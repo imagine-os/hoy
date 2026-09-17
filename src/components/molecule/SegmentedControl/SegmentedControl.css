@@ -1,10 +1,11 @@
-.segmented { display: inline-flex; padding: 3px; gap: 2px; border-radius: var(--r-full); background: var(--color-surface-3); border: 1px solid var(--color-border); }
+/* canvas: pressed track (--c20) with inset shadow; the active segment is the accent pill */
+.segmented { display: inline-flex; padding: 3px; gap: 2px; border-radius: var(--r-full); background: var(--color-surface-3); box-shadow: var(--shadow-pressed); border: 1px solid var(--color-card-border); }
 .segmented.is-block { display: flex; width: 100%; }
 .segmented.is-block .segmented-btn { flex: 1 1 0; }
-.segmented-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 0; background: transparent; color: var(--color-text-muted); border-radius: var(--r-full); font-family: var(--font-heading); font-weight: var(--fw-medium); transition: background-color var(--dur-fast), color var(--dur-fast), box-shadow var(--dur-fast); }
+.segmented-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 0; background: transparent; color: var(--color-text-faint); border-radius: var(--r-full); font-family: var(--font-body); font-weight: var(--fw-medium); transition: background-color var(--dur-fast), color var(--dur-fast), box-shadow var(--dur-fast); }
 .segmented-md .segmented-btn { min-height: 38px; padding: 0 16px; font-size: var(--fs-sm); }
 .segmented-sm .segmented-btn { min-height: 30px; padding: 0 12px; font-size: var(--fs-xs); }
 .segmented-btn:hover { color: var(--color-text); }
-.segmented-btn.is-active { background: var(--color-surface); color: var(--color-text); box-shadow: var(--shadow-highlight), var(--shadow-contact); }
-.segmented-count { font-size: var(--fs-xs); padding: 0 6px; border-radius: var(--r-full); background: var(--color-surface-2); color: var(--color-text-muted); }
-.segmented-btn.is-active .segmented-count { background: var(--color-primary); color: var(--color-text-on-primary); }
+.segmented-btn.is-active { background-color: var(--color-accent-fill); background-image: var(--tex-accent-on); color: var(--color-text-on-primary); box-shadow: var(--shadow-highlight), var(--shadow-contact); }
+.segmented-count { font-size: var(--fs-xs); padding: 0 6px; border-radius: var(--r-full); background: var(--color-surface); color: var(--color-text-muted); }
+.segmented-btn.is-active .segmented-count { background: rgba(var(--m-light), .2); color: inherit; }

@@ -1,8 +1,14 @@
-.phoneshell { min-height: 100%; display: flex; justify-content: center; background: var(--color-bg); }
-.phoneshell-col { width: 100%; max-width: 560px; min-height: 100vh; display: flex; flex-direction: column; position: relative; background: var(--color-bg); }
-@media (min-width: 900px) { .phoneshell-col { border-left: 1px solid var(--color-border); border-right: 1px solid var(--color-border); } }
-.phoneshell-main { flex: 1 1 auto; padding-bottom: calc(var(--h-bottomnav) + var(--sp-6)); }
+/* On a phone the column is the screen. From 900px up it becomes the canvas phone frame:
+   430 wide, 34px radius, 170° cream gradient, frame shadow, sitting on the sand ground with the lane grain. */
+.phoneshell { min-height: 100vh; display: flex; justify-content: center; align-items: flex-start; }
+.phoneshell-col { width: 100%; max-width: 560px; min-height: 100vh; display: flex; flex-direction: column; position: relative; }
+.phoneshell-main { flex: 1 1 auto; padding-bottom: var(--sp-6); }
 .phoneshell-main .container { padding-left: var(--sp-4); padding-right: var(--sp-4); }
-.phoneshell-nav { position: fixed; bottom: 0; left: 0; right: 0; display: flex; justify-content: center; z-index: 30; pointer-events: none; }
-.phoneshell-nav .navbar { width: 100%; max-width: 560px; pointer-events: auto; }
+.phoneshell-nav { position: sticky; bottom: 0; z-index: 30; }
 .phoneshell-avatar { display: inline-flex; border-radius: 50%; }
+@media (min-width: 900px) {
+  .phoneshell { padding: var(--sp-8) var(--sp-4) var(--sp-10); background-color: var(--color-ground); background-image: var(--tex-lane-on); }
+  .phoneshell-col { max-width: var(--w-phone); height: calc(100vh - var(--sp-8) - var(--sp-10)); min-height: 640px; border-radius: var(--r-phone); overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(var(--m-shade), .25) transparent; background-color: var(--color-bg); background-image: var(--tex-surf-on), var(--gradient-frame); box-shadow: var(--shadow-frame); border: 1px solid var(--color-card-border); }
+  .phoneshell-col .topbar.is-sticky { top: 0; }
+  .phoneshell-nav .navbar { border-radius: 0 0 var(--r-phone) var(--r-phone); }
+}

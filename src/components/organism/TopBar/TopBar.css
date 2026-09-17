@@ -1,4 +1,7 @@
-.topbar { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); min-height: var(--h-topbar); padding: 0 var(--sp-4); background: color-mix(in srgb, var(--color-bg) 85%, transparent); backdrop-filter: blur(12px); border-bottom: 1px solid var(--color-border); }
+/* canvas .topbar for the hoy brand: cream at 90 % with a blue hairline */
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); min-height: var(--h-topbar); padding: 0 var(--sp-4); background: rgba(var(--m-cream), .9); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid rgba(var(--m-primary), .18); }
+:root[data-theme="dark"] .topbar { background: rgba(16,28,41,.94); border-bottom-color: rgba(var(--m-cream), .16); }
+:root[data-skin="wireframe"] .topbar { background: var(--color-lane); border-bottom-color: var(--color-border); }
 .topbar.is-sticky { position: sticky; top: 0; z-index: 20; }
 .topbar-left { display: flex; align-items: center; gap: var(--sp-2); min-width: 0; }
 .topbar-title { font-size: var(--fs-lg); font-weight: var(--fw-semibold); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

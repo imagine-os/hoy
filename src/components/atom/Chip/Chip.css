@@ -1,12 +1,21 @@
-.chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: var(--r-full); border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text); font-size: var(--fs-sm); line-height: 1.2; font-family: var(--font-body); transition: background-color var(--dur-fast), border-color var(--dur-fast); }
-button.chip:hover { border-color: var(--color-border-strong); }
-.chip.is-selected { background: var(--color-primary); color: var(--color-text-on-primary); border-color: var(--color-primary); }
-.chip-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
-.chip-mv { border-color: transparent; }
-.chip-enraiza { background: var(--mv-enraiza-bg); color: var(--mv-enraiza-fg); } .chip-enraiza .chip-dot { background: var(--mv-enraiza-dot); }
-.chip-fluye { background: var(--mv-fluye-bg); color: var(--mv-fluye-fg); } .chip-fluye .chip-dot { background: var(--mv-fluye-dot); }
-.chip-arde { background: var(--mv-arde-bg); color: var(--mv-arde-fg); } .chip-arde .chip-dot { background: var(--mv-arde-dot); }
-.chip-libera { background: var(--mv-libera-bg); color: var(--mv-libera-fg); } .chip-libera .chip-dot { background: var(--mv-libera-dot); }
-.chip-mv.is-selected { outline: 2px solid currentColor; outline-offset: 1px; }
-:root[data-theme="dark"] .chip-enraiza { color: var(--mv-enraiza-dot); } :root[data-theme="dark"] .chip-fluye { color: var(--mv-fluye-dot); }
-:root[data-theme="dark"] .chip-arde { color: var(--mv-arde-dot); } :root[data-theme="dark"] .chip-libera { color: var(--mv-libera-dot); }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: var(--r-full); border: 1px solid var(--color-card-border); background-color: var(--color-surface); color: var(--color-text); font-size: var(--fs-sm); line-height: 1.2; font-family: var(--font-body); font-weight: var(--fw-medium); box-shadow: var(--shadow-highlight), var(--shadow-contact); transition: background-color var(--dur-fast), box-shadow var(--dur-fast), transform var(--dur-fast); }
+button.chip:hover { box-shadow: var(--shadow-card); }
+button.chip:active { transform: translateY(1px); }
+.chip.is-selected { background-color: var(--color-accent-fill); background-image: var(--tex-accent-on); color: var(--color-text-on-primary); border-color: transparent; box-shadow: var(--shadow-accent); }
+.chip-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; flex: 0 0 auto; }
+/* movement tags: canvas movSets.hoy — translucent ground, dark ink, saturated dot */
+.chip-mv { border-color: transparent; box-shadow: var(--shadow-highlight); }
+.chip-enraiza { background-color: var(--mv-enraiza-bg); color: var(--mv-enraiza-fg); } .chip-enraiza .chip-dot { background: var(--mv-enraiza-dot); }
+.chip-fluye { background-color: var(--mv-fluye-bg); color: var(--mv-fluye-fg); } .chip-fluye .chip-dot { background: var(--mv-fluye-dot); }
+.chip-arde { background-color: var(--mv-arde-bg); color: var(--mv-arde-fg); } .chip-arde .chip-dot { background: var(--mv-arde-dot); }
+.chip-libera { background-color: var(--mv-libera-bg); color: var(--mv-libera-fg); } .chip-libera .chip-dot { background: var(--mv-libera-dot); }
+.chip-mv.is-selected { background-image: none; box-shadow: var(--shadow-highlight), 0 0 0 2px currentColor; }
+.chip-enraiza.is-selected { background-color: var(--mv-enraiza-bg); color: var(--mv-enraiza-fg); }
+.chip-fluye.is-selected { background-color: var(--mv-fluye-bg); color: var(--mv-fluye-fg); }
+.chip-arde.is-selected { background-color: var(--mv-arde-bg); color: var(--mv-arde-fg); }
+.chip-libera.is-selected { background-color: var(--mv-libera-bg); color: var(--mv-libera-fg); }
+:root[data-theme="dark"] .chip-enraiza, :root[data-theme="dark"] .chip-enraiza.is-selected { color: var(--mv-enraiza-dot); }
+:root[data-theme="dark"] .chip-fluye, :root[data-theme="dark"] .chip-fluye.is-selected { color: var(--mv-fluye-dot); }
+:root[data-theme="dark"] .chip-arde, :root[data-theme="dark"] .chip-arde.is-selected { color: var(--mv-arde-dot); }
+:root[data-theme="dark"] .chip-libera, :root[data-theme="dark"] .chip-libera.is-selected { color: var(--mv-libera-dot); }
+:root[data-skin="wireframe"] .chip-mv { background-color: var(--color-surface-2); color: var(--color-text); border-color: var(--color-border-strong); } :root[data-skin="wireframe"] .chip-mv .chip-dot { background: var(--color-text-muted); }

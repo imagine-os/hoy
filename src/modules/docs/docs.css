@@ -19,7 +19,7 @@
 .kanban-col { display: flex; flex-direction: column; gap: var(--sp-2); padding: var(--sp-3); border-radius: var(--r-md); background: var(--color-surface-2); border-top: 3px solid var(--color-border-strong); }
 .kanban-col-primary { border-top-color: var(--color-primary); } .kanban-col-success { border-top-color: var(--color-success); } .kanban-col-danger { border-top-color: var(--color-danger); }
 .kanban-col-head { display: flex; justify-content: space-between; align-items: center; font-family: var(--font-heading); font-weight: var(--fw-medium); font-size: var(--fs-sm); padding: 0 var(--sp-1) var(--sp-1); }
-.kanban-card { padding: var(--sp-2) var(--sp-3); border-radius: var(--r-sm); background: var(--color-surface); border: 1px solid var(--color-border); box-shadow: var(--shadow-contact); font-size: var(--fs-sm); line-height: 1.4; }
+.kanban-card { padding: var(--sp-2) var(--sp-3); border-radius: var(--r-sm); background: var(--color-surface); border: 1px solid var(--color-card-border); box-shadow: var(--shadow-highlight), var(--shadow-contact); font-size: var(--fs-sm); line-height: 1.4; }
 .kanban-empty { padding: var(--sp-2); text-align: center; }
 /* changelog */
 .cl-grid { display: grid; grid-template-columns: 90px minmax(0, 1fr); gap: var(--sp-2) var(--sp-4); margin: 0; font-size: var(--fs-sm); }

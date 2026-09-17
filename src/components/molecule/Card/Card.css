@@ -1,13 +1,19 @@
-.card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--r-md); box-shadow: var(--shadow-card); transition: box-shadow var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out), border-color var(--dur-fast); min-width: 0; }
-.card.is-raised { box-shadow: var(--shadow-raised); }
+/* The canvas .surf2 tile: paper fill, inset top highlight, contact + soft shadow, no border in the styled skin. */
+.card { position: relative; background-color: var(--color-surface); border: 1px solid var(--color-card-border); border-radius: var(--r-md); box-shadow: var(--shadow-card); transition: box-shadow var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out), border-color var(--dur-fast); min-width: 0; }
+.card.is-raised { background-color: var(--color-surface-elevated); background-image: var(--tex-surf-on); box-shadow: var(--shadow-raised); }
 .card.is-interactive { cursor: pointer; }
-.card.is-interactive:hover { transform: translateY(-2px); box-shadow: var(--shadow-raised); border-color: var(--color-border-strong); }
+.card.is-interactive:hover { transform: translateY(-2px); box-shadow: var(--shadow-raised); }
 .card-pad-none { padding: 0; } .card-pad-sm { padding: var(--sp-3); } .card-pad-md { padding: var(--sp-5); } .card-pad-lg { padding: var(--sp-8); }
-.card-primary { background: var(--color-primary); color: var(--color-text-on-primary); border-color: transparent; }
-.card-primary .eyebrow, .card-primary .muted { color: color-mix(in srgb, var(--color-text-on-primary) 70%, transparent); }
-.card-highlight { background: var(--color-highlight); color: var(--brand-ink); border-color: transparent; }
-.card-highlight .eyebrow, .card-highlight .muted { color: color-mix(in srgb, var(--brand-ink) 65%, transparent); }
-.card-muted { background: var(--color-surface-2); box-shadow: none; }
+/* .inverse — the deliberate deep-blue fill (next class, gift card) with the accent grain */
+.card-primary { background-color: var(--color-accent-fill); background-image: var(--tex-accent-on); color: var(--color-text-on-inverse); border-color: transparent; box-shadow: var(--shadow-inverse); }
+.card-primary h1, .card-primary h2, .card-primary h3, .card-primary h4, .card-primary .card-title { color: inherit; }
+.card-primary .eyebrow, .card-primary .muted { color: color-mix(in srgb, var(--color-text-on-inverse) 72%, transparent); }
+/* the pricing badge colours (#F7F3B2 / #4A4212) */
+.card-highlight { background-color: var(--color-highlight); color: var(--color-on-highlight); border-color: transparent; box-shadow: var(--shadow-card); }
+.card-highlight h1, .card-highlight h2, .card-highlight h3, .card-highlight h4, .card-highlight .card-title { color: inherit; }
+.card-highlight .eyebrow, .card-highlight .muted { color: color-mix(in srgb, var(--color-on-highlight) 65%, transparent); }
+/* "Soft" surface: no shadow, one step down */
+.card-muted { background-color: var(--color-surface-2); box-shadow: none; }
 .card-head { display: flex; align-items: flex-start; gap: var(--sp-3); margin-bottom: var(--sp-3); }
 .card-title { font-size: var(--fs-lg); }
 .card-actions { display: flex; gap: var(--sp-2); flex: 0 0 auto; }
