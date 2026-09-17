@@ -47,7 +47,7 @@
   display: flex; flex-direction: column; gap: var(--sp-5);
 }
 .site-panel h2, .site-panel h3 { color: var(--brand-yellow); }
-.site-panel .eyebrow { color: rgba(var(--m-cream), .75); }
+.site-panel .eyebrow { color: rgba(var(--m-cream), .88); } /* ≥ 4.5:1 on the deep blue panel */
 .site-panel p { color: rgba(var(--m-cream), .92); }
 .site-panel a { color: var(--brand-yellow); }
 .site-panel-rule { height: 1px; background: rgba(var(--m-sun), .45); border: 0; margin: 0; }

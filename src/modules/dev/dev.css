@@ -30,6 +30,8 @@
 .lib-name { font-size: var(--fs-xl); }
 .lib-usages { display: flex; flex-direction: column; gap: var(--sp-4); }
 .lib-usage { display: flex; flex-direction: column; gap: var(--sp-2); }
+/* a demo wider than the phone (DateStrip, a narrow-column StatTile) scrolls inside its box instead of widening the page */
+.lib-canvas { max-width: 100%; overflow-x: auto; }
 .lib-canvas { min-width: 0; overflow-x: auto; padding: var(--sp-5); border-radius: var(--r-frame); background-color: var(--color-lane); background-image: var(--tex-paper); box-shadow: inset 0 0 0 1px rgba(var(--m-shade), .07); }
 .lib-meta { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr); gap: var(--sp-5); }
 .lib-meta > * { min-width: 0; }

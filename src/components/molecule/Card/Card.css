@@ -7,7 +7,7 @@
 /* .inverse — the deliberate deep-blue fill (next class, gift card) with the accent grain */
 .card-primary { background-color: var(--color-accent-fill); background-image: var(--tex-accent-on); color: var(--color-text-on-inverse); border-color: transparent; box-shadow: var(--shadow-inverse); }
 .card-primary h1, .card-primary h2, .card-primary h3, .card-primary h4, .card-primary .card-title { color: inherit; }
-.card-primary .eyebrow, .card-primary .muted { color: color-mix(in srgb, var(--color-text-on-inverse) 72%, transparent); }
+.card-primary .eyebrow, .card-primary .muted { color: color-mix(in srgb, var(--color-text-on-inverse) 82%, transparent); } /* 82 % keeps 11px eyebrows ≥ 4.5:1 on the deep blue */
 /* the pricing badge colours (#F7F3B2 / #4A4212) */
 .card-highlight { background-color: var(--color-highlight); color: var(--color-on-highlight); border-color: transparent; box-shadow: var(--shadow-card); }
 .card-highlight h1, .card-highlight h2, .card-highlight h3, .card-highlight h4, .card-highlight .card-title { color: inherit; }
