@@ -27,6 +27,7 @@ import { NotificationsPage } from './pages/NotificationsPage';
 import { MorePage } from './pages/MorePage';
 import { IntentionPage } from './pages/IntentionPage';
 import { LegalAppPage } from './legal';
+import { AccountPage } from './pages/AccountPage';
 import { CancelledDemoPage, DeclinedDemoPage, EmptyHomePage } from './pages/StatePages';
 import { SplashPage } from './auth/SplashPage';
 import { SignInPage } from './auth/SignInPage';
@@ -68,6 +69,7 @@ export const routes: RouteDef[] = [
   { ...base, path: '/app/events/:id', element: h(EventPage), spec: canvasSpecs['C-23'] },
   { ...base, path: '/app/notifications', element: h(NotificationsPage), spec: canvasSpecs['C-24'] },
   { ...base, path: '/app/more', element: h(MorePage), spec: canvasSpecs['C-25'], nav: { labelKey: 'core.nav.more', icon: '⋯', order: 4 } },
+  { ...base, path: '/app/account', element: h(AccountPage), spec: canvasSpecs['C-26'] },
   { ...base, path: '/app/intention', element: h(IntentionPage), spec: canvasSpecs['A-05'] },
   // A-06 in-app: the same legal library the site serves, plus the member's own acceptance.
   { ...base, path: '/app/legal/:kind', element: h(LegalAppPage), spec: canvasSpecs['A-06'] },

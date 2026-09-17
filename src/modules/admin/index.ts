@@ -18,7 +18,8 @@ import { EventsAdminPage } from './EventsAdminPage';
 import { MediaPage } from './MediaPage';
 import { PayoutRunPage, PayoutsPage } from './PayoutsPage';
 import { ExpensesPage } from './ExpensesPage';
-import { M01, M02, M02a, M02b, M02c, M02d, M04, M05, M06, M07, M08a, M08b, M08c, M08d, M08e, M09, M09a, M09b, M09c } from './specs';
+import { DeletionsPage } from './DeletionsPage';
+import { M01, M02, M02a, M02b, M02c, M02d, M04, M05, M06, M07, M08a, M08b, M08c, M08d, M08e, M09, M09a, M09b, M09c, M11 } from './specs';
 export { strings } from './strings';
 
 const G = 'core.nav.group.admin';
@@ -38,6 +39,8 @@ export const routes: RouteDef[] = [
   { ...base, path: '/admin/emails', roles: [...admins, 'coordinator'], element: h(EmailsPage), spec: M04, nav: { labelKey: 'core.nav.emails', icon: '✉', order: 13, group: G } },
   { ...base, path: '/admin/whatsapp', roles: [...admins, 'coordinator', 'front_desk'], element: h(WhatsAppPage), spec: M05, nav: { labelKey: 'core.nav.whatsapp', icon: '☏', order: 14, group: G } },
   { ...base, path: '/admin/crm', roles: crm, element: h(CrmPage), spec: M06, nav: { labelKey: 'core.nav.crm', icon: '☺', order: 15, group: G } },
+  // Static segment outranks the :id param in React Router v6, so /admin/crm/deletions never reaches MemberPage.
+  { ...base, path: '/admin/crm/deletions', roles: admins, element: h(DeletionsPage), spec: M11, nav: { labelKey: 'admin.deletions.nav', icon: '⌫', order: 15.5, group: G } },
   { ...base, path: '/admin/crm/:id', roles: crm, element: h(MemberPage), spec: M06 },
   { ...base, path: '/admin/activity', roles: [...admins, 'coordinator', 'finance'], element: h(ActivityPage), spec: M07, nav: { labelKey: 'core.nav.activity', icon: '≡', order: 16, group: G } },
   { ...base, path: '/admin/settings', roles: [...admins, 'coordinator', 'finance'], element: h(SettingsPage, { group: 'general' }), spec: M08a, nav: { labelKey: 'core.nav.settings', icon: '⚙', order: 17, group: G } },

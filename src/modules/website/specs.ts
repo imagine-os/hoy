@@ -49,6 +49,17 @@ export const siteSpecs = {
     layout: ['Hero', 'Essay', 'Facts', 'Bring', 'Other', 'CTA'], data: ['modalities'],
     logic: ['Slug is validated against brand.classOrder; an unknown slug renders the not-found state with links to every class.', 'Facts (duration, intensity, heated) join `modalities` through brand.classes[slug].modalitySlugs — when no modality matches, the page says the practice lives inside the guided classes.', '"What to bring" is derived from the class’s bring keys; heated classes always list towel and water.'],
     states: ['default', 'no matching modality', 'unknown slug'] }),
+  // 0019 — the public account-deletion request Google Play requires at a URL with no sign-in.
+  deleteAccount: defineSpec({ ...pub, code: 'W-09', name: { es: 'Sitio · Eliminar cuenta', en: 'Site · Delete account' },
+    purpose: { es: 'Pedir la eliminación de una cuenta sin iniciar sesión: correo o WhatsApp, motivo opcional, y la explicación en lenguaje llano de qué se conserva por ley y qué se elimina. Es la URL pública que exige Google Play; la app la ofrece también en Perfil → Cuenta y datos (C-26).', en: 'Request an account deletion with no sign-in: email or WhatsApp, optional reason, and a plain-words explanation of what is kept by law and what is removed. It is the public URL Google Play requires; the app also offers it under Profile → Account & data (C-26).' },
+    layout: ['PageHead', 'WhatHappens', 'Form'],
+    data: ['deletion_requests', 'audit_log', 'tenants'],
+    logic: [
+      'Submit inserts one deletion_requests row with user_id null, channel website, status requested, plus an audit_log row with actor null (role public). At least one contact (valid email or a 10-digit phone) is required; the "I understand" switch gates the button.',
+      'Nothing is deleted here: admin matches the contact to a member in M-11 and the anonymisation runs server-side. The success state shows the last six characters of the row id as a reference.',
+      'The controller name and the studio email come from M-08 (tenants.settings) with tenant.ts as fallback; the retention wording matches the privacy policy §6–§7 (A-06) without typing a number.',
+    ],
+    states: ['default', 'validation: no contact', 'validation: bad email / phone', 'switch off → button disabled', 'sent (reference shown)'] }),
   /** P-01 keeps its canvas code; only the layout, data and logic are brought up to what the page renders. */
   plans: defineSpec({
     ...canvasSpecs['P-01'],

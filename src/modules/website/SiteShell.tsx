@@ -66,6 +66,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
             <Link className="small" to="/site/plans">{t('site.nav.plans')}</Link>
             <Link className="small" to="/site/legal/terms">{t('site.legal.terms')}</Link>
             <Link className="small" to="/site/legal/privacy">{t('site.legal.privacy')}</Link>
+            <Link className="small" to="/site/delete-account">{t('site.delete.nav')}</Link>
             <Link className="small" to="/">{t('site.footer.hub')}</Link>
           </div>
           <div className="stack-sm">

@@ -151,4 +151,23 @@ export const strings: StringTable = {
   'site.footer.follow': { es: 'Síguenos', en: 'Follow us' },
   'site.footer.explore': { es: 'Explora', en: 'Explore' },
   'site.footer.lang': { es: 'Idioma', en: 'Language' },
+
+  // W-09 delete account (0019)
+  'site.delete.nav': { es: 'Eliminar mi cuenta', en: 'Delete my account' },
+  'site.delete.title': { es: 'Eliminar tu cuenta', en: 'Delete your account' },
+  'site.delete.body': { es: 'Puedes pedirle a {name} que elimine tu cuenta sin iniciar sesión. Te explicamos primero qué se conserva por ley y qué se elimina; después llenas dos campos.', en: 'You can ask {name} to delete your account without signing in. First we explain what is kept by law and what is removed; then you fill in two fields.' },
+  'site.delete.kept': { es: 'Se conserva, sin tu nombre', en: 'Kept, without your name' },
+  'site.delete.kept.invoices': { es: 'Las facturas y el historial de pagos, por el plazo de conservación contable que exige la ley, ligados a un identificador anónimo.', en: 'Invoices and payment history, for the accounting retention period the law requires, linked to an anonymous identifier.' },
+  'site.delete.kept.waiver': { es: 'La exoneración firmada, por el plazo que fija la política de privacidad, como prueba de que la aceptaste.', en: 'The signed waiver, for the period the privacy policy sets, as proof that you accepted it.' },
+  'site.delete.removed': { es: 'Se elimina', en: 'Removed' },
+  'site.delete.removed.profile': { es: 'Tu perfil: nombre, foto, cumpleaños, contacto de emergencia, notas, preferencias y notificaciones.', en: 'Your profile: name, photo, birthday, emergency contact, notes, preferences and notifications.' },
+  'site.delete.removed.access': { es: 'Tu acceso a la app, las reservas futuras, los créditos y la membresía vigente.', en: 'Your access to the app, future bookings, credits and any membership still running.' },
+  'site.delete.time': { es: 'El estudio procesa la solicitud en máximo quince días hábiles y confirma por el contacto que dejes. Dudas: {email}.', en: 'The studio processes the request within fifteen business days at most and confirms through the contact you leave. Questions: {email}.' },
+  'site.delete.form': { es: 'Solicitud', en: 'Request' },
+  'site.delete.form.body': { es: 'Deja el correo o el WhatsApp con el que creaste la cuenta. Con uno basta; sirve para encontrarte y para confirmarte.', en: 'Leave the email or the WhatsApp you created the account with. One is enough; it is how we find you and how we confirm.' },
+  'site.delete.oneOf': { es: 'Correo o WhatsApp: al menos uno', en: 'Email or WhatsApp: at least one' },
+  'site.delete.err.contact': { es: 'Necesitamos un correo válido o un número de WhatsApp para encontrar tu cuenta.', en: 'We need a valid email or a WhatsApp number to find your account.' },
+  'site.delete.inApp': { es: '¿Tienes la app? Hazlo desde Perfil → Cuenta y datos', en: 'Have the app? Do it from Profile → Account & data' },
+  'site.delete.sent.title': { es: 'Solicitud recibida', en: 'Request received' },
+  'site.delete.sent.body': { es: 'Referencia {ref}. Te escribimos al contacto que dejaste cuando esté hecha, en máximo quince días hábiles. Si tienes cuenta en la app, verás el estado en Perfil → Cuenta y datos.', en: 'Reference {ref}. We write to the contact you left once it is done, within fifteen business days at most. If you have an account in the app, the status shows under Profile → Account & data.' },
 };

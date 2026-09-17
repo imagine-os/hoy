@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useState, type ReactNode } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useSession } from '../../../auth/SessionProvider';
 import { useData } from '../../../data/DataContext';
@@ -35,7 +35,6 @@ export function ProfilePage() {
   const ent = useEntitlements();
   const prefs = useNotificationPrefs();
   const [edit, setEdit] = useState(false);
-  const [del, setDel] = useState(false);
   const [saved, setSaved] = useState<string | null>(null);
   const [form, setForm] = useState({ full_name: '', phone: '', birthday: '', ec_name: '', ec_phone: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -64,7 +63,6 @@ export function ProfilePage() {
   };
   const verifyWhatsapp = async () => { if (profile) { await data.update('profiles', profile.id, { whatsapp_verified: true }); flash(t('customer.profile.whatsapp.verified')); } };
   const signOut = () => { switchUser('public'); nav('/auth/sign-in'); };
-  const deleteAccount = async () => { if (account) await data.update('users', account.id, { status: 'disabled' }); setDel(false); signOut(); };
 
   const name = profile?.full_name ?? user.name;
 
@@ -112,6 +110,7 @@ export function ProfilePage() {
     ),
     'Legal links': () => (
       <ListGroup title={t('customer.profile.legal')}>
+        <ListRow icon="▣" title={t('customer.account.title')} subtitle={t('customer.account.sub')} to="/app/account" />
         <ListRow title={t('customer.profile.legal.terms')} to="/app/legal/terms" />
         <ListRow title={t('customer.profile.legal.privacy')} subtitle={t('customer.profile.legal.law')} to="/app/legal/privacy" />
         <ListRow title={t('customer.legal.kind.waiver')} subtitle={t('customer.legal.kind.house-rules')} to="/app/legal/waiver" />
@@ -121,7 +120,7 @@ export function ProfilePage() {
     'SignOut / DeleteAccount': () => (
       <ListGroup>
         <ListRow icon="⏻" title={t('customer.profile.signOut')} onClick={signOut} />
-        <ListRow icon="×" tone="danger" title={t('customer.profile.delete')} subtitle={t('customer.profile.delete.sub')} onClick={() => setDel(true)} />
+        <ListRow icon="×" tone="danger" title={t('customer.profile.delete')} subtitle={t('customer.profile.delete.sub')} to="/app/account" />
       </ListGroup>
     ),
   };
@@ -142,14 +141,6 @@ export function ProfilePage() {
           <div className="eyebrow">{t('customer.form.emergency')}</div>
           <Field label={t('customer.form.name')}>{(id) => <Input id={id} value={form.ec_name} onChange={(e) => setForm({ ...form, ec_name: e.target.value })} />}</Field>
           <Field label={t('customer.form.phone')} error={errors.ec_phone}>{(id) => <Input id={id} value={form.ec_phone} inputMode="tel" onChange={(e) => setForm({ ...form, ec_phone: e.target.value })} />}</Field>
-        </div>
-      </Drawer>
-      <Drawer open={del} onClose={() => setDel(false)} side="bottom" title={t('customer.profile.delete')}>
-        <div className="stack">
-          <Notice tone="warn" title={t('customer.profile.delete.confirm.title')}>{t('customer.profile.delete.confirm.body')}</Notice>
-          <Button block variant="danger" onClick={deleteAccount}>{t('customer.profile.delete.cta')}</Button>
-          <Button block variant="ghost" onClick={() => setDel(false)}>{t('core.common.cancel')}</Button>
-          <p className="xs muted">{t('customer.profile.legal.law')} · <Link to="/site/legal/privacy">{t('customer.profile.legal.privacy')}</Link></p>
         </div>
       </Drawer>
     </div>

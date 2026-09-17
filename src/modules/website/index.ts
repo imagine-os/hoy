@@ -13,6 +13,7 @@ import { TeachersPage } from './pages/TeachersPage';
 import { PlansPage } from './pages/PlansPage';
 import { ContactPage } from './pages/ContactPage';
 import { LegalPage } from './pages/LegalPage';
+import { DeleteAccountPage } from './pages/DeleteAccountPage';
 export { strings } from './strings';
 
 const pub = { roles: EVERYONE, surface: 'public' as const, layout: 'auto' as const };
@@ -27,6 +28,7 @@ export const routes: RouteDef[] = [
   { ...pub, path: '/site/teachers', element: h(TeachersPage), spec: siteSpecs.teachers },
   { ...pub, path: '/site/plans', element: h(PlansPage), spec: siteSpecs.plans },
   { ...pub, path: '/site/contact', element: h(ContactPage), spec: siteSpecs.contact },
+  { ...pub, path: '/site/delete-account', element: h(DeleteAccountPage), spec: siteSpecs.deleteAccount },
   { ...pub, path: '/site/legal/terms', element: h(LegalPage, { kind: 'terms' }), spec: canvasSpecs['A-06'] },
   { ...pub, path: '/site/legal/privacy', element: h(LegalPage, { kind: 'privacy' }), spec: canvasSpecs['A-06'] },
 ];

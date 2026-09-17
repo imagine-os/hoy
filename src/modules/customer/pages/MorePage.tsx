@@ -49,6 +49,7 @@ export function MorePage() {
           <ListRow icon="?" title={t('customer.faq.title')} to="/app/faq" />
           <ListRow icon="▭" title={t('customer.pay.title')} to="/app/payment-methods" />
           <ListRow icon="◉" title={t('customer.notifications.title')} to="/app/notifications" />
+          <ListRow icon="▣" title={t('customer.account.title')} subtitle={t('customer.account.sub')} to="/app/account" />
         </ListGroup>
 
         {devMode && (

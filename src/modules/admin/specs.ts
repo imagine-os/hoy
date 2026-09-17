@@ -255,3 +255,27 @@ export const M09c = defineSpec({
   states: ['Loading', 'Empty range', 'No templates yet', 'Generate: n created / all skipped', 'Unpaid row: marcar pagado', 'Paid row: locked', 'Read-only (solo expenses.read)', 'Invalid form (empty concept, zero amount)'],
   notes: EXPENSE_NOTES,
 });
+
+const DELETION_NOTES = [
+  'A deletion request is a row, never a client-side delete: C-26 (member, signed in), W-09 (public page, no session) and the desk (front_desk channel, by hand in M-03 today) all insert into deletion_requests; this page moves the status and ticks the checklist. The anonymisation itself — profiles and users overwritten, auth user removed, notifications purged, payments and invoices kept under an anonymous id — is a server-side job (Supabase function) once the backend exists; until then the admin performs the steps in M-03 and ticks them here.',
+  'Ley 1581 de 2012 gives fifteen business days for a deletion claim; App Store Review 5.1.1(v) and Google Play’s account-deletion policy require the request to be discoverable in-app and (Play) at a public URL. The queue is what proves the studio honoured each one: rows are never deleted.',
+];
+
+/** M-11 — the account-deletion queue (0019). */
+export const M11 = defineSpec({
+  code: 'M-11',
+  name: { es: 'CRM · Solicitudes de eliminación', en: 'CRM · Deletion requests' },
+  purpose: { es: 'La cola de peticiones de borrar una cuenta: quién la pidió y por dónde, en qué estado va, la lista de anonimización paso a paso, la nota interna y el enlace a la ficha del socio. Admin la mueve de pendiente a en proceso y a hecha; cancelada cierra sin borrar.', en: 'The queue of account-deletion requests: who asked and through which channel, its status, the step-by-step anonymisation checklist, the internal note and the link to the member record. Admin moves it from requested to processing to done; cancelled closes it without deleting.' },
+  layout: ['KPIRow (abiertas · en proceso · hechas 90 días)', 'RuleNotice (15 días hábiles, qué se conserva)', 'StatusChips (abiertas / pendiente / en proceso / hecha / cancelada / todas)', 'RequestsTable (fecha + antigüedad, quién, canal, motivo, estado, checklist n/7)', 'RequestDrawer (ficha, enlace a M-06, checklist, nota, acciones)'],
+  data: ['deletion_requests', 'users', 'profiles', 'audit_log'],
+  roles: ['super_admin', 'admin'],
+  logic: [
+    'Status flow: requested → processing → done; cancelled from either open state. done and cancelled stamp resolved_at + resolved_by. Each move writes audit_log deletion.<status>; each checklist tick writes deletion.checklist.',
+    '“Marcar hecha” is disabled until all seven checklist steps are ticked (profile, contact, notifications, messages, auth, payments, confirm), so a case cannot be closed with the member still identifiable.',
+    'A public request (user_id null) shows the email or masked phone and no CRM link; matching it to a member is a human step, noted in the internal note.',
+    ...DELETION_NOTES,
+  ],
+  integrations: ['Supabase Auth'],
+  states: ['Loading', 'No open requests', 'Filter with no matches', 'Requested (mover a en proceso)', 'Processing with a partial checklist (hecha disabled)', 'All steps ticked (hecha enabled)', 'Done / cancelled (locked, read-only)', 'Public request without an account', 'Read-only (not admin)'],
+  notes: DELETION_NOTES,
+});
