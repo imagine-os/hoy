@@ -60,7 +60,7 @@ owner del estudio. Está escrito para que otra cuenta de Claude (o una persona) 
   0 stubs.** Integrations (Wompi, WhatsApp, email, DIAN, Supabase Auth/Realtime) are simulated behind
   their seams — see §F for exactly what is still mocked.
 - **Docs**: prompt log, changelog and kanban are current through `0013`. `docs/screenshots/<code>/`
-  holds every route in ES/EN × 390/1280 (dark for key pages) as JPEG q72 — **365 captures, 54 MB**,
+  holds every route in ES/EN × 390/1280 (dark for key pages) as JPEG q72 — **369 captures, 58 MB**,
   refreshed in this pass — and `docs/pages/<code>.md` exists for every routed code.
   **55 components** carry a `.meta.ts` in D-02.
 

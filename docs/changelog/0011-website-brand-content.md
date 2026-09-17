@@ -97,8 +97,9 @@ tables; adding the dependency and deleting the `MarkdownViewer` transform is one
 Respiración `modalities` row so W-08 can show facts instead of a sentence. Both are in
 `docs/kanban.md` and `ROADMAP.md` §F(e).
 
-**Counts after the full screenshot pass** — 89 routes, 77 page codes, 0 stubs, 42 tables, 365
-captures (54 MB), 28 + 28 manual chapters, 55 components in D-02, 27 pending owner decisions.
+**Counts after the full screenshot pass** — 89 routes, 77 page codes, 0 stubs, 42 tables, 369
+captures (58 MB — 365 from the pass plus the four labelled A-06 waiver shots), 28 + 28 manual
+chapters, 55 components in D-02, 27 pending owner decisions (34 deduplicated in ROADMAP §E).
 
 **Files touched by the integration** — `src/components/molecule/MediaSlot/{MediaSlot.tsx,MediaSlot.meta.ts}`
 `src/components/molecule/MapSlot/{MapSlot.tsx,MapSlot.meta.ts}`

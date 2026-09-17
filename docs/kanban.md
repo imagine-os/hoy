@@ -1,6 +1,6 @@
 # HoyOS kanban
 
-_Updated every turn. Codes reference `src/specs/canvasSpecs.ts` and the module `specs.ts` files; `/#/dev/specs` shows the live built/stub badge per code (v0.6.0 closed by the integration of three parallel tracks: 89 routes, 77 codes, 0 stubs, 42 tables, 365 captures, 55 components in D-02; website + brand content, thin-screen depth, ops-manual rebuild). What is still missing after v0.6.0 is listed as a plain numbered list in `ROADMAP.md` §F._
+_Updated every turn. Codes reference `src/specs/canvasSpecs.ts` and the module `specs.ts` files; `/#/dev/specs` shows the live built/stub badge per code (v0.6.0 closed by the integration of three parallel tracks: 89 routes, 77 codes, 0 stubs, 42 tables, 369 captures, 55 components in D-02; website + brand content, thin-screen depth, ops-manual rebuild). What is still missing after v0.6.0 is listed as a plain numbered list in `ROADMAP.md` §F._
 
 ## Backlog
 
@@ -54,7 +54,7 @@ _Updated every turn. Codes reference `src/specs/canvasSpecs.ts` and the module `
 - Jas's two items: "Planes claros" → **Planes** / **Plans**, and dark-mode card titles verified readable in the W-01 dark capture
 - `package.json` **0.1.0 → 0.6.0** (it had been stale through all of v0.5.0); README, ROADMAP §A/§E/§F and this board updated
 - `scripts/screenshots.mjs`: `--only=…$` exact-path matching (so `/manual` can be captured without the chapter route that shares its K-03 code) and `:chapter` → `03-modelo-de-valor`
-- Full screenshot pass: **89 routes, 365 captures, 54 MB**, no console errors; six new page docs generated (M-02a…M-02d, M-09a, M-09b), K-03 and S-03 docs now name their labelled captures
+- Full screenshot pass: **89 routes, 369 captures, 58 MB**, no console errors; six new page docs generated (M-02a…M-02d, M-09a, M-09b), K-03 and S-03 docs now name their labelled captures
 
 ### Ops manual, visual and live (0013 · v0.6.0)
 - 11 flat chapters became **28 ES + 28 EN in seven parts** (HOY · Operación diaria · Clientes y planes · Dinero · Contenido y marca · Legal y políticas · Sistema); nothing dropped, `LEGACY_SLUGS` keeps old links resolving
