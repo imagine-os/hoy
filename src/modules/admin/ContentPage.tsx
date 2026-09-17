@@ -18,6 +18,7 @@ import { ClassRow } from '../../components/molecule/ClassRow/ClassRow';
 import { TeacherCard } from '../../components/organism/TeacherCard/TeacherCard';
 import { EmptyState } from '../../components/molecule/EmptyState/EmptyState';
 import { useAudit } from '../staff/audit';
+import { ContentSubNav } from './contentNav';
 import './admin.css';
 
 type Entity = 'class_templates' | 'teachers' | 'modalities' | 'rooms';
@@ -128,6 +129,7 @@ export function ContentPage() {
           {canWrite && <Button size="sm" onClick={add}>{t('admin.content.add')}</Button>}
         </div>
       </div>
+      <ContentSubNav current="entities" />
       <div className="row wrap" role="tablist">
         {(Object.keys(FIELDS) as Entity[]).map((e) => <Chip key={e} selected={entity === e} onClick={() => { setEntity(e); setSelected(null); setSearch(''); }}>{t(`admin.content.tab.${e}`)}</Chip>)}
         <span className="xs muted">{t('admin.content.pricingNote')}</span>

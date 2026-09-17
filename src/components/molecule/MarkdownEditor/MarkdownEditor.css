@@ -1,0 +1,6 @@
+/* Markdown editor with a live preview (M-02a). Layout classes .adm-md / .adm-md-preview live in
+   the admin stylesheet; these are the component's own, so the molecule works outside admin too. */
+.mdedit { min-width: 0; }
+.mdedit textarea { width: 100%; min-height: 240px; font-family: var(--font-mono); font-size: var(--fs-sm); line-height: 1.55; resize: vertical; }
+.mdedit-preview h1, .mdedit-preview h2, .mdedit-preview h3 { margin-top: var(--sp-4); }
+.mdedit-preview > :first-child { margin-top: 0; }
