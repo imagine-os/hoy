@@ -1,54 +1,84 @@
 ---
-title: Manual de Operaciones HOY — Índice
+title: Índice y cómo usar este manual
 role: todos
-version: 0.1
+part: I
+version: 0.6.0
 updated: 2026-09-17
+summary: Para qué sirve el manual, cómo está organizado en siete partes y qué lee cada rol.
 ---
 
-# Manual de Operaciones — HOY Wellness Center
+# Manual de operaciones — HOY
+
+Este es el único documento sobre cómo operamos. Si algo que haces en el estudio no está aquí, o está
+aquí y no se hace así, alguna de las dos cosas debe cambiar: díselo a coordinación.
 
 ## 1. Para qué sirve
-1. Es la única fuente de cómo operamos el estudio: 15 mats por clase, 4 clases al día, una clase por persona al día.
-2. Cada procedimiento dice qué hacer, qué decir y en qué pantalla de HoyOS se hace (código + nombre, por ejemplo "S-02 Puerta / check-in").
-3. Las políticas (ventana de cancelación, reclamo de lista de espera, tolerancia, cargos) se leen de **M-08 Ajustes y políticas**; este manual cita el valor vigente, pero la pantalla manda.
+1. Es la única fuente de cómo operamos, y sus números no se escriben a mano: el manual los lee del sistema.
+2. Cada procedimiento dice qué hacer, qué decir y en qué pantalla de HoyOS se hace (código + nombre,
+   por ejemplo "S-02 Puerta / check-in"), con una captura real de esa pantalla.
+3. Las políticas (ventana de cancelación, reclamo de lista de espera, tolerancia, cargos) se leen de
+   **M-08 Ajustes y políticas** en vivo; si alguien las cambia en la pantalla, este manual cambia solo.
+
+{{tenant:capacity}}
 
 ## 2. Cómo usarlo
-1. Lee primero `01-filosofia-y-voz.md`; todo lo demás se apoya en cómo hablamos.
-2. Busca tu rol en la tabla de abajo y lee tus archivos en orden.
-3. Cada procedimiento trae una caja **Pasos en HoyOS** con los códigos de pantalla y marcadores `[screenshot: …]` que se reemplazan por capturas reales.
-4. Lo que el estudio aún no ha definido está marcado como `> DECISIÓN PENDIENTE:`. No inventes la respuesta; pregunta al owner.
-5. Versión 0.1: todo puede cambiar. Propón mejoras a coordinación; los cambios se registran en K-01.
+1. Lee la Parte I. Todo lo demás se apoya en quiénes somos y en cómo hablamos.
+2. Busca tu rol en la tabla de abajo, o usa "Empieza por aquí" en la portada del manual: tres
+   capítulos por rol y ya puedes trabajar el primer día.
+3. Los bloques con la leyenda **«Datos en vivo del sistema»** no son texto: son el valor actual.
+   No los copies a otro documento; enlaza el capítulo.
+4. Lo que el estudio aún no ha definido está marcado como `> DECISIÓN PENDIENTE:`. No inventes la
+   respuesta; pregunta al owner. La lista completa está en **Decisiones pendientes** (K-04).
+5. Versión 0.6: la estructura está estable, el contenido sigue creciendo. Propón mejoras a
+   coordinación; los cambios se registran en K-01.
 
-## 3. Quién lee qué
+## 3. Las siete partes
+| Parte | Qué contiene | Para quién |
+|---|---|---|
+| I · HOY | Quiénes somos, la filosofía, las clases y el modelo de valor | todos |
+| II · Operación diaria | Puerta, clases, maestros, sala, incidencias | recepción, maestros, mantenimiento |
+| III · Clientes y planes | Ventas, pausas, regalos, alquiler de espacio, CRM | recepción, coordinación |
+| IV · Dinero | Caja, facturación DIAN, nómina y payouts | finanzas, owner |
+| V · Contenido y marca | CMS, web y redes, medios, voz y tono | coordinación |
+| VI · Legal y políticas | Políticas vigentes, documentos legales, habeas data | owner, admin |
+| VII · Sistema | Roles, datos, integraciones, glosario | admin, todos |
 
-| Archivo | Owner | Admin | Coord. | Recepción | Finanzas | Profesores | Mantenimiento |
+## 4. Quién lee qué
+| Capítulo | Owner | Admin | Coord. | Recepción | Finanzas | Maestros | Mantenimiento |
 |---|---|---|---|---|---|---|---|
-| 01 Filosofía y voz | ● | ● | ● | ● | ● | ● | ● |
-| 02 Roles y organigrama | ● | ● | ● | ● | ● | ● | ● |
-| 03 Recepción | ○ | ● | ● | ● | ○ | ○ | – |
-| 04 Profesores | ○ | ○ | ● | ○ | – | ● | – |
-| 05 Coordinación | ○ | ● | ● | ○ | – | – | – |
-| 06 Administración y finanzas | ● | ● | ○ | – | ● | – | – |
-| 07 Mantenimiento y espacio | ○ | ○ | ● | ● | – | ○ | ● |
-| 08 Comunicación WhatsApp y email | ○ | ● | ● | ● | – | ○ | – |
-| 09 Emergencias y seguridad | ● | ● | ● | ● | ● | ● | ● |
-| 10 Checklists de entrenamiento | ● | ● | ● | ● | ● | ● | ● |
+| 01 Quiénes somos y filosofía | ● | ● | ● | ● | ● | ● | ● |
+| 02 Nuestras clases | ● | ○ | ● | ● | – | ● | ○ |
+| 03 Modelo de valor | ● | ● | ● | ● | ● | ○ | – |
+| 04 Recepción y check-in | ○ | ● | ● | ● | ○ | ○ | – |
+| 05 Clases y horarios | ○ | ● | ● | ○ | – | ○ | – |
+| 06 Maestros | ○ | ○ | ● | ○ | – | ● | – |
+| 07 Sala, calor y mantenimiento | ○ | ○ | ● | ● | – | ● | ● |
+| 08 Incidencias y emergencias | ● | ● | ● | ● | ● | ● | ● |
+| 09 Checklists de entrenamiento | ● | ● | ● | ● | ● | ● | ● |
+| 10 Ventas y planes | ○ | ● | ● | ● | ● | – | – |
+| 11 Pausas y regalos | ○ | ● | ● | ● | ○ | – | – |
+| 12 Espacio (alquiler B2B) | ● | ○ | ● | ○ | ○ | – | ○ |
+| 13 CRM y WhatsApp | ○ | ● | ● | ● | – | ○ | – |
+| 14 Pagos y caja | ● | ● | ○ | ● | ● | – | – |
+| 15 Facturación y DIAN | ● | ● | – | – | ● | – | – |
+| 16 Nómina y payouts | ● | ● | ○ | – | ● | ○ | – |
+| 17 Contenido en el CMS | ○ | ● | ● | ○ | – | ○ | – |
+| 18 Web y redes | ● | ○ | ● | ○ | – | – | – |
+| 19 Medios y artwork | ○ | ○ | ● | ○ | – | ○ | – |
+| 20 Voz y tono | ● | ● | ● | ● | ● | ● | ● |
+| 21 Políticas | ● | ● | ● | ● | ● | ○ | – |
+| 22 Documentos legales | ● | ● | ○ | ○ | ● | ○ | – |
+| 23 Habeas data | ● | ● | ● | ● | ● | ● | ● |
+| 24 Roles y permisos | ● | ● | ● | ● | ● | ● | ● |
+| 25 Datos y tablas | ○ | ● | ○ | – | ○ | – | – |
+| 26 Integraciones | ● | ● | ○ | – | ○ | – | – |
+| 27 Glosario | ● | ● | ● | ● | ● | ● | ● |
 
 ● obligatorio · ○ recomendado · – no aplica
 
-## 4. Mapa rápido de pantallas HoyOS
-| Código | Nombre | Quién la usa |
-|---|---|---|
-| S-01 | Inicio por rol | Todo el equipo |
-| S-02 | Puerta / check-in | Recepción |
-| S-03 | App de profesores | Profesores |
-| S-04 | Registrar y cobrar | Recepción |
-| M-01 | Panel admin y switches | Owner, admin |
-| M-02 | Contenido (CMS) | Coordinación |
-| M-03 | Tablas y relaciones | Admin, desarrollo |
-| M-04 | Correos transaccionales | Coordinación |
-| M-05 | Automatizaciones WhatsApp | Coordinación |
-| M-06 | CRM · socio 360 | Recepción, coordinación, finanzas |
-| M-07 | Registro de actividad | Owner, finanzas |
-| M-08 | Ajustes y políticas | Owner, admin |
-| C-02 | Horario | Todos (vista cliente) |
+## 5. Mapa rápido de pantallas
+Estas son las pantallas del equipo. La lista completa por superficie está en el capítulo `25`.
+
+{{routes:staff}}
+
+![La puerta: la pantalla donde empieza cada día](../../screenshots/S-02/es-1280.jpg "S-02 · /staff/checkin")
