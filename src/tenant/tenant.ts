@@ -8,7 +8,7 @@ export const tenant = {
   name: 'HOY',
   legalName: 'HOY Wellness Center',
   tagline: { es: 'Human club', en: 'Human club' },
-  city: 'Bogotá',
+  city: 'Medellín',
   country: 'CO',
   timezone: 'America/Bogota',
   currency: 'COP',
