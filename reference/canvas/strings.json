@@ -1,0 +1,3486 @@
+{
+"tb_sub": [
+"Design system · full app map",
+"Sistema de diseño · mapa completo"
+],
+"tb_styletb_wire": [
+"Wireframe",
+"Wireframe"
+],
+"tb_light": [
+"Light",
+"Claro"
+],
+"tb_dark": [
+"Dark",
+"Oscuro"
+],
+"tb_demo": [
+"Demo as",
+"Demo como"
+],
+"r_student": [
+"Student",
+"Estudiante"
+],
+"r_teacher": [
+"Teacher",
+"Profesor"
+],
+"r_front": [
+"Front desk",
+"Recepción"
+],
+"r_coord": [
+"Coordinator",
+"Coordinador"
+],
+"r_finance": [
+"Finance / payroll",
+"Finanzas / nómina"
+],
+"r_super": [
+"Super admin",
+"Súper admin"
+],
+"h_title": [
+"HOY Wellness Center — system canvas",
+"HOY Wellness Center — lienzo del sistema"
+],
+"l1": [
+"Onboarding & authentication",
+"Registro y autenticación"
+],
+"l1s": [
+"Cold start → account → intention",
+"Inicio → cuenta → intención"
+],
+"n_splash": [
+"Splash / breathing load",
+"Splash / carga que respira"
+],
+"n_auth": [
+"Sign in",
+"Iniciar sesión"
+],
+"n_signup": [
+"Create account",
+"Crear cuenta"
+],
+"n_waiver": [
+"Waiver & health",
+"Consentimiento y salud"
+],
+"n_feel": [
+"Intention check",
+"Intención del día"
+],
+"n_legal": [
+"Terms & privacy",
+"Términos y privacidad"
+],
+"sb": [
+"▮▮▮ ⌁ ▮",
+"▮▮▮ ⌁ ▮"
+],
+"sp_tag": [
+"An oasis within",
+"Un oasis en ti"
+],
+"sp_load": [
+"Loading…",
+"Cargando…"
+],
+"au_sub": [
+"Welcome back",
+"Bienvenido de nuevo"
+],
+"au_login": [
+"Log in",
+"Entrar"
+],
+"au_forgot": [
+"Forgot your password?",
+"¿Olvidaste tu contraseña?"
+],
+"au_or": [
+"OR",
+"O"
+],
+"au_apple": [
+"Continue with Apple",
+"Continuar con Apple"
+],
+"au_google": [
+"Continue with Google",
+"Continuar con Google"
+],
+"au_bio": [
+"Use Face ID / fingerprint",
+"Usar Face ID / huella"
+],
+"au_new": [
+"New to HOY?",
+"¿Nuevo en HOY?"
+],
+"au_create": [
+"Create an account",
+"Crear una cuenta"
+],
+"f_email": [
+"Email",
+"Correo"
+],
+"f_pass": [
+"Password",
+"Contraseña"
+],
+"f_first": [
+"First name",
+"Nombre"
+],
+"f_last": [
+"Last name",
+"Apellido"
+],
+"f_whats": [
+"WhatsApp number",
+"Número de WhatsApp"
+],
+"f_bday": [
+"Birthday",
+"Cumpleaños"
+],
+"f_name": [
+"Full name",
+"Nombre completo"
+],
+"f_phone": [
+"Phone",
+"Teléfono"
+],
+"opt": [
+"optional",
+"opcional"
+],
+"f_photo": [
+"Profile photo",
+"Foto de perfil"
+],
+"f_photo_take": [
+"Take photo",
+"Tomar foto"
+],
+"f_photo_pick": [
+"Choose",
+"Elegir"
+],
+"and": [
+"and",
+"y"
+],
+"f_terms1": [
+"I agree to the",
+"Acepto los"
+],
+"f_terms2": [
+"Terms & Conditions",
+"Términos y Condiciones"
+],
+"f_terms3": [
+"Privacy Policy",
+"Política de Privacidad"
+],
+"su_title": [
+"Create your account",
+"Crea tu cuenta"
+],
+"su_sub": [
+"Two minutes. Then you are in the room.",
+"Dos minutos. Después ya estás en la sala."
+],
+"continue": [
+"Continue",
+"Continuar"
+],
+"back": [
+"Back",
+"Atrás"
+],
+"toggleable": [
+"toggleable step",
+"paso desactivable"
+],
+"wv_emerg": [
+"Emergency contact",
+"Contacto de emergencia"
+],
+"wv_sign": [
+"Signature",
+"Firma"
+],
+"fl_hola": [
+"HOLA, MARIANA",
+"HOLA, MARIANA"
+],
+"fl_line": [
+"Una elección basta para empezar.",
+"Una elección basta para empezar."
+],
+"fl_sub": [
+"Pick one. We will shape today around it.",
+"Elige una. Armamos tu día alrededor."
+],
+"fl_skip": [
+"Skip for now",
+"Omitir por ahora"
+],
+"lg_terms": [
+"Terms & Conditions",
+"Términos y Condiciones"
+],
+"lg_priv": [
+"Privacy Policy",
+"Política de Privacidad"
+],
+"lg_updated": [
+"Placeholder copy · last updated —",
+"Texto de ejemplo · actualizado —"
+],
+"lg_t1": [
+"Membership & credits",
+"Membresía y créditos"
+],
+"lg_t2": [
+"Booking and cancellation",
+"Reservas y cancelaciones"
+],
+"lg_t3": [
+"Studio conduct",
+"Conducta en el estudio"
+],
+"lg_t4": [
+"Payments & refunds",
+"Pagos y reembolsos"
+],
+"lg_p1": [
+"Data we collect",
+"Datos que recogemos"
+],
+"lg_p2": [
+"How we use it",
+"Cómo los usamos"
+],
+"lg_p3": [
+"Ley 1581 de 2012",
+"Ley 1581 de 2012"
+],
+"lg_p4": [
+"Your rights",
+"Tus derechos"
+],
+"lg_link_priv": [
+"Read the Privacy Policy",
+"Leer la Política de Privacidad"
+],
+"lg_link_terms": [
+"Read the Terms & Conditions",
+"Leer los Términos y Condiciones"
+],
+"spec_title": [
+"Page spec",
+"Especificación"
+],
+"spec_intent": [
+"Intent",
+"Intención"
+],
+"spec_data": [
+"Data it touches",
+"Datos que usa"
+],
+"spec_roles": [
+"Who can access",
+"Quién accede"
+],
+"spec_layers": [
+"Layer tree",
+"Árbol de capas"
+],
+"spec_rules": [
+"Rules & logic",
+"Reglas y lógica"
+],
+"spec_toggles": [
+"Feature toggles",
+"Interruptores"
+],
+"roles": [
+"Public",
+"All roles"
+],
+"states": [
+"Video missing: textured placeholder with intended shot noted",
+"Untranslated: falls back to Spanish with a note"
+],
+"api": [
+"GET /design/tokens",
+"GET /design/tokens/:theme"
+],
+"tb_styled": [
+"Styled",
+"Estilizado"
+],
+"tb_wire": [
+"Wireframe",
+"Wireframe"
+],
+"n_admin": [
+"Admin dashboard & features",
+"Panel y features"
+],
+"n_cms": [
+"Content: classes & teachers",
+"Contenido: clases y profesores"
+],
+"pay_use_credit": [
+"Use 1 credit",
+"Usar 1 crédito"
+],
+"credits_left": [
+"credits remaining",
+"créditos restantes"
+],
+"l5b": [
+"Admin — operations",
+"Admin — operaciones"
+],
+"l5bs": [
+"CRM, activity log, studio settings",
+"CRM, registro de actividad, ajustes del estudio"
+],
+"n_crm": [
+"CRM · member 360",
+"CRM · ficha del cliente"
+],
+"n_act": [
+"All activity log",
+"Registro de actividad"
+],
+"n_set": [
+"Studio settings & policies",
+"Ajustes y políticas"
+],
+"crm_seg": [
+"Segments",
+"Segmentos"
+],
+"crm_s1": [
+"All members",
+"Todos"
+],
+"crm_s2": [
+"At risk",
+"En riesgo"
+],
+"crm_s3": [
+"New this month",
+"Nuevos del mes"
+],
+"crm_s4": [
+"No membership",
+"Sin membresía"
+],
+"crm_s5": [
+"Birthdays",
+"Cumpleaños"
+],
+"pl_teaser": [
+"Plans from",
+"Planes desde"
+],
+"pl_row": [
+"Plans & prices",
+"Planes y precios"
+],
+"bv_title": [
+"Bienvenida passes",
+"Pases Bienvenida"
+],
+"bv_sub": [
+"One-time entry options — no membership required.",
+"Opciones de entrada puntual — sin membresía."
+],
+"bv_eyebrow": [
+"BIENVENIDA",
+"BIENVENIDA"
+],
+"bv_intro": [
+"Para quien llega. Empiezas donde estás.",
+"Para quien llega. Empiezas donde estás."
+],
+"bv_cta": [
+"Guardar tu lugar",
+"Guardar tu lugar"
+],
+"bv_foot": [
+"¿Buscas acceso completo?",
+"¿Buscas acceso completo?"
+],
+"bv_foot_link": [
+"Ver Formas de Pertenecer",
+"Ver Formas de Pertenecer"
+],
+"at_price": [
+"Pricing card",
+"Ficha de precio"
+],
+"pl_card_d": [
+"use within a month",
+"para usar en un mes"
+],
+"clPl": [
+"11 Sep 2026 · Modelo de Valor v3 wired in",
+"11 sep 2026 · Modelo de Valor v3 integrado"
+],
+"ePl": [
+"Modelo de Valor v3 · one pricing source of truth",
+"Modelo de Valor v3 · una sola fuente de precios"
+],
+"crm_since": [
+"Member since Mar 2024",
+"Miembro desde mar 2024"
+],
+"crm_ltv": [
+"Money spent to date",
+"Dinero gastado"
+],
+"crm_visits": [
+"Classes taken",
+"Clases tomadas"
+],
+"crm_last": [
+"Last visit",
+"Última visita"
+],
+"crm_risk": [
+"Churn risk",
+"Riesgo de fuga"
+],
+"crm_low": [
+"Low",
+"Bajo"
+],
+"crm_tabs": [
+"Timeline",
+"Cronología"
+],
+"crm_book": [
+"Bookings",
+"Reservas"
+],
+"crm_pay": [
+"Payments",
+"Pagos"
+],
+"crm_notes": [
+"Notes",
+"Notas"
+],
+"crm_new": [
+"Add note",
+"Añadir nota"
+],
+"crm_wa": [
+"WhatsApp",
+"WhatsApp"
+],
+"crm_em": [
+"Email",
+"Correo"
+],
+"crm_note": [
+"Note",
+"Nota"
+],
+"crm_cat": [
+"Category",
+"Categoría"
+],
+"crm_c1": [
+"Injury / health",
+"Lesión / salud"
+],
+"crm_c2": [
+"Preference",
+"Preferencia"
+],
+"crm_c3": [
+"Billing",
+"Facturación"
+],
+"crm_c4": [
+"Complaint",
+"Queja"
+],
+"crm_c5": [
+"General",
+"General"
+],
+"crm_sys": [
+"System",
+"Sistema"
+],
+"crm_t1": [
+"Asked about bringing a guest on Saturday. Sent a guest pass.",
+"Preguntó por traer una invitada el sábado. Se envió pase."
+],
+"crm_t2": [
+"Class reminder delivered · read",
+"Recordatorio de clase entregado · leído"
+],
+"crm_t3": [
+"Mentioned a knee injury — flagged on her profile for teachers.",
+"Mencionó una lesión de rodilla — marcado en su perfil para los profesores."
+],
+"crm_t4": [
+"Receipt · 10-Class Pack · $490.000",
+"Recibo · Paquete de 10 Clases · $490.000"
+],
+"crm_t5": [
+"Attended Hot Vinyasa Flow with Alex",
+"Asistió a Hot Vinyasa con Alex"
+],
+"crm_ph": [
+"Write a note about this member…",
+"Escribe una nota sobre esta persona…"
+],
+"crm_consent": [
+"WhatsApp opt-in · Email opt-in · Habeas Data signed",
+"Opt-in WhatsApp · Opt-in correo · Habeas Data firmado"
+],
+"act_sub": [
+"Read-only. Every action by every person, filterable and sortable.",
+"Solo lectura. Toda acción de toda persona, filtrable y ordenable."
+],
+"act_when": [
+"When",
+"Cuándo"
+],
+"act_who": [
+"Who",
+"Quién"
+],
+"act_what": [
+"Action",
+"Acción"
+],
+"act_obj": [
+"Object",
+"Objeto"
+],
+"act_src": [
+"Source",
+"Origen"
+],
+"act_all": [
+"All roles",
+"Todos los roles"
+],
+"act_area": [
+"All areas",
+"Todas las áreas"
+],
+"act_range": [
+"Last 7 days",
+"Últimos 7 días"
+],
+"act_export": [
+"Export CSV",
+"Exportar CSV"
+],
+"act_1": [
+"Turned off Face check-in",
+"Apagó Check-in facial"
+],
+"act_2": [
+"Published class · Barre Strength",
+"Publicó clase · Barre Strength"
+],
+"act_3": [
+"Settled cash payment · $58.000",
+"Registró pago en efectivo · $58.000"
+],
+"act_4": [
+"Marked attendance · 16 of 20",
+"Marcó asistencia · 16 de 20"
+],
+"act_5": [
+"Refunded booking · 1 credit",
+"Reembolsó reserva · 1 crédito"
+],
+"act_6": [
+"Changed price · Plan Mensual $520.000",
+"Cambió precio · Plan Mensual $520.000"
+],
+"act_7": [
+"Signed waiver v3",
+"Firmó consentimiento v3"
+],
+"act_8": [
+"Promoted from waitlist",
+"Promovió desde lista de espera"
+],
+"act_imm": [
+"Immutable · retained 24 months · exportable for audit",
+"Inmutable · retenido 24 meses · exportable para auditoría"
+],
+"set_studio": [
+"Studio profile",
+"Perfil del estudio"
+],
+"set_hours": [
+"Opening hours",
+"Horarios"
+],
+"set_pol": [
+"Policies",
+"Políticas"
+],
+"set_tax": [
+"Tax & invoicing",
+"Impuestos y facturación"
+],
+"set_int": [
+"Integrations",
+"Integraciones"
+],
+"set_loc": [
+"Locations",
+"Sedes"
+],
+"set_cxl": [
+"Cancellation window",
+"Ventana de cancelación"
+],
+"set_wl": [
+"Waitlist claim window",
+"Ventana de reclamo"
+],
+"set_late": [
+"Late check-in grace",
+"Tolerancia de llegada"
+],
+"set_fee": [
+"No-show fee",
+"Cargo por inasistencia"
+],
+"set_nit": [
+"NIT · DIAN resolution",
+"NIT · resolución DIAN"
+],
+"set_iva": [
+"IVA rate",
+"Tasa de IVA"
+],
+"set_gw": [
+"Payment gateway",
+"Pasarela de pago"
+],
+"set_wab": [
+"WhatsApp Business API",
+"API de WhatsApp Business"
+],
+"set_pending": [
+"Pending selection",
+"Pendiente de elegir"
+],
+"set_conn": [
+"Connected",
+"Conectado"
+],
+"audit_t": [
+"Admin coverage audit",
+"Auditoría de cobertura admin"
+],
+"at_tl": [
+"Timeline entry",
+"Entrada de cronología"
+],
+"at_log": [
+"Log row",
+"Fila de registro"
+],
+"at_pay": [
+"Payment mark",
+"Marca de pago"
+],
+"at_seg": [
+"Segment item",
+"Ítem de segmento"
+],
+"at_tog": [
+"Detail switch",
+"Interruptor de detalle"
+],
+"clOps": [
+"9 Sep 2026 · Detail layers, payment marks, admin operations",
+"9 sep 2026 · Capas de detalle, marcas de pago, operaciones admin"
+],
+"eOps": [
+"Detail layers · payment marks · CRM · activity log · settings",
+"Capas de detalle · marcas de pago · CRM · registro · ajustes"
+],
+"audit_b": [
+"What a studio back-office needs, against what this canvas holds. Built: features and flags, CMS, data model, email, WhatsApp, CRM, activity log, settings. Still to build: finance and payroll (phase 8), reports and cohorts, staff directory and permission editor, discounts and promo codes, the staff-side support inbox, and the announcements composer. Nothing else in the operating model is unaccounted for.",
+"Lo que necesita el back-office de un estudio, frente a lo que tiene este lienzo. Construido: features e interruptores, CMS, modelo de datos, correo, WhatsApp, CRM, registro de actividad, ajustes. Falta: finanzas y nómina (fase 8), reportes y cohortes, directorio de staff y editor de permisos, descuentos y códigos promocionales, bandeja de soporte del staff y compositor de anuncios. Nada más del modelo operativo queda sin contemplar."
+],
+"n_sched_w": [
+"Class schedule · week",
+"Horario · semana"
+],
+"sv_wk": [
+"7–13 Sep",
+"7–13 sep"
+],
+"sv_fullw": [
+"Full",
+"Lleno"
+],
+"f2_1": [
+"Muévete",
+"Muévete"
+],
+"f2_1d": [
+"Para activarte y salir del piloto automático.",
+"Para activarte y salir del piloto automático."
+],
+"f2_2": [
+"Respira",
+"Respira"
+],
+"f2_2d": [
+"Para bajar el ritmo y estar aquí.",
+"Para bajar el ritmo y estar aquí."
+],
+"f2_3": [
+"Equilíbrate",
+"Equilíbrate"
+],
+"f2_3d": [
+"Para encontrar tu centro.",
+"Para encontrar tu centro."
+],
+"f2_4": [
+"Conecta",
+"Conecta"
+],
+"f2_4d": [
+"Para volver a ti, con otros.",
+"Para volver a ti, con otros."
+],
+"clP7c": [
+"9 Sep 2026 · C-02 schedule views",
+"9 sep 2026 · Vistas del horario C-02"
+],
+"clP7cb": [
+"Prompt intent: see the week and recurring views of C-02, which until now existed only as tabs on the Today view. Decisions: (1) week is a six-column day grid of compact time chips rather than a scrolled list, because comparing across days is the reason to open it; (2) month shows density dots per day plus the selected day's list underneath — a full month of class rows does not fit a phone and density is what people scan for; (3) recurring groups by rule, not by instance, and offers booking the whole series with single-date cancellation afterwards, which is why the view exists at all. New components registered in D-02: day-column chip, month density cell, series card. Files: Hoy Wellness System.dc.html (lane 2, D-02, K-01).",
+"Intención del prompt: ver las vistas de semana, mes y recurrentes de C-02, que hasta ahora solo existían como pestañas en la vista de Hoy. Decisiones: (1) la semana es una cuadrícula de seis columnas con fichas compactas de hora en vez de una lista, porque comparar entre días es la razón de abrirla; (2) el mes muestra puntos de densidad por día más la lista del día seleccionado debajo — un mes entero de filas no cabe en un teléfono y la densidad es lo que la gente escanea; (3) recurrentes agrupa por regla, no por instancia, y ofrece reservar la serie completa con cancelación de fechas individuales después, que es la razón de existir de la vista. Componentes nuevos en D-02: ficha de columna de día, celda de densidad mensual, tarjeta de serie. Archivos: Hoy Wellness System.dc.html (carril 2, D-02, K-01)."
+],
+"at_daychip": [
+"Day-column chip",
+"Ficha de columna"
+],
+"at_legend": [
+"Class-type legend",
+"Leyenda de tipos"
+],
+"l3c": [
+"States and edges — phase 7",
+"Estados y bordes — fase 7"
+],
+"l3cs": [
+"What the system looks like when there is nothing, when it fails, and when the studio changes plans",
+"Cómo se ve el sistema cuando no hay nada, cuando algo falla y cuando el estudio cambia de planes"
+],
+"n_empty": [
+"Home · first-time empty",
+"Inicio · primera vez"
+],
+"n_declined": [
+"Payment declined",
+"Pago rechazado"
+],
+"n_cxl": [
+"Class cancelled by studio",
+"Clase cancelada por el estudio"
+],
+"n_locked": [
+"Sign-in locked",
+"Inicio bloqueado"
+],
+"x_empty_hi": [
+"Welcome, Mariana",
+"Bienvenida, Mariana"
+],
+"x_empty_t": [
+"Your first class is waiting",
+"Tu primera clase te espera"
+],
+"x_empty_b": [
+"Pick something that matches how you want to feel today. The first one is on us.",
+"Elige algo que combine con cómo quieres sentirte hoy. La primera va por nuestra cuenta."
+],
+"x_empty_cta": [
+"Browse today's classes",
+"Ver las clases de hoy"
+],
+"x_empty_second": [
+"Take the studio tour first",
+"Primero haz el tour del estudio"
+],
+"x_empty_stats": [
+"Your practice numbers appear after your first class.",
+"Tus números de práctica aparecen después de tu primera clase."
+],
+"x_dec_t": [
+"Payment declined",
+"Pago rechazado"
+],
+"x_dec_b": [
+"Your bank declined the charge. Nothing was charged.",
+"Tu banco rechazó el cobro. No se cobró nada."
+],
+"x_dec_why": [
+"Reason from the gateway: insufficient funds",
+"Motivo del gateway: fondos insuficientes"
+],
+"x_dec_hold": [
+"Spot held",
+"Cupo reservado"
+],
+"x_dec_hold_s": [
+"We are holding your place for 9 more minutes",
+"Guardamos tu lugar 9 minutos más"
+],
+"x_dec_retry": [
+"Try another method",
+"Probar otro método"
+],
+"x_dec_cash": [
+"Pay cash at the front desk",
+"Pagar en efectivo en recepción"
+],
+"x_dec_release": [
+"Release the spot",
+"Liberar el cupo"
+],
+"x_cxl_t": [
+"Class cancelled",
+"Clase cancelada"
+],
+"x_cxl_b": [
+"Lisa is unwell and we could not find a substitute in time.",
+"Lisa está enferma y no encontramos reemplazo a tiempo."
+],
+"x_cxl_refund": [
+"1 credit returned",
+"1 crédito devuelto"
+],
+"x_cxl_alt": [
+"Similar classes today",
+"Clases similares hoy"
+],
+"x_cxl_cta": [
+"Book a replacement",
+"Reservar otra"
+],
+"x_cxl_note": [
+"We also messaged you on WhatsApp and by email.",
+"También te escribimos por WhatsApp y por correo."
+],
+"x_lock_t": [
+"Too many attempts",
+"Demasiados intentos"
+],
+"x_lock_b": [
+"For your security we paused sign-in. You can recover your password instead — that works right away.",
+"Por seguridad pausamos el inicio de sesión. Puedes recuperar tu contraseña — eso funciona de inmediato."
+],
+"x_lock_wait": [
+"Try again in 14:38",
+"Intenta de nuevo en 14:38"
+],
+"x_lock_reset": [
+"Recover my password",
+"Recuperar mi contraseña"
+],
+"x_lock_help": [
+"Write to us on WhatsApp",
+"Escríbenos por WhatsApp"
+],
+"x_c_empty": [
+"Empty state",
+"Estado vacío"
+],
+"x_c_err": [
+"Error banner",
+"Banner de error"
+],
+"x_c_skel": [
+"Skeleton row",
+"Fila esqueleto"
+],
+"clP7t": [
+"8 Sep 2026 · Phase 7 states and edges",
+"8 sep 2026 · Fase 7, estados y bordes"
+],
+"clP7b": [
+"Prompt intent: continue the plan. Drew E-01 to E-04 — the first-time empty home, a declined payment, a studio-side cancellation and a locked sign-in — because every spec listed these states and none had been designed. Decisions: (1) a declined payment holds the spot for nine more minutes rather than releasing it, so the student can switch method without losing the class, and cash at the desk is offered as the fallback; (2) the cancellation screen leads with the returned credit and two replacement classes instead of an apology, since rebooking is the only useful action; (3) a locked sign-in routes to password recovery, which is not rate-limited, instead of only counting down. New components registered in D-02: empty state, error banner, skeleton row. Files: Hoy Wellness System.dc.html (lane 3C, D-02, K-01).",
+"Intención del prompt: continuar el plan. Se dibujaron E-01 a E-04 — inicio vacío de primera vez, pago rechazado, cancelación del estudio e inicio bloqueado — porque todas las especificaciones listaban estos estados y ninguno estaba diseñado. Decisiones: (1) un pago rechazado mantiene el cupo nueve minutos más en vez de liberarlo, para que el estudiante cambie de método sin perder la clase, y se ofrece efectivo en recepción como respaldo; (2) la pantalla de cancelación abre con el crédito devuelto y dos clases alternativas en vez de una disculpa, porque volver a reservar es la única acción útil; (3) un inicio bloqueado enruta a recuperación de contraseña, que no tiene límite de intentos, en vez de solo contar el tiempo. Componentes nuevos en D-02: estado vacío, banner de error, fila esqueleto. Archivos: Hoy Wellness System.dc.html (carril 3C, D-02, K-01)."
+],
+"gift_step3": [
+"Delivery and message",
+"Entrega y mensaje"
+],
+"ev_room": [
+"Terrace",
+"Terraza"
+],
+"l3b": [
+"Customer flows — phase 6",
+"Flujos del cliente — fase 6"
+],
+"l3bs": [
+"Waitlist, password recovery, membership management, notifications, events",
+"Lista de espera, recuperación de contraseña, gestión de membresía, notificaciones, eventos"
+],
+"n_wait": [
+"Waitlist & claim window",
+"Lista de espera y reclamo"
+],
+"n_reset": [
+"Password recovery",
+"Recuperar contraseña"
+],
+"n_mmemb": [
+"Manage membership",
+"Gestionar membresía"
+],
+"n_notif": [
+"Notifications",
+"Notificaciones"
+],
+"n_event": [
+"Event & RSVP",
+"Evento y RSVP"
+],
+"wl_joined": [
+"You are on the waitlist",
+"Estás en lista de espera"
+],
+"wl_pos": [
+"Position 3 of 7",
+"Posición 3 de 7"
+],
+"wl_how": [
+"If a spot opens we message you on WhatsApp. You then have 30 minutes to claim it.",
+"Si se libera un cupo te escribimos por WhatsApp. Tienes 30 minutos para reclamarlo."
+],
+"wl_released": [
+"A spot opened",
+"Se liberó un cupo"
+],
+"wl_claim": [
+"Claim my spot",
+"Reclamar mi cupo"
+],
+"wl_expires": [
+"Expires in",
+"Vence en"
+],
+"wl_leave": [
+"Leave the waitlist",
+"Salir de la lista"
+],
+"wl_auto": [
+"Auto-claim with my credit",
+"Reclamar automáticamente con mi crédito"
+],
+"wl_note": [
+"No charge until you claim. Leaving the waitlist is free at any time.",
+"Sin cobro hasta que reclames. Salir de la lista es gratis en cualquier momento."
+],
+"rs_title": [
+"Reset your password",
+"Recupera tu contraseña"
+],
+"rs_sub": [
+"We send a 6-digit code to your WhatsApp.",
+"Enviamos un código de 6 dígitos a tu WhatsApp."
+],
+"rs_send": [
+"Send code",
+"Enviar código"
+],
+"rs_otp": [
+"Enter the code",
+"Ingresa el código"
+],
+"rs_otp_sub": [
+"Sent to +57 ••• ••• 4412",
+"Enviado al +57 ••• ••• 4412"
+],
+"rs_resend": [
+"Resend in 0:42",
+"Reenviar en 0:42"
+],
+"rs_email": [
+"Use email instead",
+"Usar correo en su lugar"
+],
+"rs_new": [
+"New password",
+"Nueva contraseña"
+],
+"rs_cta": [
+"Save and sign in",
+"Guardar y entrar"
+],
+"mm_current": [
+"Current plan",
+"Plan actual"
+],
+"mm_renews": [
+"Renews 1 Oct",
+"Renueva 1 oct"
+],
+"mm_usage": [
+"This month",
+"Este mes"
+],
+"mm_usage_v": [
+"11 classes · one a day",
+"11 clases · una al día"
+],
+"mm_freeze": [
+"Freeze membership",
+"Congelar membresía"
+],
+"mm_freeze_s": [
+"Up to 2 months a year, 15 days notice",
+"Hasta 2 meses al año, 15 días de aviso"
+],
+"mm_change": [
+"Change plan",
+"Cambiar de plan"
+],
+"mm_change_s": [
+"Applies on the next billing cycle",
+"Aplica en el próximo ciclo"
+],
+"mm_cancel": [
+"Cancel membership",
+"Cancelar membresía"
+],
+"mm_cancel_s": [
+"Active until the end of the paid period",
+"Activa hasta el fin del periodo pagado"
+],
+"mm_invoices": [
+"Billing history",
+"Historial de facturación"
+],
+"nt_today": [
+"Today",
+"Hoy"
+],
+"nt_earlier": [
+"Earlier",
+"Anterior"
+],
+"nt_1": [
+"A spot opened in Hot Vinyasa Flow — claim it within 30 minutes",
+"Se liberó un cupo en Hot Vinyasa — reclámalo en 30 minutos"
+],
+"nt_2": [
+"Morning Flow Yoga starts in 2 hours",
+"Morning Flow Yoga empieza en 2 horas"
+],
+"nt_3": [
+"Receipt for your 10-class pack",
+"Recibo de tu pack de 10 clases"
+],
+"nt_4": [
+"Ana attended her trial class — you earned 1 credit",
+"Ana asistió a su clase de prueba — ganaste 1 crédito"
+],
+"nt_5": [
+"Sala 2 reopens Thursday",
+"Sala 2 reabre el jueves"
+],
+"nt_all": [
+"Mark all as read",
+"Marcar todo como leído"
+],
+"nt_prefs": [
+"Notification settings",
+"Ajustes de notificaciones"
+],
+"ev_when": [
+"Saturday 20 Sep · 4:00–7:00 PM",
+"Sábado 20 sep · 4:00–7:00 PM"
+],
+"ev_body": [
+"Three hours of gongs, crystal bowls and guided breath on the terrace. Mats and blankets provided. Limited to 24 people.",
+"Tres horas de gongs, cuencos de cuarzo y respiración guiada en la terraza. Esterillas y cobijas incluidas. Máximo 24 personas."
+],
+"ev_host": [
+"With Sam and Lisa",
+"Con Sam y Lisa"
+],
+"ev_price": [
+"$85.000 · members $60.000",
+"$85.000 · miembros $60.000"
+],
+"ev_spots": [
+"9 spots left",
+"9 cupos disponibles"
+],
+"ev_rsvp": [
+"Reserve my spot",
+"Reservar mi cupo"
+],
+"ev_bring": [
+"Bring a friend",
+"Traer a alguien"
+],
+"at_otp": [
+"OTP input",
+"Campo OTP"
+],
+"at_notif": [
+"Notification row",
+"Fila de notificación"
+],
+"at_claim": [
+"Claim countdown",
+"Cuenta atrás de reclamo"
+],
+"at_danger": [
+"Destructive row",
+"Fila destructiva"
+],
+"at_wlpos": [
+"Waitlist position",
+"Posición en lista"
+],
+"cl3t": [
+"8 Sep 2026 · Phase 6 customer flows",
+"8 sep 2026 · Flujos del cliente, fase 6"
+],
+"cl3b": [
+"Prompt intent: continue the plan. Built C-18 to C-22: waitlist with the 30-minute claim window, password recovery via WhatsApp OTP, membership management (freeze, change, cancel), notifications inbox and event detail with RSVP. Decisions: (1) the waitlist offers auto-claim with a credit, so a released spot is not lost while the student sleeps — the alternative, a longer claim window, would hold the seat empty for hours; (2) recovery leads with WhatsApp OTP rather than email, because WhatsApp is the verified channel at sign-up and email is optional in practice; (3) cancellation keeps the membership active to the end of the paid period instead of ending it immediately, which avoids refund maths and matches Colombian consumer expectations. New components registered in D-02: OTP input, notification row, claim countdown, destructive row, waitlist position. Files: Hoy Wellness System.dc.html (lane 3B, D-02, K-01).",
+"Intención del prompt: continuar el plan. Se construyeron C-18 a C-22: lista de espera con ventana de reclamo de 30 minutos, recuperación de contraseña con OTP de WhatsApp, gestión de membresía (congelar, cambiar, cancelar), bandeja de notificaciones y detalle de evento con RSVP. Decisiones: (1) la lista de espera ofrece reclamo automático con crédito, para que un cupo liberado no se pierda mientras el estudiante duerme — la alternativa, una ventana más larga, dejaría el puesto vacío por horas; (2) la recuperación va primero por OTP de WhatsApp y no por correo, porque WhatsApp es el canal verificado en el registro y el correo es opcional en la práctica; (3) la cancelación mantiene la membresía activa hasta el fin del periodo pagado en vez de terminarla de inmediato, lo que evita cálculos de reembolso y coincide con la expectativa del consumidor colombiano. Componentes nuevos en D-02: campo OTP, fila de notificación, cuenta atrás de reclamo, fila destructiva, posición en lista. Archivos: Hoy Wellness System.dc.html (carril 3B, D-02, K-01)."
+],
+"dow1": [
+"MON",
+"LUN"
+],
+"dow2": [
+"TUE",
+"MAR"
+],
+"dow3": [
+"WED",
+"MIÉ"
+],
+"dow4": [
+"THU",
+"JUE"
+],
+"dow5": [
+"FRI",
+"VIE"
+],
+"dow6": [
+"SAT",
+"SÁB"
+],
+"wa_tpl": [
+"Template: class_cancelled_v3 · ES",
+"Plantilla: class_cancelled_v3 · ES"
+],
+"at_lvl": [
+"All levels",
+"Todos los niveles"
+],
+"ds_tex": [
+"Background textures",
+"Texturas de fondo"
+],
+"ds_surf": [
+"Surfaces",
+"Superficies"
+],
+"ds_acc": [
+"Accents",
+"Acentos"
+],
+"ds_elev": [
+"Elevation",
+"Elevación"
+],
+"ds_rad": [
+"Radii",
+"Radios"
+],
+"ds_type": [
+"Typography",
+"Tipografía"
+],
+"ds_phys_t": [
+"System physicality",
+"Física del sistema"
+],
+"ds_phys_b": [
+"Three layers always together: an inner highlight on top (white rgba .8), a short contact shadow, a wide soft shadow. Wireframe mode strips texture, colour and shadow and keeps the hierarchy. Dark mode remaps surfaces and never inverts the accents.",
+"Tres capas siempre juntas: brillo interior arriba (rgba blanco .8), sombra de contacto corta, sombra suave amplia. El modo wireframe quita textura, color y sombra y conserva la jerarquía. El modo oscuro remapea superficies y nunca invierte los acentos."
+],
+"at_atoms": [
+"Atoms",
+"Átomos"
+],
+"at_mol": [
+"Molecules",
+"Moléculas"
+],
+"at_org": [
+"Organisms",
+"Organismos"
+],
+"at_field": [
+"Field + label",
+"Campo + etiqueta"
+],
+"at_email": [
+"Email",
+"Correo"
+],
+"at_cap": [
+"Capacity meter",
+"Medidor de cupo"
+],
+"at_count": [
+"Countdown",
+"Cuenta atrás"
+],
+"at_stat": [
+"Statistic",
+"Estadística"
+],
+"at_classes": [
+"classes",
+"clases"
+],
+"at_rule_t": [
+"Rule · living inventory",
+"Regla · inventario vivo"
+],
+"at_rule_b": [
+"Every new component, variant or state is added here in the same turn it is created, at its atomic tier and with its states. No component lives in a screen without a library entry, and no entry remains without a screen that uses it; retired items are removed and noted in the changelog.",
+"Todo componente, variante o estado nuevo se agrega aquí en el mismo turno en que se crea, en su nivel atómico y con sus estados. Ningún componente vive en una pantalla sin entrada en la librería, ni queda una entrada sin pantalla que la use; lo retirado se elimina y se anota en el changelog."
+],
+"at_tpl_t": [
+"Templates and pages",
+"Plantillas y páginas"
+],
+"at_tpl_b": [
+"Templates: phone screen (340×720), desktop admin panel (960×600), legal document, email. Pages: the 30 screens on this canvas. Every component documents default, hover, active, focus, disabled, loading, empty and error; touch targets never below 44px.",
+"Plantillas: pantalla de teléfono (340×720), panel admin de escritorio (960×600), documento legal, correo. Páginas: las 30 pantallas de este lienzo. Cada componente documenta default, hover, active, focus, disabled, loading, empty y error; objetivos táctiles nunca por debajo de 44px."
+],
+"at_teach_sub": [
+"Hot Vinyasa · Yin · 12 years",
+"Hot Vinyasa · Yin · 12 años"
+],
+"bk_policy": [
+"Free cancellation up to 4h before · after that the credit is deducted",
+"Cancelación gratuita hasta 4h antes · después se descuenta el crédito"
+],
+"bk_prep": [
+"Arrive 10 minutes early · Hydrate · Towel and mat · No food 2h before",
+"Llega 10 minutos antes · Hidrátate · Toalla y esterilla · Sin comida 2h antes"
+],
+"bk_credit": [
+"1 credit",
+"1 crédito"
+],
+"h_ref": [
+"refunded",
+"devuelto"
+],
+"h_1": [
+"6 Sep · Alex · attended",
+"6 sep · Alex · asistió"
+],
+"h_2": [
+"4 Sep · Mina · attended",
+"4 sep · Mina · asistió"
+],
+"h_3": [
+"2 Sep · did not attend",
+"2 sep · no asistió"
+],
+"h_4": [
+"31 Aug · cancelled",
+"31 ago · cancelada"
+],
+"h_cr": [
+"1 credit",
+"1 crédito"
+],
+"h_memb": [
+"Membership",
+"Membresía"
+],
+"faq_1": [
+"¿Qué es HOY?",
+"¿Qué es HOY?"
+],
+"faq_2": [
+"Nunca he practicado. ¿HOY es para mí?",
+"Nunca he practicado. ¿HOY es para mí?"
+],
+"faq_3": [
+"¿Qué son Enraíza, Fluye, Arde y Libera?",
+"¿Qué son Enraíza, Fluye, Arde y Libera?"
+],
+"faq_4": [
+"¿En qué idioma son las clases?",
+"¿En qué idioma son las clases?"
+],
+"faq_5": [
+"¿Cómo elijo mi primera clase? ¿Hay niveles?",
+"¿Cómo elijo mi primera clase? ¿Hay niveles?"
+],
+"faq_6": [
+"¿Qué debo llevar y qué me pongo?",
+"¿Qué debo llevar y qué me pongo?"
+],
+"faq_7": [
+"¿Con cuánto tiempo llego? ¿Y si llego tarde?",
+"¿Con cuánto tiempo llego? ¿Y si llego tarde?"
+],
+"faq_8": [
+"¿Cómo reservo una clase?",
+"¿Cómo reservo una clase?"
+],
+"faq_9": [
+"¿Cuántas reservas puedo tener a la vez?",
+"¿Cuántas reservas puedo tener a la vez?"
+],
+"faq_10": [
+"¿Con cuánta anticipación puedo reservar?",
+"¿Con cuánta anticipación puedo reservar?"
+],
+"faq_11": [
+"¿Qué son los HOY Pods?",
+"¿Qué son los HOY Pods?"
+],
+"faq_12": [
+"¿Puedo cancelar o cambiar mi reserva?",
+"¿Puedo cancelar o cambiar mi reserva?"
+],
+"faq_13": [
+"¿Hay lista de espera si la clase está llena?",
+"¿Hay lista de espera si la clase está llena?"
+],
+"faq_14": [
+"¿Puedo ver el horario antes de registrarme?",
+"¿Puedo ver el horario antes de registrarme?"
+],
+"faq_15": [
+"¿Cuáles son los planes disponibles?",
+"¿Cuáles son los planes disponibles?"
+],
+"faq_16": [
+"¿Necesito crear una cuenta?",
+"¿Necesito crear una cuenta?"
+],
+"faq_17": [
+"¿Desde cuándo cuenta la vigencia de mi paquete?",
+"¿Desde cuándo cuenta la vigencia de mi paquete?"
+],
+"faq_18": [
+"¿Qué gano con la Membresía?",
+"¿Qué gano con la Membresía?"
+],
+"faq_19": [
+"¿Puedo invitar a alguien?",
+"¿Puedo invitar a alguien?"
+],
+"faq_20": [
+"¿Qué medios de pago aceptan? ¿Es seguro?",
+"¿Qué medios de pago aceptan? ¿Es seguro?"
+],
+"faq_21": [
+"¿Puedo pausar mi membresía?",
+"¿Puedo pausar mi membresía?"
+],
+"faq_22": [
+"¿Cómo cancelo mi membresía?",
+"¿Cómo cancelo mi membresía?"
+],
+"faq_23": [
+"¿Hacen reembolsos?",
+"¿Hacen reembolsos?"
+],
+"faq_24": [
+"¿Puedo regalar HOY?",
+"¿Puedo regalar HOY?"
+],
+"faq_25": [
+"¿Hay duchas, lockers y camerinos?",
+"¿Hay duchas, lockers y camerinos?"
+],
+"faq_26": [
+"¿Puedo dejar mis cosas? ¿Prestan tapete y props?",
+"¿Puedo dejar mis cosas? ¿Prestan tapete y props?"
+],
+"faq_27": [
+"¿Puedo alquilar el estudio?",
+"¿Puedo alquilar el estudio?"
+],
+"faq_28": [
+"¿HOY tiene experiencias para empresas?",
+"¿HOY tiene experiencias para empresas?"
+],
+"faq_29": [
+"¿Habrá ceremonias de temporada y encuentros de luna?",
+"¿Habrá ceremonias de temporada y encuentros de luna?"
+],
+"faq_30": [
+"Tengo otra pregunta. ¿Cómo los contacto?",
+"Tengo otra pregunta. ¿Cómo los contacto?"
+],
+"faq_31": [
+"¿Cuál es su horario?",
+"¿Cuál es su horario?"
+],
+"faq_32": [
+"¿Dónde están?",
+"¿Dónde están?"
+],
+"faq_title": [
+"Preguntas frecuentes",
+"Preguntas frecuentes"
+],
+"faq_1of2": [
+"Preguntas frecuentes (1/2)",
+"Preguntas frecuentes (1/2)"
+],
+"faq_2of2": [
+"Preguntas frecuentes (2/2)",
+"Preguntas frecuentes (2/2)"
+],
+"faq_s1": [
+"01 · Tu primera vez en HOY",
+"01 · Tu primera vez en HOY"
+],
+"faq_s1d": [
+"Empiezas donde estás. Empiezas HOY.",
+"Empiezas donde estás. Empiezas HOY."
+],
+"faq_s2": [
+"02 · Reservas y horarios",
+"02 · Reservas y horarios"
+],
+"faq_s2d": [
+"Cómo reservar, cambiar o cancelar tu clase.",
+"Cómo reservar, cambiar o cancelar tu clase."
+],
+"faq_s3": [
+"03 · Membresías y planes",
+"03 · Membresías y planes"
+],
+"faq_s3d": [
+"Registro, planes y precios.",
+"Registro, planes y precios."
+],
+"faq_s4": [
+"04 · El espacio",
+"04 · El espacio"
+],
+"faq_s4d": [
+"Amenidades y cómo se vive el oasis.",
+"Amenidades y cómo se vive el oasis."
+],
+"faq_s5": [
+"05 · En camino",
+"05 · En camino"
+],
+"faq_s5d": [
+"Lo que se está preparando.",
+"Lo que se está preparando."
+],
+"faq_s6": [
+"06 · Contacto y concierge",
+"06 · Contacto y concierge"
+],
+"faq_s6d": [
+"Una persona real, siempre.",
+"Una persona real, siempre."
+],
+"faq_next": [
+"Sigue en la página 2 →",
+"Sigue en la página 2 →"
+],
+"faq_prev": [
+"← Volver a la página 1",
+"← Volver a la página 1"
+],
+"h_pay1": [
+"1 Sep · Nequi",
+"1 sep · Nequi"
+],
+"h_pay2": [
+"1 Aug · Visa ••42",
+"1 ago · Visa ••42"
+],
+"h_export": [
+"Export PDF",
+"Exportar PDF"
+],
+"rl_hot": [
+"Hydration, warning signs, exits",
+"Hidratación, señales de alarma, salidas"
+],
+"rl_prep": [
+"What to bring, when to arrive, what to eat",
+"Qué traer, cuándo llegar, qué comer"
+],
+"rl_etiq": [
+"Quiet, shoes, mats, phones",
+"Silencio, zapatos, esterillas, celulares"
+],
+"rl_emerg": [
+"Protocol, first aid kit, contacts",
+"Protocolo, botiquín, contactos"
+],
+"rl_emerg_t": [
+"Emergencies",
+"Emergencias"
+],
+"rl_about": [
+"Life is today, an oasis within you",
+"La vida es hoy, un oasis en ti"
+],
+"rl_cats": [
+"Hot Room Safety · Class Preparation · Studio Etiquette · Tour · Emergencies · About",
+"Hot Room Safety · Class Preparation · Studio Etiquette · Tour · Emergencias · About"
+],
+"iv_pass": [
+"Guest pass",
+"Pase de invitada"
+],
+"iv_valid": [
+"1 trial class · valid 30 days",
+"1 clase de prueba · válido 30 días"
+],
+"iv_sent": [
+"Sent",
+"Enviados"
+],
+"iv_att": [
+"attended",
+"asistió"
+],
+"iv_open": [
+"opened",
+"abierto"
+],
+"iv_del": [
+"sent",
+"enviado"
+],
+"iv_1": [
+"Ana · WhatsApp",
+"Ana · WhatsApp"
+],
+"iv_2": [
+"Julián · email",
+"Julián · correo"
+],
+"iv_3": [
+"Sofía · link",
+"Sofía · enlace"
+],
+"pay_comply": [
+"Gateway tokenisation · PCI DSS SAQ-A · DIAN electronic invoicing · Habeas Data Ley 1581",
+"Tokenización del gateway · PCI DSS SAQ-A · Factura electrónica DIAN · Habeas Data Ley 1581"
+],
+"pay_desk_cash": [
+"Front desk · cash",
+"Recepción · efectivo"
+],
+"pf_renew": [
+"Monthly Plan · renews 1 Oct",
+"Plan Mensual · renueva 1 oct"
+],
+"pf_memb": [
+"Monthly Plan ›",
+"Plan Mensual ›"
+],
+"pf_lang": [
+"Spanish ›",
+"Español ›"
+],
+"pf_notif": [
+"WhatsApp, push ›",
+"WhatsApp, push ›"
+],
+"rt_good": [
+"What worked",
+"Lo que funcionó"
+],
+"rt_fix": [
+"Could be better",
+"Podría mejorar"
+],
+"rt_g1": [
+"Great teaching",
+"Buena guía"
+],
+"rt_g2": [
+"Right pace",
+"Buen ritmo"
+],
+"rt_g3": [
+"Loved the music",
+"Buena música"
+],
+"rt_g4": [
+"Room felt good",
+"Sala agradable"
+],
+"rt_f1": [
+"Too hot",
+"Demasiado calor"
+],
+"rt_f2": [
+"Too fast",
+"Muy rápido"
+],
+"rt_f3": [
+"Hard to hear",
+"No escuchaba bien"
+],
+"rt_f4": [
+"Too crowded",
+"Muy llena"
+],
+"rt_note": [
+"Anything else you want to tell us… (optional)",
+"Algo más que quieras contarnos… (opcional)"
+],
+"rt_anon": [
+"Send anonymously",
+"Enviar de forma anónima"
+],
+"gf_head": [
+"Gift Wellness.",
+"Gift Wellness."
+],
+"gf_head2": [
+"Share HOY.",
+"Share HOY."
+],
+"gf_sub": [
+"The gift for body and mind.",
+"El regalo para cuerpo y mente."
+],
+"gf_other": [
+"Other",
+"Otro"
+],
+"gf_date": [
+"Delivery date",
+"Fecha de entrega"
+],
+"gf_msg_ph": [
+"Write your message… 0/250",
+"Escribe tu mensaje… 0/250"
+],
+"tg_1": [
+"Hot Vinyasa · Yin",
+"Hot Vinyasa · Yin"
+],
+"tg_2": [
+"Pilates · Barre",
+"Pilates · Barre"
+],
+"tg_3": [
+"Meditation · Sound",
+"Meditación · Sonido"
+],
+"tg_4": [
+"Hot Yoga",
+"Hot Yoga"
+],
+"tg_bio": [
+"Medellín · 12 years · Mysore, Rishikesh",
+"Medellín · 12 años · Mysore, Rishikesh"
+],
+"tg_s1": [
+"Today 7:00 AM · Morning Flow",
+"Hoy 7:00 AM · Morning Flow"
+],
+"tg_s2": [
+"Today 7:30 PM · Yin",
+"Hoy 7:30 PM · Yin"
+],
+"tg_s3": [
+"Wed 6:00 AM · Hot Vinyasa",
+"Mié 6:00 AM · Hot Vinyasa"
+],
+"cl_today": [
+"Today · 7:00 AM · 60 min · Sala 1",
+"Hoy · 7:00 AM · 60 min · Sala 1"
+],
+"rv_today": [
+"Today 7:00 AM · Lisa · 60 min",
+"Hoy 7:00 AM · Lisa · 60 min"
+],
+"bk_today": [
+"Today 7:00 AM · Lisa · Sala 1",
+"Hoy 7:00 AM · Lisa · Sala 1"
+],
+"dr_sell": [
+"Sell drop-in",
+"Vender drop-in"
+],
+"dr_cam": [
+"camera · QR / face",
+"cámara · QR / rostro"
+],
+"dr_face": [
+"Face scan off by default · requires consent",
+"Face scan apagado por defecto · requiere consentimiento"
+],
+"dr_p1": [
+"Monthly Plan · 48 classes",
+"Plan Mensual · 48 clases"
+],
+"dr_p2": [
+"Pack 10 · 3 left · ⚠ knee",
+"Pack 10 · 3 restantes · ⚠ rodilla"
+],
+"dr_p3": [
+"Trial class · cash pending",
+"Clase de prueba · efectivo pendiente"
+],
+"dr_p4": [
+"Mariana's guest",
+"Invitado de Mariana"
+],
+"dr_p5": [
+"· promote on a no-show",
+"· promover si hay no-show"
+],
+"dr_promote": [
+"Promote",
+"Promover"
+],
+"rl1": [
+"everything",
+"todo"
+],
+"rl2": [
+"CMS, schedule",
+"CMS, horario"
+],
+"rl3": [
+"check-in, till",
+"check-in, caja"
+],
+"rl4": [
+"classes + student",
+"clases + alumno"
+],
+"rl5": [
+"payments, payroll",
+"pagos, nómina"
+],
+"rl6": [
+"customer app",
+"app cliente"
+],
+"rl_dual": [
+"Teachers hold both experiences and switch context whenever they want.",
+"Los profesores tienen las dos experiencias y cambian de contexto cuando quieren."
+],
+"rl_audit": [
+"Every staff action is written to the audit log: actor, target, date.",
+"Cada acción del staff queda en el registro de auditoría: actor, objetivo, fecha."
+],
+"tc_res": [
+"7:00 AM · Sala 1 ·",
+"7:00 AM · Sala 1 ·"
+],
+"tc_booked": [
+"booked",
+"reservados"
+],
+"tc_n1": [
+"14 classes ›",
+"14 clases ›"
+],
+"tc_n2": [
+"1 in review ›",
+"1 en revisión ›"
+],
+"tc_p1": [
+"Aug 16–31 · 18 classes",
+"Ago 16–31 · 18 clases"
+],
+"tc_p2": [
+"Aug 1–15 · 16 classes",
+"Ago 1–15 · 16 clases"
+],
+"tc_p3": [
+"Sep 1–15 · in progress",
+"Sep 1–15 · en curso"
+],
+"tc_p4": [
+"closes 15 Sep",
+"cierra 15 sep"
+],
+"tc_note": [
+"Attendance editable from T−15m to T+2h · after that the coordinator adjusts it",
+"Asistencia editable de T−15m a T+2h · después la ajusta el coordinador"
+],
+"am_date": [
+"September 2026 · Medellín",
+"Septiembre 2026 · Medellín"
+],
+"am_d1": [
+"+12% vs Aug",
+"+12% vs ago"
+],
+"am_12w": [
+"last 12 weeks",
+"últimas 12 semanas"
+],
+"am_scope": [
+"scope",
+"scope"
+],
+"am_state": [
+"state",
+"estado"
+],
+"am_audit": [
+"audit active",
+"auditoría activa"
+],
+"am_f2": [
+"Intention of the day (A-05)",
+"Intención del día (A-05)"
+],
+"am_f3": [
+"Practice statistics",
+"Estadísticas de práctica"
+],
+"am_f4": [
+"Face check-in",
+"Check-in facial"
+],
+"am_f5": [
+"Gift cards",
+"Tarjetas regalo"
+],
+"am_f6": [
+"Public teacher reviews",
+"Reseñas públicas de profesores"
+],
+"am_f7": [
+"Terms & privacy",
+"Términos y privacidad"
+],
+"am_s1": [
+"app · staff",
+"app · staff"
+],
+"am_s3": [
+"app · home",
+"app · home"
+],
+"am_s4": [
+"staff · app",
+"staff · app"
+],
+"am_s5": [
+"app · web",
+"app · web"
+],
+"am_s6": [
+"all",
+"todo"
+],
+"am_locked": [
+"locked",
+"bloqueado"
+],
+"cm_t1": [
+"Classes",
+"Clases"
+],
+"cm_t2": [
+"Teachers",
+"Profesores"
+],
+"cm_t3": [
+"Schedule",
+"Horario"
+],
+"cm_t4": [
+"Pricing",
+"Precios"
+],
+"cm_t5": [
+"Content",
+"Contenido"
+],
+"cm_h1": [
+"Class",
+"Clase"
+],
+"cm_h2": [
+"Teacher",
+"Profesor"
+],
+"cm_h3": [
+"Level",
+"Nivel"
+],
+"cm_h4": [
+"Status",
+"Estado"
+],
+"cm_pub": [
+"published",
+"publicado"
+],
+"cm_draft": [
+"draft",
+"borrador"
+],
+"cm_rev": [
+"in review",
+"revisión"
+],
+"cm_lv1": [
+"All",
+"Todos"
+],
+"cm_lv2": [
+"Low",
+"Bajo"
+],
+"cm_lv3": [
+"Beginner",
+"Inicial"
+],
+"cm_lv4": [
+"Medium",
+"Medio"
+],
+"cm_c1": [
+"Meditation & Sound",
+"Meditación y Sonido"
+],
+"cm_dur": [
+"Duration",
+"Duración"
+],
+"cm_cap": [
+"Capacity",
+"Capacidad"
+],
+"cm_room": [
+"Room",
+"Sala"
+],
+"cm_rec": [
+"Recurrence",
+"Recurrencia"
+],
+"cm_rec_v": [
+"Mon · Wed · Fri 7:00 AM",
+"Lun · Mié · Vie 7:00 AM"
+],
+"cm_desc_es": [
+"Description ES",
+"Descripción ES"
+],
+"cm_desc_en": [
+"Description EN",
+"Descripción EN"
+],
+"tb_note": [
+"COP in minor units · timestamps UTC · displayed America/Bogotá",
+"COP en unidades menores · timestamps UTC · display America/Bogotá"
+],
+"tb_foot": [
+"Soft delete on everything financial · hard delete only for biometric templates · versioned consents (Ley 1581)",
+"Soft delete en todo lo financiero · borrado duro solo para plantillas biométricas · consents versionados (Ley 1581)"
+],
+"em_tpl": [
+"Templates",
+"Plantillas"
+],
+"em_1": [
+"Class cancelled",
+"Clase cancelada"
+],
+"em_2": [
+"Booking confirmed",
+"Reserva confirmada"
+],
+"em_3": [
+"Receipt / invoice",
+"Recibo / factura"
+],
+"em_4": [
+"How to prepare",
+"Cómo prepararte"
+],
+"em_5": [
+"Happy birthday",
+"Feliz cumpleaños"
+],
+"em_6": [
+"Waitlist",
+"Lista de espera"
+],
+"em_7": [
+"Membership renewal",
+"Renovación membresía"
+],
+"em_8": [
+"Payment failed",
+"Pago fallido"
+],
+"em_9": [
+"Gift card",
+"Tarjeta regalo"
+],
+"em_10": [
+"Guest invitation",
+"Invitación de invitado"
+],
+"em_subj": [
+"Subject:",
+"Asunto:"
+],
+"em_subj_v": [
+"Your class tomorrow was cancelled",
+"Tu clase de mañana fue cancelada"
+],
+"em_h": [
+"We are sorry, Mariana",
+"Lo sentimos, Mariana"
+],
+"em_b": [
+"Your Morning Flow Yoga class on Tuesday 9 September at 7:00 AM was cancelled. Your credit is already back in your account and you can book another class whenever you like.",
+"Tu clase Morning Flow Yoga del martes 9 de septiembre a las 7:00 AM fue cancelada. Tu crédito ya volvió a tu cuenta y puedes reservar otra clase cuando quieras."
+],
+"em_cta": [
+"See other classes",
+"Ver otras clases"
+],
+"em_foot": [
+"HOY Wellness Center · Medellín · Unsubscribe · Terms · Privacy",
+"HOY Wellness Center · Medellín · Cancelar suscripción · Términos · Privacidad"
+],
+"em_trig": [
+"Trigger",
+"Disparador"
+],
+"em_trig_v": [
+"class.cancelled → immediate",
+"class.cancelled → inmediato"
+],
+"em_vars": [
+"Variables",
+"Variables"
+],
+"em_deep": [
+"Deep link",
+"Enlace profundo"
+],
+"em_test": [
+"Send a test",
+"Enviar prueba"
+],
+"em_ver": [
+"Version history",
+"Historial de versiones"
+],
+"wa_note": [
+"opt-in numbers only · quiet hours 9pm–7am",
+"solo números con opt-in · horas silenciosas 9pm–7am"
+],
+"wa_h1": [
+"Automation",
+"Automatización"
+],
+"wa_h2": [
+"Trigger",
+"Disparador"
+],
+"wa_h3": [
+"Delay",
+"Retraso"
+],
+"wa_h4": [
+"Meta",
+"Meta"
+],
+"wa_h5": [
+"State",
+"Estado"
+],
+"wa_1": [
+"Class cancelled",
+"Clase cancelada"
+],
+"wa_2": [
+"Booking confirmed",
+"Reserva confirmada"
+],
+"wa_3": [
+"Class reminder",
+"Recordatorio de clase"
+],
+"wa_4": [
+"Waitlist released",
+"Lista de espera liberada"
+],
+"wa_5": [
+"Happy birthday",
+"Feliz cumpleaños"
+],
+"wa_6": [
+"Ask for feedback",
+"Pedir feedback"
+],
+"wa_7": [
+"Membership expiring",
+"Membresía por vencer"
+],
+"wa_now": [
+"immediate",
+"inmediato"
+],
+"wa_appr": [
+"approved",
+"aprobada"
+],
+"wa_pend": [
+"in review",
+"en revisión"
+],
+"wa_8am": [
+"8:00 AM",
+"8:00 AM"
+],
+"wa_3d": [
+"T−3 days",
+"T−3 días"
+],
+"wa_foot": [
+"Every send is logged with delivery and read state · opt-out immediate and permanent",
+"Cada envío queda registrado con estado de entrega y lectura · opt-out inmediato y permanente"
+],
+"wa_bub": [
+"Hi Mariana 🌿 Your Morning Flow Yoga class on Tuesday 9 Sep 7:00 AM was cancelled. We returned your credit.",
+"Hola Mariana 🌿 Tu clase Morning Flow Yoga del martes 9 sep 7:00 AM fue cancelada. Devolvimos tu crédito."
+],
+"wa_bcta": [
+"See available classes",
+"Ver clases disponibles"
+],
+"wa_log": [
+"Log",
+"Registro"
+],
+"wa_log_v": [
+"1,284 sent · 1,241 delivered · 1,096 read · 12 opt-outs",
+"1.284 enviados · 1.241 entregados · 1.096 leídos · 12 opt-out"
+],
+"p_dod_t": [
+"Definition of done — every phase",
+"Definición de terminado — aplica a toda fase"
+],
+"p_dod_b": [
+"Screen drawn · spec complete (intent, story, data, roles, layers, rules, endpoints, states) · ES and EN · empty, loading and error states resolved · toggles wired to M-01 · new components in D-02 · changelog entry.",
+"Pantalla dibujada · spec completa (intención, historia, datos, roles, capas, reglas, endpoints, estados) · ES y EN · estados vacío, carga y error resueltos · interruptores conectados a M-01 · componentes nuevos en D-02 · entrada en el changelog."
+],
+"st_done": [
+"done",
+"hecho"
+],
+"st_next": [
+"next",
+"siguiente"
+],
+"st_plan": [
+"planned",
+"planeado"
+],
+"p1t": [
+"1 · Map & foundations",
+"1 · Mapa y fundamentos"
+],
+"p1b": [
+"Swimlane canvas, flow map, materials, spec panel, ES/EN, wireframe and dark mode.",
+"Lienzo por carriles, mapa de flujo, materiales, panel de especificación, ES/EN, wireframe y modo oscuro."
+],
+"p2t": [
+"2 · Customer core",
+"2 · Núcleo del cliente"
+],
+"p2b": [
+"Sign-up, intention of the day, home, schedule, class detail, reservation, payments, membership, credits.",
+"Registro, intención del día, inicio, horario, detalle, reserva, pagos, membresía, créditos."
+],
+"p3t": [
+"3 · Customer depth",
+"3 · Profundidad del cliente"
+],
+"p3b": [
+"Countdown, cancel and reschedule, check-in, feedback, history, front desk, rules, invite, gift card, teachers, settings.",
+"Cuenta atrás, cancelar y reprogramar, check-in, feedback, historial, recepción, reglas, invitar, regalo, profesores, ajustes."
+],
+"p4t": [
+"4 · Staff baseline",
+"4 · Staff base"
+],
+"p4b": [
+"Roles and permissions, door board with QR and face, teacher app with attendance, reviews and payroll.",
+"Roles y permisos, tablero de puerta con QR y rostro, app del profesor con asistencia, reseñas y nómina."
+],
+"p5t": [
+"5 · Admin & CMS",
+"5 · Admin y CMS"
+],
+"p5b": [
+"Feature switches, CMS for classes, teachers, schedule and pricing, data model, email and WhatsApp.",
+"Interruptores de features, CMS de clases, profesores, horario y precios, modelo de datos, correos y WhatsApp."
+],
+"p6t": [
+"6 · Missing customer flows",
+"6 · Flujos faltantes del cliente"
+],
+"p6b": [
+"Waitlist with 30-minute claim window, password reset and WhatsApp OTP, membership management (freeze, change, cancel), event detail with RSVP, notifications inbox, search.",
+"Lista de espera con ventana de 30 min, recuperar contraseña y OTP de WhatsApp, gestión de membresía (congelar, cambiar, cancelar), detalle de evento con RSVP, bandeja de notificaciones, búsqueda."
+],
+"p7t": [
+"7 · States & edges",
+"7 · Estados y bordes"
+],
+"p7b": [
+"Home with no bookings, payment declined, class cancelled by the studio, locked account. Drawn, not just described.",
+"Inicio sin reservas, pago rechazado, clase cancelada por el estudio, cuenta bloqueada. Dibujados, no solo descritos."
+],
+"p8t": [
+"8 · Finance & coordination",
+"8 · Finanzas y coordinación"
+],
+"p8b": [
+"Payroll run and rates, daily cash close-out, DIAN reconciliation, revenue by class and teacher; substitutions, schedule conflicts, description approvals, low-rating follow-up.",
+"Corrida de nómina y tarifas, cierre de caja diario, conciliación DIAN, ingresos por clase y profesor; sustituciones, conflictos de horario, aprobación de descripciones, seguimiento a calificaciones bajas."
+],
+"p9t": [
+"9 · Public website",
+"9 · Sitio público"
+],
+"p9b": [
+"Schedule, class types, teachers, pricing and gift cards without signing in, fed by the same CMS. Depends on final pricing and photography.",
+"Horario, tipos de clase, profesores, precios y tarjetas regalo sin iniciar sesión, alimentados por el mismo CMS. Depende de precios definitivos y fotografía."
+],
+"p10t": [
+"10 · Functional prototype & handoff",
+"10 · Prototipo funcional y entrega"
+],
+"p10b": [
+"Real end-to-end state, seeded data per role, version switcher, motion spec and final iconography, developer handoff.",
+"Estado real end-to-end, datos sembrados por rol, selector de versiones, spec de movimiento e iconografía definitiva, entrega a desarrollo."
+],
+"p_open_t": [
+"Open decisions — before phase 10",
+"Decisiones abiertas — antes de la fase 10"
+],
+"p_open_b": [
+"A second location? If it is plausible, the locations entity enters the model now, not later. Mat or spot selection? It changes the shape of the booking flow.",
+"¿Segunda sede? Si es plausible, la entidad locations entra al modelo ahora, no después. ¿Selección de puesto o esterilla? Cambia la forma del flujo de reserva."
+],
+"kb_upd": [
+"Updated in the same turn as the work",
+"Se actualiza en el mismo turno que el trabajo"
+],
+"kb_blk": [
+"Blocked",
+"Bloqueado"
+],
+"kb_blk_s": [
+"waiting on a decision or material",
+"espera decisión o material"
+],
+"ph8": [
+"phase 8",
+"fase 8"
+],
+"ph10": [
+"phase 10",
+"fase 10"
+],
+"ph10d": [
+"phase 10 · D-02",
+"fase 10 · D-02"
+],
+"k1": [
+"Waitlist + 30-minute claim window",
+"Lista de espera + ventana de 30 min"
+],
+"k2": [
+"Password reset + WhatsApp OTP",
+"Recuperar contraseña + OTP WhatsApp"
+],
+"k3": [
+"Membership management: freeze, change, cancel",
+"Gestión de membresía: congelar, cambiar, cancelar"
+],
+"k4": [
+"Notifications inbox + event with RSVP",
+"Bandeja de notificaciones + evento con RSVP"
+],
+"k5": [
+"Empty, loading and error states drawn",
+"Estados vacío, carga y error dibujados"
+],
+"k6": [
+"Finance role: payroll, cash close-out, DIAN",
+"Rol Finanzas: nómina, cierre de caja, DIAN"
+],
+"k7": [
+"Coordinator role: substitutions, approvals",
+"Rol Coordinador: sustituciones, aprobaciones"
+],
+"k8": [
+"Guest registration at the desk + announcement composer",
+"Registro de invitado en recepción + compositor de anuncios"
+],
+"k9": [
+"Motion spec + final iconography",
+"Spec de movimiento + iconografía definitiva"
+],
+"g1": [
+"Real prototype state (bookings in C-02)",
+"Estado real del prototipo (reservas en C-02)"
+],
+"g2": [
+"Seeded data per role",
+"Datos sembrados por rol"
+],
+"g3": [
+"Version switcher",
+"Selector de versiones"
+],
+"b1": [
+"Real photography: classes, teachers, studio",
+"Fotografía real: clases, profesores, estudio"
+],
+"b1n": [
+"blocks C-03, C-18, M-02, phase 9",
+"bloquea C-03, C-18, M-02, fase 9"
+],
+"b2": [
+"Final pricing and plan names",
+"Precios y nombres de planes definitivos"
+],
+"b2n": [
+"blocks C-04, C-06, C-07, phase 9",
+"bloquea C-04, C-06, C-07, fase 9"
+],
+"b3": [
+"Legal copy from counsel",
+"Texto legal de abogados"
+],
+"b3n": [
+"blocks A-06",
+"bloquea A-06"
+],
+"b4": [
+"Video: tour, preparation, etiquette",
+"Videos: tour, preparación, etiqueta"
+],
+"b4n": [
+"blocks C-13",
+"bloquea C-13"
+],
+"b5": [
+"Payment gateway chosen",
+"Pasarela de pago elegida"
+],
+"b5n": [
+"blocks C-05, DIAN reconciliation",
+"bloquea C-05, conciliación DIAN"
+],
+"b6": [
+"A second location? Mat selection?",
+"¿Segunda sede? ¿Selección de esterilla?"
+],
+"b6n": [
+"blocks M-03, the shape of C-04",
+"bloquea M-03, forma de C-04"
+],
+"e1": [
+"Swimlane canvas + flow map",
+"Lienzo por carriles + mapa"
+],
+"e2": [
+"Splash with breathing circles",
+"Splash con círculos que respiran"
+],
+"e3": [
+"Sign-up and account creation",
+"Registro y creación de cuenta"
+],
+"e4": [
+"Intention of the day",
+"Intención del día"
+],
+"e5": [
+"Per-page spec panel",
+"Panel de especificación por página"
+],
+"e6": [
+"ES/EN, wireframe, dark mode",
+"ES/EN, wireframe, modo oscuro"
+],
+"e7": [
+"Admin: features, CMS, data, messaging",
+"Admin: features, CMS, datos, mensajería"
+],
+"e8": [
+"Rule: component library as living inventory",
+"Regla: librería de componentes como inventario vivo"
+],
+"e9": [
+"Plan v0.2: 10 phases, definition of done, blockers",
+"Plan v0.2: 10 fases, definición de terminado, bloqueos"
+],
+"cl2t": [
+"8 Sep 2026 · Revised plan and library rule",
+"8 sep 2026 · Plan revisado y regla de librería"
+],
+"cl2b": [
+"Prompt intent: review the plan and keep the component library current as a rule. Decisions: (1) the D-02 library is a living inventory — every component, variant and state is registered in the same turn, and the rule also lives in CLAUDE.md for future sessions; (2) the plan goes from 6 to 10 phases with a shared definition of done, because phases grouped by output could never be called finished; (3) the kanban gains a Blocked column — three cards were waiting on studio material and read as our own pending work. Gaps found and scheduled: public website, Finance role, Coordinator role, notifications inbox, waitlist, password reset, membership management, event RSVP, guest registration at the desk, announcement composer, drawn states, motion spec and iconography. Open decisions: second location (locations entity) and mat selection. Rejected alternative: keep building screens before resolving both — they would change the data model and the shape of the booking flow already drawn. Files: Hoy Wellness System.dc.html (K-01, D-02), CLAUDE.md.",
+"Intención del prompt: revisar el plan y mantener la librería de componentes al día como regla. Decisiones: (1) la librería D-02 es inventario vivo — todo componente, variante o estado se registra en el mismo turno, y la regla queda también en CLAUDE.md para futuras sesiones; (2) el plan pasa de 6 a 10 fases con definición de terminado común, porque las fases agrupadas por salida no se podían dar por cerradas; (3) el kanban gana columna Bloqueado — tres tarjetas esperaban material del estudio y se leían como trabajo pendiente nuestro. Vacíos encontrados y agendados: sitio público, rol Finanzas, rol Coordinador, bandeja de notificaciones, lista de espera, recuperar contraseña, gestión de membresía, evento con RSVP, registro de invitado en recepción, compositor de anuncios, estados dibujados, spec de movimiento e iconografía. Decisiones abiertas: segunda sede (entidad locations) y selección de esterilla. Alternativa descartada: seguir construyendo pantallas antes de resolver ambas — cambiarían el modelo de datos y la forma del flujo de reserva ya dibujado. Archivos: Hoy Wellness System.dc.html (K-01, D-02), CLAUDE.md."
+],
+"cl1t": [
+"8 Sep 2026 · Initial system canvas",
+"8 sep 2026 · Lienzo inicial del sistema"
+],
+"cl1b": [
+"Prompt intent: a responsive mobile app for HOY with every page in flow order, ES/EN, per-page specs, admin with switches, design system and knowledgebase. Decision: a single swimlane canvas rather than separate files, so the flow reads in one pass. Rejected alternative: one file per role — the whole flow becomes unreadable.",
+"Intención del prompt: app móvil responsive para HOY con todas las páginas en orden de flujo, ES/EN, especificaciones por página, admin con interruptores, sistema de diseño y base de conocimiento. Decisión: un solo lienzo por carriles en vez de archivos separados, para que el flujo se lea de un tirón. Alternativa descartada: un archivo por rol — se pierde la lectura del flujo completo."
+],
+"cl4t": [
+"No online classes",
+"Sin clases en línea"
+],
+"cl4b": [
+"Live Online and On Demand tabs were removed from the schedule: the studio is in person. The space went to the four views (today, week, month, recurring).",
+"Se eliminaron las pestañas Live Online y On Demand del horario: el estudio es presencial. El espacio se usó para las cuatro vistas (hoy, semana, mes, recurrentes)."
+],
+"cl5t": [
+"Face check-in off by default",
+"Check-in facial apagado por defecto"
+],
+"cl5b": [
+"Biometric data requires separate consent and hard deletion. The rotating QR stays the primary method; face is the studio's option.",
+"Dato biométrico exige consentimiento aparte y borrado duro. QR rotativo queda como método principal; el rostro es opción del estudio."
+],
+"cl6t": [
+"Pending",
+"Pendiente"
+],
+"cl6b": [
+"Real photography, final pricing, legal copy, chosen gateway and the public site. Every future entry is logged here with intent, decision, rejected alternative and files touched.",
+"Fotografía real, precios definitivos, texto legal, pasarela elegida y sitio público. Cada entrada futura se registra aquí con intención, decisión, alternativa descartada y archivos tocados."
+],
+"kb_rule2": [
+"Rule: the component library (D-02) is kept current with every component, variant and state, in the same turn they are created.",
+"Regla: la librería de componentes (D-02) se mantiene al día con todos los componentes, variantes y estados, en el mismo turno en que se crean."
+],
+"hd_your": [
+"Tu clase de",
+"Tu clase de"
+],
+"br_new": [
+"HOY 2026",
+"HOY 2026"
+],
+"br_old": [
+"Archive",
+"Archivo"
+],
+"tb_tex": [
+"Texture",
+"Textura"
+],
+"tb_depth": [
+"Depth",
+"Profundidad"
+],
+"tb_ph": [
+"Photos",
+"Fotos"
+],
+"nav1": [
+"Home",
+"Inicio"
+],
+"nav2": [
+"Classes",
+"Clases"
+],
+"nav3": [
+"My Profile",
+"Mi perfil"
+],
+"nav4": [
+"History",
+"Historial"
+],
+"nav5": [
+"Club Rules",
+"Reglas"
+],
+"n_more": [
+"More · profile, rules, contact",
+"Más · perfil, reglas, contacto"
+],
+"at_more": [
+"More sheet",
+"Hoja Más"
+],
+"fd_search": [
+"Find a member",
+"Buscar socio"
+],
+"fd_search_ph": [
+"Name, phone, email or document",
+"Nombre, teléfono, correo o documento"
+],
+"fd_recent": [
+"Recent",
+"Recientes"
+],
+"fd_today": [
+"Today at the studio",
+"Hoy en el estudio"
+],
+"fd_now": [
+"Now",
+"Ahora"
+],
+"fd_next": [
+"Next",
+"Sigue"
+],
+"fd_later": [
+"Later",
+"Más tarde"
+],
+"fd_add": [
+"Add a new customer",
+"Registrar nuevo cliente"
+],
+"fd_teachers": [
+"Teachers in today",
+"Profesores de hoy"
+],
+"fd_arrived": [
+"Arrived",
+"Llegó"
+],
+"fd_expected": [
+"Expected",
+"Esperado"
+],
+"fd_actions": [
+"Desk actions",
+"Acciones de recepción"
+],
+"fd_a1": [
+"Register a walk-in",
+"Registrar sin cita"
+],
+"fd_a2": [
+"Take a payment",
+"Recibir un pago"
+],
+"fd_a3": [
+"Cancel or move a booking",
+"Cancelar o mover reserva"
+],
+"fd_a4": [
+"Member profile",
+"Perfil del socio"
+],
+"fd_ref": [
+"Reference",
+"Consulta"
+],
+"fd_r1": [
+"Class descriptions",
+"Descripciones de clases"
+],
+"fd_r2": [
+"Frequently asked questions",
+"Preguntas frecuentes"
+],
+"fd_r3": [
+"Teacher profiles",
+"Perfiles de profesores"
+],
+"fd_r4": [
+"Plans & prices",
+"Planes y precios"
+],
+"clFd": [
+"12 Sep 2026 · Front desk suite",
+"12 sep 2026 · Recepción completa"
+],
+"eFd": [
+"Front desk: search, today strip, register & pay, reference",
+"Recepción: búsqueda, tira de hoy, registro y pago, consulta"
+],
+"fd_note": [
+"Every desk action is written to the activity log with your name.",
+"Cada acción de recepción queda en el registro con tu nombre."
+],
+"n_reg": [
+"Register & take payment",
+"Registrar y recibir pago"
+],
+"rg_step1": [
+"1 · Who",
+"1 · Quién"
+],
+"rg_step2": [
+"2 · What",
+"2 · Qué"
+],
+"rg_step3": [
+"3 · How they pay",
+"3 · Cómo paga"
+],
+"rg_new": [
+"New customer",
+"Cliente nuevo"
+],
+"rg_exist": [
+"Existing member",
+"Socio existente"
+],
+"rg_consent": [
+"They agreed to the terms and privacy policy",
+"Aceptó términos y política de privacidad"
+],
+"rg_cta": [
+"Complete and check in",
+"Completar y registrar entrada"
+],
+"rg_receipt": [
+"Send receipt by WhatsApp and email",
+"Enviar recibo por WhatsApp y correo"
+],
+"rg_cash": [
+"Cash",
+"Efectivo"
+],
+"rg_card": [
+"Card",
+"Tarjeta"
+],
+"rg_transfer": [
+"Transfer",
+"Transferencia"
+],
+"pl_title": [
+"Plans & prices",
+"Planes y precios"
+],
+"pl_sub": [
+"One value model, read by every screen that quotes a price. All prices in COP.",
+"Un solo modelo de valor, leído por cada pantalla que muestra un precio. Todos los precios en COP."
+],
+"pl_h1": [
+"BIENVENIDA",
+"BIENVENIDA"
+],
+"pl_i1": [
+"For whoever arrives. You start where you are.",
+"Para quien llega. Empiezas donde estás."
+],
+"pl_h2": [
+"MEMBRESÍA",
+"MEMBRESÍA"
+],
+"pl_i2": [
+"Full access. Two simple ways to pay for it.",
+"Acceso completo. Dos formas simples de pagarlo."
+],
+"pl_foot2": [
+"The Annual Plan works out to around $416.000 a month.",
+"El Plan Anual equivale a cerca de $416.000 al mes."
+],
+"pl_h3": [
+"PAUSAS Y REGALOS",
+"PAUSAS Y REGALOS"
+],
+"pl_h3a": [
+"Pausas",
+"Pausas"
+],
+"pl_i3a": [
+"Short sessions of 15 to 30 minutes, for the days without time.",
+"Sesiones cortas de 15 a 30 minutos, para los días sin tiempo."
+],
+"pl_h3b": [
+"Regalos",
+"Regalos"
+],
+"pl_i3b": [
+"Share HOY with whoever you want.",
+"Comparte HOY con quien quieras."
+],
+"pl_h4": [
+"ESPACIO",
+"ESPACIO"
+],
+"pl_i4": [
+"Need the studio? Outside class hours we open it for productions, brands and communities.",
+"¿Necesitas el estudio? Fuera de las horas de clase lo abrimos para producciones, marcas y comunidades."
+],
+"pl_cta_res": [
+"Reservar",
+"Reservar"
+],
+"pl_cta_start": [
+"Empezar",
+"Empezar"
+],
+"pl_cta_wa": [
+"Escríbenos por WhatsApp",
+"Escríbenos por WhatsApp"
+],
+"pl_cap": [
+"Intimate studio: 15 mats · 4 classes a day · one class a day per person, on any plan.",
+"Estudio íntimo: 15 tapetes · 4 clases al día · una clase al día por persona, en cualquier plan."
+],
+"pl_ctrl": [
+"Pause up to 30 days · leave without mazes · a kind window · we tell you before every charge.",
+"Pausar hasta 30 días · soltar sin laberintos · ventana amable · avisamos antes de cada cobro."
+],
+"pl_best": [
+"Best value",
+"Mejor valor"
+],
+"pl_prepay": [
+"Pay month to month as a subscription, or prepay several months at once — your choice. Passes are always one-time.",
+"Paga mes a mes como suscripción, o prepaga varios meses de una — tú eliges. Los pases siempre son pago único."
+],
+"pl_mo_d": [
+"Full access, month to month",
+"Acceso completo, mes a mes"
+],
+"pl_yr_d": [
+"Full access, paid yearly",
+"Acceso completo, pago anual"
+],
+"rate_label": [
+"Rate your last class",
+"Califica tu última clase"
+],
+"q_rules": [
+"Club rules",
+"Reglas"
+],
+"nav_more": [
+"More",
+"Más"
+],
+"ct_wa": [
+"WhatsApp the studio",
+"Escríbenos por WhatsApp"
+],
+"ct_hours": [
+"We answer 6am–9pm",
+"Respondemos 6am–9pm"
+],
+"ct_em": [
+"Email the studio",
+"Escríbenos por correo"
+],
+"ct_em_s": [
+"hola@hoy.co · within a day",
+"hola@hoy.co · en un día"
+],
+"clNav2": [
+"10 Sep 2026 · Photography, dock icons, More",
+"10 sep 2026 · Fotografía, íconos del dock, Más"
+],
+"eNav2": [
+"Photography · dock icons · More sheet · star rating",
+"Fotografía · íconos del dock · hoja Más · estrellas"
+],
+"at_fab": [
+"Floating action button",
+"Botón flotante"
+],
+"eBrand": [
+"HOY 2026 brand theme + archive switch",
+"Tema de marca HOY 2026 + archivo"
+],
+"clBr": [
+"9 Sep 2026 · HOY 2026 brand applied",
+"9 sep 2026 · Marca HOY 2026 aplicada"
+],
+"clSch": [
+"9 Sep 2026 · Schedule reduced to two views",
+"9 sep 2026 · Horario reducido a dos vistas"
+],
+"clNav": [
+"9 Sep 2026 · Navigation restructured",
+"9 sep 2026 · Navegación reestructurada"
+],
+"at_nav": [
+"Bottom navigation · 5 tabs",
+"Navegación inferior · 5 pestañas"
+],
+"map_t": [
+"Flow map",
+"Mapa de flujo"
+],
+"map_s": [
+"Zoomed-out routing for the whole product. Each node is a screen below.",
+"Ruteo general del producto. Cada nodo es una pantalla abajo."
+],
+"map_pub": [
+"Public / pre-login",
+"Público / antes de entrar"
+],
+"map_cust": [
+"Customer",
+"Cliente"
+],
+"map_staff": [
+"Staff",
+"Staff"
+],
+"map_admin": [
+"Admin CMS",
+"CMS de administración"
+],
+"l2": [
+"Customer core",
+"Núcleo del cliente"
+],
+"l2s": [
+"Home → schedule → class → reserve → pay",
+"Inicio → horario → clase → reservar → pagar"
+],
+"l3": [
+"Customer depth",
+"Profundidad del cliente"
+],
+"l3s": [
+"Booked class, check-in, feedback, content, community",
+"Clase reservada, check-in, feedback, contenido, comunidad"
+],
+"l4": [
+"Staff & front desk",
+"Staff y recepción"
+],
+"l4s": [
+"Role home, door check-in, teacher tools",
+"Inicio por rol, check-in en puerta, herramientas del profesor"
+],
+"l5": [
+"Admin CMS — desktop first",
+"CMS de administración — escritorio primero"
+],
+"l5s": [
+"Features, content, data model, messaging",
+"Features, contenido, modelo de datos, mensajería"
+],
+"l6": [
+"Design system",
+"Sistema de diseño"
+],
+"l6s": [
+"Materials, tokens, atomic component library",
+"Materiales, tokens, librería atómica"
+],
+"l7": [
+"Knowledgebase",
+"Base de conocimiento"
+],
+"l7s": [
+"Plan, kanban, changelog, decisions",
+"Plan, kanban, changelog, decisiones"
+],
+"n_home": [
+"Home dashboard",
+"Panel de inicio"
+],
+"n_sched": [
+"Class schedule",
+"Horario de clases"
+],
+"n_detail": [
+"Class detail",
+"Detalle de clase"
+],
+"n_reserve": [
+"Reserve & checkout",
+"Reservar y pagar"
+],
+"n_pay": [
+"Payment methods",
+"Métodos de pago"
+],
+"n_member": [
+"Membership plans",
+"Planes de membresía"
+],
+"n_credits": [
+"Credits & packs",
+"Créditos y paquetes"
+],
+"n_booked": [
+"Booked class & countdown",
+"Clase reservada y cuenta atrás"
+],
+"n_rate": [
+"Rate your class",
+"Califica tu clase"
+],
+"n_history": [
+"History & payments",
+"Historial y pagos"
+],
+"n_desk": [
+"Message front desk",
+"Mensaje a recepción"
+],
+"n_rules": [
+"Club rules & practices",
+"Reglas y buenas prácticas"
+],
+"n_invite": [
+"Invite a guest",
+"Invita a alguien"
+],
+"n_gift": [
+"Gift card",
+"Tarjeta regalo"
+],
+"n_teachers": [
+"Teacher gallery",
+"Galería de profesores"
+],
+"n_profile": [
+"Profile & settings",
+"Perfil y ajustes"
+],
+"n_role": [
+"Role home",
+"Inicio por rol"
+],
+"n_door": [
+"Front desk check-in",
+"Check-in en recepción"
+],
+"n_teach": [
+"Teacher app",
+"App del profesor"
+],
+"n_admin_cms": [
+"Content: classes & teachers",
+"Contenido: clases y profesores"
+],
+"n_tables": [
+"Tables & relations",
+"Tablas y relaciones"
+],
+"n_email": [
+"Transactional emails",
+"Correos transaccionales"
+],
+"n_wa": [
+"WhatsApp automations",
+"Automatizaciones WhatsApp"
+],
+"n_ds": [
+"Materials & tokens",
+"Materiales y tokens"
+],
+"n_atoms": [
+"Component library",
+"Librería de componentes"
+],
+"n_kanban": [
+"Kanban",
+"Kanban"
+],
+"n_log": [
+"Changelog & decisions",
+"Changelog y decisiones"
+],
+"hi": [
+"Good morning, Mariana",
+"Buenos días, Mariana"
+],
+"upcoming": [
+"My upcoming classes",
+"Mis próximas clases"
+],
+"announce": [
+"Studio announcement",
+"Anuncio del estudio"
+],
+"announce_body": [
+"Sala 2 reopens Thursday after floor works. Extra 6:30 AM slot added all week.",
+"Sala 2 reabre el jueves tras la obra del piso. Cupo extra 6:30 AM toda la semana."
+],
+"stats": [
+"Your practice",
+"Tu práctica"
+],
+"st_classes": [
+"Classes completed",
+"Clases completadas"
+],
+"st_hours": [
+"Hours practised",
+"Horas practicadas"
+],
+"st_streak": [
+"Week streak",
+"Semanas seguidas"
+],
+"memb_prompt": [
+"Full access with HOY Membership",
+"Acceso completo con la Membresía HOY"
+],
+"q_book": [
+"Book a class",
+"Reservar"
+],
+"q_invite": [
+"Invite",
+"Invitar"
+],
+"q_desk": [
+"Front desk",
+"Recepción"
+],
+"rate_prompt": [
+"How was Morning Flow Yoga?",
+"¿Cómo estuvo el Flow de la Mañana?"
+],
+"rate_sub": [
+"Two taps. Or skip.",
+"Dos toques. O omítelo."
+],
+"skip": [
+"Skip",
+"Omitir"
+],
+"v_today": [
+"Today",
+"Hoy"
+],
+"v_week": [
+"Week",
+"Semana"
+],
+"v_recur": [
+"Recurring",
+"Recurrentes"
+],
+"f_level": [
+"Level",
+"Nivel"
+],
+"f_teacher": [
+"Teacher",
+"Profesor"
+],
+"f_room": [
+"Room",
+"Sala"
+],
+"spots_left": [
+"spots left",
+"cupos"
+],
+"full": [
+"Waitlist",
+"Lista de espera"
+],
+"booked": [
+"Booked",
+"Reservada"
+],
+"available": [
+"Available",
+"Disponible"
+],
+"reserve": [
+"Reserve",
+"Reservar"
+],
+"read_more": [
+"Read more",
+"Leer más"
+],
+"about_class": [
+"About this class",
+"Sobre la clase"
+],
+"about_teacher": [
+"Your teacher",
+"Tu profesor"
+],
+"prep": [
+"How to prepare",
+"Cómo prepararte"
+],
+"pay_summary": [
+"Order summary",
+"Resumen"
+],
+"pay_method": [
+"Payment method",
+"Método de pago"
+],
+"pay_use_crcredits_left": [
+"credits remaining",
+"créditos restantes"
+],
+"pay_total": [
+"Total",
+"Total"
+],
+"pay_cta": [
+"Confirm reservation",
+"Confirmar reserva"
+],
+"plan_cta": [
+"Choose plan",
+"Elegir plan"
+],
+"plan_skip": [
+"Skip — see Bienvenida passes",
+"Omitir — ver pases Bienvenida"
+],
+"change_cta": [
+"Cancel or reschedule",
+"Cancelar o reprogramar"
+],
+"clOff": [
+"12 Sep 2026 · Offline check-in retired",
+"12 sep 2026 · Check-in sin conexión retirado"
+],
+"clTrim": [
+"11 Sep 2026 · Waiver, check-in and chat removed",
+"11 sep 2026 · Consentimiento, check-in y chat retirados"
+],
+"eTrim": [
+"Waiver · customer check-in · in-app chat removed",
+"Consentimiento · check-in de cliente · chat retirados"
+],
+"ch_title": [
+"Cancel or reschedule",
+"Cancelar o reprogramar"
+],
+"ch_sub": [
+"Free until 4 hours before. After that the credit is used.",
+"Gratis hasta 4 horas antes. Después se usa el crédito."
+],
+"ch_move": [
+"Move to another class",
+"Mover a otra clase"
+],
+"ch_move_s": [
+"Same credit, no fee outside the window",
+"El mismo crédito, sin cargo fuera de la ventana"
+],
+"ch_drop": [
+"Cancel and get the credit back",
+"Cancelar y recuperar el crédito"
+],
+"ch_drop_s": [
+"Returns to your balance right away",
+"Vuelve a tu saldo de inmediato"
+],
+"ch_keep": [
+"Keep my booking",
+"Mantener mi reserva"
+],
+"ch_pick": [
+"Pick a replacement",
+"Elige otra clase"
+],
+"starts_in": [
+"Starts in",
+"Empieza en"
+],
+"add_cal": [
+"Add to calendar",
+"Añadir al calendario"
+],
+"hist_classes": [
+"Classes",
+"Clases"
+],
+"hist_pay": [
+"Payments",
+"Pagos"
+],
+"invoice": [
+"Receipt",
+"Recibo"
+],
+"inv_wa": [
+"Send by WhatsApp",
+"Enviar por WhatsApp"
+],
+"inv_mail": [
+"Send by email",
+"Enviar por correo"
+],
+"inv_link": [
+"Copy link",
+"Copiar enlace"
+],
+"inv_body": [
+"Your first class is on us. Guests get one free trial per person.",
+"Su primera clase va por nuestra cuenta. Un pase de prueba por persona."
+],
+"gift_amt": [
+"Amount",
+"Monto"
+],
+"gift_to": [
+"Recipient",
+"Para"
+],
+"gift_cta": [
+"Buy gift card",
+"Comprar tarjeta"
+],
+"set_lang": [
+"Language",
+"Idioma"
+],
+"set_notif": [
+"Notifications",
+"Notificaciones"
+],
+"set_pay": [
+"Payment methods",
+"Métodos de pago"
+],
+"set_memb": [
+"Membership",
+"Membresía"
+],
+"set_review": [
+"Leave us a review",
+"Déjanos una reseña"
+],
+"set_legal": [
+"Terms & privacy",
+"Términos y privacidad"
+],
+"set_out": [
+"Sign out",
+"Cerrar sesión"
+],
+"edit_profile": [
+"Edit profile",
+"Editar perfil"
+],
+"ph_photo": [
+"photo",
+"foto"
+],
+"ph_video": [
+"video",
+"video"
+],
+"ph_teacher": [
+"teacher portrait",
+"retrato del profesor"
+],
+"ph_class": [
+"class photo",
+"foto de clase"
+],
+"ph_qr": [
+"QR",
+"QR"
+],
+"door_q": [
+"Arrivals — 7:00 AM Morning Flow Yoga",
+"Llegadas — 7:00 AM Flow de la Mañana"
+],
+"door_scan": [
+"Scan QR or face",
+"Escanear QR o rostro"
+],
+"door_manual": [
+"Manual search",
+"Búsqueda manual"
+],
+"door_in": [
+"Checked in",
+"Registrado"
+],
+"door_wait": [
+"Expected",
+"Esperado"
+],
+"tch_sched": [
+"My schedule",
+"Mi horario"
+],
+"tch_att": [
+"Mark attendance",
+"Marcar asistencia"
+],
+"tch_pay": [
+"Payroll history",
+"Historial de nómina"
+],
+"tch_rev": [
+"Reviews",
+"Reseñas"
+],
+"tch_desc": [
+"Submit class description",
+"Enviar descripción"
+],
+"adm_features": [
+"Features & pages",
+"Features y páginas"
+],
+"adm_on": [
+"on",
+"activo"
+],
+"adm_off": [
+"off",
+"inactivo"
+],
+"adm_rev": [
+"Revenue this month",
+"Ingresos del mes"
+],
+"adm_occ": [
+"Occupancy",
+"Ocupación"
+],
+"adm_new": [
+"New students",
+"Nuevos estudiantes"
+],
+"adm_ret": [
+"Retention",
+"Retención"
+],
+"save": [
+"Save",
+"Guardar"
+],
+"preview": [
+"Preview",
+"Vista previa"
+],
+"edit": [
+"Edit",
+"Editar"
+],
+"add": [
+"Add",
+"Añadir"
+],
+"kb_plan_t": [
+"Build plan",
+"Plan de construcción"
+],
+"kb_todo": [
+"To do",
+"Por hacer"
+],
+"kb_doing": [
+"In progress",
+"En curso"
+],
+"kb_done": [
+"Done",
+"Hecho"
+],
+"kb_rule": [
+"Rule: every change is logged here — prompt intent, decision, files touched, version.",
+"Regla: todo cambio se registra aquí — intención del prompt, decisión, archivos, versión."
+],
+"n": [
+"Morning Flow Yoga",
+"Flow de la Mañana"
+],
+"cat": [
+"Hot Yoga",
+"Yoga Caliente"
+],
+"d": [
+"one class, no entry cost",
+"una clase, sin costo de entrada"
+],
+"per": [
+"/ month",
+"/ mes"
+],
+"badge": [
+"Best value",
+"Mejor valor"
+],
+"p": [
+"included",
+"incluido"
+],
+"k": [
+"Arde · hot yoga",
+"Arde · yoga caliente"
+]
+}

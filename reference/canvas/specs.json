@@ -1,0 +1,2621 @@
+{
+ "A-01": {
+  "key": "splash",
+  "code": "A-01",
+  "name": "Splash / breathing load",
+  "intent": "Set the emotional register before any UI: three concentric circles breathe around the wordmark at 7s, roughly a calm respiratory cycle. Covers session restore, feature-flag fetch and locale detection.",
+  "data": [
+   "app_config",
+   "feature_flags",
+   "session_token",
+   "device.locale",
+   "i18n.bundle"
+  ],
+  "roles": [
+   "Public",
+   "All roles"
+  ],
+  "layers": "Splash\n├ Background / sandstone\n├ BreathingRings\n│ ├ Ring 300 (0s)\n│ ├ Ring 220 (0.6s)\n│ └ Ring 150 (1.2s)\n├ Logo / hoy lockup\n├ Tagline\n└ LoadState\n  ├ Spinner\n  └ Label",
+  "toggles": [
+   {
+    "label": "Breathing animation",
+    "on": true
+   },
+   {
+    "label": "Tagline line",
+    "on": true
+   },
+   {
+    "label": "Version stamp",
+    "on": false
+   }
+  ]
+ },
+ "A-02": {
+  "key": "auth",
+  "code": "A-02",
+  "name": "Sign in",
+  "intent": "Get a returning student into the app in one tap where possible: biometric first on a known device, then Apple or Google, then email and password.",
+  "data": [
+   "users",
+   "auth_providers",
+   "devices",
+   "sessions",
+   "audit_log"
+  ],
+  "roles": [
+   "Public"
+  ],
+  "layers": "SignIn\n├ StatusBar\n├ Logo block\n├ CredentialCard\n│ ├ Email field\n│ ├ Password field\n│ ├ PrimaryButton\n│ └ ForgotLink\n├ Divider / OR\n├ ProviderStack\n│ ├ Apple (iOS only)\n│ ├ Google (Android only)\n│ └ Biometric (if enrolled)\n└ CreateAccountLink",
+  "rules": [
+   "Apple button shows on iOS, Google on Android; both on web.",
+   "Biometric appears only if a token is stored for this device.",
+   "5 failed attempts → 15 minute lockout and an email alert.",
+   "Staff accounts land on their role home, not the student home."
+  ],
+  "toggles": [
+   {
+    "label": "Apple sign-in",
+    "on": true
+   },
+   {
+    "label": "Google sign-in",
+    "on": true
+   },
+   {
+    "label": "Biometric unlock",
+    "on": true
+   },
+   {
+    "label": "Magic-link sign-in",
+    "on": false
+   }
+  ]
+ },
+ "A-03": {
+  "key": "signup",
+  "code": "A-03",
+  "name": "Create account",
+  "intent": "Collect the minimum the studio actually needs, with WhatsApp as a first-class channel because that is where reminders and cancellations go.",
+  "data": [
+   "users",
+   "profiles",
+   "consents",
+   "emergency_contacts",
+   "profile_photos",
+   "marketing_optin",
+   "whatsapp_verifications"
+  ],
+  "roles": [
+   "Public"
+  ],
+  "layers": "SignUp\n├ ProgressDots (1 of 3)\n├ Heading + sub\n├ FormStack\n│ ├ First / Last row\n│ ├ Email\n│ ├ WhatsApp (+57 default)\n│ ├ Password + strength\n│ ├ Birthday (optional)\n│ ├ EmergencyContact · name + phone\n│ └ PhotoPicker · take or choose (optional)\n├ ConsentRow → Terms, Privacy\n└ PrimaryButton",
+  "rules": [
+   "Email and WhatsApp must be unique; duplicates offer sign-in instead.",
+   "Emergency contact is collected here so it exists from the first booking, not only once a waiver is signed.",
+   "Password min 8 chars, strength meter, no composition rules.",
+   "Consent checkbox is required and stored with timestamp, IP and policy version.",
+   "Birthday optional — feeds the birthday WhatsApp/email automation.",
+   "Profile photo is optional and offered here, either from the camera or the library, so the front desk can recognise a student on arrival; it can be added later in Settings.",
+   "Colombia default country code +57."
+  ],
+  "toggles": [
+   {
+    "label": "WhatsApp field required",
+    "on": true
+   },
+   {
+    "label": "Birthday field",
+    "on": true
+   },
+   {
+    "label": "Emergency contact at sign-up",
+    "on": true
+   },
+   {
+    "label": "Profile photo at sign-up",
+    "on": true
+   },
+   {
+    "label": "Marketing opt-in row",
+    "on": false
+   }
+  ]
+ },
+ "A-05": {
+  "key": "feel",
+  "code": "A-05",
+  "name": "Intention check — ¿Cómo quieres sentirte hoy?",
+  "intent": "The signature moment of the product. One question, four verbs; the choice re-orders the home feed and the recommended classes for the session. The verbs are what the student wants to do, and each resolves to one of the four movement tags the rest of the system already colours by.",
+  "story": "As a student opening the app I tap Respira and today's list leads with the slower classes.",
+  "data": [
+   "intentions",
+   "intention_events",
+   "class_tags",
+   "movement_tags",
+   "recommendation_weights"
+  ],
+  "roles": [
+   "Student",
+   "Teacher (as student)"
+  ],
+  "layers": "IntentionCheck\n├ Greeting (first name)\n├ Question (display serif)\n├ Subtitle (italic)\n├ IntentionGrid 2×2\n│ ├ Muévete → arde · hot, vinyasa, cardio\n│ ├ Respira → fluye · restorative, yin, breathwork\n│ ├ Equilíbrate → enraiza · strength, barre, core\n│ └ Conecta → libera · community, workshops, events\n└ SkipLink",
+  "rules": [
+   "Shown once per day on first open; skippable.",
+   "Each verb maps to exactly one movement tag — Muévete→Arde, Respira→Fluye, Equilíbrate→Enraíza, Conecta→Libera — so the icon colour here matches the chip colour on every class card.",
+   "Selection tags the session and sorts Today's Classes by matching class_tags.",
+   "Stored as a time series — becomes a mood/practice insight later.",
+   "Copy stays in Spanish in both locales; it is brand voice, not UI text."
+  ],
+  "api": [
+   "POST /me/intention",
+   "GET /classes?intent=",
+   "GET /me/intentions/history"
+  ],
+  "states": [
+   "Default (this screen)",
+   "Already answered today: skipped silently",
+   "Offline: choice queues and syncs"
+  ],
+  "toggles": [
+   {
+    "label": "Intention check",
+    "on": true
+   },
+   {
+    "label": "Ask once per day",
+    "on": true
+   },
+   {
+    "label": "Use intention in recommendations",
+    "on": true
+   }
+  ]
+ },
+ "A-06": {
+  "key": "legal",
+  "code": "A-06",
+  "name": "Terms & Conditions / Privacy Policy",
+  "intent": "Real, linkable, versioned legal pages reachable from sign-up, the waiver, settings and the website — with placeholder body copy until counsel supplies the text.",
+  "data": [
+   "legal_documents",
+   "document_versions",
+   "consents"
+  ],
+  "roles": [
+   "Public",
+   "All roles"
+  ],
+  "layers": "LegalDoc\n├ BackLink\n├ Title + updated date\n├ SectionList (anchored)\n└ CrossLink (Terms ⇄ Privacy)",
+  "rules": [
+   "Each document is versioned; consents record which version was accepted.",
+   "Colombian data protection: Ley 1581 de 2012 and Decreto 1377 de 2013 sections are required.",
+   "Same content served to app and website from the CMS.",
+   "Anchors are stable so emails can deep-link to a clause."
+  ],
+  "toggles": [
+   {
+    "label": "Show last-updated date",
+    "on": true
+   },
+   {
+    "label": "Require re-consent on new version",
+    "on": true
+   }
+  ]
+ },
+ "S-04": {
+  "key": "reg",
+  "code": "S-04",
+  "name": "Register & take payment",
+  "intent": "The counter transaction in one screen: who they are, what they are buying, how they are paying. Built for someone standing at a desk with a person in front of them, so it is three short sections rather than a wizard.",
+  "story": "As front desk I register a walk-in, take cash for a trial class and check her into the 7am without leaving the screen.",
+  "data": [
+   "users",
+   "profiles",
+   "consents",
+   "bookings",
+   "orders",
+   "payments",
+   "invoices",
+   "credits",
+   "audit_log"
+  ],
+  "roles": [
+   "Front desk",
+   "Coordinator",
+   "Super admin"
+  ],
+  "layers": "RegisterPay\n├ Step1 · Who\n│ ├ New / existing switch\n│ ├ Name, WhatsApp, email\n│ ├ Emergency contact, birthday\n│ └ Consent checkbox\n├ Step2 · What (reads plans.bienvenida)\n├ Step3 · How they pay\n│ ├ Cash · card · transfer · Nequi · PSE\n│ └ Receipt by WhatsApp + email\n└ SummaryRail\n  ├ Order lines + IVA\n  └ Complete and check in",
+  "rules": [
+   "Products and prices are read from the value-model config, never typed at the desk.",
+   "Consent is recorded with timestamp, staff actor and policy version — the student agrees verbally, the desk records it.",
+   "Cash settles immediately; card and transfer create a pending order until the gateway confirms.",
+   "Completing the sale also checks the person into the class they bought, which is the whole point of doing it at the counter.",
+   "Every action writes to the activity log with the staff member's name."
+  ],
+  "api": [
+   "POST /users",
+   "POST /orders",
+   "POST /payments",
+   "POST /checkins",
+   "POST /consents"
+  ],
+  "states": [
+   "New customer (this screen)",
+   "Existing member: identity fields collapse to a found-member card",
+   "Payment declined: inline reason, order stays pending",
+   "Offline: queue and warn"
+  ],
+  "toggles": [
+   {
+    "label": "Walk-in registration",
+    "on": true
+   },
+   {
+    "label": "Cash at desk",
+    "on": true
+   },
+   {
+    "label": "Auto check-in on sale",
+    "on": true
+   },
+   {
+    "label": "Birthday field",
+    "on": true
+   }
+  ]
+ },
+ "C-08b": {
+  "key": "change",
+  "code": "C-08b",
+  "name": "Cancel or reschedule sheet",
+  "intent": "One button on the booked class opens one sheet, because a student who cannot make a class is taking a single decision with two outcomes. Moving is offered first — it keeps the credit and keeps the habit.",
+  "story": "As a student who cannot make 7am I move to the 9:30 in two taps, and my credit follows me.",
+  "layers": "ChangeSheet\n├ Handle + title\n├ PolicyLine (window from M-08)\n├ BookingSummary\n├ MoveAction (primary)\n├ CancelAction (destructive outline)\n├ ReplacementList (same day, same tag)\n└ KeepBooking (dismiss)",
+  "rules": [
+   "Move = cancel + rebook in one transaction, same entitlement, no fee outside the window.",
+   "Cancel returns the credit immediately when outside the window; inside it the credit is spent and the sheet says so before confirming.",
+   "The window value is read from Admin → Settings (M-08), never hardcoded here.",
+   "Replacements are same-day and matched on class_tags, then nearest time.",
+   "The front desk can perform either action on the student's behalf from S-02, which writes to the audit log with the staff actor."
+  ],
+  "api": [
+   "GET /policies/cancellation",
+   "POST /bookings/:id/reschedule",
+   "DELETE /bookings/:id",
+   "GET /classes/alternatives?bookingId="
+  ],
+  "states": [
+   "Outside window (this sheet)",
+   "Inside window: destructive confirm naming the forfeited credit",
+   "No replacement available: waitlist offer",
+   "Past class: sheet cannot open"
+  ],
+  "toggles": [
+   {
+    "label": "Reschedule",
+    "on": true
+   },
+   {
+    "label": "Suggest replacements",
+    "on": true
+   },
+   {
+    "label": "Late-cancel fee",
+    "on": false
+   }
+  ]
+ },
+ "C-14 / C-15": {
+  "key": "faq",
+  "code": "C-14 / C-15",
+  "name": "Preguntas frecuentes",
+  "intent": "The public answer sheet, split across two pages so the accordion never becomes a scroll of thirty open questions. It is the last stop before someone writes to the front desk, so it carries the same answers the concierge would give.",
+  "story": "As someone who has never practised I read what to bring and how early to arrive without messaging anyone.",
+  "data": [
+   "faq_entries",
+   "faq_sections",
+   "locales",
+   "content_versions",
+   "search_index"
+  ],
+  "roles": [
+   "Public",
+   "Student",
+   "Front desk",
+   "Coordinator"
+  ],
+  "layers": "FAQ (2 pages)\n├ Page 1 · C-14\n│ ├ 01 Tu primera vez en HOY\n│ ├ 02 Reservas y horarios\n│ └ 03 Membresías y planes\n└ Page 2 · C-15\n  ├ 04 El espacio\n  ├ 05 En camino\n  └ 06 Contacto y concierge",
+  "rules": [
+   "Questions are collapsed by default; only one opens at a time within a section.",
+   "Entries live in the CMS beside Club Rules, so the same answer serves app and website.",
+   "Anything about prices or plans links to #planes rather than repeating a figure.",
+   "Section 06 always ends with a route to a human — the FAQ never dead-ends."
+  ],
+  "api": [
+   "GET /content/faq?locale=",
+   "GET /content/faq/:slug",
+   "POST /content/faq/:slug/helpful"
+  ],
+  "states": [
+   "Collapsed (default)",
+   "One expanded",
+   "No match in search: offers the concierge",
+   "Untranslated entry: falls back to Spanish"
+  ],
+  "toggles": [
+   {
+    "label": "FAQ in app",
+    "on": true
+   },
+   {
+    "label": "Helpful vote",
+    "on": false
+   },
+   {
+    "label": "Search within FAQ",
+    "on": false
+   }
+  ]
+ },
+ "C-07": {
+  "key": "bienvenida",
+  "code": "C-07",
+  "name": "Bienvenida passes",
+  "intent": "The way in for someone with no membership: four one-time options, stacked cheapest first, each one reservable on the spot. It is the other half of C-06 — whoever skips the plan lands here rather than at a dead end.",
+  "story": "As a first-timer I take the trial class without signing up for anything, and I can see what a pack costs if I come back.",
+  "data": [
+   "packages",
+   "plan_prices",
+   "orders",
+   "credits",
+   "bookings",
+   "trial_eligibility"
+  ],
+  "roles": [
+   "Public",
+   "Student",
+   "Front desk"
+  ],
+  "layers": "BienvenidaPasses\n├ Header · title + sub\n├ Eyebrow · BIENVENIDA\n├ Intro line\n├ PassList (vertical)\n│ ├ Clase de Prueba\n│ ├ Pase Individual\n│ ├ Paquete de 3 Clases\n│ └ Paquete de 10 Clases\n└ FooterLink → C-06",
+  "rules": [
+   "Prices read from the value-model config; no figure is written on this screen.",
+   "Trial class is one per person, verified by document or phone.",
+   "Packs expire per their own rule — one month for 3, three months for 10.",
+   "Every button enters the same single-screen checkout (C-04) with lazy registration.",
+   "C-06's skip link points here, so the membership decision is never a dead end."
+  ],
+  "api": [
+   "GET /packages",
+   "POST /orders",
+   "POST /bookings",
+   "GET /me/entitlements"
+  ],
+  "states": [
+   "Default (this screen)",
+   "Trial already used: that row drops to a note",
+   "Existing member: banner offers C-06 instead",
+   "Loading: four skeleton rows"
+  ],
+  "toggles": [
+   {
+    "label": "Trial class",
+    "on": true
+   },
+   {
+    "label": "3-class pack",
+    "on": true
+   },
+   {
+    "label": "10-class pack",
+    "on": true
+   },
+   {
+    "label": "Single pass",
+    "on": true
+   }
+  ]
+ },
+ "P-01": {
+  "key": "planes",
+  "code": "P-01",
+  "name": "Plans & prices — Modelo de Valor v3",
+  "intent": "One value model, written once and read by every surface that quotes a price. Bienvenida lowers the barrier, Membresía is the primary plan with two ways to pay, Pausas and Regalos widen the offer, Espacio monetises the room outside class hours.",
+  "story": "As someone deciding whether to join I see the whole ladder on one page and can tell what a month actually costs.",
+  "data": [
+   "plans",
+   "plan_prices",
+   "packages",
+   "memberships",
+   "gift_cards",
+   "space_rentals",
+   "orders"
+  ],
+  "roles": [
+   "Public",
+   "Student",
+   "Front desk",
+   "Finance",
+   "Coordinator",
+   "Super admin"
+  ],
+  "layers": "PlansPage #planes\n├ Bienvenida — 4 cards + Reservar\n├ Membresía (hero)\n│ ├ Plan Mensual\n│ ├ Plan Anual · Mejor valor\n│ └ Footnote · ~$416.000/mes\n├ Pausas y Regalos (two columns)\n├ Espacio — 5 desde-prices + one WhatsApp CTA\n└ TrustStrip · capacity + conscious controls",
+  "rules": [
+   "Prices live in one config; no surface hard-codes a figure. Changing a price here changes it everywhere.",
+   "Membresía has exactly two options — Mensual and Anual. No third tier, no hidden discounts.",
+   "Espacio prices are 'desde' and lead to a conversation, not a checkout.",
+   "One class a day per person on any plan; the studio holds 15 mats and runs 4 classes a day.",
+   "Conscious controls: pause up to 30 days, leave without mazes, a kind cancellation window, notice before every charge.",
+   "Every plan CTA enters the same single-screen checkout (C-04) with lazy registration and local payment methods."
+  ],
+  "api": [
+   "GET /plans",
+   "GET /packages",
+   "POST /orders",
+   "POST /subscriptions",
+   "GET /space/enquiry"
+  ],
+  "states": [
+   "Default (this page)",
+   "Member: Membresía cards show current plan and 'change'",
+   "Promotion: badge + strike price",
+   "Sold-out space date: CTA becomes an enquiry form"
+  ],
+  "toggles": [
+   {
+    "label": "Bienvenida block",
+    "on": true
+   },
+   {
+    "label": "Pausas block",
+    "on": true
+   },
+   {
+    "label": "Espacio block",
+    "on": true
+   },
+   {
+    "label": "Annual plan",
+    "on": true
+   },
+   {
+    "label": "Promo codes",
+    "on": false
+   }
+  ]
+ },
+ "C-25": {
+  "key": "more",
+  "code": "C-25",
+  "name": "More · profile, rules, contact",
+  "intent": "A fifth destination was one too many for a 340px bar, so profile, club rules and contacting the studio live one level down. Contact moves here from the floating bubble, where it competed with the primary action on every screen.",
+  "story": "As a student I tap More and message the front desk, or read the hot-room rules, without hunting.",
+  "data": [
+   "users",
+   "profiles",
+   "memberships",
+   "credits",
+   "content_articles",
+   "studio_hours",
+   "notification_prefs"
+  ],
+  "roles": [
+   "Student",
+   "Teacher (as student)"
+  ],
+  "layers": "MoreSheet\n├ IdentityCard → C-19\n├ PrimaryGroup\n│ ├ My Profile → C-19\n│ ├ Club Rules → C-13\n│ ├ WhatsApp the studio (outbound)\n│ └ Email the studio (outbound)\n├ SecondaryGroup\n│ ├ Invite a guest → C-16\n│ ├ Gift card → C-17\n│ └ Settings → C-19\n├ SignOut\n└ BottomNav (More active)",
+  "rules": [
+   "The dock carries four destinations: Home, Classes, History, More — every remaining screen is reachable from here in one tap.",
+   "Contact is outbound only — the rows open WhatsApp or the mail client. The app carries no inbox of its own; the studio answers where it already works.",
+   "The identity card doubles as the entry to profile, so the row above is not the only path.",
+   "Sign out is last, never adjacent to a destructive-looking row."
+  ],
+  "api": [
+   "GET /me",
+   "GET /studio/hours",
+   "GET /me/credits"
+  ],
+  "states": [
+   "Loading: identity skeleton",
+   "No membership: card shows the plan prompt",
+   "Outside hours: the WhatsApp row states the reply window"
+  ],
+  "toggles": [
+   {
+    "label": "WhatsApp row",
+    "on": true
+   },
+   {
+    "label": "Email row",
+    "on": true
+   },
+   {
+    "label": "Gift card row",
+    "on": true
+   },
+   {
+    "label": "Invite row",
+    "on": true
+   }
+  ]
+ },
+ "M-06": {
+  "key": "crm",
+  "code": "M-06",
+  "name": "CRM · member 360",
+  "intent": "One record per person that the whole studio trusts: who they are, what they have paid, what they have attended, and every conversation across WhatsApp, email and the front desk — with staff notes on the same timeline.",
+  "story": "As a coordinator I open Mariana's record before she arrives and see she asked about a guest pass and mentioned a knee injury.",
+  "data": [
+   "users",
+   "profiles",
+   "memberships",
+   "credit_ledger",
+   "bookings",
+   "attendance",
+   "payments",
+   "threads",
+   "messages",
+   "wa_message_log",
+   "email_send_log",
+   "staff_notes",
+   "health_flags",
+   "consents",
+   "segments",
+   "churn_scores"
+  ],
+  "roles": [
+   "Coordinator",
+   "Front desk",
+   "Super admin",
+   "Finance (payments only)"
+  ],
+  "layers": "CRM\n├ SegmentRail (all, at risk, new, no membership, birthdays)\n├ MemberList (search, sort)\n└ MemberDetail\n  ├ IdentityHeader (photo, membership badge, consents)\n  ├ MetricRow (LTV, visits, last visit, churn risk)\n  ├ TabBar (Timeline / Bookings / Payments / Notes)\n  ├ Timeline\n  │ ├ WhatsApp message\n  │ ├ Email event\n  │ ├ Staff note\n  │ └ System event (booking, payment, attendance)\n  └ NoteComposer",
+  "rules": [
+   "The timeline merges every channel in one chronological stream — WhatsApp, email, in-app thread, staff notes and system events.",
+   "Staff notes are internal and never visible to the member; health flags surface to teachers as a marker only.",
+   "Churn risk is derived from visit cadence against the member's own baseline, not a global average.",
+   "Front desk sees the timeline but cannot edit payments; Finance sees payments but not health notes.",
+   "Every view of a member record is itself written to the activity log."
+  ],
+  "api": [
+   "GET /admin/members?segment=",
+   "GET /admin/members/:id",
+   "GET /admin/members/:id/timeline",
+   "POST /admin/members/:id/notes",
+   "GET /admin/segments"
+  ],
+  "states": [
+   "Loading: list skeleton",
+   "Empty segment: 'nobody matches yet'",
+   "No consent: channels shown as unavailable",
+   "Merged duplicate: banner with the merge history"
+  ],
+  "toggles": [
+   {
+    "label": "Churn risk score",
+    "on": true
+   },
+   {
+    "label": "Staff notes",
+    "on": true
+   },
+   {
+    "label": "Health flags on record",
+    "on": true
+   },
+   {
+    "label": "Segment rail",
+    "on": true
+   }
+  ]
+ },
+ "M-07": {
+  "key": "act",
+  "code": "M-07",
+  "name": "All activity log",
+  "intent": "An immutable record of everything anyone did, so a disputed refund, a deleted class or a changed price can always be traced to a person and a moment. Nothing on this page can be edited.",
+  "story": "As the owner I filter to price changes last month and see exactly who changed what.",
+  "data": [
+   "audit_log",
+   "users",
+   "roles",
+   "entities",
+   "ip_addresses",
+   "user_agents",
+   "retention_policy"
+  ],
+  "roles": [
+   "Super admin",
+   "Coordinator (own area)",
+   "Finance (financial events)"
+  ],
+  "layers": "ActivityLog\n├ FilterBar (date range, role, person, area, action type)\n├ SortableTable\n│ ├ When · Who · Action · Object · Source\n│ └ Row → DetailDrawer (before / after values)\n├ ExportButton (CSV)\n└ RetentionNotice",
+  "rules": [
+   "Append-only: no row can be edited or deleted by any role, including super admin.",
+   "Every entry records actor, role, action, object, before and after values, source (app, admin, front desk, automation) and timestamp.",
+   "Automations and system events are logged with the same shape as human actions.",
+   "Retained 24 months, then archived to cold storage; export produces a signed CSV.",
+   "Reading a member record is logged, so data access is auditable under Ley 1581."
+  ],
+  "api": [
+   "GET /admin/activity?from=&to=&role=&actor=&area=&type=",
+   "GET /admin/activity/:id",
+   "GET /admin/activity/export"
+  ],
+  "states": [
+   "Loading: table skeleton",
+   "Empty: 'no activity in this range'",
+   "Large range: paginated with a count",
+   "Export running: progress + email on completion"
+  ],
+  "toggles": [
+   {
+    "label": "Log record views",
+    "on": true
+   },
+   {
+    "label": "CSV export",
+    "on": true
+   },
+   {
+    "label": "Show system automations",
+    "on": true
+   }
+  ]
+ },
+ "M-08": {
+  "key": "set",
+  "code": "M-08",
+  "name": "Studio settings & policies",
+  "intent": "The operating parameters every other screen reads from: identity, hours, rooms, the cancellation and waitlist rules quoted across the app, tax and invoicing, and the third parties the studio depends on.",
+  "story": "As super admin I change the cancellation window from 4h to 6h and every screen that quotes it updates.",
+  "data": [
+   "studio_profile",
+   "locations",
+   "rooms",
+   "opening_hours",
+   "policies",
+   "tax_config",
+   "dian_resolution",
+   "integrations",
+   "api_keys",
+   "webhooks"
+  ],
+  "roles": [
+   "Super admin",
+   "Coordinator (hours, rooms)",
+   "Finance (tax, invoicing)"
+  ],
+  "layers": "Settings\n├ SectionRail\n├ StudioProfile (name, NIT, address, contact)\n├ Locations → rooms + capacity\n├ OpeningHours (per weekday, holidays)\n├ Policies\n│ ├ Cancellation window\n│ ├ Waitlist claim window\n│ ├ Late check-in grace\n│ └ No-show fee\n├ TaxAndInvoicing (IVA, DIAN resolution)\n└ Integrations (gateway, WhatsApp API, email, calendar)",
+  "rules": [
+   "Policy values are read at runtime by C-08, C-18 and E-02 — changing one here changes the copy everywhere, never a hardcoded string.",
+   "A policy change applies to future bookings only; bookings already made keep the terms they were made under.",
+   "Locations exist in the model even with one site, so a second sede needs no migration.",
+   "DIAN resolution number and range are required before electronic invoicing can be switched on.",
+   "Integration credentials are write-only in the UI and never displayed back."
+  ],
+  "api": [
+   "GET /admin/settings",
+   "PATCH /admin/settings/:section",
+   "GET /admin/locations",
+   "POST /admin/locations",
+   "GET /admin/integrations"
+  ],
+  "states": [
+   "Saving: section-level confirmation",
+   "Validation: DIAN range exhausted warning",
+   "Integration down: amber status with last check",
+   "No permission: section renders read-only"
+  ],
+  "toggles": [
+   {
+    "label": "Multiple locations",
+    "on": false
+   },
+   {
+    "label": "No-show fee",
+    "on": false
+   },
+   {
+    "label": "Electronic invoicing",
+    "on": true
+   },
+   {
+    "label": "Holiday calendar",
+    "on": true
+   }
+  ]
+ },
+ "E-01": {
+  "key": "xempty",
+  "code": "E-01",
+  "name": "Home · first-time empty state",
+  "intent": "The home screen on day one, when there is no booking, no history and no statistics — it has to teach the next step instead of showing empty containers.",
+  "story": "As a brand-new student my home screen tells me to pick a class and offers the tour, not a wall of zeros.",
+  "data": [
+   "bookings",
+   "practice_stats",
+   "announcements",
+   "content_articles",
+   "memberships"
+  ],
+  "roles": [
+   "Student"
+  ],
+  "layers": "HomeEmpty\n├ Greeting\n├ EmptyState\n│ ├ Illustration slot (placeholder)\n│ ├ Headline + body\n│ ├ PrimaryCTA · browse today\n│ └ SecondaryCTA · studio tour\n├ StatsPlaceholder (explanatory, not zeros)\n└ BottomNav",
+  "rules": [
+   "Statistics blocks never render as 0 — they render the sentence that explains when they appear.",
+   "The trial-class offer shows only if the student has not used it and Admin → Features → Free trial is on.",
+   "Announcements still render if active; they are studio news, not personal data.",
+   "Once a first booking exists this screen is replaced by C-01 permanently."
+  ],
+  "api": [
+   "GET /me/home?locale=",
+   "GET /classes?date=today",
+   "GET /content/tour"
+  ],
+  "states": [
+   "Empty (this screen)",
+   "Loading: skeleton rows",
+   "Error: retry with cached announcements"
+  ],
+  "toggles": [
+   {
+    "label": "Empty-state tour CTA",
+    "on": true
+   },
+   {
+    "label": "Explain-stats placeholder",
+    "on": true
+   },
+   {
+    "label": "Free trial offer",
+    "on": true
+   }
+  ]
+ },
+ "E-02": {
+  "key": "xdec",
+  "code": "E-02",
+  "name": "Payment declined",
+  "intent": "A refusal is the highest-risk moment in the funnel: say what happened, confirm nothing was charged, keep the class reserved, and offer a way through.",
+  "story": "As a student whose card was declined I switch to Nequi within the hold window and keep my 6pm class.",
+  "data": [
+   "payments",
+   "orders",
+   "bookings",
+   "payment_methods",
+   "gateway_responses",
+   "holds"
+  ],
+  "roles": [
+   "Student",
+   "Front desk",
+   "Finance"
+  ],
+  "layers": "PaymentDeclined\n├ ErrorBanner\n│ ├ Title + body\n│ └ GatewayReason\n├ HoldCard · 9:00 countdown\n├ AlternateMethods\n│ ├ Other saved methods\n│ └ Cash at front desk\n└ ReleaseSpotLink (destructive)",
+  "rules": [
+   "Never blame the card; state the gateway reason verbatim where one exists and keep it plain.",
+   "The spot is held 10 minutes from the first attempt; the countdown is visible and honest.",
+   "Three declines on one order switch the primary suggestion to PSE or cash.",
+   "No charge is ever captured on a decline; the order stays pending and the audit trail records every attempt.",
+   "Cash creates a pending order the front desk settles — the same path as C-05."
+  ],
+  "api": [
+   "POST /payments/intent",
+   "GET /orders/:id",
+   "POST /orders/:id/method",
+   "DELETE /holds/:id"
+  ],
+  "states": [
+   "Declined (this screen)",
+   "Retrying: button spinner, methods locked",
+   "Hold expired: spot released, rebook offered",
+   "Recovered: confirmation sheet"
+  ],
+  "toggles": [
+   {
+    "label": "10-minute spot hold",
+    "on": true
+   },
+   {
+    "label": "Show gateway reason",
+    "on": true
+   },
+   {
+    "label": "Cash fallback",
+    "on": true
+   }
+  ]
+ },
+ "E-03": {
+  "key": "xcxl",
+  "code": "E-03",
+  "name": "Class cancelled by the studio",
+  "intent": "When the studio breaks the promise, the screen should do the recovery work: refund already done, replacement classes ready, no action required to get the credit back.",
+  "story": "As a student whose 7am was cancelled I book the 9:30 instead in two taps, without contacting anyone.",
+  "data": [
+   "bookings",
+   "classes",
+   "credits",
+   "credit_ledger",
+   "notifications",
+   "cancellation_reasons"
+  ],
+  "roles": [
+   "Student",
+   "Coordinator",
+   "Front desk"
+  ],
+  "layers": "StudioCancellation\n├ CancelBanner (reason)\n├ RefundConfirmation · 1 credit\n├ AlternativesList\n│ └ ClassRow ×2 (same day, same tag)\n├ PrimaryCTA · book a replacement\n└ ChannelNote (WhatsApp + email)",
+  "rules": [
+   "The credit returns automatically before the student opens the app — the screen confirms, it does not ask.",
+   "Alternatives are same-day and matched on class_tags, then nearest time.",
+   "A studio cancellation never counts against a cancellation allowance.",
+   "Fires the class-cancelled WhatsApp template immediately, ignoring quiet hours.",
+   "If nothing suitable is available the screen offers the waitlist for the next occurrence."
+  ],
+  "api": [
+   "GET /bookings/:id",
+   "GET /classes/alternatives?bookingId=",
+   "POST /bookings",
+   "GET /me/credits"
+  ],
+  "states": [
+   "Cancelled with alternatives (this screen)",
+   "Cancelled, none available: waitlist offer",
+   "Already rebooked: confirmation",
+   "Past class: read-only"
+  ],
+  "toggles": [
+   {
+    "label": "Suggest alternatives",
+    "on": true
+   },
+   {
+    "label": "Automatic credit return",
+    "on": true
+   },
+   {
+    "label": "Waitlist fallback",
+    "on": true
+   }
+  ]
+ },
+ "E-04": {
+  "key": "xlock",
+  "code": "E-04",
+  "name": "Sign-in locked",
+  "intent": "A lockout is a security measure that must not become a dead end: state the pause, count it down, and route to recovery, which is not rate-limited.",
+  "story": "As a student locked out after five wrong passwords I recover by WhatsApp code instead of waiting.",
+  "data": [
+   "users",
+   "auth_attempts",
+   "lockouts",
+   "otp_codes",
+   "audit_log",
+   "threads"
+  ],
+  "roles": [
+   "Public"
+  ],
+  "layers": "SignInLocked\n├ LockNotice\n│ ├ Title + reason\n│ └ Countdown 14:38\n├ PrimaryCTA · recover password → C-19\n├ SecondaryCTA · WhatsApp the studio (outbound)\n└ SecurityNote",
+  "rules": [
+   "Five failed attempts pause sign-in for 15 minutes and send the account holder an email alert.",
+   "Password recovery stays available during a lockout — it uses a different rate limit.",
+   "The countdown is server-authoritative; reinstalling the app does not reset it.",
+   "Never state whether the email exists; the copy is identical for unknown accounts.",
+   "Repeated lockouts within 24h escalate to a staff review flag."
+  ],
+  "api": [
+   "POST /auth/login",
+   "GET /auth/lockout",
+   "POST /auth/recover"
+  ],
+  "states": [
+   "Locked (this screen)",
+   "Countdown finished: form re-enabled",
+   "Escalated: contact-support copy"
+  ],
+  "toggles": [
+   {
+    "label": "15-minute lockout",
+    "on": true
+   },
+   {
+    "label": "Email alert on lockout",
+    "on": true
+   },
+   {
+    "label": "WhatsApp contact link",
+    "on": true
+   }
+  ]
+ },
+ "C-20": {
+  "key": "wait",
+  "code": "C-20",
+  "name": "Waitlist & claim window",
+  "intent": "Turn a full class into a queue that actually converts: show the position, explain the rule, and make claiming a released spot a single tap inside a 30-minute window.",
+  "story": "As a student I join the waitlist for a full 12:30 class, get a WhatsApp when someone cancels, and claim the spot from the notification.",
+  "data": [
+   "waitlists",
+   "waitlist_positions",
+   "bookings",
+   "classes",
+   "credits",
+   "notifications",
+   "wa_message_log"
+  ],
+  "roles": [
+   "Student",
+   "Front desk",
+   "Coordinator"
+  ],
+  "layers": "Waitlist\n├ StatusCard\n│ ├ PositionRing (3 of 7)\n│ └ RuleExplainer\n├ ReleasedBanner (conditional)\n│ ├ ClaimCountdown 30:00\n│ └ ClaimButton\n├ AutoClaimToggle\n├ LeaveWaitlistRow\n└ PolicyNote",
+  "rules": [
+   "Promotion is strictly by position; the front desk can override with a logged reason.",
+   "A released spot is offered for 30 minutes, then passes to the next person.",
+   "Auto-claim consumes a credit the moment the spot is offered; without a credit the student is asked to pay.",
+   "Joining and leaving are free and never charge.",
+   "Studio-side promotion fires the waitlist WhatsApp template immediately, ignoring quiet hours."
+  ],
+  "api": [
+   "POST /waitlist/:classId",
+   "DELETE /waitlist/:classId",
+   "POST /waitlist/:id/claim",
+   "GET /me/waitlists",
+   "PATCH /me/waitlist-prefs"
+  ],
+  "states": [
+   "Waiting: position + rule",
+   "Offered: banner + live countdown",
+   "Expired: 'the spot passed on' + rejoin",
+   "Class started: row goes read-only"
+  ],
+  "toggles": [
+   {
+    "label": "Waitlists",
+    "on": true
+   },
+   {
+    "label": "Auto-claim with credit",
+    "on": true
+   },
+   {
+    "label": "30-minute claim window",
+    "on": true
+   },
+   {
+    "label": "Front-desk override",
+    "on": true
+   }
+  ]
+ },
+ "C-21": {
+  "key": "reset",
+  "code": "C-21",
+  "name": "Password recovery (WhatsApp OTP)",
+  "intent": "Get a locked-out student back in through the channel they actually verified: a six-digit WhatsApp code, with email as the fallback.",
+  "story": "As a student who forgot my password I receive a code on WhatsApp and set a new password in under a minute.",
+  "data": [
+   "users",
+   "otp_codes",
+   "otp_attempts",
+   "sessions",
+   "audit_log",
+   "wa_message_log"
+  ],
+  "roles": [
+   "Public"
+  ],
+  "layers": "PasswordRecovery\n├ Step1 · Identify\n│ ├ WhatsApp / email field\n│ └ SendCodeButton\n├ Step2 · Verify\n│ ├ OtpInput ×6\n│ ├ ResendTimer 0:45\n│ └ ChannelSwitch\n├ Step3 · New password\n│ ├ PasswordField + strength\n│ └ SaveButton\n└ BackToSignIn",
+  "rules": [
+   "Code is 6 digits, valid 10 minutes, single use.",
+   "Three wrong codes invalidate it and force a resend; five resends in an hour lock recovery for 30 minutes.",
+   "Resend is blocked for 45 seconds and the timer survives a screen re-entry.",
+   "A successful reset signs out every other device and writes to the audit log.",
+   "Never reveal whether an account exists — the confirmation copy is identical either way."
+  ],
+  "api": [
+   "POST /auth/recover",
+   "POST /auth/otp/verify",
+   "POST /auth/password",
+   "POST /auth/otp/resend"
+  ],
+  "states": [
+   "Sending: button spinner",
+   "Wrong code: cells shake, attempts left shown",
+   "Expired: 'code expired' + resend",
+   "Rate limited: wait time stated"
+  ],
+  "toggles": [
+   {
+    "label": "WhatsApp OTP",
+    "on": true
+   },
+   {
+    "label": "Email fallback",
+    "on": true
+   },
+   {
+    "label": "Sign out other devices on reset",
+    "on": true
+   }
+  ]
+ },
+ "C-22": {
+  "key": "mmemb",
+  "code": "C-22",
+  "name": "Manage membership",
+  "intent": "Give members the three controls they actually need — freeze, change, cancel — without a phone call, while keeping the studio's notice periods intact.",
+  "story": "As a member travelling for a month I freeze my membership instead of cancelling it.",
+  "data": [
+   "memberships",
+   "subscriptions",
+   "plans",
+   "freezes",
+   "billing_cycles",
+   "invoices",
+   "cancellation_reasons"
+  ],
+  "roles": [
+   "Student",
+   "Front desk",
+   "Finance",
+   "Super admin"
+  ],
+  "layers": "ManageMembership\n├ CurrentPlanCard\n│ ├ Plan + price\n│ ├ RenewalDate\n│ └ UsageThisMonth\n├ FreezeRow → date picker\n├ ChangePlanRow → C-06\n├ BillingHistoryRow → C-11\n└ CancelRow (destructive) → reason sheet",
+  "rules": [
+   "Freeze: up to 2 months per year, 15 days notice, billing pauses and the renewal date shifts by the frozen days.",
+   "Change plan applies on the next billing cycle; upgrades can start immediately with a prorated charge.",
+   "Cancellation keeps access until the end of the paid period — never a mid-period cut-off — and asks for a reason that feeds retention reporting.",
+   "A cancelled member keeps their credit balance and history; re-joining restores the profile.",
+   "Every change emails and WhatsApps a confirmation."
+  ],
+  "api": [
+   "GET /me/membership",
+   "POST /me/membership/freeze",
+   "PATCH /me/membership/plan",
+   "DELETE /me/membership",
+   "GET /me/invoices"
+  ],
+  "states": [
+   "Frozen: banner with resume date",
+   "Pending cancellation: end date + undo",
+   "No membership: plan picker instead",
+   "Payment failed: fix-payment banner"
+  ],
+  "toggles": [
+   {
+    "label": "Self-service freeze",
+    "on": true
+   },
+   {
+    "label": "Self-service cancellation",
+    "on": true
+   },
+   {
+    "label": "Immediate prorated upgrade",
+    "on": false
+   },
+   {
+    "label": "Ask for cancellation reason",
+    "on": true
+   }
+  ]
+ },
+ "C-24": {
+  "key": "notif",
+  "code": "C-24",
+  "name": "Notifications inbox",
+  "intent": "One place for everything the studio has sent, so a missed push or a WhatsApp scrolled past is never a lost class.",
+  "story": "As a student I missed the push about a released spot and find it in the inbox while it is still claimable.",
+  "data": [
+   "notifications",
+   "notification_reads",
+   "notification_prefs",
+   "channels",
+   "deep_links"
+  ],
+  "roles": [
+   "Student",
+   "Teacher",
+   "All roles (own inbox)"
+  ],
+  "layers": "Inbox\n├ Header + MarkAllRead\n├ TodayGroup\n│ └ NotificationRow (icon, title, time, unread dot)\n├ EarlierGroup\n├ EmptyState\n└ SettingsLink → C-19",
+  "rules": [
+   "Every notification mirrors what went out on push, email or WhatsApp, with the same deep link.",
+   "Actionable items keep their action inline until they expire (claim a spot, rate a class, fix a payment).",
+   "Read state is per account, not per device.",
+   "Retained 90 days, then archived."
+  ],
+  "api": [
+   "GET /me/notifications",
+   "POST /me/notifications/read",
+   "POST /me/notifications/read-all",
+   "GET /me/notification-prefs"
+  ],
+  "states": [
+   "Empty: 'nothing yet'",
+   "Unread: dot + heavier weight",
+   "Expired action: row dims, action removed",
+   "Offline: cached list"
+  ],
+  "toggles": [
+   {
+    "label": "Notifications inbox",
+    "on": true
+   },
+   {
+    "label": "Inline actions",
+    "on": true
+   },
+   {
+    "label": "90-day retention",
+    "on": true
+   }
+  ]
+ },
+ "C-23": {
+  "key": "event",
+  "code": "C-23",
+  "name": "Event detail & RSVP",
+  "intent": "Sell the things that are not regular classes — sound baths, workshops, retreats — with their own pricing, capacity and guest rules.",
+  "story": "As a member I reserve a spot at the full-moon sound bath at the member price and bring a friend.",
+  "data": [
+   "events",
+   "event_prices",
+   "rsvps",
+   "capacity",
+   "orders",
+   "payments",
+   "guest_passes",
+   "teachers"
+  ],
+  "roles": [
+   "Public (deep link)",
+   "Student",
+   "Coordinator",
+   "Front desk"
+  ],
+  "layers": "EventDetail\n├ HeroImage (placeholder)\n├ WhenWhere\n├ TitleBlock + hosts\n├ Body\n├ PriceRow (public / member)\n├ CapacityMeter\n├ StickyCTA · Reserve\n├ BringAFriendRow → C-16\n└ AddToCalendar",
+  "rules": [
+   "Events price separately from classes and never consume class credits unless the coordinator allows it.",
+   "Member price applies automatically to active members.",
+   "Capacity is per event, independent of room capacity.",
+   "Cancellation window is per event and can differ from the class policy.",
+   "Deep-linkable for WhatsApp and Instagram."
+  ],
+  "api": [
+   "GET /events/:id",
+   "POST /events/:id/rsvp",
+   "DELETE /rsvps/:id",
+   "GET /events?upcoming=true"
+  ],
+  "states": [
+   "Loading: hero shimmer",
+   "Sold out: waitlist offer",
+   "Past: read-only with gallery",
+   "Cancelled: banner + refund note"
+  ],
+  "toggles": [
+   {
+    "label": "Events",
+    "on": true
+   },
+   {
+    "label": "Member pricing",
+    "on": true
+   },
+   {
+    "label": "Credits usable on events",
+    "on": false
+   },
+   {
+    "label": "Guest passes on events",
+    "on": true
+   }
+  ]
+ },
+ "C-01": {
+  "key": "home",
+  "code": "C-01",
+  "name": "Home dashboard",
+  "intent": "The daily landing surface: what is happening today, what I have booked, what the studio wants me to know, and the nudges the studio needs (membership, feedback, check-in).",
+  "story": "As a student I open the app and immediately see my next class, how long until it starts, and one thing worth doing right now.",
+  "data": [
+   "bookings",
+   "classes",
+   "announcements",
+   "memberships",
+   "credits",
+   "practice_stats",
+   "feedback_requests",
+   "events"
+  ],
+  "roles": [
+   "Student",
+   "Teacher (as student)"
+  ],
+  "layers": "Home\n├ TopBar (logo, avatar, bell)\n├ FeedbackPrompt (conditional)\n├ MembershipNudge (if no plan)\n├ AnnouncementCard (if active)\n├ NextClassCard + countdown\n├ QuickActions ×4\n├ TodayList (intention-sorted)\n├ StatsRow ×3\n└ EventsStrip → BottomNav",
+  "rules": [
+   "Blocks render in priority order; each is independently toggleable in Admin → Features.",
+   "Feedback prompt appears only for a class attended in the last 72h and not yet rated.",
+   "Membership nudge hides for active members and for staff.",
+   "Countdown shows under 24h, otherwise the weekday.",
+   "Today's list re-orders by the day's intention tags."
+  ],
+  "api": [
+   "GET /me/home?locale=",
+   "GET /classes?date=today",
+   "GET /announcements/active",
+   "POST /feedback/:bookingId",
+   "GET /me/stats"
+  ],
+  "states": [
+   "Loading: skeleton cards, no layout shift",
+   "Empty: no bookings → 'Reserve your first class'",
+   "Error: cached feed + retry chip",
+   "Offline: last fetch with stale badge"
+  ],
+  "toggles": [
+   {
+    "label": "Practice statistics",
+    "on": true
+   },
+   {
+    "label": "Studio announcements",
+    "on": true
+   },
+   {
+    "label": "Membership nudge",
+    "on": true
+   },
+   {
+    "label": "Events strip",
+    "on": true
+   },
+   {
+    "label": "Post-class feedback prompt",
+    "on": true
+   }
+  ]
+ },
+ "C-02": {
+  "key": "sched",
+  "code": "C-02",
+  "name": "Class schedule",
+  "intent": "Find the right class fast. Four views (today, week, recurring) over one filterable list. Studio only — there are no online classes.",
+  "story": "As a student I filter to 6pm intermediate classes this week and see which still have space.",
+  "data": [
+   "classes",
+   "schedules",
+   "recurrence_rules",
+   "teachers",
+   "rooms",
+   "levels",
+   "capacity",
+   "waitlists"
+  ],
+  "roles": [
+   "Student",
+   "Front desk",
+   "Coordinator",
+   "Super admin"
+  ],
+  "layers": "Schedule\n├ ViewSwitch (Today / Week)\n├ DateStrip\n├ FilterBar → FilterSheet\n│ ├ Time of day\n│ ├ Level\n│ ├ Type\n│ ├ Teacher\n│ └ Room\n├ ClassList → ClassRow\n└ BottomNav",
+  "rules": [
+   "Two views only: Today and Week. Month and recurring were removed — students book within the week, and a month grid answers a question nobody asked.",
+   "No 'Live Online' or 'On Demand' tabs — in-studio only.",
+   "A full class shows Waitlist; joining notifies on release with a 30-minute claim window.",
+   "Filters persist per device for the session."
+  ],
+  "api": [
+   "GET /classes?from=&to=&filters=",
+   "GET /filters/options",
+   "POST /waitlist/:classId",
+   "GET /classes?view=week"
+  ],
+  "states": [
+   "Loading: three skeleton rows",
+   "Empty: 'No classes match' + clear-filters",
+   "Error: retry",
+   "Past days: rows read-only"
+  ],
+  "toggles": [
+   {
+    "label": "Week view",
+    "on": true
+   },
+   {
+    "label": "Waitlists",
+    "on": true
+   },
+   {
+    "label": "Map / room view",
+    "on": false
+   }
+  ]
+ },
+ "C-03": {
+  "key": "detail",
+  "code": "C-03",
+  "name": "Class detail",
+  "intent": "Everything needed to commit: what the class is, who teaches it, what to bring, how full it is, and how to reserve.",
+  "story": "As a new student I read the class description and the teacher's bio before I book.",
+  "data": [
+   "classes",
+   "class_types",
+   "teachers",
+   "rooms",
+   "capacity",
+   "prep_content",
+   "reviews"
+  ],
+  "roles": [
+   "Student",
+   "Public (deep link)",
+   "Staff"
+  ],
+  "layers": "ClassDetail\n├ HeroImage (placeholder)\n├ TitleBlock (time, duration, room)\n├ CapacityMeter\n├ AboutSection\n├ TeacherCard → TeacherProfile\n├ PrepList → Club rules\n└ StickyCTA (Reserve / Waitlist)",
+  "rules": [
+   "Reserve resolves to: use credit → membership entitlement → pay per class → trial class.",
+   "Capacity meter turns amber under 4 spots.",
+   "Deep-linkable for the website and WhatsApp shares."
+  ],
+  "api": [
+   "GET /classes/:id",
+   "GET /teachers/:id",
+   "GET /content/prep",
+   "POST /bookings"
+  ],
+  "states": [
+   "Loading: hero shimmer",
+   "Cancelled class: banner + reschedule options",
+   "Full: CTA becomes Waitlist"
+  ],
+  "toggles": [
+   {
+    "label": "Reviews on class page",
+    "on": false
+   },
+   {
+    "label": "Capacity meter",
+    "on": true
+   },
+   {
+    "label": "Prep checklist",
+    "on": true
+   }
+  ]
+ },
+ "C-04": {
+  "key": "reserve",
+  "code": "C-04",
+  "name": "Reserve & checkout",
+  "intent": "One screen from intent to confirmed, choosing the cheapest valid entitlement by default and only asking for money when there is none.",
+  "story": "As a member I tap Reserve and I am done; as a walk-in I choose a pack or a single class and pay.",
+  "data": [
+   "bookings",
+   "credits",
+   "memberships",
+   "packages",
+   "orders",
+   "payments",
+   "invoices",
+   "taxes"
+  ],
+  "roles": [
+   "Student",
+   "Front desk (on behalf)"
+  ],
+  "layers": "Checkout\n├ ClassSummary\n├ EntitlementPicker\n│ ├ Credit balance\n│ ├ Membership\n│ ├ Trial class\n│ └ Packs 1/3/10\n├ PaymentMethodRow\n├ OrderSummary (subtotal, IVA, total)\n└ ConfirmButton",
+  "rules": [
+   "Entitlement order: credits → membership → trial → single purchase.",
+   "Prices in COP; IVA shown as a line item.",
+   "Trial class is one per person, verified by document/phone.",
+   "Confirmation sends both a WhatsApp message and an email receipt.",
+   "No-show and late-cancel fees follow the cancellation window rule."
+  ],
+  "api": [
+   "POST /bookings",
+   "POST /orders",
+   "POST /payments/intent",
+   "GET /me/entitlements",
+   "GET /pricing"
+  ],
+  "states": [
+   "Loading: CTA spinner, form locked",
+   "Declined: inline reason + alternate method",
+   "Race: class filled during checkout → waitlist offer",
+   "Success: confirmation sheet"
+  ],
+  "toggles": [
+   {
+    "label": "Free trial class",
+    "on": true
+   },
+   {
+    "label": "3-class pack",
+    "on": true
+   },
+   {
+    "label": "10-class pack",
+    "on": true
+   },
+   {
+    "label": "Guest booking",
+    "on": true
+   }
+  ]
+ },
+ "C-05": {
+  "key": "pay",
+  "code": "C-05",
+  "name": "Payment methods",
+  "intent": "Colombian payment reality: cards, PSE, Nequi, Daviplata, Bancolombia transfer, Mercado Pago, wallet pay, and cash at the front desk.",
+  "story": "As a student in Medellín I pay with Nequi in three taps and get a receipt on WhatsApp.",
+  "data": [
+   "payment_methods",
+   "payments",
+   "orders",
+   "invoices",
+   "refunds",
+   "gateway_tokens"
+  ],
+  "roles": [
+   "Student",
+   "Front desk (cash only)",
+   "Finance",
+   "Super admin"
+  ],
+  "layers": "PaymentMethods\n├ SavedCards (tokenised)\n├ BankTransfer / PSE\n├ Wallets (Nequi, Daviplata)\n├ MercadoPago\n├ ApplePay / GooglePay\n├ CashAtDesk (flagged)\n└ AddMethodSheet",
+  "rules": [
+   "No card data touches our servers — gateway tokenisation only; PCI DSS SAQ-A scope.",
+   "Cash creates a pending order that the front desk settles; booking holds 60 minutes.",
+   "Electronic invoicing per DIAN requirements; receipt includes NIT and IVA breakdown.",
+   "Refunds return to the original method; credits are refunded as credits.",
+   "Habeas Data (Ley 1581) consent recorded before storing any method."
+  ],
+  "api": [
+   "GET /me/payment-methods",
+   "POST /payment-methods",
+   "DELETE /payment-methods/:id",
+   "POST /payments/:id/refund",
+   "POST /invoices/dian"
+  ],
+  "states": [
+   "Loading: rows shimmer",
+   "Empty: 'Add a payment method'",
+   "Gateway down: cash/transfer only + banner",
+   "Expired card: inline warning"
+  ],
+  "toggles": [
+   {
+    "label": "PSE",
+    "on": true
+   },
+   {
+    "label": "Nequi",
+    "on": true
+   },
+   {
+    "label": "Daviplata",
+    "on": true
+   },
+   {
+    "label": "Mercado Pago",
+    "on": true
+   },
+   {
+    "label": "Cash at front desk",
+    "on": true
+   },
+   {
+    "label": "Apple / Google Pay",
+    "on": true
+   }
+  ]
+ },
+ "C-06": {
+  "key": "member",
+  "code": "C-06",
+  "name": "Membership plans",
+  "intent": "Sell the plan without blocking the booking. Monthly or yearly, with the yearly discount shown as months free.",
+  "story": "As a student who came three times this month I see that unlimited is cheaper than my packs.",
+  "data": [
+   "plans",
+   "plan_prices",
+   "memberships",
+   "subscriptions",
+   "billing_cycles",
+   "promotions"
+  ],
+  "roles": [
+   "Student",
+   "Front desk",
+   "Finance",
+   "Super admin"
+  ],
+  "layers": "Plans\n├ CycleSwitch (Monthly / Yearly)\n├ PlanCards ×3\n│ ├ Benefits list\n│ └ Price + cycle\n├ ComparisonNote\n├ PrimaryCTA\n└ SkipLink (pay per class)",
+  "rules": [
+   "Yearly = 10× monthly, shown as '2 months free'.",
+   "Skipping is always allowed; the nudge returns on home.",
+   "Freeze, cancel and change-plan handled in Settings → Membership with the studio's notice period.",
+   "Prices come from the CMS and drive the app and the website at once."
+  ],
+  "api": [
+   "GET /plans?cycle=",
+   "POST /subscriptions",
+   "PATCH /subscriptions/:id",
+   "GET /me/membership"
+  ],
+  "states": [
+   "Loading: card skeletons",
+   "Existing member: current plan marked, others show 'change'",
+   "Promotion active: badge + strike price"
+  ],
+  "toggles": [
+   {
+    "label": "Yearly cycle",
+    "on": true
+   },
+   {
+    "label": "Freeze membership",
+    "on": true
+   },
+   {
+    "label": "Promo codes",
+    "on": false
+   }
+  ]
+ },
+ "C-07b": {
+  "key": "credits",
+  "code": "C-07b",
+  "name": "Credits & class packs",
+  "intent": "Show the balance and let students top up in the sizes the studio sells: single, 3, 10, plus the trial.",
+  "story": "As a student I buy a 10-pack and see the expiry date before I pay.",
+  "data": [
+   "credits",
+   "credit_ledger",
+   "packages",
+   "orders",
+   "expiry_rules"
+  ],
+  "roles": [
+   "Student",
+   "Front desk",
+   "Finance"
+  ],
+  "layers": "Credits\n├ BalanceHeader\n├ LedgerList (earned / used / expired)\n├ PackGrid (1 / 3 / 10)\n└ BuyCTA",
+  "rules": [
+   "Credits expire per pack rule; the ledger shows every movement with the booking that consumed it.",
+   "Cancelling inside the window returns the credit automatically.",
+   "Gift cards and guest passes land in the same ledger with their own source tag."
+  ],
+  "api": [
+   "GET /me/credits",
+   "GET /me/credits/ledger",
+   "GET /packages",
+   "POST /orders"
+  ],
+  "states": [
+   "Zero balance: pack grid promoted",
+   "Expiring soon: amber row",
+   "Loading / error: standard"
+  ],
+  "toggles": [
+   {
+    "label": "Credit expiry",
+    "on": true
+   },
+   {
+    "label": "Show ledger",
+    "on": true
+   },
+   {
+    "label": "Gift credits between students",
+    "on": false
+   }
+  ]
+ },
+ "C-08": {
+  "key": "booked",
+  "code": "C-08",
+  "name": "Booked class, countdown, cancel & reschedule",
+  "intent": "Everything you can do to a reservation you already hold, including the countdown that makes the class feel imminent.",
+  "story": "As a student I see 3h 12m until class, and I can move it to tomorrow in two taps.",
+  "data": [
+   "bookings",
+   "classes",
+   "cancellation_policy",
+   "credits",
+   "notifications"
+  ],
+  "roles": [
+   "Student",
+   "Front desk",
+   "Coordinator"
+  ],
+  "layers": "BookedClass\n├ CountdownRing\n├ ClassSummary\n├ PrepReminder\n├ ActionRow (Cancel / Reschedule / Invite)\n├ AddToCalendar\n└ PolicyNote",
+  "rules": [
+   "Free cancellation until T−4h; inside the window the credit is forfeited (configurable).",
+   "Reschedule = cancel + rebook in one transaction, same entitlement, no fee outside the window.",
+   "Studio-side cancellation refunds automatically and fires the cancellation WhatsApp template.",
+   "Countdown switches to 'Check in' inside T−60m."
+  ],
+  "api": [
+   "GET /bookings/:id",
+   "DELETE /bookings/:id",
+   "POST /bookings/:id/reschedule",
+   "GET /policies/cancellation"
+  ],
+  "states": [
+   "Inside window: destructive confirm sheet",
+   "Past class: read-only + rate CTA",
+   "Cancelled by studio: banner + alternatives"
+  ],
+  "toggles": [
+   {
+    "label": "Reschedule",
+    "on": true
+   },
+   {
+    "label": "Countdown ring",
+    "on": true
+   },
+   {
+    "label": "Late-cancel fee",
+    "on": false
+   }
+  ]
+ },
+ "C-10": {
+  "key": "rate",
+  "code": "C-10",
+  "name": "Rate your class",
+  "intent": "Capture feedback while it is warm, in under five seconds, with a skip that costs nothing.",
+  "story": "As a student I tap four leaves and optionally add a line about the room temperature.",
+  "data": [
+   "reviews",
+   "ratings",
+   "feedback_tags",
+   "teachers",
+   "classes",
+   "moderation_flags"
+  ],
+  "roles": [
+   "Student",
+   "Teacher (aggregate)",
+   "Coordinator",
+   "Super admin"
+  ],
+  "layers": "RatePrompt\n├ ClassLine\n├ RatingScale (1–5)\n├ TagChips (music, heat, pace, clarity)\n├ OptionalNote\n├ AnonymousToggle\n└ Submit / Skip",
+  "rules": [
+   "Prompted on the next open after attendance, once, then dismissed for good.",
+   "Teachers see anonymous ratings in aggregate; named comments only when the student allows it.",
+   "Ratings under 3 open an internal follow-up task for the coordinator.",
+   "Public reviews are a separate, explicit ask via Settings."
+  ],
+  "api": [
+   "POST /reviews",
+   "GET /feedback/pending",
+   "POST /feedback/skip"
+  ],
+  "states": [
+   "Multiple pending: queue one at a time",
+   "Submitted: thank-you with review link",
+   "Error: keep local draft"
+  ],
+  "toggles": [
+   {
+    "label": "Post-class feedback",
+    "on": true
+   },
+   {
+    "label": "Feedback tags",
+    "on": true
+   },
+   {
+    "label": "Anonymous by default",
+    "on": true
+   }
+  ]
+ },
+ "C-11": {
+  "key": "history",
+  "code": "C-11",
+  "name": "History & payments",
+  "intent": "One ledger for the relationship: classes attended and every peso paid, with receipts you can forward.",
+  "story": "As a student I download the receipt for last month's membership charge.",
+  "data": [
+   "bookings",
+   "attendance",
+   "orders",
+   "payments",
+   "invoices",
+   "refunds",
+   "credit_ledger"
+  ],
+  "roles": [
+   "Student",
+   "Finance",
+   "Front desk (read)",
+   "Super admin"
+  ],
+  "layers": "History\n├ TabSwitch (Classes / Payments)\n├ ClassHistoryList\n├ PaymentList → ReceiptSheet\n└ ExportButton",
+  "rules": [
+   "Receipts are DIAN electronic invoices where applicable, with NIT and IVA.",
+   "Cancelled and no-show classes are marked, not hidden.",
+   "Export produces a PDF summary for the selected range."
+  ],
+  "api": [
+   "GET /me/bookings?status=past",
+   "GET /me/payments",
+   "GET /invoices/:id",
+   "GET /me/export"
+  ],
+  "states": [
+   "Empty: 'Your first class is waiting'",
+   "Loading: rows shimmer",
+   "Error: retry"
+  ],
+  "toggles": [
+   {
+    "label": "Payments tab",
+    "on": true
+   },
+   {
+    "label": "PDF export",
+    "on": true
+   }
+  ]
+ },
+ "C-13": {
+  "key": "rules",
+  "code": "C-13",
+  "name": "Club rules & best practices",
+  "intent": "The content library that keeps the room safe and pleasant: hot-room safety, class preparation, studio etiquette, the tour, emergencies, about HOY.",
+  "story": "As a first-timer I watch the two-minute tour and know where to leave my shoes.",
+  "data": [
+   "content_articles",
+   "content_videos",
+   "categories",
+   "locales",
+   "read_receipts"
+  ],
+  "roles": [
+   "Public",
+   "Student",
+   "Staff"
+  ],
+  "layers": "RulesLibrary\n├ CategoryGrid\n│ ├ Hot room safety\n│ ├ Class preparation\n│ ├ Studio etiquette\n│ ├ Studio tour\n│ ├ Emergencies\n│ └ About HOY\n├ ArticleView\n│ ├ VideoPlayer (placeholder)\n│ └ Body + checklist\n└ RelatedLinks",
+  "rules": [
+   "Same CMS entries serve app and website; each has an EN and ES version.",
+   "First-class flow surfaces Class Preparation automatically.",
+   "Video slots are placeholders until the studio supplies footage.",
+   "Emergency article is never toggleable off."
+  ],
+  "api": [
+   "GET /content?category=",
+   "GET /content/:slug?locale=",
+   "POST /content/:slug/read"
+  ],
+  "states": [
+   "Video missing: textured placeholder with intended shot noted",
+   "Untranslated: falls back to Spanish with a note"
+  ],
+  "toggles": [
+   {
+    "label": "Video players",
+    "on": true
+   },
+   {
+    "label": "Read receipts",
+    "on": false
+   }
+  ]
+ },
+ "C-16": {
+  "key": "invite",
+  "code": "C-16",
+  "name": "Invite a guest",
+  "intent": "Make word of mouth mechanical: send a pass by WhatsApp, email or link, from a class or from its own page.",
+  "story": "As a member I invite a friend to Saturday's 9:30 and she books with the pass already applied.",
+  "data": [
+   "invites",
+   "guest_passes",
+   "referrals",
+   "attribution",
+   "credits"
+  ],
+  "roles": [
+   "Student",
+   "Front desk",
+   "Coordinator"
+  ],
+  "layers": "InviteGuest\n├ ContextCard (class or general)\n├ ChannelRow (WhatsApp / Email / Link)\n├ PassPreview\n├ SentList (status)\n└ RewardNote",
+  "rules": [
+   "One free trial pass per invited person, validated by phone or document.",
+   "Invites expire after 30 days; status tracked as sent, opened, booked, attended.",
+   "Referral reward credited to the inviter when the guest attends (configurable).",
+   "Invite entry points: class detail, booked class, home quick action, dedicated page."
+  ],
+  "api": [
+   "POST /invites",
+   "GET /me/invites",
+   "POST /invites/:id/resend",
+   "GET /referrals/config"
+  ],
+  "states": [
+   "Empty: channel row only",
+   "Pass used: row collapses to a result",
+   "Limit hit: explains the cap"
+  ],
+  "toggles": [
+   {
+    "label": "WhatsApp channel",
+    "on": true
+   },
+   {
+    "label": "Email channel",
+    "on": true
+   },
+   {
+    "label": "Copy link",
+    "on": true
+   },
+   {
+    "label": "Referral reward",
+    "on": false
+   }
+  ]
+ },
+ "C-17": {
+  "key": "gift",
+  "code": "C-17",
+  "name": "Gift card",
+  "intent": "Sell wellness as a present: amount, recipient, delivery date, message, design, then pay.",
+  "story": "As a customer I buy a gift voucher from $58.000 COP delivered on my mother's birthday.",
+  "data": [
+   "gift_cards",
+   "orders",
+   "payments",
+   "delivery_schedule",
+   "gift_designs",
+   "credit_ledger"
+  ],
+  "roles": [
+   "Public",
+   "Student",
+   "Front desk",
+   "Finance"
+  ],
+  "layers": "GiftCard\n├ HeroCard (design preview)\n├ AmountPicker (+ custom)\n├ RecipientFields\n├ DeliveryDate\n├ MessageField (250 max)\n├ DesignPicker ×4\n├ OrderSummary\n└ BuyCTA",
+  "rules": [
+   "Delivered by email and WhatsApp on the chosen date at 8:00 local time.",
+   "Redemption converts to credits on the recipient's account; never expires below the legal minimum.",
+   "Service fee, if any, is shown in the summary before payment.",
+   "Purchasable without an account."
+  ],
+  "api": [
+   "POST /gift-cards",
+   "GET /gift-designs",
+   "POST /gift-cards/:id/redeem",
+   "GET /gift-cards/:code"
+  ],
+  "states": [
+   "Custom amount: min/max validation",
+   "Delivery in the past: blocked inline",
+   "Success: preview of what the recipient receives"
+  ],
+  "toggles": [
+   {
+    "label": "Custom amount",
+    "on": true
+   },
+   {
+    "label": "Scheduled delivery",
+    "on": true
+   },
+   {
+    "label": "Service fee",
+    "on": false
+   }
+  ]
+ },
+ "C-18": {
+  "key": "teachers",
+  "code": "C-18",
+  "name": "Teacher gallery & profile",
+  "intent": "Let students choose a teacher, not just a time slot. Off the main flow, reachable from class detail and community.",
+  "story": "As a student I follow Lisa's schedule because her Yin class suits my back.",
+  "data": [
+   "teachers",
+   "teacher_photos",
+   "bios",
+   "certifications",
+   "class_assignments",
+   "ratings"
+  ],
+  "roles": [
+   "Public",
+   "Student",
+   "Staff"
+  ],
+  "layers": "TeacherGallery\n├ Grid → TeacherCard (portrait placeholder)\n└ TeacherProfile\n  ├ Portrait\n  ├ Bio + certifications\n  ├ Classes they teach\n  ├ Upcoming schedule\n  └ Aggregate rating (optional)",
+  "rules": [
+   "Teachers maintain their own photo, bio and certifications; the coordinator approves publishing.",
+   "Profiles are public for the website; ratings are hidden unless enabled.",
+   "Deep-linkable per teacher."
+  ],
+  "api": [
+   "GET /teachers",
+   "GET /teachers/:id",
+   "PATCH /teachers/me",
+   "GET /teachers/:id/classes"
+  ],
+  "states": [
+   "No portrait: textured placeholder marked 'teacher portrait'",
+   "Pending approval: staff-only draft badge"
+  ],
+  "toggles": [
+   {
+    "label": "Public ratings",
+    "on": false
+   },
+   {
+    "label": "Certifications block",
+    "on": true
+   },
+   {
+    "label": "Follow a teacher",
+    "on": false
+   }
+  ]
+ },
+ "C-19": {
+  "key": "profile",
+  "code": "C-19",
+  "name": "Profile, settings & membership",
+  "intent": "Everything about me and every switch I own, including where to leave a public review.",
+  "story": "As a student I change the app to English, update my WhatsApp number, and freeze my membership for a month.",
+  "data": [
+   "profiles",
+   "users",
+   "memberships",
+   "payment_methods",
+   "notification_prefs",
+   "consents",
+   "devices",
+   "locales"
+  ],
+  "roles": [
+   "Student",
+   "All roles (own profile)"
+  ],
+  "layers": "Profile\n├ Header (photo, name, membership badge)\n├ EditProfile\n├ MembershipRow → plan management\n├ PaymentMethods\n├ NotificationPrefs (push / email / WhatsApp)\n├ LanguageToggle (EN / ES)\n├ LeaveAReview → Google / Instagram\n├ Legal links\n└ SignOut / DeleteAccount",
+  "rules": [
+   "Language switch is instant and per account, not per device.",
+   "Notification preferences are per channel and per event type.",
+   "Account deletion honours Ley 1581 with a 30-day recovery window.",
+   "Review links open the studio's Google Business and Instagram."
+  ],
+  "api": [
+   "GET /me",
+   "PATCH /me",
+   "GET /me/notification-prefs",
+   "PATCH /me/notification-prefs",
+   "DELETE /me"
+  ],
+  "states": [
+   "Loading: header skeleton",
+   "Unverified WhatsApp: verify chip",
+   "Saving: inline confirmation"
+  ],
+  "toggles": [
+   {
+    "label": "Leave-a-review link",
+    "on": true
+   },
+   {
+    "label": "Freeze membership",
+    "on": true
+   },
+   {
+    "label": "Delete account in app",
+    "on": true
+   }
+  ]
+ },
+ "S-01": {
+  "key": "role",
+  "code": "S-01",
+  "name": "Role home & demo switcher",
+  "intent": "One app, six doors. The demo switcher in the toolbar swaps role so the whole system can be reviewed as any user.",
+  "story": "As a reviewer I switch to Front desk and see the door queue instead of the student home.",
+  "data": [
+   "users",
+   "roles",
+   "permissions",
+   "role_assignments",
+   "audit_log"
+  ],
+  "roles": [
+   "Super admin",
+   "Coordinator",
+   "Front desk",
+   "Teacher",
+   "Finance",
+   "Student"
+  ],
+  "layers": "RoleHome\n├ RoleBadge\n├ RoleNav (per permission set)\n├ TeacherToggle (teach ⇄ practise)\n└ AuditNotice",
+  "rules": [
+   "Teachers hold both a teacher and a student context and can switch freely.",
+   "Permissions are additive per role; Super admin implies all.",
+   "Every staff action is written to the audit log with actor, target and timestamp.",
+   "Demo switching exists in the prototype only, never in production."
+  ],
+  "api": [
+   "GET /me/roles",
+   "POST /session/context",
+   "GET /permissions/matrix"
+  ],
+  "states": [
+   "No role assigned: read-only student view",
+   "Context switch: full re-route"
+  ],
+  "toggles": [
+   {
+    "label": "Teacher dual context",
+    "on": true
+   },
+   {
+    "label": "Demo role switcher",
+    "on": true
+   }
+  ]
+ },
+ "S-02": {
+  "key": "door",
+  "code": "S-02",
+  "name": "Front desk check-in",
+  "intent": "The desk view during the ten minutes before class: who is expected, who has arrived, scan or search, and sell a drop-in on the spot.",
+  "story": "As front desk I scan twelve people in four minutes and settle two cash payments.",
+  "data": [
+   "classes",
+   "bookings",
+   "checkins",
+   "waitlists",
+   "orders",
+   "payments",
+   "face_templates"
+  ],
+  "roles": [
+   "Front desk",
+   "Coordinator",
+   "Super admin"
+  ],
+  "layers": "DoorBoard\n├ ClassSelector\n├ MemberSearch (name, phone, email, document)\n├ TodayStrip (now / next / later)\n├ TeachersInToday\n├ RosterList\n│ ├ Expected\n│ ├ Checked in\n│ └ Waitlist\n├ ManualSearch\n└ QuickSell (drop-in, cash)",
+  "rules": [
+   "There is no scanner: students check in at the desk by name and teachers mark attendance, so the roster has one source of truth.",
+   "Waitlist promotion happens from this screen when a no-show is confirmed at T+5m.",
+   "Cash settles the pending order and prints or sends the receipt.",
+   "Health flags show as a discreet marker for the teacher."
+  ],
+  "api": [
+   "GET /classes/:id/roster",
+   "POST /checkins/scan",
+   "POST /waitlist/:id/promote",
+   "POST /orders/:id/settle"
+  ],
+  "states": [
+   "Scanner unavailable: manual search promoted",
+   "Duplicate scan: 'already checked in'",
+   "Offline: queue check-ins locally and sync"
+  ],
+  "toggles": [
+   {
+    "label": "Member search",
+    "on": true
+   },
+   {
+    "label": "Quick-sell drop-in",
+    "on": true
+   },
+   {
+    "label": "Auto waitlist promotion",
+    "on": true
+   }
+  ]
+ },
+ "S-03": {
+  "key": "teach",
+  "code": "S-03",
+  "name": "Teacher app",
+  "intent": "What a teacher needs between classes: schedule, roster and attendance, their own content, reviews, and what they have been paid.",
+  "story": "As a teacher I mark attendance from the mat, then check last fortnight's payroll.",
+  "data": [
+   "teachers",
+   "classes",
+   "attendance",
+   "payroll_runs",
+   "payroll_lines",
+   "reviews",
+   "class_descriptions",
+   "teacher_photos"
+  ],
+  "roles": [
+   "Teacher",
+   "Coordinator",
+   "Finance (payroll)",
+   "Super admin"
+  ],
+  "layers": "TeacherHome\n├ NextClassCard\n├ RosterSheet → attendance marks\n├ ScheduleList\n├ SubmitDescription (approval flow)\n├ ReviewsPanel (aggregate + named)\n├ PayrollList → PayslipDetail\n└ ProfileEditor (photo, bio)",
+  "rules": [
+   "Attendance can be marked from T−15m to T+2h; later needs the coordinator.",
+   "Descriptions submitted by teachers go to the coordinator for approval before publishing.",
+   "Named reviews visible only when the student did not mark them anonymous or private.",
+   "Payroll shows classes taught, rate, substitutions and adjustments; the amount is read-only."
+  ],
+  "api": [
+   "GET /teachers/me/classes",
+   "POST /classes/:id/attendance",
+   "GET /teachers/me/payroll",
+   "POST /class-descriptions",
+   "GET /teachers/me/reviews"
+  ],
+  "states": [
+   "No class today: schedule promoted",
+   "Attendance locked: read-only with reason",
+   "Payroll pending: 'run closes on the 15th'"
+  ],
+  "toggles": [
+   {
+    "label": "Teacher payroll view",
+    "on": true
+   },
+   {
+    "label": "Named reviews",
+    "on": true
+   },
+   {
+    "label": "Teacher-submitted descriptions",
+    "on": true
+   }
+  ]
+ },
+ "M-01": {
+  "key": "admin",
+  "code": "M-01",
+  "name": "Admin dashboard & feature switches",
+  "intent": "The control room: the numbers that matter this and the switch panel that turns pages, steps and features on or off across the app, the website and the staff tools.",
+  "story": "As super admin I turn the waiver step off for a pop-up event and the sign-up flow drops from three steps to two.",
+  "data": [
+   "feature_flags",
+   "pages",
+   "audiences",
+   "metrics_daily",
+   "revenue",
+   "occupancy",
+   "retention",
+   "audit_log"
+  ],
+  "roles": [
+   "Super admin",
+   "Coordinator (subset)",
+   "Finance (metrics)"
+  ],
+  "layers": "AdminDashboard\n├ Sidebar (sections)\n├ KPIRow ×4\n├ OccupancyChart\n├ FeatureTable\n│ ├ Page / feature\n│ ├ Scope (app / web / staff)\n│ ├ Audience\n│ └ Toggle\n└ AuditTrail",
+  "rules": [
+   "Every flag is scoped: app, website, staff, or all; audience can be all, members, staff, or a test group.",
+   "Turning a step off removes it from the flow immediately — no release needed.",
+   "Emergency and legal pages cannot be disabled.",
+   "Each change writes actor, previous value and timestamp to the audit log.",
+   "Desktop-first layout; collapses to a stacked list on tablet and phone."
+  ],
+  "api": [
+   "GET /admin/flags",
+   "PATCH /admin/flags/:key",
+   "GET /admin/metrics?range=",
+   "GET /admin/audit"
+  ],
+  "states": [
+   "Loading: KPI skeletons",
+   "Flag conflict: dependency warning before saving",
+   "No permission: switches render read-only"
+  ],
+  "toggles": [
+   {
+    "label": "KPI row",
+    "on": true
+   },
+   {
+    "label": "Occupancy chart",
+    "on": true
+   },
+   {
+    "label": "Flag dependency checks",
+    "on": true
+   }
+  ]
+ },
+ "M-02": {
+  "key": "cms",
+  "code": "M-02",
+  "name": "Content: classes, teachers, schedule, pricing",
+  "intent": "The single source of truth behind everything: class types, the schedule, teacher profiles, pricing and content — feeding the app, the staff tools and the public website.",
+  "story": "As coordinator I add a Thursday 6:30 AM recurring Hot Vinyasa with Alex, and it appears everywhere at once.",
+  "data": [
+   "class_types",
+   "classes",
+   "schedules",
+   "recurrence_rules",
+   "teachers",
+   "rooms",
+   "plans",
+   "packages",
+   "prices",
+   "content_articles",
+   "media"
+  ],
+  "roles": [
+   "Coordinator",
+   "Super admin",
+   "Teacher (own profile only)",
+   "Finance (prices, read)"
+  ],
+  "layers": "CMS\n├ EntityTabs (Classes / Teachers / Schedule / Pricing / Content)\n├ ListView (search, filter, bulk)\n├ EditDrawer\n│ ├ Fields\n│ ├ Media (photo placeholders)\n│ ├ Localisation EN / ES\n│ └ Publish state\n└ PreviewPane (app / web)",
+  "rules": [
+   "Every content entity has EN and ES fields; publishing requires Spanish, English optional with fallback.",
+   "Draft → review → published, with scheduled publishing.",
+   "Teacher edits to their own profile enter review rather than publishing directly.",
+   "Price changes never alter existing subscriptions retroactively.",
+   "Media library holds photos and video; placeholders are flagged until real assets land."
+  ],
+  "api": [
+   "GET /admin/:entity",
+   "POST /admin/:entity",
+   "PATCH /admin/:entity/:id",
+   "POST /admin/media",
+   "POST /admin/:entity/:id/publish"
+  ],
+  "states": [
+   "Loading: table skeleton",
+   "Validation: field-level errors in the drawer",
+   "Conflict: concurrent edit warning",
+   "Empty: 'Create the first class type'"
+  ],
+  "toggles": [
+   {
+    "label": "Scheduled publishing",
+    "on": true
+   },
+   {
+    "label": "Teacher self-service profiles",
+    "on": true
+   },
+   {
+    "label": "Website preview pane",
+    "on": true
+   }
+  ]
+ },
+ "M-03": {
+  "key": "tables",
+  "code": "M-03",
+  "name": "Tables & relations",
+  "intent": "The data model in one place, so developers and the studio agree on what exists: entities, keys, relations and cardinality.",
+  "story": "As a developer I check whether a credit is tied to a booking or to an order before writing the refund logic.",
+  "data": [
+   "schema_metadata",
+   "migrations",
+   "indexes",
+   "row_counts"
+  ],
+  "roles": [
+   "Super admin",
+   "Developer",
+   "Finance (read)"
+  ],
+  "layers": "DataModel\n├ EntityGrid → EntityCard\n│ ├ Primary key\n│ ├ Fields + types\n│ └ Relations in / out\n├ RelationMap (cardinality)\n└ MigrationLog",
+  "rules": [
+   "users 1—1 profiles, 1—N bookings, 1—N payments, 1—N consents.",
+   "classes N—1 class_types, N—1 teachers, N—1 rooms; schedules 1—N classes via recurrence_rules.",
+   "bookings 1—0..1 credit_ledger entries; orders 1—N payments; payments 1—0..1 refunds.",
+   "Soft deletes everywhere financial; hard deletes only for biometric templates.",
+   "All money in COP minor units; all timestamps UTC with America/Bogota display."
+  ],
+  "api": [
+   "GET /admin/schema",
+   "GET /admin/schema/:entity",
+   "GET /admin/migrations"
+  ],
+  "states": [
+   "Loading: grid skeleton",
+   "Unmigrated change: amber badge on the entity"
+  ],
+  "toggles": [
+   {
+    "label": "Show row counts",
+    "on": true
+   },
+   {
+    "label": "Show migration log",
+    "on": true
+   }
+  ]
+ },
+ "M-04": {
+  "key": "email",
+  "code": "M-04",
+  "name": "Transactional email designs",
+  "intent": "Every automated email as a real design, editable and previewable, in both languages, with the trigger and the deep link it carries.",
+  "story": "As coordinator I edit the class-cancelled email, preview it in Spanish, and send myself a test.",
+  "data": [
+   "email_templates",
+   "template_versions",
+   "triggers",
+   "locales",
+   "send_log",
+   "deliverability_stats"
+  ],
+  "roles": [
+   "Coordinator",
+   "Super admin",
+   "Finance (receipts)"
+  ],
+  "layers": "EmailStudio\n├ TemplateList (trigger, locale, status)\n├ Canvas (rendered email)\n├ VariablePanel ({{first_name}}, {{class}}, {{time}})\n├ LocaleSwitch EN / ES\n└ TestSend + SendLog",
+  "rules": [
+   "Templates: booking confirmed, receipt, class cancelled, waitlist promoted, class reminder, how to prepare, birthday, membership renewal, payment failed, gift card delivered, invite.",
+   "Every template deep-links into the matching app screen or website page.",
+   "Receipts include the DIAN electronic invoice reference.",
+   "Version history with rollback; a test send never touches the real send log."
+  ],
+  "api": [
+   "GET /admin/email-templates",
+   "PATCH /admin/email-templates/:id",
+   "POST /admin/email-templates/:id/test",
+   "GET /admin/send-log"
+  ],
+  "states": [
+   "Unsaved changes: sticky save bar",
+   "Missing translation: blocked from activation",
+   "Provider error: banner with retry"
+  ],
+  "toggles": [
+   {
+    "label": "Birthday email",
+    "on": true
+   },
+   {
+    "label": "How-to-prepare email",
+    "on": true
+   },
+   {
+    "label": "Membership renewal notice",
+    "on": true
+   },
+   {
+    "label": "Win-back sequence",
+    "on": false
+   }
+  ]
+ },
+ "M-05": {
+  "key": "wa",
+  "code": "M-05",
+  "name": "WhatsApp automations",
+  "intent": "The channel the studio actually lives on: approved template messages, their triggers, timing and quiet hours.",
+  "story": "As coordinator I see that the class-cancelled template fires immediately and includes a one-tap rebooking link.",
+  "data": [
+   "wa_templates",
+   "wa_approvals",
+   "automations",
+   "triggers",
+   "quiet_hours",
+   "opt_ins",
+   "message_log"
+  ],
+  "roles": [
+   "Coordinator",
+   "Super admin",
+   "Front desk (manual send)"
+  ],
+  "layers": "WhatsAppStudio\n├ AutomationList (trigger → template → delay)\n├ PhonePreview (bubble render)\n├ TemplateEditor + variables\n├ ApprovalStatus (Meta)\n└ MessageLog",
+  "rules": [
+   "Only opt-in numbers receive automations; opt-out is honoured immediately and permanently.",
+   "Templates require Meta approval; status shown per template and per locale.",
+   "Quiet hours 9pm–7am — non-urgent messages queue until morning; cancellations override.",
+   "Automations: booking confirmed, reminder T−2h, class cancelled, waitlist promoted, birthday, receipt, membership expiring, feedback request, invite sent.",
+   "Every send is logged with delivery and read state."
+  ],
+  "api": [
+   "GET /admin/wa/automations",
+   "PATCH /admin/wa/automations/:id",
+   "GET /admin/wa/templates",
+   "POST /admin/wa/test",
+   "GET /admin/wa/log"
+  ],
+  "states": [
+   "Template pending approval: automation disabled with reason",
+   "Rate limited: queue depth shown",
+   "Opt-out: preview marked undeliverable"
+  ],
+  "toggles": [
+   {
+    "label": "Class reminder T−2h",
+    "on": true
+   },
+   {
+    "label": "Birthday message",
+    "on": true
+   },
+   {
+    "label": "Feedback request",
+    "on": true
+   },
+   {
+    "label": "Quiet hours",
+    "on": true
+   }
+  ]
+ },
+ "D-01": {
+  "key": "ds",
+  "code": "D-01",
+  "name": "Materials, tokens & physicality",
+  "intent": "The material layer of the system: textures, surfaces, elevation and corner radii, with a switch between the styled build and the functional wireframe.",
+  "story": "As a designer I fill a card with Warm Stone and set Medium Elevation, and every instance updates.",
+  "data": [
+   "design_tokens",
+   "materials",
+   "textures",
+   "shadow_scale",
+   "radius_scale",
+   "type_scale",
+   "themes"
+  ],
+  "roles": [
+   "Designer",
+   "Developer",
+   "Super admin"
+  ],
+  "layers": "MaterialsPage\n├ TexturePalette (sandstone, warm stone, clay, linen, travertine)\n├ SurfaceScale (card, elevated, pressed, soft)\n├ AccentSwatches (sage, terracotta, ochre, deep brown)\n├ ShadowScale ×3\n├ RadiusScale 8/16/24/32\n├ TypeScale (Playfair / Jost / Quicksand)\n└ ThemeMatrix (light / dark × styled / wireframe)",
+  "rules": [
+   "Physicality comes from three layers, always together: an inset top highlight, a tight contact shadow, and a wide soft shadow.",
+   "Textures are fills, not images per component — one texture token per surface role.",
+   "Wireframe mode strips texture, colour and shadow but keeps layout and hierarchy.",
+   "Dark mode re-maps surfaces, never inverts the accents.",
+   "Minimum contrast 4.5:1 for body text on any material."
+  ],
+  "api": [
+   "GET /design/tokens",
+   "GET /design/tokens/:theme"
+  ],
+  "states": [
+   "Styled × light",
+   "Styled × dark",
+   "Wireframe × light",
+   "Wireframe × dark"
+  ],
+  "toggles": [
+   {
+    "label": "Textures",
+    "on": true
+   },
+   {
+    "label": "Physical shadows",
+    "on": true
+   },
+   {
+    "label": "Dark theme",
+    "on": true
+   },
+   {
+    "label": "Wireframe mode",
+    "on": true
+   }
+  ]
+ },
+ "D-02": {
+  "key": "atoms",
+  "code": "D-02",
+  "name": "Component library — atomic",
+  "intent": "Every component in the product, organised as atoms, molecules, organisms, templates and pages, so a developer can build a screen without inventing anything.",
+  "story": "As a developer I need the class row: I find it under organisms with its states and props.",
+  "data": [
+   "components",
+   "variants",
+   "props",
+   "usage_examples",
+   "a11y_notes"
+  ],
+  "roles": [
+   "Designer",
+   "Developer",
+   "Super admin"
+  ],
+  "layers": "ComponentLibrary\n├ Atoms (button, chip, input, toggle, badge, avatar, icon, divider)\n├ Molecules (field+label, filter chip row, capacity meter, countdown, stat, price row)\n├ Organisms (class row, class card, teacher card, roster row, plan card, nav bar, top bar, spec panel)\n├ Templates (phone screen, desktop admin, legal doc, email)\n└ Pages (the 30 screens in this canvas)",
+  "rules": [
+   "RULE: the library is a living inventory. Any new element, variant or state introduced anywhere in the system is added here in the same turn, under its atomic tier, with its states — and retired components are removed and noted in the changelog. No component may exist in a screen without a library entry, and no entry may exist without a screen that uses it.",
+   "Atoms carry no business logic and no layout margin — spacing belongs to the parent.",
+   "Every component documents its states: default, hover, active, focus, disabled, loading, empty, error.",
+   "Touch targets never below 44px; focus rings visible in both themes.",
+   "Naming matches the code: PascalCase components, kebab-case tokens."
+  ],
+  "api": [
+   "GET /design/components",
+   "GET /design/components/:name"
+  ],
+  "states": [
+   "Default / hover / active / focus / disabled / loading / empty / error"
+  ],
+  "toggles": [
+   {
+    "label": "Show code snippets",
+    "on": false
+   },
+   {
+    "label": "Show accessibility notes",
+    "on": true
+   }
+  ]
+ },
+ "K-01": {
+  "key": "plan",
+  "code": "K-01",
+  "name": "Plan, kanban & changelog",
+  "intent": "The knowledgebase: the build plan, the board tracking it, and the log of every change with the reasoning behind it.",
+  "story": "As the studio owner I read why the waiver became a toggleable step rather than a required one.",
+  "data": [
+   "plan_phases",
+   "tasks",
+   "task_status",
+   "changelog_entries",
+   "decisions",
+   "prompt_notes",
+   "versions"
+  ],
+  "roles": [
+   "Super admin",
+   "Designer",
+   "Developer",
+   "Studio owner"
+  ],
+  "layers": "Knowledgebase\n├ PlanPhases (1–6)\n├ KanbanBoard (To do / In progress / Done)\n├ Changelog (version, date, change, reason)\n├ DecisionLog (intent → decision → consequence)\n└ VersionSwitcher",
+  "rules": [
+   "Documentation rule: every change is logged with the prompt intent, the decision taken, the files touched and the version.",
+   "Decisions record the alternative rejected, not only the choice made.",
+   "The board is updated in the same turn as the work, never afterwards.",
+   "Versions are switchable so any earlier state stays reviewable."
+  ],
+  "api": [
+   "GET /kb/plan",
+   "GET /kb/tasks",
+   "POST /kb/changelog",
+   "GET /kb/versions"
+  ],
+  "states": [
+   "Current version",
+   "Historic version (read-only banner)"
+  ],
+  "toggles": [
+   {
+    "label": "Kanban board",
+    "on": true
+   },
+   {
+    "label": "Decision log",
+    "on": true
+   },
+   {
+    "label": "Version switcher",
+    "on": true
+   }
+  ]
+ }
+}
