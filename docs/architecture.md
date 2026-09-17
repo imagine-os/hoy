@@ -7,9 +7,11 @@ entry point for testers.
 
 ## Module registry
 `src/modules/<name>/index.ts` exports `{ routes: RouteDef[], strings: StringTable }`.
-`src/app/registry.ts` collects all modules with `import.meta.glob('../modules/*/index.ts', { eager: true })`,
-merges their strings into the i18n dictionary and mounts their routes. Adding a page never touches a
-shared file.
+`src/app/registry.ts` collects all modules with `import.meta.glob('../modules/*/index.ts', { eager: true })`
+and exposes them through **lazy getters** `getRoutes()` / `getStrings()` / `getModules()`. They are lazy
+because modules (dev tools, shells) import the registry too; reading `m.routes` at module-evaluation time
+would hit an ESM cycle (TDZ). Call the getters inside functions or components, never at a module's top
+level. Adding a page never touches a shared file.
 
 ```ts
 type RouteDef = {
@@ -19,6 +21,7 @@ type RouteDef = {
   roles: Role[];                // who may enter; 'public' = anyone
   surface: 'public' | 'customer' | 'teacher' | 'staff' | 'admin' | 'dev' | 'docs';
   layout?: 'mobile' | 'desktop' | 'auto';
+  nav?: { labelKey: string; icon: string; order: number; group?: string }; // shows in the shell nav
 };
 ```
 

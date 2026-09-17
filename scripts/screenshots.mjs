@@ -27,7 +27,7 @@ function routes() {
   for (const mod of readdirSync(new URL('../src/modules', import.meta.url))) {
     let src;
     try { src = readFileSync(new URL(`../src/modules/${mod}/index.ts`, import.meta.url), 'utf8'); } catch { continue; }
-    for (const m of src.matchAll(/path:\s*'([^']+)'[^\n]*?(?:canvasSpecs\['([^']+)'\]|spec:\s*(\w+))/g)) {
+    for (const m of src.matchAll(/path:\s*'([^']+)'[^\n]*?(?:spec:\s*canvasSpecs\['([^']+)'\]|spec:\s*(\w+))/g)) {
       const path = m[1];
       let code = m[2] ?? m[3] ?? 'UNKNOWN';
       if (!specCodes[code] && !m[2]) code = ({ hubSpec: 'HUB-01', noAccessSpec: 'E-05', docsSpec: 'K-02', manualSpec: 'K-03', specsIndexSpec: 'D-03', layoutEditorSpec: 'D-04' })[code] ?? codeFromSite(src, code) ?? code;
@@ -66,12 +66,14 @@ async function main() {
           localStorage.setItem('hoyos.session', JSON.stringify({ userId: 'usr_super', devMode: true, viewAs: null }));
         }, [lang, theme]);
         const page = await ctx.newPage();
+        await page.route(/^https?:\/\/(?!localhost)/, (r) => r.abort()); // offline-safe: no fonts/CDNs through the proxy
         const errors = [];
         page.on('pageerror', (e) => errors.push(e.message));
         page.on('console', (m) => { if (m.type() === 'error' && !NOISE.test(m.text())) errors.push(m.text()); });
         try {
-          await page.goto(`${BASE}${url}`, { waitUntil: 'networkidle', timeout: 20000 });
-          await page.waitForTimeout(400);
+          await page.goto(`${BASE}${url}`, { waitUntil: 'load', timeout: 15000 });
+          await page.waitForSelector('#root > *', { timeout: 8000 });
+          await page.waitForTimeout(350);
           if (!SMOKE) {
             const dir = new URL(`../docs/screenshots/${code.replace(/[^\w-]/g, '_')}/`, import.meta.url);
             mkdirSync(dir, { recursive: true });
