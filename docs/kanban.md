@@ -31,6 +31,9 @@ _Updated every turn. Codes reference `src/specs/canvasSpecs.ts` and the module `
 - Ops manual: replace `[screenshot: …]` placeholders (12 per language) with the real captures now in `docs/screenshots/` (K-03)
 - Enrich `docs/pages/<code>.md` (generated skeletons) with the hand-written "Real vs mock" and section notes per page
 
+### Repo hygiene
+- empty10 placeholder: awaiting Justin's decision (reset to placeholder or delete)
+
 ## Doing
 - (none — 0006 visual fidelity pass closed)
 

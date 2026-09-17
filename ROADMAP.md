@@ -59,6 +59,13 @@ owner del estudio. Está escrito para que otra cuenta de Claude (o una persona) 
 - Depends on: **P1 data shapes stabilising** (schema frozen; every page reads through the provider).
 - Parallelizable with: P5. Can start the SupabaseProvider skeleton and RLS drafts while P1 finishes,
   but do not cut over `DataContext.tsx` until the customer and staff passes are merged.
+- Input: `reference/alt-build-empty10/supabase/migrations/0001_init.sql` — a generated migration
+  salvaged from the parallel `imagine-os/empty10` build (53 tables, RLS on all of them, 188 per-table
+  policies, `updated_at` triggers, an index per FK). Use it as the reference for RLS policy shape,
+  naming and per-role coverage when writing ours, and `reference/alt-build-empty10/tools/gen-supabase.mjs`
+  as the reference for generating policies from `src/data/schema.ts` instead of hand-writing them.
+  It is frozen reference material, not a schema to adopt — `supabase/schema.sql` stays the target.
+  See `reference/alt-build-empty10/README.md` and `docs/changelog/0009-salvage-empty10.md`.
 
 ### P3 — Wompi payments, then payroll
 - Scope: Wompi checkout (C-04, S-04, C-17, C-23), webhooks → `payments`/`orders` (E-02 declined path),
