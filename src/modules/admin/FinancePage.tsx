@@ -4,7 +4,7 @@ import { useI18n } from '../../i18n/I18nProvider';
 import { useSession } from '../../auth/SessionProvider';
 import { useData, useTable } from '../../data/DataContext';
 import type { BaseRow, PaymentRow, PlanRow } from '../../data/schema';
-import { formatCOP, formatDateTime } from '../../i18n/format';
+import { formatCOP, formatDate, formatDateTime } from '../../i18n/format';
 import { StatTile } from '../../components/molecule/StatTile/StatTile';
 import { Card } from '../../components/molecule/Card/Card';
 import { Button } from '../../components/atom/Button/Button';
@@ -14,14 +14,16 @@ import { BarList } from '../../components/molecule/BarList/BarList';
 import { DataTable, type DataTableColumn } from '../../components/organism/DataTable/DataTable';
 import { EmptyState } from '../../components/molecule/EmptyState/EmptyState';
 import { useAudit } from '../staff/audit';
+import { usePayroll } from './payouts';
 import { usePeople } from '../staff/people';
 import { useSettings } from './settings';
 import './admin.css';
 
 interface InvoiceRow extends BaseRow { payment_id: string; number: string; subtotal: number; tax: number; total: number; issued_at: string; dian_cufe: string | null }
-type Range = '7d' | '30d' | '90d' | 'all';
+// Colombian studios settle biweekly, so 15 days sits between the week and the month.
+type Range = '7d' | '15d' | '30d' | '90d' | 'all';
 
-/** M-09 — revenue by product and method, pending, refunds, Wompi payouts placeholder, invoices with the DIAN reference. */
+/** M-09 — revenue by product and method, pending, refunds, the teacher-payroll roll-up (M-09a) and invoices with the DIAN reference. */
 export function FinancePage() {
   const { t, lang, bi } = useI18n();
   const data = useData();
@@ -33,6 +35,8 @@ export function FinancePage() {
   const { rows: plans } = useTable<PlanRow>('plans');
   const { byId } = usePeople();
   const [range, setRange] = useState<Range>('30d');
+  const [invStatus, setInvStatus] = useState<'all' | 'approved' | 'pending' | 'refunded'>('all');
+  const { runs, linesOf } = usePayroll();
   const since = range === 'all' ? 0 : Date.now() - Number(range.replace('d', '')) * 86400e3;
   const inRange = useMemo(() => payments.filter((p) => new Date(p.paid_at ?? p.created_at).getTime() >= since), [payments, since]);
   const approved = inRange.filter((p) => p.status === 'approved');
@@ -45,6 +49,13 @@ export function FinancePage() {
   const wompiShare = revenue ? Math.round((approved.filter((p) => p.provider === 'wompi').reduce((a, p) => a + p.amount, 0) / revenue) * 100) : 0;
   const canRefund = can('payments.refund');
   const invByPayment = new Map(invoices.map((i) => [i.payment_id, i]));
+  // M-09a payroll roll-up: the three numbers that used to be an em dash.
+  const nextRun = runs.find((r) => r.status === 'draft');
+  const pendingRuns = runs.filter((r) => r.status === 'approved');
+  const quarterAgo = useMemo(() => { const d = new Date(); d.setMonth(d.getMonth() - 3); return d; }, []);
+  const paidQuarter = runs.filter((r) => r.status === 'paid' && r.paid_at && new Date(r.paid_at) >= quarterAgo);
+  const payStatusOf = new Map(payments.map((p) => [p.id, p.status]));
+  const invoicesInRange = invoices.filter((i) => new Date(i.issued_at).getTime() >= since && (invStatus === 'all' || payStatusOf.get(i.payment_id) === invStatus));
 
   const refund = async (p: PaymentRow) => {
     if (!canRefund || !confirm(t('admin.finance.refund.confirm', { amount: formatCOP(p.amount, lang) }))) return;
@@ -75,7 +86,7 @@ export function FinancePage() {
     <div className="stack">
       <div className="page-head">
         <div><h1>{t('admin.finance.title')}</h1><p className="muted small">{t('admin.finance.subtitle')}</p></div>
-        <div className="row" role="tablist">{(['7d', '30d', '90d', 'all'] as Range[]).map((r) => <Chip key={r} selected={range === r} onClick={() => setRange(r)}>{t(`admin.finance.range.${r}`)}</Chip>)}</div>
+        <div className="row" role="tablist">{(['7d', '15d', '30d', '90d', 'all'] as Range[]).map((r) => <Chip key={r} selected={range === r} onClick={() => setRange(r)}>{t(`admin.finance.range.${r}`)}</Chip>)}</div>
       </div>
       {loading && payments.length === 0 && <EmptyState tone="loading" title={t('core.common.loading')} />}
       <div className="grid grid-4">
@@ -88,21 +99,28 @@ export function FinancePage() {
         <Card title={t('admin.finance.byProduct')}><BarList items={byProduct} format={(v) => formatCOP(v, lang)} emptyText={t('admin.finance.emptyRange')} /></Card>
         <Card title={t('admin.finance.byMethod')}><BarList items={byMethod} format={(v) => formatCOP(v, lang)} emptyText={t('admin.finance.emptyRange')} /></Card>
       </div>
-      <Card tone="muted" title={t('admin.finance.payouts')} eyebrow="Wompi" actions={<Badge tone={settings.integrations.wompi === 'connected' ? 'success' : 'warn'}>{settings.integrations.wompi}</Badge>}>
+      <Card tone="muted" title={t('admin.finance.payouts')} eyebrow="M-09a"
+        actions={<div className="row wrap"><Badge tone="warn">{t('admin.payouts.simulated')}</Badge><Link to="/admin/finance/payouts"><Button size="sm" variant="ghost">{t('admin.finance.payouts.open')}</Button></Link></div>}>
         <div className="grid grid-3">
-          <StatTile label={t('admin.finance.payouts.next')} value="—" hint={t('admin.finance.payouts.placeholder')} />
-          <StatTile label={t('admin.finance.payouts.settled')} value={formatCOP(approved.filter((p) => p.provider === 'wompi').reduce((a, p) => a + p.amount, 0), lang)} hint={t('admin.finance.payouts.settled.hint')} />
-          <StatTile label={t('admin.finance.payouts.manual')} value={formatCOP(approved.filter((p) => p.provider === 'manual').reduce((a, p) => a + p.amount, 0), lang)} hint={t('admin.finance.payouts.manual.hint')} />
+          <StatTile label={t('admin.finance.payouts.next')} value={formatCOP(nextRun?.total ?? 0, lang)} hint={nextRun ? t('admin.finance.payouts.next.hint', { period: formatDate(`${nextRun.period_start}T12:00:00`, lang, { month: 'long' }), n: new Set(linesOf(nextRun.id).map((l) => l.teacher_id)).size }) : t('admin.finance.payouts.next.none')} />
+          <StatTile label={t('admin.finance.payouts.pending')} value={formatCOP(pendingRuns.reduce((a, r) => a + r.total, 0), lang)} hint={t('admin.finance.payouts.pending.hint', { n: pendingRuns.length })} trend={pendingRuns.length ? 'up' : 'flat'} />
+          <StatTile label={t('admin.finance.payouts.quarter')} value={formatCOP(paidQuarter.reduce((a, r) => a + r.total, 0), lang)} hint={t('admin.finance.payouts.quarter.hint', { n: paidQuarter.length })} />
         </div>
-        <p className="xs muted" style={{ marginTop: 12 }}>{t('admin.finance.payouts.body')} <Link to="/admin/settings">{t('core.nav.settings')}</Link></p>
+        <p className="xs muted" style={{ marginTop: 12 }}>{t('admin.finance.payouts.body')} <Link to="/admin/settings/payments">{t('core.nav.settings')}</Link></p>
       </Card>
       <section className="stack-sm">
         <div className="row-between wrap"><div className="eyebrow">{t('admin.finance.payments')}</div>{!canRefund && <span className="xs muted">{t('admin.finance.refund.noPermission')}</span>}</div>
         <DataTable columns={payCols} rows={inRange} rowKey={(p) => p.id} dense pageSize={25} emptyText={t('admin.finance.emptyRange')} />
       </section>
       <section className="stack-sm">
-        <div className="row-between wrap"><div className="eyebrow">{t('admin.finance.invoices')}</div><span className="xs muted">{settings.tax.eInvoicing ? t('admin.finance.einv.on') : t('admin.finance.einv.off')}</span></div>
-        <DataTable columns={invCols} rows={invoices.filter((i) => new Date(i.issued_at).getTime() >= since)} rowKey={(i) => i.id} dense pageSize={25} emptyText={t('admin.finance.emptyRange')} />
+        <div className="row-between wrap">
+          <div className="eyebrow">{t('admin.finance.invoices')}</div>
+          <div className="row wrap" role="tablist" aria-label={t('admin.finance.invFilter')}>
+            {(['all', 'approved', 'pending', 'refunded'] as const).map((s2) => <Chip key={s2} selected={invStatus === s2} onClick={() => setInvStatus(s2)}>{t(`admin.finance.invFilter.${s2}`)}</Chip>)}
+            <span className="xs muted">{settings.tax.eInvoicing ? t('admin.finance.einv.on') : t('admin.finance.einv.off')}</span>
+          </div>
+        </div>
+        <DataTable columns={invCols} rows={invoicesInRange} rowKey={(i) => i.id} dense pageSize={25} emptyText={t('admin.finance.emptyRange')} />
       </section>
     </div>
   );
