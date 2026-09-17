@@ -18,7 +18,7 @@ export interface EmptyStateProps {
 export function EmptyState({ title, body, icon, action, secondary, tone = 'empty', compact = false }: EmptyStateProps) {
   return (
     <div className={`emptystate emptystate-${tone} ${compact ? 'is-compact' : ''}`} role={tone === 'error' ? 'alert' : 'status'} aria-busy={tone === 'loading' || undefined}>
-      <span className="emptystate-icon" aria-hidden>{icon ?? (tone === 'error' ? '!' : tone === 'loading' ? <span className="emptystate-spinner" /> : '·')}</span>
+      <span className="emptystate-icon" aria-hidden>{icon ?? (tone === 'error' ? '!' : tone === 'loading' ? <span className="emptystate-spinner" /> : '○')}</span>
       <div className="emptystate-title">{title}</div>
       {body && <p className="emptystate-body small muted">{body}</p>}
       {(action || secondary) && <div className="emptystate-action">{action}{secondary}</div>}

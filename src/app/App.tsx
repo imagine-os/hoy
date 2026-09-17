@@ -9,6 +9,7 @@ import { DevTools } from '../dev/DevTools';
 import { getRoutes, getStrings } from './registry';
 import { withShell } from './shells';
 import { ScrollToTop } from './ScrollToTop';
+import { RouteTitle } from './RouteTitle';
 import { publishManifest } from './manifest';
 import { PolicySync } from '../modules/customer/policy';
 
@@ -24,6 +25,7 @@ export function App() {
             <PolicySync />
             <HashRouter>
               <ScrollToTop />
+              <RouteTitle routes={allRoutes} />
               {/* The one boundary every lazily-loaded module resolves under (src/app/lazyPage.ts). */}
               <Suspense fallback={<div className="lazy-fallback" aria-busy="true" />}>
                 <Routes>

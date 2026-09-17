@@ -26,7 +26,7 @@ export default defineMeta({
     { name: 'onSlot', type: '(roomId, hour) => void', description: { es: 'Clic en una celda vacía: propone una hora de inicio.', en: 'Click on an empty cell: proposes a start time.' } },
     { name: 'now', type: 'Date | null', description: { es: 'Dibuja la línea de "ahora" cuando el día es hoy.', en: 'Draws the "now" line when the day is today.' } },
   ],
-  states: ['class (movement tint)', 'confirmed (event / rental / private / maintenance material)', 'held (dashed)', 'cancelled (faded, struck)', 'done (dimmed)', 'selected', 'empty day', 'now line'],
+  states: ['class (movement tint)', 'short block (under an hour: no sub-line · under ~35 min: title only)', 'confirmed (event / rental / private / maintenance material)', 'held (dashed)', 'cancelled (faded, struck)', 'done (dimmed)', 'selected', 'empty day', 'now line'],
   usages: [
     { title: { es: 'Dos salas, un día', en: 'Two rooms, one day' }, render: () => h(RoomDayGrid, { rooms, blocks, fromHour: 6, toHour: 20, hourHeight: 40, selectedId: '3', now: new Date() }) },
     { title: { es: 'Sin nada programado', en: 'Nothing scheduled' }, render: () => h(RoomDayGrid, { rooms, blocks: [], fromHour: 8, toHour: 12, hourHeight: 32 }) },

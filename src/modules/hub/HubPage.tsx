@@ -72,7 +72,7 @@ export function HubPage() {
             </div>
           </Card>
 
-          <Card className="hub-card hub-card-dev" padding="lg">
+          {isSuperAdmin && <Card className="hub-card hub-card-dev" padding="lg">
             <span className="hub-card-icon" aria-hidden>⌥</span>
             <h3>{t('hub.card.dev')}</h3>
             <p className="muted small">{t('hub.card.dev.body')}</p>
@@ -84,7 +84,7 @@ export function HubPage() {
               <Link to="/dev/layout/C-01">{t('hub.dev.layout')}</Link>
               <Link to="/dev/knowledgebase">{t('hub.dev.kb')}</Link>
             </div>
-          </Card>
+          </Card>}
         </section>
       </main>
       <footer className="container hub-foot muted xs">{t('hub.footer')}</footer>

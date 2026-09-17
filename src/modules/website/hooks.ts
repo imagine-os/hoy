@@ -15,9 +15,10 @@ export function useSessionsJoined(filter?: (s: ClassSessionRow) => boolean) {
   }, [sessions, modalities, teachers, filter]);
 }
 
-export function useTodaySessions() {
+/** Today's classes still to come (`scheduled`); `all` also returns the ones already taught, for a day board. */
+export function useTodaySessions(all = false) {
   const today = new Date();
-  return useSessionsJoined((s) => isSameDay(s.starts_at, today) && s.status === 'scheduled');
+  return useSessionsJoined((s) => isSameDay(s.starts_at, today) && (all ? s.status !== 'cancelled' : s.status === 'scheduled'));
 }
 
 export function dayList(n = 7): Date[] {

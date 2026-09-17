@@ -26,6 +26,7 @@ export function HomePage() {
   const nav = useNavigate();
   const { sections, isVisible } = useLayout(siteSpecs.home);
   const today = useTodaySessions();
+  const todayAll = useTodaySessions(true);
   const { rows: teachers } = useTable<TeacherRow>('teachers', { where: { active: true }, limit: 4 });
   const { rows: modalities } = useTable<ModalityRow>('modalities');
   const { rows: reviews } = useTable<ReviewRow>('reviews', { orderBy: { column: 'created_at', dir: 'desc' } });
@@ -86,7 +87,7 @@ export function HomePage() {
       <section className="container site-section">
         <SectionHead title={t('site.today.title')} action={<Link to="/site/schedule">{t('site.today.all')} →</Link>} />
         <Card padding="sm">
-          {today.length === 0 && <p className="muted" style={{ padding: 16 }}>{t('site.today.empty')}</p>}
+          {today.length === 0 && <p className="muted" style={{ padding: 16 }}>{t(todayAll.length ? 'site.today.done' : 'site.today.empty')}</p>}
           {today.map(({ session: s, modality: m, teacher: te }) => (
             <ClassRow key={s.id} title={s.title} teacher={te?.display_name ?? ''} startsAt={s.starts_at} durationMin={m?.duration_min ?? 60} movement={m?.movement ?? 'fluye'} booked={s.booked_count} capacity={s.capacity} onClick={() => nav('/site/schedule')} />
           ))}

@@ -75,12 +75,14 @@ export function RoomDayGrid({ rooms, blocks, fromHour, toHour, hourHeight = 56, 
             ))}
             {blocks.filter((b) => b.roomId === r.id).map((b) => {
               const h = Math.max(hourHeight / 3, top(b.endsAt) - top(b.startsAt));
+              const short = h < hourHeight; // under an hour: no sub-line
+              const tiny = h < hourHeight * 0.6; // under ~35 min: title only
               return (
                 <button
                   key={b.id}
                   type="button"
                   role="listitem"
-                  className={`roomgrid-block tone-${b.tone} status-${b.status ?? 'class'} ${selectedId === b.id ? 'is-selected' : ''}`}
+                  className={`roomgrid-block tone-${b.tone} status-${b.status ?? 'class'} ${short ? 'is-short' : ''} ${tiny ? 'is-tiny' : ''} ${selectedId === b.id ? 'is-selected' : ''}`}
                   style={{ top: top(b.startsAt), height: h }}
                   onClick={() => onSelect?.(b)}
                   aria-pressed={selectedId === b.id}

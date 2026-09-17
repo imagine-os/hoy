@@ -110,11 +110,11 @@ function IntegrationCard({ def, row, readOnly }: { def: IntegrationDef; row: Int
         </Field>
 
         <div className="row-between wrap">
-          <div className="row">
+          <div className="row wrap">
             <Select value={status} disabled={readOnly || !row} aria-label={t('admin.integrations.statusLabel')} onChange={(e) => setStatus(e.target.value as IntegrationStatus)}>
               {INTEGRATION_STATUSES.map((s) => <option key={s} value={s}>{t(`admin.integrations.status.${s}`)}</option>)}
             </Select>
-            <Link to={`/manual/${def.manual}`} className="xs">{t('admin.integrations.manual')} →</Link>
+            <Link to={`/manual/${def.manual}`} className="xs integ-manual">{t('admin.integrations.manual')} →</Link>
           </div>
           {!readOnly && <div className="row"><span className="xs muted">{state === 'saved' ? t('admin.settings.saved') : dirty ? t('admin.settings.unsaved') : ''}</span><Button size="sm" disabled={!dirty} loading={state === 'saving'} onClick={doSave}>{t('core.common.save')}</Button></div>}
         </div>

@@ -3,6 +3,7 @@
  * seed all read from here. Amounts in COP (integers).
  */
 import { tenant } from './tenant';
+import { formatCOP } from '../i18n/format';
 
 export type PlanFamily = 'bienvenida' | 'membresia' | 'pausas' | 'regalos' | 'espacio';
 
@@ -91,8 +92,8 @@ export const FAMILY_RATIONALE: Record<PlanFamily, FamilyRationale> = {
       en: 'The economic core of the business, simplified into two clear options: monthly or yearly. Full class access in both cases — fewer options, an easier decision, and recurring revenue (MRR/ARR) the studio can forecast.',
     },
     note: {
-      es: 'El Plan Anual equivale a cerca de $416.000 al mes: una forma simple de premiar el compromiso, sin necesidad de niveles intermedios.',
-      en: 'The Annual Plan works out at roughly $416,000 a month: a simple way to reward commitment, with no need for tiers in between.',
+      es: `El Plan Anual equivale a cerca de ${formatCOP(Math.round((priceItem('annual')?.price ?? 0) / 12), 'es')} al mes: una forma simple de premiar el compromiso, sin necesidad de niveles intermedios.`,
+      en: `The Annual Plan works out at roughly ${formatCOP(Math.round((priceItem('annual')?.price ?? 0) / 12), 'en')} a month: a simple way to reward commitment, with no need for tiers in between.`,
     },
   },
   pausas: {
