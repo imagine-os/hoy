@@ -2,7 +2,7 @@
 title: Índice y cómo usar este manual
 role: todos
 part: I
-version: 0.6.0
+version: 0.7.1
 updated: 2026-09-17
 summary: Para qué sirve el manual, cómo está organizado en siete partes y qué lee cada rol.
 ---
@@ -29,7 +29,7 @@ aquí y no se hace así, alguna de las dos cosas debe cambiar: díselo a coordin
    No los copies a otro documento; enlaza el capítulo.
 4. Lo que el estudio aún no ha definido está marcado como `> DECISIÓN PENDIENTE:`. No inventes la
    respuesta; pregunta al owner. La lista completa está en **Decisiones pendientes** (K-04).
-5. Versión 0.6: la estructura está estable, el contenido sigue creciendo. Propón mejoras a
+5. Versión 0.7: la estructura está estable, el contenido sigue creciendo. Propón mejoras a
    coordinación; los cambios se registran en K-01.
 
 ## 3. Las siete partes

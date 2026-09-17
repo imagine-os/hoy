@@ -45,8 +45,7 @@ pantalla manda y el manual la lee.
 | VI · Legal y políticas | 21 políticas · 22 documentos legales · 23 habeas data |
 | VII · Sistema | 24 roles y permisos · 25 datos y tablas · 26 integraciones · 27 glosario |
 
-28 capítulos por idioma, 61 figuras por idioma, 27 decisiones pendientes, 2 marcadores de captura
-(pantallas sin foto propia).
+28 capítulos por idioma, 72 figuras por idioma, 27 decisiones pendientes, 0 marcadores de captura.
 
 ---
 _English: the club's operations manual, Spanish first with an English mirror per chapter (same file

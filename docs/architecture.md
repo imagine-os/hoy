@@ -8,7 +8,7 @@ entry point for testers.
 ## Module registry
 `src/modules/<name>/index.ts` exports `{ routes: RouteDef[], strings: StringTable }`.
 `src/app/registry.ts` collects all modules with `import.meta.glob('../modules/*/index.ts', { eager: true })`
-and exposes them through **lazy getters** `getRoutes()` / `getStrings()` / `getModules()`. They are lazy
+and exposes them through **lazy getters** `getRoutes()` / `getStrings()`. They are lazy
 because modules (dev tools, shells) import the registry too; reading `m.routes` at module-evaluation time
 would hit an ESM cycle (TDZ). Call the getters inside functions or components, never at a module's top
 level. Adding a page never touches a shared file.
@@ -24,6 +24,15 @@ type RouteDef = {
   nav?: { labelKey: string; icon: string; order: number; group?: string }; // shows in the shell nav
 };
 ```
+
+### Code splitting (0.7.1)
+A module's `index.ts` still exports `{ routes, strings }` synchronously, but its page components live in a
+`pages.ts` barrel that `src/app/lazyPage.ts` imports on first visit (`React.lazy`; the single `<Suspense>` sits
+around `<Routes>` in `App.tsx` and renders `.lazy-fallback`). Rollup dedupes the dynamic import, so each surface
+is one chunk. The markdown under `docs/` follows the same idea: `scripts/lib/docmeta.mjs` is a Vite plugin that
+serves `*.md?docmeta` (title, header meta, headings, decisions) at build time, and each body is fetched as its own
+`?raw` chunk when a page opens it (`docsIndex.ts` `useDocSource`, `manualIndex.ts` `useChapterBody`). Main chunk:
+796 kB (2 549 kB before).
 
 ## Page specs
 `src/specs/canvasSpecs.ts` holds every canvas code as a `PageSpec` (purpose, layout order, data

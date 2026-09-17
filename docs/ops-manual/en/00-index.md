@@ -2,7 +2,7 @@
 title: Index and how to use this manual
 role: everyone
 part: I
-version: 0.6.0
+version: 0.7.1
 updated: 2026-09-17
 summary: What the manual is for, how its seven parts are organised, and which chapters each role reads.
 ---
@@ -30,7 +30,7 @@ is written down and isn't done that way, one of the two has to change: tell coor
    copy them into another document; link the chapter.
 4. Anything the studio has not defined yet is marked `> DECISION NEEDED:`. Do not invent the answer;
    ask the owner. The full list is on **Decisions pending** (K-04).
-5. Version 0.6: the structure is settled, the content keeps growing. Propose improvements to
+5. Version 0.7: the structure is settled, the content keeps growing. Propose improvements to
    coordination; changes are logged in K-01.
 
 ## 3. The seven parts

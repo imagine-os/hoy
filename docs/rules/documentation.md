@@ -52,6 +52,11 @@ same turn as the work. On rebase conflicts keep both sides.
   preinstalled at `/opt/pw-browsers`; never run `playwright install` here). It blocks external
   requests so it works behind the proxy. Commit the JPEGs (quality 72; PNG was rejected as ~3× larger for the same review value) with the change. `npm run screenshots -- --smoke`
   is the fast console-error check (1280/es, no files); `--only=/docs,/manual` limits either mode.
+  Since 0.7.1 each route is captured **as the demo user of its surface** (Juliana for `/app`, Camilo for
+  `/staff`, Mateo for `/admin`, Sofía with dev mode for `/dev` and `/docs`, the visitor for `/site`; a route
+  whose roles exclude that user falls back to the first allowed role), param routes get **real ids** read from
+  the seeded mock DB, and the manual cover is saved as `<lang>-<width>-cover.jpg` so the chapter route does
+  not overwrite it.
 - Browse everything at `/#/docs/screenshots`.
 
 ## 5. Page docs (`docs/pages/<code>.md`)
