@@ -90,7 +90,7 @@
 .cust-plan { display: flex; flex-direction: column; gap: var(--sp-3); }
 .cust-plan.is-featured { border-color: var(--color-primary); }
 .cust-plan-dates { display: flex; flex-wrap: wrap; gap: var(--sp-1) var(--sp-3); margin-top: var(--sp-1); }
-.cust-plan-price strong { font-family: var(--font-heading); font-size: var(--fs-2xl); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.cust-plan-price strong { font-family: var(--font-heading); font-size: var(--fs-2xl); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; white-space: nowrap; }
 .cust-pass { display: flex; flex-direction: column; gap: var(--sp-3); }
 .cust-pass-price { font-family: var(--font-heading); font-size: var(--fs-lg); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .cust-ledger-row { display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-3) var(--sp-2); border-bottom: 1px solid var(--color-border); }
@@ -106,7 +106,7 @@
 .cust-pass-preview { display: flex; flex-direction: column; gap: var(--sp-2); }
 .cust-channels .btn { flex-direction: column; gap: 4px; min-height: 64px; font-size: var(--fs-xs); }
 .cust-giftcard { aspect-ratio: 1.6; border-radius: var(--r-lg); padding: var(--sp-5); display: flex; flex-direction: column; justify-content: space-between; gap: var(--sp-2); box-shadow: var(--shadow-inverse); border: 1px solid var(--color-card-border); }
-.cust-giftcard strong { font-family: var(--font-heading); font-size: var(--fs-3xl); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.cust-giftcard strong { font-family: var(--font-heading); font-size: var(--fs-3xl); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .cust-giftcard-cream { background: var(--mat-sand); color: var(--brand-ink); }
 .cust-giftcard-blue { background: var(--mat-deep); color: var(--brand-cream); }
 .cust-giftcard-yellow { background: var(--mat-light); color: var(--color-on-highlight); }

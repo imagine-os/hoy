@@ -1,7 +1,7 @@
 /* On a phone the column is the screen. From 900px up it becomes the canvas phone frame:
    430 wide, 34px radius, 170° cream gradient, frame shadow, sitting on the sand ground with the lane grain. */
 .phoneshell { min-height: 100vh; display: flex; justify-content: center; align-items: flex-start; }
-.phoneshell-col { width: 100%; max-width: 560px; min-height: 100vh; display: flex; flex-direction: column; position: relative; }
+.phoneshell-col { width: 100%; max-width: 560px; min-height: 100vh; display: flex; flex-direction: column; position: relative; container: phone / inline-size; }
 .phoneshell-main { flex: 1 1 auto; padding-bottom: var(--sp-6); }
 .phoneshell-main .container { padding-left: var(--sp-4); padding-right: var(--sp-4); }
 .phoneshell-nav { position: sticky; bottom: 0; z-index: 30; }

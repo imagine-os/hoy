@@ -1,5 +1,9 @@
 /* canvas KPI tile: paper, radius 14, eyebrow + Inter figure, delta in accent blue */
 .stat { background-color: var(--color-surface); border: 1px solid var(--color-card-border); border-radius: var(--r-md); padding: var(--sp-4); box-shadow: var(--shadow-card); display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-.stat-value { min-width: 0; overflow-wrap: anywhere; font-family: var(--font-heading); font-size: var(--fs-2xl); font-weight: var(--fw-semibold); letter-spacing: var(--ls-tight); line-height: 1.1; display: flex; align-items: baseline; gap: var(--sp-2); font-variant-numeric: tabular-nums; color: var(--color-ink); }
-.stat-trend { font-size: var(--fs-sm); font-family: var(--font-body); font-weight: var(--fw-regular); letter-spacing: 0; }
+/* The value fits the tile: --stat-fit is a 1 → 0.5 multiplier StatTile.tsx measures after layout; the text never wraps. */
+.stat-value { --stat-fit: 1; min-width: 0; font-family: var(--font-heading); font-size: calc(var(--fs-2xl) * var(--stat-fit)); font-weight: var(--fw-semibold); letter-spacing: var(--ls-tight); line-height: 1.1; display: flex; align-items: baseline; gap: var(--sp-2); font-variant-numeric: tabular-nums; color: var(--color-ink); min-height: calc(var(--fs-2xl) * 1.1); }
+.stat-value-text { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stat-trend { flex: 0 0 auto; font-size: var(--fs-sm); font-family: var(--font-body); font-weight: var(--fw-regular); letter-spacing: 0; }
+/* Label and hint: one or two lines, then an ellipsis — never a third line pushing the tile taller than its neighbours. */
+.stat-label, .stat-hint { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; }
 .stat-up { color: var(--color-primary); } .stat-down { color: var(--color-danger); } .stat-flat { color: var(--color-text-muted); }

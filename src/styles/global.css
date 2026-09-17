@@ -75,6 +75,10 @@ pre, table, img, svg, video, canvas, iframe { max-width: 100%; }
   h1 { font-size: var(--fs-2xl); }
 }
 @media (max-width: 480px) { .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; } }
+/* 0019 · the phone frame (PhoneShell ≥ 900px) is a named inline-size container: the same collapse the viewport
+   rules give a real phone applies inside the ~390px frame, so a KPI row is never three 100px columns on desktop. */
+@container phone (max-width: 720px) { .grid-3, .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@container phone (max-width: 480px) { .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; } }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
 .page { padding: var(--sp-6) 0 var(--sp-12); }
 .page-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--sp-3); margin-bottom: var(--sp-6); }
