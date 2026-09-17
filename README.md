@@ -5,6 +5,7 @@ built to become a multi-tenant platform for other studios later. One codebase se
 website, the customer app, the teacher app, the staff and admin desktop, the club's operations
 manual, the in-app documentation and the developer tooling.
 
+- Version: **0.3.0** (2026-09-17) — all three build tracks integrated; 76 routes, 65 page codes, 0 stubs (`/#/dev/specs`). Changelog: [`docs/changelog/`](./docs/changelog/).
 - Live (GitHub Pages; enable once in repo Settings → Pages → "GitHub Actions"): **https://imagine-os.github.io/hoy/**
 - Stack: Vite 5 + React 18 + TypeScript (strict), HashRouter, plain CSS design tokens, mock data layer
   shaped like the future Supabase schema. No backend yet; everything runs in the browser.
@@ -19,15 +20,16 @@ The root route `/#/` is a **testing hub** for private testing between the studio
 team. It offers one card per perspective; picking a staff role switches the **demo user** (fictional
 people, one per role).
 
-| Perspective | Where | Who it is for | State (v0.2) |
+| Perspective | Entry route(s) | Who it is for | State (v0.3.0) |
 | --- | --- | --- | --- |
-| Website | `/#/site` | Everyone, before login: home, about, modalities, schedule, teachers, plans, contact, legal | built |
-| Customer app | `/#/app` | Members and drop-ins (mobile-first): home + intention today; schedule, booking, plans, profile… | home built, rest landing (see `/#/dev/specs`) |
-| Teacher app | `/#/teach` | Teachers (mobile-first): my classes, attendance, payroll view | first slice |
-| Staff by role | `/#/staff`, `/#/admin` | Front desk, coordinator, admin, finance, super admin, maintenance (desktop-first); role home, check-in, register & pay, dashboard, tables, CMS, CRM, settings | role home, dashboard and table manager built; rest landing |
-| Operations manual | `/#/manual` | How the club runs in person and in software, by role — ES with EN mirror, 11 chapters, print-friendly; `/#/manual/decisions` lists what the owner still has to decide | built |
-| Documentation | `/#/docs` | Rules, architecture, prompt log (prompt | response), changelog, kanban board, flow map, data model, screenshots | built |
-| Developer | `/#/dev/*` | Design tokens (D-01), component library (D-02), spec index with built/stub badges, layout editor, knowledgebase (K-01) | built |
+| Testing hub | `/#/` | The studio team and the build team: one card per perspective, demo user switcher, dev mode | built |
+| Website | `/#/site` | Everyone, before login: home, about, modalities, schedule, teachers, plans, contact, legal | built (W-01…W-06, P-01, A-06) |
+| Customer app | `/#/auth/sign-in` → `/#/app` | Members and drop-ins (mobile-first): sign in / create account, home + intention, schedule, class, checkout, booking, waitlist, plans, passes, credits, history, profile, rules, FAQ, invite, gift, teachers, events, notifications | built (A-01…A-03, A-05, C-01…C-25, C-21, E-01…E-04) |
+| Teacher app | `/#/teach` | Teachers (mobile-first): my classes, attendance, notes, payroll view, profile | built (S-03) |
+| Staff by role | `/#/staff`, `/#/admin` | Front desk, coordinator, admin, finance, super admin, maintenance (desktop-first): role home, check-in, register & pay, dashboard, tables, CMS, emails, WhatsApp, CRM, activity, settings, finance | built (S-01, S-02, S-04, M-01…M-09) |
+| Operations manual | `/#/manual` | How the club runs in person and in software, by role — ES with EN mirror, 11 chapters, print-friendly; `/#/manual/decisions` lists what the owner still has to decide | built (K-03, K-04) |
+| Documentation | `/#/docs` | Rules, architecture, prompt log (prompt | response), changelog, kanban board, flow map, data model, page docs, screenshots | built (K-02) |
+| Developer | `/#/dev/specs`, `/#/dev/tokens`, `/#/dev/components`, `/#/dev/layout/:code`, `/#/dev/knowledgebase` | Spec index with built/stub badges, design tokens (D-01), component library (D-02), layout editor (D-04), knowledgebase (K-01) | built |
 
 The header has ES/EN, light/dark and, for super admins, a **dev mode** toggle that reveals the spec chip
 and the inspector panel (`Ctrl+.`) on every page: layout order, data tables, roles, logic, integrations.

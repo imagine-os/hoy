@@ -7,36 +7,44 @@ dónde estamos, qué sigue y en qué orden (con dependencias explícitas y lo qu
 paralelo), qué significa "terminado" en cada fase, cómo trabajar en el repo y qué debe decidir el
 owner del estudio. Está escrito para que otra cuenta de Claude (o una persona) lo retome sin contexto.
 
-## A. Where we are (v0.2.0, 2026-09-17)
+## A. Where we are (v0.3.0, 2026-09-17)
 
+- **All three parallel tracks have landed on `main`** — docs/content (`ef1dff8`), staff/admin (`8e04c8b`),
+  customer (`cb51b69`) — and the final integration pass (`docs/changelog/0005-final-integration.md`) applied
+  the shared-change requests they left for the coordinator.
 - **Live URL**: https://imagine-os.github.io/hoy/ — pending one manual step: repo Settings → Pages →
-  Source "GitHub Actions". The workflow `.github/workflows/pages.yml` already deploys `dist/` on push to `main`.
+  Source "GitHub Actions". The workflow `.github/workflows/pages.yml` already deploys `dist/` on push to `main`
+  (`has_pages` was still `false` on 2026-09-17; sessions cannot fetch `github.io`, so the owner confirms the URL).
 - **Stack**: Vite 5 + React 18 + TS strict, HashRouter, plain CSS tokens (`src/design/tokens.ts`),
-  `MockProvider` (localStorage, change events) behind the `DataProvider` interface, module registry via
-  `import.meta.glob`. `npm run build` passes with zero TS errors.
-- **Real today** (UI + mock data): hub `/`, website `/site/*` (W-01…W-06, P-01, A-06), customer home
-  `/app` (C-01 + A-05), teacher home `/teach` (S-03 first slice), staff home `/staff` (S-01), admin
-  `/admin` (M-01), table manager `/admin/tables/:table` (M-03), dev tools `/dev/*` (D-01…D-04, K-01),
-  docs viewer `/docs/*` (K-02), operations manual `/manual/*` (K-03, 11 chapters ES+EN) and decisions
-  list `/manual/decisions` (K-04).
-- **Stubs** (spec + `PageStub`, replace the element): customer C-02…C-25, teacher class/payroll/profile,
-  staff S-02 S-04, admin M-02 M-04…M-08. **Not routed**: A-01…A-03, C-21, E-01…E-04.
-- **Landing in parallel with this document**: the customer pass (C-02…C-25) and the staff/admin pass
-  (S-02, S-04, M-02…M-08) are being built by two other workers. **Re-check `/#/dev/specs` for the
-  current built/stub badge of every code before planning work** — this list is the floor, not the ceiling.
+  `MockProvider` (localStorage, change events, cross-tab `storage` sync) behind the `DataProvider` interface,
+  module registry via `import.meta.glob`, route manifest on `window.__hoyos.routes` for tooling.
+  `npm run build` passes with zero TS errors; `npm run screenshots -- --smoke` reports no console errors.
+- **Real vs stub** (`/#/dev/specs`, from `docs/screenshots/routes.json`): **76 routes, 65 codes, 0 stubs.**
+  Every routed code renders a real page on the data layer: hub HUB-01, website W-01…W-06 + P-01 + A-06,
+  auth A-01 A-02 A-03 C-21 E-04, customer C-01…C-25 (incl. C-02b, C-07b ledger, C-08b, C-14/C-15) + A-05 +
+  E-01…E-03 demo states, teacher S-03 (+ class, payroll, profile), staff S-01 S-02 S-04, admin M-01…M-09,
+  dev D-01…D-04, knowledge K-01…K-04, E-05 no-access. **Not routed** (canvas codes without a screen): none.
+  Integrations (Wompi, WhatsApp, email, DIAN, Supabase Auth/Realtime) are simulated behind their seams.
 - **Canvas**: `reference/canvas/` is v1.5 (audited; `CANVAS-AUDIT.md`). Specs regenerate with
   `node scripts/extract-canvas.mjs && npm run specs`. C-02b, C-14 and C-15 are separate codes; C-07b
-  is retired (compatibility alias only while the `/app/credits` stub exists).
-- **Docs**: prompt log, changelog and kanban are current through `0004`. `docs/screenshots/` is still
-  empty: run `npm run screenshots` (about 10 min) once the parallel passes merge, commit the PNGs, and
-  create `docs/pages/<code>.md` per page (`node scripts/gen-page-doc.mjs <code>`).
+  is the credits ledger under a compatibility alias.
+- **Docs**: prompt log, changelog and kanban are current through `0005`. `docs/screenshots/<code>/` holds
+  every route in ES/EN × 390/1280 (dark for key pages) as JPEG q72, and `docs/pages/<code>.md` exists for
+  every routed code (generated skeletons; enrich the "Real vs mock" notes by hand as pages change).
+- **Open shared requests carried into P1** (see the kanban "Data" lane): six tables (notifications + prefs,
+  reviews, invites, events + rsvps, payment_methods, content_articles / faq_entries); a `usePolicy()` hook so
+  customer pages re-render the instant M-08 changes a policy; bank account + NIT in M-08 for transfer
+  instructions (C-05).
 
 ## B. Phases (dependency-ordered)
 
 ### P1 — Finish every screen against its spec
-- Scope: every stub becomes a real page reading `useData()`, sectioned through `useLayout(spec)`,
-  with ES/EN strings, a component meta for anything new, and a `docs/pages/<code>.md`.
-- Depends on: nothing (v0.2 scaffold).
+- Scope: every routed page already renders (0 stubs at v0.3.0); P1 is now depth — the six missing tables
+  (notifications + notification_prefs, reviews, invites, events + rsvps, payment_methods,
+  content_articles / faq_entries) with seed + `npm run sql`, then the pages that fall back to
+  `localStorage`/`content.ts` read them; `usePolicy()` for instant policy re-render; bank account + NIT in
+  M-08; hand-written "Real vs mock" notes in each `docs/pages/<code>.md`; a component meta for anything new.
+- Depends on: nothing (v0.3 integration).
 - Parallelizable with: itself, by module — customer (`src/modules/customer`), teacher, staff, admin
   are independent folders; shared components are improved in place, never forked. Also parallel with P5.
 - Watch: data shapes. Any new table goes in `src/data/schema.ts` + seed + `npm run sql` in the same
