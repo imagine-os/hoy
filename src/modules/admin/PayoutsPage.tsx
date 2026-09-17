@@ -1,0 +1,296 @@
+import { useMemo, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useI18n } from '../../i18n/I18nProvider';
+import { useSession } from '../../auth/SessionProvider';
+import { useData, useTable } from '../../data/DataContext';
+import type { ClassSessionRow, PayrollLineRow, PayrollRunRow } from '../../data/schema';
+import { formatCOP, formatDate, formatDateTime } from '../../i18n/format';
+import { StatTile } from '../../components/molecule/StatTile/StatTile';
+import { Card } from '../../components/molecule/Card/Card';
+import { Button } from '../../components/atom/Button/Button';
+import { Chip } from '../../components/atom/Chip/Chip';
+import { Badge } from '../../components/atom/Badge/Badge';
+import { Select } from '../../components/atom/Input/Input';
+import { DataTable, type DataTableColumn } from '../../components/organism/DataTable/DataTable';
+import { EmptyState } from '../../components/molecule/EmptyState/EmptyState';
+import { useAudit } from '../staff/audit';
+import { useSettings } from './settings';
+import { downloadCsv, monthPeriodFor, payrollCsv, statementOf, useGenerateDraft, usePayroll, wompiPayout, type PayoutMethod, type TeacherStatement } from './payouts';
+import './admin.css';
+
+const STATUS_TONE = { draft: 'warn', approved: 'primary', paid: 'success' } as const;
+
+/** M-09a — the payroll runs list: what the studio owes teachers, per month. */
+export function PayoutsPage() {
+  const { t, lang } = useI18n();
+  const { can } = useSession();
+  const audit = useAudit('admin');
+  const nav = useNavigate();
+  const { settings } = useSettings();
+  const { runs, linesOf, loading } = usePayroll();
+  const generate = useGenerateDraft();
+  const [offset, setOffset] = useState(0);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  const canWrite = can('payroll.write');
+
+  const period = monthPeriodFor(offset);
+  const draft = runs.find((r) => r.status === 'draft');
+  const pending = runs.filter((r) => r.status === 'approved');
+  const quarterStart = new Date(); quarterStart.setMonth(quarterStart.getMonth() - 3);
+  const paidQuarter = runs.filter((r) => r.status === 'paid' && r.paid_at && new Date(r.paid_at) >= quarterStart);
+
+  const run = async () => {
+    setBusy(true); setMsg(null);
+    try {
+      const res = await generate(period, 'wompi');
+      if ('blocked' in res) { setMsg(t('admin.payouts.generate.blocked', { status: res.blocked.status })); return; }
+      await audit(res.replaced ? 'payroll.draft.regenerate' : 'payroll.draft.create', 'payroll_runs', res.run.id, { after: { period: `${period.start}…${period.end}`, lines: res.created, total: res.run.total } });
+      setMsg(t('admin.payouts.generate.done', { n: res.created, total: formatCOP(res.run.total, lang) }));
+      nav(`/admin/finance/payouts/${res.run.id}`);
+    } finally { setBusy(false); }
+  };
+
+  const cols: DataTableColumn<PayrollRunRow>[] = [
+    { key: 'period_start', label: t('admin.payouts.col.period'), render: (r) => <strong className="small">{formatDate(`${r.period_start}T12:00:00`, lang, { month: 'long', year: 'numeric' })}</strong> },
+    { key: 'status', label: t('admin.payouts.col.status'), render: (r) => <Badge tone={STATUS_TONE[r.status]}>{t(`admin.payouts.status.${r.status}`)}</Badge> },
+    { key: 'teachers', label: t('admin.payouts.col.teachers'), align: 'right', sortable: false, render: (r) => new Set(linesOf(r.id).map((l) => l.teacher_id)).size },
+    { key: 'classes', label: t('admin.payouts.col.classes'), align: 'right', sortable: false, render: (r) => linesOf(r.id).filter((l) => l.kind === 'class').length },
+    { key: 'total', label: t('admin.payouts.col.total'), align: 'right', render: (r) => formatCOP(r.total, lang) },
+    { key: 'method', label: t('admin.payouts.col.method'), render: (r) => t(`admin.payouts.method.${r.method}`) },
+    { key: 'paid_at', label: t('admin.payouts.col.settled'), render: (r) => r.paid_at ? <span className="xs mono">{formatDate(r.paid_at, lang)}</span> : r.approved_at ? <span className="xs muted">{t('admin.payouts.awaitingPayment')}</span> : <span className="muted">—</span> },
+  ];
+
+  return (
+    <div className="stack">
+      <div className="page-head">
+        <div>
+          <h1>{t('admin.payouts.title')}</h1>
+          <p className="muted small">{t('admin.payouts.subtitle')}</p>
+        </div>
+        <div className="row wrap">
+          <Link to="/admin/finance"><Button size="sm" variant="ghost">{t('admin.payouts.backToFinance')}</Button></Link>
+          <Badge tone={settings.integrations.wompi === 'connected' ? 'success' : 'warn'}>{t('admin.payouts.simulated')}</Badge>
+        </div>
+      </div>
+
+      <div className="grid grid-3">
+        <StatTile label={t('admin.payouts.kpi.next')} value={formatCOP(draft?.total ?? 0, lang)} hint={draft ? t('admin.payouts.kpi.next.hint', { period: formatDate(`${draft.period_start}T12:00:00`, lang, { month: 'long' }), n: new Set(linesOf(draft.id).map((l) => l.teacher_id)).size }) : t('admin.payouts.kpi.next.none')} />
+        <StatTile label={t('admin.payouts.kpi.pending')} value={formatCOP(pending.reduce((a, r) => a + r.total, 0), lang)} hint={t('admin.payouts.kpi.pending.hint', { n: pending.length })} trend={pending.length ? 'up' : 'flat'} />
+        <StatTile label={t('admin.payouts.kpi.quarter')} value={formatCOP(paidQuarter.reduce((a, r) => a + r.total, 0), lang)} hint={t('admin.payouts.kpi.quarter.hint', { n: paidQuarter.length })} />
+      </div>
+
+      <Card tone="muted" title={t('admin.payouts.generate')} eyebrow="M-09a">
+        <div className="row wrap" style={{ alignItems: 'flex-end', gap: 12 }}>
+          <Select value={String(offset)} onChange={(e) => setOffset(Number(e.target.value))} aria-label={t('admin.payouts.generate.period')} style={{ maxWidth: 220 }}>
+            {[0, 1, 2, 3].map((o) => {
+              const p = monthPeriodFor(o);
+              return <option key={o} value={o}>{formatDate(`${p.start}T12:00:00`, lang, { month: 'long', year: 'numeric' })}</option>;
+            })}
+          </Select>
+          <Button size="sm" loading={busy} disabled={!canWrite} onClick={run}>{t('admin.payouts.generate.action')}</Button>
+          <span className="xs muted">{t('admin.payouts.generate.hint')}</span>
+        </div>
+        {msg && <p className="small" style={{ marginTop: 12 }}>{msg}</p>}
+        {!canWrite && <p className="xs muted" style={{ marginTop: 8 }}>{t('admin.payouts.noPermission')}</p>}
+      </Card>
+
+      {loading && runs.length === 0
+        ? <EmptyState tone="loading" title={t('core.common.loading')} />
+        : runs.length === 0
+          ? <EmptyState title={t('admin.payouts.empty')} body={t('admin.payouts.empty.body')} />
+          : <DataTable columns={cols} rows={runs} rowKey={(r) => r.id} dense onRowClick={(r) => nav(`/admin/finance/payouts/${r.id}`)} />}
+
+      <p className="xs muted">{t('admin.payouts.seamNote')}</p>
+    </div>
+  );
+}
+
+/** M-09b — one run: the statement per teacher and the four things finance can do with it. */
+export function PayoutRunPage() {
+  const { id } = useParams();
+  const { t, lang } = useI18n();
+  const data = useData();
+  const { can, user } = useSession();
+  const audit = useAudit('admin');
+  const { runs, linesOf, teacherName, loading } = usePayroll();
+  const generate = useGenerateDraft();
+  const { rows: sessions } = useTable<ClassSessionRow>('class_sessions');
+  const sessionById = useMemo(() => new Map(sessions.map((s) => [s.id, s])), [sessions]);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [notice, setNotice] = useState<{ tone: 'ok' | 'bad'; text: string } | null>(null);
+  const canWrite = can('payroll.write');
+
+  const run = runs.find((r) => r.id === id);
+  const lines = run ? linesOf(run.id) : [];
+  const statement = useMemo(() => statementOf(lines), [lines]);
+
+  if (!run) {
+    return <div className="stack"><EmptyState tone={loading ? 'loading' : 'empty'} title={t(loading ? 'core.common.loading' : 'admin.payouts.notFound')} action={<Link to="/admin/finance/payouts"><Button size="sm" variant="ghost">{t('admin.payouts.title')}</Button></Link>} /></div>;
+  }
+
+  const periodLabel = `${formatDate(`${run.period_start}T12:00:00`, lang, { day: 'numeric', month: 'short' })} – ${formatDate(`${run.period_end}T12:00:00`, lang, { day: 'numeric', month: 'short', year: 'numeric' })}`;
+
+  const approve = async () => {
+    setBusy('approve'); setNotice(null);
+    try {
+      const at = new Date().toISOString();
+      await data.update('payroll_runs', run.id, { status: 'approved', approved_by: user.id, approved_at: at });
+      await audit('payroll.approve', 'payroll_runs', run.id, { before: run.status, after: 'approved', total: run.total, teachers: statement.length });
+      setNotice({ tone: 'ok', text: t('admin.payouts.msg.approved', { total: formatCOP(run.total, lang) }) });
+    } finally { setBusy(null); }
+  };
+
+  /** Stamps the settlement on the lines, so a teacher-by-teacher payment and a run payment agree. */
+  const stampLines = async (which: typeof lines, method: PayoutMethod, at: string) => {
+    for (const l of which) if (!l.paid_at) await data.update('payroll_lines', l.id, { paid_at: at, paid_method: method });
+  };
+
+  const markPaid = async (method: Exclude<PayoutMethod, 'wompi'>) => {
+    setBusy(method); setNotice(null);
+    try {
+      const at = new Date().toISOString();
+      await stampLines(lines, method, at);
+      await data.update('payroll_runs', run.id, { status: 'paid', method, paid_at: at, provider_ref: null });
+      await audit('payroll.pay', 'payroll_runs', run.id, { before: run.status, after: 'paid', method, total: run.total, teachers: statement.length });
+      setNotice({ tone: 'ok', text: t('admin.payouts.msg.paid', { method: t(`admin.payouts.method.${method}`) }) });
+    } finally { setBusy(null); }
+  };
+
+  /** One teacher settled: their lines are stamped, and the run closes itself once nobody is left. */
+  const payTeacher = async (g: TeacherStatement, method: PayoutMethod) => {
+    setBusy(`t-${g.teacherId}`); setNotice(null);
+    try {
+      const at = new Date().toISOString();
+      await stampLines(g.lines, method, at);
+      await audit('payroll.pay.teacher', 'payroll_lines', g.teacherId, { after: { method, amount: g.subtotal, classes: g.classes, run: run.id, paid_at: at } });
+      const rest = statement.filter((x) => x.teacherId !== g.teacherId);
+      const allPaid = rest.every((x) => x.settled);
+      if (allPaid) {
+        await data.update('payroll_runs', run.id, { status: 'paid', method, paid_at: at });
+        await audit('payroll.pay', 'payroll_runs', run.id, { before: run.status, after: 'paid', method, total: run.total, viaTeachers: true });
+      }
+      setNotice({ tone: 'ok', text: `${t('admin.payouts.msg.teacherPaid', { name: teacherName.get(g.teacherId) ?? g.teacherId, total: formatCOP(g.subtotal, lang), method: t(`admin.payouts.method.${method}`) })}${allPaid ? ` ${t('admin.payouts.msg.allPaid')}` : ''}` });
+    } finally { setBusy(null); }
+  };
+
+  const sendWompi = async () => {
+    setBusy('wompi'); setNotice(null);
+    try {
+      const result = await wompiPayout({ amount: run.total, recipients: statement.length }); // INTEGRATION SEAM: Wompi dispersion
+      if (result.status === 'rejected') {
+        await audit('payroll.payout.rejected', 'payroll_runs', run.id, { after: { ref: result.ref, reason: result.reason?.es } });
+        setNotice({ tone: 'bad', text: `${t('admin.payouts.msg.rejected')} ${result.reason ? (lang === 'en' ? result.reason.en : result.reason.es) : ''}` });
+        return;
+      }
+      const at = new Date().toISOString();
+      await data.update('payroll_runs', run.id, { status: 'paid', method: 'wompi', paid_at: at, provider_ref: result.ref });
+      await audit('payroll.payout.wompi', 'payroll_runs', run.id, { before: run.status, after: 'paid', total: run.total, teachers: statement.length, ref: result.ref, simulated: true });
+      setNotice({ tone: 'ok', text: t('admin.payouts.msg.sent', { ref: result.ref }) });
+    } finally { setBusy(null); }
+  };
+
+  const regenerate = async () => {
+    setBusy('regen'); setNotice(null);
+    try {
+      const res = await generate({ start: run.period_start, end: run.period_end }, run.method);
+      if ('blocked' in res) { setNotice({ tone: 'bad', text: t('admin.payouts.generate.blocked', { status: res.blocked.status }) }); return; }
+      await audit('payroll.draft.regenerate', 'payroll_runs', run.id, { after: { lines: res.created, total: res.run.total } });
+      setNotice({ tone: 'ok', text: t('admin.payouts.generate.done', { n: res.created, total: formatCOP(res.run.total, lang) }) });
+    } finally { setBusy(null); }
+  };
+
+  const exportCsv = () => {
+    downloadCsv(`payroll-${run.period_start.slice(0, 7)}.csv`, payrollCsv(run, lines, teacherName));
+    void audit('payroll.export', 'payroll_runs', run.id, { after: { rows: lines.length } });
+  };
+
+  return (
+    <div className="stack">
+      <div className="page-head">
+        <div>
+          <Link to="/admin/finance/payouts" className="xs muted">‹ {t('admin.payouts.title')}</Link>
+          <h1>{formatDate(`${run.period_start}T12:00:00`, lang, { month: 'long', year: 'numeric' })}</h1>
+          <p className="muted small">{periodLabel} · {t('admin.payouts.runOf', { n: statement.length, classes: lines.filter((l) => l.kind === 'class').length })}</p>
+        </div>
+        <div className="row wrap">
+          <Badge tone={STATUS_TONE[run.status]}>{t(`admin.payouts.status.${run.status}`)}</Badge>
+          <Badge tone="warn">{t('admin.payouts.simulated')}</Badge>
+        </div>
+      </div>
+
+      <div className="grid grid-3">
+        <StatTile label={t('admin.payouts.kpi.runTotal')} value={formatCOP(run.total, lang)} hint={t('admin.payouts.kpi.runTotal.hint', { n: lines.length })} />
+        <StatTile label={t('admin.payouts.col.method')} value={t(`admin.payouts.method.${run.method}`)} hint={run.provider_ref ? `ref ${run.provider_ref}` : t('admin.payouts.method.hint')} />
+        <StatTile label={t('admin.payouts.kpi.state')} value={t(`admin.payouts.status.${run.status}`)} hint={run.paid_at ? formatDateTime(run.paid_at, lang) : run.approved_at ? t('admin.payouts.approvedOn', { date: formatDateTime(run.approved_at, lang) }) : t('admin.payouts.notApproved')} />
+      </div>
+
+      {notice && <div className={`adm-notice ${notice.tone === 'bad' ? 'adm-notice-bad' : ''} small`}>{notice.text}</div>}
+
+      <Card title={t('admin.payouts.actions')} tone="muted">
+        <div className="row wrap">
+          {run.status === 'draft' && <Button size="sm" variant="ghost" loading={busy === 'regen'} disabled={!canWrite} onClick={regenerate}>{t('admin.payouts.action.regenerate')}</Button>}
+          {run.status === 'draft' && <Button size="sm" loading={busy === 'approve'} disabled={!canWrite} onClick={approve}>{t('admin.payouts.action.approve')}</Button>}
+          {run.status === 'approved' && <Button size="sm" loading={busy === 'wompi'} disabled={!canWrite} onClick={sendWompi}>{t('admin.payouts.action.wompi')}</Button>}
+          {run.status === 'approved' && <Button size="sm" variant="ghost" loading={busy === 'transfer'} disabled={!canWrite} onClick={() => markPaid('transfer')}>{t('admin.payouts.action.transfer')}</Button>}
+          {run.status === 'approved' && <Button size="sm" variant="ghost" loading={busy === 'cash'} disabled={!canWrite} onClick={() => markPaid('cash')}>{t('admin.payouts.action.cash')}</Button>}
+          <Button size="sm" variant="ghost" onClick={exportCsv}>{t('admin.payouts.action.csv')}</Button>
+          <Button size="sm" variant="ghost" onClick={() => window.print()}>{t('admin.payouts.action.print')}</Button>
+        </div>
+        <p className="xs muted" style={{ marginTop: 10 }}>{run.status === 'paid' ? t('admin.payouts.locked') : t('admin.payouts.flow')}</p>
+        {run.notes && <p className="xs muted">{run.notes}</p>}
+      </Card>
+
+      <section className="stack-sm">
+        <div className="eyebrow">{t('admin.payouts.statement')}</div>
+        {statement.length === 0 && <EmptyState compact title={t('admin.payouts.noLines')} body={t('admin.payouts.noLines.body')} />}
+        {run.status !== 'draft' && <p className="xs muted">{t('admin.payouts.perTeacherHint')}</p>}
+        {statement.map((g) => (
+          <Card key={g.teacherId} padding="sm" title={teacherName.get(g.teacherId) ?? g.teacherId}
+            actions={<div className="row wrap">
+              <Badge tone={g.settled ? 'success' : 'warn'}>{t(g.settled ? 'admin.payouts.status.paid' : 'admin.payouts.awaitingPayment')}</Badge>
+              <strong className="mono small">{formatCOP(g.subtotal, lang)}</strong>
+            </div>}>
+            <div className="row-between wrap">
+              <span className="xs muted">
+                {t('admin.payouts.teacherSummary', { classes: g.classes, method: t(`admin.payouts.method.${g.paidMethod ?? run.method}`) })}
+                {' · '}
+                {g.settled
+                  ? t('admin.payouts.teacherPaid', { date: formatDate(g.paidAt!, lang), method: t(`admin.payouts.method.${g.paidMethod ?? run.method}`) })
+                  : g.paidCount > 0
+                    ? t('admin.payouts.teacherPartial', { n: g.paidCount, total: g.lines.length })
+                    : t('admin.payouts.teacherUnpaid', { method: t(`admin.payouts.method.${run.method}`) })}
+              </span>
+              {!g.settled && run.status !== 'draft' && canWrite && (
+                <Button size="sm" variant="ghost" loading={busy === `t-${g.teacherId}`} onClick={() => payTeacher(g, run.method)}>{t('admin.payouts.payTeacher')}</Button>
+              )}
+            </div>
+            <div className="adm-lines">
+              {g.lines.map((l) => <LineRow key={l.id} line={l} session={l.class_session_id ? sessionById.get(l.class_session_id) : undefined} lang={lang} />)}
+            </div>
+          </Card>
+        ))}
+      </section>
+    </div>
+  );
+}
+
+function LineRow({ line, session, lang }: { line: PayrollLineRow; session: ClassSessionRow | undefined; lang: 'es' | 'en' }) {
+  const { t } = useI18n();
+  const when = session ? formatDate(session.starts_at, lang) : line.note?.slice(0, 10) ?? '—';
+  const what = session ? session.title : t(`admin.payouts.kind.${line.kind}`);
+  return (
+    <div className="adm-line">
+      <span className="xs mono adm-line-when">{when}</span>
+      <span className="grow small">
+        {what}
+        {line.kind !== 'class' && <Chip>{t(`admin.payouts.kind.${line.kind}`)}</Chip>}
+        {line.attendees != null && <span className="xs muted"> · {t('admin.payouts.attendees', { n: line.attendees })}</span>}
+        {line.note && !session && <span className="xs muted"> · {line.note}</span>}
+      </span>
+      <span className="xs muted">{line.rate ? formatCOP(line.rate, lang) : ''}</span>
+      <span className={`small mono ${line.amount < 0 ? 'adm-neg' : ''}`}>{formatCOP(line.amount, lang)}</span>
+    </div>
+  );
+}
+

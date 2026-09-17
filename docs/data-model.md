@@ -57,8 +57,8 @@ _Bloques y flujos que Admin → Features enciende o apaga por página._
 | `audience` | enum (all \| staff \| customers \| beta) |  |
 
 #### `legal_documents`
-Terms, privacy and policies, versioned.  
-_Términos, privacidad y políticas, versionados._
+Terms, privacy, waiver, cancellation, refunds and house rules — bilingual and versioned.  
+_Términos, privacidad, exoneración, cancelaciones, reembolsos y reglas de casa — bilingües y versionados._
 
 | column | type | notes |
 | --- | --- | --- |
@@ -66,12 +66,21 @@ _Términos, privacidad y políticas, versionados._
 | `tenant_id` | uuid | → `tenants` Owning studio (multi-tenant) |
 | `created_at` | timestamptz |  |
 | `updated_at` | timestamptz |  |
-| `kind` | enum (terms \| privacy \| waiver \| policy) |  |
-| `version` | text |  |
-| `locale` | text |  |
-| `title` | text |  |
-| `body_md` | text |  |
+| `kind` | enum (terms \| privacy \| waiver \| cancellation \| refunds \| house-rules) |  |
+| `slug` | text | kind + version, e.g. terms-1.0 |
+| `version` | text | semver-ish, e.g. 1.0 |
+| `status` | enum (draft \| published) |  |
+| `effective_from` | date | the date the version governs from |
+| `title` | json | {es,en} |
+| `summary` | json | {es,en} one line |
+| `body_md` | json | {es,en} markdown; {{policy.*}} tokens are resolved from M-08 at render time |
+| `requires_acceptance` | bool | the member must accept this version (waiver, terms) |
 | `published_at` | timestamptz, null |  |
+
+**Who may read / write**
+- anon + customer: read where status = published
+- admin: write (a new version is a new row; a published row is never edited in place)
+- counsel review: status stays draft until the owner publishes
 
 #### `consents`
 Which document version each user accepted.  
@@ -87,6 +96,56 @@ _Qué versión de cada documento aceptó cada usuario._
 | `legal_document_id` | uuid | → `legal_documents`  |
 | `accepted_at` | timestamptz |  |
 | `ip` | text, null |  |
+
+#### `legal_acceptances`
+Acceptance of one concrete document version (A-06): what the person signed and when.  
+_Aceptación de una versión concreta de un documento (A-06): qué firmó la persona y cuándo._
+
+| column | type | notes |
+| --- | --- | --- |
+| `id` | uuid | Primary key |
+| `tenant_id` | uuid | → `tenants` Owning studio (multi-tenant) |
+| `created_at` | timestamptz |  |
+| `updated_at` | timestamptz |  |
+| `user_id` | uuid | → `users`  |
+| `document_id` | uuid | → `legal_documents`  |
+| `kind` | text | denormalised legal_documents.kind, so “did they sign the waiver?” is one query |
+| `version` | text |  |
+| `accepted_at` | timestamptz |  |
+| `channel` | enum (app \| website \| front_desk \| import) |  |
+| `ip` | text, null |  |
+
+**Who may read / write**
+- customer: insert + read own rows (user_id = auth.uid()); never update nor delete
+- admin/finance: read all (proof of the signed waiver)
+- append-only: a new acceptance is a new row, so the history survives a new version
+
+#### `media_assets`
+One art slot per place in the app and the site (M-02d): what is missing, in which ratio and with which brief.  
+_Un cupo de arte por lugar de la app y la web (M-02d): qué falta, en qué proporción y con qué encargo._
+
+| column | type | notes |
+| --- | --- | --- |
+| `id` | uuid | Primary key |
+| `tenant_id` | uuid | → `tenants` Owning studio (multi-tenant) |
+| `created_at` | timestamptz |  |
+| `updated_at` | timestamptz |  |
+| `slot_key` | text | stable key a component asks for, e.g. class.hero |
+| `kind` | enum (photo \| video \| illustration) |  |
+| `ratio` | text | CSS aspect-ratio, e.g. 16 / 9 |
+| `label` | json | {es,en} where the slot shows |
+| `alt` | json | {es,en} alternative text |
+| `brief` | json | {es,en} what to shoot |
+| `movement` | enum (enraiza \| fluye \| arde \| libera), null | movement tint of the empty slot |
+| `url` | text, null |  |
+| `credit` | text, null | photographer / licence |
+| `status` | enum (pending \| ready) |  |
+| `sort` | int |  |
+
+**Who may read / write**
+- anon + customer: read where status = ready
+- coordinator/admin: write (M-02d media library)
+- url points at storage; HoyOS never stores the binary in a row
 
 #### `content_articles`
 Club rules (C-13), about-HOY copy and guides, editable without a deploy.  
@@ -109,6 +168,7 @@ _Reglas del club (C-13), textos “sobre HOY” y guías, editables sin deploy._
 | `required` | bool | must be read (safety) |
 | `sort` | int |  |
 | `published` | bool |  |
+| `publish_at` | timestamptz, null | scheduled publication; published + a future publish_at = scheduled (M-02a) |
 
 **Who may read / write**
 - customer + anon: read where published = true
@@ -581,6 +641,58 @@ _Invitaciones enviadas por miembros (C-16) y el crédito de recompensa cuando el
 - customer: insert + read own rows (inviter_user_id = auth.uid())
 - front_desk: read by code, to honour a pass at the desk
 - admin/finance: write status and reward_credit_id (the reward is granted server-side)
+
+#### `payroll_runs`
+One monthly teacher payroll run (M-09a): period, status, total and payout method.  
+_Una liquidación mensual de profesores (M-09a): periodo, estado, total y medio de pago._
+
+| column | type | notes |
+| --- | --- | --- |
+| `id` | uuid | Primary key |
+| `tenant_id` | uuid | → `tenants` Owning studio (multi-tenant) |
+| `created_at` | timestamptz |  |
+| `updated_at` | timestamptz |  |
+| `period_start` | date |  |
+| `period_end` | date |  |
+| `status` | enum (draft \| approved \| paid) |  |
+| `total` | int | COP, sum of payroll_lines.amount |
+| `method` | enum (wompi \| transfer \| cash) |  |
+| `approved_by` | uuid, null | → `users`  |
+| `approved_at` | timestamptz, null |  |
+| `paid_at` | timestamptz, null |  |
+| `provider_ref` | text, null | Wompi payout reference (simulated today) |
+| `notes` | text, null |  |
+
+**Who may read / write**
+- finance/admin: full control
+- teacher: read runs that contain a line of their own (S-03)
+- a run in status paid is immutable; a correction is a new adjustment line in the next run
+
+#### `payroll_lines`
+One class taught, bonus or adjustment inside a run (M-09b, S-03).  
+_Una clase dictada, bono o ajuste dentro de una corrida (M-09b, S-03)._
+
+| column | type | notes |
+| --- | --- | --- |
+| `id` | uuid | Primary key |
+| `tenant_id` | uuid | → `tenants` Owning studio (multi-tenant) |
+| `created_at` | timestamptz |  |
+| `updated_at` | timestamptz |  |
+| `run_id` | uuid | → `payroll_runs`  |
+| `teacher_id` | uuid | → `teachers`  |
+| `class_session_id` | uuid, null | → `class_sessions` null for a bonus, an adjustment or a month older than the session window |
+| `kind` | enum (class \| bonus \| adjustment) |  |
+| `rate` | int | COP, teachers.rate_per_class at the time of the run |
+| `amount` | int | COP, signed: an adjustment may be negative |
+| `attendees` | int, null | checked-in students, for the statement |
+| `paid_at` | timestamptz, null | set when this teacher is settled; a run may be paid teacher by teacher (M-09b) |
+| `paid_method` | enum (wompi \| transfer \| cash), null |  |
+| `note` | text, null |  |
+
+**Who may read / write**
+- finance/admin: full control while the run is draft
+- teacher: read own lines (teacher_id resolves to their teachers row)
+- nobody: lines of a paid run are read-only
 
 ### Comms · Comunicaciones
 

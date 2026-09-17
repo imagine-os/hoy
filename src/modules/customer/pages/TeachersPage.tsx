@@ -48,7 +48,7 @@ export function TeacherProfilePage() {
     <div className="container page cust-page">
       <PageHead back="/app/teachers" title={<span className="sr-only">{te.display_name}</span>} />
       <div className="stack">
-        <MediaPlaceholder label={t('customer.teachers.portrait')} ratio="4 / 3"><div className="cust-portrait"><Avatar name={te.display_name} src={te.photo_url} size={96} /></div></MediaPlaceholder>
+        <MediaPlaceholder slotKey="teacher.portrait" label={t('customer.teachers.portrait')} ratio="4 / 3"><div className="cust-portrait"><Avatar name={te.display_name} src={te.photo_url} size={96} /></div></MediaPlaceholder>
         <div className="stack-sm"><h1 className="cust-title">{te.display_name}</h1><p className="small">{bi(te.bio)}</p></div>
         <section className="stack-sm">
           <h2 className="cust-h2">{t('customer.teachers.teaches')}</h2>

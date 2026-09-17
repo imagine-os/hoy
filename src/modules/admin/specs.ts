@@ -10,10 +10,84 @@ export const M01 = defineSpec({
 
 export const M02 = defineSpec({
   ...canvasSpecs['M-02'],
-  layout: ['EntityTabs (Classes / Teachers / Modalities / Rooms)', 'ListView (DataTable, search, publish toggle)', 'EditDrawer (fields, ES / EN, publish state)', 'PreviewPane'],
+  layout: ['ContentSubNav (Catálogo · Artículos · FAQ · Eventos · Medios)', 'EntityTabs (Classes / Teachers / Modalities / Rooms)', 'ListView (DataTable, search, publish toggle)', 'EditDrawer (fields, ES / EN, publish state)', 'PreviewPane'],
   data: ['class_templates', 'teachers', 'modalities', 'rooms', 'audit_log'],
-  notes: [...(canvasSpecs['M-02'].notes ?? []), 'Pricing is not editable here: prices live in src/tenant/pricing.ts (P-01).', 'Publish state = the active column of each table.'],
+  notes: [...(canvasSpecs['M-02'].notes ?? []), 'Pricing is not editable here: prices live in src/tenant/pricing.ts (P-01).', 'Publish state = the active column of each table.', 'M-02 is now a family: this page is the catalogue (the four scheduling entities); M-02a…M-02d are articles, FAQ, events and the media library, behind one shared sub-navigation.'],
 });
+
+/** M-02 family leaf. Each one keeps M-02's purpose and adds its own layout, data and rules. */
+const contentSub = (code: string, name: { es: string; en: string }, purpose: { es: string; en: string }, layout: string[], extra: Partial<typeof M02> = {}) => defineSpec({
+  ...canvasSpecs['M-02'], code, name, purpose, layout,
+  roles: ['super_admin', 'admin', 'coordinator'],
+  notes: [...(canvasSpecs['M-02'].notes ?? []), 'Sub-page of M-02; the sub-navigation is shared by all five.', 'Every write appends an audit_log row through useAudit(\'admin\').'],
+  ...extra,
+});
+
+export const M02a = contentSub('M-02a',
+  { es: 'Contenido · Artículos', en: 'Content · Articles' },
+  { es: 'Editor de `content_articles`: título y cuerpo bilingües en markdown con vista previa en vivo, slug, categoría, publicación programada y “publicar ahora”.', en: 'Editor for `content_articles`: bilingual title and markdown body with a live preview, slug, category, scheduled publication and “publish now”.' },
+  ['ContentSubNav', 'StatusFilter (todos / publicado / programado / borrador)', 'ArticleTable (título + slug, categoría, estado, fecha, orden)', 'EditDrawer', 'MarkdownEditor ES/EN + preview', 'ScheduleFields (publish_at, sort)', 'PublishNow / Unpublish'],
+  {
+    data: ['content_articles', 'audit_log'],
+    logic: [
+      'Status is derived, not stored: published = false is a draft; published = true with a future publish_at is scheduled; otherwise it is live.',
+      '“Publish now” sets published = true and clears publish_at in one write, so a scheduled row can be pushed live early.',
+      'Slug is lowercase a–z, digits and hyphens; C-13 and C-14/C-15 read the rows by section and sort.',
+    ],
+    states: ['Loading', 'Empty (no articles)', 'Filter with no matches', 'Draft / scheduled / published', 'Invalid slug', 'Read-only (sin content.write)', 'Unsaved changes'],
+    integrations: [],
+  },
+);
+
+export const M02b = contentSub('M-02b',
+  { es: 'Contenido · Preguntas frecuentes', en: 'Content · FAQ' },
+  { es: 'Editor de `faq_entries` por secciones: pregunta y respuesta bilingües, orden con ↑/↓, página 1 o 2 y estado de publicación.', en: 'Editor for `faq_entries` by section: bilingual question and answer, ↑/↓ ordering, page 1 or 2 and publish state.' },
+  ['ContentSubNav', 'PageFilter (todas / 1 / 2)', 'SectionCard ×n', 'EntryRow (↑ ↓, pregunta, respuesta, publicado)', 'EditDrawer (Q/A, sección, página)', 'AddGroup / AddEntry'],
+  {
+    data: ['faq_entries', 'audit_log'],
+    logic: [
+      'Order is the `sort` column and moves one step at a time (↑/↓ swap the two sort values) — keyboard-reachable and impossible to do by accident, unlike drag-and-drop.',
+      'group_title, group_lead and page belong to the section: saving them propagates to every sibling row of the same group_key.',
+      'A new section is a new group_key with one unpublished entry; C-14 is page 1 and C-15 is page 2.',
+    ],
+    states: ['Loading', 'Empty', 'First / last entry (arrow disabled)', 'Unpublished entry', 'Read-only', 'New empty section'],
+    integrations: [],
+  },
+);
+
+export const M02c = contentSub('M-02c',
+  { es: 'Contenido · Eventos', en: 'Content · Events' },
+  { es: 'Publicador de `events`: crear y editar, publicar o despublicar, aforo, precio público y de socio, y las inscripciones ya recibidas.', en: 'Publisher for `events`: create and edit, publish or unpublish, capacity, public and member price, and the RSVPs already received.' },
+  ['ContentSubNav', 'StatusFilter', 'EventTable (título, cuándo, inscritos / aforo, precios, estado)', 'EditDrawer (fechas, sala, anfitrión, aforo, precios)', 'Publish / Unpublish / Cancel'],
+  {
+    data: ['events', 'event_rsvps', 'rooms', 'teachers', 'audit_log'],
+    logic: [
+      'The RSVP count is event_rsvps rows with status going or attended, plus their guests — it is never stored on the event.',
+      'Capacity cannot drop below the RSVPs already taken, and cannot exceed the studio mats (tenant.studio.mats).',
+      'Publishing is the only thing that makes an event visible in C-23; cancelling keeps the row and its RSVPs for the refund conversation.',
+      'A default price comes from src/tenant/pricing.ts (talleres); member_price_cop = 0 renders as “included”.',
+    ],
+    states: ['Loading', 'Empty', 'Draft / published / cancelled', 'Sold out (RSVPs = capacity)', 'Capacity below RSVPs: blocked', 'End before start: blocked', 'Delete blocked by RSVPs', 'Read-only'],
+    integrations: ['Wompi'],
+  },
+);
+
+export const M02d = contentSub('M-02d',
+  { es: 'Contenido · Biblioteca de medios', en: 'Content · Media library' },
+  { es: 'La lista de arte que el estudio debe: un cupo por lugar de la app y la web, con proporción, encargo y texto alternativo. Pegar una URL lo publica sin deploy.', en: 'The checklist of art the studio owes: one slot per place in the app and the site, with its ratio, brief and alt text. Pasting a URL publishes it with no deploy.' },
+  ['ContentSubNav', 'ReadyKPIs (listas / pendientes / video)', 'StatusFilter', 'MediaGrid → MediaCard (marco con proporción, encargo, URL, alt)', 'MarkReady / MarkPending', 'AdvancedFields (slot_key, ratio, kind, credit, label, alt, brief)'],
+  {
+    data: ['media_assets', 'audit_log'],
+    logic: [
+      'slot_key is the contract between the table and the components: MediaPlaceholder({slotKey}) renders the URL when status = ready and a branded empty slot otherwise.',
+      'A row can only be marked ready with a URL; marking it pending again hides the asset everywhere without deleting the record.',
+      'The seed ships one pending row per known slot (class hero 16:9, teacher portrait 4:3, event 4:5, studio tour video 16:9, site hero 21:9, about 4:3, contact map), so the owner reads the page as a to-do list.',
+      'HoyOS stores the URL, never the binary: uploads belong to Supabase Storage when it lands.',
+    ],
+    states: ['Loading', 'Empty', 'Pending slot (ratio + brief)', 'Ready photo', 'Ready video', 'Invalid URL', 'Read-only'],
+    integrations: ['Supabase Storage'],
+  },
+);
 
 export const M04 = defineSpec({
   ...canvasSpecs['M-04'],
@@ -95,13 +169,61 @@ export const M08e = sub('M-08e',
 export const M09 = defineSpec({
   code: 'M-09',
   name: { es: 'Finanzas', en: 'Finance' },
-  purpose: { es: 'Ingresos por producto y método, pagos pendientes, reembolsos, facturas con referencia DIAN y el marcador de payouts de Wompi.', en: 'Revenue by product and method, pending payments, refunds, invoices with the DIAN reference and the Wompi payouts placeholder.' },
-  layout: ['KPIRow', 'RevenueByProduct', 'RevenueByMethod', 'PayoutsPlaceholder (Wompi)', 'RefundsList', 'InvoicesTable (DIAN)'],
-  data: ['payments', 'invoices', 'plans', 'users', 'profiles', 'audit_log', 'tenants'],
+  purpose: { es: 'Ingresos por producto y método, pagos pendientes, reembolsos, facturas con referencia DIAN y el resumen de la nómina de profesores.', en: 'Revenue by product and method, pending payments, refunds, invoices with the DIAN reference and the teacher-payroll roll-up.' },
+  layout: ['KPIRow', 'RevenueByProduct', 'RevenueByMethod', 'PayoutsSummary (M-09a: próxima, por aprobar, pagado en el trimestre)', 'PaymentsList + Refund', 'InvoicesTable (DIAN) + StatusFilter'],
+  data: ['payments', 'invoices', 'plans', 'users', 'profiles', 'payroll_runs', 'payroll_lines', 'audit_log', 'tenants'],
   roles: ['super_admin', 'admin', 'finance'],
-  logic: ['Revenue = approved payments in the selected range grouped by plan and by method.', 'Refund flips payments.status to refunded and writes audit_log payment.refund; the credit return is a follow-up.', 'E-invoicing requires a DIAN resolution in M-08; until then the CUFE column shows —.'],
+  logic: [
+    'Revenue = approved payments in the selected range grouped by plan and by method.',
+    'Refund flips payments.status to refunded and writes audit_log payment.refund; the credit return is a follow-up.',
+    'E-invoicing requires a DIAN resolution in M-08; until then the CUFE column shows a badge instead.',
+    'The invoice filter is the status of the payment behind the invoice (invoices carry no status of their own).',
+    'Ranges are 7 / 15 / 30 / 90 days and all time: 15 days is there because Colombian studios settle biweekly, and it drives both the KPI tiles and the invoice table.',
+    'The payouts tiles read payroll_runs: the draft total, the sum of approved-not-yet-paid runs, and runs paid in the last three months.',
+  ],
   integrations: ['Wompi', 'DIAN e-invoicing'],
-  states: ['Loading', 'Empty range', 'No refund permission: action hidden', 'E-invoicing off: notice'],
-  toggles: [{ label: 'Wompi payouts', on: false }, { label: 'Refunds', on: true }, { label: 'DIAN column', on: true }],
-  notes: ['Placeholder payouts until the Wompi integration lands.'],
+  states: ['Loading', 'Empty range', 'No refund permission: action hidden', 'E-invoicing off: notice', 'No draft run yet'],
+  toggles: [{ label: 'Wompi payouts', on: true }, { label: 'Refunds', on: true }, { label: 'DIAN column', on: true }],
+  notes: ['Payouts are real rows now (payroll_runs / payroll_lines); only the Wompi dispersion call is simulated, and the page says so.'],
+});
+
+const PAYOUT_NOTES = [
+  'Teachers are paid per class taught: one completed class_sessions row = one payroll_lines row of kind class at teachers.rate_per_class. Bonuses and adjustments are lines finance adds by hand and are never derived.',
+  'src/data/payrollCalc.ts is the single arithmetic: the seed (historical runs), M-09a (generate draft) and S-03 (the teacher statement) all use it, so the three screens can never disagree.',
+  'A payout is NOT a payments row: payments is money in from members (it feeds M-09 revenue, C-11 history and M-01 KPIs). Money out lives on payroll_runs (status / paid_at / method / provider_ref) with an audit_log row per action.',
+  'wompiPayout() in src/modules/admin/payouts.ts is the dispersion seam — simulated today, with the rejected path included; the badge says simulated on both pages.',
+];
+
+/** M-09a — the payroll runs list. */
+export const M09a = defineSpec({
+  code: 'M-09a',
+  name: { es: 'Finanzas · Nóminas', en: 'Finance · Payroll runs' },
+  purpose: { es: 'Las liquidaciones mensuales de profesores: qué se debe, qué está aprobado y qué ya se pagó, y el botón que genera el borrador del periodo.', en: 'The monthly teacher payroll runs: what is owed, what is approved and what is paid, plus the button that generates the period’s draft.' },
+  layout: ['KPIRow (próxima corrida, por aprobar, pagado en el trimestre)', 'GeneratePanel (periodo + generar borrador)', 'RunsTable (periodo, estado, profesores, clases, total, medio, liquidada)', 'SeamNote'],
+  data: ['payroll_runs', 'payroll_lines', 'class_sessions', 'bookings', 'teachers', 'audit_log'],
+  roles: ['super_admin', 'admin', 'finance'],
+  logic: [
+    'Generating a draft is idempotent: an existing draft for the same period has its lines deleted and recomputed, so pressing the button twice cannot double-pay. An approved or paid run is refused with a reason.',
+    'payroll.write gates every action; payroll.read is enough to look.',
+    ...PAYOUT_NOTES,
+  ],
+  integrations: ['Wompi'],
+  states: ['Loading', 'No runs yet', 'Draft exists for the period: regenerated', 'Period already approved/paid: blocked', 'Read-only (solo payroll.read)'],
+  notes: PAYOUT_NOTES,
+});
+
+/** M-09b — one run, with the per-teacher statement. */
+export const M09b = defineSpec({
+  ...M09a,
+  code: 'M-09b',
+  name: { es: 'Finanzas · Detalle de nómina', en: 'Finance · Payroll run' },
+  purpose: { es: 'Una corrida: el extracto por profesor con sus clases, bonos y ajustes, y las cuatro acciones de finanzas — aprobar, enviar por Wompi, marcar pagada por transferencia o efectivo, exportar CSV.', en: 'One run: the per-teacher statement with their classes, bonuses and adjustments, and finance’s four actions — approve, send via Wompi, mark paid by transfer or cash, export CSV.' },
+  layout: ['RunHeader (periodo, estado, simulado)', 'KPIRow (total, medio, estado)', 'ActionBar (regenerar · aprobar · Wompi · transferencia · efectivo · CSV · imprimir)', 'Statement → TeacherCard (estado de pago, clases, líneas, subtotal, marcar como pagado)'],
+  states: ['Draft: regenerate + approve', 'Approved: pay by Wompi / transfer / cash', 'Approved: one teacher settled, the rest pending', 'Paid: locked, read-only', 'Wompi rejected: reason shown', 'Run not found', 'Negative adjustment line'],
+  logic: [
+    'A run can be settled teacher by teacher: payroll_lines.paid_at + paid_method carry the stamp, so a bounced transfer for one teacher does not hold the other seven. The run closes itself as paid once every teacher is settled.',
+    'Each teacher card shows the classes taught, the total attendance, the payment method and the settlement date — the payment detail finance is asked for on the phone.',
+    'A run-level payment stamps every unpaid line with the same date and method, so the two paths can never disagree.',
+    ...(M09a.logic ?? []),
+  ],
 });

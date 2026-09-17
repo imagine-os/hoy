@@ -49,3 +49,27 @@ Two notes that outlive the mock:
 - **`payment_methods.token_ref` is a placeholder** (`tok_demo_…`) produced by `wompiTokenise()`.
   When Wompi lands it holds the real token reference and nothing else; the card number never reaches
   HoyOS, and the column is not selectable from the client.
+
+## Who may read and write the tables added by the depth pass (0012)
+
+Same rule, two new shapes: **legal proof is append-only** and **money out is finance-only**.
+`tenant_id` still scopes every query first; the per-table notes are generated into
+[`data-model.md`](./data-model.md) from `TableDef.rls`.
+
+| Table | customer | teacher | front_desk / coordinator | admin / finance |
+| --- | --- | --- | --- | --- |
+| `legal_documents` | read where `status = published` | read | read | admin writes; a new version is a new row |
+| `legal_acceptances` | insert + read own; never update nor delete | read own | read (did they sign the waiver?) | read all |
+| `media_assets` | read where `status = ready` | read | write (M-02d) | write |
+| `payroll_runs` | — | read runs containing a line of their own (S-03) | — | finance/admin full control |
+| `payroll_lines` | — | read own lines | — | finance/admin write while the run is `draft` |
+
+Three notes that outlive the mock:
+- **A published legal version is never edited in place.** Editing would silently change what people
+  already accepted, so a correction is a new row with a new `version` and `effective_from`, and
+  `legal_acceptances` keeps pointing at the exact `document_id` the member signed.
+- **A paid payroll run is immutable.** A correction is an `adjustment` line in the next run, which is
+  why `payroll_lines.amount` is signed. A run can be settled teacher by teacher
+  (`payroll_lines.paid_at` / `paid_method`), so one bounced transfer does not hold the others.
+- **A payout is not a `payments` row.** `payments` is money in from members and feeds every revenue
+  number in the product; money out lives on `payroll_runs` with an `audit_log` entry per action.

@@ -112,8 +112,9 @@ export function ProfilePage() {
     ),
     'Legal links': () => (
       <ListGroup title={t('customer.profile.legal')}>
-        <ListRow title={t('customer.profile.legal.terms')} to="/site/legal/terms" />
-        <ListRow title={t('customer.profile.legal.privacy')} subtitle={t('customer.profile.legal.law')} to="/site/legal/privacy" />
+        <ListRow title={t('customer.profile.legal.terms')} to="/app/legal/terms" />
+        <ListRow title={t('customer.profile.legal.privacy')} subtitle={t('customer.profile.legal.law')} to="/app/legal/privacy" />
+        <ListRow title={t('customer.legal.kind.waiver')} subtitle={t('customer.legal.kind.house-rules')} to="/app/legal/waiver" />
         <ListRow title={t('customer.faq.title')} to="/app/faq" />
       </ListGroup>
     ),

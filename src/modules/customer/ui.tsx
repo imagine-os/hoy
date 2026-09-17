@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useI18n } from '../../i18n/I18nProvider';
+import { useTable } from '../../data/DataContext';
+import type { MediaAssetRow } from '../../data/schema';
 import type { Movement } from '../../design/tokens';
 import { Chip } from '../../components/atom/Chip/Chip';
 import type { JoinedSession } from './hooks';
@@ -24,11 +26,36 @@ export function PageHead({ title, sub, back, eyebrow, actions }: { title: ReactN
   );
 }
 
-/** Textured 16:9 placeholder for hero photos and videos, labelled so nobody mistakes it for content. */
-export function MediaPlaceholder({ label, ratio = '16 / 9', movement, children }: { label: string; ratio?: string; movement?: Movement; children?: ReactNode }) {
+/**
+ * A media slot. With `slotKey` it reads `media_assets` (M-02d): once the owner pastes a URL and
+ * flips the row to `ready`, the real photo or video appears here and everywhere else that slot is
+ * used, with no deploy. Until then it renders an intentional, branded empty slot — movement tint,
+ * ratio badge and an "arte pendiente / art pending" chip — so nobody mistakes it for content and
+ * everybody can see what is still owed.
+ */
+export function MediaPlaceholder({ label, ratio, movement, slotKey, children }: { label: string; ratio?: string; movement?: Movement; slotKey?: string; children?: ReactNode }) {
+  const { t, bi } = useI18n();
+  const { rows } = useTable<MediaAssetRow>('media_assets', slotKey ? { where: { slot_key: slotKey } } : { limit: 0 });
+  const asset = slotKey ? rows[0] : undefined;
+  const mv = movement ?? asset?.movement ?? undefined;
+  const ar = ratio ?? asset?.ratio ?? '16 / 9';
+  const ready = asset?.status === 'ready' && !!asset.url;
+
+  if (ready && asset) {
+    return (
+      <div className="cust-media cust-media-ready" style={{ aspectRatio: ar }}>
+        {asset.kind === 'video'
+          ? <video className="cust-media-img" src={asset.url!} controls playsInline aria-label={bi(asset.alt) || label} />
+          : <img className="cust-media-img" src={asset.url!} alt={bi(asset.alt) || label} loading="lazy" />}
+        {children}
+      </div>
+    );
+  }
   return (
-    <div className={`cust-media ${movement ? `cust-media-${movement}` : ''}`} style={{ aspectRatio: ratio }} role="img" aria-label={label}>
-      <span className="cust-media-label">{label}</span>
+    <div className={`cust-media cust-media-empty ${mv ? `cust-media-${mv}` : ''}`} style={{ aspectRatio: ar }} role="img" aria-label={`${label} · ${t('customer.media.pending')}`}>
+      <span className="cust-media-ratio" aria-hidden>{ar.replace(/\s/g, '')}</span>
+      <span className="cust-media-chip" aria-hidden>{t('customer.media.pending')}</span>
+      <span className="cust-media-label">{asset ? bi(asset.label) : label}</span>
       {children}
     </div>
   );
