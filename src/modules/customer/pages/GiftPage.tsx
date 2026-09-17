@@ -1,0 +1,103 @@
+import { useState } from 'react';
+import { useI18n } from '../../../i18n/I18nProvider';
+import { useSession } from '../../../auth/SessionProvider';
+import { useData } from '../../../data/DataContext';
+import { formatCOP } from '../../../i18n/format';
+import { tenant } from '../../../tenant/tenant';
+import { Card } from '../../../components/molecule/Card/Card';
+import { Button } from '../../../components/atom/Button/Button';
+import { Chip } from '../../../components/atom/Chip/Chip';
+import { Input } from '../../../components/atom/Input/Input';
+import { Field } from '../../../components/molecule/Field/Field';
+import { Notice } from '../../../components/molecule/Notice/Notice';
+import { Wordmark } from '../../../components/atom/Wordmark/Wordmark';
+import { OrderSummary } from '../../../components/molecule/OrderSummary/OrderSummary';
+import { priceOf } from '../hooks';
+import { recordPayment, wompiCheckout } from '../payments';
+import { policy } from '../policy';
+import { PageHead } from '../ui';
+
+const DESIGNS = ['cream', 'blue', 'yellow', 'sand'] as const;
+type Design = (typeof DESIGNS)[number];
+const AMOUNTS = ['single', 'pack3', 'pack10'] as const;
+
+/** C-17 Gift card — amount, recipient, delivery date, message, design, then pay. */
+export function GiftPage() {
+  const { t, bi, lang } = useI18n();
+  const data = useData();
+  const { user } = useSession();
+  const min = priceOf('single').price ?? 0;
+  const [amountId, setAmountId] = useState<string>('pack3');
+  const [custom, setCustom] = useState('');
+  const [name, setName] = useState('');
+  const [contact, setContact] = useState('');
+  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [message, setMessage] = useState('');
+  const [design, setDesign] = useState<Design>('cream');
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState<string | null>(null);
+
+  const amount = amountId === 'custom' ? Number(custom.replace(/\D/g, '')) || 0 : priceOf(amountId).price ?? 0;
+  const label = amountId === 'custom' ? t('customer.gift.custom') : bi(priceOf(amountId).name);
+  const today = new Date().toISOString().slice(0, 10);
+
+  const buy = async () => {
+    const e: Record<string, string> = {};
+    if (amount < min) e.amount = t('customer.gift.min', { amount: formatCOP(min, lang) });
+    if (name.trim().length < 2) e.name = t('customer.form.required');
+    if (!contact.includes('@') && contact.replace(/\D/g, '').length < 10) e.contact = t('customer.gift.contact.err');
+    if (date < today) e.date = t('customer.gift.date.past');
+    setErrors(e); if (Object.keys(e).length) return;
+    setBusy(true);
+    try {
+      const result = await wompiCheckout({ amount, method: 'card' }); // INTEGRATION SEAM: Wompi
+      await recordPayment(data, { userId: user.id, planId: amountId === 'custom' ? null : `plan_${amountId}`, amount, method: 'card', result, ivaRate: policy.ivaRate });
+      if (result.status !== 'approved') return;
+      const code = `HOY-REGALO-${Math.floor(1000 + Math.random() * 9000)}`;
+      const deliver = new Date(`${date}T08:00:00`);
+      await data.insert('gift_cards', { code, buyer_user_id: user.id, recipient_name: name.trim(), recipient_contact: contact.trim(), amount, balance: amount, deliver_at: deliver.toISOString(), redeemed_by: null, status: date === today ? 'sent' : 'scheduled' });
+      setDone(code);
+    } finally { setBusy(false); }
+  };
+
+  return (
+    <div className="container page cust-page">
+      <PageHead back="/app/more" title={t('customer.gift.title')} sub={t('customer.gift.sub')} />
+      <div className="stack">
+        <div className={`cust-giftcard cust-giftcard-${design}`} role="img" aria-label={t('customer.gift.preview')}>
+          <Wordmark variant={design === 'blue' ? 'cream' : 'blue'} height={28} />
+          <strong>{formatCOP(amount, lang)}</strong>
+          <span className="small">{name ? t('customer.gift.for', { name }) : t('customer.gift.preview')}</span>
+          {message && <em className="xs">“{message}”</em>}
+        </div>
+
+        {done ? (
+          <Notice tone="success" title={t('customer.gift.done.title')}>{t('customer.gift.done.body', { code: done, name, date })}</Notice>
+        ) : (
+          <>
+            <Field label={`1 · ${t('customer.gift.amount')}`} error={errors.amount}>{() => (
+              <div className="stack-sm">
+                <div className="row wrap">
+                  {AMOUNTS.map((id) => <Chip key={id} selected={amountId === id} onClick={() => setAmountId(id)}>{formatCOP(priceOf(id).price ?? 0, lang)} · {bi(priceOf(id).name)}</Chip>)}
+                  <Chip selected={amountId === 'custom'} onClick={() => setAmountId('custom')}>{t('customer.gift.custom')}</Chip>
+                </div>
+                {amountId === 'custom' && <Input inputMode="numeric" value={custom} onChange={(e) => setCustom(e.target.value)} placeholder={formatCOP(min, lang)} aria-label={t('customer.gift.custom')} />}
+              </div>
+            )}</Field>
+            <div className="eyebrow">2 · {t('customer.gift.to')}</div>
+            <Field label={t('customer.form.name')} required error={errors.name}>{(id) => <Input id={id} value={name} onChange={(e) => setName(e.target.value)} />}</Field>
+            <Field label={t('customer.gift.contact')} required hint={t('customer.gift.contact.hint')} error={errors.contact}>{(id) => <Input id={id} value={contact} onChange={(e) => setContact(e.target.value)} />}</Field>
+            <div className="eyebrow">3 · {t('customer.gift.delivery')}</div>
+            <Field label={t('customer.gift.date')} hint={t('customer.gift.date.hint')} error={errors.date}>{(id) => <Input id={id} type="date" min={today} value={date} onChange={(e) => setDate(e.target.value)} />}</Field>
+            <Field label={t('customer.gift.message')} hint={`${message.length} / ${policy.giftMessageMax}`}>{(id) => <textarea id={id} className="input cust-textarea" maxLength={policy.giftMessageMax} value={message} onChange={(e) => setMessage(e.target.value)} rows={3} />}</Field>
+            <Field label={t('customer.gift.design')}>{() => <div className="row wrap">{DESIGNS.map((d) => <button key={d} type="button" className={`cust-swatch cust-giftcard-${d} ${design === d ? 'is-active' : ''}`} aria-label={d} aria-pressed={design === d} onClick={() => setDesign(d)} />)}</div>}</Field>
+            <OrderSummary lines={[{ label: `${t('customer.gift.title')} · ${label}`, amount }]} taxRate={policy.ivaRate} subtotalLabel={t('customer.checkout.subtotal')} taxLabel={t('customer.checkout.iva')} totalLabel={t('customer.checkout.total')} note={t('customer.gift.note', { studio: tenant.name })} />
+            <Card padding="sm"><Button block size="lg" loading={busy} onClick={buy}>{t('customer.gift.cta', { amount: formatCOP(amount, lang) })}</Button></Card>
+            <p className="xs muted" style={{ textAlign: 'center' }}>{t('customer.pay.wompi.seam')}</p>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}

@@ -16,6 +16,7 @@ import { StatTile } from '../../components/molecule/StatTile/StatTile';
 import { ClassRow } from '../../components/molecule/ClassRow/ClassRow';
 import { ClassCard } from '../../components/organism/ClassCard/ClassCard';
 import { useSessionsJoined } from '../website/hooks';
+import { EmptyHomeBlock } from './pages/blocks';
 import './customer.css';
 
 const spec = canvasSpecs['C-01'];
@@ -29,7 +30,7 @@ export function CustomerHomePage() {
   const { user } = useSession();
   const { sections, isVisible } = useLayout(spec);
 
-  const { rows: myBookings } = useTable<BookingRow>('bookings', { where: { user_id: user.id } });
+  const { rows: myBookings, loading: bookingsLoading } = useTable<BookingRow>('bookings', { where: { user_id: user.id } });
   const { rows: intentions } = useTable<IntentionRow>('intentions', { where: { user_id: user.id, date: todayKey() } });
   const { rows: memberships } = useTable<MembershipRow>('memberships', { where: { user_id: user.id, status: 'active' } });
   const { rows: credits } = useTable<CreditRow>('credits', { where: { user_id: user.id } });
@@ -109,6 +110,9 @@ export function CustomerHomePage() {
     ),
     'EventsStrip → BottomNav': () => null,
   };
+
+  // E-01: day one — no booking, no history — teaches the next step instead of empty containers.
+  if (!bookingsLoading && myBookings.length === 0) return <div className="container page"><EmptyHomeBlock /></div>;
 
   return (
     <div className="container page cust-home">
