@@ -3,11 +3,8 @@
 _Updated every turn. Codes reference `src/specs/canvasSpecs.ts`._
 
 ## Backlog
-- C-02 Class schedule (customer, real booking flow) · C-03 Class detail · C-04 Reserve & checkout
-- C-05 Payment methods · C-06/C-07/C-07b plans, passes, credits · C-08/C-08b booked class, cancel/reschedule
-- C-10 Rate class · C-11 History · C-13 Rules · C-14/15 FAQ · C-16 Invite · C-17 Gift card · C-18 Teachers · C-19 Profile
-- C-20 Waitlist · C-21 OTP recovery · C-22 Manage membership · C-23 Events · C-24 Notifications · C-25 More
-- E-01..E-04 edge states · A-01..A-06 auth flows (real Supabase auth later)
+- Customer follow-ups: tables for notifications, reviews, invites, events, payment_methods, content (C-24 C-10 C-16 C-23 C-05 C-13 C-14/C-15) · SessionProvider accepts created accounts (A-03) · cross-tab realtime in MockProvider · policy values → tenant settings (M-08) · hub + website → `/auth/sign-in` · `WIRED` += C-02 C-03 C-19 · PDF receipts (C-11)
+- A-06 legal pages inside the app (site pages exist) · real Supabase Auth behind A-02/A-03/C-21
 - S-02/S-04 follow-ups: offline queue for check-ins, face templates (never), real Wompi link
 - M-04 MJML designer + real provider · M-05 Meta approval API · M-09 Wompi payouts + DIAN CUFE emission
 - M-02 scheduled publishing + media library · M-06 duplicate merge · M-07 signed CSV
@@ -18,7 +15,7 @@ _Updated every turn. Codes reference `src/specs/canvasSpecs.ts`._
 
 ## Doing
 - v0 scaffold hardening: more component states in D-02, seed data breadth
-- Screenshot pass (`npm run screenshots`) for the v0 routes
+- Screenshot pass (`npm run screenshots`) for the v0 routes and the 35 customer/auth routes (0002)
 
 ## Done
 
@@ -44,6 +41,13 @@ _Updated every turn. Codes reference `src/specs/canvasSpecs.ts`._
 - Public website scaffold (home, about, modalities, schedule, teachers, plans, contact, legal)
 - Testing hub (`/#/`)
 - Module stubs: customer (C-01 real), teacher, staff, admin, dev
+
+### Customer (0002 · v0.2.0)
+- Done — booking flow: C-02 schedule + C-02b week · C-03 class detail · C-04 checkout (entitlements, IVA computed, Wompi seam, E-02 inline) · C-05 payment methods · C-08 booked + C-08b change sheet · C-20 waitlist (30-min claim) · E-01 E-02 E-03 demo routes + inline states
+- Done — account & plans: C-06 · C-07 · C-07b · C-22 (pause ≤ 30 d, cancel at period end) · C-11 · C-19 (photo, WhatsApp, emergency contact, LangToggle → users.locale) · C-24 · C-25 · C-13 · C-14/C-15 · C-16 · C-17 · C-18 (+ profile) · C-23 · C-10 · A-05
+- Done — auth: A-01 splash · A-02 sign-in (demo picker, lockout → E-04) · A-03 create account · C-21 OTP recovery · E-04 locked
+- Done — components: Skeleton · Notice · ListRow/ListGroup · SegmentedControl · DateStrip · CountdownRing · EmptyState · Accordion · RatingScale · OtpInput · OrderSummary · BreathingRings (all with metas)
+- In progress — screenshots for every customer route (placeholders in docs/prompts/0002-customer-app.md)
 
 ## Docs & content
 
