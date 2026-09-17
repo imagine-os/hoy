@@ -10,3 +10,10 @@
 .mdv .mdv-placeholder-code { font-size: var(--fs-sm); background: var(--color-surface); padding: .15em .5em; border-radius: 4px; border: 1px solid var(--color-border); }
 .mdv .mdv-placeholder-cap { font-size: var(--fs-sm); }
 @media print { .mdv .mdv-placeholder { break-inside: avoid; } .mdv .mdv-callout { break-inside: avoid; } }
+.mdv .mdv-table-wrap { margin: 0 0 1em; overflow-x: auto; min-width: 0; }
+.mdv .mdv-table-wrap table { margin: 0; }
+.mdv .mdv-table-wrap th { font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-muted); font-weight: var(--fw-medium); white-space: nowrap; }
+.mdv .mdv-table-wrap td, .mdv .mdv-table-wrap th { overflow-wrap: anywhere; }
+.mdv .mdv-table-wrap tr:last-child td { border-bottom: 0; }
+.mdv .mdv-table-wrap img { max-width: 260px; }
+@media print { .mdv .mdv-table-wrap { overflow: visible; break-inside: avoid; } }
