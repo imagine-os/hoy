@@ -1,26 +1,26 @@
-import { Link } from 'react-router-dom';
-import ReactMarkdown from 'react-markdown';
 import { useI18n } from '../../../i18n/I18nProvider';
-import { useTable } from '../../../data/DataContext';
-import { formatDate } from '../../../i18n/format';
-import type { BaseRow } from '../../../data/schema';
-import { PageHead, SiteShell } from '../SiteShell';
+import { LegalDocument } from '../../../components/organism/LegalDocument/LegalDocument';
+import { EmptyState } from '../../../components/molecule/EmptyState/EmptyState';
+import { LegalFooterLinks, legalTitleKey, useLegalDoc, useLegalDocProps } from '../../customer/legal';
+import type { LegalKind } from '../../../data/schema';
+import { SiteShell } from '../SiteShell';
 
-interface LegalRow extends BaseRow { kind: string; version: string; title: string; body_md: string; published_at: string | null }
-
-/** A-06 — versioned legal documents from `legal_documents`. */
-export function LegalPage({ kind }: { kind: 'terms' | 'privacy' }) {
-  const { t, lang } = useI18n();
-  const { rows } = useTable<LegalRow>('legal_documents', { where: { kind } });
-  const doc = rows[0];
+/**
+ * A-06 (public) — any kind of legal document from `legal_documents`, with its version, its effective
+ * date and a version switcher when more than one version exists. The renderer is the shared
+ * `LegalDocument` organism, so the site and the in-app page (`/app/legal/:kind`) never drift; the
+ * numbers inside the body come from M-08 at render time, so the page cannot go stale.
+ */
+export function LegalPage({ kind }: { kind: LegalKind }) {
+  const { t } = useI18n();
+  const view = useLegalDoc(kind);
+  const props = useLegalDocProps(view);
   return (
     <SiteShell>
-      <PageHead title={t(kind === 'terms' ? 'site.legal.terms' : 'site.legal.privacy')} body={doc ? t('site.legal.updated', { date: formatDate(doc.published_at ?? doc.updated_at, lang, { dateStyle: 'long' }), v: doc.version }) : undefined} />
-      <section className="container site-section legal-body prose" style={{ paddingTop: 0 }}>
-        <p className="muted small">{t('site.legal.draft')}</p>
-        {doc && <ReactMarkdown>{doc.body_md}</ReactMarkdown>}
-        <hr />
-        <p className="small"><Link to={kind === 'terms' ? '/site/legal/privacy' : '/site/legal/terms'}>{t(kind === 'terms' ? 'site.legal.privacy' : 'site.legal.terms')} →</Link></p>
+      <section className="container site-section legal-body">
+        {view.doc
+          ? <LegalDocument {...props} footer={<LegalFooterLinks current={kind} to={(k) => `/site/legal/${k}`} />} />
+          : <EmptyState tone={view.loading ? 'loading' : 'empty'} title={t(view.loading ? 'core.common.loading' : 'customer.legal.notFound')} body={view.loading ? undefined : t(legalTitleKey(kind))} />}
       </section>
     </SiteShell>
   );

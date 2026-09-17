@@ -27,7 +27,7 @@ export function RulesPage() {
       <div className="stack">
         {tour && (
           <button type="button" className="cust-plainbtn" onClick={() => setOpen(tour)}>
-            <MediaPlaceholder label={bi(tour.video_label!)}><span className="cust-play" aria-hidden>▶</span></MediaPlaceholder>
+            <MediaPlaceholder slotKey="studio.tour" label={bi(tour.video_label!)}><span className="cust-play" aria-hidden>▶</span></MediaPlaceholder>
           </button>
         )}
         {loading && articles.length === 0 && <EmptyState compact tone="loading" title={t('core.common.loading')} />}

@@ -76,7 +76,7 @@ export function ClassDetailPage() {
 
   const SECTIONS: Record<string, () => ReactNode> = {
     'HeroImage (placeholder)': () => (
-      <MediaPlaceholder label={t('customer.class.heroPlaceholder')} movement={movementOf(joined)}>
+      <MediaPlaceholder slotKey="class.hero" label={t('customer.class.heroPlaceholder')} movement={movementOf(joined)}>
         <div className="cust-hero-chip"><MovementChip j={joined} /></div>
       </MediaPlaceholder>
     ),

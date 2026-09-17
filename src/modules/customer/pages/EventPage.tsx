@@ -85,7 +85,7 @@ export function EventPage() {
     <div className="container page cust-page cust-has-sticky">
       <PageHead back="/app/events" title={<span className="sr-only">{bi(ev.title)}</span>} />
       <div className="stack">
-        <MediaPlaceholder label={t('customer.events.photo')} ratio="4 / 5" movement="libera" />
+        <MediaPlaceholder slotKey="event.cover" label={t('customer.events.photo')} ratio="4 / 5" movement="libera" />
         <div className="stack-sm">
           <span className="eyebrow">{formatDate(ev.starts_at, lang, { weekday: 'long', day: 'numeric', month: 'long' })} · {formatTime(ev.starts_at, lang)} · {tenant.name}</span>
           <h1 className="cust-title">{bi(ev.title)}</h1>

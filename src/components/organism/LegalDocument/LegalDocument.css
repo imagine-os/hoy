@@ -1,0 +1,20 @@
+/* A-06 — one legal document, on the site and inside the app. */
+.legaldoc { display: flex; flex-direction: column; gap: var(--sp-4); min-width: 0; }
+.legaldoc-head { display: flex; flex-direction: column; gap: var(--sp-2); }
+.legaldoc-title { margin: 0; font-size: var(--fs-2xl); letter-spacing: -0.02em; overflow-wrap: anywhere; }
+.legaldoc-meta { align-items: center; gap: var(--sp-2); }
+.legaldoc-ver { color: var(--color-text-muted); }
+.legaldoc-sum { margin: 0; max-width: 62ch; }
+.legaldoc-notice,
+.legaldoc-accepted { border-radius: var(--r-md); padding: var(--sp-3) var(--sp-4); border: 1px solid var(--color-card-border); }
+.legaldoc-notice { background: var(--mv-arde-bg); color: var(--color-text); }
+.legaldoc-accepted { background: var(--mv-enraiza-bg); }
+.legaldoc-versions { align-items: center; gap: var(--sp-2); }
+.legaldoc-body { max-width: 74ch; min-width: 0; }
+.legaldoc-body h2 { font-size: var(--fs-lg); margin-top: var(--sp-6); }
+.legaldoc-body blockquote { margin: var(--sp-4) 0; padding-left: var(--sp-4); border-left: 3px solid var(--color-primary); color: var(--color-text-muted); }
+.legaldoc-foot { border-top: 1px solid var(--color-card-border); padding-top: var(--sp-4); display: flex; flex-wrap: wrap; gap: var(--sp-3); }
+@media print {
+  .legaldoc-versions, .legaldoc-foot { display: none; }
+  .legaldoc-body { max-width: none; }
+}
