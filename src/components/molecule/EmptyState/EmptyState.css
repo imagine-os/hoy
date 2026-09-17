@@ -5,6 +5,6 @@
 .emptystate-error { border-color: color-mix(in srgb, var(--color-danger) 40%, transparent); }
 .emptystate-title { font-family: var(--font-heading); font-weight: var(--fw-medium); }
 .emptystate-body { max-width: 44ch; }
-.emptystate-action { margin-top: var(--sp-2); }
+.emptystate-action { margin-top: var(--sp-2); display: flex; flex-direction: column; align-items: center; gap: var(--sp-2); }
 .emptystate-spinner { width: 16px; height: 16px; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; animation: emptystate-spin .8s linear infinite; display: block; }
 @keyframes emptystate-spin { to { transform: rotate(360deg); } }

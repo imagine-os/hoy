@@ -1,0 +1,4 @@
+.otp { display: flex; gap: var(--sp-2); justify-content: center; }
+.otp-cell.input { width: 44px; height: 52px; padding: 0; text-align: center; font-family: var(--font-heading); font-size: var(--fs-xl); font-weight: var(--fw-semibold); font-variant-numeric: tabular-nums; }
+.otp.is-invalid .otp-cell { border-color: var(--color-danger); animation: otp-shake var(--dur-slow) var(--ease-out); }
+@keyframes otp-shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }

@@ -1,0 +1,10 @@
+.cdring { position: relative; display: inline-flex; align-items: center; justify-content: center; margin: 0 auto; }
+.cdring svg { position: absolute; inset: 0; }
+.cdring-track { fill: none; stroke: var(--color-surface-3); stroke-width: 10; }
+.cdring-fill { fill: none; stroke: var(--color-primary); stroke-width: 10; stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
+.cdring-warn .cdring-fill { stroke: var(--color-warn); }
+.cdring-danger .cdring-fill { stroke: var(--color-danger); }
+.cdring-success .cdring-fill { stroke: var(--color-success); }
+.cdring-center { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center; padding: 0 18%; }
+.cdring-time { font-family: var(--font-heading); font-weight: var(--fw-semibold); font-variant-numeric: tabular-nums; line-height: 1; letter-spacing: -0.02em; }
+.cdring-label { font-size: var(--fs-xs); color: var(--color-text-muted); text-transform: uppercase; letter-spacing: .06em; }
