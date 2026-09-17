@@ -291,7 +291,7 @@ a{color:#5C6444;text-decoration:none}a:hover{color:#3F4530}
       <option value="finance">{{ t.r_finance }}</option>
       <option value="super">{{ t.r_super }}</option>
     </select>
-    <span class="accent" style="font:600 10px ui-monospace,Menlo,monospace;padding:5px 9px;border-radius:6px;background:rgba(var(--m1),.16);color:var(--c2)">v1.4</span>
+    <span class="accent" style="font:600 10px ui-monospace,Menlo,monospace;padding:5px 9px;border-radius:6px;background:rgba(var(--m1),.16);color:var(--c2)">v1.5</span>
   </div>
 </div>
 
@@ -327,13 +327,12 @@ a{color:#5C6444;text-decoration:none}a:hover{color:#3F4530}
         <div class="accent" style="font:500 12.5px Jost;background:var(--c1);color:var(--c13);padding:9px 11px;border-radius:9px">C-01 · {{ t.n_home }}</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">
           <div class="accent" style="font:500 11.5px Jost;background:rgba(var(--m1),.14);color:var(--c3);padding:8px 10px;border-radius:9px">C-02 · {{ t.n_sched }}</div>
-          <div class="accent" style="font:500 11.5px Jost;background:rgba(var(--m1),.14);color:var(--c3);padding:8px 10px;border-radius:9px">C-02b · {{ t.v_week }}</div>
+          <div class="accent" style="font:500 11.5px Jost;background:rgba(var(--m1),.14);color:var(--c3);padding:8px 10px;border-radius:9px">C-02b · {{ t.n_sched_w }}</div>
           <div class="accent" style="font:500 11.5px Jost;background:rgba(var(--m1),.14);color:var(--c3);padding:8px 10px;border-radius:9px">C-03 · {{ t.n_detail }}</div>
           <div class="accent" style="font:500 11.5px Jost;background:rgba(var(--m4),.2);color:var(--c5);padding:8px 10px;border-radius:9px">C-04 · {{ t.n_reserve }}</div>
           <div class="accent" style="font:500 11.5px Jost;background:rgba(var(--m4),.2);color:var(--c5);padding:8px 10px;border-radius:9px">C-05 · {{ t.n_pay }}</div>
           <div class="accent" style="font:500 11.5px Jost;background:rgba(var(--m4),.2);color:var(--c5);padding:8px 10px;border-radius:9px">C-06 · {{ t.n_member }}</div>
           <div class="accent" style="font:500 11.5px Jost;background:rgba(var(--m4),.2);color:var(--c5);padding:8px 10px;border-radius:9px">C-07 · {{ t.bv_title }}</div>
-          <div class="accent" style="font:500 11.5px Jost;background:rgba(var(--m4),.2);color:var(--c5);padding:8px 10px;border-radius:9px">C-07b · {{ t.n_credits }}</div>
           <div class="accent" style="font:500 11.5px Jost;background:rgba(var(--m1),.14);color:var(--c3);padding:8px 10px;border-radius:9px">C-08 · {{ t.n_booked }}</div>
           <div class="accent" style="font:500 11.5px Jost;background:rgba(var(--m1),.14);color:var(--c3);padding:8px 10px;border-radius:9px">C-08b · {{ t.ch_title }}</div>
           <div class="dim surf2" style="font:400 11.5px Jost;background:var(--c20);color:rgba(var(--m3),.65);padding:8px 10px;border-radius:9px">C-10 · {{ t.n_rate }}</div>
@@ -348,8 +347,8 @@ a{color:#5C6444;text-decoration:none}a:hover{color:#3F4530}
           <div class="accent" style="font:500 11.5px Jost;background:rgba(var(--m1),.14);color:var(--c3);padding:8px 10px;border-radius:9px">C-20 · {{ t.n_wait }}</div>
           <div class="accent" style="font:500 11.5px Jost;background:rgba(var(--m1),.14);color:var(--c3);padding:8px 10px;border-radius:9px">C-21 · {{ t.n_reset }}</div>
           <div class="accent" style="font:500 11.5px Jost;background:rgba(var(--m4),.2);color:var(--c5);padding:8px 10px;border-radius:9px">C-22 · {{ t.n_mmemb }}</div>
-          <div class="dim surf2" style="font:400 11.5px Jost;background:var(--c20);color:rgba(var(--m3),.65);padding:8px 10px;border-radius:9px">C-24 · {{ t.n_notif }}</div>
           <div class="dim surf2" style="font:400 11.5px Jost;background:var(--c20);color:rgba(var(--m3),.65);padding:8px 10px;border-radius:9px">C-23 · {{ t.n_event }}</div>
+          <div class="dim surf2" style="font:400 11.5px Jost;background:var(--c20);color:rgba(var(--m3),.65);padding:8px 10px;border-radius:9px">C-24 · {{ t.n_notif }}</div>
           <div class="accent surf2" style="font:500 11.5px Jost;background:rgba(var(--m1),.15);color:var(--c3);padding:8px 10px;border-radius:9px">C-25 · {{ t.n_more }}</div>
           <div class="accent surf2" style="font:500 11.5px Jost;background:rgba(var(--m1),.22);color:var(--c3);padding:8px 10px;border-radius:9px">P-01 · {{ t.pl_title }}</div>
           <div class="accent" style="font:500 11.5px Jost;background:rgba(var(--m6),.2);color:var(--c5);padding:8px 10px;border-radius:9px">E-01 · {{ t.n_empty }}</div>
@@ -689,7 +688,7 @@ a{color:#5C6444;text-decoration:none}a:hover{color:#3F4530}
       <div style="display:flex;align-items:center;gap:7px">
         <span class="accent" style="font:600 9.5px ui-monospace,Menlo,monospace;background:rgba(var(--m1),.15);color:var(--c2);padding:3px 6px;border-radius:4px">C-02b</span>
         <span class="ink" style="font:500 12.5px Jost">{{ t.n_sched_w }}</span>
-        <button onClick="{{ specFns.sched }}" style="margin-left:auto;font:500 10px Jost;background:var(--c23);border:1px solid rgba(var(--m2),.2);color:var(--c10);padding:3px 9px;border-radius:999px;cursor:pointer">spec</button>
+        <button onClick="{{ specFns.schedw }}" style="margin-left:auto;font:500 10px Jost;background:var(--c23);border:1px solid rgba(var(--m2),.2);color:var(--c10);padding:3px 9px;border-radius:999px;cursor:pointer">spec</button>
       </div>
       <div class="surf" style="position:relative;width:396px;border-radius:34px;overflow:hidden;background:linear-gradient(170deg,#F6EFE2,#EFE5D3);box-shadow:inset 0 1px 0 rgba(var(--m9),.7),0 2px 3px rgba(var(--m2),.1),0 18px 40px -14px rgba(var(--m2),.35);display:flex;flex-direction:column">
         <div style="padding:22px 12px 18px;display:flex;flex-direction:column;gap:13px">
@@ -918,15 +917,6 @@ a{color:#5C6444;text-decoration:none}a:hover{color:#3F4530}
       </div>
     </div>
 
-
-    <div style="display:flex;flex-direction:column;gap:9px;flex:none">
-      <div style="display:flex;align-items:center;gap:7px">
-        
-        
-        
-      </div>
-      
-    </div>
 
   </div>
 </div>
@@ -1241,7 +1231,7 @@ a{color:#5C6444;text-decoration:none}a:hover{color:#3F4530}
       <div style="display:flex;align-items:center;gap:7px">
         <span class="accent" style="font:600 9.5px ui-monospace,Menlo,monospace;background:rgba(var(--m1),.15);color:var(--c2);padding:3px 6px;border-radius:4px">C-15</span>
         <span class="ink" style="font:500 12.5px Jost">{{ t.faq_2of2 }}</span>
-        <button onClick="{{ specFns.faq }}" style="margin-left:auto;font:500 10px Jost;background:var(--c23);border:1px solid rgba(var(--m2),.2);color:var(--c10);padding:3px 9px;border-radius:999px;cursor:pointer">spec</button>
+        <button onClick="{{ specFns.faq2 }}" style="margin-left:auto;font:500 10px Jost;background:var(--c23);border:1px solid rgba(var(--m2),.2);color:var(--c10);padding:3px 9px;border-radius:999px;cursor:pointer">spec</button>
       </div>
       <div class="surf" style="width:340px;border-radius:34px;overflow:hidden;background:linear-gradient(170deg,#F6EFE2,#EFE5D3);box-shadow:inset 0 1px 0 rgba(var(--m9),.7),0 2px 3px rgba(var(--m2),.1),0 18px 40px -14px rgba(var(--m2),.35);display:flex;flex-direction:column;padding:24px 18px 18px">
         <a href="#C-14" class="ink" style="font:400 11px Jost;text-decoration:none;opacity:.7;margin-bottom:10px">{{ t.faq_prev }}</a>
@@ -1426,7 +1416,7 @@ a{color:#5C6444;text-decoration:none}a:hover{color:#3F4530}
 </div>
 
 <div class="lane" id="planes" style="background:#F0E8D9;border:1px solid rgba(var(--m2),.12);border-radius:22px;padding:24px 26px 28px;margin:22px 32px;display:flex;flex-direction:column;gap:16px">
-  <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
+  <div id="P-01" style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
     <span class="selfill" style="font:600 10px/1 ui-monospace,Menlo,monospace;padding:5px 9px;border-radius:6px;background:var(--c2);color:var(--c15)">P-01</span>
     <h2 class="ink serif disp" style="margin:0;font:600 21px/1.1 Inter,system-ui,sans-serif">{{ t.pl_title }}</h2>
     <span class="dim" style="font:300 12.5px Jost;color:rgba(var(--m3),.6)">{{ t.pl_sub }}</span>
@@ -2530,7 +2520,7 @@ a{color:#5C6444;text-decoration:none}a:hover{color:#3F4530}
           <h3 class="ink serif" style="margin:0;font:600 22px/1.1 'Playfair Display',serif">{{ t.set_pol }}</h3>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px">
             <div class="surf2" style="border-radius:13px;background:var(--c18);padding:13px 14px;box-shadow:inset 0 1px 0 rgba(var(--m9),.8)"><div class="dim" style="font:400 9.5px Jost;letter-spacing:.1em;text-transform:uppercase;color:rgba(var(--m3),.5)">{{ t.set_cxl }}</div><div class="ink serif" style="font:600 22px 'Playfair Display',serif;margin-top:3px">4 h</div><div class="dim" style="font:300 10.5px/1.5 Jost;color:rgba(var(--m3),.6);margin-top:3px">C-08 · C-11 · E-03</div></div>
-            <div class="surf2" style="border-radius:13px;background:var(--c18);padding:13px 14px;box-shadow:inset 0 1px 0 rgba(var(--m9),.8)"><div class="dim" style="font:400 9.5px Jost;letter-spacing:.1em;text-transform:uppercase;color:rgba(var(--m3),.5)">{{ t.set_wl }}</div><div class="ink serif" style="font:600 22px 'Playfair Display',serif;margin-top:3px">30 min</div><div class="dim" style="font:300 10.5px/1.5 Jost;color:rgba(var(--m3),.6);margin-top:3px">C-18</div></div>
+            <div class="surf2" style="border-radius:13px;background:var(--c18);padding:13px 14px;box-shadow:inset 0 1px 0 rgba(var(--m9),.8)"><div class="dim" style="font:400 9.5px Jost;letter-spacing:.1em;text-transform:uppercase;color:rgba(var(--m3),.5)">{{ t.set_wl }}</div><div class="ink serif" style="font:600 22px 'Playfair Display',serif;margin-top:3px">30 min</div><div class="dim" style="font:300 10.5px/1.5 Jost;color:rgba(var(--m3),.6);margin-top:3px">C-20</div></div>
             <div class="surf2" style="border-radius:13px;background:var(--c18);padding:13px 14px;box-shadow:inset 0 1px 0 rgba(var(--m9),.8)"><div class="dim" style="font:400 9.5px Jost;letter-spacing:.1em;text-transform:uppercase;color:rgba(var(--m3),.5)">{{ t.set_late }}</div><div class="ink serif" style="font:600 22px 'Playfair Display',serif;margin-top:3px">15 min</div><div class="dim" style="font:300 10.5px/1.5 Jost;color:rgba(var(--m3),.6);margin-top:3px">S-02</div></div>
             <div class="surf2" style="border-radius:13px;background:var(--c21);padding:13px 14px;box-shadow:inset 0 1px 2px rgba(var(--m2),.08);display:flex;align-items:center;gap:11px"><div style="flex:1"><div class="dim" style="font:400 9.5px Jost;letter-spacing:.1em;text-transform:uppercase;color:rgba(var(--m3),.5)">{{ t.set_fee }}</div><div class="dim" style="font:300 11px Jost;color:rgba(var(--m3),.6);margin-top:3px">{{ t.adm_off }}</div></div><span style="width:34px;height:19px;border-radius:999px;background:rgba(var(--m2),.22);position:relative;display:inline-block;flex:none"><span style="position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;background:var(--c18)"></span></span></div>
           </div>
@@ -2756,7 +2746,7 @@ a{color:#5C6444;text-decoration:none}a:hover{color:#3F4530}
 
   </div>
 
-<div class="lane" style="background:#F0E8D9;border:1px solid rgba(var(--m2),.12);border-radius:22px;padding:24px 26px 28px;margin:22px 32px 40px;display:flex;flex-direction:column;gap:16px">
+<div class="lane" id="K-01" style="background:#F0E8D9;border:1px solid rgba(var(--m2),.12);border-radius:22px;padding:24px 26px 28px;margin:22px 32px 40px;display:flex;flex-direction:column;gap:16px">
   <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
     <span style="font:600 10px/1 ui-monospace,Menlo,monospace;padding:5px 9px;border-radius:6px;background:var(--c12);color:var(--c15)">LANE 7</span>
     <h2 class="ink serif" style="margin:0;font:600 21px/1.1 'Playfair Display',serif">{{ t.l7 }}</h2>
@@ -2816,8 +2806,9 @@ a{color:#5C6444;text-decoration:none}a:hover{color:#3F4530}
           </div>
         </div>
         <div style="flex:1">
-          <div class="ink" style="font:500 11.5px Jost;margin-bottom:8px">{{ t.kb_doing }} · 3</div>
+          <div class="ink" style="font:500 11.5px Jost;margin-bottom:8px">{{ t.kb_doing }} · 4</div>
           <div style="display:flex;flex-direction:column;gap:7px">
+            <div class="surf2" style="border-radius:10px;background:var(--c20);padding:9px 10px;font:400 11px/1.4 Jost;color:var(--c12);box-shadow:inset 0 1px 2px rgba(var(--m2),.1)">{{ t.gRepo }}<div class="dim" style="font:400 9px Jost;color:rgba(var(--m3),.5);margin-top:3px">{{ t.ph10 }}</div></div>
             <div class="surf2" style="border-radius:10px;background:var(--c20);padding:9px 10px;font:400 11px/1.4 Jost;color:var(--c12);box-shadow:inset 0 1px 2px rgba(var(--m2),.1)">{{ t.g1 }}<div class="dim" style="font:400 9px Jost;color:rgba(var(--m3),.5);margin-top:3px">{{ t.ph10 }}</div></div>
             <div class="surf2" style="border-radius:10px;background:var(--c20);padding:9px 10px;font:400 11px/1.4 Jost;color:var(--c12);box-shadow:inset 0 1px 2px rgba(var(--m2),.1)">{{ t.g2 }}<div class="dim" style="font:400 9px Jost;color:rgba(var(--m3),.5);margin-top:3px">{{ t.ph10 }}</div></div>
             <div class="surf2" style="border-radius:10px;background:var(--c20);padding:9px 10px;font:400 11px/1.4 Jost;color:var(--c12);box-shadow:inset 0 1px 2px rgba(var(--m2),.1)">{{ t.g3 }}<div class="dim" style="font:400 9px Jost;color:rgba(var(--m3),.5);margin-top:3px">{{ t.ph10 }}</div></div>
@@ -2833,8 +2824,9 @@ a{color:#5C6444;text-decoration:none}a:hover{color:#3F4530}
           </div>
         </div>
         <div style="flex:1">
-          <div class="ink" style="font:500 11.5px Jost;margin-bottom:8px">{{ t.kb_done }} · 14</div>
+          <div class="ink" style="font:500 11.5px Jost;margin-bottom:8px">{{ t.kb_done }} · 21</div>
           <div style="display:flex;flex-direction:column;gap:7px">
+            <div class="accent" style="border-radius:10px;background:rgba(var(--m1),.16);padding:9px 10px;font:400 11px/1.4 Jost;color:var(--c3)">{{ t.eRepo }}</div>
             <div class="accent" style="border-radius:10px;background:rgba(var(--m1),.16);padding:9px 10px;font:400 11px/1.4 Jost;color:var(--c3)">{{ t.e1 }}</div>
             <div class="accent" style="border-radius:10px;background:rgba(var(--m1),.16);padding:9px 10px;font:400 11px/1.4 Jost;color:var(--c3)">{{ t.e2 }}</div>
             <div class="accent" style="border-radius:10px;background:rgba(var(--m1),.16);padding:9px 10px;font:400 11px/1.4 Jost;color:var(--c3)">{{ t.e3 }}</div>
@@ -2863,6 +2855,10 @@ a{color:#5C6444;text-decoration:none}a:hover{color:#3F4530}
     <div class="surf" style="width:480px;border-radius:18px;background:var(--c18);padding:20px;box-shadow:inset 0 1px 0 rgba(var(--m9),.8),0 2px 3px rgba(var(--m2),.1),0 16px 34px -14px rgba(var(--m2),.3);flex:none">
       <div class="dim" style="font:600 9.5px Jost;letter-spacing:.14em;text-transform:uppercase;color:rgba(var(--m3),.5);margin-bottom:11px">{{ t.n_log }}</div>
       <div style="display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;gap:11px">
+          <span class="accent" style="font:600 9.5px ui-monospace,Menlo,monospace;padding:4px 8px;border-radius:5px;background:rgba(var(--m1),.16);color:var(--c3);height:fit-content">v1.5</span>
+          <div><div class="ink" style="font:500 12px Jost">{{ t.clRepo }}</div><div class="dim" style="font:300 11.5px/1.6 Jost;color:rgba(var(--m3),.68);margin-top:3px">{{ t.clRepob }}</div></div>
+        </div>
         <div style="display:flex;gap:11px">
           <span class="accent" style="font:600 9.5px ui-monospace,Menlo,monospace;padding:4px 8px;border-radius:5px;background:rgba(var(--m1),.16);color:var(--c3);height:fit-content">v1.4</span>
           <div><div class="ink" style="font:500 12px Jost">{{ t.clFd }}</div><div class="dim" style="font:300 11.5px/1.6 Jost;color:rgba(var(--m3),.68);margin-top:3px">{{ t.clFdb }}</div></div>
@@ -2909,7 +2905,7 @@ a{color:#5C6444;text-decoration:none}a:hover{color:#3F4530}
         </div>
         <div style="display:flex;gap:11px">
           <span class="accent" style="font:600 9.5px ui-monospace,Menlo,monospace;padding:4px 8px;border-radius:5px;background:rgba(var(--m1),.16);color:var(--c3);height:fit-content">v0.3</span>
-          <div><div class="ink" style="font:500 12px Jost">{{ t.cl3t }}</div><div class="dim" style="font:300 11.5px/1.6 Jost;color:rgba(var(--m3),.68);margin-top:3px">{{ t.cl3b }}</div></div>
+          <div><div class="ink" style="font:500 12px Jost">{{ t.clP6t }}</div><div class="dim" style="font:300 11.5px/1.6 Jost;color:rgba(var(--m3),.68);margin-top:3px">{{ t.clP6b }}</div></div>
         </div>
         <div style="display:flex;gap:11px">
           <span class="accent" style="font:600 9.5px ui-monospace,Menlo,monospace;padding:4px 8px;border-radius:5px;background:rgba(var(--m1),.16);color:var(--c3);height:fit-content">v0.2</span>
@@ -3080,7 +3076,7 @@ class Component extends DCLogic {
       toggles: [{ label: "Apple sign-in", on: true }, { label: "Google sign-in", on: true }, { label: "Biometric unlock", on: true }, { label: "Magic-link sign-in", on: false }] },
     signup: { code: "A-03", name: "Create account", intent: "Collect the minimum the studio actually needs, with WhatsApp as a first-class channel because that is where reminders and cancellations go.",
       data: ["users", "profiles", "consents", "emergency_contacts", "profile_photos", "marketing_optin", "whatsapp_verifications"], roles: ["Public"],
-      layers: "SignUp\n├ ProgressDots (1 of 3)\n├ Heading + sub\n├ FormStack\n│ ├ First / Last row\n│ ├ Email\n│ ├ WhatsApp (+57 default)\n│ ├ Password + strength\n│ ├ Birthday (optional)\n│ ├ EmergencyContact · name + phone\n│ └ PhotoPicker · take or choose (optional)\n├ ConsentRow → Terms, Privacy\n└ PrimaryButton",
+      layers: "SignUp\n├ ProgressDots (1 of 2)\n├ Heading + sub\n├ FormStack\n│ ├ First / Last row\n│ ├ Email\n│ ├ WhatsApp (+57 default)\n│ ├ Password + strength\n│ ├ Birthday (optional)\n│ ├ EmergencyContact · name + phone\n│ └ PhotoPicker · take or choose (optional)\n├ ConsentRow → Terms, Privacy\n└ PrimaryButton",
       rules: ["Email and WhatsApp must be unique; duplicates offer sign-in instead.", "Emergency contact is collected here so it exists from the first booking, not only once a waiver is signed.", "Password min 8 chars, strength meter, no composition rules.", "Consent checkbox is required and stored with timestamp, IP and policy version.", "Birthday optional — feeds the birthday WhatsApp/email automation.", "Profile photo is optional and offered here, either from the camera or the library, so the front desk can recognise a student on arrival; it can be added later in Settings.", "Colombia default country code +57."],
       toggles: [{ label: "WhatsApp field required", on: true }, { label: "Birthday field", on: true }, { label: "Emergency contact at sign-up", on: true }, { label: "Profile photo at sign-up", on: true }, { label: "Marketing opt-in row", on: false }] },
     feel: { code: "A-05", name: "Intention check — ¿Cómo quieres sentirte hoy?", intent: "The signature moment of the product. One question, four verbs; the choice re-orders the home feed and the recommended classes for the session. The verbs are what the student wants to do, and each resolves to one of the four movement tags the rest of the system already colours by.",
@@ -3091,7 +3087,7 @@ class Component extends DCLogic {
       api: ["POST /me/intention", "GET /classes?intent=", "GET /me/intentions/history"],
       states: ["Default (this screen)", "Already answered today: skipped silently", "Offline: choice queues and syncs"],
       toggles: [{ label: "Intention check", on: true }, { label: "Ask once per day", on: true }, { label: "Use intention in recommendations", on: true }] },
-    legal: { code: "A-06", name: "Terms & Conditions / Privacy Policy", intent: "Real, linkable, versioned legal pages reachable from sign-up, the waiver, settings and the website — with placeholder body copy until counsel supplies the text.",
+    legal: { code: "A-06", name: "Terms & Conditions / Privacy Policy", intent: "Real, linkable, versioned legal pages reachable from sign-up, settings and the website — with placeholder body copy until counsel supplies the text.",
       data: ["legal_documents", "document_versions", "consents"], roles: ["Public", "All roles"],
       layers: "LegalDoc\n├ BackLink\n├ Title + updated date\n├ SectionList (anchored)\n└ CrossLink (Terms ⇄ Privacy)",
       rules: ["Each document is versioned; consents record which version was accepted.", "Colombian data protection: Ley 1581 de 2012 and Decreto 1377 de 2013 sections are required.", "Same content served to app and website from the CMS.", "Anchors are stable so emails can deep-link to a clause."],
@@ -3115,7 +3111,7 @@ class Component extends DCLogic {
       api: ["GET /policies/cancellation","POST /bookings/:id/reschedule","DELETE /bookings/:id","GET /classes/alternatives?bookingId="],
       states: ["Outside window (this sheet)","Inside window: destructive confirm naming the forfeited credit","No replacement available: waitlist offer","Past class: sheet cannot open"],
       toggles: [{ label: "Reschedule", on: true }, { label: "Suggest replacements", on: true }, { label: "Late-cancel fee", on: false }] },
-    faq: { code: "C-14 / C-15", name: "Preguntas frecuentes", intent: "The public answer sheet, split across two pages so the accordion never becomes a scroll of thirty open questions. It is the last stop before someone writes to the front desk, so it carries the same answers the concierge would give.",
+    faq: { code: "C-14", name: "Preguntas frecuentes (1/2)", intent: "Page 1 of the public answer sheet, split across two pages so the accordion never becomes a scroll of thirty open questions. It is the last stop before someone writes to the front desk, so it carries the same answers the concierge would give.",
       story: "As someone who has never practised I read what to bring and how early to arrive without messaging anyone.",
       data: ["faq_entries", "faq_sections", "locales", "content_versions", "search_index"],
       roles: ["Public", "Student", "Front desk", "Coordinator"],
@@ -3124,6 +3120,15 @@ class Component extends DCLogic {
       api: ["GET /content/faq?locale=", "GET /content/faq/:slug", "POST /content/faq/:slug/helpful"],
       states: ["Collapsed (default)", "One expanded", "No match in search: offers the concierge", "Untranslated entry: falls back to Spanish"],
       toggles: [{ label: "FAQ in app", on: true }, { label: "Helpful vote", on: false }, { label: "Search within FAQ", on: false }] },
+    faq2: { code: "C-15", name: "Preguntas frecuentes (2/2)", intent: "Page 2 of the public answer sheet: the space, getting there, and contact — it ends with a route to a human, so the FAQ never dead-ends.",
+      story: "As a visitor on my way to the studio I find the address, parking and what to do if I am late, then message the concierge in one tap.",
+      data: ["faq_entries", "faq_sections", "locales", "content_versions", "studio_profile", "opening_hours"],
+      roles: ["Public", "Student", "Front desk", "Coordinator"],
+      layers: "FAQ · page 2 (C-15)\n├ PageHeader (2/2) + back to C-14\n├ Section 04 El espacio\n├ Section 05 En camino\n├ Section 06 Contacto y concierge\n└ ContactRow → WhatsApp / email",
+      rules: ["Same accordion rules as C-14: collapsed by default, one open per section.", "Address, hours and contact are read from studio settings (M-08), never typed here.", "Section 06 always ends with a route to a human — WhatsApp first, email as fallback.", "Anything about prices or plans links to #planes rather than repeating a figure."],
+      api: ["GET /content/faq?locale=&page=2", "GET /content/faq/:slug", "GET /studio/hours"],
+      states: ["Collapsed (default)", "One expanded", "Untranslated entry: falls back to Spanish", "Studio closed today: hours row shows next opening"],
+      toggles: [{ label: "FAQ in app", on: true }, { label: "Contact row", on: true }, { label: "Helpful vote", on: false }] },
     bienvenida: { code: "C-07", name: "Bienvenida passes", intent: "The way in for someone with no membership: four one-time options, stacked cheapest first, each one reservable on the spot. It is the other half of C-06 — whoever skips the plan lands here rather than at a dead end.",
       story: "As a first-timer I take the trial class without signing up for anything, and I can see what a pack costs if I come back.",
       data: ["packages", "plan_prices", "orders", "credits", "bookings", "trial_eligibility"],
@@ -3247,7 +3252,7 @@ class Component extends DCLogic {
       api: ["GET /events/:id","POST /events/:id/rsvp","DELETE /rsvps/:id","GET /events?upcoming=true"],
       states: ["Loading: hero shimmer","Sold out: waitlist offer","Past: read-only with gallery","Cancelled: banner + refund note"],
       toggles: [{"label":"Events","on":true},{"label":"Member pricing","on":true},{"label":"Credits usable on events","on":false},{"label":"Guest passes on events","on":true}] },
-    home: { code: "C-01", name: "Home dashboard", intent: "The daily landing surface: what is happening today, what I have booked, what the studio wants me to know, and the nudges the studio needs (membership, feedback, check-in).",
+    home: { code: "C-01", name: "Home dashboard", intent: "The daily landing surface: what is happening today, what I have booked, what the studio wants me to know, and the nudges the studio needs (membership, feedback).",
       story: "As a student I open the app and immediately see my next class, how long until it starts, and one thing worth doing right now.",
       data: ["bookings", "classes", "announcements", "memberships", "credits", "practice_stats", "feedback_requests", "events"],
       roles: ["Student", "Teacher (as student)"],
@@ -3256,7 +3261,7 @@ class Component extends DCLogic {
       api: ["GET /me/home?locale=", "GET /classes?date=today", "GET /announcements/active", "POST /feedback/:bookingId", "GET /me/stats"],
       states: ["Loading: skeleton cards, no layout shift", "Empty: no bookings → 'Reserve your first class'", "Error: cached feed + retry chip", "Offline: last fetch with stale badge"],
       toggles: [{ label: "Practice statistics", on: true }, { label: "Studio announcements", on: true }, { label: "Membership nudge", on: true }, { label: "Events strip", on: true }, { label: "Post-class feedback prompt", on: true }] },
-    sched: { code: "C-02", name: "Class schedule", intent: "Find the right class fast. Four views (today, week, recurring) over one filterable list. Studio only — there are no online classes.",
+    sched: { code: "C-02", name: "Class schedule", intent: "Find the right class fast. Two views (today, week) over one filterable list. Studio only — there are no online classes.",
       story: "As a student I filter to 6pm intermediate classes this week and see which still have space.",
       data: ["classes", "schedules", "recurrence_rules", "teachers", "rooms", "levels", "capacity", "waitlists"],
       roles: ["Student", "Front desk", "Coordinator", "Super admin"],
@@ -3265,6 +3270,15 @@ class Component extends DCLogic {
       api: ["GET /classes?from=&to=&filters=", "GET /filters/options", "POST /waitlist/:classId", "GET /classes?view=week"],
       states: ["Loading: three skeleton rows", "Empty: 'No classes match' + clear-filters", "Error: retry", "Past days: rows read-only"],
       toggles: [{ label: "Week view", on: true }, { label: "Waitlists", on: true }, { label: "Map / room view", on: false }] },
+    schedw: { code: "C-02b", name: "Class schedule · week", intent: "The week view of C-02: a six-column day grid of compact time chips, because comparing across days is the reason to open it. Same data, filters and booking state as Today.",
+      story: "As a student I scan the whole week at a glance and spot the two evening classes that still have space.",
+      data: ["classes", "schedules", "teachers", "rooms", "capacity", "waitlists", "bookings"],
+      roles: ["Student", "Front desk", "Coordinator", "Super admin"],
+      layers: "ScheduleWeek\n├ ViewSwitch (Today / Week)\n├ WeekHeader (Mon–Sat, selected day filled)\n├ DayColumns ×6 → DayChip (time · open / full / booked)\n├ Legend (movement colours)\n└ BottomNav",
+      rules: ["Tapping a chip opens C-03 for that class; booked chips are filled in the selection colour.", "Past days are read-only; the current day is pre-selected.", "Filters set on Today carry over to Week for the session.", "Six columns, Monday to Saturday — the studio does not open on Sunday; a seventh column appears only if M-08 hours change."],
+      api: ["GET /classes?view=week&from=&to=", "GET /filters/options", "POST /waitlist/:classId"],
+      states: ["Loading: six skeleton columns", "Empty day: dash in the column", "Error: retry", "Past days: chips dimmed"],
+      toggles: [{ label: "Week view", on: true }, { label: "Sunday column", on: false }, { label: "Waitlists", on: true }] },
     detail: { code: "C-03", name: "Class detail", intent: "Everything needed to commit: what the class is, who teaches it, what to bring, how full it is, and how to reserve.",
       story: "As a new student I read the class description and the teacher's bio before I book.",
       data: ["classes", "class_types", "teachers", "rooms", "capacity", "prep_content", "reviews"],
@@ -3301,15 +3315,6 @@ class Component extends DCLogic {
       api: ["GET /plans?cycle=", "POST /subscriptions", "PATCH /subscriptions/:id", "GET /me/membership"],
       states: ["Loading: card skeletons", "Existing member: current plan marked, others show 'change'", "Promotion active: badge + strike price"],
       toggles: [{ label: "Yearly cycle", on: true }, { label: "Freeze membership", on: true }, { label: "Promo codes", on: false }] },
-    credits: { code: "C-07b", name: "Credits & class packs", intent: "Show the balance and let students top up in the sizes the studio sells: single, 3, 10, plus the trial.",
-      story: "As a student I buy a 10-pack and see the expiry date before I pay.",
-      data: ["credits", "credit_ledger", "packages", "orders", "expiry_rules"],
-      roles: ["Student", "Front desk", "Finance"],
-      layers: "Credits\n├ BalanceHeader\n├ LedgerList (earned / used / expired)\n├ PackGrid (1 / 3 / 10)\n└ BuyCTA",
-      rules: ["Credits expire per pack rule; the ledger shows every movement with the booking that consumed it.", "Cancelling inside the window returns the credit automatically.", "Gift cards and guest passes land in the same ledger with their own source tag."],
-      api: ["GET /me/credits", "GET /me/credits/ledger", "GET /packages", "POST /orders"],
-      states: ["Zero balance: pack grid promoted", "Expiring soon: amber row", "Loading / error: standard"],
-      toggles: [{ label: "Credit expiry", on: true }, { label: "Show ledger", on: true }, { label: "Gift credits between students", on: false }] },
     booked: { code: "C-08", name: "Booked class, countdown, cancel & reschedule", intent: "Everything you can do to a reservation you already hold, including the countdown that makes the class feel imminent.",
       story: "As a student I see 3h 12m until class, and I can move it to tomorrow in two taps.",
       data: ["bookings", "classes", "cancellation_policy", "credits", "notifications"],
@@ -3477,7 +3482,7 @@ class Component extends DCLogic {
       story: "As the studio owner I read why the waiver became a toggleable step rather than a required one.",
       data: ["plan_phases", "tasks", "task_status", "changelog_entries", "decisions", "prompt_notes", "versions"],
       roles: ["Super admin", "Designer", "Developer", "Studio owner"],
-      layers: "Knowledgebase\n├ PlanPhases (1–6)\n├ KanbanBoard (To do / In progress / Done)\n├ Changelog (version, date, change, reason)\n├ DecisionLog (intent → decision → consequence)\n└ VersionSwitcher",
+      layers: "Knowledgebase\n├ PlanPhases (1–10)\n├ KanbanBoard (To do / In progress / Blocked / Done)\n├ Changelog (version, date, change, reason)\n├ DecisionLog (intent → decision → consequence)\n└ VersionSwitcher",
       rules: ["Documentation rule: every change is logged with the prompt intent, the decision taken, the files touched and the version.", "Decisions record the alternative rejected, not only the choice made.", "The board is updated in the same turn as the work, never afterwards.", "Versions are switchable so any earlier state stays reviewable."],
       api: ["GET /kb/plan", "GET /kb/tasks", "POST /kb/changelog", "GET /kb/versions"],
       states: ["Current version", "Historic version (read-only banner)"],
@@ -3511,8 +3516,8 @@ class Component extends DCLogic {
     at_price: ["Pricing card", "Ficha de precio"],
     pl_card_d: ["use within a month", "para usar en un mes"],
     clPl: ["11 Sep 2026 · Modelo de Valor v3 wired in", "11 sep 2026 · Modelo de Valor v3 integrado"],
-    clPlb: ["Prompt intent: adopt the HOY v3 value model as the single source of truth for pricing and wire it into every surface that quotes a price. Decisions: (1) prices live in one config object read by every screen — no figure is written twice, so one edit moves the whole system; (2) the three invented membership tiers (Esencial, Ilimitada, Dúo) are gone: Membresía is Mensual and Anual only, as the model specifies, and the annual card carries the honest monthly equivalent rather than a percentage claim; (3) the trial class is now a real $39.000 product, not a free give-away, which is what the model says; (4) checkout IVA and total are computed from the config instead of being typed, so they cannot drift from the price above them; (5) capacity and conscious-controls microcopy sit with the prices — fifteen mats, four classes a day, one class a day per person, pause up to 30 days, notice before every charge. Reconciled surfaces: P-01 plans page, C-01 home teaser, C-04 checkout, C-06 membership, C-07 credits, C-11 history, C-15 gift card, C-20 manage membership, C-23 More, S-02 front-desk drop-in, M-06 CRM timeline, M-07 activity log, D-02 pricing card. Not reconciled, flagged for review: event pricing (C-22, $85.000 / $60.000 members) which the value model does not cover, teacher payroll figures, and admin revenue KPIs. Files: Hoy Wellness System.dc.html.",
-      "Intención del prompt: adoptar el modelo de valor HOY v3 como única fuente de verdad de precios e integrarlo en cada superficie que muestre un precio. Decisiones: (1) los precios viven en un solo objeto de configuración que todas las pantallas leen — ninguna cifra se escribe dos veces, así una edición mueve todo el sistema; (2) los tres niveles de membresía inventados (Esencial, Ilimitada, Dúo) desaparecen: Membresía es solo Mensual y Anual, como indica el modelo, y la tarjeta anual muestra el equivalente mensual honesto en vez de un porcentaje; (3) la clase de prueba ahora es un producto real de $39.000, no un regalo, que es lo que dice el modelo; (4) el IVA y el total del checkout se calculan desde la configuración en vez de escribirse, así no pueden desalinearse del precio que tienen encima; (5) la microcopia de capacidad y controles conscientes acompaña a los precios — quince tapetes, cuatro clases al día, una clase al día por persona, pausar hasta 30 días, aviso antes de cada cobro. Superficies conciliadas: página P-01, teaser del inicio C-01, checkout C-04, membresía C-06, créditos C-07, historial C-11, tarjeta regalo C-15, gestión de membresía C-20, Más C-23, drop-in de recepción S-02, timeline del CRM M-06, registro de actividad M-07, ficha de precio D-02. Sin conciliar, marcado para revisión: el precio de eventos (C-22, $85.000 / $60.000 socios) que el modelo no cubre, las cifras de nómina de profesores y los KPI de ingresos del admin. Archivos: Hoy Wellness System.dc.html.",],
+    clPlb: ["Prompt intent: adopt the HOY v3 value model as the single source of truth for pricing and wire it into every surface that quotes a price. Decisions: (1) prices live in one config object read by every screen — no figure is written twice, so one edit moves the whole system; (2) the three invented membership tiers (Esencial, Ilimitada, Dúo) are gone: Membresía is Mensual and Anual only, as the model specifies, and the annual card carries the honest monthly equivalent rather than a percentage claim; (3) the trial class is now a real $39.000 product, not a free give-away, which is what the model says; (4) checkout IVA and total are computed from the config instead of being typed, so they cannot drift from the price above them; (5) capacity and conscious-controls microcopy sit with the prices — fifteen mats, four classes a day, one class a day per person, pause up to 30 days, notice before every charge. Reconciled surfaces: P-01 plans page, C-01 home teaser, C-04 checkout, C-06 membership, C-07 Bienvenida passes, C-11 history, C-17 gift card, C-22 manage membership, C-25 More, S-02 front-desk drop-in, M-06 CRM timeline, M-07 activity log, D-02 pricing card. Not reconciled, flagged for review: event pricing (C-23, $85.000 / $60.000 members) which the value model does not cover, teacher payroll figures, and admin revenue KPIs. Files: Hoy Wellness System.dc.html.",
+      "Intención del prompt: adoptar el modelo de valor HOY v3 como única fuente de verdad de precios e integrarlo en cada superficie que muestre un precio. Decisiones: (1) los precios viven en un solo objeto de configuración que todas las pantallas leen — ninguna cifra se escribe dos veces, así una edición mueve todo el sistema; (2) los tres niveles de membresía inventados (Esencial, Ilimitada, Dúo) desaparecen: Membresía es solo Mensual y Anual, como indica el modelo, y la tarjeta anual muestra el equivalente mensual honesto en vez de un porcentaje; (3) la clase de prueba ahora es un producto real de $39.000, no un regalo, que es lo que dice el modelo; (4) el IVA y el total del checkout se calculan desde la configuración en vez de escribirse, así no pueden desalinearse del precio que tienen encima; (5) la microcopia de capacidad y controles conscientes acompaña a los precios — quince tapetes, cuatro clases al día, una clase al día por persona, pausar hasta 30 días, aviso antes de cada cobro. Superficies conciliadas: página P-01, teaser del inicio C-01, checkout C-04, membresía C-06, pases Bienvenida C-07, historial C-11, tarjeta regalo C-17, gestión de membresía C-22, Más C-25, drop-in de recepción S-02, timeline del CRM M-06, registro de actividad M-07, ficha de precio D-02. Sin conciliar, marcado para revisión: el precio de eventos (C-23, $85.000 / $60.000 socios) que el modelo no cubre, las cifras de nómina de profesores y los KPI de ingresos del admin. Archivos: Hoy Wellness System.dc.html.",],
     ePl: ["Modelo de Valor v3 · one pricing source of truth", "Modelo de Valor v3 · una sola fuente de precios"],
     crm_since: ["Member since Mar 2024", "Miembro desde mar 2024"],
     crm_ltv: ["Money spent to date", "Dinero gastado"],
@@ -3688,8 +3693,8 @@ class Component extends DCLogic {
     at_claim: ["Claim countdown", "Cuenta atrás de reclamo"],
     at_danger: ["Destructive row", "Fila destructiva"],
     at_wlpos: ["Waitlist position", "Posición en lista"],
-    cl3t: ["8 Sep 2026 · Phase 6 customer flows", "8 sep 2026 · Flujos del cliente, fase 6"],
-    cl3b: ["Prompt intent: continue the plan. Built C-18 to C-22: waitlist with the 30-minute claim window, password recovery via WhatsApp OTP, membership management (freeze, change, cancel), notifications inbox and event detail with RSVP. Decisions: (1) the waitlist offers auto-claim with a credit, so a released spot is not lost while the student sleeps — the alternative, a longer claim window, would hold the seat empty for hours; (2) recovery leads with WhatsApp OTP rather than email, because WhatsApp is the verified channel at sign-up and email is optional in practice; (3) cancellation keeps the membership active to the end of the paid period instead of ending it immediately, which avoids refund maths and matches Colombian consumer expectations. New components registered in D-02: OTP input, notification row, claim countdown, destructive row, waitlist position. Files: Hoy Wellness System.dc.html (lane 3B, D-02, K-01).", "Intención del prompt: continuar el plan. Se construyeron C-18 a C-22: lista de espera con ventana de reclamo de 30 minutos, recuperación de contraseña con OTP de WhatsApp, gestión de membresía (congelar, cambiar, cancelar), bandeja de notificaciones y detalle de evento con RSVP. Decisiones: (1) la lista de espera ofrece reclamo automático con crédito, para que un cupo liberado no se pierda mientras el estudiante duerme — la alternativa, una ventana más larga, dejaría el puesto vacío por horas; (2) la recuperación va primero por OTP de WhatsApp y no por correo, porque WhatsApp es el canal verificado en el registro y el correo es opcional en la práctica; (3) la cancelación mantiene la membresía activa hasta el fin del periodo pagado en vez de terminarla de inmediato, lo que evita cálculos de reembolso y coincide con la expectativa del consumidor colombiano. Componentes nuevos en D-02: campo OTP, fila de notificación, cuenta atrás de reclamo, fila destructiva, posición en lista. Archivos: Hoy Wellness System.dc.html (carril 3B, D-02, K-01)."],
+    clP6t: ["8 Sep 2026 · Phase 6 customer flows", "8 sep 2026 · Flujos del cliente, fase 6"],
+    clP6b: ["Prompt intent: continue the plan. Built C-20 to C-24: waitlist with the 30-minute claim window, password recovery via WhatsApp OTP, membership management (freeze, change, cancel), notifications inbox and event detail with RSVP. Decisions: (1) the waitlist offers auto-claim with a credit, so a released spot is not lost while the student sleeps — the alternative, a longer claim window, would hold the seat empty for hours; (2) recovery leads with WhatsApp OTP rather than email, because WhatsApp is the verified channel at sign-up and email is optional in practice; (3) cancellation keeps the membership active to the end of the paid period instead of ending it immediately, which avoids refund maths and matches Colombian consumer expectations. New components registered in D-02: OTP input, notification row, claim countdown, destructive row, waitlist position. Files: Hoy Wellness System.dc.html (lane 3B, D-02, K-01).", "Intención del prompt: continuar el plan. Se construyeron C-20 a C-24: lista de espera con ventana de reclamo de 30 minutos, recuperación de contraseña con OTP de WhatsApp, gestión de membresía (congelar, cambiar, cancelar), bandeja de notificaciones y detalle de evento con RSVP. Decisiones: (1) la lista de espera ofrece reclamo automático con crédito, para que un cupo liberado no se pierda mientras el estudiante duerme — la alternativa, una ventana más larga, dejaría el puesto vacío por horas; (2) la recuperación va primero por OTP de WhatsApp y no por correo, porque WhatsApp es el canal verificado en el registro y el correo es opcional en la práctica; (3) la cancelación mantiene la membresía activa hasta el fin del periodo pagado en vez de terminarla de inmediato, lo que evita cálculos de reembolso y coincide con la expectativa del consumidor colombiano. Componentes nuevos en D-02: campo OTP, fila de notificación, cuenta atrás de reclamo, fila destructiva, posición en lista. Archivos: Hoy Wellness System.dc.html (carril 3B, D-02, K-01)."],
     dow1: ["MON", "LUN"],
     dow2: ["TUE", "MAR"],
     dow3: ["WED", "MIÉ"],
@@ -4047,6 +4052,11 @@ class Component extends DCLogic {
     clFd: ["12 Sep 2026 · Front desk suite", "12 sep 2026 · Recepción completa"],
     clFdb: ["Prompt intent: make the desk able to run the studio. Decisions: (1) the QR/face scanner panel is gone — with customer check-in removed, the desk checks people in by name, so the rail's most valuable real estate went to member search with recent arrivals instead of a camera feed; (2) 'Sell drop-in' became 'Register a new customer', because the desk's common case is a person who does not exist in the system yet, and selling them a class is the second half of that same action; (3) a now / next / later strip shows today's three upcoming classes at a glance, so the desk answers 'what's on?' without navigating; (4) teachers appear as arrived/expected chips, since the desk needs to know whether the room has a teacher before it has students; (5) the rail carries a reference group — class descriptions, FAQ, teacher profiles, plans — because the desk is asked those questions all day and was previously guessing; (6) S-04 register-and-take-payment is one screen in three short sections, not a wizard, and completing the sale checks the person in. Alternative rejected: a separate add-customer screen — it split one counter conversation across two views. Files: Hoy Wellness System.dc.html (lane 4, K-01).",
       "Intención del prompt: que recepción pueda operar el estudio. Decisiones: (1) el panel de escáner QR/facial desaparece — sin check-in del cliente, recepción registra por nombre, así que el mejor espacio del panel pasó a la búsqueda de socios con llegadas recientes en vez de una cámara; (2) 'Vender drop-in' pasó a 'Registrar nuevo cliente', porque el caso común de recepción es alguien que aún no existe en el sistema, y venderle una clase es la segunda mitad de esa misma acción; (3) una tira ahora / sigue / más tarde muestra las tres próximas clases del día, así recepción responde '¿qué hay?' sin navegar; (4) los profesores aparecen como fichas llegó/esperado, porque recepción necesita saber si la sala tiene profesor antes de tener alumnos; (5) el panel lleva un grupo de consulta — descripciones de clases, preguntas frecuentes, perfiles de profesores, planes — porque a recepción le preguntan eso todo el día y antes adivinaba; (6) S-04 registrar y recibir pago es una pantalla en tres secciones cortas, no un asistente, y completar la venta registra la entrada. Alternativa descartada: una pantalla aparte para agregar cliente — partía una sola conversación de mostrador en dos vistas. Archivos: Hoy Wellness System.dc.html (carril 4, K-01)."],
+    clRepo: ["17 Sep 2026 · HoyOS moves to a real codebase", "17 sep 2026 · HoyOS pasa a un código real"],
+    clRepob: ["Prompt intent: move from the canvas to a real HoyOS codebase in github.com/imagine-os/hoy — with an ES/EN toggle, an inspector panel (this spec side panel, live), a docs system, demo roles, the public website and an operations manual. Decision: a Vite + React single-page app deployed to GitHub Pages with hash routing; mock data shaped like the Supabase tables in M-03, so swapping in the real backend is a data-layer change and not a rewrite; this canvas kept as the reference under reference/canvas/. Alternative rejected: continue in the canvas only — it cannot be routed, run against data, tested or handed to a developer as code. Canvas audit in the same turn, before the port: the flow map, specs and knowledgebase were reconciled with the screens that actually exist. C-07b (credits) retired from the map and the specs — its content moved to C-07 Bienvenida passes and P-01 in v1.1; C-02b, C-14 and C-15 given their own spec entries; P-01 and K-01 given anchors; stale codes corrected in the v1.1 entry (C-15→C-17 gift card, C-20→C-22 manage membership, C-22→C-23 events, C-23→C-25 More), in the v0.3 entry (C-18–C-22→C-20–C-24) and in M-08 (waitlist rule quoted on C-20, not C-18); the v0.3 Phase 6 entry, hidden behind a duplicate key, restored; the C-01, A-06, A-03, C-02 and K-01 specs no longer describe check-in, the waiver, a third sign-up step or a six-phase plan; kanban counts corrected. Files: Hoy Wellness System.dc.html (flow map, lanes 2, 3, planes, 5B, K-01, specs); repo: package.json, vite.config.ts, index.html, src/, docs/, reference/canvas/. Version: v1.5.",
+      "Intención del prompt: pasar del lienzo a un código real de HoyOS en github.com/imagine-os/hoy — con selector ES/EN, panel inspector (este panel de especificación, en vivo), sistema de documentación, roles de demostración, el sitio público y un manual operativo. Decisión: una SPA en Vite + React publicada en GitHub Pages con rutas por hash; datos de prueba con la forma de las tablas Supabase de M-03, para que conectar el backend real sea un cambio de capa de datos y no una reescritura; este lienzo se conserva como referencia en reference/canvas/. Alternativa descartada: seguir solo en el lienzo — no se puede rutear, correr con datos, probar ni entregar a desarrollo como código. Auditoría del lienzo en el mismo turno, antes de portar: el mapa de flujo, las specs y la base de conocimiento se conciliaron con las pantallas que existen. C-07b (créditos) retirado del mapa y de las specs — su contenido pasó a C-07 pases Bienvenida y P-01 en v1.1; C-02b, C-14 y C-15 con spec propia; P-01 y K-01 con ancla; códigos corregidos en la entrada v1.1 (C-15→C-17 tarjeta regalo, C-20→C-22 gestión de membresía, C-22→C-23 eventos, C-23→C-25 Más), en la v0.3 (C-18–C-22→C-20–C-24) y en M-08 (regla de lista de espera citada en C-20, no C-18); la entrada v0.3 de la fase 6, oculta tras una clave duplicada, restaurada; las specs de C-01, A-06, A-03, C-02 y K-01 ya no describen check-in, waiver, un tercer paso de registro ni un plan de seis fases; conteos del kanban corregidos. Archivos: Hoy Wellness System.dc.html (mapa, carriles 2, 3, planes, 5B, K-01, specs); repo: package.json, vite.config.ts, index.html, src/, docs/, reference/canvas/. Versión: v1.5."],
+    eRepo: ["HoyOS repo: Vite + React SPA on GitHub Pages · canvas audit v1.5", "Repo HoyOS: SPA Vite + React en GitHub Pages · auditoría del lienzo v1.5"],
+    gRepo: ["HoyOS app: ES/EN toggle, inspector panel, docs, demo roles, public website, ops manual", "App HoyOS: selector ES/EN, panel inspector, docs, roles demo, sitio público, manual operativo"],
     eFd: ["Front desk: search, today strip, register & pay, reference", "Recepción: búsqueda, tira de hoy, registro y pago, consulta"],
     fd_note: ["Every desk action is written to the activity log with your name.", "Cada acción de recepción queda en el registro con tu nombre."],
     n_reg: ["Register & take payment", "Registrar y recibir pago"],
@@ -4105,7 +4115,7 @@ class Component extends DCLogic {
     map_pub: ["Public / pre-login", "Público / antes de entrar"], map_cust: ["Customer", "Cliente"],
     map_staff: ["Staff", "Staff"], map_admin: ["Admin CMS", "CMS de administración"],
     l2: ["Customer core", "Núcleo del cliente"], l2s: ["Home → schedule → class → reserve → pay", "Inicio → horario → clase → reservar → pagar"],
-    l3: ["Customer depth", "Profundidad del cliente"], l3s: ["Booked class, check-in, feedback, content, community", "Clase reservada, check-in, feedback, contenido, comunidad"],
+    l3: ["Customer depth", "Profundidad del cliente"], l3s: ["Booked class, feedback, content, community", "Clase reservada, feedback, contenido, comunidad"],
     l4: ["Staff & front desk", "Staff y recepción"], l4s: ["Role home, door check-in, teacher tools", "Inicio por rol, check-in en puerta, herramientas del profesor"],
     l5: ["Admin CMS — desktop first", "CMS de administración — escritorio primero"], l5s: ["Features, content, data model, messaging", "Features, contenido, modelo de datos, mensajería"],
     l6: ["Design system", "Sistema de diseño"], l6s: ["Materials, tokens, atomic component library", "Materiales, tokens, librería atómica"],

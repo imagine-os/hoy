@@ -129,7 +129,7 @@ export const canvasSpecs: Record<string, PageSpec> = {
       "en": "Collect the minimum the studio actually needs, with WhatsApp as a first-class channel because that is where reminders and cancellations go."
     },
     "layout": [
-      "ProgressDots (1 of 3)",
+      "ProgressDots (1 of 2)",
       "Heading + sub",
       "FormStack",
       "ConsentRow → Terms, Privacy",
@@ -183,7 +183,7 @@ export const canvasSpecs: Record<string, PageSpec> = {
         "on": false
       }
     ],
-    "layerTree": "SignUp\n├ ProgressDots (1 of 3)\n├ Heading + sub\n├ FormStack\n│ ├ First / Last row\n│ ├ Email\n│ ├ WhatsApp (+57 default)\n│ ├ Password + strength\n│ ├ Birthday (optional)\n│ ├ EmergencyContact · name + phone\n│ └ PhotoPicker · take or choose (optional)\n├ ConsentRow → Terms, Privacy\n└ PrimaryButton",
+    "layerTree": "SignUp\n├ ProgressDots (1 of 2)\n├ Heading + sub\n├ FormStack\n│ ├ First / Last row\n│ ├ Email\n│ ├ WhatsApp (+57 default)\n│ ├ Password + strength\n│ ├ Birthday (optional)\n│ ├ EmergencyContact · name + phone\n│ └ PhotoPicker · take or choose (optional)\n├ ConsentRow → Terms, Privacy\n└ PrimaryButton",
     "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#A-03"
   },
   "A-05": {
@@ -260,7 +260,7 @@ export const canvasSpecs: Record<string, PageSpec> = {
     },
     "purpose": {
       "es": "Páginas legales reales, enlazables y versionadas; los consentimientos registran qué versión se aceptó.",
-      "en": "Real, linkable, versioned legal pages reachable from sign-up, the waiver, settings and the website — with placeholder body copy until counsel supplies the text."
+      "en": "Real, linkable, versioned legal pages reachable from sign-up, settings and the website — with placeholder body copy until counsel supplies the text."
     },
     "layout": [
       "BackLink",
@@ -315,7 +315,7 @@ export const canvasSpecs: Record<string, PageSpec> = {
     },
     "purpose": {
       "es": "La superficie diaria: qué pasa hoy, qué tengo reservado, qué quiere contarme el estudio y los recordatorios que el estudio necesita.",
-      "en": "The daily landing surface: what is happening today, what I have booked, what the studio wants me to know, and the nudges the studio needs (membership, feedback, check-in)."
+      "en": "The daily landing surface: what is happening today, what I have booked, what the studio wants me to know, and the nudges the studio needs (membership, feedback)."
     },
     "layout": [
       "TopBar (logo, avatar, bell)",
@@ -349,9 +349,7 @@ export const canvasSpecs: Record<string, PageSpec> = {
       "Countdown shows under 24h, otherwise the weekday.",
       "Today's list re-orders by the day's intention tags."
     ],
-    "integrations": [
-      "Supabase Realtime"
-    ],
+    "integrations": [],
     "states": [
       "Loading: skeleton cards, no layout shift",
       "Empty: no bookings → 'Reserve your first class'",
@@ -399,7 +397,7 @@ export const canvasSpecs: Record<string, PageSpec> = {
     },
     "purpose": {
       "es": "Ver y filtrar el horario semanal por modalidad, profesor y nivel, con capacidad en vivo.",
-      "en": "Find the right class fast. Four views (today, week, recurring) over one filterable list. Studio only — there are no online classes."
+      "en": "Find the right class fast. Two views (today, week) over one filterable list. Studio only — there are no online classes."
     },
     "layout": [
       "ViewSwitch (Today / Week)",
@@ -463,6 +461,77 @@ export const canvasSpecs: Record<string, PageSpec> = {
     ],
     "layerTree": "Schedule\n├ ViewSwitch (Today / Week)\n├ DateStrip\n├ FilterBar → FilterSheet\n│ ├ Time of day\n│ ├ Level\n│ ├ Type\n│ ├ Teacher\n│ └ Room\n├ ClassList → ClassRow\n└ BottomNav",
     "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-02"
+  },
+  "C-02b": {
+    "code": "C-02b",
+    "name": {
+      "es": "Horario de clases · semana",
+      "en": "Class schedule · week"
+    },
+    "purpose": {
+      "es": "La vista semanal de C-02: cuadrícula de seis columnas con chips de hora; mismos datos, filtros y estado de reserva que Hoy.",
+      "en": "The week view of C-02: a six-column day grid of compact time chips, because comparing across days is the reason to open it. Same data, filters and booking state as Today."
+    },
+    "layout": [
+      "ViewSwitch (Today / Week)",
+      "WeekHeader (Mon–Sat, selected day filled)",
+      "DayColumns ×6 → DayChip (time · open / full / booked)",
+      "Legend (movement colours)",
+      "BottomNav"
+    ],
+    "data": [
+      "classes",
+      "schedules",
+      "teachers",
+      "rooms",
+      "capacity",
+      "waitlists",
+      "bookings"
+    ],
+    "roles": [
+      "customer",
+      "front_desk",
+      "coordinator",
+      "super_admin"
+    ],
+    "logic": [
+      "Tapping a chip opens C-03 for that class; booked chips are filled in the selection colour.",
+      "Past days are read-only; the current day is pre-selected.",
+      "Filters set on Today carry over to Week for the session.",
+      "Six columns, Monday to Saturday — the studio does not open on Sunday; a seventh column appears only if M-08 hours change."
+    ],
+    "integrations": [
+      "Supabase Auth",
+      "Supabase Realtime"
+    ],
+    "states": [
+      "Loading: six skeleton columns",
+      "Empty day: dash in the column",
+      "Error: retry",
+      "Past days: chips dimmed"
+    ],
+    "toggles": [
+      {
+        "label": "Week view",
+        "on": true
+      },
+      {
+        "label": "Sunday column",
+        "on": false
+      },
+      {
+        "label": "Waitlists",
+        "on": true
+      }
+    ],
+    "story": "As a student I scan the whole week at a glance and spot the two evening classes that still have space.",
+    "api": [
+      "GET /classes?view=week&from=&to=",
+      "GET /filters/options",
+      "POST /waitlist/:classId"
+    ],
+    "layerTree": "ScheduleWeek\n├ ViewSwitch (Today / Week)\n├ WeekHeader (Mon–Sat, selected day filled)\n├ DayColumns ×6 → DayChip (time · open / full / booked)\n├ Legend (movement colours)\n└ BottomNav",
+    "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-02b"
   },
   "C-03": {
     "code": "C-03",
@@ -847,69 +916,6 @@ export const canvasSpecs: Record<string, PageSpec> = {
     "layerTree": "BienvenidaPasses\n├ Header · title + sub\n├ Eyebrow · BIENVENIDA\n├ Intro line\n├ PassList (vertical)\n│ ├ Clase de Prueba\n│ ├ Pase Individual\n│ ├ Paquete de 3 Clases\n│ └ Paquete de 10 Clases\n└ FooterLink → C-06",
     "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-07"
   },
-  "C-07b": {
-    "code": "C-07b",
-    "name": {
-      "es": "Créditos y paquetes",
-      "en": "Credits & class packs"
-    },
-    "purpose": {
-      "es": "Saldo de créditos, vencimientos y el libro mayor de cada movimiento.",
-      "en": "Show the balance and let students top up in the sizes the studio sells: single, 3, 10, plus the trial."
-    },
-    "layout": [
-      "BalanceHeader",
-      "LedgerList (earned / used / expired)",
-      "PackGrid (1 / 3 / 10)",
-      "BuyCTA"
-    ],
-    "data": [
-      "credits",
-      "credit_ledger",
-      "packages",
-      "orders",
-      "expiry_rules"
-    ],
-    "roles": [
-      "customer",
-      "front_desk",
-      "finance"
-    ],
-    "logic": [
-      "Credits expire per pack rule; the ledger shows every movement with the booking that consumed it.",
-      "Cancelling inside the window returns the credit automatically.",
-      "Gift cards and guest passes land in the same ledger with their own source tag."
-    ],
-    "integrations": [],
-    "states": [
-      "Zero balance: pack grid promoted",
-      "Expiring soon: amber row",
-      "Loading / error: standard"
-    ],
-    "toggles": [
-      {
-        "label": "Credit expiry",
-        "on": true
-      },
-      {
-        "label": "Show ledger",
-        "on": true
-      },
-      {
-        "label": "Gift credits between students",
-        "on": false
-      }
-    ],
-    "story": "As a student I buy a 10-pack and see the expiry date before I pay.",
-    "api": [
-      "GET /me/credits",
-      "GET /me/credits/ledger",
-      "GET /packages",
-      "POST /orders"
-    ],
-    "layerTree": "Credits\n├ BalanceHeader\n├ LedgerList (earned / used / expired)\n├ PackGrid (1 / 3 / 10)\n└ BuyCTA",
-    "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-07b"
-  },
   "C-08": {
     "code": "C-08",
     "name": {
@@ -1234,15 +1240,15 @@ export const canvasSpecs: Record<string, PageSpec> = {
     "layerTree": "RulesLibrary\n├ CategoryGrid\n│ ├ Hot room safety\n│ ├ Class preparation\n│ ├ Studio etiquette\n│ ├ Studio tour\n│ ├ Emergencies\n│ └ About HOY\n├ ArticleView\n│ ├ VideoPlayer (placeholder)\n│ └ Body + checklist\n└ RelatedLinks",
     "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-13"
   },
-  "C-14 / C-15": {
-    "code": "C-14 / C-15",
+  "C-14": {
+    "code": "C-14",
     "name": {
-      "es": "Preguntas frecuentes",
-      "en": "Preguntas frecuentes"
+      "es": "Preguntas frecuentes (1/2)",
+      "en": "Preguntas frecuentes (1/2)"
     },
     "purpose": {
-      "es": "Preguntas frecuentes buscables, versionadas y en dos idiomas.",
-      "en": "The public answer sheet, split across two pages so the accordion never becomes a scroll of thirty open questions. It is the last stop before someone writes to the front desk, so it carries the same answers the concierge would give."
+      "es": "Página 1 de las preguntas frecuentes: primera vez, reservas y planes; la última parada antes de escribir a recepción.",
+      "en": "Page 1 of the public answer sheet, split across two pages so the accordion never becomes a scroll of thirty open questions. It is the last stop before someone writes to the front desk, so it carries the same answers the concierge would give."
     },
     "layout": [
       "Page 1 · C-14",
@@ -1298,6 +1304,76 @@ export const canvasSpecs: Record<string, PageSpec> = {
     ],
     "layerTree": "FAQ (2 pages)\n├ Page 1 · C-14\n│ ├ 01 Tu primera vez en HOY\n│ ├ 02 Reservas y horarios\n│ └ 03 Membresías y planes\n└ Page 2 · C-15\n  ├ 04 El espacio\n  ├ 05 En camino\n  └ 06 Contacto y concierge",
     "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-14"
+  },
+  "C-15": {
+    "code": "C-15",
+    "name": {
+      "es": "Preguntas frecuentes (2/2)",
+      "en": "Preguntas frecuentes (2/2)"
+    },
+    "purpose": {
+      "es": "Página 2 de las preguntas frecuentes: el espacio, cómo llegar y contacto; termina con una persona, nunca en un callejón sin salida.",
+      "en": "Page 2 of the public answer sheet: the space, getting there, and contact — it ends with a route to a human, so the FAQ never dead-ends."
+    },
+    "layout": [
+      "PageHeader (2/2) + back to C-14",
+      "Section 04 El espacio",
+      "Section 05 En camino",
+      "Section 06 Contacto y concierge",
+      "ContactRow → WhatsApp / email"
+    ],
+    "data": [
+      "faq_entries",
+      "faq_sections",
+      "locales",
+      "content_versions",
+      "studio_profile",
+      "opening_hours"
+    ],
+    "roles": [
+      "public",
+      "customer",
+      "front_desk",
+      "coordinator"
+    ],
+    "logic": [
+      "Same accordion rules as C-14: collapsed by default, one open per section.",
+      "Address, hours and contact are read from studio settings (M-08), never typed here.",
+      "Section 06 always ends with a route to a human — WhatsApp first, email as fallback.",
+      "Anything about prices or plans links to #planes rather than repeating a figure."
+    ],
+    "integrations": [
+      "WhatsApp",
+      "Email"
+    ],
+    "states": [
+      "Collapsed (default)",
+      "One expanded",
+      "Untranslated entry: falls back to Spanish",
+      "Studio closed today: hours row shows next opening"
+    ],
+    "toggles": [
+      {
+        "label": "FAQ in app",
+        "on": true
+      },
+      {
+        "label": "Contact row",
+        "on": true
+      },
+      {
+        "label": "Helpful vote",
+        "on": false
+      }
+    ],
+    "story": "As a visitor on my way to the studio I find the address, parking and what to do if I am late, then message the concierge in one tap.",
+    "api": [
+      "GET /content/faq?locale=&page=2",
+      "GET /content/faq/:slug",
+      "GET /studio/hours"
+    ],
+    "layerTree": "FAQ · page 2 (C-15)\n├ PageHeader (2/2) + back to C-14\n├ Section 04 El espacio\n├ Section 05 En camino\n├ Section 06 Contacto y concierge\n└ ContactRow → WhatsApp / email",
+    "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-15"
   },
   "C-16": {
     "code": "C-16",
@@ -2471,8 +2547,8 @@ export const canvasSpecs: Record<string, PageSpec> = {
       "en": "The knowledgebase: the build plan, the board tracking it, and the log of every change with the reasoning behind it."
     },
     "layout": [
-      "PlanPhases (1–6)",
-      "KanbanBoard (To do / In progress / Done)",
+      "PlanPhases (1–10)",
+      "KanbanBoard (To do / In progress / Blocked / Done)",
       "Changelog (version, date, change, reason)",
       "DecisionLog (intent → decision → consequence)",
       "VersionSwitcher"
@@ -2524,7 +2600,7 @@ export const canvasSpecs: Record<string, PageSpec> = {
       "POST /kb/changelog",
       "GET /kb/versions"
     ],
-    "layerTree": "Knowledgebase\n├ PlanPhases (1–6)\n├ KanbanBoard (To do / In progress / Done)\n├ Changelog (version, date, change, reason)\n├ DecisionLog (intent → decision → consequence)\n└ VersionSwitcher",
+    "layerTree": "Knowledgebase\n├ PlanPhases (1–10)\n├ KanbanBoard (To do / In progress / Blocked / Done)\n├ Changelog (version, date, change, reason)\n├ DecisionLog (intent → decision → consequence)\n└ VersionSwitcher",
     "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#K-01"
   },
   "M-01": {
@@ -3503,6 +3579,106 @@ export const canvasSpecs: Record<string, PageSpec> = {
     "layerTree": "RegisterPay\n├ Step1 · Who\n│ ├ New / existing switch\n│ ├ Name, WhatsApp, email\n│ ├ Emergency contact, birthday\n│ └ Consent checkbox\n├ Step2 · What (reads plans.bienvenida)\n├ Step3 · How they pay\n│ ├ Cash · card · transfer · Nequi · PSE\n│ └ Receipt by WhatsApp + email\n└ SummaryRail\n  ├ Order lines + IVA\n  └ Complete and check in",
     "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#S-04"
   },
+  "C-07b": {
+    "code": "C-07b",
+    "name": {
+      "es": "Créditos y paquetes (retirado)",
+      "en": "Credits & packs (retired)"
+    },
+    "purpose": {
+      "es": "Saldo de créditos, vencimientos y el libro mayor de cada movimiento.",
+      "en": "The way in for someone with no membership: four one-time options, stacked cheapest first, each one reservable on the spot. It is the other half of C-06 — whoever skips the plan lands here rather than at a dead end."
+    },
+    "layout": [
+      "Header · title + sub",
+      "Eyebrow · BIENVENIDA",
+      "Intro line",
+      "PassList (vertical)",
+      "FooterLink → C-06"
+    ],
+    "data": [
+      "packages",
+      "plan_prices",
+      "orders",
+      "credits",
+      "bookings",
+      "trial_eligibility"
+    ],
+    "roles": [
+      "public",
+      "customer",
+      "front_desk"
+    ],
+    "logic": [
+      "Prices read from the value-model config; no figure is written on this screen.",
+      "Trial class is one per person, verified by document or phone.",
+      "Packs expire per their own rule — one month for 3, three months for 10.",
+      "Every button enters the same single-screen checkout (C-04) with lazy registration.",
+      "C-06's skip link points here, so the membership decision is never a dead end."
+    ],
+    "integrations": [
+      "Wompi",
+      "Supabase Auth"
+    ],
+    "states": [
+      "Default (this screen)",
+      "Trial already used: that row drops to a note",
+      "Existing member: banner offers C-06 instead",
+      "Loading: four skeleton rows"
+    ],
+    "notes": [
+      "C-07b merged into C-07 in canvas v1.5; alias kept for the /app/credits stub. Content lives in C-07 + P-01."
+    ],
+    "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-07"
+  },
+  "C-14 / C-15": {
+    "code": "C-14 / C-15",
+    "name": {
+      "es": "Preguntas frecuentes (1/2 + 2/2)",
+      "en": "FAQ (1/2 + 2/2)"
+    },
+    "purpose": {
+      "es": "Preguntas frecuentes buscables, versionadas y en dos idiomas.",
+      "en": "Page 1 of the public answer sheet, split across two pages so the accordion never becomes a scroll of thirty open questions. It is the last stop before someone writes to the front desk, so it carries the same answers the concierge would give."
+    },
+    "layout": [
+      "Page 1 · C-14",
+      "Page 2 · C-15"
+    ],
+    "data": [
+      "faq_entries",
+      "faq_sections",
+      "locales",
+      "content_versions",
+      "search_index"
+    ],
+    "roles": [
+      "public",
+      "customer",
+      "front_desk",
+      "coordinator"
+    ],
+    "logic": [
+      "Questions are collapsed by default; only one opens at a time within a section.",
+      "Entries live in the CMS beside Club Rules, so the same answer serves app and website.",
+      "Anything about prices or plans links to #planes rather than repeating a figure.",
+      "Section 06 always ends with a route to a human — the FAQ never dead-ends."
+    ],
+    "integrations": [
+      "Supabase Realtime"
+    ],
+    "states": [
+      "Collapsed (default)",
+      "One expanded",
+      "No match in search: offers the concierge",
+      "Untranslated entry: falls back to Spanish"
+    ],
+    "notes": [
+      "Shared code split into C-14 and C-15 in canvas v1.5; alias kept for the /app/faq stub. Use C-14 / C-15 separately."
+    ],
+    "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-14"
+  },
 };
 
-export const canvasCodes = Object.keys(canvasSpecs);
+/** Codes that exist in the canvas (compatibility aliases excluded). */
+export const canvasCodes = Object.keys(canvasSpecs).filter((c) => !["C-07b","C-14 / C-15"].includes(c));

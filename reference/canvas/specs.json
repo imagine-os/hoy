@@ -89,7 +89,7 @@
   "roles": [
    "Public"
   ],
-  "layers": "SignUp\n├ ProgressDots (1 of 3)\n├ Heading + sub\n├ FormStack\n│ ├ First / Last row\n│ ├ Email\n│ ├ WhatsApp (+57 default)\n│ ├ Password + strength\n│ ├ Birthday (optional)\n│ ├ EmergencyContact · name + phone\n│ └ PhotoPicker · take or choose (optional)\n├ ConsentRow → Terms, Privacy\n└ PrimaryButton",
+  "layers": "SignUp\n├ ProgressDots (1 of 2)\n├ Heading + sub\n├ FormStack\n│ ├ First / Last row\n│ ├ Email\n│ ├ WhatsApp (+57 default)\n│ ├ Password + strength\n│ ├ Birthday (optional)\n│ ├ EmergencyContact · name + phone\n│ └ PhotoPicker · take or choose (optional)\n├ ConsentRow → Terms, Privacy\n└ PrimaryButton",
   "rules": [
    "Email and WhatsApp must be unique; duplicates offer sign-in instead.",
    "Emergency contact is collected here so it exists from the first booking, not only once a waiver is signed.",
@@ -176,7 +176,7 @@
   "key": "legal",
   "code": "A-06",
   "name": "Terms & Conditions / Privacy Policy",
-  "intent": "Real, linkable, versioned legal pages reachable from sign-up, the waiver, settings and the website — with placeholder body copy until counsel supplies the text.",
+  "intent": "Real, linkable, versioned legal pages reachable from sign-up, settings and the website — with placeholder body copy until counsel supplies the text.",
   "data": [
    "legal_documents",
    "document_versions",
@@ -307,11 +307,11 @@
    }
   ]
  },
- "C-14 / C-15": {
+ "C-14": {
   "key": "faq",
-  "code": "C-14 / C-15",
-  "name": "Preguntas frecuentes",
-  "intent": "The public answer sheet, split across two pages so the accordion never becomes a scroll of thirty open questions. It is the last stop before someone writes to the front desk, so it carries the same answers the concierge would give.",
+  "code": "C-14",
+  "name": "Preguntas frecuentes (1/2)",
+  "intent": "Page 1 of the public answer sheet, split across two pages so the accordion never becomes a scroll of thirty open questions. It is the last stop before someone writes to the front desk, so it carries the same answers the concierge would give.",
   "story": "As someone who has never practised I read what to bring and how early to arrive without messaging anyone.",
   "data": [
    "faq_entries",
@@ -355,6 +355,59 @@
    },
    {
     "label": "Search within FAQ",
+    "on": false
+   }
+  ]
+ },
+ "C-15": {
+  "key": "faq2",
+  "code": "C-15",
+  "name": "Preguntas frecuentes (2/2)",
+  "intent": "Page 2 of the public answer sheet: the space, getting there, and contact — it ends with a route to a human, so the FAQ never dead-ends.",
+  "story": "As a visitor on my way to the studio I find the address, parking and what to do if I am late, then message the concierge in one tap.",
+  "data": [
+   "faq_entries",
+   "faq_sections",
+   "locales",
+   "content_versions",
+   "studio_profile",
+   "opening_hours"
+  ],
+  "roles": [
+   "Public",
+   "Student",
+   "Front desk",
+   "Coordinator"
+  ],
+  "layers": "FAQ · page 2 (C-15)\n├ PageHeader (2/2) + back to C-14\n├ Section 04 El espacio\n├ Section 05 En camino\n├ Section 06 Contacto y concierge\n└ ContactRow → WhatsApp / email",
+  "rules": [
+   "Same accordion rules as C-14: collapsed by default, one open per section.",
+   "Address, hours and contact are read from studio settings (M-08), never typed here.",
+   "Section 06 always ends with a route to a human — WhatsApp first, email as fallback.",
+   "Anything about prices or plans links to #planes rather than repeating a figure."
+  ],
+  "api": [
+   "GET /content/faq?locale=&page=2",
+   "GET /content/faq/:slug",
+   "GET /studio/hours"
+  ],
+  "states": [
+   "Collapsed (default)",
+   "One expanded",
+   "Untranslated entry: falls back to Spanish",
+   "Studio closed today: hours row shows next opening"
+  ],
+  "toggles": [
+   {
+    "label": "FAQ in app",
+    "on": true
+   },
+   {
+    "label": "Contact row",
+    "on": true
+   },
+   {
+    "label": "Helpful vote",
     "on": false
    }
   ]
@@ -1223,7 +1276,7 @@
   "key": "home",
   "code": "C-01",
   "name": "Home dashboard",
-  "intent": "The daily landing surface: what is happening today, what I have booked, what the studio wants me to know, and the nudges the studio needs (membership, feedback, check-in).",
+  "intent": "The daily landing surface: what is happening today, what I have booked, what the studio wants me to know, and the nudges the studio needs (membership, feedback).",
   "story": "As a student I open the app and immediately see my next class, how long until it starts, and one thing worth doing right now.",
   "data": [
    "bookings",
@@ -1287,7 +1340,7 @@
   "key": "sched",
   "code": "C-02",
   "name": "Class schedule",
-  "intent": "Find the right class fast. Four views (today, week, recurring) over one filterable list. Studio only — there are no online classes.",
+  "intent": "Find the right class fast. Two views (today, week) over one filterable list. Studio only — there are no online classes.",
   "story": "As a student I filter to 6pm intermediate classes this week and see which still have space.",
   "data": [
    "classes",
@@ -1336,6 +1389,60 @@
    {
     "label": "Map / room view",
     "on": false
+   }
+  ]
+ },
+ "C-02b": {
+  "key": "schedw",
+  "code": "C-02b",
+  "name": "Class schedule · week",
+  "intent": "The week view of C-02: a six-column day grid of compact time chips, because comparing across days is the reason to open it. Same data, filters and booking state as Today.",
+  "story": "As a student I scan the whole week at a glance and spot the two evening classes that still have space.",
+  "data": [
+   "classes",
+   "schedules",
+   "teachers",
+   "rooms",
+   "capacity",
+   "waitlists",
+   "bookings"
+  ],
+  "roles": [
+   "Student",
+   "Front desk",
+   "Coordinator",
+   "Super admin"
+  ],
+  "layers": "ScheduleWeek\n├ ViewSwitch (Today / Week)\n├ WeekHeader (Mon–Sat, selected day filled)\n├ DayColumns ×6 → DayChip (time · open / full / booked)\n├ Legend (movement colours)\n└ BottomNav",
+  "rules": [
+   "Tapping a chip opens C-03 for that class; booked chips are filled in the selection colour.",
+   "Past days are read-only; the current day is pre-selected.",
+   "Filters set on Today carry over to Week for the session.",
+   "Six columns, Monday to Saturday — the studio does not open on Sunday; a seventh column appears only if M-08 hours change."
+  ],
+  "api": [
+   "GET /classes?view=week&from=&to=",
+   "GET /filters/options",
+   "POST /waitlist/:classId"
+  ],
+  "states": [
+   "Loading: six skeleton columns",
+   "Empty day: dash in the column",
+   "Error: retry",
+   "Past days: chips dimmed"
+  ],
+  "toggles": [
+   {
+    "label": "Week view",
+    "on": true
+   },
+   {
+    "label": "Sunday column",
+    "on": false
+   },
+   {
+    "label": "Waitlists",
+    "on": true
    }
   ]
  },
@@ -1568,56 +1675,6 @@
    },
    {
     "label": "Promo codes",
-    "on": false
-   }
-  ]
- },
- "C-07b": {
-  "key": "credits",
-  "code": "C-07b",
-  "name": "Credits & class packs",
-  "intent": "Show the balance and let students top up in the sizes the studio sells: single, 3, 10, plus the trial.",
-  "story": "As a student I buy a 10-pack and see the expiry date before I pay.",
-  "data": [
-   "credits",
-   "credit_ledger",
-   "packages",
-   "orders",
-   "expiry_rules"
-  ],
-  "roles": [
-   "Student",
-   "Front desk",
-   "Finance"
-  ],
-  "layers": "Credits\n├ BalanceHeader\n├ LedgerList (earned / used / expired)\n├ PackGrid (1 / 3 / 10)\n└ BuyCTA",
-  "rules": [
-   "Credits expire per pack rule; the ledger shows every movement with the booking that consumed it.",
-   "Cancelling inside the window returns the credit automatically.",
-   "Gift cards and guest passes land in the same ledger with their own source tag."
-  ],
-  "api": [
-   "GET /me/credits",
-   "GET /me/credits/ledger",
-   "GET /packages",
-   "POST /orders"
-  ],
-  "states": [
-   "Zero balance: pack grid promoted",
-   "Expiring soon: amber row",
-   "Loading / error: standard"
-  ],
-  "toggles": [
-   {
-    "label": "Credit expiry",
-    "on": true
-   },
-   {
-    "label": "Show ledger",
-    "on": true
-   },
-   {
-    "label": "Gift credits between students",
     "on": false
    }
   ]
@@ -2586,7 +2643,7 @@
    "Developer",
    "Studio owner"
   ],
-  "layers": "Knowledgebase\n├ PlanPhases (1–6)\n├ KanbanBoard (To do / In progress / Done)\n├ Changelog (version, date, change, reason)\n├ DecisionLog (intent → decision → consequence)\n└ VersionSwitcher",
+  "layers": "Knowledgebase\n├ PlanPhases (1–10)\n├ KanbanBoard (To do / In progress / Blocked / Done)\n├ Changelog (version, date, change, reason)\n├ DecisionLog (intent → decision → consequence)\n└ VersionSwitcher",
   "rules": [
    "Documentation rule: every change is logged with the prompt intent, the decision taken, the files touched and the version.",
    "Decisions record the alternative rejected, not only the choice made.",

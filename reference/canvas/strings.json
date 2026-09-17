@@ -47,6 +47,14 @@
 "HOY Wellness Center — system canvas",
 "HOY Wellness Center — lienzo del sistema"
 ],
+"h_body": [
+"Every screen of the app, laid out in flow order by lane: onboarding, the customer journey, staff and front desk, the admin CMS, then the design system and the knowledgebase. Toggle language, styled/wireframe and light/dark from the bar above — the whole system re-renders.",
+"Todas las pantallas de la app, en orden de flujo por carril: registro, viaje del cliente, staff y recepción, el CMS de administración, y luego el sistema de diseño y la base de conocimiento. Cambia idioma, estilizado/wireframe y claro/oscuro desde la barra superior — todo el sistema se vuelve a dibujar."
+],
+"h_note": [
+"Every screen has a spec panel (the “spec” chip): intent, data, roles, layer tree, business rules and the feature toggles that switch it on or off. Photographic areas are marked placeholders until real assets arrive.",
+"Cada pantalla tiene un panel de especificación (el chip “spec”): intención, datos, roles, árbol de capas, reglas de negocio y los interruptores que la activan o desactivan. Las áreas fotográficas quedan marcadas como placeholders hasta tener material real."
+],
 "l1": [
 "Onboarding & authentication",
 "Registro y autenticación"
@@ -287,6 +295,10 @@
 "Read the Terms & Conditions",
 "Leer los Términos y Condiciones"
 ],
+"lorem": [
+"Placeholder legal copy to be supplied by counsel. Structure, hierarchy and link behaviour are final; wording is not.",
+"Texto legal de ejemplo, pendiente de abogados. La estructura, jerarquía y enlaces son definitivos; la redacción no."
+],
 "spec_title": [
 "Page spec",
 "Especificación"
@@ -315,17 +327,9 @@
 "Feature toggles",
 "Interruptores"
 ],
-"roles": [
-"Public",
-"All roles"
-],
-"states": [
-"Video missing: textured placeholder with intended shot noted",
-"Untranslated: falls back to Spanish with a note"
-],
-"api": [
-"GET /design/tokens",
-"GET /design/tokens/:theme"
+"spec_foot": [
+"Toggles here mirror the Admin → Features table. Turning one off removes the step from the live flow.",
+"Estos interruptores reflejan Admin → Features. Al apagar uno, el paso desaparece del flujo."
 ],
 "tb_styled": [
 "Styled",
@@ -442,6 +446,10 @@
 "clPl": [
 "11 Sep 2026 · Modelo de Valor v3 wired in",
 "11 sep 2026 · Modelo de Valor v3 integrado"
+],
+"clPlb": [
+"Prompt intent: adopt the HOY v3 value model as the single source of truth for pricing and wire it into every surface that quotes a price. Decisions: (1) prices live in one config object read by every screen — no figure is written twice, so one edit moves the whole system; (2) the three invented membership tiers (Esencial, Ilimitada, Dúo) are gone: Membresía is Mensual and Anual only, as the model specifies, and the annual card carries the honest monthly equivalent rather than a percentage claim; (3) the trial class is now a real $39.000 product, not a free give-away, which is what the model says; (4) checkout IVA and total are computed from the config instead of being typed, so they cannot drift from the price above them; (5) capacity and conscious-controls microcopy sit with the prices — fifteen mats, four classes a day, one class a day per person, pause up to 30 days, notice before every charge. Reconciled surfaces: P-01 plans page, C-01 home teaser, C-04 checkout, C-06 membership, C-07 Bienvenida passes, C-11 history, C-17 gift card, C-22 manage membership, C-25 More, S-02 front-desk drop-in, M-06 CRM timeline, M-07 activity log, D-02 pricing card. Not reconciled, flagged for review: event pricing (C-23, $85.000 / $60.000 members) which the value model does not cover, teacher payroll figures, and admin revenue KPIs. Files: Hoy Wellness System.dc.html.",
+"Intención del prompt: adoptar el modelo de valor HOY v3 como única fuente de verdad de precios e integrarlo en cada superficie que muestre un precio. Decisiones: (1) los precios viven en un solo objeto de configuración que todas las pantallas leen — ninguna cifra se escribe dos veces, así una edición mueve todo el sistema; (2) los tres niveles de membresía inventados (Esencial, Ilimitada, Dúo) desaparecen: Membresía es solo Mensual y Anual, como indica el modelo, y la tarjeta anual muestra el equivalente mensual honesto en vez de un porcentaje; (3) la clase de prueba ahora es un producto real de $39.000, no un regalo, que es lo que dice el modelo; (4) el IVA y el total del checkout se calculan desde la configuración en vez de escribirse, así no pueden desalinearse del precio que tienen encima; (5) la microcopia de capacidad y controles conscientes acompaña a los precios — quince tapetes, cuatro clases al día, una clase al día por persona, pausar hasta 30 días, aviso antes de cada cobro. Superficies conciliadas: página P-01, teaser del inicio C-01, checkout C-04, membresía C-06, pases Bienvenida C-07, historial C-11, tarjeta regalo C-17, gestión de membresía C-22, Más C-25, drop-in de recepción S-02, timeline del CRM M-06, registro de actividad M-07, ficha de precio D-02. Sin conciliar, marcado para revisión: el precio de eventos (C-23, $85.000 / $60.000 socios) que el modelo no cubre, las cifras de nómina de profesores y los KPI de ingresos del admin. Archivos: Hoy Wellness System.dc.html."
 ],
 "ePl": [
 "Modelo de Valor v3 · one pricing source of truth",
@@ -726,6 +734,10 @@
 "clOps": [
 "9 Sep 2026 · Detail layers, payment marks, admin operations",
 "9 sep 2026 · Capas de detalle, marcas de pago, operaciones admin"
+],
+"clOpsb": [
+"Prompt intent: richer materials with an undo, real payment logos, a CRM, an activity log, and a check for missing admin pages. Decisions: (1) three independent switches — Texture, Depth, Images — instead of one 'pretty' flag, so a reviewer can isolate what they dislike; texture is a woven suede grain applied only to broad surfaces, never to text-dense cards or the scannable QR; (2) depth is a six-layer physical shadow on surfaces and a coloured inner-lip shadow on accents, with an off state that falls back to a hairline rather than nothing, so structure survives; (3) payment methods carry their own brand colour and wordmark, exempt from every theme rule — a Visa mark that recolours with the studio palette is worse than no mark; (4) the CRM merges WhatsApp, email, staff notes and system events into one timeline, because a split view is how studios lose context between shifts; (5) the activity log is append-only and records reads as well as writes, which Ley 1581 requires for personal data. Audit result: finance and payroll, reports and cohorts, staff directory and permissions, discounts, the staff support inbox and the announcements composer remain to build; everything else in the operating model is now on the canvas. Files: Hoy Wellness System.dc.html (helmet, toolbar, lane 5B, K-01, D-02).",
+"Intención del prompt: materiales más ricos con posibilidad de deshacer, logos de pago reales, un CRM, un registro de actividad y una revisión de páginas admin faltantes. Decisiones: (1) tres interruptores independientes — Textura, Profundidad, Imágenes — en vez de un solo indicador de “bonito”, para que quien revise pueda aislar lo que no le gusta; la textura es un grano de gamuza aplicado solo a superficies amplias, nunca a tarjetas densas de texto ni al QR escaneable; (2) la profundidad es una sombra física de seis capas en superficies y una sombra de labio interior en acentos, con un estado apagado que cae a una línea fina y no a nada, para que la estructura sobreviva; (3) los métodos de pago llevan su color y logotipo propios, exentos de toda regla de tema — una marca Visa que cambia de color con la paleta del estudio es peor que ninguna marca; (4) el CRM une WhatsApp, correo, notas del staff y eventos del sistema en una sola cronología, porque una vista partida es como los estudios pierden contexto entre turnos; (5) el registro de actividad es solo de anexado y registra lecturas además de escrituras, como exige la Ley 1581 para datos personales. Resultado de la auditoría: faltan finanzas y nómina, reportes y cohortes, directorio de staff y permisos, descuentos, bandeja de soporte del staff y compositor de anuncios; todo lo demás del modelo operativo ya está en el lienzo. Archivos: Hoy Wellness System.dc.html (helmet, barra, carril 5B, K-01, D-02)."
 ],
 "eOps": [
 "Detail layers · payment marks · CRM · activity log · settings",
@@ -1175,13 +1187,13 @@
 "Waitlist position",
 "Posición en lista"
 ],
-"cl3t": [
+"clP6t": [
 "8 Sep 2026 · Phase 6 customer flows",
 "8 sep 2026 · Flujos del cliente, fase 6"
 ],
-"cl3b": [
-"Prompt intent: continue the plan. Built C-18 to C-22: waitlist with the 30-minute claim window, password recovery via WhatsApp OTP, membership management (freeze, change, cancel), notifications inbox and event detail with RSVP. Decisions: (1) the waitlist offers auto-claim with a credit, so a released spot is not lost while the student sleeps — the alternative, a longer claim window, would hold the seat empty for hours; (2) recovery leads with WhatsApp OTP rather than email, because WhatsApp is the verified channel at sign-up and email is optional in practice; (3) cancellation keeps the membership active to the end of the paid period instead of ending it immediately, which avoids refund maths and matches Colombian consumer expectations. New components registered in D-02: OTP input, notification row, claim countdown, destructive row, waitlist position. Files: Hoy Wellness System.dc.html (lane 3B, D-02, K-01).",
-"Intención del prompt: continuar el plan. Se construyeron C-18 a C-22: lista de espera con ventana de reclamo de 30 minutos, recuperación de contraseña con OTP de WhatsApp, gestión de membresía (congelar, cambiar, cancelar), bandeja de notificaciones y detalle de evento con RSVP. Decisiones: (1) la lista de espera ofrece reclamo automático con crédito, para que un cupo liberado no se pierda mientras el estudiante duerme — la alternativa, una ventana más larga, dejaría el puesto vacío por horas; (2) la recuperación va primero por OTP de WhatsApp y no por correo, porque WhatsApp es el canal verificado en el registro y el correo es opcional en la práctica; (3) la cancelación mantiene la membresía activa hasta el fin del periodo pagado en vez de terminarla de inmediato, lo que evita cálculos de reembolso y coincide con la expectativa del consumidor colombiano. Componentes nuevos en D-02: campo OTP, fila de notificación, cuenta atrás de reclamo, fila destructiva, posición en lista. Archivos: Hoy Wellness System.dc.html (carril 3B, D-02, K-01)."
+"clP6b": [
+"Prompt intent: continue the plan. Built C-20 to C-24: waitlist with the 30-minute claim window, password recovery via WhatsApp OTP, membership management (freeze, change, cancel), notifications inbox and event detail with RSVP. Decisions: (1) the waitlist offers auto-claim with a credit, so a released spot is not lost while the student sleeps — the alternative, a longer claim window, would hold the seat empty for hours; (2) recovery leads with WhatsApp OTP rather than email, because WhatsApp is the verified channel at sign-up and email is optional in practice; (3) cancellation keeps the membership active to the end of the paid period instead of ending it immediately, which avoids refund maths and matches Colombian consumer expectations. New components registered in D-02: OTP input, notification row, claim countdown, destructive row, waitlist position. Files: Hoy Wellness System.dc.html (lane 3B, D-02, K-01).",
+"Intención del prompt: continuar el plan. Se construyeron C-20 a C-24: lista de espera con ventana de reclamo de 30 minutos, recuperación de contraseña con OTP de WhatsApp, gestión de membresía (congelar, cambiar, cancelar), bandeja de notificaciones y detalle de evento con RSVP. Decisiones: (1) la lista de espera ofrece reclamo automático con crédito, para que un cupo liberado no se pierda mientras el estudiante duerme — la alternativa, una ventana más larga, dejaría el puesto vacío por horas; (2) la recuperación va primero por OTP de WhatsApp y no por correo, porque WhatsApp es el canal verificado en el registro y el correo es opcional en la práctica; (3) la cancelación mantiene la membresía activa hasta el fin del periodo pagado en vez de terminarla de inmediato, lo que evita cálculos de reembolso y coincide con la expectativa del consumidor colombiano. Componentes nuevos en D-02: campo OTP, fila de notificación, cuenta atrás de reclamo, fila destructiva, posición en lista. Archivos: Hoy Wellness System.dc.html (carril 3B, D-02, K-01)."
 ],
 "dow1": [
 "MON",
@@ -2499,6 +2511,14 @@
 "Prompt intent: a responsive mobile app for HOY with every page in flow order, ES/EN, per-page specs, admin with switches, design system and knowledgebase. Decision: a single swimlane canvas rather than separate files, so the flow reads in one pass. Rejected alternative: one file per role — the whole flow becomes unreadable.",
 "Intención del prompt: app móvil responsive para HOY con todas las páginas en orden de flujo, ES/EN, especificaciones por página, admin con interruptores, sistema de diseño y base de conocimiento. Decisión: un solo lienzo por carriles en vez de archivos separados, para que el flujo se lea de un tirón. Alternativa descartada: un archivo por rol — se pierde la lectura del flujo completo."
 ],
+"cl3t": [
+"Waiver as a switchable step",
+"Consentimiento como paso desactivable"
+],
+"cl3b": [
+"Decision: the waiver is a step with a switch in Admin → Features, not a fixed requirement. Consequence: sign-up drops from three steps to two when it is off, and the front desk can collect it at the counter.",
+"Decisión: el waiver es un paso con interruptor en Admin → Features, no un requisito fijo. Consecuencia: el registro pasa de tres pasos a dos cuando se apaga, y recepción puede recogerlo en el mostrador."
+],
 "cl4t": [
 "No online classes",
 "Sin clases en línea"
@@ -2666,6 +2686,26 @@
 "clFd": [
 "12 Sep 2026 · Front desk suite",
 "12 sep 2026 · Recepción completa"
+],
+"clFdb": [
+"Prompt intent: make the desk able to run the studio. Decisions: (1) the QR/face scanner panel is gone — with customer check-in removed, the desk checks people in by name, so the rail's most valuable real estate went to member search with recent arrivals instead of a camera feed; (2) 'Sell drop-in' became 'Register a new customer', because the desk's common case is a person who does not exist in the system yet, and selling them a class is the second half of that same action; (3) a now / next / later strip shows today's three upcoming classes at a glance, so the desk answers 'what's on?' without navigating; (4) teachers appear as arrived/expected chips, since the desk needs to know whether the room has a teacher before it has students; (5) the rail carries a reference group — class descriptions, FAQ, teacher profiles, plans — because the desk is asked those questions all day and was previously guessing; (6) S-04 register-and-take-payment is one screen in three short sections, not a wizard, and completing the sale checks the person in. Alternative rejected: a separate add-customer screen — it split one counter conversation across two views. Files: Hoy Wellness System.dc.html (lane 4, K-01).",
+"Intención del prompt: que recepción pueda operar el estudio. Decisiones: (1) el panel de escáner QR/facial desaparece — sin check-in del cliente, recepción registra por nombre, así que el mejor espacio del panel pasó a la búsqueda de socios con llegadas recientes en vez de una cámara; (2) 'Vender drop-in' pasó a 'Registrar nuevo cliente', porque el caso común de recepción es alguien que aún no existe en el sistema, y venderle una clase es la segunda mitad de esa misma acción; (3) una tira ahora / sigue / más tarde muestra las tres próximas clases del día, así recepción responde '¿qué hay?' sin navegar; (4) los profesores aparecen como fichas llegó/esperado, porque recepción necesita saber si la sala tiene profesor antes de tener alumnos; (5) el panel lleva un grupo de consulta — descripciones de clases, preguntas frecuentes, perfiles de profesores, planes — porque a recepción le preguntan eso todo el día y antes adivinaba; (6) S-04 registrar y recibir pago es una pantalla en tres secciones cortas, no un asistente, y completar la venta registra la entrada. Alternativa descartada: una pantalla aparte para agregar cliente — partía una sola conversación de mostrador en dos vistas. Archivos: Hoy Wellness System.dc.html (carril 4, K-01)."
+],
+"clRepo": [
+"17 Sep 2026 · HoyOS moves to a real codebase",
+"17 sep 2026 · HoyOS pasa a un código real"
+],
+"clRepob": [
+"Prompt intent: move from the canvas to a real HoyOS codebase in github.com/imagine-os/hoy — with an ES/EN toggle, an inspector panel (this spec side panel, live), a docs system, demo roles, the public website and an operations manual. Decision: a Vite + React single-page app deployed to GitHub Pages with hash routing; mock data shaped like the Supabase tables in M-03, so swapping in the real backend is a data-layer change and not a rewrite; this canvas kept as the reference under reference/canvas/. Alternative rejected: continue in the canvas only — it cannot be routed, run against data, tested or handed to a developer as code. Canvas audit in the same turn, before the port: the flow map, specs and knowledgebase were reconciled with the screens that actually exist. C-07b (credits) retired from the map and the specs — its content moved to C-07 Bienvenida passes and P-01 in v1.1; C-02b, C-14 and C-15 given their own spec entries; P-01 and K-01 given anchors; stale codes corrected in the v1.1 entry (C-15→C-17 gift card, C-20→C-22 manage membership, C-22→C-23 events, C-23→C-25 More), in the v0.3 entry (C-18–C-22→C-20–C-24) and in M-08 (waitlist rule quoted on C-20, not C-18); the v0.3 Phase 6 entry, hidden behind a duplicate key, restored; the C-01, A-06, A-03, C-02 and K-01 specs no longer describe check-in, the waiver, a third sign-up step or a six-phase plan; kanban counts corrected. Files: Hoy Wellness System.dc.html (flow map, lanes 2, 3, planes, 5B, K-01, specs); repo: package.json, vite.config.ts, index.html, src/, docs/, reference/canvas/. Version: v1.5.",
+"Intención del prompt: pasar del lienzo a un código real de HoyOS en github.com/imagine-os/hoy — con selector ES/EN, panel inspector (este panel de especificación, en vivo), sistema de documentación, roles de demostración, el sitio público y un manual operativo. Decisión: una SPA en Vite + React publicada en GitHub Pages con rutas por hash; datos de prueba con la forma de las tablas Supabase de M-03, para que conectar el backend real sea un cambio de capa de datos y no una reescritura; este lienzo se conserva como referencia en reference/canvas/. Alternativa descartada: seguir solo en el lienzo — no se puede rutear, correr con datos, probar ni entregar a desarrollo como código. Auditoría del lienzo en el mismo turno, antes de portar: el mapa de flujo, las specs y la base de conocimiento se conciliaron con las pantallas que existen. C-07b (créditos) retirado del mapa y de las specs — su contenido pasó a C-07 pases Bienvenida y P-01 en v1.1; C-02b, C-14 y C-15 con spec propia; P-01 y K-01 con ancla; códigos corregidos en la entrada v1.1 (C-15→C-17 tarjeta regalo, C-20→C-22 gestión de membresía, C-22→C-23 eventos, C-23→C-25 Más), en la v0.3 (C-18–C-22→C-20–C-24) y en M-08 (regla de lista de espera citada en C-20, no C-18); la entrada v0.3 de la fase 6, oculta tras una clave duplicada, restaurada; las specs de C-01, A-06, A-03, C-02 y K-01 ya no describen check-in, waiver, un tercer paso de registro ni un plan de seis fases; conteos del kanban corregidos. Archivos: Hoy Wellness System.dc.html (mapa, carriles 2, 3, planes, 5B, K-01, specs); repo: package.json, vite.config.ts, index.html, src/, docs/, reference/canvas/. Versión: v1.5."
+],
+"eRepo": [
+"HoyOS repo: Vite + React SPA on GitHub Pages · canvas audit v1.5",
+"Repo HoyOS: SPA Vite + React en GitHub Pages · auditoría del lienzo v1.5"
+],
+"gRepo": [
+"HoyOS app: ES/EN toggle, inspector panel, docs, demo roles, public website, ops manual",
+"App HoyOS: selector ES/EN, panel inspector, docs, roles demo, sitio público, manual operativo"
 ],
 "eFd": [
 "Front desk: search, today strip, register & pay, reference",
@@ -2847,6 +2887,10 @@
 "10 Sep 2026 · Photography, dock icons, More",
 "10 sep 2026 · Fotografía, íconos del dock, Más"
 ],
+"clNav2b": [
+"Prompt intent: real photos with a switch, icons in the dock, a clearer review control, and profile and rules behind a More entry with contact moved out of the floating bubble. Decisions: (1) photography is keyed by data-img rather than inline URLs, so the Photos switch swaps every slot at once and the off state keeps its label — a blank grey box tells a reviewer nothing about what belongs there; (2) the dock drops from five tabs to four with line icons — Home, Classes, History, More — because 340px across five labelled targets left each one under a comfortable width, and the fifth was never a peer of the others; (3) the floating WhatsApp bubble is gone: it sat over the primary action on every screen, and contact is now a normal row inside More; (4) the home feedback prompt uses five outline stars under a RATE YOUR CLASS label, so it reads as a review rather than a progress indicator. Alternative rejected: keeping five tabs and shrinking the labels, which would have pushed type below the 9.5px floor. Files: Hoy Wellness System.dc.html (lanes 2, 3B, 3C, D-02, K-01).",
+"Intención del prompt: fotos reales con interruptor, íconos en el dock, un control de reseña más claro, y perfil y reglas detrás de Más con el contacto fuera de la burbuja flotante. Decisiones: (1) la fotografía se referencia por data-img y no por URL en línea, así el interruptor Fotos cambia todos los espacios a la vez y el estado apagado conserva su etiqueta — una caja gris vacía no le dice nada a quien revisa; (2) el dock baja de cinco pestañas a cuatro con íconos de línea — Inicio, Clases, Historial, Más — porque 340px entre cinco objetivos etiquetados dejaba cada uno por debajo de un ancho cómodo, y el quinto nunca fue par de los otros; (3) la burbuja flotante de WhatsApp desapareció: estaba sobre la acción principal en cada pantalla, y el contacto ahora es una fila normal dentro de Más; (4) el aviso de feedback en el inicio usa cinco estrellas de contorno bajo una etiqueta CALIFICA TU CLASE, para que se lea como reseña y no como indicador de progreso. Alternativa descartada: conservar cinco pestañas y encoger las etiquetas, lo que habría empujado el texto por debajo del piso de 9.5px. Archivos: Hoy Wellness System.dc.html (carriles 2, 3B, 3C, D-02, K-01)."
+],
 "eNav2": [
 "Photography · dock icons · More sheet · star rating",
 "Fotografía · íconos del dock · hoja Más · estrellas"
@@ -2863,13 +2907,25 @@
 "9 Sep 2026 · HOY 2026 brand applied",
 "9 sep 2026 · Marca HOY 2026 aplicada"
 ],
+"clBrb": [
+"Prompt intent: adopt the 2026 brand manual and keep the old system switchable. Decisions: (1) the brand is a theme layer, not a rewrite — one toggle in the toolbar swaps palette, type and wordmark across all 30 screens, so the archive stays reviewable rather than being deleted; (2) the handwritten “hoy” was extracted from the manual PDF and recoloured to deep blue and cream, replacing the typed wordmark wherever the logo appears; (3) type follows the manual's own specimen — Inter for headings, DM Sans for body — rather than the Akzidenz-Grotesk named in the body copy, which is not licensed here; (4) the movement palette was remapped into brand colours: Enraíza deep blue, Fluye mid blue, Arde yellow, Libera blue-grey, keeping the four-way colour system intact; (5) D-01 now renders the active brand's tokens instead of hardcoded swatches, so the design system cannot drift from the theme. Alternative rejected: replacing every inline colour across the file — it would have destroyed the archive and taken the canvas offline for a full pass. Files: Hoy Wellness System.dc.html (helmet, toolbar, D-01, K-01), brand/hoy-blue.png, brand/hoy-cream.png.",
+"Intención del prompt: adoptar el manual de marca 2026 y poder alternar con el sistema anterior. Decisiones: (1) la marca es una capa de tema, no una reescritura — un interruptor en la barra cambia paleta, tipografía y logotipo en las 30 pantallas, así el archivo sigue disponible en vez de borrarse; (2) el “hoy” manuscrito se extrajo del PDF del manual y se recoloreó en azul profundo y crema, reemplazando el logotipo tipografiado donde aparece; (3) la tipografía sigue el espécimen del propio manual — Inter para títulos, DM Sans para textos — y no Akzidenz-Grotesk, que se nombra en el cuerpo pero no está licenciada aquí; (4) la paleta de movimientos se remapeó a colores de marca: Enraíza azul profundo, Fluye azul medio, Arde amarillo, Libera azul grisáceo, conservando el sistema de cuatro colores; (5) D-01 ahora muestra los tokens de la marca activa en vez de muestras fijas, para que el sistema de diseño no se desincronice del tema. Alternativa descartada: reemplazar cada color en línea del archivo — habría destruido el archivo histórico y dejado el lienzo fuera de servicio durante una pasada completa. Archivos: Hoy Wellness System.dc.html (helmet, barra, D-01, K-01), brand/hoy-blue.png, brand/hoy-cream.png."
+],
 "clSch": [
 "9 Sep 2026 · Schedule reduced to two views",
 "9 sep 2026 · Horario reducido a dos vistas"
 ],
+"clSchb": [
+"Prompt intent: keep only Today and Week. Month and recurring were removed along with their screens (C-02c, C-02d), their map nodes, and their D-02 specimens — the month density cell and the series card — under the living-inventory rule. Reasoning kept on record: students book inside the current week, so a month grid answered a question nobody was asking, and series booking was speculative before the studio has confirmed it sells that way. The switch is now a two-way control, which also gives each label room to breathe. Files: Hoy Wellness System.dc.html (lane 2, flow map, D-02, K-01).",
+"Intención del prompt: dejar solo Hoy y Semana. Se eliminaron mes y recurrentes junto con sus pantallas (C-02c, C-02d), sus nodos en el mapa y sus especímenes en D-02 — la celda de densidad mensual y la tarjeta de serie — según la regla de inventario vivo. Razonamiento registrado: los estudiantes reservan dentro de la semana en curso, así que la cuadrícula mensual respondía una pregunta que nadie hacía, y reservar series era especulativo antes de que el estudio confirme que vende así. El selector es ahora un control de dos opciones, lo que además da aire a cada etiqueta. Archivos: Hoy Wellness System.dc.html (carril 2, mapa, D-02, K-01)."
+],
 "clNav": [
 "9 Sep 2026 · Navigation restructured",
 "9 sep 2026 · Navegación reestructurada"
+],
+"clNavb": [
+"Prompt intent: five bottom-nav tabs, Classes and Calendar merged, front desk moved out of the nav. Decisions: (1) Home, Classes, My Profile, History, Club Rules — Classes now owns the schedule, all four views, class detail and booking, which frees a slot without hiding anything; (2) front desk becomes a floating action button rather than a tab, so it is one tap from every screen without spending a fifth of the navigation on it; (3) the button is drawn in olive and cream, not WhatsApp green — the channel is an implementation detail, the studio's palette is not; (4) the label pill beside it shows on first run only, then the icon stands alone; (5) check-in moved into the next-class card with its opening time, since arrival is time-bound and does not deserve permanent navigation. Alternative rejected: a six-tab bar — below 52px per target on a 340px screen. Applied to C-01, C-02, C-02b, C-02c, C-02d and E-01; nav bar and floating button registered in D-02. Files: Hoy Wellness System.dc.html (lane 2, lane 3C, D-02, K-01).",
+"Intención del prompt: cinco pestañas en la navegación inferior, Clases y Calendario unidos, recepción fuera de la barra. Decisiones: (1) Inicio, Clases, Mi perfil, Historial, Reglas — Clases ahora contiene el horario, las cuatro vistas, el detalle y la reserva, lo que libera un espacio sin esconder nada; (2) recepción pasa a botón flotante en vez de pestaña, así queda a un toque desde cualquier pantalla sin gastar un quinto de la navegación; (3) el botón va en oliva y crema, no en el verde de WhatsApp — el canal es un detalle de implementación, la paleta del estudio no; (4) la etiqueta junto al botón aparece solo la primera vez, después el ícono va solo; (5) el check-in se movió a la tarjeta de la próxima clase con su hora de apertura, porque llegar es algo acotado en el tiempo y no merece navegación permanente. Alternativa descartada: una barra de seis pestañas — por debajo de 52px por objetivo en una pantalla de 340px. Aplicado en C-01, C-02, C-02b, C-02c, C-02d y E-01; barra y botón flotante registrados en D-02. Archivos: Hoy Wellness System.dc.html (carril 2, carril 3C, D-02, K-01)."
 ],
 "at_nav": [
 "Bottom navigation · 5 tabs",
@@ -2912,8 +2968,8 @@
 "Profundidad del cliente"
 ],
 "l3s": [
-"Booked class, check-in, feedback, content, community",
-"Clase reservada, check-in, feedback, contenido, comunidad"
+"Booked class, feedback, content, community",
+"Clase reservada, feedback, contenido, comunidad"
 ],
 "l4": [
 "Staff & front desk",
@@ -3175,6 +3231,14 @@
 "How to prepare",
 "Cómo prepararte"
 ],
+"class_body": [
+"A steady vinyasa in a warm room. Breath-led, no pose held longer than five cycles, closing with a long savasana. Bring water and a towel.",
+"Un vinyasa constante en sala templada. Guiado por la respiración, sin posturas de más de cinco ciclos, cerrando con un savasana largo. Trae agua y toalla."
+],
+"teacher_body": [
+"Twelve years teaching in Medellín, trained in Mysore and Rishikesh. Teaches Hot Vinyasa, Yin and breathwork.",
+"Doce años enseñando en Medellín, formada en Mysore y Rishikesh. Enseña Hot Vinyasa, Yin y respiración."
+],
 "pay_summary": [
 "Order summary",
 "Resumen"
@@ -3211,9 +3275,17 @@
 "12 Sep 2026 · Offline check-in retired",
 "12 sep 2026 · Check-in sin conexión retirado"
 ],
+"clOffb": [
+"Follow-on from removing customer check-in: E-04 offline check-in was the cached-QR variant of a screen that no longer exists, so it went with it — artboard, spec, map node and eight dictionary keys, and E-05 renumbered to E-04 so the states lane stays sequential. The Offline badge organism was retired from D-02 in the same pass: with no screen using it, a library entry advertising it violates the living-inventory rule, and its two text slots had already gone empty. The v0.4 entry and the phase-7 plan bullet were amended so neither still claims a state the system does not draw.",
+"Consecuencia de retirar el check-in del cliente: E-04 sin conexión era la variante con QR en caché de una pantalla que ya no existe, así que se fue con ella — artboard, especificación, nodo del mapa y ocho claves del diccionario, y E-05 se renumeró a E-04 para que el carril de estados siga siendo secuencial. La insignia sin conexión se retiró de D-02 en la misma pasada: sin pantalla que la use, una entrada en la librería que la anuncia viola la regla de inventario vivo, y sus dos espacios de texto ya estaban vacíos. La entrada v0.4 y el punto del plan de la fase 7 se corrigieron para que ninguno siga afirmando un estado que el sistema no dibuja."
+],
 "clTrim": [
 "11 Sep 2026 · Waiver, check-in and chat removed",
 "11 sep 2026 · Consentimiento, check-in y chat retirados"
+],
+"clTrimb": [
+"Prompt intent: remove what the studio does not need, and sharpen what stays. Decisions: (1) the waiver step (A-04) is gone, not toggled off — a step nobody intends to use is dead weight in the flow and in the code, and sign-up drops to two steps with the progress indicator following it; (2) customer check-in (C-09) and its home entry points are removed: students always check in at the front desk and teachers mark attendance, so a self-service QR was a second source of truth for who was in the room; (3) in-app chat (C-12) is removed because messages run on WhatsApp and email, where the studio already lives — a third inbox is a thread that goes unread; (4) C-08's cancel and reschedule collapse into one button opening one sheet (C-08b), because the student is taking a single decision with two outcomes, and moving is offered first since it keeps the credit and the habit; (5) the C-10 feedback chips were ambiguous nouns — Music, Temperature — so they became directional statements in two labelled groups, What worked and Could be better, which is the difference between data and noise; (6) C-06 loses the monthly/yearly toggle since two cards already show both, gains a plain note that monthly can run as a subscription or be prepaid, and the Best value badge moves to cream on navy, which was unreadable at 1.9:1. Alternative rejected: keeping the waiver behind its feature flag — it left three screens of legal and signature UI in the system for a step the studio does not run. Files: Hoy Wellness System.dc.html (lanes 1, 2, 3, 3B, 5B, D-02, K-01).",
+"Intención del prompt: quitar lo que el estudio no necesita y afinar lo que se queda. Decisiones: (1) el paso de consentimiento (A-04) se elimina, no se apaga — un paso que nadie piensa usar es peso muerto en el flujo y en el código, y el registro baja a dos pasos con el indicador de progreso acorde; (2) el check-in del cliente (C-09) y sus accesos en el inicio se retiran: los estudiantes siempre hacen check-in en recepción y los profesores marcan asistencia, así que un QR de autoservicio era una segunda fuente de verdad sobre quién está en la sala; (3) el chat en la app (C-12) se retira porque los mensajes van por WhatsApp y correo, donde el estudio ya vive — una tercera bandeja es un hilo que nadie lee; (4) cancelar y reprogramar en C-08 se juntan en un botón que abre una hoja (C-08b), porque el estudiante toma una sola decisión con dos salidas, y mover se ofrece primero porque conserva el crédito y el hábito; (5) las fichas de feedback de C-10 eran sustantivos ambiguos — Música, Temperatura — y pasaron a ser afirmaciones con dirección en dos grupos, Lo que funcionó y Podría mejorar, que es la diferencia entre dato y ruido; (6) C-06 pierde el interruptor mensual/anual porque las dos tarjetas ya muestran ambos, gana una nota simple de que lo mensual puede ser suscripción o prepago, y la insignia Mejor valor pasa a crema sobre azul, que era ilegible a 1.9:1. Alternativa descartada: mantener el consentimiento detrás de su interruptor — dejaba tres pantallas de UI legal y de firma en el sistema para un paso que el estudio no ejecuta. Archivos: Hoy Wellness System.dc.html (carriles 1, 2, 3, 3B, 5B, D-02, K-01)."
 ],
 "eTrim": [
 "Waiver · customer check-in · in-app chat removed",
@@ -3454,33 +3526,5 @@
 "kb_rule": [
 "Rule: every change is logged here — prompt intent, decision, files touched, version.",
 "Regla: todo cambio se registra aquí — intención del prompt, decisión, archivos, versión."
-],
-"n": [
-"Morning Flow Yoga",
-"Flow de la Mañana"
-],
-"cat": [
-"Hot Yoga",
-"Yoga Caliente"
-],
-"d": [
-"one class, no entry cost",
-"una clase, sin costo de entrada"
-],
-"per": [
-"/ month",
-"/ mes"
-],
-"badge": [
-"Best value",
-"Mejor valor"
-],
-"p": [
-"included",
-"incluido"
-],
-"k": [
-"Arde · hot yoga",
-"Arde · yoga caliente"
 ]
 }
