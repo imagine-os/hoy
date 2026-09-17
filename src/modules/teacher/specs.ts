@@ -23,16 +23,26 @@ export const S03Class = defineSpec({
   notes: ['Marks write bookings.status (checked_in / no_show) and an audit_log row.', 'Notes are audit_log rows (action session.note) so they appear in M-07.', 'Reviews are read-only here: the average, count and tags of the `reviews` rows for this session (C-10). Anonymous reviews never show who wrote them.'],
 });
 
-/** /teach/payroll — classes × rate, placeholder until Wompi payroll. */
+/** /teach/payroll — the teacher's own statement, from payroll_runs / payroll_lines. */
 export const S03Payroll = defineSpec({
   ...base,
   name: { es: 'Nómina', en: 'Payroll' },
-  purpose: { es: 'Clases dictadas por mes × tarifa por clase, solo lectura.', en: 'Classes taught per month × per-class rate, read-only.' },
-  layout: ['MonthPicker', 'SummaryTiles', 'PayrollLines', 'WompiPlaceholder'],
-  data: ['teachers', 'class_sessions', 'bookings', 'modalities'],
-  integrations: ['Wompi'],
-  states: ['Payroll pending: run closes on the 15th', 'No classes this month'],
-  notes: ['Rate is teachers.rate_per_class; substitutions are sessions whose template teacher differs.', 'Placeholder until Wompi payroll runs exist.'],
+  purpose: { es: 'El extracto del profesor: clases dictadas × tarifa del mes, el desglose por clase, el historial de corridas y cómo preguntar por un monto.', en: 'The teacher’s statement: classes taught × rate for the month, the per-class breakdown, the run history and how to ask about an amount.' },
+  layout: ['MonthPicker', 'RunStateCard (borrador / aprobada / pagada / estimado)', 'SummaryTiles (clases, tarifa, total)', 'Breakdown (fecha, clase, asistentes, monto)', 'ExtrasLines (bono, ajuste)', 'PayoutMethodCard', 'RunHistory', 'PrintStatement + AskFinance (WhatsApp)'],
+  data: ['payroll_runs', 'payroll_lines', 'teachers', 'class_sessions', 'bookings', 'class_templates', 'payment_methods', 'tenants'],
+  integrations: ['Wompi', 'WhatsApp'],
+  logic: [
+    'Before finance generates the run, the month is computed live from completed sessions × teachers.rate_per_class (src/data/payrollCalc.ts) and labelled as an estimate.',
+    'Once a payroll_runs row covers the period, the page reads payroll_lines instead — so what the teacher sees is what finance will pay, bonuses and adjustments included.',
+    'A substitution is a session whose template teacher differs from the session teacher; it is a badge, not a different rate.',
+    'The payout method on file comes from payment_methods for the teacher’s user; the method of the run itself is shown next to it.',
+    '“Ask about this statement” opens WhatsApp to the studio contact from M-08 with the period and total prefilled.',
+  ],
+  states: ['Estimate (no run yet)', 'Draft run', 'Approved run', 'Paid run (with date)', 'No classes this month', 'Substitutions present', 'Negative adjustment', 'No payout method on file', 'Not linked to a teacher profile'],
+  notes: [
+    'Read-only by design: only finance writes payroll (M-09a/M-09b).',
+    'The Wompi dispersion is simulated (wompiPayout() in src/modules/admin/payouts.ts); the page says so instead of pretending money moved.',
+  ],
 });
 
 /** /teach/profile — public profile editor. */
