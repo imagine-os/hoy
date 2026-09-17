@@ -2,9 +2,9 @@
 title: Pagos y caja
 role: finanzas, recepción, owner
 part: IV
-version: 0.6.0
+version: 0.6.1
 updated: 2026-09-17
-summary: Medios de pago, cierre de caja, conciliación diaria, Wompi, reembolsos y los reportes del mes.
+summary: Medios de pago, cierre de caja, conciliación diaria, Wompi, reembolsos, el libro de gastos con el balance del periodo y los reportes del mes.
 ---
 
 # Pagos y caja
@@ -88,9 +88,50 @@ legales y de emergencia no se pueden apagar.
 
 ## 7. Reportes
 1. Semanal (lunes): ocupación por clase y franja, ventas por producto, no-shows.
-2. Mensual (día 5): ingresos, nómina, abonos Wompi conciliados, segmento "En riesgo", motivos de
-   cancelación de membresía.
+2. Mensual (día 5): ingresos, nómina, gastos y balance del mes (M-09), abonos Wompi conciliados,
+   segmento "En riesgo", motivos de cancelación de membresía.
 
 **Pasos en HoyOS:** M-01 KPIs → M-07 exportar CSV → M-06 segmentos → M-09 Finanzas.
+
+## 8. Gastos y balance
+El dinero sale por dos caminos: la nómina de profesores (capítulo `16`) y los gastos del estudio. Los
+gastos viven en **M-09c Gastos** (`/admin/finance/expenses`) y restan en la tarjeta **Balance del
+periodo** de **M-09 Finanzas**. Los registra **finanzas**; administración también puede. Recepción y
+coordinación no los ven: son internos del estudio.
+
+**Fijos y variables.** Un gasto **fijo** es recurrente y conocido — arriendo, servicios públicos,
+internet, aseo, software, póliza — y nace de una **plantilla** con su cadencia (**mensual** o
+**quincenal**, la quincena colombiana: vence el día ancla y quince días después) y su día de
+vencimiento. Un gasto **variable** se registra a mano cuando ocurre: mats nuevos, una reparación, la
+pauta del mes, los honorarios del contador.
+
+1. **Plantillas.** Al abrir el estudio, finanzas crea una plantilla por cada costo fijo (concepto,
+   categoría, valor por vencimiento, cadencia, día, proveedor). Si un costo deja de existir se
+   **desactiva**, no se borra: el historial conserva su origen.
+2. **Generar el periodo.** El primer día hábil de cada mes (o de cada quincena), en M-09c elige el
+   periodo y pulsa **Generar gastos fijos del periodo**. Crea una fila por plantilla y vencimiento,
+   en estado *por pagar*. Se puede repetir sin miedo: un vencimiento que ya tiene su fila se salta,
+   nunca se duplica, y un gasto ya pagado nunca se toca.
+3. **Marcar pagado.** Cuando el pago sale del banco o de la caja, marca la fila como pagada: queda la
+   fecha y el actor en el registro de actividad (M-07, acción `expense.pay`).
+4. **Registrar un variable.** Concepto, categoría, valor, fecha, si ya está pagado, método (efectivo,
+   transferencia o tarjeta), proveedor y nota. Un gasto en efectivo entra en el cierre de caja de la
+   sección 2.
+5. **Corregir.** Solo un gasto sin pagar se puede eliminar. Un gasto pagado con error se corrige con
+   una fila nueva y una nota, nunca editando la historia.
+
+![Gastos fijos por plantilla, variables a mano y el estado pagado / por pagar](../../screenshots/M-09c/es-1280.jpg "M-09c · /admin/finance/expenses")
+
+**Cómo leer el Balance.** En M-09, con el mismo filtro de periodo (7, 15, 30, 90 días o Todo), la
+tarjeta muestra cuatro números: **Ingresos** (pagos aprobados del rango) − **Nómina** (cada corrida
+cuyo periodo mensual cruza el rango, al total actual: el borrador cuenta porque las clases ya se
+dictaron) − **Gastos** (fijos y variables con fecha en el rango, pagados o no) = **Balance**, con el
+margen sobre ingresos. Un balance negativo en 7 o 15 días es normal cuando el arriendo cae en la
+ventana; el número que importa es el de 30 días y el del mes cerrado. Los enlaces de la tarjeta
+llevan a la nómina (M-09a) y a los gastos (M-09c).
+
+![La tarjeta Balance del periodo en Finanzas](../../screenshots/M-09/es-1280.jpg "M-09 · /admin/finance")
+
+{{table:expenses}}
 
 {{stats}}

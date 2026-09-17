@@ -2,9 +2,9 @@
 title: Payments and the till
 role: finance, front desk, owner
 part: IV
-version: 0.6.0
+version: 0.6.1
 updated: 2026-09-17
-summary: Payment methods, cash close, daily reconciliation, Wompi, refunds and the monthly reports.
+summary: Payment methods, cash close, daily reconciliation, Wompi, refunds, the expenses ledger with the period balance and the monthly reports.
 ---
 
 # Payments and the till
@@ -87,9 +87,49 @@ and emergency pages cannot be switched off.
 
 ## 7. Reports
 1. Weekly (Monday): occupancy by class and slot, sales by product, no-shows.
-2. Monthly (5th): revenue, payroll, reconciled Wompi payouts, the "At risk" segment, membership
-   cancellation reasons.
+2. Monthly (5th): revenue, payroll, expenses and the month's balance (M-09), reconciled Wompi payouts,
+   the "At risk" segment, membership cancellation reasons.
 
 **Steps in HoyOS:** M-01 KPIs → M-07 export CSV → M-06 segments → M-09 Finance.
+
+## 8. Expenses and the balance
+Money goes out through two routes: teacher payroll (chapter `16`) and the studio's expenses. Expenses
+live in **M-09c Expenses** (`/admin/finance/expenses`) and subtract in the **Period balance** card of
+**M-09 Finance**. **Finance** records them; admin can too. Front desk and coordination do not see
+them: they are studio-internal.
+
+**Fixed and variable.** A **fixed** expense is recurring and known — rent, utilities, internet,
+cleaning, software, the insurance policy — and is born from a **template** with its cadence
+(**monthly** or **biweekly**, the Colombian quincena: due on the anchor day and fifteen days later)
+and its due day. A **variable** expense is recorded by hand when it happens: new mats, a repair, the
+month's ads, the accountant's fee.
+
+1. **Templates.** When the studio opens, finance creates one template per fixed cost (concept,
+   category, amount per due date, cadence, day, vendor). A cost that stops existing is
+   **deactivated**, not deleted: history keeps its origin.
+2. **Generate the period.** On the first working day of each month (or each fortnight), pick the
+   period in M-09c and press **Generate the period's fixed expenses**. It creates one row per
+   template and due date, in the *to pay* state. Safe to repeat: a due date that already has its row
+   is skipped, never duplicated, and a paid expense is never touched.
+3. **Mark paid.** When the money leaves the bank or the till, mark the row paid: the date and the
+   actor land in the activity log (M-07, action `expense.pay`).
+4. **Record a variable one.** Concept, category, amount, date, whether it is already paid, method
+   (cash, transfer or card), vendor and note. A cash expense goes into the cash close of section 2.
+5. **Correct.** Only an unpaid expense can be deleted. A paid expense recorded in error is corrected
+   with a new row and a note, never by editing history.
+
+![Fixed expenses from templates, variable ones by hand, and the paid / to-pay state](../../screenshots/M-09c/en-1280.jpg "M-09c · /admin/finance/expenses")
+
+**How to read the Balance.** In M-09, with the same period filter (7, 15, 30, 90 days or All), the
+card shows four numbers: **Revenue** (approved payments in the range) − **Payroll** (every run whose
+monthly period overlaps the range, at its current total: a draft counts because the classes were
+taught) − **Expenses** (fixed and variable rows dated in the range, paid or not) = **Balance**, with
+the margin on revenue. A negative balance over 7 or 15 days is normal when rent falls inside the
+window; the number that matters is the 30-day one and the closed month's. The card's links open
+payroll (M-09a) and expenses (M-09c).
+
+![The Period balance card in Finance](../../screenshots/M-09/en-1280.jpg "M-09 · /admin/finance")
+
+{{table:expenses}}
 
 {{stats}}

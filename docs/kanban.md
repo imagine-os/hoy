@@ -1,19 +1,18 @@
 # HoyOS kanban
 
-_Updated every turn. Codes reference `src/specs/canvasSpecs.ts` and the module `specs.ts` files; `/#/dev/specs` shows the live built/stub badge per code (v0.6.0 closed by the integration of three parallel tracks: 89 routes, 77 codes, 0 stubs, 42 tables, 369 captures, 55 components in D-02; website + brand content, thin-screen depth, ops-manual rebuild). What is still missing after v0.6.0 is listed as a plain numbered list in `ROADMAP.md` §F._
+_Updated every turn. Codes reference `src/specs/canvasSpecs.ts` and the module `specs.ts` files; `/#/dev/specs` shows the live built/stub badge per code (v0.6.0 closed by the integration of three parallel tracks: 89 routes, 77 codes, 0 stubs, 42 tables, 369 captures, 55 components in D-02; website + brand content, thin-screen depth, ops-manual rebuild. v0.6.1 adds the expenses ledger: 90 routes, 78 codes, 44 tables, 373 captures). What is still missing after v0.6.1 is listed as a plain numbered list in `ROADMAP.md` §F._
 
 ## Backlog
 
 ### Product
 - **P1 leftovers from 0007/0008** (numbered in ROADMAP §B/P1): M-02 editors for `content_articles` / `faq_entries` + an event publisher for `events` (M-03 edits them generically today) · server-side invite reward (`invites.status` only reaches `sent` from the client; `joined` / `rewarded` + `reward_credit_id` need the Supabase function that grants the credit) · staff-side `notifications` sending (front desk / M-04 / M-05 writing a row) and the 90-day retention job · event waitlist (`event_rsvps.status` has no `waitlist` value yet) and attendance marking from S-02 · real Wompi tokenisation behind `wompiTokenise()`
-- **From Jas's review (0014)** — owner: finance workstream / pending Sergio: payroll settlement review page (detail of teacher payments, classes taught, and a "paid" mark per teacher) · recurring fixed fortnightly expenses + variable expenses so Hoy has a total finance balance · a "15 días" period filter on the admin finance pages *if* Sergio sets fortnightly pay periods
+- **From Jas's review (0014), still open**: M-09c has no CSV export for the accountant yet (M-09b has one) · attach the invoice / receipt image to an expense row (needs Supabase Storage, like M-02d's upload) · the "15 días" range stays as a filter until Sergio confirms fortnightly pay periods (ROADMAP §E 27 / 31)
 - A-06 legal pages inside the app (site pages exist) · real Supabase Auth behind A-02/A-03/C-21 (SessionProvider already accepts any `users` row)
 - C-05 transfer instructions can read the payout account from M-08c (M-08c stores it since 0007)
 - PDF receipts (C-11)
 - S-02/S-04 follow-ups: offline queue for check-ins, real Wompi link · M-04 MJML designer + real provider · M-05 Meta approval API · M-09 Wompi payouts + DIAN CUFE emission
 - M-02d file upload (Supabase Storage — the row stores a URL today) + a server-side scheduled-publish job · M-06 duplicate merge · M-07 signed CSV
 - Add a **Respiración modality row** (or fold it into meditación) so W-08 `/site/classes/respiracion` shows duration, intensity and heat instead of "today it lives inside the guided classes" (ROADMAP §E 22 / §F 20)
-- The **expenses ledger** M-09 needs to answer "what did the studio spend" — being built in the design-feedback thread, not in 0.6.0
 - Supabase provider (auth, realtime) · Wompi payments/payroll · WhatsApp CRM · email designer
 - Code-split the bundle by surface (single ~1.7 MB chunk today) · live cursors / presence (nice to have)
 - **Add `remark-gfm`** (its own changelog entry, with the alternative rejected) and delete the pipe-table transform in `MarkdownViewer` (`preprocessMarkdown()` fences pipe tables into a ```table block because `react-markdown` alone cannot render them; the legal documents were written as lists for the same reason)
@@ -41,9 +40,17 @@ _Updated every turn. Codes reference `src/specs/canvasSpecs.ts` and the module `
 - empty10 placeholder: awaiting Justin's decision (reset to placeholder or delete)
 
 ## Doing
-- (none — v0.6.0 closed: 0011 website & brand content, 0012 thin-screen depth, 0013 ops-manual rebuild, integrated and pushed)
+- (none — v0.6.1 closed: 0016 expenses ledger + Finance balance, on top of v0.6.0's three integrated tracks)
 
 ## Done
+
+### Expenses ledger (0016 · v0.6.1)
+- **Two tables**, additive, bilingual, `commerce` group, with `TableDef.rls` (admin / finance read + write): `expense_templates` (recurring fixed cost: concept, category, amount, cadence `biweekly` | `monthly`, anchor day, vendor, active) and `expenses` (kind `fixed` | `variable`, category, concept, amount, `incurred_on`, `paid_on`, method cash | transfer | card, vendor, note, `template_id`, `created_by`) — 42 → **44**; `npm run sql` regenerated `supabase/schema.sql` and `docs/data-model.md`
+- **One arithmetic**: `src/data/expenseCalc.ts` (`dueDatesFor`, `fixedExpensesFor`, no React) is what the seed and M-09c's generator both call — a monthly template falls due on its anchor day, a biweekly one also fifteen days later (the quincena), one due day = one fixed row, an existing row is skipped
+- **M-09c `/admin/finance/expenses`** (Jas's point 9): the same 7 / 15 / 30 / 90 días / Todo chips as M-09, tiles for fijos / variables / pagado / por pagar, by-category `BarList`, an add-expense form, the recurring-templates panel with an **idempotent "Generar gastos fijos del periodo"** (regenerating never duplicates a row; a paid row is never deleted), activate / deactivate, a new-template form, and **Marcar pagado** per unpaid row; every write is an `audit_log` row (`expense.*`); new `expenses.read` / `expenses.write` permissions; nav entry "Gastos" next to Finanzas and Nómina; existing components only
+- **M-09 Balance del periodo** card: Ingresos (approved payments) − Nómina (payroll runs whose period overlaps the range, at their current total) − Gastos (rows dated in the range, paid or not) = Balance, with the margin and links to M-09a / M-09c; existing cards intact
+- **Seed**: six Medellín-realistic templates (arriendo 4.800.000, EPM 1.150.000, internet 189.900, aseo 700.000 / quincena, software 240.000, póliza 380.000), three months of fixed rows generated from them and fifteen variable expenses over 90 days, appended after every other pass so no other page's data shifts
+- **Docs**: ops-manual chapter 14 ES + EN "Gastos y balance" with the M-09c and M-09 figures, `docs/pages/M-09c.md`, `docs/pages/M-09.md` updated, finance screenshots retaken (M-09, M-09a, M-09b, M-09c), ROADMAP §A 0.6.1 / §F 21 done, README, `package.json` 0.6.1
 
 ### Integration (v0.6.0)
 - Merged `work/site` → `work/depth` → `work/manual` onto `main`, `--no-ff` each, build green between merges, **no conflicts** (the three tracks touched disjoint files)

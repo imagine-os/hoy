@@ -7,8 +7,13 @@ dónde estamos, qué sigue y en qué orden (con dependencias explícitas y lo qu
 paralelo), qué significa "terminado" en cada fase, cómo trabajar en el repo y qué debe decidir el
 owner del estudio. Está escrito para que otra cuenta de Claude (o una persona) lo retome sin contexto.
 
-## A. Where we are (v0.6.0, 2026-09-17)
+## A. Where we are (v0.6.1, 2026-09-17)
 
+- **v0.6.1 is the expenses ledger** (`docs/changelog/0016-expenses-ledger.md`, Jas's review point 9):
+  two tables (`expense_templates`, `expenses`), one arithmetic (`src/data/expenseCalc.ts`), **M-09c**
+  `/admin/finance/expenses` with an idempotent "Generar gastos fijos del periodo" and "marcar pagado",
+  and a **Balance del periodo** card on M-09 — Ingresos − Nómina − Gastos — so Finance finally answers
+  "what did the studio spend". Chapter 14 of the manual explains it. 90 routes, 78 codes, 44 tables.
 - **v0.6.0 is three parallel tracks plus this integration**: the website and brand content
   (`docs/changelog/0011-website-brand-content.md`), the depth pass on the thin screens
   (`0012-thin-screens-depth.md`) and the operations manual rebuild (`0013-ops-manual-visual-live.md`).
@@ -40,8 +45,9 @@ owner del estudio. Está escrito para que otra cuenta de Claude (o una persona) 
   chapter, and `{{pricing:…}}` / `{{tenant:…}}` / `{{policy:…}}` / `{{table:…}}` live blocks that read
   the app's own sources — the manual cannot go stale about a price or a policy. **27 pending owner
   decisions** are auto-extracted into K-04 and §E below.
-- **Data**: **42 tables** (38 + `media_assets`, `payroll_runs`, `payroll_lines`, `legal_acceptances`,
-  with `legal_documents` rewritten for versions and bilingual bodies), each with its `TableDef.rls`
+- **Data**: **44 tables** (38 + `media_assets`, `payroll_runs`, `payroll_lines`, `legal_acceptances`,
+  with `legal_documents` rewritten for versions and bilingual bodies, + `expense_templates` and
+  `expenses` in 0.6.1), each with its `TableDef.rls`
   access contract emitted by `npm run sql` into `supabase/schema.sql` and `docs/data-model.md`.
 - **Canvas look applied** (0.4.0): D-01 is the canvas hoy-brand token set; the phone frame, cream lane
   and card skin follow it. No card-like element lets its text escape at 390 or 1280 px. Dark-theme
@@ -56,12 +62,12 @@ owner del estudio. Está escrito para que otra cuenta de Claude (o una persona) 
   `MockProvider` (localStorage, change events, cross-tab `storage` sync) behind the `DataProvider`
   interface, module registry via `import.meta.glob`, route manifest on `window.__hoyos.routes`.
   `npm run build` passes with zero TS errors.
-- **Real vs stub** (`/#/dev/specs`, from `docs/screenshots/routes.json`): **89 routes, 77 codes,
+- **Real vs stub** (`/#/dev/specs`, from `docs/screenshots/routes.json`): **90 routes, 78 codes,
   0 stubs.** Integrations (Wompi, WhatsApp, email, DIAN, Supabase Auth/Realtime) are simulated behind
   their seams — see §F for exactly what is still mocked.
-- **Docs**: prompt log, changelog and kanban are current through `0013`. `docs/screenshots/<code>/`
-  holds every route in ES/EN × 390/1280 (dark for key pages) as JPEG q72 — **369 captures, 58 MB**,
-  refreshed in this pass — and `docs/pages/<code>.md` exists for every routed code.
+- **Docs**: prompt log, changelog and kanban are current through `0016`. `docs/screenshots/<code>/`
+  holds every route in ES/EN × 390/1280 (dark for key pages) as JPEG q72 — **373 captures** — and
+  `docs/pages/<code>.md` exists for every routed code.
   **55 components** carry a `.meta.ts` in D-02.
 
 ## B. Phases (dependency-ordered)
@@ -273,7 +279,7 @@ Everything below is known and written down; nothing here is a surprise found lat
 
 1. **Supabase auth and realtime.** Sign-in is a demo picker over the `users` table and the data layer
    is `MockProvider` (localStorage + cross-tab sync). `SupabaseProvider` replaces it behind the same
-   interface; `supabase/schema.sql` (42 tables, with per-table access intent) is the input, and
+   interface; `supabase/schema.sql` (44 tables, with per-table access intent) is the input, and
    `reference/alt-build-empty10/supabase/migrations/0001_init.sql` is the RLS reference. **This is the
    gate**: payments, payroll, WhatsApp and multi-tenant all need a real authenticated user first (P2).
 2. **Wompi payments.** C-04, S-04, C-17 and C-23 all pay through one seam (`wompiCheckout()`,
@@ -351,7 +357,9 @@ of §E.
     dependency (with the changelog entry the rules require) and delete the transform.
 20. **Respiración has no `modalities` row**, so W-08 renders a sentence where the other four classes
     show duration, intensity and heat. Add the row or fold it into meditación (§E 22).
-21. **The expenses ledger** M-09 needs to answer "what did the studio spend" is being built in the
-    design-feedback thread; it is not in this release.
+21. ~~**The expenses ledger**~~ **DONE (0.6.1).** `expense_templates` + `expenses`, M-09c
+    `/admin/finance/expenses` (idempotent period generator, marcar pagado) and the Balance card on
+    M-09 (`docs/changelog/0016-expenses-ledger.md`). Still open there: a CSV export for the accountant
+    and attaching the receipt image to a row (Supabase Storage).
 22. **Photography, video and a drawn map** for the 12 `media_assets` slots (item 14) — the one thing
     the owner has said he will supply himself.
