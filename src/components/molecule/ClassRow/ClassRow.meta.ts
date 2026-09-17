@@ -10,12 +10,12 @@ export default defineMeta({
   props: [
     { name: 'title / teacher / startsAt / durationMin', type: 'string | number', required: true, description: { es: 'Datos de la sesión.', en: 'Session data.' } },
     { name: 'movement', type: 'Movement', required: true, description: { es: 'Color del punto.', en: 'Dot colour.' } },
-    { name: 'booked / capacity', type: 'number', required: true, description: { es: 'Para CapacityMeter.', en: 'For CapacityMeter.' } },
+    { name: 'booked / capacity', type: 'number', required: true, description: { es: 'Para CapacityMeter; con booked ≥ capacity la fila muestra la píldora «Sin cupos» en lugar del medidor.', en: 'For CapacityMeter; when booked ≥ capacity the row shows the “Full” pill instead of the meter.' } },
     { name: 'status', type: "'scheduled' | 'cancelled' | 'completed'", default: 'scheduled', description: { es: 'Tachado en cancelada.', en: 'Struck through when cancelled.' } },
     { name: 'onClick', type: '() => void', description: { es: 'Convierte la fila en botón.', en: 'Makes the row a button.' } },
   ],
   states: ['default', 'hover', 'booked-by-me', 'cancelled', 'completed', 'full'],
-  usages: [{ title: { es: 'Lista de hoy', en: 'Today list' }, render: () => h('div', null, h(ClassRow, { title: 'Morning Flow', teacher: 'Manuela Torres', startsAt: at(6), durationMin: 60, movement: 'fluye', booked: 9, capacity: 15, booked_by_me: true, onClick: () => {} }), h(ClassRow, { title: 'Pilates', teacher: 'Paula Mejía', startsAt: at(8), durationMin: 55, movement: 'enraiza', booked: 15, capacity: 15, onClick: () => {} }), h(ClassRow, { title: 'Hot Vinyasa', teacher: 'Andrés Quintero', startsAt: at(17), durationMin: 60, movement: 'arde', booked: 4, capacity: 15, status: 'cancelled' })) }],
+  usages: [{ title: { es: 'Lista de hoy', en: 'Today list' }, render: () => h('div', null, h(ClassRow, { title: 'Morning Flow', teacher: 'Manuela Torres', startsAt: at(6), durationMin: 60, movement: 'fluye', booked: 9, capacity: 15, booked_by_me: true, onClick: () => {} }), h(ClassRow, { title: 'Pilates · sin cupos', teacher: 'Paula Mejía', startsAt: at(8), durationMin: 55, movement: 'enraiza', booked: 15, capacity: 15, onClick: () => {} }), h(ClassRow, { title: 'Hot Vinyasa', teacher: 'Andrés Quintero', startsAt: at(17), durationMin: 60, movement: 'arde', booked: 4, capacity: 15, status: 'cancelled' })) }],
   a11y: [{ es: 'Botón cuando hay onClick; el estado va en texto (badge), no solo en color.', en: 'Button when onClick; status is text (badge), not colour alone.' }],
   usedBy: ['C-01', 'C-02', 'S-02', 'S-03', 'P-SCHEDULE'],
 });

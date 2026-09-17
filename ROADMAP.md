@@ -253,6 +253,17 @@ chapter or spec and close the card.
     v0.1 decision entries in the canvas changelog; prune the 32 orphan dictionary keys; amend the
     phase-3 plan text that still lists check-in and front desk.
 
+**From Jas's design review, 2026-09-17 (0014) — Justin to forward**
+31. **Sergio**: are teachers paid **fortnightly or monthly**? That interval is the unit of time for payroll runs
+    and the accounting reports, and it decides whether the admin finance pages get a "15 days" period filter.
+    (Same question as item 27, raised independently — answer it once. M-09 already carries the 15-day range.)
+32. **Sergio**: does the **Coordinator** role see the **monthly total-revenue KPI** in the admin panel, or is
+    that limited to admin/finance?
+33. **Lore**: do we need to store the **customer's sex/gender**? Nothing collects it today, so it would be a new
+    `profiles` field and a new question at the desk.
+34. **Lore**: is there a **group-session product for birthdays or events** — book the room and a teacher with an
+    add-on detail? Today only the fixed timetable and the events calendar exist.
+
 ## F. What remains after this pass (for Justin)
 
 Everything below is known and written down; nothing here is a surprise found late. Read it as
@@ -262,7 +273,7 @@ Everything below is known and written down; nothing here is a surprise found lat
 
 1. **Supabase auth and realtime.** Sign-in is a demo picker over the `users` table and the data layer
    is `MockProvider` (localStorage + cross-tab sync). `SupabaseProvider` replaces it behind the same
-   interface; `supabase/schema.sql` (38 tables, with per-table access intent) is the input, and
+   interface; `supabase/schema.sql` (42 tables, with per-table access intent) is the input, and
    `reference/alt-build-empty10/supabase/migrations/0001_init.sql` is the RLS reference. **This is the
    gate**: payments, payroll, WhatsApp and multi-tenant all need a real authenticated user first (P2).
 2. **Wompi payments.** C-04, S-04, C-17 and C-23 all pay through one seam (`wompiCheckout()`,
@@ -309,7 +320,7 @@ Everything below is known and written down; nothing here is a surprise found lat
     key-less OSM and Google embeds ready behind the prop, and a drawn neighbourhood map can ship
     through the media library in the meantime.
 
-**(c) Decisions only the owner can make** — **30** of them, deduplicated in §E of this file and live
+**(c) Decisions only the owner can make** — **34** of them, deduplicated in §E of this file and live
 in the app at `/#/manual/decisions` (27 flags auto-extracted from the 28-chapter operations manual,
 K-04). The canvas audit's design/spec hygiene recommendations are `CANVAS-AUDIT.md` and items 17–20
 of §E.

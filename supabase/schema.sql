@@ -711,6 +711,8 @@ create table if not exists public.payments (
   plan_id uuid references public.plans(id) on delete set null,
   -- COP, integer
   amount integer not null,
+  -- COP, integer — what the desk actually received; equals amount unless a note explains why
+  amount_paid integer,
   currency text not null,
   method text not null check (method in ('card', 'pse', 'nequi', 'cash', 'transfer', 'gift_card')),
   provider text not null check (provider in ('wompi', 'manual')),
@@ -718,7 +720,9 @@ create table if not exists public.payments (
   status text not null check (status in ('pending', 'approved', 'declined', 'refunded', 'voided')),
   paid_at timestamptz,
   -- staff user for manual payments
-  taken_by uuid references public.users(id) on delete set null
+  taken_by uuid references public.users(id) on delete set null,
+  -- Why the received amount differs from the invoice (S-04 requires it when it does)
+  note text
 );
 create index if not exists payments_tenant_idx on public.payments(tenant_id);
 create index if not exists payments_user_id_idx on public.payments(user_id);
