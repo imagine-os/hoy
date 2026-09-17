@@ -1,3 +1,12 @@
 .mdv { font-size: var(--fs-md); }
 .mdv h1 { font-size: var(--fs-3xl); } .mdv h2 { font-size: var(--fs-xl); border-bottom: 1px solid var(--color-border); padding-bottom: .3em; } .mdv h3 { font-size: var(--fs-lg); }
 .mdv pre { font-size: var(--fs-sm); }
+.mdv .mdv-callout { border-left-width: 4px; border-radius: 0 var(--r-sm) var(--r-sm) 0; padding: var(--sp-3) var(--sp-4); color: var(--color-text); }
+.mdv .mdv-callout p:last-child { margin-bottom: 0; }
+.mdv .mdv-callout-decision { border-left-color: var(--color-warn); background: color-mix(in srgb, var(--color-warn) 12%, var(--color-surface)); }
+.mdv .mdv-callout-warn { border-left-color: var(--color-danger); background: color-mix(in srgb, var(--color-danger) 10%, var(--color-surface)); }
+.mdv .mdv-callout-note { border-left-color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface)); }
+.mdv .mdv-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--sp-2); min-height: 120px; margin: var(--sp-3) 0; padding: var(--sp-4); border: 2px dashed var(--color-border-strong); border-radius: var(--r-md); background: var(--color-surface-2); color: var(--color-text-muted); text-align: center; }
+.mdv .mdv-placeholder-code { font-size: var(--fs-sm); background: var(--color-surface); padding: .15em .5em; border-radius: 4px; border: 1px solid var(--color-border); }
+.mdv .mdv-placeholder-cap { font-size: var(--fs-sm); }
+@media print { .mdv .mdv-placeholder { break-inside: avoid; } .mdv .mdv-callout { break-inside: avoid; } }

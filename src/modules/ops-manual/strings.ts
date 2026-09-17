@@ -1,0 +1,22 @@
+import type { StringTable } from '../../i18n/types';
+export const strings: StringTable = {
+  'manual.title': { es: 'Manual de operaciones', en: 'Operations manual' },
+  'manual.chapters': { es: 'Capítulos', en: 'Chapters' },
+  'manual.summary': { es: 'Resumen', en: 'Summary' },
+  'manual.decisions': { es: 'Decisiones pendientes', en: 'Decisions pending' },
+  'manual.decisions.intro': { es: 'Todo lo que el estudio aún no ha definido, extraído automáticamente de los capítulos (bloques «DECISIÓN PENDIENTE»). Cada punto necesita una respuesta del owner; cuando se decida, se edita el capítulo y desaparece de aquí.', en: 'Everything the studio has not defined yet, extracted automatically from the chapters ("DECISION NEEDED" blocks). Each item needs an answer from the owner; once decided, edit the chapter and it disappears from this list.' },
+  'manual.decisions.count': { es: '{n} decisiones pendientes', en: '{n} decisions pending' },
+  'manual.decisions.none': { es: 'No hay decisiones pendientes.', en: 'No decisions pending.' },
+  'manual.decisions.inChapter': { es: 'En el capítulo', en: 'In chapter' },
+  'manual.placeholders.count': { es: '{n} capturas por tomar', en: '{n} screenshots to capture' },
+  'manual.prev': { es: 'Anterior', en: 'Previous' },
+  'manual.next': { es: 'Siguiente', en: 'Next' },
+  'manual.print': { es: 'Imprimir', en: 'Print' },
+  'manual.role': { es: 'Para', en: 'For' },
+  'manual.version': { es: 'Versión', en: 'Version' },
+  'manual.updated': { es: 'Actualizado', en: 'Updated' },
+  'manual.fallback': { es: 'Este capítulo aún no está traducido; se muestra la versión en español.', en: 'This chapter is not translated yet; the Spanish version is shown.' },
+  'manual.notFound': { es: 'No existe ese capítulo.', en: 'No such chapter.' },
+  'manual.langNote': { es: 'El español es la fuente; el inglés es un espejo. Cambia el idioma con ES/EN en la barra lateral.', en: 'Spanish is the source; English mirrors it. Switch with ES/EN in the sidebar.' },
+  'manual.openChapter': { es: 'Abrir capítulo', en: 'Open chapter' },
+};
