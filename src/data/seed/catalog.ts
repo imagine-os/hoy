@@ -21,6 +21,9 @@ export const modalities: ModalityRow[] = [
 
 export const rooms: RoomRow[] = [
   { ...base('room_main', 200), name: 'Sala principal', capacity: tenant.studio.mats, heated: true },
+  // The small room: meditation, breathwork, private classes and closed groups (S-05). Demo capacity —
+  // the owner confirms the real room list (ROADMAP §E).
+  { ...base('room_meditacion', 200), name: 'Sala de meditación', capacity: 8, heated: false },
 ];
 
 export const teachers: TeacherRow[] = [

@@ -10,6 +10,7 @@ import { currentLegal, legalDocuments } from './legal';
 import { mediaAssets } from './media';
 import { buildPayroll } from './payroll';
 import { buildExpenses, expenseTemplates } from './expenses';
+import { buildSpecials } from './specials';
 
 const FIRST = ['Camila', 'Nicolás', 'Sara', 'Tomás', 'Mariana', 'Julián', 'Daniela', 'Sebastián', 'Gabriela', 'Alejandro', 'Antonia', 'Samuel', 'Salomé', 'Emilio', 'Luciana', 'Martín', 'Elena', 'David', 'Paulina', 'Jerónimo', 'Amelia', 'Simón', 'Renata', 'Lucas', 'Violeta', 'Benjamín', 'Catalina', 'Joaquín', 'Isabel', 'Gael'];
 const LAST = ['García', 'Rodríguez', 'Martínez', 'López', 'González', 'Hernández', 'Pérez', 'Sánchez', 'Ramírez', 'Torres', 'Flores', 'Rivera', 'Gómez', 'Díaz', 'Cruz', 'Morales', 'Reyes', 'Jiménez', 'Ruiz', 'Álvarez', 'Castro', 'Vargas', 'Romero', 'Suárez', 'Moreno', 'Muñoz', 'Rojas', 'Medina', 'Guerrero', 'Cortés'];
@@ -242,8 +243,16 @@ export function buildSeed(): Record<string, BaseRow[]> {
   // ---- media library (M-02d): one pending slot per known place art belongs ----
   db.media_assets.push(...mediaAssets);
 
+  // ---- Especiales (0017): space bookings (S-05) and the manual charges that paid for them (S-04) ----
+  const specials = buildSpecials({ invoiceCount: db.invoices.length });
+  db.space_bookings.push(...specials.bookings);
+  db.payments.push(...specials.payments);
+  db.invoices.push(...specials.invoices);
+  db.special_charges.push(...specials.charges);
+  db.audit_log.push(...specials.audit);
+
   // ---- teacher payroll (M-09a / S-03): three months, the latest still a draft ----
-  const payroll = buildPayroll({ sessions, bookings, templates: db.class_templates as (BaseRow & { teacher_id: string; weekday: number; active: boolean })[], teachers: db.teachers as TeacherRow[] });
+  const payroll = buildPayroll({ sessions, bookings, templates: db.class_templates as (BaseRow & { teacher_id: string; weekday: number; active: boolean })[], teachers: db.teachers as TeacherRow[], specials: specials.charges, spaceBookings: specials.bookings });
   db.payroll_runs.push(...payroll.runs);
   db.payroll_lines.push(...payroll.lines);
 

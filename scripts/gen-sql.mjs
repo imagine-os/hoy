@@ -11,7 +11,9 @@ const col = (c) => {
   if (c.name === 'created_at' || c.name === 'updated_at') parts.push('default now()');
   if (c.type === 'bool') parts.push('default false');
   if (c.enum) parts.push(`check (${c.name} in (${c.enum.map((e) => `'${e}'`).join(', ')}))`);
-  if (c.references) parts.push(`references public.${c.references}(id)${c.name === 'tenant_id' ? '' : ' on delete set null'}`);
+  // A reference to a table created later (or a circular pair such as special_charges ⇄ space_bookings)
+  // cannot be inline: it is emitted as `alter table … add constraint` once every table exists.
+  if (c.references && !c.deferFk) parts.push(`references public.${c.references}(id)${c.name === 'tenant_id' ? '' : ' on delete set null'}`);
   const line = parts.join(' ');
   return c.description ? `  -- ${c.description}\n${line}` : line;
 };
@@ -42,8 +44,14 @@ create or replace function public.touch_updated_at() returns trigger language pl
 begin new.updated_at = now(); return new; end $$;
 
 `;
+const order = new Map(tables.map((t, i) => [t.name, i]));
+const deferred = [];
 for (const t of tables) {
-  const cols = [...BASE_COLUMNS, ...t.columns].map(col);
+  const cols = [...BASE_COLUMNS, ...t.columns].map((c) => {
+    const later = c.references && c.references !== t.name && (order.get(c.references) ?? -1) > order.get(t.name);
+    if (later) deferred.push(`alter table public.${t.name} add constraint ${t.name}_${c.name}_fk foreign key (${c.name}) references public.${c.references}(id) on delete set null;`);
+    return col(later ? { ...c, deferFk: true } : c);
+  });
   // enum check for tenant reference: tenants.tenant_id references itself; keep as plain uuid
   const rls = (t.rls ?? []).map((n) => `--   · ${n}`).join('\n');
   sql += `-- ${t.group} · ${t.description.en}\n${rls ? `-- access:\n${rls}\n` : ''}create table if not exists public.${t.name} (\n${cols.join(',\n')}\n);\n`;
@@ -54,6 +62,7 @@ for (const t of tables) {
   sql += `create policy "${t.name}: tenant read" on public.${t.name} for select using (tenant_id = public.current_tenant_id());\n`;
   sql += `create policy "${t.name}: staff write" on public.${t.name} for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));\n\n`;
 }
+if (deferred.length) sql += `-- foreign keys to tables created later in this file (kept out of the create table so the order above stays by group)\n${deferred.join('\n')}\n\n`;
 sql += `-- ---------------------------------------------------------------------------------------------
 -- RLS notes per role (refine per table when the real backend lands):
 --   super_admin, admin   full read/write in their tenant (policy above)
@@ -102,7 +111,7 @@ for (const g of TABLE_GROUPS) {
   }
 }
 md += `\n## Seed data (\`src/data/seed/\`)
-6 modalities, 1 room (${'15'} mats), 8 teachers, 24 weekly templates (4/day Mon–Sat), sessions for −7…+7 days, 9 demo staff/users + 30 customers, memberships/credits/payments/invoices, bookings filling sessions, waitlists on full classes, today's intentions, feature flags from every spec toggle, legal docs + consents, 2 gift cards, 3 email templates, 3 WhatsApp templates, 3 automations, message and audit logs. Deterministic PRNG; reseeds daily so "today" always has classes.
+6 modalities, 2 rooms (the main room at ${'15'} mats and a small meditation room), 8 teachers, 24 weekly templates (4/day Mon–Sat), sessions for −7…+7 days, 9 demo staff/users + 30 customers, memberships/credits/payments/invoices, bookings filling sessions, waitlists on full classes, today's intentions, feature flags from every spec toggle, legal docs + consents, 2 gift cards, 3 email templates, 3 WhatsApp templates, 3 automations, message and audit logs, three months of payroll runs, and four space bookings with two Especiales (one with a manual teacher payout). Deterministic PRNG; reseeds daily so "today" always has classes.
 
 ## Adding a table
 1. Add a \`TableDef\` to \`src/data/schema.ts\` (and a typed row interface if pages use it).

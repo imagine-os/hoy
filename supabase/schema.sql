@@ -109,7 +109,7 @@ create table if not exists public.consents (
   tenant_id uuid not null references public.tenants(id),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  user_id uuid not null references public.users(id) on delete set null,
+  user_id uuid not null,
   legal_document_id uuid not null references public.legal_documents(id) on delete set null,
   accepted_at timestamptz not null,
   ip text
@@ -134,7 +134,7 @@ create table if not exists public.legal_acceptances (
   tenant_id uuid not null references public.tenants(id),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  user_id uuid not null references public.users(id) on delete set null,
+  user_id uuid not null,
   document_id uuid not null references public.legal_documents(id) on delete set null,
   -- denormalised legal_documents.kind, so “did they sign the waiver?” is one query
   kind text not null,
@@ -454,6 +454,47 @@ alter table public.class_sessions enable row level security;
 create policy "class_sessions: tenant read" on public.class_sessions for select using (tenant_id = public.current_tenant_id());
 create policy "class_sessions: staff write" on public.class_sessions for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
 
+-- schedule · A room taken by something other than a class: private event, rental, private class, maintenance or a block (S-05). An Especial may pay for it.
+-- access:
+--   · front_desk/coordinator/admin/finance/super_admin: full control
+--   · teacher: read bookings whose teacher_id resolves to their teachers row (S-03)
+--   · customer: read own bookings (customer_id = auth.uid())
+--   · a booking in status cancelled frees the room; done is history and is never edited
+create table if not exists public.space_bookings (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  room_id uuid not null references public.rooms(id) on delete set null,
+  kind text not null check (kind in ('private_event', 'rental', 'private_class', 'maintenance', 'blocked')),
+  title text not null,
+  starts_at timestamptz not null,
+  ends_at timestamptz not null,
+  customer_id uuid references public.users(id) on delete set null,
+  -- who it is for when they are not a member (a company, a birthday host)
+  contact_name text,
+  -- teacher booked with the room; their payout lives on the special charge
+  teacher_id uuid references public.teachers(id) on delete set null,
+  -- the Especial that paid for this window (S-04)
+  special_charge_id uuid,
+  status text not null check (status in ('held', 'confirmed', 'cancelled', 'done')),
+  note text,
+  -- staff user who booked it
+  created_by uuid references public.users(id) on delete set null
+);
+create index if not exists space_bookings_tenant_idx on public.space_bookings(tenant_id);
+create index if not exists space_bookings_room_id_idx on public.space_bookings(room_id);
+create index if not exists space_bookings_customer_id_idx on public.space_bookings(customer_id);
+create index if not exists space_bookings_teacher_id_idx on public.space_bookings(teacher_id);
+create index if not exists space_bookings_special_charge_id_idx on public.space_bookings(special_charge_id);
+create index if not exists space_bookings_created_by_idx on public.space_bookings(created_by);
+create trigger space_bookings_touch before update on public.space_bookings for each row execute function public.touch_updated_at();
+alter table public.space_bookings enable row level security;
+create policy "space_bookings: tenant read" on public.space_bookings for select using (tenant_id = public.current_tenant_id());
+create policy "space_bookings: staff write" on public.space_bookings for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
 -- schedule · One person’s spot in a session.
 create table if not exists public.bookings (
   -- Primary key
@@ -466,7 +507,7 @@ create table if not exists public.bookings (
   session_id uuid not null references public.class_sessions(id) on delete set null,
   status text not null check (status in ('booked', 'checked_in', 'cancelled', 'no_show', 'late_cancel')),
   paid_with text not null check (paid_with in ('membership', 'credit', 'single', 'trial', 'guest', 'comp')),
-  credit_id uuid references public.credits(id) on delete set null,
+  credit_id uuid,
   checked_in_at timestamptz,
   cancelled_at timestamptz,
   rated boolean not null default false
@@ -608,7 +649,7 @@ create table if not exists public.event_rsvps (
   event_id uuid not null references public.events(id) on delete set null,
   user_id uuid not null references public.users(id) on delete set null,
   status text not null check (status in ('going', 'cancelled', 'attended', 'no_show')),
-  payment_id uuid references public.payments(id) on delete set null,
+  payment_id uuid,
   -- extra seats taken
   guests integer not null
 );
@@ -684,7 +725,7 @@ create table if not exists public.credits (
   updated_at timestamptz not null default now(),
   user_id uuid not null references public.users(id) on delete set null,
   plan_id uuid references public.plans(id) on delete set null,
-  payment_id uuid references public.payments(id) on delete set null,
+  payment_id uuid,
   -- + purchase, − use
   delta integer not null,
   reason text not null check (reason in ('purchase', 'booking', 'refund', 'expiry', 'gift', 'comp', 'cancel_return')),
@@ -707,7 +748,9 @@ create table if not exists public.payments (
   tenant_id uuid not null references public.tenants(id),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  user_id uuid not null references public.users(id) on delete set null,
+  -- null only for an Especial sold to a non-member contact (special_charges.contact_name carries who paid)
+  user_id uuid references public.users(id) on delete set null,
+  -- null for an event RSVP or an Especial (special_charges)
   plan_id uuid references public.plans(id) on delete set null,
   -- COP, integer
   amount integer not null,
@@ -852,6 +895,47 @@ alter table public.invites enable row level security;
 create policy "invites: tenant read" on public.invites for select using (tenant_id = public.current_tenant_id());
 create policy "invites: staff write" on public.invites for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
 
+-- commerce · A charge whose concept and price were typed by hand at the desk (S-04): a private event, a rental, a group session, a special request. It may carry a manual teacher payout and a room booking.
+-- access:
+--   · front_desk/coordinator/admin/finance/super_admin: full control
+--   · teacher: read rows where teacher_id resolves to their teachers row (the payout feeds their S-03 statement)
+--   · customer: read own rows (customer_id = auth.uid())
+--   · the money in is the linked payments row; the money out is the payroll_lines row of kind manual — this table joins the two
+create table if not exists public.special_charges (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  -- free text, e.g. "Cumpleaños de Mariana · sala + profe"
+  concept text not null,
+  -- COP, integer — the price agreed by hand (IVA handled by S-04 as for any sale)
+  amount integer not null,
+  customer_id uuid references public.users(id) on delete set null,
+  -- who paid when they are not a member
+  contact_name text,
+  teacher_id uuid references public.teachers(id) on delete set null,
+  -- COP, integer — what the teacher is paid for this Especial; becomes a payroll_lines row of kind manual
+  teacher_payout integer,
+  space_booking_id uuid references public.space_bookings(id) on delete set null,
+  payment_id uuid not null references public.payments(id) on delete set null,
+  -- pricing.ts espacio item the concept started from (privada, taller, foto…), null when typed free
+  source_item text,
+  note text,
+  created_by uuid references public.users(id) on delete set null
+);
+create index if not exists special_charges_tenant_idx on public.special_charges(tenant_id);
+create index if not exists special_charges_customer_id_idx on public.special_charges(customer_id);
+create index if not exists special_charges_teacher_id_idx on public.special_charges(teacher_id);
+create index if not exists special_charges_space_booking_id_idx on public.special_charges(space_booking_id);
+create index if not exists special_charges_payment_id_idx on public.special_charges(payment_id);
+create index if not exists special_charges_created_by_idx on public.special_charges(created_by);
+create trigger special_charges_touch before update on public.special_charges for each row execute function public.touch_updated_at();
+alter table public.special_charges enable row level security;
+create policy "special_charges: tenant read" on public.special_charges for select using (tenant_id = public.current_tenant_id());
+create policy "special_charges: staff write" on public.special_charges for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
 -- commerce · One monthly teacher payroll run (M-09a): period, status, total and payout method.
 -- access:
 --   · finance/admin: full control
@@ -884,7 +968,7 @@ alter table public.payroll_runs enable row level security;
 create policy "payroll_runs: tenant read" on public.payroll_runs for select using (tenant_id = public.current_tenant_id());
 create policy "payroll_runs: staff write" on public.payroll_runs for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
 
--- commerce · One class taught, bonus or adjustment inside a run (M-09b, S-03).
+-- commerce · One class taught, bonus, adjustment or manual Especial payout inside a run (M-09b, S-03).
 -- access:
 --   · finance/admin: full control while the run is draft
 --   · teacher: read own lines (teacher_id resolves to their teachers row)
@@ -900,7 +984,10 @@ create table if not exists public.payroll_lines (
   teacher_id uuid not null references public.teachers(id) on delete set null,
   -- null for a bonus, an adjustment or a month older than the session window
   class_session_id uuid references public.class_sessions(id) on delete set null,
-  kind text not null check (kind in ('class', 'bonus', 'adjustment')),
+  -- manual = a teacher payout agreed by hand on an Especial (special_charges.teacher_payout), pulled into the run by the draft generator
+  kind text not null check (kind in ('class', 'bonus', 'adjustment', 'manual')),
+  -- source of a manual line — the generator uses it to stay idempotent
+  special_charge_id uuid references public.special_charges(id) on delete set null,
   -- COP, teachers.rate_per_class at the time of the run
   rate integer not null,
   -- COP, signed: an adjustment may be negative
@@ -916,6 +1003,7 @@ create index if not exists payroll_lines_tenant_idx on public.payroll_lines(tena
 create index if not exists payroll_lines_run_id_idx on public.payroll_lines(run_id);
 create index if not exists payroll_lines_teacher_id_idx on public.payroll_lines(teacher_id);
 create index if not exists payroll_lines_class_session_id_idx on public.payroll_lines(class_session_id);
+create index if not exists payroll_lines_special_charge_id_idx on public.payroll_lines(special_charge_id);
 create trigger payroll_lines_touch before update on public.payroll_lines for each row execute function public.touch_updated_at();
 alter table public.payroll_lines enable row level security;
 create policy "payroll_lines: tenant read" on public.payroll_lines for select using (tenant_id = public.current_tenant_id());
@@ -1210,6 +1298,14 @@ create trigger page_layouts_touch before update on public.page_layouts for each 
 alter table public.page_layouts enable row level security;
 create policy "page_layouts: tenant read" on public.page_layouts for select using (tenant_id = public.current_tenant_id());
 create policy "page_layouts: staff write" on public.page_layouts for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
+-- foreign keys to tables created later in this file (kept out of the create table so the order above stays by group)
+alter table public.consents add constraint consents_user_id_fk foreign key (user_id) references public.users(id) on delete set null;
+alter table public.legal_acceptances add constraint legal_acceptances_user_id_fk foreign key (user_id) references public.users(id) on delete set null;
+alter table public.space_bookings add constraint space_bookings_special_charge_id_fk foreign key (special_charge_id) references public.special_charges(id) on delete set null;
+alter table public.bookings add constraint bookings_credit_id_fk foreign key (credit_id) references public.credits(id) on delete set null;
+alter table public.event_rsvps add constraint event_rsvps_payment_id_fk foreign key (payment_id) references public.payments(id) on delete set null;
+alter table public.credits add constraint credits_payment_id_fk foreign key (payment_id) references public.payments(id) on delete set null;
 
 -- ---------------------------------------------------------------------------------------------
 -- RLS notes per role (refine per table when the real backend lands):

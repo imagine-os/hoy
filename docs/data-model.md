@@ -350,6 +350,35 @@ _Cada clase concreta en el calendario, con cupos en vivo._
 | `status` | enum (scheduled \| cancelled \| completed) |  |
 | `cancel_reason` | text, null |  |
 
+#### `space_bookings`
+A room taken by something other than a class: private event, rental, private class, maintenance or a block (S-05). An Especial may pay for it.  
+_Una sala ocupada por algo que no es una clase: evento privado, alquiler, clase privada, mantenimiento o bloqueo (S-05). Un Especial puede pagarla._
+
+| column | type | notes |
+| --- | --- | --- |
+| `id` | uuid | Primary key |
+| `tenant_id` | uuid | → `tenants` Owning studio (multi-tenant) |
+| `created_at` | timestamptz |  |
+| `updated_at` | timestamptz |  |
+| `room_id` | uuid | → `rooms`  |
+| `kind` | enum (private_event \| rental \| private_class \| maintenance \| blocked) |  |
+| `title` | text |  |
+| `starts_at` | timestamptz |  |
+| `ends_at` | timestamptz |  |
+| `customer_id` | uuid, null | → `users`  |
+| `contact_name` | text, null | who it is for when they are not a member (a company, a birthday host) |
+| `teacher_id` | uuid, null | → `teachers` teacher booked with the room; their payout lives on the special charge |
+| `special_charge_id` | uuid, null | → `special_charges` the Especial that paid for this window (S-04) |
+| `status` | enum (held \| confirmed \| cancelled \| done) |  |
+| `note` | text, null |  |
+| `created_by` | uuid, null | → `users` staff user who booked it |
+
+**Who may read / write**
+- front_desk/coordinator/admin/finance/super_admin: full control
+- teacher: read bookings whose teacher_id resolves to their teachers row (S-03)
+- customer: read own bookings (customer_id = auth.uid())
+- a booking in status cancelled frees the room; done is history and is never edited
+
 #### `bookings`
 One person’s spot in a session.  
 _Un cupo de una persona en una sesión._
@@ -543,8 +572,8 @@ _Cada cobro, por Wompi o manual._
 | `tenant_id` | uuid | → `tenants` Owning studio (multi-tenant) |
 | `created_at` | timestamptz |  |
 | `updated_at` | timestamptz |  |
-| `user_id` | uuid | → `users`  |
-| `plan_id` | uuid, null | → `plans`  |
+| `user_id` | uuid, null | → `users` null only for an Especial sold to a non-member contact (special_charges.contact_name carries who paid) |
+| `plan_id` | uuid, null | → `plans` null for an event RSVP or an Especial (special_charges) |
 | `amount` | int | COP, integer |
 | `amount_paid` | int, null | COP, integer — what the desk actually received; equals amount unless a note explains why |
 | `currency` | text |  |
@@ -644,6 +673,34 @@ _Invitaciones enviadas por miembros (C-16) y el crédito de recompensa cuando el
 - front_desk: read by code, to honour a pass at the desk
 - admin/finance: write status and reward_credit_id (the reward is granted server-side)
 
+#### `special_charges`
+A charge whose concept and price were typed by hand at the desk (S-04): a private event, a rental, a group session, a special request. It may carry a manual teacher payout and a room booking.  
+_Un cobro con concepto y precio escritos a mano en recepción (S-04): evento privado, alquiler, sesión de grupo, pedido especial. Puede llevar un pago manual al profesor y una reserva de sala._
+
+| column | type | notes |
+| --- | --- | --- |
+| `id` | uuid | Primary key |
+| `tenant_id` | uuid | → `tenants` Owning studio (multi-tenant) |
+| `created_at` | timestamptz |  |
+| `updated_at` | timestamptz |  |
+| `concept` | text | free text, e.g. "Cumpleaños de Mariana · sala + profe" |
+| `amount` | int | COP, integer — the price agreed by hand (IVA handled by S-04 as for any sale) |
+| `customer_id` | uuid, null | → `users`  |
+| `contact_name` | text, null | who paid when they are not a member |
+| `teacher_id` | uuid, null | → `teachers`  |
+| `teacher_payout` | int, null | COP, integer — what the teacher is paid for this Especial; becomes a payroll_lines row of kind manual |
+| `space_booking_id` | uuid, null | → `space_bookings`  |
+| `payment_id` | uuid | → `payments`  |
+| `source_item` | text, null | pricing.ts espacio item the concept started from (privada, taller, foto…), null when typed free |
+| `note` | text, null |  |
+| `created_by` | uuid, null | → `users`  |
+
+**Who may read / write**
+- front_desk/coordinator/admin/finance/super_admin: full control
+- teacher: read rows where teacher_id resolves to their teachers row (the payout feeds their S-03 statement)
+- customer: read own rows (customer_id = auth.uid())
+- the money in is the linked payments row; the money out is the payroll_lines row of kind manual — this table joins the two
+
 #### `payroll_runs`
 One monthly teacher payroll run (M-09a): period, status, total and payout method.  
 _Una liquidación mensual de profesores (M-09a): periodo, estado, total y medio de pago._
@@ -671,8 +728,8 @@ _Una liquidación mensual de profesores (M-09a): periodo, estado, total y medio 
 - a run in status paid is immutable; a correction is a new adjustment line in the next run
 
 #### `payroll_lines`
-One class taught, bonus or adjustment inside a run (M-09b, S-03).  
-_Una clase dictada, bono o ajuste dentro de una corrida (M-09b, S-03)._
+One class taught, bonus, adjustment or manual Especial payout inside a run (M-09b, S-03).  
+_Una clase dictada, bono, ajuste o pago manual de un Especial dentro de una corrida (M-09b, S-03)._
 
 | column | type | notes |
 | --- | --- | --- |
@@ -683,7 +740,8 @@ _Una clase dictada, bono o ajuste dentro de una corrida (M-09b, S-03)._
 | `run_id` | uuid | → `payroll_runs`  |
 | `teacher_id` | uuid | → `teachers`  |
 | `class_session_id` | uuid, null | → `class_sessions` null for a bonus, an adjustment or a month older than the session window |
-| `kind` | enum (class \| bonus \| adjustment) |  |
+| `kind` | enum (class \| bonus \| adjustment \| manual) | manual = a teacher payout agreed by hand on an Especial (special_charges.teacher_payout), pulled into the run by the draft generator |
+| `special_charge_id` | uuid, null | → `special_charges` source of a manual line — the generator uses it to stay idempotent |
 | `rate` | int | COP, teachers.rate_per_class at the time of the run |
 | `amount` | int | COP, signed: an adjustment may be negative |
 | `attendees` | int, null | checked-in students, for the statement |
@@ -930,7 +988,7 @@ _Orden de secciones por página guardado desde el editor drag-and-drop._
 | `updated_by` | uuid, null | → `users`  |
 
 ## Seed data (`src/data/seed/`)
-6 modalities, 1 room (15 mats), 8 teachers, 24 weekly templates (4/day Mon–Sat), sessions for −7…+7 days, 9 demo staff/users + 30 customers, memberships/credits/payments/invoices, bookings filling sessions, waitlists on full classes, today's intentions, feature flags from every spec toggle, legal docs + consents, 2 gift cards, 3 email templates, 3 WhatsApp templates, 3 automations, message and audit logs. Deterministic PRNG; reseeds daily so "today" always has classes.
+6 modalities, 2 rooms (the main room at 15 mats and a small meditation room), 8 teachers, 24 weekly templates (4/day Mon–Sat), sessions for −7…+7 days, 9 demo staff/users + 30 customers, memberships/credits/payments/invoices, bookings filling sessions, waitlists on full classes, today's intentions, feature flags from every spec toggle, legal docs + consents, 2 gift cards, 3 email templates, 3 WhatsApp templates, 3 automations, message and audit logs, three months of payroll runs, and four space bookings with two Especiales (one with a manual teacher payout). Deterministic PRNG; reseeds daily so "today" always has classes.
 
 ## Adding a table
 1. Add a `TableDef` to `src/data/schema.ts` (and a typed row interface if pages use it).

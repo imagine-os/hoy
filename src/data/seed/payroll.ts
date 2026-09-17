@@ -8,8 +8,8 @@
  * `class_session_id = null` and a note saying so. That keeps the totals honest instead of inventing
  * sessions that never existed.
  */
-import type { BaseRow, BookingRow, ClassSessionRow, PayrollLineRow, PayrollRunRow, TeacherRow } from '../schema';
-import { classLinesFor, local, monthPeriod, runTotal, type DraftLine, type Period } from '../payrollCalc';
+import type { BaseRow, BookingRow, ClassSessionRow, PayrollLineRow, PayrollRunRow, SpaceBookingRow, SpecialChargeRow, TeacherRow } from '../schema';
+import { draftLinesFor, local, monthPeriod, runTotal, type DraftLine, type Period } from '../payrollCalc';
 import { base, iso, NOW } from './catalog';
 
 interface TemplateRow extends BaseRow { teacher_id: string; weekday: number; active: boolean }
@@ -32,13 +32,13 @@ function historicLines(period: Period, templates: TemplateRow[], teachers: Teach
   for (const tpl of templates) {
     if (!tpl.active || !rate.has(tpl.teacher_id)) continue;
     for (const day of occurrences(period, tpl.weekday)) {
-      out.push({ teacher_id: tpl.teacher_id, class_session_id: null, kind: 'class', rate: rate.get(tpl.teacher_id) ?? 0, amount: rate.get(tpl.teacher_id) ?? 0, attendees: null, note: `${day} · reconstruido del horario semanal` });
+      out.push({ teacher_id: tpl.teacher_id, class_session_id: null, special_charge_id: null, kind: 'class', rate: rate.get(tpl.teacher_id) ?? 0, amount: rate.get(tpl.teacher_id) ?? 0, attendees: null, note: `${day} · reconstruido del horario semanal` });
     }
   }
   return out;
 }
 
-export function buildPayroll(input: { sessions: ClassSessionRow[]; bookings: BookingRow[]; templates: TemplateRow[]; teachers: TeacherRow[] }): { runs: PayrollRunRow[]; lines: PayrollLineRow[] } {
+export function buildPayroll(input: { sessions: ClassSessionRow[]; bookings: BookingRow[]; templates: TemplateRow[]; teachers: TeacherRow[]; specials: SpecialChargeRow[]; spaceBookings: SpaceBookingRow[] }): { runs: PayrollRunRow[]; lines: PayrollLineRow[] } {
   const runs: PayrollRunRow[] = [];
   const lines: PayrollLineRow[] = [];
   const sessionMonths = new Set(input.sessions.map((s) => s.starts_at.slice(0, 7)));
@@ -49,18 +49,19 @@ export function buildPayroll(input: { sessions: ClassSessionRow[]; bookings: Boo
     const id = `pyr_${period.start.slice(0, 7)}`;
     const status: PayrollRunRow['status'] = offset === 2 ? 'paid' : offset === 1 ? 'approved' : 'draft';
     const fromSessions = sessionMonths.has(period.start.slice(0, 7));
+    // The draft month is exactly what M-09a "generate draft" computes: class lines + the manual payouts of Especiales.
     const draft = fromSessions
-      ? classLinesFor(period, input.sessions, input.bookings, input.teachers)
+      ? draftLinesFor(period, { sessions: input.sessions, bookings: input.bookings, teachers: input.teachers, specials: input.specials, spaceBookings: input.spaceBookings })
       : historicLines(period, input.templates, input.teachers);
 
     // Finance's own lines: a full-month bonus on the settled run and one correction on the approved run.
     if (offset === 2 && draft.length) {
       const top = [...new Set(draft.map((l) => l.teacher_id))][0];
-      draft.push({ teacher_id: top, class_session_id: null, kind: 'bonus', rate: 0, amount: 150000, attendees: null, note: 'Bono por cubrir dos reemplazos' });
+      draft.push({ teacher_id: top, class_session_id: null, special_charge_id: null, kind: 'bonus', rate: 0, amount: 150000, attendees: null, note: 'Bono por cubrir dos reemplazos' });
     }
     if (offset === 1 && draft.length) {
       const someone = [...new Set(draft.map((l) => l.teacher_id))].slice(-1)[0];
-      draft.push({ teacher_id: someone, class_session_id: null, kind: 'adjustment', rate: 0, amount: -80000, attendees: null, note: 'Ajuste: clase cobrada dos veces en la corrida anterior' });
+      draft.push({ teacher_id: someone, class_session_id: null, special_charge_id: null, kind: 'adjustment', rate: 0, amount: -80000, attendees: null, note: 'Ajuste: clase cobrada dos veces en la corrida anterior' });
     }
 
     const closes = new Date(`${period.end}T12:00:00`); closes.setDate(closes.getDate() + 5);
@@ -83,6 +84,7 @@ export function buildPayroll(input: { sessions: ClassSessionRow[]; bookings: Boo
       run_id: id,
       teacher_id: l.teacher_id,
       class_session_id: l.class_session_id,
+      special_charge_id: l.special_charge_id,
       kind: l.kind,
       rate: l.rate,
       amount: l.amount,

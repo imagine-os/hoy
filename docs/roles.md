@@ -63,6 +63,8 @@ Same rule, two new shapes: **legal proof is append-only** and **money out is fin
 | `media_assets` | read where `status = ready` | read | write (M-02d) | write |
 | `payroll_runs` | — | read runs containing a line of their own (S-03) | — | finance/admin full control |
 | `payroll_lines` | — | read own lines | — | finance/admin write while the run is `draft` |
+| `space_bookings` (0017) | read own (`customer_id`) | read bookings with their `teacher_id` (S-03) | full control (S-05) | full control |
+| `special_charges` (0017) | read own (`customer_id`) | read rows with their `teacher_id` (the payout feeds S-03) | full control (S-04) | full control; the manual payroll line is derived from `teacher_payout` |
 
 Three notes that outlive the mock:
 - **A published legal version is never edited in place.** Editing would silently change what people
