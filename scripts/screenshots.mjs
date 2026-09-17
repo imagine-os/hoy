@@ -1,5 +1,11 @@
-// Captures every registered route as super_admin (dev mode on) in ES and EN at 390 and 1280 px,
-// plus light/dark for key pages. Output: docs/screenshots/<code>/<lang>-<width>[-dark][-<label>].jpg
+// Captures every registered route in ES and EN at 390 and 1280 px, plus light/dark for key pages,
+// signed in as the demo user of the route's surface (customer → Juliana, staff → Camilo, admin → Mateo,
+// dev/docs → Sofía with dev mode on) so member screens show the member experience, not an empty
+// super-admin account. Param routes get real ids read from the seeded mock DB (a scheduled class, one of
+// Juliana's bookings, a teacher, an event, a payroll run), so C-04/C-10/C-20/C-23/C-18/M-06/M-09b are
+// captured as pages, not as their not-found states. The manual cover (/manual) is saved with the label
+// `cover` so the chapter route (same code K-03) does not overwrite it.
+// Output: docs/screenshots/<code>/<lang>-<width>[-dark][-<label>].jpg
 // Usage: npm run screenshots [-- --smoke] [-- --only=/docs,/manual] [-- --label=before|after] [-- --quality=72]
 //   --smoke        1280/es only, no files, just console errors (exit 1 when anything throws)
 //   --only=a,b     only routes whose path starts with one of the prefixes; a trailing $ means an
@@ -25,7 +31,10 @@ const QUALITY = Number(args.find((a) => a.startsWith('--quality='))?.slice(10) ?
 const PORT = 4173;
 const BASE = `http://localhost:${PORT}/#`;
 export const KEY_PAGES = new Set(['HUB-01', 'W-01', 'C-01', 'S-02', 'M-01', 'M-03', 'D-02', 'K-03']);
-const PARAMS = { ':table': 'class_sessions', ':pageCode': 'C-01', ':id': 'ses_demo', ':kind': 'terms', ':chapter': '03-modelo-de-valor', ':code': 'C-01', ':slug': 'hot-yoga' };
+const STATIC_PARAMS = { ':table': 'class_sessions', ':pageCode': 'C-01', ':kind': 'terms', ':chapter': '03-modelo-de-valor', ':code': 'C-01', ':slug': 'hot-yoga' };
+/** The demo user each surface is captured as; a route whose roles exclude that user falls back to the first allowed role. */
+const SURFACE_USER = { customer: 'customer', teacher: 'teacher', staff: 'front_desk', admin: 'admin', dev: 'super_admin', docs: 'super_admin', public: 'public' };
+const DB_KEY = 'hoyos.db.v1';
 export const EXT = 'jpg';
 export const fileName = (lang, width, theme, label = '') => `${lang}-${width}${theme === 'dark' ? '-dark' : ''}${label ? `-${label}` : ''}.${EXT}`;
 export const MANIFEST = new URL('../docs/screenshots/routes.json', import.meta.url);
@@ -45,16 +54,56 @@ export function readManifest() {
   try { return JSON.parse(readFileSync(MANIFEST, 'utf8')); } catch { return null; }
 }
 
-/** Reads window.__hoyos.routes from the running preview. */
+/** Reads window.__hoyos (routes + demo users) and real row ids from the seeded mock DB in the running preview. */
 async function fetchManifest(browser) {
   const ctx = await browser.newContext();
   const page = await ctx.newPage();
   await page.route(/^https?:\/\/(?!localhost)/, (r) => r.abort());
   await page.goto(`${BASE}/`, { waitUntil: 'load', timeout: 20000 });
   await page.waitForFunction(() => window.__hoyos?.routes?.length > 0, null, { timeout: 15000 });
-  const routes = await page.evaluate(() => window.__hoyos.routes);
+  await page.waitForFunction((k) => !!localStorage.getItem(k), DB_KEY, { timeout: 15000 });
+  const { routes, users } = await page.evaluate(() => window.__hoyos);
+  const ids = await page.evaluate((k) => {
+    const db = JSON.parse(localStorage.getItem(k)).db;
+    const now = Date.now();
+    const scheduled = db.class_sessions.filter((s) => s.status === 'scheduled' && new Date(s.starts_at).getTime() > now).sort((a, b) => a.starts_at.localeCompare(b.starts_at));
+    const session = scheduled[0] ?? db.class_sessions[0];
+    const full = scheduled.find((s) => s.booked_count >= s.capacity) ?? session;
+    const mine = db.bookings.filter((b) => b.user_id === 'usr_cust');
+    const booked = mine.find((b) => b.status === 'booked') ?? mine[0];
+    const attended = mine.find((b) => b.status === 'checked_in') ?? booked;
+    const teacher = db.teachers.find((t) => t.user_id === 'usr_teach');
+    const taught = db.class_sessions.filter((s) => teacher && s.teacher_id === teacher.id && s.status !== 'cancelled').sort((a, b) => a.starts_at.localeCompare(b.starts_at));
+    const teachSession = taught.find((s) => new Date(s.ends_at).getTime() > now) ?? taught[taught.length - 1] ?? session;
+    return {
+      session: session?.id, full: full?.id, booking: booked?.id, rated: attended?.session_id ?? session?.id, teachSession: teachSession?.id,
+      teacher: db.teachers[0]?.id, event: db.events?.find((e) => e.status === 'published')?.id ?? db.events?.[0]?.id, member: 'usr_cust', payrollRun: db.payroll_runs?.[0]?.id,
+    };
+  }, DB_KEY);
   await ctx.close();
-  return routes.filter((r, i, a) => a.findIndex((x) => x.path === r.path) === i && !r.path.includes('*'));
+  return { routes: routes.filter((r, i, a) => a.findIndex((x) => x.path === r.path) === i && !r.path.includes('*')), users, ids };
+}
+
+/** The `:id` a route expects, by path family (a class, a booking, a teacher, an event, a member, a payroll run). */
+function idFor(path, ids) {
+  if (path.startsWith('/app/booking/')) return ids.booking;
+  if (path.startsWith('/app/rate/')) return ids.rated;
+  if (path.startsWith('/app/waitlist/')) return ids.full;
+  if (path.startsWith('/app/teachers/')) return ids.teacher;
+  if (path.startsWith('/app/events/')) return ids.event;
+  if (path.startsWith('/admin/crm/')) return ids.member;
+  if (path.startsWith('/admin/finance/payouts/')) return ids.payrollRun;
+  if (path.startsWith('/teach/class/')) return ids.teachSession;
+  return ids.session;
+}
+
+/** The demo user a route is captured as: the surface's default when the route allows it, else the first allowed role. */
+function userFor(route, users) {
+  const byRole = (role) => users.find((u) => u.role === role)?.id;
+  const want = SURFACE_USER[route.surface] ?? 'super_admin';
+  const allowed = route.roles ?? [];
+  const role = allowed.includes(want) || allowed.includes('public') ? want : allowed.includes('super_admin') && allowed.length === 1 ? 'super_admin' : allowed.find((r) => byRole(r)) ?? 'super_admin';
+  return { userId: byRole(role) ?? 'usr_super', devMode: role === 'super_admin' };
 }
 
 const inOnly = (r) => !ONLY.length || ONLY.some((p) => (p.endsWith('$')
@@ -67,7 +116,7 @@ async function main() {
   const exe = findChromium();
   const browser = await chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
   const NOISE = /Failed to load resource|ERR_CERT|fonts\.g(oogleapis|static)|net::/;
-  const manifest = await fetchManifest(browser);
+  const { routes: manifest, users, ids } = await fetchManifest(browser);
   mkdirSync(new URL('../docs/screenshots/', import.meta.url), { recursive: true });
   writeFileSync(MANIFEST, JSON.stringify(manifest, null, 1));
   const list = manifest.filter(inOnly);
@@ -75,17 +124,21 @@ async function main() {
   const langs = SMOKE ? ['es'] : ['es', 'en'];
   const widths = SMOKE ? [1280] : [390, 1280];
   console.log(`${list.length} routes · chromium ${exe}${ONLY.length ? ` · only ${ONLY.join(',')}` : ''}${LABEL ? ` · label ${LABEL}` : ''}${SMOKE ? ' · smoke' : ` · jpeg q${QUALITY}`}`);
-  for (const { path, code } of list) {
-    const url = path.replace(/:\w+/g, (p) => PARAMS[p] ?? 'x');
+  for (const route of list) {
+    const { path, code } = route;
+    const url = path.replace(/:\w+/g, (p) => (p === ':id' ? idFor(path, ids) : STATIC_PARAMS[p]) ?? 'x');
+    const { userId, devMode } = userFor(route, users);
+    // /manual and /manual/:chapter share the code K-03: the cover keeps its own labelled file.
+    const label = LABEL || (path === '/manual' ? 'cover' : '');
     for (const lang of langs) for (const width of widths) {
       const themes = !SMOKE && KEY_PAGES.has(code) ? ['light', 'dark'] : ['light'];
       for (const theme of themes) {
         const ctx = await browser.newContext({ viewport: { width, height: width < 600 ? 844 : 800 }, deviceScaleFactor: 1, ignoreHTTPSErrors: true });
-        await ctx.addInitScript(([l, th]) => {
+        await ctx.addInitScript(([l, th, uid, dev]) => {
           localStorage.setItem('hoyos.lang', l);
           localStorage.setItem('hoyos.theme', JSON.stringify({ theme: th, skin: 'styled' }));
-          localStorage.setItem('hoyos.session', JSON.stringify({ userId: 'usr_super', devMode: true, viewAs: null }));
-        }, [lang, theme]);
+          localStorage.setItem('hoyos.session', JSON.stringify({ userId: uid, devMode: dev, viewAs: null }));
+        }, [lang, theme, userId, devMode]);
         const page = await ctx.newPage();
         await page.route(/^https?:\/\/(?!localhost)/, (r) => r.abort()); // offline-safe: no fonts/CDNs through the proxy
         const errors = [];
@@ -94,18 +147,20 @@ async function main() {
         try {
           await page.goto(`${BASE}${url}`, { waitUntil: 'load', timeout: 15000 });
           await page.waitForSelector('#root > *', { timeout: 8000 });
+          // lazily-loaded modules (src/app/lazyPage.ts) show .lazy-fallback until their chunk arrives
+          await page.waitForFunction(() => !document.querySelector('.lazy-fallback'), null, { timeout: 8000 });
           await page.waitForTimeout(350);
           if (!SMOKE) {
             const dir = new URL(`../docs/screenshots/${safe(code)}/`, import.meta.url);
             mkdirSync(dir, { recursive: true });
-            await page.screenshot({ path: new URL(fileName(lang, width, theme, LABEL), dir).pathname, fullPage: width >= 600, type: 'jpeg', quality: QUALITY });
+            await page.screenshot({ path: new URL(fileName(lang, width, theme, label), dir).pathname, fullPage: width >= 600, type: 'jpeg', quality: QUALITY });
           }
         } catch (e) { errors.push(String(e.message)); }
         if (errors.length) problems.push({ path, lang, width, theme, errors: [...new Set(errors)].slice(0, 3) });
         await ctx.close();
       }
     }
-    process.stdout.write(`${code.padEnd(12)} ${path}\n`);
+    process.stdout.write(`${code.padEnd(12)} ${path.padEnd(36)} ${userId}\n`);
   }
   await browser.close();
   server.kill();
