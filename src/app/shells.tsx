@@ -12,7 +12,8 @@ export function withShell(route: RouteDef, children: ReactNode): ReactNode {
     case 'teacher': return <PhoneShell surface="teacher" routes={allRoutes} homeTo="/teach">{children}</PhoneShell>;
     case 'staff': return <DesktopShell surfaces={['staff', 'admin']} routes={allRoutes} title="Staff">{children}</DesktopShell>;
     case 'admin': return <DesktopShell surfaces={['admin', 'staff']} routes={allRoutes} title="Admin">{children}</DesktopShell>;
-    case 'dev': return <DesktopShell surfaces={['dev']} routes={allRoutes} title="Developer">{children}</DesktopShell>;
+    // the dev surface keeps the admin nav beside the design-system group so a super admin can go back
+    case 'dev': return <DesktopShell surfaces={['dev', 'admin']} routes={allRoutes} title="Developer">{children}</DesktopShell>;
     case 'docs': return <DesktopShell surfaces={['docs']} routes={allRoutes} title="Docs">{children}</DesktopShell>;
     default: return children;
   }

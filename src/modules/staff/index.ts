@@ -10,7 +10,7 @@ export { strings } from './strings';
 const roles: Role[] = [...STAFF_ROLES, 'teacher'];
 const desk: Role[] = ['super_admin', 'admin', 'coordinator', 'front_desk'];
 const base = { roles, surface: 'staff' as const, layout: 'desktop' as const };
-const G = 'Staff';
+const G = 'core.nav.group.staff';
 
 export const routes: RouteDef[] = [
   { ...base, path: '/staff', element: h(StaffHomePage), spec: S01, nav: { labelKey: 'core.nav.home', icon: '⌂', order: 1, group: G } },

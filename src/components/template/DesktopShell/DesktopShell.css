@@ -1,29 +1,71 @@
 /* canvas desktop frame: cream sidebar (.surf2 --c21) with a 1px inset edge; main area on the frame gradient */
 .deskshell { display: grid; grid-template-columns: var(--w-sidebar) minmax(0, 1fr); min-height: 100vh; }
-.deskshell-side { position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; background-color: var(--color-lane); background-image: var(--tex-lane-on); box-shadow: inset -1px 0 0 rgba(var(--m-shade), .1); overflow-y: auto; }
-.deskshell-brand { display: flex; align-items: center; gap: var(--sp-2); padding: var(--sp-5) var(--sp-4) var(--sp-4); }
-.deskshell-title { font-family: var(--font-body); font-size: var(--fs-2xs); text-transform: uppercase; letter-spacing: var(--ls-eyebrow); color: var(--color-text-faint); font-weight: var(--fw-semibold); flex: 1; }
-.deskshell-burger { display: none; border: 0; background: none; font-size: 20px; }
-.deskshell-nav { flex: 1 1 auto; padding: var(--sp-2) var(--sp-3); display: flex; flex-direction: column; gap: var(--sp-4); }
-.deskshell-group { display: flex; flex-direction: column; gap: 3px; }
-.deskshell-grouplabel { padding: var(--sp-2) var(--sp-3) 5px; }
-.deskshell-link { display: flex; align-items: center; gap: var(--sp-2); padding: 9px 11px; border-radius: var(--r-ctl); color: var(--color-text-muted); font-size: var(--fs-sm); text-decoration: none; transition: background-color var(--dur-fast), color var(--dur-fast); }
+.deskshell.is-rail { grid-template-columns: var(--w-rail) minmax(0, 1fr); }
+.deskshell-side { position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; background-color: var(--color-lane); background-image: var(--tex-lane-on); box-shadow: inset -1px 0 0 rgba(var(--m-shade), .1); overflow-y: auto; overflow-x: hidden; transition: width var(--dur-base) var(--ease-out); }
+.deskshell-brand { display: flex; align-items: center; gap: var(--sp-2); padding: var(--sp-5) var(--sp-4) var(--sp-4); min-width: 0; }
+.deskshell.is-rail .deskshell-brand { padding: var(--sp-4) 0; justify-content: center; }
+.deskshell-mark { display: inline-flex; flex: 0 0 auto; min-width: 0; overflow: hidden; }
+.deskshell-devtoggle { display: inline-flex; flex: 0 0 auto; }
+/* the wordmark sizes itself by height inline, so the rail caps its width (!important beats the inline width:auto) */
+.deskshell.is-rail .deskshell-mark .wordmark { width: 36px !important; height: auto !important; }
+.deskshell-title { font-family: var(--font-body); font-size: var(--fs-2xs); text-transform: uppercase; letter-spacing: var(--ls-eyebrow); color: var(--color-text-faint); font-weight: var(--fw-semibold); flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.deskshell-nav { flex: 1 1 auto; padding: var(--sp-2) var(--sp-3); display: flex; flex-direction: column; gap: var(--sp-4); min-width: 0; }
+.deskshell.is-rail .deskshell-nav { padding: var(--sp-2) 6px; gap: var(--sp-2); align-items: center; }
+.deskshell-group { display: flex; flex-direction: column; gap: 3px; min-width: 0; width: 100%; }
+.deskshell-grouplabel { display: flex; align-items: center; gap: 6px; width: 100%; padding: var(--sp-2) var(--sp-3) 5px; border: 0; background: none; text-align: left; cursor: pointer; }
+.deskshell-grouplabel:hover { color: var(--color-text-muted); }
+.deskshell-caret { flex: 0 0 auto; width: 10px; font-size: 11px; line-height: 1; }
+.deskshell-grouptext { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.deskshell-sep { width: 20px; margin: var(--sp-2) auto; border: 0; border-top: 1px solid rgba(var(--m-shade), .14); }
+.deskshell-link { position: relative; display: flex; align-items: center; gap: var(--sp-2); min-width: 0; padding: 9px 11px; border-radius: var(--r-ctl); color: var(--color-text-muted); font-size: var(--fs-sm); text-decoration: none; transition: background-color var(--dur-fast), color var(--dur-fast); }
 .deskshell-link:hover { background: rgba(var(--m-shade), .06); color: var(--color-text); text-decoration: none; }
 /* the active item is the canvas .accent pill */
 .deskshell-link.is-active { background-color: var(--color-accent-fill); background-image: var(--tex-accent-on); color: var(--color-text-on-primary); font-weight: var(--fw-medium); box-shadow: var(--shadow-accent); }
-.deskshell-icon { width: 20px; text-align: center; opacity: .8; }
-.deskshell-code { margin-left: auto; font-size: 10px; color: var(--color-text-faint); }
+.deskshell-linktext { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.deskshell-icon { flex: 0 0 auto; width: 20px; text-align: center; opacity: .8; }
+.deskshell-code { margin-left: auto; flex: 0 0 auto; font-size: 10px; color: var(--color-text-faint); }
 .deskshell-link.is-active .deskshell-code { color: inherit; opacity: .75; }
-.deskshell-foot { padding: var(--sp-4); border-top: 1px solid var(--color-border); display: flex; flex-direction: column; gap: var(--sp-3); }
-.deskshell-iconbtn { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--color-card-border); background: var(--color-surface); box-shadow: var(--shadow-highlight), var(--shadow-contact); }
-.deskshell-main { min-width: 0; padding: var(--sp-6) var(--sp-8) var(--sp-12); }
+.deskshell-who { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* icon rail (56 px) with hover tooltips */
+.deskshell.is-rail .deskshell-link { width: 40px; height: 40px; padding: 0; justify-content: center; }
+.deskshell.is-rail .deskshell-linktext { display: none; }
+.deskshell-tip { display: none; position: absolute; left: calc(100% + 8px); top: 50%; transform: translateY(-50%); z-index: 60; padding: 5px 9px; border-radius: var(--r-ctl); background: var(--color-ink); color: var(--color-bg); font-size: var(--fs-xs); font-weight: var(--fw-regular); white-space: nowrap; box-shadow: var(--shadow-raised); pointer-events: none; }
+.deskshell.is-rail .deskshell-link:hover .deskshell-tip, .deskshell.is-rail .deskshell-link:focus-visible .deskshell-tip { display: block; }
+
+.deskshell-foot { padding: var(--sp-4); display: flex; flex-direction: column; gap: var(--sp-3); box-shadow: inset 0 1px 0 rgba(var(--m-shade), .1); }
+.deskshell.is-rail .deskshell-foot { padding: var(--sp-3) 6px; align-items: center; }
+.deskshell-collapse { display: flex; align-items: center; gap: var(--sp-2); padding: 6px 8px; border: 0; border-radius: var(--r-ctl); background: none; color: var(--color-text-faint); font-size: var(--fs-sm); }
+.deskshell-collapse:hover { background: rgba(var(--m-shade), .06); color: var(--color-text); }
+.deskshell-chev { font-size: 13px; line-height: 1; }
+.deskshell-me { display: inline-flex; }
+.deskshell-iconbtn { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--color-card-border); background: var(--color-surface); box-shadow: var(--shadow-highlight), var(--shadow-contact); flex: 0 0 auto; }
+.deskshell-spec { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border: 0; border-radius: var(--r-full); background: var(--color-ink); color: var(--color-bg); font-family: var(--font-mono); font-size: var(--fs-2xs); flex: 0 0 auto; }
+.deskshell-specdot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-accent); }
+.deskshell-rs { min-width: 0; }
+.deskshell-rs .input { max-width: 150px; }
+
+/* content column: sticky top bar above the page */
+.deskshell-col { display: flex; flex-direction: column; min-width: 0; }
+.deskshell-main { min-width: 0; flex: 1 1 auto; padding: var(--sp-6) var(--sp-8) var(--sp-12); }
 .deskshell-scrim { display: none; }
+
+@media (max-width: 1200px) { .deskshell-rs .input { max-width: 120px; } }
+@media (max-width: 1080px) { .deskshell-rs { display: none; } }
+@media (max-width: 720px) { .deskshell-devtoggle .toggle-label { display: none; } }
 @media (max-width: 900px) {
-  .deskshell { grid-template-columns: 1fr; }
+  .deskshell, .deskshell.is-rail { grid-template-columns: 1fr; }
   .deskshell-side { position: fixed; inset: 0 auto 0 0; width: min(320px, 85vw); z-index: 50; transform: translateX(-100%); transition: transform var(--dur-base) var(--ease-out); box-shadow: var(--shadow-raised); }
+  /* the drawer is always the full column, never the rail */
+  .deskshell.is-rail .deskshell-side { width: min(320px, 85vw); }
+  .deskshell.is-rail .deskshell-brand { padding: var(--sp-5) var(--sp-4) var(--sp-4); justify-content: flex-start; }
+  .deskshell.is-rail .deskshell-nav { padding: var(--sp-2) var(--sp-3); align-items: stretch; }
+  .deskshell.is-rail .deskshell-link { width: auto; height: auto; padding: 9px 11px; justify-content: flex-start; }
+  .deskshell.is-rail .deskshell-linktext { display: block; }
+  .deskshell.is-rail .deskshell-foot { padding: var(--sp-4); align-items: stretch; }
   .deskshell.is-open .deskshell-side { transform: none; }
-  .deskshell-burger { display: block; position: fixed; top: 10px; left: 10px; z-index: 60; width: 40px; height: 40px; border-radius: 50%; background: var(--color-surface); border: 1px solid var(--color-card-border); box-shadow: var(--shadow-card); }
-  .deskshell.is-open .deskshell-burger { position: static; box-shadow: none; }
-  .deskshell-main { padding: var(--sp-16) var(--sp-4) var(--sp-12); }
+  .deskshell-collapse { display: none; }
+  .deskshell-tip { display: none !important; }
+  .deskshell-main { padding: var(--sp-5) var(--sp-4) var(--sp-12); }
   .deskshell.is-open .deskshell-scrim { display: block; position: fixed; inset: 0; background: var(--color-scrim); z-index: 40; }
 }

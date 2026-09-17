@@ -3,9 +3,9 @@ import { defineSpec } from '../../specs/define';
 
 export const M01 = defineSpec({
   ...canvasSpecs['M-01'],
-  layout: ['KPIRow ×4', 'OccupancyChart', 'FeatureTable', 'AuditTrail'],
-  data: ['memberships', 'payments', 'class_sessions', 'bookings', 'feature_flags', 'audit_log', 'users', 'profiles'],
-  notes: [...(canvasSpecs['M-01'].notes ?? []), 'Sections are reorderable through useLayout (layout editor D-04).', 'Flag toggles write audit_log flag.toggle with before/after.'],
+  layout: ['KPIRow ×4', 'OccupancyChart', 'TodayAtAGlance', 'AuditTrail'],
+  data: ['memberships', 'payments', 'class_sessions', 'bookings', 'modalities', 'teachers', 'audit_log', 'users', 'profiles'],
+  notes: [...(canvasSpecs['M-01'].notes ?? []), 'Sections are reorderable through useLayout (layout editor D-04).', 'The feature switches moved to M-08b (/admin/settings/features) in 0.5.0; the dashboard no longer writes feature_flags.', 'TodayAtAGlance lists today\'s sessions with occupancy and who is already in the room (bookings.checked_in).'],
 });
 
 export const M02 = defineSpec({
@@ -43,12 +43,53 @@ export const M07 = defineSpec({
   notes: [...(canvasSpecs['M-07'].notes ?? []), 'Append-only: the page has no write path.'],
 });
 
+/**
+ * M-08 is now a group of five sub-pages behind one sub-navigation (0.5.0). M-08 keeps the family spec and
+ * routes to General; M-08a…M-08e are the leaves. Every group saves one `tenants.settings` section and
+ * writes audit_log settings.update with before/after.
+ */
 export const M08 = defineSpec({
   ...canvasSpecs['M-08'],
-  layout: ['SectionRail', 'StudioProfile', 'OpeningHours', 'Capacity', 'Policies', 'QuietHours', 'TaxAndInvoicing', 'FeatureFlags', 'Integrations'],
+  layout: ['SettingsSubNav', 'General (M-08a)', 'Features (M-08b)', 'Payments (M-08c)', 'Communications (M-08d)', 'Branding (M-08e)'],
   data: ['tenants', 'feature_flags', 'rooms', 'audit_log'],
-  notes: [...(canvasSpecs['M-08'].notes ?? []), 'Stored in tenants.settings (json) via useSettings(); defaults from src/tenant/tenant.ts.', 'S-02 reads lateGraceMin, S-04 reads tax, M-05 reads quietHours.'],
+  notes: [...(canvasSpecs['M-08'].notes ?? []), 'Stored in tenants.settings (json) via useSettings(); defaults from src/tenant/tenant.ts.', 'S-02 reads lateGraceMin, S-04 reads tax, M-05 reads quietHours.', 'usePolicy() (src/modules/admin/settings.ts) re-renders consumers when a section is saved.'],
 });
+
+const sub = (code: string, name: { es: string; en: string }, purpose: { es: string; en: string }, layout: string[], extra: Partial<typeof M08> = {}) => defineSpec({
+  ...M08, code, name, purpose, layout,
+  notes: [...(M08.notes ?? []), 'Sub-page of M-08; the sub-navigation is shared by all five.'],
+  ...extra,
+});
+
+export const M08a = sub('M-08a',
+  { es: 'Ajustes · General', en: 'Settings · General' },
+  { es: 'Identidad de contacto, horario de apertura, aforo y políticas: los números que todas las demás pantallas leen.', en: 'Contact identity, opening hours, capacity and policies: the numbers every other screen reads.' },
+  ['SettingsSubNav', 'StudioProfile', 'OpeningHours', 'Capacity', 'Policies', 'Integrations'],
+);
+export const M08b = sub('M-08b',
+  { es: 'Ajustes · Funciones', en: 'Settings · Features' },
+  { es: 'Interruptores de funciones del estudio y de página (feature_flags), con escritura auditada. Vivían en el panel M-01 hasta 0.5.0.', en: 'Studio and per-page feature switches (feature_flags) with audited writes. They lived on the M-01 dashboard until 0.5.0.' },
+  ['SettingsSubNav', 'StudioFeatures', 'FeatureFlagsByPage'],
+  { logic: ['features.write gates every switch; without it the toggles render disabled.', 'A-06 and E-04 flags are locked: the demo needs them on.', 'Each flip writes audit_log flag.toggle with before/after.'], states: ['Loading', 'Read-only (sin features.write)', 'Flag bloqueado', 'Guardado'] },
+);
+export const M08c = sub('M-08c',
+  { es: 'Ajustes · Pagos', en: 'Settings · Payments' },
+  { es: 'Cuenta de consignación, NIT, IVA y resolución DIAN, y el entorno de Wompi. Las llaves secretas nunca se guardan aquí.', en: 'Payout account, NIT, IVA and DIAN resolution, and the Wompi environment. Secret keys are never stored here.' },
+  ['SettingsSubNav', 'PayoutAccount', 'WompiEnvironment + SecretNotice', 'FiscalIdentity (NIT)', 'TaxAndInvoicing'],
+  { integrations: ['Wompi', 'DIAN e-invoicing'], notes: [...(M08.notes ?? []), 'Sub-page of M-08.', 'Wompi private keys live in server environment variables, never in tenants.settings nor in the browser.'] },
+);
+export const M08d = sub('M-08d',
+  { es: 'Ajustes · Comunicaciones', en: 'Settings · Communications' },
+  { es: 'Horas de silencio y nombres de remitente de WhatsApp y email, que M-04 y M-05 usan al enviar.', en: 'Quiet hours and the WhatsApp and email sender names M-04 and M-05 use when sending.' },
+  ['SettingsSubNav', 'QuietHours', 'SenderIdentity'],
+  { integrations: ['WhatsApp Cloud API', 'Email'] },
+);
+export const M08e = sub('M-08e',
+  { es: 'Ajustes · Marca', en: 'Settings · Branding' },
+  { es: 'Nombre visible del estudio, variante del wordmark e idioma por defecto; la vista previa usa el wordmark real.', en: 'Studio display name, wordmark variant and default language; the preview uses the real wordmark.' },
+  ['SettingsSubNav', 'DisplayName', 'WordmarkVariant', 'DefaultLanguage', 'Preview'],
+  { notes: [...(M08.notes ?? []), 'Sub-page of M-08.', 'Empty display name falls back to src/tenant/tenant.ts; nothing is hardcoded per studio.'] },
+);
 
 /** New code: finance view (revenue, payouts, refunds, invoices). */
 export const M09 = defineSpec({

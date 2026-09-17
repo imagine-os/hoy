@@ -37,11 +37,19 @@
 /* M-08 settings */
 .settings { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: var(--sp-5); align-items: start; }
 .settings-rail { display: flex; flex-direction: column; gap: 2px; position: sticky; top: var(--sp-6); }
-.settings-link { text-align: left; padding: 8px 12px; border: 0; border-radius: var(--r-sm); background: none; color: var(--color-text); font-size: var(--fs-sm); }
+.settings-link { display: block; text-align: left; padding: 8px 12px; border: 0; border-radius: var(--r-sm); background: none; color: var(--color-text); font-size: var(--fs-sm); text-decoration: none; overflow-wrap: anywhere; }
+.settings-link:hover { text-decoration: none; }
 .settings-link:hover { background: var(--color-surface-2); }
 .settings-link.is-active { background: color-mix(in srgb, var(--color-primary) 12%, transparent); color: var(--color-primary); font-weight: var(--fw-medium); }
 .settings-day { display: grid; grid-template-columns: 48px 130px 1fr auto 1fr; gap: var(--sp-2); align-items: center; }
 .settings-day .input { min-height: 34px; padding: 4px 8px; }
 .settings-int { padding: 8px 0; border-bottom: 1px solid var(--color-border); }
 .settings-int:last-child { border-bottom: 0; }
+.settings-brand { display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap; padding: var(--sp-3); border-radius: var(--r-md); background: var(--color-surface-2); }
+/* M-01 today at a glance */
+.adm-today { display: grid; grid-template-columns: 76px minmax(0, 1fr) auto; gap: var(--sp-3); align-items: center; padding: 8px 0; border-bottom: 1px solid var(--color-border); }
+.adm-today:last-child { border-bottom: 0; }
+.adm-today-time { font-family: var(--font-heading); font-weight: var(--fw-semibold); font-variant-numeric: tabular-nums; }
+.adm-today-what { min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 480px) { .adm-today { grid-template-columns: 64px minmax(0, 1fr); } }
 @media (max-width: 800px) { .settings { grid-template-columns: 1fr; } .settings-rail { position: static; flex-direction: row; flex-wrap: wrap; } .settings-day { grid-template-columns: 40px 1fr; } }

@@ -227,7 +227,7 @@ export const motion = {
 } as const;
 
 export const layoutTokens = {
-  'w-phone': '430px', 'w-content': '1120px', 'h-topbar': '56px', 'h-bottomnav': '64px', 'w-sidebar': '240px',
+  'w-phone': '430px', 'w-content': '1120px', 'h-topbar': '56px', 'h-bottomnav': '64px', 'w-sidebar': '240px', 'w-rail': '56px',
 } as const;
 
 export const tokens = { brand, palette, rgb, movements, semantic, shadows, textures, materials, surfaces, type, spacing, radii, motion, layout: layoutTokens };

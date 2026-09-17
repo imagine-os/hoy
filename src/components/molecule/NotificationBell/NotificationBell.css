@@ -1,0 +1,5 @@
+.bell { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; border: 0; background: var(--color-surface); box-shadow: inset 0 0 0 1px var(--color-card-border), var(--shadow-highlight); color: var(--color-text-muted); text-decoration: none; flex: 0 0 auto; }
+.bell:hover { color: var(--color-text); text-decoration: none; }
+.bell.has-unread { color: var(--color-primary); }
+.bell-glyph { font-size: 15px; line-height: 1; }
+.bell-badge { position: absolute; top: -3px; right: -3px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: var(--r-full); background: var(--color-danger); color: #fff; font-family: var(--font-body); font-size: var(--fs-2xs); font-weight: var(--fw-semibold); line-height: 16px; text-align: center; }

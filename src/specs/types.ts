@@ -41,8 +41,12 @@ export interface RouteDef {
   roles: Role[];
   surface: Surface;
   layout?: LayoutMode;
-  /** When set, the surface's shell shows this route in its navigation (label is an i18n key). */
-  nav?: { labelKey: string; icon: string; order: number; group?: string };
+  /**
+   * When set, the surface's shell shows this route in its navigation (label is an i18n key).
+   * `group` is an i18n key too when the dictionary has it, else it renders verbatim.
+   * `to` overrides the link target (used when the nav entry should open a parameterised route).
+   */
+  nav?: { labelKey: string; icon: string; order: number; group?: string; to?: string };
 }
 
 /** Marks a spec as complete enough for the specs index badge. */

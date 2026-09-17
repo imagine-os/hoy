@@ -19,6 +19,12 @@ export interface StudioSettings {
   tax: { ivaPct: number; pricesIncludeIva: boolean; dianResolution: string; eInvoicing: boolean };
   integrations: Record<'wompi' | 'whatsapp' | 'email' | 'calendar', 'pending' | 'connected' | 'error'>;
   features: { multipleLocations: boolean; noShowFee: boolean; holidayCalendar: boolean; walkInRegistration: boolean; autoCheckinOnSale: boolean };
+  /** M-08c — payout account and the Wompi environment. Secrets are never stored here (see the page notice). */
+  payments: { bankName: string; accountType: 'savings' | 'checking'; accountNumber: string; accountHolder: string; wompiEnv: 'sandbox' | 'production' };
+  /** M-08d — sender identity for WhatsApp and email (quiet hours live in `quietHours`). */
+  comms: { whatsappSender: string; emailSender: string; emailReplyTo: string };
+  /** M-08e — tenant-facing identity. `displayName` empty falls back to src/tenant/tenant.ts. */
+  branding: { displayName: string; wordmarkVariant: 'auto' | 'blue' | 'cream' | 'yellow'; defaultLang: 'es' | 'en' };
 }
 
 export const DEFAULT_SETTINGS: StudioSettings = {
@@ -30,6 +36,9 @@ export const DEFAULT_SETTINGS: StudioSettings = {
   tax: { ivaPct: 19, pricesIncludeIva: true, dianResolution: '', eInvoicing: false },
   integrations: { wompi: 'pending', whatsapp: 'pending', email: 'pending', calendar: 'pending' },
   features: { multipleLocations: false, noShowFee: false, holidayCalendar: true, walkInRegistration: true, autoCheckinOnSale: true },
+  payments: { bankName: '', accountType: 'savings', accountNumber: '', accountHolder: tenant.legalName, wompiEnv: 'sandbox' },
+  comms: { whatsappSender: tenant.name, emailSender: tenant.legalName, emailReplyTo: tenant.contact.email },
+  branding: { displayName: '', wordmarkVariant: 'auto', defaultLang: tenant.defaultLocale },
 };
 
 export interface TenantRow extends BaseRow { settings: Partial<StudioSettings> | null }
@@ -46,6 +55,9 @@ export function mergeSettings(stored: Partial<StudioSettings> | null | undefined
     tax: { ...DEFAULT_SETTINGS.tax, ...(s.tax ?? {}) },
     integrations: { ...DEFAULT_SETTINGS.integrations, ...(s.integrations ?? {}) },
     features: { ...DEFAULT_SETTINGS.features, ...(s.features ?? {}) },
+    payments: { ...DEFAULT_SETTINGS.payments, ...(s.payments ?? {}) },
+    comms: { ...DEFAULT_SETTINGS.comms, ...(s.comms ?? {}) },
+    branding: { ...DEFAULT_SETTINGS.branding, ...(s.branding ?? {}) },
   };
 }
 
@@ -64,6 +76,26 @@ export function useSettings() {
     return { before, after: value };
   }, [data, row, settings]);
   return { settings, save, loading, ready: !!row };
+}
+
+/**
+ * The policy numbers, live. Any component that calls this re-renders when M-08 is saved, because
+ * useSettings() reads `tenants` through useTable() (which follows the provider's change events).
+ * Customer code that today reads the snapshot in src/modules/customer/policy.ts can switch to this.
+ */
+export function usePolicy() {
+  const { settings, loading, ready } = useSettings();
+  return useMemo(() => ({
+    ...settings.policies,
+    quietHours: settings.quietHours,
+    features: settings.features,
+    tax: settings.tax,
+    /** Free-cancellation deadline for a session start. */
+    cancelDeadline: (startsAt: string) => new Date(new Date(startsAt).getTime() - settings.policies.cancellationHours * 3600e3),
+    /** True while `at` is still inside the free-cancellation window. */
+    canCancelFree: (startsAt: string, at: Date = new Date()) => at.getTime() <= new Date(startsAt).getTime() - settings.policies.cancellationHours * 3600e3,
+    loading, ready,
+  }), [settings, loading, ready]);
 }
 
 /** IVA split for a consumer price, following the tax settings. */

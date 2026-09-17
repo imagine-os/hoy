@@ -1,0 +1,15 @@
+/* one cream field on the top bar; the result panel is the canvas .surf2 tile */
+.gsearch { position: relative; display: flex; align-items: center; gap: var(--sp-2); min-width: 0; width: 100%; max-width: 420px; padding: 0 var(--sp-3); height: 36px; border-radius: var(--r-full); background: var(--color-surface); box-shadow: inset 0 0 0 1px var(--color-card-border), var(--shadow-highlight); }
+.gsearch:focus-within { box-shadow: inset 0 0 0 1px var(--color-primary), var(--shadow-highlight); }
+.gsearch-icon { flex: 0 0 auto; font-size: 16px; color: var(--color-text-faint); }
+.gsearch-input { flex: 1 1 auto; min-width: 0; border: 0; background: none; outline: 0; font-size: var(--fs-sm); color: var(--color-text); }
+.gsearch-input::-webkit-search-cancel-button { display: none; }
+.gsearch-kbd { flex: 0 0 auto; font-family: var(--font-mono); font-size: var(--fs-2xs); color: var(--color-text-faint); background: var(--color-surface-2); border-radius: var(--r-xs); padding: 1px 5px; }
+.gsearch-panel { position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 40; max-height: 60vh; overflow: auto; padding: var(--sp-2); background-color: var(--color-surface-elevated, var(--color-surface)); background-image: var(--tex-surf-on); border-radius: var(--r-md); box-shadow: var(--shadow-raised); }
+.gsearch-group { padding: var(--sp-2) var(--sp-2) 2px; }
+.gsearch-item { display: flex; align-items: baseline; gap: var(--sp-2); width: 100%; min-width: 0; padding: 7px 9px; border: 0; border-radius: var(--r-ctl); background: none; color: var(--color-text); text-align: left; font-size: var(--fs-sm); }
+.gsearch-item.is-active { background: rgba(var(--m-shade), .07); }
+.gsearch-label { min-width: 0; overflow-wrap: anywhere; }
+.gsearch-hint { margin-left: auto; flex: 0 0 auto; font-family: var(--font-mono); font-size: var(--fs-2xs); color: var(--color-text-faint); }
+.gsearch-empty { padding: var(--sp-3); }
+@media (max-width: 720px) { .gsearch { max-width: none; } .gsearch-kbd { display: none; } }

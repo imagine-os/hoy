@@ -2,34 +2,33 @@ import { Fragment, useMemo, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useI18n } from '../../i18n/I18nProvider';
 import { useSession } from '../../auth/SessionProvider';
-import { useData, useTable } from '../../data/DataContext';
-import type { BaseRow, BookingRow, MembershipRow, PaymentRow } from '../../data/schema';
-import { formatCOP, formatDate, isSameDay } from '../../i18n/format';
+import { useTable } from '../../data/DataContext';
+import type { BookingRow, MembershipRow, PaymentRow } from '../../data/schema';
+import { formatCOP, formatDate, formatTime, isSameDay } from '../../i18n/format';
 import { useLayout } from '../../layout/useLayout';
 import { StatTile } from '../../components/molecule/StatTile/StatTile';
 import { Card } from '../../components/molecule/Card/Card';
-import { Toggle } from '../../components/atom/Toggle/Toggle';
+import { Badge } from '../../components/atom/Badge/Badge';
+import { CapacityMeter } from '../../components/molecule/CapacityMeter/CapacityMeter';
+import { EmptyState } from '../../components/molecule/EmptyState/EmptyState';
 import { BarList } from '../../components/molecule/BarList/BarList';
 import { Timeline, type TimelineItem } from '../../components/organism/Timeline/Timeline';
 import { useSessionsJoined } from '../website/hooks';
-import { useAudit, type AuditRow } from '../staff/audit';
+import type { AuditRow } from '../staff/audit';
 import { usePeople } from '../staff/people';
 import { M01 } from './specs';
 import './admin.css';
 
-interface FlagRow extends BaseRow { key: string; page_code: string | null; label: string; enabled: boolean }
-const LOCKED_PAGES = ['A-06', 'E-04'];
-
-/** M-01 — KPI row, occupancy chart, feature switches (audited) and the audit trail; sections via useLayout. */
+/**
+ * M-01 — KPI row, occupancy chart, today at a glance and the audit trail; sections via useLayout.
+ * The feature switches moved to M-08b (/admin/settings/features) — the dashboard reads, it does not configure.
+ */
 export function DashboardPage() {
   const { t, lang } = useI18n();
-  const data = useData();
   const { can } = useSession();
-  const audit = useAudit('admin');
   const { sections, isVisible } = useLayout(M01);
   const { rows: memberships } = useTable<MembershipRow>('memberships', { where: { status: 'active' } });
   const { rows: payments } = useTable<PaymentRow>('payments', { where: { status: 'approved' } });
-  const { rows: flags } = useTable<FlagRow>('feature_flags', { orderBy: { column: 'page_code' } });
   const { rows: log } = useTable<AuditRow>('audit_log', { orderBy: { column: 'created_at', dir: 'desc' }, limit: 10 });
   const { byId } = usePeople();
   const since = Date.now() - 30 * 86400e3;
@@ -48,14 +47,12 @@ export function DashboardPage() {
     }
     return out;
   }, [week, lang, t]);
-  const pages = [...new Set(flags.map((f) => f.page_code ?? '—'))];
-  const canFlags = can('features.write');
-
-  const toggle = async (f: FlagRow, on: boolean) => {
-    if (!canFlags) return;
-    await data.update('feature_flags', f.id, { enabled: on });
-    await audit('flag.toggle', 'feature_flags', f.id, { key: f.key, before: f.enabled, after: on });
-  };
+  const today = useMemo(() => week.filter((x) => isSameDay(x.session.starts_at, new Date())).sort((a, b) => a.session.starts_at.localeCompare(b.session.starts_at)), [week]);
+  const checkedInBySession = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const b of todayBookings) m.set(b.session_id, (m.get(b.session_id) ?? 0) + 1);
+    return m;
+  }, [todayBookings]);
   const trail: TimelineItem[] = log.map((a) => ({ id: a.id, at: a.created_at, kind: a.action.startsWith('payment') ? 'payment' : a.action.startsWith('booking') || a.action.startsWith('attendance') ? 'booking' : a.action.includes('note') ? 'note' : 'system', title: a.action, meta: `${byId.get(a.actor_id ?? '')?.name ?? t('admin.dashboard.system')} · ${a.entity}${a.entity_id ? ` · ${a.entity_id}` : ''}${a.diff?.source ? ` · ${a.diff.source}` : ''}` }));
 
   const SECTIONS: Record<string, () => ReactNode> = {
@@ -72,17 +69,28 @@ export function DashboardPage() {
         <BarList items={days} max={100} emphasizeId="0" format={(v) => `${v}%`} />
       </Card>
     ),
-    'FeatureTable': () => (
-      <Card title={t('admin.dashboard.flags')} actions={<Link to="/admin/settings" className="small">{t('core.nav.settings')}</Link>}>
-        <p className="muted small" style={{ marginBottom: 16 }}>{canFlags ? t('admin.dashboard.flags.body') : t('admin.dashboard.flags.readonly')}</p>
-        <div className="grid grid-3">
-          {pages.map((code) => (
-            <div key={code} className="stack-sm">
-              <div className="eyebrow">{code}</div>
-              {flags.filter((f) => (f.page_code ?? '—') === code).map((f) => <Toggle key={f.id} size="sm" checked={f.enabled} disabled={!canFlags || LOCKED_PAGES.includes(code)} label={f.label} onChange={(on) => toggle(f, on)} />)}
-            </div>
-          ))}
-        </div>
+    'TodayAtAGlance': () => (
+      <Card title={t('admin.dashboard.today')} eyebrow={t('admin.dashboard.today.eyebrow')} actions={<Link to="/staff/checkin" className="small">{t('core.nav.checkin')}</Link>}>
+        {today.length === 0 ? <EmptyState compact title={t('admin.dashboard.today.empty')} /> : (
+          <div>
+            {today.map(({ session, modality, teacher }) => {
+              const inRoom = checkedInBySession.get(session.id) ?? 0;
+              return (
+                <div key={session.id} className="adm-today">
+                  <span className="adm-today-time">{formatTime(session.starts_at, lang)}</span>
+                  <div className="adm-today-what">
+                    <div className="small">{modality ? (lang === 'en' ? modality.name_en : modality.name_es) : session.modality_id}{teacher ? ` · ${teacher.display_name}` : ''}</div>
+                    <CapacityMeter booked={session.booked_count} capacity={session.capacity} />
+                  </div>
+                  <div className="row">
+                    <span className="xs muted">{t('admin.dashboard.today.inRoom', { n: inRoom })}</span>
+                    {session.booked_count >= session.capacity && <Badge tone="warn">{t('core.common.full')}</Badge>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </Card>
     ),
     'AuditTrail': () => (

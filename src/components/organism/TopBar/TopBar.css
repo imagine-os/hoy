@@ -9,3 +9,13 @@
 .topbar-back:hover { background: var(--color-surface-2); text-decoration: none; }
 .topbar-brand { display: inline-flex; }
 .topbar-actions { display: flex; align-items: center; gap: var(--sp-2); flex: 0 0 auto; }
+.topbar-left { flex: 0 1 auto; }
+.topbar.has-center .topbar-left { flex: 1 1 auto; }
+.topbar-page { font-family: var(--font-heading); font-size: var(--fs-md); font-weight: var(--fw-medium); color: var(--color-ink); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.topbar-page::before { content: '/'; color: var(--color-text-faint); margin-right: var(--sp-2); font-weight: var(--fw-regular); }
+.topbar-code { flex: 0 0 auto; font-size: var(--fs-2xs); color: var(--color-text-faint); background: var(--color-surface-2); border-radius: var(--r-xs); padding: 2px 6px; }
+.topbar-center { flex: 1 1 auto; display: flex; justify-content: center; min-width: 0; }
+.topbar-lead { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: var(--r-ctl); border: 0; background: none; color: var(--color-text-muted); font-size: 17px; flex: 0 0 auto; }
+.topbar-lead:hover { background: rgba(var(--m-shade), .07); color: var(--color-text); }
+@media (max-width: 900px) { .topbar-page, .topbar-code { display: none; } }
+@media (max-width: 640px) { .topbar-center { display: none; } }

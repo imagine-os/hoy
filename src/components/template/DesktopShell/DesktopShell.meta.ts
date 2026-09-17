@@ -3,14 +3,25 @@ import { defineMeta } from '../../../design/meta';
 
 export default defineMeta({
   tier: 'template', name: 'DesktopShell',
-  description: { es: 'Chasis de escritorio (staff, admin, dev, docs): sidebar de 240px con grupos de navegación derivados de las rutas, sesión, ES/EN, tema y modo dev. Colapsa a menú en móvil.', en: 'Desktop shell (staff, admin, dev, docs): 240px sidebar with nav groups derived from routes, session, ES/EN, theme and dev mode. Collapses to a menu on mobile.' },
+  description: { es: 'Chasis de escritorio (staff, admin, dev, docs): barra superior pegajosa + columna crema de 240 px que colapsa a un riel de iconos de 56 px (chevron del pie o tecla “[”, recordado por superficie) y se vuelve cajón fuera de lienzo bajo 900 px. Los grupos de navegación vienen de RouteDef.nav.group y se pliegan con un caret; el grupo de la ruta activa queda abierto. Un super admin ve además el grupo “Sistema de diseño”.', en: 'Desktop shell (staff, admin, dev, docs): sticky top bar + 240 px cream column that collapses to a 56 px icon rail (footer chevron or the “[” key, remembered per surface) and becomes an off-canvas drawer below 900 px. Nav groups come from RouteDef.nav.group and fold with a caret; the active route’s group stays open. A super admin also sees the “Design system” group.' },
   props: [
-    { name: 'surfaces', type: 'Surface[]', required: true, description: { es: 'Superficies cuyas rutas con nav se listan.', en: 'Surfaces whose nav routes are listed.' } },
+    { name: 'surfaces', type: 'Surface[]', required: true, description: { es: 'Superficies cuyas rutas con nav se listan (el primer valor es la clave de persistencia).', en: 'Surfaces whose nav routes are listed (the first one is the persistence key).' } },
     { name: 'routes', type: 'RouteDef[]', required: true, description: { es: 'Normalmente getRoutes().', en: 'Usually getRoutes().' } },
-    { name: 'title', type: 'string', required: true, description: { es: 'Etiqueta bajo el logo.', en: 'Label under the wordmark.' } },
+    { name: 'title', type: 'string', required: true, description: { es: 'Etiqueta junto al logo del sidebar.', en: 'Label beside the sidebar wordmark.' } },
   ],
-  states: ['desktop', 'mobile-collapsed', 'mobile-open', 'dev-mode (codes visible)'],
-  usages: [{ title: { es: 'Ver en vivo', en: 'See it live' }, render: () => h('p', { className: 'muted small' }, 'Se usa en /#/staff, /#/admin, /#/dev y /#/docs.') }],
-  a11y: [{ es: 'Sidebar es <aside>; nav con aria-label; botón menú con aria-expanded.', en: 'Sidebar is <aside>; nav has aria-label; menu button has aria-expanded.' }],
+  states: [
+    'expanded (240 px)',
+    'rail / collapsed (56 px, tooltips al hover y foco)',
+    'group folded / group open (el grupo activo nunca se pliega)',
+    'dev-mode (códigos de spec visibles + chip de spec en la barra)',
+    'mobile-closed (cajón oculto)',
+    'mobile-open (cajón + scrim)',
+  ],
+  usages: [{ title: { es: 'Ver en vivo', en: 'See it live' }, render: () => h('p', { className: 'muted small' }, 'Se usa en /#/staff, /#/admin, /#/dev y /#/docs. Colapsa con “[” o el chevron del pie; los grupos se pliegan con su caret.') }],
+  a11y: [
+    { es: 'Sidebar es <aside> con aria-label; nav con aria-label; los botones de grupo y de colapsar llevan aria-expanded.', en: 'The sidebar is an <aside> with an aria-label; nav has an aria-label; group and collapse buttons carry aria-expanded.' },
+    { es: 'En el riel, cada enlace mantiene su nombre accesible (title + tooltip) aunque el texto esté oculto.', en: 'In the rail every link keeps its accessible name (title + tooltip) even though the text is hidden.' },
+    { es: 'El atajo “[” se ignora mientras se escribe en un campo.', en: 'The “[” shortcut is ignored while typing in a field.' },
+  ],
   usedBy: ['S-*', 'M-*', 'D-*', 'K-01', 'DOCS'],
 });

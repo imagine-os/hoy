@@ -12,10 +12,10 @@ import { MemberPage } from './MemberPage';
 import { ActivityPage } from './ActivityPage';
 import { SettingsPage } from './SettingsPage';
 import { FinancePage } from './FinancePage';
-import { M01, M02, M04, M05, M06, M07, M08, M09 } from './specs';
+import { M01, M02, M04, M05, M06, M07, M08a, M08b, M08c, M08d, M08e, M09 } from './specs';
 export { strings } from './strings';
 
-const G = 'Admin';
+const G = 'core.nav.group.admin';
 const base = { surface: 'admin' as const, layout: 'desktop' as const };
 const admins: Role[] = ['super_admin', 'admin'];
 const crm: Role[] = [...admins, 'coordinator', 'front_desk', 'finance'];
@@ -30,6 +30,10 @@ export const routes: RouteDef[] = [
   { ...base, path: '/admin/crm', roles: crm, element: h(CrmPage), spec: M06, nav: { labelKey: 'core.nav.crm', icon: '☺', order: 15, group: G } },
   { ...base, path: '/admin/crm/:id', roles: crm, element: h(MemberPage), spec: M06 },
   { ...base, path: '/admin/activity', roles: [...admins, 'coordinator', 'finance'], element: h(ActivityPage), spec: M07, nav: { labelKey: 'core.nav.activity', icon: '≡', order: 16, group: G } },
-  { ...base, path: '/admin/settings', roles: [...admins, 'coordinator', 'finance'], element: h(SettingsPage), spec: M08, nav: { labelKey: 'core.nav.settings', icon: '⚙', order: 17, group: G } },
+  { ...base, path: '/admin/settings', roles: [...admins, 'coordinator', 'finance'], element: h(SettingsPage, { group: 'general' }), spec: M08a, nav: { labelKey: 'core.nav.settings', icon: '⚙', order: 17, group: G } },
+  { ...base, path: '/admin/settings/features', roles: [...admins, 'coordinator', 'finance'], element: h(SettingsPage, { group: 'features' }), spec: M08b },
+  { ...base, path: '/admin/settings/payments', roles: [...admins, 'finance'], element: h(SettingsPage, { group: 'payments' }), spec: M08c },
+  { ...base, path: '/admin/settings/communications', roles: [...admins, 'coordinator'], element: h(SettingsPage, { group: 'communications' }), spec: M08d },
+  { ...base, path: '/admin/settings/branding', roles: admins, element: h(SettingsPage, { group: 'branding' }), spec: M08e },
   { ...base, path: '/admin/finance', roles: [...admins, 'finance'], element: h(FinancePage), spec: M09, nav: { labelKey: 'admin.finance.nav', icon: '◇', order: 18, group: G } },
 ];
