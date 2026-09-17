@@ -21,6 +21,12 @@ codes: D-04 HUB-01 W-01 W-04 P-01 A-02 A-03 C-11 C-19 S-02 M-08 K-01 K-02 (+ eve
 - Screenshot pass: 292 files, 28 MB in `docs/screenshots/` (JPEG q72); `docs/pages/`
   has one doc per routed code (65 files).
 
+## CI fix (follow-up commit)
+Every Pages run since `abf217a` failed at `npm run build`: the workflow used Node 20, and `npm run tokens`
+/ `npm run sql` need `node --experimental-strip-types` (Node ≥ 22.6). `.github/workflows/pages.yml` now
+builds on Node 22 (the version this repo is developed with). The `deploy` job still needs Justin to enable
+Pages (Settings → Pages → "GitHub Actions"); `has_pages` was `false` on 2026-09-17.
+
 ## Real vs stub (from the manifest, `/#/dev/specs`)
 76 routes · 65 codes · 0 stubs. Every canvas code that has a route renders a real page on the data layer;
 integrations (Wompi, WhatsApp, email, DIAN, Supabase Auth/Realtime) remain simulated behind their seams.
