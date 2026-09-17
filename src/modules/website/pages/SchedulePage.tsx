@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Fragment, useState, type ReactNode } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
+import { useLayout } from '../../../layout/useLayout';
 import { formatDate, isSameDay } from '../../../i18n/format';
 import { tenant } from '../../../tenant/tenant';
 import { movements, type Movement } from '../../../design/tokens';
@@ -11,23 +12,34 @@ import { Drawer } from '../../../components/organism/Drawer/Drawer';
 import { Button } from '../../../components/atom/Button/Button';
 import { ClassCard } from '../../../components/organism/ClassCard/ClassCard';
 import { PageHead, SiteShell } from '../SiteShell';
+import { siteSpecs } from '../specs';
 import { dayList, useSessionsJoined } from '../hooks';
 
 export function SchedulePage() {
   const { t, lang } = useI18n();
   const nav = useNavigate();
+  const [params, setParams] = useSearchParams();
+  const { sections, isVisible } = useLayout(siteSpecs.schedule);
   const days = dayList(7);
   const [day, setDay] = useState(0);
   const [picked, setPicked] = useState<string | null>(null);
   const all = useSessionsJoined();
-  const list = all.filter(({ session }) => isSameDay(session.starts_at, days[day]) && session.status !== 'completed');
+  const mvFilter = params.get('movement') as Movement | null;
+  const list = all.filter(({ session, modality }) =>
+    isSameDay(session.starts_at, days[day]) && session.status !== 'completed'
+    && (!mvFilter || modality?.movement === mvFilter));
   const chosen = all.find((x) => x.session.id === picked);
   const signInAndBook = () => nav(`/auth/sign-in?next=${encodeURIComponent(`/app/schedule?session=${picked}`)}`);
+  const pickMovement = (mv: Movement) => {
+    const next = new URLSearchParams(params);
+    if (mvFilter === mv) next.delete('movement'); else next.set('movement', mv);
+    setParams(next, { replace: true });
+  };
 
-  return (
-    <SiteShell>
-      <PageHead title={t('site.schedule.title')} body={t('site.schedule.body', { mats: tenant.studio.mats })} />
-      <section className="container" style={{ paddingBottom: 64 }}>
+  const SECTIONS: Record<string, () => ReactNode> = {
+    PageHead: () => <PageHead title={t('site.schedule.title')} body={t('site.schedule.body', { mats: tenant.studio.mats, classes: tenant.studio.classesPerDay })} />,
+    DayTabs: () => (
+      <section className="container">
         <div className="site-days" role="tablist">
           {days.map((d, i) => (
             <button key={i} type="button" role="tab" aria-selected={day === i} className={`site-daybtn ${day === i ? 'is-active' : ''}`} onClick={() => setDay(i)}>
@@ -35,17 +47,34 @@ export function SchedulePage() {
             </button>
           ))}
         </div>
+      </section>
+    ),
+    ClassList: () => (
+      <section className="container">
         <Card padding="sm">
           {list.length === 0 && <p className="muted" style={{ padding: 16 }}>{t('site.today.empty')}</p>}
           {list.map(({ session: s, modality: m, teacher: te }) => (
             <ClassRow key={s.id} title={s.title} teacher={te?.display_name ?? ''} startsAt={s.starts_at} durationMin={m?.duration_min ?? 60} movement={m?.movement ?? 'fluye'} booked={s.booked_count} capacity={s.capacity} status={s.status} onClick={() => setPicked(s.id)} />
           ))}
         </Card>
-        <div className="site-legend">
-          <span className="eyebrow" style={{ alignSelf: 'center' }}>{t('site.schedule.legend')}</span>
-          {(Object.keys(movements) as Movement[]).map((mv) => <Chip key={mv} movement={mv} dot>{movements[mv].label}</Chip>)}
-        </div>
       </section>
+    ),
+    Legend: () => (
+      <section className="container" style={{ paddingBottom: 64 }}>
+        <div className="site-legend">
+          <span className="eyebrow">{t('site.schedule.legend')}</span>
+          {(Object.keys(movements) as Movement[]).map((mv) => (
+            <Chip key={mv} movement={mv} dot selected={mvFilter === mv} onClick={() => pickMovement(mv)}>{movements[mv].label}</Chip>
+          ))}
+        </div>
+        <p className="xs muted" style={{ marginTop: 8 }}>{t('site.schedule.legendBody', { mats: tenant.studio.mats })}</p>
+      </section>
+    ),
+  };
+
+  return (
+    <SiteShell>
+      {sections.filter(isVisible).map((name) => SECTIONS[name] ? <Fragment key={name}>{SECTIONS[name]()}</Fragment> : null)}
       <Drawer open={!!chosen} onClose={() => setPicked(null)} title={t('site.schedule.loginTitle')} side="bottom">
         {chosen && (
           <div className="stack">
