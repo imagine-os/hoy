@@ -23,7 +23,7 @@ const QUALITY = Number(args.find((a) => a.startsWith('--quality='))?.slice(10) ?
 const PORT = 4173;
 const BASE = `http://localhost:${PORT}/#`;
 export const KEY_PAGES = new Set(['HUB-01', 'W-01', 'C-01', 'S-02', 'M-01', 'M-03', 'D-02', 'K-03']);
-const PARAMS = { ':table': 'class_sessions', ':pageCode': 'C-01', ':id': 'ses_demo', ':kind': 'terms', ':chapter': '03-recepcion', ':code': 'C-01' };
+const PARAMS = { ':table': 'class_sessions', ':pageCode': 'C-01', ':id': 'ses_demo', ':kind': 'terms', ':chapter': '03-recepcion', ':code': 'C-01', ':slug': 'hot-yoga' };
 export const EXT = 'jpg';
 export const fileName = (lang, width, theme, label = '') => `${lang}-${width}${theme === 'dark' ? '-dark' : ''}${label ? `-${label}` : ''}.${EXT}`;
 export const MANIFEST = new URL('../docs/screenshots/routes.json', import.meta.url);
