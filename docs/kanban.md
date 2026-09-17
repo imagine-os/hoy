@@ -1,6 +1,6 @@
 # HoyOS kanban
 
-_Updated every turn. Codes reference `src/specs/canvasSpecs.ts` and the module `specs.ts` files; `/#/dev/specs` shows the live built/stub badge per code (v0.4.0: 65 codes routed, 0 stubs; visual fidelity pass against the canvas)._
+_Updated every turn. Codes reference `src/specs/canvasSpecs.ts` and the module `specs.ts` files; `/#/dev/specs` shows the live built/stub badge per code (v0.5.0: 69 codes routed, 0 stubs; admin shell pass — collapsible sidebar, top bar, M-08a…M-08e — plus the 0008 data depth pass)._
 
 ## Backlog
 
@@ -13,8 +13,8 @@ _Updated every turn. Codes reference `src/specs/canvasSpecs.ts` and the module `
 
 ### Product
 - A-06 legal pages inside the app (site pages exist) · real Supabase Auth behind A-02/A-03/C-21 (SessionProvider already accepts any `users` row)
-- Pages that read `policy.*` re-render on the next navigation after an M-08 edit; a `usePolicy()` hook would make it instant
-- Bank account + NIT for transfer instructions (C-05) in M-08 profile section · PDF receipts (C-11)
+- `src/modules/customer/policy.ts` can now switch to `usePolicy()` (0007) and drop `<PolicySync/>`; C-05 transfer instructions can read the payout account from M-08c
+- PDF receipts (C-11)
 - S-02/S-04 follow-ups: offline queue for check-ins, real Wompi link · M-04 MJML designer + real provider · M-05 Meta approval API · M-09 Wompi payouts + DIAN CUFE emission
 - M-02 scheduled publishing + media library · M-06 duplicate merge · M-07 signed CSV
 - Supabase provider (auth, realtime) · Wompi payments/payroll · WhatsApp CRM · email designer
@@ -34,7 +34,7 @@ _Updated every turn. Codes reference `src/specs/canvasSpecs.ts` and the module `
 - empty10 placeholder: awaiting Justin's decision (reset to placeholder or delete)
 
 ## Doing
-- (none — 0008 data depth closed)
+- (none — 0007 admin shell and 0008 data depth closed)
 
 ## Done
 
@@ -48,6 +48,17 @@ _Updated every turn. Codes reference `src/specs/canvasSpecs.ts` and the module `
 - C-05 manages `payment_methods` (add via the new `wompiTokenise()` seam, remove, make default); `token_ref` is visibly a placeholder and the PAN never reaches HoyOS
 - C-13 and C-14/C-15 read `content_articles` / `faq_entries`; `src/modules/customer/content.ts` deleted and the 23 dictionary keys of the derived inbox pruned
 - New component `RatingSummary` (molecule, `.meta.ts`, states) — D-02 stays current in the same turn
+
+### Admin shell (0007 · v0.5.0)
+- `DesktopShell`: 240 px lane ⇄ 56 px icon rail with tooltips (footer chevron + `[`), collapsed state per surface in localStorage; nav groups fold with a caret (state per group, active route's group forced open); off-canvas drawer with scrim below 900 px, opened from the top bar
+- Top bar for staff/admin/dev: sidebar toggle · wordmark · page name + code chip · global search (routes by name/code, members by name, `/` to focus, ↑↓, Enter) · ES/EN · theme · unread bell (`message_log`) · role switcher · dev-mode toggle · spec chip
+- New molecules `GlobalSearch` and `NotificationBell` (with metas); `TopBar` gained `leading`, `code` and `center` slots; `RouteDef.nav` gained `group` as an i18n key and `to`
+- Feature switches left M-01 for M-08b; M-08 is now M-08a General · M-08b Features · M-08c Payments (payout account, NIT, IVA/DIAN, Wompi env, "keys never stored here") · M-08d Communications · M-08e Branding, each a route with its own spec and an audited section save
+- M-01 gained "Today at a glance" (today's classes, occupancy, who is already checked in) in the freed space
+- `usePolicy()` exported from `src/modules/admin/settings.ts` — M-08 saves reach consumers immediately
+- Design system reachable from the admin sidebar for a super admin (`core.nav.group.design` → tokens, components, specs, layout editor at C-01, knowledgebase); dev surface keeps its own shell and lists the admin group too
+- Containment pass: no card-like element lets text escape at 390 or 1280 px (Playwright: 17 real overflows before, 0 after) — `min-width: 0` on flex/grid children, `overflow-wrap: anywhere` for codes/emails/IDs, media and `pre` capped
+- D-01 gained `--w-rail: 56px`
 
 ### Visual fidelity (0006 · v0.4.0)
 - D-01 rewritten from the canvas hoy-brand tokens: `--hoy-c*` palette, `--m-*` RGB triplets, semantic surfaces (frame paper / sand tiles / cream lane / sand ground), Depth shadow scale verbatim, Texture layer as CSS (`--tex-*`), materials (`--mat-*`), surface scale, movements from `movSets.hoy`, radii 4/8/11/16/18/24/32/34, breathe 7 s + spin 1.1 s

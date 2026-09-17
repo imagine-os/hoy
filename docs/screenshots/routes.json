@@ -17,7 +17,7 @@
    "layout": [
     "KPIRow ×4",
     "OccupancyChart",
-    "FeatureTable",
+    "TodayAtAGlance",
     "AuditTrail"
    ],
    "data": [
@@ -25,7 +25,8 @@
     "payments",
     "class_sessions",
     "bookings",
-    "feature_flags",
+    "modalities",
+    "teachers",
     "audit_log",
     "users",
     "profiles"
@@ -75,7 +76,8 @@
    "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#M-01",
    "notes": [
     "Sections are reorderable through useLayout (layout editor D-04).",
-    "Flag toggles write audit_log flag.toggle with before/after."
+    "The feature switches moved to M-08b (/admin/settings/features) in 0.5.0; the dashboard no longer writes feature_flags.",
+    "TodayAtAGlance lists today's sessions with occupancy and who is already in the room (bookings.checked_in)."
    ]
   }
  },
@@ -722,28 +724,25 @@
  },
  {
   "path": "/admin/settings",
-  "code": "M-08",
+  "code": "M-08a",
   "surface": "admin",
   "status": "built",
   "spec": {
-   "code": "M-08",
+   "code": "M-08a",
    "name": {
-    "es": "Ajustes y políticas del estudio",
-    "en": "Studio settings & policies"
+    "es": "Ajustes · General",
+    "en": "Settings · General"
    },
    "purpose": {
-    "es": "Perfil del estudio, sedes, salas, horarios, políticas, impuestos e integraciones.",
-    "en": "The operating parameters every other screen reads from: identity, hours, rooms, the cancellation and waitlist rules quoted across the app, tax and invoicing, and the third parties the studio depends on."
+    "es": "Identidad de contacto, horario de apertura, aforo y políticas: los números que todas las demás pantallas leen.",
+    "en": "Contact identity, opening hours, capacity and policies: the numbers every other screen reads."
    },
    "layout": [
-    "SectionRail",
+    "SettingsSubNav",
     "StudioProfile",
     "OpeningHours",
     "Capacity",
     "Policies",
-    "QuietHours",
-    "TaxAndInvoicing",
-    "FeatureFlags",
     "Integrations"
    ],
    "data": [
@@ -807,7 +806,355 @@
    "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#M-08",
    "notes": [
     "Stored in tenants.settings (json) via useSettings(); defaults from src/tenant/tenant.ts.",
-    "S-02 reads lateGraceMin, S-04 reads tax, M-05 reads quietHours."
+    "S-02 reads lateGraceMin, S-04 reads tax, M-05 reads quietHours.",
+    "usePolicy() (src/modules/admin/settings.ts) re-renders consumers when a section is saved.",
+    "Sub-page of M-08; the sub-navigation is shared by all five."
+   ]
+  }
+ },
+ {
+  "path": "/admin/settings/features",
+  "code": "M-08b",
+  "surface": "admin",
+  "status": "built",
+  "spec": {
+   "code": "M-08b",
+   "name": {
+    "es": "Ajustes · Funciones",
+    "en": "Settings · Features"
+   },
+   "purpose": {
+    "es": "Interruptores de funciones del estudio y de página (feature_flags), con escritura auditada. Vivían en el panel M-01 hasta 0.5.0.",
+    "en": "Studio and per-page feature switches (feature_flags) with audited writes. They lived on the M-01 dashboard until 0.5.0."
+   },
+   "layout": [
+    "SettingsSubNav",
+    "StudioFeatures",
+    "FeatureFlagsByPage"
+   ],
+   "data": [
+    "tenants",
+    "feature_flags",
+    "rooms",
+    "audit_log"
+   ],
+   "roles": [
+    "super_admin",
+    "coordinator",
+    "finance"
+   ],
+   "logic": [
+    "features.write gates every switch; without it the toggles render disabled.",
+    "A-06 and E-04 flags are locked: the demo needs them on.",
+    "Each flip writes audit_log flag.toggle with before/after."
+   ],
+   "integrations": [
+    "WhatsApp",
+    "Wompi",
+    "Email",
+    "Supabase Realtime",
+    "DIAN e-invoicing"
+   ],
+   "states": [
+    "Loading",
+    "Read-only (sin features.write)",
+    "Flag bloqueado",
+    "Guardado"
+   ],
+   "toggles": [
+    {
+     "label": "Multiple locations",
+     "on": false
+    },
+    {
+     "label": "No-show fee",
+     "on": false
+    },
+    {
+     "label": "Electronic invoicing",
+     "on": true
+    },
+    {
+     "label": "Holiday calendar",
+     "on": true
+    }
+   ],
+   "story": "As super admin I change the cancellation window from 4h to 6h and every screen that quotes it updates.",
+   "api": [
+    "GET /admin/settings",
+    "PATCH /admin/settings/:section",
+    "GET /admin/locations",
+    "POST /admin/locations",
+    "GET /admin/integrations"
+   ],
+   "layerTree": "Settings\n├ SectionRail\n├ StudioProfile (name, NIT, address, contact)\n├ Locations → rooms + capacity\n├ OpeningHours (per weekday, holidays)\n├ Policies\n│ ├ Cancellation window\n│ ├ Waitlist claim window\n│ ├ Late check-in grace\n│ └ No-show fee\n├ TaxAndInvoicing (IVA, DIAN resolution)\n└ Integrations (gateway, WhatsApp API, email, calendar)",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#M-08",
+   "notes": [
+    "Stored in tenants.settings (json) via useSettings(); defaults from src/tenant/tenant.ts.",
+    "S-02 reads lateGraceMin, S-04 reads tax, M-05 reads quietHours.",
+    "usePolicy() (src/modules/admin/settings.ts) re-renders consumers when a section is saved.",
+    "Sub-page of M-08; the sub-navigation is shared by all five."
+   ]
+  }
+ },
+ {
+  "path": "/admin/settings/payments",
+  "code": "M-08c",
+  "surface": "admin",
+  "status": "built",
+  "spec": {
+   "code": "M-08c",
+   "name": {
+    "es": "Ajustes · Pagos",
+    "en": "Settings · Payments"
+   },
+   "purpose": {
+    "es": "Cuenta de consignación, NIT, IVA y resolución DIAN, y el entorno de Wompi. Las llaves secretas nunca se guardan aquí.",
+    "en": "Payout account, NIT, IVA and DIAN resolution, and the Wompi environment. Secret keys are never stored here."
+   },
+   "layout": [
+    "SettingsSubNav",
+    "PayoutAccount",
+    "WompiEnvironment + SecretNotice",
+    "FiscalIdentity (NIT)",
+    "TaxAndInvoicing"
+   ],
+   "data": [
+    "tenants",
+    "feature_flags",
+    "rooms",
+    "audit_log"
+   ],
+   "roles": [
+    "super_admin",
+    "coordinator",
+    "finance"
+   ],
+   "logic": [
+    "Policy values are read at runtime by C-08, C-18 and E-02 — changing one here changes the copy everywhere, never a hardcoded string.",
+    "A policy change applies to future bookings only; bookings already made keep the terms they were made under.",
+    "Locations exist in the model even with one site, so a second sede needs no migration.",
+    "DIAN resolution number and range are required before electronic invoicing can be switched on.",
+    "Integration credentials are write-only in the UI and never displayed back."
+   ],
+   "integrations": [
+    "Wompi",
+    "DIAN e-invoicing"
+   ],
+   "states": [
+    "Saving: section-level confirmation",
+    "Validation: DIAN range exhausted warning",
+    "Integration down: amber status with last check",
+    "No permission: section renders read-only"
+   ],
+   "toggles": [
+    {
+     "label": "Multiple locations",
+     "on": false
+    },
+    {
+     "label": "No-show fee",
+     "on": false
+    },
+    {
+     "label": "Electronic invoicing",
+     "on": true
+    },
+    {
+     "label": "Holiday calendar",
+     "on": true
+    }
+   ],
+   "story": "As super admin I change the cancellation window from 4h to 6h and every screen that quotes it updates.",
+   "api": [
+    "GET /admin/settings",
+    "PATCH /admin/settings/:section",
+    "GET /admin/locations",
+    "POST /admin/locations",
+    "GET /admin/integrations"
+   ],
+   "layerTree": "Settings\n├ SectionRail\n├ StudioProfile (name, NIT, address, contact)\n├ Locations → rooms + capacity\n├ OpeningHours (per weekday, holidays)\n├ Policies\n│ ├ Cancellation window\n│ ├ Waitlist claim window\n│ ├ Late check-in grace\n│ └ No-show fee\n├ TaxAndInvoicing (IVA, DIAN resolution)\n└ Integrations (gateway, WhatsApp API, email, calendar)",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#M-08",
+   "notes": [
+    "Stored in tenants.settings (json) via useSettings(); defaults from src/tenant/tenant.ts.",
+    "S-02 reads lateGraceMin, S-04 reads tax, M-05 reads quietHours.",
+    "usePolicy() (src/modules/admin/settings.ts) re-renders consumers when a section is saved.",
+    "Sub-page of M-08.",
+    "Wompi private keys live in server environment variables, never in tenants.settings nor in the browser."
+   ]
+  }
+ },
+ {
+  "path": "/admin/settings/communications",
+  "code": "M-08d",
+  "surface": "admin",
+  "status": "built",
+  "spec": {
+   "code": "M-08d",
+   "name": {
+    "es": "Ajustes · Comunicaciones",
+    "en": "Settings · Communications"
+   },
+   "purpose": {
+    "es": "Horas de silencio y nombres de remitente de WhatsApp y email, que M-04 y M-05 usan al enviar.",
+    "en": "Quiet hours and the WhatsApp and email sender names M-04 and M-05 use when sending."
+   },
+   "layout": [
+    "SettingsSubNav",
+    "QuietHours",
+    "SenderIdentity"
+   ],
+   "data": [
+    "tenants",
+    "feature_flags",
+    "rooms",
+    "audit_log"
+   ],
+   "roles": [
+    "super_admin",
+    "coordinator",
+    "finance"
+   ],
+   "logic": [
+    "Policy values are read at runtime by C-08, C-18 and E-02 — changing one here changes the copy everywhere, never a hardcoded string.",
+    "A policy change applies to future bookings only; bookings already made keep the terms they were made under.",
+    "Locations exist in the model even with one site, so a second sede needs no migration.",
+    "DIAN resolution number and range are required before electronic invoicing can be switched on.",
+    "Integration credentials are write-only in the UI and never displayed back."
+   ],
+   "integrations": [
+    "WhatsApp Cloud API",
+    "Email"
+   ],
+   "states": [
+    "Saving: section-level confirmation",
+    "Validation: DIAN range exhausted warning",
+    "Integration down: amber status with last check",
+    "No permission: section renders read-only"
+   ],
+   "toggles": [
+    {
+     "label": "Multiple locations",
+     "on": false
+    },
+    {
+     "label": "No-show fee",
+     "on": false
+    },
+    {
+     "label": "Electronic invoicing",
+     "on": true
+    },
+    {
+     "label": "Holiday calendar",
+     "on": true
+    }
+   ],
+   "story": "As super admin I change the cancellation window from 4h to 6h and every screen that quotes it updates.",
+   "api": [
+    "GET /admin/settings",
+    "PATCH /admin/settings/:section",
+    "GET /admin/locations",
+    "POST /admin/locations",
+    "GET /admin/integrations"
+   ],
+   "layerTree": "Settings\n├ SectionRail\n├ StudioProfile (name, NIT, address, contact)\n├ Locations → rooms + capacity\n├ OpeningHours (per weekday, holidays)\n├ Policies\n│ ├ Cancellation window\n│ ├ Waitlist claim window\n│ ├ Late check-in grace\n│ └ No-show fee\n├ TaxAndInvoicing (IVA, DIAN resolution)\n└ Integrations (gateway, WhatsApp API, email, calendar)",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#M-08",
+   "notes": [
+    "Stored in tenants.settings (json) via useSettings(); defaults from src/tenant/tenant.ts.",
+    "S-02 reads lateGraceMin, S-04 reads tax, M-05 reads quietHours.",
+    "usePolicy() (src/modules/admin/settings.ts) re-renders consumers when a section is saved.",
+    "Sub-page of M-08; the sub-navigation is shared by all five."
+   ]
+  }
+ },
+ {
+  "path": "/admin/settings/branding",
+  "code": "M-08e",
+  "surface": "admin",
+  "status": "built",
+  "spec": {
+   "code": "M-08e",
+   "name": {
+    "es": "Ajustes · Marca",
+    "en": "Settings · Branding"
+   },
+   "purpose": {
+    "es": "Nombre visible del estudio, variante del wordmark e idioma por defecto; la vista previa usa el wordmark real.",
+    "en": "Studio display name, wordmark variant and default language; the preview uses the real wordmark."
+   },
+   "layout": [
+    "SettingsSubNav",
+    "DisplayName",
+    "WordmarkVariant",
+    "DefaultLanguage",
+    "Preview"
+   ],
+   "data": [
+    "tenants",
+    "feature_flags",
+    "rooms",
+    "audit_log"
+   ],
+   "roles": [
+    "super_admin",
+    "coordinator",
+    "finance"
+   ],
+   "logic": [
+    "Policy values are read at runtime by C-08, C-18 and E-02 — changing one here changes the copy everywhere, never a hardcoded string.",
+    "A policy change applies to future bookings only; bookings already made keep the terms they were made under.",
+    "Locations exist in the model even with one site, so a second sede needs no migration.",
+    "DIAN resolution number and range are required before electronic invoicing can be switched on.",
+    "Integration credentials are write-only in the UI and never displayed back."
+   ],
+   "integrations": [
+    "WhatsApp",
+    "Wompi",
+    "Email",
+    "Supabase Realtime",
+    "DIAN e-invoicing"
+   ],
+   "states": [
+    "Saving: section-level confirmation",
+    "Validation: DIAN range exhausted warning",
+    "Integration down: amber status with last check",
+    "No permission: section renders read-only"
+   ],
+   "toggles": [
+    {
+     "label": "Multiple locations",
+     "on": false
+    },
+    {
+     "label": "No-show fee",
+     "on": false
+    },
+    {
+     "label": "Electronic invoicing",
+     "on": true
+    },
+    {
+     "label": "Holiday calendar",
+     "on": true
+    }
+   ],
+   "story": "As super admin I change the cancellation window from 4h to 6h and every screen that quotes it updates.",
+   "api": [
+    "GET /admin/settings",
+    "PATCH /admin/settings/:section",
+    "GET /admin/locations",
+    "POST /admin/locations",
+    "GET /admin/integrations"
+   ],
+   "layerTree": "Settings\n├ SectionRail\n├ StudioProfile (name, NIT, address, contact)\n├ Locations → rooms + capacity\n├ OpeningHours (per weekday, holidays)\n├ Policies\n│ ├ Cancellation window\n│ ├ Waitlist claim window\n│ ├ Late check-in grace\n│ └ No-show fee\n├ TaxAndInvoicing (IVA, DIAN resolution)\n└ Integrations (gateway, WhatsApp API, email, calendar)",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#M-08",
+   "notes": [
+    "Stored in tenants.settings (json) via useSettings(); defaults from src/tenant/tenant.ts.",
+    "S-02 reads lateGraceMin, S-04 reads tax, M-05 reads quietHours.",
+    "usePolicy() (src/modules/admin/settings.ts) re-renders consumers when a section is saved.",
+    "Sub-page of M-08.",
+    "Empty display name falls back to src/tenant/tenant.ts; nothing is hardcoded per studio."
    ]
   }
  },
