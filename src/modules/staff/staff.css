@@ -1,0 +1,42 @@
+/* S-02 door board */
+.checkin { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: var(--sp-5); align-items: start; }
+.checkin-main, .checkin-side { display: flex; flex-direction: column; gap: var(--sp-4); min-width: 0; }
+.checkin-strip { display: flex; gap: var(--sp-2); overflow-x: auto; padding-bottom: 4px; scroll-snap-type: x proximity; }
+.checkin-strip-item { flex: 0 0 auto; display: flex; flex-direction: column; gap: 4px; padding: var(--sp-2) var(--sp-3); border-radius: var(--r-md); border: 1px solid var(--color-border); background: var(--color-surface); text-align: left; color: inherit; min-width: 180px; scroll-snap-align: start; box-shadow: var(--shadow-card); }
+.checkin-strip-item:hover { border-color: var(--color-border-strong); }
+.checkin-strip-item.is-selected { border-color: var(--color-primary); box-shadow: inset 0 0 0 1px var(--color-primary), var(--shadow-card); }
+.checkin-strip-item.is-past { opacity: .6; }
+.checkin-title { font-size: var(--fs-xl); }
+.checkin-cap { min-width: 180px; }
+.checkin-searchrow { margin-top: var(--sp-3); }
+.checkin-searchrow .input { flex: 1 1 240px; min-height: 44px; font-size: var(--fs-md); }
+.checkin-kbd { border: 1px solid var(--color-border-strong); border-bottom-width: 2px; border-radius: var(--r-sm); padding: 2px 8px; font-size: var(--fs-xs); color: var(--color-text-muted); background: var(--color-surface-2); }
+.checkin-grouphead { padding: 0 var(--sp-1) var(--sp-1); }
+.checkin-teacher { padding: 8px 6px; border-bottom: 1px solid var(--color-border); }
+.checkin-teacher:last-child { border-bottom: 0; }
+@media (max-width: 1000px) { .checkin { grid-template-columns: 1fr; } }
+
+/* S-04 register & take payment */
+.register { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: var(--sp-5); align-items: start; }
+.register-steps { display: flex; flex-direction: column; gap: var(--sp-4); min-width: 0; }
+.register-rail { position: sticky; top: var(--sp-6); }
+.register-form .field { min-width: 0; }
+.register-consent { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 4px; padding-top: var(--sp-2); border-top: 1px solid var(--color-border); }
+.register-found { display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-3); border-radius: var(--r-md); background: var(--color-surface-2); }
+.register-candidate { display: flex; align-items: center; gap: var(--sp-3); width: 100%; padding: 8px 10px; border: 1px solid var(--color-border); border-radius: var(--r-md); background: var(--color-surface); color: inherit; text-align: left; }
+.register-candidate:hover { background: var(--color-surface-2); }
+.register-link { border: 0; background: none; color: var(--color-primary); padding: 0; font: inherit; cursor: pointer; }
+.register-family { margin-bottom: var(--sp-3); }
+.register-family .eyebrow { padding: var(--sp-1) 0; }
+.register-item { border-radius: var(--r-md); transition: box-shadow var(--dur-fast); }
+.register-item.is-selected { box-shadow: inset 0 0 0 2px var(--color-primary); background: color-mix(in srgb, var(--color-primary) 6%, transparent); }
+.register-methods { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: var(--sp-2); }
+.register-method { display: flex; flex-direction: column; gap: 2px; padding: var(--sp-3); border: 1px solid var(--color-border-strong); border-radius: var(--r-md); background: var(--color-surface); color: inherit; text-align: left; min-height: 64px; }
+.register-method:hover { background: var(--color-surface-2); }
+.register-method.is-selected { border-color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 8%, transparent); box-shadow: inset 0 0 0 1px var(--color-primary); }
+.register-line { padding: 4px 0; border-bottom: 1px solid var(--color-border); }
+.register-total { padding-top: var(--sp-2); font-family: var(--font-heading); font-weight: var(--fw-semibold); font-size: var(--fs-xl); }
+.register-done { display: flex; gap: var(--sp-6); align-items: flex-start; flex-wrap: wrap; }
+.register-done .stack-sm { min-width: 220px; }
+@media (max-width: 1000px) { .register { grid-template-columns: 1fr; } .register-rail { position: static; } }
+.register-item .pricerow { padding: var(--sp-3) var(--sp-2); }
