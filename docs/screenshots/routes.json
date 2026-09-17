@@ -1586,6 +1586,8 @@
     "class_sessions",
     "bookings",
     "teachers",
+    "special_charges",
+    "space_bookings",
     "audit_log"
    ],
    "roles": [
@@ -1595,6 +1597,7 @@
    ],
    "logic": [
     "Generating a draft is idempotent: an existing draft for the same period has its lines deleted and recomputed, so pressing the button twice cannot double-pay. An approved or paid run is refused with a reason.",
+    "The draft is class lines + manual lines: every special_charges row with a teacher and a teacher_payout whose service date (its space booking, else the sale) falls in the period becomes one payroll_lines row of kind manual, sourced by special_charge_id (src/data/payrollCalc.ts draftLinesFor). 0017.",
     "payroll.write gates every action; payroll.read is enough to look.",
     "Teachers are paid per class taught: one completed class_sessions row = one payroll_lines row of kind class at teachers.rate_per_class. Bonuses and adjustments are lines finance adds by hand and are never derived.",
     "src/data/payrollCalc.ts is the single arithmetic: the seed (historical runs), M-09a (generate draft) and S-03 (the teacher statement) all use it, so the three screens can never disagree.",
@@ -1646,6 +1649,8 @@
     "class_sessions",
     "bookings",
     "teachers",
+    "special_charges",
+    "space_bookings",
     "audit_log"
    ],
    "roles": [
@@ -1658,6 +1663,7 @@
     "Each teacher card shows the classes taught, the total attendance, the payment method and the settlement date — the payment detail finance is asked for on the phone.",
     "A run-level payment stamps every unpaid line with the same date and method, so the two paths can never disagree.",
     "Generating a draft is idempotent: an existing draft for the same period has its lines deleted and recomputed, so pressing the button twice cannot double-pay. An approved or paid run is refused with a reason.",
+    "The draft is class lines + manual lines: every special_charges row with a teacher and a teacher_payout whose service date (its space booking, else the sale) falls in the period becomes one payroll_lines row of kind manual, sourced by special_charge_id (src/data/payrollCalc.ts draftLinesFor). 0017.",
     "payroll.write gates every action; payroll.read is enough to look.",
     "Teachers are paid per class taught: one completed class_sessions row = one payroll_lines row of kind class at teachers.rate_per_class. Bonuses and adjustments are lines finance adds by hand and are never derived.",
     "src/data/payrollCalc.ts is the single arithmetic: the seed (historical runs), M-09a (generate draft) and S-03 (the teacher statement) all use it, so the three screens can never disagree.",
@@ -2280,7 +2286,8 @@
     "PlanCards",
     "ComparisonNote",
     "PrimaryCTA",
-    "SkipLink (Bienvenida passes)"
+    "SkipLink (Bienvenida passes)",
+    "SpecialsLine (WhatsApp, 0017)"
    ],
    "data": [
     "plans",
@@ -2330,7 +2337,8 @@
    "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-06",
    "notes": [
     "Prices only from src/tenant/pricing.ts (Modelo de Valor v3).",
-    "Wompi is simulated in src/modules/customer/payments.ts (wompiCheckout). Manual transfer/cash create pending payments the front desk settles."
+    "Wompi is simulated in src/modules/customer/payments.ts (wompiCheckout). Manual transfer/cash create pending payments the front desk settles.",
+    "Especiales (0017): birthdays, private events and team sessions are arranged directly with the studio — one line with a WhatsApp link, nothing sold here."
    ]
   }
  },
@@ -5375,7 +5383,7 @@
     "RoleBadge + KPIRow",
     "NextClassCard",
     "TodayList",
-    "QuickActions",
+    "QuickActions (check-in · register · rooms S-05)",
     "AuditNotice (recent activity)"
    ],
    "data": [
@@ -5615,6 +5623,72 @@
   }
  },
  {
+  "path": "/staff/rooms",
+  "code": "S-05",
+  "surface": "staff",
+  "status": "built",
+  "spec": {
+   "code": "S-05",
+   "name": {
+    "es": "Salas y reservas de espacio",
+    "en": "Rooms & space bookings"
+   },
+   "purpose": {
+    "es": "Ver cada sala por día con sus clases y sus reservas de espacio, reservar una ventana para un evento privado, alquiler, clase privada, mantenimiento o bloqueo, y confirmar, cancelar o cerrar la reserva.",
+    "en": "See every room by day with its classes and space bookings, book a window for a private event, rental, private class, maintenance or a block, and confirm, cancel or close the booking."
+   },
+   "layout": [
+    "DateStrip",
+    "DayGrid",
+    "BookingForm",
+    "Selected",
+    "UpcomingList"
+   ],
+   "data": [
+    "rooms",
+    "class_sessions",
+    "space_bookings",
+    "special_charges",
+    "teachers",
+    "modalities",
+    "users",
+    "profiles",
+    "audit_log"
+   ],
+   "roles": [
+    "super_admin",
+    "admin",
+    "coordinator",
+    "front_desk"
+   ],
+   "logic": [
+    "A room is taken by a scheduled class or by a space booking that is not cancelled; two windows conflict when they overlap for more than zero minutes (src/modules/staff/rooms.ts findConflicts). The form refuses an overlapping window and lists what is in the way.",
+    "Statuses: held (quoted, no deposit — dashed block) → confirmed → done; cancelled at any point frees the room. Each transition writes an audit_log row (space_booking.<status>).",
+    "Booking and charging are two acts: \"Cobrar\" opens S-04 with ?booking=<id>, which sells an Especial and links it back (special_charge_id) while confirming the booking. S-04 can also create the booking inside the sale.",
+    "A teacher on a booking is paid through the Especial (special_charges.teacher_payout → payroll_lines kind manual), never here.",
+    "bookings.write_any gates every write; the rest of the page is read-only for other staff."
+   ],
+   "integrations": [],
+   "states": [
+    "Loading",
+    "No rooms",
+    "Empty day",
+    "Day with classes only",
+    "Held / confirmed / done / cancelled blocks",
+    "Cancelled hidden by default (toggle)",
+    "Conflict: CTA disabled with the list of what overlaps",
+    "Read-only (no bookings.write_any)",
+    "Selected class → open check-in",
+    "Selected booking → confirm / done / cancel / charge"
+   ],
+   "notes": [
+    "Sections: DateStrip (14 days + any date) · DayGrid (rooms × hours: class_sessions + space_bookings) · BookingForm (kind, room, window, title, who, teacher, note, conflict check) · Selected (status actions, Cobrar → S-04) · UpcomingList.",
+    "Rooms come from the rooms table (seed: Sala principal + Sala de meditación); the grid draws as many columns as there are rows.",
+    "The hour range widens to fit the blocks; 06–21 is only the display default, not a studio fact."
+   ]
+  }
+ },
+ {
   "path": "/teach",
   "code": "S-03",
   "surface": "teacher",
@@ -5632,6 +5706,7 @@
    "layout": [
     "NextClassCard",
     "TodayClasses (roster count)",
+    "Specials (own space_bookings, S-05)",
     "ScheduleList (week)",
     "SubstitutionRequest",
     "PayrollTile"
@@ -5643,7 +5718,10 @@
     "modalities",
     "users",
     "profiles",
-    "audit_log"
+    "audit_log",
+    "space_bookings",
+    "special_charges",
+    "rooms"
    ],
    "roles": [
     "teacher",
@@ -5799,7 +5877,7 @@
     "RunStateCard (borrador / aprobada / pagada / estimado)",
     "SummaryTiles (clases, tarifa, total)",
     "Breakdown (fecha, clase, asistentes, monto)",
-    "ExtrasLines (bono, ajuste)",
+    "ExtrasLines (bono, ajuste, Especial)",
     "PayoutMethodCard",
     "RunHistory",
     "PrintStatement + AskFinance (WhatsApp)"
@@ -5807,6 +5885,7 @@
    "data": [
     "payroll_runs",
     "payroll_lines",
+    "special_charges",
     "teachers",
     "class_sessions",
     "bookings",
@@ -5823,6 +5902,7 @@
    "logic": [
     "Before finance generates the run, the month is computed live from completed sessions × teachers.rate_per_class (src/data/payrollCalc.ts) and labelled as an estimate.",
     "Once a payroll_runs row covers the period, the page reads payroll_lines instead — so what the teacher sees is what finance will pay, bonuses and adjustments included.",
+    "A line of kind manual is a teacher payout agreed on an Especial (special_charges.teacher_payout, S-04); it prints as \"Especial: <concept>\" here and in M-09b (0017).",
     "A substitution is a session whose template teacher differs from the session teacher; it is a badge, not a different rate.",
     "The payout method on file comes from payment_methods for the teacher’s user; the method of the run itself is shown next to it.",
     "“Ask about this statement” opens WhatsApp to the studio contact from M-08 with the period and total prefilled."
@@ -6306,6 +6386,7 @@
    "layout": [
     "PageHead",
     "Families",
+    "Specials",
     "Discipline",
     "TaxNote"
    ],
@@ -6330,7 +6411,8 @@
    "logic": [
     "Reads only src/tenant/pricing.ts for prices, names and the per-family rationale (FAMILY_RATIONALE).",
     "The discipline band reads DISCIPLINE, whose numbers come from tenant.studio and the number of plan families.",
-    "The IVA note reads the M-08 tax policy through usePolicy() (src/modules/admin/settings.ts), read-only."
+    "The IVA note reads the M-08 tax policy through usePolicy() (src/modules/admin/settings.ts), read-only.",
+    "Especiales (0017): private events, birthdays, team sessions and special requests are not sold here — the Specials note sends the reader to WhatsApp (tenant.contact) and the desk prices them by hand in S-04."
    ],
    "integrations": [
     "WhatsApp",
@@ -6408,6 +6490,7 @@
    "layout": [
     "PageHead",
     "ContactCards",
+    "Specials",
     "Map",
     "Form"
    ],
@@ -6417,7 +6500,8 @@
    "logic": [
     "No hardcoded contact data: reads src/tenant/tenant.ts and labels every placeholder as pending.",
     "MapSlot reads tenant.location; provider stays \"none\" so the page makes no network request.",
-    "The form has no backend: it builds a wa.me deep link with the message prefilled."
+    "The form has no backend: it builds a wa.me deep link with the message prefilled.",
+    "Especiales (0017): private events, birthdays, team sessions and special requests are arranged directly with the studio — a card that opens WhatsApp with the request prefilled."
    ],
    "states": [
     "default",

@@ -2,7 +2,7 @@
 title: Ventas y planes
 role: recepción, coordinación, finanzas
 part: III
-version: 0.6.0
+version: 0.6.2
 updated: 2026-09-17
 summary: Registrar y cobrar en el mostrador, qué ofrecer a quién, y qué hace el socio desde su propia app.
 ---
@@ -16,7 +16,9 @@ vigencias: se eligen.
 1. **S-04 Registrar y cobrar**, sección **Quién**: Nuevo / Existente. Nuevo: nombre, WhatsApp, correo,
    contacto de emergencia, cumpleaños y consentimiento (la persona acepta verbalmente; tú lo
    registras: queda con hora, tu nombre y versión de la política — ver `23`).
-2. Sección **Qué**: elige el pase Bienvenida o el plan.
+2. Sección **Qué**: elige el pase Bienvenida o el plan. Debajo, la familia **Espacio · Especiales** es
+   para lo que no tiene botón: concepto y precio a mano, profesor con su pago y sala con su ventana en la
+   misma venta (`12` §7).
 3. Sección **Cómo paga**:
    - **Wompi (link)**: envía el link por WhatsApp; la orden queda pendiente hasta que la pasarela confirme.
    - **Datáfono**: cobra; la orden queda pendiente hasta la confirmación.
@@ -46,7 +48,7 @@ El IVA que aplica hoy el riel:
 | Ya sabe que se queda el año | Membresía anual | mejor precio por mes |
 | Viene entre reuniones, 20 minutos | Pausas | no ocupa un mat de clase |
 | Quiere regalar | Bono de regalo | es nuestro canal de referidos |
-| Quiere el espacio para su evento | Espacio, "desde" + conversación | no es checkout (`12`) |
+| Quiere el espacio para su evento, un cumpleaños o una sesión para su equipo | **Especial** en S-04: precio "desde" como referencia, concepto y valor a mano | no es checkout; la conversación termina en el mostrador (`12` §7) |
 
 Precios vigentes, leídos del sistema:
 

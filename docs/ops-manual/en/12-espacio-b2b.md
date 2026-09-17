@@ -2,9 +2,9 @@
 title: Space — B2B rental
 role: coordination, owner, finance
 part: III
-version: 0.6.0
+version: 0.6.2
 updated: 2026-09-17
-summary: Renting the studio off-peak: quoting, booking, setting up, charging and checking at close.
+summary: Renting the studio off-peak: quoting, booking in S-05, charging as an Especial in S-04, setting up and checking at close.
 ---
 
 # Space — B2B rental
@@ -39,11 +39,18 @@ prices that end in a conversation.
 > DECISION NEEDED: which hours count as "off-peak" for rentals, and whether a rental may displace a published class (and with how much notice).
 
 ## 3. How we book it
-1. The block is created in **M-02 → Schedule** as a non-publishable occurrence, so the room is taken
-   and nobody schedules a class on top of it.
-2. If the rental is a workshop open to the public, it goes in as an **event** (C-23) with its own price
+1. The block is created in **S-05 · Rooms & space bookings** (`/staff/rooms`): kind (private event,
+   rental, private class, maintenance or a block), room, date, start and end time, title, contact or
+   member, teacher if there is one, note. The room is taken and nobody schedules a class on top of it.
+2. **A room never holds two things at once.** The form checks the window against the published classes
+   and the other bookings of that room and, if anything overlaps by even a minute, it lists it and will
+   not book. Change the time or the room; moving a published class is the owner's call (§2).
+3. If the rental is a workshop open to the public, it goes in as an **event** (C-23) with its own price
    and capacity — there, there is a checkout.
-3. Front desk sees the block in S-02 like anything else in the day, with the contact's name.
+4. Front desk sees the block on the S-05 calendar next to the day's classes, with the contact's name;
+   the teacher sees it on their S-03 home under **Specials**.
+
+![Rooms by day: classes and space bookings on one calendar](../../screenshots/S-05/en-1280.jpg "S-05 · /staff/rooms")
 
 ## 4. Deposit and payment
 1. A rental is confirmed with a deposit; without a deposit the date is not held.
@@ -68,10 +75,39 @@ prices that end in a conversation.
    early check.
 4. Coordination closes the case in M-06 and finance reconciles the payment (`14`).
 
-## 7. What to watch each month
+## 7. Especiales — the manual charge
+An **Especial** (Special) is the sale whose concept and price are typed by hand at the desk. It exists for
+what the value model does not cover with a button: a birthday with a teacher, a session for a team, a
+rental with extras, an odd request. It is the operational answer to the question of a group-session
+product for celebrations (ROADMAP §E 34): the mechanics are here; the commercial product, if it is ever
+standardised, is Lore's call.
+
+1. **Book** (optional, S-05): the room and the window, as in §3. It may stay **held** while there is no
+   deposit — drawn with a dashed border — or go straight to **confirmed**.
+2. **Charge** (S-04 Register & take payment): under **What they buy**, the **Space · Specials** family lists
+   the "from" prices (Private Session, Workshops, Photo & Video, Shoots, Pop-ups) and a row **Special ·
+   free concept and price**. Picking one opens the **Special** card: concept (prefilled from the "from"
+   item), agreed amount, teacher and their payout, room and window, note. If the booking already exists in
+   S-05, its **Charge** button opens S-04 with everything loaded and, on completion, confirms and links it.
+3. **Who**: existing member, new person or **Contact only** (a company or someone who is not a member:
+   name only, no customer is created). IVA, **Amount paid** and **Note** work exactly as in any sale (`10`).
+4. **Complete sale** writes the payment and the invoice, the `special_charges` row and, with a room, the
+   confirmed `space_bookings` row — one sale, and all of it in M-07 under whoever charged.
+5. **The teacher's pay** is agreed here, not in payroll: the value typed under "Teacher payout" enters the
+   period's draft as a line **"Especial: <concept>"** (`16`). No teacher or no value, no line.
+
+**Booking statuses:** held → confirmed → done; cancelled at any point frees the room and, if there was a
+teacher, drops their line from the payroll draft. A done booking is never edited.
+
+![A Special at the desk: concept, amount, teacher, room and window](../../screenshots/S-04/en-1280.jpg "S-04 · /staff/register")
+
+{{table:special_charges}}
+
+## 8. What to watch each month
 | Indicator | Where |
 |---|---|
-| Hours rented | M-02 schedule + M-06 notes |
+| Hours rented | S-05 calendar + M-06 notes |
+| Specials charged and their teacher payouts | `special_charges` (M-03) + "Especial" lines in M-09b |
 | Espacio family revenue | M-09 Finance |
 | Incidents or damage from rentals | M-07 + M-06 notes |
 | Quotes sent vs closed | M-06 notes |

@@ -2,7 +2,7 @@
 title: Teacher payroll and payouts
 role: finance, owner, coordination
 part: IV
-version: 0.6.0
+version: 0.6.2
 updated: 2026-09-17
 summary: From closed attendance to a paid teacher: draft run, approval, payment and a statement each.
 ---
@@ -34,7 +34,11 @@ contradict each other.
 3. Generating is **idempotent**: if a draft already exists for that period its lines are deleted and
    recomputed, so pressing the button twice cannot pay twice. A run that is already approved or paid
    is refused, with the reason on screen.
-4. Nothing is paid from a draft.
+4. The draft also carries the **manual lines**: every Especial (`12` §7) with a teacher and a payout
+   whose service date falls in the period enters as a line **"Especial: <concept>"** with the amount the
+   desk agreed. It comes out of the same function as the classes (`draftLinesFor`), so recomputing never
+   duplicates it and a cancelled booking drops it.
+5. Nothing is paid from a draft.
 
 In **M-09 Finance** the **15-day** range sits next to 7 / 30 / 90 and all time: Colombian studios
 settle biweekly, and that range drives both the KPI tiles and the invoice table.
@@ -48,6 +52,9 @@ settle biweekly, and that range drives both the KPI tiles and the invoice table.
    taught by whoever it says.
 3. Differences a teacher reports (`06`) are resolved before approval, with the class and the date.
 4. Substitutions are paid to whoever taught, not to whoever was scheduled.
+5. **Especial** lines are cross-checked against the S-05 booking and the charge in `special_charges`: the
+   amount is what was typed at the sale; if it is wrong, fix the Especial and recompute the draft — the
+   line itself is never edited.
 
 ![The run statement in M-09b](../../screenshots/M-09b/en-1280.jpg "M-09b · /admin/finance/payouts/:id")
 
@@ -67,8 +74,8 @@ settle biweekly, and that range drives both the KPI tiles and the invoice table.
 1. The teacher opens **S-03 · Payroll** (`/teach/payroll`). Before finance generates the run the page
    computes the period live (completed sessions × their rate) and labels it an **estimate**.
 2. As soon as a run covers the period the page stops estimating and reads the `payroll_lines`: the
-   teacher sees exactly what finance will pay, bonuses and adjustments included, along with the run's
-   status (draft · approved · paid).
+   teacher sees exactly what finance will pay, bonuses, adjustments and Especiales included, along with
+   the run's status (draft · approved · paid).
 3. It also shows the class-by-class breakdown, the history of earlier runs, the payout method on
    file, a print view and a WhatsApp link to finance with the period and the total already written.
 4. The statement is the document that settles an argument: if it isn't there, it wasn't paid.

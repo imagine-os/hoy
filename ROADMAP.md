@@ -7,7 +7,16 @@ dónde estamos, qué sigue y en qué orden (con dependencias explícitas y lo qu
 paralelo), qué significa "terminado" en cada fase, cómo trabajar en el repo y qué debe decidir el
 owner del estudio. Está escrito para que otra cuenta de Claude (o una persona) lo retome sin contexto.
 
-## A. Where we are (v0.6.1, 2026-09-17)
+## A. Where we are (v0.6.2, 2026-09-17)
+
+- **v0.6.2 — Especiales** (`docs/changelog/0017-especiales.md`, prompt `docs/prompts/0017-especiales.md`):
+  the manual path for edge cases. `special_charges` + `space_bookings` (46 tables), the **Especial** item
+  inside S-04's `espacio` family (hand concept and price, optional teacher payout, optional room window,
+  "Solo contacto" payer), **S-05 `/staff/rooms`** (rooms × hours day grid, booking form with a conflict
+  check, held / confirmed / done / cancelled), `payroll_lines.kind = manual` derived by
+  `payrollCalc.draftLinesFor()` so M-09a's idempotent draft, M-09b and S-03 all print "Especial: <concept>",
+  and website copy on P-01 / W-06 / C-06 sending private events and special requests to WhatsApp. One new
+  organism, `RoomDayGrid` (56 components). Answers Jas's item 34 structurally.
 
 - **v0.6.1 is the expenses ledger** (`docs/changelog/0016-expenses-ledger.md`, Jas's review point 9):
   two tables (`expense_templates`, `expenses`), one arithmetic (`src/data/expenseCalc.ts`), **M-09c**
@@ -45,10 +54,11 @@ owner del estudio. Está escrito para que otra cuenta de Claude (o una persona) 
   chapter, and `{{pricing:…}}` / `{{tenant:…}}` / `{{policy:…}}` / `{{table:…}}` live blocks that read
   the app's own sources — the manual cannot go stale about a price or a policy. **27 pending owner
   decisions** are auto-extracted into K-04 and §E below.
-- **Data**: **44 tables** (38 + `media_assets`, `payroll_runs`, `payroll_lines`, `legal_acceptances`,
+- **Data**: **46 tables** (38 + `media_assets`, `payroll_runs`, `payroll_lines`, `legal_acceptances`,
   with `legal_documents` rewritten for versions and bilingual bodies, + `expense_templates` and
-  `expenses` in 0.6.1), each with its `TableDef.rls`
+  `expenses` in 0.6.1, + `special_charges` and `space_bookings` in 0.6.2), each with its `TableDef.rls`
   access contract emitted by `npm run sql` into `supabase/schema.sql` and `docs/data-model.md`.
+  Forward and circular foreign keys are emitted as a deferred `alter table` block so the SQL applies in order.
 - **Canvas look applied** (0.4.0): D-01 is the canvas hoy-brand token set; the phone frame, cream lane
   and card skin follow it. No card-like element lets its text escape at 390 or 1280 px. Dark-theme
   heading contrast on the movement and class cards was fixed in this cycle and verified in the
@@ -268,7 +278,10 @@ chapter or spec and close the card.
 33. **Lore**: do we need to store the **customer's sex/gender**? Nothing collects it today, so it would be a new
     `profiles` field and a new question at the desk.
 34. **Lore**: is there a **group-session product for birthdays or events** — book the room and a teacher with an
-    add-on detail? Today only the fixed timetable and the events calendar exist.
+    add-on detail? **Structurally answered in 0.6.2 (0017)**: a birthday or event group session is an **Especial** —
+    the room is booked in S-05, the teacher and the price are set by hand in S-04, and the teacher's payout reaches
+    payroll as a manual line. What remains for Lore is whether it becomes a *standard* product with a published
+    price (a `pricing.ts` item) or stays a conversation, and what the add-on detail is.
 
 ## F. What remains after this pass (for Justin)
 
@@ -363,3 +376,8 @@ of §E.
     and attaching the receipt image to a row (Supabase Storage).
 22. **Photography, video and a drawn map** for the 12 `media_assets` slots (item 14) — the one thing
     the owner has said he will supply himself.
+23. **Especiales, still open after 0.6.2.** The seed's second room ("Sala de meditación", 8 mats) is a demo
+    row — the real room list and capacities belong in the `rooms` table once the owner confirms them. A
+    held booking does not yet expire on its own (chapter 12's deposit rule is a person's decision today,
+    §E 26), an Especial paid by Wompi link stays `pending` like any S-04 sale, and refunds of an Especial
+    go through M-09's refund like any payment (the booking is cancelled by hand in S-05).

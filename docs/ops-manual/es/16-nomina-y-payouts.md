@@ -2,7 +2,7 @@
 title: Nómina de maestros y payouts
 role: finanzas, owner, coordinación
 part: IV
-version: 0.6.0
+version: 0.6.2
 updated: 2026-09-17
 summary: Del cierre de asistencia al pago del maestro: corrida en borrador, aprobación, pago y extracto.
 ---
@@ -34,7 +34,11 @@ contradecirse.
 3. Generar es **idempotente**: si ya existe un borrador para ese periodo, sus líneas se borran y se
    recalculan, así que pulsar dos veces no puede pagar dos veces. Una corrida ya aprobada o pagada se
    rechaza con el motivo en pantalla.
-4. Nada se paga en borrador.
+4. El borrador también trae las **líneas manuales**: cada Especial (`12` §7) con profesor y valor de pago
+   cuya fecha de servicio cae en el periodo entra como una línea **"Especial: <concepto>"** con el monto
+   que recepción acordó. Sale de la misma función que las clases (`draftLinesFor`), así que recalcular no
+   la duplica y una reserva cancelada la saca.
+5. Nada se paga en borrador.
 
 En **M-09 Finanzas** el rango de **15 días** vive junto a 7 / 30 / 90 y todo: los estudios en Colombia
 liquidan quincenalmente, y ese rango mueve tanto los indicadores como la tabla de facturas.
@@ -47,6 +51,9 @@ liquidan quincenalmente, y ese rango mueve tanto los indicadores como la tabla d
 2. Coordinación cruza el detalle contra **M-02 Horario**: cada clase pagada existió y la dictó quien dice.
 3. Diferencias que reporta un maestro (`06`) se resuelven antes de aprobar, con la clase y la fecha.
 4. Sustituciones: se pagan a quien dictó, no a quien estaba programado.
+5. Las líneas **Especial** se cruzan contra la reserva de S-05 y el cobro en `special_charges`: el monto
+   es el que se escribió al vender; si está mal, se corrige el Especial y se recalcula el borrador, no se
+   edita la línea.
 
 ![Extracto de la corrida en M-09b](../../screenshots/M-09b/es-1280.jpg "M-09b · /admin/finance/payouts/:id")
 
@@ -67,8 +74,8 @@ liquidan quincenalmente, y ese rango mueve tanto los indicadores como la tabla d
    página calcula el periodo en vivo (sesiones completadas × su tarifa) y lo rotula como
    **estimado**.
 2. En cuanto existe una corrida que cubre el periodo, la página deja de estimar y lee las
-   `payroll_lines`: el maestro ve exactamente lo que finanzas va a pagar, con bonos y ajustes
-   incluidos, y el estado de la corrida (borrador · aprobada · pagada).
+   `payroll_lines`: el maestro ve exactamente lo que finanzas va a pagar, con bonos, ajustes y
+   Especiales incluidos, y el estado de la corrida (borrador · aprobada · pagada).
 3. Además muestra el desglose clase por clase, el historial de corridas anteriores, el medio de pago
    registrado, una vista de impresión y un enlace de WhatsApp a finanzas con el periodo y el total ya
    escritos.

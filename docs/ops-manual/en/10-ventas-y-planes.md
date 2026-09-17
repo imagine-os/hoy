@@ -2,7 +2,7 @@
 title: Sales and plans
 role: front desk, coordination, finance
 part: III
-version: 0.6.0
+version: 0.6.2
 updated: 2026-09-17
 summary: Registering and taking payment at the desk, what to offer whom, and what the member does from their own app.
 ---
@@ -16,7 +16,9 @@ validities: you pick them.
 1. **S-04 Register & take payment**, section **Who**: New / Existing. New: name, WhatsApp, email,
    emergency contact, birthday and consent (the person agrees verbally; you record it — it is stored
    with time, your name and the policy version, see `23`).
-2. Section **What**: pick the Bienvenida pass or the plan.
+2. Section **What**: pick the Bienvenida pass or the plan. Below them, the **Space · Specials** family is
+   for what has no button: concept and price by hand, a teacher with their payout and a room with its
+   window, all in the same sale (`12` §7).
 3. Section **How they pay**:
    - **Wompi (link)**: send the link by WhatsApp; the order stays pending until the gateway confirms.
    - **Card terminal**: charge; the order stays pending until confirmation.
@@ -46,7 +48,7 @@ The IVA the rail applies today:
 | Already knows they're staying the year | Annual Membership | best price per month |
 | Comes between meetings, 20 minutes | Pausas | doesn't occupy a class mat |
 | Wants to give a gift | Gift voucher | it is our referral channel |
-| Wants the space for their event | Espacio, "from" + a conversation | not a checkout (`12`) |
+| Wants the space for their event, a birthday or a session for their team | **Especial** in S-04: the "from" price as reference, concept and amount by hand | not a checkout; the conversation ends at the desk (`12` §7) |
 
 Current prices, read from the system:
 

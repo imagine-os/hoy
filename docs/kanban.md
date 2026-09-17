@@ -1,6 +1,6 @@
 # HoyOS kanban
 
-_Updated every turn. Codes reference `src/specs/canvasSpecs.ts` and the module `specs.ts` files; `/#/dev/specs` shows the live built/stub badge per code (v0.6.0 closed by the integration of three parallel tracks: 89 routes, 77 codes, 0 stubs, 42 tables, 369 captures, 55 components in D-02; website + brand content, thin-screen depth, ops-manual rebuild. v0.6.1 adds the expenses ledger: 90 routes, 78 codes, 44 tables, 373 captures). What is still missing after v0.6.1 is listed as a plain numbered list in `ROADMAP.md` §F._
+_Updated every turn. Codes reference `src/specs/canvasSpecs.ts` and the module `specs.ts` files; `/#/dev/specs` shows the live built/stub badge per code (v0.6.2: Especiales — S-05 rooms, the Especial item in S-04, manual payroll lines; 91 routes, 79 codes, 0 stubs, 46 tables, 56 components in D-02; on top of v0.6.1's expenses ledger and v0.6.0's three tracks). What is still missing is listed as a plain numbered list in `ROADMAP.md` §F._
 
 ## Backlog
 
@@ -34,15 +34,27 @@ _Updated every turn. Codes reference `src/specs/canvasSpecs.ts` and the module `
   - **Sergio**: are teachers paid fortnightly or monthly? (sets the unit of time for payroll runs and accounting reports, and whether a "15 días" filter is added)
   - **Sergio**: does the Coordinator see the monthly total-revenue KPI in the admin panel?
   - **Lore**: do we need to store the customer's sex/gender? (no field today)
-  - **Lore**: is there a group-session product for birthdays/events (book room + teacher + an add-on)?
+  - **Lore**: is there a group-session product for birthdays/events (book room + teacher + an add-on)? — **structurally answered in 0017**: a birthday or event group session is an **Especial** (room in S-05 + teacher + hand price in S-04, payout to payroll); whether it becomes a standard product with a fixed price is still Lore's call
 
 ### Repo hygiene
 - empty10 placeholder: awaiting Justin's decision (reset to placeholder or delete)
 
 ## Doing
-- (none — v0.6.1 closed: 0016 expenses ledger + Finance balance, on top of v0.6.0's three integrated tracks)
+- (none — 0017 Especiales pushed on top of 0016 expenses ledger)
 
 ## Done
+
+### Especiales (0017 · v0.6.2)
+- **Named**: Especiales / Specials — the edge cases handled by hand, living inside the `espacio` family whose "desde" prices already end in a conversation (manual `12`)
+- **Two tables** (42 → 44): `special_charges` (concept, hand price, customer or contact, teacher + `teacher_payout`, `space_booking_id`, `payment_id`, `source_item`) and `space_bookings` (room, kind private_event / rental / private_class / maintenance / blocked, window, status held → confirmed → done / cancelled); `payroll_lines.kind` gains `manual` + `special_charge_id`; `payments.user_id` nullable for a non-member payer
+- **S-04** "Qué compra" gained **Espacio · Especiales**: the five "desde" items + a free Especial row open the Especial card (concept, agreed amount, teacher + payout, room + window with the S-05 conflict check, note); "Quién" gained **Solo contacto**; one sale writes payment + invoice + `special_charges` + confirmed `space_bookings`, each audited; `?booking=` preloads an S-05 booking and confirms it
+- **Payroll**: `payrollCalc.ts` `manualLinesFor` / `draftLinesFor` — M-09a's draft includes one "Especial: <concept>" line per payout, idempotently (delete + recompute, sourced by `special_charge_id`); M-09b, S-03 and the CSV print it; verified run total = classes + manual lines
+- **S-05 `/staff/rooms`** (new code): `RoomDayGrid` organism (rooms × hours, classes by movement, bookings by kind, held dashed, "now" line), 14-day strip + any date, booking form that **refuses an overlapping window** and lists what is in the way, confirm / done / cancel, "Cobrar (S-04)"; linked from S-01 and the nav; the teacher's S-03 home lists their own bookings with the payout
+- **Website copy** in the brand voice: P-01 "Especiales · Lo que no cabe en un plan", W-06 card, C-06 line — all to WhatsApp from `tenant.contact`, nothing sold online
+- **Manual** ES + EN: `12` §3 books in S-05 with the conflict rule, new §7 Especiales; `10` pointer; `16` manual lines
+- Seed: second room **Sala de meditación** (demo capacity — real room list is the owner's), four bookings and two Especiales, the delivered birthday being the manual line of the current draft; `gen-sql.mjs` defers forward / circular FKs to an `alter table` block
+- Jas's item 34 for Lore answered structurally (see Decisions)
+
 
 ### Expenses ledger (0016 · v0.6.1)
 - **Two tables**, additive, bilingual, `commerce` group, with `TableDef.rls` (admin / finance read + write): `expense_templates` (recurring fixed cost: concept, category, amount, cadence `biweekly` | `monthly`, anchor day, vendor, active) and `expenses` (kind `fixed` | `variable`, category, concept, amount, `incurred_on`, `paid_on`, method cash | transfer | card, vendor, note, `template_id`, `created_by`) — 42 → **44**; `npm run sql` regenerated `supabase/schema.sql` and `docs/data-model.md`
