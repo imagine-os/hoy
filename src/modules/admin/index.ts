@@ -19,7 +19,8 @@ import { MediaPage } from './MediaPage';
 import { PayoutRunPage, PayoutsPage } from './PayoutsPage';
 import { ExpensesPage } from './ExpensesPage';
 import { DeletionsPage } from './DeletionsPage';
-import { M01, M02, M02a, M02b, M02c, M02d, M04, M05, M06, M07, M08a, M08b, M08c, M08d, M08e, M09, M09a, M09b, M09c, M11 } from './specs';
+import { IntegrationsPage } from './IntegrationsPage';
+import { M01, M02, M02a, M02b, M02c, M02d, M04, M05, M06, M07, M08a, M08b, M08c, M08d, M08e, M08f, M09, M09a, M09b, M09c, M10, M11 } from './specs';
 export { strings } from './strings';
 
 const G = 'core.nav.group.admin';
@@ -48,6 +49,8 @@ export const routes: RouteDef[] = [
   { ...base, path: '/admin/settings/payments', roles: [...admins, 'finance'], element: h(SettingsPage, { group: 'payments' }), spec: M08c },
   { ...base, path: '/admin/settings/communications', roles: [...admins, 'coordinator'], element: h(SettingsPage, { group: 'communications' }), spec: M08d },
   { ...base, path: '/admin/settings/branding', roles: admins, element: h(SettingsPage, { group: 'branding' }), spec: M08e },
+  { ...base, path: '/admin/settings/content', roles: [...admins, 'coordinator'], element: h(SettingsPage, { group: 'content' }), spec: M08f },
+  { ...base, path: '/admin/integrations', roles: admins, element: h(IntegrationsPage), spec: M10, nav: { labelKey: 'core.nav.integrations', icon: '⇄', order: 21, group: G } },
   { ...base, path: '/admin/finance', roles: [...admins, 'finance'], element: h(FinancePage), spec: M09, nav: { labelKey: 'admin.finance.nav', icon: '◇', order: 18, group: G } },
   { ...base, path: '/admin/finance/payouts', roles: [...admins, 'finance'], element: h(PayoutsPage), spec: M09a, nav: { labelKey: 'admin.payouts.nav', icon: '⊞', order: 19, group: G } },
   { ...base, path: '/admin/finance/payouts/:id', roles: [...admins, 'finance'], element: h(PayoutRunPage), spec: M09b },

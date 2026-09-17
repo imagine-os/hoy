@@ -4,11 +4,12 @@ import { demoUsers } from '../../auth/demoUsers';
 import { tenant } from '../../tenant/tenant';
 import { canvasSpecs } from '../../specs/canvasSpecs';
 import { rng } from './rng';
-import { NOW, base, dateOnly, iso, modalities, plans, rooms, teachers } from './catalog';
+import { NOW, SEED_RATE_CARD, base, dateOnly, iso, modalities, plans, rooms, teachers } from './catalog';
 import { contentArticles, events as seedEvents, faqEntries } from './content';
 import { currentLegal, legalDocuments } from './legal';
 import { mediaAssets } from './media';
 import { buildPayroll } from './payroll';
+import { buildIntegrations } from './integrations';
 import { buildExpenses, expenseTemplates } from './expenses';
 import { buildSpecials } from './specials';
 import { buildDeletionRequests } from './deletion';
@@ -29,7 +30,9 @@ export function buildSeed(): Record<string, BaseRow[]> {
   const r = rng(2026);
   const db: Record<string, BaseRow[]> = Object.fromEntries(tableNames.map((t) => [t, []]));
 
-  db.tenants.push({ ...base('ten_hoy', 365), id: tenant.id, slug: tenant.slug, name: tenant.name, legal_name: tenant.legalName, timezone: tenant.timezone, currency: tenant.currency, default_locale: tenant.defaultLocale, settings: { studio: tenant.studio, hours: tenant.hours } });
+  db.tenants.push({ ...base('ten_hoy', 365), id: tenant.id, slug: tenant.slug, name: tenant.name, legal_name: tenant.legalName, timezone: tenant.timezone, currency: tenant.currency, default_locale: tenant.defaultLocale, settings: { studio: tenant.studio, hours: tenant.hours, payroll: { cadence: 'monthly', payoutMethod: 'wompi', signedBy: '', withholding: false, rateCard: SEED_RATE_CARD } } });
+  // 0018: M-10 — every integration starts simulated, with its non-secret fields empty.
+  db.integrations.push(...buildIntegrations());
 
   // people: demo users + customers
   const users = db.users as UserRow[], profiles = db.profiles as ProfileRow[];
@@ -253,7 +256,7 @@ export function buildSeed(): Record<string, BaseRow[]> {
   db.audit_log.push(...specials.audit);
 
   // ---- teacher payroll (M-09a / S-03): three months, the latest still a draft ----
-  const payroll = buildPayroll({ sessions, bookings, templates: db.class_templates as (BaseRow & { teacher_id: string; weekday: number; active: boolean })[], teachers: db.teachers as TeacherRow[], specials: specials.charges, spaceBookings: specials.bookings });
+  const payroll = buildPayroll({ sessions, bookings, templates: db.class_templates as (BaseRow & { teacher_id: string; modality_id: string; weekday: number; active: boolean })[], teachers: db.teachers as TeacherRow[], specials: specials.charges, spaceBookings: specials.bookings, rateCard: SEED_RATE_CARD });
   db.payroll_runs.push(...payroll.runs);
   db.payroll_lines.push(...payroll.lines);
 

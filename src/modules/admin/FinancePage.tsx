@@ -35,7 +35,10 @@ export function FinancePage() {
   const { rows: invoices } = useTable<InvoiceRow>('invoices', { orderBy: { column: 'issued_at', dir: 'desc' } });
   const { rows: plans } = useTable<PlanRow>('plans');
   const { byId } = usePeople();
-  const [range, setRange] = useState<Range>('30d');
+  // 0018: the default window follows the M-08c payroll cadence (15 d when biweekly, 30 d when monthly) until the user picks one.
+  const [picked, setPicked] = useState<Range | null>(null);
+  const range: Range = picked ?? (settings.payroll.cadence === 'biweekly' ? '15d' : '30d');
+  const setRange = (r: Range) => setPicked(r);
   const [invStatus, setInvStatus] = useState<'all' | 'approved' | 'pending' | 'refunded'>('all');
   const { runs, linesOf } = usePayroll();
   const since = range === 'all' ? 0 : Date.now() - Number(range.replace('d', '')) * 86400e3;

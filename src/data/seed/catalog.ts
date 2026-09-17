@@ -16,6 +16,8 @@ export const modalities: ModalityRow[] = [
   { ...base('mod_pilates', 200), slug: 'pilates', name_es: 'Pilates', name_en: 'Pilates', movement: 'enraiza', description: { es: 'Control, centro y precisión en mat.', en: 'Control, core and precision on the mat.' }, intensity: 3, heated: false, duration_min: 55, active: true },
   { ...base('mod_barre', 200), slug: 'barre', name_es: 'Barre', name_en: 'Barre', movement: 'enraiza', description: { es: 'Fuerza y postura con inspiración en ballet.', en: 'Strength and posture with a ballet lineage.' }, intensity: 3, heated: false, duration_min: 50, active: true },
   { ...base('mod_yin', 200), slug: 'yin', name_es: 'Yin', name_en: 'Yin', movement: 'libera', description: { es: 'Posturas largas y quietas para soltar tejido profundo.', en: 'Long, still holds to release deep tissue.' }, intensity: 1, heated: false, duration_min: 60, active: true },
+  // 0018: Respiración has its own row; M-08f decides whether the public sees it (breathworkOwnClass) or it stays inside meditación.
+  { ...base('mod_respiracion', 200), slug: 'respiracion', name_es: 'Respiración', name_en: 'Breathwork', movement: 'libera', description: { es: 'Pranayama y respiración consciente, sentados o acostados. Sin esfuerzo.', en: 'Pranayama and conscious breathing, seated or lying down. No effort.' }, intensity: 1, heated: false, duration_min: 45, active: true },
   { ...base('mod_meditacion', 200), slug: 'meditacion', name_es: 'Meditación', name_en: 'Meditation', movement: 'libera', description: { es: 'Respiración guiada y silencio compartido.', en: 'Guided breath and shared silence.' }, intensity: 1, heated: false, duration_min: 40, active: true },
 ];
 
@@ -43,3 +45,13 @@ export const plans: PlanRow[] = pricing.map((p, i) => ({
   price: p.price ?? 0, period: p.period ?? 'once', credits: p.credits ?? null, validity_days: p.validityDays ?? null,
   is_from_price: !!p.from, badge: p.badge ?? null, active: true, sort: i,
 }));
+
+/**
+ * 0018 — the demo rate card M-08c opens with (COP per class by modality). It lives on the seeded
+ * `tenants.settings.payroll.rateCard`, not on the teacher rows: `teachers.rate_per_class` stays as the
+ * last fallback `payrollCalc.rateFor()` reads. The owner replaces these numbers in M-08c.
+ */
+export const SEED_RATE_CARD = {
+  byModality: { mod_hot_vinyasa: 110000, mod_morning_flow: 95000, mod_pilates: 95000, mod_barre: 90000, mod_yin: 85000, mod_meditacion: 80000, mod_respiracion: 80000 } as Record<string, number>,
+  byTeacher: {} as Record<string, number>,
+};

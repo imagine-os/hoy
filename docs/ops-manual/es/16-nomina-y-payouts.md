@@ -2,7 +2,7 @@
 title: Nómina de maestros y payouts
 role: finanzas, owner, coordinación
 part: IV
-version: 0.6.2
+version: 0.7.0
 updated: 2026-09-17
 summary: Del cierre de asistencia al pago del maestro: corrida en borrador, aprobación, pago y extracto.
 ---
@@ -40,8 +40,15 @@ contradecirse.
    la duplica y una reserva cancelada la saca.
 5. Nada se paga en borrador.
 
-En **M-09 Finanzas** el rango de **15 días** vive junto a 7 / 30 / 90 y todo: los estudios en Colombia
-liquidan quincenalmente, y ese rango mueve tanto los indicadores como la tabla de facturas.
+**La periodicidad es un interruptor, no una suposición** (0.7.0). En **M-08c · Ajustes → Pagos** el owner
+elige **mensual** o **quincenal (1–15 · 16–fin)**, y las dos están programadas: con mensual, M-09a genera una
+corrida por mes calendario; con quincenal, el mismo botón genera **dos** (la del 1 al 15 y la del 16 al fin de
+mes) y reemplaza un borrador del otro tipo que cubra los mismos días, para que ninguna clase se pague dos
+veces (una corrida aprobada o pagada bloquea en vez de reemplazarse). El extracto del maestro (`§5`) navega
+por el mismo periodo, y en **M-09 Finanzas** el rango por defecto pasa de 30 a **15 días** al cambiar el
+interruptor. La periodicidad vigente:
+
+{{policy:payroll_cadence}}
 
 ![Payouts en M-09a](../../screenshots/M-09a/es-1280.jpg "M-09a · /admin/finance/payouts")
 
@@ -84,11 +91,19 @@ liquidan quincenalmente, y ese rango mueve tanto los indicadores como la tabla d
 ![Extracto del maestro en S-03](../../screenshots/S-03/es-390-payroll.jpg "S-03 · /teach/payroll")
 
 ## 6. Las tarifas
-La tarifa por clase vive en el perfil del maestro, no en una hoja aparte:
+Desde 0.7.0 la tarifa vive en la **tarjeta de tarifas de M-08c**, no en una hoja aparte ni solo en el perfil:
+una fila por **modalidad** (COP por clase de Hot Vinyasa, Pilates, Barre…) y, si hace falta, una fila por
+**maestro** que sobrescribe. Una clase paga la tarifa del maestro si tiene una fija; si no, la de su
+modalidad; si no, la de su perfil (`teachers.rate_per_class`, que queda como último respaldo). Cambiar una
+tarifa mueve el estimado de S-03 y el próximo borrador; las corridas aprobadas o pagadas conservan sus líneas.
+En la misma tarjeta se define el **medio de pago por defecto**, **quién firma el soporte de pago** (se imprime
+en el extracto) y si el estudio **practica retención**.
+
+{{policy:payout_method}}
 
 {{table:teachers}}
 
-> DECISIÓN PENDIENTE: la periodicidad de la nómina (mensual con corte el 15, o quincenal como sugiere el rango de 15 días de M-09), la fecha de pago, las tarifas por clase (la semilla usa 80.000–110.000 COP) y el tipo de contrato.
+> DECISIÓN PENDIENTE: llenar en M-08c la periodicidad (mensual o quincenal — las dos funcionan), las tarifas reales por modalidad (la semilla trae 80.000–110.000 COP), quién firma y la fecha de pago; el tipo de contrato y si la asistencia afecta la tarifa siguen siendo del owner.
 
 ## 7. Qué está simulado hoy
 1. Las corridas, las líneas, las aprobaciones y las marcas de pago son **filas reales** en

@@ -36,6 +36,7 @@ export const coreStrings: StringTable = {
   'core.nav.whatsapp': { es: 'WhatsApp', en: 'WhatsApp' },
   'core.nav.activity': { es: 'Actividad', en: 'Activity' },
   'core.nav.settings': { es: 'Ajustes', en: 'Settings' },
+  'core.nav.integrations': { es: 'Integraciones', en: 'Integrations' },
   'core.nav.tokens': { es: 'Tokens', en: 'Tokens' },
   'core.nav.components': { es: 'Componentes', en: 'Components' },
   'core.nav.specs': { es: 'Specs', en: 'Specs' },

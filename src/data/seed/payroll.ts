@@ -9,10 +9,10 @@
  * sessions that never existed.
  */
 import type { BaseRow, BookingRow, ClassSessionRow, PayrollLineRow, PayrollRunRow, SpaceBookingRow, SpecialChargeRow, TeacherRow } from '../schema';
-import { draftLinesFor, local, monthPeriod, runTotal, type DraftLine, type Period } from '../payrollCalc';
+import { draftLinesFor, local, monthPeriod, rateFor, runTotal, type DraftLine, type Period, type RateCard } from '../payrollCalc';
 import { base, iso, NOW } from './catalog';
 
-interface TemplateRow extends BaseRow { teacher_id: string; weekday: number; active: boolean }
+interface TemplateRow extends BaseRow { teacher_id: string; modality_id?: string; weekday: number; active: boolean }
 
 /** Every date inside the period that falls on `weekday`, never in the future. */
 function occurrences(period: Period, weekday: number): string[] {
@@ -26,19 +26,20 @@ function occurrences(period: Period, weekday: number): string[] {
 }
 
 /** Historical class lines from the timetable, for months older than the session window. */
-function historicLines(period: Period, templates: TemplateRow[], teachers: TeacherRow[]): DraftLine[] {
-  const rate = new Map(teachers.map((t) => [t.id, t.rate_per_class ?? 0]));
+function historicLines(period: Period, templates: TemplateRow[], teachers: TeacherRow[], card: RateCard): DraftLine[] {
+  const known = new Set(teachers.map((t) => t.id));
   const out: DraftLine[] = [];
   for (const tpl of templates) {
-    if (!tpl.active || !rate.has(tpl.teacher_id)) continue;
+    if (!tpl.active || !known.has(tpl.teacher_id)) continue;
+    const rate = rateFor(tpl.teacher_id, tpl.modality_id ?? null, teachers, card);
     for (const day of occurrences(period, tpl.weekday)) {
-      out.push({ teacher_id: tpl.teacher_id, class_session_id: null, special_charge_id: null, kind: 'class', rate: rate.get(tpl.teacher_id) ?? 0, amount: rate.get(tpl.teacher_id) ?? 0, attendees: null, note: `${day} · reconstruido del horario semanal` });
+      out.push({ teacher_id: tpl.teacher_id, class_session_id: null, special_charge_id: null, kind: 'class', rate, amount: rate, attendees: null, note: `${day} · reconstruido del horario semanal` });
     }
   }
   return out;
 }
 
-export function buildPayroll(input: { sessions: ClassSessionRow[]; bookings: BookingRow[]; templates: TemplateRow[]; teachers: TeacherRow[]; specials: SpecialChargeRow[]; spaceBookings: SpaceBookingRow[] }): { runs: PayrollRunRow[]; lines: PayrollLineRow[] } {
+export function buildPayroll(input: { sessions: ClassSessionRow[]; bookings: BookingRow[]; templates: TemplateRow[]; teachers: TeacherRow[]; specials: SpecialChargeRow[]; spaceBookings: SpaceBookingRow[]; rateCard: RateCard }): { runs: PayrollRunRow[]; lines: PayrollLineRow[] } {
   const runs: PayrollRunRow[] = [];
   const lines: PayrollLineRow[] = [];
   const sessionMonths = new Set(input.sessions.map((s) => s.starts_at.slice(0, 7)));
@@ -51,8 +52,8 @@ export function buildPayroll(input: { sessions: ClassSessionRow[]; bookings: Boo
     const fromSessions = sessionMonths.has(period.start.slice(0, 7));
     // The draft month is exactly what M-09a "generate draft" computes: class lines + the manual payouts of Especiales.
     const draft = fromSessions
-      ? draftLinesFor(period, { sessions: input.sessions, bookings: input.bookings, teachers: input.teachers, specials: input.specials, spaceBookings: input.spaceBookings })
-      : historicLines(period, input.templates, input.teachers);
+      ? draftLinesFor(period, { sessions: input.sessions, bookings: input.bookings, teachers: input.teachers, specials: input.specials, spaceBookings: input.spaceBookings, rateCard: input.rateCard })
+      : historicLines(period, input.templates, input.teachers, input.rateCard);
 
     // Finance's own lines: a full-month bonus on the settled run and one correction on the approved run.
     if (offset === 2 && draft.length) {

@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { useI18n } from '../../i18n/I18nProvider';
+import { useContact, waLinkFor } from '../admin/settings';
 import { useTheme } from '../../design/ThemeProvider';
 import { tenant } from '../../tenant/tenant';
 import { taglines } from '../../tenant/brand';
@@ -14,17 +15,27 @@ const NAV = [
   ['/site/teachers', 'teachers'], ['/site/plans', 'plans'], ['/site/contact', 'contact'],
 ] as const;
 
-export const waHref = (message?: string) => {
-  const number = tenant.contact.whatsapp.replace(/\D/g, '');
-  return `https://wa.me/${number}${message ? `?text=${encodeURIComponent(message)}` : ''}`;
-};
+/**
+ * wa.me deep link with the studio's WhatsApp. 0018: the number comes from M-08a (`useContact()`), so the
+ * site pages call `useWaHref()`; `waHref()` stays for the rare non-hook call site and reads the last
+ * number the shell rendered with (tenant.ts until M-08a is saved).
+ */
+let currentWhatsapp: string = tenant.contact.whatsapp;
+export const waHref = (message?: string) => waLinkFor(currentWhatsapp, message);
+export function useWaHref() {
+  const contact = useContact();
+  currentWhatsapp = contact.whatsapp;
+  return (message?: string) => waLinkFor(contact.whatsapp, message);
+}
 
 /** Public website chrome: header with nav + a footer that carries hours, address and social. */
 export function SiteShell({ children }: { children: ReactNode }) {
   const { t, bi } = useI18n();
   const { theme, toggleTheme } = useTheme();
   const [open, setOpen] = useState(false);
-  const pending = ` (${bi(tenant.contact.pendingLabel)})`;
+  const contact = useContact();
+  const wa = useWaHref();
+  const pending = contact.pending ? ` (${bi(contact.pendingLabel)})` : '';
   return (
     <div className="site">
       <header className="site-head">
@@ -47,18 +58,18 @@ export function SiteShell({ children }: { children: ReactNode }) {
           <div className="stack-sm">
             <Wordmark height={26} />
             <span className="small">{bi(taglines.life)}</span>
-            <span className="xs muted">{bi(tenant.tagline)} · {tenant.city}</span>
+            <span className="xs muted">{bi(tenant.tagline)} · {contact.city}</span>
           </div>
           <div className="stack-sm">
             <span className="eyebrow">{t('site.footer.visit')}</span>
-            <span className="small">{tenant.contact.address}</span>
+            <span className="small">{contact.address}{pending}</span>
             <span className="small muted">{bi(tenant.hours)}</span>
           </div>
           <div className="stack-sm">
             <span className="eyebrow">{t('site.footer.follow')}</span>
-            <a className="small" href={waHref()} target="_blank" rel="noreferrer">WhatsApp {tenant.contact.whatsapp}{pending}</a>
-            <a className="small" href={tenant.social.instagramUrl} target="_blank" rel="noreferrer">Instagram {tenant.social.instagram}{pending}</a>
-            <a className="small" href={`mailto:${tenant.contact.email}`}>{tenant.contact.email}{pending}</a>
+            <a className="small" href={wa()} target="_blank" rel="noreferrer" data-testid="footer-whatsapp">WhatsApp {contact.whatsapp}{pending}</a>
+            <a className="small" href={contact.instagramUrl} target="_blank" rel="noreferrer">Instagram {contact.instagram}{pending}</a>
+            <a className="small" href={`mailto:${contact.email}`}>{contact.email}{pending}</a>
           </div>
           <div className="stack-sm">
             <span className="eyebrow">{t('site.footer.explore')}</span>

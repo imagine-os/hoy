@@ -1,12 +1,12 @@
 # HoyOS kanban
 
-_Updated every turn. Codes reference `src/specs/canvasSpecs.ts` and the module `specs.ts` files; `/#/dev/specs` shows the live built/stub badge per code (v0.7.0: app-store readiness — StatTile fit, C-26 Cuenta y datos, W-09 public deletion page, M-11 deletion queue, `deletion_requests`; 94 routes, 82 codes, 0 stubs, 47 tables, 56 components in D-02; on top of v0.6.2's Especiales, v0.6.1's expenses ledger and v0.6.0's three tracks). What is still missing is listed as a plain numbered list in `ROADMAP.md` §F._
+_Updated every turn. Codes reference `src/specs/canvasSpecs.ts` and the module `specs.ts` files; `/#/dev/specs` shows the live built/stub badge per code (v0.7.0, two parallel tracks: **0018** owner decisions as settings — M-08a contact identity, M-08c payroll cadence + rate card, M-08f content decisions — plus M-10 Integraciones and ROADMAP §G; **0019** app-store readiness — StatTile fit, C-26 Cuenta y datos, W-09 public deletion page, M-11 deletion queue; 96 routes, 84 codes, 0 stubs, 48 tables, 56 components in D-02; on top of v0.6.2's Especiales, v0.6.1's expenses ledger and v0.6.0's three tracks). What is still missing is listed as a plain numbered list in `ROADMAP.md` §F._
 
 ## Backlog
 
 ### Product
 - **P1 leftovers from 0007/0008** (numbered in ROADMAP §B/P1): M-02 editors for `content_articles` / `faq_entries` + an event publisher for `events` (M-03 edits them generically today) · server-side invite reward (`invites.status` only reaches `sent` from the client; `joined` / `rewarded` + `reward_credit_id` need the Supabase function that grants the credit) · staff-side `notifications` sending (front desk / M-04 / M-05 writing a row) and the 90-day retention job · event waitlist (`event_rsvps.status` has no `waitlist` value yet) and attendance marking from S-02 · real Wompi tokenisation behind `wompiTokenise()`
-- **From Jas's review (0014), still open**: M-09c has no CSV export for the accountant yet (M-09b has one) · attach the invoice / receipt image to an expense row (needs Supabase Storage, like M-02d's upload) · the "15 días" range stays as a filter until Sergio confirms fortnightly pay periods (ROADMAP §E 27 / 31)
+- **From Jas's review (0014), still open**: M-09c has no CSV export for the accountant yet (M-09b has one) · attach the invoice / receipt image to an expense row (needs Supabase Storage, like M-02d's upload) · ~~the "15 días" range stays as a filter until Sergio confirms fortnightly pay periods~~ **0018: the cadence is a switch in M-08c and the range default follows it — Sergio only has to pick**
 - A-06 legal pages inside the app (site pages exist) · real Supabase Auth behind A-02/A-03/C-21 (SessionProvider already accepts any `users` row)
 - **App-store readiness, still open after 0019** (`docs/app-store-compliance.md` §4): the server-side deletion job that M-11's seven-step checklist specifies (anonymise `profiles` + `users`, delete the auth user, purge notifications, keep payments / invoices under the anonymous id, flip `deletion_requests` to done, send the confirmation) · the edge function behind the public W-09 insert (rate-limit, no read-back) · a "report this review" action + moderation queue for C-10 reviews if they go public (Apple 1.2 / Play UGC) · privacy nutrition labels and the Play Data safety form filled from `docs/data-model.md` · the native shell (Capacitor / TWA) and push delivery
 - S-04 register page overflows horizontally at 390 px (DesktopShell at phone width; found by the 0019 tile sweep, staff is desktop-first so not fixed there) · the `--only=/app$` exact-match form of `scripts/screenshots.mjs` skipped C-01 in the 0019 run — check the `$` handling
@@ -14,7 +14,6 @@ _Updated every turn. Codes reference `src/specs/canvasSpecs.ts` and the module `
 - PDF receipts (C-11)
 - S-02/S-04 follow-ups: offline queue for check-ins, real Wompi link · M-04 MJML designer + real provider · M-05 Meta approval API · M-09 Wompi payouts + DIAN CUFE emission
 - M-02d file upload (Supabase Storage — the row stores a URL today) + a server-side scheduled-publish job · M-06 duplicate merge · M-07 signed CSV
-- Add a **Respiración modality row** (or fold it into meditación) so W-08 `/site/classes/respiracion` shows duration, intensity and heat instead of "today it lives inside the guided classes" (ROADMAP §E 22 / §F 20)
 - Supabase provider (auth, realtime) · Wompi payments/payroll · WhatsApp CRM · email designer
 - Code-split the bundle by surface (single ~1.7 MB chunk today) · live cursors / presence (nice to have)
 - **Add `remark-gfm`** (its own changelog entry, with the alternative rejected) and delete the pipe-table transform in `MarkdownViewer` (`preprocessMarkdown()` fences pipe tables into a ```table block because `react-markdown` alone cannot render them; the legal documents were written as lists for the same reason)
@@ -24,16 +23,17 @@ _Updated every turn. Codes reference `src/specs/canvasSpecs.ts` and the module `
 - Canvas audit #9/#30: prune the 32 orphan dictionary keys (n_waiver, wv_sign, at_seg, at_nav, ph_qr, door_scan…) from `reference/canvas/strings.json` consumers
 - Canvas audit #24/#25: register in D-02 the components screens use but the library lacks; fix D-02 copy counts (49 sections, 4-tab dock)
 - Canvas audit #27: amend plan phase-3 text that still lists check-in and front desk (K-01) · #28: date the v0.1 decision entries · #33: add `data` and `roles` to the C-08b spec
-- Resolve the 27 owner decisions listed at `/#/manual/decisions` (ROADMAP §E, 30 deduplicated) and update the chapters — the blocking ones are the real address and contact details, the teacher rate card and payroll cadence, which legal versions to publish, the map provider and IVA on published prices
+- Resolve the owner decisions listed at `/#/manual/decisions` (ROADMAP §E) and update the chapters — **since 0018 the blocking ones are fields to fill in**: contact details (M-08a), rate card and cadence (M-08c), legal versions and map provider (M-08f), IVA on prices (M-08c); what remains a decision is pack validity, DIAN provider / legal issuer, the Wompi settlement account and the pause rules
 - Remove the C-07b and 'C-14 / C-15' compatibility aliases from `scripts/gen-specs.mjs` (routes now use C-07b as the credits ledger and C-14/C-15 separately)
 - Enrich `docs/pages/<code>.md` (generated skeletons) with the hand-written "Real vs mock" and section notes per page
 - `scripts/screenshots.mjs` has no state parameter, so the collapsed sidebar / rail and the mobile drawer are not captured (0007 verified them by hand) — add `--state=` or a per-route hook
 - `docs/prompts/0009-salvage-empty10.md` is missing (0009 shipped with a changelog entry only); `docs/prompts/0013-ops-manual-visual-live.md` is missing the same way (its changelog references it) — the owner's prompt for the whole v0.6.0 cycle is `docs/prompts/0011-website-brand-content.md`
-- Photography, video and the drawn contact map for the 12 `media_assets` slots (all `pending`) — the owner supplies these; a map-provider decision (`MapSlot` defaults to `provider="none"`) is the other half
+- Photography, video and the drawn contact map for the 12 `media_assets` slots (all `pending`) — the owner supplies these; the map provider is now a setting in M-08f (`none` until chosen)
+- **ROADMAP §G — when nothing else is queued** (0018): SEO/OG + prerender · “next class in N minutes” widget · membership calculator · then the rest of `docs/website-vision.md`
 
 ### Decisions
 - **Open questions from Jas's review (0014), with Justin to forward** — recorded as ROADMAP §E 21–24:
-  - **Sergio**: are teachers paid fortnightly or monthly? (sets the unit of time for payroll runs and accounting reports, and whether a "15 días" filter is added)
+  - **Sergio**: are teachers paid fortnightly or monthly? — **both are built since 0018**: the M-08c cadence switch drives M-09a (one or two runs per month), S-03 and the Finance range; Sergio picks
   - **Sergio**: does the Coordinator see the monthly total-revenue KPI in the admin panel?
   - **Lore**: do we need to store the customer's sex/gender? (no field today)
   - **Lore**: is there a group-session product for birthdays/events (book room + teacher + an add-on)? — **structurally answered in 0017**: a birthday or event group session is an **Especial** (room in S-05 + teacher + hand price in S-04, payout to payroll); whether it becomes a standard product with a fixed price is still Lore's call
@@ -42,9 +42,18 @@ _Updated every turn. Codes reference `src/specs/canvasSpecs.ts` and the module `
 - empty10 placeholder: awaiting Justin's decision (reset to placeholder or delete)
 
 ## Doing
-- (none — 0019 app-store readiness pushed alongside 0018, both v0.7.0)
+- (none — 0018 decisions-as-settings and 0019 app-store readiness both pushed, both v0.7.0)
 
 ## Done
+
+### Decisions as settings · Integraciones · §G (0018 · v0.7.0)
+- **M-08a General**: contact identity as fields — address, city (Medellín), WhatsApp, email, Instagram handle + URL, map lat/lng, map label, Google Maps link — with a **“Datos confirmados”** switch; `useContact()` / `contactOf()` is the one reader (M-08a first, `tenant.ts` as default) and the site footer, W-06, `MapSlot`, the legal `{{tenant.*}}` tokens, the email footer, C-25/C-06/C-16/A-02 contact rows and `{{tenant:contact}}` all label values as pending until it is on
+- **M-08c Payments**: `pricesIncludeIva` documented as the driver of S-04 / C-04 / P-01 · **payroll cadence `monthly | biweekly` programmed both ways** (`payrollCalc.periodsFor()`, `periodAt()`; M-09a generates one or two runs per month and replaces an overlapping draft of the other cadence; S-03 navigates by period; Finance default range 30 d / 15 d; `{{policy:payroll_cadence}}`) · **rate card** by modality + per-teacher override (`payrollCalc.rateFor()`: teacher → modality → `rate_per_class`; the seed's 80–110k moved to the seeded settings row) · default payout method · who signs · withholding flag
+- **M-08f Content** (new code): public naming `disciplines | movements` (`classDisplay()` on C-03 / W-04) · **Respiración as its own class** (new `respiracion` modality row; `visibleModalities()` hides it on W-03 / W-07 / W-08 / C-03 while off) · map provider `none | osm | google` read by `MapSlot` with a preview · **legal versions** publish toggle per `legal_documents` row (audited `legal.publish` / `legal.unpublish`)
+- **M-10 Integraciones** (new code, `/admin/integrations`, super_admin/admin): one card per Wompi · WhatsApp Business · email · DIAN · maps · Supabase with non-secret fields, `simulated → configured → connected` chip, “keys live server-side” notice naming the env vars, dev checklist, notes, manual link; new **`integrations` table** (46 → 47), seeded simulated; `integration.update` audited; M-08a's Integrations section is a pointer; M-09a's badge reads the Wompi row
+- **ROADMAP**: §A 0.7.0 · §E items 2 / 11 / 21 / 22 / 27 / 30 / 31 marked “→ setting in M-08x (fill in)” · §F 15 and 20 updated · new **§G — When nothing else is queued** (SEO/OG + prerender, next-class widget, membership calculator, then the vision doc)
+- **Manual** ES + EN: `26` rewritten around M-10, `16` cadence switch + rate card, `01` pointer to M-08a
+- **Verified**: 27 / 27 Playwright checks — biweekly September = 2.240.000 + 885.000 = the monthly 3.125.000; a Hot Vinyasa rate edit moves the S-03 estimate; a WhatsApp edit moves the site footer and W-06; M-10 renders ES / EN and its save is audited; `npm run build` clean; smoke exit 0
 
 ### App-store readiness and stat-tile fit (0019 · v0.7.0)
 - **StatTile never wraps**: the value is measured after layout and shrinks (`--stat-fit`, down to 50 %) to the tile width, re-fitting on resize; label and hint clamp to two lines; meta state `long-value`. The phone frame is a named CSS container (`container: phone / inline-size`) so `.grid-3` / `.grid-4` collapse inside it like on a real 390 px phone — the actual cause of Justin's "COP 440,000" on three lines. Sweep of every KPI tile (13 routes, ES + EN, 390 viewport + 1280 frame): **8 wrapped → 0**; two other wrapping figures fixed (OrderSummary amount, C-06 plan price)

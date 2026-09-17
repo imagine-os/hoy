@@ -11,7 +11,7 @@ import { useData, useTable } from '../../data/DataContext';
 import type { LegalAcceptanceRow, LegalDocumentRow, LegalKind } from '../../data/schema';
 import { formatDate, formatDateTime, formatCOP } from '../../i18n/format';
 import { tenant } from '../../tenant/tenant';
-import { usePolicy, useSettings } from '../admin/settings';
+import { usePolicy, contactOf, useSettings } from '../admin/settings';
 import { LegalDocument, resolveLegalTokens, type LegalTokens } from '../../components/organism/LegalDocument/LegalDocument';
 import { Button } from '../../components/atom/Button/Button';
 import { Chip } from '../../components/atom/Chip/Chip';
@@ -32,15 +32,16 @@ export function useLegalTokens(): LegalTokens {
   const { t, lang } = useI18n();
   const { settings } = useSettings();
   const policy = usePolicy();
+  const contact = contactOf(settings);
   return useMemo<LegalTokens>(() => ({
     tenant: {
       name: settings.branding.displayName || tenant.name,
       legalName: tenant.legalName,
-      city: tenant.city,
+      city: contact.city,
       nit: settings.profile.nit || t('customer.legal.token.pending'),
-      address: settings.profile.address || t('customer.legal.token.pending'),
-      email: settings.profile.email,
-      whatsapp: settings.profile.whatsapp,
+      address: contact.pending ? `${contact.address} (${t('customer.legal.token.pending')})` : `${contact.address}, ${contact.city}`,
+      email: contact.email,
+      whatsapp: contact.whatsapp,
       mats: settings.studio.mats,
       perPersonPerDay: settings.studio.perPersonPerDay,
     },

@@ -21,6 +21,22 @@ owner del estudio. Está escrito para que otra cuenta de Claude (o una persona) 
   carries the real flow. Nothing is deleted client-side: the anonymisation is the server-side job the
   checklist specifies (§F 24).
 
+- **v0.7.0 — Decisions as settings + Integraciones + the long-term lane** (`docs/changelog/0018-decisions-as-settings.md`,
+  prompt `docs/prompts/0018-decisions-as-settings.md`): every §E decision that is a *value* is now a field the owner
+  fills in. **M-08a** holds the contact identity (address, city, WhatsApp, email, Instagram, map coordinates and link)
+  with a "confirmed" switch — `useContact()` is the one reader and the site footer, W-06, `MapSlot`, the legal tokens,
+  the email footer, the customer contact rows and the manual all label the values as pending until it is on.
+  **M-08c** holds the payroll switches: **cadence `monthly | biweekly`, programmed both ways** (`payrollCalc.periodsFor()`;
+  M-09a generates one or two runs per month, S-03 navigates by period, the Finance range defaults to 30 or 15 days),
+  the **teacher rate card** by modality with per-teacher overrides (`payrollCalc.rateFor()`; the seed's 80–110k moved to
+  the seeded settings row), default payout method, who signs, withholding. **M-08f** (new code) holds the content
+  decisions: public class naming, Respiración as its own class (a `respiracion` modality row exists now; the switch
+  shows or hides it), the map provider, and a publish toggle per legal version. **M-10 `/admin/integrations`** (new code)
+  is one card per integration — Wompi, WhatsApp Business, email, DIAN, maps, Supabase — with non-secret fields ready to
+  fill, a `simulated → configured → connected` chip, the "keys live server-side" notice and the dev checklist, stored in a
+  new `integrations` table (**48 tables** with 0019's `deletion_requests`). §G below is the "when nothing else is queued" lane. Verified by a 27-check
+  Playwright flow (biweekly runs sum to the monthly total; a rate edit moves S-03; a WhatsApp edit moves the footer).
+
 - **v0.6.2 — Especiales** (`docs/changelog/0017-especiales.md`, prompt `docs/prompts/0017-especiales.md`):
   the manual path for edge cases. `special_charges` + `space_bookings` (46 tables), the **Especial** item
   inside S-04's `espacio` family (hand concept and price, optional teacher payout, optional room window,
@@ -68,8 +84,8 @@ owner del estudio. Está escrito para que otra cuenta de Claude (o una persona) 
   decisions** are auto-extracted into K-04 and §E below.
 - **Data**: **47 tables** (38 + `media_assets`, `payroll_runs`, `payroll_lines`, `legal_acceptances`,
   with `legal_documents` rewritten for versions and bilingual bodies, + `expense_templates` and
-  `expenses` in 0.6.1, + `special_charges` and `space_bookings` in 0.6.2, + `deletion_requests` in
-  0.7.0), each with its `TableDef.rls`
+  `expenses` in 0.6.1, + `special_charges` and `space_bookings` in 0.6.2, + `deletion_requests` and
+  `integrations` in 0.7.0), each with its `TableDef.rls`
   access contract emitted by `npm run sql` into `supabase/schema.sql` and `docs/data-model.md`.
   Forward and circular foreign keys are emitted as a deferred `alter table` block so the SQL applies in order.
 - **Canvas look applied** (0.4.0): D-01 is the canvas hoy-brand token set; the phone frame, cream lane
@@ -85,10 +101,10 @@ owner del estudio. Está escrito para que otra cuenta de Claude (o una persona) 
   `MockProvider` (localStorage, change events, cross-tab `storage` sync) behind the `DataProvider`
   interface, module registry via `import.meta.glob`, route manifest on `window.__hoyos.routes`.
   `npm run build` passes with zero TS errors.
-- **Real vs stub** (`/#/dev/specs`, from `docs/screenshots/routes.json`): **90 routes, 78 codes,
-  0 stubs.** Integrations (Wompi, WhatsApp, email, DIAN, Supabase Auth/Realtime) are simulated behind
+- **Real vs stub** (`/#/dev/specs`, from `docs/screenshots/routes.json`): **96 routes, 84 codes,
+  0 stubs** (M-08f, M-10, C-26, W-09 and M-11 new in 0.7.0). Integrations (Wompi, WhatsApp, email, DIAN, Supabase Auth/Realtime) are simulated behind
   their seams — see §F for exactly what is still mocked.
-- **Docs**: prompt log, changelog and kanban are current through `0016`. `docs/screenshots/<code>/`
+- **Docs**: prompt log, changelog and kanban are current through `0018`. `docs/screenshots/<code>/`
   holds every route in ES/EN × 390/1280 (dark for key pages) as JPEG q72 — **373 captures** — and
   `docs/pages/<code>.md` exists for every routed code.
   **55 components** carry a `.meta.ts` in D-02.
@@ -213,7 +229,7 @@ chapter or spec and close the card.
 
 **Pricing and payments**
 1. Validity of the 10-class pack: 1 month (brief) or 3 months (P-01)?
-2. Do published prices include IVA (19 %), or does the S-04 rail add it? (also decides the website copy)
+2. Do published prices include IVA (19 %), or does the S-04 rail add it? (also decides the website copy) **→ setting in M-08c `pricesIncludeIva` (fill in)**
 3. Electronic invoicing provider (DIAN) and who is the legal issuer.
 4. Wompi settlement cycle and destination bank account.
 5. Notice days to pause a membership (C-22 proposes 15) and maximum freeze (30 days assumed).
@@ -226,7 +242,7 @@ chapter or spec and close the card.
 
 **People and payroll**
 10. Names of the people in each role and front-desk coverage per shift.
-11. Teacher pay per class, payment date, contract type, and whether attendance affects the rate.
+11. Teacher pay per class, payment date, contract type, and whether attendance affects the rate. **→ rate card in M-08c (fill in); contract type and attendance rule still a decision**
 12. Who trains each role and whether the training sign-off is kept on paper or as a note in M-06.
 
 **Communication and legal**
@@ -242,12 +258,12 @@ chapter or spec and close the card.
     everywhere, per the brand PDF — but `tenant.contact` is still `+57 300 000 0000`,
     `hola@example.com` and "Dirección del estudio (pendiente)", and `tenant.location` is an
     approximate El Poblado point labelled "por confirmar". Everything is rendered as pending, so this
-    is one edit to `src/tenant/tenant.ts` once the owner answers. (manual `01`)
+    is one edit to `src/tenant/tenant.ts` once the owner answers. (manual `01`) **→ setting in M-08a (fill in and tick “confirmed”; tenant.ts stays the default)**
 22. **How the classes are named in public**: the brand copy has five disciplines (hot yoga, barre,
     pilates, meditación, respiración), the system organises the day by four movements (Enraíza,
     Fluye, Arde, Libera). Which one does the customer see on the schedule, and which is the internal
     label? Related: **Respiración has no `modalities` row** (it is taught inside other classes today),
-    so W-08 renders a sentence instead of facts — add a row or fold it into meditación. (manual `02`)
+    so W-08 renders a sentence instead of facts — add a row or fold it into meditación. (manual `02`) **→ two settings in M-08f: public naming `disciplines | movements`, and “Respiración es una clase propia” (the row exists since 0.7.0; the switch shows or hides it)**
 23. **Pausas rules**: does "Pausas Ilimitadas" stack with Membership or replace it, and does a Pausa
     spend the one-class-per-person-per-day limit? (manual `11`)
 24. **The guest allowance**: how many guests a Membership member may bring per month, and whether a
@@ -259,7 +275,7 @@ chapter or spec and close the card.
 27. **Payroll cadence and method**: monthly with a cut-off on the 15th, or biweekly as M-09's 15-day
     range suggests? Plus the payment method (Wompi payout, transfer or cash), whether the studio
     withholds tax and who signs the payment record. The **teacher rate card** is the other half of
-    item 11: the seed uses 80,000–110,000 COP per class and needs the real numbers. (manual `16`)
+    item 11: the seed uses 80,000–110,000 COP per class and needs the real numbers. (manual `16`) **→ settings in M-08c: cadence switch (both programmed), payout method, who signs, withholding flag, rate card (fill in)**
 28. **Social publishing**: who posts (role and person), on what calendar, and who approves a post
     that mentions prices or promotions. (manual `18`)
 29. **Wordmark and media rights**: who approves third-party use of the wordmark (shoots, pop-ups,
@@ -270,7 +286,7 @@ chapter or spec and close the card.
     and four are still draft**. Every
     document carries the counsel-review notice until the owner and counsel sign off the final text
     and name the legal issuer — which is items 3 and 14 seen from the legal library's side.
-    (manual `22`, `23`)
+    (manual `22`, `23`) **→ publish toggle per version in M-08f (flip once counsel signs off)**
 
 **Canvas audit recommendations (design/spec hygiene, no owner input needed but confirm)**
 17. Register the nine components screens use but D-02 lacks (segmented switch, FAQ accordion row,
@@ -285,7 +301,7 @@ chapter or spec and close the card.
 **From Jas's design review, 2026-09-17 (0014) — Justin to forward**
 31. **Sergio**: are teachers paid **fortnightly or monthly**? That interval is the unit of time for payroll runs
     and the accounting reports, and it decides whether the admin finance pages get a "15 days" period filter.
-    (Same question as item 27, raised independently — answer it once. M-09 already carries the 15-day range.)
+    (Same question as item 27, raised independently — answer it once. M-09 already carries the 15-day range.) **→ M-08c cadence switch: pick one, both are built**
 32. **Sergio**: does the **Coordinator** role see the **monthly total-revenue KPI** in the admin panel, or is
     that limited to admin/finance?
 33. **Lore**: do we need to store the **customer's sex/gender**? Nothing collects it today, so it would be a new
@@ -358,18 +374,20 @@ Everything below is known and written down; nothing here is a surprise found lat
     and flipping a row to `ready` publishes it everywhere with no deploy) and **a map-provider
     decision** — `MapSlot` defaults to `provider="none"` so screenshots stay offline-safe, with
     key-less OSM and Google embeds ready behind the prop, and a drawn neighbourhood map can ship
-    through the media library in the meantime.
+    through the media library in the meantime. **0.7.0: the provider is a setting in M-08f and the coordinates/link are
+    edited in M-08a; the only thing left is the choice itself.**
 
 **(c) Decisions only the owner can make** — **34** of them, deduplicated in §E of this file and live
 in the app at `/#/manual/decisions` (27 flags auto-extracted from the 28-chapter operations manual,
 K-04). The canvas audit's design/spec hygiene recommendations are `CANVAS-AUDIT.md` and items 17–20
 of §E.
 
-15. The ones that block build work: pack validity, whether published prices include IVA, the DIAN
-    provider and legal issuer, the Wompi settlement account, the pause notice/freeze cap, and — new
-    in 0.6.0 — the **teacher rate card** and **payroll cadence** (§E 27), **which legal versions to
-    publish** (§E 30), the **map provider** (item 14) and the studio's **real address and contact
-    details** (§E 21).
+15. The ones that block build work: pack validity, the DIAN provider and legal issuer, the Wompi
+    settlement account and the pause notice/freeze cap. **No longer blocking since 0.7.0** — they are
+    fields the owner fills in: IVA in prices (M-08c), the **teacher rate card** and **payroll cadence**
+    (M-08c, §E 27), **which legal versions to publish** (M-08f, §E 30), the **map provider** (M-08f) and the
+    studio's **real address and contact details** (M-08a, §E 21). The integrations' non-secret ids are
+    filled in on **M-10** ahead of the dev.
 16. The rest are policy, people, payroll and legal text — they change copy and M-08 values, not structure.
 
 **(d) Repo hygiene**
@@ -389,8 +407,8 @@ of §E.
     worked around it — the manual transforms pipe tables into a fenced block renderer inside
     `MarkdownViewer`, and the legal documents were written as lists rather than tables. Add the
     dependency (with the changelog entry the rules require) and delete the transform.
-20. **Respiración has no `modalities` row**, so W-08 renders a sentence where the other four classes
-    show duration, intensity and heat. Add the row or fold it into meditación (§E 22).
+20. ~~**Respiración has no `modalities` row**~~ **DONE (0.7.0)**: the row exists (`respiracion`, 45 min, libera) and
+    M-08f decides whether the public sees it; W-08 shows facts when on and the sentence when off (§E 22).
 21. ~~**The expenses ledger**~~ **DONE (0.6.1).** `expense_templates` + `expenses`, M-09c
     `/admin/finance/expenses` (idempotent period generator, marcar pagado) and the Balance card on
     M-09 (`docs/changelog/0016-expenses-ledger.md`). Still open there: a CSV export for the accountant
@@ -411,3 +429,29 @@ of §E.
     path for reviews if they go public, counsel's sign-off on the privacy text (§E 3, 14, 30), the sign-in
     set and the minimum age (§E 35–36), and the **native shell** itself (Capacitor or a TWA) with push
     delivery. All gated on P2 (Supabase).
+
+## G. When nothing else is queued
+
+Justin, 2026-09-17: "add these to the longer term plan. its something you can do when there's nothing else to do."
+Nothing here blocks a phase in §B; pick from the top when the queue is empty. Items 1–3 are his top three; the
+rest is `docs/website-vision.md` ("Next level — 15 ideas") as one line each, minus what has since shipped.
+
+1. **SEO / Open Graph metadata + a prerender step.** Per-route `<title>` / `<meta name="description">` / OG tags
+   (a `usePageMeta` hook next to `useLayout`) and a build step that writes a static HTML snapshot per public
+   route — today a WhatsApp or Instagram link preview shows nothing and search engines see one empty shell.
+2. **"Next class in N minutes" widget.** A live line in the site header or hero ("Hot Vinyasa empieza en 42 min ·
+   3 cupos") from `class_sessions`, which the site already reads.
+3. **Membership calculator.** A visits-per-month slider that compares the Monthly Plan, the 10-class pack and
+   single passes from `src/tenant/pricing.ts` and names the break-even — the value model arguing for itself.
+4. Produce the shot list (1 video, 14 photographs across 16 `media_assets` slots) — the owner supplies it.
+5. Class-finder quiz: three questions mapped onto the four movements and five classes, ending on a filtered schedule.
+6. Motion and scroll choreography behind `--dur-*` / `--ease-*` tokens and `prefers-reduced-motion`.
+7. Accessibility pass: movement-tint contrast in both themes, focus order, skip link, keyboard run through the schedule drawer.
+8. Journal / blog from `content_articles` (`/site/journal`, `/site/journal/:slug`) — feeds item 1.
+9. Teacher spotlight series: one long-form page per month from `teachers.bio`, reusing W-08's layout.
+10. Instagram feed slot: six tiles under the footer through a cached endpoint (never a client-side token).
+11. WhatsApp deep links everywhere: per class, per plan, per booking intent, each with its context prefilled.
+12. PWA install: manifest, icon set from the wordmark, a service worker that caches the shell.
+13. Testimonial curation: a `featured` flag or admin picker for the three reviews on the home page.
+14. Bilingual SEO and the `/en` question: real per-language URLs, decided once together with item 1.
+15. `remark-gfm` (§F 19) and the bundle code-split by surface (§F 18) — hygiene that pays every later item.

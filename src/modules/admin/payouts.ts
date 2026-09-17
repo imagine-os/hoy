@@ -20,7 +20,8 @@
 import { useCallback, useMemo } from 'react';
 import { useData, useTable } from '../../data/DataContext';
 import type { BookingRow, ClassSessionRow, PayrollLineRow, PayrollRunRow, SpaceBookingRow, SpecialChargeRow, TeacherRow } from '../../data/schema';
-import { byTeacher, draftLinesFor, local, monthPeriod, runTotal, type Period } from '../../data/payrollCalc';
+import { byTeacher, draftLinesFor, isWholeMonth, local, monthPeriod, periodsFor, periodsOverlap, runTotal, type PayrollCadence, type Period, type RateCard } from '../../data/payrollCalc';
+import { useSettings } from './settings';
 import type { Bi } from '../../specs/types';
 
 export type PayoutMethod = PayrollRunRow['method'];
@@ -47,6 +48,21 @@ export async function wompiPayout(input: { amount: number; recipients: number; s
 export const monthPeriodFor = (offset: number): Period => monthPeriod(new Date(new Date().getFullYear(), new Date().getMonth() - offset, 15));
 export const periodKey = (p: Period) => p.start.slice(0, 7);
 
+/** The pay periods of the month `offset` months ago, under the M-08c cadence (one or two). 0018. */
+export const periodsForMonth = (cadence: PayrollCadence, offset: number): Period[] =>
+  periodsFor(cadence, new Date(new Date().getFullYear(), new Date().getMonth() - offset, 15));
+
+/**
+ * How a run's period is printed: “septiembre 2026” for a whole month, “1 – 15 sept 2026” for a
+ * quincena. M-09a, M-09b and S-03 share it so the two cadences read the same everywhere.
+ */
+export function periodLabel(p: Period, lang: 'es' | 'en'): string {
+  const loc = lang === 'es' ? 'es-CO' : 'en-US';
+  if (isWholeMonth(p)) return new Date(`${p.start}T12:00:00`).toLocaleDateString(loc, { month: 'long', year: 'numeric' });
+  const a = new Date(`${p.start}T12:00:00`), b = new Date(`${p.end}T12:00:00`);
+  return `${a.getDate()} – ${b.getDate()} ${b.toLocaleDateString(loc, { month: 'short', year: 'numeric' })}`;
+}
+
 /** Runs, lines and the teachers they name — the join every payout screen needs. */
 export function usePayroll() {
   const { rows: runs, loading } = useTable<PayrollRunRow>('payroll_runs', { orderBy: { column: 'period_start', dir: 'desc' } });
@@ -67,6 +83,8 @@ export function usePayroll() {
  */
 export function useGenerateDraft() {
   const data = useData();
+  const { settings } = useSettings();
+  const rateCard: RateCard = settings.payroll.rateCard;
   const { rows: sessions } = useTable<ClassSessionRow>('class_sessions');
   const { rows: bookings } = useTable<BookingRow>('bookings');
   const { rows: teachers } = useTable<TeacherRow>('teachers');
@@ -75,11 +93,20 @@ export function useGenerateDraft() {
   const { rows: specials } = useTable<SpecialChargeRow>('special_charges');
   const { rows: spaceBookings } = useTable<SpaceBookingRow>('space_bookings');
 
-  return useCallback(async (period: Period, method: PayoutMethod = 'wompi'): Promise<{ run: PayrollRunRow; created: number; replaced: boolean } | { blocked: PayrollRunRow }> => {
+  return useCallback(async (period: Period, method: PayoutMethod = 'wompi'): Promise<{ run: PayrollRunRow; created: number; replaced: boolean; replacedOverlap: boolean } | { blocked: PayrollRunRow }> => {
     const existing = runs.find((r) => r.period_start === period.start && r.period_end === period.end);
     if (existing && existing.status !== 'draft') return { blocked: existing };
+    // 0018: a run of the OTHER cadence covering these days (a monthly draft when the switch is now biweekly, or the
+    // reverse) would pay the same classes twice. A draft is replaced; an approved or paid one blocks the generation.
+    const overlapping = runs.filter((r) => r.id !== existing?.id && periodsOverlap({ start: r.period_start, end: r.period_end }, period));
+    const hard = overlapping.find((r) => r.status !== 'draft');
+    if (hard) return { blocked: hard };
+    for (const r of overlapping) {
+      for (const l of lines.filter((l) => l.run_id === r.id)) await data.remove('payroll_lines', l.id);
+      await data.remove('payroll_runs', r.id);
+    }
 
-    const draft = draftLinesFor(period, { sessions, bookings, teachers, specials, spaceBookings });
+    const draft = draftLinesFor(period, { sessions, bookings, teachers, specials, spaceBookings, rateCard });
     const total = runTotal(draft);
     let run: PayrollRunRow;
     if (existing) {
@@ -92,8 +119,8 @@ export function useGenerateDraft() {
       } as Partial<PayrollRunRow>);
     }
     for (const l of draft) await data.insert('payroll_lines', { ...l, run_id: run.id });
-    return { run, created: draft.length, replaced: !!existing };
-  }, [data, runs, lines, sessions, bookings, teachers, specials, spaceBookings]);
+    return { run, created: draft.length, replaced: !!existing, replacedOverlap: overlapping.length > 0 };
+  }, [data, runs, lines, sessions, bookings, teachers, specials, spaceBookings, rateCard]);
 }
 
 /**

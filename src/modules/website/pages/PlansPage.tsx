@@ -8,7 +8,7 @@ import { usePolicy } from '../../admin/settings';
 import { Card } from '../../../components/molecule/Card/Card';
 import { Button } from '../../../components/atom/Button/Button';
 import { PriceRow } from '../../../components/molecule/PriceRow/PriceRow';
-import { PageHead, SiteShell, waHref } from '../SiteShell';
+import { PageHead, SiteShell, useWaHref } from '../SiteShell';
 import { siteSpecs } from '../specs';
 
 const ORDER: PlanFamily[] = ['bienvenida', 'membresia', 'pausas', 'regalos', 'espacio'];
@@ -19,6 +19,7 @@ const ORDER: PlanFamily[] = ['bienvenida', 'membresia', 'pausas', 'regalos', 'es
  */
 export function PlansPage() {
   const { t, bi } = useI18n();
+  const waHref = useWaHref();
   const nav = useNavigate();
   const { sections, isVisible } = useLayout(siteSpecs.plans);
   const { tax } = usePolicy();

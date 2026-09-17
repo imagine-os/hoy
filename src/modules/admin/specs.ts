@@ -124,21 +124,22 @@ export const M07 = defineSpec({
  */
 export const M08 = defineSpec({
   ...canvasSpecs['M-08'],
-  layout: ['SettingsSubNav', 'General (M-08a)', 'Features (M-08b)', 'Payments (M-08c)', 'Communications (M-08d)', 'Branding (M-08e)'],
-  data: ['tenants', 'feature_flags', 'rooms', 'audit_log'],
-  notes: [...(canvasSpecs['M-08'].notes ?? []), 'Stored in tenants.settings (json) via useSettings(); defaults from src/tenant/tenant.ts.', 'S-02 reads lateGraceMin, S-04 reads tax, M-05 reads quietHours.', 'usePolicy() (src/modules/admin/settings.ts) re-renders consumers when a section is saved.'],
+  layout: ['SettingsSubNav', 'General (M-08a)', 'Features (M-08b)', 'Payments (M-08c)', 'Communications (M-08d)', 'Branding (M-08e)', 'Content (M-08f)'],
+  data: ['tenants', 'feature_flags', 'rooms', 'modalities', 'teachers', 'legal_documents', 'audit_log'],
+  notes: [...(canvasSpecs['M-08'].notes ?? []), 'Stored in tenants.settings (json) via useSettings(); defaults from src/tenant/tenant.ts.', 'S-02 reads lateGraceMin, S-04 reads tax, M-05 reads quietHours.', 'usePolicy() (src/modules/admin/settings.ts) re-renders consumers when a section is saved.', '0018: the owner decisions of ROADMAP §E that are values, not code, live here — contact identity (M-08a), IVA-in-prices, payroll cadence and the teacher rate card (M-08c), public class naming, Respiración as its own class, map provider and which legal versions are published (M-08f).'],
 });
 
 const sub = (code: string, name: { es: string; en: string }, purpose: { es: string; en: string }, layout: string[], extra: Partial<typeof M08> = {}) => defineSpec({
   ...M08, code, name, purpose, layout,
-  notes: [...(M08.notes ?? []), 'Sub-page of M-08; the sub-navigation is shared by all five.'],
+  notes: [...(M08.notes ?? []), 'Sub-page of M-08; the sub-navigation is shared by all six.'],
   ...extra,
 });
 
 export const M08a = sub('M-08a',
   { es: 'Ajustes · General', en: 'Settings · General' },
-  { es: 'Identidad de contacto, horario de apertura, aforo y políticas: los números que todas las demás pantallas leen.', en: 'Contact identity, opening hours, capacity and policies: the numbers every other screen reads.' },
-  ['SettingsSubNav', 'StudioProfile', 'OpeningHours', 'Capacity', 'Policies', 'Integrations'],
+  { es: 'Identidad de contacto (dirección, ciudad, WhatsApp, correo, Instagram, mapa) con su estado “pendiente”, horario de apertura, aforo y políticas: los números que todas las demás pantallas leen.', en: 'Contact identity (address, city, WhatsApp, email, Instagram, map) with its “pending” state, opening hours, capacity and policies: the numbers every other screen reads.' },
+  ['SettingsSubNav', 'StudioProfile (contact + map + confirmed)', 'OpeningHours', 'Capacity', 'Policies', 'IntegrationsPointer (M-10)'],
+  { logic: ['useContact() (src/modules/admin/settings.ts) is the one reader of address / city / WhatsApp / email / Instagram / map: M-08a first, src/tenant/tenant.ts as the default for every empty field. The site footer, W-06, MapSlot, the legal tokens, the email footer, the customer contact rows and the manual’s {{tenant:contact}} all read it.', 'Until “confirmed” is on, every consumer labels the values as pending (the tenant.ts placeholders were never presented as fact).'], states: ['Pending (default)', 'Confirmed', 'Saving', 'Read-only'] },
 );
 export const M08b = sub('M-08b',
   { es: 'Ajustes · Funciones', en: 'Settings · Features' },
@@ -148,15 +149,26 @@ export const M08b = sub('M-08b',
 );
 export const M08c = sub('M-08c',
   { es: 'Ajustes · Pagos', en: 'Settings · Payments' },
-  { es: 'Cuenta de consignación, NIT, IVA y resolución DIAN, y el entorno de Wompi. Las llaves secretas nunca se guardan aquí.', en: 'Payout account, NIT, IVA and DIAN resolution, and the Wompi environment. Secret keys are never stored here.' },
-  ['SettingsSubNav', 'PayoutAccount', 'WompiEnvironment + SecretNotice', 'FiscalIdentity (NIT)', 'TaxAndInvoicing'],
-  { integrations: ['Wompi', 'DIAN e-invoicing'], notes: [...(M08.notes ?? []), 'Sub-page of M-08.', 'Wompi private keys live in server environment variables, never in tenants.settings nor in the browser.'] },
+  { es: 'Cuenta de consignación, NIT, IVA (incluido o no en los precios publicados) y resolución DIAN, el entorno de Wompi, y la nómina: cadencia mensual o quincenal, medio de pago, quién firma y la tarjeta de tarifas por modalidad y por profesor.', en: 'Payout account, NIT, IVA (included in published prices or not) and DIAN resolution, the Wompi environment, and payroll: monthly or biweekly cadence, payout method, who signs, and the rate card by modality and by teacher.' },
+  ['SettingsSubNav', 'PayoutAccount', 'WompiEnvironment + SecretNotice', 'FiscalIdentity (NIT)', 'TaxAndInvoicing (pricesIncludeIva)', 'Payroll (cadence · payoutMethod · signedBy · withholding) + RateCard (byModality · byTeacher)'],
+  { integrations: ['Wompi', 'DIAN e-invoicing'], data: ['tenants', 'modalities', 'teachers', 'audit_log'],
+    logic: ['pricesIncludeIva drives splitTax() (S-04), OrderSummary (C-04) and the P-01 “¿Incluye IVA?” card.', 'cadence is programmed both ways: payrollCalc.periodsFor() returns one period per month or two (1–15, 16–end); M-09a generates one run per period, S-03 navigates by period, M-09’s default range follows it (30 d vs 15 d).', 'The rate card is resolved by payrollCalc.rateFor(): teacher override → modality rate → teachers.rate_per_class → 0. Editing a rate changes the S-03 estimate and the next draft; approved and paid runs keep their lines.', 'Every save writes audit_log settings.update with before/after.'],
+    states: ['Monthly (default)', 'Biweekly', 'Rate row empty (falls through)', 'Saving', 'Read-only'],
+    notes: [...(M08.notes ?? []), 'Sub-page of M-08.', 'Wompi private keys live in server environment variables, never in tenants.settings nor in the browser.'] },
 );
 export const M08d = sub('M-08d',
   { es: 'Ajustes · Comunicaciones', en: 'Settings · Communications' },
   { es: 'Horas de silencio y nombres de remitente de WhatsApp y email, que M-04 y M-05 usan al enviar.', en: 'Quiet hours and the WhatsApp and email sender names M-04 and M-05 use when sending.' },
   ['SettingsSubNav', 'QuietHours', 'SenderIdentity'],
   { integrations: ['WhatsApp Cloud API', 'Email'] },
+);
+export const M08f = sub('M-08f',
+  { es: 'Ajustes · Contenido', en: 'Settings · Content' },
+  { es: 'Decisiones de contenido del owner como ajustes: cómo se nombran las clases en público (disciplinas o movimientos), si Respiración es una clase propia o vive dentro de meditación, qué proveedor de mapa usa el sitio, y qué versiones legales están publicadas.', en: 'The owner’s content decisions as settings: how classes are named in public (disciplines or movements), whether Respiración is its own class or lives inside meditation, which map provider the site embeds, and which legal versions are published.' },
+  ['SettingsSubNav', 'PublicNaming', 'BreathworkOwnClass', 'MapProvider + MapSlot preview', 'LegalVersions (publish toggle per version)'],
+  { data: ['tenants', 'legal_documents', 'media_assets', 'audit_log'], integrations: ['Maps (OSM / Google embed)'],
+    logic: ['publicNaming: classDisplay() titles a schedule row by the modality (disciplines) or by the movement with the modality next to the teacher (movements); C-03 and W-04 read it.', 'breathworkOwnClass: visibleModalities() hides the respiracion modality row from W-03, W-07, W-08 and the C-03 filter while it is off; W-08 then prints the “lives inside the guided classes” sentence.', 'mapProvider: MapSlot reads it when no prop is passed — none keeps the site offline-safe.', 'Publishing a legal version flips legal_documents.status and stamps published_at; A-06 shows the newest published version per kind. Each flip writes audit_log legal.publish / legal.unpublish.'],
+    states: ['Disciplines (default)', 'Movements', 'Respiración hidden (default) / shown', 'Map none / osm / google', 'Legal: n of 7 published', 'Read-only'] },
 );
 export const M08e = sub('M-08e',
   { es: 'Ajustes · Marca', en: 'Settings · Branding' },
@@ -278,4 +290,24 @@ export const M11 = defineSpec({
   integrations: ['Supabase Auth'],
   states: ['Loading', 'No open requests', 'Filter with no matches', 'Requested (mover a en proceso)', 'Processing with a partial checklist (hecha disabled)', 'All steps ticked (hecha enabled)', 'Done / cancelled (locked, read-only)', 'Public request without an account', 'Read-only (not admin)'],
   notes: DELETION_NOTES,
+});
+
+/** M-10 — Integraciones (0018): one card per external system, non-secret fields ready to fill, a status chip and the dev checklist. */
+export const M10 = defineSpec({
+  code: 'M-10',
+  name: { es: 'Integraciones', en: 'Integrations' },
+  purpose: { es: 'Una tarjeta por integración — Wompi, WhatsApp Business, correo, facturación DIAN, mapas, Supabase — con los campos no secretos listos para llenar (ids de comercio, número emisor, namespace de plantillas, proveedor, URL del proyecto), un estado simulado · configurado · conectado, el aviso de que las llaves viven en el servidor y la lista de lo que el dev debe terminar.', en: 'One card per integration — Wompi, WhatsApp Business, email, DIAN e-invoicing, maps, Supabase — with the non-secret fields ready to fill (merchant ids, sender number, template namespace, provider, project URL), a simulated · configured · connected status, the notice that keys live server-side and the checklist of what the dev must finish.' },
+  layout: ['Intro', 'Cards', 'Order'],
+  data: ['integrations', 'audit_log'],
+  roles: ['super_admin', 'admin'],
+  logic: [
+    'The integrations table holds one row per key with status, a config json of NON-SECRET fields and notes; the definitions (which fields, which checklist, which secrets exist) live in src/modules/admin/integrationDefs.ts so the seed and the page agree.',
+    'Status is moved by hand: simulated (seam only) → configured (ids filled, dev has not wired it) → connected (live). Nothing here performs a connection; the seams (wompiCheckout, wompiPayout, message_log, MockProvider) keep behaving as before until the dev replaces them.',
+    'Secrets never enter the table or the browser; the card names the environment variables the dev must set instead.',
+    'settings.write gates every save; each save writes audit_log integration.update with key, before and after.',
+    'M-09a reads the Wompi row’s status for its “simulado” badge (useIntegrationStatus).',
+  ],
+  integrations: ['Wompi', 'WhatsApp Business (Meta)', 'Email provider', 'DIAN e-invoicing provider', 'Maps', 'Supabase'],
+  states: ['Loading', 'All simulated (seed)', 'Configured: fields filled, dev pending', 'Connected', 'Dirty card (unsaved)', 'Saved', 'Read-only (no settings.write)'],
+  notes: ['Sections: Intro = title · status counts · keys-live-server-side notice · manual link; Cards = one IntegrationCard per system (body · what is simulated today · fields · filled count · secrets named · checklist · notes · status select · save); Order = the connection order from ROADMAP §B and where each setting lives.', 'Manual chapter 26 is written around this page: what can be promised today and the order in which the systems get connected.', 'The M-08a “Integraciones” section became a pointer to this page in 0018; the old tenants.settings.integrations statuses are superseded by the table.'],
 });

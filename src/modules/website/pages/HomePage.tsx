@@ -14,7 +14,7 @@ import { Card } from '../../../components/molecule/Card/Card';
 import { ClassRow } from '../../../components/molecule/ClassRow/ClassRow';
 import { TeacherCard } from '../../../components/organism/TeacherCard/TeacherCard';
 import { MediaSlot } from '../../../components/molecule/MediaSlot/MediaSlot';
-import { SectionHead, SiteShell, waHref } from '../SiteShell';
+import { SectionHead, SiteShell, useWaHref } from '../SiteShell';
 import { siteSpecs } from '../specs';
 import { useTodaySessions } from '../hooks';
 
@@ -22,6 +22,7 @@ const FAMILIES: PlanFamily[] = ['bienvenida', 'membresia', 'pausas', 'regalos', 
 
 export function HomePage() {
   const { t, bi, lang } = useI18n();
+  const waHref = useWaHref();
   const nav = useNavigate();
   const { sections, isVisible } = useLayout(siteSpecs.home);
   const today = useTodaySessions();

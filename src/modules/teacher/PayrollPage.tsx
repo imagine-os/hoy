@@ -2,16 +2,16 @@ import { useCallback, useMemo, useState } from 'react';
 import { useI18n } from '../../i18n/I18nProvider';
 import { useTable } from '../../data/DataContext';
 import type { BaseRow, BookingRow, ClassSessionRow, PaymentMethodRow, PayrollLineRow, PayrollRunRow, TeacherRow } from '../../data/schema';
-import { classLinesFor, monthPeriod, runTotal, type DraftLine, type Period } from '../../data/payrollCalc';
+import { classLinesFor, isWholeMonth, periodAt, rateFor, runTotal, type DraftLine, type Period } from '../../data/payrollCalc';
 import { formatCOP, formatDate, formatDateTime, formatTime } from '../../i18n/format';
-import { tenant } from '../../tenant/tenant';
 import { StatTile } from '../../components/molecule/StatTile/StatTile';
 import { Card } from '../../components/molecule/Card/Card';
 import { Button } from '../../components/atom/Button/Button';
 import { Badge } from '../../components/atom/Badge/Badge';
 import { Chip } from '../../components/atom/Chip/Chip';
 import { EmptyState } from '../../components/molecule/EmptyState/EmptyState';
-import { useSettings } from '../admin/settings';
+import { useContact, useSettings } from '../admin/settings';
+import { periodLabel } from '../admin/payouts';
 import { waLink } from '../customer/ui';
 import { useTeacherSelf } from './useTeacherSelf';
 import './teacher.css';
@@ -34,7 +34,11 @@ export function TeacherPayrollPage() {
   const { settings } = useSettings();
   const [offset, setOffset] = useState(0);
 
-  const period: Period = useMemo(() => monthPeriod(new Date(new Date().getFullYear(), new Date().getMonth() + offset, 15)), [offset]);
+  // 0018: the period follows the M-08c cadence — a month, or a quincena (1–15 · 16–end) — and the arrows step by period.
+  const cadence = settings.payroll.cadence;
+  const rateCard = settings.payroll.rateCard;
+  const contact = useContact();
+  const period: Period = useMemo(() => periodAt(cadence, new Date(), offset), [cadence, offset]);
   const meId = me?.id;
 
   const { rows: runs } = useTable<PayrollRunRow>('payroll_runs', { orderBy: { column: 'period_start', dir: 'desc' } });
@@ -52,15 +56,16 @@ export function TeacherPayrollPage() {
   const lines: DraftLine[] = useMemo(() => {
     if (!meId) return [];
     if (run) return allLines.filter((l) => l.run_id === run.id && l.teacher_id === meId);
-    return classLinesFor(period, sessions, bookings, me ? [me as TeacherRow] : []);
-  }, [run, allLines, meId, me, period, sessions, bookings]);
+    return classLinesFor(period, sessions, bookings, me ? [me as TeacherRow] : [], rateCard);
+  }, [run, allLines, meId, me, period, sessions, bookings, rateCard]);
 
   const classLines = lines.filter((l) => l.kind === 'class');
   const extras = lines.filter((l) => l.kind !== 'class');
   const total = runTotal(lines);
-  const rate = me?.rate_per_class ?? 0;
+  /** The rate the card shows: the teacher's effective rate for their first specialty (M-08c rate card, then the profile). */
+  const rate = me ? rateFor(me.id, (me.specialties as string[] | undefined)?.[0] ?? null, [me as TeacherRow], rateCard) : 0;
   const myRuns = useMemo(() => runs.filter((r) => allLines.some((l) => l.run_id === r.id && l.teacher_id === meId)), [runs, allLines, meId]);
-  const label = new Date(`${period.start}T12:00:00`).toLocaleDateString(lang === 'es' ? 'es-CO' : 'en-US', { month: 'long', year: 'numeric' });
+  const label = periodLabel(period, lang);
   const isSub = useCallback((sessionId: string | null) => {
     const s = sessionId ? sessionById.get(sessionId) : undefined;
     return !!s?.template_id && tpl.get(s.template_id)?.teacher_id !== s.teacher_id;
@@ -68,7 +73,7 @@ export function TeacherPayrollPage() {
   const subs = classLines.filter((l) => isSub(l.class_session_id)).length;
   const method = methods.find((m) => m.is_default) ?? methods[0];
 
-  const ask = waLink(settings.profile.whatsapp || tenant.contact.whatsapp, t('teacher.payroll.ask.text', { period: label, total: formatCOP(total, lang) }));
+  const ask = waLink(contact.whatsapp, t('teacher.payroll.ask.text', { period: label, total: formatCOP(total, lang) }));
 
   return (
     <div className="container page stack teach">
@@ -91,7 +96,7 @@ export function TeacherPayrollPage() {
           <div className="grid grid-3">
             <StatTile label={t('teacher.payroll.classes')} value={classLines.length} hint={subs ? t('teacher.payroll.subs', { n: subs }) : undefined} />
             <StatTile label={t('teacher.payroll.rate')} value={formatCOP(rate, lang)} hint={t('teacher.payroll.rate.hint')} />
-            <StatTile label={t('teacher.payroll.total')} value={formatCOP(total, lang)} hint={run?.paid_at ? t('teacher.payroll.paidOn', { date: formatDate(run.paid_at, lang) }) : t('teacher.payroll.closes', { date: formatDate(`${period.end}T12:00:00`, lang) })} />
+            <StatTile label={t(isWholeMonth(period) ? 'teacher.payroll.total' : 'teacher.payroll.total.period')} value={formatCOP(total, lang)} hint={run?.paid_at ? t('teacher.payroll.paidOn', { date: formatDate(run.paid_at, lang) }) : t('teacher.payroll.closes', { date: formatDate(`${period.end}T12:00:00`, lang) })} />
           </div>
 
           <section className="stack-sm">

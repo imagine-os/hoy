@@ -1,6 +1,8 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useI18n } from '../../i18n/I18nProvider';
+import { rateFor } from '../../data/payrollCalc';
+import { useSettings } from '../admin/settings';
 import { useData, useTable } from '../../data/DataContext';
 import type { BookingRow, ClassSessionRow, RoomRow, SpaceBookingRow, SpecialChargeRow } from '../../data/schema';
 import { formatCOP, formatDate, formatTime, isSameDay } from '../../i18n/format';
@@ -23,6 +25,7 @@ import './teacher.css';
 /** S-03 Teacher home: next class, today's rosters, the week, substitution request and the payroll estimate. */
 export function TeacherHomePage() {
   const { t, lang, bi } = useI18n();
+  const { settings: homeSettings } = useSettings();
   const nav = useNavigate();
   const data = useData();
   const audit = useAudit('teacher_app');
@@ -80,7 +83,7 @@ export function TeacherHomePage() {
           <div className="grid grid-3">
             <StatTile label={t('teacher.home.today')} value={today.length} />
             <StatTile label={t('teacher.home.taughtMonth')} value={monthTaught} />
-            <StatTile label={t('teacher.home.payroll')} value={formatCOP(monthTaught * (me.rate_per_class ?? 0), lang)} hint={t('teacher.home.payroll.hint')} />
+            <StatTile label={t('teacher.home.payroll')} value={formatCOP(monthTaught * rateFor(me.id, (me.specialties as string[] | undefined)?.[0] ?? null, [me], homeSettings.payroll.rateCard), lang)} hint={t('teacher.home.payroll.hint')} />
           </div>
 
           <section className="stack-sm">

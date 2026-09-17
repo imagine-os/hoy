@@ -1,6 +1,7 @@
 import { Fragment, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
+import { useVisibleModalities } from '../../admin/settings';
 import { useLayout } from '../../../layout/useLayout';
 import { useTable } from '../../../data/DataContext';
 import type { ModalityRow } from '../../../data/schema';
@@ -21,7 +22,8 @@ export function ClassDetailPage() {
   const { slug = '' } = useParams();
   const { t, bi, lang } = useI18n();
   const { sections, isVisible } = useLayout(siteSpecs.classDetail);
-  const { rows: modalities } = useTable<ModalityRow>('modalities', { where: { active: true } });
+  const { rows: modalitiesAll } = useTable<ModalityRow>('modalities', { where: { active: true } });
+  const modalities = useVisibleModalities(modalitiesAll); // 0018: M-08f decides whether Respiración has its own row
   const c = brandClass(slug);
   const trial = priceItem('trial');
   const trialPrice = trial?.price != null ? formatCOP(trial.price, lang) : '';

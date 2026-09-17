@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useI18n } from '../../i18n/I18nProvider';
+import { useContact } from './settings';
 import { useSession } from '../../auth/SessionProvider';
 import { useData, useTable } from '../../data/DataContext';
 import type { BaseRow } from '../../data/schema';
@@ -143,10 +144,11 @@ export function EmailsPage() {
 }
 
 function Canvas({ row, lang }: { row: EmailRow; lang: 'es' | 'en' }) {
+  const contact = useContact();
   const b = parseBody(row);
   const body = lang === 'en' ? b.en || b.es : b.es;
   const subject = lang === 'en' ? row.subject.en || row.subject.es : row.subject.es;
-  return <EmailPreview envelope={`${tenant.name} <${tenant.contact.email}> → mariana@…  ·  ${lang.toUpperCase()} · v${row.version}`} subject={subject} body={body} cta={b.cta ? { label: lang === 'en' ? b.cta.label.en || b.cta.label.es : b.cta.label.es, href: b.cta.href } : undefined} footer={`${tenant.legalName} · ${tenant.city} · ${lang === 'es' ? 'Recibes este correo porque tienes una cuenta en' : 'You receive this email because you have an account at'} ${tenant.name}.`} vars={SAMPLE} />;
+  return <EmailPreview envelope={`${tenant.name} <${contact.email}> → mariana@…  ·  ${lang.toUpperCase()} · v${row.version}`} subject={subject} body={body} cta={b.cta ? { label: lang === 'en' ? b.cta.label.en || b.cta.label.es : b.cta.label.es, href: b.cta.href } : undefined} footer={`${tenant.legalName} · ${contact.city}${contact.pending ? ` (${contact.pendingLabel[lang]})` : ''} · ${lang === 'es' ? 'Recibes este correo porque tienes una cuenta en' : 'You receive this email because you have an account at'} ${tenant.name}.`} vars={SAMPLE} />;
 }
 
 function Editor({ row, readOnly, onSave, onTest }: { row: EmailRow; readOnly: boolean; onSave: (patch: Partial<EmailRow>, before: Record<string, unknown>) => Promise<void>; onTest: () => Promise<void> }) {

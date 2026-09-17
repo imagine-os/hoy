@@ -52,6 +52,7 @@ export const strings: StringTable = {
   'teacher.payroll.subs': { es: '{n} reemplazos', en: '{n} substitutions' },
   'teacher.payroll.rate': { es: 'Tarifa por clase', en: 'Rate per class' },
   'teacher.payroll.total': { es: 'Total del mes', en: 'Month total' },
+  'teacher.payroll.total.period': { es: 'Total de la quincena', en: 'Period total' },
   'teacher.payroll.closes': { es: 'cierra el {date}', en: 'run closes {date}' },
   'teacher.payroll.empty': { es: 'Sin clases dictadas este mes', en: 'No classes taught this month' },
   'teacher.payroll.empty.body': { es: 'Solo cuentan las clases cerradas (completadas).', en: 'Only closed (completed) classes count.' },

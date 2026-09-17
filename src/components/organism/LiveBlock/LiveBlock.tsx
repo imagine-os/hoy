@@ -7,7 +7,7 @@ import { useTable } from '../../../data/DataContext';
 import { TABLE_GROUPS, tableRegistry, tables } from '../../../data/schema';
 import { ROLES, ROLE_HOME, ROLE_LABEL } from '../../../auth/roles';
 import { getRoutes } from '../../../app/registry';
-import { usePolicy } from '../../../modules/admin/settings';
+import { useContact, usePolicy } from '../../../modules/admin/settings';
 import { FAMILY_LABEL, FAMILY_RATIONALE, FAMILY_ROLE, pricing, pricingByFamily, type PlanFamily, type PriceItem } from '../../../tenant/pricing';
 import { tenant } from '../../../tenant/tenant';
 import type { Bi, Surface } from '../../../specs/types';
@@ -39,6 +39,7 @@ const POLICY_ALIAS: Record<string, string> = {
   charge_notice_days: 'chargeNoticeDays',
   lockout_attempts: 'lockoutAttempts', lockout_minutes: 'lockoutMinutes',
   quiet_hours: 'quietHours', iva_pct: 'ivaPct', prices_include_iva: 'pricesIncludeIva',
+  payroll_cadence: 'payrollCadence', cadence: 'payrollCadence', payout_method: 'payoutMethod', signed_by: 'payrollSignedBy',
 };
 
 const POLICY_LABEL: Record<string, Bi> = {
@@ -55,6 +56,9 @@ const POLICY_LABEL: Record<string, Bi> = {
   quietHours: { es: 'Horas silenciosas', en: 'Quiet hours' },
   ivaPct: { es: 'IVA', en: 'IVA' },
   pricesIncludeIva: { es: 'Los precios publicados incluyen IVA', en: 'Published prices include IVA' },
+  payrollCadence: { es: 'Periodicidad de la nómina de profesores', en: 'Teacher payroll cadence' },
+  payoutMethod: { es: 'Medio de pago de la nómina por defecto', en: 'Default payroll payout method' },
+  payrollSignedBy: { es: 'Quién firma el soporte de pago', en: 'Who signs the payment record' },
 };
 
 const UNIT: Record<string, Bi> = {
@@ -163,17 +167,19 @@ function Pricing({ family }: { family?: string }) {
 
 function TenantFacts({ what }: { what?: string }) {
   const { lang, bi } = useI18n();
+  const contact = useContact();
+  const pend = contact.pending ? ` (${bi(contact.pendingLabel)})` : '';
   const rows: [string, ReactNode][] = [];
   const title = { hours: { es: 'Horario del estudio', en: 'Studio hours' }, contact: { es: 'Contacto del estudio', en: 'Studio contact' }, capacity: { es: 'Capacidad y disciplina', en: 'Capacity and discipline' }, all: { es: 'El estudio', en: 'The studio' } };
   const key = (what ?? 'all') as keyof typeof title;
   if (!title[key]) return <Unknown kind="tenant" arg={what} options={['hours', 'contact', 'capacity']} />;
   if (key === 'hours' || key === 'all') rows.push([lang === 'en' ? 'Opening hours' : 'Horario', bi(tenant.hours)], [lang === 'en' ? 'Time zone' : 'Zona horaria', `${tenant.timezone} · ${tenant.currency}`]);
   if (key === 'contact' || key === 'all') rows.push(
-    ['WhatsApp', tenant.contact.whatsapp],
-    [lang === 'en' ? 'Email' : 'Correo', tenant.contact.email],
-    [lang === 'en' ? 'Address' : 'Dirección', tenant.contact.address],
-    ['Instagram', tenant.contact.instagram],
-    [lang === 'en' ? 'City' : 'Ciudad', tenant.city],
+    ['WhatsApp', `${contact.whatsapp}${pend}`],
+    [lang === 'en' ? 'Email' : 'Correo', `${contact.email}${pend}`],
+    [lang === 'en' ? 'Address' : 'Dirección', `${contact.address}${pend}`],
+    ['Instagram', `${contact.instagram}${pend}`],
+    [lang === 'en' ? 'City' : 'Ciudad', contact.city],
   );
   if (key === 'capacity' || key === 'all') rows.push(
     [lang === 'en' ? 'Mats per class' : 'Mats por clase', String(tenant.studio.mats)],
@@ -183,7 +189,7 @@ function TenantFacts({ what }: { what?: string }) {
     [lang === 'en' ? 'Seats per day' : 'Cupos por día', String(tenant.studio.mats * tenant.studio.classesPerDay)],
   );
   return (
-    <Frame title={bi(title[key])} eyebrow={`${tenant.legalName} · src/tenant/tenant.ts`} source={<Link to="/admin/settings">{lang === 'en' ? 'Settings › General' : 'Ajustes › General'}</Link>}>
+    <Frame title={bi(title[key])} eyebrow={`${tenant.legalName} · M-08a → src/tenant/tenant.ts`} source={<Link to="/admin/settings">{lang === 'en' ? 'Settings › General (M-08a)' : 'Ajustes › General (M-08a)'}</Link>}>
       <dl className="live-dl">{rows.map(([k, v]) => <div key={k} className="live-dl-row"><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
     </Frame>
   );
@@ -196,14 +202,18 @@ function Policy({ field }: { field?: string }) {
     if (k === 'quietHours') return `${p.quietHours.from} – ${p.quietHours.to}`;
     if (k === 'ivaPct') return `${p.tax.ivaPct} %`;
     if (k === 'pricesIncludeIva') return p.tax.pricesIncludeIva ? (lang === 'en' ? 'yes' : 'sí') : 'no';
+    if (k === 'payrollCadence') return p.payroll.cadence === 'biweekly' ? (lang === 'en' ? 'biweekly (1–15 · 16–end)' : 'quincenal (1–15 · 16–fin)') : (lang === 'en' ? 'monthly' : 'mensual');
+    if (k === 'payoutMethod') return p.payroll.payoutMethod === 'wompi' ? 'Wompi' : p.payroll.payoutMethod === 'transfer' ? (lang === 'en' ? 'transfer' : 'transferencia') : (lang === 'en' ? 'cash' : 'efectivo');
+    if (k === 'payrollSignedBy') return p.payroll.signedBy || (lang === 'en' ? 'pending (M-08c)' : 'pendiente (M-08c)');
     if (k === 'noShowFee') return (p as unknown as Record<string, number>)[k] ? cop((p as unknown as Record<string, number>)[k]) : (lang === 'en' ? 'none' : 'sin cargo');
     const raw = (p as unknown as Record<string, unknown>)[k];
     const unit = UNIT[k] ? ` ${bi(UNIT[k])}` : '';
     return raw === undefined ? '—' : `${String(raw)}${unit}`;
   };
-  const source = <Link to="/admin/settings">{lang === 'en' ? 'source: Settings › Policies (M-08a)' : 'fuente: Ajustes › Políticas (M-08a)'}</Link>;
+  const payrollKeys = ['payrollCadence', 'payoutMethod', 'payrollSignedBy'];
   if (field) {
     const k = POLICY_ALIAS[field] ?? field;
+    const source = <Link to={payrollKeys.includes(k) ? '/admin/settings/payments' : '/admin/settings'}>{payrollKeys.includes(k) ? (lang === 'en' ? 'source: Settings › Payments (M-08c)' : 'fuente: Ajustes › Pagos (M-08c)') : (lang === 'en' ? 'source: Settings › Policies (M-08a)' : 'fuente: Ajustes › Políticas (M-08a)')}</Link>;
     if (!POLICY_LABEL[k]) return <Unknown kind="policy" arg={field} options={Object.keys(POLICY_LABEL)} />;
     return (
       <Frame title={bi(POLICY_LABEL[k])} eyebrow={lang === 'en' ? 'Current policy value' : 'Valor vigente de la política'} source={source}>
@@ -211,8 +221,9 @@ function Policy({ field }: { field?: string }) {
       </Frame>
     );
   }
+  const source = <Link to="/admin/settings">{lang === 'en' ? 'source: Settings › Policies (M-08a) · Payments (M-08c)' : 'fuente: Ajustes › Políticas (M-08a) · Pagos (M-08c)'}</Link>;
   return (
-    <Frame title={lang === 'en' ? 'Policies in force' : 'Políticas vigentes'} eyebrow={lang === 'en' ? 'M-08a Settings & policies' : 'M-08a Ajustes y políticas'} source={source}>
+    <Frame title={lang === 'en' ? 'Policies in force' : 'Políticas vigentes'} eyebrow={lang === 'en' ? 'M-08a Settings & policies · M-08c Payroll' : 'M-08a Ajustes y políticas · M-08c Nómina'} source={source}>
       <dl className="live-dl">
         {Object.keys(POLICY_LABEL).map((k) => <div key={k} className="live-dl-row"><dt>{bi(POLICY_LABEL[k])}</dt><dd>{value(k)}</dd></div>)}
       </dl>

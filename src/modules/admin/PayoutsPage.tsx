@@ -16,7 +16,8 @@ import { DataTable, type DataTableColumn } from '../../components/organism/DataT
 import { EmptyState } from '../../components/molecule/EmptyState/EmptyState';
 import { useAudit } from '../staff/audit';
 import { useSettings } from './settings';
-import { downloadCsv, monthPeriodFor, payrollCsv, statementOf, useGenerateDraft, usePayroll, wompiPayout, type PayoutMethod, type TeacherStatement } from './payouts';
+import { useIntegrationStatus } from './integrations';
+import { downloadCsv, monthPeriodFor, payrollCsv, periodLabel, periodsForMonth, statementOf, useGenerateDraft, usePayroll, wompiPayout, type PayoutMethod, type TeacherStatement } from './payouts';
 import './admin.css';
 
 const STATUS_TONE = { draft: 'warn', approved: 'primary', paid: 'success' } as const;
@@ -34,8 +35,11 @@ export function PayoutsPage() {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const canWrite = can('payroll.write');
+  const cadence = settings.payroll.cadence;
+  const wompiStatus = useIntegrationStatus('wompi');
 
-  const period = monthPeriodFor(offset);
+  /** 0018: one period per month, or two (1–15 · 16–end) when M-08c says biweekly. */
+  const periods = periodsForMonth(cadence, offset);
   const draft = runs.find((r) => r.status === 'draft');
   const pending = runs.filter((r) => r.status === 'approved');
   const quarterStart = new Date(); quarterStart.setMonth(quarterStart.getMonth() - 3);
@@ -44,16 +48,23 @@ export function PayoutsPage() {
   const run = async () => {
     setBusy(true); setMsg(null);
     try {
-      const res = await generate(period, 'wompi');
-      if ('blocked' in res) { setMsg(t('admin.payouts.generate.blocked', { status: res.blocked.status })); return; }
-      await audit(res.replaced ? 'payroll.draft.regenerate' : 'payroll.draft.create', 'payroll_runs', res.run.id, { after: { period: `${period.start}…${period.end}`, lines: res.created, total: res.run.total } });
-      setMsg(t('admin.payouts.generate.done', { n: res.created, total: formatCOP(res.run.total, lang) }));
-      nav(`/admin/finance/payouts/${res.run.id}`);
+      const made: { id: string; total: number; created: number }[] = [];
+      let overlap = false;
+      for (const period of periods) {
+        const res = await generate(period, settings.payroll.payoutMethod);
+        if ('blocked' in res) { setMsg(t('admin.payouts.generate.blocked', { status: res.blocked.status })); return; }
+        await audit(res.replaced ? 'payroll.draft.regenerate' : 'payroll.draft.create', 'payroll_runs', res.run.id, { after: { period: `${period.start}…${period.end}`, cadence, lines: res.created, total: res.run.total } });
+        made.push({ id: res.run.id, total: res.run.total, created: res.created });
+        overlap = overlap || res.replacedOverlap;
+      }
+      const total = made.reduce((a, m) => a + m.total, 0), n = made.reduce((a, m) => a + m.created, 0);
+      setMsg(`${made.length > 1 ? t('admin.payouts.generate.done.many', { runs: made.length, n, total: formatCOP(total, lang) }) : t('admin.payouts.generate.done', { n, total: formatCOP(total, lang) })}${overlap ? ` · ${t('admin.payouts.generate.replacedOverlap')}` : ''}`);
+      if (made.length === 1) nav(`/admin/finance/payouts/${made[0].id}`);
     } finally { setBusy(false); }
   };
 
   const cols: DataTableColumn<PayrollRunRow>[] = [
-    { key: 'period_start', label: t('admin.payouts.col.period'), render: (r) => <strong className="small">{formatDate(`${r.period_start}T12:00:00`, lang, { month: 'long', year: 'numeric' })}</strong> },
+    { key: 'period_start', label: t('admin.payouts.col.period'), render: (r) => <strong className="small">{periodLabel({ start: r.period_start, end: r.period_end }, lang)}</strong> },
     { key: 'status', label: t('admin.payouts.col.status'), render: (r) => <Badge tone={STATUS_TONE[r.status]}>{t(`admin.payouts.status.${r.status}`)}</Badge> },
     { key: 'teachers', label: t('admin.payouts.col.teachers'), align: 'right', sortable: false, render: (r) => new Set(linesOf(r.id).map((l) => l.teacher_id)).size },
     { key: 'classes', label: t('admin.payouts.col.classes'), align: 'right', sortable: false, render: (r) => linesOf(r.id).filter((l) => l.kind === 'class').length },
@@ -67,16 +78,16 @@ export function PayoutsPage() {
       <div className="page-head">
         <div>
           <h1>{t('admin.payouts.title')}</h1>
-          <p className="muted small">{t('admin.payouts.subtitle')}</p>
+          <p className="muted small">{t(cadence === 'biweekly' ? 'admin.payouts.subtitle.biweekly' : 'admin.payouts.subtitle')}</p>
         </div>
         <div className="row wrap">
           <Link to="/admin/finance"><Button size="sm" variant="ghost">{t('admin.payouts.backToFinance')}</Button></Link>
-          <Badge tone={settings.integrations.wompi === 'connected' ? 'success' : 'warn'}>{t('admin.payouts.simulated')}</Badge>
+          <Badge tone={wompiStatus === 'connected' ? 'success' : 'warn'}>{wompiStatus === 'connected' ? t('admin.integrations.status.connected') : t('admin.payouts.simulated')}</Badge>
         </div>
       </div>
 
       <div className="grid grid-3">
-        <StatTile label={t('admin.payouts.kpi.next')} value={formatCOP(draft?.total ?? 0, lang)} hint={draft ? t('admin.payouts.kpi.next.hint', { period: formatDate(`${draft.period_start}T12:00:00`, lang, { month: 'long' }), n: new Set(linesOf(draft.id).map((l) => l.teacher_id)).size }) : t('admin.payouts.kpi.next.none')} />
+        <StatTile label={t('admin.payouts.kpi.next')} value={formatCOP(draft?.total ?? 0, lang)} hint={draft ? t('admin.payouts.kpi.next.hint', { period: periodLabel({ start: draft.period_start, end: draft.period_end }, lang), n: new Set(linesOf(draft.id).map((l) => l.teacher_id)).size }) : t('admin.payouts.kpi.next.none')} />
         <StatTile label={t('admin.payouts.kpi.pending')} value={formatCOP(pending.reduce((a, r) => a + r.total, 0), lang)} hint={t('admin.payouts.kpi.pending.hint', { n: pending.length })} trend={pending.length ? 'up' : 'flat'} />
         <StatTile label={t('admin.payouts.kpi.quarter')} value={formatCOP(paidQuarter.reduce((a, r) => a + r.total, 0), lang)} hint={t('admin.payouts.kpi.quarter.hint', { n: paidQuarter.length })} />
       </div>
@@ -89,9 +100,10 @@ export function PayoutsPage() {
               return <option key={o} value={o}>{formatDate(`${p.start}T12:00:00`, lang, { month: 'long', year: 'numeric' })}</option>;
             })}
           </Select>
-          <Button size="sm" loading={busy} disabled={!canWrite} onClick={run}>{t('admin.payouts.generate.action')}</Button>
+          <Button size="sm" loading={busy} disabled={!canWrite} onClick={run}>{t(cadence === 'biweekly' ? 'admin.payouts.generate.action.biweekly' : 'admin.payouts.generate.action')}</Button>
           <span className="xs muted">{t('admin.payouts.generate.hint')}</span>
         </div>
+        <p className="xs muted" style={{ marginTop: 8 }}>{periods.map((p) => periodLabel(p, lang)).join(' · ')} — {t('admin.payouts.generate.cadence', { cadence: t(`admin.settings.f.cadence.${cadence}`) })} <Link to="/admin/settings/payments">M-08c</Link></p>
         {msg && <p className="small" style={{ marginTop: 12 }}>{msg}</p>}
         {!canWrite && <p className="xs muted" style={{ marginTop: 8 }}>{t('admin.payouts.noPermission')}</p>}
       </Card>
@@ -115,6 +127,7 @@ export function PayoutRunPage() {
   const { can, user } = useSession();
   const audit = useAudit('admin');
   const { runs, linesOf, teacherName, loading } = usePayroll();
+  const { settings: runSettings } = useSettings();
   const generate = useGenerateDraft();
   const { rows: sessions } = useTable<ClassSessionRow>('class_sessions');
   const sessionById = useMemo(() => new Map(sessions.map((s) => [s.id, s])), [sessions]);
@@ -134,7 +147,7 @@ export function PayoutRunPage() {
     return <div className="stack"><EmptyState tone={loading ? 'loading' : 'empty'} title={t(loading ? 'core.common.loading' : 'admin.payouts.notFound')} action={<Link to="/admin/finance/payouts"><Button size="sm" variant="ghost">{t('admin.payouts.title')}</Button></Link>} /></div>;
   }
 
-  const periodLabel = `${formatDate(`${run.period_start}T12:00:00`, lang, { day: 'numeric', month: 'short' })} – ${formatDate(`${run.period_end}T12:00:00`, lang, { day: 'numeric', month: 'short', year: 'numeric' })}`;
+  const periodText = `${formatDate(`${run.period_start}T12:00:00`, lang, { day: 'numeric', month: 'short' })} – ${formatDate(`${run.period_end}T12:00:00`, lang, { day: 'numeric', month: 'short', year: 'numeric' })}`;
 
   const approve = async () => {
     setBusy('approve'); setNotice(null);
@@ -215,12 +228,13 @@ export function PayoutRunPage() {
       <div className="page-head">
         <div>
           <Link to="/admin/finance/payouts" className="xs muted">‹ {t('admin.payouts.title')}</Link>
-          <h1>{formatDate(`${run.period_start}T12:00:00`, lang, { month: 'long', year: 'numeric' })}</h1>
-          <p className="muted small">{periodLabel} · {t('admin.payouts.runOf', { n: statement.length, classes: lines.filter((l) => l.kind === 'class').length })}{lines.some((l) => l.kind === 'manual') ? ` · ${t('admin.payouts.runOf.manual', { n: lines.filter((l) => l.kind === 'manual').length })}` : ''}</p>
+          <h1>{periodLabel({ start: run.period_start, end: run.period_end }, lang)}</h1>
+          <p className="muted small">{periodText} · {t('admin.payouts.runOf', { n: statement.length, classes: lines.filter((l) => l.kind === 'class').length })}{lines.some((l) => l.kind === 'manual') ? ` · ${t('admin.payouts.runOf.manual', { n: lines.filter((l) => l.kind === 'manual').length })}` : ''}</p>
         </div>
         <div className="row wrap">
           <Badge tone={STATUS_TONE[run.status]}>{t(`admin.payouts.status.${run.status}`)}</Badge>
           <Badge tone="warn">{t('admin.payouts.simulated')}</Badge>
+          {runSettings.payroll.signedBy && <span className="xs muted">{t('admin.payouts.signedBy', { name: runSettings.payroll.signedBy })}</span>}
         </div>
       </div>
 

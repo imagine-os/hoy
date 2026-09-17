@@ -1,6 +1,7 @@
 import { Fragment, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
+import { useVisibleModalities } from '../../admin/settings';
 import { useLayout } from '../../../layout/useLayout';
 import { useTable } from '../../../data/DataContext';
 import type { ModalityRow } from '../../../data/schema';
@@ -19,7 +20,8 @@ const classForModality = (slug: string): ClassSlug | undefined =>
 export function ModalitiesPage() {
   const { t, lang, bi } = useI18n();
   const { sections, isVisible } = useLayout(siteSpecs.modalities);
-  const { rows } = useTable<ModalityRow>('modalities', { where: { active: true } });
+  const { rows: rowsAll } = useTable<ModalityRow>('modalities', { where: { active: true } });
+  const rows = useVisibleModalities(rowsAll); // 0018: M-08f decides whether Respiración has its own row
 
   const SECTIONS: Record<string, () => ReactNode> = {
     PageHead: () => <PageHead title={t('site.modalities.title')} body={t('site.modalities.body')} />,

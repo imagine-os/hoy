@@ -81,3 +81,12 @@
 .adm-mv-arde { background: var(--tex-ph), linear-gradient(var(--mv-arde-bg), var(--mv-arde-bg)); }
 .adm-mv-libera { background: var(--tex-ph), linear-gradient(var(--mv-libera-bg), var(--mv-libera-bg)); }
 .adm-line-manual .grow { font-style: normal; }
+
+/* 0018 — M-08c rate card rows, M-08f map preview, M-10 cards */
+.settings-rate { display: grid; grid-template-columns: 1fr 140px; gap: 8px; align-items: center; }
+.settings-rate .input { text-align: right; font-variant-numeric: tabular-nums; }
+.settings-map { max-width: 520px; }
+.integ-grid { align-items: start; }
+.integ-fields { gap: 8px 12px; }
+.integ-check { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+@media (max-width: 720px) { .integ-grid { grid-template-columns: 1fr; } .settings-rate { grid-template-columns: 1fr 110px; } }

@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
-import { tenant } from '../../../tenant/tenant';
+import { useContact } from '../../admin/settings';
 import { Button } from '../../../components/atom/Button/Button';
 import { Card } from '../../../components/molecule/Card/Card';
 import { Accordion } from '../../../components/molecule/Accordion/Accordion';
@@ -11,6 +11,7 @@ import { PageHead, waLink } from '../ui';
 /** C-14 / C-15 FAQ — questions come from `faq_entries`, grouped by section, two pages so the accordion stays short. */
 export function FaqPage({ page }: { page: 1 | 2 }) {
   const { t, bi } = useI18n();
+  const contact = useContact();
   const { groups, totalPages, loading } = useFaq(page);
   return (
     <div className="container page cust-page">
@@ -26,7 +27,7 @@ export function FaqPage({ page }: { page: 1 | 2 }) {
         ))}
         {page === 1
           ? <Link to="/app/faq/2"><Button block variant="secondary">{t('customer.faq.next')} →</Button></Link>
-          : <Card tone="highlight" className="row-between wrap"><span className="small">{t('customer.faq.concierge')}</span><a href={waLink(tenant.contact.whatsapp, t('customer.more.whatsapp.text', { name: '' }))} target="_blank" rel="noreferrer"><Button size="sm" variant="secondary">WhatsApp →</Button></a></Card>}
+          : <Card tone="highlight" className="row-between wrap"><span className="small">{t('customer.faq.concierge')}</span><a href={waLink(contact.whatsapp, t('customer.more.whatsapp.text', { name: '' }))} target="_blank" rel="noreferrer"><Button size="sm" variant="secondary">WhatsApp →</Button></a></Card>}
       </div>
     </div>
   );

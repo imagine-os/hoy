@@ -1253,6 +1253,34 @@ alter table public.notification_prefs enable row level security;
 create policy "notification_prefs: tenant read" on public.notification_prefs for select using (tenant_id = public.current_tenant_id());
 create policy "notification_prefs: staff write" on public.notification_prefs for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
 
+-- system · One row per external system (Wompi, WhatsApp, email, DIAN, maps, Supabase): status, non-secret fields ready to fill and notes for the dev (M-10). Keys live server-side, never here.
+-- access:
+--   · super_admin/admin: full control (M-10)
+--   · finance: read (M-09a shows the Wompi status)
+--   · nobody else reads; config holds public identifiers only — a secret in this table is a bug
+create table if not exists public.integrations (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  key text not null check (key in ('wompi', 'whatsapp', 'email', 'dian', 'maps', 'supabase')),
+  -- simulated = seam only · configured = ids filled, dev has not wired it · connected = live
+  status text not null check (status in ('simulated', 'configured', 'connected')),
+  -- non-secret fields per integration (merchant id, sender number, provider name, project URL…)
+  config jsonb not null,
+  -- what the dev must still finish, in the owner’s words
+  notes text,
+  updated_by uuid references public.users(id) on delete set null
+);
+create index if not exists integrations_tenant_idx on public.integrations(tenant_id);
+create index if not exists integrations_updated_by_idx on public.integrations(updated_by);
+create trigger integrations_touch before update on public.integrations for each row execute function public.touch_updated_at();
+alter table public.integrations enable row level security;
+create policy "integrations: tenant read" on public.integrations for select using (tenant_id = public.current_tenant_id());
+create policy "integrations: staff write" on public.integrations for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
 -- system · Who did what, on which entity, when (M-07).
 create table if not exists public.audit_log (
   -- Primary key

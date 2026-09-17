@@ -951,6 +951,27 @@ _Canal × categoría que cada persona acepta (C-24 / C-19). Sin fila = activado.
 
 ### System · Sistema
 
+#### `integrations`
+One row per external system (Wompi, WhatsApp, email, DIAN, maps, Supabase): status, non-secret fields ready to fill and notes for the dev (M-10). Keys live server-side, never here.  
+_Una fila por sistema externo (Wompi, WhatsApp, correo, DIAN, mapas, Supabase): estado, campos no secretos listos para llenar y notas para el dev (M-10). Las llaves viven en el servidor, nunca aquí._
+
+| column | type | notes |
+| --- | --- | --- |
+| `id` | uuid | Primary key |
+| `tenant_id` | uuid | → `tenants` Owning studio (multi-tenant) |
+| `created_at` | timestamptz |  |
+| `updated_at` | timestamptz |  |
+| `key` | enum (wompi \| whatsapp \| email \| dian \| maps \| supabase) |  |
+| `status` | enum (simulated \| configured \| connected) | simulated = seam only · configured = ids filled, dev has not wired it · connected = live |
+| `config` | json | non-secret fields per integration (merchant id, sender number, provider name, project URL…) |
+| `notes` | text, null | what the dev must still finish, in the owner’s words |
+| `updated_by` | uuid, null | → `users`  |
+
+**Who may read / write**
+- super_admin/admin: full control (M-10)
+- finance: read (M-09a shows the Wompi status)
+- nobody else reads; config holds public identifiers only — a secret in this table is a bug
+
 #### `audit_log`
 Who did what, on which entity, when (M-07).  
 _Quién hizo qué, sobre qué entidad, cuándo (M-07)._

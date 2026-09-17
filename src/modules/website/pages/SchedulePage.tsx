@@ -1,6 +1,7 @@
 import { Fragment, useState, type ReactNode } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
+import { classDisplay, useSettings } from '../../admin/settings';
 import { useLayout } from '../../../layout/useLayout';
 import { formatDate, isSameDay } from '../../../i18n/format';
 import { tenant } from '../../../tenant/tenant';
@@ -16,7 +17,9 @@ import { siteSpecs } from '../specs';
 import { dayList, useSessionsJoined } from '../hooks';
 
 export function SchedulePage() {
-  const { t, lang } = useI18n();
+  const { t, lang, bi } = useI18n();
+  const { settings: contentSettings } = useSettings();
+  const naming = contentSettings.content.publicNaming;
   const nav = useNavigate();
   const [params, setParams] = useSearchParams();
   const { sections, isVisible } = useLayout(siteSpecs.schedule);
@@ -54,7 +57,7 @@ export function SchedulePage() {
         <Card padding="sm">
           {list.length === 0 && <p className="muted" style={{ padding: 16 }}>{t('site.today.empty')}</p>}
           {list.map(({ session: s, modality: m, teacher: te }) => (
-            <ClassRow key={s.id} title={s.title} teacher={te?.display_name ?? ''} startsAt={s.starts_at} durationMin={m?.duration_min ?? 60} movement={m?.movement ?? 'fluye'} booked={s.booked_count} capacity={s.capacity} status={s.status} onClick={() => setPicked(s.id)} />
+            <ClassRow key={s.id} {...classDisplay(naming, { title: s.title, modalityName: m ? bi({ es: m.name_es, en: m.name_en }) : null, movementLabel: movements[m?.movement ?? 'fluye'].label, teacher: te?.display_name ?? '' })} startsAt={s.starts_at} durationMin={m?.duration_min ?? 60} movement={m?.movement ?? 'fluye'} booked={s.booked_count} capacity={s.capacity} status={s.status} onClick={() => setPicked(s.id)} />
           ))}
         </Card>
       </section>

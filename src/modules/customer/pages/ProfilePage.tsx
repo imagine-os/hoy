@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
+import { useContact } from '../../admin/settings';
 import { useSession } from '../../../auth/SessionProvider';
 import { useData } from '../../../data/DataContext';
 import { formatDate } from '../../../i18n/format';
@@ -27,6 +28,7 @@ const spec = canvasSpecs['C-19'];
 /** C-19 Profile, settings & membership. */
 export function ProfilePage() {
   const { t, bi, lang } = useI18n();
+  const contact = useContact();
   const nav = useNavigate();
   const data = useData();
   const { user, switchUser } = useSession();
@@ -105,7 +107,7 @@ export function ProfilePage() {
     'LeaveAReview → Google / Instagram': () => (
       <ListGroup title={t('customer.profile.review')}>
         <ListRow icon="★" title={t('customer.profile.review.google')} href={`https://www.google.com/search?q=${encodeURIComponent(`${tenant.legalName} ${tenant.city}`)}`} />
-        <ListRow icon="◌" title={t('customer.profile.review.instagram')} subtitle={tenant.contact.instagram} href={`https://instagram.com/${tenant.contact.instagram.replace('@', '')}`} />
+        <ListRow icon="◌" title={t('customer.profile.review.instagram')} subtitle={contact.instagram} href={contact.instagramUrl} />
       </ListGroup>
     ),
     'Legal links': () => (

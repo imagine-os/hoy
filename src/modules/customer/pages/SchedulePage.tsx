@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
+import { classDisplay, useSettings, useVisibleModalities } from '../../admin/settings';
 import { useSession } from '../../../auth/SessionProvider';
 import { useTable } from '../../../data/DataContext';
 import type { ClassSessionRow, ModalityRow, TeacherRow } from '../../../data/schema';
@@ -36,6 +37,8 @@ const FKEY = 'hoyos.customer.scheduleFilters';
 /** C-02 Class schedule; with `view="week"` it is C-02b at /app/schedule/week (`?view=week` redirects there). */
 export function SchedulePage({ view: routeView }: SchedulePageProps) {
   const { t, bi, lang } = useI18n();
+  const { settings: contentSettings } = useSettings();
+  const naming = contentSettings.content.publicNaming;
   const nav = useNavigate();
   const { user } = useSession();
   const [params] = useSearchParams();
@@ -55,6 +58,7 @@ export function SchedulePage({ view: routeView }: SchedulePageProps) {
   const all = useAllSessionsJoined();
   const { loading } = useTable<ClassSessionRow>('class_sessions');
   const { rows: modalities } = useTable<ModalityRow>('modalities', { where: { active: true } });
+  const visibleMods = useVisibleModalities(modalities);
   const { rows: teachers } = useTable<TeacherRow>('teachers', { where: { active: true } });
   const { rows: myBookings } = useMyBookings();
   const mine = useMemo(() => new Set(myBookings.filter((b) => b.status === 'booked').map((b) => b.session_id)), [myBookings]);
@@ -90,7 +94,7 @@ export function SchedulePage({ view: routeView }: SchedulePageProps) {
                 return (
                   <button key={x.session.id} type="button" className={`cust-week-cell cust-week-${mv} ${x.session.status !== 'scheduled' ? 'is-off' : ''} ${mine.has(x.session.id) ? 'is-mine' : ''}`} onClick={() => open(x.session)} role="cell">
                     <span className="cust-week-time">{formatTime(x.session.starts_at, lang)}</span>
-                    <span className="cust-week-name">{x.modality ? bi({ es: x.modality.name_es, en: x.modality.name_en }) : x.session.title}</span>
+                    <span className="cust-week-name">{naming === 'movements' ? movements[mv].label : x.modality ? bi({ es: x.modality.name_es, en: x.modality.name_en }) : x.session.title}</span>
                     <span className="cust-week-spots">{x.session.status === 'cancelled' ? t('customer.schedule.cancelled') : x.session.status === 'completed' ? t('customer.schedule.done') : left <= 0 ? t('core.common.full') : t('core.common.spots', { n: left })}</span>
                     {mine.has(x.session.id) && <Badge tone="primary">{t('customer.home.booked')}</Badge>}
                   </button>
@@ -124,7 +128,7 @@ export function SchedulePage({ view: routeView }: SchedulePageProps) {
             action={activeFilters > 0 ? <Button size="sm" variant="secondary" onClick={() => setFilters(DEFAULT)}>{t('customer.schedule.clearFilters')}</Button> : undefined} />
         )}
         {!loading && dayList_.map((x) => (
-          <ClassRow key={x.session.id} title={x.session.title} teacher={x.teacher?.display_name ?? ''} startsAt={x.session.starts_at} durationMin={x.modality?.duration_min ?? 60} movement={x.modality?.movement ?? 'fluye'} booked={x.session.booked_count} capacity={x.session.capacity} status={x.session.status} booked_by_me={mine.has(x.session.id)} onClick={isPast(x.session) && !mine.has(x.session.id) ? undefined : () => open(x.session)} />
+          <ClassRow key={x.session.id} {...classDisplay(naming, { title: x.session.title, modalityName: x.modality ? bi({ es: x.modality.name_es, en: x.modality.name_en }) : null, movementLabel: movements[x.modality?.movement ?? 'fluye'].label, teacher: x.teacher?.display_name ?? '' })} startsAt={x.session.starts_at} durationMin={x.modality?.duration_min ?? 60} movement={x.modality?.movement ?? 'fluye'} booked={x.session.booked_count} capacity={x.session.capacity} status={x.session.status} booked_by_me={mine.has(x.session.id)} onClick={isPast(x.session) && !mine.has(x.session.id) ? undefined : () => open(x.session)} />
         ))}
         {!loading && dayList_.length > 0 && dayList_.every((x) => isPast(x.session)) && <p className="xs muted" style={{ padding: 8 }}>{t('customer.schedule.pastDay')}</p>}
       </Card>
@@ -153,7 +157,7 @@ export function SchedulePage({ view: routeView }: SchedulePageProps) {
           <Field label={t('customer.schedule.filter.modality')}>{(id) => (
             <Select id={id} value={filters.modality} onChange={(e) => setFilters((f) => ({ ...f, modality: e.target.value }))}>
               <option value="all">{t('core.common.all')}</option>
-              {modalities.map((m) => <option key={m.id} value={m.id}>{bi({ es: m.name_es, en: m.name_en })}</option>)}
+              {visibleMods.map((m) => <option key={m.id} value={m.id}>{bi({ es: m.name_es, en: m.name_en })}</option>)}
             </Select>
           )}</Field>
           <Field label={t('customer.schedule.filter.teacher')}>{(id) => (

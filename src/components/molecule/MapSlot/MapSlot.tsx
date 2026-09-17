@@ -2,7 +2,7 @@ import { useI18n } from '../../../i18n/I18nProvider';
 import { useTable } from '../../../data/DataContext';
 import type { MediaAssetRow } from '../../../data/schema';
 import type { Bi } from '../../../specs/types';
-import { tenant } from '../../../tenant/tenant';
+import { useContact, useSettings } from '../../../modules/admin/settings';
 import type { MediaRatio } from '../MediaSlot/MediaSlot';
 import './MapSlot.css';
 
@@ -27,7 +27,7 @@ function bbox(lat: number, lng: number, pad = 0.006) {
 }
 
 export interface MapSlotProps {
-  /** `'none'` (default) keeps the page offline-safe; `'osm'` and `'google'` embed a live map. */
+  /** `'none'` keeps the page offline-safe; `'osm'` and `'google'` embed a live map. Omitted → the M-08f setting (`none` by default). */
   provider?: MapProvider;
   ratio?: MediaRatio;
   heading?: Bi | string;
@@ -44,20 +44,24 @@ export interface MapSlotProps {
 }
 
 /**
- * The studio's location, from `tenant.location`. Default `provider="none"` renders a branded
+ * The studio's location, from M-08a (`useContact()`, tenant.ts as the default). `provider="none"` renders a branded
  * placeholder with the address line and a Google Maps deep link — no network request, so
  * screenshots stay offline-safe. `'osm'` embeds an OpenStreetMap iframe (no API key),
  * `'google'` embeds Google's key-less embed.
  */
-export function MapSlot({ provider = 'none', ratio = '16:9', heading, address, openLabel, slotKey, className = '' }: MapSlotProps) {
+export function MapSlot({ provider: providerProp, ratio = '16:9', heading, address, openLabel, slotKey, className = '' }: MapSlotProps) {
   const { bi } = useI18n();
+  // 0018: no prop → the M-08f decision; the location is M-08a's (tenant.ts as the default).
+  const { settings } = useSettings();
+  const contact = useContact();
+  const provider = providerProp ?? settings.content.mapProvider;
   const { rows } = useTable<MediaAssetRow>('media_assets', slotKey ? { where: { slot_key: slotKey } } : { limit: 0 });
   const drawn = slotKey ? rows.find((r) => r.status === 'ready' && r.url) : undefined;
-  const { lat, lng } = tenant.location;
+  const { lat, lng } = contact.location;
   const head = heading === undefined ? bi(DEFAULTS.heading) : typeof heading === 'string' ? heading : bi(heading);
-  const addr = address === undefined ? bi(tenant.location.label) : typeof address === 'string' ? address : bi(address);
+  const addr = address === undefined ? bi(contact.location.label) : typeof address === 'string' ? address : bi(address);
   const open = openLabel === undefined ? bi(DEFAULTS.open) : typeof openLabel === 'string' ? openLabel : bi(openLabel);
-  const mapsHref = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+  const mapsHref = contact.location.link ?? `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
   const osmSrc = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox(lat, lng)}&layer=mapnik&marker=${lat},${lng}`;
   const gmapSrc = `https://www.google.com/maps?q=${lat},${lng}&z=15&output=embed`;
   const embed = provider === 'osm' ? osmSrc : provider === 'google' ? gmapSrc : null;

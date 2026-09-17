@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
+import { useContact } from '../../admin/settings';
 import { useSession } from '../../../auth/SessionProvider';
 import { tenant } from '../../../tenant/tenant';
 import { Card } from '../../../components/molecule/Card/Card';
@@ -13,6 +14,7 @@ import { PageHead, waLink } from '../ui';
 /** C-25 More — profile, rules, contact and everything one level down. */
 export function MorePage() {
   const { t, bi } = useI18n();
+  const contact = useContact();
   const nav = useNavigate();
   const { user, devMode, switchUser } = useSession();
   const { profile } = useMyProfile();
@@ -37,8 +39,8 @@ export function MorePage() {
           <ListRow icon="◯" title={t('core.nav.profile')} subtitle={`${t('customer.profile.edit')} · ${t('customer.membership.title')}`} to="/app/profile" />
           <ListRow icon="◇" title={t('core.nav.plans')} subtitle={t('customer.more.plans.sub')} to="/app/plans" />
           <ListRow icon="▧" title={t('customer.rules.title')} subtitle={t('customer.more.rules.sub')} to="/app/rules" />
-          <ListRow icon="◎" title={t('customer.more.whatsapp')} subtitle={`${tenant.contact.whatsapp} · ${bi(policy.replyWindow)}`} href={waLink(tenant.contact.whatsapp, t('customer.more.whatsapp.text', { name: name.split(' ')[0] }))} />
-          <ListRow icon="✉" title={t('customer.more.email')} subtitle={tenant.contact.email} href={`mailto:${tenant.contact.email}`} />
+          <ListRow icon="◎" title={t('customer.more.whatsapp')} subtitle={`${contact.whatsapp} · ${bi(policy.replyWindow)}`} href={waLink(contact.whatsapp, t('customer.more.whatsapp.text', { name: name.split(' ')[0] }))} />
+          <ListRow icon="✉" title={t('customer.more.email')} subtitle={contact.email} href={`mailto:${contact.email}`} />
         </ListGroup>
 
         <ListGroup>

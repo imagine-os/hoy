@@ -55,6 +55,10 @@ twice (the W-07 card and the W-08 hero), and the eight portraits should come fro
 
 ## Next level — 15 ideas, in the order I would fund them
 
+> **2026-09-17 (0018):** Justin picked items 2, 4 and 6 as his top three; they open `ROADMAP.md` **§G — When nothing else
+> is queued**, followed by the rest of this list. Item 3 (contact details) is now a setting in M-08a and the map
+> provider (item 16 of the shot list) a setting in M-08f.
+
 1. **Produce the shot list (P0).** Every slot above is reserved and labelled. One photo day plus one
    short video pass takes the site from "clearly a placeholder" to finished. Nothing else on this
    list changes the first impression as much.

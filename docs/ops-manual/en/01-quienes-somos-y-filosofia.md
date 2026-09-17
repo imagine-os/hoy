@@ -2,7 +2,7 @@
 title: Who we are and our philosophy
 role: everyone
 part: I
-version: 0.6.0
+version: 0.7.0
 updated: 2026-09-17
 summary: About HOY, the philosophy of the present, and the conscious controls we promise and keep.
 ---
@@ -35,7 +35,7 @@ have to come back to this moment. Because everything starts HOY.
 Getting to know HOY is only the first step. The next one is feeling it: a trial class, no
 complications, so the person decides with their body and not only with their head.
 
-> DECISION NEEDED: the studio's street address and contact details. The city itself is settled: the system now says **Medellín** everywhere (`src/tenant/tenant.ts`, M-08a and the website), following the brand PDF headed "Medellín · 2026"; the timezone stays `America/Bogota` because it is the only one in Colombia. What is still pending is the owner's confirmation and, with it, the real street address, the WhatsApp number and the email: today the site and the manual show `El Poblado, Medellín (to be confirmed)`, `+57 300 000 0000` and `hola@example.com`, all labelled as pending.
+> DECISION NEEDED: the studio's street address and contact details. Since 0.7.0 **they are typed in M-08a · Settings → General** (address, city, WhatsApp, email, Instagram, map coordinates and link) and marked **"Details confirmed"**: while the switch is off, the site, Contact, the legal documents, the email footer, the app and this manual show the values with the *pending* label (today `El Poblado, Medellín (to be confirmed)`, `+57 300 000 0000`, `hola@example.com`). The city itself is settled — **Medellín**, following the brand PDF headed "Medellín · 2026" — and the timezone stays `America/Bogota`. `src/tenant/tenant.ts` remains the default for every empty field.
 
 ## 2. Our philosophy
 Between what was and what hasn't arrived yet, there is this moment. That is the starting point for

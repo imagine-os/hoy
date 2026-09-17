@@ -2,7 +2,7 @@
 title: Teacher payroll and payouts
 role: finance, owner, coordination
 part: IV
-version: 0.6.2
+version: 0.7.0
 updated: 2026-09-17
 summary: From closed attendance to a paid teacher: draft run, approval, payment and a statement each.
 ---
@@ -40,8 +40,14 @@ contradict each other.
    duplicates it and a cancelled booking drops it.
 5. Nothing is paid from a draft.
 
-In **M-09 Finance** the **15-day** range sits next to 7 / 30 / 90 and all time: Colombian studios
-settle biweekly, and that range drives both the KPI tiles and the invoice table.
+**The cadence is a switch, not an assumption** (0.7.0). In **M-08c · Settings → Payments** the owner picks
+**monthly** or **biweekly (1–15 · 16–end)**, and both are programmed: monthly, M-09a generates one run per
+calendar month; biweekly, the same button generates **two** (the 1st–15th and the 16th–end) and replaces a
+draft of the other kind covering the same days, so no class is paid twice (an approved or paid run blocks
+instead of being replaced). The teacher's statement (`§5`) navigates by the same period, and in **M-09
+Finance** the default range moves from 30 to **15 days** when the switch flips. The cadence in force:
+
+{{policy:payroll_cadence}}
 
 ![Payouts in M-09a](../../screenshots/M-09a/en-1280.jpg "M-09a · /admin/finance/payouts")
 
@@ -83,11 +89,18 @@ settle biweekly, and that range drives both the KPI tiles and the invoice table.
 ![The teacher’s statement in S-03](../../screenshots/S-03/en-390-payroll.jpg "S-03 · /teach/payroll")
 
 ## 6. The rates
-The per-class rate lives on the teacher's profile, not on a separate sheet:
+Since 0.7.0 the rate lives on the **M-08c rate card**, not on a separate sheet nor only on the profile: one
+row per **modality** (COP per class of Hot Vinyasa, Pilates, Barre…) and, when needed, one row per **teacher**
+that overrides it. A class pays the teacher's own rate when one is set; else the modality's; else the profile
+rate (`teachers.rate_per_class`, kept as the last fallback). Changing a rate moves the S-03 estimate and the
+next draft; approved and paid runs keep their lines. The same card sets the **default payout method**, **who
+signs the payment record** (printed on the statement) and whether the studio **withholds tax**.
+
+{{policy:payout_method}}
 
 {{table:teachers}}
 
-> DECISION NEEDED: the payroll cadence (monthly with a cut-off on the 15th, or biweekly as M-09's 15-day range suggests), the pay date, the per-class rates (the seed uses 80,000–110,000 COP) and the contract type.
+> DECISION NEEDED: fill in M-08c — the cadence (monthly or biweekly, both work), the real per-modality rates (the seed ships 80,000–110,000 COP), who signs and the pay date; the contract type and whether attendance affects the rate remain the owner's.
 
 ## 7. What is simulated today
 1. Runs, lines, approvals and payment marks are **real rows** in `payroll_runs` and `payroll_lines`,

@@ -277,7 +277,8 @@ export const classes: Record<ClassSlug, BrandClass> = {
       },
     ],
     movement: 'libera',
-    modalitySlugs: [],
+    // 0018: the `respiracion` modality row exists in the seed; M-08f (breathworkOwnClass) decides whether the public sees it.
+    modalitySlugs: ['respiracion'],
     heated: false,
     bring: ['comfy', 'nothing'],
     brief: 'close crop of a chest and shoulders mid-inhale, soft backlight, cream tones',
