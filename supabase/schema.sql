@@ -101,6 +101,42 @@ alter table public.legal_documents enable row level security;
 create policy "legal_documents: tenant read" on public.legal_documents for select using (tenant_id = public.current_tenant_id());
 create policy "legal_documents: staff write" on public.legal_documents for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
 
+-- core · Every request to delete an account (Ley 1581 deletion right; App Store 5.1.1(v) and Google Play): who asked, through which channel, its status and who closed it. Anonymisation runs server-side; the app only records and tracks the case (C-26, W-09, M-11).
+-- access:
+--   · customer: insert one row for self (user_id = auth.uid()) and read own rows; may set status = cancelled while still requested
+--   · anon (public W-09): insert only, user_id null, through an edge function that rate-limits and never reads back
+--   · admin/super_admin: read all, update status / resolved_* / checklist / note (M-11)
+--   · never deleted: the request is the proof the right was honoured; the deletion itself is a server-side job that anonymises profiles + users and keeps payments / invoices for the retention period
+create table if not exists public.deletion_requests (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  -- null when it came from the public page (W-09) — email / phone identify the person
+  user_id uuid,
+  email text,
+  phone text,
+  channel text not null check (channel in ('app', 'website', 'front_desk')),
+  status text not null check (status in ('requested', 'processing', 'done', 'cancelled')),
+  reason text,
+  requested_at timestamptz not null,
+  resolved_at timestamptz,
+  resolved_by uuid,
+  -- M-11 anonymisation checklist: { step: true } per completed step
+  checklist jsonb,
+  -- internal note for the admin who processes it
+  note text
+);
+create index if not exists deletion_requests_tenant_idx on public.deletion_requests(tenant_id);
+create index if not exists deletion_requests_user_id_idx on public.deletion_requests(user_id);
+create index if not exists deletion_requests_resolved_by_idx on public.deletion_requests(resolved_by);
+create trigger deletion_requests_touch before update on public.deletion_requests for each row execute function public.touch_updated_at();
+alter table public.deletion_requests enable row level security;
+create policy "deletion_requests: tenant read" on public.deletion_requests for select using (tenant_id = public.current_tenant_id());
+create policy "deletion_requests: staff write" on public.deletion_requests for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
 -- core · Which document version each user accepted.
 create table if not exists public.consents (
   -- Primary key
@@ -1300,6 +1336,8 @@ create policy "page_layouts: tenant read" on public.page_layouts for select usin
 create policy "page_layouts: staff write" on public.page_layouts for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
 
 -- foreign keys to tables created later in this file (kept out of the create table so the order above stays by group)
+alter table public.deletion_requests add constraint deletion_requests_user_id_fk foreign key (user_id) references public.users(id) on delete set null;
+alter table public.deletion_requests add constraint deletion_requests_resolved_by_fk foreign key (resolved_by) references public.users(id) on delete set null;
 alter table public.consents add constraint consents_user_id_fk foreign key (user_id) references public.users(id) on delete set null;
 alter table public.legal_acceptances add constraint legal_acceptances_user_id_fk foreign key (user_id) references public.users(id) on delete set null;
 alter table public.space_bookings add constraint space_bookings_special_charge_id_fk foreign key (special_charge_id) references public.special_charges(id) on delete set null;

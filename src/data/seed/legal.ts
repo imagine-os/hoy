@@ -220,6 +220,8 @@ Cómo ejercerlos: escribe a {{tenant.email}} con tu nombre, tu solicitud y un da
 
 La supresión no procede cuando exista un deber legal o contractual de conservar el dato (por ejemplo, una factura emitida).
 
+Para **eliminar tu cuenta** tienes dos caminos: en la app, *Perfil → Cuenta y datos*, o la página pública [Eliminar mi cuenta](#/site/delete-account), que no pide iniciar sesión. En ambos casos el perfil y el acceso se eliminan, y las facturas y el historial de pagos se conservan anonimizados por el plazo de la sección 6.
+
 ## 8. Seguridad
 
 Aplicamos control de acceso por rol, cifrado en tránsito, registro de auditoría de cada consulta y cambio hecho por el personal, y respaldo periódico. Abrir la ficha de un miembro queda registrado con el nombre de quien la abrió.
@@ -282,6 +284,8 @@ You may **access, update, rectify and delete** your data, **request proof of you
 How to exercise them: write to {{tenant.email}} with your name, your request and a detail that identifies you. Enquiries are answered within **ten (10) business days** and claims within **fifteen (15) business days**, extendable as the law allows. Some rights you exercise directly in the app: edit your profile, change your notification preferences and download your history.
 
 Deletion does not apply where a legal or contractual duty to keep the record exists (an issued invoice, for example).
+
+To **delete your account** there are two paths: in the app, *Profile → Account & data*, or the public page [Delete my account](#/site/delete-account), which needs no sign-in. In both cases the profile and the access are removed, and invoices and payment history are kept anonymised for the period in section 6.
 
 ## 8. Security
 

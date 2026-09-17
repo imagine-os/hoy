@@ -82,6 +82,34 @@ _Términos, privacidad, exoneración, cancelaciones, reembolsos y reglas de casa
 - admin: write (a new version is a new row; a published row is never edited in place)
 - counsel review: status stays draft until the owner publishes
 
+#### `deletion_requests`
+Every request to delete an account (Ley 1581 deletion right; App Store 5.1.1(v) and Google Play): who asked, through which channel, its status and who closed it. Anonymisation runs server-side; the app only records and tracks the case (C-26, W-09, M-11).  
+_Cada petición de borrar una cuenta (Ley 1581 · supresión; App Store 5.1.1(v) · Google Play): quién la pidió, por dónde, en qué estado va y quién la cerró. La anonimización corre en el servidor; la app solo registra y sigue el caso (C-26, W-09, M-11)._
+
+| column | type | notes |
+| --- | --- | --- |
+| `id` | uuid | Primary key |
+| `tenant_id` | uuid | → `tenants` Owning studio (multi-tenant) |
+| `created_at` | timestamptz |  |
+| `updated_at` | timestamptz |  |
+| `user_id` | uuid, null | → `users` null when it came from the public page (W-09) — email / phone identify the person |
+| `email` | text, null |  |
+| `phone` | text, null |  |
+| `channel` | enum (app \| website \| front_desk) |  |
+| `status` | enum (requested \| processing \| done \| cancelled) |  |
+| `reason` | text, null |  |
+| `requested_at` | timestamptz |  |
+| `resolved_at` | timestamptz, null |  |
+| `resolved_by` | uuid, null | → `users`  |
+| `checklist` | json, null | M-11 anonymisation checklist: { step: true } per completed step |
+| `note` | text, null | internal note for the admin who processes it |
+
+**Who may read / write**
+- customer: insert one row for self (user_id = auth.uid()) and read own rows; may set status = cancelled while still requested
+- anon (public W-09): insert only, user_id null, through an edge function that rate-limits and never reads back
+- admin/super_admin: read all, update status / resolved_* / checklist / note (M-11)
+- never deleted: the request is the proof the right was honoured; the deletion itself is a server-side job that anonymises profiles + users and keeps payments / invoices for the retention period
+
 #### `consents`
 Which document version each user accepted.  
 _Qué versión de cada documento aceptó cada usuario._

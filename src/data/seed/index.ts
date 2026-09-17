@@ -11,6 +11,7 @@ import { mediaAssets } from './media';
 import { buildPayroll } from './payroll';
 import { buildExpenses, expenseTemplates } from './expenses';
 import { buildSpecials } from './specials';
+import { buildDeletionRequests } from './deletion';
 
 const FIRST = ['Camila', 'Nicolás', 'Sara', 'Tomás', 'Mariana', 'Julián', 'Daniela', 'Sebastián', 'Gabriela', 'Alejandro', 'Antonia', 'Samuel', 'Salomé', 'Emilio', 'Luciana', 'Martín', 'Elena', 'David', 'Paulina', 'Jerónimo', 'Amelia', 'Simón', 'Renata', 'Lucas', 'Violeta', 'Benjamín', 'Catalina', 'Joaquín', 'Isabel', 'Gael'];
 const LAST = ['García', 'Rodríguez', 'Martínez', 'López', 'González', 'Hernández', 'Pérez', 'Sánchez', 'Ramírez', 'Torres', 'Flores', 'Rivera', 'Gómez', 'Díaz', 'Cruz', 'Morales', 'Reyes', 'Jiménez', 'Ruiz', 'Álvarez', 'Castro', 'Vargas', 'Romero', 'Suárez', 'Moreno', 'Muñoz', 'Rojas', 'Medina', 'Guerrero', 'Cortés'];
@@ -283,6 +284,11 @@ export function buildSeed(): Record<string, BaseRow[]> {
   // Appended after every other pass so the shared RNG stream above is untouched and no other page's data shifts.
   db.expense_templates.push(...expenseTemplates);
   db.expenses.push(...buildExpenses(r));
+
+  // ---- account deletion requests (C-26 / W-09 / M-11, 0019): fixed rows, no RNG ----
+  const deletions = buildDeletionRequests();
+  db.deletion_requests.push(...deletions.rows);
+  db.audit_log.push(...deletions.audit);
 
   return db;
 }
