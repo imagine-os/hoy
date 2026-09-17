@@ -14,8 +14,9 @@ export default defineMeta({
     { name: 'heading', type: '{ es, en } | string', description: { es: 'Cejilla sobre la dirección. Por defecto "Dónde estamos".', en: 'Eyebrow above the address. Defaults to “Where we are”.' } },
     { name: 'address', type: '{ es, en } | string', description: { es: 'Sobrescribe `tenant.location.label`.', en: 'Overrides `tenant.location.label`.' } },
     { name: 'openLabel', type: '{ es, en } | string', description: { es: 'Texto del enlace a Google Maps.', en: 'Label of the Google Maps link.' } },
+    { name: 'slotKey', type: 'string', description: { es: 'Llave de la biblioteca de medios (M-02d). Mientras no haya proveedor de mapas, un mapa ilustrado del barrio puesto en `ready` llena el marco; la dirección y el enlace se quedan.', en: 'Key into the media library (M-02d). Until a map provider is chosen, a drawn neighbourhood map flipped to `ready` fills the frame; the address line and the link stay.' } },
   ],
-  states: ['placeholder (default)', 'osm embed', 'google embed'],
+  states: ['placeholder (default)', 'drawn map from the media library', 'osm embed', 'google embed'],
   usages: [
     { title: { es: 'Placeholder (por defecto)', en: 'Placeholder (default)' }, render: () => h(MapSlot) },
     { title: { es: 'OpenStreetMap incrustado', en: 'Embedded OpenStreetMap' }, render: () => h(MapSlot, { provider: 'osm', ratio: '4:3' }) },

@@ -40,7 +40,7 @@ export function AboutPage() {
     Media: () => (
       <section className="container site-section">
         <div className="site-media-cap">
-          <MediaSlot ratio="4:3" kind="photo" label={t('site.about.media')} brief="founders / studio interior, natural light, no posed smiles" />
+          <MediaSlot ratio="4:3" kind="photo" slotKey="site.about" label={t('site.about.media')} />
         </div>
       </section>
     ),

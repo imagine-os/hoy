@@ -1,6 +1,6 @@
 # HoyOS
 
-**HoyOS** is the operations system for HOY Wellness Center, a wellness club in Bogotá, Colombia,
+**HoyOS** is the operations system for HOY Wellness Center, a wellness club in Medellín, Colombia,
 built to become a multi-tenant platform for other studios later. One codebase serves the public
 website, the customer app, the teacher app, the staff and admin desktop, the club's operations
 manual, the in-app documentation and the developer tooling.

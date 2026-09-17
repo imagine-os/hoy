@@ -35,7 +35,7 @@ have to come back to this moment. Because everything starts HOY.
 Getting to know HOY is only the first step. The next one is feeling it: a trial class, no
 complications, so the person decides with their body and not only with their head.
 
-> DECISION NEEDED: which city HOY is in. The brand material is headed "Medellín · 2026" and the "About HOY" copy names Medellín; the system configuration (`src/tenant/tenant.ts`, M-08a) says Bogotá, timezone America/Bogota. One of the two has to be corrected before the site goes live.
+> DECISION NEEDED: the studio's street address and contact details. The city itself is settled: the system now says **Medellín** everywhere (`src/tenant/tenant.ts`, M-08a and the website), following the brand PDF headed "Medellín · 2026"; the timezone stays `America/Bogota` because it is the only one in Colombia. What is still pending is the owner's confirmation and, with it, the real street address, the WhatsApp number and the email: today the site and the manual show `El Poblado, Medellín (to be confirmed)`, `+57 300 000 0000` and `hola@example.com`, all labelled as pending.
 
 ## 2. Our philosophy
 Between what was and what hasn't arrived yet, there is this moment. That is the starting point for

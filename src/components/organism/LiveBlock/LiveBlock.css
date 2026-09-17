@@ -59,3 +59,8 @@
   .live-body { overflow: visible; }
 }
 .live-item { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px; }
+
+/* {{pricing:<family>}} — the value model's own words above the price table (src/tenant/pricing.ts). */
+.live-rationale-sub { margin: 0 0 var(--sp-2); font-weight: 600; }
+.live-rationale-why { margin: 0 0 var(--sp-4); max-width: 68ch; }
+.live-rationale-note { margin: var(--sp-3) 0 0; }

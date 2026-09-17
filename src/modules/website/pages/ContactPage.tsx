@@ -51,7 +51,7 @@ export function ContactPage() {
     Map: () => (
       <section className="container site-section">
         <div className="site-media-cap">
-          <MapSlot heading={t('site.contact.map')} openLabel={t('site.contact.mapOpen')} ratio="4:3" />
+          <MapSlot heading={t('site.contact.map')} openLabel={t('site.contact.mapOpen')} ratio="4:3" slotKey="site.contact.map" />
         </div>
       </section>
     ),

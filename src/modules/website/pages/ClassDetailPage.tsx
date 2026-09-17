@@ -48,7 +48,7 @@ export function ClassDetailPage() {
       <>
         <PageHead eyebrow={bi(c.eyebrow)} title={bi(c.name)} body={bi(c.summary)} back={{ to: '/site/classes', label: t('site.classes.back') }} />
         <section className="container site-section" style={{ paddingTop: 0 }}>
-          <MediaSlot ratio="16:9" kind="photo" movement={c.movement} label={t('site.classes.media', { name: bi(c.name) })} brief={c.brief} />
+          <MediaSlot ratio="16:9" kind="photo" movement={c.movement} slotKey={`site.classes.${slug}`} label={t('site.classes.media', { name: bi(c.name) })} brief={c.brief} />
         </section>
       </>
     ),

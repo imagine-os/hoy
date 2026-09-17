@@ -1,4 +1,6 @@
 import { useI18n } from '../../../i18n/I18nProvider';
+import { useTable } from '../../../data/DataContext';
+import type { MediaAssetRow } from '../../../data/schema';
 import type { Bi } from '../../../specs/types';
 import { tenant } from '../../../tenant/tenant';
 import type { MediaRatio } from '../MediaSlot/MediaSlot';
@@ -32,6 +34,12 @@ export interface MapSlotProps {
   /** Overrides `tenant.location.label`. */
   address?: Bi | string;
   openLabel?: Bi | string;
+  /**
+   * Key into `media_assets` (M-02d). Until a map provider is chosen the owner can ship a drawn
+   * neighbourhood map through the media library: once that row is `ready` its image fills the
+   * frame, and the address line and the deep link stay.
+   */
+  slotKey?: string;
   className?: string;
 }
 
@@ -41,8 +49,10 @@ export interface MapSlotProps {
  * screenshots stay offline-safe. `'osm'` embeds an OpenStreetMap iframe (no API key),
  * `'google'` embeds Google's key-less embed.
  */
-export function MapSlot({ provider = 'none', ratio = '16:9', heading, address, openLabel, className = '' }: MapSlotProps) {
+export function MapSlot({ provider = 'none', ratio = '16:9', heading, address, openLabel, slotKey, className = '' }: MapSlotProps) {
   const { bi } = useI18n();
+  const { rows } = useTable<MediaAssetRow>('media_assets', slotKey ? { where: { slot_key: slotKey } } : { limit: 0 });
+  const drawn = slotKey ? rows.find((r) => r.status === 'ready' && r.url) : undefined;
   const { lat, lng } = tenant.location;
   const head = heading === undefined ? bi(DEFAULTS.heading) : typeof heading === 'string' ? heading : bi(heading);
   const addr = address === undefined ? bi(tenant.location.label) : typeof address === 'string' ? address : bi(address);
@@ -53,10 +63,12 @@ export function MapSlot({ provider = 'none', ratio = '16:9', heading, address, o
   const embed = provider === 'osm' ? osmSrc : provider === 'google' ? gmapSrc : null;
 
   return (
-    <div className={`mapslot ${embed ? 'has-embed' : 'is-placeholder'} ${className}`}>
+    <div className={`mapslot ${embed || drawn ? 'has-embed' : 'is-placeholder'} ${className}`}>
       <div className="mapslot-frame" style={{ aspectRatio: RATIO_CSS[ratio] }}>
         {embed ? (
           <iframe className="mapslot-embed" src={embed} title={head} loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
+        ) : drawn ? (
+          <img className="mapslot-embed" src={drawn.url!} alt={bi(drawn.alt) || head} loading="lazy" />
         ) : (
           <div className="mapslot-empty">
             <span className="mapslot-pin" aria-hidden>◉</span>

@@ -53,7 +53,7 @@ export function ClassesPage() {
                   </div>
                 </div>
                 <div className="site-classrow-media">
-                  <MediaSlot ratio="16:9" kind="photo" movement={c.movement} label={t('site.classes.media', { name: bi(c.name) })} brief={c.brief} />
+                  <MediaSlot ratio="16:9" kind="photo" movement={c.movement} slotKey={`site.classes.${slug}`} label={t('site.classes.media', { name: bi(c.name) })} brief={c.brief} />
                 </div>
               </article>
             );

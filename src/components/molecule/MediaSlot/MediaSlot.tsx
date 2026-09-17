@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
 import { useI18n } from '../../../i18n/I18nProvider';
+import { useTable } from '../../../data/DataContext';
+import type { MediaAssetRow } from '../../../data/schema';
 import type { Bi } from '../../../specs/types';
 import type { Movement } from '../../../design/tokens';
 import './MediaSlot.css';
@@ -26,8 +28,14 @@ const KIND_LABEL: Record<MediaKind, Bi> = {
 const PENDING: Bi = { es: 'arte pendiente', en: 'art pending' };
 
 export interface MediaSlotProps {
-  /** Aspect ratio of the slot; the reserved space never collapses. */
+  /** Aspect ratio of the slot; the reserved space never collapses. Falls back to the library row. */
   ratio?: MediaRatio;
+  /**
+   * Key into `media_assets` (M-02d, the media library). While that row is `pending` the slot stays
+   * an empty branded frame and borrows the row's brief, label and movement; the moment the owner
+   * pastes a URL and flips it to `ready` the real photo or video renders here, with no deploy.
+   */
+  slotKey?: string;
   /** What belongs here once the owner supplies it. */
   kind?: MediaKind;
   /** What the slot is, shown in the empty state and used as the image's alt text. */
@@ -54,28 +62,38 @@ export interface MediaSlotProps {
  * chip) — never a broken box.
  */
 export function MediaSlot({
-  ratio = '16:9', kind = 'photo', label, brief, movement, src, poster, caption, overlay, className = '',
+  ratio, kind = 'photo', label, brief, movement, slotKey, src, poster, caption, overlay, className = '',
 }: MediaSlotProps) {
   const { bi } = useI18n();
+  const { rows } = useTable<MediaAssetRow>('media_assets', slotKey ? { where: { slot_key: slotKey } } : { limit: 0 });
+  const asset = slotKey ? rows[0] : undefined;
+  const ready = asset && asset.status === 'ready' && asset.url ? asset : undefined;
+
+  const url = src ?? ready?.url ?? undefined;
+  const effKind = src ? kind : ready?.kind ?? kind;
   const text = typeof label === 'string' ? label : bi(label);
+  const alt = (ready && bi(ready.alt)) || text;
+  const mv = movement ?? asset?.movement ?? undefined;
+  const hint = brief ?? (asset ? bi(asset.brief) : undefined);
   const cap = caption === undefined ? '' : typeof caption === 'string' ? caption : bi(caption);
-  const style = { aspectRatio: RATIO_CSS[ratio] };
-  const cls = `mediaslot ${movement ? `mediaslot-${movement}` : ''} ${src ? 'has-src' : 'is-empty'} ${className}`;
+  const style = { aspectRatio: ratio ? RATIO_CSS[ratio] : asset?.ratio ?? RATIO_CSS['16:9'] };
+  const arLabel = ratio ?? (asset?.ratio ? asset.ratio.replace(/\s/g, '') : '16:9');
+  const cls = `mediaslot ${mv ? `mediaslot-${mv}` : ''} ${url ? 'has-src' : 'is-empty'} ${className}`;
 
   return (
     <figure className="mediaslot-fig">
-      <div className={cls} style={style} title={brief} role={src ? undefined : 'img'} aria-label={src ? undefined : text}>
-        {src && kind === 'video' && <video className="mediaslot-media" src={src} poster={poster} controls playsInline preload="metadata" />}
-        {src && kind !== 'video' && <img className="mediaslot-media" src={src} alt={text} loading="lazy" />}
-        {!src && (
+      <div className={cls} style={style} title={hint} role={url ? undefined : 'img'} aria-label={url ? undefined : text}>
+        {url && effKind === 'video' && <video className="mediaslot-media" src={url} poster={poster} controls playsInline preload="metadata" aria-label={alt} />}
+        {url && effKind !== 'video' && <img className="mediaslot-media" src={url} alt={alt} loading="lazy" />}
+        {!url && (
           <div className="mediaslot-empty">
-            <span className="mediaslot-glyph" aria-hidden>{GLYPH[kind]}</span>
+            <span className="mediaslot-glyph" aria-hidden>{GLYPH[effKind]}</span>
             <span className="mediaslot-label">{text}</span>
-            <span className="mediaslot-meta">{bi(KIND_LABEL[kind])} · {ratio}</span>
-            {brief && import.meta.env.DEV && <span className="mediaslot-brief">{brief}</span>}
+            <span className="mediaslot-meta">{bi(KIND_LABEL[effKind])} · {arLabel}</span>
+            {hint && import.meta.env.DEV && <span className="mediaslot-brief">{hint}</span>}
           </div>
         )}
-        {!src && <span className="mediaslot-chip">{bi(PENDING)}</span>}
+        {!url && <span className="mediaslot-chip">{bi(PENDING)}</span>}
         {overlay && <div className="mediaslot-overlay">{overlay}</div>}
       </div>
       {cap && <figcaption className="mediaslot-cap small muted">{cap}</figcaption>}

@@ -47,9 +47,8 @@ export function HomePage() {
           </div>
         </div>
         <MediaSlot
-          ratio="21:9" kind="video" movement="arde"
+          ratio="21:9" kind="video" movement="arde" slotKey="site.hero"
           label={t('site.hero.media')}
-          brief="studio at golden hour, slow dolly"
           overlay={<span className="site-hero-chip">{bi(taglines.life)}</span>}
         />
       </section>

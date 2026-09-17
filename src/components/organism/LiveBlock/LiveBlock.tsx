@@ -8,7 +8,7 @@ import { TABLE_GROUPS, tableRegistry, tables } from '../../../data/schema';
 import { ROLES, ROLE_HOME, ROLE_LABEL } from '../../../auth/roles';
 import { getRoutes } from '../../../app/registry';
 import { usePolicy } from '../../../modules/admin/settings';
-import { FAMILY_LABEL, pricing, pricingByFamily, type PlanFamily, type PriceItem } from '../../../tenant/pricing';
+import { FAMILY_LABEL, FAMILY_RATIONALE, FAMILY_ROLE, pricing, pricingByFamily, type PlanFamily, type PriceItem } from '../../../tenant/pricing';
 import { tenant } from '../../../tenant/tenant';
 import type { Bi, Surface } from '../../../specs/types';
 import './LiveBlock.css';
@@ -16,14 +16,15 @@ import './LiveBlock.css';
 /** COP, the way the studio writes it: `$ 520.000`. */
 export const cop = (n: number): string => `$ ${new Intl.NumberFormat('es-CO', { maximumFractionDigits: 0 }).format(n)}`;
 
-/** What each plan family does for the business — the value model in one line per family. */
-export const FAMILY_ROLE: Record<PlanFamily, Bi> = {
-  bienvenida: { es: 'Adquisición — la puerta de entrada barata que alimenta la Membresía', en: 'Acquisition — the low-cost front door that feeds Membership' },
-  membresia: { es: 'Ingreso recurrente — un solo nivel de acceso, mensual o anual', en: 'Recurring revenue — one access level, monthly or annual' },
-  pausas: { es: 'Frecuencia — micro-sesiones de 15–30 min, costo marginal casi cero', en: 'Frequency — 15–30 min micro-sessions, near-zero marginal cost' },
-  regalos: { es: 'Referido y comunidad — bonos y invitados de socios', en: 'Referral and community — vouchers and member guests' },
-  espacio: { es: 'Ingreso B2B — alquiler del estudio fuera de horas pico', en: 'B2B revenue — studio rental off-peak' },
-};
+/**
+ * What each plan family does for the business is no longer written here: `FAMILY_ROLE` and
+ * `FAMILY_RATIONALE` live in `src/tenant/pricing.ts` (the value model's only home), so the manual,
+ * P-01 and this block quote the same sentence.
+ */
+const familyLine = (fam: PlanFamily): Bi => ({
+  es: `${FAMILY_ROLE[fam].es} — ${FAMILY_RATIONALE[fam].subtitle.es}`,
+  en: `${FAMILY_ROLE[fam].en} — ${FAMILY_RATIONALE[fam].subtitle.en}`,
+});
 
 const SURFACES: Surface[] = ['public', 'customer', 'teacher', 'staff', 'admin', 'dev', 'docs'];
 
@@ -141,10 +142,17 @@ function Pricing({ family }: { family?: string }) {
   const eyebrow = fam ? bi(FAMILY_ROLE[fam]) : lang === 'en' ? `${pricing.length} items · src/tenant/pricing.ts` : `${pricing.length} conceptos · src/tenant/pricing.ts`;
   return (
     <Frame title={title} eyebrow={eyebrow} source={<Link to="/site/plans">P-01</Link>}>
-      {fam ? <PricingTable items={items} /> : (
+      {fam ? (
+        <>
+          <p className="live-rationale-sub">{bi(FAMILY_RATIONALE[fam].subtitle)}</p>
+          <p className="live-rationale-why small">{bi(FAMILY_RATIONALE[fam].why)}</p>
+          <PricingTable items={items} />
+          {FAMILY_RATIONALE[fam].note && <p className="live-rationale-note xs muted">{bi(FAMILY_RATIONALE[fam].note!)}</p>}
+        </>
+      ) : (
         Object.keys(FAMILY_LABEL).map((k) => (
           <div key={k} className="live-group">
-            <div className="live-group-head"><strong>{bi(FAMILY_LABEL[k as PlanFamily])}</strong><span className="muted small">{bi(FAMILY_ROLE[k as PlanFamily])}</span></div>
+            <div className="live-group-head"><strong>{bi(FAMILY_LABEL[k as PlanFamily])}</strong><span className="muted small">{bi(familyLine(k as PlanFamily))}</span></div>
             <PricingTable items={pricingByFamily(k as PlanFamily)} />
           </div>
         ))

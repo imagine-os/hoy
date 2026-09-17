@@ -34,7 +34,7 @@ que volver a este momento. Porque todo empieza HOY.
 Conocer HOY es solo el primer paso. El siguiente es sentirlo: una clase de prueba, sin
 complicaciones, para que la persona decida con el cuerpo y no solo con la cabeza.
 
-> DECISIÓN PENDIENTE: la ciudad de HOY. El material de marca dice "Medellín · 2026" y la copia de "Sobre HOY" nombra Medellín; la configuración del sistema (`src/tenant/tenant.ts`, M-08a) dice Bogotá y zona horaria America/Bogota. Una de las dos debe corregirse antes de publicar el sitio.
+> DECISIÓN PENDIENTE: la dirección y los datos de contacto de la sede. La ciudad ya quedó resuelta: el sistema dice **Medellín** en todas partes (`src/tenant/tenant.ts`, M-08a y la web), siguiendo el PDF de marca "Medellín · 2026"; la zona horaria sigue siendo `America/Bogota` porque es la única de Colombia. Falta la confirmación del dueño y, con ella, la dirección real de la sede, el WhatsApp y el correo: hoy la web y el manual muestran `El Poblado, Medellín (por confirmar)`, `+57 300 000 0000` y `hola@example.com` marcados como pendientes.
 
 ## 2. Nuestra filosofía
 Entre lo que fue y lo que todavía no llega, existe este momento. Ese es el punto de partida de todo

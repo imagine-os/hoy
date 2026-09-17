@@ -30,10 +30,9 @@ export function TeachersPage() {
             return (
               <Card key={te.id} padding="sm" className="site-teacher">
                 <MediaSlot
-                  ratio="4:3" kind="photo" movement={first?.movement}
+                  ratio="4:3" kind="photo" movement={first?.movement} slotKey="teacher.portrait"
                   src={te.photo_url ?? undefined}
                   label={t('site.teachers.portrait', { name: te.display_name })}
-                  brief={`portrait of ${te.display_name}, studio light, cream backdrop`}
                 />
                 <div className="row-between">
                   <h3>{te.display_name}</h3>
