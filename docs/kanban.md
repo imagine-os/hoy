@@ -18,6 +18,7 @@ _Updated every turn. Codes reference `src/specs/canvasSpecs.ts`._
 
 ## Doing
 - v0 scaffold hardening: more component states in D-02, seed data breadth
+- Screenshot pass (`npm run screenshots`) for the v0 routes
 
 ## Done
 - Repo bootstrap: rules (`CLAUDE.md`), reference material, docs skeleton, Pages workflow

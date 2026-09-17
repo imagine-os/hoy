@@ -51,4 +51,22 @@ If you have any issues uploading this content to the repo or claude env or whate
 
 ## Response
 
-_(filled in at the end of the build pass — see below)_
+**Built in this pass (v0.1.0, pushed to `imagine-os/hoy` `main`):**
+
+- **Repo bootstrap** — `CLAUDE.md` (Justin's rules verbatim + HoyOS engineering rules), `README.md`, `ROADMAP.md` placeholder, `.github/workflows/pages.yml` (GitHub Pages on push to main; Pages must be enabled once in repo settings), `reference/` with the canvas, extracted specs/strings, brand manual pages, pricing deck and sketches (`reference/README.md` lists what was skipped: the two 20 MB renders and the duplicate pptx).
+- **Design system (D-01)** — `src/design/tokens.ts` → generated `tokens.css`: brand palette, four movements, semantic roles, Inter + DM Sans scale, 4-pt spacing, radii 8/16/24/32, three-layer physical shadow, motion. Light/dark via `[data-theme]`, wireframe via `[data-skin]`. Rendered live at `/#/dev/tokens`.
+- **Component library (D-02)** — 24 components in `src/components/<tier>/<Name>/` each with a `.meta.ts` (props, states, usages, a11y); `/#/dev/components` renders all of them.
+- **ES/EN** — `useT()` with Spanish default, English fallback to Spanish, missing keys render `⟨key⟩`; `LangToggle` persists.
+- **Roles and demo users** — 9 roles, one fictional demo user each, `SessionProvider` with `can()`, dev mode (super admin only) and “view as”; `RequireRole` → friendly `/no-access`.
+- **Inspector panel** — every route carries a `PageSpec`; in dev mode a floating “spec” chip and `Ctrl+.` open the panel (purpose, layout order, data tables linked to the table manager, roles, logic, integrations, API, states, toggles, notes, canvas ref, completeness). All 49 canvas specs ported to `src/specs/canvasSpecs.ts`; `/#/dev/specs` indexes them with built/stub/no-route badges.
+- **Data layer** — 29 tables shaped like Supabase (every table has `id, tenant_id, created_at, updated_at`), `tableRegistry` with column metadata, `DataProvider` interface, `MockProvider` (localStorage, change events = simulated realtime, deterministic seed: 6 modalities, 8 teachers, two weeks of sessions, 30 customers, bookings, payments, plans from the pricing config), `SupabaseProvider` stub, generated `supabase/schema.sql` with RLS notes and `docs/data-model.md`.
+- **Table manager (M-03)** — `/#/admin/tables`: grouped sidebar with row counts, sortable/searchable `DataTable`, schema tab, row drawer with inline edit, new row, delete, JSON export, reset demo data.
+- **Layout editor** — `/#/dev/layout/:code` with dnd-kit; order and hidden sections persist to `page_layouts`; `useLayout(spec)` wired into the customer home (C-01) and the website home (W-01).
+- **Docs system** — `docs/` rendered in-app at `/#/docs` (sidebar tree, markdown, images), ops manual placeholder at `/#/manual`, K-01 knowledgebase at `/#/dev/knowledgebase` (kanban, changelog, prompts). Rules in `docs/rules/documentation.md`; `npm run screenshots` captures every route in ES/EN × mobile/desktop (+ dark for key pages).
+- **Website** — `/#/site` home (hero with breathing rings, movements, today's classes, plans teaser, teachers), about, modalities, schedule (7-day tabs, live capacity, deep click → sign-in prompt → customer app), teachers, plans (P-01 from `src/tenant/pricing.ts`), contact (from tenant config), legal terms/privacy (versioned `legal_documents`).
+- **Testing hub** — `/#/` with cards for website, customer app, teacher app, staff & admin (role buttons switch the demo user), operations manual, documentation, developer; header with ES/EN, theme, wireframe and dev-mode toggles.
+- **Module stubs** — customer (C-01 real with A-05 intention check, today list sorted by intention, one-tap booking with the one-class-per-day rule; 23 stubs), teacher (S-03 first slice), staff (S-01 real numbers; S-02, S-04 stubs), admin (M-01 numbers + editable feature switches; M-02, M-04…M-08 stubs), dev, docs, ops-manual. Mobile shell (bottom nav) and desktop shell (sidebar), both responsive, nav derived from routes.
+
+**Deferred to the roadmap:** real auth flows (A-01…A-03, C-21), the remaining customer/staff/admin screens, Supabase provider, Wompi, WhatsApp CRM, email designer, live cursors, canvas Flow-Map audit, operations manual content, screenshot pass for every page after the feature modules land.
+
+**Handoff for parallel workers:** the extension-point contracts are in `CLAUDE.md`, `docs/architecture.md` and the coordinator's `scaffold-handoff.md`.

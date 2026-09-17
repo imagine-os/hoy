@@ -6,7 +6,7 @@ export interface ChipProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   selected?: boolean;
   movement?: Movement;
   dot?: boolean;
-  children: ReactNode;
+  children?: ReactNode;
 }
 
 /** Selectable pill (filters, intention picker, movement tags). Renders a button when onClick is set, else a span. */

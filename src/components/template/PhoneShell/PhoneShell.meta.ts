@@ -6,7 +6,7 @@ export default defineMeta({
   description: { es: 'Chasis móvil (cliente, profesor): barra superior con logo, columna de contenido de máx. 560px y navegación inferior derivada de las rutas con `nav`.', en: 'Mobile shell (customer, teacher): brand top bar, 560px max content column and bottom nav derived from routes with `nav`.' },
   props: [
     { name: 'surface', type: 'Surface', required: true, description: { es: 'Filtra las rutas de la nav.', en: 'Filters nav routes.' } },
-    { name: 'routes', type: 'RouteDef[]', required: true, description: { es: 'Normalmente allRoutes.', en: 'Usually allRoutes.' } },
+    { name: 'routes', type: 'RouteDef[]', required: true, description: { es: 'Normalmente getRoutes().', en: 'Usually getRoutes().' } },
     { name: 'homeTo', type: 'string', required: true, description: { es: 'Destino del logo.', en: 'Wordmark destination.' } },
     { name: 'bare', type: 'boolean', description: { es: 'Sin barra superior propia.', en: 'Without its own top bar.' } },
   ],

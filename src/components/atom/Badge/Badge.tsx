@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import './Badge.css';
 
 export type BadgeTone = 'neutral' | 'primary' | 'success' | 'warn' | 'danger' | 'highlight';
-export function Badge({ tone = 'neutral', children, className = '' }: { tone?: BadgeTone; children: ReactNode; className?: string }) {
+export function Badge({ tone = 'neutral', children, className = '' }: { tone?: BadgeTone; children?: ReactNode; className?: string }) {
   return <span className={`badge badge-${tone} ${className}`}>{children}</span>;
 }
 

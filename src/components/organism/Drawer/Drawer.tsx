@@ -9,7 +9,7 @@ export interface DrawerProps {
   title?: ReactNode;
   side?: 'right' | 'left' | 'bottom';
   width?: number;
-  children: ReactNode;
+  children?: ReactNode;
   footer?: ReactNode;
 }
 

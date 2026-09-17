@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { matchPath, useLocation } from 'react-router-dom';
 import { useSession } from '../auth/SessionProvider';
 import { useT } from '../i18n/I18nProvider';
-import { allRoutes } from '../app/registry';
+import { getRoutes } from '../app/registry';
 import { InspectorPanel } from '../components/organism/InspectorPanel/InspectorPanel';
 import { onInspector } from './inspectorBus';
 import './DevTools.css';
@@ -10,7 +10,7 @@ import './DevTools.css';
 /** Resolves the RouteDef for the current location. */
 export function useCurrentRoute() {
   const { pathname } = useLocation();
-  return allRoutes.find((r) => matchPath({ path: r.path, end: true }, pathname)) ?? null;
+  return getRoutes().find((r) => matchPath({ path: r.path, end: true }, pathname)) ?? null;
 }
 
 /** Floating spec chip + inspector panel. Only mounts its UI in dev mode; Ctrl+. toggles the panel. */

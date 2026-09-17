@@ -80,7 +80,7 @@ scripts/        screenshots.mjs and other tooling
 
 ## Multi-tenant rule
 `tenant_id` on every table and every seed row. No hardcoded studio name, address, capacity, hours or
-prices outside `src/tenant/tenant.ts` and `src/modules/website/pricing.ts`. Copy that says "HOY"
+prices outside `src/tenant/tenant.ts` and `src/tenant/pricing.ts`. Copy that says "HOY"
 in a user-facing string reads the tenant name from config.
 
 ## Roles

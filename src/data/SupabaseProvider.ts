@@ -13,7 +13,9 @@ import type { ChangeEvent, DataProvider, Query } from './types';
  */
 export class SupabaseProvider implements DataProvider {
   readonly name = 'supabase';
-  constructor(private url: string, private anonKey: string) {
+  readonly url: string;
+  constructor(url: string, anonKey: string) {
+    this.url = url;
     if (!url || !anonKey) throw new Error('SupabaseProvider needs VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY');
   }
   async list<T extends BaseRow>(_table: string, _query?: Query): Promise<T[]> { throw notReady(); }

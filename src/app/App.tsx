@@ -1,0 +1,35 @@
+import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { ThemeProvider } from '../design/ThemeProvider';
+import { I18nProvider } from '../i18n/I18nProvider';
+import { SessionProvider } from '../auth/SessionProvider';
+import { DataProviderRoot } from '../data/DataContext';
+import { RequireRole } from '../auth/RequireRole';
+import { DevTools } from '../dev/DevTools';
+import { getRoutes, getStrings } from './registry';
+import { withShell } from './shells';
+import { ScrollToTop } from './ScrollToTop';
+
+export function App() {
+  const allRoutes = getRoutes();
+  const allStrings = getStrings();
+  return (
+    <ThemeProvider>
+      <I18nProvider tables={allStrings}>
+        <SessionProvider>
+          <DataProviderRoot>
+            <HashRouter>
+              <ScrollToTop />
+              <Routes>
+                {allRoutes.map((r) => (
+                  <Route key={r.path} path={r.path} element={<RequireRole roles={r.roles}>{withShell(r, r.element)}</RequireRole>} />
+                ))}
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+              <DevTools />
+            </HashRouter>
+          </DataProviderRoot>
+        </SessionProvider>
+      </I18nProvider>
+    </ThemeProvider>
+  );
+}

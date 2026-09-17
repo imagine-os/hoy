@@ -1,7 +1,7 @@
 version: 0.1.0
 date: 2026-09-17
 prompt: docs/prompts/0001-initial-build.md
-intent: Bootstrap HoyOS from the Claude Design canvas into a real, deployable, extensible codebase.
-decision: (in progress — filled at the end of the pass)
-rejected: (in progress)
-files: (in progress)
+intent: Turn the Claude Design canvas into a real, deployable, extensible codebase (HoyOS v0) that a second team can continue in parallel.
+decision: Vite + React 18 + TypeScript with HashRouter for GitHub Pages; plain CSS custom properties generated from a single tokens.ts (D-01); module registry via import.meta.glob so nobody edits a central route file; every route carries a PageSpec that powers the inspector; every component ships a .meta.ts that powers the living library (D-02); a DataProvider interface with a localStorage MockProvider now and a Supabase stub later, schema multi-tenant from day one; docs/ rendered in-app; a testing hub as the entry point.
+rejected: Next.js/SSR (needs a server; Pages is static). Tailwind (tokens must be the single source; plain CSS keeps the physical-material system explicit). A central routes.tsx (merge conflicts across parallel workers). Storing specs only in the canvas (not queryable; ported to TS). Committing the 20 MB renders (kept in the drive). Runtime-only token injection (kept a generated tokens.css so the static file can be read without running the app).
+files: CLAUDE.md README.md ROADMAP.md package.json vite.config.ts tsconfig.json index.html .github/workflows/pages.yml reference/** public/brand/** docs/** supabase/schema.sql scripts/*.mjs src/** (app, auth, components, data, design, dev, i18n, layout, modules/{hub,website,customer,teacher,staff,admin,dev,docs,ops-manual}, specs, tenant, styles)

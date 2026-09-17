@@ -11,7 +11,8 @@
     "typecheck": "tsc --noEmit",
     "screenshots": "node scripts/screenshots.mjs",
     "tokens": "node --experimental-strip-types scripts/gen-tokens.mjs",
-    "specs": "node scripts/gen-specs.mjs"
+    "specs": "node scripts/gen-specs.mjs",
+    "sql": "node --experimental-strip-types scripts/gen-sql.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.1.0",

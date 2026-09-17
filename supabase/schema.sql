@@ -1,0 +1,722 @@
+-- HoyOS — Supabase / Postgres schema draft
+-- GENERATED from src/data/schema.ts by scripts/gen-sql.mjs. Edit the TS, regenerate, review, then apply as a migration.
+-- Conventions: every table has id, tenant_id, created_at, updated_at. RLS is on everywhere.
+-- tenant_id is read from the JWT claim (auth.jwt() ->> 'tenant_id'); clients never send it.
+-- tenants.tenant_id is a self-reference (a tenant row belongs to itself) so the base-column rule holds everywhere.
+
+create extension if not exists pgcrypto;
+
+-- helper: current tenant from the JWT
+create or replace function public.current_tenant_id() returns uuid
+language sql stable as $$ select nullif(auth.jwt() ->> 'tenant_id', '')::uuid $$;
+
+-- helper: does the current user hold a role in this tenant?
+create or replace function public.has_role(role_name text) returns boolean
+language sql stable as $$
+  select exists (
+    select 1 from public.user_roles ur
+    where ur.user_id = auth.uid() and ur.tenant_id = public.current_tenant_id() and ur.role = role_name
+  )
+$$;
+
+-- updated_at trigger
+create or replace function public.touch_updated_at() returns trigger language plpgsql as $$
+begin new.updated_at = now(); return new; end $$;
+
+-- core · Each studio using HoyOS. Today: HOY.
+create table if not exists public.tenants (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  slug text not null,
+  name text not null,
+  legal_name text,
+  timezone text not null,
+  currency text not null,
+  default_locale text not null,
+  settings jsonb not null
+);
+create index if not exists tenants_tenant_idx on public.tenants(tenant_id);
+create trigger tenants_touch before update on public.tenants for each row execute function public.touch_updated_at();
+alter table public.tenants enable row level security;
+create policy "tenants: tenant read" on public.tenants for select using (tenant_id = public.current_tenant_id());
+create policy "tenants: staff write" on public.tenants for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
+-- core · Blocks and flows Admin → Features turns on or off per page.
+create table if not exists public.feature_flags (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  key text not null,
+  page_code text,
+  label text not null,
+  enabled boolean not null default false,
+  audience text not null check (audience in ('all', 'staff', 'customers', 'beta'))
+);
+create index if not exists feature_flags_tenant_idx on public.feature_flags(tenant_id);
+create trigger feature_flags_touch before update on public.feature_flags for each row execute function public.touch_updated_at();
+alter table public.feature_flags enable row level security;
+create policy "feature_flags: tenant read" on public.feature_flags for select using (tenant_id = public.current_tenant_id());
+create policy "feature_flags: staff write" on public.feature_flags for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
+-- core · Terms, privacy and policies, versioned.
+create table if not exists public.legal_documents (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  kind text not null check (kind in ('terms', 'privacy', 'waiver', 'policy')),
+  version text not null,
+  locale text not null,
+  title text not null,
+  body_md text not null,
+  published_at timestamptz
+);
+create index if not exists legal_documents_tenant_idx on public.legal_documents(tenant_id);
+create trigger legal_documents_touch before update on public.legal_documents for each row execute function public.touch_updated_at();
+alter table public.legal_documents enable row level security;
+create policy "legal_documents: tenant read" on public.legal_documents for select using (tenant_id = public.current_tenant_id());
+create policy "legal_documents: staff write" on public.legal_documents for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
+-- core · Which document version each user accepted.
+create table if not exists public.consents (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  user_id uuid not null references public.users(id) on delete set null,
+  legal_document_id uuid not null references public.legal_documents(id) on delete set null,
+  accepted_at timestamptz not null,
+  ip text
+);
+create index if not exists consents_tenant_idx on public.consents(tenant_id);
+create index if not exists consents_user_id_idx on public.consents(user_id);
+create index if not exists consents_legal_document_id_idx on public.consents(legal_document_id);
+create trigger consents_touch before update on public.consents for each row execute function public.touch_updated_at();
+alter table public.consents enable row level security;
+create policy "consents: tenant read" on public.consents for select using (tenant_id = public.current_tenant_id());
+create policy "consents: staff write" on public.consents for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
+-- people · Login accounts (mirrors auth.users in Supabase).
+create table if not exists public.users (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  email text not null,
+  phone text,
+  status text not null check (status in ('active', 'invited', 'locked', 'disabled')),
+  last_sign_in_at timestamptz,
+  locale text
+);
+create index if not exists users_tenant_idx on public.users(tenant_id);
+create trigger users_touch before update on public.users for each row execute function public.touch_updated_at();
+alter table public.users enable row level security;
+create policy "users: tenant read" on public.users for select using (tenant_id = public.current_tenant_id());
+create policy "users: staff write" on public.users for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
+-- people · Person data: name, photo, emergency contact, preferences.
+create table if not exists public.profiles (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  user_id uuid not null references public.users(id) on delete set null,
+  full_name text not null,
+  initials text,
+  photo_url text,
+  birthday date,
+  emergency_contact jsonb,
+  marketing_optin boolean not null default false,
+  whatsapp_verified boolean not null default false,
+  notes text
+);
+create index if not exists profiles_tenant_idx on public.profiles(tenant_id);
+create index if not exists profiles_user_id_idx on public.profiles(user_id);
+create trigger profiles_touch before update on public.profiles for each row execute function public.touch_updated_at();
+alter table public.profiles enable row level security;
+create policy "profiles: tenant read" on public.profiles for select using (tenant_id = public.current_tenant_id());
+create policy "profiles: staff write" on public.profiles for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
+-- people · Role assignments; a user may hold several.
+create table if not exists public.user_roles (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  user_id uuid not null references public.users(id) on delete set null,
+  role text not null check (role in ('super_admin', 'admin', 'coordinator', 'front_desk', 'finance', 'teacher', 'maintenance', 'customer')),
+  granted_by uuid references public.users(id) on delete set null
+);
+create index if not exists user_roles_tenant_idx on public.user_roles(tenant_id);
+create index if not exists user_roles_user_id_idx on public.user_roles(user_id);
+create index if not exists user_roles_granted_by_idx on public.user_roles(granted_by);
+create trigger user_roles_touch before update on public.user_roles for each row execute function public.touch_updated_at();
+alter table public.user_roles enable row level security;
+create policy "user_roles: tenant read" on public.user_roles for select using (tenant_id = public.current_tenant_id());
+create policy "user_roles: staff write" on public.user_roles for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
+-- people · Public and contractual profile of each teacher.
+create table if not exists public.teachers (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  user_id uuid references public.users(id) on delete set null,
+  display_name text not null,
+  -- {es,en}
+  bio jsonb not null,
+  photo_url text,
+  -- modality ids
+  specialties jsonb not null,
+  certifications jsonb,
+  -- COP
+  rate_per_class integer,
+  active boolean not null default false,
+  rating_avg numeric(12,2)
+);
+create index if not exists teachers_tenant_idx on public.teachers(tenant_id);
+create index if not exists teachers_user_id_idx on public.teachers(user_id);
+create trigger teachers_touch before update on public.teachers for each row execute function public.touch_updated_at();
+alter table public.teachers enable row level security;
+create policy "teachers: tenant read" on public.teachers for select using (tenant_id = public.current_tenant_id());
+create policy "teachers: staff write" on public.teachers for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
+-- schedule · Class types of the club, each with its movement.
+create table if not exists public.modalities (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  slug text not null,
+  name_es text not null,
+  name_en text not null,
+  movement text not null check (movement in ('enraiza', 'fluye', 'arde', 'libera')),
+  description jsonb not null,
+  -- 1–5
+  intensity integer not null,
+  heated boolean not null default false,
+  duration_min integer not null,
+  active boolean not null default false
+);
+create index if not exists modalities_tenant_idx on public.modalities(tenant_id);
+create trigger modalities_touch before update on public.modalities for each row execute function public.touch_updated_at();
+alter table public.modalities enable row level security;
+create policy "modalities: tenant read" on public.modalities for select using (tenant_id = public.current_tenant_id());
+create policy "modalities: staff write" on public.modalities for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
+-- schedule · Physical rooms and their mat capacity.
+create table if not exists public.rooms (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  name text not null,
+  capacity integer not null,
+  heated boolean not null default false,
+  notes text
+);
+create index if not exists rooms_tenant_idx on public.rooms(tenant_id);
+create trigger rooms_touch before update on public.rooms for each row execute function public.touch_updated_at();
+alter table public.rooms enable row level security;
+create policy "rooms: tenant read" on public.rooms for select using (tenant_id = public.current_tenant_id());
+create policy "rooms: staff write" on public.rooms for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
+-- schedule · Recurrence rules that generate sessions.
+create table if not exists public.class_templates (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  title text not null,
+  modality_id uuid not null references public.modalities(id) on delete set null,
+  teacher_id uuid not null references public.teachers(id) on delete set null,
+  room_id uuid not null references public.rooms(id) on delete set null,
+  -- 0=Sun … 6=Sat
+  weekday integer not null,
+  start_time time not null,
+  duration_min integer not null,
+  capacity integer not null,
+  level text not null check (level in ('all', 'beginner', 'intermediate', 'advanced')),
+  active boolean not null default false
+);
+create index if not exists class_templates_tenant_idx on public.class_templates(tenant_id);
+create index if not exists class_templates_modality_id_idx on public.class_templates(modality_id);
+create index if not exists class_templates_teacher_id_idx on public.class_templates(teacher_id);
+create index if not exists class_templates_room_id_idx on public.class_templates(room_id);
+create trigger class_templates_touch before update on public.class_templates for each row execute function public.touch_updated_at();
+alter table public.class_templates enable row level security;
+create policy "class_templates: tenant read" on public.class_templates for select using (tenant_id = public.current_tenant_id());
+create policy "class_templates: staff write" on public.class_templates for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
+-- schedule · Each concrete class on the calendar, with live capacity.
+create table if not exists public.class_sessions (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  template_id uuid references public.class_templates(id) on delete set null,
+  title text not null,
+  modality_id uuid not null references public.modalities(id) on delete set null,
+  teacher_id uuid not null references public.teachers(id) on delete set null,
+  room_id uuid not null references public.rooms(id) on delete set null,
+  starts_at timestamptz not null,
+  ends_at timestamptz not null,
+  capacity integer not null,
+  booked_count integer not null,
+  level text not null check (level in ('all', 'beginner', 'intermediate', 'advanced')),
+  status text not null check (status in ('scheduled', 'cancelled', 'completed')),
+  cancel_reason text
+);
+create index if not exists class_sessions_tenant_idx on public.class_sessions(tenant_id);
+create index if not exists class_sessions_template_id_idx on public.class_sessions(template_id);
+create index if not exists class_sessions_modality_id_idx on public.class_sessions(modality_id);
+create index if not exists class_sessions_teacher_id_idx on public.class_sessions(teacher_id);
+create index if not exists class_sessions_room_id_idx on public.class_sessions(room_id);
+create trigger class_sessions_touch before update on public.class_sessions for each row execute function public.touch_updated_at();
+alter table public.class_sessions enable row level security;
+create policy "class_sessions: tenant read" on public.class_sessions for select using (tenant_id = public.current_tenant_id());
+create policy "class_sessions: staff write" on public.class_sessions for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
+-- schedule · One person’s spot in a session.
+create table if not exists public.bookings (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  user_id uuid not null references public.users(id) on delete set null,
+  session_id uuid not null references public.class_sessions(id) on delete set null,
+  status text not null check (status in ('booked', 'checked_in', 'cancelled', 'no_show', 'late_cancel')),
+  paid_with text not null check (paid_with in ('membership', 'credit', 'single', 'trial', 'guest', 'comp')),
+  credit_id uuid references public.credits(id) on delete set null,
+  checked_in_at timestamptz,
+  cancelled_at timestamptz,
+  rated boolean not null default false
+);
+create index if not exists bookings_tenant_idx on public.bookings(tenant_id);
+create index if not exists bookings_user_id_idx on public.bookings(user_id);
+create index if not exists bookings_session_id_idx on public.bookings(session_id);
+create index if not exists bookings_credit_id_idx on public.bookings(credit_id);
+create trigger bookings_touch before update on public.bookings for each row execute function public.touch_updated_at();
+alter table public.bookings enable row level security;
+create policy "bookings: tenant read" on public.bookings for select using (tenant_id = public.current_tenant_id());
+create policy "bookings: staff write" on public.bookings for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
+-- schedule · Waiting positions and claim window.
+create table if not exists public.waitlist (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  user_id uuid not null references public.users(id) on delete set null,
+  session_id uuid not null references public.class_sessions(id) on delete set null,
+  position integer not null,
+  status text not null check (status in ('waiting', 'offered', 'claimed', 'expired', 'left')),
+  offered_at timestamptz,
+  claim_until timestamptz
+);
+create index if not exists waitlist_tenant_idx on public.waitlist(tenant_id);
+create index if not exists waitlist_user_id_idx on public.waitlist(user_id);
+create index if not exists waitlist_session_id_idx on public.waitlist(session_id);
+create trigger waitlist_touch before update on public.waitlist for each row execute function public.touch_updated_at();
+alter table public.waitlist enable row level security;
+create policy "waitlist: tenant read" on public.waitlist for select using (tenant_id = public.current_tenant_id());
+create policy "waitlist: staff write" on public.waitlist for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
+-- schedule · Answer to “How do you want to feel today?” (A-05).
+create table if not exists public.intentions (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  user_id uuid not null references public.users(id) on delete set null,
+  date date not null,
+  movement text not null check (movement in ('enraiza', 'fluye', 'arde', 'libera'))
+);
+create index if not exists intentions_tenant_idx on public.intentions(tenant_id);
+create index if not exists intentions_user_id_idx on public.intentions(user_id);
+create trigger intentions_touch before update on public.intentions for each row execute function public.touch_updated_at();
+alter table public.intentions enable row level security;
+create policy "intentions: tenant read" on public.intentions for select using (tenant_id = public.current_tenant_id());
+create policy "intentions: staff write" on public.intentions for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
+-- commerce · Value model v3: passes, memberships, pauses, gifts, space.
+create table if not exists public.plans (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  slug text not null,
+  family text not null check (family in ('bienvenida', 'membresia', 'pausas', 'regalos', 'espacio')),
+  name_es text not null,
+  name_en text not null,
+  description jsonb not null,
+  -- COP, integer
+  price integer not null,
+  period text check (period in ('once', 'month', 'year')),
+  credits integer,
+  validity_days integer,
+  is_from_price boolean not null default false,
+  badge jsonb,
+  active boolean not null default false,
+  sort integer not null
+);
+create index if not exists plans_tenant_idx on public.plans(tenant_id);
+create trigger plans_touch before update on public.plans for each row execute function public.touch_updated_at();
+alter table public.plans enable row level security;
+create policy "plans: tenant read" on public.plans for select using (tenant_id = public.current_tenant_id());
+create policy "plans: staff write" on public.plans for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
+-- commerce · A person’s active subscription to a plan.
+create table if not exists public.memberships (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  user_id uuid not null references public.users(id) on delete set null,
+  plan_id uuid not null references public.plans(id) on delete set null,
+  status text not null check (status in ('active', 'paused', 'past_due', 'cancelled', 'expired')),
+  starts_at date not null,
+  renews_at date,
+  ends_at date,
+  paused_until date
+);
+create index if not exists memberships_tenant_idx on public.memberships(tenant_id);
+create index if not exists memberships_user_id_idx on public.memberships(user_id);
+create index if not exists memberships_plan_id_idx on public.memberships(plan_id);
+create trigger memberships_touch before update on public.memberships for each row execute function public.touch_updated_at();
+alter table public.memberships enable row level security;
+create policy "memberships: tenant read" on public.memberships for select using (tenant_id = public.current_tenant_id());
+create policy "memberships: staff write" on public.memberships for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
+-- commerce · Ledger of purchased and used classes.
+create table if not exists public.credits (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  user_id uuid not null references public.users(id) on delete set null,
+  plan_id uuid references public.plans(id) on delete set null,
+  payment_id uuid references public.payments(id) on delete set null,
+  -- + purchase, − use
+  delta integer not null,
+  reason text not null check (reason in ('purchase', 'booking', 'refund', 'expiry', 'gift', 'comp', 'cancel_return')),
+  expires_at date
+);
+create index if not exists credits_tenant_idx on public.credits(tenant_id);
+create index if not exists credits_user_id_idx on public.credits(user_id);
+create index if not exists credits_plan_id_idx on public.credits(plan_id);
+create index if not exists credits_payment_id_idx on public.credits(payment_id);
+create trigger credits_touch before update on public.credits for each row execute function public.touch_updated_at();
+alter table public.credits enable row level security;
+create policy "credits: tenant read" on public.credits for select using (tenant_id = public.current_tenant_id());
+create policy "credits: staff write" on public.credits for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
+-- commerce · Each charge, via Wompi or manual.
+create table if not exists public.payments (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  user_id uuid not null references public.users(id) on delete set null,
+  plan_id uuid references public.plans(id) on delete set null,
+  -- COP, integer
+  amount integer not null,
+  currency text not null,
+  method text not null check (method in ('card', 'pse', 'nequi', 'cash', 'transfer', 'gift_card')),
+  provider text not null check (provider in ('wompi', 'manual')),
+  provider_ref text,
+  status text not null check (status in ('pending', 'approved', 'declined', 'refunded', 'voided')),
+  paid_at timestamptz,
+  -- staff user for manual payments
+  taken_by uuid references public.users(id) on delete set null
+);
+create index if not exists payments_tenant_idx on public.payments(tenant_id);
+create index if not exists payments_user_id_idx on public.payments(user_id);
+create index if not exists payments_plan_id_idx on public.payments(plan_id);
+create index if not exists payments_taken_by_idx on public.payments(taken_by);
+create trigger payments_touch before update on public.payments for each row execute function public.touch_updated_at();
+alter table public.payments enable row level security;
+create policy "payments: tenant read" on public.payments for select using (tenant_id = public.current_tenant_id());
+create policy "payments: staff write" on public.payments for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
+-- commerce · Fiscal document per payment (DIAN later).
+create table if not exists public.invoices (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  payment_id uuid not null references public.payments(id) on delete set null,
+  number text not null,
+  -- COP, integer
+  subtotal integer not null,
+  -- COP, integer
+  tax integer not null,
+  -- COP, integer
+  total integer not null,
+  issued_at timestamptz not null,
+  pdf_url text,
+  dian_cufe text
+);
+create index if not exists invoices_tenant_idx on public.invoices(tenant_id);
+create index if not exists invoices_payment_id_idx on public.invoices(payment_id);
+create trigger invoices_touch before update on public.invoices for each row execute function public.touch_updated_at();
+alter table public.invoices enable row level security;
+create policy "invoices: tenant read" on public.invoices for select using (tenant_id = public.current_tenant_id());
+create policy "invoices: staff write" on public.invoices for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
+-- commerce · Vouchers bought to give away, with scheduled delivery.
+create table if not exists public.gift_cards (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  code text not null,
+  buyer_user_id uuid references public.users(id) on delete set null,
+  recipient_name text not null,
+  recipient_contact text not null,
+  -- COP, integer
+  amount integer not null,
+  -- COP, integer
+  balance integer not null,
+  deliver_at timestamptz,
+  redeemed_by uuid references public.users(id) on delete set null,
+  status text not null check (status in ('scheduled', 'sent', 'redeemed', 'expired'))
+);
+create index if not exists gift_cards_tenant_idx on public.gift_cards(tenant_id);
+create index if not exists gift_cards_buyer_user_id_idx on public.gift_cards(buyer_user_id);
+create index if not exists gift_cards_redeemed_by_idx on public.gift_cards(redeemed_by);
+create trigger gift_cards_touch before update on public.gift_cards for each row execute function public.touch_updated_at();
+alter table public.gift_cards enable row level security;
+create policy "gift_cards: tenant read" on public.gift_cards for select using (tenant_id = public.current_tenant_id());
+create policy "gift_cards: staff write" on public.gift_cards for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
+-- comms · Versioned transactional emails (M-04).
+create table if not exists public.email_templates (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  key text not null,
+  name text not null,
+  trigger text not null,
+  subject jsonb not null,
+  body_mjml text not null,
+  version integer not null,
+  active boolean not null default false
+);
+create index if not exists email_templates_tenant_idx on public.email_templates(tenant_id);
+create trigger email_templates_touch before update on public.email_templates for each row execute function public.touch_updated_at();
+alter table public.email_templates enable row level security;
+create policy "email_templates: tenant read" on public.email_templates for select using (tenant_id = public.current_tenant_id());
+create policy "email_templates: staff write" on public.email_templates for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
+-- comms · Meta-approved templates with variables.
+create table if not exists public.wa_templates (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  key text not null,
+  name text not null,
+  category text not null check (category in ('utility', 'marketing', 'authentication')),
+  body jsonb not null,
+  approval_status text not null check (approval_status in ('draft', 'pending', 'approved', 'rejected')),
+  active boolean not null default false
+);
+create index if not exists wa_templates_tenant_idx on public.wa_templates(tenant_id);
+create trigger wa_templates_touch before update on public.wa_templates for each row execute function public.touch_updated_at();
+alter table public.wa_templates enable row level security;
+create policy "wa_templates: tenant read" on public.wa_templates for select using (tenant_id = public.current_tenant_id());
+create policy "wa_templates: staff write" on public.wa_templates for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
+-- comms · Trigger → channel → template, with quiet hours.
+create table if not exists public.automations (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  name text not null,
+  trigger text not null,
+  channel text not null check (channel in ('whatsapp', 'email', 'push')),
+  template_key text not null,
+  delay_min integer not null,
+  quiet_hours jsonb,
+  enabled boolean not null default false
+);
+create index if not exists automations_tenant_idx on public.automations(tenant_id);
+create trigger automations_touch before update on public.automations for each row execute function public.touch_updated_at();
+alter table public.automations enable row level security;
+create policy "automations: tenant read" on public.automations for select using (tenant_id = public.current_tenant_id());
+create policy "automations: staff write" on public.automations for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
+-- comms · Everything sent via WhatsApp, email or push.
+create table if not exists public.message_log (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  user_id uuid references public.users(id) on delete set null,
+  channel text not null check (channel in ('whatsapp', 'email', 'push')),
+  template_key text,
+  automation_id uuid references public.automations(id) on delete set null,
+  status text not null check (status in ('queued', 'sent', 'delivered', 'read', 'failed')),
+  sent_at timestamptz,
+  payload jsonb
+);
+create index if not exists message_log_tenant_idx on public.message_log(tenant_id);
+create index if not exists message_log_user_id_idx on public.message_log(user_id);
+create index if not exists message_log_automation_id_idx on public.message_log(automation_id);
+create trigger message_log_touch before update on public.message_log for each row execute function public.touch_updated_at();
+alter table public.message_log enable row level security;
+create policy "message_log: tenant read" on public.message_log for select using (tenant_id = public.current_tenant_id());
+create policy "message_log: staff write" on public.message_log for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
+-- system · Who did what, on which entity, when (M-07).
+create table if not exists public.audit_log (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  actor_id uuid references public.users(id) on delete set null,
+  action text not null,
+  entity text not null,
+  entity_id text,
+  diff jsonb,
+  ip text
+);
+create index if not exists audit_log_tenant_idx on public.audit_log(tenant_id);
+create index if not exists audit_log_actor_id_idx on public.audit_log(actor_id);
+create trigger audit_log_touch before update on public.audit_log for each row execute function public.touch_updated_at();
+alter table public.audit_log enable row level security;
+create policy "audit_log: tenant read" on public.audit_log for select using (tenant_id = public.current_tenant_id());
+create policy "audit_log: staff write" on public.audit_log for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
+-- system · Index of docs/ for search and links (the .md files are the source).
+create table if not exists public.docs_entries (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  path text not null,
+  title text not null,
+  kind text not null check (kind in ('prompt', 'changelog', 'rule', 'guide', 'manual')),
+  page_codes jsonb
+);
+create index if not exists docs_entries_tenant_idx on public.docs_entries(tenant_id);
+create trigger docs_entries_touch before update on public.docs_entries for each row execute function public.touch_updated_at();
+alter table public.docs_entries enable row level security;
+create policy "docs_entries: tenant read" on public.docs_entries for select using (tenant_id = public.current_tenant_id());
+create policy "docs_entries: staff write" on public.docs_entries for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
+-- design · Index of the D-02 library (the .meta.ts files are the source).
+create table if not exists public.components (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  name text not null,
+  tier text not null check (tier in ('atom', 'molecule', 'organism', 'template')),
+  states jsonb,
+  used_by jsonb
+);
+create index if not exists components_tenant_idx on public.components(tenant_id);
+create trigger components_touch before update on public.components for each row execute function public.touch_updated_at();
+alter table public.components enable row level security;
+create policy "components: tenant read" on public.components for select using (tenant_id = public.current_tenant_id());
+create policy "components: staff write" on public.components for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
+-- design · Per-page section order saved from the drag-and-drop editor.
+create table if not exists public.page_layouts (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  page_code text not null,
+  -- ordered section names
+  sections jsonb not null,
+  -- section names hidden
+  hidden jsonb,
+  updated_by uuid references public.users(id) on delete set null
+);
+create index if not exists page_layouts_tenant_idx on public.page_layouts(tenant_id);
+create index if not exists page_layouts_updated_by_idx on public.page_layouts(updated_by);
+create trigger page_layouts_touch before update on public.page_layouts for each row execute function public.touch_updated_at();
+alter table public.page_layouts enable row level security;
+create policy "page_layouts: tenant read" on public.page_layouts for select using (tenant_id = public.current_tenant_id());
+create policy "page_layouts: staff write" on public.page_layouts for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
+-- ---------------------------------------------------------------------------------------------
+-- RLS notes per role (refine per table when the real backend lands):
+--   super_admin, admin   full read/write in their tenant (policy above)
+--   coordinator          write on schedule, content, comms; read everything else
+--   front_desk           write bookings, checkins (bookings.status), payments(manual), profiles; read classes
+--   finance              read payments, invoices, memberships, credits; write refunds, payroll
+--   teacher              read own class_sessions/bookings (teacher_id = own teachers.id); write attendance
+--   maintenance          read rooms/class_sessions; write maintenance tables (future)
+--   customer             read own rows (user_id = auth.uid()) in bookings, credits, memberships, payments,
+--                        invoices, consents, intentions, waitlist; read public catalog (modalities, teachers,
+--                        class_sessions, plans, legal_documents)
+--   anon (public site)   read modalities, teachers(active), class_sessions(scheduled), plans(active), legal_documents(published)
+-- Realtime: enable on class_sessions, bookings, waitlist, feature_flags, page_layouts.
+-- Wompi webhooks write payments/invoices through an edge function with the service role, never from the client.
