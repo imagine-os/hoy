@@ -1,0 +1,187 @@
+import { Fragment, useMemo, useState, type ReactNode } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useI18n } from '../../../i18n/I18nProvider';
+import type { BookingRow } from '../../../data/schema';
+import { formatDate, formatTime } from '../../../i18n/format';
+import { useLayout } from '../../../layout/useLayout';
+import { tenant } from '../../../tenant/tenant';
+import { Card } from '../../../components/molecule/Card/Card';
+import { Button } from '../../../components/atom/Button/Button';
+import { Badge } from '../../../components/atom/Badge/Badge';
+import { Notice } from '../../../components/molecule/Notice/Notice';
+import { Drawer } from '../../../components/organism/Drawer/Drawer';
+import { ClassCard } from '../../../components/organism/ClassCard/ClassCard';
+import { ClassRow } from '../../../components/molecule/ClassRow/ClassRow';
+import { CountdownRing } from '../../../components/molecule/CountdownRing/CountdownRing';
+import { EmptyState } from '../../../components/molecule/EmptyState/EmptyState';
+import { Skeleton } from '../../../components/atom/Skeleton/Skeleton';
+import { ListGroup, ListRow } from '../../../components/molecule/ListRow/ListRow';
+import { canvasSpecs } from '../specs';
+import { useBookingActions, useMyBookings, useNow, useSessionJoined } from '../hooks';
+import { cancelDeadline, insideCancelWindow, MINUTE, policy } from '../policy';
+import { PageHead, downloadIcs, movementOf, roomName, shareText, teacherName } from '../ui';
+import { StudioCancelledBlock, useAlternatives } from './blocks';
+
+const spec = canvasSpecs['C-08'];
+
+/** C-08 Booked class (+ C-08b change sheet at /app/booking/:id/change). */
+export function BookedPage({ change = false }: { change?: boolean }) {
+  const { id } = useParams();
+  const { t, lang } = useI18n();
+  const nav = useNavigate();
+  const { sections, isVisible } = useLayout(spec);
+  const { rows: myBookings, loading } = useMyBookings();
+  const booking: BookingRow | null = useMemo(() => myBookings.find((b) => b.id === id) ?? [...myBookings].filter((b) => b.session_id === id).sort((a, b) => b.created_at.localeCompare(a.created_at))[0] ?? null, [myBookings, id]);
+  const { joined } = useSessionJoined(booking?.session_id);
+  const now = useNow(15_000);
+  const [flash, setFlash] = useState<{ tone: 'success' | 'warn'; text: string } | null>(null);
+
+  if (!booking || !joined) {
+    return (
+      <div className="container page cust-page">
+        <PageHead back="/app" title={loading ? <Skeleton width={180} height={28} /> : t('customer.booked.notFound')} />
+        {loading ? <Skeleton shape="rect" height={200} /> : <EmptyState title={t('customer.booked.notFound')} body={t('customer.booked.notFound.body')} action={<Link to="/app/history"><Button variant="secondary">{t('customer.nav.history')}</Button></Link>} />}
+      </div>
+    );
+  }
+
+  const s = joined.session;
+  const startsMs = new Date(s.starts_at).getTime();
+  const past = new Date(s.ends_at).getTime() < now;
+  const started = startsMs <= now;
+  const checkinOpen = !started && startsMs - now <= policy.checkinOpensMinutes * MINUTE;
+  const studioCancelled = s.status === 'cancelled';
+  const myCancelled = booking.status === 'cancelled' || booking.status === 'late_cancel';
+  const active = !past && !studioCancelled && !myCancelled && booking.status === 'booked';
+  const deadline = cancelDeadline(s.starts_at);
+  const inside = insideCancelWindow(s.starts_at, now);
+  const bookingBase = `/app/booking/${booking.id}`;
+
+  const addToCalendar = () => downloadIcs({ title: `${s.title} · ${tenant.name}`, startsAt: s.starts_at, endsAt: s.ends_at, location: `${tenant.name} · ${roomName(joined)}`, description: teacherName(joined) });
+  const share = async () => { const r = await shareText(t('customer.booked.shareText', { title: s.title, when: `${formatDate(s.starts_at, lang)} ${formatTime(s.starts_at, lang)}`, name: tenant.name }), window.location.href); if (r !== 'failed') setFlash({ tone: 'success', text: r === 'copied' ? t('customer.class.linkCopied') : t('customer.class.shared') }); };
+
+  const SECTIONS: Record<string, () => ReactNode> = {
+    CountdownRing: () => {
+      if (studioCancelled) return <StudioCancelledBlock joined={joined} booking={booking} />;
+      if (myCancelled) return <Notice tone="warn" title={booking.status === 'late_cancel' ? t('customer.booked.lateCancelled') : t('customer.booked.cancelled')} action={<Link to="/app/schedule"><Button size="sm" variant="secondary">{t('customer.class.backToSchedule')}</Button></Link>}>{booking.status === 'late_cancel' ? t('customer.booked.lateCancelled.body') : t('customer.booked.cancelled.body')}</Notice>;
+      if (past) return (
+        <Card className="stack-sm" tone="muted">
+          <div className="row wrap"><Badge tone={booking.status === 'checked_in' ? 'success' : booking.status === 'no_show' ? 'danger' : 'neutral'}>{t(`customer.history.status.${booking.status}`)}</Badge><span className="small muted">{formatDate(s.starts_at, lang)}</span></div>
+          {!booking.rated && booking.status === 'checked_in' && <Button size="sm" onClick={() => nav(`/app/rate/${s.id}`)}>{t('customer.booked.rate')}</Button>}
+        </Card>
+      );
+      return (
+        <div className="cust-center stack-sm">
+          {started
+            ? <Card tone="primary" className="cust-center" padding="lg"><strong>{t('customer.booked.inProgress')}</strong></Card>
+            : <CountdownRing until={s.starts_at} from={booking.created_at} size={180} tone={checkinOpen ? 'success' : 'primary'} label={checkinOpen ? t('customer.booked.checkin') : t('customer.booked.startsIn')} />}
+          {checkinOpen && <p className="small muted">{t('customer.booked.checkin.body')}</p>}
+        </div>
+      );
+    },
+    ClassSummary: () => (
+      <ClassCard title={s.title} teacher={teacherName(joined)} room={roomName(joined)} startsAt={s.starts_at} endsAt={s.ends_at} movement={movementOf(joined)} booked={s.booked_count} capacity={s.capacity} level={s.level} onClick={() => nav(`/app/class/${s.id}`)} />
+    ),
+    PrepReminder: () => active ? (
+      <Card eyebrow={t('customer.class.prep')} padding="md">
+        <p className="small">{joined.modality?.heated ? t('customer.class.prep.hot') : t('customer.class.prep.mat')} {t('customer.class.prep.arrive')}</p>
+        <Link to="/app/rules" className="small">{t('customer.class.rulesLink')} →</Link>
+      </Card>
+    ) : null,
+    'ActionRow (Change / Invite)': () => active ? (
+      <div className="grid grid-2">
+        <Button variant="secondary" size="lg" onClick={() => nav(`${bookingBase}/change`)}>{t('customer.booked.change')}</Button>
+        <Button variant="secondary" size="lg" onClick={() => nav(`/app/invite?session=${s.id}`)}>{t('customer.home.quick.invite')}</Button>
+      </div>
+    ) : null,
+    AddToCalendar: () => active ? (
+      <div className="row" style={{ justifyContent: 'center' }}>
+        <Button variant="ghost" size="sm" icon="▦" onClick={addToCalendar}>{t('customer.booked.addToCalendar')}</Button>
+        <Button variant="ghost" size="sm" icon="⇪" onClick={share}>{t('customer.class.share')}</Button>
+      </div>
+    ) : null,
+    PolicyNote: () => active ? (
+      <p className="xs muted" style={{ textAlign: 'center' }}>
+        {inside ? t('customer.booked.policy.inside', { h: policy.cancelWindowHours }) : t('customer.booked.policy.outside', { time: formatTime(deadline.toISOString(), lang), h: policy.cancelWindowHours })}
+        {' · '}{t('customer.booked.paidWith', { with: t(`customer.paidWith.${booking.paid_with}`) })}
+      </p>
+    ) : null,
+  };
+
+  return (
+    <div className="container page cust-page">
+      <PageHead back="/app" title={<span className="sr-only">{s.title}</span>} />
+      {flash && <Notice tone={flash.tone}>{flash.text}</Notice>}
+      <div className="stack">
+        {sections.filter(isVisible).map((name) => SECTIONS[name] ? <Fragment key={name}>{SECTIONS[name]()}</Fragment> : null)}
+      </div>
+      <ChangeSheet open={change && active} onClose={() => nav(bookingBase, { replace: true })} booking={booking} joined={joined} inside={inside} deadline={deadline} onResult={(f) => { setFlash(f); }} />
+    </div>
+  );
+}
+
+/** C-08b — cancel or reschedule sheet. Moving is offered first: it keeps the credit and the habit. */
+function ChangeSheet({ open, onClose, booking, joined, inside, deadline, onResult }: { open: boolean; onClose: () => void; booking: BookingRow; joined: NonNullable<ReturnType<typeof useSessionJoined>['joined']>; inside: boolean; deadline: Date; onResult: (f: { tone: 'success' | 'warn'; text: string }) => void }) {
+  const { t, lang } = useI18n();
+  const nav = useNavigate();
+  const { cancel, reschedule } = useBookingActions();
+  const alts = useAlternatives(joined, 4);
+  const [mode, setMode] = useState<'menu' | 'move' | 'cancel'>('menu');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const s = joined.session;
+  const close = () => { setMode('menu'); setErr(null); onClose(); };
+
+  const doCancel = async () => {
+    setBusy(true);
+    try {
+      const { late } = await cancel(booking, s);
+      onResult({ tone: late ? 'warn' : 'success', text: late ? t('customer.change.cancelled.late') : booking.paid_with === 'credit' ? t('customer.change.cancelled.creditBack') : t('customer.change.cancelled.ok') });
+      close();
+    } finally { setBusy(false); }
+  };
+  const doMove = async (toId: string) => {
+    const to = alts.find((a) => a.session.id === toId)?.session; if (!to) return;
+    setBusy(true); setErr(null);
+    try { const next = await reschedule(booking, s, to); close(); nav(`/app/booking/${next.id}`, { replace: true }); }
+    catch { setErr(t('customer.checkout.race.body')); }
+    finally { setBusy(false); }
+  };
+
+  return (
+    <Drawer open={open} onClose={close} side="bottom" title={mode === 'cancel' ? t('customer.change.cancel.title') : mode === 'move' ? t('customer.change.move.title') : t('customer.change.title')}>
+      <div className="stack">
+        {inside
+          ? <Notice tone="warn" title={t('customer.change.inside.title', { h: policy.cancelWindowHours })}>{t('customer.change.inside.body')}</Notice>
+          : <p className="small muted">{t('customer.change.outside', { time: formatTime(deadline.toISOString(), lang) })}</p>}
+        <Card padding="sm"><ClassRow title={s.title} teacher={teacherName(joined)} startsAt={s.starts_at} durationMin={joined.modality?.duration_min ?? 60} movement={movementOf(joined)} booked={s.booked_count} capacity={s.capacity} booked_by_me /></Card>
+
+        {mode === 'menu' && (
+          <ListGroup>
+            <ListRow icon="⇄" title={t('customer.change.move')} subtitle={t('customer.change.move.sub')} onClick={() => setMode('move')} />
+            <ListRow icon="×" tone="danger" title={t('customer.change.drop')} subtitle={inside ? t('customer.change.drop.sub.inside') : t('customer.change.drop.sub')} onClick={() => setMode('cancel')} />
+          </ListGroup>
+        )}
+        {mode === 'move' && (
+          <section className="stack-sm">
+            <div className="eyebrow">{t('customer.change.pick')}</div>
+            {alts.length === 0 ? (
+              <Notice tone="info" title={t('customer.change.noAlt')} action={<Link to="/app/schedule"><Button size="sm" variant="secondary">{t('customer.class.backToSchedule')}</Button></Link>}>{t('customer.change.noAlt.body')}</Notice>
+            ) : (
+              <Card padding="sm">{alts.map((a) => <ClassRow key={a.session.id} title={a.session.title} teacher={a.teacher?.display_name ?? ''} startsAt={a.session.starts_at} durationMin={a.modality?.duration_min ?? 60} movement={a.modality?.movement ?? 'fluye'} booked={a.session.booked_count} capacity={a.session.capacity} onClick={() => !busy && doMove(a.session.id)} />)}</Card>
+            )}
+            {err && <Notice tone="warn">{err}</Notice>}
+            <p className="xs muted">{t('customer.change.move.note')}</p>
+          </section>
+        )}
+        {mode === 'cancel' && (
+          <section className="stack-sm">
+            <p className="small">{inside ? t('customer.change.cancel.confirm.inside', { with: t(`customer.paidWith.${booking.paid_with}`) }) : t('customer.change.cancel.confirm')}</p>
+            <Button block variant="danger" size="lg" loading={busy} onClick={doCancel}>{t('customer.change.cancel.cta')}</Button>
+          </section>
+        )}
+        <Button block variant={mode === 'menu' ? 'secondary' : 'ghost'} onClick={mode === 'menu' ? close : () => setMode('menu')}>{mode === 'menu' ? t('customer.change.keep') : t('core.nav.back')}</Button>
+      </div>
+    </Drawer>
+  );
+}
