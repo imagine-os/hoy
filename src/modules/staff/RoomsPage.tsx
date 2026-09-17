@@ -20,14 +20,13 @@ import { personMatches, usePeople } from './people';
 import { BOOKING_KINDS, KIND_LABEL, STATUS_LABEL, dateInputValue, findConflicts, localIso } from './rooms';
 import { S05 } from './specs';
 import './staff.css';
+import { fromDateKey, addDays, startOfDay } from '../../i18n/format';
 
 const STATUS_TONE = { held: 'warn', confirmed: 'primary', cancelled: 'neutral', done: 'success' } as const;
 const KIND_TONE: Record<SpaceBookingKind, RoomBlock['tone']> = { private_event: 'event', rental: 'rental', private_class: 'private', maintenance: 'maintenance', blocked: 'blocked' };
 
 interface Form { kind: SpaceBookingKind; roomId: string; date: string; start: string; end: string; title: string; contact: string; customerId: string | null; customerQ: string; teacherId: string; note: string }
 const emptyForm = (date: string, roomId: string): Form => ({ kind: 'private_event', roomId, date, start: '', end: '', title: '', contact: '', customerId: null, customerQ: '', teacherId: '', note: '' });
-
-const addDays = (d: Date, n: number) => { const x = new Date(d); x.setHours(0, 0, 0, 0); x.setDate(x.getDate() + n); return x; };
 
 /**
  * S-05 — the rooms, one day at a time: classes and space bookings side by side, a form that refuses
@@ -52,7 +51,7 @@ export function RoomsPage() {
   const { rows: specials } = useTable<SpecialChargeRow>('special_charges');
   const { people } = usePeople();
 
-  const today = useMemo(() => addDays(new Date(), 0), []);
+  const today = useMemo(() => startOfDay(new Date()), []);
   const [date, setDate] = useState<string>(() => params.get('date') ?? dateInputValue(today));
   const [showCancelled, setShowCancelled] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(params.get('booking'));
@@ -62,7 +61,7 @@ export function RoomsPage() {
 
   const days = useMemo(() => Array.from({ length: 14 }, (_, i) => addDays(today, i)), [today]);
   const dayIndex = days.findIndex((d) => dateInputValue(d) === date);
-  const day = useMemo(() => new Date(`${date}T12:00:00`), [date]);
+  const day = useMemo(() => fromDateKey(date), [date]);
   const modality = useMemo(() => new Map(modalities.map((m) => [m.id, m])), [modalities]);
   const teacher = useMemo(() => new Map(teachers.map((x) => [x.id, x])), [teachers]);
   const roomName = useMemo(() => new Map(rooms.map((r) => [r.id, r.name])), [rooms]);
@@ -232,7 +231,7 @@ export function RoomsPage() {
         {upcoming.map((b) => (
           <button key={b.id} type="button" className={`rooms-upcoming ${selectedId === b.id ? 'is-selected' : ''}`} onClick={() => { setSelectedId(b.id); setDate(dateInputValue(new Date(b.starts_at))); }}>
             <span className="xs mono muted rooms-upcoming-when">{formatDate(b.starts_at, lang)} · {formatTime(b.starts_at, lang)}</span>
-            <span className="grow small">{b.title}<span className="xs muted"> · {roomName.get(b.room_id)}</span></span>
+            <span className="small rooms-upcoming-title">{b.title}<span className="xs muted"> · {roomName.get(b.room_id)}</span></span>
             <Badge tone={STATUS_TONE[b.status]}>{bi(STATUS_LABEL[b.status])}</Badge>
           </button>
         ))}

@@ -7,9 +7,10 @@ import { ClassCard } from '../../../components/organism/ClassCard/ClassCard';
 import { EmptyState } from '../../../components/molecule/EmptyState/EmptyState';
 import { useAllSessionsJoined, priceOf } from '../hooks';
 import { DECLINE_REASONS } from '../payments';
-import { MINUTE, policy } from '../policy';
+import { policy } from '../policy';
 import { PageHead, movementOf, roomName, teacherName } from '../ui';
 import { DeclinedBlock, EmptyHomeBlock, StudioCancelledBlock, type DeclinedState } from './blocks';
+import { MS } from '../../../i18n/format';
 
 export function EmptyHomePage() {
   const { t } = useI18n();
@@ -26,7 +27,7 @@ export function DeclinedDemoPage() {
   const nav = useNavigate();
   const all = useAllSessionsJoined();
   const next = useMemo(() => all.find((x) => x.session.status === 'scheduled' && new Date(x.session.starts_at).getTime() > Date.now() && x.session.booked_count < x.session.capacity) ?? null, [all]);
-  const [state, setState] = useState<DeclinedState>(() => ({ reason: DECLINE_REASONS.insufficient_funds, holdUntil: new Date(Date.now() + policy.paymentHoldMinutes * MINUTE).toISOString(), attempts: 1, method: 'card' }));
+  const [state, setState] = useState<DeclinedState>(() => ({ reason: DECLINE_REASONS.insufficient_funds, holdUntil: new Date(Date.now() + policy.paymentHoldMinutes * MS.min).toISOString(), attempts: 1, method: 'card' }));
   const amount = priceOf('single').price ?? 0;
   return (
     <div className="container page cust-page">

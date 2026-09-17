@@ -1,9 +1,10 @@
 import { createElement as h } from 'react';
 import { defineMeta } from '../../../design/meta';
 import { CountdownRing } from './CountdownRing';
+import { MS } from '../../../i18n/format';
 
-const inMin = (n: number) => new Date(Date.now() + n * 60e3).toISOString();
-const agoMin = (n: number) => new Date(Date.now() - n * 60e3).toISOString();
+const inMin = (n: number) => new Date(Date.now() + n * MS.min).toISOString();
+const agoMin = (n: number) => new Date(Date.now() - n * MS.min).toISOString();
 
 export default defineMeta({
   tier: 'molecule', name: 'CountdownRing',

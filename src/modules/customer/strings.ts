@@ -201,7 +201,7 @@ export const strings: StringTable = {
   'customer.plans.note': { es: 'Sala de {mats} mats; reserva con tiempo. Cambios en Perfil → Membresía.', en: '{mats}-mat room; book ahead. Changes under Profile → Membership.' },
   'customer.plans.skip': { es: '¿Prefieres pagar por clase?', en: 'Prefer to pay per class?' },
   'customer.plans.skip.cta': { es: 'Pases Bienvenida', en: 'Welcome passes' },
-  'customer.plans.specials': { es: '¿Un cumpleaños, un evento privado o una sesión para tu equipo? Eso lo armamos directamente contigo.', en: 'A birthday, a private event or a session for your team? That we shape directly with you.' },
+  'customer.plans.specials': { es: '¿Un cumpleaños, un evento privado o una sesión para tu equipo? Eso lo armamos directamente contigo.', en: 'A birthday, a private event or a session for your team? We put that together with you directly.' },
   'customer.plans.specials.cta': { es: 'Escríbenos', en: 'Write to us' },
   'customer.plans.specials.wa': { es: 'Hola HOY, quiero preguntar por un especial: un evento privado o una sesión de grupo.', en: 'Hi HOY, I would like to ask about a special: a private event or a group session.' },
   'customer.plans.confirm.title': { es: 'Confirmar membresía', en: 'Confirm membership' },
@@ -485,7 +485,7 @@ export const strings: StringTable = {
   'customer.form.email.err': { es: 'Escribe un correo válido.', en: 'Enter a valid email.' },
   'customer.form.phone': { es: 'Teléfono', en: 'Phone' },
   'customer.form.whatsapp': { es: 'WhatsApp', en: 'WhatsApp' },
-  'customer.form.whatsapp.hint': { es: 'Colombia +57 por defecto. Ahí llegan recordatorios y cancelaciones.', en: 'Colombia +57 by default. Reminders and cancellations go here.' },
+  'customer.form.whatsapp.hint': { es: 'Colombia {dial} por defecto. Ahí llegan recordatorios y cancelaciones.', en: 'Colombia {dial} by default. Reminders and cancellations go here.' },
   'customer.form.password': { es: 'Contraseña', en: 'Password' },
   'customer.form.password.hint': { es: 'Mínimo 8 caracteres. Sin reglas de composición.', en: 'At least 8 characters. No composition rules.' },
   'customer.form.password.err': { es: 'Mínimo 8 caracteres.', en: 'At least 8 characters.' },
@@ -708,7 +708,6 @@ export const strings: StringTable = {
   'customer.faq.empty': { es: 'Sin preguntas publicadas', en: 'No published questions' },
   'customer.faq.empty.body': { es: 'El estudio está preparando esta sección.', en: 'The studio is preparing this section.' },
   // 0012 · A-06 legal library (site + in-app) and the media slots
-  'customer.legal.title': { es: 'Legal', en: 'Legal' },
   'customer.legal.kind.terms': { es: 'Términos y condiciones', en: 'Terms & conditions' },
   'customer.legal.kind.privacy': { es: 'Política de privacidad', en: 'Privacy policy' },
   'customer.legal.kind.waiver': { es: 'Exoneración y declaración de salud', en: 'Waiver & health declaration' },
@@ -737,7 +736,6 @@ export const strings: StringTable = {
   'customer.legal.token.pending': { es: '(pendiente)', en: '(pending)' },
   'customer.legal.token.noShowFee': { es: ' y se cobra la tarifa de no-show de {amount}', en: ' and the {amount} no-show fee is charged' },
   'customer.media.pending': { es: 'arte pendiente', en: 'art pending' },
-  'customer.media.brief': { es: 'Encargo: {brief}', en: 'Brief: {brief}' },
 
   // C-26 Cuenta y datos (0019)
   'customer.account.title': { es: 'Cuenta y datos', en: 'Account & data' },

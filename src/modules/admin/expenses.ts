@@ -11,7 +11,8 @@ import { useCallback, useMemo } from 'react';
 import { useData, useTable } from '../../data/DataContext';
 import type { ExpenseRow, ExpenseTemplateRow, PayrollRunRow } from '../../data/schema';
 import { fixedExpensesFor, type Period } from '../../data/expenseCalc';
-import { local } from '../../data/payrollCalc';
+import {  } from '../../data/payrollCalc';
+import { dateKey } from '../../i18n/format';
 
 /** The same five ranges M-09 uses, so the two pages always describe the same window. */
 export type FinanceRange = '7d' | '15d' | '30d' | '90d' | 'all';
@@ -21,7 +22,7 @@ export const FINANCE_RANGES: FinanceRange[] = ['7d', '15d', '30d', '90d', 'all']
 export function sinceDay(range: FinanceRange, now = new Date()): string {
   if (range === 'all') return '';
   const d = new Date(now); d.setDate(d.getDate() - Number(range.replace('d', '')));
-  return local(d);
+  return dateKey(d);
 }
 
 export const inRange = (day: string, since: string) => !since || day >= since;
@@ -49,7 +50,7 @@ export function expenseTotals(rows: ExpenseRow[]) {
  * current total (a draft is a committed cost — the classes were taught). Runs are monthly, so a
  * 7-day range still shows the month it sits in rather than a misleading zero.
  */
-export function payrollInRange(runs: PayrollRunRow[], since: string, today = local(new Date())) {
+export function payrollInRange(runs: PayrollRunRow[], since: string, today = dateKey(new Date())) {
   return runs.filter((r) => r.period_start <= today && (!since || r.period_end >= since));
 }
 

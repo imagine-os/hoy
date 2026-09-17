@@ -2,7 +2,7 @@ import { Fragment, useMemo, useState, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
 import type { BookingRow } from '../../../data/schema';
-import { formatDate, formatTime } from '../../../i18n/format';
+import { formatDate, formatTime, MS } from '../../../i18n/format';
 import { useLayout } from '../../../layout/useLayout';
 import { tenant } from '../../../tenant/tenant';
 import { Card } from '../../../components/molecule/Card/Card';
@@ -18,7 +18,7 @@ import { Skeleton } from '../../../components/atom/Skeleton/Skeleton';
 import { ListGroup, ListRow } from '../../../components/molecule/ListRow/ListRow';
 import { canvasSpecs } from '../specs';
 import { useBookingActions, useMyBookings, useNow, useSessionJoined } from '../hooks';
-import { cancelDeadline, insideCancelWindow, MINUTE, policy } from '../policy';
+import { cancelDeadline, insideCancelWindow, policy } from '../policy';
 import { PageHead, downloadIcs, movementOf, roomName, shareText, teacherName } from '../ui';
 import { StudioCancelledBlock, useAlternatives } from './blocks';
 
@@ -49,7 +49,7 @@ export function BookedPage({ change = false }: { change?: boolean }) {
   const startsMs = new Date(s.starts_at).getTime();
   const past = new Date(s.ends_at).getTime() < now;
   const started = startsMs <= now;
-  const checkinOpen = !started && startsMs - now <= policy.checkinOpensMinutes * MINUTE;
+  const checkinOpen = !started && startsMs - now <= policy.checkinOpensMinutes * MS.min;
   const studioCancelled = s.status === 'cancelled';
   const myCancelled = booking.status === 'cancelled' || booking.status === 'late_cancel';
   const active = !past && !studioCancelled && !myCancelled && booking.status === 'booked';

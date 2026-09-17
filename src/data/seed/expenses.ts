@@ -9,9 +9,10 @@
  */
 import type { ExpenseRow, ExpenseTemplateRow } from '../schema';
 import { fixedExpensesFor } from '../expenseCalc';
-import { local, monthPeriod } from '../payrollCalc';
+import { monthPeriod } from '../payrollCalc';
 import { base, NOW } from './catalog';
 import type { rng } from './rng';
+import { fromDateKey, dateKey, MS } from '../../i18n/format';
 
 type Rng = ReturnType<typeof rng>;
 
@@ -45,8 +46,8 @@ const VARIABLE: [daysAgo: number, concept: string, category: ExpenseRow['categor
 /** Fixed expenses for the last three calendar months (incl. the current one) plus the variable list. */
 export function buildExpenses(r: Rng): ExpenseRow[] {
   const out: ExpenseRow[] = [];
-  const today = local(NOW);
-  const paidCutoff = local(new Date(NOW.getTime() - 3 * 864e5));
+  const today = dateKey(NOW);
+  const paidCutoff = dateKey(new Date(NOW.getTime() - 3 * MS.day));
   const METHOD_BY_CATEGORY: Partial<Record<ExpenseRow['category'], ExpenseRow['method']>> = { rent: 'transfer', utilities: 'transfer', internet: 'card', cleaning: 'transfer', software: 'card', insurance: 'transfer' };
 
   for (const offset of [2, 1, 0]) {
@@ -55,16 +56,16 @@ export function buildExpenses(r: Rng): ExpenseRow[] {
     for (const d of drafts) {
       // Everything due more than three days ago is paid, on the due day or up to two days later.
       const paid = d.incurred_on <= paidCutoff;
-      const paidOn = paid ? local(new Date(new Date(`${d.incurred_on}T12:00:00`).getTime() + r.int(0, 2) * 864e5)) : null;
-      const ageDays = Math.max(0, Math.round((NOW.getTime() - new Date(`${d.incurred_on}T12:00:00`).getTime()) / 864e5));
+      const paidOn = paid ? dateKey(new Date(fromDateKey(d.incurred_on).getTime() + r.int(0, 2) * MS.day)) : null;
+      const ageDays = Math.max(0, Math.round((NOW.getTime() - fromDateKey(d.incurred_on).getTime()) / MS.day));
       out.push({ ...base(`xp_${d.template_id.slice(4)}_${d.incurred_on}`, Math.min(ageDays + 3, 95)), ...d, paid_on: paidOn && paidOn <= today ? paidOn : null, method: METHOD_BY_CATEGORY[d.category] ?? 'transfer', note: null, created_by: 'usr_fin' });
     }
   }
 
   VARIABLE.forEach(([daysAgo, concept, category, amount, method, vendor], i) => {
-    const day = local(new Date(NOW.getTime() - daysAgo * 864e5));
+    const day = dateKey(new Date(NOW.getTime() - daysAgo * MS.day));
     // Variable costs are usually paid on the spot; a transfer may wait a couple of days, and the two most recent are still open.
-    const paidOn = daysAgo <= 6 && method === 'transfer' ? null : method === 'transfer' && r.chance(0.5) ? local(new Date(NOW.getTime() - (daysAgo - r.int(1, 2)) * 864e5)) : day;
+    const paidOn = daysAgo <= 6 && method === 'transfer' ? null : method === 'transfer' && r.chance(0.5) ? dateKey(new Date(NOW.getTime() - (daysAgo - r.int(1, 2)) * MS.day)) : day;
     out.push({ ...base(`xpv_${i}`, daysAgo), kind: 'variable', category, concept, amount, incurred_on: day, paid_on: paidOn && paidOn <= today ? paidOn : null, method, vendor, note: null, template_id: null, created_by: i % 3 === 0 ? 'usr_super' : 'usr_fin' });
   });
 

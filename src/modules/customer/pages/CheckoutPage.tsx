@@ -4,7 +4,7 @@ import { useI18n } from '../../../i18n/I18nProvider';
 import { useSession } from '../../../auth/SessionProvider';
 import { useData, useTable } from '../../../data/DataContext';
 import type { BookingRow, ClassSessionRow } from '../../../data/schema';
-import { formatCOP } from '../../../i18n/format';
+import { formatCOP, addDays, dateKey, MS } from '../../../i18n/format';
 import { useLayout } from '../../../layout/useLayout';
 import { Button } from '../../../components/atom/Button/Button';
 import { Badge } from '../../../components/atom/Badge/Badge';
@@ -18,7 +18,7 @@ import { Skeleton } from '../../../components/atom/Skeleton/Skeleton';
 import { canvasSpecs } from '../specs';
 import { PASS_IDS, priceOf, useBookingActions, useEntitlements, useMyBookings, useSessionJoined, type EntitlementKind } from '../hooks';
 import { PAYMENT_METHODS, recordPayment, wompiCheckout, type PayMethod, type WompiResult } from '../payments';
-import { MINUTE, policy } from '../policy';
+import { policy } from '../policy';
 import { PageHead, durationMin, movementOf, roomName, teacherName } from '../ui';
 import { DeclinedBlock, type DeclinedState } from './blocks';
 
@@ -82,13 +82,12 @@ export function CheckoutPage() {
         if (methodOpt.provider === 'wompi') result = await wompiCheckout({ amount, method: method as 'card' | 'pse' | 'nequi', simulate: simulateDecline ? 'declined' : 'approved' });
         const payment = await recordPayment(data, { userId: user.id, planId: `plan_${item.id}`, amount, method, result, ivaRate: policy.ivaRate });
         if (result?.status === 'declined') {
-          setDeclined((d) => ({ reason: result?.reason ?? null, holdUntil: d?.holdUntil ?? new Date(Date.now() + policy.paymentHoldMinutes * MINUTE).toISOString(), attempts: (d?.attempts ?? 0) + 1, method }));
+          setDeclined((d) => ({ reason: result?.reason ?? null, holdUntil: d?.holdUntil ?? new Date(Date.now() + policy.paymentHoldMinutes * MS.min).toISOString(), attempts: (d?.attempts ?? 0) + 1, method }));
           return;
         }
         pending = payment.status === 'pending';
         if (item.credits && item.credits > 1) {
-          const exp = new Date(); exp.setDate(exp.getDate() + (item.validityDays ?? 30));
-          await data.insert('credits', { user_id: user.id, plan_id: `plan_${item.id}`, payment_id: payment.id, delta: item.credits, reason: 'purchase', expires_at: exp.toISOString().slice(0, 10) });
+          await data.insert('credits', { user_id: user.id, plan_id: `plan_${item.id}`, payment_id: payment.id, delta: item.credits, reason: 'purchase', expires_at: dateKey(addDays(new Date(), item.validityDays ?? 30)) });
           paidWith = 'credit'; creditPlanId = `plan_${item.id}`;
         }
       }
@@ -133,7 +132,7 @@ export function CheckoutPage() {
       <section className="stack-sm">
         <div className="row-between"><h2 className="cust-h2">{t('customer.checkout.method')}</h2><Link to="/app/payment-methods" className="small">{t('customer.checkout.manageMethods')}</Link></div>
         <div className="row wrap">
-          {PAYMENT_METHODS.map((m) => <button key={m.id} type="button" className={`cust-method ${method === m.id ? 'is-active' : ''}`} aria-pressed={method === m.id} onClick={() => setMethod(m.id)}><span aria-hidden>{m.glyph}</span>{m.label}{m.provider === 'wompi' && <Badge tone="neutral">Wompi</Badge>}</button>)}
+          {PAYMENT_METHODS.map((m) => <button key={m.id} type="button" className={`cust-method ${method === m.id ? 'is-active' : ''}`} aria-pressed={method === m.id} onClick={() => setMethod(m.id)}><span aria-hidden>{m.glyph}</span>{bi(m.label)}{m.provider === 'wompi' && <Badge tone="neutral">Wompi</Badge>}</button>)}
         </div>
         <p className="xs muted">{bi(methodOpt.hint)}</p>
         {devMode && methodOpt.provider === 'wompi' && <Toggle size="sm" checked={simulateDecline} onChange={setSimulateDecline} label={t('customer.checkout.simulateDecline')} />}

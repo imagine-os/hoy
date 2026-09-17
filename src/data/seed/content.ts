@@ -7,6 +7,7 @@
 import type { ContentArticleRow, EventRow, FaqEntryRow } from '../schema';
 import { priceItem } from '../../tenant/pricing';
 import { base, iso, NOW } from './catalog';
+import { MS } from '../../i18n/format';
 
 const price = (id: string) => priceItem(id)?.price ?? 0;
 
@@ -84,7 +85,7 @@ export const faqEntries: FaqEntryRow[] = FAQ.flatMap((s, si) => s.items.map((it,
 
 /** Upcoming events, relative to "today" so C-23 always has something to show. */
 const at = (daysAhead: number, hh: number) => { const d = new Date(NOW); d.setDate(d.getDate() + daysAhead); d.setHours(hh, 0, 0, 0); return d; };
-const span = (from: Date, minutes: number) => iso(new Date(from.getTime() + minutes * 60e3));
+const span = (from: Date, minutes: number) => iso(new Date(from.getTime() + minutes * MS.min));
 
 export const events: EventRow[] = [
   { ...base('evt_sound_bath', 20), slug: 'sound-bath-luna-llena', status: 'published', room_id: 'room_main', host_teacher_id: 'tea_santiago', capacity: 24, price_cop: price('single'), member_price_cop: 0, cover_key: 'events/sound-bath',

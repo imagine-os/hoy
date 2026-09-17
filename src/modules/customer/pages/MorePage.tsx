@@ -9,7 +9,8 @@ import { Badge } from '../../../components/atom/Badge/Badge';
 import { ListGroup, ListRow } from '../../../components/molecule/ListRow/ListRow';
 import { useEntitlements, useMyProfile } from '../hooks';
 import { policy } from '../policy';
-import { PageHead, waLink } from '../ui';
+import { PageHead } from '../ui';
+import { waLink } from '../../../i18n/format';
 
 /** C-25 More — profile, rules, contact and everything one level down. */
 export function MorePage() {

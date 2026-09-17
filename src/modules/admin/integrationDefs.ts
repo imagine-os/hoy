@@ -13,6 +13,7 @@
  */
 import type { IntegrationKey, IntegrationRow, IntegrationStatus } from '../../data/schema';
 import type { Bi } from '../../specs/types';
+import { tenant } from '../../tenant/tenant';
 
 export interface IntegrationField { name: string; label: Bi; placeholder?: string; hint?: Bi }
 export interface IntegrationDef {
@@ -63,7 +64,7 @@ export const INTEGRATIONS: IntegrationDef[] = [
     body: { es: 'Plantillas aprobadas, OTP de acceso, automatizaciones y los hilos del CRM.', en: 'Approved templates, sign-in OTP, automations and the CRM threads.' },
     simulated: { es: 'Todo envío cae en message_log con estado sent; el OTP de C-21 se muestra en pantalla.', en: 'Every send lands in message_log as sent; the C-21 OTP is shown on screen.' },
     fields: [
-      { name: 'senderNumber', label: { es: 'Número emisor', en: 'Sender number' }, placeholder: '+57 3…' },
+      { name: 'senderNumber', label: { es: 'Número emisor', en: 'Sender number' }, placeholder: `${tenant.dialCode} 3…` },
       { name: 'wabaId', label: { es: 'WABA id', en: 'WABA id' }, placeholder: '1000…' },
       { name: 'phoneNumberId', label: { es: 'Phone number id', en: 'Phone number id' }, placeholder: '1234…' },
       { name: 'templateNamespace', label: { es: 'Namespace de plantillas', en: 'Template namespace' }, placeholder: 'a1b2c3…' },
@@ -107,7 +108,7 @@ export const INTEGRATIONS: IntegrationDef[] = [
       { name: 'provider', label: { es: 'Proveedor tecnológico', en: 'Technology provider' }, placeholder: 'Alegra · Siigo · Factus · …' },
       { name: 'issuerNit', label: { es: 'NIT del emisor legal', en: 'Legal issuer NIT' }, placeholder: '901.xxx.xxx-1' },
       { name: 'resolution', label: { es: 'Resolución DIAN', en: 'DIAN resolution' }, placeholder: '18764…', hint: { es: 'También en M-08c, que es donde se enciende la facturación.', en: 'Also in M-08c, where invoicing is switched on.' } },
-      { name: 'prefix', label: { es: 'Prefijo de numeración', en: 'Numbering prefix' }, placeholder: 'HOY' },
+      { name: 'prefix', label: { es: 'Prefijo de numeración', en: 'Numbering prefix' }, placeholder: tenant.invoicePrefix },
     ],
     checklist: [
       { es: 'Nombrar el emisor legal y contratar el proveedor (decisión del owner, ROADMAP §E 3).', en: 'Name the legal issuer and contract the provider (owner decision, ROADMAP §E 3).' },

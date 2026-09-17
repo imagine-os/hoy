@@ -14,6 +14,7 @@ import { Notice } from '../../../components/molecule/Notice/Notice';
 import { Toggle } from '../../../components/atom/Toggle/Toggle';
 import { PageHead, SiteShell } from '../SiteShell';
 import { siteSpecs } from '../specs';
+import { isPhone } from '../../../i18n/format';
 
 /**
  * W-09 `/site/delete-account` — the public account-deletion request Google Play asks every app to
@@ -37,7 +38,7 @@ export function DeleteAccountPage() {
   const submit = async () => {
     const e: Record<string, string> = {};
     const hasEmail = /\S+@\S+\.\S+/.test(form.email.trim());
-    const hasPhone = form.phone.replace(/\D/g, '').length >= 10;
+    const hasPhone = isPhone(form.phone);
     if (!hasEmail && !hasPhone) e.contact = t('site.delete.err.contact');
     if (form.email.trim() && !hasEmail) e.email = t('customer.form.email.err');
     if (form.phone.trim() && !hasPhone) e.phone = t('customer.form.phone');
@@ -86,7 +87,7 @@ export function DeleteAccountPage() {
                 {(id) => <Input id={id} type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} autoComplete="email" />}
               </Field>
               <Field label={t('customer.form.whatsapp')} error={errors.phone} hint={t('site.delete.oneOf')}>
-                {(id) => <Input id={id} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} inputMode="tel" autoComplete="tel" placeholder="+57 3xx xxx xxxx" />}
+                {(id) => <Input id={id} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} inputMode="tel" autoComplete="tel" placeholder={`${tenant.dialCode} 3xx xxx xxxx`} />}
               </Field>
               <div className="site-form-full">
                 <Field label={t('customer.account.delete.reason')}>

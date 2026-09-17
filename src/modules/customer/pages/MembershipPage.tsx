@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useData } from '../../../data/DataContext';
-import { formatCOP, formatDate } from '../../../i18n/format';
+import { formatCOP, formatDate, addDaysKey, dateKey } from '../../../i18n/format';
 import { Card } from '../../../components/molecule/Card/Card';
 import { Button } from '../../../components/atom/Button/Button';
 import { Badge, toneForStatus } from '../../../components/atom/Badge/Badge';
@@ -17,7 +17,6 @@ import { useEntitlements, useMyBookings } from '../hooks';
 import { policy } from '../policy';
 import { PageHead } from '../ui';
 
-const addDays = (iso: string, n: number) => { const d = new Date(iso); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); };
 const REASONS = ['price', 'schedule', 'moving', 'injury', 'other'] as const;
 
 /** C-22 Manage membership — pause, change, cancel without a phone call. */
@@ -51,8 +50,8 @@ export function MembershipPage() {
   const pause = async () => {
     setBusy(true);
     try {
-      const until = addDays(new Date().toISOString(), days);
-      await data.update('memberships', m.id, { status: 'paused', paused_until: until, renews_at: addDays(renews, days) });
+      const until = addDaysKey(dateKey(), days);
+      await data.update('memberships', m.id, { status: 'paused', paused_until: until, renews_at: addDaysKey(renews, days) });
       setFlash(t('customer.membership.paused.ok', { date: formatDate(until, lang) })); setSheet(null);
     } finally { setBusy(false); }
   };
@@ -95,7 +94,7 @@ export function MembershipPage() {
         <div className="stack">
           <p className="small muted">{t('customer.membership.pause.body', { days: policy.pauseMaxDays })}</p>
           <Field label={t('customer.membership.pause.days')}>{(id) => <Select id={id} value={days} onChange={(e) => setDays(Number(e.target.value))}>{[7, 14, 21, 30].filter((d) => d <= policy.pauseMaxDays).map((d) => <option key={d} value={d}>{t('customer.membership.pause.option', { n: d })}</option>)}</Select>}</Field>
-          <p className="small">{t('customer.membership.pause.preview', { until: formatDate(addDays(new Date().toISOString(), days), lang), renews: formatDate(addDays(renews, days), lang) })}</p>
+          <p className="small">{t('customer.membership.pause.preview', { until: formatDate(addDaysKey(dateKey(), days), lang), renews: formatDate(addDaysKey(renews, days), lang) })}</p>
           <Button block size="lg" loading={busy} onClick={pause}>{t('customer.membership.pause.cta')}</Button>
         </div>
       </Drawer>

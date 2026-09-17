@@ -7,9 +7,9 @@ import { Button } from '../../../components/atom/Button/Button';
 import { Notice } from '../../../components/molecule/Notice/Notice';
 import { CountdownRing } from '../../../components/molecule/CountdownRing/CountdownRing';
 import { policy } from '../policy';
-import { waLink } from '../ui';
 import { AuthShell } from './AuthShell';
 import { ATTEMPTS_KEY, LOCK_KEY } from './SignInPage';
+import { waLink, MS } from '../../../i18n/format';
 
 /** E-04 Sign-in locked — state the pause, count it down, route to recovery. */
 export function LockedPage() {
@@ -18,7 +18,7 @@ export function LockedPage() {
   const nav = useNavigate();
   const [until] = useState(() => {
     try { const v = sessionStorage.getItem(LOCK_KEY); if (v && new Date(v).getTime() > Date.now()) return v; } catch { /* ignore */ }
-    const d = new Date(Date.now() + policy.lockoutMinutes * 6e4).toISOString();
+    const d = new Date(Date.now() + policy.lockoutMinutes * MS.min).toISOString();
     try { sessionStorage.setItem(LOCK_KEY, d); } catch { /* ignore */ }
     return d;
   });

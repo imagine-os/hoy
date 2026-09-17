@@ -20,9 +20,12 @@
 import { useCallback, useMemo } from 'react';
 import { useData, useTable } from '../../data/DataContext';
 import type { BookingRow, ClassSessionRow, PayrollLineRow, PayrollRunRow, SpaceBookingRow, SpecialChargeRow, TeacherRow } from '../../data/schema';
-import { byTeacher, draftLinesFor, isWholeMonth, local, monthPeriod, periodsFor, periodsOverlap, runTotal, type PayrollCadence, type Period, type RateCard } from '../../data/payrollCalc';
+import { byTeacher, draftLinesFor, isWholeMonth, monthPeriod, periodsFor, periodsOverlap, runTotal, type PayrollCadence, type Period, type RateCard } from '../../data/payrollCalc';
 import { useSettings } from './settings';
 import type { Bi } from '../../specs/types';
+import { formatDate, fromDateKey } from '../../i18n/format';
+import { fakeRef } from '../customer/payments';
+import { type Lang } from '../../i18n/types';
 
 export type PayoutMethod = PayrollRunRow['method'];
 
@@ -38,7 +41,7 @@ export const PAYOUT_REJECTIONS: Record<string, Bi> = {
 /** Simulated Wompi dispersion. `simulate: 'rejected'` exercises the failure path. */
 export async function wompiPayout(input: { amount: number; recipients: number; simulate?: 'accepted' | 'rejected' }): Promise<WompiPayoutResult> {
   await wait(1100);
-  const ref = `wpo_${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+  const ref = fakeRef('wpo');
   if (input.simulate === 'rejected' || input.amount <= 0 || input.recipients === 0) {
     return { status: 'rejected', ref, reason: PAYOUT_REJECTIONS.insufficient_balance };
   }
@@ -46,7 +49,6 @@ export async function wompiPayout(input: { amount: number; recipients: number; s
 }
 
 export const monthPeriodFor = (offset: number): Period => monthPeriod(new Date(new Date().getFullYear(), new Date().getMonth() - offset, 15));
-export const periodKey = (p: Period) => p.start.slice(0, 7);
 
 /** The pay periods of the month `offset` months ago, under the M-08c cadence (one or two). 0018. */
 export const periodsForMonth = (cadence: PayrollCadence, offset: number): Period[] =>
@@ -56,11 +58,10 @@ export const periodsForMonth = (cadence: PayrollCadence, offset: number): Period
  * How a run's period is printed: “septiembre 2026” for a whole month, “1 – 15 sept 2026” for a
  * quincena. M-09a, M-09b and S-03 share it so the two cadences read the same everywhere.
  */
-export function periodLabel(p: Period, lang: 'es' | 'en'): string {
-  const loc = lang === 'es' ? 'es-CO' : 'en-US';
-  if (isWholeMonth(p)) return new Date(`${p.start}T12:00:00`).toLocaleDateString(loc, { month: 'long', year: 'numeric' });
-  const a = new Date(`${p.start}T12:00:00`), b = new Date(`${p.end}T12:00:00`);
-  return `${a.getDate()} – ${b.getDate()} ${b.toLocaleDateString(loc, { month: 'short', year: 'numeric' })}`;
+export function periodLabel(p: Period, lang: Lang): string {
+  if (isWholeMonth(p)) return formatDate(p.start, lang, { month: 'long', year: 'numeric' });
+  const a = fromDateKey(p.start), b = fromDateKey(p.end);
+  return `${a.getDate()} – ${b.getDate()} ${formatDate(b, lang, { month: 'short', year: 'numeric' })}`;
 }
 
 /** Runs, lines and the teachers they name — the join every payout screen needs. */
@@ -162,5 +163,5 @@ export function downloadCsv(name: string, csv: string) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-export { local, monthPeriod, runTotal };
+export { monthPeriod, runTotal };
 export type { Period };

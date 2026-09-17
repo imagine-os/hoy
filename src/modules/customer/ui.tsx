@@ -7,6 +7,7 @@ import type { Movement } from '../../design/tokens';
 import { Chip } from '../../components/atom/Chip/Chip';
 import type { JoinedSession } from './hooks';
 import './customer.css';
+import { MS } from '../../i18n/format';
 
 /** Page header used by every inner customer page: optional back link, eyebrow, title, subtitle, actions. */
 export function PageHead({ title, sub, back, eyebrow, actions }: { title: ReactNode; sub?: ReactNode; back?: string; eyebrow?: ReactNode; actions?: ReactNode }) {
@@ -71,7 +72,7 @@ export function MovementChip({ j }: { j: JoinedSession }) {
 export const roomName = (j: JoinedSession) => j.room?.name ?? '';
 export const teacherName = (j: JoinedSession) => j.teacher?.display_name ?? '';
 export const movementOf = (j: JoinedSession): Movement => j.modality?.movement ?? 'fluye';
-export const durationMin = (j: JoinedSession) => j.modality?.duration_min ?? Math.round((new Date(j.session.ends_at).getTime() - new Date(j.session.starts_at).getTime()) / 6e4);
+export const durationMin = (j: JoinedSession) => j.modality?.duration_min ?? Math.round((new Date(j.session.ends_at).getTime() - new Date(j.session.starts_at).getTime()) / MS.min);
 
 /** Builds and downloads an .ics for a session (C-08 / C-23 AddToCalendar). */
 export function downloadIcs(input: { title: string; startsAt: string; endsAt: string; location: string; description?: string }) {
@@ -100,4 +101,3 @@ export function downloadJson(name: string, value: unknown) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-export const waLink = (phone: string, text: string) => `https://wa.me/${phone.replace(/\D/g, '')}?text=${encodeURIComponent(text)}`;

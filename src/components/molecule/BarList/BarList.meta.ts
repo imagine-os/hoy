@@ -1,8 +1,9 @@
 import { createElement as h } from 'react';
 import { defineMeta } from '../../../design/meta';
 import { BarList } from './BarList';
+import { formatCOP } from '../../../i18n/format';
 
-const cop = (v: number) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(v);
+const cop = (v: number) => formatCOP(v);
 
 export default defineMeta({
   tier: 'molecule', name: 'BarList',

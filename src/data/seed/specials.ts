@@ -15,6 +15,7 @@ import type { BaseRow, PaymentRow, SpaceBookingRow, SpecialChargeRow } from '../
 import { priceItem } from '../../tenant/pricing';
 import { tenant } from '../../tenant/tenant';
 import { base, iso, NOW } from './catalog';
+import { DEFAULT_IVA_PCT, splitIva } from '../tax';
 
 interface InvoiceRow extends BaseRow { payment_id: string; number: string; subtotal: number; tax: number; total: number; issued_at: string; pdf_url: string | null; dian_cufe: string | null }
 interface AuditRow extends BaseRow { actor_id: string | null; action: string; entity: string; entity_id: string | null; diff: Record<string, unknown> | null; ip: string | null }
@@ -23,7 +24,7 @@ interface AuditRow extends BaseRow { actor_id: string | null; action: string; en
 const at = (days: number, h: number, m = 0) => { const d = new Date(NOW); d.setDate(d.getDate() + days); d.setHours(h, m, 0, 0); return d; };
 /** Days until the next Saturday strictly after today. */
 const toSaturday = () => ((6 - NOW.getDay() + 7) % 7) || 7;
-const split = (total: number) => { const subtotal = Math.round(total / 1.19); return { subtotal, tax: total - subtotal, total }; };
+const split = (total: number) => splitIva(total, DEFAULT_IVA_PCT / 100);
 
 export function buildSpecials(input: { invoiceCount: number }): { bookings: SpaceBookingRow[]; charges: SpecialChargeRow[]; payments: PaymentRow[]; invoices: InvoiceRow[]; audit: AuditRow[] } {
   const bookings: SpaceBookingRow[] = [];

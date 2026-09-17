@@ -15,7 +15,8 @@
  * Consumidor, derecho de retracto art. 47), Ley 527 de 1999 (firma electrónica).
  */
 import type { LegalDocumentRow } from '../schema';
-import { base, dateOnly, iso, NOW } from './catalog';
+import { base, iso, NOW } from './catalog';
+import { dateKey } from '../../i18n/format';
 
 const monthsAgo = (n: number) => { const d = new Date(NOW); d.setMonth(d.getMonth() - n); d.setHours(0, 0, 0, 0); return d; };
 
@@ -754,7 +755,7 @@ export const legalDocuments: LegalDocumentRow[] = DRAFTS.map((d) => {
     slug: `${d.kind}-${d.version}`,
     version: d.version,
     status: d.status,
-    effective_from: dateOnly(from),
+    effective_from: dateKey(from),
     title: d.title,
     summary: d.summary,
     body_md: d.body,

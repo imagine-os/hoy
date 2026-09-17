@@ -4,7 +4,7 @@ import { useI18n } from '../../../i18n/I18nProvider';
 import { useContact } from '../../admin/settings';
 import { useSession } from '../../../auth/SessionProvider';
 import { useData } from '../../../data/DataContext';
-import { formatCOP, formatDate } from '../../../i18n/format';
+import { formatCOP, formatDate, addMonths, dateKey, waLink } from '../../../i18n/format';
 import { tenant } from '../../../tenant/tenant';
 import { pricingByFamily, type PriceItem } from '../../../tenant/pricing';
 import { Card } from '../../../components/molecule/Card/Card';
@@ -17,7 +17,7 @@ import { Drawer } from '../../../components/organism/Drawer/Drawer';
 import { useEntitlements } from '../hooks';
 import { recordPayment, wompiCheckout } from '../payments';
 import { policy } from '../policy';
-import { PageHead, waLink } from '../ui';
+import { PageHead } from '../ui';
 
 type Cycle = 'month' | 'year';
 /** Plan dates carry the year: an annual cycle ends in another one. */
@@ -51,8 +51,8 @@ export function PlansPage() {
       const result = await wompiCheckout({ amount: buying.price ?? 0, method: 'card' }); // INTEGRATION SEAM: Wompi
       await recordPayment(data, { userId: user.id, planId: `plan_${buying.id}`, amount: buying.price ?? 0, method: 'card', result, ivaRate: policy.ivaRate });
       if (result.status !== 'approved') return;
-      const start = new Date(); const renews = new Date(start); renews.setMonth(renews.getMonth() + (buying.period === 'year' ? 12 : 1));
-      const patch = { plan_id: `plan_${buying.id}`, status: 'active', starts_at: start.toISOString().slice(0, 10), renews_at: renews.toISOString().slice(0, 10), ends_at: null, paused_until: null };
+      const start = new Date();
+      const patch = { plan_id: `plan_${buying.id}`, status: 'active', starts_at: dateKey(start), renews_at: dateKey(addMonths(start, buying.period === 'year' ? 12 : 1)), ends_at: null, paused_until: null };
       if (ent.membership) await data.update('memberships', ent.membership.id, patch);
       else await data.insert('memberships', { user_id: user.id, ...patch });
       setDone(true);

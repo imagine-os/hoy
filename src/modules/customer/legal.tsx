@@ -28,7 +28,7 @@ export const legalTitleKey = (kind: string) => `customer.legal.kind.${kind}`;
  * src/tenant/tenant.ts overlaid with M-08, and the policy numbers from usePolicy(). Change the
  * cancellation window in Settings and the legal page says the new number on the next render.
  */
-export function useLegalTokens(): LegalTokens {
+function useLegalTokens(): LegalTokens {
   const { t, lang } = useI18n();
   const { settings } = useSettings();
   const policy = usePolicy();
@@ -90,7 +90,7 @@ export function useLegalDocProps(view: LegalView) {
     status: doc?.status ?? 'draft',
     statusLabel,
     effectiveLabel: doc
-      ? t(doc.status === 'published' ? 'customer.legal.effective' : 'customer.legal.effective.draft', { date: formatDate(`${doc.effective_from}T12:00:00`, lang, { dateStyle: 'long' }) })
+      ? t(doc.status === 'published' ? 'customer.legal.effective' : 'customer.legal.effective.draft', { date: formatDate(doc.effective_from, lang, { dateStyle: 'long' }) })
       : '',
     notice: t('customer.legal.counsel'),
     versions: versions.map((v) => ({ id: v.id, label: `v${v.version} · ${v.status === 'published' ? t('customer.legal.status.published') : t('customer.legal.status.draft')}` })),

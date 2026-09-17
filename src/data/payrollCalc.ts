@@ -21,6 +21,7 @@
  * assuming a month.
  */
 import type { BookingRow, ClassSessionRow, PayrollLineRow, SpaceBookingRow, SpecialChargeRow, TeacherRow } from './schema';
+import { fromDateKey, dateKey } from '../i18n/format';
 
 export interface Period { start: string; end: string }
 
@@ -47,7 +48,7 @@ export function rateFor(teacherId: string, modalityId: string | null, teachers: 
 export function monthPeriod(d: Date): Period {
   const start = new Date(d.getFullYear(), d.getMonth(), 1);
   const end = new Date(d.getFullYear(), d.getMonth() + 1, 0);
-  return { start: local(start), end: local(end) };
+  return { start: dateKey(start), end: dateKey(end) };
 }
 
 /** The pay periods of the month containing `d`: one (monthly) or two — the 1st–15th and the 16th–end (biweekly). */
@@ -57,12 +58,6 @@ export function periodsFor(cadence: PayrollCadence, d: Date): Period[] {
   const mid = `${m.start.slice(0, 8)}15`;
   const sixteenth = `${m.start.slice(0, 8)}16`;
   return [{ start: m.start, end: mid }, { start: sixteenth, end: m.end }];
-}
-
-/** The period that contains a date, under a cadence. */
-export function periodContaining(cadence: PayrollCadence, d: Date): Period {
-  const day = local(d);
-  return periodsFor(cadence, d).find((p) => day >= p.start && day <= p.end) ?? monthPeriod(d);
 }
 
 /**
@@ -78,18 +73,13 @@ export function periodAt(cadence: PayrollCadence, ref: Date, offset: number): Pe
 }
 
 /** True when the period is a whole calendar month (the label can then say “septiembre 2026”). */
-export const isWholeMonth = (p: Period) => p.start.endsWith('-01') && p.end === monthPeriod(new Date(`${p.start}T12:00:00`)).end;
+export const isWholeMonth = (p: Period) => p.start.endsWith('-01') && p.end === monthPeriod(fromDateKey(p.start)).end;
 
 /** Two periods overlap when neither ends before the other starts. */
 export const periodsOverlap = (a: Period, b: Period) => a.start <= b.end && b.start <= a.end;
 
-/** Date-only string in local time (payroll periods are studio-local, never UTC-shifted). */
-export function local(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
-
-export const inPeriod = (isoDate: string, p: Period) => {
-  const day = local(new Date(isoDate));
+const inPeriod = (isoDate: string, p: Period) => {
+  const day = dateKey(new Date(isoDate));
   return day >= p.start && day <= p.end;
 };
 
@@ -144,7 +134,7 @@ export const manualLineNote = (concept: string) => `Especial: ${concept}`;
  * in it. A cancelled room booking drops the line — the teacher did not work. Deterministic, like
  * `classLinesFor`, so the generator can replace a draft without drift.
  */
-export function manualLinesFor(period: Period, specials: SpecialChargeRow[], bookings: SpaceBookingRow[], teachers: TeacherRow[]): DraftLine[] {
+function manualLinesFor(period: Period, specials: SpecialChargeRow[], bookings: SpaceBookingRow[], teachers: TeacherRow[]): DraftLine[] {
   const known = new Set(teachers.map((t) => t.id));
   return specials
     .filter((sc) => !!sc.teacher_id && known.has(sc.teacher_id) && (sc.teacher_payout ?? 0) > 0)

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useSession } from '../../../auth/SessionProvider';
-import { formatDate, formatTime } from '../../../i18n/format';
+import { formatDate, formatTime, waLink } from '../../../i18n/format';
 import { tenant } from '../../../tenant/tenant';
 import { Card } from '../../../components/molecule/Card/Card';
 import { Button } from '../../../components/atom/Button/Button';
@@ -15,7 +15,7 @@ import { ClassCard } from '../../../components/organism/ClassCard/ClassCard';
 import { ListGroup, ListRow } from '../../../components/molecule/ListRow/ListRow';
 import { useMyInvites, useSessionJoined } from '../hooks';
 import { policy } from '../policy';
-import { PageHead, movementOf, roomName, shareText, teacherName, waLink } from '../ui';
+import { PageHead, movementOf, roomName, shareText, teacherName } from '../ui';
 
 /** C-16 Invite a guest — make word of mouth mechanical. Every send is a row in `invites`. */
 export function InvitePage() {
@@ -34,7 +34,7 @@ export function InvitePage() {
     await send({ channel, target, sessionId });
     setFlash(t('customer.invite.sent')); setTimeout(() => setFlash(null), 2500);
   };
-  const viaWhatsapp = () => { window.open(to ? waLink(to, `${context} ${link}`) : `https://wa.me/?text=${encodeURIComponent(`${context} ${link}`)}`, '_blank', 'noreferrer'); void record('whatsapp', to); };
+  const viaWhatsapp = () => { window.open(waLink(to || null, `${context} ${link}`), '_blank', 'noreferrer'); void record('whatsapp', to); };
   const viaEmail = () => { window.location.href = `mailto:${to.includes('@') ? to : ''}?subject=${encodeURIComponent(t('customer.invite.subject', { studio: tenant.name }))}&body=${encodeURIComponent(`${context}\n\n${link}`)}`; void record('email', to); };
   const viaLink = async () => { const r = await shareText(context, link); if (r !== 'failed') void record('link', ''); };
 
@@ -49,7 +49,7 @@ export function InvitePage() {
           <span className="small">{t('customer.invite.pass.valid', { days: policy.inviteValidityDays })}</span>
           <code className="cust-code">{code}</code>
         </Card>
-        <Field label={t('customer.invite.to')} hint={t('customer.invite.to.hint')}>{(id) => <Input id={id} value={to} onChange={(e) => setTo(e.target.value)} placeholder="+57 300 000 0000 · ana@correo.com" />}</Field>
+        <Field label={t('customer.invite.to')} hint={t('customer.invite.to.hint')}>{(id) => <Input id={id} value={to} onChange={(e) => setTo(e.target.value)} placeholder={`${tenant.dialCode} 300 000 0000 · ana@correo.com`} />}</Field>
         <div className="grid grid-3 cust-channels">
           <Button variant="secondary" size="lg" onClick={viaWhatsapp} icon="◎">WhatsApp</Button>
           <Button variant="secondary" size="lg" onClick={viaEmail} icon="✉">Email</Button>

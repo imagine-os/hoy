@@ -14,6 +14,7 @@ import { Notice } from '../../../components/molecule/Notice/Notice';
 import { ListGroup, ListRow } from '../../../components/molecule/ListRow/ListRow';
 import { policy } from '../policy';
 import { AuthShell } from './AuthShell';
+import { MS } from '../../../i18n/format';
 
 export const ATTEMPTS_KEY = 'hoyos.auth.attempts';
 export const LOCK_KEY = 'hoyos.auth.lockUntil';
@@ -44,7 +45,7 @@ export function SignInPage() {
       setAttempts(n);
       try { sessionStorage.setItem(ATTEMPTS_KEY, String(n)); } catch { /* ignore */ }
       if (n >= policy.lockoutAttempts) {
-        try { sessionStorage.setItem(LOCK_KEY, new Date(Date.now() + policy.lockoutMinutes * 6e4).toISOString()); } catch { /* ignore */ }
+        try { sessionStorage.setItem(LOCK_KEY, new Date(Date.now() + policy.lockoutMinutes * MS.min).toISOString()); } catch { /* ignore */ }
         nav('/auth/locked'); return;
       }
       setError(t('customer.signin.wrong', { n: policy.lockoutAttempts - n }));

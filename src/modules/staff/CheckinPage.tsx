@@ -4,7 +4,7 @@ import { useI18n } from '../../i18n/I18nProvider';
 import { useSession } from '../../auth/SessionProvider';
 import { useData, useTable } from '../../data/DataContext';
 import type { BaseRow, BookingRow, ClassSessionRow } from '../../data/schema';
-import { formatTime, isSameDay } from '../../i18n/format';
+import { formatTime, isSameDay, MS } from '../../i18n/format';
 import { useLayout } from '../../layout/useLayout';
 import { Card } from '../../components/molecule/Card/Card';
 import { Button } from '../../components/atom/Button/Button';
@@ -19,6 +19,7 @@ import { useAudit } from './audit';
 import { maskPhone, personMatches, usePeople, type Person } from './people';
 import { S02 } from './specs';
 import './staff.css';
+import { type Lang } from '../../i18n/types';
 
 interface WaitlistRow extends BaseRow { user_id: string; session_id: string; position: number; status: string }
 
@@ -43,7 +44,7 @@ export function CheckinPage() {
   const todayAll = useSessionsJoined(useCallback((s: ClassSessionRow) => isSameDay(s.starts_at, new Date()) && s.status !== 'cancelled', []));
   const now = Date.now();
   const autoId = useMemo(() => {
-    const live = todayAll.find((x) => new Date(x.session.starts_at).getTime() - 30 * 60e3 <= now && new Date(x.session.ends_at).getTime() >= now);
+    const live = todayAll.find((x) => new Date(x.session.starts_at).getTime() - 30 * MS.min <= now && new Date(x.session.ends_at).getTime() >= now);
     const next = todayAll.find((x) => new Date(x.session.starts_at).getTime() > now);
     return (live ?? next ?? todayAll[todayAll.length - 1])?.session.id;
   }, [todayAll, now]);
@@ -61,7 +62,7 @@ export function CheckinPage() {
   const missed = roster.filter((x) => x.b.status === 'no_show' || x.b.status === 'late_cancel');
   const onRoster = useMemo(() => new Set(bookings.filter((b) => b.status !== 'cancelled').map((b) => b.user_id)), [bookings]);
   const walkIns = useMemo(() => (q.trim().length < 2 ? [] : people.filter((p) => p.role === 'customer' && !onRoster.has(p.id) && personMatches(p, q)).slice(0, 6)), [people, onRoster, q]);
-  const graceMs = settings.policies.lateGraceMin * 60e3;
+  const graceMs = settings.policies.lateGraceMin * MS.min;
   const isLate = (b: BookingRow) => !!selected && !!b.checked_in_at && new Date(b.checked_in_at).getTime() > new Date(selected.session.starts_at).getTime() + graceMs;
 
   const setStatus = async (b: BookingRow, status: BookingRow['status']) => {
@@ -111,7 +112,7 @@ export function CheckinPage() {
   };
 
   const full = !!selected && selected.session.booked_count >= selected.session.capacity;
-  const phase = (s: ClassSessionRow) => (new Date(s.ends_at).getTime() < now ? 'past' : new Date(s.starts_at).getTime() - 30 * 60e3 <= now ? 'now' : 'next');
+  const phase = (s: ClassSessionRow) => (new Date(s.ends_at).getTime() < now ? 'past' : new Date(s.starts_at).getTime() - 30 * MS.min <= now ? 'now' : 'next');
 
   const SECTIONS: Record<string, () => ReactNode> = {
     'TodayStrip (now / next / later)': () => (
@@ -156,15 +157,15 @@ export function CheckinPage() {
         {loading && bookings.length === 0 && <EmptyState compact tone="loading" title={t('core.common.loading')} />}
         {!loading && roster.length === 0 && waitlist.length === 0 && <EmptyState compact title={q ? t('staff.checkin.noMatch') : t('staff.checkin.emptyRoster')} body={q ? t('staff.checkin.noMatch.body') : undefined} />}
         <Group title={t('staff.checkin.expected')} n={expected.length}>
-          {expected.map(({ b, p }) => <RosterRow key={b.id} name={p?.name ?? b.user_id} initials={p?.initials} phone={maskPhone(p?.phone)} plan={planLabel(p, b)} status="booked" flag={p?.notes ?? undefined}
+          {expected.map(({ b, p }) => <RosterRow key={b.id} name={p?.name ?? b.user_id} initials={p?.initials} phone={maskPhone(p?.phone)} plan={planLabel(p, b, lang)} status="booked" flag={p?.notes ?? undefined}
             actions={canWrite && <><Button size="sm" loading={busy === b.id} onClick={() => setStatus(b, 'checked_in')}>{t('staff.checkin.checkin')}</Button><Button size="sm" variant="ghost" onClick={() => setStatus(b, 'no_show')}>{t('staff.checkin.noShow')}</Button></>} />)}
         </Group>
         <Group title={t('staff.checkin.arrived')} n={arrived.length}>
-          {arrived.map(({ b, p }) => <RosterRow key={b.id} name={p?.name ?? b.user_id} initials={p?.initials} phone={maskPhone(p?.phone)} plan={planLabel(p, b)} status="checked_in" late={isLate(b)} time={b.checked_in_at ? formatTime(b.checked_in_at, lang) : undefined} flag={p?.notes ?? undefined}
+          {arrived.map(({ b, p }) => <RosterRow key={b.id} name={p?.name ?? b.user_id} initials={p?.initials} phone={maskPhone(p?.phone)} plan={planLabel(p, b, lang)} status="checked_in" late={isLate(b)} time={b.checked_in_at ? formatTime(b.checked_in_at, lang) : undefined} flag={p?.notes ?? undefined}
             actions={canWrite && <Button size="sm" variant="ghost" onClick={() => setStatus(b, 'booked')}>{t('staff.checkin.undo')}</Button>} />)}
         </Group>
         {missed.length > 0 && <Group title={t('staff.checkin.missed')} n={missed.length}>
-          {missed.map(({ b, p }) => <RosterRow key={b.id} name={p?.name ?? b.user_id} initials={p?.initials} plan={planLabel(p, b)} status={b.status as 'no_show' | 'late_cancel'}
+          {missed.map(({ b, p }) => <RosterRow key={b.id} name={p?.name ?? b.user_id} initials={p?.initials} plan={planLabel(p, b, lang)} status={b.status as 'no_show' | 'late_cancel'}
             actions={canWrite && b.status === 'no_show' && <Button size="sm" variant="ghost" onClick={() => setStatus(b, 'checked_in')}>{t('staff.checkin.checkin')}</Button>} />)}
         </Group>}
         {waitlist.length > 0 && <Group title={t('core.common.waitlist')} n={waitlist.length}>
@@ -179,7 +180,7 @@ export function CheckinPage() {
         {[...new Map(todayAll.map((x) => [x.teacher?.id ?? x.session.teacher_id, x])).values()].map(({ session: s, teacher: te }) => (
           <div key={s.id} className="row-between checkin-teacher">
             <span className="small">{te?.display_name ?? s.teacher_id}</span>
-            <span className="row"><span className="xs muted mono">{formatTime(s.starts_at, lang)}</span><Badge tone={new Date(s.starts_at).getTime() - 15 * 60e3 <= now ? 'success' : 'neutral'}>{new Date(s.starts_at).getTime() - 15 * 60e3 <= now ? t('staff.checkin.teacher.arrived') : t('staff.checkin.teacher.expected')}</Badge></span>
+            <span className="row"><span className="xs muted mono">{formatTime(s.starts_at, lang)}</span><Badge tone={new Date(s.starts_at).getTime() - 15 * MS.min <= now ? 'success' : 'neutral'}>{new Date(s.starts_at).getTime() - 15 * MS.min <= now ? t('staff.checkin.teacher.arrived') : t('staff.checkin.teacher.expected')}</Badge></span>
           </div>
         ))}
       </Card>
@@ -209,8 +210,8 @@ export function CheckinPage() {
   );
 }
 
-function planLabel(p: Person | undefined, b: BookingRow) {
-  if (p?.plan) return p.plan.name_es;
+function planLabel(p: Person | undefined, b: BookingRow, lang: Lang) {
+  if (p?.plan) return lang === 'en' ? p.plan.name_en : p.plan.name_es;
   return b.paid_with;
 }
 

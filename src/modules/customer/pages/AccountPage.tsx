@@ -4,7 +4,7 @@ import { useI18n } from '../../../i18n/I18nProvider';
 import { useSession } from '../../../auth/SessionProvider';
 import { useData, useTable } from '../../../data/DataContext';
 import type { DeletionRequestRow, LegalAcceptanceRow } from '../../../data/schema';
-import { formatDate, formatDateTime } from '../../../i18n/format';
+import { formatDate, formatDateTime, dateKey } from '../../../i18n/format';
 import { useLayout } from '../../../layout/useLayout';
 import { tenant } from '../../../tenant/tenant';
 import { useSettings } from '../../admin/settings';
@@ -73,7 +73,7 @@ export function AccountPage() {
       for (const [table, column] of EXPORT_TABLES) out[table] = await data.list(table, { where: { [column]: user.id } });
       const paymentIds = (out.payments as { id: string }[]).map((p) => p.id);
       out.invoices = (await data.list<{ payment_id: string } & { id: string; tenant_id: string; created_at: string; updated_at: string }>('invoices')).filter((i) => paymentIds.includes(i.payment_id));
-      downloadJson(`hoy-mis-datos-${new Date().toISOString().slice(0, 10)}.json`, out);
+      downloadJson(`${tenant.slug}-mis-datos-${dateKey()}.json`, out);
       await audit('account.export', 'users', user.id, { tables: EXPORT_TABLES.length + 1 });
       say(t('customer.account.export.done'));
     } finally { setBusy(false); }

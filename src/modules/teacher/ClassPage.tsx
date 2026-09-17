@@ -4,7 +4,7 @@ import { useI18n } from '../../i18n/I18nProvider';
 import { useSession } from '../../auth/SessionProvider';
 import { useData, useRow, useTable } from '../../data/DataContext';
 import type { BookingRow, ClassSessionRow, ModalityRow, RoomRow } from '../../data/schema';
-import { formatDate, formatTime } from '../../i18n/format';
+import { formatDate, formatTime, MS } from '../../i18n/format';
 import { Card } from '../../components/molecule/Card/Card';
 import { Button } from '../../components/atom/Button/Button';
 import { Badge } from '../../components/atom/Badge/Badge';
@@ -21,8 +21,8 @@ import { useSettings } from '../admin/settings';
 import { useTeacherSelf } from './useTeacherSelf';
 import './teacher.css';
 
-const OPEN_BEFORE_MS = 15 * 60e3;
-const OPEN_AFTER_MS = 2 * 3600e3;
+const OPEN_BEFORE_MS = 15 * MS.min;
+const OPEN_AFTER_MS = 2 * MS.hour;
 
 /** /teach/class/:id — roster, attendance marks inside the window, class notes. */
 export function TeacherClassPage() {
@@ -54,7 +54,7 @@ export function TeacherClassPage() {
   const lockReason = !inWindow ? (now < start ? t('teacher.class.locked.early') : t('teacher.class.locked.late')) : !isMine ? t('teacher.class.locked.notMine') : null;
   const active = bookings.filter((b) => b.status !== 'cancelled' && b.status !== 'late_cancel');
   const present = active.filter((b) => b.status === 'checked_in').length;
-  const graceMs = settings.policies.lateGraceMin * 60e3;
+  const graceMs = settings.policies.lateGraceMin * MS.min;
 
   const mark = async (b: BookingRow, status: BookingRow['status']) => {
     if (!canMark) return;

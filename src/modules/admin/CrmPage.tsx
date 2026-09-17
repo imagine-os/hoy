@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useI18n } from '../../i18n/I18nProvider';
 import { useTable } from '../../data/DataContext';
 import type { BookingRow, CreditRow } from '../../data/schema';
-import { formatDate } from '../../i18n/format';
+import { formatDate, MS } from '../../i18n/format';
 import { Chip } from '../../components/atom/Chip/Chip';
 import { Input } from '../../components/atom/Input/Input';
 import { Badge, toneForStatus } from '../../components/atom/Badge/Badge';
@@ -14,7 +14,7 @@ import { maskPhone, usePeople, type Person } from '../staff/people';
 import './admin.css';
 
 export type Segment = 'all' | 'at_risk' | 'new' | 'no_membership' | 'birthdays';
-export const SEGMENTS: Segment[] = ['all', 'at_risk', 'new', 'no_membership', 'birthdays'];
+const SEGMENTS: Segment[] = ['all', 'at_risk', 'new', 'no_membership', 'birthdays'];
 export type Risk = 'low' | 'medium' | 'high';
 
 export interface MemberStats { visits: number; lastVisit: string | null; risk: Risk; credits: number }
@@ -29,9 +29,9 @@ export function useMemberStats(people: Person[]) {
     for (const p of people) {
       const mine = bookings.filter((b) => b.user_id === p.id).map((b) => b.checked_in_at ?? b.created_at).sort();
       const last = mine[mine.length - 1] ?? null;
-      const daysSince = last ? (now - new Date(last).getTime()) / 86400e3 : Infinity;
-      const recent = mine.filter((d) => now - new Date(d).getTime() < 30 * 86400e3).length;
-      const previous = mine.filter((d) => { const age = now - new Date(d).getTime(); return age >= 30 * 86400e3 && age < 60 * 86400e3; }).length;
+      const daysSince = last ? (now - new Date(last).getTime()) / MS.day : Infinity;
+      const recent = mine.filter((d) => now - new Date(d).getTime() < 30 * MS.day).length;
+      const previous = mine.filter((d) => { const age = now - new Date(d).getTime(); return age >= 30 * MS.day && age < 60 * MS.day; }).length;
       const bal = credits.filter((c) => c.user_id === p.id).reduce((a, c) => a + c.delta, 0);
       const engaged = !!p.membership || bal > 0;
       const risk: Risk = !engaged ? 'low' : daysSince > 21 || (previous > 0 && recent === 0) ? 'high' : daysSince > 14 || recent < previous / 2 ? 'medium' : 'low';
@@ -41,7 +41,7 @@ export function useMemberStats(people: Person[]) {
   }, [people, bookings, credits]);
 }
 
-export function inSegment(p: Person, s: MemberStats | undefined, seg: Segment): boolean {
+function inSegment(p: Person, s: MemberStats | undefined, seg: Segment): boolean {
   const now = new Date();
   switch (seg) {
     case 'all': return true;

@@ -9,18 +9,19 @@
  * sessions that never existed.
  */
 import type { BaseRow, BookingRow, ClassSessionRow, PayrollLineRow, PayrollRunRow, SpaceBookingRow, SpecialChargeRow, TeacherRow } from '../schema';
-import { draftLinesFor, local, monthPeriod, rateFor, runTotal, type DraftLine, type Period, type RateCard } from '../payrollCalc';
+import { draftLinesFor, monthPeriod, rateFor, runTotal, type DraftLine, type Period, type RateCard } from '../payrollCalc';
 import { base, iso, NOW } from './catalog';
+import { fromDateKey, dateKey } from '../../i18n/format';
 
 interface TemplateRow extends BaseRow { teacher_id: string; modality_id?: string; weekday: number; active: boolean }
 
 /** Every date inside the period that falls on `weekday`, never in the future. */
 function occurrences(period: Period, weekday: number): string[] {
   const out: string[] = [];
-  const end = new Date(`${period.end}T12:00:00`);
+  const end = fromDateKey(period.end);
   const today = new Date(NOW); today.setHours(12, 0, 0, 0);
-  for (const d = new Date(`${period.start}T12:00:00`); d <= end && d <= today; d.setDate(d.getDate() + 1)) {
-    if (d.getDay() === weekday) out.push(local(d));
+  for (const d = fromDateKey(period.start); d <= end && d <= today; d.setDate(d.getDate() + 1)) {
+    if (d.getDay() === weekday) out.push(dateKey(d));
   }
   return out;
 }
@@ -65,7 +66,7 @@ export function buildPayroll(input: { sessions: ClassSessionRow[]; bookings: Boo
       draft.push({ teacher_id: someone, class_session_id: null, special_charge_id: null, kind: 'adjustment', rate: 0, amount: -80000, attendees: null, note: 'Ajuste: clase cobrada dos veces en la corrida anterior' });
     }
 
-    const closes = new Date(`${period.end}T12:00:00`); closes.setDate(closes.getDate() + 5);
+    const closes = fromDateKey(period.end); closes.setDate(closes.getDate() + 5);
     runs.push({
       ...base(id, (offset + 1) * 30),
       period_start: period.start,

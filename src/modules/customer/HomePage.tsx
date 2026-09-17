@@ -4,7 +4,7 @@ import { useI18n } from '../../i18n/I18nProvider';
 import { useSession } from '../../auth/SessionProvider';
 import { useData, useTable } from '../../data/DataContext';
 import type { BookingRow, CreditRow, IntentionRow, MembershipRow } from '../../data/schema';
-import { formatDate, isSameDay } from '../../i18n/format';
+import { formatDate, isSameDay, dateKey } from '../../i18n/format';
 import { useLayout } from '../../layout/useLayout';
 import { canvasSpecs } from '../../specs/canvasSpecs';
 import { movements, type Movement } from '../../design/tokens';
@@ -20,7 +20,6 @@ import { EmptyHomeBlock } from './pages/blocks';
 import './customer.css';
 
 const spec = canvasSpecs['C-01'];
-const todayKey = () => new Date().toISOString().slice(0, 10);
 
 /** C-01 Home. Sections come from the layout editor order; each block is independently toggleable later via feature_flags. */
 export function CustomerHomePage() {
@@ -31,7 +30,7 @@ export function CustomerHomePage() {
   const { sections, isVisible } = useLayout(spec);
 
   const { rows: myBookings, loading: bookingsLoading } = useTable<BookingRow>('bookings', { where: { user_id: user.id } });
-  const { rows: intentions } = useTable<IntentionRow>('intentions', { where: { user_id: user.id, date: todayKey() } });
+  const { rows: intentions } = useTable<IntentionRow>('intentions', { where: { user_id: user.id, date: dateKey() } });
   const { rows: memberships } = useTable<MembershipRow>('memberships', { where: { user_id: user.id, status: 'active' } });
   const { rows: credits } = useTable<CreditRow>('credits', { where: { user_id: user.id } });
   const all = useSessionsJoined();
@@ -52,7 +51,7 @@ export function CustomerHomePage() {
 
   const setIntention = async (mv: Movement) => {
     if (intention) await data.update('intentions', intention.id, { movement: mv });
-    else await data.insert('intentions', { user_id: user.id, date: todayKey(), movement: mv });
+    else await data.insert('intentions', { user_id: user.id, date: dateKey(), movement: mv });
   };
   const book = async (sessionId: string) => {
     const s = all.find((x) => x.session.id === sessionId)?.session;

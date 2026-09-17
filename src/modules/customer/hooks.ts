@@ -2,10 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSession } from '../../auth/SessionProvider';
 import { useData, useTable } from '../../data/DataContext';
 import type { BaseRow, BookingRow, ClassSessionRow, ContentArticleRow, CreditRow, EventRow, EventRsvpRow, FaqEntryRow, InviteRow, MembershipRow, ModalityRow, NotificationPrefRow, NotificationRow, PaymentMethodRow, PaymentRow, PlanRow, ProfileRow, ReviewRow, RoomRow, TeacherRow, UserRow } from '../../data/schema';
-import { isSameDay } from '../../i18n/format';
+import { isSameDay, dateKey, MS } from '../../i18n/format';
 import { tenant } from '../../tenant/tenant';
 import { priceItem, type PriceItem } from '../../tenant/pricing';
-import { insideCancelWindow, MINUTE, policy } from './policy';
+import { insideCancelWindow, policy } from './policy';
 
 export interface WaitlistRow extends BaseRow { user_id: string; session_id: string; position: number; status: 'waiting' | 'offered' | 'claimed' | 'expired' | 'left'; offered_at: string | null; claim_until: string | null }
 export interface EmergencyContact { name: string; phone: string }
@@ -63,7 +63,7 @@ export function useEntitlements() {
   return useMemo(() => {
     const membership = memberships.find((m) => m.status === 'active') ?? memberships.find((m) => m.status === 'paused') ?? null;
     const plan = membership ? plans.find((p) => p.id === membership.plan_id) ?? null : null;
-    const today = new Date().toISOString().slice(0, 10);
+    const today = dateKey();
     const live = credits.filter((c) => !c.expires_at || c.expires_at >= today || c.delta < 0);
     const creditBalance = Math.max(0, live.reduce((a, c) => a + c.delta, 0));
     const nextExpiry = credits.filter((c) => c.delta > 0 && c.expires_at && c.expires_at >= today).map((c) => c.expires_at!).sort()[0] ?? null;
@@ -122,7 +122,7 @@ export function useBookingActions() {
     const first = waiting[0];
     if (!first) return;
     const now = Date.now();
-    await data.update('waitlist', first.id, { status: 'offered', offered_at: new Date(now).toISOString(), claim_until: new Date(now + policy.claimWindowMinutes * MINUTE).toISOString() });
+    await data.update('waitlist', first.id, { status: 'offered', offered_at: new Date(now).toISOString(), claim_until: new Date(now + policy.claimWindowMinutes * MS.min).toISOString() });
   }, [data]);
 
   const cancel = useCallback(async (booking: BookingRow, session: ClassSessionRow, reason: 'customer' | 'studio' = 'customer') => {
@@ -266,7 +266,7 @@ export function useMyInvites() {
   const data = useData();
   const { user } = useSession();
   const { rows } = useTable<InviteRow>('invites', { where: { inviter_user_id: user.id }, orderBy: { column: 'created_at', dir: 'desc' } });
-  const code = `HOY-${user.id.slice(-4).toUpperCase()}`;
+  const code = `${tenant.invoicePrefix}-${user.id.slice(-4).toUpperCase()}`;
   const send = useCallback(async (input: { channel: InviteRow['channel']; target: string; sessionId?: string | null }) => {
     const email = input.target.includes('@');
     return data.insert<InviteRow>('invites', {

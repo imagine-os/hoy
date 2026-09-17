@@ -4,7 +4,7 @@ import { useI18n } from '../../../i18n/I18nProvider';
 import { useSession } from '../../../auth/SessionProvider';
 import { useTable } from '../../../data/DataContext';
 import type { BaseRow, PaymentRow, PlanRow } from '../../../data/schema';
-import { formatCOP, formatDate, formatDateTime, formatTime } from '../../../i18n/format';
+import { formatCOP, formatDate, formatDateTime, formatTime, dateKey } from '../../../i18n/format';
 import { Card } from '../../../components/molecule/Card/Card';
 import { Button } from '../../../components/atom/Button/Button';
 import { Badge, toneForStatus } from '../../../components/atom/Badge/Badge';
@@ -15,6 +15,7 @@ import { ListGroup, ListRow } from '../../../components/molecule/ListRow/ListRow
 import { SkeletonRows } from '../../../components/atom/Skeleton/Skeleton';
 import { useAllSessionsJoined, useMyBookings } from '../hooks';
 import { PageHead, downloadJson } from '../ui';
+import { tenant } from '../../../tenant/tenant';
 
 interface InvoiceRow extends BaseRow { payment_id: string; number: string; subtotal: number; tax: number; total: number; issued_at: string }
 type Tab = 'classes' | 'payments';
@@ -40,7 +41,7 @@ export function HistoryPage() {
   const planName = (id: string | null) => { const p = plans.find((x) => x.id === id); return p ? bi({ es: p.name_es, en: p.name_en }) : t('customer.history.otherCharge'); };
   const inv = receipt ? invoices.find((i) => i.payment_id === receipt.id) : null;
 
-  const exportAll = () => downloadJson(`hoy-historial-${new Date().toISOString().slice(0, 10)}.json`, { user: user.name, exported_at: new Date().toISOString(), classes: classes.map(({ b, j }) => ({ date: j!.session.starts_at, title: j!.session.title, teacher: j!.teacher?.display_name, status: b.status, paid_with: b.paid_with })), payments: payments.map((p) => ({ date: p.paid_at ?? p.created_at, plan: planName(p.plan_id), amount: p.amount, method: p.method, provider: p.provider, status: p.status, invoice: invoices.find((i) => i.payment_id === p.id)?.number ?? null })) });
+  const exportAll = () => downloadJson(`${tenant.slug}-historial-${dateKey()}.json`, { user: user.name, exported_at: new Date().toISOString(), classes: classes.map(({ b, j }) => ({ date: j!.session.starts_at, title: j!.session.title, teacher: j!.teacher?.display_name, status: b.status, paid_with: b.paid_with })), payments: payments.map((p) => ({ date: p.paid_at ?? p.created_at, plan: planName(p.plan_id), amount: p.amount, method: p.method, provider: p.provider, status: p.status, invoice: invoices.find((i) => i.payment_id === p.id)?.number ?? null })) });
 
   return (
     <div className="container page cust-page">

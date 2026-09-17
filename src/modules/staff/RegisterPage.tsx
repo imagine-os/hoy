@@ -24,6 +24,8 @@ import { useAudit } from './audit';
 import { maskPhone, personMatches, usePeople } from './people';
 import { BOOKING_KINDS, KIND_FOR_ITEM, KIND_LABEL, dateInputValue, findConflicts, localIso, timeInputValue } from './rooms';
 import './staff.css';
+import { addDays, addMonths, dateKey, digitsOf, parseDigits } from '../../i18n/format';
+import { fakeRef } from '../customer/payments';
 
 type Method = 'cash' | 'datafono' | 'transfer' | 'nequi' | 'wompi';
 const METHODS: Method[] = ['cash', 'datafono', 'transfer', 'nequi', 'wompi'];
@@ -42,11 +44,6 @@ interface Sale { payment: PaymentRow; number: string; subtotal: number; tax: num
  */
 interface Special { on: boolean; source: string | null; concept: string; amountRaw: string; teacherId: string; payoutRaw: string; roomId: string; kind: SpaceBookingKind; date: string; start: string; end: string; note: string; bookingId: string | null }
 const NO_SPECIAL: Special = { on: false, source: null, concept: '', amountRaw: '', teacherId: '', payoutRaw: '', roomId: '', kind: 'private_event', date: '', start: '', end: '', note: '', bookingId: null };
-const digits = (raw: string) => Math.max(0, Math.round(Number(raw.replace(/[^\d]/g, '')) || 0));
-
-const addMonths = (d: Date, n: number) => { const x = new Date(d); x.setMonth(x.getMonth() + n); return x; };
-const addDays = (d: Date, n: number) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
-const dateOnly = (d: Date) => d.toISOString().slice(0, 10);
 
 /** S-04 — who · what · how, then a printable receipt. Prices from pricing.ts, IVA from M-08. */
 export function RegisterPage() {
@@ -81,14 +78,14 @@ export function RegisterPage() {
   const [done, setDone] = useState<Sale | null>(null);
 
   const canWrite = can('payments.write');
-  const specialAmount = digits(special.amountRaw);
+  const specialAmount = parseDigits(special.amountRaw);
   // An Especial is a PriceItem whose name and price were typed by hand; everything downstream (IVA, receipt, "Valor pagado") treats it like any other item.
   const item: PriceItem = special.on
     ? { id: 'especial', family: 'espacio', name: { es: special.concept.trim() || t('staff.register.especial.title'), en: special.concept.trim() || t('staff.register.especial.title') }, description: { es: '', en: '' }, price: specialAmount }
     : (priceItem(itemId) ?? pricing[0]);
   const totals = splitTax(item.price ?? 0, settings.tax);
   const specialTeacher = special.teacherId ? teachers.find((x) => x.id === special.teacherId) : undefined;
-  const payout = digits(special.payoutRaw);
+  const payout = parseDigits(special.payoutRaw);
   const bookingStart = localIso(special.date, special.start);
   const bookingEnd = localIso(special.date, special.end);
   const windowOk = !!special.roomId && !!bookingStart && !!bookingEnd && bookingStart < bookingEnd;
@@ -138,7 +135,7 @@ export function RegisterPage() {
       let isNew = false;
       if (!userId && mode !== 'contact') {
         isNew = true;
-        const u = await data.insert<UserRow>('users', { email: form.email.trim() || `${form.phone.replace(/\D/g, '')}@sin-email.hoyos.test`, phone: form.phone.trim(), status: 'active', last_sign_in_at: null, locale: lang });
+        const u = await data.insert<UserRow>('users', { email: form.email.trim() || `${digitsOf(form.phone)}@sin-email.hoyos.test`, phone: form.phone.trim(), status: 'active', last_sign_in_at: null, locale: lang });
         userId = u.id;
         const initials = displayName.split(' ').map((s) => s[0]).join('').slice(0, 2).toUpperCase();
         await data.insert<ProfileRow>('profiles', { user_id: u.id, full_name: displayName, initials, photo_url: null, birthday: form.birthday || null, emergency_contact: form.emergency ? { name: form.emergency } : null, marketing_optin: receipt.wa, whatsapp_verified: false, notes: null } as Partial<ProfileRow>);
@@ -148,8 +145,8 @@ export function RegisterPage() {
       }
       const db = METHOD_DB[method];
       const pending = method === 'wompi';
-      const payment = await data.insert<PaymentRow>('payments', { user_id: userId, plan_id: special.on ? null : `plan_${item.id}`, amount: totals.total, amount_paid: amountPaid, note: paidDiffers ? note.trim() : null, currency: tenant.currency, method: db.method, provider: db.provider, provider_ref: pending ? `wmp_link_${Math.random().toString(36).slice(2, 8)}` : null, status: pending ? 'pending' : 'approved', paid_at: pending ? null : now.toISOString(), taken_by: user.id } as Partial<PaymentRow>);
-      const number = `HOY-${1000 + invoices.length + 1}`;
+      const payment = await data.insert<PaymentRow>('payments', { user_id: userId, plan_id: special.on ? null : `plan_${item.id}`, amount: totals.total, amount_paid: amountPaid, note: paidDiffers ? note.trim() : null, currency: tenant.currency, method: db.method, provider: db.provider, provider_ref: pending ? fakeRef('wmp_link') : null, status: pending ? 'pending' : 'approved', paid_at: pending ? null : now.toISOString(), taken_by: user.id } as Partial<PaymentRow>);
+      const number = `${tenant.invoicePrefix}-${1000 + invoices.length + 1}`;
       await data.insert('invoices', { payment_id: payment.id, number, subtotal: totals.subtotal, tax: totals.tax, total: totals.total, issued_at: now.toISOString(), pdf_url: null, dian_cufe: null });
       await audit('payment.take', 'payments', payment.id, { amount: totals.total, amount_paid: amountPaid, note: paidDiffers ? note.trim() : null, method, item: item.id, invoice: number, status: payment.status, contact: mode === 'contact' ? contactName.trim() : undefined });
 
@@ -181,10 +178,10 @@ export function RegisterPage() {
       if (special.on) {
         // no plan, no credits, no class check-in: an Especial is its own thing
       } else if (item.family === 'membresia') {
-        const m = await data.insert('memberships', { user_id: userId, plan_id: `plan_${item.id}`, status: pending ? 'past_due' : 'active', starts_at: dateOnly(now), renews_at: dateOnly(addMonths(now, item.period === 'year' ? 12 : 1)), ends_at: null, paused_until: null });
+        const m = await data.insert('memberships', { user_id: userId, plan_id: `plan_${item.id}`, status: pending ? 'past_due' : 'active', starts_at: dateKey(now), renews_at: dateKey(addMonths(now, item.period === 'year' ? 12 : 1)), ends_at: null, paused_until: null });
         await audit('membership.create', 'memberships', m.id, { plan: item.id, user_id: userId });
       } else if (item.credits) {
-        const c = await data.insert('credits', { user_id: userId, plan_id: `plan_${item.id}`, payment_id: payment.id, delta: item.credits, reason: 'purchase', expires_at: item.validityDays ? dateOnly(addDays(now, item.validityDays)) : null });
+        const c = await data.insert('credits', { user_id: userId, plan_id: `plan_${item.id}`, payment_id: payment.id, delta: item.credits, reason: 'purchase', expires_at: item.validityDays ? dateKey(addDays(now, item.validityDays)) : null });
         await audit('credits.purchase', 'credits', c.id, { delta: item.credits, user_id: userId });
       }
 
@@ -240,7 +237,7 @@ export function RegisterPage() {
               <div className="grid grid-2 register-form">
                 <Field label={t('staff.register.f.first')} required>{(id) => <Input id={id} value={form.first} onChange={(e) => setForm({ ...form, first: e.target.value })} autoFocus />}</Field>
                 <Field label={t('staff.register.f.last')}>{(id) => <Input id={id} value={form.last} onChange={(e) => setForm({ ...form, last: e.target.value })} />}</Field>
-                <Field label={t('staff.register.f.whatsapp')} required hint={t('staff.register.f.whatsapp.hint')}>{(id) => <Input id={id} inputMode="tel" placeholder="+57 300 000 0000" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />}</Field>
+                <Field label={t('staff.register.f.whatsapp')} required hint={t('staff.register.f.whatsapp.hint')}>{(id) => <Input id={id} inputMode="tel" placeholder={`${tenant.dialCode} 300 000 0000`} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />}</Field>
                 <Field label={t('staff.register.f.email')}>{(id) => <Input id={id} type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />}</Field>
                 <Field label={t('staff.register.f.emergency')}>{(id) => <Input id={id} value={form.emergency} onChange={(e) => setForm({ ...form, emergency: e.target.value })} placeholder={t('staff.register.f.emergency.ph')} />}</Field>
                 <Field label={t('staff.register.f.birthday')}>{(id) => <Input id={id} type="date" value={form.birthday} onChange={(e) => setForm({ ...form, birthday: e.target.value })} />}</Field>
@@ -257,7 +254,7 @@ export function RegisterPage() {
                 ) : (
                   <>
                     <Input value={existingQ} onChange={(e) => setExistingQ(e.target.value)} placeholder={t('staff.register.search.ph')} autoFocus aria-label={t('core.common.search')} />
-                    {candidates.map((p) => <button key={p.id} type="button" className="register-candidate" onClick={() => setPersonId(p.id)}><Avatar name={p.name} initials={p.initials} size={32} /><span className="grow"><span className="small">{p.name}</span><span className="xs muted"> · {maskPhone(p.phone)}</span></span>{p.plan && <Badge tone="success">{p.plan.name_es}</Badge>}</button>)}
+                    {candidates.map((p) => <button key={p.id} type="button" className="register-candidate" onClick={() => setPersonId(p.id)}><Avatar name={p.name} initials={p.initials} size={32} /><span className="grow"><span className="small">{p.name}</span><span className="xs muted"> · {maskPhone(p.phone)}</span></span>{p.plan && <Badge tone="success">{bi({ es: p.plan.name_es, en: p.plan.name_en })}</Badge>}</button>)}
                     {existingQ.trim().length >= 2 && candidates.length === 0 && <p className="small muted">{t('staff.register.search.none')} <button type="button" className="register-link" onClick={() => setMode('new')}>{t('staff.register.new')}</button></p>}
                   </>
                 )}
@@ -337,7 +334,7 @@ export function RegisterPage() {
               <div className="row-between"><span className="small">{displayName || <span className="muted">{t('staff.register.summary.noone')}</span>}</span>{mode === 'new' && form.first && <Badge tone="primary">{t('core.common.new')}</Badge>}</div>
               <div className="row-between register-line"><span>{bi(item.name)}{special.on && <Badge tone="highlight" className="register-badge">{t('staff.register.especial.title')}</Badge>}</span><strong>{formatCOP(item.price ?? 0, lang)}</strong></div>
               {special.on && specialTeacher && payout > 0 && <div className="row-between register-line xs muted"><span>{t('staff.register.done.payout', { name: specialTeacher.display_name, amount: formatCOP(payout, lang) })}</span></div>}
-              <div className="row-between register-line small muted"><span>Subtotal</span><span>{formatCOP(totals.subtotal, lang)}</span></div>
+              <div className="row-between register-line small muted"><span>{t('core.common.subtotal')}</span><span>{formatCOP(totals.subtotal, lang)}</span></div>
               <div className="row-between register-line small muted"><span>{t('staff.register.iva', { pct: settings.tax.ivaPct })}{settings.tax.pricesIncludeIva ? ` · ${t('staff.register.iva.included')}` : ''}</span><span>{formatCOP(totals.tax, lang)}</span></div>
               <div className="row-between register-total"><span>{t('staff.register.total')}</span><span>{formatCOP(totals.total, lang)}</span></div>
               <Field label={t('staff.register.paid')} hint={t('staff.register.paid.hint')}>

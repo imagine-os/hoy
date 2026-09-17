@@ -11,9 +11,11 @@ import { Field } from '../../../components/molecule/Field/Field';
 import { Notice } from '../../../components/molecule/Notice/Notice';
 import { Avatar } from '../../../components/atom/Avatar/Avatar';
 import { AuthShell } from './AuthShell';
+import { digitsOf, isPhone } from '../../../i18n/format';
+import { tenant } from '../../../tenant/tenant';
 
 interface Form { first: string; last: string; email: string; whatsapp: string; password: string; birthday: string; ecName: string; ecPhone: string; photo: string | null; consent: boolean; marketing: boolean }
-const EMPTY: Form = { first: '', last: '', email: '', whatsapp: '+57 ', password: '', birthday: '', ecName: '', ecPhone: '+57 ', photo: null, consent: false, marketing: false };
+const EMPTY: Form = { first: '', last: '', email: '', whatsapp: `${tenant.dialCode} `, password: '', birthday: '', ecName: '', ecPhone: `${tenant.dialCode} `, photo: null, consent: false, marketing: false };
 
 export function passwordStrength(p: string): 0 | 1 | 2 | 3 {
   if (p.length < 8) return 0;
@@ -43,13 +45,13 @@ export function SignUpPage() {
     if (f.first.trim().length < 2) er.first = t('customer.form.required');
     if (f.last.trim().length < 2) er.last = t('customer.form.required');
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(f.email.trim())) er.email = t('customer.form.email.err');
-    if (f.whatsapp.replace(/\D/g, '').length < 12) er.whatsapp = t('customer.form.phone');
+    if (!isPhone(f.whatsapp, 12)) er.whatsapp = t('customer.form.phone');
     if (f.password.length < 8) er.password = t('customer.form.password.err');
     if (f.ecName.trim().length < 2) er.ecName = t('customer.form.required');
-    if (f.ecPhone.replace(/\D/g, '').length < 10) er.ecPhone = t('customer.form.phone');
+    if (!isPhone(f.ecPhone)) er.ecPhone = t('customer.form.phone');
     if (!f.consent) er.consent = t('customer.signup.consent.err');
     setErrors(er);
-    const exists = users.some((u) => u.email.toLowerCase() === f.email.trim().toLowerCase() || (u.phone && u.phone.replace(/\D/g, '') === f.whatsapp.replace(/\D/g, '')));
+    const exists = users.some((u) => u.email.toLowerCase() === f.email.trim().toLowerCase() || (u.phone && digitsOf(u.phone) === digitsOf(f.whatsapp)));
     setDup(exists);
     if (Object.keys(er).length || exists) return;
     setBusy(true);
@@ -80,7 +82,7 @@ export function SignUpPage() {
               <Field label={t('customer.form.last')} required error={errors.last}>{(id) => <Input id={id} value={f.last} onChange={(e) => set('last', e.target.value)} autoComplete="family-name" />}</Field>
             </div>
             <Field label={t('customer.form.email')} required error={errors.email}>{(id) => <Input id={id} type="email" value={f.email} onChange={(e) => set('email', e.target.value)} autoComplete="email" />}</Field>
-            <Field label={t('customer.form.whatsapp')} required hint={t('customer.form.whatsapp.hint')} error={errors.whatsapp}>{(id) => <Input id={id} inputMode="tel" value={f.whatsapp} onChange={(e) => set('whatsapp', e.target.value)} autoComplete="tel" />}</Field>
+            <Field label={t('customer.form.whatsapp')} required hint={t('customer.form.whatsapp.hint', { dial: tenant.dialCode })} error={errors.whatsapp}>{(id) => <Input id={id} inputMode="tel" value={f.whatsapp} onChange={(e) => set('whatsapp', e.target.value)} autoComplete="tel" />}</Field>
             <Field label={t('customer.form.password')} required hint={t('customer.form.password.hint')} error={errors.password}>{(id) => (
               <div className="stack-sm">
                 <Input id={id} type="password" value={f.password} onChange={(e) => set('password', e.target.value)} autoComplete="new-password" />

@@ -3,7 +3,7 @@ import { useI18n } from '../../i18n/I18nProvider';
 import { useTable } from '../../data/DataContext';
 import type { BaseRow, BookingRow, ClassSessionRow, PaymentMethodRow, PayrollLineRow, PayrollRunRow, TeacherRow } from '../../data/schema';
 import { classLinesFor, isWholeMonth, periodAt, rateFor, runTotal, type DraftLine, type Period } from '../../data/payrollCalc';
-import { formatCOP, formatDate, formatDateTime, formatTime } from '../../i18n/format';
+import { formatCOP, formatDate, formatDateTime, formatTime, waLink } from '../../i18n/format';
 import { StatTile } from '../../components/molecule/StatTile/StatTile';
 import { Card } from '../../components/molecule/Card/Card';
 import { Button } from '../../components/atom/Button/Button';
@@ -12,7 +12,6 @@ import { Chip } from '../../components/atom/Chip/Chip';
 import { EmptyState } from '../../components/molecule/EmptyState/EmptyState';
 import { useContact, useSettings } from '../admin/settings';
 import { periodLabel } from '../admin/payouts';
-import { waLink } from '../customer/ui';
 import { useTeacherSelf } from './useTeacherSelf';
 import './teacher.css';
 
@@ -96,7 +95,7 @@ export function TeacherPayrollPage() {
           <div className="grid grid-3">
             <StatTile label={t('teacher.payroll.classes')} value={classLines.length} hint={subs ? t('teacher.payroll.subs', { n: subs }) : undefined} />
             <StatTile label={t('teacher.payroll.rate')} value={formatCOP(rate, lang)} hint={t('teacher.payroll.rate.hint')} />
-            <StatTile label={t(isWholeMonth(period) ? 'teacher.payroll.total' : 'teacher.payroll.total.period')} value={formatCOP(total, lang)} hint={run?.paid_at ? t('teacher.payroll.paidOn', { date: formatDate(run.paid_at, lang) }) : t('teacher.payroll.closes', { date: formatDate(`${period.end}T12:00:00`, lang) })} />
+            <StatTile label={t(isWholeMonth(period) ? 'teacher.payroll.total' : 'teacher.payroll.total.period')} value={formatCOP(total, lang)} hint={run?.paid_at ? t('teacher.payroll.paidOn', { date: formatDate(run.paid_at, lang) }) : t('teacher.payroll.closes', { date: formatDate(period.end, lang) })} />
           </div>
 
           <section className="stack-sm">
@@ -152,7 +151,7 @@ export function TeacherPayrollPage() {
                     <div key={r.id} className="teach-payline">
                       <span className="grow">
                         <span className="row wrap">
-                          <strong className="small">{formatDate(`${r.period_start}T12:00:00`, lang, { month: 'long', year: 'numeric' })}</strong>
+                          <strong className="small">{formatDate(r.period_start, lang, { month: 'long', year: 'numeric' })}</strong>
                           <Badge tone={STATUS_TONE[r.status]}>{t(`teacher.payroll.state.${r.status}`)}</Badge>
                         </span>
                         <span className="xs muted">{t('teacher.payroll.historyLine', { n: mine.filter((l) => l.kind === 'class').length })}{r.paid_at ? ` · ${formatDateTime(r.paid_at, lang)}` : ''}</span>

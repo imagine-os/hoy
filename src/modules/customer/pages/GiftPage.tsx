@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useSession } from '../../../auth/SessionProvider';
 import { useData } from '../../../data/DataContext';
-import { formatCOP } from '../../../i18n/format';
+import { formatCOP, dateKey, isPhone, parseDigits } from '../../../i18n/format';
 import { tenant } from '../../../tenant/tenant';
 import { Card } from '../../../components/molecule/Card/Card';
 import { Button } from '../../../components/atom/Button/Button';
@@ -31,22 +31,22 @@ export function GiftPage() {
   const [custom, setCustom] = useState('');
   const [name, setName] = useState('');
   const [contact, setContact] = useState('');
-  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(() => dateKey());
   const [message, setMessage] = useState('');
   const [design, setDesign] = useState<Design>('cream');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<string | null>(null);
 
-  const amount = amountId === 'custom' ? Number(custom.replace(/\D/g, '')) || 0 : priceOf(amountId).price ?? 0;
+  const amount = amountId === 'custom' ? parseDigits(custom) : priceOf(amountId).price ?? 0;
   const label = amountId === 'custom' ? t('customer.gift.custom') : bi(priceOf(amountId).name);
-  const today = new Date().toISOString().slice(0, 10);
+  const today = dateKey();
 
   const buy = async () => {
     const e: Record<string, string> = {};
     if (amount < min) e.amount = t('customer.gift.min', { amount: formatCOP(min, lang) });
     if (name.trim().length < 2) e.name = t('customer.form.required');
-    if (!contact.includes('@') && contact.replace(/\D/g, '').length < 10) e.contact = t('customer.gift.contact.err');
+    if (!contact.includes('@') && !isPhone(contact)) e.contact = t('customer.gift.contact.err');
     if (date < today) e.date = t('customer.gift.date.past');
     setErrors(e); if (Object.keys(e).length) return;
     setBusy(true);
@@ -54,7 +54,7 @@ export function GiftPage() {
       const result = await wompiCheckout({ amount, method: 'card' }); // INTEGRATION SEAM: Wompi
       await recordPayment(data, { userId: user.id, planId: amountId === 'custom' ? null : `plan_${amountId}`, amount, method: 'card', result, ivaRate: policy.ivaRate });
       if (result.status !== 'approved') return;
-      const code = `HOY-REGALO-${Math.floor(1000 + Math.random() * 9000)}`;
+      const code = `${tenant.invoicePrefix}-REGALO-${Math.floor(1000 + Math.random() * 9000)}`;
       const deliver = new Date(`${date}T08:00:00`);
       await data.insert('gift_cards', { code, buyer_user_id: user.id, recipient_name: name.trim(), recipient_contact: contact.trim(), amount, balance: amount, deliver_at: deliver.toISOString(), redeemed_by: null, status: date === today ? 'sent' : 'scheduled' });
       setDone(code);

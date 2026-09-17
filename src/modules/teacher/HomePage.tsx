@@ -5,7 +5,7 @@ import { rateFor } from '../../data/payrollCalc';
 import { useSettings } from '../admin/settings';
 import { useData, useTable } from '../../data/DataContext';
 import type { BookingRow, ClassSessionRow, RoomRow, SpaceBookingRow, SpecialChargeRow } from '../../data/schema';
-import { formatCOP, formatDate, formatTime, isSameDay } from '../../i18n/format';
+import { formatCOP, formatDate, formatTime, isSameDay, MS } from '../../i18n/format';
 import { StatTile } from '../../components/molecule/StatTile/StatTile';
 import { Card } from '../../components/molecule/Card/Card';
 import { Button } from '../../components/atom/Button/Button';
@@ -33,7 +33,7 @@ export function TeacherHomePage() {
   const now = new Date();
   const weekEnd = new Date(now); weekEnd.setDate(weekEnd.getDate() + 7);
   const meId = me?.id;
-  const mine = useSessionsJoined(useCallback((s: ClassSessionRow) => !!meId && s.teacher_id === meId && new Date(s.ends_at) >= new Date(Date.now() - 86400e3 * 7) && new Date(s.starts_at) <= weekEnd, [meId, weekEnd.getTime()]));
+  const mine = useSessionsJoined(useCallback((s: ClassSessionRow) => !!meId && s.teacher_id === meId && new Date(s.ends_at) >= new Date(Date.now() - MS.day * 7) && new Date(s.starts_at) <= weekEnd, [meId, weekEnd.getTime()]));
   const upcoming = mine.filter((x) => x.session.status === 'scheduled' && new Date(x.session.ends_at) >= now);
   const today = mine.filter((x) => isSameDay(x.session.starts_at, now) && x.session.status !== 'cancelled');
   const week = upcoming.filter((x) => !isSameDay(x.session.starts_at, now));
@@ -48,7 +48,7 @@ export function TeacherHomePage() {
   const { rows: rooms } = useTable<RoomRow>('rooms');
   const roomName = useMemo(() => new Map(rooms.map((r) => [r.id, r.name])), [rooms]);
   const payoutOf = useMemo(() => new Map(mySpecials.filter((s) => s.space_booking_id).map((s) => [s.space_booking_id as string, s.teacher_payout])), [mySpecials]);
-  const specials = mySpace.filter((b) => b.status !== 'cancelled' && new Date(b.ends_at) >= new Date(Date.now() - 86400e3 * 7));
+  const specials = mySpace.filter((b) => b.status !== 'cancelled' && new Date(b.ends_at) >= new Date(Date.now() - MS.day * 7));
   const [sub, setSub] = useState<{ open: boolean; session: string; reason: string; sent?: boolean }>({ open: false, session: '', reason: '' });
 
   const requestSub = async () => {

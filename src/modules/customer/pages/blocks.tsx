@@ -80,7 +80,7 @@ export function DeclinedBlock({ state, amount, onRetry, onRelease, onExpired }: 
         </div>
       </Card>
       <ListGroup title={t('customer.declined.retry')}>
-        {methods.map((m) => <ListRow key={m.id} icon={m.glyph} title={m.label} subtitle={bi(m.hint)} onClick={() => onRetry(m.id)} />)}
+        {methods.map((m) => <ListRow key={m.id} icon={m.glyph} title={bi(m.label)} subtitle={bi(m.hint)} onClick={() => onRetry(m.id)} />)}
       </ListGroup>
       {preferManual && <p className="xs muted">{t('customer.declined.threeStrikes')}</p>}
       <Button variant="ghost" size="sm" onClick={onRelease}>{t('customer.declined.release')}</Button>

@@ -5,8 +5,8 @@ import { useSession } from '../../auth/SessionProvider';
 import { useData } from '../../data/DataContext';
 import { EXPENSE_CATEGORIES, type ExpenseCategory, type ExpenseRow, type ExpenseTemplateRow } from '../../data/schema';
 import { dueDatesFor, monthlyCost } from '../../data/expenseCalc';
-import { local } from '../../data/payrollCalc';
-import { formatCOP, formatDate } from '../../i18n/format';
+import {  } from '../../data/payrollCalc';
+import { formatCOP, formatDate, dateKey } from '../../i18n/format';
 import { StatTile } from '../../components/molecule/StatTile/StatTile';
 import { Card } from '../../components/molecule/Card/Card';
 import { Button } from '../../components/atom/Button/Button';
@@ -25,7 +25,7 @@ import './admin.css';
 
 type ListFilter = 'all' | 'fixed' | 'variable' | 'unpaid';
 const METHODS = ['transfer', 'cash', 'card'] as const;
-const day = (d: string, lang: 'es' | 'en') => formatDate(`${d}T12:00:00`, lang, { day: 'numeric', month: 'short' });
+const day = (d: string, lang: 'es' | 'en') => formatDate(d, lang, { day: 'numeric', month: 'short' });
 
 /** M-09c — the expenses ledger: fixed costs generated from recurring templates, variable costs typed by hand, paid / to-pay, by category. */
 export function ExpensesPage() {
@@ -60,7 +60,7 @@ export function ExpensesPage() {
     if (!canWrite) return;
     setBusy(e.id);
     try {
-      const today = local(new Date());
+      const today = dateKey(new Date());
       await data.update('expenses', e.id, { paid_on: today });
       await audit('expense.pay', 'expenses', e.id, { before: null, after: today, amount: e.amount, concept: e.concept, method: e.method });
     } finally { setBusy(null); }
@@ -104,7 +104,7 @@ export function ExpensesPage() {
     { key: 'amount', label: t('admin.expenses.col.amount'), align: 'right', render: (e) => <strong>{formatCOP(e.amount, lang)}</strong> },
     { key: 'paid_on', label: t('admin.expenses.col.status'), render: (e) => e.paid_on
       ? <Badge tone="success">{t('admin.expenses.paidOn', { date: day(e.paid_on, lang) })}</Badge>
-      : <div className="row wrap" style={{ gap: 6 }}>
+      : <div className="row adm-status-actions">
           <Badge tone="warn">{t('admin.expenses.unpaid')}</Badge>
           {canWrite && <Button size="sm" variant="ghost" loading={busy === e.id} onClick={(ev) => { ev.stopPropagation(); markPaid(e); }}>{t('admin.expenses.markPaid')}</Button>}
           {canWrite && <Button size="sm" variant="ghost" onClick={(ev) => { ev.stopPropagation(); remove(e); }} aria-label={t('core.common.delete')}>×</Button>}
@@ -116,7 +116,7 @@ export function ExpensesPage() {
     { key: 'cadence', label: t('admin.expenses.col.cadence'), render: (x) => `${t(`admin.expenses.cadence.${x.cadence}`)} · ${t(x.cadence === 'biweekly' ? 'admin.expenses.dueTwice' : 'admin.expenses.dueOnce', { d: x.anchor_day, d2: Math.min(x.anchor_day + 15, 30) })}` },
     { key: 'amount', label: t('admin.expenses.col.amount'), align: 'right', render: (x) => formatCOP(x.amount, lang) },
     { key: 'monthly', label: t('admin.expenses.col.monthly'), align: 'right', sortable: false, render: (x) => <span className="muted">{formatCOP(monthlyCost(x), lang)}</span> },
-    { key: 'active', label: t('admin.expenses.col.active'), render: (x) => <div className="row wrap" style={{ gap: 6 }}><Badge tone={x.active ? 'success' : 'neutral'}>{t(x.active ? 'admin.expenses.active' : 'admin.expenses.inactive')}</Badge>{canWrite && <Button size="sm" variant="ghost" onClick={() => toggleTemplate(x)}>{t(x.active ? 'admin.expenses.deactivate' : 'admin.expenses.activate')}</Button>}</div> },
+    { key: 'active', label: t('admin.expenses.col.active'), render: (x) => <div className="row adm-status-actions"><Badge tone={x.active ? 'success' : 'neutral'}>{t(x.active ? 'admin.expenses.active' : 'admin.expenses.inactive')}</Badge>{canWrite && <Button size="sm" variant="ghost" onClick={() => toggleTemplate(x)}>{t(x.active ? 'admin.expenses.deactivate' : 'admin.expenses.activate')}</Button>}</div> },
   ];
 
   return (
@@ -124,7 +124,7 @@ export function ExpensesPage() {
       <div className="page-head">
         <div><h1>{t('admin.expenses.title')}</h1><p className="muted small">{t('admin.expenses.subtitle')}</p></div>
         <div className="row wrap">
-          <div className="row" role="tablist" aria-label={t('admin.expenses.rangeLabel')}>{FINANCE_RANGES.map((r) => <Chip key={r} selected={range === r} onClick={() => setRange(r)}>{t(`admin.finance.range.${r}`)}</Chip>)}</div>
+          <div className="row wrap" role="tablist" aria-label={t('admin.expenses.rangeLabel')}>{FINANCE_RANGES.map((r) => <Chip key={r} selected={range === r} onClick={() => setRange(r)}>{t(`admin.finance.range.${r}`)}</Chip>)}</div>
           <Link to="/admin/finance"><Button size="sm" variant="ghost">{t('admin.payouts.backToFinance')}</Button></Link>
         </div>
       </div>
@@ -154,7 +154,7 @@ export function ExpensesPage() {
         <div className="stack">
           <div className="row wrap" style={{ alignItems: 'flex-end', gap: 12 }}>
             <Select value={String(offset)} onChange={(e) => setOffset(Number(e.target.value))} aria-label={t('admin.payouts.generate.period')} style={{ maxWidth: 220 }}>
-              {[0, 1, 2, 3].map((o) => { const p = monthPeriodFor(o); return <option key={o} value={o}>{formatDate(`${p.start}T12:00:00`, lang, { month: 'long', year: 'numeric' })}</option>; })}
+              {[0, 1, 2, 3].map((o) => { const p = monthPeriodFor(o); return <option key={o} value={o}>{formatDate(p.start, lang, { month: 'long', year: 'numeric' })}</option>; })}
             </Select>
             <Button size="sm" loading={busy === 'generate'} disabled={!canWrite || activeTemplates.length === 0} onClick={runGenerate}>{t('admin.expenses.generate.action')}</Button>
             <span className="xs muted">{t('admin.expenses.generate.hint', { n: activeTemplates.length, total: formatCOP(periodDue, lang) })}</span>
@@ -188,7 +188,7 @@ interface ExpenseDraft { kind: ExpenseRow['kind']; category: ExpenseCategory; co
 /** The add-expense form: concept, category, amount, day, paid or not, method, vendor, note. Resets after a save. */
 function ExpenseForm({ onSave }: { onSave: (d: ExpenseDraft) => Promise<void> }) {
   const { t } = useI18n();
-  const today = local(new Date());
+  const today = dateKey(new Date());
   const blank = (): ExpenseDraft => ({ kind: 'variable', category: 'supplies', concept: '', amount: 0, incurred_on: today, paid_on: today, method: 'transfer', vendor: null, note: null });
   const [d, setD] = useState<ExpenseDraft>(blank);
   const [saving, setSaving] = useState(false);
@@ -249,7 +249,7 @@ function TemplateForm({ onSave }: { onSave: (d: TemplateDraft) => Promise<void> 
   const set = <K extends keyof TemplateDraft>(k: K, v: TemplateDraft[K]) => setD((x) => ({ ...x, [k]: v }));
   const valid = d.concept.trim().length > 0 && d.amount > 0 && d.anchor_day >= 1 && d.anchor_day <= 28;
   return (
-    <div className="stack-sm" style={{ padding: 12, borderRadius: 12, background: 'var(--color-surface)' }}>
+    <div className="stack-sm adm-inset">
       <div className="grid grid-2">
         <Field label={t('admin.expenses.col.concept')} required>{(id) => <Input id={id} value={d.concept} onChange={(e) => set('concept', e.target.value)} />}</Field>
         <Field label={t('admin.expenses.col.category')}>{(id) => <Select id={id} value={d.category} onChange={(e) => set('category', e.target.value as ExpenseCategory)}>{EXPENSE_CATEGORIES.map((c) => <option key={c} value={c}>{t(`admin.expenses.cat.${c}`)}</option>)}</Select>}</Field>

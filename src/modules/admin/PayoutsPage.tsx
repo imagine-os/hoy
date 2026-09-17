@@ -97,7 +97,7 @@ export function PayoutsPage() {
           <Select value={String(offset)} onChange={(e) => setOffset(Number(e.target.value))} aria-label={t('admin.payouts.generate.period')} style={{ maxWidth: 220 }}>
             {[0, 1, 2, 3].map((o) => {
               const p = monthPeriodFor(o);
-              return <option key={o} value={o}>{formatDate(`${p.start}T12:00:00`, lang, { month: 'long', year: 'numeric' })}</option>;
+              return <option key={o} value={o}>{formatDate(p.start, lang, { month: 'long', year: 'numeric' })}</option>;
             })}
           </Select>
           <Button size="sm" loading={busy} disabled={!canWrite} onClick={run}>{t(cadence === 'biweekly' ? 'admin.payouts.generate.action.biweekly' : 'admin.payouts.generate.action')}</Button>
@@ -147,7 +147,7 @@ export function PayoutRunPage() {
     return <div className="stack"><EmptyState tone={loading ? 'loading' : 'empty'} title={t(loading ? 'core.common.loading' : 'admin.payouts.notFound')} action={<Link to="/admin/finance/payouts"><Button size="sm" variant="ghost">{t('admin.payouts.title')}</Button></Link>} /></div>;
   }
 
-  const periodText = `${formatDate(`${run.period_start}T12:00:00`, lang, { day: 'numeric', month: 'short' })} – ${formatDate(`${run.period_end}T12:00:00`, lang, { day: 'numeric', month: 'short', year: 'numeric' })}`;
+  const periodText = `${formatDate(run.period_start, lang, { day: 'numeric', month: 'short' })} – ${formatDate(run.period_end, lang, { day: 'numeric', month: 'short', year: 'numeric' })}`;
 
   const approve = async () => {
     setBusy('approve'); setNotice(null);

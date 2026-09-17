@@ -6,8 +6,8 @@ import type { IntentionRow } from '../../../data/schema';
 import { movements, type Movement } from '../../../design/tokens';
 import { Card } from '../../../components/molecule/Card/Card';
 import { PageHead } from '../ui';
+import { dateKey } from '../../../i18n/format';
 
-const todayKey = () => new Date().toISOString().slice(0, 10);
 
 /** A-05 Daily intention — "How do you want to feel today?" sorts today's classes. */
 export function IntentionPage() {
@@ -15,11 +15,11 @@ export function IntentionPage() {
   const nav = useNavigate();
   const data = useData();
   const { user } = useSession();
-  const { rows } = useTable<IntentionRow>('intentions', { where: { user_id: user.id, date: todayKey() } });
+  const { rows } = useTable<IntentionRow>('intentions', { where: { user_id: user.id, date: dateKey() } });
   const current = rows[0];
   const pick = async (mv: Movement) => {
     if (current) await data.update('intentions', current.id, { movement: mv });
-    else await data.insert('intentions', { user_id: user.id, date: todayKey(), movement: mv });
+    else await data.insert('intentions', { user_id: user.id, date: dateKey(), movement: mv });
     nav('/app');
   };
   const DESC: Record<Movement, string> = { enraiza: t('customer.intention.enraiza'), fluye: t('customer.intention.fluye'), arde: t('customer.intention.arde'), libera: t('customer.intention.libera') };

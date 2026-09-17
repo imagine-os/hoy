@@ -4,7 +4,7 @@ import { useI18n } from '../../i18n/I18nProvider';
 import { useSession } from '../../auth/SessionProvider';
 import { useData, useTable } from '../../data/DataContext';
 import type { DeletionRequestRow, DeletionStatus } from '../../data/schema';
-import { formatDate, formatDateTime } from '../../i18n/format';
+import { formatDate, formatDateTime, MS } from '../../i18n/format';
 import { Chip } from '../../components/atom/Chip/Chip';
 import { Badge } from '../../components/atom/Badge/Badge';
 import { Button } from '../../components/atom/Button/Button';
@@ -44,11 +44,11 @@ export function DeletionsPage() {
   const canAct = hasRole(['super_admin', 'admin']);
 
   const open = rows.filter((r) => r.status === 'requested' || r.status === 'processing');
-  const done90 = rows.filter((r) => r.status === 'done' && r.resolved_at && Date.now() - new Date(r.resolved_at).getTime() < 90 * 86400e3);
-  const oldest = open.length ? Math.max(...open.map((r) => Math.floor((Date.now() - new Date(r.requested_at).getTime()) / 86400e3))) : 0;
+  const done90 = rows.filter((r) => r.status === 'done' && r.resolved_at && Date.now() - new Date(r.resolved_at).getTime() < 90 * MS.day);
+  const oldest = open.length ? Math.max(...open.map((r) => Math.floor((Date.now() - new Date(r.requested_at).getTime()) / MS.day))) : 0;
 
   const who = (r: DeletionRequestRow) => (r.user_id ? byId.get(r.user_id)?.name : null) ?? r.email ?? maskPhone(r.phone);
-  const list = useMemo(() => rows.filter((r) => filter === 'all' ? true : filter === 'open' ? r.status === 'requested' || r.status === 'processing' : r.status === filter).map((r) => ({ ...r, who: who(r), age: Math.floor((Date.now() - new Date(r.requested_at).getTime()) / 86400e3) })), [rows, filter, byId]); // eslint-disable-line react-hooks/exhaustive-deps
+  const list = useMemo(() => rows.filter((r) => filter === 'all' ? true : filter === 'open' ? r.status === 'requested' || r.status === 'processing' : r.status === filter).map((r) => ({ ...r, who: who(r), age: Math.floor((Date.now() - new Date(r.requested_at).getTime()) / MS.day) })), [rows, filter, byId]);
   type Row = (typeof list)[number];
   const row = rows.find((r) => r.id === selected) ?? null;
   const checklist = row?.checklist ?? {};

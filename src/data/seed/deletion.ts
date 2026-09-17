@@ -5,8 +5,9 @@
  */
 import type { BaseRow, DeletionRequestRow } from '../schema';
 import { base, iso, NOW } from './catalog';
+import { addDays } from '../../i18n/format';
 
-const daysAgo = (n: number) => iso(new Date(NOW.getTime() - n * 86400e3));
+const daysAgo = (n: number) => iso(addDays(NOW, -n));
 
 export function buildDeletionRequests(): { rows: DeletionRequestRow[]; audit: BaseRow[] } {
   const rows: DeletionRequestRow[] = [

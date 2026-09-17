@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useI18n } from '../../../i18n/I18nProvider';
-import { formatDate, formatTime } from '../../../i18n/format';
+import { formatDate, formatTime, MS } from '../../../i18n/format';
 import type { Movement } from '../../../design/tokens';
 import { Card } from '../../molecule/Card/Card';
 import { Chip } from '../../atom/Chip/Chip';
@@ -20,7 +20,7 @@ function useCountdown(iso: string) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => { const id = setInterval(() => setNow(Date.now()), 30_000); return () => clearInterval(id); }, []);
   const ms = new Date(iso).getTime() - now;
-  return { ms, h: Math.floor(ms / 3.6e6), m: Math.max(0, Math.floor((ms % 3.6e6) / 6e4)) };
+  return { ms, h: Math.floor(ms / MS.hour), m: Math.max(0, Math.floor((ms % MS.hour) / MS.min)) };
 }
 
 /** Rich class card; `variant="next"` is the NextClassCard with countdown (under 24h) or weekday. */
@@ -28,7 +28,7 @@ export function ClassCard({ title, teacher, room, startsAt, endsAt, movement, bo
   const { lang } = useI18n();
   const cd = useCountdown(startsAt);
   const isNext = variant === 'next';
-  const when = cd.ms > 0 && cd.ms < 24 * 3.6e6
+  const when = cd.ms > 0 && cd.ms < 24 * MS.hour
     ? (lang === 'es' ? `en ${cd.h > 0 ? `${cd.h} h ` : ''}${cd.m} min` : `in ${cd.h > 0 ? `${cd.h} h ` : ''}${cd.m} min`)
     : formatDate(startsAt, lang);
   return (

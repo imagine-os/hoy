@@ -4,7 +4,6 @@ import { tenant } from '../../tenant/tenant';
 
 export const NOW = new Date();
 export const iso = (d: Date) => d.toISOString();
-export const dateOnly = (d: Date) => d.toISOString().slice(0, 10);
 export const base = (id: string, daysAgo = 30): BaseRow => {
   const d = new Date(NOW); d.setDate(d.getDate() - daysAgo);
   return { id, tenant_id: tenant.id, created_at: iso(d), updated_at: iso(d) };

@@ -12,10 +12,11 @@ import { Badge, toneForStatus } from '../../components/atom/Badge/Badge';
 import { Field } from '../../components/molecule/Field/Field';
 import { Chip } from '../../components/atom/Chip/Chip';
 import './tables.css';
+import { formatCOP } from '../../i18n/format';
 
 /** M-03 — the table manager. Sidebar of tables, DataTable, row drawer with inline edit, JSON export. */
 export function TablesPage() {
-  const { t, bi } = useI18n();
+  const { t, bi, lang } = useI18n();
   const { table } = useParams();
   const nav = useNavigate();
   const data = useData();
@@ -37,11 +38,11 @@ export function TablesPage() {
         const v = r[c.name];
         if (c.type === 'enum' && typeof v === 'string') return <Badge tone={toneForStatus(v)}>{v}</Badge>;
         if (c.references && typeof v === 'string') return <button type="button" className="tbl-ref" onClick={(e) => { e.stopPropagation(); nav(`/admin/tables/${c.references}?id=${v}`); }} title={`${c.references}/${v}`}>{v}</button>;
-        if ((c.type === 'int') && typeof v === 'number' && /price|amount|total|subtotal|tax|balance|rate/.test(c.name)) return v.toLocaleString('es-CO');
+        if ((c.type === 'int') && typeof v === 'number' && /price|amount|total|subtotal|tax|balance|rate/.test(c.name)) return formatCOP(v, lang);
         return formatCell(v);
       },
     }));
-  }, [def, nav]);
+  }, [def, nav, lang]);
 
   const selectedRow = rows.find((r) => r.id === selected) ?? null;
 
@@ -61,7 +62,7 @@ export function TablesPage() {
     <div className="tbl">
       <aside className="tbl-side">
         <div className="tbl-side-head"><h2 className="tbl-h2">{t('admin.tables.title')}</h2><span className="xs muted">{t('admin.tables.provider', { name: data.name })}</span></div>
-        <nav className="tbl-nav" aria-label="Tables">
+        <nav className="tbl-nav" aria-label={t('core.nav.tables')}>
           {TABLE_GROUPS.map((g) => (
             <div key={g.id} className="tbl-group">
               <div className="eyebrow tbl-grouplabel">{bi(g.label)}</div>
@@ -86,7 +87,7 @@ export function TablesPage() {
                 <p className="muted small">{bi(def.description)} · {t('admin.tables.columns', { n: def.allColumns.length })} · {t('core.common.rows', { n: rows.length })}</p>
               </div>
               <div className="row wrap">
-                <div className="row" role="tablist">
+                <div className="row wrap" role="tablist">
                   <Chip selected={tab === 'data'} onClick={() => setTab('data')}>{t('admin.tables.data')}</Chip>
                   <Chip selected={tab === 'schema'} onClick={() => setTab('schema')}>{t('admin.tables.schema')}</Chip>
                 </div>

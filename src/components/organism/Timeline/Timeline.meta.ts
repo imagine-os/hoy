@@ -1,8 +1,9 @@
 import { createElement as h } from 'react';
 import { defineMeta } from '../../../design/meta';
 import { Timeline } from './Timeline';
+import { MS } from '../../../i18n/format';
 
-const d = (h: number) => new Date(Date.now() - h * 3600e3).toISOString();
+const d = (h: number) => new Date(Date.now() - h * MS.hour).toISOString();
 
 export default defineMeta({
   tier: 'organism', name: 'Timeline',

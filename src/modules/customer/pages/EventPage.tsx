@@ -4,7 +4,7 @@ import { useI18n } from '../../../i18n/I18nProvider';
 import { useSession } from '../../../auth/SessionProvider';
 import { useData, useTable } from '../../../data/DataContext';
 import type { TeacherRow } from '../../../data/schema';
-import { formatCOP, formatDate, formatTime } from '../../../i18n/format';
+import { formatCOP, formatDate, formatTime, MS } from '../../../i18n/format';
 import { tenant } from '../../../tenant/tenant';
 import { Card } from '../../../components/molecule/Card/Card';
 import { Button } from '../../../components/atom/Button/Button';
@@ -65,7 +65,7 @@ export function EventPage() {
   const amount = isMember ? ev.member_price_cop : ev.price_cop;
   const memberIncluded = ev.member_price_cop === 0;
   const soldOut = entry.taken >= ev.capacity && !mine;
-  const durationMin = Math.round((new Date(ev.ends_at).getTime() - new Date(ev.starts_at).getTime()) / 6e4);
+  const durationMin = Math.round((new Date(ev.ends_at).getTime() - new Date(ev.starts_at).getTime()) / MS.min);
 
   const reserve = async () => {
     setBusy(true);

@@ -4,7 +4,7 @@ import { useI18n } from '../../../i18n/I18nProvider';
 import { useContact } from '../../admin/settings';
 import { useSession } from '../../../auth/SessionProvider';
 import { useData } from '../../../data/DataContext';
-import { formatDate } from '../../../i18n/format';
+import { formatDate, isPhone } from '../../../i18n/format';
 import { useLayout } from '../../../layout/useLayout';
 import { tenant } from '../../../tenant/tenant';
 import { Card } from '../../../components/molecule/Card/Card';
@@ -44,13 +44,13 @@ export function ProfilePage() {
   // Language is per account: persist the real LangToggle's choice on users.locale (C-19 rule).
   useEffect(() => { if (account && account.locale !== lang) data.update('users', account.id, { locale: lang }); }, [lang, account, data]);
 
-  const openEdit = () => { setForm({ full_name: profile?.full_name ?? user.name, phone: account?.phone ?? '+57 ', birthday: profile?.birthday ?? '', ec_name: profile?.emergency_contact?.name ?? '', ec_phone: profile?.emergency_contact?.phone ?? '+57 ' }); setErrors({}); setEdit(true); };
+  const openEdit = () => { setForm({ full_name: profile?.full_name ?? user.name, phone: account?.phone ?? `${tenant.dialCode} `, birthday: profile?.birthday ?? '', ec_name: profile?.emergency_contact?.name ?? '', ec_phone: profile?.emergency_contact?.phone ?? `${tenant.dialCode} ` }); setErrors({}); setEdit(true); };
   const flash = (msg: string) => { setSaved(msg); setTimeout(() => setSaved(null), 2500); };
   const save = async () => {
     const e: Record<string, string> = {};
     if (form.full_name.trim().length < 3) e.full_name = t('customer.form.required');
-    if (form.phone.replace(/\D/g, '').length < 10) e.phone = t('customer.form.phone');
-    if (form.ec_name && form.ec_phone.replace(/\D/g, '').length < 10) e.ec_phone = t('customer.form.phone');
+    if (!isPhone(form.phone)) e.phone = t('customer.form.phone');
+    if (form.ec_name && !isPhone(form.ec_phone)) e.ec_phone = t('customer.form.phone');
     setErrors(e); if (Object.keys(e).length) return;
     if (profile) await data.update('profiles', profile.id, { full_name: form.full_name.trim(), initials: form.full_name.trim().split(' ').map((s) => s[0]).join('').slice(0, 2).toUpperCase(), birthday: form.birthday || null, emergency_contact: form.ec_name ? { name: form.ec_name.trim(), phone: form.ec_phone.trim() } : null });
     if (account) await data.update('users', account.id, { phone: form.phone.trim() });
@@ -138,7 +138,7 @@ export function ProfilePage() {
       <Drawer open={edit} onClose={() => setEdit(false)} side="bottom" title={t('customer.profile.edit')} footer={<><Button variant="ghost" onClick={() => setEdit(false)}>{t('core.common.cancel')}</Button><Button onClick={save}>{t('core.common.save')}</Button></>}>
         <div className="stack">
           <Field label={t('customer.form.name')} required error={errors.full_name}>{(id) => <Input id={id} value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} autoComplete="name" />}</Field>
-          <Field label={t('customer.form.whatsapp')} required hint={t('customer.form.whatsapp.hint')} error={errors.phone}>{(id) => <Input id={id} value={form.phone} inputMode="tel" onChange={(e) => setForm({ ...form, phone: e.target.value })} autoComplete="tel" />}</Field>
+          <Field label={t('customer.form.whatsapp')} required hint={t('customer.form.whatsapp.hint', { dial: tenant.dialCode })} error={errors.phone}>{(id) => <Input id={id} value={form.phone} inputMode="tel" onChange={(e) => setForm({ ...form, phone: e.target.value })} autoComplete="tel" />}</Field>
           <Field label={t('customer.form.birthday')} hint={t('customer.form.birthday.hint')}>{(id) => <Input id={id} type="date" value={form.birthday} onChange={(e) => setForm({ ...form, birthday: e.target.value })} />}</Field>
           <div className="eyebrow">{t('customer.form.emergency')}</div>
           <Field label={t('customer.form.name')}>{(id) => <Input id={id} value={form.ec_name} onChange={(e) => setForm({ ...form, ec_name: e.target.value })} />}</Field>

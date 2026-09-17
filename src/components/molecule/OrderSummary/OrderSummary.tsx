@@ -1,6 +1,7 @@
 import { useI18n } from '../../../i18n/I18nProvider';
 import { formatCOP } from '../../../i18n/format';
 import './OrderSummary.css';
+import { splitIva } from '../../../data/tax';
 
 export interface OrderLine { label: string; amount: number; muted?: boolean }
 
@@ -16,16 +17,8 @@ export interface OrderSummaryProps {
   note?: string;
 }
 
-/** Computes subtotal, IVA and total from the lines. Colombian prices are IVA-inclusive by default. */
-export function computeOrder(lines: OrderLine[], taxRate: number, taxIncluded = true) {
-  const gross = lines.reduce((a, l) => a + l.amount, 0);
-  if (taxIncluded) {
-    const subtotal = Math.round(gross / (1 + taxRate));
-    return { subtotal, tax: gross - subtotal, total: gross };
-  }
-  const tax = Math.round(gross * taxRate);
-  return { subtotal: gross, tax, total: gross + tax };
-}
+/** Subtotal, IVA and total of the lines — the split itself lives in src/data/tax.ts. */
+const computeOrder = (lines: OrderLine[], taxRate: number, taxIncluded = true) => splitIva(lines.reduce((a, l) => a + l.amount, 0), taxRate, taxIncluded);
 
 export function OrderSummary({ lines, taxRate, taxIncluded = true, totalLabel, taxLabel, subtotalLabel, note }: OrderSummaryProps) {
   const { lang } = useI18n();

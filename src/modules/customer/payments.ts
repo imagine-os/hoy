@@ -14,6 +14,8 @@
  */
 import type { DataProvider } from '../../data/types';
 import type { PaymentRow } from '../../data/schema';
+import { splitIva } from '../../data/tax';
+import { tenant } from '../../tenant/tenant';
 
 export type ElectronicMethod = 'card' | 'pse' | 'nequi';
 export type ManualMethod = 'transfer' | 'cash';
@@ -24,22 +26,24 @@ export interface WompiResult { status: 'approved' | 'declined'; ref: string; rea
 export interface PaymentMethodOption {
   id: PayMethod;
   provider: 'wompi' | 'manual';
-  label: string;
+  label: { es: string; en: string };
   hint: { es: string; en: string };
   glyph: string;
 }
 
 /** The Colombian payment reality from C-05, in display order. Flags come from feature_flags later. */
 export const PAYMENT_METHODS: PaymentMethodOption[] = [
-  { id: 'card', provider: 'wompi', label: 'Tarjeta', hint: { es: 'Crédito o débito · vía Wompi', en: 'Credit or debit · via Wompi' }, glyph: '▭' },
-  { id: 'pse', provider: 'wompi', label: 'PSE', hint: { es: 'Débito desde tu banco · vía Wompi', en: 'Bank debit · via Wompi' }, glyph: '⇄' },
-  { id: 'nequi', provider: 'wompi', label: 'Nequi', hint: { es: 'Billetera · vía Wompi', en: 'Wallet · via Wompi' }, glyph: '◎' },
-  { id: 'transfer', provider: 'manual', label: 'Transferencia', hint: { es: 'Bancolombia · lo confirma recepción', en: 'Bancolombia · front desk confirms' }, glyph: '⇥' },
-  { id: 'cash', provider: 'manual', label: 'Efectivo', hint: { es: 'Solo en recepción · cupo retenido 60 min', en: 'Front desk only · spot held 60 min' }, glyph: '$' },
+  { id: 'card', provider: 'wompi', label: { es: 'Tarjeta', en: 'Card' }, hint: { es: 'Crédito o débito · vía Wompi', en: 'Credit or debit · via Wompi' }, glyph: '▭' },
+  { id: 'pse', provider: 'wompi', label: { es: 'PSE', en: 'PSE' }, hint: { es: 'Débito desde tu banco · vía Wompi', en: 'Bank debit · via Wompi' }, glyph: '⇄' },
+  { id: 'nequi', provider: 'wompi', label: { es: 'Nequi', en: 'Nequi' }, hint: { es: 'Billetera · vía Wompi', en: 'Wallet · via Wompi' }, glyph: '◎' },
+  { id: 'transfer', provider: 'manual', label: { es: 'Transferencia', en: 'Transfer' }, hint: { es: 'Transferencia bancaria · la confirma recepción', en: 'Bank transfer · front desk confirms' }, glyph: '⇥' },
+  { id: 'cash', provider: 'manual', label: { es: 'Efectivo', en: 'Cash' }, hint: { es: 'Solo en recepción · cupo retenido 60 min', en: 'Front desk only · spot held 60 min' }, glyph: '$' },
 ];
 
 const wait = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
-const ref = () => `wmp_${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+/** A fake provider reference (`wmp_3F9KQ2`) for the simulated Wompi flows; MockProvider ids are a different thing. */
+export const fakeRef = (prefix: string) => `${prefix}_${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+const ref = () => fakeRef('wmp');
 
 export const DECLINE_REASONS: Record<string, { es: string; en: string }> = {
   insufficient_funds: { es: 'El banco respondió: fondos insuficientes.', en: 'The bank replied: insufficient funds.' },
@@ -63,8 +67,8 @@ export async function recordPayment(data: DataProvider, input: { userId: string;
     provider: manual ? 'manual' : 'wompi', provider_ref: input.result?.ref ?? null, status, paid_at: status === 'approved' ? now : null, taken_by: input.takenBy ?? null,
   } as Partial<PaymentRow>);
   if (status === 'approved') {
-    const subtotal = Math.round(input.amount / (1 + input.ivaRate));
-    await data.insert('invoices', { payment_id: payment.id, number: `HOY-${Date.now().toString().slice(-6)}`, subtotal, tax: input.amount - subtotal, total: input.amount, issued_at: now, pdf_url: null, dian_cufe: null });
+    const { subtotal, tax } = splitIva(input.amount, input.ivaRate);
+    await data.insert('invoices', { payment_id: payment.id, number: `${tenant.invoicePrefix}-${Date.now().toString().slice(-6)}`, subtotal, tax, total: input.amount, issued_at: now, pdf_url: null, dian_cufe: null });
   }
   return payment;
 }

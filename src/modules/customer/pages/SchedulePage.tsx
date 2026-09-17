@@ -71,7 +71,7 @@ export function SchedulePage({ view: routeView }: SchedulePageProps) {
       && (filters.time === 'all' || (filters.time === 'morning' ? h < 12 : h >= 12));
   };
   const activeFilters = Object.entries(filters).filter(([, v]) => v !== 'all').length;
-  const filtered = useMemo(() => all.filter(matches), [all, filters]); // eslint-disable-line react-hooks/exhaustive-deps
+  const filtered = useMemo(() => all.filter(matches), [all, filters]);
   const counts = days.map((d) => filtered.filter((x) => isSameDay(x.session.starts_at, d) && x.session.status !== 'completed').length);
   const dayList_ = filtered.filter((x) => isSameDay(x.session.starts_at, days[day]));
   const isPast = (s: ClassSessionRow) => new Date(s.ends_at).getTime() < Date.now();

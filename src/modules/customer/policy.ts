@@ -10,6 +10,7 @@
  */
 import { useMemo } from 'react';
 import { DEFAULT_SETTINGS, usePolicy, type StudioSettings } from '../admin/settings';
+import { MS } from '../../i18n/format';
 
 export interface PolicyValues {
   /** Free cancellation until this many hours before start; inside, the credit is forfeited (late_cancel). */
@@ -67,7 +68,7 @@ function toPolicyValues(p: StudioSettings['policies'], tax: StudioSettings['tax'
 }
 
 /** Full settings → policy values. Kept for tests, docs and any non-React caller. */
-export function policyFromSettings(s: StudioSettings): PolicyValues {
+function policyFromSettings(s: StudioSettings): PolicyValues {
   return toPolicyValues(s.policies, s.tax);
 }
 
@@ -81,10 +82,9 @@ export const policy: Readonly<PolicyValues> = new Proxy({} as PolicyValues, {
 });
 
 /** Snapshot (for tests and docs). */
-export const currentPolicy = (): PolicyValues => ({ ...current });
 
 /** The policy values as a hook — re-renders the caller on every M-08 save. Preferred in new components. */
-export function usePolicyValues(): PolicyValues {
+function usePolicyValues(): PolicyValues {
   const live = usePolicy();
   return useMemo(() => toPolicyValues(live, live.tax), [live]);
 }
@@ -99,12 +99,8 @@ export function PolicySync(): null {
   return null;
 }
 
-/** ms helpers */
-export const HOUR = 3.6e6;
-export const MINUTE = 6e4;
-
 export function cancelDeadline(startsAt: string): Date {
-  return new Date(new Date(startsAt).getTime() - policy.cancelWindowHours * HOUR);
+  return new Date(new Date(startsAt).getTime() - policy.cancelWindowHours * MS.hour);
 }
 export function insideCancelWindow(startsAt: string, now = Date.now()): boolean {
   return now > cancelDeadline(startsAt).getTime();

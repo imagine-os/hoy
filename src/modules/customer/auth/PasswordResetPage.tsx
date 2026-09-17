@@ -11,6 +11,7 @@ import { SegmentedControl } from '../../../components/molecule/SegmentedControl/
 import { policy } from '../policy';
 import { AuthShell } from './AuthShell';
 import { passwordStrength } from './SignUpPage';
+import { tenant } from '../../../tenant/tenant';
 
 type Channel = 'whatsapp' | 'email';
 const RESEND_KEY = 'hoyos.auth.otpResendAt';
@@ -22,7 +23,7 @@ export function PasswordResetPage() {
   const nav = useNavigate();
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [channel, setChannel] = useState<Channel>('whatsapp');
-  const [ident, setIdent] = useState('+57 ');
+  const [ident, setIdent] = useState(`${tenant.dialCode} `);
   const [code, setCode] = useState(genCode);
   const [entered, setEntered] = useState('');
   const [wrong, setWrong] = useState(0);
@@ -60,7 +61,7 @@ export function PasswordResetPage() {
         {step === 1 && (
           <Card padding="lg" className="stack">
             <div className="stack-sm"><h1 className="cust-title">{t('customer.reset.title')}</h1><p className="muted small">{t('customer.reset.sub')}</p></div>
-            <SegmentedControl block ariaLabel={t('customer.reset.channel')} value={channel} onChange={(c) => { setChannel(c); setIdent(c === 'whatsapp' ? '+57 ' : ''); }} options={[{ value: 'whatsapp', label: 'WhatsApp' }, { value: 'email', label: 'Email' }]} />
+            <SegmentedControl block ariaLabel={t('customer.reset.channel')} value={channel} onChange={(c) => { setChannel(c); setIdent(c === 'whatsapp' ? `${tenant.dialCode} ` : ''); }} options={[{ value: 'whatsapp', label: 'WhatsApp' }, { value: 'email', label: 'Email' }]} />
             <Field label={channel === 'whatsapp' ? t('customer.form.whatsapp') : t('customer.form.email')}>{(id) => <Input id={id} value={ident} onChange={(e) => setIdent(e.target.value)} inputMode={channel === 'whatsapp' ? 'tel' : 'email'} type={channel === 'email' ? 'email' : 'text'} />}</Field>
             <Button block size="lg" loading={busy} disabled={ident.trim().length < 5} onClick={send}>{t('customer.reset.send')}</Button>
             <p className="xs muted">{t('customer.reset.privacy')} · Ley 1581 de 2012</p>

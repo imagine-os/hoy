@@ -15,13 +15,13 @@ export interface CountdownRingProps {
   showHours?: boolean;
 }
 
-export function useCountdownMs(until: string, tickMs = 1000) {
+function useCountdownMs(until: string, tickMs = 1000) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => { const id = setInterval(() => setNow(Date.now()), tickMs); return () => clearInterval(id); }, [tickMs]);
   return Math.max(0, new Date(until).getTime() - now);
 }
 
-export function formatCountdown(ms: number, showHours = true): string {
+function formatCountdown(ms: number, showHours = true): string {
   const total = Math.floor(ms / 1000);
   const h = Math.floor(total / 3600), m = Math.floor((total % 3600) / 60), s = total % 60;
   if (showHours && h > 0) return `${h}h ${String(m).padStart(2, '0')}m`;

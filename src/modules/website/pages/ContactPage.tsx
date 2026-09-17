@@ -78,7 +78,7 @@ export function ContactPage() {
               {(id) => <Input id={id} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} autoComplete="name" />}
             </Field>
             <Field label={t('site.contact.fPhone')}>
-              {(id) => <Input id={id} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} inputMode="tel" autoComplete="tel" placeholder="+57 3xx xxx xxxx" />}
+              {(id) => <Input id={id} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} inputMode="tel" autoComplete="tel" placeholder={`${tenant.dialCode} 3xx xxx xxxx`} />}
             </Field>
             <div className="site-form-full">
               <Field label={t('site.contact.fMessage')}>

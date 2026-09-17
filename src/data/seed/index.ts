@@ -4,7 +4,7 @@ import { demoUsers } from '../../auth/demoUsers';
 import { tenant } from '../../tenant/tenant';
 import { canvasSpecs } from '../../specs/canvasSpecs';
 import { rng } from './rng';
-import { NOW, SEED_RATE_CARD, base, dateOnly, iso, modalities, plans, rooms, teachers } from './catalog';
+import { NOW, SEED_RATE_CARD, base, iso, modalities, plans, rooms, teachers } from './catalog';
 import { contentArticles, events as seedEvents, faqEntries } from './content';
 import { currentLegal, legalDocuments } from './legal';
 import { mediaAssets } from './media';
@@ -13,6 +13,8 @@ import { buildIntegrations } from './integrations';
 import { buildExpenses, expenseTemplates } from './expenses';
 import { buildSpecials } from './specials';
 import { buildDeletionRequests } from './deletion';
+import { dateKey, addMonths, MS } from '../../i18n/format';
+import { DEFAULT_IVA_PCT, splitIva } from '../tax';
 
 const FIRST = ['Camila', 'Nicolás', 'Sara', 'Tomás', 'Mariana', 'Julián', 'Daniela', 'Sebastián', 'Gabriela', 'Alejandro', 'Antonia', 'Samuel', 'Salomé', 'Emilio', 'Luciana', 'Martín', 'Elena', 'David', 'Paulina', 'Jerónimo', 'Amelia', 'Simón', 'Renata', 'Lucas', 'Violeta', 'Benjamín', 'Catalina', 'Joaquín', 'Isabel', 'Gael'];
 const LAST = ['García', 'Rodríguez', 'Martínez', 'López', 'González', 'Hernández', 'Pérez', 'Sánchez', 'Ramírez', 'Torres', 'Flores', 'Rivera', 'Gómez', 'Díaz', 'Cruz', 'Morales', 'Reyes', 'Jiménez', 'Ruiz', 'Álvarez', 'Castro', 'Vargas', 'Romero', 'Suárez', 'Moreno', 'Muñoz', 'Rojas', 'Medina', 'Guerrero', 'Cortés'];
@@ -37,8 +39,8 @@ export function buildSeed(): Record<string, BaseRow[]> {
   // people: demo users + customers
   const users = db.users as UserRow[], profiles = db.profiles as ProfileRow[];
   const addPerson = (id: string, name: string, role: string, email: string, daysAgo: number) => {
-    users.push({ ...base(id, daysAgo), email, phone: `+57 3${r.int(10, 50)}${r.int(1000000, 9999999)}`, status: 'active', locale: 'es', last_sign_in_at: iso(new Date(NOW.getTime() - r.int(0, 72) * 3600e3)) });
-    profiles.push({ ...base(`prf_${id.slice(4)}`, daysAgo), user_id: id, full_name: name, initials: name.split(' ').map((s) => s[0]).join('').slice(0, 2), photo_url: null, birthday: r.chance(0.3) ? dateOnly(new Date(1975 + r.int(0, 30), r.chance(0.5) ? NOW.getMonth() : r.int(0, 11), r.int(1, 28))) : null, emergency_contact: null, marketing_optin: r.chance(0.7), whatsapp_verified: r.chance(0.8), notes: null });
+    users.push({ ...base(id, daysAgo), email, phone: `+57 3${r.int(10, 50)}${r.int(1000000, 9999999)}`, status: 'active', locale: 'es', last_sign_in_at: iso(new Date(NOW.getTime() - r.int(0, 72) * MS.hour)) });
+    profiles.push({ ...base(`prf_${id.slice(4)}`, daysAgo), user_id: id, full_name: name, initials: name.split(' ').map((s) => s[0]).join('').slice(0, 2), photo_url: null, birthday: r.chance(0.3) ? dateKey(new Date(1975 + r.int(0, 30), r.chance(0.5) ? NOW.getMonth() : r.int(0, 11), r.int(1, 28))) : null, emergency_contact: null, marketing_optin: r.chance(0.7), whatsapp_verified: r.chance(0.8), notes: null });
     db.user_roles.push({ ...base(`rol_${id.slice(4)}`, daysAgo), user_id: id, role, granted_by: 'usr_super' });
   };
   for (const u of demoUsers) if (u.role !== 'public') addPerson(u.id, u.name, u.role, u.email, 120);
@@ -67,10 +69,10 @@ export function buildSeed(): Record<string, BaseRow[]> {
       const m = modalities.find((x) => x.id === mod)!;
       const [h, mi] = start.split(':').map(Number);
       const startsAt = new Date(day); startsAt.setHours(h, mi, 0, 0);
-      const endsAt = new Date(startsAt.getTime() + m.duration_min * 60e3);
+      const endsAt = new Date(startsAt.getTime() + m.duration_min * MS.min);
       const past = endsAt < NOW;
       const cancelled = d > 0 && r.chance(0.04);
-      sessions.push({ ...base(`ses_${dateOnly(day)}_${i}`, 14), template_id: `tpl_${TIMETABLE.findIndex((t) => t[0] === wd && t[1] === start)}`, title: m.name_es, modality_id: mod, teacher_id: tea, room_id: 'room_main', starts_at: iso(startsAt), ends_at: iso(endsAt), capacity: tenant.studio.mats, booked_count: 0, level: 'all', status: cancelled ? 'cancelled' : past ? 'completed' : 'scheduled', cancel_reason: cancelled ? 'Profesor enfermo' : null });
+      sessions.push({ ...base(`ses_${dateKey(day)}_${i}`, 14), template_id: `tpl_${TIMETABLE.findIndex((t) => t[0] === wd && t[1] === start)}`, title: m.name_es, modality_id: mod, teacher_id: tea, room_id: 'room_main', starts_at: iso(startsAt), ends_at: iso(endsAt), capacity: tenant.studio.mats, booked_count: 0, level: 'all', status: cancelled ? 'cancelled' : past ? 'completed' : 'scheduled', cancel_reason: cancelled ? 'Profesor enfermo' : null });
     });
   }
 
@@ -84,13 +86,15 @@ export function buildSeed(): Record<string, BaseRow[]> {
     const payId = `pay_${i}_${kind}`;
     const paidAt = new Date(NOW); paidAt.setDate(paidAt.getDate() - daysAgo);
     payments.push({ ...base(payId, daysAgo), user_id: uid, plan_id: plan.id, amount: plan.price, amount_paid: plan.price, note: null, currency: 'COP', method: r.pick(['card', 'pse', 'nequi', 'cash', 'transfer']), provider: r.chance(0.7) ? 'wompi' : 'manual', provider_ref: r.chance(0.7) ? `wmp_${r.int(100000, 999999)}` : null, status: 'approved', paid_at: iso(paidAt), taken_by: r.chance(0.3) ? 'usr_desk' : null });
-    db.invoices.push({ ...base(`inv_${i}`, daysAgo), payment_id: payId, number: `HOY-${String(1000 + i)}`, subtotal: Math.round(plan.price / 1.19), tax: plan.price - Math.round(plan.price / 1.19), total: plan.price, issued_at: iso(paidAt), pdf_url: null, dian_cufe: null });
+    db.invoices.push({ ...base(`inv_${i}`, daysAgo), payment_id: payId, number: `${tenant.invoicePrefix}-${String(1000 + i)}`, ...splitIva(plan.price, DEFAULT_IVA_PCT / 100), issued_at: iso(paidAt), pdf_url: null, dian_cufe: null });
     if (plan.family === 'membresia') {
-      const renews = new Date(paidAt); renews.setMonth(renews.getMonth() + (kind === 'annual' ? 12 : 1));
-      memberships.push({ ...base(`mem_${i}`, daysAgo), user_id: uid, plan_id: plan.id, status: r.chance(0.9) ? 'active' : 'paused', starts_at: dateOnly(paidAt), renews_at: dateOnly(renews), ends_at: null, paused_until: null });
+      // The renewal date rolls forward until it is in the future: an "active" membership never shows a past renewal.
+      let renews = addMonths(paidAt, kind === 'annual' ? 12 : 1);
+      while (renews < NOW) renews = addMonths(renews, kind === 'annual' ? 12 : 1);
+      memberships.push({ ...base(`mem_${i}`, daysAgo), user_id: uid, plan_id: plan.id, status: r.chance(0.9) ? 'active' : 'paused', starts_at: dateKey(paidAt), renews_at: dateKey(renews), ends_at: null, paused_until: null });
     } else if (plan.credits) {
       const exp = new Date(paidAt); exp.setDate(exp.getDate() + (plan.validity_days ?? 30));
-      credits.push({ ...base(`crd_${i}_buy`, daysAgo), user_id: uid, plan_id: plan.id, payment_id: payId, delta: plan.credits, reason: 'purchase', expires_at: dateOnly(exp) });
+      credits.push({ ...base(`crd_${i}_buy`, daysAgo), user_id: uid, plan_id: plan.id, payment_id: payId, delta: plan.credits, reason: 'purchase', expires_at: dateKey(exp) });
     }
   });
 
@@ -119,7 +123,7 @@ export function buildSeed(): Record<string, BaseRow[]> {
   const startOf = new Map(sessions.map((s) => [s.id, s.starts_at]));
   const bookedIn = (sid: string, uid: string) => bookings.some((bk) => bk.session_id === sid && bk.user_id === uid && bk.status === 'booked');
   const fullToday = sessions
-    .filter((s) => s.status === 'scheduled' && s.starts_at.slice(0, 10) === dateOnly(NOW) && new Date(s.starts_at) > NOW && !bookedIn(s.id, 'usr_cust'))
+    .filter((s) => s.status === 'scheduled' && s.starts_at.slice(0, 10) === dateKey(NOW) && new Date(s.starts_at) > NOW && !bookedIn(s.id, 'usr_cust'))
     .sort((a, b) => b.booked_count - a.booked_count || a.starts_at.localeCompare(b.starts_at))[0];
   if (fullToday) {
     // Fill from people who already have an earlier class today first, so nobody's "next class" notification changes.
@@ -138,7 +142,7 @@ export function buildSeed(): Record<string, BaseRow[]> {
 
   // intentions today for a few people
   const intentions = db.intentions as IntentionRow[];
-  for (const uid of customerIds.slice(1, 8)) intentions.push({ ...base(`int_${uid}`, 0), user_id: uid, date: dateOnly(NOW), movement: r.pick(['enraiza', 'fluye', 'arde', 'libera'] as const) });
+  for (const uid of customerIds.slice(1, 8)) intentions.push({ ...base(`int_${uid}`, 0), user_id: uid, date: dateKey(NOW), movement: r.pick(['enraiza', 'fluye', 'arde', 'libera'] as const) });
 
   // ---- content as data: club rules (C-13), FAQ (C-14/C-15), events (C-23) ----
   db.content_articles.push(...contentArticles);
@@ -185,7 +189,7 @@ export function buildSeed(): Record<string, BaseRow[]> {
   methods.push({ ...base('pm_cust_nequi', 12), user_id: 'usr_cust', provider: 'wompi', kind: 'nequi', brand: 'Nequi', last4: null, token_ref: 'tok_demo_900112', is_default: false, expires: null });
 
   // invites (C-16): the demo customer has one pending and one rewarded; a few others have sent one.
-  const inviteCode = (uid: string) => `HOY-${uid.slice(-4).toUpperCase()}`;
+  const inviteCode = (uid: string) => `${tenant.invoicePrefix}-${uid.slice(-4).toUpperCase()}`;
   const rewardCredit: CreditRow = { ...base('crd_invite_reward', 30), user_id: 'usr_cust', plan_id: null, payment_id: null, delta: 1, reason: 'gift', expires_at: null } as CreditRow;
   credits.push(rewardCredit);
   const invites = db.invites as InviteRow[];
@@ -202,7 +206,7 @@ export function buildSeed(): Record<string, BaseRow[]> {
     const at = opts?.at ?? iso(NOW);
     notifications.push({ ...base(`ntf_${nid++}`, 0), created_at: at, updated_at: at, user_id: uid, kind, title, body, read_at: opts?.read ? at : null, deep_link: opts?.link ?? null, sent_via: opts?.via ?? 'in_app' });
   };
-  const hoursBefore = (isoDate: string, h: number) => iso(new Date(new Date(isoDate).getTime() - h * 3600e3));
+  const hoursBefore = (isoDate: string, h: number) => iso(new Date(new Date(isoDate).getTime() - h * MS.hour));
   for (const uid of customerIds) {
     const mine = bookings.filter((b) => b.user_id === uid);
     const upcoming = mine.filter((b) => b.status === 'booked').map((b) => sessions.find((s) => s.id === b.session_id)).filter((s): s is ClassSessionRow => !!s).sort((a, b) => a.starts_at.localeCompare(b.starts_at))[0];
@@ -211,7 +215,7 @@ export function buildSeed(): Record<string, BaseRow[]> {
     if (lastPay) notify(uid, 'payment', { es: 'Recibo de pago', en: 'Payment receipt' }, { es: 'Tu recibo está en Historial → Pagos.', en: 'Your receipt is in History → Payments.' }, { at: lastPay.paid_at ?? undefined, link: '/app/history', via: 'email', read: true });
     const toRate = mine.filter((b) => b.status === 'checked_in' && !b.rated).map((b) => sessions.find((s) => s.id === b.session_id)).filter((s): s is ClassSessionRow => !!s).sort((a, b) => b.ends_at.localeCompare(a.ends_at))[0];
     if (toRate) notify(uid, 'review', { es: `¿Cómo estuvo ${toRate.title}?`, en: `How was ${toRate.title}?` }, { es: 'Dos toques y nos ayudas a cuidar la calidad de la sala.', en: 'Two taps and you help us keep the room’s quality.' }, { at: toRate.ends_at, link: `/app/rate/${toRate.id}`, via: 'push' });
-    if (r.chance(0.55)) notify(uid, 'event', { es: 'Nuevo en la agenda: Baño de sonido · Luna llena', en: 'New on the calendar: Full Moon Sound Bath' }, { es: 'Cupos limitados. Incluido para socios de Membresía.', en: 'Limited spots. Included for Membership members.' }, { at: iso(new Date(NOW.getTime() - r.int(1, 5) * 864e5)), link: '/app/events/evt_sound_bath', via: 'email', read: r.chance(0.5) });
+    if (r.chance(0.55)) notify(uid, 'event', { es: 'Nuevo en la agenda: Baño de sonido · Luna llena', en: 'New on the calendar: Full Moon Sound Bath' }, { es: 'Cupos limitados. Incluido para socios de Membresía.', en: 'Limited spots. Included for Membership members.' }, { at: iso(new Date(NOW.getTime() - r.int(1, 5) * MS.day)), link: '/app/events/evt_sound_bath', via: 'email', read: r.chance(0.5) });
   }
   for (const w of db.waitlist as (BaseRow & { user_id: string; session_id: string; status: string })[]) {
     if (w.status !== 'waiting') continue;
@@ -219,7 +223,7 @@ export function buildSeed(): Record<string, BaseRow[]> {
     if (!s || r.chance(0.6)) continue;
     notify(w.user_id, 'waitlist', { es: `Estás en lista de espera · ${s.title}`, en: `You are on the waitlist · ${s.title}` }, { es: 'Te escribimos por WhatsApp si se libera un cupo; tienes 30 minutos para reclamarlo.', en: 'We message you on WhatsApp if a spot opens; you have 30 minutes to claim it.' }, { at: hoursBefore(s.starts_at, 30), link: `/app/waitlist/${s.id}`, via: 'whatsapp' });
   }
-  notify('usr_cust', 'invite', { es: 'Tu invitada reservó su primera clase', en: 'Your guest booked her first class' }, { es: 'Te abonamos una clase de regalo. Está en Créditos.', en: 'We credited you one class. It is in Credits.' }, { at: iso(new Date(NOW.getTime() - 29 * 864e5)), link: '/app/credits', via: 'push', read: true });
+  notify('usr_cust', 'invite', { es: 'Tu invitada reservó su primera clase', en: 'Your guest booked her first class' }, { es: 'Te abonamos una clase de regalo. Está en Créditos.', en: 'We credited you one class. It is in Credits.' }, { at: iso(new Date(NOW.getTime() - 29 * MS.day)), link: '/app/credits', via: 'push', read: true });
 
   // notification prefs (C-24 / C-19): no row means enabled, so only real choices are stored.
   const prefs = db.notification_prefs as NotificationPrefRow[];
@@ -239,7 +243,7 @@ export function buildSeed(): Record<string, BaseRow[]> {
   // Acceptance of the waiver version in force: every member signed it on their first visit.
   const waiver = currentLegal('waiver');
   customerIds.forEach((uid, i) => {
-    const signedAt = new Date(NOW.getTime() - r.int(20, 180) * 864e5);
+    const signedAt = new Date(NOW.getTime() - r.int(20, 180) * MS.day);
     db.legal_acceptances.push({ ...base(`lac_${uid}_waiver`, r.int(20, 180)), user_id: uid, document_id: waiver.id, kind: waiver.kind, version: waiver.version, accepted_at: iso(signedAt), channel: i % 4 === 0 ? 'front_desk' : 'app', ip: null });
     db.legal_acceptances.push({ ...base(`lac_${uid}_terms`, r.int(20, 180)), user_id: uid, document_id: 'leg_terms_es', kind: 'terms', version: '1.0', accepted_at: iso(signedAt), channel: 'app', ip: null });
   });

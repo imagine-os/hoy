@@ -6,7 +6,8 @@ import { Card } from '../../../components/molecule/Card/Card';
 import { Accordion } from '../../../components/molecule/Accordion/Accordion';
 import { EmptyState } from '../../../components/molecule/EmptyState/EmptyState';
 import { useFaq } from '../hooks';
-import { PageHead, waLink } from '../ui';
+import { PageHead } from '../ui';
+import { waLink } from '../../../i18n/format';
 
 /** C-14 / C-15 FAQ — questions come from `faq_entries`, grouped by section, two pages so the accordion stays short. */
 export function FaqPage({ page }: { page: 1 | 2 }) {

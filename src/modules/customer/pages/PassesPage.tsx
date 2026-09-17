@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useSession } from '../../../auth/SessionProvider';
 import { useData } from '../../../data/DataContext';
-import { formatCOP, formatDate } from '../../../i18n/format';
+import { formatCOP, formatDate, addDays, dateKey, fromDateKey, MS } from '../../../i18n/format';
 import { type PriceItem } from '../../../tenant/pricing';
 import { Card } from '../../../components/molecule/Card/Card';
 import { Button } from '../../../components/atom/Button/Button';
@@ -19,7 +19,7 @@ import { recordPayment, wompiCheckout } from '../payments';
 import { policy } from '../policy';
 import { PageHead } from '../ui';
 
-export const PENDING_PASS_KEY = 'hoyos.customer.pendingPass';
+const PENDING_PASS_KEY = 'hoyos.customer.pendingPass';
 
 /** C-07 Bienvenida passes — the way in for someone with no membership. */
 export function PassesPage() {
@@ -73,8 +73,8 @@ export function CreditsPage() {
   const [done, setDone] = useState(false);
   const packs = (['single', 'pack3', 'pack10'] as const).map(priceOf);
   const ledger = [...ent.credits].sort((a, b) => b.created_at.localeCompare(a.created_at));
-  const today = new Date().toISOString().slice(0, 10);
-  const soon = ent.nextExpiry && (new Date(ent.nextExpiry).getTime() - Date.now()) < 7 * 864e5;
+  const today = dateKey();
+  const soon = ent.nextExpiry && (fromDateKey(ent.nextExpiry).getTime() - Date.now()) < 7 * MS.day;
 
   const buy = async () => {
     if (!buying) return;
@@ -83,8 +83,7 @@ export function CreditsPage() {
       const result = await wompiCheckout({ amount: buying.price ?? 0, method: 'card' }); // INTEGRATION SEAM: Wompi
       const payment = await recordPayment(data, { userId: user.id, planId: `plan_${buying.id}`, amount: buying.price ?? 0, method: 'card', result, ivaRate: policy.ivaRate });
       if (result.status !== 'approved') return;
-      const exp = new Date(); exp.setDate(exp.getDate() + (buying.validityDays ?? 30));
-      await data.insert('credits', { user_id: user.id, plan_id: `plan_${buying.id}`, payment_id: payment.id, delta: buying.credits ?? 1, reason: 'purchase', expires_at: exp.toISOString().slice(0, 10) });
+      await data.insert('credits', { user_id: user.id, plan_id: `plan_${buying.id}`, payment_id: payment.id, delta: buying.credits ?? 1, reason: 'purchase', expires_at: dateKey(addDays(new Date(), buying.validityDays ?? 30)) });
       setDone(true);
     } finally { setBusy(false); }
   };

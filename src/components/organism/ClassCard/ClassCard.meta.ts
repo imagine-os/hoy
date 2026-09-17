@@ -1,9 +1,10 @@
 import { createElement as h } from 'react';
 import { defineMeta } from '../../../design/meta';
 import { ClassCard } from './ClassCard';
+import { MS } from '../../../i18n/format';
 
-const soon = new Date(Date.now() + 95 * 60e3).toISOString(); const soonEnd = new Date(Date.now() + 155 * 60e3).toISOString();
-const tmr = new Date(Date.now() + 30 * 3.6e6).toISOString(); const tmrEnd = new Date(Date.now() + 31 * 3.6e6).toISOString();
+const soon = new Date(Date.now() + 95 * MS.min).toISOString(); const soonEnd = new Date(Date.now() + 155 * MS.min).toISOString();
+const tmr = new Date(Date.now() + 30 * MS.hour).toISOString(); const tmrEnd = new Date(Date.now() + 31 * MS.hour).toISOString();
 
 export default defineMeta({
   tier: 'organism', name: 'ClassCard',

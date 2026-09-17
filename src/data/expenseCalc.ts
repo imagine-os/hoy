@@ -9,15 +9,16 @@
  * (same template, same day) is never generated twice, and a paid row is never touched.
  */
 import type { ExpenseRow, ExpenseTemplateRow } from './schema';
-import { local, type Period } from './payrollCalc';
+import type { Period } from './payrollCalc';
+import { fromDateKey, dateKey } from '../i18n/format';
 
 export type { Period };
 
 /** Every day a template falls due inside the period (date-only strings, sorted). */
 export function dueDatesFor(t: Pick<ExpenseTemplateRow, 'cadence' | 'anchor_day'>, period: Period): string[] {
   const out: string[] = [];
-  const first = new Date(`${period.start}T12:00:00`);
-  const end = new Date(`${period.end}T12:00:00`);
+  const first = fromDateKey(period.start);
+  const end = fromDateKey(period.end);
   const day = Math.min(28, Math.max(1, t.anchor_day || 1));
   // Walk month by month from the month before the period (a biweekly second due date can cross in).
   for (let m = new Date(first.getFullYear(), first.getMonth() - 1, 1); m <= end; m.setMonth(m.getMonth() + 1)) {
@@ -28,7 +29,7 @@ export function dueDatesFor(t: Pick<ExpenseTemplateRow, 'cadence' | 'anchor_day'
       candidates.push(second > lastOfMonth ? lastOfMonth : second);
     }
     for (const c of candidates) {
-      const d = local(c);
+      const d = dateKey(c);
       if (d >= period.start && d <= period.end && !out.includes(d)) out.push(d);
     }
   }
@@ -46,7 +47,7 @@ export interface FixedDraft {
 }
 
 /** The key that makes generation idempotent: one row per template per due day. */
-export const fixedKey = (templateId: string, incurredOn: string) => `${templateId}|${incurredOn}`;
+const fixedKey = (templateId: string, incurredOn: string) => `${templateId}|${incurredOn}`;
 
 /**
  * The fixed expenses a period owes, minus the ones that already exist. Deterministic: the same
@@ -67,7 +68,6 @@ export function fixedExpensesFor(period: Period, templates: ExpenseTemplateRow[]
   return { drafts, skipped };
 }
 
-export const sumAmount = (rows: { amount: number }[]) => rows.reduce((a, r) => a + r.amount, 0);
 
 /** What a template costs per calendar month — the number the templates table shows next to the cadence. */
 export const monthlyCost = (t: Pick<ExpenseTemplateRow, 'cadence' | 'amount'>) => t.cadence === 'biweekly' ? t.amount * 2 : t.amount;
