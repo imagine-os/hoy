@@ -1,16 +1,15 @@
 /**
  * Booking and payment policy for the customer app. Numbers the canvas cites (C-04, C-08, C-08b, C-20, C-22, E-02, E-04, C-21).
  *
- * Source of truth: M-08 Studio settings (`tenants.settings`, src/modules/admin/settings.ts) with the same defaults
- * as before. `policy.*` stays a plain read (no hook) so helpers such as cancelDeadline() keep working; the values
- * are refreshed from the data provider by <PolicySync/> (mounted once in src/app/App.tsx) whenever the tenant row
- * changes. Prices never live here — see src/tenant/pricing.ts.
+ * Source of truth: M-08 Studio settings (`tenants.settings`). Since 0.5.0 this module no longer keeps its own
+ * provider subscription: it reads `usePolicy()` from src/modules/admin/settings.ts (the live reader that follows
+ * `tenants` through useTable()), so an M-08 save reaches the customer app the same way it reaches the admin.
+ * `policy.*` stays a plain read (no hook) so helpers such as cancelDeadline() keep working from any call site;
+ * <PolicySync/> (mounted once in src/app/App.tsx, above the router) is what feeds that snapshot from the hook.
+ * Prices never live here — see src/tenant/pricing.ts.
  */
-import { useEffect } from 'react';
-import type { DataProvider } from '../../data/types';
-import { useData } from '../../data/DataContext';
-import { tenant } from '../../tenant/tenant';
-import { DEFAULT_SETTINGS, mergeSettings, type StudioSettings, type TenantRow } from '../admin/settings';
+import { useMemo } from 'react';
+import { DEFAULT_SETTINGS, usePolicy, type StudioSettings } from '../admin/settings';
 
 export interface PolicyValues {
   /** Free cancellation until this many hours before start; inside, the credit is forfeited (late_cancel). */
@@ -53,18 +52,23 @@ const FIXED = {
   replyWindow: { es: 'Respondemos en horario del estudio', en: 'We reply during studio hours' },
 } as const;
 
-export function policyFromSettings(s: StudioSettings): PolicyValues {
+function toPolicyValues(p: StudioSettings['policies'], tax: StudioSettings['tax']): PolicyValues {
   return {
-    cancelWindowHours: s.policies.cancellationHours,
-    claimWindowMinutes: s.policies.waitlistClaimMin,
-    paymentHoldMinutes: s.policies.paymentHoldMin,
-    ivaRate: s.tax.ivaPct / 100,
-    pauseMaxDays: s.policies.pauseDaysPerYear,
-    chargeNoticeDays: s.policies.chargeNoticeDays,
-    lockoutAttempts: s.policies.lockoutAttempts,
-    lockoutMinutes: s.policies.lockoutMinutes,
+    cancelWindowHours: p.cancellationHours,
+    claimWindowMinutes: p.waitlistClaimMin,
+    paymentHoldMinutes: p.paymentHoldMin,
+    ivaRate: tax.ivaPct / 100,
+    pauseMaxDays: p.pauseDaysPerYear,
+    chargeNoticeDays: p.chargeNoticeDays,
+    lockoutAttempts: p.lockoutAttempts,
+    lockoutMinutes: p.lockoutMinutes,
     ...FIXED,
   };
+}
+
+/** Full settings → policy values. Kept for tests, docs and any non-React caller. */
+export function policyFromSettings(s: StudioSettings): PolicyValues {
+  return toPolicyValues(s.policies, s.tax);
 }
 
 let current: PolicyValues = policyFromSettings(DEFAULT_SETTINGS);
@@ -79,19 +83,19 @@ export const policy: Readonly<PolicyValues> = new Proxy({} as PolicyValues, {
 /** Snapshot (for tests and docs). */
 export const currentPolicy = (): PolicyValues => ({ ...current });
 
-/** Reads the tenant row now and follows every change; returns the unsubscribe. */
-export function attachPolicy(data: DataProvider): () => void {
-  const apply = (row: TenantRow | null | undefined) => { current = policyFromSettings(mergeSettings(row?.settings)); };
-  const fetch = () => data.get<TenantRow>('tenants', tenant.id).then(apply).catch(() => undefined);
-  const first = data.peek?.<TenantRow>('tenants', { where: { id: tenant.id } })?.[0];
-  if (first) apply(first); else void fetch();
-  return data.subscribe('tenants', () => { void fetch(); });
+/** The policy values as a hook — re-renders the caller on every M-08 save. Preferred in new components. */
+export function usePolicyValues(): PolicyValues {
+  const live = usePolicy();
+  return useMemo(() => toPolicyValues(live, live.tax), [live]);
 }
 
-/** Mount once inside DataProviderRoot so M-08 edits reach the customer app (and A-02 lockout) live. */
+/**
+ * Mount once inside DataProviderRoot (above the router) so M-08 edits reach the customer app and the
+ * A-02 lockout live. It keeps the `policy` snapshot in step with `usePolicy()`; the assignment happens
+ * during render, before the routed pages below it render, so the first paint already reads stored values.
+ */
 export function PolicySync(): null {
-  const data = useData();
-  useEffect(() => attachPolicy(data), [data]);
+  current = usePolicyValues();
   return null;
 }
 

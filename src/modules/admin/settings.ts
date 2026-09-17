@@ -13,7 +13,7 @@ export interface StudioSettings {
   profile: { nit: string; address: string; whatsapp: string; email: string };
   /** 0 = Sunday … 6 = Saturday; null = closed. */
   openingHours: Record<string, OpeningHours | null>;
-  /** Read by the customer app through src/modules/customer/policy.ts (cancel window, claim window, hold, pause cap, charge notice, lockout). */
+  /** Read by the customer app through usePolicy() → src/modules/customer/policy.ts (cancel window, claim window, hold, pause cap, charge notice, lockout). */
   policies: { cancellationHours: number; waitlistClaimMin: number; lateGraceMin: number; noShowFee: number; pauseDaysPerYear: number; maxPausesPerYear: number; paymentHoldMin: number; chargeNoticeDays: number; lockoutAttempts: number; lockoutMinutes: number };
   quietHours: { from: string; to: string };
   tax: { ivaPct: number; pricesIncludeIva: boolean; dianResolution: string; eInvoicing: boolean };
@@ -81,7 +81,8 @@ export function useSettings() {
 /**
  * The policy numbers, live. Any component that calls this re-renders when M-08 is saved, because
  * useSettings() reads `tenants` through useTable() (which follows the provider's change events).
- * Customer code that today reads the snapshot in src/modules/customer/policy.ts can switch to this.
+ * src/modules/customer/policy.ts feeds its `policy` snapshot from this hook (<PolicySync/>), so the customer
+ * app and the admin read one source.
  */
 export function usePolicy() {
   const { settings, loading, ready } = useSettings();
