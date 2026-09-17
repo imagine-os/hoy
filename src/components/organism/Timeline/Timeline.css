@@ -1,0 +1,15 @@
+.timeline { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; position: relative; }
+.timeline::before { content: ''; position: absolute; left: 13px; top: 14px; bottom: 14px; width: 2px; background: var(--color-border); }
+.timeline-item { display: flex; gap: var(--sp-3); padding: var(--sp-2) 0; position: relative; }
+.timeline-dot { width: 28px; height: 28px; border-radius: 50%; flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; font-size: var(--fs-xs); background: var(--color-surface-3); color: var(--color-text-muted); border: 2px solid var(--color-surface); z-index: 1; }
+.timeline-whatsapp .timeline-dot { background: color-mix(in srgb, var(--color-success) 18%, transparent); color: var(--color-success); }
+.timeline-email .timeline-dot { background: color-mix(in srgb, var(--color-accent) 18%, transparent); color: var(--color-accent); }
+.timeline-note .timeline-dot { background: var(--color-highlight); color: var(--brand-ink); }
+.timeline-payment .timeline-dot { background: color-mix(in srgb, var(--color-primary) 14%, transparent); color: var(--color-primary); }
+.timeline-booking .timeline-dot { background: color-mix(in srgb, var(--color-success) 14%, transparent); color: var(--color-success); }
+.timeline-content { flex: 1 1 auto; min-width: 0; padding-bottom: var(--sp-2); border-bottom: 1px solid var(--color-border); }
+.timeline-item:last-child .timeline-content { border-bottom: 0; }
+.timeline-head { gap: var(--sp-2); }
+.timeline-title { font-size: var(--fs-sm); font-family: var(--font-heading); font-weight: var(--fw-medium); }
+.timeline-body { margin-top: 2px; white-space: pre-wrap; }
+.timeline-empty { padding: var(--sp-3) 0; }

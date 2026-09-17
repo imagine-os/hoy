@@ -1,0 +1,18 @@
+.rosterrow { display: flex; align-items: center; gap: var(--sp-3); width: 100%; padding: var(--sp-2) var(--sp-3); border: 0; border-bottom: 1px solid var(--color-border); background: none; color: inherit; text-align: left; font: inherit; min-height: 56px; }
+.rosterrow:last-child { border-bottom: 0; }
+.rosterrow.is-clickable { cursor: pointer; }
+.rosterrow.is-clickable:hover, .rosterrow.is-selected { background: var(--color-surface-2); }
+.rosterrow.is-selected { box-shadow: inset 3px 0 0 var(--color-primary); }
+.rosterrow-id { min-width: 0; }
+.rosterrow-name { gap: var(--sp-2); font-size: var(--fs-sm); }
+.rosterrow-name strong { font-family: var(--font-heading); font-weight: var(--fw-medium); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rosterrow-sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rosterrow-flag { color: var(--color-warn); font-size: var(--fs-sm); }
+.rosterrow-state { display: flex; align-items: center; gap: var(--sp-2); flex: 0 0 auto; }
+.rosterrow-actions { display: flex; gap: var(--sp-1); flex: 0 0 auto; }
+.rosterrow-checked_in .rosterrow-name strong { color: var(--color-text); }
+.rosterrow-no_show .rosterrow-name strong, .rosterrow-late_cancel .rosterrow-name strong, .rosterrow-cancelled .rosterrow-name strong { color: var(--color-text-muted); }
+@media (max-width: 600px) {
+  .rosterrow { flex-wrap: wrap; }
+  .rosterrow-actions { width: 100%; justify-content: flex-end; }
+}

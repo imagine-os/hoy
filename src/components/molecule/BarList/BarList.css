@@ -1,0 +1,10 @@
+.barlist { display: flex; flex-direction: column; gap: 6px; font-size: var(--fs-sm); }
+.barlist-row { display: grid; grid-template-columns: minmax(80px, 30%) minmax(0, 1fr) auto; align-items: center; gap: var(--sp-3); min-height: 24px; }
+.barlist-label { color: var(--color-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.barlist-track { display: block; height: 10px; background: var(--color-surface-2); border-radius: 2px; overflow: hidden; }
+.barlist-fill { display: block; height: 100%; background: var(--color-primary); border-radius: 0 4px 4px 0; transition: width var(--dur-slow) var(--ease-out); min-width: 2px; }
+.barlist-row.is-emph .barlist-fill { background: var(--color-accent); }
+.barlist-row:hover .barlist-fill { filter: brightness(1.1); }
+.barlist-value { color: var(--color-text); font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
+.barlist-hint { font-family: var(--font-body); }
+.barlist-empty { padding: var(--sp-3) 0; }
