@@ -42,6 +42,16 @@ pre { background: var(--color-surface-2); padding: var(--sp-3); border-radius: v
 .inverse h1, .inverse h2, .inverse h3, .inverse h4 { color: inherit; }
 .ph { background: var(--tex-ph); color: var(--color-text-muted); }
 
+/* --- containment: text never escapes its card, row, cell or tile (0.5.0) ---
+   Flex/grid children get min-width: 0 so they can shrink; prose and long unbroken strings
+   (page codes, emails, URLs, IDs) are allowed to break; media and pre blocks are capped. */
+body { overflow-wrap: break-word; }
+h1, h2, h3, h4, p, li, dd, dt, blockquote, figcaption, label, summary, td, th { overflow-wrap: anywhere; }
+code, kbd, samp, .mono, a, span, strong, b, em, i, small, time { overflow-wrap: anywhere; }
+pre, table, img, svg, video, canvas, iframe { max-width: 100%; }
+.stack > *, .stack-sm > *, .row > *, .row-between > *, .grid > * { min-width: 0; }
+.surf, .surf2, .inverse, .container, .prose { min-width: 0; }
+
 /* layout utilities (few, intentional) */
 .container { width: 100%; max-width: var(--w-content); margin: 0 auto; padding: 0 var(--sp-4); }
 .stack { display: flex; flex-direction: column; gap: var(--sp-4); }

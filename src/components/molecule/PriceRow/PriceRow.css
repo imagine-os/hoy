@@ -1,6 +1,6 @@
-.pricerow { display: flex; align-items: center; gap: var(--sp-4); padding: var(--sp-3) 0; border-bottom: 1px solid var(--color-border); width: 100%; text-align: left; background: none; border-left: 0; border-right: 0; border-top: 0; color: inherit; }
+.pricerow { display: flex; align-items: center; gap: var(--sp-4); min-width: 0; padding: var(--sp-3) 0; border-bottom: 1px solid var(--color-border); width: 100%; text-align: left; background: none; border-left: 0; border-right: 0; border-top: 0; color: inherit; }
 .pricerow:last-child { border-bottom: 0; }
 .pricerow.is-clickable:hover .pricerow-name { color: var(--color-primary); }
-.pricerow-name { font-family: var(--font-heading); font-weight: var(--fw-medium); }
+.pricerow-name { font-family: var(--font-heading); font-weight: var(--fw-medium); min-width: 0; overflow-wrap: anywhere; }
 .pricerow-price { text-align: right; white-space: nowrap; flex: 0 0 auto; }
 .pricerow-amount { font-family: var(--font-heading); font-weight: var(--fw-semibold); font-variant-numeric: tabular-nums; }
