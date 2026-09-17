@@ -1,0 +1,8 @@
+.phoneshell { min-height: 100%; display: flex; justify-content: center; background: var(--color-bg); }
+.phoneshell-col { width: 100%; max-width: 560px; min-height: 100vh; display: flex; flex-direction: column; position: relative; background: var(--color-bg); }
+@media (min-width: 900px) { .phoneshell-col { border-left: 1px solid var(--color-border); border-right: 1px solid var(--color-border); } }
+.phoneshell-main { flex: 1 1 auto; padding-bottom: calc(var(--h-bottomnav) + var(--sp-6)); }
+.phoneshell-main .container { padding-left: var(--sp-4); padding-right: var(--sp-4); }
+.phoneshell-nav { position: fixed; bottom: 0; left: 0; right: 0; display: flex; justify-content: center; z-index: 30; pointer-events: none; }
+.phoneshell-nav .navbar { width: 100%; max-width: 560px; pointer-events: auto; }
+.phoneshell-avatar { display: inline-flex; border-radius: 50%; }

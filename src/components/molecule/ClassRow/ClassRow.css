@@ -1,0 +1,9 @@
+.classrow { display: flex; align-items: center; gap: var(--sp-3); width: 100%; padding: var(--sp-3) var(--sp-2); border: 0; border-bottom: 1px solid var(--color-border); background: none; text-align: left; color: inherit; border-radius: var(--r-sm); }
+.classrow:last-child { border-bottom: 0; }
+.classrow.is-clickable:hover { background: var(--color-surface-2); }
+.classrow-dot { width: 10px; height: 10px; border-radius: 50%; flex: 0 0 auto; }
+.mv-enraiza { background: var(--mv-enraiza-dot); } .mv-fluye { background: var(--mv-fluye-dot); } .mv-arde { background: var(--mv-arde-dot); } .mv-libera { background: var(--mv-libera-dot); }
+.classrow-time { display: flex; flex-direction: column; min-width: 56px; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.classrow-title { font-family: var(--font-heading); font-weight: var(--fw-medium); }
+.classrow-cancelled .classrow-title, .classrow-completed .classrow-title { color: var(--color-text-muted); text-decoration: line-through; }
+.classrow-completed .classrow-title { text-decoration: none; }

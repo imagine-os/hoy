@@ -1,0 +1,5 @@
+.stub { display: flex; flex-direction: column; gap: var(--sp-4); max-width: 680px; margin: 0 auto; border-style: dashed; }
+.stub-code { background: var(--color-highlight); color: var(--brand-ink); padding: 2px 8px; border-radius: var(--r-sm); font-weight: var(--fw-semibold); }
+.stub-title { font-size: var(--fs-2xl); }
+.stub-layout ol { margin: var(--sp-2) 0 0; padding-left: 1.4em; columns: 2; font-size: var(--fs-sm); }
+@media (max-width: 480px) { .stub-layout ol { columns: 1; } }

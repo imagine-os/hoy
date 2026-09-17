@@ -1,0 +1,4 @@
+.langtoggle { display: inline-flex; padding: 2px; border-radius: var(--r-full); background: var(--color-surface-3); border: 1px solid var(--color-border); }
+.langtoggle button { border: 0; background: transparent; color: var(--color-text-muted); border-radius: var(--r-full); padding: 4px 10px; font-size: var(--fs-xs); font-weight: var(--fw-semibold); font-family: var(--font-heading); letter-spacing: .04em; transition: background-color var(--dur-fast), color var(--dur-fast); }
+.langtoggle button.is-active { background: var(--color-surface); color: var(--color-text); box-shadow: var(--shadow-contact); }
+.langtoggle-sm button { padding: 2px 8px; }

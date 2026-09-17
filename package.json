@@ -6,10 +6,12 @@
   "description": "HoyOS — operations system for HOY Wellness Center (multi-tenant ready)",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "build": "npm run tokens && tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "screenshots": "node scripts/screenshots.mjs"
+    "screenshots": "node scripts/screenshots.mjs",
+    "tokens": "node --experimental-strip-types scripts/gen-tokens.mjs",
+    "specs": "node scripts/gen-specs.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.1.0",

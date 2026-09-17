@@ -1,0 +1,19 @@
+.datatable { display: flex; flex-direction: column; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--r-md); box-shadow: var(--shadow-card); overflow: hidden; min-width: 0; }
+.datatable-scroll { overflow: auto; max-height: calc(100vh - 260px); }
+.datatable table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: var(--fs-sm); }
+.datatable th { text-align: left; font-family: var(--font-heading); font-weight: var(--fw-medium); font-size: var(--fs-xs); color: var(--color-text-muted); letter-spacing: .04em; text-transform: uppercase; padding: 10px 12px; background: var(--color-surface-2); border-bottom: 1px solid var(--color-border); white-space: nowrap; }
+.datatable thead.is-sticky th { position: sticky; top: 0; z-index: 1; }
+.datatable td { padding: 10px 12px; border-bottom: 1px solid var(--color-border); vertical-align: middle; max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.datatable.is-dense td { padding: 6px 10px; } .datatable.is-dense th { padding: 6px 10px; }
+.datatable tbody tr:last-child td { border-bottom: 0; }
+.datatable tr.is-clickable { cursor: pointer; } .datatable tr.is-clickable:hover td { background: var(--color-surface-2); }
+.datatable tr.is-selected td { background: color-mix(in srgb, var(--color-primary) 10%, transparent); }
+.datatable-sort { border: 0; background: none; padding: 0; font: inherit; color: inherit; letter-spacing: inherit; text-transform: inherit; display: inline-flex; gap: 4px; align-items: center; }
+.datatable-sort:hover { color: var(--color-text); }
+.datatable-sorticon { opacity: .5; }
+th[aria-sort] .datatable-sorticon { opacity: 1; color: var(--color-primary); }
+.datatable-empty { text-align: center; color: var(--color-text-muted); padding: var(--sp-10) !important; }
+.datatable-json { font-size: var(--fs-xs); color: var(--color-text-muted); background: none; }
+.datatable-foot { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-top: 1px solid var(--color-border); background: var(--color-surface-2); }
+.datatable-page { border: 1px solid var(--color-border-strong); background: var(--color-surface); border-radius: var(--r-sm); width: 28px; height: 28px; }
+.datatable-page:disabled { opacity: .4; cursor: not-allowed; }

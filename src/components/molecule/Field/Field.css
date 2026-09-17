@@ -1,0 +1,5 @@
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field-label { font-size: var(--fs-sm); font-weight: var(--fw-medium); }
+.field-req { color: var(--color-danger); }
+.field-msg { font-size: var(--fs-xs); }
+.field-error { color: var(--color-danger); }

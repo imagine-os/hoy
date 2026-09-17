@@ -1,0 +1,26 @@
+.deskshell { display: grid; grid-template-columns: var(--w-sidebar) minmax(0, 1fr); min-height: 100vh; }
+.deskshell-side { position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; background: var(--color-surface); border-right: 1px solid var(--color-border); overflow-y: auto; }
+.deskshell-brand { display: flex; align-items: center; gap: var(--sp-2); padding: var(--sp-4); border-bottom: 1px solid var(--color-border); }
+.deskshell-title { font-family: var(--font-heading); font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-muted); flex: 1; }
+.deskshell-burger { display: none; border: 0; background: none; font-size: 20px; }
+.deskshell-nav { flex: 1 1 auto; padding: var(--sp-3); display: flex; flex-direction: column; gap: var(--sp-3); }
+.deskshell-group { display: flex; flex-direction: column; gap: 2px; }
+.deskshell-grouplabel { padding: var(--sp-2) var(--sp-3) 4px; }
+.deskshell-link { display: flex; align-items: center; gap: var(--sp-2); padding: 8px 12px; border-radius: var(--r-sm); color: var(--color-text); font-size: var(--fs-sm); text-decoration: none; }
+.deskshell-link:hover { background: var(--color-surface-2); text-decoration: none; }
+.deskshell-link.is-active { background: color-mix(in srgb, var(--color-primary) 12%, transparent); color: var(--color-primary); font-weight: var(--fw-medium); }
+.deskshell-icon { width: 20px; text-align: center; opacity: .8; }
+.deskshell-code { margin-left: auto; font-size: 10px; color: var(--color-text-muted); }
+.deskshell-foot { padding: var(--sp-4); border-top: 1px solid var(--color-border); display: flex; flex-direction: column; gap: var(--sp-3); }
+.deskshell-iconbtn { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--color-border); background: var(--color-surface); }
+.deskshell-main { min-width: 0; padding: var(--sp-6) var(--sp-8) var(--sp-12); }
+.deskshell-scrim { display: none; }
+@media (max-width: 900px) {
+  .deskshell { grid-template-columns: 1fr; }
+  .deskshell-side { position: fixed; inset: 0 auto 0 0; width: min(320px, 85vw); z-index: 50; transform: translateX(-100%); transition: transform var(--dur-base) var(--ease-out); box-shadow: var(--shadow-raised); }
+  .deskshell.is-open .deskshell-side { transform: none; }
+  .deskshell-burger { display: block; position: fixed; top: 10px; left: 10px; z-index: 60; width: 40px; height: 40px; border-radius: 50%; background: var(--color-surface); border: 1px solid var(--color-border); box-shadow: var(--shadow-card); }
+  .deskshell.is-open .deskshell-burger { position: static; box-shadow: none; }
+  .deskshell-main { padding: var(--sp-16) var(--sp-4) var(--sp-12); }
+  .deskshell.is-open .deskshell-scrim { display: block; position: fixed; inset: 0; background: rgba(30,42,56,.35); z-index: 40; }
+}

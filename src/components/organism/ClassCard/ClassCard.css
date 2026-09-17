@@ -1,0 +1,8 @@
+.classcard { display: flex; flex-direction: column; gap: var(--sp-3); }
+.classcard-when { font-family: var(--font-heading); font-weight: var(--fw-semibold); font-size: var(--fs-sm); font-variant-numeric: tabular-nums; }
+.classcard-time { font-family: var(--font-heading); font-size: var(--fs-2xl); font-weight: var(--fw-semibold); line-height: 1.1; font-variant-numeric: tabular-nums; }
+.classcard-end { font-size: var(--fs-md); font-weight: var(--fw-regular); opacity: .7; }
+.classcard-meta { font-size: var(--fs-sm); opacity: .85; }
+.classcard.is-next .capmeter { color: color-mix(in srgb, var(--color-text-on-primary) 80%, transparent); }
+.classcard.is-next .capmeter-bar { background: color-mix(in srgb, var(--color-text-on-primary) 25%, transparent); }
+.classcard.is-next .chip-mv { background: color-mix(in srgb, var(--color-text-on-primary) 18%, transparent); color: var(--color-text-on-primary); }
