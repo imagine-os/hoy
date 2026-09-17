@@ -1,0 +1,28 @@
+.mapslot { display: flex; flex-direction: column; gap: var(--sp-2); min-width: 0; }
+.mapslot-frame {
+  position: relative; width: 100%; overflow: hidden;
+  border-radius: var(--r-md); border: 1px solid var(--color-card-border);
+  box-shadow: var(--shadow-highlight), var(--shadow-contact), var(--shadow-soft);
+  display: flex; align-items: center; justify-content: center;
+}
+.mapslot.is-placeholder .mapslot-frame {
+  background-color: var(--color-surface);
+  /* a very soft street-grid feel, drawn from tokens only */
+  background-image:
+    repeating-linear-gradient(0deg, rgba(var(--m-primary), .07) 0 1px, transparent 1px 34px),
+    repeating-linear-gradient(90deg, rgba(var(--m-primary), .07) 0 1px, transparent 1px 34px),
+    radial-gradient(90% 70% at 50% 50%, rgba(var(--m-light), .45), transparent 70%),
+    var(--mat-sand);
+}
+:root[data-theme="dark"] .mapslot.is-placeholder .mapslot-frame {
+  background-image:
+    repeating-linear-gradient(0deg, rgba(var(--m-primary), .12) 0 1px, transparent 1px 34px),
+    repeating-linear-gradient(90deg, rgba(var(--m-primary), .12) 0 1px, transparent 1px 34px),
+    var(--mat-deep);
+}
+.mapslot-embed { width: 100%; height: 100%; border: 0; display: block; }
+.mapslot-empty { display: flex; flex-direction: column; align-items: center; text-align: center; gap: var(--sp-2); padding: var(--sp-6); max-width: 40ch; }
+.mapslot-pin { font-size: var(--fs-2xl); color: var(--color-primary); line-height: 1; }
+.mapslot-addr { font-family: var(--font-heading); font-size: var(--fs-md); font-weight: var(--fw-medium); color: var(--color-ink); }
+.mapslot-note { font-size: var(--fs-2xs); color: var(--color-text-faint); font-style: italic; }
+.mapslot-links { margin: 0; }
