@@ -54,7 +54,6 @@ function resolveRel(base: string | undefined, rel: string): string {
 }
 
 /** Plain text of a hast node (used to sniff callout prefixes). */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function textOf(node: any): string {
   if (!node) return '';
   if (node.type === 'text') return String(node.value ?? '');
@@ -131,7 +130,7 @@ function MdTable({ source, cell }: { source: string; cell: (md: string) => React
  *    fenced ```live block, which the `directive` prop renders (a fenced block is passed through
  *    react-markdown intact, unlike a custom element, which the default HTML handling drops).
  */
-export function preprocessMarkdown(source: string): string {
+function preprocessMarkdown(source: string): string {
   const withBlocks = source
     .replace(/^\[screenshot:\s*([^\]]+)\]\s*$/gm, (_m, body: string) => {
       const code = body.match(/^([A-Z]+-\d{2}[a-z]?)/)?.[1] ?? 'screenshot';
@@ -144,7 +143,6 @@ export function preprocessMarkdown(source: string): string {
 }
 
 /** Raw text of a fenced block with the given language, or null when the node is not one. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function fencedOf(node: any, lang: string): string | null {
   const code = node?.children?.find((c: { tagName?: string }) => c.tagName === 'code');
   const cls: string[] = code?.properties?.className ?? [];
@@ -152,7 +150,6 @@ function fencedOf(node: any, lang: string): string | null {
 }
 
 /** Reads `kind:arg` out of a fenced ```live block node, or null when it is not one. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function liveOf(node: any): { kind: string; arg?: string } | null {
   const raw = fencedOf(node, 'live');
   if (raw === null) return null;
@@ -178,7 +175,6 @@ export function MarkdownViewer({ source, path, resolveAsset, resolveLink, compon
     p: ({ node, children }) => {
       const kids = (node?.children ?? []).filter((c) => !(c.type === 'text' && !String(c.value ?? '').trim()));
       const only = kids.length === 1 ? kids[0] : undefined;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       if (figure && only && (only as any).tagName === 'img' && (only as any).properties?.title) return <>{children}</>;
       return <p>{children}</p>;
     },

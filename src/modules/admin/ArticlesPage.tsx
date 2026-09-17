@@ -21,7 +21,7 @@ const SECTIONS = ['rules', 'about', 'faq'] as const;
 const TONE: Record<Status, 'warn' | 'primary' | 'success'> = { draft: 'warn', scheduled: 'primary', published: 'success' };
 
 /** Derived status: `published` plus a future `publish_at` is scheduled, not live. */
-export function articleStatus(a: ContentArticleRow, now = Date.now()): Status {
+function articleStatus(a: ContentArticleRow, now = Date.now()): Status {
   if (!a.published) return 'draft';
   if (a.publish_at && new Date(a.publish_at).getTime() > now) return 'scheduled';
   return 'published';

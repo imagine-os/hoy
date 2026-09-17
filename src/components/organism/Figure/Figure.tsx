@@ -16,7 +16,7 @@ export interface FigureProps {
 }
 
 /** Splits `S-02 · /staff/desk` into its chip and its route. */
-export function parseFigureTitle(title: string | undefined): { code?: string; to?: string } {
+function parseFigureTitle(title: string | undefined): { code?: string; to?: string } {
   if (!title) return {};
   const [code, ...rest] = title.split('·').map((s) => s.trim());
   const to = rest.find((r) => r.startsWith('/'));

@@ -32,6 +32,5 @@ function build() {
   return cache;
 }
 
-export const getModules = () => build().modules;
 export const getRoutes = (): RouteDef[] => build().routes;
 export const getStrings = (): StringTable[] => build().strings;

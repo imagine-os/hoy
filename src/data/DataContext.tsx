@@ -6,7 +6,7 @@ import { MockProvider } from './MockProvider';
 const Ctx = createContext<DataProvider | null>(null);
 
 /** Swap the provider here when Supabase is ready: new SupabaseProvider(url, key). */
-export function createDefaultProvider(): DataProvider { return new MockProvider(); }
+function createDefaultProvider(): DataProvider { return new MockProvider(); }
 
 export function DataProviderRoot({ provider, children }: { provider?: DataProvider; children: ReactNode }) {
   const p = useMemo(() => provider ?? createDefaultProvider(), [provider]);

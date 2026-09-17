@@ -42,20 +42,3 @@ export const ROLE_HOME: Record<Role, string> = {
   public: '/site',
 };
 
-/** Map canvas role labels (free text) to Role ids. */
-export function roleFromCanvasLabel(label: string): Role[] {
-  const l = label.toLowerCase();
-  if (l.includes('all roles')) return [...ALL_SIGNED_IN];
-  if (l.includes('public')) return ['public'];
-  if (l.includes('super')) return ['super_admin'];
-  if (l.includes('coordinator')) return ['coordinator'];
-  if (l.includes('front desk') || l.includes('frontdesk')) return ['front_desk'];
-  if (l.includes('finance')) return ['finance'];
-  if (l.includes('teacher')) return ['teacher'];
-  if (l.includes('student')) return ['customer'];
-  if (l.includes('designer') || l.includes('developer')) return ['super_admin'];
-  if (l.includes('studio owner') || l.includes('admin')) return ['admin'];
-  if (l.includes('staff')) return ['coordinator', 'front_desk'];
-  if (l.includes('maintenance')) return ['maintenance'];
-  return [];
-}

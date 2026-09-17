@@ -20,7 +20,7 @@ function readLang(): Lang {
   return 'es'; // Spanish is the default language.
 }
 
-export function translate(dict: StringTable, lang: Lang, key: string, vars?: Record<string, string | number>): string {
+function translate(dict: StringTable, lang: Lang, key: string, vars?: Record<string, string | number>): string {
   const entry = dict[key];
   if (!entry) {
     if (import.meta.env.DEV && !warned.has(key)) { warned.add(key); console.warn(`[i18n] missing key: ${key}`); }
@@ -56,4 +56,3 @@ export function useI18n(): I18nCtx {
 /** `const t = useT(); t('module.key', { n: 3 })` */
 export function useT() { return useI18n().t; }
 export function useLang() { const { lang, setLang } = useI18n(); return { lang, setLang }; }
-export function useBi() { return useI18n().bi; }

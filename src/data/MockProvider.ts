@@ -7,7 +7,7 @@ import { tenant } from '../tenant/tenant';
 const KEY = 'hoyos.db.v1';
 type Db = Record<string, BaseRow[]>;
 
-export const newId = (prefix = 'row'): string => `${prefix}_${Math.random().toString(36).slice(2, 10)}`;
+const newId = (prefix = 'row'): string => `${prefix}_${Math.random().toString(36).slice(2, 10)}`;
 
 /**
  * In-browser database: seeded from src/data/seed, persisted to localStorage, emits change events

@@ -122,7 +122,7 @@ export const M07 = defineSpec({
  * routes to General; M-08a…M-08e are the leaves. Every group saves one `tenants.settings` section and
  * writes audit_log settings.update with before/after.
  */
-export const M08 = defineSpec({
+const M08 = defineSpec({
   ...canvasSpecs['M-08'],
   layout: ['SettingsSubNav', 'General (M-08a)', 'Features (M-08b)', 'Payments (M-08c)', 'Communications (M-08d)', 'Branding (M-08e)', 'Content (M-08f)'],
   data: ['tenants', 'feature_flags', 'rooms', 'modalities', 'teachers', 'legal_documents', 'audit_log'],

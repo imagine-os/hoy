@@ -294,7 +294,6 @@ export const taglines = {
 } as const;
 
 /** One import for pages that want the whole board. */
-export const brandContent = { manifesto, about, philosophy, classesIntro, classes, classOrder, taglines };
 
 export const brandClass = (slug: string): BrandClass | undefined =>
   (classOrder as string[]).includes(slug) ? classes[slug as ClassSlug] : undefined;

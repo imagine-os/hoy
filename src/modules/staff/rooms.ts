@@ -10,7 +10,6 @@ import type { ClassSessionRow, SpaceBookingKind, SpaceBookingRow, SpaceBookingSt
 import type { Bi } from '../../specs/types';
 
 export const BOOKING_KINDS: SpaceBookingKind[] = ['private_event', 'rental', 'private_class', 'maintenance', 'blocked'];
-export const BOOKING_STATUSES: SpaceBookingStatus[] = ['held', 'confirmed', 'cancelled', 'done'];
 
 export const KIND_LABEL: Record<SpaceBookingKind, Bi> = {
   private_event: { es: 'Evento privado', en: 'Private event' },

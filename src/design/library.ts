@@ -11,4 +11,3 @@ export const componentLibrary: ComponentMeta[] = Object.entries(modules)
   .sort((a, b) => TIER_ORDER.indexOf(a.tier) - TIER_ORDER.indexOf(b.tier) || a.name.localeCompare(b.name));
 
 
-export function byTier(tier: Tier): ComponentMeta[] { return componentLibrary.filter((m) => m.tier === tier); }

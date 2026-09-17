@@ -9,7 +9,7 @@ import { assetUrl, docsRoute, screenshotGroups, useDocSource, useDocSources, typ
 const CODE = /\b([A-Z]{1,3}-\d{2}[a-z]?)\b/g;
 
 /** Inline text with page codes wrapped in <code>. */
-export function withCodes(text: string): ReactNode {
+function withCodes(text: string): ReactNode {
   const parts = text.split(CODE);
   return parts.map((p, i) => (i % 2 ? <code key={i} className="docs-code">{p}</code> : <Fragment key={i}>{p}</Fragment>));
 }
@@ -23,7 +23,7 @@ export interface KanbanLane { title: string; columns: { title: string; items: st
  * docs/kanban.md → lanes. `## Backlog|Doing|Done|Blocked` are columns of the default lane; any other
  * `##` starts a lane (one per worker/module) whose `###` headings are its columns. `- ` lines are cards.
  */
-export function parseKanban(source: string): KanbanLane[] {
+function parseKanban(source: string): KanbanLane[] {
   const lanes: KanbanLane[] = [];
   let lane: KanbanLane | undefined; let col: { title: string; items: string[] } | undefined;
   const ensureLane = (title: string) => { lane = lanes.find((l) => l.title === title) ?? (lanes.push({ title, columns: [] }), lanes[lanes.length - 1]); col = undefined; };
