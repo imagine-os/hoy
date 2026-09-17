@@ -4,7 +4,7 @@ import { useI18n } from '../../i18n/I18nProvider';
 import { useSession } from '../../auth/SessionProvider';
 import { useTable } from '../../data/DataContext';
 import type { BookingRow, MembershipRow, PaymentRow } from '../../data/schema';
-import { formatCOP, formatDate, formatTime, isSameDay } from '../../i18n/format';
+import { formatCOP, formatDate, formatTime, isSameDay, MS } from '../../i18n/format';
 import { useLayout } from '../../layout/useLayout';
 import { StatTile } from '../../components/molecule/StatTile/StatTile';
 import { Card } from '../../components/molecule/Card/Card';
@@ -18,22 +18,23 @@ import type { AuditRow } from '../staff/audit';
 import { usePeople } from '../staff/people';
 import { M01 } from './specs';
 import './admin.css';
+import { auditTitle } from '../staff/audit';
 
 /**
  * M-01 — KPI row, occupancy chart, today at a glance and the audit trail; sections via useLayout.
  * The feature switches moved to M-08b (/admin/settings/features) — the dashboard reads, it does not configure.
  */
 export function DashboardPage() {
-  const { t, lang } = useI18n();
+  const { t, lang, dict } = useI18n();
   const { can } = useSession();
   const { sections, isVisible } = useLayout(M01);
   const { rows: memberships } = useTable<MembershipRow>('memberships', { where: { status: 'active' } });
   const { rows: payments } = useTable<PaymentRow>('payments', { where: { status: 'approved' } });
   const { rows: log } = useTable<AuditRow>('audit_log', { orderBy: { column: 'created_at', dir: 'desc' }, limit: 10 });
   const { byId } = usePeople();
-  const since = Date.now() - 30 * 86400e3;
+  const since = Date.now() - 30 * MS.day;
   const revenue = payments.filter((p) => p.paid_at && new Date(p.paid_at).getTime() > since).reduce((a, p) => a + p.amount, 0);
-  const week = useSessionsJoined((s) => s.status !== 'cancelled' && Math.abs(new Date(s.starts_at).getTime() - Date.now()) < 3.5 * 86400e3);
+  const week = useSessionsJoined((s) => s.status !== 'cancelled' && Math.abs(new Date(s.starts_at).getTime() - Date.now()) < 3.5 * MS.day);
   const occ = week.length ? Math.round((week.reduce((a, x) => a + x.session.booked_count, 0) / week.reduce((a, x) => a + x.session.capacity, 0)) * 100) : 0;
   const todayIds = useMemo(() => week.filter((x) => isSameDay(x.session.starts_at, new Date())).map((x) => x.session.id), [week]);
   const { rows: todayBookings } = useTable<BookingRow>('bookings', { where: { session_id: todayIds, status: 'checked_in' } });
@@ -53,7 +54,7 @@ export function DashboardPage() {
     for (const b of todayBookings) m.set(b.session_id, (m.get(b.session_id) ?? 0) + 1);
     return m;
   }, [todayBookings]);
-  const trail: TimelineItem[] = log.map((a) => ({ id: a.id, at: a.created_at, kind: a.action.startsWith('payment') ? 'payment' : a.action.startsWith('booking') || a.action.startsWith('attendance') ? 'booking' : a.action.includes('note') ? 'note' : 'system', title: a.action, meta: `${byId.get(a.actor_id ?? '')?.name ?? t('admin.dashboard.system')} · ${a.entity}${a.entity_id ? ` · ${a.entity_id}` : ''}${a.diff?.source ? ` · ${a.diff.source}` : ''}` }));
+  const trail: TimelineItem[] = log.map((a) => ({ id: a.id, at: a.created_at, kind: a.action.startsWith('payment') ? 'payment' : a.action.startsWith('booking') || a.action.startsWith('attendance') ? 'booking' : a.action.includes('note') ? 'note' : 'system', title: auditTitle(a.action, t, dict), meta: `${byId.get(a.actor_id ?? '')?.name ?? t('admin.dashboard.system')} · ${a.entity}${a.entity_id ? ` · ${a.entity_id}` : ''}${a.diff?.source ? ` · ${a.diff.source}` : ''}` }));
 
   const SECTIONS: Record<string, () => ReactNode> = {
     'KPIRow ×4': () => (
@@ -70,7 +71,7 @@ export function DashboardPage() {
       </Card>
     ),
     'TodayAtAGlance': () => (
-      <Card title={t('admin.dashboard.today')} eyebrow={t('admin.dashboard.today.eyebrow')} actions={<Link to="/staff/checkin" className="small">{t('core.nav.checkin')}</Link>}>
+      <Card title={t('admin.dashboard.today')} eyebrow={t('admin.dashboard.today.eyebrow')} actions={can('checkin.write') ? <Link to="/staff/checkin" className="small">{t('core.nav.checkin')}</Link> : undefined}>
         {today.length === 0 ? <EmptyState compact title={t('admin.dashboard.today.empty')} /> : (
           <div>
             {today.map(({ session, modality, teacher }) => {

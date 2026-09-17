@@ -19,7 +19,7 @@ export function PageStub({ spec }: { spec: PageSpec }) {
         <p className="muted">{bi(spec.purpose)}</p>
         {spec.layout.length > 0 && (
           <div className="stub-layout">
-            <div className="eyebrow">Layout</div>
+            <div className="eyebrow">{t('core.stub.layout')}</div>
             <ol>{spec.layout.map((l) => <li key={l}>{l}</li>)}</ol>
           </div>
         )}

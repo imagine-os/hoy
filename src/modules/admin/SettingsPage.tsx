@@ -6,7 +6,7 @@ import type { Role } from '../../auth/roles';
 import { useData, useTable } from '../../data/DataContext';
 import type { BaseRow, LegalDocumentRow, ModalityRow, RoomRow, TeacherRow } from '../../data/schema';
 import { rateFor } from '../../data/payrollCalc';
-import { formatCOP, formatDate } from '../../i18n/format';
+import { formatCOP, formatDate, digitsOf } from '../../i18n/format';
 import { tenant } from '../../tenant/tenant';
 import { SegmentedControl } from '../../components/molecule/SegmentedControl/SegmentedControl';
 import { MapSlot } from '../../components/molecule/MapSlot/MapSlot';
@@ -40,6 +40,8 @@ const DAY_LABEL: Record<string, { es: string; en: string }> = { '0': { es: 'Dom'
 /** Flags whose page is load-bearing for the demo and cannot be switched off. */
 const LOCKED_PAGES = ['A-06', 'E-04'];
 interface FlagRow extends BaseRow { key: string; page_code: string | null; label: string; enabled: boolean }
+/** The spec toggle label as a string key: 'Week view' → 'week_view' (the seed builds `feature_flags.key` the same way). */
+const flagKey = (label: string) => label.toLowerCase().replace(/[^a-z0-9]+/g, '_');
 
 /**
  * M-08 — every operating parameter other screens read, stored in tenants.settings through the data layer.
@@ -47,7 +49,7 @@ interface FlagRow extends BaseRow { key: string; page_code: string | null; label
  * (M-08b), not on the M-01 dashboard.
  */
 export function SettingsPage({ group = 'general' }: { group?: SettingsGroup }) {
-  const { t, bi, lang } = useI18n();
+  const { t, bi, lang, dict } = useI18n();
   const { can, hasRole } = useSession();
   const data = useData();
   const audit = useAudit('admin');
@@ -108,8 +110,8 @@ export function SettingsPage({ group = 'general' }: { group?: SettingsGroup }) {
                   </div>
                   <div className="grid grid-2"><Field label={t('admin.settings.f.name')} hint={t('admin.settings.f.name.hint')}>{(id) => <Input id={id} value={tenant.name} disabled />}</Field><Field label={t('admin.settings.f.legal')}>{(id) => <Input id={id} value={tenant.legalName} disabled />}</Field></div>
                   <div className="grid grid-2"><Field label={t('admin.settings.f.address')}>{(id) => <Input id={id} value={d.address} disabled={!canWrite} onChange={(e) => set({ ...d, address: e.target.value })} />}</Field><Field label={t('admin.settings.f.city')}>{(id) => <Input id={id} value={d.city} disabled={!canWrite} placeholder={tenant.city} onChange={(e) => set({ ...d, city: e.target.value })} />}</Field></div>
-                  <div className="grid grid-2"><Field label="WhatsApp" hint={t('admin.settings.f.whatsapp.hint')}>{(id) => <Input id={id} value={d.whatsapp} disabled={!canWrite} onChange={(e) => set({ ...d, whatsapp: e.target.value })} />}</Field><Field label="Email">{(id) => <Input id={id} type="email" value={d.email} disabled={!canWrite} onChange={(e) => set({ ...d, email: e.target.value })} />}</Field></div>
-                  <div className="grid grid-2"><Field label="Instagram" hint={t('admin.settings.f.instagram.hint')}>{(id) => <Input id={id} value={d.instagram} disabled={!canWrite} placeholder="@hoy" onChange={(e) => set({ ...d, instagram: e.target.value })} />}</Field><Field label={t('admin.settings.f.instagramUrl')}>{(id) => <Input id={id} value={d.instagramUrl} disabled={!canWrite} placeholder="https://www.instagram.com/…" onChange={(e) => set({ ...d, instagramUrl: e.target.value })} />}</Field></div>
+                  <div className="grid grid-2"><Field label="WhatsApp" hint={t('admin.settings.f.whatsapp.hint', { dial: tenant.dialCode })}>{(id) => <Input id={id} value={d.whatsapp} disabled={!canWrite} onChange={(e) => set({ ...d, whatsapp: e.target.value })} />}</Field><Field label="Email">{(id) => <Input id={id} type="email" value={d.email} disabled={!canWrite} onChange={(e) => set({ ...d, email: e.target.value })} />}</Field></div>
+                  <div className="grid grid-2"><Field label="Instagram" hint={t('admin.settings.f.instagram.hint')}>{(id) => <Input id={id} value={d.instagram} disabled={!canWrite} placeholder={tenant.social.instagram} onChange={(e) => set({ ...d, instagram: e.target.value })} />}</Field><Field label={t('admin.settings.f.instagramUrl')}>{(id) => <Input id={id} value={d.instagramUrl} disabled={!canWrite} placeholder="https://www.instagram.com/…" onChange={(e) => set({ ...d, instagramUrl: e.target.value })} />}</Field></div>
                   <div className="grid grid-3">
                     <Field label={t('admin.settings.f.mapLat')}>{(id) => <Input id={id} type="number" step="0.0001" value={d.mapLat} disabled={!canWrite} onChange={(e) => set({ ...d, mapLat: Number(e.target.value) })} />}</Field>
                     <Field label={t('admin.settings.f.mapLng')}>{(id) => <Input id={id} type="number" step="0.0001" value={d.mapLng} disabled={!canWrite} onChange={(e) => set({ ...d, mapLng: Number(e.target.value) })} />}</Field>
@@ -126,7 +128,7 @@ export function SettingsPage({ group = 'general' }: { group?: SettingsGroup }) {
                     <div key={day} className="settings-day">
                       <strong className="small">{bi(DAY_LABEL[day])}</strong>
                       <Toggle size="sm" checked={!!v} disabled={!canWrite} label={v ? t('admin.settings.open') : t('admin.settings.closed')} onChange={(on) => set({ ...d, [day]: on ? { open: '06:00', close: '20:00' } : null })} />
-                      {v && <><Input type="time" value={v.open} disabled={!canWrite} onChange={(e) => set({ ...d, [day]: { ...v, open: e.target.value } })} aria-label="open" /><span className="muted">–</span><Input type="time" value={v.close} disabled={!canWrite} onChange={(e) => set({ ...d, [day]: { ...v, close: e.target.value } })} aria-label="close" /></>}
+                      {v && <><Input type="time" value={v.open} disabled={!canWrite} onChange={(e) => set({ ...d, [day]: { ...v, open: e.target.value } })} aria-label={t('admin.settings.open')} /><span className="muted">–</span><Input type="time" value={v.close} disabled={!canWrite} onChange={(e) => set({ ...d, [day]: { ...v, close: e.target.value } })} aria-label={t('admin.settings.closed')} /></>}
                     </div>
                   ); })}
                   <p className="xs muted">{t('admin.settings.hours.note')}</p>
@@ -179,7 +181,7 @@ export function SettingsPage({ group = 'general' }: { group?: SettingsGroup }) {
                   {[...new Set(flags.map((f) => f.page_code ?? '—'))].map((code) => (
                     <div key={code} className="stack-sm">
                       <div className="eyebrow">{code}</div>
-                      {flags.filter((f) => (f.page_code ?? '—') === code).map((f) => <Toggle key={f.id} size="sm" checked={f.enabled} disabled={!canFlags || LOCKED_PAGES.includes(code)} label={f.label} onChange={(on) => toggleFlag(f, on)} />)}
+                      {flags.filter((f) => (f.page_code ?? '—') === code).map((f) => <Toggle key={f.id} size="sm" checked={f.enabled} disabled={!canFlags || LOCKED_PAGES.includes(code)} label={dict[`admin.flag.${flagKey(f.label)}`] ? t(`admin.flag.${flagKey(f.label)}`) : f.label} onChange={(on) => toggleFlag(f, on)} />)}
                     </div>
                   ))}
                 </div>
@@ -193,11 +195,11 @@ export function SettingsPage({ group = 'general' }: { group?: SettingsGroup }) {
               {S('payments', t('admin.settings.sec.payments'), (d, set) => (
                 <>
                   <div className="grid grid-2">
-                    <Field label={t('admin.settings.f.bank')}>{(id) => <Input id={id} value={d.bankName} disabled={!canWrite} onChange={(e) => set({ ...d, bankName: e.target.value })} placeholder="Bancolombia" />}</Field>
+                    <Field label={t('admin.settings.f.bank')}>{(id) => <Input id={id} value={d.bankName} disabled={!canWrite} onChange={(e) => set({ ...d, bankName: e.target.value })} placeholder={t('admin.settings.f.bank.ph')} />}</Field>
                     <Field label={t('admin.settings.f.accountType')}>{(id) => <Select id={id} value={d.accountType} disabled={!canWrite} onChange={(e) => set({ ...d, accountType: e.target.value as StudioSettings['payments']['accountType'] })}><option value="savings">{t('admin.settings.f.savings')}</option><option value="checking">{t('admin.settings.f.checking')}</option></Select>}</Field>
                     <Field label={t('admin.settings.f.accountNumber')}>{(id) => <Input id={id} value={d.accountNumber} disabled={!canWrite} onChange={(e) => set({ ...d, accountNumber: e.target.value })} />}</Field>
                     <Field label={t('admin.settings.f.accountHolder')}>{(id) => <Input id={id} value={d.accountHolder} disabled={!canWrite} onChange={(e) => set({ ...d, accountHolder: e.target.value })} />}</Field>
-                    <Field label={t('admin.settings.f.wompiEnv')} hint="Wompi">{(id) => <Select id={id} value={d.wompiEnv} disabled={!canWrite} onChange={(e) => set({ ...d, wompiEnv: e.target.value as StudioSettings['payments']['wompiEnv'] })}><option value="sandbox">Sandbox</option><option value="production">{t('admin.settings.f.production')}</option></Select>}</Field>
+                    <Field label={t('admin.settings.f.wompiEnv')} hint="Wompi">{(id) => <Select id={id} value={d.wompiEnv} disabled={!canWrite} onChange={(e) => set({ ...d, wompiEnv: e.target.value as StudioSettings['payments']['wompiEnv'] })}><option value="sandbox">{t('admin.settings.f.sandbox')}</option><option value="production">{t('admin.settings.f.production')}</option></Select>}</Field>
                   </div>
                   <Notice tone="warn" title={t('admin.settings.pay.keys.title')}>{t('admin.settings.pay.keys.body')}</Notice>
                 </>
@@ -242,7 +244,7 @@ export function SettingsPage({ group = 'general' }: { group?: SettingsGroup }) {
                         {modalities.map((m) => (
                           <div key={m.id} className="settings-rate">
                             <span className="small">{bi({ es: m.name_es, en: m.name_en })}</span>
-                            <Input inputMode="numeric" aria-label={m.name_es} value={d.rateCard.byModality[m.id] ?? ''} placeholder="—" disabled={!canWrite} onChange={(e) => setMod(m.id, e.target.value.replace(/\D/g, ''))} />
+                            <Input inputMode="numeric" aria-label={m.name_es} value={d.rateCard.byModality[m.id] ?? ''} placeholder="—" disabled={!canWrite} onChange={(e) => setMod(m.id, digitsOf(e.target.value))} /><span className="xs muted settings-rate-fmt">{d.rateCard.byModality[m.id] ? formatCOP(d.rateCard.byModality[m.id], lang) : ''}</span>
                           </div>
                         ))}
                       </div>
@@ -251,7 +253,7 @@ export function SettingsPage({ group = 'general' }: { group?: SettingsGroup }) {
                         {teachers.map((te) => (
                           <div key={te.id} className="settings-rate">
                             <span className="small">{te.display_name}<span className="xs muted"> · {t('admin.settings.rate.profile', { rate: formatCOP(te.rate_per_class ?? 0, lang) })}</span></span>
-                            <Input inputMode="numeric" aria-label={te.display_name} value={d.rateCard.byTeacher[te.id] ?? ''} placeholder="—" disabled={!canWrite} onChange={(e) => setTea(te.id, e.target.value.replace(/\D/g, ''))} />
+                            <Input inputMode="numeric" aria-label={te.display_name} value={d.rateCard.byTeacher[te.id] ?? ''} placeholder="—" disabled={!canWrite} onChange={(e) => setTea(te.id, digitsOf(e.target.value))} /><span className="xs muted settings-rate-fmt">{d.rateCard.byTeacher[te.id] ? formatCOP(d.rateCard.byTeacher[te.id], lang) : ''}</span>
                           </div>
                         ))}
                       </div>
@@ -300,12 +302,12 @@ export function SettingsPage({ group = 'general' }: { group?: SettingsGroup }) {
                   <p className="xs muted">{t('admin.settings.content.note')}</p>
                 </>
               ))}
-              <Card title={t('admin.settings.sec.legal')} eyebrow="A-06 · legal_documents">
+              <Card title={t('admin.settings.sec.legal')} eyebrow={t('admin.settings.legal.eyebrow')}>
                 <p className="small muted" style={{ marginBottom: 12 }}>{t('admin.settings.legal.body', { n: legalDocs.length, on: legalDocs.filter((x) => x.status === 'published').length })}</p>
                 <div className="stack-sm">
                   {legalDocs.map((d) => (
                     <div key={d.id} className="row-between wrap settings-int">
-                      <div className="grow"><strong className="small">{bi(d.title)}</strong> <span className="xs mono muted">v{d.version}</span><div className="xs muted">{d.kind} · {t('admin.settings.legal.effective', { date: formatDate(`${d.effective_from}T12:00:00`, lang) })}{d.requires_acceptance ? ` · ${t('admin.settings.legal.requiresAcceptance')}` : ''}</div></div>
+                      <div className="grow"><strong className="small">{bi(d.title)}</strong> <span className="xs mono muted">v{d.version}</span><div className="xs muted">{d.kind} · {t('admin.settings.legal.effective', { date: formatDate(d.effective_from, lang) })}{d.requires_acceptance ? ` · ${t('admin.settings.legal.requiresAcceptance')}` : ''}</div></div>
                       <div className="row"><Badge tone={d.status === 'published' ? 'success' : 'warn'}>{t(`admin.settings.legal.${d.status}`)}</Badge><Toggle size="sm" checked={d.status === 'published'} disabled={!canLegal} label={t('admin.settings.legal.publish')} onChange={(on) => toggleLegal(d, on)} /><Link to={`/site/legal/${d.kind}`} className="xs">{t('admin.settings.legal.view')} →</Link></div>
                     </div>
                   ))}

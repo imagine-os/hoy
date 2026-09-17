@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
+import { useI18n } from '../../../i18n/I18nProvider';
 import { Wordmark } from '../../atom/Wordmark/Wordmark';
 import './TopBar.css';
 
@@ -21,11 +22,12 @@ export interface TopBarProps {
 
 /** Top bar: leading slot, title or wordmark with an optional code chip, a middle slot and actions. */
 export function TopBar({ title, brand = false, back, actions, sticky = true, homeTo, leading, code, center }: TopBarProps) {
+  const { t } = useI18n();
   return (
     <header className={`topbar ${sticky ? 'is-sticky' : ''} ${center ? 'has-center' : ''}`}>
       <div className="topbar-left">
         {leading}
-        {back && <Link to={back} className="topbar-back" aria-label="Back">‹</Link>}
+        {back && <Link to={back} className="topbar-back" aria-label={t('core.nav.back')}>‹</Link>}
         {brand && (homeTo ? <Link to={homeTo} className="topbar-brand"><Wordmark height={24} /></Link> : <span className="topbar-brand"><Wordmark height={24} /></span>)}
         {title && (brand ? <span className="topbar-page">{title}</span> : <h1 className="topbar-title">{title}</h1>)}
         {code && <code className="topbar-code">{code}</code>}

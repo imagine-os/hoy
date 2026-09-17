@@ -23,3 +23,13 @@ export function useAudit(source: AuditSource) {
 }
 
 export interface AuditRow { id: string; created_at: string; actor_id: string | null; action: string; entity: string; entity_id: string | null; diff: (Record<string, unknown> & { role?: string; source?: string; before?: unknown; after?: unknown }) | null; ip: string | null; tenant_id: string; updated_at: string; [k: string]: unknown }
+
+/**
+ * Human title for an audit action (`session.cancel` → "Clase cancelada"). The dictionary key is
+ * `admin.audit.<action>`; an action nobody translated yet falls back to the raw key, so a new write
+ * never breaks the feed — it only reads a little more technical until its string lands.
+ */
+export function auditTitle(action: string, t: (key: string) => string, dict: Record<string, unknown>): string {
+  const key = `admin.audit.${action}`;
+  return dict[key] ? t(key) : action;
+}

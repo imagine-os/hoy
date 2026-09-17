@@ -4,6 +4,8 @@ import type { BaseRow, ModalityRow } from '../../data/schema';
 import { EMPTY_RATE_CARD, type PayrollCadence, type RateCard } from '../../data/payrollCalc';
 import type { MapProvider } from '../../components/molecule/MapSlot/MapSlot';
 import { tenant } from '../../tenant/tenant';
+import { DEFAULT_IVA_PCT, splitIva } from '../../data/tax';
+import { MS } from '../../i18n/format';
 
 /**
  * M-08 — the operating parameters every other screen reads. Stored in `tenants.settings` (json)
@@ -51,10 +53,10 @@ export interface StudioSettings {
 export const DEFAULT_SETTINGS: StudioSettings = {
   studio: { ...tenant.studio },
   profile: { nit: '', address: tenant.contact.address, city: tenant.city, whatsapp: tenant.contact.whatsapp, email: tenant.contact.email, instagram: tenant.social.instagram, instagramUrl: tenant.social.instagramUrl, mapLat: tenant.location.lat, mapLng: tenant.location.lng, mapLabel: '', mapLink: '', confirmed: false },
-  openingHours: { '0': null, '1': { open: '06:00', close: '20:00' }, '2': { open: '06:00', close: '20:00' }, '3': { open: '06:00', close: '20:00' }, '4': { open: '06:00', close: '20:00' }, '5': { open: '06:00', close: '20:00' }, '6': { open: '08:00', close: '13:00' } },
+  openingHours: { ...tenant.openingHours },
   policies: { cancellationHours: 2, waitlistClaimMin: 30, lateGraceMin: 15, noShowFee: 0, pauseDaysPerYear: 30, maxPausesPerYear: 2, paymentHoldMin: 10, chargeNoticeDays: 3, lockoutAttempts: 5, lockoutMinutes: 15 },
   quietHours: { from: '21:00', to: '07:00' },
-  tax: { ivaPct: 19, pricesIncludeIva: true, dianResolution: '', eInvoicing: false },
+  tax: { ivaPct: DEFAULT_IVA_PCT, pricesIncludeIva: true, dianResolution: '', eInvoicing: false },
   integrations: { wompi: 'pending', whatsapp: 'pending', email: 'pending', calendar: 'pending' },
   features: { multipleLocations: false, noShowFee: false, holidayCalendar: true, walkInRegistration: true, autoCheckinOnSale: true },
   payments: { bankName: '', accountType: 'savings', accountNumber: '', accountHolder: tenant.legalName, wompiEnv: 'sandbox' },
@@ -67,7 +69,7 @@ export const DEFAULT_SETTINGS: StudioSettings = {
 export interface TenantRow extends BaseRow { settings: Partial<StudioSettings> | null }
 
 /** Stored partial → full settings with defaults. Exported so non-React code (customer policy) can read the same shape. */
-export function mergeSettings(stored: Partial<StudioSettings> | null | undefined): StudioSettings {
+function mergeSettings(stored: Partial<StudioSettings> | null | undefined): StudioSettings {
   const s = stored ?? {};
   return {
     studio: { ...DEFAULT_SETTINGS.studio, ...(s.studio ?? {}) },
@@ -119,19 +121,15 @@ export function usePolicy() {
     /** M-08c payroll switches (0018): cadence, default payout method, who signs. */
     payroll: settings.payroll,
     /** Free-cancellation deadline for a session start. */
-    cancelDeadline: (startsAt: string) => new Date(new Date(startsAt).getTime() - settings.policies.cancellationHours * 3600e3),
+    cancelDeadline: (startsAt: string) => new Date(new Date(startsAt).getTime() - settings.policies.cancellationHours * MS.hour),
     /** True while `at` is still inside the free-cancellation window. */
-    canCancelFree: (startsAt: string, at: Date = new Date()) => at.getTime() <= new Date(startsAt).getTime() - settings.policies.cancellationHours * 3600e3,
+    canCancelFree: (startsAt: string, at: Date = new Date()) => at.getTime() <= new Date(startsAt).getTime() - settings.policies.cancellationHours * MS.hour,
     loading, ready,
   }), [settings, loading, ready]);
 }
 
 /** IVA split for a consumer price, following the tax settings. */
-export function splitTax(price: number, tax: StudioSettings['tax']) {
-  const rate = tax.ivaPct / 100;
-  if (tax.pricesIncludeIva) { const subtotal = Math.round(price / (1 + rate)); return { subtotal, tax: price - subtotal, total: price }; }
-  const t = Math.round(price * rate); return { subtotal: price, tax: t, total: price + t };
-}
+export const splitTax = (price: number, tax: StudioSettings['tax']) => splitIva(price, tax.ivaPct / 100, tax.pricesIncludeIva);
 
 /** True when `at` falls inside quiet hours (which wrap past midnight). */
 export function inQuietHours(at: Date, q: StudioSettings['quietHours']) {
@@ -177,12 +175,8 @@ export function useContact(): StudioContact {
   return useMemo(() => contactOf(settings), [settings]);
 }
 
-/** wa.me deep link for a number (digits only) with an optional prefilled message. */
-export const waLinkFor = (whatsapp: string, message?: string) =>
-  `https://wa.me/${whatsapp.replace(/\D/g, '')}${message ? `?text=${encodeURIComponent(message)}` : ''}`;
-
 /** Slug of the modality that only exists as its own class when M-08f says so. */
-export const BREATHWORK_SLUG = 'respiracion';
+const BREATHWORK_SLUG = 'respiracion';
 
 /** Filters the modalities the public sees: Respiración is hidden while it "lives inside meditación". */
 export function visibleModalities<T extends Pick<ModalityRow, 'slug'>>(rows: T[], content: StudioSettings['content']): T[] {

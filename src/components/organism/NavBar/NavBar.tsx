@@ -1,13 +1,15 @@
 import { NavLink } from 'react-router-dom';
 import type { ReactNode } from 'react';
+import { useI18n } from '../../../i18n/I18nProvider';
 import './NavBar.css';
 
 export interface NavItem { to: string; label: string; icon: ReactNode; end?: boolean }
 
 /** Bottom navigation for mobile shells (3–5 items). */
 export function NavBar({ items }: { items: NavItem[] }) {
+  const { t } = useI18n();
   return (
-    <nav className="navbar" aria-label="Main">
+    <nav className="navbar" aria-label={t('core.nav.main')}>
       {items.map((it) => (
         <NavLink key={it.to} to={it.to} end={it.end} className={({ isActive }) => `navbar-item ${isActive ? 'is-active' : ''}`}>
           <span className="navbar-icon" aria-hidden>{it.icon}</span>

@@ -19,7 +19,7 @@ export interface ChapterCardProps {
   /** Captures the chapter still asks for. */
   placeholders?: number;
   /** Bilingual-agnostic labels for the meta row, supplied by the page. */
-  labels?: { minutes: string; figures: string; decisions: string; placeholders: string };
+  labels?: { minutes: string; figure?: string; figures: string; decisions: string; placeholders: string };
   /** Marks the card as the chapter currently open. */
   active?: boolean;
 }
@@ -35,7 +35,7 @@ export function ChapterCard({ number, title, summary, roles = [], to, minutes, f
         {roles.length > 0 && <span className="chcard-roles">{roles.map((r) => <span key={r} className="chcard-role">{r}</span>)}</span>}
         <span className="chcard-meta">
           {minutes ? <span>{minutes} {labels?.minutes ?? 'min'}</span> : null}
-          {figures ? <span>{figures} {labels?.figures ?? 'img'}</span> : null}
+          {figures ? <span>{figures} {(figures === 1 ? labels?.figure : undefined) ?? labels?.figures ?? 'img'}</span> : null}
           {decisions ? <span className="chcard-warn">{decisions} {labels?.decisions ?? '!'}</span> : null}
           {placeholders ? <span className="chcard-pending">{placeholders} {labels?.placeholders ?? '□'}</span> : null}
         </span>

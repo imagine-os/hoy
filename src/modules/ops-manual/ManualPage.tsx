@@ -28,12 +28,10 @@ function manualVersion(list: Chapter[]) {
   return { version: pick((c) => c.version), updated: pick((c) => c.updated) };
 }
 
-/** Bilingual labels the chapter card's meta row needs. */
+/** Labels the chapter card's meta row needs, from the manual's string table. */
 function useCardLabels() {
-  const { lang } = useI18n();
-  return lang === 'en'
-    ? { minutes: 'min read', figures: 'figures', decisions: 'decisions', placeholders: 'to capture' }
-    : { minutes: 'min de lectura', figures: 'capturas', decisions: 'decisiones', placeholders: 'por capturar' };
+  const { t } = useI18n();
+  return { minutes: t('manual.meta.minutes'), figure: t('manual.meta.figure'), figures: t('manual.meta.figures'), decisions: t('manual.meta.decisions'), placeholders: t('manual.meta.placeholders') };
 }
 
 /** Search field shared by the cover and the sidebar; results link straight into a chapter. */
@@ -211,8 +209,8 @@ export function ManualPage() {
               {chapter.summary && <p className="manual-chapter-lead">{chapter.summary}</p>}
               <div className="manual-meta">
                 {chapter.role && <span>{t('manual.role')}: <strong>{chapter.role}</strong></span>}
-                <span>{readingTime(chapter)} {lang === 'en' ? 'min read' : 'min de lectura'}</span>
-                {chapter.figures > 0 && <span>{chapter.figures} {lang === 'en' ? 'figures' : 'capturas'}</span>}
+                <span>{readingTime(chapter)} {t('manual.meta.minutes')}</span>
+                {chapter.figures > 0 && <span>{chapter.figures} {t(chapter.figures === 1 ? 'manual.meta.figure' : 'manual.meta.figures')}</span>}
                 {chapter.version && <span>{t('manual.version')}: <strong>{chapter.version}</strong></span>}
                 {chapter.updated && <span>{t('manual.updated')}: <strong>{chapter.updated}</strong></span>}
                 {pending > 0 && <Badge>{t('manual.placeholders.count', { n: pending })}</Badge>}

@@ -5,6 +5,9 @@ import { ManualSidebar } from './ManualPage';
 import { chaptersFor, decisionsIn, partOf } from './manualIndex';
 import './manual.css';
 
+/** A decision line is one markdown paragraph; the list shows it as plain text (emphasis and code marks stripped). */
+const plain = (md: string) => md.replace(/\*\*([^*]+)\*\*/g, '$1').replace(/`([^`]+)`/g, '$1').replace(/\[([^\]]+)\]\([^)]*\)/g, '$1');
+
 /** K-04 — every `DECISIÓN PENDIENTE` across the manual, grouped by chapter, in part order. */
 export function DecisionsPage() {
   const { t, lang, bi } = useI18n();
@@ -30,7 +33,7 @@ export function DecisionsPage() {
                 {items.map((d) => { running += 1; return (
                   <div key={d.index} className="manual-decision">
                     <span className="manual-decision-n">{String(running).padStart(2, '0')}</span>
-                    <div><div>{d.text}</div>{d.section && <div className="manual-decision-section">{t('manual.decisions.inChapter')} {chapter.number} · {d.section}</div>}</div>
+                    <div><div>{plain(d.text)}</div>{d.section && <div className="manual-decision-section">{t('manual.decisions.inChapter')} {chapter.number} · {d.section}</div>}</div>
                   </div>
                 ); })}
               </section>

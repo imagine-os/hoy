@@ -36,14 +36,14 @@ const STANDARD: { name: Bi; trigger: string; template: { key: string; name: stri
   { name: { es: 'Recibo', en: 'Receipt' }, trigger: 'payment.approved', delay_min: 0, template: { key: 'receipt', name: 'Recibo de pago', category: 'utility', body: { es: 'Hola {{1}}, recibimos tu pago de {{2}} por {{3}}. Factura {{4}}.', en: 'Hi {{1}}, we received your payment of {{2}} for {{3}}. Invoice {{4}}.' } } },
   { name: { es: 'Membresía por vencer', en: 'Membership expiring' }, trigger: 'membership.t-3d', delay_min: 0, template: { key: 'membership_expiring', name: 'Membresía por vencer', category: 'utility', body: { es: 'Hola {{1}}, tu {{2}} se renueva el {{3}}. Pausa o cambia desde la app.', en: 'Hi {{1}}, your {{2}} renews on {{3}}. Pause or change from the app.' } } },
   { name: { es: 'Pedir feedback', en: 'Feedback request' }, trigger: 'class.attended', delay_min: 180, template: { key: 'feedback_request', name: 'Pedir feedback', category: 'marketing', body: { es: 'Hola {{1}}, ¿cómo estuvo {{2}} con {{3}}? Califícala en 30 segundos.', en: 'Hi {{1}}, how was {{2}} with {{3}}? Rate it in 30 seconds.' } } },
-  { name: { es: 'Invitación enviada', en: 'Invite sent' }, trigger: 'invite.sent', delay_min: 0, template: { key: 'invite', name: 'Invitación', category: 'marketing', body: { es: '{{1}} te invita a una clase en HOY. Tu pase vale hasta el {{2}}.', en: '{{1}} invites you to a class at HOY. Your pass is valid until {{2}}.' } } },
+  { name: { es: 'Invitación enviada', en: 'Invite sent' }, trigger: 'invite.sent', delay_min: 0, template: { key: 'invite', name: 'Invitación', category: 'marketing', body: { es: `{{1}} te invita a una clase en ${tenant.name}. Tu pase vale hasta el {{2}}.`, en: `{{1}} invites you to a class at ${tenant.name}. Your pass is valid until {{2}}.` } } },
 ];
 const SAMPLE = ['Mariana', 'Hot Vinyasa', '17:30', 'HOY-1031'];
-const delayLabel = (min: number, lang: string) => (min === 0 ? (lang === 'es' ? 'inmediato' : 'immediately') : min % 60 === 0 ? `T+${min / 60}h` : `T+${min}m`);
+const delayLabel = (min: number, now: string) => (min === 0 ? now : min % 60 === 0 ? `T+${min / 60}h` : `T+${min}m`);
 
 /** M-05 — automation list, phone preview, template editor with Meta approval, quiet hours, opt-in rule, log. */
 export function WhatsAppPage() {
-  const { t, lang } = useI18n();
+  const { t, lang, dict } = useI18n();
   const data = useData();
   const { can, user } = useSession();
   const audit = useAudit('admin');
@@ -92,7 +92,7 @@ export function WhatsAppPage() {
     { key: 'sent_at', label: t('admin.wa.log.when'), render: (r: MsgRow) => <span className="mono small">{formatDateTime(r.sent_at ?? r.created_at, lang)}</span> },
     { key: 'user_id', label: t('admin.wa.log.to'), render: (r: MsgRow) => r.payload?.test ? <span>{String(r.payload.to)} <Badge tone="warn">test</Badge></span> : byId.get(r.user_id ?? '')?.name ?? String(r.payload?.to ?? '—') },
     { key: 'template_key', label: t('admin.wa.log.template') },
-    { key: 'status', label: t('admin.wa.log.status'), render: (r: MsgRow) => <Badge tone={toneForStatus(r.status)}>{r.status}</Badge> },
+    { key: 'status', label: t('admin.wa.log.status'), render: (r: MsgRow) => <Badge tone={toneForStatus(r.status)}>{dict[`admin.wa.status.${r.status}`] ? t(`admin.wa.status.${r.status}`) : r.status}</Badge> },
   ];
 
   return (
@@ -116,7 +116,7 @@ export function WhatsAppPage() {
               <div key={a.id} className={`wa-row ${a.id === auto.id ? 'is-selected' : ''}`} onClick={() => setSelected(a.id)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter') setSelected(a.id); }}>
                 <span className="small"><strong>{a.name}</strong><span className="xs muted"> · {tt?.name ?? a.template_key}</span></span>
                 <code className="xs">{a.trigger}</code>
-                <span className="xs mono">{delayLabel(a.delay_min, lang)}{a.quiet_hours ? ' · ☾' : ''}</span>
+                <span className="xs mono">{delayLabel(a.delay_min, t('admin.wa.delay.now'))}{a.quiet_hours ? ' · ☾' : ''}</span>
                 <span>{tt ? <Badge tone={toneForStatus(tt.approval_status)}>{t(`admin.wa.approval.${tt.approval_status}`)}</Badge> : <Badge tone="danger">{t('admin.wa.noTemplate')}</Badge>}</span>
                 <span onClick={(e) => e.stopPropagation()} title={blocked && !a.enabled ? t('admin.wa.blocked') : undefined}><Toggle size="sm" checked={a.enabled} disabled={!canWrite || (blocked && !a.enabled)} onChange={(on) => toggle(a, on)} /></span>
               </div>
@@ -157,7 +157,7 @@ function TemplateEditor({ row, onSave }: { row: WaTemplateRow; onSave: (patch: P
   return (
     <div className="stack-sm">
       <Field label={t('admin.wa.f.name')}>{(id) => <Input id={id} value={d.name} onChange={(e) => setD({ ...d, name: e.target.value })} />}</Field>
-      <Field label={t('admin.wa.f.category')}>{(id) => <Select id={id} value={d.category} onChange={(e) => setD({ ...d, category: e.target.value as WaTemplateRow['category'] })}><option value="utility">utility</option><option value="marketing">marketing</option><option value="authentication">authentication</option></Select>}</Field>
+      <Field label={t('admin.wa.f.category')}>{(id) => <Select id={id} value={d.category} onChange={(e) => setD({ ...d, category: e.target.value as WaTemplateRow['category'] })}>{(['utility', 'marketing', 'authentication'] as const).map((c) => <option key={c} value={c}>{t(`admin.wa.category.${c}`)}</option>)}</Select>}</Field>
       <Field label={`${t('admin.wa.f.body')} · ES`} hint={t('admin.wa.f.body.hint')}>{(id) => <textarea id={id} className="input adm-textarea" rows={4} value={d.es} onChange={(e) => setD({ ...d, es: e.target.value })} />}</Field>
       <Field label={`${t('admin.wa.f.body')} · EN`}>{(id) => <textarea id={id} className="input adm-textarea" rows={4} value={d.en} onChange={(e) => setD({ ...d, en: e.target.value })} />}</Field>
       <Field label={t('admin.wa.f.approval')} hint={t('admin.wa.f.approval.hint')}>{(id) => <Select id={id} value={d.approval_status} onChange={(e) => setD({ ...d, approval_status: e.target.value as WaTemplateRow['approval_status'] })}>{(['draft', 'pending', 'approved', 'rejected'] as const).map((s) => <option key={s} value={s}>{t(`admin.wa.approval.${s}`)}</option>)}</Select>}</Field>

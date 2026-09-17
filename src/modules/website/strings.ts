@@ -16,6 +16,7 @@ export const strings: StringTable = {
   'site.nav.teachers': { es: 'Profesores', en: 'Teachers' },
   'site.nav.plans': { es: 'Planes', en: 'Plans' },
   'site.nav.contact': { es: 'Contacto', en: 'Contact' },
+  'site.nav.label': { es: 'Sitio', en: 'Site' },
   'site.nav.signin': { es: 'Entrar', en: 'Sign in' },
   'site.nav.book': { es: 'Reservar clase', en: 'Book a class' },
 
@@ -34,6 +35,7 @@ export const strings: StringTable = {
 
   'site.today.title': { es: 'Hoy en el club', en: 'Today at the club' },
   'site.today.empty': { es: 'Hoy descansamos. Mira el horario de la semana.', en: 'We rest today. See the week’s schedule.' },
+  'site.today.done': { es: 'Las clases de hoy ya terminaron. Mañana seguimos: mira el horario.', en: 'Today’s classes are done. We continue tomorrow: see the schedule.' },
   'site.today.all': { es: 'Ver la semana completa', en: 'See the whole week' },
 
   'site.classes.title': { es: 'Nuestras clases', en: 'Our classes' },
@@ -142,8 +144,6 @@ export const strings: StringTable = {
 
   'site.legal.terms': { es: 'Términos y condiciones', en: 'Terms & conditions' },
   'site.legal.privacy': { es: 'Política de privacidad', en: 'Privacy policy' },
-  'site.legal.updated': { es: 'Última actualización: {date} · versión {v}', en: 'Last updated: {date} · version {v}' },
-  'site.legal.draft': { es: 'Borrador. Este texto será reemplazado por el documento legal revisado. Incluye las secciones exigidas por la Ley 1581 de 2012 y el Decreto 1377 de 2013.', en: 'Draft. This text will be replaced by the reviewed legal document. It includes the sections required by Ley 1581 de 2012 and Decreto 1377 de 2013.' },
 
   'site.footer.rights': { es: '© {year} {name}. Todos los derechos reservados.', en: '© {year} {name}. All rights reserved.' },
   'site.footer.hub': { es: 'Hub de pruebas', en: 'Testing hub' },

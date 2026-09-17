@@ -1,20 +1,18 @@
 import { useMemo, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
+import { formatCOP, MS } from '../../../i18n/format';
 import { Badge } from '../../atom/Badge/Badge';
 import { Chip } from '../../atom/Chip/Chip';
 import { useTable } from '../../../data/DataContext';
 import { TABLE_GROUPS, tableRegistry, tables } from '../../../data/schema';
 import { ROLES, ROLE_HOME, ROLE_LABEL } from '../../../auth/roles';
 import { getRoutes } from '../../../app/registry';
-import { useContact, usePolicy } from '../../../modules/admin/settings';
+import { useContact, usePolicy, type StudioSettings } from '../../../modules/admin/settings';
 import { FAMILY_LABEL, FAMILY_RATIONALE, FAMILY_ROLE, pricing, pricingByFamily, type PlanFamily, type PriceItem } from '../../../tenant/pricing';
 import { tenant } from '../../../tenant/tenant';
 import type { Bi, Surface } from '../../../specs/types';
 import './LiveBlock.css';
-
-/** COP, the way the studio writes it: `$ 520.000`. */
-export const cop = (n: number): string => `$ ${new Intl.NumberFormat('es-CO', { maximumFractionDigits: 0 }).format(n)}`;
 
 /**
  * What each plan family does for the business is no longer written here: `FAMILY_ROLE` and
@@ -42,34 +40,15 @@ const POLICY_ALIAS: Record<string, string> = {
   payroll_cadence: 'payrollCadence', cadence: 'payrollCadence', payout_method: 'payoutMethod', signed_by: 'payrollSignedBy',
 };
 
-const POLICY_LABEL: Record<string, Bi> = {
-  cancellationHours: { es: 'Ventana de cancelación sin costo', en: 'Free cancellation window' },
-  waitlistClaimMin: { es: 'Reclamo de lista de espera', en: 'Waitlist claim window' },
-  lateGraceMin: { es: 'Tolerancia de llegada tarde', en: 'Late-arrival grace' },
-  noShowFee: { es: 'Cargo por inasistencia', en: 'No-show fee' },
-  pauseDaysPerYear: { es: 'Días de pausa por año', en: 'Pause days per year' },
-  maxPausesPerYear: { es: 'Pausas por año', en: 'Pauses per year' },
-  paymentHoldMin: { es: 'Reserva sostenida durante el pago', en: 'Booking held during payment' },
-  chargeNoticeDays: { es: 'Aviso antes de cada cobro', en: 'Notice before each charge' },
-  lockoutAttempts: { es: 'Intentos antes de bloquear', en: 'Attempts before lockout' },
-  lockoutMinutes: { es: 'Duración del bloqueo', en: 'Lockout duration' },
-  quietHours: { es: 'Horas silenciosas', en: 'Quiet hours' },
-  ivaPct: { es: 'IVA', en: 'IVA' },
-  pricesIncludeIva: { es: 'Los precios publicados incluyen IVA', en: 'Published prices include IVA' },
-  payrollCadence: { es: 'Periodicidad de la nómina de profesores', en: 'Teacher payroll cadence' },
-  payoutMethod: { es: 'Medio de pago de la nómina por defecto', en: 'Default payroll payout method' },
-  payrollSignedBy: { es: 'Quién firma el soporte de pago', en: 'Who signs the payment record' },
+/** The policy fields a chapter may quote, in display order; labels and units are `manual.live.policy.*` keys. */
+const POLICY_KEYS = ['cancellationHours', 'waitlistClaimMin', 'lateGraceMin', 'noShowFee', 'pauseDaysPerYear', 'maxPausesPerYear', 'paymentHoldMin', 'chargeNoticeDays', 'lockoutAttempts', 'lockoutMinutes', 'quietHours', 'ivaPct', 'pricesIncludeIva', 'payrollCadence', 'payoutMethod', 'payrollSignedBy'] as const;
+type PolicyKey = typeof POLICY_KEYS[number];
+const UNIT: Partial<Record<PolicyKey, 'hours' | 'minutes' | 'days'>> = {
+  cancellationHours: 'hours', waitlistClaimMin: 'minutes', lateGraceMin: 'minutes', pauseDaysPerYear: 'days', paymentHoldMin: 'minutes', chargeNoticeDays: 'days', lockoutMinutes: 'minutes',
 };
-
-const UNIT: Record<string, Bi> = {
-  cancellationHours: { es: 'horas', en: 'hours' },
-  waitlistClaimMin: { es: 'minutos', en: 'minutes' },
-  lateGraceMin: { es: 'minutos', en: 'minutes' },
-  pauseDaysPerYear: { es: 'días', en: 'days' },
-  paymentHoldMin: { es: 'minutos', en: 'minutes' },
-  chargeNoticeDays: { es: 'días', en: 'days' },
-  lockoutMinutes: { es: 'minutos', en: 'minutes' },
-};
+const PAYROLL_KEYS: PolicyKey[] = ['payrollCadence', 'payoutMethod', 'payrollSignedBy'];
+/** The numeric policy fields live flat on the policy record; the grouped ones (tax, payroll, quiet hours) are read explicitly. */
+type FlatPolicy = Pick<StudioSettings['policies'], 'cancellationHours' | 'waitlistClaimMin' | 'lateGraceMin' | 'noShowFee' | 'pauseDaysPerYear' | 'maxPausesPerYear' | 'paymentHoldMin' | 'chargeNoticeDays' | 'lockoutAttempts' | 'lockoutMinutes'>;
 
 export interface LiveBlockProps {
   /** Directive name: pricing | tenant | policy | tables | table | roles | routes | stats | kpi. */
@@ -78,9 +57,9 @@ export interface LiveBlockProps {
   arg?: string;
 }
 
-/** Frame + bilingual "live from the system" caption every block shares. */
+/** Frame + "live from the system" caption every block shares. */
 function Frame({ title, eyebrow, source, children }: { title: string; eyebrow?: ReactNode; source?: ReactNode; children: ReactNode }) {
-  const { lang } = useI18n();
+  const { t } = useI18n();
   return (
     <section className="live" aria-label={title}>
       <header className="live-head">
@@ -88,11 +67,11 @@ function Frame({ title, eyebrow, source, children }: { title: string; eyebrow?: 
           {eyebrow && <div className="eyebrow">{eyebrow}</div>}
           <h4 className="live-title">{title}</h4>
         </div>
-        <Badge>{lang === 'en' ? 'live' : 'en vivo'}</Badge>
+        <Badge>{t('manual.live.badge')}</Badge>
       </header>
       <div className="live-body">{children}</div>
       <footer className="live-foot">
-        <span>Datos en vivo del sistema · Live from the system</span>
+        <span>{t('manual.live.foot')}</span>
         {source && <span className="live-source">{source}</span>}
       </footer>
     </section>
@@ -100,26 +79,22 @@ function Frame({ title, eyebrow, source, children }: { title: string; eyebrow?: 
 }
 
 function PricingTable({ items }: { items: PriceItem[] }) {
-  const { lang, bi } = useI18n();
-  const period = (p: PriceItem) => {
-    if (p.period === 'month') return lang === 'en' ? '/ month' : '/ mes';
-    if (p.period === 'year') return lang === 'en' ? '/ year' : '/ año';
-    return '';
-  };
+  const { t, lang, bi } = useI18n();
+  const period = (p: PriceItem) => (p.period === 'month' ? t('core.common.perMonth') : p.period === 'year' ? t('core.common.perYear') : '');
   const validity = (p: PriceItem) => {
     const bits: string[] = [];
-    if (p.credits) bits.push(lang === 'en' ? `${p.credits} ${p.credits === 1 ? 'class' : 'classes'}` : `${p.credits} ${p.credits === 1 ? 'clase' : 'clases'}`);
-    if (p.validityDays) bits.push(lang === 'en' ? `${p.validityDays} days` : `${p.validityDays} días`);
-    if (p.period === 'month') bits.push(lang === 'en' ? 'renews monthly' : 'renueva cada mes');
-    if (p.period === 'year') bits.push(lang === 'en' ? 'renews yearly' : 'renueva cada año');
+    if (p.credits) bits.push(t(p.credits === 1 ? 'manual.live.pricing.class' : 'manual.live.pricing.classes', { n: p.credits }));
+    if (p.validityDays) bits.push(t('manual.live.pricing.days', { n: p.validityDays }));
+    if (p.period === 'month') bits.push(t('manual.live.pricing.renewsMonthly'));
+    if (p.period === 'year') bits.push(t('manual.live.pricing.renewsYearly'));
     return bits.join(' · ') || '—';
   };
   return (
     <table className="live-table">
       <thead><tr>
-        <th>{lang === 'en' ? 'Item' : 'Concepto'}</th>
-        <th className="live-num">{lang === 'en' ? 'Price' : 'Precio'}</th>
-        <th>{lang === 'en' ? 'Credits / validity' : 'Créditos / vigencia'}</th>
+        <th>{t('manual.live.pricing.item')}</th>
+        <th className="live-num">{t('manual.live.pricing.price')}</th>
+        <th>{t('manual.live.pricing.validity')}</th>
       </tr></thead>
       <tbody>
         {items.map((p) => (
@@ -128,7 +103,7 @@ function PricingTable({ items }: { items: PriceItem[] }) {
               <div className="live-item"><strong>{bi(p.name)}</strong>{p.badge && <Badge tone="success">{bi(p.badge)}</Badge>}</div>
               <div className="muted xs">{bi(p.description)}</div>
             </td>
-            <td className="live-num">{p.price === null ? (lang === 'en' ? 'included' : 'incluido') : `${p.from ? (lang === 'en' ? 'from ' : 'desde ') : ''}${cop(p.price)}`}<span className="live-period">{period(p)}</span></td>
+            <td className="live-num">{p.price === null ? t('core.common.included') : `${p.from ? `${t('core.common.from')} ` : ''}${formatCOP(p.price, lang)}`}<span className="live-period">{period(p)}</span></td>
             <td className="muted">{validity(p)}</td>
           </tr>
         ))}
@@ -138,12 +113,12 @@ function PricingTable({ items }: { items: PriceItem[] }) {
 }
 
 function Pricing({ family }: { family?: string }) {
-  const { lang, bi } = useI18n();
+  const { t, bi } = useI18n();
   const fam = family as PlanFamily | undefined;
   if (fam && !FAMILY_LABEL[fam]) return <Unknown kind="pricing" arg={family} options={Object.keys(FAMILY_LABEL)} />;
   const items = fam ? pricingByFamily(fam) : pricing;
-  const title = fam ? bi(FAMILY_LABEL[fam]) : lang === 'en' ? 'Value model — five revenue lines' : 'Modelo de valor — cinco líneas de ingreso';
-  const eyebrow = fam ? bi(FAMILY_ROLE[fam]) : lang === 'en' ? `${pricing.length} items · src/tenant/pricing.ts` : `${pricing.length} conceptos · src/tenant/pricing.ts`;
+  const title = fam ? bi(FAMILY_LABEL[fam]) : t('manual.live.pricing.title');
+  const eyebrow = fam ? bi(FAMILY_ROLE[fam]) : t('manual.live.pricing.eyebrow', { n: pricing.length });
   return (
     <Frame title={title} eyebrow={eyebrow} source={<Link to="/site/plans">P-01</Link>}>
       {fam ? (
@@ -165,87 +140,88 @@ function Pricing({ family }: { family?: string }) {
   );
 }
 
+const TENANT_KEYS = ['hours', 'contact', 'capacity', 'all'] as const;
+
 function TenantFacts({ what }: { what?: string }) {
-  const { lang, bi } = useI18n();
+  const { t, bi } = useI18n();
   const contact = useContact();
   const pend = contact.pending ? ` (${bi(contact.pendingLabel)})` : '';
+  const key = (what ?? 'all') as typeof TENANT_KEYS[number];
+  if (!TENANT_KEYS.includes(key)) return <Unknown kind="tenant" arg={what} options={['hours', 'contact', 'capacity']} />;
   const rows: [string, ReactNode][] = [];
-  const title = { hours: { es: 'Horario del estudio', en: 'Studio hours' }, contact: { es: 'Contacto del estudio', en: 'Studio contact' }, capacity: { es: 'Capacidad y disciplina', en: 'Capacity and discipline' }, all: { es: 'El estudio', en: 'The studio' } };
-  const key = (what ?? 'all') as keyof typeof title;
-  if (!title[key]) return <Unknown kind="tenant" arg={what} options={['hours', 'contact', 'capacity']} />;
-  if (key === 'hours' || key === 'all') rows.push([lang === 'en' ? 'Opening hours' : 'Horario', bi(tenant.hours)], [lang === 'en' ? 'Time zone' : 'Zona horaria', `${tenant.timezone} · ${tenant.currency}`]);
+  if (key === 'hours' || key === 'all') rows.push([t('manual.live.tenant.hours'), bi(tenant.hours)], [t('manual.live.tenant.timezone'), `${tenant.timezone} · ${tenant.currency}`]);
   if (key === 'contact' || key === 'all') rows.push(
     ['WhatsApp', `${contact.whatsapp}${pend}`],
-    [lang === 'en' ? 'Email' : 'Correo', `${contact.email}${pend}`],
-    [lang === 'en' ? 'Address' : 'Dirección', `${contact.address}${pend}`],
+    [t('manual.live.tenant.email'), `${contact.email}${pend}`],
+    [t('manual.live.tenant.address'), `${contact.address}${pend}`],
     ['Instagram', `${contact.instagram}${pend}`],
-    [lang === 'en' ? 'City' : 'Ciudad', contact.city],
+    [t('manual.live.tenant.city'), contact.city],
   );
   if (key === 'capacity' || key === 'all') rows.push(
-    [lang === 'en' ? 'Mats per class' : 'Mats por clase', String(tenant.studio.mats)],
-    [lang === 'en' ? 'Classes per day' : 'Clases por día', String(tenant.studio.classesPerDay)],
-    [lang === 'en' ? 'Classes per person per day' : 'Clases por persona por día', String(tenant.studio.perPersonPerDay)],
-    [lang === 'en' ? 'Rooms' : 'Salas', String(tenant.studio.rooms)],
-    [lang === 'en' ? 'Seats per day' : 'Cupos por día', String(tenant.studio.mats * tenant.studio.classesPerDay)],
+    [t('manual.live.tenant.mats'), String(tenant.studio.mats)],
+    [t('manual.live.tenant.classesPerDay'), String(tenant.studio.classesPerDay)],
+    [t('manual.live.tenant.perPerson'), String(tenant.studio.perPersonPerDay)],
+    [t('manual.live.tenant.rooms'), String(tenant.studio.rooms)],
+    [t('manual.live.tenant.seatsPerDay'), String(tenant.studio.mats * tenant.studio.classesPerDay)],
   );
   return (
-    <Frame title={bi(title[key])} eyebrow={`${tenant.legalName} · M-08a → src/tenant/tenant.ts`} source={<Link to="/admin/settings">{lang === 'en' ? 'Settings › General (M-08a)' : 'Ajustes › General (M-08a)'}</Link>}>
+    <Frame title={t(`manual.live.tenant.title.${key}`)} eyebrow={`${tenant.legalName} · M-08a → src/tenant/tenant.ts`} source={<Link to="/admin/settings">{t('manual.live.tenant.source')}</Link>}>
       <dl className="live-dl">{rows.map(([k, v]) => <div key={k} className="live-dl-row"><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
     </Frame>
   );
 }
 
 function Policy({ field }: { field?: string }) {
-  const { lang, bi } = useI18n();
+  const { t, lang } = useI18n();
   const p = usePolicy();
-  const value = (k: string): ReactNode => {
-    if (k === 'quietHours') return `${p.quietHours.from} – ${p.quietHours.to}`;
-    if (k === 'ivaPct') return `${p.tax.ivaPct} %`;
-    if (k === 'pricesIncludeIva') return p.tax.pricesIncludeIva ? (lang === 'en' ? 'yes' : 'sí') : 'no';
-    if (k === 'payrollCadence') return p.payroll.cadence === 'biweekly' ? (lang === 'en' ? 'biweekly (1–15 · 16–end)' : 'quincenal (1–15 · 16–fin)') : (lang === 'en' ? 'monthly' : 'mensual');
-    if (k === 'payoutMethod') return p.payroll.payoutMethod === 'wompi' ? 'Wompi' : p.payroll.payoutMethod === 'transfer' ? (lang === 'en' ? 'transfer' : 'transferencia') : (lang === 'en' ? 'cash' : 'efectivo');
-    if (k === 'payrollSignedBy') return p.payroll.signedBy || (lang === 'en' ? 'pending (M-08c)' : 'pendiente (M-08c)');
-    if (k === 'noShowFee') return (p as unknown as Record<string, number>)[k] ? cop((p as unknown as Record<string, number>)[k]) : (lang === 'en' ? 'none' : 'sin cargo');
-    const raw = (p as unknown as Record<string, unknown>)[k];
-    const unit = UNIT[k] ? ` ${bi(UNIT[k])}` : '';
-    return raw === undefined ? '—' : `${String(raw)}${unit}`;
+  const flat = p as unknown as FlatPolicy;
+  const value = (k: PolicyKey): ReactNode => {
+    switch (k) {
+      case 'quietHours': return `${p.quietHours.from} – ${p.quietHours.to}`;
+      case 'ivaPct': return `${p.tax.ivaPct} %`;
+      case 'pricesIncludeIva': return t(p.tax.pricesIncludeIva ? 'manual.live.yes' : 'manual.live.no');
+      case 'payrollCadence': return t(p.payroll.cadence === 'biweekly' ? 'manual.live.policy.cadence.biweekly' : 'manual.live.policy.cadence.monthly');
+      case 'payoutMethod': return p.payroll.payoutMethod === 'wompi' ? 'Wompi' : t(`manual.live.policy.payout.${p.payroll.payoutMethod}`);
+      case 'payrollSignedBy': return p.payroll.signedBy || t('manual.live.policy.signedBy.pending');
+      case 'noShowFee': return flat.noShowFee ? formatCOP(flat.noShowFee, lang) : t('manual.live.policy.noFee');
+      default: {
+        const raw = flat[k];
+        const unit = UNIT[k] ? ` ${t(`manual.live.unit.${UNIT[k]}`)}` : '';
+        return raw === undefined ? '—' : `${String(raw)}${unit}`;
+      }
+    }
   };
-  const payrollKeys = ['payrollCadence', 'payoutMethod', 'payrollSignedBy'];
   if (field) {
-    const k = POLICY_ALIAS[field] ?? field;
-    const source = <Link to={payrollKeys.includes(k) ? '/admin/settings/payments' : '/admin/settings'}>{payrollKeys.includes(k) ? (lang === 'en' ? 'source: Settings › Payments (M-08c)' : 'fuente: Ajustes › Pagos (M-08c)') : (lang === 'en' ? 'source: Settings › Policies (M-08a)' : 'fuente: Ajustes › Políticas (M-08a)')}</Link>;
-    if (!POLICY_LABEL[k]) return <Unknown kind="policy" arg={field} options={Object.keys(POLICY_LABEL)} />;
+    const k = (POLICY_ALIAS[field] ?? field) as PolicyKey;
+    if (!POLICY_KEYS.includes(k)) return <Unknown kind="policy" arg={field} options={POLICY_KEYS} />;
+    const payroll = PAYROLL_KEYS.includes(k);
+    const source = <Link to={payroll ? '/admin/settings/payments' : '/admin/settings'}>{t(payroll ? 'manual.live.policy.source.payments' : 'manual.live.policy.source.policies')}</Link>;
     return (
-      <Frame title={bi(POLICY_LABEL[k])} eyebrow={lang === 'en' ? 'Current policy value' : 'Valor vigente de la política'} source={source}>
+      <Frame title={t(`manual.live.policy.${k}`)} eyebrow={t('manual.live.policy.current')} source={source}>
         <p className="live-big">{value(k)}</p>
       </Frame>
     );
   }
-  const source = <Link to="/admin/settings">{lang === 'en' ? 'source: Settings › Policies (M-08a) · Payments (M-08c)' : 'fuente: Ajustes › Políticas (M-08a) · Pagos (M-08c)'}</Link>;
   return (
-    <Frame title={lang === 'en' ? 'Policies in force' : 'Políticas vigentes'} eyebrow={lang === 'en' ? 'M-08a Settings & policies · M-08c Payroll' : 'M-08a Ajustes y políticas · M-08c Nómina'} source={source}>
+    <Frame title={t('manual.live.policy.title')} eyebrow={t('manual.live.policy.eyebrow')} source={<Link to="/admin/settings">{t('manual.live.policy.source.both')}</Link>}>
       <dl className="live-dl">
-        {Object.keys(POLICY_LABEL).map((k) => <div key={k} className="live-dl-row"><dt>{bi(POLICY_LABEL[k])}</dt><dd>{value(k)}</dd></div>)}
+        {POLICY_KEYS.map((k) => <div key={k} className="live-dl-row"><dt>{t(`manual.live.policy.${k}`)}</dt><dd>{value(k)}</dd></div>)}
       </dl>
     </Frame>
   );
 }
 
 function TablesBlock() {
-  const { lang, bi } = useI18n();
+  const { t, bi } = useI18n();
   return (
-    <Frame
-      title={lang === 'en' ? `Data model — ${tables.length} tables` : `Modelo de datos — ${tables.length} tablas`}
-      eyebrow={lang === 'en' ? 'src/data/schema.ts · supabase/schema.sql' : 'src/data/schema.ts · supabase/schema.sql'}
-      source={<Link to="/admin/tables">M-03</Link>}
-    >
+    <Frame title={t('manual.live.tables.title', { n: tables.length })} eyebrow="src/data/schema.ts · supabase/schema.sql" source={<Link to="/admin/tables">M-03</Link>}>
       {TABLE_GROUPS.map((g) => {
-        const list = tables.filter((t) => t.group === g.id);
+        const list = tables.filter((x) => x.group === g.id);
         if (!list.length) return null;
         return (
           <div key={g.id} className="live-group">
             <div className="live-group-head"><strong>{bi(g.label)}</strong><span className="muted small">{list.length}</span></div>
-            <div className="live-chips">{list.map((t) => <Chip key={t.name}>{t.name}<span className="live-cols">{tableRegistry[t.name].allColumns.length}</span></Chip>)}</div>
+            <div className="live-chips">{list.map((x) => <Chip key={x.name}>{x.name}<span className="live-cols">{tableRegistry[x.name].allColumns.length}</span></Chip>)}</div>
           </div>
         );
       })}
@@ -254,13 +230,13 @@ function TablesBlock() {
 }
 
 function TableBlock({ name }: { name?: string }) {
-  const { lang, bi } = useI18n();
+  const { t, bi } = useI18n();
   const def = name ? tableRegistry[name] : undefined;
-  if (!def) return <Unknown kind="table" arg={name} options={tables.map((t) => t.name)} />;
+  if (!def) return <Unknown kind="table" arg={name} options={tables.map((x) => x.name)} />;
   return (
     <Frame title={`${def.name} · ${bi(def.label)}`} eyebrow={bi(def.description)} source={<Link to={`/admin/tables/${def.name}`}>M-03</Link>}>
       <table className="live-table">
-        <thead><tr><th>{lang === 'en' ? 'Column' : 'Columna'}</th><th>{lang === 'en' ? 'Type' : 'Tipo'}</th><th>{lang === 'en' ? 'Notes' : 'Notas'}</th></tr></thead>
+        <thead><tr><th>{t('manual.live.table.column')}</th><th>{t('manual.live.table.type')}</th><th>{t('manual.live.table.notes')}</th></tr></thead>
         <tbody>
           {def.allColumns.map((c) => (
             <tr key={c.name}>
@@ -272,20 +248,20 @@ function TableBlock({ name }: { name?: string }) {
         </tbody>
       </table>
       <div className="live-rls">
-        <div className="eyebrow">{lang === 'en' ? 'Who may read / write' : 'Quién puede leer / escribir'}</div>
-        {def.rls?.length ? <ul>{def.rls.map((r) => <li key={r}>{r}</li>)}</ul> : <p className="muted small">{lang === 'en' ? 'No access contract written yet for this table.' : 'Esta tabla aún no tiene contrato de acceso escrito.'}</p>}
+        <div className="eyebrow">{t('manual.live.table.rls')}</div>
+        {def.rls?.length ? <ul>{def.rls.map((r) => <li key={r}>{r}</li>)}</ul> : <p className="muted small">{t('manual.live.table.noRls')}</p>}
       </div>
     </Frame>
   );
 }
 
 function RolesBlock() {
-  const { lang, bi } = useI18n();
+  const { t, bi } = useI18n();
   const routes = useMemo(() => getRoutes(), []);
   return (
-    <Frame title={lang === 'en' ? 'Roles and where they land' : 'Roles y dónde entran'} eyebrow="src/auth/roles.ts" source={<Link to="/docs/roles">docs/roles.md</Link>}>
+    <Frame title={t('manual.live.roles.title')} eyebrow="src/auth/roles.ts" source={<Link to="/docs/roles">docs/roles.md</Link>}>
       <table className="live-table">
-        <thead><tr><th>{lang === 'en' ? 'Role' : 'Rol'}</th><th><code>id</code></th><th>{lang === 'en' ? 'Home' : 'Entra en'}</th><th className="live-num">{lang === 'en' ? 'Routes' : 'Rutas'}</th></tr></thead>
+        <thead><tr><th>{t('manual.live.roles.role')}</th><th><code>id</code></th><th>{t('manual.live.roles.home')}</th><th className="live-num">{t('manual.live.roles.routes')}</th></tr></thead>
         <tbody>
           {ROLES.map((r) => (
             <tr key={r}>
@@ -302,14 +278,14 @@ function RolesBlock() {
 }
 
 function RoutesBlock({ surface }: { surface?: string }) {
-  const { lang, bi } = useI18n();
+  const { t, bi } = useI18n();
   const routes = useMemo(() => getRoutes(), []);
   if (!surface || !SURFACES.includes(surface as Surface)) return <Unknown kind="routes" arg={surface} options={SURFACES} />;
   const list = routes.filter((r) => r.surface === surface).sort((a, b) => a.path.localeCompare(b.path));
   return (
-    <Frame title={lang === 'en' ? `Screens of the ${surface} surface` : `Pantallas de la superficie ${surface}`} eyebrow={lang === 'en' ? `${list.length} routes · live route manifest` : `${list.length} rutas · manifiesto de rutas en vivo`} source={<Link to="/dev/specs">/#/dev/specs</Link>}>
+    <Frame title={t('manual.live.routes.title', { surface })} eyebrow={t('manual.live.routes.eyebrow', { n: list.length })} source={<Link to="/dev/specs">/#/dev/specs</Link>}>
       <table className="live-table">
-        <thead><tr><th>{lang === 'en' ? 'Code' : 'Código'}</th><th>{lang === 'en' ? 'Screen' : 'Pantalla'}</th><th>{lang === 'en' ? 'Route' : 'Ruta'}</th></tr></thead>
+        <thead><tr><th>{t('manual.live.routes.code')}</th><th>{t('manual.live.routes.screen')}</th><th>{t('manual.live.routes.route')}</th></tr></thead>
         <tbody>
           {list.map((r) => (
             <tr key={r.path}><td><code>{r.spec.code}</code></td><td>{bi(r.spec.name)}</td><td className="muted"><code>{`/#${r.path}`}</code></td></tr>
@@ -321,7 +297,7 @@ function RoutesBlock({ surface }: { surface?: string }) {
 }
 
 function Stats() {
-  const { lang } = useI18n();
+  const { t } = useI18n();
   const { rows: profiles } = useTable('profiles');
   const { rows: memberships } = useTable('memberships');
   const { rows: sessions } = useTable('class_sessions');
@@ -329,69 +305,54 @@ function Stats() {
   const { rows: bookings } = useTable('bookings');
   const now = Date.now();
   const week = sessions.filter((s) => {
-    const t = new Date(String(s.starts_at)).getTime();
-    return t >= now && t < now + 7 * 864e5;
+    const at = new Date(String(s.starts_at)).getTime();
+    return at >= now && at < now + 7 * MS.day;
   });
   const active = memberships.filter((m) => String(m.status) === 'active');
   const stats: [string, string][] = [
-    [lang === 'en' ? 'People with a profile' : 'Personas con perfil', String(profiles.length)],
-    [lang === 'en' ? 'Active memberships' : 'Membresías activas', String(active.length)],
-    [lang === 'en' ? 'Classes in the next 7 days' : 'Clases en los próximos 7 días', String(week.length)],
-    [lang === 'en' ? 'Active teachers' : 'Maestros activos', String(teachers.filter((t) => t.active !== false).length)],
-    [lang === 'en' ? 'Bookings on record' : 'Reservas registradas', String(bookings.length)],
+    [t('manual.live.stats.profiles'), String(profiles.length)],
+    [t('manual.live.stats.memberships'), String(active.length)],
+    [t('manual.live.stats.week'), String(week.length)],
+    [t('manual.live.stats.teachers'), String(teachers.filter((x) => x.active !== false).length)],
+    [t('manual.live.stats.bookings'), String(bookings.length)],
   ];
   return (
-    <Frame title={lang === 'en' ? 'The studio right now' : 'El estudio ahora mismo'} eyebrow={lang === 'en' ? 'Counted from the data layer at render time' : 'Contado en la capa de datos al renderizar'} source={<Link to="/admin">M-01</Link>}>
+    <Frame title={t('manual.live.stats.title')} eyebrow={t('manual.live.stats.eyebrow')} source={<Link to="/admin">M-01</Link>}>
       <div className="live-stats">{stats.map(([k, v]) => <div key={k} className="live-stat"><div className="live-stat-v">{v}</div><div className="live-stat-k">{k}</div></div>)}</div>
     </Frame>
   );
 }
 
+const KPI_KEYS = ['occupancy', 'noshow', 'classes'] as const;
+
 function Kpi({ name }: { name?: string }) {
-  const { lang, bi } = useI18n();
+  const { t } = useI18n();
   const { rows: sessions } = useTable('class_sessions');
   const { rows: bookings } = useTable('bookings');
   const past = sessions.filter((s) => String(s.status) === 'completed');
   const attended = bookings.filter((b) => String(b.status) === 'checked_in').length;
   const noShow = bookings.filter((b) => String(b.status) === 'no_show').length;
   const seats = past.length * tenant.studio.mats;
-  const KPIS: Record<string, { label: Bi; value: string; hint: Bi }> = {
-    occupancy: {
-      label: { es: 'Ocupación', en: 'Occupancy' },
-      value: seats ? `${Math.round((attended / seats) * 100)} %` : '—',
-      hint: { es: `asistentes / (${tenant.studio.mats} × clases dictadas)`, en: `attendees / (${tenant.studio.mats} × classes taught)` },
-    },
-    noshow: {
-      label: { es: 'No-show', en: 'No-show' },
-      value: bookings.length ? `${Math.round((noShow / bookings.length) * 100)} %` : '—',
-      hint: { es: 'reservas marcadas como no-show sobre el total', en: 'bookings marked no-show over the total' },
-    },
-    classes: {
-      label: { es: 'Clases dictadas', en: 'Classes taught' },
-      value: String(past.length),
-      hint: { es: 'sesiones con estado completed', en: 'sessions with status completed' },
-    },
-  };
-  const k = name ? KPIS[name] : undefined;
-  if (!k) return <Unknown kind="kpi" arg={name} options={Object.keys(KPIS)} />;
+  const k = name as typeof KPI_KEYS[number] | undefined;
+  if (!k || !KPI_KEYS.includes(k)) return <Unknown kind="kpi" arg={name} options={KPI_KEYS} />;
+  const value = k === 'occupancy' ? (seats ? `${Math.round((attended / seats) * 100)} %` : '—')
+    : k === 'noshow' ? (bookings.length ? `${Math.round((noShow / bookings.length) * 100)} %` : '—')
+    : String(past.length);
   return (
-    <Frame title={bi(k.label)} eyebrow={lang === 'en' ? 'KPI · M-01 dashboard' : 'KPI · panel M-01'} source={<Link to="/admin">M-01</Link>}>
-      <p className="live-big">{k.value}</p>
-      <p className="muted small">{bi(k.hint)}</p>
+    <Frame title={t(`manual.live.kpi.${k}`)} eyebrow={t('manual.live.kpi.eyebrow')} source={<Link to="/admin">M-01</Link>}>
+      <p className="live-big">{value}</p>
+      <p className="muted small">{t(`manual.live.kpi.${k}.hint`, { mats: tenant.studio.mats })}</p>
     </Frame>
   );
 }
 
 /** A directive whose name or argument the block does not know: says so and lists what exists. */
 function Unknown({ kind, arg, options }: { kind: string; arg?: string; options: readonly string[] }) {
-  const { lang } = useI18n();
+  const { t } = useI18n();
   return (
     <div className="live live-unknown">
-      <p>
-        <code>{`{{${kind}${arg ? `:${arg}` : ''}}}`}</code>{' '}
-        {lang === 'en' ? 'is not a directive this manual can render.' : 'no es una directiva que este manual sepa renderizar.'}
-      </p>
-      <p className="muted small">{lang === 'en' ? 'Available:' : 'Disponibles:'} {options.join(', ')}</p>
+      <p><code>{`{{${kind}${arg ? `:${arg}` : ''}}}`}</code> {t('manual.live.unknown')}</p>
+      <p className="muted small">{t('manual.live.available')} {options.join(', ')}</p>
     </div>
   );
 }
@@ -402,6 +363,7 @@ const KINDS = ['pricing', 'tenant', 'policy', 'tables', 'table', 'roles', 'route
  * One live-data block for the operations manual. A chapter writes `{{pricing:membresia}}` and this
  * renders the current value from the app's own sources — pricing.ts, tenant.ts, M-08 settings, the
  * table registry, the role list, the route manifest and the data layer — so the manual cannot go stale.
+ * Every label is a `manual.live.*` string (src/modules/ops-manual/strings.ts).
  */
 export function LiveBlock({ kind, arg }: LiveBlockProps) {
   switch (kind) {

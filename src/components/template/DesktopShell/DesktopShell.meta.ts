@@ -7,7 +7,7 @@ export default defineMeta({
   props: [
     { name: 'surfaces', type: 'Surface[]', required: true, description: { es: 'Superficies cuyas rutas con nav se listan (el primer valor es la clave de persistencia).', en: 'Surfaces whose nav routes are listed (the first one is the persistence key).' } },
     { name: 'routes', type: 'RouteDef[]', required: true, description: { es: 'Normalmente getRoutes().', en: 'Usually getRoutes().' } },
-    { name: 'title', type: 'string', required: true, description: { es: 'Etiqueta junto al logo del sidebar.', en: 'Label beside the sidebar wordmark.' } },
+    { name: 'titleKey', type: 'string', required: true, description: { es: 'Clave i18n de la etiqueta junto al logo del sidebar (core.nav.group.staff…).', en: 'i18n key of the label beside the sidebar wordmark (core.nav.group.staff…).' } },
   ],
   states: [
     'expanded (240 px)',

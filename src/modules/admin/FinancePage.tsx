@@ -4,7 +4,7 @@ import { useI18n } from '../../i18n/I18nProvider';
 import { useSession } from '../../auth/SessionProvider';
 import { useData, useTable } from '../../data/DataContext';
 import type { BaseRow, PaymentRow, PlanRow } from '../../data/schema';
-import { formatCOP, formatDate, formatDateTime } from '../../i18n/format';
+import { formatCOP, formatDate, formatDateTime, MS } from '../../i18n/format';
 import { StatTile } from '../../components/molecule/StatTile/StatTile';
 import { Card } from '../../components/molecule/Card/Card';
 import { Button } from '../../components/atom/Button/Button';
@@ -41,14 +41,14 @@ export function FinancePage() {
   const setRange = (r: Range) => setPicked(r);
   const [invStatus, setInvStatus] = useState<'all' | 'approved' | 'pending' | 'refunded'>('all');
   const { runs, linesOf } = usePayroll();
-  const since = range === 'all' ? 0 : Date.now() - Number(range.replace('d', '')) * 86400e3;
+  const since = range === 'all' ? 0 : Date.now() - Number(range.replace('d', '')) * MS.day;
   const inRange = useMemo(() => payments.filter((p) => new Date(p.paid_at ?? p.created_at).getTime() >= since), [payments, since]);
   const approved = inRange.filter((p) => p.status === 'approved');
   const revenue = approved.reduce((a, p) => a + p.amount, 0);
   const pending = inRange.filter((p) => p.status === 'pending');
   const refunded = inRange.filter((p) => p.status === 'refunded');
   const planMap = new Map(plans.map((p) => [p.id, p]));
-  const byProduct = useMemo(() => { const m = new Map<string, number>(); for (const p of approved) { const k = p.plan_id ?? '—'; m.set(k, (m.get(k) ?? 0) + p.amount); } return [...m.entries()].map(([id, value]) => ({ id, label: planMap.get(id) ? bi({ es: planMap.get(id)!.name_es, en: planMap.get(id)!.name_en }) : id, value })).sort((a, b) => b.value - a.value); }, [approved, planMap, bi]);
+  const byProduct = useMemo(() => { const m = new Map<string, number>(); for (const p of approved) { const k = p.plan_id ?? 'special'; m.set(k, (m.get(k) ?? 0) + p.amount); } return [...m.entries()].map(([id, value]) => ({ id, label: planMap.get(id) ? bi({ es: planMap.get(id)!.name_es, en: planMap.get(id)!.name_en }) : id === 'special' ? t('admin.finance.product.special') : id, value })).sort((a, b) => b.value - a.value); }, [approved, planMap, bi, t]);
   const byMethod = useMemo(() => { const m = new Map<string, number>(); for (const p of approved) m.set(p.method, (m.get(p.method) ?? 0) + p.amount); return [...m.entries()].map(([id, value]) => ({ id, label: t(`admin.finance.method.${id}`), value })).sort((a, b) => b.value - a.value); }, [approved, t]);
   const wompiShare = revenue ? Math.round((approved.filter((p) => p.provider === 'wompi').reduce((a, p) => a + p.amount, 0) / revenue) * 100) : 0;
   const canRefund = can('payments.refund');
@@ -77,19 +77,19 @@ export function FinancePage() {
   const payCols: DataTableColumn<PaymentRow>[] = [
     { key: 'paid_at', label: t('admin.finance.col.when'), render: (p) => <span className="mono small">{formatDateTime(p.paid_at ?? p.created_at, lang)}</span> },
     { key: 'user_id', label: t('admin.finance.col.member'), render: (p) => (p.user_id ? byId.get(p.user_id)?.name ?? p.user_id : <span className="muted">{t('admin.finance.col.contact')}</span>) },
-    { key: 'plan_id', label: t('admin.finance.col.product'), render: (p) => planMap.get(p.plan_id ?? '')?.name_es ?? '—' },
+    { key: 'plan_id', label: t('admin.finance.col.product'), render: (p) => { const pl = planMap.get(p.plan_id ?? ''); return pl ? bi({ es: pl.name_es, en: pl.name_en }) : <span className="muted">{t('admin.finance.product.special')}</span>; } },
     { key: 'amount', label: t('admin.finance.col.amount'), align: 'right', render: (p) => formatCOP(p.amount, lang) },
-    { key: 'method', label: t('admin.finance.col.method'), render: (p) => `${t(`admin.finance.method.${p.method}`)} · ${p.provider}` },
-    { key: 'status', label: t('admin.finance.col.status'), render: (p) => <Badge tone={toneForStatus(p.status)}>{p.status}</Badge> },
-    { key: 'invoice', label: 'DIAN', sortable: false, render: (p) => { const inv = invByPayment.get(p.id); return inv ? <span className="xs mono">{inv.number}{inv.dian_cufe ? ` · ${inv.dian_cufe.slice(0, 10)}…` : ` · ${t('admin.finance.noCufe')}`}</span> : <span className="muted">—</span>; } },
+    { key: 'method', label: t('admin.finance.col.method'), render: (p) => `${t(`admin.finance.method.${p.method}`)} · ${t(`admin.finance.provider.${p.provider}`)}` },
+    { key: 'status', label: t('admin.finance.col.status'), render: (p) => <Badge tone={toneForStatus(p.status)}>{t(`admin.finance.status.${p.status}`)}</Badge> },
+    { key: 'invoice', label: 'DIAN', sortable: false, render: (p) => { const inv = invByPayment.get(p.id); return inv ? <span className="xs mono" title={inv.dian_cufe ?? t('admin.finance.noCufe')}>{inv.number}{inv.dian_cufe ? ` · ${inv.dian_cufe.slice(0, 8)}…` : ''}</span> : <span className="muted">—</span>; } },
     ...(canRefund ? [{ key: 'actions', label: '', sortable: false, render: (p: PaymentRow) => p.status === 'approved' ? <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); refund(p); }}>{t('admin.finance.refund')}</Button> : null }] : []),
   ];
   const invCols: DataTableColumn<InvoiceRow>[] = [
     { key: 'number', label: t('admin.finance.col.invoice'), mono: true },
     { key: 'issued_at', label: t('admin.finance.col.when'), render: (i) => <span className="mono small">{formatDateTime(i.issued_at, lang)}</span> },
-    { key: 'subtotal', label: 'Subtotal', align: 'right', render: (i) => formatCOP(i.subtotal, lang) },
+    { key: 'subtotal', label: t('core.common.subtotal'), align: 'right', render: (i) => formatCOP(i.subtotal, lang) },
     { key: 'tax', label: `IVA ${settings.tax.ivaPct}%`, align: 'right', render: (i) => formatCOP(i.tax, lang) },
-    { key: 'total', label: 'Total', align: 'right', render: (i) => formatCOP(i.total, lang) },
+    { key: 'total', label: t('core.common.total'), align: 'right', render: (i) => formatCOP(i.total, lang) },
     { key: 'dian_cufe', label: t('admin.finance.col.cufe'), render: (i) => i.dian_cufe ? <code className="xs">{i.dian_cufe}</code> : <Badge tone={settings.tax.eInvoicing ? 'warn' : 'neutral'}>{settings.tax.eInvoicing ? t('admin.finance.cufe.pending') : t('admin.finance.cufe.off')}</Badge> },
   ];
 
@@ -97,7 +97,7 @@ export function FinancePage() {
     <div className="stack">
       <div className="page-head">
         <div><h1>{t('admin.finance.title')}</h1><p className="muted small">{t('admin.finance.subtitle')}</p></div>
-        <div className="row" role="tablist">{(['7d', '15d', '30d', '90d', 'all'] as Range[]).map((r) => <Chip key={r} selected={range === r} onClick={() => setRange(r)}>{t(`admin.finance.range.${r}`)}</Chip>)}</div>
+        <div className="row wrap" role="tablist">{(['7d', '15d', '30d', '90d', 'all'] as Range[]).map((r) => <Chip key={r} selected={range === r} onClick={() => setRange(r)}>{t(`admin.finance.range.${r}`)}</Chip>)}</div>
       </div>
       {loading && payments.length === 0 && <EmptyState tone="loading" title={t('core.common.loading')} />}
       <div className="grid grid-4">
@@ -123,7 +123,7 @@ export function FinancePage() {
       <Card tone="muted" title={t('admin.finance.payouts')} eyebrow="M-09a"
         actions={<div className="row wrap"><Badge tone="warn">{t('admin.payouts.simulated')}</Badge><Link to="/admin/finance/payouts"><Button size="sm" variant="ghost">{t('admin.finance.payouts.open')}</Button></Link></div>}>
         <div className="grid grid-3">
-          <StatTile label={t('admin.finance.payouts.next')} value={formatCOP(nextRun?.total ?? 0, lang)} hint={nextRun ? t('admin.finance.payouts.next.hint', { period: formatDate(`${nextRun.period_start}T12:00:00`, lang, { month: 'long' }), n: new Set(linesOf(nextRun.id).map((l) => l.teacher_id)).size }) : t('admin.finance.payouts.next.none')} />
+          <StatTile label={t('admin.finance.payouts.next')} value={formatCOP(nextRun?.total ?? 0, lang)} hint={nextRun ? t('admin.finance.payouts.next.hint', { period: formatDate(nextRun.period_start, lang, { month: 'long' }), n: new Set(linesOf(nextRun.id).map((l) => l.teacher_id)).size }) : t('admin.finance.payouts.next.none')} />
           <StatTile label={t('admin.finance.payouts.pending')} value={formatCOP(pendingRuns.reduce((a, r) => a + r.total, 0), lang)} hint={t('admin.finance.payouts.pending.hint', { n: pendingRuns.length })} trend={pendingRuns.length ? 'up' : 'flat'} />
           <StatTile label={t('admin.finance.payouts.quarter')} value={formatCOP(paidQuarter.reduce((a, r) => a + r.total, 0), lang)} hint={t('admin.finance.payouts.quarter.hint', { n: paidQuarter.length })} />
         </div>

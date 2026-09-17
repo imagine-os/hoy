@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { useI18n } from '../../i18n/I18nProvider';
-import { useContact, waLinkFor } from '../admin/settings';
+import { useContact } from '../admin/settings';
 import { useTheme } from '../../design/ThemeProvider';
 import { tenant } from '../../tenant/tenant';
 import { taglines } from '../../tenant/brand';
@@ -9,6 +9,7 @@ import { Wordmark } from '../../components/atom/Wordmark/Wordmark';
 import { LangToggle } from '../../components/molecule/LangToggle/LangToggle';
 import { Button } from '../../components/atom/Button/Button';
 import './site.css';
+import { waLink } from '../../i18n/format';
 
 const NAV = [
   ['/site/about', 'about'], ['/site/classes', 'classes'], ['/site/schedule', 'schedule'],
@@ -21,11 +22,11 @@ const NAV = [
  * number the shell rendered with (tenant.ts until M-08a is saved).
  */
 let currentWhatsapp: string = tenant.contact.whatsapp;
-export const waHref = (message?: string) => waLinkFor(currentWhatsapp, message);
+export const waHref = (message?: string) => waLink(currentWhatsapp, message);
 export function useWaHref() {
   const contact = useContact();
   currentWhatsapp = contact.whatsapp;
-  return (message?: string) => waLinkFor(contact.whatsapp, message);
+  return (message?: string) => waLink(contact.whatsapp, message);
 }
 
 /** Public website chrome: header with nav + a footer that carries hours, address and social. */
@@ -41,14 +42,14 @@ export function SiteShell({ children }: { children: ReactNode }) {
       <header className="site-head">
         <div className="container site-head-in">
           <Link to="/site" className="site-brand" onClick={() => setOpen(false)}><Wordmark height={30} /></Link>
-          <nav className={`site-nav ${open ? 'is-open' : ''}`} aria-label="Site">
+          <nav className={`site-nav ${open ? 'is-open' : ''}`} aria-label={t('site.nav.label')}>
             {NAV.map(([to, k]) => <NavLink key={to} to={to} className={({ isActive }) => (isActive ? 'is-active' : '')} onClick={() => setOpen(false)}>{t(`site.nav.${k}`)}</NavLink>)}
           </nav>
           <div className="site-actions">
             <LangToggle size="sm" />
             <button type="button" className="site-iconbtn" onClick={toggleTheme} aria-label={t('core.theme.toggle')}>{theme === 'dark' ? '☾' : '☀'}</button>
             <Link to="/auth/sign-in"><Button size="sm">{t('site.nav.signin')}</Button></Link>
-            <button type="button" className="site-burger" onClick={() => setOpen((o) => !o)} aria-label="Menu" aria-expanded={open}>☰</button>
+            <button type="button" className="site-burger" onClick={() => setOpen((o) => !o)} aria-label={t('core.shell.menu')} aria-expanded={open}>☰</button>
           </div>
         </div>
       </header>

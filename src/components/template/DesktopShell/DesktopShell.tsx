@@ -21,7 +21,8 @@ import './DesktopShell.css';
 export interface DesktopShellProps {
   surfaces: Surface[];
   routes: RouteDef[];
-  title: string;
+  /** i18n key of the label beside the sidebar wordmark (core.nav.group.staff, core.nav.docs…). */
+  titleKey: string;
   children: ReactNode;
 }
 
@@ -56,8 +57,9 @@ function useNarrow() {
  * Top bar: sidebar toggle · wordmark · page name + code · global search · language, theme, notifications,
  * user switcher, dev mode and the spec chip.
  */
-export function DesktopShell({ surfaces, routes, title, children }: DesktopShellProps) {
+export function DesktopShell({ surfaces, routes, titleKey, children }: DesktopShellProps) {
   const { t, bi, dict } = useI18n();
+  const title = t(titleKey);
   const { user, role, isSuperAdmin, devMode, setDevMode, hasRole, can } = useSession();
   const { theme, toggleTheme } = useTheme();
   const { pathname } = useLocation();
@@ -109,10 +111,10 @@ export function DesktopShell({ surfaces, routes, title, children }: DesktopShell
 
   const isRoot = (to: string) => to.split('/').filter(Boolean).length <= 1;
   const isOn = (to: string) => pathname === to || (!isRoot(to) && pathname.startsWith(`${to}/`));
-  const activeGroup = useMemo(() => {
-    const hit = [...items].filter((i) => isOn(i.to)).sort((a, b) => b.to.length - a.to.length)[0];
-    return hit?.group ?? '';
-  }, [items, pathname]); // eslint-disable-line react-hooks/exhaustive-deps
+  // The most specific nav item on the current path is the only active one: /admin/crm/deletions lights
+  // "Eliminaciones", not "CRM" as well.
+  const activeTo = useMemo(() => [...items].filter((i) => isOn(i.to)).sort((a, b) => b.to.length - a.to.length)[0]?.to ?? '', [items, pathname]);
+  const activeGroup = useMemo(() => items.find((i) => i.to === activeTo)?.group ?? '', [items, activeTo]);
 
   const current = useMemo(() => allowed.find((r) => matchPath({ path: r.path, end: true }, pathname)) ?? null, [allowed, pathname]);
 
@@ -157,7 +159,7 @@ export function DesktopShell({ surfaces, routes, title, children }: DesktopShell
                 {(open || collapsed) && items.filter((i) => i.group === g).map(({ to, route: r }) => (
                   <NavLink
                     key={`${r.path}-${to}`} to={to} end={isRoot(to)}
-                    className={() => `deskshell-link ${isOn(to) ? 'is-active' : ''}`}
+                    className={() => `deskshell-link ${to === activeTo ? 'is-active' : ''}`}
                     title={collapsed ? t(r.nav!.labelKey) : undefined}
                     onClick={() => setDrawer(false)}
                   >
@@ -192,14 +194,14 @@ export function DesktopShell({ surfaces, routes, title, children }: DesktopShell
       </aside>
       <div className="deskshell-col">
         <TopBar
-          brand homeTo="/" title={current ? bi(current.spec.name) : title} code={current?.spec.code}
+          brand homeTo="/" title={current ? (current.nav ? t(current.nav.labelKey) : bi(current.spec.name)) : title} code={current?.spec.code}
           leading={<button type="button" className="topbar-lead" onClick={toggleSidebar} aria-label={sidebarLabel} aria-expanded={narrow ? drawer : !collapsed} title={sidebarLabel}>☰</button>}
           center={<GlobalSearch items={searchItems} />}
           actions={
             <>
               <LangToggle size="sm" />
               <button type="button" className="deskshell-iconbtn" onClick={toggleTheme} aria-label={t('core.theme.toggle')} title={t('core.theme.toggle')}>{theme === 'dark' ? '☾' : '☀'}</button>
-              <NotificationBell count={unread} to={can('members.read') ? '/admin/whatsapp' : undefined} />
+              {allowed.some((r) => r.path === '/admin/whatsapp') && <NotificationBell count={unread} to="/admin/whatsapp" />}
               <div className="deskshell-rs"><RoleSwitcher compact /></div>
               {isSuperAdmin && <span className="deskshell-devtoggle" title={t('core.dev.mode')}><Toggle size="sm" checked={devMode} onChange={setDevMode} label={t('core.dev.mode')} /></span>}
               {devMode && current && (

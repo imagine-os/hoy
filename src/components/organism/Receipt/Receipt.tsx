@@ -29,7 +29,7 @@ export interface ReceiptProps {
 
 /** Printable counter receipt: studio, number, lines, IVA, total, method and the DIAN reference slot. */
 export function Receipt({ studio, number, issuedAt, customer, contact, lines, subtotal, tax, taxLabel, total, method, status, takenBy, dianRef, note, printLabel }: ReceiptProps) {
-  const { lang } = useI18n();
+  const { t, lang } = useI18n();
   return (
     <div className="receipt">
       <header className="receipt-head">
@@ -43,9 +43,9 @@ export function Receipt({ studio, number, issuedAt, customer, contact, lines, su
       <table className="receipt-lines">
         <tbody>
           {lines.map((l, i) => <tr key={i}><td>{l.label}</td><td className="receipt-amt">{formatCOP(l.amount, lang)}</td></tr>)}
-          <tr className="receipt-sub"><td>Subtotal</td><td className="receipt-amt">{formatCOP(subtotal, lang)}</td></tr>
+          <tr className="receipt-sub"><td>{t('core.common.subtotal')}</td><td className="receipt-amt">{formatCOP(subtotal, lang)}</td></tr>
           <tr className="receipt-sub"><td>{taxLabel}</td><td className="receipt-amt">{formatCOP(tax, lang)}</td></tr>
-          <tr className="receipt-total"><td>Total</td><td className="receipt-amt">{formatCOP(total, lang)}</td></tr>
+          <tr className="receipt-total"><td>{t('core.common.total')}</td><td className="receipt-amt">{formatCOP(total, lang)}</td></tr>
         </tbody>
       </table>
       <div className="receipt-foot small">
