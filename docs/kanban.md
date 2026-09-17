@@ -33,3 +33,31 @@ _Updated every turn. Codes reference `src/specs/canvasSpecs.ts`._
 - Public website scaffold (home, about, modalities, schedule, teachers, plans, contact, legal)
 - Testing hub (`/#/`)
 - Module stubs: customer (C-01 real), teacher, staff, admin, dev
+
+## Docs & content
+
+### Backlog
+- Canvas audit #9/#30: prune the 32 orphan dictionary keys (n_waiver, wv_sign, at_seg, at_nav, ph_qr, door_scan…) from `reference/canvas/strings.json` consumers
+- Canvas audit #22: S-04 IVA/total computed from `src/tenant/pricing.ts` instead of typed figures (S-04)
+- Canvas audit #24/#25: register in D-02 the nine components screens use but the library lacks (segmented switch C-02, FAQ accordion row C-14/C-15, five-star rating C-10, now/next/later strip + member search + teacher arrival chips S-02, gift design picker C-17, intention tile A-05, breathing rings A-01, progress dots A-03); fix D-02 copy counts (49 sections, 4-tab dock)
+- Canvas audit #26: drop scanner data/API (`face_templates`, `POST /checkins/scan`) from the S-02 spec
+- Canvas audit #27: amend plan phase-3 text that still lists check-in and front desk (K-01)
+- Canvas audit #28: date the v0.1 decision entries in the canvas changelog (K-01)
+- Canvas audit #33: add `data` and `roles` to the C-08b spec
+- Full screenshot pass (`npm run screenshots`) after the customer and staff/admin passes merge; commit PNGs; `docs/pages/<code>.md` for every routed code (`node scripts/gen-page-doc.mjs`)
+- Resolve the 17 owner decisions listed at `/#/manual/decisions` (ROADMAP §E) and update the chapters
+- Remove the C-07b and 'C-14 / C-15' compatibility aliases from `scripts/gen-specs.mjs` once `/app/credits` and `/app/faq` stubs are replaced (C-07b, C-14, C-15)
+- Ops manual: replace `[screenshot: …]` placeholders (12 per language) with real captures (K-03)
+
+### Doing
+- (none)
+
+### Done
+- Operations manual: 11 ES + 11 EN chapters in `docs/ops-manual/`, bilingual viewer with chapter sidebar, callouts, placeholders, prev/next, print (K-03)
+- Decisions pending page auto-extracted from the manual (K-04)
+- Canvas v1.5 installed; `CANVAS-AUDIT.md`; `scripts/extract-canvas.mjs`; specs/strings regenerated; C-02b, C-14, C-15 separate; C-07b retired with alias (D-03)
+- `docs/flow-map.md` with routes per code
+- Docs viewer: grouped sidebar, kanban lanes × columns, changelog newest first, prompt | response, screenshot gallery, mobile picker (K-02); knowledgebase reuses the renderers (K-01)
+- MarkdownViewer: callouts, screenshot placeholders, `components` prop (D-02)
+- Screenshot rules rewritten; `screenshots.mjs` new naming, `--only`, `--label`; `docs/pages` template + generator
+- ROADMAP.md (P1–P7, DoD, how-to, 20 open decisions) and README.md (seven perspectives)
