@@ -74,7 +74,7 @@ liquidan quincenalmente, y ese rango mueve tanto los indicadores como la tabla d
    escritos.
 4. El extracto es el documento que resuelve una discusión: si no está ahí, no se pagó.
 
-[screenshot: S-03 — extracto de nómina del maestro con clases, tarifa y ajustes]
+![Extracto del maestro en S-03](../../screenshots/S-03/es-390-payroll.jpg "S-03 · /teach/payroll")
 
 ## 6. Las tarifas
 La tarifa por clase vive en el perfil del maestro, no en una hoja aparte:

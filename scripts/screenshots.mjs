@@ -2,7 +2,9 @@
 // plus light/dark for key pages. Output: docs/screenshots/<code>/<lang>-<width>[-dark][-<label>].jpg
 // Usage: npm run screenshots [-- --smoke] [-- --only=/docs,/manual] [-- --label=before|after] [-- --quality=72]
 //   --smoke        1280/es only, no files, just console errors (exit 1 when anything throws)
-//   --only=a,b     only routes whose path starts with one of the prefixes
+//   --only=a,b     only routes whose path starts with one of the prefixes; a trailing $ means an
+//                  exact path (--only=/manual$ captures the manual cover without its chapter routes,
+//                  which share the K-03 code and would otherwise overwrite the capture)
 //   --label=before writes <lang>-<width>[-dark]-before.jpg next to the current capture (before/after pairs
 //                  for visual changes; see docs/rules/documentation.md)
 //   --quality=N    JPEG quality (default 72). JPEG keeps the repo and the Pages bundle small; PNG was ~3× larger.
@@ -23,7 +25,7 @@ const QUALITY = Number(args.find((a) => a.startsWith('--quality='))?.slice(10) ?
 const PORT = 4173;
 const BASE = `http://localhost:${PORT}/#`;
 export const KEY_PAGES = new Set(['HUB-01', 'W-01', 'C-01', 'S-02', 'M-01', 'M-03', 'D-02', 'K-03']);
-const PARAMS = { ':table': 'class_sessions', ':pageCode': 'C-01', ':id': 'ses_demo', ':kind': 'terms', ':chapter': '03-recepcion', ':code': 'C-01', ':slug': 'hot-yoga' };
+const PARAMS = { ':table': 'class_sessions', ':pageCode': 'C-01', ':id': 'ses_demo', ':kind': 'terms', ':chapter': '03-modelo-de-valor', ':code': 'C-01', ':slug': 'hot-yoga' };
 export const EXT = 'jpg';
 export const fileName = (lang, width, theme, label = '') => `${lang}-${width}${theme === 'dark' ? '-dark' : ''}${label ? `-${label}` : ''}.${EXT}`;
 export const MANIFEST = new URL('../docs/screenshots/routes.json', import.meta.url);
@@ -55,7 +57,9 @@ async function fetchManifest(browser) {
   return routes.filter((r, i, a) => a.findIndex((x) => x.path === r.path) === i && !r.path.includes('*'));
 }
 
-const inOnly = (r) => !ONLY.length || ONLY.some((p) => r.path === p || r.path.startsWith(p.endsWith('/') ? p : `${p}/`) || r.path === p.replace(/\/$/, ''));
+const inOnly = (r) => !ONLY.length || ONLY.some((p) => (p.endsWith('$')
+  ? r.path === p.slice(0, -1)
+  : r.path === p || r.path.startsWith(p.endsWith('/') ? p : `${p}/`) || r.path === p.replace(/\/$/, '')));
 
 async function main() {
   const server = spawn(process.execPath, [new URL('../node_modules/vite/bin/vite.js', import.meta.url).pathname, 'preview', '--port', String(PORT), '--strictPort'], { stdio: 'pipe' });

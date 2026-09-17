@@ -61,7 +61,7 @@ horario. Perfil: S-03 → Perfil (entra a revisión de coordinación antes de pu
 2. El corte cierra el 15 de cada mes; revisa antes y reporta diferencias a coordinación con la clase y
    fecha. El proceso completo del lado de finanzas está en `16`.
 
-[screenshot: S-03 — historial de nómina del maestro (la subpágina no tiene captura propia todavía)]
+![Nómina del maestro en S-03](../../screenshots/S-03/es-1280-payroll.jpg "S-03 · /teach/payroll")
 
 La tarifa por clase y la fecha de pago todavía no están definidas: la decisión está marcada en el
 capítulo `16`, del lado de finanzas. Mientras no se defina, lo que ves en tu historial es un cálculo.

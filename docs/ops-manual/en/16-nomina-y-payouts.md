@@ -73,7 +73,7 @@ settle biweekly, and that range drives both the KPI tiles and the invoice table.
    file, a print view and a WhatsApp link to finance with the period and the total already written.
 4. The statement is the document that settles an argument: if it isn't there, it wasn't paid.
 
-[screenshot: S-03 — the teacher payroll statement with classes, rate and adjustments]
+![The teacher’s statement in S-03](../../screenshots/S-03/en-390-payroll.jpg "S-03 · /teach/payroll")
 
 ## 6. The rates
 The per-class rate lives on the teacher's profile, not on a separate sheet:

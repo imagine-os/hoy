@@ -61,7 +61,7 @@ schedule. Profile: S-03 → Profile (goes to coordination review before publishi
 2. The run closes on the 15th each month; review before then and report differences to coordination
    with the class and date. The full finance-side process is in `16`.
 
-[screenshot: S-03 — the teacher's payroll history]
+![The teacher’s payroll in S-03](../../screenshots/S-03/en-1280-payroll.jpg "S-03 · /teach/payroll")
 
 The per-class rate and the pay date are not defined yet: that decision is flagged in chapter `16`, on
 the finance side. Until it is settled, what you see in your history is a calculation.
