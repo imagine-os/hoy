@@ -73,4 +73,9 @@ export const strings: StringTable = {
   'teacher.profile.review': { es: 'Los cambios pasan por coordinación antes de publicarse.', en: 'Changes go through the coordinator before publishing.' },
   'teacher.profile.saved': { es: 'Enviado a revisión.', en: 'Sent for review.' },
   'teacher.profile.submit': { es: 'Enviar cambios', en: 'Submit changes' },
+
+  'teacher.class.reviews': { es: 'Reseñas de esta clase', en: 'Reviews of this class' },
+  'teacher.class.reviews.count': { es: '{n} reseñas', en: '{n} reviews' },
+  'teacher.class.reviews.none': { es: 'Sin reseñas todavía', en: 'No reviews yet' },
+  'teacher.class.reviews.note': { es: 'Promedio de las reseñas de los alumnos (C-10). Solo lectura y anónimo salvo que el alumno firme.', en: 'Average of the students’ reviews (C-10). Read-only and anonymous unless the student signs it.' },
 };

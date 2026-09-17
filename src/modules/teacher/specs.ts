@@ -17,10 +17,10 @@ export const S03Class = defineSpec({
   ...base,
   name: { es: 'Clase · lista y asistencia', en: 'Class · roster & attendance' },
   purpose: { es: 'Marcar asistencia desde el mat y dejar notas de la clase.', en: 'Mark attendance from the mat and leave class notes.' },
-  layout: ['ClassHeader', 'AttendanceWindow', 'RosterSheet → attendance marks', 'ClassNotes'],
-  data,
+  layout: ['ClassHeader', 'AttendanceWindow', 'RosterSheet → attendance marks', 'ReviewSummary (read-only)', 'ClassNotes'],
+  data: [...data, 'reviews'],
   states: ['Attendance open (T−15m … T+2h)', 'Attendance locked: read-only with reason', 'Coordinator override', 'Class not found'],
-  notes: ['Marks write bookings.status (checked_in / no_show) and an audit_log row.', 'Notes are audit_log rows (action session.note) so they appear in M-07.'],
+  notes: ['Marks write bookings.status (checked_in / no_show) and an audit_log row.', 'Notes are audit_log rows (action session.note) so they appear in M-07.', 'Reviews are read-only here: the average, count and tags of the `reviews` rows for this session (C-10). Anonymous reviews never show who wrote them.'],
 });
 
 /** /teach/payroll — classes × rate, placeholder until Wompi payroll. */

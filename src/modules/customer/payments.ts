@@ -68,3 +68,17 @@ export async function recordPayment(data: DataProvider, input: { userId: string;
   }
   return payment;
 }
+
+/**
+ * INTEGRATION SEAM — Wompi tokenisation (C-05 "save this method").
+ * Today it fabricates a demo reference so `payment_methods.token_ref` is never a real token.
+ * With Wompi live, the widget returns `tokenized_card.token` (or the Nequi/PSE mandate) and this
+ * function resolves with it; the row shape and every page stay the same.
+ */
+export async function wompiTokenise(input: { kind: ElectronicMethod }): Promise<{ tokenRef: string; brand: string; last4: string | null; expires: string | null }> {
+  await wait(700);
+  const n = Math.random().toString().slice(2, 6);
+  if (input.kind === 'card') return { tokenRef: `tok_demo_${n}${n}`, brand: Math.random() < 0.5 ? 'Visa' : 'Mastercard', last4: n, expires: '12/29' };
+  if (input.kind === 'nequi') return { tokenRef: `tok_demo_nequi_${n}`, brand: 'Nequi', last4: null, expires: null };
+  return { tokenRef: `tok_demo_pse_${n}`, brand: 'Bancolombia', last4: null, expires: null };
+}

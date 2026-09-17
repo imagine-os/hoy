@@ -45,7 +45,8 @@ begin new.updated_at = now(); return new; end $$;
 for (const t of tables) {
   const cols = [...BASE_COLUMNS, ...t.columns].map(col);
   // enum check for tenant reference: tenants.tenant_id references itself; keep as plain uuid
-  sql += `-- ${t.group} · ${t.description.en}\ncreate table if not exists public.${t.name} (\n${cols.join(',\n')}\n);\n`;
+  const rls = (t.rls ?? []).map((n) => `--   · ${n}`).join('\n');
+  sql += `-- ${t.group} · ${t.description.en}\n${rls ? `-- access:\n${rls}\n` : ''}create table if not exists public.${t.name} (\n${cols.join(',\n')}\n);\n`;
   sql += `create index if not exists ${t.name}_tenant_idx on public.${t.name}(tenant_id);\n`;
   for (const c of t.columns.filter((c) => c.references)) sql += `create index if not exists ${t.name}_${c.name}_idx on public.${t.name}(${c.name});\n`;
   sql += `create trigger ${t.name}_touch before update on public.${t.name} for each row execute function public.touch_updated_at();\n`;
@@ -97,6 +98,7 @@ for (const g of TABLE_GROUPS) {
   for (const t of tables.filter((x) => x.group === g.id)) {
     md += `\n#### \`${t.name}\`\n${t.description.en}  \n_${t.description.es}_\n\n| column | type | notes |\n| --- | --- | --- |\n`;
     for (const c of [...BASE_COLUMNS, ...t.columns]) md += `| \`${c.name}\` | ${c.type}${c.enum ? ` (${c.enum.join(' \\| ')})` : ''}${c.nullable ? ', null' : ''} | ${c.references ? `→ \`${c.references}\` ` : ''}${c.description ?? ''} |\n`;
+    if (t.rls?.length) md += `\n**Who may read / write**\n${t.rls.map((n) => `- ${n}`).join('\n')}\n`;
   }
 }
 md += `\n## Seed data (\`src/data/seed/\`)

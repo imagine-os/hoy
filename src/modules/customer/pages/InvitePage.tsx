@@ -13,33 +13,30 @@ import { Notice } from '../../../components/molecule/Notice/Notice';
 import { Wordmark } from '../../../components/atom/Wordmark/Wordmark';
 import { ClassCard } from '../../../components/organism/ClassCard/ClassCard';
 import { ListGroup, ListRow } from '../../../components/molecule/ListRow/ListRow';
-import { useLocalPref, useSessionJoined } from '../hooks';
+import { useMyInvites, useSessionJoined } from '../hooks';
 import { policy } from '../policy';
 import { PageHead, movementOf, roomName, shareText, teacherName, waLink } from '../ui';
 
-interface Invite { id: string; to: string; channel: 'whatsapp' | 'email' | 'link'; status: 'sent' | 'opened' | 'booked' | 'attended'; at: string; sessionId: string | null }
-
-/** C-16 Invite a guest — make word of mouth mechanical. */
+/** C-16 Invite a guest — make word of mouth mechanical. Every send is a row in `invites`. */
 export function InvitePage() {
   const { t, lang } = useI18n();
   const { user } = useSession();
   const [params] = useSearchParams();
   const sessionId = params.get('session') ?? undefined;
   const { joined } = useSessionJoined(sessionId);
-  const [invites, setInvites] = useLocalPref<Invite[]>('invites', []);
+  const { rows: invites, code, send } = useMyInvites();
   const [to, setTo] = useState('');
   const [flash, setFlash] = useState<string | null>(null);
-  const code = `HOY-${user.id.slice(-4).toUpperCase()}`;
   const link = `${window.location.origin}${window.location.pathname}#/auth/sign-up?invite=${code}`;
   const context = joined ? t('customer.invite.text.class', { name: user.name.split(' ')[0], title: joined.session.title, when: `${formatDate(joined.session.starts_at, lang)} ${formatTime(joined.session.starts_at, lang)}`, studio: tenant.name }) : t('customer.invite.text.general', { name: user.name.split(' ')[0], studio: tenant.name });
 
-  const record = (channel: Invite['channel'], target: string) => {
-    setInvites((l) => [{ id: `inv_${Date.now()}`, to: target, channel, status: 'sent' as const, at: new Date().toISOString(), sessionId: sessionId ?? null }, ...l].slice(0, 20));
+  const record = async (channel: 'whatsapp' | 'email' | 'link', target: string) => {
+    await send({ channel, target, sessionId });
     setFlash(t('customer.invite.sent')); setTimeout(() => setFlash(null), 2500);
   };
-  const viaWhatsapp = () => { window.open(to ? waLink(to, `${context} ${link}`) : `https://wa.me/?text=${encodeURIComponent(`${context} ${link}`)}`, '_blank', 'noreferrer'); record('whatsapp', to || 'WhatsApp'); };
-  const viaEmail = () => { window.location.href = `mailto:${to.includes('@') ? to : ''}?subject=${encodeURIComponent(t('customer.invite.subject', { studio: tenant.name }))}&body=${encodeURIComponent(`${context}\n\n${link}`)}`; record('email', to || 'Email'); };
-  const viaLink = async () => { const r = await shareText(context, link); if (r !== 'failed') record('link', r === 'copied' ? t('customer.class.linkCopied') : t('customer.class.shared')); };
+  const viaWhatsapp = () => { window.open(to ? waLink(to, `${context} ${link}`) : `https://wa.me/?text=${encodeURIComponent(`${context} ${link}`)}`, '_blank', 'noreferrer'); void record('whatsapp', to); };
+  const viaEmail = () => { window.location.href = `mailto:${to.includes('@') ? to : ''}?subject=${encodeURIComponent(t('customer.invite.subject', { studio: tenant.name }))}&body=${encodeURIComponent(`${context}\n\n${link}`)}`; void record('email', to); };
+  const viaLink = async () => { const r = await shareText(context, link); if (r !== 'failed') void record('link', ''); };
 
   return (
     <div className="container page cust-page">
@@ -61,7 +58,7 @@ export function InvitePage() {
         {flash && <Notice tone="success">{flash}</Notice>}
         <ListGroup title={t('customer.invite.sentList')}>
           {invites.length === 0 && <p className="small muted" style={{ padding: 16 }}>{t('customer.invite.sentList.empty')}</p>}
-          {invites.map((i) => <ListRow key={i.id} icon={i.channel === 'whatsapp' ? '◎' : i.channel === 'email' ? '✉' : '⇪'} title={i.to} subtitle={formatDate(i.at, lang)} trailing={<Badge tone={toneForStatus(i.status)}>{t(`customer.invite.status.${i.status}`)}</Badge>} />)}
+          {invites.map((i) => <ListRow key={i.id} icon={i.channel === 'whatsapp' ? '◎' : i.channel === 'email' ? '✉' : '⇪'} title={i.invitee_phone ?? i.invitee_email ?? t(`customer.invite.channel.${i.channel}`)} subtitle={`${formatDate(i.created_at, lang)} · ${i.code}`} trailing={<Badge tone={toneForStatus(i.status)}>{t(`customer.invite.status.${i.status}`)}</Badge>} />)}
         </ListGroup>
         <p className="xs muted" style={{ textAlign: 'center' }}>{t('customer.invite.reward')}</p>
       </div>

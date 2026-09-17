@@ -88,6 +88,55 @@ _Qué versión de cada documento aceptó cada usuario._
 | `accepted_at` | timestamptz |  |
 | `ip` | text, null |  |
 
+#### `content_articles`
+Club rules (C-13), about-HOY copy and guides, editable without a deploy.  
+_Reglas del club (C-13), textos “sobre HOY” y guías, editables sin deploy._
+
+| column | type | notes |
+| --- | --- | --- |
+| `id` | uuid | Primary key |
+| `tenant_id` | uuid | → `tenants` Owning studio (multi-tenant) |
+| `created_at` | timestamptz |  |
+| `updated_at` | timestamptz |  |
+| `slug` | text |  |
+| `section` | enum (rules \| faq \| about) |  |
+| `icon` | text, null |  |
+| `title` | json | {es,en} |
+| `summary` | json | {es,en} |
+| `body_md` | json | {es,en} markdown |
+| `checklist` | json, null | [{es,en}] |
+| `video_label` | json, null | {es,en} |
+| `required` | bool | must be read (safety) |
+| `sort` | int |  |
+| `published` | bool |  |
+
+**Who may read / write**
+- customer + anon: read where published = true
+- coordinator/admin: write (M-02 content CMS)
+
+#### `faq_entries`
+Questions and answers for C-14/C-15, grouped by section and page.  
+_Preguntas y respuestas de C-14/C-15, agrupadas por sección y página._
+
+| column | type | notes |
+| --- | --- | --- |
+| `id` | uuid | Primary key |
+| `tenant_id` | uuid | → `tenants` Owning studio (multi-tenant) |
+| `created_at` | timestamptz |  |
+| `updated_at` | timestamptz |  |
+| `group_key` | text | section id, e.g. s1 (group/order are reserved words in SQL) |
+| `group_title` | json | {es,en} |
+| `group_lead` | json | {es,en} |
+| `page` | int | 1 = C-14, 2 = C-15 |
+| `question` | json | {es,en} |
+| `answer` | json | {es,en} |
+| `sort` | int |  |
+| `published` | bool |  |
+
+**Who may read / write**
+- customer + anon: read where published = true
+- coordinator/admin: write (M-02 content CMS)
+
 ### People · Personas
 
 #### `users`
@@ -291,6 +340,78 @@ _Respuesta a “¿Cómo quieres sentirte hoy?” (A-05)._
 | `date` | date |  |
 | `movement` | enum (enraiza \| fluye \| arde \| libera) |  |
 
+#### `reviews`
+A class rating (C-10): stars, tags and comment.  
+_Calificación de una clase (C-10): estrellas, etiquetas y comentario._
+
+| column | type | notes |
+| --- | --- | --- |
+| `id` | uuid | Primary key |
+| `tenant_id` | uuid | → `tenants` Owning studio (multi-tenant) |
+| `created_at` | timestamptz |  |
+| `updated_at` | timestamptz |  |
+| `user_id` | uuid | → `users`  |
+| `class_session_id` | uuid | → `class_sessions`  |
+| `teacher_id` | uuid | → `teachers`  |
+| `rating` | int | 1–5 |
+| `tags` | json | good/fix tag keys |
+| `comment` | text, null |  |
+| `visibility` | enum (anonymous \| named \| private) |  |
+
+**Who may read / write**
+- customer: insert + read own rows (user_id = auth.uid()), one per booking
+- teacher: read rows for own sessions, without user_id when visibility = anonymous
+- coordinator/admin: read all (M-06), never edit the rating
+
+#### `events`
+Workshops, sound baths and special events (C-23), published from M-02.  
+_Talleres, baños de sonido y eventos especiales (C-23), publicados desde M-02._
+
+| column | type | notes |
+| --- | --- | --- |
+| `id` | uuid | Primary key |
+| `tenant_id` | uuid | → `tenants` Owning studio (multi-tenant) |
+| `created_at` | timestamptz |  |
+| `updated_at` | timestamptz |  |
+| `slug` | text |  |
+| `title` | json | {es,en} |
+| `kind` | json | {es,en} label |
+| `description` | json | {es,en} |
+| `bring` | json, null | [{es,en}] |
+| `starts_at` | timestamptz |  |
+| `ends_at` | timestamptz |  |
+| `room_id` | uuid, null | → `rooms`  |
+| `host_teacher_id` | uuid, null | → `teachers`  |
+| `capacity` | int |  |
+| `price_cop` | int | COP, public price |
+| `member_price_cop` | int | COP, member price (0 = included) |
+| `cover_key` | text, null | media key; placeholder until real imagery |
+| `status` | enum (draft \| published \| cancelled) |  |
+
+**Who may read / write**
+- customer + anon: read where status = published
+- coordinator/admin: write
+
+#### `event_rsvps`
+Who is going to an event and with which payment (C-23).  
+_Quién va a un evento y con qué pago (C-23)._
+
+| column | type | notes |
+| --- | --- | --- |
+| `id` | uuid | Primary key |
+| `tenant_id` | uuid | → `tenants` Owning studio (multi-tenant) |
+| `created_at` | timestamptz |  |
+| `updated_at` | timestamptz |  |
+| `event_id` | uuid | → `events`  |
+| `user_id` | uuid | → `users`  |
+| `status` | enum (going \| cancelled \| attended \| no_show) |  |
+| `payment_id` | uuid, null | → `payments`  |
+| `guests` | int | extra seats taken |
+
+**Who may read / write**
+- customer: insert + read + cancel own rows (user_id = auth.uid())
+- front_desk/coordinator/admin: read all, mark attended
+
 ### Commerce · Comercio
 
 #### `plans`
@@ -412,6 +533,55 @@ _Bonos comprados para regalar, con entrega programada._
 | `redeemed_by` | uuid, null | → `users`  |
 | `status` | enum (scheduled \| sent \| redeemed \| expired) |  |
 
+#### `payment_methods`
+Methods the person saved (C-05). The token belongs to Wompi; we never store the card.  
+_Métodos que la persona guardó (C-05). El token es de Wompi; nunca guardamos la tarjeta._
+
+| column | type | notes |
+| --- | --- | --- |
+| `id` | uuid | Primary key |
+| `tenant_id` | uuid | → `tenants` Owning studio (multi-tenant) |
+| `created_at` | timestamptz |  |
+| `updated_at` | timestamptz |  |
+| `user_id` | uuid | → `users`  |
+| `provider` | enum (wompi \| manual) |  |
+| `kind` | enum (card \| pse \| nequi \| transfer \| cash) |  |
+| `brand` | text | Visa, Mastercard, Nequi, Bancolombia… |
+| `last4` | text, null |  |
+| `token_ref` | text, null | Wompi token placeholder — never a real PAN or token in the mock |
+| `is_default` | bool |  |
+| `expires` | text, null | MM/YY |
+
+**Who may read / write**
+- customer: full control of own rows (user_id = auth.uid())
+- front_desk: read brand/last4 only, to recognise a payment at the desk
+- nobody: token_ref is never selectable from the client once Wompi is live (vault column)
+
+#### `invites`
+Invites members send (C-16) and the reward credit once the guest joins.  
+_Invitaciones enviadas por miembros (C-16) y el crédito de recompensa cuando el invitado entra._
+
+| column | type | notes |
+| --- | --- | --- |
+| `id` | uuid | Primary key |
+| `tenant_id` | uuid | → `tenants` Owning studio (multi-tenant) |
+| `created_at` | timestamptz |  |
+| `updated_at` | timestamptz |  |
+| `inviter_user_id` | uuid | → `users`  |
+| `invitee_phone` | text, null |  |
+| `invitee_email` | text, null |  |
+| `invitee_user_id` | uuid, null | → `users`  |
+| `channel` | enum (whatsapp \| email \| link) |  |
+| `code` | text |  |
+| `session_id` | uuid, null | → `class_sessions` class the invite was sent from |
+| `status` | enum (sent \| opened \| joined \| rewarded) |  |
+| `reward_credit_id` | uuid, null | → `credits`  |
+
+**Who may read / write**
+- customer: insert + read own rows (inviter_user_id = auth.uid())
+- front_desk: read by code, to honour a pass at the desk
+- admin/finance: write status and reward_credit_id (the reward is granted server-side)
+
 ### Comms · Comunicaciones
 
 #### `email_templates`
@@ -484,6 +654,49 @@ _Todo lo enviado por WhatsApp, email o push._
 | `status` | enum (queued \| sent \| delivered \| read \| failed) |  |
 | `sent_at` | timestamptz, null |  |
 | `payload` | json, null |  |
+
+#### `notifications`
+The C-24 inbox: what the studio sends, with read state and a deep link.  
+_La bandeja de C-24: lo que el estudio envía, con estado de lectura y enlace profundo._
+
+| column | type | notes |
+| --- | --- | --- |
+| `id` | uuid | Primary key |
+| `tenant_id` | uuid | → `tenants` Owning studio (multi-tenant) |
+| `created_at` | timestamptz |  |
+| `updated_at` | timestamptz |  |
+| `user_id` | uuid | → `users`  |
+| `kind` | enum (booking \| waitlist \| payment \| class \| event \| review \| invite \| studio) |  |
+| `title` | json | {es,en} |
+| `body` | json | {es,en} |
+| `read_at` | timestamptz, null |  |
+| `deep_link` | text, null | in-app route, e.g. /app/booking/:id |
+| `sent_via` | enum (in_app \| whatsapp \| email \| push) |  |
+
+**Who may read / write**
+- customer: read own rows and update read_at only (user_id = auth.uid())
+- front_desk/coordinator/admin: insert for a member (send)
+- retention: rows older than 90 days are deleted by a scheduled job
+
+#### `notification_prefs`
+Channel × category each person accepts (C-24 / C-19). No row = enabled.  
+_Canal × categoría que cada persona acepta (C-24 / C-19). Sin fila = activado._
+
+| column | type | notes |
+| --- | --- | --- |
+| `id` | uuid | Primary key |
+| `tenant_id` | uuid | → `tenants` Owning studio (multi-tenant) |
+| `created_at` | timestamptz |  |
+| `updated_at` | timestamptz |  |
+| `user_id` | uuid | → `users`  |
+| `channel` | enum (whatsapp \| email \| push) |  |
+| `category` | enum (bookings \| waitlist \| payments \| events \| marketing) |  |
+| `enabled` | bool |  |
+
+**Who may read / write**
+- customer: full control of own rows (user_id = auth.uid())
+- admin: read only, to respect a mute before sending
+- marketing category is opt-out per channel; transactional categories always deliver in-app
 
 ### System · Sistema
 

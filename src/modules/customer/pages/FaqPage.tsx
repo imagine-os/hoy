@@ -4,21 +4,24 @@ import { tenant } from '../../../tenant/tenant';
 import { Button } from '../../../components/atom/Button/Button';
 import { Card } from '../../../components/molecule/Card/Card';
 import { Accordion } from '../../../components/molecule/Accordion/Accordion';
-import { faqPages } from '../content';
+import { EmptyState } from '../../../components/molecule/EmptyState/EmptyState';
+import { useFaq } from '../hooks';
 import { PageHead, waLink } from '../ui';
 
-/** C-14 / C-15 FAQ — two pages so the accordion never becomes a scroll of thirty open questions. */
+/** C-14 / C-15 FAQ — questions come from `faq_entries`, grouped by section, two pages so the accordion stays short. */
 export function FaqPage({ page }: { page: 1 | 2 }) {
   const { t, bi } = useI18n();
-  const sections = faqPages[page - 1];
+  const { groups, totalPages, loading } = useFaq(page);
   return (
     <div className="container page cust-page">
-      <PageHead back={page === 1 ? '/app/more' : '/app/faq'} title={t('customer.faq.title')} sub={t('customer.faq.page', { n: page, total: faqPages.length })} eyebrow={`C-1${page === 1 ? 4 : 5}`} />
+      <PageHead back={page === 1 ? '/app/more' : '/app/faq'} title={t('customer.faq.title')} sub={t('customer.faq.page', { n: page, total: totalPages })} eyebrow={`C-1${page === 1 ? 4 : 5}`} />
       <div className="stack">
-        {sections.map((s) => (
-          <section key={s.id} className="stack-sm">
+        {loading && groups.length === 0 && <EmptyState compact tone="loading" title={t('core.common.loading')} />}
+        {!loading && groups.length === 0 && <EmptyState icon="?" title={t('customer.faq.empty')} body={t('customer.faq.empty.body')} />}
+        {groups.map((s) => (
+          <section key={s.key} className="stack-sm">
             <div><h2 className="cust-h2">{bi(s.title)}</h2><p className="small muted">{bi(s.lead)}</p></div>
-            <Accordion items={s.items.map((q) => ({ id: q.id, question: bi(q.q), answer: <>{bi(q.a)}{/planes|plans|precio|price|cuesta|cost/i.test(bi(q.a)) && <> <Link to="/app/plans">{t('customer.faq.plansLink')} →</Link></>}</> }))} />
+            <Accordion items={s.items.map((q) => ({ id: q.id, question: bi(q.question), answer: <>{bi(q.answer)}{/planes|plans|precio|price|cuesta|cost/i.test(bi(q.answer)) && <> <Link to="/app/plans">{t('customer.faq.plansLink')} →</Link></>}</> }))} />
           </section>
         ))}
         {page === 1

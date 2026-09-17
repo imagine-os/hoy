@@ -1,0 +1,8 @@
+.ratingsum { display: flex; flex-direction: column; gap: var(--sp-2); }
+.ratingsum-head { display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap; }
+.ratingsum-value { font-size: var(--fs-h2); line-height: 1; letter-spacing: -0.02em; }
+.ratingsum-sm .ratingsum-value { font-size: var(--fs-body); }
+.ratingsum-tags { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.ratingsum-tag { display: inline-flex; align-items: center; gap: var(--sp-1); padding: 2px 10px; border-radius: var(--radius-pill, 999px); background: var(--color-surface-2, rgb(var(--m-sand) / .5)); }
+.ratingsum-tag-n { opacity: .6; }
+.ratingsum-empty { margin: 0; }

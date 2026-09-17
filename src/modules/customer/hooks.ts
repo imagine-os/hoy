@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSession } from '../../auth/SessionProvider';
 import { useData, useTable } from '../../data/DataContext';
-import type { BaseRow, BookingRow, ClassSessionRow, CreditRow, MembershipRow, ModalityRow, PaymentRow, PlanRow, ProfileRow, RoomRow, TeacherRow, UserRow } from '../../data/schema';
+import type { BaseRow, BookingRow, ClassSessionRow, ContentArticleRow, CreditRow, EventRow, EventRsvpRow, FaqEntryRow, InviteRow, MembershipRow, ModalityRow, NotificationPrefRow, NotificationRow, PaymentMethodRow, PaymentRow, PlanRow, ProfileRow, ReviewRow, RoomRow, TeacherRow, UserRow } from '../../data/schema';
 import { isSameDay } from '../../i18n/format';
 import { tenant } from '../../tenant/tenant';
 import { priceItem, type PriceItem } from '../../tenant/pricing';
@@ -171,11 +171,180 @@ export function useBookingActions() {
 export const priceOf = (id: string): PriceItem => { const p = priceItem(id); if (!p) throw new Error(`unknown price ${id}`); return p; };
 export const PASS_IDS = ['trial', 'single', 'pack3', 'pack10'] as const;
 
-/** Small localStorage-backed per-user preference (notification prefs, read receipts, invites) until their tables exist. */
+/**
+ * Small localStorage-backed per-viewer preference. Since 0008 the faked data (notification prefs,
+ * invites, ratings, RSVPs) lives in real tables; what stays here is genuinely local — the C-13 read
+ * receipts and the C-20 auto-claim switch — because no table claims to own it.
+ */
 export function useLocalPref<T>(key: string, initial: T): [T, (next: T | ((prev: T) => T)) => void] {
   const { user } = useSession();
   const k = `hoyos.pref.${user.id}.${key}`;
   const [v, setV] = useState<T>(() => { try { const raw = localStorage.getItem(k); return raw ? (JSON.parse(raw) as T) : initial; } catch { return initial; } });
   const set = useCallback((next: T | ((prev: T) => T)) => setV((prev) => { const val = typeof next === 'function' ? (next as (p: T) => T)(prev) : next; try { localStorage.setItem(k, JSON.stringify(val)); } catch { /* ignore */ } return val; }), [k]);
   return [v, set];
+}
+
+// ---------------------------------------------------------------------------------------------
+// Tables added in 0008 (data depth): notifications, notification_prefs, reviews, invites,
+// events + event_rsvps, payment_methods, content_articles, faq_entries. Every page reads them
+// through useTable(); nothing here keeps state in localStorage any more.
+// ---------------------------------------------------------------------------------------------
+
+/** C-24 inbox: my notifications, newest first, with the unread count and read/mark-all writers. */
+export function useMyNotifications() {
+  const data = useData();
+  const { user } = useSession();
+  const { rows, loading } = useTable<NotificationRow>('notifications', { where: { user_id: user.id }, orderBy: { column: 'created_at', dir: 'desc' } });
+  const unread = rows.filter((n) => !n.read_at).length;
+  const markRead = useCallback(async (n: NotificationRow) => { if (!n.read_at) await data.update('notifications', n.id, { read_at: new Date().toISOString() }); }, [data]);
+  const markAllRead = useCallback(async () => { const at = new Date().toISOString(); for (const n of rows) if (!n.read_at) await data.update('notifications', n.id, { read_at: at }); }, [data, rows]);
+  return { rows, loading, unread, markRead, markAllRead };
+}
+
+export const NOTIF_CHANNELS = ['whatsapp', 'email', 'push'] as const;
+export const NOTIF_CATEGORIES = ['bookings', 'waitlist', 'payments', 'events', 'marketing'] as const;
+export type NotifChannel = (typeof NOTIF_CHANNELS)[number];
+export type NotifCategory = (typeof NOTIF_CATEGORIES)[number];
+
+/**
+ * C-24 / C-19 notification preferences. No row means enabled, so only real choices are stored:
+ * `set` inserts the first time and updates afterwards (upsert), and `setChannel` is the C-19
+ * master switch that writes every category of one channel at once.
+ */
+export function useNotificationPrefs() {
+  const data = useData();
+  const { user } = useSession();
+  const { rows } = useTable<NotificationPrefRow>('notification_prefs', { where: { user_id: user.id } });
+  const isEnabled = useCallback((channel: NotifChannel, category: NotifCategory) => rows.find((p) => p.channel === channel && p.category === category)?.enabled ?? true, [rows]);
+  const set = useCallback(async (channel: NotifChannel, category: NotifCategory, enabled: boolean) => {
+    const existing = rows.find((p) => p.channel === channel && p.category === category);
+    if (existing) await data.update('notification_prefs', existing.id, { enabled });
+    else await data.insert<NotificationPrefRow>('notification_prefs', { user_id: user.id, channel, category, enabled } as Partial<NotificationPrefRow>);
+  }, [data, rows, user.id]);
+  const channelOn = useCallback((channel: NotifChannel) => NOTIF_CATEGORIES.some((c) => isEnabled(channel, c)), [isEnabled]);
+  const setChannel = useCallback(async (channel: NotifChannel, enabled: boolean) => { for (const c of NOTIF_CATEGORIES) await set(channel, c, enabled); }, [set]);
+  return { rows, isEnabled, set, channelOn, setChannel };
+}
+
+/** C-10: the reviews this person wrote, and the writer that records one. */
+export function useMyReviews() {
+  const data = useData();
+  const { user } = useSession();
+  const { rows } = useTable<ReviewRow>('reviews', { where: { user_id: user.id } });
+  const forSession = useCallback((sessionId: string | undefined) => (sessionId ? rows.find((r) => r.class_session_id === sessionId) ?? null : null), [rows]);
+  const rate = useCallback(async (input: { session: ClassSessionRow; rating: number; tags: string[]; comment: string; anonymous: boolean; booking?: BookingRow | null }) => {
+    const review = await data.insert<ReviewRow>('reviews', {
+      user_id: user.id, class_session_id: input.session.id, teacher_id: input.session.teacher_id,
+      rating: input.rating, tags: input.tags, comment: input.comment.trim() || null, visibility: input.anonymous ? 'anonymous' : 'named',
+    } as Partial<ReviewRow>);
+    if (input.booking) await data.update('bookings', input.booking.id, { rated: true });
+    // teachers.rating_avg stays the studio-facing average of every review of that teacher.
+    const all = await data.list<ReviewRow>('reviews', { where: { teacher_id: input.session.teacher_id } });
+    if (all.length) await data.update('teachers', input.session.teacher_id, { rating_avg: Math.round((all.reduce((a, r) => a + r.rating, 0) / all.length) * 10) / 10 });
+    return review;
+  }, [data, user.id]);
+  return { rows, forSession, rate };
+}
+
+/** Reviews of one class session (teacher app, read-only). */
+export function useSessionReviews(sessionId: string | undefined) {
+  const { rows } = useTable<ReviewRow>('reviews', { where: { class_session_id: sessionId ?? '__none__' } });
+  return useMemo(() => {
+    if (!sessionId || rows.length === 0) return { rows: [] as ReviewRow[], count: 0, average: null as number | null, tags: [] as { tag: string; n: number }[] };
+    const counts = new Map<string, number>();
+    for (const r of rows) for (const tag of r.tags ?? []) counts.set(tag, (counts.get(tag) ?? 0) + 1);
+    return {
+      rows, count: rows.length,
+      average: Math.round((rows.reduce((a, r) => a + r.rating, 0) / rows.length) * 10) / 10,
+      tags: [...counts.entries()].map(([tag, n]) => ({ tag, n })).sort((a, b) => b.n - a.n),
+    };
+  }, [rows, sessionId]);
+}
+
+/** C-16: invites I sent, plus the writer that records a new one with my referral code. */
+export function useMyInvites() {
+  const data = useData();
+  const { user } = useSession();
+  const { rows } = useTable<InviteRow>('invites', { where: { inviter_user_id: user.id }, orderBy: { column: 'created_at', dir: 'desc' } });
+  const code = `HOY-${user.id.slice(-4).toUpperCase()}`;
+  const send = useCallback(async (input: { channel: InviteRow['channel']; target: string; sessionId?: string | null }) => {
+    const email = input.target.includes('@');
+    return data.insert<InviteRow>('invites', {
+      inviter_user_id: user.id, invitee_phone: !email && /\d/.test(input.target) ? input.target : null, invitee_email: email ? input.target : null,
+      invitee_user_id: null, channel: input.channel, code, session_id: input.sessionId ?? null, status: 'sent', reward_credit_id: null,
+    } as Partial<InviteRow>);
+  }, [code, data, user.id]);
+  return { rows, code, send };
+}
+
+/** C-05: my saved payment methods, with add / remove / make-default. */
+export function usePaymentMethods() {
+  const data = useData();
+  const { user } = useSession();
+  const { rows } = useTable<PaymentMethodRow>('payment_methods', { where: { user_id: user.id }, orderBy: { column: 'created_at', dir: 'desc' } });
+  const makeDefault = useCallback(async (row: PaymentMethodRow) => {
+    for (const m of rows) if (m.is_default && m.id !== row.id) await data.update('payment_methods', m.id, { is_default: false });
+    await data.update('payment_methods', row.id, { is_default: true });
+  }, [data, rows]);
+  /** INTEGRATION SEAM: `token_ref` is a placeholder. With Wompi live, the widget returns the real token and this insert stores only that reference. */
+  const add = useCallback(async (input: { kind: PaymentMethodRow['kind']; brand: string; last4?: string | null; expires?: string | null; tokenRef: string }) => {
+    const first = rows.length === 0;
+    const created = await data.insert<PaymentMethodRow>('payment_methods', {
+      user_id: user.id, provider: 'wompi', kind: input.kind, brand: input.brand, last4: input.last4 ?? null,
+      token_ref: input.tokenRef, is_default: first, expires: input.expires ?? null,
+    } as Partial<PaymentMethodRow>);
+    return created;
+  }, [data, rows.length, user.id]);
+  const remove = useCallback(async (row: PaymentMethodRow) => {
+    await data.remove('payment_methods', row.id);
+    const rest = rows.filter((m) => m.id !== row.id);
+    if (row.is_default && rest[0]) await data.update('payment_methods', rest[0].id, { is_default: true });
+  }, [data, rows]);
+  return { rows, add, remove, makeDefault };
+}
+
+/** C-23: published events, upcoming first, joined with my RSVP. */
+export function useEvents() {
+  const { user } = useSession();
+  const { rows: events, loading } = useTable<EventRow>('events', { where: { status: 'published' }, orderBy: { column: 'starts_at' } });
+  const { rows: rsvps } = useTable<EventRsvpRow>('event_rsvps');
+  return useMemo(() => {
+    const going = (id: string) => rsvps.filter((r) => r.event_id === id && (r.status === 'going' || r.status === 'attended'));
+    return {
+      loading,
+      events: events.map((e) => ({ event: e, taken: going(e.id).reduce((a, r) => a + 1 + (r.guests ?? 0), 0), mine: rsvps.find((r) => r.event_id === e.id && r.user_id === user.id && r.status !== 'cancelled') ?? null })),
+    };
+  }, [events, rsvps, user.id, loading]);
+}
+
+/** C-23 RSVP writers (the payment itself goes through payments.ts, like every other charge). */
+export function useEventRsvp() {
+  const data = useData();
+  const { user } = useSession();
+  const going = useCallback(async (event: EventRow, paymentId: string | null) => data.insert<EventRsvpRow>('event_rsvps', { event_id: event.id, user_id: user.id, status: 'going', payment_id: paymentId, guests: 0 } as Partial<EventRsvpRow>), [data, user.id]);
+  const cancel = useCallback(async (rsvp: EventRsvpRow) => data.update('event_rsvps', rsvp.id, { status: 'cancelled' }), [data]);
+  return { going, cancel };
+}
+
+/** C-13 club rules and the "about HOY" article, from content_articles (M-02 edits them). */
+export function useContentArticles(section: ContentArticleRow['section'] | 'all' = 'all') {
+  const { rows, loading } = useTable<ContentArticleRow>('content_articles', { where: { published: true }, orderBy: { column: 'sort' } });
+  return { articles: section === 'all' ? rows : rows.filter((a) => a.section === section), loading };
+}
+
+export interface FaqGroup { key: string; title: { es: string; en: string }; lead: { es: string; en: string }; items: FaqEntryRow[] }
+
+/** C-14 / C-15 FAQ, grouped by section for one page. */
+export function useFaq(page: number) {
+  const { rows, loading } = useTable<FaqEntryRow>('faq_entries', { where: { published: true }, orderBy: { column: 'sort' } });
+  return useMemo(() => {
+    const pages = [...new Set(rows.map((r) => r.page))].sort((a, b) => a - b);
+    const groups: FaqGroup[] = [];
+    for (const r of rows.filter((x) => x.page === page)) {
+      const g = groups.find((x) => x.key === r.group_key);
+      if (g) g.items.push(r);
+      else groups.push({ key: r.group_key, title: r.group_title, lead: r.group_lead, items: [r] });
+    }
+    return { groups, totalPages: Math.max(pages.length, 1), loading };
+  }, [rows, page, loading]);
 }

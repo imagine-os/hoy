@@ -4,13 +4,12 @@ _Updated every turn. Codes reference `src/specs/canvasSpecs.ts` and the module `
 
 ## Backlog
 
-### Data (new tables the customer pages are waiting for — each needs `schema.ts` + seed + `npm run sql` + `docs/data-model.md`)
-- `notifications` + `notification_prefs` — C-24 derives its inbox from message_log + waitlist + bookings; a real table lets staff send and members mute.
-- `reviews` — C-10 marks `bookings.rated` and keeps the rating in localStorage; a table makes ratings visible to teachers and M-06.
-- `invites` — C-16 keeps sent invites per user in localStorage; a table lets the referral reward be granted.
-- `events` + `rsvps` — C-23 reads demo events from `content.ts`; tables let M-02 publish events and count attendance.
-- `payment_methods` — C-05 derives saved methods from approved payments; a table stores Wompi tokens when Wompi lands.
-- `content_articles` / `faq_entries` — C-13 and C-14/C-15 read `content.ts`; tables let M-02 edit rules and FAQ without a deploy.
+### Data (follow-ups left by 0008)
+- Screenshot pass for the pages 0008 rewired (C-05, C-10, C-13, C-14/C-15, C-16, C-19, C-23, C-24, S-03): the smoke run is green but `docs/screenshots/` still shows the pre-0008 screens.
+- M-02 editors for the new content tables (`content_articles`, `faq_entries`) and an event publisher for `events` — M-03 edits them generically today.
+- Server-side invite reward: `invites.status` only reaches `sent` from the client; `joined` / `rewarded` + `reward_credit_id` need the Supabase function that grants the credit.
+- Staff-side sending for `notifications` (front desk / M-04 / M-05 writing a row) and the 90-day retention job.
+- Event waitlist (`event_rsvps.status` has no `waitlist` value yet) and attendance marking from S-02.
 
 ### Product
 - A-06 legal pages inside the app (site pages exist) · real Supabase Auth behind A-02/A-03/C-21 (SessionProvider already accepts any `users` row)
@@ -35,9 +34,20 @@ _Updated every turn. Codes reference `src/specs/canvasSpecs.ts` and the module `
 - empty10 placeholder: awaiting Justin's decision (reset to placeholder or delete)
 
 ## Doing
-- (none — 0006 visual fidelity pass closed)
+- (none — 0008 data depth closed)
 
 ## Done
+
+### Data depth (0008 · v0.5.0)
+- Nine new tables, additive, with bilingual labels, `TableGroup` (so M-03 lists them) and a new `TableDef.rls` access contract: `notifications`, `notification_prefs`, `reviews`, `invites`, `events`, `event_rsvps`, `payment_methods`, `content_articles`, `faq_entries` (29 → 38)
+- `scripts/gen-sql.mjs` emits `TableDef.rls` as `-- access:` comments per table in `supabase/schema.sql` and as a "Who may read / write" list in `docs/data-model.md`; `docs/roles.md` carries the same matrix per role
+- Seed: 6 rule/about articles, 17 FAQ entries (6 sections, 2 pages), 3 upcoming events with RSVPs, a review for every past class marked rated (+ `teachers.rating_avg` recomputed), 2–4 notifications per customer derived from their own bookings/payments, the demo customer's full 3 × 5 preference matrix, saved methods for electronic payers, 5 invites incl. one rewarded with a real `credits` row
+- C-24 lists `notifications` (mark one / all read) and owns the channel × category preference matrix (no row = enabled); C-19's three toggles are the per-channel master switch
+- C-10 inserts `reviews` (anonymous by default) and updates `teachers.rating_avg`; `/teach/class/:id` shows the session's average, count and top tags read-only
+- C-16 writes `invites` with the member's referral code; C-23 lists published `events`, writes `event_rsvps` and pays through the existing Wompi seam (`payments` + `invoices`, `plan_id = null`)
+- C-05 manages `payment_methods` (add via the new `wompiTokenise()` seam, remove, make default); `token_ref` is visibly a placeholder and the PAN never reaches HoyOS
+- C-13 and C-14/C-15 read `content_articles` / `faq_entries`; `src/modules/customer/content.ts` deleted and the 23 dictionary keys of the derived inbox pruned
+- New component `RatingSummary` (molecule, `.meta.ts`, states) — D-02 stays current in the same turn
 
 ### Visual fidelity (0006 · v0.4.0)
 - D-01 rewritten from the canvas hoy-brand tokens: `--hoy-c*` palette, `--m-*` RGB triplets, semantic surfaces (frame paper / sand tiles / cream lane / sand ground), Depth shadow scale verbatim, Texture layer as CSS (`--tex-*`), materials (`--mat-*`), surface scale, movements from `movSets.hoy`, radii 4/8/11/16/18/24/32/34, breathe 7 s + spin 1.1 s

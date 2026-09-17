@@ -13,6 +13,8 @@ import { CapacityMeter } from '../../components/molecule/CapacityMeter/CapacityM
 import { RosterRow } from '../../components/molecule/RosterRow/RosterRow';
 import { EmptyState } from '../../components/molecule/EmptyState/EmptyState';
 import { Timeline } from '../../components/organism/Timeline/Timeline';
+import { RatingSummary } from '../../components/molecule/RatingSummary/RatingSummary';
+import { useSessionReviews } from '../customer/hooks';
 import { useAudit, type AuditRow } from '../staff/audit';
 import { maskPhone, usePeople } from '../staff/people';
 import { useSettings } from '../admin/settings';
@@ -37,6 +39,7 @@ export function TeacherClassPage() {
   const { rows: bookings, loading } = useTable<BookingRow>('bookings', { where: { session_id: id ?? '__none__' } });
   const { rows: notes } = useTable<AuditRow>('audit_log', { where: { entity: 'class_sessions', entity_id: id ?? '__none__', action: 'session.note' }, orderBy: { column: 'created_at', dir: 'desc' } });
   const { byId } = usePeople();
+  const reviews = useSessionReviews(id);
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState<string | null>(null);
 
@@ -110,6 +113,17 @@ export function TeacherClassPage() {
           </Card>
         )}
       </section>
+
+      {reviews.count > 0 && (
+        <section className="stack-sm">
+          <div className="eyebrow">{t('teacher.class.reviews')}</div>
+          <Card>
+            <RatingSummary average={reviews.average} count={reviews.count} tags={reviews.tags} tagLabel={(k) => t(`customer.rate.tag.${k}`)}
+              caption={t('teacher.class.reviews.count', { n: reviews.count })} emptyText={t('teacher.class.reviews.none')} />
+            <p className="xs muted">{t('teacher.class.reviews.note')}</p>
+          </Card>
+        </section>
+      )}
 
       <section className="stack-sm">
         <div className="eyebrow">{t('teacher.class.notes')}</div>

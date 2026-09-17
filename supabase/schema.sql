@@ -107,6 +107,73 @@ alter table public.consents enable row level security;
 create policy "consents: tenant read" on public.consents for select using (tenant_id = public.current_tenant_id());
 create policy "consents: staff write" on public.consents for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
 
+-- core · Club rules (C-13), about-HOY copy and guides, editable without a deploy.
+-- access:
+--   · customer + anon: read where published = true
+--   · coordinator/admin: write (M-02 content CMS)
+create table if not exists public.content_articles (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  slug text not null,
+  section text not null check (section in ('rules', 'faq', 'about')),
+  icon text,
+  -- {es,en}
+  title jsonb not null,
+  -- {es,en}
+  summary jsonb not null,
+  -- {es,en} markdown
+  body_md jsonb not null,
+  -- [{es,en}]
+  checklist jsonb,
+  -- {es,en}
+  video_label jsonb,
+  -- must be read (safety)
+  required boolean not null default false,
+  sort integer not null,
+  published boolean not null default false
+);
+create index if not exists content_articles_tenant_idx on public.content_articles(tenant_id);
+create trigger content_articles_touch before update on public.content_articles for each row execute function public.touch_updated_at();
+alter table public.content_articles enable row level security;
+create policy "content_articles: tenant read" on public.content_articles for select using (tenant_id = public.current_tenant_id());
+create policy "content_articles: staff write" on public.content_articles for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
+-- core · Questions and answers for C-14/C-15, grouped by section and page.
+-- access:
+--   · customer + anon: read where published = true
+--   · coordinator/admin: write (M-02 content CMS)
+create table if not exists public.faq_entries (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  -- section id, e.g. s1 (group/order are reserved words in SQL)
+  group_key text not null,
+  -- {es,en}
+  group_title jsonb not null,
+  -- {es,en}
+  group_lead jsonb not null,
+  -- 1 = C-14, 2 = C-15
+  page integer not null,
+  -- {es,en}
+  question jsonb not null,
+  -- {es,en}
+  answer jsonb not null,
+  sort integer not null,
+  published boolean not null default false
+);
+create index if not exists faq_entries_tenant_idx on public.faq_entries(tenant_id);
+create trigger faq_entries_touch before update on public.faq_entries for each row execute function public.touch_updated_at();
+alter table public.faq_entries enable row level security;
+create policy "faq_entries: tenant read" on public.faq_entries for select using (tenant_id = public.current_tenant_id());
+create policy "faq_entries: staff write" on public.faq_entries for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
 -- people · Login accounts (mirrors auth.users in Supabase).
 create table if not exists public.users (
   -- Primary key
@@ -372,6 +439,105 @@ alter table public.intentions enable row level security;
 create policy "intentions: tenant read" on public.intentions for select using (tenant_id = public.current_tenant_id());
 create policy "intentions: staff write" on public.intentions for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
 
+-- schedule · A class rating (C-10): stars, tags and comment.
+-- access:
+--   · customer: insert + read own rows (user_id = auth.uid()), one per booking
+--   · teacher: read rows for own sessions, without user_id when visibility = anonymous
+--   · coordinator/admin: read all (M-06), never edit the rating
+create table if not exists public.reviews (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  user_id uuid not null references public.users(id) on delete set null,
+  class_session_id uuid not null references public.class_sessions(id) on delete set null,
+  teacher_id uuid not null references public.teachers(id) on delete set null,
+  -- 1–5
+  rating integer not null,
+  -- good/fix tag keys
+  tags jsonb not null,
+  comment text,
+  visibility text not null check (visibility in ('anonymous', 'named', 'private'))
+);
+create index if not exists reviews_tenant_idx on public.reviews(tenant_id);
+create index if not exists reviews_user_id_idx on public.reviews(user_id);
+create index if not exists reviews_class_session_id_idx on public.reviews(class_session_id);
+create index if not exists reviews_teacher_id_idx on public.reviews(teacher_id);
+create trigger reviews_touch before update on public.reviews for each row execute function public.touch_updated_at();
+alter table public.reviews enable row level security;
+create policy "reviews: tenant read" on public.reviews for select using (tenant_id = public.current_tenant_id());
+create policy "reviews: staff write" on public.reviews for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
+-- schedule · Workshops, sound baths and special events (C-23), published from M-02.
+-- access:
+--   · customer + anon: read where status = published
+--   · coordinator/admin: write
+create table if not exists public.events (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  slug text not null,
+  -- {es,en}
+  title jsonb not null,
+  -- {es,en} label
+  kind jsonb not null,
+  -- {es,en}
+  description jsonb not null,
+  -- [{es,en}]
+  bring jsonb,
+  starts_at timestamptz not null,
+  ends_at timestamptz not null,
+  room_id uuid references public.rooms(id) on delete set null,
+  host_teacher_id uuid references public.teachers(id) on delete set null,
+  capacity integer not null,
+  -- COP, public price
+  price_cop integer not null,
+  -- COP, member price (0 = included)
+  member_price_cop integer not null,
+  -- media key; placeholder until real imagery
+  cover_key text,
+  status text not null check (status in ('draft', 'published', 'cancelled'))
+);
+create index if not exists events_tenant_idx on public.events(tenant_id);
+create index if not exists events_room_id_idx on public.events(room_id);
+create index if not exists events_host_teacher_id_idx on public.events(host_teacher_id);
+create trigger events_touch before update on public.events for each row execute function public.touch_updated_at();
+alter table public.events enable row level security;
+create policy "events: tenant read" on public.events for select using (tenant_id = public.current_tenant_id());
+create policy "events: staff write" on public.events for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
+-- schedule · Who is going to an event and with which payment (C-23).
+-- access:
+--   · customer: insert + read + cancel own rows (user_id = auth.uid())
+--   · front_desk/coordinator/admin: read all, mark attended
+create table if not exists public.event_rsvps (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  event_id uuid not null references public.events(id) on delete set null,
+  user_id uuid not null references public.users(id) on delete set null,
+  status text not null check (status in ('going', 'cancelled', 'attended', 'no_show')),
+  payment_id uuid references public.payments(id) on delete set null,
+  -- extra seats taken
+  guests integer not null
+);
+create index if not exists event_rsvps_tenant_idx on public.event_rsvps(tenant_id);
+create index if not exists event_rsvps_event_id_idx on public.event_rsvps(event_id);
+create index if not exists event_rsvps_user_id_idx on public.event_rsvps(user_id);
+create index if not exists event_rsvps_payment_id_idx on public.event_rsvps(payment_id);
+create trigger event_rsvps_touch before update on public.event_rsvps for each row execute function public.touch_updated_at();
+alter table public.event_rsvps enable row level security;
+create policy "event_rsvps: tenant read" on public.event_rsvps for select using (tenant_id = public.current_tenant_id());
+create policy "event_rsvps: staff write" on public.event_rsvps for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
 -- commerce · Value model v3: passes, memberships, pauses, gifts, space.
 create table if not exists public.plans (
   -- Primary key
@@ -535,6 +701,70 @@ alter table public.gift_cards enable row level security;
 create policy "gift_cards: tenant read" on public.gift_cards for select using (tenant_id = public.current_tenant_id());
 create policy "gift_cards: staff write" on public.gift_cards for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
 
+-- commerce · Methods the person saved (C-05). The token belongs to Wompi; we never store the card.
+-- access:
+--   · customer: full control of own rows (user_id = auth.uid())
+--   · front_desk: read brand/last4 only, to recognise a payment at the desk
+--   · nobody: token_ref is never selectable from the client once Wompi is live (vault column)
+create table if not exists public.payment_methods (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  user_id uuid not null references public.users(id) on delete set null,
+  provider text not null check (provider in ('wompi', 'manual')),
+  kind text not null check (kind in ('card', 'pse', 'nequi', 'transfer', 'cash')),
+  -- Visa, Mastercard, Nequi, Bancolombia…
+  brand text not null,
+  last4 text,
+  -- Wompi token placeholder — never a real PAN or token in the mock
+  token_ref text,
+  is_default boolean not null default false,
+  -- MM/YY
+  expires text
+);
+create index if not exists payment_methods_tenant_idx on public.payment_methods(tenant_id);
+create index if not exists payment_methods_user_id_idx on public.payment_methods(user_id);
+create trigger payment_methods_touch before update on public.payment_methods for each row execute function public.touch_updated_at();
+alter table public.payment_methods enable row level security;
+create policy "payment_methods: tenant read" on public.payment_methods for select using (tenant_id = public.current_tenant_id());
+create policy "payment_methods: staff write" on public.payment_methods for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
+-- commerce · Invites members send (C-16) and the reward credit once the guest joins.
+-- access:
+--   · customer: insert + read own rows (inviter_user_id = auth.uid())
+--   · front_desk: read by code, to honour a pass at the desk
+--   · admin/finance: write status and reward_credit_id (the reward is granted server-side)
+create table if not exists public.invites (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  inviter_user_id uuid not null references public.users(id) on delete set null,
+  invitee_phone text,
+  invitee_email text,
+  invitee_user_id uuid references public.users(id) on delete set null,
+  channel text not null check (channel in ('whatsapp', 'email', 'link')),
+  code text not null,
+  -- class the invite was sent from
+  session_id uuid references public.class_sessions(id) on delete set null,
+  status text not null check (status in ('sent', 'opened', 'joined', 'rewarded')),
+  reward_credit_id uuid references public.credits(id) on delete set null
+);
+create index if not exists invites_tenant_idx on public.invites(tenant_id);
+create index if not exists invites_inviter_user_id_idx on public.invites(inviter_user_id);
+create index if not exists invites_invitee_user_id_idx on public.invites(invitee_user_id);
+create index if not exists invites_session_id_idx on public.invites(session_id);
+create index if not exists invites_reward_credit_id_idx on public.invites(reward_credit_id);
+create trigger invites_touch before update on public.invites for each row execute function public.touch_updated_at();
+alter table public.invites enable row level security;
+create policy "invites: tenant read" on public.invites for select using (tenant_id = public.current_tenant_id());
+create policy "invites: staff write" on public.invites for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
 -- comms · Versioned transactional emails (M-04).
 create table if not exists public.email_templates (
   -- Primary key
@@ -623,6 +853,60 @@ create trigger message_log_touch before update on public.message_log for each ro
 alter table public.message_log enable row level security;
 create policy "message_log: tenant read" on public.message_log for select using (tenant_id = public.current_tenant_id());
 create policy "message_log: staff write" on public.message_log for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
+-- comms · The C-24 inbox: what the studio sends, with read state and a deep link.
+-- access:
+--   · customer: read own rows and update read_at only (user_id = auth.uid())
+--   · front_desk/coordinator/admin: insert for a member (send)
+--   · retention: rows older than 90 days are deleted by a scheduled job
+create table if not exists public.notifications (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  user_id uuid not null references public.users(id) on delete set null,
+  kind text not null check (kind in ('booking', 'waitlist', 'payment', 'class', 'event', 'review', 'invite', 'studio')),
+  -- {es,en}
+  title jsonb not null,
+  -- {es,en}
+  body jsonb not null,
+  read_at timestamptz,
+  -- in-app route, e.g. /app/booking/:id
+  deep_link text,
+  sent_via text not null check (sent_via in ('in_app', 'whatsapp', 'email', 'push'))
+);
+create index if not exists notifications_tenant_idx on public.notifications(tenant_id);
+create index if not exists notifications_user_id_idx on public.notifications(user_id);
+create trigger notifications_touch before update on public.notifications for each row execute function public.touch_updated_at();
+alter table public.notifications enable row level security;
+create policy "notifications: tenant read" on public.notifications for select using (tenant_id = public.current_tenant_id());
+create policy "notifications: staff write" on public.notifications for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
+-- comms · Channel × category each person accepts (C-24 / C-19). No row = enabled.
+-- access:
+--   · customer: full control of own rows (user_id = auth.uid())
+--   · admin: read only, to respect a mute before sending
+--   · marketing category is opt-out per channel; transactional categories always deliver in-app
+create table if not exists public.notification_prefs (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  user_id uuid not null references public.users(id) on delete set null,
+  channel text not null check (channel in ('whatsapp', 'email', 'push')),
+  category text not null check (category in ('bookings', 'waitlist', 'payments', 'events', 'marketing')),
+  enabled boolean not null default false
+);
+create index if not exists notification_prefs_tenant_idx on public.notification_prefs(tenant_id);
+create index if not exists notification_prefs_user_id_idx on public.notification_prefs(user_id);
+create trigger notification_prefs_touch before update on public.notification_prefs for each row execute function public.touch_updated_at();
+alter table public.notification_prefs enable row level security;
+create policy "notification_prefs: tenant read" on public.notification_prefs for select using (tenant_id = public.current_tenant_id());
+create policy "notification_prefs: staff write" on public.notification_prefs for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
 
 -- system · Who did what, on which entity, when (M-07).
 create table if not exists public.audit_log (

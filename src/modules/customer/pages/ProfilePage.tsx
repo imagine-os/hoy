@@ -19,11 +19,10 @@ import { LangToggle } from '../../../components/molecule/LangToggle/LangToggle';
 import { Skeleton } from '../../../components/atom/Skeleton/Skeleton';
 import { ListGroup, ListRow } from '../../../components/molecule/ListRow/ListRow';
 import { canvasSpecs } from '../specs';
-import { useEntitlements, useLocalPref, useMyProfile } from '../hooks';
+import { NOTIF_CHANNELS, useEntitlements, useMyProfile, useNotificationPrefs } from '../hooks';
 import { PageHead } from '../ui';
 
 const spec = canvasSpecs['C-19'];
-interface Prefs { push: boolean; email: boolean; whatsapp: boolean }
 
 /** C-19 Profile, settings & membership. */
 export function ProfilePage() {
@@ -34,7 +33,7 @@ export function ProfilePage() {
   const { sections, isVisible } = useLayout(spec);
   const { profile, account } = useMyProfile();
   const ent = useEntitlements();
-  const [prefs, setPrefs] = useLocalPref<Prefs>('notifications', { push: true, email: true, whatsapp: true });
+  const prefs = useNotificationPrefs();
   const [edit, setEdit] = useState(false);
   const [del, setDel] = useState(false);
   const [saved, setSaved] = useState<string | null>(null);
@@ -99,7 +98,8 @@ export function ProfilePage() {
     PaymentMethods: () => <ListGroup><ListRow icon="▭" title={t('customer.pay.title')} subtitle={t('customer.profile.pay.sub')} to="/app/payment-methods" /></ListGroup>,
     'NotificationPrefs (push / email / WhatsApp)': () => (
       <ListGroup title={t('customer.profile.notifications')}>
-        {(['whatsapp', 'push', 'email'] as (keyof Prefs)[]).map((k) => <ListRow key={k} icon={k === 'whatsapp' ? '◎' : k === 'push' ? '◉' : '✉'} title={t(`customer.profile.notif.${k}`)} subtitle={t(`customer.profile.notif.${k}.sub`)} trailing={<Toggle size="sm" checked={prefs[k]} onChange={(v) => setPrefs((p) => ({ ...p, [k]: v }))} label="" />} />)}
+        {NOTIF_CHANNELS.map((k) => <ListRow key={k} icon={k === 'whatsapp' ? '◎' : k === 'push' ? '◉' : '✉'} title={t(`customer.profile.notif.${k}`)} subtitle={t(`customer.profile.notif.${k}.sub`)} trailing={<Toggle size="sm" checked={prefs.channelOn(k)} onChange={(v) => { void prefs.setChannel(k, v); }} label="" />} />)}
+        <ListRow icon="▣" title={t('customer.notifications.prefs.title')} subtitle={t('customer.notifications.prefs.byCategory')} to="/app/notifications" />
         <ListRow icon="▣" title={t('customer.notifications.title')} to="/app/notifications" />
       </ListGroup>
     ),

@@ -1318,12 +1318,13 @@
    },
    "layout": [
     "WompiCard (placeholder)",
-    "SavedMethods",
+    "SavedMethods (add / remove / default)",
     "ElectronicMethods (card, PSE, Nequi)",
     "ManualMethods (transfer instructions, cash at desk)",
     "ComplianceNote"
    ],
    "data": [
+    "payment_methods",
     "payments",
     "invoices"
    ],
@@ -1350,7 +1351,9 @@
     "Loading: rows shimmer",
     "Empty: 'Add a payment method'",
     "Gateway down: cash/transfer only + banner",
-    "Expired card: inline warning"
+    "Expired card: inline warning",
+    "Saving: tokenising a new method",
+    "One default: every other row offers “make default”"
    ],
    "toggles": [
     {
@@ -1390,7 +1393,7 @@
    "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-05",
    "notes": [
     "Wompi is simulated in src/modules/customer/payments.ts (wompiCheckout). Manual transfer/cash create pending payments the front desk settles.",
-    "No payment_methods table yet: saved methods are derived from approved payments (shared-change request)."
+    "Saved methods are rows in payment_methods. `token_ref` is a demo placeholder produced by wompiTokenise(); the real Wompi token replaces it without changing the row shape. The PAN never reaches HoyOS."
    ]
   }
  },
@@ -1788,6 +1791,7 @@
     "Submit / Skip"
    ],
    "data": [
+    "reviews",
     "bookings",
     "class_sessions",
     "teachers"
@@ -1833,7 +1837,8 @@
    "layerTree": "RatePrompt\n├ ClassLine\n├ RatingScale (1–5)\n├ TagChips (music, heat, pace, clarity)\n├ OptionalNote\n├ AnonymousToggle\n└ Submit / Skip",
    "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-10",
    "notes": [
-    "No reviews table yet: submit marks bookings.rated = true and keeps the rating locally (shared-change request)."
+    "Submit inserts a `reviews` row (rating, tags, comment, visibility), marks bookings.rated = true and recomputes teachers.rating_avg.",
+    "Anonymous is the default: visibility = anonymous hides who wrote it from the teacher app (S-03) while M-06 keeps the link."
    ]
   }
  },
@@ -1934,6 +1939,7 @@
     "RelatedLinks"
    ],
    "data": [
+    "content_articles",
     "legal_documents"
    ],
    "roles": [
@@ -1974,7 +1980,8 @@
    "layerTree": "RulesLibrary\n├ CategoryGrid\n│ ├ Hot room safety\n│ ├ Class preparation\n│ ├ Studio etiquette\n│ ├ Studio tour\n│ ├ Emergencies\n│ └ About HOY\n├ ArticleView\n│ ├ VideoPlayer (placeholder)\n│ └ Body + checklist\n└ RelatedLinks",
    "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-13",
    "notes": [
-    "Articles live in src/modules/customer/content.ts until a content_articles table exists (shared-change request)."
+    "Articles are rows in content_articles (sections rules / about), editable from M-02 without a deploy; body_md is {es,en} markdown.",
+    "Read receipts stay per viewer in localStorage — no table claims to own them."
    ]
   }
  },
@@ -2000,7 +2007,9 @@
     "Section 03 · Membresías y planes",
     "NextPageLink → C-15"
    ],
-   "data": [],
+   "data": [
+    "faq_entries"
+   ],
    "roles": [
     "public",
     "customer",
@@ -2045,7 +2054,7 @@
    "layerTree": "FAQ (2 pages)\n├ Page 1 · C-14\n│ ├ 01 Tu primera vez en HOY\n│ ├ 02 Reservas y horarios\n│ └ 03 Membresías y planes\n└ Page 2 · C-15\n  ├ 04 El espacio\n  ├ 05 En camino\n  └ 06 Contacto y concierge",
    "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-14",
    "notes": [
-    "/app/faq. Entries live in content.ts until a faq_entries table exists; anything about prices links to /app/plans."
+    "/app/faq. Entries are faq_entries rows (group_key + page), editable from M-02; anything about prices links to /app/plans."
    ]
   }
  },
@@ -2071,7 +2080,9 @@
     "Section 06 · Contacto y concierge",
     "ConciergeRow → WhatsApp"
    ],
-   "data": [],
+   "data": [
+    "faq_entries"
+   ],
    "roles": [
     "public",
     "customer",
@@ -2117,7 +2128,7 @@
    "layerTree": "FAQ · page 2 (C-15)\n├ PageHeader (2/2) + back to C-14\n├ Section 04 El espacio\n├ Section 05 En camino\n├ Section 06 Contacto y concierge\n└ ContactRow → WhatsApp / email",
    "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-15",
    "notes": [
-    "/app/faq/2. Section 06 always ends with a route to a human."
+    "/app/faq/2 (faq_entries where page = 2). Section 06 always ends with a route to a human."
    ]
   }
  },
@@ -2144,6 +2155,8 @@
     "RewardNote"
    ],
    "data": [
+    "invites",
+    "credits",
     "class_sessions",
     "profiles"
    ],
@@ -2195,7 +2208,8 @@
    "layerTree": "InviteGuest\n├ ContextCard (class or general)\n├ ChannelRow (WhatsApp / Email / Link)\n├ PassPreview\n├ SentList (status)\n└ RewardNote",
    "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-16",
    "notes": [
-    "No invites table yet: sent invites are kept per user in localStorage (shared-change request). WhatsApp/email open outbound links."
+    "Every send inserts an `invites` row with the member’s referral code and status sent → opened → joined → rewarded. WhatsApp/email still open outbound links.",
+    "The reward is a credits row (reason gift) linked from invites.reward_credit_id; granting it is a staff/server action, never the client."
    ]
   }
  },
@@ -2509,7 +2523,7 @@
    "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-19",
    "notes": [
     "Language uses the real LangToggle and persists users.locale.",
-    "Notification prefs are per user in localStorage until a notification_prefs table exists."
+    "Notification prefs write notification_prefs: each channel toggle is the master switch for that channel’s five categories; the per-category matrix lives on C-24."
    ]
   }
  },
@@ -2697,6 +2711,7 @@
     "en": "Sell the things that are not regular classes — sound baths, workshops, retreats — with their own pricing, capacity and guest rules."
    },
    "layout": [
+    "EventList (published, upcoming first)",
     "HeroImage (placeholder)",
     "WhenWhere",
     "TitleBlock + hosts",
@@ -2708,6 +2723,10 @@
     "AddToCalendar"
    ],
    "data": [
+    "events",
+    "event_rsvps",
+    "payments",
+    "invoices",
     "teachers",
     "memberships"
    ],
@@ -2733,7 +2752,10 @@
     "Loading: hero shimmer",
     "Sold out: waitlist offer",
     "Past: read-only with gallery",
-    "Cancelled: banner + refund note"
+    "Cancelled: banner + refund note",
+    "No events published yet",
+    "Going: RSVP notice with cancel",
+    "Member price included"
    ],
    "toggles": [
     {
@@ -2763,7 +2785,8 @@
    "layerTree": "EventDetail\n├ HeroImage (placeholder)\n├ WhenWhere\n├ TitleBlock + hosts\n├ Body\n├ PriceRow (public / member)\n├ CapacityMeter\n├ StickyCTA · Reserve\n├ BringAFriendRow → C-16\n└ AddToCalendar",
    "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-23",
    "notes": [
-    "No events table yet: two demo events live in content.ts and RSVPs are kept locally (shared-change request). Public price reads pricing single; members included."
+    "Events are `events` rows (status published) and RSVPs are `event_rsvps`; M-02 publishes them. Prices are stored per event in COP and seeded from pricing.ts.",
+    "Wompi is simulated in src/modules/customer/payments.ts (wompiCheckout). Manual transfer/cash create pending payments the front desk settles. An event charge is an ordinary payments row with plan_id = null, linked from event_rsvps.payment_id."
    ]
   }
  },
@@ -2783,6 +2806,7 @@
     "en": "Sell the things that are not regular classes — sound baths, workshops, retreats — with their own pricing, capacity and guest rules."
    },
    "layout": [
+    "EventList (published, upcoming first)",
     "HeroImage (placeholder)",
     "WhenWhere",
     "TitleBlock + hosts",
@@ -2794,6 +2818,10 @@
     "AddToCalendar"
    ],
    "data": [
+    "events",
+    "event_rsvps",
+    "payments",
+    "invoices",
     "teachers",
     "memberships"
    ],
@@ -2819,7 +2847,10 @@
     "Loading: hero shimmer",
     "Sold out: waitlist offer",
     "Past: read-only with gallery",
-    "Cancelled: banner + refund note"
+    "Cancelled: banner + refund note",
+    "No events published yet",
+    "Going: RSVP notice with cancel",
+    "Member price included"
    ],
    "toggles": [
     {
@@ -2849,7 +2880,8 @@
    "layerTree": "EventDetail\n├ HeroImage (placeholder)\n├ WhenWhere\n├ TitleBlock + hosts\n├ Body\n├ PriceRow (public / member)\n├ CapacityMeter\n├ StickyCTA · Reserve\n├ BringAFriendRow → C-16\n└ AddToCalendar",
    "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-23",
    "notes": [
-    "No events table yet: two demo events live in content.ts and RSVPs are kept locally (shared-change request). Public price reads pricing single; members included."
+    "Events are `events` rows (status published) and RSVPs are `event_rsvps`; M-02 publishes them. Prices are stored per event in COP and seeded from pricing.ts.",
+    "Wompi is simulated in src/modules/customer/payments.ts (wompiCheckout). Manual transfer/cash create pending payments the front desk settles. An event charge is an ordinary payments row with plan_id = null, linked from event_rsvps.payment_id."
    ]
   }
  },
@@ -2873,13 +2905,11 @@
     "TodayGroup → NotificationRow",
     "EarlierGroup",
     "EmptyState",
-    "SettingsLink → C-19"
+    "PrefsSection (channel × category)"
    ],
    "data": [
-    "message_log",
-    "waitlist",
-    "bookings",
-    "class_sessions"
+    "notifications",
+    "notification_prefs"
    ],
    "roles": [
     "customer",
@@ -2907,7 +2937,9 @@
     "Empty: 'nothing yet'",
     "Unread: dot + heavier weight",
     "Expired action: row dims, action removed",
-    "Offline: cached list"
+    "Offline: cached list",
+    "All read",
+    "Muted category in the prefs matrix"
    ],
    "toggles": [
     {
@@ -2933,7 +2965,8 @@
    "layerTree": "Inbox\n├ Header + MarkAllRead\n├ TodayGroup\n│ └ NotificationRow (icon, title, time, unread dot)\n├ EarlierGroup\n├ EmptyState\n└ SettingsLink → C-19",
    "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-24",
    "notes": [
-    "Derived inbox: message_log rows + waitlist offers + upcoming bookings. Read state per user in localStorage until a notifications table exists."
+    "Real inbox: `notifications` rows (title/body are {es,en} JSON, deep_link routes in-app, read_at is the read receipt). Staff and automations insert; the member only updates read_at.",
+    "Preferences are notification_prefs rows (channel × category). No row means enabled, so only real choices are stored; C-19 toggles a whole channel."
    ]
   }
  },
@@ -4703,6 +4736,7 @@
     "ClassHeader",
     "AttendanceWindow",
     "RosterSheet → attendance marks",
+    "ReviewSummary (read-only)",
     "ClassNotes"
    ],
    "data": [
@@ -4712,7 +4746,8 @@
     "modalities",
     "users",
     "profiles",
-    "audit_log"
+    "audit_log",
+    "reviews"
    ],
    "roles": [
     "teacher",
@@ -4761,7 +4796,8 @@
    "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#S-03",
    "notes": [
     "Marks write bookings.status (checked_in / no_show) and an audit_log row.",
-    "Notes are audit_log rows (action session.note) so they appear in M-07."
+    "Notes are audit_log rows (action session.note) so they appear in M-07.",
+    "Reviews are read-only here: the average, count and tags of the `reviews` rows for this session (C-10). Anonymous reviews never show who wrote them."
    ]
   }
  },

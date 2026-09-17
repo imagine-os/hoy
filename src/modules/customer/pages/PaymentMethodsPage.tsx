@@ -1,9 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useI18n } from '../../../i18n/I18nProvider';
-import { useSession } from '../../../auth/SessionProvider';
-import { useTable } from '../../../data/DataContext';
-import type { PaymentRow } from '../../../data/schema';
-import { formatCOP, formatDate } from '../../../i18n/format';
+import { formatCOP } from '../../../i18n/format';
 import { tenant } from '../../../tenant/tenant';
 import { Card } from '../../../components/molecule/Card/Card';
 import { Button } from '../../../components/atom/Button/Button';
@@ -11,24 +8,17 @@ import { Badge } from '../../../components/atom/Badge/Badge';
 import { Notice } from '../../../components/molecule/Notice/Notice';
 import { ListGroup, ListRow } from '../../../components/molecule/ListRow/ListRow';
 import { EmptyState } from '../../../components/molecule/EmptyState/EmptyState';
-import { PAYMENT_METHODS, wompiCheckout } from '../payments';
-import { priceOf } from '../hooks';
+import { PAYMENT_METHODS, wompiCheckout, wompiTokenise, type ElectronicMethod } from '../payments';
+import { priceOf, usePaymentMethods } from '../hooks';
 import { policy } from '../policy';
 import { PageHead } from '../ui';
 
-/** C-05 Payment methods — Colombian payment reality, with the Wompi seam marked in the UI. */
+/** C-05 Payment methods — saved methods live in `payment_methods`; the token is Wompi's, never ours. */
 export function PaymentMethodsPage() {
   const { t, bi, lang } = useI18n();
-  const { user } = useSession();
-  const { rows: payments } = useTable<PaymentRow>('payments', { where: { user_id: user.id }, orderBy: { column: 'created_at', dir: 'desc' } });
+  const { rows: saved, add, remove, makeDefault } = usePaymentMethods();
   const [test, setTest] = useState<{ busy: boolean; ref?: string }>({ busy: false });
-
-  // No payment_methods table yet: "saved" methods are the electronic methods this person has paid with (approved).
-  const saved = useMemo(() => {
-    const seen = new Map<string, PaymentRow>();
-    for (const p of payments) if (p.status === 'approved' && p.provider === 'wompi' && !seen.has(p.method)) seen.set(p.method, p);
-    return [...seen.values()];
-  }, [payments]);
+  const [adding, setAdding] = useState<ElectronicMethod | null>(null);
   const electronic = PAYMENT_METHODS.filter((m) => m.provider === 'wompi');
   const manual = PAYMENT_METHODS.filter((m) => m.provider === 'manual');
   const testAmount = priceOf('single').price ?? 0;
@@ -37,6 +27,14 @@ export function PaymentMethodsPage() {
     setTest({ busy: true });
     const r = await wompiCheckout({ amount: testAmount, method: 'card' }); // INTEGRATION SEAM: replace with the Wompi widget.
     setTest({ busy: false, ref: r.ref });
+  };
+
+  const save = async (kind: ElectronicMethod) => {
+    setAdding(kind);
+    try {
+      const tok = await wompiTokenise({ kind }); // INTEGRATION SEAM: Wompi tokenisation.
+      await add({ kind, brand: tok.brand, last4: tok.last4, expires: tok.expires, tokenRef: tok.tokenRef });
+    } finally { setAdding(null); }
   };
 
   return (
@@ -55,11 +53,29 @@ export function PaymentMethodsPage() {
 
         <ListGroup title={t('customer.pay.saved')}>
           {saved.length === 0 && <EmptyState compact icon="▭" title={t('customer.pay.saved.empty')} body={t('customer.pay.saved.empty.body')} />}
-          {saved.map((p) => { const m = PAYMENT_METHODS.find((x) => x.id === p.method); return <ListRow key={p.id} icon={m?.glyph ?? '▭'} title={p.method === 'card' ? `${m?.label} •••• 4242` : m?.label ?? p.method} subtitle={t('customer.pay.saved.lastUsed', { date: formatDate(p.paid_at ?? p.created_at, lang) })} trailing={<Badge tone="success">{t('customer.pay.saved.tokenised')}</Badge>} />; })}
+          {saved.map((m) => {
+            const opt = PAYMENT_METHODS.find((x) => x.id === m.kind);
+            return (
+              <ListRow key={m.id} icon={opt?.glyph ?? '▭'}
+                title={m.last4 ? `${m.brand} ···· ${m.last4}` : m.brand}
+                subtitle={[m.expires ? t('customer.pay.saved.expires', { date: m.expires }) : t(`customer.pay.kind.${m.kind}`), t('customer.pay.saved.tokenised')].join(' · ')}
+                trailing={(
+                  <span className="row" style={{ gap: 'var(--sp-2)' }}>
+                    {m.is_default
+                      ? <Badge tone="success">{t('customer.pay.saved.default')}</Badge>
+                      : <Button size="sm" variant="ghost" onClick={() => { void makeDefault(m); }}>{t('customer.pay.saved.makeDefault')}</Button>}
+                    <Button size="sm" variant="ghost" onClick={() => { void remove(m); }} aria-label={t('customer.pay.saved.remove')}>✕</Button>
+                  </span>
+                )} />
+            );
+          })}
         </ListGroup>
 
         <ListGroup title={t('customer.pay.electronic')}>
-          {electronic.map((m) => <ListRow key={m.id} icon={m.glyph} title={m.label} subtitle={bi(m.hint)} trailing={<Badge tone="neutral">Wompi</Badge>} />)}
+          {electronic.map((m) => (
+            <ListRow key={m.id} icon={m.glyph} title={m.label} subtitle={bi(m.hint)}
+              trailing={<Button size="sm" variant="secondary" loading={adding === m.id} onClick={() => { void save(m.id as ElectronicMethod); }}>{t('customer.pay.add')}</Button>} />
+          ))}
         </ListGroup>
 
         <ListGroup title={t('customer.pay.manual')}>
