@@ -63,7 +63,7 @@ export const coreStrings: StringTable = {
   'core.common.retry': { es: 'Reintentar', en: 'Retry' },
   'core.common.today': { es: 'Hoy', en: 'Today' },
   'core.common.spots': { es: '{n} cupos', en: '{n} spots' },
-  'core.common.full': { es: 'Lleno', en: 'Full' },
+  'core.common.full': { es: 'Sin cupos', en: 'Full' },
   'core.common.waitlist': { es: 'Lista de espera', en: 'Waitlist' },
   'core.common.book': { es: 'Reservar', en: 'Book' },
   'core.common.min': { es: '{n} min', en: '{n} min' },

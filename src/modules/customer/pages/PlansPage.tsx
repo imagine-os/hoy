@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useSession } from '../../../auth/SessionProvider';
 import { useData } from '../../../data/DataContext';
-import { formatCOP } from '../../../i18n/format';
+import { formatCOP, formatDate } from '../../../i18n/format';
 import { tenant } from '../../../tenant/tenant';
 import { pricingByFamily, type PriceItem } from '../../../tenant/pricing';
 import { Card } from '../../../components/molecule/Card/Card';
@@ -19,6 +19,8 @@ import { policy } from '../policy';
 import { PageHead } from '../ui';
 
 type Cycle = 'month' | 'year';
+/** Plan dates carry the year: an annual cycle ends in another one. */
+const DATE_OPTS: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', year: 'numeric' };
 
 /** C-06 Membership plans — sell the plan without blocking the booking. */
 export function PlansPage() {
@@ -37,6 +39,8 @@ export function PlansPage() {
   const monthsFree = Math.max(0, Math.round(12 - (annual.price ?? 0) / (monthly.price ?? 1)));
   const shown = plans.filter((p) => p.period === cycle);
   const currentSlug = ent.plan?.slug ?? null;
+  // C-06 "Tu plan": the cycle the customer paid for — start, and the day it runs out (cancellation date if set, else the renewal).
+  const planEnd = ent.membership?.ends_at ?? ent.membership?.renews_at ?? ent.membership?.starts_at ?? '';
 
   const buy = async () => {
     if (!buying) return;
@@ -57,7 +61,15 @@ export function PlansPage() {
     <div className="container page cust-page">
       <PageHead title={t('customer.plans.title')} sub={t('customer.plans.sub')} actions={<SegmentedControl size="sm" ariaLabel={t('customer.plans.cycle')} value={cycle} onChange={setCycle} options={[{ value: 'month', label: t('core.common.perMonth').replace('/ ', '') }, { value: 'year', label: t('core.common.perYear').replace('/ ', '') }]} />} />
       <div className="stack">
-        {ent.membership && <Notice tone={ent.membership.status === 'active' ? 'success' : 'warn'} title={t('customer.plans.current', { plan: ent.plan ? bi({ es: ent.plan.name_es, en: ent.plan.name_en }) : '' })} action={<Link to="/app/membership"><Button size="sm" variant="secondary">{t('customer.plans.manage')}</Button></Link>}>{t(`customer.membership.status.${ent.membership.status}`)}</Notice>}
+        {ent.membership && (
+          <Notice tone={ent.membership.status === 'active' ? 'success' : 'warn'} title={t('customer.plans.current', { plan: ent.plan ? bi({ es: ent.plan.name_es, en: ent.plan.name_en }) : '' })} action={<Link to="/app/membership"><Button size="sm" variant="secondary">{t('customer.plans.manage')}</Button></Link>}>
+            {t(`customer.membership.status.${ent.membership.status}`)}
+            <span className="cust-plan-dates xs">
+              <span>{t('customer.plans.starts')}: <strong>{formatDate(ent.membership.starts_at, lang, DATE_OPTS)}</strong></span>
+              <span>{t('customer.plans.ends')}: <strong>{formatDate(planEnd, lang, DATE_OPTS)}</strong></span>
+            </span>
+          </Notice>
+        )}
         <div className="cust-plans">
           {shown.map((p) => {
             const isCurrent = currentSlug === p.id;

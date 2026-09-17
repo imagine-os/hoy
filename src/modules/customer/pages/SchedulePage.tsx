@@ -72,7 +72,9 @@ export function SchedulePage({ view: routeView }: SchedulePageProps) {
   const dayList_ = filtered.filter((x) => isSameDay(x.session.starts_at, days[day]));
   const isPast = (s: ClassSessionRow) => new Date(s.ends_at).getTime() < Date.now();
 
-  const open = (s: ClassSessionRow) => nav(`/app/class/${s.id}`);
+  const isFull = (s: ClassSessionRow) => s.status === 'scheduled' && s.booked_count >= s.capacity;
+  // A class with no spots left cannot be booked: the row leads to the waitlist (C-20) instead of the booking screen.
+  const open = (s: ClassSessionRow) => nav(isFull(s) && !mine.has(s.id) ? `/app/waitlist/${s.id}` : `/app/class/${s.id}`);
 
   const renderWeek = (): ReactNode => view !== 'week' ? null : (
       <div className="cust-week" role="table" aria-label={t('customer.schedule.view.week')}>

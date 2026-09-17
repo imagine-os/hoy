@@ -6,6 +6,7 @@ _Updated every turn. Codes reference `src/specs/canvasSpecs.ts` and the module `
 
 ### Product
 - **P1 leftovers from 0007/0008** (numbered in ROADMAP §B/P1): M-02 editors for `content_articles` / `faq_entries` + an event publisher for `events` (M-03 edits them generically today) · server-side invite reward (`invites.status` only reaches `sent` from the client; `joined` / `rewarded` + `reward_credit_id` need the Supabase function that grants the credit) · staff-side `notifications` sending (front desk / M-04 / M-05 writing a row) and the 90-day retention job · event waitlist (`event_rsvps.status` has no `waitlist` value yet) and attendance marking from S-02 · real Wompi tokenisation behind `wompiTokenise()`
+- **From Jas's review (0014)** — owner: finance workstream / pending Sergio: payroll settlement review page (detail of teacher payments, classes taught, and a "paid" mark per teacher) · recurring fixed fortnightly expenses + variable expenses so Hoy has a total finance balance · a "15 días" period filter on the admin finance pages *if* Sergio sets fortnightly pay periods
 - A-06 legal pages inside the app (site pages exist) · real Supabase Auth behind A-02/A-03/C-21 (SessionProvider already accepts any `users` row)
 - C-05 transfer instructions can read the payout account from M-08c (M-08c stores it since 0007)
 - PDF receipts (C-11)
@@ -26,6 +27,13 @@ _Updated every turn. Codes reference `src/specs/canvasSpecs.ts` and the module `
 - `scripts/screenshots.mjs` has no state parameter, so the collapsed sidebar / rail and the mobile drawer are not captured (0007 verified them by hand) — add `--state=` or a per-route hook
 - `docs/prompts/0009-salvage-empty10.md` is missing (0009 shipped with a changelog entry only)
 
+### Decisions
+- **Open questions from Jas's review (0014), with Justin to forward** — recorded as ROADMAP §E 21–24:
+  - **Sergio**: are teachers paid fortnightly or monthly? (sets the unit of time for payroll runs and accounting reports, and whether a "15 días" filter is added)
+  - **Sergio**: does the Coordinator see the monthly total-revenue KPI in the admin panel?
+  - **Lore**: do we need to store the customer's sex/gender? (no field today)
+  - **Lore**: is there a group-session product for birthdays/events (book room + teacher + an add-on)?
+
 ### Repo hygiene
 - empty10 placeholder: awaiting Justin's decision (reset to placeholder or delete)
 
@@ -33,6 +41,14 @@ _Updated every turn. Codes reference `src/specs/canvasSpecs.ts` and the module `
 - (none — v0.5.0 closed: 0007 admin shell, 0008 data depth, 0009 empty10 salvage, 0010 integration pass)
 
 ## Done
+
+### Jas design review (0014 · v0.5.1)
+- **C-06** "Tu plan" card shows **Inicio del plan** / **Fin del plan** ("Plan start" / "Plan end") from the existing `memberships.starts_at` and `ends_at ?? renews_at`, through `formatDate()` with the year — no new columns
+- **C-02 / C-01** a class with no spots left shows a **Sin cupos** / **Full** pill (danger `Badge`, in place of the capacity meter) and can no longer be booked: the row leads to the waitlist (C-20). `core.common.full` ES is now "Sin cupos"; `ClassRow.meta.ts` documents and renders the `full` state
+- **Seed** always has one upcoming class today at capacity (deterministic, applied after the random pass so no other page's data shifts) with a waitlist row behind it
+- **S-04** Resumen gained **Valor pagado** (defaults to the invoiced total, untouched = one-click sale) and, when it differs, the difference plus a required **Observación** that blocks "Completar venta" until filled; both persist as `payments.amount_paid` / `payments.note` (schema.ts + supabase/schema.sql + docs/data-model.md) and land in the audit entry
+- **C-05** subtitle is "Medellín · COP" — the "IVA 19%" fragment is gone in both languages; receipt and POS maths untouched
+- **W-01 / P-01** (dark-mode "Cuatro movimientos" titles, "Planes claros" → "Planes") — handed to the concurrent website workstream, which holds `src/modules/website/**`
 
 ### Final integration (0010 · v0.5.0)
 - `src/modules/customer/policy.ts` reads `usePolicy()` (`src/modules/admin/settings.ts`): its own `attachPolicy()` peek/fetch/subscribe loop is deleted, `toPolicyValues()` is the one M-08 → `PolicyValues` mapper, and `usePolicyValues()` is exported for new components. `<PolicySync/>` stays (it bridges the hook to the 18 plain `policy.*` readers and the non-React helpers) but now assigns during render, above the router, so the first paint shows stored values

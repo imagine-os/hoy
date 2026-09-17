@@ -189,6 +189,8 @@ export const strings: StringTable = {
   'customer.plans.current': { es: 'Tu plan: {plan}', en: 'Your plan: {plan}' },
   'customer.plans.manage': { es: 'Gestionar membresía', en: 'Manage membership' },
   'customer.plans.yours': { es: 'Tu plan', en: 'Your plan' },
+  'customer.plans.starts': { es: 'Inicio del plan', en: 'Plan start' },
+  'customer.plans.ends': { es: 'Fin del plan', en: 'Plan end' },
   'customer.plans.change': { es: 'Cambiar a este plan', en: 'Switch to this plan' },
   'customer.plans.cta': { es: 'Empezar', en: 'Start' },
   'customer.plans.monthsFree': { es: 'Equivale a {n} meses gratis ({monthly} al mes).', en: 'Works out to {n} months free ({monthly} a month).' },

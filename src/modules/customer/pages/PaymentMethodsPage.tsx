@@ -10,7 +10,6 @@ import { ListGroup, ListRow } from '../../../components/molecule/ListRow/ListRow
 import { EmptyState } from '../../../components/molecule/EmptyState/EmptyState';
 import { PAYMENT_METHODS, wompiCheckout, wompiTokenise, type ElectronicMethod } from '../payments';
 import { priceOf, usePaymentMethods } from '../hooks';
-import { policy } from '../policy';
 import { PageHead } from '../ui';
 
 /** C-05 Payment methods — saved methods live in `payment_methods`; the token is Wompi's, never ours. */
@@ -39,7 +38,7 @@ export function PaymentMethodsPage() {
 
   return (
     <div className="container page cust-page">
-      <PageHead back="/app/profile" title={t('customer.pay.title')} sub={`${tenant.city} · ${tenant.currency} · IVA ${Math.round(policy.ivaRate * 100)}%`} />
+      <PageHead back="/app/profile" title={t('customer.pay.title')} sub={`${tenant.city} · ${tenant.currency}`} />
       <div className="stack">
         <Card tone="primary" className="stack-sm" padding="lg">
           <div className="row-between wrap"><strong className="cust-h2">{t('customer.pay.wompi.title')}</strong><Badge tone="highlight">{t('customer.pay.wompi.badge')}</Badge></div>

@@ -59,7 +59,7 @@ export async function recordPayment(data: DataProvider, input: { userId: string;
   const status = manual ? 'pending' : input.result?.status === 'approved' ? 'approved' : 'declined';
   const now = new Date().toISOString();
   const payment = await data.insert<PaymentRow>('payments', {
-    user_id: input.userId, plan_id: input.planId, amount: input.amount, currency: 'COP', method: input.method,
+    user_id: input.userId, plan_id: input.planId, amount: input.amount, amount_paid: status === 'approved' ? input.amount : null, note: null, currency: 'COP', method: input.method,
     provider: manual ? 'manual' : 'wompi', provider_ref: input.result?.ref ?? null, status, paid_at: status === 'approved' ? now : null, taken_by: input.takenBy ?? null,
   } as Partial<PaymentRow>);
   if (status === 'approved') {

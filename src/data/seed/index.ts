@@ -74,7 +74,7 @@ export function buildSeed(): Record<string, BaseRow[]> {
     const daysAgo = r.int(1, 60);
     const payId = `pay_${i}_${kind}`;
     const paidAt = new Date(NOW); paidAt.setDate(paidAt.getDate() - daysAgo);
-    payments.push({ ...base(payId, daysAgo), user_id: uid, plan_id: plan.id, amount: plan.price, currency: 'COP', method: r.pick(['card', 'pse', 'nequi', 'cash', 'transfer']), provider: r.chance(0.7) ? 'wompi' : 'manual', provider_ref: r.chance(0.7) ? `wmp_${r.int(100000, 999999)}` : null, status: 'approved', paid_at: iso(paidAt), taken_by: r.chance(0.3) ? 'usr_desk' : null });
+    payments.push({ ...base(payId, daysAgo), user_id: uid, plan_id: plan.id, amount: plan.price, amount_paid: plan.price, note: null, currency: 'COP', method: r.pick(['card', 'pse', 'nequi', 'cash', 'transfer']), provider: r.chance(0.7) ? 'wompi' : 'manual', provider_ref: r.chance(0.7) ? `wmp_${r.int(100000, 999999)}` : null, status: 'approved', paid_at: iso(paidAt), taken_by: r.chance(0.3) ? 'usr_desk' : null });
     db.invoices.push({ ...base(`inv_${i}`, daysAgo), payment_id: payId, number: `HOY-${String(1000 + i)}`, subtotal: Math.round(plan.price / 1.19), tax: plan.price - Math.round(plan.price / 1.19), total: plan.price, issued_at: iso(paidAt), pdf_url: null, dian_cufe: null });
     if (plan.family === 'membresia') {
       const renews = new Date(paidAt); renews.setMonth(renews.getMonth() + (kind === 'annual' ? 12 : 1));
@@ -103,6 +103,27 @@ export function buildSeed(): Record<string, BaseRow[]> {
     }
     if (s.booked_count >= s.capacity) {
       for (let w = 0; w < r.int(1, 3); w++) db.waitlist.push({ ...base(`wl_${s.id}_${w}`, 1), user_id: r.pick(customerIds), session_id: s.id, position: w + 1, status: 'waiting', offered_at: null, claim_until: null });
+    }
+  }
+
+  // One upcoming class today is always full, so the "Sin cupos" / "Full" state on C-01 and C-02 is real data (Jas review, 2026-09-17).
+  const startOf = new Map(sessions.map((s) => [s.id, s.starts_at]));
+  const bookedIn = (sid: string, uid: string) => bookings.some((bk) => bk.session_id === sid && bk.user_id === uid && bk.status === 'booked');
+  const fullToday = sessions
+    .filter((s) => s.status === 'scheduled' && s.starts_at.slice(0, 10) === dateOnly(NOW) && new Date(s.starts_at) > NOW && !bookedIn(s.id, 'usr_cust'))
+    .sort((a, b) => b.booked_count - a.booked_count || a.starts_at.localeCompare(b.starts_at))[0];
+  if (fullToday) {
+    // Fill from people who already have an earlier class today first, so nobody's "next class" notification changes.
+    const hasEarlier = (uid: string) => bookings.some((bk) => bk.user_id === uid && bk.status === 'booked' && (startOf.get(bk.session_id) ?? '') < fullToday.starts_at);
+    const fillers = customerIds.filter((uid) => uid !== 'usr_cust' && !bookedIn(fullToday.id, uid)).sort((a, b) => Number(hasEarlier(b)) - Number(hasEarlier(a)));
+    for (const uid of fillers) {
+      if (fullToday.booked_count >= fullToday.capacity) break;
+      bookings.push({ ...base(`bk_full_${fullToday.booked_count}`, 1), user_id: uid, session_id: fullToday.id, status: 'booked', paid_with: memberships.some((m) => m.user_id === uid) ? 'membership' : 'credit', credit_id: null, checked_in_at: null, cancelled_at: null, rated: false });
+      fullToday.booked_count++;
+    }
+    const waiter = customerIds.find((uid) => uid !== 'usr_cust' && !bookedIn(fullToday.id, uid));
+    if (waiter && !(db.waitlist as (BaseRow & { session_id: string })[]).some((w) => w.session_id === fullToday.id)) {
+      db.waitlist.push({ ...base(`wl_${fullToday.id}_0`, 1), user_id: waiter, session_id: fullToday.id, position: 1, status: 'waiting', offered_at: null, claim_until: null });
     }
   }
 

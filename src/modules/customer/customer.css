@@ -89,6 +89,7 @@
 @media (min-width: 720px) { .cust-plans { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .cust-plan { display: flex; flex-direction: column; gap: var(--sp-3); }
 .cust-plan.is-featured { border-color: var(--color-primary); }
+.cust-plan-dates { display: flex; flex-wrap: wrap; gap: var(--sp-1) var(--sp-3); margin-top: var(--sp-1); }
 .cust-plan-price strong { font-family: var(--font-heading); font-size: var(--fs-2xl); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
 .cust-pass { display: flex; flex-direction: column; gap: var(--sp-3); }
 .cust-pass-price { font-family: var(--font-heading); font-size: var(--fs-lg); font-variant-numeric: tabular-nums; white-space: nowrap; }

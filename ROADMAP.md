@@ -206,6 +206,16 @@ deduplicated. Each needs an answer, an owner and a date; then edit the chapter o
     v0.1 decision entries in the canvas changelog; prune the 32 orphan dictionary keys; amend the
     phase-3 plan text that still lists check-in and front desk.
 
+**From Jas's design review, 2026-09-17 (0014) — Justin to forward**
+21. **Sergio**: are teachers paid **fortnightly or monthly**? That interval is the unit of time for payroll runs
+    and the accounting reports, and it decides whether the admin finance pages get a "15 days" period filter.
+22. **Sergio**: does the **Coordinator** role see the **monthly total-revenue KPI** in the admin panel, or is
+    that limited to admin/finance?
+23. **Lore**: do we need to store the **customer's sex/gender**? Nothing collects it today, so it would be a new
+    `profiles` field and a new question at the desk.
+24. **Lore**: is there a **group-session product for birthdays or events** — book the room and a teacher with an
+    add-on detail? Today only the fixed timetable and the events calendar exist.
+
 ## F. What remains after this pass (for Justin)
 
 Everything below is known and written down; nothing here is a surprise found late. Read it as

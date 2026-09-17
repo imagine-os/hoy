@@ -486,6 +486,7 @@ _Cada cobro, por Wompi o manual._
 | `user_id` | uuid | → `users`  |
 | `plan_id` | uuid, null | → `plans`  |
 | `amount` | int | COP, integer |
+| `amount_paid` | int, null | COP, integer — what the desk actually received; equals amount unless a note explains why |
 | `currency` | text |  |
 | `method` | enum (card \| pse \| nequi \| cash \| transfer \| gift_card) |  |
 | `provider` | enum (wompi \| manual) |  |
@@ -493,6 +494,7 @@ _Cada cobro, por Wompi o manual._
 | `status` | enum (pending \| approved \| declined \| refunded \| voided) |  |
 | `paid_at` | timestamptz, null |  |
 | `taken_by` | uuid, null | → `users` staff user for manual payments |
+| `note` | text, null | Why the received amount differs from the invoice (S-04 requires it when it does) |
 
 #### `invoices`
 Fiscal document per payment (DIAN later).  

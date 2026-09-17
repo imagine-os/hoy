@@ -56,6 +56,8 @@ export function RegisterPage() {
   const [itemId, setItemId] = useState('trial');
   const [method, setMethod] = useState<Method>('cash');
   const [receipt, setReceipt] = useState({ wa: true, email: true });
+  const [paidRaw, setPaidRaw] = useState<string | null>(null); // null = untouched, so it follows the invoiced total
+  const [note, setNote] = useState('');
   const [sessionId, setSessionId] = useState(params.get('session') ?? '');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -70,7 +72,11 @@ export function RegisterPage() {
   const upcoming = today.filter((x) => new Date(x.session.ends_at).getTime() > Date.now());
   const items = pricing.filter((p) => p.price != null && SELLABLE.includes(p.family));
 
-  const valid = mode === 'existing' ? !!person : form.first.trim() && form.phone.trim() && form.consent;
+  // Jas review: the desk can record a different amount received, but only with an observation attached.
+  const amountPaid = paidRaw === null || paidRaw.trim() === '' ? totals.total : Math.max(0, Math.round(Number(paidRaw.replace(/[^\d]/g, '')) || 0));
+  const paidDiffers = amountPaid !== totals.total;
+  const noteOk = !paidDiffers || note.trim().length > 0;
+  const valid = (mode === 'existing' ? !!person : form.first.trim() && form.phone.trim() && form.consent) && noteOk;
   const displayName = mode === 'existing' ? person?.name ?? '' : `${form.first.trim()} ${form.last.trim()}`.trim();
 
   const complete = async () => {
@@ -92,10 +98,10 @@ export function RegisterPage() {
       }
       const db = METHOD_DB[method];
       const pending = method === 'wompi';
-      const payment = await data.insert<PaymentRow>('payments', { user_id: userId, plan_id: `plan_${item.id}`, amount: totals.total, currency: tenant.currency, method: db.method, provider: db.provider, provider_ref: pending ? `wmp_link_${Math.random().toString(36).slice(2, 8)}` : null, status: pending ? 'pending' : 'approved', paid_at: pending ? null : now.toISOString(), taken_by: user.id } as Partial<PaymentRow>);
+      const payment = await data.insert<PaymentRow>('payments', { user_id: userId, plan_id: `plan_${item.id}`, amount: totals.total, amount_paid: amountPaid, note: paidDiffers ? note.trim() : null, currency: tenant.currency, method: db.method, provider: db.provider, provider_ref: pending ? `wmp_link_${Math.random().toString(36).slice(2, 8)}` : null, status: pending ? 'pending' : 'approved', paid_at: pending ? null : now.toISOString(), taken_by: user.id } as Partial<PaymentRow>);
       const number = `HOY-${1000 + invoices.length + 1}`;
       await data.insert('invoices', { payment_id: payment.id, number, subtotal: totals.subtotal, tax: totals.tax, total: totals.total, issued_at: now.toISOString(), pdf_url: null, dian_cufe: null });
-      await audit('payment.take', 'payments', payment.id, { amount: totals.total, method, item: item.id, invoice: number, status: payment.status });
+      await audit('payment.take', 'payments', payment.id, { amount: totals.total, amount_paid: amountPaid, note: paidDiffers ? note.trim() : null, method, item: item.id, invoice: number, status: payment.status });
 
       if (item.family === 'membresia') {
         const m = await data.insert('memberships', { user_id: userId, plan_id: `plan_${item.id}`, status: pending ? 'past_due' : 'active', starts_at: dateOnly(now), renews_at: dateOnly(addMonths(now, item.period === 'year' ? 12 : 1)), ends_at: null, paused_until: null });
@@ -122,7 +128,7 @@ export function RegisterPage() {
     } catch (e) { setError(String(e)); } finally { setBusy(false); }
   };
 
-  const reset = () => { setDone(null); setForm({ first: '', last: '', phone: '', email: '', birthday: '', emergency: '', consent: false }); setPersonId(null); setExistingQ(''); setMode('new'); setItemId('trial'); setMethod('cash'); };
+  const reset = () => { setDone(null); setForm({ first: '', last: '', phone: '', email: '', birthday: '', emergency: '', consent: false }); setPersonId(null); setExistingQ(''); setMode('new'); setItemId('trial'); setMethod('cash'); setPaidRaw(null); setNote(''); };
 
   if (!canWrite) return <div className="stack"><div className="page-head"><h1>{t('staff.register.title')}</h1></div><EmptyState tone="error" title={t('staff.register.noPermission')} body={t('staff.register.noPermission.body')} /></div>;
 
@@ -207,6 +213,17 @@ export function RegisterPage() {
               <div className="row-between register-line small muted"><span>Subtotal</span><span>{formatCOP(totals.subtotal, lang)}</span></div>
               <div className="row-between register-line small muted"><span>{t('staff.register.iva', { pct: settings.tax.ivaPct })}{settings.tax.pricesIncludeIva ? ` · ${t('staff.register.iva.included')}` : ''}</span><span>{formatCOP(totals.tax, lang)}</span></div>
               <div className="row-between register-total"><span>{t('staff.register.total')}</span><span>{formatCOP(totals.total, lang)}</span></div>
+              <Field label={t('staff.register.paid')} hint={t('staff.register.paid.hint')}>
+                {(id) => <Input id={id} inputMode="numeric" value={paidRaw ?? String(totals.total)} onChange={(e) => setPaidRaw(e.target.value)} onFocus={() => setPaidRaw((v) => v ?? String(totals.total))} />}
+              </Field>
+              {paidDiffers && (
+                <>
+                  <p className="xs register-diff">{t('staff.register.paid.diff', { amount: formatCOP(amountPaid - totals.total, lang) })}</p>
+                  <Field label={t('staff.register.note')} required hint={t('staff.register.note.hint')}>
+                    {(id) => <Input id={id} value={note} onChange={(e) => setNote(e.target.value)} placeholder={t('staff.register.note.ph')} invalid={!note.trim()} />}
+                  </Field>
+                </>
+              )}
               <Field label={t('staff.register.checkinTo')} hint={settings.features.autoCheckinOnSale ? t('staff.register.checkinTo.hint') : t('staff.register.checkinTo.off')}>
                 {(id) => <Select id={id} value={sessionId} onChange={(e) => setSessionId(e.target.value)} disabled={!settings.features.autoCheckinOnSale}><option value="">{t('staff.register.checkinTo.none')}</option>{upcoming.map(({ session: s, teacher: te }) => <option key={s.id} value={s.id}>{formatTime(s.starts_at, lang)} · {s.title} · {te?.display_name} ({s.booked_count}/{s.capacity})</option>)}</Select>}
               </Field>
