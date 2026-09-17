@@ -2,7 +2,6 @@ import { useState, type ReactNode } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { useI18n } from '../../i18n/I18nProvider';
 import { useTheme } from '../../design/ThemeProvider';
-import { useSession } from '../../auth/SessionProvider';
 import { tenant } from '../../tenant/tenant';
 import { Wordmark } from '../../components/atom/Wordmark/Wordmark';
 import { LangToggle } from '../../components/molecule/LangToggle/LangToggle';
@@ -15,7 +14,6 @@ const NAV = [['/site/about', 'about'], ['/site/modalities', 'modalities'], ['/si
 export function SiteShell({ children }: { children: ReactNode }) {
   const { t, bi } = useI18n();
   const { theme, toggleTheme } = useTheme();
-  const { switchUser } = useSession();
   const [open, setOpen] = useState(false);
   return (
     <div className="site">
@@ -28,7 +26,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
           <div className="site-actions">
             <LangToggle size="sm" />
             <button type="button" className="site-iconbtn" onClick={toggleTheme} aria-label={t('core.theme.toggle')}>{theme === 'dark' ? '☾' : '☀'}</button>
-            <Link to="/app" onClick={() => switchUser('customer')}><Button size="sm">{t('site.nav.signin')}</Button></Link>
+            <Link to="/auth/sign-in"><Button size="sm">{t('site.nav.signin')}</Button></Link>
             <button type="button" className="site-burger" onClick={() => setOpen((o) => !o)} aria-label="Menu" aria-expanded={open}>☰</button>
           </div>
         </div>

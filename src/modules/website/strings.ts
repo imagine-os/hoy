@@ -38,7 +38,7 @@ export const strings: StringTable = {
   'site.schedule.title': { es: 'Horario', en: 'Schedule' },
   'site.schedule.body': { es: 'Cuatro clases al día, {mats} mats, una clase por persona al día. Toca una clase para reservar.', en: 'Four classes a day, {mats} mats, one class per person per day. Tap a class to book.' },
   'site.schedule.loginTitle': { es: 'Para reservar, entra a tu cuenta', en: 'Sign in to book' },
-  'site.schedule.loginBody': { es: 'Reservar y pagar ocurre dentro de la app. En esta demo, entrar te lleva a la app de clientes como {name}.', en: 'Booking and paying happen inside the app. In this demo, signing in takes you to the customer app as {name}.' },
+  'site.schedule.loginBody': { es: 'Reservar y pagar ocurre dentro de la app. Entra o crea tu cuenta y volverás a esta clase.', en: 'Booking and paying happen inside the app. Sign in or create an account and you will come back to this class.' },
   'site.schedule.loginCta': { es: 'Entrar y reservar', en: 'Sign in and book' },
   'site.schedule.legend': { es: 'Leyenda', en: 'Legend' },
   'site.contact.title': { es: 'Contacto', en: 'Contact' },

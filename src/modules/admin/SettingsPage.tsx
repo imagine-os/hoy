@@ -79,6 +79,10 @@ export function SettingsPage() {
                 <Field label={t('admin.settings.f.noShowFee')} hint={settings.features.noShowFee ? 'COP' : t('admin.settings.f.noShowFee.off')}>{(id) => <Input id={id} type="number" min={0} value={d.noShowFee} disabled={!canWrite || !settings.features.noShowFee} onChange={(e) => set({ ...d, noShowFee: Number(e.target.value) })} />}</Field>
                 <Field label={t('admin.settings.f.pauseDays')} hint="C-22">{(id) => <Input id={id} type="number" min={0} value={d.pauseDaysPerYear} disabled={!canWrite} onChange={(e) => set({ ...d, pauseDaysPerYear: Number(e.target.value) })} />}</Field>
                 <Field label={t('admin.settings.f.maxPauses')}>{(id) => <Input id={id} type="number" min={0} value={d.maxPausesPerYear} disabled={!canWrite} onChange={(e) => set({ ...d, maxPausesPerYear: Number(e.target.value) })} />}</Field>
+                <Field label={t('admin.settings.f.paymentHold')} hint="E-02">{(id) => <Input id={id} type="number" min={0} value={d.paymentHoldMin} disabled={!canWrite} onChange={(e) => set({ ...d, paymentHoldMin: Number(e.target.value) })} />}</Field>
+                <Field label={t('admin.settings.f.chargeNotice')} hint="C-22">{(id) => <Input id={id} type="number" min={0} value={d.chargeNoticeDays} disabled={!canWrite} onChange={(e) => set({ ...d, chargeNoticeDays: Number(e.target.value) })} />}</Field>
+                <Field label={t('admin.settings.f.lockoutAttempts')} hint="A-02 · E-04">{(id) => <Input id={id} type="number" min={1} value={d.lockoutAttempts} disabled={!canWrite} onChange={(e) => set({ ...d, lockoutAttempts: Number(e.target.value) })} />}</Field>
+                <Field label={t('admin.settings.f.lockoutMinutes')} hint="E-04">{(id) => <Input id={id} type="number" min={1} value={d.lockoutMinutes} disabled={!canWrite} onChange={(e) => set({ ...d, lockoutMinutes: Number(e.target.value) })} />}</Field>
               </div>
               <p className="xs muted">{t('admin.settings.policies.note')}</p>
             </>

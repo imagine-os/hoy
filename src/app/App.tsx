@@ -8,15 +8,19 @@ import { DevTools } from '../dev/DevTools';
 import { getRoutes, getStrings } from './registry';
 import { withShell } from './shells';
 import { ScrollToTop } from './ScrollToTop';
+import { publishManifest } from './manifest';
+import { PolicySync } from '../modules/customer/policy';
 
 export function App() {
   const allRoutes = getRoutes();
   const allStrings = getStrings();
+  publishManifest(allRoutes);
   return (
     <ThemeProvider>
       <I18nProvider tables={allStrings}>
-        <SessionProvider>
-          <DataProviderRoot>
+        <DataProviderRoot>
+          <SessionProvider>
+            <PolicySync />
             <HashRouter>
               <ScrollToTop />
               <Routes>
@@ -27,8 +31,8 @@ export function App() {
               </Routes>
               <DevTools />
             </HashRouter>
-          </DataProviderRoot>
-        </SessionProvider>
+          </SessionProvider>
+        </DataProviderRoot>
       </I18nProvider>
     </ThemeProvider>
   );

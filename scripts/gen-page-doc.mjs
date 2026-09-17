@@ -1,50 +1,58 @@
-// Creates docs/pages/<code>.md from the spec + route (does not overwrite an existing file unless --force).
-// Run: node scripts/gen-page-doc.mjs C-02 [--force]
-import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
-import { routes } from './screenshots.mjs';
+// Creates docs/pages/<code>.md from the route manifest (docs/screenshots/routes.json, written by
+// `npm run screenshots`) — the spec the app actually serves, not a parse of the TypeScript.
+// Run: node scripts/gen-page-doc.mjs C-02 [--force]      one code
+//      node scripts/gen-page-doc.mjs --all [--force]     every routed code
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { EXT, KEY_PAGES, readManifest, safe } from './screenshots.mjs';
 
-const code = process.argv[2];
-if (!code) { console.error('usage: node scripts/gen-page-doc.mjs <code> [--force]'); process.exit(1); }
-const force = process.argv.includes('--force');
-const out = new URL(`../docs/pages/${code.replace(/[^\w-]/g, '_')}.md`, import.meta.url);
-if (existsSync(out) && !force) { console.error(`${out.pathname} exists (use --force)`); process.exit(1); }
+const args = process.argv.slice(2);
+const force = args.includes('--force');
+const all = args.includes('--all');
+const one = args.find((a) => !a.startsWith('--'));
+if (!all && !one) { console.error('usage: node scripts/gen-page-doc.mjs <code> [--force] | --all [--force]'); process.exit(1); }
 
-// Spec: canvas JSON first, then a defineSpec({...}) in a module specs.ts, parsed loosely.
+const manifest = readManifest();
+if (!manifest) { console.error('docs/screenshots/routes.json missing — run `npm run screenshots` (or `-- --smoke`) first'); process.exit(1); }
 const canvas = JSON.parse(readFileSync(new URL('../reference/canvas/specs.json', import.meta.url), 'utf8'));
-let spec = canvas[code];
-if (!spec) {
-  // defineSpec({ code: 'K-03', name: { es, en }, purpose: { es, en }, layout: [...], data: [...], roles: [...] }) in a module specs.ts
-  for (const mod of readdirSync(new URL('../src/modules', import.meta.url))) {
-    let ts; try { ts = readFileSync(new URL(`../src/modules/${mod}/specs.ts`, import.meta.url), 'utf8'); } catch { continue; }
-    const i = ts.indexOf(`code: '${code}'`); if (i < 0) continue;
-    const block = ts.slice(i, ts.indexOf('});', i));
-    const str = (k) => block.match(new RegExp(`${k}: \\{[^}]*?en: '((?:[^'\\\\]|\\\\.)*)'`))?.[1];
-    const arr = (k) => [...(block.match(new RegExp(`${k}: \\[([^\\]]*)\\]`))?.[1] ?? '').matchAll(/'((?:[^'\\\\]|\\\\.)*)'/g)].map((m) => m[1]);
-    spec = { name: str('name') ?? code, intent: str('purpose') ?? '', layout: arr('layout'), data: arr('data'), roles: block.includes('roles: EVERYONE') ? ['everyone'] : arr('roles'), rules: arr('logic') };
-    break;
-  }
-}
-const route = routes().find((r) => r.code === code);
-const name = spec?.name ?? code;
-const layout = spec?.layout ?? (spec?.layers ?? '').split('\n').slice(1).filter((l) => /^[├└]/.test(l)).map((l) => l.replace(/^[├└]\s*/, '').trim());
-const data = spec?.data ?? [];
-const roles = Array.isArray(spec?.roles) ? spec.roles.join(', ') : '';
-const key = new Set(['HUB-01', 'W-01', 'C-01', 'S-02', 'M-01', 'M-03', 'D-02', 'K-03']).has(code);
-const img = (l, w, d = '') => `![${code} ${l} ${w}${d ? ' dark' : ''}](../screenshots/${code.replace(/[^\w-]/g, '_')}/${l}-${w}${d}.png)`;
-const md = `---
+
+const codes = all ? [...new Set(manifest.map((r) => r.code))] : [one];
+let written = 0;
+for (const code of codes) {
+  const out = new URL(`../docs/pages/${safe(code)}.md`, import.meta.url);
+  if (existsSync(out) && !force) { console.error(`skip ${safe(code)}.md exists (use --force)`); continue; }
+  const entries = manifest.filter((r) => r.code === code);
+  const spec = entries[0]?.spec ?? canvas[code];
+  if (!spec) { console.error(`no spec for ${code}`); continue; }
+  const status = entries.length ? (entries.every((e) => e.status === 'stub') ? 'stub' : 'built') : 'not routed';
+  const surface = entries[0]?.surface ?? '—';
+  const name = spec.name?.en ?? spec.name ?? code;
+  const nameEs = spec.name?.es ?? name;
+  const purposeEn = spec.purpose?.en ?? spec.intent ?? '';
+  const purposeEs = spec.purpose?.es ?? '';
+  const routesMd = entries.length ? entries.map((e) => `\`/#${e.path}\``).join(' · ') : 'not routed yet';
+  const roles = Array.isArray(spec.roles) ? spec.roles.join(', ') : '';
+  const img = (l, w, d = '') => `![${code} ${l} ${w}${d ? ' dark' : ''}](../screenshots/${safe(code)}/${l}-${w}${d}.${EXT})`;
+  const list = (xs) => (xs?.length ? xs.map((x) => `- ${x}`).join('\n') : '- —');
+  const layout = spec.layout ?? [];
+  const data = spec.data ?? [];
+  const integrations = spec.integrations ?? [];
+  const realNotes = status === 'built'
+    ? `- Real: the page renders from the data layer (\`useData()\` / \`useTable\`) over the tables above; every write goes through the \`DataProvider\` so the Supabase provider replaces the mock unchanged.\n- Mock / pending: ${integrations.length ? `${integrations.join(', ')} are simulated or deferred` : 'no external integrations'}; data is the browser-local \`MockProvider\` seed.${(spec.notes ?? []).length ? `\n${spec.notes.map((n) => `- Note: ${n}`).join('\n')}` : ''}`
+    : `- Real: —\n- Mock / pending: everything (${status})`;
+  const md = `---
 title: ${code} — ${name}
 code: ${code}
-route: ${route ? `/#${route.path}` : 'not routed yet'}
+route: ${entries[0] ? `/#${entries[0].path}` : 'not routed yet'}
 roles: ${roles}
-status: stub
+status: ${status}
 ---
 
 # ${code} — ${name}
 
-**Route** \`${route ? `/#${route.path}` : '—'}\` · **Roles** ${roles || '—'} · **Spec** \`canvasSpecs['${code}']\`
+**Route** ${routesMd} · **Roles** ${roles || '—'} · **Surface** ${surface} · **Spec** \`spec.code === '${code}'\` (see \`/#/dev/specs\`)
 
 ## Purpose
-${spec?.intent ?? spec?.purpose?.en ?? '<purpose>'}
+${purposeEn || '<purpose>'}
 
 ## Screenshots
 | ES · mobile | EN · mobile |
@@ -54,7 +62,7 @@ ${spec?.intent ?? spec?.purpose?.en ?? '<purpose>'}
 | ES · desktop | EN · desktop |
 | --- | --- |
 | ${img('es', 1280)} | ${img('en', 1280)} |
-${key ? `
+${KEY_PAGES.has(code) ? `
 | ES · dark | EN · dark |
 | --- | --- |
 | ${img('es', 1280, '-dark')} | ${img('en', 1280, '-dark')} |
@@ -65,20 +73,22 @@ ${layout.length ? layout.map((l, i) => `${i + 1}. \`${l}\``).join('\n') : '1. <s
 ## Data
 | Table | Read / write | Notes |
 | --- | --- | --- |
-${data.length ? data.map((d) => `| \`${d}\` | read | |`).join('\n') : '| — | | |'}
+${data.length ? data.map((d) => `| \`${d}\` | read${/bookings|payments|invoices|credits|waitlist|profiles|users|audit_log|intentions|memberships|tenants|consents|message_log|page_layouts/.test(d) ? ' / write' : ''} | |`).join('\n') : '| — | | |'}
 
 ## Logic and integrations
-${(spec?.rules ?? []).map((r) => `- ${r}`).join('\n') || '- <rule>'}
-
+${list(spec.logic)}
+- Integrations: ${integrations.length ? integrations.join(', ') : 'none'}
+${(spec.states ?? []).length ? `\n## States\n${list(spec.states)}\n` : ''}
 ## Real vs mock
-- Real: —
-- Mock / pending: everything (stub)
+${realNotes}
 
 ## Changelog
-- <docs/changelog/NNNN-slug.md>
+- \`docs/changelog/0005-final-integration.md\` — screenshots and this page doc (v0.3.0)
 
 ---
-**Resumen (ES).** <Dos o tres líneas para el equipo del estudio.>
+**Resumen (ES).** ${nameEs}. ${purposeEs || ''}
 `;
-writeFileSync(out, md);
-console.log(`wrote ${out.pathname}`);
+  writeFileSync(out, md);
+  written++;
+}
+console.log(`wrote ${written} page doc(s)`);

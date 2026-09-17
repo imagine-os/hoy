@@ -40,7 +40,7 @@ export function BookedPage({ change = false }: { change?: boolean }) {
     return (
       <div className="container page cust-page">
         <PageHead back="/app" title={loading ? <Skeleton width={180} height={28} /> : t('customer.booked.notFound')} />
-        {loading ? <Skeleton shape="rect" height={200} /> : <EmptyState title={t('customer.booked.notFound')} body={t('customer.booked.notFound.body')} action={<Link to="/app/history"><Button variant="secondary">{t('customer.nav.history')}</Button></Link>} />}
+        {loading ? <Skeleton shape="rect" height={200} /> : <EmptyState title={t('customer.booked.notFound')} body={t('customer.booked.notFound.body')} action={<Link to="/app/history"><Button variant="secondary">{t('core.nav.history')}</Button></Link>} />}
       </div>
     );
   }

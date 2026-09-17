@@ -21,6 +21,7 @@ export const coreStrings: StringTable = {
   'core.nav.plans': { es: 'Planes', en: 'Plans' },
   'core.nav.profile': { es: 'Perfil', en: 'Profile' },
   'core.nav.more': { es: 'Más', en: 'More' },
+  'core.nav.history': { es: 'Historial', en: 'History' },
   'core.nav.classes': { es: 'Clases', en: 'Classes' },
   'core.nav.students': { es: 'Alumnos', en: 'Students' },
   'core.nav.payroll': { es: 'Nómina', en: 'Payroll' },

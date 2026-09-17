@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
-import { useSession } from '../../../auth/SessionProvider';
-import { demoUserByRole } from '../../../auth/demoUsers';
 import { formatDate, isSameDay } from '../../../i18n/format';
 import { tenant } from '../../../tenant/tenant';
 import { movements, type Movement } from '../../../design/tokens';
@@ -18,15 +16,13 @@ import { dayList, useSessionsJoined } from '../hooks';
 export function SchedulePage() {
   const { t, lang } = useI18n();
   const nav = useNavigate();
-  const { switchUser } = useSession();
   const days = dayList(7);
   const [day, setDay] = useState(0);
   const [picked, setPicked] = useState<string | null>(null);
   const all = useSessionsJoined();
   const list = all.filter(({ session }) => isSameDay(session.starts_at, days[day]) && session.status !== 'completed');
   const chosen = all.find((x) => x.session.id === picked);
-  const customer = demoUserByRole('customer');
-  const signInAndBook = () => { switchUser('customer'); nav(`/app/schedule?session=${picked}`); };
+  const signInAndBook = () => nav(`/auth/sign-in?next=${encodeURIComponent(`/app/schedule?session=${picked}`)}`);
 
   return (
     <SiteShell>
@@ -54,7 +50,7 @@ export function SchedulePage() {
         {chosen && (
           <div className="stack">
             <ClassCard title={chosen.session.title} teacher={chosen.teacher?.display_name ?? ''} room="Sala principal" startsAt={chosen.session.starts_at} endsAt={chosen.session.ends_at} movement={chosen.modality?.movement ?? 'fluye'} booked={chosen.session.booked_count} capacity={chosen.session.capacity} />
-            <p className="muted small">{t('site.schedule.loginBody', { name: customer.name })}</p>
+            <p className="muted small">{t('site.schedule.loginBody')}</p>
             <Button block size="lg" onClick={signInAndBook}>{t('site.schedule.loginCta')}</Button>
           </div>
         )}

@@ -34,7 +34,7 @@ export function RatePage() {
   const [anonymous, setAnonymous] = useState(true);
   const [done, setDone] = useState(false);
 
-  if (!joined) return <div className="container page cust-page"><PageHead back="/app" title={t('customer.rate.title')} /><EmptyState title={t('customer.class.notFound')} action={<Link to="/app/history"><Button variant="secondary">{t('customer.nav.history')}</Button></Link>} /></div>;
+  if (!joined) return <div className="container page cust-page"><PageHead back="/app" title={t('customer.rate.title')} /><EmptyState title={t('customer.class.notFound')} action={<Link to="/app/history"><Button variant="secondary">{t('core.nav.history')}</Button></Link>} /></div>;
   const already = booking?.rated || ratings.some((r) => r.sessionId === id);
   const toggle = (k: string) => setTags((ts) => (ts.includes(k) ? ts.filter((x) => x !== k) : [...ts, k]));
   const submit = async () => {

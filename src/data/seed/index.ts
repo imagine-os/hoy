@@ -28,7 +28,7 @@ export function buildSeed(): Record<string, BaseRow[]> {
   const users = db.users as UserRow[], profiles = db.profiles as ProfileRow[];
   const addPerson = (id: string, name: string, role: string, email: string, daysAgo: number) => {
     users.push({ ...base(id, daysAgo), email, phone: `+57 3${r.int(10, 50)}${r.int(1000000, 9999999)}`, status: 'active', locale: 'es', last_sign_in_at: iso(new Date(NOW.getTime() - r.int(0, 72) * 3600e3)) });
-    profiles.push({ ...base(`prf_${id.slice(4)}`, daysAgo), user_id: id, full_name: name, initials: name.split(' ').map((s) => s[0]).join('').slice(0, 2), photo_url: null, birthday: null, emergency_contact: null, marketing_optin: r.chance(0.7), whatsapp_verified: r.chance(0.8), notes: null });
+    profiles.push({ ...base(`prf_${id.slice(4)}`, daysAgo), user_id: id, full_name: name, initials: name.split(' ').map((s) => s[0]).join('').slice(0, 2), photo_url: null, birthday: r.chance(0.3) ? dateOnly(new Date(1975 + r.int(0, 30), r.chance(0.5) ? NOW.getMonth() : r.int(0, 11), r.int(1, 28))) : null, emergency_contact: null, marketing_optin: r.chance(0.7), whatsapp_verified: r.chance(0.8), notes: null });
     db.user_roles.push({ ...base(`rol_${id.slice(4)}`, daysAgo), user_id: id, role, granted_by: 'usr_super' });
   };
   for (const u of demoUsers) if (u.role !== 'public') addPerson(u.id, u.name, u.role, u.email, 120);
@@ -87,12 +87,14 @@ export function buildSeed(): Record<string, BaseRow[]> {
   // bookings: fill sessions
   const bookings = db.bookings as BookingRow[];
   let b = 0;
+  const custDays = new Set<string>(); // the demo customer books at most one class per day (tenant.studio.perPersonPerDay)
   for (const s of sessions) {
     if (s.status === 'cancelled') continue;
     const n = r.int(4, tenant.studio.mats);
     const shuffled = [...customerIds].sort(() => r.next() - 0.5).slice(0, n);
     if (new Date(s.starts_at).getDate() === NOW.getDate() && !shuffled.includes('usr_cust') && r.chance(0.5)) shuffled[0] = 'usr_cust';
     for (const uid of shuffled) {
+      if (uid === 'usr_cust') { const day = s.starts_at.slice(0, 10); if (custDays.has(day)) continue; custDays.add(day); }
       const past = s.status === 'completed';
       const status = past ? (r.chance(0.85) ? 'checked_in' : r.chance(0.5) ? 'no_show' : 'late_cancel') : 'booked';
       bookings.push({ ...base(`bk_${b++}`, 3), user_id: uid, session_id: s.id, status, paid_with: memberships.some((m) => m.user_id === uid) ? 'membership' : 'credit', credit_id: null, checked_in_at: status === 'checked_in' ? s.starts_at : null, cancelled_at: status === 'late_cancel' ? s.starts_at : null, rated: past && r.chance(0.4) });

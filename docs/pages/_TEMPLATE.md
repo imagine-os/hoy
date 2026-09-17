@@ -16,16 +16,16 @@ status: stub | built | live
 ## Screenshots
 | ES · mobile | EN · mobile |
 | --- | --- |
-| ![<CODE> es 390](../screenshots/<CODE>/es-390.png) | ![<CODE> en 390](../screenshots/<CODE>/en-390.png) |
+| ![<CODE> es 390](../screenshots/<CODE>/es-390.jpg) | ![<CODE> en 390](../screenshots/<CODE>/en-390.jpg) |
 
 | ES · desktop | EN · desktop |
 | --- | --- |
-| ![<CODE> es 1280](../screenshots/<CODE>/es-1280.png) | ![<CODE> en 1280](../screenshots/<CODE>/en-1280.png) |
+| ![<CODE> es 1280](../screenshots/<CODE>/es-1280.jpg) | ![<CODE> en 1280](../screenshots/<CODE>/en-1280.jpg) |
 
 <!-- key pages only -->
 | ES · dark | EN · dark |
 | --- | --- |
-| ![<CODE> es 1280 dark](../screenshots/<CODE>/es-1280-dark.png) | ![<CODE> en 1280 dark](../screenshots/<CODE>/en-1280-dark.png) |
+| ![<CODE> es 1280 dark](../screenshots/<CODE>/es-1280-dark.jpg) | ![<CODE> en 1280 dark](../screenshots/<CODE>/en-1280-dark.jpg) |
 
 Until `npm run screenshots` has produced a capture, use a placeholder line instead of the image:
 
@@ -50,7 +50,7 @@ Until `npm run screenshots` has produced a capture, use a placeholder line inste
 
 ## Changelog
 - `docs/changelog/NNNN-slug.md` — first version
-- `docs/changelog/NNNN-slug.md` — <visual change> ([before](../screenshots/<CODE>/es-1280-before.png) → [after](../screenshots/<CODE>/es-1280.png))
+- `docs/changelog/NNNN-slug.md` — <visual change> ([before](../screenshots/<CODE>/es-1280-before.jpg) → [after](../screenshots/<CODE>/es-1280.jpg))
 
 ---
 **Resumen (ES).** <Dos o tres líneas para el equipo del estudio.>

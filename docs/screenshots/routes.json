@@ -1,0 +1,5412 @@
+[
+ {
+  "path": "/admin",
+  "code": "M-01",
+  "surface": "admin",
+  "status": "built",
+  "spec": {
+   "code": "M-01",
+   "name": {
+    "es": "Panel admin e interruptores de funciones",
+    "en": "Admin dashboard & feature switches"
+   },
+   "purpose": {
+    "es": "Panel de administración con métricas y los interruptores de funciones por página.",
+    "en": "The control room: the numbers that matter this and the switch panel that turns pages, steps and features on or off across the app, the website and the staff tools."
+   },
+   "layout": [
+    "KPIRow ×4",
+    "OccupancyChart",
+    "FeatureTable",
+    "AuditTrail"
+   ],
+   "data": [
+    "memberships",
+    "payments",
+    "class_sessions",
+    "bookings",
+    "feature_flags",
+    "audit_log",
+    "users",
+    "profiles"
+   ],
+   "roles": [
+    "super_admin",
+    "coordinator",
+    "finance"
+   ],
+   "logic": [
+    "Every flag is scoped: app, website, staff, or all; audience can be all, members, staff, or a test group.",
+    "Turning a step off removes it from the flow immediately — no release needed.",
+    "Emergency and legal pages cannot be disabled.",
+    "Each change writes actor, previous value and timestamp to the audit log.",
+    "Desktop-first layout; collapses to a stacked list on tablet and phone."
+   ],
+   "integrations": [
+    "Supabase Auth"
+   ],
+   "states": [
+    "Loading: KPI skeletons",
+    "Flag conflict: dependency warning before saving",
+    "No permission: switches render read-only"
+   ],
+   "toggles": [
+    {
+     "label": "KPI row",
+     "on": true
+    },
+    {
+     "label": "Occupancy chart",
+     "on": true
+    },
+    {
+     "label": "Flag dependency checks",
+     "on": true
+    }
+   ],
+   "story": "As super admin I turn the waiver step off for a pop-up event and the sign-up flow drops from three steps to two.",
+   "api": [
+    "GET /admin/flags",
+    "PATCH /admin/flags/:key",
+    "GET /admin/metrics?range=",
+    "GET /admin/audit"
+   ],
+   "layerTree": "AdminDashboard\n├ Sidebar (sections)\n├ KPIRow ×4\n├ OccupancyChart\n├ FeatureTable\n│ ├ Page / feature\n│ ├ Scope (app / web / staff)\n│ ├ Audience\n│ └ Toggle\n└ AuditTrail",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#M-01",
+   "notes": [
+    "Sections are reorderable through useLayout (layout editor D-04).",
+    "Flag toggles write audit_log flag.toggle with before/after."
+   ]
+  }
+ },
+ {
+  "path": "/admin/content",
+  "code": "M-02",
+  "surface": "admin",
+  "status": "built",
+  "spec": {
+   "code": "M-02",
+   "name": {
+    "es": "Contenido: clases, profesores, horario, precios",
+    "en": "Content: classes, teachers, schedule, pricing"
+   },
+   "purpose": {
+    "es": "Gestionar clases, profesores, horario y precios desde un solo lugar.",
+    "en": "The single source of truth behind everything: class types, the schedule, teacher profiles, pricing and content — feeding the app, the staff tools and the public website."
+   },
+   "layout": [
+    "EntityTabs (Classes / Teachers / Modalities / Rooms)",
+    "ListView (DataTable, search, publish toggle)",
+    "EditDrawer (fields, ES / EN, publish state)",
+    "PreviewPane"
+   ],
+   "data": [
+    "class_templates",
+    "teachers",
+    "modalities",
+    "rooms",
+    "audit_log"
+   ],
+   "roles": [
+    "coordinator",
+    "super_admin",
+    "teacher",
+    "finance"
+   ],
+   "logic": [
+    "Every content entity has EN and ES fields; publishing requires Spanish, English optional with fallback.",
+    "Draft → review → published, with scheduled publishing.",
+    "Teacher edits to their own profile enter review rather than publishing directly.",
+    "Price changes never alter existing subscriptions retroactively.",
+    "Media library holds photos and video; placeholders are flagged until real assets land."
+   ],
+   "integrations": [],
+   "states": [
+    "Loading: table skeleton",
+    "Validation: field-level errors in the drawer",
+    "Conflict: concurrent edit warning",
+    "Empty: 'Create the first class type'"
+   ],
+   "toggles": [
+    {
+     "label": "Scheduled publishing",
+     "on": true
+    },
+    {
+     "label": "Teacher self-service profiles",
+     "on": true
+    },
+    {
+     "label": "Website preview pane",
+     "on": true
+    }
+   ],
+   "story": "As coordinator I add a Thursday 6:30 AM recurring Hot Vinyasa with Alex, and it appears everywhere at once.",
+   "api": [
+    "GET /admin/:entity",
+    "POST /admin/:entity",
+    "PATCH /admin/:entity/:id",
+    "POST /admin/media",
+    "POST /admin/:entity/:id/publish"
+   ],
+   "layerTree": "CMS\n├ EntityTabs (Classes / Teachers / Schedule / Pricing / Content)\n├ ListView (search, filter, bulk)\n├ EditDrawer\n│ ├ Fields\n│ ├ Media (photo placeholders)\n│ ├ Localisation EN / ES\n│ └ Publish state\n└ PreviewPane (app / web)",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#M-02",
+   "notes": [
+    "Pricing is not editable here: prices live in src/tenant/pricing.ts (P-01).",
+    "Publish state = the active column of each table."
+   ]
+  }
+ },
+ {
+  "path": "/admin/tables",
+  "code": "M-03",
+  "surface": "admin",
+  "status": "built",
+  "spec": {
+   "code": "M-03",
+   "name": {
+    "es": "Tablas y relaciones",
+    "en": "Tables & relations"
+   },
+   "purpose": {
+    "es": "Todas las tablas del sistema, limpias y ordenadas, con edición, filtros y exportación.",
+    "en": "The data model in one place, so developers and the studio agree on what exists: entities, keys, relations and cardinality."
+   },
+   "layout": [
+    "EntityGrid → EntityCard",
+    "RelationMap (cardinality)",
+    "MigrationLog"
+   ],
+   "data": [
+    "schema_metadata",
+    "migrations",
+    "indexes",
+    "row_counts"
+   ],
+   "roles": [
+    "super_admin",
+    "finance"
+   ],
+   "logic": [
+    "users 1—1 profiles, 1—N bookings, 1—N payments, 1—N consents.",
+    "classes N—1 class_types, N—1 teachers, N—1 rooms; schedules 1—N classes via recurrence_rules.",
+    "bookings 1—0..1 credit_ledger entries; orders 1—N payments; payments 1—0..1 refunds.",
+    "Soft deletes everywhere financial; hard deletes only for biometric templates.",
+    "All money in COP minor units; all timestamps UTC with America/Bogota display."
+   ],
+   "integrations": [
+    "Wompi",
+    "Supabase Auth"
+   ],
+   "states": [
+    "Loading: grid skeleton",
+    "Unmigrated change: amber badge on the entity"
+   ],
+   "toggles": [
+    {
+     "label": "Show row counts",
+     "on": true
+    },
+    {
+     "label": "Show migration log",
+     "on": true
+    }
+   ],
+   "story": "As a developer I check whether a credit is tied to a booking or to an order before writing the refund logic.",
+   "api": [
+    "GET /admin/schema",
+    "GET /admin/schema/:entity",
+    "GET /admin/migrations"
+   ],
+   "layerTree": "DataModel\n├ EntityGrid → EntityCard\n│ ├ Primary key\n│ ├ Fields + types\n│ └ Relations in / out\n├ RelationMap (cardinality)\n└ MigrationLog",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#M-03"
+  }
+ },
+ {
+  "path": "/admin/tables/:table",
+  "code": "M-03",
+  "surface": "admin",
+  "status": "built",
+  "spec": {
+   "code": "M-03",
+   "name": {
+    "es": "Tablas y relaciones",
+    "en": "Tables & relations"
+   },
+   "purpose": {
+    "es": "Todas las tablas del sistema, limpias y ordenadas, con edición, filtros y exportación.",
+    "en": "The data model in one place, so developers and the studio agree on what exists: entities, keys, relations and cardinality."
+   },
+   "layout": [
+    "EntityGrid → EntityCard",
+    "RelationMap (cardinality)",
+    "MigrationLog"
+   ],
+   "data": [
+    "schema_metadata",
+    "migrations",
+    "indexes",
+    "row_counts"
+   ],
+   "roles": [
+    "super_admin",
+    "finance"
+   ],
+   "logic": [
+    "users 1—1 profiles, 1—N bookings, 1—N payments, 1—N consents.",
+    "classes N—1 class_types, N—1 teachers, N—1 rooms; schedules 1—N classes via recurrence_rules.",
+    "bookings 1—0..1 credit_ledger entries; orders 1—N payments; payments 1—0..1 refunds.",
+    "Soft deletes everywhere financial; hard deletes only for biometric templates.",
+    "All money in COP minor units; all timestamps UTC with America/Bogota display."
+   ],
+   "integrations": [
+    "Wompi",
+    "Supabase Auth"
+   ],
+   "states": [
+    "Loading: grid skeleton",
+    "Unmigrated change: amber badge on the entity"
+   ],
+   "toggles": [
+    {
+     "label": "Show row counts",
+     "on": true
+    },
+    {
+     "label": "Show migration log",
+     "on": true
+    }
+   ],
+   "story": "As a developer I check whether a credit is tied to a booking or to an order before writing the refund logic.",
+   "api": [
+    "GET /admin/schema",
+    "GET /admin/schema/:entity",
+    "GET /admin/migrations"
+   ],
+   "layerTree": "DataModel\n├ EntityGrid → EntityCard\n│ ├ Primary key\n│ ├ Fields + types\n│ └ Relations in / out\n├ RelationMap (cardinality)\n└ MigrationLog",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#M-03"
+  }
+ },
+ {
+  "path": "/admin/emails",
+  "code": "M-04",
+  "surface": "admin",
+  "status": "built",
+  "spec": {
+   "code": "M-04",
+   "name": {
+    "es": "Diseños de email transaccional",
+    "en": "Transactional email designs"
+   },
+   "purpose": {
+    "es": "Diseñar y versionar los emails transaccionales con disparadores y estadísticas.",
+    "en": "Every automated email as a real design, editable and previewable, in both languages, with the trigger and the deep link it carries."
+   },
+   "layout": [
+    "TemplateList (trigger, locale, status)",
+    "Canvas (EmailPreview)",
+    "VariablePanel + Editor",
+    "LocaleSwitch ES / EN",
+    "Versions + TestSend + SendLog"
+   ],
+   "data": [
+    "email_templates",
+    "message_log",
+    "audit_log"
+   ],
+   "roles": [
+    "coordinator",
+    "super_admin",
+    "finance"
+   ],
+   "logic": [
+    "Templates: booking confirmed, receipt, class cancelled, waitlist promoted, class reminder, how to prepare, birthday, membership renewal, payment failed, gift card delivered, invite.",
+    "Every template deep-links into the matching app screen or website page.",
+    "Receipts include the DIAN electronic invoice reference.",
+    "Version history with rollback; a test send never touches the real send log."
+   ],
+   "integrations": [
+    "Wompi",
+    "Email",
+    "Supabase Auth",
+    "Supabase Realtime",
+    "DIAN e-invoicing"
+   ],
+   "states": [
+    "Unsaved changes: sticky save bar",
+    "Missing translation: blocked from activation",
+    "Provider error: banner with retry"
+   ],
+   "toggles": [
+    {
+     "label": "Birthday email",
+     "on": true
+    },
+    {
+     "label": "How-to-prepare email",
+     "on": true
+    },
+    {
+     "label": "Membership renewal notice",
+     "on": true
+    },
+    {
+     "label": "Win-back sequence",
+     "on": false
+    }
+   ],
+   "story": "As coordinator I edit the class-cancelled email, preview it in Spanish, and send myself a test.",
+   "api": [
+    "GET /admin/email-templates",
+    "PATCH /admin/email-templates/:id",
+    "POST /admin/email-templates/:id/test",
+    "GET /admin/send-log"
+   ],
+   "layerTree": "EmailStudio\n├ TemplateList (trigger, locale, status)\n├ Canvas (rendered email)\n├ VariablePanel ({{first_name}}, {{class}}, {{time}})\n├ LocaleSwitch EN / ES\n└ TestSend + SendLog",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#M-04",
+   "notes": [
+    "body_mjml stores a JSON {es,en} plain-text body until the MJML designer exists.",
+    "Versions are the audit_log rows of the template; rollback restores the before value.",
+    "Test send writes message_log with payload.test = true."
+   ]
+  }
+ },
+ {
+  "path": "/admin/whatsapp",
+  "code": "M-05",
+  "surface": "admin",
+  "status": "built",
+  "spec": {
+   "code": "M-05",
+   "name": {
+    "es": "Automatizaciones de WhatsApp",
+    "en": "WhatsApp automations"
+   },
+   "purpose": {
+    "es": "Automatizaciones de WhatsApp: plantillas aprobadas, disparadores, horas de silencio y registro.",
+    "en": "The channel the studio actually lives on: approved template messages, their triggers, timing and quiet hours."
+   },
+   "layout": [
+    "AutomationList (trigger → template → delay)",
+    "PhonePreview (bubble render)",
+    "TemplateEditor + variables",
+    "ApprovalStatus (Meta) + QuietHours + OptIn",
+    "MessageLog"
+   ],
+   "data": [
+    "automations",
+    "wa_templates",
+    "message_log",
+    "profiles",
+    "users",
+    "tenants",
+    "audit_log"
+   ],
+   "roles": [
+    "coordinator",
+    "super_admin",
+    "front_desk"
+   ],
+   "logic": [
+    "Only opt-in numbers receive automations; opt-out is honoured immediately and permanently.",
+    "Templates require Meta approval; status shown per template and per locale.",
+    "Quiet hours 9pm–7am — non-urgent messages queue until morning; cancellations override.",
+    "Automations: booking confirmed, reminder T−2h, class cancelled, waitlist promoted, birthday, receipt, membership expiring, feedback request, invite sent.",
+    "Every send is logged with delivery and read state."
+   ],
+   "integrations": [
+    "WhatsApp",
+    "Email",
+    "Supabase Realtime"
+   ],
+   "states": [
+    "Template pending approval: automation disabled with reason",
+    "Rate limited: queue depth shown",
+    "Opt-out: preview marked undeliverable"
+   ],
+   "toggles": [
+    {
+     "label": "Class reminder T−2h",
+     "on": true
+    },
+    {
+     "label": "Birthday message",
+     "on": true
+    },
+    {
+     "label": "Feedback request",
+     "on": true
+    },
+    {
+     "label": "Quiet hours",
+     "on": true
+    }
+   ],
+   "story": "As coordinator I see that the class-cancelled template fires immediately and includes a one-tap rebooking link.",
+   "api": [
+    "GET /admin/wa/automations",
+    "PATCH /admin/wa/automations/:id",
+    "GET /admin/wa/templates",
+    "POST /admin/wa/test",
+    "GET /admin/wa/log"
+   ],
+   "layerTree": "WhatsAppStudio\n├ AutomationList (trigger → template → delay)\n├ PhonePreview (bubble render)\n├ TemplateEditor + variables\n├ ApprovalStatus (Meta)\n└ MessageLog",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#M-05",
+   "notes": [
+    "Quiet hours come from M-08 settings (default 21:00–07:00).",
+    "An automation cannot be enabled while its template is not approved by Meta."
+   ]
+  }
+ },
+ {
+  "path": "/admin/crm",
+  "code": "M-06",
+  "surface": "admin",
+  "status": "built",
+  "spec": {
+   "code": "M-06",
+   "name": {
+    "es": "CRM · miembro 360",
+    "en": "CRM · member 360"
+   },
+   "purpose": {
+    "es": "Ficha 360 del miembro: membresía, créditos, asistencia, pagos, conversaciones y notas.",
+    "en": "One record per person that the whole studio trusts: who they are, what they have paid, what they have attended, and every conversation across WhatsApp, email and the front desk — with staff notes on the same timeline."
+   },
+   "layout": [
+    "SegmentRail (all, at risk, new, no membership, birthdays)",
+    "MemberList (search, sort)",
+    "MemberDetail (IdentityHeader, MetricRow, Tabs, Timeline, NoteComposer)"
+   ],
+   "data": [
+    "users",
+    "profiles",
+    "memberships",
+    "plans",
+    "bookings",
+    "class_sessions",
+    "payments",
+    "credits",
+    "message_log",
+    "consents",
+    "audit_log"
+   ],
+   "roles": [
+    "coordinator",
+    "front_desk",
+    "super_admin",
+    "finance"
+   ],
+   "logic": [
+    "The timeline merges every channel in one chronological stream — WhatsApp, email, in-app thread, staff notes and system events.",
+    "Staff notes are internal and never visible to the member; health flags surface to teachers as a marker only.",
+    "Churn risk is derived from visit cadence against the member's own baseline, not a global average.",
+    "Front desk sees the timeline but cannot edit payments; Finance sees payments but not health notes.",
+    "Every view of a member record is itself written to the activity log."
+   ],
+   "integrations": [
+    "WhatsApp",
+    "Wompi",
+    "Email"
+   ],
+   "states": [
+    "Loading: list skeleton",
+    "Empty segment: 'nobody matches yet'",
+    "No consent: channels shown as unavailable",
+    "Merged duplicate: banner with the merge history"
+   ],
+   "toggles": [
+    {
+     "label": "Churn risk score",
+     "on": true
+    },
+    {
+     "label": "Staff notes",
+     "on": true
+    },
+    {
+     "label": "Health flags on record",
+     "on": true
+    },
+    {
+     "label": "Segment rail",
+     "on": true
+    }
+   ],
+   "story": "As a coordinator I open Mariana's record before she arrives and see she asked about a guest pass and mentioned a knee injury.",
+   "api": [
+    "GET /admin/members?segment=",
+    "GET /admin/members/:id",
+    "GET /admin/members/:id/timeline",
+    "POST /admin/members/:id/notes",
+    "GET /admin/segments"
+   ],
+   "layerTree": "CRM\n├ SegmentRail (all, at risk, new, no membership, birthdays)\n├ MemberList (search, sort)\n└ MemberDetail\n  ├ IdentityHeader (photo, membership badge, consents)\n  ├ MetricRow (LTV, visits, last visit, churn risk)\n  ├ TabBar (Timeline / Bookings / Payments / Notes)\n  ├ Timeline\n  │ ├ WhatsApp message\n  │ ├ Email event\n  │ ├ Staff note\n  │ └ System event (booking, payment, attendance)\n  └ NoteComposer",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#M-06",
+   "notes": [
+    "At risk = member with plan or credits and no check-in in 21 days.",
+    "Staff notes are audit_log rows (member.note) — internal, never visible to the member.",
+    "Opening a record writes member.view to audit_log (Ley 1581)."
+   ]
+  }
+ },
+ {
+  "path": "/admin/crm/:id",
+  "code": "M-06",
+  "surface": "admin",
+  "status": "built",
+  "spec": {
+   "code": "M-06",
+   "name": {
+    "es": "CRM · miembro 360",
+    "en": "CRM · member 360"
+   },
+   "purpose": {
+    "es": "Ficha 360 del miembro: membresía, créditos, asistencia, pagos, conversaciones y notas.",
+    "en": "One record per person that the whole studio trusts: who they are, what they have paid, what they have attended, and every conversation across WhatsApp, email and the front desk — with staff notes on the same timeline."
+   },
+   "layout": [
+    "SegmentRail (all, at risk, new, no membership, birthdays)",
+    "MemberList (search, sort)",
+    "MemberDetail (IdentityHeader, MetricRow, Tabs, Timeline, NoteComposer)"
+   ],
+   "data": [
+    "users",
+    "profiles",
+    "memberships",
+    "plans",
+    "bookings",
+    "class_sessions",
+    "payments",
+    "credits",
+    "message_log",
+    "consents",
+    "audit_log"
+   ],
+   "roles": [
+    "coordinator",
+    "front_desk",
+    "super_admin",
+    "finance"
+   ],
+   "logic": [
+    "The timeline merges every channel in one chronological stream — WhatsApp, email, in-app thread, staff notes and system events.",
+    "Staff notes are internal and never visible to the member; health flags surface to teachers as a marker only.",
+    "Churn risk is derived from visit cadence against the member's own baseline, not a global average.",
+    "Front desk sees the timeline but cannot edit payments; Finance sees payments but not health notes.",
+    "Every view of a member record is itself written to the activity log."
+   ],
+   "integrations": [
+    "WhatsApp",
+    "Wompi",
+    "Email"
+   ],
+   "states": [
+    "Loading: list skeleton",
+    "Empty segment: 'nobody matches yet'",
+    "No consent: channels shown as unavailable",
+    "Merged duplicate: banner with the merge history"
+   ],
+   "toggles": [
+    {
+     "label": "Churn risk score",
+     "on": true
+    },
+    {
+     "label": "Staff notes",
+     "on": true
+    },
+    {
+     "label": "Health flags on record",
+     "on": true
+    },
+    {
+     "label": "Segment rail",
+     "on": true
+    }
+   ],
+   "story": "As a coordinator I open Mariana's record before she arrives and see she asked about a guest pass and mentioned a knee injury.",
+   "api": [
+    "GET /admin/members?segment=",
+    "GET /admin/members/:id",
+    "GET /admin/members/:id/timeline",
+    "POST /admin/members/:id/notes",
+    "GET /admin/segments"
+   ],
+   "layerTree": "CRM\n├ SegmentRail (all, at risk, new, no membership, birthdays)\n├ MemberList (search, sort)\n└ MemberDetail\n  ├ IdentityHeader (photo, membership badge, consents)\n  ├ MetricRow (LTV, visits, last visit, churn risk)\n  ├ TabBar (Timeline / Bookings / Payments / Notes)\n  ├ Timeline\n  │ ├ WhatsApp message\n  │ ├ Email event\n  │ ├ Staff note\n  │ └ System event (booking, payment, attendance)\n  └ NoteComposer",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#M-06",
+   "notes": [
+    "At risk = member with plan or credits and no check-in in 21 days.",
+    "Staff notes are audit_log rows (member.note) — internal, never visible to the member.",
+    "Opening a record writes member.view to audit_log (Ley 1581)."
+   ]
+  }
+ },
+ {
+  "path": "/admin/activity",
+  "code": "M-07",
+  "surface": "admin",
+  "status": "built",
+  "spec": {
+   "code": "M-07",
+   "name": {
+    "es": "Registro de actividad",
+    "en": "All activity log"
+   },
+   "purpose": {
+    "es": "Registro de toda la actividad del sistema con filtros por entidad, rol y fecha.",
+    "en": "An immutable record of everything anyone did, so a disputed refund, a deleted class or a changed price can always be traced to a person and a moment. Nothing on this page can be edited."
+   },
+   "layout": [
+    "FilterBar (range, actor, entity, action)",
+    "SortableTable (When · Who · Action · Object · Source)",
+    "DetailDrawer (before / after)",
+    "ExportButton (CSV)",
+    "RetentionNotice"
+   ],
+   "data": [
+    "audit_log",
+    "users",
+    "profiles",
+    "user_roles"
+   ],
+   "roles": [
+    "super_admin",
+    "coordinator",
+    "finance"
+   ],
+   "logic": [
+    "Append-only: no row can be edited or deleted by any role, including super admin.",
+    "Every entry records actor, role, action, object, before and after values, source (app, admin, front desk, automation) and timestamp.",
+    "Automations and system events are logged with the same shape as human actions.",
+    "Retained 24 months, then archived to cold storage; export produces a signed CSV.",
+    "Reading a member record is logged, so data access is auditable under Ley 1581."
+   ],
+   "integrations": [
+    "Wompi",
+    "Email",
+    "Supabase Auth"
+   ],
+   "states": [
+    "Loading: table skeleton",
+    "Empty: 'no activity in this range'",
+    "Large range: paginated with a count",
+    "Export running: progress + email on completion"
+   ],
+   "toggles": [
+    {
+     "label": "Log record views",
+     "on": true
+    },
+    {
+     "label": "CSV export",
+     "on": true
+    },
+    {
+     "label": "Show system automations",
+     "on": true
+    }
+   ],
+   "story": "As the owner I filter to price changes last month and see exactly who changed what.",
+   "api": [
+    "GET /admin/activity?from=&to=&role=&actor=&area=&type=",
+    "GET /admin/activity/:id",
+    "GET /admin/activity/export"
+   ],
+   "layerTree": "ActivityLog\n├ FilterBar (date range, role, person, area, action type)\n├ SortableTable\n│ ├ When · Who · Action · Object · Source\n│ └ Row → DetailDrawer (before / after values)\n├ ExportButton (CSV)\n└ RetentionNotice",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#M-07",
+   "notes": [
+    "Append-only: the page has no write path."
+   ]
+  }
+ },
+ {
+  "path": "/admin/settings",
+  "code": "M-08",
+  "surface": "admin",
+  "status": "built",
+  "spec": {
+   "code": "M-08",
+   "name": {
+    "es": "Ajustes y políticas del estudio",
+    "en": "Studio settings & policies"
+   },
+   "purpose": {
+    "es": "Perfil del estudio, sedes, salas, horarios, políticas, impuestos e integraciones.",
+    "en": "The operating parameters every other screen reads from: identity, hours, rooms, the cancellation and waitlist rules quoted across the app, tax and invoicing, and the third parties the studio depends on."
+   },
+   "layout": [
+    "SectionRail",
+    "StudioProfile",
+    "OpeningHours",
+    "Capacity",
+    "Policies",
+    "QuietHours",
+    "TaxAndInvoicing",
+    "FeatureFlags",
+    "Integrations"
+   ],
+   "data": [
+    "tenants",
+    "feature_flags",
+    "rooms",
+    "audit_log"
+   ],
+   "roles": [
+    "super_admin",
+    "coordinator",
+    "finance"
+   ],
+   "logic": [
+    "Policy values are read at runtime by C-08, C-18 and E-02 — changing one here changes the copy everywhere, never a hardcoded string.",
+    "A policy change applies to future bookings only; bookings already made keep the terms they were made under.",
+    "Locations exist in the model even with one site, so a second sede needs no migration.",
+    "DIAN resolution number and range are required before electronic invoicing can be switched on.",
+    "Integration credentials are write-only in the UI and never displayed back."
+   ],
+   "integrations": [
+    "WhatsApp",
+    "Wompi",
+    "Email",
+    "Supabase Realtime",
+    "DIAN e-invoicing"
+   ],
+   "states": [
+    "Saving: section-level confirmation",
+    "Validation: DIAN range exhausted warning",
+    "Integration down: amber status with last check",
+    "No permission: section renders read-only"
+   ],
+   "toggles": [
+    {
+     "label": "Multiple locations",
+     "on": false
+    },
+    {
+     "label": "No-show fee",
+     "on": false
+    },
+    {
+     "label": "Electronic invoicing",
+     "on": true
+    },
+    {
+     "label": "Holiday calendar",
+     "on": true
+    }
+   ],
+   "story": "As super admin I change the cancellation window from 4h to 6h and every screen that quotes it updates.",
+   "api": [
+    "GET /admin/settings",
+    "PATCH /admin/settings/:section",
+    "GET /admin/locations",
+    "POST /admin/locations",
+    "GET /admin/integrations"
+   ],
+   "layerTree": "Settings\n├ SectionRail\n├ StudioProfile (name, NIT, address, contact)\n├ Locations → rooms + capacity\n├ OpeningHours (per weekday, holidays)\n├ Policies\n│ ├ Cancellation window\n│ ├ Waitlist claim window\n│ ├ Late check-in grace\n│ └ No-show fee\n├ TaxAndInvoicing (IVA, DIAN resolution)\n└ Integrations (gateway, WhatsApp API, email, calendar)",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#M-08",
+   "notes": [
+    "Stored in tenants.settings (json) via useSettings(); defaults from src/tenant/tenant.ts.",
+    "S-02 reads lateGraceMin, S-04 reads tax, M-05 reads quietHours."
+   ]
+  }
+ },
+ {
+  "path": "/admin/finance",
+  "code": "M-09",
+  "surface": "admin",
+  "status": "built",
+  "spec": {
+   "code": "M-09",
+   "name": {
+    "es": "Finanzas",
+    "en": "Finance"
+   },
+   "purpose": {
+    "es": "Ingresos por producto y método, pagos pendientes, reembolsos, facturas con referencia DIAN y el marcador de payouts de Wompi.",
+    "en": "Revenue by product and method, pending payments, refunds, invoices with the DIAN reference and the Wompi payouts placeholder."
+   },
+   "layout": [
+    "KPIRow",
+    "RevenueByProduct",
+    "RevenueByMethod",
+    "PayoutsPlaceholder (Wompi)",
+    "RefundsList",
+    "InvoicesTable (DIAN)"
+   ],
+   "data": [
+    "payments",
+    "invoices",
+    "plans",
+    "users",
+    "profiles",
+    "audit_log",
+    "tenants"
+   ],
+   "roles": [
+    "super_admin",
+    "admin",
+    "finance"
+   ],
+   "logic": [
+    "Revenue = approved payments in the selected range grouped by plan and by method.",
+    "Refund flips payments.status to refunded and writes audit_log payment.refund; the credit return is a follow-up.",
+    "E-invoicing requires a DIAN resolution in M-08; until then the CUFE column shows —."
+   ],
+   "integrations": [
+    "Wompi",
+    "DIAN e-invoicing"
+   ],
+   "states": [
+    "Loading",
+    "Empty range",
+    "No refund permission: action hidden",
+    "E-invoicing off: notice"
+   ],
+   "toggles": [
+    {
+     "label": "Wompi payouts",
+     "on": false
+    },
+    {
+     "label": "Refunds",
+     "on": true
+    },
+    {
+     "label": "DIAN column",
+     "on": true
+    }
+   ],
+   "notes": [
+    "Placeholder payouts until the Wompi integration lands."
+   ]
+  }
+ },
+ {
+  "path": "/app",
+  "code": "C-01",
+  "surface": "customer",
+  "status": "built",
+  "spec": {
+   "code": "C-01",
+   "name": {
+    "es": "Inicio",
+    "en": "Home dashboard"
+   },
+   "purpose": {
+    "es": "La superficie diaria: qué pasa hoy, qué tengo reservado, qué quiere contarme el estudio y los recordatorios que el estudio necesita.",
+    "en": "The daily landing surface: what is happening today, what I have booked, what the studio wants me to know, and the nudges the studio needs (membership, feedback)."
+   },
+   "layout": [
+    "TopBar (logo, avatar, bell)",
+    "FeedbackPrompt (conditional)",
+    "MembershipNudge (if no plan)",
+    "AnnouncementCard (if active)",
+    "NextClassCard + countdown",
+    "QuickActions ×4",
+    "TodayList (intention-sorted)",
+    "StatsRow ×3",
+    "EventsStrip → BottomNav"
+   ],
+   "data": [
+    "bookings",
+    "classes",
+    "announcements",
+    "memberships",
+    "credits",
+    "practice_stats",
+    "feedback_requests",
+    "events"
+   ],
+   "roles": [
+    "customer",
+    "teacher"
+   ],
+   "logic": [
+    "Blocks render in priority order; each is independently toggleable in Admin → Features.",
+    "Feedback prompt appears only for a class attended in the last 72h and not yet rated.",
+    "Membership nudge hides for active members and for staff.",
+    "Countdown shows under 24h, otherwise the weekday.",
+    "Today's list re-orders by the day's intention tags."
+   ],
+   "integrations": [],
+   "states": [
+    "Loading: skeleton cards, no layout shift",
+    "Empty: no bookings → 'Reserve your first class'",
+    "Error: cached feed + retry chip",
+    "Offline: last fetch with stale badge"
+   ],
+   "toggles": [
+    {
+     "label": "Practice statistics",
+     "on": true
+    },
+    {
+     "label": "Studio announcements",
+     "on": true
+    },
+    {
+     "label": "Membership nudge",
+     "on": true
+    },
+    {
+     "label": "Events strip",
+     "on": true
+    },
+    {
+     "label": "Post-class feedback prompt",
+     "on": true
+    }
+   ],
+   "story": "As a student I open the app and immediately see my next class, how long until it starts, and one thing worth doing right now.",
+   "api": [
+    "GET /me/home?locale=",
+    "GET /classes?date=today",
+    "GET /announcements/active",
+    "POST /feedback/:bookingId",
+    "GET /me/stats"
+   ],
+   "layerTree": "Home\n├ TopBar (logo, avatar, bell)\n├ FeedbackPrompt (conditional)\n├ MembershipNudge (if no plan)\n├ AnnouncementCard (if active)\n├ NextClassCard + countdown\n├ QuickActions ×4\n├ TodayList (intention-sorted)\n├ StatsRow ×3\n└ EventsStrip → BottomNav",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-01"
+  }
+ },
+ {
+  "path": "/app/schedule",
+  "code": "C-02",
+  "surface": "customer",
+  "status": "built",
+  "spec": {
+   "code": "C-02",
+   "name": {
+    "es": "Horario de clases",
+    "en": "Class schedule"
+   },
+   "purpose": {
+    "es": "Ver y filtrar el horario semanal por modalidad, profesor y nivel, con capacidad en vivo.",
+    "en": "Find the right class fast. Two views (today, week) over one filterable list. Studio only — there are no online classes."
+   },
+   "layout": [
+    "ViewSwitch (Today / Week)",
+    "DateStrip",
+    "FilterBar → FilterSheet",
+    "ClassList → ClassRow",
+    "WeekGrid",
+    "Legend"
+   ],
+   "data": [
+    "class_sessions",
+    "modalities",
+    "teachers",
+    "rooms",
+    "bookings",
+    "waitlist"
+   ],
+   "roles": [
+    "customer",
+    "front_desk",
+    "coordinator",
+    "super_admin"
+   ],
+   "logic": [
+    "Two views only: Today and Week. Month and recurring were removed — students book within the week, and a month grid answers a question nobody asked.",
+    "No 'Live Online' or 'On Demand' tabs — in-studio only.",
+    "A full class shows Waitlist; joining notifies on release with a 30-minute claim window.",
+    "Filters persist per device for the session."
+   ],
+   "integrations": [
+    "Supabase Auth",
+    "Supabase Realtime"
+   ],
+   "states": [
+    "Loading: three skeleton rows",
+    "Empty: 'No classes match' + clear-filters",
+    "Error: retry",
+    "Past days: rows read-only",
+    "Week view (C-02b)"
+   ],
+   "toggles": [
+    {
+     "label": "Week view",
+     "on": true
+    },
+    {
+     "label": "Waitlists",
+     "on": true
+    },
+    {
+     "label": "Map / room view",
+     "on": false
+    }
+   ],
+   "story": "As a student I filter to 6pm intermediate classes this week and see which still have space.",
+   "api": [
+    "GET /classes?from=&to=&filters=",
+    "GET /filters/options",
+    "POST /waitlist/:classId",
+    "GET /classes?view=week"
+   ],
+   "layerTree": "Schedule\n├ ViewSwitch (Today / Week)\n├ DateStrip\n├ FilterBar → FilterSheet\n│ ├ Time of day\n│ ├ Level\n│ ├ Type\n│ ├ Teacher\n│ └ Room\n├ ClassList → ClassRow\n└ BottomNav",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-02",
+   "notes": [
+    "C-02b week view is the Week segment of this page (?view=week).",
+    "Capacity updates live through useTable subscriptions (MockProvider change events)."
+   ]
+  }
+ },
+ {
+  "path": "/app/schedule/week",
+  "code": "C-02b",
+  "surface": "customer",
+  "status": "built",
+  "spec": {
+   "code": "C-02b",
+   "name": {
+    "es": "Horario de clases · semana",
+    "en": "Class schedule · week"
+   },
+   "purpose": {
+    "es": "La vista semanal de C-02: cuadrícula de seis columnas con chips de hora; mismos datos, filtros y estado de reserva que Hoy.",
+    "en": "The week view of C-02: a six-column day grid of compact time chips, because comparing across days is the reason to open it. Same data, filters and booking state as Today."
+   },
+   "layout": [
+    "ViewSwitch (Today / Week)",
+    "FilterBar → FilterSheet",
+    "WeekGrid (Mon–Sat columns → DayChip)",
+    "Legend"
+   ],
+   "data": [
+    "class_sessions",
+    "modalities",
+    "teachers",
+    "rooms",
+    "bookings"
+   ],
+   "roles": [
+    "customer",
+    "front_desk",
+    "coordinator",
+    "super_admin"
+   ],
+   "logic": [
+    "Tapping a chip opens C-03 for that class; booked chips are filled in the selection colour.",
+    "Past days are read-only; the current day is pre-selected.",
+    "Filters set on Today carry over to Week for the session.",
+    "Six columns, Monday to Saturday — the studio does not open on Sunday; a seventh column appears only if M-08 hours change."
+   ],
+   "integrations": [
+    "Supabase Auth",
+    "Supabase Realtime"
+   ],
+   "states": [
+    "Loading: skeleton",
+    "Empty day: dash in the column",
+    "Past days: chips dimmed",
+    "Booked: chip outlined"
+   ],
+   "toggles": [
+    {
+     "label": "Week view",
+     "on": true
+    },
+    {
+     "label": "Sunday column",
+     "on": false
+    },
+    {
+     "label": "Waitlists",
+     "on": true
+    }
+   ],
+   "story": "As a student I scan the whole week at a glance and spot the two evening classes that still have space.",
+   "api": [
+    "GET /classes?view=week&from=&to=",
+    "GET /filters/options",
+    "POST /waitlist/:classId"
+   ],
+   "layerTree": "ScheduleWeek\n├ ViewSwitch (Today / Week)\n├ WeekHeader (Mon–Sat, selected day filled)\n├ DayColumns ×6 → DayChip (time · open / full / booked)\n├ Legend (movement colours)\n└ BottomNav",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-02b",
+   "notes": [
+    "Rendered by SchedulePage with view=week at /app/schedule/week; on phones the six columns stack as day groups."
+   ]
+  }
+ },
+ {
+  "path": "/app/class/:id",
+  "code": "C-03",
+  "surface": "customer",
+  "status": "built",
+  "spec": {
+   "code": "C-03",
+   "name": {
+    "es": "Detalle de clase",
+    "en": "Class detail"
+   },
+   "purpose": {
+    "es": "Todo sobre una clase: profesor, sala, nivel, preparación, cupos y el botón de reservar.",
+    "en": "Everything needed to commit: what the class is, who teaches it, what to bring, how full it is, and how to reserve."
+   },
+   "layout": [
+    "HeroImage (placeholder)",
+    "TitleBlock (time, duration, room)",
+    "CapacityMeter",
+    "AboutSection",
+    "TeacherCard → TeacherProfile",
+    "PrepList → Club rules",
+    "StickyCTA (Reserve / Waitlist)"
+   ],
+   "data": [
+    "class_sessions",
+    "modalities",
+    "teachers",
+    "rooms",
+    "bookings",
+    "waitlist"
+   ],
+   "roles": [
+    "customer",
+    "public",
+    "coordinator",
+    "front_desk"
+   ],
+   "logic": [
+    "Reserve resolves to: use credit → membership entitlement → pay per class → trial class.",
+    "Capacity meter turns amber under 4 spots.",
+    "Deep-linkable for the website and WhatsApp shares."
+   ],
+   "integrations": [
+    "WhatsApp",
+    "Supabase Realtime"
+   ],
+   "states": [
+    "Loading: hero shimmer",
+    "Cancelled class: banner + reschedule options",
+    "Full: CTA becomes Waitlist",
+    "Already booked: CTA opens the booking",
+    "Same-day conflict: CTA disabled with reason",
+    "Not found"
+   ],
+   "toggles": [
+    {
+     "label": "Reviews on class page",
+     "on": false
+    },
+    {
+     "label": "Capacity meter",
+     "on": true
+    },
+    {
+     "label": "Prep checklist",
+     "on": true
+    }
+   ],
+   "story": "As a new student I read the class description and the teacher's bio before I book.",
+   "api": [
+    "GET /classes/:id",
+    "GET /teachers/:id",
+    "GET /content/prep",
+    "POST /bookings"
+   ],
+   "layerTree": "ClassDetail\n├ HeroImage (placeholder)\n├ TitleBlock (time, duration, room)\n├ CapacityMeter\n├ AboutSection\n├ TeacherCard → TeacherProfile\n├ PrepList → Club rules\n└ StickyCTA (Reserve / Waitlist)",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-03",
+   "notes": []
+  }
+ },
+ {
+  "path": "/app/checkout/:id",
+  "code": "C-04",
+  "surface": "customer",
+  "status": "built",
+  "spec": {
+   "code": "C-04",
+   "name": {
+    "es": "Reservar y pagar",
+    "en": "Reserve & checkout"
+   },
+   "purpose": {
+    "es": "Reservar y pagar en un solo flujo: usar crédito, membresía o pagar la clase; recibo al instante.",
+    "en": "One screen from intent to confirmed, choosing the cheapest valid entitlement by default and only asking for money when there is none."
+   },
+   "layout": [
+    "ClassSummary",
+    "EntitlementPicker",
+    "PaymentMethodRow",
+    "OrderSummary (subtotal, IVA, total)",
+    "ConfirmButton"
+   ],
+   "data": [
+    "class_sessions",
+    "bookings",
+    "credits",
+    "memberships",
+    "plans",
+    "payments",
+    "invoices"
+   ],
+   "roles": [
+    "customer",
+    "front_desk"
+   ],
+   "logic": [
+    "Entitlement order: credits → membership → trial → single purchase.",
+    "Prices in COP; IVA shown as a line item.",
+    "Trial class is one per person, verified by document/phone.",
+    "Confirmation sends both a WhatsApp message and an email receipt.",
+    "No-show and late-cancel fees follow the cancellation window rule."
+   ],
+   "integrations": [
+    "WhatsApp",
+    "Wompi",
+    "Email",
+    "Supabase Realtime",
+    "DIAN e-invoicing"
+   ],
+   "states": [
+    "Loading: CTA spinner, form locked",
+    "Declined: inline reason + alternate method",
+    "Race: class filled during checkout → waitlist offer",
+    "Success: confirmation sheet"
+   ],
+   "toggles": [
+    {
+     "label": "Free trial class",
+     "on": true
+    },
+    {
+     "label": "3-class pack",
+     "on": true
+    },
+    {
+     "label": "10-class pack",
+     "on": true
+    },
+    {
+     "label": "Guest booking",
+     "on": true
+    }
+   ],
+   "story": "As a member I tap Reserve and I am done; as a walk-in I choose a pack or a single class and pay.",
+   "api": [
+    "POST /bookings",
+    "POST /orders",
+    "POST /payments/intent",
+    "GET /me/entitlements",
+    "GET /pricing"
+   ],
+   "layerTree": "Checkout\n├ ClassSummary\n├ EntitlementPicker\n│ ├ Credit balance\n│ ├ Membership\n│ ├ Trial class\n│ └ Packs 1/3/10\n├ PaymentMethodRow\n├ OrderSummary (subtotal, IVA, total)\n└ ConfirmButton",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-04",
+   "notes": [
+    "Wompi is simulated in src/modules/customer/payments.ts (wompiCheckout). Manual transfer/cash create pending payments the front desk settles.",
+    "IVA 19% is computed by OrderSummary from policy.ivaRate; prices are IVA-inclusive.",
+    "Declined payments render E-02 inline and keep the spot held 10 minutes."
+   ]
+  }
+ },
+ {
+  "path": "/app/payment-methods",
+  "code": "C-05",
+  "surface": "customer",
+  "status": "built",
+  "spec": {
+   "code": "C-05",
+   "name": {
+    "es": "Métodos de pago",
+    "en": "Payment methods"
+   },
+   "purpose": {
+    "es": "Guardar y gestionar métodos de pago; efectivo solo desde recepción.",
+    "en": "Colombian payment reality: cards, PSE, Nequi, Daviplata, Bancolombia transfer, Mercado Pago, wallet pay, and cash at the front desk."
+   },
+   "layout": [
+    "WompiCard (placeholder)",
+    "SavedMethods",
+    "ElectronicMethods (card, PSE, Nequi)",
+    "ManualMethods (transfer instructions, cash at desk)",
+    "ComplianceNote"
+   ],
+   "data": [
+    "payments",
+    "invoices"
+   ],
+   "roles": [
+    "customer",
+    "front_desk",
+    "finance",
+    "super_admin"
+   ],
+   "logic": [
+    "No card data touches our servers — gateway tokenisation only; PCI DSS SAQ-A scope.",
+    "Cash creates a pending order that the front desk settles; booking holds 60 minutes.",
+    "Electronic invoicing per DIAN requirements; receipt includes NIT and IVA breakdown.",
+    "Refunds return to the original method; credits are refunded as credits.",
+    "Habeas Data (Ley 1581) consent recorded before storing any method."
+   ],
+   "integrations": [
+    "WhatsApp",
+    "Wompi",
+    "Email",
+    "DIAN e-invoicing"
+   ],
+   "states": [
+    "Loading: rows shimmer",
+    "Empty: 'Add a payment method'",
+    "Gateway down: cash/transfer only + banner",
+    "Expired card: inline warning"
+   ],
+   "toggles": [
+    {
+     "label": "PSE",
+     "on": true
+    },
+    {
+     "label": "Nequi",
+     "on": true
+    },
+    {
+     "label": "Daviplata",
+     "on": true
+    },
+    {
+     "label": "Mercado Pago",
+     "on": true
+    },
+    {
+     "label": "Cash at front desk",
+     "on": true
+    },
+    {
+     "label": "Apple / Google Pay",
+     "on": true
+    }
+   ],
+   "story": "As a student in Medellín I pay with Nequi in three taps and get a receipt on WhatsApp.",
+   "api": [
+    "GET /me/payment-methods",
+    "POST /payment-methods",
+    "DELETE /payment-methods/:id",
+    "POST /payments/:id/refund",
+    "POST /invoices/dian"
+   ],
+   "layerTree": "PaymentMethods\n├ SavedCards (tokenised)\n├ BankTransfer / PSE\n├ Wallets (Nequi, Daviplata)\n├ MercadoPago\n├ ApplePay / GooglePay\n├ CashAtDesk (flagged)\n└ AddMethodSheet",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-05",
+   "notes": [
+    "Wompi is simulated in src/modules/customer/payments.ts (wompiCheckout). Manual transfer/cash create pending payments the front desk settles.",
+    "No payment_methods table yet: saved methods are derived from approved payments (shared-change request)."
+   ]
+  }
+ },
+ {
+  "path": "/app/plans",
+  "code": "C-06",
+  "surface": "customer",
+  "status": "built",
+  "spec": {
+   "code": "C-06",
+   "name": {
+    "es": "Planes de membresía",
+    "en": "Membership plans"
+   },
+   "purpose": {
+    "es": "Comparar y comprar planes de membresía; muestra el estado del plan actual.",
+    "en": "Sell the plan without blocking the booking. Monthly or yearly, with the yearly discount shown as months free."
+   },
+   "layout": [
+    "CycleSwitch (Monthly / Yearly)",
+    "PlanCards",
+    "ComparisonNote",
+    "PrimaryCTA",
+    "SkipLink (Bienvenida passes)"
+   ],
+   "data": [
+    "plans",
+    "memberships",
+    "payments"
+   ],
+   "roles": [
+    "customer",
+    "front_desk",
+    "finance",
+    "super_admin"
+   ],
+   "logic": [
+    "Yearly = 10× monthly, shown as '2 months free'.",
+    "Skipping is always allowed; the nudge returns on home.",
+    "Freeze, cancel and change-plan handled in Settings → Membership with the studio's notice period.",
+    "Prices come from the CMS and drive the app and the website at once."
+   ],
+   "integrations": [],
+   "states": [
+    "Loading: card skeletons",
+    "Existing member: current plan marked, others show 'change'",
+    "Promotion active: badge + strike price"
+   ],
+   "toggles": [
+    {
+     "label": "Yearly cycle",
+     "on": true
+    },
+    {
+     "label": "Freeze membership",
+     "on": true
+    },
+    {
+     "label": "Promo codes",
+     "on": false
+    }
+   ],
+   "story": "As a student who came three times this month I see that unlimited is cheaper than my packs.",
+   "api": [
+    "GET /plans?cycle=",
+    "POST /subscriptions",
+    "PATCH /subscriptions/:id",
+    "GET /me/membership"
+   ],
+   "layerTree": "Plans\n├ CycleSwitch (Monthly / Yearly)\n├ PlanCards ×3\n│ ├ Benefits list\n│ └ Price + cycle\n├ ComparisonNote\n├ PrimaryCTA\n└ SkipLink (pay per class)",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-06",
+   "notes": [
+    "Prices only from src/tenant/pricing.ts (Modelo de Valor v3).",
+    "Wompi is simulated in src/modules/customer/payments.ts (wompiCheckout). Manual transfer/cash create pending payments the front desk settles."
+   ]
+  }
+ },
+ {
+  "path": "/app/passes",
+  "code": "C-07",
+  "surface": "customer",
+  "status": "built",
+  "spec": {
+   "code": "C-07",
+   "name": {
+    "es": "Pases Bienvenida",
+    "en": "Bienvenida passes"
+   },
+   "purpose": {
+    "es": "Los pases Bienvenida: prueba, individual, paquetes de 3 y 10; elegibilidad de la clase de prueba.",
+    "en": "The way in for someone with no membership: four one-time options, stacked cheapest first, each one reservable on the spot. It is the other half of C-06 — whoever skips the plan lands here rather than at a dead end."
+   },
+   "layout": [
+    "Header · title + sub",
+    "Eyebrow · BIENVENIDA",
+    "Intro line",
+    "PassList (vertical)",
+    "FooterLink → C-06"
+   ],
+   "data": [
+    "plans",
+    "payments",
+    "credits",
+    "bookings"
+   ],
+   "roles": [
+    "public",
+    "customer",
+    "front_desk"
+   ],
+   "logic": [
+    "Prices read from the value-model config; no figure is written on this screen.",
+    "Trial class is one per person, verified by document or phone.",
+    "Packs expire per their own rule — one month for 3, three months for 10.",
+    "Every button enters the same single-screen checkout (C-04) with lazy registration.",
+    "C-06's skip link points here, so the membership decision is never a dead end."
+   ],
+   "integrations": [
+    "Wompi",
+    "Supabase Auth"
+   ],
+   "states": [
+    "Default (this screen)",
+    "Trial already used: that row drops to a note",
+    "Existing member: banner offers C-06 instead",
+    "Loading: four skeleton rows"
+   ],
+   "toggles": [
+    {
+     "label": "Trial class",
+     "on": true
+    },
+    {
+     "label": "3-class pack",
+     "on": true
+    },
+    {
+     "label": "10-class pack",
+     "on": true
+    },
+    {
+     "label": "Single pass",
+     "on": true
+    }
+   ],
+   "story": "As a first-timer I take the trial class without signing up for anything, and I can see what a pack costs if I come back.",
+   "api": [
+    "GET /packages",
+    "POST /orders",
+    "POST /bookings",
+    "GET /me/entitlements"
+   ],
+   "layerTree": "BienvenidaPasses\n├ Header · title + sub\n├ Eyebrow · BIENVENIDA\n├ Intro line\n├ PassList (vertical)\n│ ├ Clase de Prueba\n│ ├ Pase Individual\n│ ├ Paquete de 3 Clases\n│ └ Paquete de 10 Clases\n└ FooterLink → C-06",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-07",
+   "notes": [
+    "Each pass goes to C-04 with ?pass=<id>; the purchase and the booking happen in one confirm."
+   ]
+  }
+ },
+ {
+  "path": "/app/credits",
+  "code": "C-07b",
+  "surface": "customer",
+  "status": "built",
+  "spec": {
+   "code": "C-07b",
+   "name": {
+    "es": "Créditos y paquetes",
+    "en": "Credits & class packs"
+   },
+   "purpose": {
+    "es": "Saldo de créditos, vencimientos y el libro mayor de cada movimiento.",
+    "en": "The way in for someone with no membership: four one-time options, stacked cheapest first, each one reservable on the spot. It is the other half of C-06 — whoever skips the plan lands here rather than at a dead end."
+   },
+   "layout": [
+    "BalanceHeader",
+    "LedgerList (earned / used / expired)",
+    "PackGrid (1 / 3 / 10)",
+    "BuyCTA"
+   ],
+   "data": [
+    "credits",
+    "plans",
+    "payments",
+    "bookings"
+   ],
+   "roles": [
+    "public",
+    "customer",
+    "front_desk"
+   ],
+   "logic": [
+    "Prices read from the value-model config; no figure is written on this screen.",
+    "Trial class is one per person, verified by document or phone.",
+    "Packs expire per their own rule — one month for 3, three months for 10.",
+    "Every button enters the same single-screen checkout (C-04) with lazy registration.",
+    "C-06's skip link points here, so the membership decision is never a dead end."
+   ],
+   "integrations": [
+    "Wompi",
+    "Supabase Auth"
+   ],
+   "states": [
+    "Default (this screen)",
+    "Trial already used: that row drops to a note",
+    "Existing member: banner offers C-06 instead",
+    "Loading: four skeleton rows"
+   ],
+   "notes": [
+    "C-07b merged into C-07 in canvas v1.5; alias kept for the /app/credits stub. Content lives in C-07 + P-01.",
+    "Pack purchase from here credits the ledger without a booking (payments + credits rows).",
+    "Canvas v1.5 merged C-07b into C-07; the /app/credits route keeps the ledger view under the compatibility alias."
+   ],
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-07"
+  }
+ },
+ {
+  "path": "/app/booking/:id",
+  "code": "C-08",
+  "surface": "customer",
+  "status": "built",
+  "spec": {
+   "code": "C-08",
+   "name": {
+    "es": "Clase reservada, cuenta regresiva, cancelar y reprogramar",
+    "en": "Booked class, countdown, cancel & reschedule"
+   },
+   "purpose": {
+    "es": "La clase reservada con cuenta regresiva, política de cancelación y acciones de cancelar o reprogramar.",
+    "en": "Everything you can do to a reservation you already hold, including the countdown that makes the class feel imminent."
+   },
+   "layout": [
+    "CountdownRing",
+    "ClassSummary",
+    "PrepReminder",
+    "ActionRow (Change / Invite)",
+    "AddToCalendar",
+    "PolicyNote"
+   ],
+   "data": [
+    "bookings",
+    "class_sessions",
+    "modalities",
+    "teachers",
+    "rooms",
+    "credits",
+    "waitlist"
+   ],
+   "roles": [
+    "customer",
+    "front_desk",
+    "coordinator"
+   ],
+   "logic": [
+    "Free cancellation until T−2h (policy.cancelWindowHours); inside the window the credit is forfeited.",
+    "Reschedule = cancel + rebook in one transaction, same entitlement, no fee outside the window.",
+    "Studio-side cancellation refunds automatically (E-03 state inline).",
+    "Countdown switches to 'Check in' inside T−60m."
+   ],
+   "integrations": [
+    "WhatsApp",
+    "Wompi",
+    "Push notifications"
+   ],
+   "states": [
+    "Inside window: destructive confirm sheet",
+    "Past class: read-only + rate CTA",
+    "Cancelled by studio: banner + alternatives"
+   ],
+   "toggles": [
+    {
+     "label": "Reschedule",
+     "on": true
+    },
+    {
+     "label": "Countdown ring",
+     "on": true
+    },
+    {
+     "label": "Late-cancel fee",
+     "on": false
+    }
+   ],
+   "story": "As a student I see 3h 12m until class, and I can move it to tomorrow in two taps.",
+   "api": [
+    "GET /bookings/:id",
+    "DELETE /bookings/:id",
+    "POST /bookings/:id/reschedule",
+    "GET /policies/cancellation"
+   ],
+   "layerTree": "BookedClass\n├ CountdownRing\n├ ClassSummary\n├ PrepReminder\n├ ActionRow (Cancel / Reschedule / Invite)\n├ AddToCalendar\n└ PolicyNote",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-08",
+   "notes": [
+    "Add to calendar downloads an .ics; share uses the Web Share API with clipboard fallback."
+   ]
+  }
+ },
+ {
+  "path": "/app/booking/:id/change",
+  "code": "C-08b",
+  "surface": "customer",
+  "status": "built",
+  "spec": {
+   "code": "C-08b",
+   "name": {
+    "es": "Hoja de cancelar o reprogramar",
+    "en": "Cancel or reschedule sheet"
+   },
+   "purpose": {
+    "es": "Hoja inferior para cancelar o mover una reserva respetando la política.",
+    "en": "One button on the booked class opens one sheet, because a student who cannot make a class is taking a single decision with two outcomes. Moving is offered first — it keeps the credit and keeps the habit."
+   },
+   "layout": [
+    "Handle + title",
+    "PolicyLine (window from policy)",
+    "BookingSummary",
+    "MoveAction (primary)",
+    "CancelAction (destructive outline)",
+    "ReplacementList (same day, same movement)",
+    "KeepBooking (dismiss)"
+   ],
+   "data": [
+    "bookings",
+    "class_sessions",
+    "modalities",
+    "credits",
+    "waitlist"
+   ],
+   "roles": [],
+   "logic": [
+    "Move = cancel + rebook in one transaction, same entitlement, no fee outside the window.",
+    "Cancel returns the credit immediately when outside the window; inside it the credit is spent and the sheet says so before confirming.",
+    "The window value is read from Admin → Settings (M-08), never hardcoded here.",
+    "Replacements are same-day and matched on class_tags, then nearest time.",
+    "The front desk can perform either action on the student's behalf from S-02, which writes to the audit log with the staff actor."
+   ],
+   "integrations": [
+    "Supabase Realtime"
+   ],
+   "states": [
+    "Outside window (this sheet)",
+    "Inside window: destructive confirm naming the forfeited credit",
+    "No replacement available: waitlist offer",
+    "Past class: sheet cannot open"
+   ],
+   "toggles": [
+    {
+     "label": "Reschedule",
+     "on": true
+    },
+    {
+     "label": "Suggest replacements",
+     "on": true
+    },
+    {
+     "label": "Late-cancel fee",
+     "on": false
+    }
+   ],
+   "story": "As a student who cannot make 7am I move to the 9:30 in two taps, and my credit follows me.",
+   "api": [
+    "GET /policies/cancellation",
+    "POST /bookings/:id/reschedule",
+    "DELETE /bookings/:id",
+    "GET /classes/alternatives?bookingId="
+   ],
+   "layerTree": "ChangeSheet\n├ Handle + title\n├ PolicyLine (window from M-08)\n├ BookingSummary\n├ MoveAction (primary)\n├ CancelAction (destructive outline)\n├ ReplacementList (same day, same tag)\n└ KeepBooking (dismiss)",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-08b",
+   "notes": [
+    "Opens as a bottom Drawer over C-08 at /app/booking/:id/change."
+   ]
+  }
+ },
+ {
+  "path": "/app/rate/:id",
+  "code": "C-10",
+  "surface": "customer",
+  "status": "built",
+  "spec": {
+   "code": "C-10",
+   "name": {
+    "es": "Califica tu clase",
+    "en": "Rate your class"
+   },
+   "purpose": {
+    "es": "Calificar la clase y al profesor en menos de 30 segundos; alimenta métricas y moderación.",
+    "en": "Capture feedback while it is warm, in under five seconds, with a skip that costs nothing."
+   },
+   "layout": [
+    "ClassLine",
+    "RatingScale (1–5)",
+    "TagChips (good / fix)",
+    "OptionalNote",
+    "AnonymousToggle",
+    "Submit / Skip"
+   ],
+   "data": [
+    "bookings",
+    "class_sessions",
+    "teachers"
+   ],
+   "roles": [
+    "customer",
+    "teacher",
+    "coordinator",
+    "super_admin"
+   ],
+   "logic": [
+    "Prompted on the next open after attendance, once, then dismissed for good.",
+    "Teachers see anonymous ratings in aggregate; named comments only when the student allows it.",
+    "Ratings under 3 open an internal follow-up task for the coordinator.",
+    "Public reviews are a separate, explicit ask via Settings."
+   ],
+   "integrations": [],
+   "states": [
+    "Multiple pending: queue one at a time",
+    "Submitted: thank-you with review link",
+    "Error: keep local draft"
+   ],
+   "toggles": [
+    {
+     "label": "Post-class feedback",
+     "on": true
+    },
+    {
+     "label": "Feedback tags",
+     "on": true
+    },
+    {
+     "label": "Anonymous by default",
+     "on": true
+    }
+   ],
+   "story": "As a student I tap four leaves and optionally add a line about the room temperature.",
+   "api": [
+    "POST /reviews",
+    "GET /feedback/pending",
+    "POST /feedback/skip"
+   ],
+   "layerTree": "RatePrompt\n├ ClassLine\n├ RatingScale (1–5)\n├ TagChips (music, heat, pace, clarity)\n├ OptionalNote\n├ AnonymousToggle\n└ Submit / Skip",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-10",
+   "notes": [
+    "No reviews table yet: submit marks bookings.rated = true and keeps the rating locally (shared-change request)."
+   ]
+  }
+ },
+ {
+  "path": "/app/history",
+  "code": "C-11",
+  "surface": "customer",
+  "status": "built",
+  "spec": {
+   "code": "C-11",
+   "name": {
+    "es": "Historial y pagos",
+    "en": "History & payments"
+   },
+   "purpose": {
+    "es": "Historial de clases, pagos, facturas y créditos, con filtros y exportación.",
+    "en": "One ledger for the relationship: classes attended and every peso paid, with receipts you can forward."
+   },
+   "layout": [
+    "TabSwitch (Classes / Payments)",
+    "ClassHistoryList",
+    "PaymentList → ReceiptSheet",
+    "ExportButton"
+   ],
+   "data": [
+    "bookings",
+    "class_sessions",
+    "modalities",
+    "teachers",
+    "payments",
+    "invoices",
+    "plans"
+   ],
+   "roles": [
+    "customer",
+    "finance",
+    "front_desk",
+    "super_admin"
+   ],
+   "logic": [
+    "Receipts are DIAN electronic invoices where applicable, with NIT and IVA.",
+    "Cancelled and no-show classes are marked, not hidden.",
+    "Export produces a PDF summary for the selected range."
+   ],
+   "integrations": [
+    "Wompi",
+    "Email",
+    "DIAN e-invoicing"
+   ],
+   "states": [
+    "Empty: 'Your first class is waiting'",
+    "Loading: rows shimmer",
+    "Error: retry"
+   ],
+   "toggles": [
+    {
+     "label": "Payments tab",
+     "on": true
+    },
+    {
+     "label": "PDF export",
+     "on": true
+    }
+   ],
+   "story": "As a student I download the receipt for last month's membership charge.",
+   "api": [
+    "GET /me/bookings?status=past",
+    "GET /me/payments",
+    "GET /invoices/:id",
+    "GET /me/export"
+   ],
+   "layerTree": "History\n├ TabSwitch (Classes / Payments)\n├ ClassHistoryList\n├ PaymentList → ReceiptSheet\n└ ExportButton",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-11",
+   "notes": [
+    "Export downloads a JSON summary; PDF via DIAN e-invoicing later."
+   ]
+  }
+ },
+ {
+  "path": "/app/rules",
+  "code": "C-13",
+  "surface": "customer",
+  "status": "built",
+  "spec": {
+   "code": "C-13",
+   "name": {
+    "es": "Reglas del club y buenas prácticas",
+    "en": "Club rules & best practices"
+   },
+   "purpose": {
+    "es": "Reglas del club y buenas prácticas en artículos cortos con lectura confirmada.",
+    "en": "The content library that keeps the room safe and pleasant: hot-room safety, class preparation, studio etiquette, the tour, emergencies, about HOY."
+   },
+   "layout": [
+    "VideoPlaceholder (studio tour)",
+    "CategoryList",
+    "ArticleView (Drawer)",
+    "RelatedLinks"
+   ],
+   "data": [
+    "legal_documents"
+   ],
+   "roles": [
+    "public",
+    "customer",
+    "coordinator",
+    "front_desk"
+   ],
+   "logic": [
+    "Same CMS entries serve app and website; each has an EN and ES version.",
+    "First-class flow surfaces Class Preparation automatically.",
+    "Video slots are placeholders until the studio supplies footage.",
+    "Emergency article is never toggleable off."
+   ],
+   "integrations": [
+    "Email"
+   ],
+   "states": [
+    "Video missing: textured placeholder with intended shot noted",
+    "Untranslated: falls back to Spanish with a note"
+   ],
+   "toggles": [
+    {
+     "label": "Video players",
+     "on": true
+    },
+    {
+     "label": "Read receipts",
+     "on": false
+    }
+   ],
+   "story": "As a first-timer I watch the two-minute tour and know where to leave my shoes.",
+   "api": [
+    "GET /content?category=",
+    "GET /content/:slug?locale=",
+    "POST /content/:slug/read"
+   ],
+   "layerTree": "RulesLibrary\n├ CategoryGrid\n│ ├ Hot room safety\n│ ├ Class preparation\n│ ├ Studio etiquette\n│ ├ Studio tour\n│ ├ Emergencies\n│ └ About HOY\n├ ArticleView\n│ ├ VideoPlayer (placeholder)\n│ └ Body + checklist\n└ RelatedLinks",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-13",
+   "notes": [
+    "Articles live in src/modules/customer/content.ts until a content_articles table exists (shared-change request)."
+   ]
+  }
+ },
+ {
+  "path": "/app/faq",
+  "code": "C-14",
+  "surface": "customer",
+  "status": "built",
+  "spec": {
+   "code": "C-14",
+   "name": {
+    "es": "Preguntas frecuentes (1/2)",
+    "en": "Preguntas frecuentes (1/2)"
+   },
+   "purpose": {
+    "es": "Página 1 de las preguntas frecuentes: primera vez, reservas y planes; la última parada antes de escribir a recepción.",
+    "en": "Page 1 of the public answer sheet, split across two pages so the accordion never becomes a scroll of thirty open questions. It is the last stop before someone writes to the front desk, so it carries the same answers the concierge would give."
+   },
+   "layout": [
+    "Header (page 1 of 2)",
+    "Section 01 · Tu primera vez en HOY",
+    "Section 02 · Reservas y horarios",
+    "Section 03 · Membresías y planes",
+    "NextPageLink → C-15"
+   ],
+   "data": [],
+   "roles": [
+    "public",
+    "customer",
+    "front_desk",
+    "coordinator"
+   ],
+   "logic": [
+    "Questions are collapsed by default; only one opens at a time within a section.",
+    "Entries live in the CMS beside Club Rules, so the same answer serves app and website.",
+    "Anything about prices or plans links to #planes rather than repeating a figure.",
+    "Section 06 always ends with a route to a human — the FAQ never dead-ends."
+   ],
+   "integrations": [
+    "Supabase Realtime"
+   ],
+   "states": [
+    "Collapsed (default)",
+    "One expanded",
+    "No match in search: offers the concierge",
+    "Untranslated entry: falls back to Spanish"
+   ],
+   "toggles": [
+    {
+     "label": "FAQ in app",
+     "on": true
+    },
+    {
+     "label": "Helpful vote",
+     "on": false
+    },
+    {
+     "label": "Search within FAQ",
+     "on": false
+    }
+   ],
+   "story": "As someone who has never practised I read what to bring and how early to arrive without messaging anyone.",
+   "api": [
+    "GET /content/faq?locale=",
+    "GET /content/faq/:slug",
+    "POST /content/faq/:slug/helpful"
+   ],
+   "layerTree": "FAQ (2 pages)\n├ Page 1 · C-14\n│ ├ 01 Tu primera vez en HOY\n│ ├ 02 Reservas y horarios\n│ └ 03 Membresías y planes\n└ Page 2 · C-15\n  ├ 04 El espacio\n  ├ 05 En camino\n  └ 06 Contacto y concierge",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-14",
+   "notes": [
+    "/app/faq. Entries live in content.ts until a faq_entries table exists; anything about prices links to /app/plans."
+   ]
+  }
+ },
+ {
+  "path": "/app/faq/2",
+  "code": "C-15",
+  "surface": "customer",
+  "status": "built",
+  "spec": {
+   "code": "C-15",
+   "name": {
+    "es": "Preguntas frecuentes (2/2)",
+    "en": "Preguntas frecuentes (2/2)"
+   },
+   "purpose": {
+    "es": "Página 2 de las preguntas frecuentes: el espacio, cómo llegar y contacto; termina con una persona, nunca en un callejón sin salida.",
+    "en": "Page 2 of the public answer sheet: the space, getting there, and contact — it ends with a route to a human, so the FAQ never dead-ends."
+   },
+   "layout": [
+    "Header (page 2 of 2) + back to C-14",
+    "Section 04 · El espacio",
+    "Section 05 · En camino",
+    "Section 06 · Contacto y concierge",
+    "ConciergeRow → WhatsApp"
+   ],
+   "data": [],
+   "roles": [
+    "public",
+    "customer",
+    "front_desk",
+    "coordinator"
+   ],
+   "logic": [
+    "Same accordion rules as C-14: collapsed by default, one open per section.",
+    "Address, hours and contact are read from studio settings (M-08), never typed here.",
+    "Section 06 always ends with a route to a human — WhatsApp first, email as fallback.",
+    "Anything about prices or plans links to #planes rather than repeating a figure."
+   ],
+   "integrations": [
+    "WhatsApp",
+    "Email"
+   ],
+   "states": [
+    "Collapsed (default)",
+    "One expanded",
+    "Untranslated entry: falls back to Spanish",
+    "Studio closed today: hours row shows next opening"
+   ],
+   "toggles": [
+    {
+     "label": "FAQ in app",
+     "on": true
+    },
+    {
+     "label": "Contact row",
+     "on": true
+    },
+    {
+     "label": "Helpful vote",
+     "on": false
+    }
+   ],
+   "story": "As a visitor on my way to the studio I find the address, parking and what to do if I am late, then message the concierge in one tap.",
+   "api": [
+    "GET /content/faq?locale=&page=2",
+    "GET /content/faq/:slug",
+    "GET /studio/hours"
+   ],
+   "layerTree": "FAQ · page 2 (C-15)\n├ PageHeader (2/2) + back to C-14\n├ Section 04 El espacio\n├ Section 05 En camino\n├ Section 06 Contacto y concierge\n└ ContactRow → WhatsApp / email",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-15",
+   "notes": [
+    "/app/faq/2. Section 06 always ends with a route to a human."
+   ]
+  }
+ },
+ {
+  "path": "/app/invite",
+  "code": "C-16",
+  "surface": "customer",
+  "status": "built",
+  "spec": {
+   "code": "C-16",
+   "name": {
+    "es": "Invita a un amigo",
+    "en": "Invite a guest"
+   },
+   "purpose": {
+    "es": "Invitar a un amigo con pase de invitado o referido y ver la atribución.",
+    "en": "Make word of mouth mechanical: send a pass by WhatsApp, email or link, from a class or from its own page."
+   },
+   "layout": [
+    "ContextCard (class or general)",
+    "ChannelRow (WhatsApp / Email / Link)",
+    "PassPreview",
+    "SentList (status)",
+    "RewardNote"
+   ],
+   "data": [
+    "class_sessions",
+    "profiles"
+   ],
+   "roles": [
+    "customer",
+    "front_desk",
+    "coordinator"
+   ],
+   "logic": [
+    "One free trial pass per invited person, validated by phone or document.",
+    "Invites expire after 30 days; status tracked as sent, opened, booked, attended.",
+    "Referral reward credited to the inviter when the guest attends (configurable).",
+    "Invite entry points: class detail, booked class, home quick action, dedicated page."
+   ],
+   "integrations": [
+    "WhatsApp",
+    "Email"
+   ],
+   "states": [
+    "Empty: channel row only",
+    "Pass used: row collapses to a result",
+    "Limit hit: explains the cap"
+   ],
+   "toggles": [
+    {
+     "label": "WhatsApp channel",
+     "on": true
+    },
+    {
+     "label": "Email channel",
+     "on": true
+    },
+    {
+     "label": "Copy link",
+     "on": true
+    },
+    {
+     "label": "Referral reward",
+     "on": false
+    }
+   ],
+   "story": "As a member I invite a friend to Saturday's 9:30 and she books with the pass already applied.",
+   "api": [
+    "POST /invites",
+    "GET /me/invites",
+    "POST /invites/:id/resend",
+    "GET /referrals/config"
+   ],
+   "layerTree": "InviteGuest\n├ ContextCard (class or general)\n├ ChannelRow (WhatsApp / Email / Link)\n├ PassPreview\n├ SentList (status)\n└ RewardNote",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-16",
+   "notes": [
+    "No invites table yet: sent invites are kept per user in localStorage (shared-change request). WhatsApp/email open outbound links."
+   ]
+  }
+ },
+ {
+  "path": "/app/gift",
+  "code": "C-17",
+  "surface": "customer",
+  "status": "built",
+  "spec": {
+   "code": "C-17",
+   "name": {
+    "es": "Tarjeta de regalo",
+    "en": "Gift card"
+   },
+   "purpose": {
+    "es": "Comprar y programar la entrega de una tarjeta de regalo.",
+    "en": "Sell wellness as a present: amount, recipient, delivery date, message, design, then pay."
+   },
+   "layout": [
+    "HeroCard (design preview)",
+    "AmountPicker (+ custom)",
+    "RecipientFields",
+    "DeliveryDate",
+    "MessageField (250 max)",
+    "DesignPicker ×4",
+    "OrderSummary",
+    "BuyCTA"
+   ],
+   "data": [
+    "gift_cards",
+    "payments",
+    "invoices"
+   ],
+   "roles": [
+    "public",
+    "customer",
+    "front_desk",
+    "finance"
+   ],
+   "logic": [
+    "Delivered by email and WhatsApp on the chosen date at 8:00 local time.",
+    "Redemption converts to credits on the recipient's account; never expires below the legal minimum.",
+    "Service fee, if any, is shown in the summary before payment.",
+    "Purchasable without an account."
+   ],
+   "integrations": [
+    "WhatsApp",
+    "Wompi",
+    "Email",
+    "Supabase Auth",
+    "Supabase Realtime"
+   ],
+   "states": [
+    "Custom amount: min/max validation",
+    "Delivery in the past: blocked inline",
+    "Success: preview of what the recipient receives"
+   ],
+   "toggles": [
+    {
+     "label": "Custom amount",
+     "on": true
+    },
+    {
+     "label": "Scheduled delivery",
+     "on": true
+    },
+    {
+     "label": "Service fee",
+     "on": false
+    }
+   ],
+   "story": "As a customer I buy a gift voucher from $58.000 COP delivered on my mother's birthday.",
+   "api": [
+    "POST /gift-cards",
+    "GET /gift-designs",
+    "POST /gift-cards/:id/redeem",
+    "GET /gift-cards/:code"
+   ],
+   "layerTree": "GiftCard\n├ HeroCard (design preview)\n├ AmountPicker (+ custom)\n├ RecipientFields\n├ DeliveryDate\n├ MessageField (250 max)\n├ DesignPicker ×4\n├ OrderSummary\n└ BuyCTA",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-17",
+   "notes": [
+    "Amounts come from pricing.ts (single / pack3 / pack10) plus a custom amount ≥ the single pass.",
+    "Wompi is simulated in src/modules/customer/payments.ts (wompiCheckout). Manual transfer/cash create pending payments the front desk settles."
+   ]
+  }
+ },
+ {
+  "path": "/app/teachers",
+  "code": "C-18",
+  "surface": "customer",
+  "status": "built",
+  "spec": {
+   "code": "C-18",
+   "name": {
+    "es": "Galería y perfil de profesores",
+    "en": "Teacher gallery & profile"
+   },
+   "purpose": {
+    "es": "Galería de profesores con perfil, certificaciones, clases y valoraciones.",
+    "en": "Let students choose a teacher, not just a time slot. Off the main flow, reachable from class detail and community."
+   },
+   "layout": [
+    "Grid → TeacherCard",
+    "TeacherProfile (portrait, bio, classes they teach, upcoming schedule)"
+   ],
+   "data": [
+    "teachers",
+    "modalities",
+    "class_sessions"
+   ],
+   "roles": [
+    "public",
+    "customer",
+    "coordinator",
+    "front_desk"
+   ],
+   "logic": [
+    "Teachers maintain their own photo, bio and certifications; the coordinator approves publishing.",
+    "Profiles are public for the website; ratings are hidden unless enabled.",
+    "Deep-linkable per teacher."
+   ],
+   "integrations": [
+    "Supabase Auth"
+   ],
+   "states": [
+    "No portrait: textured placeholder marked 'teacher portrait'",
+    "Pending approval: staff-only draft badge"
+   ],
+   "toggles": [
+    {
+     "label": "Public ratings",
+     "on": false
+    },
+    {
+     "label": "Certifications block",
+     "on": true
+    },
+    {
+     "label": "Follow a teacher",
+     "on": false
+    }
+   ],
+   "story": "As a student I follow Lisa's schedule because her Yin class suits my back.",
+   "api": [
+    "GET /teachers",
+    "GET /teachers/:id",
+    "PATCH /teachers/me",
+    "GET /teachers/:id/classes"
+   ],
+   "layerTree": "TeacherGallery\n├ Grid → TeacherCard (portrait placeholder)\n└ TeacherProfile\n  ├ Portrait\n  ├ Bio + certifications\n  ├ Classes they teach\n  ├ Upcoming schedule\n  └ Aggregate rating (optional)",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-18",
+   "notes": [
+    "/app/teachers/:id is the deep-linkable profile."
+   ]
+  }
+ },
+ {
+  "path": "/app/teachers/:id",
+  "code": "C-18",
+  "surface": "customer",
+  "status": "built",
+  "spec": {
+   "code": "C-18",
+   "name": {
+    "es": "Galería y perfil de profesores",
+    "en": "Teacher gallery & profile"
+   },
+   "purpose": {
+    "es": "Galería de profesores con perfil, certificaciones, clases y valoraciones.",
+    "en": "Let students choose a teacher, not just a time slot. Off the main flow, reachable from class detail and community."
+   },
+   "layout": [
+    "Grid → TeacherCard",
+    "TeacherProfile (portrait, bio, classes they teach, upcoming schedule)"
+   ],
+   "data": [
+    "teachers",
+    "modalities",
+    "class_sessions"
+   ],
+   "roles": [
+    "public",
+    "customer",
+    "coordinator",
+    "front_desk"
+   ],
+   "logic": [
+    "Teachers maintain their own photo, bio and certifications; the coordinator approves publishing.",
+    "Profiles are public for the website; ratings are hidden unless enabled.",
+    "Deep-linkable per teacher."
+   ],
+   "integrations": [
+    "Supabase Auth"
+   ],
+   "states": [
+    "No portrait: textured placeholder marked 'teacher portrait'",
+    "Pending approval: staff-only draft badge"
+   ],
+   "toggles": [
+    {
+     "label": "Public ratings",
+     "on": false
+    },
+    {
+     "label": "Certifications block",
+     "on": true
+    },
+    {
+     "label": "Follow a teacher",
+     "on": false
+    }
+   ],
+   "story": "As a student I follow Lisa's schedule because her Yin class suits my back.",
+   "api": [
+    "GET /teachers",
+    "GET /teachers/:id",
+    "PATCH /teachers/me",
+    "GET /teachers/:id/classes"
+   ],
+   "layerTree": "TeacherGallery\n├ Grid → TeacherCard (portrait placeholder)\n└ TeacherProfile\n  ├ Portrait\n  ├ Bio + certifications\n  ├ Classes they teach\n  ├ Upcoming schedule\n  └ Aggregate rating (optional)",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-18",
+   "notes": [
+    "/app/teachers/:id is the deep-linkable profile."
+   ]
+  }
+ },
+ {
+  "path": "/app/profile",
+  "code": "C-19",
+  "surface": "customer",
+  "status": "built",
+  "spec": {
+   "code": "C-19",
+   "name": {
+    "es": "Perfil, ajustes y membresía",
+    "en": "Profile, settings & membership"
+   },
+   "purpose": {
+    "es": "Perfil, ajustes, idioma, notificaciones, dispositivos y membresía en un solo lugar.",
+    "en": "Everything about me and every switch I own, including where to leave a public review."
+   },
+   "layout": [
+    "Header (photo, name, membership badge)",
+    "EditProfile",
+    "MembershipRow → plan management",
+    "PaymentMethods",
+    "NotificationPrefs (push / email / WhatsApp)",
+    "LanguageToggle (EN / ES)",
+    "LeaveAReview → Google / Instagram",
+    "Legal links",
+    "SignOut / DeleteAccount"
+   ],
+   "data": [
+    "profiles",
+    "users",
+    "memberships",
+    "plans",
+    "consents"
+   ],
+   "roles": [
+    "customer",
+    "super_admin",
+    "admin",
+    "coordinator",
+    "front_desk",
+    "finance",
+    "teacher",
+    "maintenance"
+   ],
+   "logic": [
+    "Language switch is instant and per account, not per device.",
+    "Notification preferences are per channel and per event type.",
+    "Account deletion honours Ley 1581 with a 30-day recovery window.",
+    "Review links open the studio's Google Business and Instagram."
+   ],
+   "integrations": [
+    "WhatsApp",
+    "Wompi",
+    "Email",
+    "Supabase Auth",
+    "Push notifications"
+   ],
+   "states": [
+    "Loading: header skeleton",
+    "Unverified WhatsApp: verify chip",
+    "Saving: inline confirmation"
+   ],
+   "toggles": [
+    {
+     "label": "Leave-a-review link",
+     "on": true
+    },
+    {
+     "label": "Freeze membership",
+     "on": true
+    },
+    {
+     "label": "Delete account in app",
+     "on": true
+    }
+   ],
+   "story": "As a student I change the app to English, update my WhatsApp number, and freeze my membership for a month.",
+   "api": [
+    "GET /me",
+    "PATCH /me",
+    "GET /me/notification-prefs",
+    "PATCH /me/notification-prefs",
+    "DELETE /me"
+   ],
+   "layerTree": "Profile\n├ Header (photo, name, membership badge)\n├ EditProfile\n├ MembershipRow → plan management\n├ PaymentMethods\n├ NotificationPrefs (push / email / WhatsApp)\n├ LanguageToggle (EN / ES)\n├ LeaveAReview → Google / Instagram\n├ Legal links\n└ SignOut / DeleteAccount",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-19",
+   "notes": [
+    "Language uses the real LangToggle and persists users.locale.",
+    "Notification prefs are per user in localStorage until a notification_prefs table exists."
+   ]
+  }
+ },
+ {
+  "path": "/app/waitlist/:id",
+  "code": "C-20",
+  "surface": "customer",
+  "status": "built",
+  "spec": {
+   "code": "C-20",
+   "name": {
+    "es": "Lista de espera y ventana de reclamo",
+    "en": "Waitlist & claim window"
+   },
+   "purpose": {
+    "es": "Lista de espera con ventana de reclamo cuando se libera un cupo.",
+    "en": "Turn a full class into a queue that actually converts: show the position, explain the rule, and make claiming a released spot a single tap inside a 30-minute window."
+   },
+   "layout": [
+    "StatusCard (PositionRing + RuleExplainer)",
+    "ReleasedBanner (conditional, ClaimCountdown + ClaimButton)",
+    "AutoClaimToggle",
+    "LeaveWaitlistRow",
+    "PolicyNote"
+   ],
+   "data": [
+    "waitlist",
+    "class_sessions",
+    "modalities",
+    "teachers",
+    "bookings",
+    "credits"
+   ],
+   "roles": [
+    "customer",
+    "front_desk",
+    "coordinator"
+   ],
+   "logic": [
+    "Promotion is strictly by position; the front desk can override with a logged reason.",
+    "A released spot is offered for 30 minutes, then passes to the next person.",
+    "Auto-claim consumes a credit the moment the spot is offered; without a credit the student is asked to pay.",
+    "Joining and leaving are free and never charge.",
+    "Studio-side promotion fires the waitlist WhatsApp template immediately, ignoring quiet hours."
+   ],
+   "integrations": [
+    "WhatsApp",
+    "Supabase Realtime",
+    "Push notifications"
+   ],
+   "states": [
+    "Waiting: position + rule",
+    "Offered: banner + live countdown",
+    "Expired: 'the spot passed on' + rejoin",
+    "Class started: row goes read-only"
+   ],
+   "toggles": [
+    {
+     "label": "Waitlists",
+     "on": true
+    },
+    {
+     "label": "Auto-claim with credit",
+     "on": true
+    },
+    {
+     "label": "30-minute claim window",
+     "on": true
+    },
+    {
+     "label": "Front-desk override",
+     "on": true
+    }
+   ],
+   "story": "As a student I join the waitlist for a full 12:30 class, get a WhatsApp when someone cancels, and claim the spot from the notification.",
+   "api": [
+    "POST /waitlist/:classId",
+    "DELETE /waitlist/:classId",
+    "POST /waitlist/:id/claim",
+    "GET /me/waitlists",
+    "PATCH /me/waitlist-prefs"
+   ],
+   "layerTree": "Waitlist\n├ StatusCard\n│ ├ PositionRing (3 of 7)\n│ └ RuleExplainer\n├ ReleasedBanner (conditional)\n│ ├ ClaimCountdown 30:00\n│ └ ClaimButton\n├ AutoClaimToggle\n├ LeaveWaitlistRow\n└ PolicyNote",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-20",
+   "notes": [
+    "A cancellation on C-08b promotes the first waiting person to offered with a 30-minute claim_until."
+   ]
+  }
+ },
+ {
+  "path": "/app/membership",
+  "code": "C-22",
+  "surface": "customer",
+  "status": "built",
+  "spec": {
+   "code": "C-22",
+   "name": {
+    "es": "Gestionar membresía",
+    "en": "Manage membership"
+   },
+   "purpose": {
+    "es": "Pausar, cambiar o cancelar la membresía y ver los ciclos de facturación.",
+    "en": "Give members the three controls they actually need — freeze, change, cancel — without a phone call, while keeping the studio's notice periods intact."
+   },
+   "layout": [
+    "CurrentPlanCard",
+    "PauseRow → date picker (≤ 30 days)",
+    "ChangePlanRow → C-06",
+    "BillingHistoryRow → C-11",
+    "CancelRow (destructive) → reason sheet"
+   ],
+   "data": [
+    "memberships",
+    "plans",
+    "payments",
+    "bookings"
+   ],
+   "roles": [
+    "customer",
+    "front_desk",
+    "finance",
+    "super_admin"
+   ],
+   "logic": [
+    "Pause up to 30 days (policy.pauseMaxDays); renewal shifts by the paused days.",
+    "Members are notified 3 days before a charge (policy.chargeNoticeDays).",
+    "Cancellation keeps access until the paid period ends; undo until then."
+   ],
+   "integrations": [
+    "WhatsApp",
+    "Wompi",
+    "Email",
+    "DIAN e-invoicing"
+   ],
+   "states": [
+    "Frozen: banner with resume date",
+    "Pending cancellation: end date + undo",
+    "No membership: plan picker instead",
+    "Payment failed: fix-payment banner"
+   ],
+   "toggles": [
+    {
+     "label": "Self-service freeze",
+     "on": true
+    },
+    {
+     "label": "Self-service cancellation",
+     "on": true
+    },
+    {
+     "label": "Immediate prorated upgrade",
+     "on": false
+    },
+    {
+     "label": "Ask for cancellation reason",
+     "on": true
+    }
+   ],
+   "story": "As a member travelling for a month I freeze my membership instead of cancelling it.",
+   "api": [
+    "GET /me/membership",
+    "POST /me/membership/freeze",
+    "PATCH /me/membership/plan",
+    "DELETE /me/membership",
+    "GET /me/invoices"
+   ],
+   "layerTree": "ManageMembership\n├ CurrentPlanCard\n│ ├ Plan + price\n│ ├ RenewalDate\n│ └ UsageThisMonth\n├ FreezeRow → date picker\n├ ChangePlanRow → C-06\n├ BillingHistoryRow → C-11\n└ CancelRow (destructive) → reason sheet",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-22",
+   "notes": []
+  }
+ },
+ {
+  "path": "/app/events",
+  "code": "C-23",
+  "surface": "customer",
+  "status": "built",
+  "spec": {
+   "code": "C-23",
+   "name": {
+    "es": "Detalle de evento y RSVP",
+    "en": "Event detail & RSVP"
+   },
+   "purpose": {
+    "es": "Detalle de un evento con RSVP, precio y pases de invitado.",
+    "en": "Sell the things that are not regular classes — sound baths, workshops, retreats — with their own pricing, capacity and guest rules."
+   },
+   "layout": [
+    "HeroImage (placeholder)",
+    "WhenWhere",
+    "TitleBlock + hosts",
+    "Body",
+    "PriceRow (public / member)",
+    "CapacityMeter",
+    "StickyCTA · Reserve",
+    "BringAFriendRow → C-16",
+    "AddToCalendar"
+   ],
+   "data": [
+    "teachers",
+    "memberships"
+   ],
+   "roles": [
+    "public",
+    "customer",
+    "coordinator",
+    "front_desk"
+   ],
+   "logic": [
+    "Events price separately from classes and never consume class credits unless the coordinator allows it.",
+    "Member price applies automatically to active members.",
+    "Capacity is per event, independent of room capacity.",
+    "Cancellation window is per event and can differ from the class policy.",
+    "Deep-linkable for WhatsApp and Instagram."
+   ],
+   "integrations": [
+    "WhatsApp",
+    "Wompi",
+    "Supabase Realtime"
+   ],
+   "states": [
+    "Loading: hero shimmer",
+    "Sold out: waitlist offer",
+    "Past: read-only with gallery",
+    "Cancelled: banner + refund note"
+   ],
+   "toggles": [
+    {
+     "label": "Events",
+     "on": true
+    },
+    {
+     "label": "Member pricing",
+     "on": true
+    },
+    {
+     "label": "Credits usable on events",
+     "on": false
+    },
+    {
+     "label": "Guest passes on events",
+     "on": true
+    }
+   ],
+   "story": "As a member I reserve a spot at the full-moon sound bath at the member price and bring a friend.",
+   "api": [
+    "GET /events/:id",
+    "POST /events/:id/rsvp",
+    "DELETE /rsvps/:id",
+    "GET /events?upcoming=true"
+   ],
+   "layerTree": "EventDetail\n├ HeroImage (placeholder)\n├ WhenWhere\n├ TitleBlock + hosts\n├ Body\n├ PriceRow (public / member)\n├ CapacityMeter\n├ StickyCTA · Reserve\n├ BringAFriendRow → C-16\n└ AddToCalendar",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-23",
+   "notes": [
+    "No events table yet: two demo events live in content.ts and RSVPs are kept locally (shared-change request). Public price reads pricing single; members included."
+   ]
+  }
+ },
+ {
+  "path": "/app/events/:id",
+  "code": "C-23",
+  "surface": "customer",
+  "status": "built",
+  "spec": {
+   "code": "C-23",
+   "name": {
+    "es": "Detalle de evento y RSVP",
+    "en": "Event detail & RSVP"
+   },
+   "purpose": {
+    "es": "Detalle de un evento con RSVP, precio y pases de invitado.",
+    "en": "Sell the things that are not regular classes — sound baths, workshops, retreats — with their own pricing, capacity and guest rules."
+   },
+   "layout": [
+    "HeroImage (placeholder)",
+    "WhenWhere",
+    "TitleBlock + hosts",
+    "Body",
+    "PriceRow (public / member)",
+    "CapacityMeter",
+    "StickyCTA · Reserve",
+    "BringAFriendRow → C-16",
+    "AddToCalendar"
+   ],
+   "data": [
+    "teachers",
+    "memberships"
+   ],
+   "roles": [
+    "public",
+    "customer",
+    "coordinator",
+    "front_desk"
+   ],
+   "logic": [
+    "Events price separately from classes and never consume class credits unless the coordinator allows it.",
+    "Member price applies automatically to active members.",
+    "Capacity is per event, independent of room capacity.",
+    "Cancellation window is per event and can differ from the class policy.",
+    "Deep-linkable for WhatsApp and Instagram."
+   ],
+   "integrations": [
+    "WhatsApp",
+    "Wompi",
+    "Supabase Realtime"
+   ],
+   "states": [
+    "Loading: hero shimmer",
+    "Sold out: waitlist offer",
+    "Past: read-only with gallery",
+    "Cancelled: banner + refund note"
+   ],
+   "toggles": [
+    {
+     "label": "Events",
+     "on": true
+    },
+    {
+     "label": "Member pricing",
+     "on": true
+    },
+    {
+     "label": "Credits usable on events",
+     "on": false
+    },
+    {
+     "label": "Guest passes on events",
+     "on": true
+    }
+   ],
+   "story": "As a member I reserve a spot at the full-moon sound bath at the member price and bring a friend.",
+   "api": [
+    "GET /events/:id",
+    "POST /events/:id/rsvp",
+    "DELETE /rsvps/:id",
+    "GET /events?upcoming=true"
+   ],
+   "layerTree": "EventDetail\n├ HeroImage (placeholder)\n├ WhenWhere\n├ TitleBlock + hosts\n├ Body\n├ PriceRow (public / member)\n├ CapacityMeter\n├ StickyCTA · Reserve\n├ BringAFriendRow → C-16\n└ AddToCalendar",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-23",
+   "notes": [
+    "No events table yet: two demo events live in content.ts and RSVPs are kept locally (shared-change request). Public price reads pricing single; members included."
+   ]
+  }
+ },
+ {
+  "path": "/app/notifications",
+  "code": "C-24",
+  "surface": "customer",
+  "status": "built",
+  "spec": {
+   "code": "C-24",
+   "name": {
+    "es": "Bandeja de notificaciones",
+    "en": "Notifications inbox"
+   },
+   "purpose": {
+    "es": "Bandeja de notificaciones con enlaces profundos y preferencias por canal.",
+    "en": "One place for everything the studio has sent, so a missed push or a WhatsApp scrolled past is never a lost class."
+   },
+   "layout": [
+    "Header + MarkAllRead",
+    "TodayGroup → NotificationRow",
+    "EarlierGroup",
+    "EmptyState",
+    "SettingsLink → C-19"
+   ],
+   "data": [
+    "message_log",
+    "waitlist",
+    "bookings",
+    "class_sessions"
+   ],
+   "roles": [
+    "customer",
+    "teacher",
+    "super_admin",
+    "admin",
+    "coordinator",
+    "front_desk",
+    "finance",
+    "maintenance"
+   ],
+   "logic": [
+    "Every notification mirrors what went out on push, email or WhatsApp, with the same deep link.",
+    "Actionable items keep their action inline until they expire (claim a spot, rate a class, fix a payment).",
+    "Read state is per account, not per device.",
+    "Retained 90 days, then archived."
+   ],
+   "integrations": [
+    "WhatsApp",
+    "Wompi",
+    "Email",
+    "Push notifications"
+   ],
+   "states": [
+    "Empty: 'nothing yet'",
+    "Unread: dot + heavier weight",
+    "Expired action: row dims, action removed",
+    "Offline: cached list"
+   ],
+   "toggles": [
+    {
+     "label": "Notifications inbox",
+     "on": true
+    },
+    {
+     "label": "Inline actions",
+     "on": true
+    },
+    {
+     "label": "90-day retention",
+     "on": true
+    }
+   ],
+   "story": "As a student I missed the push about a released spot and find it in the inbox while it is still claimable.",
+   "api": [
+    "GET /me/notifications",
+    "POST /me/notifications/read",
+    "POST /me/notifications/read-all",
+    "GET /me/notification-prefs"
+   ],
+   "layerTree": "Inbox\n├ Header + MarkAllRead\n├ TodayGroup\n│ └ NotificationRow (icon, title, time, unread dot)\n├ EarlierGroup\n├ EmptyState\n└ SettingsLink → C-19",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-24",
+   "notes": [
+    "Derived inbox: message_log rows + waitlist offers + upcoming bookings. Read state per user in localStorage until a notifications table exists."
+   ]
+  }
+ },
+ {
+  "path": "/app/more",
+  "code": "C-25",
+  "surface": "customer",
+  "status": "built",
+  "spec": {
+   "code": "C-25",
+   "name": {
+    "es": "Más · perfil, reglas, contacto",
+    "en": "More · profile, rules, contact"
+   },
+   "purpose": {
+    "es": "El menú Más: perfil, reglas, horarios, contacto y ajustes.",
+    "en": "A fifth destination was one too many for a 340px bar, so profile, club rules and contacting the studio live one level down. Contact moves here from the floating bubble, where it competed with the primary action on every screen."
+   },
+   "layout": [
+    "IdentityCard → C-19",
+    "PrimaryGroup",
+    "SecondaryGroup",
+    "SignOut"
+   ],
+   "data": [
+    "profiles",
+    "memberships",
+    "plans",
+    "credits"
+   ],
+   "roles": [
+    "customer",
+    "teacher"
+   ],
+   "logic": [
+    "The dock carries four destinations: Home, Classes, History, More — every remaining screen is reachable from here in one tap.",
+    "Contact is outbound only — the rows open WhatsApp or the mail client. The app carries no inbox of its own; the studio answers where it already works.",
+    "The identity card doubles as the entry to profile, so the row above is not the only path.",
+    "Sign out is last, never adjacent to a destructive-looking row."
+   ],
+   "integrations": [
+    "WhatsApp",
+    "Email",
+    "Supabase Auth",
+    "Supabase Realtime",
+    "Push notifications"
+   ],
+   "states": [
+    "Loading: identity skeleton",
+    "No membership: card shows the plan prompt",
+    "Outside hours: the WhatsApp row states the reply window"
+   ],
+   "toggles": [
+    {
+     "label": "WhatsApp row",
+     "on": true
+    },
+    {
+     "label": "Email row",
+     "on": true
+    },
+    {
+     "label": "Gift card row",
+     "on": true
+    },
+    {
+     "label": "Invite row",
+     "on": true
+    }
+   ],
+   "story": "As a student I tap More and message the front desk, or read the hot-room rules, without hunting.",
+   "api": [
+    "GET /me",
+    "GET /studio/hours",
+    "GET /me/credits"
+   ],
+   "layerTree": "MoreSheet\n├ IdentityCard → C-19\n├ PrimaryGroup\n│ ├ My Profile → C-19\n│ ├ Club Rules → C-13\n│ ├ WhatsApp the studio (outbound)\n│ └ Email the studio (outbound)\n├ SecondaryGroup\n│ ├ Invite a guest → C-16\n│ ├ Gift card → C-17\n│ └ Settings → C-19\n├ SignOut\n└ BottomNav (More active)",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-25",
+   "notes": []
+  }
+ },
+ {
+  "path": "/app/intention",
+  "code": "A-05",
+  "surface": "customer",
+  "status": "built",
+  "spec": {
+   "code": "A-05",
+   "name": {
+    "es": "Intención del día — ¿Cómo quieres sentirte hoy?",
+    "en": "Intention check — ¿Cómo quieres sentirte hoy?"
+   },
+   "purpose": {
+    "es": "Preguntar cómo quiere sentirse hoy la persona y usar esa intención para ordenar las clases del día.",
+    "en": "The signature moment of the product. One question, four verbs; the choice re-orders the home feed and the recommended classes for the session. The verbs are what the student wants to do, and each resolves to one of the four movement tags the rest of the system already colours by."
+   },
+   "layout": [
+    "Question",
+    "MovementPicker ×4",
+    "Explanation",
+    "SkipLink"
+   ],
+   "data": [
+    "intentions"
+   ],
+   "roles": [
+    "customer",
+    "teacher"
+   ],
+   "logic": [
+    "Shown once per day on first open; skippable.",
+    "Each verb maps to exactly one movement tag — Muévete→Arde, Respira→Fluye, Equilíbrate→Enraíza, Conecta→Libera — so the icon colour here matches the chip colour on every class card.",
+    "Selection tags the session and sorts Today's Classes by matching class_tags.",
+    "Stored as a time series — becomes a mood/practice insight later.",
+    "Copy stays in Spanish in both locales; it is brand voice, not UI text."
+   ],
+   "integrations": [
+    "Supabase Auth"
+   ],
+   "states": [
+    "no intention yet",
+    "already answered today"
+   ],
+   "toggles": [
+    {
+     "label": "Intention check",
+     "on": true
+    },
+    {
+     "label": "Ask once per day",
+     "on": true
+    },
+    {
+     "label": "Use intention in recommendations",
+     "on": true
+    }
+   ],
+   "story": "As a student opening the app I tap Respira and today's list leads with the slower classes.",
+   "api": [
+    "POST /me/intention",
+    "GET /classes?intent=",
+    "GET /me/intentions/history"
+   ],
+   "layerTree": "IntentionCheck\n├ Greeting (first name)\n├ Question (display serif)\n├ Subtitle (italic)\n├ IntentionGrid 2×2\n│ ├ Muévete → arde · hot, vinyasa, cardio\n│ ├ Respira → fluye · restorative, yin, breathwork\n│ ├ Equilíbrate → enraiza · strength, barre, core\n│ └ Conecta → libera · community, workshops, events\n└ SkipLink",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#A-05",
+   "notes": []
+  }
+ },
+ {
+  "path": "/app/state/empty",
+  "code": "E-01",
+  "surface": "customer",
+  "status": "built",
+  "spec": {
+   "code": "E-01",
+   "name": {
+    "es": "Inicio · primera vez (vacío)",
+    "en": "Home · first-time empty state"
+   },
+   "purpose": {
+    "es": "Estado vacío del inicio para una persona nueva: invita a reservar la primera clase.",
+    "en": "The home screen on day one, when there is no booking, no history and no statistics — it has to teach the next step instead of showing empty containers."
+   },
+   "layout": [
+    "Greeting",
+    "EmptyState (illustration, headline, CTA browse today, tour)",
+    "StatsPlaceholder (explanatory, not zeros)",
+    "AnnouncementCard"
+   ],
+   "data": [
+    "bookings",
+    "memberships"
+   ],
+   "roles": [
+    "customer"
+   ],
+   "logic": [
+    "Statistics blocks never render as 0 — they render the sentence that explains when they appear.",
+    "The trial-class offer shows only if the student has not used it and Admin → Features → Free trial is on.",
+    "Announcements still render if active; they are studio news, not personal data.",
+    "Once a first booking exists this screen is replaced by C-01 permanently."
+   ],
+   "integrations": [],
+   "states": [
+    "Empty (this screen)",
+    "Loading: skeleton rows",
+    "Error: retry with cached announcements"
+   ],
+   "toggles": [
+    {
+     "label": "Empty-state tour CTA",
+     "on": true
+    },
+    {
+     "label": "Explain-stats placeholder",
+     "on": true
+    },
+    {
+     "label": "Free trial offer",
+     "on": true
+    }
+   ],
+   "story": "As a brand-new student my home screen tells me to pick a class and offers the tour, not a wall of zeros.",
+   "api": [
+    "GET /me/home?locale=",
+    "GET /classes?date=today",
+    "GET /content/tour"
+   ],
+   "layerTree": "HomeEmpty\n├ Greeting\n├ EmptyState\n│ ├ Illustration slot (placeholder)\n│ ├ Headline + body\n│ ├ PrimaryCTA · browse today\n│ └ SecondaryCTA · studio tour\n├ StatsPlaceholder (explanatory, not zeros)\n└ BottomNav",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#E-01",
+   "notes": [
+    "Demo route /app/state/empty; C-01 shows this block when the person has no bookings at all."
+   ]
+  }
+ },
+ {
+  "path": "/app/state/declined",
+  "code": "E-02",
+  "surface": "customer",
+  "status": "built",
+  "spec": {
+   "code": "E-02",
+   "name": {
+    "es": "Pago rechazado",
+    "en": "Payment declined"
+   },
+   "purpose": {
+    "es": "Pago rechazado: explicar, reintentar, cambiar método o pedir ayuda a recepción.",
+    "en": "A refusal is the highest-risk moment in the funnel: say what happened, confirm nothing was charged, keep the class reserved, and offer a way through."
+   },
+   "layout": [
+    "ErrorBanner (title, body, gateway reason)",
+    "HoldCard · countdown",
+    "AlternateMethods",
+    "ReleaseSpotLink"
+   ],
+   "data": [
+    "payments",
+    "class_sessions"
+   ],
+   "roles": [
+    "customer",
+    "front_desk",
+    "finance"
+   ],
+   "logic": [
+    "Never blame the card; state the gateway reason verbatim where one exists and keep it plain.",
+    "The spot is held 10 minutes from the first attempt; the countdown is visible and honest.",
+    "Three declines on one order switch the primary suggestion to PSE or cash.",
+    "No charge is ever captured on a decline; the order stays pending and the audit trail records every attempt.",
+    "Cash creates a pending order the front desk settles — the same path as C-05."
+   ],
+   "integrations": [
+    "Wompi"
+   ],
+   "states": [
+    "Declined (this screen)",
+    "Retrying: button spinner, methods locked",
+    "Hold expired: spot released, rebook offered",
+    "Recovered: confirmation sheet"
+   ],
+   "toggles": [
+    {
+     "label": "10-minute spot hold",
+     "on": true
+    },
+    {
+     "label": "Show gateway reason",
+     "on": true
+    },
+    {
+     "label": "Cash fallback",
+     "on": true
+    }
+   ],
+   "story": "As a student whose card was declined I switch to Nequi within the hold window and keep my 6pm class.",
+   "api": [
+    "POST /payments/intent",
+    "GET /orders/:id",
+    "POST /orders/:id/method",
+    "DELETE /holds/:id"
+   ],
+   "layerTree": "PaymentDeclined\n├ ErrorBanner\n│ ├ Title + body\n│ └ GatewayReason\n├ HoldCard · 9:00 countdown\n├ AlternateMethods\n│ ├ Other saved methods\n│ └ Cash at front desk\n└ ReleaseSpotLink (destructive)",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#E-02",
+   "notes": [
+    "Demo route /app/state/declined; the real path is C-04 → Wompi declined (dev mode has a \"simulate decline\" switch)."
+   ]
+  }
+ },
+ {
+  "path": "/app/state/cancelled",
+  "code": "E-03",
+  "surface": "customer",
+  "status": "built",
+  "spec": {
+   "code": "E-03",
+   "name": {
+    "es": "Clase cancelada por el estudio",
+    "en": "Class cancelled by the studio"
+   },
+   "purpose": {
+    "es": "El estudio canceló la clase: devolver crédito, ofrecer alternativas y avisar.",
+    "en": "When the studio breaks the promise, the screen should do the recovery work: refund already done, replacement classes ready, no action required to get the credit back."
+   },
+   "layout": [
+    "CancelBanner (reason)",
+    "RefundConfirmation · 1 credit",
+    "AlternativesList → ClassRow",
+    "PrimaryCTA · book a replacement",
+    "ChannelNote"
+   ],
+   "data": [
+    "class_sessions",
+    "bookings",
+    "credits",
+    "modalities",
+    "teachers"
+   ],
+   "roles": [
+    "customer",
+    "coordinator",
+    "front_desk"
+   ],
+   "logic": [
+    "The credit returns automatically before the student opens the app — the screen confirms, it does not ask.",
+    "Alternatives are same-day and matched on class_tags, then nearest time.",
+    "A studio cancellation never counts against a cancellation allowance.",
+    "Fires the class-cancelled WhatsApp template immediately, ignoring quiet hours.",
+    "If nothing suitable is available the screen offers the waitlist for the next occurrence."
+   ],
+   "integrations": [
+    "WhatsApp",
+    "Wompi",
+    "Email",
+    "Supabase Realtime",
+    "Push notifications"
+   ],
+   "states": [
+    "Cancelled with alternatives (this screen)",
+    "Cancelled, none available: waitlist offer",
+    "Already rebooked: confirmation",
+    "Past class: read-only"
+   ],
+   "toggles": [
+    {
+     "label": "Suggest alternatives",
+     "on": true
+    },
+    {
+     "label": "Automatic credit return",
+     "on": true
+    },
+    {
+     "label": "Waitlist fallback",
+     "on": true
+    }
+   ],
+   "story": "As a student whose 7am was cancelled I book the 9:30 instead in two taps, without contacting anyone.",
+   "api": [
+    "GET /bookings/:id",
+    "GET /classes/alternatives?bookingId=",
+    "POST /bookings",
+    "GET /me/credits"
+   ],
+   "layerTree": "StudioCancellation\n├ CancelBanner (reason)\n├ RefundConfirmation · 1 credit\n├ AlternativesList\n│ └ ClassRow ×2 (same day, same tag)\n├ PrimaryCTA · book a replacement\n└ ChannelNote (WhatsApp + email)",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#E-03",
+   "notes": [
+    "Demo route /app/state/cancelled picks a cancelled session from the seed; C-08 renders the same block when the booked session is cancelled."
+   ]
+  }
+ },
+ {
+  "path": "/auth",
+  "code": "A-01",
+  "surface": "public",
+  "status": "built",
+  "spec": {
+   "code": "A-01",
+   "name": {
+    "es": "Splash / carga que respira",
+    "en": "Splash / breathing load"
+   },
+   "purpose": {
+    "es": "Marcar el registro emocional antes de cualquier UI: tres círculos respiran alrededor del logo mientras se restaura la sesión, se cargan los feature flags y se detecta el idioma.",
+    "en": "Set the emotional register before any UI: three concentric circles breathe around the wordmark at 7s, roughly a calm respiratory cycle. Covers session restore, feature-flag fetch and locale detection."
+   },
+   "layout": [
+    "BreathingRings + Wordmark",
+    "Tagline",
+    "LoadState",
+    "ContinueButton"
+   ],
+   "data": [
+    "users",
+    "feature_flags"
+   ],
+   "roles": [
+    "public",
+    "super_admin",
+    "admin",
+    "coordinator",
+    "front_desk",
+    "finance",
+    "teacher",
+    "maintenance",
+    "customer"
+   ],
+   "logic": [
+    "Breath cycle is 7 s (--dur-breath).",
+    "Auto-continues to /auth/sign-in after 2.8 s; a button skips the wait."
+   ],
+   "integrations": [
+    "Supabase Auth"
+   ],
+   "toggles": [
+    {
+     "label": "Breathing animation",
+     "on": true
+    },
+    {
+     "label": "Tagline line",
+     "on": true
+    },
+    {
+     "label": "Version stamp",
+     "on": false
+    }
+   ],
+   "layerTree": "Splash\n├ Background / sandstone\n├ BreathingRings\n│ ├ Ring 300 (0s)\n│ ├ Ring 220 (0.6s)\n│ └ Ring 150 (1.2s)\n├ Logo / hoy lockup\n├ Tagline\n└ LoadState\n  ├ Spinner\n  └ Label",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#A-01",
+   "states": [
+    "breathing",
+    "reduced motion"
+   ],
+   "notes": [
+    "Session restore is the demo session in localStorage; Supabase Auth later."
+   ]
+  }
+ },
+ {
+  "path": "/auth/sign-in",
+  "code": "A-02",
+  "surface": "public",
+  "status": "built",
+  "spec": {
+   "code": "A-02",
+   "name": {
+    "es": "Iniciar sesión",
+    "en": "Sign in"
+   },
+   "purpose": {
+    "es": "Que un alumno que vuelve entre en un toque: biometría en dispositivo conocido, luego Apple o Google, luego correo y contraseña.",
+    "en": "Get a returning student into the app in one tap where possible: biometric first on a known device, then Apple or Google, then email and password."
+   },
+   "layout": [
+    "Logo block",
+    "DemoUserPicker",
+    "CredentialCard (email, password)",
+    "Divider / OR",
+    "ProviderStack (Apple, Google, Biometric — disabled)",
+    "CreateAccountLink"
+   ],
+   "data": [
+    "users",
+    "user_roles",
+    "audit_log"
+   ],
+   "roles": [
+    "public"
+   ],
+   "logic": [
+    "Apple button shows on iOS, Google on Android; both on web.",
+    "Biometric appears only if a token is stored for this device.",
+    "5 failed attempts → 15 minute lockout and an email alert.",
+    "Staff accounts land on their role home, not the student home."
+   ],
+   "integrations": [
+    "Email",
+    "Supabase Auth"
+   ],
+   "toggles": [
+    {
+     "label": "Apple sign-in",
+     "on": true
+    },
+    {
+     "label": "Google sign-in",
+     "on": true
+    },
+    {
+     "label": "Biometric unlock",
+     "on": true
+    },
+    {
+     "label": "Magic-link sign-in",
+     "on": false
+    }
+   ],
+   "layerTree": "SignIn\n├ StatusBar\n├ Logo block\n├ CredentialCard\n│ ├ Email field\n│ ├ Password field\n│ ├ PrimaryButton\n│ └ ForgotLink\n├ Divider / OR\n├ ProviderStack\n│ ├ Apple (iOS only)\n│ ├ Google (Android only)\n│ └ Biometric (if enrolled)\n└ CreateAccountLink",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#A-02",
+   "states": [
+    "default",
+    "wrong credentials: attempts left",
+    "locked → E-04"
+   ],
+   "notes": [
+    "Demo mode: any demo user email signs in; 5 failed attempts route to /auth/locked (E-04).",
+    "Apple / Google / biometric buttons are disabled until Supabase Auth."
+   ]
+  }
+ },
+ {
+  "path": "/auth/sign-up",
+  "code": "A-03",
+  "surface": "public",
+  "status": "built",
+  "spec": {
+   "code": "A-03",
+   "name": {
+    "es": "Crear cuenta",
+    "en": "Create account"
+   },
+   "purpose": {
+    "es": "Crear la cuenta con lo mínimo necesario y recoger consentimientos, contacto de emergencia y verificación de WhatsApp.",
+    "en": "Collect the minimum the studio actually needs, with WhatsApp as a first-class channel because that is where reminders and cancellations go."
+   },
+   "layout": [
+    "ProgressDots",
+    "Heading + sub",
+    "FormStack (name, email, WhatsApp +57, password, birthday, emergency contact, photo)",
+    "ConsentRow → /site/legal",
+    "PrimaryButton"
+   ],
+   "data": [
+    "users",
+    "profiles",
+    "user_roles",
+    "consents",
+    "legal_documents"
+   ],
+   "roles": [
+    "public"
+   ],
+   "logic": [
+    "Email and WhatsApp must be unique; duplicates offer sign-in instead.",
+    "Emergency contact is collected here so it exists from the first booking, not only once a waiver is signed.",
+    "Password min 8 chars, strength meter, no composition rules.",
+    "Consent checkbox is required and stored with timestamp, IP and policy version.",
+    "Birthday optional — feeds the birthday WhatsApp/email automation.",
+    "Profile photo is optional and offered here, either from the camera or the library, so the front desk can recognise a student on arrival; it can be added later in Settings.",
+    "Colombia default country code +57."
+   ],
+   "integrations": [
+    "WhatsApp",
+    "Email",
+    "Supabase Auth"
+   ],
+   "toggles": [
+    {
+     "label": "WhatsApp field required",
+     "on": true
+    },
+    {
+     "label": "Birthday field",
+     "on": true
+    },
+    {
+     "label": "Emergency contact at sign-up",
+     "on": true
+    },
+    {
+     "label": "Profile photo at sign-up",
+     "on": true
+    },
+    {
+     "label": "Marketing opt-in row",
+     "on": false
+    }
+   ],
+   "layerTree": "SignUp\n├ ProgressDots (1 of 2)\n├ Heading + sub\n├ FormStack\n│ ├ First / Last row\n│ ├ Email\n│ ├ WhatsApp (+57 default)\n│ ├ Password + strength\n│ ├ Birthday (optional)\n│ ├ EmergencyContact · name + phone\n│ └ PhotoPicker · take or choose (optional)\n├ ConsentRow → Terms, Privacy\n└ PrimaryButton",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#A-03",
+   "states": [
+    "default",
+    "validation errors",
+    "duplicate email → sign-in offer",
+    "created"
+   ],
+   "notes": [
+    "Inserts users + profiles + user_roles + consents rows via useData(), then SessionProvider signs in as the created row (any users id is accepted). The account lives until the mock reseeds on the next day."
+   ]
+  }
+ },
+ {
+  "path": "/auth/recover",
+  "code": "C-21",
+  "surface": "public",
+  "status": "built",
+  "spec": {
+   "code": "C-21",
+   "name": {
+    "es": "Recuperar contraseña (OTP por WhatsApp)",
+    "en": "Password recovery (WhatsApp OTP)"
+   },
+   "purpose": {
+    "es": "Recuperar acceso con un código por WhatsApp, con límites de intentos.",
+    "en": "Get a locked-out student back in through the channel they actually verified: a six-digit WhatsApp code, with email as the fallback."
+   },
+   "layout": [
+    "Step1 · Identify (WhatsApp / email)",
+    "Step2 · Verify (OtpInput ×6, ResendTimer)",
+    "Step3 · New password",
+    "BackToSignIn"
+   ],
+   "data": [
+    "users",
+    "wa_templates"
+   ],
+   "roles": [
+    "public"
+   ],
+   "logic": [
+    "Code is 6 digits, valid 10 minutes, single use.",
+    "Three wrong codes invalidate it and force a resend; five resends in an hour lock recovery for 30 minutes.",
+    "Resend is blocked for 45 seconds and the timer survives a screen re-entry.",
+    "A successful reset signs out every other device and writes to the audit log.",
+    "Never reveal whether an account exists — the confirmation copy is identical either way."
+   ],
+   "integrations": [
+    "WhatsApp",
+    "Email",
+    "Supabase Auth"
+   ],
+   "states": [
+    "Sending: button spinner",
+    "Wrong code: cells shake, attempts left shown",
+    "Expired: 'code expired' + resend",
+    "Rate limited: wait time stated"
+   ],
+   "toggles": [
+    {
+     "label": "WhatsApp OTP",
+     "on": true
+    },
+    {
+     "label": "Email fallback",
+     "on": true
+    },
+    {
+     "label": "Sign out other devices on reset",
+     "on": true
+    }
+   ],
+   "story": "As a student who forgot my password I receive a code on WhatsApp and set a new password in under a minute.",
+   "api": [
+    "POST /auth/recover",
+    "POST /auth/otp/verify",
+    "POST /auth/password",
+    "POST /auth/otp/resend"
+   ],
+   "layerTree": "PasswordRecovery\n├ Step1 · Identify\n│ ├ WhatsApp / email field\n│ └ SendCodeButton\n├ Step2 · Verify\n│ ├ OtpInput ×6\n│ ├ ResendTimer 0:45\n│ └ ChannelSwitch\n├ Step3 · New password\n│ ├ PasswordField + strength\n│ └ SaveButton\n└ BackToSignIn",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-21",
+   "notes": [
+    "OTP is simulated: the demo code is shown on screen; 3 wrong codes force a resend."
+   ]
+  }
+ },
+ {
+  "path": "/auth/locked",
+  "code": "E-04",
+  "surface": "public",
+  "status": "built",
+  "spec": {
+   "code": "E-04",
+   "name": {
+    "es": "Acceso bloqueado",
+    "en": "Sign-in locked"
+   },
+   "purpose": {
+    "es": "Acceso bloqueado tras intentos fallidos: espera, OTP o contacto con el estudio.",
+    "en": "A lockout is a security measure that must not become a dead end: state the pause, count it down, and route to recovery, which is not rate-limited."
+   },
+   "layout": [
+    "LockNotice (title, reason, countdown)",
+    "PrimaryCTA · recover password → C-21",
+    "SecondaryCTA · WhatsApp the studio",
+    "SecurityNote"
+   ],
+   "data": [
+    "users"
+   ],
+   "roles": [
+    "public"
+   ],
+   "logic": [
+    "Five failed attempts pause sign-in for 15 minutes and send the account holder an email alert.",
+    "Password recovery stays available during a lockout — it uses a different rate limit.",
+    "The countdown is server-authoritative; reinstalling the app does not reset it.",
+    "Never state whether the email exists; the copy is identical for unknown accounts.",
+    "Repeated lockouts within 24h escalate to a staff review flag."
+   ],
+   "integrations": [
+    "WhatsApp",
+    "Email",
+    "Supabase Auth"
+   ],
+   "states": [
+    "Locked (this screen)",
+    "Countdown finished: form re-enabled",
+    "Escalated: contact-support copy"
+   ],
+   "toggles": [
+    {
+     "label": "15-minute lockout",
+     "on": true
+    },
+    {
+     "label": "Email alert on lockout",
+     "on": true
+    },
+    {
+     "label": "WhatsApp contact link",
+     "on": true
+    }
+   ],
+   "story": "As a student locked out after five wrong passwords I recover by WhatsApp code instead of waiting.",
+   "api": [
+    "POST /auth/login",
+    "GET /auth/lockout",
+    "POST /auth/recover"
+   ],
+   "layerTree": "SignInLocked\n├ LockNotice\n│ ├ Title + reason\n│ └ Countdown 14:38\n├ PrimaryCTA · recover password → C-19\n├ SecondaryCTA · WhatsApp the studio (outbound)\n└ SecurityNote",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#E-04",
+   "notes": [
+    "Reached from A-02 after 5 failed attempts; the 15-minute countdown is local in the demo."
+   ]
+  }
+ },
+ {
+  "path": "/dev",
+  "code": "D-03",
+  "surface": "dev",
+  "status": "built",
+  "spec": {
+   "code": "D-03",
+   "name": {
+    "es": "Índice de specs",
+    "en": "Specs index"
+   },
+   "purpose": {
+    "es": "Lista todas las PageSpec registradas con badge de completitud, ruta y estado (construida / stub / sin ruta).",
+    "en": "Lists every registered PageSpec with completeness badge, route and status (built / stub / no route)."
+   },
+   "layout": [
+    "PageHead",
+    "FilterChips",
+    "SpecTable"
+   ],
+   "data": [
+    "components",
+    "page_layouts"
+   ],
+   "roles": [
+    "super_admin"
+   ],
+   "logic": [
+    "Completeness = 7 checks (purpose, layout, data, roles, logic, integrations, states).",
+    "A route is a stub when its element is PageStub."
+   ],
+   "integrations": [],
+   "states": [
+    "default",
+    "filtered by family"
+   ]
+  }
+ },
+ {
+  "path": "/dev/tokens",
+  "code": "D-01",
+  "surface": "dev",
+  "status": "built",
+  "spec": {
+   "code": "D-01",
+   "name": {
+    "es": "Materiales, tokens y fisicidad",
+    "en": "Materials, tokens & physicality"
+   },
+   "purpose": {
+    "es": "Los tokens de diseño: color, tipografía, espaciado, radios, sombras y movimiento.",
+    "en": "The material layer of the system: textures, surfaces, elevation and corner radii, with a switch between the styled build and the functional wireframe."
+   },
+   "layout": [
+    "TexturePalette (sandstone, warm stone, clay, linen, travertine)",
+    "SurfaceScale (card, elevated, pressed, soft)",
+    "AccentSwatches (sage, terracotta, ochre, deep brown)",
+    "ShadowScale ×3",
+    "RadiusScale 8/16/24/32",
+    "TypeScale (Playfair / Jost / Quicksand)",
+    "ThemeMatrix (light / dark × styled / wireframe)"
+   ],
+   "data": [
+    "design_tokens",
+    "materials",
+    "textures",
+    "shadow_scale",
+    "radius_scale",
+    "type_scale",
+    "themes"
+   ],
+   "roles": [
+    "super_admin"
+   ],
+   "logic": [
+    "Physicality comes from three layers, always together: an inset top highlight, a tight contact shadow, and a wide soft shadow.",
+    "Textures are fills, not images per component — one texture token per surface role.",
+    "Wireframe mode strips texture, colour and shadow but keeps layout and hierarchy.",
+    "Dark mode re-maps surfaces, never inverts the accents.",
+    "Minimum contrast 4.5:1 for body text on any material."
+   ],
+   "integrations": [
+    "Supabase Auth"
+   ],
+   "states": [
+    "Styled × light",
+    "Styled × dark",
+    "Wireframe × light",
+    "Wireframe × dark"
+   ],
+   "toggles": [
+    {
+     "label": "Textures",
+     "on": true
+    },
+    {
+     "label": "Physical shadows",
+     "on": true
+    },
+    {
+     "label": "Dark theme",
+     "on": true
+    },
+    {
+     "label": "Wireframe mode",
+     "on": true
+    }
+   ],
+   "story": "As a designer I fill a card with Warm Stone and set Medium Elevation, and every instance updates.",
+   "api": [
+    "GET /design/tokens",
+    "GET /design/tokens/:theme"
+   ],
+   "layerTree": "MaterialsPage\n├ TexturePalette (sandstone, warm stone, clay, linen, travertine)\n├ SurfaceScale (card, elevated, pressed, soft)\n├ AccentSwatches (sage, terracotta, ochre, deep brown)\n├ ShadowScale ×3\n├ RadiusScale 8/16/24/32\n├ TypeScale (Playfair / Jost / Quicksand)\n└ ThemeMatrix (light / dark × styled / wireframe)",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#D-01"
+  }
+ },
+ {
+  "path": "/dev/components",
+  "code": "D-02",
+  "surface": "dev",
+  "status": "built",
+  "spec": {
+   "code": "D-02",
+   "name": {
+    "es": "Biblioteca de componentes — atómica",
+    "en": "Component library — atomic"
+   },
+   "purpose": {
+    "es": "La biblioteca viva de componentes por nivel atómico, con estados y ejemplos.",
+    "en": "Every component in the product, organised as atoms, molecules, organisms, templates and pages, so a developer can build a screen without inventing anything."
+   },
+   "layout": [
+    "Atoms (button, chip, input, toggle, badge, avatar, icon, divider)",
+    "Molecules (field+label, filter chip row, capacity meter, countdown, stat, price row)",
+    "Organisms (class row, class card, teacher card, roster row, plan card, nav bar, top bar, spec panel)",
+    "Templates (phone screen, desktop admin, legal doc, email)",
+    "Pages (the 30 screens in this canvas)"
+   ],
+   "data": [
+    "components",
+    "variants",
+    "props",
+    "usage_examples",
+    "a11y_notes"
+   ],
+   "roles": [
+    "super_admin"
+   ],
+   "logic": [
+    "RULE: the library is a living inventory. Any new element, variant or state introduced anywhere in the system is added here in the same turn, under its atomic tier, with its states — and retired components are removed and noted in the changelog. No component may exist in a screen without a library entry, and no entry may exist without a screen that uses it.",
+    "Atoms carry no business logic and no layout margin — spacing belongs to the parent.",
+    "Every component documents its states: default, hover, active, focus, disabled, loading, empty, error.",
+    "Touch targets never below 44px; focus rings visible in both themes.",
+    "Naming matches the code: PascalCase components, kebab-case tokens."
+   ],
+   "integrations": [
+    "Email",
+    "Supabase Auth",
+    "Supabase Realtime"
+   ],
+   "states": [
+    "Default / hover / active / focus / disabled / loading / empty / error"
+   ],
+   "toggles": [
+    {
+     "label": "Show code snippets",
+     "on": false
+    },
+    {
+     "label": "Show accessibility notes",
+     "on": true
+    }
+   ],
+   "story": "As a developer I need the class row: I find it under organisms with its states and props.",
+   "api": [
+    "GET /design/components",
+    "GET /design/components/:name"
+   ],
+   "layerTree": "ComponentLibrary\n├ Atoms (button, chip, input, toggle, badge, avatar, icon, divider)\n├ Molecules (field+label, filter chip row, capacity meter, countdown, stat, price row)\n├ Organisms (class row, class card, teacher card, roster row, plan card, nav bar, top bar, spec panel)\n├ Templates (phone screen, desktop admin, legal doc, email)\n└ Pages (the 30 screens in this canvas)",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#D-02"
+  }
+ },
+ {
+  "path": "/dev/specs",
+  "code": "D-03",
+  "surface": "dev",
+  "status": "built",
+  "spec": {
+   "code": "D-03",
+   "name": {
+    "es": "Índice de specs",
+    "en": "Specs index"
+   },
+   "purpose": {
+    "es": "Lista todas las PageSpec registradas con badge de completitud, ruta y estado (construida / stub / sin ruta).",
+    "en": "Lists every registered PageSpec with completeness badge, route and status (built / stub / no route)."
+   },
+   "layout": [
+    "PageHead",
+    "FilterChips",
+    "SpecTable"
+   ],
+   "data": [
+    "components",
+    "page_layouts"
+   ],
+   "roles": [
+    "super_admin"
+   ],
+   "logic": [
+    "Completeness = 7 checks (purpose, layout, data, roles, logic, integrations, states).",
+    "A route is a stub when its element is PageStub."
+   ],
+   "integrations": [],
+   "states": [
+    "default",
+    "filtered by family"
+   ]
+  }
+ },
+ {
+  "path": "/dev/layout",
+  "code": "D-04",
+  "surface": "dev",
+  "status": "built",
+  "spec": {
+   "code": "D-04",
+   "name": {
+    "es": "Editor de layout",
+    "en": "Layout editor"
+   },
+   "purpose": {
+    "es": "Reordenar y ocultar las secciones de una página con drag-and-drop; persiste en page_layouts y las páginas lo leen con useLayout(spec).",
+    "en": "Reorder and hide a page’s sections with drag-and-drop; persists to page_layouts and pages read it with useLayout(spec)."
+   },
+   "layout": [
+    "PagePicker",
+    "SortableList (dnd-kit)",
+    "Toolbar (reset, preview)"
+   ],
+   "data": [
+    "page_layouts"
+   ],
+   "roles": [
+    "super_admin"
+   ],
+   "logic": [
+    "Stored order wins; new spec sections append; removed ones drop.",
+    "Hidden sections stay in order but are skipped by the page."
+   ],
+   "integrations": [],
+   "states": [
+    "default (spec order)",
+    "custom order saved",
+    "page not wired"
+   ]
+  }
+ },
+ {
+  "path": "/dev/layout/:pageCode",
+  "code": "D-04",
+  "surface": "dev",
+  "status": "built",
+  "spec": {
+   "code": "D-04",
+   "name": {
+    "es": "Editor de layout",
+    "en": "Layout editor"
+   },
+   "purpose": {
+    "es": "Reordenar y ocultar las secciones de una página con drag-and-drop; persiste en page_layouts y las páginas lo leen con useLayout(spec).",
+    "en": "Reorder and hide a page’s sections with drag-and-drop; persists to page_layouts and pages read it with useLayout(spec)."
+   },
+   "layout": [
+    "PagePicker",
+    "SortableList (dnd-kit)",
+    "Toolbar (reset, preview)"
+   ],
+   "data": [
+    "page_layouts"
+   ],
+   "roles": [
+    "super_admin"
+   ],
+   "logic": [
+    "Stored order wins; new spec sections append; removed ones drop.",
+    "Hidden sections stay in order but are skipped by the page."
+   ],
+   "integrations": [],
+   "states": [
+    "default (spec order)",
+    "custom order saved",
+    "page not wired"
+   ]
+  }
+ },
+ {
+  "path": "/dev/knowledgebase",
+  "code": "K-01",
+  "surface": "dev",
+  "status": "built",
+  "spec": {
+   "code": "K-01",
+   "name": {
+    "es": "Plan, kanban y changelog",
+    "en": "Plan, kanban & changelog"
+   },
+   "purpose": {
+    "es": "El plan, el kanban y el changelog del sistema.",
+    "en": "The knowledgebase: the build plan, the board tracking it, and the log of every change with the reasoning behind it."
+   },
+   "layout": [
+    "PlanPhases (1–10)",
+    "KanbanBoard (To do / In progress / Blocked / Done)",
+    "Changelog (version, date, change, reason)",
+    "DecisionLog (intent → decision → consequence)",
+    "VersionSwitcher"
+   ],
+   "data": [
+    "plan_phases",
+    "tasks",
+    "task_status",
+    "changelog_entries",
+    "decisions",
+    "prompt_notes",
+    "versions"
+   ],
+   "roles": [
+    "super_admin",
+    "admin"
+   ],
+   "logic": [
+    "Documentation rule: every change is logged with the prompt intent, the decision taken, the files touched and the version.",
+    "Decisions record the alternative rejected, not only the choice made.",
+    "The board is updated in the same turn as the work, never afterwards.",
+    "Versions are switchable so any earlier state stays reviewable."
+   ],
+   "integrations": [
+    "Supabase Auth"
+   ],
+   "states": [
+    "Current version",
+    "Historic version (read-only banner)"
+   ],
+   "toggles": [
+    {
+     "label": "Kanban board",
+     "on": true
+    },
+    {
+     "label": "Decision log",
+     "on": true
+    },
+    {
+     "label": "Version switcher",
+     "on": true
+    }
+   ],
+   "story": "As the studio owner I read why the waiver became a toggleable step rather than a required one.",
+   "api": [
+    "GET /kb/plan",
+    "GET /kb/tasks",
+    "POST /kb/changelog",
+    "GET /kb/versions"
+   ],
+   "layerTree": "Knowledgebase\n├ PlanPhases (1–10)\n├ KanbanBoard (To do / In progress / Blocked / Done)\n├ Changelog (version, date, change, reason)\n├ DecisionLog (intent → decision → consequence)\n└ VersionSwitcher",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#K-01"
+  }
+ },
+ {
+  "path": "/docs",
+  "code": "K-02",
+  "surface": "docs",
+  "status": "built",
+  "spec": {
+   "code": "K-02",
+   "name": {
+    "es": "Documentación",
+    "en": "Documentation"
+   },
+   "purpose": {
+    "es": "Visor en la app de docs/**: reglas, arquitectura, prompts, changelog, kanban, mapa de flujo, modelo de datos, capturas. Los .md son la fuente; no hay CMS.",
+    "en": "In-app viewer for docs/**: rules, architecture, prompts, changelog, kanban, flow map, data model, screenshots. The .md files are the source; no CMS."
+   },
+   "layout": [
+    "DocsSidebar (grouped: Overview, Rules, Architecture, Data model, Flow map, Kanban, Changelog, Prompts, Pages, Screenshots, Manual)",
+    "MarkdownViewer",
+    "KanbanBoard (lanes × columns)",
+    "ChangelogList / ChangelogEntry (newest first, header as definition grid)",
+    "PromptEntry (prompt | response side by side)",
+    "ScreenshotGallery (docs/screenshots/<code>/)"
+   ],
+   "data": [
+    "docs_entries"
+   ],
+   "roles": [
+    "super_admin",
+    "admin",
+    "coordinator",
+    "front_desk",
+    "finance",
+    "teacher",
+    "maintenance",
+    "customer",
+    "public"
+   ],
+   "logic": [
+    "import.meta.glob loads every docs/**/*.md as raw text and every image as a bundled URL at build time (works under base \"./\").",
+    "Relative images resolve to bundled URLs; .md links become routes; manual chapters route to /manual/<slug>.",
+    "Kanban: `## Backlog|Doing|Done|Blocked` are columns; any other `##` is a lane whose `###` are its columns.",
+    "Changelog and prompt lists sort by file number descending (newest first).",
+    "Prompt entries split at `## Response` into two columns."
+   ],
+   "integrations": [],
+   "states": [
+    "default",
+    "doc not found",
+    "index pages (changelog, prompts, screenshots)",
+    "screenshots empty"
+   ]
+  }
+ },
+ {
+  "path": "/",
+  "code": "HUB-01",
+  "surface": "public",
+  "status": "built",
+  "spec": {
+   "code": "HUB-01",
+   "name": {
+    "es": "Hub de pruebas",
+    "en": "Testing hub"
+   },
+   "purpose": {
+    "es": "Primera pantalla para el equipo de pruebas: elegir experiencia (web, cliente, profesor, staff por rol, manual, docs, dev) y controles globales (idioma, tema, modo dev).",
+    "en": "First screen for testers: pick an experience (web, customer, teacher, staff by role, manual, docs, dev) and global controls (language, theme, dev mode)."
+   },
+   "layout": [
+    "HubHeader (wordmark, LangToggle, theme, dev toggle)",
+    "SessionStrip (RoleSwitcher)",
+    "ExperienceGrid (7 cards)",
+    "StaffRolePicker",
+    "DeveloperLinks",
+    "Footer"
+   ],
+   "data": [
+    "users",
+    "user_roles",
+    "feature_flags"
+   ],
+   "roles": [
+    "super_admin",
+    "admin",
+    "coordinator",
+    "front_desk",
+    "finance",
+    "teacher",
+    "maintenance",
+    "customer",
+    "public"
+   ],
+   "logic": [
+    "Picking a staff role calls switchUser(role) before navigating.",
+    "Dev toggle only renders for super_admin.",
+    "Cards link to each surface home; the customer card also resets viewAs."
+   ],
+   "integrations": [],
+   "states": [
+    "default",
+    "dev mode on",
+    "viewing as another role"
+   ],
+   "notes": [
+    "Not part of the canvas; added for private testing. Replace with A-01 splash + real auth later."
+   ]
+  }
+ },
+ {
+  "path": "/no-access",
+  "code": "E-05",
+  "surface": "public",
+  "status": "built",
+  "spec": {
+   "code": "E-05",
+   "name": {
+    "es": "Sin acceso",
+    "en": "No access"
+   },
+   "purpose": {
+    "es": "Página amable cuando el rol actual no puede entrar a una ruta; ofrece volver al hub para cambiar de usuario demo.",
+    "en": "Friendly page when the current role cannot enter a route; offers the hub to switch demo user."
+   },
+   "layout": [
+    "Illustration",
+    "Title",
+    "Body (role name)",
+    "CTA → hub"
+   ],
+   "data": [
+    "user_roles"
+   ],
+   "roles": [
+    "super_admin",
+    "admin",
+    "coordinator",
+    "front_desk",
+    "finance",
+    "teacher",
+    "maintenance",
+    "customer",
+    "public"
+   ],
+   "logic": [
+    "RequireRole redirects here with ?from=<path>."
+   ],
+   "integrations": [],
+   "states": [
+    "default"
+   ]
+  }
+ },
+ {
+  "path": "/manual",
+  "code": "K-03",
+  "surface": "docs",
+  "status": "built",
+  "spec": {
+   "code": "K-03",
+   "name": {
+    "es": "Manual de operaciones",
+    "en": "Operations manual"
+   },
+   "purpose": {
+    "es": "Cómo funciona el club en persona y en el software, por rol. Igual para todos los que lo miran; español primero, inglés como espejo.",
+    "en": "How the club runs in person and in software, by role. Same for everyone who looks; Spanish first, English as a mirror."
+   },
+   "layout": [
+    "ChapterSidebar (titles from front matter, decisions summary link, print)",
+    "ChapterMeta (role, version, updated)",
+    "MarkdownViewer (callouts, screenshot placeholders)",
+    "PrevNext"
+   ],
+   "data": [
+    "docs_entries"
+   ],
+   "roles": [
+    "super_admin",
+    "admin",
+    "coordinator",
+    "front_desk",
+    "finance",
+    "teacher",
+    "maintenance",
+    "customer",
+    "public"
+   ],
+   "logic": [
+    "Chapters are docs/ops-manual/<lang>/<NN-slug>.md loaded with import.meta.glob at build time; the slug is shared across languages.",
+    "Follows the app language: ES is the source; a missing EN chapter falls back to ES with a notice.",
+    "`> DECISIÓN PENDIENTE:` / `> DECISION NEEDED:` blockquotes render as highlighted callouts and feed K-04.",
+    "`[screenshot: CODE — caption]` lines render as dashed placeholder boxes until a real capture replaces them.",
+    "Print: sidebar and shell chrome hidden; callouts and placeholders never split across pages."
+   ],
+   "integrations": [],
+   "states": [
+    "default",
+    "chapter not found",
+    "untranslated (ES fallback)",
+    "print"
+   ],
+   "notes": [
+    "Policies quoted in the manual (cancellation 2 h, waitlist 30 min, late grace) are read from M-08; the screen wins over the text."
+   ]
+  }
+ },
+ {
+  "path": "/manual/decisions",
+  "code": "K-04",
+  "surface": "docs",
+  "status": "built",
+  "spec": {
+   "code": "K-04",
+   "name": {
+    "es": "Decisiones pendientes",
+    "en": "Decisions pending"
+   },
+   "purpose": {
+    "es": "Lista automática de todo lo que el estudio no ha definido, extraída de los bloques «DECISIÓN PENDIENTE» del manual, agrupada por capítulo y sección.",
+    "en": "Automatic list of everything the studio has not defined, extracted from the manual’s \"DECISION NEEDED\" blocks, grouped by chapter and section."
+   },
+   "layout": [
+    "PageHead (count)",
+    "DecisionList (grouped by chapter, section, link to chapter)"
+   ],
+   "data": [
+    "docs_entries"
+   ],
+   "roles": [
+    "super_admin",
+    "admin",
+    "coordinator",
+    "front_desk",
+    "finance",
+    "teacher",
+    "maintenance",
+    "customer",
+    "public"
+   ],
+   "logic": [
+    "Extracted at build/run time from the markdown; editing a chapter updates the list, no code change.",
+    "Same list feeds ROADMAP.md \"Open decisions for the owner\"."
+   ],
+   "integrations": [],
+   "states": [
+    "default",
+    "empty"
+   ]
+  }
+ },
+ {
+  "path": "/manual/:chapter",
+  "code": "K-03",
+  "surface": "docs",
+  "status": "built",
+  "spec": {
+   "code": "K-03",
+   "name": {
+    "es": "Manual de operaciones",
+    "en": "Operations manual"
+   },
+   "purpose": {
+    "es": "Cómo funciona el club en persona y en el software, por rol. Igual para todos los que lo miran; español primero, inglés como espejo.",
+    "en": "How the club runs in person and in software, by role. Same for everyone who looks; Spanish first, English as a mirror."
+   },
+   "layout": [
+    "ChapterSidebar (titles from front matter, decisions summary link, print)",
+    "ChapterMeta (role, version, updated)",
+    "MarkdownViewer (callouts, screenshot placeholders)",
+    "PrevNext"
+   ],
+   "data": [
+    "docs_entries"
+   ],
+   "roles": [
+    "super_admin",
+    "admin",
+    "coordinator",
+    "front_desk",
+    "finance",
+    "teacher",
+    "maintenance",
+    "customer",
+    "public"
+   ],
+   "logic": [
+    "Chapters are docs/ops-manual/<lang>/<NN-slug>.md loaded with import.meta.glob at build time; the slug is shared across languages.",
+    "Follows the app language: ES is the source; a missing EN chapter falls back to ES with a notice.",
+    "`> DECISIÓN PENDIENTE:` / `> DECISION NEEDED:` blockquotes render as highlighted callouts and feed K-04.",
+    "`[screenshot: CODE — caption]` lines render as dashed placeholder boxes until a real capture replaces them.",
+    "Print: sidebar and shell chrome hidden; callouts and placeholders never split across pages."
+   ],
+   "integrations": [],
+   "states": [
+    "default",
+    "chapter not found",
+    "untranslated (ES fallback)",
+    "print"
+   ],
+   "notes": [
+    "Policies quoted in the manual (cancellation 2 h, waitlist 30 min, late grace) are read from M-08; the screen wins over the text."
+   ]
+  }
+ },
+ {
+  "path": "/staff",
+  "code": "S-01",
+  "surface": "staff",
+  "status": "built",
+  "spec": {
+   "code": "S-01",
+   "name": {
+    "es": "Inicio por rol y selector demo",
+    "en": "Role home & demo switcher"
+   },
+   "purpose": {
+    "es": "Inicio por rol con selector de usuario demo para probar cada experiencia.",
+    "en": "One app, six doors. The demo switcher in the toolbar swaps role so the whole system can be reviewed as any user."
+   },
+   "layout": [
+    "RoleBadge + KPIRow",
+    "NextClassCard",
+    "TodayList",
+    "QuickActions",
+    "AuditNotice (recent activity)"
+   ],
+   "data": [
+    "class_sessions",
+    "bookings",
+    "waitlist",
+    "payments",
+    "audit_log",
+    "teachers"
+   ],
+   "roles": [
+    "super_admin",
+    "coordinator",
+    "front_desk",
+    "teacher",
+    "finance",
+    "customer"
+   ],
+   "logic": [
+    "Teachers hold both a teacher and a student context and can switch freely.",
+    "Permissions are additive per role; Super admin implies all.",
+    "Every staff action is written to the audit log with actor, target and timestamp.",
+    "Demo switching exists in the prototype only, never in production."
+   ],
+   "integrations": [
+    "Supabase Auth"
+   ],
+   "states": [
+    "No role assigned: read-only student view",
+    "Context switch: full re-route"
+   ],
+   "toggles": [
+    {
+     "label": "Teacher dual context",
+     "on": true
+    },
+    {
+     "label": "Demo role switcher",
+     "on": true
+    }
+   ],
+   "story": "As a reviewer I switch to Front desk and see the door queue instead of the student home.",
+   "api": [
+    "GET /me/roles",
+    "POST /session/context",
+    "GET /permissions/matrix"
+   ],
+   "layerTree": "RoleHome\n├ RoleBadge\n├ RoleNav (per permission set)\n├ TeacherToggle (teach ⇄ practise)\n└ AuditNotice",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#S-01",
+   "notes": [
+    "Live: subscribes to bookings and class_sessions through useTable."
+   ]
+  }
+ },
+ {
+  "path": "/staff/checkin",
+  "code": "S-02",
+  "surface": "staff",
+  "status": "built",
+  "spec": {
+   "code": "S-02",
+   "name": {
+    "es": "Check-in en recepción",
+    "en": "Front desk check-in"
+   },
+   "purpose": {
+    "es": "Check-in en recepción: lista de la clase, llegadas, lista de espera y cobros rápidos.",
+    "en": "The desk view during the ten minutes before class: who is expected, who has arrived, scan or search, and sell a drop-in on the spot."
+   },
+   "layout": [
+    "TodayStrip (now / next / later)",
+    "MemberSearch + CapacityMeter",
+    "RosterList (expected / checked in / waitlist)",
+    "TeachersInToday",
+    "QuickSell (walk-in)"
+   ],
+   "data": [
+    "class_sessions",
+    "bookings",
+    "waitlist",
+    "users",
+    "profiles",
+    "memberships",
+    "plans",
+    "teachers",
+    "modalities",
+    "audit_log",
+    "tenants"
+   ],
+   "roles": [
+    "front_desk",
+    "coordinator",
+    "super_admin"
+   ],
+   "logic": [
+    "There is no scanner: students check in at the desk by name and teachers mark attendance, so the roster has one source of truth.",
+    "Waitlist promotion happens from this screen when a no-show is confirmed at T+5m.",
+    "Cash settles the pending order and prints or sends the receipt.",
+    "Health flags show as a discreet marker for the teacher."
+   ],
+   "integrations": [
+    "Wompi",
+    "Email",
+    "Supabase Realtime"
+   ],
+   "states": [
+    "Offline: queue check-ins locally and sync",
+    "No classes today: empty strip",
+    "Loading roster",
+    "No permission: roster read-only"
+   ],
+   "toggles": [
+    {
+     "label": "Member search",
+     "on": true
+    },
+    {
+     "label": "Quick-sell drop-in",
+     "on": true
+    },
+    {
+     "label": "Auto waitlist promotion",
+     "on": true
+    }
+   ],
+   "story": "As front desk I scan twelve people in four minutes and settle two cash payments.",
+   "api": [
+    "GET /classes/:id/roster",
+    "POST /waitlist/:id/promote",
+    "POST /orders/:id/settle"
+   ],
+   "layerTree": "DoorBoard\n├ ClassSelector\n├ MemberSearch (name, phone, email, document)\n├ TodayStrip (now / next / later)\n├ TeachersInToday\n├ RosterList\n│ ├ Expected\n│ ├ Checked in\n│ └ Waitlist\n├ ManualSearch\n└ QuickSell (drop-in, cash)",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#S-02",
+   "notes": [
+    "Late = checked in after starts_at + policies.lateGraceMin (M-08).",
+    "Keyboard: / focuses search, Enter checks in the first expected match, Esc clears.",
+    "Capacity comes from the session row (seeded from tenant.studio.mats)."
+   ]
+  }
+ },
+ {
+  "path": "/staff/register",
+  "code": "S-04",
+  "surface": "staff",
+  "status": "built",
+  "spec": {
+   "code": "S-04",
+   "name": {
+    "es": "Registrar y cobrar",
+    "en": "Register & take payment"
+   },
+   "purpose": {
+    "es": "La transacción de mostrador en una pantalla: quién es, qué compra, cómo paga.",
+    "en": "The counter transaction in one screen: who they are, what they are buying, how they are paying. Built for someone standing at a desk with a person in front of them, so it is three short sections rather than a wizard."
+   },
+   "layout": [
+    "Step1 · Who (new / existing)",
+    "Step2 · What (pricing.ts)",
+    "Step3 · How they pay",
+    "SummaryRail (IVA + total)",
+    "Receipt"
+   ],
+   "data": [
+    "users",
+    "profiles",
+    "user_roles",
+    "consents",
+    "payments",
+    "invoices",
+    "memberships",
+    "credits",
+    "bookings",
+    "class_sessions",
+    "message_log",
+    "audit_log",
+    "tenants"
+   ],
+   "roles": [
+    "front_desk",
+    "coordinator",
+    "super_admin"
+   ],
+   "logic": [
+    "Products and prices are read from the value-model config, never typed at the desk.",
+    "Consent is recorded with timestamp, staff actor and policy version — the student agrees verbally, the desk records it.",
+    "Cash settles immediately; card and transfer create a pending order until the gateway confirms.",
+    "Completing the sale also checks the person into the class they bought, which is the whole point of doing it at the counter.",
+    "Every action writes to the activity log with the staff member's name."
+   ],
+   "integrations": [
+    "WhatsApp",
+    "Wompi",
+    "Email",
+    "Supabase Realtime",
+    "DIAN e-invoicing"
+   ],
+   "states": [
+    "New customer (this screen)",
+    "Existing member: identity fields collapse to a found-member card",
+    "Payment declined: inline reason, order stays pending",
+    "Offline: queue and warn",
+    "No permission: form read-only",
+    "Sale complete: receipt view"
+   ],
+   "toggles": [
+    {
+     "label": "Walk-in registration",
+     "on": true
+    },
+    {
+     "label": "Cash at desk",
+     "on": true
+    },
+    {
+     "label": "Auto check-in on sale",
+     "on": true
+    },
+    {
+     "label": "Birthday field",
+     "on": true
+    }
+   ],
+   "story": "As front desk I register a walk-in, take cash for a trial class and check her into the 7am without leaving the screen.",
+   "api": [
+    "POST /users",
+    "POST /orders",
+    "POST /payments",
+    "POST /checkins",
+    "POST /consents"
+   ],
+   "layerTree": "RegisterPay\n├ Step1 · Who\n│ ├ New / existing switch\n│ ├ Name, WhatsApp, email\n│ ├ Emergency contact, birthday\n│ └ Consent checkbox\n├ Step2 · What (reads plans.bienvenida)\n├ Step3 · How they pay\n│ ├ Cash · card · transfer · Nequi · PSE\n│ └ Receipt by WhatsApp + email\n└ SummaryRail\n  ├ Order lines + IVA\n  └ Complete and check in",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#S-04",
+   "notes": [
+    "Prices only from src/tenant/pricing.ts; IVA from M-08 tax settings.",
+    "Wompi link is a placeholder: payment stays pending until the gateway confirms."
+   ]
+  }
+ },
+ {
+  "path": "/teach",
+  "code": "S-03",
+  "surface": "teacher",
+  "status": "built",
+  "spec": {
+   "code": "S-03",
+   "name": {
+    "es": "App de profesores",
+    "en": "Teacher app"
+   },
+   "purpose": {
+    "es": "App de profesores: mis clases, asistencia, descripción y vista de nómina.",
+    "en": "What a teacher needs between classes: schedule, roster and attendance, their own content, reviews, and what they have been paid."
+   },
+   "layout": [
+    "NextClassCard",
+    "TodayClasses (roster count)",
+    "ScheduleList (week)",
+    "SubstitutionRequest",
+    "PayrollTile"
+   ],
+   "data": [
+    "teachers",
+    "class_sessions",
+    "bookings",
+    "modalities",
+    "users",
+    "profiles",
+    "audit_log"
+   ],
+   "roles": [
+    "teacher",
+    "coordinator",
+    "finance",
+    "super_admin"
+   ],
+   "logic": [
+    "Attendance can be marked from T−15m to T+2h; later needs the coordinator.",
+    "Descriptions submitted by teachers go to the coordinator for approval before publishing.",
+    "Named reviews visible only when the student did not mark them anonymous or private.",
+    "Payroll shows classes taught, rate, substitutions and adjustments; the amount is read-only."
+   ],
+   "integrations": [
+    "Wompi"
+   ],
+   "states": [
+    "No class today: schedule promoted",
+    "Attendance locked: read-only with reason",
+    "Payroll pending: 'run closes on the 15th'"
+   ],
+   "toggles": [
+    {
+     "label": "Teacher payroll view",
+     "on": true
+    },
+    {
+     "label": "Named reviews",
+     "on": true
+    },
+    {
+     "label": "Teacher-submitted descriptions",
+     "on": true
+    }
+   ],
+   "story": "As a teacher I mark attendance from the mat, then check last fortnight's payroll.",
+   "api": [
+    "GET /teachers/me/classes",
+    "POST /classes/:id/attendance",
+    "GET /teachers/me/payroll",
+    "POST /class-descriptions",
+    "GET /teachers/me/reviews"
+   ],
+   "layerTree": "TeacherHome\n├ NextClassCard\n├ RosterSheet → attendance marks\n├ ScheduleList\n├ SubmitDescription (approval flow)\n├ ReviewsPanel (aggregate + named)\n├ PayrollList → PayslipDetail\n└ ProfileEditor (photo, bio)",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#S-03",
+   "notes": [
+    "Mobile-first inside PhoneShell.",
+    "Substitution requests are written to audit_log (action substitution.request) for the coordinator."
+   ]
+  }
+ },
+ {
+  "path": "/teach/class/:id",
+  "code": "S-03",
+  "surface": "teacher",
+  "status": "built",
+  "spec": {
+   "code": "S-03",
+   "name": {
+    "es": "Clase · lista y asistencia",
+    "en": "Class · roster & attendance"
+   },
+   "purpose": {
+    "es": "Marcar asistencia desde el mat y dejar notas de la clase.",
+    "en": "Mark attendance from the mat and leave class notes."
+   },
+   "layout": [
+    "ClassHeader",
+    "AttendanceWindow",
+    "RosterSheet → attendance marks",
+    "ClassNotes"
+   ],
+   "data": [
+    "teachers",
+    "class_sessions",
+    "bookings",
+    "modalities",
+    "users",
+    "profiles",
+    "audit_log"
+   ],
+   "roles": [
+    "teacher",
+    "coordinator",
+    "finance",
+    "super_admin"
+   ],
+   "logic": [
+    "Attendance can be marked from T−15m to T+2h; later needs the coordinator.",
+    "Descriptions submitted by teachers go to the coordinator for approval before publishing.",
+    "Named reviews visible only when the student did not mark them anonymous or private.",
+    "Payroll shows classes taught, rate, substitutions and adjustments; the amount is read-only."
+   ],
+   "integrations": [
+    "Wompi"
+   ],
+   "states": [
+    "Attendance open (T−15m … T+2h)",
+    "Attendance locked: read-only with reason",
+    "Coordinator override",
+    "Class not found"
+   ],
+   "toggles": [
+    {
+     "label": "Teacher payroll view",
+     "on": true
+    },
+    {
+     "label": "Named reviews",
+     "on": true
+    },
+    {
+     "label": "Teacher-submitted descriptions",
+     "on": true
+    }
+   ],
+   "story": "As a teacher I mark attendance from the mat, then check last fortnight's payroll.",
+   "api": [
+    "GET /teachers/me/classes",
+    "POST /classes/:id/attendance",
+    "GET /teachers/me/payroll",
+    "POST /class-descriptions",
+    "GET /teachers/me/reviews"
+   ],
+   "layerTree": "TeacherHome\n├ NextClassCard\n├ RosterSheet → attendance marks\n├ ScheduleList\n├ SubmitDescription (approval flow)\n├ ReviewsPanel (aggregate + named)\n├ PayrollList → PayslipDetail\n└ ProfileEditor (photo, bio)",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#S-03",
+   "notes": [
+    "Marks write bookings.status (checked_in / no_show) and an audit_log row.",
+    "Notes are audit_log rows (action session.note) so they appear in M-07."
+   ]
+  }
+ },
+ {
+  "path": "/teach/payroll",
+  "code": "S-03",
+  "surface": "teacher",
+  "status": "built",
+  "spec": {
+   "code": "S-03",
+   "name": {
+    "es": "Nómina",
+    "en": "Payroll"
+   },
+   "purpose": {
+    "es": "Clases dictadas por mes × tarifa por clase, solo lectura.",
+    "en": "Classes taught per month × per-class rate, read-only."
+   },
+   "layout": [
+    "MonthPicker",
+    "SummaryTiles",
+    "PayrollLines",
+    "WompiPlaceholder"
+   ],
+   "data": [
+    "teachers",
+    "class_sessions",
+    "bookings",
+    "modalities"
+   ],
+   "roles": [
+    "teacher",
+    "coordinator",
+    "finance",
+    "super_admin"
+   ],
+   "logic": [
+    "Attendance can be marked from T−15m to T+2h; later needs the coordinator.",
+    "Descriptions submitted by teachers go to the coordinator for approval before publishing.",
+    "Named reviews visible only when the student did not mark them anonymous or private.",
+    "Payroll shows classes taught, rate, substitutions and adjustments; the amount is read-only."
+   ],
+   "integrations": [
+    "Wompi"
+   ],
+   "states": [
+    "Payroll pending: run closes on the 15th",
+    "No classes this month"
+   ],
+   "toggles": [
+    {
+     "label": "Teacher payroll view",
+     "on": true
+    },
+    {
+     "label": "Named reviews",
+     "on": true
+    },
+    {
+     "label": "Teacher-submitted descriptions",
+     "on": true
+    }
+   ],
+   "story": "As a teacher I mark attendance from the mat, then check last fortnight's payroll.",
+   "api": [
+    "GET /teachers/me/classes",
+    "POST /classes/:id/attendance",
+    "GET /teachers/me/payroll",
+    "POST /class-descriptions",
+    "GET /teachers/me/reviews"
+   ],
+   "layerTree": "TeacherHome\n├ NextClassCard\n├ RosterSheet → attendance marks\n├ ScheduleList\n├ SubmitDescription (approval flow)\n├ ReviewsPanel (aggregate + named)\n├ PayrollList → PayslipDetail\n└ ProfileEditor (photo, bio)",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#S-03",
+   "notes": [
+    "Rate is teachers.rate_per_class; substitutions are sessions whose template teacher differs.",
+    "Placeholder until Wompi payroll runs exist."
+   ]
+  }
+ },
+ {
+  "path": "/teach/profile",
+  "code": "S-03",
+  "surface": "teacher",
+  "status": "built",
+  "spec": {
+   "code": "S-03",
+   "name": {
+    "es": "Mi perfil",
+    "en": "My profile"
+   },
+   "purpose": {
+    "es": "Foto, bio en dos idiomas y especialidades; los cambios pasan por coordinación.",
+    "en": "Photo, bilingual bio and specialties; changes go through the coordinator."
+   },
+   "layout": [
+    "PhotoAndName",
+    "BioEditor ES / EN",
+    "Specialties",
+    "RateReadOnly"
+   ],
+   "data": [
+    "teachers",
+    "modalities",
+    "audit_log"
+   ],
+   "roles": [
+    "teacher",
+    "coordinator",
+    "finance",
+    "super_admin"
+   ],
+   "logic": [
+    "Attendance can be marked from T−15m to T+2h; later needs the coordinator.",
+    "Descriptions submitted by teachers go to the coordinator for approval before publishing.",
+    "Named reviews visible only when the student did not mark them anonymous or private.",
+    "Payroll shows classes taught, rate, substitutions and adjustments; the amount is read-only."
+   ],
+   "integrations": [
+    "Wompi"
+   ],
+   "states": [
+    "Saved: sent for review",
+    "Not linked to a teacher profile"
+   ],
+   "toggles": [
+    {
+     "label": "Teacher payroll view",
+     "on": true
+    },
+    {
+     "label": "Named reviews",
+     "on": true
+    },
+    {
+     "label": "Teacher-submitted descriptions",
+     "on": true
+    }
+   ],
+   "story": "As a teacher I mark attendance from the mat, then check last fortnight's payroll.",
+   "api": [
+    "GET /teachers/me/classes",
+    "POST /classes/:id/attendance",
+    "GET /teachers/me/payroll",
+    "POST /class-descriptions",
+    "GET /teachers/me/reviews"
+   ],
+   "layerTree": "TeacherHome\n├ NextClassCard\n├ RosterSheet → attendance marks\n├ ScheduleList\n├ SubmitDescription (approval flow)\n├ ReviewsPanel (aggregate + named)\n├ PayrollList → PayslipDetail\n└ ProfileEditor (photo, bio)",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#S-03",
+   "notes": [
+    "Edits update teachers and write audit_log teacher.profile.submit."
+   ]
+  }
+ },
+ {
+  "path": "/site",
+  "code": "W-01",
+  "surface": "public",
+  "status": "built",
+  "spec": {
+   "roles": [
+    "super_admin",
+    "admin",
+    "coordinator",
+    "front_desk",
+    "finance",
+    "teacher",
+    "maintenance",
+    "customer",
+    "public"
+   ],
+   "integrations": [
+    "Supabase Realtime"
+   ],
+   "code": "W-01",
+   "name": {
+    "es": "Sitio · Inicio",
+    "en": "Site · Home"
+   },
+   "purpose": {
+    "es": "La portada pública: promesa de marca, cuatro movimientos, clases de hoy, planes destacados, profesores y CTA a clase de prueba.",
+    "en": "The public front page: brand promise, four movements, today’s classes, featured plans, teachers and trial-class CTA."
+   },
+   "layout": [
+    "Hero",
+    "Movements",
+    "TodayClasses",
+    "PlansTeaser",
+    "TeachersTeaser"
+   ],
+   "data": [
+    "class_sessions",
+    "modalities",
+    "teachers",
+    "plans"
+   ],
+   "logic": [
+    "Sections render in the order stored by the layout editor (useLayout).",
+    "Today list shows only scheduled sessions for the current date.",
+    "All prices come from src/tenant/pricing.ts."
+   ],
+   "states": [
+    "default",
+    "no classes today"
+   ]
+  }
+ },
+ {
+  "path": "/site/about",
+  "code": "W-02",
+  "surface": "public",
+  "status": "built",
+  "spec": {
+   "roles": [
+    "super_admin",
+    "admin",
+    "coordinator",
+    "front_desk",
+    "finance",
+    "teacher",
+    "maintenance",
+    "customer",
+    "public"
+   ],
+   "integrations": [],
+   "code": "W-02",
+   "name": {
+    "es": "Sitio · Filosofía",
+    "en": "Site · Philosophy"
+   },
+   "purpose": {
+    "es": "Quiénes somos y cómo hablamos: humana, cercana, directa, presente.",
+    "en": "Who we are and how we speak: human, close, direct, present."
+   },
+   "layout": [
+    "PageHead",
+    "Manifesto",
+    "ValuesRow",
+    "BrandBoard"
+   ],
+   "data": [],
+   "logic": [
+    "Copy comes from the brand manual (reference/brand)."
+   ],
+   "states": [
+    "default"
+   ]
+  }
+ },
+ {
+  "path": "/site/modalities",
+  "code": "W-03",
+  "surface": "public",
+  "status": "built",
+  "spec": {
+   "roles": [
+    "super_admin",
+    "admin",
+    "coordinator",
+    "front_desk",
+    "finance",
+    "teacher",
+    "maintenance",
+    "customer",
+    "public"
+   ],
+   "integrations": [],
+   "code": "W-03",
+   "name": {
+    "es": "Sitio · Modalidades",
+    "en": "Site · Modalities"
+   },
+   "purpose": {
+    "es": "Las seis prácticas del club agrupadas por movimiento, con intensidad, duración y si es sala caliente.",
+    "en": "The six practices grouped by movement, with intensity, duration and heated room."
+   },
+   "layout": [
+    "PageHead",
+    "ModalityGrid"
+   ],
+   "data": [
+    "modalities"
+   ],
+   "logic": [
+    "Groups by movement in the order Enraíza, Fluye, Arde, Libera."
+   ],
+   "states": [
+    "default"
+   ]
+  }
+ },
+ {
+  "path": "/site/schedule",
+  "code": "W-04",
+  "surface": "public",
+  "status": "built",
+  "spec": {
+   "roles": [
+    "super_admin",
+    "admin",
+    "coordinator",
+    "front_desk",
+    "finance",
+    "teacher",
+    "maintenance",
+    "customer",
+    "public"
+   ],
+   "integrations": [
+    "Supabase Realtime",
+    "Supabase Auth"
+   ],
+   "code": "W-04",
+   "name": {
+    "es": "Sitio · Horario",
+    "en": "Site · Schedule"
+   },
+   "purpose": {
+    "es": "Horario semanal público con cupos en vivo. Tocar una clase pide iniciar sesión y lleva a la app de clientes.",
+    "en": "Public weekly schedule with live capacity. Tapping a class prompts sign-in and leads to the customer app."
+   },
+   "layout": [
+    "PageHead",
+    "DayTabs",
+    "ClassList",
+    "Legend",
+    "LoginPrompt (Drawer)"
+   ],
+   "data": [
+    "class_sessions",
+    "modalities",
+    "teachers",
+    "rooms"
+   ],
+   "logic": [
+    "Shows 7 days starting today; Sundays show the empty state.",
+    "Capacity = capacity − booked_count from class_sessions.",
+    "Deep click → login prompt → /app (demo: switches to the customer demo user)."
+   ],
+   "states": [
+    "default",
+    "day without classes",
+    "login prompt open"
+   ]
+  }
+ },
+ {
+  "path": "/site/teachers",
+  "code": "W-05",
+  "surface": "public",
+  "status": "built",
+  "spec": {
+   "roles": [
+    "super_admin",
+    "admin",
+    "coordinator",
+    "front_desk",
+    "finance",
+    "teacher",
+    "maintenance",
+    "customer",
+    "public"
+   ],
+   "integrations": [],
+   "code": "W-05",
+   "name": {
+    "es": "Sitio · Profesores",
+    "en": "Site · Teachers"
+   },
+   "purpose": {
+    "es": "Galería pública de profesores con bio y especialidades.",
+    "en": "Public teacher gallery with bio and specialties."
+   },
+   "layout": [
+    "PageHead",
+    "TeacherGrid"
+   ],
+   "data": [
+    "teachers",
+    "modalities"
+   ],
+   "logic": [
+    "Only active teachers."
+   ],
+   "states": [
+    "default"
+   ]
+  }
+ },
+ {
+  "path": "/site/plans",
+  "code": "P-01",
+  "surface": "public",
+  "status": "built",
+  "spec": {
+   "code": "P-01",
+   "name": {
+    "es": "Planes y precios — Modelo de Valor v3",
+    "en": "Plans & prices — Modelo de Valor v3"
+   },
+   "purpose": {
+    "es": "La única fuente de precios: Bienvenida, Membresía, Pausas, Regalos y Espacio, leída por todas las superficies.",
+    "en": "One value model, written once and read by every surface that quotes a price. Bienvenida lowers the barrier, Membresía is the primary plan with two ways to pay, Pausas and Regalos widen the offer, Espacio monetises the room outside class hours."
+   },
+   "layout": [
+    "Bienvenida — 4 cards + Reservar",
+    "Membresía (hero)",
+    "Pausas y Regalos (two columns)",
+    "Espacio — 5 desde-prices + one WhatsApp CTA",
+    "TrustStrip · capacity + conscious controls"
+   ],
+   "data": [
+    "plans",
+    "plan_prices",
+    "packages",
+    "memberships",
+    "gift_cards",
+    "space_rentals",
+    "orders"
+   ],
+   "roles": [
+    "public",
+    "customer",
+    "front_desk",
+    "finance",
+    "coordinator",
+    "super_admin"
+   ],
+   "logic": [
+    "Prices live in one config; no surface hard-codes a figure. Changing a price here changes it everywhere.",
+    "Membresía has exactly two options — Mensual and Anual. No third tier, no hidden discounts.",
+    "Espacio prices are 'desde' and lead to a conversation, not a checkout.",
+    "One class a day per person on any plan; the studio holds 15 mats and runs 4 classes a day.",
+    "Conscious controls: pause up to 30 days, leave without mazes, a kind cancellation window, notice before every charge.",
+    "Every plan CTA enters the same single-screen checkout (C-04) with lazy registration and local payment methods."
+   ],
+   "integrations": [
+    "WhatsApp",
+    "Wompi",
+    "Supabase Realtime"
+   ],
+   "states": [
+    "Default (this page)",
+    "Member: Membresía cards show current plan and 'change'",
+    "Promotion: badge + strike price",
+    "Sold-out space date: CTA becomes an enquiry form"
+   ],
+   "toggles": [
+    {
+     "label": "Bienvenida block",
+     "on": true
+    },
+    {
+     "label": "Pausas block",
+     "on": true
+    },
+    {
+     "label": "Espacio block",
+     "on": true
+    },
+    {
+     "label": "Annual plan",
+     "on": true
+    },
+    {
+     "label": "Promo codes",
+     "on": false
+    }
+   ],
+   "story": "As someone deciding whether to join I see the whole ladder on one page and can tell what a month actually costs.",
+   "api": [
+    "GET /plans",
+    "GET /packages",
+    "POST /orders",
+    "POST /subscriptions",
+    "GET /space/enquiry"
+   ],
+   "layerTree": "PlansPage #planes\n├ Bienvenida — 4 cards + Reservar\n├ Membresía (hero)\n│ ├ Plan Mensual\n│ ├ Plan Anual · Mejor valor\n│ └ Footnote · ~$416.000/mes\n├ Pausas y Regalos (two columns)\n├ Espacio — 5 desde-prices + one WhatsApp CTA\n└ TrustStrip · capacity + conscious controls",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#P-01"
+  }
+ },
+ {
+  "path": "/site/contact",
+  "code": "W-06",
+  "surface": "public",
+  "status": "built",
+  "spec": {
+   "roles": [
+    "super_admin",
+    "admin",
+    "coordinator",
+    "front_desk",
+    "finance",
+    "teacher",
+    "maintenance",
+    "customer",
+    "public"
+   ],
+   "integrations": [
+    "WhatsApp"
+   ],
+   "code": "W-06",
+   "name": {
+    "es": "Sitio · Contacto",
+    "en": "Site · Contact"
+   },
+   "purpose": {
+    "es": "WhatsApp, correo, dirección y horario del estudio desde la configuración del tenant.",
+    "en": "WhatsApp, email, address and hours from the tenant config."
+   },
+   "layout": [
+    "PageHead",
+    "ContactCards",
+    "MapPlaceholder"
+   ],
+   "data": [
+    "tenants"
+   ],
+   "logic": [
+    "No hardcoded contact data: reads src/tenant/tenant.ts."
+   ],
+   "states": [
+    "default"
+   ]
+  }
+ },
+ {
+  "path": "/site/legal/terms",
+  "code": "A-06",
+  "surface": "public",
+  "status": "built",
+  "spec": {
+   "code": "A-06",
+   "name": {
+    "es": "Términos y condiciones / Política de privacidad",
+    "en": "Terms & Conditions / Privacy Policy"
+   },
+   "purpose": {
+    "es": "Páginas legales reales, enlazables y versionadas; los consentimientos registran qué versión se aceptó.",
+    "en": "Real, linkable, versioned legal pages reachable from sign-up, settings and the website — with placeholder body copy until counsel supplies the text."
+   },
+   "layout": [
+    "BackLink",
+    "Title + updated date",
+    "SectionList (anchored)",
+    "CrossLink (Terms ⇄ Privacy)"
+   ],
+   "data": [
+    "legal_documents",
+    "document_versions",
+    "consents"
+   ],
+   "roles": [
+    "public",
+    "super_admin",
+    "admin",
+    "coordinator",
+    "front_desk",
+    "finance",
+    "teacher",
+    "maintenance",
+    "customer"
+   ],
+   "logic": [
+    "Each document is versioned; consents record which version was accepted.",
+    "Colombian data protection: Ley 1581 de 2012 and Decreto 1377 de 2013 sections are required.",
+    "Same content served to app and website from the CMS.",
+    "Anchors are stable so emails can deep-link to a clause."
+   ],
+   "integrations": [
+    "Email",
+    "Supabase Auth"
+   ],
+   "toggles": [
+    {
+     "label": "Show last-updated date",
+     "on": true
+    },
+    {
+     "label": "Require re-consent on new version",
+     "on": true
+    }
+   ],
+   "layerTree": "LegalDoc\n├ BackLink\n├ Title + updated date\n├ SectionList (anchored)\n└ CrossLink (Terms ⇄ Privacy)",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#A-06"
+  }
+ },
+ {
+  "path": "/site/legal/privacy",
+  "code": "A-06",
+  "surface": "public",
+  "status": "built",
+  "spec": {
+   "code": "A-06",
+   "name": {
+    "es": "Términos y condiciones / Política de privacidad",
+    "en": "Terms & Conditions / Privacy Policy"
+   },
+   "purpose": {
+    "es": "Páginas legales reales, enlazables y versionadas; los consentimientos registran qué versión se aceptó.",
+    "en": "Real, linkable, versioned legal pages reachable from sign-up, settings and the website — with placeholder body copy until counsel supplies the text."
+   },
+   "layout": [
+    "BackLink",
+    "Title + updated date",
+    "SectionList (anchored)",
+    "CrossLink (Terms ⇄ Privacy)"
+   ],
+   "data": [
+    "legal_documents",
+    "document_versions",
+    "consents"
+   ],
+   "roles": [
+    "public",
+    "super_admin",
+    "admin",
+    "coordinator",
+    "front_desk",
+    "finance",
+    "teacher",
+    "maintenance",
+    "customer"
+   ],
+   "logic": [
+    "Each document is versioned; consents record which version was accepted.",
+    "Colombian data protection: Ley 1581 de 2012 and Decreto 1377 de 2013 sections are required.",
+    "Same content served to app and website from the CMS.",
+    "Anchors are stable so emails can deep-link to a clause."
+   ],
+   "integrations": [
+    "Email",
+    "Supabase Auth"
+   ],
+   "toggles": [
+    {
+     "label": "Show last-updated date",
+     "on": true
+    },
+    {
+     "label": "Require re-consent on new version",
+     "on": true
+    }
+   ],
+   "layerTree": "LegalDoc\n├ BackLink\n├ Title + updated date\n├ SectionList (anchored)\n└ CrossLink (Terms ⇄ Privacy)",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#A-06"
+  }
+ }
+]

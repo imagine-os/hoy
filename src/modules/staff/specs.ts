@@ -12,9 +12,12 @@ export const S01 = defineSpec({
 /** S-02 door / check-in — sections are the layout-editor keys. */
 export const S02 = defineSpec({
   ...canvasSpecs['S-02'],
+  // Canvas audit #26: no scanner — the door is a person with a search box, so the scan API and face templates are dropped.
+  api: (canvasSpecs['S-02'].api ?? []).filter((a) => !/scan|face/i.test(a)),
+  logic: (canvasSpecs['S-02'].logic ?? []).filter((l) => !/face.template/i.test(l)),
   layout: ['TodayStrip (now / next / later)', 'MemberSearch + CapacityMeter', 'RosterList (expected / checked in / waitlist)', 'TeachersInToday', 'QuickSell (walk-in)'],
   data: ['class_sessions', 'bookings', 'waitlist', 'users', 'profiles', 'memberships', 'plans', 'teachers', 'modalities', 'audit_log', 'tenants'],
-  states: [...(canvasSpecs['S-02'].states ?? []), 'No classes today: empty strip', 'Loading roster', 'No permission: roster read-only'],
+  states: [...(canvasSpecs['S-02'].states ?? []).filter((s) => !/scan/i.test(s)), 'No classes today: empty strip', 'Loading roster', 'No permission: roster read-only'],
   notes: [...(canvasSpecs['S-02'].notes ?? []), 'Late = checked in after starts_at + policies.lateGraceMin (M-08).', 'Keyboard: / focuses search, Enter checks in the first expected match, Esc clears.', 'Capacity comes from the session row (seeded from tenant.studio.mats).'],
 });
 

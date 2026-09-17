@@ -18,6 +18,7 @@ export const strings: StringTable = {
   'hub.card.dev': { es: 'Desarrollo', en: 'Developer' },
   'hub.card.dev.body': { es: 'Tokens, biblioteca de componentes, specs, tablas y editor de layout.', en: 'Tokens, component library, specs, tables and layout editor.' },
   'hub.open': { es: 'Abrir', en: 'Open' },
+  'hub.signin': { es: 'Entrar o crear cuenta', en: 'Sign in or create an account' },
   'hub.enterAs': { es: 'Entrar como {name}', en: 'Enter as {name}' },
   'hub.devHint': { es: 'Con modo dev activo, cada página muestra un chip “spec” y Ctrl+. abre el inspector.', en: 'With dev mode on, every page shows a “spec” chip and Ctrl+. opens the inspector.' },
   'hub.wireframe': { es: 'Wireframe', en: 'Wireframe' },

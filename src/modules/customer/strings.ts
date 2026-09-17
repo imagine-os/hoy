@@ -30,7 +30,6 @@ export const strings: StringTable = {
   'customer.home.booked': { es: 'Reservada', en: 'Booked' },
   'customer.book.ok': { es: 'Reserva confirmada', en: 'Booking confirmed' },
   'customer.book.oneADay': { es: 'Solo una clase por persona al día.', en: 'Only one class per person per day.' },
-  'customer.nav.history': { es: 'Historial', en: 'History' },
   'customer.state.demo': { es: 'Ruta de demostración del estado {code}. En el flujo real este bloque aparece dentro de la página correspondiente.', en: 'Demo route for state {code}. In the real flow this block renders inside the relevant page.' },
 
   // C-02 schedule
@@ -649,7 +648,6 @@ export const strings: StringTable = {
   'customer.signup.consent.err': { es: 'Necesitamos tu consentimiento para continuar.', en: 'We need your consent to continue.' },
   'customer.signup.dup': { es: 'Ya existe una cuenta con ese correo o WhatsApp', en: 'An account with that email or WhatsApp already exists' },
   'customer.signup.dup.body': { es: 'Entra con ella o recupera la contraseña.', en: 'Sign in with it or recover the password.' },
-  'customer.signup.demoNote': { es: 'Demo: tu cuenta se guarda en las tablas users y profiles; la sesión continúa como {name} hasta que llegue Supabase Auth.', en: 'Demo: your account is saved in the users and profiles tables; the session continues as {name} until Supabase Auth arrives.' },
   'customer.signup.cta': { es: 'Continuar', en: 'Continue' },
   'customer.signup.have': { es: '¿Ya tienes cuenta?', en: 'Already have an account?' },
 

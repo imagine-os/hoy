@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useSession } from '../../../auth/SessionProvider';
 import { demoUsers } from '../../../auth/demoUsers';
@@ -24,6 +24,8 @@ export function SignInPage() {
   const { t, bi } = useI18n();
   const nav = useNavigate();
   const { switchUser } = useSession();
+  const [params] = useSearchParams();
+  const next = params.get('next');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [attempts, setAttempts] = useState(readAttempts);
@@ -31,7 +33,7 @@ export function SignInPage() {
   const [busy, setBusy] = useState(false);
   const people = demoUsers.filter((u) => u.role !== 'public');
 
-  const enterAs = (id: string) => { const u = demoUsers.find((x) => x.id === id)!; switchUser(u.id); try { sessionStorage.removeItem(ATTEMPTS_KEY); } catch { /* ignore */ } nav(ROLE_HOME[u.role]); };
+  const enterAs = (id: string) => { const u = demoUsers.find((x) => x.id === id)!; switchUser(u.id); try { sessionStorage.removeItem(ATTEMPTS_KEY); } catch { /* ignore */ } nav(next && next.startsWith('/') && u.role === 'customer' ? next : ROLE_HOME[u.role]); };
 
   const submit = (e: FormEvent) => {
     e.preventDefault(); setBusy(true); setError(null);

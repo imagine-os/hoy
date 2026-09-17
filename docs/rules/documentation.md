@@ -38,11 +38,11 @@ same turn as the work. On rebase conflicts keep both sides.
 - **Key pages** (hub `HUB-01`, website home `W-01`, customer home `C-01`, front desk `S-02`, admin
   `M-01`, table manager `M-03`, component library `D-02`, ops manual `K-03`) are also captured in
   **light and dark** (`KEY_PAGES` in `scripts/screenshots.mjs`).
-- File name: `docs/screenshots/<code>/<lang>-<width>[-dark].png`, e.g. `C-01/es-390.png`,
-  `M-03/en-1280-dark.png`. The folder name is the page code (`/` in a code becomes `_`).
+- File name: `docs/screenshots/<code>/<lang>-<width>[-dark].jpg`, e.g. `C-01/es-390.jpg`,
+  `M-03/en-1280-dark.jpg`. The folder name is the page code (`/` in a code becomes `_`).
 - **Before/after pairs for visual changes**: before touching a screen run
   `npm run screenshots -- --only=/app/schedule --label=before`; after the change run the normal
-  pass. The pair (`es-1280-before.png` next to `es-1280.png`) is linked from the changelog entry.
+  pass. The pair (`es-1280-before.jpg` next to `es-1280.jpg`) is linked from the changelog entry.
   Delete `-before` files once the entry that references them is merged and the screen moves on.
 - **Referenced from two places**: the page doc `docs/pages/<code>.md` (§5) and the changelog entry
   that introduced or changed the screen. A doc that describes a screen without showing it is
@@ -50,7 +50,7 @@ same turn as the work. On rebase conflicts keep both sides.
   line; the viewer renders it as a dashed box with the code.
 - **Regenerate at the end of every work session** with `npm run screenshots` (Playwright, Chromium
   preinstalled at `/opt/pw-browsers`; never run `playwright install` here). It blocks external
-  requests so it works behind the proxy. Commit the PNGs with the change. `npm run screenshots -- --smoke`
+  requests so it works behind the proxy. Commit the JPEGs (quality 72; PNG was rejected as ~3× larger for the same review value) with the change. `npm run screenshots -- --smoke`
   is the fast console-error check (1280/es, no files); `--only=/docs,/manual` limits either mode.
 - Browse everything at `/#/docs/screenshots`.
 
@@ -80,5 +80,5 @@ Docs for the software: English with a Spanish summary. Ops manual (`docs/ops-man
 **Resumen (ES).** Cada prompt se guarda verbatim con su respuesta; cada cambio tiene entrada de
 changelog (versión, fecha, intención, decisión, alternativa, archivos) y mueve tarjetas en el kanban;
 cada página se captura en ES/EN a 390 y 1280 px (claro y oscuro en las páginas clave) en
-`docs/screenshots/<código>/<idioma>-<ancho>[-dark].png`, con pares antes/después para cambios
+`docs/screenshots/<código>/<idioma>-<ancho>[-dark].jpg`, con pares antes/después para cambios
 visuales, y se referencia desde `docs/pages/<código>.md` y el changelog. Todo en el mismo turno.

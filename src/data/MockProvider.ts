@@ -18,7 +18,21 @@ export class MockProvider implements DataProvider {
   private db: Db;
   private listeners = new Map<string, Set<(e: ChangeEvent) => void>>();
 
-  constructor() { this.db = this.load(); }
+  constructor() {
+    this.db = this.load();
+    // Cross-tab realtime: another tab's persist() fires `storage` here; reload and tell every subscriber.
+    if (typeof window !== 'undefined') window.addEventListener('storage', (e) => this.onStorage(e));
+  }
+
+  private onStorage(e: StorageEvent) {
+    if (e.key !== KEY || !e.newValue) return;
+    try {
+      const parsed = JSON.parse(e.newValue) as { seededOn: string; db: Db };
+      if (!tableNames.every((t) => Array.isArray(parsed.db[t]))) return;
+      this.db = parsed.db;
+      for (const t of Object.keys(this.db)) this.emit({ table: t, type: 'reset' });
+    } catch { /* ignore a half-written value */ }
+  }
 
   private load(): Db {
     try {

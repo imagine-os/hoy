@@ -13,7 +13,8 @@ export interface StudioSettings {
   profile: { nit: string; address: string; whatsapp: string; email: string };
   /** 0 = Sunday … 6 = Saturday; null = closed. */
   openingHours: Record<string, OpeningHours | null>;
-  policies: { cancellationHours: number; waitlistClaimMin: number; lateGraceMin: number; noShowFee: number; pauseDaysPerYear: number; maxPausesPerYear: number };
+  /** Read by the customer app through src/modules/customer/policy.ts (cancel window, claim window, hold, pause cap, charge notice, lockout). */
+  policies: { cancellationHours: number; waitlistClaimMin: number; lateGraceMin: number; noShowFee: number; pauseDaysPerYear: number; maxPausesPerYear: number; paymentHoldMin: number; chargeNoticeDays: number; lockoutAttempts: number; lockoutMinutes: number };
   quietHours: { from: string; to: string };
   tax: { ivaPct: number; pricesIncludeIva: boolean; dianResolution: string; eInvoicing: boolean };
   integrations: Record<'wompi' | 'whatsapp' | 'email' | 'calendar', 'pending' | 'connected' | 'error'>;
@@ -24,16 +25,17 @@ export const DEFAULT_SETTINGS: StudioSettings = {
   studio: { ...tenant.studio },
   profile: { nit: '', address: tenant.contact.address, whatsapp: tenant.contact.whatsapp, email: tenant.contact.email },
   openingHours: { '0': null, '1': { open: '06:00', close: '20:00' }, '2': { open: '06:00', close: '20:00' }, '3': { open: '06:00', close: '20:00' }, '4': { open: '06:00', close: '20:00' }, '5': { open: '06:00', close: '20:00' }, '6': { open: '08:00', close: '13:00' } },
-  policies: { cancellationHours: 4, waitlistClaimMin: 30, lateGraceMin: 15, noShowFee: 0, pauseDaysPerYear: 30, maxPausesPerYear: 2 },
+  policies: { cancellationHours: 2, waitlistClaimMin: 30, lateGraceMin: 15, noShowFee: 0, pauseDaysPerYear: 30, maxPausesPerYear: 2, paymentHoldMin: 10, chargeNoticeDays: 3, lockoutAttempts: 5, lockoutMinutes: 15 },
   quietHours: { from: '21:00', to: '07:00' },
   tax: { ivaPct: 19, pricesIncludeIva: true, dianResolution: '', eInvoicing: false },
   integrations: { wompi: 'pending', whatsapp: 'pending', email: 'pending', calendar: 'pending' },
   features: { multipleLocations: false, noShowFee: false, holidayCalendar: true, walkInRegistration: true, autoCheckinOnSale: true },
 };
 
-interface TenantRow extends BaseRow { settings: Partial<StudioSettings> | null }
+export interface TenantRow extends BaseRow { settings: Partial<StudioSettings> | null }
 
-function merge(stored: Partial<StudioSettings> | null | undefined): StudioSettings {
+/** Stored partial → full settings with defaults. Exported so non-React code (customer policy) can read the same shape. */
+export function mergeSettings(stored: Partial<StudioSettings> | null | undefined): StudioSettings {
   const s = stored ?? {};
   return {
     studio: { ...DEFAULT_SETTINGS.studio, ...(s.studio ?? {}) },
@@ -53,7 +55,7 @@ export function useSettings() {
   const data = useData();
   const { rows, loading } = useTable<TenantRow>('tenants', { where: { id: tenant.id } });
   const row = rows[0];
-  const settings = useMemo(() => merge(row?.settings), [row]);
+  const settings = useMemo(() => mergeSettings(row?.settings), [row]);
   /** Replaces one section; returns { before, after } for the audit log. */
   const save = useCallback(async <K extends SettingsSection>(section: K, value: StudioSettings[K]) => {
     const before = settings[section];

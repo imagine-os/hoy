@@ -52,7 +52,7 @@ export const routes: RouteDef[] = [
   { ...base, path: '/app/booking/:id', element: h(BookedPage), spec: canvasSpecs['C-08'] },
   { ...base, path: '/app/booking/:id/change', element: h(BookedPage, { change: true }), spec: canvasSpecs['C-08b'] },
   { ...base, path: '/app/rate/:id', element: h(RatePage), spec: canvasSpecs['C-10'] },
-  { ...base, path: '/app/history', element: h(HistoryPage), spec: canvasSpecs['C-11'], nav: { labelKey: 'customer.nav.history', icon: '▤', order: 3 } },
+  { ...base, path: '/app/history', element: h(HistoryPage), spec: canvasSpecs['C-11'], nav: { labelKey: 'core.nav.history', icon: '▤', order: 3 } },
   { ...base, path: '/app/rules', element: h(RulesPage), spec: canvasSpecs['C-13'] },
   { ...base, path: '/app/faq', element: h(FaqPage, { page: 1 }), spec: canvasSpecs['C-14'] },
   { ...base, path: '/app/faq/2', element: h(FaqPage, { page: 2 }), spec: canvasSpecs['C-15'] },

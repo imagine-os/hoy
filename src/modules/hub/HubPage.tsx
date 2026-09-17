@@ -14,9 +14,9 @@ import { RoleSwitcher } from '../../components/molecule/RoleSwitcher/RoleSwitche
 import { Badge } from '../../components/atom/Badge/Badge';
 import './hub.css';
 
-const CARDS: { key: string; to: string; icon: string; role?: Role }[] = [
+const CARDS: { key: string; to: string; icon: string; role?: Role; cta?: string }[] = [
   { key: 'website', to: '/site', icon: '◎' },
-  { key: 'customer', to: '/app', icon: '☼', role: 'customer' },
+  { key: 'customer', to: '/auth/sign-in', icon: '☼', cta: 'hub.signin' },
   { key: 'teacher', to: '/teach', icon: '✦', role: 'teacher' },
   { key: 'manual', to: '/manual', icon: '▤' },
   { key: 'docs', to: '/docs', icon: '❡' },
@@ -57,7 +57,7 @@ export function HubPage() {
               <span className="hub-card-icon" aria-hidden>{c.icon}</span>
               <h3>{t(`hub.card.${c.key}`)}</h3>
               <p className="muted small grow">{t(`hub.card.${c.key}.body`)}</p>
-              <span className="hub-card-cta">{c.role ? t('hub.enterAs', { name: demoUserByRole(c.role).name }) : t('hub.open')} →</span>
+              <span className="hub-card-cta">{c.role ? t('hub.enterAs', { name: demoUserByRole(c.role).name }) : t(c.cta ?? 'hub.open')} →</span>
             </Card>
           ))}
 

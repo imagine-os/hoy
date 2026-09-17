@@ -4,7 +4,6 @@ import { useI18n } from '../../../i18n/I18nProvider';
 import { useSession } from '../../../auth/SessionProvider';
 import { useData, useTable } from '../../../data/DataContext';
 import type { UserRow } from '../../../data/schema';
-import { demoUserByRole } from '../../../auth/demoUsers';
 import { Card } from '../../../components/molecule/Card/Card';
 import { Button } from '../../../components/atom/Button/Button';
 import { Input } from '../../../components/atom/Input/Input';
@@ -62,8 +61,7 @@ export function SignUpPage() {
       await data.insert('user_roles', { user_id: user.id, role: 'customer', granted_by: null });
       await data.insert('consents', { user_id: user.id, legal_document_id: 'leg_terms_es', accepted_at: now, ip: null });
       await data.insert('consents', { user_id: user.id, legal_document_id: 'leg_privacy_es', accepted_at: now, ip: null });
-      // SHARED-CHANGE REQUEST: SessionProvider only knows demo users, so the demo continues as the demo customer.
-      switchUser('customer');
+      switchUser(user.id); // SessionProvider resolves any users row (profile + role) — the session is the new account.
       nav('/app/intention');
     } finally { setBusy(false); }
   };
@@ -110,7 +108,6 @@ export function SignUpPage() {
             </label>
             {errors.consent && <p className="field-msg field-error" role="alert">{errors.consent}</p>}
             {dup && <Notice tone="warn" title={t('customer.signup.dup')} action={<Link to="/auth/sign-in"><Button size="sm" variant="secondary">{t('customer.signin.cta')}</Button></Link>}>{t('customer.signup.dup.body')}</Notice>}
-            <Notice tone="info">{t('customer.signup.demoNote', { name: demoUserByRole('customer').name })}</Notice>
             <Button type="submit" block size="lg" loading={busy}>{t('customer.signup.cta')}</Button>
           </form>
         </Card>

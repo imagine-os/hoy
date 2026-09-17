@@ -16,7 +16,7 @@ import { Toggle } from '../../components/atom/Toggle/Toggle';
 import './dev.css';
 
 /** Pages known to render through useLayout. Add yours here when you wire it. */
-const WIRED = new Set(['C-01', 'W-01']);
+const WIRED = new Set(['C-01', 'W-01', 'S-02', 'M-01', 'C-02', 'C-02b', 'C-03', 'C-19']);
 
 function allSpecs(): PageSpec[] {
   const m = new Map<string, PageSpec>(Object.entries(canvasSpecs));
