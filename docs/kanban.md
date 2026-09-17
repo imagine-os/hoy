@@ -8,9 +8,9 @@ _Updated every turn. Codes reference `src/specs/canvasSpecs.ts`._
 - C-10 Rate class · C-11 History · C-13 Rules · C-14/15 FAQ · C-16 Invite · C-17 Gift card · C-18 Teachers · C-19 Profile
 - C-20 Waitlist · C-21 OTP recovery · C-22 Manage membership · C-23 Events · C-24 Notifications · C-25 More
 - E-01..E-04 edge states · A-01..A-06 auth flows (real Supabase auth later)
-- S-02 Front desk check-in (real) · S-03 Teacher app (real) · S-04 Register & payment (real)
-- M-01 Admin dashboard (real metrics) · M-02 Content · M-04 Email designer · M-05 WhatsApp automations
-- M-06 CRM member 360 · M-07 Activity log · M-08 Studio settings
+- S-02/S-04 follow-ups: offline queue for check-ins, face templates (never), real Wompi link
+- M-04 MJML designer + real provider · M-05 Meta approval API · M-09 Wompi payouts + DIAN CUFE emission
+- M-02 scheduled publishing + media library · M-06 duplicate merge · M-07 signed CSV
 - Supabase provider (auth, realtime) · Wompi payments/payroll · WhatsApp CRM · email designer
 - Live cursors / presence (nice to have)
 - Operations manual content (`docs/ops-manual/`)
@@ -21,6 +21,17 @@ _Updated every turn. Codes reference `src/specs/canvasSpecs.ts`._
 - Screenshot pass (`npm run screenshots`) for the v0 routes
 
 ## Done
+
+### Staff & admin (0003, v0.2.0)
+- S-01 role home with live numbers (next class, arrivals, open shifts, payments, recent activity)
+- S-02 front desk check-in: today strip, roster, search, one-tap check-in, walk-in, late/no-show, waitlist promote, `useLayout` wired
+- S-04 register & take payment: who · what (pricing.ts) · how, IVA from M-08, receipt, auto check-in
+- S-03 teacher app: home, `/teach/class/:id` attendance + notes, `/teach/payroll` (placeholder until Wompi), `/teach/profile`
+- M-01 dashboard: KPI row, occupancy chart, audited feature switches, audit trail, `useLayout` wired
+- M-02 content CMS (templates, teachers, modalities, rooms) · M-04 email studio · M-05 WhatsApp automations
+- M-06 CRM member 360 · M-07 activity log · M-08 settings & policies (`tenants.settings`) · M-09 finance (new code)
+- Components: EmptyState, RosterRow, BarList, PhoneBubble, Timeline, EmailPreview, Receipt (with metas)
+- Every staff write appends to `audit_log` via `useAudit`
 - Repo bootstrap: rules (`CLAUDE.md`), reference material, docs skeleton, Pages workflow
 - D-01 design tokens (light/dark, wireframe skin) · ThemeProvider
 - i18n core (`useT`, ES/EN, fallback, LangToggle)
