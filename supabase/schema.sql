@@ -65,7 +65,11 @@ alter table public.feature_flags enable row level security;
 create policy "feature_flags: tenant read" on public.feature_flags for select using (tenant_id = public.current_tenant_id());
 create policy "feature_flags: staff write" on public.feature_flags for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
 
--- core · Terms, privacy and policies, versioned.
+-- core · Terms, privacy, waiver, cancellation, refunds and house rules — bilingual and versioned.
+-- access:
+--   · anon + customer: read where status = published
+--   · admin: write (a new version is a new row; a published row is never edited in place)
+--   · counsel review: status stays draft until the owner publishes
 create table if not exists public.legal_documents (
   -- Primary key
   id uuid primary key default gen_random_uuid(),
@@ -73,11 +77,22 @@ create table if not exists public.legal_documents (
   tenant_id uuid not null references public.tenants(id),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  kind text not null check (kind in ('terms', 'privacy', 'waiver', 'policy')),
+  kind text not null check (kind in ('terms', 'privacy', 'waiver', 'cancellation', 'refunds', 'house-rules')),
+  -- kind + version, e.g. terms-1.0
+  slug text not null,
+  -- semver-ish, e.g. 1.0
   version text not null,
-  locale text not null,
-  title text not null,
-  body_md text not null,
+  status text not null check (status in ('draft', 'published')),
+  -- the date the version governs from
+  effective_from date not null,
+  -- {es,en}
+  title jsonb not null,
+  -- {es,en} one line
+  summary jsonb not null,
+  -- {es,en} markdown; {{policy.*}} tokens are resolved from M-08 at render time
+  body_md jsonb not null,
+  -- the member must accept this version (waiver, terms)
+  requires_acceptance boolean not null default false,
   published_at timestamptz
 );
 create index if not exists legal_documents_tenant_idx on public.legal_documents(tenant_id);
@@ -107,6 +122,72 @@ alter table public.consents enable row level security;
 create policy "consents: tenant read" on public.consents for select using (tenant_id = public.current_tenant_id());
 create policy "consents: staff write" on public.consents for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
 
+-- core · Acceptance of one concrete document version (A-06): what the person signed and when.
+-- access:
+--   · customer: insert + read own rows (user_id = auth.uid()); never update nor delete
+--   · admin/finance: read all (proof of the signed waiver)
+--   · append-only: a new acceptance is a new row, so the history survives a new version
+create table if not exists public.legal_acceptances (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  user_id uuid not null references public.users(id) on delete set null,
+  document_id uuid not null references public.legal_documents(id) on delete set null,
+  -- denormalised legal_documents.kind, so “did they sign the waiver?” is one query
+  kind text not null,
+  version text not null,
+  accepted_at timestamptz not null,
+  channel text not null check (channel in ('app', 'website', 'front_desk', 'import')),
+  ip text
+);
+create index if not exists legal_acceptances_tenant_idx on public.legal_acceptances(tenant_id);
+create index if not exists legal_acceptances_user_id_idx on public.legal_acceptances(user_id);
+create index if not exists legal_acceptances_document_id_idx on public.legal_acceptances(document_id);
+create trigger legal_acceptances_touch before update on public.legal_acceptances for each row execute function public.touch_updated_at();
+alter table public.legal_acceptances enable row level security;
+create policy "legal_acceptances: tenant read" on public.legal_acceptances for select using (tenant_id = public.current_tenant_id());
+create policy "legal_acceptances: staff write" on public.legal_acceptances for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
+-- core · One art slot per place in the app and the site (M-02d): what is missing, in which ratio and with which brief.
+-- access:
+--   · anon + customer: read where status = ready
+--   · coordinator/admin: write (M-02d media library)
+--   · url points at storage; HoyOS never stores the binary in a row
+create table if not exists public.media_assets (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  -- stable key a component asks for, e.g. class.hero
+  slot_key text not null,
+  kind text not null check (kind in ('photo', 'video', 'illustration')),
+  -- CSS aspect-ratio, e.g. 16 / 9
+  ratio text not null,
+  -- {es,en} where the slot shows
+  label jsonb not null,
+  -- {es,en} alternative text
+  alt jsonb not null,
+  -- {es,en} what to shoot
+  brief jsonb not null,
+  -- movement tint of the empty slot
+  movement text check (movement in ('enraiza', 'fluye', 'arde', 'libera')),
+  url text,
+  -- photographer / licence
+  credit text,
+  status text not null check (status in ('pending', 'ready')),
+  sort integer not null
+);
+create index if not exists media_assets_tenant_idx on public.media_assets(tenant_id);
+create trigger media_assets_touch before update on public.media_assets for each row execute function public.touch_updated_at();
+alter table public.media_assets enable row level security;
+create policy "media_assets: tenant read" on public.media_assets for select using (tenant_id = public.current_tenant_id());
+create policy "media_assets: staff write" on public.media_assets for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
 -- core · Club rules (C-13), about-HOY copy and guides, editable without a deploy.
 -- access:
 --   · customer + anon: read where published = true
@@ -134,7 +215,9 @@ create table if not exists public.content_articles (
   -- must be read (safety)
   required boolean not null default false,
   sort integer not null,
-  published boolean not null default false
+  published boolean not null default false,
+  -- scheduled publication; published + a future publish_at = scheduled (M-02a)
+  publish_at timestamptz
 );
 create index if not exists content_articles_tenant_idx on public.content_articles(tenant_id);
 create trigger content_articles_touch before update on public.content_articles for each row execute function public.touch_updated_at();
@@ -764,6 +847,75 @@ create trigger invites_touch before update on public.invites for each row execut
 alter table public.invites enable row level security;
 create policy "invites: tenant read" on public.invites for select using (tenant_id = public.current_tenant_id());
 create policy "invites: staff write" on public.invites for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
+-- commerce · One monthly teacher payroll run (M-09a): period, status, total and payout method.
+-- access:
+--   · finance/admin: full control
+--   · teacher: read runs that contain a line of their own (S-03)
+--   · a run in status paid is immutable; a correction is a new adjustment line in the next run
+create table if not exists public.payroll_runs (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  period_start date not null,
+  period_end date not null,
+  status text not null check (status in ('draft', 'approved', 'paid')),
+  -- COP, sum of payroll_lines.amount
+  total integer not null,
+  method text not null check (method in ('wompi', 'transfer', 'cash')),
+  approved_by uuid references public.users(id) on delete set null,
+  approved_at timestamptz,
+  paid_at timestamptz,
+  -- Wompi payout reference (simulated today)
+  provider_ref text,
+  notes text
+);
+create index if not exists payroll_runs_tenant_idx on public.payroll_runs(tenant_id);
+create index if not exists payroll_runs_approved_by_idx on public.payroll_runs(approved_by);
+create trigger payroll_runs_touch before update on public.payroll_runs for each row execute function public.touch_updated_at();
+alter table public.payroll_runs enable row level security;
+create policy "payroll_runs: tenant read" on public.payroll_runs for select using (tenant_id = public.current_tenant_id());
+create policy "payroll_runs: staff write" on public.payroll_runs for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
+-- commerce · One class taught, bonus or adjustment inside a run (M-09b, S-03).
+-- access:
+--   · finance/admin: full control while the run is draft
+--   · teacher: read own lines (teacher_id resolves to their teachers row)
+--   · nobody: lines of a paid run are read-only
+create table if not exists public.payroll_lines (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  run_id uuid not null references public.payroll_runs(id) on delete set null,
+  teacher_id uuid not null references public.teachers(id) on delete set null,
+  -- null for a bonus, an adjustment or a month older than the session window
+  class_session_id uuid references public.class_sessions(id) on delete set null,
+  kind text not null check (kind in ('class', 'bonus', 'adjustment')),
+  -- COP, teachers.rate_per_class at the time of the run
+  rate integer not null,
+  -- COP, signed: an adjustment may be negative
+  amount integer not null,
+  -- checked-in students, for the statement
+  attendees integer,
+  -- set when this teacher is settled; a run may be paid teacher by teacher (M-09b)
+  paid_at timestamptz,
+  paid_method text check (paid_method in ('wompi', 'transfer', 'cash')),
+  note text
+);
+create index if not exists payroll_lines_tenant_idx on public.payroll_lines(tenant_id);
+create index if not exists payroll_lines_run_id_idx on public.payroll_lines(run_id);
+create index if not exists payroll_lines_teacher_id_idx on public.payroll_lines(teacher_id);
+create index if not exists payroll_lines_class_session_id_idx on public.payroll_lines(class_session_id);
+create trigger payroll_lines_touch before update on public.payroll_lines for each row execute function public.touch_updated_at();
+alter table public.payroll_lines enable row level security;
+create policy "payroll_lines: tenant read" on public.payroll_lines for select using (tenant_id = public.current_tenant_id());
+create policy "payroll_lines: staff write" on public.payroll_lines for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
 
 -- comms · Versioned transactional emails (M-04).
 create table if not exists public.email_templates (

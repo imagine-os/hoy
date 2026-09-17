@@ -6,6 +6,9 @@ import { canvasSpecs } from '../../specs/canvasSpecs';
 import { rng } from './rng';
 import { NOW, base, dateOnly, iso, modalities, plans, rooms, teachers } from './catalog';
 import { contentArticles, events as seedEvents, faqEntries } from './content';
+import { currentLegal, legalDocuments } from './legal';
+import { mediaAssets } from './media';
+import { buildPayroll } from './payroll';
 
 const FIRST = ['Camila', 'Nicolás', 'Sara', 'Tomás', 'Mariana', 'Julián', 'Daniela', 'Sebastián', 'Gabriela', 'Alejandro', 'Antonia', 'Samuel', 'Salomé', 'Emilio', 'Luciana', 'Martín', 'Elena', 'David', 'Paulina', 'Jerónimo', 'Amelia', 'Simón', 'Renata', 'Lucas', 'Violeta', 'Benjamín', 'Catalina', 'Joaquín', 'Isabel', 'Gael'];
 const LAST = ['García', 'Rodríguez', 'Martínez', 'López', 'González', 'Hernández', 'Pérez', 'Sánchez', 'Ramírez', 'Torres', 'Flores', 'Rivera', 'Gómez', 'Díaz', 'Cruz', 'Morales', 'Reyes', 'Jiménez', 'Ruiz', 'Álvarez', 'Castro', 'Vargas', 'Romero', 'Suárez', 'Moreno', 'Muñoz', 'Rojas', 'Medina', 'Guerrero', 'Cortés'];
@@ -203,12 +206,24 @@ export function buildSeed(): Record<string, BaseRow[]> {
     db.feature_flags.push({ ...base(`ff_${spec.code}_${t.label}`.replace(/[^a-z0-9_]/gi, '_').toLowerCase(), 100), key: `${spec.code}.${t.label.toLowerCase().replace(/[^a-z0-9]+/g, '_')}`, page_code: spec.code, label: t.label, enabled: t.on, audience: 'all' });
   }
 
-  // legal + consents
-  db.legal_documents.push(
-    { ...base('leg_terms_es', 100), kind: 'terms', version: '1.0', locale: 'es', title: 'Términos y condiciones', body_md: '# Términos y condiciones\n\n_Borrador. Sustituir por el texto legal revisado._', published_at: iso(NOW) },
-    { ...base('leg_privacy_es', 100), kind: 'privacy', version: '1.0', locale: 'es', title: 'Política de privacidad', body_md: '# Política de privacidad\n\nTratamiento de datos conforme a la Ley 1581 de 2012 y el Decreto 1377 de 2013.\n\n_Borrador._', published_at: iso(NOW) },
-  );
+  // ---- legal library (A-06): six kinds, bilingual, versioned ----
+  db.legal_documents.push(...legalDocuments);
   for (const uid of customerIds) { db.consents.push({ ...base(`con_${uid}_t`, 30), user_id: uid, legal_document_id: 'leg_terms_es', accepted_at: iso(NOW), ip: null }); }
+  // Acceptance of the waiver version in force: every member signed it on their first visit.
+  const waiver = currentLegal('waiver');
+  customerIds.forEach((uid, i) => {
+    const signedAt = new Date(NOW.getTime() - r.int(20, 180) * 864e5);
+    db.legal_acceptances.push({ ...base(`lac_${uid}_waiver`, r.int(20, 180)), user_id: uid, document_id: waiver.id, kind: waiver.kind, version: waiver.version, accepted_at: iso(signedAt), channel: i % 4 === 0 ? 'front_desk' : 'app', ip: null });
+    db.legal_acceptances.push({ ...base(`lac_${uid}_terms`, r.int(20, 180)), user_id: uid, document_id: 'leg_terms_es', kind: 'terms', version: '1.0', accepted_at: iso(signedAt), channel: 'app', ip: null });
+  });
+
+  // ---- media library (M-02d): one pending slot per known place art belongs ----
+  db.media_assets.push(...mediaAssets);
+
+  // ---- teacher payroll (M-09a / S-03): three months, the latest still a draft ----
+  const payroll = buildPayroll({ sessions, bookings, templates: db.class_templates as (BaseRow & { teacher_id: string; weekday: number; active: boolean })[], teachers: db.teachers as TeacherRow[] });
+  db.payroll_runs.push(...payroll.runs);
+  db.payroll_lines.push(...payroll.lines);
 
   db.gift_cards.push(
     { ...base('gc_1', 10), code: 'HOY-REGALO-2401', buyer_user_id: 'usr_c03', recipient_name: 'Ana', recipient_contact: '+57 300 000 0001', amount: 110000, balance: 110000, deliver_at: iso(NOW), redeemed_by: null, status: 'sent' },
