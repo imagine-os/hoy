@@ -1,0 +1,11 @@
+.teach-h1 { font-size: var(--fs-2xl); }
+.teach-head { display: flex; flex-direction: column; gap: var(--sp-2); }
+.teach-head-time { font-family: var(--font-heading); font-size: var(--fs-lg); }
+.teach-head-time::first-letter { text-transform: uppercase; }
+.teach-head .capmeter { color: color-mix(in srgb, var(--color-text-on-primary) 80%, transparent); }
+.teach-todayrow { border-bottom: 1px solid var(--color-border); }
+.teach-todayrow:last-child { border-bottom: 0; }
+.teach-month { min-width: 150px; text-align: center; text-transform: capitalize; }
+.teach-payline { display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-3); border-bottom: 1px solid var(--color-border); }
+.teach-payline:last-child { border-bottom: 0; }
+.teach textarea.input { min-height: 72px; resize: vertical; }

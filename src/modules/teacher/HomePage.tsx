@@ -1,38 +1,113 @@
+import { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useI18n } from '../../i18n/I18nProvider';
-import { useSession } from '../../auth/SessionProvider';
-import { useTable } from '../../data/DataContext';
-import type { TeacherRow } from '../../data/schema';
-import { formatCOP } from '../../i18n/format';
+import { useData, useTable } from '../../data/DataContext';
+import type { BookingRow, ClassSessionRow } from '../../data/schema';
+import { formatCOP, formatDate, formatTime, isSameDay } from '../../i18n/format';
 import { StatTile } from '../../components/molecule/StatTile/StatTile';
 import { Card } from '../../components/molecule/Card/Card';
+import { Button } from '../../components/atom/Button/Button';
+import { Select } from '../../components/atom/Input/Input';
+import { Field } from '../../components/molecule/Field/Field';
+import { Badge } from '../../components/atom/Badge/Badge';
 import { ClassRow } from '../../components/molecule/ClassRow/ClassRow';
+import { ClassCard } from '../../components/organism/ClassCard/ClassCard';
+import { Drawer } from '../../components/organism/Drawer/Drawer';
+import { EmptyState } from '../../components/molecule/EmptyState/EmptyState';
 import { useSessionsJoined } from '../website/hooks';
+import { useAudit } from '../staff/audit';
+import { useTeacherSelf } from './useTeacherSelf';
+import './teacher.css';
 
-/** S-03 Teacher home (first slice): my classes this week + payroll estimate. */
+/** S-03 Teacher home: next class, today's rosters, the week, substitution request and the payroll estimate. */
 export function TeacherHomePage() {
   const { t, lang } = useI18n();
   const nav = useNavigate();
-  const { user } = useSession();
-  const { rows: teachers } = useTable<TeacherRow>('teachers', { where: { user_id: user.id } });
-  const me = teachers[0];
-  const now = new Date(); const weekEnd = new Date(now); weekEnd.setDate(weekEnd.getDate() + 7);
-  const mine = useSessionsJoined((s) => !!me && s.teacher_id === me.id && new Date(s.starts_at) >= new Date(now.getTime() - 86400e3 * now.getDay()) && new Date(s.starts_at) <= weekEnd);
-  const students = mine.reduce((a, x) => a + x.session.booked_count, 0);
+  const data = useData();
+  const audit = useAudit('teacher_app');
+  const { me, linked, teachers, choose } = useTeacherSelf();
+  const now = new Date();
+  const weekEnd = new Date(now); weekEnd.setDate(weekEnd.getDate() + 7);
+  const meId = me?.id;
+  const mine = useSessionsJoined(useCallback((s: ClassSessionRow) => !!meId && s.teacher_id === meId && new Date(s.ends_at) >= new Date(Date.now() - 86400e3 * 7) && new Date(s.starts_at) <= weekEnd, [meId, weekEnd.getTime()]));
+  const upcoming = mine.filter((x) => x.session.status === 'scheduled' && new Date(x.session.ends_at) >= now);
+  const today = mine.filter((x) => isSameDay(x.session.starts_at, now) && x.session.status !== 'cancelled');
+  const week = upcoming.filter((x) => !isSameDay(x.session.starts_at, now));
+  const next = upcoming[0];
+  const todayIds = useMemo(() => today.map((x) => x.session.id), [today]);
+  const { rows: bookings } = useTable<BookingRow>('bookings', { where: { session_id: todayIds } });
+  const arrived = (id: string) => bookings.filter((b) => b.session_id === id && b.status === 'checked_in').length;
+  const monthTaught = mine.filter((x) => x.session.status === 'completed' && new Date(x.session.starts_at).getMonth() === now.getMonth()).length;
+  const [sub, setSub] = useState<{ open: boolean; session: string; reason: string; sent?: boolean }>({ open: false, session: '', reason: '' });
+
+  const requestSub = async () => {
+    const s = upcoming.find((x) => x.session.id === sub.session)?.session;
+    if (!s || !me) return;
+    await audit('substitution.request', 'class_sessions', s.id, { teacher_id: me.id, teacher: me.display_name, reason: sub.reason, starts_at: s.starts_at, title: s.title });
+    await data.insert('message_log', { user_id: null, channel: 'whatsapp', template_key: 'substitution_request', automation_id: null, status: 'queued', sent_at: null, payload: { to: 'coordinator', teacher: me.display_name, class: s.title, starts_at: s.starts_at, reason: sub.reason } });
+    setSub({ ...sub, sent: true });
+  };
+
   return (
-    <div className="container page stack">
-      <h1 style={{ fontSize: 'var(--fs-2xl)' }}>{t('teacher.home.title')}</h1>
-      {!me && <Card tone="muted"><p className="small muted">{t('teacher.home.notLinked')}</p></Card>}
-      <div className="grid grid-3">
-        <StatTile label={t('teacher.home.classes')} value={mine.length} />
-        <StatTile label={t('teacher.home.payroll')} value={formatCOP(mine.filter((x) => x.session.status !== 'cancelled').length * (me?.rate_per_class ?? 0), lang)} />
-        <StatTile label={t('teacher.home.rating')} value={me?.rating_avg ? `★ ${me.rating_avg.toFixed(1)}` : '—'} />
+    <div className="container page stack teach">
+      <div className="row-between wrap">
+        <h1 className="teach-h1">{t('teacher.home.title')}</h1>
+        {me && <span className="small muted">{me.display_name}</span>}
       </div>
-      <div className="eyebrow">{t('teacher.home.week')} · {t('teacher.home.students', { n: students })}</div>
-      <Card padding="sm">
-        {mine.length === 0 && <p className="muted small" style={{ padding: 12 }}>{t('teacher.home.empty')}</p>}
-        {mine.map(({ session: s, modality: m }) => <ClassRow key={s.id} title={s.title} teacher={new Date(s.starts_at).toLocaleDateString(lang === 'es' ? 'es-CO' : 'en-US', { weekday: 'long', day: 'numeric' })} startsAt={s.starts_at} durationMin={m?.duration_min ?? 60} movement={m?.movement ?? 'fluye'} booked={s.booked_count} capacity={s.capacity} status={s.status} onClick={() => nav(`/teach/class/${s.id}`)} />)}
-      </Card>
+      {!linked && (
+        <Card tone="muted">
+          <p className="small muted" style={{ marginBottom: 8 }}>{t('teacher.home.notLinked')}</p>
+          <Field label={t('teacher.home.viewAs')}>{(id) => <Select id={id} value={me?.id ?? ''} onChange={(e) => choose(e.target.value || null)}><option value="">—</option>{teachers.map((x) => <option key={x.id} value={x.id}>{x.display_name}</option>)}</Select>}</Field>
+        </Card>
+      )}
+      {me && (
+        <>
+          <section className="stack-sm">
+            <div className="eyebrow">{t('teacher.home.next')}</div>
+            {next
+              ? <ClassCard variant="next" title={next.session.title} teacher={`${next.session.booked_count}/${next.session.capacity} · ${t('teacher.home.arrived', { n: arrived(next.session.id) })}`} startsAt={next.session.starts_at} endsAt={next.session.ends_at} movement={next.modality?.movement ?? 'fluye'} booked={next.session.booked_count} capacity={next.session.capacity} cta={{ label: t('teacher.home.openRoster'), onClick: () => nav(`/teach/class/${next.session.id}`) }} />
+              : <EmptyState compact title={t('teacher.home.noNext')} body={t('teacher.home.noNext.body')} />}
+          </section>
+
+          <div className="grid grid-3">
+            <StatTile label={t('teacher.home.today')} value={today.length} />
+            <StatTile label={t('teacher.home.taughtMonth')} value={monthTaught} />
+            <StatTile label={t('teacher.home.payroll')} value={formatCOP(monthTaught * (me.rate_per_class ?? 0), lang)} hint={t('teacher.home.payroll.hint')} />
+          </div>
+
+          <section className="stack-sm">
+            <div className="row-between"><div className="eyebrow">{t('core.common.today')}</div><span className="xs muted">{formatDate(now.toISOString(), lang)}</span></div>
+            <Card padding="sm">
+              {today.length === 0 && <p className="muted small" style={{ padding: 12 }}>{t('teacher.home.emptyToday')}</p>}
+              {today.map(({ session: s, modality: m }) => (
+                <div key={s.id} className="teach-todayrow">
+                  <ClassRow title={s.title} teacher={t('teacher.home.arrivedOf', { n: arrived(s.id), total: s.booked_count })} startsAt={s.starts_at} durationMin={m?.duration_min ?? 60} movement={m?.movement ?? 'fluye'} booked={s.booked_count} capacity={s.capacity} status={s.status} onClick={() => nav(`/teach/class/${s.id}`)} />
+                </div>
+              ))}
+            </Card>
+          </section>
+
+          <section className="stack-sm">
+            <div className="row-between"><div className="eyebrow">{t('teacher.home.week')}</div><Button size="sm" variant="ghost" onClick={() => setSub({ open: true, session: upcoming[0]?.session.id ?? '', reason: '' })}>{t('teacher.home.sub')}</Button></div>
+            <Card padding="sm">
+              {week.length === 0 && <p className="muted small" style={{ padding: 12 }}>{t('teacher.home.empty')}</p>}
+              {week.map(({ session: s, modality: m }) => <ClassRow key={s.id} title={s.title} teacher={formatDate(s.starts_at, lang, { weekday: 'long', day: 'numeric' })} startsAt={s.starts_at} durationMin={m?.duration_min ?? 60} movement={m?.movement ?? 'fluye'} booked={s.booked_count} capacity={s.capacity} status={s.status} onClick={() => nav(`/teach/class/${s.id}`)} />)}
+            </Card>
+          </section>
+        </>
+      )}
+
+      <Drawer open={sub.open} onClose={() => setSub({ ...sub, open: false })} side="bottom" title={t('teacher.home.sub')}>
+        {sub.sent ? <EmptyState compact title={t('teacher.home.sub.sent')} body={t('teacher.home.sub.sent.body')} action={<Button size="sm" onClick={() => setSub({ open: false, session: '', reason: '' })}>{t('core.common.close')}</Button>} /> : (
+          <div className="stack-sm">
+            <p className="small muted">{t('teacher.home.sub.body')}</p>
+            <Field label={t('teacher.home.sub.class')}>{(id) => <Select id={id} value={sub.session} onChange={(e) => setSub({ ...sub, session: e.target.value })}>{upcoming.map(({ session: s }) => <option key={s.id} value={s.id}>{formatDate(s.starts_at, lang)} {formatTime(s.starts_at, lang)} · {s.title}</option>)}</Select>}</Field>
+            <Field label={t('teacher.home.sub.reason')}>{(id) => <textarea id={id} className="input" rows={3} value={sub.reason} onChange={(e) => setSub({ ...sub, reason: e.target.value })} />}</Field>
+            <div className="row"><Badge tone="warn">{t('teacher.home.sub.rule')}</Badge></div>
+            <Button block disabled={!sub.session || !sub.reason.trim()} onClick={requestSub}>{t('teacher.home.sub.send')}</Button>
+          </div>
+        )}
+      </Drawer>
     </div>
   );
 }
