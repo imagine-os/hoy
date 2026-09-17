@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { ThemeProvider } from '../design/ThemeProvider';
 import { I18nProvider } from '../i18n/I18nProvider';
@@ -23,12 +24,15 @@ export function App() {
             <PolicySync />
             <HashRouter>
               <ScrollToTop />
-              <Routes>
-                {allRoutes.map((r) => (
-                  <Route key={r.path} path={r.path} element={<RequireRole roles={r.roles}>{withShell(r, r.element)}</RequireRole>} />
-                ))}
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
+              {/* The one boundary every lazily-loaded module resolves under (src/app/lazyPage.ts). */}
+              <Suspense fallback={<div className="lazy-fallback" aria-busy="true" />}>
+                <Routes>
+                  {allRoutes.map((r) => (
+                    <Route key={r.path} path={r.path} element={<RequireRole roles={r.roles}>{withShell(r, r.element)}</RequireRole>} />
+                  ))}
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </Suspense>
               <DevTools />
             </HashRouter>
           </SessionProvider>

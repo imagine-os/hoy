@@ -2,7 +2,7 @@ import { NavLink, useNavigate, useParams } from 'react-router-dom';
 import { Select } from '../../components/atom/Input/Input';
 import { useI18n } from '../../i18n/I18nProvider';
 import { MarkdownViewer } from '../../components/organism/MarkdownViewer/MarkdownViewer';
-import { assetUrl, docByPath, docGroups, docs, docsRoute } from './docsIndex';
+import { assetUrl, docByPath, docGroups, docs, docsRoute, useDocSource } from './docsIndex';
 import { ChangelogEntry, ChangelogList, KanbanBoard, PromptEntry, PromptList, ScreenshotGallery } from './views';
 import './docs.css';
 
@@ -13,6 +13,7 @@ export function DocsBrowser() {
   const key = splat.replace(/\/$/, '').replace(/\.md$/, '');
   const path = key ? `docs/${key}.md` : 'docs/README.md';
   const doc = docByPath(path);
+  const source = useDocSource(doc?.path);
   const groups = docGroups();
   const navigate = useNavigate();
   const current = `/docs${key ? `/${key}` : ''}`;
@@ -22,10 +23,11 @@ export function DocsBrowser() {
   else if (key === 'prompts') main = <><h1>{t('docs.group.prompts')}</h1><PromptList entries={docs.filter((d) => /^docs\/prompts\/\d{4}-/.test(d.path))} /></>;
   else if (key === 'screenshots') main = <><h1>{t('docs.group.screenshots')}</h1><ScreenshotGallery /></>;
   else if (!doc) main = <p className="muted">{t('core.common.empty')} — {path}</p>;
-  else if (path === 'docs/kanban.md') main = <><h1>{doc.title}</h1><p className="muted small">{t('docs.kanban.intro')}</p><KanbanBoard source={doc.source} /></>;
   else if (/^docs\/changelog\/\d{4}-/.test(path)) main = <ChangelogEntry doc={doc} />;
   else if (/^docs\/prompts\/\d{4}-/.test(path)) main = <PromptEntry doc={doc} />;
-  else main = <MarkdownViewer source={doc.source} path={doc.path} resolveAsset={assetUrl} resolveLink={docsRoute} />;
+  else if (source === undefined) main = <p className="muted small">{t('core.common.loading')}</p>;
+  else if (path === 'docs/kanban.md') main = <><h1>{doc.title}</h1><p className="muted small">{t('docs.kanban.intro')}</p><KanbanBoard source={source} /></>;
+  else main = <MarkdownViewer source={source} path={doc.path} resolveAsset={assetUrl} resolveLink={docsRoute} />;
 
   const wide = key === 'kanban' || /^prompts\/\d{4}-/.test(key);
   return (

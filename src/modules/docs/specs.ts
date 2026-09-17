@@ -6,7 +6,7 @@ export const docsSpec = defineSpec({
   layout: ['DocsSidebar (grouped: Overview, Rules, Architecture, Data model, Flow map, Kanban, Changelog, Prompts, Pages, Screenshots, Manual)', 'MarkdownViewer', 'KanbanBoard (lanes × columns)', 'ChangelogList / ChangelogEntry (newest first, header as definition grid)', 'PromptEntry (prompt | response side by side)', 'ScreenshotGallery (docs/screenshots/<code>/)'],
   data: ['docs_entries'], roles: EVERYONE,
   logic: [
-    'import.meta.glob loads every docs/**/*.md as raw text and every image as a bundled URL at build time (works under base "./").',
+    'import.meta.glob indexes every docs/**/*.md at build time (title and header meta via scripts/lib/docmeta.mjs) and every image as a bundled URL; a doc body is fetched as its own chunk when opened (works under base "./").',
     'Relative images resolve to bundled URLs; .md links become routes; manual chapters route to /manual/<slug>.',
     'Kanban: `## Backlog|Doing|Done|Blocked` are columns; any other `##` is a lane whose `###` are its columns.',
     'Changelog and prompt lists sort by file number descending (newest first).',

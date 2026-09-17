@@ -4,7 +4,7 @@ import { useI18n } from '../../i18n/I18nProvider';
 import { MarkdownViewer } from '../../components/organism/MarkdownViewer/MarkdownViewer';
 import { Card } from '../../components/molecule/Card/Card';
 import { Badge, type BadgeTone } from '../../components/atom/Badge/Badge';
-import { assetUrl, docsRoute, headerMeta, screenshotGroups, type DocEntry } from './docsIndex';
+import { assetUrl, docsRoute, screenshotGroups, useDocSource, useDocSources, type DocEntry } from './docsIndex';
 
 const CODE = /\b([A-Z]{1,3}-\d{2}[a-z]?)\b/g;
 
@@ -64,11 +64,18 @@ export function KanbanBoard({ source }: { source: string }) {
 // ---------- Changelog ----------
 const HEADER_KEYS = new Set(['version', 'date', 'prompt', 'intent', 'decision', 'rejected', 'files']);
 
-export function ChangelogEntry({ doc, compact = false }: { doc: DocEntry; compact?: boolean }) {
-  const meta = headerMeta(doc.source);
-  const lines = doc.source.split('\n');
+/** Body of a changelog entry: the markdown after the `key: value` header block. */
+function bodyAfterHeader(source: string): string {
+  const lines = source.split('\n');
   let i = 0; while (i < lines.length && /^\w+:\s/.test(lines[i]) && HEADER_KEYS.has(lines[i].split(':')[0])) i++;
-  const rest = lines.slice(i).join('\n').trim();
+  return lines.slice(i).join('\n').trim();
+}
+
+export function ChangelogEntry({ doc, compact = false }: { doc: DocEntry; compact?: boolean }) {
+  const { t } = useI18n();
+  const meta = doc.meta;
+  const source = useDocSource(compact ? undefined : doc.path);
+  const rest = source === undefined ? undefined : bodyAfterHeader(source);
   const promptTo = meta.prompt ? docsRoute(meta.prompt) : undefined;
   return (
     <Card title={<span className="row wrap"><Link to={docsRoute(doc.path)!}>{doc.title}</Link>{meta.version && <Badge tone="primary">v{meta.version}</Badge>}{meta.date && <Badge>{meta.date}</Badge>}</span>}>
@@ -76,6 +83,7 @@ export function ChangelogEntry({ doc, compact = false }: { doc: DocEntry; compac
         {['intent', 'decision', 'rejected', 'files'].filter((k) => meta[k]).map((k) => <Fragment key={k}><dt className="eyebrow">{k}</dt><dd className={k === 'files' ? 'mono xs' : ''}>{withCodes(meta[k])}</dd></Fragment>)}
         {promptTo && <><dt className="eyebrow">prompt</dt><dd><Link to={promptTo} className="mono xs">{meta.prompt}</Link></dd></>}
       </dl>
+      {!compact && rest === undefined && <p className="muted small">{t('core.common.loading')}</p>}
       {!compact && rest && <MarkdownViewer source={rest} path={doc.path} resolveAsset={assetUrl} resolveLink={docsRoute} />}
     </Card>
   );
@@ -90,9 +98,11 @@ export function ChangelogList({ entries }: { entries: DocEntry[] }) {
 // ---------- Prompt log ----------
 export function PromptEntry({ doc }: { doc: DocEntry }) {
   const { t } = useI18n();
-  const m = doc.source.match(/^##\s+(Response|Respuesta)\b.*$/m);
-  const prompt = m ? doc.source.slice(0, m.index) : doc.source;
-  const response = m ? doc.source.slice(m.index!) : '';
+  const source = useDocSource(doc.path);
+  if (source === undefined) return <p className="muted small">{t('core.common.loading')}</p>;
+  const m = source.match(/^##\s+(Response|Respuesta)\b.*$/m);
+  const prompt = m ? source.slice(0, m.index) : source;
+  const response = m ? source.slice(m.index!) : '';
   return (
     <div className="prompt-entry">
       <section className="prompt-col"><div className="eyebrow prompt-label">{t('docs.prompts.prompt')}</div><MarkdownViewer source={prompt} path={doc.path} resolveAsset={assetUrl} resolveLink={docsRoute} /></section>
@@ -104,11 +114,12 @@ export function PromptEntry({ doc }: { doc: DocEntry }) {
 export function PromptList({ entries }: { entries: DocEntry[] }) {
   const { t } = useI18n();
   const sorted = [...entries].sort((a, b) => b.path.localeCompare(a.path));
+  const sources = useDocSources(sorted.map((d) => d.path));
   return (
     <div className="stack">
       <p className="muted small">{t('docs.prompts.intro', { n: sorted.length })}</p>
       {sorted.map((d) => {
-        const bullets = [...d.source.matchAll(/^- \*\*(\w+)\*\*:\s*(.+)$/gm)].map((x) => [x[1], x[2]] as const);
+        const bullets = [...(sources[d.path] ?? '').matchAll(/^- \*\*(\w+)\*\*:\s*(.+)$/gm)].map((x) => [x[1], x[2]] as const);
         return <Card key={d.path} title={<Link to={docsRoute(d.path)!}>{d.title}</Link>}><dl className="cl-grid">{bullets.map(([k, v]) => <Fragment key={k}><dt className="eyebrow">{k}</dt><dd>{withCodes(v.replace(/`/g, ''))}</dd></Fragment>)}</dl></Card>;
       })}
     </div>

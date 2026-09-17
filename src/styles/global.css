@@ -95,3 +95,7 @@ pre, table, img, svg, video, canvas, iframe { max-width: 100%; }
 .prose code { background: var(--color-surface-2); padding: .1em .35em; border-radius: var(--r-xs); }
 .prose pre code { background: none; padding: 0; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+
+/* Shown while a lazily-loaded module (docs, manual, dev tooling) fetches its chunk. Kept invisible: the chunk is
+   local and arrives in milliseconds; the page keeps its background instead of flashing a spinner. */
+.lazy-fallback { min-height: 40vh; }

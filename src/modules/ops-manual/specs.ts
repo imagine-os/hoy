@@ -17,7 +17,7 @@ export const manualSpec = defineSpec({
   ],
   data: ['docs_entries', 'tenants', 'profiles', 'memberships', 'class_sessions', 'teachers', 'bookings'], roles: EVERYONE,
   logic: [
-    'Chapters are docs/ops-manual/<lang>/<NN-slug>.md loaded with import.meta.glob at build time; the slug is shared across languages and adding a chapter needs no code change.',
+    'Chapters are docs/ops-manual/<lang>/<NN-slug>.md: the index (titles, parts, headings, decisions) is built at build time by scripts/lib/docmeta.mjs and each body loads on demand; the slug is shared across languages and adding a chapter needs no code change.',
     'Front matter is title, role, part (I…VII), version, updated and summary; `part` groups the chapters on the home grid and in the sidebar, `summary` is the card lead and is searched.',
     'Follows the app language: ES is the source; a missing EN chapter falls back to ES with a notice. Slugs retired by the 0.6.0 re-categorisation resolve through LEGACY_SLUGS.',
     'Reading time is the body word count / 200, figures are the markdown images that point at docs/screenshots, decisions and placeholders are counted from the body — nothing on a card is typed by hand.',

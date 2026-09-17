@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, NavLink, useNavigate, useParams } from 'react-router-dom';
 import { useI18n } from '../../i18n/I18nProvider';
 import { MarkdownViewer } from '../../components/organism/MarkdownViewer/MarkdownViewer';
@@ -13,8 +13,8 @@ import { Input, Select } from '../../components/atom/Input/Input';
 import { tenant } from '../../tenant/tenant';
 import { assetUrl } from '../docs/docsIndex';
 import {
-  START_HERE, chapterFor, chaptersByPart, chaptersFor, decisionsFor, decisionsIn, headingsIn,
-  manualRoute, partOf, placeholdersFor, placeholdersIn, readingTime, searchChapters, type Chapter,
+  START_HERE, chapterFor, chaptersByPart, chaptersFor, decisionsFor, decisionsIn, headingsIn, loadBodies,
+  manualRoute, partOf, placeholdersFor, placeholdersIn, readingTime, searchChapters, useChapterBody, type Chapter,
 } from './manualIndex';
 import './manual.css';
 
@@ -40,7 +40,10 @@ function useCardLabels() {
 function ManualSearch({ autoFocusResults = false }: { autoFocusResults?: boolean }) {
   const { t, lang } = useI18n();
   const [q, setQ] = useState('');
-  const hits = useMemo(() => (q.trim().length > 1 ? searchChapters(lang, q) : []), [q, lang]);
+  const [bodies, setBodies] = useState<Map<string, string>>();
+  // The full text loads the first time someone searches; until then titles, summaries and headings answer.
+  useEffect(() => { if (q.trim().length > 1 && !bodies) loadBodies(lang).then(setBodies).catch(() => undefined); }, [q, lang, bodies]);
+  const hits = useMemo(() => (q.trim().length > 1 ? searchChapters(lang, q, bodies) : []), [q, lang, bodies]);
   return (
     <div className="manual-search">
       <Input type="search" value={q} placeholder={t('manual.search.placeholder')} aria-label={t('manual.search')} onChange={(e) => setQ(e.target.value)} />
@@ -190,6 +193,7 @@ export function ManualPage() {
   const chapter = hit?.chapter;
   const pending = chapter ? placeholdersIn(chapter).length : 0;
   const headings = useMemo(() => (chapter ? headingsIn(chapter) : []), [chapter]);
+  const body = useChapterBody(chapter);
   const part = chapter ? partOf(chapter.part) : undefined;
   return (
     <div className="manual">
@@ -218,15 +222,16 @@ export function ManualPage() {
             {hit.fallback && <div className="mdv"><blockquote className="mdv-callout mdv-callout-note">{t('manual.fallback')}</blockquote></div>}
             <div className="manual-reading">
               <div className="manual-body">
-                <MarkdownViewer
-                  source={chapter.body}
+                {body === undefined && <p className="muted small">{t('core.common.loading')}</p>}
+                {body !== undefined && <MarkdownViewer
+                  source={body}
                   path={chapter.path}
                   resolveAsset={assetUrl}
                   resolveLink={manualRoute}
                   headingIds
                   directive={(kind, arg) => <LiveBlock kind={kind} arg={arg} />}
                   figure={(f) => <Figure url={f.url} caption={f.alt} title={f.title} />}
-                />
+                />}
               </div>
               <div className="manual-aside"><Toc items={headings} label={t('manual.onThisPage')} /></div>
             </div>

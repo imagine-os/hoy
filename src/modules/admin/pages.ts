@@ -1,0 +1,18 @@
+export { TablesPage } from './TablesPage';
+export { DashboardPage } from './DashboardPage';
+export { ContentPage } from './ContentPage';
+export { EmailsPage } from './EmailsPage';
+export { WhatsAppPage } from './WhatsAppPage';
+export { CrmPage } from './CrmPage';
+export { MemberPage } from './MemberPage';
+export { ActivityPage } from './ActivityPage';
+export { SettingsPage } from './SettingsPage';
+export { FinancePage } from './FinancePage';
+export { ArticlesPage } from './ArticlesPage';
+export { FaqAdminPage } from './FaqAdminPage';
+export { EventsAdminPage } from './EventsAdminPage';
+export { MediaPage } from './MediaPage';
+export { PayoutRunPage, PayoutsPage } from './PayoutsPage';
+export { ExpensesPage } from './ExpensesPage';
+export { DeletionsPage } from './DeletionsPage';
+export { IntegrationsPage } from './IntegrationsPage';

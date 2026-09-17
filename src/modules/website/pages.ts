@@ -1,0 +1,11 @@
+export { HomePage } from './pages/HomePage';
+export { AboutPage } from './pages/AboutPage';
+export { ClassesPage } from './pages/ClassesPage';
+export { ClassDetailPage } from './pages/ClassDetailPage';
+export { ModalitiesPage } from './pages/ModalitiesPage';
+export { SchedulePage } from './pages/SchedulePage';
+export { TeachersPage } from './pages/TeachersPage';
+export { PlansPage } from './pages/PlansPage';
+export { ContactPage } from './pages/ContactPage';
+export { LegalPage } from './pages/LegalPage';
+export { DeleteAccountPage } from './pages/DeleteAccountPage';
