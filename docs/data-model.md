@@ -696,6 +696,57 @@ _Una clase dictada, bono o ajuste dentro de una corrida (M-09b, S-03)._
 - teacher: read own lines (teacher_id resolves to their teachers row)
 - nobody: lines of a paid run are read-only
 
+#### `expense_templates`
+Template for one fixed studio cost (rent, utilities, cleaning…) with its cadence; M-09c generates the period’s expenses from it.  
+_Plantilla de un costo fijo del estudio (arriendo, servicios, aseo…) con su cadencia; M-09c genera de aquí los gastos del periodo._
+
+| column | type | notes |
+| --- | --- | --- |
+| `id` | uuid | Primary key |
+| `tenant_id` | uuid | → `tenants` Owning studio (multi-tenant) |
+| `created_at` | timestamptz |  |
+| `updated_at` | timestamptz |  |
+| `concept` | text |  |
+| `category` | enum (rent \| utilities \| internet \| cleaning \| software \| insurance \| supplies \| maintenance \| marketing \| fees \| other) |  |
+| `amount` | int | COP per occurrence |
+| `cadence` | enum (biweekly \| monthly) |  |
+| `anchor_day` | int | day of month it falls due (1–28); biweekly also falls due 15 days later |
+| `vendor` | text, null |  |
+| `active` | bool |  |
+| `note` | text, null |  |
+
+**Who may read / write**
+- admin/finance: full control (M-09c)
+- nobody else reads: expenses are studio-internal
+- deactivate instead of delete once a template has generated rows, so history keeps its origin
+
+#### `expenses`
+Every studio expense, fixed (generated from a template) or variable (recorded by hand); it subtracts in the M-09 balance.  
+_Cada gasto del estudio, fijo (generado de una plantilla) o variable (registrado a mano); resta en el balance de M-09._
+
+| column | type | notes |
+| --- | --- | --- |
+| `id` | uuid | Primary key |
+| `tenant_id` | uuid | → `tenants` Owning studio (multi-tenant) |
+| `created_at` | timestamptz |  |
+| `updated_at` | timestamptz |  |
+| `kind` | enum (fixed \| variable) |  |
+| `category` | enum (rent \| utilities \| internet \| cleaning \| software \| insurance \| supplies \| maintenance \| marketing \| fees \| other) |  |
+| `concept` | text |  |
+| `amount` | int | COP, integer |
+| `incurred_on` | date | the day the cost falls due or was incurred |
+| `paid_on` | date, null | null = still to pay |
+| `method` | enum (cash \| transfer \| card) |  |
+| `vendor` | text, null |  |
+| `note` | text, null |  |
+| `template_id` | uuid, null | → `expense_templates` set when generated from a recurring template (kind = fixed) |
+| `created_by` | uuid, null | → `users`  |
+
+**Who may read / write**
+- admin/finance: full control (M-09c)
+- nobody else reads: expenses are studio-internal
+- a paid row (paid_on set) is never deleted by the generator; corrections are a new row with a note
+
 ### Comms · Comunicaciones
 
 #### `email_templates`

@@ -15,6 +15,7 @@ import { DataTable, type DataTableColumn } from '../../components/organism/DataT
 import { EmptyState } from '../../components/molecule/EmptyState/EmptyState';
 import { useAudit } from '../staff/audit';
 import { usePayroll } from './payouts';
+import { expenseTotals, inRange as onOrAfter, payrollInRange, sinceDay, useExpenses } from './expenses';
 import { usePeople } from '../staff/people';
 import { useSettings } from './settings';
 import './admin.css';
@@ -56,6 +57,13 @@ export function FinancePage() {
   const paidQuarter = runs.filter((r) => r.status === 'paid' && r.paid_at && new Date(r.paid_at) >= quarterAgo);
   const payStatusOf = new Map(payments.map((p) => [p.id, p.status]));
   const invoicesInRange = invoices.filter((i) => new Date(i.issued_at).getTime() >= since && (invStatus === 'all' || payStatusOf.get(i.payment_id) === invStatus));
+  // Balance of the range (0.6.1): Ingresos − Nómina − Gastos. Payroll and expenses are date-only tables, so they share one date-only lower bound.
+  const { expenses } = useExpenses();
+  const sinceD = sinceDay(range);
+  const payrollRuns = useMemo(() => payrollInRange(runs, sinceD), [runs, sinceD]);
+  const payrollCost = payrollRuns.reduce((a, r) => a + r.total, 0);
+  const spend = useMemo(() => expenseTotals(expenses.filter((e) => onOrAfter(e.incurred_on, sinceD))), [expenses, sinceD]);
+  const balance = revenue - payrollCost - spend.total;
 
   const refund = async (p: PaymentRow) => {
     if (!canRefund || !confirm(t('admin.finance.refund.confirm', { amount: formatCOP(p.amount, lang) }))) return;
@@ -95,6 +103,16 @@ export function FinancePage() {
         <StatTile label={t('admin.finance.refunded')} value={formatCOP(refunded.reduce((a, p) => a + p.amount, 0), lang)} hint={t('admin.finance.refunded.hint', { n: refunded.length })} trend={refunded.length ? 'down' : 'flat'} />
         <StatTile label={t('admin.finance.wompiShare')} value={`${wompiShare}%`} hint={t('admin.finance.wompiShare.hint')} />
       </div>
+      <Card title={t('admin.finance.balance')} eyebrow={t('admin.finance.balance.eyebrow')} raised
+        actions={<div className="row wrap"><Link to="/admin/finance/payouts"><Button size="sm" variant="ghost">{t('admin.finance.balance.openPayroll')}</Button></Link><Link to="/admin/finance/expenses"><Button size="sm" variant="ghost">{t('admin.finance.balance.openExpenses')}</Button></Link></div>}>
+        <div className="grid grid-4">
+          <StatTile label={t('admin.finance.balance.revenue')} value={formatCOP(revenue, lang)} hint={t('admin.finance.balance.revenue.hint', { n: approved.length })} />
+          <StatTile label={t('admin.finance.balance.payroll')} value={`− ${formatCOP(payrollCost, lang)}`} hint={payrollRuns.length ? t('admin.finance.balance.payroll.hint', { n: payrollRuns.length }) : t('admin.finance.balance.payroll.none')} />
+          <StatTile label={t('admin.finance.balance.expenses')} value={`− ${formatCOP(spend.total, lang)}`} hint={t('admin.finance.balance.expenses.hint', { fixed: formatCOP(spend.fixed, lang), variable: formatCOP(spend.variable, lang) })} />
+          <StatTile label={t('admin.finance.balance.result')} value={`${balance < 0 ? '− ' : ''}${formatCOP(Math.abs(balance), lang)}`} hint={revenue > 0 ? t('admin.finance.balance.margin', { pct: Math.round((balance / revenue) * 100) }) : t('admin.finance.balance.noRevenue')} trend={balance > 0 ? 'up' : balance < 0 ? 'down' : 'flat'} />
+        </div>
+        <p className="xs muted" style={{ marginTop: 12 }}>{t('admin.finance.balance.body')}</p>
+      </Card>
       <div className="grid grid-2">
         <Card title={t('admin.finance.byProduct')}><BarList items={byProduct} format={(v) => formatCOP(v, lang)} emptyText={t('admin.finance.emptyRange')} /></Card>
         <Card title={t('admin.finance.byMethod')}><BarList items={byMethod} format={(v) => formatCOP(v, lang)} emptyText={t('admin.finance.emptyRange')} /></Card>

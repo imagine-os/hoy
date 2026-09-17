@@ -17,7 +17,8 @@ import { FaqAdminPage } from './FaqAdminPage';
 import { EventsAdminPage } from './EventsAdminPage';
 import { MediaPage } from './MediaPage';
 import { PayoutRunPage, PayoutsPage } from './PayoutsPage';
-import { M01, M02, M02a, M02b, M02c, M02d, M04, M05, M06, M07, M08a, M08b, M08c, M08d, M08e, M09, M09a, M09b } from './specs';
+import { ExpensesPage } from './ExpensesPage';
+import { M01, M02, M02a, M02b, M02c, M02d, M04, M05, M06, M07, M08a, M08b, M08c, M08d, M08e, M09, M09a, M09b, M09c } from './specs';
 export { strings } from './strings';
 
 const G = 'core.nav.group.admin';
@@ -47,4 +48,5 @@ export const routes: RouteDef[] = [
   { ...base, path: '/admin/finance', roles: [...admins, 'finance'], element: h(FinancePage), spec: M09, nav: { labelKey: 'admin.finance.nav', icon: '◇', order: 18, group: G } },
   { ...base, path: '/admin/finance/payouts', roles: [...admins, 'finance'], element: h(PayoutsPage), spec: M09a, nav: { labelKey: 'admin.payouts.nav', icon: '⊞', order: 19, group: G } },
   { ...base, path: '/admin/finance/payouts/:id', roles: [...admins, 'finance'], element: h(PayoutRunPage), spec: M09b },
+  { ...base, path: '/admin/finance/expenses', roles: [...admins, 'finance'], element: h(ExpensesPage), spec: M09c, nav: { labelKey: 'admin.expenses.nav', icon: '⊟', order: 20, group: G } },
 ];

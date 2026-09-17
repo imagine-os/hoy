@@ -921,6 +921,71 @@ alter table public.payroll_lines enable row level security;
 create policy "payroll_lines: tenant read" on public.payroll_lines for select using (tenant_id = public.current_tenant_id());
 create policy "payroll_lines: staff write" on public.payroll_lines for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
 
+-- commerce · Template for one fixed studio cost (rent, utilities, cleaning…) with its cadence; M-09c generates the period’s expenses from it.
+-- access:
+--   · admin/finance: full control (M-09c)
+--   · nobody else reads: expenses are studio-internal
+--   · deactivate instead of delete once a template has generated rows, so history keeps its origin
+create table if not exists public.expense_templates (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  concept text not null,
+  category text not null check (category in ('rent', 'utilities', 'internet', 'cleaning', 'software', 'insurance', 'supplies', 'maintenance', 'marketing', 'fees', 'other')),
+  -- COP per occurrence
+  amount integer not null,
+  cadence text not null check (cadence in ('biweekly', 'monthly')),
+  -- day of month it falls due (1–28); biweekly also falls due 15 days later
+  anchor_day integer not null,
+  vendor text,
+  active boolean not null default false,
+  note text
+);
+create index if not exists expense_templates_tenant_idx on public.expense_templates(tenant_id);
+create trigger expense_templates_touch before update on public.expense_templates for each row execute function public.touch_updated_at();
+alter table public.expense_templates enable row level security;
+create policy "expense_templates: tenant read" on public.expense_templates for select using (tenant_id = public.current_tenant_id());
+create policy "expense_templates: staff write" on public.expense_templates for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
+-- commerce · Every studio expense, fixed (generated from a template) or variable (recorded by hand); it subtracts in the M-09 balance.
+-- access:
+--   · admin/finance: full control (M-09c)
+--   · nobody else reads: expenses are studio-internal
+--   · a paid row (paid_on set) is never deleted by the generator; corrections are a new row with a note
+create table if not exists public.expenses (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  kind text not null check (kind in ('fixed', 'variable')),
+  category text not null check (category in ('rent', 'utilities', 'internet', 'cleaning', 'software', 'insurance', 'supplies', 'maintenance', 'marketing', 'fees', 'other')),
+  concept text not null,
+  -- COP, integer
+  amount integer not null,
+  -- the day the cost falls due or was incurred
+  incurred_on date not null,
+  -- null = still to pay
+  paid_on date,
+  method text not null check (method in ('cash', 'transfer', 'card')),
+  vendor text,
+  note text,
+  -- set when generated from a recurring template (kind = fixed)
+  template_id uuid references public.expense_templates(id) on delete set null,
+  created_by uuid references public.users(id) on delete set null
+);
+create index if not exists expenses_tenant_idx on public.expenses(tenant_id);
+create index if not exists expenses_template_id_idx on public.expenses(template_id);
+create index if not exists expenses_created_by_idx on public.expenses(created_by);
+create trigger expenses_touch before update on public.expenses for each row execute function public.touch_updated_at();
+alter table public.expenses enable row level security;
+create policy "expenses: tenant read" on public.expenses for select using (tenant_id = public.current_tenant_id());
+create policy "expenses: staff write" on public.expenses for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
 -- comms · Versioned transactional emails (M-04).
 create table if not exists public.email_templates (
   -- Primary key

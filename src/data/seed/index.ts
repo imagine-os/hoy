@@ -9,6 +9,7 @@ import { contentArticles, events as seedEvents, faqEntries } from './content';
 import { currentLegal, legalDocuments } from './legal';
 import { mediaAssets } from './media';
 import { buildPayroll } from './payroll';
+import { buildExpenses, expenseTemplates } from './expenses';
 
 const FIRST = ['Camila', 'Nicolás', 'Sara', 'Tomás', 'Mariana', 'Julián', 'Daniela', 'Sebastián', 'Gabriela', 'Alejandro', 'Antonia', 'Samuel', 'Salomé', 'Emilio', 'Luciana', 'Martín', 'Elena', 'David', 'Paulina', 'Jerónimo', 'Amelia', 'Simón', 'Renata', 'Lucas', 'Violeta', 'Benjamín', 'Catalina', 'Joaquín', 'Isabel', 'Gael'];
 const LAST = ['García', 'Rodríguez', 'Martínez', 'López', 'González', 'Hernández', 'Pérez', 'Sánchez', 'Ramírez', 'Torres', 'Flores', 'Rivera', 'Gómez', 'Díaz', 'Cruz', 'Morales', 'Reyes', 'Jiménez', 'Ruiz', 'Álvarez', 'Castro', 'Vargas', 'Romero', 'Suárez', 'Moreno', 'Muñoz', 'Rojas', 'Medina', 'Guerrero', 'Cortés'];
@@ -268,6 +269,11 @@ export function buildSeed(): Record<string, BaseRow[]> {
   );
   for (let i = 0; i < 12; i++) db.message_log.push({ ...base(`msg_${i}`, r.int(0, 6)), user_id: r.pick(customerIds), channel: r.pick(['whatsapp', 'email']), template_key: r.pick(['class_reminder', 'receipt']), automation_id: r.pick(['aut_1', 'aut_2']), status: r.pick(['sent', 'delivered', 'read']), sent_at: iso(NOW), payload: null });
   for (let i = 0; i < 20; i++) db.audit_log.push({ ...base(`aud_${i}`, r.int(0, 10)), actor_id: r.pick(['usr_desk', 'usr_coord', 'usr_super', 'usr_fin']), action: r.pick(['booking.create', 'payment.take', 'session.cancel', 'member.update', 'flag.toggle']), entity: r.pick(['bookings', 'payments', 'class_sessions', 'profiles', 'feature_flags']), entity_id: null, diff: null, ip: null });
+
+  // ---- expenses ledger (M-09c): recurring templates + three months of fixed costs + variable costs ----
+  // Appended after every other pass so the shared RNG stream above is untouched and no other page's data shifts.
+  db.expense_templates.push(...expenseTemplates);
+  db.expenses.push(...buildExpenses(r));
 
   return db;
 }
