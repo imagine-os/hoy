@@ -2,6 +2,8 @@
  * Modelo de Valor v3 — the ONLY place a price is written. P-01, C-06, C-07, S-04 and the `plans`
  * seed all read from here. Amounts in COP (integers).
  */
+import { tenant } from './tenant';
+
 export type PlanFamily = 'bienvenida' | 'membresia' | 'pausas' | 'regalos' | 'espacio';
 
 export interface PriceItem {
@@ -47,3 +49,97 @@ export const pricing: PriceItem[] = [
 
 export const pricingByFamily = (family: PlanFamily) => pricing.filter((p) => p.family === family);
 export const priceItem = (id: string) => pricing.find((p) => p.id === id);
+
+/**
+ * Why each family exists — the "Por qué existe" rationale from the Modelo de Valor deck, so the
+ * public plans page can explain the model instead of only listing prices. Additive: prices,
+ * `FAMILY_LABEL` and `pricing` above are unchanged.
+ */
+export const FAMILY_ROLE: Record<PlanFamily, { es: string; en: string }> = {
+  bienvenida: { es: 'Adquisición', en: 'Acquisition' },
+  membresia: { es: 'Ingreso recurrente', en: 'Recurring revenue' },
+  pausas: { es: 'Frecuencia', en: 'Frequency' },
+  regalos: { es: 'Referido y comunidad', en: 'Referral and community' },
+  espacio: { es: 'Ingreso B2B', en: 'B2B revenue' },
+};
+
+export interface FamilyRationale {
+  /** The commercial role, shown as the card eyebrow. */
+  role: { es: string; en: string };
+  /** One line under the family name. */
+  subtitle: { es: string; en: string };
+  /** The "Por qué existe" paragraph. */
+  why: { es: string; en: string };
+  /** Optional footnote (the annual plan's monthly equivalent, the referral cost). */
+  note?: { es: string; en: string };
+}
+
+export const FAMILY_RATIONALE: Record<PlanFamily, FamilyRationale> = {
+  bienvenida: {
+    role: FAMILY_ROLE.bienvenida,
+    subtitle: { es: 'Para quien llega — el primer paso, sin complicaciones.', en: 'For whoever arrives — the first step, no complications.' },
+    why: {
+      es: 'Puntos de entrada a precio bajo, pensados para bajar la barrera de la primera visita. No buscan rentabilidad inmediata: buscan que la persona pruebe una clase y decida seguir, alimentando el paso hacia la Membresía.',
+      en: 'Low-priced entry points, designed to lower the barrier to a first visit. They are not built for immediate margin: they are built so a person tries one class and decides to keep going, feeding the step up into Membership.',
+    },
+  },
+  membresia: {
+    role: FAMILY_ROLE.membresia,
+    subtitle: { es: 'Un solo nivel de acceso, dos formas simples de pagarlo.', en: 'One level of access, two simple ways to pay for it.' },
+    why: {
+      es: 'El núcleo económico del negocio, simplificado a dos opciones claras: mensual o anual. Mismo acceso completo a las clases en ambos casos — menos opciones, decisión más fácil, e ingreso recurrente (MRR/ARR) más predecible para el estudio.',
+      en: 'The economic core of the business, simplified into two clear options: monthly or yearly. Full class access in both cases — fewer options, an easier decision, and recurring revenue (MRR/ARR) the studio can forecast.',
+    },
+    note: {
+      es: 'El Plan Anual equivale a cerca de $416.000 al mes: una forma simple de premiar el compromiso, sin necesidad de niveles intermedios.',
+      en: 'The Annual Plan works out at roughly $416,000 a month: a simple way to reward commitment, with no need for tiers in between.',
+    },
+  },
+  pausas: {
+    role: FAMILY_ROLE.pausas,
+    subtitle: { es: 'Sesiones cortas de 15 a 30 minutos.', en: 'Short sessions of 15 to 30 minutes.' },
+    why: {
+      es: 'Micro-sesiones entre clases completas: elevan la frecuencia semanal por persona con costo marginal casi nulo para el estudio.',
+      en: 'Micro-sessions between full classes: they raise weekly visits per person at almost no marginal cost to the studio.',
+    },
+  },
+  regalos: {
+    role: FAMILY_ROLE.regalos,
+    subtitle: { es: 'Para compartir la experiencia.', en: 'To share the experience.' },
+    why: {
+      es: 'Regalar y compartir la experiencia son, en la práctica, el canal de referido de HOY: nuevas personas llegan a través de alguien que ya conoce el estudio.',
+      en: 'Gifting and sharing the experience are, in practice, HOY’s referral channel: new people arrive through someone who already knows the studio.',
+    },
+    note: {
+      es: 'Cada bono trae a alguien nuevo al estudio, a un costo de adquisición cercano a cero.',
+      en: 'Every voucher brings someone new into the studio, at an acquisition cost close to zero.',
+    },
+  },
+  espacio: {
+    role: FAMILY_ROLE.espacio,
+    subtitle: { es: 'Alquiler del estudio — el activo físico como línea de negocio.', en: 'Studio rental — the physical asset as a line of business.' },
+    why: {
+      es: 'El estudio genera ingreso más allá de las clases: producciones, marcas y comunidades alquilan el espacio fuera de las horas de mayor demanda. Es la línea de ingreso menos dependiente del ciclo de membresías y con mayor techo por transacción.',
+      en: 'The studio earns beyond its classes: productions, brands and communities rent the space outside peak hours. It is the revenue line least tied to the membership cycle, and the one with the highest ceiling per transaction.',
+    },
+  },
+};
+
+/**
+ * The discipline behind the model — four numbers and the paragraph that ties the five families
+ * together. The numbers are read from src/tenant/tenant.ts (studio capacity) and from the number of
+ * families here, so nothing is written twice.
+ */
+export const DISCIPLINE = {
+  numbers: [
+    { value: tenant.studio.mats, label: { es: 'tapetes por sesión', en: 'mats per session' } },
+    { value: tenant.studio.classesPerDay, label: { es: 'clases al día (los 4 movimientos)', en: 'classes a day (the 4 movements)' } },
+    { value: tenant.studio.perPersonPerDay, label: { es: 'clase diaria por persona en cualquier plan', en: 'class per person per day on any plan' } },
+    { value: (Object.keys(FAMILY_LABEL) as PlanFamily[]).length, label: { es: 'líneas de ingreso', en: 'revenue lines' } },
+  ],
+  paragraph: {
+    es: 'La Bienvenida capta y la Membresía retiene; Pausas y Regalos suben la frecuencia y el referido a costo marginal bajo; el Espacio abre ingreso B2B sin depender del ciclo de membresías. Cinco palancas, un mismo estudio — con un límite de capacidad claro que protege la experiencia.',
+    en: 'Welcome brings people in and Membership keeps them; Pauses and Gifts raise frequency and referrals at low marginal cost; Space opens B2B revenue that does not depend on the membership cycle. Five levers, one studio — with a clear capacity limit that protects the experience.',
+  },
+  tagline: { es: 'La vida es HOY.', en: 'Life is HOY.' },
+} as const;
