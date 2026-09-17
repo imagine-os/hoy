@@ -1,24 +1,18 @@
 # HoyOS kanban
 
-_Updated every turn. Codes reference `src/specs/canvasSpecs.ts` and the module `specs.ts` files; `/#/dev/specs` shows the live built/stub badge per code (v0.5.0: 69 codes routed, 0 stubs; admin shell pass — collapsible sidebar, top bar, M-08a…M-08e — plus the 0008 data depth pass)._
+_Updated every turn. Codes reference `src/specs/canvasSpecs.ts` and the module `specs.ts` files; `/#/dev/specs` shows the live built/stub badge per code (v0.5.0 closed by the 0010 integration pass: 80 routes, 69 codes, 0 stubs; admin shell + data depth + empty10 salvage + this pass). What is still missing after v0.5.0 is listed as a plain numbered list in `ROADMAP.md` §F._
 
 ## Backlog
 
-### Data (follow-ups left by 0008)
-- Screenshot pass for the pages 0008 rewired (C-05, C-10, C-13, C-14/C-15, C-16, C-19, C-23, C-24, S-03): the smoke run is green but `docs/screenshots/` still shows the pre-0008 screens.
-- M-02 editors for the new content tables (`content_articles`, `faq_entries`) and an event publisher for `events` — M-03 edits them generically today.
-- Server-side invite reward: `invites.status` only reaches `sent` from the client; `joined` / `rewarded` + `reward_credit_id` need the Supabase function that grants the credit.
-- Staff-side sending for `notifications` (front desk / M-04 / M-05 writing a row) and the 90-day retention job.
-- Event waitlist (`event_rsvps.status` has no `waitlist` value yet) and attendance marking from S-02.
-
 ### Product
+- **P1 leftovers from 0007/0008** (numbered in ROADMAP §B/P1): M-02 editors for `content_articles` / `faq_entries` + an event publisher for `events` (M-03 edits them generically today) · server-side invite reward (`invites.status` only reaches `sent` from the client; `joined` / `rewarded` + `reward_credit_id` need the Supabase function that grants the credit) · staff-side `notifications` sending (front desk / M-04 / M-05 writing a row) and the 90-day retention job · event waitlist (`event_rsvps.status` has no `waitlist` value yet) and attendance marking from S-02 · real Wompi tokenisation behind `wompiTokenise()`
 - A-06 legal pages inside the app (site pages exist) · real Supabase Auth behind A-02/A-03/C-21 (SessionProvider already accepts any `users` row)
-- `src/modules/customer/policy.ts` can now switch to `usePolicy()` (0007) and drop `<PolicySync/>`; C-05 transfer instructions can read the payout account from M-08c
+- C-05 transfer instructions can read the payout account from M-08c (M-08c stores it since 0007)
 - PDF receipts (C-11)
 - S-02/S-04 follow-ups: offline queue for check-ins, real Wompi link · M-04 MJML designer + real provider · M-05 Meta approval API · M-09 Wompi payouts + DIAN CUFE emission
 - M-02 scheduled publishing + media library · M-06 duplicate merge · M-07 signed CSV
 - Supabase provider (auth, realtime) · Wompi payments/payroll · WhatsApp CRM · email designer
-- Code-split the bundle by surface (single ~1.2 MB chunk today) · live cursors / presence (nice to have)
+- Code-split the bundle by surface (single ~1.6 MB chunk today) · live cursors / presence (nice to have)
 
 ### Docs & content
 - Visual pass follow-ups: per-screen density check of C-03, C-04, S-04, M-03 against their canvas artboards at real size; photography placeholders (`data-ph`) once real imagery exists; consider vendoring Inter/DM Sans woff2 for offline captures
@@ -29,14 +23,24 @@ _Updated every turn. Codes reference `src/specs/canvasSpecs.ts` and the module `
 - Remove the C-07b and 'C-14 / C-15' compatibility aliases from `scripts/gen-specs.mjs` (routes now use C-07b as the credits ledger and C-14/C-15 separately)
 - Ops manual: replace `[screenshot: …]` placeholders (12 per language) with the real captures now in `docs/screenshots/` (K-03)
 - Enrich `docs/pages/<code>.md` (generated skeletons) with the hand-written "Real vs mock" and section notes per page
+- `scripts/screenshots.mjs` has no state parameter, so the collapsed sidebar / rail and the mobile drawer are not captured (0007 verified them by hand) — add `--state=` or a per-route hook
+- `docs/prompts/0009-salvage-empty10.md` is missing (0009 shipped with a changelog entry only)
 
 ### Repo hygiene
 - empty10 placeholder: awaiting Justin's decision (reset to placeholder or delete)
 
 ## Doing
-- (none — 0007 admin shell and 0008 data depth closed)
+- (none — v0.5.0 closed: 0007 admin shell, 0008 data depth, 0009 empty10 salvage, 0010 integration pass)
 
 ## Done
+
+### Final integration (0010 · v0.5.0)
+- `src/modules/customer/policy.ts` reads `usePolicy()` (`src/modules/admin/settings.ts`): its own `attachPolicy()` peek/fetch/subscribe loop is deleted, `toPolicyValues()` is the one M-08 → `PolicyValues` mapper, and `usePolicyValues()` is exported for new components. `<PolicySync/>` stays (it bridges the hook to the 18 plain `policy.*` readers and the non-React helpers) but now assigns during render, above the router, so the first paint shows stored values
+- 0007 and 0008 both keep version 0.5.0 — they shipped together; recorded in ROADMAP §A so the duplicate is not read as an error
+- Full screenshot pass: 80 routes, 308 `.jpg` captures retaken, 109 changed — the nine pages 0008 rewired (C-05, C-10, C-13, C-14/C-15, C-16, C-19, C-23, C-24, S-03) and the pages the containment pass shifted; M-08a…M-08e byte-identical to 0007. No console errors, `docs/screenshots` 39 MB. Collapsed-sidebar state skipped — the script has no state parameter
+- `gen-page-doc.mjs --all` wrote M-08a…M-08e page docs; `docs/pages/M-08.md` is now the family index and its retired single-page captures were removed
+- ROADMAP: §A rewritten for 0.5.0, Data lane done, six numbered P1 leftovers, and new **§F "What remains after this pass (for Justin)"** — 18 numbered items in four groups (mocked integrations, thin screens, owner decisions, repo hygiene). 265 lines
+- README at 0.5.0
 
 ### Data depth (0008 · v0.5.0)
 - Nine new tables, additive, with bilingual labels, `TableGroup` (so M-03 lists them) and a new `TableDef.rls` access contract: `notifications`, `notification_prefs`, `reviews`, `invites`, `events`, `event_rsvps`, `payment_methods`, `content_articles`, `faq_entries` (29 → 38)

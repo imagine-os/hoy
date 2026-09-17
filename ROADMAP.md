@@ -7,46 +7,73 @@ dónde estamos, qué sigue y en qué orden (con dependencias explícitas y lo qu
 paralelo), qué significa "terminado" en cada fase, cómo trabajar en el repo y qué debe decidir el
 owner del estudio. Está escrito para que otra cuenta de Claude (o una persona) lo retome sin contexto.
 
-## A. Where we are (v0.3.0, 2026-09-17)
+## A. Where we are (v0.5.0, 2026-09-17)
 
-- **All three parallel tracks have landed on `main`** — docs/content (`ef1dff8`), staff/admin (`8e04c8b`),
-  customer (`cb51b69`) — and the final integration pass (`docs/changelog/0005-final-integration.md`) applied
-  the shared-change requests they left for the coordinator.
-- **Live URL**: https://imagine-os.github.io/hoy/ — pending one manual step: repo Settings → Pages →
-  Source "GitHub Actions". The workflow `.github/workflows/pages.yml` already deploys `dist/` on push to `main`
-  (`has_pages` was still `false` on 2026-09-17; sessions cannot fetch `github.io`, so the owner confirms the URL).
+- **v0.5.0 is four changelog entries**: the admin shell (`docs/changelog/0007-admin-shell.md`), the
+  data-depth pass (`0008-data-depth.md`), the empty10 salvage (`0009-salvage-empty10.md`) and this
+  integration pass (`0010-final-pass-0.5.0.md`). 0007 and 0008 were built in parallel and shipped
+  together, so both entries carry version 0.5.0 on purpose — there is no 0.5.1 between them.
+- **Admin/staff shell**: `DesktopShell` collapses from the 240 px cream lane to a 56 px icon rail
+  (footer chevron or `[`, remembered per surface) and becomes an off-canvas drawer with a scrim below
+  900 px; nav groups fold and the active route's group is forced open. A `TopBar` carries the sidebar
+  toggle, the wordmark, the page name with its spec-code chip, global search (routes by name/code,
+  members by name), ES/EN, theme, an unread bell, the role switcher, the dev-mode toggle and the spec
+  chip. A super admin reaches the design system (tokens, components, specs, layout editor,
+  knowledgebase) from inside the admin sidebar.
+- **Settings is a family, not a page**: M-08a General · M-08b Features (the switches that used to sit
+  on the M-01 dashboard) · M-08c Payments (payout account, NIT, IVA/DIAN, Wompi environment) ·
+  M-08d Communications · M-08e Branding — five routes, each with its own spec and an audited section
+  save. Wompi private keys are never stored; the page says where they live. M-01 spent the freed
+  space on "Today at a glance".
+- **Data**: **38 tables** (29 + the nine 0008 added: `notifications`, `notification_prefs`, `reviews`,
+  `invites`, `events`, `event_rsvps`, `payment_methods`, `content_articles`, `faq_entries`), each with
+  a `TableDef.rls` access contract that `npm run sql` emits into `supabase/schema.sql` and
+  `docs/data-model.md`. **Every customer page is on real data**: C-24 inbox + preference matrix, C-10
+  reviews (with `teachers.rating_avg`), C-16 invites, C-23 events + RSVPs, C-05 saved methods,
+  C-13/C-14/C-15 content and FAQ. `src/modules/customer/content.ts` is gone; nothing reads
+  `localStorage` any more except two genuinely per-viewer preferences.
+- **Canvas look applied** (0.4.0): D-01 is the canvas hoy-brand token set (palette, RGB triplets,
+  semantic surfaces, Depth shadows, texture, materials, radii, movements); the phone frame, cream lane
+  and card skin follow it. Since 0.5.0 no card-like element lets its text escape at 390 or 1280 px.
+- **Policy is one source**: `src/modules/customer/policy.ts` feeds its `policy` snapshot from
+  `usePolicy()` (`src/modules/admin/settings.ts`), so an M-08 save reaches the customer app and the
+  A-02 lockout through the same live reader the admin uses. `<PolicySync/>` stays as the one-line
+  bridge that lets non-hook helpers (`cancelDeadline()`) keep working; `usePolicyValues()` is the hook
+  for new components.
+- **Live URL**: https://imagine-os.github.io/hoy/ — still pending one manual step: repo Settings →
+  Pages → Source "GitHub Actions". `.github/workflows/pages.yml` deploys `dist/` on push to `main`.
 - **Stack**: Vite 5 + React 18 + TS strict, HashRouter, plain CSS tokens (`src/design/tokens.ts`),
-  `MockProvider` (localStorage, change events, cross-tab `storage` sync) behind the `DataProvider` interface,
-  module registry via `import.meta.glob`, route manifest on `window.__hoyos.routes` for tooling.
-  `npm run build` passes with zero TS errors; `npm run screenshots -- --smoke` reports no console errors.
-- **Real vs stub** (`/#/dev/specs`, from `docs/screenshots/routes.json`): **76 routes, 65 codes, 0 stubs.**
-  Every routed code renders a real page on the data layer: hub HUB-01, website W-01…W-06 + P-01 + A-06,
-  auth A-01 A-02 A-03 C-21 E-04, customer C-01…C-25 (incl. C-02b, C-07b ledger, C-08b, C-14/C-15) + A-05 +
-  E-01…E-03 demo states, teacher S-03 (+ class, payroll, profile), staff S-01 S-02 S-04, admin M-01…M-09,
-  dev D-01…D-04, knowledge K-01…K-04, E-05 no-access. **Not routed** (canvas codes without a screen): none.
-  Integrations (Wompi, WhatsApp, email, DIAN, Supabase Auth/Realtime) are simulated behind their seams.
-- **Canvas**: `reference/canvas/` is v1.5 (audited; `CANVAS-AUDIT.md`). Specs regenerate with
-  `node scripts/extract-canvas.mjs && npm run specs`. C-02b, C-14 and C-15 are separate codes; C-07b
-  is the credits ledger under a compatibility alias.
-- **Docs**: prompt log, changelog and kanban are current through `0005`. `docs/screenshots/<code>/` holds
-  every route in ES/EN × 390/1280 (dark for key pages) as JPEG q72, and `docs/pages/<code>.md` exists for
-  every routed code (generated skeletons; enrich the "Real vs mock" notes by hand as pages change).
-- **Open shared requests carried into P1** (see the kanban "Data" lane): six tables (notifications + prefs,
-  reviews, invites, events + rsvps, payment_methods, content_articles / faq_entries); a `usePolicy()` hook so
-  customer pages re-render the instant M-08 changes a policy; bank account + NIT in M-08 for transfer
-  instructions (C-05).
+  `MockProvider` (localStorage, change events, cross-tab `storage` sync) behind the `DataProvider`
+  interface, module registry via `import.meta.glob`, route manifest on `window.__hoyos.routes`.
+  `npm run build` passes with zero TS errors.
+- **Real vs stub** (`/#/dev/specs`, from `docs/screenshots/routes.json`): **80 routes, 69 codes, 0 stubs.**
+  Integrations (Wompi, WhatsApp, email, DIAN, Supabase Auth/Realtime) are simulated behind their seams —
+  see §F for exactly what is still mocked.
+- **Docs**: prompt log, changelog and kanban are current through `0010`. `docs/screenshots/<code>/` holds
+  every route in ES/EN × 390/1280 (dark for key pages) as JPEG q72, refreshed in this pass, and
+  `docs/pages/<code>.md` exists for every routed code.
 
 ## B. Phases (dependency-ordered)
 
 ### P1 — Finish every screen against its spec
-- Scope: every routed page already renders (0 stubs at v0.3.0); P1 is now depth — the six missing tables
-  (notifications + notification_prefs, reviews, invites, events + rsvps, payment_methods,
-  content_articles / faq_entries) with seed + `npm run sql`, then the pages that fall back to
-  `localStorage`/`content.ts` read them; `usePolicy()` for instant policy re-render; bank account + NIT in
-  M-08; hand-written "Real vs mock" notes in each `docs/pages/<code>.md`; a component meta for anything new.
-- Depends on: nothing (v0.3 integration).
-- Parallelizable with: itself, by module — customer (`src/modules/customer`), teacher, staff, admin
-  are independent folders; shared components are improved in place, never forked. Also parallel with P5.
+- **Done at v0.5.0**: every routed page renders (0 stubs), the nine missing tables landed with seed +
+  `npm run sql` (29 → 38), every page that fell back to `localStorage`/`content.ts` reads them,
+  `usePolicy()` gives instant policy re-render, and M-08c holds the payout account + NIT that C-05's
+  transfer instructions need.
+- **Still open in P1** (the leftovers 0007 and 0008 named, all P1):
+  1. M-02 editors for `content_articles` and `faq_entries`, plus an event publisher for `events` —
+     M-03's generic table manager edits them today.
+  2. Server-side invite reward: `invites.status` only reaches `sent` from the client; `joined` /
+     `rewarded` + `reward_credit_id` need the Supabase function that grants the credit (never the browser).
+  3. Staff-side notification sending (front desk / M-04 / M-05 writing a `notifications` row) and the
+     90-day retention job.
+  4. Event waitlist (`event_rsvps.status` has no `waitlist` value yet) and attendance marking from S-02.
+  5. Real Wompi tokenisation behind `wompiTokenise()` — the row shape in `payment_methods` is final,
+     the token is a visible placeholder.
+  6. Hand-written "Real vs mock" and section notes in each `docs/pages/<code>.md` (generated skeletons today).
+- Depends on: nothing. Items 2, 3 and 5 are cheapest right after P2/P3 land their server side.
+- Parallelizable with: itself, by module — customer, teacher, staff, admin are independent folders;
+  shared components are improved in place, never forked. Also parallel with P5.
 - Watch: data shapes. Any new table goes in `src/data/schema.ts` + seed + `npm run sql` in the same
   turn, because P2 freezes the schema.
 
@@ -178,3 +205,61 @@ deduplicated. Each needs an answer, an owner and a date; then edit the chapter o
 20. Add `data`/`roles` to the C-08b spec; update D-02 copy counts (49 sections, 4-tab dock); date the
     v0.1 decision entries in the canvas changelog; prune the 32 orphan dictionary keys; amend the
     phase-3 plan text that still lists check-in and front desk.
+
+## F. What remains after this pass (for Justin)
+
+Everything below is known and written down; nothing here is a surprise found late. Read it as
+"what HoyOS is not yet", grouped by the kind of work it needs.
+
+**(a) Product work that is still mocked** — the UI, tables and seams exist; the vendor does not.
+
+1. **Supabase auth and realtime.** Sign-in is a demo picker over the `users` table and the data layer
+   is `MockProvider` (localStorage + cross-tab sync). `SupabaseProvider` replaces it behind the same
+   interface; `supabase/schema.sql` (38 tables, with per-table access intent) is the input, and
+   `reference/alt-build-empty10/supabase/migrations/0001_init.sql` is the RLS reference. **This is the
+   gate**: payments, payroll, WhatsApp and multi-tenant all need a real authenticated user first (P2).
+2. **Wompi payments.** C-04, S-04, C-17 and C-23 all pay through one seam (`wompiCheckout()`,
+   `wompiTokenise()`), write real `payments`/`invoices` rows and show the declined path — but no money
+   moves and no webhook confirms. Needs merchant credentials, a sandbox, and server-side webhooks (P3).
+3. **Wompi payroll / payouts.** `/teach/payroll` and M-09's payouts block compute classes × rate and
+   stop there. Needs the finance role's payout rails and a statement per teacher (P3).
+4. **WhatsApp Business API.** M-05 automations, M-06 CRM threads and the C-21 OTP are simulated in
+   `message_log`. Needs a Meta-approved sender and templates — **the approval has a lead time, so
+   start that application before P2 finishes** (P4).
+5. **Email sending.** M-04 designs and previews bilingual templates; nothing sends. Needs a provider
+   (and the MJML step) — receipts and reports depend on it (P4).
+6. **DIAN e-invoicing.** `invoices` rows carry the reference shape, no CUFE is emitted. Needs a
+   provider decision and the legal issuer named (§E items 3 and 4) before it can be built (P3).
+
+**(b) UI depth that is still thin** — real pages, but their page doc or spec says "placeholder".
+
+7. **M-02 content CMS** — media library is photo placeholders, and the new content tables have no
+   dedicated editors or event publisher (P1 item 1).
+8. **M-09 finance** — `PayoutsPlaceholder (Wompi)` and an invoice table without a real DIAN reference.
+9. **`/teach/payroll` (S-03)** — "placeholder until Wompi payroll runs exist".
+10. **A-06 legal pages** — real, linkable, versioned pages with placeholder body copy until counsel
+    supplies the text (§E item 14).
+11. **C-05 payment methods** — `WompiCard (placeholder)`; the saved-method row is right, the token is not.
+12. **S-04 register & take payment** — the Wompi link is a placeholder, so a card payment stays pending.
+13. **C-13 club rules** — `VideoPlaceholder (studio tour)` until the studio supplies footage.
+14. **Photography and a map** — C-03, C-18, C-23 and W-06 render `HeroImage` / portrait / `MapPlaceholder`
+    slots. These need assets and a map provider, not code.
+
+**(c) Decisions only the owner can make** — 20 of them, deduplicated in §E of this file and live in the
+app at `/#/manual/decisions` (auto-extracted from the operations manual, K-04). The canvas audit's
+design/spec hygiene recommendations are `CANVAS-AUDIT.md` and items 17–20 of §E.
+
+15. The five that block build work: pack validity, whether published prices include IVA, the DIAN
+    provider and legal issuer, the Wompi settlement account, and the pause notice/freeze cap.
+16. The rest are policy, people, payroll and legal text — they change copy and M-08 values, not structure.
+
+**(d) Repo hygiene**
+
+17. **`imagine-os/empty10`** is untouched and waiting on Justin: reset it to a placeholder, or delete it.
+    Its four worth-keeping files (the 53-table RLS migration, its generator, `ARCHITECTURE.md`,
+    `PLAN.md`) are already frozen in `reference/alt-build-empty10/`, so nothing is lost either way —
+    see `docs/changelog/0009-salvage-empty10.md`.
+18. Smaller: code-split the bundle by surface (one ~1.6 MB chunk today), drop the C-07b and
+    "C-14 / C-15" compatibility aliases from `scripts/gen-specs.mjs`, prune the 32 orphan canvas
+    dictionary keys, and replace the ops manual's 12 `[screenshot: …]` placeholders per language with
+    the captures that now exist.
