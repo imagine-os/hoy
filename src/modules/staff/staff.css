@@ -1,7 +1,7 @@
 /* S-02 door board */
 .checkin { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: var(--sp-5); align-items: start; }
 .checkin-main, .checkin-side { display: flex; flex-direction: column; gap: var(--sp-4); min-width: 0; }
-.checkin-strip { display: flex; gap: var(--sp-2); overflow-x: auto; padding-bottom: 4px; scroll-snap-type: x proximity; }
+.checkin-strip { display: flex; gap: var(--sp-2); overflow-x: auto; padding: 0 32px 4px 0; scroll-snap-type: x proximity; mask-image: linear-gradient(to right, black calc(100% - 32px), transparent); -webkit-mask-image: linear-gradient(to right, black calc(100% - 32px), transparent); }
 .checkin-strip-item { flex: 0 0 auto; display: flex; flex-direction: column; gap: 4px; padding: var(--sp-2) var(--sp-3); border-radius: var(--r-md); border: 1px solid var(--color-card-border); background: var(--color-surface); text-align: left; color: inherit; min-width: 180px; scroll-snap-align: start; box-shadow: var(--shadow-card); }
 .checkin-strip-item:hover { border-color: var(--color-border-strong); }
 .checkin-strip-item.is-selected { border-color: var(--color-primary); box-shadow: inset 0 0 0 1px var(--color-primary), var(--shadow-card); }
@@ -30,7 +30,8 @@
 .register-family .eyebrow { padding: var(--sp-1) 0; }
 .register-item { border-radius: var(--r-md); transition: box-shadow var(--dur-fast); }
 .register-item.is-selected { box-shadow: inset 0 0 0 2px var(--color-primary); background: color-mix(in srgb, var(--color-primary) 6%, transparent); }
-.register-methods { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: var(--sp-2); }
+.register-methods { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.register-methods > * { flex: 1 1 150px; min-width: 0; }
 .register-method { display: flex; flex-direction: column; gap: 2px; padding: var(--sp-3); border: 1px solid var(--color-card-border); box-shadow: var(--shadow-highlight), var(--shadow-contact); border-radius: var(--r-md); background: var(--color-surface); color: inherit; text-align: left; min-height: 64px; }
 .register-method:hover { background: var(--color-surface-2); }
 .register-method.is-selected { border-color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 8%, transparent); box-shadow: inset 0 0 0 1px var(--color-primary); }
@@ -58,10 +59,12 @@
 .rooms-picked { padding: 6px 10px; border-radius: var(--r-ctl); background: var(--color-surface-2); }
 .rooms-conflict ul { margin: 6px 0; padding-left: 18px; }
 .rooms-free { color: var(--color-success); font-weight: var(--fw-medium); }
-.rooms-upcoming { display: flex; align-items: center; gap: var(--sp-3); width: 100%; padding: 8px 10px; border: 0; border-top: 1px solid var(--color-border); background: transparent; color: inherit; text-align: left; cursor: pointer; }
+/* date on its own line, then title + status: the 360px rail is too narrow for three columns */
+.rooms-upcoming { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px var(--sp-3); align-items: center; width: 100%; padding: 8px 10px; border: 0; border-top: 1px solid var(--color-border); background: transparent; color: inherit; text-align: left; cursor: pointer; }
 .rooms-upcoming:first-child { border-top: 0; }
 .rooms-upcoming:hover, .rooms-upcoming.is-selected { background: var(--color-surface-2); }
-.rooms-upcoming-when { min-width: 120px; }
+.rooms-upcoming-when { grid-column: 1 / -1; }
+.rooms-upcoming-title { min-width: 0; overflow-wrap: normal; word-break: normal; }
 .register-special { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-3) var(--sp-4); }
 .register-special .register-full { grid-column: 1 / -1; }
 .register-custom { display: flex; align-items: center; gap: var(--sp-3); width: 100%; padding: var(--sp-3) var(--sp-2); border: 1px dashed var(--color-border-strong); border-radius: var(--r-md); background: transparent; color: inherit; text-align: left; cursor: pointer; }

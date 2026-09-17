@@ -8,8 +8,8 @@
 .phonebubble-business { align-self: flex-start; background: var(--color-surface); border-top-left-radius: 4px; }
 .phonebubble-user { align-self: flex-end; background: var(--color-highlight); color: var(--color-on-highlight); border-top-right-radius: 4px; }
 .phonebubble-text { white-space: pre-wrap; word-break: break-word; }
-.phonebubble-time { position: absolute; right: 8px; bottom: 4px; font-size: 10px; color: var(--color-text-muted); }
+.phonebubble-time { position: absolute; right: 8px; bottom: 4px; font-size: var(--fs-2xs); color: var(--color-text-muted); }
 .phonebubble-cta { margin: 10px -10px -18px; padding: 8px; border-top: 1px solid var(--color-border); text-align: center; color: var(--color-primary); font-weight: var(--fw-medium); }
-.phonebubble-var { background: color-mix(in srgb, var(--color-warn) 25%, transparent); color: var(--color-text); border-radius: 4px; padding: 0 3px; font-family: var(--font-mono); font-size: 0.9em; }
+.phonebubble-var { background: color-mix(in srgb, var(--color-warn) 25%, transparent); color: var(--color-text); border-radius: var(--r-xs); padding: 0 3px; font-family: var(--font-mono); font-size: 0.9em; }
 .phonebubble-resolved { font-weight: var(--fw-medium); }
 .phonebubble.is-undeliverable { opacity: .55; text-decoration: line-through; }

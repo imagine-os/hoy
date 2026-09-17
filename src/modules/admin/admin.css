@@ -8,7 +8,7 @@
 .emails-item:hover { background: var(--color-surface-2); }
 .emails-item.is-selected { border-color: var(--color-primary); box-shadow: inset 0 0 0 1px var(--color-primary); }
 .emails-item > .row { justify-content: space-between; }
-.emails-var { font-size: var(--fs-xs); background: color-mix(in srgb, var(--color-warn) 25%, transparent); padding: 2px 6px; border-radius: 4px; }
+.emails-var { font-size: var(--fs-xs); background: color-mix(in srgb, var(--color-warn) 25%, transparent); padding: 2px 6px; border-radius: var(--r-xs); }
 .emails-version { display: flex; align-items: center; gap: var(--sp-2); padding: 8px 6px; border-bottom: 1px solid var(--color-border); }
 .emails-version:last-child { border-bottom: 0; }
 @media (max-width: 1200px) { .emails { grid-template-columns: 220px minmax(0, 1fr); } .emails-side { grid-column: 1 / -1; } }
@@ -80,13 +80,18 @@
 .adm-mv-fluye { background: var(--tex-ph), linear-gradient(var(--mv-fluye-bg), var(--mv-fluye-bg)); }
 .adm-mv-arde { background: var(--tex-ph), linear-gradient(var(--mv-arde-bg), var(--mv-arde-bg)); }
 .adm-mv-libera { background: var(--tex-ph), linear-gradient(var(--mv-libera-bg), var(--mv-libera-bg)); }
-.adm-line-manual .grow { font-style: normal; }
 
 /* 0018 — M-08c rate card rows, M-08f map preview, M-10 cards */
-.settings-rate { display: grid; grid-template-columns: 1fr 140px; gap: 8px; align-items: center; }
+.settings-rate { display: grid; grid-template-columns: 1fr 140px 110px; gap: 8px; align-items: center; }
+.settings-rate-fmt { font-variant-numeric: tabular-nums; }
 .settings-rate .input { text-align: right; font-variant-numeric: tabular-nums; }
 .settings-map { max-width: 520px; }
 .integ-grid { align-items: start; }
 .integ-fields { gap: 8px 12px; }
 .integ-check { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
 @media (max-width: 720px) { .integ-grid { grid-template-columns: 1fr; } .settings-rate { grid-template-columns: 1fr 110px; } }
+
+/* 0020 — status cells keep chip + actions on one line; inset panels (M-09c template form) */
+.adm-status-actions { flex-wrap: nowrap; gap: 6px; white-space: nowrap; }
+.adm-inset { padding: var(--sp-3); border-radius: var(--r-ctl); background: var(--color-surface); }
+.integ-manual { white-space: nowrap; }

@@ -81,7 +81,7 @@ export const semantic = {
     'color-text': '#24384F',         // .surf body ink (--c2/--c10)
     'color-ink': '#1C2E42',          // .ink · headings (--c3)
     'color-text-muted': '#4C5D70',   // .dim
-    'color-text-faint': 'rgba(36,56,79,.55)', // rgba(var(--m3),.5–.6) eyebrows and hints
+    'color-text-faint': 'rgba(36,56,79,.72)', // eyebrows and hints · .72 keeps 11px semibold text ≥ 4.5:1 on cream and paper (0020)
     'color-text-on-primary': '#F5EEE1', // --c13 on accent fills
     'color-text-on-inverse': '#F1E7D2', // .inverse ink
     'color-primary': '#35597D',      // --c1 · accent as text/links (dark → --cat)
@@ -114,7 +114,7 @@ export const semantic = {
     'color-text': '#E4DAC6',
     'color-ink': '#F1E7D2',
     'color-text-muted': '#A3B3C5',
-    'color-text-faint': 'rgba(228,218,198,.55)',
+    'color-text-faint': 'rgba(228,218,198,.72)', // ≥ 4.5:1 on the dark tile (0020)
     'color-text-on-primary': '#F5EEE1',
     'color-text-on-inverse': '#EFE6D4',
     'color-primary': '#9BC0E4',      // --cat dark
@@ -218,6 +218,7 @@ export const spacing = {
 
 /** Canvas radii: 4 (code tags) · 8 · 11 (controls, date cells) · 16 (cards) · 18 (desktop frame) · 24 · 32 · 34 (phone) · pill. */
 export const radii = {
+  'r-2xs': '2px',    // hairline tracks (bar lists, token bars)
   'r-xs': '4px', 'r-sm': '8px', 'r-ctl': '11px', 'r-md': '16px', 'r-frame': '18px', 'r-lg': '24px', 'r-xl': '32px', 'r-phone': '34px', 'r-full': '999px',
 } as const;
 
@@ -226,7 +227,7 @@ export const motion = {
   'ease-out': 'cubic-bezier(.2,.7,.2,1)', 'ease-in-out': 'cubic-bezier(.65,0,.35,1)',
 } as const;
 
-export const layoutTokens = {
+const layoutTokens = {
   'w-phone': '430px', 'w-content': '1120px', 'h-topbar': '56px', 'h-bottomnav': '64px', 'w-sidebar': '240px', 'w-rail': '56px',
 } as const;
 

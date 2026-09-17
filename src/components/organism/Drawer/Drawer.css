@@ -5,7 +5,7 @@
 .drawer-left { left: 0; border-radius: 0 var(--r-lg) var(--r-lg) 0; animation: drawer-in-left var(--dur-slow) var(--ease-out); }
 .drawer-bottom { left: 0; right: 0; top: auto; max-height: 85vh; border-radius: var(--r-lg) var(--r-lg) 0 0; animation: drawer-in-up var(--dur-slow) var(--ease-out); }
 .drawer-head { display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-4) var(--sp-5); border-bottom: 1px solid var(--color-border); }
-.drawer-close { border: 0; background: var(--color-surface-2); width: 32px; height: 32px; border-radius: 50%; font-size: 20px; line-height: 1; color: var(--color-text-muted); }
+.drawer-close { border: 0; background: var(--color-surface-2); width: 32px; height: 32px; border-radius: 50%; font-size: var(--fs-xl); line-height: 1; color: var(--color-text-muted); }
 .drawer-close:hover { background: var(--color-surface-3); color: var(--color-text); }
 .drawer-body { flex: 1 1 auto; overflow: auto; padding: var(--sp-5); }
 .drawer-foot { padding: var(--sp-3) var(--sp-5); border-top: 1px solid var(--color-border); display: flex; gap: var(--sp-2); justify-content: flex-end; }

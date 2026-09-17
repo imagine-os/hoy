@@ -4,5 +4,5 @@
 .navbar-item:hover { text-decoration: none; color: var(--color-text); }
 .navbar-item.is-active { color: var(--color-primary); }
 .navbar-item.is-active::before { content: ''; position: absolute; top: 6px; width: 28px; height: 3px; border-radius: var(--r-full); background: var(--color-primary); opacity: .9; }
-.navbar-icon { font-size: 20px; line-height: 1; }
+.navbar-icon { font-size: var(--fs-xl); line-height: 1; }
 .navbar-item.is-active .navbar-icon { transform: translateY(-1px); }

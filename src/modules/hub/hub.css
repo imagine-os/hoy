@@ -9,7 +9,7 @@
 .hub-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-4); }
 .hub-card { display: flex; flex-direction: column; gap: var(--sp-2); min-height: 200px; }
 .hub-card h3 { font-size: var(--fs-xl); }
-.hub-card-icon { font-size: 28px; line-height: 1; color: var(--color-primary); margin-bottom: var(--sp-1); }
+.hub-card-icon { font-size: var(--fs-2xl); line-height: 1; color: var(--color-primary); margin-bottom: var(--sp-1); }
 .hub-card-cta { color: var(--color-primary); font-family: var(--font-heading); font-weight: var(--fw-medium); font-size: var(--fs-sm); margin-top: auto; }
 .hub-card-staff { grid-column: span 2; }
 .hub-roles { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-top: var(--sp-2); }
@@ -17,3 +17,7 @@
 .hub-foot { padding-top: var(--sp-4); padding-bottom: var(--sp-6); }
 @media (max-width: 900px) { .hub-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 600px) { .hub-grid { grid-template-columns: 1fr; } .hub-card-staff { grid-column: auto; } .hub-card { min-height: 0; } }
+
+/* E-05 no access */
+.noaccess-glyph { font-size: var(--fs-4xl); line-height: 1; }
+.noaccess-title { font-size: var(--fs-2xl); }

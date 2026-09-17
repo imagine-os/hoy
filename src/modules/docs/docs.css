@@ -11,7 +11,7 @@
 .docs-main { max-width: 820px; min-width: 0; }
 .docs.is-wide .docs-main { max-width: none; }
 .docs-path { margin-bottom: 0; }
-.docs-code { font-size: .85em; background: var(--color-surface-2); padding: .05em .35em; border-radius: 4px; }
+.docs-code { font-size: .85em; background: var(--color-surface-2); padding: .05em .35em; border-radius: var(--r-xs); }
 /* kanban */
 .kanban { display: flex; flex-direction: column; gap: var(--sp-8); }
 .kanban-lane-title { font-size: var(--fs-lg); margin-bottom: var(--sp-3); }

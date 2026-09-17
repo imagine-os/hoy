@@ -14,7 +14,8 @@
 .card-highlight .eyebrow, .card-highlight .muted { color: color-mix(in srgb, var(--color-on-highlight) 65%, transparent); }
 /* "Soft" surface: no shadow, one step down */
 .card-muted { background-color: var(--color-surface-2); box-shadow: none; }
-.card-head { display: flex; align-items: flex-start; gap: var(--sp-3); margin-bottom: var(--sp-3); min-width: 0; }
+.card-head { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--sp-2) var(--sp-3); margin-bottom: var(--sp-3); min-width: 0; }
+.card-head > .grow { flex: 1 1 200px; }
 .card-head > * { min-width: 0; }
 .card-title { font-size: var(--fs-lg); min-width: 0; overflow-wrap: anywhere; }
-.card-actions { display: flex; gap: var(--sp-2); flex: 0 0 auto; }
+.card-actions { display: flex; flex-wrap: wrap; gap: var(--sp-2); flex: 0 1 auto; min-width: 0; }

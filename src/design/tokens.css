@@ -85,6 +85,7 @@
   --sp-12: 48px;
   --sp-16: 64px;
   --sp-20: 80px;
+  --r-2xs: 2px;
   --r-xs: 4px;
   --r-sm: 8px;
   --r-ctl: 11px;
@@ -127,7 +128,7 @@
   --color-text: #24384F;
   --color-ink: #1C2E42;
   --color-text-muted: #4C5D70;
-  --color-text-faint: rgba(36,56,79,.55);
+  --color-text-faint: rgba(36,56,79,.72);
   --color-text-on-primary: #F5EEE1;
   --color-text-on-inverse: #F1E7D2;
   --color-primary: #35597D;
@@ -190,7 +191,7 @@
   --color-text: #E4DAC6;
   --color-ink: #F1E7D2;
   --color-text-muted: #A3B3C5;
-  --color-text-faint: rgba(228,218,198,.55);
+  --color-text-faint: rgba(228,218,198,.72);
   --color-text-on-primary: #F5EEE1;
   --color-text-on-inverse: #EFE6D4;
   --color-primary: #9BC0E4;

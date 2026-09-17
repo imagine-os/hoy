@@ -12,8 +12,8 @@ export function NoAccessPage() {
   return (
     <div className="container page" style={{ maxWidth: 560 }}>
       <Card padding="lg" className="stack">
-        <div style={{ fontSize: 40 }} aria-hidden>⌾</div>
-        <h1 style={{ fontSize: 'var(--fs-2xl)' }}>{t('core.noAccess.title')}</h1>
+        <div className="noaccess-glyph" aria-hidden>⌾</div>
+        <h1 className="noaccess-title">{t('core.noAccess.title')}</h1>
         <p className="muted">{t('core.noAccess.body', { role: bi(ROLE_LABEL[role]) })}</p>
         <RoleSwitcher />
         <div><Link to="/"><Button>{t('core.noAccess.cta')}</Button></Link></div>

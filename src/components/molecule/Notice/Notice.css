@@ -7,9 +7,9 @@
 .notice-info { border-color: color-mix(in srgb, var(--color-accent) 40%, transparent); background: color-mix(in srgb, var(--color-accent) 10%, var(--color-surface)); }
 .notice-info .notice-icon { background: var(--color-accent); color: var(--color-text-on-primary); }
 .notice-success { border-color: color-mix(in srgb, var(--color-success) 40%, transparent); background: color-mix(in srgb, var(--color-success) 10%, var(--color-surface)); }
-.notice-success .notice-icon { background: var(--color-success); color: #fff; }
+.notice-success .notice-icon { background: var(--color-success); color: var(--color-text-on-primary); }
 .notice-warn { border-color: color-mix(in srgb, var(--color-warn) 45%, transparent); background: color-mix(in srgb, var(--color-warn) 12%, var(--color-surface)); }
-.notice-warn .notice-icon { background: var(--color-warn); color: #fff; }
+.notice-warn .notice-icon { background: var(--color-warn); color: var(--color-text-on-primary); }
 .notice-danger { border-color: color-mix(in srgb, var(--color-danger) 40%, transparent); background: color-mix(in srgb, var(--color-danger) 10%, var(--color-surface)); }
-.notice-danger .notice-icon { background: var(--color-danger); color: #fff; }
+.notice-danger .notice-icon { background: var(--color-danger); color: var(--color-text-on-primary); }
 @media (max-width: 480px) { .notice { flex-wrap: wrap; } .notice-action { width: 100%; justify-content: flex-end; } }

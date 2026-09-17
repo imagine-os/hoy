@@ -1,21 +1,21 @@
 /* canvas .topbar for the hoy brand: cream at 90 % with a blue hairline */
 .topbar { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); min-height: var(--h-topbar); padding: 0 var(--sp-4); background: rgba(var(--m-cream), .9); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid rgba(var(--m-primary), .18); }
-:root[data-theme="dark"] .topbar { background: rgba(16,28,41,.94); border-bottom-color: rgba(var(--m-cream), .16); }
+:root[data-theme="dark"] .topbar { background: rgba(var(--m-deep), .94); border-bottom-color: rgba(var(--m-cream), .16); }
 :root[data-skin="wireframe"] .topbar { background: var(--color-lane); border-bottom-color: var(--color-border); }
 .topbar.is-sticky { position: sticky; top: 0; z-index: 20; }
 .topbar-left { display: flex; align-items: center; gap: var(--sp-2); min-width: 0; }
 .topbar-title { font-size: var(--fs-lg); font-weight: var(--fw-semibold); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.topbar-back { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; font-size: 24px; line-height: 1; color: var(--color-text); text-decoration: none; }
+.topbar-back { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; font-size: var(--fs-xl); line-height: 1; color: var(--color-text); text-decoration: none; }
 .topbar-back:hover { background: var(--color-surface-2); text-decoration: none; }
 .topbar-brand { display: inline-flex; }
 .topbar-actions { display: flex; align-items: center; gap: var(--sp-2); flex: 0 0 auto; }
 .topbar-left { flex: 0 1 auto; }
-.topbar.has-center .topbar-left { flex: 1 1 auto; }
+.topbar.has-center .topbar-left { flex: 1 1 auto; min-width: 200px; }
 .topbar-page { font-family: var(--font-heading); font-size: var(--fs-md); font-weight: var(--fw-medium); color: var(--color-ink); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .topbar-page::before { content: '/'; color: var(--color-text-faint); margin-right: var(--sp-2); font-weight: var(--fw-regular); }
 .topbar-code { flex: 0 0 auto; font-size: var(--fs-2xs); color: var(--color-text-faint); background: var(--color-surface-2); border-radius: var(--r-xs); padding: 2px 6px; }
-.topbar-center { flex: 1 1 auto; display: flex; justify-content: center; min-width: 0; }
-.topbar-lead { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: var(--r-ctl); border: 0; background: none; color: var(--color-text-muted); font-size: 17px; flex: 0 0 auto; }
+.topbar-center { flex: 0 1 320px; display: flex; justify-content: center; min-width: 120px; }
+.topbar-lead { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: var(--r-ctl); border: 0; background: none; color: var(--color-text-muted); font-size: var(--fs-lg); flex: 0 0 auto; }
 .topbar-lead:hover { background: rgba(var(--m-shade), .07); color: var(--color-text); }
 @media (max-width: 900px) { .topbar-page, .topbar-code { display: none; } }
 @media (max-width: 640px) { .topbar-center { display: none; } }

@@ -18,6 +18,11 @@
 .roomgrid-block:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 1px; }
 .roomgrid-block.is-selected { box-shadow: inset 0 0 0 2px var(--color-primary), var(--shadow-contact); }
 .roomgrid-block-title, .roomgrid-block-sub { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* A block under an hour drops its sub-line; under ~35 min it keeps the title only, centred — no line is cut mid-glyph. */
+.roomgrid-block.is-short { padding-top: 2px; padding-bottom: 2px; justify-content: center; gap: 0; }
+.roomgrid-block.is-short .roomgrid-block-sub { display: none; }
+.roomgrid-block.is-short .roomgrid-block-title { line-height: 1.1; }
+.roomgrid-block.is-tiny .roomgrid-block-time { display: none; }
 .roomgrid-block-time { color: var(--color-text-muted); }
 .roomgrid-block-chip { position: absolute; right: 6px; top: 4px; }
 /* tones: the four movements for classes, four materials for the space bookings */

@@ -1,5 +1,5 @@
 .capmeter { display: flex; align-items: center; gap: var(--sp-2); font-size: var(--fs-xs); color: var(--color-text-muted); min-width: 0; }
-.capmeter-bar { flex: 1 1 60px; height: 6px; border-radius: var(--r-full); background: var(--color-surface-3); overflow: hidden; box-shadow: inset 0 1px 1px rgba(0,0,0,.06); }
+.capmeter-bar { flex: 1 1 60px; height: 6px; border-radius: var(--r-full); background: var(--color-surface-3); overflow: hidden; box-shadow: inset 0 1px 1px rgba(var(--m-shade), .06); }
 .capmeter-bar span { display: block; height: 100%; background: var(--color-success); border-radius: inherit; transition: width var(--dur-slow) var(--ease-out); }
 .capmeter-low .capmeter-bar span { background: var(--color-warn); }
 .capmeter-full .capmeter-bar span { background: var(--color-danger); }

@@ -10,7 +10,7 @@ export default defineMeta({
     { name: 'variant', type: "'blue' | 'cream' | 'yellow' | 'auto'", default: 'auto', description: { es: 'Colorway.', en: 'Colourway.' } },
   ],
   states: ['light', 'dark'],
-  usages: [{ title: { es: 'Colorways', en: 'Colourways' }, render: () => h('div', { className: 'row wrap', style: { background: 'var(--brand-deepBlue)', padding: 16, borderRadius: 16 } }, h(Wordmark, { variant: 'cream', height: 40 }), h(Wordmark, { variant: 'yellow', height: 40 })) }],
+  usages: [{ title: { es: 'Colorways', en: 'Colourways' }, render: () => h('div', { className: 'row wrap', style: { background: 'var(--brand-deepBlue)', padding: 16, borderRadius: 'var(--r-md)' } }, h(Wordmark, { variant: 'cream', height: 40 }), h(Wordmark, { variant: 'yellow', height: 40 })) }],
   a11y: [{ es: 'alt = nombre del tenant.', en: 'alt = tenant name.' }],
   usedBy: ['HUB', 'P-HOME', 'TopBar'],
 });
