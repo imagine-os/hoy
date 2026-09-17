@@ -1,41 +1,54 @@
-import { NavLink, useParams } from 'react-router-dom';
+import { NavLink, useNavigate, useParams } from 'react-router-dom';
+import { Select } from '../../components/atom/Input/Input';
 import { useI18n } from '../../i18n/I18nProvider';
 import { MarkdownViewer } from '../../components/organism/MarkdownViewer/MarkdownViewer';
-import { assetUrl, docByPath, docTree } from './docsIndex';
+import { assetUrl, docByPath, docGroups, docs, docsRoute } from './docsIndex';
+import { ChangelogEntry, ChangelogList, KanbanBoard, PromptEntry, PromptList, ScreenshotGallery } from './views';
 import './docs.css';
 
-export interface DocsBrowserProps {
-  /** Sub-folder of docs/ this browser is limited to ('' = all, 'ops-manual/' = the manual). */
-  prefix: string;
-  /** Route base, e.g. '/docs' or '/manual'. */
-  routeBase: string;
-  defaultDoc: string;
-  title: string;
-}
-
-/** Sidebar tree + markdown viewer over docs/**. Used by /docs and /manual. */
-export function DocsBrowser({ prefix, routeBase, defaultDoc, title }: DocsBrowserProps) {
-  const { t } = useI18n();
-  const { '*': splat } = useParams();
-  const path = splat ? `docs/${prefix}${splat}${splat.endsWith('.md') ? '' : '.md'}` : defaultDoc;
+/** K-02 — grouped sidebar over docs/** with purpose-built renderers for kanban, changelog, prompts and screenshots. */
+export function DocsBrowser() {
+  const { t, bi } = useI18n();
+  const { '*': splat = '' } = useParams();
+  const key = splat.replace(/\/$/, '').replace(/\.md$/, '');
+  const path = key ? `docs/${key}.md` : 'docs/README.md';
   const doc = docByPath(path);
-  const toRoute = (p: string) => (p.startsWith(`docs/${prefix}`) ? `${routeBase}/${p.slice(`docs/${prefix}`.length).replace(/\.md$/, '')}` : p.startsWith('docs/') ? `/docs/${p.slice(5).replace(/\.md$/, '')}` : undefined);
-  const tree = docTree(prefix);
+  const groups = docGroups();
+  const navigate = useNavigate();
+  const current = `/docs${key ? `/${key}` : ''}`;
+
+  let main: JSX.Element;
+  if (key === 'changelog') main = <><h1>{t('docs.group.changelog')}</h1><ChangelogList entries={docs.filter((d) => /^docs\/changelog\/\d{4}-/.test(d.path))} /></>;
+  else if (key === 'prompts') main = <><h1>{t('docs.group.prompts')}</h1><PromptList entries={docs.filter((d) => /^docs\/prompts\/\d{4}-/.test(d.path))} /></>;
+  else if (key === 'screenshots') main = <><h1>{t('docs.group.screenshots')}</h1><ScreenshotGallery /></>;
+  else if (!doc) main = <p className="muted">{t('core.common.empty')} — {path}</p>;
+  else if (path === 'docs/kanban.md') main = <><h1>{doc.title}</h1><p className="muted small">{t('docs.kanban.intro')}</p><KanbanBoard source={doc.source} /></>;
+  else if (/^docs\/changelog\/\d{4}-/.test(path)) main = <ChangelogEntry doc={doc} />;
+  else if (/^docs\/prompts\/\d{4}-/.test(path)) main = <PromptEntry doc={doc} />;
+  else main = <MarkdownViewer source={doc.source} path={doc.path} resolveAsset={assetUrl} resolveLink={docsRoute} />;
+
+  const wide = key === 'kanban' || /^prompts\/\d{4}-/.test(key);
   return (
-    <div className="docs">
+    <div className={`docs ${wide ? 'is-wide' : ''}`}>
       <aside className="docs-side">
-        <h2 className="docs-h2">{title}</h2>
-        <nav className="docs-nav" aria-label={title}>
-          {tree.map(({ dir, items }) => (
-            <div key={dir} className="docs-group">
-              {dir && <div className="eyebrow docs-grouplabel">{dir.replace(`${prefix.replace(/\/$/, '')}/`, '').replace(prefix.replace(/\/$/, ''), '') || dir}</div>}
-              {items.map((d) => <NavLink key={d.path} to={toRoute(d.path)!} className={({ isActive }) => `docs-link ${isActive || d.path === path ? 'is-active' : ''}`}>{d.title}</NavLink>)}
+        <h2 className="docs-h2">{t('docs.title')}</h2>
+        <div className="docs-mobile">
+          <Select aria-label={t('docs.title')} value={groups.some((g) => g.items.some((it) => it.to === current)) ? current : '/docs'} onChange={(e) => navigate(e.target.value)}>
+            {groups.map((g) => <optgroup key={g.key} label={bi(g.label)}>{g.items.map((it) => <option key={it.to} value={it.to}>{it.title.endsWith(' ·') ? `${t('docs.all')} ${it.title.slice(0, -2)}` : it.title}</option>)}</optgroup>)}
+          </Select>
+        </div>
+        <nav className="docs-nav" aria-label={t('docs.title')}>
+          {groups.map((g) => (
+            <div key={g.key} className="docs-group">
+              <div className="eyebrow docs-grouplabel">{bi(g.label)}</div>
+              {g.items.map((it) => <NavLink key={it.to} to={it.to} end className={({ isActive }) => `docs-link ${isActive ? 'is-active' : ''}`}>{it.title.endsWith(' ·') ? `${t('docs.all')} ${it.title.slice(0, -2)}` : it.title}</NavLink>)}
             </div>
           ))}
         </nav>
       </aside>
-      <article className="docs-main">
-        {doc ? <><p className="xs muted mono docs-path">{doc.path}</p><MarkdownViewer source={doc.source} path={doc.path} resolveAsset={assetUrl} resolveLink={toRoute} /></> : <p className="muted">{t('core.common.empty')} — {path}</p>}
+      <article className="docs-main stack">
+        {doc && <p className="xs muted mono docs-path">{doc.path}</p>}
+        {main}
       </article>
     </div>
   );
