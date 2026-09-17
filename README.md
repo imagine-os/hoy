@@ -5,7 +5,7 @@ built to become a multi-tenant platform for other studios later. One codebase se
 website, the customer app, the teacher app, the staff and admin desktop, the club's operations
 manual, the in-app documentation and the developer tooling.
 
-- Version: **0.3.0** (2026-09-17) — all three build tracks integrated; 76 routes, 65 page codes, 0 stubs (`/#/dev/specs`). Changelog: [`docs/changelog/`](./docs/changelog/).
+- Version: **0.4.0** (2026-09-17) — visual fidelity pass against the canvas (D-01 rewritten, textures and shadow scale as CSS, phone frame shell); all three build tracks integrated; 76 routes, 65 page codes, 0 stubs (`/#/dev/specs`). Changelog: [`docs/changelog/`](./docs/changelog/).
 - Live (GitHub Pages; enable once in repo Settings → Pages → "GitHub Actions"): **https://imagine-os.github.io/hoy/**
 - Stack: Vite 5 + React 18 + TypeScript (strict), HashRouter, plain CSS design tokens, mock data layer
   shaped like the future Supabase schema. No backend yet; everything runs in the browser.
