@@ -97,6 +97,7 @@
     "en": "The single source of truth behind everything: class types, the schedule, teacher profiles, pricing and content — feeding the app, the staff tools and the public website."
    },
    "layout": [
+    "ContentSubNav (Catálogo · Artículos · FAQ · Eventos · Medios)",
     "EntityTabs (Classes / Teachers / Modalities / Rooms)",
     "ListView (DataTable, search, publish toggle)",
     "EditDrawer (fields, ES / EN, publish state)",
@@ -155,7 +156,325 @@
    "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#M-02",
    "notes": [
     "Pricing is not editable here: prices live in src/tenant/pricing.ts (P-01).",
-    "Publish state = the active column of each table."
+    "Publish state = the active column of each table.",
+    "M-02 is now a family: this page is the catalogue (the four scheduling entities); M-02a…M-02d are articles, FAQ, events and the media library, behind one shared sub-navigation."
+   ]
+  }
+ },
+ {
+  "path": "/admin/content/articles",
+  "code": "M-02a",
+  "surface": "admin",
+  "status": "built",
+  "spec": {
+   "code": "M-02a",
+   "name": {
+    "es": "Contenido · Artículos",
+    "en": "Content · Articles"
+   },
+   "purpose": {
+    "es": "Editor de `content_articles`: título y cuerpo bilingües en markdown con vista previa en vivo, slug, categoría, publicación programada y “publicar ahora”.",
+    "en": "Editor for `content_articles`: bilingual title and markdown body with a live preview, slug, category, scheduled publication and “publish now”."
+   },
+   "layout": [
+    "ContentSubNav",
+    "StatusFilter (todos / publicado / programado / borrador)",
+    "ArticleTable (título + slug, categoría, estado, fecha, orden)",
+    "EditDrawer",
+    "MarkdownEditor ES/EN + preview",
+    "ScheduleFields (publish_at, sort)",
+    "PublishNow / Unpublish"
+   ],
+   "data": [
+    "content_articles",
+    "audit_log"
+   ],
+   "roles": [
+    "super_admin",
+    "admin",
+    "coordinator"
+   ],
+   "logic": [
+    "Status is derived, not stored: published = false is a draft; published = true with a future publish_at is scheduled; otherwise it is live.",
+    "“Publish now” sets published = true and clears publish_at in one write, so a scheduled row can be pushed live early.",
+    "Slug is lowercase a–z, digits and hyphens; C-13 and C-14/C-15 read the rows by section and sort."
+   ],
+   "integrations": [],
+   "states": [
+    "Loading",
+    "Empty (no articles)",
+    "Filter with no matches",
+    "Draft / scheduled / published",
+    "Invalid slug",
+    "Read-only (sin content.write)",
+    "Unsaved changes"
+   ],
+   "toggles": [
+    {
+     "label": "Scheduled publishing",
+     "on": true
+    },
+    {
+     "label": "Teacher self-service profiles",
+     "on": true
+    },
+    {
+     "label": "Website preview pane",
+     "on": true
+    }
+   ],
+   "story": "As coordinator I add a Thursday 6:30 AM recurring Hot Vinyasa with Alex, and it appears everywhere at once.",
+   "api": [
+    "GET /admin/:entity",
+    "POST /admin/:entity",
+    "PATCH /admin/:entity/:id",
+    "POST /admin/media",
+    "POST /admin/:entity/:id/publish"
+   ],
+   "layerTree": "CMS\n├ EntityTabs (Classes / Teachers / Schedule / Pricing / Content)\n├ ListView (search, filter, bulk)\n├ EditDrawer\n│ ├ Fields\n│ ├ Media (photo placeholders)\n│ ├ Localisation EN / ES\n│ └ Publish state\n└ PreviewPane (app / web)",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#M-02",
+   "notes": [
+    "Sub-page of M-02; the sub-navigation is shared by all five.",
+    "Every write appends an audit_log row through useAudit('admin')."
+   ]
+  }
+ },
+ {
+  "path": "/admin/content/faq",
+  "code": "M-02b",
+  "surface": "admin",
+  "status": "built",
+  "spec": {
+   "code": "M-02b",
+   "name": {
+    "es": "Contenido · Preguntas frecuentes",
+    "en": "Content · FAQ"
+   },
+   "purpose": {
+    "es": "Editor de `faq_entries` por secciones: pregunta y respuesta bilingües, orden con ↑/↓, página 1 o 2 y estado de publicación.",
+    "en": "Editor for `faq_entries` by section: bilingual question and answer, ↑/↓ ordering, page 1 or 2 and publish state."
+   },
+   "layout": [
+    "ContentSubNav",
+    "PageFilter (todas / 1 / 2)",
+    "SectionCard ×n",
+    "EntryRow (↑ ↓, pregunta, respuesta, publicado)",
+    "EditDrawer (Q/A, sección, página)",
+    "AddGroup / AddEntry"
+   ],
+   "data": [
+    "faq_entries",
+    "audit_log"
+   ],
+   "roles": [
+    "super_admin",
+    "admin",
+    "coordinator"
+   ],
+   "logic": [
+    "Order is the `sort` column and moves one step at a time (↑/↓ swap the two sort values) — keyboard-reachable and impossible to do by accident, unlike drag-and-drop.",
+    "group_title, group_lead and page belong to the section: saving them propagates to every sibling row of the same group_key.",
+    "A new section is a new group_key with one unpublished entry; C-14 is page 1 and C-15 is page 2."
+   ],
+   "integrations": [],
+   "states": [
+    "Loading",
+    "Empty",
+    "First / last entry (arrow disabled)",
+    "Unpublished entry",
+    "Read-only",
+    "New empty section"
+   ],
+   "toggles": [
+    {
+     "label": "Scheduled publishing",
+     "on": true
+    },
+    {
+     "label": "Teacher self-service profiles",
+     "on": true
+    },
+    {
+     "label": "Website preview pane",
+     "on": true
+    }
+   ],
+   "story": "As coordinator I add a Thursday 6:30 AM recurring Hot Vinyasa with Alex, and it appears everywhere at once.",
+   "api": [
+    "GET /admin/:entity",
+    "POST /admin/:entity",
+    "PATCH /admin/:entity/:id",
+    "POST /admin/media",
+    "POST /admin/:entity/:id/publish"
+   ],
+   "layerTree": "CMS\n├ EntityTabs (Classes / Teachers / Schedule / Pricing / Content)\n├ ListView (search, filter, bulk)\n├ EditDrawer\n│ ├ Fields\n│ ├ Media (photo placeholders)\n│ ├ Localisation EN / ES\n│ └ Publish state\n└ PreviewPane (app / web)",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#M-02",
+   "notes": [
+    "Sub-page of M-02; the sub-navigation is shared by all five.",
+    "Every write appends an audit_log row through useAudit('admin')."
+   ]
+  }
+ },
+ {
+  "path": "/admin/content/events",
+  "code": "M-02c",
+  "surface": "admin",
+  "status": "built",
+  "spec": {
+   "code": "M-02c",
+   "name": {
+    "es": "Contenido · Eventos",
+    "en": "Content · Events"
+   },
+   "purpose": {
+    "es": "Publicador de `events`: crear y editar, publicar o despublicar, aforo, precio público y de socio, y las inscripciones ya recibidas.",
+    "en": "Publisher for `events`: create and edit, publish or unpublish, capacity, public and member price, and the RSVPs already received."
+   },
+   "layout": [
+    "ContentSubNav",
+    "StatusFilter",
+    "EventTable (título, cuándo, inscritos / aforo, precios, estado)",
+    "EditDrawer (fechas, sala, anfitrión, aforo, precios)",
+    "Publish / Unpublish / Cancel"
+   ],
+   "data": [
+    "events",
+    "event_rsvps",
+    "rooms",
+    "teachers",
+    "audit_log"
+   ],
+   "roles": [
+    "super_admin",
+    "admin",
+    "coordinator"
+   ],
+   "logic": [
+    "The RSVP count is event_rsvps rows with status going or attended, plus their guests — it is never stored on the event.",
+    "Capacity cannot drop below the RSVPs already taken, and cannot exceed the studio mats (tenant.studio.mats).",
+    "Publishing is the only thing that makes an event visible in C-23; cancelling keeps the row and its RSVPs for the refund conversation.",
+    "A default price comes from src/tenant/pricing.ts (talleres); member_price_cop = 0 renders as “included”."
+   ],
+   "integrations": [
+    "Wompi"
+   ],
+   "states": [
+    "Loading",
+    "Empty",
+    "Draft / published / cancelled",
+    "Sold out (RSVPs = capacity)",
+    "Capacity below RSVPs: blocked",
+    "End before start: blocked",
+    "Delete blocked by RSVPs",
+    "Read-only"
+   ],
+   "toggles": [
+    {
+     "label": "Scheduled publishing",
+     "on": true
+    },
+    {
+     "label": "Teacher self-service profiles",
+     "on": true
+    },
+    {
+     "label": "Website preview pane",
+     "on": true
+    }
+   ],
+   "story": "As coordinator I add a Thursday 6:30 AM recurring Hot Vinyasa with Alex, and it appears everywhere at once.",
+   "api": [
+    "GET /admin/:entity",
+    "POST /admin/:entity",
+    "PATCH /admin/:entity/:id",
+    "POST /admin/media",
+    "POST /admin/:entity/:id/publish"
+   ],
+   "layerTree": "CMS\n├ EntityTabs (Classes / Teachers / Schedule / Pricing / Content)\n├ ListView (search, filter, bulk)\n├ EditDrawer\n│ ├ Fields\n│ ├ Media (photo placeholders)\n│ ├ Localisation EN / ES\n│ └ Publish state\n└ PreviewPane (app / web)",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#M-02",
+   "notes": [
+    "Sub-page of M-02; the sub-navigation is shared by all five.",
+    "Every write appends an audit_log row through useAudit('admin')."
+   ]
+  }
+ },
+ {
+  "path": "/admin/content/media",
+  "code": "M-02d",
+  "surface": "admin",
+  "status": "built",
+  "spec": {
+   "code": "M-02d",
+   "name": {
+    "es": "Contenido · Biblioteca de medios",
+    "en": "Content · Media library"
+   },
+   "purpose": {
+    "es": "La lista de arte que el estudio debe: un cupo por lugar de la app y la web, con proporción, encargo y texto alternativo. Pegar una URL lo publica sin deploy.",
+    "en": "The checklist of art the studio owes: one slot per place in the app and the site, with its ratio, brief and alt text. Pasting a URL publishes it with no deploy."
+   },
+   "layout": [
+    "ContentSubNav",
+    "ReadyKPIs (listas / pendientes / video)",
+    "StatusFilter",
+    "MediaGrid → MediaCard (marco con proporción, encargo, URL, alt)",
+    "MarkReady / MarkPending",
+    "AdvancedFields (slot_key, ratio, kind, credit, label, alt, brief)"
+   ],
+   "data": [
+    "media_assets",
+    "audit_log"
+   ],
+   "roles": [
+    "super_admin",
+    "admin",
+    "coordinator"
+   ],
+   "logic": [
+    "slot_key is the contract between the table and the components: MediaPlaceholder({slotKey}) renders the URL when status = ready and a branded empty slot otherwise.",
+    "A row can only be marked ready with a URL; marking it pending again hides the asset everywhere without deleting the record.",
+    "The seed ships one pending row per known slot (class hero 16:9, teacher portrait 4:3, event 4:5, studio tour video 16:9, site hero 21:9, about 4:3, contact map), so the owner reads the page as a to-do list.",
+    "HoyOS stores the URL, never the binary: uploads belong to Supabase Storage when it lands."
+   ],
+   "integrations": [
+    "Supabase Storage"
+   ],
+   "states": [
+    "Loading",
+    "Empty",
+    "Pending slot (ratio + brief)",
+    "Ready photo",
+    "Ready video",
+    "Invalid URL",
+    "Read-only"
+   ],
+   "toggles": [
+    {
+     "label": "Scheduled publishing",
+     "on": true
+    },
+    {
+     "label": "Teacher self-service profiles",
+     "on": true
+    },
+    {
+     "label": "Website preview pane",
+     "on": true
+    }
+   ],
+   "story": "As coordinator I add a Thursday 6:30 AM recurring Hot Vinyasa with Alex, and it appears everywhere at once.",
+   "api": [
+    "GET /admin/:entity",
+    "POST /admin/:entity",
+    "PATCH /admin/:entity/:id",
+    "POST /admin/media",
+    "POST /admin/:entity/:id/publish"
+   ],
+   "layerTree": "CMS\n├ EntityTabs (Classes / Teachers / Schedule / Pricing / Content)\n├ ListView (search, filter, bulk)\n├ EditDrawer\n│ ├ Fields\n│ ├ Media (photo placeholders)\n│ ├ Localisation EN / ES\n│ └ Publish state\n└ PreviewPane (app / web)",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#M-02",
+   "notes": [
+    "Sub-page of M-02; the sub-navigation is shared by all five.",
+    "Every write appends an audit_log row through useAudit('admin')."
    ]
   }
  },
@@ -1170,16 +1489,16 @@
     "en": "Finance"
    },
    "purpose": {
-    "es": "Ingresos por producto y método, pagos pendientes, reembolsos, facturas con referencia DIAN y el marcador de payouts de Wompi.",
-    "en": "Revenue by product and method, pending payments, refunds, invoices with the DIAN reference and the Wompi payouts placeholder."
+    "es": "Ingresos por producto y método, pagos pendientes, reembolsos, facturas con referencia DIAN y el resumen de la nómina de profesores.",
+    "en": "Revenue by product and method, pending payments, refunds, invoices with the DIAN reference and the teacher-payroll roll-up."
    },
    "layout": [
     "KPIRow",
     "RevenueByProduct",
     "RevenueByMethod",
-    "PayoutsPlaceholder (Wompi)",
-    "RefundsList",
-    "InvoicesTable (DIAN)"
+    "PayoutsSummary (M-09a: próxima, por aprobar, pagado en el trimestre)",
+    "PaymentsList + Refund",
+    "InvoicesTable (DIAN) + StatusFilter"
    ],
    "data": [
     "payments",
@@ -1187,6 +1506,8 @@
     "plans",
     "users",
     "profiles",
+    "payroll_runs",
+    "payroll_lines",
     "audit_log",
     "tenants"
    ],
@@ -1198,7 +1519,10 @@
    "logic": [
     "Revenue = approved payments in the selected range grouped by plan and by method.",
     "Refund flips payments.status to refunded and writes audit_log payment.refund; the credit return is a follow-up.",
-    "E-invoicing requires a DIAN resolution in M-08; until then the CUFE column shows —."
+    "E-invoicing requires a DIAN resolution in M-08; until then the CUFE column shows a badge instead.",
+    "The invoice filter is the status of the payment behind the invoice (invoices carry no status of their own).",
+    "Ranges are 7 / 15 / 30 / 90 days and all time: 15 days is there because Colombian studios settle biweekly, and it drives both the KPI tiles and the invoice table.",
+    "The payouts tiles read payroll_runs: the draft total, the sum of approved-not-yet-paid runs, and runs paid in the last three months."
    ],
    "integrations": [
     "Wompi",
@@ -1208,12 +1532,13 @@
     "Loading",
     "Empty range",
     "No refund permission: action hidden",
-    "E-invoicing off: notice"
+    "E-invoicing off: notice",
+    "No draft run yet"
    ],
    "toggles": [
     {
      "label": "Wompi payouts",
-     "on": false
+     "on": true
     },
     {
      "label": "Refunds",
@@ -1225,7 +1550,132 @@
     }
    ],
    "notes": [
-    "Placeholder payouts until the Wompi integration lands."
+    "Payouts are real rows now (payroll_runs / payroll_lines); only the Wompi dispersion call is simulated, and the page says so."
+   ]
+  }
+ },
+ {
+  "path": "/admin/finance/payouts",
+  "code": "M-09a",
+  "surface": "admin",
+  "status": "built",
+  "spec": {
+   "code": "M-09a",
+   "name": {
+    "es": "Finanzas · Nóminas",
+    "en": "Finance · Payroll runs"
+   },
+   "purpose": {
+    "es": "Las liquidaciones mensuales de profesores: qué se debe, qué está aprobado y qué ya se pagó, y el botón que genera el borrador del periodo.",
+    "en": "The monthly teacher payroll runs: what is owed, what is approved and what is paid, plus the button that generates the period’s draft."
+   },
+   "layout": [
+    "KPIRow (próxima corrida, por aprobar, pagado en el trimestre)",
+    "GeneratePanel (periodo + generar borrador)",
+    "RunsTable (periodo, estado, profesores, clases, total, medio, liquidada)",
+    "SeamNote"
+   ],
+   "data": [
+    "payroll_runs",
+    "payroll_lines",
+    "class_sessions",
+    "bookings",
+    "teachers",
+    "audit_log"
+   ],
+   "roles": [
+    "super_admin",
+    "admin",
+    "finance"
+   ],
+   "logic": [
+    "Generating a draft is idempotent: an existing draft for the same period has its lines deleted and recomputed, so pressing the button twice cannot double-pay. An approved or paid run is refused with a reason.",
+    "payroll.write gates every action; payroll.read is enough to look.",
+    "Teachers are paid per class taught: one completed class_sessions row = one payroll_lines row of kind class at teachers.rate_per_class. Bonuses and adjustments are lines finance adds by hand and are never derived.",
+    "src/data/payrollCalc.ts is the single arithmetic: the seed (historical runs), M-09a (generate draft) and S-03 (the teacher statement) all use it, so the three screens can never disagree.",
+    "A payout is NOT a payments row: payments is money in from members (it feeds M-09 revenue, C-11 history and M-01 KPIs). Money out lives on payroll_runs (status / paid_at / method / provider_ref) with an audit_log row per action.",
+    "wompiPayout() in src/modules/admin/payouts.ts is the dispersion seam — simulated today, with the rejected path included; the badge says simulated on both pages."
+   ],
+   "integrations": [
+    "Wompi"
+   ],
+   "states": [
+    "Loading",
+    "No runs yet",
+    "Draft exists for the period: regenerated",
+    "Period already approved/paid: blocked",
+    "Read-only (solo payroll.read)"
+   ],
+   "notes": [
+    "Teachers are paid per class taught: one completed class_sessions row = one payroll_lines row of kind class at teachers.rate_per_class. Bonuses and adjustments are lines finance adds by hand and are never derived.",
+    "src/data/payrollCalc.ts is the single arithmetic: the seed (historical runs), M-09a (generate draft) and S-03 (the teacher statement) all use it, so the three screens can never disagree.",
+    "A payout is NOT a payments row: payments is money in from members (it feeds M-09 revenue, C-11 history and M-01 KPIs). Money out lives on payroll_runs (status / paid_at / method / provider_ref) with an audit_log row per action.",
+    "wompiPayout() in src/modules/admin/payouts.ts is the dispersion seam — simulated today, with the rejected path included; the badge says simulated on both pages."
+   ]
+  }
+ },
+ {
+  "path": "/admin/finance/payouts/:id",
+  "code": "M-09b",
+  "surface": "admin",
+  "status": "built",
+  "spec": {
+   "code": "M-09b",
+   "name": {
+    "es": "Finanzas · Detalle de nómina",
+    "en": "Finance · Payroll run"
+   },
+   "purpose": {
+    "es": "Una corrida: el extracto por profesor con sus clases, bonos y ajustes, y las cuatro acciones de finanzas — aprobar, enviar por Wompi, marcar pagada por transferencia o efectivo, exportar CSV.",
+    "en": "One run: the per-teacher statement with their classes, bonuses and adjustments, and finance’s four actions — approve, send via Wompi, mark paid by transfer or cash, export CSV."
+   },
+   "layout": [
+    "RunHeader (periodo, estado, simulado)",
+    "KPIRow (total, medio, estado)",
+    "ActionBar (regenerar · aprobar · Wompi · transferencia · efectivo · CSV · imprimir)",
+    "Statement → TeacherCard (estado de pago, clases, líneas, subtotal, marcar como pagado)"
+   ],
+   "data": [
+    "payroll_runs",
+    "payroll_lines",
+    "class_sessions",
+    "bookings",
+    "teachers",
+    "audit_log"
+   ],
+   "roles": [
+    "super_admin",
+    "admin",
+    "finance"
+   ],
+   "logic": [
+    "A run can be settled teacher by teacher: payroll_lines.paid_at + paid_method carry the stamp, so a bounced transfer for one teacher does not hold the other seven. The run closes itself as paid once every teacher is settled.",
+    "Each teacher card shows the classes taught, the total attendance, the payment method and the settlement date — the payment detail finance is asked for on the phone.",
+    "A run-level payment stamps every unpaid line with the same date and method, so the two paths can never disagree.",
+    "Generating a draft is idempotent: an existing draft for the same period has its lines deleted and recomputed, so pressing the button twice cannot double-pay. An approved or paid run is refused with a reason.",
+    "payroll.write gates every action; payroll.read is enough to look.",
+    "Teachers are paid per class taught: one completed class_sessions row = one payroll_lines row of kind class at teachers.rate_per_class. Bonuses and adjustments are lines finance adds by hand and are never derived.",
+    "src/data/payrollCalc.ts is the single arithmetic: the seed (historical runs), M-09a (generate draft) and S-03 (the teacher statement) all use it, so the three screens can never disagree.",
+    "A payout is NOT a payments row: payments is money in from members (it feeds M-09 revenue, C-11 history and M-01 KPIs). Money out lives on payroll_runs (status / paid_at / method / provider_ref) with an audit_log row per action.",
+    "wompiPayout() in src/modules/admin/payouts.ts is the dispersion seam — simulated today, with the rejected path included; the badge says simulated on both pages."
+   ],
+   "integrations": [
+    "Wompi"
+   ],
+   "states": [
+    "Draft: regenerate + approve",
+    "Approved: pay by Wompi / transfer / cash",
+    "Approved: one teacher settled, the rest pending",
+    "Paid: locked, read-only",
+    "Wompi rejected: reason shown",
+    "Run not found",
+    "Negative adjustment line"
+   ],
+   "notes": [
+    "Teachers are paid per class taught: one completed class_sessions row = one payroll_lines row of kind class at teachers.rate_per_class. Bonuses and adjustments are lines finance adds by hand and are never derived.",
+    "src/data/payrollCalc.ts is the single arithmetic: the seed (historical runs), M-09a (generate draft) and S-03 (the teacher statement) all use it, so the three screens can never disagree.",
+    "A payout is NOT a payments row: payments is money in from members (it feeds M-09 revenue, C-11 history and M-01 KPIs). Money out lives on payroll_runs (status / paid_at / method / provider_ref) with an audit_log row per action.",
+    "wompiPayout() in src/modules/admin/payouts.ts is the dispersion seam — simulated today, with the rejected path included; the badge says simulated on both pages."
    ]
   }
  },
@@ -3463,6 +3913,85 @@
   }
  },
  {
+  "path": "/app/legal/:kind",
+  "code": "A-06",
+  "surface": "customer",
+  "status": "built",
+  "spec": {
+   "code": "A-06",
+   "name": {
+    "es": "Términos y condiciones / Política de privacidad",
+    "en": "Terms & Conditions / Privacy Policy"
+   },
+   "purpose": {
+    "es": "Páginas legales reales, enlazables y versionadas; los consentimientos registran qué versión se aceptó.",
+    "en": "Real, linkable, versioned legal pages reachable from sign-up, settings and the website — with placeholder body copy until counsel supplies the text."
+   },
+   "layout": [
+    "BackLink",
+    "LegalDocument (title, version, effective date, status badge)",
+    "CounselNotice",
+    "VersionSwitcher (when > 1 version)",
+    "AcceptanceReceipt + Accept",
+    "Body (markdown, {{policy.*}} resolved live)",
+    "SiblingLinks",
+    "PrintButton"
+   ],
+   "data": [
+    "legal_documents",
+    "legal_acceptances",
+    "consents",
+    "tenants"
+   ],
+   "roles": [
+    "public",
+    "super_admin",
+    "admin",
+    "coordinator",
+    "front_desk",
+    "finance",
+    "teacher",
+    "maintenance",
+    "customer"
+   ],
+   "logic": [
+    "Six kinds: terms, privacy, waiver, cancellation, refunds, house-rules. A new version is a new legal_documents row; a published row is never edited in place.",
+    "The body carries {{tenant.*}} and {{policy.*}} tokens resolved at render time from src/tenant/tenant.ts + M-08 (usePolicy()), so the cancellation window on the page is the one the app enforces.",
+    "legal_acceptances is append-only: user_id + document_id + version + accepted_at + channel. The in-app page shows the member the exact version they signed.",
+    "Requires_acceptance marks the documents a member must accept (terms, privacy, waiver)."
+   ],
+   "integrations": [
+    "Email",
+    "Supabase Auth"
+   ],
+   "toggles": [
+    {
+     "label": "Show last-updated date",
+     "on": true
+    },
+    {
+     "label": "Require re-consent on new version",
+     "on": true
+    }
+   ],
+   "layerTree": "LegalDoc\n├ BackLink\n├ Title + updated date\n├ SectionList (anchored)\n└ CrossLink (Terms ⇄ Privacy)",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#A-06",
+   "states": [
+    "Published version in force",
+    "Draft pending counsel review",
+    "More than one version: switcher",
+    "Accepted by this member (date + channel)",
+    "Accepted an older version",
+    "Not accepted yet: accept action",
+    "Kind not found"
+   ],
+   "notes": [
+    "Route /app/legal/:kind (customer surface) and /site/legal/:kind (public) render the same LegalDocument organism.",
+    "Every version is studio-written and NOT counsel-reviewed yet: the notice says so on every render and the four documents not operationally in force keep status = draft."
+   ]
+  }
+ },
+ {
   "path": "/app/state/empty",
   "code": "E-01",
   "surface": "customer",
@@ -4585,17 +5114,28 @@
     "en": "Operations manual"
    },
    "purpose": {
-    "es": "Cómo funciona el club en persona y en el software, por rol. Igual para todos los que lo miran; español primero, inglés como espejo.",
-    "en": "How the club runs in person and in software, by role. Same for everyone who looks; Spanish first, English as a mirror."
+    "es": "Cómo funciona el club en persona y en el software, en siete partes: quiénes somos, la operación diaria, clientes y planes, dinero, contenido y marca, legal y políticas, y el sistema. Igual para todos los que lo miran; español primero, inglés como espejo.",
+    "en": "How the club runs in person and in software, in seven parts: who we are, daily operations, customers and plans, money, content and brand, legal and policies, and the system. Same for everyone who looks; Spanish first, English as a mirror."
    },
    "layout": [
-    "ChapterSidebar (titles from front matter, decisions summary link, print)",
-    "ChapterMeta (role, version, updated)",
-    "MarkdownViewer (callouts, screenshot placeholders)",
+    "ManualCover (wordmark, title, tagline, version + updated, chapter/reading/figure counts, decisions badge)",
+    "ManualSearch (filters chapters by title, summary, role and body)",
+    "StartHere (three chapters per role: recepción, maestros, admin, finanzas)",
+    "PartGrid (ChapterCard per chapter: number, title, summary, role chips, reading time, figures, decisions)",
+    "ChapterSidebar (parts and their chapters, decisions link, search, print)",
+    "ChapterHead (part eyebrow, title, summary, role, reading time, version, updated)",
+    "MarkdownViewer (callouts, Figure captures, LiveBlock directives, screenshot placeholders)",
+    "Toc (sticky in-page outline from the ## headings, desktop)",
     "PrevNext"
    ],
    "data": [
-    "docs_entries"
+    "docs_entries",
+    "tenants",
+    "profiles",
+    "memberships",
+    "class_sessions",
+    "teachers",
+    "bookings"
    ],
    "roles": [
     "super_admin",
@@ -4609,21 +5149,27 @@
     "public"
    ],
    "logic": [
-    "Chapters are docs/ops-manual/<lang>/<NN-slug>.md loaded with import.meta.glob at build time; the slug is shared across languages.",
-    "Follows the app language: ES is the source; a missing EN chapter falls back to ES with a notice.",
+    "Chapters are docs/ops-manual/<lang>/<NN-slug>.md loaded with import.meta.glob at build time; the slug is shared across languages and adding a chapter needs no code change.",
+    "Front matter is title, role, part (I…VII), version, updated and summary; `part` groups the chapters on the home grid and in the sidebar, `summary` is the card lead and is searched.",
+    "Follows the app language: ES is the source; a missing EN chapter falls back to ES with a notice. Slugs retired by the 0.6.0 re-categorisation resolve through LEGACY_SLUGS.",
+    "Reading time is the body word count / 200, figures are the markdown images that point at docs/screenshots, decisions and placeholders are counted from the body — nothing on a card is typed by hand.",
     "`> DECISIÓN PENDIENTE:` / `> DECISION NEEDED:` blockquotes render as highlighted callouts and feed K-04.",
-    "`[screenshot: CODE — caption]` lines render as dashed placeholder boxes until a real capture replaces them.",
-    "Print: sidebar and shell chrome hidden; callouts and placeholders never split across pages."
+    "A `{{directive}}` line (or a fenced ```live block) renders as a LiveBlock: pricing by family from src/tenant/pricing.ts, studio facts from src/tenant/tenant.ts, the policy values in force through usePolicy() (M-08), the table registry, the role list, the route manifest per surface and counts from the data layer. Every block carries the bilingual \"Datos en vivo del sistema · Live from the system\" caption and an unknown directive explains itself.",
+    "`![caption](../../screenshots/<CODE>/<lang>-<width>.jpg \"CODE · /route\")` renders as a Figure: framed capture, code chip and a link to the live screen. `[screenshot: CODE — caption]` still renders as a dashed box for screens with no capture.",
+    "Print: sidebar, outline, search and shell chrome hidden; callouts, figures and live blocks never split across pages."
    ],
    "integrations": [],
    "states": [
-    "default",
+    "home (cover + grid)",
+    "chapter",
     "chapter not found",
     "untranslated (ES fallback)",
+    "search results",
     "print"
    ],
    "notes": [
-    "Policies quoted in the manual (cancellation 2 h, waitlist 30 min, late grace) are read from M-08; the screen wins over the text."
+    "Policies quoted in prose are the exception, not the rule: a number that M-08 owns is written as `{{policy:…}}` so the chapter cannot go stale.",
+    "Prices are never typed in a chapter; `{{pricing:<family>}}` reads src/tenant/pricing.ts, the only place a price exists."
    ]
   }
  },
@@ -4639,12 +5185,13 @@
     "en": "Decisions pending"
    },
    "purpose": {
-    "es": "Lista automática de todo lo que el estudio no ha definido, extraída de los bloques «DECISIÓN PENDIENTE» del manual, agrupada por capítulo y sección.",
-    "en": "Automatic list of everything the studio has not defined, extracted from the manual’s \"DECISION NEEDED\" blocks, grouped by chapter and section."
+    "es": "Lista automática de todo lo que el estudio no ha definido, extraída de los bloques «DECISIÓN PENDIENTE» del manual, agrupada por capítulo y parte.",
+    "en": "Automatic list of everything the studio has not defined, extracted from the manual’s \"DECISION NEEDED\" blocks, grouped by chapter and part."
    },
    "layout": [
     "PageHead (count)",
-    "DecisionList (grouped by chapter, section, link to chapter)"
+    "DecisionList (grouped by chapter with its part eyebrow, section, link to chapter)",
+    "ChapterSidebar"
    ],
    "data": [
     "docs_entries"
@@ -4662,7 +5209,8 @@
    ],
    "logic": [
     "Extracted at build/run time from the markdown; editing a chapter updates the list, no code change.",
-    "Same list feeds ROADMAP.md \"Open decisions for the owner\"."
+    "Same list feeds ROADMAP.md \"Open decisions for the owner\".",
+    "Numbering runs across the whole manual so a decision can be cited as \"K-04 #07\"."
    ],
    "integrations": [],
    "states": [
@@ -4683,17 +5231,28 @@
     "en": "Operations manual"
    },
    "purpose": {
-    "es": "Cómo funciona el club en persona y en el software, por rol. Igual para todos los que lo miran; español primero, inglés como espejo.",
-    "en": "How the club runs in person and in software, by role. Same for everyone who looks; Spanish first, English as a mirror."
+    "es": "Cómo funciona el club en persona y en el software, en siete partes: quiénes somos, la operación diaria, clientes y planes, dinero, contenido y marca, legal y políticas, y el sistema. Igual para todos los que lo miran; español primero, inglés como espejo.",
+    "en": "How the club runs in person and in software, in seven parts: who we are, daily operations, customers and plans, money, content and brand, legal and policies, and the system. Same for everyone who looks; Spanish first, English as a mirror."
    },
    "layout": [
-    "ChapterSidebar (titles from front matter, decisions summary link, print)",
-    "ChapterMeta (role, version, updated)",
-    "MarkdownViewer (callouts, screenshot placeholders)",
+    "ManualCover (wordmark, title, tagline, version + updated, chapter/reading/figure counts, decisions badge)",
+    "ManualSearch (filters chapters by title, summary, role and body)",
+    "StartHere (three chapters per role: recepción, maestros, admin, finanzas)",
+    "PartGrid (ChapterCard per chapter: number, title, summary, role chips, reading time, figures, decisions)",
+    "ChapterSidebar (parts and their chapters, decisions link, search, print)",
+    "ChapterHead (part eyebrow, title, summary, role, reading time, version, updated)",
+    "MarkdownViewer (callouts, Figure captures, LiveBlock directives, screenshot placeholders)",
+    "Toc (sticky in-page outline from the ## headings, desktop)",
     "PrevNext"
    ],
    "data": [
-    "docs_entries"
+    "docs_entries",
+    "tenants",
+    "profiles",
+    "memberships",
+    "class_sessions",
+    "teachers",
+    "bookings"
    ],
    "roles": [
     "super_admin",
@@ -4707,21 +5266,27 @@
     "public"
    ],
    "logic": [
-    "Chapters are docs/ops-manual/<lang>/<NN-slug>.md loaded with import.meta.glob at build time; the slug is shared across languages.",
-    "Follows the app language: ES is the source; a missing EN chapter falls back to ES with a notice.",
+    "Chapters are docs/ops-manual/<lang>/<NN-slug>.md loaded with import.meta.glob at build time; the slug is shared across languages and adding a chapter needs no code change.",
+    "Front matter is title, role, part (I…VII), version, updated and summary; `part` groups the chapters on the home grid and in the sidebar, `summary` is the card lead and is searched.",
+    "Follows the app language: ES is the source; a missing EN chapter falls back to ES with a notice. Slugs retired by the 0.6.0 re-categorisation resolve through LEGACY_SLUGS.",
+    "Reading time is the body word count / 200, figures are the markdown images that point at docs/screenshots, decisions and placeholders are counted from the body — nothing on a card is typed by hand.",
     "`> DECISIÓN PENDIENTE:` / `> DECISION NEEDED:` blockquotes render as highlighted callouts and feed K-04.",
-    "`[screenshot: CODE — caption]` lines render as dashed placeholder boxes until a real capture replaces them.",
-    "Print: sidebar and shell chrome hidden; callouts and placeholders never split across pages."
+    "A `{{directive}}` line (or a fenced ```live block) renders as a LiveBlock: pricing by family from src/tenant/pricing.ts, studio facts from src/tenant/tenant.ts, the policy values in force through usePolicy() (M-08), the table registry, the role list, the route manifest per surface and counts from the data layer. Every block carries the bilingual \"Datos en vivo del sistema · Live from the system\" caption and an unknown directive explains itself.",
+    "`![caption](../../screenshots/<CODE>/<lang>-<width>.jpg \"CODE · /route\")` renders as a Figure: framed capture, code chip and a link to the live screen. `[screenshot: CODE — caption]` still renders as a dashed box for screens with no capture.",
+    "Print: sidebar, outline, search and shell chrome hidden; callouts, figures and live blocks never split across pages."
    ],
    "integrations": [],
    "states": [
-    "default",
+    "home (cover + grid)",
+    "chapter",
     "chapter not found",
     "untranslated (ES fallback)",
+    "search results",
     "print"
    ],
    "notes": [
-    "Policies quoted in the manual (cancellation 2 h, waitlist 30 min, late grace) are read from M-08; the screen wins over the text."
+    "Policies quoted in prose are the exception, not the rule: a number that M-08 owns is written as `{{policy:…}}` so the chapter cannot go stale.",
+    "Prices are never typed in a chapter; `{{pricing:<family>}}` reads src/tenant/pricing.ts, the only place a price exists."
    ]
   }
  },
@@ -5160,20 +5725,28 @@
     "en": "Payroll"
    },
    "purpose": {
-    "es": "Clases dictadas por mes × tarifa por clase, solo lectura.",
-    "en": "Classes taught per month × per-class rate, read-only."
+    "es": "El extracto del profesor: clases dictadas × tarifa del mes, el desglose por clase, el historial de corridas y cómo preguntar por un monto.",
+    "en": "The teacher’s statement: classes taught × rate for the month, the per-class breakdown, the run history and how to ask about an amount."
    },
    "layout": [
     "MonthPicker",
-    "SummaryTiles",
-    "PayrollLines",
-    "WompiPlaceholder"
+    "RunStateCard (borrador / aprobada / pagada / estimado)",
+    "SummaryTiles (clases, tarifa, total)",
+    "Breakdown (fecha, clase, asistentes, monto)",
+    "ExtrasLines (bono, ajuste)",
+    "PayoutMethodCard",
+    "RunHistory",
+    "PrintStatement + AskFinance (WhatsApp)"
    ],
    "data": [
+    "payroll_runs",
+    "payroll_lines",
     "teachers",
     "class_sessions",
     "bookings",
-    "modalities"
+    "class_templates",
+    "payment_methods",
+    "tenants"
    ],
    "roles": [
     "teacher",
@@ -5182,17 +5755,26 @@
     "super_admin"
    ],
    "logic": [
-    "Attendance can be marked from T−15m to T+2h; later needs the coordinator.",
-    "Descriptions submitted by teachers go to the coordinator for approval before publishing.",
-    "Named reviews visible only when the student did not mark them anonymous or private.",
-    "Payroll shows classes taught, rate, substitutions and adjustments; the amount is read-only."
+    "Before finance generates the run, the month is computed live from completed sessions × teachers.rate_per_class (src/data/payrollCalc.ts) and labelled as an estimate.",
+    "Once a payroll_runs row covers the period, the page reads payroll_lines instead — so what the teacher sees is what finance will pay, bonuses and adjustments included.",
+    "A substitution is a session whose template teacher differs from the session teacher; it is a badge, not a different rate.",
+    "The payout method on file comes from payment_methods for the teacher’s user; the method of the run itself is shown next to it.",
+    "“Ask about this statement” opens WhatsApp to the studio contact from M-08 with the period and total prefilled."
    ],
    "integrations": [
-    "Wompi"
+    "Wompi",
+    "WhatsApp"
    ],
    "states": [
-    "Payroll pending: run closes on the 15th",
-    "No classes this month"
+    "Estimate (no run yet)",
+    "Draft run",
+    "Approved run",
+    "Paid run (with date)",
+    "No classes this month",
+    "Substitutions present",
+    "Negative adjustment",
+    "No payout method on file",
+    "Not linked to a teacher profile"
    ],
    "toggles": [
     {
@@ -5219,8 +5801,8 @@
    "layerTree": "TeacherHome\n├ NextClassCard\n├ RosterSheet → attendance marks\n├ ScheduleList\n├ SubmitDescription (approval flow)\n├ ReviewsPanel (aggregate + named)\n├ PayrollList → PayslipDetail\n└ ProfileEditor (photo, bio)",
    "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#S-03",
    "notes": [
-    "Rate is teachers.rate_per_class; substitutions are sessions whose template teacher differs.",
-    "Placeholder until Wompi payroll runs exist."
+    "Read-only by design: only finance writes payroll (M-09a/M-09b).",
+    "The Wompi dispersion is simulated (wompiPayout() in src/modules/admin/payouts.ts); the page says so instead of pretending money moved."
    ]
   }
  },
@@ -5324,30 +5906,36 @@
     "en": "Site · Home"
    },
    "purpose": {
-    "es": "La portada pública: promesa de marca, cuatro movimientos, clases de hoy, planes destacados, profesores y CTA a clase de prueba.",
-    "en": "The public front page: brand promise, four movements, today’s classes, featured plans, teachers and trial-class CTA."
+    "es": "La portada pública: el manifiesto de marca, los cuatro movimientos, las cinco clases, las clases de hoy, el modelo de valor, la filosofía, los profesores, reseñas reales y el primer paso (clase de prueba).",
+    "en": "The public front page: the brand manifesto, the four movements, the five classes, today’s classes, the value model, the philosophy, the teachers, real reviews and the first step (a trial class)."
    },
    "layout": [
     "Hero",
     "Movements",
+    "Classes",
     "TodayClasses",
-    "PlansTeaser",
-    "TeachersTeaser"
+    "ValueModel",
+    "Philosophy",
+    "Teachers",
+    "Testimonials",
+    "FirstStep"
    ],
    "data": [
     "class_sessions",
     "modalities",
     "teachers",
-    "plans"
+    "reviews"
    ],
    "logic": [
     "Sections render in the order stored by the layout editor (useLayout).",
     "Today list shows only scheduled sessions for the current date.",
-    "All prices come from src/tenant/pricing.ts."
+    "Prose comes from src/tenant/brand.ts; prices from src/tenant/pricing.ts; facts from src/tenant/tenant.ts.",
+    "Testimonials read `reviews` with a comment and non-private visibility; the empty state says the space is pending."
    ],
    "states": [
     "default",
-    "no classes today"
+    "no classes today",
+    "no published reviews"
    ]
   }
  },
@@ -5371,25 +5959,123 @@
    "integrations": [],
    "code": "W-02",
    "name": {
-    "es": "Sitio · Filosofía",
-    "en": "Site · Philosophy"
+    "es": "Sitio · Sobre HOY",
+    "en": "Site · About HOY"
    },
    "purpose": {
-    "es": "Quiénes somos y cómo hablamos: humana, cercana, directa, presente.",
-    "en": "Who we are and how we speak: human, close, direct, present."
+    "es": "El texto completo de \"Sobre HOY\", los cuatro valores, la filosofía en panel oscuro y el tablero de marca.",
+    "en": "The full “About HOY” text, the four values, the philosophy on a dark panel and the brand board."
    },
    "layout": [
-    "PageHead",
-    "Manifesto",
-    "ValuesRow",
+    "Head",
+    "About",
+    "Values",
+    "Media",
+    "Philosophy",
     "BrandBoard"
    ],
    "data": [],
    "logic": [
-    "Copy comes from the brand manual (reference/brand)."
+    "Every paragraph comes from src/tenant/brand.ts (transcribed from the owner’s brand manual).",
+    "The 4:3 media slot is a booked photograph: founders / studio interior."
    ],
    "states": [
     "default"
+   ]
+  }
+ },
+ {
+  "path": "/site/classes",
+  "code": "W-07",
+  "surface": "public",
+  "status": "built",
+  "spec": {
+   "roles": [
+    "super_admin",
+    "admin",
+    "coordinator",
+    "front_desk",
+    "finance",
+    "teacher",
+    "maintenance",
+    "customer",
+    "public"
+   ],
+   "integrations": [],
+   "code": "W-07",
+   "name": {
+    "es": "Sitio · Clases",
+    "en": "Site · Classes"
+   },
+   "purpose": {
+    "es": "La introducción \"Nuestras clases\" y una tarjeta rica por clase (hot yoga, barre, pilates, meditación, respiración) con su hueco de foto 16:9.",
+    "en": "The “Our classes” introduction and one rich card per class (hot yoga, barre, pilates, meditation, breathwork), each with its 16:9 photo slot."
+   },
+   "layout": [
+    "PageHead",
+    "Intro",
+    "ClassList",
+    "CTA"
+   ],
+   "data": [
+    "modalities"
+   ],
+   "logic": [
+    "Cards are generated from brand.classOrder; nothing is written twice.",
+    "Each card links to /site/classes/:slug and carries its movement colour."
+   ],
+   "states": [
+    "default"
+   ]
+  }
+ },
+ {
+  "path": "/site/classes/:slug",
+  "code": "W-08",
+  "surface": "public",
+  "status": "built",
+  "spec": {
+   "roles": [
+    "super_admin",
+    "admin",
+    "coordinator",
+    "front_desk",
+    "finance",
+    "teacher",
+    "maintenance",
+    "customer",
+    "public"
+   ],
+   "integrations": [],
+   "code": "W-08",
+   "name": {
+    "es": "Sitio · Clase",
+    "en": "Site · Class"
+   },
+   "purpose": {
+    "es": "El ensayo completo de una clase, los datos de la modalidad que le corresponde, qué traer, el enlace al horario y la llamada a la clase de prueba.",
+    "en": "One class’s full essay, the facts of its matching modality, what to bring, the link into the schedule and the trial-class call to action."
+   },
+   "layout": [
+    "Hero",
+    "Essay",
+    "Facts",
+    "Bring",
+    "Other",
+    "CTA"
+   ],
+   "data": [
+    "modalities"
+   ],
+   "logic": [
+    "Slug is validated against brand.classOrder; an unknown slug renders the not-found state with links to every class.",
+    "Facts (duration, intensity, heated) join `modalities` through brand.classes[slug].modalitySlugs — when no modality matches, the page says the practice lives inside the guided classes.",
+    "\"What to bring\" is derived from the class’s bring keys; heated classes always list towel and water."
+   ],
+   "states": [
+    "default",
+    "no matching modality",
+    "unknown slug"
    ]
   }
  },
@@ -5417,18 +6103,20 @@
     "en": "Site · Modalities"
    },
    "purpose": {
-    "es": "Las seis prácticas del club agrupadas por movimiento, con intensidad, duración y si es sala caliente.",
-    "en": "The six practices grouped by movement, with intensity, duration and heated room."
+    "es": "Las prácticas del horario agrupadas por movimiento, con intensidad, duración y sala caliente — y el enlace al ensayo de la clase a la que pertenece cada una.",
+    "en": "The scheduled practices grouped by movement, with intensity, duration and heated room — each cross-linked to the class essay it belongs to."
    },
    "layout": [
     "PageHead",
-    "ModalityGrid"
+    "ModalityGrid",
+    "ClassLinks"
    ],
    "data": [
     "modalities"
    ],
    "logic": [
-    "Groups by movement in the order Enraíza, Fluye, Arde, Libera."
+    "Groups by movement in the order Enraíza, Fluye, Arde, Libera.",
+    "Each modality links to /site/classes/:slug through brand.classes[*].modalitySlugs."
    ],
    "states": [
     "default"
@@ -5469,8 +6157,7 @@
     "PageHead",
     "DayTabs",
     "ClassList",
-    "Legend",
-    "LoginPrompt (Drawer)"
+    "Legend"
    ],
    "data": [
     "class_sessions",
@@ -5514,8 +6201,8 @@
     "en": "Site · Teachers"
    },
    "purpose": {
-    "es": "Galería pública de profesores con bio y especialidades.",
-    "en": "Public teacher gallery with bio and specialties."
+    "es": "Galería pública de profesores con retrato (hueco de foto reservado), bio y especialidades.",
+    "en": "Public teacher gallery with a portrait (a booked photo slot), bio and specialties."
    },
    "layout": [
     "PageHead",
@@ -5526,10 +6213,12 @@
     "modalities"
    ],
    "logic": [
-    "Only active teachers."
+    "Only active teachers.",
+    "A teacher without photo_url renders a 4:3 MediaSlot instead of an empty avatar."
    ],
    "states": [
-    "default"
+    "default",
+    "no portrait yet"
    ]
   }
  },
@@ -5549,11 +6238,10 @@
     "en": "One value model, written once and read by every surface that quotes a price. Bienvenida lowers the barrier, Membresía is the primary plan with two ways to pay, Pausas and Regalos widen the offer, Espacio monetises the room outside class hours."
    },
    "layout": [
-    "Bienvenida — 4 cards + Reservar",
-    "Membresía (hero)",
-    "Pausas y Regalos (two columns)",
-    "Espacio — 5 desde-prices + one WhatsApp CTA",
-    "TrustStrip · capacity + conscious controls"
+    "PageHead",
+    "Families",
+    "Discipline",
+    "TaxNote"
    ],
    "data": [
     "plans",
@@ -5562,7 +6250,8 @@
     "memberships",
     "gift_cards",
     "space_rentals",
-    "orders"
+    "orders",
+    "tenants"
    ],
    "roles": [
     "public",
@@ -5573,12 +6262,9 @@
     "super_admin"
    ],
    "logic": [
-    "Prices live in one config; no surface hard-codes a figure. Changing a price here changes it everywhere.",
-    "Membresía has exactly two options — Mensual and Anual. No third tier, no hidden discounts.",
-    "Espacio prices are 'desde' and lead to a conversation, not a checkout.",
-    "One class a day per person on any plan; the studio holds 15 mats and runs 4 classes a day.",
-    "Conscious controls: pause up to 30 days, leave without mazes, a kind cancellation window, notice before every charge.",
-    "Every plan CTA enters the same single-screen checkout (C-04) with lazy registration and local payment methods."
+    "Reads only src/tenant/pricing.ts for prices, names and the per-family rationale (FAMILY_RATIONALE).",
+    "The discipline band reads DISCIPLINE, whose numbers come from tenant.studio and the number of plan families.",
+    "The IVA note reads the M-08 tax policy through usePolicy() (src/modules/admin/settings.ts), read-only."
    ],
    "integrations": [
     "WhatsApp",
@@ -5586,10 +6272,9 @@
     "Supabase Realtime"
    ],
    "states": [
-    "Default (this page)",
-    "Member: Membresía cards show current plan and 'change'",
-    "Promotion: badge + strike price",
-    "Sold-out space date: CTA becomes an enquiry form"
+    "default",
+    "IVA included",
+    "IVA added at checkout"
    ],
    "toggles": [
     {
@@ -5651,22 +6336,27 @@
     "en": "Site · Contact"
    },
    "purpose": {
-    "es": "WhatsApp, correo, dirección y horario del estudio desde la configuración del tenant.",
-    "en": "WhatsApp, email, address and hours from the tenant config."
+    "es": "WhatsApp, correo, dirección, Instagram y horario desde la configuración del tenant, el mapa del estudio y un formulario que abre WhatsApp con el mensaje listo.",
+    "en": "WhatsApp, email, address, Instagram and hours from the tenant config, the studio map, and a form that opens WhatsApp with the message ready."
    },
    "layout": [
     "PageHead",
     "ContactCards",
-    "MapPlaceholder"
+    "Map",
+    "Form"
    ],
    "data": [
     "tenants"
    ],
    "logic": [
-    "No hardcoded contact data: reads src/tenant/tenant.ts."
+    "No hardcoded contact data: reads src/tenant/tenant.ts and labels every placeholder as pending.",
+    "MapSlot reads tenant.location; provider stays \"none\" so the page makes no network request.",
+    "The form has no backend: it builds a wa.me deep link with the message prefilled."
    ],
    "states": [
-    "default"
+    "default",
+    "form empty",
+    "form filled"
    ]
   }
  },
