@@ -3,7 +3,8 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useI18n } from '../../i18n/I18nProvider';
 import { useSession } from '../../auth/SessionProvider';
 import { useData, useTable } from '../../data/DataContext';
-import type { ClassSessionRow, PayrollLineRow, PayrollRunRow } from '../../data/schema';
+import type { ClassSessionRow, PayrollLineRow, PayrollRunRow, SpaceBookingRow, SpecialChargeRow } from '../../data/schema';
+import { specialServiceDate } from '../../data/payrollCalc';
 import { formatCOP, formatDate, formatDateTime } from '../../i18n/format';
 import { StatTile } from '../../components/molecule/StatTile/StatTile';
 import { Card } from '../../components/molecule/Card/Card';
@@ -117,6 +118,10 @@ export function PayoutRunPage() {
   const generate = useGenerateDraft();
   const { rows: sessions } = useTable<ClassSessionRow>('class_sessions');
   const sessionById = useMemo(() => new Map(sessions.map((s) => [s.id, s])), [sessions]);
+  const { rows: specials } = useTable<SpecialChargeRow>('special_charges');
+  const { rows: spaceBookings } = useTable<SpaceBookingRow>('space_bookings');
+  /** Service date of each Especial (its room window, else the sale day) — what a manual line prints as "when". */
+  const specialWhen = useMemo(() => new Map(specials.map((sc) => [sc.id, specialServiceDate(sc, spaceBookings)])), [specials, spaceBookings]);
   const [busy, setBusy] = useState<string | null>(null);
   const [notice, setNotice] = useState<{ tone: 'ok' | 'bad'; text: string } | null>(null);
   const canWrite = can('payroll.write');
@@ -211,7 +216,7 @@ export function PayoutRunPage() {
         <div>
           <Link to="/admin/finance/payouts" className="xs muted">‹ {t('admin.payouts.title')}</Link>
           <h1>{formatDate(`${run.period_start}T12:00:00`, lang, { month: 'long', year: 'numeric' })}</h1>
-          <p className="muted small">{periodLabel} · {t('admin.payouts.runOf', { n: statement.length, classes: lines.filter((l) => l.kind === 'class').length })}</p>
+          <p className="muted small">{periodLabel} · {t('admin.payouts.runOf', { n: statement.length, classes: lines.filter((l) => l.kind === 'class').length })}{lines.some((l) => l.kind === 'manual') ? ` · ${t('admin.payouts.runOf.manual', { n: lines.filter((l) => l.kind === 'manual').length })}` : ''}</p>
         </div>
         <div className="row wrap">
           <Badge tone={STATUS_TONE[run.status]}>{t(`admin.payouts.status.${run.status}`)}</Badge>
@@ -245,6 +250,7 @@ export function PayoutRunPage() {
         <div className="eyebrow">{t('admin.payouts.statement')}</div>
         {statement.length === 0 && <EmptyState compact title={t('admin.payouts.noLines')} body={t('admin.payouts.noLines.body')} />}
         {run.status !== 'draft' && <p className="xs muted">{t('admin.payouts.perTeacherHint')}</p>}
+        {lines.some((l) => l.kind === 'manual') && <p className="xs muted">{t('admin.payouts.manualHint')}</p>}
         {statement.map((g) => (
           <Card key={g.teacherId} padding="sm" title={teacherName.get(g.teacherId) ?? g.teacherId}
             actions={<div className="row wrap">
@@ -266,7 +272,7 @@ export function PayoutRunPage() {
               )}
             </div>
             <div className="adm-lines">
-              {g.lines.map((l) => <LineRow key={l.id} line={l} session={l.class_session_id ? sessionById.get(l.class_session_id) : undefined} lang={lang} />)}
+              {g.lines.map((l) => <LineRow key={l.id} line={l} session={l.class_session_id ? sessionById.get(l.class_session_id) : undefined} when={l.special_charge_id ? specialWhen.get(l.special_charge_id) : undefined} lang={lang} />)}
             </div>
           </Card>
         ))}
@@ -275,18 +281,20 @@ export function PayoutRunPage() {
   );
 }
 
-function LineRow({ line, session, lang }: { line: PayrollLineRow; session: ClassSessionRow | undefined; lang: 'es' | 'en' }) {
+function LineRow({ line, session, when: serviceAt, lang }: { line: PayrollLineRow; session: ClassSessionRow | undefined; when?: string; lang: 'es' | 'en' }) {
   const { t } = useI18n();
-  const when = session ? formatDate(session.starts_at, lang) : line.note?.slice(0, 10) ?? '—';
-  const what = session ? session.title : t(`admin.payouts.kind.${line.kind}`);
+  const manual = line.kind === 'manual';
+  const when = session ? formatDate(session.starts_at, lang) : manual ? formatDate(serviceAt ?? line.created_at, lang) : line.note?.slice(0, 10) ?? '—';
+  // A manual line prints its source: "Especial: <concept>" is written into note by payrollCalc.manualLineNote.
+  const what = session ? session.title : manual && line.note ? line.note : t(`admin.payouts.kind.${line.kind}`);
   return (
-    <div className="adm-line">
+    <div className="adm-line" data-kind={line.kind}>
       <span className="xs mono adm-line-when">{when}</span>
       <span className="grow small">
         {what}
         {line.kind !== 'class' && <Chip>{t(`admin.payouts.kind.${line.kind}`)}</Chip>}
         {line.attendees != null && <span className="xs muted"> · {t('admin.payouts.attendees', { n: line.attendees })}</span>}
-        {line.note && !session && <span className="xs muted"> · {line.note}</span>}
+        {line.note && !session && !manual && <span className="xs muted"> · {line.note}</span>}
       </span>
       <span className="xs muted">{line.rate ? formatCOP(line.rate, lang) : ''}</span>
       <span className={`small mono ${line.amount < 0 ? 'adm-neg' : ''}`}>{formatCOP(line.amount, lang)}</span>

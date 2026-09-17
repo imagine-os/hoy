@@ -7,8 +7,8 @@ const data = ['teachers', 'class_sessions', 'bookings', 'modalities', 'users', '
 /** S-03 teacher home. */
 export const S03 = defineSpec({
   ...base,
-  layout: ['NextClassCard', 'TodayClasses (roster count)', 'ScheduleList (week)', 'SubstitutionRequest', 'PayrollTile'],
-  data,
+  layout: ['NextClassCard', 'TodayClasses (roster count)', 'Specials (own space_bookings, S-05)', 'ScheduleList (week)', 'SubstitutionRequest', 'PayrollTile'],
+  data: [...data, 'space_bookings', 'special_charges', 'rooms'],
   notes: [...(base.notes ?? []), 'Mobile-first inside PhoneShell.', 'Substitution requests are written to audit_log (action substitution.request) for the coordinator.'],
 });
 
@@ -28,12 +28,13 @@ export const S03Payroll = defineSpec({
   ...base,
   name: { es: 'Nómina', en: 'Payroll' },
   purpose: { es: 'El extracto del profesor: clases dictadas × tarifa del mes, el desglose por clase, el historial de corridas y cómo preguntar por un monto.', en: 'The teacher’s statement: classes taught × rate for the month, the per-class breakdown, the run history and how to ask about an amount.' },
-  layout: ['MonthPicker', 'RunStateCard (borrador / aprobada / pagada / estimado)', 'SummaryTiles (clases, tarifa, total)', 'Breakdown (fecha, clase, asistentes, monto)', 'ExtrasLines (bono, ajuste)', 'PayoutMethodCard', 'RunHistory', 'PrintStatement + AskFinance (WhatsApp)'],
-  data: ['payroll_runs', 'payroll_lines', 'teachers', 'class_sessions', 'bookings', 'class_templates', 'payment_methods', 'tenants'],
+  layout: ['MonthPicker', 'RunStateCard (borrador / aprobada / pagada / estimado)', 'SummaryTiles (clases, tarifa, total)', 'Breakdown (fecha, clase, asistentes, monto)', 'ExtrasLines (bono, ajuste, Especial)', 'PayoutMethodCard', 'RunHistory', 'PrintStatement + AskFinance (WhatsApp)'],
+  data: ['payroll_runs', 'payroll_lines', 'special_charges', 'teachers', 'class_sessions', 'bookings', 'class_templates', 'payment_methods', 'tenants'],
   integrations: ['Wompi', 'WhatsApp'],
   logic: [
     'Before finance generates the run, the month is computed live from completed sessions × teachers.rate_per_class (src/data/payrollCalc.ts) and labelled as an estimate.',
     'Once a payroll_runs row covers the period, the page reads payroll_lines instead — so what the teacher sees is what finance will pay, bonuses and adjustments included.',
+    'A line of kind manual is a teacher payout agreed on an Especial (special_charges.teacher_payout, S-04); it prints as "Especial: <concept>" here and in M-09b (0017).',
     'A substitution is a session whose template teacher differs from the session teacher; it is a badge, not a different rate.',
     'The payout method on file comes from payment_methods for the teacher’s user; the method of the run itself is shown next to it.',
     '“Ask about this statement” opens WhatsApp to the studio contact from M-08 with the period and total prefilled.',

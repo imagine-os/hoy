@@ -41,3 +41,34 @@
 .register-done .stack-sm { min-width: 220px; }
 @media (max-width: 1000px) { .register { grid-template-columns: 1fr; } .register-rail { position: static; } }
 .register-item .pricerow { padding: var(--sp-3) var(--sp-2); }
+
+/* 0017 · S-05 rooms + Especiales */
+.staff-notice { border-radius: var(--r-md); padding: var(--sp-3) var(--sp-4); background: var(--mv-enraiza-bg); border: 1px solid var(--color-card-border); }
+.staff-notice-bad { background: var(--mv-arde-bg); }
+.rooms { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: var(--sp-5); align-items: start; }
+.rooms-main, .rooms-rail { min-width: 0; }
+.rooms-datebar { display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap; }
+.rooms-datebar .datestrip { flex: 1 1 auto; min-width: 0; }
+.rooms-anydate { max-width: 170px; }
+.rooms-daylabel::first-letter { text-transform: uppercase; }
+.rooms-form .field { min-width: 0; }
+.rooms-form-full { grid-column: 1 / -1; }
+.rooms-times { align-items: flex-start; }
+.rooms-times .field { flex: 1 1 0; }
+.rooms-picked { padding: 6px 10px; border-radius: var(--r-ctl); background: var(--color-surface-2); }
+.rooms-conflict ul { margin: 6px 0; padding-left: 18px; }
+.rooms-free { color: var(--color-success); font-weight: var(--fw-medium); }
+.rooms-upcoming { display: flex; align-items: center; gap: var(--sp-3); width: 100%; padding: 8px 10px; border: 0; border-top: 1px solid var(--color-border); background: transparent; color: inherit; text-align: left; cursor: pointer; }
+.rooms-upcoming:first-child { border-top: 0; }
+.rooms-upcoming:hover, .rooms-upcoming.is-selected { background: var(--color-surface-2); }
+.rooms-upcoming-when { min-width: 120px; }
+.register-special { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-3) var(--sp-4); }
+.register-special .register-full { grid-column: 1 / -1; }
+.register-custom { display: flex; align-items: center; gap: var(--sp-3); width: 100%; padding: var(--sp-3) var(--sp-2); border: 1px dashed var(--color-border-strong); border-radius: var(--r-md); background: transparent; color: inherit; text-align: left; cursor: pointer; }
+.register-custom:hover { background: var(--color-surface-2); }
+.register-item.is-selected .register-custom { border-style: solid; border-color: transparent; }
+@media (max-width: 1000px) {
+  .rooms { grid-template-columns: 1fr; }
+  .register-special { grid-template-columns: 1fr; }
+}
+.register-badge { margin-left: 6px; vertical-align: middle; }

@@ -201,10 +201,11 @@ export const M09a = defineSpec({
   name: { es: 'Finanzas · Nóminas', en: 'Finance · Payroll runs' },
   purpose: { es: 'Las liquidaciones mensuales de profesores: qué se debe, qué está aprobado y qué ya se pagó, y el botón que genera el borrador del periodo.', en: 'The monthly teacher payroll runs: what is owed, what is approved and what is paid, plus the button that generates the period’s draft.' },
   layout: ['KPIRow (próxima corrida, por aprobar, pagado en el trimestre)', 'GeneratePanel (periodo + generar borrador)', 'RunsTable (periodo, estado, profesores, clases, total, medio, liquidada)', 'SeamNote'],
-  data: ['payroll_runs', 'payroll_lines', 'class_sessions', 'bookings', 'teachers', 'audit_log'],
+  data: ['payroll_runs', 'payroll_lines', 'class_sessions', 'bookings', 'teachers', 'special_charges', 'space_bookings', 'audit_log'],
   roles: ['super_admin', 'admin', 'finance'],
   logic: [
     'Generating a draft is idempotent: an existing draft for the same period has its lines deleted and recomputed, so pressing the button twice cannot double-pay. An approved or paid run is refused with a reason.',
+    'The draft is class lines + manual lines: every special_charges row with a teacher and a teacher_payout whose service date (its space booking, else the sale) falls in the period becomes one payroll_lines row of kind manual, sourced by special_charge_id (src/data/payrollCalc.ts draftLinesFor). 0017.',
     'payroll.write gates every action; payroll.read is enough to look.',
     ...PAYOUT_NOTES,
   ],

@@ -73,7 +73,7 @@ export function FinancePage() {
 
   const payCols: DataTableColumn<PaymentRow>[] = [
     { key: 'paid_at', label: t('admin.finance.col.when'), render: (p) => <span className="mono small">{formatDateTime(p.paid_at ?? p.created_at, lang)}</span> },
-    { key: 'user_id', label: t('admin.finance.col.member'), render: (p) => byId.get(p.user_id)?.name ?? p.user_id },
+    { key: 'user_id', label: t('admin.finance.col.member'), render: (p) => (p.user_id ? byId.get(p.user_id)?.name ?? p.user_id : <span className="muted">{t('admin.finance.col.contact')}</span>) },
     { key: 'plan_id', label: t('admin.finance.col.product'), render: (p) => planMap.get(p.plan_id ?? '')?.name_es ?? '—' },
     { key: 'amount', label: t('admin.finance.col.amount'), align: 'right', render: (p) => formatCOP(p.amount, lang) },
     { key: 'method', label: t('admin.finance.col.method'), render: (p) => `${t(`admin.finance.method.${p.method}`)} · ${p.provider}` },

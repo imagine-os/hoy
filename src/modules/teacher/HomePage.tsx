@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useI18n } from '../../i18n/I18nProvider';
 import { useData, useTable } from '../../data/DataContext';
-import type { BookingRow, ClassSessionRow } from '../../data/schema';
+import type { BookingRow, ClassSessionRow, RoomRow, SpaceBookingRow, SpecialChargeRow } from '../../data/schema';
 import { formatCOP, formatDate, formatTime, isSameDay } from '../../i18n/format';
 import { StatTile } from '../../components/molecule/StatTile/StatTile';
 import { Card } from '../../components/molecule/Card/Card';
@@ -16,12 +16,13 @@ import { Drawer } from '../../components/organism/Drawer/Drawer';
 import { EmptyState } from '../../components/molecule/EmptyState/EmptyState';
 import { useSessionsJoined } from '../website/hooks';
 import { useAudit } from '../staff/audit';
+import { KIND_LABEL, STATUS_LABEL } from '../staff/rooms';
 import { useTeacherSelf } from './useTeacherSelf';
 import './teacher.css';
 
 /** S-03 Teacher home: next class, today's rosters, the week, substitution request and the payroll estimate. */
 export function TeacherHomePage() {
-  const { t, lang } = useI18n();
+  const { t, lang, bi } = useI18n();
   const nav = useNavigate();
   const data = useData();
   const audit = useAudit('teacher_app');
@@ -38,6 +39,13 @@ export function TeacherHomePage() {
   const { rows: bookings } = useTable<BookingRow>('bookings', { where: { session_id: todayIds } });
   const arrived = (id: string) => bookings.filter((b) => b.session_id === id && b.status === 'checked_in').length;
   const monthTaught = mine.filter((x) => x.session.status === 'completed' && new Date(x.session.starts_at).getMonth() === now.getMonth()).length;
+  // Especiales (0017): rooms booked with this teacher outside the timetable, last 7 days and ahead.
+  const { rows: mySpace } = useTable<SpaceBookingRow>('space_bookings', meId ? { where: { teacher_id: meId }, orderBy: { column: 'starts_at' } } : { limit: 0 });
+  const { rows: mySpecials } = useTable<SpecialChargeRow>('special_charges', meId ? { where: { teacher_id: meId } } : { limit: 0 });
+  const { rows: rooms } = useTable<RoomRow>('rooms');
+  const roomName = useMemo(() => new Map(rooms.map((r) => [r.id, r.name])), [rooms]);
+  const payoutOf = useMemo(() => new Map(mySpecials.filter((s) => s.space_booking_id).map((s) => [s.space_booking_id as string, s.teacher_payout])), [mySpecials]);
+  const specials = mySpace.filter((b) => b.status !== 'cancelled' && new Date(b.ends_at) >= new Date(Date.now() - 86400e3 * 7));
   const [sub, setSub] = useState<{ open: boolean; session: string; reason: string; sent?: boolean }>({ open: false, session: '', reason: '' });
 
   const requestSub = async () => {
@@ -85,6 +93,26 @@ export function TeacherHomePage() {
                 </div>
               ))}
             </Card>
+          </section>
+
+          <section className="stack-sm">
+            <div className="eyebrow">{t('teacher.home.specials')}</div>
+            <Card padding="sm">
+              {specials.length === 0 && <p className="muted small" style={{ padding: 12 }}>{t('teacher.home.specials.empty')}</p>}
+              {specials.map((b) => {
+                const payout = payoutOf.get(b.id);
+                return (
+                  <div key={b.id} className="teach-payline">
+                    <span className="grow">
+                      <span className="row wrap"><strong className="small">{b.title}</strong><Badge tone={b.status === 'done' ? 'success' : b.status === 'held' ? 'warn' : 'primary'}>{bi(STATUS_LABEL[b.status])}</Badge></span>
+                      <span className="xs muted">{formatDate(b.starts_at, lang)} · {formatTime(b.starts_at, lang)}–{formatTime(b.ends_at, lang)} · {roomName.get(b.room_id)} · {bi(KIND_LABEL[b.kind])}</span>
+                    </span>
+                    <span className="xs mono">{payout ? t('teacher.home.specials.payout', { amount: formatCOP(payout, lang) }) : t('teacher.home.specials.unpaid')}</span>
+                  </div>
+                );
+              })}
+            </Card>
+            <p className="xs muted">{t('teacher.home.specials.hint')}</p>
           </section>
 
           <section className="stack-sm">

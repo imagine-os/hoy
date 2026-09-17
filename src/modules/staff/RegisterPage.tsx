@@ -1,9 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useI18n } from '../../i18n/I18nProvider';
 import { useSession } from '../../auth/SessionProvider';
 import { useData, useTable } from '../../data/DataContext';
-import type { BaseRow, BookingRow, PaymentRow, ProfileRow, UserRow } from '../../data/schema';
+import type { BaseRow, BookingRow, ClassSessionRow, PaymentRow, ProfileRow, RoomRow, SpaceBookingKind, SpaceBookingRow, SpecialChargeRow, TeacherRow, UserRow } from '../../data/schema';
 import { formatCOP, formatTime } from '../../i18n/format';
 import { tenant } from '../../tenant/tenant';
 import { FAMILY_LABEL, priceItem, pricing, type PlanFamily, type PriceItem } from '../../tenant/pricing';
@@ -22,6 +22,7 @@ import { useTodaySessions } from '../website/hooks';
 import { splitTax, useSettings } from '../admin/settings';
 import { useAudit } from './audit';
 import { maskPhone, personMatches, usePeople } from './people';
+import { BOOKING_KINDS, KIND_FOR_ITEM, KIND_LABEL, dateInputValue, findConflicts, localIso, timeInputValue } from './rooms';
 import './staff.css';
 
 type Method = 'cash' | 'datafono' | 'transfer' | 'nequi' | 'wompi';
@@ -30,8 +31,18 @@ const METHOD_DB: Record<Method, { method: string; provider: 'wompi' | 'manual' }
   cash: { method: 'cash', provider: 'manual' }, datafono: { method: 'card', provider: 'manual' }, transfer: { method: 'transfer', provider: 'manual' }, nequi: { method: 'nequi', provider: 'manual' }, wompi: { method: 'card', provider: 'wompi' },
 };
 const SELLABLE: PlanFamily[] = ['bienvenida', 'membresia', 'pausas'];
+type Mode = 'new' | 'existing' | 'contact';
 
-interface Sale { payment: PaymentRow; number: string; subtotal: number; tax: number; total: number; customer: string; contact: string; item: PriceItem; checkedIn?: string; isNew: boolean }
+interface Sale { payment: PaymentRow; number: string; subtotal: number; tax: number; total: number; customer: string; contact: string; item: PriceItem; checkedIn?: string; isNew: boolean; booking?: string; payout?: { name: string; amount: number } }
+
+/**
+ * Especiales (0017): the one item whose concept and price are typed by hand. Started from a
+ * pricing.ts "desde" item of the espacio family (source) or free. Optional teacher + payout, optional
+ * room window; `bookingId` is set when S-05 sent the desk here to charge an existing booking.
+ */
+interface Special { on: boolean; source: string | null; concept: string; amountRaw: string; teacherId: string; payoutRaw: string; roomId: string; kind: SpaceBookingKind; date: string; start: string; end: string; note: string; bookingId: string | null }
+const NO_SPECIAL: Special = { on: false, source: null, concept: '', amountRaw: '', teacherId: '', payoutRaw: '', roomId: '', kind: 'private_event', date: '', start: '', end: '', note: '', bookingId: null };
+const digits = (raw: string) => Math.max(0, Math.round(Number(raw.replace(/[^\d]/g, '')) || 0));
 
 const addMonths = (d: Date, n: number) => { const x = new Date(d); x.setMonth(x.getMonth() + n); return x; };
 const addDays = (d: Date, n: number) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
@@ -48,8 +59,14 @@ export function RegisterPage() {
   const { people } = usePeople();
   const today = useTodaySessions();
   const { rows: invoices } = useTable<BaseRow>('invoices');
+  const { rows: rooms } = useTable<RoomRow>('rooms', { orderBy: { column: 'created_at' } });
+  const { rows: teachers } = useTable<TeacherRow>('teachers', { where: { active: true }, orderBy: { column: 'display_name' } });
+  const { rows: sessions } = useTable<ClassSessionRow>('class_sessions');
+  const { rows: spaceBookings } = useTable<SpaceBookingRow>('space_bookings');
 
-  const [mode, setMode] = useState<'new' | 'existing'>('new');
+  const [mode, setMode] = useState<Mode>('new');
+  const [contactName, setContactName] = useState('');
+  const [special, setSpecial] = useState<Special>(NO_SPECIAL);
   const [form, setForm] = useState({ first: '', last: '', phone: '', email: '', birthday: '', emergency: '', consent: false });
   const [existingQ, setExistingQ] = useState('');
   const [personId, setPersonId] = useState<string | null>(null);
@@ -64,8 +81,40 @@ export function RegisterPage() {
   const [done, setDone] = useState<Sale | null>(null);
 
   const canWrite = can('payments.write');
-  const item = priceItem(itemId) ?? pricing[0];
+  const specialAmount = digits(special.amountRaw);
+  // An Especial is a PriceItem whose name and price were typed by hand; everything downstream (IVA, receipt, "Valor pagado") treats it like any other item.
+  const item: PriceItem = special.on
+    ? { id: 'especial', family: 'espacio', name: { es: special.concept.trim() || t('staff.register.especial.title'), en: special.concept.trim() || t('staff.register.especial.title') }, description: { es: '', en: '' }, price: specialAmount }
+    : (priceItem(itemId) ?? pricing[0]);
   const totals = splitTax(item.price ?? 0, settings.tax);
+  const specialTeacher = special.teacherId ? teachers.find((x) => x.id === special.teacherId) : undefined;
+  const payout = digits(special.payoutRaw);
+  const bookingStart = localIso(special.date, special.start);
+  const bookingEnd = localIso(special.date, special.end);
+  const windowOk = !!special.roomId && !!bookingStart && !!bookingEnd && bookingStart < bookingEnd;
+  const conflicts = useMemo(() => (special.on && special.roomId ? findConflicts({ roomId: special.roomId, startsAt: bookingStart, endsAt: bookingEnd, excludeBookingId: special.bookingId }, sessions, spaceBookings) : []), [special.on, special.roomId, special.bookingId, bookingStart, bookingEnd, sessions, spaceBookings]);
+  const linkedBooking = special.bookingId ? spaceBookings.find((b) => b.id === special.bookingId) : undefined;
+  const specialOk = !special.on || (special.concept.trim().length > 0 && specialAmount > 0 && (!special.roomId || (windowOk && conflicts.length === 0)));
+
+  /** Start an Especial from a "desde" item of the espacio family (concept and reference price prefilled) or free. */
+  const startSpecial = (source: string | null) => {
+    const src = source ? priceItem(source) : undefined;
+    setSpecial({ ...NO_SPECIAL, on: true, source, concept: src ? bi(src.name) : '', amountRaw: src?.price ? String(src.price) : '', kind: source ? (KIND_FOR_ITEM[source] ?? 'private_event') : 'private_event', date: dateInputValue(new Date()) });
+    setPaidRaw(null);
+  };
+  const pickItem = (id: string) => { setItemId(id); setSpecial(NO_SPECIAL); if (mode === 'contact') setMode('new'); setPaidRaw(null); };
+
+  // S-05 sent the desk here to charge an existing booking: load it once, into an Especial.
+  const bookingParam = params.get('booking');
+  useEffect(() => {
+    if (!bookingParam || special.bookingId === bookingParam) return;
+    const b = spaceBookings.find((x) => x.id === bookingParam);
+    if (!b) return;
+    const source = b.kind === 'private_class' ? 'privada' : b.kind === 'rental' ? (b.title.toLowerCase().includes('foto') ? 'foto' : 'taller') : null;
+    const src = source ? priceItem(source) : undefined;
+    setSpecial({ on: true, source, concept: b.title, amountRaw: src?.price ? String(src.price) : '', teacherId: b.teacher_id ?? '', payoutRaw: '', roomId: b.room_id, kind: b.kind, date: dateInputValue(new Date(b.starts_at)), start: timeInputValue(b.starts_at), end: timeInputValue(b.ends_at), note: b.note ?? '', bookingId: b.id });
+    if (b.customer_id) { setMode('existing'); setPersonId(b.customer_id); } else { setMode('contact'); setContactName(b.contact_name ?? ''); }
+  }, [bookingParam, spaceBookings, special.bookingId]);
   const person = personId ? people.find((p) => p.id === personId) : undefined;
   const candidates = useMemo(() => (existingQ.trim().length < 2 ? [] : people.filter((p) => p.role === 'customer' && personMatches(p, existingQ)).slice(0, 6)), [people, existingQ]);
   const session = today.find((x) => x.session.id === sessionId);
@@ -76,17 +125,18 @@ export function RegisterPage() {
   const amountPaid = paidRaw === null || paidRaw.trim() === '' ? totals.total : Math.max(0, Math.round(Number(paidRaw.replace(/[^\d]/g, '')) || 0));
   const paidDiffers = amountPaid !== totals.total;
   const noteOk = !paidDiffers || note.trim().length > 0;
-  const valid = (mode === 'existing' ? !!person : form.first.trim() && form.phone.trim() && form.consent) && noteOk;
-  const displayName = mode === 'existing' ? person?.name ?? '' : `${form.first.trim()} ${form.last.trim()}`.trim();
+  const who = mode === 'existing' ? !!person : mode === 'contact' ? special.on && contactName.trim().length > 0 : form.first.trim() && form.phone.trim() && form.consent;
+  const valid = who && noteOk && specialOk;
+  const displayName = mode === 'existing' ? person?.name ?? '' : mode === 'contact' ? contactName.trim() : `${form.first.trim()} ${form.last.trim()}`.trim();
 
   const complete = async () => {
     if (!canWrite || !valid) return;
     setBusy(true); setError(null);
     try {
       const now = new Date();
-      let userId = person?.id;
+      let userId: string | null = person?.id ?? null;
       let isNew = false;
-      if (!userId) {
+      if (!userId && mode !== 'contact') {
         isNew = true;
         const u = await data.insert<UserRow>('users', { email: form.email.trim() || `${form.phone.replace(/\D/g, '')}@sin-email.hoyos.test`, phone: form.phone.trim(), status: 'active', last_sign_in_at: null, locale: lang });
         userId = u.id;
@@ -98,12 +148,39 @@ export function RegisterPage() {
       }
       const db = METHOD_DB[method];
       const pending = method === 'wompi';
-      const payment = await data.insert<PaymentRow>('payments', { user_id: userId, plan_id: `plan_${item.id}`, amount: totals.total, amount_paid: amountPaid, note: paidDiffers ? note.trim() : null, currency: tenant.currency, method: db.method, provider: db.provider, provider_ref: pending ? `wmp_link_${Math.random().toString(36).slice(2, 8)}` : null, status: pending ? 'pending' : 'approved', paid_at: pending ? null : now.toISOString(), taken_by: user.id } as Partial<PaymentRow>);
+      const payment = await data.insert<PaymentRow>('payments', { user_id: userId, plan_id: special.on ? null : `plan_${item.id}`, amount: totals.total, amount_paid: amountPaid, note: paidDiffers ? note.trim() : null, currency: tenant.currency, method: db.method, provider: db.provider, provider_ref: pending ? `wmp_link_${Math.random().toString(36).slice(2, 8)}` : null, status: pending ? 'pending' : 'approved', paid_at: pending ? null : now.toISOString(), taken_by: user.id } as Partial<PaymentRow>);
       const number = `HOY-${1000 + invoices.length + 1}`;
       await data.insert('invoices', { payment_id: payment.id, number, subtotal: totals.subtotal, tax: totals.tax, total: totals.total, issued_at: now.toISOString(), pdf_url: null, dian_cufe: null });
-      await audit('payment.take', 'payments', payment.id, { amount: totals.total, amount_paid: amountPaid, note: paidDiffers ? note.trim() : null, method, item: item.id, invoice: number, status: payment.status });
+      await audit('payment.take', 'payments', payment.id, { amount: totals.total, amount_paid: amountPaid, note: paidDiffers ? note.trim() : null, method, item: item.id, invoice: number, status: payment.status, contact: mode === 'contact' ? contactName.trim() : undefined });
 
-      if (item.family === 'membresia') {
+      // Especial: the room window (new or the one S-05 sent us) and the special_charges row that joins money in, teacher payout and booking.
+      let bookingTitle: string | undefined;
+      let payoutDone: Sale['payout'];
+      if (special.on) {
+        const concept = special.concept.trim();
+        const contact = mode === 'contact' ? contactName.trim() : null;
+        let bookingId: string | null = null;
+        if (special.roomId && windowOk) {
+          if (linkedBooking) {
+            await data.update('space_bookings', linkedBooking.id, { status: linkedBooking.status === 'held' ? 'confirmed' : linkedBooking.status, customer_id: userId, contact_name: userId ? null : contact, teacher_id: special.teacherId || null });
+            await audit('space_booking.confirmed', 'space_bookings', linkedBooking.id, { before: linkedBooking.status, after: 'confirmed', via: 'S-04' });
+            bookingId = linkedBooking.id;
+          } else {
+            const b = await data.insert<SpaceBookingRow>('space_bookings', { room_id: special.roomId, kind: special.kind, title: concept, starts_at: bookingStart, ends_at: bookingEnd, customer_id: userId, contact_name: userId ? null : contact, teacher_id: special.teacherId || null, special_charge_id: null, status: 'confirmed', note: special.note.trim() || null, created_by: user.id } as Partial<SpaceBookingRow>);
+            await audit('space_booking.create', 'space_bookings', b.id, { after: { kind: special.kind, room_id: special.roomId, starts_at: bookingStart, ends_at: bookingEnd, status: 'confirmed', title: concept }, via: 'S-04' });
+            bookingId = b.id;
+          }
+          bookingTitle = `${concept} · ${formatTime(bookingStart, lang)}–${formatTime(bookingEnd, lang)}`;
+        }
+        const sc = await data.insert<SpecialChargeRow>('special_charges', { concept, amount: totals.total, customer_id: userId, contact_name: userId ? null : contact, teacher_id: special.teacherId || null, teacher_payout: special.teacherId && payout > 0 ? payout : null, space_booking_id: bookingId, payment_id: payment.id, source_item: special.source, note: special.note.trim() || null, created_by: user.id } as Partial<SpecialChargeRow>);
+        if (bookingId) await data.update('space_bookings', bookingId, { special_charge_id: sc.id });
+        await audit('special.create', 'special_charges', sc.id, { concept, amount: totals.total, teacher_id: special.teacherId || null, teacher_payout: sc.teacher_payout, booking: bookingId, payment: payment.id, source: special.source });
+        if (specialTeacher && sc.teacher_payout) payoutDone = { name: specialTeacher.display_name, amount: sc.teacher_payout };
+      }
+
+      if (special.on) {
+        // no plan, no credits, no class check-in: an Especial is its own thing
+      } else if (item.family === 'membresia') {
         const m = await data.insert('memberships', { user_id: userId, plan_id: `plan_${item.id}`, status: pending ? 'past_due' : 'active', starts_at: dateOnly(now), renews_at: dateOnly(addMonths(now, item.period === 'year' ? 12 : 1)), ends_at: null, paused_until: null });
         await audit('membership.create', 'memberships', m.id, { plan: item.id, user_id: userId });
       } else if (item.credits) {
@@ -112,7 +189,7 @@ export function RegisterPage() {
       }
 
       let checkedIn: string | undefined;
-      if (session && settings.features.autoCheckinOnSale) {
+      if (session && settings.features.autoCheckinOnSale && userId && !special.on) {
         const paidWith = item.family === 'membresia' ? 'membership' : item.id === 'trial' ? 'trial' : item.credits ? 'credit' : 'single';
         const b = await data.insert<BookingRow>('bookings', { user_id: userId, session_id: session.session.id, status: 'checked_in', paid_with: paidWith, credit_id: null, checked_in_at: now.toISOString(), cancelled_at: null, rated: false });
         await data.update('class_sessions', session.session.id, { booked_count: session.session.booked_count + 1 });
@@ -121,26 +198,27 @@ export function RegisterPage() {
         checkedIn = `${session.session.title} · ${formatTime(session.session.starts_at, lang)}`;
       }
       for (const ch of [receipt.wa ? 'whatsapp' : null, receipt.email ? 'email' : null]) {
-        if (ch) await data.insert('message_log', { user_id: userId, channel: ch, template_key: 'receipt', automation_id: null, status: 'sent', sent_at: now.toISOString(), payload: { invoice: number, amount: totals.total } });
+        if (ch && userId) await data.insert('message_log', { user_id: userId, channel: ch, template_key: 'receipt', automation_id: null, status: 'sent', sent_at: now.toISOString(), payload: { invoice: number, amount: totals.total } });
       }
-      const contact = mode === 'existing' ? maskPhone(person?.phone) : maskPhone(form.phone);
-      setDone({ payment, number, subtotal: totals.subtotal, tax: totals.tax, total: totals.total, customer: displayName, contact, item, checkedIn, isNew });
+      const contact = mode === 'existing' ? maskPhone(person?.phone) : mode === 'contact' ? '—' : maskPhone(form.phone);
+      setDone({ payment, number, subtotal: totals.subtotal, tax: totals.tax, total: totals.total, customer: displayName, contact, item, checkedIn, isNew, booking: bookingTitle, payout: payoutDone });
     } catch (e) { setError(String(e)); } finally { setBusy(false); }
   };
 
-  const reset = () => { setDone(null); setForm({ first: '', last: '', phone: '', email: '', birthday: '', emergency: '', consent: false }); setPersonId(null); setExistingQ(''); setMode('new'); setItemId('trial'); setMethod('cash'); setPaidRaw(null); setNote(''); };
+  const reset = () => { setDone(null); setForm({ first: '', last: '', phone: '', email: '', birthday: '', emergency: '', consent: false }); setPersonId(null); setExistingQ(''); setMode('new'); setItemId('trial'); setMethod('cash'); setPaidRaw(null); setNote(''); setSpecial(NO_SPECIAL); setContactName(''); };
 
   if (!canWrite) return <div className="stack"><div className="page-head"><h1>{t('staff.register.title')}</h1></div><EmptyState tone="error" title={t('staff.register.noPermission')} body={t('staff.register.noPermission.body')} /></div>;
 
   if (done) {
     return (
       <div className="stack">
-        <div className="page-head"><div><h1>{t('staff.register.done')}</h1><p className="muted small">{done.isNew ? t('staff.register.done.new', { name: done.customer }) : t('staff.register.done.existing', { name: done.customer })}{done.checkedIn ? ` · ${t('staff.register.done.checkedIn', { cls: done.checkedIn })}` : ''}</p></div></div>
+        <div className="page-head"><div><h1>{t('staff.register.done')}</h1><p className="muted small">{done.isNew ? t('staff.register.done.new', { name: done.customer }) : t('staff.register.done.existing', { name: done.customer })}{done.checkedIn ? ` · ${t('staff.register.done.checkedIn', { cls: done.checkedIn })}` : ''}{done.booking ? ` · ${t('staff.register.done.booking', { title: done.booking })}` : ''}{done.payout ? ` · ${t('staff.register.done.payout', { name: done.payout.name, amount: formatCOP(done.payout.amount, lang) })}` : ''}</p></div></div>
         <div className="register-done">
-          <Receipt studio={tenant.legalName} number={done.number} issuedAt={done.payment.created_at} customer={done.customer} contact={done.contact} lines={[{ label: bi(done.item.name), amount: done.total }]} subtotal={done.subtotal} tax={done.tax} taxLabel={t('staff.register.iva', { pct: settings.tax.ivaPct })} total={done.total} method={t(`staff.register.method.${method}`)} status={done.payment.status} takenBy={`${user.name}`} dianRef={null} note={done.checkedIn ? t('staff.register.done.checkedIn', { cls: done.checkedIn }) : undefined} printLabel={t('staff.register.print')} />
+          <Receipt studio={tenant.legalName} number={done.number} issuedAt={done.payment.created_at} customer={done.customer} contact={done.contact} lines={[{ label: bi(done.item.name), amount: done.total }]} subtotal={done.subtotal} tax={done.tax} taxLabel={t('staff.register.iva', { pct: settings.tax.ivaPct })} total={done.total} method={t(`staff.register.method.${method}`)} status={done.payment.status} takenBy={`${user.name}`} dianRef={null} note={done.checkedIn ? t('staff.register.done.checkedIn', { cls: done.checkedIn }) : done.booking ? t('staff.register.done.booking', { title: done.booking }) : undefined} printLabel={t('staff.register.print')} />
           <div className="stack-sm">
             {done.payment.status === 'pending' && <Card tone="highlight"><p className="small">{t('staff.register.wompi.pending')}</p></Card>}
             <Button onClick={reset}>{t('staff.register.newSale')}</Button>
+            {done.booking && <Link to="/staff/rooms"><Button block variant="secondary">{t('staff.home.openRooms')}</Button></Link>}
             <Link to={`/staff/checkin${sessionId ? `?session=${sessionId}` : ''}`}><Button block variant="secondary">{t('staff.home.openCheckin')}</Button></Link>
           </div>
         </div>
@@ -153,8 +231,12 @@ export function RegisterPage() {
       <div className="page-head"><div><h1>{t('staff.register.title')}</h1><p className="muted small">{t('staff.register.subtitle')}</p></div></div>
       <div className="register">
         <div className="register-steps">
-          <Card eyebrow={t('staff.register.step1')} title={t('staff.register.who')} actions={<div className="row" role="tablist"><Chip selected={mode === 'new'} onClick={() => setMode('new')}>{t('staff.register.new')}</Chip><Chip selected={mode === 'existing'} onClick={() => setMode('existing')}>{t('staff.register.existing')}</Chip></div>}>
-            {mode === 'new' ? (
+          <Card eyebrow={t('staff.register.step1')} title={t('staff.register.who')} actions={<div className="row wrap" role="tablist"><Chip selected={mode === 'new'} onClick={() => setMode('new')}>{t('staff.register.new')}</Chip><Chip selected={mode === 'existing'} onClick={() => setMode('existing')}>{t('staff.register.existing')}</Chip><Chip selected={mode === 'contact'} disabled={!special.on} title={special.on ? undefined : t('staff.register.contact.only')} onClick={() => setMode('contact')}>{t('staff.register.contact')}</Chip></div>}>
+            {mode === 'contact' ? (
+              <div className="stack-sm">
+                <Field label={t('staff.register.contact.name')} required hint={t('staff.register.contact.hint')}>{(id) => <Input id={id} value={contactName} onChange={(e) => setContactName(e.target.value)} placeholder={t('staff.rooms.f.contact.ph')} autoFocus />}</Field>
+              </div>
+            ) : mode === 'new' ? (
               <div className="grid grid-2 register-form">
                 <Field label={t('staff.register.f.first')} required>{(id) => <Input id={id} value={form.first} onChange={(e) => setForm({ ...form, first: e.target.value })} autoFocus />}</Field>
                 <Field label={t('staff.register.f.last')}>{(id) => <Input id={id} value={form.last} onChange={(e) => setForm({ ...form, last: e.target.value })} />}</Field>
@@ -188,10 +270,54 @@ export function RegisterPage() {
             {SELLABLE.map((fam) => (
               <div key={fam} className="register-family">
                 <div className="eyebrow">{bi(FAMILY_LABEL[fam])}</div>
-                {items.filter((p) => p.family === fam).map((p) => <div key={p.id} className={`register-item ${p.id === itemId ? 'is-selected' : ''}`}><PriceRow item={p} onSelect={() => setItemId(p.id)} /></div>)}
+                {items.filter((p) => p.family === fam).map((p) => <div key={p.id} className={`register-item ${!special.on && p.id === itemId ? 'is-selected' : ''}`}><PriceRow item={p} onSelect={() => pickItem(p.id)} /></div>)}
               </div>
             ))}
+            <div className="register-family">
+              <div className="eyebrow">{t('staff.register.especial.family')}</div>
+              <p className="xs muted" style={{ marginBottom: 8 }}>{t('staff.register.especial.family.hint')}</p>
+              {pricing.filter((p) => p.family === 'espacio' && p.price != null).map((p) => <div key={p.id} className={`register-item ${special.on && special.source === p.id ? 'is-selected' : ''}`}><PriceRow item={p} onSelect={() => startSpecial(p.id)} /></div>)}
+              <div className={`register-item ${special.on && special.source === null ? 'is-selected' : ''}`}>
+                <button type="button" className="register-custom" onClick={() => startSpecial(null)} aria-pressed={special.on && special.source === null}>
+                  <span className="grow"><strong className="small">{t('staff.register.especial.custom')}</strong><span className="xs muted" style={{ display: 'block' }}>{t('staff.register.especial.custom.hint')}</span></span>
+                  <Badge tone="highlight">{t('staff.register.especial.title')}</Badge>
+                </button>
+              </div>
+            </div>
           </Card>
+
+          {special.on && (
+            <Card eyebrow="Especial" title={t('staff.register.especial.title')} tone="highlight" data-testid="especial-card">
+              <p className="xs muted" style={{ marginBottom: 12 }}>{t('staff.register.especial.body')}</p>
+              {linkedBooking && <p className="small" style={{ marginBottom: 12 }}><Badge tone="primary">S-05</Badge> {t('staff.register.especial.fromBooking', { title: linkedBooking.title })}</p>}
+              <div className="register-special">
+                <div className="register-full"><Field label={t('staff.register.especial.concept')} required>{(id) => <Input id={id} value={special.concept} onChange={(e) => setSpecial({ ...special, concept: e.target.value })} placeholder={t('staff.register.especial.concept.ph')} invalid={!special.concept.trim()} autoFocus={!linkedBooking} />}</Field></div>
+                <Field label={t('staff.register.especial.amount')} required hint={t('staff.register.especial.amount.hint')}>{(id) => <Input id={id} inputMode="numeric" value={special.amountRaw} onChange={(e) => { setSpecial({ ...special, amountRaw: e.target.value }); setPaidRaw(null); }} invalid={specialAmount <= 0} />}</Field>
+                <Field label={t('staff.register.especial.teacher')}>{(id) => <Select id={id} value={special.teacherId} onChange={(e) => setSpecial({ ...special, teacherId: e.target.value })}><option value="">{t('staff.register.especial.teacher.none')}</option>{teachers.map((x) => <option key={x.id} value={x.id}>{x.display_name}</option>)}</Select>}</Field>
+                {specialTeacher && <div className="register-full"><Field label={t('staff.register.especial.payout')} hint={t('staff.register.especial.payout.hint', { rate: formatCOP(specialTeacher.rate_per_class ?? 0, lang) })}>{(id) => <Input id={id} inputMode="numeric" value={special.payoutRaw} onChange={(e) => setSpecial({ ...special, payoutRaw: e.target.value })} placeholder={String(specialTeacher.rate_per_class ?? '')} />}</Field></div>}
+                <Field label={t('staff.register.especial.room')}>{(id) => <Select id={id} value={special.roomId} onChange={(e) => setSpecial({ ...special, roomId: e.target.value })} disabled={!!linkedBooking}><option value="">{t('staff.register.especial.room.none')}</option>{rooms.map((r) => <option key={r.id} value={r.id}>{r.name} · {t('core.common.capacity', { n: r.capacity })}</option>)}</Select>}</Field>
+                {special.roomId && (
+                  <>
+                    <Field label={t('staff.register.especial.kind')}>{(id) => <Select id={id} value={special.kind} onChange={(e) => setSpecial({ ...special, kind: e.target.value as SpaceBookingKind })} disabled={!!linkedBooking}>{BOOKING_KINDS.filter((k) => k !== 'maintenance' && k !== 'blocked').map((k) => <option key={k} value={k}>{bi(KIND_LABEL[k])}</option>)}</Select>}</Field>
+                    <Field label={t('staff.register.especial.date')} required>{(id) => <Input id={id} type="date" value={special.date} onChange={(e) => setSpecial({ ...special, date: e.target.value })} disabled={!!linkedBooking} />}</Field>
+                    <Field label={t('staff.register.especial.start')} required>{(id) => <Input id={id} type="time" step={900} value={special.start} onChange={(e) => setSpecial({ ...special, start: e.target.value })} disabled={!!linkedBooking} />}</Field>
+                    <Field label={t('staff.register.especial.end')} required>{(id) => <Input id={id} type="time" step={900} value={special.end} onChange={(e) => setSpecial({ ...special, end: e.target.value })} disabled={!!linkedBooking} invalid={!!special.start && !!special.end && !windowOk} />}</Field>
+                    <div className="register-full">
+                      {windowOk && conflicts.length > 0 && (
+                        <div className="staff-notice staff-notice-bad small" role="alert" data-testid="especial-conflict">
+                          <strong>{t('staff.rooms.conflict', { room: rooms.find((r) => r.id === special.roomId)?.name ?? '' })}</strong>
+                          <ul className="xs" style={{ margin: '6px 0 0', paddingLeft: 18 }}>{conflicts.map((c) => <li key={c.id}>{formatTime(c.starts_at, lang)}–{formatTime(c.ends_at, lang)} · {c.title}</li>)}</ul>
+                        </div>
+                      )}
+                      {windowOk && conflicts.length === 0 && <p className="xs rooms-free">{t('staff.rooms.free', { room: rooms.find((r) => r.id === special.roomId)?.name ?? '' })}</p>}
+                      {special.start && special.end && !windowOk && <p className="xs register-diff">{t('staff.rooms.badWindow')}</p>}
+                    </div>
+                  </>
+                )}
+                <div className="register-full"><Field label={t('staff.register.especial.note')}>{(id) => <Input id={id} value={special.note} onChange={(e) => setSpecial({ ...special, note: e.target.value })} placeholder={t('staff.register.especial.note.ph')} />}</Field></div>
+              </div>
+            </Card>
+          )}
 
           <Card eyebrow={t('staff.register.step3')} title={t('staff.register.how')}>
             <div className="register-methods" role="radiogroup">
@@ -209,7 +335,8 @@ export function RegisterPage() {
           <Card title={t('staff.register.summary')} raised>
             <div className="stack-sm">
               <div className="row-between"><span className="small">{displayName || <span className="muted">{t('staff.register.summary.noone')}</span>}</span>{mode === 'new' && form.first && <Badge tone="primary">{t('core.common.new')}</Badge>}</div>
-              <div className="row-between register-line"><span>{bi(item.name)}</span><strong>{formatCOP(item.price ?? 0, lang)}</strong></div>
+              <div className="row-between register-line"><span>{bi(item.name)}{special.on && <Badge tone="highlight" className="register-badge">{t('staff.register.especial.title')}</Badge>}</span><strong>{formatCOP(item.price ?? 0, lang)}</strong></div>
+              {special.on && specialTeacher && payout > 0 && <div className="row-between register-line xs muted"><span>{t('staff.register.done.payout', { name: specialTeacher.display_name, amount: formatCOP(payout, lang) })}</span></div>}
               <div className="row-between register-line small muted"><span>Subtotal</span><span>{formatCOP(totals.subtotal, lang)}</span></div>
               <div className="row-between register-line small muted"><span>{t('staff.register.iva', { pct: settings.tax.ivaPct })}{settings.tax.pricesIncludeIva ? ` · ${t('staff.register.iva.included')}` : ''}</span><span>{formatCOP(totals.tax, lang)}</span></div>
               <div className="row-between register-total"><span>{t('staff.register.total')}</span><span>{formatCOP(totals.total, lang)}</span></div>
@@ -225,7 +352,7 @@ export function RegisterPage() {
                 </>
               )}
               <Field label={t('staff.register.checkinTo')} hint={settings.features.autoCheckinOnSale ? t('staff.register.checkinTo.hint') : t('staff.register.checkinTo.off')}>
-                {(id) => <Select id={id} value={sessionId} onChange={(e) => setSessionId(e.target.value)} disabled={!settings.features.autoCheckinOnSale}><option value="">{t('staff.register.checkinTo.none')}</option>{upcoming.map(({ session: s, teacher: te }) => <option key={s.id} value={s.id}>{formatTime(s.starts_at, lang)} · {s.title} · {te?.display_name} ({s.booked_count}/{s.capacity})</option>)}</Select>}
+                {(id) => <Select id={id} value={sessionId} onChange={(e) => setSessionId(e.target.value)} disabled={!settings.features.autoCheckinOnSale || special.on || mode === 'contact'}><option value="">{t('staff.register.checkinTo.none')}</option>{upcoming.map(({ session: s, teacher: te }) => <option key={s.id} value={s.id}>{formatTime(s.starts_at, lang)} · {s.title} · {te?.display_name} ({s.booked_count}/{s.capacity})</option>)}</Select>}
               </Field>
               {error && <EmptyState compact tone="error" title={t('core.common.error')} body={error} />}
               <Button block size="lg" disabled={!valid} loading={busy} onClick={complete}>{method === 'wompi' ? t('staff.register.cta.link') : t('staff.register.cta')}</Button>

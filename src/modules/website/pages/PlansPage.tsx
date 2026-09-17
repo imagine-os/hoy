@@ -6,8 +6,9 @@ import { FAMILY_LABEL, FAMILY_RATIONALE, DISCIPLINE, pricing, type PlanFamily } 
 import { tenant } from '../../../tenant/tenant';
 import { usePolicy } from '../../admin/settings';
 import { Card } from '../../../components/molecule/Card/Card';
+import { Button } from '../../../components/atom/Button/Button';
 import { PriceRow } from '../../../components/molecule/PriceRow/PriceRow';
-import { PageHead, SiteShell } from '../SiteShell';
+import { PageHead, SiteShell, waHref } from '../SiteShell';
 import { siteSpecs } from '../specs';
 
 const ORDER: PlanFamily[] = ['bienvenida', 'membresia', 'pausas', 'regalos', 'espacio'];
@@ -41,6 +42,17 @@ export function PlansPage() {
             );
           })}
         </div>
+      </section>
+    ),
+    // Especiales (0017): what a plan cannot hold is arranged directly with the studio — no checkout, a conversation.
+    Specials: () => (
+      <section className="container site-section" style={{ paddingTop: 0 }}>
+        <Card eyebrow={t('site.plans.specials.eyebrow')} title={t('site.plans.specials.title')} tone="muted" className="site-specials">
+          <p className="small" style={{ maxWidth: '60ch' }}>{t('site.plans.specials.body')}</p>
+          <div className="row wrap" style={{ marginTop: 16 }}>
+            <a href={waHref(t('site.plans.specials.wa'))} target="_blank" rel="noreferrer"><Button size="sm" variant="secondary">{t('site.plans.specials.cta')}</Button></a>
+          </div>
+        </Card>
       </section>
     ),
     Discipline: () => (

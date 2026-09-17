@@ -48,6 +48,17 @@ export function ContactPage() {
         </div>
       </section>
     ),
+    // Especiales (0017)
+    Specials: () => (
+      <section className="container site-section" style={{ paddingTop: 0 }}>
+        <Card eyebrow={t('site.contact.specials')} tone="muted" className="site-specials">
+          <p className="small" style={{ maxWidth: '60ch' }}>{t('site.contact.specialsBody')}</p>
+          <div className="row wrap" style={{ marginTop: 12 }}>
+            <a href={waHref(t('site.plans.specials.wa'))} target="_blank" rel="noreferrer"><Button size="sm" variant="secondary">{t('site.plans.specials.cta')}</Button></a>
+          </div>
+        </Card>
+      </section>
+    ),
     Map: () => (
       <section className="container site-section">
         <div className="site-media-cap">

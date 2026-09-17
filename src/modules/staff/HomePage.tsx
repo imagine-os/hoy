@@ -66,6 +66,7 @@ export function StaffHomePage() {
             <div className="stack-sm">
               <Link to="/staff/checkin"><Button block>{t('staff.home.openCheckin')}</Button></Link>
               {can('payments.write') && <Link to="/staff/register"><Button block variant="secondary">{t('staff.home.openRegister')}</Button></Link>}
+              {can('bookings.write_any') && <Link to="/staff/rooms"><Button block variant="secondary">{t('staff.home.openRooms')}</Button></Link>}
               {can('members.read') && <Link to="/admin/crm"><Button block variant="ghost">{t('staff.home.openCrm')}</Button></Link>}
               {can('tables.read') && <Link to="/admin/tables"><Button block variant="ghost">{t('staff.home.openTables')}</Button></Link>}
             </div>

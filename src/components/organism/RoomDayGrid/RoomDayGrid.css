@@ -1,0 +1,45 @@
+/* RoomDayGrid — rooms as columns, hours as rows, blocks by the minute (S-05). D-01 tokens only. */
+.roomgrid { --rg-gutter: 56px; border: 1px solid var(--color-card-border); border-radius: var(--r-md); background: var(--color-surface); box-shadow: var(--shadow-highlight), var(--shadow-contact); overflow: hidden; }
+.roomgrid-head, .roomgrid-body { display: grid; grid-template-columns: var(--rg-gutter) repeat(var(--rg-cols), minmax(0, 1fr)); }
+.roomgrid-head { border-bottom: 1px solid var(--color-border); background: var(--color-surface-2); }
+.roomgrid-room { display: flex; flex-direction: column; padding: var(--sp-2) var(--sp-3); border-left: 1px solid var(--color-border); min-width: 0; }
+.roomgrid-room strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.roomgrid-body { position: relative; }
+.roomgrid-hours { position: relative; }
+.roomgrid-hour { height: var(--rg-hour); padding: 2px 6px; border-top: 1px solid var(--color-border); }
+.roomgrid-hour:first-child { border-top: 0; }
+.roomgrid-col { position: relative; border-left: 1px solid var(--color-border); min-width: 0; }
+.roomgrid-cell { display: block; width: 100%; height: var(--rg-hour); border: 0; border-top: 1px solid var(--color-border); background: transparent; padding: 0; cursor: pointer; }
+.roomgrid-cell:first-child { border-top: 0; }
+.roomgrid-cell:hover { background: color-mix(in srgb, var(--color-primary) 5%, transparent); }
+.roomgrid-cell:focus-visible { outline: 2px solid var(--color-focus); outline-offset: -2px; }
+.roomgrid-block { position: absolute; left: 4px; right: 4px; display: flex; flex-direction: column; gap: 1px; padding: 4px 8px; border: 1px solid transparent; border-radius: var(--r-sm); text-align: left; color: var(--color-text); background: var(--color-surface-3); overflow: hidden; cursor: pointer; transition: box-shadow var(--dur-fast), transform var(--dur-fast); }
+.roomgrid-block:hover { box-shadow: var(--shadow-contact); }
+.roomgrid-block:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 1px; }
+.roomgrid-block.is-selected { box-shadow: inset 0 0 0 2px var(--color-primary), var(--shadow-contact); }
+.roomgrid-block-title, .roomgrid-block-sub { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.roomgrid-block-time { color: var(--color-text-muted); }
+.roomgrid-block-chip { position: absolute; right: 6px; top: 4px; }
+/* tones: the four movements for classes, four materials for the space bookings */
+.roomgrid-block.tone-enraiza { background: var(--mv-enraiza-bg); border-color: color-mix(in srgb, var(--mv-enraiza-dot) 50%, transparent); }
+.roomgrid-block.tone-fluye { background: var(--mv-fluye-bg); border-color: color-mix(in srgb, var(--mv-fluye-dot) 50%, transparent); }
+.roomgrid-block.tone-arde { background: var(--mv-arde-bg); border-color: color-mix(in srgb, var(--mv-arde-dot) 50%, transparent); }
+.roomgrid-block.tone-libera { background: var(--mv-libera-bg); border-color: color-mix(in srgb, var(--mv-libera-dot) 50%, transparent); }
+.roomgrid-block.tone-event { background: var(--color-highlight); color: var(--color-on-highlight); border-color: color-mix(in srgb, var(--color-on-highlight) 30%, transparent); }
+.roomgrid-block.tone-event .roomgrid-block-time { color: inherit; opacity: .8; }
+.roomgrid-block.tone-rental { background: var(--mat-sky); color: var(--color-text-on-primary); border-color: transparent; }
+.roomgrid-block.tone-rental .roomgrid-block-time { color: inherit; opacity: .85; }
+.roomgrid-block.tone-private { background: var(--mat-deep); color: var(--color-text-on-primary); border-color: transparent; }
+.roomgrid-block.tone-private .roomgrid-block-time { color: inherit; opacity: .85; }
+.roomgrid-block.tone-maintenance, .roomgrid-block.tone-blocked { background: var(--mat-linen); color: var(--color-text-muted); border-color: var(--color-border-strong); }
+/* statuses */
+.roomgrid-block.status-held { border-style: dashed; border-color: var(--color-border-strong); background: var(--color-surface-elevated); color: var(--color-text); }
+.roomgrid-block.status-cancelled { opacity: .45; text-decoration: line-through; }
+.roomgrid-block.status-done { opacity: .75; }
+.roomgrid-now { position: absolute; left: var(--rg-gutter); right: 0; height: 0; border-top: 2px solid var(--color-danger); pointer-events: none; }
+.roomgrid-now span { position: absolute; right: 6px; top: -9px; padding: 0 6px; border-radius: var(--r-full); background: var(--color-danger); color: var(--color-text-on-primary); line-height: 16px; }
+@media (max-width: 720px) {
+  .roomgrid { --rg-gutter: 44px; }
+  .roomgrid-block { padding: 2px 6px; }
+  .roomgrid-block-sub { display: none; }
+}

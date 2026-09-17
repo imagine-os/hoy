@@ -119,8 +119,8 @@ export function TeacherPayrollPage() {
               {extras.map((l, i) => (
                 <div key={`x-${i}`} className="teach-payline">
                   <span className="grow">
-                    <span className="row wrap"><strong className="small">{t(`teacher.payroll.kind.${l.kind}`)}</strong></span>
-                    <span className="xs muted">{l.note}</span>
+                    <span className="row wrap"><strong className="small">{l.kind === 'manual' && l.note ? l.note : t(`teacher.payroll.kind.${l.kind}`)}</strong>{l.kind === 'manual' && <Badge tone="highlight">{t('teacher.payroll.kind.manual')}</Badge>}</span>
+                    <span className="xs muted">{l.kind === 'manual' ? t('teacher.payroll.manual.hint') : l.note}</span>
                   </span>
                   <span className={`small mono ${l.amount < 0 ? 'teach-neg' : ''}`}>{formatCOP(l.amount, lang)}</span>
                 </div>

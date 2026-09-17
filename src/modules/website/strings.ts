@@ -111,6 +111,11 @@ export const strings: StringTable = {
   'site.plans.taxTitle': { es: '¿Incluye IVA?', en: 'Does it include VAT?' },
   'site.plans.taxIncluded': { es: 'Sí: los precios mostrados ya incluyen IVA del {pct}%.', en: 'Yes: the prices shown already include {pct}% VAT.' },
   'site.plans.taxExcluded': { es: 'No: a los precios mostrados se les suma IVA del {pct}% al pagar.', en: 'No: {pct}% VAT is added to the prices shown at checkout.' },
+  'site.plans.specials.eyebrow': { es: 'Especiales', en: 'Specials' },
+  'site.plans.specials.title': { es: 'Lo que no cabe en un plan', en: 'What does not fit in a plan' },
+  'site.plans.specials.body': { es: 'Un cumpleaños, una sesión para tu equipo, un evento privado o algo que todavía no tiene nombre. Esas cosas no se compran con un botón: se conversan. Escríbenos y lo armamos contigo.', en: 'A birthday, a session for your team, a private event or something that does not have a name yet. Those things are not bought with a button: they are talked through. Write to us and we will shape it with you.' },
+  'site.plans.specials.cta': { es: 'Escribirnos por WhatsApp', en: 'Write to us on WhatsApp' },
+  'site.plans.specials.wa': { es: 'Hola HOY, quiero preguntar por un especial: un evento privado o una sesión de grupo.', en: 'Hi HOY, I would like to ask about a special: a private event or a group session.' },
   'site.plans.taxSource': { es: 'Parámetro de operación (M-08). Si cambia en la configuración, cambia aquí.', en: 'An operating parameter (M-08). Change it in settings and it changes here.' },
 
   'site.contact.title': { es: 'Contacto', en: 'Contact' },
@@ -131,6 +136,8 @@ export const strings: StringTable = {
   'site.contact.fMessage': { es: 'Mensaje', en: 'Message' },
   'site.contact.fMessagePh': { es: 'Quiero probar una clase…', en: 'I would like to try a class…' },
   'site.contact.fSend': { es: 'Enviar por WhatsApp', en: 'Send on WhatsApp' },
+  'site.contact.specials': { es: 'Especiales', en: 'Specials' },
+  'site.contact.specialsBody': { es: 'Eventos privados, cumpleaños, sesiones para equipos y pedidos especiales se arman directamente con el estudio. Cuéntanos qué tienes en mente y te respondemos por WhatsApp.', en: 'Private events, birthdays, team sessions and special requests are arranged directly with the studio. Tell us what you have in mind and we will answer on WhatsApp.' },
   'site.contact.fTemplate': { es: 'Hola HOY, soy {name} ({phone}). {message}', en: 'Hi HOY, I am {name} ({phone}). {message}' },
 
   'site.legal.terms': { es: 'Términos y condiciones', en: 'Terms & conditions' },

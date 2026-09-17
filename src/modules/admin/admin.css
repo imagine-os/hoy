@@ -80,3 +80,4 @@
 .adm-mv-fluye { background: var(--tex-ph), linear-gradient(var(--mv-fluye-bg), var(--mv-fluye-bg)); }
 .adm-mv-arde { background: var(--tex-ph), linear-gradient(var(--mv-arde-bg), var(--mv-arde-bg)); }
 .adm-mv-libera { background: var(--tex-ph), linear-gradient(var(--mv-libera-bg), var(--mv-libera-bg)); }
+.adm-line-manual .grow { font-style: normal; }

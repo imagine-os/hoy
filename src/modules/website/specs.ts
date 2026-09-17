@@ -36,8 +36,8 @@ export const siteSpecs = {
     states: ['default', 'no portrait yet'] }),
   contact: defineSpec({ ...pub, code: 'W-06', name: { es: 'Sitio · Contacto', en: 'Site · Contact' },
     purpose: { es: 'WhatsApp, correo, dirección, Instagram y horario desde la configuración del tenant, el mapa del estudio y un formulario que abre WhatsApp con el mensaje listo.', en: 'WhatsApp, email, address, Instagram and hours from the tenant config, the studio map, and a form that opens WhatsApp with the message ready.' },
-    layout: ['PageHead', 'ContactCards', 'Map', 'Form'], data: ['tenants'],
-    logic: ['No hardcoded contact data: reads src/tenant/tenant.ts and labels every placeholder as pending.', 'MapSlot reads tenant.location; provider stays "none" so the page makes no network request.', 'The form has no backend: it builds a wa.me deep link with the message prefilled.'],
+    layout: ['PageHead', 'ContactCards', 'Specials', 'Map', 'Form'], data: ['tenants'],
+    logic: ['No hardcoded contact data: reads src/tenant/tenant.ts and labels every placeholder as pending.', 'MapSlot reads tenant.location; provider stays "none" so the page makes no network request.', 'The form has no backend: it builds a wa.me deep link with the message prefilled.', 'Especiales (0017): private events, birthdays, team sessions and special requests are arranged directly with the studio — a card that opens WhatsApp with the request prefilled.'],
     integrations: ['WhatsApp'], states: ['default', 'form empty', 'form filled'] }),
   classes: defineSpec({ ...pub, code: 'W-07', name: { es: 'Sitio · Clases', en: 'Site · Classes' },
     purpose: { es: 'La introducción "Nuestras clases" y una tarjeta rica por clase (hot yoga, barre, pilates, meditación, respiración) con su hueco de foto 16:9.', en: 'The “Our classes” introduction and one rich card per class (hot yoga, barre, pilates, meditation, breathwork), each with its 16:9 photo slot.' },
@@ -52,12 +52,13 @@ export const siteSpecs = {
   /** P-01 keeps its canvas code; only the layout, data and logic are brought up to what the page renders. */
   plans: defineSpec({
     ...canvasSpecs['P-01'],
-    layout: ['PageHead', 'Families', 'Discipline', 'TaxNote'],
+    layout: ['PageHead', 'Families', 'Specials', 'Discipline', 'TaxNote'],
     data: [...new Set([...(canvasSpecs['P-01'].data ?? []), 'tenants'])],
     logic: [
       'Reads only src/tenant/pricing.ts for prices, names and the per-family rationale (FAMILY_RATIONALE).',
       'The discipline band reads DISCIPLINE, whose numbers come from tenant.studio and the number of plan families.',
       'The IVA note reads the M-08 tax policy through usePolicy() (src/modules/admin/settings.ts), read-only.',
+      'Especiales (0017): private events, birthdays, team sessions and special requests are not sold here — the Specials note sends the reader to WhatsApp (tenant.contact) and the desk prices them by hand in S-04.',
     ],
     states: ['default', 'IVA included', 'IVA added at checkout'],
   }),

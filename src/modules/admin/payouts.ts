@@ -19,8 +19,8 @@
  */
 import { useCallback, useMemo } from 'react';
 import { useData, useTable } from '../../data/DataContext';
-import type { BookingRow, ClassSessionRow, PayrollLineRow, PayrollRunRow, TeacherRow } from '../../data/schema';
-import { byTeacher, classLinesFor, local, monthPeriod, runTotal, type Period } from '../../data/payrollCalc';
+import type { BookingRow, ClassSessionRow, PayrollLineRow, PayrollRunRow, SpaceBookingRow, SpecialChargeRow, TeacherRow } from '../../data/schema';
+import { byTeacher, draftLinesFor, local, monthPeriod, runTotal, type Period } from '../../data/payrollCalc';
 import type { Bi } from '../../specs/types';
 
 export type PayoutMethod = PayrollRunRow['method'];
@@ -58,9 +58,12 @@ export function usePayroll() {
 }
 
 /**
- * Writes (or rewrites) the draft run for a period from the completed sessions in it.
+ * Writes (or rewrites) the draft run for a period from the completed sessions in it **and** the
+ * manual teacher payouts of the Especiales delivered in it (0017: `special_charges.teacher_payout`
+ * → a line of kind 'manual' with `special_charge_id`).
  * Idempotent: an existing draft for the same period has its lines replaced, so pressing the button
- * twice cannot double-pay. An approved or paid run is never touched.
+ * twice cannot double-pay — a manual line is recomputed from its source, never added twice. An
+ * approved or paid run is never touched.
  */
 export function useGenerateDraft() {
   const data = useData();
@@ -69,12 +72,14 @@ export function useGenerateDraft() {
   const { rows: teachers } = useTable<TeacherRow>('teachers');
   const { rows: runs } = useTable<PayrollRunRow>('payroll_runs');
   const { rows: lines } = useTable<PayrollLineRow>('payroll_lines');
+  const { rows: specials } = useTable<SpecialChargeRow>('special_charges');
+  const { rows: spaceBookings } = useTable<SpaceBookingRow>('space_bookings');
 
   return useCallback(async (period: Period, method: PayoutMethod = 'wompi'): Promise<{ run: PayrollRunRow; created: number; replaced: boolean } | { blocked: PayrollRunRow }> => {
     const existing = runs.find((r) => r.period_start === period.start && r.period_end === period.end);
     if (existing && existing.status !== 'draft') return { blocked: existing };
 
-    const draft = classLinesFor(period, sessions, bookings, teachers);
+    const draft = draftLinesFor(period, { sessions, bookings, teachers, specials, spaceBookings });
     const total = runTotal(draft);
     let run: PayrollRunRow;
     if (existing) {
@@ -88,7 +93,7 @@ export function useGenerateDraft() {
     }
     for (const l of draft) await data.insert('payroll_lines', { ...l, run_id: run.id });
     return { run, created: draft.length, replaced: !!existing };
-  }, [data, runs, lines, sessions, bookings, teachers]);
+  }, [data, runs, lines, sessions, bookings, teachers, specials, spaceBookings]);
 }
 
 /**
@@ -101,6 +106,7 @@ export function statementOf(lines: PayrollLineRow[]) {
     return {
       ...g,
       classes: g.lines.filter((l) => l.kind === 'class').length,
+      manual: g.lines.filter((l) => l.kind === 'manual').length,
       attendees: g.lines.reduce((a, l) => a + (l.attendees ?? 0), 0),
       extras: g.lines.filter((l) => l.kind !== 'class'),
       paidCount: paid.length,
@@ -115,10 +121,10 @@ export type TeacherStatement = ReturnType<typeof statementOf>[number];
 
 /** Client-side CSV of a run, one row per line — what finance hands the accountant. */
 export function payrollCsv(run: PayrollRunRow, lines: PayrollLineRow[], teacherName: Map<string, string>): string {
-  const head = ['period_start', 'period_end', 'run_status', 'teacher', 'kind', 'class_session_id', 'attendees', 'rate_cop', 'amount_cop', 'paid_at', 'paid_method', 'note'];
+  const head = ['period_start', 'period_end', 'run_status', 'teacher', 'kind', 'class_session_id', 'special_charge_id', 'attendees', 'rate_cop', 'amount_cop', 'paid_at', 'paid_method', 'note'];
   const esc = (v: unknown) => { const s = v == null ? '' : String(v); return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
-  const rows = lines.map((l) => [run.period_start, run.period_end, run.status, teacherName.get(l.teacher_id) ?? l.teacher_id, l.kind, l.class_session_id ?? '', l.attendees ?? '', l.rate, l.amount, l.paid_at ?? '', l.paid_method ?? '', l.note ?? '']);
-  rows.push(['', '', '', 'TOTAL', '', '', '', '', String(run.total), '', '', '']);
+  const rows = lines.map((l) => [run.period_start, run.period_end, run.status, teacherName.get(l.teacher_id) ?? l.teacher_id, l.kind, l.class_session_id ?? '', l.special_charge_id ?? '', l.attendees ?? '', l.rate, l.amount, l.paid_at ?? '', l.paid_method ?? '', l.note ?? '']);
+  rows.push(['', '', '', 'TOTAL', '', '', '', '', '', String(run.total), '', '', '']);
   return [head, ...rows].map((r) => r.map(esc).join(',')).join('\n');
 }
 

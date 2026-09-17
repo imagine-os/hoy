@@ -16,7 +16,7 @@ import { Drawer } from '../../../components/organism/Drawer/Drawer';
 import { useEntitlements } from '../hooks';
 import { recordPayment, wompiCheckout } from '../payments';
 import { policy } from '../policy';
-import { PageHead } from '../ui';
+import { PageHead, waLink } from '../ui';
 
 type Cycle = 'month' | 'year';
 /** Plan dates carry the year: an annual cycle ends in another one. */
@@ -94,6 +94,10 @@ export function PlansPage() {
         <Card tone="muted" className="row-between wrap">
           <span className="small">{t('customer.plans.skip')}</span>
           <Link to="/app/passes"><Button size="sm" variant="secondary">{t('customer.plans.skip.cta')} →</Button></Link>
+        </Card>
+        <Card tone="muted" className="row-between wrap">
+          <span className="small">{t('customer.plans.specials')}</span>
+          <a href={waLink(tenant.contact.whatsapp, t('customer.plans.specials.wa'))} target="_blank" rel="noreferrer"><Button size="sm" variant="ghost">{t('customer.plans.specials.cta')} →</Button></a>
         </Card>
       </div>
 
