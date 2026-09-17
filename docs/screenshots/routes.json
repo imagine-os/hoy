@@ -872,6 +872,65 @@
   }
  },
  {
+  "path": "/admin/crm/deletions",
+  "code": "M-11",
+  "surface": "admin",
+  "status": "built",
+  "spec": {
+   "code": "M-11",
+   "name": {
+    "es": "CRM · Solicitudes de eliminación",
+    "en": "CRM · Deletion requests"
+   },
+   "purpose": {
+    "es": "La cola de peticiones de borrar una cuenta: quién la pidió y por dónde, en qué estado va, la lista de anonimización paso a paso, la nota interna y el enlace a la ficha del socio. Admin la mueve de pendiente a en proceso y a hecha; cancelada cierra sin borrar.",
+    "en": "The queue of account-deletion requests: who asked and through which channel, its status, the step-by-step anonymisation checklist, the internal note and the link to the member record. Admin moves it from requested to processing to done; cancelled closes it without deleting."
+   },
+   "layout": [
+    "KPIRow (abiertas · en proceso · hechas 90 días)",
+    "RuleNotice (15 días hábiles, qué se conserva)",
+    "StatusChips (abiertas / pendiente / en proceso / hecha / cancelada / todas)",
+    "RequestsTable (fecha + antigüedad, quién, canal, motivo, estado, checklist n/7)",
+    "RequestDrawer (ficha, enlace a M-06, checklist, nota, acciones)"
+   ],
+   "data": [
+    "deletion_requests",
+    "users",
+    "profiles",
+    "audit_log"
+   ],
+   "roles": [
+    "super_admin",
+    "admin"
+   ],
+   "logic": [
+    "Status flow: requested → processing → done; cancelled from either open state. done and cancelled stamp resolved_at + resolved_by. Each move writes audit_log deletion.<status>; each checklist tick writes deletion.checklist.",
+    "“Marcar hecha” is disabled until all seven checklist steps are ticked (profile, contact, notifications, messages, auth, payments, confirm), so a case cannot be closed with the member still identifiable.",
+    "A public request (user_id null) shows the email or masked phone and no CRM link; matching it to a member is a human step, noted in the internal note.",
+    "A deletion request is a row, never a client-side delete: C-26 (member, signed in), W-09 (public page, no session) and the desk (front_desk channel, by hand in M-03 today) all insert into deletion_requests; this page moves the status and ticks the checklist. The anonymisation itself — profiles and users overwritten, auth user removed, notifications purged, payments and invoices kept under an anonymous id — is a server-side job (Supabase function) once the backend exists; until then the admin performs the steps in M-03 and ticks them here.",
+    "Ley 1581 de 2012 gives fifteen business days for a deletion claim; App Store Review 5.1.1(v) and Google Play’s account-deletion policy require the request to be discoverable in-app and (Play) at a public URL. The queue is what proves the studio honoured each one: rows are never deleted."
+   ],
+   "integrations": [
+    "Supabase Auth"
+   ],
+   "states": [
+    "Loading",
+    "No open requests",
+    "Filter with no matches",
+    "Requested (mover a en proceso)",
+    "Processing with a partial checklist (hecha disabled)",
+    "All steps ticked (hecha enabled)",
+    "Done / cancelled (locked, read-only)",
+    "Public request without an account",
+    "Read-only (not admin)"
+   ],
+   "notes": [
+    "A deletion request is a row, never a client-side delete: C-26 (member, signed in), W-09 (public page, no session) and the desk (front_desk channel, by hand in M-03 today) all insert into deletion_requests; this page moves the status and ticks the checklist. The anonymisation itself — profiles and users overwritten, auth user removed, notifications purged, payments and invoices kept under an anonymous id — is a server-side job (Supabase function) once the backend exists; until then the admin performs the steps in M-03 and ticks them here.",
+    "Ley 1581 de 2012 gives fifteen business days for a deletion claim; App Store Review 5.1.1(v) and Google Play’s account-deletion policy require the request to be discoverable in-app and (Play) at a public URL. The queue is what proves the studio honoured each one: rows are never deleted."
+   ]
+  }
+ },
+ {
   "path": "/admin/crm/:id",
   "code": "M-06",
   "surface": "admin",
@@ -3920,6 +3979,70 @@
   }
  },
  {
+  "path": "/app/account",
+  "code": "C-26",
+  "surface": "customer",
+  "status": "built",
+  "spec": {
+   "code": "C-26",
+   "name": {
+    "es": "Cuenta y datos",
+    "en": "Account & data"
+   },
+   "purpose": {
+    "es": "Los derechos sobre la cuenta en un solo lugar: quién es el responsable del tratamiento, los consentimientos que la persona controla, una copia de sus propios datos, los documentos legales y la solicitud de eliminar la cuenta con lo que se conserva explicado en lenguaje llano.",
+    "en": "Account-level rights in one place: who the data controller is, the consents the member controls, a copy of their own data, the legal documents and the request to delete the account, with what is kept explained in plain words."
+   },
+   "layout": [
+    "DataController",
+    "ConsentToggles",
+    "ExportData",
+    "LegalLinks",
+    "DeleteAccount"
+   ],
+   "data": [
+    "deletion_requests",
+    "profiles",
+    "users",
+    "notification_prefs",
+    "legal_acceptances",
+    "legal_documents",
+    "payments",
+    "invoices",
+    "bookings",
+    "audit_log",
+    "tenants"
+   ],
+   "roles": [
+    "customer",
+    "teacher"
+   ],
+   "logic": [
+    "Deleting is a request, not a client-side delete: the page inserts one deletion_requests row (status requested, channel app, optional reason) plus an audit_log row (account.deletion_request). Admin follows it in M-11; the anonymisation of profiles + users and the removal of the auth user run server-side (Supabase function) once the backend exists. Nothing on the client alters the profile.",
+    "Two-step confirm: step one explains what is kept (invoices and payment history for the legal retention period, anonymised) and what ends (access, profile, notifications) and requires the \"I understand\" switch; step two is the destructive button. While a request is open the row is replaced by its status and a \"cancel request\" that flips status to cancelled (only from requested).",
+    "Export builds one JSON with the member’s own rows from every table that points at their user id, plus the invoices of their payments, and logs account.export.",
+    "Marketing consent is the notification_prefs marketing category per channel (WhatsApp, email); profiles.marketing_optin mirrors “any channel on”. Data-processing consent is read-only here: it shows the privacy version accepted (legal_acceptances kind privacy) and links to A-06 to accept the current one.",
+    "The data controller line reads the display name from M-08 (tenants.settings) with tenant.legalName and the studio email — nothing about the studio is typed here."
+   ],
+   "integrations": [
+    "Supabase Auth"
+   ],
+   "states": [
+    "No request: delete row available",
+    "Step 1: explanation, switch off → next disabled",
+    "Step 2: destructive confirm",
+    "Request pending (requested) with cancel",
+    "Request processing (no cancel)",
+    "Privacy policy not accepted yet",
+    "Exporting"
+   ],
+   "notes": [
+    "Reached from C-19 (Cuenta y datos) and C-25. The public counterpart with no sign-in is W-09 (/site/delete-account); the admin queue is M-11.",
+    "Apple App Store 5.1.1(v) and Google Play both require in-app account deletion to be discoverable; the page sits one tap under Profile and is named in the compliance checklist (docs/app-store-compliance.md)."
+   ]
+  }
+ },
+ {
   "path": "/app/intention",
   "code": "A-05",
   "surface": "customer",
@@ -6507,6 +6630,57 @@
     "default",
     "form empty",
     "form filled"
+   ]
+  }
+ },
+ {
+  "path": "/site/delete-account",
+  "code": "W-09",
+  "surface": "public",
+  "status": "built",
+  "spec": {
+   "roles": [
+    "super_admin",
+    "admin",
+    "coordinator",
+    "front_desk",
+    "finance",
+    "teacher",
+    "maintenance",
+    "customer",
+    "public"
+   ],
+   "integrations": [],
+   "code": "W-09",
+   "name": {
+    "es": "Sitio · Eliminar cuenta",
+    "en": "Site · Delete account"
+   },
+   "purpose": {
+    "es": "Pedir la eliminación de una cuenta sin iniciar sesión: correo o WhatsApp, motivo opcional, y la explicación en lenguaje llano de qué se conserva por ley y qué se elimina. Es la URL pública que exige Google Play; la app la ofrece también en Perfil → Cuenta y datos (C-26).",
+    "en": "Request an account deletion with no sign-in: email or WhatsApp, optional reason, and a plain-words explanation of what is kept by law and what is removed. It is the public URL Google Play requires; the app also offers it under Profile → Account & data (C-26)."
+   },
+   "layout": [
+    "PageHead",
+    "WhatHappens",
+    "Form"
+   ],
+   "data": [
+    "deletion_requests",
+    "audit_log",
+    "tenants"
+   ],
+   "logic": [
+    "Submit inserts one deletion_requests row with user_id null, channel website, status requested, plus an audit_log row with actor null (role public). At least one contact (valid email or a 10-digit phone) is required; the \"I understand\" switch gates the button.",
+    "Nothing is deleted here: admin matches the contact to a member in M-11 and the anonymisation runs server-side. The success state shows the last six characters of the row id as a reference.",
+    "The controller name and the studio email come from M-08 (tenants.settings) with tenant.ts as fallback; the retention wording matches the privacy policy §6–§7 (A-06) without typing a number."
+   ],
+   "states": [
+    "default",
+    "validation: no contact",
+    "validation: bad email / phone",
+    "switch off → button disabled",
+    "sent (reference shown)"
    ]
   }
  },

@@ -54,6 +54,7 @@ Names are the section headers (EN / ES). Source of truth for prices is `src/tena
 | C-23 | Event & RSVP · Evento y RSVP | Sound baths, workshops, retreats with own pricing, capacity and guest rules. | [`/app/events/:id`](#/app/events/ses_demo) |
 | C-24 | Notifications · Notificaciones | Inbox of everything the studio sent, with deep links. | [`/app/notifications`](#/app/notifications) |
 | C-25 | More · profile, rules, contact · Más · perfil, reglas, contacto | Fourth dock tab: profile, club rules, FAQ, contact. | [`/app/more`](#/app/more) |
+| C-26 | Account & data · Cuenta y datos | Data controller, consents, download my data, legal documents, delete my account (request → M-11). | [`/app/account`](#/app/account) |
 
 ## Customer — states and edges, phase 7 (Estados y bordes)
 
@@ -121,7 +122,7 @@ Screen-to-screen:
 - C-01 → C-02 ⇄ C-02b → C-03 → C-04 → (C-05 | C-06 | C-07 | P-01) → C-08 → C-08b; C-04 failure → E-02; studio cancellation → E-03
 - C-03 full → C-20 (claim) → C-08
 - C-08 after class → C-10 → C-11
-- C-25 → C-19 · C-13 · C-14/C-15 · contact; C-19 → C-22 · C-24 · A-06
+- C-25 → C-19 · C-13 · C-14/C-15 · contact; C-19 → C-22 · C-24 · A-06 · C-26; C-26 → A-06 · M-11 (request); W-09 → M-11 (request)
 - A-02 → C-21 (forgot) ; A-02 lockout → E-04 → C-21
 - C-01 event card → C-23; C-01 first run → E-01
 - S-01 → S-02 → S-04 (register & pay) ; S-01 → S-03

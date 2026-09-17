@@ -7,7 +7,19 @@ dónde estamos, qué sigue y en qué orden (con dependencias explícitas y lo qu
 paralelo), qué significa "terminado" en cada fase, cómo trabajar en el repo y qué debe decidir el
 owner del estudio. Está escrito para que otra cuenta de Claude (o una persona) lo retome sin contexto.
 
-## A. Where we are (v0.6.2, 2026-09-17)
+## A. Where we are (v0.7.0, 2026-09-17)
+
+- **v0.7.0 — App-store readiness and the stat-tile fit** (`docs/changelog/0019-app-store-readiness.md`,
+  prompt `docs/prompts/0019-app-store-readiness.md`; version shared with 0018, built in parallel):
+  `StatTile` never wraps its value (measured fit down to 50 %, two-line label / hint) and the desktop
+  phone frame is a CSS container so KPI rows collapse inside it like on a phone — the cause of the
+  "COP 440,000" on three lines. `deletion_requests` (47 tables) with **C-26 `/app/account` Cuenta y
+  datos** (data controller, consents, download my data, legal links, two-step delete request that says
+  invoices are kept anonymised), **W-09 `/site/delete-account`** (the public URL Google Play requires)
+  and **M-11 `/admin/crm/deletions`** (queue, seven-step anonymisation checklist, audit per move).
+  `docs/app-store-compliance.md` lists every Apple / Play row as done / pending / needs dev; manual 23
+  carries the real flow. Nothing is deleted client-side: the anonymisation is the server-side job the
+  checklist specifies (§F 24).
 
 - **v0.6.2 — Especiales** (`docs/changelog/0017-especiales.md`, prompt `docs/prompts/0017-especiales.md`):
   the manual path for edge cases. `special_charges` + `space_bookings` (46 tables), the **Especial** item
@@ -54,9 +66,10 @@ owner del estudio. Está escrito para que otra cuenta de Claude (o una persona) 
   chapter, and `{{pricing:…}}` / `{{tenant:…}}` / `{{policy:…}}` / `{{table:…}}` live blocks that read
   the app's own sources — the manual cannot go stale about a price or a policy. **27 pending owner
   decisions** are auto-extracted into K-04 and §E below.
-- **Data**: **46 tables** (38 + `media_assets`, `payroll_runs`, `payroll_lines`, `legal_acceptances`,
+- **Data**: **47 tables** (38 + `media_assets`, `payroll_runs`, `payroll_lines`, `legal_acceptances`,
   with `legal_documents` rewritten for versions and bilingual bodies, + `expense_templates` and
-  `expenses` in 0.6.1, + `special_charges` and `space_bookings` in 0.6.2), each with its `TableDef.rls`
+  `expenses` in 0.6.1, + `special_charges` and `space_bookings` in 0.6.2, + `deletion_requests` in
+  0.7.0), each with its `TableDef.rls`
   access contract emitted by `npm run sql` into `supabase/schema.sql` and `docs/data-model.md`.
   Forward and circular foreign keys are emitted as a deferred `alter table` block so the SQL applies in order.
 - **Canvas look applied** (0.4.0): D-01 is the canvas hoy-brand token set; the phone frame, cream lane
@@ -283,6 +296,14 @@ chapter or spec and close the card.
     payroll as a manual line. What remains for Lore is whether it becomes a *standard* product with a published
     price (a `pricing.ts` item) or stays a conversation, and what the add-on detail is.
 
+**From the app-store checklist, 2026-09-17 (0019, `docs/app-store-compliance.md`)**
+35. **Sign-in set for the store build**: email + WhatsApp OTP only, or also Google — if Google (or any
+    social login) is offered, Apple guideline 4.8 makes **Sign in with Apple** mandatory. Decides what A-02
+    shows and what Supabase Auth enables.
+36. **Minimum age in the store listings**: the terms say 18+, or 14–18 with a guardian's written
+    authorisation at the desk. State 18+ in both stores (recommended, keeps the app out of the Families
+    policy) or build the guardian flow into sign-up.
+
 ## F. What remains after this pass (for Justin)
 
 Everything below is known and written down; nothing here is a surprise found late. Read it as
@@ -381,3 +402,12 @@ of §E.
     held booking does not yet expire on its own (chapter 12's deposit rule is a person's decision today,
     §E 26), an Especial paid by Wompi link stays `pending` like any S-04 sale, and refunds of an Especial
     go through M-09's refund like any payment (the booking is cancelled by hand in S-05).
+24. **App-store readiness, still open after 0.7.0.** The structure exists (C-26, W-09, M-11,
+    `deletion_requests`, the checklist doc); what is missing is execution and paperwork: the **server-side
+    deletion job** M-11's seven steps specify (anonymise `profiles` + `users`, delete the Supabase auth
+    user, purge notifications, keep `payments` / `invoices` under the anonymous id, flip the request to
+    `done`, send the confirmation), the **edge function** behind the public W-09 insert, **privacy nutrition
+    labels** and the **Play Data safety form** filled from `docs/data-model.md`, a **report / moderation**
+    path for reviews if they go public, counsel's sign-off on the privacy text (§E 3, 14, 30), the sign-in
+    set and the minimum age (§E 35–36), and the **native shell** itself (Capacitor or a TWA) with push
+    delivery. All gated on P2 (Supabase).

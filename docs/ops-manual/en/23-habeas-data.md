@@ -2,9 +2,9 @@
 title: Personal data and habeas data
 role: everyone
 part: VI
-version: 0.6.0
+version: 0.7.0
 updated: 2026-09-17
-summary: Law 1581 of 2012 in practice: what we ask for, how health data is stored, who may see what, and how it is deleted.
+summary: Law 1581 of 2012 in practice: what we ask for, how health data is stored, who may see what, and how a person sees, takes or deletes their data — from the app, from the website and in the admin queue.
 ---
 
 # Personal data and habeas data
@@ -38,25 +38,67 @@ member timeline but does not edit payments; finance sees payments but not health
 ## 3. The person's rights
 | Right | What we do | Deadline |
 |---|---|---|
-| Access | we show them what we hold | same day if in person |
+| Access | we show them what we hold; in the app they can **download their data** (C-26) | same day if in person |
 | Correction | corrected in M-06, or they do it in C-19 | immediate |
-| Deletion | front desk opens the case, admin executes it | 15 business days at most |
-| Withdraw marketing consent | the channel is switched off in C-24 / M-06 | immediate |
+| Deletion | the person asks by themselves (C-26 or the public page W-09) or front desk opens the case; admin executes it in **M-11** | 15 business days at most |
+| Withdraw marketing consent | the person switches the channel off in C-26 / C-24; the team in M-06 | immediate |
 
-If someone asks to delete their data: front desk opens the case, admin executes it and replies within
-15 business days at most. **Financial records are kept by legal obligation** (soft delete): the invoice
-is not deleted, the personal data attached to it is anonymised.
+**Financial records are kept by legal obligation**: the invoice and the payment history are not deleted;
+they stay linked to an anonymous identifier for the period the privacy policy sets (A-06 §6). The profile
+and the login account are anonymised. That is what the app tells the person before they confirm, in two
+steps, and what we repeat if they ask.
 
 ![What the person can correct themselves](../../screenshots/C-19/en-390.jpg "C-19 · /app/profile")
 
-## 4. When someone asks
+## 4. Deleting an account: the whole flow
+Three entrances, one queue, one table (`deletion_requests`). Nobody deletes anything by hand on the
+spot: the request is recorded, admin follows it and the technical run happens server-side.
+
+**a) The person, from the app (C-26 Account & data).** Profile → Account & data → *Delete my account*.
+Step one: what is kept and what ends, an optional reason and the "I understand" switch. Step two: the
+confirmation. A row is created in **requested** state and the person sees it right there; they can cancel
+it while it is still requested. The same screen holds their marketing consents, the privacy-policy version
+they accepted, the download of their data and the six legal documents.
+
+![Account & data: consents, a copy of the data and delete the account](../../screenshots/C-26/en-390.jpg "C-26 · /app/account")
+
+**b) Anyone, from the website with no sign-in (W-09).** Google Play requires a public URL to request
+deletion. The page explains the same, asks for email or WhatsApp (one is enough) and creates the row with
+no user attached. It is linked from the site footer and from point 7 of the privacy policy.
+
+![The public deletion page](../../screenshots/W-09/en-1280.jpg "W-09 · /site/delete-account")
+
+**c) Front desk, when asked in person.** Confirm the identity, open the row in M-03 with channel "front
+desk" (or ask admin to open it) and note who asked. Do not promise a date: the deadline is the one in the
+table above.
+
+**d) Admin, in the queue (M-11 CRM → Deletions).** Each request shows who, channel, reason, age and
+status. Admin moves it to **processing**, ticks the seven steps of the anonymisation checklist (profile,
+login account, notifications and preferences, messages, auth user, payments and invoices kept anonymous,
+confirmation sent) and only then can mark it **done**. **Cancelled** closes it without deleting. Rows are
+never deleted: they are the proof the right was honoured, and every move lands in M-07.
+
+![The admin queue with the anonymisation checklist](../../screenshots/M-11/en-1280.jpg "M-11 · /admin/crm/deletions")
+
+{{table:deletion_requests}}
+
+## 5. When someone asks
 "What do you do with my data?" — the short, true answer: "We keep your name, your WhatsApp, your email
 and an emergency contact so we can look after you. If you told us something about your health, it stays
-here as an internal note. You can ask us to show you, correct or delete all of it whenever you like."
+here as an internal note. You can see, download, correct or delete all of it from the app, under Profile →
+Account & data, or ask us and we do it within fifteen business days at most."
 
-## 5. What is simulated today
-1. Consents are genuinely recorded, with the version and the time.
-2. Soft delete exists as a concept in the data model, but executing it is still manual (admin, in M-03).
-3. Real authentication (Supabase) is not connected: today access is a demo picker (`26`).
+"If I delete the account, do my payments disappear?" — "Invoices are kept because the law obliges us, but
+without your name: nobody at the studio can link them back to you."
+
+## 6. What is simulated today
+1. Consents are genuinely recorded, with the version and the time; so is the deletion request, with its
+   trail in M-07.
+2. The **execution** of the anonymisation (profile, account, auth user, notifications) is a server-side
+   job that will exist with Supabase (`26`). Until then admin performs the steps in M-03 and ticks them in
+   M-11; the M-11 checklist is the specification of that job.
+3. Real authentication (Supabase) is not connected: today access is a demo picker.
+4. The full list of App Store and Google Play requirements, with their status, is
+   `docs/app-store-compliance.md` (readable in the app under Documentation).
 
 > DECISION NEEDED: the final data-protection policy text (drafted by counsel) and who is named as the published data controller.

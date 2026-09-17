@@ -1,6 +1,6 @@
 # HoyOS kanban
 
-_Updated every turn. Codes reference `src/specs/canvasSpecs.ts` and the module `specs.ts` files; `/#/dev/specs` shows the live built/stub badge per code (v0.6.2: Especiales — S-05 rooms, the Especial item in S-04, manual payroll lines; 91 routes, 79 codes, 0 stubs, 46 tables, 56 components in D-02; on top of v0.6.1's expenses ledger and v0.6.0's three tracks). What is still missing is listed as a plain numbered list in `ROADMAP.md` §F._
+_Updated every turn. Codes reference `src/specs/canvasSpecs.ts` and the module `specs.ts` files; `/#/dev/specs` shows the live built/stub badge per code (v0.7.0: app-store readiness — StatTile fit, C-26 Cuenta y datos, W-09 public deletion page, M-11 deletion queue, `deletion_requests`; 94 routes, 82 codes, 0 stubs, 47 tables, 56 components in D-02; on top of v0.6.2's Especiales, v0.6.1's expenses ledger and v0.6.0's three tracks). What is still missing is listed as a plain numbered list in `ROADMAP.md` §F._
 
 ## Backlog
 
@@ -8,6 +8,8 @@ _Updated every turn. Codes reference `src/specs/canvasSpecs.ts` and the module `
 - **P1 leftovers from 0007/0008** (numbered in ROADMAP §B/P1): M-02 editors for `content_articles` / `faq_entries` + an event publisher for `events` (M-03 edits them generically today) · server-side invite reward (`invites.status` only reaches `sent` from the client; `joined` / `rewarded` + `reward_credit_id` need the Supabase function that grants the credit) · staff-side `notifications` sending (front desk / M-04 / M-05 writing a row) and the 90-day retention job · event waitlist (`event_rsvps.status` has no `waitlist` value yet) and attendance marking from S-02 · real Wompi tokenisation behind `wompiTokenise()`
 - **From Jas's review (0014), still open**: M-09c has no CSV export for the accountant yet (M-09b has one) · attach the invoice / receipt image to an expense row (needs Supabase Storage, like M-02d's upload) · the "15 días" range stays as a filter until Sergio confirms fortnightly pay periods (ROADMAP §E 27 / 31)
 - A-06 legal pages inside the app (site pages exist) · real Supabase Auth behind A-02/A-03/C-21 (SessionProvider already accepts any `users` row)
+- **App-store readiness, still open after 0019** (`docs/app-store-compliance.md` §4): the server-side deletion job that M-11's seven-step checklist specifies (anonymise `profiles` + `users`, delete the auth user, purge notifications, keep payments / invoices under the anonymous id, flip `deletion_requests` to done, send the confirmation) · the edge function behind the public W-09 insert (rate-limit, no read-back) · a "report this review" action + moderation queue for C-10 reviews if they go public (Apple 1.2 / Play UGC) · privacy nutrition labels and the Play Data safety form filled from `docs/data-model.md` · the native shell (Capacitor / TWA) and push delivery
+- S-04 register page overflows horizontally at 390 px (DesktopShell at phone width; found by the 0019 tile sweep, staff is desktop-first so not fixed there) · the `--only=/app$` exact-match form of `scripts/screenshots.mjs` skipped C-01 in the 0019 run — check the `$` handling
 - C-05 transfer instructions can read the payout account from M-08c (M-08c stores it since 0007)
 - PDF receipts (C-11)
 - S-02/S-04 follow-ups: offline queue for check-ins, real Wompi link · M-04 MJML designer + real provider · M-05 Meta approval API · M-09 Wompi payouts + DIAN CUFE emission
@@ -40,9 +42,19 @@ _Updated every turn. Codes reference `src/specs/canvasSpecs.ts` and the module `
 - empty10 placeholder: awaiting Justin's decision (reset to placeholder or delete)
 
 ## Doing
-- (none — 0017 Especiales pushed on top of 0016 expenses ledger)
+- (none — 0019 app-store readiness pushed alongside 0018, both v0.7.0)
 
 ## Done
+
+### App-store readiness and stat-tile fit (0019 · v0.7.0)
+- **StatTile never wraps**: the value is measured after layout and shrinks (`--stat-fit`, down to 50 %) to the tile width, re-fitting on resize; label and hint clamp to two lines; meta state `long-value`. The phone frame is a named CSS container (`container: phone / inline-size`) so `.grid-3` / `.grid-4` collapse inside it like on a real 390 px phone — the actual cause of Justin's "COP 440,000" on three lines. Sweep of every KPI tile (13 routes, ES + EN, 390 viewport + 1280 frame): **8 wrapped → 0**; two other wrapping figures fixed (OrderSummary amount, C-06 plan price)
+- **`deletion_requests`** (46 → 47): who asked (member or public contact), channel app / website / front_desk, status requested → processing → done | cancelled, reason, checklist json, resolved_by; RLS contract; rows never deleted
+- **C-26 `/app/account` Cuenta y datos** (new): data controller from M-08, marketing consent per channel (`notification_prefs`), privacy version accepted, download my data (JSON of 20 tables), legal links, two-step delete-account request that says what is kept (invoices, anonymised) and what ends; pending state with cancel; C-19 / C-25 link to it; the old client-side "disable" is gone
+- **W-09 `/site/delete-account`** (new): the public URL Google Play requires — email or WhatsApp, reason, retention explanation, no sign-in; footer link on every site page; privacy policy §7 points at both paths
+- **M-11 `/admin/crm/deletions`** (new, admin / super_admin): queue with status actions, seven-step anonymisation checklist gating "Marcar hecha", internal note, M-06 link, audit row per move; nav under CRM
+- **`docs/app-store-compliance.md`**: Apple + Google Play rows marked done / pending / needs dev, the settings the app already provides, the ordered pre-submission list; rendered in `/#/docs`
+- **Manual 23** ES + EN: the real deletion flow (member, public page, desk, admin queue, retention) with figures of the three screens
+- Verified: build clean, 47 tables, smoke exit 0, tile sweep 8 → 0, Playwright flow 26 / 26 (member request → public request → admin done → audit trail)
 
 ### Especiales (0017 · v0.6.2)
 - **Named**: Especiales / Specials — the edge cases handled by hand, living inside the `espacio` family whose "desde" prices already end in a conversation (manual `12`)
