@@ -39,7 +39,7 @@ booking transaction works on the mock data layer: book → booked_count +1 (live
 promotion with a 30-minute `claim_until` when someone cancels → credit ledger movements → payments + invoices rows.
 
 ### Booking flow
-- **C-02 `/app/schedule`** — Day / Week segmented switch (`?view=week` is C-02b), `DateStrip` for seven days with class
+- **C-02 `/app/schedule`** — Day / Week segmented switch (the Week segment is C-02b at `/app/schedule/week`), `DateStrip` for seven days with class
   counts, movement chips inline, filter sheet (time of day, modality, teacher, intention). Filters persist per session.
   Loading = three skeleton rows, empty = "No classes match" + clear filters, Sunday = closed, past days read-only.
   Deep link `?session=<id>` from the website forwards to the class. `useLayout(spec)` wired.
@@ -86,7 +86,7 @@ WhatsApp / email / link, sent list) · C-17 gift card (amount from pricing + cus
 classes) · C-23 events (list + detail, member price, RSVP) · C-10 rate (stars, tags, note, anonymous; marks
 `bookings.rated`) · A-05 intention page.
 `[screenshot: C-06]` `[screenshot: C-07]` `[screenshot: C-07b]` `[screenshot: C-22]` `[screenshot: C-11]`
-`[screenshot: C-19]` `[screenshot: C-24]` `[screenshot: C-25]` `[screenshot: C-13]` `[screenshot: C-14 / C-15]`
+`[screenshot: C-19]` `[screenshot: C-24]` `[screenshot: C-25]` `[screenshot: C-13]` `[screenshot: C-14]` `[screenshot: C-15]`
 `[screenshot: C-16]` `[screenshot: C-17]` `[screenshot: C-18]` `[screenshot: C-23]` `[screenshot: C-10]`
 
 ### Auth flow (`/auth/*`, public surface, `AuthShell`)

@@ -24,26 +24,28 @@ import { canvasSpecs } from '../specs';
 import { useAllSessionsJoined, useMyBookings } from '../hooks';
 import { PageHead } from '../ui';
 
-const spec = canvasSpecs['C-02'];
+const specDay = canvasSpecs['C-02'];
+const specWeek = canvasSpecs['C-02b'];
 type View = 'today' | 'week';
+export interface SchedulePageProps { view?: View }
 type TimeOfDay = 'all' | 'morning' | 'evening';
 interface Filters { movement: Movement | 'all'; modality: string; teacher: string; time: TimeOfDay }
 const DEFAULT: Filters = { movement: 'all', modality: 'all', teacher: 'all', time: 'all' };
 const FKEY = 'hoyos.customer.scheduleFilters';
 
-/** C-02 Class schedule (+ C-02b week view). */
-export function SchedulePage() {
+/** C-02 Class schedule; with `view="week"` it is C-02b at /app/schedule/week (`?view=week` redirects there). */
+export function SchedulePage({ view: routeView }: SchedulePageProps) {
   const { t, bi, lang } = useI18n();
   const nav = useNavigate();
   const { user } = useSession();
-  const [params, setParams] = useSearchParams();
-  const { sections, isVisible } = useLayout(spec);
+  const [params] = useSearchParams();
+  const view: View = routeView ?? 'today';
+  const { sections, isVisible } = useLayout(view === 'week' ? specWeek : specDay);
 
   // Deep link from the website: /app/schedule?session=<id> → class detail.
-  useEffect(() => { const s = params.get('session'); if (s) nav(`/app/class/${s}`, { replace: true }); }, [params, nav]);
+  useEffect(() => { const s = params.get('session'); if (s) nav(`/app/class/${s}`, { replace: true }); else if (params.get('view') === 'week') nav('/app/schedule/week', { replace: true }); }, [params, nav]);
 
-  const view: View = params.get('view') === 'week' ? 'week' : 'today';
-  const setView = (v: View) => setParams(v === 'week' ? { view: 'week' } : {}, { replace: true });
+  const setView = (v: View) => nav(v === 'week' ? '/app/schedule/week' : '/app/schedule');
   const days = useMemo(() => dayList(7), []);
   const [day, setDay] = useState(0);
   const [sheet, setSheet] = useState(false);
@@ -72,6 +74,32 @@ export function SchedulePage() {
 
   const open = (s: ClassSessionRow) => nav(`/app/class/${s.id}`);
 
+  const renderWeek = (): ReactNode => view !== 'week' ? null : (
+      <div className="cust-week" role="table" aria-label={t('customer.schedule.view.week')}>
+        {days.map((d, i) => {
+          const list = filtered.filter((x) => isSameDay(x.session.starts_at, d));
+          return (
+            <div key={i} className={`cust-week-col ${i === 0 ? 'is-today' : ''}`} role="row">
+              <div className="cust-week-head" role="columnheader"><span className="xs">{i === 0 ? t('core.common.today') : formatDate(d.toISOString(), lang, { weekday: 'short' })}</span><strong>{d.getDate()}</strong></div>
+              {list.length === 0 && <div className="cust-week-empty xs muted">{d.getDay() === 0 ? t('customer.schedule.closedShort') : '—'}</div>}
+              {list.map((x) => {
+                const left = x.session.capacity - x.session.booked_count;
+                const mv = x.modality?.movement ?? 'fluye';
+                return (
+                  <button key={x.session.id} type="button" className={`cust-week-cell cust-week-${mv} ${x.session.status !== 'scheduled' ? 'is-off' : ''} ${mine.has(x.session.id) ? 'is-mine' : ''}`} onClick={() => open(x.session)} role="cell">
+                    <span className="cust-week-time">{formatTime(x.session.starts_at, lang)}</span>
+                    <span className="cust-week-name">{x.modality ? bi({ es: x.modality.name_es, en: x.modality.name_en }) : x.session.title}</span>
+                    <span className="cust-week-spots">{x.session.status === 'cancelled' ? t('customer.schedule.cancelled') : x.session.status === 'completed' ? t('customer.schedule.done') : left <= 0 ? t('core.common.full') : t('core.common.spots', { n: left })}</span>
+                    {mine.has(x.session.id) && <Badge tone="primary">{t('customer.home.booked')}</Badge>}
+                  </button>
+                );
+              })}
+            </div>
+          );
+        })}
+      </div>
+    );
+
   const SECTIONS: Record<string, () => ReactNode> = {
     'ViewSwitch (Today / Week)': () => (
       <PageHead title={t('customer.schedule.title')} sub={t('customer.schedule.sub')} actions={<SegmentedControl size="sm" ariaLabel={t('customer.schedule.view')} value={view} onChange={setView} options={[{ value: 'today', label: t('customer.schedule.view.today') }, { value: 'week', label: t('customer.schedule.view.week') }]} />} />
@@ -99,31 +127,8 @@ export function SchedulePage() {
         {!loading && dayList_.length > 0 && dayList_.every((x) => isPast(x.session)) && <p className="xs muted" style={{ padding: 8 }}>{t('customer.schedule.pastDay')}</p>}
       </Card>
     ),
-    WeekGrid: () => view !== 'week' ? null : (
-      <div className="cust-week" role="table" aria-label={t('customer.schedule.view.week')}>
-        {days.map((d, i) => {
-          const list = filtered.filter((x) => isSameDay(x.session.starts_at, d));
-          return (
-            <div key={i} className={`cust-week-col ${i === 0 ? 'is-today' : ''}`} role="row">
-              <div className="cust-week-head" role="columnheader"><span className="xs">{i === 0 ? t('core.common.today') : formatDate(d.toISOString(), lang, { weekday: 'short' })}</span><strong>{d.getDate()}</strong></div>
-              {list.length === 0 && <div className="cust-week-empty xs muted">{d.getDay() === 0 ? t('customer.schedule.closedShort') : '—'}</div>}
-              {list.map((x) => {
-                const left = x.session.capacity - x.session.booked_count;
-                const mv = x.modality?.movement ?? 'fluye';
-                return (
-                  <button key={x.session.id} type="button" className={`cust-week-cell cust-week-${mv} ${x.session.status !== 'scheduled' ? 'is-off' : ''} ${mine.has(x.session.id) ? 'is-mine' : ''}`} onClick={() => open(x.session)} role="cell">
-                    <span className="cust-week-time">{formatTime(x.session.starts_at, lang)}</span>
-                    <span className="cust-week-name">{x.modality ? bi({ es: x.modality.name_es, en: x.modality.name_en }) : x.session.title}</span>
-                    <span className="cust-week-spots">{x.session.status === 'cancelled' ? t('customer.schedule.cancelled') : x.session.status === 'completed' ? t('customer.schedule.done') : left <= 0 ? t('core.common.full') : t('core.common.spots', { n: left })}</span>
-                    {mine.has(x.session.id) && <Badge tone="primary">{t('customer.home.booked')}</Badge>}
-                  </button>
-                );
-              })}
-            </div>
-          );
-        })}
-      </div>
-    ),
+    WeekGrid: renderWeek,
+    'WeekGrid (Mon–Sat columns → DayChip)': renderWeek,
     Legend: () => (
       <div className="row wrap cust-legend">
         <span className="eyebrow">{t('customer.schedule.legend')}</span>

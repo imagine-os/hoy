@@ -42,6 +42,7 @@ const pub = { roles: EVERYONE, surface: 'public' as const, layout: 'mobile' as c
 export const routes: RouteDef[] = [
   { ...base, path: '/app', element: h(CustomerHomePage), spec: canvasSpecs['C-01'], nav: { labelKey: 'core.nav.home', icon: '⌂', order: 1 } },
   { ...base, path: '/app/schedule', element: h(SchedulePage), spec: canvasSpecs['C-02'], nav: { labelKey: 'core.nav.schedule', icon: '▦', order: 2 } },
+  { ...base, path: '/app/schedule/week', element: h(SchedulePage, { view: 'week' }), spec: canvasSpecs['C-02b'] },
   { ...base, path: '/app/class/:id', element: h(ClassDetailPage), spec: canvasSpecs['C-03'] },
   { ...base, path: '/app/checkout/:id', element: h(CheckoutPage), spec: canvasSpecs['C-04'] },
   { ...base, path: '/app/payment-methods', element: h(PaymentMethodsPage), spec: canvasSpecs['C-05'] },
@@ -53,8 +54,8 @@ export const routes: RouteDef[] = [
   { ...base, path: '/app/rate/:id', element: h(RatePage), spec: canvasSpecs['C-10'] },
   { ...base, path: '/app/history', element: h(HistoryPage), spec: canvasSpecs['C-11'], nav: { labelKey: 'customer.nav.history', icon: '▤', order: 3 } },
   { ...base, path: '/app/rules', element: h(RulesPage), spec: canvasSpecs['C-13'] },
-  { ...base, path: '/app/faq', element: h(FaqPage, { page: 1 }), spec: canvasSpecs['C-14 / C-15'] },
-  { ...base, path: '/app/faq/2', element: h(FaqPage, { page: 2 }), spec: canvasSpecs['C-14 / C-15'] },
+  { ...base, path: '/app/faq', element: h(FaqPage, { page: 1 }), spec: canvasSpecs['C-14'] },
+  { ...base, path: '/app/faq/2', element: h(FaqPage, { page: 2 }), spec: canvasSpecs['C-15'] },
   { ...base, path: '/app/invite', element: h(InvitePage), spec: canvasSpecs['C-16'] },
   { ...base, path: '/app/gift', element: h(GiftPage), spec: canvasSpecs['C-17'] },
   { ...base, path: '/app/teachers', element: h(TeachersPage), spec: canvasSpecs['C-18'] },
