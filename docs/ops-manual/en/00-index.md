@@ -1,54 +1,85 @@
 ---
-title: HOY Operations Manual — Index
+title: Index and how to use this manual
 role: everyone
-version: 0.1
+part: I
+version: 0.6.0
 updated: 2026-09-17
+summary: What the manual is for, how its seven parts are organised, and which chapters each role reads.
 ---
 
-# Operations Manual — HOY Wellness Center
+# Operations manual — HOY
 
-## 1. Purpose
-1. This is the single source for how we run the studio: 15 mats per class, 4 classes a day, one class per person per day.
-2. Every procedure says what to do, what to say and on which HoyOS screen it happens (code + name, e.g. "S-02 Front desk check-in").
-3. Policies (cancellation window, waitlist claim, late grace, fees) are read from **M-08 Studio settings & policies**; this manual quotes the current value, but the screen wins.
+This is the only document about how we run the studio. If something you do here isn't written down, or
+is written down and isn't done that way, one of the two has to change: tell coordination.
+
+## 1. What it is for
+1. It is the single source for how we operate, and its numbers are not typed by hand: the manual reads
+   them from the system.
+2. Every procedure says what to do, what to say and on which HoyOS screen it happens (code + name,
+   e.g. "S-02 Front desk check-in"), with a real capture of that screen.
+3. Policies (cancellation window, waitlist claim, late grace, fees) are read live from **M-08 Studio
+   settings & policies**; change them on the screen and this manual changes with them.
+
+{{tenant:capacity}}
 
 ## 2. How to use it
-1. Read `01-filosofia-y-voz.md` first; everything else rests on how we speak.
-2. Find your role in the table below and read your files in order.
-3. Every procedure has a **Steps in HoyOS** box with screen codes and `[screenshot: …]` placeholders to be replaced with real captures.
-4. Anything the studio has not yet defined is marked `> DECISION NEEDED:`. Do not invent the answer; ask the owner.
-5. Version 0.1: everything may change. Propose improvements to coordination; changes are logged in K-01.
+1. Read Part I. Everything else rests on who we are and how we speak.
+2. Find your role in the table below, or use "Start here" on the manual cover: three chapters per role
+   and you can work your first day.
+3. The blocks captioned **"Live from the system"** are not text — they are the current value. Don't
+   copy them into another document; link the chapter.
+4. Anything the studio has not defined yet is marked `> DECISION NEEDED:`. Do not invent the answer;
+   ask the owner. The full list is on **Decisions pending** (K-04).
+5. Version 0.6: the structure is settled, the content keeps growing. Propose improvements to
+   coordination; changes are logged in K-01.
 
-## 3. Who reads what
+## 3. The seven parts
+| Part | What it holds | For |
+|---|---|---|
+| I · HOY | Who we are, the philosophy, the classes and the value model | everyone |
+| II · Daily operations | Door, classes, teachers, room, incidents | front desk, teachers, maintenance |
+| III · Customers and plans | Sales, pauses, gifts, space rental, CRM | front desk, coordination |
+| IV · Money | Till, DIAN invoicing, payroll and payouts | finance, owner |
+| V · Content and brand | CMS, web and social, media, voice and tone | coordination |
+| VI · Legal and policies | Policies in force, legal documents, data protection | owner, admin |
+| VII · System | Roles, data, integrations, glossary | admin, everyone |
 
-| File | Owner | Admin | Coord. | Front desk | Finance | Teachers | Maintenance |
+## 4. Who reads what
+| Chapter | Owner | Admin | Coord. | Front desk | Finance | Teachers | Maintenance |
 |---|---|---|---|---|---|---|---|
-| 01 Philosophy and voice | ● | ● | ● | ● | ● | ● | ● |
-| 02 Roles and org chart | ● | ● | ● | ● | ● | ● | ● |
-| 03 Front desk | ○ | ● | ● | ● | ○ | ○ | – |
-| 04 Teachers | ○ | ○ | ● | ○ | – | ● | – |
-| 05 Coordination | ○ | ● | ● | ○ | – | – | – |
-| 06 Administration and finance | ● | ● | ○ | – | ● | – | – |
-| 07 Maintenance and space | ○ | ○ | ● | ● | – | ○ | ● |
-| 08 WhatsApp and email | ○ | ● | ● | ● | – | ○ | – |
-| 09 Emergencies and safety | ● | ● | ● | ● | ● | ● | ● |
-| 10 Training checklists | ● | ● | ● | ● | ● | ● | ● |
+| 01 Who we are and our philosophy | ● | ● | ● | ● | ● | ● | ● |
+| 02 Our classes | ● | ○ | ● | ● | – | ● | ○ |
+| 03 Value model | ● | ● | ● | ● | ● | ○ | – |
+| 04 Front desk and check-in | ○ | ● | ● | ● | ○ | ○ | – |
+| 05 Classes and schedule | ○ | ● | ● | ○ | – | ○ | – |
+| 06 Teachers | ○ | ○ | ● | ○ | – | ● | – |
+| 07 Room, heat and maintenance | ○ | ○ | ● | ● | – | ● | ● |
+| 08 Incidents and emergencies | ● | ● | ● | ● | ● | ● | ● |
+| 09 Training checklists | ● | ● | ● | ● | ● | ● | ● |
+| 10 Sales and plans | ○ | ● | ● | ● | ● | – | – |
+| 11 Pauses and gifts | ○ | ● | ● | ● | ○ | – | – |
+| 12 Space (B2B rental) | ● | ○ | ● | ○ | ○ | – | ○ |
+| 13 CRM and WhatsApp | ○ | ● | ● | ● | – | ○ | – |
+| 14 Payments and the till | ● | ● | ○ | ● | ● | – | – |
+| 15 Invoicing and DIAN | ● | ● | – | – | ● | – | – |
+| 16 Payroll and payouts | ● | ● | ○ | – | ● | ○ | – |
+| 17 Content in the CMS | ○ | ● | ● | ○ | – | ○ | – |
+| 18 Web and social | ● | ○ | ● | ○ | – | – | – |
+| 19 Media and artwork | ○ | ○ | ● | ○ | – | ○ | – |
+| 20 Voice and tone | ● | ● | ● | ● | ● | ● | ● |
+| 21 Policies | ● | ● | ● | ● | ● | ○ | – |
+| 22 Legal documents | ● | ● | ○ | ○ | ● | ○ | – |
+| 23 Personal data | ● | ● | ● | ● | ● | ● | ● |
+| 24 Roles and permissions | ● | ● | ● | ● | ● | ● | ● |
+| 25 Data and tables | ○ | ● | ○ | – | ○ | – | – |
+| 26 Integrations | ● | ● | ○ | – | ○ | – | – |
+| 27 Glossary | ● | ● | ● | ● | ● | ● | ● |
 
 ● required · ○ recommended · – not applicable
 
-## 4. Quick map of HoyOS screens
-| Code | Name | Who uses it |
-|---|---|---|
-| S-01 | Role home | Whole team |
-| S-02 | Front desk check-in | Front desk |
-| S-03 | Teacher app | Teachers |
-| S-04 | Register & take payment | Front desk |
-| M-01 | Admin dashboard & feature switches | Owner, admin |
-| M-02 | Content (CMS) | Coordination |
-| M-03 | Tables & relations | Admin, development |
-| M-04 | Transactional emails | Coordination |
-| M-05 | WhatsApp automations | Coordination |
-| M-06 | CRM · member 360 | Front desk, coordination, finance |
-| M-07 | All activity log | Owner, finance |
-| M-08 | Studio settings & policies | Owner, admin |
-| C-02 | Class schedule | Everyone (customer view) |
+## 5. Quick map of screens
+These are the team's screens. The full list per surface is in chapter `25`.
+
+{{routes:staff}}
+
+![The door: where every day starts](../../screenshots/S-02/en-1280.jpg "S-02 · /staff/checkin")

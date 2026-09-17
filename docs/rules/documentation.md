@@ -65,12 +65,41 @@ and embeds the four (or eight) screenshots. Update it in the same turn as a visu
   usage in the meta.
 - New token value → `src/design/tokens.ts` only; never a literal in a component.
 
-## 7. Language
+## 7. Operations manual (`docs/ops-manual/`, K-03)
+The manual is markdown on disk; adding or renaming a chapter needs no code change. Rules:
+- `es/` is the source, `en/` is the mirror with the **same file name**. A missing EN chapter falls back
+  to ES with a notice, so an untranslated chapter is visible, not hidden.
+- File name is `NN-slug.md`; the `NN` prefix orders the manual and is the number shown in the UI.
+  When a chapter is renumbered, add its old slug to `LEGACY_SLUGS` in `manualIndex.ts` so existing
+  links and the screenshot tooling's `:chapter` param keep resolving.
+- Front matter is mandatory and has six keys: `title`, `role`, `part` (`I`…`VII`), `version`,
+  `updated`, `summary`. `part` groups the chapter on the cover grid and in the sidebar; `summary` is
+  the one-line card lead and is searched.
+- Reading time, figure count, decision count and placeholder count are **derived from the body** —
+  never written into front matter.
+- **A number the system owns is never typed into a chapter.** Prices, studio facts, policy values, the
+  schema, roles, routes and counts are written as a `{{directive}}` line on its own, rendered by
+  `LiveBlock`: `{{pricing[:family]}}`, `{{tenant:hours|contact|capacity}}`, `{{policy[:field]}}`,
+  `{{tables}}`, `{{table:<name>}}`, `{{roles}}`, `{{routes:<surface>}}`, `{{stats}}`, `{{kpi:<name>}}`.
+  Each block carries the bilingual "Datos en vivo del sistema · Live from the system" caption and an
+  unknown directive explains itself instead of breaking the page. A fenced ```live block holding
+  `kind:arg` is the same thing spelled out.
+- A real capture is a markdown image with a **title**: `![caption](../../screenshots/<CODE>/<lang>-<width>.jpg "CODE · /route")`.
+  It renders as a `Figure` — framed, captioned, code-chipped and clickable through to the screen. Pick
+  `es-*` captures for ES chapters and `en-*` for EN, `390` for member/teacher flows and `1280` for
+  staff/admin. Aim for 3–6 figures in an operational chapter.
+- `[screenshot: CODE — caption]` stays the syntax for a screen with **no capture yet**; it renders as a
+  dashed box and is counted per chapter, so the gap is visible instead of forgotten.
+- Owner decisions are `> DECISIÓN PENDIENTE:` / `> DECISION NEEDED:` on one blockquote line. They are
+  extracted into `/#/manual/decisions` (K-04) and `ROADMAP.md` §E, so **do not repeat the same decision
+  in two chapters** — flag it once, in the chapter that owns it, and cross-reference from the other.
+
+## 8. Language
 Docs for the software: English with a Spanish summary. Ops manual (`docs/ops-manual/`): Spanish first
 (`es/`), English mirror (`en/`) with the same file names; pending decisions as `> DECISIÓN PENDIENTE:`
 / `> DECISION NEEDED:` so `/#/manual/decisions` and `ROADMAP.md` can list them.
 
-## 8. Canvas
+## 9. Canvas
 `reference/canvas/` is frozen reference material. When it changes (rare), re-run
 `node scripts/extract-canvas.mjs` and `npm run specs`, and record the delta in
 `reference/canvas/CANVAS-AUDIT.md`.
