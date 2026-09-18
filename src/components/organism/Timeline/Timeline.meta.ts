@@ -22,5 +22,5 @@ export default defineMeta({
     { id: '5', at: d(72), kind: 'booking', title: 'Check-in · Pilates 8:00' },
   ] }) }],
   a11y: [{ es: 'Lista ordenada con <time dateTime>; los iconos son decorativos.', en: 'Ordered list with <time dateTime>; icons are decorative.' }],
-  usedBy: ['M-01', 'M-06', 'S-03'],
+  usedBy: ['M-01', 'S-01', 'S-03'],
 });

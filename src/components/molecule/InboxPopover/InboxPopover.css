@@ -1,0 +1,11 @@
+.inboxpop { position: relative; display: inline-flex; flex: 0 0 auto; }
+.inboxpop-panel { position: absolute; top: calc(100% + 8px); right: 0; z-index: 40; width: min(360px, calc(100vw - 2 * var(--sp-4))); display: flex; flex-direction: column; padding: var(--sp-2); background-color: var(--color-surface-elevated, var(--color-surface)); background-image: var(--tex-surf-on); border-radius: var(--r-md); box-shadow: var(--shadow-raised); border: 1px solid var(--color-card-border); }
+.inboxpop-head { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); padding: var(--sp-2) var(--sp-2) var(--sp-1); }
+.inboxpop-item { display: flex; align-items: center; gap: var(--sp-2); padding: var(--sp-2); border-radius: var(--r-ctl); color: var(--color-text); text-decoration: none; min-width: 0; }
+.inboxpop-item:hover { background: rgba(var(--m-shade), .07); text-decoration: none; }
+.inboxpop-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.inboxpop-top { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-2); min-width: 0; }
+.inboxpop-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--font-heading); font-weight: var(--fw-medium); font-size: var(--fs-sm); }
+.inboxpop-snippet { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-xs); color: var(--color-text-muted); }
+.inboxpop-empty, .inboxpop-more { padding: var(--sp-2); text-align: center; }
+.inboxpop-foot { display: block; margin-top: var(--sp-1); padding: var(--sp-2); border-top: 1px solid var(--color-border); text-align: center; }

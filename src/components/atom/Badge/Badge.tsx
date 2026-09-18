@@ -12,6 +12,6 @@ export function toneForStatus(status: string): BadgeTone {
   if (/active|approved|scheduled|checked_in|delivered|read|sent|claimed|redeemed|enabled|on$/.test(s)) return 'success';
   if (/pending|paused|waiting|offered|invited|queued|draft|past_due/.test(s)) return 'warn';
   if (/cancel|declined|failed|locked|disabled|no_show|expired|refunded|rejected|voided|late/.test(s)) return 'danger';
-  if (/completed|booked/.test(s)) return 'primary';
+  if (/completed|booked|received/.test(s)) return 'primary';
   return 'neutral';
 }

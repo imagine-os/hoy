@@ -23,5 +23,5 @@ export default defineMeta({
   states: ['default', 'active', 'hover', 'with count'],
   usages: [{ title: { es: 'Vista y ciclo', en: 'View and cycle' }, render: () => h(Demo) }],
   a11y: [{ es: 'role=tablist con aria-selected por opción; navegable con teclado como botones.', en: 'role=tablist with aria-selected per option; keyboard-reachable as buttons.' }],
-  usedBy: ['C-02', 'C-06', 'C-11', 'C-18'],
+  usedBy: ['C-02', 'C-06', 'C-11', 'C-18', 'MessageComposer'],
 });

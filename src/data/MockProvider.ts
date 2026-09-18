@@ -5,13 +5,21 @@ import { buildSeed } from './seed';
 import { tenant } from '../tenant/tenant';
 
 const KEY = 'hoyos.db.v1';
+/**
+ * Bump when the seed or the schema changes shape (new columns an old localStorage copy would lack):
+ * a stored db with another version is thrown away and reseeded, whatever day it was seeded on.
+ *   1 · up to 0.7.1 · 2 · 0.8.0 message_log becomes the unified conversation record (direction, source, body, read_at…)
+ */
+export const SEED_VERSION = 2;
 type Db = Record<string, BaseRow[]>;
+interface Stored { seededOn: string; version?: number; db: Db }
 
 const newId = (prefix = 'row'): string => `${prefix}_${Math.random().toString(36).slice(2, 10)}`;
 
 /**
  * In-browser database: seeded from src/data/seed, persisted to localStorage, emits change events
- * to simulate Supabase realtime. Reseeds when the seed day changes so "today" always has classes.
+ * to simulate Supabase realtime. Reseeds when the seed day changes so "today" always has classes, and when
+ * SEED_VERSION moves so a stored copy never lacks a column the code now reads.
  */
 export class MockProvider implements DataProvider {
   readonly name = 'mock';
@@ -27,8 +35,8 @@ export class MockProvider implements DataProvider {
   private onStorage(e: StorageEvent) {
     if (e.key !== KEY || !e.newValue) return;
     try {
-      const parsed = JSON.parse(e.newValue) as { seededOn: string; db: Db };
-      if (!tableNames.every((t) => Array.isArray(parsed.db[t]))) return;
+      const parsed = JSON.parse(e.newValue) as Stored;
+      if (parsed.version !== SEED_VERSION || !tableNames.every((t) => Array.isArray(parsed.db[t]))) return;
       this.db = parsed.db;
       for (const t of Object.keys(this.db)) this.emit({ table: t, type: 'reset' });
     } catch { /* ignore a half-written value */ }
@@ -38,8 +46,8 @@ export class MockProvider implements DataProvider {
     try {
       const raw = localStorage.getItem(KEY);
       if (raw) {
-        const parsed = JSON.parse(raw) as { seededOn: string; db: Db };
-        if (parsed.seededOn === new Date().toDateString() && tableNames.every((t) => Array.isArray(parsed.db[t]))) return parsed.db;
+        const parsed = JSON.parse(raw) as Stored;
+        if (parsed.version === SEED_VERSION && parsed.seededOn === new Date().toDateString() && tableNames.every((t) => Array.isArray(parsed.db[t]))) return parsed.db;
       }
     } catch { /* fall through to reseed */ }
     const db = buildSeed();
@@ -47,7 +55,8 @@ export class MockProvider implements DataProvider {
     return db;
   }
   private persist(db = this.db) {
-    try { localStorage.setItem(KEY, JSON.stringify({ seededOn: new Date().toDateString(), db })); } catch { /* quota or private mode */ }
+    const stored: Stored = { seededOn: new Date().toDateString(), version: SEED_VERSION, db };
+    try { localStorage.setItem(KEY, JSON.stringify(stored)); } catch { /* quota or private mode */ }
   }
   private emit(e: ChangeEvent) {
     this.listeners.get(e.table)?.forEach((cb) => cb(e));

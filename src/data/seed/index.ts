@@ -1,4 +1,4 @@
-import type { BaseRow, BookingRow, ClassSessionRow, CreditRow, EventRow, IntentionRow, InviteRow, MembershipRow, NotificationRow, NotificationPrefRow, PaymentMethodRow, PaymentRow, ProfileRow, ReviewRow, TeacherRow, UserRow } from '../schema';
+import type { BaseRow, BookingRow, ClassSessionRow, CreditRow, EventRow, IntentionRow, InviteRow, MembershipRow, MessageLogRow, NotificationRow, NotificationPrefRow, PaymentMethodRow, PaymentRow, ProfileRow, ReviewRow, TeacherRow, UserRow } from '../schema';
 import { tableNames } from '../schema';
 import { demoUsers } from '../../auth/demoUsers';
 import { tenant } from '../../tenant/tenant';
@@ -13,6 +13,7 @@ import { buildIntegrations } from './integrations';
 import { buildExpenses, expenseTemplates } from './expenses';
 import { buildSpecials } from './specials';
 import { buildDeletionRequests } from './deletion';
+import { automationText, buildMessages } from './messages';
 import { dateKey, addMonths, MS } from '../../i18n/format';
 import { DEFAULT_IVA_PCT, splitIva } from '../tax';
 
@@ -284,7 +285,17 @@ export function buildSeed(): Record<string, BaseRow[]> {
     { ...base('aut_2', 80), name: 'Recibo por email', trigger: 'payment.approved', channel: 'email', template_key: 'receipt', delay_min: 0, quiet_hours: null, enabled: true },
     { ...base('aut_3', 80), name: 'Oferta de lista de espera', trigger: 'waitlist.offered', channel: 'whatsapp', template_key: 'waitlist_offer', delay_min: 0, quiet_hours: null, enabled: false },
   );
-  for (let i = 0; i < 12; i++) db.message_log.push({ ...base(`msg_${i}`, r.int(0, 6)), user_id: r.pick(customerIds), channel: r.pick(['whatsapp', 'email']), template_key: r.pick(['class_reminder', 'receipt']), automation_id: r.pick(['aut_1', 'aut_2']), status: r.pick(['sent', 'delivered', 'read']), sent_at: iso(NOW), payload: null });
+  // Automated sends of the last week (reminders, receipts): outbound rows with the text the template rendered.
+  for (let i = 0; i < 12; i++) {
+    const uid = r.pick(customerIds), channel = r.pick(['whatsapp', 'email'] as const), template_key = r.pick(['class_reminder', 'receipt'] as const), automation_id = r.pick(['aut_1', 'aut_2']), status = r.pick(['sent', 'delivered', 'read'] as const);
+    const stamp = base(`msg_${i}`, r.int(0, 6));
+    // Local clock time (no RNG): a reminder goes out 2 h before the 5:30 p. m. class, a receipt at a till hour; a row that would land after NOW moves back a day.
+    const when = new Date(stamp.created_at); when.setHours(template_key === 'class_reminder' ? 15 : 9 + (i % 5) * 2, template_key === 'class_reminder' ? 30 : 15, 0, 0);
+    if (when > NOW) when.setDate(when.getDate() - 1);
+    stamp.created_at = stamp.updated_at = iso(when);
+    const tx = automationText(template_key, (profiles.find((p) => p.user_id === uid)?.full_name ?? '').split(' ')[0], channel);
+    db.message_log.push({ ...stamp, user_id: uid, channel, direction: 'outbound', source: 'automation', template_key, automation_id, subject: tx.subject, body: tx.body, status, sent_at: stamp.created_at, sent_by: null, read_at: null, read_by: null, external_id: null, payload: null } as MessageLogRow);
+  }
   for (let i = 0; i < 20; i++) db.audit_log.push({ ...base(`aud_${i}`, r.int(0, 10)), actor_id: r.pick(['usr_desk', 'usr_coord', 'usr_super', 'usr_fin']), action: r.pick(['booking.create', 'payment.take', 'session.cancel', 'member.update', 'flag.toggle']), entity: r.pick(['bookings', 'payments', 'class_sessions', 'profiles', 'feature_flags']), entity_id: null, diff: null, ip: null });
 
   // ---- expenses ledger (M-09c): recurring templates + three months of fixed costs + variable costs ----
@@ -296,6 +307,9 @@ export function buildSeed(): Record<string, BaseRow[]> {
   const deletions = buildDeletionRequests();
   db.deletion_requests.push(...deletions.rows);
   db.audit_log.push(...deletions.audit);
+
+  // ---- conversations (M-06 / S-06, 0.8.0): fixed rows, no RNG; six inbound messages stay unread ----
+  db.message_log.push(...buildMessages(new Map(profiles.map((p) => [p.user_id, p.full_name]))));
 
   return db;
 }

@@ -1,0 +1,13 @@
+.thread { display: flex; flex-direction: column; gap: var(--sp-2); padding: var(--sp-2) 0; min-width: 0; }
+.thread.is-scroll { flex: 1 1 auto; min-height: 240px; overflow-y: auto; padding: var(--sp-5) var(--sp-3) var(--sp-3); scroll-padding-top: var(--sp-5); mask-image: linear-gradient(to bottom, transparent, black var(--sp-5)); -webkit-mask-image: linear-gradient(to bottom, transparent, black var(--sp-5)); }
+.thread-day { display: flex; justify-content: center; padding: var(--sp-2) 0; }
+.thread-day span { font-size: var(--fs-2xs); text-transform: uppercase; letter-spacing: var(--ls-eyebrow); font-weight: var(--fw-semibold); color: var(--color-text-faint); background: var(--color-surface-2); padding: 2px 10px; border-radius: var(--r-full); }
+.thread-day span::first-letter { text-transform: uppercase; }
+/* system lines: what the studio did around the conversation (booking, payment, check-in) */
+.thread-event { align-self: center; display: flex; align-items: baseline; flex-wrap: wrap; justify-content: center; gap: var(--sp-1) var(--sp-2); max-width: 92%; padding: 2px var(--sp-3); font-size: var(--fs-xs); color: var(--color-text-muted); text-align: center; }
+.thread-event-glyph { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; font-size: var(--fs-2xs); background: var(--color-surface-3); color: var(--color-text-muted); }
+.thread-event-payment .thread-event-glyph { background: color-mix(in srgb, var(--color-primary) 14%, transparent); color: var(--color-primary); }
+.thread-event-booking .thread-event-glyph { background: color-mix(in srgb, var(--color-success) 14%, transparent); color: var(--color-success); }
+.thread-event-title { color: var(--color-text); font-weight: var(--fw-medium); }
+.thread-event-time { font-variant-numeric: tabular-nums; color: var(--color-text-faint); }
+.thread-empty { padding: var(--sp-4) 0; text-align: center; }

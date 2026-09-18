@@ -14,7 +14,8 @@ export interface TimelineItem {
   meta?: string;
 }
 
-const ICON: Record<TimelineKind, string> = { whatsapp: '☏', email: '✉', note: '✎', system: '⚙', payment: '$', booking: '✓' };
+/** Glyph per kind — shared with MessageThread's system lines so both streams draw the same event the same way. */
+export const TIMELINE_ICON: Record<TimelineKind, string> = { whatsapp: '☏', email: '✉', note: '✎', system: '⚙', payment: '$', booking: '✓' };
 
 /** Chronological stream (newest first) merging every channel: messages, notes, payments, bookings, system events. */
 export function Timeline({ items, emptyText, limit }: { items: TimelineItem[]; emptyText?: string; limit?: number }) {
@@ -25,7 +26,7 @@ export function Timeline({ items, emptyText, limit }: { items: TimelineItem[]; e
     <ol className="timeline">
       {sorted.map((it) => (
         <li key={it.id} className={`timeline-item timeline-${it.kind}`}>
-          <span className="timeline-dot" aria-hidden>{ICON[it.kind]}</span>
+          <span className="timeline-dot" aria-hidden>{TIMELINE_ICON[it.kind]}</span>
           <div className="timeline-content">
             <div className="row-between wrap timeline-head">
               <strong className="timeline-title">{it.title}</strong>

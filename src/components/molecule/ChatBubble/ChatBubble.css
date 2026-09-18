@@ -1,0 +1,39 @@
+/* Chat rows: the member on the left (paper), the studio on the right (highlight yellow, like the WhatsApp preview). */
+.chatbubble { max-width: min(78%, 560px); min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.chatbubble-in { align-self: flex-start; }
+.chatbubble-out { align-self: flex-end; align-items: flex-end; }
+.chatbubble-body { position: relative; padding: var(--sp-2) var(--sp-3); border-radius: var(--r-md); font-size: var(--fs-sm); line-height: 1.4; box-shadow: var(--shadow-card); background: var(--color-surface); color: var(--color-text); }
+.chatbubble-in .chatbubble-body { border-top-left-radius: var(--r-xs); }
+.chatbubble-out .chatbubble-body { border-top-right-radius: var(--r-xs); background: var(--color-highlight); color: var(--color-on-highlight); }
+.chatbubble-out.is-auto .chatbubble-body { background: var(--color-surface-2); color: var(--color-text); border: 1px dashed var(--color-border-strong); box-shadow: none; }
+.chatbubble-text { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.chatbubble-meta { display: flex; align-items: center; justify-content: flex-end; gap: var(--sp-1); margin-top: 4px; font-size: var(--fs-2xs); color: inherit; opacity: .75; }
+.chatbubble-out .chatbubble-meta { color: var(--color-on-highlight); }
+.chatbubble-out.is-auto .chatbubble-meta, .chatbubble-in .chatbubble-meta { color: var(--color-text-muted); opacity: 1; }
+.chatbubble-time { font-variant-numeric: tabular-nums; }
+.chatbubble-glyph { font-size: var(--fs-xs); line-height: 1; }
+.chatbubble-who { font-size: var(--fs-xs); color: var(--color-text-muted); padding: 0 var(--sp-1); }
+.chatbubble-status { margin-left: var(--sp-1); }
+.chatbubble-chat.is-unread .chatbubble-body { box-shadow: var(--shadow-card), 0 0 0 2px var(--color-primary); }
+
+/* Email: a card with a subject line, full width of the thread but capped like the bubbles. */
+.chatbubble-email { max-width: min(92%, 640px); padding: var(--sp-3) var(--sp-4); border-radius: var(--r-md); background: var(--color-surface); border: 1px solid var(--color-card-border); box-shadow: var(--shadow-card); gap: var(--sp-1); }
+.chatbubble-email.chatbubble-out { align-items: stretch; }
+.chatbubble-email.is-unread { border-color: var(--color-primary); }
+.chatbubble-head { display: flex; align-items: center; flex-wrap: wrap; gap: var(--sp-2); font-size: var(--fs-xs); color: var(--color-text-muted); }
+.chatbubble-head .chatbubble-who { padding: 0; }
+.chatbubble-head .chatbubble-time { margin-left: auto; }
+.chatbubble-subject { font-size: var(--fs-md); font-weight: var(--fw-semibold); color: var(--color-ink); overflow-wrap: anywhere; }
+.chatbubble-email .chatbubble-text { font-size: var(--fs-sm); color: var(--color-text); }
+.chatbubble-foot { display: flex; justify-content: flex-end; }
+
+/* Internal note: the yellow card, centered, dashed — visibly not a message. */
+.chatbubble-note { align-self: center; width: min(92%, 640px); padding: var(--sp-2) var(--sp-3); border-radius: var(--r-md); background: color-mix(in srgb, var(--color-highlight) 55%, var(--color-surface)); border: 1px dashed color-mix(in srgb, var(--color-on-highlight) 40%, transparent); color: var(--color-text); }
+.chatbubble-note .chatbubble-head { color: var(--color-on-highlight); }
+.chatbubble-note .chatbubble-head strong { color: var(--color-on-highlight); }
+.chatbubble-note .chatbubble-text { font-size: var(--fs-sm); }
+:root[data-theme="dark"] .chatbubble-note { background: color-mix(in srgb, var(--color-highlight) 14%, var(--color-surface)); color: var(--color-text); }
+:root[data-theme="dark"] .chatbubble-note .chatbubble-head, :root[data-theme="dark"] .chatbubble-note .chatbubble-head strong { color: var(--color-warn); }
+:root[data-theme="dark"] .chatbubble-out .chatbubble-body { background: var(--color-accent-fill); color: var(--color-text-on-inverse); }
+:root[data-theme="dark"] .chatbubble-out .chatbubble-meta { color: var(--color-text-on-inverse); }
+@media (max-width: 480px) { .chatbubble { max-width: 92%; } .chatbubble-email, .chatbubble-note { width: 100%; max-width: 100%; } }

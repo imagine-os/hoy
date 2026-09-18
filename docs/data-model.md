@@ -889,8 +889,8 @@ _Disparador → canal → plantilla, con horas de silencio._
 | `enabled` | bool |  |
 
 #### `message_log`
-Everything sent via WhatsApp, email or push.  
-_Todo lo enviado por WhatsApp, email o push._
+The whole conversation with each person: WhatsApp and email both ways (manual, automation, newsletter, system) plus internal staff notes. M-06 shows it per person; S-06 spreads it across the front-desk inbox.  
+_La conversación completa con cada persona: WhatsApp y email en ambos sentidos (manual, automatización, newsletter, sistema) y las notas internas del equipo. M-06 la muestra por persona; S-06 la reparte en la bandeja de recepción._
 
 | column | type | notes |
 | --- | --- | --- |
@@ -898,13 +898,27 @@ _Todo lo enviado por WhatsApp, email o push._
 | `tenant_id` | uuid | → `tenants` Owning studio (multi-tenant) |
 | `created_at` | timestamptz |  |
 | `updated_at` | timestamptz |  |
-| `user_id` | uuid, null | → `users`  |
-| `channel` | enum (whatsapp \| email \| push) |  |
+| `user_id` | uuid, null | → `users` the member this belongs to; null for team-only rows (a substitution request) |
+| `channel` | enum (whatsapp \| email \| push \| note) | note = internal staff note, never delivered |
+| `direction` | enum (inbound \| outbound \| internal) | inbound = from the member · outbound = to the member · internal = staff note (M-06 / S-06) |
+| `source` | enum (manual \| automation \| newsletter \| system) | manual = typed by staff · automation = M-05/M-04 trigger · newsletter = campaign · system = receipts, substitution requests |
 | `template_key` | text, null |  |
 | `automation_id` | uuid, null | → `automations`  |
-| `status` | enum (queued \| sent \| delivered \| read \| failed) |  |
+| `subject` | text, null | email subject / newsletter title |
+| `body` | text, null | the message text as sent or received |
+| `status` | enum (received \| queued \| sent \| delivered \| read \| failed) | received = inbound row · queued = waiting for quiet hours to end |
 | `sent_at` | timestamptz, null |  |
-| `payload` | json, null |  |
+| `sent_by` | uuid, null | → `users` staff author of an outbound or internal row; null for automations |
+| `read_at` | timestamptz, null | staff read receipt for an inbound row; null drives the unread counts (bell, S-01, S-06) |
+| `read_by` | uuid, null | → `users`  |
+| `external_id` | text, null | provider message id (Meta wamid, email message-id) for the future webhook |
+| `payload` | json, null | provider extras: template vars, test flag, invoice number |
+
+**Who may read / write**
+- front_desk/coordinator/admin: read every row of the tenant, insert outbound and internal rows, update read_at/read_by only (S-06, M-06)
+- customer: read own inbound/outbound rows (user_id = auth.uid()); internal rows (channel note) are never visible to the member
+- automation/webhook service role: insert inbound rows and update status/external_id from the provider callback
+- retention: internal notes follow the member record (deleted with it, M-11); provider ids are kept for reconciliation
 
 #### `notifications`
 The C-24 inbox: what the studio sends, with read state and a deep link.  
@@ -1037,7 +1051,7 @@ _Orden de secciones por página guardado desde el editor drag-and-drop._
 | `updated_by` | uuid, null | → `users`  |
 
 ## Seed data (`src/data/seed/`)
-6 modalities, 2 rooms (the main room at 15 mats and a small meditation room), 8 teachers, 24 weekly templates (4/day Mon–Sat), sessions for −7…+7 days, 9 demo staff/users + 30 customers, memberships/credits/payments/invoices, bookings filling sessions, waitlists on full classes, today's intentions, feature flags from every spec toggle, legal docs + consents, 2 gift cards, 3 email templates, 3 WhatsApp templates, 3 automations, message and audit logs, three months of payroll runs, and four space bookings with two Especiales (one with a manual teacher payout). Deterministic PRNG; reseeds daily so "today" always has classes.
+6 modalities, 2 rooms (the main room at 15 mats and a small meditation room), 8 teachers, 24 weekly templates (4/day Mon–Sat), sessions for −7…+7 days, 9 demo staff/users + 30 customers, memberships/credits/payments/invoices, bookings filling sessions, waitlists on full classes, today's intentions, feature flags from every spec toggle, legal docs + consents, 2 gift cards, 3 email templates, 3 WhatsApp templates, 3 automations, the unified message record (`seed/messages.ts`: 69 `message_log` rows — WhatsApp both ways, automated reminders and receipts, newsletters, one email exchange, internal notes — in 17 conversations, six inbound left unread), audit logs, three months of payroll runs, and four space bookings with two Especiales (one with a manual teacher payout). Deterministic PRNG; reseeds daily so "today" always has classes.
 
 ## Adding a table
 1. Add a `TableDef` to `src/data/schema.ts` (and a typed row interface if pages use it).

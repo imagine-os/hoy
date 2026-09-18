@@ -1175,7 +1175,12 @@ alter table public.automations enable row level security;
 create policy "automations: tenant read" on public.automations for select using (tenant_id = public.current_tenant_id());
 create policy "automations: staff write" on public.automations for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
 
--- comms · Everything sent via WhatsApp, email or push.
+-- comms · The whole conversation with each person: WhatsApp and email both ways (manual, automation, newsletter, system) plus internal staff notes. M-06 shows it per person; S-06 spreads it across the front-desk inbox.
+-- access:
+--   · front_desk/coordinator/admin: read every row of the tenant, insert outbound and internal rows, update read_at/read_by only (S-06, M-06)
+--   · customer: read own inbound/outbound rows (user_id = auth.uid()); internal rows (channel note) are never visible to the member
+--   · automation/webhook service role: insert inbound rows and update status/external_id from the provider callback
+--   · retention: internal notes follow the member record (deleted with it, M-11); provider ids are kept for reconciliation
 create table if not exists public.message_log (
   -- Primary key
   id uuid primary key default gen_random_uuid(),
@@ -1183,17 +1188,38 @@ create table if not exists public.message_log (
   tenant_id uuid not null references public.tenants(id),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
+  -- the member this belongs to; null for team-only rows (a substitution request)
   user_id uuid references public.users(id) on delete set null,
-  channel text not null check (channel in ('whatsapp', 'email', 'push')),
+  -- note = internal staff note, never delivered
+  channel text not null check (channel in ('whatsapp', 'email', 'push', 'note')),
+  -- inbound = from the member · outbound = to the member · internal = staff note (M-06 / S-06)
+  direction text not null check (direction in ('inbound', 'outbound', 'internal')),
+  -- manual = typed by staff · automation = M-05/M-04 trigger · newsletter = campaign · system = receipts, substitution requests
+  source text not null check (source in ('manual', 'automation', 'newsletter', 'system')),
   template_key text,
   automation_id uuid references public.automations(id) on delete set null,
-  status text not null check (status in ('queued', 'sent', 'delivered', 'read', 'failed')),
+  -- email subject / newsletter title
+  subject text,
+  -- the message text as sent or received
+  body text,
+  -- received = inbound row · queued = waiting for quiet hours to end
+  status text not null check (status in ('received', 'queued', 'sent', 'delivered', 'read', 'failed')),
   sent_at timestamptz,
+  -- staff author of an outbound or internal row; null for automations
+  sent_by uuid references public.users(id) on delete set null,
+  -- staff read receipt for an inbound row; null drives the unread counts (bell, S-01, S-06)
+  read_at timestamptz,
+  read_by uuid references public.users(id) on delete set null,
+  -- provider message id (Meta wamid, email message-id) for the future webhook
+  external_id text,
+  -- provider extras: template vars, test flag, invoice number
   payload jsonb
 );
 create index if not exists message_log_tenant_idx on public.message_log(tenant_id);
 create index if not exists message_log_user_id_idx on public.message_log(user_id);
 create index if not exists message_log_automation_id_idx on public.message_log(automation_id);
+create index if not exists message_log_sent_by_idx on public.message_log(sent_by);
+create index if not exists message_log_read_by_idx on public.message_log(read_by);
 create trigger message_log_touch before update on public.message_log for each row execute function public.touch_updated_at();
 alter table public.message_log enable row level security;
 create policy "message_log: tenant read" on public.message_log for select using (tenant_id = public.current_tenant_id());

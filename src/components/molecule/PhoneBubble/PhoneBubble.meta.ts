@@ -18,5 +18,5 @@ export default defineMeta({
     { title: { es: 'No entregable', en: 'Undeliverable' }, render: () => h(PhoneBubble, { header: 'HOY · WhatsApp', text: 'Se liberó un cupo en {{1}}.', undeliverable: 'Plantilla pendiente de aprobación en Meta' }) },
   ],
   a11y: [{ es: 'El marco es role=img con el nombre del negocio; las variables sin resolver son <mark>.', en: 'Frame is role=img named after the business; unresolved variables are <mark>.' }],
-  usedBy: ['M-05', 'M-06'],
+  usedBy: ['M-05'],
 });

@@ -40,6 +40,19 @@ export function formatTime(iso: string | Date, lang: Lang = 'es'): string {
 export function formatDateTime(iso: string | Date, lang: Lang = 'es'): string {
   return new Intl.DateTimeFormat(localeOf(lang), { dateStyle: 'medium', timeStyle: 'short' }).format(toDate(iso));
 }
+/**
+ * "hace 5 min" · "hace 2 h" · "ayer" · "12 sept": how long ago something happened, for chat lists and
+ * notification rows. Under a minute it says "ahora"; past a week it falls back to the short date.
+ */
+export function formatRelative(iso: string | Date, lang: Lang = 'es', now: Date = new Date()): string {
+  const diff = now.getTime() - toDate(iso).getTime();
+  const rtf = new Intl.RelativeTimeFormat(localeOf(lang), { numeric: 'auto', style: 'narrow' });
+  if (diff < MS.min) return lang === 'es' ? 'ahora' : 'now';
+  if (diff < MS.hour) return rtf.format(-Math.round(diff / MS.min), 'minute');
+  if (diff < MS.day) return rtf.format(-Math.round(diff / MS.hour), 'hour');
+  if (diff < 7 * MS.day) return rtf.format(-Math.round(diff / MS.day), 'day');
+  return formatDate(iso, lang, { day: 'numeric', month: 'short' });
+}
 export function isSameDay(a: string | Date, b: string | Date): boolean {
   const da = toDate(a), db = toDate(b);
   return da.getFullYear() === db.getFullYear() && da.getMonth() === db.getMonth() && da.getDate() === db.getDate();

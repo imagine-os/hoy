@@ -16,5 +16,5 @@ export default defineMeta({
     { title: { es: 'Movimientos', en: 'Movements' }, render: () => h('div', { className: 'row wrap' }, h(Chip, { movement: 'enraiza', dot: true }, 'Enraíza'), h(Chip, { movement: 'fluye', dot: true }, 'Fluye'), h(Chip, { movement: 'arde', dot: true }, 'Arde'), h(Chip, { movement: 'libera', dot: true }, 'Libera')) },
   ],
   a11y: [{ es: 'Botón con aria-pressed cuando es interactivo; span cuando es solo etiqueta.', en: 'Button with aria-pressed when interactive; span when label only.' }],
-  usedBy: ['C-01', 'C-02', 'A-05', 'M-03'],
+  usedBy: ['C-01', 'C-02', 'A-05', 'M-03', 'M-06', 'ConversationList'],
 });

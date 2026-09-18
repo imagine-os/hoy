@@ -14,5 +14,5 @@ export default defineMeta({
   states: ['initials', 'photo'],
   usages: [{ title: { es: 'Tamaños', en: 'Sizes' }, render: () => h('div', { className: 'row' }, h(Avatar, { name: 'Juliana Ospina', size: 28 }), h(Avatar, { name: 'Andrés Quintero' }), h(Avatar, { name: 'Sofía Arango', size: 56 })) }],
   a11y: [{ es: 'role="img" con aria-label = nombre.', en: 'role="img" with aria-label = name.' }],
-  usedBy: ['C-01', 'S-01', 'HUB', 'TopBar'],
+  usedBy: ['C-01', 'S-01', 'S-06', 'HUB', 'TopBar', 'ConversationList', 'InboxPopover'],
 });

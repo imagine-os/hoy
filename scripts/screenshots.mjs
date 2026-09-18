@@ -92,6 +92,7 @@ function idFor(path, ids) {
   if (path.startsWith('/app/teachers/')) return ids.teacher;
   if (path.startsWith('/app/events/')) return ids.event;
   if (path.startsWith('/admin/crm/')) return ids.member;
+  if (path.startsWith('/staff/inbox/')) return ids.member;
   if (path.startsWith('/admin/finance/payouts/')) return ids.payrollRun;
   if (path.startsWith('/teach/class/')) return ids.teachSession;
   return ids.session;
