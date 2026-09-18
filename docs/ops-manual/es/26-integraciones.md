@@ -2,8 +2,8 @@
 title: Integraciones y qué está simulado
 role: admin, owner, finanzas
 part: VII
-version: 0.7.0
-updated: 2026-09-17
+version: 0.8.0
+updated: 2026-09-18
 summary: Qué sistemas externos usa HOY, en qué estado está cada uno, qué puede llenar el owner desde ya en M-10 y qué termina el dev.
 ---
 
@@ -38,8 +38,8 @@ Cada guardado queda en el registro de actividad (`integration.update`, M-07) con
 | Supabase (auth + datos) | inicio de sesión real y base de datos | **simulado**: los datos viven en el navegador y el acceso es un selector de demo | crear el proyecto, aplicar `supabase/schema.sql` y las reglas RLS, `SupabaseProvider` |
 | Wompi pagos | link de pago, datáfono, tarjeta guardada | **simulado**: escribe pagos y facturas reales, muestra el rechazo, pero no mueve dinero | credenciales de comercio, sandbox y webhooks del lado servidor |
 | Wompi payroll | pagar a los maestros | **simulado**: la corrida calcula, se aprueba y se marca pagada; la dispersión resuelve con una referencia ficticia (`16`) | credenciales de dispersión y el webhook que confirma |
-| WhatsApp Business | automatizaciones, CRM, OTP | **simulado**: todo queda en el registro de mensajes | remitente aprobado por Meta y plantillas por idioma — **la aprobación tarda: se pide antes que Supabase** |
-| Correo | recibos, reportes, avisos | **simulado**: se diseña y se previsualiza, no se envía | proveedor de envío y dominio verificado |
+| WhatsApp Business | automatizaciones, conversación CRM y bandeja (`13`), OTP | **simulado**: entradas y salidas quedan en `message_log` con dirección y estado; el webhook real escribe en la misma tabla | remitente aprobado por Meta y plantillas por idioma; el webhook de la Cloud API (mensajes entrantes y estados) — **la aprobación tarda: se pide antes que Supabase** |
+| Correo | recibos, reportes, newsletters, correspondencia en la conversación (`13`) | **simulado**: entradas y salidas quedan en `message_log` con dirección y estado; el envío y el correo entrante reales escriben en la misma tabla | proveedor de envío y dominio verificado; correo entrante (IMAP o SES) al `message_log` |
 | Facturación DIAN | factura electrónica | **simulado**: la fila tiene la forma, no hay CUFE (`15`) | proveedor tecnológico y emisor legal |
 | Mapas | mapa en contacto | **pendiente de elegir**: el proveedor es un ajuste en M-08f, las coordenadas en M-08a | la decisión (OSM sin llave o Google) |
 
@@ -76,4 +76,6 @@ haya proveedor. M-10 repite este orden al pie de la página.
 ![Ajustes · Pagos: periodicidad y tarjeta de tarifas](../../screenshots/M-08c/es-1280.jpg "M-08c · /admin/settings/payments")
 
 ## 6. Lo que registra un envío simulado
+Cada fila es un mensaje de la conversación de una persona (`13`): canal, dirección (entrante, saliente, interna), origen (manual, automatización, newsletter, sistema), estado y el id del proveedor que llenará el webhook.
+
 {{table:message_log}}

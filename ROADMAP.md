@@ -1,13 +1,33 @@
 # HoyOS roadmap
 
-**Resumen (ES).** HoyOS v0.7 es una base real y desplegable: sitio web, app de clientes, app de
+**Resumen (ES).** HoyOS v0.8 es una base real y desplegable: sitio web, app de clientes, app de
 profesores, escritorio de staff/admin, manual de operaciones, documentación y herramientas de
 desarrollo en una sola base de código, con datos de prueba en el navegador. Este documento dice
 dónde estamos, qué sigue y en qué orden (con dependencias explícitas y lo que se puede hacer en
 paralelo), qué significa "terminado" en cada fase, cómo trabajar en el repo y qué debe decidir el
 owner del estudio. Está escrito para que otra cuenta de Claude (o una persona) lo retome sin contexto.
 
-## A. Where we are (v0.7.1, 2026-09-17)
+## A. Where we are (v0.8.0, 2026-09-18)
+
+- **v0.8.0 — Conversación CRM y bandeja S-06** (`docs/changelog/0021-crm-conversacion-y-bandeja.md`, prompt
+  `docs/prompts/0021-crm-conversacion-y-bandeja.md`; Justin: "make the CRM page for the customers really, really
+  good … the history of WhatsApp messages … any emails … notes … a notification from the top bar to know who has
+  sent them recent messages"). `message_log` is now the **unified communications record** — `direction`, `source`,
+  `subject`, `body`, `sent_by`, `read_at` / `read_by`, `external_id`; channel `note`, status `received`; an `rls`
+  contract (21 of 48 tables) — and `src/data/comms.ts` is the one seam every send, note and "who wrote" reader goes
+  through (`useMessaging`, `useConversations`, `useUnreadInbound`). **M-06** opens on a **Conversación** tab: a
+  WhatsApp-style thread (member left, studio right, automations dashed, emails as cards with a Newsletter ·
+  Automático · Manual badge, internal notes the member never sees, bookings / payments / consents as system lines),
+  filter chips, a WhatsApp · Email · Nota composer gated by `members.write`, and "Abrir en bandeja". **S-06
+  `/staff/inbox[/:id]` Bandeja de mensajes** (new code, desk roles) is the two-pane inbox — conversations unread
+  first with search and filters, the selected thread with the person's header and "Ver ficha CRM" → M-06, the same
+  composer; selecting a thread is the team's read receipt. The top-bar **bell** counts inbound rows nobody read and
+  opens a popover of the five latest unread threads; **S-01** gained the "Mensajes sin leer" tile, a "Mensajes
+  recientes" card and the inbox quick action. Five components with metas (`ChatBubble`, `MessageComposer`,
+  `InboxPopover`, `MessageThread`, `ConversationList` — 61 in D-02), notes moved from `audit_log` into the thread,
+  every insert site writes the new shape, a fixed seed of 69 messages in 17 conversations with six unread. Manual 13
+  rewritten around it (ES + EN). Everything is simulated in the browser; the WhatsApp Cloud API webhook and the
+  email inbound will insert rows into the same table (§F 4–5).
 
 - **v0.7.1 — Polish and code-quality pass** (`docs/changelog/0020-polish-pass.md`, prompt
   `docs/prompts/0020-polish-pass.md`; Justin: "make sure everything is polished and cleanly coded"). No new
@@ -97,7 +117,7 @@ owner del estudio. Está escrito para que otra cuenta de Claude (o una persona) 
   studio owes; `MediaPlaceholder` in the app and `MediaSlot` / `MapSlot` on the site all read it, so
   pasting a URL and flipping a row to `ready` publishes the asset everywhere with no deploy. Twelve
   slots today, all `pending`.
-- **The operations manual is a book.** 28 ES + 28 EN chapters in seven parts, 72 figures per language
+- **The operations manual is a book.** 28 ES + 28 EN chapters in seven parts, 73 figures per language
   pulled from `docs/screenshots/`, a cover with reading paths by role, a table of contents per
   chapter, and `{{pricing:…}}` / `{{tenant:…}}` / `{{policy:…}}` / `{{table:…}}` live blocks that read
   the app's own sources — the manual cannot go stale about a price or a policy. **27 pending owner
@@ -105,8 +125,8 @@ owner del estudio. Está escrito para que otra cuenta de Claude (o una persona) 
 - **Data**: **48 tables** (38 + `media_assets`, `payroll_runs`, `payroll_lines`, `legal_acceptances`,
   with `legal_documents` rewritten for versions and bilingual bodies, + `expense_templates` and
   `expenses` in 0.6.1, + `special_charges` and `space_bookings` in 0.6.2, + `deletion_requests` and
-  `integrations` in 0.7.0), **20 of them with a `TableDef.rls`** access contract emitted by `npm run sql` into
-  `supabase/schema.sql` and `docs/data-model.md` (the other 28 still to write, §F 25).
+  `integrations` in 0.7.0; `message_log` widened into the conversation record in 0.8.0), **21 of them with a `TableDef.rls`** access contract emitted by `npm run sql` into
+  `supabase/schema.sql` and `docs/data-model.md` (the other 27 still to write, §F 25).
   Forward and circular foreign keys are emitted as a deferred `alter table` block so the SQL applies in order.
 - **Canvas look applied** (0.4.0): D-01 is the canvas hoy-brand token set; the phone frame, cream lane
   and card skin follow it. No card-like element lets its text escape at 390 or 1280 px. Dark-theme
@@ -123,14 +143,14 @@ owner del estudio. Está escrito para que otra cuenta de Claude (o una persona) 
   `npm run build` passes with zero TS errors (`strict`, `noUnusedLocals`, `noUnusedParameters`, `noImplicitReturns`, `noImplicitOverride`).
   Since 0.7.1 the bundle is split per surface (`src/app/lazyPage.ts`): main chunk 796 kB, each surface and the
   docs markdown load on first visit.
-- **Real vs stub** (`/#/dev/specs`, from `docs/screenshots/routes.json`): **96 routes, 84 codes,
-  0 stubs** (M-08f, M-10, C-26, W-09 and M-11 new in 0.7.0). Integrations (Wompi, WhatsApp, email, DIAN, Supabase Auth/Realtime) are simulated behind
+- **Real vs stub** (`/#/dev/specs`, from `docs/screenshots/routes.json`): **98 routes, 85 codes,
+  0 stubs** (S-06 new in 0.8.0; M-08f, M-10, C-26, W-09 and M-11 new in 0.7.0). Integrations (Wompi, WhatsApp, email, DIAN, Supabase Auth/Realtime) are simulated behind
   their seams — see §F for exactly what is still mocked.
-- **Docs**: prompt log, changelog and kanban are current through `0020`. `docs/screenshots/<code>/`
-  holds every route in ES/EN × 390/1280 (dark for key pages) as JPEG q72 — **391 captures** (+ 13
-  before-captures under `_before/0006`) — and
+- **Docs**: prompt log, changelog and kanban are current through `0021`. `docs/screenshots/<code>/`
+  holds every route in ES/EN × 390/1280 (dark for key pages) as JPEG q72 — **395 captures** (+ 13
+  before-captures under `_before/0006` and the 0021 before / after pairs for M-06 and S-01) — and
   `docs/pages/<code>.md` exists for every routed code.
-  **56 components** carry a `.meta.ts` in D-02.
+  **61 components** carry a `.meta.ts` in D-02.
 - **v0.5.1 — Jas's review + tenant city** (`0014`, `0015`): cut on `main` while the three 0.6.0 tracks were on
   branches, so it is numbered after them; C-06 plan dates, the Sin cupos pill, S-04 Valor pagado, `city: 'Medellín'`.
 
@@ -185,8 +205,11 @@ owner del estudio. Está escrito para que otra cuenta de Claude (o una persona) 
 - Parallelizable with: P4 (different tables, different integrations, same auth base).
 
 ### P4 — WhatsApp Business API + email designer/sender
-- Scope: `wa_templates`, `automations`, `message_log` (M-05), WhatsApp OTP (C-21), CRM threads in
-  M-06; email designer with `email_templates` versions (M-04), sender, approvals, quiet hours; push
+- Scope: `wa_templates`, `automations`, `message_log` (M-05), WhatsApp OTP (C-21), ~~CRM threads in
+  M-06~~ **done-simulated in 0.8.0**: the M-06 Conversación tab and the S-06 inbox read and write `message_log`
+  through `src/data/comms.ts`; what P4 adds is the **Cloud API webhook** (inbound rows, status callbacks, the
+  queued rows released after quiet hours) and **email inbound** (IMAP / SES → `channel email, direction inbound`) —
+  no page changes; email designer with `email_templates` versions (M-04), sender, approvals, quiet hours; push
   notifications feed C-24. Templates are bilingual and versioned; sending honours opt-in and quiet hours.
 - Depends on: P2 auth (identity + tenant); template approval from Meta (lead time: start the
   application early, in parallel with P2).
@@ -354,7 +377,7 @@ Everything below is known and written down; nothing here is a surprise found lat
 
 1. **Supabase auth and realtime.** Sign-in is a demo picker over the `users` table and the data layer
    is `MockProvider` (localStorage + cross-tab sync). `SupabaseProvider` replaces it behind the same
-   interface; `supabase/schema.sql` (48 tables, 20 with a per-table access contract) is the input, and
+   interface; `supabase/schema.sql` (48 tables, 21 with a per-table access contract) is the input, and
    `reference/alt-build-empty10/supabase/migrations/0001_init.sql` is the RLS reference. **This is the
    gate**: payments, payroll, WhatsApp and multi-tenant all need a real authenticated user first (P2).
 2. **Wompi payments.** C-04, S-04, C-17 and C-23 all pay through one seam (`wompiCheckout()`,
@@ -364,11 +387,17 @@ Everything below is known and written down; nothing here is a surprise found lat
    are real rows (M-09a, M-09b, S-03) with an audit entry each, and `wompiPayout()` is the dispersion
    seam with its rejected path. What is missing is the money: merchant payout credentials, a sandbox
    and the webhook that confirms a dispersion (P3).
-4. **WhatsApp Business API.** M-05 automations, M-06 CRM threads and the C-21 OTP are simulated in
-   `message_log`. Needs a Meta-approved sender and templates — **the approval has a lead time, so
-   start that application before P2 finishes** (P4).
-5. **Email sending.** M-04 designs and previews bilingual templates; nothing sends. Needs a provider
-   (and the MJML step) — receipts and reports depend on it (P4).
+4. **WhatsApp Business API.** M-05 automations, the M-06 / S-06 conversations and the C-21 OTP are simulated in
+   `message_log`. **Narrowed in 0.8.0**: the thread, the inbox, the composer, the read receipts and the unread
+   counts are real rows through `src/data/comms.ts`; what is missing is the **Cloud API webhook** that inserts
+   `direction = inbound` rows (`external_id = wamid`), posts the status callbacks (sent → delivered → read →
+   failed) onto the outbound rows and releases the `queued` rows when quiet hours end. Needs a Meta-approved
+   sender and templates — **the approval has a lead time, so start that application before P2 finishes** (P4).
+5. **Email sending and inbound.** M-04 designs and previews bilingual templates; nothing sends. Since 0.8.0
+   the M-06 / S-06 composer writes `channel email` rows and the thread shows newsletters, automated mails and
+   real correspondence from the seed; the **email inbound** (IMAP or SES → `message_log` `direction inbound`,
+   threaded by `In-Reply-To` onto the member) and the newsletter sender (`source newsletter` per recipient) are
+   the missing halves. Needs a provider (and the MJML step) — receipts and reports depend on it (P4).
 6. **DIAN e-invoicing.** `invoices` rows carry the reference shape, no CUFE is emitted. Needs a
    provider decision and the legal issuer named (§E items 3 and 4) before it can be built (P3).
 
@@ -457,10 +486,10 @@ of §E.
 
 **(f) Left by the 0.7.1 polish pass** (`docs/changelog/0020-polish-pass.md`; none blocks a phase)
 
-25. **`TableDef.rls` for the 28 tables that have none** (`tenants feature_flags consents users profiles user_roles
+25. **`TableDef.rls` for the 27 tables that have none** (`tenants feature_flags consents users profiles user_roles
     teachers modalities rooms class_templates class_sessions bookings waitlist intentions plans memberships credits
-    payments invoices gift_cards email_templates wa_templates automations message_log audit_log docs_entries
-    components page_layouts`), then `npm run sql` — the input P2 needs.
+    payments invoices gift_cards email_templates wa_templates automations audit_log docs_entries
+    components page_layouts`; `message_log` got its contract in 0.8.0), then `npm run sql` — the input P2 needs.
 26. **Spec `data:` overrides** for M-03, C-01, D-01, D-02, K-01, P-01 and A-06 in their module `specs.ts`: their
     canvas `data` arrays name 32 nouns that are not tables (`plan_phases`, `design_tokens`…) and the inspector lists
     them as if they were.
@@ -486,6 +515,18 @@ of §E.
 34. **`media_assets`**: the seed has 12 slots, `docs/website-vision.md` plans 16 — seed the four class-portrait slots
     or keep saying 12.
 35. **Screenshot params**: `npm run screenshots -- '--only=/app$'` skipped C-01 in the 0019 run — check the `$` handling.
+
+**(g) Left by the 0.8.0 conversation and inbox pass** (`docs/changelog/0021-crm-conversacion-y-bandeja.md`)
+
+36. **The webhook and the inbound mail** (items 4 and 5 above) — the only reason S-06 shows seed conversations.
+37. **An "Equipo" conversation** in S-06 for `user_id`-null `message_log` rows: the teacher's substitution
+    request is `inbound · system` with no member and only M-05's log lists it today.
+38. **Server-side RLS for `message_log`** from its `TableDef.rls` contract (desk roles read / insert / update
+    `read_at` only; the customer reads own non-internal rows; the webhook service role inserts inbound), and the
+    M-11 anonymisation job deleting the internal notes with the member record.
+39. **Inbox depth**: a "waiting on us" / assigned state per conversation once two people answer from one number,
+    one-tap replies from the approved M-05 templates, per-person unread instead of the team receipt if the
+    studio ever wants it, `scripts/screenshots.mjs --state=` so the open bell popover is captured by the pass.
 
 ## G. When nothing else is queued
 

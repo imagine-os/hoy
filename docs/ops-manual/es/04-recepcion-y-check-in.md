@@ -2,8 +2,8 @@
 title: Recepción y check-in
 role: recepción, coordinación
 part: II
-version: 0.6.0
-updated: 2026-09-17
+version: 0.8.0
+updated: 2026-09-18
 summary: La puerta: apertura, saludo, check-in, walk-ins, lista de espera, objetos perdidos y traspasos.
 ---
 
@@ -19,7 +19,7 @@ Más tarde, los maestros del día y las acciones de recepción. Cada acción que
 2. Entra a HoyOS con tu usuario → **S-01 Inicio por rol** → Recepción.
 3. En **S-02** confirma las clases del día, los cupos y que cada maestro aparezca como "Esperado".
 4. Revisa la lista de espera de cada clase y los pagos pendientes de ayer (transferencias sin confirmar).
-5. Lee los mensajes de WhatsApp de la noche (llegaron en horas silenciosas; se responden al abrir).
+5. Abre la **Bandeja de mensajes (S-06)** y responde lo que llegó en la noche: los hilos sin leer van primero y la campana de la barra superior dice cuántos hay. Cómo se responde está en `13`.
 6. Cuenta la base de caja y anótala en la planilla de cierre (`14`).
 
 ![Inicio por rol: lo que te espera hoy](../../screenshots/S-01/es-1280.jpg "S-01 · /staff")

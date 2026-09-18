@@ -2,8 +2,8 @@
 title: Índice y cómo usar este manual
 role: todos
 part: I
-version: 0.7.1
-updated: 2026-09-17
+version: 0.8.0
+updated: 2026-09-18
 summary: Para qué sirve el manual, cómo está organizado en siete partes y qué lee cada rol.
 ---
 
@@ -29,7 +29,7 @@ aquí y no se hace así, alguna de las dos cosas debe cambiar: díselo a coordin
    No los copies a otro documento; enlaza el capítulo.
 4. Lo que el estudio aún no ha definido está marcado como `> DECISIÓN PENDIENTE:`. No inventes la
    respuesta; pregunta al owner. La lista completa está en **Decisiones pendientes** (K-04).
-5. Versión 0.7: la estructura está estable, el contenido sigue creciendo. Propón mejoras a
+5. Versión 0.8: la estructura está estable, el contenido sigue creciendo. Propón mejoras a
    coordinación; los cambios se registran en K-01.
 
 ## 3. Las siete partes
@@ -58,7 +58,7 @@ aquí y no se hace así, alguna de las dos cosas debe cambiar: díselo a coordin
 | 10 Ventas y planes | ○ | ● | ● | ● | ● | – | – |
 | 11 Pausas y regalos | ○ | ● | ● | ● | ○ | – | – |
 | 12 Espacio (alquiler B2B) | ● | ○ | ● | ○ | ○ | – | ○ |
-| 13 CRM y WhatsApp | ○ | ● | ● | ● | – | ○ | – |
+| 13 CRM, WhatsApp y correo (ficha, conversación y bandeja) | ○ | ● | ● | ● | ○ | ○ | – |
 | 14 Pagos y caja | ● | ● | ○ | ● | ● | – | – |
 | 15 Facturación y DIAN | ● | ● | – | – | ● | – | – |
 | 16 Nómina y payouts | ● | ● | ○ | – | ● | ○ | – |

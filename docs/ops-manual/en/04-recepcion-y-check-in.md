@@ -2,8 +2,8 @@
 title: Front desk and check-in
 role: front desk, coordination
 part: II
-version: 0.6.0
-updated: 2026-09-17
+version: 0.8.0
+updated: 2026-09-18
 summary: The door: opening, greeting, check-in, walk-ins, waitlist, lost and found, handoffs.
 ---
 
@@ -19,7 +19,7 @@ Later strip, today's teachers and the desk actions. Every action is logged with 
 2. Sign in to HoyOS with your user → **S-01 Role home** → Front desk.
 3. In **S-02** confirm the day's classes, the capacity and that each teacher shows as "Expected".
 4. Review each class's waitlist and yesterday's pending payments (unconfirmed transfers).
-5. Read the overnight WhatsApp messages (they arrived during quiet hours; replies go out when we open).
+5. Open the **Message inbox (S-06)** and answer what came in overnight: unread threads come first and the top-bar bell says how many there are. How to reply is in `13`.
 6. Count the cash float and write it on the closing sheet (`14`).
 
 ![Role home: what today looks like](../../screenshots/S-01/en-1280.jpg "S-01 · /staff")

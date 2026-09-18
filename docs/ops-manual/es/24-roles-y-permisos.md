@@ -2,8 +2,8 @@
 title: Roles y permisos
 role: todos
 part: VII
-version: 0.6.0
-updated: 2026-09-17
+version: 0.8.0
+updated: 2026-09-18
 summary: El organigrama, qué hace cada rol, qué pantallas ve, quién aprueba qué y cómo se piden accesos.
 ---
 
@@ -31,9 +31,9 @@ Hoy varias personas pueden cubrir más de un rol. Lo que no cambia es quién apr
 |---|---|---|
 | Owner | Visión, precios, políticas, contratos, decisiones pendientes | M-01, M-08, M-07, M-09 |
 | Admin | Configuración de HoyOS, switches, integraciones, usuarios del equipo | M-01, M-08, M-03 |
-| Coordinación | Horario, maestros, sustituciones, eventos, contenido, automatizaciones, calidad | M-02, M-04, M-05, M-06, C-02 |
-| Recepción | Puerta, check-in, ventas en mostrador, cobros, WhatsApp en horario | S-02, S-04, M-06 |
-| Finanzas | Conciliación, nómina, facturación electrónica, reembolsos, reportes | M-09, M-01, M-07, M-06 (Pagos) |
+| Coordinación | Horario, maestros, sustituciones, eventos, contenido, automatizaciones, calidad | M-02, M-04, M-05, M-06, S-06, C-02 |
+| Recepción | Puerta, check-in, ventas en mostrador, cobros, WhatsApp y correo en horario (`13`) | S-02, S-06, S-04, M-06 |
+| Finanzas | Conciliación, nómina, facturación electrónica, reembolsos, reportes | M-09, M-01, M-07, M-06 (Pagos; lee la conversación, no escribe) |
 | Maestros | La clase: antes, durante, después; asistencia; su perfil | S-03 |
 | Mantenimiento | Limpieza, montaje de sala, insumos, equipos, seguridad física | checklists de `07` |
 
@@ -52,7 +52,19 @@ Hoy varias personas pueden cubrir más de un rol. Lo que no cambia es quién apr
 | Nuevo usuario de equipo o cambio de rol | Coordinación | Admin | M-01 |
 | Apagar/encender features | Admin | Owner | M-08b |
 
-## 5. Principios
+## 5. Quién abre la bandeja y quién escribe
+| Rol | Bandeja S-06 | Conversación en M-06 | Escribir (WhatsApp, correo, nota) |
+|---|---|---|---|
+| Owner / Admin | sí | sí | sí |
+| Coordinación | sí | sí | sí |
+| Recepción | sí | sí | sí |
+| Finanzas | no | lee | no (la caja aparece deshabilitada) |
+| Maestros | no | no | no; una solicitud de sustitución va a coordinación por M-05 |
+| Mantenimiento | no | no | no |
+
+La campana de mensajes solo se muestra a quien puede abrir la bandeja. Marcar un mensaje como leído es un acto del equipo: cualquiera de estos roles que abra el hilo lo apaga para todos, y el registro guarda quién.
+
+## 6. Principios
 1. Cada acción en HoyOS queda en **M-07 Registro de actividad** con tu nombre. Trabaja siempre con tu
    propio usuario; nunca compartas la sesión.
 2. Si te falta un permiso, no lo rodees: pide a admin. Un permiso pedido y registrado es seguro; un
@@ -61,7 +73,7 @@ Hoy varias personas pueden cubrir más de un rol. Lo que no cambia es quién apr
 
 ![Inicio por rol](../../screenshots/S-01/es-1280.jpg "S-01 · /staff")
 
-## 6. Pantallas por superficie
+## 7. Pantallas por superficie
 {{routes:admin}}
 
 {{routes:teacher}}

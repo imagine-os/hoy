@@ -2,8 +2,8 @@
 title: Integrations and what is simulated
 role: admin, owner, finance
 part: VII
-version: 0.7.0
-updated: 2026-09-17
+version: 0.8.0
+updated: 2026-09-18
 summary: Which external systems HOY uses, the state of each one, what the owner can already fill in on M-10, and what the dev finishes.
 ---
 
@@ -37,8 +37,8 @@ Every save lands in the activity log (`integration.update`, M-07) with before an
 | Supabase (auth + data) | real sign-in and the database | **simulated**: data lives in the browser and access is a demo picker | create the project, apply `supabase/schema.sql` and the RLS rules, `SupabaseProvider` |
 | Wompi payments | payment link, card terminal, saved card | **simulated**: writes real payments and invoices, shows the declined path, but no money moves | merchant credentials, a sandbox and server-side webhooks |
 | Wompi payroll | paying teachers | **simulated**: the run computes, is approved and marked paid; the dispersion resolves with a fake reference (`16`) | dispersion credentials and the confirming webhook |
-| WhatsApp Business | automations, CRM, OTP | **simulated**: everything lands in the message log | a Meta-approved sender and templates per language — **approval has a lead time: apply before Supabase is done** |
-| Email | receipts, reports, notices | **simulated**: designed and previewed, not sent | a sending provider and a verified domain |
+| WhatsApp Business | automations, the CRM conversation and inbox (`13`), OTP | **simulated**: inbound and outbound land in `message_log` with a direction and a status; the real webhook writes to the same table | a Meta-approved sender and templates per language; the Cloud API webhook (inbound messages and statuses) — **approval has a lead time: apply before Supabase is done** |
+| Email | receipts, reports, newsletters, correspondence in the conversation (`13`) | **simulated**: inbound and outbound land in `message_log` with a direction and a status; real sending and inbound mail write to the same table | a sending provider and a verified domain; inbound mail (IMAP or SES) into `message_log` |
 | DIAN invoicing | electronic invoice | **simulated**: the row has the shape, there is no CUFE (`15`) | a technology provider and the legal issuer |
 | Maps | the map on contact | **to be chosen**: the provider is a setting in M-08f, the coordinates in M-08a | the decision (key-less OSM or Google) |
 
@@ -76,4 +76,6 @@ provider is picked. M-10 repeats this order at the foot of the page.
 ![Settings · Payments: cadence and rate card](../../screenshots/M-08c/en-1280.jpg "M-08c · /admin/settings/payments")
 
 ## 6. What a simulated send records
+Each row is one message in a person's conversation (`13`): channel, direction (inbound, outbound, internal), source (manual, automation, newsletter, system), status and the provider id the webhook will fill in.
+
 {{table:message_log}}
