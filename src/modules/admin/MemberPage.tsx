@@ -2,82 +2,74 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useI18n } from '../../i18n/I18nProvider';
 import { useSession } from '../../auth/SessionProvider';
-import { useData, useTable } from '../../data/DataContext';
-import type { BaseRow, BookingRow, ClassSessionRow, PaymentRow, PlanRow } from '../../data/schema';
+import { useTable } from '../../data/DataContext';
+import type { BaseRow, BookingRow, ClassSessionRow, MessageLogRow, PaymentRow, PlanRow } from '../../data/schema';
+import { isConversationRow, useAuthorOf, useMessaging } from '../../data/comms';
 import { formatCOP, formatDate, formatDateTime, formatTime } from '../../i18n/format';
-import { tenant } from '../../tenant/tenant';
 import { Card } from '../../components/molecule/Card/Card';
 import { Button } from '../../components/atom/Button/Button';
 import { Badge, toneForStatus } from '../../components/atom/Badge/Badge';
 import { Chip } from '../../components/atom/Chip/Chip';
 import { Avatar } from '../../components/atom/Avatar/Avatar';
 import { StatTile } from '../../components/molecule/StatTile/StatTile';
-import { Field } from '../../components/molecule/Field/Field';
-import { Timeline, type TimelineItem } from '../../components/organism/Timeline/Timeline';
 import { DataTable } from '../../components/organism/DataTable/DataTable';
-import { Drawer } from '../../components/organism/Drawer/Drawer';
-import { PhoneBubble } from '../../components/molecule/PhoneBubble/PhoneBubble';
 import { EmptyState } from '../../components/molecule/EmptyState/EmptyState';
-import { useAudit, type AuditRow } from '../staff/audit';
+import { MessageThread, type ThreadEvent } from '../../components/organism/MessageThread/MessageThread';
+import { MessageComposer } from '../../components/molecule/MessageComposer/MessageComposer';
+import { useAudit } from '../staff/audit';
 import { maskPhone, usePeople } from '../staff/people';
 import { useMemberStats } from './CrmPage';
 import './admin.css';
 
-interface MsgRow extends BaseRow { user_id: string | null; channel: 'whatsapp' | 'email' | 'push'; template_key: string | null; status: string; sent_at: string | null; payload: Record<string, unknown> | null }
 interface ConsentRow extends BaseRow { user_id: string; legal_document_id: string; accepted_at: string }
-type Tab = 'timeline' | 'bookings' | 'payments' | 'notes';
+type Tab = 'conversation' | 'bookings' | 'payments';
+type Filter = 'all' | 'whatsapp' | 'email' | 'note' | 'system';
+const FILTERS: Filter[] = ['all', 'whatsapp', 'email', 'note', 'system'];
 
-/** M-06 detail — identity header, metric row, merged timeline, bookings, payments, internal notes, WhatsApp / email actions. */
+/** M-06 detail — identity header, metric row, the unified conversation (WhatsApp, email, notes, system events) with its reply box, bookings, payments. */
 export function MemberPage() {
   const { id } = useParams();
   const { t, lang, bi } = useI18n();
-  const data = useData();
   const { can, user } = useSession();
   const audit = useAudit('admin');
+  const { sendComposed, markConversationRead, quietUntil } = useMessaging('admin');
+  const authorOf = useAuthorOf();
   const { byId, loading } = usePeople();
   const person = id ? byId.get(id) : undefined;
   const one = useMemo(() => (person ? [person] : []), [person]);
   const stats = useMemberStats(one).get(id ?? '');
   const { rows: bookings } = useTable<BookingRow>('bookings', { where: { user_id: id ?? '__none__' } });
   const { rows: payments } = useTable<PaymentRow>('payments', { where: { user_id: id ?? '__none__' }, orderBy: { column: 'created_at', dir: 'desc' } });
-  const { rows: messages } = useTable<MsgRow>('message_log', { where: { user_id: id ?? '__none__' } });
+  const { rows: allMessages } = useTable<MessageLogRow>('message_log', { where: { user_id: id ?? '__none__' } });
   const { rows: consents } = useTable<ConsentRow>('consents', { where: { user_id: id ?? '__none__' } });
-  const { rows: notes } = useTable<AuditRow>('audit_log', { where: { entity: 'profiles', entity_id: person?.profileId ?? '__none__', action: 'member.note' }, orderBy: { column: 'created_at', dir: 'desc' } });
   const { rows: sessions } = useTable<ClassSessionRow>('class_sessions');
   const { rows: plans } = useTable<PlanRow>('plans');
-  const [tab, setTab] = useState<Tab>('timeline');
-  const [note, setNote] = useState('');
-  const [compose, setCompose] = useState<{ channel: 'whatsapp' | 'email'; text: string } | null>(null);
+  const [tab, setTab] = useState<Tab>('conversation');
+  const [filter, setFilter] = useState<Filter>('all');
   const logged = useRef<string | null>(null);
   useEffect(() => { if (person && logged.current !== person.id) { logged.current = person.id; audit('member.view', 'users', person.id, { name: person.name }); } }, [person?.id]);
+
+  const messages = useMemo(() => allMessages.filter(isConversationRow), [allMessages]);
+  const unread = messages.filter((m) => m.direction === 'inbound' && !m.read_at).length;
+  // Reading the conversation is the team's read receipt for what the member sent.
+  useEffect(() => { if (id && tab === 'conversation' && unread > 0) void markConversationRead(id); }, [id, tab, unread, markConversationRead]);
 
   if (!person) return <div className="stack"><Link to="/admin/crm" className="small">← {t('admin.crm.title')}</Link><EmptyState tone={loading ? 'loading' : 'error'} title={loading ? t('core.common.loading') : t('admin.member.notFound')} body={loading ? undefined : t('admin.member.notFound.body')} /></div>;
 
   const sess = new Map(sessions.map((s) => [s.id, s]));
   const plan = new Map(plans.map((p) => [p.id, p]));
   const canPayments = can('payments.read');
-  const canNotes = can('members.write');
+  const canWrite = can('members.write');
   const ltv = payments.filter((p) => p.status === 'approved').reduce((a, p) => a + p.amount, 0);
   const active = bookings.filter((b) => b.status !== 'cancelled');
 
-  const timeline: TimelineItem[] = [
-    ...messages.map<TimelineItem>((m) => ({ id: m.id, at: m.sent_at ?? m.created_at, kind: m.channel === 'email' ? 'email' : 'whatsapp', title: m.template_key ?? m.channel, body: typeof m.payload?.text === 'string' ? m.payload.text : undefined, meta: `${m.status}${m.automation_id ? ` · ${t('admin.member.automation')}` : m.payload?.by ? ` · ${String(m.payload.by)}` : ''}` })),
-    ...(canPayments ? payments.map<TimelineItem>((p) => ({ id: p.id, at: p.paid_at ?? p.created_at, kind: 'payment', title: `${t('admin.member.payment')} · ${plan.get(p.plan_id ?? '')?.name_es ?? ''}`, meta: `${formatCOP(p.amount, lang)} · ${p.method} · ${p.status}` })) : []),
-    ...active.map<TimelineItem>((b) => { const s = sess.get(b.session_id); return { id: b.id, at: b.checked_in_at ?? b.created_at, kind: 'booking', title: `${t(`admin.member.booking.${b.status}`)} · ${s?.title ?? ''}`, meta: s ? `${formatDate(s.starts_at, lang)} ${formatTime(s.starts_at, lang)} · ${b.paid_with}` : b.paid_with }; }),
-    ...notes.map<TimelineItem>((n) => ({ id: n.id, at: n.created_at, kind: 'note', title: t('admin.member.note'), body: String(n.diff?.note ?? ''), meta: byId.get(n.actor_id ?? '')?.name ?? '—' })),
+  const events: ThreadEvent[] = [
+    ...(canPayments ? payments.map<ThreadEvent>((p) => ({ id: p.id, at: p.paid_at ?? p.created_at, kind: 'payment', title: `${t('admin.member.payment')} · ${plan.get(p.plan_id ?? '')?.name_es ?? ''}`, meta: `${formatCOP(p.amount, lang)} · ${p.method} · ${p.status}` })) : []),
+    ...active.map<ThreadEvent>((b) => { const s = sess.get(b.session_id); return { id: b.id, at: b.checked_in_at ?? b.created_at, kind: 'booking', title: `${t(`admin.member.booking.${b.status}`)} · ${s?.title ?? ''}`, meta: s ? `${formatDate(s.starts_at, lang)} ${formatTime(s.starts_at, lang)} · ${b.paid_with}` : b.paid_with }; }),
+    ...consents.map<ThreadEvent>((c) => ({ id: c.id, at: c.accepted_at ?? c.created_at, kind: 'system', title: t('admin.member.conversation.event.consent') })),
   ];
-
-  const addNote = async () => {
-    if (!note.trim() || !person.profileId) return;
-    await audit('member.note', 'profiles', person.profileId, { note: note.trim(), user_id: person.id });
-    setNote('');
-  };
-  const send = async () => {
-    if (!compose?.text.trim()) return;
-    const m = await data.insert('message_log', { user_id: person.id, channel: compose.channel, template_key: null, automation_id: null, status: 'sent', sent_at: new Date().toISOString(), payload: { text: compose.text.trim(), by: user.name, manual: true } });
-    await audit('member.message', 'message_log', m.id, { channel: compose.channel, user_id: person.id });
-    setCompose(null);
-  };
+  const shownMessages = filter === 'all' ? messages : filter === 'system' ? [] : messages.filter((m) => m.channel === filter);
+  const shownEvents = filter === 'all' || filter === 'system' ? events : [];
 
   const bookingCols = [
     { key: 'when', label: t('admin.member.col.when'), render: (b: BookingRow) => { const s = sess.get(b.session_id); return s ? <span className="small">{formatDate(s.starts_at, lang)} · {formatTime(s.starts_at, lang)}</span> : b.session_id; } },
@@ -108,10 +100,7 @@ export function MemberPage() {
             {person.birthday && <Badge tone="highlight">🎂 {formatDate(person.birthday, lang, { day: 'numeric', month: 'short' })}</Badge>}
           </div>
         </div>
-        <div className="row wrap">
-          {can('members.write') && <Button size="sm" variant="secondary" disabled={!person.whatsappVerified && !person.phone} onClick={() => setCompose({ channel: 'whatsapp', text: '' })}>WhatsApp</Button>}
-          {can('members.write') && <Button size="sm" variant="secondary" onClick={() => setCompose({ channel: 'email', text: '' })}>Email</Button>}
-        </div>
+        {can('members.write') && <Link to={`/staff/inbox/${person.id}`}><Button size="sm" variant="secondary">{t('admin.member.conversation.openInbox')}</Button></Link>}
       </Card>
       <div className="grid grid-4">
         <StatTile label={t('admin.member.ltv')} value={canPayments ? formatCOP(ltv, lang) : '—'} />
@@ -120,30 +109,25 @@ export function MemberPage() {
         <StatTile label={t('admin.crm.col.risk')} value={t(`admin.crm.risk.${stats?.risk ?? 'low'}`)} trend={stats?.risk === 'high' ? 'down' : stats?.risk === 'medium' ? 'flat' : 'up'} hint={t('admin.member.risk.hint')} />
       </div>
       <div className="row wrap" role="tablist">
-        {(['timeline', 'bookings', 'payments', 'notes'] as Tab[]).filter((x) => x !== 'payments' || canPayments).map((x) => <Chip key={x} selected={tab === x} onClick={() => setTab(x)}>{t(`admin.member.tab.${x}`)}</Chip>)}
+        {(['conversation', 'bookings', 'payments'] as Tab[]).filter((x) => x !== 'payments' || canPayments).map((x) => <Chip key={x} selected={tab === x} onClick={() => setTab(x)}>{t(`admin.member.tab.${x}`)}{x === 'conversation' && unread > 0 ? ` · ${unread}` : ''}</Chip>)}
       </div>
-      {tab === 'timeline' && <Card><Timeline items={timeline} emptyText={t('admin.member.timeline.empty')} /></Card>}
-      {tab === 'bookings' && <DataTable columns={bookingCols} rows={[...active].sort((a, b) => (sess.get(b.session_id)?.starts_at ?? '').localeCompare(sess.get(a.session_id)?.starts_at ?? ''))} rowKey={(r) => r.id} dense emptyText={t('admin.member.bookings.empty')} />}
-      {tab === 'payments' && canPayments && <DataTable columns={paymentCols} rows={payments} rowKey={(r) => r.id} dense emptyText={t('admin.member.payments.empty')} />}
-      {tab === 'notes' && (
-        <Card>
-          <div className="stack-sm">
-            <p className="xs muted">{t('admin.member.notes.rule')}</p>
-            {canNotes && <><textarea className="input adm-textarea" rows={3} value={note} onChange={(e) => setNote(e.target.value)} placeholder={t('admin.member.notes.ph')} aria-label={t('admin.member.note')} /><div className="row-between"><span className="xs muted">{user.name}</span><Button size="sm" disabled={!note.trim()} onClick={addNote}>{t('admin.member.notes.add')}</Button></div></>}
-            <Timeline items={timeline.filter((x) => x.kind === 'note')} emptyText={t('admin.member.notes.empty')} />
+      {tab === 'conversation' && (
+        <Card padding="sm" className="member-conv">
+          <div className="row wrap member-conv-filters" role="tablist" aria-label={t('admin.member.tab.conversation')}>
+            {FILTERS.map((f) => <Chip key={f} selected={filter === f} onClick={() => setFilter(f)}>{t(`admin.member.conversation.filter.${f}`)}</Chip>)}
           </div>
+          <MessageThread messages={shownMessages} events={shownEvents} personName={person.name} authorOf={authorOf} emptyText={t('admin.member.conversation.empty')} autoScroll={false} />
+          {filter !== 'system' && (
+            <MessageComposer
+              onSend={(m) => sendComposed(person.id, m)} readOnly={!canWrite} author={user.name}
+              whatsappBlocked={!person.whatsappVerified ? t('core.msg.compose.unverified') : undefined}
+              quietUntil={quietUntil}
+            />
+          )}
         </Card>
       )}
-      <Drawer open={!!compose} onClose={() => setCompose(null)} title={compose?.channel === 'whatsapp' ? `WhatsApp · ${person.name}` : `Email · ${person.name}`} width={440}>
-        {compose && (
-          <div className="stack-sm">
-            <p className="xs muted">{compose.channel === 'whatsapp' ? t('admin.member.compose.wa', { studio: tenant.name }) : t('admin.member.compose.email')}</p>
-            <Field label={t('admin.member.compose.text')}>{(id) => <textarea id={id} className="input adm-textarea" rows={5} value={compose.text} onChange={(e) => setCompose({ ...compose, text: e.target.value })} />}</Field>
-            {compose.channel === 'whatsapp' && <PhoneBubble header={`${tenant.name} · WhatsApp`} text={compose.text || '…'} time={formatTime(new Date().toISOString(), lang)} undeliverable={!person.whatsappVerified ? t('admin.member.compose.unverified') : undefined} />}
-            <Button disabled={!compose.text.trim()} onClick={send}>{t('admin.member.compose.send')}</Button>
-          </div>
-        )}
-      </Drawer>
+      {tab === 'bookings' && <DataTable columns={bookingCols} rows={[...active].sort((a, b) => (sess.get(b.session_id)?.starts_at ?? '').localeCompare(sess.get(a.session_id)?.starts_at ?? ''))} rowKey={(r) => r.id} dense emptyText={t('admin.member.bookings.empty')} />}
+      {tab === 'payments' && canPayments && <DataTable columns={paymentCols} rows={payments} rowKey={(r) => r.id} dense emptyText={t('admin.member.payments.empty')} />}
       <p className="xs muted">{t('admin.member.viewLogged')}</p>
     </div>
   );

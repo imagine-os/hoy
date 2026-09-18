@@ -5,7 +5,8 @@ import { useI18n } from '../../../i18n/I18nProvider';
 import { useSession } from '../../../auth/SessionProvider';
 import { useTheme } from '../../../design/ThemeProvider';
 import { useTable } from '../../../data/DataContext';
-import type { BaseRow, ProfileRow } from '../../../data/schema';
+import type { ProfileRow } from '../../../data/schema';
+import { toSummary, useUnreadInbound } from '../../../data/comms';
 import { ROLE_LABEL } from '../../../auth/roles';
 import { openInspector } from '../../../dev/inspectorBus';
 import { Wordmark } from '../../atom/Wordmark/Wordmark';
@@ -15,7 +16,7 @@ import { RoleSwitcher } from '../../molecule/RoleSwitcher/RoleSwitcher';
 import { Avatar } from '../../atom/Avatar/Avatar';
 import { TopBar } from '../../organism/TopBar/TopBar';
 import { GlobalSearch, type SearchItem } from '../../molecule/GlobalSearch/GlobalSearch';
-import { NotificationBell } from '../../molecule/NotificationBell/NotificationBell';
+import { InboxPopover } from '../../molecule/InboxPopover/InboxPopover';
 import './DesktopShell.css';
 
 export interface DesktopShellProps {
@@ -25,8 +26,6 @@ export interface DesktopShellProps {
   titleKey: string;
   children: ReactNode;
 }
-
-interface MsgRow extends BaseRow { user_id: string | null; status: string }
 
 const KEY = 'hoyos.shell';
 function read<T>(key: string, fallback: T): T {
@@ -54,8 +53,8 @@ function useNarrow() {
  * Sidebar: 240 px cream lane that collapses to a 56 px icon rail (chevron in the footer or the `[` key,
  * remembered per surface in localStorage) and becomes an off-canvas drawer below 900 px. Nav groups come
  * from `RouteDef.nav.group` and fold with a caret (remembered per group; the active route's group stays open).
- * Top bar: sidebar toggle · wordmark · page name + code · global search · language, theme, notifications,
- * user switcher, dev mode and the spec chip.
+ * Top bar: sidebar toggle · wordmark · page name + code · global search · language, theme, the inbox bell
+ * (unread inbound messages, with a popover of the threads → S-06), user switcher, dev mode and the spec chip.
  */
 export function DesktopShell({ surfaces, routes, titleKey, children }: DesktopShellProps) {
   const { t, bi, dict } = useI18n();
@@ -128,8 +127,10 @@ export function DesktopShell({ surfaces, routes, titleKey, children }: DesktopSh
     return [...pages, ...people];
   }, [allowed, profiles, can, bi, t]);
 
-  const { rows: messages } = useTable<MsgRow>('message_log', { where: { user_id: user.id } });
-  const unread = messages.filter((m) => m.status === 'sent' || m.status === 'delivered' || m.status === 'queued').length;
+  // The bell counts what members sent and nobody on the team has read (S-06); it only shows to roles that can open the inbox.
+  const inbox = useUnreadInbound();
+  const inboxItems = useMemo(() => inbox.conversations.map(toSummary), [inbox.conversations]);
+  const hasInbox = allowed.some((r) => r.path === '/staff/inbox');
 
   const sidebarLabel = narrow ? (drawer ? t('core.shell.closeMenu') : t('core.shell.menu')) : collapsed ? t('core.shell.expand') : t('core.shell.collapse');
 
@@ -201,7 +202,7 @@ export function DesktopShell({ surfaces, routes, titleKey, children }: DesktopSh
             <>
               <LangToggle size="sm" />
               <button type="button" className="deskshell-iconbtn" onClick={toggleTheme} aria-label={t('core.theme.toggle')} title={t('core.theme.toggle')}>{theme === 'dark' ? '☾' : '☀'}</button>
-              {allowed.some((r) => r.path === '/admin/whatsapp') && <NotificationBell count={unread} to="/admin/whatsapp" />}
+              {hasInbox && <InboxPopover count={inbox.count} items={inboxItems} itemTo={(k) => `/staff/inbox/${k}`} inboxTo="/staff/inbox" />}
               <div className="deskshell-rs"><RoleSwitcher compact /></div>
               {isSuperAdmin && <span className="deskshell-devtoggle" title={t('core.dev.mode')}><Toggle size="sm" checked={devMode} onChange={setDevMode} label={t('core.dev.mode')} /></span>}
               {devMode && current && (

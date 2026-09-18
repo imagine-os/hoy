@@ -3,7 +3,7 @@ import { useI18n } from '../../i18n/I18nProvider';
 import { useContact } from './settings';
 import { useSession } from '../../auth/SessionProvider';
 import { useData, useTable } from '../../data/DataContext';
-import type { BaseRow } from '../../data/schema';
+import type { BaseRow, MessageLogRow } from '../../data/schema';
 import type { Bi } from '../../specs/types';
 import { formatDateTime } from '../../i18n/format';
 import { tenant } from '../../tenant/tenant';
@@ -22,7 +22,6 @@ import { usePeople } from '../staff/people';
 import './admin.css';
 
 interface EmailRow extends BaseRow { key: string; name: string; trigger: string; subject: Bi; body_mjml: string; version: number; active: boolean }
-interface MsgRow extends BaseRow { user_id: string | null; channel: string; template_key: string | null; status: string; sent_at: string | null; payload: Record<string, unknown> | null }
 
 /** The eleven templates the spec names, with default copy. `body_mjml` holds a JSON {es,en} plain-text body until the MJML designer exists. */
 /** Deep-link scheme of the customer app (`hoyapp://` for the HOY tenant). */
@@ -53,12 +52,12 @@ const varsIn = (...texts: string[]) => [...new Set(texts.join(' ').match(/\{\{\s
 
 /** M-04 — template list by trigger, rendered canvas with sample data, ES/EN switch, editor, versions, test send, send log. */
 export function EmailsPage() {
-  const { t, lang } = useI18n();
+  const { t, lang, bi } = useI18n();
   const data = useData();
   const { can, user } = useSession();
   const audit = useAudit('admin');
   const { rows: templates, loading } = useTable<EmailRow>('email_templates', { orderBy: { column: 'trigger' } });
-  const { rows: log } = useTable<MsgRow>('message_log', { where: { channel: 'email' }, orderBy: { column: 'created_at', dir: 'desc' } });
+  const { rows: log } = useTable<MessageLogRow>('message_log', { where: { channel: 'email' }, orderBy: { column: 'created_at', dir: 'desc' } });
   const { byId } = usePeople();
   const [selected, setSelected] = useState<string | null>(null);
   const [preview, setPreview] = useState<'es' | 'en'>('es');
@@ -76,16 +75,16 @@ export function EmailsPage() {
   };
   const testSend = async () => {
     if (!row) return;
-    const m = await data.insert('message_log', { user_id: user.id, channel: 'email', template_key: row.key, automation_id: null, status: 'sent', sent_at: new Date().toISOString(), payload: { test: true, to: user.email, locale: preview, version: row.version } });
+    const m = await data.insert<MessageLogRow>('message_log', { user_id: user.id, channel: 'email', direction: 'outbound', source: 'manual', template_key: row.key, automation_id: null, subject: bi(row.subject), body: null, status: 'sent', sent_at: new Date().toISOString(), sent_by: user.id, read_at: null, read_by: null, external_id: null, payload: { test: true, to: user.email, locale: preview, version: row.version } });
     await audit('email_template.test', 'email_templates', row.id, { message_id: m.id, to: user.email, locale: preview });
     setTab('log');
   };
 
   const logColumns = [
-    { key: 'sent_at', label: t('admin.emails.log.when'), render: (r: MsgRow) => <span className="mono small">{r.sent_at ? formatDateTime(r.sent_at, lang) : '—'}</span> },
-    { key: 'user_id', label: t('admin.emails.log.to'), render: (r: MsgRow) => r.payload?.test ? <span>{String(r.payload.to)} <Badge tone="warn">test</Badge></span> : byId.get(r.user_id ?? '')?.name ?? '—' },
+    { key: 'sent_at', label: t('admin.emails.log.when'), render: (r: MessageLogRow) => <span className="mono small">{r.sent_at ? formatDateTime(r.sent_at, lang) : '—'}</span> },
+    { key: 'user_id', label: t('admin.emails.log.to'), render: (r: MessageLogRow) => r.payload?.test ? <span>{String(r.payload.to)} <Badge tone="warn">test</Badge></span> : byId.get(r.user_id ?? '')?.name ?? '—' },
     { key: 'template_key', label: t('admin.emails.log.template') },
-    { key: 'status', label: t('admin.emails.log.status'), render: (r: MsgRow) => <Badge tone={toneForStatus(r.status)}>{r.status}</Badge> },
+    { key: 'status', label: t('admin.emails.log.status'), render: (r: MessageLogRow) => <Badge tone={toneForStatus(r.status)}>{r.status}</Badge> },
   ];
 
   return (

@@ -13,13 +13,15 @@ import { ClassRow } from '../../components/molecule/ClassRow/ClassRow';
 import { ClassCard } from '../../components/organism/ClassCard/ClassCard';
 import { Timeline, type TimelineItem } from '../../components/organism/Timeline/Timeline';
 import { EmptyState } from '../../components/molecule/EmptyState/EmptyState';
+import { ConversationList } from '../../components/organism/ConversationList/ConversationList';
+import { toSummary, useConversations } from '../../data/comms';
 import { useTodaySessions } from '../website/hooks';
 import { usePeople } from './people';
 import type { AuditRow } from './audit';
 import './staff.css';
 import { auditTitle } from './audit';
 
-/** S-01 Role home: live numbers (next class, arrivals, open shifts, payments) and the two counter actions. */
+/** S-01 Role home: live numbers (next class, arrivals, open shifts, payments, unread messages), the counter actions and the latest conversations (→ S-06). */
 export function StaffHomePage() {
   const { t, bi, lang, dict } = useI18n();
   const nav = useNavigate();
@@ -32,6 +34,10 @@ export function StaffHomePage() {
   const { rows: payments } = useTable<PaymentRow>('payments');
   const { rows: audit } = useTable<AuditRow>('audit_log', { orderBy: { column: 'created_at', dir: 'desc' }, limit: 8 });
   const { byId } = usePeople();
+  const { conversations } = useConversations();
+  const unreadMsgs = conversations.reduce((a, c) => a + c.unread, 0);
+  const unreadThreads = conversations.filter((c) => c.unread > 0).length;
+  const recent = useMemo(() => conversations.map(toSummary), [conversations]);
   const now = Date.now();
   const next = today.find((x) => new Date(x.session.ends_at).getTime() > now);
   const arrivals = bookings.filter((b) => b.status === 'checked_in').length;
@@ -48,7 +54,9 @@ export function StaffHomePage() {
         <StatTile label={t('staff.home.arrivals')} value={arrivals} hint={t('staff.home.arrivals.hint', { n: expected })} trend={arrivals > 0 ? 'up' : 'flat'} />
         <StatTile label={t('staff.home.openShifts')} value={openShifts} hint={t('staff.home.openShifts.hint', { n: today.length })} />
         <StatTile label={can('payments.read') ? t('staff.home.payments') : t('staff.home.waitlist')} value={can('payments.read') ? formatCOP(paidToday, lang) : waitlist.length} hint={can('payments.read') && pending ? t('staff.home.pending', { n: pending }) : undefined} />
-        <StatTile label={t('staff.home.waitlist')} value={waitlist.length} />
+        {can('members.read')
+          ? <StatTile label={t('staff.home.unread')} value={unreadMsgs} hint={unreadThreads ? t('staff.home.unread.hint', { n: unreadThreads }) : undefined} trend={unreadMsgs > 0 ? 'down' : 'flat'} />
+          : <StatTile label={t('staff.home.waitlist')} value={waitlist.length} />}
       </div>
       <div className="grid grid-2">
         <div className="stack">
@@ -69,10 +77,16 @@ export function StaffHomePage() {
               {can('checkin.write') && <Link to="/staff/checkin"><Button block>{t('staff.home.openCheckin')}</Button></Link>}
               {can('payments.write') && <Link to="/staff/register"><Button block variant="secondary">{t('staff.home.openRegister')}</Button></Link>}
               {can('bookings.write_any') && <Link to="/staff/rooms"><Button block variant="secondary">{t('staff.home.openRooms')}</Button></Link>}
+              {can('members.read') && <Link to="/staff/inbox"><Button block variant="secondary">{t('staff.home.openInbox')}</Button></Link>}
               {can('members.read') && <Link to="/admin/crm"><Button block variant="ghost">{t('staff.home.openCrm')}</Button></Link>}
               {can('tables.read') && <Link to="/admin/tables"><Button block variant="ghost">{t('staff.home.openTables')}</Button></Link>}
             </div>
           </Card>
+          {can('members.read') && (
+            <Card title={t('staff.home.messages')} padding="sm" className="home-msgs" actions={<Link to="/staff/inbox" className="small">{t('core.common.viewAll')}</Link>}>
+              {recent.length === 0 ? <p className="muted small" style={{ padding: 12 }}>{t('staff.home.messages.empty')}</p> : <ConversationList compact limit={5} conversations={recent} linkTo={(k) => `/staff/inbox/${k}`} />}
+            </Card>
+          )}
           <Card title={t('staff.home.activity')} padding="sm" actions={can('audit.read') ? <Link to="/admin/activity" className="small">{t('core.common.viewAll')}</Link> : undefined}>
             <div style={{ padding: '0 8px' }}><Timeline items={activity} limit={6} /></div>
             <p className="xs muted" style={{ padding: 8 }}>{t('staff.home.activity.note')}</p>

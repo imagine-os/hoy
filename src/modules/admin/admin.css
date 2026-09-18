@@ -29,6 +29,9 @@
 /* M-06 member */
 .member-head { display: flex; gap: var(--sp-4); align-items: flex-start; flex-wrap: wrap; }
 .member-name { font-size: var(--fs-2xl); }
+.member-conv { display: flex; flex-direction: column; gap: var(--sp-3); }
+.member-conv-filters { gap: var(--sp-1); }
+.member-conv-filters .chip { padding: 4px 10px; font-size: var(--fs-xs); }
 
 /* M-07 activity */
 .act-filters .input { width: auto; min-width: 140px; }

@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useI18n } from '../../i18n/I18nProvider';
 import { useSession } from '../../auth/SessionProvider';
 import { useData, useTable } from '../../data/DataContext';
-import type { BaseRow, BookingRow, ClassSessionRow, PaymentRow, ProfileRow, RoomRow, SpaceBookingKind, SpaceBookingRow, SpecialChargeRow, TeacherRow, UserRow } from '../../data/schema';
+import type { BaseRow, BookingRow, ClassSessionRow, MessageLogRow, PaymentRow, ProfileRow, RoomRow, SpaceBookingKind, SpaceBookingRow, SpecialChargeRow, TeacherRow, UserRow } from '../../data/schema';
 import { formatCOP, formatTime } from '../../i18n/format';
 import { tenant } from '../../tenant/tenant';
 import { FAMILY_LABEL, priceItem, pricing, type PlanFamily, type PriceItem } from '../../tenant/pricing';
@@ -194,8 +194,8 @@ export function RegisterPage() {
         await audit('booking.checkin', 'bookings', b.id, { after: 'checked_in', session_id: session.session.id, user_id: userId, source_sale: payment.id });
         checkedIn = `${session.session.title} · ${formatTime(session.session.starts_at, lang)}`;
       }
-      for (const ch of [receipt.wa ? 'whatsapp' : null, receipt.email ? 'email' : null]) {
-        if (ch && userId) await data.insert('message_log', { user_id: userId, channel: ch, template_key: 'receipt', automation_id: null, status: 'sent', sent_at: now.toISOString(), payload: { invoice: number, amount: totals.total } });
+      for (const ch of [receipt.wa ? 'whatsapp' : null, receipt.email ? 'email' : null] as const) {
+        if (ch && userId) await data.insert<MessageLogRow>('message_log', { user_id: userId, channel: ch, direction: 'outbound', source: 'system', template_key: 'receipt', automation_id: null, subject: ch === 'email' ? `${tenant.name} · ${number}` : null, body: `${number} · ${formatCOP(totals.total, 'es')}`, status: 'sent', sent_at: now.toISOString(), sent_by: user.id, read_at: null, read_by: null, external_id: null, payload: { invoice: number, amount: totals.total } });
       }
       const contact = mode === 'existing' ? maskPhone(person?.phone) : mode === 'contact' ? '—' : maskPhone(form.phone);
       setDone({ payment, number, subtotal: totals.subtotal, tax: totals.tax, total: totals.total, customer: displayName, contact, item, checkedIn, isNew, booking: bookingTitle, payout: payoutDone });

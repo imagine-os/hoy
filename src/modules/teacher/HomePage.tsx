@@ -4,7 +4,7 @@ import { useI18n } from '../../i18n/I18nProvider';
 import { rateFor } from '../../data/payrollCalc';
 import { useSettings } from '../admin/settings';
 import { useData, useTable } from '../../data/DataContext';
-import type { BookingRow, ClassSessionRow, RoomRow, SpaceBookingRow, SpecialChargeRow } from '../../data/schema';
+import type { BookingRow, ClassSessionRow, MessageLogRow, RoomRow, SpaceBookingRow, SpecialChargeRow } from '../../data/schema';
 import { formatCOP, formatDate, formatTime, isSameDay, MS } from '../../i18n/format';
 import { StatTile } from '../../components/molecule/StatTile/StatTile';
 import { Card } from '../../components/molecule/Card/Card';
@@ -55,7 +55,8 @@ export function TeacherHomePage() {
     const s = upcoming.find((x) => x.session.id === sub.session)?.session;
     if (!s || !me) return;
     await audit('substitution.request', 'class_sessions', s.id, { teacher_id: me.id, teacher: me.display_name, reason: sub.reason, starts_at: s.starts_at, title: s.title });
-    await data.insert('message_log', { user_id: null, channel: 'whatsapp', template_key: 'substitution_request', automation_id: null, status: 'queued', sent_at: null, payload: { to: 'coordinator', teacher: me.display_name, class: s.title, starts_at: s.starts_at, reason: sub.reason } });
+    // Team-only row (user_id null): it never enters a customer conversation; the coordinator reads it in M-05's log.
+    await data.insert<MessageLogRow>('message_log', { user_id: null, channel: 'whatsapp', direction: 'inbound', source: 'system', template_key: 'substitution_request', automation_id: null, subject: null, body: `${me.display_name} · ${s.title} · ${sub.reason}`, status: 'queued', sent_at: null, sent_by: null, read_at: null, read_by: null, external_id: null, payload: { to: 'coordinator', teacher: me.display_name, class: s.title, starts_at: s.starts_at, reason: sub.reason } });
     setSub({ ...sub, sent: true });
   };
 

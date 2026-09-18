@@ -4,9 +4,9 @@ import { defineSpec } from '../../specs/define';
 /** S-01 role home — live numbers and the two counter actions. */
 export const S01 = defineSpec({
   ...canvasSpecs['S-01'],
-  layout: ['RoleBadge + KPIRow', 'NextClassCard', 'TodayList', 'QuickActions (check-in · register · rooms S-05)', 'AuditNotice (recent activity)'],
-  data: ['class_sessions', 'bookings', 'waitlist', 'payments', 'audit_log', 'teachers'],
-  notes: [...(canvasSpecs['S-01'].notes ?? []), 'Live: subscribes to bookings and class_sessions through useTable.'],
+  layout: ['RoleBadge + KPIRow (arrivals · shifts · payments · unread messages)', 'NextClassCard', 'TodayList', 'QuickActions (check-in · register · rooms S-05 · inbox S-06)', 'RecentMessages (latest conversations → S-06)', 'AuditNotice (recent activity)'],
+  data: ['class_sessions', 'bookings', 'waitlist', 'payments', 'message_log', 'users', 'profiles', 'audit_log', 'teachers'],
+  notes: [...(canvasSpecs['S-01'].notes ?? []), 'Live: subscribes to bookings and class_sessions through useTable.', 'Unread = message_log rows with direction inbound and read_at null (useUnreadInbound); the card lists the five latest conversations, unread first.'],
 });
 
 /** S-02 door / check-in — sections are the layout-editor keys. */
@@ -48,4 +48,25 @@ export const S05 = defineSpec({
   integrations: [],
   states: ['Loading', 'No rooms', 'Empty day', 'Day with classes only', 'Held / confirmed / done / cancelled blocks', 'Cancelled hidden by default (toggle)', 'Conflict: CTA disabled with the list of what overlaps', 'Read-only (no bookings.write_any)', 'Selected class → open check-in', 'Selected booking → confirm / done / cancel / charge'],
   notes: ['Sections: DateStrip (14 days + any date) · DayGrid (rooms × hours: class_sessions + space_bookings) · BookingForm (kind, room, window, title, who, teacher, note, conflict check) · Selected (status actions, Cobrar → S-04) · UpcomingList.', 'Rooms come from the rooms table (seed: Sala principal + Sala de meditación); the grid draws as many columns as there are rows.', 'The hour range widens to fit the blocks; 06–21 is only the display default, not a studio fact.'],
+});
+
+/** S-06 front-desk inbox — every customer conversation (WhatsApp, email, notes) in one WhatsApp-style view (0.8.0). */
+export const S06 = defineSpec({
+  code: 'S-06',
+  name: { es: 'Bandeja de mensajes', en: 'Message inbox' },
+  purpose: { es: 'Ver quién escribió al estudio, responder por WhatsApp o email desde la misma pantalla, dejar notas internas y saltar a la ficha CRM de la persona. Una conversación por persona, con lo entrante, lo saliente, lo automático y las notas del equipo en un solo hilo.', en: 'See who wrote to the studio, reply by WhatsApp or email from the same screen, leave internal notes and jump to the person’s CRM record. One conversation per person, with inbound, outbound, automated and staff notes in a single thread.' },
+  layout: ['ConversationList (search · Todos / No leídos / WhatsApp / Email · unread first)', 'ThreadHeader (avatar, plan, masked phone, WhatsApp verified, → M-06)', 'MessageThread (day separators, bubbles, email cards, notes)', 'MessageComposer (WhatsApp · Email · Nota)'],
+  data: ['message_log', 'users', 'profiles', 'memberships', 'plans', 'tenants', 'audit_log'],
+  roles: ['super_admin', 'admin', 'coordinator', 'front_desk'],
+  logic: [
+    'A conversation is every message_log row with the same user_id, ordered by sent_at (or created_at); test sends from M-04/M-05 (payload.test) are excluded (src/data/comms.ts useConversations).',
+    'Unread = inbound rows with read_at null. Opening a thread writes read_at / read_by on all of them (markConversationRead) — that is the team’s read receipt, and what empties the bell, S-01 and the list badge.',
+    'Sending goes through useMessaging(): WhatsApp and email insert an outbound row (source manual, sent_by = the signed-in user) and an audit_log member.message; a note inserts an internal row (channel note) plus member.note without its content.',
+    'WhatsApp status is queued during quiet hours (M-08 quietHours) and sent otherwise; the composer says so. Email ignores quiet hours. A member whose number is not verified cannot receive WhatsApp: the tab stays, the box is disabled with the reason.',
+    'members.write gates the composer; other desk roles read the thread. members.read gates the “Ver ficha CRM” button.',
+    'Rows with user_id null (a teacher’s substitution request) belong to the team, not to a customer, and are not listed here.',
+  ],
+  integrations: ['WhatsApp Cloud API (simulated: inbound rows arrive by webhook into message_log)', 'Email provider (simulated: same table, channel email)'],
+  states: ['Loading', 'No conversations', 'None selected (“Elige una conversación”)', 'All read', 'Thread with unread inbound (blue ring)', 'Filtered / searched list, no match', 'Read-only composer (no members.write)', 'WhatsApp blocked (unverified number)', 'Quiet hours (queued hint)', 'Thread not found (old link)', 'Narrow: list, then thread (≤ 900 px)'],
+  notes: ['Route /staff/inbox lists; /staff/inbox/:id selects. The URL is the selection so the bell, S-01 and M-06 can deep-link.', 'The same three components (MessageThread, ChatBubble, MessageComposer) render the Conversación tab of M-06.', 'Every capture reseeds, so the six unread demo messages are always there at first load.'],
 });

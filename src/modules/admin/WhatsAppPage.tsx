@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useI18n } from '../../i18n/I18nProvider';
 import { useSession } from '../../auth/SessionProvider';
 import { useData, useTable } from '../../data/DataContext';
-import type { BaseRow, ProfileRow } from '../../data/schema';
+import type { BaseRow, MessageLogRow, ProfileRow } from '../../data/schema';
 import type { Bi } from '../../specs/types';
 import { formatDateTime } from '../../i18n/format';
 import { tenant } from '../../tenant/tenant';
@@ -24,7 +24,6 @@ import './admin.css';
 
 interface AutomationRow extends BaseRow { name: string; trigger: string; channel: 'whatsapp' | 'email' | 'push'; template_key: string; delay_min: number; quiet_hours: { from: string; to: string } | null; enabled: boolean }
 interface WaTemplateRow extends BaseRow { key: string; name: string; category: 'utility' | 'marketing' | 'authentication'; body: Bi; approval_status: 'draft' | 'pending' | 'approved' | 'rejected'; active: boolean }
-interface MsgRow extends BaseRow { user_id: string | null; channel: string; template_key: string | null; status: string; sent_at: string | null; payload: Record<string, unknown> | null }
 
 /** The nine automations the spec names; created on demand when missing. */
 const STANDARD: { name: Bi; trigger: string; template: { key: string; name: string; category: WaTemplateRow['category']; body: Bi }; delay_min: number }[] = [
@@ -50,7 +49,7 @@ export function WhatsAppPage() {
   const { settings } = useSettings();
   const { rows: automations, loading } = useTable<AutomationRow>('automations', { where: { channel: 'whatsapp' }, orderBy: { column: 'trigger' } });
   const { rows: templates } = useTable<WaTemplateRow>('wa_templates', { orderBy: { column: 'name' } });
-  const { rows: log } = useTable<MsgRow>('message_log', { where: { channel: 'whatsapp' }, orderBy: { column: 'created_at', dir: 'desc' } });
+  const { rows: log } = useTable<MessageLogRow>('message_log', { where: { channel: 'whatsapp' }, orderBy: { column: 'created_at', dir: 'desc' } });
   const { rows: profiles } = useTable<ProfileRow>('profiles');
   const { byId } = usePeople();
   const [selected, setSelected] = useState<string | null>(null);
@@ -84,15 +83,17 @@ export function WhatsAppPage() {
   };
   const testSend = async () => {
     if (!auto || !tpl) return;
-    const m = await data.insert('message_log', { user_id: user.id, channel: 'whatsapp', template_key: tpl.key, automation_id: auto.id, status: quiet && auto.quiet_hours ? 'queued' : 'sent', sent_at: quiet && auto.quiet_hours ? null : new Date().toISOString(), payload: { test: true, to: user.name, locale: preview, vars: SAMPLE } });
+    const hold = quiet && !!auto.quiet_hours;
+    const body = (preview === 'en' ? tpl.body.en || tpl.body.es : tpl.body.es).replace(/\{\{\s*(\d+)\s*\}\}/g, (_, i: string) => SAMPLE[Number(i) - 1] ?? '');
+    const m = await data.insert<MessageLogRow>('message_log', { user_id: user.id, channel: 'whatsapp', direction: 'outbound', source: 'manual', template_key: tpl.key, automation_id: auto.id, subject: null, body, status: hold ? 'queued' : 'sent', sent_at: hold ? null : new Date().toISOString(), sent_by: user.id, read_at: null, read_by: null, external_id: null, payload: { test: true, to: user.name, locale: preview, vars: SAMPLE } });
     await audit('wa_template.test', 'wa_templates', tpl.id, { message_id: m.id, automation_id: auto.id });
   };
 
   const logColumns = [
-    { key: 'sent_at', label: t('admin.wa.log.when'), render: (r: MsgRow) => <span className="mono small">{formatDateTime(r.sent_at ?? r.created_at, lang)}</span> },
-    { key: 'user_id', label: t('admin.wa.log.to'), render: (r: MsgRow) => r.payload?.test ? <span>{String(r.payload.to)} <Badge tone="warn">test</Badge></span> : byId.get(r.user_id ?? '')?.name ?? String(r.payload?.to ?? '—') },
+    { key: 'sent_at', label: t('admin.wa.log.when'), render: (r: MessageLogRow) => <span className="mono small">{formatDateTime(r.sent_at ?? r.created_at, lang)}</span> },
+    { key: 'user_id', label: t('admin.wa.log.to'), render: (r: MessageLogRow) => r.payload?.test ? <span>{String(r.payload.to)} <Badge tone="warn">test</Badge></span> : byId.get(r.user_id ?? '')?.name ?? String(r.payload?.to ?? '—') },
     { key: 'template_key', label: t('admin.wa.log.template') },
-    { key: 'status', label: t('admin.wa.log.status'), render: (r: MsgRow) => <Badge tone={toneForStatus(r.status)}>{dict[`admin.wa.status.${r.status}`] ? t(`admin.wa.status.${r.status}`) : r.status}</Badge> },
+    { key: 'status', label: t('admin.wa.log.status'), render: (r: MessageLogRow) => <Badge tone={toneForStatus(r.status)}>{dict[`admin.wa.status.${r.status}`] ? t(`admin.wa.status.${r.status}`) : r.status}</Badge> },
   ];
 
   return (

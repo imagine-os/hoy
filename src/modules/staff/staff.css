@@ -75,3 +75,30 @@
   .register-special { grid-template-columns: 1fr; }
 }
 .register-badge { margin-left: 6px; vertical-align: middle; }
+
+/* 0.8.0 · S-06 inbox: conversation list + thread, WhatsApp style; stacks below 900 px (list first, thread when selected) */
+.inbox { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: var(--sp-5); align-items: start; }
+.inbox-list, .inbox-pane { min-width: 0; }
+.inbox-thread { display: flex; flex-direction: column; min-height: 480px; }
+.inbox-thread .thread.is-scroll { max-height: calc(100vh - var(--h-topbar) - 360px); min-height: 280px; }
+.inbox-head { display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-3) var(--sp-4); border-bottom: 1px solid var(--color-border); }
+.inbox-back { display: none; width: 32px; height: 32px; align-items: center; justify-content: center; border-radius: 50%; font-size: var(--fs-xl); color: var(--color-text); }
+.inbox-who { gap: 2px; }
+.inbox-name { font-family: var(--font-heading); font-size: var(--fs-lg); }
+.inbox-compose { padding: var(--sp-3); border-top: 1px solid var(--color-border); }
+.inbox-empty { min-height: 320px; display: flex; align-items: center; justify-content: center; }
+@media (max-width: 900px) {
+  .inbox { grid-template-columns: 1fr; }
+  .inbox.has-thread .inbox-list { display: none; }
+  .inbox-back { display: inline-flex; }
+  .inbox-thread .thread.is-scroll { max-height: 55vh; }
+}
+@media (max-width: 600px) {
+  .inbox-head { flex-wrap: wrap; gap: var(--sp-2) var(--sp-3); }
+  .inbox-who { flex: 1 1 0; }
+  .inbox-head > a:last-child { flex: 1 1 100%; display: flex; }
+  .inbox-head > a:last-child .btn { width: 100%; }
+  .inbox-email { display: none; }
+}
+/* S-01 recent messages card */
+.home-msgs .convlist { gap: 0; }

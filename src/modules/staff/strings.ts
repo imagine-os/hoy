@@ -22,6 +22,22 @@ export const strings: StringTable = {
   'staff.home.activity': { es: 'Actividad reciente', en: 'Recent activity' },
   'staff.home.activity.note': { es: 'Cada acción del equipo queda en el registro con nombre y hora.', en: 'Every staff action is logged with name and time.' },
   'staff.home.system': { es: 'Sistema', en: 'System' },
+  'staff.home.unread': { es: 'Mensajes sin leer', en: 'Unread messages' },
+  'staff.home.unread.hint': { es: 'en {n} conversaciones', en: 'across {n} conversations' },
+  'staff.home.messages': { es: 'Mensajes recientes', en: 'Recent messages' },
+  'staff.home.messages.empty': { es: 'Nadie ha escrito todavía.', en: 'Nobody has written yet.' },
+  'staff.home.openInbox': { es: 'Abrir bandeja de mensajes', en: 'Open message inbox' },
+
+  // S-06
+  'staff.inbox.title': { es: 'Bandeja de mensajes', en: 'Message inbox' },
+  'staff.inbox.subtitle': { es: '{n} mensajes esperan respuesta.', en: '{n} messages are waiting for a reply.' },
+  'staff.inbox.subtitle.allRead': { es: 'Todo respondido. WhatsApp y email de cada persona, en un solo hilo.', en: 'All answered. Each person’s WhatsApp and email in one thread.' },
+  'staff.inbox.select': { es: 'Elige una conversación', en: 'Pick a conversation' },
+  'staff.inbox.select.body': { es: 'A la izquierda están las personas que han escrito. Los hilos con mensajes sin leer van primero.', en: 'The people who wrote are on the left. Threads with unread messages come first.' },
+  'staff.inbox.notFound': { es: 'Conversación no encontrada', en: 'Conversation not found' },
+  'staff.inbox.notFound.body': { es: 'El enlace es antiguo o la persona no tiene mensajes.', en: 'The link is old or the person has no messages.' },
+  'staff.inbox.back': { es: 'Volver a la bandeja', en: 'Back to the inbox' },
+  'staff.inbox.openCrm': { es: 'Ver ficha CRM', en: 'Open CRM record' },
 
   // S-02
   'staff.checkin.title': { es: 'Check-in', en: 'Check-in' },
