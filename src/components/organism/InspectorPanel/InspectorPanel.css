@@ -10,3 +10,6 @@
 .insp-table.is-known { border-style: solid; color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 8%, transparent); }
 .insp-table.is-known:hover { text-decoration: none; background: color-mix(in srgb, var(--color-primary) 16%, transparent); }
 .insp-details { margin-top: var(--sp-2); } .insp-details pre { margin: var(--sp-2) 0 0; }
+
+/* the actions list wraps id · intent · params · permission on one line each */
+.insp-actions li { line-height: 1.5; }

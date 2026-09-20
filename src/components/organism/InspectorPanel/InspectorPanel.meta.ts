@@ -11,7 +11,7 @@ function Demo() {
 
 export default defineMeta({
   tier: 'organism', name: 'InspectorPanel',
-  description: { es: 'Panel de spec: propósito, layout, datos (enlazados al gestor de tablas), roles, lógica, integraciones, estados, toggles, notas y completitud.', en: 'Spec panel: purpose, layout, data (linked to the table manager), roles, logic, integrations, states, toggles, notes and completeness.' },
+  description: { es: 'Panel de spec: propósito, layout, datos (enlazados al gestor de tablas), roles, lógica, integraciones, acciones (WebMCP), estados, toggles, notas y completitud.', en: 'Spec panel: purpose, layout, data (linked to the table manager), roles, logic, integrations, actions (WebMCP), states, toggles, notes and completeness.' },
   props: [
     { name: 'spec', type: 'PageSpec | null', required: true, description: { es: 'La spec de la ruta actual.', en: 'Current route spec.' } },
     { name: 'open / onClose', type: 'boolean / fn', required: true, description: { es: 'Control.', en: 'Control.' } },

@@ -57,6 +57,23 @@ export function InspectorPanel({ spec, open, onClose, routePath }: InspectorPane
         </Section>
         <Section title={L('Lógica y cálculos', 'Logic & calculations')} empty={!spec.logic.length}><ul className="insp-list">{spec.logic.map((r, i) => <li key={i}>{r}</li>)}</ul></Section>
         <Section title={L('Integraciones', 'Integrations')} empty={!spec.integrations.length}><div className="row wrap">{spec.integrations.map((r) => <Badge key={r} tone="primary">{r}</Badge>)}</div></Section>
+        {spec.actions?.length ? (
+          <Section title={L('Acciones (WebMCP)', 'Actions (WebMCP)')}>
+            <ul className="insp-list insp-actions">
+              {spec.actions.map((a) => (
+                <li key={a.id}>
+                  <code className="xs">{a.id}</code>
+                  <span className="small"> — {bi(a.intent)}</span>
+                  {a.params && <span className="xs muted"> ({Object.entries(a.params).map(([k, v]) => `${k}: ${v}`).join(' · ')})</span>}
+                  {a.permission && <> <Badge tone="neutral">{a.permission}</Badge></>}
+                </li>
+              ))}
+            </ul>
+            <p className="xs muted" style={{ marginTop: 'var(--sp-2)' }}>
+              {L('Declaradas en la spec y ejecutables con window.__hoyos.run(id, params) mientras la página esté abierta.', 'Declared in the spec and runnable with window.__hoyos.run(id, params) while the page is open.')}
+            </p>
+          </Section>
+        ) : null}
         {spec.api && <Section title="API"><ul className="insp-list mono xs">{spec.api.map((a, i) => <li key={i}>{a}</li>)}</ul></Section>}
         <Section title={L('Estados', 'States')} empty={!spec.states?.length}><ul className="insp-list">{spec.states?.map((s, i) => <li key={i}>{s}</li>)}</ul></Section>
         <Section title={L('Interruptores (Admin → Features)', 'Toggles (Admin → Features)')} empty={!spec.toggles?.length}>

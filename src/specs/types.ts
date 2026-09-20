@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import type { Role } from '../auth/roles';
+import type { ActionDef } from '../actions/types';
 
 /** Bilingual text. Spanish is required; English falls back to Spanish. */
 export type Bi = { es: string; en: string };
@@ -32,6 +33,13 @@ export interface PageSpec {
   api?: string[];
   /** Full layer tree from the canvas (multi-line), when present. */
   layerTree?: string;
+  /**
+   * What this page can be asked to do (src/actions). Declared here so the whole vocabulary is
+   * readable from any page; the page mounts the handlers with `useActions(spec, handlers)`.
+   */
+  actions?: ActionDef[];
+  /** Viewport widths (px) the page has been checked at — phone to 4K TV. */
+  checkedAt?: number[];
 }
 
 export interface RouteDef {
