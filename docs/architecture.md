@@ -37,7 +37,8 @@ serves `*.md?docmeta` (title, header meta, headings, decisions) at build time, a
 ## Page specs
 `src/specs/canvasSpecs.ts` holds every canvas code as a `PageSpec` (purpose, layout order, data
 tables, roles, logic, integrations, states, toggles, notes, canvasRef). The inspector panel reads the
-spec of the current route. New pages add a spec next to their route.
+spec of the current route. New pages add a spec next to their route. Two optional fields carry the
+newer contracts: `actions` (below) and `checkedAt`, the viewport widths the page has been checked at.
 
 ## Design system
 `src/design/tokens.ts` → `tokens.css` (CSS custom properties). Themes via `[data-theme=light|dark]`,
@@ -66,6 +67,30 @@ email webhooks insert `direction = inbound` rows and update `status` / `external
 `user_id` null (a teacher's substitution request) belong to the team and stay out of every customer thread.
 `MockProvider.SEED_VERSION` is bumped whenever a column is added, so a stored demo db is reseeded instead of
 missing it.
+
+## Actions registry (0.9.0)
+`src/actions/` is the one way a page says what it can be asked to do. A page **declares** its actions
+in its `PageSpec.actions` — `{ id, label{es,en}, intent{es,en}, params?, permission? }`, id shaped
+`<page>.<verb>` — and **mounts** handlers for the same ids with `useActions(spec, handlers)`.
+`listActions()` walks every routed spec, so the whole vocabulary is readable from any page (each
+entry carries its page code, route and a live `mounted`), and `run(id, params)` invokes a mounted
+handler and resolves `{ ok, message }` without ever throwing. `src/app/manifest.ts` publishes both on
+`window.__hoyos` — that is the WebMCP surface, and the vocabulary the voice controller will speak.
+The inspector renders a page's actions as its own section. `permission` is declared, not enforced:
+the control it drives is already role-gated, and enforcement belongs to the server that will proxy
+these. Contract and current inventory: `docs/reference/surfaces.md`.
+
+## Frame session (0.9.0)
+A page can be embedded in a same-origin iframe and told which session to run under, through the hash
+query: `#/app?as=customer&lang=en&theme=dark&dev=0&live=0`. `src/app/frameSession.ts` runs before
+`createRoot().render()` (the providers read their key in a `useState` initialiser) and, only when the
+document is framed and the query asks for it, patches `Storage.prototype.getItem/setItem/removeItem`
+for exactly three keys — `hoyos.session`, `hoyos.lang`, `hoyos.theme`. Reads answer from the frame's
+values, writes are swallowed, every other key passes through. So a preview runs as Juliana while the
+tester stays super admin, and nothing a framed page does can reach the tester's own session. The same
+module owns `liveFramesAllowed()`: no frames inside a frame, none with `live=0`, and none under
+`navigator.webdriver`, which is what makes a screenshot of HUB-01 deterministic. Consumers:
+`DeviceFrame` and `PagePreview` (HUB-01, D-05, D-06).
 
 ## Layout editor
 `useLayout(spec)` returns the section order stored in `page_layouts` (or the spec default). The

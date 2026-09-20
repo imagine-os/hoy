@@ -11,6 +11,8 @@ this folder). The club's **operations manual** (how HOY runs, in person and in s
 | `prompts/NNNN-slug.md` | Every prompt verbatim + the response summary. |
 | `changelog/NNNN-slug.md` | K-01 entries: version, date, intent, decision, alternative rejected, files. |
 | `kanban.md` | Live board: backlog / doing / done, updated every turn. |
+| `decisions.md` | Append-only engineering decisions (`D-NNNN`): context, decision, alternative rejected. Owner decisions live at `/#/manual/decisions`. |
+| `reference/surfaces.md` | What a machine can drive: WebMCP (`window.__hoyos`), the `npm run` CLI, the (absent) HTTP API. Date-stamped every pass. |
 | `architecture.md` | Folder map, extension points, providers, shells. |
 | `roles.md` | Role matrix, demo users, dev mode and "view as". |
 | `i18n.md` | String tables, `useT`, fallback rules. |
@@ -20,7 +22,7 @@ this folder). The club's **operations manual** (how HOY runs, in person and in s
 | `pages/<code>.md` | One doc per routed page code (spec, real vs mock, captures); skeletons from `scripts/gen-page-doc.mjs`. |
 | `app-store-compliance.md` | Apple / Google Play rows (account deletion, privacy, payments) marked done / pending / needs dev. |
 | `website-vision.md` | The public site's long-term ideas (feeds ROADMAP §G). |
-| `screenshots/<code>/` | JPEG captures (q72) produced by `npm run screenshots`, ES/EN × 390/1280, dark for key pages. |
+| `screenshots/<code>/` | JPEG captures (q72) produced by `npm run screenshots`, ES/EN × 390/1280, dark for key pages. Plus `thumb-<lang>-desktop[-dark].jpg` (640×400) and `thumb-<lang>-phone[-dark].jpg` (195×422) from `npm run thumbnails` (q64) — the preview images HUB-01 and D-05 display. |
 | `ops-manual/` | The club operations manual, 28 bilingual chapters in seven parts (K-03), rendered at `/#/manual`. |
 
 ## Conventions

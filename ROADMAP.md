@@ -1,13 +1,44 @@
 # HoyOS roadmap
 
-**Resumen (ES).** HoyOS v0.8 es una base real y desplegable: sitio web, app de clientes, app de
+**Resumen (ES).** HoyOS v0.9 es una base real y desplegable: sitio web, app de clientes, app de
 profesores, escritorio de staff/admin, manual de operaciones, documentación y herramientas de
 desarrollo en una sola base de código, con datos de prueba en el navegador. Este documento dice
 dónde estamos, qué sigue y en qué orden (con dependencias explícitas y lo que se puede hacer en
 paralelo), qué significa "terminado" en cada fase, cómo trabajar en el repo y qué debe decidir el
 owner del estudio. Está escrito para que otra cuenta de Claude (o una persona) lo retome sin contexto.
 
-## A. Where we are (v0.8.0, 2026-09-18)
+## A. Where we are (v0.9.0, 2026-09-20)
+
+- **v0.9.0 — Hub home redesign** (`docs/changelog/0022-hub-home-redesign.md`, prompt
+  `docs/prompts/0022-hub-home-redesign.md`; Justin, pointing at the cal-tenant-law hub: "it has thumbnail images
+  and things like that for the customer/tenant … We need a better hub home page for hoy please"). **HUB-01 shows
+  the product instead of describing it.** A deep-blue brand band carries the header (wordmark, version badge,
+  language, theme, and for a super admin the wireframe and dev-mode switches, with a cream focus ring) and the hero
+  (`HOY Wellness Center · Medellín`, "HoyOS · hub de pruebas", one-sentence lead, the brand tagline, `BreathingRings`
+  under a radial mask); a floating session bar rides the band edge with the role switcher and a `Placeholder`-marked
+  "Reportar un problema". Four 3fr/9fr bands follow — **Fuera del estudio** (customer app featured full-width with a
+  phone preview, website, teacher app), **El equipo** (recepción, bandeja, caja, panel, CRM, finanzas — each "Entrar
+  como" its demo person), **Construcción y pruebas** on a tinted lane (manual, docs, kanban, dev tools) and the
+  **Hub de pruebas** row of nine tool cards — over a live `<dl>` stat strip (101 routes, 87 codes, 48 tables, 66
+  components, 8 actions, 28 manual chapters). **Previews are the point**: `PagePreview` layers a hue-tinted idle tile,
+  the committed capture from `docs/screenshots/<code>/thumb-*` (new `npm run thumbnails`, 640×400 desktop and 195×422
+  phone at q64) and — in view only, six at a time in document order, never framed, never with `live=0`, never under
+  `navigator.webdriver` — the running page inside a `DeviceFrame` (a same-origin iframe at a real device viewport,
+  scaled by a `ResizeObserver`). `src/app/frameSession.ts` shadows `hoyos.session` / `hoyos.lang` / `hoyos.theme`
+  inside a frame and swallows writes, so a preview runs as Juliana while the tester stays super admin. New
+  **actions registry** `src/actions/`: `PageSpec.actions` declares `{ id, label, intent, params, permission }`,
+  `useActions()` mounts handlers, `listActions()` reads the whole vocabulary from any page and
+  `window.__hoyos.actions` / `window.__hoyos.run(id, params)` is the **WebMCP surface** (HUB-01 declares and wires
+  eight; the inspector shows them). Two new dev routes: **D-05 `/dev/canvas`** (83 pages as capture tiles grouped by
+  surface, four-step zoom, click opens) and **D-06 `/dev/simulator`** (any route on phone · tablet · desktop · 4K TV
+  as any role, language and theme, the whole view in the hash query). Five components with metas (61 → 66):
+  `Icon` (29 inline stroke glyphs), `Placeholder` (the "not wired yet" rule as a component, with a `Toast`),
+  `Toast`, `DeviceFrame`, `PagePreview`. A hub-scoped `--ui` step (1 · 1.125 ≥1920 · 1.375 ≥2560 · 1.75 ≥3840) scales
+  type, medallions, padding and the grid so the page reads from ten feet on a 4K TV; thirteen `--hue-*` family angles
+  joined D-01 and are mixed into the shared surfaces rather than adding colours. New docs: **`docs/decisions.md`**
+  (append-only engineering decisions, D-0001…D-0005) and **`docs/reference/surfaces.md`** (WebMCP · CLI · API, dated
+  every pass). Entry chunk 829 → 889 kB; the ~490 thumbnail URLs are a dynamically imported 31.7 kB chunk.
+
 
 - **v0.8.0 — Conversación CRM y bandeja S-06** (`docs/changelog/0021-crm-conversacion-y-bandeja.md`, prompt
   `docs/prompts/0021-crm-conversacion-y-bandeja.md`; Justin: "make the CRM page for the customers really, really
@@ -143,14 +174,14 @@ owner del estudio. Está escrito para que otra cuenta de Claude (o una persona) 
   `npm run build` passes with zero TS errors (`strict`, `noUnusedLocals`, `noUnusedParameters`, `noImplicitReturns`, `noImplicitOverride`).
   Since 0.7.1 the bundle is split per surface (`src/app/lazyPage.ts`): main chunk 796 kB, each surface and the
   docs markdown load on first visit.
-- **Real vs stub** (`/#/dev/specs`, from `docs/screenshots/routes.json`): **98 routes, 85 codes,
-  0 stubs** (S-06 new in 0.8.0; M-08f, M-10, C-26, W-09 and M-11 new in 0.7.0). Integrations (Wompi, WhatsApp, email, DIAN, Supabase Auth/Realtime) are simulated behind
+- **Real vs stub** (`/#/dev/specs`, from `docs/screenshots/routes.json`): **101 routes, 87 codes,
+  0 stubs** (D-05 and D-06 new in 0.9.0; S-06 new in 0.8.0; M-08f, M-10, C-26, W-09 and M-11 new in 0.7.0). Integrations (Wompi, WhatsApp, email, DIAN, Supabase Auth/Realtime) are simulated behind
   their seams — see §F for exactly what is still mocked.
 - **Docs**: prompt log, changelog and kanban are current through `0021`. `docs/screenshots/<code>/`
   holds every route in ES/EN × 390/1280 (dark for key pages) as JPEG q72 — **395 captures** (+ 13
   before-captures under `_before/0006` and the 0021 before / after pairs for M-06 and S-01) — and
   `docs/pages/<code>.md` exists for every routed code.
-  **61 components** carry a `.meta.ts` in D-02.
+  **66 components** carry a `.meta.ts` in D-02.
 - **v0.5.1 — Jas's review + tenant city** (`0014`, `0015`): cut on `main` while the three 0.6.0 tracks were on
   branches, so it is numbered after them; C-06 plan dates, the Sin cupos pill, S-04 Valor pagado, `city: 'Medellín'`.
 
