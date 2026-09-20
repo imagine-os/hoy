@@ -164,6 +164,21 @@
   --tex-accent: repeating-linear-gradient(101deg,rgba(0,0,0,.06) 0 1px,transparent 1px 3px), repeating-linear-gradient(13deg,rgba(0,0,0,.045) 0 1px,transparent 1px 5px), radial-gradient(120% 90% at 25% 10%,rgba(var(--m-light),.15),transparent 58%);
   --tex-paper: radial-gradient(rgba(var(--m-shade),.16) 1.1px,transparent 1.3px) 0 0/13px 13px;
   --tex-ph: repeating-linear-gradient(45deg,var(--color-surface-3),var(--color-surface-3) 5px,var(--color-surface-4) 5px,var(--color-surface-4) 10px);
+  --hue-site: 198;
+  --hue-app: 40;
+  --hue-teacher: 268;
+  --hue-desk: 158;
+  --hue-inbox: 210;
+  --hue-pos: 24;
+  --hue-admin: 222;
+  --hue-crm: 330;
+  --hue-finance: 96;
+  --hue-manual: 44;
+  --hue-docs: 186;
+  --hue-kb: 286;
+  --hue-dev: 244;
+  --hue-sat: 46%;
+  --hue-lum: 52%;
   --tex-lane-on: var(--tex-lane);
   --tex-surf-on: var(--tex-surf);
   --tex-accent-on: var(--tex-accent);
@@ -217,6 +232,8 @@
   --shadow-frame: inset 0 1px 0 rgba(255,255,255,.08), 0 2px 3px rgba(0,0,0,.5), 0 18px 40px -14px rgba(0,0,0,.7);
   --shadow-accent: inset 0 1px 0 rgba(255,255,255,.18), inset 0 -1px 0 rgba(0,0,0,.25), 0 2px 4px -1px rgba(0,0,0,.4), 0 10px 22px -8px rgba(0,0,0,.6);
   --shadow-inverse: inset 0 1px 0 rgba(255,255,255,.1), 0 3px 7px -2px rgba(0,0,0,.4), 0 18px 38px -14px rgba(0,0,0,.7);
+  --hue-sat: 42%;
+  --hue-lum: 64%;
   --tex-lane-on: none;
   --tex-surf-on: none;
   --color-card-border: rgba(241,231,210,.06);
@@ -256,6 +273,7 @@
   --shadow-highlight: none; --shadow-contact: none; --shadow-soft: none; --shadow-card: none; --shadow-raised: none;
   --shadow-frame: none; --shadow-accent: none; --shadow-inverse: none; --shadow-lane: none; --shadow-pressed: none; --shadow-pressed-deep: none;
   --tex-lane-on: none; --tex-surf-on: none; --tex-accent-on: none;
+  --hue-sat: 0%; --hue-lum: 62%;
   --tex-ph: repeating-linear-gradient(45deg,#F2F1ED,#F2F1ED 5px,#E4E2DB 5px,#E4E2DB 10px);
   --mat-sand: #EDEBE5; --mat-light: #EDEBE5; --mat-sky: #D6D3CA; --mat-deep: #C9C4B8; --mat-linen: #EDEBE5;
   --font-heading: 'Jost', system-ui, sans-serif;

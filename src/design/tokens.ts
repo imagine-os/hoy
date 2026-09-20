@@ -176,6 +176,17 @@ export const materials = {
   linen: { label: 'Linen', fill: 'repeating-linear-gradient(90deg,#F7F1E5,#F7F1E5 3px,#EDE4D4 3px,#EDE4D4 6px)' },
 } as const;
 
+/**
+ * Card-family hues (HUB-01 surface cards, D-05 canvas tiles). One angle per family; every fill is
+ * `color-mix()` of `hsl(var(--hue) var(--hue-sat) var(--hue-lum))` with a semantic surface token, so a
+ * family tints the shared surfaces instead of introducing a new colour. Dark re-balances sat/lum only.
+ */
+export const hues = {
+  site: 198, app: 40, teacher: 268, desk: 158, inbox: 210, pos: 24, admin: 222,
+  crm: 330, finance: 96, manual: 44, docs: 186, kb: 286, dev: 244,
+} as const;
+export type HueFamily = keyof typeof hues;
+
 /** D-01 surface scale (canvas `tokens.surfaces`). */
 export const surfaces = {
   card: { label: 'Card', fill: 'var(--color-surface)', shadow: 'var(--shadow-card)' },
@@ -231,7 +242,7 @@ const layoutTokens = {
   'w-phone': '430px', 'w-content': '1120px', 'h-topbar': '56px', 'h-bottomnav': '64px', 'w-sidebar': '240px', 'w-rail': '56px',
 } as const;
 
-export const tokens = { brand, palette, rgb, movements, semantic, shadows, textures, materials, surfaces, type, spacing, radii, motion, layout: layoutTokens };
+export const tokens = { brand, palette, rgb, movements, semantic, shadows, textures, materials, surfaces, hues, type, spacing, radii, motion, layout: layoutTokens };
 
 function vars(obj: Record<string, string>): string {
   return Object.entries(obj).map(([k, v]) => `  --${k}: ${v};`).join('\n');
@@ -243,6 +254,7 @@ export function buildTokensCss(): string {
   const paletteVars = vars(Object.fromEntries(Object.entries(palette).map(([k, v]) => [`hoy-${k}`, v])));
   const mv = Object.entries(movements).flatMap(([k, m]) => [[`mv-${k}-fg`, m.fg], [`mv-${k}-dot`, m.dot], [`mv-${k}-bg`, m.bg]]);
   const mat = Object.fromEntries(Object.entries(materials).map(([k, m]) => [`mat-${k}`, m.fill]));
+  const hueVars = vars(Object.fromEntries(Object.entries(hues).map(([k, v]) => [`hue-${k}`, String(v)])));
   return `/* GENERATED from src/design/tokens.ts — do not edit by hand */
 :root {
 ${brandVars}
@@ -258,6 +270,9 @@ ${vars(rgb.light)}
 ${vars(semantic.light)}
 ${vars(shadows)}
 ${vars(textures)}
+${hueVars}
+  --hue-sat: 46%;
+  --hue-lum: 52%;
   --tex-lane-on: var(--tex-lane);
   --tex-surf-on: var(--tex-surf);
   --tex-accent-on: var(--tex-accent);
@@ -273,6 +288,8 @@ ${vars(semantic.dark)}
   --shadow-frame: inset 0 1px 0 rgba(255,255,255,.08), 0 2px 3px rgba(0,0,0,.5), 0 18px 40px -14px rgba(0,0,0,.7);
   --shadow-accent: inset 0 1px 0 rgba(255,255,255,.18), inset 0 -1px 0 rgba(0,0,0,.25), 0 2px 4px -1px rgba(0,0,0,.4), 0 10px 22px -8px rgba(0,0,0,.6);
   --shadow-inverse: inset 0 1px 0 rgba(255,255,255,.1), 0 3px 7px -2px rgba(0,0,0,.4), 0 18px 38px -14px rgba(0,0,0,.7);
+  --hue-sat: 42%;
+  --hue-lum: 64%;
   --tex-lane-on: none;
   --tex-surf-on: none;
   --color-card-border: rgba(241,231,210,.06);
@@ -312,6 +329,7 @@ ${vars(semantic.dark)}
   --shadow-highlight: none; --shadow-contact: none; --shadow-soft: none; --shadow-card: none; --shadow-raised: none;
   --shadow-frame: none; --shadow-accent: none; --shadow-inverse: none; --shadow-lane: none; --shadow-pressed: none; --shadow-pressed-deep: none;
   --tex-lane-on: none; --tex-surf-on: none; --tex-accent-on: none;
+  --hue-sat: 0%; --hue-lum: 62%;
   --tex-ph: repeating-linear-gradient(45deg,#F2F1ED,#F2F1ED 5px,#E4E2DB 5px,#E4E2DB 10px);
   --mat-sand: #EDEBE5; --mat-light: #EDEBE5; --mat-sky: #D6D3CA; --mat-deep: #C9C4B8; --mat-linen: #EDEBE5;
   --font-heading: 'Jost', system-ui, sans-serif;

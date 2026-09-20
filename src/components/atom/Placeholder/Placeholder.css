@@ -1,0 +1,9 @@
+/* "Not wired yet": always announced, always blocked, and outlined while dev mode is on. */
+.placeholder { position: relative; display: inline-flex; border-radius: var(--r-ctl); }
+.placeholder.is-block { display: flex; width: 100%; }
+.placeholder > * { opacity: .72; }
+.placeholder.is-dev { outline: 1.5px dashed var(--color-warn); outline-offset: 3px; }
+.placeholder.is-dev::after {
+  content: '·'; position: absolute; top: -6px; right: -6px; width: 14px; height: 14px; border-radius: 50%;
+  background: var(--color-warn); color: var(--color-bg); font-size: var(--fs-2xs); line-height: 12px; text-align: center; pointer-events: none;
+}

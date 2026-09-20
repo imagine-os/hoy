@@ -14,5 +14,5 @@ export default defineMeta({
   states: ['breathing', 'static (reduced motion)'],
   usages: [{ title: { es: 'Con logo', en: 'With wordmark' }, render: () => h(BreathingRings, { size: 220 }, h(Wordmark, { height: 40 })) }],
   a11y: [{ es: 'Decorativo; respeta prefers-reduced-motion; el texto central sigue siendo texto.', en: 'Decorative; honours prefers-reduced-motion; centre text stays real text.' }],
-  usedBy: ['A-01'],
+  usedBy: ['A-01', 'HUB-01'],
 });

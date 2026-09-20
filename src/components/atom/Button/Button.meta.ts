@@ -18,5 +18,5 @@ export default defineMeta({
     { title: { es: 'Tamaños y estados', en: 'Sizes and states' }, render: () => h('div', { className: 'row wrap' }, h(Button, { size: 'sm' }, 'Pequeño'), h(Button, { size: 'lg' }, 'Grande'), h(Button, { loading: true }, 'Guardando'), h(Button, { disabled: true }, 'Deshabilitado')) },
   ],
   a11y: [{ es: 'Usa <button>; aria-busy en carga; foco visible con anillo de 2px.', en: 'Native <button>; aria-busy while loading; 2px visible focus ring.' }],
-  usedBy: ['C-01', 'P-01', 'M-03', 'HUB'],
+  usedBy: ['C-01', 'P-01', 'M-03', 'HUB-01'],
 });

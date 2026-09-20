@@ -9,5 +9,5 @@ export default defineMeta({
   states: ['es', 'en'],
   usages: [{ title: { es: 'Default', en: 'Default' }, render: () => h('div', { className: 'row' }, h(LangToggle), h(LangToggle, { size: 'sm' })) }],
   a11y: [{ es: 'role="group" con aria-label bilingüe; aria-pressed en cada botón.', en: 'role="group" with bilingual aria-label; aria-pressed on each button.' }],
-  usedBy: ['HUB', 'TopBar', 'DesktopShell'],
+  usedBy: ['TopBar', 'DesktopShell', 'HUB-01'],
 });

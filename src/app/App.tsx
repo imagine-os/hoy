@@ -12,6 +12,7 @@ import { ScrollToTop } from './ScrollToTop';
 import { RouteTitle } from './RouteTitle';
 import { publishManifest } from './manifest';
 import { PolicySync } from '../modules/customer/policy';
+import { Toasts } from '../components/molecule/Toast/Toast';
 
 export function App() {
   const allRoutes = getRoutes();
@@ -36,6 +37,8 @@ export function App() {
                 </Routes>
               </Suspense>
               <DevTools />
+              {/* The one toast stack; anything calls toast() from src/app/toast.ts. */}
+              <Toasts />
             </HashRouter>
           </SessionProvider>
         </DataProviderRoot>

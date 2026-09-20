@@ -2,6 +2,7 @@ import type { StringTable } from './types';
 
 /** Shared strings used by shells, guards and dev tooling. Module strings live in each module. */
 export const coreStrings: StringTable = {
+  'core.theme.light': { es: 'Claro', en: 'Light' },
   'core.theme.dark': { es: 'Oscuro', en: 'Dark' },
   'core.theme.toggle': { es: 'Cambiar tema', en: 'Toggle theme' },
   'core.lang.toggle': { es: 'Idioma / Language', en: 'Idioma / Language' },
@@ -11,6 +12,8 @@ export const coreStrings: StringTable = {
   'core.dev.viewAs': { es: 'Ver como', en: 'View as' },
   'core.session.switch': { es: 'Cambiar usuario', en: 'Switch user' },
   'core.nav.hub': { es: 'Hub', en: 'Hub' },
+  'core.nav.canvas': { es: 'Lienzo', en: 'Canvas' },
+  'core.nav.simulator': { es: 'Simulador', en: 'Simulator' },
   'core.nav.back': { es: 'Volver', en: 'Back' },
   'core.nav.main': { es: 'Navegación principal', en: 'Main navigation' },
   'core.nav.home': { es: 'Inicio', en: 'Home' },
@@ -145,4 +148,19 @@ export const coreStrings: StringTable = {
   'core.msg.list.noMatch': { es: 'Nada coincide con ese filtro.', en: 'Nothing matches that filter.' },
   'core.msg.list.label': { es: 'Conversaciones', en: 'Conversations' },
   'core.common.viewAll': { es: 'Ver todo', en: 'View all' },
+
+  // Placeholder (atom) — the "not wired yet" rule from CLAUDE.md.
+  'core.placeholder.title': { es: 'Aún no conectado · Not wired yet', en: 'Not wired yet · Aún no conectado' },
+  'core.placeholder.hint': { es: 'Aún no conectado: {what}. El control existe pero todavía no hace nada.', en: 'Not wired yet: {what}. The control exists but does nothing yet.' },
+  'core.placeholder.toast': { es: 'Aún no conectado: {what}', en: 'Not wired yet: {what}' },
+
+  // Previews and frames (PagePreview, DeviceFrame) — shared by HUB-01, D-05 and D-06.
+  'core.preview.of': { es: 'Vista previa de {name}', en: 'Preview of {name}' },
+  'core.preview.live': { es: 'En vivo', en: 'Live' },
+  'core.preview.thumb': { es: 'Captura', en: 'Capture' },
+  'core.preview.none': { es: 'Sin captura todavía', en: 'No capture yet' },
+  'core.device.phone': { es: 'Teléfono', en: 'Phone' },
+  'core.device.tablet': { es: 'Tableta', en: 'Tablet' },
+  'core.device.desktop': { es: 'Escritorio', en: 'Desktop' },
+  'core.device.tv': { es: 'TV 4K', en: '4K TV' },
 };

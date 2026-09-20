@@ -9,5 +9,5 @@ export default defineMeta({
   states: ['default', 'super-admin (view-as visible)', 'compact'],
   usages: [{ title: { es: 'Default', en: 'Default' }, render: () => h(RoleSwitcher) }],
   a11y: [{ es: 'Selects con aria-label; etiqueta oculta para lectores.', en: 'Selects with aria-label; visually hidden label.' }],
-  usedBy: ['HUB', 'S-01', 'DesktopShell', 'PhoneShell'],
+  usedBy: ['S-01', 'DesktopShell', 'PhoneShell', 'HUB-01'],
 });
