@@ -14,6 +14,13 @@
 //   --label=before writes <lang>-<width>[-dark]-before.jpg next to the current capture (before/after pairs
 //                  for visual changes; see docs/rules/documentation.md)
 //   --quality=N    JPEG quality (default 72). JPEG keeps the repo and the Pages bundle small; PNG was ~3× larger.
+//   --thumbs       hub/card thumbnails instead of full-page captures (npm run thumbnails). One route per
+//                  page code (first in the manifest; /manual wins K-03 over its chapter routes), both langs,
+//                  both themes: a 640×400 desktop thumbnail (1280×800 viewport, deviceScaleFactor 0.5, not
+//                  fullPage) at docs/screenshots/<code>/thumb-<lang>-desktop[-dark].jpg, plus for
+//                  customer/teacher surfaces and /auth (PhoneShell) routes a 195×422 phone thumbnail
+//                  (390×844 viewport, deviceScaleFactor 0.5) at thumb-<lang>-phone[-dark].jpg. JPEG quality
+//                  64. Supports --only=; ignores --label/--quality/--smoke.
 //
 // The route list is NOT parsed from TypeScript: the built app publishes window.__hoyos.routes
 // (src/app/manifest.ts) with each route's real spec.code, and this script reads it from the preview
@@ -25,6 +32,7 @@ import { chromium } from 'playwright-core';
 
 const args = process.argv.slice(2);
 const SMOKE = args.includes('--smoke');
+const THUMBS = args.includes('--thumbs');
 const ONLY = (args.find((a) => a.startsWith('--only='))?.slice(7) ?? '').split(',').filter(Boolean);
 const LABEL = args.find((a) => a.startsWith('--label='))?.slice(8) ?? '';
 const QUALITY = Number(args.find((a) => a.startsWith('--quality='))?.slice(10) ?? 72);
@@ -172,5 +180,75 @@ async function main() {
   else console.log('\nno console errors');
   process.exit(problems.length ? 1 : 0);
 }
+const THUMB_QUALITY = 64;
+const PHONE_SURFACES = new Set(['customer', 'teacher']);
+/** thumb-<lang>-<desktop|phone>[-dark].jpg — parallel to fileName() but for --thumbs output. */
+const thumbFileName = (lang, kind, theme) => `thumb-${lang}-${kind}${theme === 'dark' ? '-dark' : ''}.${EXT}`;
+
+async function captureThumb({ browser, path, url, lang, theme, userId, devMode, code, width, height, kind, problems, NOISE }) {
+  const ctx = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: 0.5, ignoreHTTPSErrors: true });
+  await ctx.addInitScript(([l, th, uid, dev]) => {
+    localStorage.setItem('hoyos.lang', l);
+    localStorage.setItem('hoyos.theme', JSON.stringify({ theme: th, skin: 'styled' }));
+    localStorage.setItem('hoyos.session', JSON.stringify({ userId: uid, devMode: dev, viewAs: null }));
+  }, [lang, theme, userId, devMode]);
+  const page = await ctx.newPage();
+  await page.route(/^https?:\/\/(?!localhost)/, (r) => r.abort()); // offline-safe: no fonts/CDNs through the proxy
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('console', (m) => { if (m.type() === 'error' && !NOISE.test(m.text())) errors.push(m.text()); });
+  try {
+    await page.goto(`${BASE}${url}`, { waitUntil: 'load', timeout: 15000 });
+    await page.waitForSelector('#root > *', { timeout: 8000 });
+    // lazily-loaded modules (src/app/lazyPage.ts) show .lazy-fallback until their chunk arrives
+    await page.waitForFunction(() => !document.querySelector('.lazy-fallback'), null, { timeout: 8000 });
+    await page.waitForTimeout(400);
+    const dir = new URL(`../docs/screenshots/${safe(code)}/`, import.meta.url);
+    mkdirSync(dir, { recursive: true });
+    await page.screenshot({ path: new URL(thumbFileName(lang, kind, theme), dir).pathname, fullPage: false, type: 'jpeg', quality: THUMB_QUALITY });
+  } catch (e) { errors.push(String(e.message)); }
+  if (errors.length) problems.push({ path, lang, theme, kind, errors: [...new Set(errors)].slice(0, 3) });
+  await ctx.close();
+}
+
+/** One thumbnail pass: desktop + (for customer/teacher/PhoneShell routes) phone, per code/lang/theme. */
+async function mainThumbs() {
+  const server = spawn(process.execPath, [new URL('../node_modules/vite/bin/vite.js', import.meta.url).pathname, 'preview', '--port', String(PORT), '--strictPort'], { stdio: 'pipe' });
+  await new Promise((r) => setTimeout(r, 2500));
+  const exe = findChromium();
+  const browser = await chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
+  const NOISE = /Failed to load resource|ERR_CERT|fonts\.g(oogleapis|static)|net::/;
+  const { routes: manifest, users, ids } = await fetchManifest(browser);
+  mkdirSync(new URL('../docs/screenshots/', import.meta.url), { recursive: true });
+  writeFileSync(MANIFEST, JSON.stringify(manifest, null, 1));
+  // Dedupe by code, keeping the first route per code (same order as the manifest); /manual is the
+  // canonical route for K-03 so it wins over its chapter routes (/manual/:chapter shares the code).
+  const byCode = new Map();
+  for (const route of manifest.filter(inOnly)) if (!byCode.has(route.code)) byCode.set(route.code, route);
+  const manualRoute = manifest.find((r) => r.path === '/manual');
+  if (byCode.has('K-03') && manualRoute && inOnly(manualRoute)) byCode.set('K-03', manualRoute);
+  const list = [...byCode.values()];
+  const problems = [];
+  console.log(`${list.length} codes · chromium ${exe}${ONLY.length ? ` · only ${ONLY.join(',')}` : ''} · thumbs q${THUMB_QUALITY}`);
+  for (const route of list) {
+    const { path, code } = route;
+    const url = path.replace(/:\w+/g, (p) => (p === ':id' ? idFor(path, ids) : STATIC_PARAMS[p]) ?? 'x');
+    const { userId, devMode } = userFor(route, users);
+    const needsPhone = PHONE_SURFACES.has(route.surface) || path.startsWith('/auth');
+    for (const lang of ['es', 'en']) {
+      for (const theme of ['light', 'dark']) {
+        await captureThumb({ browser, path, url, lang, theme, userId, devMode, code, width: 1280, height: 800, kind: 'desktop', problems, NOISE });
+        if (needsPhone) await captureThumb({ browser, path, url, lang, theme, userId, devMode, code, width: 390, height: 844, kind: 'phone', problems, NOISE });
+      }
+    }
+    process.stdout.write(`${code.padEnd(12)} ${path.padEnd(36)} ${userId}\n`);
+  }
+  await browser.close();
+  server.kill();
+  if (problems.length) { console.log('\nPROBLEMS:'); for (const p of problems) console.log(`  ${p.path} [${p.lang}/${p.kind}/${p.theme}]`, p.errors.join(' | ')); }
+  else console.log('\nno console errors');
+  process.exit(problems.length ? 1 : 0);
+}
+
 // Only run when executed directly (gen-page-doc.mjs imports helpers from here).
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main().catch((e) => { console.error(e); process.exit(1); });
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) (THUMBS ? mainThumbs() : main()).catch((e) => { console.error(e); process.exit(1); });

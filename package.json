@@ -1,7 +1,7 @@
 {
   "name": "hoyos",
   "private": true,
-  "version": "0.8.0",
+  "version": "0.9.0",
   "type": "module",
   "description": "HoyOS — operations system for HOY Wellness Center (multi-tenant ready)",
   "scripts": {
@@ -10,6 +10,7 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "screenshots": "node scripts/screenshots.mjs",
+    "thumbnails": "node scripts/screenshots.mjs --thumbs",
     "tokens": "node --experimental-strip-types scripts/gen-tokens.mjs",
     "specs": "node scripts/gen-specs.mjs",
     "sql": "node --experimental-strip-types scripts/gen-sql.mjs",
