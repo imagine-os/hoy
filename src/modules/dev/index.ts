@@ -1,7 +1,7 @@
 import type { RouteDef } from '../../specs/types';
 import { canvasSpecs } from '../../specs/canvasSpecs';
 import { lazyPages } from '../../app/lazyPage';
-import { layoutEditorSpec, specsIndexSpec } from './specs';
+import { canvasSpec, layoutEditorSpec, simulatorSpec, specsIndexSpec } from './specs';
 export { strings } from './strings';
 
 // super_admin-only tooling (component library, layout editor with dnd-kit, knowledgebase): one lazy chunk.
@@ -18,4 +18,6 @@ export const routes: RouteDef[] = [
   { ...base, path: '/dev/layout', element: page('LayoutEditorPage'), spec: layoutEditorSpec, nav: { labelKey: 'core.nav.layout', icon: '⇅', order: 4, group: G, to: '/dev/layout/C-01' } },
   { ...base, path: '/dev/layout/:pageCode', element: page('LayoutEditorPage'), spec: layoutEditorSpec },
   { ...base, path: '/dev/knowledgebase', element: page('KnowledgebasePage'), spec: canvasSpecs['K-01'], nav: { labelKey: 'core.nav.knowledgebase', icon: '❡', order: 5, group: G } },
+  { ...base, path: '/dev/canvas', element: page('CanvasPage'), spec: canvasSpec, nav: { labelKey: 'core.nav.canvas', icon: '▩', order: 6, group: G } },
+  { ...base, path: '/dev/simulator', element: page('SimulatorPage'), spec: simulatorSpec, nav: { labelKey: 'core.nav.simulator', icon: '▣', order: 7, group: G } },
 ];

@@ -1,0 +1,6 @@
+/* D-06 — the controls row and the one big frame. */
+.sim-controls { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--sp-3); }
+.sim-controls .field { min-width: 220px; flex: 1 1 220px; }
+.sim-size { letter-spacing: var(--ls-eyebrow); }
+.sim-stage { max-width: 1100px; width: 100%; }
+@media (max-width: 720px) { .sim-controls .field { flex-basis: 100%; } }

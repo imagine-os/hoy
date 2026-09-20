@@ -13,3 +13,46 @@ export const layoutEditorSpec = defineSpec({
   logic: ['Stored order wins; new spec sections append; removed ones drop.', 'Hidden sections stay in order but are skipped by the page.'],
   integrations: [], states: ['default (spec order)', 'custom order saved', 'page not wired'],
 });
+
+export const canvasSpec = defineSpec({
+  code: 'D-05', name: { es: 'Lienzo de páginas', en: 'Page canvas' },
+  purpose: {
+    es: 'Todo el producto en una pantalla: cada página con su captura real, agrupada por superficie (Hub · Sitio · Acceso · Clientes · Profesores · Staff · Administración · Desarrollo · Documentación), con nombre, código y ruta, y un zoom de cuatro pasos. Clic o Enter abre la página.',
+    en: 'The whole product on one screen: every page with its real capture, grouped by surface (Hub · Website · Auth · Customer · Teacher · Staff · Admin · Dev · Docs), with its name, code and route, and a four-step zoom. Click or Enter opens the page.',
+  },
+  layout: ['PageHead (title, count, zoom SegmentedControl)', 'GroupSection × 9 (heading + tile grid)', 'Tile (PagePreview + name + code + route)'],
+  data: ['page_layouts', 'components'],
+  roles: ['super_admin'],
+  logic: [
+    'Routes come from the registry; param routes (:id) and splats are skipped so a tile always opens something.',
+    'Only static captures here (docs/screenshots/<code>/thumb-*): a map of 90-plus pages never boots live frames.',
+    'Customer and teacher tiles use the phone capture, everything else the desktop one.',
+    'The zoom step sets --zoom, which is the grid’s minimum track width — the tiles reflow, they are not transformed.',
+    'In dev mode a stub page is badged as such.',
+  ],
+  integrations: [],
+  states: ['default (M)', 'zoom S / L / XL', 'sin capturas todavía (mosaicos inactivos)', 'modo dev (badges de esbozo)'],
+  checkedAt: [360, 390, 768, 1280, 1920, 2560, 3840],
+  notes: ['Captures come from `npm run screenshots`; a page with no thumbnail yet shows its hue-tinted idle tile.'],
+});
+
+export const simulatorSpec = defineSpec({
+  code: 'D-06', name: { es: 'Simulador de dispositivos', en: 'Device simulator' },
+  purpose: {
+    es: 'Cualquier ruta, en cualquier dispositivo, como cualquier persona: teléfono 390×844, tableta 768×1024, escritorio 1280×800 o TV 3840×2160, con rol, idioma y tema propios del marco. Todo el estado va en la query del hash, así una vista es un enlace.',
+    en: 'Any route, on any device, as anyone: phone 390×844, tablet 768×1024, desktop 1280×800 or 4K TV 3840×2160, with the frame’s own role, language and theme. All the state lives in the hash query, so a view is a link.',
+  },
+  layout: ['PageHead (title, “Abrir en pestaña”)', 'Controls (device SegmentedControl, route select, role select, lang, theme)', 'SizeLine', 'DeviceFrame'],
+  data: ['users', 'user_roles'],
+  roles: ['super_admin'],
+  logic: [
+    'Every control writes to the hash query (route, device, as, lang, theme); the page reads it back, so reload and bookmark keep the view.',
+    'The frame is the real app in a same-origin iframe at the preset’s pixel size, scaled to fit with a ResizeObserver.',
+    'src/app/frameSession.ts shadows hoyos.session / hoyos.lang / hoyos.theme inside the frame, so simulating a role never changes the tester’s own session.',
+    'Dev tooling is off inside the frame, so the spec chip does not appear in a simulated view.',
+    'Changing any control remounts the frame (key), which is a real navigation rather than a partial state.',
+  ],
+  integrations: [],
+  states: ['teléfono', 'tableta', 'escritorio', 'TV 4K', 'rol sin acceso a la ruta (el marco muestra E-05)', 'oscuro', 'English'],
+  checkedAt: [360, 390, 768, 1280, 1920, 2560, 3840],
+});
