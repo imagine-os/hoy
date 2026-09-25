@@ -12,6 +12,6 @@ Build/typecheck passes. A read-only source audit caught and resolved edition nav
 
 Current provider is MockProvider. Classes, teachers, CMS and contact configuration remain connected through their existing shared provider. No external production database or payment integration is newly activated. No video generated or charged.
 
-[Original screenshot](../screenshots/W-01/es-1280-before.jpg) · [V2 screenshot](../screenshots/W-01/es-1280.jpg)
+[Original screenshot](../screenshots/W-01/es-1280-before.jpg) · [V2 screenshot](../screenshots/W-01/es-1348-sanctuary.jpg)
 
 **Resumen (ES).** Santuario V2 rediseña solo el sitio web. Se conserva V1 y la capa compartida de datos. Texturas, fotos y animación suave ya implementadas; videos preparados y pendientes.

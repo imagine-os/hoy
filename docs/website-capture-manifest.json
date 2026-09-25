@@ -1,0 +1,446 @@
+[
+  {
+    "code": "W-01",
+    "route": "/site",
+    "lang": "es",
+    "device": "phone",
+    "theme": "light",
+    "capture": "full simulator"
+  },
+  {
+    "code": "W-01",
+    "route": "/site",
+    "lang": "es",
+    "device": "desktop",
+    "theme": "light",
+    "capture": "full simulator"
+  },
+  {
+    "code": "W-01",
+    "route": "/site",
+    "lang": "en",
+    "device": "phone",
+    "theme": "light",
+    "capture": "full simulator"
+  },
+  {
+    "code": "W-01",
+    "route": "/site",
+    "lang": "en",
+    "device": "desktop",
+    "theme": "light",
+    "capture": "full simulator"
+  },
+  {
+    "code": "W-02",
+    "route": "/site/about",
+    "lang": "es",
+    "device": "phone",
+    "theme": "light",
+    "capture": "full simulator"
+  },
+  {
+    "code": "W-02",
+    "route": "/site/about",
+    "lang": "es",
+    "device": "desktop",
+    "theme": "light",
+    "capture": "full simulator"
+  },
+  {
+    "code": "W-02",
+    "route": "/site/about",
+    "lang": "en",
+    "device": "phone",
+    "theme": "light",
+    "capture": "full simulator"
+  },
+  {
+    "code": "W-02",
+    "route": "/site/about",
+    "lang": "en",
+    "device": "desktop",
+    "theme": "light",
+    "capture": "full simulator"
+  },
+  {
+    "code": "W-03",
+    "route": "/site/modalities",
+    "lang": "es",
+    "device": "phone",
+    "theme": "light",
+    "heading": "    - main:\n      - heading \"Modalidades\" [level=1]",
+    "capture": "full simulator"
+  },
+  {
+    "code": "W-03",
+    "route": "/site/modalities",
+    "lang": "es",
+    "device": "desktop",
+    "theme": "light",
+    "heading": "    - main:\n      - heading \"Modalidades\" [level=1]",
+    "capture": "full simulator"
+  },
+  {
+    "code": "W-03",
+    "route": "/site/modalities",
+    "lang": "en",
+    "device": "phone",
+    "theme": "light",
+    "heading": "    - main:\n      - heading \"Modalities\" [level=1]",
+    "capture": "full simulator"
+  },
+  {
+    "code": "W-03",
+    "route": "/site/modalities",
+    "lang": "en",
+    "device": "desktop",
+    "theme": "light",
+    "heading": "    - main:\n      - heading \"Modalities\" [level=1]",
+    "capture": "full simulator"
+  },
+  {
+    "code": "W-04",
+    "route": "/site/schedule",
+    "lang": "es",
+    "device": "phone",
+    "theme": "light",
+    "heading": "    - main:\n      - heading \"Horario\" [level=1]",
+    "capture": "visible simulator"
+  },
+  {
+    "code": "W-04",
+    "route": "/site/schedule",
+    "lang": "es",
+    "device": "desktop",
+    "theme": "light",
+    "heading": "    - main:\n      - heading \"Horario\" [level=1]",
+    "capture": "full simulator"
+  },
+  {
+    "code": "W-04",
+    "route": "/site/schedule",
+    "lang": "en",
+    "device": "phone",
+    "theme": "light",
+    "heading": "    - main:\n      - heading \"Schedule\" [level=1]",
+    "capture": "full simulator"
+  },
+  {
+    "code": "W-04",
+    "route": "/site/schedule",
+    "lang": "en",
+    "device": "desktop",
+    "theme": "light",
+    "heading": "    - main:\n      - heading \"Schedule\" [level=1]",
+    "capture": "full simulator"
+  },
+  {
+    "code": "W-05",
+    "route": "/site/teachers",
+    "lang": "es",
+    "device": "phone",
+    "theme": "light",
+    "heading": "    - main:\n      - heading \"Profesores\" [level=1]",
+    "capture": "visible simulator"
+  },
+  {
+    "code": "W-05",
+    "route": "/site/teachers",
+    "lang": "es",
+    "device": "desktop",
+    "theme": "light",
+    "heading": "    - main:\n      - heading \"Profesores\" [level=1]",
+    "capture": "full simulator"
+  },
+  {
+    "code": "W-05",
+    "route": "/site/teachers",
+    "lang": "en",
+    "device": "phone",
+    "theme": "light",
+    "heading": "    - main:\n      - heading \"Teachers\" [level=1]",
+    "capture": "full simulator"
+  },
+  {
+    "code": "W-05",
+    "route": "/site/teachers",
+    "lang": "en",
+    "device": "desktop",
+    "theme": "light",
+    "heading": "    - main:\n      - heading \"Teachers\" [level=1]",
+    "capture": "full simulator"
+  },
+  {
+    "code": "W-06",
+    "route": "/site/contact",
+    "lang": "es",
+    "device": "phone",
+    "theme": "light",
+    "heading": "    - main:\n      - heading \"Contacto\" [level=1]",
+    "capture": "visible simulator"
+  },
+  {
+    "code": "W-06",
+    "route": "/site/contact",
+    "lang": "es",
+    "device": "desktop",
+    "theme": "light",
+    "heading": "    - main:\n      - heading \"Contacto\" [level=1]",
+    "capture": "full simulator"
+  },
+  {
+    "code": "W-06",
+    "route": "/site/contact",
+    "lang": "en",
+    "device": "phone",
+    "theme": "light",
+    "heading": "    - main:\n      - heading \"Contact\" [level=1]",
+    "capture": "full simulator"
+  },
+  {
+    "code": "W-06",
+    "route": "/site/contact",
+    "lang": "en",
+    "device": "desktop",
+    "theme": "light",
+    "heading": "    - main:\n      - heading \"Contact\" [level=1]",
+    "capture": "full simulator"
+  },
+  {
+    "code": "W-07",
+    "route": "/site/classes",
+    "lang": "es",
+    "device": "phone",
+    "theme": "light",
+    "capture": "visible simulator"
+  },
+  {
+    "code": "W-07",
+    "route": "/site/classes",
+    "lang": "es",
+    "device": "desktop",
+    "theme": "light",
+    "capture": "full simulator"
+  },
+  {
+    "code": "W-07",
+    "route": "/site/classes",
+    "lang": "en",
+    "device": "phone",
+    "theme": "light",
+    "capture": "visible simulator"
+  },
+  {
+    "code": "W-07",
+    "route": "/site/classes",
+    "lang": "en",
+    "device": "desktop",
+    "theme": "light",
+    "capture": "full simulator"
+  },
+  {
+    "code": "W-09",
+    "route": "/site/delete-account",
+    "lang": "es",
+    "device": "phone",
+    "theme": "light",
+    "heading": "    - main:\n      - heading \"Eliminar tu cuenta\" [level=1]",
+    "capture": "full simulator"
+  },
+  {
+    "code": "W-09",
+    "route": "/site/delete-account",
+    "lang": "es",
+    "device": "desktop",
+    "theme": "light",
+    "heading": "    - main:\n      - heading \"Eliminar tu cuenta\" [level=1]",
+    "capture": "full simulator"
+  },
+  {
+    "code": "W-09",
+    "route": "/site/delete-account",
+    "lang": "en",
+    "device": "phone",
+    "theme": "light",
+    "heading": "    - main:\n      - heading \"Delete your account\" [level=1]",
+    "capture": "visible simulator"
+  },
+  {
+    "code": "W-09",
+    "route": "/site/delete-account",
+    "lang": "en",
+    "device": "desktop",
+    "theme": "light",
+    "heading": "    - main:\n      - heading \"Delete your account\" [level=1]",
+    "capture": "full simulator"
+  },
+  {
+    "code": "P-01",
+    "route": "/site/plans",
+    "lang": "es",
+    "device": "phone",
+    "theme": "light",
+    "heading": "    - main:\n      - heading \"Planes\" [level=1]",
+    "capture": "full simulator"
+  },
+  {
+    "code": "P-01",
+    "route": "/site/plans",
+    "lang": "es",
+    "device": "desktop",
+    "theme": "light",
+    "heading": "    - main:\n      - heading \"Planes\" [level=1]",
+    "capture": "full simulator"
+  },
+  {
+    "code": "P-01",
+    "route": "/site/plans",
+    "lang": "en",
+    "device": "phone",
+    "theme": "light",
+    "heading": "    - main:\n      - heading \"Plans\" [level=1]",
+    "capture": "full simulator"
+  },
+  {
+    "code": "P-01",
+    "route": "/site/plans",
+    "lang": "en",
+    "device": "desktop",
+    "theme": "light",
+    "heading": "    - main:\n      - heading \"Plans\" [level=1]",
+    "capture": "full simulator"
+  },
+  {
+    "code": "A-06",
+    "route": "/site/legal/terms",
+    "lang": "es",
+    "device": "phone",
+    "theme": "light",
+    "capture": "visible simulator"
+  },
+  {
+    "code": "A-06",
+    "route": "/site/legal/terms",
+    "lang": "es",
+    "device": "desktop",
+    "theme": "light",
+    "capture": "full simulator"
+  },
+  {
+    "code": "A-06",
+    "route": "/site/legal/terms",
+    "lang": "en",
+    "device": "phone",
+    "theme": "light",
+    "capture": "full simulator"
+  },
+  {
+    "code": "A-06",
+    "route": "/site/legal/terms",
+    "lang": "en",
+    "device": "desktop",
+    "theme": "light",
+    "capture": "full simulator"
+  },
+  {
+    "code": "A-06",
+    "route": "/site/legal/privacy",
+    "lang": "es",
+    "device": "phone",
+    "theme": "light",
+    "capture": "full simulator"
+  },
+  {
+    "code": "A-06",
+    "route": "/site/legal/privacy",
+    "lang": "es",
+    "device": "desktop",
+    "theme": "light",
+    "capture": "full simulator"
+  },
+  {
+    "code": "A-06",
+    "route": "/site/legal/privacy",
+    "lang": "en",
+    "device": "phone",
+    "theme": "light",
+    "capture": "full simulator"
+  },
+  {
+    "code": "A-06",
+    "route": "/site/legal/privacy",
+    "lang": "en",
+    "device": "desktop",
+    "theme": "light",
+    "capture": "full simulator"
+  },
+  {
+    "code": "W-01",
+    "route": "/site",
+    "lang": "es",
+    "device": "phone",
+    "theme": "dark",
+    "capture": "full simulator"
+  },
+  {
+    "code": "W-01",
+    "route": "/site",
+    "lang": "es",
+    "device": "desktop",
+    "theme": "dark",
+    "capture": "full simulator"
+  },
+  {
+    "code": "W-01",
+    "route": "/site",
+    "lang": "en",
+    "device": "phone",
+    "theme": "dark",
+    "capture": "full simulator"
+  },
+  {
+    "code": "W-01",
+    "route": "/site",
+    "lang": "en",
+    "device": "desktop",
+    "theme": "dark",
+    "capture": "visible simulator"
+  },
+  {
+    "code": "W-08",
+    "route": "/site/classes/hot-yoga",
+    "lang": "es",
+    "device": "phone",
+    "theme": "light",
+    "heading": "Hot Yoga",
+    "capture": "simulator via classes navigation"
+  },
+  {
+    "code": "W-08",
+    "route": "/site/classes/hot-yoga",
+    "lang": "es",
+    "device": "desktop",
+    "theme": "light",
+    "heading": "Hot Yoga",
+    "capture": "simulator via classes navigation"
+  },
+  {
+    "code": "W-08",
+    "route": "/site/classes/hot-yoga",
+    "lang": "en",
+    "device": "phone",
+    "theme": "light",
+    "heading": "Hot Yoga",
+    "capture": "simulator via classes navigation"
+  },
+  {
+    "code": "W-08",
+    "route": "/site/classes/hot-yoga",
+    "lang": "en",
+    "device": "desktop",
+    "theme": "light",
+    "heading": "Hot Yoga",
+    "capture": "simulator via classes navigation"
+  }
+]

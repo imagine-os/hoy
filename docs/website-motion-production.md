@@ -39,7 +39,7 @@ Primary pricing sources:
 | Asset | Website placement | Motion | Composition and crop | Deliverables |
 |---|---|---|---|---|
 | `hoy-hero-breathing` | Opening hero | A few leaf tips sway less than 1–2 cm; very light linen movement if present | Use the exact approved hero still, 16:9 landscape, preserve clear space behind the headline | 10s source, looped MP4/WebM, AVIF/WebP poster |
-| `hoy-studio-light` | The space / philosophy | A soft leaf shadow moves in a tiny repeating arc across the wall | Architectural detail or empty practice space, 16:9; static geometry and stable exposure | 10s source, looped MP4/WebM, AVIF/WebP poster |
+| `hoy-studio-light` | The space / About page | A soft leaf shadow moves in a tiny repeating arc across the wall | Selected architectural source is 2:3 portrait; preserve its crop, static geometry and stable exposure | 10s source, looped MP4/WebM, AVIF/WebP poster |
 | `hoy-ritual-pause` | Pause before booking / closing section | A linen edge lifts slightly and settles; optional very subtle leaf reflection | Material still life, mat/linen/ceramic, 16:9 landscape with mobile-safe center | 10s source, looped MP4/WebM, AVIF/WebP poster |
 | `hoy-hero-breathing-mobile` | Optional mobile hero | Same motion direction as desktop | Separate 9:16 art direction only if the landscape crop loses the key subject | Optional 10s generation, 720px export + poster |
 
@@ -89,8 +89,8 @@ Use fal `submit_job`, retain the returned request ID, poll that exact job, and c
 
 ## Website motion behavior
 
-- Load the still poster immediately. Fade in the ready video without changing the image crop or causing layout shift. `muted`, `playsInline`, `loop`, no controls for decorative media; keep an accessible global Pause motion control.
-- Play only the visible background. Use IntersectionObserver and pause on hidden tabs. Never download all loops on the initial load; load secondary videos shortly before their section approaches the viewport.
+- Load the still poster immediately. Once approved clips are supplied, add a video-readiness state and opacity transition so the ready video fades in without changing the image crop or causing layout shift. This fade is a pending integration task. `muted`, `playsInline`, `loop` and no controls for decorative media are already supported. The current Pause motion control is local to the Home page and resets on navigation; the future About/studio loop needs its own visible pause control or shared motion state.
+- Play only the visible background. Use IntersectionObserver and pause on hidden tabs. The current component requests each video when its scene becomes visible; it does not prefetch before the viewport. Never download all loops on the initial load.
 - If autoplay fails, leave the poster visible. On `prefers-reduced-motion`, Save-Data, or explicit Pause motion, show the poster and avoid downloading ambient loops.
 - Keep text and booking controls in real HTML above the visual, with stable contrast. Video must not contain copy, buttons or interface chrome.
 - Preserve natural scrolling. One section may have a gentle 1.00→1.035 scale and at most 24px translation as it crosses the viewport. It should stop when the user stops scrolling. Do not scrub a long video on every scroll event or hijack the scroll wheel.
@@ -121,13 +121,13 @@ All paths are relative to this repository. These optimized stills are production
 
 The studio source is portrait: keep the source aspect ratio, do not stretch to landscape. The philosophy portrait remains a still; do not animate this model's face. The generated practice-flow.webp is a supplemental editorial image, not a named teacher portrait.
 
-After generation and seam review, place the approved hero and ritual MP4s in `public/video/`, then add their base-relative paths as `video` in the matching `siteLoops` entry. AmbientScene already supports silent inline looping, poster fallback, pause/resume when offscreen or the document is hidden, a manual motion control, reduced-motion and data-saver handling. No video URLs are shipped until files exist and pass visual review. A separate studio/about implementation should use the same component and a page-visible pause control while preserving any ready CMS media.
+After generation and seam review, place the approved hero and ritual MP4s in `public/video/`, then add their base-relative paths as `video` in the matching `siteLoops` entry. AmbientScene already supports silent inline looping, poster fallback, pause/resume when offscreen or the document is hidden, reduced-motion and data-saver handling. HomePage supplies its own manual motion control; that state is page-local and resets on navigation. Add the video-readiness fade when integrating the approved clips. No video URLs are shipped until files exist and pass visual review. The About/studio loop is not implemented yet: integrate the same component with a page-visible pause control or shared motion state, preserving any ready CMS media.
 
 ### What is already implemented
 
 - Native scrolling; no scroll hijacking.
 - Capped ±24px photo parallax, restrained entry reveals, tactile hover/press responses.
-- Hero motion pause control, reduced-motion overrides, static-first rendering.
+- Home-page motion pause control that resets on navigation, reduced-motion overrides, static-first rendering.
 - No animated camera video or generated loops were produced in this release.
 
 ### Acceptance before production video is activated
