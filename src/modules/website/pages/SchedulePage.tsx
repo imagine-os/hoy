@@ -29,7 +29,7 @@ export function SchedulePage() {
   const all = useSessionsJoined();
   const mvFilter = params.get('movement') as Movement | null;
   const list = all.filter(({ session, modality }) =>
-    isSameDay(session.starts_at, days[day]) && session.status !== 'completed'
+    isSameDay(session.starts_at, days[day]) && session.status !== 'completed' && session.status !== 'cancelled'
     && (!mvFilter || modality?.movement === mvFilter));
   const chosen = all.find((x) => x.session.id === picked);
   const signInAndBook = () => nav(`/auth/sign-in?next=${encodeURIComponent(`/app/schedule?session=${picked}`)}`);

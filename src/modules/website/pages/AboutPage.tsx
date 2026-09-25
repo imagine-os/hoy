@@ -1,3 +1,5 @@
+import { siteImage } from '../artwork';
+import { useSiteEdition } from '../edition';
 import { Fragment, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
@@ -13,6 +15,7 @@ import { siteSpecs } from '../specs';
 
 /** W-02 — the brand's own words, from src/tenant/brand.ts. */
 export function AboutPage() {
+  const { edition } = useSiteEdition();
   const { t, bi } = useI18n();
   const { sections, isVisible } = useLayout(siteSpecs.about);
 
@@ -40,7 +43,7 @@ export function AboutPage() {
     Media: () => (
       <section className="container site-section">
         <div className="site-media-cap">
-          <MediaSlot ratio="4:3" kind="photo" slotKey="site.about" label={t('site.about.media')} />
+          <MediaSlot ratio="4:3" kind="photo" slotKey="site.about" fallbackSrc={edition === "sanctuary" ? siteImage("arch") : undefined} label={t('site.about.media')} />
         </div>
       </section>
     ),
@@ -67,7 +70,7 @@ export function AboutPage() {
 
   return (
     <SiteShell>
-      {sections.filter(isVisible).map((name) => SECTIONS[name] ? <Fragment key={name}>{SECTIONS[name]()}</Fragment> : null)}
+      {sections.filter(name => isVisible(name) && (edition === 'classic' || name !== 'BrandBoard')).map((name) => SECTIONS[name] ? <Fragment key={name}>{SECTIONS[name]()}</Fragment> : null)}
     </SiteShell>
   );
 }

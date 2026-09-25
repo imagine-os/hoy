@@ -8,7 +8,7 @@ const pub = { roles: EVERYONE, integrations: [] as string[] };
 export const siteSpecs = {
   home: defineSpec({ ...pub, code: 'W-01', name: { es: 'Sitio · Inicio', en: 'Site · Home' },
     purpose: { es: 'La portada pública: el manifiesto de marca, los cuatro movimientos, las cinco clases, las clases de hoy, el modelo de valor, la filosofía, los profesores, reseñas reales y el primer paso (clase de prueba).', en: 'The public front page: the brand manifesto, the four movements, the five classes, today’s classes, the value model, the philosophy, the teachers, real reviews and the first step (a trial class).' },
-    layout: ['Hero', 'Movements', 'Classes', 'TodayClasses', 'ValueModel', 'Philosophy', 'Teachers', 'Testimonials', 'FirstStep'],
+    layout: ['Hero', 'Movements', 'Philosophy', 'Classes', 'TodayClasses', 'Teachers', 'ValueModel', 'Testimonials', 'FirstStep'],
     data: ['class_sessions', 'modalities', 'teachers', 'reviews'],
     logic: ['Sections render in the order stored by the layout editor (useLayout).', 'Today list shows only scheduled sessions for the current date.', 'Prose comes from src/tenant/brand.ts; prices from src/tenant/pricing.ts; facts from src/tenant/tenant.ts.', 'Testimonials read `reviews` with a comment and non-private visibility; the empty state says the space is pending.'],
     integrations: ['Supabase Realtime'], states: ['default', 'no classes today', 'no published reviews'] }),

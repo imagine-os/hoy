@@ -142,6 +142,7 @@ export const semantic = {
  * rgb triplets so dark re-colours them. `card` = .surf2 tiles, `raised` = .surf panels/frames.
  */
 export const shadows = {
+  'shadow-stone': 'inset 0 1px 0 rgba(255,255,255,.7), inset 0 -3px 0 rgba(73,65,47,.13), 0 4px 8px -3px rgba(36,56,79,.16), 0 16px 36px -20px rgba(36,56,79,.32)',
   'shadow-highlight': 'inset 0 1px 0 rgba(var(--m-light),.85)',
   'shadow-contact': '0 1px 1.5px rgba(var(--m-shade),.10)',
   'shadow-soft': '0 6px 14px -8px rgba(var(--m-shade),.30)',
@@ -200,6 +201,7 @@ export const surfaces = {
 export const type = {
   'font-heading': "'Inter', 'Inter Fallback', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif",
   'font-body': "'DM Sans', 'DM Sans Fallback', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif",
+  'font-editorial': "'Cormorant Garamond', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif",
   'font-mono': "ui-monospace, 'SF Mono', Menlo, Consolas, monospace",
   'fs-2xs': '0.6875rem', // 11px · eyebrows, code tags
   'fs-xs': '0.75rem',
@@ -234,6 +236,7 @@ export const radii = {
 } as const;
 
 export const motion = {
+  'dur-reveal': '800ms', 'dur-ambient': '18s',
   'dur-fast': '120ms', 'dur-base': '200ms', 'dur-slow': '360ms', 'dur-spin': '1.1s', 'dur-breath': '7s',
   'ease-out': 'cubic-bezier(.2,.7,.2,1)', 'ease-in-out': 'cubic-bezier(.65,0,.35,1)',
 } as const;

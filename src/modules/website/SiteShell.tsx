@@ -1,5 +1,5 @@
-import { useState, type ReactNode } from 'react';
-import { Link, NavLink } from 'react-router-dom';
+import { useState, useEffect, useRef, type ReactNode } from 'react';
+import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useI18n } from '../../i18n/I18nProvider';
 import { useContact } from '../admin/settings';
 import { useTheme } from '../../design/ThemeProvider';
@@ -9,6 +9,10 @@ import { Wordmark } from '../../components/atom/Wordmark/Wordmark';
 import { LangToggle } from '../../components/molecule/LangToggle/LangToggle';
 import { Button } from '../../components/atom/Button/Button';
 import './site.css';
+import './sanctuary.css';
+import { useSiteEdition } from './edition';
+import { Icon } from '../../components/atom/Icon/Icon';
+import { SiteVersionSelect } from '../../components/molecule/SiteVersionSelect/SiteVersionSelect';
 import { waLink } from '../../i18n/format';
 
 const NAV = [
@@ -32,28 +36,38 @@ export function useWaHref() {
 /** Public website chrome: header with nav + a footer that carries hours, address and social. */
 export function SiteShell({ children }: { children: ReactNode }) {
   const { t, bi } = useI18n();
+  const { edition, setEdition } = useSiteEdition();
+  const { pathname } = useLocation();
+  const shell = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (edition !== 'sanctuary' || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const observer = new IntersectionObserver(entries => entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('is-revealed'); observer.unobserve(entry.target); } }), { threshold: .08 });
+    shell.current?.querySelectorAll('[data-reveal]').forEach(el => { el.classList.add('reveal-ready'); observer.observe(el); });
+    return () => observer.disconnect();
+  }, [edition, pathname]);
   const { theme, toggleTheme } = useTheme();
   const [open, setOpen] = useState(false);
   const contact = useContact();
   const wa = useWaHref();
   const pending = contact.pending ? ` (${bi(contact.pendingLabel)})` : '';
   return (
-    <div className="site">
+    <div className="site" data-edition={edition} ref={shell}>
       <header className="site-head">
         <div className="container site-head-in">
-          <Link to="/site" className="site-brand" onClick={() => setOpen(false)}><Wordmark height={30} /></Link>
+          <Link to="/site" className="site-brand" onClick={() => setOpen(false)}><Wordmark height={34} /><span className="site-brand-caption">{bi(tenant.tagline)}</span></Link>
           <nav className={`site-nav ${open ? 'is-open' : ''}`} aria-label={t('site.nav.label')}>
             {NAV.map(([to, k]) => <NavLink key={to} to={to} className={({ isActive }) => (isActive ? 'is-active' : '')} onClick={() => setOpen(false)}>{t(`site.nav.${k}`)}</NavLink>)}
           </nav>
           <div className="site-actions">
+            <SiteVersionSelect value={edition} onChange={setEdition} />
             <LangToggle size="sm" />
-            <button type="button" className="site-iconbtn" onClick={toggleTheme} aria-label={t('core.theme.toggle')}>{theme === 'dark' ? '☾' : '☀'}</button>
+            <button type="button" className="site-iconbtn" onClick={toggleTheme} aria-label={t('core.theme.toggle')}><Icon name={theme === 'dark' ? 'moon' : 'sun'} size={17} /></button>
             <Link to="/auth/sign-in"><Button size="sm">{t('site.nav.signin')}</Button></Link>
             <button type="button" className="site-burger" onClick={() => setOpen((o) => !o)} aria-label={t('core.shell.menu')} aria-expanded={open}>☰</button>
           </div>
         </div>
       </header>
-      <main className="site-main">{children}</main>
+      <main className="site-main" id="site-main">{children}</main>
       <footer className="site-foot">
         <div className="container site-foot-grid">
           <div className="stack-sm">
@@ -87,6 +101,8 @@ export function SiteShell({ children }: { children: ReactNode }) {
           </div>
         </div>
         <div className="container site-foot-bottom">
+          {edition === "sanctuary" && <p className="site-concept-note">{t("site.new.demo")}</p>}
+          <a className="small" href="https://github.com/imagine-os/hoy/blob/main/docs/website-versions.md" target="_blank" rel="noreferrer">{t("site.edition.history")} ↗</a>
           <span className="xs muted">{t('site.footer.rights', { year: new Date().getFullYear(), name: tenant.legalName })}</span>
         </div>
       </footer>

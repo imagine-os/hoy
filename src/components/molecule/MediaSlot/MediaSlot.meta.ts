@@ -9,6 +9,7 @@ export default defineMeta({
     en: 'The site’s single media slot: books the space for a photo, video or illustration with its ratio and art direction. Empty it looks intentional (movement tint, grain, an “art pending” chip); with `src` — or with a `slotKey` whose `media_assets` row is `ready` — it renders the real image or video.',
   },
   props: [
+    { name: 'fallbackSrc', type: 'string', description: { es: 'Arte local que se muestra si el CMS todavía no tiene contenido listo.', en: 'Local editorial art, superseded by a ready CMS asset.' } },
     { name: 'ratio', type: "'16:9' | '4:3' | '4:5' | '1:1' | '21:9'", default: '16:9', description: { es: 'Proporción reservada; el hueco nunca colapsa. Sin valor toma la de la fila de `media_assets`.', en: 'Reserved aspect ratio; the slot never collapses. Without one it takes the ratio of the `media_assets` row.' } },
     { name: 'kind', type: "'photo' | 'video' | 'illustration'", default: 'photo', description: { es: 'Qué va aquí; decide el glifo y si `src` se monta como <img> o <video>.', en: 'What belongs here; picks the glyph and whether `src` mounts as <img> or <video>.' } },
     { name: 'label', type: '{ es, en } | string', required: true, description: { es: 'Nombre del hueco; también es el alt de la imagen.', en: 'Name of the slot; doubles as the image alt text.' } },
@@ -22,6 +23,7 @@ export default defineMeta({
   ],
   states: ['empty photo', 'empty video', 'pending library row', 'ready library row', 'with src', 'with caption'],
   usages: [
+    { title: { es: 'Arte de concepto', en: 'Concept artwork' }, render: () => h(MediaSlot, { ratio: '4:5', fallbackSrc: './images/sanctuary/hot-yoga.webp', label: { es: 'Práctica de yoga', en: 'Yoga practice' } }) },
     { title: { es: 'Vacío · foto 4:3 con movimiento', en: 'Empty · 4:3 photo with movement' }, render: () => h(MediaSlot, { ratio: '4:3', kind: 'photo', movement: 'arde', label: { es: 'Interior del estudio', en: 'Studio interior' }, brief: 'hot room at golden hour, steam on the glass' }) },
     { title: { es: 'Vacío · video 21:9', en: 'Empty · 21:9 video' }, render: () => h(MediaSlot, { ratio: '21:9', kind: 'video', label: { es: 'Video de portada', en: 'Hero video' }, brief: 'studio at golden hour, slow dolly' }) },
     { title: { es: 'Con archivo real', en: 'With a real asset' }, render: () => h(MediaSlot, { ratio: '16:9', kind: 'photo', src: './brand/p8-2.png', label: { es: 'Tablero de marca', en: 'Brand board' } }) },

@@ -263,3 +263,16 @@ _Updated every turn. Codes reference `src/specs/canvasSpecs.ts` and the module `
 - M-03 Table manager · Layout editor (`/#/dev/layout/:code`) + `useLayout`
 - Docs viewer (`/#/docs`), knowledgebase (`/#/dev/knowledgebase`), ops-manual viewer (`/#/manual`)
 - Public website scaffold (home, about, modalities, schedule, teachers, plans, contact, legal) · Testing hub (`/#/`)
+
+
+## Website · Sanctuary 2.0 (0023)
+
+### Done
+- W-01: cinematic architectural hero, tactile movement links, arched class imagery, connected schedule/teachers, material pricing and closing scene.
+- W-01–W-09 / P-01: website-only design, Aleja imagery, preserved CMS/data seam, ES/EN and light/dark, version dropdown with V1 preserved.
+- D-01 / D-02: additive editorial/motion/stone tokens, AmbientScene and SiteVersionSelect metadata, MediaSlot fallback asset support.
+- Website release history, exact video sources, prompts, costed three-loop handoff and asset provenance.
+
+### Backlog
+- Generate and inspect the three approved environmental loops; Magnific catalog unavailable at check, fal budget documented.
+- Confirm real studio photography, teacher portraits, final copy, contact values and pricing before replacing demo content.

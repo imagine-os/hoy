@@ -1,5 +1,5 @@
-import { Fragment, type ReactNode } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Fragment, useState, type ReactNode } from 'react';
+import { Link } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useLayout } from '../../../layout/useLayout';
 import { useTable } from '../../../data/DataContext';
@@ -7,168 +7,77 @@ import type { TeacherRow, ModalityRow, ReviewRow } from '../../../data/schema';
 import { formatCOP } from '../../../i18n/format';
 import { tenant } from '../../../tenant/tenant';
 import { priceItem, FAMILY_LABEL, FAMILY_RATIONALE, type PlanFamily } from '../../../tenant/pricing';
-import { manifesto, philosophy, classesIntro, classes, classOrder, taglines } from '../../../tenant/brand';
+import { classes, classOrder } from '../../../tenant/brand';
 import { movements, type Movement } from '../../../design/tokens';
-import { Button } from '../../../components/atom/Button/Button';
-import { Card } from '../../../components/molecule/Card/Card';
-import { ClassRow } from '../../../components/molecule/ClassRow/ClassRow';
-import { TeacherCard } from '../../../components/organism/TeacherCard/TeacherCard';
+import { AmbientScene } from '../../../components/organism/AmbientScene/AmbientScene';
 import { MediaSlot } from '../../../components/molecule/MediaSlot/MediaSlot';
-import { SectionHead, SiteShell, useWaHref } from '../SiteShell';
+import { Icon } from '../../../components/atom/Icon/Icon';
+import { SiteShell } from '../SiteShell';
 import { siteSpecs } from '../specs';
 import { useTodaySessions } from '../hooks';
-
-const FAMILIES: PlanFamily[] = ['bienvenida', 'membresia', 'pausas', 'regalos', 'espacio'];
+import { useSiteEdition } from '../edition';
+import { siteImage, siteLoops } from '../artwork';
+import { ClassicHomePage } from './ClassicHomePage';
 
 export function HomePage() {
+  const { edition } = useSiteEdition();
+  return edition === 'classic' ? <ClassicHomePage /> : <SanctuaryHome />;
+}
+function SanctuaryHome() {
   const { t, bi, lang } = useI18n();
-  const waHref = useWaHref();
-  const nav = useNavigate();
   const { sections, isVisible } = useLayout(siteSpecs.home);
   const today = useTodaySessions();
-  const todayAll = useTodaySessions(true);
+  const [motion, setMotion] = useState(true);
   const { rows: teachers } = useTable<TeacherRow>('teachers', { where: { active: true }, limit: 4 });
   const { rows: modalities } = useTable<ModalityRow>('modalities');
   const { rows: reviews } = useTable<ReviewRow>('reviews', { orderBy: { column: 'created_at', dir: 'desc' } });
-  const modName = (id: string) => { const m = modalities.find((x) => x.id === id); return m ? (lang === 'es' ? m.name_es : m.name_en) : ''; };
+  const quotes = [...new Map(reviews.filter(r => r.comment && r.visibility !== 'private').map(r => [r.comment, r])).values()].slice(0, 2);
   const trial = priceItem('trial');
-  const trialPrice = trial?.price != null ? formatCOP(trial.price, lang) : '';
-  // one card per distinct comment: the seed repeats a handful of phrases across many reviews
-  const quotes = [...new Map(reviews.filter((r) => r.comment && r.visibility !== 'private').map((r) => [r.comment, r])).values()].slice(0, 3);
-
+  const price = trial?.price != null ? formatCOP(trial.price, lang) : '';
+  const families: PlanFamily[] = ['bienvenida', 'membresia', 'pausas'];
   const SECTIONS: Record<string, () => ReactNode> = {
-    Hero: () => (
-      <section className="container site-hero">
-        <div className="site-hero-copy">
-          <p className="eyebrow">{t('site.hero.eyebrow', { city: tenant.city })}</p>
-          <h1>{bi(manifesto.lead)} <em>{bi(manifesto.emphasis)}</em></h1>
-          <p className="site-lead muted">{t('site.hero.body', { city: tenant.city, mats: tenant.studio.mats, classes: tenant.studio.classesPerDay })}</p>
-          <div className="row wrap">
-            <Link to="/site/plans"><Button size="lg">{t('site.hero.cta', { price: trialPrice })}</Button></Link>
-            <Link to="/site/schedule"><Button size="lg" variant="secondary">{t('site.hero.cta2')}</Button></Link>
-          </div>
+    Hero: () => <section className="sanctuary-hero">
+      <AmbientScene {...siteLoops.hero} alt={t('site.new.artAlt')} className="sanctuary-hero-scene" priority motion={motion} />
+      <div className="sanctuary-hero-wash" />
+      <div className="container sanctuary-hero-inner">
+        <div className="sanctuary-hero-copy">
+          <p className="eyebrow">{t('site.new.eyebrow', { name: tenant.name.toUpperCase() })} <span className="hero-eyebrow-rule" /> {tenant.city}</p>
+          <h1>{t('site.new.title')}<br /><em>{t('site.new.title2')}</em></h1>
+          <p className="sanctuary-intro">{t('site.new.body')}</p>
+          <Link to="/site/schedule" className="sanctuary-button">{t('site.new.book')}<Icon name="arrow-right" size={20} /></Link>
+          <Link to="/site/about" className="sanctuary-text-link">{t('site.new.explore')} <span>↗</span></Link>
         </div>
-        <MediaSlot
-          ratio="21:9" kind="video" movement="arde" slotKey="site.hero"
-          label={t('site.hero.media')}
-          overlay={<span className="site-hero-chip">{bi(taglines.life)}</span>}
-        />
-      </section>
-    ),
-    Movements: () => (
-      <section className="container site-section">
-        <SectionHead title={t('site.movements.title')} body={t('site.movements.body')} />
-        <div className="grid grid-4">
-          {(Object.keys(movements) as Movement[]).map((mv) => (
-            <div key={mv} className={`mvcard mvcard-${mv}`}><h3>{movements[mv].label}</h3><p className="small">{t(`site.mv.${mv}`)}</p></div>
-          ))}
-        </div>
-      </section>
-    ),
-    Classes: () => (
-      <section className="container site-section">
-        <SectionHead eyebrow={bi(classesIntro.eyebrow)} title={t('site.classes.title')} action={<Link to="/site/classes">{t('site.classes.all')} →</Link>} />
-        <div className="site-classgrid">
-          {classOrder.map((slug) => {
-            const c = classes[slug];
-            return (
-              <Link key={slug} to={`/site/classes/${slug}`} className={`site-classcard mvcard-${c.movement}`}>
-                <p className="eyebrow">{bi(c.eyebrow)}</p>
-                <h3>{bi(c.name)}</h3>
-                <p className="small">{bi(c.summary)}</p>
-                <span className="site-classcard-more">{t('site.classes.read')} →</span>
-              </Link>
-            );
-          })}
-        </div>
-      </section>
-    ),
-    TodayClasses: () => (
-      <section className="container site-section">
-        <SectionHead title={t('site.today.title')} action={<Link to="/site/schedule">{t('site.today.all')} →</Link>} />
-        <Card padding="sm">
-          {today.length === 0 && <p className="muted" style={{ padding: 16 }}>{t(todayAll.length ? 'site.today.done' : 'site.today.empty')}</p>}
-          {today.map(({ session: s, modality: m, teacher: te }) => (
-            <ClassRow key={s.id} title={s.title} teacher={te?.display_name ?? ''} startsAt={s.starts_at} durationMin={m?.duration_min ?? 60} movement={m?.movement ?? 'fluye'} booked={s.booked_count} capacity={s.capacity} onClick={() => nav('/site/schedule')} />
-          ))}
-        </Card>
-      </section>
-    ),
-    ValueModel: () => (
-      <section className="container site-section">
-        <SectionHead title={t('site.value.title')} body={t('site.value.body')} action={<Link to="/site/plans">{t('site.value.all')} →</Link>} />
-        <div className="site-valuegrid">
-          {FAMILIES.map((fam) => (
-            <Card key={fam} eyebrow={bi(FAMILY_RATIONALE[fam].role)} title={bi(FAMILY_LABEL[fam])} tone={fam === 'membresia' ? 'highlight' : 'surface'}>
-              <p className="small muted">{bi(FAMILY_RATIONALE[fam].subtitle)}</p>
-            </Card>
-          ))}
-        </div>
-      </section>
-    ),
-    Philosophy: () => (
-      <section className="container site-section">
-        <div className="site-panel">
-          <p className="eyebrow">{bi(philosophy.eyebrow)}</p>
-          <h2>{bi(philosophy.title)}</h2>
-          <hr className="site-panel-rule" />
-          <p className="site-quote">{bi(philosophy.pullQuote)}</p>
-          <div className="site-panel-cols">
-            <p>{bi(philosophy.paragraphs[0])}</p>
-            <p>{bi(philosophy.paragraphs[2])}</p>
-          </div>
-          <p><Link to="/site/about">{t('site.philosophy.more')} →</Link></p>
-        </div>
-      </section>
-    ),
-    Teachers: () => (
-      <section className="container site-section">
-        <SectionHead title={t('site.teachers.title')} body={t('site.teachers.body')} action={<Link to="/site/teachers">{t('site.teachers.title')} →</Link>} />
-        <div className="grid grid-4">
-          {teachers.map((te) => <TeacherCard key={te.id} name={te.display_name} bio={te.bio} rating={te.rating_avg} specialties={te.specialties.map((id) => ({ label: modName(id), movement: modalities.find((m) => m.id === id)?.movement ?? 'fluye' }))} onClick={() => nav('/site/teachers')} />)}
-        </div>
-      </section>
-    ),
-    Testimonials: () => (
-      <section className="container site-section">
-        <SectionHead title={t('site.testimonials.title')} body={t('site.testimonials.body')} />
-        {quotes.length === 0 ? (
-          <Card><p className="muted small">{t('site.testimonials.empty')}</p></Card>
-        ) : (
-          <div className="grid grid-3">
-            {quotes.map((r) => (
-              <Card key={r.id} className="site-testi">
-                <p className="xs" aria-label={`${r.rating}/5`}>{'★'.repeat(r.rating)}<span className="muted">{'★'.repeat(5 - r.rating)}</span></p>
-                <p className="site-testi-quote">“{r.comment}”</p>
-                <p className="xs muted">{t('site.testimonials.member')}</p>
-              </Card>
-            ))}
-          </div>
-        )}
-      </section>
-    ),
-    FirstStep: () => (
-      <section className="container site-section">
-        <div className="site-panel site-cta">
-          <div className="site-cta-copy">
-            <p className="eyebrow">{t('site.first.eyebrow')}</p>
-            <h2>{t('site.first.title')}</h2>
-            <p>{t('site.first.body', { price: trialPrice })}</p>
-          </div>
-          <div className="row wrap">
-            <Link to="/site/plans"><Button size="lg">{t('site.first.cta')}</Button></Link>
-            <a href={waHref(bi({ es: 'Hola HOY, quiero una clase de prueba.', en: 'Hi HOY, I would like a trial class.' }))} target="_blank" rel="noreferrer">
-              <Button size="lg" variant="secondary">{t('site.first.cta2')}</Button>
-            </a>
-          </div>
-        </div>
-      </section>
-    ),
+      </div>
+      <div className="sanctuary-hero-bottom container"><span className="sanctuary-scroll"><span aria-hidden>↓</span>{t('site.new.scroll')}</span><button type="button" className="sanctuary-motion" onClick={() => setMotion(m => !m)} aria-pressed={!motion}>{motion ? 'Ⅱ' : '▷'} <span>{t(motion ? 'site.new.ambient' : 'site.new.static')}</span></button></div>
+    </section>,
+    Movements: () => <section className="container sanctuary-section sanctuary-movements" data-reveal>
+      <div className="sanctuary-centered"><p className="eyebrow">{t('site.new.chapter1')}</p><h2>{t('site.new.movements')}</h2><p className="muted">{t('site.new.movementsBody')}</p></div>
+      <div className="sanctuary-stones">{(Object.keys(movements) as Movement[]).map(m => <Link to={`/site/schedule?movement=${m}`} className="sanctuary-stone" key={m}>
+        <div className="sanctuary-stone-art"><img src={siteImage(`stone-${m}`)} alt="" loading="lazy" width="320" height="320" /></div>
+        <h3>{movements[m].label}</h3><p>{t(`site.mv.${m}`)}</p><span className="sanctuary-stone-arrow" aria-hidden>↗</span>
+      </Link>)}</div>
+    </section>,
+    Philosophy: () => <section className="sanctuary-philosophy" data-reveal><div className="container sanctuary-philosophy-grid">
+      <div className="sanctuary-philosophy-art"><AmbientScene {...siteLoops.philosophy} alt={t('site.new.philosophyAlt')} className="sanctuary-portrait" motion={motion} /><span className="sanctuary-photo-caption">{t('site.new.scroll')}</span></div>
+      <div className="sanctuary-philosophy-copy"><p className="eyebrow">{t('site.new.philosophyLabel')}</p><h2>{t('site.new.philosophyTitle')}<br /><em>{t('site.new.philosophyEm')}</em></h2><p className="muted">{t('site.new.philosophyBody')}</p><Link className="sanctuary-text-link" to="/site/about">{t('site.philosophy.more')} <Icon name="arrow-right" /></Link></div>
+    </div></section>,
+    Classes: () => <section className="container sanctuary-section" data-reveal>
+      <div className="sanctuary-heading"><div><p className="eyebrow">{t('site.new.chapter2')}</p><h2>{t('site.new.classesTitle')}</h2><p className="muted">{t('site.new.classesBody')}</p></div><Link className="sanctuary-text-link" to="/site/classes">{t('site.classes.all')} <Icon name="arrow-right" /></Link></div>
+      <div className="sanctuary-class-gallery">{classOrder.map((slug, index) => <Link className="sanctuary-class" key={slug} to={`/site/classes/${slug}`}>
+        <div className="sanctuary-class-photo"><MediaSlot ratio="4:5" slotKey={`site.classes.${slug}`} label={t('site.classes.media', { name: bi(classes[slug].name) })} fallbackSrc={siteImage(slug)} /><span className="sanctuary-class-open" aria-hidden>↗</span></div>
+        <div className="sanctuary-class-meta"><span className="eyebrow">0{index + 1} / {movements[classes[slug].movement].label}</span><h3>{bi(classes[slug].name)}</h3><p>{bi(classes[slug].eyebrow)}</p></div>
+      </Link>)}</div>
+    </section>,
+    TodayClasses: () => <section className="sanctuary-schedule" data-reveal><div className="container sanctuary-schedule-grid"><div className="sanctuary-schedule-intro"><p className="eyebrow">{t('site.new.chapter3')}</p><h2>{t('site.new.scheduleTitle')}</h2><p>{t('site.new.scheduleBody')}</p><Link className="sanctuary-button is-light" to="/site/schedule">{t('site.today.all')} <Icon name="arrow-right" /></Link></div>
+      <div className="sanctuary-agenda"><div className="sanctuary-agenda-head"><span>{t('site.today.title')}</span><span>{new Intl.DateTimeFormat(lang === 'es' ? 'es-CO' : 'en-US', { day: 'numeric', month: 'short' }).format(new Date())}</span></div>
+        {today.length ? today.slice(0, 4).map(({ session, modality, teacher }) => <Link key={session.id} to={`/site/schedule?movement=${modality?.movement ?? 'fluye'}`} className="sanctuary-session"><span className="sanctuary-session-time">{new Intl.DateTimeFormat(lang === 'es' ? 'es-CO' : 'en-US', { hour: 'numeric', minute: '2-digit' }).format(new Date(session.starts_at))}</span><span><strong>{session.title}</strong><small>{teacher?.display_name} · {modality?.duration_min ?? 60} min</small></span><span aria-hidden>↗</span></Link>) : <p className="sanctuary-agenda-empty">{t('site.today.empty')}</p>}
+      </div></div></section>,
+    Teachers: () => <section className="container sanctuary-section" data-reveal><div className="sanctuary-heading"><div><p className="eyebrow">{t('site.nav.teachers')}</p><h2>{t('site.new.teachersTitle')}</h2><p className="muted">{t('site.new.teachersBody')}</p></div><Link className="sanctuary-text-link" to="/site/teachers">{t('site.nav.teachers')} <Icon name="arrow-right" /></Link></div>
+      <div className="sanctuary-teachers"><div className="sanctuary-community"><img src={siteImage('community')} alt={t('site.new.community')} loading="lazy" /><p>{t('site.new.community')}</p></div><div className="sanctuary-teacher-list">{teachers.map((te, i) => <Link to="/site/teachers" key={te.id} className="sanctuary-teacher-link"><span className="sanctuary-teacher-number">0{i + 1}</span>{te.photo_url && <img src={te.photo_url} alt="" />}<span><h3>{te.display_name}</h3><p>{te.specialties.map(id => {const m = modalities.find(m => m.id === id); return m ? (lang === 'es' ? m.name_es : m.name_en) : '';}).filter(Boolean).join(' · ')}</p></span><span aria-hidden>↗</span></Link>)}</div></div>
+    </section>,
+    ValueModel: () => <section className="sanctuary-plans" data-reveal><div className="container sanctuary-section"><div className="sanctuary-centered"><p className="eyebrow">{t('site.nav.plans')}</p><h2>{t('site.new.plansTitle')}</h2><p className="muted">{t('site.new.plansBody')}</p></div><div className="sanctuary-plan-grid">{families.map((fam, i) => <Link to={'/site/plans'} key={fam} className={`sanctuary-plan ${i === 1 ? 'is-blue' : ''}`}><p className="eyebrow">0{i + 1} / {t(`site.new.planLabel${i}`)}</p><h3>{bi(FAMILY_LABEL[fam])}</h3>{i === 0 && price ? <p className="sanctuary-price">{price}<small>{t('site.new.firstClass')}</small></p> : <p className="sanctuary-plan-sub">{bi(FAMILY_RATIONALE[fam].subtitle)}</p>}<span className="sanctuary-plan-cta">{t('site.plans.all')}<Icon name="arrow-right" /></span></Link>)}</div><div className="sanctuary-centered sanctuary-plans-more"><Link className="sanctuary-text-link" to="/site/plans">{t('site.value.all')} <Icon name="arrow-right" /></Link></div></div></section>,
+    Testimonials: () => quotes.length > 0 ? <section className="container sanctuary-section sanctuary-quotes" data-reveal>{quotes.map(r => <blockquote key={r.id}><span className="sanctuary-quote-mark" aria-hidden>“</span><p>{r.comment}</p><footer>{t('site.testimonials.member')}</footer></blockquote>)}</section> : null,
+    FirstStep: () => <section className="sanctuary-finale" data-reveal><AmbientScene {...siteLoops.ritual} alt={t('site.new.ritualAlt')} className="sanctuary-finale-scene" motion={motion} /><div className="sanctuary-finale-card"><p className="eyebrow">{t('site.new.visit')}</p><h2>{t('site.new.endTitle')}<br /><em>{t('site.new.endEm')}</em></h2><p>{t('site.new.endBody')}</p><Link className="sanctuary-button" to="/site/schedule">{t('site.new.book')}<Icon name="arrow-right" /></Link></div></section>,
   };
-
-  return (
-    <SiteShell>
-      {sections.filter(isVisible).map((name) => SECTIONS[name] ? <Fragment key={name}>{SECTIONS[name]()}</Fragment> : null)}
-    </SiteShell>
-  );
+  return <SiteShell><div className="sanctuary" data-motion={motion ? 'on' : 'off'}>{sections.filter(isVisible).map(name => SECTIONS[name] ? <Fragment key={name}>{SECTIONS[name]()}</Fragment> : null)}</div></SiteShell>;
 }

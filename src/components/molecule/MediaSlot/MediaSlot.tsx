@@ -46,6 +46,8 @@ export interface MediaSlotProps {
   movement?: Movement;
   /** When a real asset lands, pass it here and the slot renders the media instead. */
   src?: string;
+  /** Local editorial fallback; a ready CMS asset takes priority. */
+  fallbackSrc?: string;
   /** Poster frame for a video `src`. */
   poster?: string;
   /** Caption under the slot. */
@@ -62,14 +64,14 @@ export interface MediaSlotProps {
  * chip) — never a broken box.
  */
 export function MediaSlot({
-  ratio, kind = 'photo', label, brief, movement, slotKey, src, poster, caption, overlay, className = '',
+  ratio, kind = 'photo', label, brief, movement, slotKey, src, fallbackSrc, poster, caption, overlay, className = '',
 }: MediaSlotProps) {
   const { bi } = useI18n();
   const { rows } = useTable<MediaAssetRow>('media_assets', slotKey ? { where: { slot_key: slotKey } } : { limit: 0 });
   const asset = slotKey ? rows[0] : undefined;
   const ready = asset && asset.status === 'ready' && asset.url ? asset : undefined;
 
-  const url = src ?? ready?.url ?? undefined;
+  const url = src ?? ready?.url ?? fallbackSrc ?? undefined;
   const effKind = src ? kind : ready?.kind ?? kind;
   const text = typeof label === 'string' ? label : bi(label);
   const alt = (ready && bi(ready.alt)) || text;

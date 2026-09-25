@@ -1,9 +1,9 @@
 {
   "name": "hoyos",
   "private": true,
-  "version": "0.9.0",
+  "version": "0.9.1",
   "type": "module",
-  "description": "HoyOS — operations system for HOY Wellness Center (multi-tenant ready)",
+  "description": "HoyOS \u2014 operations system for HOY Wellness Center (multi-tenant ready)",
   "scripts": {
     "dev": "vite",
     "build": "npm run tokens && tsc --noEmit && vite build",

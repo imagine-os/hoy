@@ -1,3 +1,4 @@
+import { useSiteEdition } from '../edition';
 import { Fragment, type ReactNode } from 'react';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useLayout } from '../../../layout/useLayout';
@@ -10,6 +11,7 @@ import { PageHead, SiteShell } from '../SiteShell';
 import { siteSpecs } from '../specs';
 
 export function TeachersPage() {
+  const { edition } = useSiteEdition();
   const { t, lang, bi } = useI18n();
   const { sections, isVisible } = useLayout(siteSpecs.teachers);
   const { rows: teachers } = useTable<TeacherRow>('teachers', { where: { active: true } });
@@ -29,11 +31,13 @@ export function TeachersPage() {
             const first = te.specialties.map(spec)[0];
             return (
               <Card key={te.id} padding="sm" className="site-teacher">
+                {edition === 'sanctuary' && !te.photo_url ? <div className="site-teacher-monogram" aria-label={t('site.new.portraitPending')}><span aria-hidden>{te.display_name.split(' ').map(part => part[0]).slice(0,2).join('')}</span><small>{t('site.new.portraitPending')}</small></div> : (
                 <MediaSlot
                   ratio="4:3" kind="photo" movement={first?.movement} slotKey="teacher.portrait"
                   src={te.photo_url ?? undefined}
                   label={t('site.teachers.portrait', { name: te.display_name })}
                 />
+                )}
                 <div className="row-between">
                   <h3>{te.display_name}</h3>
                   {te.rating_avg != null && <span className="small muted">★ {te.rating_avg.toFixed(1)}</span>}

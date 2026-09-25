@@ -54,6 +54,7 @@
   --mat-linen: repeating-linear-gradient(90deg,#F7F1E5,#F7F1E5 3px,#EDE4D4 3px,#EDE4D4 6px);
   --font-heading: 'Inter', 'Inter Fallback', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
   --font-body: 'DM Sans', 'DM Sans Fallback', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+  --font-editorial: 'Cormorant Garamond', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
   --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
   --fs-2xs: 0.6875rem;
   --fs-xs: 0.75rem;
@@ -95,6 +96,8 @@
   --r-xl: 32px;
   --r-phone: 34px;
   --r-full: 999px;
+  --dur-reveal: 800ms;
+  --dur-ambient: 18s;
   --dur-fast: 120ms;
   --dur-base: 200ms;
   --dur-slow: 360ms;
@@ -148,6 +151,7 @@
   --gradient-frame: linear-gradient(170deg,#FBF7EF,#F6EFE2);
   --gradient-tile: linear-gradient(150deg,#F5EEE1,#EDE4D4);
   --color-scrim: rgba(36,56,79,.35);
+  --shadow-stone: inset 0 1px 0 rgba(255,255,255,.7), inset 0 -3px 0 rgba(73,65,47,.13), 0 4px 8px -3px rgba(36,56,79,.16), 0 16px 36px -20px rgba(36,56,79,.32);
   --shadow-highlight: inset 0 1px 0 rgba(var(--m-light),.85);
   --shadow-contact: 0 1px 1.5px rgba(var(--m-shade),.10);
   --shadow-soft: 0 6px 14px -8px rgba(var(--m-shade),.30);
