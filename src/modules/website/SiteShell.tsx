@@ -36,7 +36,7 @@ export function useWaHref() {
 /** Public website chrome: header with nav + a footer that carries hours, address and social. */
 export function SiteShell({ children }: { children: ReactNode }) {
   const { t, bi } = useI18n();
-  const { edition, setEdition, videoEnabled, motion } = useSiteEdition();
+  const { edition, setEdition, videoEnabled, motion, setMotion } = useSiteEdition();
   const { pathname } = useLocation();
   const shell = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -51,21 +51,16 @@ export function SiteShell({ children }: { children: ReactNode }) {
     const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
     const pointer = window.matchMedia('(hover: hover) and (pointer: fine)');
     let frame = 0;
-    let active: HTMLElement | null = null;
-    const reset = () => { cancelAnimationFrame(frame); frame = 0; if (active) { active.style.removeProperty('--depth-x'); active.style.removeProperty('--depth-y'); active = null; } };
+    const reset = () => { cancelAnimationFrame(frame); frame = 0; el.style.removeProperty('--depth-x'); el.style.removeProperty('--depth-y'); };
     const move = (event: PointerEvent) => {
       if (preference.matches || !pointer.matches || event.pointerType === 'touch') { reset(); return; }
-      const target = (event.target as Element).closest<HTMLElement>('.sanctuary-philosophy-art,.sanctuary-community,.sanctuary-plan,.site-teacher,.sanctuary-teacher-link');
-      if (target !== active) { reset(); active = target; }
-      if (!target) return;
-      const rect = target.getBoundingClientRect();
-      const x = Math.max(-1, Math.min(1, (event.clientX - rect.left) / rect.width * 2 - 1));
-      const y = Math.max(-1, Math.min(1, (event.clientY - rect.top) / rect.height * 2 - 1));
+      const x = Math.max(-1, Math.min(1, event.clientX / window.innerWidth * 2 - 1));
+      const y = Math.max(-1, Math.min(1, event.clientY / window.innerHeight * 2 - 1));
       cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => { target.style.setProperty('--depth-x', String(x)); target.style.setProperty('--depth-y', String(y)); });
+      frame = requestAnimationFrame(() => { el.style.setProperty('--depth-x', String(x)); el.style.setProperty('--depth-y', String(y)); });
     };
-    el.addEventListener('pointermove', move, { passive: true }); el.addEventListener('pointerleave', reset); preference.addEventListener('change', reset);
-    return () => { reset(); el.removeEventListener('pointermove', move); el.removeEventListener('pointerleave', reset); preference.removeEventListener('change', reset); };
+    window.addEventListener('pointermove', move, { passive: true }); document.documentElement.addEventListener('pointerleave', reset); preference.addEventListener('change', reset);
+    return () => { reset(); window.removeEventListener('pointermove', move); document.documentElement.removeEventListener('pointerleave', reset); preference.removeEventListener('change', reset); };
   }, [edition, pathname, motion]);
   const { theme, toggleTheme } = useTheme();
   const [open, setOpen] = useState(false);
@@ -82,6 +77,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
           </nav>
           <div className="site-actions">
             <SiteVersionSelect value={edition} videoEnabled={videoEnabled} onChange={setEdition} />
+            {edition === 'sanctuary' && <button type="button" className="site-iconbtn" onClick={() => setMotion(!motion)} aria-pressed={!motion} aria-label={t(motion ? 'site.new.ambient' : 'site.new.static')}>{motion ? 'Ⅱ' : '▷'}</button>}
             <LangToggle size="sm" />
             <button type="button" className="site-iconbtn" onClick={toggleTheme} aria-label={t('core.theme.toggle')}><Icon name={theme === 'dark' ? 'moon' : 'sun'} size={17} /></button>
             <Link to="/auth/sign-in"><Button size="sm">{t('site.nav.signin')}</Button></Link>

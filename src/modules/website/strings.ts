@@ -215,8 +215,8 @@ export const strings: StringTable = {
   'site.delete.inApp': { es: '¿Tienes la app? Hazlo desde Perfil → Cuenta y datos', en: 'Have the app? Do it from Profile → Account & data' },
   'site.delete.sent.title': { es: 'Solicitud recibida', en: 'Request received' },
   'site.delete.sent.body': { es: 'Referencia {ref}. Te escribimos al contacto que dejaste cuando esté hecha, en máximo quince días hábiles. Si tienes cuenta en la app, verás el estado en Perfil → Cuenta y datos.', en: 'Reference {ref}. We write to the contact you left once it is done, within fifteen business days at most. If you have an account in the app, the status shows under Profile → Account & data.' },
-  'site.edition.video': { es: 'V2.1 · Video', en: 'V2.1 · Video' },
-  'site.edition.still': { es: 'V2.1 · Sin video', en: 'V2.1 · Still' },
+  'site.edition.video': { es: 'V2.2 · Video', en: 'V2.2 · Video' },
+  'site.edition.still': { es: 'V2.2 · Sin video', en: 'V2.2 · Still' },
   'site.new.samplePortrait': { es: 'Retrato de muestra · generado', en: 'Sample portrait · generated' },
   'site.new.samplePortraits': { es: 'Retratos generados para ilustrar el diseño; no representan al equipo real.', en: 'Generated sample portraits illustrate the design; they do not depict the real team.' },
 };

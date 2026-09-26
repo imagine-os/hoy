@@ -1,4 +1,4 @@
-import { sampleTeacherPortrait } from '../artwork';
+import { sampleTeacherPortrait, siteVideo } from '../artwork';
 import { useSiteEdition } from '../edition';
 import { Fragment, type ReactNode } from 'react';
 import { useI18n } from '../../../i18n/I18nProvider';
@@ -12,7 +12,7 @@ import { PageHead, SiteShell } from '../SiteShell';
 import { siteSpecs } from '../specs';
 
 export function TeachersPage() {
-  const { edition } = useSiteEdition();
+  const { edition, motion, videoEnabled } = useSiteEdition();
   const { t, lang, bi } = useI18n();
   const { sections, isVisible } = useLayout(siteSpecs.teachers);
   const { rows: teachers } = useTable<TeacherRow>('teachers', { where: { active: true } });
@@ -37,17 +37,18 @@ export function TeachersPage() {
                   ratio={edition === 'sanctuary' ? "4:5" : "4:3"} kind="photo" movement={first?.movement} slotKey="teacher.portrait"
                   src={te.photo_url ?? undefined}
                   fallbackSrc={edition === 'sanctuary' ? sampleTeacherPortrait(te.id) : undefined}
+                  fallbackVideo={edition === 'sanctuary' && videoEnabled && sampleTeacherPortrait(te.id) ? siteVideo(`teacher-${te.id.slice(4)}`) : undefined} motion={motion}
                   caption={edition === 'sanctuary' && !te.photo_url && sampleTeacherPortrait(te.id) ? t('site.new.samplePortrait') : undefined}
                   label={t('site.teachers.portrait', { name: te.display_name })}
                 />
                 )}
-                <div className="row-between">
+                <div className="site-teacher-copy"><div className="row-between">
                   <h3>{te.display_name}</h3>
                   {te.rating_avg != null && <span className="small muted">★ {te.rating_avg.toFixed(1)}</span>}
                 </div>
                 <p className="small">{bi(te.bio)}</p>
                 <div className="row wrap">{te.specialties.map(spec).map((s) => <Chip key={s.label} movement={s.movement} dot>{s.label}</Chip>)}</div>
-              </Card>
+              </div></Card>
             );
           })}
         </div>

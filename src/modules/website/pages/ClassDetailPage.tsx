@@ -1,4 +1,4 @@
-import { siteImage } from '../artwork';
+import { siteImage, siteVideo } from '../artwork';
 import { useSiteEdition } from '../edition';
 import { Fragment, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router-dom';
@@ -21,7 +21,7 @@ import { siteSpecs } from '../specs';
 
 /** W-08 — one class essay, joined to its modality rows through brand.classes[slug].modalitySlugs. */
 export function ClassDetailPage() {
-  const { edition } = useSiteEdition();
+  const { edition, motion, videoEnabled } = useSiteEdition();
   const { slug = '' } = useParams();
   const { t, bi, lang } = useI18n();
   const { sections, isVisible } = useLayout(siteSpecs.classDetail);
@@ -53,7 +53,7 @@ export function ClassDetailPage() {
       <>
         <PageHead eyebrow={bi(c.eyebrow)} title={bi(c.name)} body={bi(c.summary)} back={{ to: '/site/classes', label: t('site.classes.back') }} />
         <section className="container site-section" style={{ paddingTop: 0 }}>
-          <MediaSlot ratio="16:9" kind="photo" movement={c.movement} slotKey={`site.classes.${slug}`} fallbackSrc={edition === "sanctuary" ? siteImage(slug) : undefined} label={t('site.classes.media', { name: bi(c.name) })} brief={c.brief} />
+          <MediaSlot ratio="16:9" kind="photo" movement={c.movement} slotKey={`site.classes.${slug}`} fallbackSrc={edition === "sanctuary" ? siteImage(slug) : undefined} fallbackVideo={edition === "sanctuary" && videoEnabled ? siteVideo(slug) : undefined} motion={motion} label={t('site.classes.media', { name: bi(c.name) })} brief={c.brief} />
         </section>
       </>
     ),

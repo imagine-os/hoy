@@ -11,8 +11,8 @@ export default defineMeta({
     { name: 'tone', type: "'surface' | 'primary' | 'highlight' | 'muted'", default: 'surface', description: { es: 'Material.', en: 'Material.' } },
     { name: 'raised / interactive', type: 'boolean', description: { es: 'Elevación mayor / hover que levanta.', en: 'Higher elevation / lifting hover.' } },
   ],
-  states: ['default', 'raised', 'interactive-hover'],
-  usages: [{ title: { es: 'Tonos', en: 'Tones' }, render: () => h('div', { className: 'grid grid-2' }, h(Card, { eyebrow: 'Hoy', title: 'Hot Vinyasa · 6:30' }, 'Superficie.'), h(Card, { tone: 'primary', title: 'Próxima clase' }, 'Primario.'), h(Card, { tone: 'highlight', title: 'Mejor valor' }, 'Realce.'), h(Card, { tone: 'muted', interactive: true, title: 'Interactiva' }, 'Pasa el cursor.')) }],
+  states: ['arched teacher card', 'default', 'raised', 'interactive-hover'],
+  usages: [{ title: { es: 'Maestro · arco completo', en: 'Teacher · full arch' }, render: () => h('div', { className: 'site', 'data-edition': 'sanctuary', style: { maxWidth: 340 } }, h(Card, { className: 'site-teacher' }, h('img', { src: './images/sanctuary/teacher-andres.webp', alt: 'Sample portrait', style: { width: '100%' } }), h('div', { className: 'site-teacher-copy' }, 'Retrato de muestra / Sample portrait'))) },{ title: { es: 'Tonos', en: 'Tones' }, render: () => h('div', { className: 'grid grid-2' }, h(Card, { eyebrow: 'Hoy', title: 'Hot Vinyasa · 6:30' }, 'Superficie.'), h(Card, { tone: 'primary', title: 'Próxima clase' }, 'Primario.'), h(Card, { tone: 'highlight', title: 'Mejor valor' }, 'Realce.'), h(Card, { tone: 'muted', interactive: true, title: 'Interactiva' }, 'Pasa el cursor.')) }],
   a11y: [{ es: 'Si es interactiva, el hijo debe tener el control accesible (botón o enlace).', en: 'When interactive, the child must hold the accessible control (button or link).' }],
   usedBy: ['C-01', 'HUB', 'P-01', 'M-03', 'D-01', 'D-02'],
 });

@@ -2,6 +2,7 @@
 
 | Website version | Release | Date | Link | Notes |
 | --- | --- | --- | --- | --- |
+| V2.2 · Living photographs | 2.2 | 2026-09-26 | [Open](https://imagine-os.github.io/hoy/#/site?version=sanctuary&video=on&motion=on) | Regenerated hero, living class and portrait photographs, full arched teacher cards, page-wide pointer depth and shared pause. |
 | V2.1 · Living Sanctuary | 2.1 | 2026-09-25 | [Video on](https://imagine-os.github.io/hoy/#/site?version=sanctuary&video=on) · [Video off](https://imagine-os.github.io/hoy/#/site?version=sanctuary&video=off) | Inset shadows, pointer depth, teacher hover, eight sample portraits, corrected logo and tropical closing scene. |
 | V2 · Sanctuary | 2.0 | 2026-09-25 | [Open Sanctuary](https://imagine-os.github.io/hoy/#/site?version=sanctuary) | Aleja direction, stone controls, architectural imagery, responsive editorial design, ambient-ready backgrounds. |
 | V1 · Original | Baseline at 8560b9f | Preserved 2026-09-25 | [Open Original](https://imagine-os.github.io/hoy/#/site?version=classic) | Original home content and visual styles; shared navigation adds the edition switcher. |

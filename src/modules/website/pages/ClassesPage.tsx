@@ -1,4 +1,4 @@
-import { siteImage } from '../artwork';
+import { siteImage, siteVideo } from '../artwork';
 import { useSiteEdition } from '../edition';
 import { Fragment, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
@@ -20,7 +20,7 @@ import { siteSpecs } from '../specs';
 
 /** W-07 — "Nuestras clases": the intro plus one rich card per class, all from src/tenant/brand.ts. */
 export function ClassesPage() {
-  const { edition } = useSiteEdition();
+  const { edition, motion, videoEnabled } = useSiteEdition();
   const { t, bi, lang } = useI18n();
   const { sections, isVisible } = useLayout(siteSpecs.classes);
   const { rows: modalitiesAll } = useTable<ModalityRow>('modalities', { where: { active: true } });
@@ -58,7 +58,7 @@ export function ClassesPage() {
                   </div>
                 </div>
                 <div className="site-classrow-media">
-                  <MediaSlot ratio="16:9" kind="photo" movement={c.movement} slotKey={`site.classes.${slug}`} fallbackSrc={edition === "sanctuary" ? siteImage(slug) : undefined} label={t('site.classes.media', { name: bi(c.name) })} brief={c.brief} />
+                  <MediaSlot ratio="16:9" kind="photo" movement={c.movement} slotKey={`site.classes.${slug}`} fallbackSrc={edition === "sanctuary" ? siteImage(slug) : undefined} fallbackVideo={edition === "sanctuary" && videoEnabled ? siteVideo(slug) : undefined} motion={motion} label={t('site.classes.media', { name: bi(c.name) })} brief={c.brief} />
                 </div>
               </article>
             );

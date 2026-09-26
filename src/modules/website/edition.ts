@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 export type SiteEdition = 'sanctuary' | 'classic';
 const KEY = 'hoy.site.edition';
-export const SITE_RELEASE = '2.1';
+export const SITE_RELEASE = '2.2';
 export function useSiteEdition() {
   const { pathname, search } = useLocation();
   const navigate = useNavigate();

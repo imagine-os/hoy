@@ -233,6 +233,7 @@ export const spacing = {
 
 /** Canvas radii: 4 (code tags) · 8 · 11 (controls, date cells) · 16 (cards) · 18 (desktop frame) · 24 · 32 · 34 (phone) · pill. */
 export const radii = {
+  'r-arch-card': '50% 50% 16px 16px / 180px 180px 16px 16px',
   'r-2xs': '2px',    // hairline tracks (bar lists, token bars)
   'r-xs': '4px', 'r-sm': '8px', 'r-ctl': '11px', 'r-md': '16px', 'r-frame': '18px', 'r-lg': '24px', 'r-xl': '32px', 'r-phone': '34px', 'r-full': '999px',
 } as const;

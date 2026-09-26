@@ -312,3 +312,24 @@
 .sanctuary-community p { transform: translate(calc(var(--depth-x,0) * 5px),calc(var(--depth-y,0) * 4px)); transition: transform var(--dur-slow); }
 .site[data-motion="off"] .sanctuary-community p { transform: none; }
 @media(prefers-reduced-motion:reduce) { .sanctuary-community p { transform: none; } }
+
+/* V2.2: the complete card forms the arch; the photo meets its outer edge. */
+.site[data-edition="sanctuary"] .site-teacher { padding: 0; border-radius: var(--r-arch-card); overflow: hidden; gap: 0; }
+.site[data-edition="sanctuary"] .site-teacher .mediaslot-fig { margin: 0; }
+.site[data-edition="sanctuary"] .site-teacher .mediaslot { border: 0; border-radius: 0; }
+.site[data-edition="sanctuary"] .site-teacher .mediaslot-cap { padding: var(--sp-3) var(--sp-5) 0; }
+.site[data-edition="classic"] .site-teacher-copy { display: contents; }
+.site[data-edition="sanctuary"] .site-teacher-copy { padding: var(--sp-5); display: flex; flex-direction: column; gap: var(--sp-3); }
+.mediaslot-living { position: absolute; inset: 0; }
+.community-living { aspect-ratio: 4/5; width: 100%; }
+.site[data-edition="sanctuary"] .site-teacher .ambient-scene-media,
+.site[data-edition="sanctuary"] .sanctuary-class-photo .ambient-scene-media,
+.site[data-edition="sanctuary"] .community-living .ambient-scene-media,
+.site[data-edition="sanctuary"] .site-classrow .ambient-scene-media { transform: translate(calc(var(--depth-x,0) * -6px),calc(var(--depth-y,0) * -5px)); transition: transform var(--dur-slow) var(--ease-out); }
+.site[data-edition="sanctuary"] .site-teacher { transform: perspective(1000px) rotateX(calc(var(--depth-y,0) * -0.6deg)) rotateY(calc(var(--depth-x,0) * 0.8deg)); }
+.site[data-edition="sanctuary"] .sanctuary-hero-scene .ambient-scene-media { transform: none; }
+.site[data-motion="off"] .ambient-scene-media,.site[data-motion="off"] .site-teacher { transform: none !important; }
+@media(prefers-reduced-motion:reduce) { .site[data-edition="sanctuary"] .ambient-scene-media,.site[data-edition="sanctuary"] .site-teacher { transform: none !important; } }
+
+.teacher-avatar-living { width: 54px; height: 64px; flex: 0 0 54px; border-radius: var(--r-full); }
+.sanctuary-teacher-link .teacher-avatar-living img { width: 108%; height: 108%; border-radius: 0; transform: none; }

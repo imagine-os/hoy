@@ -4,6 +4,7 @@ import { useTable } from '../../../data/DataContext';
 import type { MediaAssetRow } from '../../../data/schema';
 import type { Bi } from '../../../specs/types';
 import type { Movement } from '../../../design/tokens';
+import { AmbientScene } from '../../organism/AmbientScene/AmbientScene';
 import './MediaSlot.css';
 
 export type MediaRatio = '16:9' | '4:3' | '4:5' | '1:1' | '21:9';
@@ -48,6 +49,9 @@ export interface MediaSlotProps {
   src?: string;
   /** Local editorial fallback; a ready CMS asset takes priority. */
   fallbackSrc?: string;
+  /** Living version of the fallback only; never replaces an explicit or CMS asset. */
+  fallbackVideo?: string;
+  motion?: boolean;
   /** Poster frame for a video `src`. */
   poster?: string;
   /** Caption under the slot. */
@@ -64,7 +68,7 @@ export interface MediaSlotProps {
  * chip) — never a broken box.
  */
 export function MediaSlot({
-  ratio, kind = 'photo', label, brief, movement, slotKey, src, fallbackSrc, poster, caption, overlay, className = '',
+  ratio, kind = 'photo', label, brief, movement, slotKey, src, fallbackSrc, fallbackVideo, motion = true, poster, caption, overlay, className = '',
 }: MediaSlotProps) {
   const { bi } = useI18n();
   const { rows } = useTable<MediaAssetRow>('media_assets', slotKey ? { where: { slot_key: slotKey } } : { limit: 0 });
@@ -81,12 +85,14 @@ export function MediaSlot({
   const style = { aspectRatio: ratio ? RATIO_CSS[ratio] : asset?.ratio ?? RATIO_CSS['16:9'] };
   const arLabel = ratio ?? (asset?.ratio ? asset.ratio.replace(/\s/g, '') : '16:9');
   const cls = `mediaslot ${mv ? `mediaslot-${mv}` : ''} ${url ? 'has-src' : 'is-empty'} ${className}`;
+  const living = !!(url && fallbackVideo && !src && !ready && effKind !== 'video');
 
   return (
     <figure className="mediaslot-fig">
       <div className={cls} style={style} title={hint} role={url ? undefined : 'img'} aria-label={url ? undefined : text}>
         {url && effKind === 'video' && <video className="mediaslot-media" src={url} poster={poster} controls playsInline preload="metadata" aria-label={alt} />}
-        {url && effKind !== 'video' && <img className="mediaslot-media" src={url} alt={alt} loading="lazy" />}
+        {living && <AmbientScene poster={url!} video={fallbackVideo} motion={motion} alt={alt} className="mediaslot-living" />}
+        {url && effKind !== 'video' && !living && <img className="mediaslot-media" src={url} alt={alt} loading="lazy" />}
         {!url && (
           <div className="mediaslot-empty">
             <span className="mediaslot-glyph" aria-hidden>{GLYPH[effKind]}</span>
