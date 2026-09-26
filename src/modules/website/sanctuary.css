@@ -41,7 +41,7 @@
 .site[data-edition="sanctuary"] .site-foot { margin-top: 0; background: var(--color-lane); padding-top: 30px; }
 .site[data-edition="sanctuary"] .site-foot-grid { grid-template-columns: 1.2fr 1.2fr 1.3fr 1fr; }
 .site[data-edition="sanctuary"] .site-foot-grid > :last-child { display: none; }
-.site[data-edition="sanctuary"] .site-foot-grid > :first-child img { width: 100px; height: auto; margin-bottom: 12px; }
+.site[data-edition="sanctuary"] .site-footer-wordmark { align-self: flex-start; flex: none; max-width: 100%; object-fit: contain; object-position: left center; margin-bottom: 12px; }
 .site[data-edition="sanctuary"] .site-daybtn { border-radius: var(--r-xs); min-width: 90px; padding: 17px 22px; box-shadow: var(--shadow-stone); }
 .site[data-edition="sanctuary"] .classrow { padding-top: 22px; padding-bottom: 22px; }
 .sanctuary h2 em { color: var(--color-primary); }
@@ -274,3 +274,41 @@
  .site[data-edition="sanctuary"] .langtoggle { padding:2px; }
  .site[data-edition="sanctuary"] .langtoggle button { padding:4px; min-width:22px; }
 }
+
+/* 2.1 — recessed image wells and separate photo, frame and caption planes. */
+.site[data-edition="sanctuary"] .sanctuary-button { box-shadow: var(--shadow-stone), var(--shadow-carved); }
+.site[data-edition="sanctuary"] .sanctuary-button:active { box-shadow: var(--shadow-pressed-deep); }
+.sanctuary-portrait::after,.sanctuary-community::after,.sanctuary-class-photo::after { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; box-shadow: var(--shadow-photo-inset); z-index: 2; }
+.sanctuary-philosophy-art { perspective: 1000px; }
+.sanctuary-portrait { box-shadow: var(--shadow-frame); transform: rotateX(calc(var(--depth-y,0) * -2deg)) rotateY(calc(var(--depth-x,0) * 3deg)); transition: transform var(--dur-slow) var(--ease-out); }
+.sanctuary-portrait .ambient-scene-media { transform: translate(calc(var(--depth-x,0) * -9px),calc(var(--scene-shift,0px) + var(--depth-y,0) * -8px)) scale(1.025); transition: transform var(--dur-slow) var(--ease-out); }
+.sanctuary-philosophy-art::before { transform: translate(calc(var(--depth-x,0) * -5px),calc(var(--depth-y,0) * -5px)); transition: transform var(--dur-slow); box-shadow: var(--shadow-carved); }
+.sanctuary-photo-caption { transform: translate(calc(var(--depth-x,0) * 12px),calc(var(--depth-y,0) * 9px)); transition: transform var(--dur-slow); z-index: 3; }
+.sanctuary-community img { transform: scale(1.045) translate(calc(var(--depth-x,0) * -7px),calc(var(--depth-y,0) * -7px)); transition: transform var(--dur-slow); }
+.sanctuary-community p { width: 100%; z-index: 3; }
+.sanctuary-teacher-link { border-radius: var(--r-sm); transition: background var(--dur-slow), box-shadow var(--dur-slow), padding var(--dur-slow); }
+.sanctuary-teacher-link:hover,.sanctuary-teacher-link:focus-visible { padding-left: 16px; padding-right: 16px; background: var(--color-surface); box-shadow: var(--shadow-carved); }
+.sanctuary-teacher-link img { transition: transform var(--dur-slow), box-shadow var(--dur-slow); box-shadow: var(--shadow-frame); }
+.sanctuary-teacher-link:hover img { transform: scale(1.12) rotate(calc(var(--depth-x,0) * 3deg)); }
+.sanctuary-teacher-link > span:last-child { transition: transform var(--dur-base); }
+.sanctuary-teacher-link:hover > span:last-child { transform: translate(3px,-3px); }
+.sample-portrait-label { display: block; font-size: 10px; color: var(--color-text-muted); margin-top: 5px; }
+.site[data-edition="sanctuary"] .site-teacher { overflow: hidden; transition: transform var(--dur-slow),box-shadow var(--dur-slow); }
+.site[data-edition="sanctuary"] .site-teacher:hover { transform: perspective(1000px) rotateX(calc(var(--depth-y,0) * -1deg)) rotateY(calc(var(--depth-x,0) * 2deg)) translateY(-4px); box-shadow: var(--shadow-raised); }
+.site[data-edition="sanctuary"] .site-teacher .mediaslot { box-shadow: var(--shadow-photo-inset); }
+.site[data-edition="sanctuary"] .site-teacher .mediaslot-media { transition: transform var(--dur-slow); }
+.site[data-edition="sanctuary"] .site-teacher:hover .mediaslot-media { transform: scale(1.035); }
+.site[data-motion="off"] [data-reveal] { opacity: 1; transform: none; }
+.site[data-motion="off"] *, .site[data-motion="off"] *::before { transition: none !important; animation: none !important; }
+@media (prefers-reduced-motion: reduce), (hover: none) {
+ .sanctuary-portrait,.sanctuary-philosophy-art::before,.sanctuary-photo-caption,.sanctuary-community img,.site[data-edition="sanctuary"] .site-teacher:hover,.site[data-edition="sanctuary"] .site-teacher:hover .mediaslot-media,.sanctuary-teacher-link:hover img { transform: none; }
+ .sanctuary-portrait .ambient-scene-media { transform: none; }
+}
+
+.sanctuary-about-scene { aspect-ratio: 2/3; width: min(100%, 620px); margin: 0 auto 20px; border-radius: 48% 48% 3px 3px; box-shadow: var(--shadow-frame); }
+.site[data-motion="off"] .sanctuary-portrait, .site[data-motion="off"] .sanctuary-portrait .ambient-scene-media, .site[data-motion="off"] .sanctuary-philosophy-art::before, .site[data-motion="off"] .sanctuary-photo-caption, .site[data-motion="off"] .sanctuary-community img, .site[data-motion="off"] .sanctuary-teacher-link:hover img, .site[data-motion="off"] .site-teacher:hover, .site[data-motion="off"] .site-teacher:hover .mediaslot-media { transform: none; }
+
+.sanctuary-community { perspective: 1000px; box-shadow: var(--shadow-frame); }
+.sanctuary-community p { transform: translate(calc(var(--depth-x,0) * 5px),calc(var(--depth-y,0) * 4px)); transition: transform var(--dur-slow); }
+.site[data-motion="off"] .sanctuary-community p { transform: none; }
+@media(prefers-reduced-motion:reduce) { .sanctuary-community p { transform: none; } }

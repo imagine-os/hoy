@@ -1,4 +1,7 @@
-import { siteImage } from '../artwork';
+import { AmbientScene } from '../../../components/organism/AmbientScene/AmbientScene';
+import { useTable } from '../../../data/DataContext';
+import type { MediaAssetRow } from '../../../data/schema';
+import { siteLoops, siteImage } from '../artwork';
 import { useSiteEdition } from '../edition';
 import { Fragment, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
@@ -15,7 +18,9 @@ import { siteSpecs } from '../specs';
 
 /** W-02 — the brand's own words, from src/tenant/brand.ts. */
 export function AboutPage() {
-  const { edition } = useSiteEdition();
+  const { edition, videoEnabled, motion, setMotion } = useSiteEdition();
+  const { rows: media } = useTable<MediaAssetRow>('media_assets', { where: { slot_key: 'site.about' } });
+  const readyMedia = media.some(asset => asset.status === 'ready' && asset.url);
   const { t, bi } = useI18n();
   const { sections, isVisible } = useLayout(siteSpecs.about);
 
@@ -43,7 +48,7 @@ export function AboutPage() {
     Media: () => (
       <section className="container site-section">
         <div className="site-media-cap">
-          <MediaSlot ratio="4:3" kind="photo" slotKey="site.about" fallbackSrc={edition === "sanctuary" ? siteImage("arch") : undefined} label={t('site.about.media')} />
+          {edition === 'sanctuary' && !readyMedia ? <><AmbientScene {...siteLoops.studio} video={videoEnabled ? siteLoops.studio.video : undefined} motion={motion} className="sanctuary-about-scene" alt={t('site.about.media')} /><button type="button" className="sanctuary-motion" onClick={() => setMotion(!motion)} aria-pressed={!motion}>{t(motion ? 'site.new.ambient' : 'site.new.static')}</button></> : <MediaSlot ratio="4:3" kind="photo" slotKey="site.about" fallbackSrc={edition === "sanctuary" ? siteImage("arch") : undefined} label={t('site.about.media')} />}
         </div>
       </section>
     ),

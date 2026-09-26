@@ -2,6 +2,7 @@
 
 | Website version | Release | Date | Link | Notes |
 | --- | --- | --- | --- | --- |
+| V2.1 · Living Sanctuary | 2.1 | 2026-09-25 | [Video on](https://imagine-os.github.io/hoy/#/site?version=sanctuary&video=on) · [Video off](https://imagine-os.github.io/hoy/#/site?version=sanctuary&video=off) | Inset shadows, pointer depth, teacher hover, eight sample portraits, corrected logo and tropical closing scene. |
 | V2 · Sanctuary | 2.0 | 2026-09-25 | [Open Sanctuary](https://imagine-os.github.io/hoy/#/site?version=sanctuary) | Aleja direction, stone controls, architectural imagery, responsive editorial design, ambient-ready backgrounds. |
 | V1 · Original | Baseline at 8560b9f | Preserved 2026-09-25 | [Open Original](https://imagine-os.github.io/hoy/#/site?version=classic) | Original home content and visual styles; shared navigation adds the edition switcher. |
 
@@ -9,4 +10,4 @@ V2 is the default for a new visitor. The native dropdown is available on every p
 
 [Video production handoff](website-motion-production.md) · [Asset sources](website-assets.md)
 
-**Resumen (ES).** El selector de navegación permite comparar Santuario V2 con el sitio original V1. Clases, maestros y precios siguen usando la misma capa de datos. Los videos están preparados pero pendientes de generación.
+**Resumen (ES).** El selector de navegación permite comparar Santuario V2 con el sitio original V1. Clases, maestros y precios siguen usando la misma capa de datos. V2.1 añade videos ambientales opcionales, retratos de muestra y profundidad con el puntero.

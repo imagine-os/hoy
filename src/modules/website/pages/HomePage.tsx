@@ -1,4 +1,4 @@
-import { Fragment, useState, type ReactNode } from 'react';
+import { Fragment, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useLayout } from '../../../layout/useLayout';
@@ -16,7 +16,7 @@ import { SiteShell } from '../SiteShell';
 import { siteSpecs } from '../specs';
 import { useTodaySessions } from '../hooks';
 import { useSiteEdition } from '../edition';
-import { siteImage, siteLoops } from '../artwork';
+import { siteImage, siteLoops, sampleTeacherPortrait } from '../artwork';
 import { ClassicHomePage } from './ClassicHomePage';
 
 export function HomePage() {
@@ -27,7 +27,7 @@ function SanctuaryHome() {
   const { t, bi, lang } = useI18n();
   const { sections, isVisible } = useLayout(siteSpecs.home);
   const today = useTodaySessions();
-  const [motion, setMotion] = useState(true);
+  const { motion, setMotion, videoEnabled } = useSiteEdition();
   const { rows: teachers } = useTable<TeacherRow>('teachers', { where: { active: true }, limit: 4 });
   const { rows: modalities } = useTable<ModalityRow>('modalities');
   const { rows: reviews } = useTable<ReviewRow>('reviews', { orderBy: { column: 'created_at', dir: 'desc' } });
@@ -37,7 +37,7 @@ function SanctuaryHome() {
   const families: PlanFamily[] = ['bienvenida', 'membresia', 'pausas'];
   const SECTIONS: Record<string, () => ReactNode> = {
     Hero: () => <section className="sanctuary-hero">
-      <AmbientScene {...siteLoops.hero} alt={t('site.new.artAlt')} className="sanctuary-hero-scene" priority motion={motion} />
+      <AmbientScene {...siteLoops.hero} video={videoEnabled ? siteLoops.hero.video : undefined} alt={t('site.new.artAlt')} className="sanctuary-hero-scene" priority motion={motion} />
       <div className="sanctuary-hero-wash" />
       <div className="container sanctuary-hero-inner">
         <div className="sanctuary-hero-copy">
@@ -48,7 +48,7 @@ function SanctuaryHome() {
           <Link to="/site/about" className="sanctuary-text-link">{t('site.new.explore')} <span>↗</span></Link>
         </div>
       </div>
-      <div className="sanctuary-hero-bottom container"><span className="sanctuary-scroll"><span aria-hidden>↓</span>{t('site.new.scroll')}</span><button type="button" className="sanctuary-motion" onClick={() => setMotion(m => !m)} aria-pressed={!motion}>{motion ? 'Ⅱ' : '▷'} <span>{t(motion ? 'site.new.ambient' : 'site.new.static')}</span></button></div>
+      <div className="sanctuary-hero-bottom container"><span className="sanctuary-scroll"><span aria-hidden>↓</span>{t('site.new.scroll')}</span><button type="button" className="sanctuary-motion" onClick={() => setMotion(!motion)} aria-pressed={!motion}>{motion ? 'Ⅱ' : '▷'} <span>{t(motion ? 'site.new.ambient' : 'site.new.static')}</span></button></div>
     </section>,
     Movements: () => <section className="container sanctuary-section sanctuary-movements" data-reveal>
       <div className="sanctuary-centered"><p className="eyebrow">{t('site.new.chapter1')}</p><h2>{t('site.new.movements')}</h2><p className="muted">{t('site.new.movementsBody')}</p></div>
@@ -73,11 +73,11 @@ function SanctuaryHome() {
         {today.length ? today.slice(0, 4).map(({ session, modality, teacher }) => <Link key={session.id} to={`/site/schedule?movement=${modality?.movement ?? 'fluye'}`} className="sanctuary-session"><span className="sanctuary-session-time">{new Intl.DateTimeFormat(lang === 'es' ? 'es-CO' : 'en-US', { hour: 'numeric', minute: '2-digit' }).format(new Date(session.starts_at))}</span><span><strong>{session.title}</strong><small>{teacher?.display_name} · {modality?.duration_min ?? 60} min</small></span><span aria-hidden>↗</span></Link>) : <p className="sanctuary-agenda-empty">{t('site.today.empty')}</p>}
       </div></div></section>,
     Teachers: () => <section className="container sanctuary-section" data-reveal><div className="sanctuary-heading"><div><p className="eyebrow">{t('site.nav.teachers')}</p><h2>{t('site.new.teachersTitle')}</h2><p className="muted">{t('site.new.teachersBody')}</p></div><Link className="sanctuary-text-link" to="/site/teachers">{t('site.nav.teachers')} <Icon name="arrow-right" /></Link></div>
-      <div className="sanctuary-teachers"><div className="sanctuary-community"><img src={siteImage('community')} alt={t('site.new.community')} loading="lazy" /><p>{t('site.new.community')}</p></div><div className="sanctuary-teacher-list">{teachers.map((te, i) => <Link to="/site/teachers" key={te.id} className="sanctuary-teacher-link"><span className="sanctuary-teacher-number">0{i + 1}</span>{te.photo_url && <img src={te.photo_url} alt="" />}<span><h3>{te.display_name}</h3><p>{te.specialties.map(id => {const m = modalities.find(m => m.id === id); return m ? (lang === 'es' ? m.name_es : m.name_en) : '';}).filter(Boolean).join(' · ')}</p></span><span aria-hidden>↗</span></Link>)}</div></div>
+      <div className="sanctuary-teachers"><div className="sanctuary-community"><img src={siteImage('community')} alt={t('site.new.community')} loading="lazy" /><p>{t('site.new.community')}</p></div><div className="sanctuary-teacher-list">{teachers.map((te, i) => <Link to="/site/teachers" key={te.id} className="sanctuary-teacher-link"><span className="sanctuary-teacher-number">0{i + 1}</span>{(te.photo_url || sampleTeacherPortrait(te.id)) && <img src={te.photo_url || sampleTeacherPortrait(te.id)} alt="" />}<span><h3>{te.display_name}</h3>{!te.photo_url && sampleTeacherPortrait(te.id) && <small className="sample-portrait-label">{t('site.new.samplePortrait')}</small>}<p>{te.specialties.map(id => {const m = modalities.find(m => m.id === id); return m ? (lang === 'es' ? m.name_es : m.name_en) : '';}).filter(Boolean).join(' · ')}</p></span><span aria-hidden>↗</span></Link>)}</div></div>
     </section>,
     ValueModel: () => <section className="sanctuary-plans" data-reveal><div className="container sanctuary-section"><div className="sanctuary-centered"><p className="eyebrow">{t('site.nav.plans')}</p><h2>{t('site.new.plansTitle')}</h2><p className="muted">{t('site.new.plansBody')}</p></div><div className="sanctuary-plan-grid">{families.map((fam, i) => <Link to={'/site/plans'} key={fam} className={`sanctuary-plan ${i === 1 ? 'is-blue' : ''}`}><p className="eyebrow">0{i + 1} / {t(`site.new.planLabel${i}`)}</p><h3>{bi(FAMILY_LABEL[fam])}</h3>{i === 0 && price ? <p className="sanctuary-price">{price}<small>{t('site.new.firstClass')}</small></p> : <p className="sanctuary-plan-sub">{bi(FAMILY_RATIONALE[fam].subtitle)}</p>}<span className="sanctuary-plan-cta">{t('site.plans.all')}<Icon name="arrow-right" /></span></Link>)}</div><div className="sanctuary-centered sanctuary-plans-more"><Link className="sanctuary-text-link" to="/site/plans">{t('site.value.all')} <Icon name="arrow-right" /></Link></div></div></section>,
     Testimonials: () => quotes.length > 0 ? <section className="container sanctuary-section sanctuary-quotes" data-reveal>{quotes.map(r => <blockquote key={r.id}><span className="sanctuary-quote-mark" aria-hidden>“</span><p>{r.comment}</p><footer>{t('site.testimonials.member')}</footer></blockquote>)}</section> : null,
-    FirstStep: () => <section className="sanctuary-finale" data-reveal><AmbientScene {...siteLoops.ritual} alt={t('site.new.ritualAlt')} className="sanctuary-finale-scene" motion={motion} /><div className="sanctuary-finale-card"><p className="eyebrow">{t('site.new.visit')}</p><h2>{t('site.new.endTitle')}<br /><em>{t('site.new.endEm')}</em></h2><p>{t('site.new.endBody')}</p><Link className="sanctuary-button" to="/site/schedule">{t('site.new.book')}<Icon name="arrow-right" /></Link></div></section>,
+    FirstStep: () => <section className="sanctuary-finale" data-reveal><AmbientScene {...siteLoops.ritual} video={videoEnabled ? siteLoops.ritual.video : undefined} alt={t('site.new.ritualAlt')} className="sanctuary-finale-scene" motion={motion} /><div className="sanctuary-finale-card"><p className="eyebrow">{t('site.new.visit')}</p><h2>{t('site.new.endTitle')}<br /><em>{t('site.new.endEm')}</em></h2><p>{t('site.new.endBody')}</p><Link className="sanctuary-button" to="/site/schedule">{t('site.new.book')}<Icon name="arrow-right" /></Link></div></section>,
   };
   return <SiteShell><div className="sanctuary" data-motion={motion ? 'on' : 'off'}>{sections.filter(isVisible).map(name => SECTIONS[name] ? <Fragment key={name}>{SECTIONS[name]()}</Fragment> : null)}</div></SiteShell>;
 }

@@ -142,6 +142,8 @@ export const semantic = {
  * rgb triplets so dark re-colours them. `card` = .surf2 tiles, `raised` = .surf panels/frames.
  */
 export const shadows = {
+  'shadow-photo-inset': 'inset 0 8px 24px rgba(var(--m-shade),.24), inset 0 1px 2px rgba(var(--m-shade),.35)',
+  'shadow-carved': 'inset 0 2px 7px rgba(var(--m-shade),.18), inset 0 -1px 0 rgba(var(--m-light),.75)',
   'shadow-stone': 'inset 0 1px 0 rgba(255,255,255,.7), inset 0 -3px 0 rgba(73,65,47,.13), 0 4px 8px -3px rgba(36,56,79,.16), 0 16px 36px -20px rgba(36,56,79,.32)',
   'shadow-highlight': 'inset 0 1px 0 rgba(var(--m-light),.85)',
   'shadow-contact': '0 1px 1.5px rgba(var(--m-shade),.10)',

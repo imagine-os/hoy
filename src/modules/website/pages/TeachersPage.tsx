@@ -1,3 +1,4 @@
+import { sampleTeacherPortrait } from '../artwork';
 import { useSiteEdition } from '../edition';
 import { Fragment, type ReactNode } from 'react';
 import { useI18n } from '../../../i18n/I18nProvider';
@@ -25,16 +26,18 @@ export function TeachersPage() {
     PageHead: () => <PageHead title={t('site.teachers.title')} body={t('site.teachers.body')} />,
     TeacherGrid: () => (
       <section className="container site-section" style={{ paddingTop: 0 }}>
-        <p className="xs muted" style={{ marginBottom: 16 }}>{t('site.teachers.legend')}</p>
+        <p className="xs muted" style={{ marginBottom: 16 }}>{t('site.teachers.legend')} {edition === 'sanctuary' && t('site.new.samplePortraits')}</p>
         <div className="site-teachergrid">
           {teachers.map((te) => {
             const first = te.specialties.map(spec)[0];
             return (
               <Card key={te.id} padding="sm" className="site-teacher">
-                {edition === 'sanctuary' && !te.photo_url ? <div className="site-teacher-monogram" aria-label={t('site.new.portraitPending')}><span aria-hidden>{te.display_name.split(' ').map(part => part[0]).slice(0,2).join('')}</span><small>{t('site.new.portraitPending')}</small></div> : (
+                {edition === 'sanctuary' && !te.photo_url && !sampleTeacherPortrait(te.id) ? <div className="site-teacher-monogram" aria-label={t('site.new.portraitPending')}><span aria-hidden>{te.display_name.split(' ').map(part => part[0]).slice(0,2).join('')}</span><small>{t('site.new.portraitPending')}</small></div> : (
                 <MediaSlot
-                  ratio="4:3" kind="photo" movement={first?.movement} slotKey="teacher.portrait"
+                  ratio={edition === 'sanctuary' ? "4:5" : "4:3"} kind="photo" movement={first?.movement} slotKey="teacher.portrait"
                   src={te.photo_url ?? undefined}
+                  fallbackSrc={edition === 'sanctuary' ? sampleTeacherPortrait(te.id) : undefined}
+                  caption={edition === 'sanctuary' && !te.photo_url && sampleTeacherPortrait(te.id) ? t('site.new.samplePortrait') : undefined}
                   label={t('site.teachers.portrait', { name: te.display_name })}
                 />
                 )}

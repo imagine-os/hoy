@@ -14,11 +14,14 @@ export interface AmbientSceneProps {
 export function AmbientScene({ poster, video, alt, children, className = '', priority = false, motion = true }: AmbientSceneProps) {
   const root = useRef<HTMLDivElement>(null);
   const player = useRef<HTMLVideoElement>(null);
+  const [ready, setReady] = useState(false);
   const [visible, setVisible] = useState(priority);
   const [permitted, setPermitted] = useState(false);
   const [failed, setFailed] = useState(false);
   const [requested, setRequested] = useState(false);
+  useEffect(() => { setReady(false); setFailed(false); setRequested(false); }, [video]);
   useEffect(() => { if (video && visible && permitted) setRequested(true); }, [video, visible, permitted]);
+  useEffect(() => { if (!permitted) setReady(false); }, [permitted]);
   useEffect(() => {
     const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
     const connection = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
@@ -58,7 +61,7 @@ export function AmbientScene({ poster, video, alt, children, className = '', pri
   }, [visible, permitted, video, requested]);
   return <div ref={root} className={`ambient-scene ${className}`}>
     <img className="ambient-scene-media" src={poster} alt={alt} loading={priority ? 'eager' : 'lazy'} fetchPriority={priority ? 'high' : 'auto'} />
-    {video && permitted && requested && !failed && <video ref={player} className="ambient-scene-media" src={video} poster={poster} muted loop playsInline preload="none" aria-hidden="true" onError={() => setFailed(true)} />}
+    {video && permitted && requested && !failed && <video ref={player} className={`ambient-scene-media ambient-scene-video ${ready ? "is-ready" : ""}`} src={video} poster={poster} muted loop playsInline preload="none" aria-hidden="true" onPlaying={() => setReady(true)} onError={() => setFailed(true)} />}
     {children && <div className="ambient-scene-content">{children}</div>}
   </div>;
 }

@@ -50,7 +50,7 @@ export const strings: StringTable = {
   "site.new.portraitPending": { es: "Retrato por confirmar", en: "Portrait to be confirmed" },
   "site.new.artAlt": { es: "Concepto de un santuario de yoga con arcos y luz natural", en: "Concept yoga sanctuary with arches and natural light" },
   "site.new.philosophyAlt": { es: "Una pausa al sol frente a las montañas", en: "A pause in the sunlight facing the mountains" },
-  "site.new.ritualAlt": { es: "Lino, cerámica azul y piedra junto al agua", en: "Linen, blue ceramic and stone beside the water" },
+  "site.new.ritualAlt": { es: "Estudio tropical de yoga con jardín en Medellín", en: "Tropical yoga studio with a garden in Medellín" },
   "site.new.visit": { es: "Te esperamos.", en: "We’ll see you here." },
   "site.new.firstClass": { es: "Tu primera clase", en: "Your first class" },
   'site.nav.home': { es: 'Inicio', en: 'Home' },
@@ -215,4 +215,8 @@ export const strings: StringTable = {
   'site.delete.inApp': { es: '¿Tienes la app? Hazlo desde Perfil → Cuenta y datos', en: 'Have the app? Do it from Profile → Account & data' },
   'site.delete.sent.title': { es: 'Solicitud recibida', en: 'Request received' },
   'site.delete.sent.body': { es: 'Referencia {ref}. Te escribimos al contacto que dejaste cuando esté hecha, en máximo quince días hábiles. Si tienes cuenta en la app, verás el estado en Perfil → Cuenta y datos.', en: 'Reference {ref}. We write to the contact you left once it is done, within fifteen business days at most. If you have an account in the app, the status shows under Profile → Account & data.' },
+  'site.edition.video': { es: 'V2.1 · Video', en: 'V2.1 · Video' },
+  'site.edition.still': { es: 'V2.1 · Sin video', en: 'V2.1 · Still' },
+  'site.new.samplePortrait': { es: 'Retrato de muestra · generado', en: 'Sample portrait · generated' },
+  'site.new.samplePortraits': { es: 'Retratos generados para ilustrar el diseño; no representan al equipo real.', en: 'Generated sample portraits illustrate the design; they do not depict the real team.' },
 };

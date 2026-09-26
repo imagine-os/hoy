@@ -2,3 +2,6 @@
 .ambient-scene-media { position: absolute; inset: -4%; width: 108%; height: 108%; max-width: none; object-fit: cover; transform: translateY(var(--scene-shift, 0px)); }
 .ambient-scene-content { position: relative; z-index: 1; height: 100%; }
 @media (prefers-reduced-motion: reduce) { .ambient-scene-media { transform: none; } }
+
+.ambient-scene-video { opacity: 0; transition: opacity var(--dur-reveal) ease; }
+.ambient-scene-video.is-ready { opacity: 1; }
