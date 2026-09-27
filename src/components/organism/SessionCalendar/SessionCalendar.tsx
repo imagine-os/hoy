@@ -14,7 +14,7 @@ export function SessionCalendar({ sessions, onPick, mine, initialView = 'week' }
   const { t, lang, bi } = useI18n();
   const { settings } = useSettings();
   const [view, setView] = useState<CalendarView>(initialView);
-  const [date, setDate] = useState(() => { const next = sessions.find(x => x.session.status === 'scheduled' && new Date(x.session.starts_at).getTime() > Date.now()); return initialView === 'week' && new Date().getDay() === 0 && next ? fromDateKey(dateKey(new Date(next.session.starts_at))) : fromDateKey(dateKey()); });
+  const [date, setDate] = useState(() => { const next = sessions.find(x => x.session.status === 'scheduled' && new Date(x.session.starts_at).getTime() > Date.now()); return initialView === 'week' && next ? fromDateKey(dateKey(new Date(next.session.starts_at))) : fromDateKey(dateKey()); });
   const monday = addDays(date, -((date.getDay() + 6) % 7));
   const monthStart = new Date(date.getFullYear(), date.getMonth(), 1, 12);
   const gridStart = addDays(monthStart, -((monthStart.getDay() + 6) % 7));
@@ -34,7 +34,7 @@ export function SessionCalendar({ sessions, onPick, mine, initialView = 'week' }
           <button className="calendar-day-head" type="button" onClick={() => openDay(d)} aria-label={formatDate(d, lang, { weekday: 'long', day: 'numeric', month: 'long' })}><span>{formatDate(d, lang, { weekday: 'short' })}</span><strong>{d.getDate()}</strong><small>{t('site.calendar.classes', { n: onDay(d).length })}</small></button>
           {onDay(d).length === 0 && <p className="calendar-empty small">{t('site.calendar.noClasses')}</p>}
           {onDay(d).slice(0, view === 'month' ? 2 : undefined).map(x => <button key={x.session.id} type="button" className={`calendar-session ${x.session.status !== 'scheduled' ? 'is-off' : ''}`} data-movement={x.modality?.movement ?? 'fluye'} onClick={() => onPick(x.session)}>
-            <ClassThumbnail modality={x.modality}/><span className="calendar-session-copy"><time>{formatTime(x.session.starts_at, lang)}</time><strong>{name(x).title}</strong>{view === 'week' && <span>{x.teacher?.display_name}</span>}<small>{x.session.status !== 'scheduled' ? t(`core.status.${x.session.status}`) : mine?.has(x.session.id) ? t('core.status.booked') : x.session.booked_count >= x.session.capacity ? t('core.common.full') : t('core.common.spots', { n: x.session.capacity - x.session.booked_count })}</small></span>
+            <ClassThumbnail modality={x.modality}/><span className="calendar-session-copy"><time>{formatTime(x.session.starts_at, lang)}</time><strong>{name(x).title}</strong>{view === 'week' && <span>{x.teacher?.display_name}</span>}<small>{x.session.status !== 'scheduled' ? t(x.session.status === 'completed' ? 'customer.schedule.done' : 'core.status.cancelled') : mine?.has(x.session.id) ? t('core.status.booked') : x.session.booked_count >= x.session.capacity ? t('core.common.full') : t('core.common.spots', { n: x.session.capacity - x.session.booked_count })}</small></span>
           </button>)}
           {view === 'month' && onDay(d).length > 2 && <button type="button" className="calendar-more" onClick={() => openDay(d)}>{t('site.calendar.more', { n: onDay(d).length - 2 })}</button>}
         </div>)}</div>

@@ -13,6 +13,6 @@ export interface ChipProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 export function Chip({ selected = false, movement, dot = false, className = '', children, onClick, ...rest }: ChipProps) {
   const cls = `chip ${selected ? 'is-selected' : ''} ${movement ? `chip-mv chip-${movement}` : ''} ${className}`;
   const inner = <>{dot && <span className="chip-dot" aria-hidden />}{children}</>;
-  if (onClick) return <button type="button" className={cls} aria-pressed={selected} onClick={onClick} {...rest}>{inner}</button>;
-  return <span className={cls}>{inner}</span>;
+  if (onClick) return <button type="button" data-movement={movement} className={cls} aria-pressed={selected} onClick={onClick} {...rest}>{inner}</button>;
+  return <span data-movement={movement} className={cls}>{inner}</span>;
 }
