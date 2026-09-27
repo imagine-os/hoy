@@ -17,7 +17,8 @@ import { Skeleton } from '../../../components/atom/Skeleton/Skeleton';
 import { canvasSpecs } from '../specs';
 import { useBookingActions, useEntitlements, useMyBookings, useSessionJoined, useWaitlistFor } from '../hooks';
 import { policy } from '../policy';
-import { MediaPlaceholder, MovementChip, PageHead, durationMin, movementOf, roomName, shareText } from '../ui';
+import {  PageHead, durationMin, roomName, shareText } from '../ui';
+import { ClassThumbnail } from '../../../components/molecule/ClassThumbnail/ClassThumbnail';
 import { StudioCancelledBlock } from './blocks';
 
 const spec = canvasSpecs['C-03'];
@@ -76,9 +77,7 @@ export function ClassDetailPage() {
 
   const SECTIONS: Record<string, () => ReactNode> = {
     'HeroImage (placeholder)': () => (
-      <MediaPlaceholder slotKey="class.hero" label={t('customer.class.heroPlaceholder')} movement={movementOf(joined)}>
-        <div className="cust-hero-chip"><MovementChip j={joined} /></div>
-      </MediaPlaceholder>
+      <div style={{ aspectRatio: '16 / 9', overflow: 'hidden', borderRadius: 'var(--r-lg)' }}><ClassThumbnail modality={m}/></div>
     ),
     'TitleBlock (time, duration, room)': () => (
       <div className="stack-sm">

@@ -20,6 +20,9 @@ import { PASS_IDS, priceOf, useBookingActions, useEntitlements, useMyBookings, u
 import { PAYMENT_METHODS, recordPayment, wompiCheckout, type PayMethod, type WompiResult } from '../payments';
 import { policy } from '../policy';
 import { PageHead, durationMin, movementOf, roomName, teacherName } from '../ui';
+import { MatPicker } from '../../../components/organism/MatPicker/MatPicker';
+import { usesMats, occupiesMat, chooseMat } from '../../../data/mats';
+import { tenant } from '../../../tenant/tenant';
 import { DeclinedBlock, type DeclinedState } from './blocks';
 
 const spec = canvasSpecs['C-04'];
@@ -43,6 +46,11 @@ export function CheckoutPage() {
 
   const passParam = params.get('pass');
   const claimId = params.get('claim');
+  const [mat, setMat] = useState<number | null>(() => Number(params.get('mat')) || null);
+  const { rows: roomBookings } = useTable<BookingRow>('bookings', { where: { session_id: id ?? '' } });
+  const yoga = usesMats(joined?.modality);
+  const matValid = mat != null && Number.isInteger(mat) && mat >= 1 && mat <= Math.min(joined?.session.capacity ?? 0, tenant.studio.mats) && !roomBookings.some(b => occupiesMat(b) && b.mat_number === mat);
+  const alreadyBooked = myBookings.some(b => b.session_id === id && occupiesMat(b));
   const [choice, setChoice] = useState<Choice | null>(() => {
     if (passParam && isPass(passParam as Choice)) return passParam as Choice;
     // A pass picked on C-07 before choosing a class (sessionStorage) becomes the default here.
@@ -53,7 +61,7 @@ export function CheckoutPage() {
   const [method, setMethod] = useState<PayMethod>('card');
   const [simulateDecline, setSimulateDecline] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<'full' | 'unavailable' | 'conflict' | null>(null);
+  const [error, setError] = useState<'full' | 'unavailable' | 'conflict' | 'mat' | null>(null);
   const [declined, setDeclined] = useState<DeclinedState | null>(null);
   const [done, setDone] = useState<{ booking: BookingRow; pending: boolean } | null>(null);
 
@@ -71,7 +79,12 @@ export function CheckoutPage() {
     if (!joined) return;
     setBusy(true); setError(null);
     try {
-      if (joined.session.status !== 'scheduled') throw new Error('session_unavailable');
+      if (yoga) {
+        if (!matValid) { setError('mat'); return; }
+        chooseMat(await data.list<BookingRow>('bookings', { where: { session_id: joined.session.id } }), Math.min(joined.session.capacity, tenant.studio.mats), mat);
+      }
+      if (alreadyBooked) throw new Error('booking_exists');
+      if (joined.session.status !== 'scheduled' || new Date(joined.session.starts_at).getTime() <= Date.now()) throw new Error('session_unavailable');
       if (conflict) { setError('conflict'); return; }
       let paidWith: EntitlementKind = kind === 'credit' ? 'credit' : kind === 'membership' ? 'membership' : kind === 'trial' ? 'trial' : kind === 'single' ? 'single' : 'credit';
       let creditPlanId: string | null = null;
@@ -91,12 +104,12 @@ export function CheckoutPage() {
           paidWith = 'credit'; creditPlanId = `plan_${item.id}`;
         }
       }
-      const booking = await book(joined.session, paidWith, { creditPlanId });
+      const booking = await book(joined.session, paidWith, { creditPlanId, matNumber: yoga ? mat : null });
       if (claimId) await data.update('waitlist', claimId, { status: 'claimed' });
       setDeclined(null);
       setDone({ booking, pending });
     } catch (e) {
-      setError((e as Error).message === 'session_full' ? 'full' : 'unavailable');
+      setError((e as Error).message.startsWith('mat_') ? 'mat' : (e as Error).message === 'session_full' ? 'full' : 'unavailable');
     } finally { setBusy(false); }
   };
 
@@ -111,7 +124,7 @@ export function CheckoutPage() {
 
   const s = joined.session;
   const SECTIONS: Record<string, () => ReactNode> = {
-    ClassSummary: () => <ClassCard title={s.title} teacher={teacherName(joined)} room={roomName(joined)} startsAt={s.starts_at} endsAt={s.ends_at} movement={movementOf(joined)} booked={s.booked_count} capacity={s.capacity} level={s.level} />,
+    ClassSummary: () => <div className="stack"><ClassCard title={s.title} teacher={teacherName(joined)} room={roomName(joined)} startsAt={s.starts_at} endsAt={s.ends_at} movement={movementOf(joined)} booked={s.booked_count} capacity={s.capacity} level={s.level} />{yoga && <MatPicker sessionId={s.id} capacity={s.capacity} value={mat} onChange={n => { setMat(n); setError(null); }} />}</div>,
     EntitlementPicker: () => declined ? null : (
       <section className="stack-sm">
         <h2 className="cust-h2">{t('customer.checkout.payWith')}</h2>
@@ -147,10 +160,12 @@ export function CheckoutPage() {
       <DeclinedBlock state={declined} amount={amount} onRetry={(m) => { setMethod(m); setDeclined(null); setSimulateDecline(false); }} onRelease={() => nav(`/app/class/${s.id}`)} onExpired={() => setDeclined(null)} />
     ) : (
       <div className="stack-sm cust-sticky">
+        {error === 'mat' && <Notice tone="warn">{t('site.mat.error')}</Notice>}
+        {alreadyBooked && <Notice tone="warn">{t('customer.home.booked')}</Notice>}
         {error === 'full' && <Notice tone="warn" title={t('customer.checkout.race.title')} action={<Button size="sm" onClick={() => nav(`/app/waitlist/${s.id}`)}>{t('core.common.waitlist')}</Button>}>{t('customer.checkout.race.body')}</Notice>}
         {error === 'unavailable' && <Notice tone="danger" title={t('core.common.error')}>{t('customer.checkout.unavailable')}</Notice>}
         {(error === 'conflict' || conflict) && <Notice tone="warn">{t('customer.book.oneADay')} {conflict && <Link to={`/app/class/${conflict}`}>{t('customer.class.seeOther')}</Link>}</Notice>}
-        <Button block size="lg" loading={busy} disabled={!!conflict || s.status !== 'scheduled'} onClick={confirm}>
+        <Button block size="lg" loading={busy} disabled={!!conflict || alreadyBooked || (yoga && !matValid) || s.status !== 'scheduled' || new Date(s.starts_at).getTime() <= Date.now()} onClick={confirm}>
           {amount > 0 ? (methodOpt.provider === 'wompi' ? t('customer.checkout.payWompi', { amount: formatCOP(amount, lang) }) : t('customer.checkout.confirmManual', { amount: formatCOP(amount, lang) })) : t('customer.checkout.confirm')}
         </Button>
         <p className="xs muted" style={{ textAlign: 'center' }}>{t('customer.checkout.policy', { h: policy.cancelWindowHours })}</p>
@@ -168,6 +183,7 @@ export function CheckoutPage() {
         {done && (
           <div className="stack">
             <ClassCard variant="next" title={s.title} teacher={teacherName(joined)} room={roomName(joined)} startsAt={s.starts_at} endsAt={s.ends_at} movement={movementOf(joined)} booked={s.booked_count} capacity={s.capacity} />
+            {done.booking.mat_number && <p className="small">{t('site.mat.confirmed', { n: done.booking.mat_number })}</p>}
             {done.pending ? <Notice tone="warn" title={t('customer.checkout.pending.title')}>{t('customer.checkout.pending.body')}</Notice> : <p className="small muted">{t('customer.checkout.success.body', { min: durationMin(joined) })}</p>}
             <Button block size="lg" onClick={() => nav(`/app/booking/${done.booking.id}`)}>{t('customer.class.viewBooking')}</Button>
             <Button block variant="ghost" onClick={() => nav('/app/schedule')}>{t('customer.class.backToSchedule')}</Button>

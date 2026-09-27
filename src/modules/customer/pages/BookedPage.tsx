@@ -57,7 +57,7 @@ export function BookedPage({ change = false }: { change?: boolean }) {
   const inside = insideCancelWindow(s.starts_at, now);
   const bookingBase = `/app/booking/${booking.id}`;
 
-  const addToCalendar = () => downloadIcs({ title: `${s.title} · ${tenant.name}`, startsAt: s.starts_at, endsAt: s.ends_at, location: `${tenant.name} · ${roomName(joined)}`, description: teacherName(joined) });
+  const addToCalendar = () => downloadIcs({ title: `${s.title} · ${tenant.name}`, startsAt: s.starts_at, endsAt: s.ends_at, location: `${tenant.name} · ${roomName(joined)}`, description: `${teacherName(joined)}${booking.mat_number ? ` · ${t('site.mat.confirmed', { n: booking.mat_number })}` : ''}` });
   const share = async () => { const r = await shareText(t('customer.booked.shareText', { title: s.title, when: `${formatDate(s.starts_at, lang)} ${formatTime(s.starts_at, lang)}`, name: tenant.name }), window.location.href); if (r !== 'failed') setFlash({ tone: 'success', text: r === 'copied' ? t('customer.class.linkCopied') : t('customer.class.shared') }); };
 
   const SECTIONS: Record<string, () => ReactNode> = {
@@ -80,7 +80,7 @@ export function BookedPage({ change = false }: { change?: boolean }) {
       );
     },
     ClassSummary: () => (
-      <ClassCard title={s.title} teacher={teacherName(joined)} room={roomName(joined)} startsAt={s.starts_at} endsAt={s.ends_at} movement={movementOf(joined)} booked={s.booked_count} capacity={s.capacity} level={s.level} onClick={() => nav(`/app/class/${s.id}`)} />
+      <div className="stack-sm"><ClassCard title={s.title} teacher={teacherName(joined)} room={roomName(joined)} startsAt={s.starts_at} endsAt={s.ends_at} movement={movementOf(joined)} booked={s.booked_count} capacity={s.capacity} level={s.level} onClick={() => nav(`/app/class/${s.id}`)} />{booking.mat_number && <p className="small" style={{ textAlign: 'center' }}>{t('site.mat.confirmed', { n: booking.mat_number })}</p>}</div>
     ),
     PrepReminder: () => active ? (
       <Card eyebrow={t('customer.class.prep')} padding="md">

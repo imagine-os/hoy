@@ -8,6 +8,7 @@ import { taglines } from '../../tenant/brand';
 import { Wordmark } from '../../components/atom/Wordmark/Wordmark';
 import { LangToggle } from '../../components/molecule/LangToggle/LangToggle';
 import { Button } from '../../components/atom/Button/Button';
+import { ElementCursor } from '../../components/atom/ElementCursor/ElementCursor';
 import './site.css';
 import './sanctuary.css';
 import { useSiteEdition } from './edition';
@@ -69,6 +70,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
   const pending = contact.pending ? ` (${bi(contact.pendingLabel)})` : '';
   return (
     <div className="site" data-edition={edition} data-motion={motion ? "on" : "off"} ref={shell}>
+      <ElementCursor enabled={edition === 'sanctuary' && motion} />
       <header className="site-head">
         <div className="container site-head-in">
           <Link to="/site" className="site-brand" onClick={() => setOpen(false)}><Wordmark height={34} /><span className="site-brand-caption">{bi(tenant.tagline)}</span></Link>

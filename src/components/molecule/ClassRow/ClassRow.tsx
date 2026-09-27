@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { formatTime } from '../../../i18n/format';
 import type { Movement } from '../../../design/tokens';
@@ -6,6 +7,7 @@ import { Badge } from '../../atom/Badge/Badge';
 import './ClassRow.css';
 
 export interface ClassRowProps {
+  thumbnail?: ReactNode;
   title: string;
   teacher: string;
   startsAt: string;
@@ -19,13 +21,14 @@ export interface ClassRowProps {
 }
 
 /** Dense one-line class entry for lists (today, schedule day, check-in). */
-export function ClassRow({ title, teacher, startsAt, durationMin, movement, booked, capacity, status = 'scheduled', booked_by_me, onClick }: ClassRowProps) {
+export function ClassRow({ thumbnail, title, teacher, startsAt, durationMin, movement, booked, capacity, status = 'scheduled', booked_by_me, onClick }: ClassRowProps) {
   const { lang, t } = useI18n();
   const Tag = onClick ? 'button' : 'div';
   // No spots left: the row states it as a pill and the capacity meter gives way to it (nothing left to meter).
   const full = status === 'scheduled' && booked >= capacity;
   return (
-    <Tag className={`classrow classrow-${status} ${full ? 'is-full' : ''} ${onClick ? 'is-clickable' : ''}`} onClick={onClick} type={onClick ? 'button' : undefined}>
+    <Tag data-movement={movement} className={`classrow classrow-${status} ${full ? 'is-full' : ''} ${onClick ? 'is-clickable' : ''}`} onClick={onClick} type={onClick ? 'button' : undefined}>
+      {thumbnail && <span className="classrow-thumbnail">{thumbnail}</span>}
       <span className={`classrow-dot mv-${movement}`} aria-hidden />
       <div className="classrow-time"><strong>{formatTime(startsAt, lang)}</strong><span className="xs muted">{t('core.common.min', { n: durationMin })}</span></div>
       <div className="grow">

@@ -1,26 +1,18 @@
 import { Fragment, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
-import { classDisplay, useSettings, useVisibleModalities } from '../../admin/settings';
+import { useVisibleModalities } from '../../admin/settings';
 import { useSession } from '../../../auth/SessionProvider';
 import { useTable } from '../../../data/DataContext';
 import type { ClassSessionRow, ModalityRow, TeacherRow } from '../../../data/schema';
-import { formatDate, formatTime, isSameDay } from '../../../i18n/format';
 import { useLayout } from '../../../layout/useLayout';
 import { movements, type Movement } from '../../../design/tokens';
-import { Card } from '../../../components/molecule/Card/Card';
 import { Chip } from '../../../components/atom/Chip/Chip';
 import { Button } from '../../../components/atom/Button/Button';
-import { Badge } from '../../../components/atom/Badge/Badge';
 import { Select } from '../../../components/atom/Input/Input';
 import { Field } from '../../../components/molecule/Field/Field';
 import { Drawer } from '../../../components/organism/Drawer/Drawer';
-import { ClassRow } from '../../../components/molecule/ClassRow/ClassRow';
-import { DateStrip } from '../../../components/molecule/DateStrip/DateStrip';
-import { SegmentedControl } from '../../../components/molecule/SegmentedControl/SegmentedControl';
-import { SkeletonRows } from '../../../components/atom/Skeleton/Skeleton';
-import { EmptyState } from '../../../components/molecule/EmptyState/EmptyState';
-import { dayList } from '../../website/hooks';
+import { SessionCalendar } from '../../../components/organism/SessionCalendar/SessionCalendar';
 import { canvasSpecs } from '../specs';
 import { useAllSessionsJoined, useMyBookings } from '../hooks';
 import { PageHead } from '../ui';
@@ -36,9 +28,7 @@ const FKEY = 'hoyos.customer.scheduleFilters';
 
 /** C-02 Class schedule; with `view="week"` it is C-02b at /app/schedule/week (`?view=week` redirects there). */
 export function SchedulePage({ view: routeView }: SchedulePageProps) {
-  const { t, bi, lang } = useI18n();
-  const { settings: contentSettings } = useSettings();
-  const naming = contentSettings.content.publicNaming;
+  const { t, bi } = useI18n();
   const nav = useNavigate();
   const { user } = useSession();
   const [params] = useSearchParams();
@@ -48,15 +38,11 @@ export function SchedulePage({ view: routeView }: SchedulePageProps) {
   // Deep link from the website: /app/schedule?session=<id> → class detail.
   useEffect(() => { const s = params.get('session'); if (s) nav(`/app/class/${s}`, { replace: true }); else if (params.get('view') === 'week') nav('/app/schedule/week', { replace: true }); }, [params, nav]);
 
-  const setView = (v: View) => nav(v === 'week' ? '/app/schedule/week' : '/app/schedule');
-  const days = useMemo(() => dayList(7), []);
-  const [day, setDay] = useState(0);
   const [sheet, setSheet] = useState(false);
   const [filters, setFilters] = useState<Filters>(() => { try { const raw = sessionStorage.getItem(FKEY); return raw ? { ...DEFAULT, ...JSON.parse(raw) } : DEFAULT; } catch { return DEFAULT; } });
   useEffect(() => { try { sessionStorage.setItem(FKEY, JSON.stringify(filters)); } catch { /* ignore */ } }, [filters]);
 
   const all = useAllSessionsJoined();
-  const { loading } = useTable<ClassSessionRow>('class_sessions');
   const { rows: modalities } = useTable<ModalityRow>('modalities', { where: { active: true } });
   const visibleMods = useVisibleModalities(modalities);
   const { rows: teachers } = useTable<TeacherRow>('teachers', { where: { active: true } });
@@ -72,45 +58,13 @@ export function SchedulePage({ view: routeView }: SchedulePageProps) {
   };
   const activeFilters = Object.entries(filters).filter(([, v]) => v !== 'all').length;
   const filtered = useMemo(() => all.filter(matches), [all, filters]);
-  const counts = days.map((d) => filtered.filter((x) => isSameDay(x.session.starts_at, d) && x.session.status !== 'completed').length);
-  const dayList_ = filtered.filter((x) => isSameDay(x.session.starts_at, days[day]));
-  const isPast = (s: ClassSessionRow) => new Date(s.ends_at).getTime() < Date.now();
-
   const isFull = (s: ClassSessionRow) => s.status === 'scheduled' && s.booked_count >= s.capacity;
   // A class with no spots left cannot be booked: the row leads to the waitlist (C-20) instead of the booking screen.
   const open = (s: ClassSessionRow) => nav(isFull(s) && !mine.has(s.id) ? `/app/waitlist/${s.id}` : `/app/class/${s.id}`);
 
-  const renderWeek = (): ReactNode => view !== 'week' ? null : (
-      <div className="cust-week" role="table" aria-label={t('customer.schedule.view.week')}>
-        {days.map((d, i) => {
-          const list = filtered.filter((x) => isSameDay(x.session.starts_at, d));
-          return (
-            <div key={i} className={`cust-week-col ${i === 0 ? 'is-today' : ''}`} role="row">
-              <div className="cust-week-head" role="columnheader"><span className="xs">{i === 0 ? t('core.common.today') : formatDate(d.toISOString(), lang, { weekday: 'short' })}</span><strong>{d.getDate()}</strong></div>
-              {list.length === 0 && <div className="cust-week-empty xs muted">{d.getDay() === 0 ? t('customer.schedule.closedShort') : '—'}</div>}
-              {list.map((x) => {
-                const left = x.session.capacity - x.session.booked_count;
-                const mv = x.modality?.movement ?? 'fluye';
-                return (
-                  <button key={x.session.id} type="button" className={`cust-week-cell cust-week-${mv} ${x.session.status !== 'scheduled' ? 'is-off' : ''} ${mine.has(x.session.id) ? 'is-mine' : ''}`} onClick={() => open(x.session)} role="cell">
-                    <span className="cust-week-time">{formatTime(x.session.starts_at, lang)}</span>
-                    <span className="cust-week-name">{naming === 'movements' ? movements[mv].label : x.modality ? bi({ es: x.modality.name_es, en: x.modality.name_en }) : x.session.title}</span>
-                    <span className="cust-week-spots">{x.session.status === 'cancelled' ? t('customer.schedule.cancelled') : x.session.status === 'completed' ? t('customer.schedule.done') : left <= 0 ? t('core.common.full') : t('core.common.spots', { n: left })}</span>
-                    {mine.has(x.session.id) && <Badge tone="primary">{t('customer.home.booked')}</Badge>}
-                  </button>
-                );
-              })}
-            </div>
-          );
-        })}
-      </div>
-    );
-
   const SECTIONS: Record<string, () => ReactNode> = {
-    'ViewSwitch (Today / Week)': () => (
-      <PageHead title={t('customer.schedule.title')} sub={t('customer.schedule.sub')} actions={<SegmentedControl size="sm" ariaLabel={t('customer.schedule.view')} value={view} onChange={setView} options={[{ value: 'today', label: t('customer.schedule.view.today') }, { value: 'week', label: t('customer.schedule.view.week') }]} />} />
-    ),
-    DateStrip: () => view === 'today' ? <DateStrip days={days} value={day} onChange={setDay} counts={counts} disabledIndex={(i) => days[i].getDay() === 0} /> : null,
+    'ViewSwitch (Today / Week)': () => <PageHead title={t('customer.schedule.title')} sub={t('customer.schedule.sub')} />,
+    DateStrip: () => null,
     'FilterBar → FilterSheet': () => (
       <div className="cust-filters">
         <div className="cust-filters-scroll">
@@ -120,21 +74,9 @@ export function SchedulePage({ view: routeView }: SchedulePageProps) {
         <Button size="sm" variant={activeFilters > 0 ? 'primary' : 'secondary'} onClick={() => setSheet(true)} icon="⚲">{t('core.common.filter')}{activeFilters > 0 ? ` · ${activeFilters}` : ''}</Button>
       </div>
     ),
-    'ClassList → ClassRow': () => view !== 'today' ? null : (
-      <Card padding="sm" aria-busy={loading || undefined}>
-        {loading && <SkeletonRows />}
-        {!loading && dayList_.length === 0 && (
-          <EmptyState compact title={days[day].getDay() === 0 ? t('customer.schedule.closed') : t('customer.schedule.empty')} body={activeFilters > 0 ? t('customer.schedule.empty.filters') : t('customer.schedule.empty.body')}
-            action={activeFilters > 0 ? <Button size="sm" variant="secondary" onClick={() => setFilters(DEFAULT)}>{t('customer.schedule.clearFilters')}</Button> : undefined} />
-        )}
-        {!loading && dayList_.map((x) => (
-          <ClassRow key={x.session.id} {...classDisplay(naming, { title: x.session.title, modalityName: x.modality ? bi({ es: x.modality.name_es, en: x.modality.name_en }) : null, movementLabel: movements[x.modality?.movement ?? 'fluye'].label, teacher: x.teacher?.display_name ?? '' })} startsAt={x.session.starts_at} durationMin={x.modality?.duration_min ?? 60} movement={x.modality?.movement ?? 'fluye'} booked={x.session.booked_count} capacity={x.session.capacity} status={x.session.status} booked_by_me={mine.has(x.session.id)} onClick={isPast(x.session) && !mine.has(x.session.id) ? undefined : () => open(x.session)} />
-        ))}
-        {!loading && dayList_.length > 0 && dayList_.every((x) => isPast(x.session)) && <p className="xs muted" style={{ padding: 8 }}>{t('customer.schedule.pastDay')}</p>}
-      </Card>
-    ),
-    WeekGrid: renderWeek,
-    'WeekGrid (Mon–Sat columns → DayChip)': renderWeek,
+    'ClassList → ClassRow': () => view === 'today' ? <SessionCalendar sessions={filtered} mine={mine} initialView="day" onPick={open} /> : null,
+    WeekGrid: () => <SessionCalendar sessions={filtered} mine={mine} initialView="week" onPick={open} />,
+    'WeekGrid (Mon–Sat columns → DayChip)': () => <SessionCalendar sessions={filtered} mine={mine} initialView="week" onPick={open} />,
     Legend: () => (
       <div className="row wrap cust-legend">
         <span className="eyebrow">{t('customer.schedule.legend')}</span>

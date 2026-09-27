@@ -14,3 +14,5 @@
 @keyframes drawer-in-right { from { transform: translateX(40px); opacity: 0; } }
 @keyframes drawer-in-left { from { transform: translateX(-40px); opacity: 0; } }
 @keyframes drawer-in-up { from { transform: translateY(40px); opacity: 0; } }
+
+.drawer-body{box-shadow:var(--shadow-window)}.drawer-bottom .drawer-body>.stack{max-width:720px;margin-inline:auto}

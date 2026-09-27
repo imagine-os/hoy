@@ -8,7 +8,6 @@ import { formatDate, isSameDay, dateKey } from '../../i18n/format';
 import { useLayout } from '../../layout/useLayout';
 import { canvasSpecs } from '../../specs/canvasSpecs';
 import { movements, type Movement } from '../../design/tokens';
-import { tenant } from '../../tenant/tenant';
 import { Card } from '../../components/molecule/Card/Card';
 import { Chip } from '../../components/atom/Chip/Chip';
 import { Button } from '../../components/atom/Button/Button';
@@ -53,14 +52,7 @@ export function CustomerHomePage() {
     if (intention) await data.update('intentions', intention.id, { movement: mv });
     else await data.insert('intentions', { user_id: user.id, date: dateKey(), movement: mv });
   };
-  const book = async (sessionId: string) => {
-    const s = all.find((x) => x.session.id === sessionId)?.session;
-    if (!s) return;
-    const sameDay = myBookings.some((b) => b.status === 'booked' && all.find((x) => x.session.id === b.session_id && isSameDay(x.session.starts_at, s.starts_at)));
-    if (sameDay && tenant.studio.perPersonPerDay === 1) { alert(t('customer.book.oneADay')); return; }
-    await data.insert('bookings', { user_id: user.id, session_id: sessionId, status: 'booked', paid_with: membership ? 'membership' : 'credit', credit_id: null, checked_in_at: null, cancelled_at: null, rated: false });
-    await data.update('class_sessions', sessionId, { booked_count: s.booked_count + 1 });
-  };
+  const book = (sessionId: string) => nav(`/app/checkout/${sessionId}`);
 
   const SECTIONS: Record<string, () => ReactNode> = {
     'TopBar (logo, avatar, bell)': () => <h1 className="cust-greeting">{t('customer.home.greeting', { name: user.name.split(' ')[0] })}</h1>,

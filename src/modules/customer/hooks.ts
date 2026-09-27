@@ -101,17 +101,19 @@ export function useBookingActions() {
     return hit?.session_id ?? null;
   }, []);
 
-  const book = useCallback(async (session: ClassSessionRow, paidWith: EntitlementKind, opts?: { creditPlanId?: string | null }) => {
+  const book = useCallback(async (session: ClassSessionRow, paidWith: EntitlementKind, opts?: { creditPlanId?: string | null; matNumber?: number | null }) => {
     // Race guard: re-read the session so a spot that filled during checkout is caught (C-04 "Race" state).
     const fresh = await data.get<ClassSessionRow>('class_sessions', session.id);
     if (!fresh || fresh.status !== 'scheduled') throw new Error('session_unavailable');
     if (fresh.booked_count >= fresh.capacity) throw new Error('session_full');
-    let creditId: string | null = null;
+    const existing = await data.list<BookingRow>('bookings', { where: { user_id: user.id, session_id: fresh.id } });
+    if (existing.some(b => b.status === 'booked' || b.status === 'checked_in')) throw new Error('booking_exists');
+    const booking = await data.insert<BookingRow>('bookings', { user_id: user.id, session_id: fresh.id, status: 'booked', paid_with: paidWith, credit_id: null, checked_in_at: null, cancelled_at: null, rated: false, mat_number: opts?.matNumber ?? null });
     if (paidWith === 'credit') {
       const c = await data.insert<CreditRow>('credits', { user_id: user.id, plan_id: opts?.creditPlanId ?? null, payment_id: null, delta: -1, reason: 'booking', expires_at: null } as Partial<CreditRow>);
-      creditId = c.id;
+      await data.update('bookings', booking.id, { credit_id: c.id });
+      booking.credit_id = c.id;
     }
-    const booking = await data.insert<BookingRow>('bookings', { user_id: user.id, session_id: fresh.id, status: 'booked', paid_with: paidWith, credit_id: creditId, checked_in_at: null, cancelled_at: null, rated: false });
     await data.update('class_sessions', fresh.id, { booked_count: fresh.booked_count + 1 });
     return booking;
   }, [data, user.id]);
@@ -142,9 +144,9 @@ export function useBookingActions() {
   const reschedule = useCallback(async (booking: BookingRow, from: ClassSessionRow, to: ClassSessionRow) => {
     const fresh = await data.get<ClassSessionRow>('class_sessions', to.id);
     if (!fresh || fresh.booked_count >= fresh.capacity || fresh.status !== 'scheduled') throw new Error('session_full');
+    const next = await data.insert<BookingRow>('bookings', { user_id: booking.user_id, session_id: fresh.id, status: 'booked', paid_with: booking.paid_with, credit_id: booking.credit_id, checked_in_at: null, cancelled_at: null, rated: false });
     await data.update('bookings', booking.id, { status: 'cancelled', cancelled_at: new Date().toISOString() });
     await data.update('class_sessions', from.id, { booked_count: Math.max(0, from.booked_count - 1) });
-    const next = await data.insert<BookingRow>('bookings', { user_id: booking.user_id, session_id: fresh.id, status: 'booked', paid_with: booking.paid_with, credit_id: booking.credit_id, checked_in_at: null, cancelled_at: null, rated: false });
     await data.update('class_sessions', fresh.id, { booked_count: fresh.booked_count + 1 });
     await promoteWaitlist(from.id);
     return next;

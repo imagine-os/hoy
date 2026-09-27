@@ -1,3 +1,5 @@
+import { chooseMat, occupiesMat, usesMats } from './mats';
+import type { BookingRow, ClassSessionRow, ModalityRow } from './schema';
 import type { BaseRow } from './schema';
 import { tableNames } from './schema';
 import { applyQuery, type ChangeEvent, type DataProvider, type Query } from './types';
@@ -10,7 +12,7 @@ const KEY = 'hoyos.db.v1';
  * a stored db with another version is thrown away and reseeded, whatever day it was seeded on.
  *   1 · up to 0.7.1 · 2 · 0.8.0 message_log becomes the unified conversation record (direction, source, body, read_at…)
  */
-export const SEED_VERSION = 2;
+export const SEED_VERSION = 3;
 type Db = Record<string, BaseRow[]>;
 interface Stored { seededOn: string; version?: number; db: Db }
 
@@ -28,8 +30,56 @@ export class MockProvider implements DataProvider {
 
   constructor() {
     this.db = this.load();
+    this.expandDemoCalendar();
+    this.assignLegacyMats();
     // Cross-tab realtime: another tab's persist() fires `storage` here; reload and tell every subscriber.
     if (typeof window !== 'undefined') window.addEventListener('storage', (e) => this.onStorage(e));
+  }
+
+  private expandDemoCalendar() {
+    // Demo-only publishing horizon from existing studio templates; no invented attendees.
+    type Template = BaseRow & { active: boolean; weekday: number; start_time: string; duration_min: number; capacity: number; title: string; modality_id: string; teacher_id: string; room_id: string; level: string };
+    const sessions = this.db.class_sessions as ClassSessionRow[];
+    const latest = sessions.reduce((at, s) => s.starts_at > at ? s.starts_at : at, '');
+    const now = new Date().toISOString();
+    for (let day = 0; day <= 42; day++) {
+      const date = new Date(); date.setDate(date.getDate() + day);
+      for (const template of this.db.class_templates as Template[]) {
+        if (!template.active || template.weekday !== date.getDay()) continue;
+        const [h, m] = template.start_time.split(':').map(Number);
+        const start = new Date(date); start.setHours(h, m, 0, 0);
+        if (start.toISOString() <= latest) continue;
+        const id = `demo_${template.id}_${start.getFullYear()}_${start.getMonth()}_${start.getDate()}`;
+        if (sessions.some(s => s.id === id)) continue;
+        sessions.push({ id, tenant_id: tenant.id, created_at: now, updated_at: now, template_id: template.id, title: template.title, modality_id: template.modality_id, teacher_id: template.teacher_id, room_id: template.room_id, starts_at: start.toISOString(), ends_at: new Date(start.getTime() + template.duration_min * 60000).toISOString(), capacity: template.room_id === 'room_main' ? tenant.studio.mats : template.capacity, booked_count: 0, level: template.level, status: 'scheduled', cancel_reason: null });
+      }
+    }
+  }
+  private assignLegacyMats() {
+    const bookings = this.db.bookings as BookingRow[];
+    for (const session of this.db.class_sessions as ClassSessionRow[]) {
+      const modality = (this.db.modalities as ModalityRow[]).find(m => m.id === session.modality_id);
+      if (!usesMats(modality)) continue;
+      const active = bookings.filter(b => b.session_id === session.id && occupiesMat(b));
+      for (const booking of active) if (booking.mat_number == null) booking.mat_number = chooseMat(active, Math.min(session.capacity, tenant.studio.mats));
+    }
+    this.persist();
+  }
+  private syncCapacity(sessionId: string) {
+    const session = (this.db.class_sessions as ClassSessionRow[]).find(s => s.id === sessionId);
+    if (!session) return;
+    session.booked_count = (this.db.bookings as BookingRow[]).filter(b => b.session_id === sessionId && b.status !== 'cancelled' && b.status !== 'late_cancel').length;
+    this.emit({ table: 'class_sessions', type: 'update', row: session, id: session.id });
+  }
+  private prepareBooking(row: BookingRow) {
+    if (!occupiesMat(row)) return row;
+    const session = (this.db.class_sessions as ClassSessionRow[]).find(s => s.id === row.session_id);
+    if (!session || session.status !== 'scheduled' || new Date(session.starts_at).getTime() <= Date.now()) throw new Error('session_unavailable');
+    const others = (this.db.bookings as BookingRow[]).filter(b => b.session_id === row.session_id && b.id !== row.id && occupiesMat(b));
+    if (others.some(b => b.user_id === row.user_id)) throw new Error('booking_exists');
+    if (others.length >= session.capacity) throw new Error('session_full');
+    const modality = (this.db.modalities as ModalityRow[]).find(m => m.id === session.modality_id);
+    return usesMats(modality) ? { ...row, mat_number: chooseMat(others, Math.min(session.capacity, tenant.studio.mats), row.mat_number) } : { ...row, mat_number: null };
   }
 
   private onStorage(e: StorageEvent) {
@@ -47,7 +97,14 @@ export class MockProvider implements DataProvider {
       const raw = localStorage.getItem(KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as Stored;
-        if (parsed.version === SEED_VERSION && parsed.seededOn === new Date().toDateString() && tableNames.every((t) => Array.isArray(parsed.db[t]))) return parsed.db;
+        if ((parsed.version === SEED_VERSION || parsed.version === 2) && parsed.seededOn === new Date().toDateString() && tableNames.every((t) => Array.isArray(parsed.db[t]))) {
+          if (parsed.version === 2) {
+            // Preserve same-day CMS edits, members and bookings when upgrading this demo.
+            const sessions = parsed.db.class_sessions as ClassSessionRow[];
+            for (const session of sessions) if (session.room_id === 'room_main' && session.capacity === 15) session.capacity = tenant.studio.mats;
+          }
+          return parsed.db;
+        }
       }
     } catch { /* fall through to reseed */ }
     const db = buildSeed();
@@ -73,8 +130,10 @@ export class MockProvider implements DataProvider {
 
   async insert<T extends BaseRow>(table: string, row: Partial<T>): Promise<T> {
     const now = new Date().toISOString();
-    const full = { id: newId(table.slice(0, 3)), tenant_id: tenant.id, created_at: now, updated_at: now, ...row } as T;
+    let full = { id: newId(table.slice(0, 3)), tenant_id: tenant.id, created_at: now, updated_at: now, ...row } as T;
+    if (table === 'bookings') full = this.prepareBooking(full as unknown as BookingRow) as unknown as T;
     this.rows(table).push(full);
+    if (table === 'bookings') this.syncCapacity((full as unknown as BookingRow).session_id);
     this.persist();
     this.emit({ table, type: 'insert', row: full });
     return full;
@@ -83,8 +142,15 @@ export class MockProvider implements DataProvider {
     const rows = this.rows(table);
     const i = rows.findIndex((r) => r.id === id);
     if (i < 0) throw new Error(`${table}/${id} not found`);
-    const next = { ...rows[i], ...patch, updated_at: new Date().toISOString() } as T;
+    let next = { ...rows[i], ...patch, updated_at: new Date().toISOString() } as T;
+    if (table === 'bookings' && ('mat_number' in patch || 'session_id' in patch || ((patch as Partial<BookingRow>).status === 'booked' && (rows[i] as BookingRow).status !== 'booked'))) next = this.prepareBooking(next as unknown as BookingRow) as unknown as T;
+    const previousSession = table === 'bookings' ? (rows[i] as BookingRow).session_id : null;
     rows[i] = next;
+    if (table === 'bookings') {
+      if (previousSession) this.syncCapacity(previousSession);
+      this.syncCapacity((next as unknown as BookingRow).session_id);
+    }
+    if (table === 'class_sessions' && 'booked_count' in patch) this.syncCapacity(id);
     this.persist();
     this.emit({ table, type: 'update', row: next, id });
     return next;
@@ -101,6 +167,8 @@ export class MockProvider implements DataProvider {
   }
   async reset(): Promise<void> {
     this.db = buildSeed();
+    this.expandDemoCalendar();
+    this.assignLegacyMats();
     this.persist();
     for (const t of Object.keys(this.db)) this.emit({ table: t, type: 'reset' });
   }

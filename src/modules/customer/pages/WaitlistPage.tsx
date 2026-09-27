@@ -70,7 +70,7 @@ export function WaitlistPage() {
 
   const claim = async () => {
     if (!mine) return;
-    if (!ent.hasAnyEntitlement) { nav(`/app/checkout/${s.id}?claim=${mine.id}`); return; }
+    if (!ent.hasAnyEntitlement || /yoga|vinyasa|flow|yin/.test(joined.modality?.slug ?? '')) { nav(`/app/checkout/${s.id}?claim=${mine.id}`); return; }
     setBusy(true);
     try { const b = await claimWaitlist(mine, s, ent.defaultKind); nav(`/app/booking/${b.id}`); } finally { setBusy(false); }
   };
