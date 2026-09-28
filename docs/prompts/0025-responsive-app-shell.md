@@ -103,3 +103,11 @@ Supabase. The full 360…3840 screenshot matrix and `checkedAt` (this pass recor
 Reservar y registrarse se leen como una sola experiencia desde el sitio hasta la app. La escala `--ui` aplica a
 todo, los controles miden 44 px o más y hay siete acciones WebMCP nuevas. Quedan pendientes la tableta
 (768–899 px), los controles del sitio, las acciones restantes y la autenticación real (Supabase).
+
+**Review and QA round (same day).** The screenshot matrix (`claude/responsive-screenshots`: `--widths` / `--pages` /
+`--dark` on `scripts/screenshots.mjs`, 138 captures, `docs/qa/responsive-2026-09-28.md`) was merged, then the code
+review and the QA findings were fixed in five commits: `c62033e` chip dot colours (blocker), `87df53e`
+`--m-deep`, the 16 px caption floor from 1920 px, 44 px brand / ES-EN targets and a week grid that scales,
+`6c4f7d3` Drawer focus trap + scroll lock + stable close, `d6c36c5` C-04 confirm bar, 44 px mats, one
+calendar on C-02 and honest split columns, `9772100` a site header that fits on phones, scales with `--ui` and has
+44 px controls, plus the W-05 teacher grid. Deferred items stay in the QA document with a reason and a kanban card.

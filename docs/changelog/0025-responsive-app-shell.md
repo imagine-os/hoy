@@ -131,10 +131,54 @@ JPEGs of the /app and /teach pages still show the phone frame until the screensh
 
 [screenshot: C-06 — plans at 1280, both cycles side by side, ?plan=annual preselected with its dialog open]
 
+## Review and QA fixes (`c62033e`, `87df53e`, `6c4f7d3`, `d6c36c5`, `9772100`)
+intent: the code review of the branch (one blocker, five should-fix, nits) and the 360–3840 QA matrix
+(`docs/qa/responsive-2026-09-28.md`) before the PR leaves draft.
+decision:
+- **Chip** (`c62033e`, blocker): the four `.chip-X .chip-dot` colours are scoped again; the 44 px pass had left
+  unscoped `.chip-dot` rules (every dot grey) and `.chip-X button.chip` selectors that matched nothing.
+- **D-01** (`87df53e`): `m-deep` exists (light `28,46,66`, dark `20,34,50`), so the dark top bar and site
+  header are opaque. `fs-floor` (0 px up to 1919 px, 16 px in every `--ui` band, via `UI_SCALE.minText`) is folded
+  into `fs-2xs` / `fs-xs` with `max()`: eyebrows and captions never compute under 16 px on a large screen (G3),
+  phones and desktops keep 11 / 12 px. `w-phone` is gone (DeviceFrame has its presets). `TopBar` brand link and
+  `LangToggle` buttons are 44 px targets (G1); dead `calc(--h-ctl - n)` floors removed. `SessionCalendar` week
+  and month text uses the tokens instead of 10–12 px, grid minimum widths in rem (I-03).
+- **Drawer** (`6c4f7d3`): focus trap (Tab / Shift+Tab cycle inside), `body { overflow: hidden }` while open,
+  `onClose` in a ref so inline callbacks do not re-run the effect (the effect re-captured the dialog as the opener
+  and re-focused it on every parent render, e.g. while paying), focus returns to the trigger, Escape closes only
+  the innermost dialog. States and a11y in the meta.
+- **Customer** (`d6c36c5`): C-04's confirm bar is static in the right column from 900 px (I-08) and an opaque
+  theme-correct sticky bar below (I-07); `MatPicker` mats are 44 px targets and a room row of 8 wraps to two rows
+  of 4 under ~380 px (container query, `--mat-cols` / `--mat-cols-narrow`) (I-06); picker width in rem (I-09);
+  C-02 renders one calendar (the `WeekGrid` block only renders on the week route) (I-02); `SplitSections` decides
+  the columns from what rendered, so an all-null side renders no empty column, and `.cust-split-side` is its own
+  `app` container so `StatsRow` collapses to its width.
+- **Website** (`9772100`, `b431757`): header heights and controls in rem / `--h-ctl` (44 px targets, scale with `--ui` from
+  1920 px: G4 header); below 600 px the edition select and motion toggle move into the open menu
+  (`.site-nav-tools`) so the header fits at 360 / 390 with no overflow (I-14, I-15); the W-05 teacher grid is
+  `minmax(15rem, 1fr)` with whole-word wrapping (I-16).
+rejected: a `position: fixed` confirm bar with reserved page padding (its height varies with the notices it carries,
+so the reserved space would be wrong whenever one shows); `<dialog>.showModal()` for the trap (would change the
+portal/animation model of every Drawer caller); a fluid `clamp()` for the caption sizes (would move the 1280 layout;
+the floor only acts from 1920 px); `zoom` or per-page px multipliers for the site header (the rem route is D-0007).
+files: src/components/atom/Chip/Chip.css; src/components/molecule/{LangToggle,SegmentedControl}/*.css;
+src/components/organism/{Drawer,MatPicker,SessionCalendar,TopBar}/*; src/design/tokens.{ts,css};
+src/modules/customer/{customer.css,split.tsx,pages/SchedulePage.tsx}; src/modules/website/{site.css,sanctuary.css,SiteShell.tsx};
+docs/qa/responsive-2026-09-28.md; docs/screenshots/{C-01,C-02,C-04,W-04,W-05,P-01}/* (re-captured at 360–3840);
+docs/kanban.md; this entry; docs/prompts/0025-responsive-app-shell.md.
+codes: C-01 C-02 C-02b C-04 C-06 C-08 C-08b A-02 W-01…W-05 P-01 D-01 D-02 M-03.
+verification: `npm run build` green, `npm run test:dates` and `scripts/test-mat-bookings.mjs` pass; re-captures at
+360 / 1280 / 3840 inspected for C-04, C-02, W-04, W-05.
+
 ## Deferred
 
 - The tablet band (768–899 px) still uses the 560 px column.
-- Website controls are under 44 px, and W-04 `.site-actions` overflows by 13 px at 390 px.
+- Website controls outside the header (`.site .btn` in the body, P-01's `a.btn` links) are under 44 px; the header
+  controls and the W-04 `.site-actions` overflow were fixed in the review round above.
+- QA matrix items deferred with kanban cards: inline text links under 44 px (G2), Sanctuary body copy in px and the
+  1360 px column at 4K (G4 body), C-02 chip row and week/month grids as scroll regions on phones (I-04, I-05), ES
+  copy nits (I-05b), C-01 empty lower half at 4K (I-10), C-08 countdown ring in px (I-11), avatar initials and the
+  A-03 checkbox hit area (I-12, I-13).
 - Actions beyond the hub and this flow, and a shell scope for the navigation actions.
 - Real auth is gated on Supabase.
 - DesktopShell `useNarrow()` should become `useMinWidth`.
