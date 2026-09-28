@@ -7,7 +7,7 @@
 .site-head-in { display: flex; align-items: center; gap: var(--sp-6); min-height: 4rem; }
 .site-brand { display: inline-flex; align-items: center; min-height: var(--h-ctl); flex: 0 0 auto; }
 .site-nav { display: flex; gap: var(--sp-5); flex: 1; }
-.site-nav a { display: inline-flex; align-items: center; min-height: var(--h-ctl); color: var(--color-text); font-family: var(--font-heading); font-size: var(--fs-sm); font-weight: var(--fw-medium); padding: 6px 0; border-bottom: 2px solid transparent; }
+.site-nav a { display: inline-flex; align-items: center; min-height: var(--h-ctl); white-space: nowrap; color: var(--color-text); font-family: var(--font-heading); font-size: var(--fs-sm); font-weight: var(--fw-medium); padding: 6px 0; border-bottom: 2px solid transparent; }
 .site-nav a:hover { text-decoration: none; color: var(--color-primary); }
 .site-nav a.is-active { border-bottom-color: var(--color-primary); color: var(--color-primary); }
 .site-actions { display: flex; align-items: center; gap: var(--sp-2); margin-left: auto; min-width: 0; flex: 0 1 auto; }
@@ -137,7 +137,7 @@
   .site-panel { padding: var(--sp-8) var(--sp-6); border-radius: var(--r-lg); }
 }
 @media (max-width: 600px) {
-  .site-actions .btn, .site-actions .site-version, .site-actions .site-motion { display: none; }
+  .site-actions .btn, .site .site-head .site-actions .site-version, .site .site-head .site-actions .site-motion { display: none; }
   .site-nav.is-open .site-nav-tools { display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-3) 0; }
   .site-head-in { gap: var(--sp-3); }
   .site-actions { gap: var(--sp-1); }
