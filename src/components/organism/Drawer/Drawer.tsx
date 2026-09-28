@@ -11,10 +11,16 @@ export interface DrawerProps {
   width?: number;
   children?: ReactNode;
   footer?: ReactNode;
+  /** How a bottom sheet renders from 900 px: a centred dialog (default) or still a full-width sheet. */
+  desktop?: 'dialog' | 'sheet';
 }
 
-/** Slide-over panel (portal). Escape and overlay close it; focus moves inside on open. */
-export function Drawer({ open, onClose, title, side = 'right', width = 420, children, footer }: DrawerProps) {
+/**
+ * Slide-over panel (portal). Escape and overlay close it; focus moves inside on open.
+ * `side="bottom"` is a bottom sheet below 900 px and, by default, a centred dialog from 900 px (D-0006: no phone
+ * patterns on desktop); `desktop="sheet"` keeps the sheet everywhere.
+ */
+export function Drawer({ open, onClose, title, side = 'right', width = 420, children, footer, desktop = 'dialog' }: DrawerProps) {
   const t = useT();
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -29,7 +35,7 @@ export function Drawer({ open, onClose, title, side = 'right', width = 420, chil
   return createPortal(
     <div className="drawer-root">
       <div className="drawer-overlay" onClick={onClose} aria-hidden />
-      <div ref={ref} tabIndex={-1} role="dialog" aria-modal="true" className={`drawer drawer-${side}`} style={side !== 'bottom' ? { width: `min(${width}px, 100vw)` } : undefined}>
+      <div ref={ref} tabIndex={-1} role="dialog" aria-modal="true" className={`drawer drawer-${side} ${side === 'bottom' && desktop === 'dialog' ? 'is-dialog' : ''}`} style={side !== 'bottom' ? { width: `min(${width}px, 100vw)` } : undefined}>
         <header className="drawer-head">
           <div className="grow">{typeof title === 'string' ? <h3>{title}</h3> : title}</div>
           <button type="button" className="drawer-close" onClick={onClose} aria-label={t('core.common.close')}>×</button>

@@ -131,13 +131,12 @@
 .cust-intention { display: flex; flex-direction: column; gap: var(--sp-2); min-height: 120px; }
 .cust-intention.is-active { border-color: var(--color-primary); }
 
-/* auth shell */
+/* auth shell — AppShell's top bar over one centred column (--w-auth 480 → --w-auth-wide 576 from 900 px) */
 .auth { min-height: 100vh; display: flex; flex-direction: column; }
-.auth-head { display: flex; align-items: center; justify-content: space-between; padding: var(--sp-4); max-width: 560px; width: 100%; margin: 0 auto; }
-.auth-brand { display: inline-flex; }
 .auth-iconbtn { width: var(--h-ctl); height: var(--h-ctl); border-radius: 50%; border: 1px solid var(--color-card-border); background: var(--color-surface); box-shadow: var(--shadow-highlight), var(--shadow-contact); }
-.auth-main { flex: 1 1 auto; display: flex; justify-content: center; padding: 0 var(--sp-4) var(--sp-8); }
-.auth-col { width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: var(--sp-5); }
+.auth-main { flex: 1 1 auto; display: flex; justify-content: center; padding: var(--sp-4) var(--sp-4) var(--sp-8); }
+.auth-col { width: 100%; max-width: var(--w-auth); display: flex; flex-direction: column; gap: var(--sp-5); }
+@media (min-width: 900px) { .auth-main { padding-top: var(--sp-10); } .auth-col { max-width: var(--w-auth-wide); } .auth .topbar { padding-inline: var(--sp-6); min-height: calc(var(--h-topbar) + var(--sp-2)); } }
 .auth-intro { padding-top: var(--sp-2); }
 .auth-foot { text-align: center; padding: var(--sp-4); }
 .auth-divider { display: flex; align-items: center; gap: var(--sp-3); color: var(--color-text-muted); font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: .08em; }

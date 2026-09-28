@@ -1,5 +1,6 @@
 /* V2 only. V1 retains site.css. Materials use Aleja's supplied photographs. */
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap');
+/* Cormorant Garamond is loaded from index.html (<link>, next to Inter and DM Sans) — an @import here made the website
+   chunk's CSS fail to preload, and the whole site rendered blank, whenever Google Fonts was unreachable. */
 .site-version select { max-width: 142px; min-height: 38px; padding: 6px 22px 6px 9px; border: 1px solid var(--color-border); border-radius: var(--r-sm); background: var(--color-surface); color: var(--color-text); font-size: 12px; cursor: pointer; }
 .site-brand-caption { display: none; }
 .site-concept-note { font-size: 12px; margin-bottom: 14px; color: var(--color-text-muted); }

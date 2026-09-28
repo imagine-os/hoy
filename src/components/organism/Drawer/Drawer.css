@@ -10,6 +10,11 @@
 .drawer-body { flex: 1 1 auto; overflow: auto; padding: var(--sp-5); }
 .drawer-foot { padding: var(--sp-3) var(--sp-5); border-top: 1px solid var(--color-border); display: flex; gap: var(--sp-2); justify-content: flex-end; }
 @media (max-width: 600px) { .drawer-right, .drawer-left { width: 100vw !important; border-radius: 0; } }
+/* ≥ 900 px: a bottom sheet becomes a centred dialog (unless desktop="sheet") */
+@media (min-width: 900px) {
+  .drawer-bottom.is-dialog { inset: 0; margin: auto; width: min(40rem, calc(100vw - var(--sp-12))); height: max-content; max-height: 85vh; border-radius: var(--r-lg); }
+  .drawer-bottom.is-dialog .drawer-body > .stack { max-width: none; }
+}
 @keyframes drawer-fade { from { opacity: 0; } }
 @keyframes drawer-in-right { from { transform: translateX(40px); opacity: 0; } }
 @keyframes drawer-in-left { from { transform: translateX(-40px); opacity: 0; } }
