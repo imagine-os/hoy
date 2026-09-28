@@ -93,7 +93,8 @@ export function SchedulePage({ view: routeView }: SchedulePageProps) {
       </div>
     ),
     'ClassList → ClassRow': () => view === 'today' ? <SessionCalendar sessions={filtered} mine={mine} initialView="day" onPick={open} /> : null,
-    WeekGrid: () => <SessionCalendar sessions={filtered} mine={mine} initialView="week" onPick={open} />,
+    // The Today page renders one calendar (its toolbar already switches Day / Week / Month); the week route is C-02b.
+    WeekGrid: () => view === 'week' ? <SessionCalendar sessions={filtered} mine={mine} initialView="week" onPick={open} /> : null,
     'WeekGrid (Mon–Sat columns → DayChip)': () => <SessionCalendar sessions={filtered} mine={mine} initialView="week" onPick={open} />,
     Legend: () => (
       <div className="row wrap cust-legend">

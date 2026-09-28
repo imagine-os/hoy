@@ -21,19 +21,24 @@ export interface SplitSectionsProps {
  */
 export function SplitSections({ names, render, side, full = () => false, className = '', narrowClassName }: SplitSectionsProps) {
   const wide = useMinWidth('shell');
-  const item = (n: string) => <Fragment key={n}>{render(n)}</Fragment>;
+  // Render once, then decide the columns from what actually rendered: a side block that returns null (member
+  // with a plan, no announcement) must not open an empty right-hand column.
+  const rendered = names.map((n) => [n, render(n)] as const).filter(([, node]) => node != null);
+  const item = ([n, node]: readonly [string, ReactNode]) => <Fragment key={n}>{node}</Fragment>;
   if (!wide) {
-    const flat = names.map(item);
+    const flat = rendered.map(item);
     return narrowClassName ? <div className={narrowClassName}>{flat}</div> : <>{flat}</>;
   }
-  const main = names.filter((n) => !full(n) && !side(n)), aside = names.filter((n) => !full(n) && side(n));
+  const main = rendered.filter(([n]) => !full(n) && !side(n)), aside = rendered.filter(([n]) => !full(n) && side(n));
   return (
     <>
-      {names.filter(full).map(item)}
-      <div className={`cust-split ${className}`}>
-        <div className="stack cust-split-main">{main.map(item)}</div>
-        {aside.length > 0 && <aside className="stack cust-split-side">{aside.map(item)}</aside>}
-      </div>
+      {rendered.filter(([n]) => full(n)).map(item)}
+      {aside.length > 0 ? (
+        <div className={`cust-split ${className}`}>
+          <div className="stack cust-split-main">{main.map(item)}</div>
+          <aside className="stack cust-split-side">{aside.map(item)}</aside>
+        </div>
+      ) : <div className="stack cust-split-main">{main.map(item)}</div>}
     </>
   );
 }

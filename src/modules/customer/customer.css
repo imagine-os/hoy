@@ -17,7 +17,9 @@
 .cust-sub { margin-top: 2px; }
 .cust-h2 { font-size: var(--fs-lg); }
 .cust-center { display: flex; flex-direction: column; align-items: center; text-align: center; }
-.cust-sticky { display: flex; flex-direction: column; gap: var(--sp-2); position: sticky; bottom: calc(var(--h-bottomnav) + var(--sp-3)); padding: var(--sp-3) 0; background: rgba(var(--m-cream), .9); backdrop-filter: blur(8px); z-index: 5; }
+/* Sticky confirm bar (< 900 px): opaque, theme-correct ground so nothing shows through it; it is the last block in the
+   flow, so at the end of the scroll it sits in its own place and covers nothing. From 900 px it is static in the aside. */
+.cust-sticky { display: flex; flex-direction: column; gap: var(--sp-2); position: sticky; bottom: calc(var(--h-bottomnav) + var(--sp-3)); padding: var(--sp-3) 0; background: var(--color-bg); box-shadow: 0 -1px 0 var(--color-border), 0 -12px 16px -12px rgba(var(--m-shade), .18); z-index: 5; }
 .cust-has-sticky { padding-bottom: var(--sp-4); }
 @media (min-width: 900px) { .cust-sticky { bottom: var(--sp-3); } }
 .cust-checklist { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 4px; }
@@ -175,7 +177,9 @@
   .cust-split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(20rem, 26rem); gap: var(--sp-8); align-items: start; }
   .cust-home-split { grid-template-columns: minmax(0, 1.5fr) minmax(18rem, 1fr); }
   .cust-split-main, .cust-split-side { gap: var(--sp-5); }
-  .cust-split-side .cust-sticky { bottom: var(--sp-4); }
+  /* the aside is its own `app` container so grid utilities (StatsRow) collapse to its width, not the page's */
+  .cust-split-side { container: app / inline-size; }
+  .cust-split-side .cust-sticky { position: static; padding: 0; background: none; box-shadow: none; }
   .cust-title, .cust-greeting { font-size: var(--fs-3xl); }
   .cust-plans { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .cust-plans-links { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
