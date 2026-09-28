@@ -18,6 +18,8 @@ import { Skeleton } from '../../../components/atom/Skeleton/Skeleton';
 import { ListGroup, ListRow } from '../../../components/molecule/ListRow/ListRow';
 import { canvasSpecs } from '../specs';
 import { SplitSections } from '../split';
+import { useActions } from '../../../actions';
+import { useAppNavHandlers } from '../actions';
 import { useBookingActions, useMyBookings, useNow, useSessionJoined } from '../hooks';
 import { cancelDeadline, insideCancelWindow, policy } from '../policy';
 import { PageHead, downloadIcs, movementOf, roomName, shareText, teacherName } from '../ui';
@@ -31,6 +33,7 @@ export function BookedPage({ change = false }: { change?: boolean }) {
   const { t, lang } = useI18n();
   const nav = useNavigate();
   const { sections, isVisible } = useLayout(spec);
+  useActions(spec, useAppNavHandlers());
   const { rows: myBookings, loading } = useMyBookings();
   const booking: BookingRow | null = useMemo(() => myBookings.find((b) => b.id === id) ?? [...myBookings].filter((b) => b.session_id === id).sort((a, b) => b.created_at.localeCompare(a.created_at))[0] ?? null, [myBookings, id]);
   const { joined } = useSessionJoined(booking?.session_id);

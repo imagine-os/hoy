@@ -1,5 +1,7 @@
 import { useMemo, type ReactNode } from 'react';
 import { SplitSections } from './split';
+import { useActions } from '../../actions';
+import { useAppNavHandlers } from './actions';
 import { Link, useNavigate } from 'react-router-dom';
 import { useI18n } from '../../i18n/I18nProvider';
 import { useSession } from '../../auth/SessionProvider';
@@ -29,6 +31,7 @@ export function CustomerHomePage() {
   const data = useData();
   const { user } = useSession();
   const { sections, isVisible } = useLayout(spec);
+  useActions(spec, useAppNavHandlers());
 
   const { rows: myBookings, loading: bookingsLoading } = useTable<BookingRow>('bookings', { where: { user_id: user.id } });
   const { rows: intentions } = useTable<IntentionRow>('intentions', { where: { user_id: user.id, date: dateKey() } });

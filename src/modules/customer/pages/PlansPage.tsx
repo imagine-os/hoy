@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useMinWidth } from '../../../layout/useMinWidth';
 import { useI18n } from '../../../i18n/I18nProvider';
@@ -19,6 +19,11 @@ import { useEntitlements } from '../hooks';
 import { recordPayment, wompiCheckout } from '../payments';
 import { policy } from '../policy';
 import { PageHead } from '../ui';
+import { useActions } from '../../../actions';
+import { need, useAppNavHandlers } from '../actions';
+import { canvasSpecs } from '../specs';
+
+const spec = canvasSpecs['C-06'];
 
 type Cycle = 'month' | 'year';
 /** Plan dates carry the year: an annual cycle ends in another one. */
@@ -49,6 +54,22 @@ export function PlansPage() {
   const currentSlug = ent.plan?.slug ?? null;
   // C-06 "Tu plan": the cycle the customer paid for — start, and the day it runs out (cancellation date if set, else the renewal).
   const planEnd = ent.membership?.ends_at ?? ent.membership?.renews_at ?? ent.membership?.starts_at ?? '';
+
+  // WebMCP (0025): app.choosePlan preselects a plan and opens its confirmation — the same state as ?plan=<id>.
+  // Paying stays a person's click on the confirmation's button.
+  const navHandlers = useAppNavHandlers();
+  const handlers = useMemo(() => ({
+    ...navHandlers,
+    'app.choosePlan': (p?: Record<string, string>) => {
+      const id = need(p, 'plan');
+      const all = pricingByFamily('membresia');
+      const plan = all.find((x) => x.id === id);
+      if (!plan) throw new Error(`unknown plan "${id}" — one of ${all.map((x) => x.id).join(', ')}`);
+      setCycle(plan.period === 'year' ? 'year' : 'month'); setDone(false); setBuying(plan);
+      return `plan ${plan.id} chosen; confirmation open`;
+    },
+  }), [navHandlers]);
+  useActions(spec, handlers);
 
   const buy = async () => {
     if (!buying) return;
