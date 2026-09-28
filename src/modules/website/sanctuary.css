@@ -1,7 +1,7 @@
 /* V2 only. V1 retains site.css. Materials use Aleja's supplied photographs. */
 /* Cormorant Garamond is loaded from index.html (<link>, next to Inter and DM Sans) — an @import here made the website
    chunk's CSS fail to preload, and the whole site rendered blank, whenever Google Fonts was unreachable. */
-.site-version select { max-width: 142px; min-height: 38px; padding: 6px 22px 6px 9px; border: 1px solid var(--color-border); border-radius: var(--r-sm); background: var(--color-surface); color: var(--color-text); font-size: 12px; cursor: pointer; }
+.site-version select { max-width: 9rem; min-height: var(--h-ctl); padding: 6px 22px 6px 9px; border: 1px solid var(--color-border); border-radius: var(--r-sm); background: var(--color-surface); color: var(--color-text); font-size: var(--fs-xs); cursor: pointer; }
 .site-brand-caption { display: none; }
 .site-concept-note { font-size: 12px; margin-bottom: 14px; color: var(--color-text-muted); }
 .site-foot-bottom > a { float: right; }
@@ -9,15 +9,15 @@
 .site[data-edition="sanctuary"] { background: var(--color-bg); --w-content: 1360px; }
 .site[data-edition="sanctuary"] .container { padding-left: clamp(24px, 5vw, 80px); padding-right: clamp(24px, 5vw, 80px); max-width: 1520px; }
 .site[data-edition="sanctuary"] .site-head { background: color-mix(in srgb, var(--color-bg) 94%, transparent); backdrop-filter: blur(18px); border-bottom: 1px solid var(--color-border); }
-.site[data-edition="sanctuary"] .site-head-in { min-height: 92px; gap: 36px; }
+.site[data-edition="sanctuary"] .site-head-in { min-height: 5.75rem; gap: 2.25rem; }
 .site[data-edition="sanctuary"] .site-brand { flex-direction: column; align-items: center; gap: 4px; }
-.site[data-edition="sanctuary"] .site-brand-caption { display: block; text-transform: uppercase; font-size: 8px; letter-spacing: .22em; white-space: nowrap; }
+.site[data-edition="sanctuary"] .site-brand-caption { display: block; text-transform: uppercase; font-size: .5rem; letter-spacing: .22em; white-space: nowrap; }
 .site[data-edition="sanctuary"] .site-nav { justify-content: center; gap: clamp(12px, 1.6vw, 24px); }
-.site[data-edition="sanctuary"] .site-nav a { font-size: 13px; font-weight: 400; }
-.site[data-edition="sanctuary"] .site-actions { gap: 10px; }
-.site[data-edition="sanctuary"] .site-iconbtn { display: grid; place-items: center; border: 1px solid var(--color-border); background: transparent; box-shadow: none; width: 36px; height: 36px; }
-.site[data-edition="sanctuary"] .site-actions .btn { border-radius: var(--r-xs); min-height: 36px; }
-.site[data-edition="sanctuary"] .eyebrow { font-size: 11px; letter-spacing: .16em; font-weight: 500; line-height: 1.5; }
+.site[data-edition="sanctuary"] .site-nav a { font-size: .8125rem; font-weight: 400; }
+.site[data-edition="sanctuary"] .site-actions { gap: .625rem; }
+.site[data-edition="sanctuary"] .site-iconbtn { display: grid; place-items: center; border: 1px solid var(--color-border); background: transparent; box-shadow: none; width: var(--h-ctl); height: var(--h-ctl); }
+.site[data-edition="sanctuary"] .site-actions .btn { border-radius: var(--r-xs); min-height: var(--h-ctl); }
+.site[data-edition="sanctuary"] .eyebrow { font-size: var(--fs-2xs); letter-spacing: .16em; font-weight: 500; line-height: 1.5; }
 .site[data-edition="sanctuary"] h1, .site[data-edition="sanctuary"] h2 { font-family: var(--font-editorial); font-weight: 400; letter-spacing: -.035em; line-height: 1.03; color: var(--color-primary); }
 .site[data-edition="sanctuary"] h2 { font-size: clamp(38px, 4.6vw, 64px); }
 .site[data-edition="sanctuary"] h3 { font-weight: 500; }
@@ -174,9 +174,9 @@
   .sanctuary-plan { padding: 26px; }
 }
 @media(max-width:900px) {
-  .site[data-edition="sanctuary"] .site-head-in { min-height: 78px; }
-  .site[data-edition="sanctuary"] .site-nav { top: 78px; background: var(--color-bg); padding: 16px 5vw; }
-  .site[data-edition="sanctuary"] .site-nav a { font-size: 17px; padding: 15px 0; }
+  .site[data-edition="sanctuary"] .site-head-in { min-height: 4.875rem; }
+  .site[data-edition="sanctuary"] .site-nav { top: 4.875rem; background: var(--color-bg); padding: 16px 5vw; }
+  .site[data-edition="sanctuary"] .site-nav a { font-size: 1.0625rem; padding: 15px 0; }
   .sanctuary-hero { height: 720px; min-height: 660px; }
   .sanctuary-hero-scene .ambient-scene-media { object-position: 60% center; }
   .sanctuary-hero-wash { background: linear-gradient(90deg,rgba(246,237,219,.9),rgba(246,237,219,.52) 54%,rgba(246,237,219,.02)); }
@@ -194,15 +194,12 @@
   .sanctuary-heading { align-items: flex-start; flex-direction: column; gap: 5px; }
 }
 @media(max-width:600px) {
-  .site[data-edition="sanctuary"] .site-head-in { min-height: 72px; gap: 10px; }
+  .site[data-edition="sanctuary"] .site-head-in { min-height: 4.5rem; gap: var(--sp-3); }
   .site[data-edition="sanctuary"] .site-brand-caption { font-size: 7px; }
   .site[data-edition="sanctuary"] .site-brand img { height: 27px !important; width: auto; }
-  .site[data-edition="sanctuary"] .site-actions { gap: 6px; }
-  .site-version select { max-width: 115px; font-size: 11px; padding-left: 7px; padding-right: 4px; }
-  .site[data-edition="sanctuary"] .site-iconbtn { width:30px; height:30px; }
-  .site[data-edition="sanctuary"] .lang-toggle { font-size: 11px; }
-  .site[data-edition="sanctuary"] .site-nav { top: 72px; }
-  .site[data-edition="sanctuary"] .site-burger { font-size:20px; padding:4px; }
+  .site[data-edition="sanctuary"] .site-actions { gap: var(--sp-1); }
+  .site[data-edition="sanctuary"] .site-nav { top: 4.5rem; }
+  .site[data-edition="sanctuary"] .site-burger { font-size:20px; }
   .sanctuary-hero { height: 760px; min-height: min(760px, calc(100svh - 72px)); max-height: 850px; }
   .sanctuary-hero-inner { align-items: flex-start; padding-top: 68px; }
   .site[data-edition="sanctuary"] .sanctuary-hero h1 { font-size: clamp(72px,17.8vw,100px); line-height: .94; margin-top: 24px; }
@@ -271,9 +268,8 @@
  .site[data-edition="sanctuary"] .site-head-in { padding-left:16px; padding-right:16px; gap:8px; }
  .site[data-edition="sanctuary"] .site-brand-caption { display:none; }
  .site[data-edition="sanctuary"] .site-actions { gap:4px; }
- .site-version select { max-width:90px; padding-left:3px; }
  .site[data-edition="sanctuary"] .langtoggle { padding:2px; }
- .site[data-edition="sanctuary"] .langtoggle button { padding:4px; min-width:22px; }
+ .site[data-edition="sanctuary"] .langtoggle button { padding:4px; }
 }
 
 /* 2.1 — recessed image wells and separate photo, frame and caption planes. */
