@@ -7,7 +7,7 @@
 .topbar-title { font-size: var(--fs-lg); font-weight: var(--fw-semibold); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .topbar-back { display: inline-flex; align-items: center; justify-content: center; width: var(--h-ctl); height: var(--h-ctl); border-radius: 50%; font-size: var(--fs-xl); line-height: 1; color: var(--color-text); text-decoration: none; }
 .topbar-back:hover { background: var(--color-surface-2); text-decoration: none; }
-.topbar-brand { display: inline-flex; }
+.topbar-brand { display: inline-flex; align-items: center; min-height: var(--h-ctl); }
 .topbar-actions { display: flex; align-items: center; gap: var(--sp-2); flex: 0 0 auto; }
 .topbar-left { flex: 0 1 auto; }
 .topbar.has-center .topbar-left { flex: 1 1 auto; min-width: 0; }
@@ -19,5 +19,5 @@
 .topbar-lead:hover { background: rgba(var(--m-shade), .07); color: var(--color-text); }
 /* primary nav slot (AppShell ≥ 900 px) sits after the brand and takes the free width */
 .topbar-nav { flex: 1 1 auto; display: flex; align-items: center; min-width: 0; margin-left: var(--sp-4); }
-@media (max-width: 900px) { .topbar-page, .topbar-code { display: none; } }
+@media (max-width: 899.98px) { .topbar-page, .topbar-code { display: none; } }
 @media (max-width: 640px) { .topbar-center { display: none; } }

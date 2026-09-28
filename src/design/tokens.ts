@@ -34,6 +34,7 @@ export const rgb = {
   light: {
     'm-primary': '53,89,125',   // --m1 · deep blue
     'm-shade': '36,56,79',      // --m2 · ink shade for shadows and grain
+    'm-deep': '28,46,66',       // --c3 · deep ink behind the dark-theme top bars (TopBar, site header)
     'm-ink': '36,56,79',        // --m3
     'm-mid': '95,133,177',      // --m4
     'm-sun': '216,194,74',      // --m5
@@ -45,6 +46,7 @@ export const rgb = {
   dark: {
     'm-primary': '155,192,228', // --cat dark
     'm-shade': '0,0,0',         // dark .surf shadows use pure black in the canvas
+    'm-deep': '20,34,50',       // one step below the dark frame paper (#1B2E44) so the sticky bar reads over scrolled content
     'm-ink': '228,218,198',
     'm-mid': '95,133,177',
     'm-sun': '216,194,74',
@@ -206,8 +208,11 @@ export const type = {
   'font-body': "'DM Sans', 'DM Sans Fallback', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif",
   'font-editorial': "'Cormorant Garamond', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif",
   'font-mono': "ui-monospace, 'SF Mono', Menlo, Consolas, monospace",
-  'fs-2xs': '0.6875rem', // 11px · eyebrows, code tags
-  'fs-xs': '0.75rem',
+  /* `fs-floor` is 0 up to 1919 px and 16 px from 1920 px (UI_SCALE.minText): the two caption sizes never compute
+     under 16 px on a large screen (10-foot legibility) while the base sizes stay 11 / 12 px on phones and desktops. */
+  'fs-floor': '0px',
+  'fs-2xs': 'max(0.6875rem, var(--fs-floor))', // 11px · eyebrows, code tags
+  'fs-xs': 'max(0.75rem, var(--fs-floor))',    // 12px · captions, week-grid text
   'fs-sm': '0.875rem',
   'fs-md': '1rem',
   'fs-lg': '1.125rem',
@@ -246,12 +251,12 @@ export const motion = {
 } as const;
 
 /**
- * Layout widths and heights. rem values scale with the `--ui` band (1120 → 1960 px at 3840); `w-phone` is a device
- * width and stays in px — it is only used by the hub's DeviceFrame simulator now (D-0006).
- * `h-ctl` is the minimum height of every interactive control (44 px at the base size).
+ * Layout widths and heights, all in rem so they scale with the `--ui` band (1120 → 1960 px at 3840). The phone
+ * bezel width lives in the hub's DeviceFrame presets (D-0006), not here.
+ * `h-ctl` is the minimum height (and the minimum width of a square target) of every interactive control (44 px).
  */
 const layoutTokens = {
-  'w-phone': '430px', 'w-content': '70rem', 'w-app': '75rem', 'w-auth': '30rem', 'w-auth-wide': '36rem',
+  'w-content': '70rem', 'w-app': '75rem', 'w-auth': '30rem', 'w-auth-wide': '36rem',
   'h-topbar': '3.5rem', 'h-bottomnav': '4rem', 'h-ctl': '2.75rem', 'w-sidebar': '15rem', 'w-rail': '3.5rem',
 } as const;
 
@@ -270,8 +275,8 @@ const breakpointVars = Object.fromEntries(Object.entries(BREAKPOINTS).map(([k, v
  * 1.75 at ≥ 3840. It lives on :root and drives the html font-size, so every rem token (type, spacing, control heights,
  * layout widths) scales with it; px values stay put and multiply by `var(--ui)` where they must grow.
  */
-export const UI_SCALE: readonly { minWidth: number; ui: number }[] = [
-  { minWidth: BREAKPOINTS.hd, ui: 1.125 }, { minWidth: BREAKPOINTS.qhd, ui: 1.375 }, { minWidth: BREAKPOINTS.uhd, ui: 1.75 },
+export const UI_SCALE: readonly { minWidth: number; ui: number; minText: number }[] = [
+  { minWidth: BREAKPOINTS.hd, ui: 1.125, minText: 16 }, { minWidth: BREAKPOINTS.qhd, ui: 1.375, minText: 16 }, { minWidth: BREAKPOINTS.uhd, ui: 1.75, minText: 16 },
 ];
 
 export const tokens = { brand, palette, rgb, movements, semantic, shadows, textures, materials, surfaces, hues, type, spacing, radii, motion, layout: layoutTokens, breakpoints: breakpointVars };
@@ -313,7 +318,7 @@ ${hueVars}
   --color-card-border: transparent;
   color-scheme: light;
 }
-${UI_SCALE.map((b) => `@media (min-width: ${b.minWidth}px) { :root { --ui: ${b.ui}; } }`).join('\n')}
+${UI_SCALE.map((b) => `@media (min-width: ${b.minWidth}px) { :root { --ui: ${b.ui}; --fs-floor: ${b.minText}px; } }`).join('\n')}
 /* D-0007: the band scales the root font-size, so every rem token grows with it. */
 html { font-size: calc(100% * var(--ui)); }
 :root[data-theme="dark"] {

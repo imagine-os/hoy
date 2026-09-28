@@ -56,8 +56,9 @@
   --font-body: 'DM Sans', 'DM Sans Fallback', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
   --font-editorial: 'Cormorant Garamond', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
   --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
-  --fs-2xs: 0.6875rem;
-  --fs-xs: 0.75rem;
+  --fs-floor: 0px;
+  --fs-2xs: max(0.6875rem, var(--fs-floor));
+  --fs-xs: max(0.75rem, var(--fs-floor));
   --fs-sm: 0.875rem;
   --fs-md: 1rem;
   --fs-lg: 1.125rem;
@@ -106,7 +107,6 @@
   --dur-breath: 7s;
   --ease-out: cubic-bezier(.2,.7,.2,1);
   --ease-in-out: cubic-bezier(.65,0,.35,1);
-  --w-phone: 430px;
   --w-content: 70rem;
   --w-app: 75rem;
   --w-auth: 30rem;
@@ -127,6 +127,7 @@
   --ui: 1;
   --m-primary: 53,89,125;
   --m-shade: 36,56,79;
+  --m-deep: 28,46,66;
   --m-ink: 36,56,79;
   --m-mid: 95,133,177;
   --m-sun: 216,194,74;
@@ -206,14 +207,15 @@
   --color-card-border: transparent;
   color-scheme: light;
 }
-@media (min-width: 1920px) { :root { --ui: 1.125; } }
-@media (min-width: 2560px) { :root { --ui: 1.375; } }
-@media (min-width: 3840px) { :root { --ui: 1.75; } }
+@media (min-width: 1920px) { :root { --ui: 1.125; --fs-floor: 16px; } }
+@media (min-width: 2560px) { :root { --ui: 1.375; --fs-floor: 16px; } }
+@media (min-width: 3840px) { :root { --ui: 1.75; --fs-floor: 16px; } }
 /* D-0007: the band scales the root font-size, so every rem token grows with it. */
 html { font-size: calc(100% * var(--ui)); }
 :root[data-theme="dark"] {
   --m-primary: 155,192,228;
   --m-shade: 0,0,0;
+  --m-deep: 20,34,50;
   --m-ink: 228,218,198;
   --m-mid: 95,133,177;
   --m-sun: 216,194,74;
