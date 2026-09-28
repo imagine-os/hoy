@@ -30,15 +30,15 @@ artboard. Nothing invents a value off this file.
   eyebrows are `--fs-2xs` uppercase `--ls-eyebrow .14em` in `--color-text-faint`.
 - **Spacing**: 4-pt grid `--sp-1 … --sp-20`.
 - **Radii**: `--r-xs 4` (code tags) · `--r-sm 8` · `--r-ctl 11` (controls, date cells) · `--r-md 16` (cards) ·
-  `--r-frame 18` (desktop frame) · `--r-lg 24` · `--r-xl 32` · `--r-phone 34` (phone frame) · `--r-full`.
+  `--r-frame 18` (desktop frame) · `--r-lg 24` · `--r-xl 32` · `--r-phone 34` (DeviceFrame phone bezel) · `--r-full`.
 - **Motion**: `--dur-fast/base/slow`, `--dur-spin 1.1s`, `--dur-breath 7s`; the breathe keyframes are the canvas's
   (`scale .82 → 1.08`, `opacity .5 → .95`).
 
 ## Canvas var → HoyOS token
 | Canvas | Value (hoy, light) | HoyOS token | Used for |
 | --- | --- | --- | --- |
-| page ground | `#E7DCC6` | `--color-ground` | behind the phone frame on desktop |
-| `.surf` (frame) | `#FBF7EF` | `--color-bg`, `--gradient-frame` | app background / phone & desktop frame |
+| page ground | `#E7DCC6` | `--color-ground` | hub ground; behind the DeviceFrame in the simulator |
+| `.surf` (frame) | `#FBF7EF` | `--color-bg`, `--gradient-frame` | app background (AppShell is full-viewport, D-0006) / DeviceFrame fill |
 | `.surf2` (tile) | `#F5EEE1` (`--c13/--c19/--c25`) | `--color-surface` | cards, tiles, list groups, tables |
 | D-01 Elevated | `#FFFCF6` | `--color-surface-elevated` | raised cards, hover |
 | `--c17` | `#EFE7DA` | `--color-surface-2` | muted cards, code blocks |
@@ -69,7 +69,7 @@ artboard. Nothing invents a value off this file.
 | `--m10` | `251,247,239` | `--m-paper` | — |
 | Depth `.surf2` shadow | — | `--shadow-card` | cards |
 | Depth `.surf` shadow | — | `--shadow-raised` | drawers, raised cards |
-| frame shadow (inline) | — | `--shadow-frame` | phone frame |
+| frame shadow (inline) | — | `--shadow-frame` | DeviceFrame bezel (hub previews, D-06) |
 | Depth `.accent` shadow | — | `--shadow-accent` | primary buttons |
 | Depth `.inverse` shadow | — | `--shadow-inverse` | inverse cards, gift cards |
 | Texture `.lane` | — | `--tex-lane` | body, sidebar, ground |

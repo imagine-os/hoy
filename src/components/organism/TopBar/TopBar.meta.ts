@@ -19,8 +19,9 @@ export default defineMeta({
     { name: 'code', type: 'string', description: { es: 'Código de spec en un chip pequeño.', en: 'Spec code in a small chip.' } },
     { name: 'center', type: 'ReactNode', description: { es: 'Zona central (GlobalSearch).', en: 'Middle zone (GlobalSearch).' } },
     { name: 'actions', type: 'ReactNode', description: { es: 'Zona derecha.', en: 'Right side.' } },
+    { name: 'nav', type: 'ReactNode', description: { es: 'Navegación principal junto al logo (AppShell ≥ 900 px).', en: 'Primary navigation beside the brand (AppShell ≥ 900 px).' } },
   ],
-  states: ['title', 'brand', 'with-back', 'admin (brand + page + code + search + actions)', '≤900 px (sin título ni código)', '≤640 px (sin búsqueda)'],
+  states: ['title', 'brand', 'with-back', 'with-nav (AppShell ≥ 900 px: brand + primary nav + actions)', 'admin (brand + page + code + search + actions)', '≤900 px (sin título ni código)', '≤640 px (sin búsqueda)'],
   usages: [
     { title: { es: 'Dos variantes', en: 'Two variants' }, render: () => (h('div', { className: 'stack-sm' }, h(TopBar, { brand: true, sticky: false, actions: h('div', { className: 'row' }, h(LangToggle, { size: 'sm' }), h(Avatar, { name: 'Juliana Ospina', size: 28 })) }), h(TopBar, { title: 'Horario', back: '/app', sticky: false }))) },
     { title: { es: 'Barra de admin', en: 'Admin bar' }, render: () => h(TopBar, { brand: true, sticky: false, title: 'Panel', code: 'M-01', leading: h('button', { type: 'button', className: 'topbar-lead', 'aria-label': 'Menu' }, '☰'), center: h(GlobalSearch, { items: searchDemo, shortcut: null }), actions: h('div', { className: 'row' }, h(LangToggle, { size: 'sm' }), h(NotificationBell, { count: 2 }), h(Avatar, { name: 'Justin', size: 28 })) }) },
@@ -29,5 +30,5 @@ export default defineMeta({
     { es: 'El título solo es h1; junto al logo es texto (la página mantiene su propio h1).', en: 'A lone title is an h1; beside the wordmark it is plain text (the page keeps its own h1).' },
     { es: 'El botón atrás y el de menú tienen aria-label.', en: 'The back and menu buttons have aria-labels.' },
   ],
-  usedBy: ['PhoneShell', 'DesktopShell', 'P-*'],
+  usedBy: ['AppShell', 'AuthShell', 'DesktopShell', 'P-*'],
 });

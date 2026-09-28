@@ -17,5 +17,7 @@
 .topbar-center { flex: 0 1 320px; display: flex; justify-content: center; min-width: 0; }
 .topbar-lead { display: inline-flex; align-items: center; justify-content: center; width: var(--h-ctl); height: var(--h-ctl); border-radius: var(--r-ctl); border: 0; background: none; color: var(--color-text-muted); font-size: var(--fs-lg); flex: 0 0 auto; }
 .topbar-lead:hover { background: rgba(var(--m-shade), .07); color: var(--color-text); }
+/* primary nav slot (AppShell ≥ 900 px) sits after the brand and takes the free width */
+.topbar-nav { flex: 1 1 auto; display: flex; align-items: center; min-width: 0; margin-left: var(--sp-4); }
 @media (max-width: 900px) { .topbar-page, .topbar-code { display: none; } }
 @media (max-width: 640px) { .topbar-center { display: none; } }

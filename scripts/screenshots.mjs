@@ -18,7 +18,7 @@
 //                  page code (first in the manifest; /manual wins K-03 over its chapter routes), both langs,
 //                  both themes: a 640×400 desktop thumbnail (1280×800 viewport, deviceScaleFactor 0.5, not
 //                  fullPage) at docs/screenshots/<code>/thumb-<lang>-desktop[-dark].jpg, plus for
-//                  customer/teacher surfaces and /auth (PhoneShell) routes a 195×422 phone thumbnail
+//                  customer/teacher surfaces and /auth (AppShell) routes a 195×422 phone thumbnail
 //                  (390×844 viewport, deviceScaleFactor 0.5) at thumb-<lang>-phone[-dark].jpg. JPEG quality
 //                  64. Supports --only=; ignores --label/--quality/--smoke.
 //
@@ -211,7 +211,7 @@ async function captureThumb({ browser, path, url, lang, theme, userId, devMode, 
   await ctx.close();
 }
 
-/** One thumbnail pass: desktop + (for customer/teacher/PhoneShell routes) phone, per code/lang/theme. */
+/** One thumbnail pass: desktop + (for customer/teacher/AppShell routes) phone, per code/lang/theme. */
 async function mainThumbs() {
   const server = spawn(process.execPath, [new URL('../node_modules/vite/bin/vite.js', import.meta.url).pathname, 'preview', '--port', String(PORT), '--strictPort'], { stdio: 'pipe' });
   await new Promise((r) => setTimeout(r, 2500));
