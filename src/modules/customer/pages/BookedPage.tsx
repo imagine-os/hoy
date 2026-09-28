@@ -1,4 +1,4 @@
-import { Fragment, useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
 import type { BookingRow } from '../../../data/schema';
@@ -17,6 +17,9 @@ import { EmptyState } from '../../../components/molecule/EmptyState/EmptyState';
 import { Skeleton } from '../../../components/atom/Skeleton/Skeleton';
 import { ListGroup, ListRow } from '../../../components/molecule/ListRow/ListRow';
 import { canvasSpecs } from '../specs';
+import { SplitSections } from '../split';
+import { useActions } from '../../../actions';
+import { useAppNavHandlers } from '../actions';
 import { useBookingActions, useMyBookings, useNow, useSessionJoined } from '../hooks';
 import { cancelDeadline, insideCancelWindow, policy } from '../policy';
 import { PageHead, downloadIcs, movementOf, roomName, shareText, teacherName } from '../ui';
@@ -30,6 +33,7 @@ export function BookedPage({ change = false }: { change?: boolean }) {
   const { t, lang } = useI18n();
   const nav = useNavigate();
   const { sections, isVisible } = useLayout(spec);
+  useActions(spec, useAppNavHandlers());
   const { rows: myBookings, loading } = useMyBookings();
   const booking: BookingRow | null = useMemo(() => myBookings.find((b) => b.id === id) ?? [...myBookings].filter((b) => b.session_id === id).sort((a, b) => b.created_at.localeCompare(a.created_at))[0] ?? null, [myBookings, id]);
   const { joined } = useSessionJoined(booking?.session_id);
@@ -112,9 +116,8 @@ export function BookedPage({ change = false }: { change?: boolean }) {
     <div className="container page cust-page">
       <PageHead back="/app" title={<span className="sr-only">{s.title}</span>} />
       {flash && <Notice tone={flash.tone}>{flash.text}</Notice>}
-      <div className="stack">
-        {sections.filter(isVisible).map((name) => SECTIONS[name] ? <Fragment key={name}>{SECTIONS[name]()}</Fragment> : null)}
-      </div>
+      {/* ≥ 900 px: countdown + class on the left; reminder, actions, calendar and policy on the right. */}
+      <SplitSections narrowClassName="stack" className="cust-booked" names={sections.filter(isVisible)} render={(n) => SECTIONS[n]?.() ?? null} side={(n) => n !== 'CountdownRing' && n !== 'ClassSummary'} />
       <ChangeSheet open={change && active} onClose={() => nav(bookingBase, { replace: true })} booking={booking} joined={joined} inside={inside} deadline={deadline} onResult={(f) => { setFlash(f); }} />
     </div>
   );

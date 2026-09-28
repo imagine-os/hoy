@@ -75,8 +75,11 @@ scripts/        screenshots.mjs and other tooling
   AND `supabase/schema.sql` AND `docs/data-model.md`, in the same turn.
 - **Layout order**: sectioned pages render through `useLayout(spec)` so the layout editor (`/#/dev/layout/:code`)
   can reorder them.
-- **Shells**: mobile-first `PhoneShell` (customer, teacher) and desktop-first `DesktopShell` (staff, admin, dev).
-  Both are responsive; pick by `RouteDef.layout`.
+- **Shells**: `AppShell` (customer, teacher) is one responsive shell — content column + bottom dock below 900 px,
+  full-viewport page with top-bar nav from 900 px up; no phone bezel (D-0006, the bezel lives only in the hub's
+  `DeviceFrame` simulator). `DesktopShell` (staff, admin, dev, docs) is the sidebar shell. `withShell()` honours
+  `RouteDef.layout`: `mobile` → AppShell, `desktop` → DesktopShell, `auto` → the surface default. Breakpoints come
+  from `BREAKPOINTS` in `tokens.ts` (`useMinWidth('shell')` in React); the `--ui` band scales every surface (D-0007).
 
 ## Multi-tenant rule
 `tenant_id` on every table and every seed row. No hardcoded studio name, address, capacity, hours or

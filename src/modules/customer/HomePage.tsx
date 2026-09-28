@@ -1,4 +1,7 @@
-import { Fragment, useMemo, type ReactNode } from 'react';
+import { useMemo, type ReactNode } from 'react';
+import { SplitSections } from './split';
+import { useActions } from '../../actions';
+import { useAppNavHandlers } from './actions';
 import { Link, useNavigate } from 'react-router-dom';
 import { useI18n } from '../../i18n/I18nProvider';
 import { useSession } from '../../auth/SessionProvider';
@@ -19,6 +22,7 @@ import { EmptyHomeBlock } from './pages/blocks';
 import './customer.css';
 
 const spec = canvasSpecs['C-01'];
+const HOME_SIDE = new Set(['MembershipNudge (if no plan)', 'AnnouncementCard (if active)', 'QuickActions ×4', 'StatsRow ×3', 'FeedbackPrompt (conditional)']);
 
 /** C-01 Home. Sections come from the layout editor order; each block is independently toggleable later via feature_flags. */
 export function CustomerHomePage() {
@@ -27,6 +31,7 @@ export function CustomerHomePage() {
   const data = useData();
   const { user } = useSession();
   const { sections, isVisible } = useLayout(spec);
+  useActions(spec, useAppNavHandlers());
 
   const { rows: myBookings, loading: bookingsLoading } = useTable<BookingRow>('bookings', { where: { user_id: user.id } });
   const { rows: intentions } = useTable<IntentionRow>('intentions', { where: { user_id: user.id, date: dateKey() } });
@@ -107,7 +112,9 @@ export function CustomerHomePage() {
 
   return (
     <div className="container page cust-home">
-      {sections.filter(isVisible).map((name) => SECTIONS[name] ? <Fragment key={name}>{SECTIONS[name]()}</Fragment> : null)}
+      {/* ≥ 900 px: greeting across, next class + today on the left, membership / notice / quick actions / stats on the right. */}
+      <SplitSections className="cust-home-split" names={sections.filter(isVisible)} render={(n) => SECTIONS[n]?.() ?? null}
+        full={(n) => n === 'TopBar (logo, avatar, bell)'} side={(n) => HOME_SIDE.has(n)} />
     </div>
   );
 }

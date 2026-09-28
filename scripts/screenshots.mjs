@@ -14,11 +14,17 @@
 //   --label=before writes <lang>-<width>[-dark]-before.jpg next to the current capture (before/after pairs
 //                  for visual changes; see docs/rules/documentation.md)
 //   --quality=N    JPEG quality (default 72). JPEG keeps the repo and the Pages bundle small; PNG was ~3× larger.
+//   --widths=a,b   viewport widths in px (default 390,1280). Viewport height is 844 below 600 px, 800 up to 1919 px,
+//                  and 16:9 from 1920 px up (1920x1080, 2560x1440, 3840x2160); wide captures are full-page.
+//                  e.g. --widths=360,390,768,1280,1920,2560,3840 for the responsive matrix.
+//   --pages=a,b    only routes whose page code (spec.code) is exactly one of the list (--pages=C-01,C-04);
+//                  combines with --only=. C-08 does not match C-08b.
+//   --dark=a,b     page codes captured in dark as well as light, replacing KEY_PAGES for this run
 //   --thumbs       hub/card thumbnails instead of full-page captures (npm run thumbnails). One route per
 //                  page code (first in the manifest; /manual wins K-03 over its chapter routes), both langs,
 //                  both themes: a 640×400 desktop thumbnail (1280×800 viewport, deviceScaleFactor 0.5, not
 //                  fullPage) at docs/screenshots/<code>/thumb-<lang>-desktop[-dark].jpg, plus for
-//                  customer/teacher surfaces and /auth (PhoneShell) routes a 195×422 phone thumbnail
+//                  customer/teacher surfaces and /auth (AppShell) routes a 195×422 phone thumbnail
 //                  (390×844 viewport, deviceScaleFactor 0.5) at thumb-<lang>-phone[-dark].jpg. JPEG quality
 //                  64. Supports --only=; ignores --label/--quality/--smoke.
 //
@@ -36,6 +42,9 @@ const THUMBS = args.includes('--thumbs');
 const ONLY = (args.find((a) => a.startsWith('--only='))?.slice(7) ?? '').split(',').filter(Boolean);
 const LABEL = args.find((a) => a.startsWith('--label='))?.slice(8) ?? '';
 const QUALITY = Number(args.find((a) => a.startsWith('--quality='))?.slice(10) ?? 72);
+const PAGES = (args.find((a) => a.startsWith('--pages='))?.slice(8) ?? '').split(',').filter(Boolean);
+const WIDTHS = (args.find((a) => a.startsWith('--widths='))?.slice(9) ?? '').split(',').map(Number).filter((n) => n > 0);
+const DARK = (args.find((a) => a.startsWith('--dark='))?.slice(7) ?? '').split(',').filter(Boolean);
 const PORT = 4173;
 const BASE = `http://localhost:${PORT}/#`;
 export const KEY_PAGES = new Set(['HUB-01', 'W-01', 'C-01', 'S-02', 'M-01', 'M-03', 'D-02', 'K-03']);
@@ -115,9 +124,9 @@ function userFor(route, users) {
   return { userId: byRole(role) ?? 'usr_super', devMode: role === 'super_admin' };
 }
 
-const inOnly = (r) => !ONLY.length || ONLY.some((p) => (p.endsWith('$')
+const inOnly = (r) => (!PAGES.length || PAGES.includes(r.code)) && (!ONLY.length || ONLY.some((p) => (p.endsWith('$')
   ? r.path === p.slice(0, -1)
-  : r.path === p || r.path.startsWith(p.endsWith('/') ? p : `${p}/`) || r.path === p.replace(/\/$/, '')));
+  : r.path === p || r.path.startsWith(p.endsWith('/') ? p : `${p}/`) || r.path === p.replace(/\/$/, ''))));
 
 async function main() {
   const server = spawn(process.execPath, [new URL('../node_modules/vite/bin/vite.js', import.meta.url).pathname, 'preview', '--port', String(PORT), '--strictPort'], { stdio: 'pipe' });
@@ -131,8 +140,10 @@ async function main() {
   const list = manifest.filter(inOnly);
   const problems = [];
   const langs = SMOKE ? ['es'] : ['es', 'en'];
-  const widths = SMOKE ? [1280] : [390, 1280];
-  console.log(`${list.length} routes · chromium ${exe}${ONLY.length ? ` · only ${ONLY.join(',')}` : ''}${LABEL ? ` · label ${LABEL}` : ''}${SMOKE ? ' · smoke' : ` · jpeg q${QUALITY}`}`);
+  const widths = SMOKE ? [1280] : WIDTHS.length ? WIDTHS : [390, 1280];
+  const heightFor = (w) => (w < 600 ? 844 : w >= 1920 ? Math.round((w * 9) / 16) : 800);
+  const darkPages = DARK.length ? new Set(DARK) : KEY_PAGES;
+  console.log(`${list.length} routes · chromium ${exe}${ONLY.length ? ` · only ${ONLY.join(',')}` : ''}${PAGES.length ? ` · pages ${PAGES.join(',')}` : ''}${LABEL ? ` · label ${LABEL}` : ''}${SMOKE ? ' · smoke' : ` · jpeg q${QUALITY}`}`);
   for (const route of list) {
     const { path, code } = route;
     const url = path.replace(/:\w+/g, (p) => (p === ':id' ? idFor(path, ids) : STATIC_PARAMS[p]) ?? 'x');
@@ -140,7 +151,7 @@ async function main() {
     // /manual and /manual/:chapter share the code K-03: the cover keeps its own labelled file.
     const label = LABEL || (path === '/manual' ? 'cover' : '');
     for (const lang of langs) for (const width of widths) {
-      const themes = !SMOKE && KEY_PAGES.has(code) ? ['light', 'dark'] : ['light'];
+      const themes = !SMOKE && darkPages.has(code) ? ['light', 'dark'] : ['light'];
       for (const theme of themes) {
         const ctx = await browser.newContext({ viewport: { width, height: width < 600 ? 844 : 800 }, deviceScaleFactor: 1, ignoreHTTPSErrors: true });
         await ctx.addInitScript(([l, th, uid, dev]) => {
@@ -173,7 +184,7 @@ async function main() {
   }
   await browser.close();
   server.kill();
-  if (!SMOKE && !ONLY.length && !LABEL) {
+  if (!SMOKE && !ONLY.length && !PAGES.length && !WIDTHS.length && !LABEL) {
     writeFileSync(new URL('../docs/screenshots/README.md', import.meta.url), `# Screenshots\n\nGenerated by \`npm run screenshots\` on ${new Date().toISOString().slice(0, 10)} (JPEG, quality ${QUALITY}). One folder per page code; file name \`<lang>-<width>[-dark][-<label>].${EXT}\` (e.g. \`es-390.${EXT}\`, \`en-1280-dark.${EXT}\`, \`es-1280-before.${EXT}\`). \`routes.json\` is the route manifest the app published (\`window.__hoyos.routes\`) when the pass ran. Browse them at \`/#/docs/screenshots\`; reference them from \`docs/pages/<code>.md\` and the changelog entry.\n\n| Code | Route | Status |\n| --- | --- | --- |\n${list.map((r) => `| \`${r.code}\` | \`#${r.path}\` | ${r.status} |`).join('\n')}\n`);
   }
   if (problems.length) { console.log('\nPROBLEMS:'); for (const p of problems) console.log(`  ${p.path} [${p.lang}/${p.width}/${p.theme}]`, p.errors.join(' | ')); }
@@ -211,7 +222,7 @@ async function captureThumb({ browser, path, url, lang, theme, userId, devMode, 
   await ctx.close();
 }
 
-/** One thumbnail pass: desktop + (for customer/teacher/PhoneShell routes) phone, per code/lang/theme. */
+/** One thumbnail pass: desktop + (for customer/teacher/AppShell routes) phone, per code/lang/theme. */
 async function mainThumbs() {
   const server = spawn(process.execPath, [new URL('../node_modules/vite/bin/vite.js', import.meta.url).pathname, 'preview', '--port', String(PORT), '--strictPort'], { stdio: 'pipe' });
   await new Promise((r) => setTimeout(r, 2500));

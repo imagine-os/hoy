@@ -1,4 +1,4 @@
-import { Fragment, useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useSession } from '../../../auth/SessionProvider';
@@ -24,6 +24,9 @@ import { MatPicker } from '../../../components/organism/MatPicker/MatPicker';
 import { usesMats, occupiesMat, chooseMat } from '../../../data/mats';
 import { tenant } from '../../../tenant/tenant';
 import { DeclinedBlock, type DeclinedState } from './blocks';
+import { SplitSections } from '../split';
+import { useActions } from '../../../actions';
+import { need, useAppNavHandlers } from '../actions';
 
 const spec = canvasSpecs['C-04'];
 type Choice = 'credit' | 'membership' | 'trial' | 'single' | 'pack3' | 'pack10';
@@ -75,17 +78,18 @@ export function CheckoutPage() {
     ...PASS_IDS.map((pid) => { const p = priceOf(pid); return { id: pid as Choice, title: bi(p.name), sub: bi(p.description), price: formatCOP(p.price ?? 0, lang), available: pid !== 'trial' || !ent.trialUsed }; }),
   ];
 
-  const confirm = async () => {
-    if (!joined) return;
+  /** Books (and pays, when a pass is chosen). Resolves the outcome so the WebMCP action can report it. */
+  const confirm = async (): Promise<string> => {
+    if (!joined) return 'unavailable';
     setBusy(true); setError(null);
     try {
       if (yoga) {
-        if (!matValid) { setError('mat'); return; }
+        if (!matValid) { setError('mat'); return 'mat'; }
         chooseMat(await data.list<BookingRow>('bookings', { where: { session_id: joined.session.id } }), Math.min(joined.session.capacity, tenant.studio.mats), mat);
       }
       if (alreadyBooked) throw new Error('booking_exists');
       if (joined.session.status !== 'scheduled' || new Date(joined.session.starts_at).getTime() <= Date.now()) throw new Error('session_unavailable');
-      if (conflict) { setError('conflict'); return; }
+      if (conflict) { setError('conflict'); return 'conflict'; }
       let paidWith: EntitlementKind = kind === 'credit' ? 'credit' : kind === 'membership' ? 'membership' : kind === 'trial' ? 'trial' : kind === 'single' ? 'single' : 'credit';
       let creditPlanId: string | null = null;
       let pending = false;
@@ -96,7 +100,7 @@ export function CheckoutPage() {
         const payment = await recordPayment(data, { userId: user.id, planId: `plan_${item.id}`, amount, method, result, ivaRate: policy.ivaRate });
         if (result?.status === 'declined') {
           setDeclined((d) => ({ reason: result?.reason ?? null, holdUntil: d?.holdUntil ?? new Date(Date.now() + policy.paymentHoldMinutes * MS.min).toISOString(), attempts: (d?.attempts ?? 0) + 1, method }));
-          return;
+          return 'declined';
         }
         pending = payment.status === 'pending';
         if (item.credits && item.credits > 1) {
@@ -108,10 +112,45 @@ export function CheckoutPage() {
       if (claimId) await data.update('waitlist', claimId, { status: 'claimed' });
       setDeclined(null);
       setDone({ booking, pending });
+      return `booked ${booking.id}${pending ? ' (payment pending at the desk)' : ''}`;
     } catch (e) {
-      setError((e as Error).message.startsWith('mat_') ? 'mat' : (e as Error).message === 'session_full' ? 'full' : 'unavailable');
+      const code = (e as Error).message.startsWith('mat_') ? 'mat' : (e as Error).message === 'session_full' ? 'full' : 'unavailable';
+      setError(code);
+      return code;
     } finally { setBusy(false); }
   };
+
+  // WebMCP (0025). The handlers read the latest render through a ref so they are memoized once.
+  // app.confirmReservation only books what costs nothing now (credit / membership); a charge stays a person's click.
+  const live = useRef({ confirm, joined, yoga, matValid, amount, alreadyBooked, conflict, roomBookings });
+  live.current = { confirm, joined, yoga, matValid, amount, alreadyBooked, conflict, roomBookings };
+  const navHandlers = useAppNavHandlers();
+  const handlers = useMemo(() => ({
+    ...navHandlers,
+    'app.pickMat': (p?: Record<string, string>) => {
+      const { joined: j, yoga: y, roomBookings: taken } = live.current;
+      if (!j) throw new Error('no class is open in checkout');
+      if (!y) throw new Error('this class does not use mats');
+      const n = Number(need(p, 'mat'));
+      const max = Math.min(j.session.capacity, tenant.studio.mats);
+      if (!Number.isInteger(n) || n < 1 || n > max) throw new Error(`mat must be 1–${max}`);
+      if (taken.some((b) => occupiesMat(b) && b.mat_number === n)) throw new Error(`mat ${n} is taken`);
+      setMat(n); setError(null);
+      return `mat ${n} selected`;
+    },
+    'app.confirmReservation': async () => {
+      const c = live.current;
+      if (!c.joined) throw new Error('no class is open in checkout');
+      if (c.alreadyBooked) throw new Error('already booked');
+      if (c.conflict) throw new Error('one class a day: another booking that day');
+      if (c.yoga && !c.matValid) throw new Error('pick a free mat first (app.pickMat)');
+      if (c.amount > 0) throw new Error('this reservation charges a pass; payment needs a person to confirm');
+      const out = await c.confirm();
+      if (!out.startsWith('booked')) throw new Error(out);
+      return out;
+    },
+  }), [navHandlers]);
+  useActions(spec, handlers);
 
   if (!joined) {
     return (
@@ -176,9 +215,8 @@ export function CheckoutPage() {
   return (
     <div className="container page cust-page">
       <PageHead back={`/app/class/${s.id}`} title={t('customer.checkout.title')} sub={claimId ? t('customer.checkout.claiming') : undefined} />
-      <div className="stack">
-        {sections.filter(isVisible).map((name) => SECTIONS[name] ? <Fragment key={name}>{SECTIONS[name]()}</Fragment> : null)}
-      </div>
+      {/* ≥ 900 px: what you are booking (class + mat) on the left, how you pay + confirm on the right (D-0006). */}
+      <SplitSections narrowClassName="stack" className="cust-checkout" names={sections.filter(isVisible)} render={(n) => SECTIONS[n]?.() ?? null} side={(n) => n !== 'ClassSummary'} />
       <Drawer open={!!done} onClose={() => done && nav(`/app/booking/${done.booking.id}`)} title={t('customer.book.ok')} side="bottom">
         {done && (
           <div className="stack">

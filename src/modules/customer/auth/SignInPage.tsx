@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useMemo, useRef, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useSession } from '../../../auth/SessionProvider';
@@ -14,6 +14,11 @@ import { Notice } from '../../../components/molecule/Notice/Notice';
 import { ListGroup, ListRow } from '../../../components/molecule/ListRow/ListRow';
 import { policy } from '../policy';
 import { AuthShell } from './AuthShell';
+import { canvasSpecs } from '../specs';
+import { useActions } from '../../../actions';
+import { need } from '../actions';
+
+const spec = canvasSpecs['A-02'];
 import { MS } from '../../../i18n/format';
 
 export const ATTEMPTS_KEY = 'hoyos.auth.attempts';
@@ -35,6 +40,20 @@ export function SignInPage() {
   const people = demoUsers.filter((u) => u.role !== 'public');
 
   const enterAs = (id: string) => { const u = demoUsers.find((x) => x.id === id)!; switchUser(u.id); try { sessionStorage.removeItem(ATTEMPTS_KEY); } catch { /* ignore */ } nav(next && next.startsWith('/') && u.role === 'customer' ? next : ROLE_HOME[u.role]); };
+
+  // WebMCP (0025): auth.signIn enters as a demo user and follows ?next= exactly like a tap on the picker.
+  const enterRef = useRef(enterAs); enterRef.current = enterAs;
+  const handlers = useMemo(() => ({
+    'auth.signIn': (p?: Record<string, string>) => {
+      const id = need(p, 'user');
+      const signable = demoUsers.filter((x) => x.role !== 'public');
+      const u = signable.find((x) => x.id === id);
+      if (!u) throw new Error(`unknown demo user "${id}" — one of ${signable.map((x) => x.id).join(', ')}`);
+      enterRef.current(u.id);
+      return `signed in as ${u.id} (${u.role})`;
+    },
+  }), []);
+  useActions(spec, handlers);
 
   const submit = (e: FormEvent) => {
     e.preventDefault(); setBusy(true); setError(null);

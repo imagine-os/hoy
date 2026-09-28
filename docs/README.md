@@ -4,6 +4,12 @@ Everything about the software lives here and is rendered in-app at `/#/docs` (si
 this folder). The club's **operations manual** (how HOY runs, in person and in software) lives in
 `ops-manual/` and is rendered at `/#/manual`.
 
+## Start here (current as of 2026-09-28, v0.10.0)
+- **Latest work**: [prompt 0025](prompts/0025-responsive-app-shell.md) · [changelog 0025](changelog/0025-responsive-app-shell.md) — the responsive app shell (no phone frame on desktop); [changelog 0024](changelog/0024-website-v2-backfill.md) — website V2.1–V2.3, back-filled.
+- **Decisions that shape every screen**: [D-0006](decisions.md) — the customer and teacher apps are full-viewport at every width, the phone bezel lives only in the hub's `DeviceFrame` simulator; [D-0007](decisions.md) — the `--ui` large-screen band applies to every surface.
+- **Responsive standard**: every page works from **360 px phones to 3840 px 4K TVs** (`BREAKPOINTS` in `src/design/tokens.ts`: 360 · 390 · 768 · 900 · 1280 · 1920 · 2560 · 3840); the app/customer shell switches at **900 px**; every interactive control is at least **44 px** (`--h-ctl`); nothing is hover-only. `PageSpec.checkedAt` records the widths a page was checked at. See `design-system.md` and `architecture.md` (Shells).
+- **Live board**: [kanban](kanban.md) (0025 follow-ups at the top of Backlog) · machine surfaces: [surfaces](reference/surfaces.md).
+
 ## Map
 | Path | What |
 | --- | --- |

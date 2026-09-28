@@ -7,6 +7,7 @@
 import { canvasSpecs as base } from '../../specs/canvasSpecs';
 import { defineSpec } from '../../specs/define';
 import type { PageSpec } from '../../specs/types';
+import { CUSTOMER_ACTIONS } from './actions';
 
 const ext = (code: string, patch: Partial<PageSpec>): PageSpec => {
   const b: PageSpec = base[code] ?? { code, name: { es: code, en: code }, purpose: { es: '', en: '' }, layout: [], data: [], roles: ['customer'], logic: [], integrations: [] };
@@ -86,3 +87,12 @@ export const canvasSpecs: Record<string, PageSpec> = {
   'E-03': ext('E-03', { layout: ['CancelBanner (reason)', 'RefundConfirmation · 1 credit', 'AlternativesList → ClassRow', 'PrimaryCTA · book a replacement', 'ChannelNote'], data: ['class_sessions', 'bookings', 'credits', 'modalities', 'teachers'], notes: ['Demo route /app/state/cancelled picks a cancelled session from the seed; C-08 renders the same block when the booked session is cancelled.'] }),
   'E-04': ext('E-04', { layout: ['LockNotice (title, reason, countdown)', 'PrimaryCTA · recover password → C-21', 'SecondaryCTA · WhatsApp the studio', 'SecurityNote'], data: ['users'], notes: ['Reached from A-02 after 5 failed attempts; the 15-minute countdown is local in the demo.'] }),
 };
+
+// 0025 — WebMCP actions (./actions.ts) and the widths the responsive AppShell pass was checked at (390 · 1280 · 3840,
+// scratchpad captures of 2026-09-28; the full 360→3840 matrix is the screenshot pass's job).
+const CHECKED_0025: Record<string, number[]> = { 'C-01': [390, 1280, 3840], 'C-02': [390, 1280, 3840], 'C-04': [390, 1280, 3840], 'C-06': [390, 1280, 3840], 'C-08': [390, 1280, 3840], 'A-02': [390, 1280, 3840], 'A-05': [390, 1280, 3840] };
+for (const code of new Set([...Object.keys(CUSTOMER_ACTIONS), ...Object.keys(CHECKED_0025)])) {
+  const s = canvasSpecs[code];
+  if (!s) continue;
+  canvasSpecs[code] = { ...s, actions: [...(s.actions ?? []), ...(CUSTOMER_ACTIONS[code] ?? [])], checkedAt: CHECKED_0025[code] ?? s.checkedAt };
+}

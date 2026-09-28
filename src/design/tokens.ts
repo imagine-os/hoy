@@ -34,6 +34,7 @@ export const rgb = {
   light: {
     'm-primary': '53,89,125',   // --m1 · deep blue
     'm-shade': '36,56,79',      // --m2 · ink shade for shadows and grain
+    'm-deep': '28,46,66',       // --c3 · deep ink behind the dark-theme top bars (TopBar, site header)
     'm-ink': '36,56,79',        // --m3
     'm-mid': '95,133,177',      // --m4
     'm-sun': '216,194,74',      // --m5
@@ -45,6 +46,7 @@ export const rgb = {
   dark: {
     'm-primary': '155,192,228', // --cat dark
     'm-shade': '0,0,0',         // dark .surf shadows use pure black in the canvas
+    'm-deep': '20,34,50',       // one step below the dark frame paper (#1B2E44) so the sticky bar reads over scrolled content
     'm-ink': '228,218,198',
     'm-mid': '95,133,177',
     'm-sun': '216,194,74',
@@ -206,8 +208,11 @@ export const type = {
   'font-body': "'DM Sans', 'DM Sans Fallback', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif",
   'font-editorial': "'Cormorant Garamond', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif",
   'font-mono': "ui-monospace, 'SF Mono', Menlo, Consolas, monospace",
-  'fs-2xs': '0.6875rem', // 11px · eyebrows, code tags
-  'fs-xs': '0.75rem',
+  /* `fs-floor` is 0 up to 1919 px and 16 px from 1920 px (UI_SCALE.minText): the two caption sizes never compute
+     under 16 px on a large screen (10-foot legibility) while the base sizes stay 11 / 12 px on phones and desktops. */
+  'fs-floor': '0px',
+  'fs-2xs': 'max(0.6875rem, var(--fs-floor))', // 11px · eyebrows, code tags
+  'fs-xs': 'max(0.75rem, var(--fs-floor))',    // 12px · captions, week-grid text
   'fs-sm': '0.875rem',
   'fs-md': '1rem',
   'fs-lg': '1.125rem',
@@ -226,10 +231,10 @@ export const type = {
   'fw-bold': '700',
 } as const;
 
-/** 4-pt grid */
+/** 4-pt grid, in rem (4px = .25rem at the base size) so spacing scales with the `--ui` band like type does (D-0007). */
 export const spacing = {
-  'sp-0': '0', 'sp-1': '4px', 'sp-2': '8px', 'sp-3': '12px', 'sp-4': '16px', 'sp-5': '20px',
-  'sp-6': '24px', 'sp-8': '32px', 'sp-10': '40px', 'sp-12': '48px', 'sp-16': '64px', 'sp-20': '80px',
+  'sp-0': '0', 'sp-1': '0.25rem', 'sp-2': '0.5rem', 'sp-3': '0.75rem', 'sp-4': '1rem', 'sp-5': '1.25rem',
+  'sp-6': '1.5rem', 'sp-8': '2rem', 'sp-10': '2.5rem', 'sp-12': '3rem', 'sp-16': '4rem', 'sp-20': '5rem',
 } as const;
 
 /** Canvas radii: 4 (code tags) · 8 · 11 (controls, date cells) · 16 (cards) · 18 (desktop frame) · 24 · 32 · 34 (phone) · pill. */
@@ -245,11 +250,36 @@ export const motion = {
   'ease-out': 'cubic-bezier(.2,.7,.2,1)', 'ease-in-out': 'cubic-bezier(.65,0,.35,1)',
 } as const;
 
+/**
+ * Layout widths and heights, all in rem so they scale with the `--ui` band (1120 → 1960 px at 3840). The phone
+ * bezel width lives in the hub's DeviceFrame presets (D-0006), not here.
+ * `h-ctl` is the minimum height (and the minimum width of a square target) of every interactive control (44 px).
+ */
 const layoutTokens = {
-  'w-phone': '430px', 'w-content': '1120px', 'h-topbar': '56px', 'h-bottomnav': '64px', 'w-sidebar': '240px', 'w-rail': '56px',
+  'w-content': '70rem', 'w-app': '75rem', 'w-auth': '30rem', 'w-auth-wide': '36rem',
+  'h-topbar': '3.5rem', 'h-bottomnav': '4rem', 'h-ctl': '2.75rem', 'w-sidebar': '15rem', 'w-rail': '3.5rem',
 } as const;
 
-export const tokens = { brand, palette, rgb, movements, semantic, shadows, textures, materials, surfaces, hues, type, spacing, radii, motion, layout: layoutTokens };
+/**
+ * Breakpoints (px, min-width). One list for CSS media queries, `useMinWidth()` and `PageSpec.checkedAt`.
+ * `shell` (900) is where AppShell swaps the bottom dock for the top-bar nav and DesktopShell opens its sidebar.
+ * CSS cannot read custom properties inside @media, so the CSS vars are documentary; the numbers are the contract.
+ */
+export const BREAKPOINTS = { xs: 360, phone: 390, tablet: 768, shell: 900, desktop: 1280, hd: 1920, qhd: 2560, uhd: 3840 } as const;
+export type Breakpoint = keyof typeof BREAKPOINTS;
+export const CHECK_WIDTHS: readonly number[] = Object.values(BREAKPOINTS);
+const breakpointVars = Object.fromEntries(Object.entries(BREAKPOINTS).map(([k, v]) => [`bp-${k}`, `${v}px`])) as Record<string, string>;
+
+/**
+ * Large-screen scale band (D-0004, made global by D-0007): `--ui` is 1 up to 1919 px, 1.125 at ≥ 1920, 1.375 at ≥ 2560,
+ * 1.75 at ≥ 3840. It lives on :root and drives the html font-size, so every rem token (type, spacing, control heights,
+ * layout widths) scales with it; px values stay put and multiply by `var(--ui)` where they must grow.
+ */
+export const UI_SCALE: readonly { minWidth: number; ui: number; minText: number }[] = [
+  { minWidth: BREAKPOINTS.hd, ui: 1.125, minText: 16 }, { minWidth: BREAKPOINTS.qhd, ui: 1.375, minText: 16 }, { minWidth: BREAKPOINTS.uhd, ui: 1.75, minText: 16 },
+];
+
+export const tokens = { brand, palette, rgb, movements, semantic, shadows, textures, materials, surfaces, hues, type, spacing, radii, motion, layout: layoutTokens, breakpoints: breakpointVars };
 
 function vars(obj: Record<string, string>): string {
   return Object.entries(obj).map(([k, v]) => `  --${k}: ${v};`).join('\n');
@@ -273,6 +303,8 @@ ${vars(spacing)}
 ${vars(radii)}
 ${vars(motion)}
 ${vars(layoutTokens)}
+${vars(breakpointVars)}
+  --ui: 1;
 ${vars(rgb.light)}
 ${vars(semantic.light)}
 ${vars(shadows)}
@@ -286,6 +318,9 @@ ${hueVars}
   --color-card-border: transparent;
   color-scheme: light;
 }
+${UI_SCALE.map((b) => `@media (min-width: ${b.minWidth}px) { :root { --ui: ${b.ui}; --fs-floor: ${b.minText}px; } }`).join('\n')}
+/* D-0007: the band scales the root font-size, so every rem token grows with it. */
+html { font-size: calc(100% * var(--ui)); }
 :root[data-theme="dark"] {
 ${vars(rgb.dark)}
 ${vars(semantic.dark)}

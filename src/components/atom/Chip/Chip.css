@@ -2,6 +2,7 @@
 button.chip:hover { box-shadow: var(--shadow-card); }
 button.chip:active { transform: translateY(1px); }
 .chip.is-selected { background-color: var(--color-accent-fill); background-image: var(--tex-accent-on); color: var(--color-text-on-primary); border-color: transparent; box-shadow: var(--shadow-accent); }
+button.chip { min-height: var(--h-ctl); }
 .chip-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; flex: 0 0 auto; }
 /* movement tags: canvas movSets.hoy — translucent ground, dark ink, saturated dot */
 .chip-mv { border-color: transparent; box-shadow: var(--shadow-highlight); }

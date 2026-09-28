@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useVisibleModalities } from '../../admin/settings';
@@ -16,6 +16,8 @@ import { SessionCalendar } from '../../../components/organism/SessionCalendar/Se
 import { canvasSpecs } from '../specs';
 import { useAllSessionsJoined, useMyBookings } from '../hooks';
 import { PageHead } from '../ui';
+import { useActions } from '../../../actions';
+import { need, useAppNavHandlers } from '../actions';
 
 const specDay = canvasSpecs['C-02'];
 const specWeek = canvasSpecs['C-02b'];
@@ -58,6 +60,22 @@ export function SchedulePage({ view: routeView }: SchedulePageProps) {
   };
   const activeFilters = Object.entries(filters).filter(([, v]) => v !== 'all').length;
   const filtered = useMemo(() => all.filter(matches), [all, filters]);
+
+  // WebMCP (0025): app.reserve opens checkout for a session id; the id must be a bookable session in the schedule.
+  const allRef = useRef(all); allRef.current = all;
+  const navHandlers = useAppNavHandlers();
+  const handlers = useMemo(() => ({
+    ...navHandlers,
+    'app.reserve': (p?: Record<string, string>) => {
+      const id = need(p, 'session');
+      const x = allRef.current.find((j) => j.session.id === id);
+      if (!x) throw new Error(`unknown session "${id}"`);
+      if (x.session.status !== 'scheduled' || new Date(x.session.starts_at).getTime() <= Date.now()) throw new Error(`session "${id}" is not bookable (${x.session.status})`);
+      nav(`/app/checkout/${id}`);
+      return `opened /app/checkout/${id}`;
+    },
+  }), [navHandlers, nav]);
+  useActions(specDay, handlers);
   const isFull = (s: ClassSessionRow) => s.status === 'scheduled' && s.booked_count >= s.capacity;
   // A class with no spots left cannot be booked: the row leads to the waitlist (C-20) instead of the booking screen.
   const open = (s: ClassSessionRow) => nav(isFull(s) && !mine.has(s.id) ? `/app/waitlist/${s.id}` : `/app/class/${s.id}`);
@@ -75,7 +93,8 @@ export function SchedulePage({ view: routeView }: SchedulePageProps) {
       </div>
     ),
     'ClassList → ClassRow': () => view === 'today' ? <SessionCalendar sessions={filtered} mine={mine} initialView="day" onPick={open} /> : null,
-    WeekGrid: () => <SessionCalendar sessions={filtered} mine={mine} initialView="week" onPick={open} />,
+    // The Today page renders one calendar (its toolbar already switches Day / Week / Month); the week route is C-02b.
+    WeekGrid: () => view === 'week' ? <SessionCalendar sessions={filtered} mine={mine} initialView="week" onPick={open} /> : null,
     'WeekGrid (Mon–Sat columns → DayChip)': () => <SessionCalendar sessions={filtered} mine={mine} initialView="week" onPick={open} />,
     Legend: () => (
       <div className="row wrap cust-legend">

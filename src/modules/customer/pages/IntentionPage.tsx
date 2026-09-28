@@ -27,7 +27,7 @@ export function IntentionPage() {
     <div className="container page cust-page">
       <PageHead back="/app" title={t('customer.home.intention.q')} sub={t('customer.home.intention.hint')} />
       <div className="stack">
-        <div className="grid grid-2">
+        <div className="grid grid-2 cust-intention-grid">
           {(Object.keys(movements) as Movement[]).map((mv) => (
             <Card key={mv} interactive onClick={() => pick(mv)} className={`cust-intention cust-intention-${mv} ${current?.movement === mv ? 'is-active' : ''}`} padding="lg">
               <span className={`classrow-dot mv-${mv}`} aria-hidden style={{ width: 14, height: 14 }} />

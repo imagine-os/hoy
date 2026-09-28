@@ -97,7 +97,7 @@ module owns `liveFramesAllowed()`: no frames inside a frame, none with `live=0`,
 editor at `/#/dev/layout/:code` reorders with dnd-kit and persists through the provider.
 
 ## Shells
-`PhoneShell` (bottom nav, mobile-first) and `DesktopShell` (sidebar, desktop-first). Both responsive.
+`AppShell` (customer, teacher: content column + bottom dock below 900 px, full-viewport page with top-bar nav from 900 px — no phone bezel, D-0006) and `DesktopShell` (staff, admin, dev, docs: sidebar). `withShell()` honours `RouteDef.layout`.
 
 ## Deployment
 GitHub Actions → GitHub Pages from `dist/`. HashRouter avoids server routing.

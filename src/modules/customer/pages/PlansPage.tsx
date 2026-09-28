@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useMemo, useState } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useMinWidth } from '../../../layout/useMinWidth';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useContact } from '../../admin/settings';
 import { useSession } from '../../../auth/SessionProvider';
@@ -18,6 +19,11 @@ import { useEntitlements } from '../hooks';
 import { recordPayment, wompiCheckout } from '../payments';
 import { policy } from '../policy';
 import { PageHead } from '../ui';
+import { useActions } from '../../../actions';
+import { need, useAppNavHandlers } from '../actions';
+import { canvasSpecs } from '../specs';
+
+const spec = canvasSpecs['C-06'];
 
 type Cycle = 'month' | 'year';
 /** Plan dates carry the year: an annual cycle ends in another one. */
@@ -31,18 +37,39 @@ export function PlansPage() {
   const data = useData();
   const { user } = useSession();
   const ent = useEntitlements();
-  const [cycle, setCycle] = useState<Cycle>('month');
-  const [buying, setBuying] = useState<PriceItem | null>(null);
+  const wide = useMinWidth('shell');
+  const [params] = useSearchParams();
+  const plans = pricingByFamily('membresia');
+  // W-05 → A-02 → here with ?plan=<id>: the plan chosen on the site is preselected and its confirmation opens at once.
+  const preselected = plans.find((p) => p.id === params.get('plan')) ?? null;
+  const [cycle, setCycle] = useState<Cycle>(() => (preselected?.period === 'year' ? 'year' : 'month'));
+  const [buying, setBuying] = useState<PriceItem | null>(preselected);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
 
-  const plans = pricingByFamily('membresia');
   const monthly = plans.find((p) => p.period === 'month')!, annual = plans.find((p) => p.period === 'year')!;
   const monthsFree = Math.max(0, Math.round(12 - (annual.price ?? 0) / (monthly.price ?? 1)));
-  const shown = plans.filter((p) => p.period === cycle);
+  // From 900 px both cycles sit side by side (no toggle); on a phone the segmented control picks one.
+  const shown = wide ? plans : plans.filter((p) => p.period === cycle);
   const currentSlug = ent.plan?.slug ?? null;
   // C-06 "Tu plan": the cycle the customer paid for — start, and the day it runs out (cancellation date if set, else the renewal).
   const planEnd = ent.membership?.ends_at ?? ent.membership?.renews_at ?? ent.membership?.starts_at ?? '';
+
+  // WebMCP (0025): app.choosePlan preselects a plan and opens its confirmation — the same state as ?plan=<id>.
+  // Paying stays a person's click on the confirmation's button.
+  const navHandlers = useAppNavHandlers();
+  const handlers = useMemo(() => ({
+    ...navHandlers,
+    'app.choosePlan': (p?: Record<string, string>) => {
+      const id = need(p, 'plan');
+      const all = pricingByFamily('membresia');
+      const plan = all.find((x) => x.id === id);
+      if (!plan) throw new Error(`unknown plan "${id}" — one of ${all.map((x) => x.id).join(', ')}`);
+      setCycle(plan.period === 'year' ? 'year' : 'month'); setDone(false); setBuying(plan);
+      return `plan ${plan.id} chosen; confirmation open`;
+    },
+  }), [navHandlers]);
+  useActions(spec, handlers);
 
   const buy = async () => {
     if (!buying) return;
@@ -61,7 +88,7 @@ export function PlansPage() {
 
   return (
     <div className="container page cust-page">
-      <PageHead title={t('customer.plans.title')} sub={t('customer.plans.sub')} actions={<SegmentedControl size="sm" ariaLabel={t('customer.plans.cycle')} value={cycle} onChange={setCycle} options={[{ value: 'month', label: t('core.common.perMonth').replace('/ ', '') }, { value: 'year', label: t('core.common.perYear').replace('/ ', '') }]} />} />
+      <PageHead title={t('customer.plans.title')} sub={t('customer.plans.sub')} actions={wide ? undefined : <SegmentedControl size="sm" ariaLabel={t('customer.plans.cycle')} value={cycle} onChange={setCycle} options={[{ value: 'month', label: t('core.common.perMonth').replace('/ ', '') }, { value: 'year', label: t('core.common.perYear').replace('/ ', '') }]} />} />
       <div className="stack">
         {ent.membership && (
           <Notice tone={ent.membership.status === 'active' ? 'success' : 'warn'} title={t('customer.plans.current', { plan: ent.plan ? bi({ es: ent.plan.name_es, en: ent.plan.name_en }) : '' })} action={<Link to="/app/membership"><Button size="sm" variant="secondary">{t('customer.plans.manage')}</Button></Link>}>
@@ -76,7 +103,7 @@ export function PlansPage() {
           {shown.map((p) => {
             const isCurrent = currentSlug === p.id;
             return (
-              <Card key={p.id} className={`cust-plan ${p.period === 'year' ? 'is-featured' : ''}`} raised={p.period === 'year'} padding="lg">
+              <Card key={p.id} className={`cust-plan ${p.period === 'year' ? 'is-featured' : ''} ${preselected?.id === p.id ? 'is-preselected' : ''}`} raised={p.period === 'year'} padding="lg">
                 <div className="row-between wrap"><h2 className="cust-h2">{bi(p.name)}</h2>{p.badge && <Badge tone="highlight">{bi(p.badge)}</Badge>}{isCurrent && <Badge tone="success">{t('customer.plans.yours')}</Badge>}</div>
                 <p className="small muted">{bi(p.description)}</p>
                 <div className="cust-plan-price"><strong>{formatCOP(p.price ?? 0, lang)}</strong><span className="small muted"> {p.period === 'month' ? t('core.common.perMonth') : t('core.common.perYear')}</span></div>
@@ -93,14 +120,16 @@ export function PlansPage() {
           })}
         </div>
         <p className="xs muted" style={{ textAlign: 'center' }}>{t('customer.plans.note', { mats: tenant.studio.mats })}</p>
-        <Card tone="muted" className="row-between wrap">
-          <span className="small">{t('customer.plans.skip')}</span>
-          <Link to="/app/passes"><Button size="sm" variant="secondary">{t('customer.plans.skip.cta')} →</Button></Link>
-        </Card>
-        <Card tone="muted" className="row-between wrap">
-          <span className="small">{t('customer.plans.specials')}</span>
-          <a href={waLink(contact.whatsapp, t('customer.plans.specials.wa'))} target="_blank" rel="noreferrer"><Button size="sm" variant="ghost">{t('customer.plans.specials.cta')} →</Button></a>
-        </Card>
+        <div className="cust-plans-links">
+          <Card tone="muted" className="row-between wrap">
+            <span className="small">{t('customer.plans.skip')}</span>
+            <Link to="/app/passes"><Button size="sm" variant="secondary">{t('customer.plans.skip.cta')} →</Button></Link>
+          </Card>
+          <Card tone="muted" className="row-between wrap">
+            <span className="small">{t('customer.plans.specials')}</span>
+            <a href={waLink(contact.whatsapp, t('customer.plans.specials.wa'))} target="_blank" rel="noreferrer"><Button size="sm" variant="ghost">{t('customer.plans.specials.cta')} →</Button></a>
+          </Card>
+        </div>
       </div>
 
       <Drawer open={!!buying} onClose={() => { setBuying(null); setDone(false); }} side="bottom" title={done ? t('customer.plans.done.title') : t('customer.plans.confirm.title')}>

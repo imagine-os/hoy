@@ -17,7 +17,7 @@
 .deskshell-caret { flex: 0 0 auto; width: 10px; font-size: var(--fs-2xs); line-height: 1; }
 .deskshell-grouptext { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .deskshell-sep { width: 20px; margin: var(--sp-2) auto; border: 0; border-top: 1px solid rgba(var(--m-shade), .14); }
-.deskshell-link { position: relative; display: flex; align-items: center; gap: var(--sp-2); min-width: 0; padding: 9px 11px; border-radius: var(--r-ctl); color: var(--color-text-muted); font-size: var(--fs-sm); text-decoration: none; transition: background-color var(--dur-fast), color var(--dur-fast); }
+.deskshell-link { position: relative; display: flex; align-items: center; min-height: var(--h-ctl); gap: var(--sp-2); min-width: 0; padding: 9px 11px; border-radius: var(--r-ctl); color: var(--color-text-muted); font-size: var(--fs-sm); text-decoration: none; transition: background-color var(--dur-fast), color var(--dur-fast); }
 .deskshell-link:hover { background: rgba(var(--m-shade), .06); color: var(--color-text); text-decoration: none; }
 /* the active item is the canvas .accent pill */
 .deskshell-link.is-active { background-color: var(--color-accent-fill); background-image: var(--tex-accent-on); color: var(--color-text-on-primary); font-weight: var(--fw-medium); box-shadow: var(--shadow-accent); }
@@ -28,7 +28,7 @@
 .deskshell-who { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* icon rail (56 px) with hover tooltips */
-.deskshell.is-rail .deskshell-link { width: 40px; height: 40px; padding: 0; justify-content: center; }
+.deskshell.is-rail .deskshell-link { width: var(--h-ctl); height: var(--h-ctl); padding: 0; justify-content: center; }
 .deskshell.is-rail .deskshell-linktext { display: none; }
 .deskshell-tip { display: none; position: absolute; left: calc(100% + 8px); top: 50%; transform: translateY(-50%); z-index: 60; padding: 5px 9px; border-radius: var(--r-ctl); background: var(--color-ink); color: var(--color-bg); font-size: var(--fs-xs); font-weight: var(--fw-regular); white-space: nowrap; box-shadow: var(--shadow-raised); pointer-events: none; }
 .deskshell.is-rail .deskshell-link:hover .deskshell-tip, .deskshell.is-rail .deskshell-link:focus-visible .deskshell-tip { display: block; }
