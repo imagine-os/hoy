@@ -226,10 +226,10 @@ export const type = {
   'fw-bold': '700',
 } as const;
 
-/** 4-pt grid */
+/** 4-pt grid, in rem (4px = .25rem at the base size) so spacing scales with the `--ui` band like type does (D-0007). */
 export const spacing = {
-  'sp-0': '0', 'sp-1': '4px', 'sp-2': '8px', 'sp-3': '12px', 'sp-4': '16px', 'sp-5': '20px',
-  'sp-6': '24px', 'sp-8': '32px', 'sp-10': '40px', 'sp-12': '48px', 'sp-16': '64px', 'sp-20': '80px',
+  'sp-0': '0', 'sp-1': '0.25rem', 'sp-2': '0.5rem', 'sp-3': '0.75rem', 'sp-4': '1rem', 'sp-5': '1.25rem',
+  'sp-6': '1.5rem', 'sp-8': '2rem', 'sp-10': '2.5rem', 'sp-12': '3rem', 'sp-16': '4rem', 'sp-20': '5rem',
 } as const;
 
 /** Canvas radii: 4 (code tags) · 8 · 11 (controls, date cells) · 16 (cards) · 18 (desktop frame) · 24 · 32 · 34 (phone) · pill. */
@@ -245,11 +245,36 @@ export const motion = {
   'ease-out': 'cubic-bezier(.2,.7,.2,1)', 'ease-in-out': 'cubic-bezier(.65,0,.35,1)',
 } as const;
 
+/**
+ * Layout widths and heights. rem values scale with the `--ui` band (1120 → 1960 px at 3840); `w-phone` is a device
+ * width and stays in px — it is only used by the hub's DeviceFrame simulator now (D-0006).
+ * `h-ctl` is the minimum height of every interactive control (44 px at the base size).
+ */
 const layoutTokens = {
-  'w-phone': '430px', 'w-content': '1120px', 'h-topbar': '56px', 'h-bottomnav': '64px', 'w-sidebar': '240px', 'w-rail': '56px',
+  'w-phone': '430px', 'w-content': '70rem', 'w-app': '75rem', 'w-auth': '30rem', 'w-auth-wide': '36rem',
+  'h-topbar': '3.5rem', 'h-bottomnav': '4rem', 'h-ctl': '2.75rem', 'w-sidebar': '15rem', 'w-rail': '3.5rem',
 } as const;
 
-export const tokens = { brand, palette, rgb, movements, semantic, shadows, textures, materials, surfaces, hues, type, spacing, radii, motion, layout: layoutTokens };
+/**
+ * Breakpoints (px, min-width). One list for CSS media queries, `useMinWidth()` and `PageSpec.checkedAt`.
+ * `shell` (900) is where AppShell swaps the bottom dock for the top-bar nav and DesktopShell opens its sidebar.
+ * CSS cannot read custom properties inside @media, so the CSS vars are documentary; the numbers are the contract.
+ */
+export const BREAKPOINTS = { xs: 360, phone: 390, tablet: 768, shell: 900, desktop: 1280, hd: 1920, qhd: 2560, uhd: 3840 } as const;
+export type Breakpoint = keyof typeof BREAKPOINTS;
+export const CHECK_WIDTHS: readonly number[] = Object.values(BREAKPOINTS);
+const breakpointVars = Object.fromEntries(Object.entries(BREAKPOINTS).map(([k, v]) => [`bp-${k}`, `${v}px`])) as Record<string, string>;
+
+/**
+ * Large-screen scale band (D-0004, made global by D-0007): `--ui` is 1 up to 1919 px, 1.125 at ≥ 1920, 1.375 at ≥ 2560,
+ * 1.75 at ≥ 3840. It lives on :root and drives the html font-size, so every rem token (type, spacing, control heights,
+ * layout widths) scales with it; px values stay put and multiply by `var(--ui)` where they must grow.
+ */
+export const UI_SCALE: readonly { minWidth: number; ui: number }[] = [
+  { minWidth: BREAKPOINTS.hd, ui: 1.125 }, { minWidth: BREAKPOINTS.qhd, ui: 1.375 }, { minWidth: BREAKPOINTS.uhd, ui: 1.75 },
+];
+
+export const tokens = { brand, palette, rgb, movements, semantic, shadows, textures, materials, surfaces, hues, type, spacing, radii, motion, layout: layoutTokens, breakpoints: breakpointVars };
 
 function vars(obj: Record<string, string>): string {
   return Object.entries(obj).map(([k, v]) => `  --${k}: ${v};`).join('\n');
@@ -273,6 +298,8 @@ ${vars(spacing)}
 ${vars(radii)}
 ${vars(motion)}
 ${vars(layoutTokens)}
+${vars(breakpointVars)}
+  --ui: 1;
 ${vars(rgb.light)}
 ${vars(semantic.light)}
 ${vars(shadows)}
@@ -286,6 +313,9 @@ ${hueVars}
   --color-card-border: transparent;
   color-scheme: light;
 }
+${UI_SCALE.map((b) => `@media (min-width: ${b.minWidth}px) { :root { --ui: ${b.ui}; } }`).join('\n')}
+/* D-0007: the band scales the root font-size, so every rem token grows with it. */
+html { font-size: calc(100% * var(--ui)); }
 :root[data-theme="dark"] {
 ${vars(rgb.dark)}
 ${vars(semantic.dark)}

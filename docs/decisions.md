@@ -92,6 +92,44 @@ Fields: **Date**, **Status** (accepted · superseded by D-NNNN), **Context**, **
   image toolchain in the build for something the screenshot pass already has a browser open for), and
   rendering the card art as CSS/SVG mock-ups (pretty, and a lie the moment a screen changes).
 
+### D-0006 — The customer app is full-viewport at every width; the phone bezel exists only in the hub's DeviceFrame simulator
+
+- **Date** 2026-09-28 · **Status** accepted · **Changelog** `docs/changelog/0025-responsive-app-shell.md`
+- **Context.** Justin: "on desktop, as we're working through the reserve and register process it switches from the
+  desktop experience to mobile. It should all flow as one experience. Also, mobile is currently living in a mockup
+  of a phone." Both were the same rule: `PhoneShell.css` drew the canvas phone frame (430 px, 34 px radius, sand
+  ground, internal scroll) from 900 px up, and every `/app/*` and `/teach*` route rendered inside it — so the
+  website (1120–1520 px) handed a desktop user to a 480 px auth column and then to a 430 px phone.
+- **Decision.** One responsive shell for customer and teacher, `AppShell`: below 900 px it is the current phone
+  layout (content column, sticky bottom dock); at 900 px and up it is a full-viewport page with a top bar
+  (wordmark, primary nav, language, avatar) and content in a centred container (`--w-app` 1200 px, growing with the
+  `--ui` band). No bezel, no inner scroll container — the document scrolls. The phone bezel survives in exactly one
+  place: `DeviceFrame` (hub previews, `/#/dev/simulator`), which renders the real page in a 390 × 844 iframe with
+  `chrome`. `RouteDef.layout` is now honoured by `withShell()`: `mobile` → AppShell, `desktop` → DesktopShell,
+  `auto` → the surface default. Auth (`AuthShell`) adopts the same top bar and a 480 → 576 px column, and the site's
+  bottom sheets become centred dialogs at 900 px, so reserve and register read as one system from site to app.
+- **Alternative rejected.** Keeping the frame and adding a "desktop mode" toggle — it keeps the mockup as the default,
+  and the flow would still jump widths at each hand-off. Also rejected: picking the shell per viewport in JS
+  (PhoneShell below 900, DesktopShell above) — the sidebar shell is staff tooling, not a member experience, and the
+  nav items already come from `RouteDef.nav`, so one shell can simply change how it draws them.
+
+### D-0007 — The `--ui` large-screen scale band applies globally, not hub-only
+
+- **Date** 2026-09-28 · **Status** accepted · supersedes the deferral in D-0004 · **Changelog** `docs/changelog/0025-responsive-app-shell.md`
+- **Context.** D-0004 proved the band on the hub and deferred the rest: at 3840 px the checkout was a 430 px strip
+  with 16 px body text and the website a 1520 px strip — not legible from ten feet, not usable as a desk monitor.
+- **Decision.** `--ui` moves from `.hub` to `:root` in the generated tokens (`1` · `1.125` ≥ 1920 · `1.375` ≥ 2560 ·
+  `1.75` ≥ 3840) and drives `html { font-size: calc(100% * var(--ui)) }`. Spacing (`--sp-*`), control heights
+  (`--h-ctl` 2.75rem = 44 px), bar heights and layout widths (`--w-content`, `--w-app`, `--w-sidebar`) are rem, so
+  type, spacing, controls and containers scale together on every surface; the hub drops its own
+  `calc(var(--sp-*) * var(--ui))` multipliers (px values like `44px * var(--ui)` keep theirs — px does not follow
+  the root font). Breakpoints are one list, `BREAKPOINTS` in `tokens.ts` (360 · 390 · 768 · 900 · 1280 · 1920 ·
+  2560 · 3840), shared by CSS, `useMinWidth()` and `PageSpec.checkedAt`. Every interactive control is at least
+  `--h-ctl` tall.
+- **Alternative rejected.** Per-surface bands (`.appshell { --ui }`, `.site { --ui }`…) — three copies of the same
+  numbers that drift. Also rejected: CSS `zoom` on the root — it scales fixed-px art and the DeviceFrame maths too,
+  and its `vh`/`getBoundingClientRect` behaviour still differs between engines.
+
 ---
 **Resumen (ES).** Este archivo es la lista corta y citable de las decisiones de ingeniería, una por
 bloque, solo se añade: una decisión que deja de ser cierta se reemplaza con un bloque nuevo, nunca

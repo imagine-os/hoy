@@ -75,17 +75,17 @@
   --fw-semibold: 600;
   --fw-bold: 700;
   --sp-0: 0;
-  --sp-1: 4px;
-  --sp-2: 8px;
-  --sp-3: 12px;
-  --sp-4: 16px;
-  --sp-5: 20px;
-  --sp-6: 24px;
-  --sp-8: 32px;
-  --sp-10: 40px;
-  --sp-12: 48px;
-  --sp-16: 64px;
-  --sp-20: 80px;
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.25rem;
+  --sp-6: 1.5rem;
+  --sp-8: 2rem;
+  --sp-10: 2.5rem;
+  --sp-12: 3rem;
+  --sp-16: 4rem;
+  --sp-20: 5rem;
   --r-arch-card: 50% 50% 16px 16px / 180px 180px 16px 16px;
   --r-2xs: 2px;
   --r-xs: 4px;
@@ -107,11 +107,24 @@
   --ease-out: cubic-bezier(.2,.7,.2,1);
   --ease-in-out: cubic-bezier(.65,0,.35,1);
   --w-phone: 430px;
-  --w-content: 1120px;
-  --h-topbar: 56px;
-  --h-bottomnav: 64px;
-  --w-sidebar: 240px;
-  --w-rail: 56px;
+  --w-content: 70rem;
+  --w-app: 75rem;
+  --w-auth: 30rem;
+  --w-auth-wide: 36rem;
+  --h-topbar: 3.5rem;
+  --h-bottomnav: 4rem;
+  --h-ctl: 2.75rem;
+  --w-sidebar: 15rem;
+  --w-rail: 3.5rem;
+  --bp-xs: 360px;
+  --bp-phone: 390px;
+  --bp-tablet: 768px;
+  --bp-shell: 900px;
+  --bp-desktop: 1280px;
+  --bp-hd: 1920px;
+  --bp-qhd: 2560px;
+  --bp-uhd: 3840px;
+  --ui: 1;
   --m-primary: 53,89,125;
   --m-shade: 36,56,79;
   --m-ink: 36,56,79;
@@ -193,6 +206,11 @@
   --color-card-border: transparent;
   color-scheme: light;
 }
+@media (min-width: 1920px) { :root { --ui: 1.125; } }
+@media (min-width: 2560px) { :root { --ui: 1.375; } }
+@media (min-width: 3840px) { :root { --ui: 1.75; } }
+/* D-0007: the band scales the root font-size, so every rem token grows with it. */
+html { font-size: calc(100% * var(--ui)); }
 :root[data-theme="dark"] {
   --m-primary: 155,192,228;
   --m-shade: 0,0,0;
