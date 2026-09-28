@@ -5,6 +5,7 @@ _Updated every turn. Codes reference `src/specs/canvasSpecs.ts` and the module `
 ## Backlog
 
 ### Product
+- **Mat-booking data has no schema yet (from 0024)**: `bookings.mat_number` exists only as a TypeScript module augmentation in `src/data/mats.ts`, and the demo calendar horizon and mat assignment live in `MockProvider` (`SEED_VERSION = 3`). Nothing appears in `src/data/schema.ts`, `supabase/schema.sql` or `docs/data-model.md` (`rooms` only mentions capacity in mats). Close the gap: add the column (and a per-room mat layout if wanted), regenerate `npm run sql`, document it in `docs/data-model.md`, and make the double-booking rule server-side
 - **P1 leftovers from 0007/0008** (numbered in ROADMAP §B/P1): M-02 editors for `content_articles` / `faq_entries` + an event publisher for `events` (M-03 edits them generically today) · server-side invite reward (`invites.status` only reaches `sent` from the client; `joined` / `rewarded` + `reward_credit_id` need the Supabase function that grants the credit) · staff-side `notifications` sending (front desk / M-04 / M-05 writing a C-24 in-app row — **not** closed by 0021, whose inbox writes `message_log`, the WhatsApp / email record; the two could be joined by one `useMessaging()` call later) and the 90-day retention job · event waitlist (`event_rsvps.status` has no `waitlist` value yet) and attendance marking from S-02 · real Wompi tokenisation behind `wompiTokenise()`
 - **From Jas's review (0014), still open**: M-09c has no CSV export for the accountant yet (M-09b has one) · attach the invoice / receipt image to an expense row (needs Supabase Storage, like M-02d's upload) · ~~the "15 días" range stays as a filter until Sergio confirms fortnightly pay periods~~ **0018: the cadence is a switch in M-08c and the range default follows it — Sergio only has to pick**
 - Real Supabase Auth behind A-02/A-03/C-21 (SessionProvider already accepts any `users` row)
@@ -48,6 +49,10 @@ _Updated every turn. Codes reference `src/specs/canvasSpecs.ts` and the module `
 ## Doing
 
 ## Done
+
+### Website V2.1 to V2.3 back-fill (0024 · v0.9.4)
+- Docs back-fill only, written 2026-09-28: prompt and changelog 0024 for the four commits that shipped without one (`fc2d1d3` V2.1, `89b8375` V2.2, `6465f8a` V2.3, `d4c567e` calendar polish); the prompt text was never recorded, so the entry quotes the commit messages and says so
+- Shipped by those commits (already live): elemental cursor, membership cards (P-PLANS), shared day/week/month `SessionCalendar` and CMS class photos (P-SCHEDULE, C-02), 16-mat checkout and booking confirmation (C-03, C-04, C-08), 19 sample videos (3 ambient + 16 living) and 8 portraits (W-01, W-02, W-04, W-07, W-08), calendar typography and upcoming-week default
 
 ### Hub home redesign (0022 · v0.9.0)
 - **HUB-01 rebuilt around real previews**: brand band (wordmark, `v0.9.0` badge, language, theme, wireframe + dev toggles, cream focus ring) with the hero (eyebrow · h1 · lead · brand tagline · `BreathingRings` under a radial mask); a floating session bar over the band edge (`RoleSwitcher`, "Reportar un problema" as a `Placeholder`, the `Ctrl + .` hint); four 3fr/9fr bands — Fuera del estudio (customer app featured with a phone preview, website, teacher app) · El equipo (recepción, bandeja, caja, admin, CRM, finanzas) · Construcción y pruebas on a tinted lane (manual, docs, kanban, dev tools) · Hub de pruebas (nine tool cards); a live `<dl>` stat strip (101 routes, 87 codes, 48 tables, 66 components, 8 actions, 28 chapters)
