@@ -5,7 +5,7 @@
 .topbar.is-sticky { position: sticky; top: 0; z-index: 20; }
 .topbar-left { display: flex; align-items: center; gap: var(--sp-2); min-width: 0; }
 .topbar-title { font-size: var(--fs-lg); font-weight: var(--fw-semibold); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.topbar-back { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; font-size: var(--fs-xl); line-height: 1; color: var(--color-text); text-decoration: none; }
+.topbar-back { display: inline-flex; align-items: center; justify-content: center; width: var(--h-ctl); height: var(--h-ctl); border-radius: 50%; font-size: var(--fs-xl); line-height: 1; color: var(--color-text); text-decoration: none; }
 .topbar-back:hover { background: var(--color-surface-2); text-decoration: none; }
 .topbar-brand { display: inline-flex; }
 .topbar-actions { display: flex; align-items: center; gap: var(--sp-2); flex: 0 0 auto; }
@@ -15,7 +15,7 @@
 .topbar-page::before { content: '/'; color: var(--color-text-faint); margin-right: var(--sp-2); font-weight: var(--fw-regular); }
 .topbar-code { flex: 0 0 auto; font-size: var(--fs-2xs); color: var(--color-text-faint); background: var(--color-surface-2); border-radius: var(--r-xs); padding: 2px 6px; }
 .topbar-center { flex: 0 1 320px; display: flex; justify-content: center; min-width: 0; }
-.topbar-lead { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: var(--r-ctl); border: 0; background: none; color: var(--color-text-muted); font-size: var(--fs-lg); flex: 0 0 auto; }
+.topbar-lead { display: inline-flex; align-items: center; justify-content: center; width: var(--h-ctl); height: var(--h-ctl); border-radius: var(--r-ctl); border: 0; background: none; color: var(--color-text-muted); font-size: var(--fs-lg); flex: 0 0 auto; }
 .topbar-lead:hover { background: rgba(var(--m-shade), .07); color: var(--color-text); }
 @media (max-width: 900px) { .topbar-page, .topbar-code { display: none; } }
 @media (max-width: 640px) { .topbar-center { display: none; } }

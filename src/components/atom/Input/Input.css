@@ -1,5 +1,5 @@
 /* canvas select/input: paper fill, blue hairline at .28, radius 11 */
-.input { width: 100%; min-height: 40px; padding: 8px 12px; border-radius: var(--r-ctl); border: 1px solid var(--color-border-strong); background: var(--color-surface); color: var(--color-text); font-family: var(--font-body); font-size: var(--fs-sm); box-shadow: var(--shadow-highlight); transition: border-color var(--dur-fast), box-shadow var(--dur-fast); }
+.input { width: 100%; min-height: var(--h-ctl); padding: 8px 12px; border-radius: var(--r-ctl); border: 1px solid var(--color-border-strong); background: var(--color-surface); color: var(--color-text); font-family: var(--font-body); font-size: var(--fs-sm); box-shadow: var(--shadow-highlight); transition: border-color var(--dur-fast), box-shadow var(--dur-fast); }
 .input::placeholder { color: var(--color-text-faint); }
 .input:focus { outline: none; border-color: var(--color-focus); box-shadow: var(--shadow-highlight), 0 0 0 3px rgba(var(--m-mid), .25); }
 .input:disabled { opacity: .5; cursor: not-allowed; }
