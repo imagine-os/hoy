@@ -91,8 +91,10 @@ export const canvasSpecs: Record<string, PageSpec> = {
 // 0025 — WebMCP actions (./actions.ts) and the widths the responsive AppShell pass was checked at (390 · 1280 · 3840,
 // scratchpad captures of 2026-09-28; the full 360→3840 matrix is the screenshot pass's job).
 const CHECKED_0025: Record<string, number[]> = { 'C-01': [390, 1280, 3840], 'C-02': [390, 1280, 3840], 'C-04': [390, 1280, 3840], 'C-06': [390, 1280, 3840], 'C-08': [390, 1280, 3840], 'A-02': [390, 1280, 3840], 'A-05': [390, 1280, 3840] };
-for (const code of new Set([...Object.keys(CUSTOMER_ACTIONS), ...Object.keys(CHECKED_0025)])) {
+// 0026 — phone calendar views and the responsive mat grid were checked at the six-width matrix (DOM audit + captures, 2026-09-28).
+const CHECKED_0026: Record<string, number[]> = { 'C-02': [360, 390, 768, 1280, 1920, 3840], 'C-02b': [360, 390, 768, 1280, 1920, 3840], 'C-04': [360, 390, 768, 1280, 1920, 3840] };
+for (const code of new Set([...Object.keys(CUSTOMER_ACTIONS), ...Object.keys(CHECKED_0025), ...Object.keys(CHECKED_0026)])) {
   const s = canvasSpecs[code];
   if (!s) continue;
-  canvasSpecs[code] = { ...s, actions: [...(s.actions ?? []), ...(CUSTOMER_ACTIONS[code] ?? [])], checkedAt: CHECKED_0025[code] ?? s.checkedAt };
+  canvasSpecs[code] = { ...s, actions: [...(s.actions ?? []), ...(CUSTOMER_ACTIONS[code] ?? [])], checkedAt: CHECKED_0026[code] ?? CHECKED_0025[code] ?? s.checkedAt };
 }

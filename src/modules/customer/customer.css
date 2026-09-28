@@ -45,6 +45,8 @@
 .cust-filters-scroll { display: flex; gap: var(--sp-2); overflow-x: auto; flex: 1 1 auto; scrollbar-width: none; padding: 2px 28px 2px 2px; mask-image: linear-gradient(to right, black calc(100% - 28px), transparent); -webkit-mask-image: linear-gradient(to right, black calc(100% - 28px), transparent); }
 .cust-filters-scroll::-webkit-scrollbar { display: none; }
 .cust-filters-scroll .chip { flex: 0 0 auto; }
+/* 0026 (QA I-04): under 480 px of app column the movement chips wrap to two rows instead of a clipped swipe row */
+@container app (max-width: 480px) { .cust-filters { flex-wrap: wrap; padding: 2px; } .cust-filters-scroll { display: contents; } }
 .cust-legend { padding-top: var(--sp-2); }
 .cust-week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: var(--sp-2); }
 .cust-week-col { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
