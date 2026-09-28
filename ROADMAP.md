@@ -1,13 +1,33 @@
 # HoyOS roadmap
 
-**Resumen (ES).** HoyOS v0.9 es una base real y desplegable: sitio web, app de clientes, app de
+**Resumen (ES).** HoyOS v0.10 es una base real y desplegable: sitio web, app de clientes, app de
 profesores, escritorio de staff/admin, manual de operaciones, documentación y herramientas de
 desarrollo en una sola base de código, con datos de prueba en el navegador. Este documento dice
 dónde estamos, qué sigue y en qué orden (con dependencias explícitas y lo que se puede hacer en
 paralelo), qué significa "terminado" en cada fase, cómo trabajar en el repo y qué debe decidir el
 owner del estudio. Está escrito para que otra cuenta de Claude (o una persona) lo retome sin contexto.
 
-## A. Where we are (v0.9.0, 2026-09-20)
+## A. Where we are (v0.10.0, 2026-09-28)
+
+- **v0.10.0 — Responsive app shell** (`docs/changelog/0025-responsive-app-shell.md`, prompt
+  `docs/prompts/0025-responsive-app-shell.md`; Justin: "on desktop, as we're working through the reserve and
+  register proecess it switches from the desktop experience to mobile. It should all flow as one experience. Also,
+  mobile is currently living in a mockup of a phone"). **The customer and teacher apps are full-viewport at every
+  width** (D-0006): `AppShell` replaces `PhoneShell` — content column + bottom dock below 900 px, top-bar nav and a
+  centred `--w-app` container from 900 px, the document scrolls, no bezel. The phone bezel lives only in the hub's
+  `DeviceFrame` simulator (HUB-01 previews, D-06). `withShell()` finally honours `RouteDef.layout`. **The `--ui` band
+  is global** (D-0007, supersedes D-0004's deferral): `:root` drives `html { font-size }`, spacing and layout tokens
+  are rem, one `BREAKPOINTS` list (360 · 390 · 768 · 900 · 1280 · 1920 · 2560 · 3840) serves CSS, `useMinWidth()`
+  and `PageSpec.checkedAt`, and every control is at least 44 px (`--h-ctl`). Desktop pass on the reserve and register
+  pages: `SplitSections` two-column layouts (C-01, C-04, C-08), C-06 shows both cycles and reads `?plan=`, A-05 in
+  four columns, C-02 filter chips wrap; bottom sheets (W-04 reserve, C-04 success, C-06 confirm, C-08b change, C-02
+  filters) are centred dialogs from 900 px; `AuthShell` (A-01…A-03, C-21, E-04) shares the top bar and widens to
+  576 px; the Sanctuary fonts moved from a CSS `@import` (fatal when Google Fonts is unreachable) to a `<link>`.
+  Seven WebMCP actions (`app.reserve`, `app.pickMat`, `app.confirmReservation`, `app.choosePlan`, `app.openSchedule`,
+  `app.goHome`, `auth.signIn`). Left for later: a real tablet layout for 768–899, website controls under 44 px, the
+  W-04 `.site-actions` overflow at 390, actions beyond the hub and this flow, and real auth (Supabase).
+- **v0.9.2–0.9.4 — Website V2.1–V2.3** (`docs/changelog/0024-website-v2-backfill.md`, back-filled): living
+  photographs and video, arched teacher cards, the elemental cursor, membership cards and the 16-mat booking.
 
 - **v0.9.0 — Hub home redesign** (`docs/changelog/0022-hub-home-redesign.md`, prompt
   `docs/prompts/0022-hub-home-redesign.md`; Justin, pointing at the cal-tenant-law hub: "it has thumbnail images
@@ -83,7 +103,8 @@ owner del estudio. Está escrito para que otra cuenta de Claude (o una persona) 
 - **v0.7.0 — App-store readiness and the stat-tile fit** (`docs/changelog/0019-app-store-readiness.md`,
   prompt `docs/prompts/0019-app-store-readiness.md`; version shared with 0018, built in parallel):
   `StatTile` never wraps its value (measured fit down to 50 %, two-line label / hint) and the desktop
-  phone frame is a CSS container so KPI rows collapse inside it like on a phone — the cause of the
+  phone frame is a CSS container so KPI rows collapse inside it like on a phone (the frame itself was removed in
+  0.10.0, D-0006; the container is now the `AppShell` column, `app`) — the cause of the
   "COP 440,000" on three lines. `deletion_requests` (47 tables) with **C-26 `/app/account` Cuenta y
   datos** (data controller, consents, download my data, legal links, two-step delete request that says
   invoices are kept anonymised), **W-09 `/site/delete-account`** (the public URL Google Play requires)
@@ -159,7 +180,8 @@ owner del estudio. Está escrito para que otra cuenta de Claude (o una persona) 
   `integrations` in 0.7.0; `message_log` widened into the conversation record in 0.8.0), **21 of them with a `TableDef.rls`** access contract emitted by `npm run sql` into
   `supabase/schema.sql` and `docs/data-model.md` (the other 27 still to write, §F 25).
   Forward and circular foreign keys are emitted as a deferred `alter table` block so the SQL applies in order.
-- **Canvas look applied** (0.4.0): D-01 is the canvas hoy-brand token set; the phone frame, cream lane
+- **Canvas look applied** (0.4.0): D-01 is the canvas hoy-brand token set; the phone frame (desktop bezel removed
+  in 0.10.0 — it survives only in the hub's `DeviceFrame` simulator, D-0006), cream lane
   and card skin follow it. No card-like element lets its text escape at 390 or 1280 px. Dark-theme
   heading contrast on the movement and class cards was fixed in this cycle and verified in the
   W-01 dark capture.
@@ -177,7 +199,7 @@ owner del estudio. Está escrito para que otra cuenta de Claude (o una persona) 
 - **Real vs stub** (`/#/dev/specs`, from `docs/screenshots/routes.json`): **101 routes, 87 codes,
   0 stubs** (D-05 and D-06 new in 0.9.0; S-06 new in 0.8.0; M-08f, M-10, C-26, W-09 and M-11 new in 0.7.0). Integrations (Wompi, WhatsApp, email, DIAN, Supabase Auth/Realtime) are simulated behind
   their seams — see §F for exactly what is still mocked.
-- **Docs**: prompt log, changelog and kanban are current through `0021`. `docs/screenshots/<code>/`
+- **Docs**: prompt log, changelog and kanban are current through `0025`. `docs/screenshots/<code>/`
   holds every route in ES/EN × 390/1280 (dark for key pages) as JPEG q72 — **395 captures** (+ 13
   before-captures under `_before/0006` and the 0021 before / after pairs for M-06 and S-01) — and
   `docs/pages/<code>.md` exists for every routed code.
