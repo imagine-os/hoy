@@ -1,4 +1,4 @@
-import { Fragment, useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useSession } from '../../../auth/SessionProvider';
@@ -24,6 +24,7 @@ import { MatPicker } from '../../../components/organism/MatPicker/MatPicker';
 import { usesMats, occupiesMat, chooseMat } from '../../../data/mats';
 import { tenant } from '../../../tenant/tenant';
 import { DeclinedBlock, type DeclinedState } from './blocks';
+import { SplitSections } from '../split';
 
 const spec = canvasSpecs['C-04'];
 type Choice = 'credit' | 'membership' | 'trial' | 'single' | 'pack3' | 'pack10';
@@ -176,9 +177,8 @@ export function CheckoutPage() {
   return (
     <div className="container page cust-page">
       <PageHead back={`/app/class/${s.id}`} title={t('customer.checkout.title')} sub={claimId ? t('customer.checkout.claiming') : undefined} />
-      <div className="stack">
-        {sections.filter(isVisible).map((name) => SECTIONS[name] ? <Fragment key={name}>{SECTIONS[name]()}</Fragment> : null)}
-      </div>
+      {/* ≥ 900 px: what you are booking (class + mat) on the left, how you pay + confirm on the right (D-0006). */}
+      <SplitSections narrowClassName="stack" className="cust-checkout" names={sections.filter(isVisible)} render={(n) => SECTIONS[n]?.() ?? null} side={(n) => n !== 'ClassSummary'} />
       <Drawer open={!!done} onClose={() => done && nav(`/app/booking/${done.booking.id}`)} title={t('customer.book.ok')} side="bottom">
         {done && (
           <div className="stack">

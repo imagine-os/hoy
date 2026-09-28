@@ -168,3 +168,20 @@
 .cust-media-chip { font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: .14em; color: var(--color-text-muted); border: 1px dashed var(--color-border-strong); border-radius: var(--r-full); padding: 2px 10px; }
 .cust-legal { gap: var(--sp-5); }
 .cust-legal-link { font-size: var(--fs-sm); }
+
+/* 0025 · desktop pass (AppShell ≥ 900 px): two-column pages, grids that use the width, never a 430 px strip */
+.cust-plans-links { display: flex; flex-direction: column; gap: var(--sp-4); }
+.cust-plan.is-preselected { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+@media (min-width: 900px) {
+  .cust-split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(20rem, 26rem); gap: var(--sp-8); align-items: start; }
+  .cust-home-split { grid-template-columns: minmax(0, 1.5fr) minmax(18rem, 1fr); }
+  .cust-split-main, .cust-split-side { gap: var(--sp-5); }
+  .cust-split-side .cust-sticky { bottom: var(--sp-4); }
+  .cust-title, .cust-greeting { font-size: var(--fs-3xl); }
+  .cust-plans { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cust-plans-links { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cust-intention-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .cust-intention { min-height: 10rem; }
+  .cust-filters { flex-wrap: wrap; }
+  .cust-filters-scroll { flex-wrap: wrap; overflow: visible; mask-image: none; -webkit-mask-image: none; padding: 2px; }
+}
