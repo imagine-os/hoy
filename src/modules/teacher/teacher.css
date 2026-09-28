@@ -5,7 +5,7 @@
 .teach-head .capmeter { color: color-mix(in srgb, var(--color-text-on-primary) 80%, transparent); }
 .teach-todayrow { border-bottom: 1px solid var(--color-border); }
 .teach-todayrow:last-child { border-bottom: 0; }
-.teach-month { min-width: 150px; text-align: center; text-transform: capitalize; }
+.teach-month { min-width: 9.375rem; text-align: center; text-transform: capitalize; }
 .teach-payline { display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-3); border-bottom: 1px solid var(--color-border); }
 .teach-payline:last-child { border-bottom: 0; }
 .teach textarea.input { min-height: 72px; resize: vertical; }
@@ -15,3 +15,7 @@
 @media print {
   .teach .teach-h1 + div, .teach a[href^="https://wa.me"] { display: none; }
 }
+
+/* 0026 · from 900 px the teacher pages are lists (rosters, statement lines, a form): they read best in a 60rem column, not the
+   75rem app container the two-column customer pages use, so `--w-teach` caps them (it still grows with the --ui band). */
+@media (min-width: 900px) { .appshell-main > .teach.container { max-width: var(--w-teach); } }
