@@ -43,14 +43,14 @@ ClassRow, the nav items, the DesktopShell sidebar links and rail, and the Sessio
 text-buttons `.cust-linkbtn` and `.cust-plainbtn` are exempt. The grid container query is renamed `phone` → `app`.
 This closes the 0022 kanban card "Lift design-system control heights to 44 px system-wide". The hub's own
 "pointer targets" override is now redundant but has not been deleted yet (kanban).
-rejected: raising only the atoms' md size. Shared selects and chips would stay under the floor.
+rejected: not recorded for this commit beyond D-0007. 0022 had deferred the system-wide bump because it moves every route and capture at once, and this pass accepts that cost.
 files: src/components/atom/{Button,Chip,Input,Toggle}/*.css; src/components/molecule/{ClassRow,LangToggle,RoleSwitcher,SegmentedControl}/*.css; src/components/organism/{Drawer,NavBar,SessionCalendar,TopBar}/*.css; src/components/template/DesktopShell/DesktopShell.css; src/modules/customer/customer.css; src/styles/global.css
 codes: C-*, S-*, M-*, D-*, W-04 (shared atoms).
 
 ## `PhoneShell` → responsive `AppShell` (`5eec767`)
 
 prompt intent: "mobile is currently living in a mockup of a phone".
-decision: `template/AppShell` (new, with meta) replaces `template/PhoneShell` (deleted; D-02 count unchanged at 66).
+decision: `template/AppShell` (new, with meta) replaces `template/PhoneShell` (deleted; D-02 count unchanged at 73).
 Below 900 px it keeps the brand top bar, the column of at most 560 px and the sticky dock. From 900 px it is
 full-viewport: `TopBar` gains a `nav` slot, `NavBar` gains `variant="top"`, and content sits in the `--w-app`
 container with document scroll. The dock and the top nav are never rendered at the same time (one `<nav>` in the
@@ -84,9 +84,8 @@ The meta gains the prop, its states and a usage. This covers the W-04 reserve sh
 C-08b change and C-02 filters. The Sanctuary edition's Cormorant Garamond moved from `@import` in `sanctuary.css` to
 a `<link>` in `index.html`. The `@import` made Vite's CSS preload fail, which blanked the whole website chunk whenever
 Google Fonts was unreachable.
-rejected: a side panel for the desktop drawer (the reserve sheet is a two-line confirmation and does not need a
-full-height panel); self-hosting the font in this pass (a new binary asset and licence review, so it stays on the
-kanban with the Inter/DM Sans vendoring card).
+rejected: not recorded for this commit beyond D-0006, which rejects keeping the frame and choosing shells per
+viewport. Self-hosting the fonts stays on the existing kanban card for vendoring Inter and DM Sans.
 files: index.html; src/components/organism/Drawer/{Drawer.tsx,Drawer.css,Drawer.meta.ts}; src/modules/customer/auth/AuthShell.tsx; src/modules/customer/customer.css; src/modules/website/sanctuary.css
 codes: A-01, A-02, A-03, C-21, E-04, W-04, W-05, C-02, C-04, C-06, C-08b.
 
