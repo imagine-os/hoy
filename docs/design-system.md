@@ -89,6 +89,29 @@ inverts accents: fills stay `#35597D`, text accents lighten to `--cat #9BC0E4`. 
 canvas). Wireframe strips colour, texture and shadow, restores 1 px `#C9C4B8` borders (`--color-card-border`) and sets
 Jost as the face, to review structure. `ThemeProvider` exposes toggles; choices persist in localStorage.
 
+## Logo — the hoy wordmark (0033)
+
+Source: *Manual de marca 2026* (slides 7 and 10). The logo is the handwritten script **"hoy"** plus **HUMAN CLUB** in
+spaced caps; construction 6X wide × (3X script + X caps line).
+
+| Rule | Value | Where it is enforced |
+| --- | --- | --- |
+| Clear space | the height of the H of HUMAN CLUB on all sides (= ⅓ of the script height) | `--wm-inline-gap` (0.12em) on top of the word space inside headings; the header gap (2.25rem) |
+| Minimum size | 120 px wide on screen, 30 mm in print | `--wm-min-w`; the inline and header marks use `max(…, 120px / ratio)` |
+| Colourways | #35597D on light · #F1E7D2 or #F7F3B2 on the deep blue | `Wordmark tone`: `auto` (blue in light, cream in dark), `blue`, `cream`, `yellow`, `current` |
+| Print | blue | `@media print` in `Wordmark.css` |
+
+**Assets** (`public/brand/`): `hoy-wordmark.svg` — the script traced from the manual's slide-3 artwork (the PDF holds it
+only as raster), one path, `fill="currentColor"`, `<symbol id="hoy">` for `<use href>`; metrics in
+`tenant.brand.vector` (ratio 1.985, baseline 0.73 of the height). `hoy-blue.png` / `hoy-cream.png` / `hoy-yellow.png`
+stay for `<img>` uses (emails, receipts, the apps). `p8-2.png` / `p8-3.png` are the sand lockups.
+
+**In headings** — `brandHeading(text)` (`src/components/atom/Wordmark/brandHeading.tsx`) swaps the standalone word
+`HOY` (the tenant name, case-sensitive) for the inline mark: `--wm-inline-h` 1.2em tall, dropped so the script's
+baseline sits on the text baseline, `role="img"` + `aria-label="HOY"`. Display headings only (website V2: page titles,
+closing panels); never paragraphs, buttons, nav links, eyebrows, meta titles or `<title>`, and never the Spanish adverb
+"hoy" ("today"). The places are listed in `docs/changelog/0033-site-wordmark-headings.md`.
+
 ## Component library (D-02)
 Every component ships a `.meta.ts` (tier, description es/en, props, states, usages, a11y notes).
 `/#/dev/components` renders all of them on the graph-paper canvas. Rule: no component without a meta, no meta

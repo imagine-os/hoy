@@ -1,0 +1,25 @@
+/* Wordmark atom (D-02). Raster <img> colourways + the vector script mark (tenant.brand.vector) in two layouts:
+   `vector` (a block mark for the site header / footer) and `inline` (inside a display heading, in place of HOY). */
+.wordmark-vector, .wordmark-inline { display: inline-block; aspect-ratio: var(--wm-ratio); line-height: 0; flex: none; }
+.wordmark-vector svg, .wordmark-inline svg { display: block; width: 100%; height: 100%; overflow: visible; }
+/* inline: height in em of the heading font, never under the 120 px minimum width; dropped so the script baseline sits on
+   the text baseline (drop = height × (baseline − 1)); side margins complete the clear space on top of the word space. */
+.wordmark-inline {
+  --wm-h: max(var(--wm-inline-h), calc(var(--wm-min-w) / var(--wm-ratio)));
+  height: var(--wm-h);
+  vertical-align: calc(var(--wm-h) * (var(--wm-baseline) - 1));
+  margin-inline: var(--wm-inline-gap);
+}
+/* punctuation that closes the phrase ("HOY.") belongs to it: no clear-space margin before it */
+.wordmark-inline.wordmark-inline-punct { margin-inline-end: 0.02em; }
+/* keeps the mark and the punctuation that follows it ("HOY.") on one line */
+.wordmark-nowrap { white-space: nowrap; }
+.wordmark-tone-auto { color: var(--brand-deepBlue); }
+:root[data-theme="dark"] .wordmark-tone-auto { color: var(--brand-cream); }
+.wordmark-tone-blue { color: var(--brand-deepBlue); }
+.wordmark-tone-cream { color: var(--brand-cream); }
+.wordmark-tone-yellow { color: var(--brand-yellow); }
+/* tone "current" follows the heading colour (cream / yellow on the deep-blue panels) — no rule needed */
+@media print {
+  .wordmark-vector, .wordmark-inline { color: var(--brand-deepBlue) !important; }
+}

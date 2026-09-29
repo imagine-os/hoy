@@ -15,13 +15,14 @@ import { Button } from '../../../components/atom/Button/Button';
 import { Chip } from '../../../components/atom/Chip/Chip';
 import { Badge } from '../../../components/atom/Badge/Badge';
 import { MediaSlot } from '../../../components/molecule/MediaSlot/MediaSlot';
-import { PageHead, SiteShell } from '../SiteShell';
+import { PageHead, SiteShell, useBrandHeading } from '../SiteShell';
 import { siteSpecs } from '../specs';
 
 /** W-07 — "Nuestras clases": the intro plus one rich card per class, all from src/tenant/brand.ts. */
 export function ClassesPage() {
   const { edition, motion, videoEnabled } = useSiteEdition();
   const { t, bi, lang } = useI18n();
+  const brand = useBrandHeading();
   const { sections, isVisible } = useLayout(siteSpecs.classes);
   const { rows: modalitiesAll } = useTable<ModalityRow>('modalities', { where: { active: true } });
   const modalities = useVisibleModalities(modalitiesAll); // 0018: M-08f decides whether Respiración has its own row
@@ -71,7 +72,7 @@ export function ClassesPage() {
         <div className="site-panel site-cta">
           <div className="site-cta-copy">
             <p className="eyebrow">{t('site.first.eyebrow')}</p>
-            <h2>{bi(taglines.start)}</h2>
+            <h2>{brand(bi(taglines.start), 'current')}</h2>
             <p>{t('site.first.body', { price: trialPrice })}</p>
           </div>
           <div className="row wrap">
