@@ -22,6 +22,8 @@ codes: C-01, C-27 (new), C-22, C-25, C-19, M-12 (new), M-06, M-01, S-03, D-02 (f
 
 Rebased before merge onto 0037 (spacing standard, v0.14.0) and 0039 (the movements retired, v0.15.0), which is why this change is 0040 / D-0014 / D-0015 / v0.16.0 and the tables count 52 → 54: the five new stylesheets and the practice rules in `customer.css` / `admin.css` moved onto the D-01 spacing tokens (the retired `--sp-5` in the week header became `--block`), and `SEED_VERSION` is 5 above the 0.15.0 tone upgrade (4).
 
+Fixed right after merge (PR #18): `StreakBadge` coloured its alive medal with the retired `--mv-arde-*` movement tokens (gone in 0039), so the medal rendered without its warm ground; it now uses the `--tone-clay-*` class tone (the same colours, D-01 `classTones`).
+
 Model routing: Fable 5.1 (direction, research, analytics core and hooks, seed, tables, this record), Opus 5.5 (the five components, customer pages C-01 / C-27 / C-22, admin M-12 / M-06 / M-01, teacher S-03), Sonnet 5.5 (screenshots and the QA matrix, done after this entry).
 
 Checks (final pass, 2026-09-29): `npx tsc --noEmit` clean · `npm run test:analytics` 57 checks pass · `npm run test:dates` 10 checks pass · `npm run lint:manual` 28 chapters × 2 languages, 0 violations (no manual chapter describes the home stats card, so no chapter changed) · `npm run lint:spacing` 71 raw values = baseline, 0 legacy `--sp-N` aliases · `npm run sql` twice with no drift · `npm run build` green (`public/hub-map.json` 89 codes, `product.version` 0.16.0) · `npm run hub-map:check` 9 sample routes open real pages · screenshots refreshed at 390 and 1280 in ES and EN for C-01 (light + dark), C-19, C-22, C-25, C-27, D-02, M-01 (light + dark), M-06, M-12, S-03, plus their hub thumbnails.

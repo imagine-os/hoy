@@ -12,9 +12,9 @@
 /* best and hint run the full width under the stamp, so a StatTile-width column never squeezes them into three lines */
 .streak-best { grid-column: 1 / -1; overflow-wrap: normal; line-height: 1.3; }
 .streak-hint { grid-column: 1 / -1; }
-/* alive: warm (the Arde movement ground + dot), heavier stroke */
-.streak[data-state="alive"] .streak-medal { background: var(--mv-arde-bg); color: var(--mv-arde-fg); box-shadow: var(--shadow-highlight), var(--shadow-contact); }
-:root[data-theme="dark"] .streak[data-state="alive"] .streak-medal { color: var(--mv-arde-dot); }
+/* alive: warm (the clay class tone ground + dot, D-01 classTones), heavier stroke */
+.streak[data-state="alive"] .streak-medal { background: var(--tone-clay-bg); color: var(--tone-clay-fg); box-shadow: var(--shadow-highlight), var(--shadow-contact); }
+:root[data-theme="dark"] .streak[data-state="alive"] .streak-medal { color: var(--tone-clay-dot); }
 /* at risk: warn tone + a dashed ring (shape cue, not colour only) */
 .streak[data-state="at_risk"] .streak-medal { background: color-mix(in srgb, var(--color-warn) 14%, var(--color-surface)); color: var(--color-warn); border: 1.5px dashed var(--color-warn); box-shadow: none; }
 /* building: neutral pressed medallion (default) */
