@@ -32,7 +32,7 @@ export const CAPTURED: Record<string, string> = {
   'C-23': '2026-09-20',
   'C-24': '2026-09-20',
   'C-25': '2026-09-29',
-  'C-26': '2026-09-17',
+  'C-26': '2026-09-29',
   'D-01': '2026-09-29',
   'D-02': '2026-09-29',
   'D-03': '2026-09-20',
@@ -85,7 +85,7 @@ export const CAPTURED: Record<string, string> = {
   'W-03': '2026-09-25',
   'W-04': '2026-09-28',
   'W-05': '2026-09-28',
-  'W-06': '2026-09-25',
+  'W-06': '2026-09-29',
   'W-07': '2026-09-29',
   'W-08': '2026-09-29',
   'W-09': '2026-09-25',
@@ -94,7 +94,7 @@ export const CAPTURED: Record<string, string> = {
 /** Page code → date of the newest changelog entry whose `codes:` line names it. */
 export const CHANGED: Record<string, string> = {
   'A-01': '2026-09-28',
-  'A-02': '2026-09-28',
+  'A-02': '2026-09-29',
   'A-03': '2026-09-29',
   'A-05': '2026-09-29',
   'A-06': '2026-09-29',

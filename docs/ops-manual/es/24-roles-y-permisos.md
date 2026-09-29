@@ -2,7 +2,7 @@
 title: Roles y permisos
 role: todos
 part: VII
-version: 0.13.2
+version: 0.13.3
 updated: 2026-09-29
 summary: El organigrama, qué hace cada rol (también marketing y desarrollo), qué pantallas usa, quién aprueba qué y cómo se piden accesos.
 ---

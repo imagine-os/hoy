@@ -2,7 +2,7 @@
 title: Roles and permissions
 role: everyone
 part: VII
-version: 0.13.2
+version: 0.13.3
 updated: 2026-09-29
 summary: The org chart, what each role does (marketing and developer included), which screens it uses, who approves what and how to ask for access.
 ---

@@ -2,7 +2,7 @@
 title: Integraciones y qué está simulado
 role: admin, owner, finanzas, desarrollo
 part: VII
-version: 0.13.2
+version: 0.13.3
 updated: 2026-09-29
 summary: Qué sistemas externos usa HOY, en qué estado está cada uno, qué se puede decir hoy sin prometer de más y qué falta conectar.
 ---

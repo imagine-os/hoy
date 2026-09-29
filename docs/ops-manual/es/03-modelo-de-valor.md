@@ -2,7 +2,7 @@
 title: Modelo de valor
 role: owner, admin, finanzas, recepción, marketing
 part: I
-version: 0.13.2
+version: 0.13.3
 updated: 2026-09-29
 summary: Las seis líneas de ingreso de HOY, para qué existe cada una, qué ofrecer en el mostrador y los precios vigentes.
 ---

@@ -2,7 +2,7 @@
 title: Web and social
 role: coordination, owner, marketing
 part: V
-version: 0.13.2
+version: 0.13.3
 updated: 2026-09-29
 summary: The website's pages and their official copy, who changes what, how the site leads into the app and the rules for posting on social media.
 ---

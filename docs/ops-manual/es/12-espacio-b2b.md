@@ -2,7 +2,7 @@
 title: Espacio — alquiler B2B
 role: coordinación, owner, finanzas
 part: III
-version: 0.13.2
+version: 0.13.3
 updated: 2026-09-29
 summary: Alquilar el estudio fuera de horas pico: cotizar, reservar la sala, cobrar como Especial, montar y revisar al cerrar.
 ---

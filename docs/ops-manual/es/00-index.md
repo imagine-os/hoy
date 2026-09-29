@@ -2,7 +2,7 @@
 title: Índice y cómo usar este manual
 role: todos
 part: I
-version: 0.13.2
+version: 0.13.3
 updated: 2026-09-29
 summary: Para qué sirve el manual, cómo leerlo según tu rol, qué partes ajusta el estudio y dónde están los documentos fuente.
 ---

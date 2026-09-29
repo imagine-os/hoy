@@ -2,7 +2,7 @@
 title: Front desk and check-in
 role: front desk, coordination
 part: II
-version: 0.13.2
+version: 0.13.3
 updated: 2026-09-29
 summary: The door step by step: opening, greeting, checking people in, walk-ins, cancellations, the waitlist, lost and found and handoffs.
 ---

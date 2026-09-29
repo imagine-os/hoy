@@ -2,7 +2,7 @@
 title: Checklists de entrenamiento
 role: todos
 part: II
-version: 0.13.2
+version: 0.13.3
 updated: 2026-09-29
 summary: Día 1, Semana 1 y Mes 1 para cada rol, incluidos marketing y desarrollo, con la firma de quien entrena.
 ---

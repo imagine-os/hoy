@@ -2,7 +2,7 @@
 title: Nómina de maestros y payouts
 role: finanzas, owner, coordinación
 part: IV
-version: 0.13.2
+version: 0.13.3
 updated: 2026-09-29
 summary: De la asistencia cerrada al pago del maestro: generar el borrador, revisar, aprobar, pagar y el extracto del maestro.
 ---

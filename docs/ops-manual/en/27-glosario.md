@@ -2,7 +2,7 @@
 title: Glossary
 role: everyone
 part: VII
-version: 0.13.2
+version: 0.13.3
 updated: 2026-09-29
 summary: The words we use, what they mean, what we say in front of customers and how to read the codes in the In HoyOS boxes.
 ---

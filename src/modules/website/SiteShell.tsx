@@ -81,14 +81,14 @@ export function SiteShell({ children }: { children: ReactNode }) {
             {/* on phones (≤ 600 px) the edition select and motion toggle move from the header into the open menu so the header fits without overflow */}
             <div className="site-nav-tools">
               <SiteVersionSelect value={edition} videoEnabled={videoEnabled} onChange={setEdition} />
-              {edition === 'sanctuary' && <button type="button" className="site-iconbtn" onClick={() => setMotion(!motion)} aria-pressed={!motion} aria-label={t(motion ? 'site.new.ambient' : 'site.new.static')}>{motion ? 'Ⅱ' : '▷'}</button>}
+              {edition === 'sanctuary' && <button type="button" className="site-iconbtn ctl-round" onClick={() => setMotion(!motion)} aria-pressed={!motion} aria-label={t(motion ? 'site.new.ambient' : 'site.new.static')}>{motion ? 'Ⅱ' : '▷'}</button>}
             </div>
           </nav>
           <div className="site-actions">
             <SiteVersionSelect value={edition} videoEnabled={videoEnabled} onChange={setEdition} />
-            {edition === 'sanctuary' && <button type="button" className="site-iconbtn site-motion" onClick={() => setMotion(!motion)} aria-pressed={!motion} aria-label={t(motion ? 'site.new.ambient' : 'site.new.static')}>{motion ? 'Ⅱ' : '▷'}</button>}
+            {edition === 'sanctuary' && <button type="button" className="site-iconbtn site-motion ctl-round" onClick={() => setMotion(!motion)} aria-pressed={!motion} aria-label={t(motion ? 'site.new.ambient' : 'site.new.static')}>{motion ? 'Ⅱ' : '▷'}</button>}
             <LangToggle size="sm" />
-            <button type="button" className="site-iconbtn" onClick={toggleTheme} aria-label={t('core.theme.toggle')}><Icon name={theme === 'dark' ? 'moon' : 'sun'} size={17} /></button>
+            <button type="button" className="site-iconbtn ctl-round" onClick={toggleTheme} aria-label={t('core.theme.toggle')}><Icon name={theme === 'dark' ? 'moon' : 'sun'} size={17} /></button>
             <Link to="/auth/sign-in"><Button size="sm">{t('site.nav.signin')}</Button></Link>
             <button type="button" className="site-burger" onClick={() => setOpen((o) => !o)} aria-label={t('core.shell.menu')} aria-expanded={open}>☰</button>
           </div>

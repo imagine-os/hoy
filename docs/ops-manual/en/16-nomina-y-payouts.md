@@ -2,7 +2,7 @@
 title: Teacher payroll and payouts
 role: finance, owner, coordination
 part: IV
-version: 0.13.2
+version: 0.13.3
 updated: 2026-09-29
 summary: From closed attendance to the teacher's pay: generating the draft, reviewing, approving, paying and the teacher's statement.
 ---

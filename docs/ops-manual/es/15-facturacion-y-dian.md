@@ -2,7 +2,7 @@
 title: Facturación y DIAN
 role: finanzas, admin, owner
 part: IV
-version: 0.13.2
+version: 0.13.3
 updated: 2026-09-29
 summary: Qué se necesita antes de encender la factura electrónica, cómo se aplica el IVA, facturas a empresas y qué falta.
 ---

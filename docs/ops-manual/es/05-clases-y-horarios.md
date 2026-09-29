@@ -2,7 +2,7 @@
 title: Clases y horarios
 role: coordinación
 part: II
-version: 0.13.2
+version: 0.13.3
 updated: 2026-09-29
 summary: Armar el horario, asignar maestros, cancelar una clase del estudio y publicar eventos y talleres.
 ---

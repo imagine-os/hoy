@@ -2,7 +2,7 @@
 title: Web y redes
 role: coordinación, owner, marketing
 part: V
-version: 0.13.2
+version: 0.13.3
 updated: 2026-09-29
 summary: Las páginas del sitio y su texto oficial, quién cambia qué, cómo lleva el sitio a la app y las reglas para publicar en redes.
 ---

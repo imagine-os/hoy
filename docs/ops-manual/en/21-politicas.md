@@ -2,7 +2,7 @@
 title: Policies in force
 role: owner, admin, front desk, finance
 part: VI
-version: 0.13.2
+version: 0.13.3
 updated: 2026-09-29
 summary: The numbered rules in force today, what each one controls, who changes them and what happens to bookings already made.
 ---

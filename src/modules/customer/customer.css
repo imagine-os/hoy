@@ -135,7 +135,7 @@
 
 /* auth shell — AppShell's top bar over one centred column (--w-auth 480 → --w-auth-wide 576 from 900 px) */
 .auth { min-height: 100vh; display: flex; flex-direction: column; }
-.auth-iconbtn { width: var(--h-ctl); height: var(--h-ctl); border-radius: 50%; border: 1px solid var(--color-card-border); background: var(--color-surface); box-shadow: var(--shadow-highlight), var(--shadow-contact); }
+.auth-iconbtn { border: 1px solid var(--color-card-border); background: var(--color-surface); box-shadow: var(--shadow-highlight), var(--shadow-contact); }
 .auth-main { flex: 1 1 auto; display: flex; justify-content: center; padding: var(--sp-4) var(--sp-4) var(--sp-8); }
 .auth-col { width: 100%; max-width: var(--w-auth); display: flex; flex-direction: column; gap: var(--sp-5); }
 @media (min-width: 900px) { .auth-main { padding-top: var(--sp-10); } .auth-col { max-width: var(--w-auth-wide); } .auth .topbar { padding-inline: var(--sp-6); min-height: calc(var(--h-topbar) + var(--sp-2)); } }

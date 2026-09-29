@@ -10,7 +10,7 @@ I gave you 2 files with updated knowledge for you  on how to write and content. 
 
 This prompt was split in two parallel passes. **0031** (the product pass: roles, the LMS reading, the editing
 experience, the directives, the source-document embeds, the hub's marketing-kit card) is recorded in its own prompt
-file. **0032** — this file — is the content pass. Version **0.13.2**. Full record in
+file. **0032** — this file — is the content pass. Version **0.13.3**. Full record in
 `docs/changelog/0032-manual-content.md`.
 
 1. **All 28 chapters rewritten, ES first, then EN (56 files).** Plain language for a staff member on day one: "tú",

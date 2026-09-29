@@ -31,6 +31,9 @@ button, input, select, textarea { font: inherit; color: inherit; }
 button { cursor: pointer; }
 /* D-0007 · every control is at least --h-ctl (44 px at the base size) tall; inline text links are exempt. */
 button:not(.cust-linkbtn):not(.cust-plainbtn), input:not([type=checkbox]):not([type=radio]):not([type=range]), select { min-height: var(--h-ctl); }
+/* 0035 · the round icon-only control (theme toggle, bell): width = height = --h-ctl, so the floor above never
+   stretches a circle into an oval. Modules add only their skin (border, background, shadow, colour). */
+.ctl-round { display: inline-grid; place-items: center; flex: 0 0 auto; inline-size: var(--h-ctl); block-size: var(--h-ctl); min-inline-size: var(--h-ctl); aspect-ratio: 1; padding: 0; border-radius: 50%; }
 img { max-width: 100%; display: block; }
 code, pre, kbd { font-family: var(--font-mono); font-size: 0.9em; }
 pre { background: var(--color-surface-2); padding: var(--sp-3); border-radius: var(--r-sm); overflow: auto; box-shadow: var(--shadow-pressed); }

@@ -2,7 +2,7 @@
 title: Training checklists
 role: everyone
 part: II
-version: 0.13.2
+version: 0.13.3
 updated: 2026-09-29
 summary: Day 1, Week 1 and Month 1 for every role, marketing and developer included, signed off by whoever trains you.
 ---

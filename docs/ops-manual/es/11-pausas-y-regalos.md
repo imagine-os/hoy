@@ -2,7 +2,7 @@
 title: Pausas y regalos
 role: recepción, coordinación
 part: III
-version: 0.13.2
+version: 0.13.3
 updated: 2026-09-29
 summary: Pausar y cancelar una membresía, las sesiones cortas de Pausas, los bonos de regalo, los invitados y los referidos.
 ---

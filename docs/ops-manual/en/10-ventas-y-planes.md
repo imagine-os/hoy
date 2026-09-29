@@ -2,7 +2,7 @@
 title: Sales and plans
 role: front desk, coordination, finance
 part: III
-version: 0.13.2
+version: 0.13.3
 updated: 2026-09-29
 summary: Registering and taking payment at the desk, what to offer each person and everything members can do on their own in the app.
 ---

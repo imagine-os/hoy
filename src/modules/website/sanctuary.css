@@ -16,7 +16,7 @@
 .site[data-edition="sanctuary"] .site-nav { justify-content: center; gap: clamp(12px, 1.6vw, 24px); }
 .site[data-edition="sanctuary"] .site-nav a { font-size: .8125rem; font-weight: 400; }
 .site[data-edition="sanctuary"] .site-actions { gap: .625rem; }
-.site[data-edition="sanctuary"] .site-iconbtn { display: grid; place-items: center; border: 1px solid var(--color-border); background: transparent; box-shadow: none; width: var(--h-ctl); height: var(--h-ctl); }
+.site[data-edition="sanctuary"] .site-iconbtn { display: grid; place-items: center; border: 1px solid var(--color-border); background: transparent; box-shadow: none; }
 .site[data-edition="sanctuary"] .site-actions .btn { border-radius: var(--r-xs); min-height: var(--h-ctl); }
 .site[data-edition="sanctuary"] .eyebrow { font-size: var(--fs-2xs); letter-spacing: .16em; font-weight: 500; line-height: 1.5; }
 .site[data-edition="sanctuary"] h1, .site[data-edition="sanctuary"] h2 { font-family: var(--font-editorial); font-weight: 400; letter-spacing: -.035em; line-height: 1.03; color: var(--color-primary); }
@@ -199,7 +199,7 @@
   .sanctuary-hero-copy { padding:0; }
   .sanctuary-button { padding: 16px 22px; font-size: 14px; }
   .sanctuary-hero-bottom { bottom: 20px; }
-  .sanctuary-motion { width:34px; height:34px; padding:0; justify-content:center; }
+  .sanctuary-motion { inline-size:var(--h-ctl); block-size:var(--h-ctl); aspect-ratio:1; padding:0; justify-content:center; }
   .sanctuary-motion span { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); }
   .sanctuary-scroll { font-size:11px; }
   .sanctuary-section { padding-top:64px; padding-bottom:64px; }

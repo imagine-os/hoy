@@ -2,7 +2,7 @@
 title: Políticas vigentes
 role: owner, admin, recepción, finanzas
 part: VI
-version: 0.13.2
+version: 0.13.3
 updated: 2026-09-29
 summary: Las reglas con número que rigen hoy, qué controla cada una, quién las cambia y qué pasa con lo ya reservado.
 ---

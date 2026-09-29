@@ -2,7 +2,7 @@
 title: Datos personales y habeas data
 role: todos
 part: VI
-version: 0.13.2
+version: 0.13.3
 updated: 2026-09-29
 summary: La Ley 1581 en la práctica: qué pedimos, cómo cuidamos los datos de salud, quién ve qué, y cómo una persona ve, descarga, corrige o borra sus datos.
 ---
