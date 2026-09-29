@@ -21,8 +21,8 @@ text in Spanish and English, and every change goes through draft, review and pub
 
 {{tenant:capacity}}
 
-2. Spread the four movements (Enraíza, Fluye, Arde, Libera) across the day, so there is always something intense
-   and something calm. What each one is: [Our classes](02-nuestras-clases.md).
+2. Spread the intensities across the day, so there is always something intense and something calm. What each
+   class is: [Our classes](02-nuestras-clases.md).
 3. Create the class as recurring: discipline, teacher, room, time and how often it repeats.
 4. Always publish in Spanish. If the English is missing, the app shows the Spanish.
 5. Announce schedule changes ahead of time (see below). A change never affects bookings that already exist.

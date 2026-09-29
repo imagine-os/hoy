@@ -1,4 +1,4 @@
-import type { BaseRow, BookingRow, ClassSessionRow, CreditRow, EventRow, IntentionRow, InviteRow, MembershipRow, MessageLogRow, NotificationRow, NotificationPrefRow, PaymentMethodRow, PaymentRow, ProfileRow, ReviewRow, TeacherRow, UserRow } from '../schema';
+import type { BaseRow, BookingRow, ClassSessionRow, CreditRow, EventRow, InviteRow, MembershipRow, MessageLogRow, NotificationRow, NotificationPrefRow, PaymentMethodRow, PaymentRow, ProfileRow, ReviewRow, TeacherRow, UserRow } from '../schema';
 import { tableNames } from '../schema';
 import { demoUsers } from '../../auth/demoUsers';
 import { tenant } from '../../tenant/tenant';
@@ -144,10 +144,6 @@ export function buildSeed(): Record<string, BaseRow[]> {
       db.waitlist.push({ ...base(`wl_${fullToday.id}_0`, 1), user_id: waiter, session_id: fullToday.id, position: 1, status: 'waiting', offered_at: null, claim_until: null });
     }
   }
-
-  // intentions today for a few people
-  const intentions = db.intentions as IntentionRow[];
-  for (const uid of customerIds.slice(1, 8)) intentions.push({ ...base(`int_${uid}`, 0), user_id: uid, date: dateKey(NOW), movement: r.pick(['enraiza', 'fluye', 'arde', 'libera'] as const) });
 
   // ---- content as data: club rules (C-13), FAQ (C-14/C-15), events (C-23) ----
   db.content_articles.push(...contentArticles);

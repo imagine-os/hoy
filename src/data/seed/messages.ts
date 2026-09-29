@@ -114,7 +114,7 @@ export function buildMessages(nameOf: Map<string, string>): MessageLogRow[] {
     [
       inWa(TOMAS, 4, '12:10', `Buenas, tengo una lesión en la rodilla izquierda (menisco, ya en fisioterapia). ¿Puedo hacer Hot Vinyasa o mejor empiezo con otra clase?`),
       outWa(TOMAS, 4, '12:40', `Hola ${first(TOMAS)}, gracias por contarnos. Con la rodilla en recuperación te recomendamos empezar por Pilates o Yin: ambas trabajan fuerza y movilidad sin impacto. Le avisamos a la profe antes de tu clase para que te dé variaciones. Cuando el fisio te dé luz verde, pasas a la sala caliente.`, COORD),
-      note(TOMAS, 4, '12:45', 'Lesión de rodilla izquierda (menisco) — avisar a la profe antes de Arde. Empieza con Pilates / Yin.', COORD),
+      note(TOMAS, 4, '12:45', 'Lesión de rodilla izquierda (menisco) — avisar a la profe antes de Hot Vinyasa. Empieza con Pilates / Yin.', COORD),
       inWa(TOMAS, 4, '13:02', `Mil gracias, empiezo con Pilates entonces 💪`),
       autoWa(TOMAS, 1, first(TOMAS)),
       inWa(TOMAS, 0, '19:05', `Hoy salí feliz de Pilates, la profe Carolina me cuidó la rodilla todo el tiempo. ¿Ella da también los jueves?`, true),

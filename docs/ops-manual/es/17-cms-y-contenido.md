@@ -21,7 +21,7 @@ y al mostrador.
 |---|---|
 | Las clases y sus descripciones | horario de la app, detalle de la clase, sitio |
 | Los perfiles de los maestros (bio, foto, especialidades) | app del socio, sitio, app de maestros |
-| Disciplinas y movimientos | sitio, horario |
+| Disciplinas | sitio, horario |
 | Salas y capacidad | Contenido, Check-in |
 | Reglas del club | app del socio |
 | Preguntas frecuentes | app del socio |

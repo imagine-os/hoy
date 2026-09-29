@@ -299,9 +299,6 @@ export function SettingsPage({ group = 'general' }: { group?: SettingsGroup }) {
               {S('content', t('admin.settings.sec.content'), (d, set) => (
                 <>
                   <div className="grid grid-2">
-                    <Field label={t('admin.settings.f.naming')} hint={t('admin.settings.f.naming.hint')}>{() => (
-                      <SegmentedControl<StudioSettings['content']['publicNaming']> ariaLabel={t('admin.settings.f.naming')} value={d.publicNaming} onChange={(v) => canWrite && set({ ...d, publicNaming: v })} options={[{ value: 'disciplines', label: t('admin.settings.f.naming.disciplines') }, { value: 'movements', label: t('admin.settings.f.naming.movements') }]} />
-                    )}</Field>
                     <Field label={t('admin.settings.f.mapProvider')} hint={t('admin.settings.f.mapProvider.hint')}>{(id) => <Select id={id} value={d.mapProvider} disabled={!canWrite} onChange={(e) => set({ ...d, mapProvider: e.target.value as StudioSettings['content']['mapProvider'] })}>{(['none', 'osm', 'google'] as const).map((v) => <option key={v} value={v}>{t(`admin.settings.f.mapProvider.${v}`)}</option>)}</Select>}</Field>
                   </div>
                   <Toggle checked={d.breathworkOwnClass} disabled={!canWrite} label={t('admin.settings.f.breathwork')} onChange={(on) => set({ ...d, breathworkOwnClass: on })} />

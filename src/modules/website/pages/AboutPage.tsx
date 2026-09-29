@@ -11,6 +11,7 @@ import { tenant } from '../../../tenant/tenant';
 import { about, philosophy, taglines } from '../../../tenant/brand';
 import { Card } from '../../../components/molecule/Card/Card';
 import { Chip } from '../../../components/atom/Chip/Chip';
+import { TONES } from '../../../design/tokens';
 import { Button } from '../../../components/atom/Button/Button';
 import { MediaSlot } from '../../../components/molecule/MediaSlot/MediaSlot';
 import { PageHead, SiteShell } from '../SiteShell';
@@ -41,7 +42,7 @@ export function AboutPage() {
       <section className="container site-section">
         <p className="eyebrow">{t('site.about.values')}</p>
         <div className="row wrap" style={{ marginTop: 'var(--sp-sm)' }}>
-          {about.values.map((v, i) => <Chip key={i} dot movement={(['enraiza', 'fluye', 'arde', 'libera'] as const)[i % 4]}>{bi(v)}</Chip>)}
+          {about.values.map((v, i) => <Chip key={i} dot tone={TONES[i % TONES.length]}>{bi(v)}</Chip>)}
         </div>
       </section>
     ),

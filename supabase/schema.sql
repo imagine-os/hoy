@@ -210,8 +210,8 @@ create table if not exists public.media_assets (
   alt jsonb not null,
   -- {es,en} what to shoot
   brief jsonb not null,
-  -- movement tint of the empty slot
-  movement text check (movement in ('enraiza', 'fluye', 'arde', 'libera')),
+  -- class-tone tint of the empty slot (D-01 classTones)
+  tone text check (tone in ('moss', 'river', 'clay', 'sun', 'sage', 'slate', 'plum')),
   url text,
   -- photographer / licence
   credit text,
@@ -387,7 +387,7 @@ alter table public.teachers enable row level security;
 create policy "teachers: tenant read" on public.teachers for select using (tenant_id = public.current_tenant_id());
 create policy "teachers: staff write" on public.teachers for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
 
--- schedule · Class types of the club, each with its movement.
+-- schedule · Class types of the club, each with its colour tone.
 create table if not exists public.modalities (
   -- Primary key
   id uuid primary key default gen_random_uuid(),
@@ -398,7 +398,8 @@ create table if not exists public.modalities (
   slug text not null,
   name_es text not null,
   name_en text not null,
-  movement text not null check (movement in ('enraiza', 'fluye', 'arde', 'libera')),
+  -- colour tone (D-01 classTones), one per modality
+  tone text not null check (tone in ('moss', 'river', 'clay', 'sun', 'sage', 'slate', 'plum')),
   description jsonb not null,
   -- 1–5
   intensity integer not null,
@@ -580,25 +581,6 @@ create trigger waitlist_touch before update on public.waitlist for each row exec
 alter table public.waitlist enable row level security;
 create policy "waitlist: tenant read" on public.waitlist for select using (tenant_id = public.current_tenant_id());
 create policy "waitlist: staff write" on public.waitlist for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
-
--- schedule · DEPRECATED (0030): answer to “How do you want to feel today?” (A-05, retired from the product). Kept as history; nothing writes or reads new rows.
-create table if not exists public.intentions (
-  -- Primary key
-  id uuid primary key default gen_random_uuid(),
-  -- Owning studio (multi-tenant)
-  tenant_id uuid not null references public.tenants(id),
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now(),
-  user_id uuid not null references public.users(id) on delete set null,
-  date date not null,
-  movement text not null check (movement in ('enraiza', 'fluye', 'arde', 'libera'))
-);
-create index if not exists intentions_tenant_idx on public.intentions(tenant_id);
-create index if not exists intentions_user_id_idx on public.intentions(user_id);
-create trigger intentions_touch before update on public.intentions for each row execute function public.touch_updated_at();
-alter table public.intentions enable row level security;
-create policy "intentions: tenant read" on public.intentions for select using (tenant_id = public.current_tenant_id());
-create policy "intentions: staff write" on public.intentions for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
 
 -- schedule · A class rating (C-10): stars, tags and comment.
 -- access:
@@ -1554,7 +1536,7 @@ alter table public.credits add constraint credits_payment_id_fk foreign key (pay
 --   teacher              read own class_sessions/bookings (teacher_id = own teachers.id); write attendance
 --   maintenance          read rooms/class_sessions; write maintenance tables (future)
 --   customer             read own rows (user_id = auth.uid()) in bookings, credits, memberships, payments,
---                        invoices, consents, intentions, waitlist; read public catalog (modalities, teachers,
+--                        invoices, consents, waitlist; read public catalog (modalities, teachers,
 --                        class_sessions, plans, legal_documents)
 --   anon (public site)   read modalities, teachers(active), class_sessions(scheduled), plans(active), legal_documents(published)
 -- Realtime: enable on class_sessions, bookings, waitlist, feature_flags, page_layouts.

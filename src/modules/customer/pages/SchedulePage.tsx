@@ -6,7 +6,6 @@ import { useSession } from '../../../auth/SessionProvider';
 import { useTable } from '../../../data/DataContext';
 import type { ClassSessionRow, ModalityRow, TeacherRow } from '../../../data/schema';
 import { useLayout } from '../../../layout/useLayout';
-import { movements, type Movement } from '../../../design/tokens';
 import { Chip } from '../../../components/atom/Chip/Chip';
 import { Button } from '../../../components/atom/Button/Button';
 import { Select } from '../../../components/atom/Input/Input';
@@ -24,9 +23,20 @@ const specWeek = canvasSpecs['C-02b'];
 type View = 'today' | 'week';
 export interface SchedulePageProps { view?: View }
 type TimeOfDay = 'all' | 'morning' | 'evening';
-interface Filters { movement: Movement | 'all'; modality: string; teacher: string; time: TimeOfDay }
-const DEFAULT: Filters = { movement: 'all', modality: 'all', teacher: 'all', time: 'all' };
+interface Filters { modality: string; teacher: string; time: TimeOfDay }
+const DEFAULT: Filters = { modality: 'all', teacher: 'all', time: 'all' };
 const FKEY = 'hoyos.customer.scheduleFilters';
+/** Reads the persisted filters, keeping only today's keys: an older shape (pre-0039, with a colour-group key) loses its unknown keys, anything unreadable is DEFAULT. */
+function loadFilters(): Filters {
+  try {
+    const raw = sessionStorage.getItem(FKEY);
+    const s = raw ? JSON.parse(raw) as Record<string, unknown> : null;
+    if (!s || typeof s !== 'object') return DEFAULT;
+    const str = (v: unknown, d: string) => (typeof v === 'string' && v ? v : d);
+    const time = s.time === 'morning' || s.time === 'evening' ? s.time : 'all';
+    return { modality: str(s.modality, DEFAULT.modality), teacher: str(s.teacher, DEFAULT.teacher), time };
+  } catch { return DEFAULT; }
+}
 
 /** C-02 Class schedule; with `view="week"` it is C-02b at /app/schedule/week (`?view=week` redirects there). */
 export function SchedulePage({ view: routeView }: SchedulePageProps) {
@@ -41,7 +51,7 @@ export function SchedulePage({ view: routeView }: SchedulePageProps) {
   useEffect(() => { const s = params.get('session'); if (s) nav(`/app/class/${s}`, { replace: true }); else if (params.get('view') === 'week') nav('/app/schedule/week', { replace: true }); }, [params, nav]);
 
   const [sheet, setSheet] = useState(false);
-  const [filters, setFilters] = useState<Filters>(() => { try { const raw = sessionStorage.getItem(FKEY); return raw ? { ...DEFAULT, ...JSON.parse(raw) } : DEFAULT; } catch { return DEFAULT; } });
+  const [filters, setFilters] = useState<Filters>(loadFilters);
   useEffect(() => { try { sessionStorage.setItem(FKEY, JSON.stringify(filters)); } catch { /* ignore */ } }, [filters]);
 
   const all = useAllSessionsJoined();
@@ -53,11 +63,13 @@ export function SchedulePage({ view: routeView }: SchedulePageProps) {
 
   const matches = (x: (typeof all)[number]) => {
     const h = new Date(x.session.starts_at).getHours();
-    return (filters.movement === 'all' || x.modality?.movement === filters.movement)
-      && (filters.modality === 'all' || x.session.modality_id === filters.modality)
+    return (filters.modality === 'all' || x.session.modality_id === filters.modality)
       && (filters.teacher === 'all' || x.session.teacher_id === filters.teacher)
       && (filters.time === 'all' || (filters.time === 'morning' ? h < 12 : h >= 12));
   };
+  // 0039: one chip per visible class type in its tone; the bar and the filter sheet share it, so they never disagree.
+  const pickModality = (id: string) => setFilters((f) => ({ ...f, modality: f.modality === id ? 'all' : id }));
+  const classChips = visibleMods.map((m) => <Chip key={m.id} tone={m.tone} dot selected={filters.modality === m.id} onClick={() => pickModality(m.id)}>{bi({ es: m.name_es, en: m.name_en })}</Chip>);
   const activeFilters = Object.entries(filters).filter(([, v]) => v !== 'all').length;
   const filtered = useMemo(() => all.filter(matches), [all, filters]);
 
@@ -86,8 +98,8 @@ export function SchedulePage({ view: routeView }: SchedulePageProps) {
     'FilterBar → FilterSheet': () => (
       <div className="cust-filters">
         <div className="cust-filters-scroll">
-          <Chip selected={filters.movement === 'all'} onClick={() => setFilters((f) => ({ ...f, movement: 'all' }))}>{t('core.common.all')}</Chip>
-          {(Object.keys(movements) as Movement[]).map((mv) => <Chip key={mv} movement={mv} dot selected={filters.movement === mv} onClick={() => setFilters((f) => ({ ...f, movement: f.movement === mv ? 'all' : mv }))}>{movements[mv].label}</Chip>)}
+          <Chip selected={filters.modality === 'all'} onClick={() => setFilters((f) => ({ ...f, modality: 'all' }))}>{t('core.common.all')}</Chip>
+          {classChips}
         </div>
         <Button size="sm" variant={activeFilters > 0 ? 'primary' : 'secondary'} onClick={() => setSheet(true)} icon="filter">{t('core.common.filter')}{activeFilters > 0 ? ` · ${activeFilters}` : ''}</Button>
       </div>
@@ -99,7 +111,7 @@ export function SchedulePage({ view: routeView }: SchedulePageProps) {
     Legend: () => (
       <div className="row wrap cust-legend">
         <span className="eyebrow">{t('customer.schedule.legend')}</span>
-        {(Object.keys(movements) as Movement[]).map((mv) => <Chip key={mv} movement={mv} dot>{movements[mv].label}</Chip>)}
+        {visibleMods.map((m) => <Chip key={m.id} tone={m.tone} dot>{bi({ es: m.name_es, en: m.name_en })}</Chip>)}
       </div>
     ),
   };
@@ -115,19 +127,13 @@ export function SchedulePage({ view: routeView }: SchedulePageProps) {
             <div className="row wrap" id={id}>{(['all', 'morning', 'evening'] as TimeOfDay[]).map((k) => <Chip key={k} selected={filters.time === k} onClick={() => setFilters((f) => ({ ...f, time: k }))}>{t(`customer.schedule.filter.time.${k}`)}</Chip>)}</div>
           )}</Field>
           <Field label={t('customer.schedule.filter.modality')}>{(id) => (
-            <Select id={id} value={filters.modality} onChange={(e) => setFilters((f) => ({ ...f, modality: e.target.value }))}>
-              <option value="all">{t('core.common.all')}</option>
-              {visibleMods.map((m) => <option key={m.id} value={m.id}>{bi({ es: m.name_es, en: m.name_en })}</option>)}
-            </Select>
+            <div className="row wrap" id={id} role="group"><Chip selected={filters.modality === 'all'} onClick={() => setFilters((f) => ({ ...f, modality: 'all' }))}>{t('core.common.all')}</Chip>{classChips}</div>
           )}</Field>
           <Field label={t('customer.schedule.filter.teacher')}>{(id) => (
             <Select id={id} value={filters.teacher} onChange={(e) => setFilters((f) => ({ ...f, teacher: e.target.value }))}>
               <option value="all">{t('core.common.all')}</option>
               {teachers.map((te) => <option key={te.id} value={te.id}>{te.display_name}</option>)}
             </Select>
-          )}</Field>
-          <Field label={t('customer.schedule.filter.movement')} hint={t('customer.schedule.filter.movement.hint')}>{(id) => (
-            <div className="row wrap" id={id}>{(Object.keys(movements) as Movement[]).map((mv) => <Chip key={mv} movement={mv} dot selected={filters.movement === mv} onClick={() => setFilters((f) => ({ ...f, movement: f.movement === mv ? 'all' : mv }))}>{movements[mv].label}</Chip>)}</div>
           )}</Field>
         </div>
       </Drawer>

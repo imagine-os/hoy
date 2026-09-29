@@ -46,12 +46,12 @@ export interface StudioSettings {
    */
   payroll: { cadence: PayrollCadence; payoutMethod: 'wompi' | 'transfer' | 'cash'; signedBy: string; withholding: boolean; rateCard: RateCard };
   /**
-   * M-08f — content decisions (0018). `publicNaming` decides whether the customer schedule leads with the
-   * movement (Enraíza · Fluye · Arde · Libera) or the discipline (Hot Vinyasa, Pilates…); `breathworkOwnClass`
+   * M-08f — content decisions (0018). `breathworkOwnClass`
    * shows or hides the Respiración modality row (W-08 facts vs the “lives inside meditation” sentence);
-   * `mapProvider` is what MapSlot embeds.
+   * `mapProvider` is what MapSlot embeds. (0039 retired `publicNaming`: classes are always titled by their
+   * modality; a stored object that still carries the key is read without it, see mergeSettings.)
    */
-  content: { publicNaming: 'disciplines' | 'movements'; breathworkOwnClass: boolean; mapProvider: MapProvider };
+  content: { breathworkOwnClass: boolean; mapProvider: MapProvider };
 }
 
 export const DEFAULT_SETTINGS: StudioSettings = {
@@ -67,7 +67,7 @@ export const DEFAULT_SETTINGS: StudioSettings = {
   comms: { whatsappSender: tenant.name, emailSender: tenant.legalName, emailReplyTo: tenant.contact.email },
   branding: { displayName: '', wordmarkVariant: 'auto', defaultLang: tenant.defaultLocale },
   payroll: { cadence: 'monthly', payoutMethod: 'wompi', signedBy: '', withholding: false, rateCard: EMPTY_RATE_CARD },
-  content: { publicNaming: 'disciplines', breathworkOwnClass: false, mapProvider: 'none' },
+  content: { breathworkOwnClass: false, mapProvider: 'none' },
 };
 
 export interface TenantRow extends BaseRow { settings: Partial<StudioSettings> | null }
@@ -88,7 +88,8 @@ function mergeSettings(stored: Partial<StudioSettings> | null | undefined): Stud
     comms: { ...DEFAULT_SETTINGS.comms, ...(s.comms ?? {}) },
     branding: { ...DEFAULT_SETTINGS.branding, ...(s.branding ?? {}) },
     payroll: { ...DEFAULT_SETTINGS.payroll, ...(s.payroll ?? {}), rateCard: { byModality: { ...(s.payroll?.rateCard?.byModality ?? {}) }, byTeacher: { ...(s.payroll?.rateCard?.byTeacher ?? {}) } } },
-    content: { ...DEFAULT_SETTINGS.content, ...(s.content ?? {}) },
+    // Known keys only: a row saved before 0039 may still hold `publicNaming`, which is ignored.
+    content: { breathworkOwnClass: s.content?.breathworkOwnClass ?? DEFAULT_SETTINGS.content.breathworkOwnClass, mapProvider: s.content?.mapProvider ?? DEFAULT_SETTINGS.content.mapProvider },
   };
 }
 
@@ -203,13 +204,10 @@ export function useVisibleModalities<T extends Pick<ModalityRow, 'slug'>>(rows: 
 }
 
 /**
- * How a class is titled on a public schedule row (C-03, W-04, W-01): by discipline (the modality
- * name, the default) or by movement, with the discipline moved next to the teacher's name.
+ * How a class is titled on a public schedule row (C-03, W-04, W-01): by its session title, which is the
+ * modality name unless the coordinator renamed the session; the modality name fills an empty title.
+ * (0039: the M-08f `publicNaming` switch is retired, so there is one naming.)
  */
-export function classDisplay(naming: StudioSettings['content']['publicNaming'], input: { title: string; modalityName: string | null; movementLabel: string; teacher: string }): { title: string; teacher: string } {
-  if (naming === 'movements') {
-    const disc = input.modalityName ?? input.title;
-    return { title: input.movementLabel, teacher: disc && input.teacher ? `${disc} · ${input.teacher}` : disc || input.teacher };
-  }
-  return { title: input.title, teacher: input.teacher };
+export function classDisplay(input: { title: string; modalityName?: string | null; teacher: string }): { title: string; teacher: string } {
+  return { title: input.title || input.modalityName || '', teacher: input.teacher };
 }

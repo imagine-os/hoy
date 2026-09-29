@@ -16,7 +16,7 @@ artboard. Nothing invents a value off this file.
   text-faint, text-on-primary, text-on-inverse, primary (accent as text), accent-fill (accent as a fill),
   accent, accent-soft, highlight/on-highlight (pricing badge), border, border-strong, success/warn/danger, focus,
   scrim; `--gradient-frame`, `--gradient-tile`.
-- **Movements** (`--mv-*`): Enraíza / Fluye / Arde / Libera from the canvas `movSets.hoy`.
+- **Class tones** (`--tone-*`): seven hue-named tones (moss, river, clay, sun, sage, slate, plum) used by chips, class rows, calendar dots, room blocks and empty media frames; one per modality, chosen in M-02 modalities.
 - **Shadows** (`--shadow-*`): the canvas Depth layer verbatim — `card` (`.surf2` tiles: inset highlight + contact +
   soft), `raised` (`.surf` panels, six layers), `frame` (phone/desktop frame), `accent` (buttons, active pills),
   `inverse` (deep-blue cards), `lane`, `pressed`, `pressed-deep`. Aliases `highlight`, `contact`, `soft` are the three
@@ -80,7 +80,7 @@ artboard. Nothing invents a value off this file.
 | `.graphpaper` | — | `--tex-paper` | component library canvas |
 | `.ph` | — | `--tex-ph` | media placeholders |
 | D-01 textures | Sand · Light · Sky · Deep · Linen | `--mat-*` | hero art, gift cards |
-| `movSets.hoy` | — | `--mv-{enraiza,fluye,arde,libera}-{fg,dot,bg}` | chips, week cells, legends |
+| Class tones (`classTones`) | moss · river · clay · sun · sage · slate · plum | `--tone-{moss,river,clay,sun,sage,slate,plum}-{fg,dot,bg}` | chips, class rows, calendar dots, room blocks, empty media frames; one per modality, chosen in M-02 modalities |
 | radii 4 · 8 · 11 · 16 · 18 · 24 · 32 · 34 | — | `--r-xs … --r-phone` | — |
 | `@keyframes breathe` 7 s, `spin` 1.1 s | — | `--dur-breath`, `--dur-spin` | A-01 rings, spinners |
 

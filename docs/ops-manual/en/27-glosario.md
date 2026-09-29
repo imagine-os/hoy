@@ -29,7 +29,6 @@ The studio's words, on one page. If a word in this manual isn't here, ask coordi
 | Special | a sale with the concept and price typed by hand (birthday, team session, rental with extras) | the concept: "your private session" |
 | Corporate Experiences | the sixth line, **in preparation**: wellbeing for work teams (team session, recurring programme, tailored workshop) | "we're preparing a programme for teams" |
 | Discipline | hot yoga, barre, pilates, meditation, breathwork: each class's public name | the class name |
-| Movement | Enraíza, Fluye, Arde, Libera: the internal label that shapes the day | not used with customers |
 
 ## 2. Operations
 | Word | What it means |

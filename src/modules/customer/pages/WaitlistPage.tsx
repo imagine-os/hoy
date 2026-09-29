@@ -17,7 +17,7 @@ import { ListGroup, ListRow } from '../../../components/molecule/ListRow/ListRow
 import { canvasSpecs } from '../specs';
 import { useBookingActions, useEntitlements, useLocalPref, useMyBookings, useNow, useSessionJoined, useWaitlistFor } from '../hooks';
 import { policy } from '../policy';
-import { PageHead, movementOf, roomName, teacherName } from '../ui';
+import { PageHead, toneOf, roomName, teacherName } from '../ui';
 
 const spec = canvasSpecs['C-20'];
 
@@ -122,7 +122,7 @@ export function WaitlistPage() {
     <div className="container page cust-page">
       <PageHead back={`/app/class/${s.id}`} title={t('core.common.waitlist')} sub={`${s.title} · ${formatDate(s.starts_at, lang)} ${formatTime(s.starts_at, lang)}`} />
       <div className="stack">
-        <ClassCard title={s.title} teacher={teacherName(joined)} room={roomName(joined)} startsAt={s.starts_at} endsAt={s.ends_at} movement={movementOf(joined)} booked={s.booked_count} capacity={s.capacity} onClick={() => nav(`/app/class/${s.id}`)} />
+        <ClassCard title={s.title} teacher={teacherName(joined)} room={roomName(joined)} startsAt={s.starts_at} endsAt={s.ends_at} tone={toneOf(joined)} booked={s.booked_count} capacity={s.capacity} onClick={() => nav(`/app/class/${s.id}`)} />
         {sections.filter(isVisible).map((name) => SECTIONS[name] ? <Fragment key={name}>{SECTIONS[name]()}</Fragment> : null)}
       </div>
     </div>

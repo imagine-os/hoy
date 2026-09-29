@@ -26,7 +26,7 @@ const spec = canvasSpecs['C-26'];
 /** The member's own rows, table by table, for the JSON export. `where` names the column that points at the user. */
 const EXPORT_TABLES: [table: string, column: string][] = [
   ['users', 'id'], ['profiles', 'user_id'], ['user_roles', 'user_id'], ['memberships', 'user_id'], ['credits', 'user_id'], ['bookings', 'user_id'], ['waitlist', 'user_id'],
-  ['payments', 'user_id'], ['payment_methods', 'user_id'], ['intentions', 'user_id'], ['reviews', 'user_id'], ['invites', 'inviter_user_id'], ['event_rsvps', 'user_id'],
+  ['payments', 'user_id'], ['payment_methods', 'user_id'], ['reviews', 'user_id'], ['invites', 'inviter_user_id'], ['event_rsvps', 'user_id'],
   ['notifications', 'user_id'], ['notification_prefs', 'user_id'], ['consents', 'user_id'], ['legal_acceptances', 'user_id'], ['message_log', 'user_id'], ['deletion_requests', 'user_id'],
 ];
 

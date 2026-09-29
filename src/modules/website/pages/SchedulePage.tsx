@@ -3,13 +3,13 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useLayout } from '../../../layout/useLayout';
 import { useTable } from '../../../data/DataContext';
-import type { BookingRow } from '../../../data/schema';
+import type { BookingRow, ModalityRow } from '../../../data/schema';
+import { useVisibleModalities } from '../../admin/settings';
 import { usesMats, occupiesMat } from '../../../data/mats';
 import { MatPicker } from '../../../components/organism/MatPicker/MatPicker';
 import { SessionCalendar } from '../../../components/organism/SessionCalendar/SessionCalendar';
 import { useSession } from '../../../auth/SessionProvider';
 import { tenant } from '../../../tenant/tenant';
-import { movements, type Movement } from '../../../design/tokens';
 import { Chip } from '../../../components/atom/Chip/Chip';
 import { Drawer } from '../../../components/organism/Drawer/Drawer';
 import { Button } from '../../../components/atom/Button/Button';
@@ -19,7 +19,7 @@ import { siteSpecs } from '../specs';
 import { useSessionsJoined } from '../hooks';
 
 export function SchedulePage() {
-  const { t } = useI18n();
+  const { t, bi } = useI18n();
   const { user } = useSession();
   const nav = useNavigate();
   const [params, setParams] = useSearchParams();
@@ -28,8 +28,11 @@ export function SchedulePage() {
   const { rows: bookings } = useTable<BookingRow>('bookings');
   const [picked, setPicked] = useState<string | null>(null);
   const all = useSessionsJoined();
-  const mvFilter = params.get('movement') as Movement | null;
-  const list = all.filter(({ modality }) => !mvFilter || modality?.movement === mvFilter);
+  const { rows: modalitiesAll } = useTable<ModalityRow>('modalities', { where: { active: true } });
+  const modalities = useVisibleModalities(modalitiesAll);
+  // 0039: the filter is the class (modality slug) in ?modality=; an unknown slug (or an old ?movement= link) shows everything.
+  const modFilter = modalities.find((m) => m.slug === params.get('modality'))?.slug ?? null;
+  const list = all.filter(({ modality }) => !modFilter || modality?.slug === modFilter);
   const chosen = all.find((x) => x.session.id === picked);
   const yoga = usesMats(chosen?.modality);
   const taken = new Set(bookings.filter(b => b.session_id === picked && occupiesMat(b)).map(b => b.mat_number));
@@ -39,9 +42,10 @@ export function SchedulePage() {
     const next = full ? `/app/waitlist/${picked}` : `/app/checkout/${picked}${mat ? `?mat=${mat}` : ''}`;
     nav(user.role === 'public' ? `/auth/sign-in?next=${encodeURIComponent(next)}` : next);
   };
-  const pickMovement = (mv: Movement) => {
+  const pickModality = (slug: string) => {
     const next = new URLSearchParams(params);
-    if (mvFilter === mv) next.delete('movement'); else next.set('movement', mv);
+    next.delete('movement');
+    if (modFilter === slug) next.delete('modality'); else next.set('modality', slug);
     setParams(next, { replace: true });
   };
 
@@ -53,8 +57,8 @@ export function SchedulePage() {
       <section className="container" style={{ paddingBottom: 'var(--sp-4xl)' }}>
         <div className="site-legend">
           <span className="eyebrow">{t('site.schedule.legend')}</span>
-          {(Object.keys(movements) as Movement[]).map((mv) => (
-            <Chip key={mv} movement={mv} dot selected={mvFilter === mv} onClick={() => pickMovement(mv)}>{movements[mv].label}</Chip>
+          {modalities.map((m) => (
+            <Chip key={m.id} tone={m.tone} dot selected={modFilter === m.slug} onClick={() => pickModality(m.slug)}>{bi({ es: m.name_es, en: m.name_en })}</Chip>
           ))}
         </div>
         <p className="xs muted" style={{ marginTop: 'var(--sp-sm)' }}>{t('site.schedule.legendBody', { mats: tenant.studio.mats })}</p>
@@ -68,7 +72,7 @@ export function SchedulePage() {
       <Drawer open={!!chosen} onClose={() => setPicked(null)} title={t('site.schedule.loginTitle')} side="bottom">
         {chosen && (
           <div className="stack">
-            <ClassCard title={chosen.session.title} teacher={chosen.teacher?.display_name ?? ''} room={t('site.mat.room')} startsAt={chosen.session.starts_at} endsAt={chosen.session.ends_at} movement={chosen.modality?.movement ?? 'fluye'} booked={chosen.session.booked_count} capacity={chosen.session.capacity} />
+            <ClassCard title={chosen.session.title} teacher={chosen.teacher?.display_name ?? ''} room={t('site.mat.room')} startsAt={chosen.session.starts_at} endsAt={chosen.session.ends_at} tone={chosen.modality?.tone ?? 'river'} booked={chosen.session.booked_count} capacity={chosen.session.capacity} />
             {yoga && !full && !unavailable && <MatPicker sessionId={chosen.session.id} capacity={chosen.session.capacity} value={mat} onChange={setMat} />}
             <p className="muted small">{t('site.schedule.loginBody')}</p>
             <Button block size="lg" onClick={signInAndBook} disabled={unavailable || (!full && yoga && (mat == null || taken.has(mat)))}>{unavailable ? t('customer.class.past') : full ? t('core.common.waitlist') : t('site.mat.continue')}</Button>

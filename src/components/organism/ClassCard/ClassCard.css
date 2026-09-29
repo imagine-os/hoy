@@ -6,6 +6,6 @@
 .classcard-meta { font-size: var(--fs-sm); opacity: .85; }
 .classcard.is-next .capmeter { color: color-mix(in srgb, var(--color-text-on-primary) 80%, transparent); }
 .classcard.is-next .capmeter-bar { background: color-mix(in srgb, var(--color-text-on-primary) 25%, transparent); }
-.classcard.is-next .chip-mv { background: color-mix(in srgb, var(--color-text-on-primary) 18%, transparent); color: var(--color-text-on-primary); }
+.classcard.is-next .chip-tone { background: color-mix(in srgb, var(--color-text-on-primary) 18%, transparent); color: var(--color-text-on-primary); }
 /* 0037 · the meter grows in the card footer: a zero-width bar left an 8 px gap before "7 cupos" / "Sin cupos" */
 .classcard .capmeter { flex: 1 1 auto; max-width: 15rem; }

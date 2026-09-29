@@ -3,7 +3,7 @@ import { useI18n } from '../../../i18n/I18nProvider';
 import { useTable } from '../../../data/DataContext';
 import type { MediaAssetRow } from '../../../data/schema';
 import type { Bi } from '../../../specs/types';
-import type { Movement } from '../../../design/tokens';
+import type { Tone } from '../../../design/tokens';
 import { AmbientScene } from '../../organism/AmbientScene/AmbientScene';
 import './MediaSlot.css';
 
@@ -33,7 +33,7 @@ export interface MediaSlotProps {
   ratio?: MediaRatio;
   /**
    * Key into `media_assets` (M-02d, the media library). While that row is `pending` the slot stays
-   * an empty branded frame and borrows the row's brief, label and movement; the moment the owner
+   * an empty branded frame and borrows the row's brief, label and tone; the moment the owner
    * pastes a URL and flips it to `ready` the real photo or video renders here, with no deploy.
    */
   slotKey?: string;
@@ -43,8 +43,8 @@ export interface MediaSlotProps {
   label: Bi | string;
   /** One-line art direction. Always the `title` attribute; printed in the slot in dev mode. */
   brief?: string;
-  /** Tints the empty state with a movement colour (D-01 `movements`). */
-  movement?: Movement;
+  /** Tints the empty state with a class tone (D-01 `classTones`). */
+  tone?: Tone;
   /** When a real asset lands, pass it here and the slot renders the media instead. */
   src?: string;
   /** Local editorial fallback; a ready CMS asset takes priority. */
@@ -64,11 +64,11 @@ export interface MediaSlotProps {
 /**
  * The one media slot for the whole site: every future photo, video or illustration is booked with
  * this component, so the owner can see exactly which artwork is missing and drop a `src` in later.
- * Empty it renders an intentional branded frame (movement tint, suede grain, ratio, "arte pendiente"
+ * Empty it renders an intentional branded frame (class-tone tint, suede grain, ratio, "arte pendiente"
  * chip) — never a broken box.
  */
 export function MediaSlot({
-  ratio, kind = 'photo', label, brief, movement, slotKey, src, fallbackSrc, fallbackVideo, motion = true, poster, caption, overlay, className = '',
+  ratio, kind = 'photo', label, brief, tone, slotKey, src, fallbackSrc, fallbackVideo, motion = true, poster, caption, overlay, className = '',
 }: MediaSlotProps) {
   const { bi } = useI18n();
   const { rows } = useTable<MediaAssetRow>('media_assets', slotKey ? { where: { slot_key: slotKey } } : { limit: 0 });
@@ -79,12 +79,12 @@ export function MediaSlot({
   const effKind = src ? kind : ready?.kind ?? kind;
   const text = typeof label === 'string' ? label : bi(label);
   const alt = (ready && bi(ready.alt)) || text;
-  const mv = movement ?? asset?.movement ?? undefined;
+  const tn = tone ?? asset?.tone ?? undefined;
   const hint = brief ?? (asset ? bi(asset.brief) : undefined);
   const cap = caption === undefined ? '' : typeof caption === 'string' ? caption : bi(caption);
   const style = { aspectRatio: ratio ? RATIO_CSS[ratio] : asset?.ratio ?? RATIO_CSS['16:9'] };
   const arLabel = ratio ?? (asset?.ratio ? asset.ratio.replace(/\s/g, '') : '16:9');
-  const cls = `mediaslot ${mv ? `mediaslot-${mv}` : ''} ${url ? 'has-src' : 'is-empty'} ${className}`;
+  const cls = `mediaslot ${tn ? `mediaslot-${tn} is-toned` : ''} ${url ? 'has-src' : 'is-empty'} ${className}`;
   const living = !!(url && fallbackVideo && !src && !ready && effKind !== 'video');
 
   return (

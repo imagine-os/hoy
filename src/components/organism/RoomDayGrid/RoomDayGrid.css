@@ -25,11 +25,8 @@
 .roomgrid-block.is-tiny .roomgrid-block-time { display: none; }
 .roomgrid-block-time { color: var(--color-text-muted); }
 .roomgrid-block-chip { position: absolute; right: 6px; top: var(--sp-xs); }
-/* tones: the four movements for classes, four materials for the space bookings */
-.roomgrid-block.tone-enraiza { background: var(--mv-enraiza-bg); border-color: color-mix(in srgb, var(--mv-enraiza-dot) 50%, transparent); }
-.roomgrid-block.tone-fluye { background: var(--mv-fluye-bg); border-color: color-mix(in srgb, var(--mv-fluye-dot) 50%, transparent); }
-.roomgrid-block.tone-arde { background: var(--mv-arde-bg); border-color: color-mix(in srgb, var(--mv-arde-dot) 50%, transparent); }
-.roomgrid-block.tone-libera { background: var(--mv-libera-bg); border-color: color-mix(in srgb, var(--mv-libera-dot) 50%, transparent); }
+/* tones: a class takes its modality tone (--t-* from the .tone-<id> hook in tokens.css), space bookings one of four materials */
+.roomgrid-block.tone-moss, .roomgrid-block.tone-river, .roomgrid-block.tone-clay, .roomgrid-block.tone-sun, .roomgrid-block.tone-sage, .roomgrid-block.tone-slate, .roomgrid-block.tone-plum { background: var(--t-bg); border-color: color-mix(in srgb, var(--t-dot) 50%, transparent); }
 .roomgrid-block.tone-event { background: var(--color-highlight); color: var(--color-on-highlight); border-color: color-mix(in srgb, var(--color-on-highlight) 30%, transparent); }
 .roomgrid-block.tone-event .roomgrid-block-time { color: inherit; opacity: .8; }
 .roomgrid-block.tone-rental { background: var(--mat-sky); color: var(--color-text-on-primary); border-color: transparent; }

@@ -176,7 +176,7 @@ export const strings: StringTable = {
   'staff.rooms.anyDate': { es: 'Ir a una fecha', en: 'Jump to a date' },
   'staff.rooms.dayCount': { es: '{classes} clases · {bookings} reservas de espacio', en: '{classes} classes · {bookings} space bookings' },
   'staff.rooms.showCancelled': { es: 'Ver canceladas', en: 'Show cancelled' },
-  'staff.rooms.legend': { es: 'Clases con el color de su movimiento · reservas en espera con borde punteado', en: 'Classes in their movement colour · held bookings dashed' },
+  'staff.rooms.legend': { es: 'Clases con el color de su modalidad · reservas en espera con borde punteado', en: 'Classes in their modality colour · held bookings dashed' },
   'staff.rooms.noRooms': { es: 'No hay salas en la tabla rooms', en: 'No rooms in the rooms table' },
   'staff.rooms.readonly': { es: 'Tu rol ve el calendario de salas pero no reserva.', en: 'Your role sees the room calendar but cannot book.' },
   'staff.rooms.form.title': { es: 'Reservar espacio', en: 'Book a room' },

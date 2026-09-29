@@ -80,7 +80,7 @@ export function TeacherClassPage() {
     <div className="container page stack teach">
       <Link to="/teach" className="small" style={{ display: 'inline-flex', alignItems: 'center', gap: 'var(--sp-xs)' }}><Icon name="arrow-left" size="sm" /> {t('core.nav.back')}</Link>
       <Card tone="primary" className="teach-head">
-        <div className="row wrap"><Chip movement={modality?.movement ?? 'fluye'} dot>{session.title}</Chip>{session.status !== 'scheduled' && <Badge tone={session.status === 'completed' ? 'primary' : 'danger'}>{session.status}</Badge>}</div>
+        <div className="row wrap"><Chip tone={modality?.tone ?? 'river'} dot>{session.title}</Chip>{session.status !== 'scheduled' && <Badge tone={session.status === 'completed' ? 'primary' : 'danger'}>{session.status}</Badge>}</div>
         <div className="teach-head-time">{formatDate(session.starts_at, lang, { weekday: 'long', day: 'numeric', month: 'long' })} · {formatTime(session.starts_at, lang)}–{formatTime(session.ends_at, lang)}</div>
         <div className="row wrap small"><span>{room?.name ?? '—'}</span><span>·</span><span>{t('teacher.class.present', { n: present, total: active.length })}</span></div>
         <CapacityMeter booked={session.booked_count} capacity={session.capacity} />

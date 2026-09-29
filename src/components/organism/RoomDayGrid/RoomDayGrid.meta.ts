@@ -5,8 +5,8 @@ import { RoomDayGrid, type RoomBlock } from './RoomDayGrid';
 const day = (hh: number, mm = 0) => { const d = new Date(); d.setHours(hh, mm, 0, 0); return d.toISOString(); };
 const rooms = [{ id: 'a', name: 'Sala principal', capacity: 15 }, { id: 'b', name: 'Sala de meditación', capacity: 8 }];
 const blocks: RoomBlock[] = [
-  { id: '1', roomId: 'a', startsAt: day(6), endsAt: day(7), title: 'Morning Flow', sub: 'Manuela · 9/15', tone: 'fluye', status: 'class' },
-  { id: '2', roomId: 'a', startsAt: day(12), endsAt: day(13), title: 'Hot Vinyasa', sub: 'Andrés · 15/15', tone: 'arde', status: 'class' },
+  { id: '1', roomId: 'a', startsAt: day(6), endsAt: day(7), title: 'Morning Flow', sub: 'Manuela · 9/15', tone: 'river', status: 'class' },
+  { id: '2', roomId: 'a', startsAt: day(12), endsAt: day(13), title: 'Hot Vinyasa', sub: 'Andrés · 15/15', tone: 'clay', status: 'class' },
   { id: '3', roomId: 'a', startsAt: day(16), endsAt: day(17, 30), title: 'Sesión privada · equipo', sub: 'Paula · Lumen Studio', tone: 'private', status: 'confirmed' },
   { id: '4', roomId: 'b', startsAt: day(8), endsAt: day(11), title: 'Mantenimiento', tone: 'maintenance', status: 'confirmed' },
   { id: '5', roomId: 'b', startsAt: day(17), endsAt: day(18, 30), title: 'Cumpleaños de Mariana', sub: 'Felipe · 8 personas', tone: 'event', status: 'held' },
@@ -26,7 +26,7 @@ export default defineMeta({
     { name: 'onSlot', type: '(roomId, hour) => void', description: { es: 'Clic en una celda vacía: propone una hora de inicio.', en: 'Click on an empty cell: proposes a start time.' } },
     { name: 'now', type: 'Date | null', description: { es: 'Dibuja la línea de "ahora" cuando el día es hoy.', en: 'Draws the "now" line when the day is today.' } },
   ],
-  states: ['class (movement tint)', 'short block (under an hour: no sub-line · under ~35 min: title only)', 'confirmed (event / rental / private / maintenance material)', 'held (dashed)', 'cancelled (faded, struck)', 'done (dimmed)', 'selected', 'empty day', 'now line'],
+  states: ['class (modality tone tint)', 'short block (under an hour: no sub-line · under ~35 min: title only)', 'confirmed (event / rental / private / maintenance material)', 'held (dashed)', 'cancelled (faded, struck)', 'done (dimmed)', 'selected', 'empty day', 'now line'],
   usages: [
     { title: { es: 'Dos salas, un día', en: 'Two rooms, one day' }, render: () => h(RoomDayGrid, { rooms, blocks, fromHour: 6, toHour: 20, hourHeight: 40, selectedId: '3', now: new Date() }) },
     { title: { es: 'Sin nada programado', en: 'Nothing scheduled' }, render: () => h(RoomDayGrid, { rooms, blocks: [], fromHour: 8, toHour: 12, hourHeight: 32 }) },

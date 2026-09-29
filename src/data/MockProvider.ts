@@ -4,6 +4,8 @@ import type { BaseRow } from './schema';
 import { tableNames } from './schema';
 import { applyQuery, type ChangeEvent, type DataProvider, type Query } from './types';
 import { buildSeed } from './seed';
+import { modalities as seedModalities } from './seed/catalog';
+import { mediaAssets as seedMedia } from './seed/media';
 import { tenant } from '../tenant/tenant';
 
 const KEY = 'hoyos.db.v1';
@@ -11,8 +13,22 @@ const KEY = 'hoyos.db.v1';
  * Bump when the seed or the schema changes shape (new columns an old localStorage copy would lack):
  * a stored db with another version is thrown away and reseeded, whatever day it was seeded on.
  *   1 · up to 0.7.1 · 2 · 0.8.0 message_log becomes the unified conversation record (direction, source, body, read_at…)
+ *   4 · 0.15.0 modalities.movement / media_assets.movement become `tone`, the intentions table is gone (upgraded in place)
  */
-export const SEED_VERSION = 3;
+export const SEED_VERSION = 4;
+
+/** 0039: a v3 copy still carries `movement`; give each row its seed tone (or the old colour's tone) and drop intentions. */
+const LEGACY_TONE: Record<string, string> = { enraiza: 'moss', fluye: 'river', arde: 'clay', libera: 'sun' };
+function upgradeTones(db: Db) {
+  const bySeed = (seed: { id: string; tone: string | null }[], row: BaseRow) => seed.find((s) => s.id === row.id)?.tone;
+  for (const [table, seed, fallback] of [['modalities', seedModalities, 'river'], ['media_assets', seedMedia, null]] as const) {
+    for (const row of (db[table] ?? []) as (BaseRow & { tone?: string | null; movement?: string | null })[]) {
+      if (row.tone === undefined) row.tone = bySeed(seed, row) ?? (row.movement ? LEGACY_TONE[row.movement] : undefined) ?? fallback;
+      delete row.movement;
+    }
+  }
+  delete db.intentions;
+}
 type Db = Record<string, BaseRow[]>;
 interface Stored { seededOn: string; version?: number; db: Db }
 
@@ -97,12 +113,13 @@ export class MockProvider implements DataProvider {
       const raw = localStorage.getItem(KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as Stored;
-        if ((parsed.version === SEED_VERSION || parsed.version === 2) && parsed.seededOn === new Date().toDateString() && tableNames.every((t) => Array.isArray(parsed.db[t]))) {
+        if ((parsed.version === SEED_VERSION || parsed.version === 2 || parsed.version === 3) && parsed.seededOn === new Date().toDateString() && tableNames.every((t) => Array.isArray(parsed.db[t]))) {
           if (parsed.version === 2) {
             // Preserve same-day CMS edits, members and bookings when upgrading this demo.
             const sessions = parsed.db.class_sessions as ClassSessionRow[];
             for (const session of sessions) if (session.room_id === 'room_main' && session.capacity === 15) session.capacity = tenant.studio.mats;
           }
+          if (parsed.version !== SEED_VERSION) { upgradeTones(parsed.db); this.persist(parsed.db); }
           return parsed.db;
         }
       }

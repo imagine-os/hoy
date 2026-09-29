@@ -48,7 +48,7 @@ export function ClassicHomePage() {
           </div>
         </div>
         <MediaSlot
-          ratio="21:9" kind="video" movement="arde" slotKey="site.hero"
+          ratio="21:9" kind="video" tone="clay" slotKey="site.hero"
           label={t('site.hero.media')}
           overlay={<span className="site-hero-chip">{bi(taglines.life)}</span>}
         />
@@ -61,7 +61,7 @@ export function ClassicHomePage() {
           {classOrder.map((slug) => {
             const c = classes[slug];
             return (
-              <Link key={slug} to={`/site/classes/${slug}`} className={`site-classcard mvcard-${c.movement}`}>
+              <Link key={slug} to={`/site/classes/${slug}`} className={`site-classcard tonecard-${c.tone}`}>
                 <p className="eyebrow">{bi(c.eyebrow)}</p>
                 <h3>{bi(c.name)}</h3>
                 <p className="small">{bi(c.summary)}</p>
@@ -78,7 +78,7 @@ export function ClassicHomePage() {
         <Card padding="sm">
           {today.length === 0 && <p className="muted" style={{ padding: 'var(--sp-lg)' }}>{t(todayAll.length ? 'site.today.done' : 'site.today.empty')}</p>}
           {today.map(({ session: s, modality: m, teacher: te }) => (
-            <ClassRow key={s.id} title={s.title} teacher={te?.display_name ?? ''} startsAt={s.starts_at} durationMin={m?.duration_min ?? 60} movement={m?.movement ?? 'fluye'} booked={s.booked_count} capacity={s.capacity} onClick={() => nav('/site/schedule')} />
+            <ClassRow key={s.id} title={s.title} teacher={te?.display_name ?? ''} startsAt={s.starts_at} durationMin={m?.duration_min ?? 60} tone={m?.tone ?? 'river'} booked={s.booked_count} capacity={s.capacity} onClick={() => nav('/site/schedule')} />
           ))}
         </Card>
       </section>
@@ -114,7 +114,7 @@ export function ClassicHomePage() {
       <section className="container site-section">
         <SectionHead title={t('site.teachers.title')} body={t('site.teachers.body')} action={<Link to="/site/teachers">{t('site.teachers.title')} →</Link>} />
         <div className="grid grid-4">
-          {teachers.map((te) => <TeacherCard key={te.id} name={te.display_name} bio={te.bio} rating={te.rating_avg} specialties={te.specialties.map((id) => ({ label: modName(id), movement: modalities.find((m) => m.id === id)?.movement ?? 'fluye' }))} onClick={() => nav('/site/teachers')} />)}
+          {teachers.map((te) => <TeacherCard key={te.id} name={te.display_name} bio={te.bio} rating={te.rating_avg} specialties={te.specialties.map((id) => ({ label: modName(id), tone: modalities.find((m) => m.id === id)?.tone ?? 'river' }))} onClick={() => nav('/site/teachers')} />)}
         </div>
       </section>
     ),

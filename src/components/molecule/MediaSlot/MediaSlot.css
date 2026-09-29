@@ -18,10 +18,9 @@
 :root[data-theme="dark"] .mediaslot.is-empty {
   background-image: var(--tex-paper), radial-gradient(120% 90% at 22% 12%, rgba(var(--m-light), .10), transparent 62%), var(--mat-deep);
 }
-.mediaslot-enraiza.is-empty { background-image: var(--tex-paper), linear-gradient(var(--mv-enraiza-bg), var(--mv-enraiza-bg)), linear-gradient(var(--mv-enraiza-bg), var(--mv-enraiza-bg)), var(--mat-sand); }
-.mediaslot-fluye.is-empty { background-image: var(--tex-paper), linear-gradient(var(--mv-fluye-bg), var(--mv-fluye-bg)), linear-gradient(var(--mv-fluye-bg), var(--mv-fluye-bg)), var(--mat-sand); }
-.mediaslot-arde.is-empty { background-image: var(--tex-paper), linear-gradient(var(--mv-arde-bg), var(--mv-arde-bg)), linear-gradient(var(--mv-arde-bg), var(--mv-arde-bg)), var(--mat-sand); }
-.mediaslot-libera.is-empty { background-image: var(--tex-paper), linear-gradient(var(--mv-libera-bg), var(--mv-libera-bg)), linear-gradient(var(--mv-libera-bg), var(--mv-libera-bg)), var(--mat-sand); }
+/* class tone (0039): the .mediaslot-<tone> hook sets --t-bg (tokens.css); one rule covers every tone */
+.mediaslot.is-empty.is-toned { background-image: var(--tex-paper), linear-gradient(var(--t-bg), var(--t-bg)), linear-gradient(var(--t-bg), var(--t-bg)), var(--mat-sand); }
+
 
 .mediaslot-media { width: 100%; height: 100%; object-fit: cover; display: block; }
 

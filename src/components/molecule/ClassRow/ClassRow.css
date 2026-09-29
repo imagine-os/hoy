@@ -1,8 +1,7 @@
 .classrow { display: flex; align-items: center; min-height: var(--h-ctl); gap: var(--sp-md); width: 100%; padding: var(--sp-md) var(--sp-sm); border: 0; border-bottom: 1px solid var(--color-border); background: none; text-align: left; color: inherit; border-radius: var(--r-sm); }
 .classrow:last-child { border-bottom: 0; }
 .classrow.is-clickable:hover { background: var(--color-surface-2); }
-.classrow-dot { width: 0.625rem; height: 0.625rem; border-radius: 50%; flex: 0 0 auto; }
-.mv-enraiza { background: var(--mv-enraiza-dot); } .mv-fluye { background: var(--mv-fluye-dot); } .mv-arde { background: var(--mv-arde-dot); } .mv-libera { background: var(--mv-libera-dot); }
+.classrow-dot { width: 0.625rem; height: 0.625rem; border-radius: 50%; flex: 0 0 auto; background: var(--t-dot, var(--tone-river-dot)); } /* --t-dot from the .tone-<id> hook (tokens.css) */
 .classrow-full { flex: 0 0 auto; }
 .classrow-time { display: flex; flex-direction: column; min-width: 3.5rem; line-height: 1.2; font-variant-numeric: tabular-nums; }
 .classrow-title { font-family: var(--font-heading); font-weight: var(--fw-medium); }

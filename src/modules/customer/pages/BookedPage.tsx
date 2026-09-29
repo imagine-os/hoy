@@ -22,7 +22,7 @@ import { useActions } from '../../../actions';
 import { useAppNavHandlers } from '../actions';
 import { useBookingActions, useMyBookings, useNow, useSessionJoined } from '../hooks';
 import { cancelDeadline, insideCancelWindow, policy } from '../policy';
-import { PageHead, downloadIcs, movementOf, roomName, shareText, teacherName } from '../ui';
+import { PageHead, downloadIcs, toneOf, roomName, shareText, teacherName } from '../ui';
 import { StudioCancelledBlock, useAlternatives } from './blocks';
 
 const spec = canvasSpecs['C-08'];
@@ -84,7 +84,7 @@ export function BookedPage({ change = false }: { change?: boolean }) {
       );
     },
     ClassSummary: () => (
-      <div className="stack-sm"><ClassCard title={s.title} teacher={teacherName(joined)} room={roomName(joined)} startsAt={s.starts_at} endsAt={s.ends_at} movement={movementOf(joined)} booked={s.booked_count} capacity={s.capacity} level={s.level} onClick={() => nav(`/app/class/${s.id}`)} />{booking.mat_number && <p className="small" style={{ textAlign: 'center' }}>{t('site.mat.confirmed', { n: booking.mat_number })}</p>}</div>
+      <div className="stack-sm"><ClassCard title={s.title} teacher={teacherName(joined)} room={roomName(joined)} startsAt={s.starts_at} endsAt={s.ends_at} tone={toneOf(joined)} booked={s.booked_count} capacity={s.capacity} level={s.level} onClick={() => nav(`/app/class/${s.id}`)} />{booking.mat_number && <p className="small" style={{ textAlign: 'center' }}>{t('site.mat.confirmed', { n: booking.mat_number })}</p>}</div>
     ),
     PrepReminder: () => active ? (
       <Card eyebrow={t('customer.class.prep')} padding="md">
@@ -157,7 +157,7 @@ function ChangeSheet({ open, onClose, booking, joined, inside, deadline, onResul
         {inside
           ? <Notice tone="warn" title={t('customer.change.inside.title', { h: policy.cancelWindowHours })}>{t('customer.change.inside.body')}</Notice>
           : <p className="small muted">{t('customer.change.outside', { time: formatTime(deadline.toISOString(), lang) })}</p>}
-        <Card padding="sm"><ClassRow title={s.title} teacher={teacherName(joined)} startsAt={s.starts_at} durationMin={joined.modality?.duration_min ?? 60} movement={movementOf(joined)} booked={s.booked_count} capacity={s.capacity} booked_by_me /></Card>
+        <Card padding="sm"><ClassRow title={s.title} teacher={teacherName(joined)} startsAt={s.starts_at} durationMin={joined.modality?.duration_min ?? 60} tone={toneOf(joined)} booked={s.booked_count} capacity={s.capacity} booked_by_me /></Card>
 
         {mode === 'menu' && (
           <ListGroup>
@@ -171,7 +171,7 @@ function ChangeSheet({ open, onClose, booking, joined, inside, deadline, onResul
             {alts.length === 0 ? (
               <Notice tone="info" title={t('customer.change.noAlt')} action={<Link to="/app/schedule"><Button size="sm" variant="secondary">{t('customer.class.backToSchedule')}</Button></Link>}>{t('customer.change.noAlt.body')}</Notice>
             ) : (
-              <Card padding="sm">{alts.map((a) => <ClassRow key={a.session.id} title={a.session.title} teacher={a.teacher?.display_name ?? ''} startsAt={a.session.starts_at} durationMin={a.modality?.duration_min ?? 60} movement={a.modality?.movement ?? 'fluye'} booked={a.session.booked_count} capacity={a.session.capacity} onClick={() => !busy && doMove(a.session.id)} />)}</Card>
+              <Card padding="sm">{alts.map((a) => <ClassRow key={a.session.id} title={a.session.title} teacher={a.teacher?.display_name ?? ''} startsAt={a.session.starts_at} durationMin={a.modality?.duration_min ?? 60} tone={a.modality?.tone ?? 'river'} booked={a.session.booked_count} capacity={a.session.capacity} onClick={() => !busy && doMove(a.session.id)} />)}</Card>
             )}
             {err && <Notice tone="warn">{err}</Notice>}
             <p className="xs muted">{t('customer.change.move.note')}</p>

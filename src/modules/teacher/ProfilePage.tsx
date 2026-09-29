@@ -54,7 +54,7 @@ export function TeacherProfilePage() {
         </div>
       </Card>
       <Card title={t('teacher.profile.specialties')}>
-        <div className="row wrap">{modalities.map((m) => <Chip key={m.id} movement={m.movement} dot selected={draft.specialties.includes(m.id)} onClick={() => toggle(m.id)}>{bi({ es: m.name_es, en: m.name_en })}</Chip>)}</div>
+        <div className="row wrap">{modalities.map((m) => <Chip key={m.id} tone={m.tone} dot selected={draft.specialties.includes(m.id)} onClick={() => toggle(m.id)}>{bi({ es: m.name_es, en: m.name_en })}</Chip>)}</div>
       </Card>
       <Card tone="muted" padding="sm" className="row-between wrap">
         <span className="small">{t('teacher.profile.rate')}</span>
@@ -62,7 +62,7 @@ export function TeacherProfilePage() {
       </Card>
       <div className="stack-sm">
         <div className="eyebrow">{t('teacher.profile.preview')}</div>
-        <TeacherCard name={draft.display_name || me.display_name} bio={{ es: draft.bioEs, en: draft.bioEn || draft.bioEs }} photo={me.photo_url} rating={me.rating_avg} specialties={draft.specialties.map((id) => modalities.find((m) => m.id === id)).filter(Boolean).map((m) => ({ label: bi({ es: m!.name_es, en: m!.name_en }), movement: m!.movement }))} />
+        <TeacherCard name={draft.display_name || me.display_name} bio={{ es: draft.bioEs, en: draft.bioEn || draft.bioEs }} photo={me.photo_url} rating={me.rating_avg} specialties={draft.specialties.map((id) => modalities.find((m) => m.id === id)).filter(Boolean).map((m) => ({ label: bi({ es: m!.name_es, en: m!.name_en }), tone: m!.tone }))} />
       </div>
       <div className="row-between wrap">
         <span className="xs muted">{saved ? t('teacher.profile.saved') : t('teacher.profile.review')}</span>
