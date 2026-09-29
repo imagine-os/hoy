@@ -1,12 +1,12 @@
 {
   "name": "hoyos",
   "private": true,
-  "version": "0.10.1",
+  "version": "0.11.0",
   "type": "module",
   "description": "HoyOS \u2014 operations system for HOY Wellness Center (multi-tenant ready)",
   "scripts": {
     "dev": "vite",
-    "build": "npm run tokens && tsc --noEmit && vite build",
+    "build": "npm run tokens && npm run hub-map && tsc --noEmit && vite build && node scripts/copy-shots.mjs",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "screenshots": "node scripts/screenshots.mjs",
@@ -15,6 +15,7 @@
     "specs": "node scripts/gen-specs.mjs",
     "sql": "node --experimental-strip-types scripts/gen-sql.mjs",
     "flow-map": "node scripts/gen-flow-map.mjs",
+    "hub-map": "node scripts/gen-hub-map.mjs",
     "test:dates": "node --experimental-strip-types scripts/test-date-keys.mjs"
   },
   "dependencies": {

@@ -1,0 +1,4563 @@
+{
+  "schema": "hoy.hub-map/1",
+  "generatedAt": "2026-09-29T00:00:00.000Z",
+  "product": {
+    "id": "hoy",
+    "name": {
+      "es": "HoyOS",
+      "en": "HoyOS"
+    },
+    "tagline": {
+      "es": "Un solo sistema para cada puesto del estudio: quien practica, quien enseña, quien recibe en la puerta, quien administra y quien lo construye.",
+      "en": "One system for every seat at the studio: members, teachers, front desk, admin, and the people who build it."
+    },
+    "version": "0.11.0",
+    "baseUrl": "https://imagine-os.github.io/hoy/",
+    "hubRoute": "/",
+    "brand": {
+      "accent": "#35597D",
+      "wordmark": "brand/hoy-blue.png"
+    }
+  },
+  "embed": {
+    "pattern": "{baseUrl}#{route}?as={role}&lang={lang}&theme={theme}&dev=0&live=0",
+    "note": {
+      "es": "Sustituye {baseUrl}, {route} (una ruta de experiences[] o pages[]; un segmento :id es una plantilla y hay que cambiarlo por un id real), {role} (un id de roles[]), {lang} (es | en) y {theme} (light | dark), y carga la URL en un iframe. Dentro del iframe la app corre como el usuario demo de ese rol sin tocar la sesión de quien la mira; live=0 apaga las vistas previas anidadas. Mismo origen solo en imagine-os.github.io.",
+      "en": "Substitute {baseUrl}, {route} (a route from experiences[] or pages[]; a :id segment is a template to replace with a real id), {role} (an id from roles[]), {lang} (es | en) and {theme} (light | dark), and load the URL in an iframe. Inside the frame the app runs as that role’s demo user without touching the viewer’s own session; live=0 turns nested previews off. Same-origin only on imagine-os.github.io."
+    }
+  },
+  "roles": [
+    {
+      "id": "customer",
+      "label": {
+        "es": "Cliente",
+        "en": "Customer"
+      },
+      "description": {
+        "es": "Quien practica: reserva, paga y lleva su membresía y su historial desde el teléfono.",
+        "en": "Whoever practises: books, pays and keeps their membership and history on the phone."
+      },
+      "band": "outside",
+      "home": "/app",
+      "device": "phone",
+      "demoUser": {
+        "id": "usr_cust",
+        "firstName": "Juliana"
+      },
+      "look": "customer",
+      "props": [
+        "phone",
+        "rating"
+      ]
+    },
+    {
+      "id": "public",
+      "label": {
+        "es": "Público",
+        "en": "Public"
+      },
+      "description": {
+        "es": "Cualquiera sin sesión: el sitio web, las clases, los planes y el contacto.",
+        "en": "Anyone not signed in: the website, the classes, the plans and contact."
+      },
+      "band": "outside",
+      "home": "/site",
+      "device": "page",
+      "look": "public",
+      "props": [
+        "tablet",
+        "book"
+      ]
+    },
+    {
+      "id": "teacher",
+      "label": {
+        "es": "Profesor/a",
+        "en": "Teacher"
+      },
+      "description": {
+        "es": "Enseña: sus clases, la lista de asistentes, la asistencia desde el mat y su nómina.",
+        "en": "Teaches: their classes, the roster, attendance from the mat and their payroll."
+      },
+      "band": "outside",
+      "home": "/teach",
+      "device": "phone",
+      "demoUser": {
+        "id": "usr_teach",
+        "firstName": "Andrés"
+      },
+      "look": "teacher",
+      "props": [
+        "phone",
+        "clipboard"
+      ]
+    },
+    {
+      "id": "front_desk",
+      "label": {
+        "es": "Recepción",
+        "en": "Front desk"
+      },
+      "description": {
+        "es": "La puerta del estudio: check-in, la bandeja de mensajes y la caja.",
+        "en": "The studio’s door: check-in, the message inbox and the register."
+      },
+      "band": "team",
+      "home": "/staff",
+      "device": "desktop",
+      "demoUser": {
+        "id": "usr_desk",
+        "firstName": "Camilo"
+      },
+      "look": "frontdesk",
+      "props": [
+        "stamp",
+        "keys"
+      ]
+    },
+    {
+      "id": "coordinator",
+      "label": {
+        "es": "Coordinación",
+        "en": "Coordinator"
+      },
+      "description": {
+        "es": "Coordina el horario, los profesores y las comunicaciones, y lleva el CRM.",
+        "en": "Runs the schedule, the teachers and communications, and owns the CRM."
+      },
+      "band": "team",
+      "home": "/staff",
+      "device": "desktop",
+      "demoUser": {
+        "id": "usr_coord",
+        "firstName": "Valentina"
+      },
+      "look": "coordinator",
+      "props": [
+        "board",
+        "clipboard"
+      ]
+    },
+    {
+      "id": "finance",
+      "label": {
+        "es": "Finanzas",
+        "en": "Finance"
+      },
+      "description": {
+        "es": "Ingresos, gastos, nómina de profesores e impuestos, con el libro detrás.",
+        "en": "Revenue, expenses, teacher payroll and tax, with the ledger behind it."
+      },
+      "band": "team",
+      "home": "/admin",
+      "device": "desktop",
+      "demoUser": {
+        "id": "usr_fin",
+        "firstName": "Laura"
+      },
+      "look": "finance",
+      "props": [
+        "calculator",
+        "contract"
+      ]
+    },
+    {
+      "id": "admin",
+      "label": {
+        "es": "Administración",
+        "en": "Admin"
+      },
+      "description": {
+        "es": "El dueño del estudio: el panel, los ajustes, el contenido, las tablas y el manual.",
+        "en": "The studio owner: the dashboard, settings, content, tables and the manual."
+      },
+      "band": "team",
+      "home": "/admin",
+      "device": "desktop",
+      "demoUser": {
+        "id": "usr_admin",
+        "firstName": "Mateo"
+      },
+      "look": "admin",
+      "props": [
+        "laptop",
+        "keys"
+      ]
+    },
+    {
+      "id": "super_admin",
+      "label": {
+        "es": "Super admin",
+        "en": "Super admin"
+      },
+      "description": {
+        "es": "Quien construye el sistema: ve todo, incluido el modo dev, y puede ver como cualquier rol.",
+        "en": "Whoever builds the system: sees everything, dev mode included, and can view as any role."
+      },
+      "band": "build",
+      "home": "/admin",
+      "device": "desktop",
+      "demoUser": {
+        "id": "usr_super",
+        "firstName": "Sofía"
+      },
+      "look": "superadmin",
+      "props": [
+        "laptop",
+        "plans"
+      ]
+    },
+    {
+      "id": "maintenance",
+      "label": {
+        "es": "Mantenimiento",
+        "en": "Maintenance"
+      },
+      "description": {
+        "es": "Salas, incidencias e inventario, desde el panel del equipo.",
+        "en": "Rooms, incidents and inventory, from the team dashboard."
+      },
+      "band": "team",
+      "home": "/staff",
+      "device": "desktop",
+      "demoUser": {
+        "id": "usr_maint",
+        "firstName": "Rosa"
+      },
+      "look": "maintenance",
+      "props": [
+        "hardhat",
+        "tape"
+      ]
+    }
+  ],
+  "experiences": [
+    {
+      "id": "app",
+      "code": "C-01",
+      "label": {
+        "es": "App de clientes",
+        "en": "Customer app"
+      },
+      "purpose": {
+        "es": "Móvil primero: la intención del día, las clases de hoy, reservar, pagar, la membresía y el historial.",
+        "en": "Mobile first: the day’s intention, today’s classes, booking, paying, membership and history."
+      },
+      "roleId": "customer",
+      "roles": [
+        "customer",
+        "teacher"
+      ],
+      "band": "outside",
+      "device": "phone",
+      "route": "/app",
+      "url": "https://imagine-os.github.io/hoy/#/app",
+      "featured": true,
+      "secondary": {
+        "label": {
+          "es": "Entrar o crear cuenta",
+          "en": "Sign in or create an account"
+        },
+        "route": "/auth/sign-in"
+      },
+      "pageCodes": [
+        "C-01",
+        "C-02",
+        "C-11",
+        "C-25",
+        "C-02b",
+        "C-03",
+        "C-04",
+        "C-05",
+        "C-06",
+        "C-07",
+        "C-07b",
+        "C-08",
+        "C-08b",
+        "C-10",
+        "C-13",
+        "C-14",
+        "C-15",
+        "C-16",
+        "C-17",
+        "C-18",
+        "C-19",
+        "C-20",
+        "C-22",
+        "C-23",
+        "C-24",
+        "C-26",
+        "A-05",
+        "A-06",
+        "E-01",
+        "E-02",
+        "E-03",
+        "A-01",
+        "A-02",
+        "A-03",
+        "C-21",
+        "E-04",
+        "E-05"
+      ],
+      "shots": {
+        "thumbs": {
+          "es-phone": "hub-map/shots/C-01/thumb-es-phone.jpg",
+          "en-phone": "hub-map/shots/C-01/thumb-en-phone.jpg",
+          "es-desktop": "hub-map/shots/C-01/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/C-01/thumb-en-desktop.jpg",
+          "es-phone-dark": "hub-map/shots/C-01/thumb-es-phone-dark.jpg",
+          "en-phone-dark": "hub-map/shots/C-01/thumb-en-phone-dark.jpg",
+          "es-desktop-dark": "hub-map/shots/C-01/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/C-01/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/C-01/es-390.jpg",
+          "en-390": "hub-map/shots/C-01/en-390.jpg",
+          "es-1280": "hub-map/shots/C-01/es-1280.jpg",
+          "en-1280": "hub-map/shots/C-01/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "id": "site",
+      "code": "W-01",
+      "label": {
+        "es": "Sitio web",
+        "en": "Website"
+      },
+      "purpose": {
+        "es": "Lo que ve cualquiera antes de entrar: filosofía, clases, horario, profesores, planes y contacto.",
+        "en": "What anyone sees before signing in: philosophy, classes, schedule, teachers, plans and contact."
+      },
+      "roleId": "public",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "finance",
+        "teacher",
+        "maintenance",
+        "customer",
+        "public"
+      ],
+      "band": "outside",
+      "device": "page",
+      "route": "/site",
+      "url": "https://imagine-os.github.io/hoy/#/site",
+      "pageCodes": [
+        "W-01",
+        "W-02",
+        "W-07",
+        "W-08",
+        "W-03",
+        "W-04",
+        "W-05",
+        "P-01",
+        "W-06",
+        "W-09"
+      ],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/W-01/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/W-01/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/W-01/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/W-01/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/W-01/es-390.jpg",
+          "en-390": "hub-map/shots/W-01/en-390.jpg",
+          "es-1280": "hub-map/shots/W-01/es-1280.jpg",
+          "en-1280": "hub-map/shots/W-01/en-1280.jpg",
+          "es-390-full": "hub-map/shots/W-01/es-390-full.jpg",
+          "en-390-full": "hub-map/shots/W-01/en-390-full.jpg"
+        }
+      }
+    },
+    {
+      "id": "teacher",
+      "code": "S-03",
+      "label": {
+        "es": "App de profesores",
+        "en": "Teacher app"
+      },
+      "purpose": {
+        "es": "Sus clases, la lista de asistentes, la asistencia desde el mat y su nómina.",
+        "en": "Their classes, the roster, attendance from the mat and their payroll."
+      },
+      "roleId": "teacher",
+      "roles": [
+        "teacher",
+        "coordinator",
+        "admin"
+      ],
+      "band": "outside",
+      "device": "phone",
+      "route": "/teach",
+      "url": "https://imagine-os.github.io/hoy/#/teach",
+      "pageCodes": [
+        "S-03"
+      ],
+      "shots": {
+        "thumbs": {
+          "es-phone": "hub-map/shots/S-03/thumb-es-phone.jpg",
+          "en-phone": "hub-map/shots/S-03/thumb-en-phone.jpg",
+          "es-desktop": "hub-map/shots/S-03/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/S-03/thumb-en-desktop.jpg",
+          "es-phone-dark": "hub-map/shots/S-03/thumb-es-phone-dark.jpg",
+          "en-phone-dark": "hub-map/shots/S-03/thumb-en-phone-dark.jpg",
+          "es-desktop-dark": "hub-map/shots/S-03/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/S-03/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/S-03/es-390.jpg",
+          "en-390": "hub-map/shots/S-03/en-390.jpg",
+          "es-1280": "hub-map/shots/S-03/es-1280.jpg",
+          "en-1280": "hub-map/shots/S-03/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "id": "desk",
+      "code": "S-02",
+      "label": {
+        "es": "Recepción",
+        "en": "Front desk"
+      },
+      "purpose": {
+        "es": "Check-in de la clase que empieza, búsqueda por nombre y control de aforo.",
+        "en": "Check-in for the class about to start, search by name and capacity control."
+      },
+      "roleId": "front_desk",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk"
+      ],
+      "band": "team",
+      "device": "desktop",
+      "route": "/staff/checkin",
+      "url": "https://imagine-os.github.io/hoy/#/staff/checkin",
+      "pageCodes": [
+        "S-01",
+        "S-02",
+        "S-05"
+      ],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/S-02/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/S-02/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/S-02/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/S-02/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/S-02/es-390.jpg",
+          "en-390": "hub-map/shots/S-02/en-390.jpg",
+          "es-1280": "hub-map/shots/S-02/es-1280.jpg",
+          "en-1280": "hub-map/shots/S-02/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "id": "inbox",
+      "code": "S-06",
+      "label": {
+        "es": "Bandeja de mensajes",
+        "en": "Inbox"
+      },
+      "purpose": {
+        "es": "WhatsApp, correos y notas del equipo en un solo hilo por persona.",
+        "en": "WhatsApp, emails and team notes in one thread per person."
+      },
+      "roleId": "front_desk",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk"
+      ],
+      "band": "team",
+      "device": "desktop",
+      "route": "/staff/inbox",
+      "url": "https://imagine-os.github.io/hoy/#/staff/inbox",
+      "pageCodes": [
+        "S-06"
+      ],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/S-06/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/S-06/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/S-06/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/S-06/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/S-06/es-390.jpg",
+          "en-390": "hub-map/shots/S-06/en-390.jpg",
+          "es-1280": "hub-map/shots/S-06/es-1280.jpg",
+          "en-1280": "hub-map/shots/S-06/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "id": "pos",
+      "code": "S-04",
+      "label": {
+        "es": "Caja",
+        "en": "Point of sale"
+      },
+      "purpose": {
+        "es": "Vender un plan, un pase o un producto, cobrar y emitir el recibo.",
+        "en": "Sell a plan, a pass or a product, take the payment and issue the receipt."
+      },
+      "roleId": "front_desk",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk"
+      ],
+      "band": "team",
+      "device": "desktop",
+      "route": "/staff/register",
+      "url": "https://imagine-os.github.io/hoy/#/staff/register",
+      "pageCodes": [
+        "S-04"
+      ],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/S-04/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/S-04/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/S-04/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/S-04/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/S-04/es-390.jpg",
+          "en-390": "hub-map/shots/S-04/en-390.jpg",
+          "es-1280": "hub-map/shots/S-04/es-1280.jpg",
+          "en-1280": "hub-map/shots/S-04/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "id": "admin",
+      "code": "M-01",
+      "label": {
+        "es": "Panel de administración",
+        "en": "Admin dashboard"
+      },
+      "purpose": {
+        "es": "Cómo va el estudio hoy: ocupación, ingresos, clases y lo que necesita atención.",
+        "en": "How the studio is doing today: occupancy, revenue, classes and what needs attention."
+      },
+      "roleId": "admin",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "finance"
+      ],
+      "band": "team",
+      "device": "desktop",
+      "route": "/admin",
+      "url": "https://imagine-os.github.io/hoy/#/admin",
+      "pageCodes": [
+        "M-01",
+        "M-02",
+        "M-03",
+        "M-04",
+        "M-05",
+        "M-07",
+        "M-08a",
+        "M-10",
+        "M-02a",
+        "M-02b",
+        "M-02c",
+        "M-02d",
+        "M-08b",
+        "M-08c",
+        "M-08d",
+        "M-08e",
+        "M-08f"
+      ],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/M-01/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/M-01/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/M-01/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/M-01/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/M-01/es-390.jpg",
+          "en-390": "hub-map/shots/M-01/en-390.jpg",
+          "es-1280": "hub-map/shots/M-01/es-1280.jpg",
+          "en-1280": "hub-map/shots/M-01/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "id": "crm",
+      "code": "M-06",
+      "label": {
+        "es": "CRM",
+        "en": "CRM"
+      },
+      "purpose": {
+        "es": "La ficha de cada persona: conversación, reservas, pagos, consentimientos y notas.",
+        "en": "Each person’s record: conversation, bookings, payments, consents and notes."
+      },
+      "roleId": "coordinator",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "finance"
+      ],
+      "band": "team",
+      "device": "desktop",
+      "route": "/admin/crm",
+      "url": "https://imagine-os.github.io/hoy/#/admin/crm",
+      "pageCodes": [
+        "M-06",
+        "M-11"
+      ],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/M-06/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/M-06/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/M-06/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/M-06/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/M-06/es-390.jpg",
+          "en-390": "hub-map/shots/M-06/en-390.jpg",
+          "es-1280": "hub-map/shots/M-06/es-1280.jpg",
+          "en-1280": "hub-map/shots/M-06/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "id": "finance",
+      "code": "M-09",
+      "label": {
+        "es": "Finanzas",
+        "en": "Finance"
+      },
+      "purpose": {
+        "es": "Ingresos, gastos, nómina de profesores e impuestos, con el libro detrás.",
+        "en": "Revenue, expenses, teacher payroll and tax, with the ledger behind it."
+      },
+      "roleId": "finance",
+      "roles": [
+        "super_admin",
+        "admin",
+        "finance"
+      ],
+      "band": "team",
+      "device": "desktop",
+      "route": "/admin/finance",
+      "url": "https://imagine-os.github.io/hoy/#/admin/finance",
+      "pageCodes": [
+        "M-09",
+        "M-09a",
+        "M-09c",
+        "M-09b"
+      ],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/M-09/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/M-09/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/M-09/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/M-09/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/M-09/es-390.jpg",
+          "en-390": "hub-map/shots/M-09/en-390.jpg",
+          "es-1280": "hub-map/shots/M-09/es-1280.jpg",
+          "en-1280": "hub-map/shots/M-09/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "id": "manual",
+      "code": "K-03",
+      "label": {
+        "es": "Manual de operaciones",
+        "en": "Operations manual"
+      },
+      "purpose": {
+        "es": "Cómo funciona el club en persona y en el software, por rol, con datos en vivo.",
+        "en": "How the club runs in person and in software, by role, with live data."
+      },
+      "roleId": "admin",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "finance",
+        "teacher",
+        "maintenance",
+        "customer",
+        "public"
+      ],
+      "band": "build",
+      "device": "sheet",
+      "route": "/manual",
+      "url": "https://imagine-os.github.io/hoy/#/manual",
+      "pageCodes": [
+        "K-03",
+        "K-04"
+      ],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/K-03/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/K-03/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/K-03/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/K-03/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/K-03/es-390.jpg",
+          "en-390": "hub-map/shots/K-03/en-390.jpg",
+          "es-1280": "hub-map/shots/K-03/es-1280.jpg",
+          "en-1280": "hub-map/shots/K-03/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "id": "docs",
+      "code": "K-02",
+      "label": {
+        "es": "Documentación y changelog",
+        "en": "Documentation & changelog"
+      },
+      "purpose": {
+        "es": "Cada prompt, cada respuesta y cada cambio, con sus capturas.",
+        "en": "Every prompt, every response and every change, with their captures."
+      },
+      "roleId": "super_admin",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "finance",
+        "teacher",
+        "maintenance",
+        "customer",
+        "public"
+      ],
+      "band": "build",
+      "device": "sheet",
+      "route": "/docs",
+      "url": "https://imagine-os.github.io/hoy/#/docs",
+      "pageCodes": [
+        "K-02"
+      ],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/K-02/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/K-02/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/K-02/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/K-02/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/K-02/es-390.jpg",
+          "en-390": "hub-map/shots/K-02/en-390.jpg",
+          "es-1280": "hub-map/shots/K-02/es-1280.jpg",
+          "en-1280": "hub-map/shots/K-02/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "id": "kb",
+      "code": "K-01",
+      "label": {
+        "es": "Kanban y knowledgebase",
+        "en": "Kanban & knowledgebase"
+      },
+      "purpose": {
+        "es": "El tablero de trabajo, el changelog y el registro de prompts en una sola pantalla.",
+        "en": "The work board, the changelog and the prompt log on one screen."
+      },
+      "roleId": "super_admin",
+      "roles": [
+        "super_admin"
+      ],
+      "band": "build",
+      "device": "desktop",
+      "route": "/dev/knowledgebase",
+      "url": "https://imagine-os.github.io/hoy/#/dev/knowledgebase",
+      "pageCodes": [
+        "K-01"
+      ],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/K-01/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/K-01/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/K-01/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/K-01/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/K-01/es-390.jpg",
+          "en-390": "hub-map/shots/K-01/en-390.jpg",
+          "es-1280": "hub-map/shots/K-01/es-1280.jpg",
+          "en-1280": "hub-map/shots/K-01/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "id": "dev",
+      "code": "D-03",
+      "label": {
+        "es": "Herramientas de desarrollo",
+        "en": "Dev tools"
+      },
+      "purpose": {
+        "es": "Specs, tokens, biblioteca de componentes, editor de layout, lienzo y simulador.",
+        "en": "Specs, tokens, component library, layout editor, canvas and simulator."
+      },
+      "roleId": "super_admin",
+      "roles": [
+        "super_admin"
+      ],
+      "band": "build",
+      "device": "desktop",
+      "route": "/dev",
+      "url": "https://imagine-os.github.io/hoy/#/dev",
+      "pageCodes": [
+        "D-01",
+        "D-02",
+        "D-03",
+        "D-04",
+        "D-05",
+        "D-06",
+        "HUB-01"
+      ],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/D-03/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/D-03/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/D-03/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/D-03/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/D-03/es-390.jpg",
+          "en-390": "hub-map/shots/D-03/en-390.jpg",
+          "es-1280": "hub-map/shots/D-03/es-1280.jpg",
+          "en-1280": "hub-map/shots/D-03/en-1280.jpg"
+        }
+      }
+    }
+  ],
+  "pages": [
+    {
+      "code": "M-01",
+      "route": "/admin",
+      "name": {
+        "es": "Panel admin e interruptores de funciones",
+        "en": "Admin dashboard & feature switches"
+      },
+      "purpose": {
+        "es": "Panel de administración con métricas y los interruptores de funciones por página.",
+        "en": "The control room: the numbers that matter this and the switch panel that turns pages, steps and features on or off across the app, the website and the staff tools."
+      },
+      "surface": "admin",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "finance"
+      ],
+      "experienceId": "admin",
+      "device": "desktop",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/M-01/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/M-01/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/M-01/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/M-01/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/M-01/es-390.jpg",
+          "en-390": "hub-map/shots/M-01/en-390.jpg",
+          "es-1280": "hub-map/shots/M-01/es-1280.jpg",
+          "en-1280": "hub-map/shots/M-01/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "M-02",
+      "route": "/admin/content",
+      "name": {
+        "es": "Contenido: clases, profesores, horario, precios",
+        "en": "Content: classes, teachers, schedule, pricing"
+      },
+      "purpose": {
+        "es": "Gestionar clases, profesores, horario y precios desde un solo lugar.",
+        "en": "The single source of truth behind everything: class types, the schedule, teacher profiles, pricing and content — feeding the app, the staff tools and the public website."
+      },
+      "surface": "admin",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator"
+      ],
+      "experienceId": "admin",
+      "device": "desktop",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/M-02/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/M-02/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/M-02/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/M-02/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/M-02/es-390.jpg",
+          "en-390": "hub-map/shots/M-02/en-390.jpg",
+          "es-1280": "hub-map/shots/M-02/es-1280.jpg",
+          "en-1280": "hub-map/shots/M-02/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "M-02a",
+      "route": "/admin/content/articles",
+      "name": {
+        "es": "Contenido · Artículos",
+        "en": "Content · Articles"
+      },
+      "purpose": {
+        "es": "Editor de `content_articles`: título y cuerpo bilingües en markdown con vista previa en vivo, slug, categoría, publicación programada y “publicar ahora”.",
+        "en": "Editor for `content_articles`: bilingual title and markdown body with a live preview, slug, category, scheduled publication and “publish now”."
+      },
+      "surface": "admin",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator"
+      ],
+      "experienceId": "admin",
+      "device": "desktop",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/M-02a/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/M-02a/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/M-02a/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/M-02a/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/M-02a/es-390.jpg",
+          "en-390": "hub-map/shots/M-02a/en-390.jpg",
+          "es-1280": "hub-map/shots/M-02a/es-1280.jpg",
+          "en-1280": "hub-map/shots/M-02a/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "M-02b",
+      "route": "/admin/content/faq",
+      "name": {
+        "es": "Contenido · Preguntas frecuentes",
+        "en": "Content · FAQ"
+      },
+      "purpose": {
+        "es": "Editor de `faq_entries` por secciones: pregunta y respuesta bilingües, orden con ↑/↓, página 1 o 2 y estado de publicación.",
+        "en": "Editor for `faq_entries` by section: bilingual question and answer, ↑/↓ ordering, page 1 or 2 and publish state."
+      },
+      "surface": "admin",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator"
+      ],
+      "experienceId": "admin",
+      "device": "desktop",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/M-02b/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/M-02b/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/M-02b/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/M-02b/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/M-02b/es-390.jpg",
+          "en-390": "hub-map/shots/M-02b/en-390.jpg",
+          "es-1280": "hub-map/shots/M-02b/es-1280.jpg",
+          "en-1280": "hub-map/shots/M-02b/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "M-02c",
+      "route": "/admin/content/events",
+      "name": {
+        "es": "Contenido · Eventos",
+        "en": "Content · Events"
+      },
+      "purpose": {
+        "es": "Publicador de `events`: crear y editar, publicar o despublicar, aforo, precio público y de socio, y las inscripciones ya recibidas.",
+        "en": "Publisher for `events`: create and edit, publish or unpublish, capacity, public and member price, and the RSVPs already received."
+      },
+      "surface": "admin",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator"
+      ],
+      "experienceId": "admin",
+      "device": "desktop",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/M-02c/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/M-02c/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/M-02c/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/M-02c/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/M-02c/es-390.jpg",
+          "en-390": "hub-map/shots/M-02c/en-390.jpg",
+          "es-1280": "hub-map/shots/M-02c/es-1280.jpg",
+          "en-1280": "hub-map/shots/M-02c/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "M-02d",
+      "route": "/admin/content/media",
+      "name": {
+        "es": "Contenido · Biblioteca de medios",
+        "en": "Content · Media library"
+      },
+      "purpose": {
+        "es": "La lista de arte que el estudio debe: un cupo por lugar de la app y la web, con proporción, encargo y texto alternativo. Pegar una URL lo publica sin deploy.",
+        "en": "The checklist of art the studio owes: one slot per place in the app and the site, with its ratio, brief and alt text. Pasting a URL publishes it with no deploy."
+      },
+      "surface": "admin",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator"
+      ],
+      "experienceId": "admin",
+      "device": "desktop",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/M-02d/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/M-02d/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/M-02d/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/M-02d/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/M-02d/es-390.jpg",
+          "en-390": "hub-map/shots/M-02d/en-390.jpg",
+          "es-1280": "hub-map/shots/M-02d/es-1280.jpg",
+          "en-1280": "hub-map/shots/M-02d/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "M-03",
+      "route": "/admin/tables",
+      "name": {
+        "es": "Tablas y relaciones",
+        "en": "Tables & relations"
+      },
+      "purpose": {
+        "es": "Todas las tablas del sistema, limpias y ordenadas, con edición, filtros y exportación.",
+        "en": "The data model in one place, so developers and the studio agree on what exists: entities, keys, relations and cardinality."
+      },
+      "surface": "admin",
+      "roles": [
+        "super_admin",
+        "finance"
+      ],
+      "experienceId": "admin",
+      "device": "desktop",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/M-03/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/M-03/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/M-03/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/M-03/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/M-03/es-390.jpg",
+          "en-390": "hub-map/shots/M-03/en-390.jpg",
+          "es-1280": "hub-map/shots/M-03/es-1280.jpg",
+          "en-1280": "hub-map/shots/M-03/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "M-04",
+      "route": "/admin/emails",
+      "name": {
+        "es": "Diseños de email transaccional",
+        "en": "Transactional email designs"
+      },
+      "purpose": {
+        "es": "Diseñar y versionar los emails transaccionales con disparadores y estadísticas.",
+        "en": "Every automated email as a real design, editable and previewable, in both languages, with the trigger and the deep link it carries."
+      },
+      "surface": "admin",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator"
+      ],
+      "experienceId": "admin",
+      "device": "desktop",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/M-04/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/M-04/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/M-04/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/M-04/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/M-04/es-390.jpg",
+          "en-390": "hub-map/shots/M-04/en-390.jpg",
+          "es-1280": "hub-map/shots/M-04/es-1280.jpg",
+          "en-1280": "hub-map/shots/M-04/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "M-05",
+      "route": "/admin/whatsapp",
+      "name": {
+        "es": "Automatizaciones de WhatsApp",
+        "en": "WhatsApp automations"
+      },
+      "purpose": {
+        "es": "Automatizaciones de WhatsApp: plantillas aprobadas, disparadores, horas de silencio y registro.",
+        "en": "The channel the studio actually lives on: approved template messages, their triggers, timing and quiet hours."
+      },
+      "surface": "admin",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk"
+      ],
+      "experienceId": "admin",
+      "device": "desktop",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/M-05/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/M-05/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/M-05/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/M-05/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/M-05/es-390.jpg",
+          "en-390": "hub-map/shots/M-05/en-390.jpg",
+          "es-1280": "hub-map/shots/M-05/es-1280.jpg",
+          "en-1280": "hub-map/shots/M-05/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "M-06",
+      "route": "/admin/crm",
+      "name": {
+        "es": "CRM · miembro 360",
+        "en": "CRM · member 360"
+      },
+      "purpose": {
+        "es": "Ficha 360 del miembro: membresía, créditos, asistencia, pagos, conversaciones y notas.",
+        "en": "One record per person that the whole studio trusts: who they are, what they have paid, what they have attended, and every conversation across WhatsApp, email and the front desk — with staff notes on the same timeline."
+      },
+      "surface": "admin",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "finance"
+      ],
+      "experienceId": "crm",
+      "device": "desktop",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/M-06/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/M-06/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/M-06/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/M-06/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/M-06/es-390.jpg",
+          "en-390": "hub-map/shots/M-06/en-390.jpg",
+          "es-1280": "hub-map/shots/M-06/es-1280.jpg",
+          "en-1280": "hub-map/shots/M-06/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "M-11",
+      "route": "/admin/crm/deletions",
+      "name": {
+        "es": "CRM · Solicitudes de eliminación",
+        "en": "CRM · Deletion requests"
+      },
+      "purpose": {
+        "es": "La cola de peticiones de borrar una cuenta: quién la pidió y por dónde, en qué estado va, la lista de anonimización paso a paso, la nota interna y el enlace a la ficha del socio. Admin la mueve de pendiente a en proceso y a hecha; cancelada cierra sin borrar.",
+        "en": "The queue of account-deletion requests: who asked and through which channel, its status, the step-by-step anonymisation checklist, the internal note and the link to the member record. Admin moves it from requested to processing to done; cancelled closes it without deleting."
+      },
+      "surface": "admin",
+      "roles": [
+        "super_admin",
+        "admin"
+      ],
+      "experienceId": "crm",
+      "device": "desktop",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/M-11/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/M-11/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/M-11/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/M-11/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/M-11/es-390.jpg",
+          "en-390": "hub-map/shots/M-11/en-390.jpg",
+          "es-1280": "hub-map/shots/M-11/es-1280.jpg",
+          "en-1280": "hub-map/shots/M-11/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "M-07",
+      "route": "/admin/activity",
+      "name": {
+        "es": "Registro de actividad",
+        "en": "All activity log"
+      },
+      "purpose": {
+        "es": "Registro de toda la actividad del sistema con filtros por entidad, rol y fecha.",
+        "en": "An immutable record of everything anyone did, so a disputed refund, a deleted class or a changed price can always be traced to a person and a moment. Nothing on this page can be edited."
+      },
+      "surface": "admin",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "finance"
+      ],
+      "experienceId": "admin",
+      "device": "desktop",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/M-07/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/M-07/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/M-07/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/M-07/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/M-07/es-390.jpg",
+          "en-390": "hub-map/shots/M-07/en-390.jpg",
+          "es-1280": "hub-map/shots/M-07/es-1280.jpg",
+          "en-1280": "hub-map/shots/M-07/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "M-08a",
+      "route": "/admin/settings",
+      "name": {
+        "es": "Ajustes · General",
+        "en": "Settings · General"
+      },
+      "purpose": {
+        "es": "Identidad de contacto (dirección, ciudad, WhatsApp, correo, Instagram, mapa) con su estado “pendiente”, horario de apertura, aforo y políticas: los números que todas las demás pantallas leen.",
+        "en": "Contact identity (address, city, WhatsApp, email, Instagram, map) with its “pending” state, opening hours, capacity and policies: the numbers every other screen reads."
+      },
+      "surface": "admin",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "finance"
+      ],
+      "experienceId": "admin",
+      "device": "desktop",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/M-08a/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/M-08a/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/M-08a/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/M-08a/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/M-08a/es-390.jpg",
+          "en-390": "hub-map/shots/M-08a/en-390.jpg",
+          "es-1280": "hub-map/shots/M-08a/es-1280.jpg",
+          "en-1280": "hub-map/shots/M-08a/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "M-08b",
+      "route": "/admin/settings/features",
+      "name": {
+        "es": "Ajustes · Funciones",
+        "en": "Settings · Features"
+      },
+      "purpose": {
+        "es": "Interruptores de funciones del estudio y de página (feature_flags), con escritura auditada. Vivían en el panel M-01 hasta 0.5.0.",
+        "en": "Studio and per-page feature switches (feature_flags) with audited writes. They lived on the M-01 dashboard until 0.5.0."
+      },
+      "surface": "admin",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "finance"
+      ],
+      "experienceId": "admin",
+      "device": "desktop",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/M-08b/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/M-08b/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/M-08b/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/M-08b/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/M-08b/es-390.jpg",
+          "en-390": "hub-map/shots/M-08b/en-390.jpg",
+          "es-1280": "hub-map/shots/M-08b/es-1280.jpg",
+          "en-1280": "hub-map/shots/M-08b/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "M-08c",
+      "route": "/admin/settings/payments",
+      "name": {
+        "es": "Ajustes · Pagos",
+        "en": "Settings · Payments"
+      },
+      "purpose": {
+        "es": "Cuenta de consignación, NIT, IVA (incluido o no en los precios publicados) y resolución DIAN, el entorno de Wompi, y la nómina: cadencia mensual o quincenal, medio de pago, quién firma y la tarjeta de tarifas por modalidad y por profesor.",
+        "en": "Payout account, NIT, IVA (included in published prices or not) and DIAN resolution, the Wompi environment, and payroll: monthly or biweekly cadence, payout method, who signs, and the rate card by modality and by teacher."
+      },
+      "surface": "admin",
+      "roles": [
+        "super_admin",
+        "admin",
+        "finance"
+      ],
+      "experienceId": "admin",
+      "device": "desktop",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/M-08c/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/M-08c/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/M-08c/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/M-08c/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/M-08c/es-390.jpg",
+          "en-390": "hub-map/shots/M-08c/en-390.jpg",
+          "es-1280": "hub-map/shots/M-08c/es-1280.jpg",
+          "en-1280": "hub-map/shots/M-08c/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "M-08d",
+      "route": "/admin/settings/communications",
+      "name": {
+        "es": "Ajustes · Comunicaciones",
+        "en": "Settings · Communications"
+      },
+      "purpose": {
+        "es": "Horas de silencio y nombres de remitente de WhatsApp y email, que M-04 y M-05 usan al enviar.",
+        "en": "Quiet hours and the WhatsApp and email sender names M-04 and M-05 use when sending."
+      },
+      "surface": "admin",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator"
+      ],
+      "experienceId": "admin",
+      "device": "desktop",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/M-08d/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/M-08d/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/M-08d/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/M-08d/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/M-08d/es-390.jpg",
+          "en-390": "hub-map/shots/M-08d/en-390.jpg",
+          "es-1280": "hub-map/shots/M-08d/es-1280.jpg",
+          "en-1280": "hub-map/shots/M-08d/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "M-08e",
+      "route": "/admin/settings/branding",
+      "name": {
+        "es": "Ajustes · Marca",
+        "en": "Settings · Branding"
+      },
+      "purpose": {
+        "es": "Nombre visible del estudio, variante del wordmark e idioma por defecto; la vista previa usa el wordmark real.",
+        "en": "Studio display name, wordmark variant and default language; the preview uses the real wordmark."
+      },
+      "surface": "admin",
+      "roles": [
+        "super_admin",
+        "admin"
+      ],
+      "experienceId": "admin",
+      "device": "desktop",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/M-08e/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/M-08e/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/M-08e/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/M-08e/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/M-08e/es-390.jpg",
+          "en-390": "hub-map/shots/M-08e/en-390.jpg",
+          "es-1280": "hub-map/shots/M-08e/es-1280.jpg",
+          "en-1280": "hub-map/shots/M-08e/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "M-08f",
+      "route": "/admin/settings/content",
+      "name": {
+        "es": "Ajustes · Contenido",
+        "en": "Settings · Content"
+      },
+      "purpose": {
+        "es": "Decisiones de contenido del owner como ajustes: cómo se nombran las clases en público (disciplinas o movimientos), si Respiración es una clase propia o vive dentro de meditación, qué proveedor de mapa usa el sitio, y qué versiones legales están publicadas.",
+        "en": "The owner’s content decisions as settings: how classes are named in public (disciplines or movements), whether Respiración is its own class or lives inside meditation, which map provider the site embeds, and which legal versions are published."
+      },
+      "surface": "admin",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator"
+      ],
+      "experienceId": "admin",
+      "device": "desktop",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/M-08f/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/M-08f/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/M-08f/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/M-08f/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/M-08f/es-390.jpg",
+          "en-390": "hub-map/shots/M-08f/en-390.jpg",
+          "es-1280": "hub-map/shots/M-08f/es-1280.jpg",
+          "en-1280": "hub-map/shots/M-08f/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "M-10",
+      "route": "/admin/integrations",
+      "name": {
+        "es": "Integraciones",
+        "en": "Integrations"
+      },
+      "purpose": {
+        "es": "Una tarjeta por integración — Wompi, WhatsApp Business, correo, facturación DIAN, mapas, Supabase — con los campos no secretos listos para llenar (ids de comercio, número emisor, namespace de plantillas, proveedor, URL del proyecto), un estado simulado · configurado · conectado, el aviso de que las llaves viven en el servidor y la lista de lo que el dev debe terminar.",
+        "en": "One card per integration — Wompi, WhatsApp Business, email, DIAN e-invoicing, maps, Supabase — with the non-secret fields ready to fill (merchant ids, sender number, template namespace, provider, project URL), a simulated · configured · connected status, the notice that keys live server-side and the checklist of what the dev must finish."
+      },
+      "surface": "admin",
+      "roles": [
+        "super_admin",
+        "admin"
+      ],
+      "experienceId": "admin",
+      "device": "desktop",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/M-10/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/M-10/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/M-10/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/M-10/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/M-10/es-390.jpg",
+          "en-390": "hub-map/shots/M-10/en-390.jpg",
+          "es-1280": "hub-map/shots/M-10/es-1280.jpg",
+          "en-1280": "hub-map/shots/M-10/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "M-09",
+      "route": "/admin/finance",
+      "name": {
+        "es": "Finanzas",
+        "en": "Finance"
+      },
+      "purpose": {
+        "es": "Ingresos por producto y método, pagos pendientes, reembolsos, facturas con referencia DIAN y el resumen de la nómina de profesores.",
+        "en": "Revenue by product and method, pending payments, refunds, invoices with the DIAN reference and the teacher-payroll roll-up."
+      },
+      "surface": "admin",
+      "roles": [
+        "super_admin",
+        "admin",
+        "finance"
+      ],
+      "experienceId": "finance",
+      "device": "desktop",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/M-09/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/M-09/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/M-09/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/M-09/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/M-09/es-390.jpg",
+          "en-390": "hub-map/shots/M-09/en-390.jpg",
+          "es-1280": "hub-map/shots/M-09/es-1280.jpg",
+          "en-1280": "hub-map/shots/M-09/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "M-09a",
+      "route": "/admin/finance/payouts",
+      "name": {
+        "es": "Finanzas · Nóminas",
+        "en": "Finance · Payroll runs"
+      },
+      "purpose": {
+        "es": "Las liquidaciones mensuales de profesores: qué se debe, qué está aprobado y qué ya se pagó, y el botón que genera el borrador del periodo.",
+        "en": "The monthly teacher payroll runs: what is owed, what is approved and what is paid, plus the button that generates the period’s draft."
+      },
+      "surface": "admin",
+      "roles": [
+        "super_admin",
+        "admin",
+        "finance"
+      ],
+      "experienceId": "finance",
+      "device": "desktop",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/M-09a/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/M-09a/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/M-09a/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/M-09a/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/M-09a/es-390.jpg",
+          "en-390": "hub-map/shots/M-09a/en-390.jpg",
+          "es-1280": "hub-map/shots/M-09a/es-1280.jpg",
+          "en-1280": "hub-map/shots/M-09a/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "M-09b",
+      "route": "/admin/finance/payouts/:id",
+      "name": {
+        "es": "Finanzas · Detalle de nómina",
+        "en": "Finance · Payroll run"
+      },
+      "purpose": {
+        "es": "Una corrida: el extracto por profesor con sus clases, bonos y ajustes, y las cuatro acciones de finanzas — aprobar, enviar por Wompi, marcar pagada por transferencia o efectivo, exportar CSV.",
+        "en": "One run: the per-teacher statement with their classes, bonuses and adjustments, and finance’s four actions — approve, send via Wompi, mark paid by transfer or cash, export CSV."
+      },
+      "surface": "admin",
+      "roles": [
+        "super_admin",
+        "admin",
+        "finance"
+      ],
+      "experienceId": "finance",
+      "device": "desktop",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/M-09b/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/M-09b/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/M-09b/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/M-09b/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/M-09b/es-390.jpg",
+          "en-390": "hub-map/shots/M-09b/en-390.jpg",
+          "es-1280": "hub-map/shots/M-09b/es-1280.jpg",
+          "en-1280": "hub-map/shots/M-09b/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "M-09c",
+      "route": "/admin/finance/expenses",
+      "name": {
+        "es": "Finanzas · Gastos",
+        "en": "Finance · Expenses"
+      },
+      "purpose": {
+        "es": "El libro de gastos del estudio: fijos recurrentes (arriendo, servicios, aseo por quincena…) generados de plantillas con un botón idempotente, variables registrados a mano, pagado y por pagar, por categoría — la tercera pata del balance de M-09.",
+        "en": "The studio’s expenses ledger: recurring fixed costs (rent, utilities, cleaning by the quincena…) generated from templates with one idempotent button, variable costs recorded by hand, paid and to pay, by category — the third leg of the M-09 balance."
+      },
+      "surface": "admin",
+      "roles": [
+        "super_admin",
+        "admin",
+        "finance"
+      ],
+      "experienceId": "finance",
+      "device": "desktop",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/M-09c/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/M-09c/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/M-09c/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/M-09c/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/M-09c/es-390.jpg",
+          "en-390": "hub-map/shots/M-09c/en-390.jpg",
+          "es-1280": "hub-map/shots/M-09c/es-1280.jpg",
+          "en-1280": "hub-map/shots/M-09c/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "C-01",
+      "route": "/app",
+      "name": {
+        "es": "Inicio",
+        "en": "Home dashboard"
+      },
+      "purpose": {
+        "es": "La superficie diaria: qué pasa hoy, qué tengo reservado, qué quiere contarme el estudio y los recordatorios que el estudio necesita.",
+        "en": "The daily landing surface: what is happening today, what I have booked, what the studio wants me to know, and the nudges the studio needs (membership, feedback)."
+      },
+      "surface": "customer",
+      "roles": [
+        "customer",
+        "teacher"
+      ],
+      "experienceId": "app",
+      "device": "phone",
+      "status": "built",
+      "actions": [
+        "app.goHome",
+        "app.openSchedule"
+      ],
+      "shots": {
+        "thumbs": {
+          "es-phone": "hub-map/shots/C-01/thumb-es-phone.jpg",
+          "en-phone": "hub-map/shots/C-01/thumb-en-phone.jpg",
+          "es-desktop": "hub-map/shots/C-01/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/C-01/thumb-en-desktop.jpg",
+          "es-phone-dark": "hub-map/shots/C-01/thumb-es-phone-dark.jpg",
+          "en-phone-dark": "hub-map/shots/C-01/thumb-en-phone-dark.jpg",
+          "es-desktop-dark": "hub-map/shots/C-01/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/C-01/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/C-01/es-390.jpg",
+          "en-390": "hub-map/shots/C-01/en-390.jpg",
+          "es-1280": "hub-map/shots/C-01/es-1280.jpg",
+          "en-1280": "hub-map/shots/C-01/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "C-02",
+      "route": "/app/schedule",
+      "name": {
+        "es": "Horario de clases",
+        "en": "Class schedule"
+      },
+      "purpose": {
+        "es": "Ver y filtrar el horario semanal por modalidad, profesor y nivel, con capacidad en vivo.",
+        "en": "Find the right class fast. Two views (today, week) over one filterable list. Studio only — there are no online classes."
+      },
+      "surface": "customer",
+      "roles": [
+        "customer",
+        "teacher"
+      ],
+      "experienceId": "app",
+      "device": "phone",
+      "status": "built",
+      "actions": [
+        "app.reserve",
+        "app.goHome",
+        "app.openSchedule"
+      ],
+      "shots": {
+        "thumbs": {
+          "es-phone": "hub-map/shots/C-02/thumb-es-phone.jpg",
+          "en-phone": "hub-map/shots/C-02/thumb-en-phone.jpg",
+          "es-desktop": "hub-map/shots/C-02/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/C-02/thumb-en-desktop.jpg",
+          "es-phone-dark": "hub-map/shots/C-02/thumb-es-phone-dark.jpg",
+          "en-phone-dark": "hub-map/shots/C-02/thumb-en-phone-dark.jpg",
+          "es-desktop-dark": "hub-map/shots/C-02/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/C-02/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/C-02/es-390.jpg",
+          "en-390": "hub-map/shots/C-02/en-390.jpg",
+          "es-1280": "hub-map/shots/C-02/es-1280.jpg",
+          "en-1280": "hub-map/shots/C-02/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "C-02b",
+      "route": "/app/schedule/week",
+      "name": {
+        "es": "Horario de clases · semana",
+        "en": "Class schedule · week"
+      },
+      "purpose": {
+        "es": "La vista semanal de C-02: cuadrícula de seis columnas con chips de hora; mismos datos, filtros y estado de reserva que Hoy.",
+        "en": "The week view of C-02: a six-column day grid of compact time chips, because comparing across days is the reason to open it. Same data, filters and booking state as Today."
+      },
+      "surface": "customer",
+      "roles": [
+        "customer",
+        "teacher"
+      ],
+      "experienceId": "app",
+      "device": "phone",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-phone": "hub-map/shots/C-02b/thumb-es-phone.jpg",
+          "en-phone": "hub-map/shots/C-02b/thumb-en-phone.jpg",
+          "es-desktop": "hub-map/shots/C-02b/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/C-02b/thumb-en-desktop.jpg",
+          "es-phone-dark": "hub-map/shots/C-02b/thumb-es-phone-dark.jpg",
+          "en-phone-dark": "hub-map/shots/C-02b/thumb-en-phone-dark.jpg",
+          "es-desktop-dark": "hub-map/shots/C-02b/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/C-02b/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/C-02b/es-390.jpg",
+          "en-390": "hub-map/shots/C-02b/en-390.jpg",
+          "es-1280": "hub-map/shots/C-02b/es-1280.jpg",
+          "en-1280": "hub-map/shots/C-02b/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "C-03",
+      "route": "/app/class/:id",
+      "name": {
+        "es": "Detalle de clase",
+        "en": "Class detail"
+      },
+      "purpose": {
+        "es": "Todo sobre una clase: profesor, sala, nivel, preparación, cupos y el botón de reservar.",
+        "en": "Everything needed to commit: what the class is, who teaches it, what to bring, how full it is, and how to reserve."
+      },
+      "surface": "customer",
+      "roles": [
+        "customer",
+        "teacher"
+      ],
+      "experienceId": "app",
+      "device": "phone",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-phone": "hub-map/shots/C-03/thumb-es-phone.jpg",
+          "en-phone": "hub-map/shots/C-03/thumb-en-phone.jpg",
+          "es-desktop": "hub-map/shots/C-03/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/C-03/thumb-en-desktop.jpg",
+          "es-phone-dark": "hub-map/shots/C-03/thumb-es-phone-dark.jpg",
+          "en-phone-dark": "hub-map/shots/C-03/thumb-en-phone-dark.jpg",
+          "es-desktop-dark": "hub-map/shots/C-03/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/C-03/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/C-03/es-390.jpg",
+          "en-390": "hub-map/shots/C-03/en-390.jpg",
+          "es-1280": "hub-map/shots/C-03/es-1280.jpg",
+          "en-1280": "hub-map/shots/C-03/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "C-04",
+      "route": "/app/checkout/:id",
+      "name": {
+        "es": "Reservar y pagar",
+        "en": "Reserve & checkout"
+      },
+      "purpose": {
+        "es": "Reservar y pagar en un solo flujo: usar crédito, membresía o pagar la clase; recibo al instante.",
+        "en": "One screen from intent to confirmed, choosing the cheapest valid entitlement by default and only asking for money when there is none."
+      },
+      "surface": "customer",
+      "roles": [
+        "customer",
+        "teacher"
+      ],
+      "experienceId": "app",
+      "device": "phone",
+      "status": "built",
+      "actions": [
+        "app.pickMat",
+        "app.confirmReservation",
+        "app.goHome",
+        "app.openSchedule"
+      ],
+      "shots": {
+        "thumbs": {
+          "es-phone": "hub-map/shots/C-04/thumb-es-phone.jpg",
+          "en-phone": "hub-map/shots/C-04/thumb-en-phone.jpg",
+          "es-desktop": "hub-map/shots/C-04/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/C-04/thumb-en-desktop.jpg",
+          "es-phone-dark": "hub-map/shots/C-04/thumb-es-phone-dark.jpg",
+          "en-phone-dark": "hub-map/shots/C-04/thumb-en-phone-dark.jpg",
+          "es-desktop-dark": "hub-map/shots/C-04/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/C-04/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/C-04/es-390.jpg",
+          "en-390": "hub-map/shots/C-04/en-390.jpg",
+          "es-1280": "hub-map/shots/C-04/es-1280.jpg",
+          "en-1280": "hub-map/shots/C-04/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "C-05",
+      "route": "/app/payment-methods",
+      "name": {
+        "es": "Métodos de pago",
+        "en": "Payment methods"
+      },
+      "purpose": {
+        "es": "Guardar y gestionar métodos de pago; efectivo solo desde recepción.",
+        "en": "Colombian payment reality: cards, PSE, Nequi, Daviplata, Bancolombia transfer, Mercado Pago, wallet pay, and cash at the front desk."
+      },
+      "surface": "customer",
+      "roles": [
+        "customer",
+        "teacher"
+      ],
+      "experienceId": "app",
+      "device": "phone",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-phone": "hub-map/shots/C-05/thumb-es-phone.jpg",
+          "en-phone": "hub-map/shots/C-05/thumb-en-phone.jpg",
+          "es-desktop": "hub-map/shots/C-05/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/C-05/thumb-en-desktop.jpg",
+          "es-phone-dark": "hub-map/shots/C-05/thumb-es-phone-dark.jpg",
+          "en-phone-dark": "hub-map/shots/C-05/thumb-en-phone-dark.jpg",
+          "es-desktop-dark": "hub-map/shots/C-05/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/C-05/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/C-05/es-390.jpg",
+          "en-390": "hub-map/shots/C-05/en-390.jpg",
+          "es-1280": "hub-map/shots/C-05/es-1280.jpg",
+          "en-1280": "hub-map/shots/C-05/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "C-06",
+      "route": "/app/plans",
+      "name": {
+        "es": "Planes de membresía",
+        "en": "Membership plans"
+      },
+      "purpose": {
+        "es": "Comparar y comprar planes de membresía; muestra el estado del plan actual.",
+        "en": "Sell the plan without blocking the booking. Monthly or yearly, with the yearly discount shown as months free."
+      },
+      "surface": "customer",
+      "roles": [
+        "customer",
+        "teacher"
+      ],
+      "experienceId": "app",
+      "device": "phone",
+      "status": "built",
+      "actions": [
+        "app.choosePlan",
+        "app.goHome",
+        "app.openSchedule"
+      ],
+      "shots": {
+        "thumbs": {
+          "es-phone": "hub-map/shots/C-06/thumb-es-phone.jpg",
+          "en-phone": "hub-map/shots/C-06/thumb-en-phone.jpg",
+          "es-desktop": "hub-map/shots/C-06/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/C-06/thumb-en-desktop.jpg",
+          "es-phone-dark": "hub-map/shots/C-06/thumb-es-phone-dark.jpg",
+          "en-phone-dark": "hub-map/shots/C-06/thumb-en-phone-dark.jpg",
+          "es-desktop-dark": "hub-map/shots/C-06/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/C-06/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/C-06/es-390.jpg",
+          "en-390": "hub-map/shots/C-06/en-390.jpg",
+          "es-1280": "hub-map/shots/C-06/es-1280.jpg",
+          "en-1280": "hub-map/shots/C-06/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "C-07",
+      "route": "/app/passes",
+      "name": {
+        "es": "Pases Bienvenida",
+        "en": "Bienvenida passes"
+      },
+      "purpose": {
+        "es": "Los pases Bienvenida: prueba, individual, paquetes de 3 y 10; elegibilidad de la clase de prueba.",
+        "en": "The way in for someone with no membership: four one-time options, stacked cheapest first, each one reservable on the spot. It is the other half of C-06 — whoever skips the plan lands here rather than at a dead end."
+      },
+      "surface": "customer",
+      "roles": [
+        "customer",
+        "teacher"
+      ],
+      "experienceId": "app",
+      "device": "phone",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-phone": "hub-map/shots/C-07/thumb-es-phone.jpg",
+          "en-phone": "hub-map/shots/C-07/thumb-en-phone.jpg",
+          "es-desktop": "hub-map/shots/C-07/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/C-07/thumb-en-desktop.jpg",
+          "es-phone-dark": "hub-map/shots/C-07/thumb-es-phone-dark.jpg",
+          "en-phone-dark": "hub-map/shots/C-07/thumb-en-phone-dark.jpg",
+          "es-desktop-dark": "hub-map/shots/C-07/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/C-07/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/C-07/es-390.jpg",
+          "en-390": "hub-map/shots/C-07/en-390.jpg",
+          "es-1280": "hub-map/shots/C-07/es-1280.jpg",
+          "en-1280": "hub-map/shots/C-07/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "C-07b",
+      "route": "/app/credits",
+      "name": {
+        "es": "Créditos y paquetes",
+        "en": "Credits & class packs"
+      },
+      "purpose": {
+        "es": "Saldo de créditos, vencimientos y el libro mayor de cada movimiento.",
+        "en": "The way in for someone with no membership: four one-time options, stacked cheapest first, each one reservable on the spot. It is the other half of C-06 — whoever skips the plan lands here rather than at a dead end."
+      },
+      "surface": "customer",
+      "roles": [
+        "customer",
+        "teacher"
+      ],
+      "experienceId": "app",
+      "device": "phone",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-phone": "hub-map/shots/C-07b/thumb-es-phone.jpg",
+          "en-phone": "hub-map/shots/C-07b/thumb-en-phone.jpg",
+          "es-desktop": "hub-map/shots/C-07b/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/C-07b/thumb-en-desktop.jpg",
+          "es-phone-dark": "hub-map/shots/C-07b/thumb-es-phone-dark.jpg",
+          "en-phone-dark": "hub-map/shots/C-07b/thumb-en-phone-dark.jpg",
+          "es-desktop-dark": "hub-map/shots/C-07b/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/C-07b/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/C-07b/es-390.jpg",
+          "en-390": "hub-map/shots/C-07b/en-390.jpg",
+          "es-1280": "hub-map/shots/C-07b/es-1280.jpg",
+          "en-1280": "hub-map/shots/C-07b/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "C-08",
+      "route": "/app/booking/:id",
+      "name": {
+        "es": "Clase reservada, cuenta regresiva, cancelar y reprogramar",
+        "en": "Booked class, countdown, cancel & reschedule"
+      },
+      "purpose": {
+        "es": "La clase reservada con cuenta regresiva, política de cancelación y acciones de cancelar o reprogramar.",
+        "en": "Everything you can do to a reservation you already hold, including the countdown that makes the class feel imminent."
+      },
+      "surface": "customer",
+      "roles": [
+        "customer",
+        "teacher"
+      ],
+      "experienceId": "app",
+      "device": "phone",
+      "status": "built",
+      "actions": [
+        "app.goHome",
+        "app.openSchedule"
+      ],
+      "shots": {
+        "thumbs": {
+          "es-phone": "hub-map/shots/C-08/thumb-es-phone.jpg",
+          "en-phone": "hub-map/shots/C-08/thumb-en-phone.jpg",
+          "es-desktop": "hub-map/shots/C-08/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/C-08/thumb-en-desktop.jpg",
+          "es-phone-dark": "hub-map/shots/C-08/thumb-es-phone-dark.jpg",
+          "en-phone-dark": "hub-map/shots/C-08/thumb-en-phone-dark.jpg",
+          "es-desktop-dark": "hub-map/shots/C-08/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/C-08/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/C-08/es-390.jpg",
+          "en-390": "hub-map/shots/C-08/en-390.jpg",
+          "es-1280": "hub-map/shots/C-08/es-1280.jpg",
+          "en-1280": "hub-map/shots/C-08/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "C-08b",
+      "route": "/app/booking/:id/change",
+      "name": {
+        "es": "Hoja de cancelar o reprogramar",
+        "en": "Cancel or reschedule sheet"
+      },
+      "purpose": {
+        "es": "Hoja inferior para cancelar o mover una reserva respetando la política.",
+        "en": "One button on the booked class opens one sheet, because a student who cannot make a class is taking a single decision with two outcomes. Moving is offered first — it keeps the credit and keeps the habit."
+      },
+      "surface": "customer",
+      "roles": [
+        "customer",
+        "teacher"
+      ],
+      "experienceId": "app",
+      "device": "phone",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-phone": "hub-map/shots/C-08b/thumb-es-phone.jpg",
+          "en-phone": "hub-map/shots/C-08b/thumb-en-phone.jpg",
+          "es-desktop": "hub-map/shots/C-08b/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/C-08b/thumb-en-desktop.jpg",
+          "es-phone-dark": "hub-map/shots/C-08b/thumb-es-phone-dark.jpg",
+          "en-phone-dark": "hub-map/shots/C-08b/thumb-en-phone-dark.jpg",
+          "es-desktop-dark": "hub-map/shots/C-08b/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/C-08b/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/C-08b/es-390.jpg",
+          "en-390": "hub-map/shots/C-08b/en-390.jpg",
+          "es-1280": "hub-map/shots/C-08b/es-1280.jpg",
+          "en-1280": "hub-map/shots/C-08b/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "C-10",
+      "route": "/app/rate/:id",
+      "name": {
+        "es": "Califica tu clase",
+        "en": "Rate your class"
+      },
+      "purpose": {
+        "es": "Calificar la clase y al profesor en menos de 30 segundos; alimenta métricas y moderación.",
+        "en": "Capture feedback while it is warm, in under five seconds, with a skip that costs nothing."
+      },
+      "surface": "customer",
+      "roles": [
+        "customer",
+        "teacher"
+      ],
+      "experienceId": "app",
+      "device": "phone",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-phone": "hub-map/shots/C-10/thumb-es-phone.jpg",
+          "en-phone": "hub-map/shots/C-10/thumb-en-phone.jpg",
+          "es-desktop": "hub-map/shots/C-10/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/C-10/thumb-en-desktop.jpg",
+          "es-phone-dark": "hub-map/shots/C-10/thumb-es-phone-dark.jpg",
+          "en-phone-dark": "hub-map/shots/C-10/thumb-en-phone-dark.jpg",
+          "es-desktop-dark": "hub-map/shots/C-10/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/C-10/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/C-10/es-390.jpg",
+          "en-390": "hub-map/shots/C-10/en-390.jpg",
+          "es-1280": "hub-map/shots/C-10/es-1280.jpg",
+          "en-1280": "hub-map/shots/C-10/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "C-11",
+      "route": "/app/history",
+      "name": {
+        "es": "Historial y pagos",
+        "en": "History & payments"
+      },
+      "purpose": {
+        "es": "Historial de clases, pagos, facturas y créditos, con filtros y exportación.",
+        "en": "One ledger for the relationship: classes attended and every peso paid, with receipts you can forward."
+      },
+      "surface": "customer",
+      "roles": [
+        "customer",
+        "teacher"
+      ],
+      "experienceId": "app",
+      "device": "phone",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-phone": "hub-map/shots/C-11/thumb-es-phone.jpg",
+          "en-phone": "hub-map/shots/C-11/thumb-en-phone.jpg",
+          "es-desktop": "hub-map/shots/C-11/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/C-11/thumb-en-desktop.jpg",
+          "es-phone-dark": "hub-map/shots/C-11/thumb-es-phone-dark.jpg",
+          "en-phone-dark": "hub-map/shots/C-11/thumb-en-phone-dark.jpg",
+          "es-desktop-dark": "hub-map/shots/C-11/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/C-11/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/C-11/es-390.jpg",
+          "en-390": "hub-map/shots/C-11/en-390.jpg",
+          "es-1280": "hub-map/shots/C-11/es-1280.jpg",
+          "en-1280": "hub-map/shots/C-11/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "C-13",
+      "route": "/app/rules",
+      "name": {
+        "es": "Reglas del club y buenas prácticas",
+        "en": "Club rules & best practices"
+      },
+      "purpose": {
+        "es": "Reglas del club y buenas prácticas en artículos cortos con lectura confirmada.",
+        "en": "The content library that keeps the room safe and pleasant: hot-room safety, class preparation, studio etiquette, the tour, emergencies, about HOY."
+      },
+      "surface": "customer",
+      "roles": [
+        "customer",
+        "teacher"
+      ],
+      "experienceId": "app",
+      "device": "phone",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-phone": "hub-map/shots/C-13/thumb-es-phone.jpg",
+          "en-phone": "hub-map/shots/C-13/thumb-en-phone.jpg",
+          "es-desktop": "hub-map/shots/C-13/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/C-13/thumb-en-desktop.jpg",
+          "es-phone-dark": "hub-map/shots/C-13/thumb-es-phone-dark.jpg",
+          "en-phone-dark": "hub-map/shots/C-13/thumb-en-phone-dark.jpg",
+          "es-desktop-dark": "hub-map/shots/C-13/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/C-13/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/C-13/es-390.jpg",
+          "en-390": "hub-map/shots/C-13/en-390.jpg",
+          "es-1280": "hub-map/shots/C-13/es-1280.jpg",
+          "en-1280": "hub-map/shots/C-13/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "C-14",
+      "route": "/app/faq",
+      "name": {
+        "es": "Preguntas frecuentes (1/2)",
+        "en": "Preguntas frecuentes (1/2)"
+      },
+      "purpose": {
+        "es": "Página 1 de las preguntas frecuentes: primera vez, reservas y planes; la última parada antes de escribir a recepción.",
+        "en": "Page 1 of the public answer sheet, split across two pages so the accordion never becomes a scroll of thirty open questions. It is the last stop before someone writes to the front desk, so it carries the same answers the concierge would give."
+      },
+      "surface": "customer",
+      "roles": [
+        "customer",
+        "teacher"
+      ],
+      "experienceId": "app",
+      "device": "phone",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-phone": "hub-map/shots/C-14/thumb-es-phone.jpg",
+          "en-phone": "hub-map/shots/C-14/thumb-en-phone.jpg",
+          "es-desktop": "hub-map/shots/C-14/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/C-14/thumb-en-desktop.jpg",
+          "es-phone-dark": "hub-map/shots/C-14/thumb-es-phone-dark.jpg",
+          "en-phone-dark": "hub-map/shots/C-14/thumb-en-phone-dark.jpg",
+          "es-desktop-dark": "hub-map/shots/C-14/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/C-14/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/C-14/es-390.jpg",
+          "en-390": "hub-map/shots/C-14/en-390.jpg",
+          "es-1280": "hub-map/shots/C-14/es-1280.jpg",
+          "en-1280": "hub-map/shots/C-14/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "C-15",
+      "route": "/app/faq/2",
+      "name": {
+        "es": "Preguntas frecuentes (2/2)",
+        "en": "Preguntas frecuentes (2/2)"
+      },
+      "purpose": {
+        "es": "Página 2 de las preguntas frecuentes: el espacio, cómo llegar y contacto; termina con una persona, nunca en un callejón sin salida.",
+        "en": "Page 2 of the public answer sheet: the space, getting there, and contact — it ends with a route to a human, so the FAQ never dead-ends."
+      },
+      "surface": "customer",
+      "roles": [
+        "customer",
+        "teacher"
+      ],
+      "experienceId": "app",
+      "device": "phone",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-phone": "hub-map/shots/C-15/thumb-es-phone.jpg",
+          "en-phone": "hub-map/shots/C-15/thumb-en-phone.jpg",
+          "es-desktop": "hub-map/shots/C-15/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/C-15/thumb-en-desktop.jpg",
+          "es-phone-dark": "hub-map/shots/C-15/thumb-es-phone-dark.jpg",
+          "en-phone-dark": "hub-map/shots/C-15/thumb-en-phone-dark.jpg",
+          "es-desktop-dark": "hub-map/shots/C-15/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/C-15/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/C-15/es-390.jpg",
+          "en-390": "hub-map/shots/C-15/en-390.jpg",
+          "es-1280": "hub-map/shots/C-15/es-1280.jpg",
+          "en-1280": "hub-map/shots/C-15/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "C-16",
+      "route": "/app/invite",
+      "name": {
+        "es": "Invita a un amigo",
+        "en": "Invite a guest"
+      },
+      "purpose": {
+        "es": "Invitar a un amigo con pase de invitado o referido y ver la atribución.",
+        "en": "Make word of mouth mechanical: send a pass by WhatsApp, email or link, from a class or from its own page."
+      },
+      "surface": "customer",
+      "roles": [
+        "customer",
+        "teacher"
+      ],
+      "experienceId": "app",
+      "device": "phone",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-phone": "hub-map/shots/C-16/thumb-es-phone.jpg",
+          "en-phone": "hub-map/shots/C-16/thumb-en-phone.jpg",
+          "es-desktop": "hub-map/shots/C-16/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/C-16/thumb-en-desktop.jpg",
+          "es-phone-dark": "hub-map/shots/C-16/thumb-es-phone-dark.jpg",
+          "en-phone-dark": "hub-map/shots/C-16/thumb-en-phone-dark.jpg",
+          "es-desktop-dark": "hub-map/shots/C-16/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/C-16/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/C-16/es-390.jpg",
+          "en-390": "hub-map/shots/C-16/en-390.jpg",
+          "es-1280": "hub-map/shots/C-16/es-1280.jpg",
+          "en-1280": "hub-map/shots/C-16/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "C-17",
+      "route": "/app/gift",
+      "name": {
+        "es": "Tarjeta de regalo",
+        "en": "Gift card"
+      },
+      "purpose": {
+        "es": "Comprar y programar la entrega de una tarjeta de regalo.",
+        "en": "Sell wellness as a present: amount, recipient, delivery date, message, design, then pay."
+      },
+      "surface": "customer",
+      "roles": [
+        "customer",
+        "teacher"
+      ],
+      "experienceId": "app",
+      "device": "phone",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-phone": "hub-map/shots/C-17/thumb-es-phone.jpg",
+          "en-phone": "hub-map/shots/C-17/thumb-en-phone.jpg",
+          "es-desktop": "hub-map/shots/C-17/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/C-17/thumb-en-desktop.jpg",
+          "es-phone-dark": "hub-map/shots/C-17/thumb-es-phone-dark.jpg",
+          "en-phone-dark": "hub-map/shots/C-17/thumb-en-phone-dark.jpg",
+          "es-desktop-dark": "hub-map/shots/C-17/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/C-17/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/C-17/es-390.jpg",
+          "en-390": "hub-map/shots/C-17/en-390.jpg",
+          "es-1280": "hub-map/shots/C-17/es-1280.jpg",
+          "en-1280": "hub-map/shots/C-17/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "C-18",
+      "route": "/app/teachers",
+      "name": {
+        "es": "Galería y perfil de profesores",
+        "en": "Teacher gallery & profile"
+      },
+      "purpose": {
+        "es": "Galería de profesores con perfil, certificaciones, clases y valoraciones.",
+        "en": "Let students choose a teacher, not just a time slot. Off the main flow, reachable from class detail and community."
+      },
+      "surface": "customer",
+      "roles": [
+        "customer",
+        "teacher"
+      ],
+      "experienceId": "app",
+      "device": "phone",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-phone": "hub-map/shots/C-18/thumb-es-phone.jpg",
+          "en-phone": "hub-map/shots/C-18/thumb-en-phone.jpg",
+          "es-desktop": "hub-map/shots/C-18/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/C-18/thumb-en-desktop.jpg",
+          "es-phone-dark": "hub-map/shots/C-18/thumb-es-phone-dark.jpg",
+          "en-phone-dark": "hub-map/shots/C-18/thumb-en-phone-dark.jpg",
+          "es-desktop-dark": "hub-map/shots/C-18/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/C-18/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/C-18/es-390.jpg",
+          "en-390": "hub-map/shots/C-18/en-390.jpg",
+          "es-1280": "hub-map/shots/C-18/es-1280.jpg",
+          "en-1280": "hub-map/shots/C-18/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "C-19",
+      "route": "/app/profile",
+      "name": {
+        "es": "Perfil, ajustes y membresía",
+        "en": "Profile, settings & membership"
+      },
+      "purpose": {
+        "es": "Perfil, ajustes, idioma, notificaciones, dispositivos y membresía en un solo lugar.",
+        "en": "Everything about me and every switch I own, including where to leave a public review."
+      },
+      "surface": "customer",
+      "roles": [
+        "customer",
+        "teacher"
+      ],
+      "experienceId": "app",
+      "device": "phone",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-phone": "hub-map/shots/C-19/thumb-es-phone.jpg",
+          "en-phone": "hub-map/shots/C-19/thumb-en-phone.jpg",
+          "es-desktop": "hub-map/shots/C-19/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/C-19/thumb-en-desktop.jpg",
+          "es-phone-dark": "hub-map/shots/C-19/thumb-es-phone-dark.jpg",
+          "en-phone-dark": "hub-map/shots/C-19/thumb-en-phone-dark.jpg",
+          "es-desktop-dark": "hub-map/shots/C-19/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/C-19/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/C-19/es-390.jpg",
+          "en-390": "hub-map/shots/C-19/en-390.jpg",
+          "es-1280": "hub-map/shots/C-19/es-1280.jpg",
+          "en-1280": "hub-map/shots/C-19/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "C-20",
+      "route": "/app/waitlist/:id",
+      "name": {
+        "es": "Lista de espera y ventana de reclamo",
+        "en": "Waitlist & claim window"
+      },
+      "purpose": {
+        "es": "Lista de espera con ventana de reclamo cuando se libera un cupo.",
+        "en": "Turn a full class into a queue that actually converts: show the position, explain the rule, and make claiming a released spot a single tap inside a 30-minute window."
+      },
+      "surface": "customer",
+      "roles": [
+        "customer",
+        "teacher"
+      ],
+      "experienceId": "app",
+      "device": "phone",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-phone": "hub-map/shots/C-20/thumb-es-phone.jpg",
+          "en-phone": "hub-map/shots/C-20/thumb-en-phone.jpg",
+          "es-desktop": "hub-map/shots/C-20/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/C-20/thumb-en-desktop.jpg",
+          "es-phone-dark": "hub-map/shots/C-20/thumb-es-phone-dark.jpg",
+          "en-phone-dark": "hub-map/shots/C-20/thumb-en-phone-dark.jpg",
+          "es-desktop-dark": "hub-map/shots/C-20/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/C-20/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/C-20/es-390.jpg",
+          "en-390": "hub-map/shots/C-20/en-390.jpg",
+          "es-1280": "hub-map/shots/C-20/es-1280.jpg",
+          "en-1280": "hub-map/shots/C-20/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "C-22",
+      "route": "/app/membership",
+      "name": {
+        "es": "Gestionar membresía",
+        "en": "Manage membership"
+      },
+      "purpose": {
+        "es": "Pausar, cambiar o cancelar la membresía y ver los ciclos de facturación.",
+        "en": "Give members the three controls they actually need — freeze, change, cancel — without a phone call, while keeping the studio's notice periods intact."
+      },
+      "surface": "customer",
+      "roles": [
+        "customer",
+        "teacher"
+      ],
+      "experienceId": "app",
+      "device": "phone",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-phone": "hub-map/shots/C-22/thumb-es-phone.jpg",
+          "en-phone": "hub-map/shots/C-22/thumb-en-phone.jpg",
+          "es-desktop": "hub-map/shots/C-22/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/C-22/thumb-en-desktop.jpg",
+          "es-phone-dark": "hub-map/shots/C-22/thumb-es-phone-dark.jpg",
+          "en-phone-dark": "hub-map/shots/C-22/thumb-en-phone-dark.jpg",
+          "es-desktop-dark": "hub-map/shots/C-22/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/C-22/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/C-22/es-390.jpg",
+          "en-390": "hub-map/shots/C-22/en-390.jpg",
+          "es-1280": "hub-map/shots/C-22/es-1280.jpg",
+          "en-1280": "hub-map/shots/C-22/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "C-23",
+      "route": "/app/events",
+      "name": {
+        "es": "Detalle de evento y RSVP",
+        "en": "Event detail & RSVP"
+      },
+      "purpose": {
+        "es": "Detalle de un evento con RSVP, precio y pases de invitado.",
+        "en": "Sell the things that are not regular classes — sound baths, workshops, retreats — with their own pricing, capacity and guest rules."
+      },
+      "surface": "customer",
+      "roles": [
+        "customer",
+        "teacher"
+      ],
+      "experienceId": "app",
+      "device": "phone",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-phone": "hub-map/shots/C-23/thumb-es-phone.jpg",
+          "en-phone": "hub-map/shots/C-23/thumb-en-phone.jpg",
+          "es-desktop": "hub-map/shots/C-23/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/C-23/thumb-en-desktop.jpg",
+          "es-phone-dark": "hub-map/shots/C-23/thumb-es-phone-dark.jpg",
+          "en-phone-dark": "hub-map/shots/C-23/thumb-en-phone-dark.jpg",
+          "es-desktop-dark": "hub-map/shots/C-23/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/C-23/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/C-23/es-390.jpg",
+          "en-390": "hub-map/shots/C-23/en-390.jpg",
+          "es-1280": "hub-map/shots/C-23/es-1280.jpg",
+          "en-1280": "hub-map/shots/C-23/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "C-24",
+      "route": "/app/notifications",
+      "name": {
+        "es": "Bandeja de notificaciones",
+        "en": "Notifications inbox"
+      },
+      "purpose": {
+        "es": "Bandeja de notificaciones con enlaces profundos y preferencias por canal.",
+        "en": "One place for everything the studio has sent, so a missed push or a WhatsApp scrolled past is never a lost class."
+      },
+      "surface": "customer",
+      "roles": [
+        "customer",
+        "teacher"
+      ],
+      "experienceId": "app",
+      "device": "phone",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-phone": "hub-map/shots/C-24/thumb-es-phone.jpg",
+          "en-phone": "hub-map/shots/C-24/thumb-en-phone.jpg",
+          "es-desktop": "hub-map/shots/C-24/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/C-24/thumb-en-desktop.jpg",
+          "es-phone-dark": "hub-map/shots/C-24/thumb-es-phone-dark.jpg",
+          "en-phone-dark": "hub-map/shots/C-24/thumb-en-phone-dark.jpg",
+          "es-desktop-dark": "hub-map/shots/C-24/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/C-24/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/C-24/es-390.jpg",
+          "en-390": "hub-map/shots/C-24/en-390.jpg",
+          "es-1280": "hub-map/shots/C-24/es-1280.jpg",
+          "en-1280": "hub-map/shots/C-24/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "C-25",
+      "route": "/app/more",
+      "name": {
+        "es": "Más · perfil, reglas, contacto",
+        "en": "More · profile, rules, contact"
+      },
+      "purpose": {
+        "es": "El menú Más: perfil, reglas, horarios, contacto y ajustes.",
+        "en": "A fifth destination was one too many for a 340px bar, so profile, club rules and contacting the studio live one level down. Contact moves here from the floating bubble, where it competed with the primary action on every screen."
+      },
+      "surface": "customer",
+      "roles": [
+        "customer",
+        "teacher"
+      ],
+      "experienceId": "app",
+      "device": "phone",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-phone": "hub-map/shots/C-25/thumb-es-phone.jpg",
+          "en-phone": "hub-map/shots/C-25/thumb-en-phone.jpg",
+          "es-desktop": "hub-map/shots/C-25/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/C-25/thumb-en-desktop.jpg",
+          "es-phone-dark": "hub-map/shots/C-25/thumb-es-phone-dark.jpg",
+          "en-phone-dark": "hub-map/shots/C-25/thumb-en-phone-dark.jpg",
+          "es-desktop-dark": "hub-map/shots/C-25/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/C-25/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/C-25/es-390.jpg",
+          "en-390": "hub-map/shots/C-25/en-390.jpg",
+          "es-1280": "hub-map/shots/C-25/es-1280.jpg",
+          "en-1280": "hub-map/shots/C-25/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "C-26",
+      "route": "/app/account",
+      "name": {
+        "es": "Cuenta y datos",
+        "en": "Account & data"
+      },
+      "purpose": {
+        "es": "Los derechos sobre la cuenta en un solo lugar: quién es el responsable del tratamiento, los consentimientos que la persona controla, una copia de sus propios datos, los documentos legales y la solicitud de eliminar la cuenta con lo que se conserva explicado en lenguaje llano.",
+        "en": "Account-level rights in one place: who the data controller is, the consents the member controls, a copy of their own data, the legal documents and the request to delete the account, with what is kept explained in plain words."
+      },
+      "surface": "customer",
+      "roles": [
+        "customer",
+        "teacher"
+      ],
+      "experienceId": "app",
+      "device": "phone",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-phone": "hub-map/shots/C-26/thumb-es-phone.jpg",
+          "en-phone": "hub-map/shots/C-26/thumb-en-phone.jpg",
+          "es-desktop": "hub-map/shots/C-26/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/C-26/thumb-en-desktop.jpg",
+          "es-phone-dark": "hub-map/shots/C-26/thumb-es-phone-dark.jpg",
+          "en-phone-dark": "hub-map/shots/C-26/thumb-en-phone-dark.jpg",
+          "es-desktop-dark": "hub-map/shots/C-26/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/C-26/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/C-26/es-390.jpg",
+          "en-390": "hub-map/shots/C-26/en-390.jpg",
+          "es-1280": "hub-map/shots/C-26/es-1280.jpg",
+          "en-1280": "hub-map/shots/C-26/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "A-05",
+      "route": "/app/intention",
+      "name": {
+        "es": "Intención del día — ¿Cómo quieres sentirte hoy?",
+        "en": "Intention check — ¿Cómo quieres sentirte hoy?"
+      },
+      "purpose": {
+        "es": "Preguntar cómo quiere sentirse hoy la persona y usar esa intención para ordenar las clases del día.",
+        "en": "The signature moment of the product. One question, four verbs; the choice re-orders the home feed and the recommended classes for the session. The verbs are what the student wants to do, and each resolves to one of the four movement tags the rest of the system already colours by."
+      },
+      "surface": "customer",
+      "roles": [
+        "customer",
+        "teacher"
+      ],
+      "experienceId": "app",
+      "device": "phone",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-phone": "hub-map/shots/A-05/thumb-es-phone.jpg",
+          "en-phone": "hub-map/shots/A-05/thumb-en-phone.jpg",
+          "es-desktop": "hub-map/shots/A-05/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/A-05/thumb-en-desktop.jpg",
+          "es-phone-dark": "hub-map/shots/A-05/thumb-es-phone-dark.jpg",
+          "en-phone-dark": "hub-map/shots/A-05/thumb-en-phone-dark.jpg",
+          "es-desktop-dark": "hub-map/shots/A-05/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/A-05/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/A-05/es-390.jpg",
+          "en-390": "hub-map/shots/A-05/en-390.jpg",
+          "es-1280": "hub-map/shots/A-05/es-1280.jpg",
+          "en-1280": "hub-map/shots/A-05/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "A-06",
+      "route": "/app/legal/:kind",
+      "name": {
+        "es": "Términos y condiciones / Política de privacidad",
+        "en": "Terms & Conditions / Privacy Policy"
+      },
+      "purpose": {
+        "es": "Páginas legales reales, enlazables y versionadas; los consentimientos registran qué versión se aceptó.",
+        "en": "Real, linkable, versioned legal pages reachable from sign-up, settings and the website — with placeholder body copy until counsel supplies the text."
+      },
+      "surface": "customer",
+      "roles": [
+        "customer",
+        "teacher",
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "finance",
+        "maintenance",
+        "public"
+      ],
+      "experienceId": "app",
+      "device": "phone",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-phone": "hub-map/shots/A-06/thumb-es-phone.jpg",
+          "en-phone": "hub-map/shots/A-06/thumb-en-phone.jpg",
+          "es-desktop": "hub-map/shots/A-06/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/A-06/thumb-en-desktop.jpg",
+          "es-phone-dark": "hub-map/shots/A-06/thumb-es-phone-dark.jpg",
+          "en-phone-dark": "hub-map/shots/A-06/thumb-en-phone-dark.jpg",
+          "es-desktop-dark": "hub-map/shots/A-06/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/A-06/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/A-06/es-390.jpg",
+          "en-390": "hub-map/shots/A-06/en-390.jpg",
+          "es-1280": "hub-map/shots/A-06/es-1280.jpg",
+          "en-1280": "hub-map/shots/A-06/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "E-01",
+      "route": "/app/state/empty",
+      "name": {
+        "es": "Inicio · primera vez (vacío)",
+        "en": "Home · first-time empty state"
+      },
+      "purpose": {
+        "es": "Estado vacío del inicio para una persona nueva: invita a reservar la primera clase.",
+        "en": "The home screen on day one, when there is no booking, no history and no statistics — it has to teach the next step instead of showing empty containers."
+      },
+      "surface": "customer",
+      "roles": [
+        "customer",
+        "teacher"
+      ],
+      "experienceId": "app",
+      "device": "phone",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-phone": "hub-map/shots/E-01/thumb-es-phone.jpg",
+          "en-phone": "hub-map/shots/E-01/thumb-en-phone.jpg",
+          "es-desktop": "hub-map/shots/E-01/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/E-01/thumb-en-desktop.jpg",
+          "es-phone-dark": "hub-map/shots/E-01/thumb-es-phone-dark.jpg",
+          "en-phone-dark": "hub-map/shots/E-01/thumb-en-phone-dark.jpg",
+          "es-desktop-dark": "hub-map/shots/E-01/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/E-01/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/E-01/es-390.jpg",
+          "en-390": "hub-map/shots/E-01/en-390.jpg",
+          "es-1280": "hub-map/shots/E-01/es-1280.jpg",
+          "en-1280": "hub-map/shots/E-01/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "E-02",
+      "route": "/app/state/declined",
+      "name": {
+        "es": "Pago rechazado",
+        "en": "Payment declined"
+      },
+      "purpose": {
+        "es": "Pago rechazado: explicar, reintentar, cambiar método o pedir ayuda a recepción.",
+        "en": "A refusal is the highest-risk moment in the funnel: say what happened, confirm nothing was charged, keep the class reserved, and offer a way through."
+      },
+      "surface": "customer",
+      "roles": [
+        "customer",
+        "teacher"
+      ],
+      "experienceId": "app",
+      "device": "phone",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-phone": "hub-map/shots/E-02/thumb-es-phone.jpg",
+          "en-phone": "hub-map/shots/E-02/thumb-en-phone.jpg",
+          "es-desktop": "hub-map/shots/E-02/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/E-02/thumb-en-desktop.jpg",
+          "es-phone-dark": "hub-map/shots/E-02/thumb-es-phone-dark.jpg",
+          "en-phone-dark": "hub-map/shots/E-02/thumb-en-phone-dark.jpg",
+          "es-desktop-dark": "hub-map/shots/E-02/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/E-02/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/E-02/es-390.jpg",
+          "en-390": "hub-map/shots/E-02/en-390.jpg",
+          "es-1280": "hub-map/shots/E-02/es-1280.jpg",
+          "en-1280": "hub-map/shots/E-02/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "E-03",
+      "route": "/app/state/cancelled",
+      "name": {
+        "es": "Clase cancelada por el estudio",
+        "en": "Class cancelled by the studio"
+      },
+      "purpose": {
+        "es": "El estudio canceló la clase: devolver crédito, ofrecer alternativas y avisar.",
+        "en": "When the studio breaks the promise, the screen should do the recovery work: refund already done, replacement classes ready, no action required to get the credit back."
+      },
+      "surface": "customer",
+      "roles": [
+        "customer",
+        "teacher"
+      ],
+      "experienceId": "app",
+      "device": "phone",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-phone": "hub-map/shots/E-03/thumb-es-phone.jpg",
+          "en-phone": "hub-map/shots/E-03/thumb-en-phone.jpg",
+          "es-desktop": "hub-map/shots/E-03/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/E-03/thumb-en-desktop.jpg",
+          "es-phone-dark": "hub-map/shots/E-03/thumb-es-phone-dark.jpg",
+          "en-phone-dark": "hub-map/shots/E-03/thumb-en-phone-dark.jpg",
+          "es-desktop-dark": "hub-map/shots/E-03/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/E-03/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/E-03/es-390.jpg",
+          "en-390": "hub-map/shots/E-03/en-390.jpg",
+          "es-1280": "hub-map/shots/E-03/es-1280.jpg",
+          "en-1280": "hub-map/shots/E-03/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "A-01",
+      "route": "/auth",
+      "name": {
+        "es": "Splash / carga que respira",
+        "en": "Splash / breathing load"
+      },
+      "purpose": {
+        "es": "Marcar el registro emocional antes de cualquier UI: tres círculos respiran alrededor del logo mientras se restaura la sesión, se cargan los feature flags y se detecta el idioma.",
+        "en": "Set the emotional register before any UI: three concentric circles breathe around the wordmark at 7s, roughly a calm respiratory cycle. Covers session restore, feature-flag fetch and locale detection."
+      },
+      "surface": "public",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "finance",
+        "teacher",
+        "maintenance",
+        "customer",
+        "public"
+      ],
+      "experienceId": "app",
+      "device": "phone",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-phone": "hub-map/shots/A-01/thumb-es-phone.jpg",
+          "en-phone": "hub-map/shots/A-01/thumb-en-phone.jpg",
+          "es-desktop": "hub-map/shots/A-01/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/A-01/thumb-en-desktop.jpg",
+          "es-phone-dark": "hub-map/shots/A-01/thumb-es-phone-dark.jpg",
+          "en-phone-dark": "hub-map/shots/A-01/thumb-en-phone-dark.jpg",
+          "es-desktop-dark": "hub-map/shots/A-01/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/A-01/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/A-01/es-390.jpg",
+          "en-390": "hub-map/shots/A-01/en-390.jpg",
+          "es-1280": "hub-map/shots/A-01/es-1280.jpg",
+          "en-1280": "hub-map/shots/A-01/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "A-02",
+      "route": "/auth/sign-in",
+      "name": {
+        "es": "Iniciar sesión",
+        "en": "Sign in"
+      },
+      "purpose": {
+        "es": "Que un alumno que vuelve entre en un toque: biometría en dispositivo conocido, luego Apple o Google, luego correo y contraseña.",
+        "en": "Get a returning student into the app in one tap where possible: biometric first on a known device, then Apple or Google, then email and password."
+      },
+      "surface": "public",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "finance",
+        "teacher",
+        "maintenance",
+        "customer",
+        "public"
+      ],
+      "experienceId": "app",
+      "device": "phone",
+      "status": "built",
+      "actions": [
+        "auth.signIn"
+      ],
+      "shots": {
+        "thumbs": {
+          "es-phone": "hub-map/shots/A-02/thumb-es-phone.jpg",
+          "en-phone": "hub-map/shots/A-02/thumb-en-phone.jpg",
+          "es-desktop": "hub-map/shots/A-02/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/A-02/thumb-en-desktop.jpg",
+          "es-phone-dark": "hub-map/shots/A-02/thumb-es-phone-dark.jpg",
+          "en-phone-dark": "hub-map/shots/A-02/thumb-en-phone-dark.jpg",
+          "es-desktop-dark": "hub-map/shots/A-02/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/A-02/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/A-02/es-390.jpg",
+          "en-390": "hub-map/shots/A-02/en-390.jpg",
+          "es-1280": "hub-map/shots/A-02/es-1280.jpg",
+          "en-1280": "hub-map/shots/A-02/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "A-03",
+      "route": "/auth/sign-up",
+      "name": {
+        "es": "Crear cuenta",
+        "en": "Create account"
+      },
+      "purpose": {
+        "es": "Crear la cuenta con lo mínimo necesario y recoger consentimientos, contacto de emergencia y verificación de WhatsApp.",
+        "en": "Collect the minimum the studio actually needs, with WhatsApp as a first-class channel because that is where reminders and cancellations go."
+      },
+      "surface": "public",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "finance",
+        "teacher",
+        "maintenance",
+        "customer",
+        "public"
+      ],
+      "experienceId": "app",
+      "device": "phone",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-phone": "hub-map/shots/A-03/thumb-es-phone.jpg",
+          "en-phone": "hub-map/shots/A-03/thumb-en-phone.jpg",
+          "es-desktop": "hub-map/shots/A-03/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/A-03/thumb-en-desktop.jpg",
+          "es-phone-dark": "hub-map/shots/A-03/thumb-es-phone-dark.jpg",
+          "en-phone-dark": "hub-map/shots/A-03/thumb-en-phone-dark.jpg",
+          "es-desktop-dark": "hub-map/shots/A-03/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/A-03/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/A-03/es-390.jpg",
+          "en-390": "hub-map/shots/A-03/en-390.jpg",
+          "es-1280": "hub-map/shots/A-03/es-1280.jpg",
+          "en-1280": "hub-map/shots/A-03/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "C-21",
+      "route": "/auth/recover",
+      "name": {
+        "es": "Recuperar contraseña (OTP por WhatsApp)",
+        "en": "Password recovery (WhatsApp OTP)"
+      },
+      "purpose": {
+        "es": "Recuperar acceso con un código por WhatsApp, con límites de intentos.",
+        "en": "Get a locked-out student back in through the channel they actually verified: a six-digit WhatsApp code, with email as the fallback."
+      },
+      "surface": "public",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "finance",
+        "teacher",
+        "maintenance",
+        "customer",
+        "public"
+      ],
+      "experienceId": "app",
+      "device": "phone",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-phone": "hub-map/shots/C-21/thumb-es-phone.jpg",
+          "en-phone": "hub-map/shots/C-21/thumb-en-phone.jpg",
+          "es-desktop": "hub-map/shots/C-21/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/C-21/thumb-en-desktop.jpg",
+          "es-phone-dark": "hub-map/shots/C-21/thumb-es-phone-dark.jpg",
+          "en-phone-dark": "hub-map/shots/C-21/thumb-en-phone-dark.jpg",
+          "es-desktop-dark": "hub-map/shots/C-21/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/C-21/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/C-21/es-390.jpg",
+          "en-390": "hub-map/shots/C-21/en-390.jpg",
+          "es-1280": "hub-map/shots/C-21/es-1280.jpg",
+          "en-1280": "hub-map/shots/C-21/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "E-04",
+      "route": "/auth/locked",
+      "name": {
+        "es": "Acceso bloqueado",
+        "en": "Sign-in locked"
+      },
+      "purpose": {
+        "es": "Acceso bloqueado tras intentos fallidos: espera, OTP o contacto con el estudio.",
+        "en": "A lockout is a security measure that must not become a dead end: state the pause, count it down, and route to recovery, which is not rate-limited."
+      },
+      "surface": "public",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "finance",
+        "teacher",
+        "maintenance",
+        "customer",
+        "public"
+      ],
+      "experienceId": "app",
+      "device": "phone",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-phone": "hub-map/shots/E-04/thumb-es-phone.jpg",
+          "en-phone": "hub-map/shots/E-04/thumb-en-phone.jpg",
+          "es-desktop": "hub-map/shots/E-04/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/E-04/thumb-en-desktop.jpg",
+          "es-phone-dark": "hub-map/shots/E-04/thumb-es-phone-dark.jpg",
+          "en-phone-dark": "hub-map/shots/E-04/thumb-en-phone-dark.jpg",
+          "es-desktop-dark": "hub-map/shots/E-04/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/E-04/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/E-04/es-390.jpg",
+          "en-390": "hub-map/shots/E-04/en-390.jpg",
+          "es-1280": "hub-map/shots/E-04/es-1280.jpg",
+          "en-1280": "hub-map/shots/E-04/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "D-03",
+      "route": "/dev",
+      "name": {
+        "es": "Índice de specs",
+        "en": "Specs index"
+      },
+      "purpose": {
+        "es": "Lista todas las PageSpec registradas con badge de completitud, ruta y estado (construida / stub / sin ruta).",
+        "en": "Lists every registered PageSpec with completeness badge, route and status (built / stub / no route)."
+      },
+      "surface": "dev",
+      "roles": [
+        "super_admin"
+      ],
+      "experienceId": "dev",
+      "device": "desktop",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/D-03/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/D-03/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/D-03/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/D-03/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/D-03/es-390.jpg",
+          "en-390": "hub-map/shots/D-03/en-390.jpg",
+          "es-1280": "hub-map/shots/D-03/es-1280.jpg",
+          "en-1280": "hub-map/shots/D-03/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "D-01",
+      "route": "/dev/tokens",
+      "name": {
+        "es": "Materiales, tokens y fisicidad",
+        "en": "Materials, tokens & physicality"
+      },
+      "purpose": {
+        "es": "Los tokens de diseño: color, tipografía, espaciado, radios, sombras y movimiento.",
+        "en": "The material layer of the system: textures, surfaces, elevation and corner radii, with a switch between the styled build and the functional wireframe."
+      },
+      "surface": "dev",
+      "roles": [
+        "super_admin"
+      ],
+      "experienceId": "dev",
+      "device": "desktop",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/D-01/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/D-01/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/D-01/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/D-01/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/D-01/es-390.jpg",
+          "en-390": "hub-map/shots/D-01/en-390.jpg",
+          "es-1280": "hub-map/shots/D-01/es-1280.jpg",
+          "en-1280": "hub-map/shots/D-01/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "D-02",
+      "route": "/dev/components",
+      "name": {
+        "es": "Biblioteca de componentes — atómica",
+        "en": "Component library — atomic"
+      },
+      "purpose": {
+        "es": "La biblioteca viva de componentes por nivel atómico, con estados y ejemplos.",
+        "en": "Every component in the product, organised as atoms, molecules, organisms, templates and pages, so a developer can build a screen without inventing anything."
+      },
+      "surface": "dev",
+      "roles": [
+        "super_admin"
+      ],
+      "experienceId": "dev",
+      "device": "desktop",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/D-02/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/D-02/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/D-02/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/D-02/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/D-02/es-390.jpg",
+          "en-390": "hub-map/shots/D-02/en-390.jpg",
+          "es-1280": "hub-map/shots/D-02/es-1280.jpg",
+          "en-1280": "hub-map/shots/D-02/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "D-04",
+      "route": "/dev/layout",
+      "name": {
+        "es": "Editor de layout",
+        "en": "Layout editor"
+      },
+      "purpose": {
+        "es": "Reordenar y ocultar las secciones de una página con drag-and-drop; persiste en page_layouts y las páginas lo leen con useLayout(spec).",
+        "en": "Reorder and hide a page’s sections with drag-and-drop; persists to page_layouts and pages read it with useLayout(spec)."
+      },
+      "surface": "dev",
+      "roles": [
+        "super_admin"
+      ],
+      "experienceId": "dev",
+      "device": "desktop",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/D-04/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/D-04/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/D-04/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/D-04/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/D-04/es-390.jpg",
+          "en-390": "hub-map/shots/D-04/en-390.jpg",
+          "es-1280": "hub-map/shots/D-04/es-1280.jpg",
+          "en-1280": "hub-map/shots/D-04/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "K-01",
+      "route": "/dev/knowledgebase",
+      "name": {
+        "es": "Plan, kanban y changelog",
+        "en": "Plan, kanban & changelog"
+      },
+      "purpose": {
+        "es": "El plan, el kanban y el changelog del sistema.",
+        "en": "The knowledgebase: the build plan, the board tracking it, and the log of every change with the reasoning behind it."
+      },
+      "surface": "dev",
+      "roles": [
+        "super_admin"
+      ],
+      "experienceId": "kb",
+      "device": "desktop",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/K-01/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/K-01/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/K-01/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/K-01/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/K-01/es-390.jpg",
+          "en-390": "hub-map/shots/K-01/en-390.jpg",
+          "es-1280": "hub-map/shots/K-01/es-1280.jpg",
+          "en-1280": "hub-map/shots/K-01/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "D-05",
+      "route": "/dev/canvas",
+      "name": {
+        "es": "Lienzo de páginas",
+        "en": "Page canvas"
+      },
+      "purpose": {
+        "es": "Todo el producto en una pantalla: cada página con su captura real, agrupada por superficie (Hub · Sitio · Acceso · Clientes · Profesores · Staff · Administración · Desarrollo · Documentación), con nombre, código y ruta, y un zoom de cuatro pasos. Clic o Enter abre la página.",
+        "en": "The whole product on one screen: every page with its real capture, grouped by surface (Hub · Website · Auth · Customer · Teacher · Staff · Admin · Dev · Docs), with its name, code and route, and a four-step zoom. Click or Enter opens the page."
+      },
+      "surface": "dev",
+      "roles": [
+        "super_admin"
+      ],
+      "experienceId": "dev",
+      "device": "desktop",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {},
+        "full": {
+          "es-390": "hub-map/shots/D-05/es-390.jpg",
+          "en-390": "hub-map/shots/D-05/en-390.jpg",
+          "es-1280": "hub-map/shots/D-05/es-1280.jpg",
+          "en-1280": "hub-map/shots/D-05/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "D-06",
+      "route": "/dev/simulator",
+      "name": {
+        "es": "Simulador de dispositivos",
+        "en": "Device simulator"
+      },
+      "purpose": {
+        "es": "Cualquier ruta, en cualquier dispositivo, como cualquier persona: teléfono 390×844, tableta 768×1024, escritorio 1280×800 o TV 3840×2160, con rol, idioma y tema propios del marco. Todo el estado va en la query del hash, así una vista es un enlace.",
+        "en": "Any route, on any device, as anyone: phone 390×844, tablet 768×1024, desktop 1280×800 or 4K TV 3840×2160, with the frame’s own role, language and theme. All the state lives in the hash query, so a view is a link."
+      },
+      "surface": "dev",
+      "roles": [
+        "super_admin"
+      ],
+      "experienceId": "dev",
+      "device": "desktop",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {},
+        "full": {
+          "es-390": "hub-map/shots/D-06/es-390.jpg",
+          "en-390": "hub-map/shots/D-06/en-390.jpg",
+          "es-1280": "hub-map/shots/D-06/es-1280.jpg",
+          "en-1280": "hub-map/shots/D-06/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "K-02",
+      "route": "/docs",
+      "name": {
+        "es": "Documentación",
+        "en": "Documentation"
+      },
+      "purpose": {
+        "es": "Visor en la app de docs/**: reglas, arquitectura, prompts, changelog, kanban, mapa de flujo, modelo de datos, capturas. Los .md son la fuente; no hay CMS.",
+        "en": "In-app viewer for docs/**: rules, architecture, prompts, changelog, kanban, flow map, data model, screenshots. The .md files are the source; no CMS."
+      },
+      "surface": "docs",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "finance",
+        "teacher",
+        "maintenance",
+        "customer",
+        "public"
+      ],
+      "experienceId": "docs",
+      "device": "sheet",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/K-02/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/K-02/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/K-02/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/K-02/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/K-02/es-390.jpg",
+          "en-390": "hub-map/shots/K-02/en-390.jpg",
+          "es-1280": "hub-map/shots/K-02/es-1280.jpg",
+          "en-1280": "hub-map/shots/K-02/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "HUB-01",
+      "route": "/",
+      "name": {
+        "es": "Hub de pruebas",
+        "en": "Testing hub"
+      },
+      "purpose": {
+        "es": "La primera pantalla: enseña el sistema entero de un vistazo y deja entrar a cualquier puesto del estudio con su usuario demo. Cada tarjeta muestra la pantalla real (captura, y la página en vivo cuando cabe), su estado y su ruta; abajo, el sistema en números y el hub de pruebas (lienzo, simulador, specs, tablas, componentes, tokens, decisiones, capturas).",
+        "en": "The first screen: it shows the whole system at once and lets a tester enter any seat at the studio as its demo user. Every card shows the real screen (a capture, and the running page when there is room), its status and its route; below, the system in numbers and the testing hub (canvas, simulator, specs, tables, components, tokens, decisions, captures)."
+      },
+      "surface": "public",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "finance",
+        "teacher",
+        "maintenance",
+        "customer",
+        "public"
+      ],
+      "experienceId": "dev",
+      "device": "desktop",
+      "status": "built",
+      "actions": [
+        "hub.enterAs",
+        "hub.openCanvas",
+        "hub.openSimulator",
+        "hub.openTool",
+        "hub.toggleDevMode",
+        "hub.setLang",
+        "hub.map",
+        "hub.toggleTheme",
+        "hub.toggleWireframe"
+      ],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/HUB-01/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/HUB-01/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/HUB-01/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/HUB-01/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/HUB-01/es-390.jpg",
+          "en-390": "hub-map/shots/HUB-01/en-390.jpg",
+          "es-1280": "hub-map/shots/HUB-01/es-1280.jpg",
+          "en-1280": "hub-map/shots/HUB-01/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "E-05",
+      "route": "/no-access",
+      "name": {
+        "es": "Sin acceso",
+        "en": "No access"
+      },
+      "purpose": {
+        "es": "Página amable cuando el rol actual no puede entrar a una ruta; ofrece volver al hub para cambiar de usuario demo.",
+        "en": "Friendly page when the current role cannot enter a route; offers the hub to switch demo user."
+      },
+      "surface": "public",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "finance",
+        "teacher",
+        "maintenance",
+        "customer",
+        "public"
+      ],
+      "experienceId": "app",
+      "device": "phone",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/E-05/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/E-05/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/E-05/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/E-05/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/E-05/es-390.jpg",
+          "en-390": "hub-map/shots/E-05/en-390.jpg",
+          "es-1280": "hub-map/shots/E-05/es-1280.jpg",
+          "en-1280": "hub-map/shots/E-05/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "K-03",
+      "route": "/manual",
+      "name": {
+        "es": "Manual de operaciones",
+        "en": "Operations manual"
+      },
+      "purpose": {
+        "es": "Cómo funciona el club en persona y en el software, en siete partes: quiénes somos, la operación diaria, clientes y planes, dinero, contenido y marca, legal y políticas, y el sistema. Igual para todos los que lo miran; español primero, inglés como espejo.",
+        "en": "How the club runs in person and in software, in seven parts: who we are, daily operations, customers and plans, money, content and brand, legal and policies, and the system. Same for everyone who looks; Spanish first, English as a mirror."
+      },
+      "surface": "docs",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "finance",
+        "teacher",
+        "maintenance",
+        "customer",
+        "public"
+      ],
+      "experienceId": "manual",
+      "device": "sheet",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/K-03/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/K-03/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/K-03/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/K-03/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/K-03/es-390.jpg",
+          "en-390": "hub-map/shots/K-03/en-390.jpg",
+          "es-1280": "hub-map/shots/K-03/es-1280.jpg",
+          "en-1280": "hub-map/shots/K-03/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "K-04",
+      "route": "/manual/decisions",
+      "name": {
+        "es": "Decisiones pendientes",
+        "en": "Decisions pending"
+      },
+      "purpose": {
+        "es": "Lista automática de todo lo que el estudio no ha definido, extraída de los bloques «DECISIÓN PENDIENTE» del manual, agrupada por capítulo y parte.",
+        "en": "Automatic list of everything the studio has not defined, extracted from the manual’s \"DECISION NEEDED\" blocks, grouped by chapter and part."
+      },
+      "surface": "docs",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "finance",
+        "teacher",
+        "maintenance",
+        "customer",
+        "public"
+      ],
+      "experienceId": "manual",
+      "device": "sheet",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/K-04/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/K-04/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/K-04/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/K-04/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/K-04/es-390.jpg",
+          "en-390": "hub-map/shots/K-04/en-390.jpg",
+          "es-1280": "hub-map/shots/K-04/es-1280.jpg",
+          "en-1280": "hub-map/shots/K-04/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "S-01",
+      "route": "/staff",
+      "name": {
+        "es": "Inicio por rol y selector demo",
+        "en": "Role home & demo switcher"
+      },
+      "purpose": {
+        "es": "Inicio por rol con selector de usuario demo para probar cada experiencia.",
+        "en": "One app, six doors. The demo switcher in the toolbar swaps role so the whole system can be reviewed as any user."
+      },
+      "surface": "staff",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "finance",
+        "maintenance",
+        "teacher"
+      ],
+      "experienceId": "desk",
+      "device": "desktop",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/S-01/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/S-01/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/S-01/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/S-01/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/S-01/es-390.jpg",
+          "en-390": "hub-map/shots/S-01/en-390.jpg",
+          "es-1280": "hub-map/shots/S-01/es-1280.jpg",
+          "en-1280": "hub-map/shots/S-01/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "S-06",
+      "route": "/staff/inbox",
+      "name": {
+        "es": "Bandeja de mensajes",
+        "en": "Message inbox"
+      },
+      "purpose": {
+        "es": "Ver quién escribió al estudio, responder por WhatsApp o email desde la misma pantalla, dejar notas internas y saltar a la ficha CRM de la persona. Una conversación por persona, con lo entrante, lo saliente, lo automático y las notas del equipo en un solo hilo.",
+        "en": "See who wrote to the studio, reply by WhatsApp or email from the same screen, leave internal notes and jump to the person’s CRM record. One conversation per person, with inbound, outbound, automated and staff notes in a single thread."
+      },
+      "surface": "staff",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk"
+      ],
+      "experienceId": "inbox",
+      "device": "desktop",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/S-06/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/S-06/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/S-06/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/S-06/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/S-06/es-390.jpg",
+          "en-390": "hub-map/shots/S-06/en-390.jpg",
+          "es-1280": "hub-map/shots/S-06/es-1280.jpg",
+          "en-1280": "hub-map/shots/S-06/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "S-02",
+      "route": "/staff/checkin",
+      "name": {
+        "es": "Check-in en recepción",
+        "en": "Front desk check-in"
+      },
+      "purpose": {
+        "es": "Check-in en recepción: lista de la clase, llegadas, lista de espera y cobros rápidos.",
+        "en": "The desk view during the ten minutes before class: who is expected, who has arrived, scan or search, and sell a drop-in on the spot."
+      },
+      "surface": "staff",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk"
+      ],
+      "experienceId": "desk",
+      "device": "desktop",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/S-02/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/S-02/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/S-02/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/S-02/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/S-02/es-390.jpg",
+          "en-390": "hub-map/shots/S-02/en-390.jpg",
+          "es-1280": "hub-map/shots/S-02/es-1280.jpg",
+          "en-1280": "hub-map/shots/S-02/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "S-04",
+      "route": "/staff/register",
+      "name": {
+        "es": "Registrar y cobrar",
+        "en": "Register & take payment"
+      },
+      "purpose": {
+        "es": "La transacción de mostrador en una pantalla: quién es, qué compra, cómo paga.",
+        "en": "The counter transaction in one screen: who they are, what they are buying, how they are paying. Built for someone standing at a desk with a person in front of them, so it is three short sections rather than a wizard."
+      },
+      "surface": "staff",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk"
+      ],
+      "experienceId": "pos",
+      "device": "desktop",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/S-04/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/S-04/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/S-04/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/S-04/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/S-04/es-390.jpg",
+          "en-390": "hub-map/shots/S-04/en-390.jpg",
+          "es-1280": "hub-map/shots/S-04/es-1280.jpg",
+          "en-1280": "hub-map/shots/S-04/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "S-05",
+      "route": "/staff/rooms",
+      "name": {
+        "es": "Salas y reservas de espacio",
+        "en": "Rooms & space bookings"
+      },
+      "purpose": {
+        "es": "Ver cada sala por día con sus clases y sus reservas de espacio, reservar una ventana para un evento privado, alquiler, clase privada, mantenimiento o bloqueo, y confirmar, cancelar o cerrar la reserva.",
+        "en": "See every room by day with its classes and space bookings, book a window for a private event, rental, private class, maintenance or a block, and confirm, cancel or close the booking."
+      },
+      "surface": "staff",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk"
+      ],
+      "experienceId": "desk",
+      "device": "desktop",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/S-05/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/S-05/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/S-05/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/S-05/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/S-05/es-390.jpg",
+          "en-390": "hub-map/shots/S-05/en-390.jpg",
+          "es-1280": "hub-map/shots/S-05/es-1280.jpg",
+          "en-1280": "hub-map/shots/S-05/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "S-03",
+      "route": "/teach",
+      "name": {
+        "es": "App de profesores",
+        "en": "Teacher app"
+      },
+      "purpose": {
+        "es": "App de profesores: mis clases, asistencia, descripción y vista de nómina.",
+        "en": "What a teacher needs between classes: schedule, roster and attendance, their own content, reviews, and what they have been paid."
+      },
+      "surface": "teacher",
+      "roles": [
+        "teacher",
+        "coordinator",
+        "admin",
+        "finance"
+      ],
+      "experienceId": "teacher",
+      "device": "phone",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-phone": "hub-map/shots/S-03/thumb-es-phone.jpg",
+          "en-phone": "hub-map/shots/S-03/thumb-en-phone.jpg",
+          "es-desktop": "hub-map/shots/S-03/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/S-03/thumb-en-desktop.jpg",
+          "es-phone-dark": "hub-map/shots/S-03/thumb-es-phone-dark.jpg",
+          "en-phone-dark": "hub-map/shots/S-03/thumb-en-phone-dark.jpg",
+          "es-desktop-dark": "hub-map/shots/S-03/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/S-03/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/S-03/es-390.jpg",
+          "en-390": "hub-map/shots/S-03/en-390.jpg",
+          "es-1280": "hub-map/shots/S-03/es-1280.jpg",
+          "en-1280": "hub-map/shots/S-03/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "W-01",
+      "route": "/site",
+      "name": {
+        "es": "Sitio · Inicio",
+        "en": "Site · Home"
+      },
+      "purpose": {
+        "es": "La portada pública: el manifiesto de marca, los cuatro movimientos, las cinco clases, las clases de hoy, el modelo de valor, la filosofía, los profesores, reseñas reales y el primer paso (clase de prueba).",
+        "en": "The public front page: the brand manifesto, the four movements, the five classes, today’s classes, the value model, the philosophy, the teachers, real reviews and the first step (a trial class)."
+      },
+      "surface": "public",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "finance",
+        "teacher",
+        "maintenance",
+        "customer",
+        "public"
+      ],
+      "experienceId": "site",
+      "device": "page",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/W-01/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/W-01/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/W-01/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/W-01/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/W-01/es-390.jpg",
+          "en-390": "hub-map/shots/W-01/en-390.jpg",
+          "es-1280": "hub-map/shots/W-01/es-1280.jpg",
+          "en-1280": "hub-map/shots/W-01/en-1280.jpg",
+          "es-390-full": "hub-map/shots/W-01/es-390-full.jpg",
+          "en-390-full": "hub-map/shots/W-01/en-390-full.jpg"
+        }
+      }
+    },
+    {
+      "code": "W-02",
+      "route": "/site/about",
+      "name": {
+        "es": "Sitio · Sobre HOY",
+        "en": "Site · About HOY"
+      },
+      "purpose": {
+        "es": "El texto completo de \"Sobre HOY\", los cuatro valores, la filosofía en panel oscuro y el tablero de marca.",
+        "en": "The full “About HOY” text, the four values, the philosophy on a dark panel and the brand board."
+      },
+      "surface": "public",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "finance",
+        "teacher",
+        "maintenance",
+        "customer",
+        "public"
+      ],
+      "experienceId": "site",
+      "device": "page",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/W-02/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/W-02/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/W-02/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/W-02/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/W-02/es-390.jpg",
+          "en-390": "hub-map/shots/W-02/en-390.jpg",
+          "es-1280": "hub-map/shots/W-02/es-1280.jpg",
+          "en-1280": "hub-map/shots/W-02/en-1280.jpg",
+          "es-390-full": "hub-map/shots/W-02/es-390-full.jpg",
+          "en-390-full": "hub-map/shots/W-02/en-390-full.jpg"
+        }
+      }
+    },
+    {
+      "code": "W-07",
+      "route": "/site/classes",
+      "name": {
+        "es": "Sitio · Clases",
+        "en": "Site · Classes"
+      },
+      "purpose": {
+        "es": "La introducción \"Nuestras clases\" y una tarjeta rica por clase (hot yoga, barre, pilates, meditación, respiración) con su hueco de foto 16:9.",
+        "en": "The “Our classes” introduction and one rich card per class (hot yoga, barre, pilates, meditation, breathwork), each with its 16:9 photo slot."
+      },
+      "surface": "public",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "finance",
+        "teacher",
+        "maintenance",
+        "customer",
+        "public"
+      ],
+      "experienceId": "site",
+      "device": "page",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/W-07/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/W-07/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/W-07/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/W-07/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/W-07/es-390.jpg",
+          "en-390": "hub-map/shots/W-07/en-390.jpg",
+          "es-1280": "hub-map/shots/W-07/es-1280.jpg",
+          "en-1280": "hub-map/shots/W-07/en-1280.jpg",
+          "es-390-full": "hub-map/shots/W-07/es-390-full.jpg",
+          "en-390-full": "hub-map/shots/W-07/en-390-full.jpg"
+        }
+      }
+    },
+    {
+      "code": "W-08",
+      "route": "/site/classes/:slug",
+      "name": {
+        "es": "Sitio · Clase",
+        "en": "Site · Class"
+      },
+      "purpose": {
+        "es": "El ensayo completo de una clase, los datos de la modalidad que le corresponde, qué traer, el enlace al horario y la llamada a la clase de prueba.",
+        "en": "One class’s full essay, the facts of its matching modality, what to bring, the link into the schedule and the trial-class call to action."
+      },
+      "surface": "public",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "finance",
+        "teacher",
+        "maintenance",
+        "customer",
+        "public"
+      ],
+      "experienceId": "site",
+      "device": "page",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/W-08/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/W-08/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/W-08/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/W-08/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/W-08/es-390.jpg",
+          "en-390": "hub-map/shots/W-08/en-390.jpg",
+          "es-1280": "hub-map/shots/W-08/es-1280.jpg",
+          "en-1280": "hub-map/shots/W-08/en-1280.jpg",
+          "es-390-full": "hub-map/shots/W-08/es-390-full.jpg",
+          "en-390-full": "hub-map/shots/W-08/en-390-full.jpg"
+        }
+      }
+    },
+    {
+      "code": "W-03",
+      "route": "/site/modalities",
+      "name": {
+        "es": "Sitio · Modalidades",
+        "en": "Site · Modalities"
+      },
+      "purpose": {
+        "es": "Las prácticas del horario agrupadas por movimiento, con intensidad, duración y sala caliente — y el enlace al ensayo de la clase a la que pertenece cada una.",
+        "en": "The scheduled practices grouped by movement, with intensity, duration and heated room — each cross-linked to the class essay it belongs to."
+      },
+      "surface": "public",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "finance",
+        "teacher",
+        "maintenance",
+        "customer",
+        "public"
+      ],
+      "experienceId": "site",
+      "device": "page",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/W-03/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/W-03/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/W-03/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/W-03/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/W-03/es-390.jpg",
+          "en-390": "hub-map/shots/W-03/en-390.jpg",
+          "es-1280": "hub-map/shots/W-03/es-1280.jpg",
+          "en-1280": "hub-map/shots/W-03/en-1280.jpg",
+          "es-390-full": "hub-map/shots/W-03/es-390-full.jpg",
+          "en-390-full": "hub-map/shots/W-03/en-390-full.jpg"
+        }
+      }
+    },
+    {
+      "code": "W-04",
+      "route": "/site/schedule",
+      "name": {
+        "es": "Sitio · Horario",
+        "en": "Site · Schedule"
+      },
+      "purpose": {
+        "es": "Horario semanal público con cupos en vivo. Tocar una clase pide iniciar sesión y lleva a la app de clientes.",
+        "en": "Public weekly schedule with live capacity. Tapping a class prompts sign-in and leads to the customer app."
+      },
+      "surface": "public",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "finance",
+        "teacher",
+        "maintenance",
+        "customer",
+        "public"
+      ],
+      "experienceId": "site",
+      "device": "page",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/W-04/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/W-04/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/W-04/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/W-04/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/W-04/es-390.jpg",
+          "en-390": "hub-map/shots/W-04/en-390.jpg",
+          "es-1280": "hub-map/shots/W-04/es-1280.jpg",
+          "en-1280": "hub-map/shots/W-04/en-1280.jpg",
+          "es-390-full": "hub-map/shots/W-04/es-390-full.jpg",
+          "en-390-full": "hub-map/shots/W-04/en-390-full.jpg"
+        }
+      }
+    },
+    {
+      "code": "W-05",
+      "route": "/site/teachers",
+      "name": {
+        "es": "Sitio · Profesores",
+        "en": "Site · Teachers"
+      },
+      "purpose": {
+        "es": "Galería pública de profesores con retrato (hueco de foto reservado), bio y especialidades.",
+        "en": "Public teacher gallery with a portrait (a booked photo slot), bio and specialties."
+      },
+      "surface": "public",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "finance",
+        "teacher",
+        "maintenance",
+        "customer",
+        "public"
+      ],
+      "experienceId": "site",
+      "device": "page",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/W-05/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/W-05/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/W-05/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/W-05/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/W-05/es-390.jpg",
+          "en-390": "hub-map/shots/W-05/en-390.jpg",
+          "es-1280": "hub-map/shots/W-05/es-1280.jpg",
+          "en-1280": "hub-map/shots/W-05/en-1280.jpg",
+          "es-390-full": "hub-map/shots/W-05/es-390-full.jpg",
+          "en-390-full": "hub-map/shots/W-05/en-390-full.jpg"
+        }
+      }
+    },
+    {
+      "code": "P-01",
+      "route": "/site/plans",
+      "name": {
+        "es": "Planes y precios — Modelo de Valor v3",
+        "en": "Plans & prices — Modelo de Valor v3"
+      },
+      "purpose": {
+        "es": "La única fuente de precios: Bienvenida, Membresía, Pausas, Regalos y Espacio, leída por todas las superficies.",
+        "en": "One value model, written once and read by every surface that quotes a price. Bienvenida lowers the barrier, Membresía is the primary plan with two ways to pay, Pausas and Regalos widen the offer, Espacio monetises the room outside class hours."
+      },
+      "surface": "public",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "finance",
+        "teacher",
+        "maintenance",
+        "customer",
+        "public"
+      ],
+      "experienceId": "site",
+      "device": "page",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/P-01/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/P-01/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/P-01/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/P-01/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/P-01/es-390.jpg",
+          "en-390": "hub-map/shots/P-01/en-390.jpg",
+          "es-1280": "hub-map/shots/P-01/es-1280.jpg",
+          "en-1280": "hub-map/shots/P-01/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "code": "W-06",
+      "route": "/site/contact",
+      "name": {
+        "es": "Sitio · Contacto",
+        "en": "Site · Contact"
+      },
+      "purpose": {
+        "es": "WhatsApp, correo, dirección, Instagram y horario desde la configuración del tenant, el mapa del estudio y un formulario que abre WhatsApp con el mensaje listo.",
+        "en": "WhatsApp, email, address, Instagram and hours from the tenant config, the studio map, and a form that opens WhatsApp with the message ready."
+      },
+      "surface": "public",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "finance",
+        "teacher",
+        "maintenance",
+        "customer",
+        "public"
+      ],
+      "experienceId": "site",
+      "device": "page",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/W-06/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/W-06/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/W-06/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/W-06/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/W-06/es-390.jpg",
+          "en-390": "hub-map/shots/W-06/en-390.jpg",
+          "es-1280": "hub-map/shots/W-06/es-1280.jpg",
+          "en-1280": "hub-map/shots/W-06/en-1280.jpg",
+          "es-390-full": "hub-map/shots/W-06/es-390-full.jpg",
+          "en-390-full": "hub-map/shots/W-06/en-390-full.jpg"
+        }
+      }
+    },
+    {
+      "code": "W-09",
+      "route": "/site/delete-account",
+      "name": {
+        "es": "Sitio · Eliminar cuenta",
+        "en": "Site · Delete account"
+      },
+      "purpose": {
+        "es": "Pedir la eliminación de una cuenta sin iniciar sesión: correo o WhatsApp, motivo opcional, y la explicación en lenguaje llano de qué se conserva por ley y qué se elimina. Es la URL pública que exige Google Play; la app la ofrece también en Perfil → Cuenta y datos (C-26).",
+        "en": "Request an account deletion with no sign-in: email or WhatsApp, optional reason, and a plain-words explanation of what is kept by law and what is removed. It is the public URL Google Play requires; the app also offers it under Profile → Account & data (C-26)."
+      },
+      "surface": "public",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "finance",
+        "teacher",
+        "maintenance",
+        "customer",
+        "public"
+      ],
+      "experienceId": "site",
+      "device": "page",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/W-09/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/W-09/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/W-09/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/W-09/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/W-09/es-390.jpg",
+          "en-390": "hub-map/shots/W-09/en-390.jpg",
+          "es-1280": "hub-map/shots/W-09/es-1280.jpg",
+          "en-1280": "hub-map/shots/W-09/en-1280.jpg",
+          "es-390-full": "hub-map/shots/W-09/es-390-full.jpg",
+          "en-390-full": "hub-map/shots/W-09/en-390-full.jpg"
+        }
+      }
+    }
+  ],
+  "tools": [
+    {
+      "id": "canvas",
+      "code": "D-05",
+      "label": {
+        "es": "Lienzo de páginas",
+        "en": "Page canvas"
+      },
+      "purpose": {
+        "es": "Cada pantalla del sistema como miniatura, agrupada por superficie y con zoom.",
+        "en": "Every screen as a thumbnail, grouped by surface, with zoom."
+      },
+      "route": "/dev/canvas",
+      "url": "https://imagine-os.github.io/hoy/#/dev/canvas",
+      "device": "desktop",
+      "shots": {
+        "thumbs": {},
+        "full": {
+          "es-390": "hub-map/shots/D-05/es-390.jpg",
+          "en-390": "hub-map/shots/D-05/en-390.jpg",
+          "es-1280": "hub-map/shots/D-05/es-1280.jpg",
+          "en-1280": "hub-map/shots/D-05/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "id": "simulator",
+      "code": "D-06",
+      "label": {
+        "es": "Simulador",
+        "en": "Simulator"
+      },
+      "purpose": {
+        "es": "Cualquier ruta en teléfono, tableta, escritorio o TV 4K, con el rol que quieras.",
+        "en": "Any route on phone, tablet, desktop or 4K TV, as any role."
+      },
+      "route": "/dev/simulator",
+      "url": "https://imagine-os.github.io/hoy/#/dev/simulator",
+      "device": "desktop",
+      "shots": {
+        "thumbs": {},
+        "full": {
+          "es-390": "hub-map/shots/D-06/es-390.jpg",
+          "en-390": "hub-map/shots/D-06/en-390.jpg",
+          "es-1280": "hub-map/shots/D-06/es-1280.jpg",
+          "en-1280": "hub-map/shots/D-06/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "id": "specs",
+      "code": "D-03",
+      "label": {
+        "es": "Specs de página",
+        "en": "Page specs"
+      },
+      "purpose": {
+        "es": "Qué promete cada pantalla y cuánto le falta.",
+        "en": "What each screen promises and how much is missing."
+      },
+      "route": "/dev/specs",
+      "url": "https://imagine-os.github.io/hoy/#/dev/specs",
+      "device": "desktop",
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/D-03/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/D-03/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/D-03/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/D-03/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/D-03/es-390.jpg",
+          "en-390": "hub-map/shots/D-03/en-390.jpg",
+          "es-1280": "hub-map/shots/D-03/es-1280.jpg",
+          "en-1280": "hub-map/shots/D-03/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "id": "layout",
+      "code": "D-04",
+      "label": {
+        "es": "Editor de layout",
+        "en": "Layout editor"
+      },
+      "purpose": {
+        "es": "Reordenar y ocultar las secciones de una página.",
+        "en": "Reorder and hide a page’s sections."
+      },
+      "route": "/dev/layout/C-01",
+      "url": "https://imagine-os.github.io/hoy/#/dev/layout/C-01",
+      "device": "desktop",
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/D-04/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/D-04/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/D-04/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/D-04/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/D-04/es-390.jpg",
+          "en-390": "hub-map/shots/D-04/en-390.jpg",
+          "es-1280": "hub-map/shots/D-04/es-1280.jpg",
+          "en-1280": "hub-map/shots/D-04/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "id": "tables",
+      "code": "M-03",
+      "label": {
+        "es": "Tablas",
+        "en": "Tables"
+      },
+      "purpose": {
+        "es": "El gestor de datos: leer y editar cualquier fila demo.",
+        "en": "The data manager: read and edit any demo row."
+      },
+      "route": "/admin/tables",
+      "url": "https://imagine-os.github.io/hoy/#/admin/tables",
+      "device": "desktop",
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/M-03/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/M-03/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/M-03/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/M-03/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/M-03/es-390.jpg",
+          "en-390": "hub-map/shots/M-03/en-390.jpg",
+          "es-1280": "hub-map/shots/M-03/es-1280.jpg",
+          "en-1280": "hub-map/shots/M-03/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "id": "components",
+      "code": "D-02",
+      "label": {
+        "es": "Biblioteca de componentes",
+        "en": "Component library"
+      },
+      "purpose": {
+        "es": "Cada componente con sus props, estados y accesibilidad.",
+        "en": "Every component with its props, states and accessibility."
+      },
+      "route": "/dev/components",
+      "url": "https://imagine-os.github.io/hoy/#/dev/components",
+      "device": "desktop",
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/D-02/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/D-02/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/D-02/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/D-02/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/D-02/es-390.jpg",
+          "en-390": "hub-map/shots/D-02/en-390.jpg",
+          "es-1280": "hub-map/shots/D-02/es-1280.jpg",
+          "en-1280": "hub-map/shots/D-02/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "id": "tokens",
+      "code": "D-01",
+      "label": {
+        "es": "Tokens de diseño",
+        "en": "Design tokens"
+      },
+      "purpose": {
+        "es": "Color, tipografía, sombra, textura y movimiento, en vivo.",
+        "en": "Colour, type, shadow, texture and motion, live."
+      },
+      "route": "/dev/tokens",
+      "url": "https://imagine-os.github.io/hoy/#/dev/tokens",
+      "device": "desktop",
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/D-01/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/D-01/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/D-01/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/D-01/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/D-01/es-390.jpg",
+          "en-390": "hub-map/shots/D-01/en-390.jpg",
+          "es-1280": "hub-map/shots/D-01/es-1280.jpg",
+          "en-1280": "hub-map/shots/D-01/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "id": "decisions",
+      "code": "K-04",
+      "label": {
+        "es": "Decisiones pendientes",
+        "en": "Decisions pending"
+      },
+      "purpose": {
+        "es": "Lo que el estudio todavía tiene que decidir.",
+        "en": "What the studio still has to decide."
+      },
+      "route": "/manual/decisions",
+      "url": "https://imagine-os.github.io/hoy/#/manual/decisions",
+      "device": "desktop",
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/K-04/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/K-04/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/K-04/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/K-04/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/K-04/es-390.jpg",
+          "en-390": "hub-map/shots/K-04/en-390.jpg",
+          "es-1280": "hub-map/shots/K-04/es-1280.jpg",
+          "en-1280": "hub-map/shots/K-04/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "id": "screenshots",
+      "code": "K-02",
+      "label": {
+        "es": "Capturas",
+        "en": "Screenshots"
+      },
+      "purpose": {
+        "es": "Todas las capturas por código de página, ES y EN, claro y oscuro.",
+        "en": "Every capture by page code, ES and EN, light and dark."
+      },
+      "route": "/docs/screenshots",
+      "url": "https://imagine-os.github.io/hoy/#/docs/screenshots",
+      "device": "desktop",
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/K-02/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/K-02/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/K-02/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/K-02/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/K-02/es-390.jpg",
+          "en-390": "hub-map/shots/K-02/en-390.jpg",
+          "es-1280": "hub-map/shots/K-02/es-1280.jpg",
+          "en-1280": "hub-map/shots/K-02/en-1280.jpg"
+        }
+      }
+    }
+  ],
+  "lenses": {
+    "aluzina": {
+      "title": {
+        "es": "hoy en el estudio aluzina",
+        "en": "hoy in the aluzina studio"
+      },
+      "framing": {
+        "es": "Un entregable del estudio: un mat por cada rol del cliente, con las pantallas de ese rol encima.",
+        "en": "A studio deliverable: one mat per client role, with that role’s screens laid on it."
+      },
+      "groupBy": "role",
+      "showTools": false,
+      "entry": "/"
+    },
+    "between-gigs": {
+      "title": {
+        "es": "hoy como gig",
+        "en": "hoy as a gig"
+      },
+      "framing": {
+        "es": "Un gig con sus superficies y sus herramientas.",
+        "en": "One gig with its surfaces and tools."
+      },
+      "groupBy": "experience",
+      "showTools": true,
+      "entry": "/"
+    },
+    "standalone": {
+      "title": {
+        "es": "Hub de pruebas de hoy",
+        "en": "hoy’s testing hub"
+      },
+      "framing": {
+        "es": "El hub de pruebas propio de hoy: cada superficie por banda y cada herramienta, como en /#/.",
+        "en": "hoy’s own testing hub: every surface by band and every tool, as at /#/."
+      },
+      "groupBy": "surface",
+      "showTools": true,
+      "entry": "/"
+    }
+  }
+}

@@ -1,12 +1,20 @@
 import type { StringTable } from '../../i18n/types';
+import { HOY_PRODUCT, HUB_EXPERIENCES, HUB_TOOL_LIST } from '../../hub/hubMap.data';
+
+const cardStrings: StringTable = Object.fromEntries([
+  ...HUB_EXPERIENCES.flatMap((e) => [
+    [`hub.card.${e.id}`, e.label],
+    [`hub.card.${e.id}.body`, e.purpose],
+    ...(e.secondary ? [[`hub.card.${e.id}.secondary`, e.secondary.label]] : []),
+  ]),
+  ...HUB_TOOL_LIST.flatMap((x) => [[`hub.tool.${x.id}`, x.label], [`hub.tool.${x.id}.body`, x.purpose]]),
+]);
 
 export const strings: StringTable = {
   // Header and hero
   'hub.title': { es: 'HoyOS · hub de pruebas', en: 'HoyOS · testing hub' },
-  'hub.lead': {
-    es: 'Un solo sistema para cada puesto del estudio: quien practica, quien enseña, quien recibe en la puerta, quien administra y quien lo construye.',
-    en: 'One system for every seat at the studio: members, teachers, front desk, admin, and the people who build it.',
-  },
+  // The lead is the product tagline the hub map publishes (src/hub/hubMap.data.ts HOY_PRODUCT).
+  'hub.lead': HOY_PRODUCT.tagline,
   'hub.version': { es: 'v{v}', en: 'v{v}' },
   'hub.session': { es: 'Estás probando como', en: 'You are testing as' },
   'hub.report': { es: 'Reportar un problema', en: 'Report a problem' },
@@ -27,57 +35,12 @@ export const strings: StringTable = {
   'hub.band.tools.title': { es: 'Todo el sistema de un vistazo', en: 'See the whole system at once' },
   'hub.band.tools.body': { es: 'Lienzo de páginas, simulador de dispositivos, specs, tablas, componentes, tokens, decisiones y capturas.', en: 'Page canvas, device simulator, specs, tables, components, tokens, decisions and captures.' },
 
-  // Surface cards
-  'hub.card.app': { es: 'App de clientes', en: 'Customer app' },
-  'hub.card.app.body': { es: 'Móvil primero: la intención del día, las clases de hoy, reservar, pagar, la membresía y el historial.', en: 'Mobile first: the day’s intention, today’s classes, booking, paying, membership and history.' },
-  'hub.card.site': { es: 'Sitio web', en: 'Website' },
-  'hub.card.site.body': { es: 'Lo que ve cualquiera antes de entrar: filosofía, clases, horario, profesores, planes y contacto.', en: 'What anyone sees before signing in: philosophy, classes, schedule, teachers, plans and contact.' },
-  'hub.card.teacher': { es: 'App de profesores', en: 'Teacher app' },
-  'hub.card.teacher.body': { es: 'Sus clases, la lista de asistentes, la asistencia desde el mat y su nómina.', en: 'Their classes, the roster, attendance from the mat and their payroll.' },
-  'hub.card.desk': { es: 'Recepción', en: 'Front desk' },
-  'hub.card.desk.body': { es: 'Check-in de la clase que empieza, búsqueda por nombre y control de aforo.', en: 'Check-in for the class about to start, search by name and capacity control.' },
-  'hub.card.inbox': { es: 'Bandeja de mensajes', en: 'Inbox' },
-  'hub.card.inbox.body': { es: 'WhatsApp, correos y notas del equipo en un solo hilo por persona.', en: 'WhatsApp, emails and team notes in one thread per person.' },
-  'hub.card.pos': { es: 'Caja', en: 'Point of sale' },
-  'hub.card.pos.body': { es: 'Vender un plan, un pase o un producto, cobrar y emitir el recibo.', en: 'Sell a plan, a pass or a product, take the payment and issue the receipt.' },
-  'hub.card.admin': { es: 'Panel de administración', en: 'Admin dashboard' },
-  'hub.card.admin.body': { es: 'Cómo va el estudio hoy: ocupación, ingresos, clases y lo que necesita atención.', en: 'How the studio is doing today: occupancy, revenue, classes and what needs attention.' },
-  'hub.card.crm': { es: 'CRM', en: 'CRM' },
-  'hub.card.crm.body': { es: 'La ficha de cada persona: conversación, reservas, pagos, consentimientos y notas.', en: 'Each person’s record: conversation, bookings, payments, consents and notes.' },
-  'hub.card.finance': { es: 'Finanzas', en: 'Finance' },
-  'hub.card.finance.body': { es: 'Ingresos, gastos, nómina de profesores e impuestos, con el libro detrás.', en: 'Revenue, expenses, teacher payroll and tax, with the ledger behind it.' },
-  'hub.card.manual': { es: 'Manual de operaciones', en: 'Operations manual' },
-  'hub.card.manual.body': { es: 'Cómo funciona el club en persona y en el software, por rol, con datos en vivo.', en: 'How the club runs in person and in software, by role, with live data.' },
-  'hub.card.docs': { es: 'Documentación y changelog', en: 'Documentation & changelog' },
-  'hub.card.docs.body': { es: 'Cada prompt, cada respuesta y cada cambio, con sus capturas.', en: 'Every prompt, every response and every change, with their captures.' },
-  'hub.card.kb': { es: 'Kanban y knowledgebase', en: 'Kanban & knowledgebase' },
-  'hub.card.kb.body': { es: 'El tablero de trabajo, el changelog y el registro de prompts en una sola pantalla.', en: 'The work board, the changelog and the prompt log on one screen.' },
-  'hub.card.dev': { es: 'Herramientas de desarrollo', en: 'Dev tools' },
-  'hub.card.dev.body': { es: 'Specs, tokens, biblioteca de componentes, editor de layout, lienzo y simulador.', en: 'Specs, tokens, component library, layout editor, canvas and simulator.' },
-
-  // Tools row
-  'hub.tool.canvas': { es: 'Lienzo de páginas', en: 'Page canvas' },
-  'hub.tool.canvas.body': { es: 'Cada pantalla del sistema como miniatura, agrupada por superficie y con zoom.', en: 'Every screen as a thumbnail, grouped by surface, with zoom.' },
-  'hub.tool.simulator': { es: 'Simulador', en: 'Simulator' },
-  'hub.tool.simulator.body': { es: 'Cualquier ruta en teléfono, tableta, escritorio o TV 4K, con el rol que quieras.', en: 'Any route on phone, tablet, desktop or 4K TV, as any role.' },
-  'hub.tool.specs': { es: 'Specs de página', en: 'Page specs' },
-  'hub.tool.specs.body': { es: 'Qué promete cada pantalla y cuánto le falta.', en: 'What each screen promises and how much is missing.' },
-  'hub.tool.layout': { es: 'Editor de layout', en: 'Layout editor' },
-  'hub.tool.layout.body': { es: 'Reordenar y ocultar las secciones de una página.', en: 'Reorder and hide a page’s sections.' },
-  'hub.tool.tables': { es: 'Tablas', en: 'Tables' },
-  'hub.tool.tables.body': { es: 'El gestor de datos: leer y editar cualquier fila demo.', en: 'The data manager: read and edit any demo row.' },
-  'hub.tool.components': { es: 'Biblioteca de componentes', en: 'Component library' },
-  'hub.tool.components.body': { es: 'Cada componente con sus props, estados y accesibilidad.', en: 'Every component with its props, states and accessibility.' },
-  'hub.tool.tokens': { es: 'Tokens de diseño', en: 'Design tokens' },
-  'hub.tool.tokens.body': { es: 'Color, tipografía, sombra, textura y movimiento, en vivo.', en: 'Colour, type, shadow, texture and motion, live.' },
-  'hub.tool.decisions': { es: 'Decisiones pendientes', en: 'Decisions pending' },
-  'hub.tool.decisions.body': { es: 'Lo que el estudio todavía tiene que decidir.', en: 'What the studio still has to decide.' },
-  'hub.tool.screenshots': { es: 'Capturas', en: 'Screenshots' },
-  'hub.tool.screenshots.body': { es: 'Todas las capturas por código de página, ES y EN, claro y oscuro.', en: 'Every capture by page code, ES and EN, light and dark.' },
+  // Surface cards and the tools row: label and body come from the hub map data (one source for this
+  // page and public/hub-map.json), keyed hub.card.<id>[.body|.secondary] and hub.tool.<id>[.body].
+  ...cardStrings,
 
   // Card chrome
   'hub.open': { es: 'Abrir', en: 'Open' },
-  'hub.signin': { es: 'Entrar o crear cuenta', en: 'Sign in or create an account' },
   'hub.enterAs': { es: 'Entrar como {name}', en: 'Enter as {name}' },
   'hub.here': { es: 'Estás aquí', en: 'You are here' },
   'hub.new': { es: 'Nuevo', en: 'New' },

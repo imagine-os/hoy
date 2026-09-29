@@ -7,8 +7,13 @@ dónde estamos, qué sigue y en qué orden (con dependencias explícitas y lo qu
 paralelo), qué significa "terminado" en cada fase, cómo trabajar en el repo y qué debe decidir el
 owner del estudio. Está escrito para que otra cuenta de Claude (o una persona) lo retome sin contexto.
 
-## A. Where we are (v0.10.0, 2026-09-28)
+## A. Where we are (v0.11.0, 2026-09-29)
 
+- **v0.11.0 — Hub map** (`docs/changelog/0027-hub-map.md`, prompt `docs/prompts/0027-hub-map.md`; Justin: "hoy will be
+  in aluzina, in my between gigs company os system and in its own as it is now … each systems point of view can see
+  into the hoy hub contents in its own way"): `public/hub-map.json` (schema `hoy.hub-map/1`, `docs/reference/hub-map.md`)
+  generated from `src/hub/hubMap.data.ts` + the route registry on every build, shots under `hub-map/shots/`, tall
+  website pages (`--full`), the `hub.map` action.
 - **v0.10.1 — Phone calendar views, teacher width, responsive mat grid** (`docs/changelog/0026-calendar-teacher-mats.md`,
   prompt `docs/prompts/0026-calendar-teacher-mats.md`; Justin: "on mobile the calendar had some issues on week and month
   view … the teacher app … was too wide … the 16 mats are always 2 rows of 8"): `SessionCalendar` week strip and month

@@ -27,6 +27,9 @@ import { BreathingRings } from '../../components/organism/BreathingRings/Breathi
 import { LivePreviewBudget, PagePreview } from '../../components/organism/PagePreview/PagePreview';
 import { hubSpec, HUB_SURFACES, HUB_TOOLS, type HubSurfaceKey, type HubToolKey } from './specs';
 import { useUiScale } from './useUiScale';
+import { HUB_EXPERIENCES, HUB_TOOL_LIST } from '../../hub/hubMap.data';
+import type { HubBand } from '../../hub/hubMap.types';
+import { hubMapUrl, loadHubMap } from '../../hub/hubMapClient';
 import './hub.css';
 
 interface SurfaceCard {
@@ -34,6 +37,7 @@ interface SurfaceCard {
   /** Page code — drives the thumbnail folder and the dev-mode chip. */
   code: string;
   to: string;
+  band: HubBand;
   /** Entering the card switches to this role's demo user first. */
   role?: Role;
   icon: IconName;
@@ -42,43 +46,56 @@ interface SurfaceCard {
   secondary?: { to: string; key: string };
 }
 
-const BAND_OUTSIDE: SurfaceCard[] = [
-  { key: 'app', code: 'C-01', to: '/app', role: 'customer', icon: 'smartphone', shape: 'phone', featured: true, secondary: { to: '/auth/sign-in', key: 'hub.signin' } },
-  { key: 'site', code: 'W-01', to: '/site', icon: 'globe' },
-  { key: 'teacher', code: 'S-03', to: '/teach', role: 'teacher', icon: 'sparkle' },
-];
+/**
+ * What only this page needs to draw a card: its icon and preview shape. Everything else — code, route,
+ * band, role, label, purpose — comes from the hub map data (src/hub/hubMap.data.ts), the same module
+ * `npm run hub-map` publishes as public/hub-map.json for other hosts.
+ */
+const CARD_UI: Record<HubSurfaceKey, { icon: IconName; shape?: ThumbShape }> = {
+  app: { icon: 'smartphone', shape: 'phone' },
+  site: { icon: 'globe' },
+  teacher: { icon: 'sparkle' },
+  desk: { icon: 'check' },
+  inbox: { icon: 'inbox' },
+  pos: { icon: 'receipt' },
+  admin: { icon: 'gauge' },
+  crm: { icon: 'users' },
+  finance: { icon: 'wallet' },
+  manual: { icon: 'book' },
+  docs: { icon: 'file-text' },
+  kb: { icon: 'list-checks' },
+  dev: { icon: 'code' },
+};
 
-const BAND_TEAM: SurfaceCard[] = [
-  { key: 'desk', code: 'S-02', to: '/staff/checkin', role: 'front_desk', icon: 'check' },
-  { key: 'inbox', code: 'S-06', to: '/staff/inbox', role: 'front_desk', icon: 'inbox' },
-  { key: 'pos', code: 'S-04', to: '/staff/register', role: 'front_desk', icon: 'receipt' },
-  { key: 'admin', code: 'M-01', to: '/admin', role: 'admin', icon: 'gauge' },
-  { key: 'crm', code: 'M-06', to: '/admin/crm', role: 'coordinator', icon: 'users' },
-  { key: 'finance', code: 'M-09', to: '/admin/finance', role: 'finance', icon: 'wallet' },
-];
-
-const BAND_BUILD: SurfaceCard[] = [
-  { key: 'manual', code: 'K-03', to: '/manual', icon: 'book' },
-  { key: 'docs', code: 'K-02', to: '/docs', icon: 'file-text' },
-  { key: 'kb', code: 'K-01', to: '/dev/knowledgebase', role: 'super_admin', icon: 'list-checks' },
-  { key: 'dev', code: 'D-03', to: '/dev', role: 'super_admin', icon: 'code' },
-];
-
-const ALL_CARDS = [...BAND_OUTSIDE, ...BAND_TEAM, ...BAND_BUILD];
+const ALL_CARDS: SurfaceCard[] = HUB_EXPERIENCES.map((e) => {
+  const key = e.id as HubSurfaceKey;
+  return {
+    key, code: e.code, to: e.route, band: e.band, ...CARD_UI[key],
+    role: e.switchUser ? (e.roleId as Role) : undefined,
+    featured: e.featured,
+    secondary: e.secondary ? { to: e.secondary.route, key: `hub.card.${key}.secondary` } : undefined,
+  };
+});
+const inBand = (band: HubBand) => ALL_CARDS.filter((c) => c.band === band);
+const BAND_OUTSIDE = inBand('outside');
+const BAND_TEAM = inBand('team');
+const BAND_BUILD = inBand('build');
 
 interface ToolCard { key: HubToolKey; to: string; icon: IconName; isNew?: boolean }
 
-const TOOLS: ToolCard[] = [
-  { key: 'canvas', to: '/dev/canvas', icon: 'grid', isNew: true },
-  { key: 'simulator', to: '/dev/simulator', icon: 'monitor', isNew: true },
-  { key: 'specs', to: '/dev/specs', icon: 'file-text' },
-  { key: 'layout', to: '/dev/layout/C-01', icon: 'layout' },
-  { key: 'tables', to: '/admin/tables', icon: 'table' },
-  { key: 'components', to: '/dev/components', icon: 'layers' },
-  { key: 'tokens', to: '/dev/tokens', icon: 'palette' },
-  { key: 'decisions', to: '/manual/decisions', icon: 'list-checks' },
-  { key: 'screenshots', to: '/docs/screenshots', icon: 'camera' },
-];
+const TOOL_UI: Record<HubToolKey, { icon: IconName; isNew?: boolean }> = {
+  canvas: { icon: 'grid', isNew: true },
+  simulator: { icon: 'monitor', isNew: true },
+  specs: { icon: 'file-text' },
+  layout: { icon: 'layout' },
+  tables: { icon: 'table' },
+  components: { icon: 'layers' },
+  tokens: { icon: 'palette' },
+  decisions: { icon: 'list-checks' },
+  screenshots: { icon: 'camera' },
+};
+
+const TOOLS: ToolCard[] = HUB_TOOL_LIST.map((x) => ({ key: x.id as HubToolKey, to: x.route, ...TOOL_UI[x.id as HubToolKey] }));
 
 type Status = 'built' | 'stub' | 'planned';
 
@@ -206,6 +223,11 @@ export function HubPage() {
       if (p?.lang !== 'es' && p?.lang !== 'en') throw new Error('lang must be es or en');
       setLang(p.lang);
       return `language ${p.lang}`;
+    },
+    // The machine-readable hub map other hosts (aluzina, between-gigs) render from: where it lives and what it holds.
+    'hub.map': async () => {
+      const m = await loadHubMap();
+      return `hub map ${hubMapUrl()} · ${m.schema} v${m.product.version} · ${m.roles.length} roles, ${m.experiences.length} experiences, ${m.pages.length} pages, ${m.tools.length} tools · data at window.__hoyos.hubMap.data`;
     },
     'hub.toggleTheme': () => { toggleTheme(); return `theme ${theme === 'dark' ? 'light' : 'dark'}`; },
     'hub.toggleWireframe': () => {

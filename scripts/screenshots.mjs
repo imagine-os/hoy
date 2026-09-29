@@ -20,6 +20,10 @@
 //   --pages=a,b    only routes whose page code (spec.code) is exactly one of the list (--pages=C-01,C-04);
 //                  combines with --only=. C-08 does not match C-08b.
 //   --dark=a,b     page codes captured in dark as well as light, replacing KEY_PAGES for this run
+//   --full         tall website pages for the hub map (public/hub-map.json HubShots.full): 390 px wide,
+//                  fullPage, height capped at 6000 px, light only, JPEG q70 unless --quality is given, written
+//                  as <lang>-390-full.jpg. Defaults to the W-xx website codes; --pages= / --only= narrow or
+//                  widen it. Does not rewrite docs/screenshots/README.md.
 //   --thumbs       hub/card thumbnails instead of full-page captures (npm run thumbnails). One route per
 //                  page code (first in the manifest; /manual wins K-03 over its chapter routes), both langs,
 //                  both themes: a 640×400 desktop thumbnail (1280×800 viewport, deviceScaleFactor 0.5, not
@@ -39,9 +43,11 @@ import { chromium } from 'playwright-core';
 const args = process.argv.slice(2);
 const SMOKE = args.includes('--smoke');
 const THUMBS = args.includes('--thumbs');
+const FULL = args.includes('--full');
+const FULL_MAX_HEIGHT = 6000;
 const ONLY = (args.find((a) => a.startsWith('--only='))?.slice(7) ?? '').split(',').filter(Boolean);
 const LABEL = args.find((a) => a.startsWith('--label='))?.slice(8) ?? '';
-const QUALITY = Number(args.find((a) => a.startsWith('--quality='))?.slice(10) ?? 72);
+const QUALITY = Number(args.find((a) => a.startsWith('--quality='))?.slice(10) ?? (args.includes('--full') ? 70 : 72));
 const PAGES = (args.find((a) => a.startsWith('--pages='))?.slice(8) ?? '').split(',').filter(Boolean);
 const WIDTHS = (args.find((a) => a.startsWith('--widths='))?.slice(9) ?? '').split(',').map(Number).filter((n) => n > 0);
 const DARK = (args.find((a) => a.startsWith('--dark='))?.slice(7) ?? '').split(',').filter(Boolean);
@@ -137,13 +143,13 @@ async function main() {
   const { routes: manifest, users, ids } = await fetchManifest(browser);
   mkdirSync(new URL('../docs/screenshots/', import.meta.url), { recursive: true });
   writeFileSync(MANIFEST, JSON.stringify(manifest, null, 1));
-  const list = manifest.filter(inOnly);
+  const list = manifest.filter(inOnly).filter((r) => !FULL || PAGES.length || ONLY.length || r.code.startsWith('W-'));
   const problems = [];
   const langs = SMOKE ? ['es'] : ['es', 'en'];
-  const widths = SMOKE ? [1280] : WIDTHS.length ? WIDTHS : [390, 1280];
+  const widths = FULL ? [390] : SMOKE ? [1280] : WIDTHS.length ? WIDTHS : [390, 1280];
   const heightFor = (w) => (w < 600 ? 844 : w >= 1920 ? Math.round((w * 9) / 16) : 800);
   const darkPages = DARK.length ? new Set(DARK) : KEY_PAGES;
-  console.log(`${list.length} routes · chromium ${exe}${ONLY.length ? ` · only ${ONLY.join(',')}` : ''}${PAGES.length ? ` · pages ${PAGES.join(',')}` : ''}${LABEL ? ` · label ${LABEL}` : ''}${SMOKE ? ' · smoke' : ` · jpeg q${QUALITY}`}`);
+  console.log(`${list.length} routes${FULL ? ' · full 390 pages' : ''} · chromium ${exe}${ONLY.length ? ` · only ${ONLY.join(',')}` : ''}${PAGES.length ? ` · pages ${PAGES.join(',')}` : ''}${LABEL ? ` · label ${LABEL}` : ''}${SMOKE ? ' · smoke' : ` · jpeg q${QUALITY}`}`);
   for (const route of list) {
     const { path, code } = route;
     const url = path.replace(/:\w+/g, (p) => (p === ':id' ? idFor(path, ids) : STATIC_PARAMS[p]) ?? 'x');
@@ -151,9 +157,10 @@ async function main() {
     // /manual and /manual/:chapter share the code K-03: the cover keeps its own labelled file.
     const label = LABEL || (path === '/manual' ? 'cover' : '');
     for (const lang of langs) for (const width of widths) {
-      const themes = !SMOKE && darkPages.has(code) ? ['light', 'dark'] : ['light'];
+      const themes = !SMOKE && !FULL && darkPages.has(code) ? ['light', 'dark'] : ['light'];
       for (const theme of themes) {
-        const ctx = await browser.newContext({ viewport: { width, height: width < 600 ? 844 : 800 }, deviceScaleFactor: 1, ignoreHTTPSErrors: true });
+        // --full: reduced motion so the site's scroll reveals ([data-reveal]) are drawn in place, not faded out below the fold.
+        const ctx = await browser.newContext({ viewport: { width, height: width < 600 ? 844 : 800 }, deviceScaleFactor: 1, ignoreHTTPSErrors: true, ...(FULL ? { reducedMotion: 'reduce' } : {}) });
         await ctx.addInitScript(([l, th, uid, dev]) => {
           localStorage.setItem('hoyos.lang', l);
           localStorage.setItem('hoyos.theme', JSON.stringify({ theme: th, skin: 'styled' }));
@@ -173,7 +180,19 @@ async function main() {
           if (!SMOKE) {
             const dir = new URL(`../docs/screenshots/${safe(code)}/`, import.meta.url);
             mkdirSync(dir, { recursive: true });
-            await page.screenshot({ path: new URL(fileName(lang, width, theme, label), dir).pathname, fullPage: width >= 600, type: 'jpeg', quality: QUALITY });
+            if (FULL) {
+              // A tall page for hosts that stack the website (the hub map's es-390-full / en-390-full).
+              // Walk the page once so lazy images below the fold load, then return to the top.
+              await page.evaluate(async (max) => {
+                for (let y = 0; y < Math.min(document.documentElement.scrollHeight, max); y += 700) { window.scrollTo(0, y); await new Promise((r) => setTimeout(r, 120)); }
+                window.scrollTo(0, 0);
+              }, FULL_MAX_HEIGHT);
+              await page.waitForTimeout(600);
+              const height = await page.evaluate(() => document.documentElement.scrollHeight);
+              await page.screenshot({ path: new URL(fileName(lang, width, theme, LABEL || 'full'), dir).pathname, fullPage: true, clip: { x: 0, y: 0, width, height: Math.min(height, FULL_MAX_HEIGHT) }, type: 'jpeg', quality: QUALITY });
+            } else {
+              await page.screenshot({ path: new URL(fileName(lang, width, theme, label), dir).pathname, fullPage: width >= 600, type: 'jpeg', quality: QUALITY });
+            }
           }
         } catch (e) { errors.push(String(e.message)); }
         if (errors.length) problems.push({ path, lang, width, theme, errors: [...new Set(errors)].slice(0, 3) });
@@ -184,7 +203,7 @@ async function main() {
   }
   await browser.close();
   server.kill();
-  if (!SMOKE && !ONLY.length && !PAGES.length && !WIDTHS.length && !LABEL) {
+  if (!SMOKE && !FULL && !ONLY.length && !PAGES.length && !WIDTHS.length && !LABEL) {
     writeFileSync(new URL('../docs/screenshots/README.md', import.meta.url), `# Screenshots\n\nGenerated by \`npm run screenshots\` on ${new Date().toISOString().slice(0, 10)} (JPEG, quality ${QUALITY}). One folder per page code; file name \`<lang>-<width>[-dark][-<label>].${EXT}\` (e.g. \`es-390.${EXT}\`, \`en-1280-dark.${EXT}\`, \`es-1280-before.${EXT}\`). \`routes.json\` is the route manifest the app published (\`window.__hoyos.routes\`) when the pass ran. Browse them at \`/#/docs/screenshots\`; reference them from \`docs/pages/<code>.md\` and the changelog entry.\n\n| Code | Route | Status |\n| --- | --- | --- |\n${list.map((r) => `| \`${r.code}\` | \`#${r.path}\` | ${r.status} |`).join('\n')}\n`);
   }
   if (problems.length) { console.log('\nPROBLEMS:'); for (const p of problems) console.log(`  ${p.path} [${p.lang}/${p.width}/${p.theme}]`, p.errors.join(' | ')); }

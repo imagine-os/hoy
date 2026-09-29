@@ -1,7 +1,7 @@
 # Machine surfaces — MCP / WebMCP, CLI, API
 
 What something other than a person can drive in HoyOS today, and what it cannot.
-**Checked 2026-09-28** (v0.10.0; previous check 2026-09-20, v0.9.0). Re-check and date this file every pass; a line that is not
+**Checked 2026-09-29** (v0.11.0; previous check 2026-09-28, v0.10.0). Re-check and date this file every pass; a line that is not
 re-checked is not current.
 
 ---
@@ -18,6 +18,7 @@ There is **no MCP server** yet: this is the in-page surface only.
 | `__hoyos.users` | `{ id, role }[]` | The demo users, so tooling can sign in as the right person per surface. |
 | `__hoyos.actions` | `DeclaredAction[]` (getter) | Every action **declared** by any routed page: `id`, `label{es,en}`, `intent{es,en}`, `params?`, `permission?`, plus `code`, `route` and `mounted`. A getter, so `mounted` answers for the page that is open right now. |
 | `__hoyos.run(id, params?)` | `Promise<{ ok, message }>` | Runs a **mounted** action. Never throws: an unknown or unmounted id comes back `ok: false` with the reason. |
+| `__hoyos.hubMap` | `{ url, data, load() }` | Since 0027. The published hub map (§4): `url` is where this deployment serves `hub-map.json`, `data` the parsed map once loaded (`null` before; reading it starts the load), `load()` resolves with it. Source `src/hub/hubMapClient.ts`. |
 
 ```js
 await window.__hoyos.run('hub.setLang', { lang: 'en' });   // { ok: true, message: 'language en' }
@@ -35,6 +36,7 @@ window.__hoyos.actions.filter((a) => a.mounted);
 | `hub.openTool` | HUB-01 | Abre {tool} | `tool: enum:canvas,simulator,specs,layout,tables,components,tokens,decisions,screenshots` | — |
 | `hub.toggleDevMode` | HUB-01 | Enciende o apaga el modo dev | — | `dev.tools` |
 | `hub.setLang` | HUB-01 | Pon la interfaz en {lang} | `lang: enum:es,en` | — |
+| `hub.map` | HUB-01 | Dame el mapa del hub | — | — |
 | `hub.toggleTheme` | HUB-01 | Cambia entre claro y oscuro | — | — |
 | `hub.toggleWireframe` | HUB-01 | Muestra el sistema en wireframe | — | `dev.tools` |
 | `app.reserve` | C-02 | Reserva la clase {session} | `session: string (class_sessions.id)` — must be scheduled and in the future | `bookings.write` · customer, teacher |
@@ -74,7 +76,8 @@ duplication of the navigation actions.
 ### Frame contract
 
 A page can be embedded in a same-origin iframe and told which session to run under, through the hash
-query: `#/app?as=customer&lang=en&theme=dark&dev=0&live=0`. `src/app/frameSession.ts` shadows
+query: `#/app?as=customer&lang=en&theme=dark&dev=0&live=0` (since 0027 `frameUrl()` writes the keys in exactly
+this order, which is the hub map's embed pattern `{baseUrl}#{route}?as={role}&lang={lang}&theme={theme}&dev=0&live=0`). `src/app/frameSession.ts` shadows
 `hoyos.session`, `hoyos.lang` and `hoyos.theme` for that document only and swallows writes, so a
 preview never touches the viewer's session. `live=0` also switches live previews off, as does
 `navigator.webdriver`. `DeviceFrame` and `PagePreview` (HUB-01, D-05, D-06) are the consumers.
@@ -88,7 +91,9 @@ Everything is Node, in `scripts/`, and safe to run from a clean checkout.
 | Script | What it does | Writes |
 | --- | --- | --- |
 | `npm run dev` | Vite dev server at `http://localhost:5173/#/` | — |
-| `npm run build` | `npm run tokens` → `tsc --noEmit` → `vite build`. **Must be green before every push.** | `src/design/tokens.css`, `dist/` |
+| `npm run build` | `npm run tokens` → `npm run hub-map` → `tsc --noEmit` → `vite build` → `node scripts/copy-shots.mjs`. **Must be green before every push.** | `src/design/tokens.css`, `public/hub-map.json`, `dist/` (incl. `dist/hub-map/shots/`) |
+| `npm run hub-map` | `scripts/gen-hub-map.mjs`: composes the hub map from `src/hub/hubMap.data.ts` + the live route registry (Vite SSR loader, no browser) + `docs/screenshots/`, validates it against the contract and exits 1 on any problem. Deterministic (`generatedAt` = the latest changelog date) | `public/hub-map.json` (committed) |
+| `node scripts/copy-shots.mjs` | Copies every capture the map references into `dist/hub-map/shots/<CODE>/` and prints the total (budget 80 MB; the plan lives in `scripts/lib/hubShots.mjs`) | `dist/hub-map/shots/` |
 | `npm run preview` | Serves `dist/` at `:4173` (what the screenshot pass drives) | — |
 | `npm run typecheck` | `tsc --noEmit` alone | — |
 | `npm run tokens` | Regenerates the stylesheet from `src/design/tokens.ts` (D-01) | `src/design/tokens.css` |
@@ -96,6 +101,7 @@ Everything is Node, in `scripts/`, and safe to run from a clean checkout.
 | `npm run sql` | Regenerates the Supabase schema from `src/data/schema.ts` | `supabase/schema.sql` |
 | `npm run flow-map` | Rebuilds the code → route map from the published manifest | `docs/flow-map.md` |
 | `npm run screenshots` | Full capture pass: every route, ES + EN, 390 + 1280, light + dark for key pages, signed in as each surface's demo user. `--smoke` (console-error check, no files) · `--only=a,b` · `--pages=C-02,C-04` · `--widths=360,390,768,1280,1920,3840` · `--dark=a,b` · `--label=before` · `--quality=N` (0026 pass: `--pages=C-02,C-02b,C-04,W-04,S-03 --widths=360,390,768,1280,1920,3840`) | `docs/screenshots/<code>/<lang>-<width>[-dark].jpg`, `docs/screenshots/routes.json` |
+| `npm run screenshots -- --full` | Tall website pages for the hub map: the W-xx codes at 390 px, fullPage capped at 6000 px, light, JPEG q70, reduced motion so scroll reveals are drawn | `docs/screenshots/W-xx/<lang>-390-full.jpg` |
 | `npm run thumbnails` | `screenshots.mjs --thumbs` — the hub/canvas thumbnails: one route per page code, both languages, both themes, 640 × 400 desktop and 195 × 422 phone, JPEG q64 | `docs/screenshots/<CODE>/thumb-*.jpg` |
 | `npm run test:dates` | The local-date-key regression test | — |
 | `node scripts/test-mat-bookings.mjs` | The 16-mat booking rules against `MockProvider` (bounds, collisions, release, persistence); run with the build before every `src/` commit since 0025 | — |
@@ -124,7 +130,25 @@ Planned, in order: **Supabase** (Postgres + Auth + Realtime + Storage) behind `S
 `message_log`. Each one gets its own changelog entry and its own row in this table when it lands.
 
 ---
+
+## 4. Published files — the hub map
+
+Since 0027 (v0.11.0) the site publishes one machine-readable description of itself, for other hosts
+(the aluzina studio OS, the between-gigs company OS) to draw the hub through their own lens. Contract and
+consumer checklist: [`hub-map.md`](./hub-map.md).
+
+| File | URL | What |
+| --- | --- | --- |
+| `public/hub-map.json` | `https://imagine-os.github.io/hoy/hub-map.json` | Schema `hoy.hub-map/1`: product, embed pattern, 9 roles, 13 experiences (the hub cards), every page code (87), 9 tools, 3 lens hints |
+| `dist/hub-map/shots/<CODE>/…` | `https://imagine-os.github.io/hoy/hub-map/shots/<CODE>/<file>.jpg` | The thumbs (`thumb-<lang>-<phone\|desktop>[-dark].jpg`) and captures (`<lang>-390.jpg`, `<lang>-1280.jpg`, W-xx `<lang>-390-full.jpg`) the map's `shots` point at, relative to `product.baseUrl` |
+
+**Embed pattern**: `{baseUrl}#{route}?as={role}&lang={lang}&theme={theme}&dev=0&live=0` — what
+`frameUrl()` builds; a host substitutes and iframes it. Same-origin only under `imagine-os.github.io`.
+
+---
 **Resumen (ES).** Qué puede manejar una máquina hoy: en la página, `window.__hoyos` publica las rutas,
 los usuarios demo, las acciones declaradas y `run(id, params)` para ejecutarlas (superficie WebMCP; no
-hay servidor MCP todavía). En la terminal, los `npm run` de arriba. API HTTP: ninguna — todo pasa por
+hay servidor MCP todavía), y `__hoyos.hubMap` con el mapa del hub. Archivo publicado: `hub-map.json`
+(esquema `hoy.hub-map/1`), con sus capturas en `hub-map/shots/`, para que aluzina y between-gigs dibujen el hub a su manera.
+En la terminal, los `npm run` de arriba. API HTTP: ninguna — todo pasa por
 `DataProvider`, hoy `MockProvider` en el navegador; los endpoints previstos están en `PageSpec.api`.
