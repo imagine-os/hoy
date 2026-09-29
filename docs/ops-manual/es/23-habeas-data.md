@@ -18,7 +18,7 @@ es lo que cada persona del equipo hace y no hace todos los días.
 1. Al registrarse, en la app o en el mostrador, la persona acepta la política de datos. Queda guardado con la
    hora, la versión y quién la registró (ver [Documentos legales](22-documentos-legales.md)).
 2. Solo pedimos lo necesario: nombre, WhatsApp, correo, contacto de emergencia, cumpleaños y el permiso.
-   La app ya no pregunta "¿cómo quieres sentirte hoy?", así que tampoco guardamos una intención del día.
+   Ya no guardamos una "intención del día": la app dejó de pedirla.
 3. **Los datos de salud son sensibles.** Se guardan como una marca y una nota interna. Nunca se leen en voz alta,
    nunca se mandan por WhatsApp y nunca se comentan entre turnos.
 4. Cada vez que alguien abre la ficha de un socio, queda registrado.

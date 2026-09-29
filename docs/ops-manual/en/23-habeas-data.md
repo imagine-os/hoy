@@ -18,7 +18,7 @@ the team does and doesn't do, every day.
 1. When they register, in the app or at the desk, the person accepts the data policy. It is saved with the time,
    the version and who recorded it (see [Legal documents](22-documentos-legales.md)).
 2. We only ask for what we need: name, WhatsApp, email, emergency contact, birthday and consent.
-   The app no longer asks "how do you want to feel today?", so we don't keep an intention of the day either.
+   We no longer keep an "intention of the day": the app stopped asking for it.
 3. **Health data is sensitive.** It is kept as a marker and an internal note. It is never read out loud, never sent
    by WhatsApp and never discussed between shifts.
 4. Every time someone opens a member's record, it is recorded.
