@@ -87,12 +87,17 @@ export const about = {
       en: 'Getting to know HOY is only the first step. The next one is feeling it: a trial class, no complications, so you decide with your body and not only with your head. Look through our plans and find the way in that suits you best.',
     },
   ] satisfies Bi[],
-  /** The four words the brand speaks in. */
+  /**
+   * The brand's personality, as the 2026 brand manual ("Manual de marca", slide 6) names it: five
+   * traits (0032 — was four words, Humana · Cercana · Directa · Presente, from the earlier brief;
+   * "directa" now lives inside "Cercana").
+   */
   values: [
+    { es: 'Presente', en: 'Present' },
     { es: 'Humana', en: 'Human' },
     { es: 'Cercana', en: 'Close' },
-    { es: 'Directa', en: 'Direct' },
-    { es: 'Presente', en: 'Present' },
+    { es: 'Sensorial', en: 'Sensory' },
+    { es: 'Contemporánea', en: 'Contemporary' },
   ] satisfies Bi[],
 } as const;
 
