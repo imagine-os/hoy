@@ -384,3 +384,45 @@ export const M12 = defineSpec({
     'At-risk here uses the 14 / 30 / 60 / 90 ladder of analytics.ts; the M-06 segment rail still uses its own 21-day rule (useMemberStats) until the two are unified.',
   ],
 });
+
+/** 0044 — M-03 table manager, redesigned (views, sidebar, graph). Replaces the raw canvas spec (whose `data` named non-tables). */
+export const M03 = defineSpec({
+  ...canvasSpecs['M-03'],
+  code: 'M-03',
+  name: { es: 'Tablas y relaciones', en: 'Tables & relations' },
+  purpose: {
+    es: 'El gestor de datos del estudio con vistas: cualquier tabla como cuadrícula, lista, galería, tablero o grafo de relaciones, con filtros, orden, agrupación, columnas y vistas guardadas para el equipo. Todo en palabras (los nombres técnicos solo en modo dev), cada referencia abre la fila a la que apunta y el panel de la fila muestra quién la usa.',
+    en: 'The studio’s data manager with views: any table as a grid, list, gallery, board or relationship graph, with filters, sorts, grouping, columns and views saved for the team. Everything in words (technical names only in dev mode), every reference opens the row it points at and the row panel shows what uses it.',
+  },
+  layout: [
+    'TablesSidebar (expanded · rail · phone sheet): search, Fijadas, Recientes, groups as accordions, row counts, provider footer, reset demo data (in-product confirm)',
+    'TableHeader (icon, human title, kind + group badges, description, counts, technical-names toggle in dev mode)',
+    'ViewSwitcher (SegmentedControl: Cuadrícula · Lista · Galería · Tablero · Calendario* · Línea de tiempo* · Grafo) + SavedViewsMenu',
+    'Toolbar (Filtrar · Ordenar · Agrupar · Columnas · Buscar · Exportar · Esquema · Nueva fila) + ActiveFilterChips + ToolPanel',
+    'View: GridView (DataTable) | ListView (ListRow) | GalleryView (Card grid) | KanbanView (KanbanBoard) | GraphView (RelationGraph, table or row level) | SchemaView',
+    'RowDrawer (fields by type, FK pickers by title, ES / EN inputs, Relaciones, Ver en el grafo, delete with in-product confirm)',
+  ],
+  data: ['table_views', 'any table in src/data/schema.ts (tableRegistry)', 'tenants'],
+  roles: ['super_admin', 'finance', 'developer'],
+  logic: [
+    'One pipeline for every view: rows → filters (AND) → search (display text of the visible columns) → sorts → view. Filters, sorts, groupBy, hidden columns, column order, card fields and the board column live in the view state; “Guardar vista” writes exactly that into table_views.config.',
+    'Labels: columnLabel() = ColumnDef.label → the bilingual dictionary in src/data/labels.ts → humanizeName(); tableLabel() = TableDef.label; rowTitle() = titleColumn (Bi json in the current language, a foreign key resolves the referenced row’s title) → the first text column → the id.',
+    'Foreign keys render as a chip with the referenced row’s title and open /admin/tables/<table>?id=<id>; the page reads ?id= and opens the row drawer. ?view= makes views linkable, ?focus= centres the row-level graph, ?where=column:value opens a table filtered (the drawer’s Relaciones links use it).',
+    'Relations come from ColumnDef.references (src/data/relations.ts): outgoing = the columns of this table, incoming = columns elsewhere pointing here, with reverse names “<table> · <column>”. tenant_id is left out of the graph.',
+    'Graph: all tables coloured by group tone, FK arrows, the open table ringed with its neighbours (“Solo vecinos” keeps only them), layout by layoutGraph() (seeded force-directed, identical on every render). Row level: the row in the centre, the rows it points at on the right, the tables pointing at it on the left with counts.',
+    'Kanban: one lane per value of an enum / boolean column (default status); a drag of the grip or the “Mover a…” menu writes data.update(table, id, { column: value }). Read-only without tables.write.',
+    'Technical names (snake_case) show only as a quiet mono line when dev mode is on and the toggle is on (default on in dev mode). Sensitive columns (api_keys.key_hash) are hidden from roles without tables.write.',
+    'Per-viewer conveniences (sidebar state, open groups, pinned, recent, technical names) persist in localStorage hoyos.tables.prefs; saved views are shared rows in table_views.',
+    'Calendar and Timeline are declared view kinds wrapped in the Placeholder atom (not wired yet); disabled for tables without a date column.',
+  ],
+  integrations: ['DataProvider (MockProvider today, SupabaseProvider later): list / peek / insert / update / remove / subscribe'],
+  states: ['No table picked (overview of every group)', 'Grid · List · Gallery · Board · Graph (table level) · Graph (row level)', 'Filtered to no rows', 'Sidebar expanded / rail / phone sheet', 'Search with no matching table', 'Row drawer (edit) / read-only for finance and developer', 'Delete confirm (in-product)', 'Reset demo data confirm', 'Board without an option column', 'Calendar / Timeline placeholder', 'Technical names on (dev mode)'],
+  toggles: [{ label: 'Technical names (dev mode)', on: true }, { label: 'Neighbours only (graph)', on: false }],
+  actions: ADMIN_ACTIONS['M-03'],
+  checkedAt: [390, 768, 1280, 1920, 3840],
+  notes: [
+    '0044 redesign (Justin: “looks like it’s only for developers… Airtable, Notion are baseline… I also like graph views”). The canvas layout (EntityGrid / RelationMap / MigrationLog) is superseded by the views above; the relation map is the graph view.',
+    'Column labels come from the dictionary until a later pass fills ColumnDef.label per column (Sonnet, mechanical).',
+    'Calendar and timeline views are the next pass; the view kinds already exist in table_views.kind.',
+  ],
+});

@@ -48,11 +48,28 @@ export const integrationsGooglePush: ActionDef = {
   permission: 'settings.write',
 };
 
+/** 0044 — M-03 table manager. `table` is a name from src/data/schema.ts (e.g. bookings); `id` a row id. */
+const TABLE = 'string — a table name from src/data/schema.ts (bookings, class_sessions, users…)';
+export const TABLES_ACTIONS: ActionDef[] = [
+  { id: 'tables.open', label: { es: 'Abrir una tabla', en: 'Open a table' }, intent: { es: 'Abre la tabla {table}', en: 'Open the {table} table' }, params: { table: TABLE }, permission: 'tables.read' },
+  { id: 'tables.openRow', label: { es: 'Abrir una fila', en: 'Open a row' }, intent: { es: 'Abre la fila {id} de {table}', en: 'Open row {id} of {table}' }, params: { table: TABLE, id: 'string — the row id' }, permission: 'tables.read' },
+  { id: 'tables.setView', label: { es: 'Cambiar el tipo de vista', en: 'Change the view type' }, intent: { es: 'Muéstralo como {kind}', en: 'Show it as a {kind}' }, params: { kind: 'enum:grid,list,gallery,kanban,graph (calendar, timeline: not wired yet)' }, permission: 'tables.read' },
+  { id: 'tables.search', label: { es: 'Buscar en la tabla', en: 'Search the table' }, intent: { es: 'Busca {q} en esta tabla', en: 'Search this table for {q}' }, params: { q: 'string (empty clears)' }, permission: 'tables.read' },
+  { id: 'tables.filter', label: { es: 'Añadir un filtro', en: 'Add a filter' }, intent: { es: 'Filtra donde {column} {op} {value}', en: 'Filter where {column} {op} {value}' }, params: { column: 'string — a column name of the open table', op: 'enum:is,is_not,contains,empty,not_empty,before,after,gt,lt,in (default: the first for the column type)', value: 'string (comma-separated for in; YYYY-MM-DD for dates)' }, permission: 'tables.read' },
+  { id: 'tables.newRow', label: { es: 'Crear una fila', en: 'Create a row' }, intent: { es: 'Crea una fila nueva en esta tabla', en: 'Create a new row in this table' }, permission: 'tables.write' },
+  { id: 'tables.export', label: { es: 'Exportar la vista', en: 'Export the view' }, intent: { es: 'Exporta esta vista en {format}', en: 'Export this view as {format}' }, params: { format: 'enum:json,csv (default json)' }, permission: 'tables.read' },
+  { id: 'tables.toggleSidebar', label: { es: 'Mostrar u ocultar la barra de tablas', en: 'Show or hide the tables bar' }, intent: { es: 'Contrae (o expande) la barra de tablas', en: 'Collapse (or expand) the tables bar' }, permission: 'tables.read' },
+  { id: 'tables.saveView', label: { es: 'Guardar la vista', en: 'Save the view' }, intent: { es: 'Guarda esta vista como {name}', en: 'Save this view as {name}' }, params: { name: 'string' }, permission: 'tables.write' },
+  { id: 'tables.pin', label: { es: 'Fijar una tabla', en: 'Pin a table' }, intent: { es: 'Fija (o suelta) la tabla {table}', en: 'Pin (or unpin) the {table} table' }, params: { table: `${TABLE} (default: the open one)` }, permission: 'tables.read' },
+  { id: 'tables.toggleTechnicalNames', label: { es: 'Nombres técnicos', en: 'Technical names' }, intent: { es: 'Muestra (u oculta) los nombres técnicos', en: 'Show (or hide) the technical names' }, permission: 'dev.tools' },
+];
+
 /** Page code → the actions it declares. Merged into the specs in `./specs.ts`. */
 export const ADMIN_ACTIONS: Record<string, ActionDef[]> = {
   'M-08a': [settingsHoursUpdate],
   'M-08g': [settingsHoursOverrideAdd, settingsHoursOverrideRemove, settingsHoursHolidaysImport],
   'M-10a': [integrationsGoogleCopyHours, integrationsGoogleConnect, integrationsGooglePush],
+  'M-03': TABLES_ACTIONS,
 };
 
 /** Reads a required string param or throws, so `run()` answers `{ ok: false }` instead of pretending. */

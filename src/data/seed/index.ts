@@ -12,6 +12,7 @@ import { buildPayroll } from './payroll';
 import { buildIntegrations } from './integrations';
 import { buildHoursOverrides } from './hours';
 import { buildApiKeys } from './apiKeys';
+import { buildTableViews } from './views';
 import { buildExpenses, expenseTemplates } from './expenses';
 import { buildSpecials } from './specials';
 import { buildDeletionRequests } from './deletion';
@@ -45,6 +46,8 @@ export function buildSeed(): Record<string, BaseRow[]> {
   // 0041: M-08g — the next Colombian holidays (closed) and one special Saturday; D-07 — two example developer keys (hash only).
   db.hours_overrides.push(...buildHoursOverrides());
   db.api_keys.push(...buildApiKeys());
+  // 0044: M-03 — the default saved views (a bookings board, a people gallery, upcoming classes).
+  db.table_views.push(...buildTableViews());
 
   // people: demo users + customers
   const users = db.users as UserRow[], profiles = db.profiles as ProfileRow[];

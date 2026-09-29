@@ -1591,6 +1591,36 @@ alter table public.audit_log enable row level security;
 create policy "audit_log: tenant read" on public.audit_log for select using (tenant_id = public.current_tenant_id());
 create policy "audit_log: staff write" on public.audit_log for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
 
+-- system · The table manager views (M-03): which table, which kind of view (grid, list, gallery, board, graph…) and with which filters, sorts, grouping and columns. A shared view is visible to the whole team.
+-- access:
+--   · staff with tables.read: read shared rows and their own (created_by = auth.uid())
+--   · staff with tables.write: insert; update and delete their own rows (super_admin: any)
+--   · is_default marks the view a table opens with; one default per table_name
+create table if not exists public.table_views (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  -- the table this view shows (a name from src/data/schema.ts)
+  table_name text not null,
+  -- {es,en}
+  name jsonb not null,
+  kind text not null check (kind in ('grid', 'list', 'gallery', 'kanban', 'calendar', 'timeline', 'graph')),
+  -- { filters: [{column, op, value}], sorts: [{column, dir}], groupBy, hiddenColumns, columnOrder, cardFields, kanbanColumn, pinned }
+  config jsonb not null,
+  is_default boolean not null default false,
+  shared boolean not null default false,
+  created_by uuid references public.users(id) on delete set null
+);
+create index if not exists table_views_tenant_idx on public.table_views(tenant_id);
+create index if not exists table_views_created_by_idx on public.table_views(created_by);
+create trigger table_views_touch before update on public.table_views for each row execute function public.touch_updated_at();
+alter table public.table_views enable row level security;
+create policy "table_views: tenant read" on public.table_views for select using (tenant_id = public.current_tenant_id());
+create policy "table_views: staff write" on public.table_views for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
 -- system · Index of docs/ for search and links (the .md files are the source).
 create table if not exists public.docs_entries (
   -- Primary key

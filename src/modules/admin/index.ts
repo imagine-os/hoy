@@ -1,8 +1,7 @@
 import { lazyPages } from '../../app/lazyPage';
 import type { RouteDef } from '../../specs/types';
 import type { Role } from '../../auth/roles';
-import { canvasSpecs } from '../../specs/canvasSpecs';
-import { M01, M02, M02a, M02b, M02c, M02d, M04, M05, M06, M07, M08a, M08b, M08c, M08d, M08e, M08f, M08g, M09, M09a, M09b, M09c, M10, M10a, M11, M12 } from './specs';
+import { M01, M02, M03, M02a, M02b, M02c, M02d, M04, M05, M06, M07, M08a, M08b, M08c, M08d, M08e, M08f, M08g, M09, M09a, M09b, M09c, M10, M10a, M11, M12 } from './specs';
 export { strings } from './strings';
 // Admin pages (M-xx): one chunk for staff who open /admin.
 const page = lazyPages(() => import('./pages'));
@@ -24,8 +23,8 @@ export const routes: RouteDef[] = [
   { ...base, path: '/admin/content/faq', roles: content, element: page('FaqAdminPage'), spec: M02b },
   { ...base, path: '/admin/content/events', roles: content, element: page('EventsAdminPage'), spec: M02c },
   { ...base, path: '/admin/content/media', roles: content, element: page('MediaPage'), spec: M02d },
-  { ...base, path: '/admin/tables', roles: tablesRoles, element: page('TablesPage'), spec: canvasSpecs['M-03'], nav: { labelKey: 'core.nav.tables', icon: 'table', order: 12, group: G } },
-  { ...base, path: '/admin/tables/:table', roles: tablesRoles, element: page('TablesPage'), spec: canvasSpecs['M-03'] },
+  { ...base, path: '/admin/tables', roles: tablesRoles, element: page('TablesPage'), spec: M03, nav: { labelKey: 'core.nav.tables', icon: 'table', order: 12, group: G } },
+  { ...base, path: '/admin/tables/:table', roles: tablesRoles, element: page('TablesPage'), spec: M03 },
   { ...base, path: '/admin/emails', roles: content, element: page('EmailsPage'), spec: M04, nav: { labelKey: 'core.nav.emails', icon: 'mail', order: 13, group: G } },
   { ...base, path: '/admin/whatsapp', roles: [...content, 'front_desk'], element: page('WhatsAppPage'), spec: M05, nav: { labelKey: 'core.nav.whatsapp', icon: 'whatsapp', order: 14, group: G } },
   { ...base, path: '/admin/crm', roles: crm, element: page('CrmPage'), spec: M06, nav: { labelKey: 'core.nav.crm', icon: 'crm', order: 15, group: G } },

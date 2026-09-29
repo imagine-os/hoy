@@ -10,10 +10,20 @@
 .datatable tr.is-selected td { background: color-mix(in srgb, var(--color-primary) 10%, transparent); }
 .datatable-sort { border: 0; background: none; padding: 0; font: inherit; color: inherit; letter-spacing: inherit; text-transform: inherit; display: inline-flex; gap: var(--sp-xs); align-items: center; }
 .datatable-sort:hover { color: var(--color-text); }
+.datatable-sort { min-height: var(--h-ctl); text-align: left; }
+.datatable-thlabel { display: inline-flex; flex-direction: column; align-items: flex-start; gap: var(--sp-2xs); }
+.datatable-sortn { font-size: var(--fs-2xs); margin-left: var(--sp-2xs); }
+/* 0044 · group header rows (groupBy) */
+.datatable tr.datatable-group th { position: static; text-align: left; text-transform: none; letter-spacing: normal; font-size: var(--fs-sm); font-weight: var(--fw-semibold); color: var(--color-text); background: var(--color-surface-3); padding: var(--sp-sm) var(--sp-md); }
+.datatable-groupcount { margin-left: var(--gap-inline); color: var(--color-text-muted); font-weight: var(--fw-regular); }
+.datatable tr.is-clickable:focus-visible td { box-shadow: inset 0 0 0 2px var(--color-focus); }
 .datatable-sorticon { display: inline-flex; vertical-align: middle; margin-left: var(--sp-xs); line-height: 0; opacity: .5; }
 th[aria-sort] .datatable-sorticon { opacity: 1; color: var(--color-primary); }
 .datatable-empty { text-align: center; color: var(--color-text-muted); padding: var(--sp-2xl) !important; }
 .datatable-json { font-size: var(--fs-xs); color: var(--color-text-muted); background: none; }
 .datatable-foot { display: flex; justify-content: space-between; align-items: center; padding: var(--sp-sm) var(--sp-md); border-top: 1px solid var(--color-border); background: var(--color-surface-2); }
-.datatable-page { border: 1px solid var(--color-border-strong); background: var(--color-surface); border-radius: var(--r-sm); width: 1.75rem; height: 1.75rem; }
+.datatable-pager { gap: var(--gap-inline); }
+/* 0044 · the pager buttons are 44 px targets like every control (they were 28 px) */
+.datatable-page { display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--color-border-strong); background: var(--color-surface); color: var(--color-text); border-radius: var(--r-full); width: var(--h-ctl); height: var(--h-ctl); }
+.datatable-page:focus-visible, .datatable-sort:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
 .datatable-page:disabled { opacity: .4; cursor: not-allowed; }
