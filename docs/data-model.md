@@ -515,6 +515,53 @@ _Quién va a un evento y con qué pago (C-23)._
 - customer: insert + read + cancel own rows (user_id = auth.uid())
 - front_desk/coordinator/admin: read all, mark attended
 
+### Practice & analytics · Práctica y analítica
+
+#### `practice_goals`
+How many classes a week each person wants to take (C-01, C-27). One active row per person; history is kept.  
+_Cuántas clases por semana quiere tomar cada persona (C-01, C-27). Una fila activa por persona; el historial se conserva._
+
+| column | type | notes |
+| --- | --- | --- |
+| `id` | uuid | Primary key |
+| `tenant_id` | uuid | → `tenants` Owning studio (multi-tenant) |
+| `created_at` | timestamptz |  |
+| `updated_at` | timestamptz |  |
+| `user_id` | uuid | → `users`  |
+| `cadence` | enum (week) | only weekly today; a monthly cadence is reserved for a later pass and would extend this enum, never replace it |
+| `target` | int | classes per week the member chose, 1–7; 0 = no goal, only tracking |
+| `source` | enum (member \| suggested) | member = picked by hand · suggested = accepted the app’s suggestion from their own history |
+| `starts_on` | date |  |
+| `active` | bool |  |
+| `note` | text, null | why, in the member’s words; optional |
+
+**Who may read / write**
+- customer: insert + read + update own rows (user_id = auth.uid())
+- front_desk/coordinator/admin: read (M-06, M-12)
+- one active row per person: setting a new goal ends the previous one (active = false), so history survives
+
+#### `activity_events`
+The member-facing moments the raw tables do not hold: a goal set, a milestone reached, a rest week that saved the streak… Bookings, check-ins and payments stay in their own tables and every metric is derived from them.  
+_Los momentos que las tablas crudas no guardan: una meta fijada, un hito alcanzado, una semana de descanso que salvó la racha… Reservas, check-ins y pagos siguen en sus tablas y toda métrica se deriva de ellas._
+
+| column | type | notes |
+| --- | --- | --- |
+| `id` | uuid | Primary key |
+| `tenant_id` | uuid | → `tenants` Owning studio (multi-tenant) |
+| `created_at` | timestamptz |  |
+| `updated_at` | timestamptz |  |
+| `user_id` | uuid, null | → `users` null = studio-level event |
+| `kind` | enum (goal.set \| milestone \| streak.saved \| streak.broken \| first.visit \| plan.purchased \| plan.renewed \| credit.expiring) |  |
+| `occurred_at` | timestamptz | when it happened, which may be earlier than when the app noticed (created_at) |
+| `ref_table` | text, null | the row it points at (bookings, practice_goals, credits…) |
+| `ref_id` | text, null |  |
+| `payload` | json, null | kind-specific: { target } for goal.set, { count } for milestone, { week } for streak.saved |
+
+**Who may read / write**
+- customer: read own rows (user_id = auth.uid()); inserts happen from the app on the member’s own actions
+- coordinator/admin/front_desk: read all (M-12, M-06)
+- append-only: never updated nor deleted; a correction is a new row
+
 ### Commerce · Comercio
 
 #### `plans`
@@ -1151,7 +1198,7 @@ _Orden de secciones por página guardado desde el editor drag-and-drop._
 | `updated_by` | uuid, null | → `users`  |
 
 ## Seed data (`src/data/seed/`)
-6 modalities, 2 rooms (the main room at 15 mats and a small meditation room), 8 teachers, 24 weekly templates (4/day Mon–Sat), sessions for −7…+7 days, 9 demo staff/users + 30 customers, memberships/credits/payments/invoices, bookings filling sessions, waitlists on full classes, feature flags from every spec toggle, legal docs + consents, 2 gift cards, 3 email templates, 3 WhatsApp templates, 3 automations, the unified message record (`seed/messages.ts`: 69 `message_log` rows — WhatsApp both ways, automated reminders and receipts, newsletters, one email exchange, internal notes — in 17 conversations, six inbound left unread), audit logs, three months of payroll runs, and four space bookings with two Especiales (one with a manual teacher payout). Deterministic PRNG; reseeds daily so "today" always has classes.
+6 modalities, 2 rooms (the main room at 15 mats and a small meditation room), 8 teachers, 24 weekly templates (4/day Mon–Sat), sessions for −7…+7 days, 9 demo staff/users + 30 customers, memberships/credits/payments/invoices, bookings filling sessions, waitlists on full classes, feature flags from every spec toggle, legal docs + consents, 2 gift cards, 3 email templates, 3 WhatsApp templates, 3 automations, the unified message record (`seed/messages.ts`: 69 `message_log` rows — WhatsApp both ways, automated reminders and receipts, newsletters, one email exchange, internal notes — in 17 conversations, six inbound left unread), audit logs, three months of payroll runs, four space bookings with two Especiales (one with a manual teacher payout), and the practice record (0039): seven active `practice_goals` (the demo member's 2 / week over an ended 1 / week, so her first week is graded at 1 — rule 8), seven weeks of completed morning classes for the demo member so her weekly streak is real (6 met weeks, one saved by the rest-week rule), and her `activity_events` (goals set, milestones 1 · 5 · 10 at the visit that reached them, the saved week). Deterministic PRNG; reseeds daily so "today" always has classes.
 
 ## Adding a table
 1. Add a `TableDef` to `src/data/schema.ts` (and a typed row interface if pages use it).

@@ -1,4 +1,4 @@
-import type { BaseRow, BookingRow, ClassSessionRow, CreditRow, EventRow, InviteRow, MembershipRow, MessageLogRow, NotificationRow, NotificationPrefRow, PaymentMethodRow, PaymentRow, ProfileRow, ReviewRow, TeacherRow, UserRow } from '../schema';
+import type { ActivityEventRow, BaseRow, BookingRow, ClassSessionRow, CreditRow, EventRow, InviteRow, MembershipRow, MessageLogRow, NotificationRow, NotificationPrefRow, PaymentMethodRow, PaymentRow, PracticeGoalRow, ProfileRow, ReviewRow, TeacherRow, UserRow } from '../schema';
 import { tableNames } from '../schema';
 import { demoUsers } from '../../auth/demoUsers';
 import { tenant } from '../../tenant/tenant';
@@ -16,7 +16,8 @@ import { buildDeletionRequests } from './deletion';
 import { automationText, buildMessages } from './messages';
 import { buildStudioPolicies } from './studioPolicies';
 import { LATE_ROLES, buildLateStaff, buildManual } from './manual';
-import { dateKey, addMonths, MS } from '../../i18n/format';
+import { dateKey, addDays, addDaysKey, addMonths, MS } from '../../i18n/format';
+import { practiceStats, weekStartKey } from '../analytics';
 import { DEFAULT_IVA_PCT, splitIva } from '../tax';
 import { isRetired } from '../../specs/retired';
 
@@ -320,6 +321,74 @@ export function buildSeed(): Record<string, BaseRow[]> {
   db.manual_training.push(...manual.training);
   db.manual_requests.push(...manual.requests);
   db.manual_overrides.push(...manual.overrides);
+
+  // ---- practice analytics (0039, C-01 / C-27 / M-06 / M-12): goals, the demo member's history and the events record ----
+  // Appended last and without the shared RNG, so nothing above shifts. The session window is ±7 days, so the demo
+  // member's older weeks are given here: completed morning classes she attended (one per day, tenant.studio.perPersonPerDay)
+  // with a fixed rotation of co-attendees, so the weekly streak has real rows under it: 2 visits in each of the last
+  // 7 full weeks except the 6th one back (1 visit) — the rest-week rule visibly saves that week.
+  const currentWeek = weekStartKey(NOW);
+  const dayOf = (isoStamp: string) => dateKey(new Date(isoStamp));
+  const bookedDays = (uid: string) => new Set(bookings.filter((bk) => bk.user_id === uid).map((bk) => { const ses = sessions.find((x) => x.id === bk.session_id); return ses ? dayOf(ses.starts_at) : ''; }));
+  const paidWith = (uid: string) => (memberships.some((m) => m.user_id === uid) ? 'membership' : 'credit');
+  let extra = 0;
+  const checkIn = (uid: string, ses: ClassSessionRow, status: BookingRow['status'] = 'checked_in') => {
+    const daysAgo = Math.max(1, Math.round((NOW.getTime() - new Date(ses.starts_at).getTime()) / MS.day) + 1);
+    bookings.push({ ...base(`bk_pr_${extra++}`, daysAgo), user_id: uid, session_id: ses.id, status, paid_with: paidWith(uid), credit_id: null, checked_in_at: status === 'checked_in' ? ses.starts_at : null, cancelled_at: null, rated: false });
+    if (status !== 'late_cancel') ses.booked_count++;
+  };
+  for (let back = 7; back >= 1; back--) {
+    const week = addDaysKey(currentWeek, -7 * back);
+    const need = back === 6 ? 1 : 2;
+    const mine = bookedDays('usr_cust');
+    let have = bookings.filter((bk) => bk.user_id === 'usr_cust' && bk.status === 'checked_in' && weekStartKey(sessions.find((x) => x.id === bk.session_id)?.starts_at ?? NOW) === week).length;
+    // First the classes that already exist in that week (the seed window), on days she has nothing yet.
+    for (const ses of sessions.filter((x) => x.status === 'completed' && weekStartKey(x.starts_at) === week).sort((a, b) => a.starts_at.localeCompare(b.starts_at))) {
+      if (have >= need) break;
+      if (mine.has(dayOf(ses.starts_at)) || bookings.some((bk) => bk.user_id === 'usr_cust' && bk.session_id === ses.id)) continue;
+      checkIn('usr_cust', ses); mine.add(dayOf(ses.starts_at)); have++;
+    }
+    // Then her usual slot — Tuesday and Thursday at 08:00 (Pilates / Barre, "practica en la mañana") — on days with no class yet.
+    for (const weekday of [2, 4, 1, 3, 5, 6]) {
+      if (have >= need) break;
+      const day = addDays(new Date(`${week}T12:00:00`), weekday - 1); day.setHours(0, 0, 0, 0);
+      const key = dateKey(day);
+      if (mine.has(key) || key >= dateKey(NOW)) continue;
+      const tplIndex = TIMETABLE.findIndex((t) => t[0] === weekday && t[1] === '08:00');
+      const [, start, mod, tea] = TIMETABLE[tplIndex];
+      const id = `ses_${key}_1`;
+      if (sessions.some((x) => x.id === id)) continue;
+      const m = modalities.find((x) => x.id === mod)!;
+      const [h, mi] = start.split(':').map(Number);
+      const startsAt = new Date(day); startsAt.setHours(h, mi, 0, 0);
+      const ses: ClassSessionRow = { ...base(id, back * 7 + 14), template_id: `tpl_${tplIndex}`, title: m.name_es, modality_id: mod, teacher_id: tea, room_id: 'room_main', starts_at: iso(startsAt), ends_at: iso(new Date(startsAt.getTime() + m.duration_min * MS.min)), capacity: tenant.studio.mats, booked_count: 0, level: 'all', status: 'completed', cancel_reason: null };
+      sessions.push(ses);
+      checkIn('usr_cust', ses); mine.add(key); have++;
+      // Eight regulars in a fixed rotation keep the class plausible (seven present, one no-show).
+      for (let j = 0; j < 8; j++) {
+        const uid = customerIds[1 + ((extra * 3 + j * 4) % (customerIds.length - 1))];
+        if (bookedDays(uid).has(key)) continue;
+        checkIn(uid, ses, j === 7 ? 'no_show' : 'checked_in');
+      }
+    }
+  }
+
+  // Goals: the demo member's current goal (2 / week, six weeks old) over an ended 1 / week she started with (her first
+  // week is graded at 1, so the run starts there — analytics.ts rule 8), and six more members for M-12.
+  const goals = db.practice_goals as PracticeGoalRow[];
+  const goalRow = (id: string, uid: string, target: number, source: PracticeGoalRow['source'], daysAgo: number, active: boolean, note: string | null): PracticeGoalRow => ({ ...base(id, daysAgo), user_id: uid, cadence: 'week', target, source, starts_on: dateKey(addDays(NOW, -daysAgo)), active, note });
+  goals.push(goalRow('pgl_cust_1', 'usr_cust', 1, 'member', 77, false, 'Quiero volver a la rutina de la mañana.'));
+  goals.push(goalRow('pgl_cust_2', 'usr_cust', 2, 'member', 42, true, 'Dos veces por semana es lo que sostengo.'));
+  ([['usr_c02', 1], ['usr_c05', 2], ['usr_c08', 3], ['usr_c11', 2], ['usr_c14', 1], ['usr_c17', 2]] as const).forEach(([uid, target], i) => goals.push(goalRow(`pgl_${uid.slice(4)}`, uid, target, i % 2 ? 'suggested' : 'member', 20 + i * 3, true, null)));
+
+  // The events record for the demo member: goals set, milestones at the visit that reached them, the rest week that saved the streak.
+  const events = db.activity_events as ActivityEventRow[];
+  const event = (id: string, kind: ActivityEventRow['kind'], occurredAt: string, ref: [string, string] | null, payload: Record<string, unknown>): ActivityEventRow => ({ id, tenant_id: tenant.id, created_at: occurredAt, updated_at: occurredAt, user_id: 'usr_cust', kind, occurred_at: occurredAt, ref_table: ref?.[0] ?? null, ref_id: ref?.[1] ?? null, payload });
+  for (const g of goals.filter((x) => x.user_id === 'usr_cust')) events.push(event(`aev_${g.id}`, 'goal.set', g.created_at, ['practice_goals', g.id], { target: g.target, source: g.source }));
+  const custStats = practiceStats({ userId: 'usr_cust', bookings, sessions, goals: goals.filter((g) => g.user_id === 'usr_cust'), memberships: memberships.filter((m) => m.user_id === 'usr_cust'), now: NOW });
+  const custVisits = bookings.filter((bk) => bk.user_id === 'usr_cust' && bk.status === 'checked_in').map((bk) => ({ bk, ses: sessions.find((x) => x.id === bk.session_id)! })).filter((v) => v.ses && v.ses.status !== 'cancelled').sort((a, b) => a.ses.starts_at.localeCompare(b.ses.starts_at));
+  for (const m of custStats.milestonesReached.filter((x) => x <= 10)) { const v = custVisits[m - 1]; events.push(event(`aev_cust_m${m}`, 'milestone', v.ses.starts_at, ['bookings', v.bk.id], { count: m })); }
+  for (const week of custStats.streak.savedWeeks) events.push(event(`aev_cust_saved_${week}`, 'streak.saved', iso(new Date(`${addDaysKey(week, 7)}T07:00:00`)), null, { week }));
 
   return db;
 }

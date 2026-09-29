@@ -127,7 +127,7 @@ export const HUB_GROUP_RULES: { prefix: string; group: string; exact?: boolean }
   { prefix: '/app', group: 'book', exact: true },
   ...['schedule', 'class', 'booking', 'waitlist', 'rate', 'events'].map((p) => ({ prefix: `/app/${p}`, group: 'book' })),
   ...['checkout', 'payment-methods', 'plans', 'passes', 'credits', 'membership', 'gift', 'invite', 'history'].map((p) => ({ prefix: `/app/${p}`, group: 'pay' })),
-  ...['profile', 'account', 'notifications', 'more', 'rules', 'faq', 'teachers', 'legal', 'state'].map((p) => ({ prefix: `/app/${p}`, group: 'account' })),
+  ...['profile', 'account', 'practice', 'notifications', 'more', 'rules', 'faq', 'teachers', 'legal', 'state'].map((p) => ({ prefix: `/app/${p}`, group: 'account' })),
   { prefix: '/no-access', group: 'account' },
   { prefix: '/auth', group: 'auth' },
   // website, teacher app
