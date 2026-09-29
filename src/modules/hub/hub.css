@@ -37,7 +37,6 @@
 .hub-head-tools { display: flex; align-items: center; flex-wrap: wrap; gap: var(--sp-3); }
 .hub-head-tools .toggle-label { color: var(--color-text-on-inverse); }
 .hub-iconbtn {
-  display: grid; place-items: center; width: 44px; height: 44px; border-radius: var(--r-full);
   border: 1px solid color-mix(in srgb, var(--color-text-on-inverse) 28%, transparent);
   background: color-mix(in srgb, var(--color-text-on-inverse) 10%, transparent);
   color: var(--color-text-on-inverse);

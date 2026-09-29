@@ -16,7 +16,7 @@ export function AuthShell({ children, bare = false }: { children: ReactNode; bar
   const { theme, toggleTheme } = useTheme();
   return (
     <div className="auth">
-      {!bare && <TopBar brand homeTo="/" actions={<><LangToggle size="sm" /><button type="button" className="auth-iconbtn" onClick={toggleTheme} aria-label={t('core.theme.toggle')}>{theme === 'dark' ? '☾' : '☀'}</button></>} />}
+      {!bare && <TopBar brand homeTo="/" actions={<><LangToggle size="sm" /><button type="button" className="auth-iconbtn ctl-round" onClick={toggleTheme} aria-label={t('core.theme.toggle')}>{theme === 'dark' ? '☾' : '☀'}</button></>} />}
       <main className="auth-main">{children}</main>
       {!bare && <footer className="auth-foot xs muted">{tenant.legalName} · {tenant.city} · <Link to="/site/legal/privacy">{t('customer.profile.legal.privacy')}</Link> · <Link to="/">{t('core.nav.hub')}</Link></footer>}
     </div>

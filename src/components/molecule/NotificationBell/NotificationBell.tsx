@@ -26,6 +26,6 @@ export function NotificationBell({ count, to, onClick, max = 9, expanded, contro
       {count > 0 && <span className="bell-badge" aria-hidden>{count > max ? `${max}+` : count}</span>}
     </>
   );
-  if (to) return <Link to={to} className={`bell ${count > 0 ? 'has-unread' : ''}`} aria-label={label} title={label}>{inner}</Link>;
-  return <button type="button" className={`bell ${count > 0 ? 'has-unread' : ''}`} aria-label={label} title={label} onClick={onClick} aria-expanded={expanded} aria-controls={expanded ? controls : undefined} aria-haspopup={controls ? 'dialog' : undefined}>{inner}</button>;
+  if (to) return <Link to={to} className={`bell ctl-round ${count > 0 ? 'has-unread' : ''}`} aria-label={label} title={label}>{inner}</Link>;
+  return <button type="button" className={`bell ctl-round ${count > 0 ? 'has-unread' : ''}`} aria-label={label} title={label} onClick={onClick} aria-expanded={expanded} aria-controls={expanded ? controls : undefined} aria-haspopup={controls ? 'dialog' : undefined}>{inner}</button>;
 }

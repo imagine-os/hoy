@@ -257,7 +257,7 @@ export function HubPage() {
               </div>
               <div className="hub-head-tools">
                 <LangToggle />
-                <button type="button" className="hub-iconbtn" onClick={toggleTheme} aria-label={t('core.theme.toggle')} title={t('core.theme.toggle')}>
+                <button type="button" className="hub-iconbtn ctl-round" onClick={toggleTheme} aria-label={t('core.theme.toggle')} title={t('core.theme.toggle')}>
                   <Icon name={theme === 'dark' ? 'moon' : 'sun'} size={20} />
                 </button>
                 {isSuperAdmin && <Toggle size="sm" checked={skin === 'wireframe'} onChange={toggleSkin} label={t('hub.wireframe')} />}
