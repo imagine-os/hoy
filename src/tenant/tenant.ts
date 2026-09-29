@@ -87,6 +87,12 @@ export const tenant = {
   brand: {
     wordmark: { blue: './brand/hoy-blue.png', cream: './brand/hoy-cream.png', yellow: './brand/hoy-yellow.png' },
     lockup: { sand: './brand/p8-2.png', sandAlt: './brand/p8-3.png' },
+    /**
+     * 0033 — the script mark as one vector (public/brand/hoy-wordmark.svg, `<symbol id="hoy">`, fill currentColor) for
+     * the website's display headings. `ratio` = width / height of the symbol's viewBox; `baseline` = where the script's
+     * baseline sits, as a fraction of the height from the top (the Wordmark atom drops the mark by 1 − baseline).
+     */
+    vector: { src: './brand/hoy-wordmark.svg#hoy', ratio: 4501 / 2267, baseline: 0.73 },
   },
 } as const;
 
