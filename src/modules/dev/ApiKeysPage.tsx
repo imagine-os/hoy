@@ -50,7 +50,8 @@ export function ApiKeysPage() {
   const [busy, setBusy] = useState(false);
   const [confirmRevoke, setConfirmRevoke] = useState<string | null>(null);
 
-  const find = (idOrPrefix: string) => rows.find((k) => k.id === idOrPrefix || k.prefix === idOrPrefix);
+  // Handlers read the provider, not the rendered rows, so quick successive calls (an agent) see each other's writes.
+  const find = async (idOrPrefix: string) => (await data.list<ApiKeyRow>('api_keys')).find((k) => k.id === idOrPrefix || k.prefix === idOrPrefix);
   const guard = () => { if (!canWrite) throw new Error('api_keys.write required'); };
 
   const create = async (d: Draft): Promise<ApiKeyRow> => {
@@ -117,13 +118,13 @@ export function ApiKeysPage() {
       return `created ${k.prefix}… (${k.environment}); the full key is shown once on screen and is not returned here`;
     },
     'dev.apiKeys.rotate': async (p) => {
-      const old = find(p?.id?.trim() ?? '');
+      const old = await find(p?.id?.trim() ?? '');
       if (!old) throw new Error('no key with that id or prefix');
       const k = await rotate(old);
       return `rotated ${old.prefix}… → ${k.prefix}…; the old key works for 24 h; the new key is shown once on screen`;
     },
     'dev.apiKeys.revoke': async (p) => {
-      const k = find(p?.id?.trim() ?? '');
+      const k = await find(p?.id?.trim() ?? '');
       if (!k) throw new Error('no key with that id or prefix');
       await revoke(k);
       return `revoked ${k.prefix}…`;

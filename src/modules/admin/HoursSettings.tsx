@@ -83,7 +83,9 @@ export function HoursSettings() {
   /** Inserts every Colombian holiday from today to the end of next year that has no override on its date yet. */
   const importHolidays = async (): Promise<number> => {
     if (!canWrite) throw new Error('hours.write required');
-    const taken = new Set(hours.overrides.map((o) => o.start_date));
+    // Read the provider, not the rendered list: two quick calls (a double click, an agent) must not import twice.
+    const current = await data.list<HoursOverrideRow>('hours_overrides');
+    const taken = new Set(current.map((o) => o.start_date));
     const fresh = upcomingColombianHolidays(today).filter((h) => !taken.has(h.date));
     for (const h of fresh) {
       await data.insert<HoursOverrideRow>('hours_overrides', { start_date: h.date, end_date: h.date, closed: true, open: null, close: null, label: h.label, kind: 'holiday', source: 'colombia', note: null, google_synced_at: null, created_by: user.id });
@@ -97,7 +99,7 @@ export function HoursSettings() {
     if (!canWrite) throw new Error('hours.write required');
     const bad = validateOverride(d);
     if (bad) throw new Error(t(bad));
-    const before = d.id ? hours.overrides.find((o) => o.id === d.id) ?? null : null;
+    const before = d.id ? await data.get<HoursOverrideRow>('hours_overrides', d.id) : null;
     const row = d.id
       ? await data.update<HoursOverrideRow>('hours_overrides', d.id, toRow(d, before?.created_by ?? user.id))
       : await data.insert<HoursOverrideRow>('hours_overrides', { ...toRow(d, user.id), source: 'manual', google_synced_at: null });
@@ -107,7 +109,7 @@ export function HoursSettings() {
 
   const remove = async (id: string) => {
     if (!canWrite) throw new Error('hours.write required');
-    const before = hours.overrides.find((o) => o.id === id);
+    const before = await data.get<HoursOverrideRow>('hours_overrides', id);
     if (!before) throw new Error(`no override ${id}`);
     await data.remove('hours_overrides', id);
     await audit('hours.override.delete', 'hours_overrides', id, { before });
@@ -138,7 +140,7 @@ export function HoursSettings() {
       return `added ${row.id} (${row.start_date}${row.end_date !== row.start_date ? `–${row.end_date}` : ''}, ${row.closed ? 'closed' : `${row.open ?? 'usual'}–${row.close ?? 'usual'}`})`;
     },
     'settings.hours.override.remove': async (p) => {
-      const id = p?.id?.trim() || hours.overrides.find((o) => o.start_date === p?.date?.trim())?.id;
+      const id = p?.id?.trim() || (await data.list<HoursOverrideRow>('hours_overrides')).find((o) => o.start_date === p?.date?.trim())?.id;
       if (!id) throw new Error('pass id or a date that has an exception');
       await remove(id);
       return `removed ${id}`;

@@ -20,7 +20,7 @@ import { Notice } from '../../components/molecule/Notice/Notice';
 import { EmptyState } from '../../components/molecule/EmptyState/EmptyState';
 import { Wordmark } from '../../components/atom/Wordmark/Wordmark';
 import { useAudit } from '../staff/audit';
-import { contactOf, useOpeningHours, useSettings, type SettingsSection, type StudioSettings, CONTACT_FIELDS } from './settings';
+import { contactOf, useOpeningHours, useSettings, type SettingsSection, type StudioSettings, type TenantRow, CONTACT_FIELDS } from './settings';
 import { HoursSettings } from './HoursSettings';
 import { useActions } from '../../actions/bus';
 import type { ActionHandler } from '../../actions/types';
@@ -391,7 +391,7 @@ function Section<K extends SettingsSection>({ section, value, save, audit, readO
  */
 function GeneralActions() {
   const { can } = useSession();
-  const { settings, save } = useSettings();
+  const data = useData();
   const audit = useAudit('admin');
   const impl = useMemo<Record<string, ActionHandler>>(() => ({
     'settings.hours.update': async (p) => {
@@ -399,18 +399,22 @@ function GeneralActions() {
       const day = need(p, 'day');
       if (!DAYS.includes(day)) throw new Error('day must be 0–6 (0 = Sunday)');
       const open = need(p, 'open');
-      const next = { ...settings.openingHours };
+      // Read the stored row, not the rendered settings, so two quick calls (an agent) do not overwrite each other.
+      const row = await data.get<TenantRow>('tenants', tenant.id);
+      if (!row) throw new Error('tenant row not found');
+      const before = { ...tenant.openingHours, ...(row.settings?.openingHours ?? {}) };
+      const next: StudioSettings['openingHours'] = { ...before };
       if (open === 'closed') next[day] = null;
       else {
         const v = { open, close: need(p, 'close') };
         if (!validDay(v)) throw new Error('times must be HH:MM with close after open');
         next[day] = v;
       }
-      const { before, after } = await save('openingHours', next);
-      await audit('settings.update', 'tenants', tenant.id, { section: 'openingHours', before, after, via: 'action' });
+      await data.update<TenantRow>('tenants', row.id, { settings: { ...(row.settings ?? {}), openingHours: next } });
+      await audit('settings.update', 'tenants', tenant.id, { section: 'openingHours', before, after: next, via: 'action' });
       return `day ${day}: ${next[day] ? `${next[day]!.open}–${next[day]!.close}` : 'closed'}`;
     },
-  }), [can, settings.openingHours, save, audit]);
+  }), [can, data, audit]);
   useActions(M08a, impl);
   return null;
 }
