@@ -18,7 +18,7 @@ _Two screenshots were attached: the C-13 club rules list showing "About HOY — 
 
 Branch `feat/retire-movements`, version **0.15.0**. Full record in `docs/changelog/0039-retire-movements.md`; the decision is D-0013 in `docs/decisions.md`.
 
-<!-- integrator: PR link -->
+PR: [imagine-os/hoy#15](https://github.com/imagine-os/hoy/pull/15)
 
 1. **Answer to "are they anywhere else?"**: yes — the C-13 "Sobre HOY" seed article (the screenshot), the schedule filter chips, legend and drawer (C-02 / C-02b), the website hero line and W-01 class-gallery eyebrow, W-03 grouping, the W-04 legend and `?movement=` filter, the W-07 chip, the W-08 "Movimiento" fact, the S-05 rooms legend, D-01 tokens, pricing copy ("los 4 movimientos"), a CRM note, D-02 component metas, `--mv-*` CSS hooks, the schema enums and the `intentions` table, `brand.ts`, the media seed, the M-08f `publicNaming` setting, ops-manual chapters 02 / 05 / 07 / 17 / 19 / 27, the page docs, ROADMAP and four stone images. Each one is listed with what happened to it in the changelog entry.
 2. **Customer app**: the "Sobre HOY" article is rewritten from the owner's source text ("HOY es un santuario urbano: hot yoga, barre, pilates, meditación y respiración bajo un mismo techo…"). The schedule filter chips and legend are the visible modalities ("Clases / Classes").
