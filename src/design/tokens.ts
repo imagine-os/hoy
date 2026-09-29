@@ -190,6 +190,8 @@ export const materials = {
 export const hues = {
   site: 198, app: 40, teacher: 268, desk: 158, inbox: 210, pos: 24, admin: 222,
   crm: 330, finance: 96, manual: 44, docs: 186, kb: 286, dev: 244,
+  // 0031: the marketing-kit card (coming soon) and the source-documents card
+  marketing: 352, sources: 58,
 } as const;
 export type HueFamily = keyof typeof hues;
 

@@ -10,6 +10,8 @@ export const M01 = defineSpec({
 
 export const M02 = defineSpec({
   ...canvasSpecs['M-02'],
+  // 0031: marketing (content.write) joins; home of the marketing role.
+  roles: [...new Set([...canvasSpecs['M-02'].roles, 'marketing' as const])],
   layout: ['ContentSubNav (Catálogo · Artículos · FAQ · Eventos · Medios)', 'EntityTabs (Classes / Teachers / Modalities / Rooms)', 'ListView (DataTable, search, publish toggle)', 'EditDrawer (fields, ES / EN, publish state)', 'PreviewPane'],
   data: ['class_templates', 'teachers', 'modalities', 'rooms', 'audit_log'],
   notes: [...(canvasSpecs['M-02'].notes ?? []), 'Pricing is not editable here: prices live in src/tenant/pricing.ts (P-01).', 'Publish state = the active column of each table.', 'M-02 is now a family: this page is the catalogue (the four scheduling entities); M-02a…M-02d are articles, FAQ, events and the media library, behind one shared sub-navigation.'],
@@ -18,7 +20,7 @@ export const M02 = defineSpec({
 /** M-02 family leaf. Each one keeps M-02's purpose and adds its own layout, data and rules. */
 const contentSub = (code: string, name: { es: string; en: string }, purpose: { es: string; en: string }, layout: string[], extra: Partial<typeof M02> = {}) => defineSpec({
   ...canvasSpecs['M-02'], code, name, purpose, layout,
-  roles: ['super_admin', 'admin', 'coordinator'],
+  roles: ['super_admin', 'admin', 'coordinator', 'marketing'],
   notes: [...(canvasSpecs['M-02'].notes ?? []), 'Sub-page of M-02; the sub-navigation is shared by all five.', 'Every write appends an audit_log row through useAudit(\'admin\').'],
   ...extra,
 });
@@ -91,6 +93,7 @@ export const M02d = contentSub('M-02d',
 
 export const M04 = defineSpec({
   ...canvasSpecs['M-04'],
+  roles: [...new Set([...canvasSpecs['M-04'].roles, 'marketing' as const])], // 0031
   layout: ['TemplateList (trigger, locale, status)', 'Canvas (EmailPreview)', 'VariablePanel + Editor', 'LocaleSwitch ES / EN', 'Versions + TestSend + SendLog'],
   data: ['email_templates', 'message_log', 'audit_log'],
   notes: [...(canvasSpecs['M-04'].notes ?? []), 'body_mjml stores a JSON {es,en} plain-text body until the MJML designer exists.', 'Versions are the audit_log rows of the template; rollback restores the before value.', 'Test send writes message_log with payload.test = true.'],
@@ -98,6 +101,7 @@ export const M04 = defineSpec({
 
 export const M05 = defineSpec({
   ...canvasSpecs['M-05'],
+  roles: [...new Set([...canvasSpecs['M-05'].roles, 'marketing' as const])], // 0031
   layout: ['AutomationList (trigger → template → delay)', 'PhonePreview (bubble render)', 'TemplateEditor + variables', 'ApprovalStatus (Meta) + QuietHours + OptIn', 'MessageLog'],
   data: ['automations', 'wa_templates', 'message_log', 'profiles', 'users', 'tenants', 'audit_log'],
   notes: [...(canvasSpecs['M-05'].notes ?? []), 'Quiet hours come from M-08 settings (default 21:00–07:00).', 'An automation cannot be enabled while its template is not approved by Meta.'],
@@ -105,6 +109,7 @@ export const M05 = defineSpec({
 
 export const M06 = defineSpec({
   ...canvasSpecs['M-06'],
+  roles: [...new Set([...canvasSpecs['M-06'].roles, 'marketing' as const])], // 0031
   layout: ['SegmentRail (all, at risk, new, no membership, birthdays)', 'MemberList (search, sort)', 'MemberDetail (IdentityHeader → S-06, MetricRow, Tabs: Conversación · Reservas · Pagos)', 'Conversación: filter chips Todo / WhatsApp / Email / Notas / Sistema → MessageThread + MessageComposer'],
   data: ['users', 'profiles', 'memberships', 'plans', 'bookings', 'class_sessions', 'payments', 'credits', 'message_log', 'consents', 'audit_log'],
   states: [...(canvasSpecs['M-06'].states ?? []), 'Conversación: unread inbound (blue ring) → read on open', 'Composer read-only (no members.write)', 'WhatsApp blocked (unverified number)', 'Quiet hours (queued hint)', 'Sistema filter: events only, no composer'],

@@ -1,5 +1,6 @@
 import { createElement as h } from 'react';
 import { defineMeta } from '../../../design/meta';
+import { Icon } from '../../atom/Icon/Icon';
 import { ChapterCard } from './ChapterCard';
 
 const LABELS = { minutes: 'min de lectura', figures: 'capturas', decisions: 'decisiones', placeholders: 'por capturar' };
@@ -19,10 +20,15 @@ export default defineMeta({
     { name: 'minutes / figures / decisions / placeholders', type: 'number', description: { es: 'Cifras de la fila inferior; una cifra en cero no se muestra.', en: 'Figures for the bottom row; a zero is not shown.' } },
     { name: 'labels', type: '{ minutes, figures, decisions, placeholders }', description: { es: 'Etiquetas ya traducidas; el i18n vive fuera del componente.', en: 'Already-translated labels; i18n stays outside the component.' } },
     { name: 'active', type: 'boolean', default: 'false', description: { es: 'Marca el capítulo abierto.', en: 'Marks the chapter currently open.' } },
+    { name: 'icon', type: 'ReactNode', description: { es: 'Icono del capítulo (0031, src/modules/ops-manual/chapterIcons.ts).', en: 'Chapter icon (0031, src/modules/ops-manual/chapterIcons.ts).' } },
+    { name: 'level / levelLabel', type: "'required' | 'recommended' | 'na' · string", description: { es: 'Cómo aplica al rol del lector; `na` atenúa la tarjeta, que sigue abriendo el capítulo.', en: 'How it applies to the reader’s role; `na` dims the card, which still opens the chapter.' } },
+    { name: 'read / readLabel', type: 'boolean · string', description: { es: 'El lector lo marcó como leído.', en: 'The reader marked it as read.' } },
   ],
-  states: ['default', 'hover', 'focus', 'active', 'with decisions', 'without summary'],
+  states: ['default', 'hover', 'focus', 'active', 'with decisions', 'without summary', 'with icon', 'required for the lens', 'recommended', 'not applicable (dimmed)', 'read'],
   usages: [
     { title: { es: 'Capítulo operativo', en: 'Operational chapter' }, render: () => h(ChapterCard, { number: '04', title: 'Recepción y check-in', summary: 'La puerta: saludo, check-in, walk-ins, lista de espera y cierre de caja.', roles: ['recepción', 'coordinación'], to: '/manual/04-recepcion-y-check-in', minutes: 9, figures: 5, decisions: 2, labels: LABELS }) },
+    { title: { es: 'Con lente: obligatorio y leído', en: 'With a lens: required and read' }, render: () => h(ChapterCard, { number: '04', title: 'Recepción y check-in', summary: 'La puerta.', to: '/manual/04-recepcion-y-check-in', minutes: 9, labels: LABELS, icon: h(Icon, { name: 'checkin', size: 20 }), level: 'required', levelLabel: 'Obligatorio', read: true, readLabel: 'Leído' }) },
+    { title: { es: 'No aplica (atenuada)', en: 'Not applicable (dimmed)' }, render: () => h(ChapterCard, { number: '15', title: 'Facturación y DIAN', to: '/manual/15-facturacion-y-dian', minutes: 6, labels: LABELS, icon: h(Icon, { name: 'receipt', size: 20 }), level: 'na', levelLabel: 'No aplica para Profes' }) },
     { title: { es: 'Abierto, sin resumen', en: 'Open, no summary' }, render: () => h(ChapterCard, { number: '27', title: 'Glosario', to: '/manual/27-glosario', minutes: 3, active: true, labels: LABELS }) },
   ],
   a11y: [

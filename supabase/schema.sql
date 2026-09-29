@@ -348,7 +348,7 @@ create table if not exists public.user_roles (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   user_id uuid not null references public.users(id) on delete set null,
-  role text not null check (role in ('super_admin', 'admin', 'coordinator', 'front_desk', 'finance', 'teacher', 'maintenance', 'customer')),
+  role text not null check (role in ('super_admin', 'admin', 'coordinator', 'front_desk', 'finance', 'teacher', 'maintenance', 'marketing', 'developer', 'customer')),
   granted_by uuid references public.users(id) on delete set null
 );
 create index if not exists user_roles_tenant_idx on public.user_roles(tenant_id);
@@ -1279,6 +1279,151 @@ create trigger notification_prefs_touch before update on public.notification_pre
 alter table public.notification_prefs enable row level security;
 create policy "notification_prefs: tenant read" on public.notification_prefs for select using (tenant_id = public.current_tenant_id());
 create policy "notification_prefs: staff write" on public.notification_prefs for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
+-- manual · Who marked which manual chapter (K-03) as read, and at which version: each person’s “read N of M”.
+-- access:
+--   · every staff role: insert + read own rows (user_id = auth.uid()); a re-read of a new version is a new row
+--   · admin/coordinator/super_admin: read all (the K-03 “Equipo” view)
+--   · never updated in place
+create table if not exists public.manual_progress (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  user_id uuid not null references public.users(id) on delete set null,
+  -- file name without .md, e.g. 04-recepcion-y-check-in (same in ES and EN)
+  chapter_slug text not null,
+  -- chapter front-matter version read
+  version text not null,
+  read_at timestamptz not null
+);
+create index if not exists manual_progress_tenant_idx on public.manual_progress(tenant_id);
+create index if not exists manual_progress_user_id_idx on public.manual_progress(user_id);
+create trigger manual_progress_touch before update on public.manual_progress for each row execute function public.touch_updated_at();
+alter table public.manual_progress enable row level security;
+create policy "manual_progress: tenant read" on public.manual_progress for select using (tenant_id = public.current_tenant_id());
+create policy "manual_progress: staff write" on public.manual_progress for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
+-- manual · Each Day 1 / Week 1 / Month 1 checklist item (chapter 09) a person completed, and the stage sign-off by their trainer (item_key = __signoff).
+-- access:
+--   · every staff role: insert + delete own item rows (user_id = auth.uid()) while the stage is not signed
+--   · coordinator/admin/super_admin: read all, insert the __signoff row for anyone (signed_by = auth.uid())
+--   · a __signoff row is never deleted; a correction is a new row
+create table if not exists public.manual_training (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  -- the person being trained
+  user_id uuid not null references public.users(id) on delete set null,
+  -- the checklist followed (a Role id)
+  role text not null,
+  stage text not null check (stage in ('day1', 'week1', 'month1')),
+  -- src/modules/ops-manual/training.ts item key, or __signoff
+  item_key text not null,
+  done_at timestamptz not null,
+  -- trainer who signed the stage (only on __signoff rows)
+  signed_by uuid references public.users(id) on delete set null
+);
+create index if not exists manual_training_tenant_idx on public.manual_training(tenant_id);
+create index if not exists manual_training_user_id_idx on public.manual_training(user_id);
+create index if not exists manual_training_signed_by_idx on public.manual_training(signed_by);
+create trigger manual_training_touch before update on public.manual_training for each row execute function public.touch_updated_at();
+alter table public.manual_training enable row level security;
+create policy "manual_training: tenant read" on public.manual_training for select using (tenant_id = public.current_tenant_id());
+create policy "manual_training: staff write" on public.manual_training for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
+-- manual · A manual section rewritten in the app by the owner or coordination (or suggested by an agent): shown instead of the repository text, with its history. The original markdown is never touched.
+-- access:
+--   · everyone who can read the manual: read rows with status live
+--   · admin/super_admin: insert + update any section; coordinator: only sections marked {{editable:coordinator}}
+--   · any staff role / agent: insert status suggested; only an editor turns it live or dismissed
+--   · history is append-only: restoring sets status reverted, never deletes
+create table if not exists public.manual_overrides (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  chapter_slug text not null,
+  lang text not null check (lang in ('es', 'en')),
+  -- the ## heading text the override replaces (the section below it)
+  section_heading text not null,
+  -- markdown of the section body, without the heading line
+  body_md text not null,
+  edited_by uuid references public.users(id) on delete set null,
+  -- why it changed
+  note text,
+  -- 1, 2, 3… per chapter + lang + section
+  version integer not null,
+  status text not null check (status in ('live', 'reverted', 'suggested', 'dismissed'))
+);
+create index if not exists manual_overrides_tenant_idx on public.manual_overrides(tenant_id);
+create index if not exists manual_overrides_edited_by_idx on public.manual_overrides(edited_by);
+create trigger manual_overrides_touch before update on public.manual_overrides for each row execute function public.touch_updated_at();
+alter table public.manual_overrides enable row level security;
+create policy "manual_overrides: tenant read" on public.manual_overrides for select using (tenant_id = public.current_tenant_id());
+create policy "manual_overrides: staff write" on public.manual_overrides for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
+-- manual · “Request a change”: what someone on the team wants the manual to say. The owner answers it on K-04, or an agent picks it up through the actions registry.
+-- access:
+--   · every staff role: insert + read own rows (requested_by = auth.uid())
+--   · admin/coordinator/super_admin: read all, update status and answer
+create table if not exists public.manual_requests (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  chapter_slug text not null,
+  section_heading text,
+  lang text not null check (lang in ('es', 'en')),
+  request text not null,
+  requested_by uuid references public.users(id) on delete set null,
+  status text not null check (status in ('open', 'done', 'dismissed')),
+  answer text
+);
+create index if not exists manual_requests_tenant_idx on public.manual_requests(tenant_id);
+create index if not exists manual_requests_requested_by_idx on public.manual_requests(requested_by);
+create trigger manual_requests_touch before update on public.manual_requests for each row execute function public.touch_updated_at();
+alter table public.manual_requests enable row level security;
+create policy "manual_requests: tenant read" on public.manual_requests for select using (tenant_id = public.current_tenant_id());
+create policy "manual_requests: staff write" on public.manual_requests for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
+-- manual · Text rules the manual quotes with {{studio:key}} and the owner or coordination adjust without touching the markdown (lost items, opening, closing…). Numeric policies stay in M-08.
+-- access:
+--   · everyone who can read the manual: read
+--   · admin/super_admin: update any row; coordinator: rows with editable_by = coordinator
+--   · a new key is added in src/data/seed/studioPolicies.ts until Supabase lands
+create table if not exists public.studio_policies (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  key text not null,
+  -- {es,en}
+  label jsonb not null,
+  value_es text not null,
+  value_en text not null,
+  -- chapter number where it is quoted, e.g. 21
+  chapter text,
+  editable_by text not null check (editable_by in ('owner', 'coordinator')),
+  updated_by uuid references public.users(id) on delete set null
+);
+create index if not exists studio_policies_tenant_idx on public.studio_policies(tenant_id);
+create index if not exists studio_policies_updated_by_idx on public.studio_policies(updated_by);
+create trigger studio_policies_touch before update on public.studio_policies for each row execute function public.touch_updated_at();
+alter table public.studio_policies enable row level security;
+create policy "studio_policies: tenant read" on public.studio_policies for select using (tenant_id = public.current_tenant_id());
+create policy "studio_policies: staff write" on public.studio_policies for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
 
 -- system · One row per external system (Wompi, WhatsApp, email, DIAN, maps, Supabase): status, non-secret fields ready to fill and notes for the dev (M-10). Keys live server-side, never here.
 -- access:

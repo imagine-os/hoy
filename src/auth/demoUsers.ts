@@ -18,6 +18,8 @@ export const demoUsers: DemoUser[] = [
   { id: 'usr_fin', role: 'finance', name: 'Laura Betancur', initials: 'LB', email: 'laura@demo.hoyos.test', blurb: { es: 'Pagos, facturas y nómina.', en: 'Payments, invoices and payroll.' } },
   { id: 'usr_teach', role: 'teacher', name: 'Andrés Quintero', initials: 'AQ', email: 'andres@demo.hoyos.test', blurb: { es: 'Profesor de Hot Vinyasa.', en: 'Hot Vinyasa teacher.' } },
   { id: 'usr_maint', role: 'maintenance', name: 'Rosa Cárdenas', initials: 'RC', email: 'rosa@demo.hoyos.test', blurb: { es: 'Salas, incidencias e inventario.', en: 'Rooms, incidents and inventory.' } },
+  { id: 'usr_mkt', role: 'marketing', name: 'Camila Herrera', initials: 'CH', email: 'camila@demo.hoyos.test', blurb: { es: 'Marketing: contenido, campañas y la voz de la marca.', en: 'Marketing: content, campaigns and the brand voice.' } },
+  { id: 'usr_dev', role: 'developer', name: 'Julián Mesa', initials: 'JM', email: 'julian@demo.hoyos.test', blurb: { es: 'Desarrollo: herramientas dev, specs, tablas y docs, con modo dev.', en: 'Developer: dev tools, specs, tables and docs, with dev mode.' } },
   { id: 'usr_cust', role: 'customer', name: 'Juliana Ospina', initials: 'JO', email: 'juliana@demo.hoyos.test', blurb: { es: 'Socia mensual, practica en la mañana.', en: 'Monthly member, morning practice.' } },
   { id: 'usr_public', role: 'public', name: 'Visitante', initials: '·', email: '', blurb: { es: 'Sin sesión.', en: 'Not signed in.' } },
 ];

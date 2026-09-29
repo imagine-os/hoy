@@ -1,0 +1,44 @@
+[
+  {
+    "id": "modelo-de-valor",
+    "title": { "es": "Modelo de valor (sin precios)", "en": "Value model (no prices)" },
+    "file": "source/modelo-de-valor.pdf",
+    "cover": "source/modelo-de-valor-cover.jpg",
+    "pages": 8,
+    "date": "2026-09-29",
+    "kind": "deck",
+    "summary": {
+      "es": "Deck de ocho diapositivas para el owner e inversionistas con las seis líneas de ingreso de HOY — Bienvenida, Membresía, Pausas, Regalos, Espacio y Experiencias Corporativas (en camino) —, deliberadamente sin precios. La disciplina detrás: 16 tapetes por sesión y una clase diaria por persona en cualquier plan.",
+      "en": "Eight-slide deck for the owner and investors with HOY’s six revenue lines — Welcome, Membership, Pauses, Gifts, Space and Corporate Experiences (coming) — deliberately without prices. The discipline behind it: 16 mats per session and one class per person per day on any plan."
+    },
+    "chapters": ["03", "10", "11", "12"]
+  },
+  {
+    "id": "contenido-completo",
+    "title": { "es": "Contenido completo: Sobre HOY, filosofía y clases", "en": "Full content: About HOY, philosophy and classes" },
+    "file": "source/contenido-completo.pdf",
+    "cover": "source/contenido-completo-cover.jpg",
+    "pages": 5,
+    "date": "2026-09-29",
+    "kind": "web-copy",
+    "summary": {
+      "es": "Los textos finales en español del sitio: Sobre HOY, Nuestra filosofía y Nuestras clases (Hot Yoga, Barre, Pilates, Meditación y Respiración), escritos en segunda persona y sin jerga. Es la voz con la que el equipo habla del club: un santuario urbano donde no se necesita experiencia previa, «solo llegar».",
+      "en": "The final Spanish website copy: About HOY, Our philosophy and Our classes (Hot Yoga, Barre, Pilates, Meditation and Breathwork), written in the second person and jargon-free. It is the voice the team uses to talk about the club: an urban sanctuary where no prior experience is needed, “just show up”."
+    },
+    "chapters": ["01", "02", "18", "20"]
+  },
+  {
+    "id": "manual-de-marca",
+    "title": { "es": "Manual de marca 2026", "en": "Brand manual 2026" },
+    "file": "source/manual-de-marca.pdf",
+    "cover": "source/manual-de-marca-cover.jpg",
+    "pages": 12,
+    "date": "2026-09-29",
+    "kind": "brand-manual",
+    "summary": {
+      "es": "El manual de marca de HOY · Human Club: manifiesto, propósito, misión, cinco rasgos de personalidad (presente, humana, cercana, sensorial, contemporánea), logo y su construcción, tipografía y paleta. Reglas duras: área de protección de una H, tamaño mínimo 30 mm / 120 px y los cuatro colores #35597D, #5F85B1, #F7F3B2 y #F1E7D2.",
+      "en": "HOY · Human Club’s brand manual: manifesto, purpose, mission, five personality traits (present, human, close, sensorial, contemporary), the logo and its construction, typography and palette. Hard rules: clear space of one H, minimum size 30 mm / 120 px and the four colours #35597D, #5F85B1, #F7F3B2 and #F1E7D2."
+    },
+    "chapters": ["01", "18", "19", "20"]
+  }
+]

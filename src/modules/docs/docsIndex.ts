@@ -12,6 +12,8 @@ export interface DocMeta {
   headings: string[];
   decisions: { section: string; text: string }[];
   placeholders: string[];
+  /** `> EN HOYOS:` screen boxes in a manual chapter (0031); absent for other docs before 0031. */
+  screenBoxes?: number;
 }
 
 const metaFiles = import.meta.glob<DocMeta>('../../../docs/**/*.md', { query: '?docmeta', import: 'default', eager: true });

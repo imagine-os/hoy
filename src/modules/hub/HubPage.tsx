@@ -44,6 +44,8 @@ interface SurfaceCard {
   shape?: ThumbShape;
   featured?: boolean;
   secondary?: { to: string; key: string };
+  /** 0031: announced, not built — "Próximamente" badge and a Placeholder instead of the enter button. */
+  comingSoon?: boolean;
 }
 
 /**
@@ -61,7 +63,9 @@ const CARD_UI: Record<HubSurfaceKey, { icon: IconName; shape?: ThumbShape }> = {
   admin: { icon: 'gauge' },
   crm: { icon: 'users' },
   finance: { icon: 'wallet' },
+  marketing: { icon: 'palette' },
   manual: { icon: 'book' },
+  sources: { icon: 'files' },
   docs: { icon: 'file-text' },
   kb: { icon: 'list-checks' },
   dev: { icon: 'code' },
@@ -74,6 +78,7 @@ const ALL_CARDS: SurfaceCard[] = HUB_EXPERIENCES.map((e) => {
     role: e.switchUser ? (e.roleId as Role) : undefined,
     featured: e.featured,
     secondary: e.secondary ? { to: e.secondary.route, key: `hub.card.${key}.secondary` } : undefined,
+    comingSoon: e.comingSoon,
   };
 });
 const inBand = (band: HubBand) => ALL_CARDS.filter((c) => c.band === band);
@@ -111,21 +116,28 @@ function SurfaceTile({ card, order, status, here, live, ui, onEnter }: {
   const tone = status === 'built' ? 'success' : status === 'stub' ? 'warn' : 'neutral';
 
   return (
-    <article className={`hub-card ${card.featured ? 'is-featured' : ''}`} style={{ ['--hue' as string]: `var(--hue-${card.key})` }}>
+    <article className={`hub-card ${card.featured ? 'is-featured' : ''} ${card.comingSoon ? 'is-soon' : ''}`} style={{ ['--hue' as string]: `var(--hue-${card.key})` }}>
       <div className="hub-card-body">
         <div className="hub-card-top">
           <span className="hub-medallion" aria-hidden><Icon name={card.icon} size={Math.round(22 * ui)} /></span>
           <div className="hub-card-badges">
-            <Badge tone={tone}>{t(`hub.status.${status}`)}</Badge>
-            {here && <Badge tone="primary">{t('hub.here')}</Badge>}
+            {card.comingSoon ? <Badge tone="highlight">{t('hub.status.soon')}</Badge> : <Badge tone={tone}>{t(`hub.status.${status}`)}</Badge>}
+            {here && !card.comingSoon && <Badge tone="primary">{t('hub.here')}</Badge>}
           </div>
         </div>
         <h3 className="hub-card-title">{name}</h3>
         <p className="hub-card-lead muted">{t(`hub.card.${card.key}.body`)}</p>
         <div className="hub-card-foot">
-          <Button variant="secondary" onClick={() => onEnter(card)}>
-            {person ? t('hub.enterAs', { name: person.name.split(' ')[0] }) : t('hub.open')}
-          </Button>
+          {card.comingSoon ? (
+            <>
+              <Placeholder what={name}><Button variant="secondary" icon="sparkle">{t('hub.soon.cta')}</Button></Placeholder>
+              <Link className="hub-card-secondary small" to={card.to} onClick={(e) => { e.preventDefault(); onEnter({ ...card, comingSoon: false }); }}>{t('hub.soon.today', { code: card.code })}</Link>
+            </>
+          ) : (
+            <Button variant="secondary" onClick={() => onEnter(card)}>
+              {person ? t('hub.enterAs', { name: person.name.split(' ')[0] }) : t('hub.open')}
+            </Button>
+          )}
           {card.secondary && <Link className="hub-card-secondary small" to={card.secondary.to}>{t(card.secondary.key)}</Link>}
         </div>
         <p className="hub-card-meta xs">
@@ -138,7 +150,7 @@ function SurfaceTile({ card, order, status, here, live, ui, onEnter }: {
       <div className="hub-card-preview">
         <PagePreview
           code={card.code} route={card.to} name={name} shape={card.shape ?? 'desktop'}
-          as={card.role} live={live} order={order} maxScale={card.shape === 'phone' ? ui : 1}
+          as={card.role} live={live && !card.comingSoon} order={order} maxScale={card.shape === 'phone' ? ui : 1}
         />
       </div>
     </article>
@@ -167,7 +179,7 @@ function Band({ id, eyebrow, title, body, tint, children }: {
 export function HubPage() {
   const { t, bi, setLang } = useI18n();
   const nav = useNavigate();
-  const { role, isSuperAdmin, devMode, setDevMode, switchUser } = useSession();
+  const { role, isSuperAdmin, canDevMode, devMode, setDevMode, switchUser } = useSession();
   const { theme, toggleTheme, skin, toggleSkin } = useTheme();
   const root = useRef<HTMLDivElement>(null);
   const ui = useUiScale(root);
@@ -203,6 +215,7 @@ export function HubPage() {
       // A bad parameter is a failure, not a result: `run()` turns a throw into { ok: false }, while a
       // returned string is reported as { ok: true } and an agent would read it as "done".
       if (!card) throw new Error(`unknown surface "${p?.surface ?? ''}" — one of ${HUB_SURFACES.join(', ')}`);
+      if (card.comingSoon) throw new Error(`${card.key} is coming soon (not built yet); today that work happens at ${card.to}`);
       enter(card);
       return `entered ${card.key} at ${card.to}`;
     },
@@ -216,7 +229,7 @@ export function HubPage() {
     },
     // `permission` on the spec is advisory metadata for agents; the gate that counts is here.
     'hub.toggleDevMode': () => {
-      if (!isSuperAdmin) throw new Error('requires super_admin');
+      if (!canDevMode) throw new Error('requires super_admin or developer');
       setDevMode(!devMode); return `dev mode ${devMode ? 'off' : 'on'}`;
     },
     'hub.setLang': (p?: Record<string, string>) => {
@@ -234,7 +247,7 @@ export function HubPage() {
       if (!isSuperAdmin) throw new Error('requires super_admin');
       toggleSkin(); return `skin ${skin === 'wireframe' ? 'styled' : 'wireframe'}`;
     },
-  }), [enter, nav, setDevMode, devMode, setLang, toggleTheme, theme, toggleSkin, skin, isSuperAdmin]);
+  }), [enter, nav, setDevMode, devMode, setLang, toggleTheme, theme, toggleSkin, skin, isSuperAdmin, canDevMode]);
   useActions(hubSpec, handlers);
 
   // Document order decides who gets one of the six live frames first.
@@ -261,7 +274,7 @@ export function HubPage() {
                   <Icon name={theme === 'dark' ? 'moon' : 'sun'} size={20} />
                 </button>
                 {isSuperAdmin && <Toggle size="sm" checked={skin === 'wireframe'} onChange={toggleSkin} label={t('hub.wireframe')} />}
-                {isSuperAdmin && <Toggle size="sm" checked={devMode} onChange={setDevMode} label={t('core.dev.mode')} />}
+                {canDevMode && <Toggle size="sm" checked={devMode} onChange={setDevMode} label={t('core.dev.mode')} />}
               </div>
             </header>
 
