@@ -11,7 +11,7 @@
       "es": "Un solo sistema para cada puesto del estudio: quien practica, quien enseña, quien recibe en la puerta, quien administra y quien lo construye.",
       "en": "One system for every seat at the studio: members, teachers, front desk, admin, and the people who build it."
     },
-    "version": "0.15.0",
+    "version": "0.16.0",
     "baseUrl": "https://imagine-os.github.io/hoy/",
     "hubRoute": "/",
     "brand": {
@@ -333,6 +333,7 @@
         "C-23",
         "C-24",
         "C-26",
+        "C-27",
         "A-06",
         "E-01",
         "E-02",
@@ -610,6 +611,7 @@
       "url": "https://imagine-os.github.io/hoy/#/admin",
       "pageCodes": [
         "M-01",
+        "M-12",
         "M-02",
         "M-03",
         "M-04",
@@ -1025,6 +1027,54 @@
           "en-390": "hub-map/shots/M-01/en-390.jpg",
           "es-1280": "hub-map/shots/M-01/es-1280.jpg",
           "en-1280": "hub-map/shots/M-01/en-1280.jpg"
+        }
+      },
+      "group": {
+        "id": "admin",
+        "label": {
+          "es": "Administración",
+          "en": "Admin"
+        },
+        "order": 10
+      }
+    },
+    {
+      "code": "M-12",
+      "route": "/admin/analytics",
+      "name": {
+        "es": "Analítica de práctica",
+        "en": "Practice analytics"
+      },
+      "purpose": {
+        "es": "Cómo va el estudio en asistencia y retención: ocupación, asistencia, no-shows, horarios populares, segunda visita, quién lleva días sin venir, modalidades, profesores, logros para felicitar en persona y créditos por vencer. Sin cifras de ingresos.",
+        "en": "How the studio is doing on attendance and retention: fill, attendance, no-shows, popular slots, second visit, who has not come in for a while, modalities, teachers, milestones to congratulate in person and credits about to expire. No revenue figures."
+      },
+      "surface": "admin",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "finance"
+      ],
+      "experienceId": "admin",
+      "device": "desktop",
+      "status": "built",
+      "actions": [
+        "analytics.setRange",
+        "analytics.openMember"
+      ],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/M-12/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/M-12/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/M-12/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/M-12/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/M-12/es-390.jpg",
+          "en-390": "hub-map/shots/M-12/en-390.jpg",
+          "es-1280": "hub-map/shots/M-12/es-1280.jpg",
+          "en-1280": "hub-map/shots/M-12/en-1280.jpg"
         }
       },
       "group": {
@@ -2036,8 +2086,10 @@
       "device": "phone",
       "status": "built",
       "actions": [
+        "app.setGoal",
         "app.goHome",
-        "app.openSchedule"
+        "app.openSchedule",
+        "app.openPractice"
       ],
       "shots": {
         "thumbs": {
@@ -2088,7 +2140,8 @@
       "actions": [
         "app.reserve",
         "app.goHome",
-        "app.openSchedule"
+        "app.openSchedule",
+        "app.openPractice"
       ],
       "shots": {
         "thumbs": {
@@ -2235,7 +2288,8 @@
         "app.pickMat",
         "app.confirmReservation",
         "app.goHome",
-        "app.openSchedule"
+        "app.openSchedule",
+        "app.openPractice"
       ],
       "shots": {
         "thumbs": {
@@ -2334,7 +2388,8 @@
       "actions": [
         "app.choosePlan",
         "app.goHome",
-        "app.openSchedule"
+        "app.openSchedule",
+        "app.openPractice"
       ],
       "shots": {
         "thumbs": {
@@ -2478,7 +2533,8 @@
       "status": "built",
       "actions": [
         "app.goHome",
-        "app.openSchedule"
+        "app.openSchedule",
+        "app.openPractice"
       ],
       "shots": {
         "thumbs": {
@@ -3252,6 +3308,58 @@
           "en-390": "hub-map/shots/C-26/en-390.jpg",
           "es-1280": "hub-map/shots/C-26/es-1280.jpg",
           "en-1280": "hub-map/shots/C-26/en-1280.jpg"
+        }
+      },
+      "group": {
+        "id": "account",
+        "label": {
+          "es": "Cuenta",
+          "en": "Account"
+        },
+        "order": 30
+      }
+    },
+    {
+      "code": "C-27",
+      "route": "/app/practice",
+      "name": {
+        "es": "Tu práctica",
+        "en": "Your practice"
+      },
+      "purpose": {
+        "es": "La práctica de la persona en lenguaje llano: cuántas clases tomó esta semana y este mes, cuántas semanas seguidas lleva cumpliendo su meta, sus logros y lo que más practica, y la meta semanal que ella misma elige. Privado: nunca se compara con otras personas.",
+        "en": "The member’s practice in plain words: how many classes they attended this week and this month, how many weeks in a row they have met their goal, their milestones and what they practise most, and the weekly goal they choose themselves. Private: never compared with anyone else."
+      },
+      "surface": "customer",
+      "roles": [
+        "customer",
+        "teacher"
+      ],
+      "experienceId": "app",
+      "device": "phone",
+      "status": "built",
+      "actions": [
+        "app.setGoal",
+        "app.goHome",
+        "app.openSchedule",
+        "app.openPractice"
+      ],
+      "shots": {
+        "thumbs": {
+          "es-phone": "hub-map/shots/C-27/thumb-es-phone.jpg",
+          "en-phone": "hub-map/shots/C-27/thumb-en-phone.jpg",
+          "es-desktop": "hub-map/shots/C-27/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/C-27/thumb-en-desktop.jpg",
+          "es-phone-dark": "hub-map/shots/C-27/thumb-es-phone-dark.jpg",
+          "en-phone-dark": "hub-map/shots/C-27/thumb-en-phone-dark.jpg",
+          "es-desktop-dark": "hub-map/shots/C-27/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/C-27/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/C-27/es-390.jpg",
+          "en-390": "hub-map/shots/C-27/en-390.jpg",
+          "es-1280": "hub-map/shots/C-27/es-1280.jpg",
+          "en-1280": "hub-map/shots/C-27/en-1280.jpg"
         }
       },
       "group": {

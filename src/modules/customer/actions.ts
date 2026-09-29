@@ -16,8 +16,17 @@ const SIGN_IN_IDS = demoUsers.filter((u) => u.role !== 'public').map((u) => u.id
 
 export const appGoHome: ActionDef = { id: 'app.goHome', label: { es: 'Ir al inicio', en: 'Go home' }, intent: { es: 'Llévame al inicio de la app', en: 'Take me to the app home' } };
 export const appOpenSchedule: ActionDef = { id: 'app.openSchedule', label: { es: 'Abrir el horario', en: 'Open the schedule' }, intent: { es: 'Muéstrame el horario de clases', en: 'Show me the class schedule' }, permission: 'classes.read' };
+/** 0040: C-27 Tu práctica, from anywhere in the app. */
+export const appOpenPractice: ActionDef = { id: 'app.openPractice', label: { es: 'Ver mi práctica', en: 'See my practice' }, intent: { es: 'Muéstrame mi práctica', en: 'Show me my practice' } };
 /** Shell-level navigation, declared on every page of the reserve / register flow (the registry has no shell scope). */
-export const APP_NAV_ACTIONS: ActionDef[] = [appGoHome, appOpenSchedule];
+export const APP_NAV_ACTIONS: ActionDef[] = [appGoHome, appOpenSchedule, appOpenPractice];
+
+/** 0040: the member's weekly practice goal (C-01 inline picker, C-27 GoalSection). 0 = "sin meta": counts stay, the streak hides. */
+export const appSetGoal: ActionDef = {
+  id: 'app.setGoal', label: { es: 'Cambiar mi meta semanal', en: 'Change my weekly goal' },
+  intent: { es: 'Quiero practicar {target} veces por semana', en: 'I want to practise {target} times a week' },
+  params: { target: 'number 0–7 (0 = sin meta)' }, permission: 'bookings.write',
+};
 
 export const appReserve: ActionDef = {
   id: 'app.reserve', label: { es: 'Reservar una clase', en: 'Reserve a class' },
@@ -46,7 +55,8 @@ export const authSignIn: ActionDef = {
 
 /** Page code → the actions it declares. Merged into the specs in `./specs.ts`. */
 export const CUSTOMER_ACTIONS: Record<string, ActionDef[]> = {
-  'C-01': APP_NAV_ACTIONS,
+  'C-01': [appSetGoal, ...APP_NAV_ACTIONS],
+  'C-27': [appSetGoal, ...APP_NAV_ACTIONS],
   'C-02': [appReserve, ...APP_NAV_ACTIONS],
   'C-04': [appPickMat, appConfirmReservation, ...APP_NAV_ACTIONS],
   'C-06': [appChoosePlan, ...APP_NAV_ACTIONS],
@@ -60,6 +70,7 @@ export function useAppNavHandlers(): Record<string, ActionHandler> {
   return useMemo(() => ({
     'app.goHome': () => { nav('/app'); return 'opened /app'; },
     'app.openSchedule': () => { nav('/app/schedule'); return 'opened /app/schedule'; },
+    'app.openPractice': () => { nav('/app/practice'); return 'opened /app/practice'; },
   }), [nav]);
 }
 

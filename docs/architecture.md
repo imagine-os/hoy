@@ -68,6 +68,26 @@ email webhooks insert `direction = inbound` rows and update `status` / `external
 `MockProvider.SEED_VERSION` is bumped whenever a column is added, so a stored demo db is reseeded instead of
 missing it.
 
+### Analytics seam (0040)
+Every practice number — a member's weekly streak, "clases tomadas este mes", the studio's fill and attendance rates,
+a teacher's new faces — is **derived** from the raw tables, never stored: `src/data/analytics.ts` is the pure
+module (no React, no provider) and `src/data/useAnalytics.ts` its hooks (`usePracticeStats` / `useMemberPractice`
+for C-01, C-27 and M-06, `usePracticeStats` also for C-22; `usePracticeGoal` to set or clear the goal; `useMilestoneRecorder` to write the record;
+`useStudioStats` / `useTeacherStats` for M-12 and S-03). Inputs: `bookings` × `class_sessions` (a visit is a
+`checked_in` booking dated by the **session's** start, never the booking's `created_at`), `memberships` (pauses,
+who is entitled), `credits` (live balances) and `practice_goals` (the target, one active row per person; a new
+goal ends the old one so history survives). `activity_events` is an append-only record the app writes for the
+member's timeline (goal set, milestone reached, rest week that saved the streak…); no metric reads it. The streak,
+in three lines: weeks run Monday–Sunday in local time and a week is met when visits ≥ the member's target (target 0
+= no streak, counts still shown); the current week never breaks the streak and counts once met; one missed week per
+rolling four is forgiven when there was practice in the four before it, a paused membership week is skipped, and two
+misses (or a miss with no grace) reset the run while `best` stays. Rules and edge cases are proven by
+`npm run test:analytics`. Goals are history — a change ends the active `practice_goals` row rather than editing it — and
+`practiceStats()` receives every row of the person, so each past week is judged by the goal that was in force when it
+closed (the latest row with `starts_on` ≤ that week's Sunday; rule 8, D-0015): raising a goal never rewrites past
+weeks. Research, glossary and the thresholds M-12 uses: `docs/reference/analytics.md`;
+decisions D-0014 / D-0015.
+
 ## Actions registry (0.9.0)
 `src/actions/` is the one way a page says what it can be asked to do. A page **declares** its actions
 in its `PageSpec.actions` — `{ id, label{es,en}, intent{es,en}, params?, permission? }`, id shaped

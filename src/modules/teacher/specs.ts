@@ -7,10 +7,10 @@ const data = ['teachers', 'class_sessions', 'bookings', 'modalities', 'users', '
 /** S-03 teacher home. */
 export const S03 = defineSpec({
   ...base,
-  layout: ['NextClassCard', 'TodayClasses (roster count)', 'Specials (own space_bookings, S-05)', 'ScheduleList (week)', 'SubstitutionRequest', 'PayrollTile'],
-  data: [...data, 'space_bookings', 'special_charges', 'rooms'],
+  layout: ['NextClassCard', 'PayrollTile', 'MyNumbers (30 días: own fill, attendance, no-shows, new faces, regulars, first-timer return, rating vs studio average)', 'TodayClasses (roster count)', 'Specials (own space_bookings, S-05)', 'ScheduleList (week)', 'SubstitutionRequest'],
+  data: [...data, 'space_bookings', 'special_charges', 'rooms', 'reviews', 'memberships', 'credits', 'practice_goals'],
   checkedAt: [390, 768, 1280, 1920, 3840],
-  notes: [...(base.notes ?? []), 'Mobile-first inside AppShell (column + dock below 900 px; from 900 px a --w-teach column of 60rem with the top-bar nav, 0026).', 'Substitution requests are written to audit_log (action substitution.request) for the coordinator.'],
+  notes: [...(base.notes ?? []), 'Mobile-first inside AppShell (column + dock below 900 px; from 900 px a --w-teach column of 60rem with the top-bar nav, 0026).', 'Substitution requests are written to audit_log (action substitution.request) for the coordinator.', 'MyNumbers reads teacherStats(me, 30) and studioStats(30) from src/data/analytics.ts: the teacher sees only their own numbers against the studio average, never a ranked list of colleagues (research §B; the per-teacher table is M-12, staff only). The rating stays hidden until 5 reviews in the range (research §3). "Solo tú y coordinación ven estos números."'],
 });
 
 /** /teach/class/:id — roster, attendance, notes. */

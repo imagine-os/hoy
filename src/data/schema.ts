@@ -20,7 +20,7 @@ export interface ColumnDef {
   wide?: boolean;
 }
 
-export type TableGroup = 'core' | 'people' | 'schedule' | 'commerce' | 'comms' | 'manual' | 'system' | 'design';
+export type TableGroup = 'core' | 'people' | 'schedule' | 'analytics' | 'commerce' | 'comms' | 'manual' | 'system' | 'design';
 
 export interface TableDef {
   name: string;
@@ -115,6 +115,14 @@ export const tables: TableDef[] = [
   { name: 'event_rsvps', group: 'schedule', label: { es: 'Inscripciones a eventos', en: 'Event RSVPs' }, description: { es: 'Quién va a un evento y con qué pago (C-23).', en: 'Who is going to an event and with which payment (C-23).' },
     rls: ['customer: insert + read + cancel own rows (user_id = auth.uid())', 'front_desk/coordinator/admin: read all, mark attended'],
     columns: [{ name: 'event_id', type: 'uuid', references: 'events' }, { name: 'user_id', type: 'uuid', references: 'users' }, { name: 'status', type: 'enum', enum: ['going', 'cancelled', 'attended', 'no_show'] }, { name: 'payment_id', type: 'uuid', references: 'payments', nullable: true }, { name: 'guests', type: 'int', description: 'extra seats taken' }] },
+
+  // ---- analytics (0040): the member's weekly goal and the moments worth remembering; every metric is derived from bookings + class_sessions (src/data/analytics.ts) ----
+  { name: 'practice_goals', group: 'analytics', titleColumn: 'target', label: { es: 'Metas de práctica', en: 'Practice goals' }, description: { es: 'Cuántas clases por semana quiere tomar cada persona (C-01, C-27). Una fila activa por persona; el historial se conserva.', en: 'How many classes a week each person wants to take (C-01, C-27). One active row per person; history is kept.' },
+    rls: ['customer: insert + read + update own rows (user_id = auth.uid())', 'front_desk/coordinator/admin: read (M-06, M-12)', 'one active row per person: setting a new goal ends the previous one (active = false), so history survives'],
+    columns: [{ name: 'user_id', type: 'uuid', references: 'users' }, { name: 'cadence', type: 'enum', enum: ['week'], description: 'only weekly today; a monthly cadence is reserved for a later pass and would extend this enum, never replace it' }, { name: 'target', type: 'int', description: 'classes per week the member chose, 1–7; 0 = no goal, only tracking' }, { name: 'source', type: 'enum', enum: ['member', 'suggested'], description: 'member = picked by hand · suggested = accepted the app’s suggestion from their own history' }, { name: 'starts_on', type: 'date' }, { name: 'active', type: 'bool' }, { name: 'note', type: 'text', nullable: true, wide: true, description: 'why, in the member’s words; optional' }] },
+  { name: 'activity_events', group: 'analytics', titleColumn: 'kind', label: { es: 'Eventos de actividad', en: 'Activity events' }, description: { es: 'Los momentos que las tablas crudas no guardan: una meta fijada, un hito alcanzado, una semana de descanso que salvó la racha… Reservas, check-ins y pagos siguen en sus tablas y toda métrica se deriva de ellas.', en: 'The member-facing moments the raw tables do not hold: a goal set, a milestone reached, a rest week that saved the streak… Bookings, check-ins and payments stay in their own tables and every metric is derived from them.' },
+    rls: ['customer: read own rows (user_id = auth.uid()); inserts happen from the app on the member’s own actions', 'coordinator/admin/front_desk: read all (M-12, M-06)', 'append-only: never updated nor deleted; a correction is a new row'],
+    columns: [{ name: 'user_id', type: 'uuid', references: 'users', nullable: true, description: 'null = studio-level event' }, { name: 'kind', type: 'enum', enum: ['goal.set', 'milestone', 'streak.saved', 'streak.broken', 'first.visit', 'plan.purchased', 'plan.renewed', 'credit.expiring'] }, { name: 'occurred_at', type: 'timestamptz', description: 'when it happened, which may be earlier than when the app noticed (created_at)' }, { name: 'ref_table', type: 'text', nullable: true, description: 'the row it points at (bookings, practice_goals, credits…)' }, { name: 'ref_id', type: 'text', nullable: true }, { name: 'payload', type: 'json', nullable: true, wide: true, description: 'kind-specific: { target } for goal.set, { count } for milestone, { week } for streak.saved' }] },
 
   // ---- commerce ----
   { name: 'plans', group: 'commerce', titleColumn: 'name_es', label: { es: 'Planes y precios', en: 'Plans & prices' }, description: { es: 'Modelo de Valor v3: pases, membresías, pausas, regalos, espacio.', en: 'Value model v3: passes, memberships, pauses, gifts, space.' },
@@ -215,6 +223,7 @@ export const TABLE_GROUPS: { id: TableGroup; label: Bi }[] = [
   { id: 'core', label: { es: 'Núcleo', en: 'Core' } },
   { id: 'people', label: { es: 'Personas', en: 'People' } },
   { id: 'schedule', label: { es: 'Horario', en: 'Schedule' } },
+  { id: 'analytics', label: { es: 'Práctica y analítica', en: 'Practice & analytics' } },
   { id: 'commerce', label: { es: 'Comercio', en: 'Commerce' } },
   { id: 'comms', label: { es: 'Comunicaciones', en: 'Comms' } },
   { id: 'manual', label: { es: 'Manual y formación', en: 'Manual & training' } },
@@ -229,7 +238,7 @@ export interface RoomRow extends BaseRow { name: string; capacity: number; heate
 export interface ClassSessionRow extends BaseRow { template_id: string | null; title: string; modality_id: string; teacher_id: string; room_id: string; starts_at: string; ends_at: string; capacity: number; booked_count: number; level: string; status: 'scheduled' | 'cancelled' | 'completed'; cancel_reason: string | null }
 export interface BookingRow extends BaseRow { user_id: string; session_id: string; status: 'booked' | 'checked_in' | 'cancelled' | 'no_show' | 'late_cancel'; paid_with: string; credit_id: string | null; checked_in_at: string | null; cancelled_at: string | null; rated: boolean }
 export interface PlanRow extends BaseRow { slug: string; family: 'bienvenida' | 'membresia' | 'pausas' | 'regalos' | 'espacio'; name_es: string; name_en: string; description: { es: string; en: string }; price: number; period: 'once' | 'month' | 'year' | null; credits: number | null; validity_days: number | null; is_from_price: boolean; badge: { es: string; en: string } | null; active: boolean; sort: number }
-export interface MembershipRow extends BaseRow { user_id: string; plan_id: string; status: string; starts_at: string; renews_at: string | null; ends_at: string | null }
+export interface MembershipRow extends BaseRow { user_id: string; plan_id: string; status: string; starts_at: string; renews_at: string | null; ends_at: string | null; paused_until?: string | null }
 export interface UserRow extends BaseRow { email: string; phone: string | null; status: string; locale: string | null }
 export interface ProfileRow extends BaseRow { user_id: string; full_name: string; initials: string | null; photo_url: string | null; marketing_optin: boolean; whatsapp_verified: boolean }
 export interface PaymentRow extends BaseRow { user_id: string | null; plan_id: string | null; amount: number; amount_paid: number | null; currency: string; method: string; provider: string; status: string; paid_at: string | null; note: string | null }
@@ -276,3 +285,10 @@ export interface StudioPolicyRow extends BaseRow { key: string; label: { es: str
 export type IntegrationKey = 'wompi' | 'whatsapp' | 'email' | 'dian' | 'maps' | 'supabase';
 export type IntegrationStatus = 'simulated' | 'configured' | 'connected';
 export interface IntegrationRow extends BaseRow { key: IntegrationKey; status: IntegrationStatus; config: Record<string, string>; notes: string | null; updated_by: string | null }
+// ---- analytics (0040) ----
+export type GoalCadence = 'week';
+export type GoalSource = 'member' | 'suggested';
+export interface PracticeGoalRow extends BaseRow { user_id: string; cadence: GoalCadence; target: number; source: GoalSource; starts_on: string; active: boolean; note: string | null }
+export type ActivityEventKind = 'goal.set' | 'milestone' | 'streak.saved' | 'streak.broken' | 'first.visit' | 'plan.purchased' | 'plan.renewed' | 'credit.expiring';
+export const ACTIVITY_EVENT_KINDS: readonly ActivityEventKind[] = ['goal.set', 'milestone', 'streak.saved', 'streak.broken', 'first.visit', 'plan.purchased', 'plan.renewed', 'credit.expiring'];
+export interface ActivityEventRow extends BaseRow { user_id: string | null; kind: ActivityEventKind; occurred_at: string; ref_table: string | null; ref_id: string | null; payload: Record<string, unknown> | null }

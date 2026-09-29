@@ -94,6 +94,7 @@ export function ProfilePage() {
         <ListRow icon="ticket" title={t('customer.membership.title')} subtitle={ent.membership ? t('customer.home.membership.active', { date: formatDate(ent.membership.renews_at ?? ent.membership.starts_at, lang) }) : t('customer.profile.noPlan')} to="/app/membership" trailing={ent.membership ? <Badge tone={ent.membership.status === 'active' ? 'success' : 'warn'}>{t(`customer.membership.status.${ent.membership.status}`)}</Badge> : undefined} />
         <ListRow icon="coins" title={t('customer.credits.title')} subtitle={t('customer.checkout.credit.sub', { n: ent.creditBalance })} to="/app/credits" />
         <ListRow icon="history" title={t('core.nav.history')} to="/app/history" />
+        <ListRow icon="flame" title={t('customer.practice.title')} subtitle={t('customer.practice.more.sub')} to="/app/practice" />
       </ListGroup>
     ),
     PaymentMethods: () => <ListGroup><ListRow icon="credit-card" title={t('customer.pay.title')} subtitle={t('customer.profile.pay.sub')} to="/app/payment-methods" /></ListGroup>,
