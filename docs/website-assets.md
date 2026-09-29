@@ -19,10 +19,10 @@ Design: contemporary editorial wellness; cream #F1E7D2, blues #35597D / #5F85B1,
 | texture-sunlight.webp | TEXTURE 02.png | Pricing background |
 | texture-limestone.webp | TEXTURE 03.png | Cards and panels |
 | texture-blue.webp | TEXTURE 04.png | Blue mineral panels |
-| stone-enraiza.webp | ENRRAIZA GROUNDING.png | Movement selector |
-| stone-fluye.webp | FLUI GO WITH THE FOW.png | Movement selector |
-| stone-arde.webp | ARDE BURN.png | Movement selector |
-| stone-libera.webp | FREE LIBERA.png | Movement selector |
+| stone-enraiza.webp | ENRRAIZA GROUNDING.png | Movement selector (retired from W-01 in 0034; file kept, not rendered) |
+| stone-fluye.webp | FLUI GO WITH THE FOW.png | Movement selector (retired from W-01 in 0034; file kept, not rendered) |
+| stone-arde.webp | ARDE BURN.png | Movement selector (retired from W-01 in 0034; file kept, not rendered) |
+| stone-libera.webp | FREE LIBERA.png | Movement selector (retired from W-01 in 0034; file kept, not rendered) |
 | hero-sanctuary.webp | New built-in OpenAI image generation | Hero / video anchor |
 | ritual-stillness.webp | New built-in OpenAI image generation | Closing scene / video anchor |
 | practice-flow.webp | New built-in OpenAI image generation | Supplemental editorial asset |

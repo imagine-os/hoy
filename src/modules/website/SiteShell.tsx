@@ -5,7 +5,8 @@ import { useContact } from '../admin/settings';
 import { useTheme } from '../../design/ThemeProvider';
 import { tenant } from '../../tenant/tenant';
 import { taglines } from '../../tenant/brand';
-import { Wordmark } from '../../components/atom/Wordmark/Wordmark';
+import { Wordmark, type WordmarkTone } from '../../components/atom/Wordmark/Wordmark';
+import { brandHeading } from '../../components/atom/Wordmark/brandHeading';
 import { LangToggle } from '../../components/molecule/LangToggle/LangToggle';
 import { Button } from '../../components/atom/Button/Button';
 import { ElementCursor } from '../../components/atom/ElementCursor/ElementCursor';
@@ -73,7 +74,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
       <ElementCursor enabled={edition === 'sanctuary' && motion} />
       <header className="site-head">
         <div className="container site-head-in">
-          <Link to="/site" className="site-brand" onClick={() => setOpen(false)}><Wordmark height={34} /><span className="site-brand-caption">{bi(tenant.tagline)}</span></Link>
+          <Link to="/site" className="site-brand" onClick={() => setOpen(false)}>{edition === 'sanctuary' ? <Wordmark vector /> : <Wordmark height={34} />}<span className="site-brand-caption">{bi(tenant.tagline)}</span></Link>
           <nav className={`site-nav ${open ? 'is-open' : ''}`} aria-label={t('site.nav.label')}>
             {NAV.map(([to, k]) => <NavLink key={to} to={to} className={({ isActive }) => (isActive ? 'is-active' : '')} onClick={() => setOpen(false)}>{t(`site.nav.${k}`)}</NavLink>)}
             {/* on phones (≤ 600 px) the edition select and motion toggle move from the header into the open menu so the header fits without overflow */}
@@ -96,7 +97,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
       <footer className="site-foot">
         <div className="container site-foot-grid">
           <div className="stack-sm">
-            <Wordmark height={42} className="site-footer-wordmark" />
+            {edition === 'sanctuary' ? <Link to="/site" className="site-footer-brand"><Wordmark vector className="site-footer-wordmark" /></Link> : <Wordmark height={42} className="site-footer-wordmark" />}
             <span className="small">{bi(taglines.life)}</span>
             <span className="xs muted">{bi(tenant.tagline)} · {contact.city}</span>
           </div>
@@ -135,12 +136,22 @@ export function SiteShell({ children }: { children: ReactNode }) {
   );
 }
 
+/**
+ * 0033 — V2 (sanctuary) display headings set the brand word as the vector wordmark (`brandHeading`); V1 keeps its
+ * 28–36 px headings as text, where the mark would fall under the brand manual's 120 px minimum.
+ */
+export function useBrandHeading() {
+  const { edition } = useSiteEdition();
+  return (text: string, tone?: WordmarkTone) => (edition === 'sanctuary' ? brandHeading(text, { tone }) : text);
+}
+
 export function PageHead({ title, body, eyebrow, back }: { title: string; body?: string; eyebrow?: string; back?: { to: string; label: string } }) {
+  const brand = useBrandHeading();
   return (
     <div className="site-pagehead container">
       {back && <Link className="small site-back" to={back.to}>‹ {back.label}</Link>}
       {eyebrow && <p className="eyebrow">{eyebrow}</p>}
-      <h1>{title}</h1>
+      <h1>{brand(title)}</h1>
       {body && <p className="muted site-lead">{body}</p>}
     </div>
   );
@@ -148,11 +159,12 @@ export function PageHead({ title, body, eyebrow, back }: { title: string; body?:
 
 /** Section heading used by every site section. */
 export function SectionHead({ title, body, eyebrow, action }: { title: string; body?: string; eyebrow?: string; action?: ReactNode }) {
+  const brand = useBrandHeading();
   return (
     <div className="site-section-top">
       <div className="site-section-head">
         {eyebrow && <p className="eyebrow">{eyebrow}</p>}
-        <h2>{title}</h2>
+        <h2>{brand(title)}</h2>
         {body && <p className="muted">{body}</p>}
       </div>
       {action && <div className="site-section-action">{action}</div>}

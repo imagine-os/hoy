@@ -226,6 +226,12 @@ export const type = {
   'lh-base': '1.5',
   'ls-tight': '-0.02em',  // canvas hoy headings
   'ls-eyebrow': '0.14em', // canvas eyebrows
+  /* 0033 — the script wordmark set inside a display heading in place of the word HOY (Wordmark `inline`). Sized in em so
+     it follows the heading; the floor keeps it at the brand manual's 120 px minimum width; the gap is added to the word
+     space on each side so the clear space totals ≈ the H height of the lockup (⅓ of the script height). */
+  'wm-inline-h': '1.2em',
+  'wm-inline-gap': '0.12em',
+  'wm-min-w': '120px',
   'fw-light': '300',
   'fw-regular': '400',
   'fw-medium': '500',

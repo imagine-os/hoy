@@ -8,7 +8,7 @@ import { formatCOP } from '../../../i18n/format';
 import { tenant } from '../../../tenant/tenant';
 import { priceItem, FAMILY_LABEL, FAMILY_RATIONALE, type PlanFamily } from '../../../tenant/pricing';
 import { classes, classOrder } from '../../../tenant/brand';
-import { movements, type Movement } from '../../../design/tokens';
+import { movements } from '../../../design/tokens';
 import { AmbientScene } from '../../../components/organism/AmbientScene/AmbientScene';
 import { MediaSlot } from '../../../components/molecule/MediaSlot/MediaSlot';
 import { Icon } from '../../../components/atom/Icon/Icon';
@@ -49,13 +49,6 @@ function SanctuaryHome() {
         </div>
       </div>
       <div className="sanctuary-hero-bottom container"><span className="sanctuary-scroll"><span aria-hidden>↓</span>{t('site.new.scroll')}</span><button type="button" className="sanctuary-motion" onClick={() => setMotion(!motion)} aria-pressed={!motion}>{motion ? 'Ⅱ' : '▷'} <span>{t(motion ? 'site.new.ambient' : 'site.new.static')}</span></button></div>
-    </section>,
-    Movements: () => <section className="container sanctuary-section sanctuary-movements" data-reveal>
-      <div className="sanctuary-centered"><p className="eyebrow">{t('site.new.chapter1')}</p><h2>{t('site.new.movements')}</h2><p className="muted">{t('site.new.movementsBody')}</p></div>
-      <div className="sanctuary-stones">{(Object.keys(movements) as Movement[]).map(m => <Link to={`/site/schedule?movement=${m}`} className="sanctuary-stone" key={m}>
-        <div className="sanctuary-stone-art"><img src={siteImage(`stone-${m}`)} alt="" loading="lazy" width="320" height="320" /></div>
-        <h3>{movements[m].label}</h3><p>{t(`site.mv.${m}`)}</p><span className="sanctuary-stone-arrow" aria-hidden>↗</span>
-      </Link>)}</div>
     </section>,
     Philosophy: () => <section className="sanctuary-philosophy" data-reveal><div className="container sanctuary-philosophy-grid">
       <div className="sanctuary-philosophy-art"><AmbientScene {...siteLoops.philosophy} video={videoEnabled ? siteLoops.philosophy.video : undefined} alt={t('site.new.philosophyAlt')} className="sanctuary-portrait" motion={motion} /><span className="sanctuary-photo-caption">{t('site.new.scroll')}</span></div>

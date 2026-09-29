@@ -70,6 +70,9 @@
   --lh-base: 1.5;
   --ls-tight: -0.02em;
   --ls-eyebrow: 0.14em;
+  --wm-inline-h: 1.2em;
+  --wm-inline-gap: 0.12em;
+  --wm-min-w: 120px;
   --fw-light: 300;
   --fw-regular: 400;
   --fw-medium: 500;

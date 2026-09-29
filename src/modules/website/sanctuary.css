@@ -76,17 +76,6 @@
 .sanctuary-heading > div { max-width: 720px; }
 .sanctuary-heading h2 { margin: 14px 0 18px; }
 .sanctuary-heading .sanctuary-text-link { flex-shrink: 0; margin-bottom: 5px; }
-.sanctuary-movements { padding-top: 76px; padding-bottom: 94px; }
-.sanctuary-stones { display: grid; grid-template-columns: repeat(4, 1fr); gap: 36px; }
-.sanctuary-stone { position: relative; text-align: center; color: var(--color-text); padding: 0 10px; }
-.sanctuary-stone:hover { text-decoration: none; }
-.sanctuary-stone-art { aspect-ratio: 1; border-radius: 50%; overflow: hidden; margin: 0 auto 22px; width: min(100%, 170px); box-shadow: var(--shadow-stone); transition: transform var(--dur-slow) var(--ease-out), box-shadow var(--dur-slow); }
-.sanctuary-stone-art img { width: 100%; height: 100%; object-fit: cover; transition: transform var(--dur-slow) var(--ease-out); }
-.sanctuary-stone:hover .sanctuary-stone-art { transform: translateY(-8px) rotate(-3deg); box-shadow: var(--shadow-raised); }
-.sanctuary-stone:active .sanctuary-stone-art { transform: translateY(1px); }
-.site[data-edition="sanctuary"] .sanctuary-stone h3 { font-family: var(--font-editorial); font-size: 32px; color: var(--color-primary); margin-bottom: 10px; }
-.sanctuary-stone p { max-width: 24ch; margin: auto; font-size: 14px; color: var(--color-text-muted); line-height: 1.7; }
-.sanctuary-stone-arrow { display: inline-block; margin-top: 12px; color: var(--color-primary); }
 .sanctuary-philosophy { padding: 68px 0; background-color: var(--color-lane); background-image: linear-gradient(color-mix(in srgb,var(--color-lane) 95%,transparent),color-mix(in srgb,var(--color-lane) 95%,transparent)),url('../../../public/images/sanctuary/texture-limestone.webp'); background-size: cover; }
 .sanctuary-philosophy-grid { display: grid; grid-template-columns: 1fr 1.15fr; gap: 11%; align-items: center; }
 .sanctuary-philosophy-art { position: relative; padding: 0 0 20px 28px; }
@@ -163,7 +152,6 @@
 .sanctuary[data-motion="off"] [data-reveal] { opacity: 1; transform: none; transition: none; }
 :root[data-theme="dark"] .sanctuary-hero-wash { background: linear-gradient(90deg,rgba(20,36,53,.91),rgba(20,36,53,.58) 46%,rgba(20,36,53,.1) 80%); }
 :root[data-theme="dark"] .site[data-edition="sanctuary"] .sanctuary-hero h1, :root[data-theme="dark"] .sanctuary-hero-copy > .eyebrow, :root[data-theme="dark"] .sanctuary-intro, :root[data-theme="dark"] .sanctuary-hero-copy > .sanctuary-text-link, :root[data-theme="dark"] .sanctuary-scroll { color: var(--brand-cream); }
-:root[data-theme="dark"] .sanctuary-stone-art { opacity: .9; }
 @media(min-width:1600px) { .sanctuary-hero { height: 860px; max-height: 1000px; } }
 @media(max-width:1150px) {
   .site[data-edition="sanctuary"] .site-head-in { gap: 18px; }
@@ -182,7 +170,6 @@
   .sanctuary-hero-scene .ambient-scene-media { object-position: 60% center; }
   .sanctuary-hero-wash { background: linear-gradient(90deg,rgba(246,237,219,.9),rgba(246,237,219,.52) 54%,rgba(246,237,219,.02)); }
   .sanctuary-philosophy-grid { gap: 6%; }
-  .sanctuary-stones { gap: 20px; }
   .sanctuary-portrait { height: 450px; }
   .sanctuary-schedule-grid { grid-template-columns: 1fr; gap: 45px; }
   .sanctuary-schedule-intro { max-width: 530px; }
@@ -219,10 +206,6 @@
   .site[data-edition="sanctuary"] h2 { font-size:42px; }
   .sanctuary-centered { margin-bottom:34px; }
   .sanctuary-centered h2 { margin:12px 0 16px; }
-  .sanctuary-stones { grid-template-columns:repeat(2,1fr); gap:32px 18px; }
-  .sanctuary-stone { padding:0; }
-  .sanctuary-stone-art { width:130px; margin-bottom:18px; }
-  .sanctuary-stone p { font-size:13px; }
   .sanctuary-philosophy { padding:48px 0 62px; }
   .sanctuary-philosophy-grid { grid-template-columns:1fr; gap:42px; }
   .sanctuary-philosophy-art { max-width:390px; width:100%; margin:auto; padding-left:18px; }
@@ -259,7 +242,6 @@
 @media(prefers-reduced-motion:reduce) {
   .sanctuary *, .site[data-edition="sanctuary"] .btn { transition:none !important; animation:none !important; }
   .reveal-ready { opacity:1; transform:none; }
-  .sanctuary-stone:hover .sanctuary-stone-art, .sanctuary-class:hover img, .sanctuary-plan:hover, .sanctuary-button:hover { transform:none; }
 }
 .site[data-edition="sanctuary"] .site-teacher-monogram { aspect-ratio: 4/5; border-radius: 48% 48% 4px 4px; background: linear-gradient(color-mix(in srgb,var(--color-lane) 85%,transparent),color-mix(in srgb,var(--color-lane) 85%,transparent)),url('../../../public/images/sanctuary/texture-limestone.webp') center/cover; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:20px; }
 .site-teacher-monogram > span { font: 72px var(--font-editorial); color:var(--color-primary); }
@@ -331,3 +313,16 @@
 
 .teacher-avatar-living { width: 54px; height: 64px; flex: 0 0 54px; border-radius: var(--r-full); }
 .sanctuary-teacher-link .teacher-avatar-living img { width: 108%; height: 108%; border-radius: 0; transform: none; }
+/* 0033 — the vector wordmark in the V2 header and footer: at the brand manual's 120 px minimum width (3.2rem tall, so it
+   grows with the --ui band on large screens), blue on light / cream on dark (Wordmark tone auto), mid blue / yellow on
+   hover, and the global focus ring with room for the clear space. */
+.site[data-edition="sanctuary"] .site-brand .wordmark-vector,
+.site[data-edition="sanctuary"] .site-footer-brand .wordmark-vector { height: max(3.2rem, calc(var(--wm-min-w) / var(--wm-ratio))); }
+.site[data-edition="sanctuary"] .site-footer-brand { display: inline-flex; align-self: flex-start; margin-bottom: 12px; border-radius: var(--r-xs); }
+.site[data-edition="sanctuary"] .site-footer-brand .site-footer-wordmark { margin-bottom: 0; }
+.site[data-edition="sanctuary"] .site-brand { border-radius: var(--r-xs); }
+.site[data-edition="sanctuary"] .site-brand .wordmark-vector, .site[data-edition="sanctuary"] .site-footer-brand .wordmark-vector { transition: color var(--dur-base) var(--ease-out); }
+.site[data-edition="sanctuary"] .site-brand:hover .wordmark-vector, .site[data-edition="sanctuary"] .site-footer-brand:hover .wordmark-vector { color: var(--brand-midBlue); }
+:root[data-theme="dark"] .site[data-edition="sanctuary"] .site-brand:hover .wordmark-vector, :root[data-theme="dark"] .site[data-edition="sanctuary"] .site-footer-brand:hover .wordmark-vector { color: var(--brand-yellow); }
+.site[data-edition="sanctuary"] .site-brand:focus-visible, .site[data-edition="sanctuary"] .site-footer-brand:focus-visible { outline-offset: 6px; }
+@media (prefers-reduced-motion: reduce) { .site[data-edition="sanctuary"] .site-brand .wordmark-vector, .site[data-edition="sanctuary"] .site-footer-brand .wordmark-vector { transition: none; } }
