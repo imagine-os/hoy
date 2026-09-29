@@ -17,8 +17,9 @@ const KEY = 'hoyos.db.v1';
  *   5 · 0040 practice_goals + activity_events and the demo member's goal history (an ended 1 / week under the active 2 / week); a copy without the tables fails the table check and reseeds
  *   6 · 0.17.0 hours_overrides and api_keys tables, the google_business integration row, settings.openingHours seeded (0041);
  *       a v5 copy lacks the two tables, so it fails the table check and reseeds
+ *   7 · 0043 table_views (M-03 saved views) with six default views; a v6 copy lacks the table, so it reseeds
  */
-export const SEED_VERSION = 6;
+export const SEED_VERSION = 7;
 
 /** 0039: a v3 copy still carries `movement`; give each row its seed tone (or the old colour's tone) and drop intentions. */
 const LEGACY_TONE: Record<string, string> = { enraiza: 'moss', fluye: 'river', arde: 'clay', libera: 'sun' };

@@ -1204,6 +1204,29 @@ _Quién hizo qué, sobre qué entidad, cuándo (M-07)._
 | `diff` | json, null |  |
 | `ip` | text, null |  |
 
+#### `table_views`
+The table manager views (M-03): which table, which kind of view (grid, list, gallery, board, graph…) and with which filters, sorts, grouping and columns. A shared view is visible to the whole team.  
+_Las vistas del gestor de tablas (M-03): qué tabla, qué tipo de vista (cuadrícula, lista, galería, tablero, grafo…) y con qué filtros, orden, agrupación y columnas. Una vista compartida la ve todo el equipo._
+
+| column | type | notes |
+| --- | --- | --- |
+| `id` | uuid | Primary key |
+| `tenant_id` | uuid | → `tenants` Owning studio (multi-tenant) |
+| `created_at` | timestamptz |  |
+| `updated_at` | timestamptz |  |
+| `table_name` | text | the table this view shows (a name from src/data/schema.ts) |
+| `name` | json | {es,en} |
+| `kind` | enum (grid \| list \| gallery \| kanban \| calendar \| timeline \| graph) |  |
+| `config` | json | { filters: [{column, op, value}], sorts: [{column, dir}], groupBy, hiddenColumns, columnOrder, cardFields, kanbanColumn, pinned } |
+| `is_default` | bool |  |
+| `shared` | bool |  |
+| `created_by` | uuid, null | → `users`  |
+
+**Who may read / write**
+- staff with tables.read: read shared rows and their own (created_by = auth.uid())
+- staff with tables.write: insert; update and delete their own rows (super_admin: any)
+- is_default marks the view a table opens with; one default per table_name
+
 #### `docs_entries`
 Index of docs/ for search and links (the .md files are the source).  
 _Índice de docs/ para búsqueda y enlaces (los .md son la fuente)._

@@ -1,0 +1,34 @@
+/* 0043 · RelationGraph (M-03 graph view). Colours are D-01 class tones and semantic tokens; sizes are rem / tokens. */
+.rgraph { display: flex; flex-direction: column; gap: var(--stack); min-width: 0; }
+.rgraph-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--gap-control); }
+.rgraph-zoom { gap: var(--gap-inline); }
+.rgraph-iconbtn .btn-label:empty { display: none; }
+.rgraph-hint { margin: 0; flex: 1 1 16rem; }
+.rgraph-canvas { position: relative; block-size: max(24rem, min(70vh, 56rem)); border-radius: var(--r-md); border: 1px solid var(--color-card-border); background: var(--color-surface); box-shadow: var(--shadow-card); overflow: hidden; touch-action: none; cursor: grab; }
+.rgraph-canvas:active { cursor: grabbing; }
+.rgraph-canvas:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+.rgraph-canvas svg { display: block; }
+.rgraph-edge { stroke: var(--color-border-strong); stroke-width: 1.25; }
+.rgraph-edge.is-strong { stroke: var(--color-primary); stroke-width: 2.25; }
+.rgraph-edge.is-faded { opacity: .25; }
+.rgraph-arrow { fill: var(--color-border-strong); }
+.rgraph-arrow.is-strong { fill: var(--color-primary); }
+.rgraph-node { cursor: pointer; outline: none; }
+.rgraph-node.is-faded { opacity: .35; }
+.rgraph-hit { fill: transparent; }
+.rgraph-dot { fill: var(--g-fill, var(--color-text-faint)); stroke: var(--color-surface); stroke-width: 2; }
+.rgraph-ring { fill: none; stroke: var(--g-fill, var(--color-primary)); stroke-width: 2.5; opacity: .6; }
+.rgraph-node.is-hot .rgraph-dot, .rgraph-node:focus-visible .rgraph-dot { stroke: var(--color-focus); stroke-width: 3; }
+.rgraph-node:focus-visible .rgraph-hit { stroke: var(--color-focus); stroke-width: 2; stroke-dasharray: 4 3; }
+.rgraph-label { font-family: var(--font-body); font-size: var(--fs-xs); font-weight: var(--fw-medium); fill: var(--color-text); paint-order: stroke; stroke: var(--color-surface); stroke-width: 4; stroke-linejoin: round; pointer-events: none; }
+.rgraph-node.is-focus .rgraph-label { font-family: var(--font-heading); font-size: var(--fs-sm); font-weight: var(--fw-semibold); }
+.rgraph-sublabel { font-size: var(--fs-2xs); fill: var(--color-text-muted); font-weight: var(--fw-regular); }
+.rgraph-legend { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--gap-inline) var(--gap-control); }
+.rgraph-legend-item { display: inline-flex; align-items: center; gap: var(--gap-inline); font-size: var(--fs-sm); color: var(--color-text-muted); }
+.rgraph-swatch { inline-size: var(--sp-md); block-size: var(--sp-md); border-radius: 50%; background: var(--g-fill, var(--color-text-faint)); flex: 0 0 auto; }
+/* tone → fill: the class-tone dots, then primary / accent for the system and design groups */
+.rgraph-tone-moss { --g-fill: var(--tone-moss-dot); } .rgraph-tone-river { --g-fill: var(--tone-river-dot); } .rgraph-tone-clay { --g-fill: var(--tone-clay-dot); }
+.rgraph-tone-sun { --g-fill: var(--tone-sun-dot); } .rgraph-tone-sage { --g-fill: var(--tone-sage-dot); } .rgraph-tone-slate { --g-fill: var(--tone-slate-dot); }
+.rgraph-tone-plum { --g-fill: var(--tone-plum-dot); } .rgraph-tone-primary { --g-fill: var(--color-primary); } .rgraph-tone-accent { --g-fill: var(--color-accent); } .rgraph-tone-warn { --g-fill: var(--color-warn); }
+.rgraph-tone-neutral { --g-fill: var(--color-text-faint); }
+@media (max-width: 767.98px) { .rgraph-canvas { block-size: 60vh; } }

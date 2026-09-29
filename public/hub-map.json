@@ -1322,8 +1322,8 @@
         "en": "Tables & relations"
       },
       "purpose": {
-        "es": "Todas las tablas del sistema, limpias y ordenadas, con edición, filtros y exportación.",
-        "en": "The data model in one place, so developers and the studio agree on what exists: entities, keys, relations and cardinality."
+        "es": "El gestor de datos del estudio con vistas: cualquier tabla como cuadrícula, lista, galería, tablero o grafo de relaciones, con filtros, orden, agrupación, columnas y vistas guardadas para el equipo. Todo en palabras (los nombres técnicos solo en modo dev), cada referencia abre la fila a la que apunta y el panel de la fila muestra quién la usa.",
+        "en": "The studio’s data manager with views: any table as a grid, list, gallery, board or relationship graph, with filters, sorts, grouping, columns and views saved for the team. Everything in words (technical names only in dev mode), every reference opens the row it points at and the row panel shows what uses it."
       },
       "surface": "admin",
       "roles": [
@@ -1334,7 +1334,19 @@
       "experienceId": "admin",
       "device": "desktop",
       "status": "built",
-      "actions": [],
+      "actions": [
+        "tables.open",
+        "tables.openRow",
+        "tables.setView",
+        "tables.search",
+        "tables.filter",
+        "tables.newRow",
+        "tables.export",
+        "tables.toggleSidebar",
+        "tables.saveView",
+        "tables.pin",
+        "tables.toggleTechnicalNames"
+      ],
       "shots": {
         "thumbs": {
           "es-desktop": "hub-map/shots/M-03/thumb-es-desktop.jpg",
@@ -5565,8 +5577,8 @@
         "en": "Tables"
       },
       "purpose": {
-        "es": "El gestor de datos: leer y editar cualquier fila demo.",
-        "en": "The data manager: read and edit any demo row."
+        "es": "El gestor de datos con vistas: cuadrícula, lista, galería, tablero y grafo.",
+        "en": "The data manager with views: grid, list, gallery, board and graph."
       },
       "route": "/admin/tables",
       "url": "https://imagine-os.github.io/hoy/#/admin/tables",

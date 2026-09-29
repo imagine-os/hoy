@@ -1,6 +1,6 @@
 {
   "note": "Raw px/rem spacing values still allowed (scripts/spacing-lint.mjs). Lower it, never raise it.",
-  "total": 63,
+  "total": 61,
   "files": {
     "src/components/atom/Placeholder/Placeholder.css": 2,
     "src/components/atom/Toggle/Toggle.css": 3,
@@ -11,7 +11,6 @@
     "src/components/molecule/MediaSlot/MediaSlot.css": 2,
     "src/components/molecule/NotificationBell/NotificationBell.css": 2,
     "src/components/molecule/PhoneBubble/PhoneBubble.css": 2,
-    "src/components/organism/DataTable/DataTable.css": 2,
     "src/components/organism/MatPicker/MatPicker.css": 2,
     "src/components/organism/MessageThread/MessageThread.css": 2,
     "src/components/organism/NavBar/NavBar.css": 1,
