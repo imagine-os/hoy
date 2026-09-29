@@ -1,8 +1,8 @@
 /* WeekDots — seven cells Mon → Sun. Sizes are rem, so the row grows with the --ui band. */
-.weekdots { --wd-dot: 1.75rem; --wd-gap: var(--sp-2); display: flex; flex-direction: column; gap: var(--sp-2); min-width: 0; }
-.weekdots-sm { --wd-dot: 1.25rem; --wd-gap: var(--sp-1); }
-.weekdots-row { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: var(--wd-gap); max-width: calc(7 * (var(--wd-dot) + var(--sp-6))); }
-.weekdots-cell { display: flex; flex-direction: column; align-items: center; gap: var(--sp-1); min-width: 0; }
+.weekdots { --wd-dot: 1.75rem; --wd-gap: var(--sp-sm); display: flex; flex-direction: column; gap: var(--sp-sm); min-width: 0; }
+.weekdots-sm { --wd-dot: 1.25rem; --wd-gap: var(--sp-xs); }
+.weekdots-row { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: var(--wd-gap); max-width: calc(7 * (var(--wd-dot) + var(--sp-xl))); }
+.weekdots-cell { display: flex; flex-direction: column; align-items: center; gap: var(--sp-xs); min-width: 0; }
 .weekdots-initial { font-size: var(--fs-xs); font-weight: var(--fw-medium); color: var(--color-text-muted); line-height: 1; }
 .weekdots-sm .weekdots-initial { font-size: var(--fs-2xs); }
 .weekdots-dot { display: grid; place-items: center; inline-size: var(--wd-dot); block-size: var(--wd-dot); border-radius: 50%; border: 1.5px solid var(--color-border-strong); background: transparent; color: var(--color-text-on-primary); transition: background-color var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out); }
@@ -14,7 +14,7 @@
 /* nothing: hollow, dashed so it reads as "empty" without colour */
 .weekdots-cell[data-state="none"] .weekdots-dot { border-style: dashed; }
 /* today: heavier initial in the accent text colour + a short bar under the dot */
-.weekdots-today { inline-size: 0.75rem; block-size: 3px; border-radius: var(--r-full); background: transparent; }
+.weekdots-today { inline-size: var(--sp-md); block-size: var(--sp-2xs); border-radius: var(--r-full); background: transparent; }
 .weekdots-cell[data-today] .weekdots-today { background: var(--color-primary); }
 .weekdots-cell[data-today] .weekdots-initial { color: var(--color-primary); font-weight: var(--fw-bold); }
 /* future without a booking: dimmed */

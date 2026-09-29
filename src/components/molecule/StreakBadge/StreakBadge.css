@@ -1,12 +1,12 @@
 /* StreakBadge — a stamp: flame medallion + count. Fits a StatTile column at 390 px (≈ 140 px of content). */
-.streak { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: var(--sp-3); row-gap: var(--sp-1); min-width: 0; }
+.streak { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: var(--sp-md); row-gap: var(--sp-xs); min-width: 0; }
 .streak-medal { display: grid; place-items: center; inline-size: var(--icon-tile); block-size: var(--icon-tile); border-radius: 50%; flex: 0 0 auto;
   background: var(--color-surface-3); color: var(--color-text-muted); border: 1.5px solid transparent; box-shadow: var(--shadow-pressed); }
 .streak-body { display: contents; }
 .streak-medal { grid-row: 1; grid-column: 1; }
 .streak-main { grid-row: 1; grid-column: 2; }
 /* the count never wraps; the unit may drop under it in a very narrow column */
-.streak-main { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: var(--sp-1); min-width: 0; line-height: 1.05; }
+.streak-main { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: var(--sp-xs); min-width: 0; line-height: 1.05; }
 .streak-count { font-family: var(--font-heading); font-size: var(--fs-2xl); font-weight: var(--fw-semibold); letter-spacing: var(--ls-tight); font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--color-ink); }
 .streak-unit { font-size: var(--fs-sm); color: var(--color-text-muted); white-space: nowrap; }
 /* best and hint run the full width under the stamp, so a StatTile-width column never squeezes them into three lines */

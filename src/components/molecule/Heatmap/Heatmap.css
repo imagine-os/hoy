@@ -2,14 +2,14 @@
    Heatmap — 5 sequential steps of the brand blue mixed into the tile surface. Light mixes the deep blue
    (--color-accent-fill), dark mixes the light accent text blue (--color-primary) so the steps stay distinct on navy. */
 .heatmap { --hm-ink: var(--color-accent-fill); --hm-base: var(--color-surface); --hm-cell: 2.5rem;
-  display: flex; flex-direction: column; gap: var(--sp-3); min-width: 0; max-width: 100%; }
+  display: flex; flex-direction: column; gap: var(--sp-md); min-width: 0; max-width: 100%; }
 :root[data-theme="dark"] .heatmap { --hm-ink: var(--color-primary); }
-.heatmap-scroll { max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; padding-block-end: 2px; }
+.heatmap-scroll { max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; padding-block-end: var(--sp-2xs); }
 .heatmap-table { inline-size: min(100%, calc(var(--hm-cols, 12) * 4.5rem + 5rem)); border-collapse: separate; border-spacing: 3px; font-size: var(--fs-xs); font-variant-numeric: tabular-nums; max-width: none; }
-.heatmap-col { font-weight: var(--fw-medium); color: var(--color-text-muted); text-align: center; padding: 0 0 var(--sp-1); white-space: nowrap; min-width: var(--hm-cell); }
+.heatmap-col { font-weight: var(--fw-medium); color: var(--color-text-muted); text-align: center; padding: 0 0 var(--sp-xs); white-space: nowrap; min-width: var(--hm-cell); }
 .heatmap-row, .heatmap-corner { position: sticky; inset-inline-start: 0; z-index: 1; background: var(--hm-base); }
-.heatmap-row { inline-size: 1%; text-align: start; font-weight: var(--fw-medium); color: var(--color-text); padding-inline-end: var(--sp-2); white-space: nowrap; }
-.heatmap-cell { min-width: var(--hm-cell); height: calc(var(--hm-cell) * .8); text-align: center; vertical-align: middle; border-radius: var(--r-xs); color: var(--color-text); font-size: var(--fs-2xs); line-height: 1; padding: 0 2px; white-space: nowrap; overflow-wrap: normal; }
+.heatmap-row { inline-size: 1%; text-align: start; font-weight: var(--fw-medium); color: var(--color-text); padding-inline-end: var(--sp-sm); white-space: nowrap; }
+.heatmap-cell { min-width: var(--hm-cell); height: calc(var(--hm-cell) * .8); text-align: center; vertical-align: middle; border-radius: var(--r-xs); color: var(--color-text); font-size: var(--fs-2xs); line-height: 1; padding: 0 var(--sp-2xs); white-space: nowrap; overflow-wrap: normal; }
 .heatmap-cell:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 1px; position: relative; z-index: 2; }
 .heatmap [data-step="0"] { background: transparent; box-shadow: inset 0 0 0 1px var(--color-border); background-image: repeating-linear-gradient(135deg, var(--color-border) 0 1px, transparent 1px 6px); }
 .heatmap { --hm-1: 12%; --hm-2: 30%; --hm-3: 50%; --hm-4: 72%; --hm-5: 94%; }
@@ -19,9 +19,9 @@
 .heatmap [data-step="3"] { background: color-mix(in oklab, var(--hm-ink) var(--hm-3), var(--hm-base)); }
 .heatmap [data-step="4"] { background: color-mix(in oklab, var(--hm-ink) var(--hm-4), var(--hm-base)); }
 .heatmap [data-step="5"] { background: color-mix(in oklab, var(--hm-ink) var(--hm-5), var(--hm-base)); }
-.heatmap-legend { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-1); }
-.heatmap-swatch { display: inline-block; inline-size: 1.25rem; block-size: .75rem; border-radius: var(--r-2xs); }
-.heatmap-swatch-empty { margin-inline-start: var(--sp-3); }
+.heatmap-legend { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-xs); }
+.heatmap-swatch { display: inline-block; inline-size: var(--sp-lg); block-size: var(--sp-md); border-radius: var(--r-2xs); }
+.heatmap-swatch-empty { margin-inline-start: var(--sp-md); }
 .heatmap-cell:hover { box-shadow: inset 0 0 0 2px var(--color-text-faint); }
 /* printed values wear the text token on a small surface label, so they read on every step in both themes */
-.heatmap-value { display: inline-block; padding: 2px 4px; border-radius: var(--r-xs); background: color-mix(in srgb, var(--hm-base) 84%, transparent); color: var(--color-text); font-weight: var(--fw-medium); }
+.heatmap-value { display: inline-block; padding: var(--sp-2xs) var(--sp-xs); border-radius: var(--r-xs); background: color-mix(in srgb, var(--hm-base) 84%, transparent); color: var(--color-text); font-weight: var(--fw-medium); }
