@@ -8,7 +8,6 @@ import { formatCOP } from '../../../i18n/format';
 import { tenant } from '../../../tenant/tenant';
 import { priceItem, FAMILY_LABEL, FAMILY_RATIONALE, type PlanFamily } from '../../../tenant/pricing';
 import { manifesto, philosophy, classesIntro, classes, classOrder, taglines } from '../../../tenant/brand';
-import { movements, type Movement } from '../../../design/tokens';
 import { Button } from '../../../components/atom/Button/Button';
 import { Card } from '../../../components/molecule/Card/Card';
 import { ClassRow } from '../../../components/molecule/ClassRow/ClassRow';
@@ -24,7 +23,7 @@ export function ClassicHomePage() {
   const { t, bi, lang } = useI18n();
   const waHref = useWaHref();
   const nav = useNavigate();
-  const { sections, isVisible } = useLayout({ ...siteSpecs.home, layout: ['Hero', 'Movements', 'Classes', 'TodayClasses', 'ValueModel', 'Philosophy', 'Teachers', 'Testimonials', 'FirstStep'] });
+  const { sections, isVisible } = useLayout({ ...siteSpecs.home, layout: ['Hero', 'Classes', 'TodayClasses', 'ValueModel', 'Philosophy', 'Teachers', 'Testimonials', 'FirstStep'] });
   const today = useTodaySessions();
   const todayAll = useTodaySessions(true);
   const { rows: teachers } = useTable<TeacherRow>('teachers', { where: { active: true }, limit: 4 });
@@ -53,16 +52,6 @@ export function ClassicHomePage() {
           label={t('site.hero.media')}
           overlay={<span className="site-hero-chip">{bi(taglines.life)}</span>}
         />
-      </section>
-    ),
-    Movements: () => (
-      <section className="container site-section">
-        <SectionHead title={t('site.movements.title')} body={t('site.movements.body')} />
-        <div className="grid grid-4">
-          {(Object.keys(movements) as Movement[]).map((mv) => (
-            <div key={mv} className={`mvcard mvcard-${mv}`}><h3>{movements[mv].label}</h3><p className="small">{t(`site.mv.${mv}`)}</p></div>
-          ))}
-        </div>
       </section>
     ),
     Classes: () => (
