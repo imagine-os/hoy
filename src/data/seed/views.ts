@@ -14,7 +14,7 @@ export function buildTableViews(): TableViewRow[] {
     view('tvw_bookings_board', 'bookings', { es: 'Reservas por estado', en: 'Bookings by status' }, 'kanban', { kanbanColumn: 'status', cardFields: ['session_id', 'paid_with', 'checked_in_at'] }),
     view('tvw_sessions_week', 'class_sessions', { es: 'Semana de clases', en: 'Week of classes' }, 'calendar', { dateColumn: 'starts_at', endColumn: 'ends_at', calendarMode: 'week' }, true),
     view('tvw_sessions_upcoming', 'class_sessions', { es: 'Próximas clases', en: 'Upcoming classes' }, 'grid', { filters: [{ column: 'status', op: 'is', value: 'scheduled' }], sorts: [{ column: 'starts_at', dir: 'asc' }], hiddenColumns: ['id', 'tenant_id', 'created_at', 'updated_at', 'template_id', 'cancel_reason'] }),
-    view('tvw_sessions_timeline', 'class_sessions', { es: 'Día por profesor', en: 'Day by teacher' }, 'timeline', { dateColumn: 'starts_at', endColumn: 'ends_at', groupBy: 'teacher_id', timelineZoom: 'day' }),
+    view('tvw_sessions_timeline', 'class_sessions', { es: 'Semana por profesor', en: 'Week by teacher' }, 'timeline', { dateColumn: 'starts_at', endColumn: 'ends_at', groupBy: 'teacher_id', timelineZoom: 'week' }),
     view('tvw_sessions_by_teacher', 'class_sessions', { es: 'Clases por profesor', en: 'Classes by teacher' }, 'grid', { groupBy: 'teacher_id', sorts: [{ column: 'starts_at', dir: 'asc' }] }),
     view('tvw_users_gallery', 'users', { es: 'Personas', en: 'People' }, 'gallery', { cardFields: ['phone', 'status', 'last_sign_in_at'] }),
     view('tvw_payments_board', 'payments', { es: 'Pagos por estado', en: 'Payments by status' }, 'kanban', { kanbanColumn: 'status', cardFields: ['amount', 'method', 'paid_at'] }),

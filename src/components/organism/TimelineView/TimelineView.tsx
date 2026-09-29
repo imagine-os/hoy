@@ -16,6 +16,8 @@ const COL_REM: Record<TimelineZoom, number> = { day: 6, week: 9, month: 2.75, qu
 /** A point marker's label takes about this much room (rem) — used when stacking rows so labels do not overlap. */
 const POINT_REM = 12;
 const MIN_BAR_REM = 2.75;
+/** Bars narrower than this (rem) carry their label beside them, like a point marker. */
+const NARROW_REM = 7;
 
 export interface TimelineGroup { key: string; label: string }
 
@@ -65,7 +67,7 @@ export function shiftTimeline(zoom: TimelineZoom, cursor: string, n: number): st
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
-interface Placed<T> { ev: PlacedEvent<T>; l: number; w: number | null; cutStart: boolean; cutEnd: boolean; row: number; group: TimelineGroup | null }
+interface Placed<T> { ev: PlacedEvent<T>; l: number; w: number | null; narrow: boolean; cutStart: boolean; cutEnd: boolean; row: number; group: TimelineGroup | null }
 
 /**
  * 0045 · TimelineView (M-03 "Línea de tiempo"): rows as bars on a horizontal time axis from their start to their end
@@ -100,14 +102,14 @@ export function TimelineView<T>(props: TimelineViewProps<T>) {
       const l = Math.max(0, pct(ev.startMs));
       const w = ev.endMs == null ? null : Math.min(100, pct(ev.endMs)) - l;
       const lane = byLane.get(laneKey) ?? { group: compact || !getGroup ? null : group, items: [] };
-      lane.items.push({ ev, l, w, cutStart: ev.startMs < from.getTime(), cutEnd: ev.endMs != null && ev.endMs > to.getTime(), row: 0, group });
+      lane.items.push({ ev, l, w, narrow: w != null && w < (NARROW_REM / trackRem) * 100, cutStart: ev.startMs < from.getTime(), cutEnd: ev.endMs != null && ev.endMs > to.getTime(), row: 0, group });
       byLane.set(laneKey, lane);
     }
     const pointPct = (POINT_REM / trackRem) * 100, minPct = (MIN_BAR_REM / trackRem) * 100;
     for (const lane of byLane.values()) {
       const ends: number[] = [];
       for (const p of lane.items) {
-        const right = p.l + (p.w == null ? pointPct : Math.max(p.w, minPct));
+        const right = p.l + (p.w == null ? pointPct : p.narrow ? Math.max(p.w, minPct) + pointPct : Math.max(p.w, minPct));
         let r = ends.findIndex((e) => e <= p.l);
         if (r === -1) { r = ends.length; ends.push(0); }
         ends[r] = right + 0.2;
@@ -221,16 +223,17 @@ export function TimelineView<T>(props: TimelineViewProps<T>) {
               <div className="tl-track" style={{ '--rows': lane.rows } as CSSProperties}>
                 {ticks.map((d, i) => <span key={d.getTime()} className={`tl-line ${isMajor(d, i) ? 'is-major' : ''}`} style={{ '--l': pct(d.getTime()) } as CSSProperties} aria-hidden />)}
                 {nowPct != null && <span className="tl-now" style={{ '--l': nowPct } as CSSProperties} aria-hidden />}
-                {lane.items.map(({ ev, l, w, cutStart, cutEnd, row, group }) => {
+                {lane.items.map(({ ev, l, w, narrow, cutStart, cutEnd, row, group }) => {
                   const label = `${ev.title} · ${when(ev)}${compact && group ? ` · ${group.label}` : ''}`;
                   return (
-                    <div key={ev.key} role="listitem" className="tl-item" style={{ '--l': l, '--w': w ?? 0, '--row': row } as CSSProperties}>
+                    <div key={ev.key} role="listitem" className={`tl-item ${narrow ? 'is-narrow' : ''}`} style={{ '--l': l, '--w': w ?? 0, '--row': row } as CSSProperties}>
                       <button type="button" className={`tl-bar ${w == null ? 'is-point' : ''} ${cutStart ? 'is-cut-start' : ''} ${cutEnd ? 'is-cut-end' : ''} ${ev.muted ? 'is-muted' : ''} ${selectedKey === ev.key ? 'is-selected' : ''}`}
                         {...eventTone(ev.tone)} title={label} aria-label={label} onClick={() => onOpen(ev.row)}>
                         {w == null && <span className="tl-diamond" aria-hidden />}
-                        <span className="tl-bar-title">{ev.title}</span>
-                        {compact && group && <span className="tl-bar-group">{group.label}</span>}
+                        {!narrow && <span className="tl-bar-title">{ev.title}</span>}
+                        {!narrow && compact && group && <span className="tl-bar-group">{group.label}</span>}
                       </button>
+                      {narrow && <span className="tl-outside" aria-hidden><span className="tl-bar-title">{ev.title}</span>{compact && group && <span className="tl-bar-group">{group.label}</span>}</span>}
                     </div>
                   );
                 })}
