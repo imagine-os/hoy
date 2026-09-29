@@ -2,7 +2,7 @@
 title: Space — B2B rental
 role: coordination, owner, finance
 part: III
-version: __VERSION__
+version: 0.13.1
 updated: 2026-09-29
 summary: Renting the studio outside peak hours: quoting, booking the room, charging it as a Special, setting up and checking at the end.
 ---

@@ -2,7 +2,7 @@
 title: Legal documents
 role: owner, admin, finance
 part: VI
-version: __VERSION__
+version: 0.13.1
 updated: 2026-09-29
 summary: Terms, privacy, waiver and policies: how they are versioned, where they are accepted and what is missing before publishing them.
 ---

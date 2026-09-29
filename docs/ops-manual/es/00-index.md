@@ -2,7 +2,7 @@
 title: Índice y cómo usar este manual
 role: todos
 part: I
-version: __VERSION__
+version: 0.13.1
 updated: 2026-09-29
 summary: Para qué sirve el manual, cómo leerlo según tu rol, qué partes ajusta el estudio y dónde están los documentos fuente.
 ---
@@ -76,6 +76,10 @@ Tres documentos del estudio viven dentro del manual, en el capítulo donde se us
 | Contenido completo | El texto final del sitio: Sobre HOY, filosofía y clases | [01](01-quienes-somos-y-filosofia.md) y [18](18-web-y-redes.md) |
 | Manual de marca 2026 | Manifiesto, propósito, misión, personalidad, logo, colores y tipografía | [01](01-quienes-somos-y-filosofia.md), [19](19-medios-y-artwork.md) y [20](20-voz-y-tono.md) |
 | Modelo de valor | Las seis líneas de ingreso y para qué existe cada una | [03](03-modelo-de-valor.md) |
+
+Los tres también están juntos, para leerlos o descargarlos, en la página **Documentos fuente** del hub.
+
+> EN HOYOS: K-05 Documentos fuente (/docs/source).
 
 ## 7. Mapa rápido de pantallas
 Estas son las pantallas del equipo. La lista completa está en el capítulo [25](25-datos-y-tablas.md).

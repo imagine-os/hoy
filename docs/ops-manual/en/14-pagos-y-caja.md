@@ -2,7 +2,7 @@
 title: Payments and the till
 role: finance, front desk, owner
 part: IV
-version: __VERSION__
+version: 0.13.1
 updated: 2026-09-29
 summary: Payment methods, closing the till, daily reconciliation, Wompi, refunds, expenses and the balance, and the monthly reports.
 ---

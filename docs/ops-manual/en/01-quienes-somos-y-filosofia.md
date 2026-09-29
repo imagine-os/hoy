@@ -2,7 +2,7 @@
 title: Who we are and our philosophy
 role: everyone
 part: I
-version: __VERSION__
+version: 0.13.1
 updated: 2026-09-29
 summary: About HOY, our philosophy, why we are small on purpose and the four promises we always keep.
 ---

@@ -2,7 +2,7 @@
 title: Integrations and what is simulated
 role: admin, owner, finance, developer
 part: VII
-version: __VERSION__
+version: 0.13.1
 updated: 2026-09-29
 summary: Which outside systems HOY uses, what state each one is in, what you can say today without over-promising and what is left to connect.
 ---

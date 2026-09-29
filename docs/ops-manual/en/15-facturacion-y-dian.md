@@ -2,7 +2,7 @@
 title: Invoicing and DIAN
 role: finance, admin, owner
 part: IV
-version: __VERSION__
+version: 0.13.1
 updated: 2026-09-29
 summary: What is needed before switching on electronic invoicing, how VAT is applied, company invoices and what is still missing.
 ---

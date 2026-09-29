@@ -2,7 +2,7 @@
 title: Ventas y planes
 role: recepción, coordinación, finanzas
 part: III
-version: __VERSION__
+version: 0.13.1
 updated: 2026-09-29
 summary: Registrar y cobrar en el mostrador, qué ofrecer a cada persona y todo lo que el socio puede hacer solo desde su app.
 ---

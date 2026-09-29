@@ -77,7 +77,7 @@ _Updated every turn. Codes reference `src/specs/canvasSpecs.ts` and the module `
 
 ## Done
 
-### 2026-09-29 · Operations manual content (0032 · v__VERSION__)
+### 2026-09-29 · Operations manual content (0032 · v0.13.1)
 - **K-03 plain language**: all 28 chapters rewritten ES-first with an EN mirror (56 files) — tú, short sentences, qué hacer → qué decir → qué revisar; screen codes moved into 47 `EN HOYOS` / `IN HOYOS` boxes per language; every live block and figure kept
 - **Style guide**: `docs/ops-manual/STYLE.md` (the register for hand and prompted edits)
 - **Directives in place** (0031 contract): `{{audience}}` + a "Para:" row per chapter, 32 editable sections, 18 studio-rule cards (13 keys appended to `studioPolicies.ts`), 8 role passages, 6 source embeds, 8 training blocks (marketing and developer included)

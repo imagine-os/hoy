@@ -2,7 +2,7 @@
 title: Media library and artwork
 role: coordination, admin, marketing
 part: V
-version: __VERSION__
+version: 0.13.1
 updated: 2026-09-29
 summary: The brand manual's logo, colour and type rules, which images the system needs, in what format, and what still has to be produced.
 ---

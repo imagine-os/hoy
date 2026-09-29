@@ -2,7 +2,7 @@
 title: Biblioteca de medios y artwork
 role: coordinación, admin, marketing
 part: V
-version: __VERSION__
+version: 0.13.1
 updated: 2026-09-29
 summary: Las reglas del logo, los colores y las tipografías del manual de marca, qué fotos necesita el sistema, en qué formato y qué falta producir.
 ---

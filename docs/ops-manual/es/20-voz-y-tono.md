@@ -2,7 +2,7 @@
 title: Voz y tono
 role: todos
 part: V
-version: __VERSION__
+version: 0.13.1
 updated: 2026-09-29
 summary: El manifiesto, el propósito y la misión; las cuatro palabras clave y los cinco rasgos de la marca; cómo saludamos, cómo decimos no y lo que nunca escribimos.
 ---

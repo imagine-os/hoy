@@ -2,7 +2,7 @@
 title: Value model
 role: owner, admin, finance, front desk, marketing
 part: I
-version: __VERSION__
+version: 0.13.1
 updated: 2026-09-29
 summary: HOY's six revenue lines, why each one exists, what to offer at the desk and the prices in force.
 ---

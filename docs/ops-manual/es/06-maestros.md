@@ -2,7 +2,7 @@
 title: Maestros
 role: maestros, coordinación
 part: II
-version: __VERSION__
+version: 0.13.1
 updated: 2026-09-29
 summary: Antes, durante y después de la clase; la asistencia, los reemplazos, las reseñas, tu pago y el código de conducta.
 ---

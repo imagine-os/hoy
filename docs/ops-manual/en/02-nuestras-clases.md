@@ -2,7 +2,7 @@
 title: Our classes
 role: everyone
 part: I
-version: __VERSION__
+version: 0.13.1
 updated: 2026-09-29
 summary: HOY's five disciplines, what to say about each one at the door and the four movements we use internally to shape the day.
 ---

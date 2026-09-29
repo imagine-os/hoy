@@ -2,7 +2,7 @@
 title: Index and how to use this manual
 role: everyone
 part: I
-version: __VERSION__
+version: 0.13.1
 updated: 2026-09-29
 summary: What the manual is for, how to read it for your role, which parts the studio adjusts and where the source documents live.
 ---
@@ -75,6 +75,10 @@ Three studio documents live inside the manual, in the chapter where they are use
 | Full content | The final website copy: About HOY, philosophy and classes | [01](01-quienes-somos-y-filosofia.md) and [18](18-web-y-redes.md) |
 | Brand manual 2026 | Manifesto, purpose, mission, personality, logo, colours and type | [01](01-quienes-somos-y-filosofia.md), [19](19-medios-y-artwork.md) and [20](20-voz-y-tono.md) |
 | Value model | The six revenue lines and why each one exists | [03](03-modelo-de-valor.md) |
+
+All three are also together, to read or download, on the hub's **Source documents** page.
+
+> IN HOYOS: K-05 Source documents (/docs/source).
 
 ## 7. Quick map of screens
 These are the team's screens. The full list is in chapter [25](25-datos-y-tablas.md).

@@ -2,7 +2,7 @@
 title: Teachers
 role: teachers, coordination
 part: II
-version: __VERSION__
+version: 0.13.1
 updated: 2026-09-29
 summary: Before, during and after class; attendance, substitutions, reviews, your pay and the code of conduct.
 ---

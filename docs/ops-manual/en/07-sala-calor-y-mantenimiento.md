@@ -2,7 +2,7 @@
 title: Room, heat and maintenance
 role: maintenance, front desk, teachers
 part: II
-version: __VERSION__
+version: 0.13.1
 updated: 2026-09-29
 summary: Cleaning, setting up the room, the heated room, supplies, equipment checks and safety.
 ---

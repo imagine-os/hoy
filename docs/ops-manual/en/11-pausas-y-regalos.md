@@ -2,7 +2,7 @@
 title: Pauses and gifts
 role: front desk, coordination
 part: III
-version: __VERSION__
+version: 0.13.1
 updated: 2026-09-29
 summary: Pausing and cancelling a membership, the short Pause sessions, gift vouchers, guests and referrals.
 ---

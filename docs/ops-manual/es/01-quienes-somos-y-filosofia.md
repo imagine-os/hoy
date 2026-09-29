@@ -2,7 +2,7 @@
 title: Quiénes somos y nuestra filosofía
 role: todos
 part: I
-version: __VERSION__
+version: 0.13.1
 updated: 2026-09-29
 summary: Sobre HOY, nuestra filosofía, por qué somos pequeños a propósito y las cuatro promesas que cumplimos siempre.
 ---

@@ -2,7 +2,7 @@
 title: Nuestras clases
 role: todos
 part: I
-version: __VERSION__
+version: 0.13.1
 updated: 2026-09-29
 summary: Las cinco disciplinas de HOY, qué decir de cada una en la puerta y los cuatro movimientos que usamos por dentro para ordenar el día.
 ---

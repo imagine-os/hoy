@@ -2,7 +2,7 @@
 title: CRM, WhatsApp y correo
 role: recepción, coordinación
 part: III
-version: __VERSION__
+version: 0.13.1
 updated: 2026-09-29
 summary: La ficha del socio y su conversación, las reglas de WhatsApp, los mensajes automáticos, cómo escribir y la Bandeja de recepción.
 ---

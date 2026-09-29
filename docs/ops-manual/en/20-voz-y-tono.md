@@ -2,7 +2,7 @@
 title: Voice and tone
 role: everyone
 part: V
-version: __VERSION__
+version: 0.13.1
 updated: 2026-09-29
 summary: The manifesto, purpose and mission; the brand's four keywords and five traits; how we greet, how we say no and what we never write.
 ---

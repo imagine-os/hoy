@@ -2,7 +2,7 @@
 title: Sala, calor y mantenimiento
 role: mantenimiento, recepción, maestros
 part: II
-version: __VERSION__
+version: 0.13.1
 updated: 2026-09-29
 summary: Limpieza, montaje de la sala, la sala caliente, insumos, revisión de equipos y seguridad.
 ---
