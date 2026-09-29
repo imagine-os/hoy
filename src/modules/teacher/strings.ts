@@ -113,6 +113,8 @@ export const strings: StringTable = {
   'teacher.payroll.history': { es: 'Corridas anteriores', en: 'Earlier runs' },
   'teacher.payroll.historyLine': { es: '{n} clases', en: '{n} classes' },
   'teacher.payroll.download': { es: 'Descargar extracto (PDF)', en: 'Download statement (PDF)' },
+  'teacher.payroll.prev': { es: 'Mes anterior', en: 'Previous month' },
+  'teacher.payroll.next': { es: 'Mes siguiente', en: 'Next month' },
   'teacher.payroll.ask': { es: 'Preguntar por este extracto', en: 'Ask about this statement' },
   'teacher.payroll.ask.text': { es: 'Hola, tengo una pregunta sobre mi nómina de {period} (total {total}).', en: 'Hi, I have a question about my {period} payroll (total {total}).' },
   'teacher.payroll.runBy': { es: 'La nómina la corre finanzas del estudio · Wompi simulado', en: 'Payroll is run by the studio’s finance team · Wompi simulated' },

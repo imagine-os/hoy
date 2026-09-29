@@ -74,12 +74,12 @@ export function StaffHomePage() {
         <div className="stack">
           <Card title={t('staff.home.quick')}>
             <div className="stack-sm">
-              {can('checkin.write') && <Link to="/staff/checkin"><Button block>{t('staff.home.openCheckin')}</Button></Link>}
-              {can('payments.write') && <Link to="/staff/register"><Button block variant="secondary">{t('staff.home.openRegister')}</Button></Link>}
-              {can('bookings.write_any') && <Link to="/staff/rooms"><Button block variant="secondary">{t('staff.home.openRooms')}</Button></Link>}
-              {can('members.read') && <Link to="/staff/inbox"><Button block variant="secondary">{t('staff.home.openInbox')}</Button></Link>}
-              {can('members.read') && <Link to="/admin/crm"><Button block variant="ghost">{t('staff.home.openCrm')}</Button></Link>}
-              {can('tables.read') && <Link to="/admin/tables"><Button block variant="ghost">{t('staff.home.openTables')}</Button></Link>}
+              {can('checkin.write') && <Link to="/staff/checkin"><Button block icon="checkin">{t('staff.home.openCheckin')}</Button></Link>}
+              {can('payments.write') && <Link to="/staff/register"><Button block variant="secondary" icon="register">{t('staff.home.openRegister')}</Button></Link>}
+              {can('bookings.write_any') && <Link to="/staff/rooms"><Button block variant="secondary" icon="rooms">{t('staff.home.openRooms')}</Button></Link>}
+              {can('members.read') && <Link to="/staff/inbox"><Button block variant="secondary" icon="inbox">{t('staff.home.openInbox')}</Button></Link>}
+              {can('members.read') && <Link to="/admin/crm"><Button block variant="ghost" icon="crm">{t('staff.home.openCrm')}</Button></Link>}
+              {can('tables.read') && <Link to="/admin/tables"><Button block variant="ghost" icon="table">{t('staff.home.openTables')}</Button></Link>}
             </div>
           </Card>
           {can('members.read') && (

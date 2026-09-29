@@ -5,6 +5,7 @@ import type { MessageLogRow } from '../../../data/schema';
 import { ChatBubble } from '../../molecule/ChatBubble/ChatBubble';
 import { TIMELINE_ICON, type TimelineKind } from '../Timeline/Timeline';
 import './MessageThread.css';
+import { Icon } from '../../atom/Icon/Icon';
 
 /** A non-message event shown inline as a system line: a booking, a payment, a check-in, a consent. */
 export interface ThreadEvent { id: string; at: string; kind: TimelineKind; title: string; meta?: string }
@@ -57,7 +58,7 @@ export function MessageThread({ messages, events = [], authorOf, personName, emp
         if (it.kind === 'event') {
           return [sep, (
             <div key={it.id} className={`thread-event thread-event-${it.e.kind}`}>
-              <span className="thread-event-glyph" aria-hidden>{TIMELINE_ICON[it.e.kind]}</span>
+              <span className="thread-event-glyph" aria-hidden><Icon name={TIMELINE_ICON[it.e.kind]} size={12} /></span>
               <span className="thread-event-title">{it.e.title}</span>
               {it.e.meta && <span className="thread-event-meta">· {it.e.meta}</span>}
               <time className="thread-event-time" dateTime={it.at}>{formatTime(it.at, lang)}</time>

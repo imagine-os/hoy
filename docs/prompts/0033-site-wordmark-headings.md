@@ -10,7 +10,7 @@ This is in the website specifically.
 
 ## Response
 
-Branch `feat/site-wordmark` from `main` at `f4b9197`, version **0.11.3**. Full record in
+Branch `feat/site-wordmark` from `main` at `f4b9197`, merged with `main` at `c235764` (0030 icons), version **0.12.1**. Full record in
 `docs/changelog/0033-site-wordmark-headings.md`; before / after contact sheet at
 `docs/screenshots/_brand/wordmark-in-headings-2026-09-29.jpg`.
 

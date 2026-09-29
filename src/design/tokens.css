@@ -110,6 +110,14 @@
   --dur-breath: 7s;
   --ease-out: cubic-bezier(.2,.7,.2,1);
   --ease-in-out: cubic-bezier(.65,0,.35,1);
+  --icon-xs: 0.875rem;
+  --icon-sm: 1rem;
+  --icon-md: 1.25rem;
+  --icon-lg: 1.5rem;
+  --icon-xl: 2rem;
+  --icon-tile: 2.25rem;
+  --icon-stroke: 1.75;
+  --icon-stroke-active: 2.25;
   --w-content: 70rem;
   --w-app: 75rem;
   --w-teach: 60rem;

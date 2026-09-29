@@ -16,6 +16,7 @@ import { buildDeletionRequests } from './deletion';
 import { automationText, buildMessages } from './messages';
 import { dateKey, addMonths, MS } from '../../i18n/format';
 import { DEFAULT_IVA_PCT, splitIva } from '../tax';
+import { isRetired } from '../../specs/retired';
 
 const FIRST = ['Camila', 'Nicolás', 'Sara', 'Tomás', 'Mariana', 'Julián', 'Daniela', 'Sebastián', 'Gabriela', 'Alejandro', 'Antonia', 'Samuel', 'Salomé', 'Emilio', 'Luciana', 'Martín', 'Elena', 'David', 'Paulina', 'Jerónimo', 'Amelia', 'Simón', 'Renata', 'Lucas', 'Violeta', 'Benjamín', 'Catalina', 'Joaquín', 'Isabel', 'Gael'];
 const LAST = ['García', 'Rodríguez', 'Martínez', 'López', 'González', 'Hernández', 'Pérez', 'Sánchez', 'Ramírez', 'Torres', 'Flores', 'Rivera', 'Gómez', 'Díaz', 'Cruz', 'Morales', 'Reyes', 'Jiménez', 'Ruiz', 'Álvarez', 'Castro', 'Vargas', 'Romero', 'Suárez', 'Moreno', 'Muñoz', 'Rojas', 'Medina', 'Guerrero', 'Cortés'];
@@ -234,7 +235,7 @@ export function buildSeed(): Record<string, BaseRow[]> {
   ['usr_c04', 'usr_c08', 'usr_c14', 'usr_c21'].forEach((uid) => prefs.push({ ...base(`np_${uid}_marketing`, r.int(5, 80)), user_id: uid, channel: 'whatsapp', category: 'marketing', enabled: false }));
 
   // feature flags from spec toggles
-  for (const spec of Object.values(canvasSpecs)) for (const t of spec.toggles ?? []) {
+  for (const spec of Object.values(canvasSpecs).filter((sp) => !isRetired(sp.code))) for (const t of spec.toggles ?? []) {
     db.feature_flags.push({ ...base(`ff_${spec.code}_${t.label}`.replace(/[^a-z0-9_]/gi, '_').toLowerCase(), 100), key: `${spec.code}.${t.label.toLowerCase().replace(/[^a-z0-9]+/g, '_')}`, page_code: spec.code, label: t.label, enabled: t.on, audience: 'all' });
   }
 

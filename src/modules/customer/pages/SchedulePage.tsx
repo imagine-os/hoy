@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useVisibleModalities } from '../../admin/settings';
 import { useSession } from '../../../auth/SessionProvider';
@@ -89,7 +89,7 @@ export function SchedulePage({ view: routeView }: SchedulePageProps) {
           <Chip selected={filters.movement === 'all'} onClick={() => setFilters((f) => ({ ...f, movement: 'all' }))}>{t('core.common.all')}</Chip>
           {(Object.keys(movements) as Movement[]).map((mv) => <Chip key={mv} movement={mv} dot selected={filters.movement === mv} onClick={() => setFilters((f) => ({ ...f, movement: f.movement === mv ? 'all' : mv }))}>{movements[mv].label}</Chip>)}
         </div>
-        <Button size="sm" variant={activeFilters > 0 ? 'primary' : 'secondary'} onClick={() => setSheet(true)} icon="⚲">{t('core.common.filter')}{activeFilters > 0 ? ` · ${activeFilters}` : ''}</Button>
+        <Button size="sm" variant={activeFilters > 0 ? 'primary' : 'secondary'} onClick={() => setSheet(true)} icon="filter">{t('core.common.filter')}{activeFilters > 0 ? ` · ${activeFilters}` : ''}</Button>
       </div>
     ),
     'ClassList → ClassRow': () => view === 'today' ? <SessionCalendar sessions={filtered} mine={mine} initialView="day" onPick={open} /> : null,
@@ -100,7 +100,6 @@ export function SchedulePage({ view: routeView }: SchedulePageProps) {
       <div className="row wrap cust-legend">
         <span className="eyebrow">{t('customer.schedule.legend')}</span>
         {(Object.keys(movements) as Movement[]).map((mv) => <Chip key={mv} movement={mv} dot>{movements[mv].label}</Chip>)}
-        <Link to="/app/intention" className="small">{t('customer.schedule.intentionLink')} →</Link>
       </div>
     ),
   };
@@ -127,7 +126,7 @@ export function SchedulePage({ view: routeView }: SchedulePageProps) {
               {teachers.map((te) => <option key={te.id} value={te.id}>{te.display_name}</option>)}
             </Select>
           )}</Field>
-          <Field label={t('customer.schedule.filter.intention')} hint={t('customer.schedule.filter.intention.hint')}>{(id) => (
+          <Field label={t('customer.schedule.filter.movement')} hint={t('customer.schedule.filter.movement.hint')}>{(id) => (
             <div className="row wrap" id={id}>{(Object.keys(movements) as Movement[]).map((mv) => <Chip key={mv} movement={mv} dot selected={filters.movement === mv} onClick={() => setFilters((f) => ({ ...f, movement: f.movement === mv ? 'all' : mv }))}>{movements[mv].label}</Chip>)}</div>
           )}</Field>
         </div>

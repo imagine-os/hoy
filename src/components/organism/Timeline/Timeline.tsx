@@ -1,6 +1,7 @@
 import { useI18n } from '../../../i18n/I18nProvider';
 import { formatDateTime } from '../../../i18n/format';
 import './Timeline.css';
+import { Icon, type IconName } from '../../atom/Icon/Icon';
 
 export type TimelineKind = 'whatsapp' | 'email' | 'note' | 'system' | 'payment' | 'booking';
 
@@ -15,7 +16,7 @@ export interface TimelineItem {
 }
 
 /** Glyph per kind — shared with MessageThread's system lines so both streams draw the same event the same way. */
-export const TIMELINE_ICON: Record<TimelineKind, string> = { whatsapp: '☏', email: '✉', note: '✎', system: '⚙', payment: '$', booking: '✓' };
+export const TIMELINE_ICON: Record<TimelineKind, IconName> = { whatsapp: 'whatsapp', email: 'mail', note: 'notes', system: 'settings', payment: 'payment', booking: 'user-check' };
 
 /** Chronological stream (newest first) merging every channel: messages, notes, payments, bookings, system events. */
 export function Timeline({ items, emptyText, limit }: { items: TimelineItem[]; emptyText?: string; limit?: number }) {
@@ -26,7 +27,7 @@ export function Timeline({ items, emptyText, limit }: { items: TimelineItem[]; e
     <ol className="timeline">
       {sorted.map((it) => (
         <li key={it.id} className={`timeline-item timeline-${it.kind}`}>
-          <span className="timeline-dot" aria-hidden>{TIMELINE_ICON[it.kind]}</span>
+          <span className="timeline-dot" aria-hidden><Icon name={TIMELINE_ICON[it.kind]} size="xs" /></span>
           <div className="timeline-content">
             <div className="row-between wrap timeline-head">
               <strong className="timeline-title">{it.title}</strong>

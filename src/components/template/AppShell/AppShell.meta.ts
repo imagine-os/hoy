@@ -13,5 +13,5 @@ export default defineMeta({
   states: ['narrow (< 900 px: column + dock)', 'wide (≥ 900 px: top-bar nav, full viewport)'],
   usages: [{ title: { es: 'Ver en vivo', en: 'See it live' }, render: () => h('p', { className: 'muted small' }, 'Se usa en /#/app y /#/teach; el simulador (D-06) lo muestra a 390 px dentro del marco. Abre la app de cliente para verlo con datos reales.') }],
   a11y: [{ es: '<main> para el contenido; la nav (dock o barra) es <nav aria-label> con aria-current; todos los controles ≥ 44 px.', en: '<main> for content; the nav (dock or bar) is <nav aria-label> with aria-current; every control ≥ 44 px.' }],
-  usedBy: ['C-*', 'A-05', 'E-*', 'S-03'],
+  usedBy: ['C-*', 'E-*', 'S-03'],
 });

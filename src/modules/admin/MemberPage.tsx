@@ -100,7 +100,7 @@ export function MemberPage() {
             {person.birthday && <Badge tone="highlight">🎂 {formatDate(person.birthday, lang, { day: 'numeric', month: 'short' })}</Badge>}
           </div>
         </div>
-        {can('members.write') && <Link to={`/staff/inbox/${person.id}`}><Button size="sm" variant="secondary">{t('admin.member.conversation.openInbox')}</Button></Link>}
+        {can('members.write') && <Link to={`/staff/inbox/${person.id}`}><Button size="sm" variant="secondary" icon="inbox">{t('admin.member.conversation.openInbox')}</Button></Link>}
       </Card>
       <div className="grid grid-4">
         <StatTile label={t('admin.member.ltv')} value={canPayments ? formatCOP(ltv, lang) : '—'} />

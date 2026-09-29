@@ -237,6 +237,7 @@ create table if not exists public.content_articles (
   updated_at timestamptz not null default now(),
   slug text not null,
   section text not null check (section in ('rules', 'faq', 'about')),
+  -- Icon set name (src/components/atom/Icon, 0030), e.g. flame, clock; any other text renders as a literal glyph
   icon text,
   -- {es,en}
   title jsonb not null,
@@ -580,7 +581,7 @@ alter table public.waitlist enable row level security;
 create policy "waitlist: tenant read" on public.waitlist for select using (tenant_id = public.current_tenant_id());
 create policy "waitlist: staff write" on public.waitlist for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
 
--- schedule · Answer to “How do you want to feel today?” (A-05).
+-- schedule · DEPRECATED (0030): answer to “How do you want to feel today?” (A-05, retired from the product). Kept as history; nothing writes or reads new rows.
 create table if not exists public.intentions (
   -- Primary key
   id uuid primary key default gen_random_uuid(),

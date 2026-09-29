@@ -12,12 +12,12 @@ const G = 'core.nav.group.design';
 
 export const routes: RouteDef[] = [
   { ...base, path: '/dev', element: page('SpecsIndexPage'), spec: specsIndexSpec },
-  { ...base, path: '/dev/tokens', element: page('TokensPage'), spec: canvasSpecs['D-01'], nav: { labelKey: 'core.nav.tokens', icon: '◐', order: 1, group: G } },
-  { ...base, path: '/dev/components', element: page('ComponentsPage'), spec: canvasSpecs['D-02'], nav: { labelKey: 'core.nav.components', icon: '❖', order: 2, group: G } },
-  { ...base, path: '/dev/specs', element: page('SpecsIndexPage'), spec: specsIndexSpec, nav: { labelKey: 'core.nav.specs', icon: '☰', order: 3, group: G } },
-  { ...base, path: '/dev/layout', element: page('LayoutEditorPage'), spec: layoutEditorSpec, nav: { labelKey: 'core.nav.layout', icon: '⇅', order: 4, group: G, to: '/dev/layout/C-01' } },
+  { ...base, path: '/dev/tokens', element: page('TokensPage'), spec: canvasSpecs['D-01'], nav: { labelKey: 'core.nav.tokens', icon: 'tokens', order: 1, group: G } },
+  { ...base, path: '/dev/components', element: page('ComponentsPage'), spec: canvasSpecs['D-02'], nav: { labelKey: 'core.nav.components', icon: 'components', order: 2, group: G } },
+  { ...base, path: '/dev/specs', element: page('SpecsIndexPage'), spec: specsIndexSpec, nav: { labelKey: 'core.nav.specs', icon: 'specs', order: 3, group: G } },
+  { ...base, path: '/dev/layout', element: page('LayoutEditorPage'), spec: layoutEditorSpec, nav: { labelKey: 'core.nav.layout', icon: 'layout', order: 4, group: G, to: '/dev/layout/C-01' } },
   { ...base, path: '/dev/layout/:pageCode', element: page('LayoutEditorPage'), spec: layoutEditorSpec },
-  { ...base, path: '/dev/knowledgebase', element: page('KnowledgebasePage'), spec: canvasSpecs['K-01'], nav: { labelKey: 'core.nav.knowledgebase', icon: '❡', order: 5, group: G } },
-  { ...base, path: '/dev/canvas', element: page('CanvasPage'), spec: canvasSpec, nav: { labelKey: 'core.nav.canvas', icon: '▩', order: 6, group: G } },
-  { ...base, path: '/dev/simulator', element: page('SimulatorPage'), spec: simulatorSpec, nav: { labelKey: 'core.nav.simulator', icon: '▣', order: 7, group: G } },
+  { ...base, path: '/dev/knowledgebase', element: page('KnowledgebasePage'), spec: canvasSpecs['K-01'], nav: { labelKey: 'core.nav.knowledgebase', icon: 'knowledgebase', order: 5, group: G } },
+  { ...base, path: '/dev/canvas', element: page('CanvasPage'), spec: canvasSpec, nav: { labelKey: 'core.nav.canvas', icon: 'canvas', order: 6, group: G } },
+  { ...base, path: '/dev/simulator', element: page('SimulatorPage'), spec: simulatorSpec, nav: { labelKey: 'core.nav.simulator', icon: 'simulator', order: 7, group: G } },
 ];

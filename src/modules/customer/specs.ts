@@ -22,7 +22,15 @@ export const canvasSpecs: Record<string, PageSpec> = {
   'A-01': ext('A-01', { layout: ['BreathingRings + Wordmark', 'Tagline', 'LoadState', 'ContinueButton'], data: ['users', 'feature_flags'], logic: ['Breath cycle is 7 s (--dur-breath).', 'Auto-continues to /auth/sign-in after 2.8 s; a button skips the wait.'], states: ['breathing', 'reduced motion'], notes: ['Session restore is the demo session in localStorage; Supabase Auth later.'] }),
   'A-02': ext('A-02', { layout: ['Logo block', 'DemoUserPicker', 'CredentialCard (email, password)', 'Divider / OR', 'ProviderStack (Apple, Google, Biometric — disabled)', 'CreateAccountLink'], data: ['users', 'user_roles', 'audit_log'], states: ['default', 'wrong credentials: attempts left', 'locked → E-04'], notes: ['Demo mode: any demo user email signs in; 5 failed attempts route to /auth/locked (E-04).', 'Apple / Google / biometric buttons are disabled until Supabase Auth.'] }),
   'A-03': ext('A-03', { layout: ['ProgressDots', 'Heading + sub', 'FormStack (name, email, WhatsApp +57, password, birthday, emergency contact, photo)', 'ConsentRow → /site/legal', 'PrimaryButton'], data: ['users', 'profiles', 'user_roles', 'consents', 'legal_documents'], states: ['default', 'validation errors', 'duplicate email → sign-in offer', 'created'], notes: ['Inserts users + profiles + user_roles + consents rows via useData(), then SessionProvider signs in as the created row (any users id is accepted). The account lives until the mock reseeds on the next day.'] }),
-  'A-05': ext('A-05', { layout: ['Question', 'MovementPicker ×4', 'Explanation', 'SkipLink'], data: ['intentions'], states: ['no intention yet', 'already answered today'] }),
+  // 0030 — RETIRED. Justin asked to erase “¿Cómo quieres sentirte hoy?” from the experience: no route (the registry
+  // redirects /app/intention → /app), no C-01 block, no sign-up hop, no flags. The code stays so history, docs and the
+  // canvas reference still resolve; `intentions` is kept in the schema as history (deprecated, nothing writes to it).
+  'A-05': ext('A-05', { layout: [], data: ['intentions'], states: ['retired (0030): /app/intention redirects to /app'], toggles: [], actions: [], notes: ['RETIRED in 0030 (0.12.0): removed from the customer experience end to end. Not routed; /app/intention redirects to /app. The intentions table is deprecated history.'] }),
+  'C-01': ext('C-01', {
+    layout: ['TopBar (logo, avatar, bell)', 'FeedbackPrompt (conditional)', 'MembershipNudge (if no plan)', 'AnnouncementCard (if active)', 'NextClassCard + countdown', 'QuickActions ×4', 'TodayList', 'StatsRow ×3', 'EventsStrip → BottomNav'],
+    logic: (base['C-01']?.logic ?? []).filter((l) => !/intention/i.test(l)).concat(["Today's list is in start-time order (the A-05 intention sort was retired in 0030)."]),
+    notes: ['0030: the “¿Cómo quieres sentirte hoy?” card left the home; quick actions and the dock use the Icon set.'],
+  }),
   'A-06': ext('A-06', {
     layout: ['BackLink', 'LegalDocument (title, version, effective date, status badge)', 'CounselNotice', 'VersionSwitcher (when > 1 version)', 'AcceptanceReceipt + Accept', 'Body (markdown, {{policy.*}} resolved live)', 'SiblingLinks', 'PrintButton'],
     data: ['legal_documents', 'legal_acceptances', 'consents', 'tenants'],

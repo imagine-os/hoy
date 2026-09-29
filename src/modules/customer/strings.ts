@@ -4,10 +4,6 @@ import type { StringTable } from '../../i18n/types';
 export const strings: StringTable = {
   // C-01 home
   'customer.home.greeting': { es: 'Hola, {name}', en: 'Hi, {name}' },
-  'customer.home.intention.q': { es: '¿Cómo quieres sentirte hoy?', en: 'How do you want to feel today?' },
-  'customer.home.intention.hint': { es: 'Tu horario de hoy se ordena según tu intención.', en: 'Today’s schedule sorts by your intention.' },
-  'customer.home.intention.done': { es: 'Hoy: {mv}', en: 'Today: {mv}' },
-  'customer.home.intention.change': { es: 'Cambiar', en: 'Change' },
   'customer.home.next': { es: 'Tu próxima clase', en: 'Your next class' },
   'customer.home.next.empty': { es: 'No tienes clases reservadas.', en: 'You have no booked classes.' },
   'customer.home.next.cta': { es: 'Reserva tu primera clase', en: 'Book your first class' },
@@ -45,8 +41,8 @@ export const strings: StringTable = {
   'customer.schedule.filter.time.evening': { es: 'Tarde', en: 'Evening' },
   'customer.schedule.filter.modality': { es: 'Modalidad', en: 'Modality' },
   'customer.schedule.filter.teacher': { es: 'Profesor/a', en: 'Teacher' },
-  'customer.schedule.filter.intention': { es: 'Intención (movimiento)', en: 'Intention (movement)' },
-  'customer.schedule.filter.intention.hint': { es: 'Los cuatro movimientos del club.', en: 'The club’s four movements.' },
+  'customer.schedule.filter.movement': { es: 'Movimiento', en: 'Movement' },
+  'customer.schedule.filter.movement.hint': { es: 'Los cuatro movimientos del club.', en: 'The club’s four movements.' },
   'customer.schedule.clearFilters': { es: 'Quitar filtros', en: 'Clear filters' },
   'customer.schedule.apply': { es: 'Aplicar', en: 'Apply' },
   'customer.schedule.empty': { es: 'Ninguna clase coincide', en: 'No classes match' },
@@ -58,7 +54,6 @@ export const strings: StringTable = {
   'customer.schedule.cancelled': { es: 'Cancelada', en: 'Cancelled' },
   'customer.schedule.done': { es: 'Terminada', en: 'Done' },
   'customer.schedule.legend': { es: 'Movimientos', en: 'Movements' },
-  'customer.schedule.intentionLink': { es: 'Elegir mi intención de hoy', en: 'Pick today’s intention' },
 
   // C-03 class detail
   'customer.class.notFound': { es: 'Clase no encontrada', en: 'Class not found' },
@@ -588,12 +583,6 @@ export const strings: StringTable = {
   'customer.more.states': { es: 'Estados de ejemplo (dev)', en: 'Sample states (dev)' },
   'customer.more.authFlow': { es: 'Flujo de acceso', en: 'Auth flow' },
 
-  // A-05 intention
-  'customer.intention.enraiza': { es: 'Tierra, centro, fuerza tranquila.', en: 'Ground, centre, quiet strength.' },
-  'customer.intention.fluye': { es: 'Movimiento continuo, respiración.', en: 'Continuous movement, breath.' },
-  'customer.intention.arde': { es: 'Calor, sudor, foco.', en: 'Heat, sweat, focus.' },
-  'customer.intention.libera': { es: 'Soltar, quietud, descanso.', en: 'Release, stillness, rest.' },
-  'customer.intention.skip': { es: 'Hoy no, gracias', en: 'Not today, thanks' },
 
   // A-01 splash
   'customer.splash.line1': { es: 'La vida es', en: 'Life is' },

@@ -57,7 +57,7 @@ export const rgb = {
   },
 } as const;
 
-/** The four movements — canvas `movSets.hoy`; class cards, week chips and the intention picker. */
+/** The four movements — canvas `movSets.hoy`; class cards, week chips and the schedule filter. */
 export const movements = {
   enraiza: { label: 'Enraíza', fg: '#3A4C36', dot: '#5A7355', bg: 'rgba(90,115,85,.24)' },
   fluye: { label: 'Fluye', fg: '#2C4A6B', dot: '#5F85B1', bg: 'rgba(95,133,177,.24)' },
@@ -257,6 +257,18 @@ export const motion = {
 } as const;
 
 /**
+ * Icon scale (0030). One lucide stroke set behind the `Icon` atom: sizes are rem so glyphs grow with the `--ui` band
+ * like type does; the stroke is a unitless SVG width (1.75 at rest, 2.25 for the active dock / top-bar item) so a
+ * 20 px glyph and a 40 px glyph read with the same weight next to DM Sans. `icon-tile` is the square medallion behind a
+ * settings or list-row glyph.
+ */
+export const icons = {
+  'icon-xs': '0.875rem', 'icon-sm': '1rem', 'icon-md': '1.25rem', 'icon-lg': '1.5rem', 'icon-xl': '2rem',
+  'icon-tile': '2.25rem', 'icon-stroke': '1.75', 'icon-stroke-active': '2.25',
+} as const;
+export type IconSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+
+/**
  * Layout widths and heights, all in rem so they scale with the `--ui` band (1120 → 1960 px at 3840). The phone
  * bezel width lives in the hub's DeviceFrame presets (D-0006), not here.
  * `h-ctl` is the minimum height (and the minimum width of a square target) of every interactive control (44 px).
@@ -285,7 +297,7 @@ export const UI_SCALE: readonly { minWidth: number; ui: number; minText: number 
   { minWidth: BREAKPOINTS.hd, ui: 1.125, minText: 16 }, { minWidth: BREAKPOINTS.qhd, ui: 1.375, minText: 16 }, { minWidth: BREAKPOINTS.uhd, ui: 1.75, minText: 16 },
 ];
 
-export const tokens = { brand, palette, rgb, movements, semantic, shadows, textures, materials, surfaces, hues, type, spacing, radii, motion, layout: layoutTokens, breakpoints: breakpointVars };
+export const tokens = { brand, palette, rgb, movements, semantic, shadows, textures, materials, surfaces, hues, type, spacing, radii, motion, icons, layout: layoutTokens, breakpoints: breakpointVars };
 
 function vars(obj: Record<string, string>): string {
   return Object.entries(obj).map(([k, v]) => `  --${k}: ${v};`).join('\n');
@@ -308,6 +320,7 @@ ${vars(type)}
 ${vars(spacing)}
 ${vars(radii)}
 ${vars(motion)}
+${vars(icons)}
 ${vars(layoutTokens)}
 ${vars(breakpointVars)}
   --ui: 1;

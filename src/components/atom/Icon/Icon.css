@@ -1,0 +1,4 @@
+/* One stroke weight for the whole product (D-01 --icon-stroke); an inline strokeWidth still wins. */
+.icon { flex: 0 0 auto; display: inline-block; vertical-align: middle; stroke-width: var(--icon-stroke); overflow: visible; }
+/* Active nav items and pressed toggles read heavier, never by colour alone. */
+.is-active > .navbar-icon .icon, .icon.is-strong { stroke-width: var(--icon-stroke-active); }

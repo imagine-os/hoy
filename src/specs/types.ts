@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import type { Role } from '../auth/roles';
 import type { ActionDef } from '../actions/types';
+import type { IconName } from '../components/atom/Icon/Icon';
 
 /** Bilingual text. Spanish is required; English falls back to Spanish. */
 export type Bi = { es: string; en: string };
@@ -42,6 +43,9 @@ export interface PageSpec {
   checkedAt?: number[];
 }
 
+/** A retired path that keeps resolving: the router sends `from` to `to` (replace, query string dropped). No spec, no shell, not in the manifest. */
+export interface RedirectDef { from: string; to: string; /** Why it moved, for the changelog and the inspector. */ reason: string }
+
 export interface RouteDef {
   path: string;
   element: ReactNode;
@@ -54,7 +58,7 @@ export interface RouteDef {
    * `group` is an i18n key too when the dictionary has it, else it renders verbatim.
    * `to` overrides the link target (used when the nav entry should open a parameterised route).
    */
-  nav?: { labelKey: string; icon: string; order: number; group?: string; to?: string };
+  nav?: { labelKey: string; icon: IconName; order: number; group?: string; to?: string };
 }
 
 /** Marks a spec as complete enough for the specs index badge. */

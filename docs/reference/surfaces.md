@@ -1,8 +1,13 @@
 # Machine surfaces — MCP / WebMCP, CLI, API
 
 What something other than a person can drive in HoyOS today, and what it cannot.
-**Checked 2026-09-29** (v0.11.2; previous check 2026-09-29, v0.11.1). Re-check and date this file every pass; a line that is not
+**Checked 2026-09-29** (v0.12.0; previous check 2026-09-29, v0.11.2). Re-check and date this file every pass; a line that is not
 re-checked is not current.
+
+**0030 delta (v0.12.0).** `window.__hoyos.routes` no longer lists `/app/intention` (A-05 retired); the path still
+resolves in the browser through the customer module's new `redirects` export (`/app/intention` → `/app`), which is
+router-only and not part of the manifest. No action ids changed (A-05 had none). The icon pass is visual only: labels,
+`aria-label`s and action ids are unchanged, so agents and the voice vocabulary see the same controls.
 
 ---
 
