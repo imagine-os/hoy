@@ -1154,6 +1154,8 @@ export const strings: StringTable = {
   'admin.settings.hours.err.times': { es: 'Pon las dos horas o ninguna; la de cierre después de la de apertura.', en: 'Set both times or neither; closing after opening.' },
   'admin.settings.hours.err.label': { es: 'El nombre en español es obligatorio.', en: 'The Spanish name is required.' },
   'admin.settings.hours.err.start': { es: 'Elige la fecha inicial.', en: 'Pick the start date.' },
+  'admin.settings.hours.err.save': { es: 'No se pudo guardar: {error}', en: 'Could not save: {error}' },
+  'admin.settings.hours.err.delete': { es: 'No se pudo eliminar: {error}', en: 'Could not delete: {error}' },
   'admin.settings.hours.saved': { es: 'Excepción guardada', en: 'Exception saved' },
   'admin.settings.hours.deleted': { es: 'Excepción eliminada', en: 'Exception deleted' },
   'admin.settings.hours.delete.confirm': { es: '¿Eliminar? Toca otra vez', en: 'Delete? Tap again' },

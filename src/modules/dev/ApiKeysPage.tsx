@@ -69,7 +69,10 @@ export function ApiKeysPage() {
   const rotate = async (old: ApiKeyRow): Promise<ApiKeyRow> => {
     guard();
     if (keyStatus(old) === 'revoked' || keyStatus(old) === 'expired') throw new Error(t('dev.apiKeys.err.rotateDead'));
-    const { raw, row } = await newKeyRow({ name: old.name, environment: old.environment, scopes: old.scopes, expiresAt: null, createdBy: user.id, replacesId: old.id });
+    // The replacement keeps the old key's lifetime: same duration from now, or never-expiring if the old one was.
+    const lifetime = old.expires_at ? new Date(old.expires_at).getTime() - new Date(old.created_at).getTime() : null;
+    const expiresAt = lifetime && lifetime > 0 ? new Date(Date.now() + lifetime).toISOString() : null;
+    const { raw, row } = await newKeyRow({ name: old.name, environment: old.environment, scopes: old.scopes, expiresAt, createdBy: user.id, replacesId: old.id });
     const saved = await data.insert<ApiKeyRow>('api_keys', row);
     const grace = new Date(Date.now() + ROTATION_GRACE_MS).toISOString();
     const oldExpires = old.expires_at && old.expires_at < grace ? old.expires_at : grace;
@@ -114,7 +117,9 @@ export function ApiKeysPage() {
     'dev.apiKeys.create': async (p) => {
       const environment: ApiKeyEnvironment = p?.environment === 'live' ? 'live' : 'test';
       const scopes = (p?.scopes ?? '').split(',').map((s) => s.trim()).filter(Boolean);
-      const k = await create({ name: p?.name ?? '', environment, scopes, expiryDays: Number(p?.expires_days) || 0 });
+      // Same default as the drawer (EMPTY.expiryDays); an explicit 0 means never.
+      const expiryDays = p?.expires_days?.trim() ? Math.max(0, Number(p.expires_days) || 0) : EMPTY.expiryDays;
+      const k = await create({ name: p?.name ?? '', environment, scopes, expiryDays });
       return `created ${k.prefix}… (${k.environment}); the full key is shown once on screen and is not returned here`;
     },
     'dev.apiKeys.rotate': async (p) => {

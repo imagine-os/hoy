@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useData, useTable } from '../../data/DataContext';
 import type { BaseRow, HoursOverrideRow, ModalityRow } from '../../data/schema';
 import { EMPTY_RATE_CARD, type PayrollCadence, type RateCard } from '../../data/payrollCalc';
@@ -233,7 +233,10 @@ function dateKeyIn(now: Date, tz: string): string {
 export function useOpeningHours(): StudioHours {
   const { settings } = useSettings();
   const { rows, loading } = useTable<HoursOverrideRow>('hours_overrides');
-  return useMemo(() => ({ ...hoursOf(settings, rows), loading }), [settings, rows, loading]);
+  // A 60 s tick so "today" and todayKey follow opening / closing times and midnight while a page stays open.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => { const id = setInterval(() => setNow(Date.now()), 60_000); return () => clearInterval(id); }, []);
+  return useMemo(() => ({ ...hoursOf(settings, rows, new Date(now)), loading }), [settings, rows, loading, now]);
 }
 
 /** Slug of the modality that only exists as its own class when M-08f says so. */

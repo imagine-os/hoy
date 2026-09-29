@@ -120,13 +120,17 @@ export function HoursSettings() {
     const bad = validateOverride(draft);
     if (bad) { setError(bad); return; }
     setBusy(true);
-    try { await save(draft); toast(t('admin.settings.hours.saved'), 'success'); setDraft(null); } finally { setBusy(false); }
+    try { await save(draft); toast(t('admin.settings.hours.saved'), 'success'); setDraft(null); }
+    catch (e) { toast(t('admin.settings.hours.err.save', { error: (e as Error).message }), 'danger'); }
+    finally { setBusy(false); }
   };
   const doDelete = async () => {
     if (!draft?.id) return;
     if (!confirmDelete) { setConfirmDelete(true); return; }
     setBusy(true);
-    try { await remove(draft.id); toast(t('admin.settings.hours.deleted'), 'success'); setDraft(null); } finally { setBusy(false); setConfirmDelete(false); }
+    try { await remove(draft.id); toast(t('admin.settings.hours.deleted'), 'success'); setDraft(null); }
+    catch (e) { toast(t('admin.settings.hours.err.delete', { error: (e as Error).message }), 'danger'); }
+    finally { setBusy(false); setConfirmDelete(false); }
   };
   const open = (d: Draft) => { setDraft(d); setError(null); setConfirmDelete(false); };
 
@@ -175,7 +179,7 @@ export function HoursSettings() {
             ? (
               <div className="row wrap">
                 <Button size="sm" icon="plus" onClick={() => open(emptyDraft(today))}>{t('admin.settings.hours.add')}</Button>
-                <Button size="sm" variant="secondary" icon="download" onClick={() => { void importHolidays(); }}>{t('admin.settings.hours.import', { year, next: year + 1 })}</Button>
+                <Button size="sm" variant="secondary" icon="download" onClick={() => { importHolidays().catch((e: Error) => toast(t('admin.settings.hours.err.save', { error: e.message }), 'danger')); }}>{t('admin.settings.hours.import', { year, next: year + 1 })}</Button>
               </div>
             )
             : <p className="xs muted">{t('admin.settings.hours.readonly')}</p>}

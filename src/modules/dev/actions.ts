@@ -8,7 +8,7 @@ import { API_KEY_SCOPES } from './apiKeys';
 export const devApiKeysCreate: ActionDef = {
   id: 'dev.apiKeys.create', label: { es: 'Crear una llave de API', en: 'Create an API key' },
   intent: { es: 'Crea una llave {environment} llamada {name} con {scopes}', en: 'Create a {environment} key called {name} with {scopes}' },
-  params: { name: 'string', environment: 'enum:live,test', scopes: `csv of ${API_KEY_SCOPES.join(',')}`, expires_days: 'number (optional)' }, permission: 'api_keys.write',
+  params: { name: 'string', environment: 'enum:live,test', scopes: `csv of ${API_KEY_SCOPES.join(',')}`, expires_days: 'number (optional, default 90; 0 = never)' }, permission: 'api_keys.write',
 };
 export const devApiKeysRotate: ActionDef = {
   id: 'dev.apiKeys.rotate', label: { es: 'Rotar una llave', en: 'Rotate a key' },
