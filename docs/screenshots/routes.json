@@ -2344,7 +2344,7 @@
    "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-01",
    "notes": [
     "0030: the “¿Cómo quieres sentirte hoy?” card left the home; quick actions and the dock use the Icon set.",
-    "0039: the StatsRow ×3 section (name kept for stored layouts) is the practice block — classes attended this month (by session date) + upcoming booked, weeks in a row on the goal (StreakBadge), plan balance labelled by what it is (membership → unlimited + renewal, credits → classes left + expiry), the week as WeekDots and a link to C-27. With no goal row yet it asks the weekly goal inline (GoalPicker). useMilestoneRecorder writes milestone / streak.saved events once; a newly recorded milestone shows a one-time toast."
+    "0040: the StatsRow ×3 section (name kept for stored layouts) is the practice block — classes attended this month (by session date) + upcoming booked, weeks in a row on the goal (StreakBadge), plan balance labelled by what it is (membership → unlimited + renewal, credits → classes left + expiry), the week as WeekDots and a link to C-27. With no goal row yet it asks the weekly goal inline (GoalPicker). useMilestoneRecorder writes milestone / streak.saved events once; a newly recorded milestone shows a one-time toast."
    ],
    "actions": [
     {
@@ -4409,7 +4409,7 @@
     "super_admin"
    ],
    "logic": [
-    "Usage tile (0039) = classes attended this month from practiceStats (checked_in, by session date), hint = upcoming booked — the same number as C-01 and C-27.",
+    "Usage tile (0040) = classes attended this month from practiceStats (checked_in, by session date), hint = upcoming booked — the same number as C-01 and C-27.",
     "Pause up to 30 days (policy.pauseMaxDays); renewal shifts by the paused days.",
     "Members are notified 3 days before a charge (policy.chargeNoticeDays).",
     "Cancellation keeps access until the paid period ends; undo until then."

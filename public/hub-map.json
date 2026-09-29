@@ -11,7 +11,7 @@
       "es": "Un solo sistema para cada puesto del estudio: quien practica, quien enseña, quien recibe en la puerta, quien administra y quien lo construye.",
       "en": "One system for every seat at the studio: members, teachers, front desk, admin, and the people who build it."
     },
-    "version": "0.14.0",
+    "version": "0.16.0",
     "baseUrl": "https://imagine-os.github.io/hoy/",
     "hubRoute": "/",
     "brand": {
@@ -1810,8 +1810,8 @@
         "en": "Settings · Content"
       },
       "purpose": {
-        "es": "Decisiones de contenido del owner como ajustes: cómo se nombran las clases en público (disciplinas o movimientos), si Respiración es una clase propia o vive dentro de meditación, qué proveedor de mapa usa el sitio, y qué versiones legales están publicadas.",
-        "en": "The owner’s content decisions as settings: how classes are named in public (disciplines or movements), whether Respiración is its own class or lives inside meditation, which map provider the site embeds, and which legal versions are published."
+        "es": "Decisiones de contenido del owner como ajustes: si Respiración es una clase propia o vive dentro de meditación, qué proveedor de mapa usa el sitio, y qué versiones legales están publicadas.",
+        "en": "The owner’s content decisions as settings: whether Respiración is its own class or lives inside meditation, which map provider the site embeds, and which legal versions are published."
       },
       "surface": "admin",
       "roles": [
@@ -4992,8 +4992,8 @@
         "en": "Site · Modalities"
       },
       "purpose": {
-        "es": "Las prácticas del horario agrupadas por movimiento, con intensidad, duración y sala caliente — y el enlace al ensayo de la clase a la que pertenece cada una.",
-        "en": "The scheduled practices grouped by movement, with intensity, duration and heated room — each cross-linked to the class essay it belongs to."
+        "es": "Las prácticas del horario agrupadas por clase (hot yoga, barre, pilates, meditación, respiración), con intensidad, duración y sala caliente — y el enlace al ensayo de la clase a la que pertenece cada una.",
+        "en": "The scheduled practices grouped by class (hot yoga, barre, pilates, meditation, breathwork), with intensity, duration and heated room — each cross-linked to the class essay it belongs to."
       },
       "surface": "public",
       "roles": [
