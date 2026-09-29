@@ -21,8 +21,8 @@ texto en español y en inglés, y cada cambio pasa por borrador, revisión y pub
 
 {{tenant:capacity}}
 
-2. Reparte los cuatro movimientos (Enraíza, Fluye, Arde, Libera) a lo largo del día, para que siempre haya
-   algo intenso y algo tranquilo. Qué es cada uno: [Nuestras clases](02-nuestras-clases.md).
+2. Reparte las intensidades a lo largo del día, para que siempre haya algo intenso y algo tranquilo. Qué es
+   cada clase: [Nuestras clases](02-nuestras-clases.md).
 3. Crea la clase como recurrente: disciplina, maestro, sala, hora y cada cuánto se repite.
 4. Publica siempre en español. Si falta el inglés, la app muestra el español.
 5. Avisa los cambios de horario con anticipación (ver abajo). Un cambio no afecta las reservas que ya existen.

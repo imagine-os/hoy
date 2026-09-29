@@ -4,7 +4,7 @@ role: everyone
 part: I
 version: 0.13.3
 updated: 2026-09-29
-summary: HOY's five disciplines, what to say about each one at the door and the four movements we use internally to shape the day.
+summary: HOY's five disciplines, what to say about each one at the door and how they are kept in the system.
 ---
 
 # Our classes
@@ -27,8 +27,6 @@ This is how the website puts it:
 
 **What to say if they can't choose:** "Any of them works for a first time. If you want to sweat, hot yoga or
 barre. If you want something calmer, pilates or meditation."
-
-> IN HOYOS: M-08f Settings → Content → public class naming = disciplines.
 
 ## 2. Hot Yoga
 > Something happens when the body moves in heat: the mind stops resisting and starts to give. At HOY, hot yoga is
@@ -91,21 +89,11 @@ practise beforehand."
 
 > IN HOYOS: M-08f Settings → Content → "Breathwork is its own class" (on or off).
 
-## 7. The four movements (internal use)
-Internally, the team shapes the day with four **movements**: Enraíza, Fluye, Arde and Libera. They give the
-schedule its colours and help spread the classes across the day. They are an internal label: to the customer we
-say the name of the discipline.
-
-| Movement | Feels like | Usually |
-|---|---|---|
-| Enraíza (ground) | settling, holding, landing | pilates, breathwork |
-| Fluye (flow) | letting go, linking, long breaths | gentle yoga, mobility |
-| Arde (burn) | raising the pulse, shaking, sweating | barre, hot yoga |
-| Libera (release) | loosening, staying still, closing | meditation, restorative |
+## 7. The class list in the system
+On the schedule every class has its own colour, so the team and members can spot it at a glance.
 
 ![Four classes a day, each with its colour](../../screenshots/C-02/en-390.jpg "C-02 · /app/schedule")
 
-## 8. The class list in the system
 Name, description, intensity, length and whether the room is heated: this is how the system keeps them, and how
 they appear on the website and in the app. Coordination edits them.
 

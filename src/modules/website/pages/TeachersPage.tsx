@@ -19,7 +19,7 @@ export function TeachersPage() {
   const { rows: modalities } = useTable<ModalityRow>('modalities');
   const spec = (id: string) => {
     const m = modalities.find((x) => x.id === id);
-    return { label: m ? (lang === 'es' ? m.name_es : m.name_en) : id, movement: m?.movement ?? ('fluye' as const) };
+    return { label: m ? (lang === 'es' ? m.name_es : m.name_en) : id, tone: m?.tone ?? ('river' as const) };
   };
 
   const SECTIONS: Record<string, () => ReactNode> = {
@@ -34,7 +34,7 @@ export function TeachersPage() {
               <Card key={te.id} padding="sm" className="site-teacher">
                 {edition === 'sanctuary' && !te.photo_url && !sampleTeacherPortrait(te.id) ? <div className="site-teacher-monogram" aria-label={t('site.new.portraitPending')}><span aria-hidden>{te.display_name.split(' ').map(part => part[0]).slice(0,2).join('')}</span><small>{t('site.new.portraitPending')}</small></div> : (
                 <MediaSlot
-                  ratio={edition === 'sanctuary' ? "4:5" : "4:3"} kind="photo" movement={first?.movement} slotKey="teacher.portrait"
+                  ratio={edition === 'sanctuary' ? "4:5" : "4:3"} kind="photo" tone={first?.tone} slotKey="teacher.portrait"
                   src={te.photo_url ?? undefined}
                   fallbackSrc={edition === 'sanctuary' ? sampleTeacherPortrait(te.id) : undefined}
                   fallbackVideo={edition === 'sanctuary' && videoEnabled && sampleTeacherPortrait(te.id) ? siteVideo(`teacher-${te.id.slice(4)}`) : undefined} motion={motion}
@@ -47,7 +47,7 @@ export function TeachersPage() {
                   {te.rating_avg != null && <span className="small muted">★ {te.rating_avg.toFixed(1)}</span>}
                 </div>
                 <p className="small">{bi(te.bio)}</p>
-                <div className="row wrap">{te.specialties.map(spec).map((s) => <Chip key={s.label} movement={s.movement} dot>{s.label}</Chip>)}</div>
+                <div className="row wrap">{te.specialties.map(spec).map((s) => <Chip key={s.label} tone={s.tone} dot>{s.label}</Chip>)}</div>
               </div></Card>
             );
           })}

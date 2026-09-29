@@ -39,10 +39,8 @@ export const strings: StringTable = {
   'customer.schedule.filter.time.all': { es: 'Todo el día', en: 'All day' },
   'customer.schedule.filter.time.morning': { es: 'Mañana', en: 'Morning' },
   'customer.schedule.filter.time.evening': { es: 'Tarde', en: 'Evening' },
-  'customer.schedule.filter.modality': { es: 'Modalidad', en: 'Modality' },
+  'customer.schedule.filter.modality': { es: 'Clase', en: 'Class' },
   'customer.schedule.filter.teacher': { es: 'Profesor/a', en: 'Teacher' },
-  'customer.schedule.filter.movement': { es: 'Movimiento', en: 'Movement' },
-  'customer.schedule.filter.movement.hint': { es: 'Los cuatro movimientos del club.', en: 'The club’s four movements.' },
   'customer.schedule.clearFilters': { es: 'Quitar filtros', en: 'Clear filters' },
   'customer.schedule.apply': { es: 'Aplicar', en: 'Apply' },
   'customer.schedule.empty': { es: 'Ninguna clase coincide', en: 'No classes match' },
@@ -53,7 +51,7 @@ export const strings: StringTable = {
   'customer.schedule.pastDay': { es: 'Clases pasadas: solo lectura.', en: 'Past classes: read-only.' },
   'customer.schedule.cancelled': { es: 'Cancelada', en: 'Cancelled' },
   'customer.schedule.done': { es: 'Terminada', en: 'Done' },
-  'customer.schedule.legend': { es: 'Movimientos', en: 'Movements' },
+  'customer.schedule.legend': { es: 'Clases', en: 'Classes' },
 
   // C-03 class detail
   'customer.class.notFound': { es: 'Clase no encontrada', en: 'Class not found' },

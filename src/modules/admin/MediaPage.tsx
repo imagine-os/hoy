@@ -33,7 +33,7 @@ export function MediaPage() {
   const add = async () => {
     const body: Partial<MediaAssetRow> = {
       slot_key: '', kind: 'photo', ratio: '16 / 9', label: { es: '', en: '' }, alt: { es: '', en: '' },
-      brief: { es: '', en: '' }, movement: null, url: null, credit: null, status: 'pending',
+      brief: { es: '', en: '' }, tone: null, url: null, credit: null, status: 'pending',
       sort: Math.max(0, ...rows.map((r) => r.sort)) + 10,
     };
     const created = await data.insert<MediaAssetRow>('media_assets', body);
@@ -97,7 +97,7 @@ function MediaCard({ asset, readOnly, bi, onSave, onRemove }: { asset: MediaAsse
       eyebrow={<span className="mono xs">{asset.slot_key || t('admin.media.noKey')}</span>}
       title={bi(asset.label) || t('admin.media.untitled')}
       actions={<Badge tone={asset.status === 'ready' ? 'success' : 'warn'}>{t(`admin.media.status.${asset.status}`)}</Badge>}>
-      <div className={`adm-media-frame ${asset.movement ? `adm-mv-${asset.movement}` : ''}`} style={{ aspectRatio: draft.ratio }}>
+      <div className={`adm-media-frame ${asset.tone ? `adm-tone-${asset.tone}` : ''}`} style={{ aspectRatio: draft.ratio }}>
         {asset.status === 'ready' && asset.url
           ? (asset.kind === 'video' ? <video src={asset.url} controls playsInline /> : <img src={asset.url} alt={bi(asset.alt)} loading="lazy" />)
           : <span className="adm-media-ratio">{draft.ratio.replace(/\s/g, '')}</span>}
@@ -105,7 +105,7 @@ function MediaCard({ asset, readOnly, bi, onSave, onRemove }: { asset: MediaAsse
       <div className="row wrap" style={{ marginTop: 'var(--sp-sm)' }}>
         <Chip>{t(`admin.media.kind.${asset.kind}`)}</Chip>
         <Chip>{draft.ratio.replace(/\s/g, '')}</Chip>
-        {asset.movement && <Chip movement={asset.movement} dot>{asset.movement}</Chip>}
+        {asset.tone && <Chip tone={asset.tone} dot>{asset.tone}</Chip>}
       </div>
       <p className="xs muted" style={{ marginTop: 'var(--sp-sm)' }}>{bi(asset.brief) || t('admin.media.noBrief')}</p>
 

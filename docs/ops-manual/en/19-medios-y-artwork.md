@@ -51,7 +51,7 @@ personality, humanity and movement; HUMAN CLUB brings structure and clarity.
 | Cream | #F1E7D2 | a soft, neutral base; a sense of space |
 
 The light tones bring light and lightness; the blues bring depth and stability. The other tones you see in the app
-(ink, sand, the colour of each movement) are extensions of the system, not brand colours.
+(ink, sand, the colour of each class) are extensions of the system, not brand colours.
 
 ## 4. The typefaces
 1. **Titles and headings:** Inter (Regular, Medium, Semibold). The manual names Akzidenz-Grotesk as the main face;

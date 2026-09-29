@@ -85,12 +85,12 @@ export function EventPage() {
     <div className="container page cust-page cust-has-sticky">
       <PageHead back="/app/events" title={<span className="sr-only">{bi(ev.title)}</span>} />
       <div className="stack">
-        <MediaPlaceholder slotKey="event.cover" label={t('customer.events.photo')} ratio="4 / 5" movement="libera" />
+        <MediaPlaceholder slotKey="event.cover" label={t('customer.events.photo')} ratio="4 / 5" tone="sun" />
         <div className="stack-sm">
           <span className="eyebrow">{formatDate(ev.starts_at, lang, { weekday: 'long', day: 'numeric', month: 'long' })} · {formatTime(ev.starts_at, lang)} · {tenant.name}</span>
           <h1 className="cust-title">{bi(ev.title)}</h1>
           <p className="small muted">{host ? t('customer.events.host', { name: host.display_name }) : ''}</p>
-          <div className="row wrap"><Chip movement="libera" dot>{bi(ev.kind)}</Chip><Chip>{t('core.common.min', { n: durationMin })}</Chip></div>
+          <div className="row wrap"><Chip tone="sun" dot>{bi(ev.kind)}</Chip><Chip>{t('core.common.min', { n: durationMin })}</Chip></div>
         </div>
         <p className="small">{bi(ev.description)}</p>
         <Card padding="sm" className="stack-sm">

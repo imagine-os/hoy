@@ -19,7 +19,7 @@ import { canvasSpecs } from '../specs';
 import { PASS_IDS, priceOf, useBookingActions, useEntitlements, useMyBookings, useSessionJoined, type EntitlementKind } from '../hooks';
 import { PAYMENT_METHODS, recordPayment, wompiCheckout, type PayMethod, type WompiResult } from '../payments';
 import { policy } from '../policy';
-import { PageHead, durationMin, movementOf, roomName, teacherName } from '../ui';
+import { PageHead, durationMin, toneOf, roomName, teacherName } from '../ui';
 import { MatPicker } from '../../../components/organism/MatPicker/MatPicker';
 import { usesMats, occupiesMat, chooseMat } from '../../../data/mats';
 import { tenant } from '../../../tenant/tenant';
@@ -164,7 +164,7 @@ export function CheckoutPage() {
 
   const s = joined.session;
   const SECTIONS: Record<string, () => ReactNode> = {
-    ClassSummary: () => <div className="stack"><ClassCard title={s.title} teacher={teacherName(joined)} room={roomName(joined)} startsAt={s.starts_at} endsAt={s.ends_at} movement={movementOf(joined)} booked={s.booked_count} capacity={s.capacity} level={s.level} />{yoga && <MatPicker sessionId={s.id} capacity={s.capacity} value={mat} onChange={n => { setMat(n); setError(null); }} />}</div>,
+    ClassSummary: () => <div className="stack"><ClassCard title={s.title} teacher={teacherName(joined)} room={roomName(joined)} startsAt={s.starts_at} endsAt={s.ends_at} tone={toneOf(joined)} booked={s.booked_count} capacity={s.capacity} level={s.level} />{yoga && <MatPicker sessionId={s.id} capacity={s.capacity} value={mat} onChange={n => { setMat(n); setError(null); }} />}</div>,
     EntitlementPicker: () => declined ? null : (
       <section className="stack-sm">
         <h2 className="cust-h2">{t('customer.checkout.payWith')}</h2>
@@ -221,7 +221,7 @@ export function CheckoutPage() {
       <Drawer open={!!done} onClose={() => done && nav(`/app/booking/${done.booking.id}`)} title={t('customer.book.ok')} side="bottom">
         {done && (
           <div className="stack">
-            <ClassCard variant="next" title={s.title} teacher={teacherName(joined)} room={roomName(joined)} startsAt={s.starts_at} endsAt={s.ends_at} movement={movementOf(joined)} booked={s.booked_count} capacity={s.capacity} />
+            <ClassCard variant="next" title={s.title} teacher={teacherName(joined)} room={roomName(joined)} startsAt={s.starts_at} endsAt={s.ends_at} tone={toneOf(joined)} booked={s.booked_count} capacity={s.capacity} />
             {done.booking.mat_number && <p className="small">{t('site.mat.confirmed', { n: done.booking.mat_number })}</p>}
             {done.pending ? <Notice tone="warn" title={t('customer.checkout.pending.title')}>{t('customer.checkout.pending.body')}</Notice> : <p className="small muted">{t('customer.checkout.success.body', { min: durationMin(joined) })}</p>}
             <Button block size="lg" onClick={() => nav(`/app/booking/${done.booking.id}`)}>{t('customer.class.viewBooking')}</Button>

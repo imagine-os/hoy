@@ -4,7 +4,7 @@ role: todos
 part: I
 version: 0.13.3
 updated: 2026-09-29
-summary: Las cinco disciplinas de HOY, qué decir de cada una en la puerta y los cuatro movimientos que usamos por dentro para ordenar el día.
+summary: Las cinco disciplinas de HOY, qué decir de cada una en la puerta y cómo se guardan en el sistema.
 ---
 
 # Nuestras clases
@@ -28,8 +28,6 @@ Así lo dice el sitio:
 
 **Qué decir si no sabe cuál elegir:** "Todas sirven para empezar. Si quieres sudar, hot yoga o barre. Si
 quieres algo más tranquilo, pilates o meditación."
-
-> EN HOYOS: M-08f Ajustes → Contenido → nombre público de las clases = disciplinas.
 
 ## 2. Hot Yoga
 > Hay algo que pasa cuando el cuerpo se mueve en calor: la mente deja de resistirse y empieza a ceder. En HOY,
@@ -93,21 +91,11 @@ necesitas practicar antes."
 
 > EN HOYOS: M-08f Ajustes → Contenido → "Respiración es una clase propia" (encendido o apagado).
 
-## 7. Los cuatro movimientos (uso interno)
-Por dentro, el equipo ordena el día con cuatro **movimientos**: Enraíza, Fluye, Arde y Libera. Dan el color
-del horario y ayudan a repartir las clases. Son una etiqueta interna: al cliente le decimos el nombre de la
-disciplina.
-
-| Movimiento | Se siente como | Suele ser |
-|---|---|---|
-| Enraíza | bajar, sostener, aterrizar | pilates, respiración |
-| Fluye | soltar, encadenar, respirar largo | yoga suave, movilidad |
-| Arde | subir el pulso, temblar, sudar | barre, hot yoga |
-| Libera | aflojar, quedarse quieto, cerrar | meditación, restaurativo |
+## 7. La lista de clases en el sistema
+En el horario cada clase tiene su propio color, para que el equipo y los socios la reconozcan de un vistazo.
 
 ![Cuatro clases al día, cada una con su color](../../screenshots/C-02/es-390.jpg "C-02 · /app/schedule")
 
-## 8. La lista de clases en el sistema
 Nombre, descripción, intensidad, duración y si la sala es caliente: así las guarda el sistema y así salen en
 el sitio y en la app. Coordinación las edita.
 

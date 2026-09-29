@@ -10,7 +10,6 @@ import type { ModalityRow } from '../../../data/schema';
 import { formatCOP } from '../../../i18n/format';
 import { priceItem } from '../../../tenant/pricing';
 import { brandClass, classes, classOrder, taglines } from '../../../tenant/brand';
-import { movements } from '../../../design/tokens';
 import { Button } from '../../../components/atom/Button/Button';
 import { Chip } from '../../../components/atom/Chip/Chip';
 import { Badge } from '../../../components/atom/Badge/Badge';
@@ -38,7 +37,7 @@ export function ClassDetailPage() {
         <PageHead title={bi({ es: 'Clase no encontrada', en: 'Class not found' })} body={t('site.classes.notFound')} />
         <section className="container site-section" style={{ paddingTop: 0 }}>
           <div className="row wrap">
-            {classOrder.map((s) => <Link key={s} to={`/site/classes/${s}`}><Chip movement={classes[s].movement} dot>{bi(classes[s].name)}</Chip></Link>)}
+            {classOrder.map((s) => <Link key={s} to={`/site/classes/${s}`}><Chip tone={classes[s].tone} dot>{bi(classes[s].name)}</Chip></Link>)}
           </div>
         </section>
       </SiteShell>
@@ -54,7 +53,7 @@ export function ClassDetailPage() {
       <>
         <PageHead eyebrow={bi(c.eyebrow)} title={bi(c.name)} body={bi(c.summary)} back={{ to: '/site/classes', label: t('site.classes.back') }} />
         <section className="container site-section" style={{ paddingTop: 0 }}>
-          <MediaSlot ratio="16:9" kind="photo" movement={c.movement} slotKey={`site.classes.${slug}`} fallbackSrc={edition === "sanctuary" ? siteImage(slug) : undefined} fallbackVideo={edition === "sanctuary" && videoEnabled ? siteVideo(slug) : undefined} motion={motion} label={t('site.classes.media', { name: bi(c.name) })} brief={c.brief} />
+          <MediaSlot ratio="16:9" kind="photo" tone={c.tone} slotKey={`site.classes.${slug}`} fallbackSrc={edition === "sanctuary" ? siteImage(slug) : undefined} fallbackVideo={edition === "sanctuary" && videoEnabled ? siteVideo(slug) : undefined} motion={motion} label={t('site.classes.media', { name: bi(c.name) })} brief={c.brief} />
         </section>
       </>
     ),
@@ -71,14 +70,13 @@ export function ClassDetailPage() {
               <div className="site-fact"><span className="eyebrow">{t('site.classes.duration')}</span><strong>{t('core.common.min', { n: primary.duration_min })}</strong></div>
               <div className="site-fact"><span className="eyebrow">{t('site.classes.intensity')}</span><strong>{'●'.repeat(primary.intensity)}{'○'.repeat(5 - primary.intensity)}</strong></div>
               <div className="site-fact"><span className="eyebrow">{t('site.classes.room')}</span><strong>{primary.heated ? t('site.classes.roomHot') : t('site.classes.roomTemperate')}</strong></div>
-              <div className="site-fact"><span className="eyebrow">{t('site.classes.movement')}</span><strong>{movements[c.movement].label}</strong></div>
             </div>
           ) : (
             <p className="small muted">{t('site.classes.factsPending')}</p>
           )}
           {mods.length > 0 && (
             <div className="row wrap" style={{ marginTop: 'var(--sp-lg)' }}>
-              {mods.map((m) => <Chip key={m.id} movement={m.movement} dot>{lang === 'es' ? m.name_es : m.name_en}</Chip>)}
+              {mods.map((m) => <Chip key={m.id} tone={m.tone} dot>{lang === 'es' ? m.name_es : m.name_en}</Chip>)}
               {c.heated && <Badge tone="warn">{t('site.modalities.heated')}</Badge>}
             </div>
           )}
@@ -99,7 +97,7 @@ export function ClassDetailPage() {
         <p className="eyebrow">{t('site.classes.other')}</p>
         <div className="site-classgrid" style={{ marginTop: 'var(--sp-md)' }}>
           {classOrder.filter((s) => s !== slug).map((s) => (
-            <Link key={s} to={`/site/classes/${s}`} className={`site-classcard mvcard-${classes[s].movement}`}>
+            <Link key={s} to={`/site/classes/${s}`} className={`site-classcard tonecard-${classes[s].tone}`}>
               <p className="eyebrow">{bi(classes[s].eyebrow)}</p>
               <h3>{bi(classes[s].name)}</h3>
               <span className="site-classcard-more">{t('site.classes.read')} →</span>
@@ -118,7 +116,7 @@ export function ClassDetailPage() {
           </div>
           <div className="row wrap">
             <Link to="/site/plans"><Button size="lg">{t('site.first.cta')}</Button></Link>
-            <Link to={`/site/schedule?movement=${c.movement}`}><Button size="lg" variant="secondary">{t('site.classes.schedule')}</Button></Link>
+            <Link to={c.modalitySlugs[0] ? `/site/schedule?modality=${c.modalitySlugs[0]}` : '/site/schedule'}><Button size="lg" variant="secondary">{t('site.classes.schedule')}</Button></Link>
           </div>
         </div>
       </section>

@@ -1,9 +1,11 @@
 import type { ReactNode } from 'react';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { formatTime } from '../../../i18n/format';
+import type { Tone } from '../../../design/tokens';
 import './RoomDayGrid.css';
 
-export type RoomBlockTone = 'enraiza' | 'fluye' | 'arde' | 'libera' | 'event' | 'rental' | 'private' | 'maintenance' | 'blocked';
+/** A class block takes its modality tone; space bookings take a material. */
+export type RoomBlockTone = Tone | 'event' | 'rental' | 'private' | 'maintenance' | 'blocked';
 
 export interface RoomBlock {
   id: string;

@@ -35,7 +35,7 @@ El tiempo que hay entre una clase y la siguiente:
 1. Pon los tapetes como lo pide la clase (en líneas o en círculo; lo dice la descripción de la clase).
 2. Por tapete: dos bloques, una correa y una manta. Cojín grande (bolster) si la clase lo usa.
 3. Temperatura y humedad a lo que pide la clase.
-4. Luz y música según el movimiento de la clase (Enraíza, Fluye, Arde o Libera).
+4. Luz y música según la clase y su intensidad.
 
 ## 3. La sala caliente
 El hot yoga se practica en calor a propósito (ver [Nuestras clases](02-nuestras-clases.md)). Eso cambia el

@@ -72,7 +72,7 @@ sql += `-- ---------------------------------------------------------------------
 --   teacher              read own class_sessions/bookings (teacher_id = own teachers.id); write attendance
 --   maintenance          read rooms/class_sessions; write maintenance tables (future)
 --   customer             read own rows (user_id = auth.uid()) in bookings, credits, memberships, payments,
---                        invoices, consents, intentions, waitlist; read public catalog (modalities, teachers,
+--                        invoices, consents, waitlist; read public catalog (modalities, teachers,
 --                        class_sessions, plans, legal_documents)
 --   anon (public site)   read modalities, teachers(active), class_sessions(scheduled), plans(active), legal_documents(published)
 -- Realtime: enable on class_sessions, bookings, waitlist, feature_flags, page_layouts.
@@ -111,7 +111,7 @@ for (const g of TABLE_GROUPS) {
   }
 }
 md += `\n## Seed data (\`src/data/seed/\`)
-6 modalities, 2 rooms (the main room at ${'15'} mats and a small meditation room), 8 teachers, 24 weekly templates (4/day Mon–Sat), sessions for −7…+7 days, 9 demo staff/users + 30 customers, memberships/credits/payments/invoices, bookings filling sessions, waitlists on full classes, today's intentions, feature flags from every spec toggle, legal docs + consents, 2 gift cards, 3 email templates, 3 WhatsApp templates, 3 automations, the unified message record (\`seed/messages.ts\`: 69 \`message_log\` rows — WhatsApp both ways, automated reminders and receipts, newsletters, one email exchange, internal notes — in 17 conversations, six inbound left unread), audit logs, three months of payroll runs, and four space bookings with two Especiales (one with a manual teacher payout). Deterministic PRNG; reseeds daily so "today" always has classes.
+6 modalities, 2 rooms (the main room at ${'15'} mats and a small meditation room), 8 teachers, 24 weekly templates (4/day Mon–Sat), sessions for −7…+7 days, 9 demo staff/users + 30 customers, memberships/credits/payments/invoices, bookings filling sessions, waitlists on full classes, feature flags from every spec toggle, legal docs + consents, 2 gift cards, 3 email templates, 3 WhatsApp templates, 3 automations, the unified message record (\`seed/messages.ts\`: 69 \`message_log\` rows — WhatsApp both ways, automated reminders and receipts, newsletters, one email exchange, internal notes — in 17 conversations, six inbound left unread), audit logs, three months of payroll runs, and four space bookings with two Especiales (one with a manual teacher payout). Deterministic PRNG; reseeds daily so "today" always has classes.
 
 ## Adding a table
 1. Add a \`TableDef\` to \`src/data/schema.ts\` (and a typed row interface if pages use it).

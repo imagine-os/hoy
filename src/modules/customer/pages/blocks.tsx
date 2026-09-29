@@ -20,7 +20,7 @@ import { useAllSessionsJoined, type JoinedSession } from '../hooks';
 import { PAYMENT_METHODS, type PayMethod } from '../payments';
 import { policy } from '../policy';
 
-/** Same-day replacements for a session: scheduled, not full, in the future; movement match first, then nearest time. */
+/** Same-day replacements for a session: scheduled, not full, in the future; same modality (class) first, then nearest time. */
 export function useAlternatives(j: JoinedSession | null, limit = 3) {
   const all = useAllSessionsJoined();
   return useMemo(() => {
@@ -28,7 +28,7 @@ export function useAlternatives(j: JoinedSession | null, limit = 3) {
     const now = Date.now();
     return all
       .filter((x) => x.session.id !== j.session.id && x.session.status === 'scheduled' && isSameDay(x.session.starts_at, j.session.starts_at) && new Date(x.session.starts_at).getTime() > now && x.session.booked_count < x.session.capacity)
-      .sort((a, b) => (Number(b.modality?.movement === j.modality?.movement) - Number(a.modality?.movement === j.modality?.movement)) || Math.abs(new Date(a.session.starts_at).getTime() - new Date(j.session.starts_at).getTime()) - Math.abs(new Date(b.session.starts_at).getTime() - new Date(j.session.starts_at).getTime()))
+      .sort((a, b) => (Number(b.session.modality_id === j.session.modality_id) - Number(a.session.modality_id === j.session.modality_id)) || Math.abs(new Date(a.session.starts_at).getTime() - new Date(j.session.starts_at).getTime()) - Math.abs(new Date(b.session.starts_at).getTime() - new Date(j.session.starts_at).getTime()))
       .slice(0, limit);
   }, [all, j, limit]);
 }
@@ -49,7 +49,7 @@ export function StudioCancelledBlock({ joined, booking }: { joined: JoinedSessio
           <Card padding="sm"><EmptyState compact title={t('customer.cancelled.noAlt')} body={t('customer.cancelled.noAlt.body')} action={<Link to="/app/schedule"><Button size="sm" variant="secondary">{t('customer.class.backToSchedule')}</Button></Link>} /></Card>
         ) : (
           <Card padding="sm">
-            {alts.map((x) => <ClassRow key={x.session.id} title={x.session.title} teacher={x.teacher?.display_name ?? ''} startsAt={x.session.starts_at} durationMin={x.modality?.duration_min ?? 60} movement={x.modality?.movement ?? 'fluye'} booked={x.session.booked_count} capacity={x.session.capacity} onClick={() => nav(`/app/class/${x.session.id}`)} />)}
+            {alts.map((x) => <ClassRow key={x.session.id} title={x.session.title} teacher={x.teacher?.display_name ?? ''} startsAt={x.session.starts_at} durationMin={x.modality?.duration_min ?? 60} tone={x.modality?.tone ?? 'river'} booked={x.session.booked_count} capacity={x.session.capacity} onClick={() => nav(`/app/class/${x.session.id}`)} />)}
           </Card>
         )}
         {alts[0] && <Button block size="lg" onClick={() => nav(`/app/checkout/${alts[0].session.id}`)}>{t('customer.cancelled.cta')}</Button>}

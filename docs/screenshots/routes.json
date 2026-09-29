@@ -1702,12 +1702,11 @@
     "en": "Settings · Content"
    },
    "purpose": {
-    "es": "Decisiones de contenido del owner como ajustes: cómo se nombran las clases en público (disciplinas o movimientos), si Respiración es una clase propia o vive dentro de meditación, qué proveedor de mapa usa el sitio, y qué versiones legales están publicadas.",
-    "en": "The owner’s content decisions as settings: how classes are named in public (disciplines or movements), whether Respiración is its own class or lives inside meditation, which map provider the site embeds, and which legal versions are published."
+    "es": "Decisiones de contenido del owner como ajustes: si Respiración es una clase propia o vive dentro de meditación, qué proveedor de mapa usa el sitio, y qué versiones legales están publicadas.",
+    "en": "The owner’s content decisions as settings: whether Respiración is its own class or lives inside meditation, which map provider the site embeds, and which legal versions are published."
    },
    "layout": [
     "SettingsSubNav",
-    "PublicNaming",
     "BreathworkOwnClass",
     "MapProvider + MapSlot preview",
     "LegalVersions (publish toggle per version)"
@@ -1724,7 +1723,7 @@
     "finance"
    ],
    "logic": [
-    "publicNaming: classDisplay() titles a schedule row by the modality (disciplines) or by the movement with the modality next to the teacher (movements); C-03 and W-04 read it.",
+    "Classes are always titled by their modality (classDisplay() keeps the session title); the publicNaming switch was retired in 0039 and a stored value is ignored.",
     "breathworkOwnClass: visibleModalities() hides the respiracion modality row from W-03, W-07, W-08 and the C-03 filter while it is off; W-08 then prints the “lives inside the guided classes” sentence.",
     "mapProvider: MapSlot reads it when no prop is passed — none keeps the site offline-safe.",
     "Publishing a legal version flips legal_documents.status and stamps published_at; A-06 shows the newest published version per kind. Each flip writes audit_log legal.publish / legal.unpublish."
@@ -1733,8 +1732,6 @@
     "Maps (OSM / Google embed)"
    ],
    "states": [
-    "Disciplines (default)",
-    "Movements",
     "Respiración hidden (default) / shown",
     "Map none / osm / google",
     "Legal: n of 7 published",
@@ -3235,7 +3232,7 @@
     "BookingSummary",
     "MoveAction (primary)",
     "CancelAction (destructive outline)",
-    "ReplacementList (same day, same movement)",
+    "ReplacementList (same day, same class)",
     "KeepBooking (dismiss)"
    ],
    "data": [
@@ -8131,7 +8128,7 @@
    ],
    "logic": [
     "Cards are generated from brand.classOrder; nothing is written twice.",
-    "Each card links to /site/classes/:slug and carries its movement colour."
+    "Each card links to /site/classes/:slug and carries its class tone."
    ],
    "states": [
     "default"
@@ -8242,8 +8239,8 @@
     "en": "Site · Modalities"
    },
    "purpose": {
-    "es": "Las prácticas del horario agrupadas por movimiento, con intensidad, duración y sala caliente — y el enlace al ensayo de la clase a la que pertenece cada una.",
-    "en": "The scheduled practices grouped by movement, with intensity, duration and heated room — each cross-linked to the class essay it belongs to."
+    "es": "Las prácticas del horario agrupadas por clase (hot yoga, barre, pilates, meditación, respiración), con intensidad, duración y sala caliente — y el enlace al ensayo de la clase a la que pertenece cada una.",
+    "en": "The scheduled practices grouped by class (hot yoga, barre, pilates, meditation, breathwork), with intensity, duration and heated room — each cross-linked to the class essay it belongs to."
    },
    "layout": [
     "PageHead",
@@ -8254,7 +8251,7 @@
     "modalities"
    ],
    "logic": [
-    "Groups by movement in the order Enraíza, Fluye, Arde, Libera.",
+    "Grouped by class in brand.classOrder: the heading chip is the class name in its tone, the rows are the modalities in brand.classes[slug].modalitySlugs (hidden ones filtered by visibleModalities()).",
     "Each modality links to /site/classes/:slug through brand.classes[*].modalitySlugs."
    ],
    "states": [

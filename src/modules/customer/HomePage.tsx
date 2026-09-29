@@ -60,7 +60,7 @@ export function CustomerHomePage() {
       <section className="stack-sm">
         <div className="eyebrow">{t('customer.home.next')}</div>
         {next
-          ? <ClassCard variant="next" title={next.session.title} teacher={next.teacher?.display_name ?? ''} room="Sala principal" startsAt={next.session.starts_at} endsAt={next.session.ends_at} movement={next.modality?.movement ?? 'fluye'} booked={next.session.booked_count} capacity={next.session.capacity} cta={{ label: t('customer.home.view'), onClick: () => nav(`/app/class/${next.session.id}`) }} />
+          ? <ClassCard variant="next" title={next.session.title} teacher={next.teacher?.display_name ?? ''} room="Sala principal" startsAt={next.session.starts_at} endsAt={next.session.ends_at} tone={next.modality?.tone ?? 'river'} booked={next.session.booked_count} capacity={next.session.capacity} cta={{ label: t('customer.home.view'), onClick: () => nav(`/app/class/${next.session.id}`) }} />
           : <Card className="row-between wrap"><span className="muted small">{t('customer.home.next.empty')}</span><Link to="/app/schedule"><Button size="sm">{t('customer.home.next.cta')}</Button></Link></Card>}
       </section>
     ),
@@ -75,7 +75,7 @@ export function CustomerHomePage() {
         <Card padding="sm">
           {today.length === 0 && <p className="muted small" style={{ padding: 'var(--sp-md)' }}>{t('customer.home.today.empty')}</p>}
           {today.map(({ session: s, modality: m, teacher: te }) => (
-            <ClassRow key={s.id} title={s.title} teacher={te?.display_name ?? ''} startsAt={s.starts_at} durationMin={m?.duration_min ?? 60} movement={m?.movement ?? 'fluye'} booked={s.booked_count} capacity={s.capacity} booked_by_me={activeBookingIds.has(s.id)} onClick={() => (activeBookingIds.has(s.id) ? nav(`/app/class/${s.id}`) : s.booked_count >= s.capacity ? nav(`/app/waitlist/${s.id}`) : book(s.id))} />
+            <ClassRow key={s.id} title={s.title} teacher={te?.display_name ?? ''} startsAt={s.starts_at} durationMin={m?.duration_min ?? 60} tone={m?.tone ?? 'river'} booked={s.booked_count} capacity={s.capacity} booked_by_me={activeBookingIds.has(s.id)} onClick={() => (activeBookingIds.has(s.id) ? nav(`/app/class/${s.id}`) : s.booked_count >= s.capacity ? nav(`/app/waitlist/${s.id}`) : book(s.id))} />
           ))}
         </Card>
       </section>

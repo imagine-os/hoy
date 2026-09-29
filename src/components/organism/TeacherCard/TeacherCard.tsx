@@ -2,12 +2,12 @@ import { useI18n } from '../../../i18n/I18nProvider';
 import { Card } from '../../molecule/Card/Card';
 import { Avatar } from '../../atom/Avatar/Avatar';
 import { Chip } from '../../atom/Chip/Chip';
-import type { Movement } from '../../../design/tokens';
+import type { Tone } from '../../../design/tokens';
 import './TeacherCard.css';
 
 export interface TeacherCardProps {
   name: string; bio: { es: string; en: string }; photo?: string | null; rating?: number | null;
-  specialties: { label: string; movement: Movement }[];
+  specialties: { label: string; tone: Tone }[];
   onClick?: () => void;
 }
 
@@ -23,7 +23,7 @@ export function TeacherCard({ name, bio, photo, rating, specialties, onClick }: 
         </div>
       </div>
       <p className="small teachercard-bio">{bi(bio)}</p>
-      <div className="row wrap">{specialties.map((s) => <Chip key={s.label} movement={s.movement} dot>{s.label}</Chip>)}</div>
+      <div className="row wrap">{specialties.map((s) => <Chip key={s.label} tone={s.tone} dot>{s.label}</Chip>)}</div>
     </Card>
   );
 }

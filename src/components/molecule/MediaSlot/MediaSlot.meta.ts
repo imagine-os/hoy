@@ -5,8 +5,8 @@ import { MediaSlot } from './MediaSlot';
 export default defineMeta({
   tier: 'molecule', name: 'MediaSlot',
   description: {
-    es: 'El único hueco de medios del sitio: reserva el espacio de una foto, un video o una ilustración con su proporción y su dirección de arte. Vacío se ve intencional (tinte de movimiento, grano, chip "arte pendiente"); con `src` —o con un `slotKey` cuya fila de `media_assets` está en `ready`— renderiza la imagen o el video real.',
-    en: 'The site’s single media slot: books the space for a photo, video or illustration with its ratio and art direction. Empty it looks intentional (movement tint, grain, an “art pending” chip); with `src` — or with a `slotKey` whose `media_assets` row is `ready` — it renders the real image or video.',
+    es: 'El único hueco de medios del sitio: reserva el espacio de una foto, un video o una ilustración con su proporción y su dirección de arte. Vacío se ve intencional (tinte del tono de la clase, grano, chip "arte pendiente"); con `src` —o con un `slotKey` cuya fila de `media_assets` está en `ready`— renderiza la imagen o el video real.',
+    en: 'The site’s single media slot: books the space for a photo, video or illustration with its ratio and art direction. Empty it looks intentional (class-tone tint, grain, an “art pending” chip); with `src` — or with a `slotKey` whose `media_assets` row is `ready` — it renders the real image or video.',
   },
   props: [
     { name: 'fallbackVideo', type: 'string', description: { es: 'Bucle del arte de muestra; las fotos reales y el CMS tienen prioridad.', en: 'Living fallback loop; explicit photos and CMS content take priority.' } },
@@ -16,8 +16,8 @@ export default defineMeta({
     { name: 'kind', type: "'photo' | 'video' | 'illustration'", default: 'photo', description: { es: 'Qué va aquí; decide el glifo y si `src` se monta como <img> o <video>.', en: 'What belongs here; picks the glyph and whether `src` mounts as <img> or <video>.' } },
     { name: 'label', type: '{ es, en } | string', required: true, description: { es: 'Nombre del hueco; también es el alt de la imagen.', en: 'Name of the slot; doubles as the image alt text.' } },
     { name: 'brief', type: 'string', description: { es: 'Dirección de arte en una línea: siempre el atributo title, visible dentro del hueco en modo dev.', en: 'One-line art direction: always the title attribute, printed inside the slot in dev mode.' } },
-    { name: 'movement', type: "Movement", description: { es: 'Tiñe el estado vacío con el color del movimiento.', en: 'Tints the empty state with the movement colour.' } },
-    { name: 'slotKey', type: 'string', description: { es: 'Llave de la biblioteca de medios (M-02d, `media_assets.slot_key`): mientras la fila está `pending` el hueco presta su encargo, etiqueta y movimiento; cuando el dueño pega la URL y la pasa a `ready`, la foto o el video reales aparecen sin deploy.', en: 'Key into the media library (M-02d, `media_assets.slot_key`): while the row is `pending` the slot borrows its brief, label and movement; when the owner pastes the URL and flips it to `ready` the real photo or video appears with no deploy.' } },
+    { name: 'tone', type: "Tone", description: { es: 'Tiñe el estado vacío con el tono de la clase (D-01 classTones).', en: 'Tints the empty state with the class tone (D-01 classTones).' } },
+    { name: 'slotKey', type: 'string', description: { es: 'Llave de la biblioteca de medios (M-02d, `media_assets.slot_key`): mientras la fila está `pending` el hueco presta su encargo, etiqueta y tono; cuando el dueño pega la URL y la pasa a `ready`, la foto o el video reales aparecen sin deploy.', en: 'Key into the media library (M-02d, `media_assets.slot_key`): while the row is `pending` the slot borrows its brief, label and tone; when the owner pastes the URL and flips it to `ready` the real photo or video appears with no deploy.' } },
     { name: 'src', type: 'string', description: { es: 'Cuando llega el archivo real: renderiza <img> o <video> en vez del placeholder.', en: 'When the real asset lands: renders <img> or <video> instead of the placeholder.' } },
     { name: 'poster', type: 'string', description: { es: 'Fotograma de portada para un `src` de video.', en: 'Poster frame for a video `src`.' } },
     { name: 'caption', type: '{ es, en } | string', description: { es: 'Pie de foto bajo el hueco.', en: 'Caption under the slot.' } },
@@ -27,11 +27,11 @@ export default defineMeta({
   usages: [
     { title: { es: 'Foto viva', en: 'Living photo' }, render: () => h(MediaSlot, { ratio: '4:5', fallbackSrc: './images/sanctuary/hot-yoga.webp', fallbackVideo: './video/living-hot-yoga.mp4', label: { es: 'Yoga', en: 'Yoga' } }) },
     { title: { es: 'Arte de concepto', en: 'Concept artwork' }, render: () => h(MediaSlot, { ratio: '4:5', fallbackSrc: './images/sanctuary/hot-yoga.webp', label: { es: 'Práctica de yoga', en: 'Yoga practice' } }) },
-    { title: { es: 'Vacío · foto 4:3 con movimiento', en: 'Empty · 4:3 photo with movement' }, render: () => h(MediaSlot, { ratio: '4:3', kind: 'photo', movement: 'arde', label: { es: 'Interior del estudio', en: 'Studio interior' }, brief: 'hot room at golden hour, steam on the glass' }) },
+    { title: { es: 'Vacío · foto 4:3 con tono', en: 'Empty · 4:3 photo with a tone' }, render: () => h(MediaSlot, { ratio: '4:3', kind: 'photo', tone: 'clay', label: { es: 'Interior del estudio', en: 'Studio interior' }, brief: 'hot room at golden hour, steam on the glass' }) },
     { title: { es: 'Vacío · video 21:9', en: 'Empty · 21:9 video' }, render: () => h(MediaSlot, { ratio: '21:9', kind: 'video', label: { es: 'Video de portada', en: 'Hero video' }, brief: 'studio at golden hour, slow dolly' }) },
     { title: { es: 'Con archivo real', en: 'With a real asset' }, render: () => h(MediaSlot, { ratio: '16:9', kind: 'photo', src: './brand/p8-2.png', label: { es: 'Tablero de marca', en: 'Brand board' } }) },
     { title: { es: 'Desde la biblioteca de medios', en: 'From the media library' }, render: () => h(MediaSlot, { ratio: '21:9', kind: 'video', slotKey: 'site.hero', label: { es: 'Web · hero principal', en: 'Website · main hero' } }) },
-    { title: { es: 'Con pie de foto', en: 'With a caption' }, render: () => h(MediaSlot, { ratio: '1:1', kind: 'illustration', movement: 'libera', label: { es: 'Ilustración de respiración', en: 'Breath illustration' }, caption: { es: 'Pendiente de ilustrador.', en: 'Pending an illustrator.' } }) },
+    { title: { es: 'Con pie de foto', en: 'With a caption' }, render: () => h(MediaSlot, { ratio: '1:1', kind: 'illustration', tone: 'plum', label: { es: 'Ilustración de respiración', en: 'Breath illustration' }, caption: { es: 'Pendiente de ilustrador.', en: 'Pending an illustrator.' } }) },
   ],
   a11y: [
     { es: 'Vacío el hueco es role="img" con aria-label = label, así un lector de pantalla anuncia qué falta en vez de leer un div vacío.', en: 'Empty, the slot is role="img" with aria-label = label, so a screen reader announces what is missing instead of reading an empty div.' },

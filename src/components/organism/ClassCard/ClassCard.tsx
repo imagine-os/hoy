@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { formatDate, formatTime, MS } from '../../../i18n/format';
-import type { Movement } from '../../../design/tokens';
+import type { Tone } from '../../../design/tokens';
 import { Card } from '../../molecule/Card/Card';
 import { Chip } from '../../atom/Chip/Chip';
 import { Button } from '../../atom/Button/Button';
@@ -9,7 +9,7 @@ import { CapacityMeter } from '../../molecule/CapacityMeter/CapacityMeter';
 import './ClassCard.css';
 
 export interface ClassCardProps {
-  title: string; teacher: string; room?: string; startsAt: string; endsAt: string; movement: Movement;
+  title: string; teacher: string; room?: string; startsAt: string; endsAt: string; tone: Tone;
   booked: number; capacity: number; level?: string;
   variant?: 'next' | 'default';
   cta?: { label: string; onClick: () => void; variant?: 'primary' | 'secondary' };
@@ -24,7 +24,7 @@ function useCountdown(iso: string) {
 }
 
 /** Rich class card; `variant="next"` is the NextClassCard with countdown (under 24h) or weekday. */
-export function ClassCard({ title, teacher, room, startsAt, endsAt, movement, booked, capacity, level, variant = 'default', cta, onClick }: ClassCardProps) {
+export function ClassCard({ title, teacher, room, startsAt, endsAt, tone, booked, capacity, level, variant = 'default', cta, onClick }: ClassCardProps) {
   const { lang } = useI18n();
   const cd = useCountdown(startsAt);
   const isNext = variant === 'next';
@@ -34,7 +34,7 @@ export function ClassCard({ title, teacher, room, startsAt, endsAt, movement, bo
   return (
     <Card tone={isNext ? 'primary' : 'surface'} interactive={!!onClick} onClick={onClick} className={`classcard ${isNext ? 'is-next' : ''}`} padding="md">
       <div className="row-between">
-        <Chip movement={movement} dot>{title}</Chip>
+        <Chip tone={tone} dot>{title}</Chip>
         {isNext && <span className="classcard-when">{when}</span>}
       </div>
       <div className="classcard-main">

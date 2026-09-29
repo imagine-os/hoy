@@ -125,7 +125,7 @@ export function CheckinPage() {
               return (
                 <button key={s.id} type="button" role="tab" aria-selected={s.id === selectedId} className={`checkin-strip-item is-${ph} ${s.id === selectedId ? 'is-selected' : ''}`} onClick={() => setParams({ session: s.id })}>
                   <div className="row-between"><strong className="mono">{formatTime(s.starts_at, lang)}</strong><Badge tone={ph === 'now' ? 'success' : ph === 'past' ? 'neutral' : 'primary'}>{t(`staff.checkin.phase.${ph}`)}</Badge></div>
-                  <span className="row"><span className={`classrow-dot mv-${m?.movement ?? 'fluye'}`} aria-hidden /><span className="small">{s.title}</span></span>
+                  <span className="row"><span className={`classrow-dot mv-${m?.tone ?? 'river'}`} aria-hidden /><span className="small">{s.title}</span></span>
                   <span className="xs muted">{te?.display_name} · {s.booked_count}/{s.capacity}</span>
                 </button>
               );

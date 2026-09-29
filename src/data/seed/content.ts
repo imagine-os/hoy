@@ -40,7 +40,7 @@ export const contentArticles: ContentArticleRow[] = [
   { ...base('art_about', 120), slug: 'about', section: 'about', icon: 'info', required: false, sort: 6, published: true, publish_at: null,
     title: { es: 'Sobre HOY', en: 'About HOY' },
     summary: { es: 'Un club humano. La vida es hoy.', en: 'A human club. Life is today.' },
-    body_md: { es: 'HOY es un club de bienestar: cuatro movimientos —Enraíza, Fluye, Arde, Libera— y un espacio para practicar sin prisa.\n\nCada clase es para todos los niveles y el profesor adapta la práctica. Lo que cuidamos es el ritmo, no el rendimiento.', en: 'HOY is a wellness club: four movements —Enraíza, Fluye, Arde, Libera— and a space to practise without hurry.\n\nEvery class is all-levels and the teacher adapts the practice. We look after rhythm, not performance.' },
+    body_md: { es: 'HOY es un santuario urbano: hot yoga, barre, pilates, meditación y respiración bajo un mismo techo, y un espacio para practicar sin prisa.\n\nCada clase es para todos los niveles y el profesor adapta la práctica. Lo que cuidamos es el ritmo, no el rendimiento.', en: 'HOY is an urban sanctuary: hot yoga, barre, pilates, meditation and breathwork under one roof, and a space to practise without hurry.\n\nEvery class is all-levels and the teacher adapts the practice. We look after rhythm, not performance.' },
     checklist: null, video_label: null },
 ];
 

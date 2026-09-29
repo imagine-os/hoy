@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { formatTime } from '../../../i18n/format';
-import type { Movement } from '../../../design/tokens';
+import type { Tone } from '../../../design/tokens';
 import { CapacityMeter } from '../CapacityMeter/CapacityMeter';
 import { Badge } from '../../atom/Badge/Badge';
 import './ClassRow.css';
@@ -12,7 +12,7 @@ export interface ClassRowProps {
   teacher: string;
   startsAt: string;
   durationMin: number;
-  movement: Movement;
+  tone: Tone;
   booked: number;
   capacity: number;
   status?: 'scheduled' | 'cancelled' | 'completed';
@@ -21,15 +21,15 @@ export interface ClassRowProps {
 }
 
 /** Dense one-line class entry for lists (today, schedule day, check-in). */
-export function ClassRow({ thumbnail, title, teacher, startsAt, durationMin, movement, booked, capacity, status = 'scheduled', booked_by_me, onClick }: ClassRowProps) {
+export function ClassRow({ thumbnail, title, teacher, startsAt, durationMin, tone, booked, capacity, status = 'scheduled', booked_by_me, onClick }: ClassRowProps) {
   const { lang, t } = useI18n();
   const Tag = onClick ? 'button' : 'div';
   // No spots left: the row states it as a pill and the capacity meter gives way to it (nothing left to meter).
   const full = status === 'scheduled' && booked >= capacity;
   return (
-    <Tag data-movement={movement} className={`classrow classrow-${status} ${full ? 'is-full' : ''} ${onClick ? 'is-clickable' : ''}`} onClick={onClick} type={onClick ? 'button' : undefined}>
+    <Tag data-tone={tone} className={`classrow classrow-${status} ${full ? 'is-full' : ''} ${onClick ? 'is-clickable' : ''}`} onClick={onClick} type={onClick ? 'button' : undefined}>
       {thumbnail && <span className="classrow-thumbnail">{thumbnail}</span>}
-      <span className={`classrow-dot mv-${movement}`} aria-hidden />
+      <span className={`classrow-dot tone-${tone}`} aria-hidden />
       <div className="classrow-time"><strong>{formatTime(startsAt, lang)}</strong><span className="xs muted">{t('core.common.min', { n: durationMin })}</span></div>
       <div className="grow">
         <div className="row"><span className="classrow-title">{title}</span>{booked_by_me && <Badge tone="primary">{t('core.status.booked')}</Badge>}{status === 'cancelled' && <Badge tone="danger">{t('core.status.cancelled')}</Badge>}</div>

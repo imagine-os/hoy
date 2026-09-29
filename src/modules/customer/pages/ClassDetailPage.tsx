@@ -112,7 +112,7 @@ export function ClassDetailPage() {
     'TeacherCard → TeacherProfile': () => te ? (
       <section className="stack-sm">
         <h2 className="cust-h2">{t('customer.class.teacher')}</h2>
-        <TeacherCard name={te.display_name} bio={te.bio} photo={te.photo_url} rating={te.rating_avg} specialties={m ? [{ label: bi({ es: m.name_es, en: m.name_en }), movement: m.movement }] : []} onClick={() => nav(`/app/teachers/${te.id}`)} />
+        <TeacherCard name={te.display_name} bio={te.bio} photo={te.photo_url} rating={te.rating_avg} specialties={m ? [{ label: bi({ es: m.name_es, en: m.name_en }), tone: m.tone }] : []} onClick={() => nav(`/app/teachers/${te.id}`)} />
       </section>
     ) : null,
     'PrepList → Club rules': () => (

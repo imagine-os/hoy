@@ -205,3 +205,10 @@ Fields: **Date**, **Status** (accepted · superseded by D-NNNN), **Context**, **
 **Resumen (ES).** Este archivo es la lista corta y citable de las decisiones de ingeniería, una por
 bloque, solo se añade: una decisión que deja de ser cierta se reemplaza con un bloque nuevo, nunca
 borrando el viejo. Las decisiones que todavía tiene que tomar el estudio están en `/#/manual/decisions`.
+
+### D-0013 — The four movements are retired; classes carry a neutral colour tone
+
+- **Date** 2026-09-29 · **Status** accepted · **Changelog** `docs/changelog/0039-retire-movements.md` · supersedes the "internal label" position recorded in ROADMAP §E 22 / changelog 0032, and the D-01 `movements` token set from 0006
+- **Context.** The owner found Enraíza / Fluye / Arde / Libera in the club rules ("Sobre HOY") and in the booking flow and wants them gone everywhere. The source documents transcribed in `src/tenant/brand.ts` and in the manual never named them: the vocabulary was an invention of the canvas that leaked into customer copy.
+- **Decision.** No movements, public or internal, and no data keys: D-01 `movements` becomes `classTones` with seven hue-named tones (moss, river, clay, sun, sage, slate, plum, CSS `--tone-*`), `modalities.movement` and `media_assets.movement` become `tone` (one tone per modality, chosen in M-02), the `intentions` table is dropped and the M-08f `publicNaming` setting is removed. Classes are always named by modality, and schedule filters and legends (C-02, C-02b, W-04 with `?modality=<slug>`) are the visible modalities.
+- **Alternative rejected.** Keeping the movements as internal-only labels — 0032 tried it and they still leaked into customer copy. Naming the tones after elements or feelings — that would re-create the concept under new names.

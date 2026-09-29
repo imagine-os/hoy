@@ -16,11 +16,11 @@ prioritised list of the next moves — so the owner can pick, not guess.
 | Code | Route | What it is now |
 | --- | --- | --- |
 | W-01 | `/#/site` | Landing page rebuilt around the manifesto: the cover line over a 21:9 video slot, the five classes, today's classes, the five-family value model with commercial roles, a slate-blue philosophy panel with pale-yellow headings, teachers, real reviews from the `reviews` table, and a "first step" band that prints the live trial price. Eight sections since 0034 (the "¿Cómo quieres sentirte hoy?" movements picker was removed), reorderable at `/#/dev/layout/W-01`. |
-| W-02 | `/#/site/about` | The full "Sobre HOY" (five paragraphs), the four values as movement chips, a 4:3 founders/interior photo slot, "Nuestra filosofía" on the dark brand panel, and the brand board. |
-| W-07 | `/#/site/classes` | **New.** The "Nuestras clases" introduction plus one rich alternating block per class, each with a 16:9 photo slot, movement chip and live duration from `modalities`. |
-| W-08 | `/#/site/classes/:slug` | **New.** One class in full: the essay, the modality facts (duration, intensity, heated, movement), a derived "what to bring" list, links to the other classes and a CTA into the filtered schedule. |
+| W-02 | `/#/site/about` | The full "Sobre HOY" (five paragraphs), the four values as chips, a 4:3 founders/interior photo slot, "Nuestra filosofía" on the dark brand panel, and the brand board. |
+| W-07 | `/#/site/classes` | **New.** The "Nuestras clases" introduction plus one rich alternating block per class, each with a 16:9 photo slot, modality-name chip and live duration from `modalities`. |
+| W-08 | `/#/site/classes/:slug` | **New.** One class in full: the essay, the modality facts (duration, intensity, heated), a derived "what to bring" list, links to the other classes and a CTA into the filtered schedule. |
 | W-03 | `/#/site/modalities` | Every modality now cross-links to the class essay it belongs to (`brand.classes[*].modalitySlugs` is the join). |
-| W-04 | `/#/site/schedule` | The movement legend is now a filter (`?movement=`), which is what W-08's schedule CTA links to. |
+| W-04 | `/#/site/schedule` | The modality legend is now a filter (`?modality=<slug>`), which is what W-08's schedule CTA links to. |
 | W-05 | `/#/site/teachers` | Each teacher gets a real 4:3 portrait slot (their `photo_url` when it exists, a branded art-pending frame when it does not). |
 | P-01 | `/#/site/plans` | Each family shows its commercial role, subtitle and "Por qué existe" paragraph; the Annual Plan carries its monthly-equivalent footnote; a dark band prints the four discipline numbers (15 · 4 · 1 · 5) and the investor paragraph; an "¿Incluye IVA?" card reads the live M-08 tax policy. |
 | W-06 | `/#/site/contact` | `MapSlot` replaces the "mapa pendiente" box, every placeholder contact detail is labelled as pending, and an "escríbenos" form opens WhatsApp with the message prefilled (no backend). |
@@ -74,7 +74,7 @@ twice (the W-07 card and the W-08 hero), and the eight portraits should come fro
    already reads it. A live line in the header or hero ("Hot Vinyasa empieza en 42 min · 3 cupos")
    turns the schedule from information into urgency, and it is a few hours of work.
 5. **Class-finder quiz (P1).** Three questions — how do you want to feel, how much time, heat or no
-   heat — mapped onto the four movements and the five classes, ending on a filtered schedule. It
+   heat — mapped onto the five classes, ending on a filtered schedule. It
    answers the one question the copy admits people have ("no necesitas elegir la correcta").
 6. **Membership calculator (P1).** A slider for visits per month that compares the Monthly Plan, the
    10-class pack and single passes using `src/tenant/pricing.ts`, and names the break-even. It makes
@@ -83,7 +83,7 @@ twice (the W-07 card and the W-08 hero), and the eight portraits should come fro
    slow reveal per section, a parallax drift on the hero media, the breathing rings from the old hero
    reused as a scroll indicator. All through `--dur-*` / `--ease-*` tokens, all behind
    `prefers-reduced-motion`.
-8. **Accessibility pass (P1).** Contrast audit of the movement tints in both themes (two dark-mode
+8. **Accessibility pass (P1).** Contrast audit of the class tones in both themes (two dark-mode
    heading colours were already corrected in this pass), visible focus order through the new nav and
    the classes grid, a skip link, and a keyboard run through the schedule drawer and the contact form.
 9. **Journal / blog from `content_articles` (P2).** The table and its bilingual markdown bodies

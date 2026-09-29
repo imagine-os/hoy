@@ -8,7 +8,7 @@ import { EmptyState } from '../../../components/molecule/EmptyState/EmptyState';
 import { useAllSessionsJoined, priceOf } from '../hooks';
 import { DECLINE_REASONS } from '../payments';
 import { policy } from '../policy';
-import { PageHead, movementOf, roomName, teacherName } from '../ui';
+import { PageHead, toneOf, roomName, teacherName } from '../ui';
 import { DeclinedBlock, EmptyHomeBlock, StudioCancelledBlock, type DeclinedState } from './blocks';
 import { MS } from '../../../i18n/format';
 
@@ -34,7 +34,7 @@ export function DeclinedDemoPage() {
       <PageHead back="/app" title={t('customer.declined.title')} />
       <Notice tone="info">{t('customer.state.demo', { code: 'E-02' })}</Notice>
       <div className="stack">
-        {next && <ClassCard title={next.session.title} teacher={teacherName(next)} room={roomName(next)} startsAt={next.session.starts_at} endsAt={next.session.ends_at} movement={movementOf(next)} booked={next.session.booked_count} capacity={next.session.capacity} />}
+        {next && <ClassCard title={next.session.title} teacher={teacherName(next)} room={roomName(next)} startsAt={next.session.starts_at} endsAt={next.session.ends_at} tone={toneOf(next)} booked={next.session.booked_count} capacity={next.session.capacity} />}
         <DeclinedBlock state={state} amount={amount}
           onRetry={(m) => (next ? nav(`/app/checkout/${next.session.id}?pass=single`) : setState((s) => ({ ...s, method: m, attempts: s.attempts + 1 })))}
           onRelease={() => nav('/app/schedule')} />

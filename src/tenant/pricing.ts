@@ -169,7 +169,7 @@ export const FAMILY_RATIONALE: Record<PlanFamily, FamilyRationale> = {
 export const DISCIPLINE = {
   numbers: [
     { value: tenant.studio.mats, label: { es: 'tapetes por sesión', en: 'mats per session' } },
-    { value: tenant.studio.classesPerDay, label: { es: 'clases al día (los 4 movimientos)', en: 'classes a day (the 4 movements)' } },
+    { value: tenant.studio.classesPerDay, label: { es: 'clases al día', en: 'classes a day' } },
     { value: tenant.studio.perPersonPerDay, label: { es: 'clase diaria por persona en cualquier plan', en: 'class per person per day on any plan' } },
     { value: (Object.keys(FAMILY_LABEL) as PlanFamily[]).length, label: { es: 'líneas de ingreso', en: 'revenue lines' } },
   ],

@@ -61,8 +61,8 @@
 @media (max-width: 800px) { .settings { grid-template-columns: 1fr; } .settings-rail { position: static; flex-direction: row; flex-wrap: wrap; } .settings-day { grid-template-columns: var(--sp-3xl) minmax(0, 1fr) auto minmax(0, 1fr); } .settings-day > :nth-child(2) { grid-column: 2 / -1; } .settings-day > :nth-child(3) { grid-column: 2; } }
 
 /* 0012 · M-09a/b payouts, M-02a–d content sub-pages */
-.adm-notice { border-radius: var(--r-md); padding: var(--sp-md) var(--sp-lg); background: var(--mv-enraiza-bg); border: 1px solid var(--color-card-border); }
-.adm-notice-bad { background: var(--mv-arde-bg); }
+.adm-notice { border-radius: var(--r-md); padding: var(--sp-md) var(--sp-lg); background: var(--tone-moss-bg); border: 1px solid var(--color-card-border); }
+.adm-notice-bad { background: var(--tone-clay-bg); }
 .adm-lines { display: flex; flex-direction: column; }
 .adm-line { display: flex; align-items: baseline; gap: var(--sp-md); padding: var(--sp-sm) 0; border-top: 1px solid var(--color-card-border); min-width: 0; }
 .adm-line:first-child { border-top: 0; }
@@ -82,10 +82,8 @@
 .adm-faq-q { display: flex; flex-direction: column; gap: var(--sp-2xs); text-align: left; background: none; border: 0; padding: 0; cursor: pointer; color: inherit; font: inherit; min-width: 0; }
 .adm-faq-q:hover .small { text-decoration: underline; }
 .adm-faq-q span { overflow-wrap: anywhere; }
-.adm-mv-enraiza { background: var(--tex-ph), linear-gradient(var(--mv-enraiza-bg), var(--mv-enraiza-bg)); }
-.adm-mv-fluye { background: var(--tex-ph), linear-gradient(var(--mv-fluye-bg), var(--mv-fluye-bg)); }
-.adm-mv-arde { background: var(--tex-ph), linear-gradient(var(--mv-arde-bg), var(--mv-arde-bg)); }
-.adm-mv-libera { background: var(--tex-ph), linear-gradient(var(--mv-libera-bg), var(--mv-libera-bg)); }
+/* the .adm-tone-<tone> hook (tokens.css) sets --t-bg on the frame */
+.adm-media-frame[class*="adm-tone-"] { background: var(--tex-ph), linear-gradient(var(--t-bg), var(--t-bg)); }
 
 /* 0018 — M-08c rate card rows, M-08f map preview, M-10 cards */
 .settings-rate { display: grid; grid-template-columns: 1fr 8.75rem 6.875rem; gap: var(--sp-sm); align-items: center; }
