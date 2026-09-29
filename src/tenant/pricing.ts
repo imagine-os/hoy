@@ -14,11 +14,13 @@ export type PlanFamily = 'bienvenida' | 'membresia' | 'pausas' | 'regalos' | 'es
 
 /** Families that are announced but not sold yet: no `pricing` item may use them. */
 export const COMING_SOON_FAMILIES: readonly PlanFamily[] = ['corporativo'];
+/** The families a priced item (and so a `plans` row) can belong to. */
+export type SellableFamily = Exclude<PlanFamily, 'corporativo'>;
 export const isComingSoon = (family: PlanFamily) => COMING_SOON_FAMILIES.includes(family);
 
 export interface PriceItem {
   id: string;
-  family: PlanFamily;
+  family: SellableFamily;
   name: { es: string; en: string };
   description: { es: string; en: string };
   /** COP; null when the price reads "included". */

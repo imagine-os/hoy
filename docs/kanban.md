@@ -8,6 +8,8 @@ _Updated every turn. Codes reference `src/specs/canvasSpecs.ts` and the module `
 - **0027 follow-up** · **between-gigs consumer** (Justin's company OS): hoy as one gig — lens `between-gigs`, one surface per experience with its `pageCodes`, plus the tools row Consumer guide: aluzina's `docs/tenant/hub-map-consumer.md` (imagine-os/aluzina); use `pages[].group` (0028) for the sub-mats.
 
 ### Product
+- **0032 follow-up** · **Experiencias Corporativas on the site**: `corporativo` exists in `pricing.ts` as a coming-soon family with `CORPORATE_FORMATS` (no prices); P-01 and W-01 do not show it yet — a "Próximamente · Cuéntanos de tu equipo" card to WhatsApp (never a checkout), marked not wired in dev mode. `ClassicHomePage` keeps its own five-family list
+- **0032 follow-up** · **Manual guidance media**: short photos and videos for the manual (artwork list item 11 in chapter 19), and a screenshot pass for the rewritten chapters (QA)
 - **0030 follow-up** · **Icons, second pass**: MediaSlot placeholder glyphs (◎ ▶ ✎), website (W-*) icons, the ♨ heated-room mark and the ✓ / · booleans in DataTable onto the `Icon` set; a full screenshot pass for the desktop pages whose sidebars changed
 - **0030 follow-up** · **Legal text**: the privacy document lists "intention of the day" among studio activity; drop it in the next legal version (A-06, counsel review)
 - **0027 follow-up** · **Hub map, second pass**: tablet shots (`device: tablet` has no capture key yet) · a `--full` pass for the long docs / manual sheets · a JSON Schema file next to the TS contract so non-TS hosts can validate · push-style updates (hosts poll `product.version` today)
@@ -56,6 +58,7 @@ _Updated every turn. Codes reference `src/specs/canvasSpecs.ts` and the module `
 - **ROADMAP §G — when nothing else is queued** (0018): SEO/OG + prerender · “next class in N minutes” widget · membership calculator · then the rest of `docs/website-vision.md`
 
 ### Decisions
+- **0032 follow-up** · **Three new owner decisions** (ROADMAP §E 37–39): is the Clase de Prueba free ("sin costo de entrada" vs 39,000 COP) · scope, prices and capacity rule of Experiencias Corporativas · drop "intención del día" from the next privacy-policy version
 - **Open questions from Jas's review (0014), with Justin to forward** — recorded as ROADMAP §E 31–34:
   - **Sergio**: are teachers paid fortnightly or monthly? — **both are built since 0018**: the M-08c cadence switch drives M-09a (one or two runs per month), S-03 and the Finance range; Sergio picks
   - **Sergio**: does the Coordinator see the monthly total-revenue KPI in the admin panel?
@@ -68,6 +71,13 @@ _Updated every turn. Codes reference `src/specs/canvasSpecs.ts` and the module `
 ## Doing
 
 ## Done
+
+### 2026-09-29 · Operations manual content (0032 · v__VERSION__)
+- **K-03 plain language**: all 28 chapters rewritten ES-first with an EN mirror (56 files) — tú, short sentences, qué hacer → qué decir → qué revisar; screen codes moved into 47 `EN HOYOS` / `IN HOYOS` boxes per language; every live block and figure kept
+- **Style guide**: `docs/ops-manual/STYLE.md` (the register for hand and prompted edits)
+- **Directives in place** (0031 contract): `{{audience}}` + a "Para:" row per chapter, 32 editable sections, 18 studio-rule cards (13 keys appended to `studioPolicies.ts`), 8 role passages, 6 source embeds, 8 training blocks (marketing and developer included)
+- **Reconciled**: six revenue lines (`corporativo` coming soon in `pricing.ts`, no prices), 16 mats, disciplines public / movements internal, Pausas Ilimitadas stacks, guest included, brand manual (manifesto, 4 keywords, 5 traits, logo, palette, type) in 19–20, A-05 gone
+- **K-04 decisions**: closed 2, narrowed 6, added 3 (27 → 28); ROADMAP §E 1 and 22 closed with source and date, 37–39 added
 
 ### 2026-09-29 · Icons + the daily intention retired (0030 · v0.12.0)
 - **Icon system** (D-0008): `lucide-react` behind `Icon` (29 → 135 names in five groups), D-01 `--icon-*` tokens, `renderIcon()` for the Button / ListRow / Card / EmptyState / Notice / NavBar slots, `nav.icon: IconName` (Opus 5.5 build, Fable 5.1 direction)

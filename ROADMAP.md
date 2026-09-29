@@ -7,8 +7,15 @@ dónde estamos, qué sigue y en qué orden (con dependencias explícitas y lo qu
 paralelo), qué significa "terminado" en cada fase, cómo trabajar en el repo y qué debe decidir el
 owner del estudio. Está escrito para que otra cuenta de Claude (o una persona) lo retome sin contexto.
 
-## A. Where we are (v0.12.0, 2026-09-29)
+## A. Where we are (v__VERSION__, 2026-09-29)
 
+- **v__VERSION__ — Operations manual content** (`docs/changelog/0032-manual-content.md`, prompt `docs/prompts/0032-manual-content.md`;
+  Justin: "The operations manual is too techinical right now … identify things like policies that are ready for the business
+  owner or operations manager to edit"): all 28 chapters rewritten in plain language in ES and EN against
+  `docs/ops-manual/STYLE.md`; screen codes moved into `EN HOYOS` / `IN HOYOS` boxes; the 0031 directives in place (audience,
+  editable sections, studio rules, role passages, source documents, training); six revenue lines (`corporativo` in
+  `pricing.ts`, coming soon, no prices); decisions closed / narrowed / added in §E (1, 22 closed; 23, 24, 28, 29 narrowed;
+  37–39 added).
 - **v0.12.0 — Icons + the daily intention retired** (`docs/changelog/0030-icons.md`, prompt `docs/prompts/0030-icons.md`; Justin: "the icons in the bottom tray, and other icons should probably be better … In settings, there should be clear icons for each setting" and "erase the \"How do you want to feel today\" component from the experience"):
   `lucide-react` behind the `Icon` atom (135 names, D-0008, `--icon-*` tokens), typed `nav.icon`, Card `icon`, settings rail + section glyphs; A-05 retired (redirect, no C-01 card, no flags, `intentions` deprecated).
 
@@ -341,12 +348,12 @@ owner del estudio. Está escrito para que otra cuenta de Claude (o una persona) 
 10. When the canvas or specs change: `node scripts/extract-canvas.mjs && npm run specs`; log it in `CANVAS-AUDIT.md`.
 
 ## E. Open decisions for the owner
-From the operations manual (`/#/manual/decisions`, **27 flags** across its 28 chapters) and the canvas
+From the operations manual (`/#/manual/decisions`, **28 flags** across its 28 chapters since 0032) and the canvas
 audit (recommendations), deduplicated. Each needs an answer, an owner and a date; then edit the
 chapter or spec and close the card.
 
 **Pricing and payments**
-1. Validity of the 10-class pack: 1 month (brief) or 3 months (P-01)?
+1. ~~Validity of the 10-class pack: 1 month (brief) or 3 months (P-01)?~~ **Closed 2026-09-29 (0032, source: "Modelo de Valor — sin precios"): the 10-Class Pack is used within 3 months and the 3-Class Pack within 1 month — as `pricing.ts` already had.**
 2. Do published prices include IVA (19 %), or does the S-04 rail add it? (also decides the website copy) **→ setting in M-08c `pricesIncludeIva` (fill in)**
 3. Electronic invoicing provider (DIAN) and who is the legal issuer.
 4. Wompi settlement cycle and destination bank account.
@@ -382,10 +389,17 @@ chapter or spec and close the card.
     Fluye, Arde, Libera). Which one does the customer see on the schedule, and which is the internal
     label? Related: **Respiración has no `modalities` row** (it is taught inside other classes today),
     so W-08 renders a sentence instead of facts — add a row or fold it into meditación. (manual `02`) **→ two settings in M-08f: public naming `disciplines | movements`, and “Respiración es una clase propia” (the row exists since 0.7.0; the switch shows or hides it)**
-23. **Pausas rules**: does "Pausas Ilimitadas" stack with Membership or replace it, and does a Pausa
-    spend the one-class-per-person-per-day limit? (manual `11`)
-24. **The guest allowance**: how many guests a Membership member may bring per month, and whether a
-    guest takes one of the 15 mats or sits above capacity. (manual `11`)
+    **Closed 2026-09-29 (0032, source: "Contenido completo — Sobre nosotros, filosofía y clases")**: the public
+    names are the five disciplines; Enraíza / Fluye / Arde / Libera are an internal label (colour and day
+    planning). Breathwork is "presente en nuestras clases guiadas"; whether it also runs as its own class is
+    the existing M-08f switch, not a decision. Set M-08f public naming to `disciplines`.
+23. **Pausas rules**: ~~does "Pausas Ilimitadas" stack with Membership or replace it~~ **(answered 2026-09-29,
+    0032, value-model deck: a "complemento mensual" — it stacks)**; still open: does a Pausa spend the
+    one-class-per-person-per-day limit? (manual `11`)
+24. **The guest allowance**: ~~is the guest a paid product~~ **(answered 2026-09-29, 0032, value-model deck:
+    "Invitado — incluido, para socios de Membresía")**; still open: how many guests a member may bring per
+    month, and whether a guest takes one of the 16 mats or sits above capacity. Until then the studio rule
+    `guest_allowance_note` (editable in the manual) is the working default. (manual `11`)
 25. **B2B rental windows**: which hours count as off-peak, and may a rental displace a published
     class (with how much notice)? (manual `12`)
 26. **B2B rental terms**: deposit percentage, cancellation policy (how much is refunded and until
@@ -394,17 +408,32 @@ chapter or spec and close the card.
     range suggests? Plus the payment method (Wompi payout, transfer or cash), whether the studio
     withholds tax and who signs the payment record. The **teacher rate card** is the other half of
     item 11: the seed uses 80,000–110,000 COP per class and needs the real numbers. (manual `16`) **→ settings in M-08c: cadence switch (both programmed), payout method, who signs, withholding flag, rate card (fill in)**
-28. **Social publishing**: who posts (role and person), on what calendar, and who approves a post
-    that mentions prices or promotions. (manual `18`)
-29. **Wordmark and media rights**: who approves third-party use of the wordmark (shoots, pop-ups,
-    partner brands), whether studio-made material must credit HOY, and who owns the rights to photos
-    and video shot in the studio during a paid rental. (manual `19`)
+28. **Social publishing**: who posts (role and person — the **marketing** role exists since 0031, the
+    person does not), on what calendar (`social_calendar_note`), and who approves a post that mentions
+    prices or promotions. (manual `18`)
+29. **Wordmark and media rights**: the *rules* are now set by the 2026 brand manual (three colourways,
+    6X × (3X + X) construction, clear space = H height, minimum 30 mm / 120 px — manual `19` §2, 0032);
+    still open: who approves third-party use of the wordmark (shoots, pop-ups, partner brands), whether
+    studio-made material must credit HOY, and who owns the rights to photos and video shot in the studio
+    during a paid rental. (manual `19`)
 30. **Which legal versions to publish.** `legal_documents` now holds **seven versions across six
     kinds** (terms, privacy, waiver ×2, cancellation, refunds, house rules); **three are published
     and four are still draft**. Every
     document carries the counsel-review notice until the owner and counsel sign off the final text
     and name the legal issuer — which is items 3 and 14 seen from the legal library's side.
     (manual `22`, `23`) **→ publish toggle per version in M-08f (flip once counsel signs off)**
+
+**Added by the 0032 manual-content pass (chapters 03, 23), 2026-09-29**
+37. **Is the Clase de Prueba free?** The value-model deck calls it "una clase, sin costo de entrada";
+    `pricing.ts` prices `trial` at 39,000 COP (P-01, S-04 and C-06 show that price). Either "sin costo de
+    entrada" means no joining fee, or the trial should be free. (manual `03`)
+38. **Experiencias Corporativas — scope and prices.** The deck adds a sixth line "en camino" with three
+    formats (sesión para equipos, programa recurrente, taller a medida) and "alcance, formatos y precios por
+    confirmar". `pricing.ts` carries the family with no items; decide the scope, the prices and whether an
+    office session counts against studio capacity before anything sells it. (manual `03`)
+39. **The privacy text still lists "intención del día".** A-05 was retired in 0.12.0 and the app no longer
+    collects it; drop it from the privacy policy in its next version (the legal library is versioned — the
+    manual does not edit it). (manual `23`)
 
 **Canvas audit recommendations (design/spec hygiene, no owner input needed but confirm)**
 17. Register the nine components screens use but D-02 lacks (segmented switch, FAQ accordion row,
