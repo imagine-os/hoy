@@ -1,1 +1,45 @@
-.element-cursor{position:fixed;left:0;top:0;width:0;height:0;z-index:10000;pointer-events:none;opacity:0;transition:opacity .2s;--orb-color:var(--tone-sun-dot)}.element-cursor[data-visible=true]{opacity:1}.element-cursor-core,.element-cursor-halo{position:absolute;left:0;top:0;border-radius:50%;transform:translate(-50%,-50%);pointer-events:none}.element-cursor-core{width:9px;height:9px;background:radial-gradient(circle at 35% 30%,var(--color-surface),var(--orb-color) 75%);border:1px solid rgba(var(--m-light),.7);box-shadow:0 0 7px var(--orb-color),0 0 18px var(--orb-color)}.element-cursor-halo{width:38px;height:38px;background:radial-gradient(circle,color-mix(in srgb,var(--orb-color) 22%,transparent),transparent 70%);border:1px solid color-mix(in srgb,var(--orb-color) 25%,transparent);transition:width .4s,height .4s,border-radius .6s,background .4s;box-shadow:0 0 24px color-mix(in srgb,var(--orb-color) 18%,transparent)}.element-cursor[data-interactive=true] .element-cursor-halo{width:55px;height:55px;border-color:color-mix(in srgb,var(--orb-color) 55%,transparent)}.element-cursor[data-element=moss] .element-cursor-halo{border-radius:38%}.element-cursor[data-element=clay] .element-cursor-halo{border-radius:48% 52% 40% 60%}.element-cursor[data-element=river] .element-cursor-halo{border-style:double}.element-cursor[data-pressed=true] .element-cursor-halo{width:23px;height:23px}@media(hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference){.element-cursor-active,.element-cursor-active a,.element-cursor-active button,.element-cursor-active [role=tab]{cursor:none}.element-cursor-active input,.element-cursor-active textarea{cursor:text}}@media(prefers-reduced-motion:reduce),(pointer:coarse){.element-cursor{display:none}}
+/* 0042 — site cursor: ink dot + trailing primary ring, theme tokens only (no glow, no gradient, no per-tone shape).
+ * Pointer geometry is in px on purpose: it has to match the OS pointer, which scales with the device pixel ratio,
+ * not with the `--ui` type band (a rem ring would balloon at 3840 while the native arrow stays the same size).
+ * The sizes live in local custom properties so the states below only swap values. */
+.element-cursor {
+  --cursor-dot: 6px; --cursor-dot-active: 4px;
+  --cursor-ring: 28px; --cursor-ring-active: 40px; --cursor-ring-pressed: 22px;
+  --cursor-stroke: 1.5px;
+  --cursor-tone: var(--color-primary);
+  position: fixed; left: 0; top: 0; width: 0; height: 0;
+  z-index: 10000; /* above every overlay; D-01 has no layer scale yet, and a pointer must never sit under a drawer */
+  pointer-events: none; opacity: 0; transition: opacity var(--dur-base) var(--ease-out);
+}
+.element-cursor[data-visible=true] { opacity: 1 }
+.element-cursor-dot, .element-cursor-ring { position: absolute; left: 0; top: 0; pointer-events: none; will-change: transform }
+.element-cursor-dot::before, .element-cursor-ring::before {
+  content: ''; position: absolute; left: 0; top: 0; border-radius: var(--r-full); transform: translate(-50%, -50%);
+  transition: width var(--dur-base) var(--ease-out), height var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out), opacity var(--dur-base) var(--ease-out);
+}
+/* dot: ink (light #1C2E42 · dark #F1E7D2); the surface-coloured hairline keeps it visible over ink-coloured bands in
+ * light mode and over cream bands and photos in dark mode */
+.element-cursor-dot::before {
+  width: var(--cursor-dot); height: var(--cursor-dot); background: var(--color-ink);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-surface) 60%, transparent);
+}
+/* ring: a hairline in the primary blue (light #35597D · dark #9BC0E4), or 60 % tone + 40 % primary over a class tone.
+ * The same surface hairline as the dot runs on both sides of the stroke, so the ring still reads over the primary
+ * button (blue on blue in light mode) and over warm photos; over the page background it disappears into the surface. */
+.element-cursor-ring::before {
+  width: var(--cursor-ring); height: var(--cursor-ring); background: transparent;
+  border: var(--cursor-stroke) solid color-mix(in srgb, var(--cursor-tone) 55%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-surface) 45%, transparent), inset 0 0 0 1px color-mix(in srgb, var(--color-surface) 45%, transparent);
+}
+.element-cursor[data-interactive=true] .element-cursor-ring::before { width: var(--cursor-ring-active); height: var(--cursor-ring-active); border-color: color-mix(in srgb, var(--cursor-tone) 90%, transparent) }
+.element-cursor[data-interactive=true] .element-cursor-dot::before { width: var(--cursor-dot-active); height: var(--cursor-dot-active) }
+.element-cursor[data-pressed=true] .element-cursor-ring::before { width: var(--cursor-ring-pressed); height: var(--cursor-ring-pressed) }
+.element-cursor[data-text=true] .element-cursor-ring::before { opacity: 0 }
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .element-cursor-active, .element-cursor-active a, .element-cursor-active button, .element-cursor-active [role=button],
+  .element-cursor-active [role=tab], .element-cursor-active label[for], .element-cursor-active summary,
+  .element-cursor-active .is-interactive, .element-cursor-active .is-clickable { cursor: none }
+  .element-cursor-active input, .element-cursor-active textarea, .element-cursor-active [contenteditable] { cursor: text }
+  .element-cursor-active select { cursor: auto }
+}
+@media (prefers-reduced-motion: reduce), (pointer: coarse) { .element-cursor { display: none } }

@@ -1,8 +1,7 @@
 {
   "note": "Raw px/rem spacing values still allowed (scripts/spacing-lint.mjs). Lower it, never raise it.",
-  "total": 71,
+  "total": 63,
   "files": {
-    "src/components/atom/ElementCursor/ElementCursor.css": 8,
     "src/components/atom/Placeholder/Placeholder.css": 2,
     "src/components/atom/Toggle/Toggle.css": 3,
     "src/components/molecule/BarList/BarList.css": 1,
