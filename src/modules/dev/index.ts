@@ -2,7 +2,7 @@ import type { RouteDef } from '../../specs/types';
 import { canvasSpecs } from '../../specs/canvasSpecs';
 import { lazyPages } from '../../app/lazyPage';
 import { DEV_MODE_ROLES as DEV_ROLES } from '../../auth/roles';
-import { canvasSpec, layoutEditorSpec, simulatorSpec, specsIndexSpec } from './specs';
+import { apiKeysSpec, canvasSpec, layoutEditorSpec, simulatorSpec, specsIndexSpec } from './specs';
 export { strings } from './strings';
 
 // super_admin + developer tooling (0031) (component library, layout editor with dnd-kit, knowledgebase): one lazy chunk.
@@ -20,5 +20,7 @@ export const routes: RouteDef[] = [
   { ...base, path: '/dev/layout/:pageCode', element: page('LayoutEditorPage'), spec: layoutEditorSpec },
   { ...base, path: '/dev/knowledgebase', element: page('KnowledgebasePage'), spec: canvasSpecs['K-01'], nav: { labelKey: 'core.nav.knowledgebase', icon: 'knowledgebase', order: 5, group: G } },
   { ...base, path: '/dev/canvas', element: page('CanvasPage'), spec: canvasSpec, nav: { labelKey: 'core.nav.canvas', icon: 'canvas', order: 6, group: G } },
+  // 0039: developer keys — admin reads them (api_keys.read), super_admin and developer issue them.
+  { ...base, roles: [...DEV_ROLES, 'admin'], path: '/dev/api-keys', element: page('ApiKeysPage'), spec: apiKeysSpec, nav: { labelKey: 'dev.apiKeys.nav', icon: 'key-round', order: 8, group: G } },
   { ...base, path: '/dev/simulator', element: page('SimulatorPage'), spec: simulatorSpec, nav: { labelKey: 'core.nav.simulator', icon: 'simulator', order: 7, group: G } },
 ];

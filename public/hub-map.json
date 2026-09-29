@@ -974,6 +974,7 @@
         "D-04",
         "D-05",
         "D-06",
+        "D-07",
         "HUB-01"
       ],
       "shots": {
@@ -4079,6 +4080,49 @@
           "en-390": "hub-map/shots/D-05/en-390.jpg",
           "es-1280": "hub-map/shots/D-05/es-1280.jpg",
           "en-1280": "hub-map/shots/D-05/en-1280.jpg"
+        }
+      },
+      "group": {
+        "id": "dev",
+        "label": {
+          "es": "Desarrollo",
+          "en": "Dev tools"
+        },
+        "order": 10
+      }
+    },
+    {
+      "code": "D-07",
+      "route": "/dev/api-keys",
+      "name": {
+        "es": "Llaves de API",
+        "en": "API keys"
+      },
+      "purpose": {
+        "es": "Las llaves que HoyOS entrega a desarrolladores para llamar su API: crear (con entorno, permisos y vencimiento opcional), ver una sola vez, rotar con 24 horas de gracia y revocar. Solo se guarda un prefijo y el hash SHA-256; la verificación la hará el servidor.",
+        "en": "The keys HoyOS issues to developers to call its API: create (with environment, scopes and an optional expiry), see once, rotate with a 24-hour grace period and revoke. Only a prefix and the SHA-256 hash are stored; the server will do the verification."
+      },
+      "surface": "dev",
+      "roles": [
+        "super_admin",
+        "developer",
+        "admin"
+      ],
+      "experienceId": "dev",
+      "device": "desktop",
+      "status": "built",
+      "actions": [
+        "dev.apiKeys.create",
+        "dev.apiKeys.rotate",
+        "dev.apiKeys.revoke"
+      ],
+      "shots": {
+        "thumbs": {},
+        "full": {
+          "es-390": "hub-map/shots/D-07/es-390.jpg",
+          "en-390": "hub-map/shots/D-07/en-390.jpg",
+          "es-1280": "hub-map/shots/D-07/es-1280.jpg",
+          "en-1280": "hub-map/shots/D-07/en-1280.jpg"
         }
       },
       "group": {

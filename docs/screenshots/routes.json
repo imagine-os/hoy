@@ -6202,6 +6202,120 @@
   }
  },
  {
+  "path": "/dev/api-keys",
+  "code": "D-07",
+  "surface": "dev",
+  "status": "built",
+  "roles": [
+   "super_admin",
+   "developer",
+   "admin"
+  ],
+  "spec": {
+   "code": "D-07",
+   "name": {
+    "es": "Llaves de API",
+    "en": "API keys"
+   },
+   "purpose": {
+    "es": "Las llaves que HoyOS entrega a desarrolladores para llamar su API: crear (con entorno, permisos y vencimiento opcional), ver una sola vez, rotar con 24 horas de gracia y revocar. Solo se guarda un prefijo y el hash SHA-256; la verificación la hará el servidor.",
+    "en": "The keys HoyOS issues to developers to call its API: create (with environment, scopes and an optional expiry), see once, rotate with a 24-hour grace period and revoke. Only a prefix and the SHA-256 hash are stored; the server will do the verification."
+   },
+   "layout": [
+    "Intro",
+    "Keys",
+    "TryRequest"
+   ],
+   "data": [
+    "api_keys",
+    "audit_log"
+   ],
+   "roles": [
+    "super_admin",
+    "developer",
+    "admin"
+   ],
+   "logic": [
+    "Format hoy_<live|test>_<24 base62> from crypto.getRandomValues (rejection-sampled); stored: prefix (13 chars) + SHA-256 hex via crypto.subtle. The raw key lives only in component state until the drawer closes.",
+    "Rotate inserts a new key with replaces_id = old id and sets the old key’s expires_at to now + 24 h (unless it already expires sooner). Revoke sets revoked_at; rows are never deleted.",
+    "Status: revoked (revoked_at) · expired (expires_at past) · expiring (within 7 days) · active.",
+    "api_keys.write (super_admin, developer) gates create / rotate / revoke; admin reads the list (api_keys.read). Every write is audited: api_key.create / api_key.rotate / api_key.revoke with the prefix, never the key.",
+    "Verification is a server concern (D-0015): hash the bearer token, match key_hash, check environment, scopes, expiry and revocation, stamp last_used_at. No server exists yet, so “Try a request” is a Placeholder."
+   ],
+   "integrations": [
+    "HoyOS HTTP API (designed, not built)"
+   ],
+   "states": [
+    "Loading",
+    "Empty",
+    "Seed: two example keys",
+    "Create drawer",
+    "Key shown once",
+    "Rotating (grace 24 h)",
+    "Revoke confirm",
+    "Read-only (admin)"
+   ],
+   "actions": [
+    {
+     "id": "dev.apiKeys.create",
+     "label": {
+      "es": "Crear una llave de API",
+      "en": "Create an API key"
+     },
+     "intent": {
+      "es": "Crea una llave {environment} llamada {name} con {scopes}",
+      "en": "Create a {environment} key called {name} with {scopes}"
+     },
+     "params": {
+      "name": "string",
+      "environment": "enum:live,test",
+      "scopes": "csv of classes.read,bookings.read,bookings.write,customers.read,hours.read,hours.write,webhooks.receive",
+      "expires_days": "number (optional)"
+     },
+     "permission": "api_keys.write"
+    },
+    {
+     "id": "dev.apiKeys.rotate",
+     "label": {
+      "es": "Rotar una llave",
+      "en": "Rotate a key"
+     },
+     "intent": {
+      "es": "Rota la llave {id}; la vieja funciona 24 horas más",
+      "en": "Rotate key {id}; the old one keeps working for 24 hours"
+     },
+     "params": {
+      "id": "string (api_keys.id or prefix)"
+     },
+     "permission": "api_keys.write"
+    },
+    {
+     "id": "dev.apiKeys.revoke",
+     "label": {
+      "es": "Revocar una llave",
+      "en": "Revoke a key"
+     },
+     "intent": {
+      "es": "Revoca la llave {id} ya",
+      "en": "Revoke key {id} now"
+     },
+     "params": {
+      "id": "string (api_keys.id or prefix)"
+     },
+     "permission": "api_keys.write"
+    }
+   ],
+   "checkedAt": [
+    390,
+    1280
+   ],
+   "notes": [
+    "Outbound secrets (Wompi, WhatsApp, Google OAuth…) stay in the server environment and are named on M-10; these are inbound keys HoyOS issues.",
+    "Scopes: classes.read, bookings.read, bookings.write, customers.read, hours.read, hours.write, webhooks.receive."
+   ]
+  }
+ },
+ {
   "path": "/dev/simulator",
   "code": "D-06",
   "surface": "dev",
