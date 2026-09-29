@@ -17,7 +17,7 @@ function Demo() {
 
 export default defineMeta({
   tier: 'organism', name: 'KanbanBoard',
-  description: { es: 'Tablero de tarjetas por columnas (0043, M-03): arrastrar desde el asa o mover con el menú “Mover a…”; conteo por columna; desplazamiento horizontal con imán en teléfonos.', en: 'Board of cards in columns (0043, M-03): drag from the grip or move with the “Move to…” menu; count per column; horizontal scroll with snap on phones.' },
+  description: { es: 'Tablero de tarjetas por columnas (0044, M-03): arrastrar desde el asa o mover con el menú “Mover a…”; conteo por columna; desplazamiento horizontal con imán en teléfonos.', en: 'Board of cards in columns (0044, M-03): drag from the grip or move with the “Move to…” menu; count per column; horizontal scroll with snap on phones.' },
   props: [
     { name: 'columns', type: '{ id, label, tone? }[]', required: true, description: { es: 'Columnas en orden (un valor de enum o booleano).', en: 'Columns in order (an enum or boolean value).' } },
     { name: 'cards', type: '{ id, column, title, name, meta? }[]', required: true, description: { es: 'Tarjetas; name es el texto para el menú y el asa.', en: 'Cards; name is the text for the menu and the grip.' } },

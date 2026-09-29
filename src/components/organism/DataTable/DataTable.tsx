@@ -11,13 +11,13 @@ export interface DataTableColumn<T> {
   width?: number | string;
   align?: 'left' | 'right' | 'center';
   mono?: boolean;
-  /** 0043: the value the column sorts by when it is not `row[key]` (a foreign key sorts by the referenced row's title). */
+  /** 0044: the value the column sorts by when it is not `row[key]` (a foreign key sorts by the referenced row's title). */
   sortValue?: (row: T) => unknown;
 }
 
 export interface DataTableSort { key: string; dir: 'asc' | 'desc' }
 
-/** 0043: rows grouped under header rows (M-03 "Agrupar por"). Groups keep the order of their first row after sorting unless `order` says otherwise. */
+/** 0044: rows grouped under header rows (M-03 "Agrupar por"). Groups keep the order of their first row after sorting unless `order` says otherwise. */
 export interface DataTableGroupBy<T> {
   value: (row: T) => string;
   label?: (value: string, count: number) => ReactNode;
@@ -35,16 +35,16 @@ export interface DataTableProps<T> {
   dense?: boolean;
   pageSize?: number;
   stickyHeader?: boolean;
-  /** 0043: column keys not rendered (the column list stays the same, so a saved view can hide and show them). */
+  /** 0044: column keys not rendered (the column list stays the same, so a saved view can hide and show them). */
   hiddenColumns?: string[];
-  /** 0043: group rows under header rows. */
+  /** 0044: group rows under header rows. */
   groupBy?: DataTableGroupBy<T>;
-  /** 0043: allow several sort keys — Shift + click (or Shift + Enter) on a header adds it; a plain click replaces the sort. */
+  /** 0044: allow several sort keys — Shift + click (or Shift + Enter) on a header adds it; a plain click replaces the sort. */
   multiSort?: boolean;
-  /** 0043: controlled sort (with `onSortsChange`); omit both for the built-in single-column sort. */
+  /** 0044: controlled sort (with `onSortsChange`); omit both for the built-in single-column sort. */
   sorts?: DataTableSort[];
   onSortsChange?: (sorts: DataTableSort[]) => void;
-  /** 0043: a page-wide cell renderer that wins over `column.render` when it returns something other than undefined. */
+  /** 0044: a page-wide cell renderer that wins over `column.render` when it returns something other than undefined. */
   onCellRender?: (row: T, column: DataTableColumn<T>) => ReactNode | undefined;
 }
 

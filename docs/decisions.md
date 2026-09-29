@@ -296,9 +296,34 @@ Fields: **Date**, **Status** (accepted · superseded by D-NNNN), **Context**, **
   use it; keys without scopes or environments (a test integration could write live bookings); verifying in the
   browser (there is nothing to protect there).
 
-### D-0019 — The schema is the ontology
+### D-0019 — One multi-tenant MCP server over the actions vocabulary; WebMCP in the page; marketplaces are packaging
 
-- **Date** 2026-09-29 · **Status** accepted · **Changelog** `docs/changelog/0043-tables-views.md`
+- **Date** 2026-09-29 · **Status** accepted · **Changelog** `docs/changelog/0043-ai-surfaces-distribution.md`
+- **Context.** Justin asked whether MCP, CLI and API are organized, whether MCP and WebMCP differ, and for a plan to get
+  HOY into ChatGPT, Claude, Cursor, Grok, Meta Muse and other AI marketplaces — for HOY and system-wide, multi-tenant.
+  HoyOS has no server; the 40 declared actions were readable only inside the running page (`window.__hoyos`) until
+  0043 published `actions.json`; their `permission` is advisory metadata that `run()` does not check. Research and
+  plan: `docs/reference/ai-distribution.md`.
+- **Decision.** One Cloudflare Worker (the server the 0041 card already plans for the Google push and key verification)
+  serves `POST /mcp` — Streamable HTTP, 2026-07-28 shape with a 2025-11-25 compatibility path, never `/sse` — for every
+  studio and every product: the tenant comes from the credential, a `POST /t/{studio-slug}/mcp` alias serves the public
+  tools and per-studio directory URLs, and the Worker is a `{product}/{tenant}` gateway (hoy, aluzina, Between Gigs each
+  publish an `actions.json`, as `hub-map.json` set the precedent). The tool list is generated from `actions.json`
+  entries marked `surface: server | both` (new optional `ActionDef.surface`, default `page`; `params` become JSON
+  Schema); permissions are enforced server-side and writes append the page's `audit_log` rows. Two auth doors:
+  developer keys (D-0018) for staff, machines and IDEs; OAuth 2.1 (PRM, PKCE S256, CIMD first, DCR fallback,
+  `resource`) on Supabase Auth for consumer clients. Phase 0 is a read-only demo over the seed, writes answer "not wired
+  yet". In the page, `src/actions/webmcp.ts` registers the mounted actions as `document.modelContext` tools (Chrome
+  origin trial), no server. Directory listings (Anthropic, OpenAI, the MCP Registry, Gemini CLI, Grok Build, Cursor,
+  Muse) are packaging of that one server. Paying stays a person's click.
+- **Alternative rejected.** One MCP server per marketplace or per studio (N copies of the same tools, N auth reviews); a
+  hand-written tool list separate from the actions registry (two vocabularies drift; the voice controller and the
+  agents would disagree); GPT Actions / custom GPTs (being retired); building the server inside the GitHub Pages app
+  (static hosting has no process, and the page's `run()` needs a signed-in browser).
+
+### D-0020 — The schema is the ontology
+
+- **Date** 2026-09-29 · **Status** accepted · **Changelog** `docs/changelog/0044-tables-views.md`
 - **Context.** Justin asked whether an ontology is built into the tables system, whether it is necessary, and whether
   it would make things more complex. `src/data/schema.ts` already declares 56 typed tables with bilingual labels, nine
   groups, 83 foreign-key relations and a `titleColumn` per table; the M-03 page ignored most of it and showed raw
@@ -316,9 +341,9 @@ Fields: **Date**, **Status** (accepted · superseded by D-NNNN), **Context**, **
   expose none of it; and the graph view needs nothing beyond foreign keys and `titleColumn` to draw the schema or a
   record's neighbourhood.
 
-### D-0020 — Views are rows; realtime is Supabase first, Yjs only for documents
+### D-0021 — Views are rows; realtime is Supabase first, Yjs only for documents
 
-- **Date** 2026-09-29 · **Status** accepted · **Changelog** `docs/changelog/0043-tables-views.md`
+- **Date** 2026-09-29 · **Status** accepted · **Changelog** `docs/changelog/0044-tables-views.md`
 - **Context.** The tables system gains saved views (grid, list, gallery, kanban, graph; calendar, timeline and form
   next), and Justin asked how all of it is prepared for a database connection, Supabase, and "yjs or liveblocks type
   abilities". Today the only provider is `MockProvider` on localStorage; `SupabaseProvider` is a stub; no realtime,

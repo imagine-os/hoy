@@ -48,7 +48,7 @@ export const integrationsGooglePush: ActionDef = {
   permission: 'settings.write',
 };
 
-/** 0043 — M-03 table manager. `table` is a name from src/data/schema.ts (e.g. bookings); `id` a row id. */
+/** 0044 — M-03 table manager. `table` is a name from src/data/schema.ts (e.g. bookings); `id` a row id. */
 const TABLE = 'string — a table name from src/data/schema.ts (bookings, class_sessions, users…)';
 export const TABLES_ACTIONS: ActionDef[] = [
   { id: 'tables.open', label: { es: 'Abrir una tabla', en: 'Open a table' }, intent: { es: 'Abre la tabla {table}', en: 'Open the {table} table' }, params: { table: TABLE }, permission: 'tables.read' },

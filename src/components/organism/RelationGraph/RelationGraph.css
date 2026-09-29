@@ -1,4 +1,4 @@
-/* 0043 · RelationGraph (M-03 graph view). Colours are D-01 class tones and semantic tokens; sizes are rem / tokens. */
+/* 0044 · RelationGraph (M-03 graph view). Colours are D-01 class tones and semantic tokens; sizes are rem / tokens. */
 .rgraph { display: flex; flex-direction: column; gap: var(--stack); min-width: 0; }
 .rgraph-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--gap-control); }
 .rgraph-zoom { gap: var(--gap-inline); }

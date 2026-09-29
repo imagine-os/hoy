@@ -1,5 +1,5 @@
 /**
- * 0043 — the relation graph of the data model, derived from `ColumnDef.references` (every foreign key points at `id`).
+ * 0044 — the relation graph of the data model, derived from `ColumnDef.references` (every foreign key points at `id`).
  * Used by the table manager (M-03): FK chips, the "Related" section of the row drawer, and the graph view.
  * `tenant_id → tenants` is on every table, so it is left out of the graph (it would connect everything to one node).
  * Pure data + functions, no React.

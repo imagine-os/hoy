@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 
 /**
- * 0043 — per-viewer conveniences of the table manager, kept in localStorage `hoyos.tables.prefs`: the sidebar state,
+ * 0044 — per-viewer conveniences of the table manager, kept in localStorage `hoyos.tables.prefs`: the sidebar state,
  * which groups are closed, pinned and recent tables and the "technical names" switch. Never shared state (saved views
  * live in the `table_views` table), and the page renders the same when storage is blocked.
  */

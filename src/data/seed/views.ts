@@ -1,5 +1,5 @@
 /**
- * 0043 — M-03 seed: the default views the table manager opens with, so the first visit already shows a board,
+ * 0044 — M-03 seed: the default views the table manager opens with, so the first visit already shows a board,
  * a gallery and a filtered grid. Built by hand (no RNG), so the shared seed stream is untouched.
  */
 import type { TableViewRow } from '../schema';

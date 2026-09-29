@@ -385,7 +385,7 @@ export const M12 = defineSpec({
   ],
 });
 
-/** 0043 — M-03 table manager, redesigned (views, sidebar, graph). Replaces the raw canvas spec (whose `data` named non-tables). */
+/** 0044 — M-03 table manager, redesigned (views, sidebar, graph). Replaces the raw canvas spec (whose `data` named non-tables). */
 export const M03 = defineSpec({
   ...canvasSpecs['M-03'],
   code: 'M-03',
@@ -421,7 +421,7 @@ export const M03 = defineSpec({
   actions: ADMIN_ACTIONS['M-03'],
   checkedAt: [390, 768, 1280, 1920, 3840],
   notes: [
-    '0043 redesign (Justin: “looks like it’s only for developers… Airtable, Notion are baseline… I also like graph views”). The canvas layout (EntityGrid / RelationMap / MigrationLog) is superseded by the views above; the relation map is the graph view.',
+    '0044 redesign (Justin: “looks like it’s only for developers… Airtable, Notion are baseline… I also like graph views”). The canvas layout (EntityGrid / RelationMap / MigrationLog) is superseded by the views above; the relation map is the graph view.',
     'Column labels come from the dictionary until a later pass fills ColumnDef.label per column (Sonnet, mechanical).',
     'Calendar and timeline views are the next pass; the view kinds already exist in table_views.kind.',
   ],

@@ -1,5 +1,5 @@
 /**
- * 0043 — human names for the data model. The table manager (M-03) never shows a raw `snake_case` identifier as the
+ * 0044 — human names for the data model. The table manager (M-03) never shows a raw `snake_case` identifier as the
  * main text: column headers, field labels and enum badges read from here, and the raw name only appears as a quiet
  * mono line when "technical names" is on.
  *

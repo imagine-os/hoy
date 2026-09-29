@@ -42,7 +42,7 @@ export const GRAPH_H = 640;
 const MIN_Z = 0.4, MAX_Z = 4;
 
 /**
- * An SVG relationship graph (0043, M-03). Nodes are focusable (Tab), Enter / Space activates one; the canvas pans
+ * An SVG relationship graph (0044, M-03). Nodes are focusable (Tab), Enter / Space activates one; the canvas pans
  * with a drag or the arrow keys and zooms with the buttons or + / − / 0 — nothing is pointer-only. Coordinates are
  * real CSS pixels of the box (the viewBox follows the element's size), so labels are set in rem and stay legible
  * on a 4K TV through the --ui band. Colours come from the D-01 class tones and semantic tokens only.

@@ -1,7 +1,7 @@
 # Tables system — development plan
 
-_Pass 0043 · v0.18.0 · 2026-09-29 · written by Fable 5.1 (plan, judgement) · prompt `docs/prompts/0043-tables-views.md`
-· decisions [D-0019](../decisions.md), [D-0020](../decisions.md) · page M-03 `/admin/tables`._
+_Pass 0044 · v0.19.0 · 2026-09-29 · written by Fable 5.1 (plan, judgement) · prompt `docs/prompts/0044-tables-views.md`
+· decisions [D-0020](../decisions.md), [D-0021](../decisions.md) · page M-03 `/admin/tables`._
 
 This is the first deliverable of the pass, per project convention: order of operations, tasks bound by dependencies
 (not calendar days), a model per task, and room for repeated passes and polish. Written for Justin; a Spanish summary
@@ -39,7 +39,7 @@ toggle away.
 
 ```mermaid
 graph LR
-  subgraph A["Pass A · 0043 · this PR"]
+  subgraph A["Pass A · 0044 · this PR"]
     A1[A1 schema metadata]
     A2[A2 relations + graph layout]
     A3[A3 table_views + seeds]
@@ -104,7 +104,7 @@ graph LR
   end
 ```
 
-### Pass A — 0043, this PR
+### Pass A — 0044, this PR
 
 | Task | Depends on | Model | Done when |
 | --- | --- | --- | --- |
@@ -114,8 +114,8 @@ graph LR
 | **A4** Page: toggleable sidebar (expanded / rail / sheet; pinned, recent, search, collapsible groups), header, view switcher, filter / sort / group / columns toolbar, grid / list / gallery / kanban | A1, A2, A3 | Opus | M-03 at 360 → 3840 with 44 px targets and keyboard on every control; labels from the design-system fonts; technical names behind the dev toggle; FK cells show row titles; saved views persist as rows; `api_keys.key_hash` hidden for read-only roles |
 | **A5** Graph view (schema graph + record neighbourhood) | A2 | Opus | SVG graph, zoom / pan by keyboard and pointer, click a node → that table or row, legend by group, readable at 390 and 3840 |
 | **A6** `M03` spec in `src/modules/admin/specs.ts` + actions registry + hub map | A4 | Opus | Real `data`, `layout`, `states`, `checkedAt`; `tables.*` actions declared with ES/EN intents and permissions; `hubMap.data.ts` tool purpose updated; `npm run hub-map` deterministic |
-| **A7** Before / after captures, spacing audit, page doc M-03, surfaces delta | A4, A5, A6 | Sonnet | `docs/screenshots/M-03/*-before.jpg` and after at 390 / 1280 / 3840, `_tables/` sheets; `audit:spacing` clean on `/admin/tables`; `docs/pages/M-03.md` rewritten; `surfaces.md` 0043 delta + actions table |
-| **A8** Plan, decisions D-0019 / D-0020, prompt / changelog / kanban / README | — (parallel) | Fable | This file, both decisions, the numbered docs — same turn as the work |
+| **A7** Before / after captures, spacing audit, page doc M-03, surfaces delta | A4, A5, A6 | Sonnet | `docs/screenshots/M-03/*-before.jpg` and after at 390 / 1280 / 3840, `_tables/` sheets; `audit:spacing` clean on `/admin/tables`; `docs/pages/M-03.md` rewritten; `surfaces.md` 0044 delta + actions table |
+| **A8** Plan, decisions D-0020 / D-0021, prompt / changelog / kanban / README | — (parallel) | Fable | This file, both decisions, the numbered docs — same turn as the work |
 
 ### Pass B — polish (next)
 
@@ -157,7 +157,7 @@ labels, a `titleColumn` per table. What it lacks is **metadata, not a new layer*
 human `label` per column, and reverse relations derived from the foreign keys (a `users` row *has* bookings because
 `bookings.user_id` points at it). Pass A adds exactly that.
 
-Recommendation (**D-0019**): **no separate ontology module or vocabulary.** The graph view reads foreign keys and
+Recommendation (**D-0020**): **no separate ontology module or vocabulary.** The graph view reads foreign keys and
 `titleColumn`; nothing else is needed to draw the schema or a record's neighbourhood. Cross-project shared vocabulary
 (aluzina, Between Gigs) stays at the hub-map level, where it already lives; a `hoy.entities/1` publication of the
 entity list (name, label, kind, icon, relations) can follow the hub-map pattern **only when a consumer asks for it**.
@@ -186,7 +186,7 @@ the wrong tool**: a booking is one row with a capacity rule, and the right answe
 plus realtime plus an optimistic `version` check with a visible Notice — not a merge. Yjs earns its place only for long
 text edited together (manual pages, studio policies, maybe page layouts), and only if the team actually edits text
 together; C8 measures that before adopting it. Liveblocks is rejected as a new vendor unless presence UX later needs
-it, consistent with ROADMAP P7 ("Supabase Realtime presence preferred, no new vendor"). Recorded as **D-0020**.
+it, consistent with ROADMAP P7 ("Supabase Realtime presence preferred, no new vendor"). Recorded as **D-0021**.
 
 ## Repeated passes and polish
 
@@ -198,7 +198,7 @@ table behaves differently from 200 seeded rows (virtualised grid, server-side fi
 
 ## Model routing
 
-Model routing: Fable 5.1 (this plan, D-0019 / D-0020, architecture, shared code review) · Opus (schema metadata,
+Model routing: Fable 5.1 (this plan, D-0020 / D-0021, architecture, shared code review) · Opus (schema metadata,
 relations, `table_views`, the page, the graph view, spec + actions, the Supabase adapter) · Sonnet (captures, spacing
 audit, page doc, surfaces delta, bilingual label fill, QA matrices). Every reply states which model did the work.
 
@@ -207,6 +207,6 @@ audit, page doc, surfaces delta, bilingual label fill, QA matrices). Every reply
 al estilo Airtable / Notion (cuadrícula, lista, galería, kanban, calendario, línea de tiempo, formulario), filtros, orden,
 agrupación, columnas ocultas y vistas guardadas como filas, más una vista de grafo (esquema y vecindario de un registro).
 El esquema ya es una ontología ligera: solo le faltan metadatos (tipo, icono, etiquetas por columna); no se añade una capa
-de ontología aparte (D-0019). La conexión a Supabase sigue el orden C1 → C9: versión para conflictos, RLS completo, modelo
+de ontología aparte (D-0020). La conexión a Supabase sigue el orden C1 → C9: versión para conflictos, RLS completo, modelo
 de auth, adaptador, presencia, cola offline; Yjs solo para textos largos coeditados y Liveblocks descartado como proveedor
-nuevo (D-0020). Los pases A → B → C no son estrictamente seriales; el relleno en español y las matrices de QA nunca bloquean.
+nuevo (D-0021). Los pases A → B → C no son estrictamente seriales; el relleno en español y las matrices de QA nunca bloquean.

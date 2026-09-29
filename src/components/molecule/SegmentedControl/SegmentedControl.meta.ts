@@ -18,7 +18,7 @@ export default defineMeta({
   description: { es: 'Conmutador de 2 a 4 vías (Hoy / Semana, Clases / Pagos, Mensual / Anual). Píldora sobre pista.', en: 'Two-to-four way switch (Today / Week, Classes / Payments, Monthly / Yearly). Pill on a track.' },
   props: [
     { name: 'options', type: '{ value, label, count?, icon?, disabled?, hint?, placeholder? }[]', required: true, description: { es: 'Opciones en orden. icon = glifo; disabled + hint = no se puede elegir y dice por qué; placeholder = aún no conectada (átomo Placeholder).', en: 'Options in order. icon = glyph; disabled + hint = cannot be picked and says why; placeholder = not wired yet (Placeholder atom).' } },
-    { name: 'compact', type: 'boolean', default: 'false', description: { es: 'Bajo 768 px las opciones con icono muestran solo el icono (0043).', en: 'Below 768 px options with an icon show the icon only (0043).' } },
+    { name: 'compact', type: 'boolean', default: 'false', description: { es: 'Bajo 768 px las opciones con icono muestran solo el icono (0044).', en: 'Below 768 px options with an icon show the icon only (0044).' } },
     { name: 'value / onChange', type: 'T / (v: T) => void', required: true, description: { es: 'Controlado.', en: 'Controlled.' } },
     { name: 'size', type: "'sm' | 'md'", default: 'md', description: { es: 'Altura 30 / 38.', en: 'Height 30 / 38.' } },
     { name: 'block', type: 'boolean', default: 'false', description: { es: 'Ancho completo, opciones iguales.', en: 'Full width, equal options.' } },

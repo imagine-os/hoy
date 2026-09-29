@@ -1,23 +1,33 @@
 # Machine surfaces — MCP / WebMCP, CLI, API
 
 What something other than a person can drive in HoyOS today, and what it cannot.
-**Checked 2026-09-29** (v0.18.0; previous check 2026-09-29, v0.17.0). Re-check and date this file every pass; a line that is not
+**Checked 2026-09-29** (v0.19.0; previous check 2026-09-29, v0.18.0). Re-check and date this file every pass; a line that is not
 re-checked is not current.
 
-**0043 delta (v0.18.0).** Eleven new action ids on M-03 `/admin/tables/:table`, declared in `src/modules/admin/actions.ts`
+**0044 delta (v0.19.0).** Eleven new action ids on M-03 `/admin/tables/:table`, declared in `src/modules/admin/actions.ts`
 (`ADMIN_ACTIONS['M-03']`): `tables.open`, `tables.openRow`, `tables.setView`, `tables.search`, `tables.filter`,
 `tables.newRow`, `tables.export`, `tables.toggleSidebar`, `tables.saveView`, `tables.pin` and `tables.toggleTechnicalNames`
 (the last is `dev.tools`; `tables.newRow` and `tables.saveView` are `tables.write`; the rest `tables.read`).
 `tables.setView` takes `grid`, `list`, `gallery`, `kanban` or `graph`; `calendar` and `timeline` answer "not wired yet".
 The page URL is now a linkable-view surface an agent can build without the page open: `?id=` (row drawer), `?view=`
 (view kind), `?v=` (a saved view), `?focus=` (row-level graph) and `?where=column:value` (filtered table), e.g.
-`/#/admin/tables/bookings?view=graph`. Saved views are rows in the new `table_views` table (57 tables in all), so they are
+`/#/admin/tables/bookings?view=graph`. Saved views are rows in the new `table_views` table (57 tables in all), and `public/actions.json` lists the eleven ids after the next build (51 actions), so they are
 readable and writable through `DataProvider` like any other row. `hoy.hub-map/1` changes only in text: the tables tool
 `purpose` now reads "El gestor de datos con vistas: cuadrícula, lista, galería, tablero y grafo." (regenerated
-`public/hub-map.json`, version 0.18.0; no schema change). `npm run sql` regenerated `supabase/schema.sql` and
+`public/hub-map.json`, version 0.19.0; no schema change). `npm run sql` regenerated `supabase/schema.sql` and
 `docs/data-model.md`; `MockProvider.SEED_VERSION` is 7, so every stored demo db reseeds once. Not machine-reachable yet:
 the graph zoom / pan, the kanban drag (the keyboard and the "Move to…" select are the page's own controls) and saved-view
 rename / delete.
+
+**0043 delta (v0.18.0).** The actions vocabulary is published as a file: `public/actions.json` (schema `hoy.actions/1`,
+contract `src/actions/manifest.types.ts`, URL `https://imagine-os.github.io/hoy/actions.json`), written by
+`scripts/gen-actions.mjs` from the same `PageSpec.actions` that `__hoyos.actions` lists — 40 actions, the 11 permissions
+they reference (with the roles that hold each), and the declaring pages. `npm run actions` runs in `npm run build` right
+after `npm run hub-map` and exits 1 on a conflicting duplicate id, a missing `es` / `en`, an unknown permission or zero
+actions. `window.__hoyos.actionsUrl` says where this deployment serves it. Audit against the code (106 routes, 92 codes,
+40 action ids on 16 page codes): every id, intent, param and permission below matches; fixed the page column of
+`app.goHome` / `app.openSchedule` (also C-27), the route roles after `·` of `settings.hours.update` and
+`dev.apiKeys.create`, the table split in two before `manual.setLens`, the missing `npm run capture-dates` row in §2 and the hub-map page count in §4 (89 → 92).
 
 **0041 delta (v0.17.0).** Thirteen new action ids: the admin module declares actions for the first time
 (`src/modules/admin/actions.ts`, `ADMIN_ACTIONS` merged into the specs) — `settings.hours.update` (M-08a),
@@ -57,6 +67,7 @@ There is **no MCP server** yet: this is the in-page surface only.
 | `__hoyos.actions` | `DeclaredAction[]` (getter) | Every action **declared** by any routed page: `id`, `label{es,en}`, `intent{es,en}`, `params?`, `permission?`, plus `code`, `route` and `mounted`. A getter, so `mounted` answers for the page that is open right now. |
 | `__hoyos.run(id, params?)` | `Promise<{ ok, message }>` | Runs a **mounted** action. Never throws: an unknown or unmounted id comes back `ok: false` with the reason. |
 | `__hoyos.hubMap` | `{ url, data, load() }` | Since 0027. The published hub map (§4): `url` is where this deployment serves `hub-map.json`, `data` the parsed map once loaded (`null` before; reading it starts the load), `load()` resolves with it. Source `src/hub/hubMapClient.ts`. |
+| `__hoyos.actionsUrl` | `string` | Since 0043. Where this deployment serves `actions.json` (§4, schema `hoy.actions/1`): the same vocabulary as `actions`, as a file an agent can read without the page. |
 
 ```js
 await window.__hoyos.run('hub.setLang', { lang: 'en' });   // { ok: true, message: 'language en' }
@@ -81,21 +92,21 @@ window.__hoyos.actions.filter((a) => a.mounted);
 | `app.pickMat` | C-04 | Quiero el tapete {mat} | `mat: number 1–16` — free mat, mat classes only | `bookings.write` · customer, teacher |
 | `app.confirmReservation` | C-04 | Confirma mi reserva | — | `bookings.write` · customer, teacher |
 | `app.choosePlan` | C-06 | Quiero el plan {plan} | `plan: enum:monthly,annual` | `payments.read` · customer, teacher |
-| `app.goHome` | C-01 (also C-02, C-04, C-06, C-08) | Llévame al inicio de la app | — | — · customer, teacher |
-| `app.openSchedule` | C-01 (also C-02, C-04, C-06, C-08) | Muéstrame el horario de clases | — | `classes.read` · customer, teacher |
+| `app.goHome` | C-01 (also C-02, C-04, C-06, C-08, C-27) | Llévame al inicio de la app | — | — · customer, teacher |
+| `app.openSchedule` | C-01 (also C-02, C-04, C-06, C-08, C-27) | Muéstrame el horario de clases | — | `classes.read` · customer, teacher |
 | `app.openPractice` | C-01 (also C-27, C-02, C-04, C-06, C-08) | Muéstrame mi práctica | — | — · customer, teacher |
 | `app.setGoal` | C-01 (also C-27) | Quiero practicar {target} veces por semana | `target: number 0–7 (0 = sin meta)` — a whole number; ends the active `practice_goals` row, inserts the new one and writes a `goal.set` event; answers `goal N/week` | `bookings.write` · customer, teacher |
 | `analytics.setRange` | M-12 | Muéstrame la analítica de los últimos {range} días | `range: enum:7,30,90` | `members.read` · super_admin, admin, coordinator, finance |
 | `analytics.openMember` | M-12 | Abre la ficha de {userId} | `userId: string — users.id (usr_cust)` → `/admin/crm/:id` | `members.read` · super_admin, admin, coordinator, finance |
 | `auth.signIn` | A-02 | Entra como {user} | `user: enum:usr_super,usr_admin,usr_coord,usr_desk,usr_fin,usr_teach,usr_maint,usr_mkt,usr_dev,usr_cust` | — · public (anyone on `/auth/sign-in`) |
-| `settings.hours.update` | M-08a | Abre el {day} de {open} a {close} (o ciérralo) | `day: enum:0–6 (0 = Sunday)`, `open: HH:MM \| closed`, `close: HH:MM` | `settings.write` · admin, super_admin |
+| `settings.hours.update` | M-08a | Abre el {day} de {open} a {close} (o ciérralo) | `day: enum:0–6 (0 = Sunday)`, `open: HH:MM \| closed`, `close: HH:MM` | `settings.write` · super_admin, admin, coordinator, finance (the page; only super_admin and admin hold the permission) |
 | `settings.hours.override.add` | M-08g | El {start} cerramos por {label} / abrimos de {open} a {close} | `start: YYYY-MM-DD`, `end?`, `label`, `label_en?`, `closed: enum:true,false`, `open?`, `close?`, `kind?: enum:holiday,special,event` — same validation as the drawer | `hours.write` · admin, super_admin, coordinator |
 | `settings.hours.override.remove` | M-08g | Quita la excepción del {date} | `id` or `date: YYYY-MM-DD` | `hours.write` |
 | `settings.hours.holidays.import` | M-08g | Importa los festivos de Colombia de este año y el próximo | — (skips dates that already have an exception) | `hours.write` |
 | `integrations.google.copyHours` | M-10a | Copia el horario para pegarlo en Google Business Profile | `format?: enum:text,json` — answers the copied text | — · admin, super_admin |
 | `integrations.google.connect` | M-10a | Conecta el perfil de Google del estudio (no conectado aún) | — answers `ok: false` (no server) | `settings.write` |
 | `integrations.google.push` | M-10a | Envía el horario a Google ahora (no conectado aún) | — answers `ok: false` (no server) | `settings.write` |
-| `dev.apiKeys.create` | D-07 | Crea una llave {environment} llamada {name} con {scopes} | `name`, `environment: enum:live,test`, `scopes: csv`, `expires_days?` — answers the prefix; the raw key is shown once on screen, never returned | `api_keys.write` · super_admin, developer |
+| `dev.apiKeys.create` | D-07 | Crea una llave {environment} llamada {name} con {scopes} | `name`, `environment: enum:live,test`, `scopes: csv`, `expires_days?` — answers the prefix; the raw key is shown once on screen, never returned | `api_keys.write` · super_admin, developer, admin (admin reads the page; only super_admin and developer hold the permission) |
 | `dev.apiKeys.rotate` | D-07 | Rota la llave {id}; la vieja funciona 24 horas más | `id: api_keys.id or prefix` | `api_keys.write` |
 | `dev.apiKeys.revoke` | D-07 | Revoca la llave {id} ya | `id: api_keys.id or prefix` | `api_keys.write` |
 | `tables.open` | M-03 | Abre la tabla {table} | `table: enum of table names` | `tables.read` |
@@ -109,7 +120,6 @@ window.__hoyos.actions.filter((a) => a.mounted);
 | `tables.saveView` | M-03 | Guarda esta vista como {name} | `name` — writes a `table_views` row | `tables.write` |
 | `tables.pin` | M-03 | Fija (o suelta) la tabla {table} | `table` (default: the open one) | `tables.read` |
 | `tables.toggleTechnicalNames` | M-03 | Muestra (u oculta) los nombres técnicos | — | `dev.tools` |
-
 | `manual.setLens` | K-03 | Muéstrame el manual de {role} | `role: enum:all,super_admin,admin,coordinator,front_desk,finance,teacher,maintenance,marketing,developer` | `docs.read` |
 | `manual.markRead` | K-03 | Marca el capítulo {chapter} como leído | `chapter: slug or number` (default the open chapter) | `docs.read` · team roles |
 | `manual.signTraining` | K-03 | Firma {stage} de {user} | `user: users.id`, `stage: enum:day1,week1,month1`, `role?` (default the person's role) | `manual.train` · coordinator, admin, super_admin |
@@ -165,6 +175,7 @@ Since 0025 the customer reserve / register flow has actions too (above); check-i
 waitlist, changing a booking and sign-up are the next set, and each one has to be declared in its page's spec
 before it can be run. A shell scope (actions a shell, not a page, declares) would remove the five-spec
 duplication of the navigation actions.
+The plan for a hosted, multi-tenant MCP server and marketplace listings is in `docs/reference/ai-distribution.md` (0043).
 
 ### Frame contract
 
@@ -184,8 +195,10 @@ Everything is Node, in `scripts/`, and safe to run from a clean checkout.
 | Script | What it does | Writes |
 | --- | --- | --- |
 | `npm run dev` | Vite dev server at `http://localhost:5173/#/` | — |
-| `npm run build` | `npm run tokens` → spacing lint (report) → `npm run hub-map` → `npm run capture-dates` → manual lint (report) → `tsc --noEmit` → `vite build` → `node scripts/copy-shots.mjs`. **Must be green before every push.** | `src/design/tokens.css`, `public/hub-map.json`, `dist/` (incl. `dist/hub-map/shots/`) |
+| `npm run build` | `npm run tokens` → spacing lint (report) → `npm run hub-map` → `npm run actions` → `npm run capture-dates` → manual lint (report) → `tsc --noEmit` → `vite build` → `node scripts/copy-shots.mjs`. **Must be green before every push.** | `src/design/tokens.css`, `public/hub-map.json`, `public/actions.json`, `src/app/captureDates.ts`, `dist/` (incl. `dist/hub-map/shots/`) |
 | `npm run hub-map` | `scripts/gen-hub-map.mjs`: composes the hub map from `src/hub/hubMap.data.ts` + the live route registry (Vite SSR loader, no browser) + `docs/screenshots/`, validates it against the contract and exits 1 on any problem. Deterministic (`generatedAt` = the latest changelog date) | `public/hub-map.json` (committed) |
+| `npm run actions` | Since 0043. `scripts/gen-actions.mjs`: the actions vocabulary from every routed page's `spec.actions` (Vite SSR loader, no browser) + `src/auth/permissions.ts`; one entry per id with `label` / `intent` in ES and EN, `params`, `permission`, the union of the declaring routes' `roles` and the declaring `pages`. Exits 1 on a duplicate id whose label / intent / params / permission differ, a missing `es` / `en`, a permission not in `permissions.ts` or zero actions. Deterministic (`generatedAt` = the latest changelog date) | `public/actions.json` (committed) |
+| `npm run capture-dates` | Since 0031. `scripts/gen-capture-dates.mjs`: per page code, the day `docs/screenshots/<CODE>/es-1280.jpg` was last committed and the newest changelog entry naming the code, so the manual's figures can flag a stale capture. Git history only; a shallow clone keeps the committed file | `src/app/captureDates.ts` |
 | `npm run hub-map:check` | Since 0029. `scripts/check-sample-routes.mjs`: serves `dist/` (`vite preview`), opens every `pages[].sampleRoute` of `public/hub-map.json` in a same-origin iframe with `?as=<owning role>&dev=0&live=0` and fails when a `sample` segment is not resolved, the page has 20 words or fewer, shows a not-found state or a `⟨missing-key⟩` marker. Not part of the build; run after `npm run build` | — (prints one line per sample) |
 | `node scripts/copy-shots.mjs` | Copies every capture the map references into `dist/hub-map/shots/<CODE>/` and prints the total (budget 80 MB; the plan lives in `scripts/lib/hubShots.mjs`) | `dist/hub-map/shots/` |
 | `npm run preview` | Serves `dist/` at `:4173` (what the screenshot pass drives) | — |
@@ -246,7 +259,7 @@ Planned, in order: **Supabase** (Postgres + Auth + Realtime + Storage) behind `S
 
 ---
 
-## 4. Published files — the hub map
+## 4. Published files — the hub map and the actions vocabulary
 
 Since 0027 (v0.11.0) the site publishes one machine-readable description of itself, for other hosts
 (the aluzina studio OS, the between-gigs company OS) to draw the hub through their own lens. Contract and
@@ -254,7 +267,8 @@ consumer checklist: [`hub-map.md`](./hub-map.md).
 
 | File | URL | What |
 | --- | --- | --- |
-| `public/hub-map.json` | `https://imagine-os.github.io/hoy/hub-map.json` | Schema `hoy.hub-map/1`: product, embed pattern, 11 roles, 15 experiences (the hub cards; `marketing` carries `comingSoon: true`, 0031), every page code (89 after the 0040 build — C-27 and M-12 join the 87; each with a `group`; the 9 template pages with a `sampleRoute`), 9 tools, 3 lens hints |
+| `public/hub-map.json` | `https://imagine-os.github.io/hoy/hub-map.json` | Schema `hoy.hub-map/1`: product, embed pattern, 11 roles, 15 experiences (the hub cards; `marketing` carries `comingSoon: true`, 0031), every page code (92 after the 0041 build — M-08g, M-10a and D-07 join the 89; each with a `group`; the 9 template pages with a `sampleRoute`), 9 tools, 3 lens hints |
+| `public/actions.json` | `https://imagine-os.github.io/hoy/actions.json` | Since 0043. Schema `hoy.actions/1` (contract `src/actions/manifest.types.ts`): product, `run` (how to execute — in the page, `window.__hoyos.run(id, params)`; no MCP server yet), the 11 permissions the actions reference with the roles that hold each, and the 40 actions sorted by id — `label` / `intent` `{es,en}`, `params?`, `permission?`, `roles` (union of the declaring routes) and `pages` (`code`, `route`). The vocabulary without opening the page; written by `npm run actions` |
 | `public/source/<id>.pdf` (+ `<id>-cover.jpg`) | `https://imagine-os.github.io/hoy/source/<id>.pdf` | Since 0031: the owner's source documents (`modelo-de-valor`, `contenido-completo`, `manual-de-marca`); index `docs/source/index.json`; shown on K-05 `/#/docs/source` |
 | `dist/hub-map/shots/<CODE>/…` | `https://imagine-os.github.io/hoy/hub-map/shots/<CODE>/<file>.jpg` | The thumbs (`thumb-<lang>-<phone\|desktop>[-dark].jpg`) and captures (`<lang>-390.jpg`, `<lang>-1280.jpg`, W-xx `<lang>-390-full.jpg`) the map's `shots` point at, relative to `product.baseUrl` |
 
@@ -262,10 +276,11 @@ consumer checklist: [`hub-map.md`](./hub-map.md).
 `frameUrl()` builds; a host substitutes and iframes it. Same-origin only under `imagine-os.github.io`.
 
 ---
-**Resumen (ES).** Qué puede manejar una máquina hoy (revisado 2026-09-29, v0.18.0; 0043 añade once acciones `tables.*` en M-03, los parámetros de URL `?id=`, `?view=`, `?v=`, `?focus=` y `?where=` como vistas enlazables, y la tabla `table_views`; 0040 añadió `app.openPractice`, `app.setGoal`, `analytics.setRange`, `analytics.openMember`, las tablas `practice_goals` y `activity_events`, y `npm run test:analytics`): en la página, `window.__hoyos` publica las rutas,
+**Resumen (ES).** Qué puede manejar una máquina hoy (revisado 2026-09-29, v0.19.0; 0044 añade once acciones `tables.*` en M-03, los parámetros de URL `?id=`, `?view=`, `?v=`, `?focus=` y `?where=` como vistas enlazables, y la tabla `table_views`; 0041 añade las acciones de horario — `settings.hours.*` —, de Google Business Profile — `integrations.google.*`, conectar y enviar responden «aún no conectado» — y de llaves de desarrollador — `dev.apiKeys.*` —; 0043 publica el vocabulario como archivo): en la página, `window.__hoyos` publica las rutas,
 los usuarios demo, las acciones declaradas y `run(id, params)` para ejecutarlas (superficie WebMCP; no
-hay servidor MCP todavía), y `__hoyos.hubMap` con el mapa del hub. Archivo publicado: `hub-map.json`
-(esquema `hoy.hub-map/1`), con sus capturas en `hub-map/shots/`, para que aluzina y between-gigs dibujen el hub a su manera;
-cada página con ruta plantilla trae `sampleRoute`, una ruta que abre un registro real (`npm run hub-map:check` la verifica).
-En la terminal, los `npm run` de arriba. API HTTP: ninguna — todo pasa por
-`DataProvider`, hoy `MockProvider` en el navegador; los endpoints previstos están en `PageSpec.api`.
+hay servidor MCP todavía), `__hoyos.hubMap` con el mapa del hub y `__hoyos.actionsUrl`. Archivos publicados: `hub-map.json`
+(esquema `hoy.hub-map/1`), con sus capturas en `hub-map/shots/`, para que aluzina y between-gigs dibujen el hub a su manera
+(cada página con ruta plantilla trae `sampleRoute`, que `npm run hub-map:check` verifica), y `actions.json` (esquema
+`hoy.actions/1`, 40 acciones con su intención en ES y EN, parámetros, permiso, roles y páginas), que `npm run actions`
+escribe en cada build: el vocabulario completo sin abrir la página. En la terminal, los `npm run` de arriba. API HTTP:
+ninguna — todo pasa por `DataProvider`, hoy `MockProvider` en el navegador; los endpoints previstos están en `PageSpec.api`.

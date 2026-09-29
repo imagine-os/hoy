@@ -7,7 +7,21 @@ dónde estamos, qué sigue y en qué orden (con dependencias explícitas y lo qu
 paralelo), qué significa "terminado" en cada fase, cómo trabajar en el repo y qué debe decidir el
 owner del estudio. Está escrito para que otra cuenta de Claude (o una persona) lo retome sin contexto.
 
-## A. Where we are (v0.17.0, 2026-09-29)
+## A. Where we are (v0.19.0, 2026-09-29)
+
+- **v0.19.0 — Tables system redesign** (`docs/changelog/0044-tables-views.md`, prompt `docs/prompts/0044-tables-views.md`;
+  Justin: "the tables system can look nicer… airtable, notion are baseline… I also like graph views… is ontology built in?…
+  how is this prepared for supabase and yjs or liveblocks?"): M-03 shows words instead of identifiers, has a toggleable
+  sidebar, grid / list / gallery / board / graph views, filters, sorts, grouping, saved views as `table_views` rows and 11
+  `tables.*` actions; the schema is the ontology (D-0020); views are rows, realtime is Supabase first, Yjs only for
+  documents (D-0021); plan `docs/plans/tables-system.md`. Still needed: calendar and timeline (B2), column labels (B1),
+  and Pass C (version column, RLS, `SupabaseProvider`, presence, offline queue).
+
+- **v0.18.0 — Machine surfaces audit, actions.json, AI distribution plan** (`docs/changelog/0043-ai-surfaces-distribution.md`,
+  prompt `docs/prompts/0043-ai-surfaces-distribution.md`; Justin: "do we have mcp cli, api stuff all organized proper. Not
+  sure if mcp and web mcp are different?"): `surfaces.md` audited against the code, the 40 actions published as
+  `actions.json` on every build, and `docs/reference/ai-distribution.md` (D-0019) plans one multi-tenant MCP server over
+  that vocabulary, WebMCP in the page and marketplace listings as packaging. Still needed: the server itself and §E 44–47.
 
 - **v0.17.0 — Hours, holidays, Google Business Profile, developer keys** (`docs/changelog/0041-hours-google-keys.md`,
   prompt `docs/prompts/0041-hours-google-keys.md`; Justin: "the opening hours once it is updated here, would be reflected
@@ -285,8 +299,8 @@ owner del estudio. Está escrito para que otra cuenta de Claude (o una persona) 
   WhatsApp, E-04 lockout); RLS per role and per `tenant_id`; realtime subscriptions on `class_sessions`,
   `bookings`, `waitlist`, `checkins`. Keep the demo users behind a `VITE_DEMO_AUTH` flag for testing.
 - Depends on: **P1 data shapes stabilising** (schema frozen; every page reads through the provider).
-- Plan (0043): the connection order — `version` + optimistic concurrency, RLS on the 26 tables, the auth model doc, then
-  `SupabaseProvider`, provider switch, presence, offline queue — is Pass C in `docs/plans/tables-system.md` (D-0020).
+- Plan (0044): the connection order — `version` + optimistic concurrency, RLS on the 26 tables, the auth model doc, then
+  `SupabaseProvider`, provider switch, presence, offline queue — is Pass C in `docs/plans/tables-system.md` (D-0021).
 - Parallelizable with: P5. Can start the SupabaseProvider skeleton and RLS drafts while P1 finishes,
   but do not cut over `DataContext.tsx` until the customer and staff passes are merged.
 - Input: `reference/alt-build-empty10/supabase/migrations/0001_init.sql` — a generated migration
@@ -338,8 +352,8 @@ owner del estudio. Está escrito para que otra cuenta de Claude (o una persona) 
   Realtime presence (preferred, no new vendor) or Liveblocks; marketing, social and content tools
   (campaigns, landing blocks in M-02, post scheduler, analytics).
 - Depends on: P2 realtime (presence) and P4 (campaigns reuse templates and sender).
-- Plan (0043): presence on the table manager and the editors is C6 in `docs/plans/tables-system.md`; Yjs only for
-  long-text co-editing (C8, decide then); Liveblocks stays rejected as a new vendor (D-0020).
+- Plan (0044): presence on the table manager and the editors is C6 in `docs/plans/tables-system.md`; Yjs only for
+  long-text co-editing (C8, decide then); Liveblocks stays rejected as a new vendor (D-0021).
 - Parallelizable with: P6.
 
 ## C. Definition of done (per phase)
@@ -514,6 +528,15 @@ chapter or spec and close the card.
     reaching one trigger an automated WhatsApp (M-05 template) as well as the in-app toast and the M-12 list for the
     desk, or stay an in-person congratulation?
 
+**From the AI distribution plan, 2026-09-29 (0043, `docs/reference/ai-distribution.md` §6)**
+44. **Where the MCP server lives.** Its hostname, and its home: a `server/` folder in this repo or a sibling repo
+    `imagine-os/mcp`?
+45. **Open-source the MCP server?** The Cursor Marketplace requires it; the official MCP Registry and Claude do not.
+46. **Which accounts to open.** A paid Claude plan for the Anthropic directory, OpenAI organization verification, the
+    muse.ai/platform partner application, a GitHub-verified DNS namespace for the registry.
+47. **Charged bookings by an agent.** May an agent book on a member's behalf when the pass would be charged, or does
+    paying stay a person's click (the 0025 limit, kept today)?
+
 ## F. What remains after this pass (for Justin)
 
 Everything below is known and written down; nothing here is a surprise found late. Read it as
@@ -636,11 +659,11 @@ of §E.
     teachers modalities rooms class_templates class_sessions bookings waitlist plans memberships credits
     payments invoices gift_cards email_templates wa_templates automations audit_log docs_entries
     components page_layouts`; `message_log` got its contract in 0.8.0; `intentions` was dropped in 0039, so 26 remain), then `npm run sql` — the input P2 needs.
-    _(0043: task C2 in `docs/plans/tables-system.md`, Sonnet with a Fable review.)_
+    _(0044: task C2 in `docs/plans/tables-system.md`, Sonnet with a Fable review.)_
 26. **Spec `data:` overrides** for M-03, C-01, D-01, D-02, K-01, P-01 and A-06 in their module `specs.ts`: their
     canvas `data` arrays name 32 nouns that are not tables (`plan_phases`, `design_tokens`…) and the inspector lists
     them as if they were.
-    _(0043: M-03 gets its `M03` spec in `src/modules/admin/specs.ts` — task A6 in `docs/plans/tables-system.md`; the
+    _(0044: M-03 gets its `M03` spec in `src/modules/admin/specs.ts` — task A6 in `docs/plans/tables-system.md`; the
     other six remain.)_
 27. **`useLayout(spec)` on the ~70 sectioned pages that still render a fixed order** (largest first: C-23, A-06,
     C-17, M-09, M-02a, A-02, C-10, C-06, M-08a/c, M-09c…); the customer pages already using the `SECTIONS[name]`

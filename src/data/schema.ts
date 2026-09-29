@@ -19,14 +19,14 @@ export interface ColumnDef {
   description?: string;
   /** Hide in default table view (long text, json). */
   wide?: boolean;
-  /** 0043: the human name of the column in the table manager (M-03). Absent = the bilingual dictionary in src/data/labels.ts. */
+  /** 0044: the human name of the column in the table manager (M-03). Absent = the bilingual dictionary in src/data/labels.ts. */
   label?: Bi;
-  /** 0043: a secret-adjacent value (a key hash): M-03 hides it from roles without tables.write. */
+  /** 0044: a secret-adjacent value (a key hash): M-03 hides it from roles without tables.write. */
   sensitive?: boolean;
 }
 
 /**
- * 0043: what kind of thing a row is, so M-03 can pick a sensible default view and icon.
+ * 0044: what kind of thing a row is, so M-03 can pick a sensible default view and icon.
  * entity = a thing that exists (a person, a plan) · event = something that happens at a time (a booking, a payment) ·
  * link = a join between two things (a role grant, an RSVP) · config = a setting or a template · log = append-only history.
  */
@@ -39,14 +39,14 @@ export interface TableDef {
   label: Bi;
   description: Bi;
   group: TableGroup;
-  /** 0043: see TableKind. */
+  /** 0044: see TableKind. */
   kind?: TableKind;
-  /** 0043: the glyph beside the table in the M-03 sidebar and graph (the Icon atom's set). */
+  /** 0044: the glyph beside the table in the M-03 sidebar and graph (the Icon atom's set). */
   icon?: IconName;
   columns: ColumnDef[];
   /** Column used as the human-readable title of a row. */
   titleColumn?: string;
-  /** 0043: take the title from the row of another table that points here (users → the profiles row whose user_id is this user: the full name, not the email). */
+  /** 0044: take the title from the row of another table that points here (users → the profiles row whose user_id is this user: the full name, not the email). */
   titleFrom?: { table: string; column: string };
   /** Per-table RLS intent, emitted as comments above the table in supabase/schema.sql and in docs/data-model.md. */
   rls?: string[];
@@ -230,7 +230,7 @@ export const tables: TableDef[] = [
     columns: [{ name: 'name', type: 'text' }, { name: 'prefix', type: 'text', description: 'first 13 characters, e.g. hoy_live_ab12 — what the list shows' }, { name: 'key_hash', type: 'text', sensitive: true, description: 'SHA-256 hex of the full key' }, { name: 'scopes', type: 'json', description: 'string[] from API_KEY_SCOPES (classes.read, bookings.write, hours.read…)' }, { name: 'environment', type: 'enum', enum: ['live', 'test'] }, { name: 'created_by', type: 'uuid', references: 'users', nullable: true }, { name: 'last_used_at', type: 'timestamptz', nullable: true, description: 'written by the server on each verified request' }, { name: 'expires_at', type: 'timestamptz', nullable: true }, { name: 'revoked_at', type: 'timestamptz', nullable: true }, { name: 'replaces_id', type: 'uuid', references: 'api_keys', nullable: true, description: 'set on the new key when it rotates an old one' }] },
   { name: 'audit_log', group: 'system', kind: 'log', icon: 'history', titleColumn: 'action', label: { es: 'Registro de actividad', en: 'Audit log' }, description: { es: 'Quién hizo qué, sobre qué entidad, cuándo (M-07).', en: 'Who did what, on which entity, when (M-07).' },
     columns: [{ name: 'actor_id', type: 'uuid', references: 'users', nullable: true }, { name: 'action', type: 'text' }, { name: 'entity', type: 'text' }, { name: 'entity_id', type: 'text', nullable: true }, { name: 'diff', type: 'json', nullable: true, wide: true }, { name: 'ip', type: 'text', nullable: true }] },
-  // 0043: saved views of the table manager (M-03) — grid, list, gallery, kanban, graph — with their filters, sorts and grouping.
+  // 0044: saved views of the table manager (M-03) — grid, list, gallery, kanban, graph — with their filters, sorts and grouping.
   { name: 'table_views', group: 'system', kind: 'config', icon: 'layout', titleColumn: 'name', label: { es: 'Vistas guardadas', en: 'Saved views' }, description: { es: 'Las vistas del gestor de tablas (M-03): qué tabla, qué tipo de vista (cuadrícula, lista, galería, tablero, grafo…) y con qué filtros, orden, agrupación y columnas. Una vista compartida la ve todo el equipo.', en: 'The table manager views (M-03): which table, which kind of view (grid, list, gallery, board, graph…) and with which filters, sorts, grouping and columns. A shared view is visible to the whole team.' },
     rls: ['staff with tables.read: read shared rows and their own (created_by = auth.uid())', 'staff with tables.write: insert; update and delete their own rows (super_admin: any)', 'is_default marks the view a table opens with; one default per table_name'],
     columns: [{ name: 'table_name', type: 'text', description: 'the table this view shows (a name from src/data/schema.ts)' }, { name: 'name', type: 'json', description: '{es,en}' }, { name: 'kind', type: 'enum', enum: ['grid', 'list', 'gallery', 'kanban', 'calendar', 'timeline', 'graph'] }, { name: 'config', type: 'json', wide: true, description: '{ filters: [{column, op, value}], sorts: [{column, dir}], groupBy, hiddenColumns, columnOrder, cardFields, kanbanColumn, pinned }' }, { name: 'is_default', type: 'bool' }, { name: 'shared', type: 'bool' }, { name: 'created_by', type: 'uuid', references: 'users', nullable: true }] },
@@ -329,7 +329,7 @@ export interface PracticeGoalRow extends BaseRow { user_id: string; cadence: Goa
 export type ActivityEventKind = 'goal.set' | 'milestone' | 'streak.saved' | 'streak.broken' | 'first.visit' | 'plan.purchased' | 'plan.renewed' | 'credit.expiring';
 export const ACTIVITY_EVENT_KINDS: readonly ActivityEventKind[] = ['goal.set', 'milestone', 'streak.saved', 'streak.broken', 'first.visit', 'plan.purchased', 'plan.renewed', 'credit.expiring'];
 export interface ActivityEventRow extends BaseRow { user_id: string | null; kind: ActivityEventKind; occurred_at: string; ref_table: string | null; ref_id: string | null; payload: Record<string, unknown> | null }
-// ---- table manager (0043) ----
+// ---- table manager (0044) ----
 export type TableViewKind = 'grid' | 'list' | 'gallery' | 'kanban' | 'calendar' | 'timeline' | 'graph';
 export const TABLE_VIEW_KINDS: readonly TableViewKind[] = ['grid', 'list', 'gallery', 'kanban', 'calendar', 'timeline', 'graph'];
 export type ViewFilterOp = 'is' | 'is_not' | 'contains' | 'empty' | 'not_empty' | 'before' | 'after' | 'gt' | 'lt' | 'in';

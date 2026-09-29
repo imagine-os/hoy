@@ -6,13 +6,13 @@ export interface SegmentOption<T extends string> {
   value: T;
   label: string;
   count?: number;
-  /** 0043: a glyph before the label. */
+  /** 0044: a glyph before the label. */
   icon?: IconName;
-  /** 0043: the option cannot be picked (a tooltip says why through `hint`). */
+  /** 0044: the option cannot be picked (a tooltip says why through `hint`). */
   disabled?: boolean;
-  /** 0043: tooltip text for the option (why it is disabled, or the label when `compact` hides it). */
+  /** 0044: tooltip text for the option (why it is disabled, or the label when `compact` hides it). */
   hint?: string;
-  /** 0043: the option is not wired yet — wrapped in the Placeholder atom (tooltip + toast, dashed in dev mode). The value is what is missing. */
+  /** 0044: the option is not wired yet — wrapped in the Placeholder atom (tooltip + toast, dashed in dev mode). The value is what is missing. */
   placeholder?: string;
 }
 
@@ -23,7 +23,7 @@ export interface SegmentedControlProps<T extends string> {
   ariaLabel: string;
   size?: 'sm' | 'md';
   block?: boolean;
-  /** 0043: below 768 px options with an icon show only the icon (the label stays for assistive tech and the tooltip). */
+  /** 0044: below 768 px options with an icon show only the icon (the label stays for assistive tech and the tooltip). */
   compact?: boolean;
 }
 

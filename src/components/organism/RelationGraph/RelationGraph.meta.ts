@@ -17,7 +17,7 @@ const edges = [
 
 export default defineMeta({
   tier: 'organism', name: 'RelationGraph',
-  description: { es: 'Grafo de relaciones en SVG (0043, M-03): nodos coloreados por tono, flechas de clave foránea, nodo en foco con sus vecinos, zoom y desplazamiento con botones, arrastre o teclado.', en: 'SVG relationship graph (0043, M-03): tone-coloured nodes, foreign-key arrows, a focused node with its neighbours, zoom and pan with buttons, drag or keyboard.' },
+  description: { es: 'Grafo de relaciones en SVG (0044, M-03): nodos coloreados por tono, flechas de clave foránea, nodo en foco con sus vecinos, zoom y desplazamiento con botones, arrastre o teclado.', en: 'SVG relationship graph (0044, M-03): tone-coloured nodes, foreign-key arrows, a focused node with its neighbours, zoom and pan with buttons, drag or keyboard.' },
   props: [
     { name: 'nodes', type: '{ id, label, sublabel?, tone?, state?: focus|near|dim, weight?, cluster? }[]', required: true, description: { es: 'Nodos. dim = etiqueta solo al pasar o enfocar.', en: 'Nodes. dim = label only on hover or focus.' } },
     { name: 'edges', type: '{ from, to, label?, strong? }[]', required: true, description: { es: 'Aristas dirigidas (from → to).', en: 'Directed edges (from → to).' } },

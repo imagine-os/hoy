@@ -1,4 +1,4 @@
-/* M-03 table manager (0043 redesign). Tokens only (ui-spacing skill): no raw px/rem spacing; layout widths in rem. */
+/* M-03 table manager (0044 redesign). Tokens only (ui-spacing skill): no raw px/rem spacing; layout widths in rem. */
 .tbl { display: grid; grid-template-columns: 18rem minmax(0, 1fr); margin: calc(-1 * var(--sp-xl)) calc(-1 * var(--gutter)) calc(-1 * var(--sp-3xl)); min-height: calc(100vh - var(--h-topbar)); }
 .tbl.is-rail { grid-template-columns: var(--w-rail) minmax(0, 1fr); }
 .tbl-main { padding: var(--sp-xl) var(--gutter) var(--sp-3xl); min-width: 0; display: flex; flex-direction: column; gap: var(--block); }

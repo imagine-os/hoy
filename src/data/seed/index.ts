@@ -46,7 +46,7 @@ export function buildSeed(): Record<string, BaseRow[]> {
   // 0041: M-08g — the next Colombian holidays (closed) and one special Saturday; D-07 — two example developer keys (hash only).
   db.hours_overrides.push(...buildHoursOverrides());
   db.api_keys.push(...buildApiKeys());
-  // 0043: M-03 — the default saved views (a bookings board, a people gallery, upcoming classes).
+  // 0044: M-03 — the default saved views (a bookings board, a people gallery, upcoming classes).
   db.table_views.push(...buildTableViews());
 
   // people: demo users + customers

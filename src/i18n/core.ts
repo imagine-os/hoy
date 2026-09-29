@@ -78,7 +78,7 @@ export const coreStrings: StringTable = {
   'core.common.rows': { es: '{n} filas', en: '{n} rows' },
   'core.common.previous': { es: 'Anterior', en: 'Previous' },
   'core.common.next': { es: 'Siguiente', en: 'Next' },
-  // 0043 · RelationGraph and KanbanBoard organisms (M-03)
+  // 0044 · RelationGraph and KanbanBoard organisms (M-03)
   'core.graph.zoom': { es: 'Zoom', en: 'Zoom' },
   'core.graph.zoomIn': { es: 'Acercar', en: 'Zoom in' },
   'core.graph.zoomOut': { es: 'Alejar', en: 'Zoom out' },

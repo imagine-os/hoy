@@ -31,7 +31,7 @@ export interface KanbanBoardProps {
 }
 
 /**
- * A board of cards in columns (0043, M-03 "Tablero"). Cards move by dragging the grip (pointer, touch or keyboard
+ * A board of cards in columns (0044, M-03 "Tablero"). Cards move by dragging the grip (pointer, touch or keyboard
  * through dnd-kit) AND through a "Move to…" menu on every card, so nothing is drag-only. Column headers show counts;
  * on phones the columns scroll horizontally with snap.
  */

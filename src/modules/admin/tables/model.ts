@@ -1,5 +1,5 @@
 /**
- * 0043 — M-03 view model: which columns show, how filters / sorts / grouping apply, and the plain-text value of a
+ * 0044 — M-03 view model: which columns show, how filters / sorts / grouping apply, and the plain-text value of a
  * cell (search, CSV, sort by title). One pipeline for every view kind: rows → filters → search → sorts → view.
  */
 import type { Lang } from '../../../i18n/types';
