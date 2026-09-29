@@ -159,7 +159,7 @@ const TENANT_KEYS = ['hours', 'contact', 'capacity', 'all'] as const;
 function TenantFacts({ what }: { what?: string }) {
   const { t, bi, lang } = useI18n();
   const contact = useContact();
-  // 0039: the hours the owner saved in M-08a and the exceptions of the next 30 days from M-08g.
+  // 0040: the hours the owner saved in M-08a and the exceptions of the next 30 days from M-08g.
   const hours = useOpeningHours();
   const pend = (f: ContactField) => pendingSuffix(contact, f, lang);
   const key = (what ?? 'all') as typeof TENANT_KEYS[number];

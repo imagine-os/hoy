@@ -18,7 +18,7 @@ Names are the spec names (EN · ES); a code with several routes (M-03, K-03, A-0
 | P-01 | Plans & prices — Modelo de Valor v3 · Planes y precios — Modelo de Valor v3 | One value model, written once and read by every surface that quotes a price. Bienvenida lowers the barrier, Membresía is the primary plan with two ways to pay, Pausas and Regalos widen the offer, Espacio monetises the room outside class hours. | [`/site/plans`](#/site/plans) |
 | W-01 | Site · Home · Sitio · Inicio | The public front page: the brand manifesto, the five classes, today’s classes, the value model, the philosophy, the teachers, real reviews and the first step (a trial class). | [`/site`](#/site) |
 | W-02 | Site · About HOY · Sitio · Sobre HOY | The full “About HOY” text, the four values, the philosophy on a dark panel and the brand board. | [`/site/about`](#/site/about) |
-| W-03 | Site · Modalities · Sitio · Modalidades | The scheduled practices grouped by movement, with intensity, duration and heated room — each cross-linked to the class essay it belongs to. | [`/site/modalities`](#/site/modalities) |
+| W-03 | Site · Modalities · Sitio · Modalidades | The scheduled practices grouped by class (hot yoga, barre, pilates, meditation, breathwork), with intensity, duration and heated room — each cross-linked to the class essay it belongs to. | [`/site/modalities`](#/site/modalities) |
 | W-04 | Site · Schedule · Sitio · Horario | Public weekly schedule with live capacity. Tapping a class prompts sign-in and leads to the customer app. | [`/site/schedule`](#/site/schedule) |
 | W-05 | Site · Teachers · Sitio · Profesores | Public teacher gallery with a portrait (a booked photo slot), bio and specialties. | [`/site/teachers`](#/site/teachers) |
 | W-06 | Site · Contact · Sitio · Contacto | WhatsApp, email, address, Instagram and hours from the tenant config, the studio map, and a form that opens WhatsApp with the message ready. | [`/site/contact`](#/site/contact) |
@@ -113,7 +113,7 @@ Names are the spec names (EN · ES); a code with several routes (M-03, K-03, A-0
 | M-08c | Settings · Payments · Ajustes · Pagos | Payout account, NIT, IVA (included in published prices or not) and DIAN resolution, the Wompi environment, and payroll: monthly or biweekly cadence, payout method, who signs, and the rate card by modality and by teacher. | [`/admin/settings/payments`](#/admin/settings/payments) |
 | M-08d | Settings · Communications · Ajustes · Comunicaciones | Quiet hours and the WhatsApp and email sender names M-04 and M-05 use when sending. | [`/admin/settings/communications`](#/admin/settings/communications) |
 | M-08e | Settings · Branding · Ajustes · Marca | Studio display name, wordmark variant and default language; the preview uses the real wordmark. | [`/admin/settings/branding`](#/admin/settings/branding) |
-| M-08f | Settings · Content · Ajustes · Contenido | The owner’s content decisions as settings: how classes are named in public (disciplines or movements), whether Respiración is its own class or lives inside meditation, which map provider the site embeds, and which legal versions are published. | [`/admin/settings/content`](#/admin/settings/content) |
+| M-08f | Settings · Content · Ajustes · Contenido | The owner’s content decisions as settings: whether Respiración is its own class or lives inside meditation, which map provider the site embeds, and which legal versions are published. | [`/admin/settings/content`](#/admin/settings/content) |
 | M-08g | Settings · Holidays & special hours · Ajustes · Festivos y horarios especiales | Dated exceptions to the weekly hours: closed holidays, days with other hours and events. Imports the Colombian holidays (Ley Emiliani) in one click, edits each exception in a panel and previews what customers will see over the next 30 days. | [`/admin/settings/hours`](#/admin/settings/hours) |
 | M-09 | Finance · Finanzas | Revenue by product and method, pending payments, refunds, invoices with the DIAN reference and the teacher-payroll roll-up. | [`/admin/finance`](#/admin/finance) |
 | M-09a | Finance · Payroll runs · Finanzas · Nóminas | The monthly teacher payroll runs: what is owed, what is approved and what is paid, plus the button that generates the period’s draft. | [`/admin/finance/payouts`](#/admin/finance/payouts) |
@@ -158,7 +158,7 @@ Data (entity → screens that read or write it; entity names follow M-03 / the s
 - **orders, payments, invoices, refunds** → C-04, C-05, C-11, C-17, C-23, E-02, S-04, M-06, M-07
 - **memberships, subscriptions, freezes** → C-01, C-06, C-19, C-22, C-25, M-06
 - **credits, credit_ledger** → C-04, C-08b, C-11, C-16, C-17, E-03, M-06
-- **intentions** → deprecated history (A-05 retired in 0030; nothing reads or writes it); **movement_tags** → C-02 movement filter, class cards
+- **intentions** → table removed in 0039 (A-05 retired in 0030); **modality tone** (`modalities.tone`) → C-02 / C-02b / W-04 filter chips and legend, class rows, calendar dots, S-05 room blocks
 - **reviews, ratings** → C-10, C-18, S-03
 - **content_articles, faq_entries** → C-13, C-14, C-15, C-25, S-02 reference rail, M-02
 - **events, rsvps** → C-01, C-23

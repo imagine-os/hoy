@@ -1,10 +1,10 @@
 # Machine surfaces — MCP / WebMCP, CLI, API
 
 What something other than a person can drive in HoyOS today, and what it cannot.
-**Checked 2026-09-29** (v0.15.0; previous check 2026-09-29, v0.14.0). Re-check and date this file every pass; a line that is not
+**Checked 2026-09-29** (v0.16.0; previous check 2026-09-29, v0.14.0). Re-check and date this file every pass; a line that is not
 re-checked is not current.
 
-**0039 delta (v0.15.0).** Thirteen new action ids: the admin module declares actions for the first time
+**0040 delta (v0.16.0).** Thirteen new action ids: the admin module declares actions for the first time
 (`src/modules/admin/actions.ts`, `ADMIN_ACTIONS` merged into the specs) — `settings.hours.update` (M-08a),
 `settings.hours.override.add` / `.remove` / `settings.hours.holidays.import` (M-08g), `integrations.google.copyHours` /
 `.connect` / `.push` (M-10a) — and D-07 declares `dev.apiKeys.create` / `.rotate` / `.revoke`
@@ -82,7 +82,7 @@ window.__hoyos.actions.filter((a) => a.mounted);
 | `manual.listRequests` | K-04 | ¿Qué cambios pidió el equipo al manual? | `status?: enum:open,done,dismissed,all` (default open) — answers a JSON array | `manual.edit` · coordinator, admin, super_admin |
 | `manual.answerRequest` | K-04 | Responde la solicitud {id}: {answer} | `id: manual_requests.id`, `answer`, `status?: enum:done,dismissed,open` | `manual.edit` · coordinator, admin, super_admin |
 
-Added 2026-09-29 (0039): hours, Google Business Profile and developer keys. The handlers re-check their permission
+Added 2026-09-29 (0040): hours, Google Business Profile and developer keys. The handlers re-check their permission
 (`settings.write`, `hours.write`, `api_keys.write`) and throw, so `run()` answers `{ ok: false }` for a role without it;
 every write appends the same `audit_log` row as the button (`settings.update`, `hours.override.save` /
 `.delete`, `hours.import_holidays`, `api_key.create` / `.rotate` / `.revoke`). Deliberate limits: the Google connect /
@@ -157,8 +157,8 @@ Everything is Node, in `scripts/`, and safe to run from a clean checkout.
 | `npm run lint:spacing` | Since 0037. `scripts/spacing-lint.mjs`: raw px/rem on spacing properties (margin, padding, gap, inset, top/right/bottom/left) and control sizes ≤ 64 px in `src/**/*.css` and inline `style` margin/padding/gap in `.tsx`; 1 px and `/* optical */` nudges ≤ 2 px allowed. Exit 1 when the count is above the baseline. `--report` (used by `npm run build`) prints only grown files · `--update-baseline` | `scripts/spacing-baseline.json` |
 | `npm run audit:spacing` | Since 0037. `scripts/spacing-audit.mjs --route=/app [--as=usr_cust] [--widths=390,1280,3840] [--grid] [--all] [--out=dir]`: serves `dist/` on :4174, prints uneven or off-grid sibling gaps, unequal card padding and targets under 44 px (divided by `--ui`); `--grid` saves a 4 / 16 px grid overlay. Run `npm run build` first | `spacing-audit/<route>-<width>-grid.jpg` with `--grid` |
 | `npm run test:dates` | The local-date-key regression test | — |
-| `npm run test:holidays` | Since 0039. `scripts/test-holidays.mjs`: `src/tenant/holidays.co.ts` against the official 2026 Colombian calendar (18 dates, Easter 5 April), Meeus Easter for seven years, every Emiliani holiday on a Monday 2025–2028 | — |
-| `npm run test:hours` | Since 0039. `scripts/test-hours.mjs`: `effectiveHoursFor` (override wins, inclusive, narrowest), `toGoogleBusinessHours` (Business Information API shape, one special period per date, overnight close), `toSchemaOrgHours`, `todayStatus` in America/Bogota | — |
+| `npm run test:holidays` | Since 0040. `scripts/test-holidays.mjs`: `src/tenant/holidays.co.ts` against the official 2026 Colombian calendar (18 dates, Easter 5 April), Meeus Easter for seven years, every Emiliani holiday on a Monday 2025–2028 | — |
+| `npm run test:hours` | Since 0040. `scripts/test-hours.mjs`: `effectiveHoursFor` (override wins, inclusive, narrowest), `toGoogleBusinessHours` (Business Information API shape, one special period per date, overnight close), `toSchemaOrgHours`, `todayStatus` in America/Bogota | — |
 | `node scripts/test-mat-bookings.mjs` | The 16-mat booking rules against `MockProvider` (bounds, collisions, release, persistence); run with the build before every `src/` commit since 0025 | — |
 | `node scripts/gen-page-doc.mjs <CODE>` | Page-doc skeleton from the spec and the captures | `docs/pages/<CODE>.md` |
 
@@ -184,14 +184,14 @@ Planned, in order: **Supabase** (Postgres + Auth + Realtime + Storage) behind `S
 `message_log` (`direction: inbound`, `external_id` = `wamid`) · **email inbound** (IMAP or SES) →
 `message_log`. Each one gets its own changelog entry and its own row in this table when it lands.
 
-**Designed in 0039, not answering.**
-- **Developer keys (inbound, D-0015).** D-07 issues `hoy_<live|test>_<24 base62>` keys; `api_keys` stores the
+**Designed in 0040, not answering.**
+- **Developer keys (inbound, D-0016).** D-07 issues `hoy_<live|test>_<24 base62>` keys; `api_keys` stores the
   13-character prefix and the SHA-256 hex, never the key. A request will carry `Authorization: Bearer hoy_live_…`; the
   server hashes the token, matches `key_hash`, checks `environment`, `scopes` (`classes.read`, `bookings.read`,
   `bookings.write`, `customers.read`, `hours.read`, `hours.write`, `webhooks.receive`), `expires_at` and `revoked_at`,
   and stamps `last_used_at`. First endpoints the scopes are shaped for: `GET /v1/classes`, `GET /v1/hours` (weekly +
   overrides, the same data as `useOpeningHours()`), `GET|POST /v1/bookings`. None exists.
-- **Google Business Profile push (outbound, D-0014).** On save in M-08a / M-08g and nightly, the server calls
+- **Google Business Profile push (outbound, D-0015).** On save in M-08a / M-08g and nightly, the server calls
   `PATCH https://mybusinessbusinessinformation.googleapis.com/v1/{locationName}?updateMask=regularHours,specialHours`
   with the body `toGoogleBusinessHours()` builds (M-10a shows it), using the location's refresh token from the server
   environment (`GOOGLE_BUSINESS_REFRESH_TOKEN_<TENANT>`), then sets `hours_overrides.google_synced_at`. Nightly it reads

@@ -11,6 +11,7 @@ import { Input, Select } from '../../components/atom/Input/Input';
 import { Button } from '../../components/atom/Button/Button';
 import { Badge } from '../../components/atom/Badge/Badge';
 import { Chip } from '../../components/atom/Chip/Chip';
+import { TONES } from '../../design/tokens';
 import { Toggle } from '../../components/atom/Toggle/Toggle';
 import { Field } from '../../components/molecule/Field/Field';
 import { Card } from '../../components/molecule/Card/Card';
@@ -22,7 +23,7 @@ import { ContentSubNav } from './contentNav';
 import './admin.css';
 
 type Entity = 'class_templates' | 'teachers' | 'modalities' | 'rooms';
-type FieldKind = 'text' | 'int' | 'bool' | 'bi' | 'select' | 'ref' | 'time' | 'list';
+type FieldKind = 'text' | 'int' | 'bool' | 'bi' | 'select' | 'ref' | 'time' | 'list' | 'tone';
 interface FieldDef { name: string; kind: FieldKind; label: Bi; options?: readonly string[]; ref?: 'modalities' | 'teachers' | 'rooms'; required?: boolean; hint?: Bi }
 
 const WEEKDAYS: Bi[] = [{ es: 'Domingo', en: 'Sunday' }, { es: 'Lunes', en: 'Monday' }, { es: 'Martes', en: 'Tuesday' }, { es: 'Miércoles', en: 'Wednesday' }, { es: 'Jueves', en: 'Thursday' }, { es: 'Viernes', en: 'Friday' }, { es: 'Sábado', en: 'Saturday' }];
@@ -49,7 +50,7 @@ const FIELDS: Record<Entity, FieldDef[]> = {
     { name: 'name_es', kind: 'text', label: { es: 'Nombre (ES)', en: 'Name (ES)' }, required: true },
     { name: 'name_en', kind: 'text', label: { es: 'Nombre (EN)', en: 'Name (EN)' } },
     { name: 'slug', kind: 'text', label: { es: 'Slug', en: 'Slug' } },
-    { name: 'movement', kind: 'select', options: ['enraiza', 'fluye', 'arde', 'libera'], label: { es: 'Movimiento', en: 'Movement' } },
+    { name: 'tone', kind: 'tone', label: { es: 'Tono de color', en: 'Colour tone' }, hint: { es: 'El color de la clase en chips, horario y calendario.', en: 'The class colour on chips, schedule and calendar.' } },
     { name: 'description', kind: 'bi', label: { es: 'Descripción', en: 'Description' } },
     { name: 'intensity', kind: 'int', label: { es: 'Intensidad 1–5', en: 'Intensity 1–5' } },
     { name: 'duration_min', kind: 'int', label: { es: 'Duración (min)', en: 'Duration (min)' } },
@@ -65,7 +66,7 @@ const FIELDS: Record<Entity, FieldDef[]> = {
 const BLANK: Record<Entity, Record<string, unknown>> = {
   class_templates: { title: '', modality_id: '', teacher_id: '', room_id: '', weekday: 1, start_time: '07:00', duration_min: 60, capacity: tenant.studio.mats, level: 'all', active: false },
   teachers: { user_id: null, display_name: '', bio: { es: '', en: '' }, photo_url: null, specialties: [], certifications: null, rate_per_class: 0, active: false, rating_avg: null },
-  modalities: { slug: '', name_es: '', name_en: '', movement: 'fluye', description: { es: '', en: '' }, intensity: 3, heated: false, duration_min: 60, active: false },
+  modalities: { slug: '', name_es: '', name_en: '', tone: 'river', description: { es: '', en: '' }, intensity: 3, heated: false, duration_min: 60, active: false },
   rooms: { name: '', capacity: tenant.studio.mats, heated: false, notes: null },
 };
 
@@ -94,9 +95,9 @@ export function ContentPage() {
         const v = r[f.name];
         if (f.kind === 'ref' && f.ref) return refLabel(f.ref, v);
         if (f.kind === 'bi') return bi((v as Bi | null) ?? { es: '', en: '' }) || <span className="muted">—</span>;
-        if (f.kind === 'list') return (v as string[]).map((id) => <Chip key={id} movement={modalities.find((m) => m.id === id)?.movement}>{refLabel('modalities', id)}</Chip>);
+        if (f.kind === 'list') return (v as string[]).map((id) => <Chip key={id} tone={modalities.find((m) => m.id === id)?.tone}>{refLabel('modalities', id)}</Chip>);
         if (f.name === 'weekday') return bi(WEEKDAYS[Number(v)]);
-        if (f.name === 'movement') return <Chip movement={v as ModalityRow['movement']} dot>{String(v)}</Chip>;
+        if (f.kind === 'tone') return <Chip tone={v as ModalityRow['tone']} dot>{String(v)}</Chip>;
         if (typeof v === 'boolean') return v ? '✓' : '·';
         return v == null || v === '' ? <span className="muted">—</span> : String(v);
       } })),
@@ -168,7 +169,8 @@ function Editor({ entity, row, fields, refs, modalities, readOnly, lang, onSave 
               if (f.kind === 'select') return <Select id={id} disabled={readOnly} value={String(v ?? '')} onChange={(e) => set(f.name, f.name === 'weekday' ? Number(e.target.value) : e.target.value)}>{f.options!.map((o) => <option key={o} value={o}>{f.name === 'weekday' ? bi(WEEKDAYS[Number(o)]) : o}</option>)}</Select>;
               if (f.kind === 'ref' && f.ref) return <Select id={id} disabled={readOnly} value={String(v ?? '')} onChange={(e) => set(f.name, e.target.value)}><option value="">—</option>{refs[f.ref].map((r) => <option key={r.id} value={r.id}>{r.label}</option>)}</Select>;
               if (f.kind === 'bi') { const b = (v as Bi | null) ?? { es: '', en: '' }; return <div className="stack-sm"><textarea id={id} className="input adm-textarea" disabled={readOnly} placeholder="ES" value={b.es} onChange={(e) => set(f.name, { ...b, es: e.target.value })} /><textarea className="input adm-textarea" disabled={readOnly} placeholder="EN" value={b.en} onChange={(e) => set(f.name, { ...b, en: e.target.value })} aria-label={`${bi(f.label)} EN`} /></div>; }
-              if (f.kind === 'list') { const list = (v as string[]) ?? []; return <div className="row wrap">{modalities.map((m) => <Chip key={m.id} movement={m.movement} dot selected={list.includes(m.id)} onClick={readOnly ? undefined : () => set(f.name, list.includes(m.id) ? list.filter((x) => x !== m.id) : [...list, m.id])}>{bi({ es: m.name_es, en: m.name_en })}</Chip>)}</div>; }
+              if (f.kind === 'tone') return <div className="row wrap" id={id} role="group">{TONES.map((k) => <Chip key={k} tone={k} dot selected={v === k} onClick={readOnly ? undefined : () => set(f.name, k)}>{k}</Chip>)}</div>;
+              if (f.kind === 'list') { const list = (v as string[]) ?? []; return <div className="row wrap">{modalities.map((m) => <Chip key={m.id} tone={m.tone} dot selected={list.includes(m.id)} onClick={readOnly ? undefined : () => set(f.name, list.includes(m.id) ? list.filter((x) => x !== m.id) : [...list, m.id])}>{bi({ es: m.name_es, en: m.name_en })}</Chip>)}</div>; }
               return <Input id={id} disabled={readOnly} value={v == null ? '' : String(v)} onChange={(e) => set(f.name, e.target.value === '' && f.name !== 'title' ? null : e.target.value)} />;
             }}
           </Field>
@@ -176,9 +178,9 @@ function Editor({ entity, row, fields, refs, modalities, readOnly, lang, onSave 
       </div>
       {!readOnly && <div className="row-between wrap"><span className="xs muted">{dirty ? t('admin.content.unsaved') : t('admin.content.upToDate')}</span><Button size="sm" disabled={!dirty || errors.length > 0} loading={saving} onClick={save}>{t('core.common.save')}</Button></div>}
       <Card tone="muted" eyebrow={t('admin.content.preview')} padding="sm">
-        {entity === 'class_templates' && <ClassRow title={String(d.title ?? '')} teacher={refs.teachers.find((x) => x.id === d.teacher_id)?.label ?? ''} startsAt={`2026-01-05T${String(d.start_time ?? '07:00')}:00`} durationMin={Number(d.duration_min ?? 60)} movement={modalities.find((m) => m.id === d.modality_id)?.movement ?? 'fluye'} booked={0} capacity={Number(d.capacity ?? 0)} />}
-        {entity === 'teachers' && <TeacherCard name={String(d.display_name ?? '')} bio={(d.bio as Bi) ?? { es: '', en: '' }} photo={d.photo_url as string | null} rating={row.rating_avg as number | null} specialties={((d.specialties as string[]) ?? []).map((id) => modalities.find((m) => m.id === id)).filter(Boolean).map((m) => ({ label: bi({ es: m!.name_es, en: m!.name_en }), movement: m!.movement }))} />}
-        {entity === 'modalities' && <div className="stack-sm"><Chip movement={d.movement as ModalityRow['movement']} dot>{lang === 'en' ? String(d.name_en || d.name_es) : String(d.name_es)}</Chip><p className="small">{bi((d.description as Bi) ?? { es: '' })}</p><span className="xs muted">{d.duration_min as number} min · {t('admin.content.intensity')} {String(d.intensity)}{d.heated ? ' · ♨' : ''}</span></div>}
+        {entity === 'class_templates' && <ClassRow title={String(d.title ?? '')} teacher={refs.teachers.find((x) => x.id === d.teacher_id)?.label ?? ''} startsAt={`2026-01-05T${String(d.start_time ?? '07:00')}:00`} durationMin={Number(d.duration_min ?? 60)} tone={modalities.find((m) => m.id === d.modality_id)?.tone ?? 'river'} booked={0} capacity={Number(d.capacity ?? 0)} />}
+        {entity === 'teachers' && <TeacherCard name={String(d.display_name ?? '')} bio={(d.bio as Bi) ?? { es: '', en: '' }} photo={d.photo_url as string | null} rating={row.rating_avg as number | null} specialties={((d.specialties as string[]) ?? []).map((id) => modalities.find((m) => m.id === id)).filter(Boolean).map((m) => ({ label: bi({ es: m!.name_es, en: m!.name_en }), tone: m!.tone }))} />}
+        {entity === 'modalities' && <div className="stack-sm"><Chip tone={d.tone as ModalityRow['tone']} dot>{lang === 'en' ? String(d.name_en || d.name_es) : String(d.name_es)}</Chip><p className="small">{bi((d.description as Bi) ?? { es: '' })}</p><span className="xs muted">{d.duration_min as number} min · {t('admin.content.intensity')} {String(d.intensity)}{d.heated ? ' · ♨' : ''}</span></div>}
         {entity === 'rooms' && <div className="row-between"><strong>{String(d.name ?? '')}</strong><Badge>{String(d.capacity)} mats{d.heated ? ' · ♨' : ''}</Badge></div>}
       </Card>
     </div>

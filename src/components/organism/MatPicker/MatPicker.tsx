@@ -45,7 +45,7 @@ export function MatPicker({ sessionId, capacity, value, onChange }: MatPickerPro
   const cols = useMatColumns(roomRef, perRow);
   const pad = (n: number) => String(n).padStart(2, '0');
   const physicalRows = Array.from({ length: matRows }, (_, r) => Array.from({ length: perRow }, (_, i) => r * perRow + i + 1).filter(n => n <= mats));
-  return <section className="mat-picker" data-movement="enraiza">
+  return <section className="mat-picker" data-tone="moss">
     <div className="row-between wrap"><div><p className="eyebrow">{t('site.mat.eyebrow')}</p><h3>{t('site.mat.title')}</h3></div><span className="small muted">{t('site.mat.layout', { n: mats, rows: matRows })}</span></div>
     <div className="mat-room" ref={roomRef} data-cols={cols}><div className="mat-teacher">{t('site.mat.front')}</div>
       <div className="mat-rows">{physicalRows.map((list, r) => <div key={r} className="mat-row">

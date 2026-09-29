@@ -19,7 +19,7 @@ export function TeachersPage() {
   const nav = useNavigate();
   const { rows: teachers } = useTable<TeacherRow>('teachers', { where: { active: true } });
   const { rows: modalities } = useTable<ModalityRow>('modalities');
-  const spec = (te: TeacherRow) => te.specialties.map((id) => modalities.find((m) => m.id === id)).filter(Boolean).map((m) => ({ label: bi({ es: m!.name_es, en: m!.name_en }), movement: m!.movement }));
+  const spec = (te: TeacherRow) => te.specialties.map((id) => modalities.find((m) => m.id === id)).filter(Boolean).map((m) => ({ label: bi({ es: m!.name_es, en: m!.name_en }), tone: m!.tone }));
   return (
     <div className="container page cust-page">
       <PageHead back="/app/more" title={t('customer.teachers.title')} sub={t('customer.teachers.sub')} />
@@ -52,13 +52,13 @@ export function TeacherProfilePage() {
         <div className="stack-sm"><h1 className="cust-title">{te.display_name}</h1><p className="small">{bi(te.bio)}</p></div>
         <section className="stack-sm">
           <h2 className="cust-h2">{t('customer.teachers.teaches')}</h2>
-          <div className="row wrap">{mods.map((m) => <Chip key={m.id} movement={m.movement} dot>{bi({ es: m.name_es, en: m.name_en })}</Chip>)}</div>
+          <div className="row wrap">{mods.map((m) => <Chip key={m.id} tone={m.tone} dot>{bi({ es: m.name_es, en: m.name_en })}</Chip>)}</div>
         </section>
         <section className="stack-sm">
           <h2 className="cust-h2">{t('customer.teachers.upcoming')}</h2>
           <Card padding="sm">
             {upcoming.length === 0 && <p className="small muted" style={{ padding: 'var(--sp-md)' }}>{t('customer.teachers.upcoming.empty')}</p>}
-            {upcoming.map((x) => <ClassRow key={x.session.id} title={x.session.title} teacher={x.room?.name ?? ''} startsAt={x.session.starts_at} durationMin={x.modality?.duration_min ?? 60} movement={x.modality?.movement ?? 'fluye'} booked={x.session.booked_count} capacity={x.session.capacity} onClick={() => nav(`/app/class/${x.session.id}`)} />)}
+            {upcoming.map((x) => <ClassRow key={x.session.id} title={x.session.title} teacher={x.room?.name ?? ''} startsAt={x.session.starts_at} durationMin={x.modality?.duration_min ?? 60} tone={x.modality?.tone ?? 'river'} booked={x.session.booked_count} capacity={x.session.capacity} onClick={() => nav(`/app/class/${x.session.id}`)} />)}
           </Card>
         </section>
         <p className="xs muted" style={{ textAlign: 'center' }}>{t('customer.teachers.ratingsNote')}</p>

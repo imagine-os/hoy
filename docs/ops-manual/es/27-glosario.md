@@ -30,7 +30,6 @@ que la agregue.
 | Especial | venta con concepto y precio escritos a mano (cumpleaños, sesión de equipo, alquiler con extras) | el concepto: "tu sesión privada" |
 | Experiencias Corporativas | la sexta línea, **en preparación**: bienestar para equipos de trabajo (sesión para equipos, programa recurrente, taller a medida) | "estamos preparando un programa para equipos" |
 | Disciplina | hot yoga, barre, pilates, meditación, respiración: el nombre público de cada clase | el nombre de la clase |
-| Movimiento | Enraíza, Fluye, Arde, Libera: la etiqueta interna que ordena el día | no se usa delante del cliente |
 
 ## 2. De la operación
 | Palabra | Qué significa |

@@ -10,7 +10,6 @@ import type { ModalityRow } from '../../../data/schema';
 import { formatCOP } from '../../../i18n/format';
 import { priceItem } from '../../../tenant/pricing';
 import { classesIntro, classes, classOrder, taglines } from '../../../tenant/brand';
-import { movements } from '../../../design/tokens';
 import { Button } from '../../../components/atom/Button/Button';
 import { Chip } from '../../../components/atom/Chip/Chip';
 import { Badge } from '../../../components/atom/Badge/Badge';
@@ -50,7 +49,7 @@ export function ClassesPage() {
                   <p className="site-lead muted">{bi(c.summary)}</p>
                   <p className="small">{bi(c.paragraphs[0])}</p>
                   <div className="row wrap">
-                    <Chip movement={c.movement} dot>{movements[c.movement].label}</Chip>
+                    <Chip tone={c.tone} dot>{mods.length ? c.modalitySlugs.map((s) => mods.find((m) => m.slug === s)).filter((m): m is ModalityRow => !!m).map((m) => bi({ es: m.name_es, en: m.name_en })).join(' · ') : bi(c.name)}</Chip>
                     {c.heated && <Badge tone="warn">{t('site.modalities.heated')}</Badge>}
                     {mods.map((m) => <Chip key={m.id}>{t('core.common.min', { n: m.duration_min })}</Chip>)}
                   </div>
@@ -59,7 +58,7 @@ export function ClassesPage() {
                   </div>
                 </div>
                 <div className="site-classrow-media">
-                  <MediaSlot ratio="16:9" kind="photo" movement={c.movement} slotKey={`site.classes.${slug}`} fallbackSrc={edition === "sanctuary" ? siteImage(slug) : undefined} fallbackVideo={edition === "sanctuary" && videoEnabled ? siteVideo(slug) : undefined} motion={motion} label={t('site.classes.media', { name: bi(c.name) })} brief={c.brief} />
+                  <MediaSlot ratio="16:9" kind="photo" tone={c.tone} slotKey={`site.classes.${slug}`} fallbackSrc={edition === "sanctuary" ? siteImage(slug) : undefined} fallbackVideo={edition === "sanctuary" && videoEnabled ? siteVideo(slug) : undefined} motion={motion} label={t('site.classes.media', { name: bi(c.name) })} brief={c.brief} />
                 </div>
               </article>
             );

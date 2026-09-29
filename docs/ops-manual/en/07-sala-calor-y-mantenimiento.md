@@ -35,7 +35,7 @@ The time between one class and the next:
 1. Lay out the mats the way the class asks (in rows or in a circle; the class description says which).
 2. Per mat: two blocks, a strap and a blanket. A bolster if the class uses one.
 3. Temperature and humidity to what the class needs.
-4. Light and music to match the class's movement (Enraíza, Fluye, Arde or Libera).
+4. Light and music to match the class and its intensity.
 
 ## 3. The heated room
 Hot yoga is practised in heat on purpose (see [Our classes](02-nuestras-clases.md)). That changes the work:

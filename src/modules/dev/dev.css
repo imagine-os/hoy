@@ -1,7 +1,7 @@
 .tok-swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(9.375rem, 1fr)); gap: var(--sp-md); }
 .tok-swatch { display: flex; flex-direction: column; gap: var(--sp-xs); }
 .tok-swatch-color { display: block; height: 3.5rem; border-radius: var(--r-sm); border: 1px solid var(--color-border); box-shadow: var(--shadow-highlight); }
-.tok-mv { display: flex; align-items: center; gap: var(--sp-sm); padding: var(--sp-md); border-radius: var(--r-sm); font-family: var(--font-heading); font-weight: 500; }
+.tok-tone { display: flex; align-items: center; gap: var(--sp-sm); padding: var(--sp-md); border-radius: var(--r-sm); font-family: var(--font-heading); font-weight: 500; }
 .tok-dot { width: var(--sp-md); height: var(--sp-md); border-radius: 50%; }
 .tok-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(11.25rem, 1fr)); gap: var(--sp-sm); }
 .tok-row { display: flex; align-items: center; gap: var(--sp-md); font-size: var(--fs-sm); min-width: 0; }
@@ -46,7 +46,7 @@
 .le-handle:active { cursor: grabbing; }
 .le-name { font-family: var(--font-heading); font-size: var(--fs-sm); font-weight: 500; min-width: 0; overflow-wrap: anywhere; }
 .le-grid { align-items: start; }
-/* 0039 · D-07 developer API keys */
+/* 0040 · D-07 developer API keys */
 .apikeys-cell { display: flex; flex-direction: column; align-items: flex-start; gap: var(--stack-tight); }
 .apikeys-scopes { display: flex; flex-wrap: wrap; gap: var(--stack-tight); white-space: normal; min-width: 12rem; }
 .apikeys-actions { flex-direction: column; align-items: stretch; gap: var(--gap-inline); }

@@ -32,7 +32,7 @@ export const routes: RouteDef[] = [
   { ...base, path: '/admin/crm/:id', roles: crm, element: page('MemberPage'), spec: M06 },
   { ...base, path: '/admin/activity', roles: [...admins, 'coordinator', 'finance'], element: page('ActivityPage'), spec: M07, nav: { labelKey: 'core.nav.activity', icon: 'activity', order: 16, group: G } },
   { ...base, path: '/admin/settings', roles: [...admins, 'coordinator', 'finance'], element: page('SettingsPage', { group: 'general' }), spec: M08a, nav: { labelKey: 'core.nav.settings', icon: 'settings', order: 17, group: G } },
-  // 0039: holidays and special hours — the coordinator keeps them current (hours.write).
+  // 0040: holidays and special hours — the coordinator keeps them current (hours.write).
   { ...base, path: '/admin/settings/hours', roles: [...admins, 'coordinator'], element: page('SettingsPage', { group: 'hours' }), spec: M08g },
   { ...base, path: '/admin/settings/features', roles: [...admins, 'coordinator', 'finance'], element: page('SettingsPage', { group: 'features' }), spec: M08b },
   { ...base, path: '/admin/settings/payments', roles: [...admins, 'finance'], element: page('SettingsPage', { group: 'payments' }), spec: M08c },

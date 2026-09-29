@@ -119,7 +119,7 @@ export const strings: StringTable = {
   'site.nav.book': { es: 'Reservar clase', en: 'Book a class' },
 
   'site.hero.eyebrow': { es: 'Human club · {city}', en: 'Human club · {city}' },
-  'site.hero.body': { es: 'Un santuario urbano en {city}: {mats} tapetes, {classes} clases al día y cuatro formas de moverte. Sin experiencia previa, sin prisa.', en: 'An urban sanctuary in {city}: {mats} mats, {classes} classes a day and four ways to move. No previous experience, no hurry.' },
+  'site.hero.body': { es: 'Un santuario urbano en {city}: {mats} tapetes, {classes} clases al día y varias formas de moverte. Sin experiencia previa, sin prisa.', en: 'An urban sanctuary in {city}: {mats} mats, {classes} classes a day and several ways to move. No previous experience, no hurry.' },
   'site.hero.cta': { es: 'Clase de prueba · {price}', en: 'Trial class · {price}' },
   'site.hero.cta2': { es: 'Ver horario', en: 'See schedule' },
   'site.hero.media': { es: 'Video de portada del estudio', en: 'Studio hero video' },
@@ -140,7 +140,6 @@ export const strings: StringTable = {
   'site.classes.room': { es: 'Sala', en: 'Room' },
   'site.classes.roomHot': { es: 'Caliente, a propósito', en: 'Heated, on purpose' },
   'site.classes.roomTemperate': { es: 'Temperatura ambiente', en: 'Room temperature' },
-  'site.classes.movement': { es: 'Movimiento', en: 'Movement' },
   'site.classes.factsPending': { es: 'Esta práctica todavía no tiene una modalidad propia en el horario: hoy se vive dentro de las clases guiadas.', en: 'This practice does not have its own modality in the schedule yet: today it lives inside the guided classes.' },
   'site.classes.bring': { es: 'Qué traer', en: 'What to bring' },
   'site.classes.bring.towel': { es: 'Toalla — la sala es caliente y vas a sudar.', en: 'A towel — the room is heated and you will sweat.' },
@@ -178,7 +177,8 @@ export const strings: StringTable = {
   'site.about.classes': { es: 'Conoce las clases', en: 'Meet the classes' },
 
   'site.modalities.title': { es: 'Modalidades', en: 'Modalities' },
-  'site.modalities.body': { es: 'Seis prácticas, cuatro movimientos, una sala.', en: 'Six practices, four movements, one room.' },
+  'site.modalities.body': { es: 'Seis prácticas, una sala.', en: 'Six practices, one room.' },
+  'site.modalities.other': { es: 'Otras prácticas', en: 'Other practices' },
   'site.modalities.intensity': { es: 'Intensidad', en: 'Intensity' },
   'site.modalities.heated': { es: 'Sala caliente', en: 'Heated room' },
   'site.modalities.classLink': { es: 'Leer sobre {name}', en: 'Read about {name}' },
@@ -190,7 +190,7 @@ export const strings: StringTable = {
   'site.schedule.loginBody': { es: 'Reservar y pagar ocurre dentro de la app. Entra o crea tu cuenta y volverás a esta clase.', en: 'Booking and paying happen inside the app. Sign in or create an account and you will come back to this class.' },
   'site.schedule.loginCta': { es: 'Entrar y reservar', en: 'Sign in and book' },
   'site.schedule.legend': { es: 'Leyenda', en: 'Legend' },
-  'site.schedule.legendBody': { es: 'El color de cada clase es su movimiento. El cupo que ves es en vivo: {mats} tapetes por sesión.', en: 'Each class’s colour is its movement. The capacity you see is live: {mats} mats per session.' },
+  'site.schedule.legendBody': { es: 'Cada clase tiene su color. El cupo que ves es en vivo: {mats} tapetes por sesión.', en: 'Each class has its own colour. The capacity you see is live: {mats} mats per session.' },
 
   'site.teachers.title': { es: 'Profesores', en: 'Teachers' },
   'site.teachers.body': { es: 'Personas que enseñan desde la práctica, no desde el guion.', en: 'People who teach from practice, not from a script.' },

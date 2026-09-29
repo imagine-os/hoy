@@ -21,7 +21,7 @@ app and the desk.
 |---|---|
 | The classes and their descriptions | the app's schedule, class detail, website |
 | Teacher profiles (bio, photo, specialities) | member app, website, teacher app |
-| Disciplines and movements | website, schedule |
+| Disciplines | website, schedule |
 | Rooms and capacity | Content, Check-in |
 | Club rules | member app |
 | Frequently asked questions | member app |

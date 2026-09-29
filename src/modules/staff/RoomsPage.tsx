@@ -72,7 +72,7 @@ export function RoomsPage() {
   const counts = useMemo(() => days.map((d) => sessions.filter((s) => s.status !== 'cancelled' && isSameDay(s.starts_at, d)).length + bookings.filter((b) => b.status !== 'cancelled' && isSameDay(b.starts_at, d)).length), [days, sessions, bookings]);
 
   const blocks: RoomBlock[] = useMemo(() => [
-    ...daySessions.map<RoomBlock>((s) => ({ id: s.id, roomId: s.room_id, startsAt: s.starts_at, endsAt: s.ends_at, title: s.title, sub: `${teacher.get(s.teacher_id)?.display_name ?? ''} · ${s.booked_count}/${s.capacity}`, tone: modality.get(s.modality_id)?.movement ?? 'fluye', status: 'class' })),
+    ...daySessions.map<RoomBlock>((s) => ({ id: s.id, roomId: s.room_id, startsAt: s.starts_at, endsAt: s.ends_at, title: s.title, sub: `${teacher.get(s.teacher_id)?.display_name ?? ''} · ${s.booked_count}/${s.capacity}`, tone: modality.get(s.modality_id)?.tone ?? 'river', status: 'class' })),
     ...dayBookings.map<RoomBlock>((b) => ({ id: b.id, roomId: b.room_id, startsAt: b.starts_at, endsAt: b.ends_at, title: b.title, sub: [b.teacher_id ? teacher.get(b.teacher_id)?.display_name : null, b.contact_name].filter(Boolean).join(' · ') || bi(KIND_LABEL[b.kind]), tone: KIND_TONE[b.kind], status: b.status })),
   ], [daySessions, dayBookings, teacher, modality, bi]);
 

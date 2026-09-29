@@ -56,24 +56,18 @@
 .site-quote { font-family: var(--font-heading); font-size: clamp(1.25rem, 2.6vw, 1.9rem); line-height: var(--lh-tight); letter-spacing: var(--ls-tight); color: var(--brand-yellow); max-width: 34ch; }
 .site-panel-cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-xl); }
 
-/* ---------- movement cards ---------- */
-.mvcard { display: flex; flex-direction: column; gap: var(--sp-sm); padding: var(--sp-xl); border-radius: var(--r-md); border: 1px solid var(--color-card-border); box-shadow: var(--shadow-card); }
-.mvcard h3 { font-size: var(--fs-xl); }
-.mvcard-enraiza { background: var(--mv-enraiza-bg); } .mvcard-fluye { background: var(--mv-fluye-bg); } .mvcard-arde { background: var(--mv-arde-bg); } .mvcard-libera { background: var(--mv-libera-bg); }
-.mvcard-enraiza h3 { color: var(--mv-enraiza-fg); } .mvcard-fluye h3 { color: var(--mv-fluye-fg); } .mvcard-arde h3 { color: var(--mv-arde-fg); } .mvcard-libera h3 { color: var(--mv-libera-fg); }
-/* the *-fg inks are mixed for cream paper; on the dark theme they fall under 3:1, so the heading
-   goes back to the ink token and the movement is carried by the tint behind it. */
-:root[data-theme="dark"] .mvcard h3, :root[data-theme="dark"] .site-classcard h3 { color: var(--color-ink); }
+/* ---------- class-tone cards (0039) ---------- */
+/* .tonecard-<id> (hook in tokens.css) sets --t-fg / --t-bg. The *-fg inks are mixed for cream paper; on the dark
+   theme they fall under 3:1, so the heading goes back to the ink token and the tone is carried by the tint behind it. */
+.site-classcard[class*="tonecard-"] h3 { color: var(--t-fg); }
+:root[data-theme="dark"] .site-classcard h3 { color: var(--color-ink); }
 
 /* ---------- classes ---------- */
 .site-classgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(12.25rem, 1fr)); gap: var(--sp-lg); }
 .site-classcard { display: flex; flex-direction: column; gap: var(--sp-md); padding: var(--card-pad); border-radius: var(--r-md); border: 1px solid var(--color-card-border); background-color: var(--color-surface); background-image: var(--tex-surf-on); box-shadow: var(--shadow-card); color: var(--color-text); }
 .site-classcard:hover { text-decoration: none; box-shadow: var(--shadow-raised); }
 .site-classcard h3 { font-size: var(--fs-xl); }
-.site-classcard.mvcard-enraiza { background-image: linear-gradient(var(--mv-enraiza-bg), var(--mv-enraiza-bg)); }
-.site-classcard.mvcard-fluye { background-image: linear-gradient(var(--mv-fluye-bg), var(--mv-fluye-bg)); }
-.site-classcard.mvcard-arde { background-image: linear-gradient(var(--mv-arde-bg), var(--mv-arde-bg)); }
-.site-classcard.mvcard-libera { background-image: linear-gradient(var(--mv-libera-bg), var(--mv-libera-bg)); }
+.site-classcard[class*="tonecard-"] { background-image: linear-gradient(var(--t-bg), var(--t-bg)); }
 .site-classcard .site-classcard-more { color: var(--color-primary); font-size: var(--fs-sm); font-weight: var(--fw-medium); margin-top: auto; }
 .site-classrow { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: var(--sp-2xl); align-items: center; }
 .site-classrow:nth-child(even) .site-classrow-media { order: -1; }

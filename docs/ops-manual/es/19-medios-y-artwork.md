@@ -51,7 +51,7 @@ manuscrito aporta personalidad, humanidad y movimiento; HUMAN CLUB aporta estruc
 | Crema | #F1E7D2 | una base neutra y suave; da amplitud |
 
 Los tonos claros dan luz y ligereza; los azules dan profundidad y estabilidad. Los demás tonos que ves en la app
-(tinta, arena, los colores de cada movimiento) son extensiones del sistema, no colores de marca.
+(tinta, arena, el color de cada clase) son extensiones del sistema, no colores de marca.
 
 ## 4. Las tipografías
 1. **Títulos y encabezados:** Inter (Regular, Medium, Semibold). El manual nombra Akzidenz-Grotesk como la

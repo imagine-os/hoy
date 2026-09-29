@@ -7,14 +7,14 @@ dónde estamos, qué sigue y en qué orden (con dependencias explícitas y lo qu
 paralelo), qué significa "terminado" en cada fase, cómo trabajar en el repo y qué debe decidir el
 owner del estudio. Está escrito para que otra cuenta de Claude (o una persona) lo retome sin contexto.
 
-## A. Where we are (v0.15.0, 2026-09-29)
+## A. Where we are (v0.16.0, 2026-09-29)
 
-- **v0.15.0 — Hours, holidays, Google Business Profile, developer keys** (`docs/changelog/0039-hours-google-keys.md`,
-  prompt `docs/prompts/0039-hours-google-keys.md`; Justin: "the opening hours once it is updated here, would be reflected
+- **v0.16.0 — Hours, holidays, Google Business Profile, developer keys** (`docs/changelog/0040-hours-google-keys.md`,
+  prompt `docs/prompts/0040-hours-google-keys.md`; Justin: "the opening hours once it is updated here, would be reflected
   in google business? … maybe we need a secret key systme for our apps for developers … Holiday hours, and special
-  overrides"): the M-08a hours are read everywhere (D-0013), `hours_overrides` + M-08g with the Colombian holidays,
-  M-10a previews the Google Business Profile push with platform / studio setup steps (D-0014), D-07 developer API keys
-  (D-0015). Still needed: the server (Google push + key verification) and Google's API access approval.
+  overrides"): the M-08a hours are read everywhere (D-0014), `hours_overrides` + M-08g with the Colombian holidays,
+  M-10a previews the Google Business Profile push with platform / studio setup steps (D-0015), D-07 developer API keys
+  (D-0016). Still needed: the server (Google push + key verification) and Google's API access approval.
 
 - **v0.14.0 — Spacing and sizing standard** (`docs/changelog/0037-spacing-standard.md`, prompt `docs/prompts/0037-ui-spacing.md`;
   Justin: "make sure all spacing and sizing across everything is picture perfect"): one 4 px rem scale plus semantic
@@ -376,7 +376,7 @@ chapter or spec and close the card.
 **Policies (fields in M-08)**
 6. Late-arrival grace minutes and no-show fee.
 7. Minimum students to run a class (if any) and substitution rate for teachers.
-8. Exact hours of the 4 daily classes and days of operation (6 or 7 days). _(0039: the opening hours are now editable in M-08a, with holidays and special hours in M-08g, and reach every screen; the decision itself is still open.)_
+8. Exact hours of the 4 daily classes and days of operation (6 or 7 days). _(0040: the opening hours are now editable in M-08a, with holidays and special hours in M-08g, and reach every screen; the decision itself is still open.)_
 9. Target room temperature per class type and exact pre-heat time.
 
 **People and payroll**
@@ -410,6 +410,10 @@ chapter or spec and close the card.
     names are the five disciplines; Enraíza / Fluye / Arde / Libera are an internal label (colour and day
     planning). Breathwork is "presente en nuestras clases guiadas"; whether it also runs as its own class is
     the existing M-08f switch, not a decision. Set M-08f public naming to `disciplines`.
+    **Superseded 2026-09-29 (0039)**: the owner retired the four movements entirely — not public, not internal, not as
+    data keys — so the "internal label" resolution above no longer holds. Classes are always named by modality, each
+    modality carries a neutral colour tone, and the M-08f public-naming setting is removed (D-0013,
+    `docs/changelog/0039-retire-movements.md`).
 23. **Pausas rules**: ~~does "Pausas Ilimitadas" stack with Membership or replace it~~ **(answered 2026-09-29,
     0032, value-model deck: a "complemento mensual" — it stacks)**; still open: does a Pausa spend the
     one-class-per-person-per-day limit? (manual `11`)
@@ -577,7 +581,7 @@ of §E.
     worked around it — the manual transforms pipe tables into a fenced block renderer inside
     `MarkdownViewer`, and the legal documents were written as lists rather than tables. Add the
     dependency (with the changelog entry the rules require) and delete the transform.
-20. ~~**Respiración has no `modalities` row**~~ **DONE (0.7.0)**: the row exists (`respiracion`, 45 min, libera) and
+20. ~~**Respiración has no `modalities` row**~~ **DONE (0.7.0)**: the row exists (`respiracion`, 45 min) and
     M-08f decides whether the public sees it; W-08 shows facts when on and the sentence when off (§E 22).
 21. ~~**The expenses ledger**~~ **DONE (0.6.1).** `expense_templates` + `expenses`, M-09c
     `/admin/finance/expenses` (idempotent period generator, marcar pagado) and the Balance card on
@@ -603,9 +607,9 @@ of §E.
 **(f) Left by the 0.7.1 polish pass** (`docs/changelog/0020-polish-pass.md`; none blocks a phase)
 
 25. **`TableDef.rls` for the 27 tables that have none** (`tenants feature_flags consents users profiles user_roles
-    teachers modalities rooms class_templates class_sessions bookings waitlist intentions plans memberships credits
+    teachers modalities rooms class_templates class_sessions bookings waitlist plans memberships credits
     payments invoices gift_cards email_templates wa_templates automations audit_log docs_entries
-    components page_layouts`; `message_log` got its contract in 0.8.0), then `npm run sql` — the input P2 needs.
+    components page_layouts`; `message_log` got its contract in 0.8.0; `intentions` was dropped in 0039, so 26 remain), then `npm run sql` — the input P2 needs.
 26. **Spec `data:` overrides** for M-03, C-01, D-01, D-02, K-01, P-01 and A-06 in their module `specs.ts`: their
     canvas `data` arrays name 32 nouns that are not tables (`plan_phases`, `design_tokens`…) and the inspector lists
     them as if they were.
@@ -658,9 +662,9 @@ rest is `docs/website-vision.md` ("Next level — 15 ideas") as one line each, m
 3. **Membership calculator.** A visits-per-month slider that compares the Monthly Plan, the 10-class pack and
    single passes from `src/tenant/pricing.ts` and names the break-even — the value model arguing for itself.
 4. Produce the shot list (1 video, 14 photographs across the 12 seeded `media_assets` slots — 16 once the class portraits split, `docs/website-vision.md`) — the owner supplies it.
-5. Class-finder quiz: three questions mapped onto the four movements and five classes, ending on a filtered schedule.
+5. Class-finder quiz: three questions mapped onto the five classes, ending on a filtered schedule.
 6. Motion and scroll choreography behind `--dur-*` / `--ease-*` tokens and `prefers-reduced-motion`.
-7. Accessibility pass: movement-tint contrast in both themes, focus order, skip link, keyboard run through the schedule drawer.
+7. Accessibility pass: class-tone contrast in both themes, focus order, skip link, keyboard run through the schedule drawer.
 8. Journal / blog from `content_articles` (`/site/journal`, `/site/journal/:slug`) — feeds item 1.
 9. Teacher spotlight series: one long-form page per month from `teachers.bio`, reusing W-08's layout.
 10. Instagram feed slot: six tiles under the footer through a cached endpoint (never a client-side token).

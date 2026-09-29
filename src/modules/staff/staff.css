@@ -44,8 +44,8 @@
 .register-item .pricerow { padding: var(--sp-md) var(--sp-sm); }
 
 /* 0017 · S-05 rooms + Especiales */
-.staff-notice { border-radius: var(--r-md); padding: var(--sp-md) var(--sp-lg); background: var(--mv-enraiza-bg); border: 1px solid var(--color-card-border); }
-.staff-notice-bad { background: var(--mv-arde-bg); }
+.staff-notice { border-radius: var(--r-md); padding: var(--sp-md) var(--sp-lg); background: var(--tone-moss-bg); border: 1px solid var(--color-card-border); }
+.staff-notice-bad { background: var(--tone-clay-bg); }
 .rooms { display: grid; grid-template-columns: minmax(0, 1fr) 22.5rem; gap: var(--block); align-items: start; }
 .rooms-main, .rooms-rail { min-width: 0; }
 .rooms-datebar { display: flex; align-items: center; gap: var(--sp-md); flex-wrap: wrap; }

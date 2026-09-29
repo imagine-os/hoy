@@ -57,14 +57,26 @@ export const rgb = {
   },
 } as const;
 
-/** The four movements — canvas `movSets.hoy`; class cards, week chips and the schedule filter. */
-export const movements = {
-  enraiza: { label: 'Enraíza', fg: '#3A4C36', dot: '#5A7355', bg: 'rgba(90,115,85,.24)' },
-  fluye: { label: 'Fluye', fg: '#2C4A6B', dot: '#5F85B1', bg: 'rgba(95,133,177,.24)' },
-  arde: { label: 'Arde', fg: '#7A3F27', dot: '#C4704F', bg: 'rgba(196,112,79,.26)' },
-  libera: { label: 'Libera', fg: '#5E5312', dot: '#D8C24A', bg: 'rgba(216,194,74,.32)' },
+/**
+ * Class tones — a neutral per-modality palette (0039). Each class type (`modalities.tone`) and each website class
+ * (`brand.classes[slug].tone`) picks one; chips, calendar dots, room blocks and empty media frames are tinted with it.
+ * The ids are hue names and carry no concept: they are never shown as words outside the D-01 tokens page.
+ * `fg` is the chip ink on the translucent `bg` in the light theme; `dot` is the saturated mark (dots, borders); in the
+ * dark theme chip text is `dot` mixed toward the ink so it holds 4.5:1 on the dark surfaces (Chip.css).
+ * moss / river / clay / sun are the canvas `movSets.hoy` colours; sage / slate / plum were added in the same family.
+ */
+export const classTones = {
+  moss: { fg: '#3A4C36', dot: '#5A7355', bg: 'rgba(90,115,85,.24)' },
+  river: { fg: '#2C4A6B', dot: '#5F85B1', bg: 'rgba(95,133,177,.24)' },
+  clay: { fg: '#7A3F27', dot: '#C4704F', bg: 'rgba(196,112,79,.26)' },
+  sun: { fg: '#5E5312', dot: '#D8C24A', bg: 'rgba(216,194,74,.32)' },
+  sage: { fg: '#34483D', dot: '#7E9C88', bg: 'rgba(126,156,136,.26)' },
+  slate: { fg: '#323F4C', dot: '#848F9B', bg: 'rgba(132,143,155,.26)' },
+  plum: { fg: '#57344F', dot: '#9E6E8F', bg: 'rgba(158,110,143,.24)' },
 } as const;
-export type Movement = keyof typeof movements;
+export type Tone = keyof typeof classTones;
+/** Every tone id, in palette order (selects, generated CSS rules, the tokens page). */
+export const TONES = Object.keys(classTones) as Tone[];
 
 /**
  * Semantic roles. Light = canvas `.canvas[data-brand="hoy"]:not([data-theme="dark"])`,
@@ -349,24 +361,34 @@ export const UI_SCALE: readonly { minWidth: number; ui: number; minText: number 
   { minWidth: BREAKPOINTS.hd, ui: 1.125, minText: 16 }, { minWidth: BREAKPOINTS.qhd, ui: 1.375, minText: 16 }, { minWidth: BREAKPOINTS.uhd, ui: 1.75, minText: 16 },
 ];
 
-export const tokens = { brand, palette, rgb, movements, semantic, shadows, textures, materials, surfaces, hues, type, spacing, spacingLegacy, spacingSemantic, radii, motion, icons, layout: layoutTokens, breakpoints: breakpointVars };
+export const tokens = { brand, palette, rgb, classTones, semantic, shadows, textures, materials, surfaces, hues, type, spacing, spacingLegacy, spacingSemantic, radii, motion, icons, layout: layoutTokens, breakpoints: breakpointVars };
 
 function vars(obj: Record<string, string>): string {
   return Object.entries(obj).map(([k, v]) => `  --${k}: ${v};`).join('\n');
+}
+
+/**
+ * Class-tone hooks (0039). Every element that carries a tone — `.chip-<id>`, `.tone-<id>` (ClassRow dot, RoomDayGrid block),
+ * `.tonecard-<id>`, `.mediaslot-<id>`, `.cust-media-<id>`, `.cust-week-<id>`, `.adm-tone-<id>` or `[data-tone=<id>]` —
+ * gets the local `--t-fg / --t-dot / --t-bg`, so component CSS reads those once instead of one rule per tone.
+ */
+export const TONE_HOOKS = ['chip', 'tone', 'tonecard', 'mediaslot', 'cust-media', 'cust-week', 'adm-tone'] as const;
+function toneHooksCss(): string {
+  return TONES.map((id) => `${[...TONE_HOOKS.map((h) => `.${h}-${id}`), `[data-tone="${id}"]`].join(', ')} { --t-fg: var(--tone-${id}-fg); --t-dot: var(--tone-${id}-dot); --t-bg: var(--tone-${id}-bg); }`).join('\n');
 }
 
 /** Builds the full tokens stylesheet. Themes via [data-theme], skins via [data-skin]. */
 export function buildTokensCss(): string {
   const brandVars = vars(Object.fromEntries(Object.entries(brand).map(([k, v]) => [`brand-${k}`, v])));
   const paletteVars = vars(Object.fromEntries(Object.entries(palette).map(([k, v]) => [`hoy-${k}`, v])));
-  const mv = Object.entries(movements).flatMap(([k, m]) => [[`mv-${k}-fg`, m.fg], [`mv-${k}-dot`, m.dot], [`mv-${k}-bg`, m.bg]]);
+  const tone = Object.entries(classTones).flatMap(([k, m]) => [[`tone-${k}-fg`, m.fg], [`tone-${k}-dot`, m.dot], [`tone-${k}-bg`, m.bg]]);
   const mat = Object.fromEntries(Object.entries(materials).map(([k, m]) => [`mat-${k}`, m.fill]));
   const hueVars = vars(Object.fromEntries(Object.entries(hues).map(([k, v]) => [`hue-${k}`, String(v)])));
   return `/* GENERATED from src/design/tokens.ts — do not edit by hand */
 :root {
 ${brandVars}
 ${paletteVars}
-${vars(Object.fromEntries(mv))}
+${vars(Object.fromEntries(tone))}
 ${vars(mat)}
 ${vars(type)}
 ${vars(spacing)}
@@ -391,6 +413,7 @@ ${hueVars}
   --color-card-border: transparent;
   color-scheme: light;
 }
+${toneHooksCss()}
 ${SPACING_BANDS.map((b) => `@media (min-width: ${b.minWidth}px) { :root {${Object.entries(b.vars).map(([k, v]) => ` --${k}: ${v};`).join('')} } }`).join('\n')}
 ${UI_SCALE.map((b) => `@media (min-width: ${b.minWidth}px) { :root { --ui: ${b.ui}; --fs-floor: ${b.minText}px; } }`).join('\n')}
 /* D-0007: the band scales the root font-size, so every rem token grows with it. */

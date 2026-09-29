@@ -59,7 +59,7 @@ _Excepciones con fecha al horario semanal de M-08a: festivos (cerrado), jornadas
 | `kind` | enum (holiday \| special \| event) |  |
 | `source` | enum (manual \| colombia) | colombia = imported from the Ley Emiliani calendar (src/tenant/holidays.co.ts) |
 | `note` | text, null |  |
-| `google_synced_at` | timestamptz, null | last successful push to Google Business Profile (server-side, 0039: no server yet) |
+| `google_synced_at` | timestamptz, null | last successful push to Google Business Profile (server-side, 0040: no server yet) |
 | `created_by` | text, null |  |
 
 **Who may read / write**
@@ -191,7 +191,7 @@ _Un cupo de arte por lugar de la app y la web (M-02d): qué falta, en qué propo
 | `label` | json | {es,en} where the slot shows |
 | `alt` | json | {es,en} alternative text |
 | `brief` | json | {es,en} what to shoot |
-| `movement` | enum (enraiza \| fluye \| arde \| libera), null | movement tint of the empty slot |
+| `tone` | enum (moss \| river \| clay \| sun \| sage \| slate \| plum), null | class-tone tint of the empty slot (D-01 classTones) |
 | `url` | text, null |  |
 | `credit` | text, null | photographer / licence |
 | `status` | enum (pending \| ready) |  |
@@ -327,8 +327,8 @@ _Perfil público y contractual de cada profesor._
 ### Schedule · Horario
 
 #### `modalities`
-Class types of the club, each with its movement.  
-_Tipos de clase del club, cada uno con su movimiento._
+Class types of the club, each with its colour tone.  
+_Tipos de clase del club, cada uno con su tono de color._
 
 | column | type | notes |
 | --- | --- | --- |
@@ -339,7 +339,7 @@ _Tipos de clase del club, cada uno con su movimiento._
 | `slug` | text |  |
 | `name_es` | text |  |
 | `name_en` | text |  |
-| `movement` | enum (enraiza \| fluye \| arde \| libera) |  |
+| `tone` | enum (moss \| river \| clay \| sun \| sage \| slate \| plum) | colour tone (D-01 classTones), one per modality |
 | `description` | json |  |
 | `intensity` | int | 1–5 |
 | `heated` | bool |  |
@@ -469,20 +469,6 @@ _Posiciones en espera y ventana de reclamo._
 | `status` | enum (waiting \| offered \| claimed \| expired \| left) |  |
 | `offered_at` | timestamptz, null |  |
 | `claim_until` | timestamptz, null |  |
-
-#### `intentions`
-DEPRECATED (0030): answer to “How do you want to feel today?” (A-05, retired from the product). Kept as history; nothing writes or reads new rows.  
-_OBSOLETA (0030): respuesta a “¿Cómo quieres sentirte hoy?” (A-05, retirada del producto). Se conserva como historial; nada escribe ni lee filas nuevas._
-
-| column | type | notes |
-| --- | --- | --- |
-| `id` | uuid | Primary key |
-| `tenant_id` | uuid | → `tenants` Owning studio (multi-tenant) |
-| `created_at` | timestamptz |  |
-| `updated_at` | timestamptz |  |
-| `user_id` | uuid | → `users`  |
-| `date` | date |  |
-| `movement` | enum (enraiza \| fluye \| arde \| libera) |  |
 
 #### `reviews`
 A class rating (C-10): stars, tags and comment.  
@@ -1219,7 +1205,7 @@ _Orden de secciones por página guardado desde el editor drag-and-drop._
 | `updated_by` | uuid, null | → `users`  |
 
 ## Seed data (`src/data/seed/`)
-6 modalities, 2 rooms (the main room at 15 mats and a small meditation room), 8 teachers, 24 weekly templates (4/day Mon–Sat), sessions for −7…+7 days, 9 demo staff/users + 30 customers, memberships/credits/payments/invoices, bookings filling sessions, waitlists on full classes, today's intentions, feature flags from every spec toggle, legal docs + consents, 2 gift cards, 3 email templates, 3 WhatsApp templates, 3 automations, the unified message record (`seed/messages.ts`: 69 `message_log` rows — WhatsApp both ways, automated reminders and receipts, newsletters, one email exchange, internal notes — in 17 conversations, six inbound left unread), audit logs, three months of payroll runs, and four space bookings with two Especiales (one with a manual teacher payout). Deterministic PRNG; reseeds daily so "today" always has classes.
+6 modalities, 2 rooms (the main room at 15 mats and a small meditation room), 8 teachers, 24 weekly templates (4/day Mon–Sat), sessions for −7…+7 days, 9 demo staff/users + 30 customers, memberships/credits/payments/invoices, bookings filling sessions, waitlists on full classes, feature flags from every spec toggle, legal docs + consents, 2 gift cards, 3 email templates, 3 WhatsApp templates, 3 automations, the unified message record (`seed/messages.ts`: 69 `message_log` rows — WhatsApp both ways, automated reminders and receipts, newsletters, one email exchange, internal notes — in 17 conversations, six inbound left unread), audit logs, three months of payroll runs, and four space bookings with two Especiales (one with a manual teacher payout). Deterministic PRNG; reseeds daily so "today" always has classes.
 
 ## Adding a table
 1. Add a `TableDef` to `src/data/schema.ts` (and a typed row interface if pages use it).

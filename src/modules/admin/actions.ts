@@ -1,11 +1,11 @@
 import type { ActionDef } from '../../actions/types';
 
 /**
- * 0039 — what the admin pages can be asked to do (WebMCP today, the voice controller later). Declared on the
+ * 0040 — what the admin pages can be asked to do (WebMCP today, the voice controller later). Declared on the
  * page specs in `./specs.ts` (`ADMIN_ACTIONS`), mounted by each page with `useActions()`. As on the customer
  * pages, `permission` is advisory metadata: the route's roles decide whether the page (and so the handler) is
  * mounted, and each handler re-checks the permission before it writes. The admin module declared no actions
- * before 0039; the rest of M-xx gains them as each page is touched.
+ * before 0040; the rest of M-xx gains them as each page is touched.
  */
 const DAY = 'enum:0,1,2,3,4,5,6 (0 = Sunday)';
 const TIME = 'HH:MM (24 h)';

@@ -17,7 +17,7 @@ import { Icon } from '../../../components/atom/Icon/Icon';
 export function MorePage() {
   const { t, bi, lang } = useI18n();
   const contact = useContact();
-  // 0039: M-08a weekly hours + M-08g exceptions, with today's line in the studio's time zone.
+  // 0040: M-08a weekly hours + M-08g exceptions, with today's line in the studio's time zone.
   const hours = useOpeningHours();
   const nav = useNavigate();
   const { user, devMode, switchUser } = useSession();

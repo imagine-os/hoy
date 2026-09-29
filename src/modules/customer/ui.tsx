@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useI18n } from '../../i18n/I18nProvider';
 import { useTable } from '../../data/DataContext';
 import type { MediaAssetRow } from '../../data/schema';
-import type { Movement } from '../../design/tokens';
+import type { Tone } from '../../design/tokens';
 import { Chip } from '../../components/atom/Chip/Chip';
 import type { JoinedSession } from './hooks';
 import './customer.css';
@@ -31,15 +31,15 @@ export function PageHead({ title, sub, back, eyebrow, actions }: { title: ReactN
 /**
  * A media slot. With `slotKey` it reads `media_assets` (M-02d): once the owner pastes a URL and
  * flips the row to `ready`, the real photo or video appears here and everywhere else that slot is
- * used, with no deploy. Until then it renders an intentional, branded empty slot — movement tint,
+ * used, with no deploy. Until then it renders an intentional, branded empty slot — class-tone tint,
  * ratio badge and an "arte pendiente / art pending" chip — so nobody mistakes it for content and
  * everybody can see what is still owed.
  */
-export function MediaPlaceholder({ label, ratio, movement, slotKey, children }: { label: string; ratio?: string; movement?: Movement; slotKey?: string; children?: ReactNode }) {
+export function MediaPlaceholder({ label, ratio, tone, slotKey, children }: { label: string; ratio?: string; tone?: Tone; slotKey?: string; children?: ReactNode }) {
   const { t, bi } = useI18n();
   const { rows } = useTable<MediaAssetRow>('media_assets', slotKey ? { where: { slot_key: slotKey } } : { limit: 0 });
   const asset = slotKey ? rows[0] : undefined;
-  const mv = movement ?? asset?.movement ?? undefined;
+  const tn = tone ?? asset?.tone ?? undefined;
   const ar = ratio ?? asset?.ratio ?? '16 / 9';
   const ready = asset?.status === 'ready' && !!asset.url;
 
@@ -54,7 +54,7 @@ export function MediaPlaceholder({ label, ratio, movement, slotKey, children }: 
     );
   }
   return (
-    <div className={`cust-media cust-media-empty ${mv ? `cust-media-${mv}` : ''}`} style={{ aspectRatio: ar }} role="img" aria-label={`${label} · ${t('customer.media.pending')}`}>
+    <div className={`cust-media cust-media-empty ${tn ? `cust-media-${tn}` : ''}`} style={{ aspectRatio: ar }} role="img" aria-label={`${label} · ${t('customer.media.pending')}`}>
       <span className="cust-media-ratio" aria-hidden>{ar.replace(/\s/g, '')}</span>
       <span className="cust-media-chip" aria-hidden>{t('customer.media.pending')}</span>
       <span className="cust-media-label">{asset ? bi(asset.label) : label}</span>
@@ -63,16 +63,16 @@ export function MediaPlaceholder({ label, ratio, movement, slotKey, children }: 
   );
 }
 
-/** Movement chip for a joined session (falls back to fluye). */
-export function MovementChip({ j }: { j: JoinedSession }) {
+/** Class chip for a joined session: the modality name in its tone (falls back to river). */
+export function ClassChip({ j }: { j: JoinedSession }) {
   const { bi } = useI18n();
-  const mv = j.modality?.movement ?? 'fluye';
-  return <Chip movement={mv} dot>{j.modality ? bi({ es: j.modality.name_es, en: j.modality.name_en }) : j.session.title}</Chip>;
+  return <Chip tone={toneOf(j)} dot>{j.modality ? bi({ es: j.modality.name_es, en: j.modality.name_en }) : j.session.title}</Chip>;
 }
 
 export const roomName = (j: JoinedSession) => j.room?.name ?? '';
 export const teacherName = (j: JoinedSession) => j.teacher?.display_name ?? '';
-export const movementOf = (j: JoinedSession): Movement => j.modality?.movement ?? 'fluye';
+/** The joined session's modality tone (D-01 classTones), river when the modality is missing. */
+export const toneOf = (j: JoinedSession): Tone => j.modality?.tone ?? 'river';
 export const durationMin = (j: JoinedSession) => j.modality?.duration_min ?? Math.round((new Date(j.session.ends_at).getTime() - new Date(j.session.starts_at).getTime()) / MS.min);
 
 /** Builds and downloads an .ics for a session (C-08 / C-23 AddToCalendar). */

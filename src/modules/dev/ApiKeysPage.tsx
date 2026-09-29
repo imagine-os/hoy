@@ -33,7 +33,7 @@ interface Draft { name: string; environment: ApiKeyEnvironment; scopes: string[]
 const EMPTY: Draft = { name: '', environment: 'test', scopes: ['classes.read', 'hours.read'], expiryDays: 90 };
 
 /**
- * D-07 `/dev/api-keys` (0039, D-0015) — keys HoyOS issues to developers. Hashed at rest, shown once, scoped,
+ * D-07 `/dev/api-keys` (0040, D-0016) — keys HoyOS issues to developers. Hashed at rest, shown once, scoped,
  * rotated with a 24-hour grace period, revoked by stamping revoked_at. Nothing verifies them yet: that is the server.
  */
 export function ApiKeysPage() {

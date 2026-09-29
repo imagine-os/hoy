@@ -131,7 +131,7 @@ function IntegrationCard({ def, row, readOnly }: { def: IntegrationDef; row: Int
   );
 }
 
-/** 0039: a checklist split by who does it (platform once · studio per location). M-10 cards and M-10a share it. */
+/** 0040: a checklist split by who does it (platform once · studio per location). M-10 cards and M-10a share it. */
 export function IntegrationSteps({ def }: { def: IntegrationDef }) {
   const { t, bi } = useI18n();
   return (

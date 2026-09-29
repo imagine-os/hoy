@@ -2,7 +2,7 @@ import type { ActionDef } from '../../actions/types';
 import { API_KEY_SCOPES } from './apiKeys';
 
 /**
- * 0039 — D-07 developer keys (WebMCP). The raw key is never returned through the registry: a create or
+ * 0040 — D-07 developer keys (WebMCP). The raw key is never returned through the registry: a create or
  * rotate answers with the prefix and the key is shown once on screen, so it never lands in an agent transcript.
  */
 export const devApiKeysCreate: ActionDef = {

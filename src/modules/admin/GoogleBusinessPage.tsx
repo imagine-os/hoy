@@ -26,7 +26,7 @@ const GOOGLE_PROFILE_URL = 'https://business.google.com/';
 const API_BASE = 'https://mybusinessbusinessinformation.googleapis.com/v1';
 
 /**
- * M-10a `/admin/integrations/google-business` (0039, D-0014) — what HoyOS will send to Google Business Profile.
+ * M-10a `/admin/integrations/google-business` (0040, D-0015) — what HoyOS will send to Google Business Profile.
  * Nothing here talks to Google: the preview is the real `locations.patch` body, the copy buttons work, and the
  * connect / push controls are Placeholders until the server that holds the tokens exists.
  */

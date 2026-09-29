@@ -9,7 +9,7 @@
  * Prices live in ./pricing.ts, physical facts in ./tenant.ts. Nothing here repeats either.
  */
 import type { Bi } from '../specs/types';
-import type { Movement } from '../design/tokens';
+import type { Tone } from '../design/tokens';
 
 /** The slugs the site routes on: /site/classes/:slug. */
 export type ClassSlug = 'hot-yoga' | 'barre' | 'pilates' | 'meditacion' | 'respiracion';
@@ -26,8 +26,8 @@ export interface BrandClass {
   summary: Bi;
   /** The full essay, in order. */
   paragraphs: Bi[];
-  /** Movement token this practice belongs to (D-01 `movements`). */
-  movement: Movement;
+  /** Colour tone of this class on cards, chips and empty media frames (D-01 `classTones`); a hue name, never shown as a word. */
+  tone: Tone;
   /**
    * `modalities.slug` values this essay covers, so a later worker can join the essay to the
    * catalogue rows (duration, intensity, heated) without editing the seed.
@@ -173,7 +173,7 @@ export const classes: Record<ClassSlug, BrandClass> = {
         en: 'Over time, hot yoga becomes less about what you achieve on the mat and more about what you take away from it: more clarity, more strength, more capacity to stay present even when things get intense. Practising in heat teaches you to keep calm when everything is asking you to come undone — a skill that stays with you long after you leave the studio. That is perhaps the real reason people come back.',
       },
     ],
-    movement: 'arde',
+    tone: 'clay',
     modalitySlugs: ['hot-vinyasa'],
     heated: true,
     bring: ['towel', 'water', 'comfy'],
@@ -204,7 +204,7 @@ export const classes: Record<ClassSlug, BrandClass> = {
         en: 'Do not worry if it is your first time: the class adapts to any level, from someone who has never taken this kind of class to someone who knows every position by heart. What stays with you in the end is not only a stronger body, but the certainty that you could go further than you thought.',
       },
     ],
-    movement: 'enraiza',
+    tone: 'sage',
     modalitySlugs: ['barre'],
     heated: false,
     bring: ['socks', 'water', 'comfy'],
@@ -235,7 +235,7 @@ export const classes: Record<ClassSlug, BrandClass> = {
         en: 'What begins as strength in the centre of the body ends up showing everywhere else: in how you walk, how you sit, how you respond when something takes you by surprise. Pilates does not promise fast or dramatic change; it promises something that lasts longer — a different relationship with your own body, made of precision, patience and presence.',
       },
     ],
-    movement: 'enraiza',
+    tone: 'moss',
     modalitySlugs: ['pilates'],
     heated: false,
     bring: ['socks', 'water', 'comfy'],
@@ -258,7 +258,7 @@ export const classes: Record<ClassSlug, BrandClass> = {
         en: 'We include it among our experiences because we believe wellbeing does not live only in the movement of the body; it also lives in the pause. Practising regularly helps release accumulated stress, sharpens mental clarity and trains a capacity that grows scarcer all the time: being present. So alongside guided sessions in our regular schedule, meditation is a natural extension of what HOY already proposes — coming back to yourself, one moment at a time.',
       },
     ],
-    movement: 'libera',
+    tone: 'plum',
     modalitySlugs: ['meditacion', 'yin'],
     heated: false,
     bring: ['layers', 'nothing'],
@@ -281,7 +281,7 @@ export const classes: Record<ClassSlug, BrandClass> = {
         en: 'It is not about mastering a complex technique, but about reconnecting with something you already know how to do. That is why it is present in our guided classes too: a short, effortless pause that stays with you long after you leave the studio.',
       },
     ],
-    movement: 'libera',
+    tone: 'slate',
     // 0018: the `respiracion` modality row exists in the seed; M-08f (breathworkOwnClass) decides whether the public sees it.
     modalitySlugs: ['respiracion'],
     heated: false,

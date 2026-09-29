@@ -995,7 +995,7 @@ export const strings: StringTable = {
   'admin.deletions.step.contact': { es: 'Cuenta de acceso anonimizada', en: 'Login account anonymised' },
   'admin.deletions.step.contact.body': { es: 'users: correo y teléfono reemplazados por un identificador anónimo, status → disabled', en: 'users: email and phone replaced by an anonymous identifier, status → disabled' },
   'admin.deletions.step.notifications': { es: 'Notificaciones y preferencias borradas', en: 'Notifications and preferences deleted' },
-  'admin.deletions.step.notifications.body': { es: 'notifications, notification_prefs, intentions, waitlist; reservas futuras canceladas', en: 'notifications, notification_prefs, intentions, waitlist; future bookings cancelled' },
+  'admin.deletions.step.notifications.body': { es: 'notifications, notification_prefs, waitlist; reservas futuras canceladas', en: 'notifications, notification_prefs, waitlist; future bookings cancelled' },
   'admin.deletions.step.messages': { es: 'Mensajes purgados', en: 'Messages purged' },
   'admin.deletions.step.messages.body': { es: 'message_log: payload en blanco, se conserva el conteo por canal', en: 'message_log: payload cleared, the per-channel count is kept' },
   'admin.deletions.step.auth': { es: 'Usuario de autenticación eliminado', en: 'Auth user removed' },
@@ -1059,10 +1059,6 @@ export const strings: StringTable = {
   'admin.settings.rate.profile': { es: 'perfil {rate}', en: 'profile {rate}' },
   'admin.settings.rate.example': { es: 'Ejemplo: {teacher} dictando {modality} cobra {rate} con esta tarjeta.', en: 'Example: {teacher} teaching {modality} earns {rate} with this card.' },
   'admin.settings.sec.content': { es: 'Clases en público y mapa', en: 'Classes in public and map' },
-  'admin.settings.f.naming': { es: 'Nombre público de las clases', en: 'Public class naming' },
-  'admin.settings.f.naming.hint': { es: 'Horario de clientes (C-03) y del sitio (W-04)', en: 'Customer (C-03) and site (W-04) schedules' },
-  'admin.settings.f.naming.disciplines': { es: 'Disciplinas', en: 'Disciplines' },
-  'admin.settings.f.naming.movements': { es: 'Movimientos', en: 'Movements' },
   'admin.settings.f.breathwork': { es: 'Respiración es una clase propia (muestra su fila de modalidad)', en: 'Respiración is its own class (shows its modality row)' },
   'admin.settings.f.breathwork.hint': { es: 'Apagado: vive dentro de meditación y W-08 lo dice en palabras. Encendido: aparece en Modalidades, Clases y el filtro del horario con duración, intensidad y sala.', en: 'Off: it lives inside meditation and W-08 says so in words. On: it appears in Modalities, Classes and the schedule filter with duration, intensity and room.' },
   'admin.settings.f.mapProvider': { es: 'Proveedor del mapa', en: 'Map provider' },
@@ -1108,7 +1104,7 @@ export const strings: StringTable = {
   'admin.payouts.generate.done.many': { es: '{runs} corridas · {n} líneas · {total}', en: '{runs} runs · {n} lines · {total}' },
   'admin.payouts.generate.replacedOverlap': { es: 'Se reemplazó un borrador que cubría el mismo mes con otra periodicidad.', en: 'A draft covering the same month under the other cadence was replaced.' },
   'admin.payouts.signedBy': { es: 'Firma el soporte: {name}', en: 'Payment record signed by: {name}' },
-  // ---- 0039 · M-08g holidays & special hours ----
+  // ---- 0040 · M-08g holidays & special hours ----
   'admin.settings.group.hours': { es: 'Festivos y horarios', en: 'Holidays & hours' },
   'admin.settings.group.hours.body': { es: 'Festivos, jornadas con otro horario y eventos: las excepciones con fecha al horario semanal de General.', en: 'Holidays, days with other hours and events: the dated exceptions to the weekly hours in General.' },
   'admin.settings.hours.precedence': { es: 'Una excepción gana sobre el horario semanal en las fechas que cubre (desde y hasta incluidas). Si dos se cruzan, gana la más corta.', en: 'An exception wins over the weekly hours on the dates it covers (from and to included). If two overlap, the shorter one wins.' },
@@ -1163,7 +1159,7 @@ export const strings: StringTable = {
   'admin.settings.hours.delete.confirm': { es: '¿Eliminar? Toca otra vez', en: 'Delete? Tap again' },
   'admin.settings.hours.readonly': { es: 'Solo lectura: administración y coordinación editan las excepciones.', en: 'Read-only: admins and coordination edit the exceptions.' },
   'admin.settings.hours.override': { es: 'Excepción', en: 'Exception' },
-  // ---- 0039 · M-10 additions and M-10a Google Business Profile ----
+  // ---- 0040 · M-10 additions and M-10a Google Business Profile ----
   'admin.integrations.open': { es: 'Abrir', en: 'Open' },
   'admin.integrations.steps': { es: 'Pasos, según quién los hace', en: 'Steps, by who does them' },
   'admin.integrations.who': { es: 'Lo hace: {who}', en: 'Done by: {who}' },

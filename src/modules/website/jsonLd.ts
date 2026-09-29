@@ -6,7 +6,7 @@ import { useContact, useOpeningHours } from '../admin/settings';
 const SCRIPT_ID = 'hoyos-localbusiness';
 
 /**
- * 0039 — the studio as schema.org `LocalBusiness` JSON-LD in the website's <head>, so search engines read the
+ * 0040 — the studio as schema.org `LocalBusiness` JSON-LD in the website's <head>, so search engines read the
  * same hours and exceptions the page prints (M-08a weekly hours + M-08g overrides from today on). Only confirmed
  * contact fields are published (0036): a pending placeholder never goes out as structured data. Language-neutral
  * on purpose; the names come from src/tenant/tenant.ts.

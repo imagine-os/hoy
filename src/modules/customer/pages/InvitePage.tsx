@@ -15,7 +15,7 @@ import { ClassCard } from '../../../components/organism/ClassCard/ClassCard';
 import { ListGroup, ListRow } from '../../../components/molecule/ListRow/ListRow';
 import { useMyInvites, useSessionJoined } from '../hooks';
 import { policy } from '../policy';
-import { PageHead, movementOf, roomName, shareText, teacherName } from '../ui';
+import { PageHead, toneOf, roomName, shareText, teacherName } from '../ui';
 
 /** C-16 Invite a guest — make word of mouth mechanical. Every send is a row in `invites`. */
 export function InvitePage() {
@@ -42,7 +42,7 @@ export function InvitePage() {
     <div className="container page cust-page">
       <PageHead back={joined ? `/app/class/${joined.session.id}` : '/app/more'} title={t('customer.invite.title')} sub={t('customer.invite.sub')} />
       <div className="stack">
-        {joined && <ClassCard title={joined.session.title} teacher={teacherName(joined)} room={roomName(joined)} startsAt={joined.session.starts_at} endsAt={joined.session.ends_at} movement={movementOf(joined)} booked={joined.session.booked_count} capacity={joined.session.capacity} />}
+        {joined && <ClassCard title={joined.session.title} teacher={teacherName(joined)} room={roomName(joined)} startsAt={joined.session.starts_at} endsAt={joined.session.ends_at} tone={toneOf(joined)} booked={joined.session.booked_count} capacity={joined.session.capacity} />}
         <Card tone="primary" className="cust-pass-preview" padding="lg">
           <div className="row-between"><span className="eyebrow">{t('customer.invite.pass')}</span><Wordmark variant="cream" height={22} /></div>
           <strong className="cust-h2">{t('customer.invite.pass.title')}</strong>

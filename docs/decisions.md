@@ -201,9 +201,16 @@ Fields: **Date**, **Status** (accepted · superseded by D-NNNN), **Context**, **
   CLAUDE.md already rejects it (plain CSS with tokens), and it would put spacing in JSX where the lint and the
   component library cannot see a relationship, only a number.
 
-### D-0013 — Saved hours are the source of truth; dated overrides live in a table
+### D-0013 — The four movements are retired; classes carry a neutral colour tone
 
-- **Date** 2026-09-29 · **Status** accepted · **Changelog** `docs/changelog/0039-hours-google-keys.md`
+- **Date** 2026-09-29 · **Status** accepted · **Changelog** `docs/changelog/0039-retire-movements.md` · supersedes the "internal label" position recorded in ROADMAP §E 22 / changelog 0032, and the D-01 `movements` token set from 0006
+- **Context.** The owner found Enraíza / Fluye / Arde / Libera in the club rules ("Sobre HOY") and in the booking flow and wants them gone everywhere. The source documents transcribed in `src/tenant/brand.ts` and in the manual never named them: the vocabulary was an invention of the canvas that leaked into customer copy.
+- **Decision.** No movements, public or internal, and no data keys: D-01 `movements` becomes `classTones` with seven hue-named tones (moss, river, clay, sun, sage, slate, plum, CSS `--tone-*`), `modalities.movement` and `media_assets.movement` become `tone` (one tone per modality, chosen in M-02), the `intentions` table is dropped and the M-08f `publicNaming` setting is removed. Classes are always named by modality, and schedule filters and legends (C-02, C-02b, W-04 with `?modality=<slug>`) are the visible modalities.
+- **Alternative rejected.** Keeping the movements as internal-only labels — 0032 tried it and they still leaked into customer copy. Naming the tones after elements or feelings — that would re-create the concept under new names.
+
+### D-0014 — Saved hours are the source of truth; dated overrides live in a table
+
+- **Date** 2026-09-29 · **Status** accepted · **Changelog** `docs/changelog/0040-hours-google-keys.md`
 - **Context.** M-08a saved the weekly hours into `tenants.settings.openingHours`, but every screen quoted a constant
   sentence in `tenant.ts`, so a change reached nobody. Justin asked for the hours to reach Google Business and for
   holiday hours and special overrides.
@@ -216,9 +223,9 @@ Fields: **Date**, **Status** (accepted · superseded by D-NNNN), **Context**, **
   a recurring per-holiday rule (Emiliani and Easter move the dates every year; a yearly import is explicit and
   auditable); an overrides array inside `tenants.settings` (no ids, no `updated_at`, no realtime per row).
 
-### D-0014 — Google Business Profile: HoyOS pushes, a server holds the tokens, one way with drift read-back
+### D-0015 — Google Business Profile: HoyOS pushes, a server holds the tokens, one way with drift read-back
 
-- **Date** 2026-09-29 · **Status** accepted · **Changelog** `docs/changelog/0039-hours-google-keys.md`
+- **Date** 2026-09-29 · **Status** accepted · **Changelog** `docs/changelog/0040-hours-google-keys.md`
 - **Context.** Each studio on HoyOS has its own Business Profile; the Business Profile API needs a Google Cloud project
   with approved access, OAuth with `business.manage`, and a refresh token per location. The browser DB is localStorage.
 - **Decision.** HoyOS is the source of truth. A server (not built yet) pushes `locations.patch` with
@@ -231,9 +238,9 @@ Fields: **Date**, **Status** (accepted · superseded by D-NNNN), **Context**, **
   `integrations.config` (a plaintext secret in localStorage — already rejected for Wompi in 0007 / 0018); one Google
   project per studio (every studio would repeat the access request and the consent-screen review).
 
-### D-0015 — Developer API keys: hashed at rest, shown once, scoped, rotated with a grace period
+### D-0016 — Developer API keys: hashed at rest, shown once, scoped, rotated with a grace period
 
-- **Date** 2026-09-29 · **Status** accepted · **Changelog** `docs/changelog/0039-hours-google-keys.md`
+- **Date** 2026-09-29 · **Status** accepted · **Changelog** `docs/changelog/0040-hours-google-keys.md`
 - **Context.** Justin asked for "a secret key system for our apps for developers". HoyOS has no server; secrets it
   uses to call others (Wompi, WhatsApp, Google) already live in server env. Keys it gives to others are the reverse.
 - **Decision.** D-07 issues `hoy_<live|test>_<24 base62>` from the CSPRNG; `api_keys` stores the 13-character prefix

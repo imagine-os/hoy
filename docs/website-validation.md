@@ -7,17 +7,17 @@ Validated on September 25, 2026 against deployed website release 2.0, commit `81
 
 - TypeScript and production build passed.
 - Source audit fixes: validated edition deep links persist for subsequent website navigation; Classic retains its original default section order; pricing links target the supported plans route; narrow-header language controls use the correct selector; requested ambient videos remain mounted when scrolled offscreen.
-- Class slugs and movement-filtered schedule links match the existing routes. Schedule filter changes retain other query parameters.
+- Class slugs and modality-filtered schedule links (`?modality=<slug>`; the `?movement=` form was retired in 0039) match the existing routes. Schedule filter changes retain other query parameters.
 - Scope: website pages and additive shared components/tokens only. The data provider, hub, operations screens and authentication were not replaced.
 
 ## Live visual and interaction checks
 
 - Desktop Sanctuary composition inspected: architectural imagery, typography, stone controls and section layout render correctly.
-- Below-fold desktop review covered movement controls, all five class images, community/teachers, pricing and the closing section; no overlaps, clipped text or missing images were found.
+- Below-fold desktop review covered the home controls (the movement stones were later removed, 0034 / 0039), all five class images, community/teachers, pricing and the closing section; no overlaps, clipped text or missing images were found.
 - At a 390 CSS-pixel mobile viewport, the header controls fit; the menu opens and closes; navigation to the schedule works.
 - Selecting a scheduled class opens the correct sign-in reservation dialog and displays its availability.
 - Spanish and English home views, plus the mobile dark appearance, were visually inspected.
-- The edition dropdown switches between V1 and V2; website navigation retains the selected edition. The Arde schedule control filters the visible sessions and updates the URL.
+- The edition dropdown switches between V1 and V2; website navigation retains the selected edition. A schedule filter control filters the visible sessions (checked in that pass on the then-current movement legend; the legend is now the modalities, 0039) and updates the URL.
 - Saved 52 responsive captures: W-01–W-09, P-01, and both A-06 legal routes in ES/EN at 390/1280 CSS pixels, plus four dark home views. See the [capture manifest](website-capture-manifest.json). Class detail was reached through the public classes listing because the simulator route picker omits parameterized routes.
 - Responsive captures use actual 390 and 1280 CSS-pixel device-simulator viewports inside browser chrome. The saved screenshot can include that chrome and a scaled simulator frame; its image pixel width is not a claim about the website viewport width.
 - Clean desktop reference: [Sanctuary desktop screenshot](screenshots/W-01/es-1348-sanctuary.jpg). Responsive home references: [ES mobile](screenshots/W-01/es-390.jpg), [EN mobile](screenshots/W-01/en-390.jpg), [ES desktop](screenshots/W-01/es-1280.jpg), [EN desktop](screenshots/W-01/en-1280.jpg).
