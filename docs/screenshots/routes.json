@@ -650,15 +650,15 @@
     "en": "Tables & relations"
    },
    "purpose": {
-    "es": "El gestor de datos del estudio con vistas: cualquier tabla como cuadrícula, lista, galería, tablero o grafo de relaciones, con filtros, orden, agrupación, columnas y vistas guardadas para el equipo. Todo en palabras (los nombres técnicos solo en modo dev), cada referencia abre la fila a la que apunta y el panel de la fila muestra quién la usa.",
-    "en": "The studio’s data manager with views: any table as a grid, list, gallery, board or relationship graph, with filters, sorts, grouping, columns and views saved for the team. Everything in words (technical names only in dev mode), every reference opens the row it points at and the row panel shows what uses it."
+    "es": "El gestor de datos del estudio con vistas: cualquier tabla como cuadrícula, lista, galería, tablero, calendario, línea de tiempo o grafo de relaciones, con filtros, orden, agrupación, columnas y vistas guardadas para el equipo. Todo en palabras (los nombres técnicos solo en modo dev), cada referencia abre la fila a la que apunta y el panel de la fila muestra quién la usa.",
+    "en": "The studio’s data manager with views: any table as a grid, list, gallery, board, calendar, timeline or relationship graph, with filters, sorts, grouping, columns and views saved for the team. Everything in words (technical names only in dev mode), every reference opens the row it points at and the row panel shows what uses it."
    },
    "layout": [
     "TablesSidebar (expanded · rail · phone sheet): search, Fijadas, Recientes, groups as accordions, row counts, provider footer, reset demo data (in-product confirm)",
     "TableHeader (icon, human title, kind + group badges, description, counts, technical-names toggle in dev mode)",
-    "ViewSwitcher (SegmentedControl: Cuadrícula · Lista · Galería · Tablero · Calendario* · Línea de tiempo* · Grafo) + SavedViewsMenu",
-    "Toolbar (Filtrar · Ordenar · Agrupar · Columnas · Buscar · Exportar · Esquema · Nueva fila) + ActiveFilterChips + ToolPanel",
-    "View: GridView (DataTable) | ListView (ListRow) | GalleryView (Card grid) | KanbanView (KanbanBoard) | GraphView (RelationGraph, table or row level) | SchemaView",
+    "ViewSwitcher (SegmentedControl: Cuadrícula · Lista · Galería · Tablero · Calendario · Línea de tiempo · Grafo) + SavedViewsMenu (pick, save, rename, delete with in-product confirm)",
+    "Toolbar (Filtrar · Ordenar · Agrupar / Carriles · Fecha + Hasta (calendar, timeline) · Columnas · Buscar · Exportar · Esquema · Nueva fila) + ActiveFilterChips + ToolPanel",
+    "View: GridView (DataTable) | ListView (ListRow) | GalleryView (Card grid) | KanbanView (KanbanBoard) | CalendarTableView (CalendarView: month · week · agenda) | TimelineTableView (TimelineView: day · week · month · quarter, lanes by the group column) | GraphView (RelationGraph, table or row level) | SchemaView",
     "RowDrawer (fields by type, FK pickers by title, ES / EN inputs, Relaciones, Ver en el grafo, delete with in-product confirm)"
    ],
    "data": [
@@ -680,7 +680,11 @@
     "Kanban: one lane per value of an enum / boolean column (default status); a drag of the grip or the “Mover a…” menu writes data.update(table, id, { column: value }). Read-only without tables.write.",
     "Technical names (snake_case) show only as a quiet mono line when dev mode is on and the toggle is on (default on in dev mode). Sensitive columns (api_keys.key_hash) are hidden from roles without tables.write.",
     "Per-viewer conveniences (sidebar state, open groups, pinned, recent, technical names) persist in localStorage hoyos.tables.prefs; saved views are shared rows in table_views.",
-    "Calendar and Timeline are declared view kinds wrapped in the Placeholder atom (not wired yet); disabled for tables without a date column."
+    "Calendar and timeline (0045) place rows by the view’s date column (config.dateColumn, default dateColumnOf: the first date / timestamp column) and end column (config.endColumn, default endColumnOf: starts_at → ends_at, start_date → end_date, period_start → period_end, then end_* / *_until / expires_at); the toolbar’s Fecha / Hasta selects change them and saved views keep them. Both are disabled (with a hint) for tables without a date column of their own.",
+    "Calendar: month (Monday first, up to three chips a day and “+N más” → the day’s list), week (all-day strip and hour rows from the first to the last timed row, overlapping chips side by side, a now line) and agenda (30 days from the cursor, grouped by day; the default under 768 px). Clicking an empty day (or a free hour in the week) with tables.write inserts a row with the date prefilled and opens the drawer. Chip tone: the row’s tone → the tone of the row it points at (a class’s modality) → toneForStatus(status); cancelled / expired rows are dimmed.",
+    "Timeline: bars from the date column to the end column (a diamond when there is no end) on a day · week · month · quarter axis, lanes by the view’s groupBy (teacher, room, status…) with sticky labels, a today line, scroll with snap; below 768 px one lane with the group as a chip on each bar. Bars open the row; moving a row’s dates is not a timeline gesture.",
+    "URL: ?view=calendar|timeline, ?date=YYYY-MM-DD (the cursor; absent = today when the period around today has rows, otherwise the nearest row), ?mode=month|week|agenda, ?zoom=day|week|month|quarter. The mode and zoom also go into the view state, so “Guardar vista” keeps them.",
+    "Saved views: the views menu renames (inline field) and deletes (in-product confirm) a view; only its creator or a role with tables.write."
    ],
    "integrations": [
     "DataProvider (MockProvider today, SupabaseProvider later): list / peek / insert / update / remove / subscribe"
@@ -695,7 +699,12 @@
     "Delete confirm (in-product)",
     "Reset demo data confirm",
     "Board without an option column",
-    "Calendar / Timeline placeholder",
+    "Calendar month · week · agenda",
+    "Calendar empty period (jump to the previous / next row)",
+    "Timeline day · week · month · quarter, with lanes",
+    "Timeline, phone (one lane, group chips)",
+    "Calendar / timeline disabled (no date column)",
+    "Saved view rename / delete confirm",
     "Technical names on (dev mode)"
    ],
    "toggles": [
@@ -755,11 +764,72 @@
       "en": "Change the view type"
      },
      "intent": {
-      "es": "Muéstralo como {kind}",
-      "en": "Show it as a {kind}"
+      "es": "Muéstralo como {kind} (cuadrícula, lista, galería, tablero, calendario, línea de tiempo o grafo)",
+      "en": "Show it as a {kind} (grid, list, gallery, board, calendar, timeline or graph)"
      },
      "params": {
-      "kind": "enum:grid,list,gallery,kanban,graph (calendar, timeline: not wired yet)"
+      "kind": "enum:grid,list,gallery,kanban,calendar,timeline,graph (calendar and timeline need a date column)"
+     },
+     "permission": "tables.read"
+    },
+    {
+     "id": "tables.setDateColumn",
+     "label": {
+      "es": "Elegir la columna de fecha",
+      "en": "Pick the date column"
+     },
+     "intent": {
+      "es": "Pon las filas en el calendario por {column} hasta {endColumn}",
+      "en": "Place the rows by {column} until {endColumn}"
+     },
+     "params": {
+      "column": "string — a date or timestamp column of the open table (starts_at, start_date, created_at…)",
+      "endColumn": "string — where rows end (none = a point; default: the pair of column, e.g. ends_at)"
+     },
+     "permission": "tables.read"
+    },
+    {
+     "id": "tables.calendarMode",
+     "label": {
+      "es": "Disposición del calendario",
+      "en": "Calendar layout"
+     },
+     "intent": {
+      "es": "Muestra el calendario por {mode}",
+      "en": "Show the calendar by {mode}"
+     },
+     "params": {
+      "mode": "enum:month,week,agenda"
+     },
+     "permission": "tables.read"
+    },
+    {
+     "id": "tables.timelineZoom",
+     "label": {
+      "es": "Zoom de la línea de tiempo",
+      "en": "Timeline zoom"
+     },
+     "intent": {
+      "es": "Acerca o aleja la línea de tiempo a {zoom}",
+      "en": "Zoom the timeline to {zoom}"
+     },
+     "params": {
+      "zoom": "enum:day,week,month,quarter"
+     },
+     "permission": "tables.read"
+    },
+    {
+     "id": "tables.goToDate",
+     "label": {
+      "es": "Ir a una fecha",
+      "en": "Go to a date"
+     },
+     "intent": {
+      "es": "Ve al {date} en el calendario o la línea de tiempo",
+      "en": "Go to {date} on the calendar or the timeline"
+     },
+     "params": {
+      "date": "string — YYYY-MM-DD, today, next or previous"
      },
      "permission": "tables.read"
     },
@@ -850,6 +920,37 @@
      "permission": "tables.write"
     },
     {
+     "id": "tables.renameView",
+     "label": {
+      "es": "Renombrar una vista",
+      "en": "Rename a view"
+     },
+     "intent": {
+      "es": "Cambia el nombre de la vista {view} a {name}",
+      "en": "Rename the view {view} to {name}"
+     },
+     "params": {
+      "view": "string — a saved view id or its current name (default: the active one)",
+      "name": "string"
+     },
+     "permission": "tables.write"
+    },
+    {
+     "id": "tables.deleteView",
+     "label": {
+      "es": "Eliminar una vista",
+      "en": "Delete a view"
+     },
+     "intent": {
+      "es": "Elimina la vista {view}",
+      "en": "Delete the view {view}"
+     },
+     "params": {
+      "view": "string — a saved view id or its current name (default: the active one)"
+     },
+     "permission": "tables.write"
+    },
+    {
      "id": "tables.pin",
      "label": {
       "es": "Fijar una tabla",
@@ -885,9 +986,9 @@
     3840
    ],
    "notes": [
-    "0043 redesign (Justin: “looks like it’s only for developers… Airtable, Notion are baseline… I also like graph views”). The canvas layout (EntityGrid / RelationMap / MigrationLog) is superseded by the views above; the relation map is the graph view.",
+    "0044 redesign (Justin: “looks like it’s only for developers… Airtable, Notion are baseline… I also like graph views”). The canvas layout (EntityGrid / RelationMap / MigrationLog) is superseded by the views above; the relation map is the graph view.",
     "Column labels come from the dictionary until a later pass fills ColumnDef.label per column (Sonnet, mechanical).",
-    "Calendar and timeline views are the next pass; the view kinds already exist in table_views.kind."
+    "0045 (Justin: “it looks like the other views aren’t wired. Finish it up please”): calendar and timeline built as the CalendarView / TimelineView organisms; saved views can be renamed and deleted."
    ]
   }
  },
@@ -908,15 +1009,15 @@
     "en": "Tables & relations"
    },
    "purpose": {
-    "es": "El gestor de datos del estudio con vistas: cualquier tabla como cuadrícula, lista, galería, tablero o grafo de relaciones, con filtros, orden, agrupación, columnas y vistas guardadas para el equipo. Todo en palabras (los nombres técnicos solo en modo dev), cada referencia abre la fila a la que apunta y el panel de la fila muestra quién la usa.",
-    "en": "The studio’s data manager with views: any table as a grid, list, gallery, board or relationship graph, with filters, sorts, grouping, columns and views saved for the team. Everything in words (technical names only in dev mode), every reference opens the row it points at and the row panel shows what uses it."
+    "es": "El gestor de datos del estudio con vistas: cualquier tabla como cuadrícula, lista, galería, tablero, calendario, línea de tiempo o grafo de relaciones, con filtros, orden, agrupación, columnas y vistas guardadas para el equipo. Todo en palabras (los nombres técnicos solo en modo dev), cada referencia abre la fila a la que apunta y el panel de la fila muestra quién la usa.",
+    "en": "The studio’s data manager with views: any table as a grid, list, gallery, board, calendar, timeline or relationship graph, with filters, sorts, grouping, columns and views saved for the team. Everything in words (technical names only in dev mode), every reference opens the row it points at and the row panel shows what uses it."
    },
    "layout": [
     "TablesSidebar (expanded · rail · phone sheet): search, Fijadas, Recientes, groups as accordions, row counts, provider footer, reset demo data (in-product confirm)",
     "TableHeader (icon, human title, kind + group badges, description, counts, technical-names toggle in dev mode)",
-    "ViewSwitcher (SegmentedControl: Cuadrícula · Lista · Galería · Tablero · Calendario* · Línea de tiempo* · Grafo) + SavedViewsMenu",
-    "Toolbar (Filtrar · Ordenar · Agrupar · Columnas · Buscar · Exportar · Esquema · Nueva fila) + ActiveFilterChips + ToolPanel",
-    "View: GridView (DataTable) | ListView (ListRow) | GalleryView (Card grid) | KanbanView (KanbanBoard) | GraphView (RelationGraph, table or row level) | SchemaView",
+    "ViewSwitcher (SegmentedControl: Cuadrícula · Lista · Galería · Tablero · Calendario · Línea de tiempo · Grafo) + SavedViewsMenu (pick, save, rename, delete with in-product confirm)",
+    "Toolbar (Filtrar · Ordenar · Agrupar / Carriles · Fecha + Hasta (calendar, timeline) · Columnas · Buscar · Exportar · Esquema · Nueva fila) + ActiveFilterChips + ToolPanel",
+    "View: GridView (DataTable) | ListView (ListRow) | GalleryView (Card grid) | KanbanView (KanbanBoard) | CalendarTableView (CalendarView: month · week · agenda) | TimelineTableView (TimelineView: day · week · month · quarter, lanes by the group column) | GraphView (RelationGraph, table or row level) | SchemaView",
     "RowDrawer (fields by type, FK pickers by title, ES / EN inputs, Relaciones, Ver en el grafo, delete with in-product confirm)"
    ],
    "data": [
@@ -938,7 +1039,11 @@
     "Kanban: one lane per value of an enum / boolean column (default status); a drag of the grip or the “Mover a…” menu writes data.update(table, id, { column: value }). Read-only without tables.write.",
     "Technical names (snake_case) show only as a quiet mono line when dev mode is on and the toggle is on (default on in dev mode). Sensitive columns (api_keys.key_hash) are hidden from roles without tables.write.",
     "Per-viewer conveniences (sidebar state, open groups, pinned, recent, technical names) persist in localStorage hoyos.tables.prefs; saved views are shared rows in table_views.",
-    "Calendar and Timeline are declared view kinds wrapped in the Placeholder atom (not wired yet); disabled for tables without a date column."
+    "Calendar and timeline (0045) place rows by the view’s date column (config.dateColumn, default dateColumnOf: the first date / timestamp column) and end column (config.endColumn, default endColumnOf: starts_at → ends_at, start_date → end_date, period_start → period_end, then end_* / *_until / expires_at); the toolbar’s Fecha / Hasta selects change them and saved views keep them. Both are disabled (with a hint) for tables without a date column of their own.",
+    "Calendar: month (Monday first, up to three chips a day and “+N más” → the day’s list), week (all-day strip and hour rows from the first to the last timed row, overlapping chips side by side, a now line) and agenda (30 days from the cursor, grouped by day; the default under 768 px). Clicking an empty day (or a free hour in the week) with tables.write inserts a row with the date prefilled and opens the drawer. Chip tone: the row’s tone → the tone of the row it points at (a class’s modality) → toneForStatus(status); cancelled / expired rows are dimmed.",
+    "Timeline: bars from the date column to the end column (a diamond when there is no end) on a day · week · month · quarter axis, lanes by the view’s groupBy (teacher, room, status…) with sticky labels, a today line, scroll with snap; below 768 px one lane with the group as a chip on each bar. Bars open the row; moving a row’s dates is not a timeline gesture.",
+    "URL: ?view=calendar|timeline, ?date=YYYY-MM-DD (the cursor; absent = today when the period around today has rows, otherwise the nearest row), ?mode=month|week|agenda, ?zoom=day|week|month|quarter. The mode and zoom also go into the view state, so “Guardar vista” keeps them.",
+    "Saved views: the views menu renames (inline field) and deletes (in-product confirm) a view; only its creator or a role with tables.write."
    ],
    "integrations": [
     "DataProvider (MockProvider today, SupabaseProvider later): list / peek / insert / update / remove / subscribe"
@@ -953,7 +1058,12 @@
     "Delete confirm (in-product)",
     "Reset demo data confirm",
     "Board without an option column",
-    "Calendar / Timeline placeholder",
+    "Calendar month · week · agenda",
+    "Calendar empty period (jump to the previous / next row)",
+    "Timeline day · week · month · quarter, with lanes",
+    "Timeline, phone (one lane, group chips)",
+    "Calendar / timeline disabled (no date column)",
+    "Saved view rename / delete confirm",
     "Technical names on (dev mode)"
    ],
    "toggles": [
@@ -1013,11 +1123,72 @@
       "en": "Change the view type"
      },
      "intent": {
-      "es": "Muéstralo como {kind}",
-      "en": "Show it as a {kind}"
+      "es": "Muéstralo como {kind} (cuadrícula, lista, galería, tablero, calendario, línea de tiempo o grafo)",
+      "en": "Show it as a {kind} (grid, list, gallery, board, calendar, timeline or graph)"
      },
      "params": {
-      "kind": "enum:grid,list,gallery,kanban,graph (calendar, timeline: not wired yet)"
+      "kind": "enum:grid,list,gallery,kanban,calendar,timeline,graph (calendar and timeline need a date column)"
+     },
+     "permission": "tables.read"
+    },
+    {
+     "id": "tables.setDateColumn",
+     "label": {
+      "es": "Elegir la columna de fecha",
+      "en": "Pick the date column"
+     },
+     "intent": {
+      "es": "Pon las filas en el calendario por {column} hasta {endColumn}",
+      "en": "Place the rows by {column} until {endColumn}"
+     },
+     "params": {
+      "column": "string — a date or timestamp column of the open table (starts_at, start_date, created_at…)",
+      "endColumn": "string — where rows end (none = a point; default: the pair of column, e.g. ends_at)"
+     },
+     "permission": "tables.read"
+    },
+    {
+     "id": "tables.calendarMode",
+     "label": {
+      "es": "Disposición del calendario",
+      "en": "Calendar layout"
+     },
+     "intent": {
+      "es": "Muestra el calendario por {mode}",
+      "en": "Show the calendar by {mode}"
+     },
+     "params": {
+      "mode": "enum:month,week,agenda"
+     },
+     "permission": "tables.read"
+    },
+    {
+     "id": "tables.timelineZoom",
+     "label": {
+      "es": "Zoom de la línea de tiempo",
+      "en": "Timeline zoom"
+     },
+     "intent": {
+      "es": "Acerca o aleja la línea de tiempo a {zoom}",
+      "en": "Zoom the timeline to {zoom}"
+     },
+     "params": {
+      "zoom": "enum:day,week,month,quarter"
+     },
+     "permission": "tables.read"
+    },
+    {
+     "id": "tables.goToDate",
+     "label": {
+      "es": "Ir a una fecha",
+      "en": "Go to a date"
+     },
+     "intent": {
+      "es": "Ve al {date} en el calendario o la línea de tiempo",
+      "en": "Go to {date} on the calendar or the timeline"
+     },
+     "params": {
+      "date": "string — YYYY-MM-DD, today, next or previous"
      },
      "permission": "tables.read"
     },
@@ -1108,6 +1279,37 @@
      "permission": "tables.write"
     },
     {
+     "id": "tables.renameView",
+     "label": {
+      "es": "Renombrar una vista",
+      "en": "Rename a view"
+     },
+     "intent": {
+      "es": "Cambia el nombre de la vista {view} a {name}",
+      "en": "Rename the view {view} to {name}"
+     },
+     "params": {
+      "view": "string — a saved view id or its current name (default: the active one)",
+      "name": "string"
+     },
+     "permission": "tables.write"
+    },
+    {
+     "id": "tables.deleteView",
+     "label": {
+      "es": "Eliminar una vista",
+      "en": "Delete a view"
+     },
+     "intent": {
+      "es": "Elimina la vista {view}",
+      "en": "Delete the view {view}"
+     },
+     "params": {
+      "view": "string — a saved view id or its current name (default: the active one)"
+     },
+     "permission": "tables.write"
+    },
+    {
      "id": "tables.pin",
      "label": {
       "es": "Fijar una tabla",
@@ -1143,9 +1345,9 @@
     3840
    ],
    "notes": [
-    "0043 redesign (Justin: “looks like it’s only for developers… Airtable, Notion are baseline… I also like graph views”). The canvas layout (EntityGrid / RelationMap / MigrationLog) is superseded by the views above; the relation map is the graph view.",
+    "0044 redesign (Justin: “looks like it’s only for developers… Airtable, Notion are baseline… I also like graph views”). The canvas layout (EntityGrid / RelationMap / MigrationLog) is superseded by the views above; the relation map is the graph view.",
     "Column labels come from the dictionary until a later pass fills ColumnDef.label per column (Sonnet, mechanical).",
-    "Calendar and timeline views are the next pass; the view kinds already exist in table_views.kind."
+    "0045 (Justin: “it looks like the other views aren’t wired. Finish it up please”): calendar and timeline built as the CalendarView / TimelineView organisms; saved views can be renamed and deleted."
    ]
   }
  },
