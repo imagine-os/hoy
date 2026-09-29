@@ -122,11 +122,11 @@ graph LR
 | Task | Depends on | Model | Done when |
 | --- | --- | --- | --- |
 | **B1** Bilingual `label` for every column of the 57 tables and enum value labels | A1 | Sonnet | No column header or enum Badge falls back to the humanized identifier; ES and EN both filled |
-| **B2** Calendar + timeline views (tables with date columns) | A4 | Opus | `class_sessions`, `events`, `hours_overrides`, `payroll_runs`… open in a month / week calendar and a timeline; the placeholders from A4 become real |
+| **B2** Calendar + timeline views (tables with date columns) | A4 | Opus | done in 0046 (`CalendarView`, `TimelineView`, the Fecha / Hasta picker, seeded views for `class_sessions`, `events`, `memberships`, `hours_overrides`, `payroll_runs`) |
 | **B3** Form view (public / staff data entry from a view) | A4 | Opus | A view of type `form` renders one Field per visible column, validates by type, inserts through the provider |
 | **B4** Inline cell editing + column resize / reorder by keyboard | A4 | Opus | Enter edits a cell, Escape cancels, Tab moves; widths and order saved on the view row; no drag-only path |
 | **B5** Record-level graph polish (expand neighbours, path between two rows) | A5 | Opus | Double-click / Enter expands a node one hop; "path from A to B" highlights the FK chain |
-| **B6** View sharing UI + per-role default views | A3 | Opus | Share toggle on a view, a default view per role per table, honoured on open |
+| **B6** View sharing UI + per-role default views | A3 | Opus | Share toggle on a view, a default view per role per table, honoured on open. Partly done in 0046: rename and delete of saved views; sharing UI and per-role defaults remain |
 | **B7** QA matrix 360 → 3840, all inputs (keyboard, mouse, trackpad, touch, pen) | B1–B6 | Sonnet | Matrix in `docs/qa/`, every cell green or a filed follow-up card |
 
 ### Pass C — connection

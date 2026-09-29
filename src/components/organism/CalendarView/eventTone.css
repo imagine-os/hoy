@@ -1,0 +1,7 @@
+/* 0046 · status tones for CalendarView chips and TimelineView bars (class tones come from [data-tone] in tokens.css) */
+[data-ev="neutral"] { --t-fg: var(--color-text); --t-bg: var(--color-surface-3); --t-dot: var(--color-text-faint); }
+[data-ev="primary"] { --t-fg: var(--color-primary); --t-bg: color-mix(in srgb, var(--color-primary) 16%, transparent); --t-dot: var(--color-primary); }
+[data-ev="success"] { --t-fg: var(--color-success); --t-bg: color-mix(in srgb, var(--color-success) 18%, transparent); --t-dot: var(--color-success); }
+[data-ev="warn"] { --t-fg: var(--color-warn); --t-bg: color-mix(in srgb, var(--color-warn) 20%, transparent); --t-dot: var(--color-warn); }
+[data-ev="danger"] { --t-fg: var(--color-danger); --t-bg: color-mix(in srgb, var(--color-danger) 16%, transparent); --t-dot: var(--color-danger); }
+[data-ev="highlight"] { --t-fg: var(--color-on-highlight); --t-bg: var(--color-highlight); --t-dot: var(--color-on-highlight); }

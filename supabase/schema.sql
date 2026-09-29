@@ -1591,7 +1591,7 @@ alter table public.audit_log enable row level security;
 create policy "audit_log: tenant read" on public.audit_log for select using (tenant_id = public.current_tenant_id());
 create policy "audit_log: staff write" on public.audit_log for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
 
--- system · The table manager views (M-03): which table, which kind of view (grid, list, gallery, board, graph…) and with which filters, sorts, grouping and columns. A shared view is visible to the whole team.
+-- system · The table manager views (M-03): which table, which kind of view (grid, list, gallery, board, calendar, timeline, graph) and with which filters, sorts, grouping and columns. A shared view is visible to the whole team.
 -- access:
 --   · staff with tables.read: read shared rows and their own (created_by = auth.uid())
 --   · staff with tables.write: insert; update and delete their own rows (super_admin: any)
@@ -1608,7 +1608,7 @@ create table if not exists public.table_views (
   -- {es,en}
   name jsonb not null,
   kind text not null check (kind in ('grid', 'list', 'gallery', 'kanban', 'calendar', 'timeline', 'graph')),
-  -- { filters: [{column, op, value}], sorts: [{column, dir}], groupBy, hiddenColumns, columnOrder, cardFields, kanbanColumn, pinned }
+  -- { filters: [{column, op, value}], sorts: [{column, dir}], groupBy, hiddenColumns, columnOrder, cardFields, kanbanColumn, pinned, dateColumn, endColumn, calendarMode, timelineZoom }
   config jsonb not null,
   is_default boolean not null default false,
   shared boolean not null default false,

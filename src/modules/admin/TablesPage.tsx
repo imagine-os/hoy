@@ -4,9 +4,10 @@ import { useI18n } from '../../i18n/I18nProvider';
 import { useSession } from '../../auth/SessionProvider';
 import { useData, useTable } from '../../data/DataContext';
 import type { DataProvider } from '../../data/types';
-import { TABLE_GROUPS, TABLE_VIEW_KINDS, tableRegistry, tables, type BaseRow, type TableViewConfig, type TableViewKind, type TableViewRow, type ViewFilterOp } from '../../data/schema';
+import { CALENDAR_MODES, TABLE_GROUPS, TABLE_VIEW_KINDS, TIMELINE_ZOOMS, tableRegistry, tables, type BaseRow, type CalendarMode, type TableViewConfig, type TableViewKind, type TableViewRow, type TimelineZoom, type ViewFilterOp } from '../../data/schema';
 import { columnLabel, enumLabel, rowTitle, tableLabel, type RowResolver } from '../../data/labels';
 import { dateColumnOf } from '../../data/relations';
+import { dateKey } from '../../i18n/format';
 import { useActions } from '../../actions/bus';
 import type { ActionHandler } from '../../actions/types';
 import { useMinWidth } from '../../layout/useMinWidth';
@@ -28,6 +29,10 @@ import type { CellCtx } from './tables/cells';
 import { GalleryView, GridView, KanbanView, ListView } from './tables/Views';
 import { GraphView } from './tables/GraphView';
 import { SchemaView } from './tables/SchemaView';
+import { CalendarTableView, DateColumnPicker, TimelineTableView, timeColumns } from './tables/TimeViews';
+import { calendarPeriod, shiftCursor } from '../../components/organism/CalendarView/CalendarView';
+import { shiftTimeline, timelineRange } from '../../components/organism/TimelineView/TimelineView';
+import { readWhen } from '../../components/organism/CalendarView/events';
 import { RowDrawer } from './tables/RowDrawer';
 import { ColumnsPanel, ExportPanel, FilterPanel, GroupPanel, SortPanel, VIEW_ICON, ViewsPanel, type PanelId } from './tables/Panels';
 import { M03 } from './specs';
@@ -62,9 +67,13 @@ function makeResolver(data: DataProvider) {
 
 interface ViewState { viewId: string | null; kind: TableViewKind; cfg: TableViewConfig }
 const isKind = (v: string | null): v is TableViewKind => !!v && (TABLE_VIEW_KINDS as readonly string[]).includes(v);
-const BUILT: TableViewKind[] = ['grid', 'list', 'gallery', 'kanban', 'graph'];
+const isMode = (v: string | null | undefined): v is CalendarMode => !!v && (CALENDAR_MODES as readonly string[]).includes(v);
+const isZoom = (v: string | null | undefined): v is TimelineZoom => !!v && (TIMELINE_ZOOMS as readonly string[]).includes(v);
+const DATE_KEY = /^\d{4}-\d{2}-\d{2}$/;
+/** The two views that place rows by a date column (disabled for tables without one). */
+const TIME_KINDS: TableViewKind[] = ['calendar', 'timeline'];
 
-/** M-03 — the table manager: sidebar of tables, views (grid · list · gallery · board · graph), filters, row drawer. */
+/** M-03 — the table manager: sidebar of tables, views (grid · list · gallery · board · calendar · timeline · graph), filters, row drawer. */
 export function TablesPage() {
   const { t, bi, lang } = useI18n();
   const { table } = useParams();
@@ -84,6 +93,7 @@ export function TablesPage() {
     [data, version]);
   const counts = useMemo(() => Object.fromEntries(tables.map((x) => [x.name, rowsOf(x.name).length])), [rowsOf]);
   const def: Def | undefined = table ? tableRegistry[table] : undefined;
+  const hasDate = def ? !!dateColumnOf(def.name) : false;
   const { rows } = useTable<BaseRow>(def?.name ?? 'tenants');
   const { rows: allViews } = useTable<TableViewRow>('table_views');
   const views = useMemo(() => allViews.filter((v) => v.table_name === def?.name && (v.shared || v.created_by === user.id)), [allViews, def?.name, user.id]);
@@ -102,7 +112,7 @@ export function TablesPage() {
   const cfg = vs.cfg;
   const selected = params.get('id');
   const focusId = params.get('focus');
-  const setParam = (patch: Record<string, string | null>) => setParams((p) => { const n = new URLSearchParams(p); for (const [k, v] of Object.entries(patch)) { if (v == null) n.delete(k); else n.set(k, v); } return n; }, { replace: false });
+  const setParam = (patch: Record<string, string | null>, replace = false) => setParams((p) => { const n = new URLSearchParams(p); for (const [k, v] of Object.entries(patch)) { if (v == null) n.delete(k); else n.set(k, v); } return n; }, { replace });
 
   const [search, setSearch] = useState('');
   const [panel, setPanel] = useState<PanelId | null>(null);
@@ -128,6 +138,41 @@ export function TablesPage() {
   const selectedRow = selected ? rows.find((r) => r.id === selected) ?? (def ? resolve(def.name, selected) ?? null : null) : null;
   const focusRow = focusId && def ? rows.find((r) => r.id === focusId) ?? null : null;
 
+  // ---- calendar / timeline: ?date= (cursor), ?mode= (calendar layout, agenda by default on phones), ?zoom= ----
+  const phone = !useMinWidth('tablet');
+  const urlMode = params.get('mode'), urlZoom = params.get('zoom'), urlDate = params.get('date');
+  const calMode: CalendarMode = isMode(urlMode) ? urlMode : phone ? 'agenda' : cfg.calendarMode ?? 'month';
+  const tlZoom: TimelineZoom = isZoom(urlZoom) ? urlZoom : cfg.timelineZoom ?? 'month';
+  const time = def ? timeColumns(def, cfg) : { date: null, end: null, options: [] as string[] };
+  /** Today when the period around today has rows; otherwise the nearest row after it (or the last one before it). */
+  const autoCursor = useMemo(() => {
+    const today = dateKey();
+    if (!def || !time.date || (kind !== 'calendar' && kind !== 'timeline')) return today;
+    const keys = filtered.map((r) => readWhen(r[time.date!])).filter((w): w is NonNullable<typeof w> => !!w).map((w) => dateKey(w.date)).sort();
+    if (keys.length === 0) return today;
+    let from: string, to: string;
+    if (kind === 'calendar') ({ from, to } = calendarPeriod(calMode, today));
+    else { const r = timelineRange(tlZoom, today); from = dateKey(r.from); to = dateKey(new Date(r.to.getTime() - 1)); }
+    if (keys.some((k) => k >= from && k <= to)) return today;
+    return keys.find((k) => k > to) ?? keys[keys.length - 1];
+  }, [def, time.date, kind, filtered, calMode, tlZoom]);
+  const cursor = urlDate && DATE_KEY.test(urlDate) ? urlDate : autoCursor;
+  const setCursor = (k: string) => setParam({ date: k }, true);
+  // `also` rides in the same URL update: two setSearchParams calls in one tick would drop the first (the view switch)
+  const setCalMode = (m: CalendarMode, also: Record<string, string | null> = {}) => { setCfg((c) => ({ ...c, calendarMode: m })); setParam({ ...also, mode: m }, true); };
+  const setTlZoom = (z: TimelineZoom, also: Record<string, string | null> = {}) => { setCfg((c) => ({ ...c, timelineZoom: z })); setParam({ ...also, zoom: z }, true); };
+  const canCreateOnDate = canWrite && !!time.date && time.date !== 'created_at' && time.date !== 'updated_at';
+  const createOn = (k: string, hhmm?: string) => {
+    if (!def || !time.date) return;
+    const col = (name: string | null) => (name ? def.allColumns.find((c) => c.name === name) : undefined);
+    const start = col(time.date), end = col(time.end);
+    const at = (h: string) => new Date(`${k}T${h}:00`);
+    const s = at(hhmm ?? '09:00');
+    const prefill: Record<string, unknown> = { [time.date]: start?.type === 'date' ? k : s.toISOString() };
+    if (end && time.end) prefill[time.end] = end.type === 'date' ? k : new Date(s.getTime() + 3600e3).toISOString();
+    void addRow(prefill);
+  };
+
   const openRow = (id: string | null) => setParam({ id });
   const ctx: CellCtx = useMemo(() => ({
     lang, resolve, yes: t('admin.tables.yes'), no: t('admin.tables.no'),
@@ -143,7 +188,7 @@ export function TablesPage() {
     else download(`${def.name}.csv`, toCsv(allowed, sorted), 'text/csv');
     toast(t('admin.tables.exported', { n: sorted.length, format: format.toUpperCase() }), 'success');
   };
-  const addRow = async () => {
+  const addRow = async (prefill: Record<string, unknown> = {}) => {
     if (!def || !canWrite) return;
     const blank: Record<string, unknown> = {};
     for (const c of def.columns) {
@@ -155,7 +200,7 @@ export function TablesPage() {
       else if (c.type === 'timestamptz') blank[c.name] = c.nullable ? null : new Date().toISOString();
       else blank[c.name] = c.nullable ? null : '';
     }
-    const row = await data.insert(def.name, blank);
+    const row = await data.insert(def.name, { ...blank, ...prefill });
     openRow(row.id);
     toast(t('admin.tables.added'), 'success');
   };
@@ -166,6 +211,26 @@ export function TablesPage() {
     toast(t('admin.tables.views.saved', { name }), 'success');
   };
   const setKind = (k: TableViewKind) => { setVs((s) => ({ ...s, kind: k })); setParam({ view: k === 'grid' ? null : k, focus: k === 'graph' ? focusId : null }); };
+  const canEditView = (v: TableViewRow) => canWrite || v.created_by === user.id;
+  const renameView = async (v: TableViewRow, name: string) => {
+    if (!canEditView(v) || !name.trim()) return;
+    const other = lang === 'es' ? 'en' : 'es';
+    const next = { ...v.name, [lang]: name.trim(), ...(v.name[other] === v.name[lang] || !v.name[other] ? { [other]: name.trim() } : {}) };
+    await data.update<TableViewRow>('table_views', v.id, { name: next });
+    toast(t('admin.tables.views.renamed', { name: name.trim() }), 'success');
+  };
+  const deleteView = async (v: TableViewRow) => {
+    if (!canEditView(v)) return;
+    await data.remove('table_views', v.id);
+    if (vs.viewId === v.id) { setVs(() => ({ viewId: null, kind: 'grid', cfg: {} })); setParam({ view: null, v: null, mode: null, zoom: null }); }
+    toast(t('admin.tables.views.deleted', { name: bi(v.name) }), 'success');
+  };
+  /** A saved view by id or by its name in either language (default: the active one). */
+  const findView = (ref?: string) => {
+    if (!ref) return views.find((v) => v.id === vs.viewId);
+    const q = ref.trim().toLowerCase();
+    return views.find((v) => v.id === ref) ?? views.find((v) => v.name.es.toLowerCase() === q || v.name.en.toLowerCase() === q);
+  };
   const moveCard = async (id: string, column: string, value: string | boolean) => {
     if (!def || !canWrite) return;
     await data.update(def.name, id, { [column]: value });
@@ -180,7 +245,28 @@ export function TablesPage() {
   api.current = {
     'tables.open': (p) => { const name = need(p, 'table'); if (!tableRegistry[name]) throw new Error(`unknown table "${name}"`); nav(`/admin/tables/${name}`); return `opened ${name}`; },
     'tables.openRow': (p) => { const name = need(p, 'table'); const id = need(p, 'id'); if (!tableRegistry[name]) throw new Error(`unknown table "${name}"`); nav(`/admin/tables/${name}?id=${encodeURIComponent(id)}`); return `opened ${name}/${id}`; },
-    'tables.setView': (p) => { const k = need(p, 'kind'); if (!isKind(k)) throw new Error(`unknown view "${k}"`); if (!BUILT.includes(k)) throw new Error(`the ${k} view is not wired yet`); if (!def) throw new Error('open a table first'); setKind(k); return `view ${k}`; },
+    'tables.setView': (p) => { const k = need(p, 'kind'); if (!isKind(k)) throw new Error(`unknown view "${k}"`); if (!def) throw new Error('open a table first'); if (TIME_KINDS.includes(k) && !hasDate) throw new Error(`${def.name} has no date column`); setKind(k); return `view ${k}`; },
+    'tables.setDateColumn': (p) => {
+      if (!def) throw new Error('open a table first');
+      if (!hasDate) throw new Error(`${def.name} has no date column`);
+      const column = need(p, 'column'); if (!time.options.includes(column)) throw new Error(`"${column}" is not a date column of ${def.name} (${time.options.join(', ')})`);
+      const endRaw = p?.endColumn; const endColumn = endRaw == null || endRaw === '' ? undefined : endRaw === 'none' ? null : endRaw;
+      if (endColumn && (!time.options.includes(endColumn) || endColumn === column)) throw new Error(`"${endColumn}" is not another date column of ${def.name}`);
+      setCfg((c) => ({ ...c, dateColumn: column, endColumn }));
+      return `date column ${column}${endColumn ? ` → ${endColumn}` : endColumn === null ? ' (no end)' : ''}`;
+    },
+    'tables.calendarMode': (p) => { const m = need(p, 'mode'); if (!isMode(m)) throw new Error('mode is month, week or agenda'); if (!def || !hasDate) throw new Error('open a table with a date column first'); if (kind !== 'calendar') setVs((st) => ({ ...st, kind: 'calendar' })); setCalMode(m, { view: 'calendar', focus: null }); return `calendar by ${m}`; },
+    'tables.timelineZoom': (p) => { const z = need(p, 'zoom'); if (!isZoom(z)) throw new Error('zoom is day, week, month or quarter'); if (!def || !hasDate) throw new Error('open a table with a date column first'); if (kind !== 'timeline') setVs((st) => ({ ...st, kind: 'timeline' })); setTlZoom(z, { view: 'timeline', focus: null }); return `timeline zoom ${z}`; },
+    'tables.goToDate': (p) => {
+      const d = need(p, 'date');
+      if (kind !== 'calendar' && kind !== 'timeline') throw new Error('open the calendar or the timeline first');
+      const step = (n: number) => (kind === 'calendar' ? shiftCursor(calMode, cursor, n) : shiftTimeline(tlZoom, cursor, n));
+      const k = d === 'today' ? dateKey() : d === 'next' ? step(1) : d === 'previous' ? step(-1) : d;
+      if (!DATE_KEY.test(k)) throw new Error('date is YYYY-MM-DD, today, next or previous');
+      setCursor(k); return `at ${k}`;
+    },
+    'tables.renameView': async (p) => { const v = findView(p?.view); if (!v) throw new Error('no such saved view'); if (!canEditView(v)) throw new Error('only its creator or tables.write'); await renameView(v, need(p, 'name')); return 'view renamed'; },
+    'tables.deleteView': async (p) => { const v = findView(p?.view); if (!v) throw new Error('no such saved view'); if (!canEditView(v)) throw new Error('only its creator or tables.write'); await deleteView(v); return 'view deleted'; },
     'tables.search': (p) => { setSearch(p?.q ?? ''); return `search "${p?.q ?? ''}"`; },
     'tables.filter': (p) => {
       if (!def) throw new Error('open a table first');
@@ -208,10 +294,9 @@ export function TablesPage() {
       onNavigate={() => setSheet(false)} onToggle={toggleSidebar} onReset={data.reset && canWrite ? () => setResetting(true) : undefined} />
   );
 
-  const hasDate = def ? !!dateColumnOf(def.name) : false;
   const kindOptions: SegmentOption<TableViewKind>[] = TABLE_VIEW_KINDS.map((k) => ({
     value: k, label: t(`admin.tables.view.${k}`), icon: VIEW_ICON[k],
-    ...(BUILT.includes(k) ? {} : hasDate ? { placeholder: t(`admin.tables.view.${k}.what`) } : { disabled: true, hint: t('admin.tables.view.noDate') }),
+    ...(TIME_KINDS.includes(k) && !hasDate ? { disabled: true, hint: t('admin.tables.view.noDate') } : {}),
   }));
   const activeView = views.find((v) => v.id === vs.viewId);
   const filters = cfg.filters ?? [];
@@ -276,12 +361,13 @@ export function TablesPage() {
               <div className="tbl-toolbar" role="toolbar" aria-label={t('admin.tables.toolbar')}>
                 {toolBtn('filter', 'filter', t('admin.tables.filter'), filters.length)}
                 {toolBtn('sort', 'sort', t('admin.tables.sort'), cfg.sorts?.length)}
-                {kind === 'grid' && toolBtn('group', 'group', t('admin.tables.group'), cfg.groupBy ? 1 : 0)}
+                {(kind === 'grid' || kind === 'timeline') && toolBtn('group', 'group', t(kind === 'timeline' ? 'admin.tables.lanes' : 'admin.tables.group'), cfg.groupBy ? 1 : 0)}
+                {TIME_KINDS.includes(kind) && hasDate && <DateColumnPicker def={def} cfg={cfg} setCfg={setCfg} technical={technical} />}
                 {toolBtn('columns', 'columns', t('admin.tables.columnsPanel'))}
                 <div className="tbl-search"><Input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('admin.tables.search', { table: tableLabel(def, lang) })} aria-label={t('core.common.search')} /></div>
                 {toolBtn('export', 'download', t('admin.tables.export'))}
                 <Chip selected={schema} onClick={() => setSchema((s) => !s)}>{t('admin.tables.schema')}</Chip>
-                {canWrite && <Button size="sm" icon="plus" onClick={addRow}>{t('admin.tables.addRow')}</Button>}
+                {canWrite && <Button size="sm" icon="plus" onClick={() => addRow()}>{t('admin.tables.addRow')}</Button>}
               </div>
 
               {filters.length > 0 && (
@@ -303,8 +389,9 @@ export function TablesPage() {
                   {panel === 'columns' && <ColumnsPanel def={def} cfg={cfg} setCfg={setCfg} technical={technical} canWrite={canWrite} onClose={() => setPanel(null)} />}
                   {panel === 'export' && <ExportPanel count={sorted.length} onExport={exportRows} onClose={() => setPanel(null)} />}
                   {panel === 'views' && <ViewsPanel views={views} activeId={vs.viewId} canWrite={canWrite} onClose={() => setPanel(null)} onSave={saveView}
-                    onDefault={() => { setVs(() => ({ viewId: null, kind: 'grid', cfg: {} })); setParam({ view: null, v: null }); }}
-                    onPick={(v) => { setVs(() => ({ viewId: v.id, kind: v.kind, cfg: v.config ?? {} })); setParam({ view: v.kind === 'grid' ? null : v.kind, v: null }); setPanel(null); }} />}
+                    canEdit={canEditView} onRename={renameView} onDelete={deleteView}
+                    onDefault={() => { setVs(() => ({ viewId: null, kind: 'grid', cfg: {} })); setParam({ view: null, v: null, mode: null, zoom: null, date: null }); }}
+                    onPick={(v) => { setVs(() => ({ viewId: v.id, kind: v.kind, cfg: v.config ?? {} })); setParam({ view: v.kind === 'grid' ? null : v.kind, v: null, mode: null, zoom: null, date: null }); setPanel(null); }} />}
                 </div>
               )}
             </header>
@@ -318,7 +405,14 @@ export function TablesPage() {
                 {kind === 'graph' && <GraphView def={def} counts={counts} focus={focusRow} resolve={resolve} rowsOf={rowsOf}
                   onTable={(name) => nav(`/admin/tables/${name}?view=graph`)} onRow={(tbl, id) => nav(`/admin/tables/${tbl}?view=graph&focus=${encodeURIComponent(id)}`)}
                   onOpenRow={(id) => openRow(id)} onRelated={(tbl, column, id) => nav(`/admin/tables/${tbl}?where=${encodeURIComponent(`${column}:${id}`)}`)} onClearFocus={() => setParam({ focus: null })} />}
-                {(kind === 'calendar' || kind === 'timeline') && <Notice tone="info" title={t(`admin.tables.view.${kind}`)}>{t('admin.tables.view.soon')}</Notice>}
+                {kind === 'calendar' && (hasDate
+                  ? <CalendarTableView def={def} rows={sorted} cfg={cfg} resolve={resolve} onOpen={openRow} selected={selected} cursor={cursor} onCursorChange={setCursor}
+                      mode={calMode} onModeChange={setCalMode} onCreate={canCreateOnDate ? createOn : undefined} />
+                  : <Notice tone="info" title={t('admin.tables.view.calendar')}>{t('admin.tables.view.noDate')}</Notice>)}
+                {kind === 'timeline' && (hasDate
+                  ? <TimelineTableView def={def} rows={sorted} cfg={cfg} resolve={resolve} onOpen={openRow} selected={selected} cursor={cursor} onCursorChange={setCursor}
+                      zoom={tlZoom} onZoomChange={setTlZoom} />
+                  : <Notice tone="info" title={t('admin.tables.view.timeline')}>{t('admin.tables.view.noDate')}</Notice>)}
               </div>
             )}
 

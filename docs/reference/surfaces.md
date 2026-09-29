@@ -1,8 +1,22 @@
 # Machine surfaces — MCP / WebMCP, CLI, API
 
 What something other than a person can drive in HoyOS today, and what it cannot.
-**Checked 2026-09-29** (v0.19.0; previous check 2026-09-29, v0.18.0). Re-check and date this file every pass; a line that is not
+**Checked 2026-09-29** (v0.20.0; previous check 2026-09-29, v0.19.0). Re-check and date this file every pass; a line that is not
 re-checked is not current.
+
+**0046 delta (v0.20.0).** Six new action ids on M-03, declared in `src/modules/admin/actions.ts`: `tables.setDateColumn`
+(`column`, `endColumn?`), `tables.calendarMode` (`mode: enum:month,week,agenda`), `tables.timelineZoom`
+(`zoom: enum:day,week,month,quarter`), `tables.goToDate` (`date`: `YYYY-MM-DD`, `today`, `next` or `previous`),
+`tables.renameView` and `tables.deleteView` (both `tables.write`; `view` is a saved-view id or its name, default the active
+one); M-03 now declares 17 `tables.*` actions. `tables.setView` widened to `grid,list,gallery,kanban,calendar,timeline,graph`
+(calendar and timeline need a date or timestamp column; they no longer answer "not wired yet"). Three new URL params are
+linkable surfaces with `?view=calendar|timeline`: `?date=YYYY-MM-DD` (the cursor), `?mode=month|week|agenda` and
+`?zoom=day|week|month|quarter`, e.g. `/#/admin/tables/class_sessions?view=calendar&mode=month&date=2026-09-29`. Saved-view
+rename and delete are now machine-reachable (they were listed as not reachable in 0044). The hub map tool `purpose` now
+reads "El gestor de datos con vistas: cuadrícula, lista, galería, tablero, calendario, línea de tiempo y grafo."
+(`public/hub-map.json`, version 0.20.0; no schema change). `public/actions.json` now lists 57 actions (was 51), version 0.20.0.
+`MockProvider.SEED_VERSION` is 8, so every stored demo db reseeds once. Still not machine-reachable: the graph zoom / pan,
+the kanban drag and the timeline bar click (the keyboard, `tables.openRow` and `tables.goToDate` are the reachable paths).
 
 **0044 delta (v0.19.0).** Eleven new action ids on M-03 `/admin/tables/:table`, declared in `src/modules/admin/actions.ts`
 (`ADMIN_ACTIONS['M-03']`): `tables.open`, `tables.openRow`, `tables.setView`, `tables.search`, `tables.filter`,
@@ -111,13 +125,19 @@ window.__hoyos.actions.filter((a) => a.mounted);
 | `dev.apiKeys.revoke` | D-07 | Revoca la llave {id} ya | `id: api_keys.id or prefix` | `api_keys.write` |
 | `tables.open` | M-03 | Abre la tabla {table} | `table: enum of table names` | `tables.read` |
 | `tables.openRow` | M-03 | Abre la fila {id} de {table} | `table`, `id` | `tables.read` |
-| `tables.setView` | M-03 | Muéstralo como {kind} | `kind: enum:grid,list,gallery,kanban,graph` — `calendar`, `timeline` answer "not wired yet" | `tables.read` |
+| `tables.setView` | M-03 | Muéstralo como {kind} | `kind: enum:grid,list,gallery,kanban,calendar,timeline,graph` — calendar and timeline need a date or timestamp column | `tables.read` |
+| `tables.setDateColumn` | M-03 | Pon las filas en el calendario por {column} hasta {endColumn} | `column` (a date or timestamp column of the open table), `endColumn?` (none = a point; default the pair of `column`) | `tables.read` |
+| `tables.calendarMode` | M-03 | Muestra el calendario por {mode} | `mode: enum:month,week,agenda` | `tables.read` |
+| `tables.timelineZoom` | M-03 | Acerca o aleja la línea de tiempo a {zoom} | `zoom: enum:day,week,month,quarter` | `tables.read` |
+| `tables.goToDate` | M-03 | Ve al {date} en el calendario o la línea de tiempo | `date`: `YYYY-MM-DD`, `today`, `next` or `previous` | `tables.read` |
 | `tables.search` | M-03 | Busca {q} en esta tabla | `q` (empty clears) | `tables.read` |
 | `tables.filter` | M-03 | Filtra donde {column} {op} {value} | `column`, `op: enum:is,is_not,contains,empty,not_empty,before,after,gt,lt,in`, `value` (comma-separated for `in`; YYYY-MM-DD for dates) | `tables.read` |
 | `tables.newRow` | M-03 | Crea una fila nueva en esta tabla | — | `tables.write` |
 | `tables.export` | M-03 | Exporta esta vista en {format} | `format: enum:json,csv` (raw column names and values) | `tables.read` |
 | `tables.toggleSidebar` | M-03 | Contrae (o expande) la barra de tablas | — | `tables.read` |
 | `tables.saveView` | M-03 | Guarda esta vista como {name} | `name` — writes a `table_views` row | `tables.write` |
+| `tables.renameView` | M-03 | Cambia el nombre de la vista {view} a {name} | `view` (id or name; default the active one), `name` | `tables.write` |
+| `tables.deleteView` | M-03 | Elimina la vista {view} | `view` (id or name; default the active one) | `tables.write` |
 | `tables.pin` | M-03 | Fija (o suelta) la tabla {table} | `table` (default: the open one) | `tables.read` |
 | `tables.toggleTechnicalNames` | M-03 | Muestra (u oculta) los nombres técnicos | — | `dev.tools` |
 | `manual.setLens` | K-03 | Muéstrame el manual de {role} | `role: enum:all,super_admin,admin,coordinator,front_desk,finance,teacher,maintenance,marketing,developer` | `docs.read` |
@@ -268,7 +288,7 @@ consumer checklist: [`hub-map.md`](./hub-map.md).
 | File | URL | What |
 | --- | --- | --- |
 | `public/hub-map.json` | `https://imagine-os.github.io/hoy/hub-map.json` | Schema `hoy.hub-map/1`: product, embed pattern, 11 roles, 15 experiences (the hub cards; `marketing` carries `comingSoon: true`, 0031), every page code (92 after the 0041 build — M-08g, M-10a and D-07 join the 89; each with a `group`; the 9 template pages with a `sampleRoute`), 9 tools, 3 lens hints |
-| `public/actions.json` | `https://imagine-os.github.io/hoy/actions.json` | Since 0043. Schema `hoy.actions/1` (contract `src/actions/manifest.types.ts`): product, `run` (how to execute — in the page, `window.__hoyos.run(id, params)`; no MCP server yet), the 11 permissions the actions reference with the roles that hold each, and the 40 actions sorted by id — `label` / `intent` `{es,en}`, `params?`, `permission?`, `roles` (union of the declaring routes) and `pages` (`code`, `route`). The vocabulary without opening the page; written by `npm run actions` |
+| `public/actions.json` | `https://imagine-os.github.io/hoy/actions.json` | Since 0043. Schema `hoy.actions/1` (contract `src/actions/manifest.types.ts`): product, `run` (how to execute — in the page, `window.__hoyos.run(id, params)`; no MCP server yet), the 11 permissions the actions reference with the roles that hold each, and the actions sorted by id (57 at v0.20.0) — `label` / `intent` `{es,en}`, `params?`, `permission?`, `roles` (union of the declaring routes) and `pages` (`code`, `route`). The vocabulary without opening the page; written by `npm run actions` |
 | `public/source/<id>.pdf` (+ `<id>-cover.jpg`) | `https://imagine-os.github.io/hoy/source/<id>.pdf` | Since 0031: the owner's source documents (`modelo-de-valor`, `contenido-completo`, `manual-de-marca`); index `docs/source/index.json`; shown on K-05 `/#/docs/source` |
 | `dist/hub-map/shots/<CODE>/…` | `https://imagine-os.github.io/hoy/hub-map/shots/<CODE>/<file>.jpg` | The thumbs (`thumb-<lang>-<phone\|desktop>[-dark].jpg`) and captures (`<lang>-390.jpg`, `<lang>-1280.jpg`, W-xx `<lang>-390-full.jpg`) the map's `shots` point at, relative to `product.baseUrl` |
 
@@ -276,7 +296,7 @@ consumer checklist: [`hub-map.md`](./hub-map.md).
 `frameUrl()` builds; a host substitutes and iframes it. Same-origin only under `imagine-os.github.io`.
 
 ---
-**Resumen (ES).** Qué puede manejar una máquina hoy (revisado 2026-09-29, v0.19.0; 0044 añade once acciones `tables.*` en M-03, los parámetros de URL `?id=`, `?view=`, `?v=`, `?focus=` y `?where=` como vistas enlazables, y la tabla `table_views`; 0041 añade las acciones de horario — `settings.hours.*` —, de Google Business Profile — `integrations.google.*`, conectar y enviar responden «aún no conectado» — y de llaves de desarrollador — `dev.apiKeys.*` —; 0043 publica el vocabulario como archivo): en la página, `window.__hoyos` publica las rutas,
+**Resumen (ES).** Qué puede manejar una máquina hoy (revisado 2026-09-29, v0.20.0; 0046 añade seis acciones `tables.*` — fecha, modo del calendario, zoom, ir a una fecha, renombrar y eliminar vistas —, amplía `tables.setView` a calendario y línea de tiempo y suma los parámetros `?date=`, `?mode=` y `?zoom=`; 0044 añade once acciones `tables.*` en M-03, los parámetros de URL `?id=`, `?view=`, `?v=`, `?focus=` y `?where=` como vistas enlazables, y la tabla `table_views`; 0041 añade las acciones de horario — `settings.hours.*` —, de Google Business Profile — `integrations.google.*`, conectar y enviar responden «aún no conectado» — y de llaves de desarrollador — `dev.apiKeys.*` —; 0043 publica el vocabulario como archivo): en la página, `window.__hoyos` publica las rutas,
 los usuarios demo, las acciones declaradas y `run(id, params)` para ejecutarlas (superficie WebMCP; no
 hay servidor MCP todavía), `__hoyos.hubMap` con el mapa del hub y `__hoyos.actionsUrl`. Archivos publicados: `hub-map.json`
 (esquema `hoy.hub-map/1`), con sus capturas en `hub-map/shots/`, para que aluzina y between-gigs dibujen el hub a su manera

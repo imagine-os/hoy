@@ -148,3 +148,31 @@ export function dateColumnOf(table: string): string | null {
   const c = def?.columns.find((x) => x.type === 'timestamptz' || x.type === 'date');
   return c?.name ?? null;
 }
+
+/**
+ * 0046: the columns the calendar / timeline "Fecha" picker offers — the table's own date and timestamp columns, then
+ * created_at / updated_at. Empty when the table has no date column of its own (the two views stay disabled).
+ */
+export function dateColumnsOf(table: string): string[] {
+  const def = tableRegistry[table];
+  if (!def || !dateColumnOf(table)) return [];
+  return [...def.columns.filter((x) => x.type === 'timestamptz' || x.type === 'date').map((x) => x.name), 'created_at', 'updated_at'];
+}
+
+/**
+ * 0046: the column where a row placed by `start` ends, or null (a point in time). The pair first (starts_at → ends_at,
+ * start_date → end_date, period_start → period_end, X_start → X_end, start_X → end_X), then any end_* / *_end /
+ * *_until / expires_at column of the same kind of date.
+ */
+export function endColumnOf(table: string, start: string | null | undefined = dateColumnOf(table)): string | null {
+  const def = tableRegistry[table];
+  if (!def || !start) return null;
+  const dates = def.columns.filter((x) => (x.type === 'timestamptz' || x.type === 'date') && x.name !== start);
+  const has = (n: string) => dates.some((x) => x.name === n);
+  const pairs = [start.replace(/^starts_/, 'ends_'), start.replace(/^start_/, 'end_'), start.replace(/_start$/, '_end'), start.replace(/^start/, 'end'), start.replace(/_from$/, '_until')];
+  const pair = pairs.find((n) => n !== start && has(n));
+  if (pair) return pair;
+  if (!/(^|_)(start|starts|from|begin)/.test(start)) return null;
+  const kind = def.columns.find((x) => x.name === start)?.type;
+  return dates.find((x) => x.type === kind && /^ends?_|_end$|_until$|^expires_at$/.test(x.name))?.name ?? null;
+}
