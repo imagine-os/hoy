@@ -23,6 +23,11 @@ const hubActions: ActionDef[] = [
   { id: 'hub.openTool', label: { es: 'Abrir una herramienta', en: 'Open a tool' }, intent: { es: 'Abre {tool}', en: 'Open {tool}' }, params: { tool: `enum:${HUB_TOOLS.join(',')}` } },
   { id: 'hub.toggleDevMode', label: { es: 'Modo dev', en: 'Dev mode' }, intent: { es: 'Enciende o apaga el modo dev', en: 'Turn dev mode on or off' }, permission: 'dev.tools' },
   { id: 'hub.setLang', label: { es: 'Cambiar idioma', en: 'Set the language' }, intent: { es: 'Pon la interfaz en {lang}', en: 'Put the interface in {lang}' }, params: { lang: 'enum:es,en' } },
+  {
+    id: 'hub.map',
+    label: { es: 'Mapa del hub', en: 'Hub map' },
+    intent: { es: 'Dame el mapa del hub', en: 'Give me the hub map' },
+  },
   { id: 'hub.toggleTheme', label: { es: 'Cambiar tema', en: 'Toggle theme' }, intent: { es: 'Cambia entre claro y oscuro', en: 'Switch between light and dark' } },
   { id: 'hub.toggleWireframe', label: { es: 'Wireframe', en: 'Wireframe' }, intent: { es: 'Muestra el sistema en wireframe', en: 'Show the system as a wireframe' }, permission: 'dev.tools' },
 ];
@@ -56,6 +61,8 @@ export const hubSpec = defineSpec({
     'A framed preview runs under its own session (src/app/frameSession.ts shadows hoyos.session / hoyos.lang / hoyos.theme), so it never touches the tester’s.',
     'The stat strip counts live: routes and codes from the registry, tables from tableRegistry, components from the D-02 glob, actions from listActions(), manual chapters from the ops-manual glob.',
     'Wireframe and dev-mode toggles only render for super_admin; a tool whose route the current role cannot open still renders and lands on /no-access, as the guard does everywhere else.',
+    'The bands and the tools row are drawn from the hub map data (src/hub/hubMap.data.ts): the same module scripts/gen-hub-map.mjs publishes as public/hub-map.json (schema hoy.hub-map/1) for other hosts — aluzina, between-gigs — so the hub and its map cannot drift. Only icons and preview shapes live in HubPage.tsx.',
+    'hub.map answers with the published map URL and loads the map into window.__hoyos.hubMap.data.',
     'Hub type sizes, medallions, padding and grid width scale with a hub-scoped --ui variable: 1 · 1.125 (≥1920) · 1.375 (≥2560) · 1.75 (≥3840).',
   ],
   integrations: [],

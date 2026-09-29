@@ -49,10 +49,11 @@ const isRole = (s: string): s is Role => (ROLES as readonly string[]).includes(s
 /** Builds the hash a preview iframe loads: the route plus the session it should run under. */
 export function frameUrl(route: string, opts: { as?: Role; lang?: string; theme?: string; dev?: boolean }): string {
   const q = new URLSearchParams();
+  // Same order as the hub map's embed pattern (src/hub/hubMap.data.ts EMBED_PATTERN).
   if (opts.as) q.set('as', opts.as);
-  q.set('dev', opts.dev ? '1' : '0');
   if (opts.lang) q.set('lang', opts.lang);
   if (opts.theme) q.set('theme', opts.theme);
+  q.set('dev', opts.dev ? '1' : '0');
   q.set('live', '0');
   const base = typeof window === 'undefined' ? '' : `${window.location.pathname}${window.location.search}`;
   return `${base}#${route}?${q.toString()}`;

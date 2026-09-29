@@ -54,7 +54,7 @@ The page's own thumbnails (what the canvas shows for it):
 6. **Band C · Construcción y pruebas** (tinted lane) — Manual de operaciones, Documentación y changelog, Kanban y knowledgebase, Herramientas de desarrollo.
 7. **ToolsRow · Hub de pruebas** — nine compact tool cards: lienzo, simulador, specs, editor de layout, tablas, componentes, tokens, decisiones, capturas.
 8. **StatStrip** — a `<dl>`: routes, page codes, tables, components, actions, manual chapters.
-9. **Footer** — `HoyOS v0.9.0 · pruebas privadas · datos demo`.
+9. **Footer** — `HoyOS v{version} · pruebas privadas · datos demo` (v0.11.0 at 0027).
 
 Each surface card: hue medallion + `Icon`, a built / stub / planned `Badge`, an "Estás aquí" badge
 when the route is the current role's home, title, one-line body, a `PagePreview`, one outline
@@ -82,11 +82,27 @@ manual chapters from the ops-manual glob (`src/app/counts.ts`).
 | `hub.openTool` | Abre {tool} | `tool` (9 keys) | — |
 | `hub.toggleDevMode` | Enciende o apaga el modo dev | — | `dev.tools` |
 | `hub.setLang` | Pon la interfaz en {lang} | `lang` (`es` or `en`) | — |
+| `hub.map` | Dame el mapa del hub | — | — |
 | `hub.toggleTheme` | Cambia entre claro y oscuro | — | — |
 | `hub.toggleWireframe` | Muestra el sistema en wireframe | — | `dev.tools` |
 
 Declared in `hubSpec.actions`, mounted by `useActions()`, listed at `window.__hoyos.actions` and run
 with `window.__hoyos.run(id, params)`. See `docs/reference/surfaces.md`.
+
+`hub.map` (0027) loads the published hub map and answers with its URL and counts, e.g.
+`hub map https://imagine-os.github.io/hoy/hub-map.json · hoy.hub-map/1 v0.11.0 · 9 roles, 13 experiences, 87 pages, 9 tools`;
+the parsed map is then at `window.__hoyos.hubMap.data`.
+
+## The hub map (data module)
+Since 0027 the bands, the cards and the tools row are not written in `HubPage.tsx`: they come from
+`src/hub/hubMap.data.ts` (`HUB_EXPERIENCES`, `HUB_TOOL_LIST`, `HUB_ROLES`, `HOY_PRODUCT`), a pure data module
+that `scripts/gen-hub-map.mjs` also publishes, joined with the route registry, as `public/hub-map.json`
+(schema `hoy.hub-map/1`, [`docs/reference/hub-map.md`](../reference/hub-map.md)). The card and tool labels and
+bodies, the "Entrar o crear cuenta" link and the hero lead (`hub.card.*`, `hub.tool.*`, `hub.lead`) are derived
+from it in `src/modules/hub/strings.ts`. Only the icons and the preview shapes (`CARD_UI`, `TOOL_UI`) stay in the
+page. Changing a card is one edit in the data module: the hub, the published map and every host that reads it
+(aluzina, between-gigs) move together. `src/hub/hubMap.check.ts` checks the module's copied role facts against
+`src/auth/` (dev warning; the generator fails the build).
 
 ## Logic and integrations
 - A card enters as the demo user of its role: `switchUser(role)` then `navigate(to)` — the tester never has to pick a person first.
@@ -110,6 +126,7 @@ framed (inside a preview or the simulator) · no captures yet (idle tiles) · En
 ## Changelog
 - `docs/changelog/0001-initial-build.md` — first version (card grid, staff role picker, developer links)
 - `docs/changelog/0022-hub-home-redesign.md` — rebuilt around real previews ([before](../screenshots/HUB-01/es-1280-before.jpg) → [after](../screenshots/HUB-01/es-1280.jpg))
+- `docs/changelog/0027-hub-map.md` — cards and tools read from `src/hub/hubMap.data.ts` (same rendering), the `hub.map` action, captures at v0.11.0
 
 ---
 **Resumen (ES).** La puerta de entrada. Cada tarjeta muestra la pantalla real que abre — la captura y,

@@ -1,0 +1,181 @@
+/**
+ * The hub map's hand-written half — PURE data, no React, no JSX, no runtime imports, so plain node
+ * can load it (`node --experimental-strip-types`) as well as Vite.
+ *
+ * One source of truth for what the hub shows: HUB-01 (`src/modules/hub/HubPage.tsx`) renders its
+ * bands and tool row from these arrays and its card / tool strings are derived from them
+ * (`src/modules/hub/strings.ts`), and `scripts/gen-hub-map.mjs` joins them with the route registry
+ * into `public/hub-map.json` (contract: `./hubMap.types.ts`, `docs/reference/hub-map.md`).
+ *
+ * Role facts (labels, homes, demo first names) are duplicated from `src/auth/roles.ts` and
+ * `src/auth/demoUsers.ts` because those files are imported without extensions elsewhere and this file
+ * must stay import-free; `checkHubMapData()` in `./hubMap.check.ts` (dev) and the generator (every
+ * build) fail loudly when the copies drift.
+ */
+import type { Bi, HubBand, HubDevice, HubExperience, HubLensHint, HubLensId, HubRole } from './hubMap.types';
+
+export const HUB_MAP_SCHEMA = 'hoy.hub-map/1' as const;
+/** Where the product is published (GitHub Pages). Every URL in the map is relative to it. */
+export const HOY_BASE_URL = 'https://imagine-os.github.io/hoy/';
+/** The testing hub's own route. */
+export const HUB_ROUTE = '/';
+/** The published file, relative to the base URL. */
+export const HUB_MAP_FILE = 'hub-map.json';
+/** Where the build copies the captures the map points at, relative to the base URL. */
+export const HUB_SHOTS_DIR = 'hub-map/shots';
+
+/** Exactly what `frameUrl()` (src/app/frameSession.ts) builds for a preview iframe, as a template. */
+export const EMBED_PATTERN = '{baseUrl}#{route}?as={role}&lang={lang}&theme={theme}&dev=0&live=0';
+export const EMBED_NOTE: Bi = {
+  es: 'Sustituye {baseUrl}, {route} (una ruta de experiences[] o pages[]; un segmento :id es una plantilla y hay que cambiarlo por un id real), {role} (un id de roles[]), {lang} (es | en) y {theme} (light | dark), y carga la URL en un iframe. Dentro del iframe la app corre como el usuario demo de ese rol sin tocar la sesión de quien la mira; live=0 apaga las vistas previas anidadas. Mismo origen solo en imagine-os.github.io.',
+  en: 'Substitute {baseUrl}, {route} (a route from experiences[] or pages[]; a :id segment is a template to replace with a real id), {role} (an id from roles[]), {lang} (es | en) and {theme} (light | dark), and load the URL in an iframe. Inside the frame the app runs as that role’s demo user without touching the viewer’s own session; live=0 turns nested previews off. Same-origin only on imagine-os.github.io.',
+};
+
+export const HOY_PRODUCT: { id: 'hoy'; name: Bi; tagline: Bi; accent: string; wordmark: string } = {
+  id: 'hoy',
+  name: { es: 'HoyOS', en: 'HoyOS' },
+  // Also the hub hero's lead (`hub.lead`).
+  tagline: {
+    es: 'Un solo sistema para cada puesto del estudio: quien practica, quien enseña, quien recibe en la puerta, quien administra y quien lo construye.',
+    en: 'One system for every seat at the studio: members, teachers, front desk, admin, and the people who build it.',
+  },
+  accent: '#35597D', // D-01 brand.deepBlue (src/design/tokens.ts) — checked by the generator
+  wordmark: 'brand/hoy-blue.png',
+};
+
+/** Every role, outside-in: who practises, who visits, who teaches, then the team, then who builds. */
+export const HUB_ROLES: HubRole[] = [
+  {
+    id: 'customer', label: { es: 'Cliente', en: 'Customer' },
+    description: { es: 'Quien practica: reserva, paga y lleva su membresía y su historial desde el teléfono.', en: 'Whoever practises: books, pays and keeps their membership and history on the phone.' },
+    band: 'outside', home: '/app', device: 'phone', demoUser: { id: 'usr_cust', firstName: 'Juliana' }, look: 'customer', props: ['phone', 'rating'],
+  },
+  {
+    id: 'public', label: { es: 'Público', en: 'Public' },
+    description: { es: 'Cualquiera sin sesión: el sitio web, las clases, los planes y el contacto.', en: 'Anyone not signed in: the website, the classes, the plans and contact.' },
+    band: 'outside', home: '/site', device: 'page', look: 'public', props: ['tablet', 'book'],
+  },
+  {
+    id: 'teacher', label: { es: 'Profesor/a', en: 'Teacher' },
+    description: { es: 'Enseña: sus clases, la lista de asistentes, la asistencia desde el mat y su nómina.', en: 'Teaches: their classes, the roster, attendance from the mat and their payroll.' },
+    band: 'outside', home: '/teach', device: 'phone', demoUser: { id: 'usr_teach', firstName: 'Andrés' }, look: 'teacher', props: ['phone', 'clipboard'],
+  },
+  {
+    id: 'front_desk', label: { es: 'Recepción', en: 'Front desk' },
+    description: { es: 'La puerta del estudio: check-in, la bandeja de mensajes y la caja.', en: 'The studio’s door: check-in, the message inbox and the register.' },
+    band: 'team', home: '/staff', device: 'desktop', demoUser: { id: 'usr_desk', firstName: 'Camilo' }, look: 'frontdesk', props: ['stamp', 'keys'],
+  },
+  {
+    id: 'coordinator', label: { es: 'Coordinación', en: 'Coordinator' },
+    description: { es: 'Coordina el horario, los profesores y las comunicaciones, y lleva el CRM.', en: 'Runs the schedule, the teachers and communications, and owns the CRM.' },
+    band: 'team', home: '/staff', device: 'desktop', demoUser: { id: 'usr_coord', firstName: 'Valentina' }, look: 'coordinator', props: ['board', 'clipboard'],
+  },
+  {
+    id: 'finance', label: { es: 'Finanzas', en: 'Finance' },
+    description: { es: 'Ingresos, gastos, nómina de profesores e impuestos, con el libro detrás.', en: 'Revenue, expenses, teacher payroll and tax, with the ledger behind it.' },
+    band: 'team', home: '/admin', device: 'desktop', demoUser: { id: 'usr_fin', firstName: 'Laura' }, look: 'finance', props: ['calculator', 'contract'],
+  },
+  {
+    id: 'admin', label: { es: 'Administración', en: 'Admin' },
+    description: { es: 'El dueño del estudio: el panel, los ajustes, el contenido, las tablas y el manual.', en: 'The studio owner: the dashboard, settings, content, tables and the manual.' },
+    band: 'team', home: '/admin', device: 'desktop', demoUser: { id: 'usr_admin', firstName: 'Mateo' }, look: 'admin', props: ['laptop', 'keys'],
+  },
+  {
+    id: 'super_admin', label: { es: 'Super admin', en: 'Super admin' },
+    description: { es: 'Quien construye el sistema: ve todo, incluido el modo dev, y puede ver como cualquier rol.', en: 'Whoever builds the system: sees everything, dev mode included, and can view as any role.' },
+    band: 'build', home: '/admin', device: 'desktop', demoUser: { id: 'usr_super', firstName: 'Sofía' }, look: 'superadmin', props: ['laptop', 'plans'],
+  },
+  {
+    id: 'maintenance', label: { es: 'Mantenimiento', en: 'Maintenance' },
+    description: { es: 'Salas, incidencias e inventario, desde el panel del equipo.', en: 'Rooms, incidents and inventory, from the team dashboard.' },
+    band: 'team', home: '/staff', device: 'desktop', demoUser: { id: 'usr_maint', firstName: 'Rosa' }, look: 'maintenance', props: ['hardhat', 'tape'],
+  },
+];
+
+/** The hand-written part of an experience; the generator adds `roles`, `url`, `pageCodes` and `shots`. */
+export interface HubExperienceSeed extends Omit<HubExperience, 'roles' | 'url' | 'pageCodes' | 'shots'> {
+  /** Entering the card switches to `roleId`'s demo user first (false: open as whoever is testing). */
+  switchUser: boolean;
+}
+
+const exp = (id: string, code: string, band: HubBand, device: HubDevice, route: string, roleId: string, switchUser: boolean, label: Bi, purpose: Bi, extra: Partial<HubExperienceSeed> = {}): HubExperienceSeed =>
+  ({ id, code, label, purpose, roleId, band, device, route, switchUser, ...extra });
+
+/** The 13 hub cards, in document order (= `HUB_SURFACES` in src/modules/hub/specs.ts). */
+export const HUB_EXPERIENCES: HubExperienceSeed[] = [
+  exp('app', 'C-01', 'outside', 'phone', '/app', 'customer', true,
+    { es: 'App de clientes', en: 'Customer app' },
+    { es: 'Móvil primero: la intención del día, las clases de hoy, reservar, pagar, la membresía y el historial.', en: 'Mobile first: the day’s intention, today’s classes, booking, paying, membership and history.' },
+    { featured: true, secondary: { label: { es: 'Entrar o crear cuenta', en: 'Sign in or create an account' }, route: '/auth/sign-in' } }),
+  exp('site', 'W-01', 'outside', 'page', '/site', 'public', false,
+    { es: 'Sitio web', en: 'Website' },
+    { es: 'Lo que ve cualquiera antes de entrar: filosofía, clases, horario, profesores, planes y contacto.', en: 'What anyone sees before signing in: philosophy, classes, schedule, teachers, plans and contact.' }),
+  exp('teacher', 'S-03', 'outside', 'phone', '/teach', 'teacher', true,
+    { es: 'App de profesores', en: 'Teacher app' },
+    { es: 'Sus clases, la lista de asistentes, la asistencia desde el mat y su nómina.', en: 'Their classes, the roster, attendance from the mat and their payroll.' }),
+  exp('desk', 'S-02', 'team', 'desktop', '/staff/checkin', 'front_desk', true,
+    { es: 'Recepción', en: 'Front desk' },
+    { es: 'Check-in de la clase que empieza, búsqueda por nombre y control de aforo.', en: 'Check-in for the class about to start, search by name and capacity control.' }),
+  exp('inbox', 'S-06', 'team', 'desktop', '/staff/inbox', 'front_desk', true,
+    { es: 'Bandeja de mensajes', en: 'Inbox' },
+    { es: 'WhatsApp, correos y notas del equipo en un solo hilo por persona.', en: 'WhatsApp, emails and team notes in one thread per person.' }),
+  exp('pos', 'S-04', 'team', 'desktop', '/staff/register', 'front_desk', true,
+    { es: 'Caja', en: 'Point of sale' },
+    { es: 'Vender un plan, un pase o un producto, cobrar y emitir el recibo.', en: 'Sell a plan, a pass or a product, take the payment and issue the receipt.' }),
+  exp('admin', 'M-01', 'team', 'desktop', '/admin', 'admin', true,
+    { es: 'Panel de administración', en: 'Admin dashboard' },
+    { es: 'Cómo va el estudio hoy: ocupación, ingresos, clases y lo que necesita atención.', en: 'How the studio is doing today: occupancy, revenue, classes and what needs attention.' }),
+  exp('crm', 'M-06', 'team', 'desktop', '/admin/crm', 'coordinator', true,
+    { es: 'CRM', en: 'CRM' },
+    { es: 'La ficha de cada persona: conversación, reservas, pagos, consentimientos y notas.', en: 'Each person’s record: conversation, bookings, payments, consents and notes.' }),
+  exp('finance', 'M-09', 'team', 'desktop', '/admin/finance', 'finance', true,
+    { es: 'Finanzas', en: 'Finance' },
+    { es: 'Ingresos, gastos, nómina de profesores e impuestos, con el libro detrás.', en: 'Revenue, expenses, teacher payroll and tax, with the ledger behind it.' }),
+  exp('manual', 'K-03', 'build', 'sheet', '/manual', 'admin', false,
+    { es: 'Manual de operaciones', en: 'Operations manual' },
+    { es: 'Cómo funciona el club en persona y en el software, por rol, con datos en vivo.', en: 'How the club runs in person and in software, by role, with live data.' }),
+  exp('docs', 'K-02', 'build', 'sheet', '/docs', 'super_admin', false,
+    { es: 'Documentación y changelog', en: 'Documentation & changelog' },
+    { es: 'Cada prompt, cada respuesta y cada cambio, con sus capturas.', en: 'Every prompt, every response and every change, with their captures.' }),
+  exp('kb', 'K-01', 'build', 'desktop', '/dev/knowledgebase', 'super_admin', true,
+    { es: 'Kanban y knowledgebase', en: 'Kanban & knowledgebase' },
+    { es: 'El tablero de trabajo, el changelog y el registro de prompts en una sola pantalla.', en: 'The work board, the changelog and the prompt log on one screen.' }),
+  exp('dev', 'D-03', 'build', 'desktop', '/dev', 'super_admin', true,
+    { es: 'Herramientas de desarrollo', en: 'Dev tools' },
+    { es: 'Specs, tokens, biblioteca de componentes, editor de layout, lienzo y simulador.', en: 'Specs, tokens, component library, layout editor, canvas and simulator.' }),
+];
+
+/** The hand-written part of a tool; the generator adds `url`, `device` and `shots`. */
+export interface HubToolSeed { id: string; code: string; label: Bi; purpose: Bi; route: string }
+
+/** The testing-hub row, in document order (= `HUB_TOOLS` in src/modules/hub/specs.ts). */
+export const HUB_TOOL_LIST: HubToolSeed[] = [
+  { id: 'canvas', code: 'D-05', route: '/dev/canvas', label: { es: 'Lienzo de páginas', en: 'Page canvas' }, purpose: { es: 'Cada pantalla del sistema como miniatura, agrupada por superficie y con zoom.', en: 'Every screen as a thumbnail, grouped by surface, with zoom.' } },
+  { id: 'simulator', code: 'D-06', route: '/dev/simulator', label: { es: 'Simulador', en: 'Simulator' }, purpose: { es: 'Cualquier ruta en teléfono, tableta, escritorio o TV 4K, con el rol que quieras.', en: 'Any route on phone, tablet, desktop or 4K TV, as any role.' } },
+  { id: 'specs', code: 'D-03', route: '/dev/specs', label: { es: 'Specs de página', en: 'Page specs' }, purpose: { es: 'Qué promete cada pantalla y cuánto le falta.', en: 'What each screen promises and how much is missing.' } },
+  { id: 'layout', code: 'D-04', route: '/dev/layout/C-01', label: { es: 'Editor de layout', en: 'Layout editor' }, purpose: { es: 'Reordenar y ocultar las secciones de una página.', en: 'Reorder and hide a page’s sections.' } },
+  { id: 'tables', code: 'M-03', route: '/admin/tables', label: { es: 'Tablas', en: 'Tables' }, purpose: { es: 'El gestor de datos: leer y editar cualquier fila demo.', en: 'The data manager: read and edit any demo row.' } },
+  { id: 'components', code: 'D-02', route: '/dev/components', label: { es: 'Biblioteca de componentes', en: 'Component library' }, purpose: { es: 'Cada componente con sus props, estados y accesibilidad.', en: 'Every component with its props, states and accessibility.' } },
+  { id: 'tokens', code: 'D-01', route: '/dev/tokens', label: { es: 'Tokens de diseño', en: 'Design tokens' }, purpose: { es: 'Color, tipografía, sombra, textura y movimiento, en vivo.', en: 'Colour, type, shadow, texture and motion, live.' } },
+  { id: 'decisions', code: 'K-04', route: '/manual/decisions', label: { es: 'Decisiones pendientes', en: 'Decisions pending' }, purpose: { es: 'Lo que el estudio todavía tiene que decidir.', en: 'What the studio still has to decide.' } },
+  { id: 'screenshots', code: 'K-02', route: '/docs/screenshots', label: { es: 'Capturas', en: 'Screenshots' }, purpose: { es: 'Todas las capturas por código de página, ES y EN, claro y oscuro.', en: 'Every capture by page code, ES and EN, light and dark.' } },
+];
+
+/** How each host is expected to look into the hub. Hints, not rules: a host may ignore them. */
+export const HUB_LENSES: Record<HubLensId, HubLensHint> = {
+  aluzina: {
+    title: { es: 'hoy en el estudio aluzina', en: 'hoy in the aluzina studio' },
+    framing: { es: 'Un entregable del estudio: un mat por cada rol del cliente, con las pantallas de ese rol encima.', en: 'A studio deliverable: one mat per client role, with that role’s screens laid on it.' },
+    groupBy: 'role', showTools: false, entry: '/',
+  },
+  'between-gigs': {
+    title: { es: 'hoy como gig', en: 'hoy as a gig' },
+    framing: { es: 'Un gig con sus superficies y sus herramientas.', en: 'One gig with its surfaces and tools.' },
+    groupBy: 'experience', showTools: true, entry: '/',
+  },
+  standalone: {
+    title: { es: 'Hub de pruebas de hoy', en: 'hoy’s testing hub' },
+    framing: { es: 'El hub de pruebas propio de hoy: cada superficie por banda y cada herramienta, como en /#/.', en: 'hoy’s own testing hub: every surface by band and every tool, as at /#/.' },
+    groupBy: 'surface', showTools: true, entry: '/',
+  },
+};
