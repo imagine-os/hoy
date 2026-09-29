@@ -155,12 +155,12 @@ async function main() {
     const url = path.replace(/:\w+/g, (p) => (p === ':id' ? idFor(path, ids) : STATIC_PARAMS[p]) ?? 'x');
     const { userId, devMode } = userFor(route, users);
     // /manual and /manual/:chapter share the code K-03: the cover keeps its own labelled file.
-    const label = LABEL || (path === '/manual' ? 'cover' : '');
+    const label = [path === '/manual' ? 'cover' : '', LABEL].filter(Boolean).join('-');
     for (const lang of langs) for (const width of widths) {
       const themes = !SMOKE && !FULL && darkPages.has(code) ? ['light', 'dark'] : ['light'];
       for (const theme of themes) {
-        // --full: reduced motion so the site's scroll reveals ([data-reveal]) are drawn in place, not faded out below the fold.
-        const ctx = await browser.newContext({ viewport: { width, height: width < 600 ? 844 : 800 }, deviceScaleFactor: 1, ignoreHTTPSErrors: true, ...(FULL ? { reducedMotion: 'reduce' } : {}) });
+        // 0037: every capture uses reduced motion, so the website's scroll reveals ([data-reveal]) are drawn in place in a full-page capture instead of fading out below the fold (the sections were blank).
+        const ctx = await browser.newContext({ viewport: { width, height: width < 600 ? 844 : 800 }, deviceScaleFactor: 1, ignoreHTTPSErrors: true, reducedMotion: 'reduce' });
         await ctx.addInitScript(([l, th, uid, dev]) => {
           localStorage.setItem('hoyos.lang', l);
           localStorage.setItem('hoyos.theme', JSON.stringify({ theme: th, skin: 'styled' }));
