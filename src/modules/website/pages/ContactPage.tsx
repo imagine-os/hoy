@@ -40,11 +40,11 @@ export function ContactPage() {
           {cards.map(([label, value, href, field]) => (
             <Card key={label} eyebrow={label}>
               {href ? <a href={href} target="_blank" rel="noreferrer">{value}</a> : <span>{value}</span>}
-              {field && contact.pendingFields[field] && <p className="xs muted" style={{ marginTop: 6 }}>{t('site.contact.pending')}</p>}
+              {field && contact.pendingFields[field] && <p className="xs muted" style={{ marginTop: 'var(--sp-sm)' }}>{t('site.contact.pending')}</p>}
             </Card>
           ))}
         </div>
-        <div className="row wrap" style={{ marginTop: 16 }}>
+        <div className="row wrap" style={{ marginTop: 'var(--sp-lg)' }}>
           <a href={waHref(bi({ es: 'Hola HOY, quiero información.', en: 'Hi HOY, I would like some information.' }))} target="_blank" rel="noreferrer">
             <Button size="lg">{t('site.contact.waCta')}</Button>
           </a>
@@ -56,7 +56,7 @@ export function ContactPage() {
       <section className="container site-section" style={{ paddingTop: 0 }}>
         <Card eyebrow={t('site.contact.specials')} tone="muted" className="site-specials">
           <p className="small" style={{ maxWidth: '60ch' }}>{t('site.contact.specialsBody')}</p>
-          <div className="row wrap" style={{ marginTop: 12 }}>
+          <div className="row wrap" style={{ marginTop: 'var(--sp-md)' }}>
             <a href={waHref(t('site.plans.specials.wa'))} target="_blank" rel="noreferrer"><Button size="sm" variant="secondary">{t('site.plans.specials.cta')}</Button></a>
           </div>
         </Card>
@@ -72,7 +72,7 @@ export function ContactPage() {
     Form: () => (
       <section className="container site-section">
         <Card eyebrow={t('site.contact.form')}>
-          <p className="small muted" style={{ marginBottom: 16 }}>{t('site.contact.formBody')}</p>
+          <p className="small muted" style={{ marginBottom: 'var(--sp-lg)' }}>{t('site.contact.formBody')}</p>
           <div className="site-form">
             <Field label={t('site.contact.fName')}>
               {(id) => <Input id={id} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} autoComplete="name" />}

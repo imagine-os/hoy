@@ -111,8 +111,8 @@ export function DeletionsPage() {
             <div className="eyebrow">{t('admin.deletions.checklist')}</div>
             <Card padding="sm">
               {DELETION_STEPS.map((s) => (
-                <label key={s} className="row small" style={{ padding: '6px 0', alignItems: 'flex-start', gap: 10 }}>
-                  <input type="checkbox" checked={!!checklist[s]} disabled={!canAct || row.status === 'done' || row.status === 'cancelled'} onChange={(e) => { void tick(row, s, e.target.checked); }} style={{ marginTop: 3 }} />
+                <label key={s} className="row small" style={{ padding: 'var(--sp-sm) 0', alignItems: 'flex-start', gap: 'var(--sp-md)' }}>
+                  <input type="checkbox" checked={!!checklist[s]} disabled={!canAct || row.status === 'done' || row.status === 'cancelled'} onChange={(e) => { void tick(row, s, e.target.checked); }} style={{ marginTop: 'var(--sp-xs)' }} />
                   <span><strong>{t(`admin.deletions.step.${s}`)}</strong><br /><span className="xs muted">{t(`admin.deletions.step.${s}.body`)}</span></span>
                 </label>
               ))}
@@ -122,7 +122,7 @@ export function DeletionsPage() {
             <textarea className="input adm-textarea" rows={2} value={note ?? row.note ?? ''} disabled={!canAct} onChange={(e) => setNote(e.target.value)} onBlur={() => { void saveNote(row); }} placeholder={t('admin.deletions.note.ph')} aria-label={t('admin.deletions.note')} />
 
             {canAct && (row.status === 'requested' || row.status === 'processing') && (
-              <div className="row wrap" style={{ marginTop: 8 }}>
+              <div className="row wrap" style={{ marginTop: 'var(--sp-sm)' }}>
                 {row.status === 'requested' && <Button size="sm" onClick={() => move(row, 'processing')}>{t('admin.deletions.action.processing')}</Button>}
                 <Button size="sm" variant={allTicked ? 'primary' : 'secondary'} disabled={!allTicked} onClick={() => move(row, 'done')}>{t('admin.deletions.action.done')}</Button>
                 <Button size="sm" variant="ghost" onClick={() => move(row, 'cancelled')}>{t('admin.deletions.action.cancel')}</Button>

@@ -114,7 +114,7 @@ export function FinancePage() {
           <StatTile label={t('admin.finance.balance.expenses')} value={`− ${formatCOP(spend.total, lang)}`} hint={t('admin.finance.balance.expenses.hint', { fixed: formatCOP(spend.fixed, lang), variable: formatCOP(spend.variable, lang) })} />
           <StatTile label={t('admin.finance.balance.result')} value={`${balance < 0 ? '− ' : ''}${formatCOP(Math.abs(balance), lang)}`} hint={revenue > 0 ? t('admin.finance.balance.margin', { pct: Math.round((balance / revenue) * 100) }) : t('admin.finance.balance.noRevenue')} trend={balance > 0 ? 'up' : balance < 0 ? 'down' : 'flat'} />
         </div>
-        <p className="xs muted" style={{ marginTop: 12 }}>{t('admin.finance.balance.body')}</p>
+        <p className="xs muted" style={{ marginTop: 'var(--sp-md)' }}>{t('admin.finance.balance.body')}</p>
       </Card>
       <div className="grid grid-2">
         <Card title={t('admin.finance.byProduct')}><BarList items={byProduct} format={(v) => formatCOP(v, lang)} emptyText={t('admin.finance.emptyRange')} /></Card>
@@ -127,7 +127,7 @@ export function FinancePage() {
           <StatTile label={t('admin.finance.payouts.pending')} value={formatCOP(pendingRuns.reduce((a, r) => a + r.total, 0), lang)} hint={t('admin.finance.payouts.pending.hint', { n: pendingRuns.length })} trend={pendingRuns.length ? 'up' : 'flat'} />
           <StatTile label={t('admin.finance.payouts.quarter')} value={formatCOP(paidQuarter.reduce((a, r) => a + r.total, 0), lang)} hint={t('admin.finance.payouts.quarter.hint', { n: paidQuarter.length })} />
         </div>
-        <p className="xs muted" style={{ marginTop: 12 }}>{t('admin.finance.payouts.body')} <Link to="/admin/settings/payments">{t('core.nav.settings')}</Link></p>
+        <p className="xs muted" style={{ marginTop: 'var(--sp-md)' }}>{t('admin.finance.payouts.body')} <Link to="/admin/settings/payments">{t('core.nav.settings')}</Link></p>
       </Card>
       <section className="stack-sm">
         <div className="row-between wrap"><div className="eyebrow">{t('admin.finance.payments')}</div>{!canRefund && <span className="xs muted">{t('admin.finance.refund.noPermission')}</span>}</div>

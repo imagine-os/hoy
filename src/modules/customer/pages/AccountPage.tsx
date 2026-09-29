@@ -101,7 +101,7 @@ export function AccountPage() {
     DataController: () => (
       <Card eyebrow={t('customer.account.controller')} padding="md">
         <p className="small">{t('customer.account.controller.body', { name: controllerName, legal: tenant.legalName, email: contactEmail, address: `${contact.address}, ${contact.city}${pendingSuffix(contact, 'address', lang)}`, whatsapp: `${contact.whatsapp}${pendingSuffix(contact, 'whatsapp', lang)}` })}</p>
-        <p className="xs muted" style={{ marginTop: 6 }}>{t('customer.profile.legal.law')} · <Link to="/app/legal/privacy">{t('customer.profile.legal.privacy')}</Link></p>
+        <p className="xs muted" style={{ marginTop: 'var(--sp-sm)' }}>{t('customer.profile.legal.law')} · <Link to="/app/legal/privacy">{t('customer.profile.legal.privacy')}</Link></p>
       </Card>
     ),
     ConsentToggles: () => (
@@ -115,7 +115,7 @@ export function AccountPage() {
     ExportData: () => (
       <Card eyebrow={t('customer.account.export')} padding="md">
         <p className="small">{t('customer.account.export.body')}</p>
-        <div className="row wrap" style={{ marginTop: 12 }}>
+        <div className="row wrap" style={{ marginTop: 'var(--sp-md)' }}>
           <Button size="sm" variant="secondary" loading={busy} onClick={exportData}>{t('customer.account.export.cta')}</Button>
           <Link to="/app/history" className="small">{t('core.nav.history')} →</Link>
         </div>
@@ -128,13 +128,13 @@ export function AccountPage() {
     ),
     DeleteAccount: () => open ? (
       <Card tone="highlight" eyebrow={t('customer.account.delete')} padding="md">
-        <div className="row wrap" style={{ marginBottom: 8 }}>
+        <div className="row wrap" style={{ marginBottom: 'var(--sp-sm)' }}>
           <Badge tone={open.status === 'processing' ? 'primary' : 'warn'}>{t(`customer.account.status.${open.status}`)}</Badge>
           <span className="xs muted">{t('customer.account.delete.requestedOn', { date: formatDateTime(open.requested_at, lang) })}</span>
         </div>
         <p className="small">{t(open.status === 'processing' ? 'customer.account.delete.processing.body' : 'customer.account.delete.pending.body')}</p>
-        <p className="xs muted" style={{ marginTop: 6 }}>{t('customer.account.delete.retention')}</p>
-        {open.status === 'requested' && <Button size="sm" variant="ghost" onClick={cancelDeletion} style={{ marginTop: 12 }}>{t('customer.account.delete.cancel')}</Button>}
+        <p className="xs muted" style={{ marginTop: 'var(--sp-sm)' }}>{t('customer.account.delete.retention')}</p>
+        {open.status === 'requested' && <Button size="sm" variant="ghost" onClick={cancelDeletion} style={{ marginTop: 'var(--sp-md)' }}>{t('customer.account.delete.cancel')}</Button>}
       </Card>
     ) : (
       <ListGroup title={t('customer.account.delete')}>

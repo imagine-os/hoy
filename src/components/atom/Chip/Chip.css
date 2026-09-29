@@ -1,9 +1,9 @@
-.chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: var(--r-full); border: 1px solid var(--color-card-border); background-color: var(--color-surface); color: var(--color-text); font-size: var(--fs-sm); line-height: 1.2; font-family: var(--font-body); font-weight: var(--fw-medium); box-shadow: var(--shadow-highlight), var(--shadow-contact); transition: background-color var(--dur-fast), box-shadow var(--dur-fast), transform var(--dur-fast); }
+.chip { display: inline-flex; align-items: center; gap: var(--gap-inline); padding: var(--sp-xs) var(--sp-md); border-radius: var(--r-full); border: 1px solid var(--color-card-border); background-color: var(--color-surface); color: var(--color-text); font-size: var(--fs-sm); line-height: 1.2; font-family: var(--font-body); font-weight: var(--fw-medium); box-shadow: var(--shadow-highlight), var(--shadow-contact); transition: background-color var(--dur-fast), box-shadow var(--dur-fast), transform var(--dur-fast); }
 button.chip:hover { box-shadow: var(--shadow-card); }
 button.chip:active { transform: translateY(1px); }
 .chip.is-selected { background-color: var(--color-accent-fill); background-image: var(--tex-accent-on); color: var(--color-text-on-primary); border-color: transparent; box-shadow: var(--shadow-accent); }
 button.chip { min-height: var(--h-ctl); }
-.chip-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; flex: 0 0 auto; }
+.chip-dot { width: var(--sp-sm); height: var(--sp-sm); border-radius: 50%; background: currentColor; flex: 0 0 auto; }
 /* movement tags: canvas movSets.hoy — translucent ground, dark ink, saturated dot */
 .chip-mv { border-color: transparent; box-shadow: var(--shadow-highlight); }
 .chip-enraiza { background-color: var(--mv-enraiza-bg); color: var(--mv-enraiza-fg); } .chip-enraiza .chip-dot { background: var(--mv-enraiza-dot); }

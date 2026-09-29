@@ -1,6 +1,6 @@
 .chcard {
-  display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--sp-3);
-  min-width: 0; padding: var(--sp-4);
+  display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--sp-md);
+  min-width: 0; padding: var(--sp-lg);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--r-md);
@@ -12,24 +12,24 @@
 .chcard:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
 .chcard.is-active { border-color: var(--color-primary); }
 
-.chcard-num { font-family: var(--font-mono); font-size: var(--fs-sm); color: var(--color-text-muted); padding-top: 2px; }
+.chcard-num { font-family: var(--font-mono); font-size: var(--fs-sm); color: var(--color-text-muted); padding-top: var(--sp-2xs); }
 .chcard.is-active .chcard-num { color: var(--color-primary); }
-.chcard-body { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.chcard-body { display: flex; flex-direction: column; gap: var(--sp-sm); min-width: 0; }
 .chcard-title { font-weight: var(--fw-medium); letter-spacing: -0.01em; overflow-wrap: anywhere; }
 .chcard-summary { font-size: var(--fs-sm); color: var(--color-text-muted); }
-.chcard-roles { display: flex; flex-wrap: wrap; gap: 4px; }
+.chcard-roles { display: flex; flex-wrap: wrap; gap: var(--sp-xs); }
 .chcard-role {
   font-size: var(--fs-xs); padding: .1em .5em; border-radius: var(--r-full);
   background: var(--color-surface-2); color: var(--color-text-muted); border: 1px solid var(--color-border);
 }
-.chcard-meta { display: flex; flex-wrap: wrap; gap: var(--sp-3); font-size: var(--fs-xs); color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
+.chcard-meta { display: flex; flex-wrap: wrap; gap: var(--sp-md); font-size: var(--fs-xs); color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
 .chcard-warn { color: var(--color-warn); }
 .chcard-pending { color: var(--color-text-muted); }
 
 /* 0031 · icon, reader's level and read state */
-.chcard-lead { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-.chcard-icon { display: inline-flex; align-items: center; justify-content: center; width: 2.25rem; height: 2.25rem; border-radius: var(--r-md); background: color-mix(in srgb, var(--color-primary) 10%, var(--color-surface)); color: var(--color-primary); }
-.chcard-flags { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.chcard-lead { display: flex; flex-direction: column; align-items: center; gap: var(--sp-sm); }
+.chcard-icon { display: inline-flex; align-items: center; justify-content: center; width: var(--icon-tile); height: var(--icon-tile); border-radius: var(--r-md); background: color-mix(in srgb, var(--color-primary) 10%, var(--color-surface)); color: var(--color-primary); }
+.chcard-flags { display: flex; flex-wrap: wrap; gap: var(--sp-sm); align-items: center; }
 .chcard-level { font-size: var(--fs-xs); padding: .1em .55em; border-radius: var(--r-full); border: 1px solid var(--color-border); color: var(--color-text-muted); }
 .chcard-level.is-required { border-color: color-mix(in srgb, var(--color-warn) 55%, transparent); background: color-mix(in srgb, var(--color-warn) 14%, var(--color-surface)); color: var(--color-text); }
 .chcard-level.is-recommended { border-color: color-mix(in srgb, var(--color-primary) 40%, transparent); color: var(--color-primary); }

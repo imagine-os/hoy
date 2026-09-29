@@ -176,7 +176,7 @@ export function CheckinPage() {
     ) : null,
     'TeachersInToday': () => (
       <Card title={t('staff.checkin.teachers')} padding="sm">
-        {todayAll.length === 0 && <p className="small muted" style={{ padding: 8 }}>—</p>}
+        {todayAll.length === 0 && <p className="small muted" style={{ padding: 'var(--sp-sm)' }}>—</p>}
         {[...new Map(todayAll.map((x) => [x.teacher?.id ?? x.session.teacher_id, x])).values()].map(({ session: s, teacher: te }) => (
           <div key={s.id} className="row-between checkin-teacher">
             <span className="small">{te?.display_name ?? s.teacher_id}</span>
@@ -187,7 +187,7 @@ export function CheckinPage() {
     ),
     'QuickSell (walk-in)': () => (
       <Card title={t('staff.checkin.walkin')} padding="sm">
-        <div className="stack-sm" style={{ padding: 4 }}>
+        <div className="stack-sm" style={{ padding: 'var(--sp-xs)' }}>
           <p className="xs muted">{t('staff.checkin.walkin.body')}</p>
           {q.trim().length >= 2 && walkIns.length === 0 && <p className="small muted">{t('staff.checkin.walkin.none')}</p>}
           {walkIns.map((p) => <RosterRow key={p.id} name={p.name} initials={p.initials} phone={maskPhone(p.phone)} plan={p.plan ? bi({ es: p.plan.name_es, en: p.plan.name_en }) : t('staff.checkin.noPlan')} status="booked"

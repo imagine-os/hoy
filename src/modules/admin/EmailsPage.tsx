@@ -127,7 +127,7 @@ export function EmailsPage() {
             {tab === 'edit' && <Editor key={row.id} row={row} readOnly={!canWrite} onSave={async (patch, before) => { await data.update('email_templates', row.id, { ...patch, version: row.version + 1 }); await audit('email_template.update', 'email_templates', row.id, { before, after: patch, version: row.version + 1 }); }} onTest={testSend} />}
             {tab === 'versions' && (
               <Card padding="sm">
-                {versions.length === 0 && <p className="small muted" style={{ padding: 8 }}>{t('admin.emails.versions.empty')}</p>}
+                {versions.length === 0 && <p className="small muted" style={{ padding: 'var(--sp-sm)' }}>{t('admin.emails.versions.empty')}</p>}
                 {versions.map((v) => (
                   <div key={v.id} className="emails-version">
                     <div className="grow"><div className="small"><strong>{v.action.replace('email_template.', '')}</strong>{v.diff?.version != null ? ` · v${String(v.diff.version)}` : ''}</div><div className="xs muted">{formatDateTime(v.created_at, lang)} · {byId.get(v.actor_id ?? '')?.name ?? '—'}</div></div>

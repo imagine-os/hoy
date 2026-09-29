@@ -1,265 +1,267 @@
 /* V2 only. V1 retains site.css. Materials use Aleja's supplied photographs. */
 /* Cormorant Garamond is loaded from index.html (<link>, next to Inter and DM Sans) — an @import here made the website
    chunk's CSS fail to preload, and the whole site rendered blank, whenever Google Fonts was unreachable. */
-.site-version select { max-width: 9rem; min-height: var(--h-ctl); padding: 6px 22px 6px 9px; border: 1px solid var(--color-border); border-radius: var(--r-sm); background: var(--color-surface); color: var(--color-text); font-size: var(--fs-xs); cursor: pointer; }
+.site-version select { max-width: 9rem; min-height: var(--h-ctl); padding: var(--sp-sm) var(--sp-xl) var(--sp-sm) var(--sp-sm); border: 1px solid var(--color-border); border-radius: var(--r-sm); background: var(--color-surface); color: var(--color-text); font-size: var(--fs-xs); cursor: pointer; }
 .site-brand-caption { display: none; }
-.site-concept-note { font-size: 12px; margin-bottom: 14px; color: var(--color-text-muted); }
+.site-concept-note { font-size: 0.75rem; margin-bottom: var(--sp-lg); color: var(--color-text-muted); }
 .site-foot-bottom > a { float: right; }
-.library-ambient { height: 300px; }
-.site[data-edition="sanctuary"] { background: var(--color-bg); --w-content: 1360px; }
-.site[data-edition="sanctuary"] .container { padding-left: clamp(24px, 5vw, 80px); padding-right: clamp(24px, 5vw, 80px); max-width: 1520px; }
+.library-ambient { height: 18.75rem; }
+.site[data-edition="sanctuary"] { background: var(--color-bg); --w-content: 85rem; }
+.site[data-edition="sanctuary"] .container { padding-left: clamp(var(--sp-xl), 5vw, var(--sp-4xl)); padding-right: clamp(var(--sp-xl), 5vw, var(--sp-4xl)); max-width: 95rem; }
 .site[data-edition="sanctuary"] .site-head { background: color-mix(in srgb, var(--color-bg) 94%, transparent); backdrop-filter: blur(18px); border-bottom: 1px solid var(--color-border); }
 /* the header row grows with the --ui band (2660 px at 3840) so its rem-sized controls and the nav keep one line */
-.site[data-edition="sanctuary"] .site-head-in { min-height: 5.75rem; gap: 2.25rem; max-width: calc(1520px * var(--ui)); }
-.site[data-edition="sanctuary"] .site-brand { flex-direction: column; align-items: center; gap: 4px; }
+.site[data-edition="sanctuary"] .site-head-in { min-height: 5.75rem; gap: var(--sp-2xl); max-width: 95rem; }
+.site[data-edition="sanctuary"] .site-brand { flex-direction: column; align-items: center; gap: var(--sp-xs); }
 .site[data-edition="sanctuary"] .site-brand-caption { display: block; text-transform: uppercase; font-size: .5rem; letter-spacing: .22em; white-space: nowrap; }
-.site[data-edition="sanctuary"] .site-nav { justify-content: center; gap: clamp(12px, 1.6vw, 24px); }
+.site[data-edition="sanctuary"] .site-nav { justify-content: center; gap: clamp(var(--sp-md), 1.6vw, var(--sp-xl)); }
 .site[data-edition="sanctuary"] .site-nav a { font-size: .8125rem; font-weight: 400; }
-.site[data-edition="sanctuary"] .site-actions { gap: .625rem; }
+.site[data-edition="sanctuary"] .site-actions { gap: var(--sp-md); }
 .site[data-edition="sanctuary"] .site-iconbtn { display: grid; place-items: center; border: 1px solid var(--color-border); background: transparent; box-shadow: none; }
 .site[data-edition="sanctuary"] .site-actions .btn { border-radius: var(--r-xs); min-height: var(--h-ctl); }
 .site[data-edition="sanctuary"] .eyebrow { font-size: var(--fs-2xs); letter-spacing: .16em; font-weight: 500; line-height: 1.5; }
 .site[data-edition="sanctuary"] h1, .site[data-edition="sanctuary"] h2 { font-family: var(--font-editorial); font-weight: 400; letter-spacing: -.035em; line-height: 1.03; color: var(--color-primary); }
-.site[data-edition="sanctuary"] h2 { font-size: clamp(38px, 4.6vw, 64px); }
+.site[data-edition="sanctuary"] h2 { font-size: clamp(2.375rem, 4.6vw, 4rem); }
 .site[data-edition="sanctuary"] h3 { font-weight: 500; }
 .site[data-edition="sanctuary"] em { font-weight: 400; }
 .site[data-edition="sanctuary"] .btn { border-radius: var(--r-xs); box-shadow: var(--shadow-stone); background-image: var(--tex-accent); transition: transform var(--dur-base), box-shadow var(--dur-base); }
 .site[data-edition="sanctuary"] .btn:hover { transform: translateY(-2px); }
 .site[data-edition="sanctuary"] .btn-secondary { background-image: var(--tex-surf); }
-.site[data-edition="sanctuary"] .site-pagehead { padding-top: 75px; padding-bottom: 44px; position: relative; }
-.site[data-edition="sanctuary"] .site-pagehead h1 { font-size: clamp(52px, 6vw, 92px); }
-.site[data-edition="sanctuary"] .site-pagehead::after { content: ''; position: absolute; right: 5vw; top: 30px; width: 200px; height: 140px; opacity: .07; background: url('../../../public/images/sanctuary/texture-blue.webp') center/cover; pointer-events: none; }
-.site[data-edition="sanctuary"] .site-lead { font-size: 18px; line-height: 1.8; }
-.site[data-edition="sanctuary"] .site-section { padding-top: 48px; padding-bottom: 72px; }
+.site[data-edition="sanctuary"] .site-pagehead { padding-top: var(--sp-4xl); padding-bottom: var(--sp-3xl); position: relative; }
+.site[data-edition="sanctuary"] .site-pagehead h1 { font-size: clamp(3.25rem, 6vw, 5.75rem); }
+.site[data-edition="sanctuary"] .site-pagehead::after { content: ''; position: absolute; right: 5vw; top: var(--sp-2xl); width: 12.5rem; height: 8.75rem; opacity: .07; background: url('../../../public/images/sanctuary/texture-blue.webp') center/cover; pointer-events: none; }
+.site[data-edition="sanctuary"] .site-lead { font-size: 1.125rem; line-height: 1.8; }
+.site[data-edition="sanctuary"] .site-section { padding-top: var(--section); padding-bottom: var(--section); }
+/* 0037 · consecutive sections are one --section apart, not two (the classic edition already did this) */
+.site[data-edition="sanctuary"] .site-section + .site-section { padding-top: 0; }
 .site[data-edition="sanctuary"] .card { background-image: linear-gradient(color-mix(in srgb, var(--color-surface) 94%, transparent),color-mix(in srgb, var(--color-surface) 94%, transparent)),url('../../../public/images/sanctuary/texture-limestone.webp'); background-size: cover; box-shadow: var(--shadow-stone); border-radius: var(--r-sm); }
 .site[data-edition="sanctuary"] .card-highlight { background-color: var(--color-highlight); background-image: var(--tex-surf); }
-.site[data-edition="sanctuary"] .site-panel { border-radius: var(--r-sm); background-image: linear-gradient(rgba(53,89,125,.92),rgba(53,89,125,.92)),url('../../../public/images/sanctuary/texture-blue.webp'); background-size: cover; padding: 56px; }
+.site[data-edition="sanctuary"] .site-panel { border-radius: var(--r-sm); background-image: linear-gradient(rgba(53,89,125,.92),rgba(53,89,125,.92)),url('../../../public/images/sanctuary/texture-blue.webp'); background-size: cover; padding: var(--sp-3xl); }
 .site[data-edition="sanctuary"] .site-panel h2 { color: var(--brand-cream); }
 .site[data-edition="sanctuary"] .site-classrow { gap: 8%; }
-.site[data-edition="sanctuary"] .site-classrow-media { max-width: 500px; }
+.site[data-edition="sanctuary"] .site-classrow-media { max-width: 31.25rem; }
 .site[data-edition="sanctuary"] .site-classrow .mediaslot { aspect-ratio: 4/5 !important; border-radius: 48% 48% 5px 5px; }
-.site[data-edition="sanctuary"] .site-teachergrid { gap: 28px; }
+.site[data-edition="sanctuary"] .site-teachergrid { gap: var(--grid-gap); }
 .site[data-edition="sanctuary"] .site-teacher .mediaslot { border-radius: 45% 45% 4px 4px; }
-.site[data-edition="sanctuary"] .site-foot { margin-top: 0; background: var(--color-lane); padding-top: 30px; }
+.site[data-edition="sanctuary"] .site-foot { margin-top: 0; background: var(--color-lane); padding-top: var(--sp-2xl); }
 .site[data-edition="sanctuary"] .site-foot-grid { grid-template-columns: 1.2fr 1.2fr 1.3fr 1fr; }
 .site[data-edition="sanctuary"] .site-foot-grid > :last-child { display: none; }
-.site[data-edition="sanctuary"] .site-footer-wordmark { align-self: flex-start; flex: none; max-width: 100%; object-fit: contain; object-position: left center; margin-bottom: 12px; }
-.site[data-edition="sanctuary"] .site-daybtn { border-radius: var(--r-xs); min-width: 90px; padding: 17px 22px; box-shadow: var(--shadow-stone); }
-.site[data-edition="sanctuary"] .classrow { padding-top: 22px; padding-bottom: 22px; }
+.site[data-edition="sanctuary"] .site-footer-wordmark { align-self: flex-start; flex: none; max-width: 100%; object-fit: contain; object-position: left center; margin-bottom: var(--sp-md); }
+.site[data-edition="sanctuary"] .site-daybtn { border-radius: var(--r-xs); min-width: 5.625rem; padding: var(--sp-lg) var(--sp-xl); box-shadow: var(--shadow-stone); }
+.site[data-edition="sanctuary"] .classrow { padding-top: var(--sp-xl); padding-bottom: var(--sp-xl); }
 .sanctuary h2 em { color: var(--color-primary); }
-.sanctuary-hero { min-height: 690px; height: min(780px, calc(100svh - 92px)); position: relative; isolation: isolate; }
+.sanctuary-hero { min-height: 43.125rem; height: min(48.75rem, calc(100svh - 5.75rem)); position: relative; isolation: isolate; }
 .sanctuary-hero-scene, .sanctuary-hero-wash { position: absolute; inset: 0; }
 .sanctuary-hero-scene .ambient-scene-media { object-position: 55% 55%; }
 .sanctuary-hero-wash { background: linear-gradient(90deg, rgba(246,237,219,.76),rgba(246,237,219,.15) 46%,transparent 72%); }
 .sanctuary-hero-inner { height: 100%; position: relative; display: flex; align-items: center; }
-.sanctuary-hero-copy { max-width: 520px; padding-bottom: 34px; }
-.sanctuary-hero-copy > .eyebrow { display: flex; align-items: center; gap: 16px; color: var(--brand-deepBlue); }
-.hero-eyebrow-rule { width: 28px; height: 1px; background: currentColor; opacity: .6; }
-.site[data-edition="sanctuary"] .sanctuary-hero h1 { font-size: clamp(70px, 8.5vw, 132px); line-height: .95; margin: 26px 0; color: var(--brand-deepBlue); letter-spacing: -.045em; }
-.sanctuary-intro { max-width: 335px; font-size: 17px; line-height: 1.8; color: var(--brand-ink); margin-bottom: 30px; }
-.sanctuary-button { display: inline-flex; align-items: center; justify-content: space-between; gap: 32px; padding: 18px 26px; color: var(--brand-cream); background-color: var(--brand-deepBlue); background-image: var(--tex-accent); border: 1px solid rgba(255,255,255,.1); box-shadow: var(--shadow-stone); border-radius: var(--r-xs); font-size: 14px; transition: transform var(--dur-base), box-shadow var(--dur-base); }
+.sanctuary-hero-copy { max-width: 32.5rem; padding-bottom: var(--sp-2xl); }
+.sanctuary-hero-copy > .eyebrow { display: flex; align-items: center; gap: var(--sp-lg); color: var(--brand-deepBlue); }
+.hero-eyebrow-rule { width: var(--sp-2xl); height: 1px; background: currentColor; opacity: .6; }
+.site[data-edition="sanctuary"] .sanctuary-hero h1 { font-size: clamp(4.375rem, 8.5vw, 8.25rem); line-height: .95; margin: var(--sp-xl) 0; color: var(--brand-deepBlue); letter-spacing: -.045em; }
+.sanctuary-intro { max-width: 20.9375rem; font-size: 1.0625rem; line-height: 1.8; color: var(--brand-ink); margin-bottom: var(--sp-2xl); }
+.sanctuary-button { display: inline-flex; align-items: center; justify-content: space-between; gap: var(--sp-2xl); padding: var(--sp-lg) var(--sp-xl); color: var(--brand-cream); background-color: var(--brand-deepBlue); background-image: var(--tex-accent); border: 1px solid rgba(255,255,255,.1); box-shadow: var(--shadow-stone); border-radius: var(--r-xs); font-size: 0.875rem; transition: transform var(--dur-base), box-shadow var(--dur-base); }
 .sanctuary-button:hover { transform: translateY(-3px); text-decoration: none; box-shadow: var(--shadow-raised); }
 .sanctuary-button:active { transform: translateY(1px); }
 .sanctuary-button.is-light { background-color: var(--brand-cream); background-image: var(--tex-surf); color: var(--brand-deepBlue); }
-.sanctuary-text-link { display: inline-flex; align-items: center; gap: 20px; color: var(--color-primary); padding: 12px 0; font-size: 14px; border-bottom: 1px solid var(--color-border-strong); }
-.sanctuary-text-link:hover { text-decoration: none; gap: 28px; }
-.sanctuary-hero-copy > .sanctuary-text-link { display: flex; width: max-content; margin-top: 18px; color: var(--brand-deepBlue); }
-.sanctuary-hero-bottom { position: absolute; bottom: 26px; left: 0; right: 0; display: flex; justify-content: space-between; align-items: center; color: var(--brand-deepBlue); }
-.sanctuary-scroll { font-size: 12px; display: flex; gap: 18px; align-items: center; }
-.sanctuary-scroll > span { font-size: 24px; }
-.sanctuary-motion { display: inline-flex; align-items: center; gap: 8px; padding: 9px 13px; border: 1px solid rgba(53,89,125,.24); color: var(--brand-deepBlue); background: rgba(251,247,239,.88); backdrop-filter: blur(8px); border-radius: var(--r-full); font-size: 12px; }
-.sanctuary-section { padding-top: 100px; padding-bottom: 100px; }
-.sanctuary-centered { text-align: center; max-width: 750px; margin: 0 auto 46px; }
-.sanctuary-centered h2 { margin: 14px 0 18px; }
-.sanctuary-centered > p:last-child { font-size: 16px; line-height: 1.7; }
-.sanctuary-heading { display: flex; gap: 32px; justify-content: space-between; align-items: flex-end; margin-bottom: 44px; }
-.sanctuary-heading > div { max-width: 720px; }
-.sanctuary-heading h2 { margin: 14px 0 18px; }
-.sanctuary-heading .sanctuary-text-link { flex-shrink: 0; margin-bottom: 5px; }
-.sanctuary-philosophy { padding: 68px 0; background-color: var(--color-lane); background-image: linear-gradient(color-mix(in srgb,var(--color-lane) 95%,transparent),color-mix(in srgb,var(--color-lane) 95%,transparent)),url('../../../public/images/sanctuary/texture-limestone.webp'); background-size: cover; }
+.sanctuary-text-link { display: inline-flex; align-items: center; gap: var(--sp-xl); color: var(--color-primary); padding: var(--sp-md) 0; font-size: 0.875rem; border-bottom: 1px solid var(--color-border-strong); }
+.sanctuary-text-link:hover { text-decoration: none; gap: var(--sp-2xl); }
+.sanctuary-hero-copy > .sanctuary-text-link { display: flex; width: max-content; margin-top: var(--sp-lg); color: var(--brand-deepBlue); }
+.sanctuary-hero-bottom { position: absolute; bottom: var(--sp-xl); left: 0; right: 0; display: flex; justify-content: space-between; align-items: center; color: var(--brand-deepBlue); }
+.sanctuary-scroll { font-size: 0.75rem; display: flex; gap: var(--sp-lg); align-items: center; }
+.sanctuary-scroll > span { font-size: 1.5rem; }
+.sanctuary-motion { display: inline-flex; align-items: center; gap: var(--sp-sm); padding: var(--sp-sm) var(--sp-md); border: 1px solid rgba(53,89,125,.24); color: var(--brand-deepBlue); background: rgba(251,247,239,.88); backdrop-filter: blur(8px); border-radius: var(--r-full); font-size: 0.75rem; }
+.sanctuary-section { padding-top: var(--section-hero); padding-bottom: var(--section-hero); }
+.sanctuary-centered { text-align: center; max-width: 46.875rem; margin: 0 auto var(--sp-3xl); }
+.sanctuary-centered h2 { margin: var(--sp-lg) 0 var(--sp-lg); }
+.sanctuary-centered > p:last-child { font-size: 1rem; line-height: 1.7; }
+.sanctuary-heading { display: flex; gap: var(--sp-2xl); justify-content: space-between; align-items: flex-end; margin-bottom: var(--sp-3xl); }
+.sanctuary-heading > div { max-width: 45rem; }
+.sanctuary-heading h2 { margin: var(--sp-lg) 0 var(--sp-lg); }
+.sanctuary-heading .sanctuary-text-link { flex-shrink: 0; margin-bottom: var(--sp-xs); }
+.sanctuary-philosophy { padding: var(--section) 0; background-color: var(--color-lane); background-image: linear-gradient(color-mix(in srgb,var(--color-lane) 95%,transparent),color-mix(in srgb,var(--color-lane) 95%,transparent)),url('../../../public/images/sanctuary/texture-limestone.webp'); background-size: cover; }
 .sanctuary-philosophy-grid { display: grid; grid-template-columns: 1fr 1.15fr; gap: 11%; align-items: center; }
-.sanctuary-philosophy-art { position: relative; padding: 0 0 20px 28px; }
+.sanctuary-philosophy-art { position: relative; padding: 0 0 var(--sp-xl) var(--sp-2xl); }
 .sanctuary-philosophy-art:before { content: ''; position: absolute; left: 0; bottom: 0; width: 87%; height: 88%; border: 1px solid var(--color-border-strong); border-radius: 48% 48% 0 0; }
-.sanctuary-portrait { height: 580px; border-radius: 48% 48% 2px 2px; }
-.sanctuary-photo-caption { position: absolute; right: 20px; bottom: 40px; font-family: var(--font-editorial); font-style: italic; font-size: 26px; color: var(--brand-white); text-shadow: 0 2px 8px rgba(0,0,0,.6); }
-.sanctuary-philosophy-copy h2 { margin: 20px 0 28px; }
-.sanctuary-philosophy-copy > p:not(.eyebrow) { max-width: 42ch; font-size: 17px; line-height: 1.9; }
-.sanctuary-philosophy-copy .sanctuary-text-link { margin-top: 26px; }
-.sanctuary-class-gallery { display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px; }
+.sanctuary-portrait { height: 36.25rem; border-radius: 48% 48% 2px 2px; }
+.sanctuary-photo-caption { position: absolute; right: var(--sp-xl); bottom: var(--sp-3xl); font-family: var(--font-editorial); font-style: italic; font-size: 1.625rem; color: var(--brand-white); text-shadow: 0 2px 8px rgba(0,0,0,.6); }
+.sanctuary-philosophy-copy h2 { margin: var(--sp-xl) 0; }
+.sanctuary-philosophy-copy > p:not(.eyebrow) { max-width: 42ch; font-size: 1.0625rem; line-height: 1.9; }
+.sanctuary-philosophy-copy .sanctuary-text-link { margin-top: var(--sp-xl); }
+.sanctuary-class-gallery { display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--sp-xl); }
 .sanctuary-class { color: var(--color-text); min-width: 0; }
 .sanctuary-class:hover { text-decoration: none; }
-.sanctuary-class:nth-child(even) { padding-top: 34px; }
+.sanctuary-class:nth-child(even) { padding-top: var(--sp-2xl); }
 .sanctuary-class-photo { position: relative; overflow: hidden; border-radius: 48% 48% 3px 3px; }
 .sanctuary-class-photo .mediaslot-fig { margin: 0; }
 .sanctuary-class-photo .mediaslot { border: 0; border-radius: 0; aspect-ratio: 3/4 !important; box-shadow: none; }
 .sanctuary-class-photo img { transition: transform var(--dur-reveal) var(--ease-out); }
 .sanctuary-class:hover img { transform: scale(1.05); }
-.sanctuary-class-open { position: absolute; right: 12px; bottom: 14px; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--brand-white); color: var(--brand-deepBlue); }
-.sanctuary-class-meta { padding: 20px 0 0; }
-.sanctuary-class-meta .eyebrow { font-size: 10px !important; }
-.site[data-edition="sanctuary"] .sanctuary-class h3 { font-size: 27px; font-family: var(--font-editorial); margin-top: 10px; color: var(--color-primary); }
-.sanctuary-class-meta p { font-size: 12px; margin-top: 8px; color: var(--color-text-muted); line-height: 1.6; }
-.sanctuary-schedule { padding: 76px 0; color: var(--brand-cream); background-color: var(--brand-deepBlue); background-image: linear-gradient(rgba(53,89,125,.92),rgba(53,89,125,.92)),url('../../../public/images/sanctuary/texture-blue.webp'); background-size: cover; }
+.sanctuary-class-open { position: absolute; right: var(--sp-md); bottom: var(--sp-lg); display: grid; place-items: center; width: var(--sp-2xl); height: var(--sp-2xl); border-radius: 50%; background: var(--brand-white); color: var(--brand-deepBlue); }
+.sanctuary-class-meta { padding: var(--sp-xl) 0 0; }
+.sanctuary-class-meta .eyebrow { font-size: 0.625rem !important; }
+.site[data-edition="sanctuary"] .sanctuary-class h3 { font-size: 1.6875rem; font-family: var(--font-editorial); margin-top: var(--sp-md); color: var(--color-primary); }
+.sanctuary-class-meta p { font-size: 0.75rem; margin-top: var(--sp-sm); color: var(--color-text-muted); line-height: 1.6; }
+.sanctuary-schedule { padding: var(--section) 0; color: var(--brand-cream); background-color: var(--brand-deepBlue); background-image: linear-gradient(rgba(53,89,125,.92),rgba(53,89,125,.92)),url('../../../public/images/sanctuary/texture-blue.webp'); background-size: cover; }
 .sanctuary-schedule-grid { display: grid; grid-template-columns: .95fr 1.05fr; gap: 9%; align-items: center; }
-.site[data-edition="sanctuary"] .sanctuary-schedule h2 { color: var(--brand-cream); margin: 18px 0 20px; }
+.site[data-edition="sanctuary"] .sanctuary-schedule h2 { color: var(--brand-cream); margin: var(--sp-lg) 0 var(--sp-xl); }
 .sanctuary-schedule .eyebrow { color: var(--brand-cream); }
 .sanctuary-schedule-intro > p { opacity: .9; line-height: 1.8; }
-.sanctuary-schedule-intro .sanctuary-button { margin-top: 30px; }
+.sanctuary-schedule-intro .sanctuary-button { margin-top: var(--sp-2xl); }
 .sanctuary-agenda { border-top: 1px solid rgba(241,231,210,.4); }
-.sanctuary-agenda-head { display: flex; justify-content: space-between; font-size: 12px; padding: 20px 0; text-transform: uppercase; letter-spacing: .12em; }
-.sanctuary-session { color: var(--brand-cream); display: grid; grid-template-columns: 90px 1fr auto; gap: 20px; align-items: center; padding: 24px 0; border-top: 1px solid rgba(241,231,210,.22); }
+.sanctuary-agenda-head { display: flex; justify-content: space-between; font-size: 0.75rem; padding: var(--sp-xl) 0; text-transform: uppercase; letter-spacing: .12em; }
+.sanctuary-session { color: var(--brand-cream); display: grid; grid-template-columns: 5.625rem 1fr auto; gap: var(--sp-xl); align-items: center; padding: var(--sp-xl) 0; border-top: 1px solid rgba(241,231,210,.22); }
 .sanctuary-session:hover { text-decoration: none; background: rgba(241,231,210,.07); }
-.sanctuary-session-time { font-size: 14px; }
-.sanctuary-session strong { font-size: 18px; font-weight: 400; }
-.sanctuary-session small { display: block; opacity: .78; margin-top: 7px; font-size: 12px; }
-.sanctuary-agenda-empty { padding: 44px 0; }
+.sanctuary-session-time { font-size: 0.875rem; }
+.sanctuary-session strong { font-size: 1.125rem; font-weight: 400; }
+.sanctuary-session small { display: block; opacity: .78; margin-top: var(--sp-sm); font-size: 0.75rem; }
+.sanctuary-agenda-empty { padding: var(--sp-3xl) 0; }
 .sanctuary-teachers { display: grid; grid-template-columns: .9fr 1.1fr; gap: 8%; align-items: center; }
-.sanctuary-community { position: relative; overflow: hidden; border-radius: 48% 48% 3px 3px; max-height: 540px; }
+.sanctuary-community { position: relative; overflow: hidden; border-radius: 48% 48% 3px 3px; max-height: 33.75rem; }
 .sanctuary-community img { width: 100%; }
-.sanctuary-community p { position: absolute; bottom: 0; padding: 64px 34px 32px; background: linear-gradient(transparent,rgba(0,0,0,.7)); color: var(--brand-white); font-family: var(--font-editorial); font-size: 30px; line-height: 1.15; }
-.sanctuary-teacher-link { display: flex; align-items: center; gap: 24px; padding: 32px 0; border-top: 1px solid var(--color-border-strong); }
+.sanctuary-community p { position: absolute; bottom: 0; padding: var(--sp-4xl) var(--sp-2xl) var(--sp-2xl); background: linear-gradient(transparent,rgba(0,0,0,.7)); color: var(--brand-white); font-family: var(--font-editorial); font-size: 1.875rem; line-height: 1.15; }
+.sanctuary-teacher-link { display: flex; align-items: center; gap: var(--sp-xl); padding: var(--sp-2xl) 0; border-top: 1px solid var(--color-border-strong); }
 .sanctuary-teacher-link:last-child { border-bottom: 1px solid var(--color-border-strong); }
 .sanctuary-teacher-link:hover { text-decoration: none; }
-.sanctuary-teacher-number { font-family: var(--font-editorial); font-size: 24px; color: var(--color-text-muted); }
+.sanctuary-teacher-number { font-family: var(--font-editorial); font-size: 1.5rem; color: var(--color-text-muted); }
 .sanctuary-teacher-link > span:nth-last-child(2) { flex: 1; }
-.site[data-edition="sanctuary"] .sanctuary-teacher-link h3 { font-family: var(--font-editorial); font-size: 32px; color: var(--color-primary); }
-.sanctuary-teacher-link p { font-size: 13px; margin-top: 7px; color: var(--color-text-muted); }
-.sanctuary-teacher-link img { width: 54px; height: 64px; object-fit: cover; border-radius: var(--r-full); }
+.site[data-edition="sanctuary"] .sanctuary-teacher-link h3 { font-family: var(--font-editorial); font-size: 2rem; color: var(--color-primary); }
+.sanctuary-teacher-link p { font-size: 0.8125rem; margin-top: var(--sp-sm); color: var(--color-text-muted); }
+.sanctuary-teacher-link img { width: 3.375rem; height: var(--sp-4xl); object-fit: cover; border-radius: var(--r-full); }
 .sanctuary-plans { background-color: var(--color-lane); background-image: linear-gradient(color-mix(in srgb,var(--color-lane) 92%,transparent),color-mix(in srgb,var(--color-lane) 92%,transparent)),url('../../../public/images/sanctuary/texture-sunlight.webp'); background-size: cover; }
-.sanctuary-plan-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
-.sanctuary-plan { display: flex; flex-direction: column; min-height: 350px; padding: 36px; border-radius: var(--r-xs); color: var(--color-text); border: 1px solid var(--color-border); background-color: var(--color-surface-elevated); background-image: linear-gradient(color-mix(in srgb,var(--color-surface-elevated) 94%,transparent),color-mix(in srgb,var(--color-surface-elevated) 88%,transparent)),url('../../../public/images/sanctuary/texture-limestone.webp'); background-size: cover; box-shadow: var(--shadow-stone); transition: transform var(--dur-slow); }
+.sanctuary-plan-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--grid-gap); }
+.sanctuary-plan { display: flex; flex-direction: column; min-height: 21.875rem; padding: var(--card-pad-lg); border-radius: var(--r-xs); color: var(--color-text); border: 1px solid var(--color-border); background-color: var(--color-surface-elevated); background-image: linear-gradient(color-mix(in srgb,var(--color-surface-elevated) 94%,transparent),color-mix(in srgb,var(--color-surface-elevated) 88%,transparent)),url('../../../public/images/sanctuary/texture-limestone.webp'); background-size: cover; box-shadow: var(--shadow-stone); transition: transform var(--dur-slow); }
 .sanctuary-plan:hover { transform: translateY(-7px); text-decoration: none; }
-.site[data-edition="sanctuary"] .sanctuary-plan h3 { font-family: var(--font-editorial); font-size: 40px; font-weight: 400; color: var(--color-primary); margin: 22px 0; }
+.site[data-edition="sanctuary"] .sanctuary-plan h3 { font-family: var(--font-editorial); font-size: 2.5rem; font-weight: 400; color: var(--color-primary); margin: var(--sp-xl) 0; }
 .sanctuary-plan.is-blue { background-image: linear-gradient(rgba(53,89,125,.9),rgba(53,89,125,.9)),url('../../../public/images/sanctuary/texture-blue.webp'); background-color: var(--brand-deepBlue); color: var(--brand-cream); }
 .site[data-edition="sanctuary"] .sanctuary-plan.is-blue h3, .sanctuary-plan.is-blue .eyebrow { color: var(--brand-cream); }
-.sanctuary-price { font-size: 35px; font-family: var(--font-editorial); }
-.sanctuary-price small { display: block; font-family: var(--font-body); font-size: 13px; margin-top: 6px; }
-.sanctuary-plan-sub { font-size: 16px; line-height: 1.8; max-width: 26ch; }
-.sanctuary-plan-cta { display: flex; justify-content: space-between; gap: 16px; margin-top: auto; padding-top: 28px; font-size: 14px; }
-.sanctuary-plans-more { margin-top: 30px; margin-bottom: 0; }
-.sanctuary-quotes { display: grid; grid-template-columns: repeat(2,1fr); gap: 80px; text-align: center; }
+.sanctuary-price { font-size: 2.1875rem; font-family: var(--font-editorial); }
+.sanctuary-price small { display: block; font-family: var(--font-body); font-size: 0.8125rem; margin-top: var(--sp-sm); }
+.sanctuary-plan-sub { font-size: 1rem; line-height: 1.8; max-width: 26ch; }
+.sanctuary-plan-cta { display: flex; justify-content: space-between; gap: var(--sp-lg); margin-top: auto; padding-top: var(--sp-2xl); font-size: 0.875rem; }
+.sanctuary-plans-more { margin-top: var(--sp-2xl); margin-bottom: 0; }
+.sanctuary-quotes { display: grid; grid-template-columns: repeat(2,1fr); gap: var(--sp-4xl); text-align: center; }
 .sanctuary-quotes blockquote { margin: 0; }
-.sanctuary-quote-mark { font-family: var(--font-editorial); font-size: 80px; line-height: .7; color: var(--color-accent); }
-.sanctuary-quotes p { font-size: 25px; line-height: 1.4; font-family: var(--font-editorial); color: var(--color-primary); }
-.sanctuary-quotes footer { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; margin-top: 22px; color: var(--color-text-muted); }
-.sanctuary-finale { min-height: 680px; position: relative; display: flex; align-items: center; justify-content: flex-end; padding: 60px 7vw; }
+.sanctuary-quote-mark { font-family: var(--font-editorial); font-size: 5rem; line-height: .7; color: var(--color-accent); }
+.sanctuary-quotes p { font-size: 1.5625rem; line-height: 1.4; font-family: var(--font-editorial); color: var(--color-primary); }
+.sanctuary-quotes footer { font-size: 0.6875rem; letter-spacing: .12em; text-transform: uppercase; margin-top: var(--sp-xl); color: var(--color-text-muted); }
+.sanctuary-finale { min-height: 42.5rem; position: relative; display: flex; align-items: center; justify-content: flex-end; padding: var(--sp-4xl) 7vw; }
 .sanctuary-finale-scene { position: absolute; inset: 0; }
-.sanctuary-finale-card { position: relative; width: 520px; padding: 58px; border: 1px solid rgba(255,255,255,.6); background: color-mix(in srgb,var(--color-bg) 94%,transparent); backdrop-filter: blur(8px); box-shadow: var(--shadow-stone); }
-.sanctuary-finale-card h2 { margin: 18px 0 26px; }
-.sanctuary-finale-card > p:not(.eyebrow) { font-size: 16px; line-height: 1.8; margin-bottom: 28px; }
+.sanctuary-finale-card { position: relative; width: 32.5rem; padding: var(--sp-4xl); border: 1px solid rgba(255,255,255,.6); background: color-mix(in srgb,var(--color-bg) 94%,transparent); backdrop-filter: blur(8px); box-shadow: var(--shadow-stone); }
+.sanctuary-finale-card h2 { margin: var(--sp-lg) 0 var(--sp-xl); }
+.sanctuary-finale-card > p:not(.eyebrow) { font-size: 1rem; line-height: 1.8; margin-bottom: var(--sp-xl); }
 .reveal-ready { opacity: 0; transform: translateY(24px); transition: opacity var(--dur-reveal) var(--ease-out), transform var(--dur-reveal) var(--ease-out); }
 .reveal-ready.is-revealed { opacity: 1; transform: none; }
 .sanctuary[data-motion="off"] [data-reveal] { opacity: 1; transform: none; transition: none; }
 :root[data-theme="dark"] .sanctuary-hero-wash { background: linear-gradient(90deg,rgba(20,36,53,.91),rgba(20,36,53,.58) 46%,rgba(20,36,53,.1) 80%); }
 :root[data-theme="dark"] .site[data-edition="sanctuary"] .sanctuary-hero h1, :root[data-theme="dark"] .sanctuary-hero-copy > .eyebrow, :root[data-theme="dark"] .sanctuary-intro, :root[data-theme="dark"] .sanctuary-hero-copy > .sanctuary-text-link, :root[data-theme="dark"] .sanctuary-scroll { color: var(--brand-cream); }
-@media(min-width:1600px) { .sanctuary-hero { height: 860px; max-height: 1000px; } }
+@media(min-width:1600px) { .sanctuary-hero { height: 53.75rem; max-height: 62.5rem; } }
 @media(max-width:1150px) {
-  .site[data-edition="sanctuary"] .site-head-in { gap: 18px; }
+  .site[data-edition="sanctuary"] .site-head-in { gap: var(--sp-lg); }
   .site[data-edition="sanctuary"] .site-actions .btn { display:none; }
-  .site[data-edition="sanctuary"] .site-nav { gap: 14px; }
-  .sanctuary-class-gallery { grid-template-columns: repeat(3,1fr); gap: 36px 24px; }
+  .site[data-edition="sanctuary"] .site-nav { gap: var(--sp-lg); }
+  .sanctuary-class-gallery { grid-template-columns: repeat(3,1fr); gap: var(--sp-2xl) var(--sp-xl); }
   .sanctuary-class:nth-child(even) { padding-top:0; }
-  .sanctuary-portrait { height: 490px; }
-  .sanctuary-plan { padding: 26px; }
+  .sanctuary-portrait { height: 30.625rem; }
+  .sanctuary-plan { padding: var(--sp-xl); }
 }
 @media(max-width:900px) {
   .site[data-edition="sanctuary"] .site-head-in { min-height: 4.875rem; }
-  .site[data-edition="sanctuary"] .site-nav { top: 4.875rem; background: var(--color-bg); padding: 16px 5vw; }
-  .site[data-edition="sanctuary"] .site-nav a { font-size: 1.0625rem; padding: 15px 0; }
-  .sanctuary-hero { height: 720px; min-height: 660px; }
+  .site[data-edition="sanctuary"] .site-nav { top: 4.875rem; background: var(--color-bg); padding: var(--sp-lg) 5vw; }
+  .site[data-edition="sanctuary"] .site-nav a { font-size: 1.0625rem; padding: var(--sp-lg) 0; }
+  .sanctuary-hero { height: 45rem; min-height: 41.25rem; }
   .sanctuary-hero-scene .ambient-scene-media { object-position: 60% center; }
   .sanctuary-hero-wash { background: linear-gradient(90deg,rgba(246,237,219,.9),rgba(246,237,219,.52) 54%,rgba(246,237,219,.02)); }
   .sanctuary-philosophy-grid { gap: 6%; }
-  .sanctuary-portrait { height: 450px; }
-  .sanctuary-schedule-grid { grid-template-columns: 1fr; gap: 45px; }
-  .sanctuary-schedule-intro { max-width: 530px; }
+  .sanctuary-portrait { height: 28.125rem; }
+  .sanctuary-schedule-grid { grid-template-columns: 1fr; gap: var(--sp-3xl); }
+  .sanctuary-schedule-intro { max-width: 33.125rem; }
   .sanctuary-teachers { gap: 5%; }
-  .sanctuary-teacher-link { padding: 22px 0; gap: 16px; }
-  .sanctuary-plan-grid { gap: 16px; }
-  .site[data-edition="sanctuary"] .sanctuary-plan h3 { font-size: 32px; }
-  .sanctuary-plan { padding: 25px 20px; }
+  .sanctuary-teacher-link { padding: var(--sp-xl) 0; gap: var(--sp-lg); }
+  .sanctuary-plan-grid { gap: var(--grid-gap); }
+  .site[data-edition="sanctuary"] .sanctuary-plan h3 { font-size: 2rem; }
+  .sanctuary-plan { padding: var(--sp-xl); }
   .site[data-edition="sanctuary"] .site-foot-grid { grid-template-columns: repeat(2,1fr); }
-  .sanctuary-heading { align-items: flex-start; flex-direction: column; gap: 5px; }
+  .sanctuary-heading { align-items: flex-start; flex-direction: column; gap: var(--sp-xs); }
 }
 @media(max-width:600px) {
-  .site[data-edition="sanctuary"] .site-head-in { min-height: 4.5rem; gap: var(--sp-3); }
-  .site[data-edition="sanctuary"] .site-brand-caption { font-size: 7px; }
-  .site[data-edition="sanctuary"] .site-brand img { height: 27px !important; width: auto; }
-  .site[data-edition="sanctuary"] .site-actions { gap: var(--sp-1); }
+  .site[data-edition="sanctuary"] .site-head-in { min-height: 4.5rem; gap: var(--sp-md); }
+  .site[data-edition="sanctuary"] .site-brand-caption { font-size: 0.4375rem; }
+  .site[data-edition="sanctuary"] .site-brand img { height: var(--sp-xl) !important; width: auto; }
+  .site[data-edition="sanctuary"] .site-actions { gap: var(--sp-xs); }
   .site[data-edition="sanctuary"] .site-nav { top: 4.5rem; }
-  .site[data-edition="sanctuary"] .site-burger { font-size:20px; }
-  .sanctuary-hero { height: 760px; min-height: min(760px, calc(100svh - 72px)); max-height: 850px; }
-  .sanctuary-hero-inner { align-items: flex-start; padding-top: 68px; }
-  .site[data-edition="sanctuary"] .sanctuary-hero h1 { font-size: clamp(72px,17.8vw,100px); line-height: .94; margin-top: 24px; }
-  .sanctuary-hero-copy > .eyebrow { font-size: 10px; gap: 12px; }
-  .hero-eyebrow-rule { width: 18px; }
+  .site[data-edition="sanctuary"] .site-burger { font-size:1.25rem; }
+  .sanctuary-hero { height: 47.5rem; min-height: min(47.5rem, calc(100svh - 4.5rem)); max-height: 53.125rem; }
+  .sanctuary-hero-inner { align-items: flex-start; padding-top: var(--sp-4xl); }
+  .site[data-edition="sanctuary"] .sanctuary-hero h1 { font-size: clamp(4.5rem,17.8vw,6.25rem); line-height: .94; margin-top: var(--sp-xl); }
+  .sanctuary-hero-copy > .eyebrow { font-size: 0.625rem; gap: var(--sp-md); }
+  .hero-eyebrow-rule { width: var(--sp-lg); }
   .sanctuary-hero-scene .ambient-scene-media { object-position: 68% center; }
   .sanctuary-hero-wash { background: linear-gradient(180deg,rgba(246,237,219,.97),rgba(246,237,219,.79) 47%,rgba(246,237,219,.06) 83%); }
-  .sanctuary-intro { max-width: 285px; font-size:16px; line-height:1.7; }
+  .sanctuary-intro { max-width: 17.8125rem; font-size:1rem; line-height:1.7; }
   .sanctuary-hero-copy { padding:0; }
-  .sanctuary-button { padding: 16px 22px; font-size: 14px; }
-  .sanctuary-hero-bottom { bottom: 20px; }
+  .sanctuary-button { padding: var(--sp-lg) var(--sp-xl); font-size: 0.875rem; }
+  .sanctuary-hero-bottom { bottom: var(--sp-xl); }
   .sanctuary-motion { inline-size:var(--h-ctl); block-size:var(--h-ctl); aspect-ratio:1; padding:0; justify-content:center; }
   .sanctuary-motion span { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); }
-  .sanctuary-scroll { font-size:11px; }
-  .sanctuary-section { padding-top:64px; padding-bottom:64px; }
-  .site[data-edition="sanctuary"] h2 { font-size:42px; }
-  .sanctuary-centered { margin-bottom:34px; }
-  .sanctuary-centered h2 { margin:12px 0 16px; }
-  .sanctuary-philosophy { padding:48px 0 62px; }
-  .sanctuary-philosophy-grid { grid-template-columns:1fr; gap:42px; }
-  .sanctuary-philosophy-art { max-width:390px; width:100%; margin:auto; padding-left:18px; }
-  .sanctuary-portrait { height:450px; }
-  .sanctuary-philosophy-copy > p:not(.eyebrow) { font-size:16px; line-height:1.8; }
-  .sanctuary-class-gallery { display:flex; gap:18px; overflow-x:auto; scroll-snap-type:x mandatory; padding-bottom:20px; margin-right:-24px; padding-right:24px; scrollbar-width:thin; }
-  .sanctuary-class { width:70vw; max-width:290px; flex:0 0 auto; scroll-snap-align:start; }
+  .sanctuary-scroll { font-size:0.6875rem; }
+  .sanctuary-section { padding-top:var(--sp-4xl); padding-bottom:var(--sp-4xl); }
+  .site[data-edition="sanctuary"] h2 { font-size:2.625rem; }
+  .sanctuary-centered { margin-bottom:var(--sp-2xl); }
+  .sanctuary-centered h2 { margin:var(--sp-md) 0 var(--sp-lg); }
+  .sanctuary-philosophy { padding:var(--section) 0; }
+  .sanctuary-philosophy-grid { grid-template-columns:1fr; gap:var(--sp-3xl); }
+  .sanctuary-philosophy-art { max-width:24.375rem; width:100%; margin:auto; padding-left:var(--sp-lg); }
+  .sanctuary-portrait { height:28.125rem; }
+  .sanctuary-philosophy-copy > p:not(.eyebrow) { font-size:1rem; line-height:1.8; }
+  .sanctuary-class-gallery { display:flex; gap:var(--sp-lg); overflow-x:auto; scroll-snap-type:x mandatory; padding-bottom:var(--sp-xl); margin-right:calc(var(--sp-xl) * -1); padding-right:var(--sp-xl); scrollbar-width:thin; }
+  .sanctuary-class { width:70vw; max-width:18.125rem; flex:0 0 auto; scroll-snap-align:start; }
   .sanctuary-class-photo .mediaslot { aspect-ratio:4/5 !important; }
-  .sanctuary-class-meta .eyebrow { font-size:11px !important; }
-  .sanctuary-class-meta p { font-size:13px; }
-  .sanctuary-schedule { padding:60px 0; }
-  .sanctuary-session { grid-template-columns:74px 1fr auto; gap:12px; padding:21px 0; }
-  .sanctuary-session strong { font-size:16px; }
-  .sanctuary-agenda-head { font-size:11px; }
-  .sanctuary-teachers { grid-template-columns:1fr; gap:40px; }
-  .sanctuary-community { max-height:450px; }
-  .sanctuary-teacher-link { padding:25px 0; }
-  .sanctuary-plan-grid { grid-template-columns:1fr; gap:22px; }
-  .sanctuary-plan { min-height:300px; padding:30px; }
-  .site[data-edition="sanctuary"] .sanctuary-plan h3 { font-size:40px; }
-  .sanctuary-quotes { grid-template-columns:1fr; gap:60px; }
-  .sanctuary-finale { min-height:740px; padding:35px 24px; align-items:flex-end; }
+  .sanctuary-class-meta .eyebrow { font-size:0.6875rem !important; }
+  .sanctuary-class-meta p { font-size:0.8125rem; }
+  .sanctuary-schedule { padding:var(--section) 0; }
+  .sanctuary-session { grid-template-columns:4.625rem 1fr auto; gap:var(--sp-md); padding:var(--sp-xl) 0; }
+  .sanctuary-session strong { font-size:1rem; }
+  .sanctuary-agenda-head { font-size:0.6875rem; }
+  .sanctuary-teachers { grid-template-columns:1fr; gap:var(--sp-3xl); }
+  .sanctuary-community { max-height:28.125rem; }
+  .sanctuary-teacher-link { padding:var(--sp-xl) 0; }
+  .sanctuary-plan-grid { grid-template-columns:1fr; gap:var(--grid-gap); }
+  .sanctuary-plan { min-height:18.75rem; padding:var(--sp-xl); }
+  .site[data-edition="sanctuary"] .sanctuary-plan h3 { font-size:2.5rem; }
+  .sanctuary-quotes { grid-template-columns:1fr; gap:var(--sp-3xl); }
+  .sanctuary-finale { min-height:46.25rem; padding:var(--sp-2xl) var(--sp-xl); align-items:flex-end; }
   .sanctuary-finale-scene .ambient-scene-media { object-position:32% center; }
-  .sanctuary-finale-card { width:100%; padding:35px 28px; }
-  .site[data-edition="sanctuary"] .site-pagehead { padding-top:52px; padding-bottom:36px; }
-  .site[data-edition="sanctuary"] .site-pagehead h1 { font-size:57px; }
-  .site[data-edition="sanctuary"] .site-section { padding-bottom:48px; }
-  .site[data-edition="sanctuary"] .site-panel { padding:32px 25px; }
-  .site[data-edition="sanctuary"] .site-foot-grid { grid-template-columns:1fr; gap:30px; }
-  .site[data-edition="sanctuary"] .site-foot { padding-top:5px; }
-  .site-foot-bottom > a { float:none; display:block; margin-bottom:16px; }
+  .sanctuary-finale-card { width:100%; padding:var(--sp-2xl); }
+  .site[data-edition="sanctuary"] .site-pagehead { padding-top:var(--sp-3xl); padding-bottom:var(--sp-2xl); }
+  .site[data-edition="sanctuary"] .site-pagehead h1 { font-size:3.5625rem; }
+  .site[data-edition="sanctuary"] .site-section { padding-bottom: var(--section); }
+  .site[data-edition="sanctuary"] .site-panel { padding:var(--sp-xl); }
+  .site[data-edition="sanctuary"] .site-foot-grid { grid-template-columns:1fr; gap:var(--sp-2xl); }
+  .site[data-edition="sanctuary"] .site-foot { padding-top:var(--sp-xs); }
+  .site-foot-bottom > a { float:none; display:block; margin-bottom:var(--sp-lg); }
   :root[data-theme="dark"] .sanctuary-hero-wash { background:linear-gradient(180deg,rgba(20,36,53,.98),rgba(20,36,53,.79) 50%,rgba(20,36,53,.15) 85%); }
 }
 @media(prefers-reduced-motion:reduce) {
   .sanctuary *, .site[data-edition="sanctuary"] .btn { transition:none !important; animation:none !important; }
   .reveal-ready { opacity:1; transform:none; }
 }
-.site[data-edition="sanctuary"] .site-teacher-monogram { aspect-ratio: 4/5; border-radius: 48% 48% 4px 4px; background: linear-gradient(color-mix(in srgb,var(--color-lane) 85%,transparent),color-mix(in srgb,var(--color-lane) 85%,transparent)),url('../../../public/images/sanctuary/texture-limestone.webp') center/cover; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:20px; }
-.site-teacher-monogram > span { font: 72px var(--font-editorial); color:var(--color-primary); }
-.site-teacher-monogram small { font-size:12px; color:var(--color-text-muted); }
-@media(max-width:600px) { .site[data-edition="sanctuary"] .langtoggle { font-size:11px; } }
+.site[data-edition="sanctuary"] .site-teacher-monogram { aspect-ratio: 4/5; border-radius: 48% 48% 4px 4px; background: linear-gradient(color-mix(in srgb,var(--color-lane) 85%,transparent),color-mix(in srgb,var(--color-lane) 85%,transparent)),url('../../../public/images/sanctuary/texture-limestone.webp') center/cover; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:var(--sp-xl); }
+.site-teacher-monogram > span { font: 4.5rem var(--font-editorial); color:var(--color-primary); }
+.site-teacher-monogram small { font-size:0.75rem; color:var(--color-text-muted); }
+@media(max-width:600px) { .site[data-edition="sanctuary"] .langtoggle { font-size:0.6875rem; } }
 @media(max-width:380px) {
- .site[data-edition="sanctuary"] .site-head-in { padding-left:16px; padding-right:16px; gap:8px; }
+ .site[data-edition="sanctuary"] .site-head-in { padding-left:var(--sp-lg); padding-right:var(--sp-lg); gap:var(--sp-sm); }
  .site[data-edition="sanctuary"] .site-brand-caption { display:none; }
- .site[data-edition="sanctuary"] .site-actions { gap:4px; }
- .site[data-edition="sanctuary"] .langtoggle { padding:2px; }
- .site[data-edition="sanctuary"] .langtoggle button { padding:4px; }
+ .site[data-edition="sanctuary"] .site-actions { gap:var(--sp-xs); }
+ .site[data-edition="sanctuary"] .langtoggle { padding:var(--sp-2xs); }
+ .site[data-edition="sanctuary"] .langtoggle button { padding:var(--sp-xs); }
 }
 
 /* 2.1 — recessed image wells and separate photo, frame and caption planes. */
 .site[data-edition="sanctuary"] .sanctuary-button { box-shadow: var(--shadow-stone), var(--shadow-carved); }
 .site[data-edition="sanctuary"] .sanctuary-button:active { box-shadow: var(--shadow-pressed-deep); }
 .sanctuary-portrait::after,.sanctuary-community::after,.sanctuary-class-photo::after { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; box-shadow: var(--shadow-photo-inset); z-index: 2; }
-.sanctuary-philosophy-art { perspective: 1000px; }
+.sanctuary-philosophy-art { perspective: 62.5rem; }
 .sanctuary-portrait { box-shadow: var(--shadow-frame); transform: rotateX(calc(var(--depth-y,0) * -2deg)) rotateY(calc(var(--depth-x,0) * 3deg)); transition: transform var(--dur-slow) var(--ease-out); }
 .sanctuary-portrait .ambient-scene-media { transform: translate(calc(var(--depth-x,0) * -9px),calc(var(--scene-shift,0px) + var(--depth-y,0) * -8px)) scale(1.025); transition: transform var(--dur-slow) var(--ease-out); }
 .sanctuary-philosophy-art::before { transform: translate(calc(var(--depth-x,0) * -5px),calc(var(--depth-y,0) * -5px)); transition: transform var(--dur-slow); box-shadow: var(--shadow-carved); }
@@ -267,12 +269,12 @@
 .sanctuary-community img { transform: scale(1.045) translate(calc(var(--depth-x,0) * -7px),calc(var(--depth-y,0) * -7px)); transition: transform var(--dur-slow); }
 .sanctuary-community p { width: 100%; z-index: 3; }
 .sanctuary-teacher-link { border-radius: var(--r-sm); transition: background var(--dur-slow), box-shadow var(--dur-slow), padding var(--dur-slow); }
-.sanctuary-teacher-link:hover,.sanctuary-teacher-link:focus-visible { padding-left: 16px; padding-right: 16px; background: var(--color-surface); box-shadow: var(--shadow-carved); }
+.sanctuary-teacher-link:hover,.sanctuary-teacher-link:focus-visible { padding-left: var(--sp-lg); padding-right: var(--sp-lg); background: var(--color-surface); box-shadow: var(--shadow-carved); }
 .sanctuary-teacher-link img { transition: transform var(--dur-slow), box-shadow var(--dur-slow); box-shadow: var(--shadow-frame); }
 .sanctuary-teacher-link:hover img { transform: scale(1.12) rotate(calc(var(--depth-x,0) * 3deg)); }
 .sanctuary-teacher-link > span:last-child { transition: transform var(--dur-base); }
 .sanctuary-teacher-link:hover > span:last-child { transform: translate(3px,-3px); }
-.sample-portrait-label { display: block; font-size: 10px; color: var(--color-text-muted); margin-top: 5px; }
+.sample-portrait-label { display: block; font-size: 0.625rem; color: var(--color-text-muted); margin-top: var(--sp-xs); }
 .site[data-edition="sanctuary"] .site-teacher { overflow: hidden; transition: transform var(--dur-slow),box-shadow var(--dur-slow); }
 .site[data-edition="sanctuary"] .site-teacher:hover { transform: perspective(1000px) rotateX(calc(var(--depth-y,0) * -1deg)) rotateY(calc(var(--depth-x,0) * 2deg)) translateY(-4px); box-shadow: var(--shadow-raised); }
 .site[data-edition="sanctuary"] .site-teacher .mediaslot { box-shadow: var(--shadow-photo-inset); }
@@ -285,10 +287,10 @@
  .sanctuary-portrait .ambient-scene-media { transform: none; }
 }
 
-.sanctuary-about-scene { aspect-ratio: 2/3; width: min(100%, 620px); margin: 0 auto 20px; border-radius: 48% 48% 3px 3px; box-shadow: var(--shadow-frame); }
+.sanctuary-about-scene { aspect-ratio: 2/3; width: min(100%, 38.75rem); margin: 0 auto var(--sp-xl); border-radius: 48% 48% 3px 3px; box-shadow: var(--shadow-frame); }
 .site[data-motion="off"] .sanctuary-portrait, .site[data-motion="off"] .sanctuary-portrait .ambient-scene-media, .site[data-motion="off"] .sanctuary-philosophy-art::before, .site[data-motion="off"] .sanctuary-photo-caption, .site[data-motion="off"] .sanctuary-community img, .site[data-motion="off"] .sanctuary-teacher-link:hover img, .site[data-motion="off"] .site-teacher:hover, .site[data-motion="off"] .site-teacher:hover .mediaslot-media { transform: none; }
 
-.sanctuary-community { perspective: 1000px; box-shadow: var(--shadow-frame); }
+.sanctuary-community { perspective: 62.5rem; box-shadow: var(--shadow-frame); }
 .sanctuary-community p { transform: translate(calc(var(--depth-x,0) * 5px),calc(var(--depth-y,0) * 4px)); transition: transform var(--dur-slow); }
 .site[data-motion="off"] .sanctuary-community p { transform: none; }
 @media(prefers-reduced-motion:reduce) { .sanctuary-community p { transform: none; } }
@@ -297,9 +299,9 @@
 .site[data-edition="sanctuary"] .site-teacher { padding: 0; border-radius: var(--r-arch-card); overflow: hidden; gap: 0; }
 .site[data-edition="sanctuary"] .site-teacher .mediaslot-fig { margin: 0; }
 .site[data-edition="sanctuary"] .site-teacher .mediaslot { border: 0; border-radius: 0; }
-.site[data-edition="sanctuary"] .site-teacher .mediaslot-cap { padding: var(--sp-3) var(--sp-5) 0; }
+.site[data-edition="sanctuary"] .site-teacher .mediaslot-cap { padding: var(--sp-md) var(--card-pad) 0; }
 .site[data-edition="classic"] .site-teacher-copy { display: contents; }
-.site[data-edition="sanctuary"] .site-teacher-copy { padding: var(--sp-5); display: flex; flex-direction: column; gap: var(--sp-3); }
+.site[data-edition="sanctuary"] .site-teacher-copy { padding: var(--card-pad); display: flex; flex-direction: column; gap: var(--sp-md); }
 .mediaslot-living { position: absolute; inset: 0; }
 .community-living { aspect-ratio: 4/5; width: 100%; }
 .site[data-edition="sanctuary"] .site-teacher .ambient-scene-media,
@@ -311,14 +313,14 @@
 .site[data-motion="off"] .ambient-scene-media,.site[data-motion="off"] .site-teacher { transform: none !important; }
 @media(prefers-reduced-motion:reduce) { .site[data-edition="sanctuary"] .ambient-scene-media,.site[data-edition="sanctuary"] .site-teacher { transform: none !important; } }
 
-.teacher-avatar-living { width: 54px; height: 64px; flex: 0 0 54px; border-radius: var(--r-full); }
+.teacher-avatar-living { width: 3.375rem; height: var(--sp-4xl); flex: 0 0 3.375rem; border-radius: var(--r-full); }
 .sanctuary-teacher-link .teacher-avatar-living img { width: 108%; height: 108%; border-radius: 0; transform: none; }
 /* 0033 — the vector wordmark in the V2 header and footer: at the brand manual's 120 px minimum width (3.2rem tall, so it
    grows with the --ui band on large screens), blue on light / cream on dark (Wordmark tone auto), mid blue / yellow on
    hover, and the global focus ring with room for the clear space. */
 .site[data-edition="sanctuary"] .site-brand .wordmark-vector,
 .site[data-edition="sanctuary"] .site-footer-brand .wordmark-vector { height: max(3.2rem, calc(var(--wm-min-w) / var(--wm-ratio))); }
-.site[data-edition="sanctuary"] .site-footer-brand { display: inline-flex; align-self: flex-start; margin-bottom: 12px; border-radius: var(--r-xs); }
+.site[data-edition="sanctuary"] .site-footer-brand { display: inline-flex; align-self: flex-start; margin-bottom: var(--sp-md); border-radius: var(--r-xs); }
 .site[data-edition="sanctuary"] .site-footer-brand .site-footer-wordmark { margin-bottom: 0; }
 .site[data-edition="sanctuary"] .site-brand { border-radius: var(--r-xs); }
 .site[data-edition="sanctuary"] .site-brand .wordmark-vector, .site[data-edition="sanctuary"] .site-footer-brand .wordmark-vector { transition: color var(--dur-base) var(--ease-out); }

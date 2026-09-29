@@ -77,7 +77,7 @@ export function ClassDetailPage() {
             <p className="small muted">{t('site.classes.factsPending')}</p>
           )}
           {mods.length > 0 && (
-            <div className="row wrap" style={{ marginTop: 16 }}>
+            <div className="row wrap" style={{ marginTop: 'var(--sp-lg)' }}>
               {mods.map((m) => <Chip key={m.id} movement={m.movement} dot>{lang === 'es' ? m.name_es : m.name_en}</Chip>)}
               {c.heated && <Badge tone="warn">{t('site.modalities.heated')}</Badge>}
             </div>
@@ -97,7 +97,7 @@ export function ClassDetailPage() {
     Other: () => (
       <section className="container site-section">
         <p className="eyebrow">{t('site.classes.other')}</p>
-        <div className="site-classgrid" style={{ marginTop: 12 }}>
+        <div className="site-classgrid" style={{ marginTop: 'var(--sp-md)' }}>
           {classOrder.filter((s) => s !== slug).map((s) => (
             <Link key={s} to={`/site/classes/${s}`} className={`site-classcard mvcard-${classes[s].movement}`}>
               <p className="eyebrow">{bi(classes[s].eyebrow)}</p>

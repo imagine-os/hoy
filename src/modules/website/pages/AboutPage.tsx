@@ -31,7 +31,7 @@ export function AboutPage() {
         <div className="site-prose">
           {about.paragraphs.map((p, i) => <p key={i}>{bi(p)}</p>)}
         </div>
-        <div className="row wrap" style={{ marginTop: 24 }}>
+        <div className="row wrap" style={{ marginTop: 'var(--sp-xl)' }}>
           <Link to="/site/classes"><Button>{t('site.about.classes')}</Button></Link>
           <Link to="/site/plans"><Button variant="secondary">{t('site.plans.all')}</Button></Link>
         </div>
@@ -40,7 +40,7 @@ export function AboutPage() {
     Values: () => (
       <section className="container site-section">
         <p className="eyebrow">{t('site.about.values')}</p>
-        <div className="row wrap" style={{ marginTop: 8 }}>
+        <div className="row wrap" style={{ marginTop: 'var(--sp-sm)' }}>
           {about.values.map((v, i) => <Chip key={i} dot movement={(['enraiza', 'fluye', 'arde', 'libera'] as const)[i % 4]}>{bi(v)}</Chip>)}
         </div>
       </section>
@@ -67,7 +67,7 @@ export function AboutPage() {
       <section className="container site-section">
         <Card eyebrow={t('site.about.board')} padding="sm">
           <img src={tenant.brand.lockup.sand} alt={`${tenant.name} lockup`} style={{ width: '100%', borderRadius: 'var(--r-sm)' }} />
-          <p className="xs muted" style={{ marginTop: 8 }}>{t('site.about.boardNote')}</p>
+          <p className="xs muted" style={{ marginTop: 'var(--sp-sm)' }}>{t('site.about.boardNote')}</p>
         </Card>
       </section>
     ),

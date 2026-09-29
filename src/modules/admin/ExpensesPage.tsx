@@ -142,7 +142,7 @@ export function ExpensesPage() {
       <div className="grid grid-2">
         <Card title={t('admin.expenses.byCategory')} eyebrow={t(`admin.finance.range.${range}`)}>
           <BarList items={byCategory} format={(v) => formatCOP(v, lang)} emptyText={t('admin.finance.emptyRange')} />
-          <p className="xs muted" style={{ marginTop: 12 }}>{t('admin.expenses.byCategory.hint', { total: formatCOP(totals.total, lang) })}</p>
+          <p className="xs muted" style={{ marginTop: 'var(--sp-md)' }}>{t('admin.expenses.byCategory.hint', { total: formatCOP(totals.total, lang) })}</p>
         </Card>
         <Card title={t('admin.expenses.add')} eyebrow="M-09c">
           {canWrite ? <ExpenseForm onSave={add} /> : <p className="small muted">{t('admin.expenses.noPermission')}</p>}
@@ -152,7 +152,7 @@ export function ExpensesPage() {
       <Card tone="muted" title={t('admin.expenses.templates')} eyebrow={t('admin.expenses.templates.eyebrow')}
         actions={canWrite ? <Button size="sm" variant="ghost" onClick={() => setShowTemplateForm((v) => !v)}>{showTemplateForm ? t('core.common.cancel') : t('admin.expenses.templates.new')}</Button> : undefined}>
         <div className="stack">
-          <div className="row wrap" style={{ alignItems: 'flex-end', gap: 12 }}>
+          <div className="row wrap" style={{ alignItems: 'flex-end', gap: 'var(--sp-md)' }}>
             <Select value={String(offset)} onChange={(e) => setOffset(Number(e.target.value))} aria-label={t('admin.payouts.generate.period')} style={{ maxWidth: 220 }}>
               {[0, 1, 2, 3].map((o) => { const p = monthPeriodFor(o); return <option key={o} value={o}>{formatDate(p.start, lang, { month: 'long', year: 'numeric' })}</option>; })}
             </Select>

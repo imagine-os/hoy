@@ -1,10 +1,10 @@
-.emptystate { display: flex; flex-direction: column; align-items: center; text-align: center; gap: var(--sp-2); padding: var(--sp-10) var(--sp-6); border: 1px dashed var(--color-border-strong); border-radius: var(--r-md); background: var(--color-surface-2); color: var(--color-text); }
-.emptystate.is-compact { padding: var(--sp-5) var(--sp-4); }
-.emptystate-icon { width: 36px; height: 36px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--color-surface-3); color: var(--color-text-muted); font-family: var(--font-heading); font-weight: var(--fw-semibold); }
+.emptystate { display: flex; flex-direction: column; align-items: center; text-align: center; gap: var(--sp-sm); padding: var(--sp-2xl) var(--sp-xl); border: 1px dashed var(--color-border-strong); border-radius: var(--r-md); background: var(--color-surface-2); color: var(--color-text); }
+.emptystate.is-compact { padding: var(--card-pad); }
+.emptystate-icon { width: var(--icon-tile); height: var(--icon-tile); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--color-surface-3); color: var(--color-text-muted); font-family: var(--font-heading); font-weight: var(--fw-semibold); }
 .emptystate-error .emptystate-icon { background: color-mix(in srgb, var(--color-danger) 14%, transparent); color: var(--color-danger); }
 .emptystate-error { border-color: color-mix(in srgb, var(--color-danger) 40%, transparent); }
 .emptystate-title { font-family: var(--font-heading); font-weight: var(--fw-medium); overflow-wrap: anywhere; }
 .emptystate-body { max-width: 44ch; overflow-wrap: anywhere; }
-.emptystate-action { margin-top: var(--sp-2); display: flex; flex-direction: column; align-items: center; gap: var(--sp-2); }
-.emptystate-spinner { width: 16px; height: 16px; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; animation: emptystate-spin .8s linear infinite; display: block; }
+.emptystate-action { margin-top: var(--sp-sm); display: flex; flex-direction: column; align-items: center; gap: var(--sp-sm); }
+.emptystate-spinner { width: var(--sp-lg); height: var(--sp-lg); border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; animation: emptystate-spin .8s linear infinite; display: block; }
 @keyframes emptystate-spin { to { transform: rotate(360deg); } }

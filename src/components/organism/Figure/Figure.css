@@ -1,7 +1,7 @@
-.figure { margin: var(--sp-5) 0; display: flex; flex-direction: column; gap: var(--sp-2); min-width: 0; }
+.figure { margin: var(--block) 0; display: flex; flex-direction: column; gap: var(--sp-sm); min-width: 0; }
 .figure-frame {
   position: relative; min-width: 0;
-  padding: var(--sp-2);
+  padding: var(--sp-sm);
   background: var(--color-surface-2);
   border: 1px solid var(--color-border);
   border-radius: var(--r-md);
@@ -12,18 +12,18 @@
 .figure-link:hover .figure-img { outline: 2px solid var(--color-primary); outline-offset: 1px; }
 .figure-link:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
 .figure-code {
-  position: absolute; top: var(--sp-3); right: var(--sp-3);
+  position: absolute; top: var(--sp-md); right: var(--sp-md);
   background: var(--color-surface); border: 1px solid var(--color-border);
   border-radius: var(--r-xs); padding: .1em .45em;
   font-size: var(--fs-xs);
 }
 .figure-code code { background: none; padding: 0; }
 .figure-cap { font-size: var(--fs-sm); color: var(--color-text-muted); overflow-wrap: anywhere; }
-.figure-mobile { max-width: 300px; }
+.figure-mobile { max-width: 18.75rem; }
 
 @media (max-width: 640px) { .figure-mobile { max-width: 100%; } }
 @media print { .figure { break-inside: avoid; } .figure-frame { box-shadow: none; } }
 
 /* 0031: capture date + stale flag under the caption */
-.figure-date { display: flex; flex-wrap: wrap; gap: var(--sp-2); align-items: center; margin-top: 4px; font-size: var(--fs-xs); color: var(--color-text-muted); }
-.figure-stale { display: inline-flex; align-items: center; padding: 1px 8px; border-radius: var(--r-full); border: 1px solid color-mix(in srgb, var(--color-warn) 60%, transparent); background: color-mix(in srgb, var(--color-warn) 14%, var(--color-surface)); color: var(--color-text); }
+.figure-date { display: flex; flex-wrap: wrap; gap: var(--sp-sm); align-items: center; margin-top: var(--sp-xs); font-size: var(--fs-xs); color: var(--color-text-muted); }
+.figure-stale { display: inline-flex; align-items: center; padding: 1px var(--sp-sm); border-radius: var(--r-full); border: 1px solid color-mix(in srgb, var(--color-warn) 60%, transparent); background: color-mix(in srgb, var(--color-warn) 14%, var(--color-surface)); color: var(--color-text); }

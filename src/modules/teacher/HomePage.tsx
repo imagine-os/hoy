@@ -68,7 +68,7 @@ export function TeacherHomePage() {
       </div>
       {!linked && (
         <Card tone="muted">
-          <p className="small muted" style={{ marginBottom: 8 }}>{t('teacher.home.notLinked')}</p>
+          <p className="small muted" style={{ marginBottom: 'var(--sp-sm)' }}>{t('teacher.home.notLinked')}</p>
           <Field label={t('teacher.home.viewAs')}>{(id) => <Select id={id} value={me?.id ?? ''} onChange={(e) => choose(e.target.value || null)}><option value="">—</option>{teachers.map((x) => <option key={x.id} value={x.id}>{x.display_name}</option>)}</Select>}</Field>
         </Card>
       )}
@@ -90,7 +90,7 @@ export function TeacherHomePage() {
           <section className="stack-sm">
             <div className="row-between"><div className="eyebrow">{t('core.common.today')}</div><span className="xs muted">{formatDate(now.toISOString(), lang)}</span></div>
             <Card padding="sm">
-              {today.length === 0 && <p className="muted small" style={{ padding: 12 }}>{t('teacher.home.emptyToday')}</p>}
+              {today.length === 0 && <p className="muted small" style={{ padding: 'var(--sp-md)' }}>{t('teacher.home.emptyToday')}</p>}
               {today.map(({ session: s, modality: m }) => (
                 <div key={s.id} className="teach-todayrow">
                   <ClassRow title={s.title} teacher={t('teacher.home.arrivedOf', { n: arrived(s.id), total: s.booked_count })} startsAt={s.starts_at} durationMin={m?.duration_min ?? 60} movement={m?.movement ?? 'fluye'} booked={s.booked_count} capacity={s.capacity} status={s.status} onClick={() => nav(`/teach/class/${s.id}`)} />
@@ -102,7 +102,7 @@ export function TeacherHomePage() {
           <section className="stack-sm">
             <div className="eyebrow">{t('teacher.home.specials')}</div>
             <Card padding="sm">
-              {specials.length === 0 && <p className="muted small" style={{ padding: 12 }}>{t('teacher.home.specials.empty')}</p>}
+              {specials.length === 0 && <p className="muted small" style={{ padding: 'var(--sp-md)' }}>{t('teacher.home.specials.empty')}</p>}
               {specials.map((b) => {
                 const payout = payoutOf.get(b.id);
                 return (
@@ -122,7 +122,7 @@ export function TeacherHomePage() {
           <section className="stack-sm">
             <div className="row-between"><div className="eyebrow">{t('teacher.home.week')}</div><Button size="sm" variant="ghost" onClick={() => setSub({ open: true, session: upcoming[0]?.session.id ?? '', reason: '' })}>{t('teacher.home.sub')}</Button></div>
             <Card padding="sm">
-              {week.length === 0 && <p className="muted small" style={{ padding: 12 }}>{t('teacher.home.empty')}</p>}
+              {week.length === 0 && <p className="muted small" style={{ padding: 'var(--sp-md)' }}>{t('teacher.home.empty')}</p>}
               {week.map(({ session: s, modality: m }) => <ClassRow key={s.id} title={s.title} teacher={formatDate(s.starts_at, lang, { weekday: 'long', day: 'numeric' })} startsAt={s.starts_at} durationMin={m?.duration_min ?? 60} movement={m?.movement ?? 'fluye'} booked={s.booked_count} capacity={s.capacity} status={s.status} onClick={() => nav(`/teach/class/${s.id}`)} />)}
             </Card>
           </section>

@@ -39,7 +39,7 @@ export function InspectorPanel({ spec, open, onClose, routePath }: InspectorPane
         {routePath && <Section title={L('Ruta', 'Route')}><code>#{routePath}</code></Section>}
         <Section title={L('Layout (orden de componentes)', 'Layout (component order)')} empty={!spec.layout.length}>
           <ol className="insp-layout">{spec.layout.map((l, i) => <li key={i}>{l}</li>)}</ol>
-          <div className="row wrap" style={{ marginTop: 8 }}>
+          <div className="row wrap" style={{ marginTop: 'var(--sp-sm)' }}>
             <Link className="small" to={`/dev/layout/${encodeURIComponent(spec.code)}`}>{L('Reordenar en el editor →', 'Reorder in the layout editor →')}</Link>
           </div>
           {spec.layerTree && <details className="insp-details"><summary className="small muted">{L('Árbol completo', 'Full tree')}</summary><pre className="xs">{spec.layerTree}</pre></details>}
@@ -50,7 +50,7 @@ export function InspectorPanel({ spec, open, onClose, routePath }: InspectorPane
               ? <Link key={d} to={`/admin/tables/${d}`} className="insp-table is-known"><code>{d}</code></Link>
               : <span key={d} className="insp-table" title={L('Aún no existe en schema.ts', 'Not in schema.ts yet')}><code>{d}</code></span>)}
           </div>
-          <p className="xs muted" style={{ marginTop: 6 }}>{L('Azul = existe en el schema y abre el gestor de tablas.', 'Blue = exists in the schema and opens the table manager.')}</p>
+          <p className="xs muted" style={{ marginTop: 'var(--sp-sm)' }}>{L('Azul = existe en el schema y abre el gestor de tablas.', 'Blue = exists in the schema and opens the table manager.')}</p>
         </Section>
         <Section title={L('Roles con acceso', 'Roles with access')} empty={!spec.roles.length}>
           <div className="row wrap">{spec.roles.map((r) => <Chip key={r}>{bi(ROLE_LABEL[r])}</Chip>)}</div>
@@ -69,7 +69,7 @@ export function InspectorPanel({ spec, open, onClose, routePath }: InspectorPane
                 </li>
               ))}
             </ul>
-            <p className="xs muted" style={{ marginTop: 'var(--sp-2)' }}>
+            <p className="xs muted" style={{ marginTop: 'var(--sp-sm)' }}>
               {L('Declaradas en la spec y ejecutables con window.__hoyos.run(id, params) mientras la página esté abierta.', 'Declared in the spec and runnable with window.__hoyos.run(id, params) while the page is open.')}
             </p>
           </Section>

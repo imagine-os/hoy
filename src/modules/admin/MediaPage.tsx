@@ -102,14 +102,14 @@ function MediaCard({ asset, readOnly, bi, onSave, onRemove }: { asset: MediaAsse
           ? (asset.kind === 'video' ? <video src={asset.url} controls playsInline /> : <img src={asset.url} alt={bi(asset.alt)} loading="lazy" />)
           : <span className="adm-media-ratio">{draft.ratio.replace(/\s/g, '')}</span>}
       </div>
-      <div className="row wrap" style={{ marginTop: 8 }}>
+      <div className="row wrap" style={{ marginTop: 'var(--sp-sm)' }}>
         <Chip>{t(`admin.media.kind.${asset.kind}`)}</Chip>
         <Chip>{draft.ratio.replace(/\s/g, '')}</Chip>
         {asset.movement && <Chip movement={asset.movement} dot>{asset.movement}</Chip>}
       </div>
-      <p className="xs muted" style={{ marginTop: 8 }}>{bi(asset.brief) || t('admin.media.noBrief')}</p>
+      <p className="xs muted" style={{ marginTop: 'var(--sp-sm)' }}>{bi(asset.brief) || t('admin.media.noBrief')}</p>
 
-      <div className="stack-sm" style={{ marginTop: 8 }}>
+      <div className="stack-sm" style={{ marginTop: 'var(--sp-sm)' }}>
         <Field label={t('admin.media.url')} error={urlBad ? t('admin.media.url.bad') : undefined} hint={t('admin.media.url.hint')}>
           {(id) => <Input id={id} disabled={readOnly} value={draft.url ?? ''} placeholder="https://…" onChange={(e) => set('url', e.target.value || null)} />}
         </Field>
@@ -122,7 +122,7 @@ function MediaCard({ asset, readOnly, bi, onSave, onRemove }: { asset: MediaAsse
       </div>
 
       {open && (
-        <div className="stack-sm" style={{ marginTop: 10 }}>
+        <div className="stack-sm" style={{ marginTop: 'var(--sp-md)' }}>
           <div className="grid grid-2">
             <Field label={t('admin.media.slotKey')} hint={t('admin.media.slotKey.hint')}>
               {(id) => <Input id={id} disabled={readOnly} value={draft.slot_key} onChange={(e) => set('slot_key', e.target.value.trim())} />}

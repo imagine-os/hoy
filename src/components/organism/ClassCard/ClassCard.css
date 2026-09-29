@@ -1,4 +1,4 @@
-.classcard { display: flex; flex-direction: column; gap: var(--sp-3); min-width: 0; }
+.classcard { display: flex; flex-direction: column; gap: var(--sp-md); min-width: 0; }
 .classcard-meta, .classcard-when { overflow-wrap: anywhere; }
 .classcard-when { font-family: var(--font-heading); font-weight: var(--fw-semibold); font-size: var(--fs-sm); font-variant-numeric: tabular-nums; }
 .classcard-time { font-family: var(--font-heading); font-size: var(--fs-2xl); font-weight: var(--fw-semibold); line-height: 1.1; font-variant-numeric: tabular-nums; }
@@ -7,3 +7,5 @@
 .classcard.is-next .capmeter { color: color-mix(in srgb, var(--color-text-on-primary) 80%, transparent); }
 .classcard.is-next .capmeter-bar { background: color-mix(in srgb, var(--color-text-on-primary) 25%, transparent); }
 .classcard.is-next .chip-mv { background: color-mix(in srgb, var(--color-text-on-primary) 18%, transparent); color: var(--color-text-on-primary); }
+/* 0037 · the meter grows in the card footer: a zero-width bar left an 8 px gap before "7 cupos" / "Sin cupos" */
+.classcard .capmeter { flex: 1 1 auto; max-width: 15rem; }

@@ -2,22 +2,22 @@
 .deskshell { display: grid; grid-template-columns: var(--w-sidebar) minmax(0, 1fr); min-height: 100vh; }
 .deskshell.is-rail { grid-template-columns: var(--w-rail) minmax(0, 1fr); }
 .deskshell-side { position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; background-color: var(--color-lane); background-image: var(--tex-lane-on); box-shadow: inset -1px 0 0 rgba(var(--m-shade), .1); overflow-y: auto; overflow-x: hidden; transition: width var(--dur-base) var(--ease-out); }
-.deskshell-brand { display: flex; align-items: center; gap: var(--sp-2); padding: var(--sp-5) var(--sp-4) var(--sp-4); min-width: 0; }
-.deskshell.is-rail .deskshell-brand { padding: var(--sp-4) 0; justify-content: center; }
-.deskshell-mark { display: inline-flex; flex: 0 0 auto; min-width: 0; overflow: hidden; }
+.deskshell-brand { display: flex; align-items: center; gap: var(--sp-sm); padding: var(--sp-lg); min-width: 0; }
+.deskshell.is-rail .deskshell-brand { padding: var(--sp-lg) 0; justify-content: center; }
+.deskshell-mark { display: inline-flex; align-items: center; min-height: var(--h-ctl); flex: 0 0 auto; min-width: 0; overflow: hidden; }
 .deskshell-devtoggle { display: inline-flex; flex: 0 0 auto; }
 /* the wordmark sizes itself by height inline, so the rail caps its width (!important beats the inline width:auto) */
-.deskshell.is-rail .deskshell-mark .wordmark { width: 36px !important; height: auto !important; }
+.deskshell.is-rail .deskshell-mark .wordmark { width: var(--icon-tile) !important; height: auto !important; }
 .deskshell-title { font-family: var(--font-body); font-size: var(--fs-2xs); text-transform: uppercase; letter-spacing: var(--ls-eyebrow); color: var(--color-text-faint); font-weight: var(--fw-semibold); flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.deskshell-nav { flex: 1 1 auto; padding: var(--sp-2) var(--sp-3); display: flex; flex-direction: column; gap: var(--sp-4); min-width: 0; }
-.deskshell.is-rail .deskshell-nav { padding: var(--sp-2) 6px; gap: var(--sp-2); align-items: center; }
-.deskshell-group { display: flex; flex-direction: column; gap: 3px; min-width: 0; width: 100%; }
-.deskshell-grouplabel { display: flex; align-items: center; gap: 6px; width: 100%; padding: var(--sp-2) var(--sp-3) 5px; border: 0; background: none; text-align: left; cursor: pointer; }
+.deskshell-nav { flex: 1 1 auto; padding: var(--sp-sm) var(--sp-md); display: flex; flex-direction: column; gap: var(--sp-lg); min-width: 0; }
+.deskshell.is-rail .deskshell-nav { padding: var(--sp-sm) var(--sp-xs); gap: var(--sp-sm); align-items: center; }
+.deskshell-group { display: flex; flex-direction: column; gap: var(--sp-xs); min-width: 0; width: 100%; }
+.deskshell-grouplabel { display: flex; align-items: center; gap: var(--sp-sm); width: 100%; padding: var(--sp-sm) var(--sp-md) var(--sp-xs); border: 0; background: none; text-align: left; cursor: pointer; }
 .deskshell-grouplabel:hover { color: var(--color-text-muted); }
 .deskshell-caret { flex: 0 0 auto; display: inline-flex; line-height: 0; }
 .deskshell-grouptext { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.deskshell-sep { width: 20px; margin: var(--sp-2) auto; border: 0; border-top: 1px solid rgba(var(--m-shade), .14); }
-.deskshell-link { position: relative; display: flex; align-items: center; min-height: var(--h-ctl); gap: var(--sp-2); min-width: 0; padding: 9px 11px; border-radius: var(--r-ctl); color: var(--color-text-muted); font-size: var(--fs-sm); text-decoration: none; transition: background-color var(--dur-fast), color var(--dur-fast); }
+.deskshell-sep { width: var(--icon-md); margin: var(--sp-sm) auto; border: 0; border-top: 1px solid rgba(var(--m-shade), .14); }
+.deskshell-link { position: relative; display: flex; align-items: center; min-height: var(--h-ctl); gap: var(--sp-sm); min-width: 0; padding: var(--sp-sm) var(--sp-md); border-radius: var(--r-ctl); color: var(--color-text-muted); font-size: var(--fs-sm); text-decoration: none; transition: background-color var(--dur-fast), color var(--dur-fast); }
 .deskshell-link:hover { background: rgba(var(--m-shade), .06); color: var(--color-text); text-decoration: none; }
 /* the active item is the canvas .accent pill */
 .deskshell-link.is-active { background-color: var(--color-accent-fill); background-image: var(--tex-accent-on); color: var(--color-text-on-primary); font-weight: var(--fw-medium); box-shadow: var(--shadow-accent); }
@@ -32,43 +32,43 @@
 /* icon rail (56 px) with hover tooltips */
 .deskshell.is-rail .deskshell-link { width: var(--h-ctl); height: var(--h-ctl); padding: 0; justify-content: center; }
 .deskshell.is-rail .deskshell-linktext { display: none; }
-.deskshell-tip { display: none; position: absolute; left: calc(100% + 8px); top: 50%; transform: translateY(-50%); z-index: 60; padding: 5px 9px; border-radius: var(--r-ctl); background: var(--color-ink); color: var(--color-bg); font-size: var(--fs-xs); font-weight: var(--fw-regular); white-space: nowrap; box-shadow: var(--shadow-raised); pointer-events: none; }
+.deskshell-tip { display: none; position: absolute; left: calc(100% + var(--sp-sm)); top: 50%; transform: translateY(-50%); z-index: 60; padding: var(--sp-xs) var(--sp-sm); border-radius: var(--r-ctl); background: var(--color-ink); color: var(--color-bg); font-size: var(--fs-xs); font-weight: var(--fw-regular); white-space: nowrap; box-shadow: var(--shadow-raised); pointer-events: none; }
 .deskshell.is-rail .deskshell-link:hover .deskshell-tip, .deskshell.is-rail .deskshell-link:focus-visible .deskshell-tip { display: block; }
 
-.deskshell-foot { padding: var(--sp-4); display: flex; flex-direction: column; gap: var(--sp-3); box-shadow: inset 0 1px 0 rgba(var(--m-shade), .1); }
-.deskshell.is-rail .deskshell-foot { padding: var(--sp-3) 6px; align-items: center; }
-.deskshell-collapse { display: flex; align-items: center; gap: var(--sp-2); padding: 6px 8px; border: 0; border-radius: var(--r-ctl); background: none; color: var(--color-text-faint); font-size: var(--fs-sm); }
+.deskshell-foot { padding: var(--sp-lg); display: flex; flex-direction: column; gap: var(--sp-md); box-shadow: inset 0 1px 0 rgba(var(--m-shade), .1); }
+.deskshell.is-rail .deskshell-foot { padding: var(--sp-md) var(--sp-xs); align-items: center; }
+.deskshell-collapse { display: flex; align-items: center; gap: var(--sp-sm); padding: var(--sp-sm); border: 0; border-radius: var(--r-ctl); background: none; color: var(--color-text-faint); font-size: var(--fs-sm); }
 .deskshell-collapse:hover { background: rgba(var(--m-shade), .06); color: var(--color-text); }
 .deskshell-chev { display: inline-flex; line-height: 0; }
 .deskshell-me { display: inline-flex; }
 .deskshell-iconbtn { border: 1px solid var(--color-card-border); background: var(--color-surface); box-shadow: var(--shadow-highlight), var(--shadow-contact); }
-.deskshell-spec { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border: 0; border-radius: var(--r-full); background: var(--color-ink); color: var(--color-bg); font-family: var(--font-mono); font-size: var(--fs-2xs); flex: 0 0 auto; }
-.deskshell-specdot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-accent); }
+.deskshell-spec { display: inline-flex; align-items: center; gap: var(--sp-xs); padding: var(--sp-xs) var(--sp-sm); border: 0; border-radius: var(--r-full); background: var(--color-ink); color: var(--color-bg); font-family: var(--font-mono); font-size: var(--fs-2xs); flex: 0 0 auto; }
+.deskshell-specdot { width: 0.375rem; height: 0.375rem; border-radius: 50%; background: var(--color-accent); }
 .deskshell-rs { min-width: 0; }
-.deskshell-rs .input { max-width: 150px; }
+.deskshell-rs .input { max-width: 9.375rem; }
 
 /* content column: sticky top bar above the page */
 .deskshell-col { display: flex; flex-direction: column; min-width: 0; }
-.deskshell-main { min-width: 0; flex: 1 1 auto; padding: var(--sp-6) var(--sp-8) var(--sp-12); }
+.deskshell-main { min-width: 0; flex: 1 1 auto; padding: var(--sp-xl) var(--gutter) var(--sp-3xl); }
 .deskshell-scrim { display: none; }
 
-@media (max-width: 1200px) { .deskshell-rs .input { max-width: 120px; } }
+@media (max-width: 1200px) { .deskshell-rs .input { max-width: 7.5rem; } }
 @media (max-width: 1080px) { .deskshell-rs { display: none; } }
 @media (max-width: 720px) { .deskshell-devtoggle .toggle-label { display: none; } }
 @media (max-width: 900px) {
   .deskshell, .deskshell.is-rail { grid-template-columns: 1fr; }
-  .deskshell-side { position: fixed; inset: 0 auto 0 0; width: min(320px, 85vw); z-index: 50; transform: translateX(-100%); transition: transform var(--dur-base) var(--ease-out); box-shadow: var(--shadow-raised); }
+  .deskshell-side { position: fixed; inset: 0 auto 0 0; width: min(20rem, 85vw); z-index: 50; transform: translateX(-100%); transition: transform var(--dur-base) var(--ease-out); box-shadow: var(--shadow-raised); }
   /* the drawer is always the full column, never the rail */
-  .deskshell.is-rail .deskshell-side { width: min(320px, 85vw); }
-  .deskshell.is-rail .deskshell-brand { padding: var(--sp-5) var(--sp-4) var(--sp-4); justify-content: flex-start; }
-  .deskshell.is-rail .deskshell-nav { padding: var(--sp-2) var(--sp-3); align-items: stretch; }
-  .deskshell.is-rail .deskshell-link { width: auto; height: auto; padding: 9px 11px; justify-content: flex-start; }
+  .deskshell.is-rail .deskshell-side { width: min(20rem, 85vw); }
+  .deskshell.is-rail .deskshell-brand { padding: var(--sp-lg); justify-content: flex-start; }
+  .deskshell.is-rail .deskshell-nav { padding: var(--sp-sm) var(--sp-md); align-items: stretch; }
+  .deskshell.is-rail .deskshell-link { width: auto; height: auto; padding: var(--sp-sm) var(--sp-md); justify-content: flex-start; }
   .deskshell.is-rail .deskshell-linktext { display: block; }
-  .deskshell.is-rail .deskshell-foot { padding: var(--sp-4); align-items: stretch; }
+  .deskshell.is-rail .deskshell-foot { padding: var(--sp-lg); align-items: stretch; }
   .deskshell.is-open .deskshell-side { transform: none; }
   .deskshell-collapse { display: none; }
   .deskshell-tip { display: none !important; }
-  .deskshell-main { padding: var(--sp-5) var(--sp-4) var(--sp-12); }
+  .deskshell-main { padding: var(--sp-xl) var(--gutter) var(--sp-3xl); }
   .deskshell.is-open .deskshell-scrim { display: block; position: fixed; inset: 0; background: var(--color-scrim); z-index: 40; }
 }
 /* 0035 · on a phone in dev mode the round 44 px theme toggle and bell, the dev toggle and the spec chip fill the bar:
@@ -76,3 +76,5 @@
    380 px the dev switch leaves the bar (the spec chip already says dev mode is on; the hub switches it off). */
 @media (max-width: 479.98px) { .deskshell-col .topbar:has(.deskshell-spec) .topbar-brand { display: none; } }
 @media (max-width: 379.98px) { .deskshell-col .topbar:has(.deskshell-spec) .deskshell-devtoggle { display: none; } }
+/* 0037 · text links in the foot (← Hub) are 44 px targets like every control */
+.deskshell-foot a { display: inline-flex; align-items: center; min-height: var(--h-ctl); }

@@ -76,7 +76,7 @@ export function ClassicHomePage() {
       <section className="container site-section">
         <SectionHead title={t('site.today.title')} action={<Link to="/site/schedule">{t('site.today.all')} →</Link>} />
         <Card padding="sm">
-          {today.length === 0 && <p className="muted" style={{ padding: 16 }}>{t(todayAll.length ? 'site.today.done' : 'site.today.empty')}</p>}
+          {today.length === 0 && <p className="muted" style={{ padding: 'var(--sp-lg)' }}>{t(todayAll.length ? 'site.today.done' : 'site.today.empty')}</p>}
           {today.map(({ session: s, modality: m, teacher: te }) => (
             <ClassRow key={s.id} title={s.title} teacher={te?.display_name ?? ''} startsAt={s.starts_at} durationMin={m?.duration_min ?? 60} movement={m?.movement ?? 'fluye'} booked={s.booked_count} capacity={s.capacity} onClick={() => nav('/site/schedule')} />
           ))}

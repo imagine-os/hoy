@@ -196,7 +196,7 @@ export function RoomsPage() {
         return (
           <Card title={selectedSession.title} eyebrow={t('staff.rooms.selected.class')} padding="sm" actions={<Badge tone="primary">{formatTime(selectedSession.starts_at, lang)}–{formatTime(selectedSession.ends_at, lang)}</Badge>}>
             <p className="small">{teacher.get(selectedSession.teacher_id)?.display_name} · {roomName.get(selectedSession.room_id)} · {selectedSession.booked_count}/{selectedSession.capacity}</p>
-            <div className="row wrap" style={{ marginTop: 8 }}><Link to={`/staff/checkin?session=${selectedSession.id}`}><Button size="sm" variant="ghost" icon="checkin">{t('staff.home.openCheckin')}</Button></Link></div>
+            <div className="row wrap" style={{ marginTop: 'var(--sp-sm)' }}><Link to={`/staff/checkin?session=${selectedSession.id}`}><Button size="sm" variant="ghost" icon="checkin">{t('staff.home.openCheckin')}</Button></Link></div>
           </Card>
         );
       }
@@ -227,7 +227,7 @@ export function RoomsPage() {
     },
     UpcomingList: () => (
       <Card title={t('staff.rooms.upcoming')} padding="sm">
-        {upcoming.length === 0 && <p className="small muted" style={{ padding: 8 }}>{t('staff.rooms.upcoming.empty')}</p>}
+        {upcoming.length === 0 && <p className="small muted" style={{ padding: 'var(--sp-sm)' }}>{t('staff.rooms.upcoming.empty')}</p>}
         {upcoming.map((b) => (
           <button key={b.id} type="button" className={`rooms-upcoming ${selectedId === b.id ? 'is-selected' : ''}`} onClick={() => { setSelectedId(b.id); setDate(dateInputValue(new Date(b.starts_at))); }}>
             <span className="xs mono muted rooms-upcoming-when">{formatDate(b.starts_at, lang)} · {formatTime(b.starts_at, lang)}</span>

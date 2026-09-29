@@ -40,8 +40,8 @@ export function ModalitiesPage() {
                     return (
                       <Card key={m.id} title={lang === 'es' ? m.name_es : m.name_en} actions={m.heated ? <Badge tone="warn">{t('site.modalities.heated')}</Badge> : undefined}>
                         <p className="small muted">{bi(m.description)}</p>
-                        <p className="xs muted" style={{ marginTop: 8 }}>{t('site.modalities.intensity')} {'●'.repeat(m.intensity)}{'○'.repeat(5 - m.intensity)} · {t('core.common.min', { n: m.duration_min })}</p>
-                        {slug && <p className="small" style={{ marginTop: 10 }}><Link to={`/site/classes/${slug}`}>{t('site.modalities.classLink', { name: bi(classes[slug].name) })} →</Link></p>}
+                        <p className="xs muted" style={{ marginTop: 'var(--sp-sm)' }}>{t('site.modalities.intensity')} {'●'.repeat(m.intensity)}{'○'.repeat(5 - m.intensity)} · {t('core.common.min', { n: m.duration_min })}</p>
+                        {slug && <p className="small" style={{ marginTop: 'var(--sp-md)' }}><Link to={`/site/classes/${slug}`}>{t('site.modalities.classLink', { name: bi(classes[slug].name) })} →</Link></p>}
                       </Card>
                     );
                   })}
@@ -55,7 +55,7 @@ export function ModalitiesPage() {
     ClassLinks: () => (
       <section className="container site-section">
         <Card eyebrow={t('site.classes.title')}>
-          <p className="small muted" style={{ marginBottom: 12 }}>{t('site.modalities.essays')}</p>
+          <p className="small muted" style={{ marginBottom: 'var(--sp-md)' }}>{t('site.modalities.essays')}</p>
           <div className="row wrap">
             {classOrder.map((s) => (
               <Link key={s} to={`/site/classes/${s}`}><Chip movement={classes[s].movement} dot>{bi(classes[s].name)}</Chip></Link>

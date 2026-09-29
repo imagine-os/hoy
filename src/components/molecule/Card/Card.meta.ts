@@ -8,7 +8,7 @@ export default defineMeta({
   props: [
     { name: 'title / eyebrow / actions', type: 'ReactNode', description: { es: 'Cabecera opcional.', en: 'Optional header.' } },
     { name: 'icon', type: 'IconName | ReactNode', description: { es: 'Glifo en un cuadro teñido junto al título (secciones de Ajustes).', en: 'Glyph in a tinted tile beside the title (Settings sections).' } },
-    { name: 'padding', type: "'none' | 'sm' | 'md' | 'lg'", default: 'md', description: { es: 'Relleno.', en: 'Padding.' } },
+    { name: 'padding', type: "'none' | 'sm' | 'md' | 'lg'", default: 'md', description: { es: 'Relleno igual en los cuatro lados: sm 12 · md --card-pad (16 teléfono / 24 desde 768) · lg --card-pad-lg (24 / 32).', en: 'Equal on all four sides: sm 12 · md --card-pad (16 phone / 24 from 768) · lg --card-pad-lg (24 / 32).' } },
     { name: 'tone', type: "'surface' | 'primary' | 'highlight' | 'muted'", default: 'surface', description: { es: 'Material.', en: 'Material.' } },
     { name: 'raised / interactive', type: 'boolean', description: { es: 'Elevación mayor / hover que levanta.', en: 'Higher elevation / lifting hover.' } },
   ],

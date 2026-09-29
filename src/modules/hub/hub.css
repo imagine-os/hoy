@@ -2,8 +2,8 @@
    HUB-01 — the front door.
    Everything scales off the global --ui band (tokens.css, D-0007): 1 on a laptop,
    1.125 at 1920, 1.375 at 2560, 1.75 at 3840. rem tokens (type, spacing, widths)
-   follow the root font-size on their own; only px art multiplies by var(--ui)
-   here. Legible from ten feet on a 4K TV; cards never thin into a strip. Colour comes from the design
+   follow the root font-size on their own, and so does the art, written in rem (0037
+   removed the calc(var(--h-ctl) * var(--ui)) products that scaled twice). Legible from ten feet on a 4K TV; cards never thin into a strip. Colour comes from the design
    tokens; a card family only contributes a hue angle (--hue-*) that is mixed
    into the shared surfaces, never a new colour.
    =========================================================================== */
@@ -12,7 +12,7 @@
 
 .hub-wrap {
   width: 100%; max-width: var(--w-content); margin: 0 auto;
-  padding-inline: var(--sp-4);
+  padding-inline: var(--sp-lg);
 }
 
 /* --------------------------------------------------------------- brand band */
@@ -22,7 +22,7 @@
   background-image: var(--tex-accent-on);
   color: var(--color-text-on-inverse);
   box-shadow: var(--shadow-inverse);
-  padding-bottom: var(--sp-16);
+  padding-bottom: var(--sp-4xl);
 }
 .hub-brandband h1, .hub-brandband h2, .hub-brandband h3 { color: inherit; }
 .hub-brandband .eyebrow { color: color-mix(in srgb, var(--color-text-on-inverse) 82%, transparent); }
@@ -30,11 +30,11 @@
 .hub-brandband :focus-visible { outline: 2px solid var(--brand-yellow); outline-offset: 2px; }
 
 .hub-head {
-  display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3);
-  flex-wrap: wrap; padding-block: var(--sp-5);
+  display: flex; align-items: center; justify-content: space-between; gap: var(--sp-md);
+  flex-wrap: wrap; padding-block: var(--sp-xl);
 }
-.hub-head-brand { display: flex; align-items: center; gap: var(--sp-3); }
-.hub-head-tools { display: flex; align-items: center; flex-wrap: wrap; gap: var(--sp-3); }
+.hub-head-brand { display: flex; align-items: center; gap: var(--sp-md); }
+.hub-head-tools { display: flex; align-items: center; flex-wrap: wrap; gap: var(--sp-md); }
 .hub-head-tools .toggle-label { color: var(--color-text-on-inverse); }
 .hub-iconbtn {
   border: 1px solid color-mix(in srgb, var(--color-text-on-inverse) 28%, transparent);
@@ -46,9 +46,9 @@
 /* --------------------------------------------------------------------- hero */
 .hub-hero {
   display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center;
-  gap: var(--sp-8); padding-block: var(--sp-8) var(--sp-4);
+  gap: var(--sp-2xl); padding-block: var(--sp-2xl) var(--sp-lg);
 }
-.hub-hero-text { display: flex; flex-direction: column; gap: var(--sp-3); max-width: 62ch; }
+.hub-hero-text { display: flex; flex-direction: column; gap: var(--sp-md); max-width: 62ch; }
 .hub-hero h1 { font-size: var(--fs-3xl); }
 .hub-hero-lead { font-size: var(--fs-lg); color: color-mix(in srgb, var(--color-text-on-inverse) 88%, transparent); }
 .hub-hero-tagline {
@@ -64,29 +64,29 @@
 
 /* ------------------------------------------------------- floating session bar */
 .hub-sessionbar {
-  position: relative; z-index: 2; margin-top: calc(-1 * var(--sp-10));
-  display: flex; align-items: center; flex-wrap: wrap; gap: var(--sp-3);
-  padding: var(--sp-3) var(--sp-4);
+  position: relative; z-index: 2; margin-top: calc(-1 * var(--sp-2xl));
+  display: flex; align-items: center; flex-wrap: wrap; gap: var(--sp-md);
+  padding: var(--sp-md) var(--sp-lg);
   background: var(--color-surface-elevated); background-image: var(--tex-surf-on);
   border: 1px solid var(--color-card-border); border-radius: var(--r-md); box-shadow: var(--shadow-raised);
 }
 .hub-sessionbar-label { flex: none; }
 .hub-devhint {
   color: var(--color-on-highlight); background: var(--color-highlight); box-shadow: var(--shadow-highlight);
-  padding: var(--sp-2) var(--sp-3); border-radius: var(--r-sm);
+  padding: var(--sp-sm) var(--sp-md); border-radius: var(--r-sm);
 }
 
 /* -------------------------------------------------------------------- bands */
 .hub-main { flex: 1; }
-.hub-band-row { padding-block: var(--sp-12); }
+.hub-band-row { padding-block: var(--sp-3xl); }
 .hub-band-row.is-tinted { background: var(--color-lane); background-image: var(--tex-lane-on); }
-.hub-band-inner { display: grid; grid-template-columns: 3fr 9fr; gap: var(--sp-8); align-items: start; }
-.hub-band-head { display: flex; flex-direction: column; gap: var(--sp-2); position: sticky; top: var(--sp-6); }
+.hub-band-inner { display: grid; grid-template-columns: 3fr 9fr; gap: var(--sp-2xl); align-items: start; }
+.hub-band-head { display: flex; flex-direction: column; gap: var(--sp-sm); position: sticky; top: var(--sp-xl); }
 .hub-band-head h2 { font-size: var(--fs-2xl); }
 .hub-band-body { font-size: var(--fs-sm); }
 .hub-band-content { min-width: 0; }
 
-.hub-grid { display: grid; gap: var(--sp-4); }
+.hub-grid { display: grid; gap: var(--sp-lg); }
 .hub-grid-outside { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .hub-grid-outside > .is-featured { grid-column: 1 / -1; }
 .hub-grid-team { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -103,12 +103,12 @@
   .hub-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-raised); }
 }
 .hub-card:focus-within { box-shadow: var(--shadow-raised); }
-.hub-card-body { display: flex; flex-direction: column; gap: var(--sp-2); padding: var(--sp-5); }
-.hub-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--sp-2); }
-.hub-card-badges { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; }
+.hub-card-body { display: flex; flex-direction: column; gap: var(--sp-sm); padding: var(--card-pad); }
+.hub-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--sp-sm); }
+.hub-card-badges { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--sp-xs); }
 .hub-medallion {
   display: grid; place-items: center; flex: none;
-  width: calc(44px * var(--ui)); height: calc(44px * var(--ui)); border-radius: var(--r-ctl);
+  width: var(--h-ctl); height: var(--h-ctl); border-radius: var(--r-ctl);
   color: hsl(var(--hue, 210) var(--hue-sat) 30%);
   background: color-mix(in srgb, hsl(var(--hue, 210) var(--hue-sat) var(--hue-lum)) 24%, var(--color-surface-elevated));
   box-shadow: var(--shadow-card);
@@ -116,12 +116,12 @@
 :root[data-theme="dark"] .hub-medallion { color: hsl(var(--hue, 210) var(--hue-sat) 80%); }
 .hub-card-title { font-size: var(--fs-xl); }
 .hub-card-lead { font-size: var(--fs-sm); }
-.hub-card-foot { display: flex; align-items: center; flex-wrap: wrap; gap: var(--sp-3); margin-top: auto; padding-top: var(--sp-2); }
-.hub-card-secondary { min-height: 44px; display: inline-flex; align-items: center; }
-.hub-card-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; color: var(--color-text-faint); }
+.hub-card-foot { display: flex; align-items: center; flex-wrap: wrap; gap: var(--sp-md); margin-top: auto; padding-top: var(--sp-sm); }
+.hub-card-secondary { min-height: var(--h-ctl); display: inline-flex; align-items: center; }
+.hub-card-meta { display: flex; align-items: center; flex-wrap: wrap; gap: var(--sp-xs); color: var(--color-text-faint); }
 .hub-card-meta code { font-size: var(--fs-2xs); }
-.hub-card-code { background: var(--color-surface-3); padding: 1px 5px; border-radius: var(--r-xs); }
-.hub-card-preview { padding: 0 var(--sp-5) var(--sp-5); }
+.hub-card-code { background: var(--color-surface-3); padding: 1px var(--sp-xs); border-radius: var(--r-xs); }
+.hub-card-preview { padding: 0 var(--card-pad) var(--card-pad); }
 
 /* the featured card: copy left, phone preview right, on a hue-tinted gradient */
 .hub-card.is-featured {
@@ -130,18 +130,18 @@
     linear-gradient(120deg, color-mix(in srgb, hsl(var(--hue, 210) var(--hue-sat) var(--hue-lum)) 16%, transparent), transparent 62%),
     var(--tex-surf-on);
 }
-.hub-card.is-featured .hub-card-body { flex: 1 1 auto; padding: var(--sp-8); }
+.hub-card.is-featured .hub-card-body { flex: 1 1 auto; padding: var(--sp-2xl); }
 .hub-card.is-featured .hub-card-title { font-size: var(--fs-2xl); }
 .hub-card.is-featured .hub-card-preview {
-  flex: 0 0 calc(186px * var(--ui)); display: flex; align-items: flex-end;
-  padding: var(--sp-6) var(--sp-6) 0 0;
+  flex: 0 0 11.625rem; display: flex; align-items: flex-end;
+  padding: var(--sp-xl) var(--sp-xl) 0 0;
 }
 
 /* -------------------------------------------------------------- tools row */
-.hub-tools { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-3); }
+.hub-tools { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-md); }
 .hub-tool {
-  display: flex; align-items: center; gap: var(--sp-3); min-height: calc(64px * var(--ui));
-  padding: var(--sp-3) var(--sp-4);
+  display: flex; align-items: center; gap: var(--sp-md); min-height: var(--sp-4xl);
+  padding: var(--sp-md) var(--sp-lg);
   background: var(--color-surface); border: 1px solid var(--color-card-border); border-radius: var(--r-ctl);
   box-shadow: var(--shadow-card); color: var(--color-text); text-decoration: none;
   transition: box-shadow var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out);
@@ -149,27 +149,27 @@
 .hub-tool:hover { text-decoration: none; }
 @media (hover: hover) and (pointer: fine) { .hub-tool:hover { transform: translateY(-2px); box-shadow: var(--shadow-raised); } }
 .hub-tool-icon {
-  display: grid; place-items: center; flex: none; width: calc(40px * var(--ui)); height: calc(40px * var(--ui));
+  display: grid; place-items: center; flex: none; width: 2.5rem; height: 2.5rem;
   border-radius: var(--r-sm); color: hsl(var(--hue, 210) var(--hue-sat) 30%);
   background: color-mix(in srgb, hsl(var(--hue, 210) var(--hue-sat) var(--hue-lum)) 20%, var(--color-surface-elevated));
 }
 :root[data-theme="dark"] .hub-tool-icon { color: hsl(var(--hue, 210) var(--hue-sat) 80%); }
-.hub-tool-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.hub-tool-title { display: flex; align-items: center; gap: var(--sp-2); font-family: var(--font-heading); font-weight: var(--fw-medium); font-size: var(--fs-md); color: var(--color-ink); }
+.hub-tool-text { display: flex; flex-direction: column; gap: var(--sp-2xs); min-width: 0; }
+.hub-tool-title { display: flex; align-items: center; gap: var(--sp-sm); font-family: var(--font-heading); font-weight: var(--fw-medium); font-size: var(--fs-md); color: var(--color-ink); }
 .hub-tool-body { font-size: var(--fs-xs); }
 .hub-tool-go { flex: none; color: var(--color-primary); }
 
 /* ------------------------------------------------------------ stats + foot */
-.hub-foot { border-top: 1px solid var(--color-border); padding-block: var(--sp-8) var(--sp-10); }
-.hub-stats { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: var(--sp-4); margin: 0 0 var(--sp-5); }
-.hub-stat { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.hub-foot { border-top: 1px solid var(--color-border); padding-block: var(--sp-2xl) var(--sp-3xl); }
+.hub-stats { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: var(--sp-lg); margin: 0 0 var(--block); }
+.hub-stat { display: flex; flex-direction: column; gap: var(--sp-2xs); min-width: 0; }
 .hub-stat dt { margin: 0; }
 .hub-stat-value { margin: 0; font-family: var(--font-heading); font-weight: var(--fw-semibold); font-size: var(--fs-2xl); color: var(--color-ink); line-height: var(--lh-tight); }
 .hub-footline { font-size: var(--fs-xs); }
 
 /* ------------------------------------------------------------- breakpoints */
 @media (max-width: 1280px) {
-  .hub-band-inner { grid-template-columns: 1fr; gap: var(--sp-5); }
+  .hub-band-inner { grid-template-columns: 1fr; gap: var(--grid-gap); }
   .hub-band-head { position: static; }
 }
 @media (max-width: 1100px) {
@@ -186,9 +186,9 @@
 }
 @media (max-width: 600px) {
   .hub-card.is-featured { flex-direction: column; }
-  .hub-card.is-featured .hub-card-body { padding: var(--sp-5); }
-  .hub-card.is-featured .hub-card-preview { flex: 1 1 auto; padding: 0 var(--sp-5) var(--sp-5); max-width: calc(240px * var(--ui)); }
-  .hub-band-row { padding-block: var(--sp-8); }
+  .hub-card.is-featured .hub-card-body { padding: var(--card-pad); }
+  .hub-card.is-featured .hub-card-preview { flex: 1 1 auto; padding: 0 var(--card-pad) var(--card-pad); max-width: 15rem; }
+  .hub-band-row { padding-block: var(--sp-2xl); }
 }
 @media (max-width: 480px) {
   .hub-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -202,11 +202,11 @@
    in the components themselves would restyle all 101 routes and invalidate every capture, which
    is a pass of its own (kanban). Heights scale with --ui like the rest of the page. */
 /* The wordmark keeps its 30 × --ui drawing; the padding is what makes the box 44. */
-.hub-brandband a { display: inline-flex; align-items: center; padding-block: calc(7px * var(--ui)); min-height: calc(44px * var(--ui)); }
+.hub-brandband a { display: inline-flex; align-items: center; min-height: var(--h-ctl); }
 .hub-brandband .langtoggle { padding: 0; }
-.hub-brandband .langtoggle button { min-width: calc(44px * var(--ui)); min-height: calc(44px * var(--ui)); padding: 0 calc(14px * var(--ui)); }
-.hub-sessionbar .input, .hub-sessionbar .btn { min-height: calc(44px * var(--ui)); padding-block: calc(9px * var(--ui)); }
-.hub-card .btn, .hub-tool .btn { min-height: calc(44px * var(--ui)); padding-block: calc(11px * var(--ui)); }
+.hub-brandband .langtoggle button { min-width: var(--h-ctl); min-height: var(--h-ctl); padding: 0 var(--sp-lg); }
+.hub-sessionbar .input, .hub-sessionbar .btn { min-height: var(--h-ctl); padding-block: 0; }
+.hub-card .btn, .hub-tool .btn { min-height: var(--h-ctl); padding-block: 0; }
 
 /* E-05 no access — the page the guard sends a role that cannot open a route. */
 .noaccess-glyph { font-size: var(--fs-4xl); line-height: 1; }

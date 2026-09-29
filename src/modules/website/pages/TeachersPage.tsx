@@ -26,7 +26,7 @@ export function TeachersPage() {
     PageHead: () => <PageHead title={t('site.teachers.title')} body={t('site.teachers.body')} />,
     TeacherGrid: () => (
       <section className="container site-section" style={{ paddingTop: 0 }}>
-        <p className="xs muted" style={{ marginBottom: 16 }}>{t('site.teachers.legend')} {edition === 'sanctuary' && t('site.new.samplePortraits')}</p>
+        <p className="xs muted" style={{ marginBottom: 'var(--sp-lg)' }}>{t('site.teachers.legend')} {edition === 'sanctuary' && t('site.new.samplePortraits')}</p>
         <div className="site-teachergrid">
           {teachers.map((te) => {
             const first = te.specialties.map(spec)[0];

@@ -93,7 +93,7 @@ export function PayoutsPage() {
       </div>
 
       <Card tone="muted" title={t('admin.payouts.generate')} eyebrow="M-09a">
-        <div className="row wrap" style={{ alignItems: 'flex-end', gap: 12 }}>
+        <div className="row wrap" style={{ alignItems: 'flex-end', gap: 'var(--sp-md)' }}>
           <Select value={String(offset)} onChange={(e) => setOffset(Number(e.target.value))} aria-label={t('admin.payouts.generate.period')} style={{ maxWidth: 220 }}>
             {[0, 1, 2, 3].map((o) => {
               const p = monthPeriodFor(o);
@@ -103,9 +103,9 @@ export function PayoutsPage() {
           <Button size="sm" loading={busy} disabled={!canWrite} onClick={run}>{t(cadence === 'biweekly' ? 'admin.payouts.generate.action.biweekly' : 'admin.payouts.generate.action')}</Button>
           <span className="xs muted">{t('admin.payouts.generate.hint')}</span>
         </div>
-        <p className="xs muted" style={{ marginTop: 8 }}>{periods.map((p) => periodLabel(p, lang)).join(' · ')} — {t('admin.payouts.generate.cadence', { cadence: t(`admin.settings.f.cadence.${cadence}`) })} <Link to="/admin/settings/payments">M-08c</Link></p>
-        {msg && <p className="small" style={{ marginTop: 12 }}>{msg}</p>}
-        {!canWrite && <p className="xs muted" style={{ marginTop: 8 }}>{t('admin.payouts.noPermission')}</p>}
+        <p className="xs muted" style={{ marginTop: 'var(--sp-sm)' }}>{periods.map((p) => periodLabel(p, lang)).join(' · ')} — {t('admin.payouts.generate.cadence', { cadence: t(`admin.settings.f.cadence.${cadence}`) })} <Link to="/admin/settings/payments">M-08c</Link></p>
+        {msg && <p className="small" style={{ marginTop: 'var(--sp-md)' }}>{msg}</p>}
+        {!canWrite && <p className="xs muted" style={{ marginTop: 'var(--sp-sm)' }}>{t('admin.payouts.noPermission')}</p>}
       </Card>
 
       {loading && runs.length === 0
@@ -256,7 +256,7 @@ export function PayoutRunPage() {
           <Button size="sm" variant="ghost" onClick={exportCsv}>{t('admin.payouts.action.csv')}</Button>
           <Button size="sm" variant="ghost" onClick={() => window.print()}>{t('admin.payouts.action.print')}</Button>
         </div>
-        <p className="xs muted" style={{ marginTop: 10 }}>{run.status === 'paid' ? t('admin.payouts.locked') : t('admin.payouts.flow')}</p>
+        <p className="xs muted" style={{ marginTop: 'var(--sp-md)' }}>{run.status === 'paid' ? t('admin.payouts.locked') : t('admin.payouts.flow')}</p>
         {run.notes && <p className="xs muted">{run.notes}</p>}
       </Card>
 

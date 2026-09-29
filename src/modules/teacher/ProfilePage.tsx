@@ -45,7 +45,7 @@ export function TeacherProfilePage() {
           <Avatar name={me.display_name} src={me.photo_url} size={64} />
           <div className="grow"><Field label={t('teacher.profile.name')}>{(id) => <Input id={id} value={draft.display_name} onChange={(e) => setDraft({ ...draft, display_name: e.target.value })} />}</Field></div>
         </div>
-        <p className="xs muted" style={{ marginTop: 8 }}>{t('teacher.profile.photo')}</p>
+        <p className="xs muted" style={{ marginTop: 'var(--sp-sm)' }}>{t('teacher.profile.photo')}</p>
       </Card>
       <Card title={t('teacher.profile.bio')}>
         <div className="stack-sm">

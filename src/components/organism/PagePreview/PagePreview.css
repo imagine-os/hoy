@@ -21,7 +21,7 @@
 .pagepreview-live { position: absolute; inset: 0; }
 .pagepreview-live .devframe { height: 100%; }
 .pagepreview-tag {
-  position: absolute; right: var(--sp-2); bottom: var(--sp-2); z-index: 2;
+  position: absolute; right: var(--sp-sm); bottom: var(--sp-sm); z-index: 2;
   font-size: var(--fs-2xs); font-weight: var(--fw-semibold); letter-spacing: var(--ls-eyebrow); text-transform: uppercase;
-  padding: 2px 6px; border-radius: var(--r-xs); background: var(--color-scrim); color: var(--brand-cream);
+  padding: var(--sp-2xs) var(--sp-sm); border-radius: var(--r-xs); background: var(--color-scrim); color: var(--brand-cream);
 }

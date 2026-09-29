@@ -1,7 +1,7 @@
-.rating { display: inline-flex; gap: 2px; }
+.rating { display: inline-flex; gap: var(--sp-2xs); }
 .rating-star { border: 0; background: none; color: var(--color-surface-3); line-height: 1; transition: color var(--dur-fast), transform var(--dur-fast); padding: 0; }
-.rating-lg .rating-star { width: 48px; height: 48px; font-size: var(--fs-3xl); }
-.rating-md .rating-star { width: 32px; height: 32px; font-size: var(--fs-xl); }
+.rating-lg .rating-star { width: var(--sp-3xl); height: var(--sp-3xl); font-size: var(--fs-3xl); }
+.rating-md .rating-star { width: var(--sp-2xl); height: var(--sp-2xl); font-size: var(--fs-xl); }
 .rating-star:hover:not(:disabled) { transform: scale(1.1); color: var(--color-warn); }
 .rating-star.is-on { color: var(--color-warn); }
 .rating-star:disabled { cursor: default; }
