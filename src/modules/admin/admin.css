@@ -52,13 +52,21 @@
 .settings-int { padding: var(--sp-sm) 0; border-bottom: 1px solid var(--color-border); }
 .settings-int:last-child { border-bottom: 0; }
 .settings-brand { display: flex; align-items: center; gap: var(--sp-md); flex-wrap: wrap; padding: var(--sp-md); border-radius: var(--r-md); background: var(--color-surface-2); }
+/* 0039 · M-08a today line + links; M-08g next-30-days grid */
+.settings-hours-links { display: flex; flex-wrap: wrap; gap: var(--gap-control); }
+.hours-days { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); gap: var(--sp-sm); }
+.hours-day { display: flex; flex-direction: column; gap: var(--stack-tight); padding: var(--sp-sm) var(--sp-md); border-radius: var(--r-md); background: var(--color-surface-2); min-height: var(--h-ctl); }
+.hours-day.is-closed strong { color: var(--color-text-muted); }
+.hours-day.is-override { background: color-mix(in srgb, var(--color-accent) 18%, var(--color-surface-2)); box-shadow: inset 0 0 0 1px var(--color-border-strong); }
+.hours-badges { gap: var(--gap-inline); flex-wrap: nowrap; }
+.hours-day-why { display: inline-flex; align-items: center; gap: var(--stack-tight); overflow-wrap: anywhere; }
 /* M-01 today at a glance */
 .adm-today { display: grid; grid-template-columns: 4.75rem minmax(0, 1fr) auto; gap: var(--sp-md); align-items: center; padding: var(--sp-sm) 0; border-bottom: 1px solid var(--color-border); }
 .adm-today:last-child { border-bottom: 0; }
 .adm-today-time { font-family: var(--font-heading); font-weight: var(--fw-semibold); font-variant-numeric: tabular-nums; }
 .adm-today-what { min-width: 0; overflow-wrap: anywhere; }
 @media (max-width: 480px) { .adm-today { grid-template-columns: 4rem minmax(0, 1fr); } }
-@media (max-width: 800px) { .settings { grid-template-columns: 1fr; } .settings-rail { position: static; flex-direction: row; flex-wrap: wrap; } .settings-day { grid-template-columns: var(--sp-3xl) minmax(0, 1fr) auto minmax(0, 1fr); } .settings-day > :nth-child(2) { grid-column: 2 / -1; } .settings-day > :nth-child(3) { grid-column: 2; } }
+@media (max-width: 800px) { .settings { grid-template-columns: minmax(0, 1fr); } .settings-rail { position: static; flex-direction: row; flex-wrap: wrap; } .settings-day { grid-template-columns: var(--sp-3xl) minmax(0, 1fr) auto minmax(0, 1fr); } .settings-day > :nth-child(2) { grid-column: 2 / -1; } .settings-day > :nth-child(3) { grid-column: 2; } }
 
 /* 0012 · M-09a/b payouts, M-02a–d content sub-pages */
 .adm-notice { border-radius: var(--r-md); padding: var(--sp-md) var(--sp-lg); background: var(--mv-enraiza-bg); border: 1px solid var(--color-card-border); }

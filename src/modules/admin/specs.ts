@@ -1,5 +1,6 @@
 import { canvasSpecs } from '../../specs/canvasSpecs';
 import { defineSpec } from '../../specs/define';
+import { ADMIN_ACTIONS } from './actions';
 
 export const M01 = defineSpec({
   ...canvasSpecs['M-01'],
@@ -130,22 +131,32 @@ export const M07 = defineSpec({
  */
 const M08 = defineSpec({
   ...canvasSpecs['M-08'],
-  layout: ['SettingsSubNav', 'General (M-08a)', 'Features (M-08b)', 'Payments (M-08c)', 'Communications (M-08d)', 'Branding (M-08e)', 'Content (M-08f)'],
-  data: ['tenants', 'feature_flags', 'rooms', 'modalities', 'teachers', 'legal_documents', 'audit_log'],
+  layout: ['SettingsSubNav', 'General (M-08a)', 'Features (M-08b)', 'Payments (M-08c)', 'Communications (M-08d)', 'Branding (M-08e)', 'Content (M-08f)', 'Holidays & special hours (M-08g)'],
+  data: ['tenants', 'feature_flags', 'rooms', 'modalities', 'teachers', 'legal_documents', 'hours_overrides', 'audit_log'],
   notes: [...(canvasSpecs['M-08'].notes ?? []), 'Stored in tenants.settings (json) via useSettings(); defaults from src/tenant/tenant.ts.', 'S-02 reads lateGraceMin, S-04 reads tax, M-05 reads quietHours.', 'usePolicy() (src/modules/admin/settings.ts) re-renders consumers when a section is saved.', '0018: the owner decisions of ROADMAP §E that are values, not code, live here — contact identity (M-08a), IVA-in-prices, payroll cadence and the teacher rate card (M-08c), public class naming, Respiración as its own class, map provider and which legal versions are published (M-08f).'],
 });
 
 const sub = (code: string, name: { es: string; en: string }, purpose: { es: string; en: string }, layout: string[], extra: Partial<typeof M08> = {}) => defineSpec({
   ...M08, code, name, purpose, layout,
-  notes: [...(M08.notes ?? []), 'Sub-page of M-08; the sub-navigation is shared by all six.'],
+  notes: [...(M08.notes ?? []), 'Sub-page of M-08; the sub-navigation is shared by all seven.'],
   ...extra,
 });
 
 export const M08a = sub('M-08a',
   { es: 'Ajustes · General', en: 'Settings · General' },
   { es: 'Identidad de contacto (dirección, ciudad, WhatsApp, correo, Instagram, mapa) con su estado “pendiente”, horario de apertura, aforo y políticas: los números que todas las demás pantallas leen.', en: 'Contact identity (address, city, WhatsApp, email, Instagram, map) with its “pending” state, opening hours, capacity and policies: the numbers every other screen reads.' },
-  ['SettingsSubNav', 'StudioProfile (contact + map + confirmed per field)', 'OpeningHours', 'Capacity', 'Policies', 'IntegrationsPointer (M-10)'],
-  { logic: ['useContact() (src/modules/admin/settings.ts) is the one reader of address / city / WhatsApp / email / Instagram / map: M-08a first, src/tenant/tenant.ts as the default for every empty field. The site footer, W-06, MapSlot, the legal tokens, the email footer, the customer contact rows and the manual’s {{tenant:contact}} all read it.', 'Confirmation is per field (0036): WhatsApp, address, email and Instagram each have a “confirmed” switch; every consumer labels only the unconfirmed ones as pending (the tenant.ts placeholders are never presented as fact). tenant.ts ships WhatsApp and address confirmed (from the owner, 2026-09-29), email and Instagram pending. A stored pre-0036 `confirmed: true` still confirms all four.'], states: ['Some fields pending (default: email, Instagram)', 'All confirmed', 'Saving', 'Read-only'] },
+  ['SettingsSubNav', 'StudioProfile (contact + map + confirmed per field)', 'OpeningHours (weekly + today line + links to M-08g and M-10a)', 'Capacity', 'Policies', 'IntegrationsPointer (M-10)'],
+  { data: ['tenants', 'hours_overrides', 'rooms', 'audit_log'], actions: ADMIN_ACTIONS['M-08a'], logic: ['0039: the weekly hours saved here are the source of truth (D-0013). useOpeningHours() (src/modules/admin/settings.ts) merges them with the M-08g overrides and tenant.ts defaults; the site footer, W-06, C-25, the manual’s {{tenant:hours}}, the website’s LocalBusiness JSON-LD and the Google Business Profile body (M-10a) all read it. The card shows today’s line (todayStatus, America/Bogota) and links to M-08g and M-10a.', 'useContact() (src/modules/admin/settings.ts) is the one reader of address / city / WhatsApp / email / Instagram / map: M-08a first, src/tenant/tenant.ts as the default for every empty field. The site footer, W-06, MapSlot, the legal tokens, the email footer, the customer contact rows and the manual’s {{tenant:contact}} all read it.', 'Confirmation is per field (0036): WhatsApp, address, email and Instagram each have a “confirmed” switch; every consumer labels only the unconfirmed ones as pending (the tenant.ts placeholders are never presented as fact). tenant.ts ships WhatsApp and address confirmed (from the owner, 2026-09-29), email and Instagram pending. A stored pre-0036 `confirmed: true` still confirms all four.'], states: ['Some fields pending (default: email, Instagram)', 'All confirmed', 'Saving', 'Read-only'] },
+);
+export const M08g = sub('M-08g',
+  { es: 'Ajustes · Festivos y horarios especiales', en: 'Settings · Holidays & special hours' },
+  { es: 'Excepciones con fecha al horario semanal: festivos cerrados, jornadas con otro horario y eventos. Importa los festivos de Colombia (Ley Emiliani) con un clic, edita cada excepción en un panel y muestra lo que verán los clientes los próximos 30 días.', en: 'Dated exceptions to the weekly hours: closed holidays, days with other hours and events. Imports the Colombian holidays (Ley Emiliani) in one click, edits each exception in a panel and previews what customers will see over the next 30 days.' },
+  ['SettingsSubNav', 'PrecedenceNotice', 'Overrides (DataTable + ImportHolidays + Add)', 'Upcoming30Days', 'OverrideDrawer (dates · label ES/EN · closed · times · kind · note)'],
+  { data: ['hours_overrides', 'tenants', 'audit_log'], integrations: ['Google Business Profile (specialHours, via M-10a)'], actions: ADMIN_ACTIONS['M-08g'],
+    roles: ['super_admin', 'admin', 'coordinator'],
+    logic: ['An override covering a date wins over the weekly hours for that date (ranges inclusive; on overlap the narrowest range wins) — effectiveHoursFor() in src/tenant/hours.ts. An open override with empty times keeps the weekly times.', 'Import: colombianHolidays() (src/tenant/holidays.co.ts, Ley 51/1983 with Meeus Easter) for the rest of this year and all of next; each holiday not already present on its date is inserted closed with source colombia. Audit hours.import_holidays with the count.', 'Save / delete write audit_log hours.override.save / hours.override.delete with before and after. hours.write gates every write (admin, super_admin, coordinator).', 'Validation: end ≥ start; when both times are set, close > open; one time without the other is refused; the Spanish label is required.', 'The Google column reads google_synced_at: empty or older than updated_at = pending push. Only the server sets it (no server yet, D-0014).'],
+    states: ['Loading', 'Empty (no exceptions yet)', 'Seed: three holidays + one special Saturday', 'Drawer new / edit', 'Validation error', 'Import done (n added) / nothing new', 'Read-only (no hours.write)'],
+    notes: [...(M08.notes ?? []), 'Sub-page of M-08 (0039). The weekly hours stay in M-08a; this page never edits them.'] },
 );
 export const M08b = sub('M-08b',
   { es: 'Ajustes · Funciones', en: 'Settings · Features' },

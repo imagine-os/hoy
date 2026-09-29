@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { useI18n } from '../../i18n/I18nProvider';
 import { useSession } from '../../auth/SessionProvider';
@@ -20,15 +20,21 @@ import { Notice } from '../../components/molecule/Notice/Notice';
 import { EmptyState } from '../../components/molecule/EmptyState/EmptyState';
 import { Wordmark } from '../../components/atom/Wordmark/Wordmark';
 import { useAudit } from '../staff/audit';
-import { contactOf, useSettings, type SettingsSection, type StudioSettings, CONTACT_FIELDS } from './settings';
+import { contactOf, useOpeningHours, useSettings, type SettingsSection, type StudioSettings, CONTACT_FIELDS } from './settings';
+import { HoursSettings } from './HoursSettings';
+import { useActions } from '../../actions/bus';
+import type { ActionHandler } from '../../actions/types';
+import { need } from './actions';
+import { M08a } from './specs';
 import './admin.css';
 import { Icon, type IconName } from '../../components/atom/Icon/Icon';
 
-/** The six sub-pages of M-08. `general` is /admin/settings; the rest are /admin/settings/<key>. `content` (M-08f) arrived in 0018. */
-export type SettingsGroup = 'general' | 'features' | 'payments' | 'communications' | 'branding' | 'content';
+/** The seven sub-pages of M-08. `general` is /admin/settings; the rest are /admin/settings/<key>. `content` (M-08f) arrived in 0018, `hours` (M-08g) in 0039. */
+export type SettingsGroup = 'general' | 'hours' | 'features' | 'payments' | 'communications' | 'branding' | 'content';
 /** Roles mirror the RouteDef roles in src/modules/admin/index.ts so the rail never offers a blocked page. */
 export const SETTINGS_GROUPS: { key: SettingsGroup; path: string; roles: Role[]; icon: IconName }[] = [
   { key: 'general', path: '/admin/settings', roles: ['super_admin', 'admin', 'coordinator', 'finance'], icon: 'studio' },
+  { key: 'hours', path: '/admin/settings/hours', roles: ['super_admin', 'admin', 'coordinator'], icon: 'calendar-clock' },
   { key: 'features', path: '/admin/settings/features', roles: ['super_admin', 'admin', 'coordinator', 'finance'], icon: 'features' },
   { key: 'payments', path: '/admin/settings/payments', roles: ['super_admin', 'admin', 'finance'], icon: 'credit-card' },
   { key: 'communications', path: '/admin/settings/communications', roles: ['super_admin', 'admin', 'coordinator'], icon: 'communications' },
@@ -38,6 +44,10 @@ export const SETTINGS_GROUPS: { key: SettingsGroup; path: string; roles: Role[];
 
 const DAYS = ['0', '1', '2', '3', '4', '5', '6'];
 const DAY_LABEL: Record<string, { es: string; en: string }> = { '0': { es: 'Dom', en: 'Sun' }, '1': { es: 'Lun', en: 'Mon' }, '2': { es: 'Mar', en: 'Tue' }, '3': { es: 'Mié', en: 'Wed' }, '4': { es: 'Jue', en: 'Thu' }, '5': { es: 'Vie', en: 'Fri' }, '6': { es: 'Sáb', en: 'Sat' } };
+/** A day's hours are valid when both times are HH:MM and closing comes after opening (0039). */
+const validDay = (v: { open: string; close: string }) => /^\d{2}:\d{2}$/.test(v.open) && /^\d{2}:\d{2}$/.test(v.close) && v.close > v.open;
+/** What a day reopens with: its tenant.ts default, or the first open day's (never a time typed here). */
+const defaultDay = (day: string) => ({ ...(tenant.openingHours[day as keyof typeof tenant.openingHours] ?? Object.values(tenant.openingHours).find((v) => !!v)!) });
 /** 0030: one glyph per settings section (M-08a…f); the rail uses SETTINGS_GROUPS[].icon. */
 const SECTION_ICON: Record<SettingsSection, IconName> = { profile: 'identity', openingHours: 'clock', studio: 'capacity', policies: 'policies', features: 'features', payments: 'credit-card', tax: 'tax', payroll: 'payroll', quietHours: 'quiet-hours', comms: 'send', content: 'content', branding: 'branding', integrations: 'integrations' };
 /** Flags whose page is load-bearing for the demo and cannot be switched off. */
@@ -66,6 +76,8 @@ export function SettingsPage({ group = 'general' }: { group?: SettingsGroup }) {
   const contact = contactOf(settings);
   const canWrite = can('settings.write');
   const canFlags = can('features.write');
+  // 0039: today's line in the hours card, and the M-08a WebMCP action.
+  const hours = useOpeningHours();
 
   /** M-08f — publish or withdraw one legal version (A-06 reads `status`); every flip is audited. */
   const toggleLegal = async (d: LegalDocumentRow, on: boolean) => {
@@ -89,8 +101,8 @@ export function SettingsPage({ group = 'general' }: { group?: SettingsGroup }) {
   );
   if (!ready) return <div className="stack">{head}<EmptyState tone="loading" title={t('core.common.loading')} /></div>;
 
-  const S = <K extends SettingsSection>(section: K, title: string, render: (d: StudioSettings[K], set: (v: StudioSettings[K]) => void) => ReactNode, icon?: IconName) => (
-    <Section<K> section={section} value={settings[section]} save={save} audit={audit} readOnly={!canWrite} title={title} icon={icon ?? SECTION_ICON[section]} render={render} />
+  const S = <K extends SettingsSection>(section: K, title: string, render: (d: StudioSettings[K], set: (v: StudioSettings[K]) => void) => ReactNode, icon?: IconName, valid?: (d: StudioSettings[K]) => boolean) => (
+    <Section<K> section={section} value={settings[section]} save={save} audit={audit} readOnly={!canWrite} title={title} icon={icon ?? SECTION_ICON[section]} render={render} valid={valid} />
   );
 
   return (
@@ -105,6 +117,7 @@ export function SettingsPage({ group = 'general' }: { group?: SettingsGroup }) {
         <div className="settings-main stack">
           {group === 'general' && (
             <>
+              <GeneralActions />
               {S('profile', t('admin.settings.sec.profile'), (d, set) => (
                 <>
                   <div className="row-between wrap">
@@ -132,16 +145,22 @@ export function SettingsPage({ group = 'general' }: { group?: SettingsGroup }) {
               ))}
               {S('openingHours', t('admin.settings.sec.openingHours'), (d, set) => (
                 <div className="stack-sm">
-                  {DAYS.map((day) => { const v = d[day]; return (
+                  <p className="small" data-testid="hours-today"><strong>{bi(hours.today)}</strong></p>
+                  {DAYS.map((day) => { const v = d[day]; const label = bi(DAY_LABEL[day]); return (
                     <div key={day} className="settings-day">
-                      <strong className="small">{bi(DAY_LABEL[day])}</strong>
-                      <Toggle size="sm" checked={!!v} disabled={!canWrite} label={v ? t('admin.settings.open') : t('admin.settings.closed')} onChange={(on) => set({ ...d, [day]: on ? { open: '06:00', close: '20:00' } : null })} />
-                      {v && <><Input type="time" value={v.open} disabled={!canWrite} onChange={(e) => set({ ...d, [day]: { ...v, open: e.target.value } })} aria-label={t('admin.settings.open')} /><span className="muted">–</span><Input type="time" value={v.close} disabled={!canWrite} onChange={(e) => set({ ...d, [day]: { ...v, close: e.target.value } })} aria-label={t('admin.settings.closed')} /></>}
+                      <strong className="small">{label}</strong>
+                      <Toggle size="sm" checked={!!v} disabled={!canWrite} label={v ? t('admin.settings.open') : t('admin.settings.closed')} onChange={(on) => set({ ...d, [day]: on ? defaultDay(day) : null })} />
+                      {v && <><Input type="time" value={v.open} disabled={!canWrite} invalid={!validDay(v)} onChange={(e) => set({ ...d, [day]: { ...v, open: e.target.value } })} aria-label={t('admin.settings.hours.opensAt', { day: label })} /><span className="muted">–</span><Input type="time" value={v.close} disabled={!canWrite} invalid={!validDay(v)} onChange={(e) => set({ ...d, [day]: { ...v, close: e.target.value } })} aria-label={t('admin.settings.hours.closesAt', { day: label })} /></>}
                     </div>
                   ); })}
+                  {DAYS.some((day) => d[day] && !validDay(d[day]!)) && <p className="xs" role="alert">{t('admin.settings.hours.invalid')}</p>}
                   <p className="xs muted">{t('admin.settings.hours.note')}</p>
+                  <div className="settings-hours-links">
+                    <Link to="/admin/settings/hours" className="btn btn-ghost btn-sm"><span className="btn-icon" aria-hidden><Icon name="calendar-clock" size="sm" /></span><span className="btn-label">{t('admin.settings.hours.link.overrides')}</span></Link>
+                    {hasRole(['super_admin', 'admin']) && <Link to="/admin/integrations/google-business" className="btn btn-ghost btn-sm"><span className="btn-icon" aria-hidden><Icon name="store" size="sm" /></span><span className="btn-label">{t('admin.settings.hours.link.google')}</span></Link>}
+                  </div>
                 </div>
-              ))}
+              ), undefined, (d) => DAYS.every((day) => !d[day] || validDay(d[day]!)))}
               {S('studio', t('admin.settings.sec.studio'), (d, set) => (
                 <>
                   <div className="grid grid-3">
@@ -174,6 +193,8 @@ export function SettingsPage({ group = 'general' }: { group?: SettingsGroup }) {
               </Card>
             </>
           )}
+
+          {group === 'hours' && <HoursSettings />}
 
           {group === 'features' && (
             <>
@@ -345,7 +366,7 @@ export function SettingsPage({ group = 'general' }: { group?: SettingsGroup }) {
   );
 }
 
-function Section<K extends SettingsSection>({ section, value, save, audit, readOnly, title, icon, render }: { section: K; icon: IconName; value: StudioSettings[K]; save: (s: K, v: StudioSettings[K]) => Promise<{ before: unknown; after: unknown }>; audit: (a: string, e: string, id?: string | null, d?: Record<string, unknown>) => Promise<unknown>; readOnly: boolean; title: string; render: (d: StudioSettings[K], set: (v: StudioSettings[K]) => void) => ReactNode }) {
+function Section<K extends SettingsSection>({ section, value, save, audit, readOnly, title, icon, render, valid }: { section: K; icon: IconName; value: StudioSettings[K]; save: (s: K, v: StudioSettings[K]) => Promise<{ before: unknown; after: unknown }>; audit: (a: string, e: string, id?: string | null, d?: Record<string, unknown>) => Promise<unknown>; readOnly: boolean; title: string; render: (d: StudioSettings[K], set: (v: StudioSettings[K]) => void) => ReactNode; valid?: (d: StudioSettings[K]) => boolean }) {
   const { t } = useI18n();
   const [d, setD] = useState(value);
   const [state, setState] = useState<'idle' | 'saving' | 'saved'>('idle');
@@ -358,8 +379,38 @@ function Section<K extends SettingsSection>({ section, value, save, audit, readO
     setState('saved'); setTimeout(() => setState('idle'), 2000);
   };
   return (
-    <Card title={title} icon={icon} actions={!readOnly && <div className="row"><span className="xs muted">{state === 'saved' ? t('admin.settings.saved') : dirty ? t('admin.settings.unsaved') : ''}</span><Button size="sm" disabled={!dirty} loading={state === 'saving'} onClick={doSave}>{t('core.common.save')}</Button></div>}>
+    <Card title={title} icon={icon} actions={!readOnly && <div className="row"><span className="xs muted">{state === 'saved' ? t('admin.settings.saved') : dirty ? t('admin.settings.unsaved') : ''}</span><Button size="sm" disabled={!dirty || (valid ? !valid(d) : false)} loading={state === 'saving'} onClick={doSave}>{t('core.common.save')}</Button></div>}>
       <div className="stack">{render(d, setD)}</div>
     </Card>
   );
+}
+
+/**
+ * M-08a WebMCP (0039): `settings.hours.update` changes one weekday and saves the section exactly as the card's
+ * Save button does (same validation, same `settings.update` audit row). Mounted only on the General group.
+ */
+function GeneralActions() {
+  const { can } = useSession();
+  const { settings, save } = useSettings();
+  const audit = useAudit('admin');
+  const impl = useMemo<Record<string, ActionHandler>>(() => ({
+    'settings.hours.update': async (p) => {
+      if (!can('settings.write')) throw new Error('settings.write required');
+      const day = need(p, 'day');
+      if (!DAYS.includes(day)) throw new Error('day must be 0–6 (0 = Sunday)');
+      const open = need(p, 'open');
+      const next = { ...settings.openingHours };
+      if (open === 'closed') next[day] = null;
+      else {
+        const v = { open, close: need(p, 'close') };
+        if (!validDay(v)) throw new Error('times must be HH:MM with close after open');
+        next[day] = v;
+      }
+      const { before, after } = await save('openingHours', next);
+      await audit('settings.update', 'tenants', tenant.id, { section: 'openingHours', before, after, via: 'action' });
+      return `day ${day}: ${next[day] ? `${next[day]!.open}–${next[day]!.close}` : 'closed'}`;
+    },
+  }), [can, settings.openingHours, save, audit]);
+  useActions(M08a, impl);
+  return null;
 }
