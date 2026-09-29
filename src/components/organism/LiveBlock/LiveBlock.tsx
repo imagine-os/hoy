@@ -8,7 +8,8 @@ import { useTable } from '../../../data/DataContext';
 import { TABLE_GROUPS, tableRegistry, tables } from '../../../data/schema';
 import { ROLES, ROLE_HOME, ROLE_LABEL } from '../../../auth/roles';
 import { getRoutes } from '../../../app/registry';
-import { useContact, usePolicy, type StudioSettings , pendingSuffix, type ContactField } from '../../../modules/admin/settings';
+import { useContact, useOpeningHours, usePolicy, type StudioSettings, pendingSuffix, type ContactField } from '../../../modules/admin/settings';
+import { overrideLine, upcomingOverrides } from '../../../tenant/hours';
 import { FAMILY_LABEL, FAMILY_RATIONALE, FAMILY_ROLE, pricing, pricingByFamily, type PlanFamily, type PriceItem } from '../../../tenant/pricing';
 import { tenant } from '../../../tenant/tenant';
 import type { Bi, Surface } from '../../../specs/types';
@@ -158,11 +159,18 @@ const TENANT_KEYS = ['hours', 'contact', 'capacity', 'all'] as const;
 function TenantFacts({ what }: { what?: string }) {
   const { t, bi, lang } = useI18n();
   const contact = useContact();
+  // 0039: the hours the owner saved in M-08a and the exceptions of the next 30 days from M-08g.
+  const hours = useOpeningHours();
   const pend = (f: ContactField) => pendingSuffix(contact, f, lang);
   const key = (what ?? 'all') as typeof TENANT_KEYS[number];
   if (!TENANT_KEYS.includes(key)) return <Unknown kind="tenant" arg={what} options={['hours', 'contact', 'capacity']} />;
   const rows: [string, ReactNode][] = [];
-  if (key === 'hours' || key === 'all') rows.push([t('manual.live.tenant.hours'), bi(tenant.hours)], [t('manual.live.tenant.timezone'), `${tenant.timezone} · ${tenant.currency}`]);
+  if (key === 'hours' || key === 'all') {
+    const soon = upcomingOverrides(hours.overrides, hours.todayKey, 30);
+    rows.push([t('manual.live.tenant.hours'), bi(hours.sentence)], [t('manual.live.tenant.today'), bi(hours.today)]);
+    if (soon.length) rows.push([t('manual.live.tenant.overrides'), soon.map((o) => overrideLine(o, lang)).join(' · ')]);
+    rows.push([t('manual.live.tenant.timezone'), `${tenant.timezone} · ${tenant.currency}`]);
+  }
   if (key === 'contact' || key === 'all') rows.push(
     ['WhatsApp', `${contact.whatsapp}${pend('whatsapp')}`],
     [t('manual.live.tenant.email'), `${contact.email}${pend('email')}`],

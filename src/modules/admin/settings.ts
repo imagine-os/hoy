@@ -1,11 +1,12 @@
 import { useCallback, useMemo } from 'react';
 import { useData, useTable } from '../../data/DataContext';
-import type { BaseRow, ModalityRow } from '../../data/schema';
+import type { BaseRow, HoursOverrideRow, ModalityRow } from '../../data/schema';
 import { EMPTY_RATE_CARD, type PayrollCadence, type RateCard } from '../../data/payrollCalc';
 import type { MapProvider } from '../../components/molecule/MapSlot/MapSlot';
 import { tenant } from '../../tenant/tenant';
 import { DEFAULT_IVA_PCT, splitIva } from '../../data/tax';
-import { MS } from '../../i18n/format';
+import { MS, dateKey } from '../../i18n/format';
+import { effectiveHoursFor, hoursSentence, todayStatus, type EffectiveHours, type WeeklyHours } from '../../tenant/hours';
 
 /**
  * M-08 — the operating parameters every other screen reads. Stored in `tenants.settings` (json)
@@ -186,6 +187,52 @@ export function pendingSuffix(contact: StudioContact, field: ContactField, lang:
 export function useContact(): StudioContact {
   const { settings } = useSettings();
   return useMemo(() => contactOf(settings), [settings]);
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * 0039 — opening hours, live (D-0013). The weekly hours saved in M-08a are the source of truth, the
+ * dated exceptions in `hours_overrides` (M-08g) win for the dates they cover, tenant.ts is the fallback.
+ * The site footer, W-06, C-25, the manual's {{tenant:hours}}, the JSON-LD and M-10a all read this.
+ * ---------------------------------------------------------------------------------------------- */
+
+export interface StudioHours {
+  weekly: WeeklyHours;
+  /** Every override, sorted by start date. */
+  overrides: HoursOverrideRow[];
+  /** The weekly hours as one sentence per language ("Lun–Vie 6:00–20:00 · Sáb 8:00–13:00 · Dom cerrado"). */
+  sentence: { es: string; en: string };
+  /** Today's line in the studio's time zone ("Hoy: 06:00–20:00", "Hoy cerrado · Festivo (…)"). */
+  today: { es: string; en: string };
+  /** Today's date key in the studio's time zone. */
+  todayKey: string;
+  effectiveHoursFor: (date: string) => EffectiveHours<HoursOverrideRow>;
+  loading: boolean;
+}
+
+/** Settings + overrides → hours. Pure, exported for tests and non-React callers. */
+export function hoursOf(settings: StudioSettings, overrides: HoursOverrideRow[], now: Date = new Date()): Omit<StudioHours, 'loading'> {
+  const weekly: WeeklyHours = { ...tenant.openingHours, ...settings.openingHours };
+  const sorted = [...overrides].sort((a, b) => a.start_date.localeCompare(b.start_date));
+  return {
+    weekly,
+    overrides: sorted,
+    sentence: { es: hoursSentence(weekly, 'es'), en: hoursSentence(weekly, 'en') },
+    today: { es: todayStatus(now, tenant.timezone, weekly, sorted, 'es'), en: todayStatus(now, tenant.timezone, weekly, sorted, 'en') },
+    todayKey: dateKeyIn(now, tenant.timezone),
+    effectiveHoursFor: (date: string) => effectiveHoursFor(date, weekly, sorted),
+  };
+}
+
+/** The date key of `now` in an IANA zone (falls back to the viewer's local date if Intl cannot). */
+function dateKeyIn(now: Date, tz: string): string {
+  try { return new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' }).format(now); } catch { return dateKey(now); }
+}
+
+/** The studio's opening hours, live: M-08a weekly hours + M-08g overrides, tenant.ts as the default. */
+export function useOpeningHours(): StudioHours {
+  const { settings } = useSettings();
+  const { rows, loading } = useTable<HoursOverrideRow>('hours_overrides');
+  return useMemo(() => ({ ...hoursOf(settings, rows), loading }), [settings, rows, loading]);
 }
 
 /** Slug of the modality that only exists as its own class when M-08f says so. */

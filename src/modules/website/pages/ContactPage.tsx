@@ -2,7 +2,8 @@ import { Fragment, useState, type ReactNode } from 'react';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useLayout } from '../../../layout/useLayout';
 import { tenant } from '../../../tenant/tenant';
-import { useContact, type ContactField } from '../../admin/settings';
+import { useContact, useOpeningHours, type ContactField } from '../../admin/settings';
+import { overrideLine, upcomingOverrides } from '../../../tenant/hours';
 import { Card } from '../../../components/molecule/Card/Card';
 import { Button } from '../../../components/atom/Button/Button';
 import { Field } from '../../../components/molecule/Field/Field';
@@ -13,10 +14,13 @@ import { siteSpecs } from '../specs';
 
 /** W-06 — contact details from the tenant config, the studio map, and a WhatsApp form with no backend. */
 export function ContactPage() {
-  const { t, bi } = useI18n();
+  const { t, bi, lang } = useI18n();
   const { sections, isVisible } = useLayout(siteSpecs.contact);
   const [form, setForm] = useState({ name: '', phone: '', message: '' });
   const contact = useContact();
+  // 0039: M-08a weekly hours + the M-08g exceptions of the next 30 days.
+  const hours = useOpeningHours();
+  const soon = upcomingOverrides(hours.overrides, hours.todayKey, 30).slice(0, 3);
   const waHref = useWaHref();
 
   const send = () => {
@@ -29,7 +33,7 @@ export function ContactPage() {
     [t('site.contact.email'), contact.email, `mailto:${contact.email}`, 'email'],
     [t('site.contact.instagram'), contact.instagram, contact.instagramUrl, 'instagram'],
     [t('site.contact.address'), `${contact.address} · ${contact.city}`, contact.location.link ?? undefined, 'address'],
-    [t('site.contact.hours'), bi(tenant.hours), undefined, null],
+    [t('site.contact.hours'), bi(hours.sentence), undefined, null],
   ] as const satisfies readonly (readonly [string, string, string | undefined, ContactField | null])[];
 
   const SECTIONS: Record<string, () => ReactNode> = {
@@ -41,6 +45,12 @@ export function ContactPage() {
             <Card key={label} eyebrow={label}>
               {href ? <a href={href} target="_blank" rel="noreferrer">{value}</a> : <span>{value}</span>}
               {field && contact.pendingFields[field] && <p className="xs muted" style={{ marginTop: 'var(--sp-sm)' }}>{t('site.contact.pending')}</p>}
+              {label === t('site.contact.hours') && (
+                <div className="stack-sm" style={{ marginTop: 'var(--sp-sm)' }}>
+                  <p className="small" data-testid="contact-today">{bi(hours.today)}</p>
+                  {soon.length > 0 && <ul className="xs muted" aria-label={t('site.contact.hoursSoon')}>{soon.map((o) => <li key={o.id}>{overrideLine(o, lang)}</li>)}</ul>}
+                </div>
+              )}
             </Card>
           ))}
         </div>

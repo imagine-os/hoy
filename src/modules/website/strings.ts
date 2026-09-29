@@ -218,6 +218,7 @@ export const strings: StringTable = {
   'site.contact.email': { es: 'Correo', en: 'Email' },
   'site.contact.address': { es: 'Dirección', en: 'Address' },
   'site.contact.hours': { es: 'Horario de atención', en: 'Opening hours' },
+  'site.contact.hoursSoon': { es: 'Próximos cambios de horario', en: 'Upcoming hour changes' },
   'site.contact.instagram': { es: 'Instagram', en: 'Instagram' },
   'site.contact.pending': { es: 'Dato pendiente de confirmar', en: 'Detail pending confirmation' },
   'site.contact.waCta': { es: 'Abrir WhatsApp', en: 'Open WhatsApp' },

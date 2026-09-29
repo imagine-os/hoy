@@ -62,6 +62,8 @@ export const strings: StringTable = {
   'manual.live.tenant.title.all': { es: 'El estudio', en: 'The studio' },
   'manual.live.tenant.source': { es: 'Ajustes › General (M-08a)', en: 'Settings › General (M-08a)' },
   'manual.live.tenant.hours': { es: 'Horario', en: 'Opening hours' },
+  'manual.live.tenant.today': { es: 'Hoy', en: 'Today' },
+  'manual.live.tenant.overrides': { es: 'Próximos 30 días', en: 'Next 30 days' },
   'manual.live.tenant.timezone': { es: 'Zona horaria', en: 'Time zone' },
   'manual.live.tenant.email': { es: 'Correo', en: 'Email' },
   'manual.live.tenant.address': { es: 'Dirección', en: 'Address' },
