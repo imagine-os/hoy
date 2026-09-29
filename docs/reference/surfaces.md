@@ -1,8 +1,17 @@
 # Machine surfaces — MCP / WebMCP, CLI, API
 
 What something other than a person can drive in HoyOS today, and what it cannot.
-**Checked 2026-09-29** (v0.14.0; previous check 2026-09-29, v0.12.0). Re-check and date this file every pass; a line that is not
+**Checked 2026-09-29** (v0.16.0; previous check 2026-09-29, v0.15.0). Re-check and date this file every pass; a line that is not
 re-checked is not current.
+
+**0040 delta (v0.16.0).** Four actions join the vocabulary: `app.openPractice` and `app.setGoal` on the customer side
+(declared on C-01 and the new C-27 `/app/practice`; `app.openPractice` is part of the shell navigation set, so it is also
+declared on C-02, C-04, C-06 and C-08), and `analytics.setRange` / `analytics.openMember` on the new M-12
+`/admin/analytics`. `window.__hoyos.routes` gains `/app/practice` (C-27) and `/admin/analytics` (M-12): 101 → 103 routes,
+87 → 89 codes; `public/hub-map.json` picks both up on the next build (`/app/practice` in the customer app's *Account*
+group via `HUB_GROUP_RULES`). Two tables join `{{tables}}` / M-03 in the new *Práctica y analítica* group:
+`practice_goals` and `activity_events` (53 → 55). One CLI entry: `npm run test:analytics`. `MockProvider.SEED_VERSION`
+is 4, so every stored demo db reseeds once.
 
 **0030 delta (v0.12.0).** `window.__hoyos.routes` no longer lists `/app/intention` (A-05 retired); the path still
 resolves in the browser through the customer module's new `redirects` export (`/app/intention` → `/app`), which is
@@ -50,6 +59,10 @@ window.__hoyos.actions.filter((a) => a.mounted);
 | `app.choosePlan` | C-06 | Quiero el plan {plan} | `plan: enum:monthly,annual` | `payments.read` · customer, teacher |
 | `app.goHome` | C-01 (also C-02, C-04, C-06, C-08) | Llévame al inicio de la app | — | — · customer, teacher |
 | `app.openSchedule` | C-01 (also C-02, C-04, C-06, C-08) | Muéstrame el horario de clases | — | `classes.read` · customer, teacher |
+| `app.openPractice` | C-01 (also C-27, C-02, C-04, C-06, C-08) | Muéstrame mi práctica | — | — · customer, teacher |
+| `app.setGoal` | C-01 (also C-27) | Quiero practicar {target} veces por semana | `target: number 0–7 (0 = sin meta)` — a whole number; ends the active `practice_goals` row, inserts the new one and writes a `goal.set` event; answers `goal N/week` | `bookings.write` · customer, teacher |
+| `analytics.setRange` | M-12 | Muéstrame la analítica de los últimos {range} días | `range: enum:7,30,90` | `members.read` · super_admin, admin, coordinator, finance |
+| `analytics.openMember` | M-12 | Abre la ficha de {userId} | `userId: string — users.id (usr_cust)` → `/admin/crm/:id` | `members.read` · super_admin, admin, coordinator, finance |
 | `auth.signIn` | A-02 | Entra como {user} | `user: enum:usr_super,usr_admin,usr_coord,usr_desk,usr_fin,usr_teach,usr_maint,usr_mkt,usr_dev,usr_cust` | — · public (anyone on `/auth/sign-in`) |
 
 | `manual.setLens` | K-03 | Muéstrame el manual de {role} | `role: enum:all,super_admin,admin,coordinator,front_desk,finance,teacher,maintenance,marketing,developer` | `docs.read` |
@@ -62,6 +75,12 @@ window.__hoyos.actions.filter((a) => a.mounted);
 | `manual.openSource` | K-03 (also K-04, K-05) | Abre el documento {id} | `id: enum:modelo-de-valor,contenido-completo,manual-de-marca` | `docs.read` |
 | `manual.listRequests` | K-04 | ¿Qué cambios pidió el equipo al manual? | `status?: enum:open,done,dismissed,all` (default open) — answers a JSON array | `manual.edit` · coordinator, admin, super_admin |
 | `manual.answerRequest` | K-04 | Responde la solicitud {id}: {answer} | `id: manual_requests.id`, `answer`, `status?: enum:done,dismissed,open` | `manual.edit` · coordinator, admin, super_admin |
+
+Added 2026-09-29 (0040): `app.openPractice` / `app.setGoal` (`src/modules/customer/actions.ts`, handlers in `actions.ts` and
+`practice.tsx`) and `analytics.setRange` / `analytics.openMember` (declared in the `M12` spec, `src/modules/admin/specs.ts`,
+handlers in `AnalyticsPage.tsx`). `app.setGoal` is the first customer action that **writes a preference** rather than a
+booking; 0 clears the goal ("sin meta") and keeps the counts. Every practice number an agent could ask for is derived on
+read (`src/data/analytics.ts`), so there is no "refresh stats" action and none is planned.
 
 Added 2026-09-29 (0031): the ten `manual.*` actions (declared in `src/modules/ops-manual/actionDefs.ts`, handlers in
 `manualActions.ts`) make **prompt-based editing** of the operations manual possible for an agent in the page: read the
@@ -131,6 +150,7 @@ Everything is Node, in `scripts/`, and safe to run from a clean checkout.
 | `npm run lint:spacing` | Since 0037. `scripts/spacing-lint.mjs`: raw px/rem on spacing properties (margin, padding, gap, inset, top/right/bottom/left) and control sizes ≤ 64 px in `src/**/*.css` and inline `style` margin/padding/gap in `.tsx`; 1 px and `/* optical */` nudges ≤ 2 px allowed. Exit 1 when the count is above the baseline. `--report` (used by `npm run build`) prints only grown files · `--update-baseline` | `scripts/spacing-baseline.json` |
 | `npm run audit:spacing` | Since 0037. `scripts/spacing-audit.mjs --route=/app [--as=usr_cust] [--widths=390,1280,3840] [--grid] [--all] [--out=dir]`: serves `dist/` on :4174, prints uneven or off-grid sibling gaps, unequal card padding and targets under 44 px (divided by `--ui`); `--grid` saves a 4 / 16 px grid overlay. Run `npm run build` first | `spacing-audit/<route>-<width>-grid.jpg` with `--grid` |
 | `npm run test:dates` | The local-date-key regression test | — |
+| `npm run test:analytics` | Since 0040. `scripts/test-analytics.mjs`: bundles `src/data/analytics.ts` with esbuild and proves the streak rules (Mon–Sun weeks in America/Bogota, met / at-risk / rest week / paused / broken / best), session-dated month counts, the goal suggestion, the studio arithmetic and the seeded demo member's facts. Exit 1 on any failed check; run with the build before every `src/data` commit | — |
 | `node scripts/test-mat-bookings.mjs` | The 16-mat booking rules against `MockProvider` (bounds, collisions, release, persistence); run with the build before every `src/` commit since 0025 | — |
 | `node scripts/gen-page-doc.mjs <CODE>` | Page-doc skeleton from the spec and the captures | `docs/pages/<CODE>.md` |
 
@@ -166,7 +186,7 @@ consumer checklist: [`hub-map.md`](./hub-map.md).
 
 | File | URL | What |
 | --- | --- | --- |
-| `public/hub-map.json` | `https://imagine-os.github.io/hoy/hub-map.json` | Schema `hoy.hub-map/1`: product, embed pattern, 11 roles, 15 experiences (the hub cards; `marketing` carries `comingSoon: true`, 0031), every page code (87, each with a `group`; the 9 template pages with a `sampleRoute`), 9 tools, 3 lens hints |
+| `public/hub-map.json` | `https://imagine-os.github.io/hoy/hub-map.json` | Schema `hoy.hub-map/1`: product, embed pattern, 11 roles, 15 experiences (the hub cards; `marketing` carries `comingSoon: true`, 0031), every page code (89 after the 0040 build — C-27 and M-12 join the 87; each with a `group`; the 9 template pages with a `sampleRoute`), 9 tools, 3 lens hints |
 | `public/source/<id>.pdf` (+ `<id>-cover.jpg`) | `https://imagine-os.github.io/hoy/source/<id>.pdf` | Since 0031: the owner's source documents (`modelo-de-valor`, `contenido-completo`, `manual-de-marca`); index `docs/source/index.json`; shown on K-05 `/#/docs/source` |
 | `dist/hub-map/shots/<CODE>/…` | `https://imagine-os.github.io/hoy/hub-map/shots/<CODE>/<file>.jpg` | The thumbs (`thumb-<lang>-<phone\|desktop>[-dark].jpg`) and captures (`<lang>-390.jpg`, `<lang>-1280.jpg`, W-xx `<lang>-390-full.jpg`) the map's `shots` point at, relative to `product.baseUrl` |
 
@@ -174,7 +194,7 @@ consumer checklist: [`hub-map.md`](./hub-map.md).
 `frameUrl()` builds; a host substitutes and iframes it. Same-origin only under `imagine-os.github.io`.
 
 ---
-**Resumen (ES).** Qué puede manejar una máquina hoy: en la página, `window.__hoyos` publica las rutas,
+**Resumen (ES).** Qué puede manejar una máquina hoy (revisado 2026-09-29, v0.16.0; 0040 añade `app.openPractice`, `app.setGoal`, `analytics.setRange`, `analytics.openMember`, las tablas `practice_goals` y `activity_events`, y `npm run test:analytics`): en la página, `window.__hoyos` publica las rutas,
 los usuarios demo, las acciones declaradas y `run(id, params)` para ejecutarlas (superficie WebMCP; no
 hay servidor MCP todavía), y `__hoyos.hubMap` con el mapa del hub. Archivo publicado: `hub-map.json`
 (esquema `hoy.hub-map/1`), con sus capturas en `hub-map/shots/`, para que aluzina y between-gigs dibujen el hub a su manera;
