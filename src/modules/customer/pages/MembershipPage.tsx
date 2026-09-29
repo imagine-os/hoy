@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useData } from '../../../data/DataContext';
@@ -13,7 +13,9 @@ import { Drawer } from '../../../components/organism/Drawer/Drawer';
 import { EmptyState } from '../../../components/molecule/EmptyState/EmptyState';
 import { StatTile } from '../../../components/molecule/StatTile/StatTile';
 import { ListGroup, ListRow } from '../../../components/molecule/ListRow/ListRow';
-import { useEntitlements, useMyBookings } from '../hooks';
+import { useEntitlements } from '../hooks';
+import { usePracticeStats } from '../../../data/useAnalytics';
+import { plural } from '../practice';
 import { policy } from '../policy';
 import { PageHead } from '../ui';
 
@@ -24,7 +26,8 @@ export function MembershipPage() {
   const { t, bi, lang } = useI18n();
   const data = useData();
   const ent = useEntitlements();
-  const { rows: bookings } = useMyBookings();
+  // 0039: the same 'clases tomadas este mes' as C-01 / C-27 — checked in, counted by the session's date.
+  const { stats } = usePracticeStats();
   const [sheet, setSheet] = useState<'pause' | 'cancel' | null>(null);
   const [days, setDays] = useState(14);
   const [reason, setReason] = useState<string>('schedule');
@@ -32,7 +35,6 @@ export function MembershipPage() {
   const [flash, setFlash] = useState<string | null>(null);
 
   const m = ent.membership;
-  const usage = useMemo(() => { const now = new Date(); return bookings.filter((b) => (b.status === 'checked_in' || b.status === 'booked') && new Date(b.created_at).getMonth() === now.getMonth() && new Date(b.created_at).getFullYear() === now.getFullYear()).length; }, [bookings]);
   const paused = m?.status === 'paused';
   const pendingCancel = m?.status === 'cancelled' && m.ends_at && new Date(m.ends_at).getTime() > Date.now();
 
@@ -76,7 +78,7 @@ export function MembershipPage() {
           <p className="small muted">{t('customer.membership.renews', { date: formatDate(renews, lang) })} · {formatCOP(plan.price, lang)} {plan.period === 'year' ? t('core.common.perYear') : t('core.common.perMonth')}</p>
           <p className="xs muted">{t('customer.membership.notice', { days: policy.chargeNoticeDays })}</p>
           <div className="grid grid-2">
-            <StatTile label={t('customer.membership.usage')} value={usage} hint={t('customer.membership.usage.hint')} />
+            <StatTile label={t('customer.membership.usage')} value={stats.attendedThisMonth} hint={stats.bookedUpcoming > 0 ? plural(t, 'customer.home.stats.upcoming', stats.bookedUpcoming) : t('customer.home.stats.upcoming.none')} />
             <StatTile label={t('customer.membership.since')} value={formatDate(m.starts_at, lang)} />
           </div>
         </Card>

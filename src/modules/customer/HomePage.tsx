@@ -1,4 +1,4 @@
-import { useMemo, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, type ReactNode } from 'react';
 import { SplitSections } from './split';
 import { useActions } from '../../actions';
 import { useAppNavHandlers } from './actions';
@@ -6,7 +6,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useI18n } from '../../i18n/I18nProvider';
 import { useSession } from '../../auth/SessionProvider';
 import { useTable } from '../../data/DataContext';
-import type { BookingRow, CreditRow, MembershipRow } from '../../data/schema';
+import type { ActivityEventRow, BookingRow, MembershipRow, PracticeGoalRow } from '../../data/schema';
 import { formatDate, isSameDay } from '../../i18n/format';
 import { useLayout } from '../../layout/useLayout';
 import { canvasSpecs } from './specs';
@@ -17,6 +17,12 @@ import { ClassRow } from '../../components/molecule/ClassRow/ClassRow';
 import { ClassCard } from '../../components/organism/ClassCard/ClassCard';
 import { useSessionsJoined } from '../website/hooks';
 import { EmptyHomeBlock } from './pages/blocks';
+import { WeekDots } from '../../components/molecule/WeekDots/WeekDots';
+import { usePracticeStats, useMilestoneRecorder } from '../../data/useAnalytics';
+import type { PracticeStats } from '../../data/analytics';
+import { toast } from '../../app/toast';
+import { useEntitlements } from './hooks';
+import { plural, weekInitials, PracticeGoalPicker, PracticeStreak, usePracticeHandlers, useSaveGoal } from './practice';
 import './customer.css';
 import { Icon } from '../../components/atom/Icon/Icon';
 
@@ -29,11 +35,15 @@ export function CustomerHomePage() {
   const nav = useNavigate();
   const { user } = useSession();
   const { sections, isVisible } = useLayout(spec);
-  useActions(spec, useAppNavHandlers());
+  const { stats, goal, loading: practiceLoading } = usePracticeStats();
+  useMilestoneRecorder(stats);
+  useMilestoneToast(stats, practiceLoading);
+  const navHandlers = useAppNavHandlers();
+  const practiceHandlers = usePracticeHandlers(stats.suggestedTarget);
+  useActions(spec, useMemo(() => ({ ...navHandlers, ...practiceHandlers }), [navHandlers, practiceHandlers]));
 
   const { rows: myBookings, loading: bookingsLoading } = useTable<BookingRow>('bookings', { where: { user_id: user.id } });
   const { rows: memberships } = useTable<MembershipRow>('memberships', { where: { user_id: user.id, status: 'active' } });
-  const { rows: credits } = useTable<CreditRow>('credits', { where: { user_id: user.id } });
   const all = useSessionsJoined();
   const now = Date.now();
 
@@ -43,8 +53,6 @@ export function CustomerHomePage() {
     // 0030: plain start-time order (the A-05 intention sort is retired with the question)
     return all.filter((x) => isSameDay(x.session.starts_at, new Date()) && x.session.status === 'scheduled' && new Date(x.session.ends_at).getTime() > now);
   }, [all, now]);
-  const monthCount = myBookings.filter((b) => b.status === 'checked_in' && new Date(b.created_at).getMonth() === new Date().getMonth()).length;
-  const creditBalance = credits.reduce((a, c) => a + c.delta, 0);
   const membership = memberships[0];
 
   const book = (sessionId: string) => nav(`/app/checkout/${sessionId}`);
@@ -80,13 +88,8 @@ export function CustomerHomePage() {
         </Card>
       </section>
     ),
-    'StatsRow ×3': () => (
-      <div className="grid grid-3">
-        <StatTile label={t('customer.home.stats.classes')} value={monthCount} trend={monthCount > 4 ? 'up' : 'flat'} />
-        <StatTile label={t('customer.home.stats.streak')} value={t('customer.home.stats.weeks', { n: Math.min(8, Math.ceil(monthCount / 2) + 1) })} />
-        <StatTile label={t('customer.home.stats.credits')} value={membership ? '∞' : creditBalance} />
-      </div>
-    ),
+    // 0039: the section keeps its name (stored layouts reference it); it renders the practice block.
+    'StatsRow ×3': () => <PracticeBlock stats={stats} goal={goal} />,
     'EventsStrip → BottomNav': () => null,
   };
 
@@ -100,4 +103,79 @@ export function CustomerHomePage() {
         full={(n) => n === 'TopBar (logo, avatar, bell)'} side={(n) => HOME_SIDE.has(n)} />
     </div>
   );
+}
+
+/**
+ * C-01 practice block (0039). Three tiles that each say what they count — classes attended this month (by session
+ * date), weeks in a row on the goal, and the plan balance named by what it is — then the week as dots and a real
+ * link to C-27. With no goal row yet the streak tile becomes the weekly-goal question; "sin meta" hides the streak.
+ */
+function PracticeBlock({ stats, goal }: { stats: PracticeStats; goal: PracticeGoalRow | null }) {
+  const { t, lang } = useI18n();
+  const ent = useEntitlements();
+  const save = useSaveGoal(stats.suggestedTarget);
+  const asked = goal != null;
+  const m = ent.membership;
+  const unlimited = !!m && ent.plan?.credits == null;
+  const upcoming = stats.bookedUpcoming > 0 ? plural(t, 'customer.home.stats.upcoming', stats.bookedUpcoming) : t('customer.home.stats.upcoming.none');
+
+  const planTile = m?.status === 'active' && unlimited
+    ? <StatTile label={t('customer.home.stats.membership')} value={t('customer.home.stats.unlimited')} hint={t('customer.home.stats.renews', { date: formatDate(m.renews_at ?? m.starts_at, lang, { day: 'numeric', month: 'short' }) })} />
+    : m?.status === 'paused' && unlimited
+      ? <StatTile label={t('customer.home.stats.membership')} value={t('customer.home.stats.paused')} hint={m.paused_until ? t('customer.home.stats.pausedUntil', { date: formatDate(m.paused_until, lang, { day: 'numeric', month: 'short' }) }) : undefined} />
+      : <StatTile label={t('customer.home.stats.credits')} value={ent.creditBalance}
+          hint={ent.creditBalance > 0 && ent.nextExpiry ? t('customer.home.stats.expires', { date: formatDate(ent.nextExpiry, lang, { day: 'numeric', month: 'short' }) }) : ent.creditBalance === 0 && !m ? t('customer.home.stats.noPlan') : undefined} />;
+
+  return (
+    <section className="stack-sm cust-practice" aria-labelledby="cust-practice-title">
+      <div className="row-between wrap">
+        <h2 className="eyebrow" id="cust-practice-title">{t('customer.home.stats.title')}</h2>
+        <Link to="/app/practice" className="cust-practice-link">{t('customer.home.stats.more')} <Icon name="arrow-right" size="xs" /></Link>
+      </div>
+      <div className={`grid cust-practice-tiles ${stats.hasGoal ? '' : 'is-two'}`}>
+        <StatTile label={t('customer.home.stats.classes')} value={stats.attendedThisMonth} hint={upcoming} />
+        {stats.hasGoal && (
+          <div className="stat cust-practice-streak">
+            <div className="eyebrow stat-label">{t('customer.home.stats.streak')}</div>
+            <PracticeStreak stats={stats} />
+          </div>
+        )}
+        {planTile}
+      </div>
+      {!asked && (
+        <Card tone="highlight" padding="md" className="stack-sm">
+          <h3 className="cust-practice-q">{t('customer.home.goal.title')}</h3>
+          <PracticeGoalPicker value={null} suggested={stats.suggestedTarget} onPick={(n) => { void save(n); }} />
+        </Card>
+      )}
+      <Card padding="sm" className="cust-practice-week">
+        <WeekDots days={stats.thisWeek.days} target={stats.target} attended={stats.thisWeek.attended} labels={weekInitials(t)} size="sm">
+          {stats.hasGoal ? t('customer.home.stats.week', { attended: stats.thisWeek.attended, target: stats.target }) : plural(t, 'customer.home.stats.weekNoGoal', stats.thisWeek.attended)}
+        </WeekDots>
+      </Card>
+    </section>
+  );
+}
+
+/**
+ * A one-time "¡Clase número N!" when useMilestoneRecorder has just written a milestone event this session: the
+ * milestone events present on first load are the baseline; a reached milestone missing from it, recent (≤ 14 days,
+ * so a member's old history is not celebrated on their first visit) and not toasted yet, is announced once.
+ */
+function useMilestoneToast(stats: PracticeStats, loading: boolean) {
+  const { t } = useI18n();
+  const { user } = useSession();
+  const { rows: events, loading: evLoading } = useTable<ActivityEventRow>('activity_events', { where: { user_id: user.id, kind: 'milestone' } });
+  const baseline = useRef<Set<number> | null>(null);
+  const shown = useRef(new Set<number>());
+  useEffect(() => {
+    if (loading || evLoading) return;
+    if (!baseline.current) { baseline.current = new Set(events.map((e) => Number(e.payload?.count))); return; }
+    const recorded = new Set(events.map((e) => Number(e.payload?.count)));
+    const since = Date.now() - 14 * 86_400_000;
+    const fresh = stats.milestoneDates.filter((d) => recorded.has(d.at) && !baseline.current!.has(d.at) && !shown.current.has(d.at) && new Date(`${d.on}T12:00:00`).getTime() >= since);
+    for (const d of fresh) shown.current.add(d.at);
+    const top = fresh.map((d) => d.at).sort((a, b) => b - a)[0];
+    if (top) toast(t('customer.home.milestone', { n: top }), 'success', 6000);
+  }, [events, loading, evLoading, stats.milestoneDates, t]);
 }

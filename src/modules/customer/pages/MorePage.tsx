@@ -39,6 +39,7 @@ export function MorePage() {
 
         <ListGroup>
           <ListRow icon="profile" title={t('core.nav.profile')} subtitle={`${t('customer.profile.edit')} · ${t('customer.membership.title')}`} to="/app/profile" />
+          <ListRow icon="flame" title={t('customer.practice.title')} subtitle={t('customer.practice.more.sub')} to="/app/practice" />
           <ListRow icon="ticket" title={t('core.nav.plans')} subtitle={t('customer.more.plans.sub')} to="/app/plans" />
           <ListRow icon="policies" title={t('customer.rules.title')} subtitle={t('customer.more.rules.sub')} to="/app/rules" />
           <ListRow icon="whatsapp" title={t('customer.more.whatsapp')} subtitle={`${contact.whatsapp}${pendingSuffix(contact, 'whatsapp', lang)} · ${bi(policy.replyWindow)}`} href={waLink(contact.whatsapp, t('customer.more.whatsapp.text', { name: name.split(' ')[0] }))} />
