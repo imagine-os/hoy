@@ -87,11 +87,15 @@ try {
     if (!e) problems.push(`page ${m.code} ${m.path}: no experience for surface ${m.surface}`);
     const group = data.hubGroupOf(m.path);
     if (!group) problems.push(`page ${m.code} ${m.path}: no group rule in HUB_GROUP_RULES (src/hub/hubMap.data.ts)`);
+    const sample = m.path.includes(':') ? data.HUB_SAMPLE_ROUTES[m.path] : undefined;
+    if (m.path.includes(':') && !sample) problems.push(`page ${m.code} ${m.path}: template route without a sample in HUB_SAMPLE_ROUTES (src/hub/hubMap.data.ts)`);
+    if (sample && (sample.route.includes(':') || !matches(m.path, sample.route))) problems.push(`page ${m.code}: sample ${sample.route} does not fit ${m.path}`);
     return {
       code: m.code, route: m.path, name: m.spec.name, purpose: m.spec.purpose, surface: m.surface, roles,
       experienceId: experienceId ?? '', device: e?.device ?? 'desktop', status: m.status,
       actions: (m.spec.actions ?? []).map((a) => a.id), shots: shotsOf(m.code),
       ...(group ? { group: { id: group.id, label: group.label, order: group.order } } : {}),
+      ...(sample ? { sampleRoute: sample.route } : {}),
     };
   });
 
@@ -170,6 +174,8 @@ try {
     if (!pageCodes.has(t.code)) problems.push(`tool ${t.id}: code ${t.code} does not exist`);
     if (!hasShots(t.shots)) problems.push(`tool ${t.id}: no shots for ${t.code}`);
   }
+  const templates = new Set(pages.map((p) => p.route));
+  for (const pattern of Object.keys(data.HUB_SAMPLE_ROUTES)) if (!templates.has(pattern)) problems.push(`HUB_SAMPLE_ROUTES ${pattern}: no page has this route`);
   const inExperience = new Set(experiences.flatMap((e) => e.pageCodes));
   for (const c of pageCodes) if (!inExperience.has(c)) problems.push(`page ${c} belongs to no experience`);
 } finally {

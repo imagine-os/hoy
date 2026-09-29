@@ -67,6 +67,12 @@ _Updated every turn. Codes reference `src/specs/canvasSpecs.ts` and the module `
 
 ## Done
 
+### 2026-09-29 · Hub map sample routes (0029 · v0.11.2)
+- **`pages[].sampleRoute`** (additive, contract stays `hoy.hub-map/1`) on the 9 template pages, from `HUB_SAMPLE_ROUTES` in `src/hub/hubMap.data.ts`; the generator fails the build on a template page without a sample
+- **Live picks**: the seed reseeds daily with date-based ids, so class / checkout / booking / change / rate / waitlist / payout samples use the reserved `sample` segment, which `src/app/SampleRoute.tsx` resolves to today's record (`src/hub/sampleIds.ts`); legal `terms` and site `hot-yoga` are literal and seed-checked
+- **`npm run hub-map:check`** (`scripts/check-sample-routes.mjs`): 9 / 9 samples open real pages in a same-origin iframe (resolved route, > 20 words, no not-found, no ⟨key⟩)
+- **Host follow-up**: aluzina W-05 and between-gigs embed `sampleRoute ?? route`
+
 ### 2026-09-29 · Hub map page groups (0028 · v0.11.1)
 - **aluzina client hub desk consumes hub-map** (imagine-os/aluzina, from the 0027 follow-ups): the W-05 desk at https://imagine-os.github.io/aluzina/#/founder/clients/hoy/hub lays hoy out on mats per client role from `hub-map.json` (three lenses, dev page D-16)
 - **`pages[].group`** (additive, contract stays `hoy.hub-map/1`): `{ id, label, order }` from `HUB_GROUPS` + `HUB_GROUP_RULES` (route prefix → group, longest prefix wins) in `src/hub/hubMap.data.ts`; the generator fails the build if a page matches no rule
