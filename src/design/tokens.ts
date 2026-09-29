@@ -239,17 +239,67 @@ export const type = {
   'fw-bold': '700',
 } as const;
 
-/** 4-pt grid, in rem (4px = .25rem at the base size) so spacing scales with the `--ui` band like type does (D-0007). */
+/**
+ * Spacing scale (0037). One 4 px-based scale in rem (4 px = .25rem at the base size) so every step scales with the
+ * `--ui` band like type does (D-0007). `sp-px` is the hairline and stays 1 px. Module CSS never writes a raw px/rem
+ * for margin, padding, gap or inset: it uses a semantic token below, or a scale step (scripts/spacing-lint.mjs).
+ */
 export const spacing = {
-  'sp-0': '0', 'sp-1': '0.25rem', 'sp-2': '0.5rem', 'sp-3': '0.75rem', 'sp-4': '1rem', 'sp-5': '1.25rem',
-  'sp-6': '1.5rem', 'sp-8': '2rem', 'sp-10': '2.5rem', 'sp-12': '3rem', 'sp-16': '4rem', 'sp-20': '5rem',
+  'sp-0': '0', 'sp-px': '1px', 'sp-2xs': '0.125rem', 'sp-xs': '0.25rem', 'sp-sm': '0.5rem', 'sp-md': '0.75rem',
+  'sp-lg': '1rem', 'sp-xl': '1.5rem', 'sp-2xl': '2rem', 'sp-3xl': '3rem', 'sp-4xl': '4rem', 'sp-5xl': '6rem',
 } as const;
 
-/** Canvas radii: 4 (code tags) · 8 · 11 (controls, date cells) · 16 (cards) · 18 (desktop frame) · 24 · 32 · 34 (phone) · pill. */
+/**
+ * Legacy numeric names (0001–0036), kept as aliases of the scale for one pass so older branches still resolve.
+ * New code uses the named steps; the lint counts these as warnings. The off-scale 20 / 40 / 80 px steps
+ * (`sp-5`, `sp-10`, `sp-20`) were retired in 0037: their call sites moved to `--block`, `--card-pad` or a scale step.
+ */
+export const spacingLegacy = {
+  'sp-1': 'var(--sp-xs)', 'sp-2': 'var(--sp-sm)', 'sp-3': 'var(--sp-md)', 'sp-4': 'var(--sp-lg)', 'sp-6': 'var(--sp-xl)',
+  'sp-8': 'var(--sp-2xl)', 'sp-12': 'var(--sp-3xl)', 'sp-16': 'var(--sp-4xl)',
+} as const;
+
+/**
+ * Semantic spacing (0037) — the vocabulary pages use. Every value resolves to a scale step; the responsive ones
+ * step up in SPACING_BANDS below (viewport min-width, px). Read it as a sentence: controls sit `gap-control` apart,
+ * a card pads `card-pad`, blocks inside a card or section are `block` apart, sections are `section` apart.
+ */
+export const spacingSemantic = {
+  'gap-inline': 'var(--sp-sm)',    // icon ↔ label, chip contents, inline meta
+  'gap-control': 'var(--sp-md)',   // between buttons, chips, inputs in a row
+  'stack-tight': 'var(--sp-xs)',   // eyebrow → heading, heading → lead, label → hint
+  'stack': 'var(--sp-sm)',         // lead → body, rows of a small list, field label → control
+  'stack-loose': 'var(--sp-lg)',   // form fields, paragraphs of a card
+  'block': 'var(--sp-xl)',         // between blocks inside a card, a page or a section
+  'card-pad': 'var(--sp-lg)',      // 16 phone · 24 from 768
+  'card-pad-lg': 'var(--sp-xl)',   // 24 phone · 32 from 768 (feature cards, dialogs)
+  'section': 'var(--sp-3xl)',      // 48 phone · 64 from 768 (between page sections)
+  'section-hero': 'var(--sp-4xl)', // 64 phone · 96 from 768 (website hero and full-bleed bands)
+  'gutter': 'var(--sp-lg)',        // page side padding: 16 phone · 24 from 768 · 32 from 1280
+  'grid-gap': 'var(--sp-lg)',      // card grids: 16 phone · 24 from 768
+  'row-pad-y': 'var(--sp-md)',     // list rows: 12 × 16, min-height --h-ctl
+  'row-pad-x': 'var(--sp-lg)',
+  'row-pad': 'var(--row-pad-y) var(--row-pad-x)',
+  'btn-pad-x': 'var(--sp-lg)',     // buttons pad 0 × 16 (height comes from --h-ctl); sm 12, lg 24
+  'measure': '65ch',               // body text line length
+} as const;
+
+/** The viewport widths where the responsive semantic tokens step up (0037). */
+export const SPACING_BANDS: readonly { minWidth: number; vars: Record<string, string> }[] = [
+  { minWidth: 768, vars: { 'card-pad': 'var(--sp-xl)', 'card-pad-lg': 'var(--sp-2xl)', section: 'var(--sp-4xl)', 'section-hero': 'var(--sp-5xl)', gutter: 'var(--sp-xl)', 'grid-gap': 'var(--sp-xl)' } },
+  { minWidth: 1280, vars: { gutter: 'var(--sp-2xl)' } },
+];
+
+/**
+ * Radii. 0037: rem so corners scale with the `--ui` band (a 16 px corner on a 1.75× card read sharp at 3840), and
+ * on the 4 px scale: 2 · 4 · 8 · 12 (controls, was 11) · 16 (cards) · 24 · 32 · pill. `r-frame` 18 (desktop frame)
+ * and `r-phone` 34 (DeviceFrame bezel) are the canvas's device constants, kept as they are. Nested corners follow
+ * inner = outer − padding (a 16 px card with 8 px padding holds an 8 px tile).
+ */
 export const radii = {
-  'r-arch-card': '50% 50% 16px 16px / 180px 180px 16px 16px',
-  'r-2xs': '2px',    // hairline tracks (bar lists, token bars)
-  'r-xs': '4px', 'r-sm': '8px', 'r-ctl': '11px', 'r-md': '16px', 'r-frame': '18px', 'r-lg': '24px', 'r-xl': '32px', 'r-phone': '34px', 'r-full': '999px',
+  'r-arch-card': '50% 50% 1rem 1rem / 11.25rem 11.25rem 1rem 1rem',
+  'r-2xs': '0.125rem', // hairline tracks (bar lists, token bars)
+  'r-xs': '0.25rem', 'r-sm': '0.5rem', 'r-ctl': '0.75rem', 'r-md': '1rem', 'r-frame': '1.125rem', 'r-lg': '1.5rem', 'r-xl': '2rem', 'r-phone': '2.125rem', 'r-full': '999px',
 } as const;
 
 export const motion = {
@@ -277,7 +327,7 @@ export type IconSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
  */
 const layoutTokens = {
   'w-content': '70rem', 'w-app': '75rem', 'w-teach': '60rem', 'w-auth': '30rem', 'w-auth-wide': '36rem',
-  'h-topbar': '3.5rem', 'h-bottomnav': '4rem', 'h-ctl': '2.75rem', 'w-sidebar': '15rem', 'w-rail': '3.5rem',
+  'h-topbar': '3.5rem', 'h-bottomnav': '4rem', 'h-ctl': '2.75rem', 'h-ctl-lg': '3rem', 'w-sidebar': '15rem', 'w-rail': '3.5rem',
 } as const;
 
 /**
@@ -299,7 +349,7 @@ export const UI_SCALE: readonly { minWidth: number; ui: number; minText: number 
   { minWidth: BREAKPOINTS.hd, ui: 1.125, minText: 16 }, { minWidth: BREAKPOINTS.qhd, ui: 1.375, minText: 16 }, { minWidth: BREAKPOINTS.uhd, ui: 1.75, minText: 16 },
 ];
 
-export const tokens = { brand, palette, rgb, movements, semantic, shadows, textures, materials, surfaces, hues, type, spacing, radii, motion, icons, layout: layoutTokens, breakpoints: breakpointVars };
+export const tokens = { brand, palette, rgb, movements, semantic, shadows, textures, materials, surfaces, hues, type, spacing, spacingLegacy, spacingSemantic, radii, motion, icons, layout: layoutTokens, breakpoints: breakpointVars };
 
 function vars(obj: Record<string, string>): string {
   return Object.entries(obj).map(([k, v]) => `  --${k}: ${v};`).join('\n');
@@ -320,6 +370,8 @@ ${vars(Object.fromEntries(mv))}
 ${vars(mat)}
 ${vars(type)}
 ${vars(spacing)}
+${vars(spacingLegacy)}
+${vars(spacingSemantic)}
 ${vars(radii)}
 ${vars(motion)}
 ${vars(icons)}
@@ -339,6 +391,7 @@ ${hueVars}
   --color-card-border: transparent;
   color-scheme: light;
 }
+${SPACING_BANDS.map((b) => `@media (min-width: ${b.minWidth}px) { :root {${Object.entries(b.vars).map(([k, v]) => ` --${k}: ${v};`).join('')} } }`).join('\n')}
 ${UI_SCALE.map((b) => `@media (min-width: ${b.minWidth}px) { :root { --ui: ${b.ui}; --fs-floor: ${b.minText}px; } }`).join('\n')}
 /* D-0007: the band scales the root font-size, so every rem token grows with it. */
 html { font-size: calc(100% * var(--ui)); }

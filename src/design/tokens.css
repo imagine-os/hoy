@@ -79,27 +79,52 @@
   --fw-semibold: 600;
   --fw-bold: 700;
   --sp-0: 0;
-  --sp-1: 0.25rem;
-  --sp-2: 0.5rem;
-  --sp-3: 0.75rem;
-  --sp-4: 1rem;
-  --sp-5: 1.25rem;
-  --sp-6: 1.5rem;
-  --sp-8: 2rem;
-  --sp-10: 2.5rem;
-  --sp-12: 3rem;
-  --sp-16: 4rem;
-  --sp-20: 5rem;
-  --r-arch-card: 50% 50% 16px 16px / 180px 180px 16px 16px;
-  --r-2xs: 2px;
-  --r-xs: 4px;
-  --r-sm: 8px;
-  --r-ctl: 11px;
-  --r-md: 16px;
-  --r-frame: 18px;
-  --r-lg: 24px;
-  --r-xl: 32px;
-  --r-phone: 34px;
+  --sp-px: 1px;
+  --sp-2xs: 0.125rem;
+  --sp-xs: 0.25rem;
+  --sp-sm: 0.5rem;
+  --sp-md: 0.75rem;
+  --sp-lg: 1rem;
+  --sp-xl: 1.5rem;
+  --sp-2xl: 2rem;
+  --sp-3xl: 3rem;
+  --sp-4xl: 4rem;
+  --sp-5xl: 6rem;
+  --sp-1: var(--sp-xs);
+  --sp-2: var(--sp-sm);
+  --sp-3: var(--sp-md);
+  --sp-4: var(--sp-lg);
+  --sp-6: var(--sp-xl);
+  --sp-8: var(--sp-2xl);
+  --sp-12: var(--sp-3xl);
+  --sp-16: var(--sp-4xl);
+  --gap-inline: var(--sp-sm);
+  --gap-control: var(--sp-md);
+  --stack-tight: var(--sp-xs);
+  --stack: var(--sp-sm);
+  --stack-loose: var(--sp-lg);
+  --block: var(--sp-xl);
+  --card-pad: var(--sp-lg);
+  --card-pad-lg: var(--sp-xl);
+  --section: var(--sp-3xl);
+  --section-hero: var(--sp-4xl);
+  --gutter: var(--sp-lg);
+  --grid-gap: var(--sp-lg);
+  --row-pad-y: var(--sp-md);
+  --row-pad-x: var(--sp-lg);
+  --row-pad: var(--row-pad-y) var(--row-pad-x);
+  --btn-pad-x: var(--sp-lg);
+  --measure: 65ch;
+  --r-arch-card: 50% 50% 1rem 1rem / 11.25rem 11.25rem 1rem 1rem;
+  --r-2xs: 0.125rem;
+  --r-xs: 0.25rem;
+  --r-sm: 0.5rem;
+  --r-ctl: 0.75rem;
+  --r-md: 1rem;
+  --r-frame: 1.125rem;
+  --r-lg: 1.5rem;
+  --r-xl: 2rem;
+  --r-phone: 2.125rem;
   --r-full: 999px;
   --dur-reveal: 800ms;
   --dur-ambient: 18s;
@@ -126,6 +151,7 @@
   --h-topbar: 3.5rem;
   --h-bottomnav: 4rem;
   --h-ctl: 2.75rem;
+  --h-ctl-lg: 3rem;
   --w-sidebar: 15rem;
   --w-rail: 3.5rem;
   --bp-xs: 360px;
@@ -221,6 +247,8 @@
   --color-card-border: transparent;
   color-scheme: light;
 }
+@media (min-width: 768px) { :root { --card-pad: var(--sp-xl); --card-pad-lg: var(--sp-2xl); --section: var(--sp-4xl); --section-hero: var(--sp-5xl); --gutter: var(--sp-xl); --grid-gap: var(--sp-xl); } }
+@media (min-width: 1280px) { :root { --gutter: var(--sp-2xl); } }
 @media (min-width: 1920px) { :root { --ui: 1.125; --fs-floor: 16px; } }
 @media (min-width: 2560px) { :root { --ui: 1.375; --fs-floor: 16px; } }
 @media (min-width: 3840px) { :root { --ui: 1.75; --fs-floor: 16px; } }
