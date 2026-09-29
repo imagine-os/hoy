@@ -70,7 +70,7 @@ const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 interface Placed<T> { ev: PlacedEvent<T>; l: number; w: number | null; narrow: boolean; cutStart: boolean; cutEnd: boolean; row: number; group: TimelineGroup | null }
 
 /**
- * 0045 · TimelineView (M-03 "Línea de tiempo"): rows as bars on a horizontal time axis from their start to their end
+ * 0046 · TimelineView (M-03 "Línea de tiempo"): rows as bars on a horizontal time axis from their start to their end
  * (a point marker when there is no end), in lanes by a group (teacher, room, status…) with sticky lane labels.
  * Zoom day · week · month · quarter (segmented control, `+` / `−`), prev / today / next, a today line, horizontal
  * scroll with snap and arrow keys, focusable bars that open the row. Overlapping bars stack inside their lane.

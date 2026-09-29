@@ -85,7 +85,7 @@ function layoutDay<T>(evs: PlacedEvent<T>[]): Map<string, { col: number; cols: n
 }
 
 /**
- * 0045 · CalendarView (M-03 "Calendario"): any rows with a date as a month grid, a week with hour rows, or an agenda
+ * 0046 · CalendarView (M-03 "Calendario"): any rows with a date as a month grid, a week with hour rows, or an agenda
  * list grouped by day. Monday first like the schedule pages; weekday and month names from Intl; today ringed.
  * Every chip is a button; arrows move the day, PageUp / PageDown the month, `t` goes to today, Enter opens.
  * Below 768 px the month and the week become 44 px day cells with tone dots above the day's list (the phone pattern

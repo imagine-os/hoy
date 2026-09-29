@@ -1,4 +1,4 @@
-/* 0045 · TimelineView (M-03 "Línea de tiempo"): lanes × a time axis. Tokens only; every width in rem so 3840 keeps the rhythm. */
+/* 0046 · TimelineView (M-03 "Línea de tiempo"): lanes × a time axis. Tokens only; every width in rem so 3840 keeps the rhythm. */
 .tl { --tl-label: 13rem; --tl-col: 4rem; --tl-rowh: calc(var(--h-ctl) + var(--sp-xs)); --tl-minbar: var(--h-ctl); --tl-point: 12rem; display: flex; flex-direction: column; gap: var(--stack-loose); min-width: 0; }
 .tl-z-day { --tl-col: 6rem; }
 .tl-z-week { --tl-col: 9rem; }

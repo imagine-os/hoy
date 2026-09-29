@@ -150,7 +150,7 @@ export function dateColumnOf(table: string): string | null {
 }
 
 /**
- * 0045: the columns the calendar / timeline "Fecha" picker offers — the table's own date and timestamp columns, then
+ * 0046: the columns the calendar / timeline "Fecha" picker offers — the table's own date and timestamp columns, then
  * created_at / updated_at. Empty when the table has no date column of its own (the two views stay disabled).
  */
 export function dateColumnsOf(table: string): string[] {
@@ -160,7 +160,7 @@ export function dateColumnsOf(table: string): string[] {
 }
 
 /**
- * 0045: the column where a row placed by `start` ends, or null (a point in time). The pair first (starts_at → ends_at,
+ * 0046: the column where a row placed by `start` ends, or null (a point in time). The pair first (starts_at → ends_at,
  * start_date → end_date, period_start → period_end, X_start → X_end, start_X → end_X), then any end_* / *_end /
  * *_until / expires_at column of the same kind of date.
  */

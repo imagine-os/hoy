@@ -185,7 +185,7 @@ export function ExportPanel({ count, onExport, onClose }: { count: number; onExp
 export interface ViewsPanelProps {
   views: TableViewRow[]; activeId: string | null; canWrite: boolean; onClose: () => void;
   onPick: (v: TableViewRow) => void; onDefault: () => void; onSave: (name: string) => void;
-  /** 0045: rename / delete — only the view's creator or a role with tables.write. */
+  /** 0046: rename / delete — only the view's creator or a role with tables.write. */
   canEdit: (v: TableViewRow) => boolean; onRename: (v: TableViewRow, name: string) => void; onDelete: (v: TableViewRow) => void;
 }
 

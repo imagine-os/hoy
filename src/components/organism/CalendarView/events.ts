@@ -1,5 +1,5 @@
 /**
- * 0045 — shared by CalendarView and TimelineView: reading a row's start / end (a date key or a timestamp), the
+ * 0046 — shared by CalendarView and TimelineView: reading a row's start / end (a date key or a timestamp), the
  * Monday-first week the schedule pages use, and the colour of a row. A class tone (moss, river…) rides the global
  * `[data-tone]` hook from D-01; a status tone (success, warn…) sets the same `--t-fg / --t-bg / --t-dot` trio through
  * `[data-ev]` (eventTone.css), so chips and bars read one set of custom properties whichever tone they get.

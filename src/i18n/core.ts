@@ -90,7 +90,7 @@ export const coreStrings: StringTable = {
   'core.kanban.drag': { es: 'Arrastrar {name}', en: 'Drag {name}' },
   'core.kanban.moveTo': { es: 'Mover {name} a…', en: 'Move {name} to…' },
   'core.kanban.moveShort': { es: 'Mover a…', en: 'Move to…' },
-  // 0045: CalendarView and TimelineView (M-03 calendar / timeline views)
+  // 0046: CalendarView and TimelineView (M-03 calendar / timeline views)
   'core.calendar.prev': { es: 'Periodo anterior', en: 'Previous period' },
   'core.calendar.next': { es: 'Periodo siguiente', en: 'Next period' },
   'core.calendar.mode': { es: 'Disposición del calendario', en: 'Calendar layout' },

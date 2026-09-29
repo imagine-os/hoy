@@ -336,14 +336,14 @@ export type ViewFilterOp = 'is' | 'is_not' | 'contains' | 'empty' | 'not_empty' 
 export interface ViewFilter { column: string; op: ViewFilterOp; value?: string | string[] }
 export interface ViewSort { column: string; dir: 'asc' | 'desc' }
 /** What a saved view remembers (table_views.config). Every field optional so an old row keeps loading. */
-/** 0045: how the calendar lays out a period and how far the timeline axis reaches. */
+/** 0046: how the calendar lays out a period and how far the timeline axis reaches. */
 export type CalendarMode = 'month' | 'week' | 'agenda';
 export const CALENDAR_MODES: readonly CalendarMode[] = ['month', 'week', 'agenda'];
 export type TimelineZoom = 'day' | 'week' | 'month' | 'quarter';
 export const TIMELINE_ZOOMS: readonly TimelineZoom[] = ['day', 'week', 'month', 'quarter'];
 /**
  * What a saved view remembers (table_views.config). Every field optional so an old row keeps loading.
- * 0045: dateColumn / endColumn place rows on the calendar and the timeline (absent = dateColumnOf / endColumnOf);
+ * 0046: dateColumn / endColumn place rows on the calendar and the timeline (absent = dateColumnOf / endColumnOf);
  * calendarMode and timelineZoom are the layout the view opens with.
  */
 export interface TableViewConfig { filters?: ViewFilter[]; sorts?: ViewSort[]; groupBy?: string | null; hiddenColumns?: string[]; columnOrder?: string[]; cardFields?: string[]; kanbanColumn?: string | null; pinned?: boolean; dateColumn?: string; endColumn?: string | null; calendarMode?: CalendarMode; timelineZoom?: TimelineZoom }

@@ -29,8 +29,8 @@ function Demo({ zoom: z0, grouped }: { zoom: TimelineZoom; grouped: boolean }) {
 export default defineMeta({
   tier: 'organism', name: 'TimelineView',
   description: {
-    es: 'Línea de tiempo genérica (0045, M-03 «Línea de tiempo»): barras de inicio a fin (un rombo cuando no hay fin) en carriles por grupo con etiquetas fijas a la izquierda; zoom día · semana · mes · trimestre, anterior / hoy / siguiente, línea de hoy, desplazamiento horizontal con imán. Las barras que se cruzan se apilan dentro del carril. Bajo 768 px un solo carril y el grupo como ficha en cada barra.',
-    en: 'Generic timeline (0045, M-03 “Timeline”): bars from start to end (a diamond when there is no end) in lanes by group with sticky labels on the left; zoom day · week · month · quarter, previous / today / next, a today line, horizontal scroll with snap. Overlapping bars stack inside their lane. Below 768 px one lane and the group as a chip on each bar.',
+    es: 'Línea de tiempo genérica (0046, M-03 «Línea de tiempo»): barras de inicio a fin (un rombo cuando no hay fin) en carriles por grupo con etiquetas fijas a la izquierda; zoom día · semana · mes · trimestre, anterior / hoy / siguiente, línea de hoy, desplazamiento horizontal con imán. Las barras que se cruzan se apilan dentro del carril. Bajo 768 px un solo carril y el grupo como ficha en cada barra.',
+    en: 'Generic timeline (0046, M-03 “Timeline”): bars from start to end (a diamond when there is no end) in lanes by group with sticky labels on the left; zoom day · week · month · quarter, previous / today / next, a today line, horizontal scroll with snap. Overlapping bars stack inside their lane. Below 768 px one lane and the group as a chip on each bar.',
   },
   props: [
     { name: 'rows', type: 'T[]', required: true, description: { es: 'Las filas; las que no tienen fecha no se muestran.', en: 'The rows; rows without a date are left out.' } },

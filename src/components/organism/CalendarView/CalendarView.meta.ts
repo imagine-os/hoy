@@ -33,8 +33,8 @@ function Demo({ initial, create }: { initial: CalendarMode; create?: boolean }) 
 export default defineMeta({
   tier: 'organism', name: 'CalendarView',
   description: {
-    es: 'Calendario genérico de filas con fecha (0045, M-03 «Calendario»): mes (7 columnas, hasta 3 fichas por día y «+N más»), semana (franja de todo el día y filas por hora, fichas lado a lado cuando se cruzan) y agenda agrupada por día. Lunes primero, nombres de días y meses desde Intl, hoy con anillo. Bajo 768 px el mes y la semana son celdas de 44 px con puntos de tono y la lista del día.',
-    en: 'Generic calendar of dated rows (0045, M-03 “Calendar”): month (7 columns, up to 3 chips a day and “+N more”), week (all-day strip and hour rows, overlapping chips side by side) and an agenda grouped by day. Monday first, weekday and month names from Intl, today ringed. Below 768 px the month and week become 44 px cells with tone dots and the day’s list.',
+    es: 'Calendario genérico de filas con fecha (0046, M-03 «Calendario»): mes (7 columnas, hasta 3 fichas por día y «+N más»), semana (franja de todo el día y filas por hora, fichas lado a lado cuando se cruzan) y agenda agrupada por día. Lunes primero, nombres de días y meses desde Intl, hoy con anillo. Bajo 768 px el mes y la semana son celdas de 44 px con puntos de tono y la lista del día.',
+    en: 'Generic calendar of dated rows (0046, M-03 “Calendar”): month (7 columns, up to 3 chips a day and “+N more”), week (all-day strip and hour rows, overlapping chips side by side) and an agenda grouped by day. Monday first, weekday and month names from Intl, today ringed. Below 768 px the month and week become 44 px cells with tone dots and the day’s list.',
   },
   props: [
     { name: 'rows', type: 'T[]', required: true, description: { es: 'Las filas; las que no tienen fecha no se muestran.', en: 'The rows; rows without a date are left out.' } },

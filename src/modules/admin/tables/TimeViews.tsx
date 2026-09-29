@@ -1,5 +1,5 @@
 /**
- * 0045 — M-03 "Calendario" and "Línea de tiempo": the table's rows handed to the CalendarView / TimelineView organisms,
+ * 0046 — M-03 "Calendario" and "Línea de tiempo": the table's rows handed to the CalendarView / TimelineView organisms,
  * placed by the view's date column (config.dateColumn, default dateColumnOf) and end column (config.endColumn, default
  * endColumnOf). Tones: the row's own tone → the tone of a row it points at (a class's modality) → its status enum.
  */

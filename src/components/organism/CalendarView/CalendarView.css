@@ -1,4 +1,4 @@
-/* 0045 · CalendarView (M-03 "Calendario"): month grid, week with hour rows, agenda. Tokens only; layout sizes in rem. */
+/* 0046 · CalendarView (M-03 "Calendario"): month grid, week with hour rows, agenda. Tokens only; layout sizes in rem. */
 .cal { --cal-hour: var(--sp-4xl); --cal-gutter: 4.5rem; display: flex; flex-direction: column; gap: var(--stack-loose); min-width: 0; }
 .cal-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--gap-control); }
 .cal-nav { display: flex; flex-wrap: wrap; align-items: center; gap: var(--gap-inline); min-width: 0; }

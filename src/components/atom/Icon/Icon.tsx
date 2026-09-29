@@ -62,7 +62,7 @@ const ICONS = {
   kanban: Kanban, list: List, 'layout-list': LayoutList, graph: Waypoints, gantt: ChartGantt, pin: Pin, 'pin-off': PinOff,
   'panel-left-close': PanelLeftClose, 'panel-left-open': PanelLeftOpen, columns: Columns3, group: Group, 'zoom-in': ZoomIn,
   'zoom-out': ZoomOut, locate: Locate, grip: GripVertical, braces: Braces,
-  // 0045: the M-03 calendar modes (month · week · agenda) and the timeline
+  // 0046: the M-03 calendar modes (month · week · agenda) and the timeline
   'calendar-days': CalendarDays, 'calendar-range': CalendarRange,
 } satisfies Record<string, LucideIcon>;
 
