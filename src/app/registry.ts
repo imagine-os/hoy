@@ -21,7 +21,11 @@ function build() {
   const modules = Object.entries(found)
     .map(([path, m]) => ({ name: path.split('/')[2], routes: m.routes ?? [], strings: m.strings ?? {}, redirects: m.redirects ?? [] }))
     .sort((a, b) => a.name.localeCompare(b.name));
-  cache = { modules, routes: modules.flatMap((m) => m.routes), strings: modules.map((m) => m.strings), redirects: modules.flatMap((m) => m.redirects) };
+  // Splat routes (`/docs/*`) go last, so a lookup that takes the first match (shell title, inspector, route title)
+  // finds a static route of another module (`/docs/source`, 0031) before the catch-all.
+  const all = modules.flatMap((m) => m.routes);
+  const routes = [...all.filter((r) => !r.path.endsWith('*')), ...all.filter((r) => r.path.endsWith('*'))];
+  cache = { modules, routes, strings: modules.map((m) => m.strings), redirects: modules.flatMap((m) => m.redirects) };
   if (import.meta.env.DEV) {
     const seen = new Map<string, string>();
     for (const m of modules) for (const r of m.routes) {

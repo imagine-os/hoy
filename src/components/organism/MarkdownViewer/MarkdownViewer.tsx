@@ -37,10 +37,17 @@ export interface MarkdownViewerProps {
   figure?: (fig: MarkdownFigure) => ReactNode;
   /** Adds an `id` to every `##` heading so an in-page table of contents can link to it. */
   headingIds?: boolean;
+  /**
+   * Renders a role-scoped block — `{{for:teacher,front_desk}}` … `{{/for}}` — given its role ids and
+   * its rendered content. When absent the block renders with a small "For: teacher, front_desk" label,
+   * so a scoped passage is never hidden by a viewer that knows nothing about roles.
+   */
+  scope?: (roles: string[], content: ReactNode) => ReactNode;
 }
 
 /** Callout prefixes recognised at the start of a blockquote → tone class. */
 const CALLOUTS: [RegExp, string][] = [
+  [/^(EN HOYOS|IN HOYOS)\b/i, 'hoyos'],
   [/^(DECISIÓN PENDIENTE|DECISION NEEDED|DECISION PENDING)\b/i, 'decision'],
   [/^(ADVERTENCIA|WARNING|CUIDADO|CAUTION)\b/i, 'warn'],
   [/^(NOTA|NOTE|TIP|CONSEJO)\b/i, 'note'],
@@ -122,6 +129,29 @@ function MdTable({ source, cell }: { source: string; cell: (md: string) => React
   );
 }
 
+/** Fence that wraps a `{{for:…}}` block: tildes, so the backtick fences inside it stay intact. */
+const SCOPE_FENCE = '~~~~~~';
+const PAGE_CODE = /(^|[^`\w-])([A-Z]{1,3}-\d{2}[a-z]?)(?![\w`-])/g;
+
+/**
+ * `> EN HOYOS: …` / `> IN HOYOS: …` blockquotes are "screen boxes": where a procedure happens in the
+ * software, kept out of the prose. The label becomes a bold lead, bare page codes (S-02, M-08a) become
+ * code chips and `->` becomes an arrow, so the box reads as steps.
+ */
+function screenBoxes(source: string): string {
+  const lines = source.split('\n');
+  let inBox = false, fenced = false;
+  return lines.map((line) => {
+    if (/^\s*(```|~~~)/.test(line)) { fenced = !fenced; inBox = false; return line; }
+    if (fenced) return line;
+    const start = line.match(/^>\s*(EN HOYOS|IN HOYOS)\s*:\s*(.*)$/i);
+    if (start) { inBox = true; line = `> **${start[1].toUpperCase()}** ${start[2]}`; }
+    else if (!/^>/.test(line)) { inBox = false; return line; }
+    if (!inBox) return line;
+    return line.replace(/\s*->\s*/g, ' → ').replace(PAGE_CODE, (_m, pre: string, code: string) => `${pre}\`${code}\``);
+  }).join('\n');
+}
+
 /**
  * Documentation conventions applied before parsing:
  * 1. `[screenshot: C-02 — caption]` on its own line is a placeholder for a capture that does not
@@ -129,9 +159,14 @@ function MdTable({ source, cell }: { source: string; cell: (md: string) => React
  * 2. `{{pricing}}` / `{{pricing:membresia}}` on its own line is a live-data directive. It becomes a
  *    fenced ```live block, which the `directive` prop renders (a fenced block is passed through
  *    react-markdown intact, unlike a custom element, which the default HTML handling drops).
+ * 3. `{{for:teacher,front_desk}}` … `{{/for}}` wraps a role-scoped passage (a tilde fence → `scope`).
+ * 4. `> EN HOYOS:` / `> IN HOYOS:` blockquotes become screen boxes (see `screenBoxes`).
  */
 function preprocessMarkdown(source: string): string {
-  const withBlocks = source
+  const withBlocks = screenBoxes(source)
+    // {{for:teacher,front_desk}} … {{/for}} → a tilde fence the `pre` override renders through `scope`.
+    .replace(/^\{\{\s*for\s*:\s*([^}]*?)\s*\}\}[ \t]*$/gim, (_m, roles: string) => `\n${SCOPE_FENCE}for:${roles.replace(/\s+/g, '')}`)
+    .replace(/^\{\{\s*\/\s*for\s*\}\}[ \t]*$/gim, `${SCOPE_FENCE}\n`)
     .replace(/^\[screenshot:\s*([^\]]+)\]\s*$/gm, (_m, body: string) => {
       const code = body.match(/^([A-Z]+-\d{2}[a-z]?)/)?.[1] ?? 'screenshot';
       return `![${body.replace(/[[\]]/g, '')}](placeholder:${code})`;
@@ -149,6 +184,15 @@ function fencedOf(node: any, lang: string): string | null {
   return cls.includes(`language-${lang}`) ? textOf(code).replace(/\n$/, '') : null;
 }
 
+/** Role ids and inner markdown of a `{{for:…}}` block (a `~~~~~~for:a,b` fence), or null. */
+function scopeOf(node: any): { roles: string[]; body: string } | null {
+  const code = node?.children?.find((c: { tagName?: string }) => c.tagName === 'code');
+  const cls: string[] = code?.properties?.className ?? [];
+  const hit = cls.find((c) => c.startsWith('language-for:'));
+  if (!hit) return null;
+  return { roles: hit.slice('language-for:'.length).split(',').filter(Boolean), body: textOf(code).replace(/\n$/, '') };
+}
+
 /** Reads `kind:arg` out of a fenced ```live block node, or null when it is not one. */
 function liveOf(node: any): { kind: string; arg?: string } | null {
   const raw = fencedOf(node, 'live');
@@ -158,8 +202,10 @@ function liveOf(node: any): { kind: string; arg?: string } | null {
   return { kind, arg: rest.length ? rest.join(':').trim() || undefined : undefined };
 }
 
+const urlTransform = (url: string) => (url.startsWith('placeholder:') ? url : defaultUrlTransform(url));
+
 /** Renders markdown with the `.prose` styles, rewriting relative images and .md links. */
-export function MarkdownViewer({ source, path, resolveAsset, resolveLink, components, directive, figure, headingIds }: MarkdownViewerProps) {
+export function MarkdownViewer({ source, path, resolveAsset, resolveLink, components, directive, figure, headingIds, scope }: MarkdownViewerProps) {
   const assetUrl = (src: string) => (/^(https?:)?\/\//.test(src) ? src : resolveAsset?.(resolveRel(path, src)) ?? src);
   const builtIn: Components = {
     img: ({ src = '', alt, title }) => {
@@ -180,6 +226,11 @@ export function MarkdownViewer({ source, path, resolveAsset, resolveLink, compon
     },
     h2: ({ node, children }) => (headingIds ? <h2 id={headingSlug(textOf(node))}>{children}</h2> : <h2>{children}</h2>),
     pre: ({ node, children }) => {
+      const scoped = scopeOf(node);
+      if (scoped) {
+        const content = <ReactMarkdown urlTransform={urlTransform} components={{ ...builtIn, ...components }}>{scoped.body}</ReactMarkdown>;
+        return <>{scope ? scope(scoped.roles, content) : <div className="mdv-scope"><div className="mdv-scope-label">{`→ ${scoped.roles.join(', ')}`}</div>{content}</div>}</>;
+      }
       const tbl = fencedOf(node, 'table');
       if (tbl !== null) return <MdTable source={tbl} cell={renderCell} />;
       const live = liveOf(node);

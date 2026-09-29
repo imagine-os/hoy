@@ -2,13 +2,15 @@
 
 | Role | Surface | Layout | Notes |
 | --- | --- | --- | --- |
-| `super_admin` | everything | desktop | Only role that can turn **dev mode** on and "view as" another role. |
+| `super_admin` | everything | desktop | Turns **dev mode** on and is the only role that can "view as" another role. |
 | `admin` | admin, staff | desktop | Studio owner / general manager. |
 | `coordinator` | staff, admin subset (content, schedule, CRM) | desktop | Runs the daily operation. |
 | `front_desk` | staff (check-in, register) | desktop | Counter work. |
 | `finance` | admin subset (payments, invoices, payroll) | desktop | Read-mostly on operations. |
 | `teacher` | teacher app | mobile | Own classes, attendance, payroll view. |
 | `maintenance` | staff subset (rooms, incidents) | mobile/desktop | Facility tasks. |
+| `marketing` | admin subset: Contenido (M-02 family), E-mails (M-04), WhatsApp (M-05), CRM read (M-06) | desktop | Since 0031. Home `/admin/content`. `content.write`, `comms.write`, `members.read`; no settings, payments or member edits. Demo: Camila Herrera. The "Kit de marketing" is announced in the hub (coming soon). |
+| `developer` | dev (D-01…D-06, K-01), docs, manual, table manager read-only (M-03) | desktop | Since 0031. Home `/dev`. `dev.tools`, `docs.read`, `tables.read`, `audit.read`; **dev mode** like super admin, but no view-as and no settings or finance writes. Demo: Julián Mesa. |
 | `customer` | customer app | mobile | Members and drop-ins. |
 | `public` | website | auto | Not signed in. |
 
@@ -21,8 +23,15 @@ One fictional person per role in `src/auth/demoUsers.ts`. The hub and the `RoleS
 switch between them; the choice persists in localStorage under `hoyos.session`.
 
 ## Dev mode and view-as
-A super admin can toggle **dev mode** (spec chip, inspector `Ctrl+.`, layout editor links) and pick
-**view as** any role to see that role's experience with or without dev tooling.
+A super admin — and, since 0031, a developer (`DEV_MODE_ROLES` in `src/auth/roles.ts`) — can toggle **dev mode**
+(spec chip, inspector `Ctrl+.`, layout editor links). Only the super admin can pick **view as** any role to see that
+role's experience with or without dev tooling.
+
+## The manual by role (0031)
+Every team role (`TEAM_ROLES`) has a reading path in the operations manual: `src/modules/ops-manual/audience.ts`
+says which chapters are required and recommended for each role (the owner is `admin`), and `training.ts` holds each
+role's Día 1 / Semana 1 / Mes 1 checklist. Permissions `manual.edit` (admin, super admin; coordinator on sections
+marked `{{editable:coordinator}}`) and `manual.train` (coordinator and up: sign training stages, see the team view).
 
 ## Who may read and write the member-owned tables (0008)
 The new tables from the data-depth pass belong to the member, not to the studio. The rule is the same

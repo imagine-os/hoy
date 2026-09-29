@@ -25,3 +25,15 @@
 .chcard-meta { display: flex; flex-wrap: wrap; gap: var(--sp-3); font-size: var(--fs-xs); color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
 .chcard-warn { color: var(--color-warn); }
 .chcard-pending { color: var(--color-text-muted); }
+
+/* 0031 · icon, reader's level and read state */
+.chcard-lead { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.chcard-icon { display: inline-flex; align-items: center; justify-content: center; width: 2.25rem; height: 2.25rem; border-radius: var(--r-md); background: color-mix(in srgb, var(--color-primary) 10%, var(--color-surface)); color: var(--color-primary); }
+.chcard-flags { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.chcard-level { font-size: var(--fs-xs); padding: .1em .55em; border-radius: var(--r-full); border: 1px solid var(--color-border); color: var(--color-text-muted); }
+.chcard-level.is-required { border-color: color-mix(in srgb, var(--color-warn) 55%, transparent); background: color-mix(in srgb, var(--color-warn) 14%, var(--color-surface)); color: var(--color-text); }
+.chcard-level.is-recommended { border-color: color-mix(in srgb, var(--color-primary) 40%, transparent); color: var(--color-primary); }
+.chcard-read { font-size: var(--fs-xs); color: var(--color-success); }
+.chcard.is-na { opacity: .62; box-shadow: none; background: var(--color-surface-2); }
+.chcard.is-na:hover, .chcard.is-na:focus-visible { opacity: 1; }
+.chcard.is-na .chcard-icon { background: var(--color-surface); color: var(--color-text-muted); }

@@ -153,6 +153,10 @@ export const coreStrings: StringTable = {
   'core.placeholder.title': { es: 'Aún no conectado · Not wired yet', en: 'Not wired yet · Aún no conectado' },
   'core.placeholder.hint': { es: 'Aún no conectado: {what}. El control existe pero todavía no hace nada.', en: 'Not wired yet: {what}. The control exists but does nothing yet.' },
   'core.placeholder.toast': { es: 'Aún no conectado: {what}', en: 'Not wired yet: {what}' },
+  // Figure (0031): capture date and the stale flag
+  'core.figure.captured': { es: 'Captura del {date}', en: 'Captured {date}' },
+  'core.figure.stale': { es: 'puede estar desactualizada', en: 'may be out of date' },
+  'core.figure.staleHint': { es: 'La pantalla cambió después de esta captura; ábrela para ver cómo está hoy.', en: 'The screen changed after this capture; open it to see how it looks today.' },
 
   // Previews and frames (PagePreview, DeviceFrame) — shared by HUB-01, D-05 and D-06.
   'core.preview.of': { es: 'Vista previa de {name}', en: 'Preview of {name}' },

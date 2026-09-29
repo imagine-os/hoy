@@ -4,3 +4,7 @@
 .mdedit textarea { width: 100%; min-height: 240px; font-family: var(--font-mono); font-size: var(--fs-sm); line-height: 1.55; resize: vertical; }
 .mdedit-preview h1, .mdedit-preview h2, .mdedit-preview h3 { margin-top: var(--sp-4); }
 .mdedit-preview > :first-child { margin-top: 0; }
+/* 0031: the same two-column layout without the admin stylesheet (the manual's section editor, K-03). */
+.mdedit { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--sp-4); }
+.mdedit-preview { border: 1px solid var(--color-card-border); border-radius: var(--r-md); padding: var(--sp-4); background: var(--color-surface); overflow: auto; max-height: 560px; min-width: 0; }
+@media (min-width: 900px) { .mdedit { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }

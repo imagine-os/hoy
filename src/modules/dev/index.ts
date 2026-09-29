@@ -1,12 +1,13 @@
 import type { RouteDef } from '../../specs/types';
 import { canvasSpecs } from '../../specs/canvasSpecs';
 import { lazyPages } from '../../app/lazyPage';
+import { DEV_MODE_ROLES as DEV_ROLES } from '../../auth/roles';
 import { canvasSpec, layoutEditorSpec, simulatorSpec, specsIndexSpec } from './specs';
 export { strings } from './strings';
 
-// super_admin-only tooling (component library, layout editor with dnd-kit, knowledgebase): one lazy chunk.
+// super_admin + developer tooling (0031) (component library, layout editor with dnd-kit, knowledgebase): one lazy chunk.
 const page = lazyPages(() => import('./pages'));
-const base = { roles: ['super_admin' as const], surface: 'dev' as const, layout: 'desktop' as const };
+const base = { roles: DEV_ROLES, surface: 'dev' as const, layout: 'desktop' as const };
 /** The design-system group: it shows in the dev sidebar and, for a super admin, in the staff and admin sidebars. */
 const G = 'core.nav.group.design';
 

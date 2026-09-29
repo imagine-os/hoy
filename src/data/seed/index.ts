@@ -14,6 +14,8 @@ import { buildExpenses, expenseTemplates } from './expenses';
 import { buildSpecials } from './specials';
 import { buildDeletionRequests } from './deletion';
 import { automationText, buildMessages } from './messages';
+import { buildStudioPolicies } from './studioPolicies';
+import { LATE_ROLES, buildLateStaff, buildManual } from './manual';
 import { dateKey, addMonths, MS } from '../../i18n/format';
 import { DEFAULT_IVA_PCT, splitIva } from '../tax';
 import { isRetired } from '../../specs/retired';
@@ -45,7 +47,8 @@ export function buildSeed(): Record<string, BaseRow[]> {
     profiles.push({ ...base(`prf_${id.slice(4)}`, daysAgo), user_id: id, full_name: name, initials: name.split(' ').map((s) => s[0]).join('').slice(0, 2), photo_url: null, birthday: r.chance(0.3) ? dateKey(new Date(1975 + r.int(0, 30), r.chance(0.5) ? NOW.getMonth() : r.int(0, 11), r.int(1, 28))) : null, emergency_contact: null, marketing_optin: r.chance(0.7), whatsapp_verified: r.chance(0.8), notes: null });
     db.user_roles.push({ ...base(`rol_${id.slice(4)}`, daysAgo), user_id: id, role, granted_by: 'usr_super' });
   };
-  for (const u of demoUsers) if (u.role !== 'public') addPerson(u.id, u.name, u.role, u.email, 120);
+  // Roles added after 0.11 (marketing, developer) are seeded at the end with fixed rows, so the shared RNG stream is untouched.
+  for (const u of demoUsers) if (u.role !== 'public' && !LATE_ROLES.has(u.role)) addPerson(u.id, u.name, u.role, u.email, 120);
   const customerIds: string[] = ['usr_cust'];
   for (let i = 0; i < 30; i++) {
     const name = `${FIRST[i]} ${LAST[(i * 7) % LAST.length]}`;
@@ -311,6 +314,16 @@ export function buildSeed(): Record<string, BaseRow[]> {
 
   // ---- conversations (M-06 / S-06, 0.8.0): fixed rows, no RNG; six inbound messages stay unread ----
   db.message_log.push(...buildMessages(new Map(profiles.map((p) => [p.user_id, p.full_name]))));
+
+  // ---- the manual as a staff LMS (0031): marketing + developer people, text policies, reading and training history ----
+  const late = buildLateStaff();
+  users.push(...late.users); profiles.push(...late.profiles); db.user_roles.push(...late.roles);
+  db.studio_policies.push(...buildStudioPolicies());
+  const manual = buildManual();
+  db.manual_progress.push(...manual.progress);
+  db.manual_training.push(...manual.training);
+  db.manual_requests.push(...manual.requests);
+  db.manual_overrides.push(...manual.overrides);
 
   return db;
 }
