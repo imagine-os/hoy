@@ -16,3 +16,4 @@ export { PayoutRunPage, PayoutsPage } from './PayoutsPage';
 export { ExpensesPage } from './ExpensesPage';
 export { DeletionsPage } from './DeletionsPage';
 export { IntegrationsPage } from './IntegrationsPage';
+export { GoogleBusinessPage } from './GoogleBusinessPage';

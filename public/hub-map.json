@@ -626,7 +626,8 @@
         "M-08c",
         "M-08d",
         "M-08e",
-        "M-08f"
+        "M-08f",
+        "M-10a"
       ],
       "shots": {
         "thumbs": {
@@ -1850,8 +1851,8 @@
         "en": "Integrations"
       },
       "purpose": {
-        "es": "Una tarjeta por integración — Wompi, WhatsApp Business, correo, facturación DIAN, mapas, Supabase — con los campos no secretos listos para llenar (ids de comercio, número emisor, namespace de plantillas, proveedor, URL del proyecto), un estado simulado · configurado · conectado, el aviso de que las llaves viven en el servidor y la lista de lo que el dev debe terminar.",
-        "en": "One card per integration — Wompi, WhatsApp Business, email, DIAN e-invoicing, maps, Supabase — with the non-secret fields ready to fill (merchant ids, sender number, template namespace, provider, project URL), a simulated · configured · connected status, the notice that keys live server-side and the checklist of what the dev must finish."
+        "es": "Una tarjeta por integración — Wompi, WhatsApp Business, correo, facturación DIAN, mapas, Supabase, Google Business Profile — con los campos no secretos listos para llenar (ids de comercio, número emisor, namespace de plantillas, proveedor, URL del proyecto), un estado simulado · configurado · conectado, el aviso de que las llaves viven en el servidor y la lista de lo que el dev debe terminar.",
+        "en": "One card per integration — Wompi, WhatsApp Business, email, DIAN e-invoicing, maps, Supabase, Google Business Profile — with the non-secret fields ready to fill (merchant ids, sender number, template namespace, provider, project URL), a simulated · configured · connected status, the notice that keys live server-side and the checklist of what the dev must finish."
       },
       "surface": "admin",
       "roles": [
@@ -1874,6 +1875,48 @@
           "en-390": "hub-map/shots/M-10/en-390.jpg",
           "es-1280": "hub-map/shots/M-10/es-1280.jpg",
           "en-1280": "hub-map/shots/M-10/en-1280.jpg"
+        }
+      },
+      "group": {
+        "id": "admin",
+        "label": {
+          "es": "Administración",
+          "en": "Admin"
+        },
+        "order": 10
+      }
+    },
+    {
+      "code": "M-10a",
+      "route": "/admin/integrations/google-business",
+      "name": {
+        "es": "Integraciones · Google Business Profile",
+        "en": "Integrations · Google Business Profile"
+      },
+      "purpose": {
+        "es": "El horario del estudio en Google Search y Maps. Muestra el estado de la conexión, el cuerpo exacto que HoyOS enviará a la Business Profile API (horario semanal de M-08a + festivos y horarios especiales de M-08g), los pasos separados por quién los hace (plataforma una vez, estudio por sede) y, mientras no hay servidor, copiar el horario para pegarlo a mano.",
+        "en": "The studio’s hours on Google Search and Maps. Shows the connection status, the exact body HoyOS will send to the Business Profile API (M-08a weekly hours + M-08g holidays and special hours), the steps split by who does them (platform once, studio per location) and, while there is no server, copying the hours to paste by hand."
+      },
+      "surface": "admin",
+      "roles": [
+        "super_admin",
+        "admin"
+      ],
+      "experienceId": "admin",
+      "device": "desktop",
+      "status": "built",
+      "actions": [
+        "integrations.google.copyHours",
+        "integrations.google.connect",
+        "integrations.google.push"
+      ],
+      "shots": {
+        "thumbs": {},
+        "full": {
+          "es-390": "hub-map/shots/M-10a/es-390.jpg",
+          "en-390": "hub-map/shots/M-10a/en-390.jpg",
+          "es-1280": "hub-map/shots/M-10a/es-1280.jpg",
+          "en-1280": "hub-map/shots/M-10a/en-1280.jpg"
         }
       },
       "group": {

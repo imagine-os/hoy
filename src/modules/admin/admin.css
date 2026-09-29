@@ -109,3 +109,12 @@
 .adm-status-actions { flex-wrap: nowrap; gap: var(--sp-sm); white-space: nowrap; }
 .adm-inset { padding: var(--sp-md); border-radius: var(--r-ctl); background: var(--color-surface); }
 .integ-manual { white-space: nowrap; }
+.integ-notes { margin: 0; padding-left: var(--sp-xl); display: grid; gap: var(--sp-xs); }
+/* 0039 · M-10a Google Business Profile */
+.gbp-json { margin: 0; max-height: 26rem; overflow: auto; padding: var(--card-pad); border-radius: var(--r-md); background: var(--color-surface-2); font-family: var(--font-mono); font-size: var(--fs-xs); line-height: 1.5; white-space: pre; }
+.gbp-week { width: 100%; border-collapse: collapse; }
+.gbp-week th, .gbp-week td { text-align: left; padding: var(--sp-sm) 0; border-bottom: 1px solid var(--color-border); }
+.gbp-week tr:last-child th, .gbp-week tr:last-child td { border-bottom: 0; }
+.gbp-endpoint { overflow-wrap: anywhere; }
+.gbp-facts { margin: 0; }
+.gbp-facts dd { margin: 0; overflow-wrap: anywhere; }

@@ -1957,8 +1957,8 @@
     "en": "Integrations"
    },
    "purpose": {
-    "es": "Una tarjeta por integración — Wompi, WhatsApp Business, correo, facturación DIAN, mapas, Supabase — con los campos no secretos listos para llenar (ids de comercio, número emisor, namespace de plantillas, proveedor, URL del proyecto), un estado simulado · configurado · conectado, el aviso de que las llaves viven en el servidor y la lista de lo que el dev debe terminar.",
-    "en": "One card per integration — Wompi, WhatsApp Business, email, DIAN e-invoicing, maps, Supabase — with the non-secret fields ready to fill (merchant ids, sender number, template namespace, provider, project URL), a simulated · configured · connected status, the notice that keys live server-side and the checklist of what the dev must finish."
+    "es": "Una tarjeta por integración — Wompi, WhatsApp Business, correo, facturación DIAN, mapas, Supabase, Google Business Profile — con los campos no secretos listos para llenar (ids de comercio, número emisor, namespace de plantillas, proveedor, URL del proyecto), un estado simulado · configurado · conectado, el aviso de que las llaves viven en el servidor y la lista de lo que el dev debe terminar.",
+    "en": "One card per integration — Wompi, WhatsApp Business, email, DIAN e-invoicing, maps, Supabase, Google Business Profile — with the non-secret fields ready to fill (merchant ids, sender number, template namespace, provider, project URL), a simulated · configured · connected status, the notice that keys live server-side and the checklist of what the dev must finish."
    },
    "layout": [
     "Intro",
@@ -1986,7 +1986,8 @@
     "Email provider",
     "DIAN e-invoicing provider",
     "Maps",
-    "Supabase"
+    "Supabase",
+    "Google Business Profile"
    ],
    "states": [
     "Loading",
@@ -1998,9 +1999,110 @@
     "Read-only (no settings.write)"
    ],
    "notes": [
+    "0039: the google_business card opens M-10a (its detail page) and its checklist is split into “Platform, once” and “This studio, per location”; the Intro gains a notice that separates outbound secrets (server env, this page) from the inbound developer keys HoyOS issues (D-07).",
     "Sections: Intro = title · status counts · keys-live-server-side notice · manual link; Cards = one IntegrationCard per system (body · what is simulated today · fields · filled count · secrets named · checklist · notes · status select · save); Order = the connection order from ROADMAP §B and where each setting lives.",
     "Manual chapter 26 is written around this page: what can be promised today and the order in which the systems get connected.",
     "The M-08a “Integraciones” section became a pointer to this page in 0018; the old tenants.settings.integrations statuses are superseded by the table."
+   ]
+  }
+ },
+ {
+  "path": "/admin/integrations/google-business",
+  "code": "M-10a",
+  "surface": "admin",
+  "status": "built",
+  "roles": [
+   "super_admin",
+   "admin"
+  ],
+  "spec": {
+   "code": "M-10a",
+   "name": {
+    "es": "Integraciones · Google Business Profile",
+    "en": "Integrations · Google Business Profile"
+   },
+   "purpose": {
+    "es": "El horario del estudio en Google Search y Maps. Muestra el estado de la conexión, el cuerpo exacto que HoyOS enviará a la Business Profile API (horario semanal de M-08a + festivos y horarios especiales de M-08g), los pasos separados por quién los hace (plataforma una vez, estudio por sede) y, mientras no hay servidor, copiar el horario para pegarlo a mano.",
+    "en": "The studio’s hours on Google Search and Maps. Shows the connection status, the exact body HoyOS will send to the Business Profile API (M-08a weekly hours + M-08g holidays and special hours), the steps split by who does them (platform once, studio per location) and, while there is no server, copying the hours to paste by hand."
+   },
+   "layout": [
+    "Status",
+    "Preview",
+    "Setup",
+    "Fallback"
+   ],
+   "data": [
+    "integrations",
+    "tenants",
+    "hours_overrides",
+    "audit_log"
+   ],
+   "roles": [
+    "super_admin",
+    "admin"
+   ],
+   "logic": [
+    "HoyOS is the source of truth and pushes one way (D-0014): on save in M-08a / M-08g and nightly, the server calls locations.patch with updateMask=regularHours,specialHours and the body toGoogleBusinessHours() builds (src/tenant/hours.ts). Nightly it reads the location back and flags drift; nothing is pulled into HoyOS silently.",
+    "Tokens never reach the browser: the OAuth client id / secret are platform env vars; each location’s refresh token is a server secret named per tenant (GOOGLE_BUSINESS_REFRESH_TOKEN_<TENANT>). The integrations row keeps only locationName, accountEmail and placeId.",
+    "Status reads the google_business integrations row; “last push” is the newest hours_overrides.google_synced_at, which only the server writes (none yet).",
+    "Special hours are one period per date (Google allows endDate at most one day after startDate), so multi-day overrides are expanded; past overrides are left out.",
+    "Connect with Google and Push now are Placeholders until the server exists; Copy (JSON and text) and the Google link work today."
+   ],
+   "integrations": [
+    "Google Business Profile (Business Information API v1, Account Management API)",
+    "Google OAuth 2.0 (scope business.manage)"
+   ],
+   "states": [
+    "Loading",
+    "Simulated (seed)",
+    "Configured (location filled, server pending)",
+    "Connected",
+    "No special hours upcoming",
+    "Copied"
+   ],
+   "actions": [
+    {
+     "id": "integrations.google.copyHours",
+     "label": {
+      "es": "Copiar el horario para Google",
+      "en": "Copy the hours for Google"
+     },
+     "intent": {
+      "es": "Copia el horario para pegarlo en Google Business Profile",
+      "en": "Copy the hours to paste into Google Business Profile"
+     },
+     "params": {
+      "format": "enum:text,json (default text)"
+     }
+    },
+    {
+     "id": "integrations.google.connect",
+     "label": {
+      "es": "Conectar con Google",
+      "en": "Connect with Google"
+     },
+     "intent": {
+      "es": "Conecta el perfil de Google del estudio (no conectado aún)",
+      "en": "Connect the studio’s Google profile (not wired yet)"
+     },
+     "permission": "settings.write"
+    },
+    {
+     "id": "integrations.google.push",
+     "label": {
+      "es": "Enviar el horario a Google",
+      "en": "Push the hours to Google"
+     },
+     "intent": {
+      "es": "Envía el horario a Google ahora (no conectado aún)",
+      "en": "Push the hours to Google now (not wired yet)"
+     },
+     "permission": "settings.write"
+    }
+   ],
+   "notes": [
+    "Sub-page of M-10, linked from the google_business card (“Open”) and from the M-08a Opening hours card.",
+    "Multi-tenant: the platform steps happen once for every studio on HoyOS; each studio only connects its own location."
    ]
   }
  },
