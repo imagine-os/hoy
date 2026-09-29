@@ -331,3 +331,16 @@
 
 .teacher-avatar-living { width: 54px; height: 64px; flex: 0 0 54px; border-radius: var(--r-full); }
 .sanctuary-teacher-link .teacher-avatar-living img { width: 108%; height: 108%; border-radius: 0; transform: none; }
+/* 0033 — the vector wordmark in the V2 header and footer: at the brand manual's 120 px minimum width (3.2rem tall, so it
+   grows with the --ui band on large screens), blue on light / cream on dark (Wordmark tone auto), mid blue / yellow on
+   hover, and the global focus ring with room for the clear space. */
+.site[data-edition="sanctuary"] .site-brand .wordmark-vector,
+.site[data-edition="sanctuary"] .site-footer-brand .wordmark-vector { height: max(3.2rem, calc(var(--wm-min-w) / var(--wm-ratio))); }
+.site[data-edition="sanctuary"] .site-footer-brand { display: inline-flex; align-self: flex-start; margin-bottom: 12px; border-radius: var(--r-xs); }
+.site[data-edition="sanctuary"] .site-footer-brand .site-footer-wordmark { margin-bottom: 0; }
+.site[data-edition="sanctuary"] .site-brand { border-radius: var(--r-xs); }
+.site[data-edition="sanctuary"] .site-brand .wordmark-vector, .site[data-edition="sanctuary"] .site-footer-brand .wordmark-vector { transition: color var(--dur-base) var(--ease-out); }
+.site[data-edition="sanctuary"] .site-brand:hover .wordmark-vector, .site[data-edition="sanctuary"] .site-footer-brand:hover .wordmark-vector { color: var(--brand-midBlue); }
+:root[data-theme="dark"] .site[data-edition="sanctuary"] .site-brand:hover .wordmark-vector, :root[data-theme="dark"] .site[data-edition="sanctuary"] .site-footer-brand:hover .wordmark-vector { color: var(--brand-yellow); }
+.site[data-edition="sanctuary"] .site-brand:focus-visible, .site[data-edition="sanctuary"] .site-footer-brand:focus-visible { outline-offset: 6px; }
+@media (prefers-reduced-motion: reduce) { .site[data-edition="sanctuary"] .site-brand .wordmark-vector, .site[data-edition="sanctuary"] .site-footer-brand .wordmark-vector { transition: none; } }

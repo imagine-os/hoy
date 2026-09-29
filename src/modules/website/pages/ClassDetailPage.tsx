@@ -16,7 +16,7 @@ import { Chip } from '../../../components/atom/Chip/Chip';
 import { Badge } from '../../../components/atom/Badge/Badge';
 import { Card } from '../../../components/molecule/Card/Card';
 import { MediaSlot } from '../../../components/molecule/MediaSlot/MediaSlot';
-import { PageHead, SiteShell } from '../SiteShell';
+import { PageHead, SiteShell, useBrandHeading } from '../SiteShell';
 import { siteSpecs } from '../specs';
 
 /** W-08 — one class essay, joined to its modality rows through brand.classes[slug].modalitySlugs. */
@@ -24,6 +24,7 @@ export function ClassDetailPage() {
   const { edition, motion, videoEnabled } = useSiteEdition();
   const { slug = '' } = useParams();
   const { t, bi, lang } = useI18n();
+  const brand = useBrandHeading();
   const { sections, isVisible } = useLayout(siteSpecs.classDetail);
   const { rows: modalitiesAll } = useTable<ModalityRow>('modalities', { where: { active: true } });
   const modalities = useVisibleModalities(modalitiesAll); // 0018: M-08f decides whether Respiración has its own row
@@ -112,7 +113,7 @@ export function ClassDetailPage() {
         <div className="site-panel site-cta">
           <div className="site-cta-copy">
             <p className="eyebrow">{t('site.first.eyebrow')}</p>
-            <h2>{bi(taglines.life)}</h2>
+            <h2>{brand(bi(taglines.life), 'current')}</h2>
             <p>{t('site.first.body', { price: trialPrice })}</p>
           </div>
           <div className="row wrap">
