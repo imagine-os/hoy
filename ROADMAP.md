@@ -285,6 +285,8 @@ owner del estudio. Está escrito para que otra cuenta de Claude (o una persona) 
   WhatsApp, E-04 lockout); RLS per role and per `tenant_id`; realtime subscriptions on `class_sessions`,
   `bookings`, `waitlist`, `checkins`. Keep the demo users behind a `VITE_DEMO_AUTH` flag for testing.
 - Depends on: **P1 data shapes stabilising** (schema frozen; every page reads through the provider).
+- Plan (0043): the connection order — `version` + optimistic concurrency, RLS on the 26 tables, the auth model doc, then
+  `SupabaseProvider`, provider switch, presence, offline queue — is Pass C in `docs/plans/tables-system.md` (D-0020).
 - Parallelizable with: P5. Can start the SupabaseProvider skeleton and RLS drafts while P1 finishes,
   but do not cut over `DataContext.tsx` until the customer and staff passes are merged.
 - Input: `reference/alt-build-empty10/supabase/migrations/0001_init.sql` — a generated migration
@@ -336,6 +338,8 @@ owner del estudio. Está escrito para que otra cuenta de Claude (o una persona) 
   Realtime presence (preferred, no new vendor) or Liveblocks; marketing, social and content tools
   (campaigns, landing blocks in M-02, post scheduler, analytics).
 - Depends on: P2 realtime (presence) and P4 (campaigns reuse templates and sender).
+- Plan (0043): presence on the table manager and the editors is C6 in `docs/plans/tables-system.md`; Yjs only for
+  long-text co-editing (C8, decide then); Liveblocks stays rejected as a new vendor (D-0020).
 - Parallelizable with: P6.
 
 ## C. Definition of done (per phase)
@@ -632,9 +636,12 @@ of §E.
     teachers modalities rooms class_templates class_sessions bookings waitlist plans memberships credits
     payments invoices gift_cards email_templates wa_templates automations audit_log docs_entries
     components page_layouts`; `message_log` got its contract in 0.8.0; `intentions` was dropped in 0039, so 26 remain), then `npm run sql` — the input P2 needs.
+    _(0043: task C2 in `docs/plans/tables-system.md`, Sonnet with a Fable review.)_
 26. **Spec `data:` overrides** for M-03, C-01, D-01, D-02, K-01, P-01 and A-06 in their module `specs.ts`: their
     canvas `data` arrays name 32 nouns that are not tables (`plan_phases`, `design_tokens`…) and the inspector lists
     them as if they were.
+    _(0043: M-03 gets its `M03` spec in `src/modules/admin/specs.ts` — task A6 in `docs/plans/tables-system.md`; the
+    other six remain.)_
 27. **`useLayout(spec)` on the ~70 sectioned pages that still render a fixed order** (largest first: C-23, A-06,
     C-17, M-09, M-02a, A-02, C-10, C-06, M-08a/c, M-09c…); the customer pages already using the `SECTIONS[name]`
     pattern are the cheapest.

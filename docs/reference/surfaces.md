@@ -1,8 +1,23 @@
 # Machine surfaces — MCP / WebMCP, CLI, API
 
 What something other than a person can drive in HoyOS today, and what it cannot.
-**Checked 2026-09-29** (v0.17.0; previous check 2026-09-29, v0.16.0). Re-check and date this file every pass; a line that is not
+**Checked 2026-09-29** (v0.18.0; previous check 2026-09-29, v0.17.0). Re-check and date this file every pass; a line that is not
 re-checked is not current.
+
+**0043 delta (v0.18.0).** Eleven new action ids on M-03 `/admin/tables/:table`, declared in `src/modules/admin/actions.ts`
+(`ADMIN_ACTIONS['M-03']`): `tables.open`, `tables.openRow`, `tables.setView`, `tables.search`, `tables.filter`,
+`tables.newRow`, `tables.export`, `tables.toggleSidebar`, `tables.saveView`, `tables.pin` and `tables.toggleTechnicalNames`
+(the last is `dev.tools`; `tables.newRow` and `tables.saveView` are `tables.write`; the rest `tables.read`).
+`tables.setView` takes `grid`, `list`, `gallery`, `kanban` or `graph`; `calendar` and `timeline` answer "not wired yet".
+The page URL is now a linkable-view surface an agent can build without the page open: `?id=` (row drawer), `?view=`
+(view kind), `?v=` (a saved view), `?focus=` (row-level graph) and `?where=column:value` (filtered table), e.g.
+`/#/admin/tables/bookings?view=graph`. Saved views are rows in the new `table_views` table (57 tables in all), so they are
+readable and writable through `DataProvider` like any other row. `hoy.hub-map/1` changes only in text: the tables tool
+`purpose` now reads "El gestor de datos con vistas: cuadrícula, lista, galería, tablero y grafo." (regenerated
+`public/hub-map.json`, version 0.18.0; no schema change). `npm run sql` regenerated `supabase/schema.sql` and
+`docs/data-model.md`; `MockProvider.SEED_VERSION` is 7, so every stored demo db reseeds once. Not machine-reachable yet:
+the graph zoom / pan, the kanban drag (the keyboard and the "Move to…" select are the page's own controls) and saved-view
+rename / delete.
 
 **0041 delta (v0.17.0).** Thirteen new action ids: the admin module declares actions for the first time
 (`src/modules/admin/actions.ts`, `ADMIN_ACTIONS` merged into the specs) — `settings.hours.update` (M-08a),
@@ -83,6 +98,17 @@ window.__hoyos.actions.filter((a) => a.mounted);
 | `dev.apiKeys.create` | D-07 | Crea una llave {environment} llamada {name} con {scopes} | `name`, `environment: enum:live,test`, `scopes: csv`, `expires_days?` — answers the prefix; the raw key is shown once on screen, never returned | `api_keys.write` · super_admin, developer |
 | `dev.apiKeys.rotate` | D-07 | Rota la llave {id}; la vieja funciona 24 horas más | `id: api_keys.id or prefix` | `api_keys.write` |
 | `dev.apiKeys.revoke` | D-07 | Revoca la llave {id} ya | `id: api_keys.id or prefix` | `api_keys.write` |
+| `tables.open` | M-03 | Abre la tabla {table} | `table: enum of table names` | `tables.read` |
+| `tables.openRow` | M-03 | Abre la fila {id} de {table} | `table`, `id` | `tables.read` |
+| `tables.setView` | M-03 | Muéstralo como {kind} | `kind: enum:grid,list,gallery,kanban,graph` — `calendar`, `timeline` answer "not wired yet" | `tables.read` |
+| `tables.search` | M-03 | Busca {q} en esta tabla | `q` (empty clears) | `tables.read` |
+| `tables.filter` | M-03 | Filtra donde {column} {op} {value} | `column`, `op: enum:is,is_not,contains,empty,not_empty,before,after,gt,lt,in`, `value` (comma-separated for `in`; YYYY-MM-DD for dates) | `tables.read` |
+| `tables.newRow` | M-03 | Crea una fila nueva en esta tabla | — | `tables.write` |
+| `tables.export` | M-03 | Exporta esta vista en {format} | `format: enum:json,csv` (raw column names and values) | `tables.read` |
+| `tables.toggleSidebar` | M-03 | Contrae (o expande) la barra de tablas | — | `tables.read` |
+| `tables.saveView` | M-03 | Guarda esta vista como {name} | `name` — writes a `table_views` row | `tables.write` |
+| `tables.pin` | M-03 | Fija (o suelta) la tabla {table} | `table` (default: the open one) | `tables.read` |
+| `tables.toggleTechnicalNames` | M-03 | Muestra (u oculta) los nombres técnicos | — | `dev.tools` |
 
 | `manual.setLens` | K-03 | Muéstrame el manual de {role} | `role: enum:all,super_admin,admin,coordinator,front_desk,finance,teacher,maintenance,marketing,developer` | `docs.read` |
 | `manual.markRead` | K-03 | Marca el capítulo {chapter} como leído | `chapter: slug or number` (default the open chapter) | `docs.read` · team roles |
@@ -166,7 +192,7 @@ Everything is Node, in `scripts/`, and safe to run from a clean checkout.
 | `npm run typecheck` | `tsc --noEmit` alone | — |
 | `npm run tokens` | Regenerates the stylesheet from `src/design/tokens.ts` (D-01) | `src/design/tokens.css` |
 | `npm run specs` | Regenerates the canvas specs from `reference/canvas/` | `src/specs/canvasSpecs.ts` |
-| `npm run sql` | Regenerates the Supabase schema from `src/data/schema.ts` | `supabase/schema.sql` |
+| `npm run sql` | Regenerates the Supabase schema and the data-model doc from `src/data/schema.ts` (Node 22 type stripping) | `supabase/schema.sql`, `docs/data-model.md` |
 | `npm run flow-map` | Rebuilds the code → route map from the published manifest | `docs/flow-map.md` |
 | `npm run screenshots` | Full capture pass: every route, ES + EN, 390 + 1280, light + dark for key pages, signed in as each surface's demo user. `--smoke` (console-error check, no files) · `--only=a,b` · `--pages=C-02,C-04` · `--widths=360,390,768,1280,1920,3840` · `--dark=a,b` · `--label=before` · `--quality=N` (0026 pass: `--pages=C-02,C-02b,C-04,W-04,S-03 --widths=360,390,768,1280,1920,3840`) | `docs/screenshots/<code>/<lang>-<width>[-dark].jpg`, `docs/screenshots/routes.json` |
 | `npm run screenshots -- --full` | Tall website pages for the hub map: the W-xx codes at 390 px, fullPage capped at 6000 px, light, JPEG q70, reduced motion so scroll reveals are drawn | `docs/screenshots/W-xx/<lang>-390-full.jpg` |
@@ -236,7 +262,7 @@ consumer checklist: [`hub-map.md`](./hub-map.md).
 `frameUrl()` builds; a host substitutes and iframes it. Same-origin only under `imagine-os.github.io`.
 
 ---
-**Resumen (ES).** Qué puede manejar una máquina hoy (revisado 2026-09-29, v0.16.0; 0040 añade `app.openPractice`, `app.setGoal`, `analytics.setRange`, `analytics.openMember`, las tablas `practice_goals` y `activity_events`, y `npm run test:analytics`): en la página, `window.__hoyos` publica las rutas,
+**Resumen (ES).** Qué puede manejar una máquina hoy (revisado 2026-09-29, v0.18.0; 0043 añade once acciones `tables.*` en M-03, los parámetros de URL `?id=`, `?view=`, `?v=`, `?focus=` y `?where=` como vistas enlazables, y la tabla `table_views`; 0040 añadió `app.openPractice`, `app.setGoal`, `analytics.setRange`, `analytics.openMember`, las tablas `practice_goals` y `activity_events`, y `npm run test:analytics`): en la página, `window.__hoyos` publica las rutas,
 los usuarios demo, las acciones declaradas y `run(id, params)` para ejecutarlas (superficie WebMCP; no
 hay servidor MCP todavía), y `__hoyos.hubMap` con el mapa del hub. Archivo publicado: `hub-map.json`
 (esquema `hoy.hub-map/1`), con sus capturas en `hub-map/shots/`, para que aluzina y between-gigs dibujen el hub a su manera;

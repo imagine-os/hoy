@@ -296,6 +296,48 @@ Fields: **Date**, **Status** (accepted · superseded by D-NNNN), **Context**, **
   use it; keys without scopes or environments (a test integration could write live bookings); verifying in the
   browser (there is nothing to protect there).
 
+### D-0019 — The schema is the ontology
+
+- **Date** 2026-09-29 · **Status** accepted · **Changelog** `docs/changelog/0043-tables-views.md`
+- **Context.** Justin asked whether an ontology is built into the tables system, whether it is necessary, and whether
+  it would make things more complex. `src/data/schema.ts` already declares 56 typed tables with bilingual labels, nine
+  groups, 83 foreign-key relations and a `titleColumn` per table; the M-03 page ignored most of it and showed raw
+  identifiers, which is why the system read as developer-only and as if it had no model of its own.
+- **Decision.** The schema **is** the ontology. What was missing is metadata on the existing definitions, not a new
+  layer: a `kind` and an `icon` per table, `titleColumn` on every table, a human `label` (ES/EN) and a `sensitive` flag
+  per column, and reverse relations **derived** from the foreign keys (`src/data/relations.ts`). The graph view, the
+  related-rows drawer and the FK cells get everything from `references` and `titleColumn`. Cross-project vocabulary
+  stays at the hub-map level (`hoy.hub-map/1`); a `hoy.entities/1` publication of the entity list follows the hub-map
+  pattern only when a consumer (aluzina, Between Gigs) asks for it. People see labels, icons and relations — never
+  "classes" or "predicates". Plan: `docs/plans/tables-system.md`.
+- **Alternative rejected.** A standalone ontology layer with classes, typed predicates and inference. Rejected because
+  it is a second place to define the same things (every table would exist twice, once as a `TableDef` and once as a
+  class) and a second language for the humans who use the studio software; Airtable and Notion, the stated baseline,
+  expose none of it; and the graph view needs nothing beyond foreign keys and `titleColumn` to draw the schema or a
+  record's neighbourhood.
+
+### D-0020 — Views are rows; realtime is Supabase first, Yjs only for documents
+
+- **Date** 2026-09-29 · **Status** accepted · **Changelog** `docs/changelog/0043-tables-views.md`
+- **Context.** The tables system gains saved views (grid, list, gallery, kanban, graph; calendar, timeline and form
+  next), and Justin asked how all of it is prepared for a database connection, Supabase, and "yjs or liveblocks type
+  abilities". Today the only provider is `MockProvider` on localStorage; `SupabaseProvider` is a stub; no realtime,
+  presence, offline or CRDT library is installed; rows carry `updated_at` but no version.
+- **Decision.** (1) **Saved views are rows** in a `table_views` table (table, name ES/EN, type, filters, sorts,
+  group_by, hidden columns, shared flag, owner) read and written through the same `DataProvider`, so views sync the
+  moment Supabase lands, with no separate store. (2) **Concurrency** is optimistic: a `version` column in
+  `BASE_COLUMNS` plus `updated_at`; `update()` rejects a stale write and the UI shows a visible Notice ("someone changed
+  this") with reload / overwrite — never a silent last-write-wins and never a merge of row data. (3) **Supabase
+  Realtime** carries both changes (`postgres_changes` → `subscribe`) and presence (who is viewing / editing which row).
+  (4) **Yjs is reserved for long-text co-editing** (manual pages, studio policies, page layouts) and adopted only when
+  the team actually edits text together, with its updates stored in Supabase. Order and tasks: Pass C in
+  `docs/plans/tables-system.md`.
+- **Alternative rejected.** A CRDT for row data (a booking with a capacity rule is not a document; a merge can produce
+  a row nobody wrote); views in localStorage or in `tenants.settings` (no ids, no `updated_at`, no realtime, nothing to
+  share); **Liveblocks** as a new vendor for presence and storage — rejected unless presence UX later needs what
+  Supabase Realtime presence cannot do, consistent with ROADMAP P7 ("Supabase Realtime presence preferred, no new
+  vendor"); silent last-write-wins (the current mock behaviour, acceptable only while one person edits at a time).
+
 ---
 **Resumen (ES).** Este archivo es la lista corta y citable de las decisiones de ingeniería, una por
 bloque, solo se añade: una decisión que deja de ser cierta se reemplaza con un bloque nuevo, nunca
