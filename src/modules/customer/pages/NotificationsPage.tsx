@@ -10,8 +10,9 @@ import { ListGroup, ListRow } from '../../../components/molecule/ListRow/ListRow
 import { SegmentedControl } from '../../../components/molecule/SegmentedControl/SegmentedControl';
 import { NOTIF_CATEGORIES, NOTIF_CHANNELS, useMyNotifications, useNotificationPrefs, type NotifChannel } from '../hooks';
 import { PageHead } from '../ui';
+import { Icon, type IconName } from '../../../components/atom/Icon/Icon';
 
-const ICON: Record<NotificationRow['kind'], string> = { booking: '◔', waitlist: '≡', payment: '$', class: '▦', event: '✦', review: '☆', invite: '✉', studio: '◎' };
+const ICON: Record<NotificationRow['kind'], IconName> = { booking: 'calendar-clock', waitlist: 'waitlist', payment: 'credit-card', class: 'schedule', event: 'ticket', review: 'star', invite: 'invite', studio: 'studio' };
 
 /** C-24 Notifications — the `notifications` table is the inbox; `notification_prefs` is the mute switchboard. */
 export function NotificationsPage() {
@@ -29,7 +30,7 @@ export function NotificationsPage() {
     <ListGroup title={title}>
       {list.map((n) => (
         <ListRow key={n.id}
-          icon={<span className={n.read_at ? '' : 'cust-unread'}>{ICON[n.kind] ?? '▣'}</span>}
+          icon={<span className={n.read_at ? '' : 'cust-unread'}><Icon name={ICON[n.kind] ?? 'bell'} /></span>}
           title={<span style={{ fontWeight: n.read_at ? 'var(--fw-regular)' : 'var(--fw-semibold)' }}>{bi(n.title)}</span>}
           subtitle={`${bi(n.body)} · ${t(`customer.notifications.via.${n.sent_via}`)} · ${isSameDay(n.created_at, new Date()) ? formatTime(n.created_at, lang) : formatDate(n.created_at, lang)}`}
           trailing={n.deep_link ? <Button size="sm" variant="secondary" onClick={() => { void open(n); }}>{t('customer.notifications.open')}</Button> : undefined}
@@ -44,7 +45,7 @@ export function NotificationsPage() {
         actions={unread > 0 ? <Button size="sm" variant="ghost" onClick={() => { void markAllRead(); }}>{t('customer.notifications.markAll')}</Button> : undefined} />
       <div className="stack">
         {loading && rows.length === 0 && <EmptyState compact tone="loading" title={t('core.common.loading')} />}
-        {!loading && rows.length === 0 && <EmptyState icon="▣" title={t('customer.notifications.empty')} body={t('customer.notifications.empty.body')} />}
+        {!loading && rows.length === 0 && <EmptyState icon="bell" title={t('customer.notifications.empty')} body={t('customer.notifications.empty.body')} />}
         {group(today, t('customer.notifications.today'))}
         {group(earlier, t('customer.notifications.earlier'))}
 
@@ -54,7 +55,7 @@ export function NotificationsPage() {
             options={NOTIF_CHANNELS.map((c) => ({ value: c, label: t(`customer.notifications.channel.${c}`) }))} />
           <ListGroup>
             {NOTIF_CATEGORIES.map((cat) => (
-              <ListRow key={cat} icon={cat === 'marketing' ? '✧' : '✓'} title={t(`customer.notifications.cat.${cat}`)} subtitle={t(`customer.notifications.cat.${cat}.sub`)}
+              <ListRow key={cat} icon={cat === 'marketing' ? 'sparkle' : 'bell-ring'} title={t(`customer.notifications.cat.${cat}`)} subtitle={t(`customer.notifications.cat.${cat}.sub`)}
                 trailing={<Toggle size="sm" label="" checked={prefs.isEnabled(channel, cat)} onChange={(v) => { void prefs.set(channel, cat, v); }} />} />
             ))}
           </ListGroup>

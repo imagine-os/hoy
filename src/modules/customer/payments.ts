@@ -16,6 +16,7 @@ import type { DataProvider } from '../../data/types';
 import type { PaymentRow } from '../../data/schema';
 import { splitIva } from '../../data/tax';
 import { tenant } from '../../tenant/tenant';
+import type { IconName } from '../../components/atom/Icon/Icon';
 
 export type ElectronicMethod = 'card' | 'pse' | 'nequi';
 export type ManualMethod = 'transfer' | 'cash';
@@ -28,16 +29,16 @@ export interface PaymentMethodOption {
   provider: 'wompi' | 'manual';
   label: { es: string; en: string };
   hint: { es: string; en: string };
-  glyph: string;
+  glyph: IconName;
 }
 
 /** The Colombian payment reality from C-05, in display order. Flags come from feature_flags later. */
 export const PAYMENT_METHODS: PaymentMethodOption[] = [
-  { id: 'card', provider: 'wompi', label: { es: 'Tarjeta', en: 'Card' }, hint: { es: 'Crédito o débito · vía Wompi', en: 'Credit or debit · via Wompi' }, glyph: '▭' },
-  { id: 'pse', provider: 'wompi', label: { es: 'PSE', en: 'PSE' }, hint: { es: 'Débito desde tu banco · vía Wompi', en: 'Bank debit · via Wompi' }, glyph: '⇄' },
-  { id: 'nequi', provider: 'wompi', label: { es: 'Nequi', en: 'Nequi' }, hint: { es: 'Billetera · vía Wompi', en: 'Wallet · via Wompi' }, glyph: '◎' },
-  { id: 'transfer', provider: 'manual', label: { es: 'Transferencia', en: 'Transfer' }, hint: { es: 'Transferencia bancaria · la confirma recepción', en: 'Bank transfer · front desk confirms' }, glyph: '⇥' },
-  { id: 'cash', provider: 'manual', label: { es: 'Efectivo', en: 'Cash' }, hint: { es: 'Solo en recepción · cupo retenido 60 min', en: 'Front desk only · spot held 60 min' }, glyph: '$' },
+  { id: 'card', provider: 'wompi', label: { es: 'Tarjeta', en: 'Card' }, hint: { es: 'Crédito o débito · vía Wompi', en: 'Credit or debit · via Wompi' }, glyph: 'credit-card' },
+  { id: 'pse', provider: 'wompi', label: { es: 'PSE', en: 'PSE' }, hint: { es: 'Débito desde tu banco · vía Wompi', en: 'Bank debit · via Wompi' }, glyph: 'bank' },
+  { id: 'nequi', provider: 'wompi', label: { es: 'Nequi', en: 'Nequi' }, hint: { es: 'Billetera · vía Wompi', en: 'Wallet · via Wompi' }, glyph: 'smartphone' },
+  { id: 'transfer', provider: 'manual', label: { es: 'Transferencia', en: 'Transfer' }, hint: { es: 'Transferencia bancaria · la confirma recepción', en: 'Bank transfer · front desk confirms' }, glyph: 'move' },
+  { id: 'cash', provider: 'manual', label: { es: 'Efectivo', en: 'Cash' }, hint: { es: 'Solo en recepción · cupo retenido 60 min', en: 'Front desk only · spot held 60 min' }, glyph: 'cash' },
 ];
 
 const wait = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));

@@ -1,5 +1,6 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import './Button.css';
+import { renderIcon, type IconName } from '../Icon/Icon';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
 export type ButtonSize = 'sm' | 'md' | 'lg';
@@ -9,7 +10,8 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   size?: ButtonSize;
   loading?: boolean;
   block?: boolean;
-  icon?: ReactNode;
+  /** An `IconName` or a node; shown before the label, aria-hidden (the label names the action). */
+  icon?: IconName | ReactNode;
 }
 
 export function Button({ variant = 'primary', size = 'md', loading = false, block = false, icon, className = '', children, disabled, ...rest }: ButtonProps) {
@@ -21,7 +23,7 @@ export function Button({ variant = 'primary', size = 'md', loading = false, bloc
       {...rest}
     >
       {loading && <span className="btn-spinner" aria-hidden />}
-      {icon && <span className="btn-icon" aria-hidden>{icon}</span>}
+      {icon && <span className="btn-icon" aria-hidden>{renderIcon(icon, size === 'lg' ? 'md' : 'sm')}</span>}
       <span className="btn-label">{children}</span>
     </button>
   );

@@ -8,13 +8,14 @@ import { Chip } from '../../components/atom/Chip/Chip';
 import type { JoinedSession } from './hooks';
 import './customer.css';
 import { MS } from '../../i18n/format';
+import { Icon } from '../../components/atom/Icon/Icon';
 
 /** Page header used by every inner customer page: optional back link, eyebrow, title, subtitle, actions. */
 export function PageHead({ title, sub, back, eyebrow, actions }: { title: ReactNode; sub?: ReactNode; back?: string; eyebrow?: ReactNode; actions?: ReactNode }) {
   const { t } = useI18n();
   return (
     <header className="cust-head">
-      {back && <Link to={back} className="cust-back">‹ <span>{t('core.nav.back')}</span></Link>}
+      {back && <Link to={back} className="cust-back"><Icon name="chevron-left" size="sm" /><span>{t('core.nav.back')}</span></Link>}
       <div className="row-between wrap">
         <div className="grow">
           {eyebrow && <div className="eyebrow">{eyebrow}</div>}

@@ -106,14 +106,14 @@ export const HUB_GROUPS: Record<string, HubGroup> = Object.fromEntries(([
  * Route prefix -> group id. A rule matches a path when the path equals the prefix or sits under it
  * (`prefix/...`); with `exact` only the path itself matches. The longest matching prefix wins, so a rule
  * for `/app/schedule` beats the one for `/app`. Every page must match a rule (the generator fails the
- * build otherwise). Customer app: book (schedule, class, booking, waitlist, rate, events, intention),
+ * build otherwise). Customer app: book (schedule, class, booking, waitlist, rate, events),
  * pay (checkout, payment methods, plans, passes, credits, membership, gift, invite, history), account
  * (profile, account, notifications, more, rules, faq, teachers, legal, edge states, /no-access), auth.
  */
 export const HUB_GROUP_RULES: { prefix: string; group: string; exact?: boolean }[] = [
   // customer app
   { prefix: '/app', group: 'book', exact: true },
-  ...['schedule', 'class', 'booking', 'waitlist', 'rate', 'events', 'intention'].map((p) => ({ prefix: `/app/${p}`, group: 'book' })),
+  ...['schedule', 'class', 'booking', 'waitlist', 'rate', 'events'].map((p) => ({ prefix: `/app/${p}`, group: 'book' })),
   ...['checkout', 'payment-methods', 'plans', 'passes', 'credits', 'membership', 'gift', 'invite', 'history'].map((p) => ({ prefix: `/app/${p}`, group: 'pay' })),
   ...['profile', 'account', 'notifications', 'more', 'rules', 'faq', 'teachers', 'legal', 'state'].map((p) => ({ prefix: `/app/${p}`, group: 'account' })),
   { prefix: '/no-access', group: 'account' },
@@ -192,7 +192,7 @@ const exp = (id: string, code: string, band: HubBand, device: HubDevice, route: 
 export const HUB_EXPERIENCES: HubExperienceSeed[] = [
   exp('app', 'C-01', 'outside', 'phone', '/app', 'customer', true,
     { es: 'App de clientes', en: 'Customer app' },
-    { es: 'Móvil primero: la intención del día, las clases de hoy, reservar, pagar, la membresía y el historial.', en: 'Mobile first: the day’s intention, today’s classes, booking, paying, membership and history.' },
+    { es: 'Móvil primero: las clases de hoy, reservar, pagar, la membresía y el historial.', en: 'Mobile first: today’s classes, booking, paying, membership and history.' },
     { featured: true, secondary: { label: { es: 'Entrar o crear cuenta', en: 'Sign in or create an account' }, route: '/auth/sign-in' } }),
   exp('site', 'W-01', 'outside', 'page', '/site', 'public', false,
     { es: 'Sitio web', en: 'Website' },

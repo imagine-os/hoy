@@ -12,6 +12,7 @@ import { EmptyState } from '../../../components/molecule/EmptyState/EmptyState';
 import { PAYMENT_METHODS, wompiCheckout, wompiTokenise, type ElectronicMethod } from '../payments';
 import { priceOf, usePaymentMethods } from '../hooks';
 import { PageHead } from '../ui';
+import { Icon } from '../../../components/atom/Icon/Icon';
 
 /** C-05 Payment methods — saved methods live in `payment_methods`; the token is Wompi's, never ours. */
 export function PaymentMethodsPage() {
@@ -54,11 +55,11 @@ export function PaymentMethodsPage() {
         </Card>
 
         <ListGroup title={t('customer.pay.saved')}>
-          {saved.length === 0 && <EmptyState compact icon="▭" title={t('customer.pay.saved.empty')} body={t('customer.pay.saved.empty.body')} />}
+          {saved.length === 0 && <EmptyState compact icon="credit-card" title={t('customer.pay.saved.empty')} body={t('customer.pay.saved.empty.body')} />}
           {saved.map((m) => {
             const opt = PAYMENT_METHODS.find((x) => x.id === m.kind);
             return (
-              <ListRow key={m.id} icon={opt?.glyph ?? '▭'}
+              <ListRow key={m.id} icon={opt?.glyph ?? 'credit-card'}
                 title={m.last4 ? `${m.brand} ···· ${m.last4}` : m.brand}
                 subtitle={[m.expires ? t('customer.pay.saved.expires', { date: m.expires }) : t(`customer.pay.kind.${m.kind}`), t('customer.pay.saved.tokenised')].join(' · ')}
                 trailing={(
@@ -66,7 +67,7 @@ export function PaymentMethodsPage() {
                     {m.is_default
                       ? <Badge tone="success">{t('customer.pay.saved.default')}</Badge>
                       : <Button size="sm" variant="ghost" onClick={() => { void makeDefault(m); }}>{t('customer.pay.saved.makeDefault')}</Button>}
-                    <Button size="sm" variant="ghost" onClick={() => { void remove(m); }} aria-label={t('customer.pay.saved.remove')}>✕</Button>
+                    <Button size="sm" variant="ghost" onClick={() => { void remove(m); }} aria-label={t('customer.pay.saved.remove')} title={t('customer.pay.saved.remove')}><Icon name="trash" size="sm" /></Button>
                   </span>
                 )} />
             );

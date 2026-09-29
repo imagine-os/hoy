@@ -94,3 +94,22 @@ Every component ships a `.meta.ts` (tier, description es/en, props, states, usag
 `/#/dev/components` renders all of them on the graph-paper canvas. Rule: no component without a meta, no meta
 without a usage. Surface vocabulary shared by all of them: `.surf` (frame/panel), `.surf2` (tile), `.inverse`
 (deep-blue card), `.ph` (placeholder) in `global.css`, and the `Card` tones `surface | primary | highlight | muted`.
+
+## Icons (0030, v0.12.0)
+One set, one seam: `src/components/atom/Icon/Icon.tsx` maps **135 names** (`IconName`) to [lucide](https://lucide.dev)
+glyphs (ISC licence, named imports only, so the bundle carries just these). Nothing else imports `lucide-react`;
+redrawing or swapping a glyph is one line in the map. D-02 (`/#/dev/components` → Icon) shows every name in five
+groups: navigation, actions, settings, things and status, hub tools.
+
+- **Tokens (D-01)**: `--icon-xs` 14 · `--icon-sm` 16 · `--icon-md` 20 · `--icon-lg` 24 · `--icon-xl` 32 px (rem, so
+  they grow with `--ui`), `--icon-tile` 36 px (the tinted square behind a list-row or settings glyph),
+  `--icon-stroke` 1.75 and `--icon-stroke-active` 2.25. `size` takes a step name or px.
+- **Slots take the name**: `Button icon="user-plus"`, `ListRow icon="bell"`, `Card icon="clock"`, `EmptyState icon="inbox"`,
+  `Notice icon=…`, `NavBar` items and `RouteDef.nav.icon` (typed `IconName`, so a nav entry cannot fall back to a
+  box). `renderIcon()` draws a known name and passes any other node through (Avatar, a seeded literal glyph); an
+  unknown kebab-case string warns in dev.
+- **Active state is never colour alone**: the dock item gets a tinted pill behind a heavier stroke and a semibold
+  label; the sidebar active pill and the settings rail thicken the stroke too.
+- **Labels stay**: every icon is `aria-hidden` next to a visible label; an icon-only control (month arrows, remove
+  card, inbox back) carries `aria-label` + `title`. Targets stay at `--h-ctl` (44 px) from the control, not the glyph.
+- **Themes**: `currentColor` everywhere, so light, dark and wireframe inherit the container's contrast.

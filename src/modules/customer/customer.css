@@ -5,7 +5,7 @@
 .cust-quick-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: var(--sp-3) var(--sp-1); border-radius: var(--r-ctl); background: var(--color-surface); border: 1px solid var(--color-card-border); box-shadow: var(--shadow-highlight), var(--shadow-contact); color: var(--color-text); font-size: var(--fs-xs); font-family: var(--font-body); font-weight: var(--fw-medium); text-decoration: none; min-height: 64px; transition: box-shadow var(--dur-fast), transform var(--dur-fast); }
 .cust-quick-btn:hover { text-decoration: none; box-shadow: var(--shadow-card); }
 .cust-quick-btn:active { transform: translateY(1px); }
-.cust-quick-btn span:first-child { font-size: var(--fs-xl); color: var(--color-primary); }
+.cust-quick-icon { display: inline-flex; line-height: 0; color: var(--color-primary); }
 
 /* shared page scaffolding */
 .cust-page { display: flex; flex-direction: column; gap: var(--sp-4); padding-top: var(--sp-4); }
@@ -128,12 +128,10 @@
 .cust-posring strong { font-size: var(--fs-3xl); line-height: 1; }
 
 /* C-24 */
-.cust-unread { position: relative; }
+.cust-unread { position: relative; display: inline-flex; }
 .cust-unread::after { content: ''; position: absolute; top: -4px; right: -8px; width: 8px; height: 8px; border-radius: 50%; background: var(--color-danger); }
 
 /* A-05 */
-.cust-intention { display: flex; flex-direction: column; gap: var(--sp-2); min-height: 120px; }
-.cust-intention.is-active { border-color: var(--color-primary); }
 
 /* auth shell — AppShell's top bar over one centred column (--w-auth 480 → --w-auth-wide 576 from 900 px) */
 .auth { min-height: 100vh; display: flex; flex-direction: column; }
@@ -185,8 +183,6 @@
   .cust-title, .cust-greeting { font-size: var(--fs-3xl); }
   .cust-plans { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .cust-plans-links { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .cust-intention-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  .cust-intention { min-height: 10rem; }
   .cust-filters { flex-wrap: wrap; }
   .cust-filters-scroll { flex-wrap: wrap; overflow: visible; mask-image: none; -webkit-mask-image: none; padding: 2px; }
 }

@@ -129,8 +129,8 @@ export function ClassDetailPage() {
       <div className="cust-sticky">
         {cta()}
         <div className="row" style={{ justifyContent: 'center' }}>
-          <Button variant="ghost" size="sm" onClick={share} icon="⇪">{t('customer.class.share')}</Button>
-          <Button variant="ghost" size="sm" onClick={() => nav(`/app/invite?session=${s.id}`)} icon="✉">{t('customer.home.quick.invite')}</Button>
+          <Button variant="ghost" size="sm" onClick={share} icon="share">{t('customer.class.share')}</Button>
+          <Button variant="ghost" size="sm" onClick={() => nav(`/app/invite?session=${s.id}`)} icon="invite">{t('customer.home.quick.invite')}</Button>
         </div>
         {shared && <Notice tone="success">{shared}</Notice>}
       </div>

@@ -13,6 +13,7 @@ import { MessageThread } from '../../components/organism/MessageThread/MessageTh
 import { MessageComposer } from '../../components/molecule/MessageComposer/MessageComposer';
 import { maskPhone, usePeople } from './people';
 import './staff.css';
+import { Icon } from '../../components/atom/Icon/Icon';
 
 /** S-06 front-desk inbox: every customer conversation on the left, the selected thread and the reply box on the right. */
 export function InboxPage() {
@@ -46,12 +47,12 @@ export function InboxPage() {
           {loading && conversations.length === 0 ? <EmptyState compact tone="loading" title={t('core.common.loading')} /> : <ConversationList conversations={summaries} selectedKey={id} linkTo={(k) => `/staff/inbox/${k}`} />}
         </aside>
         <section className="inbox-pane" aria-live="polite">
-          {!id && <Card className="inbox-empty"><EmptyState icon="✉" title={t('staff.inbox.select')} body={t('staff.inbox.select.body')} /></Card>}
+          {!id && <Card className="inbox-empty"><EmptyState icon="inbox" title={t('staff.inbox.select')} body={t('staff.inbox.select.body')} /></Card>}
           {id && !person && <Card className="inbox-empty"><EmptyState tone={loading ? 'loading' : 'empty'} title={loading ? t('core.common.loading') : t('staff.inbox.notFound')} body={loading ? undefined : t('staff.inbox.notFound.body')} action={<Link to="/staff/inbox"><Button size="sm" variant="secondary">{t('staff.inbox.back')}</Button></Link>} /></Card>}
           {id && person && (
             <Card padding="none" className="inbox-thread">
               <header className="inbox-head">
-                <Link to="/staff/inbox" className="inbox-back small" aria-label={t('staff.inbox.back')}>‹</Link>
+                <Link to="/staff/inbox" className="inbox-back small" aria-label={t('staff.inbox.back')} title={t('staff.inbox.back')}><Icon name="chevron-left" /></Link>
                 <Avatar name={person.name} initials={person.initials} size={44} />
                 <div className="grow stack-sm inbox-who">
                   <div className="row wrap">
@@ -61,7 +62,7 @@ export function InboxPage() {
                   </div>
                   <div className="xs muted">{maskPhone(person.phone)}{person.email && <span className="inbox-email"> · {person.email}</span>}</div>
                 </div>
-                {can('members.read') && <Link to={`/admin/crm/${id}`}><Button size="sm" variant="secondary">{t('staff.inbox.openCrm')}</Button></Link>}
+                {can('members.read') && <Link to={`/admin/crm/${id}`}><Button size="sm" variant="secondary" icon="crm">{t('staff.inbox.openCrm')}</Button></Link>}
               </header>
               <MessageThread scroll messages={selected?.messages ?? []} personName={person.name} authorOf={authorOf} />
               <div className="inbox-compose">

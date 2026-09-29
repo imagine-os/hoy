@@ -1,8 +1,9 @@
 import { useI18n } from '../../i18n/I18nProvider';
 import { useTheme } from '../../design/ThemeProvider';
-import { brand, materials, movements, motion, palette, radii, rgb, semantic, shadows, spacing, surfaces, textures, type as typeTokens } from '../../design/tokens';
+import { brand, icons, materials, movements, motion, palette, radii, rgb, semantic, shadows, spacing, surfaces, textures, type as typeTokens } from '../../design/tokens';
 import { Card } from '../../components/molecule/Card/Card';
 import { Toggle } from '../../components/atom/Toggle/Toggle';
+import { Icon } from '../../components/atom/Icon/Icon';
 import './dev.css';
 
 /** D-01 — renders the token object live: palette, semantic roles, materials, textures, the shadow scale, type, spacing, radii, motion. */
@@ -53,6 +54,7 @@ export function TokensPage() {
           {Object.keys(shadows).map((k) => <div key={k} className={`tok-shadow ${k === 'shadow-accent' ? 'is-accent' : ''} ${k.startsWith('shadow-pressed') ? 'is-pressed' : ''}`} style={{ boxShadow: `var(--${k})` }}><code className="xs">--{k}</code></div>)}
         </div>
       </Card>
+      <Card title={t('dev.tokens.icons')} eyebrow={t('dev.tokens.icons.eyebrow')}><div className="tok-grid">{Object.entries(icons).map(([k, v]) => <div key={k} className="tok-row"><code>--{k}</code>{k.startsWith('icon-stroke') ? <Icon name="schedule" size="lg" strokeWidth={Number(v)} /> : k === 'icon-tile' ? <span className="card-icon"><Icon name="settings" /></span> : <Icon name="schedule" size={k.replace('icon-', '') as 'md'} />}<span className="xs muted">{v}</span></div>)}</div></Card>
       <Card title={t('dev.tokens.motion')}><div className="tok-grid">{Object.entries(motion).map(([k, v]) => <div key={k} className="tok-row"><code>--{k}</code><span className="xs muted">{v}</span></div>)}</div></Card>
     </div>
   );

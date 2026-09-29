@@ -7,7 +7,10 @@ dónde estamos, qué sigue y en qué orden (con dependencias explícitas y lo qu
 paralelo), qué significa "terminado" en cada fase, cómo trabajar en el repo y qué debe decidir el
 owner del estudio. Está escrito para que otra cuenta de Claude (o una persona) lo retome sin contexto.
 
-## A. Where we are (v0.11.2, 2026-09-29)
+## A. Where we are (v0.12.0, 2026-09-29)
+
+- **v0.12.0 — Icons + the daily intention retired** (`docs/changelog/0030-icons.md`, prompt `docs/prompts/0030-icons.md`; Justin: "the icons in the bottom tray, and other icons should probably be better … In settings, there should be clear icons for each setting" and "erase the \"How do you want to feel today\" component from the experience"):
+  `lucide-react` behind the `Icon` atom (135 names, D-0008, `--icon-*` tokens), typed `nav.icon`, Card `icon`, settings rail + section glyphs; A-05 retired (redirect, no C-01 card, no flags, `intentions` deprecated).
 
 - **v0.11.2 — Hub map sample routes** (`docs/changelog/0029-hub-map-sample-routes.md`, prompt `docs/prompts/0029-hub-map-sample-routes.md`):
   the 9 template pages carry `pages[].sampleRoute` (additive); a `sample` segment is resolved by the app to today's seed record; `npm run hub-map:check` opens all nine.

@@ -87,6 +87,8 @@ This is the studio's capacity:
 
 {{tenant:capacity}}
 
+![The member app home: the next class and today's classes](../../screenshots/C-01/en-390.jpg "C-01 · /app")
+
 ## 5. Four promises we keep
 We promise every member four things. They are not slogans: they are rules the system applies on its own.
 

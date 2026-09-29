@@ -66,7 +66,7 @@ export function TeacherProfilePage() {
       </div>
       <div className="row-between wrap">
         <span className="xs muted">{saved ? t('teacher.profile.saved') : t('teacher.profile.review')}</span>
-        <Button disabled={!dirty || !draft.bioEs.trim() || !draft.display_name.trim()} onClick={save}>{t('teacher.profile.submit')}</Button>
+        <Button disabled={!dirty || !draft.bioEs.trim() || !draft.display_name.trim()} onClick={save} icon="send">{t('teacher.profile.submit')}</Button>
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
 import './NotificationBell.css';
+import { Icon } from '../../atom/Icon/Icon';
 
 export interface NotificationBellProps {
   /** Unread count; 0 renders the plain bell. */
@@ -21,7 +22,7 @@ export function NotificationBell({ count, to, onClick, max = 9, expanded, contro
   const label = `${t('core.notifications.label')} · ${count > 0 ? t('core.notifications.count', { n: count }) : t('core.notifications.none')}`;
   const inner = (
     <>
-      <span className="bell-glyph" aria-hidden>✽</span>
+      <span className="bell-glyph" aria-hidden><Icon name="bell" size="sm" /></span>
       {count > 0 && <span className="bell-badge" aria-hidden>{count > max ? `${max}+` : count}</span>}
     </>
   );

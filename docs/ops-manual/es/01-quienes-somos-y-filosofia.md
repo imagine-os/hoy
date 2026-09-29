@@ -91,6 +91,8 @@ Esta es la capacidad del estudio:
 
 {{tenant:capacity}}
 
+![El inicio de la app del socio: su próxima clase y las de hoy](../../screenshots/C-01/es-390.jpg "C-01 · /app")
+
 ## 5. Cuatro promesas que cumplimos
 Prometemos cuatro cosas a cada socio. No son frases bonitas: son reglas que el sistema aplica solo.
 

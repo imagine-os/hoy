@@ -64,7 +64,7 @@ export function SignUpPage() {
       await data.insert('consents', { user_id: user.id, legal_document_id: 'leg_terms_es', accepted_at: now, ip: null });
       await data.insert('consents', { user_id: user.id, legal_document_id: 'leg_privacy_es', accepted_at: now, ip: null });
       switchUser(user.id); // SessionProvider resolves any users row (profile + role) — the session is the new account.
-      nav('/app/intention');
+      nav('/app');
     } finally { setBusy(false); }
   };
 

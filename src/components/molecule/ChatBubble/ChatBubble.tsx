@@ -3,6 +3,7 @@ import { formatTime } from '../../../i18n/format';
 import type { MessageChannel, MessageDirection, MessageSource, MessageStatus } from '../../../data/schema';
 import { Badge, toneForStatus } from '../../atom/Badge/Badge';
 import './ChatBubble.css';
+import { Icon, type IconName } from '../../atom/Icon/Icon';
 
 export interface ChatBubbleProps {
   direction: MessageDirection;
@@ -19,7 +20,7 @@ export interface ChatBubbleProps {
   unread?: boolean;
 }
 
-export const CHANNEL_GLYPH: Record<MessageChannel, string> = { whatsapp: '☏', email: '✉', push: '◉', note: '✎' };
+export const CHANNEL_GLYPH: Record<MessageChannel, IconName> = { whatsapp: 'whatsapp', email: 'mail', push: 'bell', note: 'notes' };
 
 /**
  * One message in a conversation. WhatsApp and push rows are chat bubbles (member on the left, studio on the
@@ -39,7 +40,7 @@ export function ChatBubble({ direction, channel, text, subject, status, author, 
   if (kind === 'note') {
     return (
       <article className="chatbubble chatbubble-note" aria-label={t('core.msg.note')}>
-        <header className="chatbubble-head"><span className="chatbubble-glyph" aria-hidden>{CHANNEL_GLYPH.note}</span><strong>{t('core.msg.note')}</strong>{who && <span className="chatbubble-who">· {who}</span>}{time}</header>
+        <header className="chatbubble-head"><span className="chatbubble-glyph" aria-hidden><Icon name={CHANNEL_GLYPH.note} size={12} /></span><strong>{t('core.msg.note')}</strong>{who && <span className="chatbubble-who">· {who}</span>}{time}</header>
         <p className="chatbubble-text">{text}</p>
       </article>
     );
@@ -48,7 +49,7 @@ export function ChatBubble({ direction, channel, text, subject, status, author, 
     return (
       <article className={`chatbubble chatbubble-email chatbubble-${side} ${unread ? 'is-unread' : ''}`}>
         <header className="chatbubble-head">
-          <span className="chatbubble-glyph" aria-hidden>{CHANNEL_GLYPH.email}</span>
+          <span className="chatbubble-glyph" aria-hidden><Icon name={CHANNEL_GLYPH.email} size={12} /></span>
           <span className="chatbubble-who">{author ?? t('core.msg.channel.email')}</span>
           {source !== 'manual' && <Badge tone={source === 'newsletter' ? 'highlight' : 'neutral'}>{t(`core.msg.source.${source}`)}</Badge>}
           {unread && <Badge tone="primary">{t('core.msg.status.received')}</Badge>}
@@ -65,7 +66,7 @@ export function ChatBubble({ direction, channel, text, subject, status, author, 
       {who && side === 'out' && <div className="chatbubble-who xs">{who}</div>}
       <div className="chatbubble-body">
         <p className="chatbubble-text">{text}</p>
-        <span className="chatbubble-meta"><span className="chatbubble-glyph" aria-hidden>{CHANNEL_GLYPH[channel]}</span>{time}{statusBadge}</span>
+        <span className="chatbubble-meta"><span className="chatbubble-glyph" aria-hidden><Icon name={CHANNEL_GLYPH[channel]} size={12} /></span>{time}{statusBadge}</span>
       </div>
     </div>
   );

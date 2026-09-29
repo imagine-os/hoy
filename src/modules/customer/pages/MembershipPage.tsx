@@ -81,12 +81,12 @@ export function MembershipPage() {
           </div>
         </Card>
         <ListGroup>
-          <ListRow icon="❙❙" title={t('customer.membership.pause')} subtitle={t('customer.membership.pause.sub', { days: policy.pauseMaxDays })} onClick={() => setSheet('pause')} disabled={paused || !!pendingCancel} />
-          <ListRow icon="⇄" title={t('customer.membership.change')} subtitle={t('customer.membership.change.sub')} to="/app/plans" />
-          <ListRow icon="▤" title={t('customer.membership.billing')} subtitle={t('customer.membership.billing.sub')} to="/app/history?tab=payments" />
+          <ListRow icon="pause" title={t('customer.membership.pause')} subtitle={t('customer.membership.pause.sub', { days: policy.pauseMaxDays })} onClick={() => setSheet('pause')} disabled={paused || !!pendingCancel} />
+          <ListRow icon="move" title={t('customer.membership.change')} subtitle={t('customer.membership.change.sub')} to="/app/plans" />
+          <ListRow icon="receipt" title={t('customer.membership.billing')} subtitle={t('customer.membership.billing.sub')} to="/app/history?tab=payments" />
         </ListGroup>
         <ListGroup>
-          <ListRow icon="×" tone="danger" title={t('customer.membership.cancel')} subtitle={t('customer.membership.cancel.sub')} onClick={() => setSheet('cancel')} disabled={!!pendingCancel} />
+          <ListRow icon="cancel" tone="danger" title={t('customer.membership.cancel')} subtitle={t('customer.membership.cancel.sub')} onClick={() => setSheet('cancel')} disabled={!!pendingCancel} />
         </ListGroup>
       </div>
 

@@ -1,15 +1,20 @@
 /* bottom dock: paper tile with the inset highlight, lifted off the page */
 .navbar-dock { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; height: var(--h-bottomnav); background-color: var(--color-surface); border-top: 1px solid var(--color-card-border); box-shadow: inset 0 1px 0 rgba(var(--m-light), .8), 0 -6px 18px -10px rgba(var(--m-shade), .35); padding-bottom: env(safe-area-inset-bottom); }
-.navbar-item { position: relative; min-height: var(--h-ctl); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: var(--color-text-faint); font-size: var(--fs-2xs); font-family: var(--font-body); font-weight: var(--fw-medium); letter-spacing: .02em; text-decoration: none; transition: color var(--dur-fast); }
+.navbar-item { position: relative; min-height: var(--h-ctl); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: var(--color-text-muted); font-size: var(--fs-2xs); font-family: var(--font-body); font-weight: var(--fw-medium); letter-spacing: .02em; text-decoration: none; transition: color var(--dur-fast); }
 .navbar-item:hover { text-decoration: none; color: var(--color-text); }
-.navbar-item.is-active { color: var(--color-primary); }
-.navbar-item.is-active::before { content: ''; position: absolute; top: 6px; width: 28px; height: 3px; border-radius: var(--r-full); background: var(--color-primary); opacity: .9; }
-.navbar-icon { font-size: var(--fs-xl); line-height: 1; }
-.navbar-item.is-active .navbar-icon { transform: translateY(-1px); }
+.navbar-item.is-active { color: var(--color-primary); font-weight: var(--fw-semibold); }
+/* 0030: the active item gets a tinted pill behind a heavier glyph (shape + weight + colour, never colour alone). */
+.navbar-icon { display: inline-flex; align-items: center; justify-content: center; line-height: 0; }
+.navbar-dock .navbar-icon { width: 3.5rem; height: 2rem; border-radius: var(--r-full); transition: background-color var(--dur-fast); }
+.navbar-dock .navbar-item:hover .navbar-icon { background: rgba(var(--m-shade), .06); }
+.navbar-dock .navbar-item.is-active .navbar-icon { background: rgba(var(--m-primary), .16); }
+.navbar-item:focus-visible { outline: none; }
+.navbar-item:focus-visible .navbar-icon { outline: 2px solid var(--color-focus, var(--color-primary)); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .navbar-dock .navbar-icon { transition: none; } }
 /* top variant (AppShell ≥ 900 px): a horizontal row of pill links inside the top bar, icon + label inline */
 .navbar-top { display: flex; align-items: center; gap: var(--sp-1); }
 .navbar-top .navbar-item { flex-direction: row; gap: var(--sp-2); min-height: var(--h-ctl); padding: 0 var(--sp-4); border-radius: var(--r-full); font-size: var(--fs-sm); color: var(--color-text-muted); }
 .navbar-top .navbar-item:hover { background: rgba(var(--m-shade), .06); }
 .navbar-top .navbar-item.is-active { background: rgba(var(--m-primary), .1); color: var(--color-primary); }
-.navbar-top .navbar-item.is-active::before { display: none; }
-.navbar-top .navbar-icon { font-size: var(--fs-md); }
+.navbar-top .navbar-item:focus-visible { outline: 2px solid var(--color-focus, var(--color-primary)); outline-offset: 2px; }
+.navbar-top .navbar-item:focus-visible .navbar-icon { outline: none; }

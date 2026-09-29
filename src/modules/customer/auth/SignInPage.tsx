@@ -93,7 +93,7 @@ export function SignInPage() {
           <div className="stack-sm">
             <Button block variant="secondary" disabled icon="">{t('customer.signin.apple')}</Button>
             <Button block variant="secondary" disabled icon="G">{t('customer.signin.google')}</Button>
-            <Button block variant="secondary" disabled icon="☉">{t('customer.signin.biometric')}</Button>
+            <Button block variant="secondary" disabled icon="biometric">{t('customer.signin.biometric')}</Button>
             <p className="xs muted" style={{ textAlign: 'center' }}>{t('customer.signin.providersNote')}</p>
           </div>
         </Card>

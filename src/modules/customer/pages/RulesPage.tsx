@@ -9,6 +9,7 @@ import { EmptyState } from '../../../components/molecule/EmptyState/EmptyState';
 import { ListGroup, ListRow } from '../../../components/molecule/ListRow/ListRow';
 import { useContentArticles, useLocalPref } from '../hooks';
 import { MediaPlaceholder, PageHead } from '../ui';
+import { Icon } from '../../../components/atom/Icon/Icon';
 
 /** C-13 Club rules & best practices — articles come from `content_articles` (M-02 edits them, no deploy). */
 export function RulesPage() {
@@ -27,13 +28,13 @@ export function RulesPage() {
       <div className="stack">
         {tour && (
           <button type="button" className="cust-plainbtn" onClick={() => setOpen(tour)}>
-            <MediaPlaceholder slotKey="studio.tour" label={bi(tour.video_label!)}><span className="cust-play" aria-hidden>▶</span></MediaPlaceholder>
+            <MediaPlaceholder slotKey="studio.tour" label={bi(tour.video_label!)}><span className="cust-play" aria-hidden><Icon name="play" /></span></MediaPlaceholder>
           </button>
         )}
         {loading && articles.length === 0 && <EmptyState compact tone="loading" title={t('core.common.loading')} />}
         {articles.length > 0 && (
           <ListGroup>
-            {articles.map((a) => <ListRow key={a.id} icon={a.icon ?? '◦'} title={bi(a.title)} subtitle={bi(a.summary)} trailing={read.includes(a.slug) ? <Badge tone="success">{t('customer.rules.read')}</Badge> : a.required ? <Badge tone="danger">{t('customer.rules.required')}</Badge> : undefined} onClick={() => setOpen(a)} />)}
+            {articles.map((a) => <ListRow key={a.id} icon={a.icon ?? 'info'} title={bi(a.title)} subtitle={bi(a.summary)} trailing={read.includes(a.slug) ? <Badge tone="success">{t('customer.rules.read')}</Badge> : a.required ? <Badge tone="danger">{t('customer.rules.required')}</Badge> : undefined} onClick={() => setOpen(a)} />)}
           </ListGroup>
         )}
         <p className="xs muted" style={{ textAlign: 'center' }}>{t('customer.rules.note')}</p>
@@ -41,7 +42,7 @@ export function RulesPage() {
       <Drawer open={!!open} onClose={() => setOpen(null)} side="bottom" title={open ? bi(open.title) : ''} footer={open ? <Button onClick={() => markRead(open)}>{t('customer.rules.gotIt')}</Button> : undefined}>
         {open && (
           <div className="stack">
-            {open.video_label && <MediaPlaceholder label={bi(open.video_label)}><span className="cust-play" aria-hidden>▶</span></MediaPlaceholder>}
+            {open.video_label && <MediaPlaceholder label={bi(open.video_label)}><span className="cust-play" aria-hidden><Icon name="play" /></span></MediaPlaceholder>}
             {paragraphs(bi(open.body_md)).map((p, i) => <p key={i} className="small">{p}</p>)}
             {open.checklist && open.checklist.length > 0 && <Card tone="muted" eyebrow={t('customer.rules.checklist')}><ul className="cust-checklist small">{open.checklist.map((c, i) => <li key={i}>{bi(c)}</li>)}</ul></Card>}
           </div>
