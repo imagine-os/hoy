@@ -90,7 +90,7 @@ Declared in `hubSpec.actions`, mounted by `useActions()`, listed at `window.__ho
 with `window.__hoyos.run(id, params)`. See `docs/reference/surfaces.md`.
 
 `hub.map` (0027) loads the published hub map and answers with its URL and counts, e.g.
-`hub map https://imagine-os.github.io/hoy/hub-map.json · hoy.hub-map/1 v0.11.0 · 9 roles, 13 experiences, 87 pages, 9 tools`;
+`hub map https://imagine-os.github.io/hoy/hub-map.json · hoy.hub-map/1 v0.11.1 · 9 roles, 13 experiences, 87 pages, 9 tools`;
 the parsed map is then at `window.__hoyos.hubMap.data`.
 
 ## The hub map (data module)

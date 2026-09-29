@@ -45,10 +45,14 @@ export interface HubExperience {
   /** Of the experience's entry page. */
   shots: HubShots;
 }
+/** A sub-mat: the group a page sits in inside its experience (e.g. the customer app's Book / Pay / Account / Sign in). `order` sorts groups within an experience, ascending. Ids are stable across releases; labels are copy. */
+export interface HubGroup { id: string; label: Bi; order: number; }
 /** Every route that has a code (one entry per code; `route` is the code's first route). */
 export interface HubPage {
   code: string; route: string; name: Bi; purpose: Bi; surface: string; roles: string[];
   experienceId: string; device: HubDevice; status: 'built' | 'stub'; actions: string[]; shots: HubShots;
+  /** Since 0028, additive: the sub-mat this page belongs to inside its experience. Absent only if a host reads an older file. */
+  group?: HubGroup;
 }
 export interface HubTool { id: string; code: string; label: Bi; purpose: Bi; route: string; url: string; device: 'desktop'; shots: HubShots; }
 export interface HubLensHint { title: Bi; framing: Bi; groupBy: 'role' | 'experience' | 'surface'; showTools: boolean; entry: string; }
