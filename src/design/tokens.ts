@@ -256,7 +256,7 @@ export const motion = {
  * `h-ctl` is the minimum height (and the minimum width of a square target) of every interactive control (44 px).
  */
 const layoutTokens = {
-  'w-content': '70rem', 'w-app': '75rem', 'w-auth': '30rem', 'w-auth-wide': '36rem',
+  'w-content': '70rem', 'w-app': '75rem', 'w-teach': '60rem', 'w-auth': '30rem', 'w-auth-wide': '36rem',
   'h-topbar': '3.5rem', 'h-bottomnav': '4rem', 'h-ctl': '2.75rem', 'w-sidebar': '15rem', 'w-rail': '3.5rem',
 } as const;
 

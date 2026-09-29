@@ -23,7 +23,7 @@ export const siteSpecs = {
     layout: ['PageHead', 'ModalityGrid', 'ClassLinks'], data: ['modalities'],
     logic: ['Groups by movement in the order Enraíza, Fluye, Arde, Libera.', 'Each modality links to /site/classes/:slug through brand.classes[*].modalitySlugs.'],
     states: ['default'] }),
-  schedule: defineSpec({ ...pub, code: 'W-04', name: { es: 'Sitio · Horario', en: 'Site · Schedule' },
+  schedule: defineSpec({ ...pub, code: 'W-04', name: { es: 'Sitio · Horario', en: 'Site · Schedule' }, checkedAt: [360, 390, 768, 1280, 1920, 3840],
     purpose: { es: 'Horario semanal público con cupos en vivo. Tocar una clase pide iniciar sesión y lleva a la app de clientes.', en: 'Public weekly schedule with live capacity. Tapping a class prompts sign-in and leads to the customer app.' },
     layout: ['PageHead', 'DayTabs', 'ClassList', 'Legend'],
     data: ['class_sessions', 'modalities', 'teachers', 'rooms'],

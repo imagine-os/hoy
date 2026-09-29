@@ -9,6 +9,10 @@ owner del estudio. Está escrito para que otra cuenta de Claude (o una persona) 
 
 ## A. Where we are (v0.10.0, 2026-09-28)
 
+- **v0.10.1 — Phone calendar views, teacher width, responsive mat grid** (`docs/changelog/0026-calendar-teacher-mats.md`,
+  prompt `docs/prompts/0026-calendar-teacher-mats.md`; Justin: "on mobile the calendar had some issues on week and month
+  view … the teacher app … was too wide … the 16 mats are always 2 rows of 8"): `SessionCalendar` week strip and month
+  grid under 900 px, `--w-teach`, room-width `MatPicker` rows.
 - **v0.10.0 — Responsive app shell** (`docs/changelog/0025-responsive-app-shell.md`, prompt
   `docs/prompts/0025-responsive-app-shell.md`; Justin: "on desktop, as we're working through the reserve and
   register proecess it switches from the desktop experience to mobile. It should all flow as one experience. Also,
@@ -199,7 +203,7 @@ owner del estudio. Está escrito para que otra cuenta de Claude (o una persona) 
 - **Real vs stub** (`/#/dev/specs`, from `docs/screenshots/routes.json`): **101 routes, 87 codes,
   0 stubs** (D-05 and D-06 new in 0.9.0; S-06 new in 0.8.0; M-08f, M-10, C-26, W-09 and M-11 new in 0.7.0). Integrations (Wompi, WhatsApp, email, DIAN, Supabase Auth/Realtime) are simulated behind
   their seams — see §F for exactly what is still mocked.
-- **Docs**: prompt log, changelog and kanban are current through `0025`. `docs/screenshots/<code>/`
+- **Docs**: prompt log, changelog and kanban are current through `0026`. `docs/screenshots/<code>/`
   holds every route in ES/EN × 390/1280 (dark for key pages) as JPEG q72 — **395 captures** (+ 13
   before-captures under `_before/0006` and the 0021 before / after pairs for M-06 and S-01) — and
   `docs/pages/<code>.md` exists for every routed code.

@@ -109,6 +109,7 @@
   --ease-in-out: cubic-bezier(.65,0,.35,1);
   --w-content: 70rem;
   --w-app: 75rem;
+  --w-teach: 60rem;
   --w-auth: 30rem;
   --w-auth-wide: 36rem;
   --h-topbar: 3.5rem;

@@ -2203,7 +2203,37 @@
     "GET /me/stats"
    ],
    "layerTree": "Home\n├ TopBar (logo, avatar, bell)\n├ FeedbackPrompt (conditional)\n├ MembershipNudge (if no plan)\n├ AnnouncementCard (if active)\n├ NextClassCard + countdown\n├ QuickActions ×4\n├ TodayList (intention-sorted)\n├ StatsRow ×3\n└ EventsStrip → BottomNav",
-   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-01"
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-01",
+   "actions": [
+    {
+     "id": "app.goHome",
+     "label": {
+      "es": "Ir al inicio",
+      "en": "Go home"
+     },
+     "intent": {
+      "es": "Llévame al inicio de la app",
+      "en": "Take me to the app home"
+     }
+    },
+    {
+     "id": "app.openSchedule",
+     "label": {
+      "es": "Abrir el horario",
+      "en": "Open the schedule"
+     },
+     "intent": {
+      "es": "Muéstrame el horario de clases",
+      "en": "Show me the class schedule"
+     },
+     "permission": "classes.read"
+    }
+   ],
+   "checkedAt": [
+    390,
+    1280,
+    3840
+   ]
   }
  },
  {
@@ -2290,6 +2320,54 @@
    "notes": [
     "C-02b week view is the Week segment of this page (?view=week).",
     "Capacity updates live through useTable subscriptions (MockProvider change events)."
+   ],
+   "actions": [
+    {
+     "id": "app.reserve",
+     "label": {
+      "es": "Reservar una clase",
+      "en": "Reserve a class"
+     },
+     "intent": {
+      "es": "Reserva la clase {session}",
+      "en": "Reserve the class {session}"
+     },
+     "params": {
+      "session": "string (class_sessions.id)"
+     },
+     "permission": "bookings.write"
+    },
+    {
+     "id": "app.goHome",
+     "label": {
+      "es": "Ir al inicio",
+      "en": "Go home"
+     },
+     "intent": {
+      "es": "Llévame al inicio de la app",
+      "en": "Take me to the app home"
+     }
+    },
+    {
+     "id": "app.openSchedule",
+     "label": {
+      "es": "Abrir el horario",
+      "en": "Open the schedule"
+     },
+     "intent": {
+      "es": "Muéstrame el horario de clases",
+      "en": "Show me the class schedule"
+     },
+     "permission": "classes.read"
+    }
+   ],
+   "checkedAt": [
+    360,
+    390,
+    768,
+    1280,
+    1920,
+    3840
    ]
   }
  },
@@ -2371,6 +2449,15 @@
    "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-02b",
    "notes": [
     "Rendered by SchedulePage with view=week at /app/schedule/week; on phones the six columns stack as day groups."
+   ],
+   "actions": [],
+   "checkedAt": [
+    360,
+    390,
+    768,
+    1280,
+    1920,
+    3840
    ]
   }
  },
@@ -2550,6 +2637,66 @@
     "Wompi is simulated in src/modules/customer/payments.ts (wompiCheckout). Manual transfer/cash create pending payments the front desk settles.",
     "IVA 19% is computed by OrderSummary from policy.ivaRate; prices are IVA-inclusive.",
     "Declined payments render E-02 inline and keep the spot held 10 minutes."
+   ],
+   "actions": [
+    {
+     "id": "app.pickMat",
+     "label": {
+      "es": "Elegir tapete",
+      "en": "Pick a mat"
+     },
+     "intent": {
+      "es": "Quiero el tapete {mat}",
+      "en": "I want mat {mat}"
+     },
+     "params": {
+      "mat": "number 1–16"
+     },
+     "permission": "bookings.write"
+    },
+    {
+     "id": "app.confirmReservation",
+     "label": {
+      "es": "Confirmar la reserva",
+      "en": "Confirm the reservation"
+     },
+     "intent": {
+      "es": "Confirma mi reserva",
+      "en": "Confirm my reservation"
+     },
+     "permission": "bookings.write"
+    },
+    {
+     "id": "app.goHome",
+     "label": {
+      "es": "Ir al inicio",
+      "en": "Go home"
+     },
+     "intent": {
+      "es": "Llévame al inicio de la app",
+      "en": "Take me to the app home"
+     }
+    },
+    {
+     "id": "app.openSchedule",
+     "label": {
+      "es": "Abrir el horario",
+      "en": "Open the schedule"
+     },
+     "intent": {
+      "es": "Muéstrame el horario de clases",
+      "en": "Show me the class schedule"
+     },
+     "permission": "classes.read"
+    }
+   ],
+   "checkedAt": [
+    360,
+    390,
+    768,
+    1280,
+    1920,
+    3840
    ]
   }
  },
@@ -2730,6 +2877,51 @@
     "Prices only from src/tenant/pricing.ts (Modelo de Valor v3).",
     "Wompi is simulated in src/modules/customer/payments.ts (wompiCheckout). Manual transfer/cash create pending payments the front desk settles.",
     "Especiales (0017): birthdays, private events and team sessions are arranged directly with the studio — one line with a WhatsApp link, nothing sold here."
+   ],
+   "actions": [
+    {
+     "id": "app.choosePlan",
+     "label": {
+      "es": "Elegir un plan",
+      "en": "Choose a plan"
+     },
+     "intent": {
+      "es": "Quiero el plan {plan}",
+      "en": "I want the {plan} plan"
+     },
+     "params": {
+      "plan": "enum:monthly,annual"
+     },
+     "permission": "payments.read"
+    },
+    {
+     "id": "app.goHome",
+     "label": {
+      "es": "Ir al inicio",
+      "en": "Go home"
+     },
+     "intent": {
+      "es": "Llévame al inicio de la app",
+      "en": "Take me to the app home"
+     }
+    },
+    {
+     "id": "app.openSchedule",
+     "label": {
+      "es": "Abrir el horario",
+      "en": "Open the schedule"
+     },
+     "intent": {
+      "es": "Muéstrame el horario de clases",
+      "en": "Show me the class schedule"
+     },
+     "permission": "classes.read"
+    }
+   ],
+   "checkedAt": [
+    390,
+    1280,
+    3840
    ]
   }
  },
@@ -2962,6 +3154,36 @@
    "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-08",
    "notes": [
     "Add to calendar downloads an .ics; share uses the Web Share API with clipboard fallback."
+   ],
+   "actions": [
+    {
+     "id": "app.goHome",
+     "label": {
+      "es": "Ir al inicio",
+      "en": "Go home"
+     },
+     "intent": {
+      "es": "Llévame al inicio de la app",
+      "en": "Take me to the app home"
+     }
+    },
+    {
+     "id": "app.openSchedule",
+     "label": {
+      "es": "Abrir el horario",
+      "en": "Open the schedule"
+     },
+     "intent": {
+      "es": "Muéstrame el horario de clases",
+      "en": "Show me the class schedule"
+     },
+     "permission": "classes.read"
+    }
+   ],
+   "checkedAt": [
+    390,
+    1280,
+    3840
    ]
   }
  },
@@ -4526,7 +4748,13 @@
    ],
    "layerTree": "IntentionCheck\n├ Greeting (first name)\n├ Question (display serif)\n├ Subtitle (italic)\n├ IntentionGrid 2×2\n│ ├ Muévete → arde · hot, vinyasa, cardio\n│ ├ Respira → fluye · restorative, yin, breathwork\n│ ├ Equilíbrate → enraiza · strength, barre, core\n│ └ Conecta → libera · community, workshops, events\n└ SkipLink",
    "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#A-05",
-   "notes": []
+   "notes": [],
+   "actions": [],
+   "checkedAt": [
+    390,
+    1280,
+    3840
+   ]
   }
  },
  {
@@ -5006,6 +5234,27 @@
    "notes": [
     "Demo mode: any demo user email signs in; 5 failed attempts route to /auth/locked (E-04).",
     "Apple / Google / biometric buttons are disabled until Supabase Auth."
+   ],
+   "actions": [
+    {
+     "id": "auth.signIn",
+     "label": {
+      "es": "Entrar",
+      "en": "Sign in"
+     },
+     "intent": {
+      "es": "Entra como {user}",
+      "en": "Sign in as {user}"
+     },
+     "params": {
+      "user": "enum:usr_super,usr_admin,usr_coord,usr_desk,usr_fin,usr_teach,usr_maint,usr_cust"
+     }
+    }
+   ],
+   "checkedAt": [
+    390,
+    1280,
+    3840
    ]
   }
  },
@@ -6911,8 +7160,15 @@
    ],
    "layerTree": "TeacherHome\n├ NextClassCard\n├ RosterSheet → attendance marks\n├ ScheduleList\n├ SubmitDescription (approval flow)\n├ ReviewsPanel (aggregate + named)\n├ PayrollList → PayslipDetail\n└ ProfileEditor (photo, bio)",
    "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#S-03",
+   "checkedAt": [
+    390,
+    768,
+    1280,
+    1920,
+    3840
+   ],
    "notes": [
-    "Mobile-first inside PhoneShell.",
+    "Mobile-first inside AppShell (column + dock below 900 px; from 900 px a --w-teach column of 60rem with the top-bar nav, 0026).",
     "Substitution requests are written to audit_log (action substitution.request) for the coordinator."
    ]
   }
@@ -7229,11 +7485,11 @@
    "layout": [
     "Hero",
     "Movements",
+    "Philosophy",
     "Classes",
     "TodayClasses",
-    "ValueModel",
-    "Philosophy",
     "Teachers",
+    "ValueModel",
     "Testimonials",
     "FirstStep"
    ],
@@ -7521,6 +7777,14 @@
     "es": "Sitio · Horario",
     "en": "Site · Schedule"
    },
+   "checkedAt": [
+    360,
+    390,
+    768,
+    1280,
+    1920,
+    3840
+   ],
    "purpose": {
     "es": "Horario semanal público con cupos en vivo. Tocar una clase pide iniciar sesión y lleva a la app de clientes.",
     "en": "Public weekly schedule with live capacity. Tapping a class prompts sign-in and leads to the customer app."

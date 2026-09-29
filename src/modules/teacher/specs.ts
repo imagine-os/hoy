@@ -9,7 +9,8 @@ export const S03 = defineSpec({
   ...base,
   layout: ['NextClassCard', 'TodayClasses (roster count)', 'Specials (own space_bookings, S-05)', 'ScheduleList (week)', 'SubstitutionRequest', 'PayrollTile'],
   data: [...data, 'space_bookings', 'special_charges', 'rooms'],
-  notes: [...(base.notes ?? []), 'Mobile-first inside AppShell (column + dock below 900 px, full-viewport with top-bar nav above).', 'Substitution requests are written to audit_log (action substitution.request) for the coordinator.'],
+  checkedAt: [390, 768, 1280, 1920, 3840],
+  notes: [...(base.notes ?? []), 'Mobile-first inside AppShell (column + dock below 900 px; from 900 px a --w-teach column of 60rem with the top-bar nav, 0026).', 'Substitution requests are written to audit_log (action substitution.request) for the coordinator.'],
 });
 
 /** /teach/class/:id — roster, attendance, notes. */
