@@ -1,8 +1,17 @@
 # Machine surfaces — MCP / WebMCP, CLI, API
 
 What something other than a person can drive in HoyOS today, and what it cannot.
-**Checked 2026-09-29** (v0.14.0; previous check 2026-09-29, v0.12.0). Re-check and date this file every pass; a line that is not
+**Checked 2026-09-29** (v0.15.0; previous check 2026-09-29, v0.14.0). Re-check and date this file every pass; a line that is not
 re-checked is not current.
+
+**0039 delta (v0.15.0).** Thirteen new action ids: the admin module declares actions for the first time
+(`src/modules/admin/actions.ts`, `ADMIN_ACTIONS` merged into the specs) — `settings.hours.update` (M-08a),
+`settings.hours.override.add` / `.remove` / `settings.hours.holidays.import` (M-08g), `integrations.google.copyHours` /
+`.connect` / `.push` (M-10a) — and D-07 declares `dev.apiKeys.create` / `.rotate` / `.revoke`
+(`src/modules/dev/actions.ts`). Three new routes in `window.__hoyos.routes`: `/admin/settings/hours`,
+`/admin/integrations/google-business`, `/dev/api-keys`. New permissions `hours.write`, `api_keys.read`, `api_keys.write`.
+New CLI: `npm run test:holidays`, `npm run test:hours`. §3 now records the designed developer-key scheme and the planned
+Google push — both design, nothing answers.
 
 **0030 delta (v0.12.0).** `window.__hoyos.routes` no longer lists `/app/intention` (A-05 retired); the path still
 resolves in the browser through the customer module's new `redirects` export (`/app/intention` → `/app`), which is
@@ -51,6 +60,16 @@ window.__hoyos.actions.filter((a) => a.mounted);
 | `app.goHome` | C-01 (also C-02, C-04, C-06, C-08) | Llévame al inicio de la app | — | — · customer, teacher |
 | `app.openSchedule` | C-01 (also C-02, C-04, C-06, C-08) | Muéstrame el horario de clases | — | `classes.read` · customer, teacher |
 | `auth.signIn` | A-02 | Entra como {user} | `user: enum:usr_super,usr_admin,usr_coord,usr_desk,usr_fin,usr_teach,usr_maint,usr_mkt,usr_dev,usr_cust` | — · public (anyone on `/auth/sign-in`) |
+| `settings.hours.update` | M-08a | Abre el {day} de {open} a {close} (o ciérralo) | `day: enum:0–6 (0 = Sunday)`, `open: HH:MM \| closed`, `close: HH:MM` | `settings.write` · admin, super_admin |
+| `settings.hours.override.add` | M-08g | El {start} cerramos por {label} / abrimos de {open} a {close} | `start: YYYY-MM-DD`, `end?`, `label`, `label_en?`, `closed: enum:true,false`, `open?`, `close?`, `kind?: enum:holiday,special,event` — same validation as the drawer | `hours.write` · admin, super_admin, coordinator |
+| `settings.hours.override.remove` | M-08g | Quita la excepción del {date} | `id` or `date: YYYY-MM-DD` | `hours.write` |
+| `settings.hours.holidays.import` | M-08g | Importa los festivos de Colombia de este año y el próximo | — (skips dates that already have an exception) | `hours.write` |
+| `integrations.google.copyHours` | M-10a | Copia el horario para pegarlo en Google Business Profile | `format?: enum:text,json` — answers the copied text | — · admin, super_admin |
+| `integrations.google.connect` | M-10a | Conecta el perfil de Google del estudio (no conectado aún) | — answers `ok: false` (no server) | `settings.write` |
+| `integrations.google.push` | M-10a | Envía el horario a Google ahora (no conectado aún) | — answers `ok: false` (no server) | `settings.write` |
+| `dev.apiKeys.create` | D-07 | Crea una llave {environment} llamada {name} con {scopes} | `name`, `environment: enum:live,test`, `scopes: csv`, `expires_days?` — answers the prefix; the raw key is shown once on screen, never returned | `api_keys.write` · super_admin, developer |
+| `dev.apiKeys.rotate` | D-07 | Rota la llave {id}; la vieja funciona 24 horas más | `id: api_keys.id or prefix` | `api_keys.write` |
+| `dev.apiKeys.revoke` | D-07 | Revoca la llave {id} ya | `id: api_keys.id or prefix` | `api_keys.write` |
 
 | `manual.setLens` | K-03 | Muéstrame el manual de {role} | `role: enum:all,super_admin,admin,coordinator,front_desk,finance,teacher,maintenance,marketing,developer` | `docs.read` |
 | `manual.markRead` | K-03 | Marca el capítulo {chapter} como leído | `chapter: slug or number` (default the open chapter) | `docs.read` · team roles |
@@ -62,6 +81,13 @@ window.__hoyos.actions.filter((a) => a.mounted);
 | `manual.openSource` | K-03 (also K-04, K-05) | Abre el documento {id} | `id: enum:modelo-de-valor,contenido-completo,manual-de-marca` | `docs.read` |
 | `manual.listRequests` | K-04 | ¿Qué cambios pidió el equipo al manual? | `status?: enum:open,done,dismissed,all` (default open) — answers a JSON array | `manual.edit` · coordinator, admin, super_admin |
 | `manual.answerRequest` | K-04 | Responde la solicitud {id}: {answer} | `id: manual_requests.id`, `answer`, `status?: enum:done,dismissed,open` | `manual.edit` · coordinator, admin, super_admin |
+
+Added 2026-09-29 (0039): hours, Google Business Profile and developer keys. The handlers re-check their permission
+(`settings.write`, `hours.write`, `api_keys.write`) and throw, so `run()` answers `{ ok: false }` for a role without it;
+every write appends the same `audit_log` row as the button (`settings.update`, `hours.override.save` /
+`.delete`, `hours.import_holidays`, `api_key.create` / `.rotate` / `.revoke`). Deliberate limits: the Google connect /
+push actions exist so the vocabulary is complete but answer "not wired yet", and the key actions never put a raw key
+in an agent's transcript.
 
 Added 2026-09-29 (0031): the ten `manual.*` actions (declared in `src/modules/ops-manual/actionDefs.ts`, handlers in
 `manualActions.ts`) make **prompt-based editing** of the operations manual possible for an agent in the page: read the
@@ -131,6 +157,8 @@ Everything is Node, in `scripts/`, and safe to run from a clean checkout.
 | `npm run lint:spacing` | Since 0037. `scripts/spacing-lint.mjs`: raw px/rem on spacing properties (margin, padding, gap, inset, top/right/bottom/left) and control sizes ≤ 64 px in `src/**/*.css` and inline `style` margin/padding/gap in `.tsx`; 1 px and `/* optical */` nudges ≤ 2 px allowed. Exit 1 when the count is above the baseline. `--report` (used by `npm run build`) prints only grown files · `--update-baseline` | `scripts/spacing-baseline.json` |
 | `npm run audit:spacing` | Since 0037. `scripts/spacing-audit.mjs --route=/app [--as=usr_cust] [--widths=390,1280,3840] [--grid] [--all] [--out=dir]`: serves `dist/` on :4174, prints uneven or off-grid sibling gaps, unequal card padding and targets under 44 px (divided by `--ui`); `--grid` saves a 4 / 16 px grid overlay. Run `npm run build` first | `spacing-audit/<route>-<width>-grid.jpg` with `--grid` |
 | `npm run test:dates` | The local-date-key regression test | — |
+| `npm run test:holidays` | Since 0039. `scripts/test-holidays.mjs`: `src/tenant/holidays.co.ts` against the official 2026 Colombian calendar (18 dates, Easter 5 April), Meeus Easter for seven years, every Emiliani holiday on a Monday 2025–2028 | — |
+| `npm run test:hours` | Since 0039. `scripts/test-hours.mjs`: `effectiveHoursFor` (override wins, inclusive, narrowest), `toGoogleBusinessHours` (Business Information API shape, one special period per date, overnight close), `toSchemaOrgHours`, `todayStatus` in America/Bogota | — |
 | `node scripts/test-mat-bookings.mjs` | The 16-mat booking rules against `MockProvider` (bounds, collisions, release, persistence); run with the build before every `src/` commit since 0025 | — |
 | `node scripts/gen-page-doc.mjs <CODE>` | Page-doc skeleton from the spec and the captures | `docs/pages/<CODE>.md` |
 
@@ -155,6 +183,20 @@ Planned, in order: **Supabase** (Postgres + Auth + Realtime + Storage) behind `S
 **Wompi** (payments and payroll, Colombia) behind `wompiTokenise()` · **WhatsApp Cloud API** webhook →
 `message_log` (`direction: inbound`, `external_id` = `wamid`) · **email inbound** (IMAP or SES) →
 `message_log`. Each one gets its own changelog entry and its own row in this table when it lands.
+
+**Designed in 0039, not answering.**
+- **Developer keys (inbound, D-0015).** D-07 issues `hoy_<live|test>_<24 base62>` keys; `api_keys` stores the
+  13-character prefix and the SHA-256 hex, never the key. A request will carry `Authorization: Bearer hoy_live_…`; the
+  server hashes the token, matches `key_hash`, checks `environment`, `scopes` (`classes.read`, `bookings.read`,
+  `bookings.write`, `customers.read`, `hours.read`, `hours.write`, `webhooks.receive`), `expires_at` and `revoked_at`,
+  and stamps `last_used_at`. First endpoints the scopes are shaped for: `GET /v1/classes`, `GET /v1/hours` (weekly +
+  overrides, the same data as `useOpeningHours()`), `GET|POST /v1/bookings`. None exists.
+- **Google Business Profile push (outbound, D-0014).** On save in M-08a / M-08g and nightly, the server calls
+  `PATCH https://mybusinessbusinessinformation.googleapis.com/v1/{locationName}?updateMask=regularHours,specialHours`
+  with the body `toGoogleBusinessHours()` builds (M-10a shows it), using the location's refresh token from the server
+  environment (`GOOGLE_BUSINESS_REFRESH_TOKEN_<TENANT>`), then sets `hours_overrides.google_synced_at`. Nightly it reads
+  the location back and flags drift; nothing is written into HoyOS from Google. Planned home: a Cloudflare Worker or a
+  Supabase Edge Function (kanban).
 
 ---
 

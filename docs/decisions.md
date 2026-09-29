@@ -201,6 +201,50 @@ Fields: **Date**, **Status** (accepted · superseded by D-NNNN), **Context**, **
   CLAUDE.md already rejects it (plain CSS with tokens), and it would put spacing in JSX where the lint and the
   component library cannot see a relationship, only a number.
 
+### D-0013 — Saved hours are the source of truth; dated overrides live in a table
+
+- **Date** 2026-09-29 · **Status** accepted · **Changelog** `docs/changelog/0039-hours-google-keys.md`
+- **Context.** M-08a saved the weekly hours into `tenants.settings.openingHours`, but every screen quoted a constant
+  sentence in `tenant.ts`, so a change reached nobody. Justin asked for the hours to reach Google Business and for
+  holiday hours and special overrides.
+- **Decision.** The weekly hours stay a settings section (M-08a). Dated exceptions are rows in `hours_overrides`
+  (start/end inclusive, closed or other times, label ES/EN, kind, source, `google_synced_at`); an override wins for the
+  dates it covers, the narrowest range on overlap. Pure readers in `src/tenant/hours.ts`, one hook
+  (`useOpeningHours()`) for every surface, `tenant.ts` as the fallback. Colombian holidays are computed per year
+  (`src/tenant/holidays.co.ts`) and imported as closed rows the studio can edit.
+- **Alternative rejected.** A table for the weekly hours too (the week is one small object already saved and audited);
+  a recurring per-holiday rule (Emiliani and Easter move the dates every year; a yearly import is explicit and
+  auditable); an overrides array inside `tenants.settings` (no ids, no `updated_at`, no realtime per row).
+
+### D-0014 — Google Business Profile: HoyOS pushes, a server holds the tokens, one way with drift read-back
+
+- **Date** 2026-09-29 · **Status** accepted · **Changelog** `docs/changelog/0039-hours-google-keys.md`
+- **Context.** Each studio on HoyOS has its own Business Profile; the Business Profile API needs a Google Cloud project
+  with approved access, OAuth with `business.manage`, and a refresh token per location. The browser DB is localStorage.
+- **Decision.** HoyOS is the source of truth. A server (not built yet) pushes `locations.patch` with
+  `updateMask=regularHours,specialHours` — the body `toGoogleBusinessHours()` builds and M-10a previews — on save and
+  nightly, reads the location back nightly to flag drift, and never writes Google's values into HoyOS. The platform
+  sets Google up once (project, APIs, access request, consent screen, client id/secret in server env); each studio only
+  connects its own location. The `integrations` row keeps public identifiers (location name, account email, place id);
+  tokens live in server env, named per tenant.
+- **Alternative rejected.** Two-way sync (two sources of truth, silent overwrites); tokens in the browser or in
+  `integrations.config` (a plaintext secret in localStorage — already rejected for Wompi in 0007 / 0018); one Google
+  project per studio (every studio would repeat the access request and the consent-screen review).
+
+### D-0015 — Developer API keys: hashed at rest, shown once, scoped, rotated with a grace period
+
+- **Date** 2026-09-29 · **Status** accepted · **Changelog** `docs/changelog/0039-hours-google-keys.md`
+- **Context.** Justin asked for "a secret key system for our apps for developers". HoyOS has no server; secrets it
+  uses to call others (Wompi, WhatsApp, Google) already live in server env. Keys it gives to others are the reverse.
+- **Decision.** D-07 issues `hoy_<live|test>_<24 base62>` from the CSPRNG; `api_keys` stores the 13-character prefix
+  and the SHA-256 hash, never the key, which is shown once. Keys carry scopes, an environment and an optional expiry;
+  rotation creates a replacement (`replaces_id`) and gives the old key 24 hours; revocation stamps `revoked_at`, rows are
+  never deleted; every step is audited with the prefix. Verification (hash the bearer token, match, check scope /
+  expiry / revocation, stamp `last_used_at`) is the server's job.
+- **Alternative rejected.** Storing the key (encrypted or not) so it can be shown again — anyone with the table could
+  use it; keys without scopes or environments (a test integration could write live bookings); verifying in the
+  browser (there is nothing to protect there).
+
 ---
 **Resumen (ES).** Este archivo es la lista corta y citable de las decisiones de ingeniería, una por
 bloque, solo se añade: una decisión que deja de ser cierta se reemplaza con un bloque nuevo, nunca
