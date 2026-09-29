@@ -1231,7 +1231,7 @@
    },
    "layout": [
     "SettingsSubNav",
-    "StudioProfile (contact + map + confirmed)",
+    "StudioProfile (contact + map + confirmed per field)",
     "OpeningHours",
     "Capacity",
     "Policies",
@@ -1253,7 +1253,7 @@
    ],
    "logic": [
     "useContact() (src/modules/admin/settings.ts) is the one reader of address / city / WhatsApp / email / Instagram / map: M-08a first, src/tenant/tenant.ts as the default for every empty field. The site footer, W-06, MapSlot, the legal tokens, the email footer, the customer contact rows and the manual’s {{tenant:contact}} all read it.",
-    "Until “confirmed” is on, every consumer labels the values as pending (the tenant.ts placeholders were never presented as fact)."
+    "Confirmation is per field (0036): WhatsApp, address, email and Instagram each have a “confirmed” switch; every consumer labels only the unconfirmed ones as pending (the tenant.ts placeholders are never presented as fact). tenant.ts ships WhatsApp and address confirmed (from the owner, 2026-09-29), email and Instagram pending. A stored pre-0036 `confirmed: true` still confirms all four."
    ],
    "integrations": [
     "WhatsApp",
@@ -1263,8 +1263,8 @@
     "DIAN e-invoicing"
    ],
    "states": [
-    "Pending (default)",
-    "Confirmed",
+    "Some fields pending (default: email, Instagram)",
+    "All confirmed",
     "Saving",
     "Read-only"
    ],
@@ -8557,8 +8557,8 @@
     "tenants"
    ],
    "logic": [
-    "No hardcoded contact data: reads src/tenant/tenant.ts and labels every placeholder as pending.",
-    "MapSlot reads tenant.location; provider stays \"none\" so the page makes no network request.",
+    "No hardcoded contact data: reads useContact() (M-08a, src/tenant/tenant.ts as the default) and labels only the fields not confirmed yet as pending (0036: WhatsApp and address confirmed; email and Instagram pending).",
+    "MapSlot reads the contact location (address label + Google Maps link); provider stays \"none\" so the page makes no network request.",
     "The form has no backend: it builds a wa.me deep link with the message prefilled.",
     "Especiales (0017): private events, birthdays, team sessions and special requests are arranged directly with the studio — a card that opens WhatsApp with the request prefilled."
    ],

@@ -7,7 +7,7 @@ import type { DeletionRequestRow, LegalAcceptanceRow } from '../../../data/schem
 import { formatDate, formatDateTime, dateKey } from '../../../i18n/format';
 import { useLayout } from '../../../layout/useLayout';
 import { tenant } from '../../../tenant/tenant';
-import { useSettings } from '../../admin/settings';
+import { contactOf, pendingSuffix, useSettings } from '../../admin/settings';
 import { useAudit } from '../../staff/audit';
 import { Card } from '../../../components/molecule/Card/Card';
 import { Button } from '../../../components/atom/Button/Button';
@@ -56,7 +56,8 @@ export function AccountPage() {
   const open = requests.find((r) => r.status === 'requested' || r.status === 'processing') ?? null;
   const privacy = useMemo(() => [...acceptances].sort((a, b) => b.accepted_at.localeCompare(a.accepted_at))[0], [acceptances]);
   const controllerName = settings.branding.displayName || tenant.name;
-  const contactEmail = settings.profile.email || tenant.contact.email;
+  const contact = contactOf(settings);
+  const contactEmail = `${contact.email}${pendingSuffix(contact, 'email', lang)}`;
   const say = (msg: string) => { setFlash(msg); setTimeout(() => setFlash(null), 3000); };
 
   const setMarketing = async (channel: 'whatsapp' | 'email', on: boolean) => {
@@ -99,7 +100,7 @@ export function AccountPage() {
   const SECTIONS: Record<string, () => ReactNode> = {
     DataController: () => (
       <Card eyebrow={t('customer.account.controller')} padding="md">
-        <p className="small">{t('customer.account.controller.body', { name: controllerName, legal: tenant.legalName, email: contactEmail })}</p>
+        <p className="small">{t('customer.account.controller.body', { name: controllerName, legal: tenant.legalName, email: contactEmail, address: `${contact.address}, ${contact.city}${pendingSuffix(contact, 'address', lang)}`, whatsapp: `${contact.whatsapp}${pendingSuffix(contact, 'whatsapp', lang)}` })}</p>
         <p className="xs muted" style={{ marginTop: 6 }}>{t('customer.profile.legal.law')} · <Link to="/app/legal/privacy">{t('customer.profile.legal.privacy')}</Link></p>
       </Card>
     ),

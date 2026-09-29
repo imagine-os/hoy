@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useI18n } from '../../i18n/I18nProvider';
-import { useContact } from './settings';
+import { useContact , pendingSuffix } from './settings';
 import { useSession } from '../../auth/SessionProvider';
 import { useData, useTable } from '../../data/DataContext';
 import type { BaseRow, MessageLogRow } from '../../data/schema';
@@ -150,7 +150,7 @@ function Canvas({ row, lang }: { row: EmailRow; lang: 'es' | 'en' }) {
   const b = parseBody(row);
   const body = lang === 'en' ? b.en || b.es : b.es;
   const subject = lang === 'en' ? row.subject.en || row.subject.es : row.subject.es;
-  return <EmailPreview envelope={`${tenant.name} <${contact.email}> → mariana@…  ·  ${lang.toUpperCase()} · v${row.version}`} subject={subject} body={body} cta={b.cta ? { label: lang === 'en' ? b.cta.label.en || b.cta.label.es : b.cta.label.es, href: b.cta.href } : undefined} footer={`${tenant.legalName} · ${contact.city}${contact.pending ? ` (${contact.pendingLabel[lang]})` : ''} · ${t('admin.emails.footer', { studio: tenant.name })}`} vars={SAMPLE} />;
+  return <EmailPreview envelope={`${tenant.name} <${contact.email}>${pendingSuffix(contact, 'email', lang)} → mariana@…  ·  ${lang.toUpperCase()} · v${row.version}`} subject={subject} body={body} cta={b.cta ? { label: lang === 'en' ? b.cta.label.en || b.cta.label.es : b.cta.label.es, href: b.cta.href } : undefined} footer={`${tenant.legalName} · ${contact.address}, ${contact.city}${pendingSuffix(contact, 'address', lang)} · WhatsApp ${contact.whatsapp}${pendingSuffix(contact, 'whatsapp', lang)} · ${t('admin.emails.footer', { studio: tenant.name })}`} vars={SAMPLE} />;
 }
 
 function Editor({ row, readOnly, onSave, onTest }: { row: EmailRow; readOnly: boolean; onSave: (patch: Partial<EmailRow>, before: Record<string, unknown>) => Promise<void>; onTest: () => Promise<void> }) {
