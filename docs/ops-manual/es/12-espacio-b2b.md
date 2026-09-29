@@ -2,115 +2,137 @@
 title: Espacio — alquiler B2B
 role: coordinación, owner, finanzas
 part: III
-version: 0.6.2
-updated: 2026-09-17
-summary: Alquilar el estudio fuera de horas pico: cotizar, agendar en S-05, cobrar como Especial en S-04, montar y revisar al cierre.
+version: 0.13.3
+updated: 2026-09-29
+summary: Alquilar el estudio fuera de horas pico: cotizar, reservar la sala, cobrar como Especial, montar y revisar al cerrar.
 ---
 
 # Espacio — alquiler B2B
 
-La quinta línea de ingreso. El estudio es un espacio bonito que está vacío muchas horas al día: eso se
-vende. No es un plan de cliente y **no pasa por checkout**: son precios "desde" y terminan en una
-conversación.
+El estudio es un espacio bonito que está vacío muchas horas al día, y eso también se vende. El alquiler no es
+un plan de cliente y **no se paga en línea**: son precios "desde" que terminan en una conversación.
+
+{{audience:12-espacio-b2b}}
+
+Estos son los precios de referencia:
 
 {{pricing:espacio}}
 
 ## 1. Qué se alquila y qué no
+{{editable:owner}}
+
 | Sí | No |
 |---|---|
-| Talleres de terceros, con maestro propio o nuestro | Nada que desplace una clase del horario sin aprobación del owner |
-| Sesiones privadas (una persona o un grupo cerrado) | Eventos con alcohol o con más gente de la que caben mats |
-| Foto y video, medio día | Uso del wordmark o de la marca sin aprobación (`19`) |
-| Rodajes, por día | Subarriendo: quien alquila no revende el espacio |
-| Pop-ups y activaciones de marca | Horas pico, salvo excepción del owner |
+| Talleres de otras personas, con su maestro o con uno nuestro | Nada que quite una clase del horario sin aprobación del owner |
+| Sesiones privadas (una persona o un grupo cerrado) | Eventos con alcohol o con más gente de la que cabe en los tapetes |
+| Foto y video, por medio día | Usar el logo o la marca sin aprobación (ver [Medios](19-medios-y-artwork.md)) |
+| Rodajes, por día | Subarrendar: quien alquila no revende el espacio |
+| Pop-ups y activaciones de marca | Horas pico, salvo que el owner haga una excepción |
+
+Si una **empresa** pide un programa de bienestar para su equipo, eso es la línea de Experiencias Corporativas,
+que todavía está en preparación (ver [Modelo de valor](03-modelo-de-valor.md)). Una sesión puntual para un
+equipo sí se puede cobrar hoy como Especial.
 
 ## 2. Cómo se cotiza
-1. Llega por WhatsApp, Instagram o el formulario del sitio (W-06 Contacto). Recepción no cotiza:
-   pasa el contacto a coordinación el mismo día.
-2. Coordinación pregunta cinco cosas: **qué** es, **cuántas personas**, **qué día y hora**, **qué
-   necesita del espacio** (sonido, luz, calor, sillas) y **si va a haber cámaras**.
-3. Se cotiza sobre el precio "desde" de la familia Espacio, más lo que cueste lo extra (personal en
-   sala, limpieza profunda, horas fuera de horario).
-4. La cotización se manda por escrito y se guarda como nota en M-06 sobre la empresa o la persona, con
-   el monto y las condiciones. Nada se acuerda solo por voz.
+1. El pedido llega por WhatsApp, Instagram o el formulario de contacto del sitio. Recepción no cotiza: pasa el
+   contacto a coordinación el mismo día.
+2. Coordinación pregunta cinco cosas: **qué** es, **cuántas personas**, **qué día y a qué hora**, **qué
+   necesita** del espacio (sonido, luz, calor, sillas) y **si habrá cámaras**.
+3. Se cotiza sobre el precio "desde", más lo extra: personal en la sala, limpieza profunda, horas fuera del
+   horario.
+4. La cotización se manda por escrito y se guarda como nota en la ficha de la persona o la empresa, con el
+   monto y las condiciones. Nada se acuerda solo de palabra.
+
+**Qué decir cuando llega un pedido:** "¡Qué bueno! Te paso con coordinación, que te escribe hoy con la
+propuesta."
+
+Este es el horario del estudio:
 
 {{tenant:hours}}
 
-> DECISIÓN PENDIENTE: qué horas cuentan como "fuera de pico" para alquiler y si un alquiler puede desplazar una clase publicada (y con cuánto aviso).
+> DECISIÓN PENDIENTE: qué horas cuentan como "fuera de pico" para alquilar, y si un alquiler puede mover una clase ya publicada (y con cuánto aviso).
 
-## 3. Cómo se agenda
-1. El bloque se crea en **S-05 · Salas y reservas de espacio** (`/staff/rooms`): tipo (evento privado,
-   alquiler, clase privada, mantenimiento o bloqueo), sala, fecha, hora de inicio y fin, título, contacto o
-   socio, profesor si lo lleva, nota. La sala queda ocupada y nadie programa una clase encima.
-2. **La sala no acepta dos cosas a la vez.** El formulario compara la ventana con las clases publicadas y
-   con las demás reservas de esa sala y, si algo se cruza aunque sea un minuto, lo lista y no deja
-   reservar. Se cambia la hora o la sala; mover una clase publicada es decisión del owner (§2).
-3. Si el alquiler es un taller abierto al público, va como **evento** (C-23) con su precio y cupo
-   propios: ahí sí hay checkout.
-4. Recepción ve el bloque en el calendario de S-05 junto a las clases del día, con el nombre del contacto;
-   el profesor lo ve en su inicio de S-03 bajo **Especiales**.
+## 3. Cómo se reserva la sala
+1. Crea el bloque en **Salas**: tipo (evento privado, alquiler, clase privada, mantenimiento o bloqueo), sala,
+   fecha, hora de inicio y fin, título, contacto, maestro si lo hay y una nota.
+2. **La sala no acepta dos cosas a la vez.** Si el horario se cruza con una clase publicada o con otra reserva,
+   aunque sea un minuto, la pantalla te lo muestra y no deja reservar. Cambia la hora o la sala.
+3. Si es un taller abierto al público, se publica como **evento**, con su precio y su cupo: ese sí se paga en
+   línea.
+4. Recepción ve el bloque en el calendario junto a las clases del día. El maestro lo ve en su app, en
+   "Especiales".
 
-![Salas por día: clases y reservas de espacio en el mismo calendario](../../screenshots/S-05/es-1280.jpg "S-05 · /staff/rooms")
+![Salas por día: clases y reservas en el mismo calendario](../../screenshots/S-05/es-1280.jpg "S-05 · /staff/rooms")
+
+> EN HOYOS: S-05 Salas y reservas de espacio → Nueva reserva → tipo, sala, ventana → Guardar.
 
 ## 4. Anticipo y cobro
-1. El alquiler se confirma con anticipo; sin anticipo la fecha no se bloquea.
-2. El saldo se cobra antes del uso, no después. Medios: los mismos de S-04 (`10`), normalmente link de
-   Wompi o transferencia.
-3. Para empresa: se toma NIT y razón social **antes** de emitir, porque la factura no se rehace (`15`).
+{{editable:owner}}
 
-> DECISIÓN PENDIENTE: porcentaje de anticipo, política de cancelación del alquiler (¿cuánto se devuelve y hasta cuándo?) y si se pide depósito por daños.
+1. El alquiler se confirma con anticipo (ver la regla de abajo).
+2. El saldo se cobra antes del uso, no después. Los medios son los mismos del mostrador; lo normal es link de
+   Wompi o transferencia.
+3. Si es una empresa, pide el NIT y la razón social **antes** de facturar. La factura no se puede rehacer
+   (ver [Facturación](15-facturacion-y-dian.md)).
+
+Los términos del anticipo:
+
+{{studio:b2b_deposit_note}}
+
+> DECISIÓN PENDIENTE: el porcentaje de anticipo, cuánto se devuelve si se cancela el alquiler y hasta cuándo, y si se pide un depósito por daños.
 
 ## 5. El día del alquiler
-1. Montaje según lo acordado, no según el estándar de clase (`07`). Lo que se mueva, se anota.
-2. Alguien del equipo está presente todo el tiempo: el espacio no se entrega con llave a un tercero.
-3. Reglas que se dicen al entrar: dónde están las salidas, qué no se mueve, que no se pisa la sala con
-   zapatos de calle y a qué hora hay que salir.
-4. Si hay cámaras: no se graba a socios que no vinieron a eso. Si coincide con una clase, se avisa a
-   los asistentes antes de entrar.
+{{editable:coordinator}}
+
+1. Monta la sala como se acordó, no como una clase. Anota lo que se mueva.
+2. Alguien del equipo está presente todo el tiempo. Nunca se entregan las llaves a un tercero.
+3. Al entrar, di las reglas: dónde están las salidas, qué no se mueve, que no se entra a la sala con zapatos de
+   calle y a qué hora hay que salir.
+4. Si hay cámaras, no se graba a socios que no vinieron a eso. Si coincide con una clase, se avisa a los
+   alumnos antes de entrar.
 
 ## 6. Cierre y daños
-1. Revisión conjunta al final: piso, espejos, props, baños, equipo de sonido y luz.
-2. Lo que falte o se haya roto se fotografía en el momento y se anota en la nota de M-06 del cliente.
-3. Limpieza profunda antes de la siguiente clase; si el alquiler termina tarde, la primera clase del
-   día siguiente se revisa temprano.
-4. Coordinación cierra el caso en M-06 y finanzas concilia el cobro (`14`).
+1. Revisa todo con quien alquiló: piso, espejos, accesorios, baños, sonido y luz.
+2. Lo que falte o se haya roto se fotografía en el momento y se anota en su ficha.
+3. Limpieza profunda antes de la siguiente clase. Si el alquiler termina tarde, la primera clase del día
+   siguiente se revisa temprano.
+4. Coordinación cierra el caso y finanzas concilia el cobro (ver [Pagos y caja](14-pagos-y-caja.md)).
 
-## 7. Especiales — el cobro manual
-Un **Especial** es la venta cuyo concepto y precio se escriben a mano en recepción. Existe para lo que el
-modelo de valor no cubre con un botón: un cumpleaños con profe, una sesión para un equipo, un alquiler con
-extras, un pedido raro. Es la respuesta operativa a la pregunta de si hay un producto de sesión grupal para
-celebraciones (ROADMAP §E 34): la mecánica ya está; el producto comercial, si se estandariza, lo decide Lore.
+## 7. Especiales: el cobro a mano
+Un **Especial** es una venta con concepto y precio escritos a mano. Sirve para lo que no tiene botón: un
+cumpleaños con maestro, una sesión para un equipo, un alquiler con extras, un pedido raro.
 
-1. **Reservar** (opcional, S-05): la sala y la ventana, como en §3. Puede quedar **en espera** mientras no
-   haya anticipo — se dibuja con borde punteado — o **confirmada**.
-2. **Cobrar** (S-04 Registrar y cobrar): en **Qué compra**, la familia **Espacio · Especiales** lista los
-   precios "desde" (Sesión Privada, Talleres, Foto & Video, Rodajes, Pop-ups) y un renglón **Especial ·
-   concepto y precio manual**. Elegir uno abre la tarjeta **Especial**: concepto (viene prellenado del
-   "desde"), valor acordado, profesor y su pago, sala y ventana, nota. Si la reserva ya existe en S-05,
-   el botón **Cobrar** de la reserva abre S-04 con todo cargado y, al completar, la confirma y la enlaza.
-3. **Quién**: socio existente, persona nueva o **Solo contacto** (empresa o persona que no es socia: solo el
-   nombre, no se crea cliente). El IVA, el **Valor pagado** y la **Observación** funcionan igual que en
-   cualquier venta (`10`).
-4. **Completar venta** escribe el pago y la factura, la fila en `special_charges` y, si lleva sala, la
-   reserva confirmada en `space_bookings` — todo en una sola venta y todo en M-07 a nombre de quien cobró.
-5. **El pago al profesor** se acuerda aquí, no en la nómina: el valor escrito en "Pago al profesor" entra
-   al borrador del periodo como línea **"Especial: <concepto>"** (`16`). Sin profesor o sin valor, no hay
-   línea.
+1. **Reservar la sala** (si hace falta): como en la sección 3. Puede quedar **en espera** mientras no haya
+   anticipo (se ve con borde punteado) o **confirmada**.
+2. **Cobrar:** en Registrar y cobrar, elige **Espacio · Especiales**. Elige un precio "desde" o "Especial ·
+   concepto y precio manual". Llena: concepto, valor acordado, maestro y su pago, sala y horario, nota. Si la
+   reserva ya existe, el botón **Cobrar** de la reserva abre el cobro con todo lleno.
+3. **Quién paga:** un socio, una persona nueva o **solo contacto** (una empresa o alguien que no es socio: solo
+   el nombre). El IVA y las observaciones funcionan como en cualquier venta.
+4. **Completar la venta** guarda el pago, la factura y la reserva confirmada, todo junto y con tu nombre.
+5. **El pago al maestro** se acuerda aquí, no en la nómina. El valor que escribas entra al pago del periodo
+   como una línea "Especial: <concepto>" (ver [Nómina](16-nomina-y-payouts.md)).
 
-**Estados de la reserva:** en espera → confirmada → realizada; cancelada en cualquier momento libera la
-sala y, si tenía profesor, saca su línea del borrador de nómina. Una reserva realizada no se edita.
+**Estados de la reserva:** en espera → confirmada → realizada. Si se cancela, la sala queda libre y la línea
+del maestro sale del pago. Una reserva realizada ya no se edita.
 
-![Un Especial en el mostrador: concepto, valor, profe, sala y ventana](../../screenshots/S-04/es-1280-especial.jpg "S-04 · /staff/register")
+![Un Especial en el mostrador: concepto, valor, maestro, sala y horario](../../screenshots/S-04/es-1280-especial.jpg "S-04 · /staff/register")
+
+Así queda guardado cada Especial:
 
 {{table:special_charges}}
 
-## 8. Qué mirar cada mes
-| Indicador | Dónde |
-|---|---|
-| Horas alquiladas | calendario de S-05 + notas de M-06 |
-| Especiales cobrados y su pago a profesores | `special_charges` (M-03) + líneas "Especial" en M-09b |
-| Ingreso de la familia Espacio | M-09 Finanzas |
-| Incidencias o daños por alquiler | M-07 + notas de M-06 |
-| Cotizaciones enviadas vs. cerradas | notas de M-06 |
+> EN HOYOS: S-04 Registrar y cobrar → Qué compra → Espacio · Especiales → tarjeta Especial → Completar venta.
 
-![Finanzas: dónde se ve lo que entró](../../screenshots/M-09/es-1280.jpg "M-09 · /admin/finance")
+## 8. Qué mirar cada mes
+{{for:super_admin,admin,coordinator,finance}}
+| Qué | Dónde lo ves |
+|---|---|
+| Horas alquiladas | el calendario de Salas y las notas de cada cliente |
+| Especiales cobrados y lo que se pagó a los maestros | la tabla de Especiales y las líneas "Especial" del pago de maestros |
+| Ingreso de la línea Espacio | Finanzas |
+| Daños o incidentes en alquileres | el registro de actividad y las notas |
+| Cotizaciones enviadas y cerradas | las notas de cada cliente |
+{{/for}}
+
+![Finanzas: lo que entró](../../screenshots/M-09/es-1280.jpg "M-09 · /admin/finance")

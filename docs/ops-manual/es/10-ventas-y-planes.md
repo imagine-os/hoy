@@ -2,87 +2,100 @@
 title: Ventas y planes
 role: recepción, coordinación, finanzas
 part: III
-version: 0.6.2
-updated: 2026-09-17
-summary: Registrar y cobrar en el mostrador, qué ofrecer a quién, y qué hace el socio desde su propia app.
+version: 0.13.3
+updated: 2026-09-29
+summary: Registrar y cobrar en el mostrador, qué ofrecer a cada persona y todo lo que el socio puede hacer solo desde su app.
 ---
 
 # Ventas y planes
 
-Todo lo que se vende sale del modelo de valor (`03`). En el mostrador no se inventan precios ni
-vigencias: se eligen.
+Todo lo que se vende sale del [modelo de valor](03-modelo-de-valor.md). En el mostrador no se inventan precios
+ni vigencias: se eligen.
 
-## 1. Registrar y cobrar (S-04)
-1. **S-04 Registrar y cobrar**, sección **Quién**: Nuevo / Existente. Nuevo: nombre, WhatsApp, correo,
-   contacto de emergencia, cumpleaños y consentimiento (la persona acepta verbalmente; tú lo
-   registras: queda con hora, tu nombre y versión de la política — ver `23`).
-2. Sección **Qué**: elige el pase Bienvenida o el plan. Debajo, la familia **Espacio · Especiales** es
-   para lo que no tiene botón: concepto y precio a mano, profesor con su pago y sala con su ventana en la
-   misma venta (`12` §7).
-3. Sección **Cómo paga**:
-   - **Wompi (link)**: envía el link por WhatsApp; la orden queda pendiente hasta que la pasarela confirme.
-   - **Datáfono**: cobra; la orden queda pendiente hasta la confirmación.
-   - **Efectivo**: liquida de inmediato; guarda el dinero en caja y entrega recibo.
-   - **Transferencia / Nequi**: pide comprobante en pantalla, deja la orden pendiente y anótala para finanzas.
-4. **Completar y registrar**: la venta hace el check-in automático en la clase comprada. Recibo por
-   WhatsApp y correo.
-5. Pago rechazado: la orden queda pendiente con la razón; ofrece otro medio, no repitas el cobro a ciegas.
+{{audience:10-ventas-y-planes}}
 
-![Quién · Qué · Cómo paga, con el riel de resumen](../../screenshots/S-04/es-1280.jpg "S-04 · /staff/register")
+## 1. Registrar y cobrar
+1. **Quién.** Elige si es una persona nueva o un socio que ya existe. Si es nueva, pide nombre, WhatsApp,
+   correo, contacto de emergencia y cumpleaños.
+2. **El permiso de datos.** Pregúntale si acepta el tratamiento de sus datos. Ella dice que sí en voz alta y
+   tú lo marcas. Queda guardado con la hora, tu nombre y la versión de la política (ver
+   [Datos personales](23-habeas-data.md)).
+3. **Qué compra.** Elige el pase o el plan. Para lo que no tiene botón (un cumpleaños, una sesión para un
+   equipo, un alquiler con extras) está **Espacio · Especiales**: concepto y precio a mano (ver
+   [Espacio — alquiler B2B](12-espacio-b2b.md)).
+4. **Cómo paga:**
+   - **Link de Wompi:** envíale el link por WhatsApp. La venta queda pendiente hasta que el pago se confirme.
+   - **Datáfono:** cobra. La venta queda pendiente hasta la confirmación.
+   - **Efectivo:** queda pagada de inmediato. Guarda el dinero en la caja y entrega el recibo.
+   - **Transferencia o Nequi:** pide ver el comprobante, deja la venta pendiente y anótala para finanzas.
+5. **Completar.** Al completar la venta, la persona queda registrada en la clase que compró. El recibo le
+   llega por WhatsApp y correo.
+6. **Si el pago falla:** la venta queda pendiente con la razón. Ofrece otro medio. No repitas el cobro a
+   ciegas.
 
-**Pasos en HoyOS:** S-04 → Quién → Qué → Cómo paga → Completar y registrar. Consultar después: M-06
-CRM → pestaña Pagos.
+**Qué decir al cobrar:** "Listo, ya quedaste en la de las 7. El recibo te llega al WhatsApp."
 
-> DECISIÓN PENDIENTE: si los precios publicados incluyen IVA o el riel de S-04 lo suma aparte.
+![Quién · Qué · Cómo paga, con el resumen a la derecha](../../screenshots/S-04/es-1280.jpg "S-04 · /staff/register")
 
-El IVA que aplica hoy el riel:
+Este es el IVA que se aplica hoy:
 
 {{policy:iva_pct}}
 
-## 2. Qué ofrecer a quién
-| Quien tienes enfrente | Qué se ofrece | Por qué |
-|---|---|---|
-| Primera vez, no sabe si le gusta | Clase de Prueba | decide con el cuerpo, no con la cabeza |
-| Volvió y preguntó por precios | Paquete de 3 | compromiso corto, sin mensualidad |
-| Viene 2–3 veces por semana | Membresía mensual | le sale mejor y a nosotros nos estabiliza |
-| Ya sabe que se queda el año | Membresía anual | mejor precio por mes |
-| Viene entre reuniones, 20 minutos | Pausas | no ocupa un mat de clase |
-| Quiere regalar | Bono de regalo | es nuestro canal de referidos |
-| Quiere el espacio para su evento, un cumpleaños o una sesión para su equipo | **Especial** en S-04: precio "desde" como referencia, concepto y valor a mano | no es checkout; la conversación termina en el mostrador (`12` §7) |
+> DECISIÓN PENDIENTE: si los precios publicados ya incluyen el IVA o si se suma aparte al cobrar. Esto también decide cómo se escriben los precios en el sitio.
 
-Precios vigentes, leídos del sistema:
+> EN HOYOS: S-04 Registrar y cobrar → Quién → Qué → Cómo paga → Completar y registrar. Después: M-06 CRM → pestaña Pagos.
+
+## 2. Qué ofrecer a cada persona
+| Quién tienes enfrente | Qué le ofreces | Por qué |
+|---|---|---|
+| Viene por primera vez y no sabe si le va a gustar | Clase de Prueba | decide con el cuerpo, no con la cabeza |
+| Volvió y pregunta precios | Paquete de 3 | compromiso corto, sin mensualidad |
+| Viene 2 o 3 veces por semana | Membresía mensual | le sale mejor y a nosotros nos da estabilidad |
+| Sabe que se queda todo el año | Membresía anual | el mejor precio por mes |
+| Viene entre reuniones, 20 minutos | Pausas | no ocupa un tapete de clase |
+| Quiere regalar | Bono de Regalo | es como llega gente nueva |
+| Quiere el espacio para un evento, un cumpleaños o su equipo | Especial, con el precio "desde" como referencia | se conversa y se cobra en el mostrador |
+
+Estos son los precios vigentes:
 
 {{pricing:bienvenida}}
 
 {{pricing:membresia}}
 
 ## 3. Lo que el socio puede hacer solo
-Casi todo. No hace falta que recepción lo haga por él, y es mejor que no lo haga:
+Casi todo. Es mejor que lo haga desde su app: así aprende y no depende del mostrador.
 
-| Quiere | Pantalla |
+| Quiere | Dónde, en su app |
 |---|---|
-| Ver y reservar clases | C-02 Horario |
-| Ver sus pases y créditos | C-07 / C-07b |
-| Comprar un plan | C-06 Planes → C-04 Checkout |
-| Cambiar o cancelar una reserva | C-08 / C-08b |
-| Pausar o cancelar la membresía | C-22 Gestionar membresía |
-| Ver sus pagos y recibos | C-11 Historial |
-| Cambiar sus datos y su idioma | C-19 Perfil |
-| Guardar un medio de pago | C-05 Medios de pago |
+| Ver y reservar clases | Horario |
+| Ver sus pases y créditos | Mis pases |
+| Comprar un plan | Planes → pagar |
+| Cambiar o cancelar una reserva | Mis reservas |
+| Pausar o cancelar la membresía | Gestionar membresía |
+| Ver sus pagos y recibos | Historial |
+| Cambiar sus datos o su idioma | Perfil |
+| Guardar un medio de pago | Medios de pago |
 
-![El checkout del socio, con el IVA calculado](../../screenshots/C-04/es-390.jpg "C-04 · /app/checkout/:id")
+**Qué decir:** "Eso lo puedes hacer tú desde la app, en Mis reservas. Si quieres, te muestro."
 
-![Sus planes](../../screenshots/C-06/es-390.jpg "C-06 · /app/plans")
+![El pago en la app del socio, con el IVA calculado](../../screenshots/C-04/es-390.jpg "C-04 · /app/checkout/:id")
+
+![Los planes en la app](../../screenshots/C-06/es-390.jpg "C-06 · /app/plans")
+
+> EN HOYOS: C-02 Horario · C-07 Pases · C-06 Planes → C-04 Pago · C-08 Reservas · C-22 Membresía · C-11 Historial · C-19 Perfil · C-05 Medios de pago.
 
 ## 4. Créditos y vigencias
-1. Un pase Bienvenida da créditos con fecha de caducidad; la Membresía no da créditos, da acceso.
-2. Un crédito devuelto por cancelación dentro de la ventana vuelve con su vigencia original, no se extiende.
-3. Cortesías: se devuelve **crédito, no dinero**, y lo aprueba coordinación (`14`).
+1. Un pase de Bienvenida da **créditos** con fecha de vencimiento. La Membresía no da créditos: da acceso.
+2. Si la persona cancela dentro de la ventana, el crédito vuelve con su fecha original. No se alarga.
+3. Una cortesía se da en **crédito, no en dinero**, y la aprueba coordinación (ver
+   [Pagos y caja](14-pagos-y-caja.md)).
+
+Así guarda el sistema los créditos:
 
 {{table:credits}}
 
 ## 5. Recibos
-Cada venta liquidada genera recibo por WhatsApp y correo, con la referencia de la factura electrónica
-cuando la facturación está encendida (`15`).
+Cada venta pagada genera un recibo por WhatsApp y correo. Cuando la facturación electrónica esté encendida,
+el recibo llevará también la referencia de la factura (ver [Facturación](15-facturacion-y-dian.md)).
 
-![El recibo del socio](../../screenshots/C-11/es-390.jpg "C-11 · /app/history")
+![El recibo en la app del socio](../../screenshots/C-11/es-390.jpg "C-11 · /app/history")

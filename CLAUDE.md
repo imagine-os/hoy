@@ -87,8 +87,9 @@ prices outside `src/tenant/tenant.ts` and `src/tenant/pricing.ts`. Copy that say
 in a user-facing string reads the tenant name from config.
 
 ## Roles
-`super_admin, admin, coordinator, front_desk, finance, teacher, maintenance, customer, public`
-(`src/auth/roles.ts`). Dev mode (inspector, spec chip, layout editor) is only available to `super_admin`.
+`super_admin, admin, coordinator, front_desk, finance, teacher, maintenance, marketing, developer, customer, public`
+(`src/auth/roles.ts`, 11 roles). Dev mode (inspector, spec chip, layout editor) is available to `super_admin` and
+`developer` (`DEV_MODE_ROLES`).
 A super admin can "view as" any role with dev tooling on or off.
 
 ## Documentation and prompt log (mandatory, same turn as the work)

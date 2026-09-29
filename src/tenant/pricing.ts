@@ -1,15 +1,26 @@
 /**
  * Modelo de Valor v3 — the ONLY place a price is written. P-01, C-06, C-07, S-04 and the `plans`
  * seed all read from here. Amounts in COP (integers).
+ *
+ * Six families since 0032 (the owner's "Modelo de Valor — sin precios" deck): the sixth,
+ * `corporativo` (Experiencias Corporativas), is "en camino" — it has a label, a role and a
+ * rationale but **no priced items**, so nothing can sell it; `COMING_SOON_FAMILIES` marks it and
+ * `CORPORATE_FORMATS` lists its three planned formats without prices.
  */
 import { tenant } from './tenant';
 import { formatCOP } from '../i18n/format';
 
-export type PlanFamily = 'bienvenida' | 'membresia' | 'pausas' | 'regalos' | 'espacio';
+export type PlanFamily = 'bienvenida' | 'membresia' | 'pausas' | 'regalos' | 'espacio' | 'corporativo';
+
+/** Families that are announced but not sold yet: no `pricing` item may use them. */
+export const COMING_SOON_FAMILIES: readonly PlanFamily[] = ['corporativo'];
+/** The families a priced item (and so a `plans` row) can belong to. */
+export type SellableFamily = Exclude<PlanFamily, 'corporativo'>;
+export const isComingSoon = (family: PlanFamily) => COMING_SOON_FAMILIES.includes(family);
 
 export interface PriceItem {
   id: string;
-  family: PlanFamily;
+  family: SellableFamily;
   name: { es: string; en: string };
   description: { es: string; en: string };
   /** COP; null when the price reads "included". */
@@ -27,6 +38,7 @@ export const FAMILY_LABEL: Record<PlanFamily, { es: string; en: string }> = {
   pausas: { es: 'Pausas', en: 'Pauses' },
   regalos: { es: 'Regalos', en: 'Gifts' },
   espacio: { es: 'Espacio', en: 'Space' },
+  corporativo: { es: 'Experiencias Corporativas', en: 'Corporate Experiences' },
 };
 
 export const pricing: PriceItem[] = [
@@ -49,6 +61,16 @@ export const pricing: PriceItem[] = [
 ];
 
 export const pricingByFamily = (family: PlanFamily) => pricing.filter((p) => p.family === family);
+
+/**
+ * The three formats Experiencias Corporativas is being prepared in — descriptions only, no price,
+ * no validity, no checkout. Scope and prices are an open owner decision (manual chapter 03).
+ */
+export const CORPORATE_FORMATS: { id: string; name: { es: string; en: string }; description: { es: string; en: string } }[] = [
+  { id: 'corp-team', name: { es: 'Sesión para equipos', en: 'Team session' }, description: { es: 'una experiencia grupal en el estudio o en la oficina', en: 'a group experience at the studio or at the office' } },
+  { id: 'corp-program', name: { es: 'Programa recurrente', en: 'Recurring programme' }, description: { es: 'encuentros periódicos para un mismo equipo', en: 'regular sessions for the same team' } },
+  { id: 'corp-workshop', name: { es: 'Taller a medida', en: 'Tailored workshop' }, description: { es: 'una sesión temática, diseñada según la necesidad del equipo', en: 'a themed session designed around what the team needs' } },
+];
 export const priceItem = (id: string) => pricing.find((p) => p.id === id);
 
 /**
@@ -62,6 +84,7 @@ export const FAMILY_ROLE: Record<PlanFamily, { es: string; en: string }> = {
   pausas: { es: 'Frecuencia', en: 'Frequency' },
   regalos: { es: 'Referido y comunidad', en: 'Referral and community' },
   espacio: { es: 'Ingreso B2B', en: 'B2B revenue' },
+  corporativo: { es: 'En camino', en: 'On the way' },
 };
 
 export interface FamilyRationale {
@@ -124,10 +147,22 @@ export const FAMILY_RATIONALE: Record<PlanFamily, FamilyRationale> = {
       en: 'The studio earns beyond its classes: productions, brands and communities rent the space outside peak hours. It is the revenue line least tied to the membership cycle, and the one with the highest ceiling per transaction.',
     },
   },
+  corporativo: {
+    role: FAMILY_ROLE.corporativo,
+    subtitle: { es: 'Bienestar para equipos que rinden alto y descansan poco.', en: 'Wellbeing for teams that perform hard and rest little.' },
+    why: {
+      es: 'Llevar HOY a los equipos que más lo necesitan: pausas activas, movimiento y respiración como parte de la cultura de trabajo, no como un beneficio aislado. Tres formatos en preparación: sesión para equipos, programa recurrente y taller a medida.',
+      en: 'Taking HOY to the teams that need it most: active breaks, movement and breathing as part of the work culture, not an isolated perk. Three formats in preparation: team session, recurring programme and tailored workshop.',
+    },
+    note: {
+      es: 'Aún en preparación: alcance, formatos y precios están por confirmar antes del lanzamiento.',
+      en: 'Still in preparation: scope, formats and prices are to be confirmed before launch.',
+    },
+  },
 };
 
 /**
- * The discipline behind the model — four numbers and the paragraph that ties the five families
+ * The discipline behind the model — four numbers and the paragraph that ties the six families
  * together. The numbers are read from src/tenant/tenant.ts (studio capacity) and from the number of
  * families here, so nothing is written twice.
  */
@@ -139,8 +174,8 @@ export const DISCIPLINE = {
     { value: (Object.keys(FAMILY_LABEL) as PlanFamily[]).length, label: { es: 'líneas de ingreso', en: 'revenue lines' } },
   ],
   paragraph: {
-    es: 'La Bienvenida capta y la Membresía retiene; Pausas y Regalos suben la frecuencia y el referido a costo marginal bajo; el Espacio abre ingreso B2B sin depender del ciclo de membresías. Cinco palancas, un mismo estudio — con un límite de capacidad claro que protege la experiencia.',
-    en: 'Welcome brings people in and Membership keeps them; Pauses and Gifts raise frequency and referrals at low marginal cost; Space opens B2B revenue that does not depend on the membership cycle. Five levers, one studio — with a clear capacity limit that protects the experience.',
+    es: 'La Bienvenida capta y la Membresía retiene; Pausas y Regalos suben la frecuencia y el referido a costo marginal bajo; el Espacio abre ingreso B2B sin depender del ciclo de membresías, y las Experiencias Corporativas suman un canal adicional en preparación. Seis palancas, un mismo estudio — con un límite de capacidad claro que protege la experiencia.',
+    en: 'Welcome brings people in and Membership keeps them; Pauses and Gifts raise frequency and referrals at low marginal cost; Space opens B2B revenue that does not depend on the membership cycle; and Corporate Experiences add one more channel, still in preparation. Six levers, one studio — with a clear capacity limit that protects the experience.',
   },
   tagline: { es: 'La vida es HOY.', en: 'Life is HOY.' },
 } as const;

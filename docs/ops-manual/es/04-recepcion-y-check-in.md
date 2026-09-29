@@ -2,98 +2,136 @@
 title: Recepción y check-in
 role: recepción, coordinación
 part: II
-version: 0.8.0
-updated: 2026-09-18
-summary: La puerta: apertura, saludo, check-in, walk-ins, lista de espera, objetos perdidos y traspasos.
+version: 0.13.3
+updated: 2026-09-29
+summary: La puerta paso a paso: abrir, saludar, registrar la llegada, walk-ins, cancelaciones, lista de espera, objetos perdidos y traspasos.
 ---
 
 # Recepción y check-in
 
-Tu pantalla base es **S-02 Puerta / check-in**. Desde ahí buscas socios, ves la tira Ahora / Sigue /
-Más tarde, los maestros del día y las acciones de recepción. Cada acción queda en el registro con tu nombre.
+Tu pantalla de trabajo es **Check-in**: desde ahí buscas socios, ves qué clase está pasando, cuál sigue y qué
+maestros llegaron. Todo lo que haces queda registrado con tu nombre.
 
-![La puerta: búsqueda, tira del día, maestros y acciones](../../screenshots/S-02/es-1280.jpg "S-02 · /staff/checkin")
+{{audience:04-recepcion-y-check-in}}
 
-## 1. Apertura (45 min antes de la primera clase)
-1. Enciende luces, clima y música de recepción; revisa que la sala esté montada según `07`.
-2. Entra a HoyOS con tu usuario → **S-01 Inicio por rol** → Recepción.
-3. En **S-02** confirma las clases del día, los cupos y que cada maestro aparezca como "Esperado".
-4. Revisa la lista de espera de cada clase y los pagos pendientes de ayer (transferencias sin confirmar).
-5. Abre la **Bandeja de mensajes (S-06)** y responde lo que llegó en la noche: los hilos sin leer van primero y la campana de la barra superior dice cuántos hay. Cómo se responde está en `13`.
-6. Cuenta la base de caja y anótala en la planilla de cierre (`14`).
+![La puerta: búsqueda, clases del día, maestros y acciones](../../screenshots/S-02/es-1280.jpg "S-02 · /staff/checkin")
 
-![Inicio por rol: lo que te espera hoy](../../screenshots/S-01/es-1280.jpg "S-01 · /staff")
+## 1. Apertura
+{{editable:coordinator}}
+
+Llega antes de la primera clase, con este margen:
+
+{{studio:opening_lead_minutes}}
+
+1. Enciende luces, clima y música de recepción. Revisa que la sala esté montada (ver
+   [Sala, calor y mantenimiento](07-sala-calor-y-mantenimiento.md)).
+2. Entra a HoyOS con tu propio usuario.
+3. En Check-in, revisa las clases del día, los cupos y que cada maestro aparezca como "Esperado".
+4. Revisa la lista de espera de cada clase y los pagos de ayer que siguen pendientes (transferencias sin
+   confirmar).
+5. Abre la Bandeja y responde lo que llegó en la noche. Los mensajes sin leer van primero. Cómo responder:
+   [CRM, WhatsApp y correo](13-crm-y-whatsapp.md).
+6. Cuenta la base de caja y anótala en la planilla de cierre.
+
+![Tu inicio: lo que te espera hoy](../../screenshots/S-01/es-1280.jpg "S-01 · /staff")
+
+> EN HOYOS: S-01 Inicio → S-02 Check-in (clases y maestros) → S-06 Bandeja.
 
 ## 2. Saludo
-1. Mira a la persona, sonríe, nombre si lo conoces: "Hola, Camila. ¿Vienes a la de las 7?"
-2. Si es nueva: "Hola, bienvenida a HOY. ¿Es tu primera vez? Te registro en un minuto."
-3. Antes de la clase, una sola pregunta útil: "¿Necesitas mat o trajiste el tuyo?"
+{{editable:owner}}
 
-El tono completo —qué se dice y qué no— está en el capítulo `20`.
+1. Mira a la persona, sonríe y di su nombre si lo sabes: "Hola, Camila. ¿Vienes a la de las 7?"
+2. Si es nueva, usa el saludo de la casa (abajo) y regístrala.
+3. Antes de la clase, una sola pregunta útil: "¿Necesitas tapete o trajiste el tuyo?"
 
-## 3. Check-in
-1. En **S-02** selecciona la clase en el selector; la lista muestra Esperados, Registrados y Lista de espera.
-2. Busca por nombre, teléfono, correo o documento; toca la persona → **Registrado**.
-3. Si aparece "ya registrado", no dupliques: es la misma persona o el maestro ya marcó asistencia.
-4. Marcador de salud discreto: no lo comentes en voz alta; el maestro lo ve en su lista.
-5. Pasados los minutos de tolerancia, quien no llegó es no-show: confírmalo en S-02 para que la lista
-   de espera se promueva.
+El saludo para alguien que viene por primera vez:
 
-**Pasos en HoyOS:** S-02 Puerta / check-in → selector de clase → Buscar socio → Registrado.
-Cancelar o mover: acción "Cancelar o mover reserva" (abre C-08b en nombre del socio).
+{{studio:greeting_line}}
 
-![La reserva del socio, que es lo que él ve](../../screenshots/C-08/es-390.jpg "C-08 · /app/booking/:id")
+Qué decimos y qué no: [Voz y tono](20-voz-y-tono.md).
 
-## 4. Walk-ins
-1. Sin cupo en la clase que quiere: ofrece la siguiente del día o la lista de espera. Una persona,
-   una clase al día.
-2. Los precios se leen en S-04 desde el modelo de valor; nunca los digites ni los negocies. El
-   catálogo y para qué sirve cada familia está en el capítulo `03`; el procedimiento de venta, en `10`.
+## 3. Registrar la llegada (check-in)
+1. Elige la clase. Verás tres grupos: Esperados, Registrados y Lista de espera.
+2. Busca a la persona por nombre, teléfono, correo o documento. Tócala y marca **Registrado**.
+3. Si dice "ya registrado", no lo repitas: es la misma persona, o el maestro ya marcó su asistencia.
+4. Si ves una marca de salud, no la comentes en voz alta. El maestro también la ve en su lista.
+5. Cuando pasa la tolerancia de llegada, quien no vino es un no-show. Confírmalo para que el cupo pase a la
+   lista de espera.
+
+Si la persona quiere cancelar o cambiar de clase, usa "Cancelar o mover reserva": haces el cambio por ella,
+igual que lo haría en su app.
+
+![La reserva, tal como la ve el socio](../../screenshots/C-08/es-390.jpg "C-08 · /app/booking/:id")
+
+> EN HOYOS: S-02 Check-in → selector de clase → Buscar socio → Registrado. Cambios: "Cancelar o mover reserva" (abre C-08b).
+
+## 4. Walk-ins (llega sin reserva)
+1. Si hay cupo, regístrala y cobra (ver [Ventas y planes](10-ventas-y-planes.md)).
+2. Si no hay cupo, ofrece la siguiente clase del día o la lista de espera.
+3. Recuerda la regla: una persona, una clase al día.
+4. Los precios no se escriben ni se negocian: se eligen en Registrar y cobrar.
+
+**Qué decir:** "Esa ya está llena. Hay cupo a las 9:30, ¿te la guardo? O te dejo en lista de espera."
 
 ## 5. Cancelaciones, llegadas tarde y no-show
-Las reglas son valores de M-08, no memoria. Estos son los vigentes:
+Las reglas son las de Ajustes, no las que recordamos. Esta es la ventana de cancelación vigente:
 
 {{policy:cancellation_window_hours}}
 
-| Situación | Regla | Qué dices |
+| Situación | Qué pasa | Qué dices |
 |---|---|---|
-| Cancela dentro de la ventana | Crédito vuelve de inmediato | "Listo, tu crédito ya está de vuelta." |
-| Cancela fuera de la ventana | Crédito se consume | "Como faltan menos horas que la ventana, esta clase cuenta. ¿Te muevo a otra del día?" |
-| Mover | Cancelar + reservar en una acción; sin cargo dentro de la ventana | "Te paso a la de las 9:30, mismo crédito." |
-| Llega tarde | Tolerancia según M-08 | "Entra con cuidado; el maestro ya empezó." |
-| No-show | Se confirma en S-02; crédito se consume | Se avisa por WhatsApp con la plantilla, no con reproches |
+| Cancela dentro de la ventana | El crédito vuelve de inmediato | "Listo, tu crédito ya está de vuelta." |
+| Cancela fuera de la ventana | El crédito se usa | "Como faltan menos horas que la ventana, esta clase cuenta. ¿Te muevo a otra del día?" |
+| Quiere moverse de clase | Se cancela y se reserva en un paso; sin costo dentro de la ventana | "Te paso a la de las 9:30, con el mismo crédito." |
+| Llega tarde | Entra si está dentro de la tolerancia | "Entra con cuidado; el maestro ya empezó." |
+| No vino | Se confirma el no-show y el crédito se usa | Se le escribe por WhatsApp con la plantilla, sin reproches |
 
-> DECISIÓN PENDIENTE: minutos de tolerancia de llegada y cargo por inasistencia (campos "Tolerancia de llegada" y "Cargo por inasistencia" en M-08).
+> DECISIÓN PENDIENTE: los minutos de tolerancia para llegar tarde y si faltar sin avisar tiene un cargo en dinero.
 
-![El cambio de reserva, en nombre del socio](../../screenshots/C-08b/es-390.jpg "C-08b · /app/booking/:id/change")
+![Cambiar una reserva en nombre del socio](../../screenshots/C-08b/es-390.jpg "C-08b · /app/booking/:id/change")
+
+> EN HOYOS: M-08a Ajustes → "Tolerancia de llegada" y "Cargo por inasistencia".
 
 ## 6. Lista de espera
-1. Promoción estricta por orden; el cupo liberado se ofrece por WhatsApp durante la ventana de reclamo
-   (ignora horas silenciosas) y luego pasa al siguiente.
-2. Puedes saltar el orden solo con razón registrada (por ejemplo, la persona ya está en la puerta).
+1. El cupo que se libera se ofrece en orden. La persona recibe un WhatsApp y tiene un tiempo para tomarlo;
+   si no lo toma, pasa a la siguiente.
+2. Solo puedes saltar el orden con una razón escrita (por ejemplo, la persona ya está en la puerta).
+
+Este es el tiempo que tiene cada persona para tomar el cupo:
 
 {{policy:waitlist_claim_minutes}}
 
-**Pasos en HoyOS:** S-02 → sección Lista de espera → Promover (razón). Vista del socio: C-20.
-
 ![Lo que ve quien está en lista de espera](../../screenshots/C-20/es-390.jpg "C-20 · /app/waitlist/:id")
 
+> EN HOYOS: S-02 → sección Lista de espera → Promover (con razón). El socio lo ve en C-20.
+
 ## 7. Objetos perdidos
-1. Etiqueta con fecha, clase y descripción; guarda en la caja de perdidos; nota en M-06 si sabes de
-   quién es.
-2. Se guardan 30 días; después se donan. Avísalo al entregar.
+{{editable:coordinator}}
 
-## 8. Incidentes
-1. Seguridad de la persona primero (`08`). Después registra: nota en **M-06** con categoría, hora y
-   qué hiciste; avisa a coordinación el mismo día.
+1. Ponle una etiqueta con la fecha, la clase y qué es.
+2. Guárdalo en la caja de objetos perdidos.
+3. Si sabes de quién es, escríbele y deja una nota en su ficha.
 
-## 9. Traspasos
-1. Recepción → Coordinación: incidentes, quejas, solicitudes de pausa fuera de regla, no-shows
-   repetidos. Nota en **M-06** con categoría y aviso en el grupo interno.
-2. Recepción → Finanzas: cierre de caja diario, pagos pendientes (transferencias sin confirmar),
-   solicitudes de reembolso (`14`).
-3. Cualquiera → Admin: acceso, permisos, algo que HoyOS no deja hacer.
+Cuánto tiempo los guardamos:
+
+{{studio:lost_items_days}}
+
+## 8. Si pasa algo
+Primero la persona, después el registro. Qué hacer en cada caso:
+[Incidencias y emergencias](08-incidencias-y-emergencias.md). Después, deja una nota en la ficha del socio
+con qué pasó, a qué hora y qué hiciste, y avisa a coordinación el mismo día.
+
+## 9. A quién le pasas qué
+| A quién | Qué |
+|---|---|
+| Coordinación | incidentes, quejas, pedidos de pausa fuera de la regla, no-shows repetidos |
+| Finanzas | el cierre de caja del día, las transferencias pendientes, los pedidos de reembolso |
+| Admin | accesos, permisos, algo que HoyOS no te deja hacer |
+
+Deja siempre una nota en la ficha y avisa por el grupo interno.
+
+> EN HOYOS: M-06 CRM → ficha del socio → Nota.
 
 ## 10. Cierre
-El conteo de efectivo, las transferencias pendientes y la planilla de cierre están en el capítulo
-`14`. La checklist física de cierre del espacio está en `07`.
+El conteo de efectivo y la planilla de cierre: [Pagos y caja](14-pagos-y-caja.md). El cierre físico del
+espacio: [Sala, calor y mantenimiento](07-sala-calor-y-mantenimiento.md).

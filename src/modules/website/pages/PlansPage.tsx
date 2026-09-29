@@ -2,7 +2,7 @@ import { Fragment, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useLayout } from '../../../layout/useLayout';
-import { FAMILY_LABEL, pricing, priceItem } from '../../../tenant/pricing';
+import { COMING_SOON_FAMILIES, FAMILY_LABEL, FAMILY_RATIONALE, FAMILY_ROLE, pricing, priceItem } from '../../../tenant/pricing';
 import { tenant } from '../../../tenant/tenant';
 import { usePolicy } from '../../admin/settings';
 import { Card } from '../../../components/molecule/Card/Card';
@@ -35,6 +35,8 @@ export function PlansPage() {
       <section className="container site-section"><div className="site-section-top"><div><p className="eyebrow">{bi(FAMILY_LABEL.bienvenida)}</p><h2>{t('site.plans.passesTitle')}</h2><p className="muted">{t('site.plans.passesBody')}</p></div></div><div className="plans-pass-grid">{pricing.filter(p => p.family === 'bienvenida').map(p => <article className="plans-pass" key={p.id} data-movement="libera"><span className="eyebrow">{t('site.plans.classCount', { n: p.credits ?? 1 })}</span><h3>{bi(p.name)}</h3><p className="small muted">{bi(p.description)}</p><strong className="plans-pass-price">{formatCOP(p.price ?? 0, lang)}</strong><span className="xs muted">{t('site.plans.validity', { n: p.validityDays ?? 30 })}</span><Button variant="secondary" onClick={() => buy(p.id)}>{t('site.plans.select')}</Button></article>)}</div>
       <div className="plans-secondary">{(['pausas','regalos'] as const).map(fam => <Card key={fam} title={bi(FAMILY_LABEL[fam])}><p className="small muted">{t(`site.plans.${fam}Body`)}</p>{pricing.filter(p => p.family === fam).map(p => <PriceRow key={p.id} item={p} onSelect={() => p.id === 'guest' ? nav('/auth/sign-in?next=%2Fapp%2Finvite') : p.id === 'bono' ? nav('/auth/sign-in?next=%2Fapp%2Fgift') : buy(p.id)}/>)}</Card>)}</div></section>
       <section className="container site-section"><Card title={t('site.plans.spaceTitle')}><p className="small muted">{t('site.plans.spaceBody')}</p>{pricing.filter(p => p.family === 'espacio').map(p => <PriceRow key={p.id} item={p}/>)}<a className="btn btn-secondary" href={waHref(t('site.plans.specials.wa'))} target="_blank" rel="noreferrer">{t('site.plans.specials.cta')} ↗</a></Card></section>
+      {/* 0038: announced families (no price, no checkout, no link) — read from src/tenant/pricing.ts */}
+      {COMING_SOON_FAMILIES.map((fam) => <section className="container site-section" style={{ paddingTop: 0 }} key={fam} data-coming-soon={fam}><Card eyebrow={bi(FAMILY_ROLE[fam])} title={bi(FAMILY_LABEL[fam])} tone="muted"><p className="small muted" style={{ maxWidth: '60ch' }}>{bi(FAMILY_RATIONALE[fam].subtitle)}</p></Card></section>)}
     </>,
     // Especiales (0017): what a plan cannot hold is arranged directly with the studio — no checkout, a conversation.
     Specials: () => (

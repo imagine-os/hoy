@@ -2,113 +2,105 @@
 title: Teacher payroll and payouts
 role: finance, owner, coordination
 part: IV
-version: 0.7.0
-updated: 2026-09-17
-summary: From closed attendance to a paid teacher: draft run, approval, payment and a statement each.
+version: 0.13.3
+updated: 2026-09-29
+summary: From closed attendance to the teacher's pay: generating the draft, reviewing, approving, paying and the teacher's statement.
 ---
 
 # Teacher payroll and payouts
 
-A teacher is paid for what they taught, and what they taught is whatever attendance they closed
-themselves. That is the whole chain: no closed attendance, no payroll line.
+Teachers are paid for the classes they taught, and the classes they taught are the attendance they closed
+themselves. No closed attendance, no pay.
 
-## 1. The chain
-```
-Attendance closed in S-03 (teacher)
-   → draft run — M-09a /admin/finance/payouts (finance)
-      → per-teacher detail reviewed — M-09b /admin/finance/payouts/:id (coordination)
-         → approved — M-09b (owner)
-            → paid per teacher (Wompi / transfer / cash) — M-09b
-               → the teacher's statement — S-03 /teach/payroll
-```
+{{audience:16-nomina-y-payouts}}
 
-One arithmetic holds the whole chain together: `src/data/payrollCalc.ts`. The run finance generates
-and the estimate the teacher sees come out of the same function, so the two screens cannot
-contradict each other.
+## 1. The path of a payment
+1. **The teacher** closes attendance for each class in their app.
+2. **Finance** generates the period's draft.
+3. **Coordination** reviews each teacher's detail.
+4. **The owner** approves.
+5. **Finance** pays each teacher (Wompi, transfer or cash).
+6. **The teacher** sees the statement in the app.
 
-## 2. Generating the run
-1. Finance opens **M-09a · Finance → Payouts** (`/admin/finance/payouts`): the list of runs, with the
-   period, the number of teachers, the total and the status of each one.
-2. The button generates the period's **draft**: one line per teacher with classes taught × rate, read
-   from the completed sessions and from `teachers.rate_per_class`.
-3. Generating is **idempotent**: if a draft already exists for that period its lines are deleted and
-   recomputed, so pressing the button twice cannot pay twice. A run that is already approved or paid
-   is refused, with the reason on screen.
-4. The draft also carries the **manual lines**: every Especial (`12` §7) with a teacher and a payout
-   whose service date falls in the period enters as a line **"Especial: <concept>"** with the amount the
-   desk agreed. It comes out of the same function as the classes (`draftLinesFor`), so recomputing never
-   duplicates it and a cancelled booking drops it.
-5. Nothing is paid from a draft.
+Finance's draft and the estimate the teacher sees come from the same calculation, so they can never show different
+numbers.
 
-**The cadence is a switch, not an assumption** (0.7.0). In **M-08c · Settings → Payments** the owner picks
-**monthly** or **biweekly (1–15 · 16–end)**, and both are programmed: monthly, M-09a generates one run per
-calendar month; biweekly, the same button generates **two** (the 1st–15th and the 16th–end) and replaces a
-draft of the other kind covering the same days, so no class is paid twice (an approved or paid run blocks
-instead of being replaced). The teacher's statement (`§5`) navigates by the same period, and in **M-09
-Finance** the default range moves from 30 to **15 days** when the switch flips. The cadence in force:
+> IN HOYOS: S-03 (attendance) → M-09a Payouts (draft) → M-09b detail (review and approval) → S-03 Payroll (statement).
+
+## 2. Generating the draft
+1. In Finance → Payouts you see the list of pay runs by period: how many teachers, the total and the state.
+2. The button generates the period's **draft**: one line per teacher, classes taught × rate.
+3. You can generate it again safely: the draft is recalculated, nothing is ever paid twice. A run that is already
+   approved or paid can't be regenerated; the screen says why.
+4. The draft also brings in the **Specials**: each one with a teacher and an amount, inside the period, becomes a
+   line "Special: <concept>" (see [Space](12-espacio-b2b.md)).
+5. Nothing is paid in draft.
+
+**Monthly or fortnightly.** The owner chooses in Settings → Payments whether teachers are paid every month or every
+fortnight (1st–15th and 16th–end of month). Both work. With fortnightly, the same button generates two drafts, and
+no class is paid twice. This is the frequency in force:
 
 {{policy:payroll_cadence}}
 
-![Payouts in M-09a](../../screenshots/M-09a/en-1280.jpg "M-09a · /admin/finance/payouts")
+![The list of teacher pay runs](../../screenshots/M-09a/en-1280.jpg "M-09a · /admin/finance/payouts")
 
-## 3. Checking it
-1. Opening a run lands on **M-09b** (`/admin/finance/payouts/:id`): the per-teacher statement, with
-   the classes they taught, the rate, the adjustments and the total. It exports to **CSV** and prints.
-2. Coordination cross-checks the detail against **M-02 Schedule**: every paid class existed and was
-   taught by whoever it says.
-3. Differences a teacher reports (`06`) are resolved before approval, with the class and the date.
-4. Substitutions are paid to whoever taught, not to whoever was scheduled.
-5. **Especial** lines are cross-checked against the S-05 booking and the charge in `special_charges`: the
-   amount is what was typed at the sale; if it is wrong, fix the Especial and recompute the draft — the
-   line itself is never edited.
+## 3. Reviewing
+1. Opening a run shows each teacher's statement: classes, rate, adjustments and total. You can export or print it.
+2. Coordination checks it against the schedule: every paid class happened and was taught by the person it says.
+3. Anything a teacher disputes is settled before approval, with the class and the date.
+4. A substitution is paid to whoever taught the class, not to whoever was on the schedule.
+5. A Special line is checked against its booking and its charge. If it is wrong, fix the Special and regenerate the
+   draft; the line is never edited by hand.
 
-![The run statement in M-09b](../../screenshots/M-09b/en-1280.jpg "M-09b · /admin/finance/payouts/:id")
+![A pay run's detail](../../screenshots/M-09b/en-1280.jpg "M-09b · /admin/finance/payouts/:id")
 
 ## 4. Approving and paying
-1. **The owner approves** in M-09b. Approval freezes the run: from then on lines are not edited, they
-   are adjusted in the next run.
-2. Once approved, the run is paid by whichever method the studio has settled on: **send via Wompi**
-   (simulated today, with its rejected path), **mark paid by transfer** or **by cash**.
-3. Payment can also be marked **teacher by teacher**, which is how it actually goes when one is paid
-   by transfer and another comes by the desk. The run **closes itself as paid** the moment the last
-   teacher is settled: nobody has to remember to close it.
-4. All of it — generate, approve, send, mark paid — lands in **M-07** with the actor and the time.
+1. **The owner approves.** From then on the run is frozen: if something changes, it is adjusted in the next period.
+2. It is paid by the method the studio sets: **Wompi** (simulated today), **transfer** or **cash**.
+3. It can be marked paid **teacher by teacher**. When the last one is paid, the run closes itself.
+4. Generating, approving, sending and marking paid are all in the activity log, with name and time.
 
-> DECISION NEEDED: the payment method for teacher payroll (Wompi payout, transfer or cash), whether the studio withholds tax, and who signs off the payment record.
+> DECISION NEEDED: which method teachers are paid by (Wompi, transfer or cash), whether the studio withholds tax, and who signs the payment record.
 
 ## 5. The teacher's statement
-1. The teacher opens **S-03 · Payroll** (`/teach/payroll`). Before finance generates the run the page
-   computes the period live (completed sessions × their rate) and labels it an **estimate**.
-2. As soon as a run covers the period the page stops estimating and reads the `payroll_lines`: the
-   teacher sees exactly what finance will pay, bonuses, adjustments and Especiales included, along with
-   the run's status (draft · approved · paid).
-3. It also shows the class-by-class breakdown, the history of earlier runs, the payout method on
-   file, a print view and a WhatsApp link to finance with the period and the total already written.
-4. The statement is the document that settles an argument: if it isn't there, it wasn't paid.
+{{for:teacher}}
+This is what you see in your app, under Payroll.
+{{/for}}
 
-![The teacher’s statement in S-03](../../screenshots/S-03/en-390-payroll.jpg "S-03 · /teach/payroll")
+1. Before finance generates the draft, the app works out the period live (classes taught × rate) and marks it as an
+   **estimate**.
+2. Once the draft exists, the app shows exactly what finance will pay, with bonuses, adjustments and Specials, and
+   its state: draft, approved or paid.
+3. It also shows class by class, earlier runs, the payment method, a print view and a WhatsApp button to finance
+   with the period and the total already written.
+4. The statement settles any doubt: if it isn't there, it wasn't paid.
 
-## 6. The rates
-Since 0.7.0 the rate lives on the **M-08c rate card**, not on a separate sheet nor only on the profile: one
-row per **modality** (COP per class of Hot Vinyasa, Pilates, Barre…) and, when needed, one row per **teacher**
-that overrides it. A class pays the teacher's own rate when one is set; else the modality's; else the profile
-rate (`teachers.rate_per_class`, kept as the last fallback). Changing a rate moves the S-03 estimate and the
-next draft; approved and paid runs keep their lines. The same card sets the **default payout method**, **who
-signs the payment record** (printed on the statement) and whether the studio **withholds tax**.
+![The statement in the teacher app](../../screenshots/S-03/en-390-payroll.jpg "S-03 · /teach/payroll")
+
+## 6. Rates
+Rates live in Settings → Payments, on the **rate card**: one per discipline (what a hot yoga, pilates or barre class
+pays) and, if needed, one per teacher that overrides the discipline rate.
+
+1. If the teacher has their own rate, that one is used.
+2. If not, the discipline's.
+3. If there is neither, the one on their profile.
+
+Changing a rate moves the teacher's estimate and the next draft. Anything already approved or paid doesn't change.
+The same card sets the default payment method, who signs the record and whether the studio withholds tax.
+
+This is the default payment method:
 
 {{policy:payout_method}}
 
+This is how teachers and their fallback rate are kept:
+
 {{table:teachers}}
 
-> DECISION NEEDED: fill in M-08c — the cadence (monthly or biweekly, both work), the real per-modality rates (the seed ships 80,000–110,000 COP), who signs and the pay date; the contract type and whether attendance affects the rate remain the owner's.
+> DECISION NEEDED: the real rates per discipline (today they are examples, between 80,000 and 110,000 COP per class) and the pay date, which are filled in Settings; and, for the owner, the teachers' contract type and whether attendance changes the rate.
 
-## 7. What is simulated today
-1. Runs, lines, approvals and payment marks are **real rows** in `payroll_runs` and `payroll_lines`,
-   each with its M-07 entry. What is not real is the money: `wompiPayout()` is the dispersion seam and
-   both screens carry a **"Wompi simulated"** badge (`26`).
-2. A payout is **not a `payments` row**. `payments` is money in from members and feeds M-09's revenue;
-   money out lives on the run and its lines. That is why paying payroll does not move the revenue
-   figures.
-3. `/teach/payroll` is read-only: the teacher sees what finance will pay, not a button to collect it.
-4. When Wompi payroll exists, the approved run is what will trigger the payment; the flow in this
-   chapter does not change, it just stops being manual.
+## 7. What really works today
+1. Drafts, approvals and paid marks are real and recorded. What isn't real yet is the money: the Wompi payout is
+   simulated and the screens say so (see [Integrations](26-integraciones.md)).
+2. Paying teachers doesn't change the month's revenue: it is money going out, not coming in.
+3. Teachers only see their statement. They have no button to get paid.
+4. When Wompi is connected, approval will trigger the payment. The rest of this chapter stays the same.

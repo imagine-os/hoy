@@ -14,6 +14,8 @@ idioma de la app) y `/#/manual/decisions` lista todo lo que el estudio aún no h
 
 ## Convenciones dentro de un capítulo
 
+Cómo se escribe (el registro, qué no va en el texto, dónde van las pantallas): **[STYLE.md](STYLE.md)**.
+
 | Escribes | Sale |
 |---|---|
 | `> DECISIÓN PENDIENTE: …` (EN: `> DECISION NEEDED: …`) | callout resaltado + una entrada en `/#/manual/decisions` y en `ROADMAP.md` |
@@ -27,6 +29,13 @@ idioma de la app) y `/#/manual/decisions` lista todo lo que el estudio aún no h
 | `{{roles}}` | la matriz de roles desde `src/auth/roles.ts` |
 | `{{routes:customer}}` | las pantallas de una superficie, con su código, desde el manifiesto de rutas |
 | `{{stats}}`, `{{kpi:occupancy}}` | conteos y KPIs en vivo de la capa de datos |
+| `> EN HOYOS: S-02 Check-in → …` (EN: `> IN HOYOS:`) | la caja de pantalla al final de una sección: códigos y pasos fuera de la prosa (una por sección como máximo) |
+| `{{audience}}` · `{{audience:04-recepcion-y-check-in}}` | la matriz de quién lee qué · la fila "Para:" bajo el título de un capítulo |
+| `{{editable:owner}}` / `{{editable:coordinator}}` (sola, bajo el `##`) | la sección es una regla de la casa que ese nivel ajusta |
+| `{{studio:lost_items_days}}` (sola en su línea, con una frase antes) | una regla del estudio de `studio_policies`, editable en el manual |
+| `{{for:teacher,front_desk}}` … `{{/for}}` | un pasaje que solo aplica a esos roles |
+| `{{source:modelo-de-valor}}` · `contenido-completo` · `manual-de-marca` | el documento fuente incrustado |
+| `{{training:front_desk}}` | el checklist Día 1 / Semana 1 / Mes 1 de un rol |
 
 Un bloque `{{…}}` se escribe **solo en su línea**. Toda directiva lleva la leyenda bilingüe
 «Datos en vivo del sistema · Live from the system»; una directiva desconocida se explica en pantalla en
@@ -45,7 +54,7 @@ pantalla manda y el manual la lee.
 | VI · Legal y políticas | 21 políticas · 22 documentos legales · 23 habeas data |
 | VII · Sistema | 24 roles y permisos · 25 datos y tablas · 26 integraciones · 27 glosario |
 
-28 capítulos por idioma, 72 figuras por idioma, 27 decisiones pendientes, 0 marcadores de captura.
+28 capítulos por idioma, 73 figuras por idioma, 28 decisiones pendientes, 0 marcadores de captura (0032).
 
 ---
 _English: the club's operations manual, Spanish first with an English mirror per chapter (same file
