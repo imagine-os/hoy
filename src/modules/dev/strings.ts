@@ -61,7 +61,7 @@ export const strings: StringTable = {
   'dev.kb.kanban': { es: 'Kanban', en: 'Kanban' },
   'dev.kb.changelog': { es: 'Changelog', en: 'Changelog' },
   'dev.kb.prompts': { es: 'Prompts', en: 'Prompts' },
-  // ---- 0040 · D-07 developer API keys ----
+  // ---- 0041 · D-07 developer API keys ----
   'dev.apiKeys.nav': { es: 'Llaves de API', en: 'API keys' },
   'dev.apiKeys.title': { es: 'Llaves de API', en: 'API keys' },
   'dev.apiKeys.subtitle': { es: 'Llaves que HoyOS entrega a desarrolladores para leer clases y horarios, o escribir reservas, desde otra app. Se guarda un hash; la llave completa se ve una sola vez.', en: 'Keys HoyOS issues to developers to read classes and hours, or write bookings, from another app. A hash is stored; the full key is seen only once.' },

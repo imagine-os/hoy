@@ -88,6 +88,120 @@
   }
  },
  {
+  "path": "/admin/analytics",
+  "code": "M-12",
+  "surface": "admin",
+  "status": "built",
+  "roles": [
+   "super_admin",
+   "admin",
+   "coordinator",
+   "finance"
+  ],
+  "spec": {
+   "code": "M-12",
+   "name": {
+    "es": "Analítica de práctica",
+    "en": "Practice analytics"
+   },
+   "purpose": {
+    "es": "Cómo va el estudio en asistencia y retención: ocupación, asistencia, no-shows, horarios populares, segunda visita, quién lleva días sin venir, modalidades, profesores, logros para felicitar en persona y créditos por vencer. Sin cifras de ingresos.",
+    "en": "How the studio is doing on attendance and retention: fill, attendance, no-shows, popular slots, second visit, who has not come in for a while, modalities, teachers, milestones to congratulate in person and credits about to expire. No revenue figures."
+   },
+   "layout": [
+    "KPIRow ×4",
+    "Heatmap",
+    "Retention",
+    "AtRiskList",
+    "ByModality",
+    "ByTeacher",
+    "Milestones",
+    "CreditsExpiring"
+   ],
+   "data": [
+    "bookings",
+    "class_sessions",
+    "memberships",
+    "credits",
+    "practice_goals",
+    "profiles",
+    "users",
+    "teachers",
+    "modalities"
+   ],
+   "roles": [
+    "super_admin",
+    "admin",
+    "coordinator",
+    "finance"
+   ],
+   "logic": [
+    "Every number comes from studioStats() in src/data/analytics.ts through useStudioStats(range); the page computes nothing itself. Range chips 7 / 30 / 90 days, default 30.",
+    "Ocupación (fill) = seats taken (booked + checked_in + no_show) / capacity of completed classes in range.",
+    "Asistencia = checked_in / seats taken. No-shows = no_show / seats taken. Cancelaciones tardías = late_cancel / (seats taken + late_cancel).",
+    "Miembros activos = distinct users with ≥ 1 check-in in range; nuevos = their first ever check-in falls in range; visitas / semana = check-ins / active members / (range ÷ 7).",
+    "Heatmap cell = mean per-class fill of completed classes at that weekday × start hour; rows Lun–Sáb (Dom only when a Sunday class ran), columns = the hours present. 70–85 % healthy, > 90 % add a class, < 60 % for 4 weeks review the slot (research §4).",
+    "Segunda visita = members whose first visit was 30–60 days ago and who attended again within 30 days / those members (goal > 60 %).",
+    "En riesgo = active membership or live credits AND last check-in ≥ 14 days ago; band = largest of 14 / 30 / 60 / 90 ≤ days since. Sorted by days since, descending. Each row opens the M-06 record.",
+    "Por profesor = completed classes per teacher: classes, mean attendance (check-ins / classes), fill, no-show rate, new faces (first check-in with that teacher in range), regulars (≥ 3 check-ins with that teacher in range); sorted by classes.",
+    "Logros = MILESTONES (1, 5, 10, 25, 50, 100, 250) reached inside the range, newest first, first 8, each linking to M-06.",
+    "Créditos por vencer = members with a live balance whose next purchase expiry falls within 14 / 7 days (notify at 14 and 7)."
+   ],
+   "integrations": [],
+   "states": [
+    "Loading (empty tables)",
+    "Range with no classes held",
+    "Nobody at risk (EmptyState)",
+    "No milestones in range",
+    "No goals set yet",
+    "Heatmap scrolls inside its card on phones"
+   ],
+   "actions": [
+    {
+     "id": "analytics.setRange",
+     "label": {
+      "es": "Cambiar el rango",
+      "en": "Change the range"
+     },
+     "intent": {
+      "es": "Muéstrame la analítica de los últimos {range} días",
+      "en": "Show me analytics for the last {range} days"
+     },
+     "params": {
+      "range": "enum:7,30,90"
+     },
+     "permission": "members.read"
+    },
+    {
+     "id": "analytics.openMember",
+     "label": {
+      "es": "Abrir la ficha de un miembro",
+      "en": "Open a member record"
+     },
+     "intent": {
+      "es": "Abre la ficha de {userId}",
+      "en": "Open the record of {userId}"
+     },
+     "params": {
+      "userId": "string — users.id (usr_cust)"
+     },
+     "permission": "members.read"
+    }
+   ],
+   "checkedAt": [
+    390,
+    1280,
+    3840
+   ],
+   "notes": [
+    "No revenue on this page: ROADMAP §E item 32 (does the coordinator see the monthly revenue KPI) is still open, so M-12 is attendance / retention only and opens for super_admin, admin, coordinator and finance — the same roles as M-01. Money stays in M-09.",
+    "Members are never ranked here. The at-risk list is an operational list for the team (who to call), not a leaderboard, and it links to the CRM record.",
+    "The per-teacher table is for studio staff only. Teachers see their own numbers against the studio average in S-03 (\"Mis números\"), never a list of colleagues (research §B).",
+    "At-risk here uses the 14 / 30 / 60 / 90 ladder of analytics.ts; the M-06 segment rail still uses its own 21-day rule (useMemberStats) until the two are unified."
+   ]
+  }
+ },
+ {
   "path": "/admin/content",
   "code": "M-02",
   "surface": "admin",
@@ -871,7 +985,7 @@
    "layout": [
     "SegmentRail (all, at risk, new, no membership, birthdays)",
     "MemberList (search, sort)",
-    "MemberDetail (IdentityHeader → S-06, MetricRow, Tabs: Conversación · Reservas · Pagos)",
+    "MemberDetail (IdentityHeader → S-06, MetricRow, Tabs: Conversación · Reservas · Pagos · Práctica)",
     "Conversación: filter chips Todo / WhatsApp / Email / Notas / Sistema → MessageThread + MessageComposer"
    ],
    "data": [
@@ -885,7 +999,8 @@
     "credits",
     "message_log",
     "consents",
-    "audit_log"
+    "audit_log",
+    "practice_goals"
    ],
    "roles": [
     "coordinator",
@@ -949,7 +1064,8 @@
     "At risk = member with plan or credits and no check-in in 21 days.",
     "Since 0.8.0 the conversation is message_log: inbound and outbound WhatsApp/email (manual, automation, newsletter, system) and internal notes (channel note, direction internal) — never visible to the member. Bookings, payments and consents appear inline as system lines.",
     "Sending and notes go through useMessaging() (src/data/comms.ts): audit_log keeps member.message / member.note as a trail without content. Opening the tab marks the member’s inbound rows read.",
-    "Opening a record writes member.view to audit_log (Ley 1581)."
+    "Opening a record writes member.view to audit_log (Ley 1581).",
+    "Práctica tab (read-only): useMemberPractice(id) — streak (StreakBadge), this week (WeekDots), classes this month / all time, last visit, the active weekly goal and milestones (MilestoneList). Same practiceStats() the member sees in C-27, so the desk and the member never read different numbers."
    ]
   }
  },
@@ -1042,7 +1158,7 @@
    "layout": [
     "SegmentRail (all, at risk, new, no membership, birthdays)",
     "MemberList (search, sort)",
-    "MemberDetail (IdentityHeader → S-06, MetricRow, Tabs: Conversación · Reservas · Pagos)",
+    "MemberDetail (IdentityHeader → S-06, MetricRow, Tabs: Conversación · Reservas · Pagos · Práctica)",
     "Conversación: filter chips Todo / WhatsApp / Email / Notas / Sistema → MessageThread + MessageComposer"
    ],
    "data": [
@@ -1056,7 +1172,8 @@
     "credits",
     "message_log",
     "consents",
-    "audit_log"
+    "audit_log",
+    "practice_goals"
    ],
    "roles": [
     "coordinator",
@@ -1120,7 +1237,8 @@
     "At risk = member with plan or credits and no check-in in 21 days.",
     "Since 0.8.0 the conversation is message_log: inbound and outbound WhatsApp/email (manual, automation, newsletter, system) and internal notes (channel note, direction internal) — never visible to the member. Bookings, payments and consents appear inline as system lines.",
     "Sending and notes go through useMessaging() (src/data/comms.ts): audit_log keeps member.message / member.note as a trail without content. Opening the tab marks the member’s inbound rows read.",
-    "Opening a record writes member.view to audit_log (Ley 1581)."
+    "Opening a record writes member.view to audit_log (Ley 1581).",
+    "Práctica tab (read-only): useMemberPractice(id) — streak (StreakBadge), this week (WeekDots), classes this month / all time, last visit, the active weekly goal and milestones (MilestoneList). Same practiceStats() the member sees in C-27, so the desk and the member never read different numbers."
    ]
   }
  },
@@ -1249,7 +1367,7 @@
     "finance"
    ],
    "logic": [
-    "0040: the weekly hours saved here are the source of truth (D-0014). useOpeningHours() (src/modules/admin/settings.ts) merges them with the M-08g overrides and tenant.ts defaults; the site footer, W-06, C-25, the manual’s {{tenant:hours}}, the website’s LocalBusiness JSON-LD and the Google Business Profile body (M-10a) all read it. The card shows today’s line (todayStatus, America/Bogota) and links to M-08g and M-10a.",
+    "0041: the weekly hours saved here are the source of truth (D-0016). useOpeningHours() (src/modules/admin/settings.ts) merges them with the M-08g overrides and tenant.ts defaults; the site footer, W-06, C-25, the manual’s {{tenant:hours}}, the website’s LocalBusiness JSON-LD and the Google Business Profile body (M-10a) all read it. The card shows today’s line (todayStatus, America/Bogota) and links to M-08g and M-10a.",
     "useContact() (src/modules/admin/settings.ts) is the one reader of address / city / WhatsApp / email / Instagram / map: M-08a first, src/tenant/tenant.ts as the default for every empty field. The site footer, W-06, MapSlot, the legal tokens, the email footer, the customer contact rows and the manual’s {{tenant:contact}} all read it.",
     "Confirmation is per field (0036): WhatsApp, address, email and Instagram each have a “confirmed” switch; every consumer labels only the unconfirmed ones as pending (the tenant.ts placeholders are never presented as fact). tenant.ts ships WhatsApp and address confirmed (from the owner, 2026-09-29), email and Instagram pending. A stored pre-0036 `confirmed: true` still confirms all four."
    ],
@@ -1364,7 +1482,7 @@
     "Import: colombianHolidays() (src/tenant/holidays.co.ts, Ley 51/1983 with Meeus Easter) for the rest of this year and all of next; each holiday not already present on its date is inserted closed with source colombia. Audit hours.import_holidays with the count.",
     "Save / delete write audit_log hours.override.save / hours.override.delete with before and after. hours.write gates every write (admin, super_admin, coordinator).",
     "Validation: end ≥ start; when both times are set, close > open; one time without the other is refused; the Spanish label is required.",
-    "The Google column reads google_synced_at: empty or older than updated_at = pending push. Only the server sets it (no server yet, D-0015)."
+    "The Google column reads google_synced_at: empty or older than updated_at = pending push. Only the server sets it (no server yet, D-0017)."
    ],
    "integrations": [
     "Google Business Profile (specialHours, via M-10a)"
@@ -1411,7 +1529,7 @@
     "S-02 reads lateGraceMin, S-04 reads tax, M-05 reads quietHours.",
     "usePolicy() (src/modules/admin/settings.ts) re-renders consumers when a section is saved.",
     "0018: the owner decisions of ROADMAP §E that are values, not code, live here — contact identity (M-08a), IVA-in-prices, payroll cadence and the teacher rate card (M-08c), public class naming, Respiración as its own class, map provider and which legal versions are published (M-08f).",
-    "Sub-page of M-08 (0040). The weekly hours stay in M-08a; this page never edits them."
+    "Sub-page of M-08 (0041). The weekly hours stay in M-08a; this page never edits them."
    ],
    "actions": [
     {
@@ -1996,7 +2114,7 @@
     "Read-only (no settings.write)"
    ],
    "notes": [
-    "0040: the google_business card opens M-10a (its detail page) and its checklist is split into “Platform, once” and “This studio, per location”; the Intro gains a notice that separates outbound secrets (server env, this page) from the inbound developer keys HoyOS issues (D-07).",
+    "0041: the google_business card opens M-10a (its detail page) and its checklist is split into “Platform, once” and “This studio, per location”; the Intro gains a notice that separates outbound secrets (server env, this page) from the inbound developer keys HoyOS issues (D-07).",
     "Sections: Intro = title · status counts · keys-live-server-side notice · manual link; Cards = one IntegrationCard per system (body · what is simulated today · fields · filled count · secrets named · checklist · notes · status select · save); Order = the connection order from ROADMAP §B and where each setting lives.",
     "Manual chapter 26 is written around this page: what can be promised today and the order in which the systems get connected.",
     "The M-08a “Integraciones” section became a pointer to this page in 0018; the old tenants.settings.integrations statuses are superseded by the table."
@@ -2039,7 +2157,7 @@
     "admin"
    ],
    "logic": [
-    "HoyOS is the source of truth and pushes one way (D-0015): on save in M-08a / M-08g and nightly, the server calls locations.patch with updateMask=regularHours,specialHours and the body toGoogleBusinessHours() builds (src/tenant/hours.ts). Nightly it reads the location back and flags drift; nothing is pulled into HoyOS silently.",
+    "HoyOS is the source of truth and pushes one way (D-0017): on save in M-08a / M-08g and nightly, the server calls locations.patch with updateMask=regularHours,specialHours and the body toGoogleBusinessHours() builds (src/tenant/hours.ts). Nightly it reads the location back and flags drift; nothing is pulled into HoyOS silently.",
     "Tokens never reach the browser: the OAuth client id / secret are platform env vars; each location’s refresh token is a server secret named per tenant (GOOGLE_BUSINESS_REFRESH_TOKEN_<TENANT>). The integrations row keeps only locationName, accountEmail and placeId.",
     "Status reads the google_business integrations row; “last push” is the newest hours_overrides.google_synced_at, which only the server writes (none yet).",
     "Special hours are one period per date (Google allows endDate at most one day after startDate), so multi-day overrides are expanded; past overrides are left out.",
@@ -2435,7 +2553,10 @@
     "credits",
     "practice_stats",
     "feedback_requests",
-    "events"
+    "events",
+    "class_sessions",
+    "practice_goals",
+    "activity_events"
    ],
    "roles": [
     "customer",
@@ -2488,9 +2609,25 @@
    "layerTree": "Home\n├ TopBar (logo, avatar, bell)\n├ FeedbackPrompt (conditional)\n├ MembershipNudge (if no plan)\n├ AnnouncementCard (if active)\n├ NextClassCard + countdown\n├ QuickActions ×4\n├ TodayList (intention-sorted)\n├ StatsRow ×3\n└ EventsStrip → BottomNav",
    "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-01",
    "notes": [
-    "0030: the “¿Cómo quieres sentirte hoy?” card left the home; quick actions and the dock use the Icon set."
+    "0030: the “¿Cómo quieres sentirte hoy?” card left the home; quick actions and the dock use the Icon set.",
+    "0040: the StatsRow ×3 section (name kept for stored layouts) is the practice block — classes attended this month (by session date) + upcoming booked, weeks in a row on the goal (StreakBadge), plan balance labelled by what it is (membership → unlimited + renewal, credits → classes left + expiry), the week as WeekDots and a link to C-27. With no goal row yet it asks the weekly goal inline (GoalPicker). useMilestoneRecorder writes milestone / streak.saved events once; a newly recorded milestone shows a one-time toast."
    ],
    "actions": [
+    {
+     "id": "app.setGoal",
+     "label": {
+      "es": "Cambiar mi meta semanal",
+      "en": "Change my weekly goal"
+     },
+     "intent": {
+      "es": "Quiero practicar {target} veces por semana",
+      "en": "I want to practise {target} times a week"
+     },
+     "params": {
+      "target": "number 0–7 (0 = sin meta)"
+     },
+     "permission": "bookings.write"
+    },
     {
      "id": "app.goHome",
      "label": {
@@ -2513,6 +2650,17 @@
       "en": "Show me the class schedule"
      },
      "permission": "classes.read"
+    },
+    {
+     "id": "app.openPractice",
+     "label": {
+      "es": "Ver mi práctica",
+      "en": "See my practice"
+     },
+     "intent": {
+      "es": "Muéstrame mi práctica",
+      "en": "Show me my practice"
+     }
     }
    ],
    "checkedAt": [
@@ -2645,6 +2793,17 @@
       "en": "Show me the class schedule"
      },
      "permission": "classes.read"
+    },
+    {
+     "id": "app.openPractice",
+     "label": {
+      "es": "Ver mi práctica",
+      "en": "See my practice"
+     },
+     "intent": {
+      "es": "Muéstrame mi práctica",
+      "en": "Show me my practice"
+     }
     }
    ],
    "checkedAt": [
@@ -2974,6 +3133,17 @@
       "en": "Show me the class schedule"
      },
      "permission": "classes.read"
+    },
+    {
+     "id": "app.openPractice",
+     "label": {
+      "es": "Ver mi práctica",
+      "en": "See my practice"
+     },
+     "intent": {
+      "es": "Muéstrame mi práctica",
+      "en": "Show me my practice"
+     }
     }
    ],
    "checkedAt": [
@@ -3202,6 +3372,17 @@
       "en": "Show me the class schedule"
      },
      "permission": "classes.read"
+    },
+    {
+     "id": "app.openPractice",
+     "label": {
+      "es": "Ver mi práctica",
+      "en": "See my practice"
+     },
+     "intent": {
+      "es": "Muéstrame mi práctica",
+      "en": "Show me my practice"
+     }
     }
    ],
    "checkedAt": [
@@ -3464,6 +3645,17 @@
       "en": "Show me the class schedule"
      },
      "permission": "classes.read"
+    },
+    {
+     "id": "app.openPractice",
+     "label": {
+      "es": "Ver mi práctica",
+      "en": "See my practice"
+     },
+     "intent": {
+      "es": "Muéstrame mi práctica",
+      "en": "Show me my practice"
+     }
     }
    ],
    "checkedAt": [
@@ -4473,7 +4665,8 @@
     "memberships",
     "plans",
     "payments",
-    "bookings"
+    "bookings",
+    "class_sessions"
    ],
    "roles": [
     "customer",
@@ -4482,6 +4675,7 @@
     "super_admin"
    ],
    "logic": [
+    "Usage tile (0040) = classes attended this month from practiceStats (checked_in, by session date), hint = upcoming booked — the same number as C-01 and C-27.",
     "Pause up to 30 days (policy.pauseMaxDays); renewal shifts by the paused days.",
     "Members are notified 3 days before a charge (policy.chargeNoticeDays).",
     "Cancellation keeps access until the paid period ends; undo until then."
@@ -4963,6 +5157,124 @@
    "notes": [
     "Reached from C-19 (Cuenta y datos) and C-25. The public counterpart with no sign-in is W-09 (/site/delete-account); the admin queue is M-11.",
     "Apple App Store 5.1.1(v) and Google Play both require in-app account deletion to be discoverable; the page sits one tap under Profile and is named in the compliance checklist (docs/app-store-compliance.md)."
+   ]
+  }
+ },
+ {
+  "path": "/app/practice",
+  "code": "C-27",
+  "surface": "customer",
+  "status": "built",
+  "roles": [
+   "customer",
+   "teacher"
+  ],
+  "spec": {
+   "code": "C-27",
+   "name": {
+    "es": "Tu práctica",
+    "en": "Your practice"
+   },
+   "purpose": {
+    "es": "La práctica de la persona en lenguaje llano: cuántas clases tomó esta semana y este mes, cuántas semanas seguidas lleva cumpliendo su meta, sus logros y lo que más practica, y la meta semanal que ella misma elige. Privado: nunca se compara con otras personas.",
+    "en": "The member’s practice in plain words: how many classes they attended this week and this month, how many weeks in a row they have met their goal, their milestones and what they practise most, and the weekly goal they choose themselves. Private: never compared with anyone else."
+   },
+   "layout": [
+    "WeekHeader",
+    "StreakCard",
+    "MonthSummary",
+    "History12Weeks",
+    "Milestones",
+    "Favourites",
+    "GoalSection"
+   ],
+   "data": [
+    "bookings",
+    "class_sessions",
+    "practice_goals",
+    "activity_events",
+    "memberships",
+    "credits",
+    "modalities",
+    "teachers"
+   ],
+   "roles": [
+    "customer",
+    "teacher"
+   ],
+   "logic": [
+    "A visit is a checked_in booking counted by the SESSION start date (local, America/Bogota), never by the booking created_at. \"Clases tomadas este mes\" = visits in the current calendar month; \"reservadas próximas\" = status booked with the session in the future.",
+    "Weeks run Monday–Sunday. A week counts when visits ≥ the weekly goal; the current week never breaks the run and counts once met. At risk = current week not met on Saturday or Sunday.",
+    "Rest week: one missed week per rolling 4 weeks is forgiven (saved) when the run is alive and there was a visit in the 4 weeks before; a saved week keeps the run but does not add. Weeks with the membership paused neither add nor break.",
+    "Two missed weeks in a row, or a miss with no rest week left, resets the run; best = the longest run under the same rules. A broken run shows the best one, never a red zero.",
+    "Goal 0 (\"sin meta por ahora\") hides the streak and the ring; counts, history and milestones stay. The goal is changed here or on C-01; each change ends the active practice_goals row and inserts a new one plus a goal.set activity event.",
+    "Milestones 1 · 5 · 10 · 25 · 50 · 100 · 250 lifetime visits; C-01 writes the milestone / streak.saved events once (useMilestoneRecorder). Favourites = most-attended modality and teacher over the last 90 days."
+   ],
+   "integrations": [],
+   "states": [
+    "No bookings ever: EmptyState with the book CTA",
+    "Goal set, streak alive",
+    "At risk (weekend, goal not met)",
+    "Building (no run yet, a visit this week)",
+    "Broken (shows the best run)",
+    "No goal (sin meta): no ring, no streak, counts stay",
+    "Rest week used / rest week available",
+    "Month with no-shows or late cancels (neutral tiles, shown only when > 0)"
+   ],
+   "notes": [
+    "Reached from C-01 (practice block link), C-25 More and C-19 Profile (account group).",
+    "Same numbers as M-06 (member file) and M-12 (studio analytics): all read practiceStats()."
+   ],
+   "actions": [
+    {
+     "id": "app.setGoal",
+     "label": {
+      "es": "Cambiar mi meta semanal",
+      "en": "Change my weekly goal"
+     },
+     "intent": {
+      "es": "Quiero practicar {target} veces por semana",
+      "en": "I want to practise {target} times a week"
+     },
+     "params": {
+      "target": "number 0–7 (0 = sin meta)"
+     },
+     "permission": "bookings.write"
+    },
+    {
+     "id": "app.goHome",
+     "label": {
+      "es": "Ir al inicio",
+      "en": "Go home"
+     },
+     "intent": {
+      "es": "Llévame al inicio de la app",
+      "en": "Take me to the app home"
+     }
+    },
+    {
+     "id": "app.openSchedule",
+     "label": {
+      "es": "Abrir el horario",
+      "en": "Open the schedule"
+     },
+     "intent": {
+      "es": "Muéstrame el horario de clases",
+      "en": "Show me the class schedule"
+     },
+     "permission": "classes.read"
+    },
+    {
+     "id": "app.openPractice",
+     "label": {
+      "es": "Ver mi práctica",
+      "en": "See my practice"
+     },
+     "intent": {
+      "es": "Muéstrame mi práctica",
+      "en": "Show me my practice"
+     }
+    }
    ]
   }
  },
@@ -6234,10 +6546,10 @@
    ],
    "logic": [
     "Format hoy_<live|test>_<24 base62> from crypto.getRandomValues (rejection-sampled); stored: prefix (13 chars) + SHA-256 hex via crypto.subtle. The raw key lives only in component state until the drawer closes.",
-    "Rotate inserts a new key with replaces_id = old id and sets the old key’s expires_at to now + 24 h (unless it already expires sooner). Revoke sets revoked_at; rows are never deleted.",
+    "Rotate inserts a new key with replaces_id = old id and the old key’s lifetime (same duration from now; never-expiring stays never), and sets the old key’s expires_at to now + 24 h (unless it already expires sooner). Revoke sets revoked_at; rows are never deleted.",
     "Status: revoked (revoked_at) · expired (expires_at past) · expiring (within 7 days) · active.",
     "api_keys.write (super_admin, developer) gates create / rotate / revoke; admin reads the list (api_keys.read). Every write is audited: api_key.create / api_key.rotate / api_key.revoke with the prefix, never the key.",
-    "Verification is a server concern (D-0016): hash the bearer token, match key_hash, check environment, scopes, expiry and revocation, stamp last_used_at. No server exists yet, so “Try a request” is a Placeholder."
+    "Verification is a server concern (D-0018): hash the bearer token, match key_hash, check environment, scopes, expiry and revocation, stamp last_used_at. No server exists yet, so “Try a request” is a Placeholder."
    ],
    "integrations": [
     "HoyOS HTTP API (designed, not built)"
@@ -6267,7 +6579,7 @@
       "name": "string",
       "environment": "enum:live,test",
       "scopes": "csv of classes.read,bookings.read,bookings.write,customers.read,hours.read,hours.write,webhooks.receive",
-      "expires_days": "number (optional)"
+      "expires_days": "number (optional, default 90; 0 = never)"
      },
      "permission": "api_keys.write"
     },
@@ -7978,11 +8290,12 @@
    },
    "layout": [
     "NextClassCard",
+    "PayrollTile",
+    "MyNumbers (30 días: own fill, attendance, no-shows, new faces, regulars, first-timer return, rating vs studio average)",
     "TodayClasses (roster count)",
     "Specials (own space_bookings, S-05)",
     "ScheduleList (week)",
-    "SubstitutionRequest",
-    "PayrollTile"
+    "SubstitutionRequest"
    ],
    "data": [
     "teachers",
@@ -7994,7 +8307,11 @@
     "audit_log",
     "space_bookings",
     "special_charges",
-    "rooms"
+    "rooms",
+    "reviews",
+    "memberships",
+    "credits",
+    "practice_goals"
    ],
    "roles": [
     "teacher",
@@ -8049,7 +8366,8 @@
    ],
    "notes": [
     "Mobile-first inside AppShell (column + dock below 900 px; from 900 px a --w-teach column of 60rem with the top-bar nav, 0026).",
-    "Substitution requests are written to audit_log (action substitution.request) for the coordinator."
+    "Substitution requests are written to audit_log (action substitution.request) for the coordinator.",
+    "MyNumbers reads teacherStats(me, 30) and studioStats(30) from src/data/analytics.ts: the teacher sees only their own numbers against the studio average, never a ranked list of colleagues (research §B; the per-teacher table is M-12, staff only). The rating stays hidden until 5 reviews in the range (research §3). \"Solo tú y coordinación ven estos números.\""
    ]
   }
  },

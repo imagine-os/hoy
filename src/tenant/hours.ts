@@ -1,5 +1,5 @@
 /**
- * 0040 — the studio's opening hours as data (D-0014). The weekly hours saved in M-08a
+ * 0041 — the studio's opening hours as data (D-0016). The weekly hours saved in M-08a
  * (`tenants.settings.openingHours`) are the source of truth; dated exceptions (holidays, special
  * hours, events) live in the `hours_overrides` table and win over the week for the dates they cover.
  * Every surface reads the result through `useOpeningHours()` (src/modules/admin/settings.ts); the
@@ -172,7 +172,7 @@ export function overrideLine(o: OverrideLike, lang: Lang): string {
 
 /* ---------------------------------------------------------------------------------------------
  * Google Business Profile — the `locations.patch` body (Business Information API v1,
- * updateMask=regularHours,specialHours). HoyOS pushes; nothing is pulled into HoyOS (D-0015).
+ * updateMask=regularHours,specialHours). HoyOS pushes; nothing is pulled into HoyOS (D-0017).
  * ------------------------------------------------------------------------------------------- */
 export interface GoogleTimeOfDay { hours: number; minutes: number }
 export interface GoogleDate { year: number; month: number; day: number }

@@ -36,13 +36,13 @@ const ICONS = {
   pause: Pause, undo: Undo2, edit: SquarePen, play: Play, 'arrow-right': ArrowRight, 'arrow-left': ArrowLeft,
   'arrow-up': ArrowUp, 'arrow-down': ArrowDown, sort: ArrowUpDown, 'chevron-right': ChevronRight, 'chevron-left': ChevronLeft,
   'chevron-down': ChevronDown, 'list-plus': ListPlus, waitlist: ListOrdered, qr: QrCode,
-  // 0040: copy a value, reveal / hide a secret, rotate a key
+  // 0041: copy a value, reveal / hide a secret, rotate a key
   copy: Copy, eye: Eye, 'eye-off': EyeOff, 'refresh-cw': RefreshCw,
   // settings groups and sections (M-08)
   studio: Building2, identity: IdCard, clock: Clock, capacity: Users, policies: ScrollText, features: ToggleRight, flag: Flag,
   'credit-card': CreditCard, fiscal: Landmark, tax: Percent, communications: MessagesSquare, 'quiet-hours': MoonStar,
   branding: Palette, legal: Scale, 'map-pin': MapPin, image: Image, sliders: SlidersHorizontal,
-  // 0040: Google Business Profile (the studio's storefront listing)
+  // 0041: Google Business Profile (the studio's storefront listing)
   store: Store,
   // things and status
   calendar: Calendar, 'calendar-clock': CalendarClock, bell: Bell, 'bell-ring': BellRing, shield: ShieldCheck, languages: Languages,

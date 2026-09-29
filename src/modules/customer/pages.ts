@@ -21,6 +21,7 @@ export { NotificationsPage } from './pages/NotificationsPage';
 export { MorePage } from './pages/MorePage';
 export { LegalAppPage } from './legal';
 export { AccountPage } from './pages/AccountPage';
+export { PracticePage } from './pages/PracticePage';
 export { CancelledDemoPage, DeclinedDemoPage, EmptyHomePage } from './pages/StatePages';
 export { SplashPage } from './auth/SplashPage';
 export { SignInPage } from './auth/SignInPage';

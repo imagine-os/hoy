@@ -46,7 +46,7 @@
 .le-handle:active { cursor: grabbing; }
 .le-name { font-family: var(--font-heading); font-size: var(--fs-sm); font-weight: 500; min-width: 0; overflow-wrap: anywhere; }
 .le-grid { align-items: start; }
-/* 0040 · D-07 developer API keys */
+/* 0041 · D-07 developer API keys */
 .apikeys-cell { display: flex; flex-direction: column; align-items: flex-start; gap: var(--stack-tight); }
 .apikeys-scopes { display: flex; flex-wrap: wrap; gap: var(--stack-tight); white-space: normal; min-width: 12rem; }
 .apikeys-actions { flex-direction: column; align-items: stretch; gap: var(--gap-inline); }

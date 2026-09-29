@@ -13,11 +13,12 @@ const KEY = 'hoyos.db.v1';
  * Bump when the seed or the schema changes shape (new columns an old localStorage copy would lack):
  * a stored db with another version is thrown away and reseeded, whatever day it was seeded on.
  *   1 · up to 0.7.1 · 2 · 0.8.0 message_log becomes the unified conversation record (direction, source, body, read_at…)
- *   4 · 0.15.0 modalities.movement / media_assets.movement become `tone`, the intentions table is gone (upgraded in place)
- *   5 · 0.16.0 hours_overrides and api_keys tables, the google_business integration row, settings.openingHours seeded (0040);
- *       a v4 copy lacks the two tables, so it is reseeded rather than upgraded
+ *   3 · 0.13 main room at 16 mats · 4 · 0.15.0 modalities.movement / media_assets.movement become `tone`, the intentions table is gone (upgraded in place)
+ *   5 · 0040 practice_goals + activity_events and the demo member's goal history (an ended 1 / week under the active 2 / week); a copy without the tables fails the table check and reseeds
+ *   6 · 0.17.0 hours_overrides and api_keys tables, the google_business integration row, settings.openingHours seeded (0041);
+ *       a v5 copy lacks the two tables, so it fails the table check and reseeds
  */
-export const SEED_VERSION = 5;
+export const SEED_VERSION = 6;
 
 /** 0039: a v3 copy still carries `movement`; give each row its seed tone (or the old colour's tone) and drop intentions. */
 const LEGACY_TONE: Record<string, string> = { enraiza: 'moss', fluye: 'river', arde: 'clay', libera: 'sun' };

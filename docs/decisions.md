@@ -208,9 +208,53 @@ Fields: **Date**, **Status** (accepted · superseded by D-NNNN), **Context**, **
 - **Decision.** No movements, public or internal, and no data keys: D-01 `movements` becomes `classTones` with seven hue-named tones (moss, river, clay, sun, sage, slate, plum, CSS `--tone-*`), `modalities.movement` and `media_assets.movement` become `tone` (one tone per modality, chosen in M-02), the `intentions` table is dropped and the M-08f `publicNaming` setting is removed. Classes are always named by modality, and schedule filters and legends (C-02, C-02b, W-04 with `?modality=<slug>`) are the visible modalities.
 - **Alternative rejected.** Keeping the movements as internal-only labels — 0032 tried it and they still leaked into customer copy. Naming the tones after elements or feelings — that would re-create the concept under new names.
 
-### D-0014 — Saved hours are the source of truth; dated overrides live in a table
+### D-0014 — Practice metrics derive from the raw tables; `activity_events` records moments, never truth
 
-- **Date** 2026-09-29 · **Status** accepted · **Changelog** `docs/changelog/0040-hours-google-keys.md`
+- **Date** 2026-09-29 · **Status** accepted · **Changelog** `docs/changelog/0040-practice-analytics.md`
+- **Context.** Justin: "Classes this month is not clear if that's how many they've taken … somewhere we can store those
+  types of analytics for both admin and customer usefulness." The old home tile counted check-ins by the booking's
+  `created_at`, C-22 counted "booked and attended" under the same label, and the "streak" was a formula over the month
+  count. Five screens (C-01, C-27, C-22, M-06, M-12, S-03) now need the same numbers, and the research's event model
+  suggested storing immutable events and materialising weekly aggregates.
+- **Decision.** No metric is stored. `src/data/analytics.ts` is one pure module (no React, no provider) whose
+  `practiceStats()`, `studioStats()` and `teacherStats()` derive everything from `bookings` × `class_sessions` (a visit
+  is a `checked_in` booking dated by the **session's** start), `memberships`, `credits` and `practice_goals`; the hooks
+  in `useAnalytics.ts` memoise them over `useTable()`. `activity_events` is an **append-only record of moments** the raw
+  tables do not hold — a goal set, a milestone reached, a rest week that saved the streak — written by the app
+  (`usePracticeGoal`, `useMilestoneRecorder`, idempotent) and read by timelines and future automations, **never by a
+  metric**. A Supabase materialisation later is a cache of the same functions, not a second definition.
+- **Alternative rejected.** A `member_stats` (or `member_week`) table written on check-in — two definitions of the same
+  number to keep in sync, a migration every time a rule changes, and a wrong row that no recomputation fixes. Also
+  rejected: deriving from `activity_events` (the research's pure event-sourcing model) — bookings, check-ins and payments
+  already have their tables and their access contracts; duplicating them as events would make `bookings` and the event
+  stream disagree the first time a booking is edited.
+
+### D-0015 — The streak is weekly, goal-based, with one rest week per four, and a goal change never rewrites past weeks
+
+- **Date** 2026-09-29 · **Status** accepted · **Changelog** `docs/changelog/0040-practice-analytics.md`
+- **Context.** Justin: "The streak can be cooler, and maybe we figure out smartly or by asking them what their goal is
+  for tracking." Studio attendance is 2–4 events a week, not a daily behaviour; daily streaks with no rest days are the
+  widely criticised counter-example, broken streaks demotivate (66 % vs 58 % continuation) and repair mechanics work
+  (Duolingo's freeze). Members who reach twice a week early are the ones who stay.
+- **Decision.** The unit is the **week**, Monday–Sunday in the studio's time zone. The member **chooses** a weekly goal
+  (1 · 2 · 3 · 4+ or none; the history's median is marked "Sugerido", default 2) — it is never inferred silently. A week
+  is met when visits ≥ the goal; the current week never breaks the run and counts once met; **one missed week per
+  rolling four is forgiven** when the run is alive and there was practice in the four weeks before; a week with the
+  membership paused neither counts nor breaks; two misses in a row (or a miss with no rest week left) reset the run
+  while **`best` is kept forever** and a broken run shows the best one, never a red zero. Goals are history:
+  `practice_goals` keeps one active row per person and a change ends the previous row instead of editing it, so each
+  past week is judged against the goal that was active during it — **raising a goal never rewrites past weeks**.
+  Implemented as `analytics.ts` rule 8: `usePracticeStats` passes every `practice_goals` row of the person and each
+  week takes the target of the latest row whose `starts_on` ≤ that week's Sunday (weeks before the earliest goal use
+  the earliest goal's target); `npm run test:analytics` proves the raise, the lower and the same-day double change.
+- **Alternative rejected.** A daily streak (punishes rest); a streak with no slack (the research's "convenient exit
+  point"); one freeze per calendar month (month-boundary effects; "the first miss in any four weeks" is easier to say);
+  inferring the goal from history without asking (the research says do not, and a silently changing goal makes the
+  streak unexplainable); editing the goal row in place (past weeks would be re-judged against the new target).
+
+### D-0016 — Saved hours are the source of truth; dated overrides live in a table
+
+- **Date** 2026-09-29 · **Status** accepted · **Changelog** `docs/changelog/0041-hours-google-keys.md`
 - **Context.** M-08a saved the weekly hours into `tenants.settings.openingHours`, but every screen quoted a constant
   sentence in `tenant.ts`, so a change reached nobody. Justin asked for the hours to reach Google Business and for
   holiday hours and special overrides.
@@ -223,9 +267,9 @@ Fields: **Date**, **Status** (accepted · superseded by D-NNNN), **Context**, **
   a recurring per-holiday rule (Emiliani and Easter move the dates every year; a yearly import is explicit and
   auditable); an overrides array inside `tenants.settings` (no ids, no `updated_at`, no realtime per row).
 
-### D-0015 — Google Business Profile: HoyOS pushes, a server holds the tokens, one way with drift read-back
+### D-0017 — Google Business Profile: HoyOS pushes, a server holds the tokens, one way with drift read-back
 
-- **Date** 2026-09-29 · **Status** accepted · **Changelog** `docs/changelog/0040-hours-google-keys.md`
+- **Date** 2026-09-29 · **Status** accepted · **Changelog** `docs/changelog/0041-hours-google-keys.md`
 - **Context.** Each studio on HoyOS has its own Business Profile; the Business Profile API needs a Google Cloud project
   with approved access, OAuth with `business.manage`, and a refresh token per location. The browser DB is localStorage.
 - **Decision.** HoyOS is the source of truth. A server (not built yet) pushes `locations.patch` with
@@ -238,9 +282,9 @@ Fields: **Date**, **Status** (accepted · superseded by D-NNNN), **Context**, **
   `integrations.config` (a plaintext secret in localStorage — already rejected for Wompi in 0007 / 0018); one Google
   project per studio (every studio would repeat the access request and the consent-screen review).
 
-### D-0016 — Developer API keys: hashed at rest, shown once, scoped, rotated with a grace period
+### D-0018 — Developer API keys: hashed at rest, shown once, scoped, rotated with a grace period
 
-- **Date** 2026-09-29 · **Status** accepted · **Changelog** `docs/changelog/0040-hours-google-keys.md`
+- **Date** 2026-09-29 · **Status** accepted · **Changelog** `docs/changelog/0041-hours-google-keys.md`
 - **Context.** Justin asked for "a secret key system for our apps for developers". HoyOS has no server; secrets it
   uses to call others (Wompi, WhatsApp, Google) already live in server env. Keys it gives to others are the reverse.
 - **Decision.** D-07 issues `hoy_<live|test>_<24 base62>` from the CSPRNG; `api_keys` stores the 13-character prefix
@@ -256,3 +300,4 @@ Fields: **Date**, **Status** (accepted · superseded by D-NNNN), **Context**, **
 **Resumen (ES).** Este archivo es la lista corta y citable de las decisiones de ingeniería, una por
 bloque, solo se añade: una decisión que deja de ser cierta se reemplaza con un bloque nuevo, nunca
 borrando el viejo. Las decisiones que todavía tiene que tomar el estudio están en `/#/manual/decisions`.
+

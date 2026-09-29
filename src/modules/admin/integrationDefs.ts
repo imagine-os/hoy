@@ -32,18 +32,18 @@ export interface IntegrationDef {
   /** Manual chapter slug (`/manual/<slug>`). */
   manual: string;
   /**
-   * 0040: the checklist split by who does it — `platform` once for every studio on HoyOS (the dev / the
+   * 0041: the checklist split by who does it — `platform` once for every studio on HoyOS (the dev / the
    * HoyOS operator), `studio` once per location (the owner). When present, `checklist` is the same steps flattened.
    */
   groups?: IntegrationStepGroup[];
-  /** 0040: how the integration behaves once connected, in plain words (what is pushed, what is pulled). */
+  /** 0041: how the integration behaves once connected, in plain words (what is pushed, what is pulled). */
   notes?: Bi[];
-  /** 0040: a detail page for this integration (M-10a), linked from its card. */
+  /** 0041: a detail page for this integration (M-10a), linked from its card. */
   detail?: string;
 }
 export interface IntegrationStepGroup { key: 'platform' | 'studio'; label: Bi; who: Bi; steps: Bi[] }
 
-/** 0040 — Google Business Profile: HoyOS pushes the hours; the platform sets up Google once, each studio connects its own location. */
+/** 0041 — Google Business Profile: HoyOS pushes the hours; the platform sets up Google once, each studio connects its own location. */
 const GOOGLE_BUSINESS_GROUPS: IntegrationStepGroup[] = [
   {
     key: 'platform', label: { es: 'Plataforma, una sola vez', en: 'Platform, once' }, who: { es: 'Equipo HoyOS / dev', en: 'HoyOS team / dev' },

@@ -7,15 +7,24 @@ dónde estamos, qué sigue y en qué orden (con dependencias explícitas y lo qu
 paralelo), qué significa "terminado" en cada fase, cómo trabajar en el repo y qué debe decidir el
 owner del estudio. Está escrito para que otra cuenta de Claude (o una persona) lo retome sin contexto.
 
-## A. Where we are (v0.16.0, 2026-09-29)
+## A. Where we are (v0.17.0, 2026-09-29)
 
-- **v0.16.0 — Hours, holidays, Google Business Profile, developer keys** (`docs/changelog/0040-hours-google-keys.md`,
-  prompt `docs/prompts/0040-hours-google-keys.md`; Justin: "the opening hours once it is updated here, would be reflected
+- **v0.17.0 — Hours, holidays, Google Business Profile, developer keys** (`docs/changelog/0041-hours-google-keys.md`,
+  prompt `docs/prompts/0041-hours-google-keys.md`; Justin: "the opening hours once it is updated here, would be reflected
   in google business? … maybe we need a secret key systme for our apps for developers … Holiday hours, and special
-  overrides"): the M-08a hours are read everywhere (D-0014), `hours_overrides` + M-08g with the Colombian holidays,
-  M-10a previews the Google Business Profile push with platform / studio setup steps (D-0015), D-07 developer API keys
-  (D-0016). Still needed: the server (Google push + key verification) and Google's API access approval.
+  overrides"): the M-08a hours are read everywhere (D-0016), `hours_overrides` + M-08g with the Colombian holidays,
+  M-10a previews the Google Business Profile push with platform / studio setup steps (D-0017), D-07 developer API keys
+  (D-0018). Still needed: the server (Google push + key verification) and Google's API access approval.
 
+- **v0.16.0 — Practice analytics** (`docs/changelog/0040-practice-analytics.md`, prompt `docs/prompts/0040-practice-analytics.md`;
+  Justin: "For the Classes this month and streak its confusing, on the customer app … maybe we figure out smartly or by asking them
+  what their goal is for tracking … do some deeper research into best practices for gym/yoga/wellness analytics"): the research and
+  proposal in `docs/reference/analytics.md` (members vs teachers vs the club, with sources); every practice number derived from
+  `bookings` × `class_sessions` by `src/data/analytics.ts` (D-0014, proven by `npm run test:analytics`); the streak is weekly,
+  goal-based, with one rest week per four (D-0015); the member picks the goal (`GoalPicker`, suggested from history); C-01's block
+  says what it counts ("Clases tomadas este mes", "Semanas seguidas", "Clases restantes en tu plan"); new C-27 Tu práctica and
+  M-12 Analítica de práctica (attendance / retention, no revenue while §E 32 is open), the M-06 Práctica tab, S-03 Mis números;
+  tables `practice_goals` + `activity_events` (54); five molecules (80 in D-02); four actions; §E 40–43 added.
 - **v0.14.0 — Spacing and sizing standard** (`docs/changelog/0037-spacing-standard.md`, prompt `docs/prompts/0037-ui-spacing.md`;
   Justin: "make sure all spacing and sizing across everything is picture perfect"): one 4 px rem scale plus semantic
   tokens in D-01 (D-0012), the `ui-spacing` skill, `npm run lint:spacing` in the build (774 → 71 raw values) and
@@ -376,7 +385,7 @@ chapter or spec and close the card.
 **Policies (fields in M-08)**
 6. Late-arrival grace minutes and no-show fee.
 7. Minimum students to run a class (if any) and substitution rate for teachers.
-8. Exact hours of the 4 daily classes and days of operation (6 or 7 days). _(0040: the opening hours are now editable in M-08a, with holidays and special hours in M-08g, and reach every screen; the decision itself is still open.)_
+8. Exact hours of the 4 daily classes and days of operation (6 or 7 days). _(0041: the opening hours are now editable in M-08a, with holidays and special hours in M-08g, and reach every screen; the decision itself is still open.)_
 9. Target room temperature per class type and exact pre-heat time.
 
 **People and payroll**
@@ -487,6 +496,19 @@ chapter or spec and close the card.
 36. **Minimum age in the store listings**: the terms say 18+, or 14–18 with a guardian's written
     authorisation at the desk. State 18+ in both stores (recommended, keeps the app out of the Families
     policy) or build the guardian flow into sign-up.
+
+**From the practice-analytics research, 2026-09-29 (0040, `docs/reference/analytics.md` §8)**
+40. **Revenue on M-12 Analítica de práctica.** The page shows attendance and retention only because item 32 (does the
+    Coordinator see the monthly revenue KPI?) is open, and it opens for the same roles as M-01. Once Sergio answers 32,
+    decide whether revenue per class hour and plan mix join M-12 or stay in Finance (M-09).
+41. **One at-risk rule.** The CRM segment rail (M-06) flags "en riesgo" at **21 days** without a check-in; M-12 uses the
+    industry ladder **14 / 30 / 60 / 90**. Unify on the ladder (recommended) or keep the CRM's own rule?
+42. **A pause the member declares.** Today a week only skips the streak when the *membership* is paused (`status paused`
+    + `paused_until`). Should a member be able to declare a "pausa" (travel, injury) of up to four weeks in the app,
+    independent of the plan? It would be a `practice_pauses` table or a column on `practice_goals`.
+43. **Milestones by WhatsApp.** `activity_events` records every milestone (1 · 5 · 10 · 25 · 50 · 100 · 250 classes). Should
+    reaching one trigger an automated WhatsApp (M-05 template) as well as the in-app toast and the M-12 list for the
+    desk, or stay an in-person congratulation?
 
 ## F. What remains after this pass (for Justin)
 

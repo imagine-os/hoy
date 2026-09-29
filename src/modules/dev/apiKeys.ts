@@ -1,5 +1,5 @@
 /**
- * 0040 — developer API keys (D-0016). HoyOS issues keys to developers (inbound); it never stores a raw key:
+ * 0041 — developer API keys (D-0018). HoyOS issues keys to developers (inbound); it never stores a raw key:
  * the list keeps the 13-character prefix people recognise (`hoy_live_ab12`) and a SHA-256 hash the server
  * compares against. The raw key exists once, in the browser memory of the person who created it, and is shown
  * to them one time. Verification (hash the bearer token, look up the row, check scope, expiry and revocation,

@@ -16,7 +16,7 @@ import { Timeline, type TimelineItem } from '../../components/organism/Timeline/
 import { useSessionsJoined } from '../website/hooks';
 import type { AuditRow } from '../staff/audit';
 import { usePeople } from '../staff/people';
-import { M01 } from './specs';
+import { M01, M12 } from './specs';
 import './admin.css';
 import { auditTitle } from '../staff/audit';
 
@@ -26,7 +26,7 @@ import { auditTitle } from '../staff/audit';
  */
 export function DashboardPage() {
   const { t, lang, dict } = useI18n();
-  const { can } = useSession();
+  const { can, hasRole } = useSession();
   const { sections, isVisible } = useLayout(M01);
   const { rows: memberships } = useTable<MembershipRow>('memberships', { where: { status: 'active' } });
   const { rows: payments } = useTable<PaymentRow>('payments', { where: { status: 'approved' } });
@@ -66,7 +66,7 @@ export function DashboardPage() {
       </div>
     ),
     'OccupancyChart': () => (
-      <Card title={t('admin.dashboard.occChart')} eyebrow={t('admin.dashboard.occChart.eyebrow')}>
+      <Card title={t('admin.dashboard.occChart')} eyebrow={t('admin.dashboard.occChart.eyebrow')} actions={hasRole(M12.roles) ? <Link to="/admin/analytics" className="small">{t('admin.dashboard.analyticsLink')}</Link> : undefined}>
         <BarList items={days} max={100} emphasizeId="0" format={(v) => `${v}%`} />
       </Card>
     ),

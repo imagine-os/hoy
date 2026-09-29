@@ -1,5 +1,5 @@
 /**
- * 0040 — copy text to the clipboard: the async Clipboard API when the page has it (secure context), else a
+ * 0041 — copy text to the clipboard: the async Clipboard API when the page has it (secure context), else a
  * hidden textarea + execCommand for older browsers and embedded previews. Never throws; returns whether it copied.
  */
 export async function copyText(text: string): Promise<boolean> {

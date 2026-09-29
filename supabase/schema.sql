@@ -71,7 +71,7 @@ create table if not exists public.hours_overrides (
   -- colombia = imported from the Ley Emiliani calendar (src/tenant/holidays.co.ts)
   source text not null check (source in ('manual', 'colombia')),
   note text,
-  -- last successful push to Google Business Profile (server-side, 0040: no server yet)
+  -- last successful push to Google Business Profile (server-side, 0041: no server yet)
   google_synced_at timestamptz,
   created_by text
 );
@@ -716,6 +716,67 @@ create trigger event_rsvps_touch before update on public.event_rsvps for each ro
 alter table public.event_rsvps enable row level security;
 create policy "event_rsvps: tenant read" on public.event_rsvps for select using (tenant_id = public.current_tenant_id());
 create policy "event_rsvps: staff write" on public.event_rsvps for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
+-- analytics · How many classes a week each person wants to take (C-01, C-27). One active row per person; history is kept.
+-- access:
+--   · customer: insert + read + update own rows (user_id = auth.uid())
+--   · front_desk/coordinator/admin: read (M-06, M-12)
+--   · one active row per person: setting a new goal ends the previous one (active = false), so history survives
+create table if not exists public.practice_goals (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  user_id uuid not null references public.users(id) on delete set null,
+  -- only weekly today; a monthly cadence is reserved for a later pass and would extend this enum, never replace it
+  cadence text not null check (cadence in ('week')),
+  -- classes per week the member chose, 1–7; 0 = no goal, only tracking
+  target integer not null,
+  -- member = picked by hand · suggested = accepted the app’s suggestion from their own history
+  source text not null check (source in ('member', 'suggested')),
+  starts_on date not null,
+  active boolean not null default false,
+  -- why, in the member’s words; optional
+  note text
+);
+create index if not exists practice_goals_tenant_idx on public.practice_goals(tenant_id);
+create index if not exists practice_goals_user_id_idx on public.practice_goals(user_id);
+create trigger practice_goals_touch before update on public.practice_goals for each row execute function public.touch_updated_at();
+alter table public.practice_goals enable row level security;
+create policy "practice_goals: tenant read" on public.practice_goals for select using (tenant_id = public.current_tenant_id());
+create policy "practice_goals: staff write" on public.practice_goals for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
+-- analytics · The member-facing moments the raw tables do not hold: a goal set, a milestone reached, a rest week that saved the streak… Bookings, check-ins and payments stay in their own tables and every metric is derived from them.
+-- access:
+--   · customer: read own rows (user_id = auth.uid()); inserts happen from the app on the member’s own actions
+--   · coordinator/admin/front_desk: read all (M-12, M-06)
+--   · append-only: never updated nor deleted; a correction is a new row
+create table if not exists public.activity_events (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  -- null = studio-level event
+  user_id uuid references public.users(id) on delete set null,
+  kind text not null check (kind in ('goal.set', 'milestone', 'streak.saved', 'streak.broken', 'first.visit', 'plan.purchased', 'plan.renewed', 'credit.expiring')),
+  -- when it happened, which may be earlier than when the app noticed (created_at)
+  occurred_at timestamptz not null,
+  -- the row it points at (bookings, practice_goals, credits…)
+  ref_table text,
+  ref_id text,
+  -- kind-specific: { target } for goal.set, { count } for milestone, { week } for streak.saved
+  payload jsonb
+);
+create index if not exists activity_events_tenant_idx on public.activity_events(tenant_id);
+create index if not exists activity_events_user_id_idx on public.activity_events(user_id);
+create trigger activity_events_touch before update on public.activity_events for each row execute function public.touch_updated_at();
+alter table public.activity_events enable row level security;
+create policy "activity_events: tenant read" on public.activity_events for select using (tenant_id = public.current_tenant_id());
+create policy "activity_events: staff write" on public.activity_events for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
 
 -- commerce · Value model v3: passes, memberships, pauses, gifts, space.
 create table if not exists public.plans (

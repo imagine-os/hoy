@@ -68,7 +68,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
   const { theme, toggleTheme } = useTheme();
   const [open, setOpen] = useState(false);
   const contact = useContact();
-  // 0040: the hours in the footer follow M-08a / M-08g, and the same hours go out as LocalBusiness JSON-LD.
+  // 0041: the hours in the footer follow M-08a / M-08g, and the same hours go out as LocalBusiness JSON-LD.
   const hours = useOpeningHours();
   useStudioJsonLd();
   const wa = useWaHref();

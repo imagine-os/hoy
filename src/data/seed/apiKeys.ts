@@ -1,7 +1,7 @@
 /**
- * 0040 — D-07 seed: two example developer keys. Only the display prefix and the SHA-256 hash are stored,
+ * 0041 — D-07 seed: two example developer keys. Only the display prefix and the SHA-256 hash are stored,
  * exactly as a real key would be; the raw values were throwaway strings generated once and never kept,
- * so nobody knows them — by design (D-0016). They cannot authenticate anything (there is no server yet).
+ * so nobody knows them — by design (D-0018). They cannot authenticate anything (there is no server yet).
  */
 import type { ApiKeyRow } from '../schema';
 import { MS } from '../../i18n/format';

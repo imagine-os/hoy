@@ -58,7 +58,7 @@ export const simulatorSpec = defineSpec({
   checkedAt: [360, 390, 768, 1280, 1920, 2560, 3840],
 });
 
-/** D-07 — developer API keys (0040, D-0016): issue, rotate, revoke; hash at rest, shown once. */
+/** D-07 — developer API keys (0041, D-0018): issue, rotate, revoke; hash at rest, shown once. */
 export const apiKeysSpec = defineSpec({
   code: 'D-07', name: { es: 'Llaves de API', en: 'API keys' },
   purpose: { es: 'Las llaves que HoyOS entrega a desarrolladores para llamar su API: crear (con entorno, permisos y vencimiento opcional), ver una sola vez, rotar con 24 horas de gracia y revocar. Solo se guarda un prefijo y el hash SHA-256; la verificación la hará el servidor.', en: 'The keys HoyOS issues to developers to call its API: create (with environment, scopes and an optional expiry), see once, rotate with a 24-hour grace period and revoke. Only a prefix and the SHA-256 hash are stored; the server will do the verification.' },
@@ -70,7 +70,7 @@ export const apiKeysSpec = defineSpec({
     'Rotate inserts a new key with replaces_id = old id and the old key’s lifetime (same duration from now; never-expiring stays never), and sets the old key’s expires_at to now + 24 h (unless it already expires sooner). Revoke sets revoked_at; rows are never deleted.',
     'Status: revoked (revoked_at) · expired (expires_at past) · expiring (within 7 days) · active.',
     'api_keys.write (super_admin, developer) gates create / rotate / revoke; admin reads the list (api_keys.read). Every write is audited: api_key.create / api_key.rotate / api_key.revoke with the prefix, never the key.',
-    'Verification is a server concern (D-0016): hash the bearer token, match key_hash, check environment, scopes, expiry and revocation, stamp last_used_at. No server exists yet, so “Try a request” is a Placeholder.',
+    'Verification is a server concern (D-0018): hash the bearer token, match key_hash, check environment, scopes, expiry and revocation, stamp last_used_at. No server exists yet, so “Try a request” is a Placeholder.',
   ],
   integrations: ['HoyOS HTTP API (designed, not built)'],
   states: ['Loading', 'Empty', 'Seed: two example keys', 'Create drawer', 'Key shown once', 'Rotating (grace 24 h)', 'Revoke confirm', 'Read-only (admin)'],

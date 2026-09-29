@@ -17,7 +17,7 @@ import { Icon } from '../../../components/atom/Icon/Icon';
 export function MorePage() {
   const { t, bi, lang } = useI18n();
   const contact = useContact();
-  // 0040: M-08a weekly hours + M-08g exceptions, with today's line in the studio's time zone.
+  // 0041: M-08a weekly hours + M-08g exceptions, with today's line in the studio's time zone.
   const hours = useOpeningHours();
   const nav = useNavigate();
   const { user, devMode, switchUser } = useSession();
@@ -41,6 +41,7 @@ export function MorePage() {
 
         <ListGroup>
           <ListRow icon="profile" title={t('core.nav.profile')} subtitle={`${t('customer.profile.edit')} · ${t('customer.membership.title')}`} to="/app/profile" />
+          <ListRow icon="flame" title={t('customer.practice.title')} subtitle={t('customer.practice.more.sub')} to="/app/practice" />
           <ListRow icon="ticket" title={t('core.nav.plans')} subtitle={t('customer.more.plans.sub')} to="/app/plans" />
           <ListRow icon="policies" title={t('customer.rules.title')} subtitle={t('customer.more.rules.sub')} to="/app/rules" />
           <ListRow icon="whatsapp" title={t('customer.more.whatsapp')} subtitle={`${contact.whatsapp}${pendingSuffix(contact, 'whatsapp', lang)} · ${bi(policy.replyWindow)}`} href={waLink(contact.whatsapp, t('customer.more.whatsapp.text', { name: name.split(' ')[0] }))} />

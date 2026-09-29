@@ -111,10 +111,10 @@ export const M05 = defineSpec({
 export const M06 = defineSpec({
   ...canvasSpecs['M-06'],
   roles: [...new Set([...canvasSpecs['M-06'].roles, 'marketing' as const])], // 0031
-  layout: ['SegmentRail (all, at risk, new, no membership, birthdays)', 'MemberList (search, sort)', 'MemberDetail (IdentityHeader → S-06, MetricRow, Tabs: Conversación · Reservas · Pagos)', 'Conversación: filter chips Todo / WhatsApp / Email / Notas / Sistema → MessageThread + MessageComposer'],
-  data: ['users', 'profiles', 'memberships', 'plans', 'bookings', 'class_sessions', 'payments', 'credits', 'message_log', 'consents', 'audit_log'],
+  layout: ['SegmentRail (all, at risk, new, no membership, birthdays)', 'MemberList (search, sort)', 'MemberDetail (IdentityHeader → S-06, MetricRow, Tabs: Conversación · Reservas · Pagos · Práctica)', 'Conversación: filter chips Todo / WhatsApp / Email / Notas / Sistema → MessageThread + MessageComposer'],
+  data: ['users', 'profiles', 'memberships', 'plans', 'bookings', 'class_sessions', 'payments', 'credits', 'message_log', 'consents', 'audit_log', 'practice_goals'],
   states: [...(canvasSpecs['M-06'].states ?? []), 'Conversación: unread inbound (blue ring) → read on open', 'Composer read-only (no members.write)', 'WhatsApp blocked (unverified number)', 'Quiet hours (queued hint)', 'Sistema filter: events only, no composer'],
-  notes: [...(canvasSpecs['M-06'].notes ?? []), 'At risk = member with plan or credits and no check-in in 21 days.', 'Since 0.8.0 the conversation is message_log: inbound and outbound WhatsApp/email (manual, automation, newsletter, system) and internal notes (channel note, direction internal) — never visible to the member. Bookings, payments and consents appear inline as system lines.', 'Sending and notes go through useMessaging() (src/data/comms.ts): audit_log keeps member.message / member.note as a trail without content. Opening the tab marks the member’s inbound rows read.', 'Opening a record writes member.view to audit_log (Ley 1581).'],
+  notes: [...(canvasSpecs['M-06'].notes ?? []), 'At risk = member with plan or credits and no check-in in 21 days.', 'Since 0.8.0 the conversation is message_log: inbound and outbound WhatsApp/email (manual, automation, newsletter, system) and internal notes (channel note, direction internal) — never visible to the member. Bookings, payments and consents appear inline as system lines.', 'Sending and notes go through useMessaging() (src/data/comms.ts): audit_log keeps member.message / member.note as a trail without content. Opening the tab marks the member’s inbound rows read.', 'Opening a record writes member.view to audit_log (Ley 1581).', 'Práctica tab (read-only): useMemberPractice(id) — streak (StreakBadge), this week (WeekDots), classes this month / all time, last visit, the active weekly goal and milestones (MilestoneList). Same practiceStats() the member sees in C-27, so the desk and the member never read different numbers.'],
 });
 
 export const M07 = defineSpec({
@@ -146,7 +146,7 @@ export const M08a = sub('M-08a',
   { es: 'Ajustes · General', en: 'Settings · General' },
   { es: 'Identidad de contacto (dirección, ciudad, WhatsApp, correo, Instagram, mapa) con su estado “pendiente”, horario de apertura, aforo y políticas: los números que todas las demás pantallas leen.', en: 'Contact identity (address, city, WhatsApp, email, Instagram, map) with its “pending” state, opening hours, capacity and policies: the numbers every other screen reads.' },
   ['SettingsSubNav', 'StudioProfile (contact + map + confirmed per field)', 'OpeningHours (weekly + today line + links to M-08g and M-10a)', 'Capacity', 'Policies', 'IntegrationsPointer (M-10)'],
-  { data: ['tenants', 'hours_overrides', 'rooms', 'audit_log'], actions: ADMIN_ACTIONS['M-08a'], logic: ['0040: the weekly hours saved here are the source of truth (D-0014). useOpeningHours() (src/modules/admin/settings.ts) merges them with the M-08g overrides and tenant.ts defaults; the site footer, W-06, C-25, the manual’s {{tenant:hours}}, the website’s LocalBusiness JSON-LD and the Google Business Profile body (M-10a) all read it. The card shows today’s line (todayStatus, America/Bogota) and links to M-08g and M-10a.', 'useContact() (src/modules/admin/settings.ts) is the one reader of address / city / WhatsApp / email / Instagram / map: M-08a first, src/tenant/tenant.ts as the default for every empty field. The site footer, W-06, MapSlot, the legal tokens, the email footer, the customer contact rows and the manual’s {{tenant:contact}} all read it.', 'Confirmation is per field (0036): WhatsApp, address, email and Instagram each have a “confirmed” switch; every consumer labels only the unconfirmed ones as pending (the tenant.ts placeholders are never presented as fact). tenant.ts ships WhatsApp and address confirmed (from the owner, 2026-09-29), email and Instagram pending. A stored pre-0036 `confirmed: true` still confirms all four.'], states: ['Some fields pending (default: email, Instagram)', 'All confirmed', 'Saving', 'Read-only'] },
+  { data: ['tenants', 'hours_overrides', 'rooms', 'audit_log'], actions: ADMIN_ACTIONS['M-08a'], logic: ['0041: the weekly hours saved here are the source of truth (D-0016). useOpeningHours() (src/modules/admin/settings.ts) merges them with the M-08g overrides and tenant.ts defaults; the site footer, W-06, C-25, the manual’s {{tenant:hours}}, the website’s LocalBusiness JSON-LD and the Google Business Profile body (M-10a) all read it. The card shows today’s line (todayStatus, America/Bogota) and links to M-08g and M-10a.', 'useContact() (src/modules/admin/settings.ts) is the one reader of address / city / WhatsApp / email / Instagram / map: M-08a first, src/tenant/tenant.ts as the default for every empty field. The site footer, W-06, MapSlot, the legal tokens, the email footer, the customer contact rows and the manual’s {{tenant:contact}} all read it.', 'Confirmation is per field (0036): WhatsApp, address, email and Instagram each have a “confirmed” switch; every consumer labels only the unconfirmed ones as pending (the tenant.ts placeholders are never presented as fact). tenant.ts ships WhatsApp and address confirmed (from the owner, 2026-09-29), email and Instagram pending. A stored pre-0036 `confirmed: true` still confirms all four.'], states: ['Some fields pending (default: email, Instagram)', 'All confirmed', 'Saving', 'Read-only'] },
 );
 export const M08g = sub('M-08g',
   { es: 'Ajustes · Festivos y horarios especiales', en: 'Settings · Holidays & special hours' },
@@ -154,9 +154,9 @@ export const M08g = sub('M-08g',
   ['SettingsSubNav', 'PrecedenceNotice', 'Overrides (DataTable + ImportHolidays + Add)', 'Upcoming30Days', 'OverrideDrawer (dates · label ES/EN · closed · times · kind · note)'],
   { data: ['hours_overrides', 'tenants', 'audit_log'], integrations: ['Google Business Profile (specialHours, via M-10a)'], actions: ADMIN_ACTIONS['M-08g'],
     roles: ['super_admin', 'admin', 'coordinator'],
-    logic: ['An override covering a date wins over the weekly hours for that date (ranges inclusive; on overlap the narrowest range wins) — effectiveHoursFor() in src/tenant/hours.ts. An open override with empty times keeps the weekly times.', 'Import: colombianHolidays() (src/tenant/holidays.co.ts, Ley 51/1983 with Meeus Easter) for the rest of this year and all of next; each holiday not already present on its date is inserted closed with source colombia. Audit hours.import_holidays with the count.', 'Save / delete write audit_log hours.override.save / hours.override.delete with before and after. hours.write gates every write (admin, super_admin, coordinator).', 'Validation: end ≥ start; when both times are set, close > open; one time without the other is refused; the Spanish label is required.', 'The Google column reads google_synced_at: empty or older than updated_at = pending push. Only the server sets it (no server yet, D-0015).'],
+    logic: ['An override covering a date wins over the weekly hours for that date (ranges inclusive; on overlap the narrowest range wins) — effectiveHoursFor() in src/tenant/hours.ts. An open override with empty times keeps the weekly times.', 'Import: colombianHolidays() (src/tenant/holidays.co.ts, Ley 51/1983 with Meeus Easter) for the rest of this year and all of next; each holiday not already present on its date is inserted closed with source colombia. Audit hours.import_holidays with the count.', 'Save / delete write audit_log hours.override.save / hours.override.delete with before and after. hours.write gates every write (admin, super_admin, coordinator).', 'Validation: end ≥ start; when both times are set, close > open; one time without the other is refused; the Spanish label is required.', 'The Google column reads google_synced_at: empty or older than updated_at = pending push. Only the server sets it (no server yet, D-0017).'],
     states: ['Loading', 'Empty (no exceptions yet)', 'Seed: three holidays + one special Saturday', 'Drawer new / edit', 'Validation error', 'Import done (n added) / nothing new', 'Read-only (no hours.write)'],
-    notes: [...(M08.notes ?? []), 'Sub-page of M-08 (0040). The weekly hours stay in M-08a; this page never edits them.'] },
+    notes: [...(M08.notes ?? []), 'Sub-page of M-08 (0041). The weekly hours stay in M-08a; this page never edits them.'] },
 );
 export const M08b = sub('M-08b',
   { es: 'Ajustes · Funciones', en: 'Settings · Features' },
@@ -326,10 +326,10 @@ export const M10 = defineSpec({
   ],
   integrations: ['Wompi', 'WhatsApp Business (Meta)', 'Email provider', 'DIAN e-invoicing provider', 'Maps', 'Supabase', 'Google Business Profile'],
   states: ['Loading', 'All simulated (seed)', 'Configured: fields filled, dev pending', 'Connected', 'Dirty card (unsaved)', 'Saved', 'Read-only (no settings.write)'],
-  notes: ['0040: the google_business card opens M-10a (its detail page) and its checklist is split into “Platform, once” and “This studio, per location”; the Intro gains a notice that separates outbound secrets (server env, this page) from the inbound developer keys HoyOS issues (D-07).', 'Sections: Intro = title · status counts · keys-live-server-side notice · manual link; Cards = one IntegrationCard per system (body · what is simulated today · fields · filled count · secrets named · checklist · notes · status select · save); Order = the connection order from ROADMAP §B and where each setting lives.', 'Manual chapter 26 is written around this page: what can be promised today and the order in which the systems get connected.', 'The M-08a “Integraciones” section became a pointer to this page in 0018; the old tenants.settings.integrations statuses are superseded by the table.'],
+  notes: ['0041: the google_business card opens M-10a (its detail page) and its checklist is split into “Platform, once” and “This studio, per location”; the Intro gains a notice that separates outbound secrets (server env, this page) from the inbound developer keys HoyOS issues (D-07).', 'Sections: Intro = title · status counts · keys-live-server-side notice · manual link; Cards = one IntegrationCard per system (body · what is simulated today · fields · filled count · secrets named · checklist · notes · status select · save); Order = the connection order from ROADMAP §B and where each setting lives.', 'Manual chapter 26 is written around this page: what can be promised today and the order in which the systems get connected.', 'The M-08a “Integraciones” section became a pointer to this page in 0018; the old tenants.settings.integrations statuses are superseded by the table.'],
 });
 
-/** M-10a — Google Business Profile (0040, D-0015): the hours HoyOS will push, the setup split by who does it, and a manual fallback. */
+/** M-10a — Google Business Profile (0041, D-0017): the hours HoyOS will push, the setup split by who does it, and a manual fallback. */
 export const M10a = defineSpec({
   code: 'M-10a',
   name: { es: 'Integraciones · Google Business Profile', en: 'Integrations · Google Business Profile' },
@@ -338,7 +338,7 @@ export const M10a = defineSpec({
   data: ['integrations', 'tenants', 'hours_overrides', 'audit_log'],
   roles: ['super_admin', 'admin'],
   logic: [
-    'HoyOS is the source of truth and pushes one way (D-0015): on save in M-08a / M-08g and nightly, the server calls locations.patch with updateMask=regularHours,specialHours and the body toGoogleBusinessHours() builds (src/tenant/hours.ts). Nightly it reads the location back and flags drift; nothing is pulled into HoyOS silently.',
+    'HoyOS is the source of truth and pushes one way (D-0017): on save in M-08a / M-08g and nightly, the server calls locations.patch with updateMask=regularHours,specialHours and the body toGoogleBusinessHours() builds (src/tenant/hours.ts). Nightly it reads the location back and flags drift; nothing is pulled into HoyOS silently.',
     'Tokens never reach the browser: the OAuth client id / secret are platform env vars; each location’s refresh token is a server secret named per tenant (GOOGLE_BUSINESS_REFRESH_TOKEN_<TENANT>). The integrations row keeps only locationName, accountEmail and placeId.',
     'Status reads the google_business integrations row; “last push” is the newest hours_overrides.google_synced_at, which only the server writes (none yet).',
     'Special hours are one period per date (Google allows endDate at most one day after startDate), so multi-day overrides are expanded; past overrides are left out.',
@@ -348,4 +348,39 @@ export const M10a = defineSpec({
   states: ['Loading', 'Simulated (seed)', 'Configured (location filled, server pending)', 'Connected', 'No special hours upcoming', 'Copied'],
   actions: ADMIN_ACTIONS['M-10a'],
   notes: ['Sub-page of M-10, linked from the google_business card (“Open”) and from the M-08a Opening hours card.', 'Multi-tenant: the platform steps happen once for every studio on HoyOS; each studio only connects its own location.'],
+});
+
+/** M-12 — practice analytics (attendance and retention; no money on this page). */
+export const M12 = defineSpec({
+  code: 'M-12',
+  name: { es: 'Analítica de práctica', en: 'Practice analytics' },
+  purpose: { es: 'Cómo va el estudio en asistencia y retención: ocupación, asistencia, no-shows, horarios populares, segunda visita, quién lleva días sin venir, modalidades, profesores, logros para felicitar en persona y créditos por vencer. Sin cifras de ingresos.', en: 'How the studio is doing on attendance and retention: fill, attendance, no-shows, popular slots, second visit, who has not come in for a while, modalities, teachers, milestones to congratulate in person and credits about to expire. No revenue figures.' },
+  layout: ['KPIRow ×4', 'Heatmap', 'Retention', 'AtRiskList', 'ByModality', 'ByTeacher', 'Milestones', 'CreditsExpiring'],
+  data: ['bookings', 'class_sessions', 'memberships', 'credits', 'practice_goals', 'profiles', 'users', 'teachers', 'modalities'],
+  roles: ['super_admin', 'admin', 'coordinator', 'finance'],
+  logic: [
+    'Every number comes from studioStats() in src/data/analytics.ts through useStudioStats(range); the page computes nothing itself. Range chips 7 / 30 / 90 days, default 30.',
+    'Ocupación (fill) = seats taken (booked + checked_in + no_show) / capacity of completed classes in range.',
+    'Asistencia = checked_in / seats taken. No-shows = no_show / seats taken. Cancelaciones tardías = late_cancel / (seats taken + late_cancel).',
+    'Miembros activos = distinct users with ≥ 1 check-in in range; nuevos = their first ever check-in falls in range; visitas / semana = check-ins / active members / (range ÷ 7).',
+    'Heatmap cell = mean per-class fill of completed classes at that weekday × start hour; rows Lun–Sáb (Dom only when a Sunday class ran), columns = the hours present. 70–85 % healthy, > 90 % add a class, < 60 % for 4 weeks review the slot (research §4).',
+    'Segunda visita = members whose first visit was 30–60 days ago and who attended again within 30 days / those members (goal > 60 %).',
+    'En riesgo = active membership or live credits AND last check-in ≥ 14 days ago; band = largest of 14 / 30 / 60 / 90 ≤ days since. Sorted by days since, descending. Each row opens the M-06 record.',
+    'Por profesor = completed classes per teacher: classes, mean attendance (check-ins / classes), fill, no-show rate, new faces (first check-in with that teacher in range), regulars (≥ 3 check-ins with that teacher in range); sorted by classes.',
+    'Logros = MILESTONES (1, 5, 10, 25, 50, 100, 250) reached inside the range, newest first, first 8, each linking to M-06.',
+    'Créditos por vencer = members with a live balance whose next purchase expiry falls within 14 / 7 days (notify at 14 and 7).',
+  ],
+  integrations: [],
+  states: ['Loading (empty tables)', 'Range with no classes held', 'Nobody at risk (EmptyState)', 'No milestones in range', 'No goals set yet', 'Heatmap scrolls inside its card on phones'],
+  actions: [
+    { id: 'analytics.setRange', label: { es: 'Cambiar el rango', en: 'Change the range' }, intent: { es: 'Muéstrame la analítica de los últimos {range} días', en: 'Show me analytics for the last {range} days' }, params: { range: 'enum:7,30,90' }, permission: 'members.read' },
+    { id: 'analytics.openMember', label: { es: 'Abrir la ficha de un miembro', en: 'Open a member record' }, intent: { es: 'Abre la ficha de {userId}', en: 'Open the record of {userId}' }, params: { userId: 'string — users.id (usr_cust)' }, permission: 'members.read' },
+  ],
+  checkedAt: [390, 1280, 3840],
+  notes: [
+    'No revenue on this page: ROADMAP §E item 32 (does the coordinator see the monthly revenue KPI) is still open, so M-12 is attendance / retention only and opens for super_admin, admin, coordinator and finance — the same roles as M-01. Money stays in M-09.',
+    'Members are never ranked here. The at-risk list is an operational list for the team (who to call), not a leaderboard, and it links to the CRM record.',
+    'The per-teacher table is for studio staff only. Teachers see their own numbers against the studio average in S-03 ("Mis números"), never a list of colleagues (research §B).',
+    'At-risk here uses the 14 / 30 / 60 / 90 ladder of analytics.ts; the M-06 segment rail still uses its own 21-day rule (useMemberStats) until the two are unified.',
+  ],
 });

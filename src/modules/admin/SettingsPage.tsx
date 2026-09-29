@@ -29,7 +29,7 @@ import { M08a } from './specs';
 import './admin.css';
 import { Icon, type IconName } from '../../components/atom/Icon/Icon';
 
-/** The seven sub-pages of M-08. `general` is /admin/settings; the rest are /admin/settings/<key>. `content` (M-08f) arrived in 0018, `hours` (M-08g) in 0040. */
+/** The seven sub-pages of M-08. `general` is /admin/settings; the rest are /admin/settings/<key>. `content` (M-08f) arrived in 0018, `hours` (M-08g) in 0041. */
 export type SettingsGroup = 'general' | 'hours' | 'features' | 'payments' | 'communications' | 'branding' | 'content';
 /** Roles mirror the RouteDef roles in src/modules/admin/index.ts so the rail never offers a blocked page. */
 export const SETTINGS_GROUPS: { key: SettingsGroup; path: string; roles: Role[]; icon: IconName }[] = [
@@ -44,7 +44,7 @@ export const SETTINGS_GROUPS: { key: SettingsGroup; path: string; roles: Role[];
 
 const DAYS = ['0', '1', '2', '3', '4', '5', '6'];
 const DAY_LABEL: Record<string, { es: string; en: string }> = { '0': { es: 'Dom', en: 'Sun' }, '1': { es: 'Lun', en: 'Mon' }, '2': { es: 'Mar', en: 'Tue' }, '3': { es: 'Mié', en: 'Wed' }, '4': { es: 'Jue', en: 'Thu' }, '5': { es: 'Vie', en: 'Fri' }, '6': { es: 'Sáb', en: 'Sat' } };
-/** A day's hours are valid when both times are HH:MM and closing comes after opening (0040). */
+/** A day's hours are valid when both times are HH:MM and closing comes after opening (0041). */
 const validDay = (v: { open: string; close: string }) => /^\d{2}:\d{2}$/.test(v.open) && /^\d{2}:\d{2}$/.test(v.close) && v.close > v.open;
 /** What a day reopens with: its tenant.ts default, or the first open day's (never a time typed here). */
 const defaultDay = (day: string) => ({ ...(tenant.openingHours[day as keyof typeof tenant.openingHours] ?? Object.values(tenant.openingHours).find((v) => !!v)!) });
@@ -76,7 +76,7 @@ export function SettingsPage({ group = 'general' }: { group?: SettingsGroup }) {
   const contact = contactOf(settings);
   const canWrite = can('settings.write');
   const canFlags = can('features.write');
-  // 0040: today's line in the hours card, and the M-08a WebMCP action.
+  // 0041: today's line in the hours card, and the M-08a WebMCP action.
   const hours = useOpeningHours();
 
   /** M-08f — publish or withdraw one legal version (A-06 reads `status`); every flip is audited. */
@@ -383,7 +383,7 @@ function Section<K extends SettingsSection>({ section, value, save, audit, readO
 }
 
 /**
- * M-08a WebMCP (0040): `settings.hours.update` changes one weekday and saves the section exactly as the card's
+ * M-08a WebMCP (0041): `settings.hours.update` changes one weekday and saves the section exactly as the card's
  * Save button does (same validation, same `settings.update` audit row). Mounted only on the General group.
  */
 function GeneralActions() {

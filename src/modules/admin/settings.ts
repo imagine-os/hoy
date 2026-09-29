@@ -191,7 +191,7 @@ export function useContact(): StudioContact {
 }
 
 /* ------------------------------------------------------------------------------------------------
- * 0040 — opening hours, live (D-0014). The weekly hours saved in M-08a are the source of truth, the
+ * 0041 — opening hours, live (D-0016). The weekly hours saved in M-08a are the source of truth, the
  * dated exceptions in `hours_overrides` (M-08g) win for the dates they cover, tenant.ts is the fallback.
  * The site footer, W-06, C-25, the manual's {{tenant:hours}}, the JSON-LD and M-10a all read this.
  * ---------------------------------------------------------------------------------------------- */

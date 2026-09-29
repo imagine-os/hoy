@@ -18,7 +18,7 @@ export function ContactPage() {
   const { sections, isVisible } = useLayout(siteSpecs.contact);
   const [form, setForm] = useState({ name: '', phone: '', message: '' });
   const contact = useContact();
-  // 0040: M-08a weekly hours + the M-08g exceptions of the next 30 days.
+  // 0041: M-08a weekly hours + the M-08g exceptions of the next 30 days.
   const hours = useOpeningHours();
   const soon = upcomingOverrides(hours.overrides, hours.todayKey, 30).slice(0, 3);
   const waHref = useWaHref();

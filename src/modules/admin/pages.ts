@@ -1,5 +1,6 @@
 export { TablesPage } from './TablesPage';
 export { DashboardPage } from './DashboardPage';
+export { AnalyticsPage } from './AnalyticsPage';
 export { ContentPage } from './ContentPage';
 export { EmailsPage } from './EmailsPage';
 export { WhatsAppPage } from './WhatsAppPage';

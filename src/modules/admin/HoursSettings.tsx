@@ -57,7 +57,7 @@ const toRow = (d: Draft, by: string): Partial<HoursOverrideRow> => ({
 });
 
 /**
- * M-08g `/admin/settings/hours` — the dated exceptions to the weekly hours (D-0014). Rendered inside the
+ * M-08g `/admin/settings/hours` — the dated exceptions to the weekly hours (D-0016). Rendered inside the
  * M-08 settings shell (SettingsPage group `hours`). hours.write gates every write; every write is audited.
  */
 export function HoursSettings() {
@@ -134,7 +134,7 @@ export function HoursSettings() {
   };
   const open = (d: Draft) => { setDraft(d); setError(null); setConfirmDelete(false); };
 
-  // WebMCP (0040): the same writes, same validation, same audit.
+  // WebMCP (0041): the same writes, same validation, same audit.
   const impl = useMemo<Record<string, ActionHandler>>(() => ({
     'settings.hours.override.add': async (p) => {
       const closed = (p?.closed ?? 'true') !== 'false';

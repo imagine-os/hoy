@@ -6,7 +6,7 @@ import { hoursSentence } from './hours';
 
 export type DayHours = { open: string; close: string } | null;
 /**
- * Opening hours per weekday (0 = Sunday), `null` when closed. These are the DEFAULTS only (0040): the live
+ * Opening hours per weekday (0 = Sunday), `null` when closed. These are the DEFAULTS only (0041): the live
  * hours are the ones saved in M-08a (`tenants.settings.openingHours`) plus the dated exceptions in
  * `hours_overrides` (M-08g), read everywhere through `useOpeningHours()` in src/modules/admin/settings.ts.
  */
@@ -19,7 +19,7 @@ const openingHours: OpeningHours = {
   '6': { open: '08:00', close: '13:00' },
 };
 
-/** 0040: moved to ./hours.ts with the other pure hours readers; re-exported so existing imports keep working. */
+/** 0041: moved to ./hours.ts with the other pure hours readers; re-exported so existing imports keep working. */
 export { hoursSentence };
 
 export const tenant = {
