@@ -7,7 +7,13 @@ dónde estamos, qué sigue y en qué orden (con dependencias explícitas y lo qu
 paralelo), qué significa "terminado" en cada fase, cómo trabajar en el repo y qué debe decidir el
 owner del estudio. Está escrito para que otra cuenta de Claude (o una persona) lo retome sin contexto.
 
-## A. Where we are (v0.17.0, 2026-09-29)
+## A. Where we are (v0.18.0, 2026-09-29)
+
+- **v0.18.0 — Machine surfaces audit, actions.json, AI distribution plan** (`docs/changelog/0043-ai-surfaces-distribution.md`,
+  prompt `docs/prompts/0043-ai-surfaces-distribution.md`; Justin: "do we have mcp cli, api stuff all organized proper. Not
+  sure if mcp and web mcp are different?"): `surfaces.md` audited against the code, the 40 actions published as
+  `actions.json` on every build, and `docs/reference/ai-distribution.md` (D-0019) plans one multi-tenant MCP server over
+  that vocabulary, WebMCP in the page and marketplace listings as packaging. Still needed: the server itself and §E 44–47.
 
 - **v0.17.0 — Hours, holidays, Google Business Profile, developer keys** (`docs/changelog/0041-hours-google-keys.md`,
   prompt `docs/prompts/0041-hours-google-keys.md`; Justin: "the opening hours once it is updated here, would be reflected
@@ -509,6 +515,15 @@ chapter or spec and close the card.
 43. **Milestones by WhatsApp.** `activity_events` records every milestone (1 · 5 · 10 · 25 · 50 · 100 · 250 classes). Should
     reaching one trigger an automated WhatsApp (M-05 template) as well as the in-app toast and the M-12 list for the
     desk, or stay an in-person congratulation?
+
+**From the AI distribution plan, 2026-09-29 (0043, `docs/reference/ai-distribution.md` §6)**
+44. **Where the MCP server lives.** Its hostname, and its home: a `server/` folder in this repo or a sibling repo
+    `imagine-os/mcp`?
+45. **Open-source the MCP server?** The Cursor Marketplace requires it; the official MCP Registry and Claude do not.
+46. **Which accounts to open.** A paid Claude plan for the Anthropic directory, OpenAI organization verification, the
+    muse.ai/platform partner application, a GitHub-verified DNS namespace for the registry.
+47. **Charged bookings by an agent.** May an agent book on a member's behalf when the pass would be charged, or does
+    paying stay a person's click (the 0025 limit, kept today)?
 
 ## F. What remains after this pass (for Justin)
 
