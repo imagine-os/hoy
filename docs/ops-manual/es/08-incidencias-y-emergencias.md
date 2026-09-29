@@ -2,7 +2,7 @@
 title: Incidencias y emergencias
 role: todos
 part: II
-version: 0.13.1
+version: 0.13.2
 updated: 2026-09-29
 summary: Emergencia médica, mareo por calor, evacuación, a quién llamar y cómo se deja registro de un incidente.
 ---

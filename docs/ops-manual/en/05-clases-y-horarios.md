@@ -2,7 +2,7 @@
 title: Classes and schedule
 role: coordination
 part: II
-version: 0.13.1
+version: 0.13.2
 updated: 2026-09-29
 summary: Building the schedule, assigning teachers, cancelling a studio class and publishing events and workshops.
 ---

@@ -7,15 +7,17 @@ dónde estamos, qué sigue y en qué orden (con dependencias explícitas y lo qu
 paralelo), qué significa "terminado" en cada fase, cómo trabajar en el repo y qué debe decidir el
 owner del estudio. Está escrito para que otra cuenta de Claude (o una persona) lo retome sin contexto.
 
-## A. Where we are (v0.13.1, 2026-09-29)
+## A. Where we are (v0.13.2, 2026-09-29)
 
-- **v0.13.1 — Operations manual content** (`docs/changelog/0032-manual-content.md`, prompt `docs/prompts/0032-manual-content.md`;
+- **v0.13.2 — Operations manual content** (`docs/changelog/0032-manual-content.md`, prompt `docs/prompts/0032-manual-content.md`;
   Justin: "The operations manual is too techinical right now … identify things like policies that are ready for the business
   owner or operations manager to edit"): all 28 chapters rewritten in plain language in ES and EN against
   `docs/ops-manual/STYLE.md`; screen codes moved into `EN HOYOS` / `IN HOYOS` boxes; the 0031 directives in place (audience,
   editable sections, studio rules, role passages, source documents, training); six revenue lines (`corporativo` in
   `pricing.ts`, coming soon, no prices); decisions closed / narrowed / added in §E (1, 22 closed; 23, 24, 28, 29 narrowed;
   37–39 added).
+- **v0.13.1 — Real phone and address** (`docs/changelog/0036-real-contact.md`, prompt `docs/prompts/0036-real-contact.md`; Justin: "Phone number for hoy. The address is same as Santa maria tenis club in poblado medellin"):
+  WhatsApp +57 312 776 5000 and Cl. 7B Sur # 29C-100, El Poblado (6.19281, -75.56535) in `tenant.ts`; M-08a confirms per field, so the phone and address render as facts everywhere while email, Instagram and NIT stay pending (§E 21).
 - **v0.12.0 — Icons + the daily intention retired** (`docs/changelog/0030-icons.md`, prompt `docs/prompts/0030-icons.md`; Justin: "the icons in the bottom tray, and other icons should probably be better … In settings, there should be clear icons for each setting" and "erase the \"How do you want to feel today\" component from the experience"):
   `lucide-react` behind the `Icon` atom (135 names, D-0008, `--icon-*` tokens), typed `nav.icon`, Card `icon`, settings rail + section glyphs; A-05 retired (redirect, no C-01 card, no flags, `intentions` deprecated).
 
@@ -384,6 +386,9 @@ chapter or spec and close the card.
     `hola@example.com` and "Dirección del estudio (pendiente)", and `tenant.location` is an
     approximate El Poblado point labelled "por confirmar". Everything is rendered as pending, so this
     is one edit to `src/tenant/tenant.ts` once the owner answers. (manual `01`) **→ setting in M-08a (fill in and tick “confirmed”; tenant.ts stays the default)**
+    **Address and phone now confirmed from the owner (2026-09-29, 0036)**: WhatsApp +57 312 776 5000; the studio shares the
+    Santa María Tenis Club premises, Cl. 7B Sur # 29C-100, El Poblado, Medellín (club site santamariatenisclub.com),
+    6.19281 / -75.56535. **Still open**: the studio's email, Instagram handle and NIT (M-08a per-field switches stay off).
 22. **How the classes are named in public**: the brand copy has five disciplines (hot yoga, barre,
     pilates, meditación, respiración), the system organises the day by four movements (Enraíza,
     Fluye, Arde, Libera). Which one does the customer see on the schedule, and which is the internal

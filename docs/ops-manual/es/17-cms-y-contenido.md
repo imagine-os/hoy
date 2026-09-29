@@ -2,7 +2,7 @@
 title: Contenido en el CMS
 role: coordinación, admin, marketing
 part: V
-version: 0.13.1
+version: 0.13.2
 updated: 2026-09-29
 summary: Qué textos se editan en Contenido, cómo pasan de borrador a publicado, las reglas del club y las preguntas frecuentes.
 ---

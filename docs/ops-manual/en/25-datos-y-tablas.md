@@ -2,7 +2,7 @@
 title: Data and tables
 role: admin, owner, developer
 part: VII
-version: 0.13.1
+version: 0.13.2
 updated: 2026-09-29
 summary: Why knowing the data helps, the full model, how to read who can see each table and the rules for touching data.
 ---

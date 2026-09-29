@@ -2,7 +2,7 @@
 title: CRM, WhatsApp and email
 role: front desk, coordination
 part: III
-version: 0.13.1
+version: 0.13.2
 updated: 2026-09-29
 summary: The member record and its conversation, the WhatsApp rules, automated messages, how to write and the front desk's Inbox.
 ---

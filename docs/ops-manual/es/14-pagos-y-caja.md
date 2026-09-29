@@ -2,7 +2,7 @@
 title: Pagos y caja
 role: finanzas, recepción, owner
 part: IV
-version: 0.13.1
+version: 0.13.2
 updated: 2026-09-29
 summary: Los medios de pago, el cierre de caja, la conciliación diaria, Wompi, los reembolsos, los gastos y el balance, y los reportes del mes.
 ---

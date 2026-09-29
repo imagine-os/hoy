@@ -2,7 +2,7 @@
 title: Incidents and emergencies
 role: everyone
 part: II
-version: 0.13.1
+version: 0.13.2
 updated: 2026-09-29
 summary: A medical emergency, heat dizziness, evacuation, who to call and how an incident is recorded.
 ---

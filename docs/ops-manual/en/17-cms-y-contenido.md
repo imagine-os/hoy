@@ -2,7 +2,7 @@
 title: Content in the CMS
 role: coordination, admin, marketing
 part: V
-version: 0.13.1
+version: 0.13.2
 updated: 2026-09-29
 summary: Which texts are edited in Content, how they go from draft to published, the club rules and the FAQ.
 ---

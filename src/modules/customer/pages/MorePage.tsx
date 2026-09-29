@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
-import { useContact } from '../../admin/settings';
+import { pendingSuffix, useContact } from '../../admin/settings';
 import { useSession } from '../../../auth/SessionProvider';
 import { tenant } from '../../../tenant/tenant';
 import { Card } from '../../../components/molecule/Card/Card';
@@ -15,7 +15,7 @@ import { Icon } from '../../../components/atom/Icon/Icon';
 
 /** C-25 More — profile, rules, contact and everything one level down. */
 export function MorePage() {
-  const { t, bi } = useI18n();
+  const { t, bi, lang } = useI18n();
   const contact = useContact();
   const nav = useNavigate();
   const { user, devMode, switchUser } = useSession();
@@ -41,8 +41,9 @@ export function MorePage() {
           <ListRow icon="profile" title={t('core.nav.profile')} subtitle={`${t('customer.profile.edit')} · ${t('customer.membership.title')}`} to="/app/profile" />
           <ListRow icon="ticket" title={t('core.nav.plans')} subtitle={t('customer.more.plans.sub')} to="/app/plans" />
           <ListRow icon="policies" title={t('customer.rules.title')} subtitle={t('customer.more.rules.sub')} to="/app/rules" />
-          <ListRow icon="whatsapp" title={t('customer.more.whatsapp')} subtitle={`${contact.whatsapp} · ${bi(policy.replyWindow)}`} href={waLink(contact.whatsapp, t('customer.more.whatsapp.text', { name: name.split(' ')[0] }))} />
-          <ListRow icon="mail" title={t('customer.more.email')} subtitle={contact.email} href={`mailto:${contact.email}`} />
+          <ListRow icon="whatsapp" title={t('customer.more.whatsapp')} subtitle={`${contact.whatsapp}${pendingSuffix(contact, 'whatsapp', lang)} · ${bi(policy.replyWindow)}`} href={waLink(contact.whatsapp, t('customer.more.whatsapp.text', { name: name.split(' ')[0] }))} />
+          <ListRow icon="mail" title={t('customer.more.email')} subtitle={`${contact.email}${pendingSuffix(contact, 'email', lang)}`} href={`mailto:${contact.email}`} />
+          <ListRow icon="map-pin" title={t('customer.more.visit')} subtitle={`${contact.address}, ${contact.city}${pendingSuffix(contact, 'address', lang)}`} href={contact.location.link ?? `https://www.google.com/maps/search/?api=1&query=${contact.location.lat},${contact.location.lng}`} />
         </ListGroup>
 
         <ListGroup>

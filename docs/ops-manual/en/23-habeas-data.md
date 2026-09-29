@@ -2,7 +2,7 @@
 title: Personal data and habeas data
 role: everyone
 part: VI
-version: 0.13.1
+version: 0.13.2
 updated: 2026-09-29
 summary: Law 1581 in practice: what we ask for, how we look after health data, who sees what, and how a person views, downloads, corrects or deletes their data.
 ---

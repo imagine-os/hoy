@@ -2,7 +2,7 @@
 title: Index and how to use this manual
 role: everyone
 part: I
-version: 0.13.1
+version: 0.13.2
 updated: 2026-09-29
 summary: What the manual is for, how to read it for your role, which parts the studio adjusts and where the source documents live.
 ---

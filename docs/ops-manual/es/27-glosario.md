@@ -2,7 +2,7 @@
 title: Glosario
 role: todos
 part: VII
-version: 0.13.1
+version: 0.13.2
 updated: 2026-09-29
 summary: Las palabras que usamos, qué significan, qué decimos delante del cliente y cómo leer los códigos de los recuadros En HoyOS.
 ---

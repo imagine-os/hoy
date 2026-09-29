@@ -2,7 +2,7 @@
 title: Recepción y check-in
 role: recepción, coordinación
 part: II
-version: 0.13.1
+version: 0.13.2
 updated: 2026-09-29
 summary: La puerta paso a paso: abrir, saludar, registrar la llegada, walk-ins, cancelaciones, lista de espera, objetos perdidos y traspasos.
 ---

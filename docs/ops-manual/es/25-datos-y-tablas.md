@@ -2,7 +2,7 @@
 title: Datos y tablas
 role: admin, owner, desarrollo
 part: VII
-version: 0.13.1
+version: 0.13.2
 updated: 2026-09-29
 summary: Para qué sirve conocer los datos, el modelo completo, cómo se lee quién puede ver cada tabla y las reglas para tocar datos.
 ---
