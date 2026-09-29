@@ -7,7 +7,8 @@ import { Chip } from '../../../components/atom/Chip/Chip';
 import { Input, Select } from '../../../components/atom/Input/Input';
 import { Toggle } from '../../../components/atom/Toggle/Toggle';
 import { Card } from '../../../components/molecule/Card/Card';
-import { Icon } from '../../../components/atom/Icon/Icon';
+import { Icon, type IconName } from '../../../components/atom/Icon/Icon';
+import { Notice } from '../../../components/molecule/Notice/Notice';
 import { groupableColumns, hiddenOf, isDate, isNumber, opNeedsValue, opsFor, orderedColumns, type Def } from './model';
 
 export type PanelId = 'filter' | 'sort' | 'group' | 'columns' | 'export' | 'views';
@@ -26,7 +27,7 @@ function ColumnSelect({ def, cols, value, onChange, label, technical }: { def: D
   );
 }
 
-function IconBtn({ icon, label, onClick, disabled }: { icon: 'arrow-up' | 'arrow-down' | 'close'; label: string; onClick: () => void; disabled?: boolean }) {
+function IconBtn({ icon, label, onClick, disabled }: { icon: IconName; label: string; onClick: () => void; disabled?: boolean }) {
   return <button type="button" className="tbl-iconbtn ctl-round" onClick={onClick} disabled={disabled} aria-label={label} title={label}><Icon name={icon} size="sm" /></button>;
 }
 
@@ -181,19 +182,47 @@ export function ExportPanel({ count, onExport, onClose }: { count: number; onExp
   );
 }
 
-export function ViewsPanel({ views, activeId, onPick, onDefault, onSave, canWrite, onClose }: { views: TableViewRow[]; activeId: string | null; onPick: (v: TableViewRow) => void; onDefault: () => void; onSave: (name: string) => void; canWrite: boolean; onClose: () => void }) {
+export interface ViewsPanelProps {
+  views: TableViewRow[]; activeId: string | null; canWrite: boolean; onClose: () => void;
+  onPick: (v: TableViewRow) => void; onDefault: () => void; onSave: (name: string) => void;
+  /** 0045: rename / delete — only the view's creator or a role with tables.write. */
+  canEdit: (v: TableViewRow) => boolean; onRename: (v: TableViewRow, name: string) => void; onDelete: (v: TableViewRow) => void;
+}
+
+export function ViewsPanel({ views, activeId, onPick, onDefault, onSave, canWrite, onClose, canEdit, onRename, onDelete }: ViewsPanelProps) {
   const { t, bi } = useI18n();
   const [name, setName] = useState('');
+  const [editing, setEditing] = useState<string | null>(null);
+  const [draft, setDraft] = useState('');
+  const [confirming, setConfirming] = useState<string | null>(null);
   return (
     <PanelShell title={t('admin.tables.views')} onClose={onClose}>
       <ul className="tbl-viewlist">
         <li><button type="button" className={`tbl-viewbtn ${activeId == null ? 'is-active' : ''}`} aria-pressed={activeId == null} onClick={onDefault}><Icon name="table" size="sm" /><span className="grow">{t('admin.tables.views.default')}</span></button></li>
         {views.map((v) => (
-          <li key={v.id}>
-            <button type="button" className={`tbl-viewbtn ${activeId === v.id ? 'is-active' : ''}`} aria-pressed={activeId === v.id} onClick={() => onPick(v)}>
-              <Icon name={VIEW_ICON[v.kind]} size="sm" /><span className="grow">{bi(v.name)}</span>
-              <span className="xs muted">{t(`admin.tables.view.${v.kind}`)}{v.is_default ? ` · ${t('admin.tables.views.isDefault')}` : ''}</span>
-            </button>
+          <li key={v.id} className="tbl-viewitem">
+            {editing === v.id ? (
+              <form className="tbl-rule" onSubmit={(e) => { e.preventDefault(); if (draft.trim()) { onRename(v, draft.trim()); setEditing(null); } }}>
+                <Input autoFocus value={draft} onChange={(e) => setDraft(e.target.value)} aria-label={t('admin.tables.views.rename')} className="tbl-ctl grow" onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); setEditing(null); } }} />
+                <Button size="sm" type="submit" icon="check" disabled={!draft.trim()}>{t('core.common.save')}</Button>
+                <Button size="sm" variant="ghost" onClick={() => setEditing(null)}>{t('core.common.cancel')}</Button>
+              </form>
+            ) : (
+              <div className="tbl-viewrow">
+                <button type="button" className={`tbl-viewbtn ${activeId === v.id ? 'is-active' : ''}`} aria-pressed={activeId === v.id} onClick={() => onPick(v)}>
+                  <Icon name={VIEW_ICON[v.kind]} size="sm" /><span className="grow">{bi(v.name)}</span>
+                  <span className="xs muted">{t(`admin.tables.view.${v.kind}`)}{v.is_default ? ` · ${t('admin.tables.views.isDefault')}` : ''}</span>
+                </button>
+                {canEdit(v) && <IconBtn icon="edit" label={t('admin.tables.views.renameNamed', { name: bi(v.name) })} onClick={() => { setConfirming(null); setDraft(bi(v.name)); setEditing(v.id); }} />}
+                {canEdit(v) && <IconBtn icon="trash" label={t('admin.tables.views.deleteNamed', { name: bi(v.name) })} onClick={() => { setEditing(null); setConfirming(v.id); }} />}
+              </div>
+            )}
+            {confirming === v.id && (
+              <Notice tone="danger" title={t('admin.tables.views.deleteConfirm', { name: bi(v.name) })}
+                action={<div className="row wrap"><Button size="sm" variant="ghost" onClick={() => setConfirming(null)}>{t('core.common.cancel')}</Button><Button size="sm" variant="danger" icon="trash" onClick={() => { onDelete(v); setConfirming(null); }}>{t('core.common.delete')}</Button></div>}>
+                {t('admin.tables.views.deleteBody')}
+              </Notice>
+            )}
           </li>
         ))}
       </ul>
@@ -207,4 +236,4 @@ export function ViewsPanel({ views, activeId, onPick, onDefault, onSave, canWrit
   );
 }
 
-export const VIEW_ICON = { grid: 'table', list: 'list', gallery: 'grid', kanban: 'kanban', calendar: 'calendar', timeline: 'gantt', graph: 'graph' } as const;
+export const VIEW_ICON = { grid: 'table', list: 'list', gallery: 'grid', kanban: 'kanban', calendar: 'calendar-days', timeline: 'gantt', graph: 'graph' } as const;

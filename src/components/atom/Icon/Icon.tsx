@@ -12,7 +12,7 @@ import {
   SlidersHorizontal, Smartphone, Sparkles, SquarePen, Star, Sun, Table, Tablet, Ticket, ToggleRight, Trash2, TriangleAlert,
   Tv, Undo2, User, UserCheck, UserCog, UserPlus, UserX, Users, Wallet, X, BookA, Siren, Mic, Database, KeyRound, LayoutTemplate,
   GraduationCap, Files, Copy, Eye, EyeOff, RefreshCw, Store, Kanban, List, LayoutList, Waypoints, ChartGantt, Pin, PinOff,
-  PanelLeftClose, PanelLeftOpen, Columns3, Group, ZoomIn, ZoomOut, Locate, GripVertical, Braces, type LucideIcon,
+  PanelLeftClose, PanelLeftOpen, Columns3, Group, ZoomIn, ZoomOut, Locate, GripVertical, Braces, CalendarRange, type LucideIcon,
 } from 'lucide-react';
 import type { IconSize } from '../../../design/tokens';
 import './Icon.css';
@@ -62,6 +62,8 @@ const ICONS = {
   kanban: Kanban, list: List, 'layout-list': LayoutList, graph: Waypoints, gantt: ChartGantt, pin: Pin, 'pin-off': PinOff,
   'panel-left-close': PanelLeftClose, 'panel-left-open': PanelLeftOpen, columns: Columns3, group: Group, 'zoom-in': ZoomIn,
   'zoom-out': ZoomOut, locate: Locate, grip: GripVertical, braces: Braces,
+  // 0045: the M-03 calendar modes (month · week · agenda) and the timeline
+  'calendar-days': CalendarDays, 'calendar-range': CalendarRange,
 } satisfies Record<string, LucideIcon>;
 
 export type IconName = keyof typeof ICONS;

@@ -1416,6 +1416,66 @@
       ]
     },
     {
+      "id": "tables.calendarMode",
+      "label": {
+        "es": "Disposición del calendario",
+        "en": "Calendar layout"
+      },
+      "intent": {
+        "es": "Muestra el calendario por {mode}",
+        "en": "Show the calendar by {mode}"
+      },
+      "params": {
+        "mode": "enum:month,week,agenda"
+      },
+      "permission": "tables.read",
+      "roles": [
+        "super_admin",
+        "finance",
+        "developer"
+      ],
+      "pages": [
+        {
+          "code": "M-03",
+          "route": "/admin/tables"
+        },
+        {
+          "code": "M-03",
+          "route": "/admin/tables/:table"
+        }
+      ]
+    },
+    {
+      "id": "tables.deleteView",
+      "label": {
+        "es": "Eliminar una vista",
+        "en": "Delete a view"
+      },
+      "intent": {
+        "es": "Elimina la vista {view}",
+        "en": "Delete the view {view}"
+      },
+      "params": {
+        "view": "string — a saved view id or its current name (default: the active one)"
+      },
+      "permission": "tables.write",
+      "roles": [
+        "super_admin",
+        "finance",
+        "developer"
+      ],
+      "pages": [
+        {
+          "code": "M-03",
+          "route": "/admin/tables"
+        },
+        {
+          "code": "M-03",
+          "route": "/admin/tables/:table"
+        }
+      ]
+    },
+    {
       "id": "tables.export",
       "label": {
         "es": "Exportar la vista",
@@ -1459,6 +1519,36 @@
         "column": "string — a column name of the open table",
         "op": "enum:is,is_not,contains,empty,not_empty,before,after,gt,lt,in (default: the first for the column type)",
         "value": "string (comma-separated for in; YYYY-MM-DD for dates)"
+      },
+      "permission": "tables.read",
+      "roles": [
+        "super_admin",
+        "finance",
+        "developer"
+      ],
+      "pages": [
+        {
+          "code": "M-03",
+          "route": "/admin/tables"
+        },
+        {
+          "code": "M-03",
+          "route": "/admin/tables/:table"
+        }
+      ]
+    },
+    {
+      "id": "tables.goToDate",
+      "label": {
+        "es": "Ir a una fecha",
+        "en": "Go to a date"
+      },
+      "intent": {
+        "es": "Ve al {date} en el calendario o la línea de tiempo",
+        "en": "Go to {date} on the calendar or the timeline"
+      },
+      "params": {
+        "date": "string — YYYY-MM-DD, today, next or previous"
       },
       "permission": "tables.read",
       "roles": [
@@ -1596,6 +1686,37 @@
       ]
     },
     {
+      "id": "tables.renameView",
+      "label": {
+        "es": "Renombrar una vista",
+        "en": "Rename a view"
+      },
+      "intent": {
+        "es": "Cambia el nombre de la vista {view} a {name}",
+        "en": "Rename the view {view} to {name}"
+      },
+      "params": {
+        "view": "string — a saved view id or its current name (default: the active one)",
+        "name": "string"
+      },
+      "permission": "tables.write",
+      "roles": [
+        "super_admin",
+        "finance",
+        "developer"
+      ],
+      "pages": [
+        {
+          "code": "M-03",
+          "route": "/admin/tables"
+        },
+        {
+          "code": "M-03",
+          "route": "/admin/tables/:table"
+        }
+      ]
+    },
+    {
       "id": "tables.saveView",
       "label": {
         "es": "Guardar la vista",
@@ -1656,17 +1777,78 @@
       ]
     },
     {
+      "id": "tables.setDateColumn",
+      "label": {
+        "es": "Elegir la columna de fecha",
+        "en": "Pick the date column"
+      },
+      "intent": {
+        "es": "Pon las filas en el calendario por {column} hasta {endColumn}",
+        "en": "Place the rows by {column} until {endColumn}"
+      },
+      "params": {
+        "column": "string — a date or timestamp column of the open table (starts_at, start_date, created_at…)",
+        "endColumn": "string — where rows end (none = a point; default: the pair of column, e.g. ends_at)"
+      },
+      "permission": "tables.read",
+      "roles": [
+        "super_admin",
+        "finance",
+        "developer"
+      ],
+      "pages": [
+        {
+          "code": "M-03",
+          "route": "/admin/tables"
+        },
+        {
+          "code": "M-03",
+          "route": "/admin/tables/:table"
+        }
+      ]
+    },
+    {
       "id": "tables.setView",
       "label": {
         "es": "Cambiar el tipo de vista",
         "en": "Change the view type"
       },
       "intent": {
-        "es": "Muéstralo como {kind}",
-        "en": "Show it as a {kind}"
+        "es": "Muéstralo como {kind} (cuadrícula, lista, galería, tablero, calendario, línea de tiempo o grafo)",
+        "en": "Show it as a {kind} (grid, list, gallery, board, calendar, timeline or graph)"
       },
       "params": {
-        "kind": "enum:grid,list,gallery,kanban,graph (calendar, timeline: not wired yet)"
+        "kind": "enum:grid,list,gallery,kanban,calendar,timeline,graph (calendar and timeline need a date column)"
+      },
+      "permission": "tables.read",
+      "roles": [
+        "super_admin",
+        "finance",
+        "developer"
+      ],
+      "pages": [
+        {
+          "code": "M-03",
+          "route": "/admin/tables"
+        },
+        {
+          "code": "M-03",
+          "route": "/admin/tables/:table"
+        }
+      ]
+    },
+    {
+      "id": "tables.timelineZoom",
+      "label": {
+        "es": "Zoom de la línea de tiempo",
+        "en": "Timeline zoom"
+      },
+      "intent": {
+        "es": "Acerca o aleja la línea de tiempo a {zoom}",
+        "en": "Zoom the timeline to {zoom}"
+      },
+      "params": {
+        "zoom": "enum:day,week,month,quarter"
       },
       "permission": "tables.read",
       "roles": [

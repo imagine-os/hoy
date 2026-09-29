@@ -1322,8 +1322,8 @@
         "en": "Tables & relations"
       },
       "purpose": {
-        "es": "El gestor de datos del estudio con vistas: cualquier tabla como cuadrícula, lista, galería, tablero o grafo de relaciones, con filtros, orden, agrupación, columnas y vistas guardadas para el equipo. Todo en palabras (los nombres técnicos solo en modo dev), cada referencia abre la fila a la que apunta y el panel de la fila muestra quién la usa.",
-        "en": "The studio’s data manager with views: any table as a grid, list, gallery, board or relationship graph, with filters, sorts, grouping, columns and views saved for the team. Everything in words (technical names only in dev mode), every reference opens the row it points at and the row panel shows what uses it."
+        "es": "El gestor de datos del estudio con vistas: cualquier tabla como cuadrícula, lista, galería, tablero, calendario, línea de tiempo o grafo de relaciones, con filtros, orden, agrupación, columnas y vistas guardadas para el equipo. Todo en palabras (los nombres técnicos solo en modo dev), cada referencia abre la fila a la que apunta y el panel de la fila muestra quién la usa.",
+        "en": "The studio’s data manager with views: any table as a grid, list, gallery, board, calendar, timeline or relationship graph, with filters, sorts, grouping, columns and views saved for the team. Everything in words (technical names only in dev mode), every reference opens the row it points at and the row panel shows what uses it."
       },
       "surface": "admin",
       "roles": [
@@ -1338,12 +1338,18 @@
         "tables.open",
         "tables.openRow",
         "tables.setView",
+        "tables.setDateColumn",
+        "tables.calendarMode",
+        "tables.timelineZoom",
+        "tables.goToDate",
         "tables.search",
         "tables.filter",
         "tables.newRow",
         "tables.export",
         "tables.toggleSidebar",
         "tables.saveView",
+        "tables.renameView",
+        "tables.deleteView",
         "tables.pin",
         "tables.toggleTechnicalNames"
       ],
@@ -5577,8 +5583,8 @@
         "en": "Tables"
       },
       "purpose": {
-        "es": "El gestor de datos con vistas: cuadrícula, lista, galería, tablero y grafo.",
-        "en": "The data manager with views: grid, list, gallery, board and graph."
+        "es": "El gestor de datos con vistas: cuadrícula, lista, galería, tablero, calendario, línea de tiempo y grafo.",
+        "en": "The data manager with views: grid, list, gallery, board, calendar, timeline and graph."
       },
       "route": "/admin/tables",
       "url": "https://imagine-os.github.io/hoy/#/admin/tables",

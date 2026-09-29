@@ -18,8 +18,10 @@ const KEY = 'hoyos.db.v1';
  *   6 · 0.17.0 hours_overrides and api_keys tables, the google_business integration row, settings.openingHours seeded (0041);
  *       a v5 copy lacks the two tables, so it fails the table check and reseeds
  *   7 · 0044 table_views (M-03 saved views) with six default views; a v6 copy lacks the table, so it reseeds
+ *   8 · 0045 table_views gains calendar / timeline views (config.dateColumn, endColumn, calendarMode, timelineZoom) and
+ *       class_sessions opens on the week calendar; a v7 copy reseeds so the new default views appear
  */
-export const SEED_VERSION = 7;
+export const SEED_VERSION = 8;
 
 /** 0039: a v3 copy still carries `movement`; give each row its seed tone (or the old colour's tone) and drop intentions. */
 const LEGACY_TONE: Record<string, string> = { enraiza: 'moss', fluye: 'river', arde: 'clay', libera: 'sun' };
@@ -146,7 +148,8 @@ export class MockProvider implements DataProvider {
   }
 
   peek<T extends BaseRow>(table: string, query?: Query): T[] { return applyQuery(this.rows(table) as T[], query); }
-  async list<T extends BaseRow>(table: string, query?: Query): Promise<T[]> { return this.peek<T>(table, query); }
+  /** A new array every call (0045): peek() hands out the live table, and a reused reference kept useTable's memos stale after an insert. */
+  async list<T extends BaseRow>(table: string, query?: Query): Promise<T[]> { return [...this.peek<T>(table, query)]; }
   async get<T extends BaseRow>(table: string, id: string): Promise<T | null> { return (this.rows(table).find((r) => r.id === id) as T) ?? null; }
 
   async insert<T extends BaseRow>(table: string, row: Partial<T>): Promise<T> {

@@ -76,6 +76,14 @@
 .tbl-viewbtn { display: flex; align-items: center; gap: var(--gap-inline); width: 100%; min-height: var(--h-ctl); padding: 0 var(--sp-md); border: 1px solid transparent; border-radius: var(--r-ctl); background: none; text-align: left; color: var(--color-text); font-family: var(--font-body); font-size: var(--fs-sm); }
 .tbl-viewbtn:hover { background: var(--color-surface-2); }
 .tbl-viewbtn.is-active { border-color: var(--color-primary); color: var(--color-primary); }
+.tbl-viewitem { display: flex; flex-direction: column; gap: var(--stack); }
+.tbl-viewrow { display: flex; align-items: center; gap: var(--sp-2xs); min-width: 0; }
+.tbl-viewrow .tbl-viewbtn { flex: 1 1 auto; min-width: 0; }
+/* 0045: the calendar / timeline Fecha and Hasta pickers in the toolbar */
+.tbl-datepick { display: inline-flex; flex-wrap: wrap; align-items: center; gap: var(--gap-inline); flex: 0 1 auto; min-width: 0; }
+.tbl-datepick-field { display: inline-flex; align-items: center; gap: var(--gap-inline); min-width: 0; }
+.tbl-datepick-field > span { white-space: nowrap; }
+.tbl-datepick .tbl-ctl { min-width: 8rem; flex: 0 1 12rem; }
 
 /* ---- cells ---- */
 .tbl-view { min-width: 0; }

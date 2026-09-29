@@ -1205,8 +1205,8 @@ _Quién hizo qué, sobre qué entidad, cuándo (M-07)._
 | `ip` | text, null |  |
 
 #### `table_views`
-The table manager views (M-03): which table, which kind of view (grid, list, gallery, board, graph…) and with which filters, sorts, grouping and columns. A shared view is visible to the whole team.  
-_Las vistas del gestor de tablas (M-03): qué tabla, qué tipo de vista (cuadrícula, lista, galería, tablero, grafo…) y con qué filtros, orden, agrupación y columnas. Una vista compartida la ve todo el equipo._
+The table manager views (M-03): which table, which kind of view (grid, list, gallery, board, calendar, timeline, graph) and with which filters, sorts, grouping and columns. A shared view is visible to the whole team.  
+_Las vistas del gestor de tablas (M-03): qué tabla, qué tipo de vista (cuadrícula, lista, galería, tablero, calendario, línea de tiempo, grafo) y con qué filtros, orden, agrupación y columnas. Una vista compartida la ve todo el equipo._
 
 | column | type | notes |
 | --- | --- | --- |
@@ -1217,7 +1217,7 @@ _Las vistas del gestor de tablas (M-03): qué tabla, qué tipo de vista (cuadrí
 | `table_name` | text | the table this view shows (a name from src/data/schema.ts) |
 | `name` | json | {es,en} |
 | `kind` | enum (grid \| list \| gallery \| kanban \| calendar \| timeline \| graph) |  |
-| `config` | json | { filters: [{column, op, value}], sorts: [{column, dir}], groupBy, hiddenColumns, columnOrder, cardFields, kanbanColumn, pinned } |
+| `config` | json | { filters: [{column, op, value}], sorts: [{column, dir}], groupBy, hiddenColumns, columnOrder, cardFields, kanbanColumn, pinned, dateColumn, endColumn, calendarMode, timelineZoom } |
 | `is_default` | bool |  |
 | `shared` | bool |  |
 | `created_by` | uuid, null | → `users`  |
