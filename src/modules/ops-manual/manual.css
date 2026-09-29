@@ -1,7 +1,7 @@
 .manual { display: grid; grid-template-columns: 16.25rem minmax(0, 1fr); gap: var(--sp-xl); }
 .manual-mobile { display: none; }
 .manual-side { position: sticky; top: var(--sp-xl); align-self: start; max-height: calc(100vh - var(--sp-3xl)); overflow: auto; display: flex; flex-direction: column; gap: var(--sp-lg); }
-.manual-side-brand { display: flex; align-items: center; gap: var(--sp-sm); color: var(--color-text); font-size: var(--fs-md); font-weight: var(--fw-medium); }
+.manual-side-brand { display: flex; align-items: center; min-height: var(--h-ctl); gap: var(--sp-sm); color: var(--color-text); font-size: var(--fs-md); font-weight: var(--fw-medium); }
 .manual-side-brand:hover { text-decoration: none; color: var(--color-primary); }
 .manual-h2 { font-size: var(--fs-lg); margin: 0; letter-spacing: -0.01em; }
 .manual-nav { display: flex; flex-direction: column; gap: var(--sp-2xs); }
@@ -258,3 +258,5 @@
   .manual-lms-cols > .manual-lms-col { order: 2; }
   .manual-lms-stack > :last-child { order: 3; }
 }
+/* 0037 · the pending-decisions badge on the cover is a link: a 44 px target around the pill, without growing the meta line */
+.manual-cover-meta > a { display: inline-flex; align-items: center; min-height: var(--h-ctl); margin-block: calc((var(--h-ctl) - 1.5em) / -2); }

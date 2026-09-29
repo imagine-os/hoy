@@ -7,7 +7,7 @@
 .site-head-in { display: flex; align-items: center; gap: var(--sp-xl); min-height: var(--sp-4xl); }
 .site-brand { display: inline-flex; align-items: center; min-height: var(--h-ctl); flex: 0 0 auto; }
 .site-nav { display: flex; gap: var(--sp-xl); flex: 1; }
-.site-nav a { display: inline-flex; align-items: center; min-height: var(--h-ctl); white-space: nowrap; color: var(--color-text); font-family: var(--font-heading); font-size: var(--fs-sm); font-weight: var(--fw-medium); padding: var(--sp-sm) 0; border-bottom: 2px solid transparent; }
+.site-nav a { display: inline-flex; align-items: center; min-height: var(--h-ctl); min-width: var(--h-ctl); white-space: nowrap; color: var(--color-text); font-family: var(--font-heading); font-size: var(--fs-sm); font-weight: var(--fw-medium); padding: var(--sp-sm) 0; border-bottom: 2px solid transparent; }
 .site-nav a:hover { text-decoration: none; color: var(--color-primary); }
 .site-nav a.is-active { border-bottom-color: var(--color-primary); color: var(--color-primary); }
 .site-actions { display: flex; align-items: center; gap: var(--sp-sm); margin-left: auto; min-width: 0; flex: 0 1 auto; }
@@ -145,3 +145,6 @@
   .site-form { grid-template-columns: 1fr; }
   .site-number strong { font-size: var(--fs-3xl); }
 }
+/* 0037 · footer links are 44 px targets (they were 21 px lines 8 px apart); the list drops its gap so the pitch is 44 */
+.site-foot-grid .stack-sm:has(> a) { gap: 0; }
+.site-foot-grid .stack-sm > a, .site-foot-bottom > a { display: inline-flex; align-items: center; align-self: flex-start; min-height: var(--h-ctl); min-width: var(--h-ctl); }

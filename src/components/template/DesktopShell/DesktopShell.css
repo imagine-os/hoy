@@ -45,14 +45,14 @@
 .deskshell-spec { display: inline-flex; align-items: center; gap: var(--sp-xs); padding: var(--sp-xs) var(--sp-sm); border: 0; border-radius: var(--r-full); background: var(--color-ink); color: var(--color-bg); font-family: var(--font-mono); font-size: var(--fs-2xs); flex: 0 0 auto; }
 .deskshell-specdot { width: 0.375rem; height: 0.375rem; border-radius: 50%; background: var(--color-accent); }
 .deskshell-rs { min-width: 0; }
-.deskshell-rs .input { max-width: 9.375rem; }
+.deskshell-rs .roleswitcher .input { max-width: 9.375rem; } /* 0037 · .roleswitcher.is-compact (180 px) out-ranked the old .deskshell-rs .input */
 
 /* content column: sticky top bar above the page */
 .deskshell-col { display: flex; flex-direction: column; min-width: 0; }
 .deskshell-main { min-width: 0; flex: 1 1 auto; padding: var(--sp-xl) var(--gutter) var(--sp-3xl); }
 .deskshell-scrim { display: none; }
 
-@media (max-width: 1200px) { .deskshell-rs .input { max-width: 7.5rem; } }
+@media (max-width: 1439.98px) { .deskshell-rs .roleswitcher .input { max-width: 7.5rem; } .deskshell-col .gsearch-kbd { display: none; } }
 @media (max-width: 1080px) { .deskshell-rs { display: none; } }
 @media (max-width: 720px) { .deskshell-devtoggle .toggle-label { display: none; } }
 @media (max-width: 900px) {

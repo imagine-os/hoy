@@ -1,4 +1,4 @@
-.btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-sm); border: 1px solid transparent; border-radius: var(--r-full); font-family: var(--font-heading); font-weight: var(--fw-medium); letter-spacing: -0.005em; line-height: 1; white-space: nowrap; transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast), box-shadow var(--dur-fast), transform var(--dur-fast); position: relative; }
+.btn { min-height: var(--h-ctl); padding: 0 var(--btn-pad-x); display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-sm); border: 1px solid transparent; border-radius: var(--r-full); font-family: var(--font-heading); font-weight: var(--fw-medium); letter-spacing: -0.005em; line-height: 1; white-space: nowrap; transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast), box-shadow var(--dur-fast), transform var(--dur-fast); position: relative; }
 .btn:active:not(:disabled) { transform: translateY(1px); }
 .btn:disabled { opacity: .5; cursor: not-allowed; }
 .btn-sm { padding: 0 var(--sp-md); font-size: var(--fs-sm); min-height: var(--h-ctl); }

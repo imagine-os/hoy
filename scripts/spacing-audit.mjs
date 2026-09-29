@@ -72,7 +72,7 @@ try {
         const r = el.getBoundingClientRect();
         const inline = el.tagName === 'A' && getComputedStyle(el).display === 'inline';
         return !inline && (r.width / ui < 43.5 || r.height / ui < 43.5);
-      }).map((el) => { const r = el.getBoundingClientRect(); return `${name(el)} ${px(r.width)}×${px(r.height)}`; });
+      }).map((el) => { const r = el.getBoundingClientRect(); return `${name(el)} "${(el.textContent ?? "").trim().slice(0, 28)}" ${px(r.width)}×${px(r.height)}`; });
       return { ui, gaps: all ? gaps : gaps.filter((g) => g.uneven || g.offGrid.length), cards: all ? cards : cards.filter((c) => !c.equal), small };
     }, ALL);
     console.log(`\n== ${ROUTE} @ ${width}px (ui ${report.ui})`);

@@ -7,7 +7,7 @@
 .topbar-title { font-size: var(--fs-lg); font-weight: var(--fw-semibold); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .topbar-back { display: inline-flex; align-items: center; justify-content: center; width: var(--h-ctl); height: var(--h-ctl); border-radius: 50%; font-size: var(--fs-xl); line-height: 1; color: var(--color-text); text-decoration: none; }
 .topbar-back:hover { background: var(--color-surface-2); text-decoration: none; }
-.topbar-brand { display: inline-flex; align-items: center; min-height: var(--h-ctl); }
+.topbar-brand { display: inline-flex; align-items: center; min-height: var(--h-ctl); flex: 0 0 auto; } /* 0037 · never squeezed by a crowded bar (K-03 at 1280 drew it 13 px wide) */
 .topbar-actions { display: flex; align-items: center; gap: var(--sp-sm); flex: 0 0 auto; }
 .topbar-left { flex: 0 1 auto; }
 .topbar.has-center .topbar-left { flex: 1 1 auto; min-width: 0; }
