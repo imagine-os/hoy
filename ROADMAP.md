@@ -7,7 +7,7 @@ dónde estamos, qué sigue y en qué orden (con dependencias explícitas y lo qu
 paralelo), qué significa "terminado" en cada fase, cómo trabajar en el repo y qué debe decidir el
 owner del estudio. Está escrito para que otra cuenta de Claude (o una persona) lo retome sin contexto.
 
-## A. Where we are (v0.13.3, 2026-09-29)
+## A. Where we are (v0.13.4, 2026-09-29)
 
 - **v0.13.3 — Operations manual content** (`docs/changelog/0032-manual-content.md`, prompt `docs/prompts/0032-manual-content.md`;
   Justin: "The operations manual is too techinical right now … identify things like policies that are ready for the business

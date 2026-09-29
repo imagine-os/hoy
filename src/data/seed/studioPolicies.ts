@@ -32,7 +32,7 @@ export const STUDIO_POLICIES: StudioPolicySeed[] = [
     value: { es: 'Recepción', en: 'Front desk' } },
   { key: 'guest_allowance_note', chapter: '11', editableBy: 'owner',
     label: { es: 'Invitados de un socio de Membresía', en: 'Guests of a Membership member' },
-    value: { es: 'Un socio de Membresía puede traer un invitado; el invitado se registra y ocupa un tapete real de la sala.', en: 'A Membership member may bring a guest; the guest is registered and takes a real mat in the room.' } },
+    value: { es: 'Provisional: un invitado por mes, ocupa un mat; pendiente de decisión del owner.', en: 'Provisional: one guest per month, takes a mat; pending the owner’s decision.' } },
   { key: 'quiet_hours_note', chapter: '13', editableBy: 'owner',
     label: { es: 'Horas silenciosas: qué significa', en: 'Quiet hours: what they mean' },
     value: { es: 'Entre esas horas no se envía nada que no sea urgente (una clase cancelada sí se avisa).', en: 'Nothing that is not urgent is sent between those hours (a cancelled class is still announced).' } },
