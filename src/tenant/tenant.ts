@@ -2,9 +2,14 @@
  * The ONLY place the studio's identity and physical facts are written.
  * Multi-tenant later: this becomes a row in `tenants` loaded at boot.
  */
+import { hoursSentence } from './hours';
 
 export type DayHours = { open: string; close: string } | null;
-/** Opening hours per weekday (0 = Sunday), `null` when closed. M-08a starts from this and may override it. */
+/**
+ * Opening hours per weekday (0 = Sunday), `null` when closed. These are the DEFAULTS only (0039): the live
+ * hours are the ones saved in M-08a (`tenants.settings.openingHours`) plus the dated exceptions in
+ * `hours_overrides` (M-08g), read everywhere through `useOpeningHours()` in src/modules/admin/settings.ts.
+ */
 export type OpeningHours = Record<'0' | '1' | '2' | '3' | '4' | '5' | '6', DayHours>;
 
 const openingHours: OpeningHours = {
@@ -14,27 +19,8 @@ const openingHours: OpeningHours = {
   '6': { open: '08:00', close: '13:00' },
 };
 
-const DAY_ABBR = { es: ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'], en: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] };
-const clock = (hhmm: string) => hhmm.replace(/^0/, '');
-
-/**
- * The opening hours as one sentence — "Lun–Vie 6:00–20:00 · Sáb 8:00–13:00 · Dom cerrado" — grouping
- * consecutive days with the same hours, Monday first. Footers, the manual and M-08a all quote it.
- */
-export function hoursSentence(hours: OpeningHours, lang: 'es' | 'en'): string {
-  const order = [1, 2, 3, 4, 5, 6, 0];
-  const runs: { from: number; to: number; v: DayHours }[] = [];
-  for (const d of order) {
-    const v = hours[String(d) as keyof OpeningHours];
-    const last = runs[runs.length - 1];
-    if (last && JSON.stringify(last.v) === JSON.stringify(v)) last.to = d; else runs.push({ from: d, to: d, v });
-  }
-  const closed = lang === 'es' ? 'cerrado' : 'closed';
-  return runs.map((r) => {
-    const days = r.from === r.to ? DAY_ABBR[lang][r.from] : `${DAY_ABBR[lang][r.from]}–${DAY_ABBR[lang][r.to]}`;
-    return `${days} ${r.v ? `${clock(r.v.open)}–${clock(r.v.close)}` : closed}`;
-  }).join(' · ');
-}
+/** 0039: moved to ./hours.ts with the other pure hours readers; re-exported so existing imports keep working. */
+export { hoursSentence };
 
 export const tenant = {
   id: 'ten_hoy',
@@ -91,7 +77,10 @@ export const tenant = {
   /** Studio capacity — the business rule waitlists, capacity meters and the checkout race cite. */
   studio: { mats: 16, matRows: 2, classesPerDay: 4, perPersonPerDay: 1, rooms: 1 },
   openingHours,
-  /** The same hours as a sentence per language (derived, never typed twice). */
+  /**
+   * The same default hours as a sentence per language (derived, never typed twice). Fallback constant only:
+   * screens quote `useOpeningHours().sentence`, which follows what the owner saves in M-08a.
+   */
   hours: { es: hoursSentence(openingHours, 'es'), en: hoursSentence(openingHours, 'en') },
   brand: {
     wordmark: { blue: './brand/hoy-blue.png', cream: './brand/hoy-cream.png', yellow: './brand/hoy-yellow.png' },

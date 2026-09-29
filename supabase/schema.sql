@@ -45,6 +45,42 @@ alter table public.tenants enable row level security;
 create policy "tenants: tenant read" on public.tenants for select using (tenant_id = public.current_tenant_id());
 create policy "tenants: staff write" on public.tenants for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
 
+-- core · Dated exceptions to the M-08a weekly hours: holidays (closed), special days (other hours) and events. They win over the week for the dates they cover (inclusive range); M-08g edits them, the site, the app and Google Business Profile read them.
+-- access:
+--   · everyone (anon included): read — the website and the app print them
+--   · admin/super_admin/coordinator: insert, update, delete (M-08g, permission hours.write)
+--   · google_synced_at is written by the server that pushes to Google Business Profile, never by the browser
+create table if not exists public.hours_overrides (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  start_date date not null,
+  -- inclusive; equal to start_date for one day
+  end_date date not null,
+  closed boolean not null default false,
+  -- empty = the weekly opening time
+  open time,
+  -- empty = the weekly closing time
+  close time,
+  -- {es,en}
+  label jsonb not null,
+  kind text not null check (kind in ('holiday', 'special', 'event')),
+  -- colombia = imported from the Ley Emiliani calendar (src/tenant/holidays.co.ts)
+  source text not null check (source in ('manual', 'colombia')),
+  note text,
+  -- last successful push to Google Business Profile (server-side, 0039: no server yet)
+  google_synced_at timestamptz,
+  created_by text
+);
+create index if not exists hours_overrides_tenant_idx on public.hours_overrides(tenant_id);
+create trigger hours_overrides_touch before update on public.hours_overrides for each row execute function public.touch_updated_at();
+alter table public.hours_overrides enable row level security;
+create policy "hours_overrides: tenant read" on public.hours_overrides for select using (tenant_id = public.current_tenant_id());
+create policy "hours_overrides: staff write" on public.hours_overrides for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
 -- core · Blocks and flows Admin → Features turns on or off per page.
 create table if not exists public.feature_flags (
   -- Primary key
@@ -1425,7 +1461,7 @@ alter table public.studio_policies enable row level security;
 create policy "studio_policies: tenant read" on public.studio_policies for select using (tenant_id = public.current_tenant_id());
 create policy "studio_policies: staff write" on public.studio_policies for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
 
--- system · One row per external system (Wompi, WhatsApp, email, DIAN, maps, Supabase): status, non-secret fields ready to fill and notes for the dev (M-10). Keys live server-side, never here.
+-- system · One row per external system (Wompi, WhatsApp, email, DIAN, maps, Supabase, Google Business Profile): status, non-secret fields ready to fill and notes for the dev (M-10). Keys live server-side, never here.
 -- access:
 --   · super_admin/admin: full control (M-10)
 --   · finance: read (M-09a shows the Wompi status)
@@ -1437,7 +1473,7 @@ create table if not exists public.integrations (
   tenant_id uuid not null references public.tenants(id),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  key text not null check (key in ('wompi', 'whatsapp', 'email', 'dian', 'maps', 'supabase')),
+  key text not null check (key in ('wompi', 'whatsapp', 'email', 'dian', 'maps', 'supabase', 'google_business')),
   -- simulated = seam only · configured = ids filled, dev has not wired it · connected = live
   status text not null check (status in ('simulated', 'configured', 'connected')),
   -- non-secret fields per integration (merchant id, sender number, provider name, project URL…)
@@ -1452,6 +1488,43 @@ create trigger integrations_touch before update on public.integrations for each 
 alter table public.integrations enable row level security;
 create policy "integrations: tenant read" on public.integrations for select using (tenant_id = public.current_tenant_id());
 create policy "integrations: staff write" on public.integrations for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+
+-- system · Keys HoyOS issues to developers to call its API (D-07). The SHA-256 hash and a visible prefix are stored; the full key is shown once. Verification is the server’s job (it does not exist yet).
+-- access:
+--   · super_admin/developer: select, insert, update (D-07, permission api_keys.write)
+--   · admin: select without key_hash (D-07 read-only, api_keys.read)
+--   · nobody deletes: revoking sets revoked_at so the audit trail keeps the row
+--   · the raw key is never stored — a raw key in this table is a bug
+create table if not exists public.api_keys (
+  -- Primary key
+  id uuid primary key default gen_random_uuid(),
+  -- Owning studio (multi-tenant)
+  tenant_id uuid not null references public.tenants(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  name text not null,
+  -- first 13 characters, e.g. hoy_live_ab12 — what the list shows
+  prefix text not null,
+  -- SHA-256 hex of the full key
+  key_hash text not null,
+  -- string[] from API_KEY_SCOPES (classes.read, bookings.write, hours.read…)
+  scopes jsonb not null,
+  environment text not null check (environment in ('live', 'test')),
+  created_by uuid references public.users(id) on delete set null,
+  -- written by the server on each verified request
+  last_used_at timestamptz,
+  expires_at timestamptz,
+  revoked_at timestamptz,
+  -- set on the new key when it rotates an old one
+  replaces_id uuid references public.api_keys(id) on delete set null
+);
+create index if not exists api_keys_tenant_idx on public.api_keys(tenant_id);
+create index if not exists api_keys_created_by_idx on public.api_keys(created_by);
+create index if not exists api_keys_replaces_id_idx on public.api_keys(replaces_id);
+create trigger api_keys_touch before update on public.api_keys for each row execute function public.touch_updated_at();
+alter table public.api_keys enable row level security;
+create policy "api_keys: tenant read" on public.api_keys for select using (tenant_id = public.current_tenant_id());
+create policy "api_keys: staff write" on public.api_keys for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
 
 -- system · Who did what, on which entity, when (M-07).
 create table if not exists public.audit_log (

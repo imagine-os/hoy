@@ -11,8 +11,9 @@ const KEY = 'hoyos.db.v1';
  * Bump when the seed or the schema changes shape (new columns an old localStorage copy would lack):
  * a stored db with another version is thrown away and reseeded, whatever day it was seeded on.
  *   1 · up to 0.7.1 · 2 · 0.8.0 message_log becomes the unified conversation record (direction, source, body, read_at…)
+ *   4 · 0.15.0 hours_overrides and api_keys tables, the google_business integration row, settings.openingHours seeded (0039)
  */
-export const SEED_VERSION = 3;
+export const SEED_VERSION = 4;
 type Db = Record<string, BaseRow[]>;
 interface Stored { seededOn: string; version?: number; db: Db }
 
