@@ -12,14 +12,18 @@ import { MS } from '../../i18n/format';
  * through the data layer; defaults come from src/tenant/tenant.ts so nothing is hardcoded twice.
  */
 export interface OpeningHours { open: string; close: string }
+/** The contact facts that carry their own confirmed / pending flag (0036). */
+export type ContactField = 'whatsapp' | 'address' | 'email' | 'instagram';
+export const CONTACT_FIELDS: readonly ContactField[] = ['whatsapp', 'address', 'email', 'instagram'];
 export interface StudioSettings {
   studio: { mats: number; classesPerDay: number; perPersonPerDay: number; rooms: number };
   /**
-   * M-08a — the studio's contact identity (0018). Every field defaults to src/tenant/tenant.ts; `confirmed`
-   * is the owner saying "these are real": until then every consumer (site footer, W-06, legal tokens,
-   * email footers, the manual) labels the values as pending. `useContact()` is the one reader.
+   * M-08a — the studio's contact identity (0018). Every field defaults to src/tenant/tenant.ts. `confirmedFields`
+   * (0036) is the owner saying "this one is real", per field: until a field is confirmed every consumer (site
+   * footer, W-06, legal tokens, email footers, the customer app, the manual) labels it as pending. `confirmed`
+   * is the pre-0036 all-at-once switch, kept so a stored `true` still confirms everything. `useContact()` is the one reader.
    */
-  profile: { nit: string; address: string; city: string; whatsapp: string; email: string; instagram: string; instagramUrl: string; mapLat: number; mapLng: number; mapLabel: string; mapLink: string; confirmed: boolean };
+  profile: { nit: string; address: string; city: string; whatsapp: string; email: string; instagram: string; instagramUrl: string; mapLat: number; mapLng: number; mapLabel: string; mapLink: string; confirmed: boolean; confirmedFields: Record<ContactField, boolean> };
   /** 0 = Sunday … 6 = Saturday; null = closed. */
   openingHours: Record<string, OpeningHours | null>;
   /** Read by the customer app through usePolicy() → src/modules/customer/policy.ts (cancel window, claim window, hold, pause cap, charge notice, lockout). */
@@ -52,7 +56,7 @@ export interface StudioSettings {
 
 export const DEFAULT_SETTINGS: StudioSettings = {
   studio: { ...tenant.studio },
-  profile: { nit: '', address: tenant.contact.address, city: tenant.city, whatsapp: tenant.contact.whatsapp, email: tenant.contact.email, instagram: tenant.social.instagram, instagramUrl: tenant.social.instagramUrl, mapLat: tenant.location.lat, mapLng: tenant.location.lng, mapLabel: '', mapLink: '', confirmed: false },
+  profile: { nit: '', address: tenant.contact.address, city: tenant.city, whatsapp: tenant.contact.whatsapp, email: tenant.contact.email, instagram: tenant.social.instagram, instagramUrl: tenant.social.instagramUrl, mapLat: tenant.location.lat, mapLng: tenant.location.lng, mapLabel: '', mapLink: '', confirmed: false, confirmedFields: { ...tenant.contact.confirmed } },
   openingHours: { ...tenant.openingHours },
   policies: { cancellationHours: 2, waitlistClaimMin: 30, lateGraceMin: 15, noShowFee: 0, pauseDaysPerYear: 30, maxPausesPerYear: 2, paymentHoldMin: 10, chargeNoticeDays: 3, lockoutAttempts: 5, lockoutMinutes: 15 },
   quietHours: { from: '21:00', to: '07:00' },
@@ -73,7 +77,7 @@ function mergeSettings(stored: Partial<StudioSettings> | null | undefined): Stud
   const s = stored ?? {};
   return {
     studio: { ...DEFAULT_SETTINGS.studio, ...(s.studio ?? {}) },
-    profile: { ...DEFAULT_SETTINGS.profile, ...(s.profile ?? {}) },
+    profile: { ...DEFAULT_SETTINGS.profile, ...(s.profile ?? {}), confirmedFields: { ...DEFAULT_SETTINGS.profile.confirmedFields, ...(s.profile?.confirmedFields ?? {}) } },
     openingHours: { ...DEFAULT_SETTINGS.openingHours, ...(s.openingHours ?? {}) },
     policies: { ...DEFAULT_SETTINGS.policies, ...(s.policies ?? {}) },
     quietHours: { ...DEFAULT_SETTINGS.quietHours, ...(s.quietHours ?? {}) },
@@ -146,7 +150,9 @@ export function inQuietHours(at: Date, q: StudioSettings['quietHours']) {
 export interface StudioContact {
   address: string; city: string; whatsapp: string; email: string; instagram: string; instagramUrl: string;
   location: { lat: number; lng: number; label: { es: string; en: string }; link: string | null };
-  /** True until the owner ticks "confirmed" in M-08a — consumers label the values as pending. */
+  /** Per field (0036): true until the owner confirms it in M-08a — consumers label that value as pending. */
+  pendingFields: Record<ContactField, boolean>;
+  /** True while any field is still pending (summary badges). */
   pending: boolean;
   pendingLabel: { es: string; en: string };
 }
@@ -156,6 +162,7 @@ export function contactOf(settings: StudioSettings): StudioContact {
   const p = settings.profile;
   const instagram = p.instagram || tenant.social.instagram;
   const label = p.mapLabel ? { es: p.mapLabel, en: p.mapLabel } : tenant.location.label;
+  const pendingFields = Object.fromEntries(CONTACT_FIELDS.map((f) => [f, !(p.confirmed || p.confirmedFields?.[f])])) as Record<ContactField, boolean>;
   return {
     address: p.address || tenant.contact.address,
     city: p.city || tenant.city,
@@ -163,10 +170,16 @@ export function contactOf(settings: StudioSettings): StudioContact {
     email: p.email || tenant.contact.email,
     instagram,
     instagramUrl: p.instagramUrl || (instagram ? `https://www.instagram.com/${instagram.replace('@', '')}` : tenant.social.instagramUrl),
-    location: { lat: p.mapLat || tenant.location.lat, lng: p.mapLng || tenant.location.lng, label, link: p.mapLink || null },
-    pending: !p.confirmed,
+    location: { lat: p.mapLat || tenant.location.lat, lng: p.mapLng || tenant.location.lng, label, link: p.mapLink || tenant.location.link || null },
+    pendingFields,
+    pending: CONTACT_FIELDS.some((f) => pendingFields[f]),
     pendingLabel: tenant.contact.pendingLabel,
   };
+}
+
+/** " (pendiente)" / " (pending)" after a value whose field is not confirmed yet; empty once it is. */
+export function pendingSuffix(contact: StudioContact, field: ContactField, lang: 'es' | 'en'): string {
+  return contact.pendingFields[field] ? ` (${contact.pendingLabel[lang]})` : '';
 }
 
 /** The studio's contact identity, live: M-08a first, tenant.ts as the default. */

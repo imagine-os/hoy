@@ -2,7 +2,7 @@ import { Fragment, useState, type ReactNode } from 'react';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useLayout } from '../../../layout/useLayout';
 import { tenant } from '../../../tenant/tenant';
-import { useContact } from '../../admin/settings';
+import { useContact, type ContactField } from '../../admin/settings';
 import { Card } from '../../../components/molecule/Card/Card';
 import { Button } from '../../../components/atom/Button/Button';
 import { Field } from '../../../components/molecule/Field/Field';
@@ -25,22 +25,22 @@ export function ContactPage() {
   };
 
   const cards = [
-    [t('site.contact.whatsapp'), contact.whatsapp, waHref(), true],
-    [t('site.contact.email'), contact.email, `mailto:${contact.email}`, true],
-    [t('site.contact.instagram'), contact.instagram, contact.instagramUrl, true],
-    [t('site.contact.address'), `${contact.address} · ${contact.city}`, contact.location.link ?? undefined, true],
-    [t('site.contact.hours'), bi(tenant.hours), undefined, false],
-  ] as const;
+    [t('site.contact.whatsapp'), contact.whatsapp, waHref(), 'whatsapp'],
+    [t('site.contact.email'), contact.email, `mailto:${contact.email}`, 'email'],
+    [t('site.contact.instagram'), contact.instagram, contact.instagramUrl, 'instagram'],
+    [t('site.contact.address'), `${contact.address} · ${contact.city}`, contact.location.link ?? undefined, 'address'],
+    [t('site.contact.hours'), bi(tenant.hours), undefined, null],
+  ] as const satisfies readonly (readonly [string, string, string | undefined, ContactField | null])[];
 
   const SECTIONS: Record<string, () => ReactNode> = {
     PageHead: () => <PageHead title={t('site.contact.title')} body={t('site.contact.body')} />,
     ContactCards: () => (
       <section className="container site-section" style={{ paddingTop: 0 }}>
         <div className="grid grid-3">
-          {cards.map(([label, value, href, isPending]) => (
+          {cards.map(([label, value, href, field]) => (
             <Card key={label} eyebrow={label}>
               {href ? <a href={href} target="_blank" rel="noreferrer">{value}</a> : <span>{value}</span>}
-              {isPending && contact.pending && <p className="xs muted" style={{ marginTop: 6 }}>{t('site.contact.pending')}</p>}
+              {field && contact.pendingFields[field] && <p className="xs muted" style={{ marginTop: 6 }}>{t('site.contact.pending')}</p>}
             </Card>
           ))}
         </div>

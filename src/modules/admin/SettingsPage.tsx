@@ -20,7 +20,7 @@ import { Notice } from '../../components/molecule/Notice/Notice';
 import { EmptyState } from '../../components/molecule/EmptyState/EmptyState';
 import { Wordmark } from '../../components/atom/Wordmark/Wordmark';
 import { useAudit } from '../staff/audit';
-import { contactOf, useSettings, type SettingsSection, type StudioSettings } from './settings';
+import { contactOf, useSettings, type SettingsSection, type StudioSettings, CONTACT_FIELDS } from './settings';
 import './admin.css';
 import { Icon, type IconName } from '../../components/atom/Icon/Icon';
 
@@ -109,7 +109,7 @@ export function SettingsPage({ group = 'general' }: { group?: SettingsGroup }) {
                 <>
                   <div className="row-between wrap">
                     <p className="small muted" style={{ maxWidth: '60ch' }}>{t('admin.settings.profile.note')}</p>
-                    <Badge tone={d.confirmed ? 'success' : 'warn'}>{d.confirmed ? t('admin.settings.profile.confirmed') : t('admin.settings.profile.pending')}</Badge>
+                    {(() => { const open = CONTACT_FIELDS.filter((f) => !(d.confirmed || d.confirmedFields[f])).length; return <Badge tone={open ? 'warn' : 'success'}>{open ? t('admin.settings.profile.pendingN', { n: open }) : t('admin.settings.profile.confirmed')}</Badge>; })()}
                   </div>
                   <div className="grid grid-2"><Field label={t('admin.settings.f.name')} hint={t('admin.settings.f.name.hint')}>{(id) => <Input id={id} value={tenant.name} disabled />}</Field><Field label={t('admin.settings.f.legal')}>{(id) => <Input id={id} value={tenant.legalName} disabled />}</Field></div>
                   <div className="grid grid-2"><Field label={t('admin.settings.f.address')}>{(id) => <Input id={id} value={d.address} disabled={!canWrite} onChange={(e) => set({ ...d, address: e.target.value })} />}</Field><Field label={t('admin.settings.f.city')}>{(id) => <Input id={id} value={d.city} disabled={!canWrite} placeholder={tenant.city} onChange={(e) => set({ ...d, city: e.target.value })} />}</Field></div>
@@ -121,7 +121,12 @@ export function SettingsPage({ group = 'general' }: { group?: SettingsGroup }) {
                     <Field label={t('admin.settings.f.mapLabel')} hint={t('admin.settings.f.mapLabel.hint')}>{(id) => <Input id={id} value={d.mapLabel} disabled={!canWrite} placeholder={contact.location.label.es} onChange={(e) => set({ ...d, mapLabel: e.target.value })} />}</Field>
                   </div>
                   <div className="grid grid-2"><Field label={t('admin.settings.f.mapLink')} hint={t('admin.settings.f.mapLink.hint')}>{(id) => <Input id={id} value={d.mapLink} disabled={!canWrite} placeholder="https://maps.app.goo.gl/…" onChange={(e) => set({ ...d, mapLink: e.target.value })} />}</Field><Field label="NIT" hint={t('admin.settings.f.nit.hint')}>{(id) => <Input id={id} value={d.nit} disabled={!canWrite} onChange={(e) => set({ ...d, nit: e.target.value })} placeholder="901.xxx.xxx-1" />}</Field></div>
-                  <Toggle checked={d.confirmed} disabled={!canWrite} label={t('admin.settings.f.confirmed')} onChange={(on) => set({ ...d, confirmed: on })} />
+                  <fieldset className="stack-sm" style={{ border: 0, padding: 0, margin: 0 }}>
+                    <legend className="eyebrow">{t('admin.settings.f.confirmed')}</legend>
+                    <div className="grid grid-2">
+                      {CONTACT_FIELDS.map((f) => <Toggle key={f} size="sm" checked={d.confirmed || d.confirmedFields[f]} disabled={!canWrite} label={t(`admin.settings.f.confirmed.${f}`)} onChange={(on) => set({ ...d, confirmed: false, confirmedFields: { ...Object.fromEntries(CONTACT_FIELDS.map((k) => [k, d.confirmed || d.confirmedFields[k]])) as typeof d.confirmedFields, [f]: on } })} />)}
+                    </div>
+                  </fieldset>
                   <p className="xs muted">{t('admin.settings.f.confirmed.hint')}</p>
                 </>
               ))}
