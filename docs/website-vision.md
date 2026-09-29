@@ -15,7 +15,7 @@ prioritised list of the next moves — so the owner can pick, not guess.
 
 | Code | Route | What it is now |
 | --- | --- | --- |
-| W-01 | `/#/site` | Landing page rebuilt around the manifesto: the cover line over a 21:9 video slot, four movements, the five classes, today's classes, the five-family value model with commercial roles, a slate-blue philosophy panel with pale-yellow headings, teachers, real reviews from the `reviews` table, and a "first step" band that prints the live trial price. Nine sections, reorderable at `/#/dev/layout/W-01`. |
+| W-01 | `/#/site` | Landing page rebuilt around the manifesto: the cover line over a 21:9 video slot, the five classes, today's classes, the five-family value model with commercial roles, a slate-blue philosophy panel with pale-yellow headings, teachers, real reviews from the `reviews` table, and a "first step" band that prints the live trial price. Eight sections since 0034 (the "¿Cómo quieres sentirte hoy?" movements picker was removed), reorderable at `/#/dev/layout/W-01`. |
 | W-02 | `/#/site/about` | The full "Sobre HOY" (five paragraphs), the four values as movement chips, a 4:3 founders/interior photo slot, "Nuestra filosofía" on the dark brand panel, and the brand board. |
 | W-07 | `/#/site/classes` | **New.** The "Nuestras clases" introduction plus one rich alternating block per class, each with a 16:9 photo slot, movement chip and live duration from `modalities`. |
 | W-08 | `/#/site/classes/:slug` | **New.** One class in full: the essay, the modality facts (duration, intensity, heated, movement), a derived "what to bring" list, links to the other classes and a CTA into the filtered schedule. |
