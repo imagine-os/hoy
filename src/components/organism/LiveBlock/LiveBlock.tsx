@@ -24,6 +24,12 @@ const familyLine = (fam: PlanFamily): Bi => ({
   en: `${FAMILY_ROLE[fam].en} — ${FAMILY_RATIONALE[fam].subtitle.en}`,
 });
 
+/** Schema descriptions are developer notes: show them as plain text, with no literal braces (`{{policy.*}}` → policy.*, `{es,en}` → es/en). */
+export const plainDescription = (text: string) => text
+  .replace(/\{\{\s*([^}]*?)\s*\}\}/g, '$1')
+  .replace(/\{\s*es\s*,\s*en\s*\}/g, 'es/en')
+  .replace(/[{}]/g, '');
+
 const SURFACES: Surface[] = ['public', 'customer', 'teacher', 'staff', 'admin', 'dev', 'docs'];
 
 /** Snake_case aliases a chapter may write for a policy field, mapped to the M-08 key. */
@@ -249,7 +255,7 @@ function TableBlock({ name }: { name?: string }) {
             <tr key={c.name}>
               <td><code>{c.name}</code></td>
               <td className="muted">{c.type}{c.nullable ? ' ?' : ''}</td>
-              <td className="muted">{[c.references ? `→ ${c.references}` : '', c.enum ? c.enum.join(' | ') : '', c.description ?? ''].filter(Boolean).join(' · ')}</td>
+              <td className="muted">{[c.references ? `→ ${c.references}` : '', c.enum ? c.enum.join(' | ') : '', plainDescription(c.description ?? '')].filter(Boolean).join(' · ')}</td>
             </tr>
           ))}
         </tbody>
