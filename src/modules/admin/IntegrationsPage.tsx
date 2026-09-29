@@ -50,7 +50,7 @@ export function IntegrationsPage() {
     Order: () => (
       <Card tone="muted" title={t('admin.integrations.order.title')} eyebrow="ROADMAP §B">
         <p className="small">{t('admin.integrations.order.body')}</p>
-        <p className="xs muted" style={{ marginTop: 8 }}>{t('admin.integrations.order.where')} <Link to="/admin/settings/payments">M-08c</Link> · <Link to="/admin/settings/communications">M-08d</Link> · <Link to="/admin/settings/content">M-08f</Link> · <Link to="/admin/activity">M-07</Link></p>
+        <p className="xs muted" style={{ marginTop: 'var(--sp-sm)' }}>{t('admin.integrations.order.where')} <Link to="/admin/settings/payments">M-08c</Link> · <Link to="/admin/settings/communications">M-08d</Link> · <Link to="/admin/settings/content">M-08f</Link> · <Link to="/admin/activity">M-07</Link></p>
       </Card>
     ),
   };

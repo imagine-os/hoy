@@ -184,7 +184,7 @@ export function SettingsPage({ group = 'general' }: { group?: SettingsGroup }) {
                 </>
               ))}
               <Card icon="flag" title={t('admin.settings.flags.title')} eyebrow={t('admin.settings.flags.eyebrow')}>
-                <p className="muted small" style={{ marginBottom: 16 }}>{canFlags ? t('admin.settings.flags.body') : t('admin.settings.flags.readonly')}</p>
+                <p className="muted small" style={{ marginBottom: 'var(--sp-lg)' }}>{canFlags ? t('admin.settings.flags.body') : t('admin.settings.flags.readonly')}</p>
                 <div className="grid grid-3">
                   {[...new Set(flags.map((f) => f.page_code ?? '—'))].map((code) => (
                     <div key={code} className="stack-sm">
@@ -193,7 +193,7 @@ export function SettingsPage({ group = 'general' }: { group?: SettingsGroup }) {
                     </div>
                   ))}
                 </div>
-                <p className="xs muted" style={{ marginTop: 16 }}>{t('admin.settings.flags.count', { n: flags.length, on: flags.filter((f) => f.enabled).length })} <Link to="/admin/activity">{t('core.nav.activity')}</Link></p>
+                <p className="xs muted" style={{ marginTop: 'var(--sp-lg)' }}>{t('admin.settings.flags.count', { n: flags.length, on: flags.filter((f) => f.enabled).length })} <Link to="/admin/activity">{t('core.nav.activity')}</Link></p>
               </Card>
             </>
           )}
@@ -244,7 +244,7 @@ export function SettingsPage({ group = 'general' }: { group?: SettingsGroup }) {
                   <Toggle checked={d.withholding} disabled={!canWrite} label={t('admin.settings.f.withholding')} onChange={(on) => set({ ...d, withholding: on })} />
                   <p className="xs muted">{d.cadence === 'biweekly' ? t('admin.settings.payroll.note.biweekly') : t('admin.settings.payroll.note.monthly')} <Link to="/admin/finance/payouts">M-09a</Link> · <Link to="/teach/payroll">S-03</Link></p>
                 </>
-                    <div className="eyebrow" style={{ marginTop: 8 }}>{t('admin.settings.sec.rateCard')}</div>
+                    <div className="eyebrow" style={{ marginTop: 'var(--sp-sm)' }}>{t('admin.settings.sec.rateCard')}</div>
                     <p className="small muted">{t('admin.settings.rate.hint')}</p>
                     <div className="grid grid-2">
                       <div className="stack-sm">
@@ -311,7 +311,7 @@ export function SettingsPage({ group = 'general' }: { group?: SettingsGroup }) {
                 </>
               ))}
               <Card icon="legal" title={t('admin.settings.sec.legal')} eyebrow={t('admin.settings.legal.eyebrow')}>
-                <p className="small muted" style={{ marginBottom: 12 }}>{t('admin.settings.legal.body', { n: legalDocs.length, on: legalDocs.filter((x) => x.status === 'published').length })}</p>
+                <p className="small muted" style={{ marginBottom: 'var(--sp-md)' }}>{t('admin.settings.legal.body', { n: legalDocs.length, on: legalDocs.filter((x) => x.status === 'published').length })}</p>
                 <div className="stack-sm">
                   {legalDocs.map((d) => (
                     <div key={d.id} className="row-between wrap settings-int">
@@ -320,7 +320,7 @@ export function SettingsPage({ group = 'general' }: { group?: SettingsGroup }) {
                     </div>
                   ))}
                 </div>
-                <p className="xs muted" style={{ marginTop: 12 }}>{t('admin.settings.legal.note')}</p>
+                <p className="xs muted" style={{ marginTop: 'var(--sp-md)' }}>{t('admin.settings.legal.note')}</p>
               </Card>
             </>
           )}

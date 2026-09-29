@@ -70,7 +70,7 @@ export function DeleteAccountPage() {
             </ul>
           </Card>
         </div>
-        <p className="small muted" style={{ marginTop: 16 }}>{t('site.delete.time', { email })} · <Link to="/site/legal/privacy">{t('site.legal.privacy')}</Link></p>
+        <p className="small muted" style={{ marginTop: 'var(--sp-lg)' }}>{t('site.delete.time', { email })} · <Link to="/site/legal/privacy">{t('site.legal.privacy')}</Link></p>
       </section>
     ),
     Form: () => (
@@ -81,7 +81,7 @@ export function DeleteAccountPage() {
           </Notice>
         ) : (
           <Card eyebrow={t('site.delete.form')}>
-            <p className="small muted" style={{ marginBottom: 16 }}>{t('site.delete.form.body')}</p>
+            <p className="small muted" style={{ marginBottom: 'var(--sp-lg)' }}>{t('site.delete.form.body')}</p>
             <div className="site-form">
               <Field label={t('customer.form.email')} error={errors.email}>
                 {(id) => <Input id={id} type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} autoComplete="email" />}

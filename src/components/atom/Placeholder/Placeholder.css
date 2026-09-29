@@ -4,6 +4,6 @@
 .placeholder > * { opacity: .72; }
 .placeholder.is-dev { outline: 1.5px dashed var(--color-warn); outline-offset: 3px; }
 .placeholder.is-dev::after {
-  content: '·'; position: absolute; top: -6px; right: -6px; width: 14px; height: 14px; border-radius: 50%;
+  content: '·'; position: absolute; top: -6px; right: -6px; width: var(--icon-xs); height: var(--icon-xs); border-radius: 50%;
   background: var(--color-warn); color: var(--color-bg); font-size: var(--fs-2xs); line-height: 12px; text-align: center; pointer-events: none;
 }

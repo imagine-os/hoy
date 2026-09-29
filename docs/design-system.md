@@ -28,9 +28,11 @@ artboard. Nothing invents a value off this file.
 - **Type**: Inter (headings, `--ls-tight: -0.02em`, colour `--color-ink`) + DM Sans (body) from Google Fonts with
   metric-adjusted `Inter Fallback` / `DM Sans Fallback` `@font-face` (see `global.css`). Scale `--fs-2xs … --fs-4xl`;
   eyebrows are `--fs-2xs` uppercase `--ls-eyebrow .14em` in `--color-text-faint`.
-- **Spacing**: 4-pt grid `--sp-1 … --sp-20`.
-- **Radii**: `--r-xs 4` (code tags) · `--r-sm 8` · `--r-ctl 11` (controls, date cells) · `--r-md 16` (cards) ·
-  `--r-frame 18` (desktop frame) · `--r-lg 24` · `--r-xl 32` · `--r-phone 34` (DeviceFrame phone bezel) · `--r-full`.
+- **Spacing**: one 4 px scale in rem `--sp-0 · --sp-px · --sp-2xs … --sp-5xl` plus the semantic layer — see
+  "Spacing and sizing" below (0037). The numeric `--sp-1 … --sp-16` remain as aliases for one pass.
+- **Radii** (rem since 0037, so corners scale with `--ui`): `--r-2xs 2` · `--r-xs 4` (code tags) · `--r-sm 8` ·
+  `--r-ctl 12` (controls, date cells; was 11) · `--r-md 16` (cards) · `--r-lg 24` · `--r-xl 32` · `--r-full`; the
+  canvas device constants `--r-frame 18` (desktop frame) and `--r-phone 34` (DeviceFrame bezel) stay off the scale.
 - **Motion**: `--dur-fast/base/slow`, `--dur-spin 1.1s`, `--dur-breath 7s`; the breathe keyframes are the canvas's
   (`scale .82 → 1.08`, `opacity .5 → .95`).
 
@@ -136,3 +138,56 @@ groups: navigation, actions, settings, things and status, hub tools.
 - **Labels stay**: every icon is `aria-hidden` next to a visible label; an icon-only control (month arrows, remove
   card, inbox back) carries `aria-label` + `title`. Targets stay at `--h-ctl` (44 px) from the control, not the glyph.
 - **Themes**: `currentColor` everywhere, so light, dark and wireframe inherit the container's contrast.
+
+## Spacing and sizing (0037)
+Justin's ask: every gap and size "picture perfect", with Client-First's good ideas and none of its confusion. The
+answer is tokens plus a lint (D-0012), explained for people in `.claude/skills/ui-spacing/SKILL.md`.
+
+**Scale** (base 4 px, rem so the `--ui` band scales it): `--sp-0` 0 · `--sp-px` 1 · `--sp-2xs` 2 · `--sp-xs` 4 ·
+`--sp-sm` 8 · `--sp-md` 12 · `--sp-lg` 16 · `--sp-xl` 24 · `--sp-2xl` 32 · `--sp-3xl` 48 · `--sp-4xl` 64 ·
+`--sp-5xl` 96. Old → new: `sp-1` xs · `sp-2` sm · `sp-3` md · `sp-4` lg · `sp-6` xl · `sp-8` 2xl · `sp-12` 3xl ·
+`sp-16` 4xl (aliases kept); the off-grid `sp-5` (20), `sp-10` (40) and `sp-20` (80) are retired.
+
+**Semantic layer** (every value is a scale step; responsive steps at viewport 768 and 1280):
+
+| Token | Phone | ≥ 768 | ≥ 1280 | For |
+| --- | --- | --- | --- | --- |
+| `--gap-inline` | 8 | | | icon ↔ label, chip contents |
+| `--gap-control` | 12 | | | between controls (`.row`, `.row-between`) |
+| `--stack-tight` | 4 | | | eyebrow → heading, heading → lead |
+| `--stack` | 8 | | | lead → body, label → control (`.stack-sm`) |
+| `--stack-loose` | 16 | | | fields, paragraphs, blocks in a `.stack` |
+| `--block` | 24 | | | blocks in a card, page or section; page head → first block |
+| `--card-pad` | 16 | 24 | | `Card padding="md"`, equal on all sides |
+| `--card-pad-lg` | 24 | 32 | | `Card padding="lg"`, plan and feature cards |
+| `--section` | 48 | 64 | | page sections (website `.site-section`) |
+| `--section-hero` | 64 | 96 | | website hero and full-bleed bands |
+| `--gutter` | 16 | 24 | 32 | `.container`, AppShell / DesktopShell side padding |
+| `--grid-gap` | 16 | 24 | | `.grid`, card grids |
+| `--row-pad` | 12 × 16 | | | `ListRow`, `RosterRow`, choice rows (min-height `--h-ctl`) |
+| `--btn-pad-x` | 16 | | | `Button` md (sm 12, lg 24; vertical 0, height `--h-ctl` / `--h-ctl-lg` 48) |
+| `--measure` | 65ch | | | `.prose` line length |
+
+**Rules**
+1. Module CSS never writes a raw px/rem for margin, padding, gap, inset (top/right/bottom/left) or the size of a
+   control (≤ 64 px). Allowed: 1 px borders and nudges ≤ 2 px marked `/* optical */`.
+2. Layout sizes (grid columns, widths, hero heights, website type) are rem, not px, so a 3840 screen keeps the
+   rhythm; a rem token is never multiplied by `var(--ui)` (it already scales — 0037 removed the hub's double scaling).
+3. Card padding equal on all sides; inner radius = outer − padding.
+4. Eyebrow → h2 and heading → lead `--stack-tight`; lead → body `--stack`.
+5. Buttons pad `0 × --btn-pad-x`; icon-only controls are square (`.ctl-round`).
+6. List rows `--row-pad`, grids `--grid-gap`, sections `--section`, consecutive sections one `--section` apart.
+7. Every target ≥ 44 × 44 px, text links in a card head included; nothing hover-only.
+8. Blocks inside a section start on the section's left edge (no stray centring).
+
+**Enforcement.** `npm run lint:spacing` (`scripts/spacing-lint.mjs`) scans `src/**/*.css` and inline
+`style={{ margin/padding/gap }}` props and fails when the count grows above `scripts/spacing-baseline.json`; `npm
+run build` runs it in report mode (a one-line summary, same failure rule). 0037 took the count from **774 to 71**;
+the 71 left are component geometry (switch knobs, dots, meter heights, avatar ovals, badge offsets, the element
+cursor) and are listed in the baseline file. `npm run audit:spacing -- --route=… --widths=…` measures a live page
+(sibling gaps, card padding, targets under 44 px, optional 4 px grid overlay).
+
+**Deviations from the brief, recorded.** The website keeps a 24 px minimum side gutter on phones (editorial
+layout; the app keeps 16). `--r-ctl` moved 11 → 12 to sit on the scale. Chips pad 4 × 12 (was 6 × 12) so status
+chips stay compact; chips in a tab row still take the 44 px floor.
+

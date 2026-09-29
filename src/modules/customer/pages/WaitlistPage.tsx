@@ -105,7 +105,7 @@ export function WaitlistPage() {
       </Card>
     ) : null,
     AutoClaimToggle: () => waiting || offered ? (
-      <Card padding="sm"><Toggle checked={autoClaim} onChange={setAutoClaim} label={t('customer.waitlist.autoClaim')} /><p className="xs muted" style={{ paddingLeft: 4 }}>{t('customer.waitlist.autoClaim.body')}</p></Card>
+      <Card padding="sm"><Toggle checked={autoClaim} onChange={setAutoClaim} label={t('customer.waitlist.autoClaim')} /><p className="xs muted" style={{ paddingLeft: 'var(--sp-xs)' }}>{t('customer.waitlist.autoClaim.body')}</p></Card>
     ) : null,
     LeaveWaitlistRow: () => waiting || offered ? (
       <ListGroup><ListRow tone="danger" icon="close" title={t('customer.waitlist.leave')} subtitle={t('customer.waitlist.leave.sub')} onClick={async () => { if (mine) { await leaveWaitlist(mine); } }} /></ListGroup>

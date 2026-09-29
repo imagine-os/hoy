@@ -2,14 +2,14 @@
 .appshell { min-height: 100vh; display: flex; flex-direction: column; }
 /* below 900 px the content is a centred column (560 px cap) — the phone layout; it is a named inline-size container
    so the grid utilities collapse inside it the same way they do on a real phone (see global.css). */
-.appshell-main { flex: 1 1 auto; width: 100%; max-width: 560px; margin: 0 auto; padding-bottom: var(--sp-6); container: app / inline-size; }
-.appshell-main .container { padding-left: var(--sp-4); padding-right: var(--sp-4); }
+.appshell-main { flex: 1 1 auto; width: 100%; max-width: 35rem; margin: 0 auto; padding-bottom: var(--sp-xl); container: app / inline-size; }
+.appshell-main .container { padding-left: var(--gutter); padding-right: var(--gutter); }
 .appshell-dock { position: sticky; bottom: 0; z-index: 30; }
 .appshell-avatar { display: inline-flex; border-radius: 50%; min-width: var(--h-ctl); min-height: var(--h-ctl); align-items: center; justify-content: center; }
 /* from 900 px: full-viewport page, centred container that grows with the --ui band, nav in the top bar */
 @media (min-width: 900px) {
-  .appshell-main { max-width: none; padding-bottom: var(--sp-12); }
+  .appshell-main { max-width: none; padding-bottom: var(--sp-3xl); }
   .appshell-main > .container, .appshell-main .cust-page, .appshell-main .cust-home { max-width: var(--w-app); }
-  .appshell-main .container { padding-left: var(--sp-6); padding-right: var(--sp-6); }
-  .appshell .topbar { padding-inline: var(--sp-6); min-height: calc(var(--h-topbar) + var(--sp-2)); }
+  .appshell-main .container { padding-left: var(--gutter); padding-right: var(--gutter); }
+  .appshell .topbar { padding-inline: var(--gutter); min-height: calc(var(--h-topbar) + var(--sp-sm)); }
 }

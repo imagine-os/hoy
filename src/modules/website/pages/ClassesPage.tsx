@@ -38,7 +38,7 @@ export function ClassesPage() {
     ),
     ClassList: () => (
       <section className="container site-section">
-        <div className="stack" style={{ gap: 'var(--sp-16)' }}>
+        <div className="stack" style={{ gap: 'var(--sp-4xl)' }}>
           {classOrder.map((slug) => {
             const c = classes[slug];
             const mods = modalities.filter((m) => c.modalitySlugs.includes(m.slug));

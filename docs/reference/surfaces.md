@@ -1,7 +1,7 @@
 # Machine surfaces — MCP / WebMCP, CLI, API
 
 What something other than a person can drive in HoyOS today, and what it cannot.
-**Checked 2026-09-29** (v0.13.4; previous check 2026-09-29, v0.12.0). Re-check and date this file every pass; a line that is not
+**Checked 2026-09-29** (v0.14.0; previous check 2026-09-29, v0.12.0). Re-check and date this file every pass; a line that is not
 re-checked is not current.
 
 **0030 delta (v0.12.0).** `window.__hoyos.routes` no longer lists `/app/intention` (A-05 retired); the path still
@@ -113,7 +113,7 @@ Everything is Node, in `scripts/`, and safe to run from a clean checkout.
 | Script | What it does | Writes |
 | --- | --- | --- |
 | `npm run dev` | Vite dev server at `http://localhost:5173/#/` | — |
-| `npm run build` | `npm run tokens` → `npm run hub-map` → `npm run capture-dates` → manual lint (report) → `tsc --noEmit` → `vite build` → `node scripts/copy-shots.mjs`. **Must be green before every push.** | `src/design/tokens.css`, `public/hub-map.json`, `dist/` (incl. `dist/hub-map/shots/`) |
+| `npm run build` | `npm run tokens` → spacing lint (report) → `npm run hub-map` → `npm run capture-dates` → manual lint (report) → `tsc --noEmit` → `vite build` → `node scripts/copy-shots.mjs`. **Must be green before every push.** | `src/design/tokens.css`, `public/hub-map.json`, `dist/` (incl. `dist/hub-map/shots/`) |
 | `npm run hub-map` | `scripts/gen-hub-map.mjs`: composes the hub map from `src/hub/hubMap.data.ts` + the live route registry (Vite SSR loader, no browser) + `docs/screenshots/`, validates it against the contract and exits 1 on any problem. Deterministic (`generatedAt` = the latest changelog date) | `public/hub-map.json` (committed) |
 | `npm run hub-map:check` | Since 0029. `scripts/check-sample-routes.mjs`: serves `dist/` (`vite preview`), opens every `pages[].sampleRoute` of `public/hub-map.json` in a same-origin iframe with `?as=<owning role>&dev=0&live=0` and fails when a `sample` segment is not resolved, the page has 20 words or fewer, shows a not-found state or a `⟨missing-key⟩` marker. Not part of the build; run after `npm run build` | — (prints one line per sample) |
 | `node scripts/copy-shots.mjs` | Copies every capture the map references into `dist/hub-map/shots/<CODE>/` and prints the total (budget 80 MB; the plan lives in `scripts/lib/hubShots.mjs`) | `dist/hub-map/shots/` |
@@ -128,6 +128,8 @@ Everything is Node, in `scripts/`, and safe to run from a clean checkout.
 | `npm run thumbnails` | `screenshots.mjs --thumbs` — the hub/canvas thumbnails: one route per page code, both languages, both themes, 640 × 400 desktop and 195 × 422 phone, JPEG q64 | `docs/screenshots/<CODE>/thumb-*.jpg` |
 | `npm run lint:manual` | Since 0038. `scripts/manual-lint.mjs`: checks `docs/ops-manual/{es,en}` against `STYLE.md` (page codes, routes, file and table names and jargon in prose; one screen box and one `{{editable}}` per `##`; closed `{{for}}`; known `{{studio:…}}` keys and `{{source:…}}` ids; existing figures; ES/EN parity; front matter; retired copy). Exit 1 on any violation not in the baseline. `--report` (used by `npm run build`) never fails · `--json` · `--update-baseline` | `docs/ops-manual/lint-baseline.json` (empty) |
 | `node scripts/manual-qa.mjs` | Since 0038. Serves `dist/` on :4174 and drives Chromium: `--stale` (no stale-capture badge on the cover and chapters 01, 04, 09, 21, 24), `--lens` (writes `docs/screenshots/K-03/<lang>-<width>-cover-<role>.jpg` for eight roles), `--smoke` (open live, edit / save / restore, mark read, request a change, sign a stage), `--keys` (Tab order, focus rings, Enter, Esc). JSON report, exit 1 on a failed check. Run `npm run build` first | `docs/screenshots/K-03/*-cover-<role>.jpg` |
+| `npm run lint:spacing` | Since 0037. `scripts/spacing-lint.mjs`: raw px/rem on spacing properties (margin, padding, gap, inset, top/right/bottom/left) and control sizes ≤ 64 px in `src/**/*.css` and inline `style` margin/padding/gap in `.tsx`; 1 px and `/* optical */` nudges ≤ 2 px allowed. Exit 1 when the count is above the baseline. `--report` (used by `npm run build`) prints only grown files · `--update-baseline` | `scripts/spacing-baseline.json` |
+| `npm run audit:spacing` | Since 0037. `scripts/spacing-audit.mjs --route=/app [--as=usr_cust] [--widths=390,1280,3840] [--grid] [--all] [--out=dir]`: serves `dist/` on :4174, prints uneven or off-grid sibling gaps, unequal card padding and targets under 44 px (divided by `--ui`); `--grid` saves a 4 / 16 px grid overlay. Run `npm run build` first | `spacing-audit/<route>-<width>-grid.jpg` with `--grid` |
 | `npm run test:dates` | The local-date-key regression test | — |
 | `node scripts/test-mat-bookings.mjs` | The 16-mat booking rules against `MockProvider` (bounds, collisions, release, persistence); run with the build before every `src/` commit since 0025 | — |
 | `node scripts/gen-page-doc.mjs <CODE>` | Page-doc skeleton from the spec and the captures | `docs/pages/<CODE>.md` |

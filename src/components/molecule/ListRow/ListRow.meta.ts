@@ -20,6 +20,6 @@ export default defineMeta({
     h(ListRow, { key: 'l', icon: 'languages', title: 'Idioma', trailing: 'Español' }),
     h(ListRow, { key: 'out', icon: 'log-out', title: 'Cerrar sesión', tone: 'danger', onClick: () => {} }),
   ] }) }],
-  a11y: [{ es: 'Es <a> o <button> según destino; toda la fila (≥56px) es el objetivo táctil.', en: 'Renders <a> or <button> by destination; the whole row (≥56px) is the touch target.' }],
+  a11y: [{ es: 'Es <a> o <button> según destino; toda la fila (≥ --h-ctl 44 px, relleno --row-pad 12 × 16) es el objetivo táctil.', en: 'Renders <a> or <button> by destination; the whole row (≥ --h-ctl 44 px, --row-pad 12 × 16 padding) is the touch target.' }],
   usedBy: ['C-05', 'C-13', 'C-19', 'C-22', 'C-24', 'C-25', 'A-02'],
 });

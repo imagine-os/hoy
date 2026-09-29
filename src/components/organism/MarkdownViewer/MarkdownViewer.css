@@ -1,12 +1,12 @@
 .mdv { font-size: var(--fs-md); }
 .mdv h1 { font-size: var(--fs-3xl); } .mdv h2 { font-size: var(--fs-xl); border-bottom: 1px solid var(--color-border); padding-bottom: .3em; } .mdv h3 { font-size: var(--fs-lg); }
 .mdv pre { font-size: var(--fs-sm); }
-.mdv .mdv-callout { border-left-width: 4px; border-radius: 0 var(--r-sm) var(--r-sm) 0; padding: var(--sp-3) var(--sp-4); color: var(--color-text); }
+.mdv .mdv-callout { border-left-width: 4px; border-radius: 0 var(--r-sm) var(--r-sm) 0; padding: var(--sp-md) var(--sp-lg); color: var(--color-text); }
 .mdv .mdv-callout p:last-child { margin-bottom: 0; }
 .mdv .mdv-callout-decision { border-left-color: var(--color-warn); background: color-mix(in srgb, var(--color-warn) 12%, var(--color-surface)); }
 .mdv .mdv-callout-warn { border-left-color: var(--color-danger); background: color-mix(in srgb, var(--color-danger) 10%, var(--color-surface)); }
 .mdv .mdv-callout-note { border-left-color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface)); }
-.mdv .mdv-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--sp-2); min-height: 120px; margin: var(--sp-3) 0; padding: var(--sp-4); border: 2px dashed var(--color-border-strong); border-radius: var(--r-md); background: var(--color-surface-2); color: var(--color-text-muted); text-align: center; }
+.mdv .mdv-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--sp-sm); min-height: 7.5rem; margin: var(--sp-md) 0; padding: var(--sp-lg); border: 2px dashed var(--color-border-strong); border-radius: var(--r-md); background: var(--color-surface-2); color: var(--color-text-muted); text-align: center; }
 .mdv .mdv-placeholder-code { font-size: var(--fs-sm); background: var(--color-surface); padding: .15em .5em; border-radius: var(--r-xs); border: 1px solid var(--color-border); }
 .mdv .mdv-placeholder-cap { font-size: var(--fs-sm); }
 @media print { .mdv .mdv-placeholder { break-inside: avoid; } .mdv .mdv-callout { break-inside: avoid; } }
@@ -15,14 +15,14 @@
 .mdv .mdv-table-wrap th { font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-muted); font-weight: var(--fw-medium); white-space: nowrap; }
 .mdv .mdv-table-wrap td, .mdv .mdv-table-wrap th { overflow-wrap: anywhere; }
 .mdv .mdv-table-wrap tr:last-child td { border-bottom: 0; }
-.mdv .mdv-table-wrap img { max-width: 260px; }
+.mdv .mdv-table-wrap img { max-width: 16.25rem; }
 @media print { .mdv .mdv-table-wrap { overflow: visible; break-inside: avoid; } }
 
 /* 0031 · screen box: `> EN HOYOS:` — where it happens in the software, out of the prose */
 .mdv .mdv-callout-hoyos { border-left-color: var(--color-border-strong); background: var(--color-surface-2); color: var(--color-text-muted); font-size: var(--fs-sm); }
-.mdv .mdv-callout-hoyos p:first-child > strong:first-child { display: block; font-size: var(--fs-xs); letter-spacing: .1em; color: var(--color-text-muted); font-weight: var(--fw-medium); margin-bottom: 2px; }
+.mdv .mdv-callout-hoyos p:first-child > strong:first-child { display: block; font-size: var(--fs-xs); letter-spacing: .1em; color: var(--color-text-muted); font-weight: var(--fw-medium); margin-bottom: var(--sp-2xs); }
 .mdv .mdv-callout-hoyos code { font-family: var(--font-mono); font-size: .92em; padding: .05em .45em; border-radius: var(--r-full); border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text); white-space: nowrap; }
 /* 0031 · role-scoped block `{{for:…}}` (default rendering; the manual passes its own) */
-.mdv .mdv-scope { border-left: 3px dashed var(--color-border-strong); padding-left: var(--sp-4); margin: 0 0 1em; }
-.mdv .mdv-scope-label { font-size: var(--fs-xs); color: var(--color-text-muted); margin-bottom: var(--sp-1, 4px); }
+.mdv .mdv-scope { border-left: 3px dashed var(--color-border-strong); padding-left: var(--sp-lg); margin: 0 0 1em; }
+.mdv .mdv-scope-label { font-size: var(--fs-xs); color: var(--color-text-muted); margin-bottom: var(--sp-1, var(--sp-xs)); }
 @media print { .mdv .mdv-callout-hoyos { break-inside: avoid; } }

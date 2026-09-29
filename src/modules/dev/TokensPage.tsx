@@ -1,6 +1,6 @@
 import { useI18n } from '../../i18n/I18nProvider';
 import { useTheme } from '../../design/ThemeProvider';
-import { brand, icons, materials, movements, motion, palette, radii, rgb, semantic, shadows, spacing, surfaces, textures, type as typeTokens } from '../../design/tokens';
+import { brand, icons, materials, movements, motion, palette, radii, rgb, semantic, shadows, spacing, spacingSemantic, surfaces, textures, type as typeTokens } from '../../design/tokens';
 import { Card } from '../../components/molecule/Card/Card';
 import { Toggle } from '../../components/atom/Toggle/Toggle';
 import { Icon } from '../../components/atom/Icon/Icon';
@@ -33,7 +33,7 @@ export function TokensPage() {
         <div className="tok-swatches">
           {Object.keys(textures).map((k) => <div key={k} className="tok-swatch"><div className={`tok-tex tok-${k}`}><span>{k.replace('tex-', '')}</span></div><code className="xs">--{k}</code></div>)}
         </div>
-        <p className="xs muted" style={{ marginTop: 'var(--sp-3)' }}>{t('dev.tokens.textures.note')}</p>
+        <p className="xs muted" style={{ marginTop: 'var(--sp-md)' }}>{t('dev.tokens.textures.note')}</p>
       </Card>
       <Card title={t('dev.tokens.materials')} eyebrow={t('dev.tokens.materials.eyebrow')}><div className="tok-swatches">{Object.entries(materials).map(([k, m]) => <div key={k} className="tok-swatch"><span className="tok-swatch-color" style={{ background: `var(--mat-${k})`, height: 72 }} /><code className="xs">--mat-{k}</code><span className="xs muted">{m.label}</span></div>)}</div></Card>
 
@@ -44,6 +44,10 @@ export function TokensPage() {
           <div className="eyebrow">Eyebrow · 11px · {typeTokens['ls-eyebrow']} · uppercase</div>
           <div className="tok-grid">{Object.entries(typeTokens).filter(([k]) => k.startsWith('fs-')).map(([k, v]) => <div key={k} className="tok-row"><code>--{k}</code><span style={{ fontSize: `var(--${k})`, fontFamily: 'var(--font-heading)' }}>Aa</span><span className="xs muted">{v}</span></div>)}</div>
         </div>
+      </Card>
+      {/* 0037 · the semantic spacing layer: every value resolves to a scale step; the bar shows the live value at this width */}
+      <Card title={t('dev.tokens.spacingSemantic')} eyebrow={t('dev.tokens.spacingSemantic.eyebrow')}>
+        <div className="grid grid-2">{Object.entries(spacingSemantic).filter(([k]) => k !== 'measure' && k !== 'row-pad').map(([k, v]) => <div key={k} className="tok-row"><code>--{k}</code><span className="tok-bar" style={{ width: `var(--${k})` }} /><span className="xs muted">{v.replace('var(--', '').replace(')', '')}</span></div>)}</div>
       </Card>
       <div className="grid grid-2">
         <Card title={t('dev.tokens.spacing')}><div className="stack-sm">{Object.entries(spacing).map(([k, v]) => <div key={k} className="tok-row"><code>--{k}</code><span className="tok-bar" style={{ width: v }} /><span className="xs muted">{v}</span></div>)}</div></Card>

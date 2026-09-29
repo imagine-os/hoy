@@ -2,6 +2,6 @@
 .breath { position: relative; display: inline-flex; align-items: center; justify-content: center; margin: 0 auto; }
 .breath-ring { position: absolute; border-radius: 50%; border: 1.5px solid rgba(var(--m-primary), .45); background: radial-gradient(circle, rgba(var(--m-mid), .10) 0%, transparent 70%); box-shadow: var(--shadow-highlight); }
 .breath.is-animated .breath-ring { animation: breathe var(--dur-breath) var(--ease-in-out) infinite; }
-.breath-center { position: relative; display: flex; flex-direction: column; align-items: center; gap: var(--sp-2); text-align: center; }
+.breath-center { position: relative; display: flex; flex-direction: column; align-items: center; gap: var(--sp-sm); text-align: center; }
 @keyframes breathe { 0%, 100% { transform: scale(.82); opacity: .5; } 50% { transform: scale(1.08); opacity: .95; } }
 @media (prefers-reduced-motion: reduce) { .breath.is-animated .breath-ring { animation: none; } }

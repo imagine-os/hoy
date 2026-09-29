@@ -184,6 +184,23 @@ Fields: **Date**, **Status** (accepted · superseded by D-NNNN), **Context**, **
   only on request. Heavy PDFs are republished with ghostscript (`/printer`, 300 dpi) after checking the logo pages.
 - **Alternative rejected.** Importing them through the docs glob — megabytes of binaries in the JS graph.
 
+### D-0012 — Spacing is tokens plus a lint, not utility classes
+
+- **Date** 2026-09-29 · **Status** accepted · **Changelog** `docs/changelog/0037-spacing-standard.md`
+- **Context.** Justin asked for "picture perfect" spacing and sizing everywhere and pointed at Client-First
+  (Finsweet), while disliking its complexity. The code had a numeric 4-pt scale with off-grid steps (20, 40, 80 px),
+  774 raw px/rem spacing values in module CSS and inline styles, px column widths that did not grow on a 4K screen,
+  and hub controls multiplied by `--ui` on top of rem (scaled twice).
+- **Decision.** One 4 px scale in rem (`--sp-2xs … --sp-5xl`) plus a small semantic layer in D-01 (`--gap-inline`,
+  `--gap-control`, `--stack-tight/--stack/--stack-loose`, `--block`, `--card-pad(-lg)`, `--section(-hero)`,
+  `--gutter`, `--grid-gap`, `--row-pad`, `--btn-pad-x`, `--measure`), the responsive ones stepping up at 768 / 1280.
+  CSS keeps writing semantic classes; values come from tokens only. `scripts/spacing-lint.mjs` runs in every build
+  and fails when raw spacing grows above `scripts/spacing-baseline.json`. The how-to is the `ui-spacing` skill.
+- **Alternative rejected.** Client-First utility classes (`padding-global`, `margin-bottom margin-large`, …) —
+  a second vocabulary in the markup, hard for a person to read, and it bypasses the component meta. Tailwind —
+  CLAUDE.md already rejects it (plain CSS with tokens), and it would put spacing in JSX where the lint and the
+  component library cannot see a relationship, only a number.
+
 ---
 **Resumen (ES).** Este archivo es la lista corta y citable de las decisiones de ingeniería, una por
 bloque, solo se añade: una decisión que deja de ser cierta se reemplaza con un bloque nuevo, nunca

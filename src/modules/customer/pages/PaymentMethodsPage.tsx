@@ -63,7 +63,7 @@ export function PaymentMethodsPage() {
                 title={m.last4 ? `${m.brand} ···· ${m.last4}` : m.brand}
                 subtitle={[m.expires ? t('customer.pay.saved.expires', { date: m.expires }) : t(`customer.pay.kind.${m.kind}`), t('customer.pay.saved.tokenised')].join(' · ')}
                 trailing={(
-                  <span className="row" style={{ gap: 'var(--sp-2)' }}>
+                  <span className="row" style={{ gap: 'var(--sp-sm)' }}>
                     {m.is_default
                       ? <Badge tone="success">{t('customer.pay.saved.default')}</Badge>
                       : <Button size="sm" variant="ghost" onClick={() => { void makeDefault(m); }}>{t('customer.pay.saved.makeDefault')}</Button>}

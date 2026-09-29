@@ -1,15 +1,15 @@
 /* Stacked one-line notices, bottom-centre on a phone and bottom-right from 600 px. */
 .toasts {
-  position: fixed; z-index: 90; left: var(--sp-4); right: var(--sp-4); bottom: calc(var(--sp-4) + env(safe-area-inset-bottom, 0px));
-  display: flex; flex-direction: column; align-items: center; gap: var(--sp-2); pointer-events: none;
+  position: fixed; z-index: 90; left: var(--sp-lg); right: var(--sp-lg); bottom: calc(var(--sp-lg) + env(safe-area-inset-bottom, 0px));
+  display: flex; flex-direction: column; align-items: center; gap: var(--sp-sm); pointer-events: none;
 }
-@media (min-width: 600px) { .toasts { left: auto; right: var(--sp-6); align-items: flex-end; max-width: 420px; } }
+@media (min-width: 600px) { .toasts { left: auto; right: var(--sp-xl); align-items: flex-end; max-width: 26.25rem; } }
 .toast {
-  pointer-events: auto; display: flex; align-items: flex-start; gap: var(--sp-2);
+  pointer-events: auto; display: flex; align-items: flex-start; gap: var(--sp-sm);
   background: var(--color-surface-elevated); color: var(--color-text);
   border: 1px solid var(--color-border); border-left: 3px solid var(--color-accent);
   border-radius: var(--r-ctl); box-shadow: var(--shadow-raised);
-  padding: var(--sp-3) var(--sp-3) var(--sp-3) var(--sp-4); font-size: var(--fs-sm); max-width: 100%;
+  padding: var(--sp-md) var(--sp-md) var(--sp-md) var(--sp-lg); font-size: var(--fs-sm); max-width: 100%;
   animation: toast-in var(--dur-base) var(--ease-out);
 }
 .toast-success { border-left-color: var(--color-success); }
@@ -17,7 +17,7 @@
 .toast-danger { border-left-color: var(--color-danger); }
 .toast-text { min-width: 0; }
 .toast-close {
-  flex: none; width: 44px; height: 44px; margin: -10px -8px -10px 0; border: 0; background: none;
+  flex: none; width: var(--h-ctl); height: var(--h-ctl); margin: calc(var(--sp-md) * -1) calc(var(--sp-sm) * -1) calc(var(--sp-md) * -1) 0; border: 0; background: none;
   color: var(--color-text-muted); border-radius: var(--r-ctl); line-height: 1; font-size: var(--fs-md);
 }
 .toast-close:hover { color: var(--color-ink); background: var(--color-surface-3); }

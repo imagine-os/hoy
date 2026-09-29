@@ -67,7 +67,7 @@ export function StaffHomePage() {
               : <EmptyState compact title={t('staff.home.next.empty')} />}
           </section>
           <Card title={t('staff.home.todayClasses')} padding="sm">
-            {todayAll.length === 0 && <p className="muted small" style={{ padding: 12 }}>{t('staff.home.todayClasses.empty')}</p>}
+            {todayAll.length === 0 && <p className="muted small" style={{ padding: 'var(--sp-md)' }}>{t('staff.home.todayClasses.empty')}</p>}
             {todayAll.map(({ session: s, modality: m, teacher: te }) => <ClassRow key={s.id} title={s.title} teacher={te?.display_name ?? ''} startsAt={s.starts_at} durationMin={m?.duration_min ?? 60} movement={m?.movement ?? 'fluye'} booked={s.booked_count} capacity={s.capacity} onClick={can('checkin.write') ? () => nav(`/staff/checkin?session=${s.id}`) : undefined} />)}
           </Card>
         </div>
@@ -84,12 +84,12 @@ export function StaffHomePage() {
           </Card>
           {can('members.read') && (
             <Card title={t('staff.home.messages')} padding="sm" className="home-msgs" actions={<Link to="/staff/inbox" className="small">{t('core.common.viewAll')}</Link>}>
-              {recent.length === 0 ? <p className="muted small" style={{ padding: 12 }}>{t('staff.home.messages.empty')}</p> : <ConversationList compact limit={5} conversations={recent} linkTo={(k) => `/staff/inbox/${k}`} />}
+              {recent.length === 0 ? <p className="muted small" style={{ padding: 'var(--sp-md)' }}>{t('staff.home.messages.empty')}</p> : <ConversationList compact limit={5} conversations={recent} linkTo={(k) => `/staff/inbox/${k}`} />}
             </Card>
           )}
           <Card title={t('staff.home.activity')} padding="sm" actions={can('audit.read') ? <Link to="/admin/activity" className="small">{t('core.common.viewAll')}</Link> : undefined}>
-            <div style={{ padding: '0 8px' }}><Timeline items={activity} limit={6} /></div>
-            <p className="xs muted" style={{ padding: 8 }}>{t('staff.home.activity.note')}</p>
+            <div style={{ padding: '0 var(--sp-sm)' }}><Timeline items={activity} limit={6} /></div>
+            <p className="xs muted" style={{ padding: 'var(--sp-sm)' }}>{t('staff.home.activity.note')}</p>
           </Card>
         </div>
       </div>

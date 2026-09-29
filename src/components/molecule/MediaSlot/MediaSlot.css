@@ -1,4 +1,4 @@
-.mediaslot-fig { margin: 0; display: flex; flex-direction: column; gap: var(--sp-2); min-width: 0; }
+.mediaslot-fig { margin: 0; display: flex; flex-direction: column; gap: var(--sp-sm); min-width: 0; }
 .mediaslot {
   position: relative; width: 100%; overflow: hidden;
   border-radius: var(--r-md); border: 1px solid var(--color-card-border);
@@ -12,7 +12,7 @@
   color: var(--color-text-muted);
 }
 .mediaslot.is-empty::after {
-  content: ''; position: absolute; inset: var(--sp-2); border-radius: var(--r-sm);
+  content: ''; position: absolute; inset: var(--sp-sm); border-radius: var(--r-sm);
   border: 1px dashed rgba(var(--m-primary), .28); pointer-events: none;
 }
 :root[data-theme="dark"] .mediaslot.is-empty {
@@ -27,10 +27,10 @@
 
 .mediaslot-empty {
   display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
-  gap: var(--sp-2); padding: var(--sp-6); max-width: 34ch;
+  gap: var(--sp-sm); padding: var(--sp-xl); max-width: 34ch;
 }
 .mediaslot-glyph {
-  width: 40px; height: 40px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+  width: 2.5rem; height: 2.5rem; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
   font-size: var(--fs-lg); color: var(--color-primary);
   background: color-mix(in srgb, var(--color-surface-elevated) 78%, transparent);
   box-shadow: var(--shadow-highlight), var(--shadow-contact);
@@ -39,17 +39,17 @@
 .mediaslot-meta { font-size: var(--fs-2xs); text-transform: uppercase; letter-spacing: var(--ls-eyebrow); color: var(--color-text-faint); }
 .mediaslot-brief { font-size: var(--fs-2xs); color: var(--color-text-faint); font-style: italic; max-width: 40ch; }
 .mediaslot-chip {
-  position: absolute; top: var(--sp-3); right: var(--sp-3);
+  position: absolute; top: var(--sp-md); right: var(--sp-md);
   font-size: var(--fs-2xs); text-transform: uppercase; letter-spacing: .08em;
-  padding: 3px 9px; border-radius: var(--r-full);
+  padding: var(--sp-xs) var(--sp-sm); border-radius: var(--r-full);
   background: var(--color-highlight); color: var(--color-on-highlight);
   box-shadow: var(--shadow-contact);
 }
-.mediaslot-overlay { position: absolute; inset: 0; display: flex; align-items: flex-end; padding: var(--sp-5); pointer-events: none; }
+.mediaslot-overlay { position: absolute; inset: 0; display: flex; align-items: flex-end; padding: var(--card-pad); pointer-events: none; }
 .mediaslot-overlay > * { pointer-events: auto; }
 .mediaslot-cap { margin: 0; }
 
 @media (max-width: 480px) {
-  .mediaslot-empty { padding: var(--sp-4); gap: var(--sp-1); }
-  .mediaslot-glyph { width: 32px; height: 32px; font-size: var(--fs-md); }
+  .mediaslot-empty { padding: var(--sp-lg); gap: var(--sp-xs); }
+  .mediaslot-glyph { width: var(--sp-2xl); height: var(--sp-2xl); font-size: var(--fs-md); }
 }

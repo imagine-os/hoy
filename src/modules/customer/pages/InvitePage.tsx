@@ -57,7 +57,7 @@ export function InvitePage() {
         </div>
         {flash && <Notice tone="success">{flash}</Notice>}
         <ListGroup title={t('customer.invite.sentList')}>
-          {invites.length === 0 && <p className="small muted" style={{ padding: 16 }}>{t('customer.invite.sentList.empty')}</p>}
+          {invites.length === 0 && <p className="small muted" style={{ padding: 'var(--sp-lg)' }}>{t('customer.invite.sentList.empty')}</p>}
           {invites.map((i) => <ListRow key={i.id} icon={i.channel === 'whatsapp' ? 'whatsapp' : i.channel === 'email' ? 'mail' : 'link'} title={i.invitee_phone ?? i.invitee_email ?? t(`customer.invite.channel.${i.channel}`)} subtitle={`${formatDate(i.created_at, lang)} · ${i.code}`} trailing={<Badge tone={toneForStatus(i.status)}>{t(`customer.invite.status.${i.status}`)}</Badge>} />)}
         </ListGroup>
         <p className="xs muted" style={{ textAlign: 'center' }}>{t('customer.invite.reward')}</p>

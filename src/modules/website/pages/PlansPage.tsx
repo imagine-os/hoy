@@ -43,7 +43,7 @@ export function PlansPage() {
       <section className="container site-section" style={{ paddingTop: 0 }}>
         <Card eyebrow={t('site.plans.specials.eyebrow')} title={t('site.plans.specials.title')} tone="muted" className="site-specials">
           <p className="small" style={{ maxWidth: '60ch' }}>{t('site.plans.specials.body')}</p>
-          <div className="row wrap" style={{ marginTop: 16 }}>
+          <div className="row wrap" style={{ marginTop: 'var(--sp-lg)' }}>
             <a href={waHref(t('site.plans.specials.wa'))} target="_blank" rel="noreferrer"><Button size="sm" variant="secondary">{t('site.plans.specials.cta')}</Button></a>
           </div>
         </Card>

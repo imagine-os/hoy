@@ -7,7 +7,7 @@ export default defineMeta({
   description: { es: 'Acción principal, secundaria, fantasma o destructiva. Pill, tres tamaños, estado de carga.', en: 'Primary, secondary, ghost or destructive action. Pill, three sizes, loading state.' },
   props: [
     { name: 'variant', type: "'primary' | 'secondary' | 'ghost' | 'danger'", default: 'primary', description: { es: 'Jerarquía visual.', en: 'Visual hierarchy.' } },
-    { name: 'size', type: "'sm' | 'md' | 'lg'", default: 'md', description: { es: 'Altura 32 / 40 / 48.', en: 'Height 32 / 40 / 48.' } },
+    { name: 'size', type: "'sm' | 'md' | 'lg'", default: 'md', description: { es: 'Altura 44 / 44 / 48 (--h-ctl, --h-ctl-lg); relleno 0 × 12 / 16 / 24 (--btn-pad-x en md).', en: 'Height 44 / 44 / 48 (--h-ctl, --h-ctl-lg); padding 0 × 12 / 16 / 24 (--btn-pad-x on md).' } },
     { name: 'loading', type: 'boolean', default: 'false', description: { es: 'Muestra spinner y bloquea.', en: 'Shows spinner and blocks.' } },
     { name: 'block', type: 'boolean', default: 'false', description: { es: 'Ancho completo.', en: 'Full width.' } },
     { name: 'icon', type: 'IconName | ReactNode', description: { es: 'Icono a la izquierda: un nombre del set Icon o un nodo. Decorativo; la etiqueta nombra la acción.', en: 'Leading icon: an Icon set name or a node. Decorative; the label names the action.' } },

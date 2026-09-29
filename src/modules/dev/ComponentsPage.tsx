@@ -33,9 +33,9 @@ export function ComponentsPage() {
                 {m.usages.map((u, i) => <div key={i} className="lib-usage"><div className="eyebrow">{bi(u.title)}</div><div className="lib-canvas">{u.render()}</div></div>)}
               </div>
               <div className="lib-meta">
-                <div><div className="eyebrow">{t('dev.components.states')}</div><div className="row wrap" style={{ marginTop: 6 }}>{m.states.map((s) => <Chip key={s}>{s}</Chip>)}</div></div>
+                <div><div className="eyebrow">{t('dev.components.states')}</div><div className="row wrap" style={{ marginTop: 'var(--sp-sm)' }}>{m.states.map((s) => <Chip key={s}>{s}</Chip>)}</div></div>
                 <div><div className="eyebrow">{t('dev.components.props')}</div><table className="lib-props"><tbody>{m.props.map((p) => <tr key={p.name}><td><code>{p.name}{p.required ? '*' : ''}</code></td><td className="muted xs"><code>{p.type}</code>{p.default ? ` = ${p.default}` : ''}</td><td className="small">{bi(p.description)}</td></tr>)}</tbody></table></div>
-                <div><div className="eyebrow">{t('dev.components.a11y')}</div><ul className="small" style={{ margin: '6px 0 0', paddingLeft: '1.2em' }}>{m.a11y.map((a, i) => <li key={i}>{bi(a)}</li>)}</ul></div>
+                <div><div className="eyebrow">{t('dev.components.a11y')}</div><ul className="small" style={{ margin: 'var(--sp-sm) 0 0', paddingLeft: '1.2em' }}>{m.a11y.map((a, i) => <li key={i}>{bi(a)}</li>)}</ul></div>
               </div>
             </Card>
           ))}

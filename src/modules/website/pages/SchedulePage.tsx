@@ -50,14 +50,14 @@ export function SchedulePage() {
     DayTabs: () => null,
     ClassList: () => <section className="container"><SessionCalendar sessions={list} onPick={s => { setPicked(s.id); setMat(null); }} /></section>,
     Legend: () => (
-      <section className="container" style={{ paddingBottom: 64 }}>
+      <section className="container" style={{ paddingBottom: 'var(--sp-4xl)' }}>
         <div className="site-legend">
           <span className="eyebrow">{t('site.schedule.legend')}</span>
           {(Object.keys(movements) as Movement[]).map((mv) => (
             <Chip key={mv} movement={mv} dot selected={mvFilter === mv} onClick={() => pickMovement(mv)}>{movements[mv].label}</Chip>
           ))}
         </div>
-        <p className="xs muted" style={{ marginTop: 8 }}>{t('site.schedule.legendBody', { mats: tenant.studio.mats })}</p>
+        <p className="xs muted" style={{ marginTop: 'var(--sp-sm)' }}>{t('site.schedule.legendBody', { mats: tenant.studio.mats })}</p>
       </section>
     ),
   };

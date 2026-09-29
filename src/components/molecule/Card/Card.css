@@ -3,7 +3,7 @@
 .card.is-raised { background-color: var(--color-surface-elevated); background-image: var(--tex-surf-on); box-shadow: var(--shadow-raised); }
 .card.is-interactive { cursor: pointer; }
 .card.is-interactive:hover { transform: translateY(-2px); box-shadow: var(--shadow-raised); }
-.card-pad-none { padding: 0; } .card-pad-sm { padding: var(--sp-3); } .card-pad-md { padding: var(--sp-5); } .card-pad-lg { padding: var(--sp-8); }
+.card-pad-none { padding: 0; } .card-pad-sm { padding: var(--sp-md); } .card-pad-md { padding: var(--card-pad); } .card-pad-lg { padding: var(--card-pad-lg); }
 /* .inverse — the deliberate deep-blue fill (next class, gift card) with the accent grain */
 .card-primary { background-color: var(--color-accent-fill); background-image: var(--tex-accent-on); color: var(--color-text-on-inverse); border-color: transparent; box-shadow: var(--shadow-inverse); }
 .card-primary h1, .card-primary h2, .card-primary h3, .card-primary h4, .card-primary .card-title { color: inherit; }
@@ -14,11 +14,13 @@
 .card-highlight .eyebrow, .card-highlight .muted { color: color-mix(in srgb, var(--color-on-highlight) 65%, transparent); }
 /* "Soft" surface: no shadow, one step down */
 .card-muted { background-color: var(--color-surface-2); box-shadow: none; }
-.card-head { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--sp-2) var(--sp-3); margin-bottom: var(--sp-3); min-width: 0; }
-.card-head > .grow { flex: 1 1 200px; }
+.card-head { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--sp-sm) var(--sp-md); margin-bottom: var(--sp-md); min-width: 0; }
+.card-head > .grow { flex: 1 1 12.5rem; }
 .card-head > * { min-width: 0; }
 .card-title { font-size: var(--fs-lg); min-width: 0; overflow-wrap: anywhere; }
-.card-actions { display: flex; flex-wrap: wrap; gap: var(--sp-2); flex: 0 1 auto; min-width: 0; }
+.card-actions { display: flex; flex-wrap: wrap; gap: var(--sp-sm); flex: 0 1 auto; min-width: 0; }
+/* 0037 · a text link in the card head ("Ver todo") keeps a 44 px target without growing the head */
+.card-actions > a:not(:has(.btn)), .card-head > a:not(:has(.btn)) { display: inline-flex; align-items: center; min-height: var(--h-ctl); margin-block: calc((var(--h-ctl) - 1.5em) / -2); }
 /* 0030: optional glyph tile before the title (settings sections, quick actions) */
 .card-head.has-icon { align-items: center; flex-wrap: nowrap; }
 .card-head.has-icon > .grow { flex: 1 1 auto; }

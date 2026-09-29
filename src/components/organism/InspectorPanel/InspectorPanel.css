@@ -1,15 +1,15 @@
-.insp { display: flex; flex-direction: column; gap: var(--sp-5); font-size: var(--fs-sm); }
-.insp-code { background: var(--color-highlight); color: var(--color-on-highlight); padding: 2px 8px; border-radius: var(--r-sm); font-weight: var(--fw-semibold); }
+.insp { display: flex; flex-direction: column; gap: var(--block); font-size: var(--fs-sm); }
+.insp-code { background: var(--color-highlight); color: var(--color-on-highlight); padding: var(--sp-2xs) var(--sp-sm); border-radius: var(--r-sm); font-weight: var(--fw-semibold); }
 .insp-title { font-size: var(--fs-md); }
-.insp-h { font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-muted); margin-bottom: var(--sp-2); font-weight: var(--fw-medium); }
-.insp-story { margin-top: var(--sp-2); font-style: italic; }
-.insp-layout { margin: 0; padding-left: 1.4em; display: flex; flex-direction: column; gap: 2px; }
+.insp-h { font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-muted); margin-bottom: var(--sp-sm); font-weight: var(--fw-medium); }
+.insp-story { margin-top: var(--sp-sm); font-style: italic; }
+.insp-layout { margin: 0; padding-left: 1.4em; display: flex; flex-direction: column; gap: var(--sp-2xs); }
 .insp-layout li::marker { color: var(--color-text-muted); font-family: var(--font-mono); font-size: var(--fs-xs); }
-.insp-list { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 4px; }
-.insp-table { display: inline-flex; padding: 2px 8px; border-radius: var(--r-sm); background: var(--color-surface-2); color: var(--color-text-muted); border: 1px dashed var(--color-border-strong); font-size: var(--fs-xs); }
+.insp-list { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: var(--sp-xs); }
+.insp-table { display: inline-flex; padding: var(--sp-2xs) var(--sp-sm); border-radius: var(--r-sm); background: var(--color-surface-2); color: var(--color-text-muted); border: 1px dashed var(--color-border-strong); font-size: var(--fs-xs); }
 .insp-table.is-known { border-style: solid; color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 8%, transparent); }
 .insp-table.is-known:hover { text-decoration: none; background: color-mix(in srgb, var(--color-primary) 16%, transparent); }
-.insp-details { margin-top: var(--sp-2); } .insp-details pre { margin: var(--sp-2) 0 0; }
+.insp-details { margin-top: var(--sp-sm); } .insp-details pre { margin: var(--sp-sm) 0 0; }
 
 /* the actions list wraps id · intent · params · permission on one line each */
 .insp-actions li { line-height: 1.5; }

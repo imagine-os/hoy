@@ -57,7 +57,7 @@ export function TeacherProfilePage() {
         <section className="stack-sm">
           <h2 className="cust-h2">{t('customer.teachers.upcoming')}</h2>
           <Card padding="sm">
-            {upcoming.length === 0 && <p className="small muted" style={{ padding: 12 }}>{t('customer.teachers.upcoming.empty')}</p>}
+            {upcoming.length === 0 && <p className="small muted" style={{ padding: 'var(--sp-md)' }}>{t('customer.teachers.upcoming.empty')}</p>}
             {upcoming.map((x) => <ClassRow key={x.session.id} title={x.session.title} teacher={x.room?.name ?? ''} startsAt={x.session.starts_at} durationMin={x.modality?.duration_min ?? 60} movement={x.modality?.movement ?? 'fluye'} booked={x.session.booked_count} capacity={x.session.capacity} onClick={() => nav(`/app/class/${x.session.id}`)} />)}
           </Card>
         </section>

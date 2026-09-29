@@ -248,7 +248,7 @@ export function RegisterPage() {
                 {person ? (
                   <div className="register-found">
                     <Avatar name={person.name} initials={person.initials} size={44} />
-                    <div className="grow"><strong>{person.name}</strong><div className="xs muted">{maskPhone(person.phone)} · {person.email}</div><div className="row wrap" style={{ marginTop: 4 }}>{person.plan ? <Badge tone="success">{bi({ es: person.plan.name_es, en: person.plan.name_en })}</Badge> : <Badge>{t('staff.checkin.noPlan')}</Badge>}{person.whatsappVerified && <Badge tone="primary">WhatsApp ✓</Badge>}</div></div>
+                    <div className="grow"><strong>{person.name}</strong><div className="xs muted">{maskPhone(person.phone)} · {person.email}</div><div className="row wrap" style={{ marginTop: 'var(--sp-xs)' }}>{person.plan ? <Badge tone="success">{bi({ es: person.plan.name_es, en: person.plan.name_en })}</Badge> : <Badge>{t('staff.checkin.noPlan')}</Badge>}{person.whatsappVerified && <Badge tone="primary">WhatsApp ✓</Badge>}</div></div>
                     <Button size="sm" variant="ghost" onClick={() => setPersonId(null)}>{t('core.common.edit')}</Button>
                   </div>
                 ) : (
@@ -263,7 +263,7 @@ export function RegisterPage() {
           </Card>
 
           <Card eyebrow={t('staff.register.step2')} title={t('staff.register.what')}>
-            <p className="xs muted" style={{ marginBottom: 12 }}>{t('staff.register.what.hint')}</p>
+            <p className="xs muted" style={{ marginBottom: 'var(--sp-md)' }}>{t('staff.register.what.hint')}</p>
             {SELLABLE.map((fam) => (
               <div key={fam} className="register-family">
                 <div className="eyebrow">{bi(FAMILY_LABEL[fam])}</div>
@@ -272,7 +272,7 @@ export function RegisterPage() {
             ))}
             <div className="register-family">
               <div className="eyebrow">{t('staff.register.especial.family')}</div>
-              <p className="xs muted" style={{ marginBottom: 8 }}>{t('staff.register.especial.family.hint')}</p>
+              <p className="xs muted" style={{ marginBottom: 'var(--sp-sm)' }}>{t('staff.register.especial.family.hint')}</p>
               {pricing.filter((p) => p.family === 'espacio' && p.price != null).map((p) => <div key={p.id} className={`register-item ${special.on && special.source === p.id ? 'is-selected' : ''}`}><PriceRow item={p} onSelect={() => startSpecial(p.id)} /></div>)}
               <div className={`register-item ${special.on && special.source === null ? 'is-selected' : ''}`}>
                 <button type="button" className="register-custom" onClick={() => startSpecial(null)} aria-pressed={special.on && special.source === null}>
@@ -285,8 +285,8 @@ export function RegisterPage() {
 
           {special.on && (
             <Card eyebrow="Especial" title={t('staff.register.especial.title')} tone="highlight" data-testid="especial-card">
-              <p className="xs muted" style={{ marginBottom: 12 }}>{t('staff.register.especial.body')}</p>
-              {linkedBooking && <p className="small" style={{ marginBottom: 12 }}><Badge tone="primary">S-05</Badge> {t('staff.register.especial.fromBooking', { title: linkedBooking.title })}</p>}
+              <p className="xs muted" style={{ marginBottom: 'var(--sp-md)' }}>{t('staff.register.especial.body')}</p>
+              {linkedBooking && <p className="small" style={{ marginBottom: 'var(--sp-md)' }}><Badge tone="primary">S-05</Badge> {t('staff.register.especial.fromBooking', { title: linkedBooking.title })}</p>}
               <div className="register-special">
                 <div className="register-full"><Field label={t('staff.register.especial.concept')} required>{(id) => <Input id={id} value={special.concept} onChange={(e) => setSpecial({ ...special, concept: e.target.value })} placeholder={t('staff.register.especial.concept.ph')} invalid={!special.concept.trim()} autoFocus={!linkedBooking} />}</Field></div>
                 <Field label={t('staff.register.especial.amount')} required hint={t('staff.register.especial.amount.hint')}>{(id) => <Input id={id} inputMode="numeric" value={special.amountRaw} onChange={(e) => { setSpecial({ ...special, amountRaw: e.target.value }); setPaidRaw(null); }} invalid={specialAmount <= 0} />}</Field>
@@ -303,7 +303,7 @@ export function RegisterPage() {
                       {windowOk && conflicts.length > 0 && (
                         <div className="staff-notice staff-notice-bad small" role="alert" data-testid="especial-conflict">
                           <strong>{t('staff.rooms.conflict', { room: rooms.find((r) => r.id === special.roomId)?.name ?? '' })}</strong>
-                          <ul className="xs" style={{ margin: '6px 0 0', paddingLeft: 18 }}>{conflicts.map((c) => <li key={c.id}>{formatTime(c.starts_at, lang)}–{formatTime(c.ends_at, lang)} · {c.title}</li>)}</ul>
+                          <ul className="xs" style={{ margin: 'var(--sp-sm) 0 0', paddingLeft: 'var(--sp-lg)' }}>{conflicts.map((c) => <li key={c.id}>{formatTime(c.starts_at, lang)}–{formatTime(c.ends_at, lang)} · {c.title}</li>)}</ul>
                         </div>
                       )}
                       {windowOk && conflicts.length === 0 && <p className="xs rooms-free">{t('staff.rooms.free', { room: rooms.find((r) => r.id === special.roomId)?.name ?? '' })}</p>}
@@ -320,8 +320,8 @@ export function RegisterPage() {
             <div className="register-methods" role="radiogroup">
               {METHODS.map((m) => <button key={m} type="button" role="radio" aria-checked={method === m} className={`register-method ${method === m ? 'is-selected' : ''}`} onClick={() => setMethod(m)}><strong className="small">{t(`staff.register.method.${m}`)}</strong><span className="xs muted">{t(`staff.register.method.${m}.hint`)}</span></button>)}
             </div>
-            {method === 'wompi' && <p className="xs muted" style={{ marginTop: 8 }}>{t('staff.register.wompi.note')}</p>}
-            <div className="row wrap" style={{ marginTop: 16 }}>
+            {method === 'wompi' && <p className="xs muted" style={{ marginTop: 'var(--sp-sm)' }}>{t('staff.register.wompi.note')}</p>}
+            <div className="row wrap" style={{ marginTop: 'var(--sp-lg)' }}>
               <Toggle size="sm" checked={receipt.wa} onChange={(on) => setReceipt({ ...receipt, wa: on })} label={t('staff.register.receipt.wa')} />
               <Toggle size="sm" checked={receipt.email} onChange={(on) => setReceipt({ ...receipt, email: on })} label={t('staff.register.receipt.email')} />
             </div>
