@@ -110,10 +110,10 @@ export const M05 = defineSpec({
 export const M06 = defineSpec({
   ...canvasSpecs['M-06'],
   roles: [...new Set([...canvasSpecs['M-06'].roles, 'marketing' as const])], // 0031
-  layout: ['SegmentRail (all, at risk, new, no membership, birthdays)', 'MemberList (search, sort)', 'MemberDetail (IdentityHeader → S-06, MetricRow, Tabs: Conversación · Reservas · Pagos)', 'Conversación: filter chips Todo / WhatsApp / Email / Notas / Sistema → MessageThread + MessageComposer'],
-  data: ['users', 'profiles', 'memberships', 'plans', 'bookings', 'class_sessions', 'payments', 'credits', 'message_log', 'consents', 'audit_log'],
+  layout: ['SegmentRail (all, at risk, new, no membership, birthdays)', 'MemberList (search, sort)', 'MemberDetail (IdentityHeader → S-06, MetricRow, Tabs: Conversación · Reservas · Pagos · Práctica)', 'Conversación: filter chips Todo / WhatsApp / Email / Notas / Sistema → MessageThread + MessageComposer'],
+  data: ['users', 'profiles', 'memberships', 'plans', 'bookings', 'class_sessions', 'payments', 'credits', 'message_log', 'consents', 'audit_log', 'practice_goals'],
   states: [...(canvasSpecs['M-06'].states ?? []), 'Conversación: unread inbound (blue ring) → read on open', 'Composer read-only (no members.write)', 'WhatsApp blocked (unverified number)', 'Quiet hours (queued hint)', 'Sistema filter: events only, no composer'],
-  notes: [...(canvasSpecs['M-06'].notes ?? []), 'At risk = member with plan or credits and no check-in in 21 days.', 'Since 0.8.0 the conversation is message_log: inbound and outbound WhatsApp/email (manual, automation, newsletter, system) and internal notes (channel note, direction internal) — never visible to the member. Bookings, payments and consents appear inline as system lines.', 'Sending and notes go through useMessaging() (src/data/comms.ts): audit_log keeps member.message / member.note as a trail without content. Opening the tab marks the member’s inbound rows read.', 'Opening a record writes member.view to audit_log (Ley 1581).'],
+  notes: [...(canvasSpecs['M-06'].notes ?? []), 'At risk = member with plan or credits and no check-in in 21 days.', 'Since 0.8.0 the conversation is message_log: inbound and outbound WhatsApp/email (manual, automation, newsletter, system) and internal notes (channel note, direction internal) — never visible to the member. Bookings, payments and consents appear inline as system lines.', 'Sending and notes go through useMessaging() (src/data/comms.ts): audit_log keeps member.message / member.note as a trail without content. Opening the tab marks the member’s inbound rows read.', 'Opening a record writes member.view to audit_log (Ley 1581).', 'Práctica tab (read-only): useMemberPractice(id) — streak (StreakBadge), this week (WeekDots), classes this month / all time, last visit, the active weekly goal and milestones (MilestoneList). Same practiceStats() the member sees in C-27, so the desk and the member never read different numbers.'],
 });
 
 export const M07 = defineSpec({
@@ -316,4 +316,39 @@ export const M10 = defineSpec({
   integrations: ['Wompi', 'WhatsApp Business (Meta)', 'Email provider', 'DIAN e-invoicing provider', 'Maps', 'Supabase'],
   states: ['Loading', 'All simulated (seed)', 'Configured: fields filled, dev pending', 'Connected', 'Dirty card (unsaved)', 'Saved', 'Read-only (no settings.write)'],
   notes: ['Sections: Intro = title · status counts · keys-live-server-side notice · manual link; Cards = one IntegrationCard per system (body · what is simulated today · fields · filled count · secrets named · checklist · notes · status select · save); Order = the connection order from ROADMAP §B and where each setting lives.', 'Manual chapter 26 is written around this page: what can be promised today and the order in which the systems get connected.', 'The M-08a “Integraciones” section became a pointer to this page in 0018; the old tenants.settings.integrations statuses are superseded by the table.'],
+});
+
+/** M-12 — practice analytics (attendance and retention; no money on this page). */
+export const M12 = defineSpec({
+  code: 'M-12',
+  name: { es: 'Analítica de práctica', en: 'Practice analytics' },
+  purpose: { es: 'Cómo va el estudio en asistencia y retención: ocupación, asistencia, no-shows, horarios populares, segunda visita, quién lleva días sin venir, modalidades, profesores, logros para felicitar en persona y créditos por vencer. Sin cifras de ingresos.', en: 'How the studio is doing on attendance and retention: fill, attendance, no-shows, popular slots, second visit, who has not come in for a while, modalities, teachers, milestones to congratulate in person and credits about to expire. No revenue figures.' },
+  layout: ['KPIRow ×4', 'Heatmap', 'Retention', 'AtRiskList', 'ByModality', 'ByTeacher', 'Milestones', 'CreditsExpiring'],
+  data: ['bookings', 'class_sessions', 'memberships', 'credits', 'practice_goals', 'profiles', 'users', 'teachers', 'modalities'],
+  roles: ['super_admin', 'admin', 'coordinator', 'finance'],
+  logic: [
+    'Every number comes from studioStats() in src/data/analytics.ts through useStudioStats(range); the page computes nothing itself. Range chips 7 / 30 / 90 days, default 30.',
+    'Ocupación (fill) = seats taken (booked + checked_in + no_show) / capacity of completed classes in range.',
+    'Asistencia = checked_in / seats taken. No-shows = no_show / seats taken. Cancelaciones tardías = late_cancel / (seats taken + late_cancel).',
+    'Miembros activos = distinct users with ≥ 1 check-in in range; nuevos = their first ever check-in falls in range; visitas / semana = check-ins / active members / (range ÷ 7).',
+    'Heatmap cell = mean per-class fill of completed classes at that weekday × start hour; rows Lun–Sáb (Dom only when a Sunday class ran), columns = the hours present. 70–85 % healthy, > 90 % add a class, < 60 % for 4 weeks review the slot (research §4).',
+    'Segunda visita = members whose first visit was 30–60 days ago and who attended again within 30 days / those members (goal > 60 %).',
+    'En riesgo = active membership or live credits AND last check-in ≥ 14 days ago; band = largest of 14 / 30 / 60 / 90 ≤ days since. Sorted by days since, descending. Each row opens the M-06 record.',
+    'Por profesor = completed classes per teacher: classes, mean attendance (check-ins / classes), fill, no-show rate, new faces (first check-in with that teacher in range), regulars (≥ 3 check-ins with that teacher in range); sorted by classes.',
+    'Logros = MILESTONES (1, 5, 10, 25, 50, 100, 250) reached inside the range, newest first, first 8, each linking to M-06.',
+    'Créditos por vencer = members with a live balance whose next purchase expiry falls within 14 / 7 days (notify at 14 and 7).',
+  ],
+  integrations: [],
+  states: ['Loading (empty tables)', 'Range with no classes held', 'Nobody at risk (EmptyState)', 'No milestones in range', 'No goals set yet', 'Heatmap scrolls inside its card on phones'],
+  actions: [
+    { id: 'analytics.setRange', label: { es: 'Cambiar el rango', en: 'Change the range' }, intent: { es: 'Muéstrame la analítica de los últimos {range} días', en: 'Show me analytics for the last {range} days' }, params: { range: 'enum:7,30,90' }, permission: 'members.read' },
+    { id: 'analytics.openMember', label: { es: 'Abrir la ficha de un miembro', en: 'Open a member record' }, intent: { es: 'Abre la ficha de {userId}', en: 'Open the record of {userId}' }, params: { userId: 'string — users.id (usr_cust)' }, permission: 'members.read' },
+  ],
+  checkedAt: [390, 1280, 3840],
+  notes: [
+    'No revenue on this page: ROADMAP §E item 32 (does the coordinator see the monthly revenue KPI) is still open, so M-12 is attendance / retention only and opens for super_admin, admin, coordinator and finance — the same roles as M-01. Money stays in M-09.',
+    'Members are never ranked here. The at-risk list is an operational list for the team (who to call), not a leaderboard, and it links to the CRM record.',
+    'The per-teacher table is for studio staff only. Teachers see their own numbers against the studio average in S-03 ("Mis números"), never a list of colleagues (research §B).',
+    'At-risk here uses the 14 / 30 / 60 / 90 ladder of analytics.ts; the M-06 segment rail still uses its own 21-day rule (useMemberStats) until the two are unified.',
+  ],
 });

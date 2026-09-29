@@ -99,3 +99,30 @@
 .adm-status-actions { flex-wrap: nowrap; gap: var(--sp-sm); white-space: nowrap; }
 .adm-inset { padding: var(--sp-md); border-radius: var(--r-ctl); background: var(--color-surface); }
 .integ-manual { white-space: nowrap; }
+/* M-12 practice analytics: one column; from 1100 px the half sections pair up (Retention + AtRisk, Milestones + Credits). */
+.adm-analytics { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--sp-4); align-items: start; }
+.adm-an-sec { min-width: 0; }
+.adm-an-sec > .card { height: 100%; }
+@media (min-width: 1100px) {
+  .adm-analytics { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; }
+  .adm-an-sec[data-span="full"] { grid-column: 1 / -1; }
+}
+.adm-an-heat { min-width: 0; overflow: hidden; }
+.adm-an-guide { margin-top: var(--sp-3); }
+.adm-an-pad { padding-inline: var(--sp-3); }
+.adm-an-goals { margin-top: var(--sp-3); }
+.adm-an-name { font-weight: var(--fw-medium); overflow-wrap: anywhere; }
+.adm-an-goal { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-xs); color: var(--color-text-muted); }
+.adm-an-dot { inline-size: 8px; block-size: 8px; border-radius: 50%; background: var(--color-primary); flex: 0 0 auto; }
+.adm-an-list { display: flex; flex-direction: column; }
+/* M-06 Práctica tab */
+.member-practice { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--sp-4); align-items: start; }
+@media (max-width: 720px) { .member-practice { grid-template-columns: minmax(0, 1fr); } }
+.adm-an-rule { margin-bottom: var(--sp-3); }
+/* Phones: the modality bar drops under its label so the "89 asistencias · 9 clases" hint never squeezes the track to nothing. */
+@media (max-width: 600px) {
+  .adm-an-modality .barlist { gap: var(--sp-3); }
+  .adm-an-modality .barlist-row { grid-template-columns: minmax(0, 1fr) auto; row-gap: 4px; }
+  .adm-an-modality .barlist-track { grid-column: 1 / -1; grid-row: 2; }
+}
+.adm-an-who { display: inline-flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; }

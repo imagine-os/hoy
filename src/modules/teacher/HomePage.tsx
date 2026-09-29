@@ -20,6 +20,7 @@ import { useSessionsJoined } from '../website/hooks';
 import { useAudit } from '../staff/audit';
 import { KIND_LABEL, STATUS_LABEL } from '../staff/rooms';
 import { useTeacherSelf } from './useTeacherSelf';
+import { useStudioStats, useTeacherStats } from '../../data/useAnalytics';
 import './teacher.css';
 
 /** S-03 Teacher home: next class, today's rosters, the week, substitution request and the payroll estimate. */
@@ -87,6 +88,8 @@ export function TeacherHomePage() {
             <StatTile label={t('teacher.home.payroll')} value={formatCOP(monthTaught * rateFor(me.id, (me.specialties as string[] | undefined)?.[0] ?? null, [me], homeSettings.payroll.rateCard), lang)} hint={t('teacher.home.payroll.hint')} />
           </div>
 
+          <MyNumbers teacherId={me.id} />
+
           <section className="stack-sm">
             <div className="row-between"><div className="eyebrow">{t('core.common.today')}</div><span className="xs muted">{formatDate(now.toISOString(), lang)}</span></div>
             <Card padding="sm">
@@ -141,5 +144,39 @@ export function TeacherHomePage() {
         )}
       </Drawer>
     </div>
+  );
+}
+
+/** Reviews below this count show no average (research §3: min n = 5 before a rating means anything). */
+const MIN_REVIEWS = 5;
+
+/**
+ * S-03 "Mis números · 30 días": the teacher's own numbers from teacherStats() next to the studio average
+ * from studioStats(). Never a list or ranking of colleagues — that table lives only in M-12 for staff.
+ */
+function MyNumbers({ teacherId }: { teacherId: string }) {
+  const { t, lang } = useI18n();
+  const me = useTeacherStats(teacherId, 30);
+  const studio = useStudioStats(30);
+  const nf = new Intl.NumberFormat(lang === 'en' ? 'en-US' : 'es-CO', { maximumFractionDigits: 1 });
+  const studioAvg = studio.classesHeld ? Math.round((studio.seatsAttended / studio.classesHeld) * 10) / 10 : 0;
+  const ret = me.firstTimerReturn;
+  return (
+    <section className="stack-sm" aria-labelledby="teach-numbers">
+      <div className="row-between wrap">
+        <div className="eyebrow" id="teach-numbers">{t('teacher.numbers.title')}</div>
+        <span className="xs muted">{me.classesTaught === 1 ? t('teacher.numbers.classes.one') : t('teacher.numbers.classes', { n: me.classesTaught })}</span>
+      </div>
+      <div className="grid grid-3">
+        <StatTile label={t('teacher.numbers.fill')} value={`${me.fillRate}%`} hint={t('teacher.numbers.fill.hint', { n: studio.fillRate })} />
+        <StatTile label={t('teacher.numbers.avg')} value={t('teacher.numbers.avg.value', { n: nf.format(me.avgAttendance) })} hint={t('teacher.numbers.avg.hint', { n: nf.format(studioAvg) })} />
+        <StatTile label={t('teacher.numbers.noShow')} value={`${me.noShowRate}%`} hint={t('teacher.numbers.noShow.hint', { n: studio.noShowRate })} />
+        <StatTile label={t('teacher.numbers.newFaces')} value={me.newFaces} hint={t('teacher.numbers.newFaces.hint')} />
+        <StatTile label={t('teacher.numbers.regulars')} value={me.regulars} hint={t('teacher.numbers.regulars.hint')} />
+        <StatTile label={t('teacher.numbers.return')} value={ret.n ? `${ret.rate}%` : '—'} hint={ret.n ? t('teacher.numbers.return.hint', { returned: ret.returned, n: ret.n }) : t('teacher.numbers.return.none')} />
+        <StatTile label={t('teacher.numbers.rating')} value={me.ratingCount >= MIN_REVIEWS && me.ratingAvg != null ? `${nf.format(me.ratingAvg)} / 5` : '—'} hint={me.ratingCount >= MIN_REVIEWS ? t('teacher.numbers.rating.hint', { n: me.ratingCount }) : t('teacher.numbers.rating.few', { n: me.ratingCount })} />
+      </div>
+      <p className="xs muted">{t('teacher.numbers.private')}</p>
+    </section>
   );
 }

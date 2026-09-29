@@ -19,10 +19,14 @@ import { MessageComposer } from '../../components/molecule/MessageComposer/Messa
 import { useAudit } from '../staff/audit';
 import { maskPhone, usePeople } from '../staff/people';
 import { useMemberStats } from './CrmPage';
+import { useMemberPractice } from '../../data/useAnalytics';
+import { StreakBadge } from '../../components/molecule/StreakBadge/StreakBadge';
+import { WeekDots } from '../../components/molecule/WeekDots/WeekDots';
+import { MilestoneList } from '../../components/molecule/MilestoneList/MilestoneList';
 import './admin.css';
 
 interface ConsentRow extends BaseRow { user_id: string; legal_document_id: string; accepted_at: string }
-type Tab = 'conversation' | 'bookings' | 'payments';
+type Tab = 'conversation' | 'bookings' | 'payments' | 'practice';
 type Filter = 'all' | 'whatsapp' | 'email' | 'note' | 'system';
 const FILTERS: Filter[] = ['all', 'whatsapp', 'email', 'note', 'system'];
 
@@ -109,7 +113,7 @@ export function MemberPage() {
         <StatTile label={t('admin.crm.col.risk')} value={t(`admin.crm.risk.${stats?.risk ?? 'low'}`)} trend={stats?.risk === 'high' ? 'down' : stats?.risk === 'medium' ? 'flat' : 'up'} hint={t('admin.member.risk.hint')} />
       </div>
       <div className="row wrap" role="tablist">
-        {(['conversation', 'bookings', 'payments'] as Tab[]).filter((x) => x !== 'payments' || canPayments).map((x) => <Chip key={x} selected={tab === x} onClick={() => setTab(x)}>{t(`admin.member.tab.${x}`)}{x === 'conversation' && unread > 0 ? ` · ${unread}` : ''}</Chip>)}
+        {(['conversation', 'bookings', 'payments', 'practice'] as Tab[]).filter((x) => x !== 'payments' || canPayments).map((x) => <Chip key={x} selected={tab === x} onClick={() => setTab(x)}>{t(`admin.member.tab.${x}`)}{x === 'conversation' && unread > 0 ? ` · ${unread}` : ''}</Chip>)}
       </div>
       {tab === 'conversation' && (
         <Card padding="sm" className="member-conv">
@@ -128,7 +132,46 @@ export function MemberPage() {
       )}
       {tab === 'bookings' && <DataTable columns={bookingCols} rows={[...active].sort((a, b) => (sess.get(b.session_id)?.starts_at ?? '').localeCompare(sess.get(a.session_id)?.starts_at ?? ''))} rowKey={(r) => r.id} dense emptyText={t('admin.member.bookings.empty')} />}
       {tab === 'payments' && canPayments && <DataTable columns={paymentCols} rows={payments} rowKey={(r) => r.id} dense emptyText={t('admin.member.payments.empty')} />}
+      {tab === 'practice' && <PracticeTab userId={person.id} />}
       <p className="xs muted">{t('admin.member.viewLogged')}</p>
     </div>
+  );
+}
+
+const EN_DAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+
+/** M-06 Práctica tab — read-only: the member's own practiceStats() (streak, this week, counts, goal, milestones), as they see it in C-27. */
+function PracticeTab({ userId }: { userId: string }) {
+  const { t, lang } = useI18n();
+  const { stats: p } = useMemberPractice(userId);
+  const unit = (n: number) => t(n === 1 ? 'admin.member.practice.week' : 'admin.member.practice.weeks');
+  const classes = (n: number) => (n === 1 ? t('admin.member.practice.classes.one') : t('admin.member.practice.classes', { n }));
+  const days = p.daysSinceLastVisit;
+  const lastHint = days == null ? t('admin.member.practice.last.never') : days === 0 ? t('admin.member.practice.last.today') : days === 1 ? t('admin.member.practice.last.one') : t('admin.member.practice.last.days', { n: days });
+  return (
+    <Card title={t('admin.member.tab.practice')}>
+      <div className="stack">
+        <div className="member-practice">
+          <div className="stack-sm">
+            <div className="eyebrow">{t('admin.member.practice.streak')}</div>
+            <StreakBadge count={p.streak.count} unit={unit(p.streak.count)} state={p.streak.state} best={p.hasGoal ? p.streak.best : undefined} bestLabel={t('admin.member.practice.best')} hint={t(`admin.member.practice.state.${p.streak.state}`)} />
+            <div className="eyebrow">{t('admin.member.practice.thisWeek')}</div>
+            <WeekDots days={p.thisWeek.days} target={p.thisWeek.target} attended={p.thisWeek.attended} labels={lang === 'en' ? EN_DAYS : undefined}>
+              {p.hasGoal ? t('admin.member.practice.thisWeek.goal', { n: p.thisWeek.attended, m: p.thisWeek.target }) : t('admin.member.practice.thisWeek.noGoal', { n: p.thisWeek.attended })}
+            </WeekDots>
+          </div>
+          <div className="grid grid-2">
+            <StatTile label={t('admin.member.practice.month')} value={p.attendedThisMonth} />
+            <StatTile label={t('admin.member.practice.total')} value={p.attendedAllTime} />
+            <StatTile label={t('admin.member.practice.last')} value={p.lastVisit ? formatDate(p.lastVisit, lang, { day: 'numeric', month: 'short' }) : '—'} hint={lastHint} />
+            <StatTile label={t('admin.member.practice.goal')} value={p.hasGoal ? t('admin.member.practice.goal.value', { n: p.target }) : t('admin.member.practice.goal.none')} hint={t('admin.member.practice.goal.hint')} />
+          </div>
+        </div>
+        {p.milestonesReached.length === 0 && !p.nextMilestone
+          ? <p className="small muted">{t('admin.member.practice.noMilestones')}</p>
+          : <MilestoneList reached={p.milestonesReached} next={p.nextMilestone} labels={{ reached: t('admin.member.practice.milestones'), next: t('admin.member.practice.next'), remaining: (n) => t('admin.member.practice.remaining', { n }), classes }} />}
+        <p className="xs muted">{t('admin.member.practice.readOnly')}</p>
+      </div>
+    </Card>
   );
 }

@@ -2,7 +2,7 @@ import { lazyPages } from '../../app/lazyPage';
 import type { RouteDef } from '../../specs/types';
 import type { Role } from '../../auth/roles';
 import { canvasSpecs } from '../../specs/canvasSpecs';
-import { M01, M02, M02a, M02b, M02c, M02d, M04, M05, M06, M07, M08a, M08b, M08c, M08d, M08e, M08f, M09, M09a, M09b, M09c, M10, M11 } from './specs';
+import { M01, M02, M02a, M02b, M02c, M02d, M04, M05, M06, M07, M08a, M08b, M08c, M08d, M08e, M08f, M09, M09a, M09b, M09c, M10, M11, M12 } from './specs';
 export { strings } from './strings';
 // Admin pages (M-xx): one chunk for staff who open /admin.
 const page = lazyPages(() => import('./pages'));
@@ -17,6 +17,8 @@ const tablesRoles: Role[] = ['super_admin', 'finance', 'developer'];
 
 export const routes: RouteDef[] = [
   { ...base, path: '/admin', roles: [...admins, 'coordinator', 'finance'], element: page('DashboardPage'), spec: M01, nav: { labelKey: 'core.nav.dashboard', icon: 'dashboard', order: 10, group: G } },
+  // M-12: attendance / retention only (no revenue) — same roles as M-01 while ROADMAP §E 32 is open.
+  { ...base, path: '/admin/analytics', roles: M12.roles, element: page('AnalyticsPage'), spec: M12, nav: { labelKey: 'admin.analytics.nav', icon: 'gauge', order: 10.5, group: G } },
   { ...base, path: '/admin/content', roles: content, element: page('ContentPage'), spec: M02, nav: { labelKey: 'core.nav.content', icon: 'content', order: 11, group: G } },
   { ...base, path: '/admin/content/articles', roles: content, element: page('ArticlesPage'), spec: M02a },
   { ...base, path: '/admin/content/faq', roles: content, element: page('FaqAdminPage'), spec: M02b },
