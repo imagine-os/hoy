@@ -20,6 +20,7 @@ import { maskPhone, usePeople } from '../staff/people';
 import { useSettings } from '../admin/settings';
 import { useTeacherSelf } from './useTeacherSelf';
 import './teacher.css';
+import { Icon } from '../../components/atom/Icon/Icon';
 
 const OPEN_BEFORE_MS = 15 * MS.min;
 const OPEN_AFTER_MS = 2 * MS.hour;
@@ -77,7 +78,7 @@ export function TeacherClassPage() {
 
   return (
     <div className="container page stack teach">
-      <Link to="/teach" className="small">← {t('core.nav.back')}</Link>
+      <Link to="/teach" className="small" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><Icon name="arrow-left" size="sm" /> {t('core.nav.back')}</Link>
       <Card tone="primary" className="teach-head">
         <div className="row wrap"><Chip movement={modality?.movement ?? 'fluye'} dot>{session.title}</Chip>{session.status !== 'scheduled' && <Badge tone={session.status === 'completed' ? 'primary' : 'danger'}>{session.status}</Badge>}</div>
         <div className="teach-head-time">{formatDate(session.starts_at, lang, { weekday: 'long', day: 'numeric', month: 'long' })} · {formatTime(session.starts_at, lang)}–{formatTime(session.ends_at, lang)}</div>
@@ -91,8 +92,8 @@ export function TeacherClassPage() {
           <div className="xs muted">{canMark && !inWindow ? t('teacher.class.window.override') : lockReason ?? t('teacher.class.window.rule')}</div>
         </div>
         <div className="row wrap">
-          {canMark && active.some((b) => b.status === 'booked') && <Button size="sm" variant="secondary" onClick={markAll}>{t('teacher.class.markAll')}</Button>}
-          {canMark && session.status === 'scheduled' && now >= start && <Button size="sm" onClick={complete}>{t('teacher.class.complete')}</Button>}
+          {canMark && active.some((b) => b.status === 'booked') && <Button size="sm" variant="secondary" onClick={markAll} icon="list-checks">{t('teacher.class.markAll')}</Button>}
+          {canMark && session.status === 'scheduled' && now >= start && <Button size="sm" onClick={complete} icon="circle-check">{t('teacher.class.complete')}</Button>}
         </div>
       </Card>
 
@@ -107,8 +108,8 @@ export function TeacherClassPage() {
               const late = !!b.checked_in_at && new Date(b.checked_in_at).getTime() > start + graceMs;
               return <RosterRow key={b.id} name={p?.name ?? b.user_id} initials={p?.initials} phone={isMine ? undefined : maskPhone(p?.phone)} plan={b.paid_with} status={b.status as 'booked' | 'checked_in' | 'no_show'} late={late} flag={p?.notes ?? undefined} time={b.checked_in_at ? formatTime(b.checked_in_at, lang) : undefined}
                 actions={canMark && (b.status === 'booked'
-                  ? <><Button size="sm" loading={busy === b.id} onClick={() => mark(b, 'checked_in')}>{t('teacher.class.present.mark')}</Button><Button size="sm" variant="ghost" onClick={() => mark(b, 'no_show')}>{t('teacher.class.absent.mark')}</Button></>
-                  : <Button size="sm" variant="ghost" onClick={() => mark(b, 'booked')}>{t('staff.checkin.undo')}</Button>)} />;
+                  ? <><Button size="sm" loading={busy === b.id} onClick={() => mark(b, 'checked_in')} icon="user-check">{t('teacher.class.present.mark')}</Button><Button size="sm" variant="ghost" onClick={() => mark(b, 'no_show')} icon="user-x">{t('teacher.class.absent.mark')}</Button></>
+                  : <Button size="sm" variant="ghost" onClick={() => mark(b, 'booked')} icon="undo">{t('staff.checkin.undo')}</Button>)} />;
             })}
           </Card>
         )}
@@ -130,7 +131,7 @@ export function TeacherClassPage() {
         <Card>
           <div className="stack-sm">
             <textarea className="input" rows={3} value={note} onChange={(e) => setNote(e.target.value)} placeholder={t('teacher.class.notes.ph')} aria-label={t('teacher.class.notes')} />
-            <div className="row-between wrap"><span className="xs muted">{t('teacher.class.notes.hint')}</span><Button size="sm" disabled={!note.trim()} onClick={addNote}>{t('teacher.class.notes.add')}</Button></div>
+            <div className="row-between wrap"><span className="xs muted">{t('teacher.class.notes.hint')}</span><Button size="sm" disabled={!note.trim()} onClick={addNote} icon="notes">{t('teacher.class.notes.add')}</Button></div>
             <Timeline items={notes.map((n) => ({ id: n.id, at: n.created_at, kind: 'note' as const, title: String(n.diff?.author ?? ''), body: String(n.diff?.note ?? '') }))} emptyText={t('teacher.class.notes.empty')} />
           </div>
         </Card>

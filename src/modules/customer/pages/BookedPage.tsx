@@ -100,8 +100,8 @@ export function BookedPage({ change = false }: { change?: boolean }) {
     ) : null,
     AddToCalendar: () => active ? (
       <div className="row" style={{ justifyContent: 'center' }}>
-        <Button variant="ghost" size="sm" icon="▦" onClick={addToCalendar}>{t('customer.booked.addToCalendar')}</Button>
-        <Button variant="ghost" size="sm" icon="⇪" onClick={share}>{t('customer.class.share')}</Button>
+        <Button variant="ghost" size="sm" icon="calendar-plus" onClick={addToCalendar}>{t('customer.booked.addToCalendar')}</Button>
+        <Button variant="ghost" size="sm" icon="share" onClick={share}>{t('customer.class.share')}</Button>
       </div>
     ) : null,
     PolicyNote: () => active ? (
@@ -161,8 +161,8 @@ function ChangeSheet({ open, onClose, booking, joined, inside, deadline, onResul
 
         {mode === 'menu' && (
           <ListGroup>
-            <ListRow icon="⇄" title={t('customer.change.move')} subtitle={t('customer.change.move.sub')} onClick={() => setMode('move')} />
-            <ListRow icon="×" tone="danger" title={t('customer.change.drop')} subtitle={inside ? t('customer.change.drop.sub.inside') : t('customer.change.drop.sub')} onClick={() => setMode('cancel')} />
+            <ListRow icon="move" title={t('customer.change.move')} subtitle={t('customer.change.move.sub')} onClick={() => setMode('move')} />
+            <ListRow icon="cancel" tone="danger" title={t('customer.change.drop')} subtitle={inside ? t('customer.change.drop.sub.inside') : t('customer.change.drop.sub')} onClick={() => setMode('cancel')} />
           </ListGroup>
         )}
         {mode === 'move' && (

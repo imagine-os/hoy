@@ -10,8 +10,8 @@ const roles: Role[] = ['teacher', 'coordinator', 'admin'];
 const base = { roles, surface: 'teacher' as const, layout: 'mobile' as const };
 
 export const routes: RouteDef[] = [
-  { ...base, path: '/teach', element: page('TeacherHomePage'), spec: S03, nav: { labelKey: 'core.nav.classes', icon: '▦', order: 1 } },
+  { ...base, path: '/teach', element: page('TeacherHomePage'), spec: S03, nav: { labelKey: 'core.nav.classes', icon: 'classes', order: 1 } },
   { ...base, path: '/teach/class/:id', element: page('TeacherClassPage'), spec: S03Class },
-  { ...base, roles: [...roles, 'finance'], path: '/teach/payroll', element: page('TeacherPayrollPage'), spec: S03Payroll, nav: { labelKey: 'core.nav.payroll', icon: '◇', order: 2 } },
-  { ...base, path: '/teach/profile', element: page('TeacherProfilePage'), spec: S03Profile, nav: { labelKey: 'core.nav.profile', icon: '◯', order: 3 } },
+  { ...base, roles: [...roles, 'finance'], path: '/teach/payroll', element: page('TeacherPayrollPage'), spec: S03Payroll, nav: { labelKey: 'core.nav.payroll', icon: 'payroll', order: 2 } },
+  { ...base, path: '/teach/profile', element: page('TeacherProfilePage'), spec: S03Profile, nav: { labelKey: 'core.nav.profile', icon: 'profile', order: 3 } },
 ];

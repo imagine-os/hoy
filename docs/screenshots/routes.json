@@ -2140,7 +2140,7 @@
     "AnnouncementCard (if active)",
     "NextClassCard + countdown",
     "QuickActions ×4",
-    "TodayList (intention-sorted)",
+    "TodayList",
     "StatsRow ×3",
     "EventsStrip → BottomNav"
    ],
@@ -2163,7 +2163,7 @@
     "Feedback prompt appears only for a class attended in the last 72h and not yet rated.",
     "Membership nudge hides for active members and for staff.",
     "Countdown shows under 24h, otherwise the weekday.",
-    "Today's list re-orders by the day's intention tags."
+    "Today's list is in start-time order (the A-05 intention sort was retired in 0030)."
    ],
    "integrations": [],
    "states": [
@@ -2204,6 +2204,9 @@
    ],
    "layerTree": "Home\n├ TopBar (logo, avatar, bell)\n├ FeedbackPrompt (conditional)\n├ MembershipNudge (if no plan)\n├ AnnouncementCard (if active)\n├ NextClassCard + countdown\n├ QuickActions ×4\n├ TodayList (intention-sorted)\n├ StatsRow ×3\n└ EventsStrip → BottomNav",
    "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-01",
+   "notes": [
+    "0030: the “¿Cómo quieres sentirte hoy?” card left the home; quick actions and the dock use the Icon set."
+   ],
    "actions": [
     {
      "id": "app.goHome",
@@ -4677,83 +4680,6 @@
    "notes": [
     "Reached from C-19 (Cuenta y datos) and C-25. The public counterpart with no sign-in is W-09 (/site/delete-account); the admin queue is M-11.",
     "Apple App Store 5.1.1(v) and Google Play both require in-app account deletion to be discoverable; the page sits one tap under Profile and is named in the compliance checklist (docs/app-store-compliance.md)."
-   ]
-  }
- },
- {
-  "path": "/app/intention",
-  "code": "A-05",
-  "surface": "customer",
-  "status": "built",
-  "roles": [
-   "customer",
-   "teacher"
-  ],
-  "spec": {
-   "code": "A-05",
-   "name": {
-    "es": "Intención del día — ¿Cómo quieres sentirte hoy?",
-    "en": "Intention check — ¿Cómo quieres sentirte hoy?"
-   },
-   "purpose": {
-    "es": "Preguntar cómo quiere sentirse hoy la persona y usar esa intención para ordenar las clases del día.",
-    "en": "The signature moment of the product. One question, four verbs; the choice re-orders the home feed and the recommended classes for the session. The verbs are what the student wants to do, and each resolves to one of the four movement tags the rest of the system already colours by."
-   },
-   "layout": [
-    "Question",
-    "MovementPicker ×4",
-    "Explanation",
-    "SkipLink"
-   ],
-   "data": [
-    "intentions"
-   ],
-   "roles": [
-    "customer",
-    "teacher"
-   ],
-   "logic": [
-    "Shown once per day on first open; skippable.",
-    "Each verb maps to exactly one movement tag — Muévete→Arde, Respira→Fluye, Equilíbrate→Enraíza, Conecta→Libera — so the icon colour here matches the chip colour on every class card.",
-    "Selection tags the session and sorts Today's Classes by matching class_tags.",
-    "Stored as a time series — becomes a mood/practice insight later.",
-    "Copy stays in Spanish in both locales; it is brand voice, not UI text."
-   ],
-   "integrations": [
-    "Supabase Auth"
-   ],
-   "states": [
-    "no intention yet",
-    "already answered today"
-   ],
-   "toggles": [
-    {
-     "label": "Intention check",
-     "on": true
-    },
-    {
-     "label": "Ask once per day",
-     "on": true
-    },
-    {
-     "label": "Use intention in recommendations",
-     "on": true
-    }
-   ],
-   "story": "As a student opening the app I tap Respira and today's list leads with the slower classes.",
-   "api": [
-    "POST /me/intention",
-    "GET /classes?intent=",
-    "GET /me/intentions/history"
-   ],
-   "layerTree": "IntentionCheck\n├ Greeting (first name)\n├ Question (display serif)\n├ Subtitle (italic)\n├ IntentionGrid 2×2\n│ ├ Muévete → arde · hot, vinyasa, cardio\n│ ├ Respira → fluye · restorative, yin, breathwork\n│ ├ Equilíbrate → enraiza · strength, barre, core\n│ └ Conecta → libera · community, workshops, events\n└ SkipLink",
-   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#A-05",
-   "notes": [],
-   "actions": [],
-   "checkedAt": [
-    390,
-    1280,
-    3840
    ]
   }
  },

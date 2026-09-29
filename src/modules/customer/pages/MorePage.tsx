@@ -11,6 +11,7 @@ import { useEntitlements, useMyProfile } from '../hooks';
 import { policy } from '../policy';
 import { PageHead } from '../ui';
 import { waLink } from '../../../i18n/format';
+import { Icon } from '../../../components/atom/Icon/Icon';
 
 /** C-25 More — profile, rules, contact and everything one level down. */
 export function MorePage() {
@@ -33,26 +34,26 @@ export function MorePage() {
             <strong>{name}</strong>
             <div className="row wrap small muted">{planLine}{ent.membership?.status !== 'active' && <span>· {t('customer.checkout.credit.sub', { n: ent.creditBalance })}</span>}{!ent.membership && <Badge tone="highlight">{t('customer.more.planPrompt')}</Badge>}</div>
           </div>
-          <span className="listrow-chevron" aria-hidden>›</span>
+          <span className="listrow-chevron" aria-hidden><Icon name="chevron-right" size="sm" /></span>
         </Card>
 
         <ListGroup>
-          <ListRow icon="◯" title={t('core.nav.profile')} subtitle={`${t('customer.profile.edit')} · ${t('customer.membership.title')}`} to="/app/profile" />
-          <ListRow icon="◇" title={t('core.nav.plans')} subtitle={t('customer.more.plans.sub')} to="/app/plans" />
-          <ListRow icon="▧" title={t('customer.rules.title')} subtitle={t('customer.more.rules.sub')} to="/app/rules" />
-          <ListRow icon="◎" title={t('customer.more.whatsapp')} subtitle={`${contact.whatsapp} · ${bi(policy.replyWindow)}`} href={waLink(contact.whatsapp, t('customer.more.whatsapp.text', { name: name.split(' ')[0] }))} />
-          <ListRow icon="✉" title={t('customer.more.email')} subtitle={contact.email} href={`mailto:${contact.email}`} />
+          <ListRow icon="profile" title={t('core.nav.profile')} subtitle={`${t('customer.profile.edit')} · ${t('customer.membership.title')}`} to="/app/profile" />
+          <ListRow icon="ticket" title={t('core.nav.plans')} subtitle={t('customer.more.plans.sub')} to="/app/plans" />
+          <ListRow icon="policies" title={t('customer.rules.title')} subtitle={t('customer.more.rules.sub')} to="/app/rules" />
+          <ListRow icon="whatsapp" title={t('customer.more.whatsapp')} subtitle={`${contact.whatsapp} · ${bi(policy.replyWindow)}`} href={waLink(contact.whatsapp, t('customer.more.whatsapp.text', { name: name.split(' ')[0] }))} />
+          <ListRow icon="mail" title={t('customer.more.email')} subtitle={contact.email} href={`mailto:${contact.email}`} />
         </ListGroup>
 
         <ListGroup>
-          <ListRow icon="✉" title={t('customer.invite.title')} to="/app/invite" />
-          <ListRow icon="▣" title={t('customer.gift.title')} to="/app/gift" />
-          <ListRow icon="✦" title={t('customer.events.title')} to="/app/events" />
-          <ListRow icon="☺" title={t('customer.teachers.title')} to="/app/teachers" />
-          <ListRow icon="?" title={t('customer.faq.title')} to="/app/faq" />
-          <ListRow icon="▭" title={t('customer.pay.title')} to="/app/payment-methods" />
-          <ListRow icon="◉" title={t('customer.notifications.title')} to="/app/notifications" />
-          <ListRow icon="▣" title={t('customer.account.title')} subtitle={t('customer.account.sub')} to="/app/account" />
+          <ListRow icon="invite" title={t('customer.invite.title')} to="/app/invite" />
+          <ListRow icon="gift" title={t('customer.gift.title')} to="/app/gift" />
+          <ListRow icon="sparkle" title={t('customer.events.title')} to="/app/events" />
+          <ListRow icon="users" title={t('customer.teachers.title')} to="/app/teachers" />
+          <ListRow icon="help" title={t('customer.faq.title')} to="/app/faq" />
+          <ListRow icon="credit-card" title={t('customer.pay.title')} to="/app/payment-methods" />
+          <ListRow icon="bell" title={t('customer.notifications.title')} to="/app/notifications" />
+          <ListRow icon="user-cog" title={t('customer.account.title')} subtitle={t('customer.account.sub')} to="/app/account" />
         </ListGroup>
 
         {devMode && (
@@ -65,7 +66,7 @@ export function MorePage() {
         )}
 
         <ListGroup>
-          <ListRow icon="⏻" title={t('customer.profile.signOut')} onClick={() => { switchUser('public'); nav('/auth/sign-in'); }} />
+          <ListRow icon="log-out" title={t('customer.profile.signOut')} onClick={() => { switchUser('public'); nav('/auth/sign-in'); }} />
         </ListGroup>
         <p className="xs muted" style={{ textAlign: 'center' }}>{tenant.legalName} · {tenant.city} · {bi(tenant.hours)}</p>
       </div>

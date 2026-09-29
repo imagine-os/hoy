@@ -130,6 +130,24 @@ Fields: **Date**, **Status** (accepted · superseded by D-NNNN), **Context**, **
   numbers that drift. Also rejected: CSS `zoom` on the root — it scales fixed-px art and the DeviceFrame maths too,
   and its `vh`/`getBoundingClientRect` behaviour still differs between engines.
 
+### D-0008 — One icon set: lucide glyphs behind the `Icon` atom
+
+- **Date** 2026-09-29 · **Status** accepted · **Changelog** `docs/changelog/0030-icons.md`
+- **Context.** Justin: the bottom-tray and other icons in the customer and teacher apps, the front-desk action icons
+  and the settings icons "should be better". Nav, list rows, buttons and timelines used literal Unicode characters
+  (⌂ ▦ ▤ ⋯ ◇ ✉ ☏ ⚙ $) that draw differently per platform font, carry no weight or active state, and in several places
+  (front-desk quick actions, settings sections) there was no icon at all. The in-house `Icon` atom had 29 glyphs,
+  used only by the hub.
+- **Decision.** Adopt `lucide-react` (ISC, ~1.5k consistent 24 px rounded-cap glyphs) **behind** the existing `Icon`
+  atom: `ICONS` maps 135 product names (`home`, `schedule`, `checkin`, `user-plus`, `promote`, `policies`, …) to lucide
+  components, imported by name so only those glyphs ship. The `name` prop API and the 29 existing names are kept, so
+  hub call sites did not change; `RouteDef.nav.icon` is typed `IconName`; the `icon` slots of Button, ListRow, Card,
+  EmptyState, Notice and NavBar accept a name. Stroke and sizes are D-01 tokens (`--icon-*`).
+- **Alternative rejected.** Extending the hand-drawn set to ~130 glyphs — weeks of drawing and review to reach the
+  consistency lucide already has, and every new screen would wait on a new drawing. Also rejected: an icon font
+  (Material Symbols) — a font download, a FOUT on first paint and ligature names that fail silently; and importing
+  lucide directly in pages — it would scatter the seam and make a later swap a repo-wide edit.
+
 ---
 **Resumen (ES).** Este archivo es la lista corta y citable de las decisiones de ingeniería, una por
 bloque, solo se añade: una decisión que deja de ser cierta se reemplaza con un bloque nuevo, nunca

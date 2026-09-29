@@ -19,7 +19,6 @@ export { MembershipPage } from './pages/MembershipPage';
 export { EventPage, EventsListPage } from './pages/EventPage';
 export { NotificationsPage } from './pages/NotificationsPage';
 export { MorePage } from './pages/MorePage';
-export { IntentionPage } from './pages/IntentionPage';
 export { LegalAppPage } from './legal';
 export { AccountPage } from './pages/AccountPage';
 export { CancelledDemoPage, DeclinedDemoPage, EmptyHomePage } from './pages/StatePages';

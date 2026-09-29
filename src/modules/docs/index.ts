@@ -25,6 +25,6 @@ const page = lazyPages(() => import('./pages'));
 const el = () => page('DocsBrowser');
 
 export const routes: RouteDef[] = [
-  { path: '/docs', element: el(), spec: docsSpec, roles: EVERYONE, surface: 'docs', layout: 'desktop', nav: { labelKey: 'core.nav.docs', icon: '❡', order: 1 } },
+  { path: '/docs', element: el(), spec: docsSpec, roles: EVERYONE, surface: 'docs', layout: 'desktop', nav: { labelKey: 'core.nav.docs', icon: 'docs', order: 1 } },
   { path: '/docs/*', element: el(), spec: docsSpec, roles: EVERYONE, surface: 'docs', layout: 'desktop' },
 ];

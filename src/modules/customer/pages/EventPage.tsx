@@ -28,11 +28,11 @@ export function EventsListPage() {
       <PageHead back="/app/more" title={t('customer.events.title')} sub={t('customer.events.sub')} />
       <div className="stack">
         {loading && events.length === 0 && <EmptyState compact tone="loading" title={t('core.common.loading')} />}
-        {!loading && events.length === 0 && <EmptyState icon="✦" title={t('customer.events.empty')} body={t('customer.events.empty.body')} />}
+        {!loading && events.length === 0 && <EmptyState icon="ticket" title={t('customer.events.empty')} body={t('customer.events.empty.body')} />}
         {events.length > 0 && (
           <ListGroup>
             {events.map(({ event: e, taken, mine }) => (
-              <ListRow key={e.id} icon="✦" title={bi(e.title)}
+              <ListRow key={e.id} icon="ticket" title={bi(e.title)}
                 subtitle={`${formatDate(e.starts_at, lang, { weekday: 'short', day: 'numeric', month: 'short' })} · ${formatTime(e.starts_at, lang)} · ${bi(e.kind)}`}
                 trailing={mine ? <Badge tone="success">{t('customer.events.going')}</Badge> : <span className="small muted">{Math.max(0, e.capacity - taken)} {t('customer.events.spots')}</span>}
                 to={`/app/events/${e.id}`} />
@@ -100,8 +100,8 @@ export function EventPage() {
         </Card>
         {ev.bring && ev.bring.length > 0 && <Card tone="muted" eyebrow={t('customer.events.bring')}><ul className="cust-checklist small">{ev.bring.map((b, i) => <li key={i}>{bi(b)}</li>)}</ul></Card>}
         <ListGroup>
-          <ListRow icon="✉" title={t('customer.events.friend')} subtitle={t('customer.events.friend.sub')} to="/app/invite" />
-          <ListRow icon="▦" title={t('customer.booked.addToCalendar')} onClick={() => downloadIcs({ title: `${bi(ev.title)} · ${tenant.name}`, startsAt: ev.starts_at, endsAt: ev.ends_at, location: tenant.name })} />
+          <ListRow icon="invite" title={t('customer.events.friend')} subtitle={t('customer.events.friend.sub')} to="/app/invite" />
+          <ListRow icon="calendar-plus" title={t('customer.booked.addToCalendar')} onClick={() => downloadIcs({ title: `${bi(ev.title)} · ${tenant.name}`, startsAt: ev.starts_at, endsAt: ev.ends_at, location: tenant.name })} />
         </ListGroup>
         <div className="cust-sticky">
           {mine ? <Notice tone="success" title={t('customer.events.going')} action={<Button size="sm" variant="ghost" onClick={() => { void cancel(mine); }}>{t('customer.events.cancel')}</Button>}>{t('customer.events.going.body')}</Notice>

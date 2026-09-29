@@ -12,11 +12,11 @@ const base = { roles, surface: 'staff' as const, layout: 'desktop' as const };
 const G = 'core.nav.group.staff';
 
 export const routes: RouteDef[] = [
-  { ...base, path: '/staff', element: page('StaffHomePage'), spec: S01, nav: { labelKey: 'core.nav.home', icon: '⌂', order: 1, group: G } },
+  { ...base, path: '/staff', element: page('StaffHomePage'), spec: S01, nav: { labelKey: 'core.nav.home', icon: 'home', order: 1, group: G } },
   // Static /staff/inbox before the :id param (React Router v6 ranks it higher anyway; the order keeps the intent visible).
-  { ...base, roles: desk, path: '/staff/inbox', element: page('InboxPage'), spec: S06, nav: { labelKey: 'core.nav.inbox', icon: '✉', order: 1.5, group: G } },
+  { ...base, roles: desk, path: '/staff/inbox', element: page('InboxPage'), spec: S06, nav: { labelKey: 'core.nav.inbox', icon: 'inbox', order: 1.5, group: G } },
   { ...base, roles: desk, path: '/staff/inbox/:id', element: page('InboxPage'), spec: S06 },
-  { ...base, roles: desk, path: '/staff/checkin', element: page('CheckinPage'), spec: S02, nav: { labelKey: 'core.nav.checkin', icon: '✓', order: 2, group: G } },
-  { ...base, roles: desk, path: '/staff/register', element: page('RegisterPage'), spec: S04, nav: { labelKey: 'core.nav.register', icon: '$', order: 3, group: G } },
-  { ...base, roles: desk, path: '/staff/rooms', element: page('RoomsPage'), spec: S05, nav: { labelKey: 'core.nav.rooms', icon: '▭', order: 4, group: G } },
+  { ...base, roles: desk, path: '/staff/checkin', element: page('CheckinPage'), spec: S02, nav: { labelKey: 'core.nav.checkin', icon: 'checkin', order: 2, group: G } },
+  { ...base, roles: desk, path: '/staff/register', element: page('RegisterPage'), spec: S04, nav: { labelKey: 'core.nav.register', icon: 'register', order: 3, group: G } },
+  { ...base, roles: desk, path: '/staff/rooms', element: page('RoomsPage'), spec: S05, nav: { labelKey: 'core.nav.rooms', icon: 'rooms', order: 4, group: G } },
 ];

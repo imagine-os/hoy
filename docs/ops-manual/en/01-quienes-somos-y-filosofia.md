@@ -62,11 +62,13 @@ class a day.
 
 {{tenant:capacity}}
 
-The product's central question is "¿Cómo quieres sentirte hoy?" — how do you want to feel today
-(screen A-05). Everything we do in the studio answers it: the person arrives wanting to feel a certain
+The studio's central question is "¿Cómo quieres sentirte hoy?" — how do you want to feel today.
+Everything we do in the studio answers it: the person arrives wanting to feel a certain
 way, and we make the path easy.
 
-![The question the member app opens with](../../screenshots/A-05/en-390.jpg "A-05 · /app/intention")
+![The member app home: the next class and today's classes](../../screenshots/C-01/en-390.jpg "C-01 · /app")
+
+_The app screen that asked this question (A-05) was retired in version 0.12.0; the question lives at the front desk and in class, not in a form._
 
 ## 4. Conscious controls
 We promise four things and we keep them. They are not slogans: they are values stored in M-08 and the

@@ -10,6 +10,7 @@ import { Input } from '../../atom/Input/Input';
 import { EmptyState } from '../../molecule/EmptyState/EmptyState';
 import { CHANNEL_GLYPH } from '../../molecule/ChatBubble/ChatBubble';
 import './ConversationList.css';
+import { Icon } from '../../atom/Icon/Icon';
 
 /** One row of the inbox: the person and their latest message. */
 export interface ConversationSummary {
@@ -81,7 +82,7 @@ export function ConversationList({ conversations, selectedKey, linkTo, compact =
                 <Avatar name={c.name} initials={c.initials} size={40} />
                 <span className="convrow-main">
                   <span className="convrow-top"><span className="convrow-name">{c.name}</span><time className="convrow-time xs" dateTime={c.lastAt}>{formatRelative(c.lastAt, lang)}</time></span>
-                  <span className="convrow-bottom"><span className="convrow-glyph" aria-hidden>{CHANNEL_GLYPH[c.channel]}</span><span className="convrow-snippet">{c.snippet}</span>{c.unread > 0 && <Badge tone="primary" className="convrow-badge">{c.unread}</Badge>}</span>
+                  <span className="convrow-bottom"><span className="convrow-glyph" aria-hidden><Icon name={CHANNEL_GLYPH[c.channel]} size={14} /></span><span className="convrow-snippet">{c.snippet}</span>{c.unread > 0 && <Badge tone="primary" className="convrow-badge">{c.unread}</Badge>}</span>
                 </span>
               </Link>
             </li>

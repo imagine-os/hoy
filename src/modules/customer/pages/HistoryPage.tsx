@@ -45,7 +45,7 @@ export function HistoryPage() {
 
   return (
     <div className="container page cust-page">
-      <PageHead title={t('customer.history.title')} sub={t('customer.history.sub')} actions={<Button size="sm" variant="secondary" icon="⇩" onClick={exportAll}>{t('customer.history.export')}</Button>} />
+      <PageHead title={t('customer.history.title')} sub={t('customer.history.sub')} actions={<Button size="sm" variant="secondary" icon="download" onClick={exportAll}>{t('customer.history.export')}</Button>} />
       <div className="stack">
         <SegmentedControl block ariaLabel={t('customer.history.title')} value={tab} onChange={(v) => setParams(v === 'payments' ? { tab: 'payments' } : {}, { replace: true })} options={[{ value: 'classes', label: t('customer.history.classes'), count: classes.length }, { value: 'payments', label: t('customer.history.payments'), count: payments.length }]} />
 
@@ -65,7 +65,7 @@ export function HistoryPage() {
           <ListGroup>
             {payments.length === 0 && <EmptyState compact title={t('customer.history.payments.empty')} />}
             {payments.map((p) => (
-              <ListRow key={p.id} icon={p.provider === 'wompi' ? '◎' : '$'} title={planName(p.plan_id)} subtitle={`${formatDate(p.paid_at ?? p.created_at, lang)} · ${t(`customer.pay.method.${p.method}`)} · ${p.provider === 'wompi' ? 'Wompi' : t('customer.pay.manual')}`}
+              <ListRow key={p.id} icon={p.provider === 'wompi' ? 'credit-card' : 'cash'} title={planName(p.plan_id)} subtitle={`${formatDate(p.paid_at ?? p.created_at, lang)} · ${t(`customer.pay.method.${p.method}`)} · ${p.provider === 'wompi' ? 'Wompi' : t('customer.pay.manual')}`}
                 trailing={<span className="stack-sm" style={{ alignItems: 'flex-end' }}><strong>{formatCOP(p.amount, lang)}</strong><Badge tone={toneForStatus(p.status)}>{t(`customer.history.pay.${p.status}`)}</Badge></span>} onClick={() => setReceipt(p)} />
             ))}
           </ListGroup>

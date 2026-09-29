@@ -27,6 +27,7 @@ import { DeclinedBlock, type DeclinedState } from './blocks';
 import { SplitSections } from '../split';
 import { useActions } from '../../../actions';
 import { need, useAppNavHandlers } from '../actions';
+import { Icon } from '../../../components/atom/Icon/Icon';
 
 const spec = canvasSpecs['C-04'];
 type Choice = 'credit' | 'membership' | 'trial' | 'single' | 'pack3' | 'pack10';
@@ -184,7 +185,7 @@ export function CheckoutPage() {
       <section className="stack-sm">
         <div className="row-between"><h2 className="cust-h2">{t('customer.checkout.method')}</h2><Link to="/app/payment-methods" className="small">{t('customer.checkout.manageMethods')}</Link></div>
         <div className="row wrap">
-          {PAYMENT_METHODS.map((m) => <button key={m.id} type="button" className={`cust-method ${method === m.id ? 'is-active' : ''}`} aria-pressed={method === m.id} onClick={() => setMethod(m.id)}><span aria-hidden>{m.glyph}</span>{bi(m.label)}{m.provider === 'wompi' && <Badge tone="neutral">Wompi</Badge>}</button>)}
+          {PAYMENT_METHODS.map((m) => <button key={m.id} type="button" className={`cust-method ${method === m.id ? 'is-active' : ''}`} aria-pressed={method === m.id} onClick={() => setMethod(m.id)}><Icon name={m.glyph} size="sm" />{bi(m.label)}{m.provider === 'wompi' && <Badge tone="neutral">Wompi</Badge>}</button>)}
         </div>
         <p className="xs muted">{bi(methodOpt.hint)}</p>
         {devMode && methodOpt.provider === 'wompi' && <Toggle size="sm" checked={simulateDecline} onChange={setSimulateDecline} label={t('customer.checkout.simulateDecline')} />}

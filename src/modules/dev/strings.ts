@@ -21,6 +21,8 @@ export const strings: StringTable = {
   'dev.tokens.materials': { es: 'Materiales', en: 'Materials' },
   'dev.tokens.materials.eyebrow': { es: 'Rellenos decorativos del D-01 del canvas · arte del hero, gift cards, vacíos', en: 'Decorative fills from the canvas D-01 · hero art, gift cards, empty art' },
   'dev.tokens.motion': { es: 'Movimiento', en: 'Motion' },
+  'dev.tokens.icons': { es: 'Iconos', en: 'Icons' },
+  'dev.tokens.icons.eyebrow': { es: 'Tamaños en rem (crecen con --ui) · trazo 1,75 / 2,25 activo · cuadro de 36 px', en: 'Sizes in rem (grow with --ui) · stroke 1.75 / 2.25 active · 36 px tile' },
   'dev.components.title': { es: 'Biblioteca de componentes (D-02)', en: 'Component library (D-02)' },
   'dev.components.body': { es: 'Cada componente vive en src/components/<nivel>/<Nombre>/ con su .meta.ts. Sin meta no hay componente; sin uso no hay meta.', en: 'Every component lives in src/components/<tier>/<Name>/ with its .meta.ts. No meta, no component; no usage, no meta.' },
   'dev.components.props': { es: 'Props', en: 'Props' },
