@@ -47,6 +47,9 @@ export const strings: StringTable = {
   'hub.status.built': { es: 'Construida', en: 'Built' },
   'hub.status.stub': { es: 'Esbozo', en: 'Stub' },
   'hub.status.planned': { es: 'Planeada', en: 'Planned' },
+  'hub.status.soon': { es: 'Próximamente', en: 'Coming soon' },
+  'hub.soon.cta': { es: 'Próximamente', en: 'Coming soon' },
+  'hub.soon.today': { es: 'Mientras tanto: {code} →', en: 'Meanwhile: {code} →' },
 
   // Stat strip and footer
   'hub.stats.label': { es: 'El sistema en números', en: 'The system in numbers' },

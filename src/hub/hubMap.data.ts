@@ -90,6 +90,17 @@ export const HUB_ROLES: HubRole[] = [
     description: { es: 'Salas, incidencias e inventario, desde el panel del equipo.', en: 'Rooms, incidents and inventory, from the team dashboard.' },
     band: 'team', home: '/staff', device: 'desktop', demoUser: { id: 'usr_maint', firstName: 'Rosa' }, look: 'maintenance', props: ['hardhat', 'tape'],
   },
+  // 0031 · two new roles
+  {
+    id: 'marketing', label: { es: 'Marketing', en: 'Marketing' },
+    description: { es: 'Contenido, campañas y la voz de la marca: el CMS, los correos y WhatsApp, y el CRM en lectura. El kit de marketing llega pronto.', en: 'Content, campaigns and the brand voice: the CMS, emails and WhatsApp, and the CRM read-only. The marketing kit is coming soon.' },
+    band: 'team', home: '/admin/content', device: 'desktop', demoUser: { id: 'usr_mkt', firstName: 'Camila' }, look: 'marketing', props: ['board', 'swatches'],
+  },
+  {
+    id: 'developer', label: { es: 'Desarrollo', en: 'Developer' },
+    description: { es: 'Quien construye y mantiene el software: herramientas dev, specs, tablas en lectura y la documentación, con modo dev; sin ajustes ni finanzas.', en: 'Whoever builds and maintains the software: dev tools, specs, read-only tables and the docs, with dev mode; no settings or finance.' },
+    band: 'build', home: '/dev', device: 'desktop', demoUser: { id: 'usr_dev', firstName: 'Julián' }, look: 'developer', props: ['laptop', 'plans'],
+  },
 ];
 
 /** The sub-mats. `order` sorts the groups inside one experience; ids are stable, labels are copy. */
@@ -100,6 +111,7 @@ export const HUB_GROUPS: Record<string, HubGroup> = Object.fromEntries(([
   ['desk', 'Recepción', 'Front desk', 10], ['inbox', 'Bandeja', 'Inbox', 20], ['pos', 'Caja', 'Register', 30],
   ['admin', 'Administración', 'Admin', 10], ['content', 'Contenido', 'Content', 20], ['crm', 'CRM', 'CRM', 30], ['finance', 'Finanzas', 'Finance', 40], ['tables', 'Tablas', 'Tables', 50],
   ['dev', 'Desarrollo', 'Dev tools', 10], ['docs', 'Documentación', 'Docs', 10], ['manual', 'Manual', 'Manual', 10],
+  ['sources', 'Documentos fuente', 'Source documents', 10],
 ] as [string, string, string, number][]).map(([id, es, en, order]) => [id, { id, label: { es, en }, order }]));
 
 /**
@@ -140,6 +152,7 @@ export const HUB_GROUP_RULES: { prefix: string; group: string; exact?: boolean }
   { prefix: '/', group: 'dev', exact: true }, // the testing hub itself
   { prefix: '/dev', group: 'dev' },
   { prefix: '/docs', group: 'docs' },
+  { prefix: '/docs/source', group: 'sources' },
   { prefix: '/manual', group: 'manual' },
 ];
 
@@ -188,7 +201,7 @@ export interface HubExperienceSeed extends Omit<HubExperience, 'roles' | 'url' |
 const exp = (id: string, code: string, band: HubBand, device: HubDevice, route: string, roleId: string, switchUser: boolean, label: Bi, purpose: Bi, extra: Partial<HubExperienceSeed> = {}): HubExperienceSeed =>
   ({ id, code, label, purpose, roleId, band, device, route, switchUser, ...extra });
 
-/** The 13 hub cards, in document order (= `HUB_SURFACES` in src/modules/hub/specs.ts). */
+/** The 15 hub cards, in document order (= `HUB_SURFACES` in src/modules/hub/specs.ts). */
 export const HUB_EXPERIENCES: HubExperienceSeed[] = [
   exp('app', 'C-01', 'outside', 'phone', '/app', 'customer', true,
     { es: 'App de clientes', en: 'Customer app' },
@@ -218,9 +231,16 @@ export const HUB_EXPERIENCES: HubExperienceSeed[] = [
   exp('finance', 'M-09', 'team', 'desktop', '/admin/finance', 'finance', true,
     { es: 'Finanzas', en: 'Finance' },
     { es: 'Ingresos, gastos, nómina de profesores e impuestos, con el libro detrás.', en: 'Revenue, expenses, teacher payroll and tax, with the ledger behind it.' }),
+  exp('marketing', 'M-02', 'team', 'desktop', '/admin/content', 'marketing', true,
+    { es: 'Kit de marketing — próximamente', en: 'Marketing kit — coming soon' },
+    { es: 'Campañas, piezas de marca y calendario de contenido para el equipo de marketing. Aún no está construido; hoy marketing trabaja en Contenido (M-02).', en: 'Campaigns, brand assets and the content calendar for the marketing team. Not built yet; today marketing works in Content (M-02).' },
+    { comingSoon: true }),
   exp('manual', 'K-03', 'build', 'sheet', '/manual', 'admin', false,
     { es: 'Manual de operaciones', en: 'Operations manual' },
-    { es: 'Cómo funciona el club en persona y en el software, por rol, con datos en vivo.', en: 'How the club runs in person and in software, by role, with live data.' }),
+    { es: 'El manual del equipo como un curso: cada rol ve lo suyo, marca lo leído y firma su formación; el owner lo ajusta desde aquí.', en: 'The team manual as a course: each role sees its own, marks what it read and signs off its training; the owner adjusts it from here.' }),
+  exp('sources', 'K-05', 'build', 'sheet', '/docs/source', 'admin', false,
+    { es: 'Documentos fuente', en: 'Source documents' },
+    { es: 'El modelo de valor, los textos del sitio y el manual de marca, con visor y los capítulos que los citan.', en: 'The value model, the website copy and the brand manual, with a viewer and the chapters that cite them.' }),
   exp('docs', 'K-02', 'build', 'sheet', '/docs', 'super_admin', false,
     { es: 'Documentación y changelog', en: 'Documentation & changelog' },
     { es: 'Cada prompt, cada respuesta y cada cambio, con sus capturas.', en: 'Every prompt, every response and every change, with their captures.' }),

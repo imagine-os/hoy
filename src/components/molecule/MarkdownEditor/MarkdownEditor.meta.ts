@@ -23,9 +23,10 @@ export default defineMeta({
     { name: 'placeholder', type: 'string', description: { es: 'Texto del textarea vacío.', en: 'Empty-textarea text.' } },
     { name: 'emptyPreview', type: 'string', description: { es: 'Texto cuando no hay nada escrito, para que la vista previa nunca sea una caja vacía.', en: 'Text when nothing is written, so the preview is never a blank box.' } },
     { name: 'disabled', type: 'boolean', default: 'false', description: { es: 'Solo lectura (sin content.write).', en: 'Read-only (without content.write).' } },
+    { name: 'renderPreview', type: '(md: string) => ReactNode', description: { es: 'Renderizador de la vista previa (el manual pasa su MarkdownViewer con tablas y bloques en vivo); por defecto react-markdown simple.', en: 'Preview renderer (the manual passes its MarkdownViewer with tables and live blocks); plain react-markdown by default.' } },
     { name: 'rows', type: 'number', default: '14', description: { es: 'Altura inicial del textarea.', en: 'Initial textarea height.' } },
   ],
-  states: ['empty (preview explains itself)', 'typing (live preview)', 'read-only', 'stacked below 900 px'],
+  states: ['empty (preview explains itself)', 'typing (live preview)', 'read-only', 'stacked below 900 px', 'custom preview renderer (K-03 section editor)'],
   usages: [
     { title: { es: 'Con contenido', en: 'With content' }, render: () => h(Demo, { start: SAMPLE }) },
     { title: { es: 'Vacío', en: 'Empty' }, render: () => h(Demo, { start: '' }) },
@@ -35,5 +36,5 @@ export default defineMeta({
     { es: 'El rótulo de edición es un <label> unido al textarea por id; el contador de palabras y caracteres se lee como texto, no como decoración.', en: 'The editing label is a <label> tied to the textarea by id; the word and character count reads as text, not decoration.' },
     { es: 'La vista previa no es editable ni focalizable: el foco no se pierde al escribir.', en: 'The preview is neither editable nor focusable: focus is never lost while typing.' },
   ],
-  usedBy: ['M-02a'],
+  usedBy: ['M-02a', 'K-03'],
 });

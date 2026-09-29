@@ -50,6 +50,12 @@ const PAYROLL_KEYS: PolicyKey[] = ['payrollCadence', 'payoutMethod', 'payrollSig
 /** The numeric policy fields live flat on the policy record; the grouped ones (tax, payroll, quiet hours) are read explicitly. */
 type FlatPolicy = Pick<StudioSettings['policies'], 'cancellationHours' | 'waitlistClaimMin' | 'lateGraceMin' | 'noShowFee' | 'pauseDaysPerYear' | 'maxPausesPerYear' | 'paymentHoldMin' | 'chargeNoticeDays' | 'lockoutAttempts' | 'lockoutMinutes'>;
 
+/** 0031: the M-08 policy a `{{policy:…}}` / `{{studio:…}}` key names (alias resolved), and whether it lives in Payments (M-08c). */
+export function policyField(key: string): { key: string; payroll: boolean } | undefined {
+  const k = (POLICY_ALIAS[key] ?? key) as PolicyKey;
+  return POLICY_KEYS.includes(k) ? { key: k, payroll: PAYROLL_KEYS.includes(k) } : undefined;
+}
+
 export interface LiveBlockProps {
   /** Directive name: pricing | tenant | policy | tables | table | roles | routes | stats | kpi. */
   kind: string;

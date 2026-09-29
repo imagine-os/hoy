@@ -1,7 +1,7 @@
 # Machine surfaces — MCP / WebMCP, CLI, API
 
 What something other than a person can drive in HoyOS today, and what it cannot.
-**Checked 2026-09-29** (v0.12.0; previous check 2026-09-29, v0.11.2). Re-check and date this file every pass; a line that is not
+**Checked 2026-09-29** (v0.13.0; previous check 2026-09-29, v0.12.0). Re-check and date this file every pass; a line that is not
 re-checked is not current.
 
 **0030 delta (v0.12.0).** `window.__hoyos.routes` no longer lists `/app/intention` (A-05 retired); the path still
@@ -35,7 +35,7 @@ window.__hoyos.actions.filter((a) => a.mounted);
 
 | id | Page | Intent (ES) | Params | Permission |
 | --- | --- | --- | --- | --- |
-| `hub.enterAs` | HUB-01 | Entra a {surface} como su usuario demo | `surface: enum:app,site,teacher,desk,inbox,pos,admin,crm,finance,manual,docs,kb,dev` | — |
+| `hub.enterAs` | HUB-01 | Entra a {surface} como su usuario demo | `surface: enum:app,site,teacher,desk,inbox,pos,admin,crm,finance,marketing,manual,sources,docs,kb,dev` — `marketing` is coming soon and answers `ok: false` | — |
 | `hub.openCanvas` | HUB-01 | Muéstrame todas las páginas en el lienzo | — | `dev.tools` |
 | `hub.openSimulator` | HUB-01 | Abre el simulador de dispositivos | — | `dev.tools` |
 | `hub.openTool` | HUB-01 | Abre {tool} | `tool: enum:canvas,simulator,specs,layout,tables,components,tokens,decisions,screenshots` | — |
@@ -50,7 +50,24 @@ window.__hoyos.actions.filter((a) => a.mounted);
 | `app.choosePlan` | C-06 | Quiero el plan {plan} | `plan: enum:monthly,annual` | `payments.read` · customer, teacher |
 | `app.goHome` | C-01 (also C-02, C-04, C-06, C-08) | Llévame al inicio de la app | — | — · customer, teacher |
 | `app.openSchedule` | C-01 (also C-02, C-04, C-06, C-08) | Muéstrame el horario de clases | — | `classes.read` · customer, teacher |
-| `auth.signIn` | A-02 | Entra como {user} | `user: enum:usr_super,usr_admin,usr_coord,usr_desk,usr_fin,usr_teach,usr_maint,usr_cust` | — · public (anyone on `/auth/sign-in`) |
+| `auth.signIn` | A-02 | Entra como {user} | `user: enum:usr_super,usr_admin,usr_coord,usr_desk,usr_fin,usr_teach,usr_maint,usr_mkt,usr_dev,usr_cust` | — · public (anyone on `/auth/sign-in`) |
+
+| `manual.setLens` | K-03 | Muéstrame el manual de {role} | `role: enum:all,super_admin,admin,coordinator,front_desk,finance,teacher,maintenance,marketing,developer` | `docs.read` |
+| `manual.markRead` | K-03 | Marca el capítulo {chapter} como leído | `chapter: slug or number` (default the open chapter) | `docs.read` · team roles |
+| `manual.signTraining` | K-03 | Firma {stage} de {user} | `user: users.id`, `stage: enum:day1,week1,month1`, `role?` (default the person's role) | `manual.train` · coordinator, admin, super_admin |
+| `manual.editSection` | K-03 | Reescribe la sección {section} del capítulo {chapter} | `chapter`, `section: ## heading`, `body: markdown`, `note?`, `lang?: es,en` — only sections marked `{{editable:…}}` | `manual.edit` · owner level: admin, super_admin; coordinator level: + coordinator |
+| `manual.restoreSection` | K-03 | Vuelve al texto original de {section} | `chapter`, `section`, `lang?` | `manual.edit` |
+| `manual.requestChange` | K-03 | Pide que el capítulo {chapter} diga {request} | `chapter`, `request`, `section?` | `docs.read` · team roles |
+| `manual.suggestEdit` | K-03 | Sugiere este texto para {section} | `chapter`, `section`, `body`, `note?`, `lang?` — any section; an owner accepts it from "Sugerencias" | `docs.read` · team roles |
+| `manual.openSource` | K-03 (also K-04, K-05) | Abre el documento {id} | `id: enum:modelo-de-valor,contenido-completo,manual-de-marca` | `docs.read` |
+| `manual.listRequests` | K-04 | ¿Qué cambios pidió el equipo al manual? | `status?: enum:open,done,dismissed,all` (default open) — answers a JSON array | `manual.edit` · coordinator, admin, super_admin |
+| `manual.answerRequest` | K-04 | Responde la solicitud {id}: {answer} | `id: manual_requests.id`, `answer`, `status?: enum:done,dismissed,open` | `manual.edit` · coordinator, admin, super_admin |
+
+Added 2026-09-29 (0031): the ten `manual.*` actions (declared in `src/modules/ops-manual/actionDefs.ts`, handlers in
+`manualActions.ts`) make **prompt-based editing** of the operations manual possible for an agent in the page: read the
+requests (`manual.listRequests`), propose a section (`manual.suggestEdit`, which an owner accepts in place), edit a
+section marked editable as an owner (`manual.editSection`), answer the request (`manual.answerRequest`). Every write
+also appends an `audit_log` row. The visible "Reescribir con IA" button is a Placeholder that points here.
 
 Added 2026-09-28 (0025). The `app.*` / `auth.*` set is declared in `src/modules/customer/actions.ts`
 (`CUSTOMER_ACTIONS`, merged into the page specs in `src/modules/customer/specs.ts`) and mounted by each page
@@ -70,8 +87,8 @@ await window.__hoyos.run('app.confirmReservation');                       // { o
 
 **What does not exist yet.** No MCP server process and no transport (stdio or HTTP) — an agent has to
 be in the page. `permission` is **advisory metadata for agents**: `run()` does not check it, and each
-gated handler enforces its own role check today — `hub.toggleDevMode` and `hub.toggleWireframe` throw
-`requires super_admin` when the session is not a super admin, so `run()` answers `{ ok: false }` —
+gated handler enforces its own role check today — `hub.toggleDevMode` throws `requires super_admin or developer`
+(since 0031) and `hub.toggleWireframe` `requires super_admin`, and each `manual.*` handler checks its role, so `run()` answers `{ ok: false }` —
 with server-side enforcement coming with the proxy that will front these.
 Since 0025 the customer reserve / register flow has actions too (above); check-in, selling, sending, the
 waitlist, changing a booking and sign-up are the next set, and each one has to be declared in its page's spec
@@ -145,7 +162,8 @@ consumer checklist: [`hub-map.md`](./hub-map.md).
 
 | File | URL | What |
 | --- | --- | --- |
-| `public/hub-map.json` | `https://imagine-os.github.io/hoy/hub-map.json` | Schema `hoy.hub-map/1`: product, embed pattern, 9 roles, 13 experiences (the hub cards), every page code (87, each with a `group`; the 9 template pages with a `sampleRoute`), 9 tools, 3 lens hints |
+| `public/hub-map.json` | `https://imagine-os.github.io/hoy/hub-map.json` | Schema `hoy.hub-map/1`: product, embed pattern, 11 roles, 15 experiences (the hub cards; `marketing` carries `comingSoon: true`, 0031), every page code (87, each with a `group`; the 9 template pages with a `sampleRoute`), 9 tools, 3 lens hints |
+| `public/source/<id>.pdf` (+ `<id>-cover.jpg`) | `https://imagine-os.github.io/hoy/source/<id>.pdf` | Since 0031: the owner's source documents (`modelo-de-valor`, `contenido-completo`, `manual-de-marca`); index `docs/source/index.json`; shown on K-05 `/#/docs/source` |
 | `dist/hub-map/shots/<CODE>/…` | `https://imagine-os.github.io/hoy/hub-map/shots/<CODE>/<file>.jpg` | The thumbs (`thumb-<lang>-<phone\|desktop>[-dark].jpg`) and captures (`<lang>-390.jpg`, `<lang>-1280.jpg`, W-xx `<lang>-390-full.jpg`) the map's `shots` point at, relative to `product.baseUrl` |
 
 **Embed pattern**: `{baseUrl}#{route}?as={role}&lang={lang}&theme={theme}&dev=0&live=0` — what

@@ -34,5 +34,5 @@ export default defineMeta({
     { es: 'Hereda color con currentColor, así que el contraste lo fija el contenedor en ambos temas. Un control solo con icono lleva aria-label y title.', en: 'Inherits colour through currentColor, so the container sets the contrast in both themes. An icon-only control carries aria-label and title.' },
     { es: 'El estado activo nunca es solo color: píldora + trazo más grueso + etiqueta en negrita.', en: 'The active state is never colour alone: pill + heavier stroke + bold label.' },
   ],
-  usedBy: ['HUB-01', 'C-01', 'C-25', 'S-01', 'S-02', 'S-03', 'S-04', 'S-06', 'M-08', 'D-05', 'D-06'],
+  usedBy: ['HUB-01', 'C-01', 'C-25', 'S-01', 'S-02', 'S-03', 'S-04', 'S-06', 'M-08', 'D-05', 'D-06', 'K-03', 'K-04', 'K-05'],
 });

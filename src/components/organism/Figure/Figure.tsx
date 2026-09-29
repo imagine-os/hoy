@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useT } from '../../../i18n/I18nProvider';
 import './Figure.css';
 
 export interface FigureProps {
@@ -13,6 +14,10 @@ export interface FigureProps {
   title?: string;
   /** Width hint for the frame: a mobile capture is shown narrow, a desktop capture full width. */
   device?: 'mobile' | 'desktop';
+  /** Day the capture was taken (YYYY-MM-DD); shown under the frame. */
+  captured?: string;
+  /** The page changed after the capture: shows the "may be out of date" badge. */
+  stale?: boolean;
 }
 
 /** Splits `S-02 · /staff/desk` into its chip and its route. */
@@ -27,7 +32,8 @@ function parseFigureTitle(title: string | undefined): { code?: string; to?: stri
  * A real screenshot inside a document: framed, captioned, chipped with its page code and clickable
  * through to the live screen. Replaces the dashed `[screenshot: …]` placeholder once a capture exists.
  */
-export function Figure({ url, caption, title, device }: FigureProps) {
+export function Figure({ url, caption, title, device, captured, stale = false }: FigureProps) {
+  const t = useT();
   const { code, to } = parseFigureTitle(title);
   const kind = device ?? (/-390(-dark)?\.(jpg|jpeg|png|webp)$/.test(url) ? 'mobile' : 'desktop');
   const img = <img className="figure-img" src={url} alt={caption ?? code ?? ''} loading="lazy" />;
@@ -37,10 +43,16 @@ export function Figure({ url, caption, title, device }: FigureProps) {
         {to ? <Link className="figure-link" to={to} aria-label={`${caption ?? ''} ${code ?? ''}`.trim()}>{img}</Link> : img}
         {code && <span className="figure-code"><code>{code}</code></span>}
       </div>
-      {(caption || to) && (
+      {(caption || to || captured) && (
         <figcaption className="figure-cap">
           {caption}
           {to && <> · <Link to={to}>{`/#${to}`}</Link></>}
+          {(captured || stale) && (
+            <span className="figure-date">
+              {captured && <span>{t('core.figure.captured', { date: captured })}</span>}
+              {stale && <span className="figure-stale" title={t('core.figure.staleHint')}>{t('core.figure.stale')}</span>}
+            </span>
+          )}
         </figcaption>
       )}
     </figure>

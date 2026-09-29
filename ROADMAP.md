@@ -7,9 +7,9 @@ dónde estamos, qué sigue y en qué orden (con dependencias explícitas y lo qu
 paralelo), qué significa "terminado" en cada fase, cómo trabajar en el repo y qué debe decidir el
 owner del estudio. Está escrito para que otra cuenta de Claude (o una persona) lo retome sin contexto.
 
-## A. Where we are (v0.12.3, 2026-09-29)
+## A. Where we are (v0.13.1, 2026-09-29)
 
-- **v0.12.3 — Real phone and address** (`docs/changelog/0036-real-contact.md`, prompt `docs/prompts/0036-real-contact.md`; Justin: "Phone number for hoy. The address is same as Santa maria tenis club in poblado medellin"):
+- **v0.13.1 — Real phone and address** (`docs/changelog/0036-real-contact.md`, prompt `docs/prompts/0036-real-contact.md`; Justin: "Phone number for hoy. The address is same as Santa maria tenis club in poblado medellin"):
   WhatsApp +57 312 776 5000 and Cl. 7B Sur # 29C-100, El Poblado (6.19281, -75.56535) in `tenant.ts`; M-08a confirms per field, so the phone and address render as facts everywhere while email, Instagram and NIT stay pending (§E 21).
 - **v0.12.0 — Icons + the daily intention retired** (`docs/changelog/0030-icons.md`, prompt `docs/prompts/0030-icons.md`; Justin: "the icons in the bottom tray, and other icons should probably be better … In settings, there should be clear icons for each setting" and "erase the \"How do you want to feel today\" component from the experience"):
   `lucide-react` behind the `Icon` atom (135 names, D-0008, `--icon-*` tokens), typed `nav.icon`, Card `icon`, settings rail + section glyphs; A-05 retired (redirect, no C-01 card, no flags, `intentions` deprecated).

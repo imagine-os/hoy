@@ -2,14 +2,14 @@ import { defineSpec } from '../../specs/define';
 export const specsIndexSpec = defineSpec({
   code: 'D-03', name: { es: 'Índice de specs', en: 'Specs index' },
   purpose: { es: 'Lista todas las PageSpec registradas con badge de completitud, ruta y estado (construida / stub / sin ruta).', en: 'Lists every registered PageSpec with completeness badge, route and status (built / stub / no route).' },
-  layout: ['PageHead', 'FilterChips', 'SpecTable'], data: ['components', 'page_layouts'], roles: ['super_admin'],
+  layout: ['PageHead', 'FilterChips', 'SpecTable'], data: ['components', 'page_layouts'], roles: ['super_admin', 'developer'],
   logic: ['Completeness = 7 checks (purpose, layout, data, roles, logic, integrations, states).', 'A route is a stub when its element is PageStub.'],
   integrations: [], states: ['default', 'filtered by family'],
 });
 export const layoutEditorSpec = defineSpec({
   code: 'D-04', name: { es: 'Editor de layout', en: 'Layout editor' },
   purpose: { es: 'Reordenar y ocultar las secciones de una página con drag-and-drop; persiste en page_layouts y las páginas lo leen con useLayout(spec).', en: 'Reorder and hide a page’s sections with drag-and-drop; persists to page_layouts and pages read it with useLayout(spec).' },
-  layout: ['PagePicker', 'SortableList (dnd-kit)', 'Toolbar (reset, preview)'], data: ['page_layouts'], roles: ['super_admin'],
+  layout: ['PagePicker', 'SortableList (dnd-kit)', 'Toolbar (reset, preview)'], data: ['page_layouts'], roles: ['super_admin', 'developer'],
   logic: ['Stored order wins; new spec sections append; removed ones drop.', 'Hidden sections stay in order but are skipped by the page.'],
   integrations: [], states: ['default (spec order)', 'custom order saved', 'page not wired'],
 });
@@ -22,7 +22,7 @@ export const canvasSpec = defineSpec({
   },
   layout: ['PageHead (title, count, zoom SegmentedControl)', 'GroupSection × 9 (heading + tile grid)', 'Tile (PagePreview + name + code + route)'],
   data: ['page_layouts', 'components'],
-  roles: ['super_admin'],
+  roles: ['super_admin', 'developer'],
   logic: [
     'Routes come from the registry; param routes (:id) and splats are skipped so a tile always opens something.',
     'Only static captures here (docs/screenshots/<code>/thumb-*): a map of 90-plus pages never boots live frames.',
@@ -44,7 +44,7 @@ export const simulatorSpec = defineSpec({
   },
   layout: ['PageHead (title, “Abrir en pestaña”)', 'Controls (device SegmentedControl, route select, role select, lang, theme)', 'SizeLine', 'DeviceFrame'],
   data: ['users', 'user_roles'],
-  roles: ['super_admin'],
+  roles: ['super_admin', 'developer'],
   logic: [
     'Every control writes to the hash query (route, device, as, lang, theme); the page reads it back, so reload and bookmark keep the view.',
     'The frame is the real app in a same-origin iframe at the preset’s pixel size, scaled to fit with a ResizeObserver.',

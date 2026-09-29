@@ -3,7 +3,7 @@ import { EVERYONE } from '../../auth/roles';
 import type { ActionDef } from '../../actions/types';
 
 /** The card families the hub lays out, in document order. Also the `surface` enum of `hub.enterAs`. */
-export const HUB_SURFACES = ['app', 'site', 'teacher', 'desk', 'inbox', 'pos', 'admin', 'crm', 'finance', 'manual', 'docs', 'kb', 'dev'] as const;
+export const HUB_SURFACES = ['app', 'site', 'teacher', 'desk', 'inbox', 'pos', 'admin', 'crm', 'finance', 'marketing', 'manual', 'sources', 'docs', 'kb', 'dev'] as const;
 export type HubSurfaceKey = (typeof HUB_SURFACES)[number];
 
 /** The testing-hub row, in document order. Also the `tool` enum of `hub.openTool`. */
@@ -44,8 +44,8 @@ export const hubSpec = defineSpec({
     'Hero (eyebrow tenant · city, h1, lead, tagline, BreathingRings art ≥ 900 px)',
     'SessionBar (RoleSwitcher, Ctrl + . hint in dev mode)',
     'BandA · Fuera del estudio (Customer app featured with a phone preview, Website, Teacher app)',
-    'BandB · El equipo (Front desk, Inbox, Caja, Admin, CRM, Finanzas)',
-    'BandC · Construcción y pruebas (Manual, Docs, Kanban, Dev tools)',
+    'BandB · El equipo (Front desk, Inbox, Caja, Admin, CRM, Finanzas, Kit de marketing — próximamente)',
+    'BandC · Construcción y pruebas (Manual, Documentos fuente, Docs, Kanban, Dev tools)',
     'ToolsRow · Hub de pruebas (9 tool cards)',
     'StatStrip (routes, codes, tables, components, actions, manual chapters)',
     'Footer',
@@ -60,7 +60,8 @@ export const hubSpec = defineSpec({
     'A preview upgrades to the running page only when it is in view (IntersectionObserver, 160 px margin) and the budget of 6 live frames has a slot for it: slots are granted in document order on first paint and then kept first-come-first-served, so a card scrolling in later never preempts one that is already live. A preview never boots a frame when the hub is itself framed, the URL carries live=0, or the page is driven by automation (navigator.webdriver) — so a screenshot pass always captures the same static-thumbnail hub.',
     'A framed preview runs under its own session (src/app/frameSession.ts shadows hoyos.session / hoyos.lang / hoyos.theme), so it never touches the tester’s.',
     'The stat strip counts live: routes and codes from the registry, tables from tableRegistry, components from the D-02 glob, actions from listActions(), manual chapters from the ops-manual glob.',
-    'Wireframe and dev-mode toggles only render for super_admin; a tool whose route the current role cannot open still renders and lands on /no-access, as the guard does everywhere else.',
+    'A card with comingSoon (0031: the marketing kit) shows a “Próximamente” badge and its enter button is a Placeholder (tooltip + “not wired yet” toast, dashed in dev mode); hub.enterAs refuses it.',
+    'The dev-mode toggle renders for super_admin and developer (0031), the wireframe toggle for super_admin only; a tool whose route the current role cannot open still renders and lands on /no-access, as the guard does everywhere else.',
     'The bands and the tools row are drawn from the hub map data (src/hub/hubMap.data.ts): the same module scripts/gen-hub-map.mjs publishes as public/hub-map.json (schema hoy.hub-map/1) for other hosts — aluzina, between-gigs — so the hub and its map cannot drift. Only icons and preview shapes live in HubPage.tsx.',
     'hub.map answers with the published map URL and loads the map into window.__hoyos.hubMap.data.',
     'Hub type sizes, medallions, padding and grid width scale with a hub-scoped --ui variable: 1 · 1.125 (≥1920) · 1.375 (≥2560) · 1.75 (≥3840).',

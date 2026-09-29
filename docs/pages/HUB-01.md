@@ -45,6 +45,15 @@ The page's own thumbnails (what the canvas shows for it):
 
 [screenshot: HUB-01 — the live-frame state: the first six cards running the real page. A capture pass cannot photograph it (`navigator.webdriver` switches live frames off); open the hub in a normal browser.]
 
+## 0031 — two cards and two roles
+- **Kit de marketing — próximamente / Marketing kit — coming soon** in the team band: announced, not built. Dashed card,
+  "Próximamente" badge, its button is a `Placeholder` (tooltip + "not wired yet" toast, dashed in dev mode) and a
+  "Mientras tanto: M-02 →" link enters as Camila (marketing) at `/admin/content`. `hub.enterAs` refuses it. In the hub
+  map it is `experiences[].comingSoon: true` with empty `pageCodes`.
+- **Documentos fuente / Source documents** (K-05) in the build band.
+- The role switcher lists the two new roles, **Marketing** (Camila Herrera) and **Desarrollo / Developer** (Julián Mesa);
+  the dev-mode toggle renders for super admin and developer.
+
 ## Sections (layout order)
 1. **BrandBand** — deep-blue band: wordmark, version `Badge` from `package.json`, `LangToggle`, a 44 × 44 theme button, and for a super admin the wireframe and dev-mode `Toggle`s. Cream ink, cream focus ring.
 2. **Hero** — eyebrow `tenant.legalName · tenant.city`, `h1`, the one-sentence lead, the brand tagline (`src/tenant/brand.ts` → `taglines.start`), and `BreathingRings` under a radial mask (hidden under 900 px).
@@ -124,6 +133,7 @@ framed (inside a preview or the simulator) · no captures yet (idle tiles) · En
 - **Mock / pending**: the data behind every surface is the browser-local `MockProvider` seed. "Reportar un problema" is a `Placeholder` — in-product annotations are on the backlog.
 
 ## Changelog
+- `docs/changelog/0031-manual-lms.md` — marketing-kit (coming soon) and source-documents cards; marketing and developer roles (v0.13.0)
 - `docs/changelog/0001-initial-build.md` — first version (card grid, staff role picker, developer links)
 - `docs/changelog/0022-hub-home-redesign.md` — rebuilt around real previews ([before](../screenshots/HUB-01/es-1280-before.jpg) → [after](../screenshots/HUB-01/es-1280.jpg))
 - `docs/changelog/0027-hub-map.md` — cards and tools read from `src/hub/hubMap.data.ts` (same rendering), the `hub.map` action, captures at v0.11.0

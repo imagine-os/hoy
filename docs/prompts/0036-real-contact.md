@@ -10,7 +10,7 @@ _Attachment: a WhatsApp contact screenshot showing the contact "HOY · +57 312 7
 
 ## Response
 
-Branch `feat/real-contact` from `main` at `b265ac7`, version **0.12.3**. Full record in
+Branch `feat/real-contact` from `main` at `b265ac7` (merged with `41757ad`, the 0031 manual LMS), version **0.13.1**. Full record in
 `docs/changelog/0036-real-contact.md`.
 
 1. **Phone**: `+57 312 776 5000` (E.164 `+573127765000`; `waLink()` strips it to `https://wa.me/573127765000`), from the
