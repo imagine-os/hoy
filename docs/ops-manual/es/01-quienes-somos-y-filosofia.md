@@ -43,9 +43,13 @@ que más te acomode.
 **En una frase, para la puerta:** "Es un espacio para moverte, respirar y bajar el ritmo. No necesitas
 experiencia: solo llegar."
 
-> DECISIÓN PENDIENTE: la dirección exacta del estudio y sus datos de contacto (WhatsApp, correo, Instagram). La ciudad ya está definida: Medellín. Mientras el owner no los confirme, la web, la app, los correos y este manual los muestran como pendientes.
+Estos son los datos de contacto del estudio. El WhatsApp y la dirección ya están confirmados:
 
-> EN HOYOS: M-08a Ajustes → General → dirección, WhatsApp, correo, Instagram → "Datos confirmados".
+{{tenant:contact}}
+
+> DECISIÓN PENDIENTE: el correo del estudio, el usuario de Instagram y el NIT. Mientras el owner no los confirme, la web, la app, los correos y este manual los muestran como pendientes.
+
+> EN HOYOS: M-08a Ajustes → General → correo, Instagram → "Datos confirmados" · M-08c Ajustes → Pagos → NIT.
 
 ## 2. Nuestra filosofía
 Entre lo que fue y lo que todavía no llega, existe este momento. Ese es el punto de partida de todo lo que

@@ -41,9 +41,13 @@ best.
 **In one line, for the door:** "It's a place to move, breathe and slow down. You don't need any experience: just
 show up."
 
-> DECISION NEEDED: the studio's exact address and its contact details (WhatsApp, email, Instagram). The city is settled: Medellín. Until the owner confirms them, the website, the app, the emails and this manual show them as pending.
+These are the studio's contact details. The WhatsApp number and the address are confirmed:
 
-> IN HOYOS: M-08a Settings → General → address, WhatsApp, email, Instagram → "Details confirmed".
+{{tenant:contact}}
+
+> DECISION NEEDED: the studio's email, Instagram handle and tax ID (NIT). Until the owner confirms them, the website, the app, the emails and this manual show them as pending.
+
+> IN HOYOS: M-08a Settings → General → email, Instagram → "Details confirmed" · M-08c Settings → Payments → NIT.
 
 ## 2. Our philosophy
 Between what was and what has not yet arrived, there is this moment. That is the starting point of everything we

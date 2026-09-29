@@ -379,7 +379,7 @@ chapter or spec and close the card.
 16. Do maintenance checklists live in HoyOS (no screen today — would be a new S-xx code) or in a separate form?
 
 **Added by the 0.6.0 manual (chapters 01, 02, 11, 12, 16, 18, 19, 22, 23)**
-21. **The studio's real address and contact details.** The city is settled — the app says Medellín
+21. **The studio's real address and contact details.** **Narrowed 2026-09-29 (Justin, Slack; 0036 writes them into `tenant.ts` and the M-08a seed): WhatsApp / phone and the address (Santa María Tenis Club, El Poblado) are confirmed; still open: the studio email, the Instagram handle and the NIT.** Before: The city is settled — the app says Medellín
     everywhere, per the brand PDF — but `tenant.contact` is still `+57 300 000 0000`,
     `hola@example.com` and "Dirección del estudio (pendiente)", and `tenant.location` is an
     approximate El Poblado point labelled "por confirmar". Everything is rendered as pending, so this
