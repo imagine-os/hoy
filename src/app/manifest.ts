@@ -28,7 +28,7 @@ export interface HoyosGlobal {
    * starts the load), `load()` resolves with it. `run('hub.map')` on HUB-01 does the same.
    */
   hubMap: { url: string; readonly data: HubMap | null; load: () => Promise<HubMap> };
-  /** Since 0042. Where this deployment serves `actions.json` (schema hoy.actions/1): the `actions` vocabulary as a file. */
+  /** Since 0043. Where this deployment serves `actions.json` (schema hoy.actions/1): the `actions` vocabulary as a file. */
   actionsUrl: string;
 }
 

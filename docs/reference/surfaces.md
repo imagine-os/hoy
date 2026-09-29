@@ -1,10 +1,10 @@
 # Machine surfaces — MCP / WebMCP, CLI, API
 
 What something other than a person can drive in HoyOS today, and what it cannot.
-**Checked 2026-09-29** (v0.17.0; previous check 2026-09-29, v0.16.0). Re-check and date this file every pass; a line that is not
+**Checked 2026-09-29** (v0.18.0; previous check 2026-09-29, v0.17.0). Re-check and date this file every pass; a line that is not
 re-checked is not current.
 
-**0042 delta (v0.17.0).** The actions vocabulary is published as a file: `public/actions.json` (schema `hoy.actions/1`,
+**0043 delta (v0.18.0).** The actions vocabulary is published as a file: `public/actions.json` (schema `hoy.actions/1`,
 contract `src/actions/manifest.types.ts`, URL `https://imagine-os.github.io/hoy/actions.json`), written by
 `scripts/gen-actions.mjs` from the same `PageSpec.actions` that `__hoyos.actions` lists — 40 actions, the 11 permissions
 they reference (with the roles that hold each), and the declaring pages. `npm run actions` runs in `npm run build` right
@@ -52,7 +52,7 @@ There is **no MCP server** yet: this is the in-page surface only.
 | `__hoyos.actions` | `DeclaredAction[]` (getter) | Every action **declared** by any routed page: `id`, `label{es,en}`, `intent{es,en}`, `params?`, `permission?`, plus `code`, `route` and `mounted`. A getter, so `mounted` answers for the page that is open right now. |
 | `__hoyos.run(id, params?)` | `Promise<{ ok, message }>` | Runs a **mounted** action. Never throws: an unknown or unmounted id comes back `ok: false` with the reason. |
 | `__hoyos.hubMap` | `{ url, data, load() }` | Since 0027. The published hub map (§4): `url` is where this deployment serves `hub-map.json`, `data` the parsed map once loaded (`null` before; reading it starts the load), `load()` resolves with it. Source `src/hub/hubMapClient.ts`. |
-| `__hoyos.actionsUrl` | `string` | Since 0042. Where this deployment serves `actions.json` (§4, schema `hoy.actions/1`): the same vocabulary as `actions`, as a file an agent can read without the page. |
+| `__hoyos.actionsUrl` | `string` | Since 0043. Where this deployment serves `actions.json` (§4, schema `hoy.actions/1`): the same vocabulary as `actions`, as a file an agent can read without the page. |
 
 ```js
 await window.__hoyos.run('hub.setLang', { lang: 'en' });   // { ok: true, message: 'language en' }
@@ -149,7 +149,7 @@ Since 0025 the customer reserve / register flow has actions too (above); check-i
 waitlist, changing a booking and sign-up are the next set, and each one has to be declared in its page's spec
 before it can be run. A shell scope (actions a shell, not a page, declares) would remove the five-spec
 duplication of the navigation actions.
-The plan for a hosted, multi-tenant MCP server and marketplace listings is in `docs/reference/ai-distribution.md` (0042).
+The plan for a hosted, multi-tenant MCP server and marketplace listings is in `docs/reference/ai-distribution.md` (0043).
 
 ### Frame contract
 
@@ -171,7 +171,7 @@ Everything is Node, in `scripts/`, and safe to run from a clean checkout.
 | `npm run dev` | Vite dev server at `http://localhost:5173/#/` | — |
 | `npm run build` | `npm run tokens` → spacing lint (report) → `npm run hub-map` → `npm run actions` → `npm run capture-dates` → manual lint (report) → `tsc --noEmit` → `vite build` → `node scripts/copy-shots.mjs`. **Must be green before every push.** | `src/design/tokens.css`, `public/hub-map.json`, `public/actions.json`, `src/app/captureDates.ts`, `dist/` (incl. `dist/hub-map/shots/`) |
 | `npm run hub-map` | `scripts/gen-hub-map.mjs`: composes the hub map from `src/hub/hubMap.data.ts` + the live route registry (Vite SSR loader, no browser) + `docs/screenshots/`, validates it against the contract and exits 1 on any problem. Deterministic (`generatedAt` = the latest changelog date) | `public/hub-map.json` (committed) |
-| `npm run actions` | Since 0042. `scripts/gen-actions.mjs`: the actions vocabulary from every routed page's `spec.actions` (Vite SSR loader, no browser) + `src/auth/permissions.ts`; one entry per id with `label` / `intent` in ES and EN, `params`, `permission`, the union of the declaring routes' `roles` and the declaring `pages`. Exits 1 on a duplicate id whose label / intent / params / permission differ, a missing `es` / `en`, a permission not in `permissions.ts` or zero actions. Deterministic (`generatedAt` = the latest changelog date) | `public/actions.json` (committed) |
+| `npm run actions` | Since 0043. `scripts/gen-actions.mjs`: the actions vocabulary from every routed page's `spec.actions` (Vite SSR loader, no browser) + `src/auth/permissions.ts`; one entry per id with `label` / `intent` in ES and EN, `params`, `permission`, the union of the declaring routes' `roles` and the declaring `pages`. Exits 1 on a duplicate id whose label / intent / params / permission differ, a missing `es` / `en`, a permission not in `permissions.ts` or zero actions. Deterministic (`generatedAt` = the latest changelog date) | `public/actions.json` (committed) |
 | `npm run capture-dates` | Since 0031. `scripts/gen-capture-dates.mjs`: per page code, the day `docs/screenshots/<CODE>/es-1280.jpg` was last committed and the newest changelog entry naming the code, so the manual's figures can flag a stale capture. Git history only; a shallow clone keeps the committed file | `src/app/captureDates.ts` |
 | `npm run hub-map:check` | Since 0029. `scripts/check-sample-routes.mjs`: serves `dist/` (`vite preview`), opens every `pages[].sampleRoute` of `public/hub-map.json` in a same-origin iframe with `?as=<owning role>&dev=0&live=0` and fails when a `sample` segment is not resolved, the page has 20 words or fewer, shows a not-found state or a `⟨missing-key⟩` marker. Not part of the build; run after `npm run build` | — (prints one line per sample) |
 | `node scripts/copy-shots.mjs` | Copies every capture the map references into `dist/hub-map/shots/<CODE>/` and prints the total (budget 80 MB; the plan lives in `scripts/lib/hubShots.mjs`) | `dist/hub-map/shots/` |
@@ -242,7 +242,7 @@ consumer checklist: [`hub-map.md`](./hub-map.md).
 | File | URL | What |
 | --- | --- | --- |
 | `public/hub-map.json` | `https://imagine-os.github.io/hoy/hub-map.json` | Schema `hoy.hub-map/1`: product, embed pattern, 11 roles, 15 experiences (the hub cards; `marketing` carries `comingSoon: true`, 0031), every page code (92 after the 0041 build — M-08g, M-10a and D-07 join the 89; each with a `group`; the 9 template pages with a `sampleRoute`), 9 tools, 3 lens hints |
-| `public/actions.json` | `https://imagine-os.github.io/hoy/actions.json` | Since 0042. Schema `hoy.actions/1` (contract `src/actions/manifest.types.ts`): product, `run` (how to execute — in the page, `window.__hoyos.run(id, params)`; no MCP server yet), the 11 permissions the actions reference with the roles that hold each, and the 40 actions sorted by id — `label` / `intent` `{es,en}`, `params?`, `permission?`, `roles` (union of the declaring routes) and `pages` (`code`, `route`). The vocabulary without opening the page; written by `npm run actions` |
+| `public/actions.json` | `https://imagine-os.github.io/hoy/actions.json` | Since 0043. Schema `hoy.actions/1` (contract `src/actions/manifest.types.ts`): product, `run` (how to execute — in the page, `window.__hoyos.run(id, params)`; no MCP server yet), the 11 permissions the actions reference with the roles that hold each, and the 40 actions sorted by id — `label` / `intent` `{es,en}`, `params?`, `permission?`, `roles` (union of the declaring routes) and `pages` (`code`, `route`). The vocabulary without opening the page; written by `npm run actions` |
 | `public/source/<id>.pdf` (+ `<id>-cover.jpg`) | `https://imagine-os.github.io/hoy/source/<id>.pdf` | Since 0031: the owner's source documents (`modelo-de-valor`, `contenido-completo`, `manual-de-marca`); index `docs/source/index.json`; shown on K-05 `/#/docs/source` |
 | `dist/hub-map/shots/<CODE>/…` | `https://imagine-os.github.io/hoy/hub-map/shots/<CODE>/<file>.jpg` | The thumbs (`thumb-<lang>-<phone\|desktop>[-dark].jpg`) and captures (`<lang>-390.jpg`, `<lang>-1280.jpg`, W-xx `<lang>-390-full.jpg`) the map's `shots` point at, relative to `product.baseUrl` |
 
@@ -250,7 +250,7 @@ consumer checklist: [`hub-map.md`](./hub-map.md).
 `frameUrl()` builds; a host substitutes and iframes it. Same-origin only under `imagine-os.github.io`.
 
 ---
-**Resumen (ES).** Qué puede manejar una máquina hoy (revisado 2026-09-29, v0.17.0; 0041 añade las acciones de horario — `settings.hours.*` —, de Google Business Profile — `integrations.google.*`, conectar y enviar responden «aún no conectado» — y de llaves de desarrollador — `dev.apiKeys.*` —; 0042 publica el vocabulario como archivo): en la página, `window.__hoyos` publica las rutas,
+**Resumen (ES).** Qué puede manejar una máquina hoy (revisado 2026-09-29, v0.18.0; 0041 añade las acciones de horario — `settings.hours.*` —, de Google Business Profile — `integrations.google.*`, conectar y enviar responden «aún no conectado» — y de llaves de desarrollador — `dev.apiKeys.*` —; 0043 publica el vocabulario como archivo): en la página, `window.__hoyos` publica las rutas,
 los usuarios demo, las acciones declaradas y `run(id, params)` para ejecutarlas (superficie WebMCP; no
 hay servidor MCP todavía), `__hoyos.hubMap` con el mapa del hub y `__hoyos.actionsUrl`. Archivos publicados: `hub-map.json`
 (esquema `hoy.hub-map/1`), con sus capturas en `hub-map/shots/`, para que aluzina y between-gigs dibujen el hub a su manera
