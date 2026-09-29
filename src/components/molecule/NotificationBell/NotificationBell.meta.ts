@@ -14,6 +14,6 @@ export default defineMeta({
   ],
   states: ['empty (0)', 'unread', 'overflow (9+)', 'hover'],
   usages: [{ title: { es: 'Vacía, con 3 y con tope', en: 'Empty, with 3 and capped' }, render: () => h('div', { className: 'row' }, h(NotificationBell, { count: 0 }), h(NotificationBell, { count: 3 }), h(NotificationBell, { count: 42 })) }],
-  a11y: [{ es: 'aria-label dice el número en palabras; la insignia es decorativa (aria-hidden).', en: 'aria-label states the number in words; the badge itself is decorative (aria-hidden).' }],
+  a11y: [{ es: 'aria-label dice el número en palabras; la insignia es decorativa (aria-hidden).', en: 'aria-label states the number in words; the badge itself is decorative (aria-hidden).' }, { es: 'Círculo de 44 px (`.ctl-round`, --h-ctl): ancho = alto, nunca un óvalo.', en: '44 px circle (`.ctl-round`, --h-ctl): width = height, never an oval.' }],
   usedBy: ['InboxPopover', 'DesktopShell', 'M-*', 'S-*'],
 });

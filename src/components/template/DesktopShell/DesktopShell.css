@@ -41,7 +41,7 @@
 .deskshell-collapse:hover { background: rgba(var(--m-shade), .06); color: var(--color-text); }
 .deskshell-chev { display: inline-flex; line-height: 0; }
 .deskshell-me { display: inline-flex; }
-.deskshell-iconbtn { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--color-card-border); background: var(--color-surface); box-shadow: var(--shadow-highlight), var(--shadow-contact); flex: 0 0 auto; }
+.deskshell-iconbtn { border: 1px solid var(--color-card-border); background: var(--color-surface); box-shadow: var(--shadow-highlight), var(--shadow-contact); }
 .deskshell-spec { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border: 0; border-radius: var(--r-full); background: var(--color-ink); color: var(--color-bg); font-family: var(--font-mono); font-size: var(--fs-2xs); flex: 0 0 auto; }
 .deskshell-specdot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-accent); }
 .deskshell-rs { min-width: 0; }
@@ -71,3 +71,8 @@
   .deskshell-main { padding: var(--sp-5) var(--sp-4) var(--sp-12); }
   .deskshell.is-open .deskshell-scrim { display: block; position: fixed; inset: 0; background: var(--color-scrim); z-index: 40; }
 }
+/* 0035 · on a phone in dev mode the round 44 px theme toggle and bell, the dev toggle and the spec chip fill the bar:
+   the spec chip stands in for the wordmark (the drawer still shows the brand) so ☰ is never overlapped, and below
+   380 px the dev switch leaves the bar (the spec chip already says dev mode is on; the hub switches it off). */
+@media (max-width: 479.98px) { .deskshell-col .topbar:has(.deskshell-spec) .topbar-brand { display: none; } }
+@media (max-width: 379.98px) { .deskshell-col .topbar:has(.deskshell-spec) .deskshell-devtoggle { display: none; } }

@@ -2,7 +2,7 @@
 /** Page code → day its docs/screenshots/<CODE>/es-1280.jpg was last committed. */
 export const CAPTURED: Record<string, string> = {
   'A-01': '2026-09-20',
-  'A-02': '2026-09-28',
+  'A-02': '2026-09-29',
   'A-03': '2026-09-28',
   'A-05': '2026-09-28',
   'A-06': '2026-09-25',
@@ -48,8 +48,7 @@ export const CAPTURED: Record<string, string> = {
   'K-01': '2026-09-20',
   'K-02': '2026-09-20',
   'K-03': '2026-09-29',
-  'K-04': '2026-09-29',
-  'K-05': '2026-09-29',
+  'K-04': '2026-09-18',
   'M-01': '2026-09-20',
   'M-02': '2026-09-18',
   'M-02a': '2026-09-18',
@@ -85,7 +84,7 @@ export const CAPTURED: Record<string, string> = {
   'W-03': '2026-09-25',
   'W-04': '2026-09-28',
   'W-05': '2026-09-28',
-  'W-06': '2026-09-29',
+  'W-06': '2026-09-25',
   'W-07': '2026-09-29',
   'W-08': '2026-09-29',
   'W-09': '2026-09-25',
@@ -94,7 +93,7 @@ export const CAPTURED: Record<string, string> = {
 /** Page code → date of the newest changelog entry whose `codes:` line names it. */
 export const CHANGED: Record<string, string> = {
   'A-01': '2026-09-28',
-  'A-02': '2026-09-28',
+  'A-02': '2026-09-29',
   'A-03': '2026-09-29',
   'A-05': '2026-09-29',
   'A-06': '2026-09-29',
