@@ -3,7 +3,7 @@ import type { StringTable } from '../../i18n/types';
 /**
  * Website copy. Long-form brand prose (manifesto, "Sobre HOY", philosophy, class essays) lives in
  * `src/tenant/brand.ts`; this table holds the UI around it — labels, headings, CTAs and notes.
- * Namespaces: site.nav · site.hero · site.movements · site.mv · site.today · site.classes ·
+ * Namespaces: site.nav · site.hero · site.today · site.classes ·
  * site.value · site.philosophy · site.testimonials · site.first · site.about ·
  * site.modalities · site.schedule · site.teachers · site.plans · site.contact · site.legal · site.footer
  */
@@ -81,14 +81,11 @@ export const strings: StringTable = {
   "site.new.scroll": { es: "Un momento para ti", en: "A moment for yourself" },
   "site.new.ambient": { es: "Pausar movimiento", en: "Pause motion" },
   "site.new.static": { es: "Activar movimiento", en: "Enable motion" },
-  "site.new.movements": { es: "¿Cómo quieres sentirte hoy?", en: "How do you want to feel today?" },
-  "site.new.movementsBody": { es: "Cuatro formas de volver a ti. Encuentra tu movimiento.", en: "Four ways back to yourself. Find your movement." },
   "site.new.philosophyTitle": { es: "No tienes que ir más lejos.", en: "You don’t have to go further." },
   "site.new.philosophyEm": { es: "Solo volver a ti.", en: "Just back to yourself." },
   "site.new.philosophyBody": { es: "Entre todo lo que haces, también hay espacio para ti. Para respirar sin prisa, sentir tu cuerpo y encontrar tu propio ritmo.", en: "Among everything you do, there is room for you, too. To breathe without rushing, feel your body, and find your own rhythm." },
-  "site.new.chapter1": { es: "01 / EL MOVIMIENTO", en: "01 / MOVEMENT" },
-  "site.new.chapter2": { es: "02 / TU PRÁCTICA", en: "02 / YOUR PRACTICE" },
-  "site.new.chapter3": { es: "03 / NOS ENCONTRAMOS", en: "03 / WE MEET" },
+  "site.new.chapter2": { es: "01 / TU PRÁCTICA", en: "01 / YOUR PRACTICE" },
+  "site.new.chapter3": { es: "02 / NOS ENCONTRAMOS", en: "02 / WE MEET" },
   "site.new.classesTitle": { es: "Muévete como te sientes.", en: "Move the way you feel." },
   "site.new.classesBody": { es: "Fuerza, fluidez o una pausa. No hay una sola forma de empezar.", en: "Strength, flow, or a pause. There is more than one way to begin." },
   "site.new.scheduleTitle": { es: "Hazle espacio a tu día.", en: "Make room in your day." },
@@ -127,12 +124,6 @@ export const strings: StringTable = {
   'site.hero.cta2': { es: 'Ver horario', en: 'See schedule' },
   'site.hero.media': { es: 'Video de portada del estudio', en: 'Studio hero video' },
 
-  'site.movements.title': { es: 'Cuatro movimientos', en: 'Four movements' },
-  'site.movements.body': { es: 'Cada clase pertenece a un movimiento. Elige cómo quieres sentirte hoy y el horario se ordena para ti.', en: 'Every class belongs to a movement. Choose how you want to feel today and the schedule sorts itself for you.' },
-  'site.mv.enraiza': { es: 'Fuerza, centro, control. Pilates y barre.', en: 'Strength, core, control. Pilates and barre.' },
-  'site.mv.fluye': { es: 'Respiración y movimiento continuo. Flow.', en: 'Breath and continuous movement. Flow.' },
-  'site.mv.arde': { es: 'Calor, sudor, foco. Hot yoga.', en: 'Heat, sweat, focus. Hot yoga.' },
-  'site.mv.libera': { es: 'Soltar, quedarse quieto. Yin y meditación.', en: 'Let go, stay still. Yin and meditation.' },
 
   'site.today.title': { es: 'Hoy en el club', en: 'Today at the club' },
   'site.today.empty': { es: 'Hoy descansamos. Mira el horario de la semana.', en: 'We rest today. See the week’s schedule.' },
