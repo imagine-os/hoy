@@ -31,7 +31,7 @@ file. **0032** — this file — is the content pass. Version **__VERSION__**. F
    stacks; the guest is included; the brand manual's manifesto, purpose, mission, four keywords and five traits (20)
    and its logo, palette and typography rules (19); chapter 01 diffed against the website copy (Medellín, the full
    closing paragraph). Marketing and developer appear as roles in 00, 09 and 24.
-5. **Decisions.** Closed 2 (10-class validity; public naming), narrowed 6 (address, Pausas daily limit, guest count
+5. **Decisions.** Closed 2 (10-class validity; public naming), narrowed 6 (contact: only email, Instagram and NIT remain; Pausas daily limit, guest count
    and mat, IVA de-duplicated to chapter 10, social publishing, wordmark approver), added 3 (the trial class price,
    the corporate line's scope and prices, "intención del día" still in the privacy text). ROADMAP §E updated with the
    source document and date on every closed item.
