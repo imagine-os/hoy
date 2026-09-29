@@ -1,0 +1,17 @@
+/* GoalPicker — reuses the SegmentedControl track/pill and the Chip; only layout lives here. */
+.goalpick { display: flex; flex-direction: column; gap: var(--sp-2); min-width: 0; }
+.goalpick-group { display: flex; flex-direction: column; align-items: flex-start; gap: var(--sp-2); min-width: 0; }
+.goalpick-line { display: flex; flex-wrap: wrap; align-items: center; column-gap: var(--sp-3); row-gap: var(--sp-1); inline-size: 100%; }
+.goalpick-track { flex: 1 1 14rem; max-inline-size: 26rem; }
+.goalpick-btn { flex-direction: column; gap: 0; line-height: 1.1; padding-block: 2px; }
+.goalpick-num { white-space: nowrap; overflow-wrap: normal; font-family: var(--font-heading); font-size: var(--fs-md); font-weight: var(--fw-semibold); font-variant-numeric: tabular-nums; }
+.goalpick-sug { font-size: var(--fs-2xs); font-weight: var(--fw-medium); letter-spacing: .02em; white-space: nowrap; }
+/* the suggested option keeps a marker even when not selected (non-colour cue: a small dot before the word) */
+.goalpick-btn[data-suggested] .goalpick-sug::before { content: ''; display: inline-block; inline-size: .4em; block-size: .4em; border-radius: 50%; background: currentColor; margin-inline-end: .3em; vertical-align: .15em; }
+.goalpick-btn:not(.is-active)[data-suggested] { color: var(--color-primary); }
+.goalpick-per { white-space: nowrap; }
+.goalpick-none { font-size: var(--fs-sm); }
+.goalpick-hint { margin: 0; }
+.goalpick[data-disabled] .goalpick-btn, .goalpick[data-disabled] .goalpick-none { cursor: not-allowed; opacity: .55; }
+/* dark: the accent pill sits close to the pressed track, so the checked option also gets a light ring (not colour alone) */
+:root[data-theme="dark"] .goalpick-btn.is-active, :root[data-theme="dark"] .goalpick-none.is-selected { box-shadow: inset 0 0 0 1.5px var(--color-primary), var(--shadow-contact); }
