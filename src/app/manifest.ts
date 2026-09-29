@@ -28,6 +28,8 @@ export interface HoyosGlobal {
    * starts the load), `load()` resolves with it. `run('hub.map')` on HUB-01 does the same.
    */
   hubMap: { url: string; readonly data: HubMap | null; load: () => Promise<HubMap> };
+  /** Since 0042. Where this deployment serves `actions.json` (schema hoy.actions/1): the `actions` vocabulary as a file. */
+  actionsUrl: string;
 }
 
 /**
@@ -45,7 +47,7 @@ export function publishManifest(routes: RouteDef[]): void {
     get data() { const d = hubMapData(); if (!d) loadHubMap().catch(() => undefined); return d; },
     load: loadHubMap,
   };
-  const g: HoyosGlobal = { routes: routeManifest(routes), users, get actions() { return listActions(); }, run, hubMap };
+  const g: HoyosGlobal = { routes: routeManifest(routes), users, get actions() { return listActions(); }, run, hubMap, actionsUrl: new URL('actions.json', hubMapUrl()).href };
   // The hub map's hand-written role facts are copies (the data module must stay import-free): say so when they drift.
   if (import.meta.env.DEV) for (const p of checkHubMapData()) console.warn(`[hub map] ${p}`);
   (window as unknown as { __hoyos?: HoyosGlobal }).__hoyos = g;

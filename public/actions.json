@@ -1,0 +1,1403 @@
+{
+  "schema": "hoy.actions/1",
+  "product": {
+    "id": "hoy",
+    "name": {
+      "es": "HoyOS",
+      "en": "HoyOS"
+    },
+    "version": "0.17.0",
+    "baseUrl": "https://imagine-os.github.io/hoy/"
+  },
+  "generatedAt": "2026-09-29T00:00:00.000Z",
+  "run": {
+    "how": "window.__hoyos.run(id, params)",
+    "note": "in-page only; no MCP server yet"
+  },
+  "permissions": [
+    {
+      "id": "bookings.write",
+      "roles": [
+        "super_admin",
+        "admin",
+        "customer"
+      ]
+    },
+    {
+      "id": "classes.read",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "teacher",
+        "maintenance",
+        "marketing",
+        "developer",
+        "customer",
+        "public"
+      ]
+    },
+    {
+      "id": "payments.read",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "finance",
+        "customer"
+      ]
+    },
+    {
+      "id": "members.read",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "finance",
+        "marketing"
+      ]
+    },
+    {
+      "id": "manual.edit",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator"
+      ]
+    },
+    {
+      "id": "manual.train",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator"
+      ]
+    },
+    {
+      "id": "settings.write",
+      "roles": [
+        "super_admin",
+        "admin"
+      ]
+    },
+    {
+      "id": "hours.write",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator"
+      ]
+    },
+    {
+      "id": "api_keys.write",
+      "roles": [
+        "super_admin",
+        "developer"
+      ]
+    },
+    {
+      "id": "dev.tools",
+      "roles": [
+        "super_admin",
+        "developer"
+      ]
+    },
+    {
+      "id": "docs.read",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "finance",
+        "teacher",
+        "maintenance",
+        "marketing",
+        "developer",
+        "customer",
+        "public"
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "id": "analytics.openMember",
+      "label": {
+        "es": "Abrir la ficha de un miembro",
+        "en": "Open a member record"
+      },
+      "intent": {
+        "es": "Abre la ficha de {userId}",
+        "en": "Open the record of {userId}"
+      },
+      "params": {
+        "userId": "string — users.id (usr_cust)"
+      },
+      "permission": "members.read",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "finance"
+      ],
+      "pages": [
+        {
+          "code": "M-12",
+          "route": "/admin/analytics"
+        }
+      ]
+    },
+    {
+      "id": "analytics.setRange",
+      "label": {
+        "es": "Cambiar el rango",
+        "en": "Change the range"
+      },
+      "intent": {
+        "es": "Muéstrame la analítica de los últimos {range} días",
+        "en": "Show me analytics for the last {range} days"
+      },
+      "params": {
+        "range": "enum:7,30,90"
+      },
+      "permission": "members.read",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "finance"
+      ],
+      "pages": [
+        {
+          "code": "M-12",
+          "route": "/admin/analytics"
+        }
+      ]
+    },
+    {
+      "id": "app.choosePlan",
+      "label": {
+        "es": "Elegir un plan",
+        "en": "Choose a plan"
+      },
+      "intent": {
+        "es": "Quiero el plan {plan}",
+        "en": "I want the {plan} plan"
+      },
+      "params": {
+        "plan": "enum:monthly,annual"
+      },
+      "permission": "payments.read",
+      "roles": [
+        "customer",
+        "teacher"
+      ],
+      "pages": [
+        {
+          "code": "C-06",
+          "route": "/app/plans"
+        }
+      ]
+    },
+    {
+      "id": "app.confirmReservation",
+      "label": {
+        "es": "Confirmar la reserva",
+        "en": "Confirm the reservation"
+      },
+      "intent": {
+        "es": "Confirma mi reserva",
+        "en": "Confirm my reservation"
+      },
+      "permission": "bookings.write",
+      "roles": [
+        "customer",
+        "teacher"
+      ],
+      "pages": [
+        {
+          "code": "C-04",
+          "route": "/app/checkout/:id"
+        }
+      ]
+    },
+    {
+      "id": "app.goHome",
+      "label": {
+        "es": "Ir al inicio",
+        "en": "Go home"
+      },
+      "intent": {
+        "es": "Llévame al inicio de la app",
+        "en": "Take me to the app home"
+      },
+      "roles": [
+        "customer",
+        "teacher"
+      ],
+      "pages": [
+        {
+          "code": "C-01",
+          "route": "/app"
+        },
+        {
+          "code": "C-02",
+          "route": "/app/schedule"
+        },
+        {
+          "code": "C-04",
+          "route": "/app/checkout/:id"
+        },
+        {
+          "code": "C-06",
+          "route": "/app/plans"
+        },
+        {
+          "code": "C-08",
+          "route": "/app/booking/:id"
+        },
+        {
+          "code": "C-27",
+          "route": "/app/practice"
+        }
+      ]
+    },
+    {
+      "id": "app.openPractice",
+      "label": {
+        "es": "Ver mi práctica",
+        "en": "See my practice"
+      },
+      "intent": {
+        "es": "Muéstrame mi práctica",
+        "en": "Show me my practice"
+      },
+      "roles": [
+        "customer",
+        "teacher"
+      ],
+      "pages": [
+        {
+          "code": "C-01",
+          "route": "/app"
+        },
+        {
+          "code": "C-02",
+          "route": "/app/schedule"
+        },
+        {
+          "code": "C-04",
+          "route": "/app/checkout/:id"
+        },
+        {
+          "code": "C-06",
+          "route": "/app/plans"
+        },
+        {
+          "code": "C-08",
+          "route": "/app/booking/:id"
+        },
+        {
+          "code": "C-27",
+          "route": "/app/practice"
+        }
+      ]
+    },
+    {
+      "id": "app.openSchedule",
+      "label": {
+        "es": "Abrir el horario",
+        "en": "Open the schedule"
+      },
+      "intent": {
+        "es": "Muéstrame el horario de clases",
+        "en": "Show me the class schedule"
+      },
+      "permission": "classes.read",
+      "roles": [
+        "customer",
+        "teacher"
+      ],
+      "pages": [
+        {
+          "code": "C-01",
+          "route": "/app"
+        },
+        {
+          "code": "C-02",
+          "route": "/app/schedule"
+        },
+        {
+          "code": "C-04",
+          "route": "/app/checkout/:id"
+        },
+        {
+          "code": "C-06",
+          "route": "/app/plans"
+        },
+        {
+          "code": "C-08",
+          "route": "/app/booking/:id"
+        },
+        {
+          "code": "C-27",
+          "route": "/app/practice"
+        }
+      ]
+    },
+    {
+      "id": "app.pickMat",
+      "label": {
+        "es": "Elegir tapete",
+        "en": "Pick a mat"
+      },
+      "intent": {
+        "es": "Quiero el tapete {mat}",
+        "en": "I want mat {mat}"
+      },
+      "params": {
+        "mat": "number 1–16"
+      },
+      "permission": "bookings.write",
+      "roles": [
+        "customer",
+        "teacher"
+      ],
+      "pages": [
+        {
+          "code": "C-04",
+          "route": "/app/checkout/:id"
+        }
+      ]
+    },
+    {
+      "id": "app.reserve",
+      "label": {
+        "es": "Reservar una clase",
+        "en": "Reserve a class"
+      },
+      "intent": {
+        "es": "Reserva la clase {session}",
+        "en": "Reserve the class {session}"
+      },
+      "params": {
+        "session": "string (class_sessions.id)"
+      },
+      "permission": "bookings.write",
+      "roles": [
+        "customer",
+        "teacher"
+      ],
+      "pages": [
+        {
+          "code": "C-02",
+          "route": "/app/schedule"
+        }
+      ]
+    },
+    {
+      "id": "app.setGoal",
+      "label": {
+        "es": "Cambiar mi meta semanal",
+        "en": "Change my weekly goal"
+      },
+      "intent": {
+        "es": "Quiero practicar {target} veces por semana",
+        "en": "I want to practise {target} times a week"
+      },
+      "params": {
+        "target": "number 0–7 (0 = sin meta)"
+      },
+      "permission": "bookings.write",
+      "roles": [
+        "customer",
+        "teacher"
+      ],
+      "pages": [
+        {
+          "code": "C-01",
+          "route": "/app"
+        },
+        {
+          "code": "C-27",
+          "route": "/app/practice"
+        }
+      ]
+    },
+    {
+      "id": "auth.signIn",
+      "label": {
+        "es": "Entrar",
+        "en": "Sign in"
+      },
+      "intent": {
+        "es": "Entra como {user}",
+        "en": "Sign in as {user}"
+      },
+      "params": {
+        "user": "enum:usr_super,usr_admin,usr_coord,usr_desk,usr_fin,usr_teach,usr_maint,usr_mkt,usr_dev,usr_cust"
+      },
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "finance",
+        "teacher",
+        "maintenance",
+        "marketing",
+        "developer",
+        "customer",
+        "public"
+      ],
+      "pages": [
+        {
+          "code": "A-02",
+          "route": "/auth/sign-in"
+        }
+      ]
+    },
+    {
+      "id": "dev.apiKeys.create",
+      "label": {
+        "es": "Crear una llave de API",
+        "en": "Create an API key"
+      },
+      "intent": {
+        "es": "Crea una llave {environment} llamada {name} con {scopes}",
+        "en": "Create a {environment} key called {name} with {scopes}"
+      },
+      "params": {
+        "name": "string",
+        "environment": "enum:live,test",
+        "scopes": "csv of classes.read,bookings.read,bookings.write,customers.read,hours.read,hours.write,webhooks.receive",
+        "expires_days": "number (optional, default 90; 0 = never)"
+      },
+      "permission": "api_keys.write",
+      "roles": [
+        "super_admin",
+        "developer",
+        "admin"
+      ],
+      "pages": [
+        {
+          "code": "D-07",
+          "route": "/dev/api-keys"
+        }
+      ]
+    },
+    {
+      "id": "dev.apiKeys.revoke",
+      "label": {
+        "es": "Revocar una llave",
+        "en": "Revoke a key"
+      },
+      "intent": {
+        "es": "Revoca la llave {id} ya",
+        "en": "Revoke key {id} now"
+      },
+      "params": {
+        "id": "string (api_keys.id or prefix)"
+      },
+      "permission": "api_keys.write",
+      "roles": [
+        "super_admin",
+        "developer",
+        "admin"
+      ],
+      "pages": [
+        {
+          "code": "D-07",
+          "route": "/dev/api-keys"
+        }
+      ]
+    },
+    {
+      "id": "dev.apiKeys.rotate",
+      "label": {
+        "es": "Rotar una llave",
+        "en": "Rotate a key"
+      },
+      "intent": {
+        "es": "Rota la llave {id}; la vieja funciona 24 horas más",
+        "en": "Rotate key {id}; the old one keeps working for 24 hours"
+      },
+      "params": {
+        "id": "string (api_keys.id or prefix)"
+      },
+      "permission": "api_keys.write",
+      "roles": [
+        "super_admin",
+        "developer",
+        "admin"
+      ],
+      "pages": [
+        {
+          "code": "D-07",
+          "route": "/dev/api-keys"
+        }
+      ]
+    },
+    {
+      "id": "hub.enterAs",
+      "label": {
+        "es": "Entrar a una superficie",
+        "en": "Enter a surface"
+      },
+      "intent": {
+        "es": "Entra a {surface} como su usuario demo",
+        "en": "Enter {surface} as its demo user"
+      },
+      "params": {
+        "surface": "enum:app,site,teacher,desk,inbox,pos,admin,crm,finance,marketing,manual,sources,docs,kb,dev"
+      },
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "finance",
+        "teacher",
+        "maintenance",
+        "marketing",
+        "developer",
+        "customer",
+        "public"
+      ],
+      "pages": [
+        {
+          "code": "HUB-01",
+          "route": "/"
+        }
+      ]
+    },
+    {
+      "id": "hub.map",
+      "label": {
+        "es": "Mapa del hub",
+        "en": "Hub map"
+      },
+      "intent": {
+        "es": "Dame el mapa del hub",
+        "en": "Give me the hub map"
+      },
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "finance",
+        "teacher",
+        "maintenance",
+        "marketing",
+        "developer",
+        "customer",
+        "public"
+      ],
+      "pages": [
+        {
+          "code": "HUB-01",
+          "route": "/"
+        }
+      ]
+    },
+    {
+      "id": "hub.openCanvas",
+      "label": {
+        "es": "Abrir el lienzo",
+        "en": "Open the canvas"
+      },
+      "intent": {
+        "es": "Muéstrame todas las páginas en el lienzo",
+        "en": "Show me every page on the canvas"
+      },
+      "permission": "dev.tools",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "finance",
+        "teacher",
+        "maintenance",
+        "marketing",
+        "developer",
+        "customer",
+        "public"
+      ],
+      "pages": [
+        {
+          "code": "HUB-01",
+          "route": "/"
+        }
+      ]
+    },
+    {
+      "id": "hub.openSimulator",
+      "label": {
+        "es": "Abrir el simulador",
+        "en": "Open the simulator"
+      },
+      "intent": {
+        "es": "Abre el simulador de dispositivos",
+        "en": "Open the device simulator"
+      },
+      "permission": "dev.tools",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "finance",
+        "teacher",
+        "maintenance",
+        "marketing",
+        "developer",
+        "customer",
+        "public"
+      ],
+      "pages": [
+        {
+          "code": "HUB-01",
+          "route": "/"
+        }
+      ]
+    },
+    {
+      "id": "hub.openTool",
+      "label": {
+        "es": "Abrir una herramienta",
+        "en": "Open a tool"
+      },
+      "intent": {
+        "es": "Abre {tool}",
+        "en": "Open {tool}"
+      },
+      "params": {
+        "tool": "enum:canvas,simulator,specs,layout,tables,components,tokens,decisions,screenshots"
+      },
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "finance",
+        "teacher",
+        "maintenance",
+        "marketing",
+        "developer",
+        "customer",
+        "public"
+      ],
+      "pages": [
+        {
+          "code": "HUB-01",
+          "route": "/"
+        }
+      ]
+    },
+    {
+      "id": "hub.setLang",
+      "label": {
+        "es": "Cambiar idioma",
+        "en": "Set the language"
+      },
+      "intent": {
+        "es": "Pon la interfaz en {lang}",
+        "en": "Put the interface in {lang}"
+      },
+      "params": {
+        "lang": "enum:es,en"
+      },
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "finance",
+        "teacher",
+        "maintenance",
+        "marketing",
+        "developer",
+        "customer",
+        "public"
+      ],
+      "pages": [
+        {
+          "code": "HUB-01",
+          "route": "/"
+        }
+      ]
+    },
+    {
+      "id": "hub.toggleDevMode",
+      "label": {
+        "es": "Modo dev",
+        "en": "Dev mode"
+      },
+      "intent": {
+        "es": "Enciende o apaga el modo dev",
+        "en": "Turn dev mode on or off"
+      },
+      "permission": "dev.tools",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "finance",
+        "teacher",
+        "maintenance",
+        "marketing",
+        "developer",
+        "customer",
+        "public"
+      ],
+      "pages": [
+        {
+          "code": "HUB-01",
+          "route": "/"
+        }
+      ]
+    },
+    {
+      "id": "hub.toggleTheme",
+      "label": {
+        "es": "Cambiar tema",
+        "en": "Toggle theme"
+      },
+      "intent": {
+        "es": "Cambia entre claro y oscuro",
+        "en": "Switch between light and dark"
+      },
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "finance",
+        "teacher",
+        "maintenance",
+        "marketing",
+        "developer",
+        "customer",
+        "public"
+      ],
+      "pages": [
+        {
+          "code": "HUB-01",
+          "route": "/"
+        }
+      ]
+    },
+    {
+      "id": "hub.toggleWireframe",
+      "label": {
+        "es": "Wireframe",
+        "en": "Wireframe"
+      },
+      "intent": {
+        "es": "Muestra el sistema en wireframe",
+        "en": "Show the system as a wireframe"
+      },
+      "permission": "dev.tools",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "finance",
+        "teacher",
+        "maintenance",
+        "marketing",
+        "developer",
+        "customer",
+        "public"
+      ],
+      "pages": [
+        {
+          "code": "HUB-01",
+          "route": "/"
+        }
+      ]
+    },
+    {
+      "id": "integrations.google.connect",
+      "label": {
+        "es": "Conectar con Google",
+        "en": "Connect with Google"
+      },
+      "intent": {
+        "es": "Conecta el perfil de Google del estudio (no conectado aún)",
+        "en": "Connect the studio’s Google profile (not wired yet)"
+      },
+      "permission": "settings.write",
+      "roles": [
+        "super_admin",
+        "admin"
+      ],
+      "pages": [
+        {
+          "code": "M-10a",
+          "route": "/admin/integrations/google-business"
+        }
+      ]
+    },
+    {
+      "id": "integrations.google.copyHours",
+      "label": {
+        "es": "Copiar el horario para Google",
+        "en": "Copy the hours for Google"
+      },
+      "intent": {
+        "es": "Copia el horario para pegarlo en Google Business Profile",
+        "en": "Copy the hours to paste into Google Business Profile"
+      },
+      "params": {
+        "format": "enum:text,json (default text)"
+      },
+      "roles": [
+        "super_admin",
+        "admin"
+      ],
+      "pages": [
+        {
+          "code": "M-10a",
+          "route": "/admin/integrations/google-business"
+        }
+      ]
+    },
+    {
+      "id": "integrations.google.push",
+      "label": {
+        "es": "Enviar el horario a Google",
+        "en": "Push the hours to Google"
+      },
+      "intent": {
+        "es": "Envía el horario a Google ahora (no conectado aún)",
+        "en": "Push the hours to Google now (not wired yet)"
+      },
+      "permission": "settings.write",
+      "roles": [
+        "super_admin",
+        "admin"
+      ],
+      "pages": [
+        {
+          "code": "M-10a",
+          "route": "/admin/integrations/google-business"
+        }
+      ]
+    },
+    {
+      "id": "manual.answerRequest",
+      "label": {
+        "es": "Responder una solicitud",
+        "en": "Answer a request"
+      },
+      "intent": {
+        "es": "Responde la solicitud {id}: {answer}",
+        "en": "Answer request {id}: {answer}"
+      },
+      "params": {
+        "id": "string — manual_requests.id",
+        "answer": "string",
+        "status": "enum:done,dismissed,open — default done"
+      },
+      "permission": "manual.edit",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "finance",
+        "teacher",
+        "maintenance",
+        "marketing",
+        "developer",
+        "customer",
+        "public"
+      ],
+      "pages": [
+        {
+          "code": "K-04",
+          "route": "/manual/decisions"
+        }
+      ]
+    },
+    {
+      "id": "manual.editSection",
+      "label": {
+        "es": "Editar una sección",
+        "en": "Edit a section"
+      },
+      "intent": {
+        "es": "Reescribe la sección {section} del capítulo {chapter}",
+        "en": "Rewrite section {section} of chapter {chapter}"
+      },
+      "params": {
+        "chapter": "string — chapter slug (04-recepcion-y-check-in) or number (04)",
+        "section": "string — the ## heading text",
+        "body": "markdown — the section body, without the heading",
+        "note": "string — why (optional)",
+        "lang": "enum:es,en — default the interface language"
+      },
+      "permission": "manual.edit",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "finance",
+        "teacher",
+        "maintenance",
+        "marketing",
+        "developer",
+        "customer",
+        "public"
+      ],
+      "pages": [
+        {
+          "code": "K-03",
+          "route": "/manual"
+        },
+        {
+          "code": "K-03",
+          "route": "/manual/:chapter"
+        }
+      ]
+    },
+    {
+      "id": "manual.listRequests",
+      "label": {
+        "es": "Ver solicitudes",
+        "en": "List requests"
+      },
+      "intent": {
+        "es": "¿Qué cambios pidió el equipo al manual?",
+        "en": "What changes did the team ask for in the manual?"
+      },
+      "params": {
+        "status": "enum:open,done,dismissed,all — default open"
+      },
+      "permission": "manual.edit",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "finance",
+        "teacher",
+        "maintenance",
+        "marketing",
+        "developer",
+        "customer",
+        "public"
+      ],
+      "pages": [
+        {
+          "code": "K-04",
+          "route": "/manual/decisions"
+        }
+      ]
+    },
+    {
+      "id": "manual.markRead",
+      "label": {
+        "es": "Marcar como leído",
+        "en": "Mark as read"
+      },
+      "intent": {
+        "es": "Marca el capítulo {chapter} como leído",
+        "en": "Mark chapter {chapter} as read"
+      },
+      "params": {
+        "chapter": "string — chapter slug (04-recepcion-y-check-in) or number (04); default the open chapter"
+      },
+      "permission": "docs.read",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "finance",
+        "teacher",
+        "maintenance",
+        "marketing",
+        "developer",
+        "customer",
+        "public"
+      ],
+      "pages": [
+        {
+          "code": "K-03",
+          "route": "/manual"
+        },
+        {
+          "code": "K-03",
+          "route": "/manual/:chapter"
+        }
+      ]
+    },
+    {
+      "id": "manual.openSource",
+      "label": {
+        "es": "Abrir un documento fuente",
+        "en": "Open a source document"
+      },
+      "intent": {
+        "es": "Abre el documento {id}",
+        "en": "Open the {id} document"
+      },
+      "params": {
+        "id": "enum:modelo-de-valor,contenido-completo,manual-de-marca"
+      },
+      "permission": "docs.read",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "finance",
+        "teacher",
+        "maintenance",
+        "marketing",
+        "developer",
+        "customer",
+        "public"
+      ],
+      "pages": [
+        {
+          "code": "K-03",
+          "route": "/manual"
+        },
+        {
+          "code": "K-04",
+          "route": "/manual/decisions"
+        },
+        {
+          "code": "K-03",
+          "route": "/manual/:chapter"
+        },
+        {
+          "code": "K-05",
+          "route": "/docs/source"
+        }
+      ]
+    },
+    {
+      "id": "manual.requestChange",
+      "label": {
+        "es": "Pedir un cambio",
+        "en": "Request a change"
+      },
+      "intent": {
+        "es": "Pide que el capítulo {chapter} diga {request}",
+        "en": "Ask for chapter {chapter} to say {request}"
+      },
+      "params": {
+        "chapter": "string — chapter slug (04-recepcion-y-check-in) or number (04)",
+        "request": "string",
+        "section": "string — ## heading (optional)"
+      },
+      "permission": "docs.read",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "finance",
+        "teacher",
+        "maintenance",
+        "marketing",
+        "developer",
+        "customer",
+        "public"
+      ],
+      "pages": [
+        {
+          "code": "K-03",
+          "route": "/manual"
+        },
+        {
+          "code": "K-03",
+          "route": "/manual/:chapter"
+        }
+      ]
+    },
+    {
+      "id": "manual.restoreSection",
+      "label": {
+        "es": "Restaurar el original",
+        "en": "Restore the original"
+      },
+      "intent": {
+        "es": "Vuelve al texto original de {section}",
+        "en": "Go back to the original text of {section}"
+      },
+      "params": {
+        "chapter": "string — chapter slug (04-recepcion-y-check-in) or number (04)",
+        "section": "string — the ## heading text",
+        "lang": "enum:es,en"
+      },
+      "permission": "manual.edit",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "finance",
+        "teacher",
+        "maintenance",
+        "marketing",
+        "developer",
+        "customer",
+        "public"
+      ],
+      "pages": [
+        {
+          "code": "K-03",
+          "route": "/manual"
+        },
+        {
+          "code": "K-03",
+          "route": "/manual/:chapter"
+        }
+      ]
+    },
+    {
+      "id": "manual.setLens",
+      "label": {
+        "es": "Ver el manual como",
+        "en": "View the manual as"
+      },
+      "intent": {
+        "es": "Muéstrame el manual de {role}",
+        "en": "Show me the {role} manual"
+      },
+      "params": {
+        "role": "enum:all,super_admin,admin,coordinator,front_desk,finance,teacher,maintenance,marketing,developer"
+      },
+      "permission": "docs.read",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "finance",
+        "teacher",
+        "maintenance",
+        "marketing",
+        "developer",
+        "customer",
+        "public"
+      ],
+      "pages": [
+        {
+          "code": "K-03",
+          "route": "/manual"
+        },
+        {
+          "code": "K-03",
+          "route": "/manual/:chapter"
+        }
+      ]
+    },
+    {
+      "id": "manual.signTraining",
+      "label": {
+        "es": "Firmar etapa de formación",
+        "en": "Sign off a training stage"
+      },
+      "intent": {
+        "es": "Firma {stage} de {user}",
+        "en": "Sign off {stage} for {user}"
+      },
+      "params": {
+        "user": "string — users.id (usr_desk)",
+        "stage": "enum:day1,week1,month1",
+        "role": "string — the checklist; default the person’s role"
+      },
+      "permission": "manual.train",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "finance",
+        "teacher",
+        "maintenance",
+        "marketing",
+        "developer",
+        "customer",
+        "public"
+      ],
+      "pages": [
+        {
+          "code": "K-03",
+          "route": "/manual"
+        },
+        {
+          "code": "K-03",
+          "route": "/manual/:chapter"
+        }
+      ]
+    },
+    {
+      "id": "manual.suggestEdit",
+      "label": {
+        "es": "Sugerir una edición",
+        "en": "Suggest an edit"
+      },
+      "intent": {
+        "es": "Sugiere este texto para {section}",
+        "en": "Suggest this text for {section}"
+      },
+      "params": {
+        "chapter": "string — chapter slug (04-recepcion-y-check-in) or number (04)",
+        "section": "string — the ## heading text",
+        "body": "markdown — proposed section body",
+        "note": "string (optional)",
+        "lang": "enum:es,en"
+      },
+      "permission": "docs.read",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "finance",
+        "teacher",
+        "maintenance",
+        "marketing",
+        "developer",
+        "customer",
+        "public"
+      ],
+      "pages": [
+        {
+          "code": "K-03",
+          "route": "/manual"
+        },
+        {
+          "code": "K-03",
+          "route": "/manual/:chapter"
+        }
+      ]
+    },
+    {
+      "id": "settings.hours.holidays.import",
+      "label": {
+        "es": "Importar festivos de Colombia",
+        "en": "Import Colombian holidays"
+      },
+      "intent": {
+        "es": "Importa los festivos de Colombia de este año y el próximo",
+        "en": "Import this year’s and next year’s Colombian holidays"
+      },
+      "permission": "hours.write",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator"
+      ],
+      "pages": [
+        {
+          "code": "M-08g",
+          "route": "/admin/settings/hours"
+        }
+      ]
+    },
+    {
+      "id": "settings.hours.override.add",
+      "label": {
+        "es": "Añadir un festivo u horario especial",
+        "en": "Add a holiday or special hours"
+      },
+      "intent": {
+        "es": "El {start} cerramos por {label} / abrimos de {open} a {close}",
+        "en": "On {start} we close for {label} / open {open} to {close}"
+      },
+      "params": {
+        "start": "YYYY-MM-DD",
+        "end": "YYYY-MM-DD (optional, inclusive)",
+        "label": "string (ES; EN optional as label_en)",
+        "closed": "enum:true,false",
+        "open": "HH:MM (24 h) (when not closed)",
+        "close": "HH:MM (24 h) (when not closed)",
+        "kind": "enum:holiday,special,event"
+      },
+      "permission": "hours.write",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator"
+      ],
+      "pages": [
+        {
+          "code": "M-08g",
+          "route": "/admin/settings/hours"
+        }
+      ]
+    },
+    {
+      "id": "settings.hours.override.remove",
+      "label": {
+        "es": "Quitar un festivo u horario especial",
+        "en": "Remove a holiday or special hours"
+      },
+      "intent": {
+        "es": "Quita la excepción del {date}",
+        "en": "Remove the exception on {date}"
+      },
+      "params": {
+        "id": "string (hours_overrides.id)",
+        "date": "YYYY-MM-DD (alternative to id)"
+      },
+      "permission": "hours.write",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator"
+      ],
+      "pages": [
+        {
+          "code": "M-08g",
+          "route": "/admin/settings/hours"
+        }
+      ]
+    },
+    {
+      "id": "settings.hours.update",
+      "label": {
+        "es": "Cambiar el horario de un día",
+        "en": "Change one day’s hours"
+      },
+      "intent": {
+        "es": "Abre el {day} de {open} a {close} (o ciérralo)",
+        "en": "Open {day} from {open} to {close} (or close it)"
+      },
+      "params": {
+        "day": "enum:0,1,2,3,4,5,6 (0 = Sunday)",
+        "open": "HH:MM (24 h) | closed",
+        "close": "HH:MM (24 h) (omit when closed)"
+      },
+      "permission": "settings.write",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "finance"
+      ],
+      "pages": [
+        {
+          "code": "M-08a",
+          "route": "/admin/settings"
+        }
+      ]
+    }
+  ]
+}

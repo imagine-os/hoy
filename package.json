@@ -6,7 +6,7 @@
   "description": "HoyOS — operations system for HOY Wellness Center (multi-tenant ready)",
   "scripts": {
     "dev": "vite",
-    "build": "npm run tokens && node scripts/spacing-lint.mjs --report && npm run hub-map && npm run capture-dates && node scripts/manual-lint.mjs --report && tsc --noEmit && vite build && node scripts/copy-shots.mjs",
+    "build": "npm run tokens && node scripts/spacing-lint.mjs --report && npm run hub-map && npm run actions && npm run capture-dates && node scripts/manual-lint.mjs --report && tsc --noEmit && vite build && node scripts/copy-shots.mjs",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "screenshots": "node scripts/screenshots.mjs",
@@ -16,6 +16,7 @@
     "sql": "node --experimental-strip-types scripts/gen-sql.mjs",
     "flow-map": "node scripts/gen-flow-map.mjs",
     "hub-map": "node scripts/gen-hub-map.mjs",
+    "actions": "node scripts/gen-actions.mjs",
     "capture-dates": "node scripts/gen-capture-dates.mjs",
     "lint:manual": "node scripts/manual-lint.mjs",
     "hub-map:check": "node scripts/check-sample-routes.mjs",
