@@ -2,103 +2,99 @@
 title: Personal data and habeas data
 role: everyone
 part: VI
-version: 0.7.0
-updated: 2026-09-17
-summary: Law 1581 of 2012 in practice: what we ask for, how health data is stored, who may see what, and how a person sees, takes or deletes their data — from the app, from the website and in the admin queue.
+version: 0.13.3
+updated: 2026-09-29
+summary: Law 1581 in practice: what we ask for, how we look after health data, who sees what, and how a person views, downloads, corrects or deletes their data.
 ---
 
 # Personal data and habeas data
 
-Law 1581 of 2012 (Colombia). This is not a chapter for lawyers: it is what every person on the team has
-to do, and not do, every day.
+In Colombia personal data is protected by Law 1581 of 2012. This chapter is not for lawyers: it is what everyone on
+the team does and doesn't do, every day.
 
-## 1. The day-to-day rules
-1. At registration (A-03 / S-04) the person accepts the data-processing policy (A-06); it is stored
-   with the time, the version and who recorded it (`22`).
-2. We only ask for what is needed: name, WhatsApp, email, emergency contact, birthday, consent.
-3. **Health data is sensitive**: it is stored as a marker and an internal note; never read aloud, never
-   sent over WhatsApp, never discussed between shifts.
-4. Every view of a member record is logged in **M-07**; access is auditable.
-5. We never share a HoyOS session and never export lists out of the system without the owner's
-   authorisation.
-6. A photo is personal data: without written permission a face is not published (`19`).
+{{audience:23-habeas-data}}
 
-**Steps in HoyOS:** A-06 Legal (current version) · M-06 → consents · M-07 → filter "record read".
+## 1. The everyday rules
+1. When they register, in the app or at the desk, the person accepts the data policy. It is saved with the time,
+   the version and who recorded it (see [Legal documents](22-documentos-legales.md)).
+2. We only ask for what we need: name, WhatsApp, email, emergency contact, birthday and consent.
+   We no longer keep an "intention of the day": the app stopped asking for it.
+3. **Health data is sensitive.** It is kept as a marker and an internal note. It is never read out loud, never sent
+   by WhatsApp and never discussed between shifts.
+4. Every time someone opens a member's record, it is recorded.
+5. Never share your HoyOS session. Never take lists of people out of the system without the owner's permission.
+6. A photo is personal data too: without written permission, no face is published (see [Media](19-medios-y-artwork.md)).
 
-![The log of accesses and actions](../../screenshots/M-07/en-1280.jpg "M-07 · /admin/activity")
+![The log of access and actions](../../screenshots/M-07/en-1280.jpg "M-07 · /admin/activity")
 
-## 2. Who may see what
-The system does not rely on goodwill: every table carries an access contract. Front desk sees the
-member timeline but does not edit payments; finance sees payments but not health notes.
+> DECISION NEEDED: the published privacy policy still lists the "intention of the day" among the data we collect, and the app no longer asks for it. The owner and the legal adviser should drop it in the next version of the document.
+
+> IN HOYOS: A-06 Legal (current version) · M-06 → the person's consents · M-07 → "record viewed" filter.
+
+## 2. Who sees what
+The system doesn't rely on goodwill: each role sees only what it needs. The front desk sees a member's history but
+doesn't edit payments; finance sees payments but not health notes.
 
 {{roles}}
+
+This is how each person's profile is kept:
 
 {{table:profiles}}
 
 ## 3. The person's rights
 | Right | What we do | Deadline |
 |---|---|---|
-| Access | we show them what we hold; in the app they can **download their data** (C-26) | same day if in person |
-| Correction | corrected in M-06, or they do it in C-19 | immediate |
-| Deletion | the person asks by themselves (C-26 or the public page W-09) or front desk opens the case; admin executes it in **M-11** | 15 business days at most |
-| Withdraw marketing consent | the person switches the channel off in C-26 / C-24; the team in M-06 | immediate |
+| Access | we show them what we hold; in the app they can **download their data** | the same day, if in person |
+| Correction | you correct it on their record, or they do it in their profile | straight away |
+| Deletion | they ask (in the app or on the public page) or the front desk opens the case; admin carries it out | 15 working days at most |
+| Stop marketing | they switch the channel off in their app, or you do it on their record | straight away |
 
-**Financial records are kept by legal obligation**: the invoice and the payment history are not deleted;
-they stay linked to an anonymous identifier for the period the privacy policy sets (A-06 §6). The profile
-and the login account are anonymised. That is what the app tells the person before they confirm, in two
-steps, and what we repeat if they ask.
+**Money records are kept by law.** Invoices and payment history are not deleted: they stay without a name, under an
+anonymous identifier, for the time the privacy policy states. The profile and the account are anonymised. The app
+explains this to the person before they confirm.
 
-![What the person can correct themselves](../../screenshots/C-19/en-390.jpg "C-19 · /app/profile")
+![What the person can correct on their own](../../screenshots/C-19/en-390.jpg "C-19 · /app/profile")
 
-## 4. Deleting an account: the whole flow
-Three entrances, one queue, one table (`deletion_requests`). Nobody deletes anything by hand on the
-spot: the request is recorded, admin follows it and the technical run happens server-side.
+## 4. Deleting an account, step by step
+There are three ways to ask and one list where admin follows it up. Nobody deletes anything by hand on the spot.
 
-**a) The person, from the app (C-26 Account & data).** Profile → Account & data → *Delete my account*.
-Step one: what is kept and what ends, an optional reason and the "I understand" switch. Step two: the
-confirmation. A row is created in **requested** state and the person sees it right there; they can cancel
-it while it is still requested. The same screen holds their marketing consents, the privacy-policy version
-they accepted, the download of their data and the six legal documents.
+1. **From the app.** Profile → Account and data → *Delete my account*. First the app explains what is kept and what
+   is deleted, asks for a reason (optional) and an "I understand" tick. Then it asks to confirm. The request is
+   **pending** and the person can cancel it while it stays that way.
+2. **From the web, without signing in.** A public page explains the same and asks for an email or WhatsApp (one is
+   enough). It is linked from the website footer and the privacy policy.
+3. **In person.** The front desk confirms who they are, opens the request (or asks admin to) and notes who asked.
+   Don't promise a date: the deadline is the one in the table above.
+4. **Admin handles it.** In the deletions list admin sees who, which channel, the reason, how long ago and the state.
+   They move it to **in progress**, tick the seven anonymisation steps and only then mark it **done**. **Cancelled**
+   closes it without deleting. Requests are never deleted: they are the proof the right was honoured.
 
-![Account & data: consents, a copy of the data and delete the account](../../screenshots/C-26/en-390.jpg "C-26 · /app/account")
+![Account and data: consents, a copy of the data and deleting the account](../../screenshots/C-26/en-390.jpg "C-26 · /app/account")
 
-**b) Anyone, from the website with no sign-in (W-09).** Google Play requires a public URL to request
-deletion. The page explains the same, asks for email or WhatsApp (one is enough) and creates the row with
-no user attached. It is linked from the site footer and from point 7 of the privacy policy.
+![The public page to request deletion](../../screenshots/W-09/en-1280.jpg "W-09 · /site/delete-account")
 
-![The public deletion page](../../screenshots/W-09/en-1280.jpg "W-09 · /site/delete-account")
+![The deletions list, with the anonymisation steps](../../screenshots/M-11/en-1280.jpg "M-11 · /admin/crm/deletions")
 
-**c) Front desk, when asked in person.** Confirm the identity, open the row in M-03 with channel "front
-desk" (or ask admin to open it) and note who asked. Do not promise a date: the deadline is the one in the
-table above.
-
-**d) Admin, in the queue (M-11 CRM → Deletions).** Each request shows who, channel, reason, age and
-status. Admin moves it to **processing**, ticks the seven steps of the anonymisation checklist (profile,
-login account, notifications and preferences, messages, auth user, payments and invoices kept anonymous,
-confirmation sent) and only then can mark it **done**. **Cancelled** closes it without deleting. Rows are
-never deleted: they are the proof the right was honoured, and every move lands in M-07.
-
-![The admin queue with the anonymisation checklist](../../screenshots/M-11/en-1280.jpg "M-11 · /admin/crm/deletions")
+This is how each request is kept:
 
 {{table:deletion_requests}}
 
+> IN HOYOS: C-26 Account and data (the person) · W-09 public page · M-03 Tables → deletion_requests, channel "front desk" (in person) · M-11 CRM → Deletions (admin).
+
 ## 5. When someone asks
-"What do you do with my data?" — the short, true answer: "We keep your name, your WhatsApp, your email
-and an emergency contact so we can look after you. If you told us something about your health, it stays
-here as an internal note. You can see, download, correct or delete all of it from the app, under Profile →
-Account & data, or ask us and we do it within fifteen business days at most."
+**"What do you do with my data?"** — "We keep your name, your WhatsApp, your email and an emergency contact so we can
+look after you. If you told us anything about your health, it stays as an internal note and never leaves here. You
+can see, download, correct or delete all of it in the app, under Profile → Account and data, or ask us and we'll do
+it within fifteen working days."
 
-"If I delete the account, do my payments disappear?" — "Invoices are kept because the law obliges us, but
-without your name: nobody at the studio can link them back to you."
+**"If I delete my account, do my payments disappear?"** — "Invoices are kept because the law requires it, but
+without your name: nobody at the studio will be able to link them back to you."
 
-## 6. What is simulated today
-1. Consents are genuinely recorded, with the version and the time; so is the deletion request, with its
-   trail in M-07.
-2. The **execution** of the anonymisation (profile, account, auth user, notifications) is a server-side
-   job that will exist with Supabase (`26`). Until then admin performs the steps in M-03 and ticks them in
-   M-11; the M-11 checklist is the specification of that job.
-3. Real authentication (Supabase) is not connected: today access is a demo picker.
-4. The full list of App Store and Google Play requirements, with their status, is
-   `docs/app-store-compliance.md` (readable in the app under Documentation).
+## 6. What really works today
+1. Consents are really saved, with version and time. So are deletion requests, with their log.
+2. Automatic deletion will arrive when the real database is connected (see [Integrations](26-integraciones.md)).
+   Until then, admin does the steps by hand and ticks them on the list.
+3. Real sign-in isn't connected yet: today people sign in with demo users.
+4. What App Store and Google Play require is listed in the [app store guide](../../app-store-compliance.md).
 
-> DECISION NEEDED: the final data-protection policy text (drafted by counsel) and who is named as the published data controller.
+> DECISION NEEDED: the final text of the data policy (drafted by the legal adviser) and who is published as the data controller.

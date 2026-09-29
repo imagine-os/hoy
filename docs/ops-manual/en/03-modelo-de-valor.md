@@ -1,102 +1,140 @@
 ---
 title: Value model
-role: owner, admin, finance, front desk
+role: owner, admin, finance, front desk, marketing
 part: I
-version: 0.6.0
-updated: 2026-09-17
-summary: The five revenue lines, what each one does for the business, and today's prices read from the system.
+version: 0.13.3
+updated: 2026-09-29
+summary: HOY's six revenue lines, why each one exists, what to offer at the desk and the prices in force.
 ---
 
 # Value model
 
-HOY sells five different things and each has a different job in the business. Whoever is at the desk
-doesn't need to know the margin, but they do need to know why each family exists — that's how you offer
-the right thing without improvising.
+HOY sells six different things and each one does a different job. At the desk you don't need to know the margins,
+but you do need to know why each line exists: that way you offer the right thing without improvising.
 
-> NOTE: no price is written in this manual. Every block below reads from `src/tenant/pricing.ts`, the
-> only place in the system where a price exists. Change a price there and it changes here, on the site
-> (P-01) and at the desk (S-04) at the same time.
+{{audience:03-modelo-de-valor}}
 
-## 1. The discipline
-Five revenue lines on a room that does not grow.
+No price in this chapter is typed by hand. The price blocks are the current ones: when a price changes, it changes
+here, on the website and at the desk at the same time.
+
+## 1. The capacity rule
+One studio, six revenue lines and one rule that protects the experience:
+
+1. Every class has a fixed number of mats.
+2. Each person takes **one class a day, on any plan**.
+3. We never sell more spots than fit.
+
+This is the capacity in force:
 
 {{tenant:capacity}}
 
-That is the whole inventory of the day: 15 mats × 4 classes = 60 spots, and one person may take one
-class a day on any plan. The model is not about selling more spots, but about selling the right spot to
-the right person — and charging for what doesn't occupy a mat at all (pauses, gifts, space).
+That is the whole inventory for the day. The business is not about selling more spots, but about offering the
+right spot to the right person — and about charging for what does not take a mat: pauses, gifts, space.
 
-## 2. The five lines
-| Family | Its job | How we measure it |
+## 2. The six lines
+| Line | Its job | How we know it works |
 |---|---|---|
-| Bienvenida | Acquisition: the cheap front door that feeds Membership | % of passes that convert to Membership within 60 days |
-| Membresía | Recurring revenue: one access level, monthly or annual | active members and month-to-month retention |
-| Pausas | Frequency: 15–30 min micro-sessions, near-zero marginal cost | visits per member per week |
-| Regalos | Referral and community: vouchers and member guests | vouchers redeemed and guests who come back |
-| Espacio | B2B revenue: studio rental off-peak | hours rented per month |
+| Welcome | Acquisition: the first visit, at a low price | how many passes end up as Memberships |
+| Membership | Recurring revenue: one access level, monthly or yearly | active members and how many stay each month |
+| Pauses | Frequency: short 15 to 30-minute sessions | visits per member per week |
+| Gifts | Referral and community: vouchers and guests | vouchers used and guests who come back |
+| Space | B2B revenue: renting the studio outside peak hours | hours rented per month |
+| Corporate Experiences | On the way: wellbeing for work teams | not on sale yet |
 
-## 3. Bienvenida — acquisition
-The front door. Low price, no commitment, built so the person decides with their body. Nobody lives off
-this line: its success is measured in how many of those passes become Membership.
+The original document, without prices:
+
+{{source:modelo-de-valor}}
+
+## 3. Welcome — the first visit
+The way in. Low price and no commitment, so the person decides with their body. This line is not meant to make
+money: it is meant to make the person come back and move up to Membership.
 
 {{pricing:bienvenida}}
 
-At the desk: if someone asks "which one should I take?", the default answer is the Trial Class the
-first time and the 3-Class Pack the second. The 10-Class Pack is for someone who already knows they'll
-be back but doesn't want a monthly plan yet.
+1. The **3-Class Pack** is used within **one month**.
+2. The **10-Class Pack** is used within **three months**.
 
-> DECISION NEEDED: 10-Class Pack validity (the brief says 1 month; P-01 Plans & prices says 3 months).
+**What to offer:** the first time, the Trial Class. The second time, the 3-Class Pack. The 10-Class Pack is for
+someone who knows they will come back but does not want a monthly plan yet.
 
-## 4. Membresía — recurring revenue
-One access level: there is no "plus plan". It is paid monthly or annually, and the annual is the same
-access at the best price per month.
+> DECISION NEEDED: the value model describes the Trial Class as "one class, no entry cost", but the system prices it today. We need to confirm whether the trial is free or whether "no entry cost" means no joining fee.
+
+## 4. Membership — the heart of the business
+One access level: there is no "plus plan". It is paid month by month or once a year. The access is the same; the
+annual plan is cheaper per month, and that is the only difference.
 
 {{pricing:membresia}}
 
-The annual plan works out at about $416,000 per month: that is what you say when someone asks whether
-it's worth it. Everything else about membership — pause, charge notice, cancelling without mazes — is
-in chapter `11` and in the policies of chapter `21`.
+**What to say if they ask whether the annual plan is worth it:** "It's the same access. Paying for the year makes
+each month cheaper." The note under the block above says how much it works out at per month.
+
+Pausing, the charge notice and cancelling without a maze: [Pauses and gifts](11-pausas-y-regalos.md) and
+[Policies](21-politicas.md).
 
 ![The plans as the public sees them](../../screenshots/P-01/en-1280.jpg "P-01 · /site/plans")
 
-## 5. Pausas — frequency
-Micro-sessions of 15 to 30 minutes: breathwork, meditation, a pause between meetings. They cost us
-almost nothing at the margin — no class mat, no full teacher hour — and their job is to make the person
-come more often per week, not pay more per visit.
+## 5. Pauses — coming more often
+Short 15 to 30-minute sessions: breathwork, meditation, a pause between meetings. They cost the studio almost
+nothing. Their job is to bring the person in more times a week.
 
 {{pricing:pausas}}
 
-The open rules of this family (whether Unlimited Pauses stacks with Membership, whether a Pause uses up
-the one-class-a-day limit) are flagged as a decision in chapter `11`.
+**Unlimited Pauses** is a monthly add-on: it stacks with Membership, it does not replace it. What is still open
+about Pauses is in [Pauses and gifts](11-pausas-y-regalos.md).
 
-## 6. Regalos — referral and community
-Our referral channel. A gift voucher brings someone who doesn't know us, carrying the recommendation of
-whoever bought it; a Membership guest brings someone who is already accompanied.
+## 6. Gifts — bringing new people
+Giving HOY as a gift and bringing someone along is, in practice, our referral channel: new people arrive with
+someone who already knows us.
 
 {{pricing:regalos}}
 
-A guest is not free for the business: they occupy a mat. That is why how many guests and when is a
-policy, not a favour at the desk.
+1. The **Gift Voucher** is bought to give away.
+2. The **Guest** is **included** for Membership members: it is a benefit, not something we charge for.
 
-How many guests and whether they occupy a mat is an open decision, flagged in chapter `11`.
+How many guests a member may bring and how they count in the room: [Pauses and gifts](11-pausas-y-regalos.md).
 
-## 7. Espacio — B2B revenue
-The studio is rented off-peak: workshops, private sessions, photo and video, shoots, pop-ups. These are
-"from" prices and they end in a conversation, not a checkout. The operational detail is in chapter `12`.
+## 7. Space — renting the studio
+The studio is rented outside the busiest hours: photo and video, workshops, private sessions, shoots and pop-ups.
+They are "from" prices and end in a conversation, not an online payment.
 
 {{pricing:espacio}}
 
-## 8. All of it together
-The full catalogue, exactly as the system reads it:
+How to quote, book and charge: [Space — B2B rental](12-espacio-b2b.md).
+
+## 8. Corporate Experiences — on the way
+The sixth line is **in preparation**. The idea is to take HOY to work teams that perform hard and rest little:
+active breaks, movement and breathing as part of the company's culture.
+
+Three formats are planned:
+
+1. **Team session:** a group experience, at the studio or at the office.
+2. **Recurring programme:** regular sessions for the same team.
+3. **Tailored workshop:** a themed session designed around what the team needs.
+
+{{pricing:corporativo}}
+
+**What to say if a company asks:** "We're preparing a programme for teams. Leave me your details and coordination
+will write to you." Pass the contact to coordination the same day. Do not give prices or dates.
+
+> DECISION NEEDED: the scope, formats and prices of Corporate Experiences, and whether a session at the company's office counts against the studio's capacity.
+
+## 9. All together
+The full catalogue, as it stands today:
 
 {{pricing}}
 
-## 9. How to read the month
-| Indicator | Where | What to look at |
-|---|---|---|
-| Revenue this month | M-01 | settled sales, COP, against the same month last year |
-| Mix by family | M-09 Finance | how much comes from Membership vs Bienvenida |
-| Occupancy | M-01 | attendees over spots offered |
-| Bienvenida conversion | M-06 segments | passes that later bought Membership |
+## 10. How to read the month
+{{for:super_admin,admin,finance}}
+| Indicator | What to look at |
+|---|---|
+| Revenue this month | sales already paid, against the same month last year |
+| Mix by line | how much comes from Membership and how much from Welcome |
+| Occupancy | people who came over spots offered |
+| Welcome conversion | passes that later bought a Membership |
+{{/for}}
+
+This is occupancy right now:
 
 {{kpi:occupancy}}
+
+> IN HOYOS: M-01 Dashboard (revenue, occupancy) · M-09 Finance (mix by line) · M-06 CRM → segments (conversion).

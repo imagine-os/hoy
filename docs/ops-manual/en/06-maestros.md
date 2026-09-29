@@ -2,75 +2,96 @@
 title: Teachers
 role: teachers, coordination
 part: II
-version: 0.6.0
-updated: 2026-09-17
-summary: Before, during and after class; attendance, substitutions, reviews, payroll and the code of conduct.
+version: 0.13.3
+updated: 2026-09-29
+summary: Before, during and after class; attendance, substitutions, reviews, your pay and the code of conduct.
 ---
 
 # Teachers
 
-Your tool is **S-03 Teacher app**: next class, roster, schedule, descriptions, reviews and payroll.
+Your tool is the **teacher app**: your next class, the list of who is coming, your schedule, your reviews and your
+pay.
+
+{{audience:06-maestros}}
 
 ![Your home: the next class](../../screenshots/S-03/en-390.jpg "S-03 · /teach")
 
 ## 1. Before class
-1. Arrive at least 15 minutes early. Front desk marks you "Arrived" in S-02; no teacher in the room,
-   no students in.
-2. Open **S-03 → Next class → Roster**: see how many are coming, who is new and the health markers. Do
-   not mention the marker aloud; adapt.
-3. Check the room with the `07` checklist: temperature, mats, props, music, light.
-4. Greet by name whoever you can; ask new people if there is anything you should know.
+1. Arrive in good time (see below). The front desk marks you "Arrived". Without a teacher in the room, no students
+   go in.
+2. Open your next class and look at the list: how many are coming, who is new and whether there are health
+   markers. Never mention a health marker out loud: adapt the class.
+3. Check the room: temperature, mats, props, music and light (see
+   [Room, heat and maintenance](07-sala-calor-y-mantenimiento.md)).
+4. Greet whoever you can by name. Ask new people if there is anything you should know.
+
+How early you arrive before class:
+
+{{studio:teacher_arrival_minutes}}
+
+This is the room's capacity:
 
 {{tenant:capacity}}
 
-## 2. During class
-1. Start on time. One class per person per day means this is "their" class today: give it in full.
-2. Mark attendance from the mat: **S-03 → Roster → marks**. The window is T−15 min to T+2 h; after that
-   only coordination can edit it.
-3. Late arrivals enter per the grace defined in M-08; receive them silently, with a gesture.
-4. No phone for anything but the roster or the music.
+**What to say to someone new:** "Welcome. Any injury or anything I should know? If at any point you need to stop,
+stop. Nobody has anything to prove here."
 
-![The roster with attendance marks](../../screenshots/S-03/en-1280.jpg "S-03 · /teach")
+## 2. During class
+1. Start on time. For that person, this is their class of the day: give all of it.
+2. Mark attendance from your mat. You can do it from 15 minutes before until 2 hours after the start; after that,
+   only coordination can change it.
+3. Anyone arriving late comes in if they are inside the grace period. Welcome them quietly, with a gesture.
+4. Your phone is only for the list and the music.
+
+![The attendance list](../../screenshots/S-03/en-1280.jpg "S-03 · /teach")
 
 ## 3. After class
-1. Close attendance before leaving the room; it feeds the waitlist, payroll and the CRM.
-2. Leave the room as you found it (props in place, studio mats cleaned).
-3. Reviews: see them in **S-03 → Reviews** (the aggregate plus named ones the student did not mark
-   anonymous). Read them; do not reply from the app.
-
-**Steps in HoyOS:** S-03 → Next class → Roster → mark attendance → close. Schedule: S-03 → My
-schedule. Profile: S-03 → Profile (goes to coordination review before publishing).
+1. Close attendance before you leave the room. The waitlist, your pay and the member's history all come from it.
+2. Leave the room as you found it: props back in place and the studio's mats clean.
+3. You see your reviews in the app: the average and the named comments the student did not mark as anonymous. You
+   read them; you don't reply from the app.
 
 ![What the student rates after class](../../screenshots/C-10/en-390.jpg "C-10 · /app/rate/:id")
 
+> IN HOYOS: S-03 → Next class → List → mark attendance → Close. Schedule: S-03 → My schedule. Profile: S-03 → Profile (coordination reviews it before it goes live).
+
 ## 4. Substitutions
-1. Find the replacement yourself within the team and tell coordination at least 24 h ahead;
-   coordination confirms the change in **M-02 Schedule** and the student sees the right name in C-02.
-2. Under 24 h or no replacement: call coordination immediately. If the class is cancelled, the system
-   returns credits and notifies (E-03); you do not message students on your own.
+1. If you can't teach a class, find the substitute in the team yourself and tell coordination with the notice
+   below.
+2. Coordination makes the change in the schedule. The student sees the right name.
+3. With less notice, or with no substitute, call coordination straight away.
+4. If the class is cancelled, the system returns the credits and tells the students. You don't message them
+   yourself.
+
+The minimum notice to ask for a substitute:
+
+{{studio:substitution_notice_hours}}
 
 ## 5. Cancellations
-1. Never cancel a class from the WhatsApp group; only coordination cancels, in M-02.
-2. Fewer students than expected: the class still happens.
+1. Never cancel a class in the WhatsApp group. Only coordination cancels.
+2. If fewer students come than expected, the class still goes ahead.
 
-> DECISION NEEDED: minimum students to run a class (if any) and the substitution rate.
+> DECISION NEEDED: whether there is a minimum number of students to run a class, and what a substitution pays.
 
-## 6. Your payroll
-1. **S-03 → Payroll history** shows classes taught, rate, substitutions and adjustments. The amount is
-   read-only.
-2. The run closes on the 15th each month; review before then and report differences to coordination
-   with the class and date. The full finance-side process is in `16`.
+## 6. Your pay
+1. In the app you see your statement: classes taught, rate, substitutions and adjustments. It is read-only.
+2. Check it before the period closes. If something doesn't add up, tell coordination with the class and the date.
+3. Until finance generates the period's pay, what you see is an **estimate**.
 
-![The teacher’s payroll in S-03](../../screenshots/S-03/en-1280-payroll.jpg "S-03 · /teach/payroll")
+How it works on the finance side: [Teacher payroll](16-nomina-y-payouts.md).
 
-The per-class rate and the pay date are not defined yet: that decision is flagged in chapter `16`, on
-the finance side. Until it is settled, what you see in your history is a calculation.
+![Your pay statement](../../screenshots/S-03/en-1280-payroll.jpg "S-03 · /teach/payroll")
+
+> IN HOYOS: S-03 → Payroll.
 
 ## 7. Code of conduct
-1. Informal "tú", calm speech, no comments on bodies or levels.
-2. Physical adjustments only with explicit consent, announced at the start.
-3. Confidentiality: what you learn about a student (health, personal life) stays in the studio; never
-   on social media, never outside. The legal obligations are in `23`.
-4. Punctuality, clean presentation, no strong perfume in the heated room.
-5. Any incident or injury: the person first (`08`), then notify coordination and a note in M-06 via
-   front desk.
+{{editable:owner}}
+
+1. We speak informally and calmly. No comments on bodies or levels.
+2. Hands-on adjustments only with clear permission, which you ask for at the start of class.
+3. What you know about a student (health, personal life) stays in the studio. Never on social media or outside.
+   See [Personal data](23-habeas-data.md).
+4. Punctuality, a clean appearance and no strong perfume in the heated room.
+5. If there is an injury or an incident: the person first (see
+   [Incidents and emergencies](08-incidencias-y-emergencias.md)), then tell coordination, and the front desk leaves
+   the note.

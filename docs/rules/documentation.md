@@ -95,6 +95,12 @@ The manual is markdown on disk; adding or renaming a chapter needs no code chang
   staff/admin. Aim for 3–6 figures in an operational chapter.
 - `[screenshot: CODE — caption]` stays the syntax for a screen with **no capture yet**; it renders as a
   dashed box and is counted per chapter, so the gap is visible instead of forgotten.
+- **Register (0032):** chapters are written for a staff member on day one, in the words of the desk — see
+  `docs/ops-manual/STYLE.md`. No page codes, routes, table names or file paths in prose: each section ends in at
+  most one `> EN HOYOS:` / `> IN HOYOS:` box that carries them. Role passages (`{{for:…}}`), editable house-rule
+  sections (`{{editable:owner|coordinator}}` under the `##`), studio-rule cards (`{{studio:<key>}}`, own line, keys in
+  `src/data/seed/studioPolicies.ts`), `{{audience…}}`, `{{source:…}}` and `{{training:<role>}}` are listed in
+  `docs/ops-manual/README.md`.
 - Owner decisions are `> DECISIÓN PENDIENTE:` / `> DECISION NEEDED:` on one blockquote line. They are
   extracted into `/#/manual/decisions` (K-04) and `ROADMAP.md` §E, so **do not repeat the same decision
   in two chapters** — flag it once, in the chapter that owns it, and cross-reference from the other.

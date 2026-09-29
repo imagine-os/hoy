@@ -2,66 +2,78 @@
 title: Glosario
 role: todos
 part: VII
-version: 0.6.0
-updated: 2026-09-17
-summary: Las palabras que usamos, qué significan y qué palabra decimos delante del cliente.
+version: 0.13.3
+updated: 2026-09-29
+summary: Las palabras que usamos, qué significan, qué decimos delante del cliente y cómo leer los códigos de los recuadros En HoyOS.
 ---
 
 # Glosario
 
+Las palabras del estudio, en una sola página. Si una palabra de este manual no está aquí, pídele a coordinación
+que la agregue.
+
+{{audience:27-glosario}}
+
 ## 1. Del negocio
-| Palabra | Significa | Delante del cliente |
+| Palabra | Qué significa | Delante del cliente decimos |
 |---|---|---|
-| Socio | persona con un plan o pase activo | su nombre, o "socio" |
-| Pase | producto de la familia Bienvenida | "pase" |
-| Membresía | acceso recurrente, mensual o anual | "membresía" |
-| Crédito | una clase prepagada con vigencia | "crédito" |
-| Pausa (producto) | micro-sesión de 15–30 min | "pausa" |
+| Socio | persona con un plan o un pase activo | su nombre, o "socio" |
+| Pase | un producto de la línea Bienvenida | "pase" |
+| Membresía | acceso que se renueva, mensual o anual | "membresía" |
+| Crédito | una clase prepagada, con fecha de vencimiento | "crédito" |
+| Pausa (producto) | sesión corta de 15 a 30 minutos | "pausa" |
+| Pausas Ilimitadas | complemento mensual que se suma a la Membresía | "pausas ilimitadas" |
 | Pausar | congelar una membresía | "pausar tu membresía" |
 | Bono | dinero prepagado con código, para regalar | "bono de regalo" |
-| Invitado | acompañante de un socio de Membresía | "invitado" |
+| Invitado | acompañante de un socio de Membresía; incluido, no se cobra | "invitado" |
 | Espacio | alquiler del estudio a un tercero | "alquiler del espacio" |
-| Movimiento | Enraíza, Fluye, Arde, Libera | el nombre del movimiento |
-| Modalidad | hot yoga, barre, pilates, meditación, respiración | el nombre de la clase |
+| Especial | venta con concepto y precio escritos a mano (cumpleaños, sesión de equipo, alquiler con extras) | el concepto: "tu sesión privada" |
+| Experiencias Corporativas | la sexta línea, **en preparación**: bienestar para equipos de trabajo (sesión para equipos, programa recurrente, taller a medida) | "estamos preparando un programa para equipos" |
+| Disciplina | hot yoga, barre, pilates, meditación, respiración: el nombre público de cada clase | el nombre de la clase |
+| Movimiento | Enraíza, Fluye, Arde, Libera: la etiqueta interna que ordena el día | no se usa delante del cliente |
 
 ## 2. De la operación
-| Palabra | Significa |
+| Palabra | Qué significa |
 |---|---|
-| Check-in | marcar que la persona llegó, en S-02 |
-| No-show | reservó y no llegó, confirmado en S-02 |
-| Cancelación tardía | canceló fuera de la ventana; el crédito se consume |
-| Lista de espera | cola por clase llena, con promoción por orden |
-| Ventana | el plazo que fija una política (cancelación, reclamo, tolerancia) |
-| Horas silenciosas | franja en la que no se envía nada no urgente |
-| Corte | el día del mes en que cierra la nómina |
-| Corrida | la nómina de un corte, en borrador, aprobada o pagada |
-| Payout | el abono que una pasarela hace al estudio, o el pago a un maestro |
-| Conciliación | cruzar lo cobrado contra lo abonado |
+| Check-in | marcar que la persona llegó |
+| No-show | reservó y no vino |
+| Cancelación tardía | canceló fuera de la ventana; el crédito se usa |
+| Lista de espera | la fila para una clase llena; el cupo se ofrece en orden |
+| Ventana | el plazo que fija una política (cancelación, lista de espera, tolerancia) |
+| Horas silenciosas | las horas en que no se envía nada que no sea urgente |
+| Periodo de nómina | el mes o la quincena que se le paga a los maestros |
+| Pago de maestros (corrida) | la nómina de un periodo: borrador, aprobada o pagada |
+| Payout | el depósito que Wompi le hace al estudio, o el pago a un maestro |
+| Conciliación | comparar lo que se cobró con lo que llegó al banco |
 
 ## 3. Del sistema
-| Palabra | Significa | No digas |
+| Palabra | Qué significa | No digas |
 |---|---|---|
-| Pantalla / código | cada pantalla tiene un código (S-02, C-04, M-08a) | "el módulo" |
-| Superficie | grupo de pantallas: público, socio, maestro, equipo, admin | — |
-| Tabla | donde se guarda algo (`25`) | "la base" |
-| Contrato de acceso | quién puede leer y escribir una tabla | "los permisos de la base" |
-| Registro de actividad | M-07: todo lo que pasó, con actor y hora | "el log" |
-| Política | un valor de M-08 que el software aplica | "la regla" |
-| Feature / switch | un bloque que se enciende o se apaga (M-08b) | "la config" |
-| Simulado | diseñado y funcionando, sin el proveedor conectado (`26`) | "fake", "mock" |
-| Placeholder | un espacio esperando contenido real (foto, texto, video) | "lo que falta" |
-| Directiva | una línea `{{…}}` que este manual reemplaza por el dato en vivo | — |
+| Pantalla | cada lugar de HoyOS; en los recuadros En HoyOS aparece con su código | "el módulo" |
+| Superficie | un grupo de pantallas: sitio, app del socio, app de maestros, equipo, administración | — |
+| Tabla | donde se guarda algo ([25](25-datos-y-tablas.md)) | "la base" |
+| Registro de actividad | todo lo que pasó, con quién y cuándo | "el log" |
+| Política | un valor de Ajustes que el sistema aplica solo | "la regla" |
+| Función | un bloque que se enciende o se apaga en Ajustes | "la config" |
+| Simulado | diseñado y funcionando, pero sin el proveedor conectado ([26](26-integraciones.md)) | "fake" |
+| Provisional | un espacio que espera contenido real (foto, texto, video) | "lo que falta" |
+| Editable | una sección de este manual que el owner o coordinación ajusta | — |
+| Bloque en vivo | un recuadro de este manual que muestra el dato actual del sistema | — |
 
-## 4. Los códigos por familia
-| Familia | Para qué |
+## 4. Cómo leer los códigos
+Los recuadros **En HoyOS** nombran las pantallas por su código. La letra dice de qué parte del sistema es:
+
+| Código | Parte |
 |---|---|
-| `A-xx` | acceso y autenticación |
-| `C-xx` | app del socio |
-| `S-xx` | equipo en el estudio (recepción, maestros) |
-| `M-xx` | administración |
-| `W-xx` / `P-01` | sitio público |
-| `E-xx` | estados límite (vacío, rechazado, cancelado, bloqueado) |
-| `D-xx` | diseño y herramientas |
-| `K-xx` | conocimiento: este manual (K-03), decisiones (K-04), changelog (K-01) |
+| `A-xx` | entrar y crear cuenta |
+| `C-xx` | la app del socio |
+| `S-xx` | el equipo en el estudio (recepción, maestros) |
+| `M-xx` | la administración |
+| `W-xx` / `P-01` | el sitio público |
+| `E-xx` | casos especiales (vacío, rechazado, cancelado, bloqueado) |
+| `D-xx` | diseño y herramientas de desarrollo |
+| `K-xx` | este manual, sus decisiones y el historial de cambios |
+
+Las páginas del sitio, con su código:
 
 {{routes:public}}

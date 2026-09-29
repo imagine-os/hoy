@@ -2,58 +2,65 @@
 title: Policies in force
 role: owner, admin, front desk, finance
 part: VI
-version: 0.6.0
-updated: 2026-09-17
-summary: The values that govern today, who changes them, and what happens to existing bookings when they change.
+version: 0.13.3
+updated: 2026-09-29
+summary: The numbered rules in force today, what each one controls, who changes them and what happens to bookings already made.
 ---
 
 # Policies in force
 
-A HOY policy is a number on a screen, not a paragraph in a document. The block below is the truth: if
-someone changes it in **M-08a Settings & policies**, this chapter changes with it.
+At HOY a policy is a number in Settings, not a paragraph in a document. The block below is the truth: if someone
+changes it in Settings, this chapter changes with it.
+
+{{audience:21-politicas}}
+
+These are the policies in force:
 
 {{policy}}
 
 ![Settings and policies](../../screenshots/M-08a/en-1280.jpg "M-08a · /admin/settings")
 
-## 1. What each value controls
-| Value | Controls | Shows up in |
+> IN HOYOS: M-08a Settings and policies → edit the value → Save.
+
+## 1. What each one controls
+| Policy | What it controls | Where you notice it |
 |---|---|---|
-| Cancellation window | until when the credit comes back in full | C-08b, S-02, `04` |
-| Waitlist claim | how long the next person has to take the spot | C-20, `04` |
-| Late-arrival grace | until when someone may enter a class that started | S-02, `06` |
-| No-show fee | whether a no-show costs money on top of the credit | S-02, `04` |
-| Pause days per year | how long a membership may be frozen | C-22, `11` |
-| Pauses per year | how many times it may be frozen | C-22, `11` |
-| Booking held during payment | how long the spot is held while they pay | C-04 |
-| Notice before each charge | how many days before a renewal we warn | M-05, C-22 |
-| Lockout attempts and duration | account protection at sign-in | A-02, E-04 |
-| Quiet hours | when nothing non-urgent is sent | M-05, `13` |
-| IVA and whether it is included | how the total is split on the receipt | S-04, `15` |
+| Cancellation window | until when the credit comes back in full | bookings, Check-in ([04](04-recepcion-y-check-in.md)) |
+| Time to take a waitlist spot | how long the next person has to accept it | waitlist ([04](04-recepcion-y-check-in.md)) |
+| Late-arrival grace | until when someone can join a class that has started | Check-in, teachers ([06](06-maestros.md)) |
+| No-show fee | whether a no-show also costs money on top of the credit | Check-in ([04](04-recepcion-y-check-in.md)) |
+| Pause days per year | how long a membership can be frozen | membership ([11](11-pausas-y-regalos.md)) |
+| Pauses per year | how many times it can be frozen | membership ([11](11-pausas-y-regalos.md)) |
+| Spot held during payment | how long the place is kept while the person pays | payment in the app |
+| Notice before each charge | how many days ahead a renewal is announced | automated messages, membership |
+| Attempts and lockout | protects the account when someone gets the password wrong | sign-in |
+| Quiet hours | when nothing non-urgent is sent | WhatsApp ([13](13-crm-y-whatsapp.md)) |
+| VAT and whether it is included | how the total is split on the receipt | payment, invoicing ([15](15-facturacion-y-dian.md)) |
 
 ## 2. Who approves a change
-| Decision | Proposes | Approves | Recorded in |
-|---|---|---|---|
-| Policy change (cancellation, claim, grace, fee) | Coordination | Owner | M-08a + M-07 |
-| Price or plan change | Admin / finance | Owner | the value model + M-07 |
-| Turning a feature on or off | Admin | Owner | M-08b + M-07 |
-| Tax details and the payout account | Finance | Owner | M-08c + M-07 |
-| WhatsApp and email sender | Coordination | Admin | M-08d + M-07 |
+{{editable:owner}}
 
-Every M-08 save is audited with the actor, the previous value and the time.
+| Change | Proposed by | Approved by |
+|---|---|---|
+| A policy (cancellation, waitlist, grace, fee) | coordination | owner |
+| A price or a plan | admin or finance | owner |
+| Switching a feature on or off | admin | owner |
+| Tax details and payout account | finance | owner |
+| The studio's WhatsApp number and email | coordination | admin |
 
-## 3. The rule about changes
-1. **A policy change does not affect what is already booked.** If someone booked under a 2-hour window,
-   that booking runs on 2 hours even if today it is 4.
-2. A change that tightens something (less grace, more notice) is announced before it is applied.
-3. A change that loosens something can be applied immediately.
-4. Front desk does not negotiate a policy at the desk. If a case deserves it, give a courtesy in credit
-   and record it (`14`).
+Every change in Settings is recorded: who, the previous value and the time.
+
+## 3. The change rule
+1. **A change never affects what is already booked.** If someone booked with a 2-hour window, their booking keeps 2
+   hours even if it is 4 today.
+2. If the change makes something stricter (less grace, more notice), it is announced before it applies.
+3. If the change makes something looser, it can apply straight away.
+4. A policy is never negotiated at the desk. If the case deserves it, give a courtesy in credit and record it (see
+   [Payments and the till](14-pagos-y-caja.md)).
 
 ## 4. What cannot be switched off
-The legal pages (A-06) and the emergency flow have no switch: they always exist, in both languages.
+The legal pages and the emergency flow have no switch: they always exist, in both languages.
 
-## 5. Decisions still missing
-Several of these fields sit at zero or at a provisional value because the studio has not settled them.
-The full list lives on **Decisions pending** (K-04) and is fed by the `DECISION NEEDED` blocks
-throughout this manual.
+## 5. What is still to be defined
+Some values are zero or provisional because the studio hasn't decided them yet. The full list is under Decisions
+needed, and each decision is flagged in the chapter it belongs to.

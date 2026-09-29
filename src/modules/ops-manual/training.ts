@@ -1,8 +1,9 @@
-// Training checklists as data (0031): Día 1 / Semana 1 / Mes 1 per role, seeded verbatim from the tables in
-// docs/ops-manual/<lang>/09-checklists-de-entrenamiento.md. Chapter 09 keeps its tables as text; the
+// Training checklists as data (0031): Día 1 / Semana 1 / Mes 1 per role, verbatim from the tables in
+// docs/ops-manual/<lang>/09-checklists-de-entrenamiento.md (re-aligned to the 0032 rewrite; keys unchanged
+// where the item is the same, so stored progress keeps its meaning). Chapter 09 keeps its tables as text; the
 // `{{training:<role>}}` directive renders this list with a checkbox per item, stored per person in
 // `manual_training` (item_key = the key below; a stage sign-off is item_key `__signoff`).
-// Marketing and developer (new roles in 0031) have no table in chapter 09 yet: their lists are a first draft.
+// Marketing and developer (new roles in 0031) have their own tables in chapter 09 §7–§8 since 0032.
 import type { Role } from '../../auth/roles';
 import type { Bi } from '../../specs/types';
 import type { TrainingStage } from '../../data/schema';
@@ -17,45 +18,44 @@ const i = (key: string, es: string, en: string): TrainingItem => ({ key, text: {
 
 export const TRAINING: Partial<Record<Role, TrainingPlan>> = {
   front_desk: {
-    day1: [i('read', 'Leer `01`, `04`, `08`, `20`', 'Read `01`, `04`, `08`, `20`'), i('user', 'usuario propio en HoyOS', 'own HoyOS user'), i('tour', 'recorrido del espacio', 'tour of the space'), i('checkin', 'practicar check-in en S-02 (demo)', 'practise check-in in S-02 (demo)'), i('greeting', 'aprender saludo', 'learn the greeting')],
-    week1: [i('openclose', 'Apertura y cierre acompañados', 'Supervised opening and closing'), i('registrations', '5 registros reales en S-04 con cada medio de pago', '5 real registrations in S-04 with every payment method'), i('cancellation', 'manejar una cancelación dentro y fuera de ventana', 'handle a cancellation inside and outside the window'), i('waitlist', 'promover lista de espera', 'promote a waitlist'), i('cashclose', 'cierre de caja con finanzas', 'cash close with finance')],
-    month1: [i('solo', 'Turno completo solo', 'Full shift alone'), i('whatsapp', 'respuestas WhatsApp con tono revisado por coordinación', 'WhatsApp replies with tone reviewed by coordination'), i('read', 'leer `13` y `07`', 'read `13` and `07`'), i('nodiff', 'sin diferencias de caja en 2 semanas', 'no cash differences for 2 weeks')],
+    day1: [i('read', 'Leer 01, 04, 08 y 20', 'Read 01, 04, 08 and 20'), i('user', 'tener tu propio usuario', 'have your own user'), i('tour', 'recorrer el espacio', 'walk the space'), i('checkin', 'practicar el check-in en modo demo', 'practise check-in in demo mode'), i('greeting', 'aprender el saludo', 'learn the greeting')],
+    week1: [i('openclose', 'Abrir y cerrar acompañada', 'Open and close with someone beside you'), i('registrations', '5 ventas reales con cada medio de pago', '5 real sales with each payment method'), i('cancellation', 'una cancelación dentro y otra fuera de la ventana', 'one cancellation inside and one outside the window'), i('waitlist', 'promover a alguien de la lista de espera', 'promote someone from the waitlist'), i('cashclose', 'cerrar caja con finanzas', 'close the till with finance')],
+    month1: [i('solo', 'Un turno completo sola', 'A full shift on your own'), i('whatsapp', 'respuestas de WhatsApp revisadas por coordinación', 'WhatsApp replies reviewed by coordination'), i('read', 'leer 07 y 13', 'read 07 and 13'), i('nodiff', 'dos semanas sin diferencias de caja', 'two weeks with no till differences')],
   },
   teacher: {
-    day1: [i('read', 'Leer `01`, `02`, `06`, `08`', 'Read `01`, `02`, `06`, `08`'), i('app', 'S-03 con su usuario', 'S-03 with own user'), i('observe', 'clase observada', 'observe a class'), i('room', 'sala y props', 'room and props')],
-    week1: [i('supervised', 'Dictar acompañado', 'Teach supervised'), i('attendance', 'marcar asistencia en ventana', 'mark attendance within the window'), i('bio', 'enviar bio y foto a revisión desde S-03', 'submit bio and photo for review from S-03')],
-    month1: [i('schedule', 'Horario fijo', 'Fixed schedule'), i('substitution', 'una sustitución gestionada correctamente', 'one substitution handled correctly'), i('payroll', 'revisar nómina en S-03 antes del 15', 'review payroll in S-03 before the 15th')],
+    day1: [i('read', 'Leer 01, 02, 06 y 08', 'Read 01, 02, 06 and 08'), i('app', 'entrar a la app de maestros con tu usuario', 'sign in to the teacher app with your user'), i('observe', 'observar una clase', 'observe a class'), i('room', 'conocer la sala y los accesorios', 'get to know the room and the props')],
+    week1: [i('supervised', 'Dar una clase acompañado', 'Teach a class with someone beside you'), i('attendance', 'marcar la asistencia a tiempo', 'mark attendance on time'), i('bio', 'enviar tu bio y tu foto a revisión', 'send your bio and photo for review')],
+    month1: [i('schedule', 'Horario fijo', 'A fixed schedule'), i('substitution', 'gestionar bien un reemplazo', 'handle a substitution properly'), i('payroll', 'revisar tu extracto de pago antes de que cierre el periodo', 'check your pay statement before the period closes')],
   },
   coordinator: {
-    day1: [i('read', 'Leer todo el manual', 'Read the whole manual'), i('demo', 'M-02, M-05, M-04, M-06 en demo', 'M-02, M-05, M-04, M-06 in demo')],
-    week1: [i('publish', 'Publicar una clase recurrente y verla en C-02', 'Publish a recurring class and see it in C-02'), i('approve', 'aprobar un contenido de maestro', 'approve a teacher’s content'), i('cancel', 'cancelar una clase de prueba y revisar E-03', 'cancel a test class and review E-03')],
-    month1: [i('nextmonth', 'Horario del mes siguiente publicado', 'Next month’s schedule published'), i('automations', 'automatizaciones sin errores en M-05', 'automations error-free in M-05'), i('weekly', 'reunión semanal con owner', 'weekly meeting with the owner')],
+    day1: [i('read', 'Leer todo el manual', 'Read the whole manual'), i('demo', 'recorrer en modo demo Contenido, Correos, WhatsApp y el CRM', 'go through Content, Emails, WhatsApp and the CRM in demo mode')],
+    week1: [i('publish', 'Publicar una clase recurrente y verla en el horario', 'Publish a recurring class and see it on the schedule'), i('approve', 'aprobar un contenido de un maestro', 'approve a teacher\'s content'), i('cancel', 'cancelar una clase de prueba y ver lo que le llega al socio', 'cancel a test class and see what the member receives')],
+    month1: [i('nextmonth', 'Horario del mes siguiente publicado', 'Next month\'s schedule published'), i('automations', 'mensajes automáticos sin errores', 'automated messages without errors'), i('weekly', 'reunión semanal con el owner', 'a weekly meeting with the owner')],
   },
   finance: {
-    day1: [i('read', 'Leer `03`, `14`, `15`, `16`', 'Read `03`, `14`, `15`, `16`'), i('access', 'acceso a M-01, M-07, M-06 (Pagos), M-09 y Wompi', 'access to M-01, M-07, M-06 (Payments), M-09 and Wompi')],
-    week1: [i('reconcile', '5 conciliaciones diarias', '5 daily reconciliations'), i('transfers', 'confirmar transferencias en M-06', 'confirm transfers in M-06'), i('export', 'exportar M-07', 'export M-07')],
-    month1: [i('close', 'Cierre mensual completo', 'Full monthly close'), i('payroll', 'nómina del 15', 'payroll on the 15th'), i('report', 'reporte al owner', 'report to the owner')],
+    day1: [i('read', 'Leer 03, 14, 15 y 16', 'Read 03, 14, 15 and 16'), i('access', 'acceso al Panel, al Registro de actividad, a los pagos del CRM, a Finanzas y a Wompi', 'access to the Dashboard, Activity, the CRM\'s payments, Finance and Wompi')],
+    week1: [i('reconcile', '5 conciliaciones diarias', '5 daily reconciliations'), i('transfers', 'confirmar transferencias', 'confirm transfers'), i('export', 'exportar el registro de actividad', 'export the activity log')],
+    month1: [i('close', 'Un cierre de mes completo', 'A full month-end close'), i('payroll', 'una nómina de maestros', 'one teacher payroll'), i('report', 'el reporte al owner', 'the report to the owner')],
   },
   admin: {
-    day1: [i('read', 'Leer `21`, `24`, `25`, `26`', 'Read `21`, `24`, `25`, `26`'), i('screens', 'M-01, M-08, M-03', 'M-01, M-08, M-03')],
-    week1: [i('users', 'Crear usuarios por rol', 'Create users per role'), i('policies', 'revisar políticas en M-08', 'review policies in M-08'), i('integrations', 'estado de integraciones', 'integration status')],
-    month1: [i('audit', 'Auditoría de M-07', 'M-07 audit'), i('switches', 'revisión de switches', 'switch review'), i('backup', 'plan de respaldo de accesos', 'access backup plan')],
+    day1: [i('read', 'Leer 21, 24, 25 y 26', 'Read 21, 24, 25 and 26'), i('screens', 'recorrer el Panel, Ajustes y Tablas', 'go through the Dashboard, Settings and Tables')],
+    week1: [i('users', 'Crear usuarios para cada rol', 'Create users for every role'), i('policies', 'revisar las políticas en Ajustes', 'review the policies in Settings'), i('integrations', 'revisar el estado de las integraciones', 'check the state of the integrations')],
+    month1: [i('audit', 'Revisar el registro de actividad', 'Review the activity log'), i('switches', 'revisar qué funciones están encendidas', 'review which features are on'), i('backup', 'plan de respaldo de accesos', 'a backup plan for access')],
   },
   maintenance: {
-    day1: [i('read', 'Leer `07`, `08`', 'Read `07`, `08`'), i('tour', 'recorrido', 'tour'), i('supplies', 'ubicación de insumos y equipos', 'location of supplies and equipment')],
-    week1: [i('setups', 'Montajes diarios acompañados', 'Daily setups supervised'), i('closing', 'checklist de cierre', 'closing checklist')],
-    month1: [i('inventory', 'Inventario semanal propio', 'Own weekly inventory'), i('equipment', 'revisión mensual de equipos hecha', 'monthly equipment check done')],
+    day1: [i('read', 'Leer 07 y 08', 'Read 07 and 08'), i('tour', 'recorrer el espacio', 'walk the space'), i('supplies', 'saber dónde están los insumos y los equipos', 'know where the supplies and the equipment are')],
+    week1: [i('setups', 'Montajes diarios acompañado', 'Daily set-ups with someone beside you'), i('closing', 'checklist de cierre', 'the closing checklist')],
+    month1: [i('inventory', 'Inventario semanal por tu cuenta', 'The weekly inventory on your own'), i('equipment', 'revisión mensual de equipos hecha', 'the monthly equipment check done')],
   },
-  // 0031 — first drafts for the two new roles; chapter 09 has no table for them yet.
   marketing: {
-    day1: [i('read', 'Leer `01`, `20`, `17`, `18`', 'Read `01`, `20`, `17`, `18`'), i('brand', 'recorrer el manual de marca en K-05', 'walk through the brand manual in K-05'), i('demo', 'M-02 y M-02d en demo', 'M-02 and M-02d in demo')],
-    week1: [i('article', 'publicar un artículo en M-02a con revisión de tono', 'publish an article in M-02a with a tone review'), i('template', 'revisar el tono de una plantilla de WhatsApp en M-05', 'review the tone of a WhatsApp template in M-05'), i('media', 'escribir el encargo de un cupo en M-02d', 'write the brief for one slot in M-02d')],
-    month1: [i('calendar', 'calendario de contenido del mes aprobado por el owner', 'month’s content calendar approved by the owner'), i('consent', 'campaña enviada solo a quien aceptó marketing (M-06)', 'campaign sent only to people who opted in to marketing (M-06)')],
+    day1: [i('read', 'Leer 01, 03, 18, 19 y 20', 'Read 01, 03, 18, 19 and 20'), i('tour', 'recorrer el estudio y el sitio', 'walk the studio and the website'), i('brand', 'conocer el manual de marca', 'get to know the brand manual')],
+    week1: [i('calendar', 'Proponer el calendario de publicaciones del mes', 'Propose the month\'s posting calendar'), i('photos', 'revisar qué fotos están aprobadas', 'check which photos are approved'), i('posts', 'escribir 3 publicaciones y que coordinación revise el tono', 'write 3 posts and have coordination review the tone')],
+    month1: [i('published', 'Un mes publicado según el calendario', 'A month posted to the calendar'), i('nothingfake', 'nada publicado que no exista en el sistema (precios, horarios, promociones)', 'nothing posted that doesn\'t exist in the system (prices, times, promotions)'), i('report', 'primer reporte al owner', 'a first report to the owner')],
   },
   developer: {
-    day1: [i('read', 'Leer `24`, `25`, `26`', 'Read `24`, `25`, `26`'), i('devmode', 'modo dev e inspector (Ctrl + .)', 'dev mode and the inspector (Ctrl + .)'), i('build', '`npm run build` en verde en su máquina', '`npm run build` green on their machine')],
-    week1: [i('change', 'un cambio con prompt, changelog y kanban en el mismo PR', 'one change with prompt, changelog and kanban in the same PR'), i('shots', 'capturas regeneradas de la página tocada', 'captures regenerated for the page touched'), i('hubmap', 'hub-map regenerado y determinista', 'hub map regenerated and deterministic')],
-    month1: [i('surfaces', 'docs/reference/surfaces.md revisado y fechado', 'docs/reference/surfaces.md re-checked and dated'), i('spec', 'una spec de página completa en D-03', 'one page spec complete in D-03')],
+    day1: [i('read', 'Leer 24, 25 y 26', 'Read 24, 25 and 26'), i('docs', 'leer la documentación del software', 'read the software documentation'), i('devmode', 'abrir la app en local y activar el modo de desarrollo', 'run the app locally and turn on developer mode')],
+    week1: [i('specs', 'Recorrer las especificaciones de cada pantalla', 'Go through each screen\'s spec'), i('simulated', 'entender qué está simulado y qué es real', 'understand what is simulated and what is real'), i('change', 'un cambio pequeño con su registro en la documentación', 'one small change recorded in the documentation')],
+    month1: [i('integration', 'Una integración avanzada (con su tarjeta de Integraciones al día)', 'One integration moved forward (with its Integrations card up to date)'), i('docsync', 'la documentación y este manual actualizados en el mismo cambio', 'the documentation and this manual updated in the same change')],
   },
 };
 

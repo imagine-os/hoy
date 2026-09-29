@@ -8,12 +8,14 @@ _Updated every turn. Codes reference `src/specs/canvasSpecs.ts` and the module `
 - **0027 follow-up** · **between-gigs consumer** (Justin's company OS): hoy as one gig — lens `between-gigs`, one surface per experience with its `pageCodes`, plus the tools row Consumer guide: aluzina's `docs/tenant/hub-map-consumer.md` (imagine-os/aluzina); use `pages[].group` (0028) for the sub-mats.
 
 ### Product
+- **0032 follow-up** · **Experiencias Corporativas on the site**: `corporativo` exists in `pricing.ts` as a coming-soon family with `CORPORATE_FORMATS` (no prices); P-01 and W-01 do not show it yet — a "Próximamente · Cuéntanos de tu equipo" card to WhatsApp (never a checkout), marked not wired in dev mode. `ClassicHomePage` keeps its own five-family list
+- **0032 follow-up** · **Manual guidance media**: short photos and videos for the manual (artwork list item 11 in chapter 19), and a screenshot pass for the rewritten chapters (QA)
+- **0034 follow-up** · ~~**The feeling question in the ops manual**~~ **done in 0032** (the rewrite drops the question and the A-05 step from every chapter; movements stay internal labels): chapters 01, 02 and 05 still name "¿Cómo quieres sentirte hoy?" as the studio's central question — keep it as brand language or rewrite now that neither the app nor the site asks it · the non-`--full` website captures draw `[data-reveal]` sections blank below the hero (run them with reduced motion like `--full`)
+- **0031 follow-up** · ~~**Manual content pass (0032, parallel)**~~ **done in 0032**: replace the static §4 table in 00-index with `{{audience}}`, mark the owner-adjustable sections `{{editable:owner|coordinator}}`, move screen references into `> EN HOYOS:` boxes, add `{{studio:…}}` keys to `src/data/seed/studioPolicies.ts`, drop `{{source:<id>}}` where the documents belong, `{{training:<role>}}` in chapter 09
 - **0035 follow-up** · **Crowded DesktopShell top bar for super admin at 1280** (pre-existing): with the RoleSwitcher (351 px), dev switch and spec chip, the wordmark and page title already squeezed to ~6 px before 0035 and now to 0 on D-01 / K-03 — give the RoleSwitcher a max width or move it into a menu from 1080–1440 px · short text pills (`Chip` "FAQ", one-letter `Button`, `SegmentedControl` at 390) are narrower than their 44 px height; give single-glyph pills a `min-inline-size: var(--h-ctl)`
 - **0036 follow-up** · **Contact still pending** (owner): the studio's email (`hola@example.com` placeholder), the Instagram handle (`@hoy` placeholder), the NIT, and a Google Maps share link for the exact entrance (M-08a map link; the default is a search for Cl. 7B Sur # 29C-100) · consider printing the address and NIT on S-04 receipts once the NIT exists
-- **0031 follow-up** · **Manual content pass (0032, parallel)**: replace the static §4 table in 00-index with `{{audience}}`, mark the owner-adjustable sections `{{editable:owner|coordinator}}`, move screen references into `> EN HOYOS:` boxes, add `{{studio:…}}` keys to `src/data/seed/studioPolicies.ts`, drop `{{source:<id>}}` where the documents belong, `{{training:<role>}}` in chapter 09
 - **0031 follow-up** · **Manual LMS, second pass**: fold accepted overrides back into the markdown (a content pass per quarter, recorded in the changelog); per-person assignment beyond "one demo person per role" once Supabase users exist; notify the requester when a request is answered (C-24 / WhatsApp); images and short videos per procedure (Justin: "later"); "Reescribir con IA" wired to a server-side agent (Placeholder today); a marketing kit page (the hub card is `comingSoon`); CLAUDE.md "Roles" still lists nine roles and "dev mode only super_admin" — update it with the owner
 - **0031 follow-up** · **Stale captures**: about two dozen page codes are flagged "may be out of date" by `src/app/captureDates.ts` (their changelog is newer than the capture); a recapture pass clears them
-- **0034 follow-up** · **The feeling question in the ops manual** (owner decision): chapters 01, 02 and 05 still name "¿Cómo quieres sentirte hoy?" as the studio's central question — keep it as brand language or rewrite now that neither the app nor the site asks it · the non-`--full` website captures draw `[data-reveal]` sections blank below the hero (run them with reduced motion like `--full`)
 - **0033 follow-up** · **Wordmark, owner decisions**: W-01's closing line "Lo que necesitas empieza hoy." could set the mark if the English also reads "starts HOY" · a vector trace of the full lockup (script + HUMAN CLUB) and the circular badge from the manual · the apps / emails still use the PNG colourways
 - **0030 follow-up** · **Icons, second pass**: MediaSlot placeholder glyphs (◎ ▶ ✎), website (W-*) icons, the ♨ heated-room mark and the ✓ / · booleans in DataTable onto the `Icon` set; a full screenshot pass for the desktop pages whose sidebars changed
 - **0030 follow-up** · **Legal text**: the privacy document lists "intention of the day" among studio activity; drop it in the next legal version (A-06, counsel review)
@@ -63,6 +65,7 @@ _Updated every turn. Codes reference `src/specs/canvasSpecs.ts` and the module `
 - **ROADMAP §G — when nothing else is queued** (0018): SEO/OG + prerender · “next class in N minutes” widget · membership calculator · then the rest of `docs/website-vision.md`
 
 ### Decisions
+- **0032 follow-up** · **Three new owner decisions** (ROADMAP §E 37–39): is the Clase de Prueba free ("sin costo de entrada" vs 39,000 COP) · scope, prices and capacity rule of Experiencias Corporativas · drop "intención del día" from the next privacy-policy version
 - **Open questions from Jas's review (0014), with Justin to forward** — recorded as ROADMAP §E 31–34:
   - **Sergio**: are teachers paid fortnightly or monthly? — **both are built since 0018**: the M-08c cadence switch drives M-09a (one or two runs per month), S-03 and the Finance range; Sergio picks
   - **Sergio**: does the Coordinator see the monthly total-revenue KPI in the admin panel?
@@ -76,16 +79,25 @@ _Updated every turn. Codes reference `src/specs/canvasSpecs.ts` and the module `
 
 ## Done
 
+### 2026-09-29 · Operations manual content (0032 · v0.13.3)
+- **K-03 plain language**: all 28 chapters rewritten ES-first with an EN mirror (56 files) — tú, short sentences, qué hacer → qué decir → qué revisar; screen codes moved into 47 `EN HOYOS` / `IN HOYOS` boxes per language; every live block and figure kept
+- **Style guide**: `docs/ops-manual/STYLE.md` (the register for hand and prompted edits)
+- **Directives in place** (0031 contract): `{{audience}}` + a "Para:" row per chapter, 32 editable sections, 18 studio-rule cards (13 keys appended to `studioPolicies.ts`), 8 role passages, 6 source embeds, 8 training blocks (marketing and developer included)
+- **Reconciled**: six revenue lines (`corporativo` coming soon in `pricing.ts`, no prices), 16 mats, disciplines public / movements internal, Pausas Ilimitadas stacks, guest included, brand manual (manifesto, 4 keywords, 5 traits, logo, palette, type) in 19–20, A-05 gone
+- **K-04 decisions**: closed 2, narrowed 6, added 3 (27 → 28); ROADMAP §E 1 and 22 closed with source and date, 37–39 added
+
 ### 2026-09-29 · Round theme toggle (0035 · v0.13.2)
 - **Regression**: the DesktopShell theme toggle (28 × 44) and the bell (32 × 44) were ovals since 0025's 44 px control floor stretched their height, not their width (not 0030)
 - **Shared fix**: `.ctl-round` in `global.css` (width = height = `--h-ctl`, `aspect-ratio: 1`, `border-radius: 50%`) on every theme toggle (DesktopShell, website V1/V2 + motion button, AuthShell, hub band) and `NotificationBell`; the site hero's phone motion button too
 - **Phone dev bar**: below 480 px the spec chip replaces the wordmark; below 380 px the dev switch leaves the bar
 - **Evidence**: `docs/screenshots/_brand/theme-toggle-round-2026-09-29.jpg`; 44 × 44 measured at 390 + 1280, light + dark on W-01, S-02, HUB-01, K-03, A-02; captures regenerated
+
 ### 2026-09-29 · Real phone and address (0036 · v0.13.1)
 - **tenant.ts**: WhatsApp +57 312 776 5000, address Cl. 7B Sur # 29C-100, El Poblado (Santa María Tenis Club, from the club's site), location 6.19281 / -75.56535 + Google Maps link
 - **M-08a**: four per-field "confirmed" switches (WhatsApp, address on; email, Instagram off) and an "N por confirmar" badge; `pendingFields` / `pendingSuffix()` in `useContact()`
 - **Consumers**: site footer (address links to the map), W-06, MapSlot, C-25 ("Cómo llegar" row), C-26 controller paragraph, A-06 legal tokens, M-04 email footer + envelope, manual `{{tenant:contact}}`
 - **Evidence**: W-06 and M-08a recaptured ES + EN, 390 + 1280, light + dark
+
 ### 2026-09-29 · The operations manual as a staff LMS (0031 · v0.13.0)
 - Roles `marketing` (Camila Herrera, `/admin/content`) and `developer` (Julián Mesa, `/dev`, dev mode); permissions `comms.write`, `manual.edit`, `manual.train`
 - K-03: lens `?as=<role>`, "Tu manual" tiles + ProgressRing, dimmed grid, level chip, "Marcar como leído", Equipo view, `{{training:<role>}}` sign-off
@@ -97,6 +109,7 @@ _Updated every turn. Codes reference `src/specs/canvasSpecs.ts` and the module `
 - **W-01**: the `Movements` section removed from V2 (heading "¿Cómo quieres sentirte hoy?", four stone links) and V1 ("Cuatro movimientos"); id retired from `siteSpecs.home.layout` (layout editor); chapter eyebrows renumbered 01 / 02
 - **Cleanup**: `site.new.movements*`, `site.new.chapter1`, `site.movements.*`, `site.mv.*` strings and the `.sanctuary-stone*` CSS removed; movements stay as labels (class meta, W-04 legend filter, W-03, W-07, W-08)
 - **Evidence**: W-01 recaptured ES + EN, 390 + 1280, light + dark, plus 390 full-page and thumbnails
+
 ### 2026-09-29 · Wordmark in website headings (0033 · v0.12.1)
 - **Asset**: `public/brand/hoy-wordmark.svg`, the script traced from the brand manual's artwork (raster in the PDF) — one path, `currentColor`, `<symbol id="hoy">`; metrics in `tenant.brand.vector`
 - **Atom**: `Wordmark` `vector` / `inline` + `tone`; `brandHeading(text)` swaps the standalone word HOY in a heading; D-01 `--wm-inline-h` 1.2em, `--wm-inline-gap` 0.12em, `--wm-min-w` 120px; baseline-aligned, `role="img"` `aria-label="HOY"`, prints blue

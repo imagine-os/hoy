@@ -86,6 +86,7 @@ function Frame({ title, eyebrow, source, children }: { title: string; eyebrow?: 
 
 function PricingTable({ items }: { items: PriceItem[] }) {
   const { t, lang, bi } = useI18n();
+  if (!items.length) return null; // a coming-soon family (corporativo) has a rationale and no priced items
   const period = (p: PriceItem) => (p.period === 'month' ? t('core.common.perMonth') : p.period === 'year' ? t('core.common.perYear') : '');
   const validity = (p: PriceItem) => {
     const bits: string[] = [];
