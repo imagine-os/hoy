@@ -2,78 +2,100 @@
 title: Roles y permisos
 role: todos
 part: VII
-version: 0.8.0
-updated: 2026-09-18
-summary: El organigrama, qué hace cada rol, qué pantallas ve, quién aprueba qué y cómo se piden accesos.
+version: __VERSION__
+updated: 2026-09-29
+summary: El organigrama, qué hace cada rol (también marketing y desarrollo), qué pantallas usa, quién aprueba qué y cómo se piden accesos.
 ---
 
 # Roles y permisos
 
+Cada persona entra con su usuario y su rol. El rol decide qué ve, qué puede cambiar y qué capítulos de este
+manual le aparecen primero.
+
+{{audience:24-roles-y-permisos}}
+
 ## 1. Organigrama
 ```
 Owner
-├─ Admin (super admin en HoyOS)
+├─ Admin
 │  ├─ Coordinación
-│  │  ├─ Recepción / front desk
+│  │  ├─ Recepción
 │  │  └─ Maestros
-│  └─ Finanzas
-└─ Mantenimiento (reporta a coordinación en el día a día)
+│  ├─ Finanzas
+│  ├─ Marketing
+│  └─ Desarrollo
+└─ Mantenimiento (en el día a día responde a coordinación)
 ```
-Hoy varias personas pueden cubrir más de un rol. Lo que no cambia es quién aprueba qué.
+Hoy una misma persona puede cubrir más de un rol. Lo que no cambia es quién aprueba qué.
 
-> DECISIÓN PENDIENTE: nombres de las personas que ocupan cada rol y horario de cobertura de recepción por franja.
+> DECISIÓN PENDIENTE: los nombres de las personas en cada rol y qué recepcionista cubre cada franja del día.
 
-## 2. Los roles del sistema
+## 2. Los roles en el sistema
 {{roles}}
 
-## 3. Responsabilidades y pantallas
-| Rol | Responsable de | Pantallas principales |
+## 3. Qué hace cada rol
+| Rol | Responde por | Dónde trabaja |
 |---|---|---|
-| Owner | Visión, precios, políticas, contratos, decisiones pendientes | M-01, M-08, M-07, M-09 |
-| Admin | Configuración de HoyOS, switches, integraciones, usuarios del equipo | M-01, M-08, M-03 |
-| Coordinación | Horario, maestros, sustituciones, eventos, contenido, automatizaciones, calidad | M-02, M-04, M-05, M-06, S-06, C-02 |
-| Recepción | Puerta, check-in, ventas en mostrador, cobros, WhatsApp y correo en horario (`13`) | S-02, S-06, S-04, M-06 |
-| Finanzas | Conciliación, nómina, facturación electrónica, reembolsos, reportes | M-09, M-01, M-07, M-06 (Pagos; lee la conversación, no escribe) |
-| Maestros | La clase: antes, durante, después; asistencia; su perfil | S-03 |
-| Mantenimiento | Limpieza, montaje de sala, insumos, equipos, seguridad física | checklists de `07` |
+| Owner | la visión, los precios, las políticas, los contratos, las decisiones pendientes | Panel, Ajustes, Registro de actividad, Finanzas |
+| Admin | la configuración de HoyOS, las funciones, las integraciones, los usuarios del equipo | Panel, Ajustes, Tablas |
+| Coordinación | horario, maestros, reemplazos, eventos, contenido, mensajes automáticos, calidad | Contenido, Correos, WhatsApp, CRM, Bandeja, horario |
+| Recepción | la puerta, el check-in, las ventas, los cobros, WhatsApp y correo en horario | Check-in, Bandeja, Registrar y cobrar, CRM |
+| Finanzas | conciliación, nómina, facturación, reembolsos, reportes | Finanzas, Panel, Registro de actividad, pagos del CRM |
+| Maestros | la clase, antes, durante y después; la asistencia; su perfil | la app de maestros |
+| Mantenimiento | limpieza, montaje, insumos, equipos, seguridad | los checklists de [Sala](07-sala-calor-y-mantenimiento.md) |
+| Marketing | contenido, redes, el kit de marca, campañas | Contenido, el sitio, [Parte V](18-web-y-redes.md) |
+| Desarrollo | herramientas de desarrollo, documentación, especificaciones, integraciones | herramientas de desarrollo, Documentación, Integraciones |
+
+**Lo que le aplica a marketing:** los capítulos de contenido ([17](17-cms-y-contenido.md)), web y redes
+([18](18-web-y-redes.md)), medios y logo ([19](19-medios-y-artwork.md)) y voz y tono
+([20](20-voz-y-tono.md)), más el modelo de valor ([03](03-modelo-de-valor.md)) para no anunciar nada que no
+exista. El kit de marketing llega pronto al hub.
+
+**Lo que le aplica a desarrollo:** roles ([24](24-roles-y-permisos.md)), datos ([25](25-datos-y-tablas.md)) e
+integraciones ([26](26-integraciones.md)), más la documentación del software, las especificaciones de cada
+pantalla y las herramientas de desarrollo.
 
 ## 4. Quién aprueba qué
-| Decisión | Propone | Aprueba | Dónde queda |
-|---|---|---|---|
-| Cambio de precio o plan | Admin / finanzas | Owner | modelo de valor · M-07 |
-| Cambio de política | Coordinación | Owner | M-08a |
-| Reembolso en dinero | Recepción / finanzas | Finanzas (≤ 1 clase) · Owner (mayor) | M-06 Pagos · M-07 |
-| Devolver un crédito por cortesía | Recepción | Coordinación | M-06 nota + M-07 |
-| Cancelar una clase del estudio | Coordinación | Coordinación (avisa a owner) | M-02 Horario · E-03 |
-| Sustitución de maestro | Maestro | Coordinación | M-02 Horario |
-| Publicar perfil o descripción de maestro | Maestro (S-03) | Coordinación | M-02 flujo de revisión |
-| Aprobar la nómina del mes | Finanzas | Owner | M-09 · M-07 |
-| Alquiler de espacio | Coordinación | Owner | M-02 + nota en M-06 |
-| Nuevo usuario de equipo o cambio de rol | Coordinación | Admin | M-01 |
-| Apagar/encender features | Admin | Owner | M-08b |
+| Decisión | La propone | La aprueba |
+|---|---|---|
+| Un precio o un plan | admin o finanzas | owner |
+| Una política | coordinación | owner |
+| Un reembolso en dinero | recepción o finanzas | finanzas (hasta el valor de una clase) · owner (más) |
+| Devolver un crédito como cortesía | recepción | coordinación |
+| Cancelar una clase del estudio | coordinación | coordinación (y avisa al owner) |
+| Un reemplazo de maestro | el maestro | coordinación |
+| Publicar el perfil de un maestro | el maestro | coordinación |
+| Aprobar el pago de los maestros | finanzas | owner |
+| Un alquiler del espacio | coordinación | owner |
+| Una publicación con precios o promociones | marketing | owner |
+| Un usuario nuevo o un cambio de rol | coordinación | admin |
+| Encender o apagar funciones | admin | owner |
 
-## 5. Quién abre la bandeja y quién escribe
-| Rol | Bandeja S-06 | Conversación en M-06 | Escribir (WhatsApp, correo, nota) |
+## 5. La Bandeja: quién la abre y quién escribe
+| Rol | Bandeja | Conversación del socio | Escribir (WhatsApp, correo, nota) |
 |---|---|---|---|
-| Owner / Admin | sí | sí | sí |
+| Owner y admin | sí | sí | sí |
 | Coordinación | sí | sí | sí |
 | Recepción | sí | sí | sí |
-| Finanzas | no | lee | no (la caja aparece deshabilitada) |
-| Maestros | no | no | no; una solicitud de sustitución va a coordinación por M-05 |
-| Mantenimiento | no | no | no |
+| Finanzas | no | solo leer | no |
+| Maestros | no | no | no; un reemplazo se pide a coordinación |
+| Mantenimiento, marketing y desarrollo | no | no | no |
 
-La campana de mensajes solo se muestra a quien puede abrir la bandeja. Marcar un mensaje como leído es un acto del equipo: cualquiera de estos roles que abra el hilo lo apaga para todos, y el registro guarda quién.
+La campana de mensajes solo aparece a quien puede abrir la Bandeja. Si alguien abre una conversación, queda leída
+para todo el equipo, y se guarda quién la abrió.
 
 ## 6. Principios
-1. Cada acción en HoyOS queda en **M-07 Registro de actividad** con tu nombre. Trabaja siempre con tu
-   propio usuario; nunca compartas la sesión.
-2. Si te falta un permiso, no lo rodees: pide a admin. Un permiso pedido y registrado es seguro; un
-   usuario compartido no lo es.
-3. Un super admin puede "ver como" otro rol para probar una pantalla; eso también queda registrado.
+1. Todo lo que haces queda registrado con tu nombre. Trabaja siempre con tu usuario y nunca compartas la sesión.
+2. Si te falta un permiso, no lo rodees: pídeselo a admin. Un permiso pedido es seguro; un usuario compartido no.
+3. Un super admin puede "ver como" otro rol para probar una pantalla. Eso también queda registrado.
 
 ![Inicio por rol](../../screenshots/S-01/es-1280.jpg "S-01 · /staff")
 
+> EN HOYOS: S-01 Inicio por rol · M-01 Panel → usuarios del equipo (admin) · selector "ver como" (super admin).
+
 ## 7. Pantallas por superficie
+Las pantallas de administración y de maestros:
+
 {{routes:admin}}
 
 {{routes:teacher}}

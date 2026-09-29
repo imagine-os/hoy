@@ -2,68 +2,90 @@
 title: Pausas y regalos
 role: recepción, coordinación
 part: III
-version: 0.6.0
-updated: 2026-09-17
-summary: Pausar y cancelar una membresía, las micro-sesiones de Pausas, bonos de regalo e invitados.
+version: __VERSION__
+updated: 2026-09-29
+summary: Pausar y cancelar una membresía, las sesiones cortas de Pausas, los bonos de regalo, los invitados y los referidos.
 ---
 
 # Pausas y regalos
 
-Dos líneas distintas con un nombre parecido. **Pausas** son micro-sesiones que se venden; **pausar**
-es congelar una membresía. Este capítulo cubre las dos, más los regalos.
+Dos cosas con nombre parecido. **Las Pausas** son sesiones cortas que se venden. **Pausar** es congelar una
+membresía. Este capítulo explica las dos, y también los regalos.
+
+{{audience:11-pausas-y-regalos}}
 
 ## 1. Pausar una membresía
-1. La persona puede congelar su membresía desde **C-22 Gestionar membresía**, sin llamar a nadie. Si
-   te lo pide en mostrador, lo haces desde M-06 y dejas nota.
-2. Los límites son política, no criterio:
+1. El socio puede congelar su membresía desde su app, sin llamar a nadie.
+2. Si te lo pide en el mostrador, lo haces tú desde su ficha y dejas una nota.
+3. Los límites los pone la política, no el criterio de quien atiende:
 
 {{policy:pause_days_per_year}}
 
-3. Siempre recibe aviso antes de cada cobro. Si pregunta "¿cuándo me cobran?", la fecha está en M-06
-   → pestaña Pagos y en C-22.
-4. Cancelar: mantiene acceso hasta el fin del período pagado. Sin laberintos: no insistas, registra el motivo.
+4. Siempre recibe un aviso antes de cada cobro. Si pregunta "¿cuándo me cobran?", la fecha está en su ficha,
+   en Pagos, y en su app.
+5. Si quiere cancelar, mantiene el acceso hasta el final de lo que pagó. No insistas. Anota el motivo.
+
+**Qué decir si quiere cancelar:** "Claro. Tienes acceso hasta el [fecha]. ¿Me cuentas por qué, para
+mejorar?"
 
 ![Pausar, cancelar y ver la próxima fecha de cobro](../../screenshots/C-22/es-390.jpg "C-22 · /app/membership")
 
-> DECISIÓN PENDIENTE: días de aviso para pausar (C-22 propone 15 días de preaviso; el brief no lo fija).
+> DECISIÓN PENDIENTE: con cuántos días de anticipación hay que pedir la pausa (la app propone 15 días).
+
+> EN HOYOS: C-22 Gestionar membresía (el socio) · M-06 CRM → ficha → Membresía (el mostrador).
 
 ## 2. Pausas (el producto)
-Micro-sesiones de 15 a 30 minutos: respiración, meditación, una pausa entre reuniones. Su trabajo en
-el negocio es la **frecuencia** (`03`): que la persona venga más veces, no que pague más por vez.
+Sesiones de 15 a 30 minutos: respiración, meditación, una pausa entre reuniones. Sirven para que la persona
+venga más seguido (ver [Modelo de valor](03-modelo-de-valor.md)).
 
 {{pricing:pausas}}
 
-En la puerta: una Pausa no necesita mat de clase ni preparación de sala completa; entra y sale. Si la
-persona ya tomó su clase del día, una Pausa no es "otra clase" —pero eso todavía hay que decidirlo—.
+1. Una Pausa no necesita tapete de clase ni montaje completo: la persona entra y sale.
+2. **Pausas Ilimitadas** es un complemento mensual: se suma a la Membresía, no la reemplaza.
 
-> DECISIÓN PENDIENTE: si "Pausas Ilimitadas" se puede sumar a la Membresía o la reemplaza, y si una Pausa consume el límite de una clase por persona por día.
+**Qué decir:** "Es una sesión corta, de 15 a 30 minutos. Si ya tienes membresía, las ilimitadas se suman a tu
+plan."
+
+> DECISIÓN PENDIENTE: si una Pausa cuenta como la clase del día (el límite de una clase por persona al día) o va aparte.
 
 ## 3. Bonos de regalo
-1. Se compran en **C-17 Regalar**, con diseño y mensaje; se entregan por WhatsApp o correo.
-2. Un bono es dinero prepagado con código: se redime en S-04 eligiendo "bono" como medio, y el sistema
-   descuenta el saldo.
-3. El bono no caduca por capricho de mostrador: su vigencia es la que muestra el sistema.
+1. Se compran en la app, en Regalar, con un diseño y un mensaje. Se entregan por WhatsApp o correo.
+2. Un bono es dinero prepagado con un código. Se usa al cobrar, eligiendo "bono" como medio de pago, y el
+   sistema descuenta el saldo.
+3. La vigencia del bono es la que muestra el sistema. No se cambia en el mostrador.
 
 {{pricing:regalos}}
 
 ![Regalar una clase](../../screenshots/C-17/es-390.jpg "C-17 · /app/gift")
 
-## 4. Invitados
-1. Un socio de Membresía puede traer un invitado; el invitado ocupa un lugar real en la sala, así que
-   se reserva como cualquier otra persona.
-2. El invitado se registra: nombre, WhatsApp, consentimiento. No entra "como acompañante" sin registro,
-   porque en una emergencia no sabríamos a quién llamar (`08`).
-3. El invitado que vuelve es el mejor cliente que existe: si pregunta precios, se le ofrece la Clase de
-   Prueba, no un descuento inventado.
+> EN HOYOS: C-17 Regalar (compra) · S-04 → Cómo paga → Bono (uso).
 
-> DECISIÓN PENDIENTE: cuántos invitados puede traer un socio de Membresía por mes y si el invitado ocupa uno de los 15 mats o entra sobre el cupo.
+## 4. Invitados
+{{editable:owner}}
+
+1. El invitado está **incluido** para los socios de Membresía: no se cobra.
+2. El invitado ocupa un lugar real en la sala, así que se reserva como cualquier otra persona.
+3. El invitado se registra: nombre, WhatsApp y permiso de datos. No entra "de acompañante" sin registro: en
+   una emergencia no sabríamos a quién llamar.
+4. Si el invitado pregunta precios, ofrécele la Clase de Prueba. Nunca un descuento inventado.
+
+La regla de invitados que rige hoy en el estudio:
+
+{{studio:guest_allowance_note}}
+
+**Qué decir al invitado:** "Bienvenida. Te registro en un minuto: nombre y WhatsApp, para tenerte en la lista
+de la clase."
+
+> DECISIÓN PENDIENTE: cuántos invitados puede traer un socio de Membresía al mes y si el invitado ocupa uno de los tapetes de la clase o entra por encima del cupo. Mientras el owner lo confirma, rige la regla del estudio de arriba.
 
 ## 5. Referidos
-1. Cada socio tiene su código de referido en **C-16 Invitar**. Cuando alguien entra con ese código, el
-   socio recibe un crédito.
-2. La recompensa la otorga el sistema, no el mostrador: si un socio reclama una recompensa que no
-   llegó, se revisa en M-06 y se escala a admin.
+1. Cada socio tiene su código en la app, en Invitar. Cuando alguien entra con ese código, el socio recibe un
+   crédito.
+2. La recompensa la da el sistema, no el mostrador. Si un socio dice que no le llegó, revísalo en su ficha y
+   pásalo a admin.
 
 ![El código de referido del socio](../../screenshots/C-16/es-390.jpg "C-16 · /app/invite")
+
+Así guarda el sistema las invitaciones:
 
 {{table:invites}}

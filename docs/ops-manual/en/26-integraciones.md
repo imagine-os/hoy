@@ -1,81 +1,99 @@
 ---
 title: Integrations and what is simulated
-role: admin, owner, finance
+role: admin, owner, finance, developer
 part: VII
-version: 0.8.0
-updated: 2026-09-18
-summary: Which external systems HOY uses, the state of each one, what the owner can already fill in on M-10, and what the dev finishes.
+version: __VERSION__
+updated: 2026-09-29
+summary: Which outside systems HOY uses, what state each one is in, what you can say today without over-promising and what is left to connect.
 ---
 
 # Integrations and what is simulated
 
-This chapter exists so nobody promises something the system does not do yet. The design is in place for
-every integration; the vendor is not always connected. Since version 0.7.0 all of that lives on one screen:
-**M-10 · Integrations** (`/admin/integrations`).
+Which outside systems HOY uses, which ones already work and which ones don't yet.
+
+{{audience:26-integraciones}}
+
+## What this is for
+This chapter exists so nobody promises something the system can't do yet. Every integration is designed, but not
+every one is connected.
+
+1. **If you work at the door or with customers:** read section 3. It tells you which sentences you can say today.
+2. **If you are the owner or admin:** section 1 tells you which details you can already fill in.
+3. **If you are a developer:** the whole chapter, plus the software documentation.
+
+The rule: if an integration says **simulated**, say the sentence in the future tense.
+
+## 1. The Integrations screen
+Every outside system has a card with five parts:
+
+1. **What it does and what is simulated today**, in one sentence you can say at the door without lying.
+2. **The details that are not secret**, ready to fill in before the developer arrives: Wompi's merchant id and
+   public key, the WhatsApp number and templates, the email provider and domain, the invoicing provider and legal
+   issuer, the map link, the database project address.
+3. **A state** that a person changes: **simulated** (it exists, but calls nobody) → **configured** (the details are
+   in, connecting is pending) → **connected** (really working).
+4. **What the developer has to finish**, in order, and the **secrets that exist**, named but never written: they live
+   on the server, not on the screen.
+5. **Notes** for the developer (which account exists, who has access) and a link to this chapter.
+
+Every change goes into the activity log, with the before and the after.
 
 ![Integrations: one card per system](../../screenshots/M-10/en-1280.jpg "M-10 · /admin/integrations")
 
-## 1. How to read M-10
-Every external system is **one card** with five parts:
+> IN HOYOS: M-10 Integrations → card → fill in the public details → change the state → Save.
 
-1. **What it does and what is simulated today** — the sentence the desk can say without lying.
-2. **The fields that are not secret**, ready to fill before the dev arrives: Wompi's merchant id and public
-   key, WhatsApp's sender number and template namespace, the email provider and domain, the DIAN technology
-   provider and legal issuer, the map link, the Supabase project URL.
-3. **A status** that a person moves, not the system: **simulated** (the seam exists, nothing is called)
-   → **configured** (the ids are in, the dev has not wired it) → **connected** (live).
-4. **The checklist of what the dev must finish**, in order, and **the secrets that exist** — named, never
-   typed: Wompi's private key, Meta's token, the email API key and Supabase's service role live in server
-   environment variables. The table has no column for them on purpose.
-5. **Notes** for the dev (which account already exists, who holds access) and a link to this chapter.
-
-Every save lands in the activity log (`integration.update`, M-07) with before and after.
-
-## 2. State
-| Integration | What for | State today | What is missing |
+## 2. What state each one is in
+| Integration | What for | Today | What is missing |
 |---|---|---|---|
-| Supabase (auth + data) | real sign-in and the database | **simulated**: data lives in the browser and access is a demo picker | create the project, apply `supabase/schema.sql` and the RLS rules, `SupabaseProvider` |
-| Wompi payments | payment link, card terminal, saved card | **simulated**: writes real payments and invoices, shows the declined path, but no money moves | merchant credentials, a sandbox and server-side webhooks |
-| Wompi payroll | paying teachers | **simulated**: the run computes, is approved and marked paid; the dispersion resolves with a fake reference (`16`) | dispersion credentials and the confirming webhook |
-| WhatsApp Business | automations, the CRM conversation and inbox (`13`), OTP | **simulated**: inbound and outbound land in `message_log` with a direction and a status; the real webhook writes to the same table | a Meta-approved sender and templates per language; the Cloud API webhook (inbound messages and statuses) — **approval has a lead time: apply before Supabase is done** |
-| Email | receipts, reports, newsletters, correspondence in the conversation (`13`) | **simulated**: inbound and outbound land in `message_log` with a direction and a status; real sending and inbound mail write to the same table | a sending provider and a verified domain; inbound mail (IMAP or SES) into `message_log` |
-| DIAN invoicing | electronic invoice | **simulated**: the row has the shape, there is no CUFE (`15`) | a technology provider and the legal issuer |
-| Maps | the map on contact | **to be chosen**: the provider is a setting in M-08f, the coordinates in M-08a | the decision (key-less OSM or Google) |
+| Database and sign-in (Supabase) | signing in with a real user and keeping data on a server | **simulated**: data lives in the browser and people sign in with demo users | create the project, apply the schema and access rules, connect |
+| Payments (Wompi) | payment link, card terminal, saved card | **simulated**: records payments and invoices and shows declines, but moves no money | merchant credentials, test environment and server confirmations |
+| Teacher payouts (Wompi) | paying each teacher | **simulated**: calculated, approved and marked paid, but no money is sent ([16](16-nomina-y-payouts.md)) | payout credentials and the confirmation |
+| WhatsApp Business | automated messages, the conversation and the Inbox ([13](13-crm-y-whatsapp.md)), sign-in codes | **simulated**: everything in and out is saved, but not sent | a Meta-approved number and templates per language. **Approval takes time: ask for it first** |
+| Email | receipts, reports, newsletters, correspondence | **simulated**: saved, but not sent or received | a sending provider, a verified domain and inbound email |
+| Electronic invoicing (DIAN) | invoicing | **simulated**: the invoice has its shape, but isn't issued ([15](15-facturacion-y-dian.md)) | technology provider and legal issuer |
+| Maps | the map on the contact page | **to be chosen** | pick the provider (a free one or Google) |
+
+This is how each one's state is kept:
 
 {{table:integrations}}
 
-## 3. What can be said today
-1. "I'll send you the payment link" → **yes**, the link exists; the charge does not confirm itself,
-   finance reviews it (`14`).
-2. "The receipt will reach you on WhatsApp" → **not yet**: it is handed over on screen and in writing.
-3. "You'll get the electronic invoice" → **not yet**: say it will arrive once invoicing is switched on.
-4. "I'll let you know if a spot opens" → **yes**, but today a person writes it, not an automation.
-5. "Your payment method is saved" → the method is stored as a reference; the card number never passes
-   through HoyOS.
-
-The rule: if the M-10 card says **simulated**, the sentence is said in the future tense.
+## 3. What you can say today
+1. "I'll send you the payment link" → **yes**. The link exists; finance confirms the payment (see
+   [Payments and the till](14-pagos-y-caja.md)).
+2. "You'll get the receipt on WhatsApp" → **not yet**. It is handed over on screen or in writing.
+3. "You'll get the electronic invoice" → **not yet**. Say it will arrive once invoicing is switched on.
+4. "I'll let you know if a spot opens up" → **yes**, but today a person writes it.
+5. "Your card is saved" → only a reference is saved. The card number never passes through HoyOS.
 
 ## 4. The order they get connected in
-Supabase first, because everything else needs a genuinely authenticated user: payments, payroll,
-WhatsApp and multi-tenant all depend on it. Then Wompi payments, then DIAN and payroll, and WhatsApp in
-parallel (its approval takes time, so the Meta application is started early). Email and maps once a
-provider is picked. M-10 repeats this order at the foot of the page.
+{{for:super_admin,admin,developer}}
+1. **Database and sign-in first**, because everything else needs a real user.
+2. **Payments with Wompi** next.
+3. **Invoicing and teacher payouts** after that.
+4. **WhatsApp in parallel**, from the start, because Meta's approval takes time.
+5. **Email and maps** once there is a provider.
 
-## 5. Where the things that can already be filled in live
-| Setting | Screen |
+The Integrations screen repeats this order at the bottom.
+{{/for}}
+
+## 5. Where to fill in what can already be filled in
+| What | Where |
 |---|---|
-| Public ids, status and notes of each integration | **M-10 Integrations** |
-| Address, city, WhatsApp, email, Instagram, map coordinates and the "details confirmed" switch | M-08a General (`01`) |
-| Payout account, NIT, IVA included or not, DIAN resolution, Wompi environment, **payroll cadence and rate card** | M-08c Payments (`16`) |
-| WhatsApp and email sender, quiet hours | M-08d Communications |
-| Map provider, public class naming, Respiración as its own class, published legal versions | M-08f Content (`02`, `22`) |
-| Turning a flow on or off | M-08b Features |
+| Public details, state and notes for each integration | Integrations |
+| Address, WhatsApp, email, Instagram, map and "details confirmed" | Settings → General ([01](01-quienes-somos-y-filosofia.md)) |
+| Payout account, NIT, VAT, DIAN resolution, Wompi environment, payroll frequency and rates | Settings → Payments ([16](16-nomina-y-payouts.md)) |
+| WhatsApp number, studio email and quiet hours | Settings → Communications |
+| Map provider, public class naming, breathwork as its own class, legal versions | Settings → Content ([02](02-nuestras-clases.md), [22](22-documentos-legales.md)) |
+| Switching a flow on or off | Settings → Features |
 
-![Settings · General: contact with its pending state](../../screenshots/M-08a/en-1280.jpg "M-08a · /admin/settings")
+![Settings · General: the contact details with their pending state](../../screenshots/M-08a/en-1280.jpg "M-08a · /admin/settings")
 
-![Settings · Payments: cadence and rate card](../../screenshots/M-08c/en-1280.jpg "M-08c · /admin/settings/payments")
+![Settings · Payments: frequency and rate card](../../screenshots/M-08c/en-1280.jpg "M-08c · /admin/settings/payments")
 
-## 6. What a simulated send records
-Each row is one message in a person's conversation (`13`): channel, direction (inbound, outbound, internal), source (manual, automation, newsletter, system), status and the provider id the webhook will fill in.
+> IN HOYOS: M-10 Integrations · M-08a General · M-08c Payments · M-08d Communications · M-08f Content · M-08b Features.
+
+## 6. What a simulated message leaves behind
+Each row is one message in a person's conversation: the channel, whether it came in or went out, what started it,
+the state and the id the provider will fill in once connected.
 
 {{table:message_log}}

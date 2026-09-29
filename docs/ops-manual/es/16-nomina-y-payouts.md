@@ -2,118 +2,108 @@
 title: Nómina de maestros y payouts
 role: finanzas, owner, coordinación
 part: IV
-version: 0.7.0
-updated: 2026-09-17
-summary: Del cierre de asistencia al pago del maestro: corrida en borrador, aprobación, pago y extracto.
+version: __VERSION__
+updated: 2026-09-29
+summary: De la asistencia cerrada al pago del maestro: generar el borrador, revisar, aprobar, pagar y el extracto del maestro.
 ---
 
 # Nómina de maestros y payouts
 
-El maestro cobra por lo que dictó, y lo que dictó lo dice la asistencia que él mismo cerró. Esa es toda
-la cadena: sin asistencia cerrada no hay línea de nómina.
+El maestro cobra por las clases que dio, y las clases que dio las dice la asistencia que él mismo cerró. Sin
+asistencia cerrada, no hay pago.
 
-## 1. La cadena
-```
-Asistencia cerrada en S-03 (maestro)
-   → corrida en borrador — M-09a /admin/finance/payouts (finanzas)
-      → revisión del detalle por maestro — M-09b /admin/finance/payouts/:id (coordinación)
-         → aprobación — M-09b (owner)
-            → pago por maestro (Wompi / transferencia / efectivo) — M-09b
-               → extracto del maestro — S-03 /teach/payroll
-```
+{{audience:16-nomina-y-payouts}}
 
-Una sola aritmética sostiene toda la cadena: `src/data/payrollCalc.ts`. La corrida que genera finanzas
-y el estimado que ve el maestro salen de la misma función, así que las dos pantallas no pueden
-contradecirse.
+## 1. El camino del pago
+1. **El maestro** cierra la asistencia de cada clase en su app.
+2. **Finanzas** genera el borrador del periodo.
+3. **Coordinación** revisa el detalle de cada maestro.
+4. **El owner** aprueba.
+5. **Finanzas** paga a cada maestro (Wompi, transferencia o efectivo).
+6. **El maestro** ve su extracto en la app.
 
-## 2. Generar la corrida
-1. Finanzas entra a **M-09a · Finanzas → Payouts** (`/admin/finance/payouts`): la lista de corridas,
-   con el periodo, el número de maestros, el total y el estado de cada una.
-2. El botón genera el **borrador** del periodo: una línea por maestro con clases dictadas × tarifa,
-   tomada de las sesiones completadas y de `teachers.rate_per_class`.
-3. Generar es **idempotente**: si ya existe un borrador para ese periodo, sus líneas se borran y se
-   recalculan, así que pulsar dos veces no puede pagar dos veces. Una corrida ya aprobada o pagada se
-   rechaza con el motivo en pantalla.
-4. El borrador también trae las **líneas manuales**: cada Especial (`12` §7) con profesor y valor de pago
-   cuya fecha de servicio cae en el periodo entra como una línea **"Especial: <concepto>"** con el monto
-   que recepción acordó. Sale de la misma función que las clases (`draftLinesFor`), así que recalcular no
-   la duplica y una reserva cancelada la saca.
+El borrador de finanzas y el estimado que ve el maestro salen de la misma cuenta, así que nunca pueden dar
+números distintos.
+
+> EN HOYOS: S-03 (asistencia) → M-09a Payouts (borrador) → M-09b detalle (revisión y aprobación) → S-03 Nómina (extracto).
+
+## 2. Generar el borrador
+1. En Finanzas → Payouts ves la lista de pagos por periodo: cuántos maestros, el total y el estado.
+2. El botón genera el **borrador** del periodo: una línea por maestro, con clases dadas × tarifa.
+3. Puedes generarlo otra vez sin miedo: el borrador se recalcula, nunca se paga dos veces. Un pago ya aprobado
+   o pagado no se puede regenerar; la pantalla dice por qué.
+4. El borrador también trae los **Especiales**: cada uno con maestro y valor, dentro del periodo, entra como
+   una línea "Especial: <concepto>" (ver [Espacio](12-espacio-b2b.md)).
 5. Nada se paga en borrador.
 
-**La periodicidad es un interruptor, no una suposición** (0.7.0). En **M-08c · Ajustes → Pagos** el owner
-elige **mensual** o **quincenal (1–15 · 16–fin)**, y las dos están programadas: con mensual, M-09a genera una
-corrida por mes calendario; con quincenal, el mismo botón genera **dos** (la del 1 al 15 y la del 16 al fin de
-mes) y reemplaza un borrador del otro tipo que cubra los mismos días, para que ninguna clase se pague dos
-veces (una corrida aprobada o pagada bloquea en vez de reemplazarse). El extracto del maestro (`§5`) navega
-por el mismo periodo, y en **M-09 Finanzas** el rango por defecto pasa de 30 a **15 días** al cambiar el
-interruptor. La periodicidad vigente:
+**Mensual o quincenal.** El owner elige en Ajustes → Pagos si se paga cada mes o cada quincena (1–15 y 16–fin
+de mes). Las dos formas funcionan. Con quincenal, el mismo botón genera dos borradores, y ninguna clase se paga
+dos veces. Esta es la frecuencia vigente:
 
 {{policy:payroll_cadence}}
 
-![Payouts en M-09a](../../screenshots/M-09a/es-1280.jpg "M-09a · /admin/finance/payouts")
+![La lista de pagos de maestros](../../screenshots/M-09a/es-1280.jpg "M-09a · /admin/finance/payouts")
 
 ## 3. Revisar
-1. Abrir la corrida lleva a **M-09b** (`/admin/finance/payouts/:id`): el extracto por maestro, con las
-   clases que dictó, la tarifa, los ajustes y el total. Se puede exportar a **CSV** o imprimir.
-2. Coordinación cruza el detalle contra **M-02 Horario**: cada clase pagada existió y la dictó quien dice.
-3. Diferencias que reporta un maestro (`06`) se resuelven antes de aprobar, con la clase y la fecha.
-4. Sustituciones: se pagan a quien dictó, no a quien estaba programado.
-5. Las líneas **Especial** se cruzan contra la reserva de S-05 y el cobro en `special_charges`: el monto
-   es el que se escribió al vender; si está mal, se corrige el Especial y se recalcula el borrador, no se
-   edita la línea.
+1. Al abrir un pago ves el extracto de cada maestro: clases, tarifa, ajustes y total. Puedes exportarlo o
+   imprimirlo.
+2. Coordinación lo compara con el horario: cada clase pagada existió y la dio quien dice.
+3. Lo que un maestro reclame se resuelve antes de aprobar, con la clase y la fecha.
+4. Un reemplazo se le paga a quien dio la clase, no a quien estaba en el horario.
+5. Una línea de Especial se compara con su reserva y su cobro. Si está mal, se corrige el Especial y se vuelve
+   a generar el borrador; la línea no se edita a mano.
 
-![Extracto de la corrida en M-09b](../../screenshots/M-09b/es-1280.jpg "M-09b · /admin/finance/payouts/:id")
+![El detalle de un pago](../../screenshots/M-09b/es-1280.jpg "M-09b · /admin/finance/payouts/:id")
 
 ## 4. Aprobar y pagar
-1. **El owner aprueba** en M-09b. La aprobación congela la corrida: a partir de ahí las líneas no se
-   editan, se ajustan en la corrida siguiente.
-2. Aprobada, la corrida se paga por el medio que el estudio haya definido: **enviar por Wompi**
-   (simulado hoy, con su camino de rechazo), **marcar pagada por transferencia** o **por efectivo**.
-3. El pago también se puede marcar **maestro por maestro**, que es como funciona en la práctica cuando
-   uno cobra por transferencia y otro pasa por caja. La corrida **se cierra sola como pagada** en el
-   momento en que el último maestro queda liquidado: nadie tiene que acordarse de cerrarla.
-4. Todo —generar, aprobar, enviar, marcar pagado— queda en **M-07** con actor y hora.
+1. **El owner aprueba.** Desde ese momento el pago queda congelado: si algo cambia, se ajusta en el periodo
+   siguiente.
+2. Se paga por el medio que defina el estudio: **Wompi** (simulado hoy), **transferencia** o **efectivo**.
+3. Se puede marcar pagado **maestro por maestro**. Cuando el último queda pagado, el pago se cierra solo.
+4. Generar, aprobar, enviar y marcar pagado queda en el registro de actividad, con nombre y hora.
 
-> DECISIÓN PENDIENTE: medio de pago de la nómina de maestros (payout de Wompi, transferencia o efectivo), si el estudio practica retención y quién firma el soporte de pago.
+> DECISIÓN PENDIENTE: con qué medio se paga a los maestros (Wompi, transferencia o efectivo), si el estudio hace retención en la fuente y quién firma el soporte de pago.
 
 ## 5. El extracto del maestro
-1. El maestro abre **S-03 · Nómina** (`/teach/payroll`). Antes de que finanzas genere la corrida, la
-   página calcula el periodo en vivo (sesiones completadas × su tarifa) y lo rotula como
-   **estimado**.
-2. En cuanto existe una corrida que cubre el periodo, la página deja de estimar y lee las
-   `payroll_lines`: el maestro ve exactamente lo que finanzas va a pagar, con bonos, ajustes y
-   Especiales incluidos, y el estado de la corrida (borrador · aprobada · pagada).
-3. Además muestra el desglose clase por clase, el historial de corridas anteriores, el medio de pago
-   registrado, una vista de impresión y un enlace de WhatsApp a finanzas con el periodo y el total ya
-   escritos.
-4. El extracto es el documento que resuelve una discusión: si no está ahí, no se pagó.
+{{for:teacher}}
+Esto es lo que ves en tu app, en Nómina.
+{{/for}}
 
-![Extracto del maestro en S-03](../../screenshots/S-03/es-390-payroll.jpg "S-03 · /teach/payroll")
+1. Antes de que finanzas genere el borrador, la app calcula el periodo en vivo (clases dadas × tarifa) y lo
+   marca como **estimado**.
+2. Cuando ya existe el borrador, la app muestra exactamente lo que finanzas va a pagar, con bonos, ajustes y
+   Especiales, y en qué estado está: borrador, aprobado o pagado.
+3. También muestra clase por clase, los pagos anteriores, el medio de pago, una vista para imprimir y un botón
+   de WhatsApp a finanzas con el periodo y el total ya escritos.
+4. El extracto resuelve cualquier duda: si no está ahí, no se pagó.
+
+![El extracto en la app del maestro](../../screenshots/S-03/es-390-payroll.jpg "S-03 · /teach/payroll")
 
 ## 6. Las tarifas
-Desde 0.7.0 la tarifa vive en la **tarjeta de tarifas de M-08c**, no en una hoja aparte ni solo en el perfil:
-una fila por **modalidad** (COP por clase de Hot Vinyasa, Pilates, Barre…) y, si hace falta, una fila por
-**maestro** que sobrescribe. Una clase paga la tarifa del maestro si tiene una fija; si no, la de su
-modalidad; si no, la de su perfil (`teachers.rate_per_class`, que queda como último respaldo). Cambiar una
-tarifa mueve el estimado de S-03 y el próximo borrador; las corridas aprobadas o pagadas conservan sus líneas.
-En la misma tarjeta se define el **medio de pago por defecto**, **quién firma el soporte de pago** (se imprime
-en el extracto) y si el estudio **practica retención**.
+Las tarifas están en Ajustes → Pagos, en la **tarjeta de tarifas**: una por disciplina (cuánto se paga por una
+clase de hot yoga, de pilates, de barre…) y, si hace falta, una por maestro que manda sobre la de la disciplina.
+
+1. Si el maestro tiene tarifa propia, se usa esa.
+2. Si no, la de la disciplina.
+3. Si no hay ninguna, la de su perfil.
+
+Cambiar una tarifa mueve el estimado del maestro y el próximo borrador. Lo ya aprobado o pagado no cambia. En la
+misma tarjeta se elige el medio de pago por defecto, quién firma el soporte y si el estudio hace retención.
+
+Este es el medio de pago por defecto:
 
 {{policy:payout_method}}
 
+Así están guardados los maestros y su tarifa de respaldo:
+
 {{table:teachers}}
 
-> DECISIÓN PENDIENTE: llenar en M-08c la periodicidad (mensual o quincenal — las dos funcionan), las tarifas reales por modalidad (la semilla trae 80.000–110.000 COP), quién firma y la fecha de pago; el tipo de contrato y si la asistencia afecta la tarifa siguen siendo del owner.
+> DECISIÓN PENDIENTE: las tarifas reales por disciplina (hoy son de ejemplo, entre 80.000 y 110.000 COP por clase) y la fecha de pago, que se llenan en Ajustes; y, del owner, el tipo de contrato de los maestros y si la asistencia cambia la tarifa.
 
-## 7. Qué está simulado hoy
-1. Las corridas, las líneas, las aprobaciones y las marcas de pago son **filas reales** en
-   `payroll_runs` y `payroll_lines`, con su registro en M-07. Lo que no es real es la plata:
-   `wompiPayout()` es la costura de dispersión y ambas pantallas llevan la etiqueta
-   **"Wompi simulado"** (`26`).
-2. Un payout **no es una fila de `payments`**. `payments` es plata que entra (miembros) y alimenta los
-   ingresos de M-09; la plata que sale vive en la corrida y en sus líneas. Por eso pagar la nómina no
-   mueve los indicadores de ingresos.
-3. `/teach/payroll` es de solo lectura: el maestro ve lo que finanzas va a pagar, no un botón para
-   cobrar.
-4. Cuando exista Wompi payroll, la corrida aprobada será la que dispare el pago; el flujo de este
-   capítulo no cambia, solo deja de ser manual.
+## 7. Qué funciona de verdad hoy
+1. Los borradores, las aprobaciones y las marcas de pagado son reales y quedan registrados. Lo que no es real
+   todavía es el dinero: el envío por Wompi está simulado y las pantallas lo dicen (ver
+   [Integraciones](26-integraciones.md)).
+2. Pagar a los maestros no cambia los ingresos del mes: es dinero que sale, no que entra.
+3. El maestro solo ve su extracto. No tiene un botón para cobrar.
+4. Cuando Wompi esté conectado, la aprobación disparará el pago. El resto de este capítulo no cambia.

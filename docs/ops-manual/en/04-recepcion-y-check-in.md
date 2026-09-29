@@ -2,97 +2,136 @@
 title: Front desk and check-in
 role: front desk, coordination
 part: II
-version: 0.8.0
-updated: 2026-09-18
-summary: The door: opening, greeting, check-in, walk-ins, waitlist, lost and found, handoffs.
+version: __VERSION__
+updated: 2026-09-29
+summary: The door step by step: opening, greeting, checking people in, walk-ins, cancellations, the waitlist, lost and found and handoffs.
 ---
 
 # Front desk and check-in
 
-Your home screen is **S-02 Front desk check-in**. From there you search members, see the Now / Next /
-Later strip, today's teachers and the desk actions. Every action is logged with your name.
+Your working screen is **Check-in**: from there you look people up, see which class is on, which one is next and
+which teachers have arrived. Everything you do is recorded under your name.
 
-![The door: search, day strip, teachers and actions](../../screenshots/S-02/en-1280.jpg "S-02 · /staff/checkin")
+{{audience:04-recepcion-y-check-in}}
 
-## 1. Opening (45 min before the first class)
-1. Turn on lights, climate and reception music; check the room is set up per `07`.
-2. Sign in to HoyOS with your user → **S-01 Role home** → Front desk.
-3. In **S-02** confirm the day's classes, the capacity and that each teacher shows as "Expected".
-4. Review each class's waitlist and yesterday's pending payments (unconfirmed transfers).
-5. Open the **Message inbox (S-06)** and answer what came in overnight: unread threads come first and the top-bar bell says how many there are. How to reply is in `13`.
-6. Count the cash float and write it on the closing sheet (`14`).
+![Check-in: search, today's classes, teachers and actions](../../screenshots/S-02/en-1280.jpg "S-02 · /staff/checkin")
 
-![Role home: what today looks like](../../screenshots/S-01/en-1280.jpg "S-01 · /staff")
+## 1. Opening
+{{editable:coordinator}}
+
+Arrive before the first class, with this much time to spare:
+
+{{studio:opening_lead_minutes}}
+
+1. Turn on the lights, the climate control and the front-desk music. Check the room is set up (see
+   [Room, heat and maintenance](07-sala-calor-y-mantenimiento.md)).
+2. Sign in to HoyOS with your own user.
+3. In Check-in, go over today's classes, the free spots and that every teacher shows as "Expected".
+4. Check each class's waitlist and yesterday's payments that are still pending (unconfirmed transfers).
+5. Open the Inbox and answer what came in overnight. Unread messages come first. How to reply:
+   [CRM, WhatsApp and email](13-crm-y-whatsapp.md).
+6. Count the cash float and write it on the closing sheet.
+
+![Your home screen: what is waiting for you today](../../screenshots/S-01/en-1280.jpg "S-01 · /staff")
+
+> IN HOYOS: S-01 Home → S-02 Check-in (classes and teachers) → S-06 Inbox.
 
 ## 2. Greeting
-1. Look at the person, smile, name if you know it: "Hola, Camila. Here for the 7?"
-2. New person: "Hola, welcome to HOY. First time? I'll register you in a minute."
-3. Before class, one useful question only: "Do you need a mat or did you bring yours?"
+{{editable:owner}}
 
-The full tone — what we say and what we don't — is in chapter `20`.
+1. Look at the person, smile and use their name if you know it: "Hi, Camila. Here for the 7 o'clock?"
+2. If they are new, use the house greeting (below) and register them.
+3. Before class, one useful question: "Do you need a mat, or did you bring yours?"
 
-## 3. Check-in
-1. In **S-02** pick the class in the selector; the list shows Expected, Checked in and Waitlist.
-2. Search by name, phone, email or ID; tap the person → **Checked in**.
-3. If it says "already checked in", do not duplicate: same person, or the teacher already marked attendance.
-4. Discreet health marker: do not say it aloud; the teacher sees it on the roster.
-5. Once the grace minutes have passed, anyone who hasn't arrived is a no-show: confirm it in S-02 so
-   the waitlist promotes.
+The greeting for someone coming for the first time:
 
-**Steps in HoyOS:** S-02 Front desk check-in → class selector → Find a member → Checked in.
-Cancel or move: action "Cancel or move a booking" (opens C-08b on the member's behalf).
+{{studio:greeting_line}}
 
-![The member's own booking, which is what they see](../../screenshots/C-08/en-390.jpg "C-08 · /app/booking/:id")
+What we say and what we don't: [Voice and tone](20-voz-y-tono.md).
+
+## 3. Checking people in
+1. Pick the class. You will see three groups: Expected, Checked in and Waitlist.
+2. Look the person up by name, phone, email or ID. Tap them and mark **Checked in**.
+3. If it says "already checked in", don't do it again: it is the same person, or the teacher already marked them.
+4. If you see a health marker, do not mention it out loud. The teacher sees it on their list too.
+5. Once the late-arrival grace has passed, anyone who didn't come is a no-show. Confirm it so the spot goes to the
+   waitlist.
+
+If the person wants to cancel or change class, use "Cancel or move booking": you make the change for them, just as
+they would in their app.
+
+![The booking, as the member sees it](../../screenshots/C-08/en-390.jpg "C-08 · /app/booking/:id")
+
+> IN HOYOS: S-02 Check-in → class picker → Find member → Checked in. Changes: "Cancel or move booking" (opens C-08b).
 
 ## 4. Walk-ins
-1. No room in the class they want: offer the next class of the day or the waitlist. One person, one
-   class a day.
-2. Prices are read in S-04 from the value model; never type them and never negotiate them. The
-   catalogue and what each family is for is in chapter `03`; the sales procedure is in `10`.
+1. If there is room, check them in and take payment (see [Sales and plans](10-ventas-y-planes.md)).
+2. If there is no room, offer the next class of the day or the waitlist.
+3. Remember the rule: one person, one class a day.
+4. Prices are never typed or negotiated: you pick them in Register & pay.
+
+**What to say:** "That one's full. There's room at 9:30 — shall I hold it for you? Or I can put you on the
+waitlist."
 
 ## 5. Cancellations, late arrivals and no-shows
-The rules are M-08 values, not memory. These are the ones in force:
+The rules are the ones in Settings, not the ones we remember. This is the cancellation window in force:
 
 {{policy:cancellation_window_hours}}
 
-| Situation | Rule | What you say |
+| Situation | What happens | What you say |
 |---|---|---|
-| Cancels inside the window | Credit returns immediately | "Done, your credit is already back." |
-| Cancels outside the window | Credit is spent | "Since we're inside the window, this class counts. Shall I move you to another one today?" |
-| Move | Cancel + rebook in one action; no fee inside the window | "I'll move you to the 9:30, same credit." |
-| Arrives late | Grace per M-08 | "Come in quietly; the teacher has started." |
-| No-show | Confirmed in S-02; credit is spent | The WhatsApp template goes out, no scolding |
+| Cancels inside the window | The credit comes back straight away | "Done, your credit is back." |
+| Cancels outside the window | The credit is used | "It's too close to the class now, so this one counts. Shall I move you to another one today?" |
+| Wants to switch class | Cancel and book in one step; free inside the window | "I'll move you to the 9:30, same credit." |
+| Arrives late | Comes in if inside the grace period | "Go on in quietly; the teacher has started." |
+| Didn't come | The no-show is confirmed and the credit is used | They get a WhatsApp from the template, with no reproach |
 
-> DECISION NEEDED: late-arrival grace minutes and the no-show fee ("Late check-in grace" and "No-show fee" fields in M-08).
+> DECISION NEEDED: how many minutes of grace for arriving late, and whether a no-show also costs money.
 
-![Changing a booking, on the member's behalf](../../screenshots/C-08b/en-390.jpg "C-08b · /app/booking/:id/change")
+![Changing a booking on the member's behalf](../../screenshots/C-08b/en-390.jpg "C-08b · /app/booking/:id/change")
+
+> IN HOYOS: M-08a Settings → "Late-arrival grace" and "No-show fee".
 
 ## 6. Waitlist
-1. Strict promotion by position; the released spot is offered over WhatsApp for the claim window
-   (ignoring quiet hours) and then passes to the next person.
-2. You may skip the order only with a logged reason (e.g. the person is already at the door).
+1. A freed spot is offered in order. The person gets a WhatsApp and has a set time to take it; if they don't, it
+   goes to the next one.
+2. You may only skip the order with a written reason (for example, the person is already at the door).
+
+This is how long each person has to take the spot:
 
 {{policy:waitlist_claim_minutes}}
 
-**Steps in HoyOS:** S-02 → Waitlist section → Promote (reason). Member view: C-20.
-
 ![What someone on the waitlist sees](../../screenshots/C-20/en-390.jpg "C-20 · /app/waitlist/:id")
 
+> IN HOYOS: S-02 → Waitlist section → Promote (with a reason). The member sees it in C-20.
+
 ## 7. Lost and found
-1. Label with date, class and description; keep in the lost-and-found box; note in M-06 if you know
-   whose it is.
-2. Kept 30 days, then donated. Say so when handing items back.
+{{editable:coordinator}}
 
-## 8. Incidents
-1. The person's safety first (`08`). Then record it: note in **M-06** with category, time and what you
-   did; tell coordination the same day.
+1. Label it with the date, the class and what it is.
+2. Put it in the lost-and-found box.
+3. If you know whose it is, message them and leave a note on their record.
 
-## 9. Handoffs
-1. Front desk → Coordination: incidents, complaints, pause requests outside the rule, repeated
-   no-shows. Note in **M-06** with a category and a heads-up in the internal group.
-2. Front desk → Finance: daily cash close, pending payments (unconfirmed transfers), refund requests (`14`).
-3. Anyone → Admin: access, permissions, anything HoyOS will not let you do.
+How long we keep them:
+
+{{studio:lost_items_days}}
+
+## 8. If something happens
+The person first, the record second. What to do in each case:
+[Incidents and emergencies](08-incidencias-y-emergencias.md). Afterwards, leave a note on the member's record with
+what happened, when and what you did, and tell coordination the same day.
+
+## 9. What goes to whom
+| To whom | What |
+|---|---|
+| Coordination | incidents, complaints, pause requests outside the rule, repeat no-shows |
+| Finance | the day's till closing, pending transfers, refund requests |
+| Admin | access, permissions, anything HoyOS won't let you do |
+
+Always leave a note on the record and flag it in the team group.
+
+> IN HOYOS: M-06 CRM → member record → Note.
 
 ## 10. Closing
-Counting cash, pending transfers and the closing sheet are in chapter `14`. The physical closing
-checklist for the space is in `07`.
+Counting the cash and the closing sheet: [Payments and the till](14-pagos-y-caja.md). Closing the space itself:
+[Room, heat and maintenance](07-sala-calor-y-mantenimiento.md).

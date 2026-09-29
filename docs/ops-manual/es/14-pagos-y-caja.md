@@ -2,136 +2,143 @@
 title: Pagos y caja
 role: finanzas, recepción, owner
 part: IV
-version: 0.6.1
-updated: 2026-09-17
-summary: Medios de pago, cierre de caja, conciliación diaria, Wompi, reembolsos, el libro de gastos con el balance del periodo y los reportes del mes.
+version: __VERSION__
+updated: 2026-09-29
+summary: Los medios de pago, el cierre de caja, la conciliación diaria, Wompi, los reembolsos, los gastos y el balance, y los reportes del mes.
 ---
 
 # Pagos y caja
 
-El dinero entra por cuatro caminos y sale por dos. Este capítulo es el circuito completo, del mostrador
+El dinero entra por varios caminos y sale por dos. Este capítulo recorre el circuito completo, del mostrador
 al banco.
 
-## 1. Los medios de pago
-| Medio | Cuándo liquida | Quién confirma |
-|---|---|---|
-| Efectivo | inmediato | recepción, al recibir |
-| Datáfono | cuando la pasarela confirma | finanzas, contra el panel de Wompi |
-| Link de Wompi | cuando la pasarela confirma | automático; finanzas revisa |
-| Transferencia / Nequi | cuando finanzas ve el abono | finanzas, en M-06 → Pagos |
-| Bono de regalo | inmediato (descuenta saldo) | sistema |
+{{audience:14-pagos-y-caja}}
 
-Una orden pendiente **no es una venta**. Hasta que liquida no cuenta en los ingresos del mes.
+## 1. Los medios de pago
+| Medio | Cuándo queda pagado | Quién lo confirma |
+|---|---|---|
+| Efectivo | de inmediato | recepción, al recibirlo |
+| Datáfono | cuando Wompi lo confirma | finanzas, en el panel de Wompi |
+| Link de Wompi | cuando Wompi lo confirma | automático; finanzas lo revisa |
+| Transferencia o Nequi | cuando finanzas ve el dinero en la cuenta | finanzas, en los pagos del socio |
+| Bono de regalo | de inmediato (descuenta el saldo) | el sistema |
+
+Una venta pendiente **no es una venta**. Hasta que queda pagada, no cuenta en los ingresos del mes.
+
+Así guarda el sistema cada pago:
 
 {{table:payments}}
 
-## 2. Cierre de caja (recepción, cada día)
-1. Tras la última clase, cuenta efectivo; compara con "Registró pago en efectivo" del día en **M-07**
-   filtrado por tu nombre.
-2. Lista transferencias pendientes con comprobante y envíalas a finanzas.
-3. Guarda el efectivo en la caja fuerte, firma la planilla, apaga equipos y cierra con la checklist de `07`.
+## 2. Cierre de caja (recepción, todos los días)
+{{editable:coordinator}}
 
-**Pasos en HoyOS:** M-07 Registro de actividad → filtro fecha hoy + origen recepción → Exportar CSV.
+1. Después de la última clase, cuenta el efectivo.
+2. Compáralo con los pagos en efectivo del día que registraste tú.
+3. Haz la lista de transferencias pendientes, con su comprobante, y envíasela a finanzas.
+4. Guarda el efectivo en la caja fuerte, firma la planilla, apaga los equipos y cierra con el checklist de
+   [Sala, calor y mantenimiento](07-sala-calor-y-mantenimiento.md).
 
 ![El registro del día, filtrado](../../screenshots/M-07/es-1280.jpg "M-07 · /admin/activity")
 
-## 3. Conciliación diaria (finanzas)
-1. Finanzas recibe de recepción la planilla de cierre y las transferencias pendientes.
-2. Cruza tres fuentes: efectivo contado, **M-07** filtrado por "Registró pago en efectivo", y el panel
-   de Wompi para links y datáfono.
-3. Confirma transferencias con comprobante en **M-06 → Pagos** (la orden pasa de pendiente a liquidada).
-4. Diferencia > $10.000: nota en M-07 exportado y aviso al owner el mismo día.
+> EN HOYOS: M-07 Registro de actividad → fecha de hoy + tu nombre → "Registró pago en efectivo" → Exportar CSV.
 
-**Pasos en HoyOS:** M-07 → filtro fecha + acción "pago" → Exportar CSV. M-06 → socio → Pagos → confirmar.
+## 3. Conciliación diaria (finanzas)
+1. Recibes de recepción la planilla de cierre y las transferencias pendientes.
+2. Cruzas tres cosas: el efectivo contado, los pagos en efectivo del registro de actividad y el panel de Wompi
+   (links y datáfono).
+3. Confirmas cada transferencia con su comprobante. La venta pasa de pendiente a pagada.
+4. Si la diferencia pasa del límite de abajo, déjalo anotado y avisa al owner el mismo día.
+
+La diferencia de caja que se le avisa al owner:
+
+{{studio:cash_difference_threshold}}
+
+> EN HOYOS: M-07 → fecha + acción "pago" → Exportar CSV. M-06 → socio → Pagos → Confirmar.
 
 ## 4. Wompi
-1. Los abonos (payouts) llegan según el ciclo del contrato con Wompi; regístralos contra las ventas por
-   fecha de transacción, no de abono.
-2. Comisiones y retenciones se contabilizan como gasto separado.
-3. La cuenta de destino y el ambiente (sandbox / producción) están en **M-08c Pagos**. Las llaves nunca
-   se guardan ahí: la pantalla lo dice.
+1. Wompi deposita el dinero según el ciclo del contrato. Regístralo contra las ventas por la fecha de la venta,
+   no por la fecha del depósito.
+2. Las comisiones y retenciones se anotan como un gasto aparte.
+3. La cuenta de destino y el ambiente (pruebas o producción) están en Ajustes → Pagos. Las llaves secretas
+   nunca se guardan ahí; la pantalla lo recuerda.
 
-![La cuenta de payout y el ambiente de Wompi](../../screenshots/M-08c/es-1280.jpg "M-08c · /admin/settings/payments")
+![La cuenta de destino y el ambiente de Wompi](../../screenshots/M-08c/es-1280.jpg "M-08c · /admin/settings/payments")
 
-> DECISIÓN PENDIENTE: ciclo de abonos contratado con Wompi y cuenta bancaria destino.
+> DECISIÓN PENDIENTE: cada cuánto deposita Wompi según el contrato y a qué cuenta bancaria.
 
 ## 5. Reembolsos
-| Caso | Qué se hace | Aprueba |
+| Caso | Qué se hace | Quién aprueba |
 |---|---|---|
-| Clase cancelada por el estudio | Crédito vuelve automático (E-03) | nadie, es automático |
-| Cobro duplicado o error | Reembolso al mismo medio desde Wompi; registro en M-06 Pagos | Finanzas |
-| Cortesía por queja | Crédito, no dinero | Coordinación |
-| Membresía anual, retiro | Prorrateo según términos (A-06) | Owner |
+| El estudio canceló la clase | El crédito vuelve solo | nadie, es automático |
+| Cobro doble o error | Se devuelve al mismo medio desde Wompi y se anota en los pagos del socio | finanzas |
+| Cortesía por una queja | Crédito, no dinero | coordinación |
+| Retiro de una membresía anual | Se prorratea según los términos | owner |
 
-Todo reembolso queda en M-07 con actor y valores antes/después.
+Todo reembolso queda registrado con quién lo hizo y los valores de antes y después.
 
-## 6. Panel y KPIs
-**M-01 Panel admin** abre con los KPIs y la gráfica de ocupación. Lo que miramos cada semana:
+## 6. El panel y los indicadores
+El **Panel** abre con los indicadores y la gráfica de ocupación. Esto miramos cada semana:
 
-| KPI | Cómo se lee | Alerta |
+| Indicador | Cómo se lee | Cuándo preocuparse |
 |---|---|---|
-| Ocupación | asistentes / (mats × clases dictadas) | < 60 % sostenido |
-| Ingresos del mes | ventas liquidadas, COP | vs. mismo mes anterior |
-| Socios activos y en riesgo | segmentos de M-06 | "En riesgo" crece 2 semanas seguidas |
-| No-show y cancelación tardía | por clase y por franja | > 10 % |
+| Ocupación | personas que vinieron / (tapetes × clases dadas) | menos del 60 % varias semanas seguidas |
+| Ingresos del mes | ventas pagadas | comparado con el mismo mes anterior |
+| Socios activos y en riesgo | los grupos del CRM | "En riesgo" crece dos semanas seguidas |
+| No-show y cancelación tardía | por clase y por franja | más del 10 % |
+
+La ocupación y los no-show de ahora mismo:
 
 {{kpi:occupancy}}
 
 {{kpi:noshow}}
 
-![KPIs y ocupación](../../screenshots/M-01/es-1280.jpg "M-01 · /admin")
+![Indicadores y ocupación](../../screenshots/M-01/es-1280.jpg "M-01 · /admin")
 
-Los switches de features (M-08b) guardan cada cambio con actor, valor anterior y hora. Las páginas
-legales y de emergencia no se pueden apagar.
+Las funciones del sistema se encienden y apagan en Ajustes → Funciones, y cada cambio queda con quién lo hizo y
+cuándo. Las páginas legales y el flujo de emergencia no se pueden apagar.
 
-![Switches de features, auditados](../../screenshots/M-08b/es-1280.jpg "M-08b · /admin/settings/features")
+![Funciones, con cada cambio registrado](../../screenshots/M-08b/es-1280.jpg "M-08b · /admin/settings/features")
 
 ## 7. Reportes
-1. Semanal (lunes): ocupación por clase y franja, ventas por producto, no-shows.
-2. Mensual (día 5): ingresos, nómina, gastos y balance del mes (M-09), abonos Wompi conciliados,
-   segmento "En riesgo", motivos de cancelación de membresía.
+{{editable:owner}}
 
-**Pasos en HoyOS:** M-01 KPIs → M-07 exportar CSV → M-06 segmentos → M-09 Finanzas.
+1. **Cada lunes:** ocupación por clase y franja, ventas por producto, no-shows.
+2. **Cada mes (día 5):** ingresos, nómina, gastos y balance del mes; depósitos de Wompi conciliados; socios "En
+   riesgo"; motivos de cancelación de membresía.
+
+> EN HOYOS: M-01 Panel → M-07 Exportar CSV → M-06 grupos → M-09 Finanzas.
 
 ## 8. Gastos y balance
-El dinero sale por dos caminos: la nómina de profesores (capítulo `16`) y los gastos del estudio. Los
-gastos viven en **M-09c Gastos** (`/admin/finance/expenses`) y restan en la tarjeta **Balance del
-periodo** de **M-09 Finanzas**. Los registra **finanzas**; administración también puede. Recepción y
-coordinación no los ven: son internos del estudio.
+El dinero sale por dos caminos: el pago de los maestros (ver [Nómina](16-nomina-y-payouts.md)) y los gastos del
+estudio. Los gastos los registra **finanzas** (admin también puede). Recepción y coordinación no los ven.
 
-**Fijos y variables.** Un gasto **fijo** es recurrente y conocido — arriendo, servicios públicos,
-internet, aseo, software, póliza — y nace de una **plantilla** con su cadencia (**mensual** o
-**quincenal**, la quincena colombiana: vence el día ancla y quince días después) y su día de
-vencimiento. Un gasto **variable** se registra a mano cuando ocurre: mats nuevos, una reparación, la
-pauta del mes, los honorarios del contador.
+**Fijos y variables.** Un gasto **fijo** se repite y se conoce: arriendo, servicios, internet, aseo, software,
+seguro. Sale de una **plantilla** con su frecuencia (mensual o quincenal) y su día de pago. Un gasto
+**variable** se anota a mano cuando pasa: tapetes nuevos, una reparación, la publicidad del mes, el contador.
 
-1. **Plantillas.** Al abrir el estudio, finanzas crea una plantilla por cada costo fijo (concepto,
-   categoría, valor por vencimiento, cadencia, día, proveedor). Si un costo deja de existir se
-   **desactiva**, no se borra: el historial conserva su origen.
-2. **Generar el periodo.** El primer día hábil de cada mes (o de cada quincena), en M-09c elige el
-   periodo y pulsa **Generar gastos fijos del periodo**. Crea una fila por plantilla y vencimiento,
-   en estado *por pagar*. Se puede repetir sin miedo: un vencimiento que ya tiene su fila se salta,
-   nunca se duplica, y un gasto ya pagado nunca se toca.
-3. **Marcar pagado.** Cuando el pago sale del banco o de la caja, marca la fila como pagada: queda la
-   fecha y el actor en el registro de actividad (M-07, acción `expense.pay`).
-4. **Registrar un variable.** Concepto, categoría, valor, fecha, si ya está pagado, método (efectivo,
-   transferencia o tarjeta), proveedor y nota. Un gasto en efectivo entra en el cierre de caja de la
-   sección 2.
-5. **Corregir.** Solo un gasto sin pagar se puede eliminar. Un gasto pagado con error se corrige con
-   una fila nueva y una nota, nunca editando la historia.
+1. **Plantillas.** Al abrir el estudio, crea una plantilla por cada gasto fijo: concepto, categoría, valor,
+   frecuencia, día y proveedor. Si un gasto deja de existir, **desactívalo**; no lo borres.
+2. **Generar el periodo.** El primer día hábil de cada mes (o quincena), elige el periodo y pulsa **Generar
+   gastos fijos del periodo**. Crea una fila por gasto, "por pagar". Puedes pulsarlo otra vez sin miedo: no se
+   duplica nada y lo ya pagado no se toca.
+3. **Marcar pagado.** Cuando el dinero sale, marca la fila como pagada. Queda la fecha y tu nombre.
+4. **Anotar un variable.** Concepto, categoría, valor, fecha, si ya se pagó, cómo (efectivo, transferencia o
+   tarjeta), proveedor y nota. Un gasto en efectivo entra en el cierre de caja.
+5. **Corregir.** Solo se borra un gasto sin pagar. Un gasto pagado por error se corrige con una fila nueva y una
+   nota, nunca editando lo que pasó.
 
-![Gastos fijos por plantilla, variables a mano y el estado pagado / por pagar](../../screenshots/M-09c/es-1280.jpg "M-09c · /admin/finance/expenses")
+![Gastos fijos por plantilla, variables a mano y su estado](../../screenshots/M-09c/es-1280.jpg "M-09c · /admin/finance/expenses")
 
-**Cómo leer el Balance.** En M-09, con el mismo filtro de periodo (7, 15, 30, 90 días o Todo), la
-tarjeta muestra cuatro números: **Ingresos** (pagos aprobados del rango) − **Nómina** (cada corrida
-cuyo periodo mensual cruza el rango, al total actual: el borrador cuenta porque las clases ya se
-dictaron) − **Gastos** (fijos y variables con fecha en el rango, pagados o no) = **Balance**, con el
-margen sobre ingresos. Un balance negativo en 7 o 15 días es normal cuando el arriendo cae en la
-ventana; el número que importa es el de 30 días y el del mes cerrado. Los enlaces de la tarjeta
-llevan a la nómina (M-09a) y a los gastos (M-09c).
+**Cómo leer el balance.** En Finanzas eliges el periodo (7, 15, 30, 90 días o todo) y la tarjeta muestra:
+**Ingresos − Nómina − Gastos = Balance**, con el margen. Un balance negativo en 7 o 15 días es normal si el
+arriendo cae en esos días. Los números que importan son el de 30 días y el del mes cerrado.
 
-![La tarjeta Balance del periodo en Finanzas](../../screenshots/M-09/es-1280.jpg "M-09 · /admin/finance")
+![La tarjeta Balance del periodo](../../screenshots/M-09/es-1280.jpg "M-09 · /admin/finance")
+
+Así guarda el sistema los gastos, y así está el estudio ahora mismo:
 
 {{table:expenses}}
 
 {{stats}}
+
+> EN HOYOS: M-09c Gastos → Plantillas · Generar gastos fijos del periodo · Marcar pagado. M-09 Finanzas → Balance del periodo.

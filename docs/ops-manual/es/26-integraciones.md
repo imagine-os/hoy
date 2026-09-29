@@ -1,81 +1,99 @@
 ---
 title: Integraciones y qué está simulado
-role: admin, owner, finanzas
+role: admin, owner, finanzas, desarrollo
 part: VII
-version: 0.8.0
-updated: 2026-09-18
-summary: Qué sistemas externos usa HOY, en qué estado está cada uno, qué puede llenar el owner desde ya en M-10 y qué termina el dev.
+version: __VERSION__
+updated: 2026-09-29
+summary: Qué sistemas externos usa HOY, en qué estado está cada uno, qué se puede decir hoy sin prometer de más y qué falta conectar.
 ---
 
 # Integraciones y qué está simulado
 
-Este capítulo existe para que nadie prometa algo que el sistema todavía no hace. El diseño está hecho
-para cada integración; el proveedor no siempre está conectado. Desde la versión 0.7.0 todo eso vive en
-una pantalla propia: **M-10 · Integraciones** (`/admin/integrations`).
+Qué sistemas externos usa HOY, cuáles ya funcionan y cuáles todavía no.
+
+{{audience:26-integraciones}}
+
+## Para qué te sirve esto
+Este capítulo existe para que nadie prometa algo que el sistema todavía no hace. Todas las integraciones están
+diseñadas, pero no todas están conectadas.
+
+1. **Si trabajas en la puerta o con clientes:** lee la sección 3. Te dice qué frases puedes decir hoy.
+2. **Si eres owner o admin:** la sección 1 te dice qué datos puedes llenar desde ya.
+3. **Si eres de desarrollo:** todo el capítulo, más la documentación del software.
+
+La regla: si una integración dice **simulado**, la frase se dice en futuro.
+
+## 1. La pantalla de Integraciones
+Cada sistema externo tiene una tarjeta con cinco partes:
+
+1. **Qué hace y qué está simulado hoy**, en una frase que se puede decir en la puerta sin mentir.
+2. **Los datos que no son secretos**, listos para llenar antes de que llegue desarrollo: el id de comercio y la
+   llave pública de Wompi, el número y las plantillas de WhatsApp, el proveedor y el dominio de correo, el
+   proveedor de facturación y el emisor legal, el enlace del mapa, la dirección del proyecto de base de datos.
+3. **Un estado** que cambia una persona: **simulado** (existe, pero no llama a nadie) → **configurado** (los
+   datos están, falta conectar) → **conectado** (funcionando de verdad).
+4. **Lo que desarrollo tiene que terminar**, en orden, y los **secretos que existen**, nombrados pero nunca
+   escritos: viven en el servidor, no en la pantalla.
+5. **Notas** para desarrollo (qué cuenta existe, quién tiene el acceso) y un enlace a este capítulo.
+
+Cada cambio queda en el registro de actividad, con el antes y el después.
 
 ![Integraciones: una tarjeta por sistema](../../screenshots/M-10/es-1280.jpg "M-10 · /admin/integrations")
 
-## 1. Cómo se lee M-10
-Cada sistema externo es **una tarjeta** con cinco partes:
+> EN HOYOS: M-10 Integraciones → tarjeta → llenar los datos públicos → cambiar el estado → Guardar.
 
-1. **Qué hace y qué está simulado hoy** — la frase que se puede decir en recepción sin mentir.
-2. **Los campos que no son secretos**, listos para llenar antes de que llegue el dev: el id de comercio y
-   la llave pública de Wompi, el número emisor y el *namespace* de plantillas de WhatsApp, el proveedor y el
-   dominio de correo, el proveedor tecnológico y el emisor legal para la DIAN, el enlace del mapa, la URL del
-   proyecto de Supabase.
-3. **Un estado** que mueve una persona, no el sistema: **simulado** (existe la costura, no se llama a nadie)
-   → **configurado** (los ids están, el dev no ha conectado) → **conectado** (en producción).
-4. **La lista de lo que el dev debe terminar**, en orden, y los **secretos que existen** — nombrados, nunca
-   escritos: la llave privada de Wompi, el token de Meta, la *API key* del correo y la *service role* de
-   Supabase viven en variables de entorno del servidor. Esta tabla no tiene una columna para ellos a propósito.
-5. **Notas** para el dev (qué cuenta ya existe, quién tiene el acceso) y un enlace a este capítulo.
-
-Cada guardado queda en el registro de actividad (`integration.update`, M-07) con el antes y el después.
-
-## 2. Estado
-| Integración | Para qué | Estado hoy | Qué falta |
+## 2. En qué estado está cada una
+| Integración | Para qué | Hoy | Qué falta |
 |---|---|---|---|
-| Supabase (auth + datos) | inicio de sesión real y base de datos | **simulado**: los datos viven en el navegador y el acceso es un selector de demo | crear el proyecto, aplicar `supabase/schema.sql` y las reglas RLS, `SupabaseProvider` |
-| Wompi pagos | link de pago, datáfono, tarjeta guardada | **simulado**: escribe pagos y facturas reales, muestra el rechazo, pero no mueve dinero | credenciales de comercio, sandbox y webhooks del lado servidor |
-| Wompi payroll | pagar a los maestros | **simulado**: la corrida calcula, se aprueba y se marca pagada; la dispersión resuelve con una referencia ficticia (`16`) | credenciales de dispersión y el webhook que confirma |
-| WhatsApp Business | automatizaciones, conversación CRM y bandeja (`13`), OTP | **simulado**: entradas y salidas quedan en `message_log` con dirección y estado; el webhook real escribe en la misma tabla | remitente aprobado por Meta y plantillas por idioma; el webhook de la Cloud API (mensajes entrantes y estados) — **la aprobación tarda: se pide antes que Supabase** |
-| Correo | recibos, reportes, newsletters, correspondencia en la conversación (`13`) | **simulado**: entradas y salidas quedan en `message_log` con dirección y estado; el envío y el correo entrante reales escriben en la misma tabla | proveedor de envío y dominio verificado; correo entrante (IMAP o SES) al `message_log` |
-| Facturación DIAN | factura electrónica | **simulado**: la fila tiene la forma, no hay CUFE (`15`) | proveedor tecnológico y emisor legal |
-| Mapas | mapa en contacto | **pendiente de elegir**: el proveedor es un ajuste en M-08f, las coordenadas en M-08a | la decisión (OSM sin llave o Google) |
+| Base de datos e inicio de sesión (Supabase) | entrar con usuario real y guardar los datos en un servidor | **simulado**: los datos viven en el navegador y se entra con usuarios de demostración | crear el proyecto, aplicar el esquema y las reglas de acceso, conectar |
+| Pagos (Wompi) | link de pago, datáfono, tarjeta guardada | **simulado**: guarda pagos y facturas y muestra rechazos, pero no mueve dinero | credenciales del comercio, ambiente de pruebas y confirmaciones del servidor |
+| Pago a maestros (Wompi) | pagarle a cada maestro | **simulado**: se calcula, se aprueba y se marca pagado, pero no se envía dinero ([16](16-nomina-y-payouts.md)) | credenciales de dispersión y la confirmación |
+| WhatsApp Business | mensajes automáticos, la conversación y la Bandeja ([13](13-crm-y-whatsapp.md)), códigos de acceso | **simulado**: lo que entra y sale queda guardado, pero no se envía | número aprobado por Meta y plantillas por idioma. **La aprobación tarda: se pide primero** |
+| Correo | recibos, reportes, newsletters, correspondencia | **simulado**: queda guardado, pero no se envía ni se recibe | proveedor de envío, dominio verificado y correo entrante |
+| Factura electrónica (DIAN) | facturar | **simulado**: la factura tiene su forma, pero no se emite ([15](15-facturacion-y-dian.md)) | proveedor tecnológico y emisor legal |
+| Mapas | el mapa en contacto | **por elegir** | decidir el proveedor (uno libre o Google) |
+
+Así está guardado el estado de cada una:
 
 {{table:integrations}}
 
 ## 3. Qué se puede decir hoy
-1. "Te mando el link de pago" → **sí**, el link existe; el cobro no se confirma solo, finanzas lo revisa (`14`).
-2. "Te llega el recibo por WhatsApp" → **todavía no**: se entrega en pantalla y por escrito a mano.
-3. "Te llega la factura electrónica" → **todavía no**: se avisa que llegará cuando la facturación esté encendida.
-4. "Te aviso si se libera un cupo" → **sí**, pero hoy lo escribe una persona, no una automatización.
-5. "Tu pago quedó guardado" → el medio de pago se guarda como referencia; el número de la tarjeta nunca
-   pasa por HoyOS.
-
-La regla: si la tarjeta de M-10 dice **simulado**, la frase se dice en futuro.
+1. "Te mando el link de pago" → **sí**. El link existe; finanzas confirma el pago (ver
+   [Pagos y caja](14-pagos-y-caja.md)).
+2. "Te llega el recibo por WhatsApp" → **todavía no**. Se entrega en pantalla o por escrito.
+3. "Te llega la factura electrónica" → **todavía no**. Se dice que llegará cuando esté encendida.
+4. "Te aviso si se libera un cupo" → **sí**, pero hoy lo escribe una persona.
+5. "Tu tarjeta quedó guardada" → se guarda solo una referencia. El número de la tarjeta nunca pasa por HoyOS.
 
 ## 4. El orden en que se conectan
-Supabase primero, porque todo lo demás necesita un usuario autenticado de verdad: pagos, nómina,
-WhatsApp y multi-tenant dependen de eso. Después Wompi pagos, luego DIAN y payroll, y en paralelo
-WhatsApp (su aprobación tarda, así que la solicitud a Meta se inicia temprano). Correo y mapas cuando
-haya proveedor. M-10 repite este orden al pie de la página.
+{{for:super_admin,admin,developer}}
+1. **Base de datos e inicio de sesión primero**, porque todo lo demás necesita un usuario real.
+2. **Pagos con Wompi** después.
+3. **Facturación y pago a maestros** a continuación.
+4. **WhatsApp en paralelo**, desde el principio, porque la aprobación de Meta tarda.
+5. **Correo y mapas** cuando haya proveedor.
 
-## 5. Dónde se configura lo que ya se puede llenar
-| Ajuste | Pantalla |
+La pantalla de Integraciones repite este orden al final.
+{{/for}}
+
+## 5. Dónde se llena lo que ya se puede llenar
+| Qué | Dónde |
 |---|---|
-| Ids públicos, estado y notas de cada integración | **M-10 Integraciones** |
-| Dirección, ciudad, WhatsApp, correo, Instagram, coordenadas del mapa y el interruptor "datos confirmados" | M-08a General (`01`) |
-| Cuenta de payout, NIT, IVA incluido o no, resolución DIAN, ambiente de Wompi, **periodicidad de la nómina y tarjeta de tarifas** | M-08c Pagos (`16`) |
-| Remitente de WhatsApp y de correo, horas de silencio | M-08d Comunicaciones |
-| Proveedor del mapa, nombre público de las clases, Respiración como clase propia, versiones legales publicadas | M-08f Contenido (`02`, `22`) |
-| Encender o apagar un flujo | M-08b Funciones |
+| Datos públicos, estado y notas de cada integración | Integraciones |
+| Dirección, WhatsApp, correo, Instagram, mapa y "datos confirmados" | Ajustes → General ([01](01-quienes-somos-y-filosofia.md)) |
+| Cuenta de pagos, NIT, IVA, resolución DIAN, ambiente de Wompi, frecuencia de nómina y tarifas | Ajustes → Pagos ([16](16-nomina-y-payouts.md)) |
+| Número de WhatsApp, correo del estudio y horas silenciosas | Ajustes → Comunicaciones |
+| Proveedor del mapa, nombre público de las clases, Respiración como clase propia, versiones legales | Ajustes → Contenido ([02](02-nuestras-clases.md), [22](22-documentos-legales.md)) |
+| Encender o apagar un flujo | Ajustes → Funciones |
 
-![Ajustes · General: contacto con estado pendiente](../../screenshots/M-08a/es-1280.jpg "M-08a · /admin/settings")
+![Ajustes · General: el contacto con su estado pendiente](../../screenshots/M-08a/es-1280.jpg "M-08a · /admin/settings")
 
-![Ajustes · Pagos: periodicidad y tarjeta de tarifas](../../screenshots/M-08c/es-1280.jpg "M-08c · /admin/settings/payments")
+![Ajustes · Pagos: frecuencia y tarjeta de tarifas](../../screenshots/M-08c/es-1280.jpg "M-08c · /admin/settings/payments")
 
-## 6. Lo que registra un envío simulado
-Cada fila es un mensaje de la conversación de una persona (`13`): canal, dirección (entrante, saliente, interna), origen (manual, automatización, newsletter, sistema), estado y el id del proveedor que llenará el webhook.
+> EN HOYOS: M-10 Integraciones · M-08a General · M-08c Pagos · M-08d Comunicaciones · M-08f Contenido · M-08b Funciones.
+
+## 6. Lo que queda guardado de un mensaje simulado
+Cada fila es un mensaje de la conversación de una persona: el canal, si entró o salió, quién lo originó, el estado
+y el id que llenará el proveedor cuando esté conectado.
 
 {{table:message_log}}

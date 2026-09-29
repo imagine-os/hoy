@@ -2,71 +2,91 @@
 title: Room, heat and maintenance
 role: maintenance, front desk, teachers
 part: II
-version: 0.6.0
-updated: 2026-09-17
-summary: Cleaning, the four daily setups, the heated room, supplies, equipment and physical safety.
+version: __VERSION__
+updated: 2026-09-29
+summary: Cleaning, setting up the room, the heated room, supplies, equipment checks and safety.
 ---
 
 # Room, heat and maintenance
 
-The room is the product. With the capacity below there is one setup per class; each one follows this guide.
+The room is the product. Every class has its set-up, and they all follow this guide.
+
+{{audience:07-sala-calor-y-mantenimiento}}
+
+This is the room's capacity:
 
 {{tenant:capacity}}
 
-## 1. Cleaning standard
-| When | What |
-|---|---|
-| Opening | Room floor mopped, mirrors, full bathrooms, reception, light scenting |
-| Between classes (15 min) | Studio mats disinfected, props tidy, floor dry, bins, bathrooms checked |
-| Closing | Everything from opening + towel/mat wash, rubbish out, ventilation |
-| Weekly | Walls, air filters, vents, supplies store, inventory |
+## 1. Cleaning
+{{editable:coordinator}}
 
-## 2. Room setup
-1. Mats in the class type's layout (rows or circle, as M-02 states in the class description).
-2. Props per mat: blocks ×2, strap, blanket; bolster available depending on the class.
-3. Temperature and humidity at the class value.
-4. Light and music per the day's movement (Enraíza, Fluye, Arde, Libera).
+| When | What you do |
+|---|---|
+| Opening | Mop the room floor, mirrors, full bathrooms, front desk, a light scent |
+| Between classes | Disinfect the studio's mats, tidy the props, dry the floor, empty bins, check bathrooms |
+| Closing | Everything from opening, plus washing towels and mats, taking the rubbish out and airing the room |
+| Every week | Walls, air filters, vents, the supplies store and the inventory |
+
+The time between one class and the next:
+
+{{studio:turnover_minutes}}
+
+## 2. Setting up the room
+1. Lay out the mats the way the class asks (in rows or in a circle; the class description says which).
+2. Per mat: two blocks, a strap and a blanket. A bolster if the class uses one.
+3. Temperature and humidity to what the class needs.
+4. Light and music to match the class's movement (Enraíza, Fluye, Arde or Libera).
 
 ## 3. The heated room
-Hot yoga is practised in heat on purpose (chapter `02`), and that changes the operation:
+Hot yoga is practised in heat on purpose (see [Our classes](02-nuestras-clases.md)). That changes the work:
 
-1. Pre-heat before the group arrives; never raise the temperature with people inside.
-2. Dry floor before the group enters, and checked between blocks: sweat on a hot floor is the most
-   common cause of a fall.
-3. Water available in the room and clean towels at the door.
-4. Full ventilation between a heated class and the next unheated one.
-5. If the climate system fails: the class runs without heat and front desk says so at the door, with
-   the way out offered ("if you'd rather, I'll move you to tomorrow and it won't count"). Never cancel
-   over temperature without talking to coordination.
-6. Heat exhaustion or dizziness is a medical incident and is handled as `08` says.
+1. Heat the room before the group arrives. Never raise the temperature with people inside.
+2. The floor must be dry before they go in, and checked between blocks. Sweat on a hot floor is the most common
+   cause of falls.
+3. Leave water in the room and clean towels at the entrance.
+4. Air the room fully between a heated class and the next unheated one.
+5. If the climate control fails, the class goes ahead without heat. The front desk says so at the door and offers
+   a way out: "If you'd rather, I'll move you to tomorrow's and it won't count." Nobody cancels over temperature
+   without talking to coordination.
+6. Dizziness or heat stroke: it is a medical emergency. Follow
+   [Incidents and emergencies](08-incidencias-y-emergencias.md).
 
-> DECISION NEEDED: target temperature per class type and the exact pre-heat time.
+> DECISION NEEDED: the target temperature for each class type and how long before class the room has to start heating.
 
 ## 4. Supplies
-1. Minimum level per item in the store; when it is reached, reorder. List: disinfectant, towels, paper,
-   soap, water, scents, filters.
-2. Purchases are approved by coordination; invoices go to finance the same week (`14`).
+{{for:maintenance,coordinator}}
+1. Every supply has a minimum level in the store. When it reaches that level, it gets ordered.
+2. The list: disinfectant, towels, paper, soap, water, scents, filters.
+3. Coordination approves purchases. Invoices go to finance the same week (see
+   [Payments and the till](14-pagos-y-caja.md)).
+{{/for}}
 
 ## 5. Equipment checks
-| Equipment | Frequency | Owner |
+{{editable:coordinator}}
+
+| Equipment | How often | Who |
 |---|---|---|
-| Climate / heating | Daily (reading) · monthly (technician) | Maintenance |
-| Sound | Daily before the first class | Front desk |
-| Lighting | Weekly | Maintenance |
-| Extinguishers and first-aid kit | Monthly, dated label | Maintenance |
-| Locks, exits | Daily at closing | Front desk |
+| Climate control and heating | Every day (read the display) · every month (technician) | Maintenance |
+| Sound | Every day, before the first class | Front desk |
+| Lighting | Every week | Maintenance |
+| Fire extinguishers and first-aid kit | Every month, with the date on the label | Maintenance |
+| Locks and exits | Every day, at closing | Front desk |
 
-## 6. Physical safety
-1. Exits always clear; nothing stacked in front of doors.
-2. Dry floor in the heated room before the group enters.
-3. Any damage or risk reported to coordination the same day, with a photo in the internal group.
+## 6. Safety
+1. Exits always clear. Nothing stacked in front of doors.
+2. The heated room's floor dry before the group goes in.
+3. Any damage or risk is reported to coordination the same day, with a photo in the team group.
 
-## 7. Records
-1. Opening, between-class and closing checklists are signed on paper or in the internal form;
-   coordination reviews them weekly.
+## 7. Where the checklists are signed
+1. The opening, between-classes and closing checklists are signed on paper or in the internal form.
+2. Coordination reviews them every week.
 
-> DECISION NEEDED: whether maintenance checklists live in HoyOS (no screen exists today) or in a separate form.
+Who signs the closing checklist:
 
-## 8. The space when it is rented
-A rental (photo, shoot, workshop, pop-up) has its own setup, its own close and its own damage check.
-That is chapter `12`.
+{{studio:closing_checklist_owner}}
+
+> DECISION NEEDED: whether the maintenance checklists live inside HoyOS (there is no screen for them today) or in a separate form.
+
+## 8. When the space is rented
+A rental (photo, shoot, workshop, pop-up) has its own set-up, its own closing and its own damage check. See
+[Space — B2B rental](12-espacio-b2b.md).
