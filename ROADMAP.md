@@ -7,8 +7,11 @@ dónde estamos, qué sigue y en qué orden (con dependencias explícitas y lo qu
 paralelo), qué significa "terminado" en cada fase, cómo trabajar en el repo y qué debe decidir el
 owner del estudio. Está escrito para que otra cuenta de Claude (o una persona) lo retome sin contexto.
 
-## A. Where we are (v0.11.0, 2026-09-29)
+## A. Where we are (v0.11.1, 2026-09-29)
 
+- **v0.11.1 — Hub map page groups** (`docs/changelog/0028-hub-map-groups.md`, prompt `docs/prompts/0028-hub-map-groups.md`):
+  `pages[].group` in `hub-map.json` (customer app: Book / Pay / Account / Sign in; other experiences: their own groups),
+  fed by `HUB_GROUP_RULES` in `src/hub/hubMap.data.ts`.
 - **v0.11.0 — Hub map** (`docs/changelog/0027-hub-map.md`, prompt `docs/prompts/0027-hub-map.md`; Justin: "hoy will be
   in aluzina, in my between gigs company os system and in its own as it is now … each systems point of view can see
   into the hoy hub contents in its own way"): `public/hub-map.json` (schema `hoy.hub-map/1`, `docs/reference/hub-map.md`)

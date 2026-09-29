@@ -1,7 +1,7 @@
 # Machine surfaces — MCP / WebMCP, CLI, API
 
 What something other than a person can drive in HoyOS today, and what it cannot.
-**Checked 2026-09-29** (v0.11.0; previous check 2026-09-28, v0.10.0). Re-check and date this file every pass; a line that is not
+**Checked 2026-09-29** (v0.11.1; previous check 2026-09-29, v0.11.0). Re-check and date this file every pass; a line that is not
 re-checked is not current.
 
 ---
@@ -139,7 +139,7 @@ consumer checklist: [`hub-map.md`](./hub-map.md).
 
 | File | URL | What |
 | --- | --- | --- |
-| `public/hub-map.json` | `https://imagine-os.github.io/hoy/hub-map.json` | Schema `hoy.hub-map/1`: product, embed pattern, 9 roles, 13 experiences (the hub cards), every page code (87), 9 tools, 3 lens hints |
+| `public/hub-map.json` | `https://imagine-os.github.io/hoy/hub-map.json` | Schema `hoy.hub-map/1`: product, embed pattern, 9 roles, 13 experiences (the hub cards), every page code (87, each with a `group`), 9 tools, 3 lens hints |
 | `dist/hub-map/shots/<CODE>/…` | `https://imagine-os.github.io/hoy/hub-map/shots/<CODE>/<file>.jpg` | The thumbs (`thumb-<lang>-<phone\|desktop>[-dark].jpg`) and captures (`<lang>-390.jpg`, `<lang>-1280.jpg`, W-xx `<lang>-390-full.jpg`) the map's `shots` point at, relative to `product.baseUrl` |
 
 **Embed pattern**: `{baseUrl}#{route}?as={role}&lang={lang}&theme={theme}&dev=0&live=0` — what

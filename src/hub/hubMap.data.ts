@@ -12,7 +12,7 @@
  * must stay import-free; `checkHubMapData()` in `./hubMap.check.ts` (dev) and the generator (every
  * build) fail loudly when the copies drift.
  */
-import type { Bi, HubBand, HubDevice, HubExperience, HubLensHint, HubLensId, HubRole } from './hubMap.types';
+import type { Bi, HubBand, HubDevice, HubExperience, HubGroup, HubLensHint, HubLensId, HubRole } from './hubMap.types';
 
 export const HUB_MAP_SCHEMA = 'hoy.hub-map/1' as const;
 /** Where the product is published (GitHub Pages). Every URL in the map is relative to it. */
@@ -91,6 +91,67 @@ export const HUB_ROLES: HubRole[] = [
     band: 'team', home: '/staff', device: 'desktop', demoUser: { id: 'usr_maint', firstName: 'Rosa' }, look: 'maintenance', props: ['hardhat', 'tape'],
   },
 ];
+
+/** The sub-mats. `order` sorts the groups inside one experience; ids are stable, labels are copy. */
+export const HUB_GROUPS: Record<string, HubGroup> = Object.fromEntries(([
+  ['book', 'Reservar', 'Book', 10], ['pay', 'Pagar', 'Pay', 20], ['account', 'Cuenta', 'Account', 30], ['auth', 'Entrar', 'Sign in', 40],
+  ['site', 'Sitio', 'Website', 10],
+  ['teach', 'Enseñar', 'Teach', 10],
+  ['desk', 'Recepción', 'Front desk', 10], ['inbox', 'Bandeja', 'Inbox', 20], ['pos', 'Caja', 'Register', 30],
+  ['admin', 'Administración', 'Admin', 10], ['content', 'Contenido', 'Content', 20], ['crm', 'CRM', 'CRM', 30], ['finance', 'Finanzas', 'Finance', 40], ['tables', 'Tablas', 'Tables', 50],
+  ['dev', 'Desarrollo', 'Dev tools', 10], ['docs', 'Documentación', 'Docs', 10], ['manual', 'Manual', 'Manual', 10],
+] as [string, string, string, number][]).map(([id, es, en, order]) => [id, { id, label: { es, en }, order }]));
+
+/**
+ * Route prefix -> group id. A rule matches a path when the path equals the prefix or sits under it
+ * (`prefix/...`); with `exact` only the path itself matches. The longest matching prefix wins, so a rule
+ * for `/app/schedule` beats the one for `/app`. Every page must match a rule (the generator fails the
+ * build otherwise). Customer app: book (schedule, class, booking, waitlist, rate, events, intention),
+ * pay (checkout, payment methods, plans, passes, credits, membership, gift, invite, history), account
+ * (profile, account, notifications, more, rules, faq, teachers, legal, edge states, /no-access), auth.
+ */
+export const HUB_GROUP_RULES: { prefix: string; group: string; exact?: boolean }[] = [
+  // customer app
+  { prefix: '/app', group: 'book', exact: true },
+  ...['schedule', 'class', 'booking', 'waitlist', 'rate', 'events', 'intention'].map((p) => ({ prefix: `/app/${p}`, group: 'book' })),
+  ...['checkout', 'payment-methods', 'plans', 'passes', 'credits', 'membership', 'gift', 'invite', 'history'].map((p) => ({ prefix: `/app/${p}`, group: 'pay' })),
+  ...['profile', 'account', 'notifications', 'more', 'rules', 'faq', 'teachers', 'legal', 'state'].map((p) => ({ prefix: `/app/${p}`, group: 'account' })),
+  { prefix: '/no-access', group: 'account' },
+  { prefix: '/auth', group: 'auth' },
+  // website, teacher app
+  { prefix: '/site', group: 'site' },
+  { prefix: '/teach', group: 'teach' },
+  // staff
+  { prefix: '/staff', group: 'desk' },
+  { prefix: '/staff/inbox', group: 'inbox' },
+  { prefix: '/staff/register', group: 'pos' },
+  // admin (emails and WhatsApp automations are content the studio writes)
+  { prefix: '/admin', group: 'admin' },
+  { prefix: '/admin/settings', group: 'admin' },
+  { prefix: '/admin/integrations', group: 'admin' },
+  { prefix: '/admin/activity', group: 'admin' },
+  { prefix: '/admin/content', group: 'content' },
+  { prefix: '/admin/emails', group: 'content' },
+  { prefix: '/admin/whatsapp', group: 'content' },
+  { prefix: '/admin/crm', group: 'crm' },
+  { prefix: '/admin/finance', group: 'finance' },
+  { prefix: '/admin/tables', group: 'tables' },
+  // build
+  { prefix: '/', group: 'dev', exact: true }, // the testing hub itself
+  { prefix: '/dev', group: 'dev' },
+  { prefix: '/docs', group: 'docs' },
+  { prefix: '/manual', group: 'manual' },
+];
+
+/** The group a route belongs to, or undefined when no rule matches. Pure: the hub page can use it too. */
+export function hubGroupOf(path: string): HubGroup | undefined {
+  let best: { prefix: string; group: string } | undefined;
+  for (const r of HUB_GROUP_RULES) {
+    const hit = r.exact ? path === r.prefix : path === r.prefix || path.startsWith(`${r.prefix}/`);
+    if (hit && (!best || r.prefix.length > best.prefix.length)) best = r;
+  }
+  return best && HUB_GROUPS[best.group];
+}
 
 /** The hand-written part of an experience; the generator adds `roles`, `url`, `pageCodes` and `shots`. */
 export interface HubExperienceSeed extends Omit<HubExperience, 'roles' | 'url' | 'pageCodes' | 'shots'> {

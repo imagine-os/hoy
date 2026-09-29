@@ -85,10 +85,13 @@ try {
     const experienceId = experienceOf(m.path, m.surface);
     const e = expById.get(experienceId);
     if (!e) problems.push(`page ${m.code} ${m.path}: no experience for surface ${m.surface}`);
+    const group = data.hubGroupOf(m.path);
+    if (!group) problems.push(`page ${m.code} ${m.path}: no group rule in HUB_GROUP_RULES (src/hub/hubMap.data.ts)`);
     return {
       code: m.code, route: m.path, name: m.spec.name, purpose: m.spec.purpose, surface: m.surface, roles,
       experienceId: experienceId ?? '', device: e?.device ?? 'desktop', status: m.status,
       actions: (m.spec.actions ?? []).map((a) => a.id), shots: shotsOf(m.code),
+      ...(group ? { group: { id: group.id, label: group.label, order: group.order } } : {}),
     };
   });
 
@@ -160,6 +163,7 @@ try {
   for (const p of pages) {
     bi(p.name, `page ${p.code} name`); bi(p.purpose, `page ${p.code} purpose`);
     for (const r of p.roles) if (!roleIds.has(r)) problems.push(`page ${p.code}: role ${r} is not a role`);
+    if (p.group) bi(p.group.label, `page ${p.code} group ${p.group.id} label`);
     if (!hasShots(p.shots)) problems.push(`page ${p.code}: no shots in docs/screenshots/${p.code}/`);
   }
   for (const t of tools) {

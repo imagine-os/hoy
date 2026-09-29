@@ -11,7 +11,7 @@
       "es": "Un solo sistema para cada puesto del estudio: quien practica, quien enseña, quien recibe en la puerta, quien administra y quien lo construye.",
       "en": "One system for every seat at the studio: members, teachers, front desk, admin, and the people who build it."
     },
-    "version": "0.11.0",
+    "version": "0.11.1",
     "baseUrl": "https://imagine-os.github.io/hoy/",
     "hubRoute": "/",
     "brand": {
@@ -887,6 +887,14 @@
           "es-1280": "hub-map/shots/M-01/es-1280.jpg",
           "en-1280": "hub-map/shots/M-01/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "admin",
+        "label": {
+          "es": "Administración",
+          "en": "Admin"
+        },
+        "order": 10
       }
     },
     {
@@ -923,6 +931,14 @@
           "es-1280": "hub-map/shots/M-02/es-1280.jpg",
           "en-1280": "hub-map/shots/M-02/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "content",
+        "label": {
+          "es": "Contenido",
+          "en": "Content"
+        },
+        "order": 20
       }
     },
     {
@@ -959,6 +975,14 @@
           "es-1280": "hub-map/shots/M-02a/es-1280.jpg",
           "en-1280": "hub-map/shots/M-02a/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "content",
+        "label": {
+          "es": "Contenido",
+          "en": "Content"
+        },
+        "order": 20
       }
     },
     {
@@ -995,6 +1019,14 @@
           "es-1280": "hub-map/shots/M-02b/es-1280.jpg",
           "en-1280": "hub-map/shots/M-02b/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "content",
+        "label": {
+          "es": "Contenido",
+          "en": "Content"
+        },
+        "order": 20
       }
     },
     {
@@ -1031,6 +1063,14 @@
           "es-1280": "hub-map/shots/M-02c/es-1280.jpg",
           "en-1280": "hub-map/shots/M-02c/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "content",
+        "label": {
+          "es": "Contenido",
+          "en": "Content"
+        },
+        "order": 20
       }
     },
     {
@@ -1067,6 +1107,14 @@
           "es-1280": "hub-map/shots/M-02d/es-1280.jpg",
           "en-1280": "hub-map/shots/M-02d/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "content",
+        "label": {
+          "es": "Contenido",
+          "en": "Content"
+        },
+        "order": 20
       }
     },
     {
@@ -1102,6 +1150,14 @@
           "es-1280": "hub-map/shots/M-03/es-1280.jpg",
           "en-1280": "hub-map/shots/M-03/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "tables",
+        "label": {
+          "es": "Tablas",
+          "en": "Tables"
+        },
+        "order": 50
       }
     },
     {
@@ -1138,6 +1194,14 @@
           "es-1280": "hub-map/shots/M-04/es-1280.jpg",
           "en-1280": "hub-map/shots/M-04/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "content",
+        "label": {
+          "es": "Contenido",
+          "en": "Content"
+        },
+        "order": 20
       }
     },
     {
@@ -1175,6 +1239,14 @@
           "es-1280": "hub-map/shots/M-05/es-1280.jpg",
           "en-1280": "hub-map/shots/M-05/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "content",
+        "label": {
+          "es": "Contenido",
+          "en": "Content"
+        },
+        "order": 20
       }
     },
     {
@@ -1213,6 +1285,14 @@
           "es-1280": "hub-map/shots/M-06/es-1280.jpg",
           "en-1280": "hub-map/shots/M-06/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "crm",
+        "label": {
+          "es": "CRM",
+          "en": "CRM"
+        },
+        "order": 30
       }
     },
     {
@@ -1248,6 +1328,14 @@
           "es-1280": "hub-map/shots/M-11/es-1280.jpg",
           "en-1280": "hub-map/shots/M-11/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "crm",
+        "label": {
+          "es": "CRM",
+          "en": "CRM"
+        },
+        "order": 30
       }
     },
     {
@@ -1285,6 +1373,14 @@
           "es-1280": "hub-map/shots/M-07/es-1280.jpg",
           "en-1280": "hub-map/shots/M-07/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "admin",
+        "label": {
+          "es": "Administración",
+          "en": "Admin"
+        },
+        "order": 10
       }
     },
     {
@@ -1322,6 +1418,14 @@
           "es-1280": "hub-map/shots/M-08a/es-1280.jpg",
           "en-1280": "hub-map/shots/M-08a/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "admin",
+        "label": {
+          "es": "Administración",
+          "en": "Admin"
+        },
+        "order": 10
       }
     },
     {
@@ -1359,6 +1463,14 @@
           "es-1280": "hub-map/shots/M-08b/es-1280.jpg",
           "en-1280": "hub-map/shots/M-08b/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "admin",
+        "label": {
+          "es": "Administración",
+          "en": "Admin"
+        },
+        "order": 10
       }
     },
     {
@@ -1395,6 +1507,14 @@
           "es-1280": "hub-map/shots/M-08c/es-1280.jpg",
           "en-1280": "hub-map/shots/M-08c/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "admin",
+        "label": {
+          "es": "Administración",
+          "en": "Admin"
+        },
+        "order": 10
       }
     },
     {
@@ -1431,6 +1551,14 @@
           "es-1280": "hub-map/shots/M-08d/es-1280.jpg",
           "en-1280": "hub-map/shots/M-08d/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "admin",
+        "label": {
+          "es": "Administración",
+          "en": "Admin"
+        },
+        "order": 10
       }
     },
     {
@@ -1466,6 +1594,14 @@
           "es-1280": "hub-map/shots/M-08e/es-1280.jpg",
           "en-1280": "hub-map/shots/M-08e/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "admin",
+        "label": {
+          "es": "Administración",
+          "en": "Admin"
+        },
+        "order": 10
       }
     },
     {
@@ -1502,6 +1638,14 @@
           "es-1280": "hub-map/shots/M-08f/es-1280.jpg",
           "en-1280": "hub-map/shots/M-08f/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "admin",
+        "label": {
+          "es": "Administración",
+          "en": "Admin"
+        },
+        "order": 10
       }
     },
     {
@@ -1537,6 +1681,14 @@
           "es-1280": "hub-map/shots/M-10/es-1280.jpg",
           "en-1280": "hub-map/shots/M-10/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "admin",
+        "label": {
+          "es": "Administración",
+          "en": "Admin"
+        },
+        "order": 10
       }
     },
     {
@@ -1573,6 +1725,14 @@
           "es-1280": "hub-map/shots/M-09/es-1280.jpg",
           "en-1280": "hub-map/shots/M-09/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "finance",
+        "label": {
+          "es": "Finanzas",
+          "en": "Finance"
+        },
+        "order": 40
       }
     },
     {
@@ -1609,6 +1769,14 @@
           "es-1280": "hub-map/shots/M-09a/es-1280.jpg",
           "en-1280": "hub-map/shots/M-09a/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "finance",
+        "label": {
+          "es": "Finanzas",
+          "en": "Finance"
+        },
+        "order": 40
       }
     },
     {
@@ -1645,6 +1813,14 @@
           "es-1280": "hub-map/shots/M-09b/es-1280.jpg",
           "en-1280": "hub-map/shots/M-09b/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "finance",
+        "label": {
+          "es": "Finanzas",
+          "en": "Finance"
+        },
+        "order": 40
       }
     },
     {
@@ -1681,6 +1857,14 @@
           "es-1280": "hub-map/shots/M-09c/es-1280.jpg",
           "en-1280": "hub-map/shots/M-09c/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "finance",
+        "label": {
+          "es": "Finanzas",
+          "en": "Finance"
+        },
+        "order": 40
       }
     },
     {
@@ -1723,6 +1907,14 @@
           "es-1280": "hub-map/shots/C-01/es-1280.jpg",
           "en-1280": "hub-map/shots/C-01/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "book",
+        "label": {
+          "es": "Reservar",
+          "en": "Book"
+        },
+        "order": 10
       }
     },
     {
@@ -1766,6 +1958,14 @@
           "es-1280": "hub-map/shots/C-02/es-1280.jpg",
           "en-1280": "hub-map/shots/C-02/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "book",
+        "label": {
+          "es": "Reservar",
+          "en": "Book"
+        },
+        "order": 10
       }
     },
     {
@@ -1805,6 +2005,14 @@
           "es-1280": "hub-map/shots/C-02b/es-1280.jpg",
           "en-1280": "hub-map/shots/C-02b/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "book",
+        "label": {
+          "es": "Reservar",
+          "en": "Book"
+        },
+        "order": 10
       }
     },
     {
@@ -1844,6 +2052,14 @@
           "es-1280": "hub-map/shots/C-03/es-1280.jpg",
           "en-1280": "hub-map/shots/C-03/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "book",
+        "label": {
+          "es": "Reservar",
+          "en": "Book"
+        },
+        "order": 10
       }
     },
     {
@@ -1888,6 +2104,14 @@
           "es-1280": "hub-map/shots/C-04/es-1280.jpg",
           "en-1280": "hub-map/shots/C-04/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "pay",
+        "label": {
+          "es": "Pagar",
+          "en": "Pay"
+        },
+        "order": 20
       }
     },
     {
@@ -1927,6 +2151,14 @@
           "es-1280": "hub-map/shots/C-05/es-1280.jpg",
           "en-1280": "hub-map/shots/C-05/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "pay",
+        "label": {
+          "es": "Pagar",
+          "en": "Pay"
+        },
+        "order": 20
       }
     },
     {
@@ -1970,6 +2202,14 @@
           "es-1280": "hub-map/shots/C-06/es-1280.jpg",
           "en-1280": "hub-map/shots/C-06/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "pay",
+        "label": {
+          "es": "Pagar",
+          "en": "Pay"
+        },
+        "order": 20
       }
     },
     {
@@ -2009,6 +2249,14 @@
           "es-1280": "hub-map/shots/C-07/es-1280.jpg",
           "en-1280": "hub-map/shots/C-07/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "pay",
+        "label": {
+          "es": "Pagar",
+          "en": "Pay"
+        },
+        "order": 20
       }
     },
     {
@@ -2048,6 +2296,14 @@
           "es-1280": "hub-map/shots/C-07b/es-1280.jpg",
           "en-1280": "hub-map/shots/C-07b/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "pay",
+        "label": {
+          "es": "Pagar",
+          "en": "Pay"
+        },
+        "order": 20
       }
     },
     {
@@ -2090,6 +2346,14 @@
           "es-1280": "hub-map/shots/C-08/es-1280.jpg",
           "en-1280": "hub-map/shots/C-08/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "book",
+        "label": {
+          "es": "Reservar",
+          "en": "Book"
+        },
+        "order": 10
       }
     },
     {
@@ -2129,6 +2393,14 @@
           "es-1280": "hub-map/shots/C-08b/es-1280.jpg",
           "en-1280": "hub-map/shots/C-08b/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "book",
+        "label": {
+          "es": "Reservar",
+          "en": "Book"
+        },
+        "order": 10
       }
     },
     {
@@ -2168,6 +2440,14 @@
           "es-1280": "hub-map/shots/C-10/es-1280.jpg",
           "en-1280": "hub-map/shots/C-10/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "book",
+        "label": {
+          "es": "Reservar",
+          "en": "Book"
+        },
+        "order": 10
       }
     },
     {
@@ -2207,6 +2487,14 @@
           "es-1280": "hub-map/shots/C-11/es-1280.jpg",
           "en-1280": "hub-map/shots/C-11/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "pay",
+        "label": {
+          "es": "Pagar",
+          "en": "Pay"
+        },
+        "order": 20
       }
     },
     {
@@ -2246,6 +2534,14 @@
           "es-1280": "hub-map/shots/C-13/es-1280.jpg",
           "en-1280": "hub-map/shots/C-13/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "account",
+        "label": {
+          "es": "Cuenta",
+          "en": "Account"
+        },
+        "order": 30
       }
     },
     {
@@ -2285,6 +2581,14 @@
           "es-1280": "hub-map/shots/C-14/es-1280.jpg",
           "en-1280": "hub-map/shots/C-14/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "account",
+        "label": {
+          "es": "Cuenta",
+          "en": "Account"
+        },
+        "order": 30
       }
     },
     {
@@ -2324,6 +2628,14 @@
           "es-1280": "hub-map/shots/C-15/es-1280.jpg",
           "en-1280": "hub-map/shots/C-15/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "account",
+        "label": {
+          "es": "Cuenta",
+          "en": "Account"
+        },
+        "order": 30
       }
     },
     {
@@ -2363,6 +2675,14 @@
           "es-1280": "hub-map/shots/C-16/es-1280.jpg",
           "en-1280": "hub-map/shots/C-16/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "pay",
+        "label": {
+          "es": "Pagar",
+          "en": "Pay"
+        },
+        "order": 20
       }
     },
     {
@@ -2402,6 +2722,14 @@
           "es-1280": "hub-map/shots/C-17/es-1280.jpg",
           "en-1280": "hub-map/shots/C-17/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "pay",
+        "label": {
+          "es": "Pagar",
+          "en": "Pay"
+        },
+        "order": 20
       }
     },
     {
@@ -2441,6 +2769,14 @@
           "es-1280": "hub-map/shots/C-18/es-1280.jpg",
           "en-1280": "hub-map/shots/C-18/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "account",
+        "label": {
+          "es": "Cuenta",
+          "en": "Account"
+        },
+        "order": 30
       }
     },
     {
@@ -2480,6 +2816,14 @@
           "es-1280": "hub-map/shots/C-19/es-1280.jpg",
           "en-1280": "hub-map/shots/C-19/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "account",
+        "label": {
+          "es": "Cuenta",
+          "en": "Account"
+        },
+        "order": 30
       }
     },
     {
@@ -2519,6 +2863,14 @@
           "es-1280": "hub-map/shots/C-20/es-1280.jpg",
           "en-1280": "hub-map/shots/C-20/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "book",
+        "label": {
+          "es": "Reservar",
+          "en": "Book"
+        },
+        "order": 10
       }
     },
     {
@@ -2558,6 +2910,14 @@
           "es-1280": "hub-map/shots/C-22/es-1280.jpg",
           "en-1280": "hub-map/shots/C-22/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "pay",
+        "label": {
+          "es": "Pagar",
+          "en": "Pay"
+        },
+        "order": 20
       }
     },
     {
@@ -2597,6 +2957,14 @@
           "es-1280": "hub-map/shots/C-23/es-1280.jpg",
           "en-1280": "hub-map/shots/C-23/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "book",
+        "label": {
+          "es": "Reservar",
+          "en": "Book"
+        },
+        "order": 10
       }
     },
     {
@@ -2636,6 +3004,14 @@
           "es-1280": "hub-map/shots/C-24/es-1280.jpg",
           "en-1280": "hub-map/shots/C-24/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "account",
+        "label": {
+          "es": "Cuenta",
+          "en": "Account"
+        },
+        "order": 30
       }
     },
     {
@@ -2675,6 +3051,14 @@
           "es-1280": "hub-map/shots/C-25/es-1280.jpg",
           "en-1280": "hub-map/shots/C-25/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "account",
+        "label": {
+          "es": "Cuenta",
+          "en": "Account"
+        },
+        "order": 30
       }
     },
     {
@@ -2714,6 +3098,14 @@
           "es-1280": "hub-map/shots/C-26/es-1280.jpg",
           "en-1280": "hub-map/shots/C-26/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "account",
+        "label": {
+          "es": "Cuenta",
+          "en": "Account"
+        },
+        "order": 30
       }
     },
     {
@@ -2753,6 +3145,14 @@
           "es-1280": "hub-map/shots/A-05/es-1280.jpg",
           "en-1280": "hub-map/shots/A-05/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "book",
+        "label": {
+          "es": "Reservar",
+          "en": "Book"
+        },
+        "order": 10
       }
     },
     {
@@ -2799,6 +3199,14 @@
           "es-1280": "hub-map/shots/A-06/es-1280.jpg",
           "en-1280": "hub-map/shots/A-06/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "account",
+        "label": {
+          "es": "Cuenta",
+          "en": "Account"
+        },
+        "order": 30
       }
     },
     {
@@ -2838,6 +3246,14 @@
           "es-1280": "hub-map/shots/E-01/es-1280.jpg",
           "en-1280": "hub-map/shots/E-01/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "account",
+        "label": {
+          "es": "Cuenta",
+          "en": "Account"
+        },
+        "order": 30
       }
     },
     {
@@ -2877,6 +3293,14 @@
           "es-1280": "hub-map/shots/E-02/es-1280.jpg",
           "en-1280": "hub-map/shots/E-02/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "account",
+        "label": {
+          "es": "Cuenta",
+          "en": "Account"
+        },
+        "order": 30
       }
     },
     {
@@ -2916,6 +3340,14 @@
           "es-1280": "hub-map/shots/E-03/es-1280.jpg",
           "en-1280": "hub-map/shots/E-03/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "account",
+        "label": {
+          "es": "Cuenta",
+          "en": "Account"
+        },
+        "order": 30
       }
     },
     {
@@ -2962,6 +3394,14 @@
           "es-1280": "hub-map/shots/A-01/es-1280.jpg",
           "en-1280": "hub-map/shots/A-01/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "auth",
+        "label": {
+          "es": "Entrar",
+          "en": "Sign in"
+        },
+        "order": 40
       }
     },
     {
@@ -3010,6 +3450,14 @@
           "es-1280": "hub-map/shots/A-02/es-1280.jpg",
           "en-1280": "hub-map/shots/A-02/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "auth",
+        "label": {
+          "es": "Entrar",
+          "en": "Sign in"
+        },
+        "order": 40
       }
     },
     {
@@ -3056,6 +3504,14 @@
           "es-1280": "hub-map/shots/A-03/es-1280.jpg",
           "en-1280": "hub-map/shots/A-03/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "auth",
+        "label": {
+          "es": "Entrar",
+          "en": "Sign in"
+        },
+        "order": 40
       }
     },
     {
@@ -3102,6 +3558,14 @@
           "es-1280": "hub-map/shots/C-21/es-1280.jpg",
           "en-1280": "hub-map/shots/C-21/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "auth",
+        "label": {
+          "es": "Entrar",
+          "en": "Sign in"
+        },
+        "order": 40
       }
     },
     {
@@ -3148,6 +3612,14 @@
           "es-1280": "hub-map/shots/E-04/es-1280.jpg",
           "en-1280": "hub-map/shots/E-04/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "auth",
+        "label": {
+          "es": "Entrar",
+          "en": "Sign in"
+        },
+        "order": 40
       }
     },
     {
@@ -3182,6 +3654,14 @@
           "es-1280": "hub-map/shots/D-03/es-1280.jpg",
           "en-1280": "hub-map/shots/D-03/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "dev",
+        "label": {
+          "es": "Desarrollo",
+          "en": "Dev tools"
+        },
+        "order": 10
       }
     },
     {
@@ -3216,6 +3696,14 @@
           "es-1280": "hub-map/shots/D-01/es-1280.jpg",
           "en-1280": "hub-map/shots/D-01/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "dev",
+        "label": {
+          "es": "Desarrollo",
+          "en": "Dev tools"
+        },
+        "order": 10
       }
     },
     {
@@ -3250,6 +3738,14 @@
           "es-1280": "hub-map/shots/D-02/es-1280.jpg",
           "en-1280": "hub-map/shots/D-02/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "dev",
+        "label": {
+          "es": "Desarrollo",
+          "en": "Dev tools"
+        },
+        "order": 10
       }
     },
     {
@@ -3284,6 +3780,14 @@
           "es-1280": "hub-map/shots/D-04/es-1280.jpg",
           "en-1280": "hub-map/shots/D-04/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "dev",
+        "label": {
+          "es": "Desarrollo",
+          "en": "Dev tools"
+        },
+        "order": 10
       }
     },
     {
@@ -3318,6 +3822,14 @@
           "es-1280": "hub-map/shots/K-01/es-1280.jpg",
           "en-1280": "hub-map/shots/K-01/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "dev",
+        "label": {
+          "es": "Desarrollo",
+          "en": "Dev tools"
+        },
+        "order": 10
       }
     },
     {
@@ -3347,6 +3859,14 @@
           "es-1280": "hub-map/shots/D-05/es-1280.jpg",
           "en-1280": "hub-map/shots/D-05/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "dev",
+        "label": {
+          "es": "Desarrollo",
+          "en": "Dev tools"
+        },
+        "order": 10
       }
     },
     {
@@ -3376,6 +3896,14 @@
           "es-1280": "hub-map/shots/D-06/es-1280.jpg",
           "en-1280": "hub-map/shots/D-06/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "dev",
+        "label": {
+          "es": "Desarrollo",
+          "en": "Dev tools"
+        },
+        "order": 10
       }
     },
     {
@@ -3418,6 +3946,14 @@
           "es-1280": "hub-map/shots/K-02/es-1280.jpg",
           "en-1280": "hub-map/shots/K-02/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "docs",
+        "label": {
+          "es": "Documentación",
+          "en": "Docs"
+        },
+        "order": 10
       }
     },
     {
@@ -3470,6 +4006,14 @@
           "es-1280": "hub-map/shots/HUB-01/es-1280.jpg",
           "en-1280": "hub-map/shots/HUB-01/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "dev",
+        "label": {
+          "es": "Desarrollo",
+          "en": "Dev tools"
+        },
+        "order": 10
       }
     },
     {
@@ -3512,6 +4056,14 @@
           "es-1280": "hub-map/shots/E-05/es-1280.jpg",
           "en-1280": "hub-map/shots/E-05/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "account",
+        "label": {
+          "es": "Cuenta",
+          "en": "Account"
+        },
+        "order": 30
       }
     },
     {
@@ -3554,6 +4106,14 @@
           "es-1280": "hub-map/shots/K-03/es-1280.jpg",
           "en-1280": "hub-map/shots/K-03/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "manual",
+        "label": {
+          "es": "Manual",
+          "en": "Manual"
+        },
+        "order": 10
       }
     },
     {
@@ -3596,6 +4156,14 @@
           "es-1280": "hub-map/shots/K-04/es-1280.jpg",
           "en-1280": "hub-map/shots/K-04/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "manual",
+        "label": {
+          "es": "Manual",
+          "en": "Manual"
+        },
+        "order": 10
       }
     },
     {
@@ -3636,6 +4204,14 @@
           "es-1280": "hub-map/shots/S-01/es-1280.jpg",
           "en-1280": "hub-map/shots/S-01/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "desk",
+        "label": {
+          "es": "Recepción",
+          "en": "Front desk"
+        },
+        "order": 10
       }
     },
     {
@@ -3673,6 +4249,14 @@
           "es-1280": "hub-map/shots/S-06/es-1280.jpg",
           "en-1280": "hub-map/shots/S-06/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "inbox",
+        "label": {
+          "es": "Bandeja",
+          "en": "Inbox"
+        },
+        "order": 20
       }
     },
     {
@@ -3710,6 +4294,14 @@
           "es-1280": "hub-map/shots/S-02/es-1280.jpg",
           "en-1280": "hub-map/shots/S-02/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "desk",
+        "label": {
+          "es": "Recepción",
+          "en": "Front desk"
+        },
+        "order": 10
       }
     },
     {
@@ -3747,6 +4339,14 @@
           "es-1280": "hub-map/shots/S-04/es-1280.jpg",
           "en-1280": "hub-map/shots/S-04/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "pos",
+        "label": {
+          "es": "Caja",
+          "en": "Register"
+        },
+        "order": 30
       }
     },
     {
@@ -3784,6 +4384,14 @@
           "es-1280": "hub-map/shots/S-05/es-1280.jpg",
           "en-1280": "hub-map/shots/S-05/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "desk",
+        "label": {
+          "es": "Recepción",
+          "en": "Front desk"
+        },
+        "order": 10
       }
     },
     {
@@ -3825,6 +4433,14 @@
           "es-1280": "hub-map/shots/S-03/es-1280.jpg",
           "en-1280": "hub-map/shots/S-03/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "teach",
+        "label": {
+          "es": "Enseñar",
+          "en": "Teach"
+        },
+        "order": 10
       }
     },
     {
@@ -3869,6 +4485,14 @@
           "es-390-full": "hub-map/shots/W-01/es-390-full.jpg",
           "en-390-full": "hub-map/shots/W-01/en-390-full.jpg"
         }
+      },
+      "group": {
+        "id": "site",
+        "label": {
+          "es": "Sitio",
+          "en": "Website"
+        },
+        "order": 10
       }
     },
     {
@@ -3913,6 +4537,14 @@
           "es-390-full": "hub-map/shots/W-02/es-390-full.jpg",
           "en-390-full": "hub-map/shots/W-02/en-390-full.jpg"
         }
+      },
+      "group": {
+        "id": "site",
+        "label": {
+          "es": "Sitio",
+          "en": "Website"
+        },
+        "order": 10
       }
     },
     {
@@ -3957,6 +4589,14 @@
           "es-390-full": "hub-map/shots/W-07/es-390-full.jpg",
           "en-390-full": "hub-map/shots/W-07/en-390-full.jpg"
         }
+      },
+      "group": {
+        "id": "site",
+        "label": {
+          "es": "Sitio",
+          "en": "Website"
+        },
+        "order": 10
       }
     },
     {
@@ -4001,6 +4641,14 @@
           "es-390-full": "hub-map/shots/W-08/es-390-full.jpg",
           "en-390-full": "hub-map/shots/W-08/en-390-full.jpg"
         }
+      },
+      "group": {
+        "id": "site",
+        "label": {
+          "es": "Sitio",
+          "en": "Website"
+        },
+        "order": 10
       }
     },
     {
@@ -4045,6 +4693,14 @@
           "es-390-full": "hub-map/shots/W-03/es-390-full.jpg",
           "en-390-full": "hub-map/shots/W-03/en-390-full.jpg"
         }
+      },
+      "group": {
+        "id": "site",
+        "label": {
+          "es": "Sitio",
+          "en": "Website"
+        },
+        "order": 10
       }
     },
     {
@@ -4089,6 +4745,14 @@
           "es-390-full": "hub-map/shots/W-04/es-390-full.jpg",
           "en-390-full": "hub-map/shots/W-04/en-390-full.jpg"
         }
+      },
+      "group": {
+        "id": "site",
+        "label": {
+          "es": "Sitio",
+          "en": "Website"
+        },
+        "order": 10
       }
     },
     {
@@ -4133,6 +4797,14 @@
           "es-390-full": "hub-map/shots/W-05/es-390-full.jpg",
           "en-390-full": "hub-map/shots/W-05/en-390-full.jpg"
         }
+      },
+      "group": {
+        "id": "site",
+        "label": {
+          "es": "Sitio",
+          "en": "Website"
+        },
+        "order": 10
       }
     },
     {
@@ -4175,6 +4847,14 @@
           "es-1280": "hub-map/shots/P-01/es-1280.jpg",
           "en-1280": "hub-map/shots/P-01/en-1280.jpg"
         }
+      },
+      "group": {
+        "id": "site",
+        "label": {
+          "es": "Sitio",
+          "en": "Website"
+        },
+        "order": 10
       }
     },
     {
@@ -4219,6 +4899,14 @@
           "es-390-full": "hub-map/shots/W-06/es-390-full.jpg",
           "en-390-full": "hub-map/shots/W-06/en-390-full.jpg"
         }
+      },
+      "group": {
+        "id": "site",
+        "label": {
+          "es": "Sitio",
+          "en": "Website"
+        },
+        "order": 10
       }
     },
     {
@@ -4263,6 +4951,14 @@
           "es-390-full": "hub-map/shots/W-09/es-390-full.jpg",
           "en-390-full": "hub-map/shots/W-09/en-390-full.jpg"
         }
+      },
+      "group": {
+        "id": "site",
+        "label": {
+          "es": "Sitio",
+          "en": "Website"
+        },
+        "order": 10
       }
     }
   ],
