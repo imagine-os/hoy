@@ -81,6 +81,9 @@ scripts/        screenshots.mjs and other tooling
   `RouteDef.layout`: `mobile` → AppShell, `desktop` → DesktopShell, `auto` → the surface default. Breakpoints come
   from `BREAKPOINTS` in `tokens.ts` (`useMinWidth('shell')` in React); the `--ui` band scales every surface (D-0007).
 
+## Spacing
+Spacing and sizing come from the D-01 scale and semantic tokens only — follow `.claude/skills/ui-spacing/SKILL.md`; `npm run lint:spacing` (inside `npm run build`) fails when raw px/rem spacing grows above its baseline.
+
 ## Multi-tenant rule
 `tenant_id` on every table and every seed row. No hardcoded studio name, address, capacity, hours or
 prices outside `src/tenant/tenant.ts` and `src/tenant/pricing.ts`. Copy that says "HOY"
