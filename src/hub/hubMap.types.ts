@@ -53,6 +53,8 @@ export interface HubPage {
   experienceId: string; device: HubDevice; status: 'built' | 'stub'; actions: string[]; shots: HubShots;
   /** Since 0028, additive: the sub-mat this page belongs to inside its experience. Absent only if a host reads an older file. */
   group?: HubGroup;
+  /** Since 0029, additive: present only when `route` is a template (has a `:param`). A concrete route that opens a real record; embed `sampleRoute ?? route`. A `sample` segment is resolved to a live seed id by the app itself, so hosts load it as is. */
+  sampleRoute?: string;
 }
 export interface HubTool { id: string; code: string; label: Bi; purpose: Bi; route: string; url: string; device: 'desktop'; shots: HubShots; }
 export interface HubLensHint { title: Bi; framing: Bi; groupBy: 'role' | 'experience' | 'surface'; showTools: boolean; entry: string; }

@@ -1,7 +1,7 @@
 # Machine surfaces — MCP / WebMCP, CLI, API
 
 What something other than a person can drive in HoyOS today, and what it cannot.
-**Checked 2026-09-29** (v0.11.1; previous check 2026-09-29, v0.11.0). Re-check and date this file every pass; a line that is not
+**Checked 2026-09-29** (v0.11.2; previous check 2026-09-29, v0.11.1). Re-check and date this file every pass; a line that is not
 re-checked is not current.
 
 ---
@@ -93,6 +93,7 @@ Everything is Node, in `scripts/`, and safe to run from a clean checkout.
 | `npm run dev` | Vite dev server at `http://localhost:5173/#/` | — |
 | `npm run build` | `npm run tokens` → `npm run hub-map` → `tsc --noEmit` → `vite build` → `node scripts/copy-shots.mjs`. **Must be green before every push.** | `src/design/tokens.css`, `public/hub-map.json`, `dist/` (incl. `dist/hub-map/shots/`) |
 | `npm run hub-map` | `scripts/gen-hub-map.mjs`: composes the hub map from `src/hub/hubMap.data.ts` + the live route registry (Vite SSR loader, no browser) + `docs/screenshots/`, validates it against the contract and exits 1 on any problem. Deterministic (`generatedAt` = the latest changelog date) | `public/hub-map.json` (committed) |
+| `npm run hub-map:check` | Since 0029. `scripts/check-sample-routes.mjs`: serves `dist/` (`vite preview`), opens every `pages[].sampleRoute` of `public/hub-map.json` in a same-origin iframe with `?as=<owning role>&dev=0&live=0` and fails when a `sample` segment is not resolved, the page has 20 words or fewer, shows a not-found state or a `⟨missing-key⟩` marker. Not part of the build; run after `npm run build` | — (prints one line per sample) |
 | `node scripts/copy-shots.mjs` | Copies every capture the map references into `dist/hub-map/shots/<CODE>/` and prints the total (budget 80 MB; the plan lives in `scripts/lib/hubShots.mjs`) | `dist/hub-map/shots/` |
 | `npm run preview` | Serves `dist/` at `:4173` (what the screenshot pass drives) | — |
 | `npm run typecheck` | `tsc --noEmit` alone | — |
@@ -139,7 +140,7 @@ consumer checklist: [`hub-map.md`](./hub-map.md).
 
 | File | URL | What |
 | --- | --- | --- |
-| `public/hub-map.json` | `https://imagine-os.github.io/hoy/hub-map.json` | Schema `hoy.hub-map/1`: product, embed pattern, 9 roles, 13 experiences (the hub cards), every page code (87, each with a `group`), 9 tools, 3 lens hints |
+| `public/hub-map.json` | `https://imagine-os.github.io/hoy/hub-map.json` | Schema `hoy.hub-map/1`: product, embed pattern, 9 roles, 13 experiences (the hub cards), every page code (87, each with a `group`; the 9 template pages with a `sampleRoute`), 9 tools, 3 lens hints |
 | `dist/hub-map/shots/<CODE>/…` | `https://imagine-os.github.io/hoy/hub-map/shots/<CODE>/<file>.jpg` | The thumbs (`thumb-<lang>-<phone\|desktop>[-dark].jpg`) and captures (`<lang>-390.jpg`, `<lang>-1280.jpg`, W-xx `<lang>-390-full.jpg`) the map's `shots` point at, relative to `product.baseUrl` |
 
 **Embed pattern**: `{baseUrl}#{route}?as={role}&lang={lang}&theme={theme}&dev=0&live=0` — what
@@ -149,6 +150,7 @@ consumer checklist: [`hub-map.md`](./hub-map.md).
 **Resumen (ES).** Qué puede manejar una máquina hoy: en la página, `window.__hoyos` publica las rutas,
 los usuarios demo, las acciones declaradas y `run(id, params)` para ejecutarlas (superficie WebMCP; no
 hay servidor MCP todavía), y `__hoyos.hubMap` con el mapa del hub. Archivo publicado: `hub-map.json`
-(esquema `hoy.hub-map/1`), con sus capturas en `hub-map/shots/`, para que aluzina y between-gigs dibujen el hub a su manera.
+(esquema `hoy.hub-map/1`), con sus capturas en `hub-map/shots/`, para que aluzina y between-gigs dibujen el hub a su manera;
+cada página con ruta plantilla trae `sampleRoute`, una ruta que abre un registro real (`npm run hub-map:check` la verifica).
 En la terminal, los `npm run` de arriba. API HTTP: ninguna — todo pasa por
 `DataProvider`, hoy `MockProvider` en el navegador; los endpoints previstos están en `PageSpec.api`.

@@ -7,8 +7,10 @@ dónde estamos, qué sigue y en qué orden (con dependencias explícitas y lo qu
 paralelo), qué significa "terminado" en cada fase, cómo trabajar en el repo y qué debe decidir el
 owner del estudio. Está escrito para que otra cuenta de Claude (o una persona) lo retome sin contexto.
 
-## A. Where we are (v0.11.1, 2026-09-29)
+## A. Where we are (v0.11.2, 2026-09-29)
 
+- **v0.11.2 — Hub map sample routes** (`docs/changelog/0029-hub-map-sample-routes.md`, prompt `docs/prompts/0029-hub-map-sample-routes.md`):
+  the 9 template pages carry `pages[].sampleRoute` (additive); a `sample` segment is resolved by the app to today's seed record; `npm run hub-map:check` opens all nine.
 - **v0.11.1 — Hub map page groups** (`docs/changelog/0028-hub-map-groups.md`, prompt `docs/prompts/0028-hub-map-groups.md`):
   `pages[].group` in `hub-map.json` (customer app: Book / Pay / Account / Sign in; other experiences: their own groups),
   fed by `HUB_GROUP_RULES` in `src/hub/hubMap.data.ts`.

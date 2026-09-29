@@ -1,7 +1,8 @@
 /**
  * Consistency check for the hub map data: the role facts duplicated in `./hubMap.data.ts` (which must
  * stay import-free for plain node) against `src/auth/roles.ts` + `src/auth/demoUsers.ts`, the card and
- * tool lists against the `hub.enterAs` / `hub.openTool` enums, and the accent against D-01.
+ * tool lists against the `hub.enterAs` / `hub.openTool` enums, the accent against D-01, and (0029) every
+ * sample route against a freshly built seed: each pick finds a row, each literal param exists.
  * Returns problems as strings; the app warns in dev (src/app/manifest.ts) and `scripts/gen-hub-map.mjs`
  * fails the build on any.
  */
@@ -9,7 +10,34 @@ import { ROLES, ROLE_HOME, ROLE_LABEL, type Role } from '../auth/roles';
 import { demoUserByRole } from '../auth/demoUsers';
 import { brand } from '../design/tokens';
 import { HUB_SURFACES, HUB_TOOLS } from '../modules/hub/specs';
-import { HOY_PRODUCT, HUB_EXPERIENCES, HUB_ROLES, HUB_TOOL_LIST } from './hubMap.data';
+import { buildSeed } from '../data/seed';
+import { classOrder } from '../tenant/brand';
+import { HOY_PRODUCT, HUB_EXPERIENCES, HUB_ROLES, HUB_SAMPLE_ROUTES, HUB_TOOL_LIST } from './hubMap.data';
+import { pickSampleIds, type SampleTables } from './sampleIds';
+
+/** Literal sample params, checked against the seed: which values a `:param` may take. */
+function literalOk(param: string, value: string, db: Record<string, { [k: string]: unknown }[]>): boolean {
+  if (param === 'kind') return db.legal_documents.some((d) => d.kind === value);
+  if (param === 'slug') return (classOrder as string[]).includes(value);
+  return false;
+}
+
+/** Every sample route resolves against today's seed (the same rows the app starts from). */
+export function checkSampleRoutes(): string[] {
+  const problems: string[] = [];
+  const db = buildSeed() as unknown as Record<string, { [k: string]: unknown }[]>;
+  const picks = pickSampleIds(db as unknown as SampleTables);
+  for (const [pattern, s] of Object.entries(HUB_SAMPLE_ROUTES)) {
+    const a = pattern.split('/'), b = s.route.split('/');
+    if (a.length !== b.length) { problems.push(`sample ${s.route}: does not fit ${pattern}`); continue; }
+    a.forEach((seg, i) => {
+      if (!seg.startsWith(':')) { if (seg !== b[i]) problems.push(`sample ${s.route}: does not fit ${pattern}`); return; }
+      if (s.pick) { if (!picks[s.pick]) problems.push(`sample ${s.route}: pick ${s.pick} finds no row in the seed`); }
+      else if (!literalOk(seg.slice(1), b[i], db)) problems.push(`sample ${s.route}: ${seg} = ${b[i]} is not in the seed`);
+    });
+  }
+  return problems;
+}
 
 export function checkHubMapData(): string[] {
   const problems: string[] = [];
@@ -31,5 +59,6 @@ export function checkHubMapData(): string[] {
   const tools = HUB_TOOL_LIST.map((t) => t.id).join(',');
   if (tools !== HUB_TOOLS.join(',')) problems.push(`HUB_TOOL_LIST order ${tools} ≠ HUB_TOOLS ${HUB_TOOLS.join(',')}`);
   if (HOY_PRODUCT.accent.toLowerCase() !== brand.deepBlue.toLowerCase()) problems.push(`product accent ${HOY_PRODUCT.accent} ≠ D-01 brand.deepBlue ${brand.deepBlue}`);
+  problems.push(...checkSampleRoutes());
   return problems;
 }

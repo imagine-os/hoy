@@ -27,8 +27,8 @@ export const HUB_SHOTS_DIR = 'hub-map/shots';
 /** Exactly what `frameUrl()` (src/app/frameSession.ts) builds for a preview iframe, as a template. */
 export const EMBED_PATTERN = '{baseUrl}#{route}?as={role}&lang={lang}&theme={theme}&dev=0&live=0';
 export const EMBED_NOTE: Bi = {
-  es: 'Sustituye {baseUrl}, {route} (una ruta de experiences[] o pages[]; un segmento :id es una plantilla y hay que cambiarlo por un id real), {role} (un id de roles[]), {lang} (es | en) y {theme} (light | dark), y carga la URL en un iframe. Dentro del iframe la app corre como el usuario demo de ese rol sin tocar la sesión de quien la mira; live=0 apaga las vistas previas anidadas. Mismo origen solo en imagine-os.github.io.',
-  en: 'Substitute {baseUrl}, {route} (a route from experiences[] or pages[]; a :id segment is a template to replace with a real id), {role} (an id from roles[]), {lang} (es | en) and {theme} (light | dark), and load the URL in an iframe. Inside the frame the app runs as that role’s demo user without touching the viewer’s own session; live=0 turns nested previews off. Same-origin only on imagine-os.github.io.',
+  es: 'Sustituye {baseUrl}, {route} (una ruta de experiences[] o pages[]; para una página usa sampleRoute ?? route: un segmento :id es una plantilla y sampleRoute ya trae un registro real), {role} (un id de roles[]), {lang} (es | en) y {theme} (light | dark), y carga la URL en un iframe. Dentro del iframe la app corre como el usuario demo de ese rol sin tocar la sesión de quien la mira; live=0 apaga las vistas previas anidadas. Mismo origen solo en imagine-os.github.io.',
+  en: 'Substitute {baseUrl}, {route} (a route from experiences[] or pages[]; for a page use sampleRoute ?? route: a :id segment is a template and sampleRoute already opens a real record), {role} (an id from roles[]), {lang} (es | en) and {theme} (light | dark), and load the URL in an iframe. Inside the frame the app runs as that role’s demo user without touching the viewer’s own session; live=0 turns nested previews off. Same-origin only on imagine-os.github.io.',
 };
 
 export const HOY_PRODUCT: { id: 'hoy'; name: Bi; tagline: Bi; accent: string; wordmark: string } = {
@@ -152,6 +152,32 @@ export function hubGroupOf(path: string): HubGroup | undefined {
   }
   return best && HUB_GROUPS[best.group];
 }
+
+/**
+ * Since 0029: a working route per template page (`pages[].sampleRoute`), so a host that embeds a page
+ * live opens a real record instead of a literal `:id`. Keyed by the page's template route; the
+ * generator fails the build when a template page has no entry or an entry matches no page.
+ *
+ * Classes, bookings and payroll runs are reseeded every day with date-based ids (`ses_<date>_<n>`,
+ * `pyr_<yyyy-mm>`), so a baked id would be stale by tomorrow. Those samples carry the reserved segment
+ * `SAMPLE_TOKEN` and a `pick`; the app swaps it for a live seed id on load (`src/app/SampleRoute.tsx`,
+ * picks in `src/hub/sampleIds.ts`). Static params (legal kind, site class slug) are written literally
+ * and checked against the seed by `checkHubMapData()`.
+ */
+export const SAMPLE_TOKEN = 'sample';
+/** session: an upcoming class with bookings and free mats · fullSession: an upcoming full class (waitlist) · booking: the demo customer's next booking · attendedSession: a class the demo customer attended · payrollRun: the approved payout run. */
+export type SamplePick = 'session' | 'fullSession' | 'booking' | 'attendedSession' | 'payrollRun';
+export const HUB_SAMPLE_ROUTES: Record<string, { route: string; pick?: SamplePick }> = {
+  '/app/class/:id': { route: '/app/class/sample', pick: 'session' },
+  '/app/checkout/:id': { route: '/app/checkout/sample', pick: 'session' },
+  '/app/booking/:id': { route: '/app/booking/sample', pick: 'booking' },
+  '/app/booking/:id/change': { route: '/app/booking/sample/change', pick: 'booking' },
+  '/app/rate/:id': { route: '/app/rate/sample', pick: 'attendedSession' },
+  '/app/waitlist/:id': { route: '/app/waitlist/sample', pick: 'fullSession' },
+  '/app/legal/:kind': { route: '/app/legal/terms' },
+  '/site/classes/:slug': { route: '/site/classes/hot-yoga' },
+  '/admin/finance/payouts/:id': { route: '/admin/finance/payouts/sample', pick: 'payrollRun' },
+};
 
 /** The hand-written part of an experience; the generator adds `roles`, `url`, `pageCodes` and `shots`. */
 export interface HubExperienceSeed extends Omit<HubExperience, 'roles' | 'url' | 'pageCodes' | 'shots'> {

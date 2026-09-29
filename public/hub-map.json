@@ -11,7 +11,7 @@
       "es": "Un solo sistema para cada puesto del estudio: quien practica, quien enseña, quien recibe en la puerta, quien administra y quien lo construye.",
       "en": "One system for every seat at the studio: members, teachers, front desk, admin, and the people who build it."
     },
-    "version": "0.11.1",
+    "version": "0.11.2",
     "baseUrl": "https://imagine-os.github.io/hoy/",
     "hubRoute": "/",
     "brand": {
@@ -22,8 +22,8 @@
   "embed": {
     "pattern": "{baseUrl}#{route}?as={role}&lang={lang}&theme={theme}&dev=0&live=0",
     "note": {
-      "es": "Sustituye {baseUrl}, {route} (una ruta de experiences[] o pages[]; un segmento :id es una plantilla y hay que cambiarlo por un id real), {role} (un id de roles[]), {lang} (es | en) y {theme} (light | dark), y carga la URL en un iframe. Dentro del iframe la app corre como el usuario demo de ese rol sin tocar la sesión de quien la mira; live=0 apaga las vistas previas anidadas. Mismo origen solo en imagine-os.github.io.",
-      "en": "Substitute {baseUrl}, {route} (a route from experiences[] or pages[]; a :id segment is a template to replace with a real id), {role} (an id from roles[]), {lang} (es | en) and {theme} (light | dark), and load the URL in an iframe. Inside the frame the app runs as that role’s demo user without touching the viewer’s own session; live=0 turns nested previews off. Same-origin only on imagine-os.github.io."
+      "es": "Sustituye {baseUrl}, {route} (una ruta de experiences[] o pages[]; para una página usa sampleRoute ?? route: un segmento :id es una plantilla y sampleRoute ya trae un registro real), {role} (un id de roles[]), {lang} (es | en) y {theme} (light | dark), y carga la URL en un iframe. Dentro del iframe la app corre como el usuario demo de ese rol sin tocar la sesión de quien la mira; live=0 apaga las vistas previas anidadas. Mismo origen solo en imagine-os.github.io.",
+      "en": "Substitute {baseUrl}, {route} (a route from experiences[] or pages[]; for a page use sampleRoute ?? route: a :id segment is a template and sampleRoute already opens a real record), {role} (an id from roles[]), {lang} (es | en) and {theme} (light | dark), and load the URL in an iframe. Inside the frame the app runs as that role’s demo user without touching the viewer’s own session; live=0 turns nested previews off. Same-origin only on imagine-os.github.io."
     }
   },
   "roles": [
@@ -1821,7 +1821,8 @@
           "en": "Finance"
         },
         "order": 40
-      }
+      },
+      "sampleRoute": "/admin/finance/payouts/sample"
     },
     {
       "code": "M-09c",
@@ -2060,7 +2061,8 @@
           "en": "Book"
         },
         "order": 10
-      }
+      },
+      "sampleRoute": "/app/class/sample"
     },
     {
       "code": "C-04",
@@ -2112,7 +2114,8 @@
           "en": "Pay"
         },
         "order": 20
-      }
+      },
+      "sampleRoute": "/app/checkout/sample"
     },
     {
       "code": "C-05",
@@ -2354,7 +2357,8 @@
           "en": "Book"
         },
         "order": 10
-      }
+      },
+      "sampleRoute": "/app/booking/sample"
     },
     {
       "code": "C-08b",
@@ -2401,7 +2405,8 @@
           "en": "Book"
         },
         "order": 10
-      }
+      },
+      "sampleRoute": "/app/booking/sample/change"
     },
     {
       "code": "C-10",
@@ -2448,7 +2453,8 @@
           "en": "Book"
         },
         "order": 10
-      }
+      },
+      "sampleRoute": "/app/rate/sample"
     },
     {
       "code": "C-11",
@@ -2871,7 +2877,8 @@
           "en": "Book"
         },
         "order": 10
-      }
+      },
+      "sampleRoute": "/app/waitlist/sample"
     },
     {
       "code": "C-22",
@@ -3207,7 +3214,8 @@
           "en": "Account"
         },
         "order": 30
-      }
+      },
+      "sampleRoute": "/app/legal/terms"
     },
     {
       "code": "E-01",
@@ -4649,7 +4657,8 @@
           "en": "Website"
         },
         "order": 10
-      }
+      },
+      "sampleRoute": "/site/classes/hot-yoga"
     },
     {
       "code": "W-03",
