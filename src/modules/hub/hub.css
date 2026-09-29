@@ -211,3 +211,7 @@
 /* E-05 no access — the page the guard sends a role that cannot open a route. */
 .noaccess-glyph { font-size: var(--fs-4xl); line-height: 1; }
 .noaccess-title { font-size: var(--fs-2xl); }
+
+/* 0031 · an announced card (the marketing kit): dashed, a little quieter, never embedded live */
+.hub-card.is-soon { border-style: dashed; }
+.hub-card.is-soon .hub-card-preview { opacity: .55; filter: saturate(.6); }

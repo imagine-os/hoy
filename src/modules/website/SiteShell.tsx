@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, type ReactNode } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useI18n } from '../../i18n/I18nProvider';
-import { useContact } from '../admin/settings';
+import { useContact , pendingSuffix, type ContactField } from '../admin/settings';
 import { useTheme } from '../../design/ThemeProvider';
 import { tenant } from '../../tenant/tenant';
 import { taglines } from '../../tenant/brand';
@@ -37,7 +37,7 @@ export function useWaHref() {
 
 /** Public website chrome: header with nav + a footer that carries hours, address and social. */
 export function SiteShell({ children }: { children: ReactNode }) {
-  const { t, bi } = useI18n();
+  const { t, bi, lang } = useI18n();
   const { edition, setEdition, videoEnabled, motion, setMotion } = useSiteEdition();
   const { pathname } = useLocation();
   const shell = useRef<HTMLDivElement>(null);
@@ -68,7 +68,8 @@ export function SiteShell({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const contact = useContact();
   const wa = useWaHref();
-  const pending = contact.pending ? ` (${bi(contact.pendingLabel)})` : '';
+  // 0036: per field — the phone and the address are confirmed, the email and Instagram still carry the label.
+  const pending = (f: ContactField) => pendingSuffix(contact, f, lang);
   return (
     <div className="site" data-edition={edition} data-motion={motion ? "on" : "off"} ref={shell}>
       <ElementCursor enabled={edition === 'sanctuary' && motion} />
@@ -103,14 +104,14 @@ export function SiteShell({ children }: { children: ReactNode }) {
           </div>
           <div className="stack-sm">
             <span className="eyebrow">{t('site.footer.visit')}</span>
-            <span className="small">{contact.address}{pending}</span>
+            <span className="small">{contact.location.link ? <a href={contact.location.link} target="_blank" rel="noreferrer">{contact.address}{pending('address')}</a> : <>{contact.address}{pending('address')}</>}</span>
             <span className="small muted">{bi(tenant.hours)}</span>
           </div>
           <div className="stack-sm">
             <span className="eyebrow">{t('site.footer.follow')}</span>
-            <a className="small" href={wa()} target="_blank" rel="noreferrer" data-testid="footer-whatsapp">WhatsApp {contact.whatsapp}{pending}</a>
-            <a className="small" href={contact.instagramUrl} target="_blank" rel="noreferrer">Instagram {contact.instagram}{pending}</a>
-            <a className="small" href={`mailto:${contact.email}`}>{contact.email}{pending}</a>
+            <a className="small" href={wa()} target="_blank" rel="noreferrer" data-testid="footer-whatsapp">WhatsApp {contact.whatsapp}{pending('whatsapp')}</a>
+            <a className="small" href={contact.instagramUrl} target="_blank" rel="noreferrer">Instagram {contact.instagram}{pending('instagram')}</a>
+            <a className="small" href={`mailto:${contact.email}`}>{contact.email}{pending('email')}</a>
           </div>
           <div className="stack-sm">
             <span className="eyebrow">{t('site.footer.explore')}</span>

@@ -148,6 +148,42 @@ Fields: **Date**, **Status** (accepted · superseded by D-NNNN), **Context**, **
   (Material Symbols) — a font download, a FOUT on first paint and ligature names that fail silently; and importing
   lucide directly in pages — it would scatter the seam and make a later swap a repo-wide edit.
 
+
+### D-0009 — Who reads what is data, and the manual has a lens
+
+- **Date** 2026-09-29 · **Status** accepted · **Changelog** `docs/changelog/0031-manual-lms.md`
+- **Context.** Justin wants the operations manual to behave like a staff LMS: each person sees their own filtered
+  version and what applies to them. The "Quién lee qué" matrix existed only as a markdown table in 00-index §4.
+- **Decision.** The matrix is `src/modules/ops-manual/audience.ts`, keyed by chapter number (the stable slug prefix),
+  with the owner as `admin`, `super_admin` as the union of the owner and "Admin" columns, and columns for the two new
+  roles. The manual reads through a **lens** — the signed-in role by default, `?as=<role>|all` in the hash query (the
+  hub map's embed key) — that orders required before recommended and dims, never hides, what does not apply.
+  `{{audience}}` renders the same data as the table, so the chapter and the filter cannot disagree.
+- **Alternative rejected.** Audience in each chapter's front matter — 28 files to keep in step and no single matrix.
+
+### D-0010 — Studio edits to the manual live beside the markdown, not in it
+
+- **Date** 2026-09-29 · **Status** accepted · **Changelog** `docs/changelog/0031-manual-lms.md`
+- **Context.** The owner and the operations manager must adapt policies and procedures without a developer; the
+  markdown in the repo is also being rewritten by a content pass.
+- **Decision.** A `##` section marked `{{editable:owner|coordinator}}` is edited in the app into `manual_overrides`
+  (versioned, live / reverted / suggested / dismissed) and rendered in place with "Editado por … · Ver original",
+  history and "Restaurar original"; text rules are `studio_policies` values (`{{studio:<key>}}`); numeric rules stay in
+  M-08. Agents propose through the actions registry (`manual.suggestEdit`) and an owner accepts. Folding an accepted
+  override back into the markdown is a content pass, recorded in the changelog like any other.
+- **Alternative rejected.** Committing edits to git from the browser — a token in the client, a commit per edit and
+  conflicts with the content pass.
+
+### D-0011 — Source documents are files served from `public/`, indexed in `docs/source/`
+
+- **Date** 2026-09-29 · **Status** accepted · **Changelog** `docs/changelog/0031-manual-lms.md`
+- **Context.** Three owner PDFs (value model, website copy, brand manual) must be available in the hub and embedded in
+  the manual; one arrived at 27.8 MB.
+- **Decision.** `public/source/<id>.pdf` (+ a first-page cover) is served as a file; `docs/source/index.json` is the
+  index (title, kind, pages, date, summary, chapters). K-05 lists them and `{{source:<id>}}` embeds one; the viewer loads
+  only on request. Heavy PDFs are republished with ghostscript (`/printer`, 300 dpi) after checking the logo pages.
+- **Alternative rejected.** Importing them through the docs glob — megabytes of binaries in the JS graph.
+
 ---
 **Resumen (ES).** Este archivo es la lista corta y citable de las decisiones de ingeniería, una por
 bloque, solo se añade: una decisión que deja de ser cierta se reemplaza con un bloque nuevo, nunca

@@ -95,7 +95,8 @@
   "roles": [
    "super_admin",
    "admin",
-   "coordinator"
+   "coordinator",
+   "marketing"
   ],
   "spec": {
    "code": "M-02",
@@ -125,7 +126,8 @@
     "coordinator",
     "super_admin",
     "teacher",
-    "finance"
+    "finance",
+    "marketing"
    ],
    "logic": [
     "Every content entity has EN and ES fields; publishing requires Spanish, English optional with fallback.",
@@ -180,7 +182,8 @@
   "roles": [
    "super_admin",
    "admin",
-   "coordinator"
+   "coordinator",
+   "marketing"
   ],
   "spec": {
    "code": "M-02a",
@@ -208,7 +211,8 @@
    "roles": [
     "super_admin",
     "admin",
-    "coordinator"
+    "coordinator",
+    "marketing"
    ],
    "logic": [
     "Status is derived, not stored: published = false is a draft; published = true with a future publish_at is scheduled; otherwise it is live.",
@@ -263,7 +267,8 @@
   "roles": [
    "super_admin",
    "admin",
-   "coordinator"
+   "coordinator",
+   "marketing"
   ],
   "spec": {
    "code": "M-02b",
@@ -290,7 +295,8 @@
    "roles": [
     "super_admin",
     "admin",
-    "coordinator"
+    "coordinator",
+    "marketing"
    ],
    "logic": [
     "Order is the `sort` column and moves one step at a time (↑/↓ swap the two sort values) — keyboard-reachable and impossible to do by accident, unlike drag-and-drop.",
@@ -344,7 +350,8 @@
   "roles": [
    "super_admin",
    "admin",
-   "coordinator"
+   "coordinator",
+   "marketing"
   ],
   "spec": {
    "code": "M-02c",
@@ -373,7 +380,8 @@
    "roles": [
     "super_admin",
     "admin",
-    "coordinator"
+    "coordinator",
+    "marketing"
    ],
    "logic": [
     "The RSVP count is event_rsvps rows with status going or attended, plus their guests — it is never stored on the event.",
@@ -432,7 +440,8 @@
   "roles": [
    "super_admin",
    "admin",
-   "coordinator"
+   "coordinator",
+   "marketing"
   ],
   "spec": {
    "code": "M-02d",
@@ -459,7 +468,8 @@
    "roles": [
     "super_admin",
     "admin",
-    "coordinator"
+    "coordinator",
+    "marketing"
    ],
    "logic": [
     "slot_key is the contract between the table and the components: MediaPlaceholder({slotKey}) renders the URL when status = ready and a branded empty slot otherwise.",
@@ -516,7 +526,8 @@
   "status": "built",
   "roles": [
    "super_admin",
-   "finance"
+   "finance",
+   "developer"
   ],
   "spec": {
    "code": "M-03",
@@ -585,7 +596,8 @@
   "status": "built",
   "roles": [
    "super_admin",
-   "finance"
+   "finance",
+   "developer"
   ],
   "spec": {
    "code": "M-03",
@@ -655,7 +667,8 @@
   "roles": [
    "super_admin",
    "admin",
-   "coordinator"
+   "coordinator",
+   "marketing"
   ],
   "spec": {
    "code": "M-04",
@@ -682,7 +695,8 @@
    "roles": [
     "coordinator",
     "super_admin",
-    "finance"
+    "finance",
+    "marketing"
    ],
    "logic": [
     "Templates: booking confirmed, receipt, class cancelled, waitlist promoted, class reminder, how to prepare, birthday, membership renewal, payment failed, gift card delivered, invite.",
@@ -745,6 +759,7 @@
    "super_admin",
    "admin",
    "coordinator",
+   "marketing",
    "front_desk"
   ],
   "spec": {
@@ -776,7 +791,8 @@
    "roles": [
     "coordinator",
     "super_admin",
-    "front_desk"
+    "front_desk",
+    "marketing"
    ],
    "logic": [
     "Only opt-in numbers receive automations; opt-out is honoured immediately and permanently.",
@@ -839,7 +855,8 @@
    "admin",
    "coordinator",
    "front_desk",
-   "finance"
+   "finance",
+   "marketing"
   ],
   "spec": {
    "code": "M-06",
@@ -874,7 +891,8 @@
     "coordinator",
     "front_desk",
     "super_admin",
-    "finance"
+    "finance",
+    "marketing"
    ],
    "logic": [
     "The timeline merges every channel in one chronological stream — WhatsApp, email, in-app thread, staff notes and system events.",
@@ -1008,7 +1026,8 @@
    "admin",
    "coordinator",
    "front_desk",
-   "finance"
+   "finance",
+   "marketing"
   ],
   "spec": {
    "code": "M-06",
@@ -1043,7 +1062,8 @@
     "coordinator",
     "front_desk",
     "super_admin",
-    "finance"
+    "finance",
+    "marketing"
    ],
    "logic": [
     "The timeline merges every channel in one chronological stream — WhatsApp, email, in-app thread, staff notes and system events.",
@@ -1211,7 +1231,7 @@
    },
    "layout": [
     "SettingsSubNav",
-    "StudioProfile (contact + map + confirmed)",
+    "StudioProfile (contact + map + confirmed per field)",
     "OpeningHours",
     "Capacity",
     "Policies",
@@ -1233,7 +1253,7 @@
    ],
    "logic": [
     "useContact() (src/modules/admin/settings.ts) is the one reader of address / city / WhatsApp / email / Instagram / map: M-08a first, src/tenant/tenant.ts as the default for every empty field. The site footer, W-06, MapSlot, the legal tokens, the email footer, the customer contact rows and the manual’s {{tenant:contact}} all read it.",
-    "Until “confirmed” is on, every consumer labels the values as pending (the tenant.ts placeholders were never presented as fact)."
+    "Confirmation is per field (0036): WhatsApp, address, email and Instagram each have a “confirmed” switch; every consumer labels only the unconfirmed ones as pending (the tenant.ts placeholders are never presented as fact). tenant.ts ships WhatsApp and address confirmed (from the owner, 2026-09-29), email and Instagram pending. A stored pre-0036 `confirmed: true` still confirms all four."
    ],
    "integrations": [
     "WhatsApp",
@@ -1243,8 +1263,8 @@
     "DIAN e-invoicing"
    ],
    "states": [
-    "Pending (default)",
-    "Confirmed",
+    "Some fields pending (default: email, Instagram)",
+    "All confirmed",
     "Saving",
     "Read-only"
    ],
@@ -5014,6 +5034,8 @@
    "finance",
    "teacher",
    "maintenance",
+   "marketing",
+   "developer",
    "customer",
    "public"
   ],
@@ -5093,6 +5115,8 @@
    "finance",
    "teacher",
    "maintenance",
+   "marketing",
+   "developer",
    "customer",
    "public"
   ],
@@ -5173,7 +5197,7 @@
       "en": "Sign in as {user}"
      },
      "params": {
-      "user": "enum:usr_super,usr_admin,usr_coord,usr_desk,usr_fin,usr_teach,usr_maint,usr_cust"
+      "user": "enum:usr_super,usr_admin,usr_coord,usr_desk,usr_fin,usr_teach,usr_maint,usr_mkt,usr_dev,usr_cust"
      }
     }
    ],
@@ -5197,6 +5221,8 @@
    "finance",
    "teacher",
    "maintenance",
+   "marketing",
+   "developer",
    "customer",
    "public"
   ],
@@ -5289,6 +5315,8 @@
    "finance",
    "teacher",
    "maintenance",
+   "marketing",
+   "developer",
    "customer",
    "public"
   ],
@@ -5374,6 +5402,8 @@
    "finance",
    "teacher",
    "maintenance",
+   "marketing",
+   "developer",
    "customer",
    "public"
   ],
@@ -5449,7 +5479,8 @@
   "surface": "dev",
   "status": "built",
   "roles": [
-   "super_admin"
+   "super_admin",
+   "developer"
   ],
   "spec": {
    "code": "D-03",
@@ -5471,7 +5502,8 @@
     "page_layouts"
    ],
    "roles": [
-    "super_admin"
+    "super_admin",
+    "developer"
    ],
    "logic": [
     "Completeness = 7 checks (purpose, layout, data, roles, logic, integrations, states).",
@@ -5490,7 +5522,8 @@
   "surface": "dev",
   "status": "built",
   "roles": [
-   "super_admin"
+   "super_admin",
+   "developer"
   ],
   "spec": {
    "code": "D-01",
@@ -5572,7 +5605,8 @@
   "surface": "dev",
   "status": "built",
   "roles": [
-   "super_admin"
+   "super_admin",
+   "developer"
   ],
   "spec": {
    "code": "D-02",
@@ -5641,7 +5675,8 @@
   "surface": "dev",
   "status": "built",
   "roles": [
-   "super_admin"
+   "super_admin",
+   "developer"
   ],
   "spec": {
    "code": "D-03",
@@ -5663,7 +5698,8 @@
     "page_layouts"
    ],
    "roles": [
-    "super_admin"
+    "super_admin",
+    "developer"
    ],
    "logic": [
     "Completeness = 7 checks (purpose, layout, data, roles, logic, integrations, states).",
@@ -5682,7 +5718,8 @@
   "surface": "dev",
   "status": "built",
   "roles": [
-   "super_admin"
+   "super_admin",
+   "developer"
   ],
   "spec": {
    "code": "D-04",
@@ -5703,7 +5740,8 @@
     "page_layouts"
    ],
    "roles": [
-    "super_admin"
+    "super_admin",
+    "developer"
    ],
    "logic": [
     "Stored order wins; new spec sections append; removed ones drop.",
@@ -5723,7 +5761,8 @@
   "surface": "dev",
   "status": "built",
   "roles": [
-   "super_admin"
+   "super_admin",
+   "developer"
   ],
   "spec": {
    "code": "D-04",
@@ -5744,7 +5783,8 @@
     "page_layouts"
    ],
    "roles": [
-    "super_admin"
+    "super_admin",
+    "developer"
    ],
    "logic": [
     "Stored order wins; new spec sections append; removed ones drop.",
@@ -5764,7 +5804,8 @@
   "surface": "dev",
   "status": "built",
   "roles": [
-   "super_admin"
+   "super_admin",
+   "developer"
   ],
   "spec": {
    "code": "K-01",
@@ -5840,7 +5881,8 @@
   "surface": "dev",
   "status": "built",
   "roles": [
-   "super_admin"
+   "super_admin",
+   "developer"
   ],
   "spec": {
    "code": "D-05",
@@ -5862,7 +5904,8 @@
     "components"
    ],
    "roles": [
-    "super_admin"
+    "super_admin",
+    "developer"
    ],
    "logic": [
     "Routes come from the registry; param routes (:id) and splats are skipped so a tile always opens something.",
@@ -5898,7 +5941,8 @@
   "surface": "dev",
   "status": "built",
   "roles": [
-   "super_admin"
+   "super_admin",
+   "developer"
   ],
   "spec": {
    "code": "D-06",
@@ -5921,7 +5965,8 @@
     "user_roles"
    ],
    "roles": [
-    "super_admin"
+    "super_admin",
+    "developer"
    ],
    "logic": [
     "Every control writes to the hash query (route, device, as, lang, theme); the page reads it back, so reload and bookmark keep the view.",
@@ -5964,6 +6009,8 @@
    "finance",
    "teacher",
    "maintenance",
+   "marketing",
+   "developer",
    "customer",
    "public"
   ],
@@ -5996,6 +6043,8 @@
     "finance",
     "teacher",
     "maintenance",
+    "marketing",
+    "developer",
     "customer",
     "public"
    ],
@@ -6028,6 +6077,8 @@
    "finance",
    "teacher",
    "maintenance",
+   "marketing",
+   "developer",
    "customer",
    "public"
   ],
@@ -6046,8 +6097,8 @@
     "Hero (eyebrow tenant · city, h1, lead, tagline, BreathingRings art ≥ 900 px)",
     "SessionBar (RoleSwitcher, Ctrl + . hint in dev mode)",
     "BandA · Fuera del estudio (Customer app featured with a phone preview, Website, Teacher app)",
-    "BandB · El equipo (Front desk, Inbox, Caja, Admin, CRM, Finanzas)",
-    "BandC · Construcción y pruebas (Manual, Docs, Kanban, Dev tools)",
+    "BandB · El equipo (Front desk, Inbox, Caja, Admin, CRM, Finanzas, Kit de marketing — próximamente)",
+    "BandC · Construcción y pruebas (Manual, Documentos fuente, Docs, Kanban, Dev tools)",
     "ToolsRow · Hub de pruebas (9 tool cards)",
     "StatStrip (routes, codes, tables, components, actions, manual chapters)",
     "Footer"
@@ -6066,6 +6117,8 @@
     "finance",
     "teacher",
     "maintenance",
+    "marketing",
+    "developer",
     "customer",
     "public"
    ],
@@ -6077,7 +6130,8 @@
     "A preview upgrades to the running page only when it is in view (IntersectionObserver, 160 px margin) and the budget of 6 live frames has a slot for it: slots are granted in document order on first paint and then kept first-come-first-served, so a card scrolling in later never preempts one that is already live. A preview never boots a frame when the hub is itself framed, the URL carries live=0, or the page is driven by automation (navigator.webdriver) — so a screenshot pass always captures the same static-thumbnail hub.",
     "A framed preview runs under its own session (src/app/frameSession.ts shadows hoyos.session / hoyos.lang / hoyos.theme), so it never touches the tester’s.",
     "The stat strip counts live: routes and codes from the registry, tables from tableRegistry, components from the D-02 glob, actions from listActions(), manual chapters from the ops-manual glob.",
-    "Wireframe and dev-mode toggles only render for super_admin; a tool whose route the current role cannot open still renders and lands on /no-access, as the guard does everywhere else.",
+    "A card with comingSoon (0031: the marketing kit) shows a “Próximamente” badge and its enter button is a Placeholder (tooltip + “not wired yet” toast, dashed in dev mode); hub.enterAs refuses it.",
+    "The dev-mode toggle renders for super_admin and developer (0031), the wireframe toggle for super_admin only; a tool whose route the current role cannot open still renders and lands on /no-access, as the guard does everywhere else.",
     "The bands and the tools row are drawn from the hub map data (src/hub/hubMap.data.ts): the same module scripts/gen-hub-map.mjs publishes as public/hub-map.json (schema hoy.hub-map/1) for other hosts — aluzina, between-gigs — so the hub and its map cannot drift. Only icons and preview shapes live in HubPage.tsx.",
     "hub.map answers with the published map URL and loads the map into window.__hoyos.hubMap.data.",
     "Hub type sizes, medallions, padding and grid width scale with a hub-scoped --ui variable: 1 · 1.125 (≥1920) · 1.375 (≥2560) · 1.75 (≥3840)."
@@ -6109,7 +6163,7 @@
       "en": "Enter {surface} as its demo user"
      },
      "params": {
-      "surface": "enum:app,site,teacher,desk,inbox,pos,admin,crm,finance,manual,docs,kb,dev"
+      "surface": "enum:app,site,teacher,desk,inbox,pos,admin,crm,finance,marketing,manual,sources,docs,kb,dev"
      }
     },
     {
@@ -6239,6 +6293,8 @@
    "finance",
    "teacher",
    "maintenance",
+   "marketing",
+   "developer",
    "customer",
    "public"
   ],
@@ -6270,6 +6326,8 @@
     "finance",
     "teacher",
     "maintenance",
+    "marketing",
+    "developer",
     "customer",
     "public"
    ],
@@ -6303,6 +6361,8 @@
    "finance",
    "teacher",
    "maintenance",
+   "marketing",
+   "developer",
    "customer",
    "public"
   ],
@@ -6313,17 +6373,22 @@
     "en": "Operations manual"
    },
    "purpose": {
-    "es": "Cómo funciona el club en persona y en el software, en siete partes: quiénes somos, la operación diaria, clientes y planes, dinero, contenido y marca, legal y políticas, y el sistema. Igual para todos los que lo miran; español primero, inglés como espejo.",
-    "en": "How the club runs in person and in software, in seven parts: who we are, daily operations, customers and plans, money, content and brand, legal and policies, and the system. Same for everyone who looks; Spanish first, English as a mirror."
+    "es": "Cómo funciona el club en persona y en el software, en siete partes, leído como un LMS del equipo: cada persona ve su manual filtrado por rol (obligatorio / recomendado), marca lo que leyó, sigue su formación Día 1 / Semana 1 / Mes 1 con la firma de quien la entrena, y el owner o coordinación ajustan las secciones y políticas marcadas como editables sin tocar el repositorio. Español primero, inglés como espejo.",
+    "en": "How the club runs in person and in software, in seven parts, read as a team LMS: each person sees their manual filtered by role (required / recommended), marks what they read, follows their Day 1 / Week 1 / Month 1 training with their trainer’s sign-off, and the owner or coordination adjust the sections and policies marked editable without touching the repository. Spanish first, English as a mirror."
    },
    "layout": [
-    "ManualCover (wordmark, title, tagline, version + updated, chapter/reading/figure counts, decisions badge)",
+    "ManualCover (wordmark, title, tagline, version + updated, chapter/reading/figure counts, decisions badge, LensSelect)",
+    "LmsCover (lens ≠ all): \"Tu manual\" · tiles (ProgressRing required read, required, recommended, training summary, decisions, requests, sources) · Start here · Required · Recommended",
+    "ManualTiles (lens = all): chapters, decisions, requests, sources",
+    "TeamView (coordinator / admin / super_admin): StatTile ×4 + DataTable (person, required read, training stage)",
     "ManualSearch (filters chapters by title, summary, role and body)",
-    "StartHere (three chapters per role: recepción, maestros, admin, finanzas)",
-    "PartGrid (ChapterCard per chapter: number, title, summary, role chips, reading time, figures, decisions)",
-    "ChapterSidebar (parts and their chapters, decisions link, search, print)",
-    "ChapterHead (part eyebrow, title, summary, role, reading time, version, updated)",
-    "MarkdownViewer (callouts, Figure captures, LiveBlock directives, screenshot placeholders)",
+    "StartHere (lens = all: three chapters per role)",
+    "PartGrid (part icon · ChapterCard per chapter: icon, number, title, level for the lens, read, reading time, figures, decisions)",
+    "ChapterSidebar (LensSelect, parts and chapters with icons and lens level / read marks, decisions, sources, search, print)",
+    "ChapterHead (part eyebrow, chapter icon, title, summary, LevelChip, ReadButton, reading time, version, updated, editable count)",
+    "SectionBlock × n (editable tag, \"Editado por … · Ver original\", history, suggestions, restore, Editar → MarkdownEditor with live preview)",
+    "MarkdownViewer (callouts, EN HOYOS screen boxes, {{for}} scoped blocks, Figure captures with capture date + stale badge, LiveBlock and manual directives)",
+    "RequestBox (\"Pedir un cambio\": section + text → manual_requests)",
     "Toc (sticky in-page outline from the ## headings, desktop)",
     "PrevNext"
    ],
@@ -6331,10 +6396,18 @@
     "docs_entries",
     "tenants",
     "profiles",
+    "users",
+    "user_roles",
     "memberships",
     "class_sessions",
     "teachers",
-    "bookings"
+    "bookings",
+    "manual_progress",
+    "manual_training",
+    "manual_overrides",
+    "manual_requests",
+    "studio_policies",
+    "audit_log"
    ],
    "roles": [
     "super_admin",
@@ -6344,31 +6417,191 @@
     "finance",
     "teacher",
     "maintenance",
+    "marketing",
+    "developer",
     "customer",
     "public"
    ],
    "logic": [
-    "Chapters are docs/ops-manual/<lang>/<NN-slug>.md: the index (titles, parts, headings, decisions) is built at build time by scripts/lib/docmeta.mjs and each body loads on demand; the slug is shared across languages and adding a chapter needs no code change.",
-    "Front matter is title, role, part (I…VII), version, updated and summary; `part` groups the chapters on the home grid and in the sidebar, `summary` is the card lead and is searched.",
-    "Follows the app language: ES is the source; a missing EN chapter falls back to ES with a notice. Slugs retired by the 0.6.0 re-categorisation resolve through LEGACY_SLUGS.",
-    "Reading time is the body word count / 200, figures are the markdown images that point at docs/screenshots, decisions and placeholders are counted from the body — nothing on a card is typed by hand.",
-    "`> DECISIÓN PENDIENTE:` / `> DECISION NEEDED:` blockquotes render as highlighted callouts and feed K-04.",
-    "A `{{directive}}` line (or a fenced ```live block) renders as a LiveBlock: pricing by family from src/tenant/pricing.ts, studio facts from src/tenant/tenant.ts, the policy values in force through usePolicy() (M-08), the table registry, the role list, the route manifest per surface and counts from the data layer. Every block carries the bilingual \"Datos en vivo del sistema · Live from the system\" caption and an unknown directive explains itself.",
-    "`![caption](../../screenshots/<CODE>/<lang>-<width>.jpg \"CODE · /route\")` renders as a Figure: framed capture, code chip and a link to the live screen. `[screenshot: CODE — caption]` still renders as a dashed box for screens with no capture.",
-    "Print: sidebar, outline, search and shell chrome hidden; callouts, figures and live blocks never split across pages."
+    "Chapters are docs/ops-manual/<lang>/<NN-slug>.md: the index (titles, parts, headings, decisions, screen boxes) is built at build time by scripts/lib/docmeta.mjs and each body loads on demand; the slug is shared across languages and adding a chapter needs no code change.",
+    "Lens: the signed-in role by default; `?as=<role>` or `?as=all` in the hash query switches it (the same key as the hub map embed pattern, so a framed manual opened as a teacher already reads as the teacher’s). Links inside the manual keep an explicit lens.",
+    "Audience is data: src/modules/ops-manual/audience.ts (the 00-index §4 matrix keyed by chapter number; owner = admin, super_admin = owner ∪ admin columns, plus marketing and developer). Required first, then recommended; a chapter that does not apply is dimmed, never hidden.",
+    "Reading progress: \"Marcar como leído\" writes manual_progress {user_id, chapter_slug, version, read_at}; a chapter whose front-matter version moved shows \"Hay una versión nueva\".",
+    "Training: {{training:<role>}} renders the Day 1 / Week 1 / Month 1 checklist from training.ts (seeded verbatim from chapter 09) with a checkbox per item in manual_training; coordination and up pick a person from the roster and \"Firmar etapa\" (item_key __signoff, signed_by).",
+    "Editing beside the markdown: a `##` section carrying {{editable:owner}} or {{editable:coordinator}} can be rewritten by that level and up; the edit is a manual_overrides row (status live, version n) shown in place with \"Editado por … · Ver original\", a history and \"Restaurar original\" (status reverted — history is never deleted). Suggestions (status suggested, e.g. from an agent through manual.suggestEdit) wait on the section’s \"Sugerencias\" chip.",
+    "{{studio:<key>}} renders a text policy from studio_policies (seed src/data/seed/studioPolicies.ts) with an inline 44 px edit for the allowed level; an M-08 policy key (or {{policy:…}}) shows the live value and, for an editor, \"Este valor se cambia en Ajustes (M-08a) →\".",
+    "{{for:teacher,front_desk}} … {{/for}} scopes a passage: shown with \"Para: …\" when the lens matches or is all; collapsed into a <details> \"Solo para …\" otherwise (never removed).",
+    "{{audience}} renders the matrix; {{audience:<slug|number>}} a \"Para: …\" chip row; {{source:<id>}} a SourceEmbed of docs/source/index.json.",
+    "`> EN HOYOS:` / `> IN HOYOS:` blockquotes render as compact screen boxes (page codes as chips, `->` as arrows); `> NOTA:` / `> NOTE:` as a note; `> DECISIÓN PENDIENTE:` feeds K-04.",
+    "Figures show their capture date (src/app/captureDates.ts, from the git date of docs/screenshots/<CODE>/es-1280.jpg) and \"puede estar desactualizada\" when a changelog entry naming the code is newer than the capture.",
+    "Every write appends an audit_log row (useAudit(\"admin\")). Print: sidebar, outline, search, tools and shell chrome hidden."
    ],
    "integrations": [],
    "states": [
-    "home (cover + grid)",
+    "home, lens = all (tiles + start here + grid)",
+    "home, lens = a role (Tu manual)",
+    "home as coordination / admin (team view)",
     "chapter",
+    "chapter, required / recommended / not applicable for the lens",
+    "chapter read / new version",
+    "section edited (override live)",
+    "section editor open",
+    "section with suggestions",
+    "scoped block collapsed",
     "chapter not found",
     "untranslated (ES fallback)",
     "search results",
     "print"
    ],
+   "actions": [
+    {
+     "id": "manual.setLens",
+     "label": {
+      "es": "Ver el manual como",
+      "en": "View the manual as"
+     },
+     "intent": {
+      "es": "Muéstrame el manual de {role}",
+      "en": "Show me the {role} manual"
+     },
+     "params": {
+      "role": "enum:all,super_admin,admin,coordinator,front_desk,finance,teacher,maintenance,marketing,developer"
+     },
+     "permission": "docs.read"
+    },
+    {
+     "id": "manual.markRead",
+     "label": {
+      "es": "Marcar como leído",
+      "en": "Mark as read"
+     },
+     "intent": {
+      "es": "Marca el capítulo {chapter} como leído",
+      "en": "Mark chapter {chapter} as read"
+     },
+     "params": {
+      "chapter": "string — chapter slug (04-recepcion-y-check-in) or number (04); default the open chapter"
+     },
+     "permission": "docs.read"
+    },
+    {
+     "id": "manual.signTraining",
+     "label": {
+      "es": "Firmar etapa de formación",
+      "en": "Sign off a training stage"
+     },
+     "intent": {
+      "es": "Firma {stage} de {user}",
+      "en": "Sign off {stage} for {user}"
+     },
+     "params": {
+      "user": "string — users.id (usr_desk)",
+      "stage": "enum:day1,week1,month1",
+      "role": "string — the checklist; default the person’s role"
+     },
+     "permission": "manual.train"
+    },
+    {
+     "id": "manual.editSection",
+     "label": {
+      "es": "Editar una sección",
+      "en": "Edit a section"
+     },
+     "intent": {
+      "es": "Reescribe la sección {section} del capítulo {chapter}",
+      "en": "Rewrite section {section} of chapter {chapter}"
+     },
+     "params": {
+      "chapter": "string — chapter slug (04-recepcion-y-check-in) or number (04)",
+      "section": "string — the ## heading text",
+      "body": "markdown — the section body, without the heading",
+      "note": "string — why (optional)",
+      "lang": "enum:es,en — default the interface language"
+     },
+     "permission": "manual.edit"
+    },
+    {
+     "id": "manual.restoreSection",
+     "label": {
+      "es": "Restaurar el original",
+      "en": "Restore the original"
+     },
+     "intent": {
+      "es": "Vuelve al texto original de {section}",
+      "en": "Go back to the original text of {section}"
+     },
+     "params": {
+      "chapter": "string — chapter slug (04-recepcion-y-check-in) or number (04)",
+      "section": "string — the ## heading text",
+      "lang": "enum:es,en"
+     },
+     "permission": "manual.edit"
+    },
+    {
+     "id": "manual.requestChange",
+     "label": {
+      "es": "Pedir un cambio",
+      "en": "Request a change"
+     },
+     "intent": {
+      "es": "Pide que el capítulo {chapter} diga {request}",
+      "en": "Ask for chapter {chapter} to say {request}"
+     },
+     "params": {
+      "chapter": "string — chapter slug (04-recepcion-y-check-in) or number (04)",
+      "request": "string",
+      "section": "string — ## heading (optional)"
+     },
+     "permission": "docs.read"
+    },
+    {
+     "id": "manual.suggestEdit",
+     "label": {
+      "es": "Sugerir una edición",
+      "en": "Suggest an edit"
+     },
+     "intent": {
+      "es": "Sugiere este texto para {section}",
+      "en": "Suggest this text for {section}"
+     },
+     "params": {
+      "chapter": "string — chapter slug (04-recepcion-y-check-in) or number (04)",
+      "section": "string — the ## heading text",
+      "body": "markdown — proposed section body",
+      "note": "string (optional)",
+      "lang": "enum:es,en"
+     },
+     "permission": "docs.read"
+    },
+    {
+     "id": "manual.openSource",
+     "label": {
+      "es": "Abrir un documento fuente",
+      "en": "Open a source document"
+     },
+     "intent": {
+      "es": "Abre el documento {id}",
+      "en": "Open the {id} document"
+     },
+     "params": {
+      "id": "enum:modelo-de-valor,contenido-completo,manual-de-marca"
+     },
+     "permission": "docs.read"
+    }
+   ],
+   "checkedAt": [
+    360,
+    390,
+    768,
+    1280,
+    1920,
+    2560,
+    3840
+   ],
    "notes": [
-    "Policies quoted in prose are the exception, not the rule: a number that M-08 owns is written as `{{policy:…}}` so the chapter cannot go stale.",
-    "Prices are never typed in a chapter; `{{pricing:<family>}}` reads src/tenant/pricing.ts, the only place a price exists."
+    "Policies quoted in prose are the exception, not the rule: a number that M-08 owns is written as `{{policy:…}}`; a text rule the owner adapts is `{{studio:…}}`.",
+    "Prices are never typed in a chapter; `{{pricing:<family>}}` reads src/tenant/pricing.ts, the only place a price exists.",
+    "\"Reescribir con IA\" is a Placeholder: an agent does it today through the actions registry (manual.suggestEdit → the owner approves)."
    ]
   }
  },
@@ -6385,26 +6618,32 @@
    "finance",
    "teacher",
    "maintenance",
+   "marketing",
+   "developer",
    "customer",
    "public"
   ],
   "spec": {
    "code": "K-04",
    "name": {
-    "es": "Decisiones pendientes",
-    "en": "Decisions pending"
+    "es": "Decisiones y solicitudes",
+    "en": "Decisions and requests"
    },
    "purpose": {
-    "es": "Lista automática de todo lo que el estudio no ha definido, extraída de los bloques «DECISIÓN PENDIENTE» del manual, agrupada por capítulo y parte.",
-    "en": "Automatic list of everything the studio has not defined, extracted from the manual’s \"DECISION NEEDED\" blocks, grouped by chapter and part."
+    "es": "Lo que el estudio no ha definido (los bloques «DECISIÓN PENDIENTE» del manual, por capítulo y parte) y lo que el equipo pidió cambiar en el manual («Pedir un cambio»), para que el owner o coordinación respondan en un solo lugar.",
+    "en": "What the studio has not defined (the manual’s \"DECISION NEEDED\" blocks, by chapter and part) and what the team asked to change in the manual (\"Request a change\"), so the owner or coordination answer in one place."
    },
    "layout": [
-    "PageHead (count)",
-    "DecisionList (grouped by chapter with its part eyebrow, section, link to chapter)",
+    "PageHead (icon, counts)",
+    "RequestsPanel (coordination and up: open requests with answer, done / dismiss; closed in a details)",
+    "DecisionList (grouped by chapter with its part eyebrow and icon, section, link to chapter)",
     "ChapterSidebar"
    ],
    "data": [
-    "docs_entries"
+    "docs_entries",
+    "manual_requests",
+    "profiles",
+    "audit_log"
    ],
    "roles": [
     "super_admin",
@@ -6414,18 +6653,81 @@
     "finance",
     "teacher",
     "maintenance",
+    "marketing",
+    "developer",
     "customer",
     "public"
    ],
    "logic": [
-    "Extracted at build/run time from the markdown; editing a chapter updates the list, no code change.",
+    "Decisions are extracted at build time from the markdown; editing a chapter updates the list, no code change.",
     "Same list feeds ROADMAP.md \"Open decisions for the owner\".",
-    "Numbering runs across the whole manual so a decision can be cited as \"K-04 #07\"."
+    "Numbering runs across the whole manual so a decision can be cited as \"K-04 #07\".",
+    "Requests come from manual_requests; answering sets status done / dismissed and the answer, and the requester sees it under the chapter’s request box.",
+    "The route stays /manual/decisions (renamed in 0031, kept for links)."
    ],
    "integrations": [],
    "states": [
     "default",
-    "empty"
+    "no decisions",
+    "no open requests",
+    "requests (lead)",
+    "requests hidden (not a lead)"
+   ],
+   "actions": [
+    {
+     "id": "manual.listRequests",
+     "label": {
+      "es": "Ver solicitudes",
+      "en": "List requests"
+     },
+     "intent": {
+      "es": "¿Qué cambios pidió el equipo al manual?",
+      "en": "What changes did the team ask for in the manual?"
+     },
+     "params": {
+      "status": "enum:open,done,dismissed,all — default open"
+     },
+     "permission": "manual.edit"
+    },
+    {
+     "id": "manual.answerRequest",
+     "label": {
+      "es": "Responder una solicitud",
+      "en": "Answer a request"
+     },
+     "intent": {
+      "es": "Responde la solicitud {id}: {answer}",
+      "en": "Answer request {id}: {answer}"
+     },
+     "params": {
+      "id": "string — manual_requests.id",
+      "answer": "string",
+      "status": "enum:done,dismissed,open — default done"
+     },
+     "permission": "manual.edit"
+    },
+    {
+     "id": "manual.openSource",
+     "label": {
+      "es": "Abrir un documento fuente",
+      "en": "Open a source document"
+     },
+     "intent": {
+      "es": "Abre el documento {id}",
+      "en": "Open the {id} document"
+     },
+     "params": {
+      "id": "enum:modelo-de-valor,contenido-completo,manual-de-marca"
+     },
+     "permission": "docs.read"
+    }
+   ],
+   "checkedAt": [
+    360,
+    390,
+    768,
+    1280,
+    1920
    ]
   }
  },
@@ -6442,6 +6744,8 @@
    "finance",
    "teacher",
    "maintenance",
+   "marketing",
+   "developer",
    "customer",
    "public"
   ],
@@ -6452,17 +6756,22 @@
     "en": "Operations manual"
    },
    "purpose": {
-    "es": "Cómo funciona el club en persona y en el software, en siete partes: quiénes somos, la operación diaria, clientes y planes, dinero, contenido y marca, legal y políticas, y el sistema. Igual para todos los que lo miran; español primero, inglés como espejo.",
-    "en": "How the club runs in person and in software, in seven parts: who we are, daily operations, customers and plans, money, content and brand, legal and policies, and the system. Same for everyone who looks; Spanish first, English as a mirror."
+    "es": "Cómo funciona el club en persona y en el software, en siete partes, leído como un LMS del equipo: cada persona ve su manual filtrado por rol (obligatorio / recomendado), marca lo que leyó, sigue su formación Día 1 / Semana 1 / Mes 1 con la firma de quien la entrena, y el owner o coordinación ajustan las secciones y políticas marcadas como editables sin tocar el repositorio. Español primero, inglés como espejo.",
+    "en": "How the club runs in person and in software, in seven parts, read as a team LMS: each person sees their manual filtered by role (required / recommended), marks what they read, follows their Day 1 / Week 1 / Month 1 training with their trainer’s sign-off, and the owner or coordination adjust the sections and policies marked editable without touching the repository. Spanish first, English as a mirror."
    },
    "layout": [
-    "ManualCover (wordmark, title, tagline, version + updated, chapter/reading/figure counts, decisions badge)",
+    "ManualCover (wordmark, title, tagline, version + updated, chapter/reading/figure counts, decisions badge, LensSelect)",
+    "LmsCover (lens ≠ all): \"Tu manual\" · tiles (ProgressRing required read, required, recommended, training summary, decisions, requests, sources) · Start here · Required · Recommended",
+    "ManualTiles (lens = all): chapters, decisions, requests, sources",
+    "TeamView (coordinator / admin / super_admin): StatTile ×4 + DataTable (person, required read, training stage)",
     "ManualSearch (filters chapters by title, summary, role and body)",
-    "StartHere (three chapters per role: recepción, maestros, admin, finanzas)",
-    "PartGrid (ChapterCard per chapter: number, title, summary, role chips, reading time, figures, decisions)",
-    "ChapterSidebar (parts and their chapters, decisions link, search, print)",
-    "ChapterHead (part eyebrow, title, summary, role, reading time, version, updated)",
-    "MarkdownViewer (callouts, Figure captures, LiveBlock directives, screenshot placeholders)",
+    "StartHere (lens = all: three chapters per role)",
+    "PartGrid (part icon · ChapterCard per chapter: icon, number, title, level for the lens, read, reading time, figures, decisions)",
+    "ChapterSidebar (LensSelect, parts and chapters with icons and lens level / read marks, decisions, sources, search, print)",
+    "ChapterHead (part eyebrow, chapter icon, title, summary, LevelChip, ReadButton, reading time, version, updated, editable count)",
+    "SectionBlock × n (editable tag, \"Editado por … · Ver original\", history, suggestions, restore, Editar → MarkdownEditor with live preview)",
+    "MarkdownViewer (callouts, EN HOYOS screen boxes, {{for}} scoped blocks, Figure captures with capture date + stale badge, LiveBlock and manual directives)",
+    "RequestBox (\"Pedir un cambio\": section + text → manual_requests)",
     "Toc (sticky in-page outline from the ## headings, desktop)",
     "PrevNext"
    ],
@@ -6470,10 +6779,18 @@
     "docs_entries",
     "tenants",
     "profiles",
+    "users",
+    "user_roles",
     "memberships",
     "class_sessions",
     "teachers",
-    "bookings"
+    "bookings",
+    "manual_progress",
+    "manual_training",
+    "manual_overrides",
+    "manual_requests",
+    "studio_policies",
+    "audit_log"
    ],
    "roles": [
     "super_admin",
@@ -6483,31 +6800,276 @@
     "finance",
     "teacher",
     "maintenance",
+    "marketing",
+    "developer",
     "customer",
     "public"
    ],
    "logic": [
-    "Chapters are docs/ops-manual/<lang>/<NN-slug>.md: the index (titles, parts, headings, decisions) is built at build time by scripts/lib/docmeta.mjs and each body loads on demand; the slug is shared across languages and adding a chapter needs no code change.",
-    "Front matter is title, role, part (I…VII), version, updated and summary; `part` groups the chapters on the home grid and in the sidebar, `summary` is the card lead and is searched.",
-    "Follows the app language: ES is the source; a missing EN chapter falls back to ES with a notice. Slugs retired by the 0.6.0 re-categorisation resolve through LEGACY_SLUGS.",
-    "Reading time is the body word count / 200, figures are the markdown images that point at docs/screenshots, decisions and placeholders are counted from the body — nothing on a card is typed by hand.",
-    "`> DECISIÓN PENDIENTE:` / `> DECISION NEEDED:` blockquotes render as highlighted callouts and feed K-04.",
-    "A `{{directive}}` line (or a fenced ```live block) renders as a LiveBlock: pricing by family from src/tenant/pricing.ts, studio facts from src/tenant/tenant.ts, the policy values in force through usePolicy() (M-08), the table registry, the role list, the route manifest per surface and counts from the data layer. Every block carries the bilingual \"Datos en vivo del sistema · Live from the system\" caption and an unknown directive explains itself.",
-    "`![caption](../../screenshots/<CODE>/<lang>-<width>.jpg \"CODE · /route\")` renders as a Figure: framed capture, code chip and a link to the live screen. `[screenshot: CODE — caption]` still renders as a dashed box for screens with no capture.",
-    "Print: sidebar, outline, search and shell chrome hidden; callouts, figures and live blocks never split across pages."
+    "Chapters are docs/ops-manual/<lang>/<NN-slug>.md: the index (titles, parts, headings, decisions, screen boxes) is built at build time by scripts/lib/docmeta.mjs and each body loads on demand; the slug is shared across languages and adding a chapter needs no code change.",
+    "Lens: the signed-in role by default; `?as=<role>` or `?as=all` in the hash query switches it (the same key as the hub map embed pattern, so a framed manual opened as a teacher already reads as the teacher’s). Links inside the manual keep an explicit lens.",
+    "Audience is data: src/modules/ops-manual/audience.ts (the 00-index §4 matrix keyed by chapter number; owner = admin, super_admin = owner ∪ admin columns, plus marketing and developer). Required first, then recommended; a chapter that does not apply is dimmed, never hidden.",
+    "Reading progress: \"Marcar como leído\" writes manual_progress {user_id, chapter_slug, version, read_at}; a chapter whose front-matter version moved shows \"Hay una versión nueva\".",
+    "Training: {{training:<role>}} renders the Day 1 / Week 1 / Month 1 checklist from training.ts (seeded verbatim from chapter 09) with a checkbox per item in manual_training; coordination and up pick a person from the roster and \"Firmar etapa\" (item_key __signoff, signed_by).",
+    "Editing beside the markdown: a `##` section carrying {{editable:owner}} or {{editable:coordinator}} can be rewritten by that level and up; the edit is a manual_overrides row (status live, version n) shown in place with \"Editado por … · Ver original\", a history and \"Restaurar original\" (status reverted — history is never deleted). Suggestions (status suggested, e.g. from an agent through manual.suggestEdit) wait on the section’s \"Sugerencias\" chip.",
+    "{{studio:<key>}} renders a text policy from studio_policies (seed src/data/seed/studioPolicies.ts) with an inline 44 px edit for the allowed level; an M-08 policy key (or {{policy:…}}) shows the live value and, for an editor, \"Este valor se cambia en Ajustes (M-08a) →\".",
+    "{{for:teacher,front_desk}} … {{/for}} scopes a passage: shown with \"Para: …\" when the lens matches or is all; collapsed into a <details> \"Solo para …\" otherwise (never removed).",
+    "{{audience}} renders the matrix; {{audience:<slug|number>}} a \"Para: …\" chip row; {{source:<id>}} a SourceEmbed of docs/source/index.json.",
+    "`> EN HOYOS:` / `> IN HOYOS:` blockquotes render as compact screen boxes (page codes as chips, `->` as arrows); `> NOTA:` / `> NOTE:` as a note; `> DECISIÓN PENDIENTE:` feeds K-04.",
+    "Figures show their capture date (src/app/captureDates.ts, from the git date of docs/screenshots/<CODE>/es-1280.jpg) and \"puede estar desactualizada\" when a changelog entry naming the code is newer than the capture.",
+    "Every write appends an audit_log row (useAudit(\"admin\")). Print: sidebar, outline, search, tools and shell chrome hidden."
    ],
    "integrations": [],
    "states": [
-    "home (cover + grid)",
+    "home, lens = all (tiles + start here + grid)",
+    "home, lens = a role (Tu manual)",
+    "home as coordination / admin (team view)",
     "chapter",
+    "chapter, required / recommended / not applicable for the lens",
+    "chapter read / new version",
+    "section edited (override live)",
+    "section editor open",
+    "section with suggestions",
+    "scoped block collapsed",
     "chapter not found",
     "untranslated (ES fallback)",
     "search results",
     "print"
    ],
+   "actions": [
+    {
+     "id": "manual.setLens",
+     "label": {
+      "es": "Ver el manual como",
+      "en": "View the manual as"
+     },
+     "intent": {
+      "es": "Muéstrame el manual de {role}",
+      "en": "Show me the {role} manual"
+     },
+     "params": {
+      "role": "enum:all,super_admin,admin,coordinator,front_desk,finance,teacher,maintenance,marketing,developer"
+     },
+     "permission": "docs.read"
+    },
+    {
+     "id": "manual.markRead",
+     "label": {
+      "es": "Marcar como leído",
+      "en": "Mark as read"
+     },
+     "intent": {
+      "es": "Marca el capítulo {chapter} como leído",
+      "en": "Mark chapter {chapter} as read"
+     },
+     "params": {
+      "chapter": "string — chapter slug (04-recepcion-y-check-in) or number (04); default the open chapter"
+     },
+     "permission": "docs.read"
+    },
+    {
+     "id": "manual.signTraining",
+     "label": {
+      "es": "Firmar etapa de formación",
+      "en": "Sign off a training stage"
+     },
+     "intent": {
+      "es": "Firma {stage} de {user}",
+      "en": "Sign off {stage} for {user}"
+     },
+     "params": {
+      "user": "string — users.id (usr_desk)",
+      "stage": "enum:day1,week1,month1",
+      "role": "string — the checklist; default the person’s role"
+     },
+     "permission": "manual.train"
+    },
+    {
+     "id": "manual.editSection",
+     "label": {
+      "es": "Editar una sección",
+      "en": "Edit a section"
+     },
+     "intent": {
+      "es": "Reescribe la sección {section} del capítulo {chapter}",
+      "en": "Rewrite section {section} of chapter {chapter}"
+     },
+     "params": {
+      "chapter": "string — chapter slug (04-recepcion-y-check-in) or number (04)",
+      "section": "string — the ## heading text",
+      "body": "markdown — the section body, without the heading",
+      "note": "string — why (optional)",
+      "lang": "enum:es,en — default the interface language"
+     },
+     "permission": "manual.edit"
+    },
+    {
+     "id": "manual.restoreSection",
+     "label": {
+      "es": "Restaurar el original",
+      "en": "Restore the original"
+     },
+     "intent": {
+      "es": "Vuelve al texto original de {section}",
+      "en": "Go back to the original text of {section}"
+     },
+     "params": {
+      "chapter": "string — chapter slug (04-recepcion-y-check-in) or number (04)",
+      "section": "string — the ## heading text",
+      "lang": "enum:es,en"
+     },
+     "permission": "manual.edit"
+    },
+    {
+     "id": "manual.requestChange",
+     "label": {
+      "es": "Pedir un cambio",
+      "en": "Request a change"
+     },
+     "intent": {
+      "es": "Pide que el capítulo {chapter} diga {request}",
+      "en": "Ask for chapter {chapter} to say {request}"
+     },
+     "params": {
+      "chapter": "string — chapter slug (04-recepcion-y-check-in) or number (04)",
+      "request": "string",
+      "section": "string — ## heading (optional)"
+     },
+     "permission": "docs.read"
+    },
+    {
+     "id": "manual.suggestEdit",
+     "label": {
+      "es": "Sugerir una edición",
+      "en": "Suggest an edit"
+     },
+     "intent": {
+      "es": "Sugiere este texto para {section}",
+      "en": "Suggest this text for {section}"
+     },
+     "params": {
+      "chapter": "string — chapter slug (04-recepcion-y-check-in) or number (04)",
+      "section": "string — the ## heading text",
+      "body": "markdown — proposed section body",
+      "note": "string (optional)",
+      "lang": "enum:es,en"
+     },
+     "permission": "docs.read"
+    },
+    {
+     "id": "manual.openSource",
+     "label": {
+      "es": "Abrir un documento fuente",
+      "en": "Open a source document"
+     },
+     "intent": {
+      "es": "Abre el documento {id}",
+      "en": "Open the {id} document"
+     },
+     "params": {
+      "id": "enum:modelo-de-valor,contenido-completo,manual-de-marca"
+     },
+     "permission": "docs.read"
+    }
+   ],
+   "checkedAt": [
+    360,
+    390,
+    768,
+    1280,
+    1920,
+    2560,
+    3840
+   ],
    "notes": [
-    "Policies quoted in prose are the exception, not the rule: a number that M-08 owns is written as `{{policy:…}}` so the chapter cannot go stale.",
-    "Prices are never typed in a chapter; `{{pricing:<family>}}` reads src/tenant/pricing.ts, the only place a price exists."
+    "Policies quoted in prose are the exception, not the rule: a number that M-08 owns is written as `{{policy:…}}`; a text rule the owner adapts is `{{studio:…}}`.",
+    "Prices are never typed in a chapter; `{{pricing:<family>}}` reads src/tenant/pricing.ts, the only place a price exists.",
+    "\"Reescribir con IA\" is a Placeholder: an agent does it today through the actions registry (manual.suggestEdit → the owner approves)."
+   ]
+  }
+ },
+ {
+  "path": "/docs/source",
+  "code": "K-05",
+  "surface": "docs",
+  "status": "built",
+  "roles": [
+   "super_admin",
+   "admin",
+   "coordinator",
+   "front_desk",
+   "finance",
+   "teacher",
+   "maintenance",
+   "marketing",
+   "developer",
+   "customer"
+  ],
+  "spec": {
+   "code": "K-05",
+   "name": {
+    "es": "Documentos fuente",
+    "en": "Source documents"
+   },
+   "purpose": {
+    "es": "Los documentos del owner de los que salen el manual y el sitio — el modelo de valor, los textos del sitio y el manual de marca — con un visor en línea, descarga y los capítulos que los citan.",
+    "en": "The owner’s documents the manual and the website are written from — the value model, the website copy and the brand manual — with an inline viewer, download and the chapters that cite them."
+   },
+   "layout": [
+    "PageHead (icon, count, lead)",
+    "SourceEmbed × n (kind, title, pages, date, summary, cover → inline PDF viewer, fullscreen, download, new tab)",
+    "ChapterLinks (chapters that embed it, with icons)",
+    "ChapterSidebar"
+   ],
+   "data": [
+    "docs_entries"
+   ],
+   "roles": [
+    "super_admin",
+    "admin",
+    "coordinator",
+    "front_desk",
+    "finance",
+    "teacher",
+    "maintenance",
+    "marketing",
+    "developer",
+    "customer"
+   ],
+   "logic": [
+    "The list is docs/source/index.json; the files are public/source/<id>.pdf (+ <id>-cover.jpg). Adding a document needs no code change.",
+    "`?doc=<id>` scrolls to one document and opens its viewer (manual.openSource).",
+    "A chapter embeds one with {{source:<id>}}."
+   ],
+   "integrations": [],
+   "states": [
+    "default",
+    "one document opened (?doc=)",
+    "viewer fullscreen"
+   ],
+   "actions": [
+    {
+     "id": "manual.openSource",
+     "label": {
+      "es": "Abrir un documento fuente",
+      "en": "Open a source document"
+     },
+     "intent": {
+      "es": "Abre el documento {id}",
+      "en": "Open the {id} document"
+     },
+     "params": {
+      "id": "enum:modelo-de-valor,contenido-completo,manual-de-marca"
+     },
+     "permission": "docs.read"
+    }
+   ],
+   "checkedAt": [
+    360,
+    390,
+    768,
+    1280,
+    1920
    ]
   }
  },
@@ -6523,6 +7085,8 @@
    "front_desk",
    "finance",
    "maintenance",
+   "marketing",
+   "developer",
    "teacher"
   ],
   "spec": {
@@ -7394,6 +7958,8 @@
    "finance",
    "teacher",
    "maintenance",
+   "marketing",
+   "developer",
    "customer",
    "public"
   ],
@@ -7406,6 +7972,8 @@
     "finance",
     "teacher",
     "maintenance",
+    "marketing",
+    "developer",
     "customer",
     "public"
    ],
@@ -7463,6 +8031,8 @@
    "finance",
    "teacher",
    "maintenance",
+   "marketing",
+   "developer",
    "customer",
    "public"
   ],
@@ -7475,6 +8045,8 @@
     "finance",
     "teacher",
     "maintenance",
+    "marketing",
+    "developer",
     "customer",
     "public"
    ],
@@ -7519,6 +8091,8 @@
    "finance",
    "teacher",
    "maintenance",
+   "marketing",
+   "developer",
    "customer",
    "public"
   ],
@@ -7531,6 +8105,8 @@
     "finance",
     "teacher",
     "maintenance",
+    "marketing",
+    "developer",
     "customer",
     "public"
    ],
@@ -7575,6 +8151,8 @@
    "finance",
    "teacher",
    "maintenance",
+   "marketing",
+   "developer",
    "customer",
    "public"
   ],
@@ -7587,6 +8165,8 @@
     "finance",
     "teacher",
     "maintenance",
+    "marketing",
+    "developer",
     "customer",
     "public"
    ],
@@ -7636,6 +8216,8 @@
    "finance",
    "teacher",
    "maintenance",
+   "marketing",
+   "developer",
    "customer",
    "public"
   ],
@@ -7648,6 +8230,8 @@
     "finance",
     "teacher",
     "maintenance",
+    "marketing",
+    "developer",
     "customer",
     "public"
    ],
@@ -7691,6 +8275,8 @@
    "finance",
    "teacher",
    "maintenance",
+   "marketing",
+   "developer",
    "customer",
    "public"
   ],
@@ -7703,6 +8289,8 @@
     "finance",
     "teacher",
     "maintenance",
+    "marketing",
+    "developer",
     "customer",
     "public"
    ],
@@ -7764,6 +8352,8 @@
    "finance",
    "teacher",
    "maintenance",
+   "marketing",
+   "developer",
    "customer",
    "public"
   ],
@@ -7776,6 +8366,8 @@
     "finance",
     "teacher",
     "maintenance",
+    "marketing",
+    "developer",
     "customer",
     "public"
    ],
@@ -7820,6 +8412,8 @@
    "finance",
    "teacher",
    "maintenance",
+   "marketing",
+   "developer",
    "customer",
    "public"
   ],
@@ -7921,6 +8515,8 @@
    "finance",
    "teacher",
    "maintenance",
+   "marketing",
+   "developer",
    "customer",
    "public"
   ],
@@ -7933,6 +8529,8 @@
     "finance",
     "teacher",
     "maintenance",
+    "marketing",
+    "developer",
     "customer",
     "public"
    ],
@@ -7959,8 +8557,8 @@
     "tenants"
    ],
    "logic": [
-    "No hardcoded contact data: reads src/tenant/tenant.ts and labels every placeholder as pending.",
-    "MapSlot reads tenant.location; provider stays \"none\" so the page makes no network request.",
+    "No hardcoded contact data: reads useContact() (M-08a, src/tenant/tenant.ts as the default) and labels only the fields not confirmed yet as pending (0036: WhatsApp and address confirmed; email and Instagram pending).",
+    "MapSlot reads the contact location (address label + Google Maps link); provider stays \"none\" so the page makes no network request.",
     "The form has no backend: it builds a wa.me deep link with the message prefilled.",
     "Especiales (0017): private events, birthdays, team sessions and special requests are arranged directly with the studio — a card that opens WhatsApp with the request prefilled."
    ],
@@ -7984,6 +8582,8 @@
    "finance",
    "teacher",
    "maintenance",
+   "marketing",
+   "developer",
    "customer",
    "public"
   ],
@@ -7996,6 +8596,8 @@
     "finance",
     "teacher",
     "maintenance",
+    "marketing",
+    "developer",
     "customer",
     "public"
    ],
@@ -8046,6 +8648,8 @@
    "finance",
    "teacher",
    "maintenance",
+   "marketing",
+   "developer",
    "customer",
    "public"
   ],
@@ -8118,6 +8722,8 @@
    "finance",
    "teacher",
    "maintenance",
+   "marketing",
+   "developer",
    "customer",
    "public"
   ],

@@ -1,0 +1,10 @@
+.pring { position: relative; display: inline-flex; flex-direction: column; align-items: center; gap: var(--sp-2); }
+.pring svg { display: block; }
+.pring-track { stroke: var(--color-border); }
+.pring-fill { stroke: var(--color-primary); transition: stroke-dashoffset var(--dur-base, 240ms) var(--ease-out, ease-out); }
+.pring-success .pring-fill { stroke: var(--color-success); }
+.pring-warn .pring-fill { stroke: var(--color-warn); }
+.pring-center { position: absolute; top: 0; left: 0; display: flex; align-items: center; justify-content: center; }
+.pring-value { font-family: var(--font-heading); font-size: var(--fs-lg); font-weight: var(--fw-medium); font-variant-numeric: tabular-nums; color: var(--color-text); }
+.pring-label { font-size: var(--fs-xs); color: var(--color-text-muted); text-align: center; max-width: 16ch; }
+@media (prefers-reduced-motion: reduce) { .pring-fill { transition: none; } }

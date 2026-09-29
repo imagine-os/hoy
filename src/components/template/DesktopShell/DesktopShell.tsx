@@ -60,7 +60,7 @@ function useNarrow() {
 export function DesktopShell({ surfaces, routes, titleKey, children }: DesktopShellProps) {
   const { t, bi, dict } = useI18n();
   const title = t(titleKey);
-  const { user, role, isSuperAdmin, devMode, setDevMode, hasRole, can } = useSession();
+  const { user, role, isSuperAdmin, canDevMode, devMode, setDevMode, hasRole, can } = useSession();
   const { theme, toggleTheme } = useTheme();
   const { pathname } = useLocation();
   const narrow = useNarrow();
@@ -205,7 +205,7 @@ export function DesktopShell({ surfaces, routes, titleKey, children }: DesktopSh
               <button type="button" className="deskshell-iconbtn ctl-round" onClick={toggleTheme} aria-label={t('core.theme.toggle')} title={t('core.theme.toggle')}><Icon name={theme === 'dark' ? 'moon' : 'sun'} size="sm" /></button>
               {hasInbox && <InboxPopover count={inbox.count} items={inboxItems} itemTo={(k) => `/staff/inbox/${k}`} inboxTo="/staff/inbox" />}
               <div className="deskshell-rs"><RoleSwitcher compact /></div>
-              {isSuperAdmin && <span className="deskshell-devtoggle" title={t('core.dev.mode')}><Toggle size="sm" checked={devMode} onChange={setDevMode} label={t('core.dev.mode')} /></span>}
+              {canDevMode && <span className="deskshell-devtoggle" title={t('core.dev.mode')}><Toggle size="sm" checked={devMode} onChange={setDevMode} label={t('core.dev.mode')} /></span>}
               {devMode && current && (
                 <button type="button" className="deskshell-spec" onClick={openInspector} title="Ctrl+." aria-label={`${t('core.dev.spec')} ${current.spec.code}`}>
                   <span className="deskshell-specdot" aria-hidden />{current.spec.code}

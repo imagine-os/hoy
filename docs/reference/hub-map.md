@@ -28,7 +28,7 @@ export type ShotKey = 'es-390' | 'en-390' | 'es-1280' | 'en-1280' | 'es-390-full
 /** URLs relative to `product.baseUrl`. A key is present only when the file is published. */
 export interface HubShots { thumbs: Partial<Record<ThumbKey, string>>; full: Partial<Record<ShotKey, string>>; }
 export interface HubRole {
-  /** hoy Role id: customer | public | teacher | front_desk | coordinator | finance | admin | super_admin | maintenance */
+  /** hoy Role id: customer | public | teacher | front_desk | coordinator | finance | admin | super_admin | maintenance | marketing | developer (last two since 0031) */
   id: string;
   label: Bi; description: Bi;
   /** outside = customers/public/teachers, team = staff/admin, build = docs/dev */
@@ -38,12 +38,12 @@ export interface HubRole {
   /** The role's primary device. */
   device: HubDevice;
   demoUser?: { id: string; firstName: string };
-  /** Figure look hint for hosts: 'customer' | 'teacher' | 'frontdesk' | 'coordinator' | 'finance' | 'admin' | 'superadmin' | 'public' | 'maintenance' */
+  /** Figure look hint for hosts: 'customer' | 'teacher' | 'frontdesk' | 'coordinator' | 'finance' | 'admin' | 'superadmin' | 'public' | 'maintenance' | 'marketing' | 'developer' (0031; fall back to your default figure for a look you do not know) */
   look: string;
   /** Two desk props from this vocabulary: laptop phone clipboard tape contract calculator plans ruler sketchbook pencils samples swatches board stamp hardhat tablet book keys mug rating */
   props: [string, string];
 }
-/** One per hub card (the 13 HUB_SURFACES) — the thing a role "enters". */
+/** One per hub card (the 15 HUB_SURFACES since 0031) — the thing a role "enters". */
 export interface HubExperience {
   id: string; code: string; label: Bi; purpose: Bi;
   /** Owning role (mat) + every role allowed in. */
@@ -51,6 +51,8 @@ export interface HubExperience {
   /** `url` = baseUrl + '#' + route */
   band: HubBand; device: HubDevice; route: string; url: string;
   featured?: boolean; secondary?: { label: Bi; route: string };
+  /** Since 0031 (additive): announced, not built (the marketing kit). `route` is where the role works today, `pageCodes` is empty; draw it as "coming soon" and do not embed it. */
+  comingSoon?: boolean;
   /** Every page code inside this experience, in nav order. */
   pageCodes: string[];
   /** Of the experience's entry page. */
@@ -217,7 +219,8 @@ every code and full captures only for the experience and tool entry pages (0027:
    - `surface` (standalone): the three `band`s (outside · team · build), as hoy's own hub does.
 4. Draw faces from `shots`: pick by `device` (phone → `thumbs.<lang>-phone`, else `-desktop`; `page` →
    `full.<lang>-390-full` when present), fall back to the other language, then to any key.
-5. On enter, iframe the embed pattern **as the owning role** (`roleId`), or link to `url` for a full tab.
+5. Skip or badge an experience with `comingSoon: true` (0031) — it has no pages; its `route` is the stand-in.
+   On enter, iframe the embed pattern **as the owning role** (`roleId`), or link to `url` for a full tab.
    For a page, **embed `sampleRoute ?? route`** — `route` may be a template (`/app/class/:id`); `sampleRoute`
    is always concrete, and a `sample` segment in it is resolved by hoy itself.
 6. Texts are `{ es, en }`; Spanish is the product's default.
@@ -225,7 +228,7 @@ every code and full captures only for the experience and tool entry pages (0027:
 
 ---
 **Resumen (ES).** `hub-map.json` (esquema `hoy.hub-map/1`) describe todo hoy por rol y por dispositivo:
-9 roles, 13 experiencias (las tarjetas del hub), 87 páginas, 9 herramientas y tres lentes (aluzina por rol,
+11 roles (marketing y desarrollo desde 0031), 15 experiencias (las tarjetas del hub; el kit de marketing con `comingSoon`), 87 páginas, 9 herramientas y tres lentes (aluzina por rol,
 between-gigs por experiencia, standalone por superficie). Lo genera `npm run hub-map` en cada build desde
 `src/hub/hubMap.data.ts` (el mismo módulo que dibuja HUB-01) y el registro de rutas; las capturas se publican
 en `hub-map/shots/`. Para incrustar una pantalla: `{baseUrl}#{route}?as={role}&lang={lang}&theme={theme}&dev=0&live=0` en un iframe.

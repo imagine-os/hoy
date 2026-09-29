@@ -8,7 +8,7 @@ import { useTable } from '../../../data/DataContext';
 import { TABLE_GROUPS, tableRegistry, tables } from '../../../data/schema';
 import { ROLES, ROLE_HOME, ROLE_LABEL } from '../../../auth/roles';
 import { getRoutes } from '../../../app/registry';
-import { useContact, usePolicy, type StudioSettings } from '../../../modules/admin/settings';
+import { useContact, usePolicy, type StudioSettings , pendingSuffix, type ContactField } from '../../../modules/admin/settings';
 import { FAMILY_LABEL, FAMILY_RATIONALE, FAMILY_ROLE, pricing, pricingByFamily, type PlanFamily, type PriceItem } from '../../../tenant/pricing';
 import { tenant } from '../../../tenant/tenant';
 import type { Bi, Surface } from '../../../specs/types';
@@ -49,6 +49,12 @@ const UNIT: Partial<Record<PolicyKey, 'hours' | 'minutes' | 'days'>> = {
 const PAYROLL_KEYS: PolicyKey[] = ['payrollCadence', 'payoutMethod', 'payrollSignedBy'];
 /** The numeric policy fields live flat on the policy record; the grouped ones (tax, payroll, quiet hours) are read explicitly. */
 type FlatPolicy = Pick<StudioSettings['policies'], 'cancellationHours' | 'waitlistClaimMin' | 'lateGraceMin' | 'noShowFee' | 'pauseDaysPerYear' | 'maxPausesPerYear' | 'paymentHoldMin' | 'chargeNoticeDays' | 'lockoutAttempts' | 'lockoutMinutes'>;
+
+/** 0031: the M-08 policy a `{{policy:…}}` / `{{studio:…}}` key names (alias resolved), and whether it lives in Payments (M-08c). */
+export function policyField(key: string): { key: string; payroll: boolean } | undefined {
+  const k = (POLICY_ALIAS[key] ?? key) as PolicyKey;
+  return POLICY_KEYS.includes(k) ? { key: k, payroll: PAYROLL_KEYS.includes(k) } : undefined;
+}
 
 export interface LiveBlockProps {
   /** Directive name: pricing | tenant | policy | tables | table | roles | routes | stats | kpi. */
@@ -143,18 +149,18 @@ function Pricing({ family }: { family?: string }) {
 const TENANT_KEYS = ['hours', 'contact', 'capacity', 'all'] as const;
 
 function TenantFacts({ what }: { what?: string }) {
-  const { t, bi } = useI18n();
+  const { t, bi, lang } = useI18n();
   const contact = useContact();
-  const pend = contact.pending ? ` (${bi(contact.pendingLabel)})` : '';
+  const pend = (f: ContactField) => pendingSuffix(contact, f, lang);
   const key = (what ?? 'all') as typeof TENANT_KEYS[number];
   if (!TENANT_KEYS.includes(key)) return <Unknown kind="tenant" arg={what} options={['hours', 'contact', 'capacity']} />;
   const rows: [string, ReactNode][] = [];
   if (key === 'hours' || key === 'all') rows.push([t('manual.live.tenant.hours'), bi(tenant.hours)], [t('manual.live.tenant.timezone'), `${tenant.timezone} · ${tenant.currency}`]);
   if (key === 'contact' || key === 'all') rows.push(
-    ['WhatsApp', `${contact.whatsapp}${pend}`],
-    [t('manual.live.tenant.email'), `${contact.email}${pend}`],
-    [t('manual.live.tenant.address'), `${contact.address}${pend}`],
-    ['Instagram', `${contact.instagram}${pend}`],
+    ['WhatsApp', `${contact.whatsapp}${pend('whatsapp')}`],
+    [t('manual.live.tenant.email'), `${contact.email}${pend('email')}`],
+    [t('manual.live.tenant.address'), `${contact.address}${pend('address')}`],
+    ['Instagram', `${contact.instagram}${pend('instagram')}`],
     [t('manual.live.tenant.city'), contact.city],
   );
   if (key === 'capacity' || key === 'all') rows.push(

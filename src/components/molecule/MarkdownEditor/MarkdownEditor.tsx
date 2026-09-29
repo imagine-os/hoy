@@ -1,4 +1,4 @@
-import { useId } from 'react';
+import { useId, type ReactNode } from 'react';
 import ReactMarkdown from 'react-markdown';
 import './MarkdownEditor.css';
 
@@ -13,6 +13,8 @@ export interface MarkdownEditorProps {
   /** Empty-preview copy, so the right column is never a blank box. */
   emptyPreview?: string;
   rows?: number;
+  /** Renders the preview (e.g. the manual's MarkdownViewer with tables and live blocks); default plain react-markdown. */
+  renderPreview?: (md: string) => ReactNode;
 }
 
 /**
@@ -20,7 +22,7 @@ export interface MarkdownEditorProps {
  * long copy is written. Stacks to one column below 900 px, and the preview renders with the same
  * `react-markdown` the reader's page uses, so what is written is what ships.
  */
-export function MarkdownEditor({ value, onChange, editLabel, previewLabel, placeholder, disabled, emptyPreview, rows = 14 }: MarkdownEditorProps) {
+export function MarkdownEditor({ value, onChange, editLabel, previewLabel, placeholder, disabled, emptyPreview, rows = 14, renderPreview }: MarkdownEditorProps) {
   const id = useId();
   return (
     <div className="adm-md mdedit">
@@ -32,7 +34,7 @@ export function MarkdownEditor({ value, onChange, editLabel, previewLabel, place
       <div className="stack-sm">
         <span className="eyebrow">{previewLabel}</span>
         <div className="adm-md-preview prose mdedit-preview">
-          {value.trim() ? <ReactMarkdown>{value}</ReactMarkdown> : <p className="muted small">{emptyPreview ?? '—'}</p>}
+          {value.trim() ? (renderPreview ? renderPreview(value) : <ReactMarkdown>{value}</ReactMarkdown>) : <p className="muted small">{emptyPreview ?? '—'}</p>}
         </div>
       </div>
     </div>

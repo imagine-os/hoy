@@ -7,6 +7,9 @@ const FRONT = /^---\n([\s\S]*?)\n---/;
 const DECISION = /^>\s*(?:DECISIÓN PENDIENTE|DECISION NEEDED|DECISION PENDING)\s*:\s*(.+)$/;
 const SCREENSHOT = /^\[screenshot:\s*([^\]]+)\]\s*$/;
 const FIGURE = /!\[[^\]]*\]\((?:\.\.\/)+screenshots\//g;
+// 0031: `> EN HOYOS:` / `> IN HOYOS:` screen boxes; `{{for:…}}` / `{{/for}}` and other `{{directive}}` lines are not prose.
+const SCREEN_BOX = /^>\s*(?:EN HOYOS|IN HOYOS)\s*:/i;
+const DIRECTIVE = /^\{\{[^}]*\}\}\s*$/;
 
 /** `key: value` header lines at the top of a file (changelog entries) or inside `---` front matter. */
 export function headerMeta(source) {
@@ -36,13 +39,15 @@ export function docMeta(path, source) {
   const meta = headerMeta(source);
   const body = fm ? source.slice(fm[0].length).replace(/^\n/, '') : source;
   const headings = [], decisions = [], placeholders = [];
-  let section = '', fenced = false;
+  let section = '', fenced = false, screenBoxes = 0;
   // Only the manual reads headings, decisions and placeholders; other docs keep the index small.
   for (const line of /docs\/ops-manual\/(es|en)\//.test(path) ? body.split('\n') : []) {
     if (/^```/.test(line)) { fenced = !fenced; continue; }
     if (fenced) continue;
     const h = line.match(/^##\s+(.+)$/); if (h) { section = h[1].trim(); headings.push(section); continue; }
     const d = line.match(DECISION); if (d) { decisions.push({ section, text: d[1].trim() }); continue; }
+    if (DIRECTIVE.test(line)) continue;
+    if (SCREEN_BOX.test(line)) { screenBoxes += 1; continue; }
     const s = line.match(SCREENSHOT); if (s) placeholders.push(s[1].trim());
   }
   return {
@@ -50,7 +55,7 @@ export function docMeta(path, source) {
     meta,
     words: (body.match(/[\p{L}\p{N}’'-]+/gu) ?? []).length,
     figures: (body.match(FIGURE) ?? []).length,
-    headings, decisions, placeholders,
+    headings, decisions, placeholders, screenBoxes,
   };
 }
 

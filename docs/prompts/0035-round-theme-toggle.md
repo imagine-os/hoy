@@ -8,7 +8,7 @@ i'm not sure why the light/dark toggle came out oval? it should be circle like i
 
 ## Response
 
-Branch `fix/round-theme-toggle` from `main` at `b265ac7`, version **0.12.3**. Full record in
+Branch `fix/round-theme-toggle` from `main` at `b265ac7`, version **0.13.2** (main was 0.13.1 after 0031 and 0036 merged first). Full record in
 `docs/changelog/0035-round-theme-toggle.md`.
 
 **Root cause.** Not the icons pass (0030): the pre-0030 build (`f4b9197`) already drew the same oval. It came from
