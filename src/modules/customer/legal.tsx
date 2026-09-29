@@ -17,6 +17,7 @@ import { Button } from '../../components/atom/Button/Button';
 import { Chip } from '../../components/atom/Chip/Chip';
 import { EmptyState } from '../../components/molecule/EmptyState/EmptyState';
 import './customer.css';
+import { Icon } from '../../components/atom/Icon/Icon';
 
 /** Display order of the library — the order the footer links and the site nav use. */
 export const LEGAL_KINDS: LegalKind[] = ['terms', 'privacy', 'waiver', 'cancellation', 'refunds', 'house-rules'];
@@ -156,7 +157,7 @@ export function LegalAppPage({ kind: fixed }: { kind?: LegalKind } = {}) {
 
   return (
     <div className="container page stack cust-legal">
-      <Link to="/app/more" className="cust-back">‹ <span>{t('core.nav.back')}</span></Link>
+      <Link to="/app/more" className="cust-back"><Icon name="chevron-left" size="sm" /><span>{t('core.nav.back')}</span></Link>
       <LegalDocument
         {...props}
         accepted={doc.requires_acceptance ? (

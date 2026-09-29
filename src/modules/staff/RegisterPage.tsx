@@ -214,9 +214,9 @@ export function RegisterPage() {
           <Receipt studio={tenant.legalName} number={done.number} issuedAt={done.payment.created_at} customer={done.customer} contact={done.contact} lines={[{ label: bi(done.item.name), amount: done.total }]} subtotal={done.subtotal} tax={done.tax} taxLabel={t('staff.register.iva', { pct: settings.tax.ivaPct })} total={done.total} method={t(`staff.register.method.${method}`)} status={done.payment.status} takenBy={`${user.name}`} dianRef={null} note={done.checkedIn ? t('staff.register.done.checkedIn', { cls: done.checkedIn }) : done.booking ? t('staff.register.done.booking', { title: done.booking }) : undefined} printLabel={t('staff.register.print')} />
           <div className="stack-sm">
             {done.payment.status === 'pending' && <Card tone="highlight"><p className="small">{t('staff.register.wompi.pending')}</p></Card>}
-            <Button onClick={reset}>{t('staff.register.newSale')}</Button>
-            {done.booking && <Link to="/staff/rooms"><Button block variant="secondary">{t('staff.home.openRooms')}</Button></Link>}
-            <Link to={`/staff/checkin${sessionId ? `?session=${sessionId}` : ''}`}><Button block variant="secondary">{t('staff.home.openCheckin')}</Button></Link>
+            <Button onClick={reset} icon="sell">{t('staff.register.newSale')}</Button>
+            {done.booking && <Link to="/staff/rooms"><Button block variant="secondary" icon="rooms">{t('staff.home.openRooms')}</Button></Link>}
+            <Link to={`/staff/checkin${sessionId ? `?session=${sessionId}` : ''}`}><Button block variant="secondary" icon="checkin">{t('staff.home.openCheckin')}</Button></Link>
           </div>
         </div>
       </div>
@@ -352,7 +352,7 @@ export function RegisterPage() {
                 {(id) => <Select id={id} value={sessionId} onChange={(e) => setSessionId(e.target.value)} disabled={!settings.features.autoCheckinOnSale || special.on || mode === 'contact'}><option value="">{t('staff.register.checkinTo.none')}</option>{upcoming.map(({ session: s, teacher: te }) => <option key={s.id} value={s.id}>{formatTime(s.starts_at, lang)} · {s.title} · {te?.display_name} ({s.booked_count}/{s.capacity})</option>)}</Select>}
               </Field>
               {error && <EmptyState compact tone="error" title={t('core.common.error')} body={error} />}
-              <Button block size="lg" disabled={!valid} loading={busy} onClick={complete}>{method === 'wompi' ? t('staff.register.cta.link') : t('staff.register.cta')}</Button>
+              <Button block size="lg" disabled={!valid} loading={busy} onClick={complete} icon={method === 'wompi' ? 'link' : 'payment'}>{method === 'wompi' ? t('staff.register.cta.link') : t('staff.register.cta')}</Button>
               <p className="xs muted">{t('staff.register.audit', { staff: user.name })}</p>
             </div>
           </Card>

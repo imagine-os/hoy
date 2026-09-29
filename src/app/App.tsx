@@ -6,7 +6,7 @@ import { SessionProvider } from '../auth/SessionProvider';
 import { DataProviderRoot } from '../data/DataContext';
 import { RequireRole } from '../auth/RequireRole';
 import { DevTools } from '../dev/DevTools';
-import { getRoutes, getStrings } from './registry';
+import { getRedirects, getRoutes, getStrings } from './registry';
 import { withShell } from './shells';
 import { ScrollToTop } from './ScrollToTop';
 import { SampleRoute } from './SampleRoute';
@@ -36,6 +36,7 @@ export function App() {
                   {allRoutes.map((r) => (
                     <Route key={r.path} path={r.path} element={<RequireRole roles={r.roles}>{withShell(r, r.element)}</RequireRole>} />
                   ))}
+                  {getRedirects().map((r) => <Route key={`redirect:${r.from}`} path={r.from} element={<Navigate to={r.to} replace />} />)}
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
               </Suspense>

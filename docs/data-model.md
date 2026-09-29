@@ -187,7 +187,7 @@ _Reglas del club (C-13), textos “sobre HOY” y guías, editables sin deploy._
 | `updated_at` | timestamptz |  |
 | `slug` | text |  |
 | `section` | enum (rules \| faq \| about) |  |
-| `icon` | text, null |  |
+| `icon` | text, null | Icon set name (src/components/atom/Icon, 0030), e.g. flame, clock; any other text renders as a literal glyph |
 | `title` | json | {es,en} |
 | `summary` | json | {es,en} |
 | `body_md` | json | {es,en} markdown |
@@ -444,8 +444,8 @@ _Posiciones en espera y ventana de reclamo._
 | `claim_until` | timestamptz, null |  |
 
 #### `intentions`
-Answer to “How do you want to feel today?” (A-05).  
-_Respuesta a “¿Cómo quieres sentirte hoy?” (A-05)._
+DEPRECATED (0030): answer to “How do you want to feel today?” (A-05, retired from the product). Kept as history; nothing writes or reads new rows.  
+_OBSOLETA (0030): respuesta a “¿Cómo quieres sentirte hoy?” (A-05, retirada del producto). Se conserva como historial; nada escribe ni lee filas nuevas._
 
 | column | type | notes |
 | --- | --- | --- |

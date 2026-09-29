@@ -11,7 +11,7 @@
       "es": "Un solo sistema para cada puesto del estudio: quien practica, quien enseña, quien recibe en la puerta, quien administra y quien lo construye.",
       "en": "One system for every seat at the studio: members, teachers, front desk, admin, and the people who build it."
     },
-    "version": "0.11.2",
+    "version": "0.12.0",
     "baseUrl": "https://imagine-os.github.io/hoy/",
     "hubRoute": "/",
     "brand": {
@@ -240,8 +240,8 @@
         "en": "Customer app"
       },
       "purpose": {
-        "es": "Móvil primero: la intención del día, las clases de hoy, reservar, pagar, la membresía y el historial.",
-        "en": "Mobile first: the day’s intention, today’s classes, booking, paying, membership and history."
+        "es": "Móvil primero: las clases de hoy, reservar, pagar, la membresía y el historial.",
+        "en": "Mobile first: today’s classes, booking, paying, membership and history."
       },
       "roleId": "customer",
       "roles": [
@@ -287,7 +287,6 @@
         "C-23",
         "C-24",
         "C-26",
-        "A-05",
         "A-06",
         "E-01",
         "E-02",
@@ -3113,53 +3112,6 @@
           "en": "Account"
         },
         "order": 30
-      }
-    },
-    {
-      "code": "A-05",
-      "route": "/app/intention",
-      "name": {
-        "es": "Intención del día — ¿Cómo quieres sentirte hoy?",
-        "en": "Intention check — ¿Cómo quieres sentirte hoy?"
-      },
-      "purpose": {
-        "es": "Preguntar cómo quiere sentirse hoy la persona y usar esa intención para ordenar las clases del día.",
-        "en": "The signature moment of the product. One question, four verbs; the choice re-orders the home feed and the recommended classes for the session. The verbs are what the student wants to do, and each resolves to one of the four movement tags the rest of the system already colours by."
-      },
-      "surface": "customer",
-      "roles": [
-        "customer",
-        "teacher"
-      ],
-      "experienceId": "app",
-      "device": "phone",
-      "status": "built",
-      "actions": [],
-      "shots": {
-        "thumbs": {
-          "es-phone": "hub-map/shots/A-05/thumb-es-phone.jpg",
-          "en-phone": "hub-map/shots/A-05/thumb-en-phone.jpg",
-          "es-desktop": "hub-map/shots/A-05/thumb-es-desktop.jpg",
-          "en-desktop": "hub-map/shots/A-05/thumb-en-desktop.jpg",
-          "es-phone-dark": "hub-map/shots/A-05/thumb-es-phone-dark.jpg",
-          "en-phone-dark": "hub-map/shots/A-05/thumb-en-phone-dark.jpg",
-          "es-desktop-dark": "hub-map/shots/A-05/thumb-es-desktop-dark.jpg",
-          "en-desktop-dark": "hub-map/shots/A-05/thumb-en-desktop-dark.jpg"
-        },
-        "full": {
-          "es-390": "hub-map/shots/A-05/es-390.jpg",
-          "en-390": "hub-map/shots/A-05/en-390.jpg",
-          "es-1280": "hub-map/shots/A-05/es-1280.jpg",
-          "en-1280": "hub-map/shots/A-05/en-1280.jpg"
-        }
-      },
-      "group": {
-        "id": "book",
-        "label": {
-          "es": "Reservar",
-          "en": "Book"
-        },
-        "order": 10
       }
     },
     {

@@ -22,21 +22,24 @@ import { Wordmark } from '../../components/atom/Wordmark/Wordmark';
 import { useAudit } from '../staff/audit';
 import { contactOf, useSettings, type SettingsSection, type StudioSettings } from './settings';
 import './admin.css';
+import { Icon, type IconName } from '../../components/atom/Icon/Icon';
 
 /** The six sub-pages of M-08. `general` is /admin/settings; the rest are /admin/settings/<key>. `content` (M-08f) arrived in 0018. */
 export type SettingsGroup = 'general' | 'features' | 'payments' | 'communications' | 'branding' | 'content';
 /** Roles mirror the RouteDef roles in src/modules/admin/index.ts so the rail never offers a blocked page. */
-export const SETTINGS_GROUPS: { key: SettingsGroup; path: string; roles: Role[] }[] = [
-  { key: 'general', path: '/admin/settings', roles: ['super_admin', 'admin', 'coordinator', 'finance'] },
-  { key: 'features', path: '/admin/settings/features', roles: ['super_admin', 'admin', 'coordinator', 'finance'] },
-  { key: 'payments', path: '/admin/settings/payments', roles: ['super_admin', 'admin', 'finance'] },
-  { key: 'communications', path: '/admin/settings/communications', roles: ['super_admin', 'admin', 'coordinator'] },
-  { key: 'branding', path: '/admin/settings/branding', roles: ['super_admin', 'admin'] },
-  { key: 'content', path: '/admin/settings/content', roles: ['super_admin', 'admin', 'coordinator'] },
+export const SETTINGS_GROUPS: { key: SettingsGroup; path: string; roles: Role[]; icon: IconName }[] = [
+  { key: 'general', path: '/admin/settings', roles: ['super_admin', 'admin', 'coordinator', 'finance'], icon: 'studio' },
+  { key: 'features', path: '/admin/settings/features', roles: ['super_admin', 'admin', 'coordinator', 'finance'], icon: 'features' },
+  { key: 'payments', path: '/admin/settings/payments', roles: ['super_admin', 'admin', 'finance'], icon: 'credit-card' },
+  { key: 'communications', path: '/admin/settings/communications', roles: ['super_admin', 'admin', 'coordinator'], icon: 'communications' },
+  { key: 'branding', path: '/admin/settings/branding', roles: ['super_admin', 'admin'], icon: 'branding' },
+  { key: 'content', path: '/admin/settings/content', roles: ['super_admin', 'admin', 'coordinator'], icon: 'file-text' },
 ];
 
 const DAYS = ['0', '1', '2', '3', '4', '5', '6'];
 const DAY_LABEL: Record<string, { es: string; en: string }> = { '0': { es: 'Dom', en: 'Sun' }, '1': { es: 'Lun', en: 'Mon' }, '2': { es: 'Mar', en: 'Tue' }, '3': { es: 'Mié', en: 'Wed' }, '4': { es: 'Jue', en: 'Thu' }, '5': { es: 'Vie', en: 'Fri' }, '6': { es: 'Sáb', en: 'Sat' } };
+/** 0030: one glyph per settings section (M-08a…f); the rail uses SETTINGS_GROUPS[].icon. */
+const SECTION_ICON: Record<SettingsSection, IconName> = { profile: 'identity', openingHours: 'clock', studio: 'capacity', policies: 'policies', features: 'features', payments: 'credit-card', tax: 'tax', payroll: 'payroll', quietHours: 'quiet-hours', comms: 'send', content: 'content', branding: 'branding', integrations: 'integrations' };
 /** Flags whose page is load-bearing for the demo and cannot be switched off. */
 const LOCKED_PAGES = ['A-06', 'E-04'];
 interface FlagRow extends BaseRow { key: string; page_code: string | null; label: string; enabled: boolean }
@@ -86,8 +89,8 @@ export function SettingsPage({ group = 'general' }: { group?: SettingsGroup }) {
   );
   if (!ready) return <div className="stack">{head}<EmptyState tone="loading" title={t('core.common.loading')} /></div>;
 
-  const S = <K extends SettingsSection>(section: K, title: string, render: (d: StudioSettings[K], set: (v: StudioSettings[K]) => void) => ReactNode) => (
-    <Section<K> section={section} value={settings[section]} save={save} audit={audit} readOnly={!canWrite} title={title} render={render} />
+  const S = <K extends SettingsSection>(section: K, title: string, render: (d: StudioSettings[K], set: (v: StudioSettings[K]) => void) => ReactNode, icon?: IconName) => (
+    <Section<K> section={section} value={settings[section]} save={save} audit={audit} readOnly={!canWrite} title={title} icon={icon ?? SECTION_ICON[section]} render={render} />
   );
 
   return (
@@ -96,7 +99,7 @@ export function SettingsPage({ group = 'general' }: { group?: SettingsGroup }) {
       <div className="settings">
         <nav className="settings-rail" aria-label={t('admin.settings.title')}>
           {SETTINGS_GROUPS.filter((g) => hasRole(g.roles)).map((g) => (
-            <NavLink key={g.key} to={g.path} end className={({ isActive }) => `settings-link ${isActive ? 'is-active' : ''}`}>{t(`admin.settings.group.${g.key}`)}</NavLink>
+            <NavLink key={g.key} to={g.path} end className={({ isActive }) => `settings-link ${isActive ? 'is-active' : ''}`}><Icon name={g.icon} size="md" /><span>{t(`admin.settings.group.${g.key}`)}</span></NavLink>
           ))}
         </nav>
         <div className="settings-main stack">
@@ -161,7 +164,7 @@ export function SettingsPage({ group = 'general' }: { group?: SettingsGroup }) {
                   <p className="xs muted">{t('admin.settings.policies.note')}</p>
                 </>
               ))}
-              <Card title={t('admin.settings.sec.integrations')} eyebrow="M-10" actions={<Link to="/admin/integrations"><Button size="sm" variant="ghost">{t('admin.settings.int.open')} →</Button></Link>}>
+              <Card icon="integrations" title={t('admin.settings.sec.integrations')} eyebrow="M-10" actions={<Link to="/admin/integrations"><Button size="sm" variant="ghost" icon="arrow-right">{t('admin.settings.int.open')}</Button></Link>}>
                 <p className="small muted">{t('admin.settings.int.pointer')}</p>
               </Card>
             </>
@@ -175,7 +178,7 @@ export function SettingsPage({ group = 'general' }: { group?: SettingsGroup }) {
                   <p className="xs muted">{t('admin.settings.features.note')}</p>
                 </>
               ))}
-              <Card title={t('admin.settings.flags.title')} eyebrow={t('admin.settings.flags.eyebrow')}>
+              <Card icon="flag" title={t('admin.settings.flags.title')} eyebrow={t('admin.settings.flags.eyebrow')}>
                 <p className="muted small" style={{ marginBottom: 16 }}>{canFlags ? t('admin.settings.flags.body') : t('admin.settings.flags.readonly')}</p>
                 <div className="grid grid-3">
                   {[...new Set(flags.map((f) => f.page_code ?? '—'))].map((code) => (
@@ -206,7 +209,7 @@ export function SettingsPage({ group = 'general' }: { group?: SettingsGroup }) {
               ))}
               {S('profile', t('admin.settings.sec.fiscal'), (d, set) => (
                 <div className="grid grid-2"><Field label="NIT" hint={t('admin.settings.f.nit.hint')}>{(id) => <Input id={id} value={d.nit} disabled={!canWrite} onChange={(e) => set({ ...d, nit: e.target.value })} placeholder="901.xxx.xxx-1" />}</Field><Field label={t('admin.settings.f.legal')}>{(id) => <Input id={id} value={tenant.legalName} disabled />}</Field></div>
-              ))}
+              ), 'fiscal')}
               {S('tax', t('admin.settings.sec.tax'), (d, set) => (
                 <>
                   <div className="grid grid-2">
@@ -302,7 +305,7 @@ export function SettingsPage({ group = 'general' }: { group?: SettingsGroup }) {
                   <p className="xs muted">{t('admin.settings.content.note')}</p>
                 </>
               ))}
-              <Card title={t('admin.settings.sec.legal')} eyebrow={t('admin.settings.legal.eyebrow')}>
+              <Card icon="legal" title={t('admin.settings.sec.legal')} eyebrow={t('admin.settings.legal.eyebrow')}>
                 <p className="small muted" style={{ marginBottom: 12 }}>{t('admin.settings.legal.body', { n: legalDocs.length, on: legalDocs.filter((x) => x.status === 'published').length })}</p>
                 <div className="stack-sm">
                   {legalDocs.map((d) => (
@@ -337,7 +340,7 @@ export function SettingsPage({ group = 'general' }: { group?: SettingsGroup }) {
   );
 }
 
-function Section<K extends SettingsSection>({ section, value, save, audit, readOnly, title, render }: { section: K; value: StudioSettings[K]; save: (s: K, v: StudioSettings[K]) => Promise<{ before: unknown; after: unknown }>; audit: (a: string, e: string, id?: string | null, d?: Record<string, unknown>) => Promise<unknown>; readOnly: boolean; title: string; render: (d: StudioSettings[K], set: (v: StudioSettings[K]) => void) => ReactNode }) {
+function Section<K extends SettingsSection>({ section, value, save, audit, readOnly, title, icon, render }: { section: K; icon: IconName; value: StudioSettings[K]; save: (s: K, v: StudioSettings[K]) => Promise<{ before: unknown; after: unknown }>; audit: (a: string, e: string, id?: string | null, d?: Record<string, unknown>) => Promise<unknown>; readOnly: boolean; title: string; render: (d: StudioSettings[K], set: (v: StudioSettings[K]) => void) => ReactNode }) {
   const { t } = useI18n();
   const [d, setD] = useState(value);
   const [state, setState] = useState<'idle' | 'saving' | 'saved'>('idle');
@@ -350,7 +353,7 @@ function Section<K extends SettingsSection>({ section, value, save, audit, readO
     setState('saved'); setTimeout(() => setState('idle'), 2000);
   };
   return (
-    <Card title={title} actions={!readOnly && <div className="row"><span className="xs muted">{state === 'saved' ? t('admin.settings.saved') : dirty ? t('admin.settings.unsaved') : ''}</span><Button size="sm" disabled={!dirty} loading={state === 'saving'} onClick={doSave}>{t('core.common.save')}</Button></div>}>
+    <Card title={title} icon={icon} actions={!readOnly && <div className="row"><span className="xs muted">{state === 'saved' ? t('admin.settings.saved') : dirty ? t('admin.settings.unsaved') : ''}</span><Button size="sm" disabled={!dirty} loading={state === 'saving'} onClick={doSave}>{t('core.common.save')}</Button></div>}>
       <div className="stack">{render(d, setD)}</div>
     </Card>
   );

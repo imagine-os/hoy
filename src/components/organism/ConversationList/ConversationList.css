@@ -12,7 +12,7 @@
 .convrow-top, .convrow-bottom { display: flex; align-items: center; gap: var(--sp-2); min-width: 0; }
 .convrow-name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--font-heading); font-weight: var(--fw-medium); font-size: var(--fs-sm); }
 .convrow-time { flex: 0 0 auto; color: var(--color-text-faint); font-variant-numeric: tabular-nums; }
-.convrow-glyph { flex: 0 0 auto; font-size: var(--fs-xs); color: var(--color-text-faint); }
+.convrow-glyph { flex: 0 0 auto; display: inline-flex; line-height: 0; font-size: var(--fs-xs); color: var(--color-text-faint); }
 .convrow-snippet { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-sm); color: var(--color-text-muted); }
 .convrow-badge { flex: 0 0 auto; }
 .convrow.is-unread .convrow-name, .convrow.is-unread .convrow-snippet { color: var(--color-ink); font-weight: var(--fw-semibold); }

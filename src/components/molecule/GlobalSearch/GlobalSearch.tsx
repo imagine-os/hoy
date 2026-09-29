@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
 import './GlobalSearch.css';
+import { Icon } from '../../atom/Icon/Icon';
 
 export interface SearchItem {
   id: string;
@@ -72,7 +73,7 @@ export function GlobalSearch({ items, max = 8, shortcut = '/' }: GlobalSearchPro
   return (
     <div className="gsearch" role="search">
       <label className="sr-only" htmlFor="gsearch-input">{t('core.search.label')}</label>
-      <span className="gsearch-icon" aria-hidden>⌕</span>
+      <span className="gsearch-icon" aria-hidden><Icon name="search" size="sm" /></span>
       <input
         id="gsearch-input" ref={inputRef} className="gsearch-input" type="search" value={q} autoComplete="off"
         placeholder={t('core.search.placeholder')} title={t('core.search.hint')}

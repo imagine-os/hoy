@@ -22,6 +22,7 @@ import { ListGroup, ListRow } from '../../../components/molecule/ListRow/ListRow
 import { canvasSpecs } from '../specs';
 import { NOTIF_CHANNELS, useEntitlements, useMyProfile, useNotificationPrefs } from '../hooks';
 import { PageHead } from '../ui';
+import { Icon } from '../../../components/atom/Icon/Icon';
 
 const spec = canvasSpecs['C-19'];
 
@@ -74,7 +75,7 @@ export function ProfilePage() {
         <label className="cust-photo">
           <Avatar name={name} initials={profile?.initials ?? user.initials} src={profile?.photo_url} size={72} />
           <input type="file" accept="image/*" className="sr-only" onChange={(e) => onPhoto(e.target.files?.[0])} />
-          <span className="cust-photo-edit" aria-hidden>✎</span>
+          <span className="cust-photo-edit" aria-hidden><Icon name="edit" size="xs" /></span>
           <span className="sr-only">{t('customer.profile.changePhoto')}</span>
         </label>
         <div className="grow stack-sm">
@@ -90,29 +91,29 @@ export function ProfilePage() {
     EditProfile: () => <Button block variant="secondary" onClick={openEdit}>{t('customer.profile.edit')}</Button>,
     'MembershipRow → plan management': () => (
       <ListGroup title={t('customer.profile.account')}>
-        <ListRow icon="◇" title={t('customer.membership.title')} subtitle={ent.membership ? t('customer.home.membership.active', { date: formatDate(ent.membership.renews_at ?? ent.membership.starts_at, lang) }) : t('customer.profile.noPlan')} to="/app/membership" trailing={ent.membership ? <Badge tone={ent.membership.status === 'active' ? 'success' : 'warn'}>{t(`customer.membership.status.${ent.membership.status}`)}</Badge> : undefined} />
-        <ListRow icon="●" title={t('customer.credits.title')} subtitle={t('customer.checkout.credit.sub', { n: ent.creditBalance })} to="/app/credits" />
-        <ListRow icon="▤" title={t('core.nav.history')} to="/app/history" />
+        <ListRow icon="ticket" title={t('customer.membership.title')} subtitle={ent.membership ? t('customer.home.membership.active', { date: formatDate(ent.membership.renews_at ?? ent.membership.starts_at, lang) }) : t('customer.profile.noPlan')} to="/app/membership" trailing={ent.membership ? <Badge tone={ent.membership.status === 'active' ? 'success' : 'warn'}>{t(`customer.membership.status.${ent.membership.status}`)}</Badge> : undefined} />
+        <ListRow icon="coins" title={t('customer.credits.title')} subtitle={t('customer.checkout.credit.sub', { n: ent.creditBalance })} to="/app/credits" />
+        <ListRow icon="history" title={t('core.nav.history')} to="/app/history" />
       </ListGroup>
     ),
-    PaymentMethods: () => <ListGroup><ListRow icon="▭" title={t('customer.pay.title')} subtitle={t('customer.profile.pay.sub')} to="/app/payment-methods" /></ListGroup>,
+    PaymentMethods: () => <ListGroup><ListRow icon="credit-card" title={t('customer.pay.title')} subtitle={t('customer.profile.pay.sub')} to="/app/payment-methods" /></ListGroup>,
     'NotificationPrefs (push / email / WhatsApp)': () => (
       <ListGroup title={t('customer.profile.notifications')}>
-        {NOTIF_CHANNELS.map((k) => <ListRow key={k} icon={k === 'whatsapp' ? '◎' : k === 'push' ? '◉' : '✉'} title={t(`customer.profile.notif.${k}`)} subtitle={t(`customer.profile.notif.${k}.sub`)} trailing={<Toggle size="sm" checked={prefs.channelOn(k)} onChange={(v) => { void prefs.setChannel(k, v); }} label="" />} />)}
-        <ListRow icon="▣" title={t('customer.notifications.prefs.title')} subtitle={t('customer.notifications.prefs.byCategory')} to="/app/notifications" />
-        <ListRow icon="▣" title={t('customer.notifications.title')} to="/app/notifications" />
+        {NOTIF_CHANNELS.map((k) => <ListRow key={k} icon={k === 'whatsapp' ? 'whatsapp' : k === 'push' ? 'bell' : 'mail'} title={t(`customer.profile.notif.${k}`)} subtitle={t(`customer.profile.notif.${k}.sub`)} trailing={<Toggle size="sm" checked={prefs.channelOn(k)} onChange={(v) => { void prefs.setChannel(k, v); }} label="" />} />)}
+        <ListRow icon="sliders" title={t('customer.notifications.prefs.title')} subtitle={t('customer.notifications.prefs.byCategory')} to="/app/notifications" />
+        <ListRow icon="bell" title={t('customer.notifications.title')} to="/app/notifications" />
       </ListGroup>
     ),
-    'LanguageToggle (EN / ES)': () => <ListGroup><ListRow icon="◐" title={t('customer.profile.language')} subtitle={t('customer.profile.language.sub')} trailing={<LangToggle size="sm" />} /></ListGroup>,
+    'LanguageToggle (EN / ES)': () => <ListGroup><ListRow icon="languages" title={t('customer.profile.language')} subtitle={t('customer.profile.language.sub')} trailing={<LangToggle size="sm" />} /></ListGroup>,
     'LeaveAReview → Google / Instagram': () => (
       <ListGroup title={t('customer.profile.review')}>
-        <ListRow icon="★" title={t('customer.profile.review.google')} href={`https://www.google.com/search?q=${encodeURIComponent(`${tenant.legalName} ${tenant.city}`)}`} />
-        <ListRow icon="◌" title={t('customer.profile.review.instagram')} subtitle={contact.instagram} href={contact.instagramUrl} />
+        <ListRow icon="star" title={t('customer.profile.review.google')} href={`https://www.google.com/search?q=${encodeURIComponent(`${tenant.legalName} ${tenant.city}`)}`} />
+        <ListRow icon="at-sign" title={t('customer.profile.review.instagram')} subtitle={contact.instagram} href={contact.instagramUrl} />
       </ListGroup>
     ),
     'Legal links': () => (
       <ListGroup title={t('customer.profile.legal')}>
-        <ListRow icon="▣" title={t('customer.account.title')} subtitle={t('customer.account.sub')} to="/app/account" />
+        <ListRow icon="user-cog" title={t('customer.account.title')} subtitle={t('customer.account.sub')} to="/app/account" />
         <ListRow title={t('customer.profile.legal.terms')} to="/app/legal/terms" />
         <ListRow title={t('customer.profile.legal.privacy')} subtitle={t('customer.profile.legal.law')} to="/app/legal/privacy" />
         <ListRow title={t('customer.legal.kind.waiver')} subtitle={t('customer.legal.kind.house-rules')} to="/app/legal/waiver" />
@@ -121,8 +122,8 @@ export function ProfilePage() {
     ),
     'SignOut / DeleteAccount': () => (
       <ListGroup>
-        <ListRow icon="⏻" title={t('customer.profile.signOut')} onClick={signOut} />
-        <ListRow icon="×" tone="danger" title={t('customer.profile.delete')} subtitle={t('customer.profile.delete.sub')} to="/app/account" />
+        <ListRow icon="log-out" title={t('customer.profile.signOut')} onClick={signOut} />
+        <ListRow icon="trash" tone="danger" title={t('customer.profile.delete')} subtitle={t('customer.profile.delete.sub')} to="/app/account" />
       </ListGroup>
     ),
   };

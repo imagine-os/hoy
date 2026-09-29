@@ -10,7 +10,7 @@ export default defineMeta({
     { name: 'tone', type: "'info' | 'success' | 'warn' | 'danger'", default: 'info', description: { es: 'Color e icono.', en: 'Colour and glyph.' } },
     { name: 'title', type: 'ReactNode', description: { es: 'Línea en negrita.', en: 'Bold line.' } },
     { name: 'action', type: 'ReactNode', description: { es: 'Botón o enlace a la derecha.', en: 'Button or link on the right.' } },
-    { name: 'icon', type: 'ReactNode', description: { es: 'Sustituye el glifo por defecto.', en: 'Replaces the default glyph.' } },
+    { name: 'icon', type: 'IconName | ReactNode', description: { es: 'Sustituye el glifo del tono (info, check, alert, circle-alert).', en: 'Replaces the tone glyph (info, check, alert, circle-alert).' } },
   ],
   states: ['info', 'success', 'warn', 'danger', 'with action'],
   usages: [{ title: { es: 'Cuatro tonos', en: 'Four tones' }, render: () => h('div', { className: 'stack-sm' },

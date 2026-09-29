@@ -1,6 +1,7 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import { useT } from '../../../i18n/I18nProvider';
 import './DataTable.css';
+import { Icon } from '../../atom/Icon/Icon';
 
 export interface DataTableColumn<T> {
   key: string;
@@ -65,7 +66,7 @@ export function DataTable<T extends Record<string, unknown>>({ columns, rows, ro
                 <th key={c.key} style={{ width: c.width, textAlign: c.align }} aria-sort={sort?.key === c.key ? (sort.dir === 'asc' ? 'ascending' : 'descending') : undefined}>
                   {c.sortable === false ? c.label : (
                     <button type="button" className="datatable-sort" onClick={() => toggleSort(c.key)}>
-                      {c.label}<span className="datatable-sorticon" aria-hidden>{sort?.key === c.key ? (sort.dir === 'asc' ? '↑' : '↓') : '↕'}</span>
+                      {c.label}<span className="datatable-sorticon" aria-hidden><Icon name={sort?.key === c.key ? (sort.dir === 'asc' ? 'arrow-up' : 'arrow-down') : 'sort'} size="xs" /></span>
                     </button>
                   )}
                 </th>

@@ -18,6 +18,7 @@ import { TopBar } from '../../organism/TopBar/TopBar';
 import { GlobalSearch, type SearchItem } from '../../molecule/GlobalSearch/GlobalSearch';
 import { InboxPopover } from '../../molecule/InboxPopover/InboxPopover';
 import './DesktopShell.css';
+import { Icon } from '../../atom/Icon/Icon';
 
 export interface DesktopShellProps {
   surfaces: Surface[];
@@ -152,7 +153,7 @@ export function DesktopShell({ surfaces, routes, titleKey, children }: DesktopSh
                     title={t(open ? 'core.shell.group.collapse' : 'core.shell.group.expand', { group: label(g) })}
                     onClick={() => setFolded((f) => ({ ...f, [g]: !f[g] }))}
                   >
-                    <span className="deskshell-caret" aria-hidden>{open ? '⌄' : '›'}</span>
+                    <span className="deskshell-caret" aria-hidden><Icon name={open ? 'chevron-down' : 'chevron-right'} size="xs" /></span>
                     <span className="deskshell-grouptext">{label(g)}</span>
                   </button>
                 )}
@@ -164,7 +165,7 @@ export function DesktopShell({ surfaces, routes, titleKey, children }: DesktopSh
                     title={collapsed ? t(r.nav!.labelKey) : undefined}
                     onClick={() => setDrawer(false)}
                   >
-                    <span className="deskshell-icon" aria-hidden>{r.nav!.icon}</span>
+                    <span className="deskshell-icon" aria-hidden><Icon name={r.nav!.icon} size="md" /></span>
                     <span className="deskshell-linktext">{t(r.nav!.labelKey)}</span>
                     {devMode && !collapsed && <code className="deskshell-code">{r.spec.code}</code>}
                     {collapsed && <span className="deskshell-tip" aria-hidden>{t(r.nav!.labelKey)}</span>}
@@ -180,7 +181,7 @@ export function DesktopShell({ surfaces, routes, titleKey, children }: DesktopSh
             aria-expanded={!collapsed} aria-label={collapsed ? t('core.shell.expand') : t('core.shell.collapse')}
             title={`${collapsed ? t('core.shell.expand') : t('core.shell.collapse')} · ${t('core.shell.collapseHint')}`}
           >
-            <span className="deskshell-chev" aria-hidden>{collapsed ? '»' : '«'}</span>
+            <span className="deskshell-chev" aria-hidden><Icon name={collapsed ? 'chevron-right' : 'chevron-left'} size="sm" /></span>
             {!collapsed && <span className="small">{t('core.shell.collapse')}</span>}
           </button>
           {collapsed ? (
@@ -201,7 +202,7 @@ export function DesktopShell({ surfaces, routes, titleKey, children }: DesktopSh
           actions={
             <>
               <LangToggle size="sm" />
-              <button type="button" className="deskshell-iconbtn" onClick={toggleTheme} aria-label={t('core.theme.toggle')} title={t('core.theme.toggle')}>{theme === 'dark' ? '☾' : '☀'}</button>
+              <button type="button" className="deskshell-iconbtn" onClick={toggleTheme} aria-label={t('core.theme.toggle')} title={t('core.theme.toggle')}><Icon name={theme === 'dark' ? 'moon' : 'sun'} size="sm" /></button>
               {hasInbox && <InboxPopover count={inbox.count} items={inboxItems} itemTo={(k) => `/staff/inbox/${k}`} inboxTo="/staff/inbox" />}
               <div className="deskshell-rs"><RoleSwitcher compact /></div>
               {isSuperAdmin && <span className="deskshell-devtoggle" title={t('core.dev.mode')}><Toggle size="sm" checked={devMode} onChange={setDevMode} label={t('core.dev.mode')} /></span>}

@@ -61,11 +61,13 @@ hace una clase al día.
 
 {{tenant:capacity}}
 
-La pregunta central del producto es "¿Cómo quieres sentirte hoy?" (pantalla A-05). Todo lo que
+La pregunta central del estudio es "¿Cómo quieres sentirte hoy?". Todo lo que
 hacemos en el estudio responde a esa pregunta: la persona llega buscando sentirse de una manera, y
 nosotros le hacemos el camino fácil.
 
-![La pregunta con la que abre la app del socio](../../screenshots/A-05/es-390.jpg "A-05 · /app/intention")
+![El inicio de la app del socio: su próxima clase y las de hoy](../../screenshots/C-01/es-390.jpg "C-01 · /app")
+
+_La pantalla que hacía esta pregunta en la app (A-05) se retiró en la versión 0.12.0; la pregunta vive en la recepción y en la clase, no en un formulario._
 
 ## 4. Controles conscientes
 Prometemos cuatro cosas y las cumplimos. No son eslóganes: son valores guardados en M-08 y el

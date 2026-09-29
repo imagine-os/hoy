@@ -14,6 +14,7 @@ import { useContact, useSettings } from '../admin/settings';
 import { periodLabel } from '../admin/payouts';
 import { useTeacherSelf } from './useTeacherSelf';
 import './teacher.css';
+import { Icon } from '../../components/atom/Icon/Icon';
 
 interface TemplateRow extends BaseRow { teacher_id: string }
 
@@ -79,9 +80,9 @@ export function TeacherPayrollPage() {
       <div className="row-between wrap">
         <h1 className="teach-h1">{t('teacher.payroll.title')}</h1>
         <div className="row">
-          <Button size="sm" variant="ghost" onClick={() => setOffset(offset - 1)} aria-label="‹">‹</Button>
+          <Button size="sm" variant="ghost" onClick={() => setOffset(offset - 1)} aria-label={t('teacher.payroll.prev')} title={t('teacher.payroll.prev')}><Icon name="chevron-left" /></Button>
           <span className="small teach-month">{label}</span>
-          <Button size="sm" variant="ghost" disabled={offset >= 0} onClick={() => setOffset(offset + 1)} aria-label="›">›</Button>
+          <Button size="sm" variant="ghost" disabled={offset >= 0} onClick={() => setOffset(offset + 1)} aria-label={t('teacher.payroll.next')} title={t('teacher.payroll.next')}><Icon name="chevron-right" /></Button>
         </div>
       </div>
 
@@ -165,8 +166,8 @@ export function TeacherPayrollPage() {
           )}
 
           <div className="row wrap">
-            <Button size="sm" variant="ghost" onClick={() => window.print()}>{t('teacher.payroll.download')}</Button>
-            <a href={ask} target="_blank" rel="noreferrer"><Button size="sm" variant="ghost">{t('teacher.payroll.ask')}</Button></a>
+            <Button size="sm" variant="ghost" onClick={() => window.print()} icon="download">{t('teacher.payroll.download')}</Button>
+            <a href={ask} target="_blank" rel="noreferrer"><Button size="sm" variant="ghost" icon="whatsapp">{t('teacher.payroll.ask')}</Button></a>
             <Chip>{t('teacher.payroll.runBy')}</Chip>
           </div>
         </>

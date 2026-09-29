@@ -19,3 +19,7 @@
 .card-head > * { min-width: 0; }
 .card-title { font-size: var(--fs-lg); min-width: 0; overflow-wrap: anywhere; }
 .card-actions { display: flex; flex-wrap: wrap; gap: var(--sp-2); flex: 0 1 auto; min-width: 0; }
+/* 0030: optional glyph tile before the title (settings sections, quick actions) */
+.card-head.has-icon { align-items: center; flex-wrap: nowrap; }
+.card-head.has-icon > .grow { flex: 1 1 auto; }
+.card-icon { flex: 0 0 auto; width: var(--icon-tile); height: var(--icon-tile); border-radius: var(--r-ctl); display: inline-flex; align-items: center; justify-content: center; background: color-mix(in srgb, var(--color-primary) 10%, var(--color-surface-2)); color: var(--color-primary); }

@@ -9,7 +9,7 @@ export interface ChipProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children?: ReactNode;
 }
 
-/** Selectable pill (filters, intention picker, movement tags). Renders a button when onClick is set, else a span. */
+/** Selectable pill (filters, movement tags). Renders a button when onClick is set, else a span. */
 export function Chip({ selected = false, movement, dot = false, className = '', children, onClick, ...rest }: ChipProps) {
   const cls = `chip ${selected ? 'is-selected' : ''} ${movement ? `chip-mv chip-${movement}` : ''} ${className}`;
   const inner = <>{dot && <span className="chip-dot" aria-hidden />}{children}</>;

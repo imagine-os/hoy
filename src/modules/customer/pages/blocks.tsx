@@ -97,7 +97,7 @@ export function EmptyHomeBlock() {
     <div className="stack cust-home">
       <h1 className="cust-greeting">{t('customer.home.greeting', { name: user.name.split(' ')[0] })}</h1>
       <Card padding="sm">
-        <EmptyState icon="☼" title={t('customer.empty.title')} body={t('customer.empty.body', { name: tenant.name })}
+        <EmptyState icon="sun" title={t('customer.empty.title')} body={t('customer.empty.body', { name: tenant.name })}
           action={<Button size="lg" onClick={() => nav('/app/schedule')}>{t('customer.empty.cta')}</Button>}
           secondary={<Link to="/app/rules" className="small">{t('customer.empty.tour')} →</Link>} />
       </Card>

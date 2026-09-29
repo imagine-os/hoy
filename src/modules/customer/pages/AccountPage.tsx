@@ -105,10 +105,10 @@ export function AccountPage() {
     ),
     ConsentToggles: () => (
       <ListGroup title={t('customer.account.consents')}>
-        <ListRow icon="◎" title={t('customer.account.consent.marketingWa')} subtitle={t('customer.account.consent.marketing.sub')} trailing={<Toggle size="sm" checked={prefs.isEnabled('whatsapp', 'marketing')} onChange={(v) => { void setMarketing('whatsapp', v); }} label="" />} />
-        <ListRow icon="✉" title={t('customer.account.consent.marketingEmail')} subtitle={t('customer.account.consent.marketing.sub')} trailing={<Toggle size="sm" checked={prefs.isEnabled('email', 'marketing')} onChange={(v) => { void setMarketing('email', v); }} label="" />} />
-        <ListRow icon="▣" title={t('customer.account.consent.processing')} subtitle={privacy ? t('customer.account.consent.processing.on', { v: privacy.version, date: formatDate(privacy.accepted_at, lang, { dateStyle: 'long' }) }) : t('customer.account.consent.processing.off')} to="/app/legal/privacy" trailing={<Badge tone={privacy ? 'success' : 'warn'}>{privacy ? `v${privacy.version}` : t('customer.legal.notAccepted.short')}</Badge>} />
-        <ListRow icon="◉" title={t('customer.notifications.prefs.title')} subtitle={t('customer.notifications.prefs.byCategory')} to="/app/notifications" />
+        <ListRow icon="whatsapp" title={t('customer.account.consent.marketingWa')} subtitle={t('customer.account.consent.marketing.sub')} trailing={<Toggle size="sm" checked={prefs.isEnabled('whatsapp', 'marketing')} onChange={(v) => { void setMarketing('whatsapp', v); }} label="" />} />
+        <ListRow icon="mail" title={t('customer.account.consent.marketingEmail')} subtitle={t('customer.account.consent.marketing.sub')} trailing={<Toggle size="sm" checked={prefs.isEnabled('email', 'marketing')} onChange={(v) => { void setMarketing('email', v); }} label="" />} />
+        <ListRow icon="shield" title={t('customer.account.consent.processing')} subtitle={privacy ? t('customer.account.consent.processing.on', { v: privacy.version, date: formatDate(privacy.accepted_at, lang, { dateStyle: 'long' }) }) : t('customer.account.consent.processing.off')} to="/app/legal/privacy" trailing={<Badge tone={privacy ? 'success' : 'warn'}>{privacy ? `v${privacy.version}` : t('customer.legal.notAccepted.short')}</Badge>} />
+        <ListRow icon="bell" title={t('customer.notifications.prefs.title')} subtitle={t('customer.notifications.prefs.byCategory')} to="/app/notifications" />
       </ListGroup>
     ),
     ExportData: () => (
@@ -137,7 +137,7 @@ export function AccountPage() {
       </Card>
     ) : (
       <ListGroup title={t('customer.account.delete')}>
-        <ListRow icon="×" tone="danger" title={t('customer.profile.delete')} subtitle={t('customer.account.delete.sub')} onClick={() => setStep(1)} />
+        <ListRow icon="trash" tone="danger" title={t('customer.profile.delete')} subtitle={t('customer.account.delete.sub')} onClick={() => setStep(1)} />
       </ListGroup>
     ),
   };

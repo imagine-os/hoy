@@ -9,7 +9,7 @@ const base = { roles: EVERYONE, surface: 'docs' as const, layout: 'desktop' as c
 const page = lazyPages(() => import('./pages'));
 
 export const routes: RouteDef[] = [
-  { ...base, path: '/manual', element: page('ManualHome'), spec: manualSpec, nav: { labelKey: 'core.nav.manual', icon: '▤', order: 2 } },
+  { ...base, path: '/manual', element: page('ManualHome'), spec: manualSpec, nav: { labelKey: 'core.nav.manual', icon: 'manual', order: 2 } },
   { ...base, path: '/manual/decisions', element: page('DecisionsPage'), spec: decisionsSpec },
   { ...base, path: '/manual/:chapter', element: page('ManualPage'), spec: manualSpec },
 ];

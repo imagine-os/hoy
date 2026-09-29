@@ -5,14 +5,12 @@ import { useAppNavHandlers } from './actions';
 import { Link, useNavigate } from 'react-router-dom';
 import { useI18n } from '../../i18n/I18nProvider';
 import { useSession } from '../../auth/SessionProvider';
-import { useData, useTable } from '../../data/DataContext';
-import type { BookingRow, CreditRow, IntentionRow, MembershipRow } from '../../data/schema';
-import { formatDate, isSameDay, dateKey } from '../../i18n/format';
+import { useTable } from '../../data/DataContext';
+import type { BookingRow, CreditRow, MembershipRow } from '../../data/schema';
+import { formatDate, isSameDay } from '../../i18n/format';
 import { useLayout } from '../../layout/useLayout';
-import { canvasSpecs } from '../../specs/canvasSpecs';
-import { movements, type Movement } from '../../design/tokens';
+import { canvasSpecs } from './specs';
 import { Card } from '../../components/molecule/Card/Card';
-import { Chip } from '../../components/atom/Chip/Chip';
 import { Button } from '../../components/atom/Button/Button';
 import { StatTile } from '../../components/molecule/StatTile/StatTile';
 import { ClassRow } from '../../components/molecule/ClassRow/ClassRow';
@@ -20,6 +18,7 @@ import { ClassCard } from '../../components/organism/ClassCard/ClassCard';
 import { useSessionsJoined } from '../website/hooks';
 import { EmptyHomeBlock } from './pages/blocks';
 import './customer.css';
+import { Icon } from '../../components/atom/Icon/Icon';
 
 const spec = canvasSpecs['C-01'];
 const HOME_SIDE = new Set(['MembershipNudge (if no plan)', 'AnnouncementCard (if active)', 'QuickActions ×4', 'StatsRow ×3', 'FeedbackPrompt (conditional)']);
@@ -28,35 +27,26 @@ const HOME_SIDE = new Set(['MembershipNudge (if no plan)', 'AnnouncementCard (if
 export function CustomerHomePage() {
   const { t, lang } = useI18n();
   const nav = useNavigate();
-  const data = useData();
   const { user } = useSession();
   const { sections, isVisible } = useLayout(spec);
   useActions(spec, useAppNavHandlers());
 
   const { rows: myBookings, loading: bookingsLoading } = useTable<BookingRow>('bookings', { where: { user_id: user.id } });
-  const { rows: intentions } = useTable<IntentionRow>('intentions', { where: { user_id: user.id, date: dateKey() } });
   const { rows: memberships } = useTable<MembershipRow>('memberships', { where: { user_id: user.id, status: 'active' } });
   const { rows: credits } = useTable<CreditRow>('credits', { where: { user_id: user.id } });
   const all = useSessionsJoined();
-  const intention = intentions[0];
   const now = Date.now();
 
   const activeBookingIds = useMemo(() => new Set(myBookings.filter((b) => b.status === 'booked').map((b) => b.session_id)), [myBookings]);
   const next = useMemo(() => all.filter((x) => activeBookingIds.has(x.session.id) && new Date(x.session.ends_at).getTime() > now && x.session.status === 'scheduled').sort((a, b) => a.session.starts_at.localeCompare(b.session.starts_at))[0], [all, activeBookingIds, now]);
   const today = useMemo(() => {
-    const list = all.filter((x) => isSameDay(x.session.starts_at, new Date()) && x.session.status === 'scheduled' && new Date(x.session.ends_at).getTime() > now);
-    // rule: today's list re-orders by the day's intention
-    if (!intention) return list;
-    return [...list].sort((a, b) => Number(b.modality?.movement === intention.movement) - Number(a.modality?.movement === intention.movement));
-  }, [all, intention, now]);
+    // 0030: plain start-time order (the A-05 intention sort is retired with the question)
+    return all.filter((x) => isSameDay(x.session.starts_at, new Date()) && x.session.status === 'scheduled' && new Date(x.session.ends_at).getTime() > now);
+  }, [all, now]);
   const monthCount = myBookings.filter((b) => b.status === 'checked_in' && new Date(b.created_at).getMonth() === new Date().getMonth()).length;
   const creditBalance = credits.reduce((a, c) => a + c.delta, 0);
   const membership = memberships[0];
 
-  const setIntention = async (mv: Movement) => {
-    if (intention) await data.update('intentions', intention.id, { movement: mv });
-    else await data.insert('intentions', { user_id: user.id, date: dateKey(), movement: mv });
-  };
   const book = (sessionId: string) => nav(`/app/checkout/${sessionId}`);
 
   const SECTIONS: Record<string, () => ReactNode> = {
@@ -76,18 +66,11 @@ export function CustomerHomePage() {
     ),
     'QuickActions ×4': () => (
       <div className="cust-quick">
-        {[['/app/schedule', '▦', 'schedule'], ['/app/schedule', '＋', 'book'], ['/app/plans', '◇', 'plans'], ['/app/invite', '✉', 'invite']].map(([to, icon, k]) => <Link key={k} to={to} className="cust-quick-btn"><span aria-hidden>{icon}</span><span>{t(`customer.home.quick.${k}`)}</span></Link>)}
+        {([['/app/schedule', 'schedule', 'schedule'], ['/app/schedule', 'calendar-plus', 'book'], ['/app/plans', 'ticket', 'plans'], ['/app/invite', 'invite', 'invite']] as const).map(([to, icon, k]) => <Link key={k} to={to} className="cust-quick-btn"><span className="cust-quick-icon" aria-hidden><Icon name={icon} size="lg" /></span><span>{t(`customer.home.quick.${k}`)}</span></Link>)}
       </div>
     ),
-    'TodayList (intention-sorted)': () => (
+    'TodayList': () => (
       <section className="stack-sm">
-        <Card className="stack-sm" tone={intention ? 'surface' : 'muted'}>
-          <div className="row-between wrap">
-            <strong className="small">{intention ? t('customer.home.intention.done', { mv: movements[intention.movement].label }) : t('customer.home.intention.q')}</strong>
-            {intention && <button type="button" className="xs muted" style={{ border: 0, background: 'none' }} onClick={() => data.remove('intentions', intention.id)}>{t('customer.home.intention.change')}</button>}
-          </div>
-          {!intention && <><div className="row wrap">{(Object.keys(movements) as Movement[]).map((mv) => <Chip key={mv} movement={mv} dot onClick={() => setIntention(mv)}>{movements[mv].label}</Chip>)}</div><p className="xs muted">{t('customer.home.intention.hint')}</p></>}
-        </Card>
         <div className="eyebrow">{t('customer.home.today')}</div>
         <Card padding="sm">
           {today.length === 0 && <p className="muted small" style={{ padding: 12 }}>{t('customer.home.today.empty')}</p>}

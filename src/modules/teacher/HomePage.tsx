@@ -136,7 +136,7 @@ export function TeacherHomePage() {
             <Field label={t('teacher.home.sub.class')}>{(id) => <Select id={id} value={sub.session} onChange={(e) => setSub({ ...sub, session: e.target.value })}>{upcoming.map(({ session: s }) => <option key={s.id} value={s.id}>{formatDate(s.starts_at, lang)} {formatTime(s.starts_at, lang)} · {s.title}</option>)}</Select>}</Field>
             <Field label={t('teacher.home.sub.reason')}>{(id) => <textarea id={id} className="input" rows={3} value={sub.reason} onChange={(e) => setSub({ ...sub, reason: e.target.value })} />}</Field>
             <div className="row"><Badge tone="warn">{t('teacher.home.sub.rule')}</Badge></div>
-            <Button block disabled={!sub.session || !sub.reason.trim()} onClick={requestSub}>{t('teacher.home.sub.send')}</Button>
+            <Button block disabled={!sub.session || !sub.reason.trim()} onClick={requestSub} icon="send">{t('teacher.home.sub.send')}</Button>
           </div>
         )}
       </Drawer>

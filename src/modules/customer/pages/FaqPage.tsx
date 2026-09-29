@@ -19,7 +19,7 @@ export function FaqPage({ page }: { page: 1 | 2 }) {
       <PageHead back={page === 1 ? '/app/more' : '/app/faq'} title={t('customer.faq.title')} sub={t('customer.faq.page', { n: page, total: totalPages })} eyebrow={`C-1${page === 1 ? 4 : 5}`} />
       <div className="stack">
         {loading && groups.length === 0 && <EmptyState compact tone="loading" title={t('core.common.loading')} />}
-        {!loading && groups.length === 0 && <EmptyState icon="?" title={t('customer.faq.empty')} body={t('customer.faq.empty.body')} />}
+        {!loading && groups.length === 0 && <EmptyState icon="help" title={t('customer.faq.empty')} body={t('customer.faq.empty.body')} />}
         {groups.map((s) => (
           <section key={s.key} className="stack-sm">
             <div><h2 className="cust-h2">{bi(s.title)}</h2><p className="small muted">{bi(s.lead)}</p></div>

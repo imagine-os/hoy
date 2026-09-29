@@ -183,8 +183,8 @@ export function RoomsPage() {
             )}
             {form.start && form.end && !windowOk && <p className="xs register-diff">{t('staff.rooms.badWindow')}</p>}
             <div className="row wrap">
-              <Button disabled={!valid} loading={busy === 'book'} onClick={() => book('confirmed')}>{t('staff.rooms.cta.confirm')}</Button>
-              <Button variant="secondary" disabled={!valid} loading={busy === 'book'} onClick={() => book('held')}>{t('staff.rooms.cta.hold')}</Button>
+              <Button disabled={!valid} loading={busy === 'book'} onClick={() => book('confirmed')} icon="check">{t('staff.rooms.cta.confirm')}</Button>
+              <Button variant="secondary" disabled={!valid} loading={busy === 'book'} onClick={() => book('held')} icon="clock">{t('staff.rooms.cta.hold')}</Button>
             </div>
             <p className="xs muted">{t('staff.rooms.form.charge')}</p>
           </div>
@@ -196,7 +196,7 @@ export function RoomsPage() {
         return (
           <Card title={selectedSession.title} eyebrow={t('staff.rooms.selected.class')} padding="sm" actions={<Badge tone="primary">{formatTime(selectedSession.starts_at, lang)}–{formatTime(selectedSession.ends_at, lang)}</Badge>}>
             <p className="small">{teacher.get(selectedSession.teacher_id)?.display_name} · {roomName.get(selectedSession.room_id)} · {selectedSession.booked_count}/{selectedSession.capacity}</p>
-            <div className="row wrap" style={{ marginTop: 8 }}><Link to={`/staff/checkin?session=${selectedSession.id}`}><Button size="sm" variant="ghost">{t('staff.home.openCheckin')}</Button></Link></div>
+            <div className="row wrap" style={{ marginTop: 8 }}><Link to={`/staff/checkin?session=${selectedSession.id}`}><Button size="sm" variant="ghost" icon="checkin">{t('staff.home.openCheckin')}</Button></Link></div>
           </Card>
         );
       }
@@ -215,10 +215,10 @@ export function RoomsPage() {
               : selected.kind !== 'maintenance' && selected.kind !== 'blocked' && <p className="xs muted">{t('staff.rooms.unpaid')}</p>}
             {canWrite && (
               <div className="row wrap">
-                {selected.status === 'held' && <Button size="sm" loading={busy === 'confirmed'} onClick={() => setStatus(selected, 'confirmed')}>{t('staff.rooms.action.confirm')}</Button>}
-                {selected.status === 'confirmed' && <Button size="sm" variant="secondary" loading={busy === 'done'} onClick={() => setStatus(selected, 'done')}>{t('staff.rooms.action.done')}</Button>}
-                {(selected.status === 'held' || selected.status === 'confirmed') && <Button size="sm" variant="ghost" loading={busy === 'cancelled'} onClick={() => setStatus(selected, 'cancelled')}>{t('staff.rooms.action.cancel')}</Button>}
-                {canPay && <Button size="sm" variant="ghost" onClick={() => nav(`/staff/register?booking=${selected.id}`)}>{t('staff.rooms.action.charge')}</Button>}
+                {selected.status === 'held' && <Button size="sm" loading={busy === 'confirmed'} onClick={() => setStatus(selected, 'confirmed')} icon="check">{t('staff.rooms.action.confirm')}</Button>}
+                {selected.status === 'confirmed' && <Button size="sm" variant="secondary" loading={busy === 'done'} onClick={() => setStatus(selected, 'done')} icon="circle-check">{t('staff.rooms.action.done')}</Button>}
+                {(selected.status === 'held' || selected.status === 'confirmed') && <Button size="sm" variant="ghost" loading={busy === 'cancelled'} onClick={() => setStatus(selected, 'cancelled')} icon="cancel">{t('staff.rooms.action.cancel')}</Button>}
+                {canPay && <Button size="sm" variant="ghost" onClick={() => nav(`/staff/register?booking=${selected.id}`)} icon="payment">{t('staff.rooms.action.charge')}</Button>}
               </div>
             )}
           </div>
@@ -245,7 +245,7 @@ export function RoomsPage() {
       <div className="page-head">
         <div><h1>{t('staff.rooms.title')}</h1><p className="muted small">{t('staff.rooms.subtitle')}</p></div>
         <div className="row wrap">
-          {can('payments.write') && <Link to="/staff/register"><Button size="sm" variant="ghost">{t('staff.home.openRegister')}</Button></Link>}
+          {can('payments.write') && <Link to="/staff/register"><Button size="sm" variant="ghost" icon="register">{t('staff.home.openRegister')}</Button></Link>}
         </div>
       </div>
       {notice && <div className={`staff-notice ${notice.tone === 'bad' ? 'staff-notice-bad' : ''} small`}>{notice.text}</div>}

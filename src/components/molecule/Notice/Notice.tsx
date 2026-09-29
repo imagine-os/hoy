@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import './Notice.css';
+import { renderIcon, type IconName } from '../../atom/Icon/Icon';
 
 export type NoticeTone = 'info' | 'success' | 'warn' | 'danger';
 
@@ -9,14 +10,15 @@ export interface NoticeProps {
   children?: ReactNode;
   /** Optional action rendered on the right (Button, Link). */
   action?: ReactNode;
-  icon?: ReactNode;
+  /** An `IconName` or a node; replaces the tone glyph. */
+  icon?: IconName | ReactNode;
   className?: string;
 }
 
 /** Inline banner for states the page must explain: cancelled class, declined payment, gateway down, saved. */
 export function Notice({ tone = 'info', title, children, action, icon, className = '' }: NoticeProps) {
   const role = tone === 'danger' || tone === 'warn' ? 'alert' : 'status';
-  const glyph = icon ?? (tone === 'danger' ? '!' : tone === 'warn' ? '△' : tone === 'success' ? '✓' : 'i');
+  const glyph = renderIcon(icon ?? (tone === 'danger' ? 'circle-alert' : tone === 'warn' ? 'alert' : tone === 'success' ? 'check' : 'info'), 'xs');
   return (
     <div className={`notice notice-${tone} ${className}`} role={role}>
       <span className="notice-icon" aria-hidden>{glyph}</span>

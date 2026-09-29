@@ -1,11 +1,13 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import './ListRow.css';
+import { Icon, isIconName, renderIcon, type IconName } from '../../atom/Icon/Icon';
 
 export interface ListRowProps {
   title: ReactNode;
   subtitle?: ReactNode;
-  icon?: ReactNode;
+  /** An `IconName` (drawn in the tinted tile) or any node (Avatar, custom glyph). */
+  icon?: IconName | ReactNode;
   /** Right-hand slot: value, Badge, Toggle. When absent and the row navigates, a chevron shows. */
   trailing?: ReactNode;
   to?: string;
@@ -22,12 +24,12 @@ export function ListRow({ title, subtitle, icon, trailing, to, href, onClick, to
   const cls = `listrow listrow-${tone} ${interactive ? 'is-interactive' : ''} ${disabled ? 'is-disabled' : ''} ${className}`;
   const inner = (
     <>
-      {icon && <span className="listrow-icon" aria-hidden>{icon}</span>}
+      {icon && <span className={`listrow-icon ${isIconName(icon) ? 'has-glyph' : ''}`} aria-hidden>{renderIcon(icon, 'md')}</span>}
       <span className="listrow-main">
         <span className="listrow-title">{title}</span>
         {subtitle && <span className="listrow-sub">{subtitle}</span>}
       </span>
-      {trailing != null ? <span className="listrow-trailing">{trailing}</span> : interactive ? <span className="listrow-chevron" aria-hidden>›</span> : null}
+      {trailing != null ? <span className="listrow-trailing">{trailing}</span> : interactive ? <span className="listrow-chevron" aria-hidden><Icon name="chevron-right" size="sm" /></span> : null}
     </>
   );
   if (to && !disabled) return <Link to={to} className={cls}>{inner}</Link>;

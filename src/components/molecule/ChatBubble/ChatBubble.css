@@ -11,7 +11,7 @@
 .chatbubble-out .chatbubble-meta { color: var(--color-on-highlight); }
 .chatbubble-out.is-auto .chatbubble-meta, .chatbubble-in .chatbubble-meta { color: var(--color-text-muted); opacity: 1; }
 .chatbubble-time { font-variant-numeric: tabular-nums; }
-.chatbubble-glyph { font-size: var(--fs-xs); line-height: 1; }
+.chatbubble-glyph { display: inline-flex; font-size: var(--fs-xs); line-height: 0; }
 .chatbubble-who { font-size: var(--fs-xs); color: var(--color-text-muted); padding: 0 var(--sp-1); }
 .chatbubble-status { margin-left: var(--sp-1); }
 .chatbubble-chat.is-unread .chatbubble-body { box-shadow: var(--shadow-card), 0 0 0 2px var(--color-primary); }
