@@ -5,3 +5,4 @@ export { LayoutEditorPage } from './LayoutEditorPage';
 export { KnowledgebasePage } from './KnowledgebasePage';
 export { CanvasPage } from './CanvasPage';
 export { SimulatorPage } from './SimulatorPage';
+export { ApiKeysPage } from './ApiKeysPage';

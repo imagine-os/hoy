@@ -7,7 +7,14 @@ dónde estamos, qué sigue y en qué orden (con dependencias explícitas y lo qu
 paralelo), qué significa "terminado" en cada fase, cómo trabajar en el repo y qué debe decidir el
 owner del estudio. Está escrito para que otra cuenta de Claude (o una persona) lo retome sin contexto.
 
-## A. Where we are (v0.14.0, 2026-09-29)
+## A. Where we are (v0.17.0, 2026-09-29)
+
+- **v0.17.0 — Hours, holidays, Google Business Profile, developer keys** (`docs/changelog/0041-hours-google-keys.md`,
+  prompt `docs/prompts/0041-hours-google-keys.md`; Justin: "the opening hours once it is updated here, would be reflected
+  in google business? … maybe we need a secret key systme for our apps for developers … Holiday hours, and special
+  overrides"): the M-08a hours are read everywhere (D-0016), `hours_overrides` + M-08g with the Colombian holidays,
+  M-10a previews the Google Business Profile push with platform / studio setup steps (D-0017), D-07 developer API keys
+  (D-0018). Still needed: the server (Google push + key verification) and Google's API access approval.
 
 - **v0.16.0 — Practice analytics** (`docs/changelog/0040-practice-analytics.md`, prompt `docs/prompts/0040-practice-analytics.md`;
   Justin: "For the Classes this month and streak its confusing, on the customer app … maybe we figure out smartly or by asking them
@@ -378,7 +385,7 @@ chapter or spec and close the card.
 **Policies (fields in M-08)**
 6. Late-arrival grace minutes and no-show fee.
 7. Minimum students to run a class (if any) and substitution rate for teachers.
-8. Exact hours of the 4 daily classes and days of operation (6 or 7 days).
+8. Exact hours of the 4 daily classes and days of operation (6 or 7 days). _(0041: the opening hours are now editable in M-08a, with holidays and special hours in M-08g, and reach every screen; the decision itself is still open.)_
 9. Target room temperature per class type and exact pre-heat time.
 
 **People and payroll**

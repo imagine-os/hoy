@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
-import { pendingSuffix, useContact } from '../../admin/settings';
+import { pendingSuffix, useContact, useOpeningHours } from '../../admin/settings';
 import { useSession } from '../../../auth/SessionProvider';
 import { tenant } from '../../../tenant/tenant';
 import { Card } from '../../../components/molecule/Card/Card';
@@ -17,6 +17,8 @@ import { Icon } from '../../../components/atom/Icon/Icon';
 export function MorePage() {
   const { t, bi, lang } = useI18n();
   const contact = useContact();
+  // 0041: M-08a weekly hours + M-08g exceptions, with today's line in the studio's time zone.
+  const hours = useOpeningHours();
   const nav = useNavigate();
   const { user, devMode, switchUser } = useSession();
   const { profile } = useMyProfile();
@@ -45,6 +47,7 @@ export function MorePage() {
           <ListRow icon="whatsapp" title={t('customer.more.whatsapp')} subtitle={`${contact.whatsapp}${pendingSuffix(contact, 'whatsapp', lang)} · ${bi(policy.replyWindow)}`} href={waLink(contact.whatsapp, t('customer.more.whatsapp.text', { name: name.split(' ')[0] }))} />
           <ListRow icon="mail" title={t('customer.more.email')} subtitle={`${contact.email}${pendingSuffix(contact, 'email', lang)}`} href={`mailto:${contact.email}`} />
           <ListRow icon="map-pin" title={t('customer.more.visit')} subtitle={`${contact.address}, ${contact.city}${pendingSuffix(contact, 'address', lang)}`} href={contact.location.link ?? `https://www.google.com/maps/search/?api=1&query=${contact.location.lat},${contact.location.lng}`} />
+          <ListRow icon="clock" title={t('customer.more.hours')} subtitle={<><span>{bi(hours.sentence)}</span><br /><strong className="xs" data-testid="more-today">{bi(hours.today)}</strong></>} />
         </ListGroup>
 
         <ListGroup>
@@ -70,7 +73,7 @@ export function MorePage() {
         <ListGroup>
           <ListRow icon="log-out" title={t('customer.profile.signOut')} onClick={() => { switchUser('public'); nav('/auth/sign-in'); }} />
         </ListGroup>
-        <p className="xs muted" style={{ textAlign: 'center' }}>{tenant.legalName} · {tenant.city} · {bi(tenant.hours)}</p>
+        <p className="xs muted" style={{ textAlign: 'center' }}>{tenant.legalName} · {contact.city}</p>
       </div>
     </div>
   );

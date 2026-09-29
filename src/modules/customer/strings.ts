@@ -660,6 +660,7 @@ export const strings: StringTable = {
   'customer.more.whatsapp': { es: 'Escribir al estudio', en: 'WhatsApp the studio' },
   'customer.more.whatsapp.text': { es: 'Hola, soy {name}. Tengo una pregunta:', en: 'Hi, it is {name}. I have a question:' },
   'customer.more.visit': { es: 'Cómo llegar', en: 'Getting here' },
+  'customer.more.hours': { es: 'Horario', en: 'Opening hours' },
   'customer.more.email': { es: 'Correo al estudio', en: 'Email the studio' },
   'customer.more.states': { es: 'Estados de ejemplo (dev)', en: 'Sample states (dev)' },
   'customer.more.authFlow': { es: 'Flujo de acceso', en: 'Auth flow' },

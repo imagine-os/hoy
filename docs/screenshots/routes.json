@@ -1350,18 +1350,15 @@
    "layout": [
     "SettingsSubNav",
     "StudioProfile (contact + map + confirmed per field)",
-    "OpeningHours",
+    "OpeningHours (weekly + today line + links to M-08g and M-10a)",
     "Capacity",
     "Policies",
     "IntegrationsPointer (M-10)"
    ],
    "data": [
     "tenants",
-    "feature_flags",
+    "hours_overrides",
     "rooms",
-    "modalities",
-    "teachers",
-    "legal_documents",
     "audit_log"
    ],
    "roles": [
@@ -1370,6 +1367,7 @@
     "finance"
    ],
    "logic": [
+    "0041: the weekly hours saved here are the source of truth (D-0016). useOpeningHours() (src/modules/admin/settings.ts) merges them with the M-08g overrides and tenant.ts defaults; the site footer, W-06, C-25, the manual’s {{tenant:hours}}, the website’s LocalBusiness JSON-LD and the Google Business Profile body (M-10a) all read it. The card shows today’s line (todayStatus, America/Bogota) and links to M-08g and M-10a.",
     "useContact() (src/modules/admin/settings.ts) is the one reader of address / city / WhatsApp / email / Instagram / map: M-08a first, src/tenant/tenant.ts as the default for every empty field. The site footer, W-06, MapSlot, the legal tokens, the email footer, the customer contact rows and the manual’s {{tenant:contact}} all read it.",
     "Confirmation is per field (0036): WhatsApp, address, email and Instagram each have a “confirmed” switch; every consumer labels only the unconfirmed ones as pending (the tenant.ts placeholders are never presented as fact). tenant.ts ships WhatsApp and address confirmed (from the owner, 2026-09-29), email and Instagram pending. A stored pre-0036 `confirmed: true` still confirms all four."
    ],
@@ -1419,7 +1417,170 @@
     "S-02 reads lateGraceMin, S-04 reads tax, M-05 reads quietHours.",
     "usePolicy() (src/modules/admin/settings.ts) re-renders consumers when a section is saved.",
     "0018: the owner decisions of ROADMAP §E that are values, not code, live here — contact identity (M-08a), IVA-in-prices, payroll cadence and the teacher rate card (M-08c), public class naming, Respiración as its own class, map provider and which legal versions are published (M-08f).",
-    "Sub-page of M-08; the sub-navigation is shared by all six."
+    "Sub-page of M-08; the sub-navigation is shared by all seven."
+   ],
+   "actions": [
+    {
+     "id": "settings.hours.update",
+     "label": {
+      "es": "Cambiar el horario de un día",
+      "en": "Change one day’s hours"
+     },
+     "intent": {
+      "es": "Abre el {day} de {open} a {close} (o ciérralo)",
+      "en": "Open {day} from {open} to {close} (or close it)"
+     },
+     "params": {
+      "day": "enum:0,1,2,3,4,5,6 (0 = Sunday)",
+      "open": "HH:MM (24 h) | closed",
+      "close": "HH:MM (24 h) (omit when closed)"
+     },
+     "permission": "settings.write"
+    }
+   ]
+  }
+ },
+ {
+  "path": "/admin/settings/hours",
+  "code": "M-08g",
+  "surface": "admin",
+  "status": "built",
+  "roles": [
+   "super_admin",
+   "admin",
+   "coordinator"
+  ],
+  "spec": {
+   "code": "M-08g",
+   "name": {
+    "es": "Ajustes · Festivos y horarios especiales",
+    "en": "Settings · Holidays & special hours"
+   },
+   "purpose": {
+    "es": "Excepciones con fecha al horario semanal: festivos cerrados, jornadas con otro horario y eventos. Importa los festivos de Colombia (Ley Emiliani) con un clic, edita cada excepción en un panel y muestra lo que verán los clientes los próximos 30 días.",
+    "en": "Dated exceptions to the weekly hours: closed holidays, days with other hours and events. Imports the Colombian holidays (Ley Emiliani) in one click, edits each exception in a panel and previews what customers will see over the next 30 days."
+   },
+   "layout": [
+    "SettingsSubNav",
+    "PrecedenceNotice",
+    "Overrides (DataTable + ImportHolidays + Add)",
+    "Upcoming30Days",
+    "OverrideDrawer (dates · label ES/EN · closed · times · kind · note)"
+   ],
+   "data": [
+    "hours_overrides",
+    "tenants",
+    "audit_log"
+   ],
+   "roles": [
+    "super_admin",
+    "admin",
+    "coordinator"
+   ],
+   "logic": [
+    "An override covering a date wins over the weekly hours for that date (ranges inclusive; on overlap the narrowest range wins) — effectiveHoursFor() in src/tenant/hours.ts. An open override with empty times keeps the weekly times.",
+    "Import: colombianHolidays() (src/tenant/holidays.co.ts, Ley 51/1983 with Meeus Easter) for the rest of this year and all of next; each holiday not already present on its date is inserted closed with source colombia. Audit hours.import_holidays with the count.",
+    "Save / delete write audit_log hours.override.save / hours.override.delete with before and after. hours.write gates every write (admin, super_admin, coordinator).",
+    "Validation: end ≥ start; when both times are set, close > open; one time without the other is refused; the Spanish label is required.",
+    "The Google column reads google_synced_at: empty or older than updated_at = pending push. Only the server sets it (no server yet, D-0017)."
+   ],
+   "integrations": [
+    "Google Business Profile (specialHours, via M-10a)"
+   ],
+   "states": [
+    "Loading",
+    "Empty (no exceptions yet)",
+    "Seed: three holidays + one special Saturday",
+    "Drawer new / edit",
+    "Validation error",
+    "Import done (n added) / nothing new",
+    "Read-only (no hours.write)"
+   ],
+   "toggles": [
+    {
+     "label": "Multiple locations",
+     "on": false
+    },
+    {
+     "label": "No-show fee",
+     "on": false
+    },
+    {
+     "label": "Electronic invoicing",
+     "on": true
+    },
+    {
+     "label": "Holiday calendar",
+     "on": true
+    }
+   ],
+   "story": "As super admin I change the cancellation window from 4h to 6h and every screen that quotes it updates.",
+   "api": [
+    "GET /admin/settings",
+    "PATCH /admin/settings/:section",
+    "GET /admin/locations",
+    "POST /admin/locations",
+    "GET /admin/integrations"
+   ],
+   "layerTree": "Settings\n├ SectionRail\n├ StudioProfile (name, NIT, address, contact)\n├ Locations → rooms + capacity\n├ OpeningHours (per weekday, holidays)\n├ Policies\n│ ├ Cancellation window\n│ ├ Waitlist claim window\n│ ├ Late check-in grace\n│ └ No-show fee\n├ TaxAndInvoicing (IVA, DIAN resolution)\n└ Integrations (gateway, WhatsApp API, email, calendar)",
+   "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#M-08",
+   "notes": [
+    "Stored in tenants.settings (json) via useSettings(); defaults from src/tenant/tenant.ts.",
+    "S-02 reads lateGraceMin, S-04 reads tax, M-05 reads quietHours.",
+    "usePolicy() (src/modules/admin/settings.ts) re-renders consumers when a section is saved.",
+    "0018: the owner decisions of ROADMAP §E that are values, not code, live here — contact identity (M-08a), IVA-in-prices, payroll cadence and the teacher rate card (M-08c), public class naming, Respiración as its own class, map provider and which legal versions are published (M-08f).",
+    "Sub-page of M-08 (0041). The weekly hours stay in M-08a; this page never edits them."
+   ],
+   "actions": [
+    {
+     "id": "settings.hours.override.add",
+     "label": {
+      "es": "Añadir un festivo u horario especial",
+      "en": "Add a holiday or special hours"
+     },
+     "intent": {
+      "es": "El {start} cerramos por {label} / abrimos de {open} a {close}",
+      "en": "On {start} we close for {label} / open {open} to {close}"
+     },
+     "params": {
+      "start": "YYYY-MM-DD",
+      "end": "YYYY-MM-DD (optional, inclusive)",
+      "label": "string (ES; EN optional as label_en)",
+      "closed": "enum:true,false",
+      "open": "HH:MM (24 h) (when not closed)",
+      "close": "HH:MM (24 h) (when not closed)",
+      "kind": "enum:holiday,special,event"
+     },
+     "permission": "hours.write"
+    },
+    {
+     "id": "settings.hours.override.remove",
+     "label": {
+      "es": "Quitar un festivo u horario especial",
+      "en": "Remove a holiday or special hours"
+     },
+     "intent": {
+      "es": "Quita la excepción del {date}",
+      "en": "Remove the exception on {date}"
+     },
+     "params": {
+      "id": "string (hours_overrides.id)",
+      "date": "YYYY-MM-DD (alternative to id)"
+     },
+     "permission": "hours.write"
+    },
+    {
+     "id": "settings.hours.holidays.import",
+     "label": {
+      "es": "Importar festivos de Colombia",
+      "en": "Import Colombian holidays"
+     },
+     "intent": {
+      "es": "Importa los festivos de Colombia de este año y el próximo",
+      "en": "Import this year’s and next year’s Colombian holidays"
+     },
+     "permission": "hours.write"
+    }
    ]
   }
  },
@@ -1456,6 +1617,7 @@
     "modalities",
     "teachers",
     "legal_documents",
+    "hours_overrides",
     "audit_log"
    ],
    "roles": [
@@ -1514,7 +1676,7 @@
     "S-02 reads lateGraceMin, S-04 reads tax, M-05 reads quietHours.",
     "usePolicy() (src/modules/admin/settings.ts) re-renders consumers when a section is saved.",
     "0018: the owner decisions of ROADMAP §E that are values, not code, live here — contact identity (M-08a), IVA-in-prices, payroll cadence and the teacher rate card (M-08c), public class naming, Respiración as its own class, map provider and which legal versions are published (M-08f).",
-    "Sub-page of M-08; the sub-navigation is shared by all six."
+    "Sub-page of M-08; the sub-navigation is shared by all seven."
    ]
   }
  },
@@ -1644,6 +1806,7 @@
     "modalities",
     "teachers",
     "legal_documents",
+    "hours_overrides",
     "audit_log"
    ],
    "roles": [
@@ -1701,7 +1864,7 @@
     "S-02 reads lateGraceMin, S-04 reads tax, M-05 reads quietHours.",
     "usePolicy() (src/modules/admin/settings.ts) re-renders consumers when a section is saved.",
     "0018: the owner decisions of ROADMAP §E that are values, not code, live here — contact identity (M-08a), IVA-in-prices, payroll cadence and the teacher rate card (M-08c), public class naming, Respiración as its own class, map provider and which legal versions are published (M-08f).",
-    "Sub-page of M-08; the sub-navigation is shared by all six."
+    "Sub-page of M-08; the sub-navigation is shared by all seven."
    ]
   }
  },
@@ -1738,6 +1901,7 @@
     "modalities",
     "teachers",
     "legal_documents",
+    "hours_overrides",
     "audit_log"
    ],
    "roles": [
@@ -1888,7 +2052,7 @@
     "S-02 reads lateGraceMin, S-04 reads tax, M-05 reads quietHours.",
     "usePolicy() (src/modules/admin/settings.ts) re-renders consumers when a section is saved.",
     "0018: the owner decisions of ROADMAP §E that are values, not code, live here — contact identity (M-08a), IVA-in-prices, payroll cadence and the teacher rate card (M-08c), public class naming, Respiración as its own class, map provider and which legal versions are published (M-08f).",
-    "Sub-page of M-08; the sub-navigation is shared by all six."
+    "Sub-page of M-08; the sub-navigation is shared by all seven."
    ]
   }
  },
@@ -1908,8 +2072,8 @@
     "en": "Integrations"
    },
    "purpose": {
-    "es": "Una tarjeta por integración — Wompi, WhatsApp Business, correo, facturación DIAN, mapas, Supabase — con los campos no secretos listos para llenar (ids de comercio, número emisor, namespace de plantillas, proveedor, URL del proyecto), un estado simulado · configurado · conectado, el aviso de que las llaves viven en el servidor y la lista de lo que el dev debe terminar.",
-    "en": "One card per integration — Wompi, WhatsApp Business, email, DIAN e-invoicing, maps, Supabase — with the non-secret fields ready to fill (merchant ids, sender number, template namespace, provider, project URL), a simulated · configured · connected status, the notice that keys live server-side and the checklist of what the dev must finish."
+    "es": "Una tarjeta por integración — Wompi, WhatsApp Business, correo, facturación DIAN, mapas, Supabase, Google Business Profile — con los campos no secretos listos para llenar (ids de comercio, número emisor, namespace de plantillas, proveedor, URL del proyecto), un estado simulado · configurado · conectado, el aviso de que las llaves viven en el servidor y la lista de lo que el dev debe terminar.",
+    "en": "One card per integration — Wompi, WhatsApp Business, email, DIAN e-invoicing, maps, Supabase, Google Business Profile — with the non-secret fields ready to fill (merchant ids, sender number, template namespace, provider, project URL), a simulated · configured · connected status, the notice that keys live server-side and the checklist of what the dev must finish."
    },
    "layout": [
     "Intro",
@@ -1937,7 +2101,8 @@
     "Email provider",
     "DIAN e-invoicing provider",
     "Maps",
-    "Supabase"
+    "Supabase",
+    "Google Business Profile"
    ],
    "states": [
     "Loading",
@@ -1949,9 +2114,110 @@
     "Read-only (no settings.write)"
    ],
    "notes": [
+    "0041: the google_business card opens M-10a (its detail page) and its checklist is split into “Platform, once” and “This studio, per location”; the Intro gains a notice that separates outbound secrets (server env, this page) from the inbound developer keys HoyOS issues (D-07).",
     "Sections: Intro = title · status counts · keys-live-server-side notice · manual link; Cards = one IntegrationCard per system (body · what is simulated today · fields · filled count · secrets named · checklist · notes · status select · save); Order = the connection order from ROADMAP §B and where each setting lives.",
     "Manual chapter 26 is written around this page: what can be promised today and the order in which the systems get connected.",
     "The M-08a “Integraciones” section became a pointer to this page in 0018; the old tenants.settings.integrations statuses are superseded by the table."
+   ]
+  }
+ },
+ {
+  "path": "/admin/integrations/google-business",
+  "code": "M-10a",
+  "surface": "admin",
+  "status": "built",
+  "roles": [
+   "super_admin",
+   "admin"
+  ],
+  "spec": {
+   "code": "M-10a",
+   "name": {
+    "es": "Integraciones · Google Business Profile",
+    "en": "Integrations · Google Business Profile"
+   },
+   "purpose": {
+    "es": "El horario del estudio en Google Search y Maps. Muestra el estado de la conexión, el cuerpo exacto que HoyOS enviará a la Business Profile API (horario semanal de M-08a + festivos y horarios especiales de M-08g), los pasos separados por quién los hace (plataforma una vez, estudio por sede) y, mientras no hay servidor, copiar el horario para pegarlo a mano.",
+    "en": "The studio’s hours on Google Search and Maps. Shows the connection status, the exact body HoyOS will send to the Business Profile API (M-08a weekly hours + M-08g holidays and special hours), the steps split by who does them (platform once, studio per location) and, while there is no server, copying the hours to paste by hand."
+   },
+   "layout": [
+    "Status",
+    "Preview",
+    "Setup",
+    "Fallback"
+   ],
+   "data": [
+    "integrations",
+    "tenants",
+    "hours_overrides",
+    "audit_log"
+   ],
+   "roles": [
+    "super_admin",
+    "admin"
+   ],
+   "logic": [
+    "HoyOS is the source of truth and pushes one way (D-0017): on save in M-08a / M-08g and nightly, the server calls locations.patch with updateMask=regularHours,specialHours and the body toGoogleBusinessHours() builds (src/tenant/hours.ts). Nightly it reads the location back and flags drift; nothing is pulled into HoyOS silently.",
+    "Tokens never reach the browser: the OAuth client id / secret are platform env vars; each location’s refresh token is a server secret named per tenant (GOOGLE_BUSINESS_REFRESH_TOKEN_<TENANT>). The integrations row keeps only locationName, accountEmail and placeId.",
+    "Status reads the google_business integrations row; “last push” is the newest hours_overrides.google_synced_at, which only the server writes (none yet).",
+    "Special hours are one period per date (Google allows endDate at most one day after startDate), so multi-day overrides are expanded; past overrides are left out.",
+    "Connect with Google and Push now are Placeholders until the server exists; Copy (JSON and text) and the Google link work today."
+   ],
+   "integrations": [
+    "Google Business Profile (Business Information API v1, Account Management API)",
+    "Google OAuth 2.0 (scope business.manage)"
+   ],
+   "states": [
+    "Loading",
+    "Simulated (seed)",
+    "Configured (location filled, server pending)",
+    "Connected",
+    "No special hours upcoming",
+    "Copied"
+   ],
+   "actions": [
+    {
+     "id": "integrations.google.copyHours",
+     "label": {
+      "es": "Copiar el horario para Google",
+      "en": "Copy the hours for Google"
+     },
+     "intent": {
+      "es": "Copia el horario para pegarlo en Google Business Profile",
+      "en": "Copy the hours to paste into Google Business Profile"
+     },
+     "params": {
+      "format": "enum:text,json (default text)"
+     }
+    },
+    {
+     "id": "integrations.google.connect",
+     "label": {
+      "es": "Conectar con Google",
+      "en": "Connect with Google"
+     },
+     "intent": {
+      "es": "Conecta el perfil de Google del estudio (no conectado aún)",
+      "en": "Connect the studio’s Google profile (not wired yet)"
+     },
+     "permission": "settings.write"
+    },
+    {
+     "id": "integrations.google.push",
+     "label": {
+      "es": "Enviar el horario a Google",
+      "en": "Push the hours to Google"
+     },
+     "intent": {
+      "es": "Envía el horario a Google ahora (no conectado aún)",
+      "en": "Push the hours to Google now (not wired yet)"
+     },
+     "permission": "settings.write"
+    }
+   ],
+   "notes": [
+    "Sub-page of M-10, linked from the google_business card (“Open”) and from the M-08a Opening hours card.",
+    "Multi-tenant: the platform steps happen once for every studio on HoyOS; each studio only connects its own location."
    ]
   }
  },
@@ -6241,6 +6507,120 @@
    ],
    "notes": [
     "Captures come from `npm run screenshots`; a page with no thumbnail yet shows its hue-tinted idle tile."
+   ]
+  }
+ },
+ {
+  "path": "/dev/api-keys",
+  "code": "D-07",
+  "surface": "dev",
+  "status": "built",
+  "roles": [
+   "super_admin",
+   "developer",
+   "admin"
+  ],
+  "spec": {
+   "code": "D-07",
+   "name": {
+    "es": "Llaves de API",
+    "en": "API keys"
+   },
+   "purpose": {
+    "es": "Las llaves que HoyOS entrega a desarrolladores para llamar su API: crear (con entorno, permisos y vencimiento opcional), ver una sola vez, rotar con 24 horas de gracia y revocar. Solo se guarda un prefijo y el hash SHA-256; la verificación la hará el servidor.",
+    "en": "The keys HoyOS issues to developers to call its API: create (with environment, scopes and an optional expiry), see once, rotate with a 24-hour grace period and revoke. Only a prefix and the SHA-256 hash are stored; the server will do the verification."
+   },
+   "layout": [
+    "Intro",
+    "Keys",
+    "TryRequest"
+   ],
+   "data": [
+    "api_keys",
+    "audit_log"
+   ],
+   "roles": [
+    "super_admin",
+    "developer",
+    "admin"
+   ],
+   "logic": [
+    "Format hoy_<live|test>_<24 base62> from crypto.getRandomValues (rejection-sampled); stored: prefix (13 chars) + SHA-256 hex via crypto.subtle. The raw key lives only in component state until the drawer closes.",
+    "Rotate inserts a new key with replaces_id = old id and the old key’s lifetime (same duration from now; never-expiring stays never), and sets the old key’s expires_at to now + 24 h (unless it already expires sooner). Revoke sets revoked_at; rows are never deleted.",
+    "Status: revoked (revoked_at) · expired (expires_at past) · expiring (within 7 days) · active.",
+    "api_keys.write (super_admin, developer) gates create / rotate / revoke; admin reads the list (api_keys.read). Every write is audited: api_key.create / api_key.rotate / api_key.revoke with the prefix, never the key.",
+    "Verification is a server concern (D-0018): hash the bearer token, match key_hash, check environment, scopes, expiry and revocation, stamp last_used_at. No server exists yet, so “Try a request” is a Placeholder."
+   ],
+   "integrations": [
+    "HoyOS HTTP API (designed, not built)"
+   ],
+   "states": [
+    "Loading",
+    "Empty",
+    "Seed: two example keys",
+    "Create drawer",
+    "Key shown once",
+    "Rotating (grace 24 h)",
+    "Revoke confirm",
+    "Read-only (admin)"
+   ],
+   "actions": [
+    {
+     "id": "dev.apiKeys.create",
+     "label": {
+      "es": "Crear una llave de API",
+      "en": "Create an API key"
+     },
+     "intent": {
+      "es": "Crea una llave {environment} llamada {name} con {scopes}",
+      "en": "Create a {environment} key called {name} with {scopes}"
+     },
+     "params": {
+      "name": "string",
+      "environment": "enum:live,test",
+      "scopes": "csv of classes.read,bookings.read,bookings.write,customers.read,hours.read,hours.write,webhooks.receive",
+      "expires_days": "number (optional, default 90; 0 = never)"
+     },
+     "permission": "api_keys.write"
+    },
+    {
+     "id": "dev.apiKeys.rotate",
+     "label": {
+      "es": "Rotar una llave",
+      "en": "Rotate a key"
+     },
+     "intent": {
+      "es": "Rota la llave {id}; la vieja funciona 24 horas más",
+      "en": "Rotate key {id}; the old one keeps working for 24 hours"
+     },
+     "params": {
+      "id": "string (api_keys.id or prefix)"
+     },
+     "permission": "api_keys.write"
+    },
+    {
+     "id": "dev.apiKeys.revoke",
+     "label": {
+      "es": "Revocar una llave",
+      "en": "Revoke a key"
+     },
+     "intent": {
+      "es": "Revoca la llave {id} ya",
+      "en": "Revoke key {id} now"
+     },
+     "params": {
+      "id": "string (api_keys.id or prefix)"
+     },
+     "permission": "api_keys.write"
+    }
+   ],
+   "checkedAt": [
+    390,
+    1280
+   ],
+   "notes": [
+    "Outbound secrets (Wompi, WhatsApp, Google OAuth…) stay in the server environment and are named on M-10; these are inbound keys HoyOS issues.",
+    "Scopes: classes.read, bookings.read, bookings.write, customers.read, hours.read, hours.write, webhooks.receive."
    ]
   }
  },

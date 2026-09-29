@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, type ReactNode } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useI18n } from '../../i18n/I18nProvider';
-import { useContact , pendingSuffix, type ContactField } from '../admin/settings';
+import { useContact, useOpeningHours, pendingSuffix, type ContactField } from '../admin/settings';
+import { useStudioJsonLd } from './jsonLd';
 import { useTheme } from '../../design/ThemeProvider';
 import { tenant } from '../../tenant/tenant';
 import { taglines } from '../../tenant/brand';
@@ -67,6 +68,9 @@ export function SiteShell({ children }: { children: ReactNode }) {
   const { theme, toggleTheme } = useTheme();
   const [open, setOpen] = useState(false);
   const contact = useContact();
+  // 0041: the hours in the footer follow M-08a / M-08g, and the same hours go out as LocalBusiness JSON-LD.
+  const hours = useOpeningHours();
+  useStudioJsonLd();
   const wa = useWaHref();
   // 0036: per field — the phone and the address are confirmed, the email and Instagram still carry the label.
   const pending = (f: ContactField) => pendingSuffix(contact, f, lang);
@@ -105,7 +109,8 @@ export function SiteShell({ children }: { children: ReactNode }) {
           <div className="stack-sm">
             <span className="eyebrow">{t('site.footer.visit')}</span>
             <span className="small">{contact.location.link ? <a href={contact.location.link} target="_blank" rel="noreferrer">{contact.address}{pending('address')}</a> : <>{contact.address}{pending('address')}</>}</span>
-            <span className="small muted">{bi(tenant.hours)}</span>
+            <span className="small muted">{bi(hours.sentence)}</span>
+            <span className="xs muted" data-testid="footer-today">{bi(hours.today)}</span>
           </div>
           <div className="stack-sm">
             <span className="eyebrow">{t('site.footer.follow')}</span>

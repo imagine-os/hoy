@@ -40,6 +40,33 @@ _Cada estudio que usa HoyOS. Hoy: HOY._
 | `default_locale` | text |  |
 | `settings` | json |  |
 
+#### `hours_overrides`
+Dated exceptions to the M-08a weekly hours: holidays (closed), special days (other hours) and events. They win over the week for the dates they cover (inclusive range); M-08g edits them, the site, the app and Google Business Profile read them.  
+_Excepciones con fecha al horario semanal de M-08a: festivos (cerrado), jornadas especiales (otro horario) y eventos. Ganan sobre la semana en las fechas que cubren (rango inclusivo); M-08g las edita, el sitio, la app y Google Business Profile las leen._
+
+| column | type | notes |
+| --- | --- | --- |
+| `id` | uuid | Primary key |
+| `tenant_id` | uuid | → `tenants` Owning studio (multi-tenant) |
+| `created_at` | timestamptz |  |
+| `updated_at` | timestamptz |  |
+| `start_date` | date |  |
+| `end_date` | date | inclusive; equal to start_date for one day |
+| `closed` | bool |  |
+| `open` | time, null | empty = the weekly opening time |
+| `close` | time, null | empty = the weekly closing time |
+| `label` | json | {es,en} |
+| `kind` | enum (holiday \| special \| event) |  |
+| `source` | enum (manual \| colombia) | colombia = imported from the Ley Emiliani calendar (src/tenant/holidays.co.ts) |
+| `note` | text, null |  |
+| `google_synced_at` | timestamptz, null | last successful push to Google Business Profile (server-side, 0041: no server yet) |
+| `created_by` | text, null |  |
+
+**Who may read / write**
+- everyone (anon included): read — the website and the app print them
+- admin/super_admin/coordinator: insert, update, delete (M-08g, permission hours.write)
+- google_synced_at is written by the server that pushes to Google Business Profile, never by the browser
+
 #### `feature_flags`
 Blocks and flows Admin → Features turns on or off per page.  
 _Bloques y flujos que Admin → Features enciende o apaga por página._
@@ -1113,8 +1140,8 @@ _Reglas de texto que el manual cita con {{studio:clave}} y que el owner o coordi
 ### System · Sistema
 
 #### `integrations`
-One row per external system (Wompi, WhatsApp, email, DIAN, maps, Supabase): status, non-secret fields ready to fill and notes for the dev (M-10). Keys live server-side, never here.  
-_Una fila por sistema externo (Wompi, WhatsApp, correo, DIAN, mapas, Supabase): estado, campos no secretos listos para llenar y notas para el dev (M-10). Las llaves viven en el servidor, nunca aquí._
+One row per external system (Wompi, WhatsApp, email, DIAN, maps, Supabase, Google Business Profile): status, non-secret fields ready to fill and notes for the dev (M-10). Keys live server-side, never here.  
+_Una fila por sistema externo (Wompi, WhatsApp, correo, DIAN, mapas, Supabase, Google Business Profile): estado, campos no secretos listos para llenar y notas para el dev (M-10). Las llaves viven en el servidor, nunca aquí._
 
 | column | type | notes |
 | --- | --- | --- |
@@ -1122,7 +1149,7 @@ _Una fila por sistema externo (Wompi, WhatsApp, correo, DIAN, mapas, Supabase): 
 | `tenant_id` | uuid | → `tenants` Owning studio (multi-tenant) |
 | `created_at` | timestamptz |  |
 | `updated_at` | timestamptz |  |
-| `key` | enum (wompi \| whatsapp \| email \| dian \| maps \| supabase) |  |
+| `key` | enum (wompi \| whatsapp \| email \| dian \| maps \| supabase \| google_business) |  |
 | `status` | enum (simulated \| configured \| connected) | simulated = seam only · configured = ids filled, dev has not wired it · connected = live |
 | `config` | json | non-secret fields per integration (merchant id, sender number, provider name, project URL…) |
 | `notes` | text, null | what the dev must still finish, in the owner’s words |
@@ -1132,6 +1159,33 @@ _Una fila por sistema externo (Wompi, WhatsApp, correo, DIAN, mapas, Supabase): 
 - super_admin/admin: full control (M-10)
 - finance: read (M-09a shows the Wompi status)
 - nobody else reads; config holds public identifiers only — a secret in this table is a bug
+
+#### `api_keys`
+Keys HoyOS issues to developers to call its API (D-07). The SHA-256 hash and a visible prefix are stored; the full key is shown once. Verification is the server’s job (it does not exist yet).  
+_Llaves que HoyOS entrega a desarrolladores para llamar su API (D-07). Se guarda el hash SHA-256 y un prefijo visible; la llave completa se muestra una sola vez. La verificación la hace el servidor (aún no existe)._
+
+| column | type | notes |
+| --- | --- | --- |
+| `id` | uuid | Primary key |
+| `tenant_id` | uuid | → `tenants` Owning studio (multi-tenant) |
+| `created_at` | timestamptz |  |
+| `updated_at` | timestamptz |  |
+| `name` | text |  |
+| `prefix` | text | first 13 characters, e.g. hoy_live_ab12 — what the list shows |
+| `key_hash` | text | SHA-256 hex of the full key |
+| `scopes` | json | string[] from API_KEY_SCOPES (classes.read, bookings.write, hours.read…) |
+| `environment` | enum (live \| test) |  |
+| `created_by` | uuid, null | → `users`  |
+| `last_used_at` | timestamptz, null | written by the server on each verified request |
+| `expires_at` | timestamptz, null |  |
+| `revoked_at` | timestamptz, null |  |
+| `replaces_id` | uuid, null | → `api_keys` set on the new key when it rotates an old one |
+
+**Who may read / write**
+- super_admin/developer: select, insert, update (D-07, permission api_keys.write)
+- admin: select without key_hash (D-07 read-only, api_keys.read)
+- nobody deletes: revoking sets revoked_at so the audit trail keeps the row
+- the raw key is never stored — a raw key in this table is a bug
 
 #### `audit_log`
 Who did what, on which entity, when (M-07).  

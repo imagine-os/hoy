@@ -46,3 +46,10 @@
 .le-handle:active { cursor: grabbing; }
 .le-name { font-family: var(--font-heading); font-size: var(--fs-sm); font-weight: 500; min-width: 0; overflow-wrap: anywhere; }
 .le-grid { align-items: start; }
+/* 0041 · D-07 developer API keys */
+.apikeys-cell { display: flex; flex-direction: column; align-items: flex-start; gap: var(--stack-tight); }
+.apikeys-scopes { display: flex; flex-wrap: wrap; gap: var(--stack-tight); white-space: normal; min-width: 12rem; }
+.apikeys-actions { flex-direction: column; align-items: stretch; gap: var(--gap-inline); }
+.apikeys-scopes-field { border: 0; margin: 0; padding: 0; }
+.apikeys-raw, .apikeys-curl { margin: 0; padding: var(--card-pad); border-radius: var(--r-md); background: var(--color-surface-2); font-family: var(--font-mono); font-size: var(--fs-sm); overflow-x: auto; }
+.apikeys-raw { font-size: var(--fs-md); white-space: pre-wrap; overflow-wrap: anywhere; user-select: all; box-shadow: inset 0 0 0 1px var(--color-border-strong); }

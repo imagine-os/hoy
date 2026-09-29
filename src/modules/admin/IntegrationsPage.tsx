@@ -14,6 +14,7 @@ import { EmptyState } from '../../components/molecule/EmptyState/EmptyState';
 import { useAudit } from '../staff/audit';
 import { INTEGRATIONS, INTEGRATION_STATUSES, filledCount, useIntegrations, type IntegrationDef } from './integrations';
 import { M10 } from './specs';
+import { Icon } from '../../components/atom/Icon/Icon';
 import './admin.css';
 
 export const STATUS_TONE: Record<IntegrationStatus, BadgeTone> = { simulated: 'warn', configured: 'primary', connected: 'success' };
@@ -40,6 +41,7 @@ export function IntegrationsPage() {
           <div className="row wrap">{counts.map(([s, n]) => <Badge key={s} tone={STATUS_TONE[s]}>{n} · {t(`admin.integrations.status.${s}`)}</Badge>)}{!canWrite && <Badge tone="warn">{t('admin.settings.readonly')}</Badge>}</div>
         </div>
         <Notice tone="warn" title={t('admin.integrations.keys.title')} action={<Link to="/manual/26-integraciones" className="small">{t('admin.integrations.manual')} →</Link>}>{t('admin.integrations.keys.body')}</Notice>
+        <Notice tone="info" icon="key-round" title={t('admin.integrations.devkeys.title')} action={<Link to="/dev/api-keys" className="small">{t('admin.integrations.devkeys.open')} →</Link>}>{t('admin.integrations.devkeys.body')}</Notice>
       </>
     ),
     Cards: () => (
@@ -100,10 +102,15 @@ function IntegrationCard({ def, row, readOnly }: { def: IntegrationDef; row: Int
         </div>
         <p className="xs muted">{t('admin.integrations.filled', { n: filled, total: def.fields.length })} · {t('admin.integrations.secrets')} <span className="mono">{def.secrets.join(', ')}</span></p>
 
-        <div className="stack-sm">
-          <span className="eyebrow">{t('admin.integrations.checklist')}</span>
-          <ol className="integ-check small">{def.checklist.map((c, i) => <li key={i}>{bi(c)}</li>)}</ol>
-        </div>
+        {def.groups
+          ? <IntegrationSteps def={def} />
+          : (
+            <div className="stack-sm">
+              <span className="eyebrow">{t('admin.integrations.checklist')}</span>
+              <ol className="integ-check small">{def.checklist.map((c, i) => <li key={i}>{bi(c)}</li>)}</ol>
+            </div>
+          )}
+        {def.notes && <ul className="xs muted integ-notes">{def.notes.map((n, i) => <li key={i}>{bi(n)}</li>)}</ul>}
 
         <Field label={t('admin.integrations.notes')} hint={t('admin.integrations.notes.hint')}>
           {(id) => <textarea id={id} className="input adm-textarea" rows={2} value={notes} disabled={readOnly || !row} onChange={(e) => setNotes(e.target.value)} />}
@@ -115,10 +122,27 @@ function IntegrationCard({ def, row, readOnly }: { def: IntegrationDef; row: Int
               {INTEGRATION_STATUSES.map((s) => <option key={s} value={s}>{t(`admin.integrations.status.${s}`)}</option>)}
             </Select>
             <Link to={`/manual/${def.manual}`} className="xs integ-manual">{t('admin.integrations.manual')} →</Link>
+            {def.detail && <Link to={def.detail} className="btn btn-secondary btn-sm"><span className="btn-icon" aria-hidden><Icon name="arrow-right" size="sm" /></span><span className="btn-label">{t('admin.integrations.open')}</span></Link>}
           </div>
           {!readOnly && <div className="row"><span className="xs muted">{state === 'saved' ? t('admin.settings.saved') : dirty ? t('admin.settings.unsaved') : ''}</span><Button size="sm" disabled={!dirty} loading={state === 'saving'} onClick={doSave}>{t('core.common.save')}</Button></div>}
         </div>
       </div>
     </Card>
+  );
+}
+
+/** 0041: a checklist split by who does it (platform once · studio per location). M-10 cards and M-10a share it. */
+export function IntegrationSteps({ def }: { def: IntegrationDef }) {
+  const { t, bi } = useI18n();
+  return (
+    <div className="stack">
+      <span className="eyebrow">{t('admin.integrations.steps')}</span>
+      {def.groups?.map((g) => (
+        <div key={g.key} className="stack-sm">
+          <div className="row wrap"><strong className="small">{bi(g.label)}</strong><Badge tone={g.key === 'platform' ? 'primary' : 'highlight'}>{t('admin.integrations.who', { who: bi(g.who) })}</Badge></div>
+          <ol className="integ-check small">{g.steps.map((c, i) => <li key={i}>{bi(c)}</li>)}</ol>
+        </div>
+      ))}
+    </div>
   );
 }

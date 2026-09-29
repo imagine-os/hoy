@@ -11,7 +11,7 @@ import {
   QrCode, Receipt, ReceiptText, Scale, ScrollText, Search, Send, Settings, Share2, ShieldCheck, ShoppingBag,
   SlidersHorizontal, Smartphone, Sparkles, SquarePen, Star, Sun, Table, Tablet, Ticket, ToggleRight, Trash2, TriangleAlert,
   Tv, Undo2, User, UserCheck, UserCog, UserPlus, UserX, Users, Wallet, X, BookA, Siren, Mic, Database, KeyRound, LayoutTemplate,
-  GraduationCap, Files, type LucideIcon,
+  GraduationCap, Files, Copy, Eye, EyeOff, RefreshCw, Store, type LucideIcon,
 } from 'lucide-react';
 import type { IconSize } from '../../../design/tokens';
 import './Icon.css';
@@ -36,10 +36,14 @@ const ICONS = {
   pause: Pause, undo: Undo2, edit: SquarePen, play: Play, 'arrow-right': ArrowRight, 'arrow-left': ArrowLeft,
   'arrow-up': ArrowUp, 'arrow-down': ArrowDown, sort: ArrowUpDown, 'chevron-right': ChevronRight, 'chevron-left': ChevronLeft,
   'chevron-down': ChevronDown, 'list-plus': ListPlus, waitlist: ListOrdered, qr: QrCode,
+  // 0041: copy a value, reveal / hide a secret, rotate a key
+  copy: Copy, eye: Eye, 'eye-off': EyeOff, 'refresh-cw': RefreshCw,
   // settings groups and sections (M-08)
   studio: Building2, identity: IdCard, clock: Clock, capacity: Users, policies: ScrollText, features: ToggleRight, flag: Flag,
   'credit-card': CreditCard, fiscal: Landmark, tax: Percent, communications: MessagesSquare, 'quiet-hours': MoonStar,
   branding: Palette, legal: Scale, 'map-pin': MapPin, image: Image, sliders: SlidersHorizontal,
+  // 0041: Google Business Profile (the studio's storefront listing)
+  store: Store,
   // things and status
   calendar: Calendar, 'calendar-clock': CalendarClock, bell: Bell, 'bell-ring': BellRing, shield: ShieldCheck, languages: Languages,
   help: CircleHelp, user: User, 'user-cog': UserCog, users: Users, coins: Coins, ticket: Ticket, gift: Gift, star: Star,

@@ -10,6 +10,8 @@ import { currentLegal, legalDocuments } from './legal';
 import { mediaAssets } from './media';
 import { buildPayroll } from './payroll';
 import { buildIntegrations } from './integrations';
+import { buildHoursOverrides } from './hours';
+import { buildApiKeys } from './apiKeys';
 import { buildExpenses, expenseTemplates } from './expenses';
 import { buildSpecials } from './specials';
 import { buildDeletionRequests } from './deletion';
@@ -37,9 +39,12 @@ export function buildSeed(): Record<string, BaseRow[]> {
   const r = rng(2026);
   const db: Record<string, BaseRow[]> = Object.fromEntries(tableNames.map((t) => [t, []]));
 
-  db.tenants.push({ ...base('ten_hoy', 365), id: tenant.id, slug: tenant.slug, name: tenant.name, legal_name: tenant.legalName, timezone: tenant.timezone, currency: tenant.currency, default_locale: tenant.defaultLocale, settings: { studio: tenant.studio, hours: tenant.hours, payroll: { cadence: 'monthly', payoutMethod: 'wompi', signedBy: '', withholding: false, rateCard: SEED_RATE_CARD } } });
+  db.tenants.push({ ...base('ten_hoy', 365), id: tenant.id, slug: tenant.slug, name: tenant.name, legal_name: tenant.legalName, timezone: tenant.timezone, currency: tenant.currency, default_locale: tenant.defaultLocale, settings: { studio: tenant.studio, openingHours: { ...tenant.openingHours }, payroll: { cadence: 'monthly', payoutMethod: 'wompi', signedBy: '', withholding: false, rateCard: SEED_RATE_CARD } } });
   // 0018: M-10 — every integration starts simulated, with its non-secret fields empty.
   db.integrations.push(...buildIntegrations());
+  // 0041: M-08g — the next Colombian holidays (closed) and one special Saturday; D-07 — two example developer keys (hash only).
+  db.hours_overrides.push(...buildHoursOverrides());
+  db.api_keys.push(...buildApiKeys());
 
   // people: demo users + customers
   const users = db.users as UserRow[], profiles = db.profiles as ProfileRow[];

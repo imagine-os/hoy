@@ -2,7 +2,7 @@ import { lazyPages } from '../../app/lazyPage';
 import type { RouteDef } from '../../specs/types';
 import type { Role } from '../../auth/roles';
 import { canvasSpecs } from '../../specs/canvasSpecs';
-import { M01, M02, M02a, M02b, M02c, M02d, M04, M05, M06, M07, M08a, M08b, M08c, M08d, M08e, M08f, M09, M09a, M09b, M09c, M10, M11, M12 } from './specs';
+import { M01, M02, M02a, M02b, M02c, M02d, M04, M05, M06, M07, M08a, M08b, M08c, M08d, M08e, M08f, M08g, M09, M09a, M09b, M09c, M10, M10a, M11, M12 } from './specs';
 export { strings } from './strings';
 // Admin pages (M-xx): one chunk for staff who open /admin.
 const page = lazyPages(() => import('./pages'));
@@ -34,12 +34,15 @@ export const routes: RouteDef[] = [
   { ...base, path: '/admin/crm/:id', roles: crm, element: page('MemberPage'), spec: M06 },
   { ...base, path: '/admin/activity', roles: [...admins, 'coordinator', 'finance'], element: page('ActivityPage'), spec: M07, nav: { labelKey: 'core.nav.activity', icon: 'activity', order: 16, group: G } },
   { ...base, path: '/admin/settings', roles: [...admins, 'coordinator', 'finance'], element: page('SettingsPage', { group: 'general' }), spec: M08a, nav: { labelKey: 'core.nav.settings', icon: 'settings', order: 17, group: G } },
+  // 0041: holidays and special hours — the coordinator keeps them current (hours.write).
+  { ...base, path: '/admin/settings/hours', roles: [...admins, 'coordinator'], element: page('SettingsPage', { group: 'hours' }), spec: M08g },
   { ...base, path: '/admin/settings/features', roles: [...admins, 'coordinator', 'finance'], element: page('SettingsPage', { group: 'features' }), spec: M08b },
   { ...base, path: '/admin/settings/payments', roles: [...admins, 'finance'], element: page('SettingsPage', { group: 'payments' }), spec: M08c },
   { ...base, path: '/admin/settings/communications', roles: [...admins, 'coordinator'], element: page('SettingsPage', { group: 'communications' }), spec: M08d },
   { ...base, path: '/admin/settings/branding', roles: admins, element: page('SettingsPage', { group: 'branding' }), spec: M08e },
   { ...base, path: '/admin/settings/content', roles: [...admins, 'coordinator'], element: page('SettingsPage', { group: 'content' }), spec: M08f },
   { ...base, path: '/admin/integrations', roles: admins, element: page('IntegrationsPage'), spec: M10, nav: { labelKey: 'core.nav.integrations', icon: 'integrations', order: 21, group: G } },
+  { ...base, path: '/admin/integrations/google-business', roles: admins, element: page('GoogleBusinessPage'), spec: M10a },
   { ...base, path: '/admin/finance', roles: [...admins, 'finance'], element: page('FinancePage'), spec: M09, nav: { labelKey: 'admin.finance.nav', icon: 'finance', order: 18, group: G } },
   { ...base, path: '/admin/finance/payouts', roles: [...admins, 'finance'], element: page('PayoutsPage'), spec: M09a, nav: { labelKey: 'admin.payouts.nav', icon: 'payroll', order: 19, group: G } },
   { ...base, path: '/admin/finance/payouts/:id', roles: [...admins, 'finance'], element: page('PayoutRunPage'), spec: M09b },

@@ -11,7 +11,7 @@
       "es": "Un solo sistema para cada puesto del estudio: quien practica, quien enseña, quien recibe en la puerta, quien administra y quien lo construye.",
       "en": "One system for every seat at the studio: members, teachers, front desk, admin, and the people who build it."
     },
-    "version": "0.16.0",
+    "version": "0.17.0",
     "baseUrl": "https://imagine-os.github.io/hoy/",
     "hubRoute": "/",
     "brand": {
@@ -623,11 +623,13 @@
         "M-02b",
         "M-02c",
         "M-02d",
+        "M-08g",
         "M-08b",
         "M-08c",
         "M-08d",
         "M-08e",
-        "M-08f"
+        "M-08f",
+        "M-10a"
       ],
       "shots": {
         "thumbs": {
@@ -974,6 +976,7 @@
         "D-04",
         "D-05",
         "D-06",
+        "D-07",
         "HUB-01"
       ],
       "shots": {
@@ -1602,7 +1605,9 @@
       "experienceId": "admin",
       "device": "desktop",
       "status": "built",
-      "actions": [],
+      "actions": [
+        "settings.hours.update"
+      ],
       "shots": {
         "thumbs": {
           "es-desktop": "hub-map/shots/M-08a/thumb-es-desktop.jpg",
@@ -1615,6 +1620,49 @@
           "en-390": "hub-map/shots/M-08a/en-390.jpg",
           "es-1280": "hub-map/shots/M-08a/es-1280.jpg",
           "en-1280": "hub-map/shots/M-08a/en-1280.jpg"
+        }
+      },
+      "group": {
+        "id": "admin",
+        "label": {
+          "es": "Administración",
+          "en": "Admin"
+        },
+        "order": 10
+      }
+    },
+    {
+      "code": "M-08g",
+      "route": "/admin/settings/hours",
+      "name": {
+        "es": "Ajustes · Festivos y horarios especiales",
+        "en": "Settings · Holidays & special hours"
+      },
+      "purpose": {
+        "es": "Excepciones con fecha al horario semanal: festivos cerrados, jornadas con otro horario y eventos. Importa los festivos de Colombia (Ley Emiliani) con un clic, edita cada excepción en un panel y muestra lo que verán los clientes los próximos 30 días.",
+        "en": "Dated exceptions to the weekly hours: closed holidays, days with other hours and events. Imports the Colombian holidays (Ley Emiliani) in one click, edits each exception in a panel and previews what customers will see over the next 30 days."
+      },
+      "surface": "admin",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator"
+      ],
+      "experienceId": "admin",
+      "device": "desktop",
+      "status": "built",
+      "actions": [
+        "settings.hours.override.add",
+        "settings.hours.override.remove",
+        "settings.hours.holidays.import"
+      ],
+      "shots": {
+        "thumbs": {},
+        "full": {
+          "es-390": "hub-map/shots/M-08g/es-390.jpg",
+          "en-390": "hub-map/shots/M-08g/en-390.jpg",
+          "es-1280": "hub-map/shots/M-08g/es-1280.jpg",
+          "en-1280": "hub-map/shots/M-08g/en-1280.jpg"
         }
       },
       "group": {
@@ -1854,8 +1902,8 @@
         "en": "Integrations"
       },
       "purpose": {
-        "es": "Una tarjeta por integración — Wompi, WhatsApp Business, correo, facturación DIAN, mapas, Supabase — con los campos no secretos listos para llenar (ids de comercio, número emisor, namespace de plantillas, proveedor, URL del proyecto), un estado simulado · configurado · conectado, el aviso de que las llaves viven en el servidor y la lista de lo que el dev debe terminar.",
-        "en": "One card per integration — Wompi, WhatsApp Business, email, DIAN e-invoicing, maps, Supabase — with the non-secret fields ready to fill (merchant ids, sender number, template namespace, provider, project URL), a simulated · configured · connected status, the notice that keys live server-side and the checklist of what the dev must finish."
+        "es": "Una tarjeta por integración — Wompi, WhatsApp Business, correo, facturación DIAN, mapas, Supabase, Google Business Profile — con los campos no secretos listos para llenar (ids de comercio, número emisor, namespace de plantillas, proveedor, URL del proyecto), un estado simulado · configurado · conectado, el aviso de que las llaves viven en el servidor y la lista de lo que el dev debe terminar.",
+        "en": "One card per integration — Wompi, WhatsApp Business, email, DIAN e-invoicing, maps, Supabase, Google Business Profile — with the non-secret fields ready to fill (merchant ids, sender number, template namespace, provider, project URL), a simulated · configured · connected status, the notice that keys live server-side and the checklist of what the dev must finish."
       },
       "surface": "admin",
       "roles": [
@@ -1878,6 +1926,48 @@
           "en-390": "hub-map/shots/M-10/en-390.jpg",
           "es-1280": "hub-map/shots/M-10/es-1280.jpg",
           "en-1280": "hub-map/shots/M-10/en-1280.jpg"
+        }
+      },
+      "group": {
+        "id": "admin",
+        "label": {
+          "es": "Administración",
+          "en": "Admin"
+        },
+        "order": 10
+      }
+    },
+    {
+      "code": "M-10a",
+      "route": "/admin/integrations/google-business",
+      "name": {
+        "es": "Integraciones · Google Business Profile",
+        "en": "Integrations · Google Business Profile"
+      },
+      "purpose": {
+        "es": "El horario del estudio en Google Search y Maps. Muestra el estado de la conexión, el cuerpo exacto que HoyOS enviará a la Business Profile API (horario semanal de M-08a + festivos y horarios especiales de M-08g), los pasos separados por quién los hace (plataforma una vez, estudio por sede) y, mientras no hay servidor, copiar el horario para pegarlo a mano.",
+        "en": "The studio’s hours on Google Search and Maps. Shows the connection status, the exact body HoyOS will send to the Business Profile API (M-08a weekly hours + M-08g holidays and special hours), the steps split by who does them (platform once, studio per location) and, while there is no server, copying the hours to paste by hand."
+      },
+      "surface": "admin",
+      "roles": [
+        "super_admin",
+        "admin"
+      ],
+      "experienceId": "admin",
+      "device": "desktop",
+      "status": "built",
+      "actions": [
+        "integrations.google.copyHours",
+        "integrations.google.connect",
+        "integrations.google.push"
+      ],
+      "shots": {
+        "thumbs": {},
+        "full": {
+          "es-390": "hub-map/shots/M-10a/es-390.jpg",
+          "en-390": "hub-map/shots/M-10a/en-390.jpg",
+          "es-1280": "hub-map/shots/M-10a/es-1280.jpg",
+          "en-1280": "hub-map/shots/M-10a/en-1280.jpg"
         }
       },
       "group": {
@@ -4098,6 +4188,49 @@
           "en-390": "hub-map/shots/D-05/en-390.jpg",
           "es-1280": "hub-map/shots/D-05/es-1280.jpg",
           "en-1280": "hub-map/shots/D-05/en-1280.jpg"
+        }
+      },
+      "group": {
+        "id": "dev",
+        "label": {
+          "es": "Desarrollo",
+          "en": "Dev tools"
+        },
+        "order": 10
+      }
+    },
+    {
+      "code": "D-07",
+      "route": "/dev/api-keys",
+      "name": {
+        "es": "Llaves de API",
+        "en": "API keys"
+      },
+      "purpose": {
+        "es": "Las llaves que HoyOS entrega a desarrolladores para llamar su API: crear (con entorno, permisos y vencimiento opcional), ver una sola vez, rotar con 24 horas de gracia y revocar. Solo se guarda un prefijo y el hash SHA-256; la verificación la hará el servidor.",
+        "en": "The keys HoyOS issues to developers to call its API: create (with environment, scopes and an optional expiry), see once, rotate with a 24-hour grace period and revoke. Only a prefix and the SHA-256 hash are stored; the server will do the verification."
+      },
+      "surface": "dev",
+      "roles": [
+        "super_admin",
+        "developer",
+        "admin"
+      ],
+      "experienceId": "dev",
+      "device": "desktop",
+      "status": "built",
+      "actions": [
+        "dev.apiKeys.create",
+        "dev.apiKeys.rotate",
+        "dev.apiKeys.revoke"
+      ],
+      "shots": {
+        "thumbs": {},
+        "full": {
+          "es-390": "hub-map/shots/D-07/es-390.jpg",
+          "en-390": "hub-map/shots/D-07/en-390.jpg",
+          "es-1280": "hub-map/shots/D-07/es-1280.jpg",
+          "en-1280": "hub-map/shots/D-07/en-1280.jpg"
         }
       },
       "group": {

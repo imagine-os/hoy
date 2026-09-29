@@ -31,7 +31,42 @@ export interface IntegrationDef {
   screens: string[];
   /** Manual chapter slug (`/manual/<slug>`). */
   manual: string;
+  /**
+   * 0041: the checklist split by who does it — `platform` once for every studio on HoyOS (the dev / the
+   * HoyOS operator), `studio` once per location (the owner). When present, `checklist` is the same steps flattened.
+   */
+  groups?: IntegrationStepGroup[];
+  /** 0041: how the integration behaves once connected, in plain words (what is pushed, what is pulled). */
+  notes?: Bi[];
+  /** 0041: a detail page for this integration (M-10a), linked from its card. */
+  detail?: string;
 }
+export interface IntegrationStepGroup { key: 'platform' | 'studio'; label: Bi; who: Bi; steps: Bi[] }
+
+/** 0041 — Google Business Profile: HoyOS pushes the hours; the platform sets up Google once, each studio connects its own location. */
+const GOOGLE_BUSINESS_GROUPS: IntegrationStepGroup[] = [
+  {
+    key: 'platform', label: { es: 'Plataforma, una sola vez', en: 'Platform, once' }, who: { es: 'Equipo HoyOS / dev', en: 'HoyOS team / dev' },
+    steps: [
+      { es: 'Crear el proyecto de Google Cloud de HoyOS.', en: 'Create the HoyOS Google Cloud project.' },
+      { es: 'Habilitar “My Business Business Information API” y “My Business Account Management API”.', en: 'Enable “My Business Business Information API” and “My Business Account Management API”.' },
+      { es: 'Enviar el formulario de acceso a la Business Profile API y esperar la aprobación: la cuota es 0 hasta que Google apruebe.', en: 'Submit the Business Profile API access request form and wait for approval: the quota is 0 until Google approves.' },
+      { es: 'Configurar la pantalla de consentimiento OAuth con el scope https://www.googleapis.com/auth/business.manage y la URI de redirección del servidor de HoyOS.', en: 'Configure the OAuth consent screen with the scope https://www.googleapis.com/auth/business.manage and the HoyOS server redirect URI.' },
+      { es: 'Poner el client id y el client secret en el entorno del servidor (nunca en el navegador ni en el repo).', en: 'Put the client id and client secret in the server environment (never in the browser or the repo).' },
+    ],
+  },
+  {
+    key: 'studio', label: { es: 'Este estudio, por sede', en: 'This studio, per location' }, who: { es: 'Owner del estudio', en: 'Studio owner' },
+    steps: [
+      { es: 'Ser propietario o administrador del perfil de empresa del estudio en Google.', en: 'Be an owner or manager of the studio’s Google Business Profile.' },
+      { es: 'Tocar “Conectar con Google” e iniciar sesión con esa cuenta.', en: 'Tap “Connect with Google” and sign in with that account.' },
+      { es: 'Elegir la sede (location).', en: 'Pick the location.' },
+      { es: 'Revisar la vista previa del horario.', en: 'Review the hours preview.' },
+      { es: 'Encender el envío automático.', en: 'Turn on automatic push.' },
+    ],
+  },
+];
+
 
 export const INTEGRATION_STATUSES: readonly IntegrationStatus[] = ['simulated', 'configured', 'connected'];
 
@@ -154,6 +189,27 @@ export const INTEGRATIONS: IntegrationDef[] = [
     secrets: ['SUPABASE_SERVICE_ROLE_KEY'],
     screens: ['A-02', 'A-03', 'C-21', 'M-03'],
     manual: '26-integraciones',
+  },
+  {
+    key: 'google_business',
+    name: { es: 'Google Business Profile', en: 'Google Business Profile' },
+    body: { es: 'El horario del estudio en Google Search y Maps: el horario semanal de M-08a y los festivos y horarios especiales de M-08g, enviados desde HoyOS.', en: 'The studio’s hours on Google Search and Maps: the M-08a weekly hours and the M-08g holidays and special hours, pushed from HoyOS.' },
+    simulated: { es: 'Nada llama a Google todavía: M-10a muestra el cuerpo exacto que se enviaría (locations.patch, regularHours + specialHours) y permite copiar el horario para pegarlo a mano.', en: 'Nothing calls Google yet: M-10a shows the exact body that would be sent (locations.patch, regularHours + specialHours) and lets you copy the hours to paste by hand.' },
+    fields: [
+      { name: 'locationName', label: { es: 'Nombre de la sede en la API', en: 'API location name' }, placeholder: 'locations/1234567890', hint: { es: 'Lo da la Business Profile API al elegir la sede, o el número en la URL del perfil.', en: 'From the Business Profile API when picking the location, or the number in the profile URL.' } },
+      { name: 'accountEmail', label: { es: 'Cuenta de Google que administra el perfil', en: 'Google account that manages the profile' }, placeholder: 'owner@gmail.com' },
+      { name: 'placeId', label: { es: 'Place id (opcional)', en: 'Place id (optional)' }, placeholder: 'ChIJ…' },
+    ],
+    checklist: GOOGLE_BUSINESS_GROUPS.flatMap((g) => g.steps),
+    groups: GOOGLE_BUSINESS_GROUPS,
+    notes: [
+      { es: 'HoyOS es la fuente: el horario se envía al guardar en M-08a / M-08g y cada noche.', en: 'HoyOS is the source: the hours are pushed on save in M-08a / M-08g and nightly.' },
+      { es: 'Cada noche se lee Google de vuelta para marcar diferencias (si alguien lo cambió allá); nada se trae a HoyOS en silencio.', en: 'Google is read back nightly to flag drift (if someone changed it there); nothing is pulled into HoyOS silently.' },
+    ],
+    secrets: ['GOOGLE_OAUTH_CLIENT_ID', 'GOOGLE_OAUTH_CLIENT_SECRET', `GOOGLE_BUSINESS_REFRESH_TOKEN_${tenant.slug.toUpperCase()}`],
+    screens: ['M-08a', 'M-08g', 'M-10a', 'W-06'],
+    manual: '26-integraciones',
+    detail: '/admin/integrations/google-business',
   },
 ];
 
