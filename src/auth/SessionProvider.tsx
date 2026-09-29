@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { ROLES, type Role } from './roles';
+import { DEV_MODE_ROLES, ROLES, type Role } from './roles';
 import { demoUserById, demoUserByRole, type DemoUser } from './demoUsers';
 import { roleCan, type Permission } from './permissions';
 import { useTable } from '../data/DataContext';
@@ -21,6 +21,8 @@ interface SessionCtx {
   /** The effective role (viewAs when active). Use this for UI decisions. */
   role: Role;
   isSuperAdmin: boolean;
+  /** The signed-in user may turn dev mode on: super_admin and developer (0031). Only super_admin may "view as". */
+  canDevMode: boolean;
   devMode: boolean;
   viewAs: Role | null;
   /** Accepts a demo user id, a role (its demo user) or any `users` row id from the data provider. */
@@ -70,20 +72,21 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   const isSuperAdmin = user.role === 'super_admin';
   const role: Role = isSuperAdmin && state.viewAs ? state.viewAs : user.role;
-  const devMode = isSuperAdmin && state.devMode;
+  const canDevMode = DEV_MODE_ROLES.includes(user.role);
+  const devMode = canDevMode && state.devMode;
 
   const switchUser = useCallback((idOrRole: string) => {
     const d = demoUserById(idOrRole) ?? (isRole(idOrRole) ? demoUserByRole(idOrRole) : undefined);
     const id = d?.id ?? idOrRole;
-    setState((s) => ({ userId: id, viewAs: null, devMode: d?.role === 'super_admin' ? s.devMode : false }));
+    setState((s) => ({ userId: id, viewAs: null, devMode: d && DEV_MODE_ROLES.includes(d.role) ? s.devMode : false }));
   }, []);
   const setDevMode = useCallback((on: boolean) => setState((s) => ({ ...s, devMode: on })), []);
   const setViewAs = useCallback((viewAs: Role | null) => setState((s) => ({ ...s, viewAs })), []);
   const can = useCallback((p: Permission) => roleCan(role, p), [role]);
   const hasRole = useCallback((roles: Role[]) => roles.includes('public') || roles.includes(role) || (isSuperAdmin && !state.viewAs), [role, isSuperAdmin, state.viewAs]);
 
-  const value = useMemo<SessionCtx>(() => ({ user, role, isSuperAdmin, devMode, viewAs: state.viewAs, switchUser, setDevMode, setViewAs, can, hasRole }),
-    [user, role, isSuperAdmin, devMode, state.viewAs, switchUser, setDevMode, setViewAs, can, hasRole]);
+  const value = useMemo<SessionCtx>(() => ({ user, role, isSuperAdmin, canDevMode, devMode, viewAs: state.viewAs, switchUser, setDevMode, setViewAs, can, hasRole }),
+    [user, role, isSuperAdmin, canDevMode, devMode, state.viewAs, switchUser, setDevMode, setViewAs, can, hasRole]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 

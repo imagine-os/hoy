@@ -211,6 +211,8 @@
   --hue-docs: 186;
   --hue-kb: 286;
   --hue-dev: 244;
+  --hue-marketing: 352;
+  --hue-sources: 58;
   --hue-sat: 46%;
   --hue-lum: 52%;
   --tex-lane-on: var(--tex-lane);

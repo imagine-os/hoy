@@ -10,7 +10,8 @@ import {
   Monitor, MonitorSmartphone, Moon, MoonStar, NotebookPen, Palette, PanelsTopLeft, Pause, Percent, Phone, Play, Plug, Plus,
   QrCode, Receipt, ReceiptText, Scale, ScrollText, Search, Send, Settings, Share2, ShieldCheck, ShoppingBag,
   SlidersHorizontal, Smartphone, Sparkles, SquarePen, Star, Sun, Table, Tablet, Ticket, ToggleRight, Trash2, TriangleAlert,
-  Tv, Undo2, User, UserCheck, UserCog, UserPlus, UserX, Users, Wallet, X, type LucideIcon,
+  Tv, Undo2, User, UserCheck, UserCog, UserPlus, UserX, Users, Wallet, X, BookA, Siren, Mic, Database, KeyRound, LayoutTemplate,
+  GraduationCap, Files, type LucideIcon,
 } from 'lucide-react';
 import type { IconSize } from '../../../design/tokens';
 import './Icon.css';
@@ -49,6 +50,9 @@ const ICONS = {
   globe: Globe, sun: Sun, moon: Moon, sparkle: Sparkles, book: BookOpen, 'file-text': FileText, layers: Layers, code: Code,
   grid: LayoutGrid, gauge: Gauge, camera: Camera, monitor: Monitor, smartphone: Smartphone, tv: Tv, tablet: Tablet,
   window: AppWindow, palette: Palette, 'list-checks': ListChecks,
+  // operations manual (0031): the chapter / part icons and the LMS tiles that the set above did not cover
+  'book-a': BookA, siren: Siren, mic: Mic, database: Database, 'key-round': KeyRound, 'layout-template': LayoutTemplate,
+  'graduation-cap': GraduationCap, files: Files,
 } satisfies Record<string, LucideIcon>;
 
 export type IconName = keyof typeof ICONS;

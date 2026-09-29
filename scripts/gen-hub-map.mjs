@@ -34,7 +34,7 @@ function experienceOf(path, surface) {
     case 'staff': return under('/staff/inbox') ? 'inbox' : under('/staff/register') ? 'pos' : 'desk';
     case 'admin': return under('/admin/crm') ? 'crm' : under('/admin/finance') ? 'finance' : 'admin';
     case 'dev': return under('/dev/knowledgebase') ? 'kb' : 'dev';
-    case 'docs': return under('/manual') ? 'manual' : 'docs';
+    case 'docs': return under('/manual') ? 'manual' : under('/docs/source') ? 'sources' : 'docs';
     case 'public':
       if (under('/site')) return 'site';
       if (path === '/') return 'dev'; // the testing hub itself sits with the dev tools
@@ -111,7 +111,9 @@ try {
       band: e.band, device: e.device, route: e.route, url: url(e.route),
       ...(e.featured ? { featured: true } : {}),
       ...(e.secondary ? { secondary: { label: e.secondary.label, route: e.secondary.route } } : {}),
-      pageCodes, shots: shotsOf(e.code),
+      ...(e.comingSoon ? { comingSoon: true } : {}),
+      // A coming-soon card (0031) owns no pages yet: its route is where the role works today.
+      pageCodes: e.comingSoon ? [] : pageCodes, shots: shotsOf(e.code),
     };
   });
 
@@ -159,8 +161,11 @@ try {
     if (!roleIds.has(e.roleId)) problems.push(`experience ${e.id}: roleId ${e.roleId} is not a role`);
     for (const r of e.roles) if (!roleIds.has(r)) problems.push(`experience ${e.id}: role ${r} is not a role`);
     if (!DEVICES.has(e.device)) problems.push(`experience ${e.id}: bad device ${e.device}`);
-    if (!e.pageCodes.length) problems.push(`experience ${e.id}: no pages`);
-    if (!e.pageCodes.includes(e.code)) problems.push(`experience ${e.id}: entry code ${e.code} is not among its pageCodes`);
+    if (e.comingSoon) { if (e.pageCodes.length) problems.push(`experience ${e.id}: coming soon but owns pages`); }
+    else {
+      if (!e.pageCodes.length) problems.push(`experience ${e.id}: no pages`);
+      if (!e.pageCodes.includes(e.code)) problems.push(`experience ${e.id}: entry code ${e.code} is not among its pageCodes`);
+    }
     for (const c of e.pageCodes) if (!pageCodes.has(c)) problems.push(`experience ${e.id}: pageCode ${c} does not exist`);
     if (!hasShots(e.shots)) problems.push(`experience ${e.id}: no shots for ${e.code}`);
   }

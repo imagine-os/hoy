@@ -274,7 +274,7 @@ _Asignación de roles; un usuario puede tener varios._
 | `created_at` | timestamptz |  |
 | `updated_at` | timestamptz |  |
 | `user_id` | uuid | → `users`  |
-| `role` | enum (super_admin \| admin \| coordinator \| front_desk \| finance \| teacher \| maintenance \| customer) |  |
+| `role` | enum (super_admin \| admin \| coordinator \| front_desk \| finance \| teacher \| maintenance \| marketing \| developer \| customer) |  |
 | `granted_by` | uuid, null | → `users`  |
 
 #### `teachers`
@@ -962,6 +962,120 @@ _Canal × categoría que cada persona acepta (C-24 / C-19). Sin fila = activado.
 - customer: full control of own rows (user_id = auth.uid())
 - admin: read only, to respect a mute before sending
 - marketing category is opt-out per channel; transactional categories always deliver in-app
+
+### Manual & training · Manual y formación
+
+#### `manual_progress`
+Who marked which manual chapter (K-03) as read, and at which version: each person’s “read N of M”.  
+_Quién marcó como leído qué capítulo del manual (K-03) y en qué versión: el «leído N de M» de cada persona._
+
+| column | type | notes |
+| --- | --- | --- |
+| `id` | uuid | Primary key |
+| `tenant_id` | uuid | → `tenants` Owning studio (multi-tenant) |
+| `created_at` | timestamptz |  |
+| `updated_at` | timestamptz |  |
+| `user_id` | uuid | → `users`  |
+| `chapter_slug` | text | file name without .md, e.g. 04-recepcion-y-check-in (same in ES and EN) |
+| `version` | text | chapter front-matter version read |
+| `read_at` | timestamptz |  |
+
+**Who may read / write**
+- every staff role: insert + read own rows (user_id = auth.uid()); a re-read of a new version is a new row
+- admin/coordinator/super_admin: read all (the K-03 “Equipo” view)
+- never updated in place
+
+#### `manual_training`
+Each Day 1 / Week 1 / Month 1 checklist item (chapter 09) a person completed, and the stage sign-off by their trainer (item_key = __signoff).  
+_Cada punto del checklist Día 1 / Semana 1 / Mes 1 (capítulo 09) que una persona completó, y la firma de etapa de quien la entrena (item_key = __signoff)._
+
+| column | type | notes |
+| --- | --- | --- |
+| `id` | uuid | Primary key |
+| `tenant_id` | uuid | → `tenants` Owning studio (multi-tenant) |
+| `created_at` | timestamptz |  |
+| `updated_at` | timestamptz |  |
+| `user_id` | uuid | → `users` the person being trained |
+| `role` | text | the checklist followed (a Role id) |
+| `stage` | enum (day1 \| week1 \| month1) |  |
+| `item_key` | text | src/modules/ops-manual/training.ts item key, or __signoff |
+| `done_at` | timestamptz |  |
+| `signed_by` | uuid, null | → `users` trainer who signed the stage (only on __signoff rows) |
+
+**Who may read / write**
+- every staff role: insert + delete own item rows (user_id = auth.uid()) while the stage is not signed
+- coordinator/admin/super_admin: read all, insert the __signoff row for anyone (signed_by = auth.uid())
+- a __signoff row is never deleted; a correction is a new row
+
+#### `manual_overrides`
+A manual section rewritten in the app by the owner or coordination (or suggested by an agent): shown instead of the repository text, with its history. The original markdown is never touched.  
+_Una sección del manual reescrita desde la app por el owner o coordinación (o sugerida por un agente): se muestra en lugar del texto del repositorio, con su historial. El markdown original nunca se toca._
+
+| column | type | notes |
+| --- | --- | --- |
+| `id` | uuid | Primary key |
+| `tenant_id` | uuid | → `tenants` Owning studio (multi-tenant) |
+| `created_at` | timestamptz |  |
+| `updated_at` | timestamptz |  |
+| `chapter_slug` | text |  |
+| `lang` | enum (es \| en) |  |
+| `section_heading` | text | the ## heading text the override replaces (the section below it) |
+| `body_md` | text | markdown of the section body, without the heading line |
+| `edited_by` | uuid, null | → `users`  |
+| `note` | text, null | why it changed |
+| `version` | int | 1, 2, 3… per chapter + lang + section |
+| `status` | enum (live \| reverted \| suggested \| dismissed) |  |
+
+**Who may read / write**
+- everyone who can read the manual: read rows with status live
+- admin/super_admin: insert + update any section; coordinator: only sections marked {{editable:coordinator}}
+- any staff role / agent: insert status suggested; only an editor turns it live or dismissed
+- history is append-only: restoring sets status reverted, never deletes
+
+#### `manual_requests`
+“Request a change”: what someone on the team wants the manual to say. The owner answers it on K-04, or an agent picks it up through the actions registry.  
+_«Pedir un cambio»: lo que alguien del equipo quiere que diga el manual. El owner lo responde en K-04, o un agente lo toma por el registro de acciones._
+
+| column | type | notes |
+| --- | --- | --- |
+| `id` | uuid | Primary key |
+| `tenant_id` | uuid | → `tenants` Owning studio (multi-tenant) |
+| `created_at` | timestamptz |  |
+| `updated_at` | timestamptz |  |
+| `chapter_slug` | text |  |
+| `section_heading` | text, null |  |
+| `lang` | enum (es \| en) |  |
+| `request` | text |  |
+| `requested_by` | uuid, null | → `users`  |
+| `status` | enum (open \| done \| dismissed) |  |
+| `answer` | text, null |  |
+
+**Who may read / write**
+- every staff role: insert + read own rows (requested_by = auth.uid())
+- admin/coordinator/super_admin: read all, update status and answer
+
+#### `studio_policies`
+Text rules the manual quotes with {{studio:key}} and the owner or coordination adjust without touching the markdown (lost items, opening, closing…). Numeric policies stay in M-08.  
+_Reglas de texto que el manual cita con {{studio:clave}} y que el owner o coordinación ajustan sin tocar el markdown (objetos perdidos, apertura, cierre…). Las políticas numéricas siguen en M-08._
+
+| column | type | notes |
+| --- | --- | --- |
+| `id` | uuid | Primary key |
+| `tenant_id` | uuid | → `tenants` Owning studio (multi-tenant) |
+| `created_at` | timestamptz |  |
+| `updated_at` | timestamptz |  |
+| `key` | text |  |
+| `label` | json | {es,en} |
+| `value_es` | text |  |
+| `value_en` | text |  |
+| `chapter` | text, null | chapter number where it is quoted, e.g. 21 |
+| `editable_by` | enum (owner \| coordinator) |  |
+| `updated_by` | uuid, null | → `users`  |
+
+**Who may read / write**
+- everyone who can read the manual: read
+- admin/super_admin: update any row; coordinator: rows with editable_by = coordinator
+- a new key is added in src/data/seed/studioPolicies.ts until Supabase lands
 
 ### System · Sistema
 

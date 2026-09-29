@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import './ChapterCard.css';
 
@@ -22,14 +23,32 @@ export interface ChapterCardProps {
   labels?: { minutes: string; figure?: string; figures: string; decisions: string; placeholders: string };
   /** Marks the card as the chapter currently open. */
   active?: boolean;
+  /** 0031 · the chapter's icon (an `<Icon>`), drawn above the number. */
+  icon?: ReactNode;
+  /** 0031 · how the chapter applies to the reader's role: `na` dims the card (it stays a working link). */
+  level?: 'required' | 'recommended' | 'na';
+  /** Already-translated text of the level ("Obligatorio", "No aplica para Recepción"). */
+  levelLabel?: string;
+  /** 0031 · the reader marked it as read; `readLabel` is the visible text ("Leído"). */
+  read?: boolean;
+  readLabel?: string;
 }
 
 /** One chapter of the operations manual as a card: number, title, summary, role chips and weight. */
-export function ChapterCard({ number, title, summary, roles = [], to, minutes, figures, decisions, placeholders, labels, active = false }: ChapterCardProps) {
+export function ChapterCard({ number, title, summary, roles = [], to, minutes, figures, decisions, placeholders, labels, active = false, icon, level, levelLabel, read = false, readLabel }: ChapterCardProps) {
   return (
-    <Link className={`chcard ${active ? 'is-active' : ''}`} to={to}>
-      <span className="chcard-num">{number}</span>
+    <Link className={`chcard ${active ? 'is-active' : ''} ${level ? `is-${level}` : ''} ${read ? 'is-read' : ''}`} to={to}>
+      <span className="chcard-lead">
+        {icon && <span className="chcard-icon" aria-hidden>{icon}</span>}
+        <span className="chcard-num">{number}</span>
+      </span>
       <span className="chcard-body">
+        {(levelLabel || read) && (
+          <span className="chcard-flags">
+            {levelLabel && <span className={`chcard-level is-${level ?? 'na'}`}>{levelLabel}</span>}
+            {read && <span className="chcard-read">✓ {readLabel}</span>}
+          </span>
+        )}
         <span className="chcard-title">{title}</span>
         {summary && <span className="chcard-summary">{summary}</span>}
         {roles.length > 0 && <span className="chcard-roles">{roles.map((r) => <span key={r} className="chcard-role">{r}</span>)}</span>}

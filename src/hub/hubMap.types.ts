@@ -17,7 +17,7 @@ export type ShotKey = 'es-390' | 'en-390' | 'es-1280' | 'en-1280' | 'es-390-full
 /** URLs relative to `product.baseUrl`. A key is present only when the file is published. */
 export interface HubShots { thumbs: Partial<Record<ThumbKey, string>>; full: Partial<Record<ShotKey, string>>; }
 export interface HubRole {
-  /** hoy Role id: customer | public | teacher | front_desk | coordinator | finance | admin | super_admin | maintenance */
+  /** hoy Role id: customer | public | teacher | front_desk | coordinator | finance | admin | super_admin | maintenance | marketing | developer (the last two since 0031) */
   id: string;
   label: Bi; description: Bi;
   /** outside = customers/public/teachers, team = staff/admin, build = docs/dev */
@@ -27,7 +27,7 @@ export interface HubRole {
   /** The role's primary device. */
   device: HubDevice;
   demoUser?: { id: string; firstName: string };
-  /** Figure look hint for hosts: 'customer' | 'teacher' | 'frontdesk' | 'coordinator' | 'finance' | 'admin' | 'superadmin' | 'public' | 'maintenance' */
+  /** Figure look hint for hosts: 'customer' | 'teacher' | 'frontdesk' | 'coordinator' | 'finance' | 'admin' | 'superadmin' | 'public' | 'maintenance' | 'marketing' | 'developer' (0031; a host that does not know a look falls back to its default figure) */
   look: string;
   /** Two desk props from this vocabulary: laptop phone clipboard tape contract calculator plans ruler sketchbook pencils samples swatches board stamp hardhat tablet book keys mug rating */
   props: [string, string];
@@ -40,6 +40,8 @@ export interface HubExperience {
   /** `url` = baseUrl + '#' + route */
   band: HubBand; device: HubDevice; route: string; url: string;
   featured?: boolean; secondary?: { label: Bi; route: string };
+  /** Since 0031, additive: the card is announced but not built. `route` is where the role works today; `pageCodes` is empty; draw it as "coming soon" and do not embed it. */
+  comingSoon?: boolean;
   /** Every page code inside this experience, in nav order. */
   pageCodes: string[];
   /** Of the experience's entry page. */

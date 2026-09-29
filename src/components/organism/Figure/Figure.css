@@ -23,3 +23,7 @@
 
 @media (max-width: 640px) { .figure-mobile { max-width: 100%; } }
 @media print { .figure { break-inside: avoid; } .figure-frame { box-shadow: none; } }
+
+/* 0031: capture date + stale flag under the caption */
+.figure-date { display: flex; flex-wrap: wrap; gap: var(--sp-2); align-items: center; margin-top: 4px; font-size: var(--fs-xs); color: var(--color-text-muted); }
+.figure-stale { display: inline-flex; align-items: center; padding: 1px 8px; border-radius: var(--r-full); border: 1px solid color-mix(in srgb, var(--color-warn) 60%, transparent); background: color-mix(in srgb, var(--color-warn) 14%, var(--color-surface)); color: var(--color-text); }
