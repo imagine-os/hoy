@@ -88,7 +88,7 @@ export function CustomerHomePage() {
         </Card>
       </section>
     ),
-    // 0039: the section keeps its name (stored layouts reference it); it renders the practice block.
+    // 0040: the section keeps its name (stored layouts reference it); it renders the practice block.
     'StatsRow ×3': () => <PracticeBlock stats={stats} goal={goal} />,
     'EventsStrip → BottomNav': () => null,
   };
@@ -106,7 +106,7 @@ export function CustomerHomePage() {
 }
 
 /**
- * C-01 practice block (0039). Three tiles that each say what they count — classes attended this month (by session
+ * C-01 practice block (0040). Three tiles that each say what they count — classes attended this month (by session
  * date), weeks in a row on the goal, and the plan balance named by what it is — then the week as dots and a real
  * link to C-27. With no goal row yet the streak tile becomes the weekly-goal question; "sin meta" hides the streak.
  */

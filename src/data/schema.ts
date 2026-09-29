@@ -116,7 +116,7 @@ export const tables: TableDef[] = [
     rls: ['customer: insert + read + cancel own rows (user_id = auth.uid())', 'front_desk/coordinator/admin: read all, mark attended'],
     columns: [{ name: 'event_id', type: 'uuid', references: 'events' }, { name: 'user_id', type: 'uuid', references: 'users' }, { name: 'status', type: 'enum', enum: ['going', 'cancelled', 'attended', 'no_show'] }, { name: 'payment_id', type: 'uuid', references: 'payments', nullable: true }, { name: 'guests', type: 'int', description: 'extra seats taken' }] },
 
-  // ---- analytics (0039): the member's weekly goal and the moments worth remembering; every metric is derived from bookings + class_sessions (src/data/analytics.ts) ----
+  // ---- analytics (0040): the member's weekly goal and the moments worth remembering; every metric is derived from bookings + class_sessions (src/data/analytics.ts) ----
   { name: 'practice_goals', group: 'analytics', titleColumn: 'target', label: { es: 'Metas de práctica', en: 'Practice goals' }, description: { es: 'Cuántas clases por semana quiere tomar cada persona (C-01, C-27). Una fila activa por persona; el historial se conserva.', en: 'How many classes a week each person wants to take (C-01, C-27). One active row per person; history is kept.' },
     rls: ['customer: insert + read + update own rows (user_id = auth.uid())', 'front_desk/coordinator/admin: read (M-06, M-12)', 'one active row per person: setting a new goal ends the previous one (active = false), so history survives'],
     columns: [{ name: 'user_id', type: 'uuid', references: 'users' }, { name: 'cadence', type: 'enum', enum: ['week'], description: 'only weekly today; a monthly cadence is reserved for a later pass and would extend this enum, never replace it' }, { name: 'target', type: 'int', description: 'classes per week the member chose, 1–7; 0 = no goal, only tracking' }, { name: 'source', type: 'enum', enum: ['member', 'suggested'], description: 'member = picked by hand · suggested = accepted the app’s suggestion from their own history' }, { name: 'starts_on', type: 'date' }, { name: 'active', type: 'bool' }, { name: 'note', type: 'text', nullable: true, wide: true, description: 'why, in the member’s words; optional' }] },
@@ -285,7 +285,7 @@ export interface StudioPolicyRow extends BaseRow { key: string; label: { es: str
 export type IntegrationKey = 'wompi' | 'whatsapp' | 'email' | 'dian' | 'maps' | 'supabase';
 export type IntegrationStatus = 'simulated' | 'configured' | 'connected';
 export interface IntegrationRow extends BaseRow { key: IntegrationKey; status: IntegrationStatus; config: Record<string, string>; notes: string | null; updated_by: string | null }
-// ---- analytics (0039) ----
+// ---- analytics (0040) ----
 export type GoalCadence = 'week';
 export type GoalSource = 'member' | 'suggested';
 export interface PracticeGoalRow extends BaseRow { user_id: string; cadence: GoalCadence; target: number; source: GoalSource; starts_on: string; active: boolean; note: string | null }

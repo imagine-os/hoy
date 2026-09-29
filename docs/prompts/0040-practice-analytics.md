@@ -8,7 +8,7 @@ For the Classes this month and streak its confusing, on the customer app,   The 
 
 ## Response
 
-Branch `feat/practice-analytics`, version **0.14.0**. Full record in `docs/changelog/0040-practice-analytics.md`; the research and the proposal as a document Justin can read: `docs/reference/analytics.md`; the two engineering decisions: D-0014 and D-0015 in `docs/decisions.md`.
+Branch `feat/practice-analytics`, version **0.16.0**. Full record in `docs/changelog/0040-practice-analytics.md`; the research and the proposal as a document Justin can read: `docs/reference/analytics.md`; the two engineering decisions: D-0014 and D-0015 in `docs/decisions.md`.
 
 **Research → proposal → build**, in that order:
 

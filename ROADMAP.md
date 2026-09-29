@@ -490,7 +490,7 @@ chapter or spec and close the card.
     authorisation at the desk. State 18+ in both stores (recommended, keeps the app out of the Families
     policy) or build the guardian flow into sign-up.
 
-**From the practice-analytics research, 2026-09-29 (0039, `docs/reference/analytics.md` §8)**
+**From the practice-analytics research, 2026-09-29 (0040, `docs/reference/analytics.md` §8)**
 40. **Revenue on M-12 Analítica de práctica.** The page shows attendance and retention only because item 32 (does the
     Coordinator see the monthly revenue KPI?) is open, and it opens for the same roles as M-01. Once Sergio answers 32,
     decide whether revenue per class hour and plan mix join M-12 or stay in Finance (M-09).

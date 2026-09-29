@@ -10,7 +10,7 @@ declared on C-02, C-04, C-06 and C-08), and `analytics.setRange` / `analytics.op
 `/admin/analytics`. `window.__hoyos.routes` gains `/app/practice` (C-27) and `/admin/analytics` (M-12): 101 → 103 routes,
 87 → 89 codes; `public/hub-map.json` picks both up on the next build (`/app/practice` in the customer app's *Account*
 group via `HUB_GROUP_RULES`). Two tables join `{{tables}}` / M-03 in the new *Práctica y analítica* group:
-`practice_goals` and `activity_events` (53 → 55). One CLI entry: `npm run test:analytics`. `MockProvider.SEED_VERSION`
+`practice_goals` and `activity_events` (52 → 54). One CLI entry: `npm run test:analytics`. `MockProvider.SEED_VERSION`
 is 4, so every stored demo db reseeds once.
 
 **0030 delta (v0.12.0).** `window.__hoyos.routes` no longer lists `/app/intention` (A-05 retired); the path still

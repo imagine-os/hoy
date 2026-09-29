@@ -9,7 +9,7 @@ export const strings: StringTable = {
   'customer.home.next.cta': { es: 'Reserva tu primera clase', en: 'Book your first class' },
   'customer.home.today': { es: 'Hoy en el club', en: 'Today at the club' },
   'customer.home.today.empty': { es: 'Hoy descansamos.', en: 'We rest today.' },
-  // C-01 practice block (0039): every label says what is counted; "racha" never stands alone as a headline (research §5.8).
+  // C-01 practice block (0040): every label says what is counted; "racha" never stands alone as a headline (research §5.8).
   'customer.home.stats.title': { es: 'Tu práctica', en: 'Your practice' },
   'customer.home.stats.classes': { es: 'Clases tomadas este mes', en: 'Classes attended this month' },
   'customer.home.stats.upcoming.one': { es: '{n} reservada próxima', en: '{n} upcoming booked' },
@@ -40,7 +40,7 @@ export const strings: StringTable = {
   'customer.home.goal.title': { es: '¿Cuántas veces por semana quieres practicar?', en: 'How many times a week do you want to practise?' },
   'customer.home.goal.hint': { es: 'Solo para tu seguimiento; puedes cambiarla cuando quieras.', en: 'Just for your own tracking; change it whenever you like.' },
   'customer.home.milestone': { es: '¡Clase número {n}!', en: 'Class number {n}!' },
-  // C-27 Tu práctica (0039)
+  // C-27 Tu práctica (0040)
   'customer.practice.title': { es: 'Tu práctica', en: 'Your practice' },
   'customer.practice.sub': { es: 'Tus clases, tus semanas y tu meta.', en: 'Your classes, your weeks and your goal.' },
   'customer.practice.goal.perWeek': { es: 'por semana', en: 'a week' },

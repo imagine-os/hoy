@@ -16,12 +16,12 @@ const SIGN_IN_IDS = demoUsers.filter((u) => u.role !== 'public').map((u) => u.id
 
 export const appGoHome: ActionDef = { id: 'app.goHome', label: { es: 'Ir al inicio', en: 'Go home' }, intent: { es: 'Llévame al inicio de la app', en: 'Take me to the app home' } };
 export const appOpenSchedule: ActionDef = { id: 'app.openSchedule', label: { es: 'Abrir el horario', en: 'Open the schedule' }, intent: { es: 'Muéstrame el horario de clases', en: 'Show me the class schedule' }, permission: 'classes.read' };
-/** 0039: C-27 Tu práctica, from anywhere in the app. */
+/** 0040: C-27 Tu práctica, from anywhere in the app. */
 export const appOpenPractice: ActionDef = { id: 'app.openPractice', label: { es: 'Ver mi práctica', en: 'See my practice' }, intent: { es: 'Muéstrame mi práctica', en: 'Show me my practice' } };
 /** Shell-level navigation, declared on every page of the reserve / register flow (the registry has no shell scope). */
 export const APP_NAV_ACTIONS: ActionDef[] = [appGoHome, appOpenSchedule, appOpenPractice];
 
-/** 0039: the member's weekly practice goal (C-01 inline picker, C-27 GoalSection). 0 = "sin meta": counts stay, the streak hides. */
+/** 0040: the member's weekly practice goal (C-01 inline picker, C-27 GoalSection). 0 = "sin meta": counts stay, the streak hides. */
 export const appSetGoal: ActionDef = {
   id: 'app.setGoal', label: { es: 'Cambiar mi meta semanal', en: 'Change my weekly goal' },
   intent: { es: 'Quiero practicar {target} veces por semana', en: 'I want to practise {target} times a week' },

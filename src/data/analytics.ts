@@ -27,7 +27,7 @@
  *     0 but this week already has ≥ 1 attendance; 'alive' otherwise when count ≥ 1; else 'none'.
  *  7. `best` is the longest run in the whole history under the same rules. `count` counts met weeks in
  *     the current run (saved weeks excluded, the current week included once met).
- *  8. Changing the goal never rewrites the past (0039). A week is graded by the goal in force when it closed: the
+ *  8. Changing the goal never rewrites the past (0040). A week is graded by the goal in force when it closed: the
  *     latest `practice_goals` row (by starts_on, then created_at; ended rows included) whose starts_on ≤ that week's
  *     Sunday. Weeks before the earliest goal use the earliest goal's target; with no goal rows at all every week has
  *     target 0. So a goal set mid-week governs the week it was set in and every later one, and the weeks already

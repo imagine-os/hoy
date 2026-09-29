@@ -39,7 +39,7 @@ const WORDS = {
 /**
  * "How often do you want to practise?" — a goal for tracking, nothing about mood. A radiogroup of 44 px pills on the
  * SegmentedControl track (1 · 2 · 3 · 4+ per week) plus a "no goal for now" Chip, one roving tab stop. Manual
- * activation (0039): arrow keys and Home / End only move focus; Space / Enter or a click / tap select, so browsing the
+ * activation (0040): arrow keys and Home / End only move focus; Space / Enter or a click / tap select, so browsing the
  * options never saves. Re-selecting the checked option is a no-op. It is not a SegmentedControl wrapper because that
  * one is a tablist.
  */

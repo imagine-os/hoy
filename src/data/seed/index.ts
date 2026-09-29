@@ -322,7 +322,7 @@ export function buildSeed(): Record<string, BaseRow[]> {
   db.manual_requests.push(...manual.requests);
   db.manual_overrides.push(...manual.overrides);
 
-  // ---- practice analytics (0039, C-01 / C-27 / M-06 / M-12): goals, the demo member's history and the events record ----
+  // ---- practice analytics (0040, C-01 / C-27 / M-06 / M-12): goals, the demo member's history and the events record ----
   // Appended last and without the shared RNG, so nothing above shifts. The session window is ±7 days, so the demo
   // member's older weeks are given here: completed morning classes she attended (one per day, tenant.studio.perPersonPerDay)
   // with a fixed rotation of co-attendees, so the weekly streak has real rows under it: 2 visits in each of the last

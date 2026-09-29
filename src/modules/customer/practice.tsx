@@ -1,5 +1,5 @@
 /**
- * 0039 — the customer side of practice analytics, shared by C-01 (home block) and C-27 (Tu práctica).
+ * 0040 — the customer side of practice analytics, shared by C-01 (home block) and C-27 (Tu práctica).
  * Numbers come from `usePracticeStats()` (src/data/useAnalytics.ts); this file only words them and wires the goal.
  */
 import { useCallback, useMemo } from 'react';

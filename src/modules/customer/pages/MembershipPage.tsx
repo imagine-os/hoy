@@ -26,7 +26,7 @@ export function MembershipPage() {
   const { t, bi, lang } = useI18n();
   const data = useData();
   const ent = useEntitlements();
-  // 0039: the same 'clases tomadas este mes' as C-01 / C-27 — checked in, counted by the session's date.
+  // 0040: the same 'clases tomadas este mes' as C-01 / C-27 — checked in, counted by the session's date.
   const { stats } = usePracticeStats();
   const [sheet, setSheet] = useState<'pause' | 'cancel' | null>(null);
   const [days, setDays] = useState(14);
