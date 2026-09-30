@@ -157,20 +157,20 @@ export function CheckinPage() {
         {loading && bookings.length === 0 && <EmptyState compact tone="loading" title={t('core.common.loading')} />}
         {!loading && roster.length === 0 && waitlist.length === 0 && <EmptyState compact title={q ? t('staff.checkin.noMatch') : t('staff.checkin.emptyRoster')} body={q ? t('staff.checkin.noMatch.body') : undefined} />}
         <Group title={t('staff.checkin.expected')} n={expected.length}>
-          {expected.map(({ b, p }) => <RosterRow key={b.id} name={p?.name ?? b.user_id} initials={p?.initials} phone={maskPhone(p?.phone)} plan={planLabel(p, b, lang)} status="booked" flag={p?.notes ?? undefined}
-            actions={canWrite && <><Button size="sm" loading={busy === b.id} onClick={() => setStatus(b, 'checked_in')} icon="user-check">{t('staff.checkin.checkin')}</Button><Button size="sm" variant="ghost" onClick={() => setStatus(b, 'no_show')} icon="user-x">{t('staff.checkin.noShow')}</Button></>} />)}
+          {expected.map(({ b, p }) => <RosterRow key={b.id} name={p?.name ?? b.user_id} initials={p?.initials} phone={maskPhone(p?.phone)} plan={planLabel(p, b, lang)} status="booked" showStatus={false} flag={p?.notes ?? undefined}
+            actions={canWrite && <><Button size="sm" variant="tonal" loading={busy === b.id} onClick={() => setStatus(b, 'checked_in')} icon="check">{t('staff.checkin.checkin')}</Button><Button size="sm" variant="outline" onClick={() => setStatus(b, 'no_show')} icon="user-x">{t('staff.checkin.noShow')}</Button></>} />)}
         </Group>
         <Group title={t('staff.checkin.arrived')} n={arrived.length}>
           {arrived.map(({ b, p }) => <RosterRow key={b.id} name={p?.name ?? b.user_id} initials={p?.initials} phone={maskPhone(p?.phone)} plan={planLabel(p, b, lang)} status="checked_in" late={isLate(b)} time={b.checked_in_at ? formatTime(b.checked_in_at, lang) : undefined} flag={p?.notes ?? undefined}
-            actions={canWrite && <Button size="sm" variant="ghost" onClick={() => setStatus(b, 'booked')} icon="undo">{t('staff.checkin.undo')}</Button>} />)}
+            actions={canWrite && <Button size="sm" variant="outline" onClick={() => setStatus(b, 'booked')} icon="undo">{t('staff.checkin.undo')}</Button>} />)}
         </Group>
         {missed.length > 0 && <Group title={t('staff.checkin.missed')} n={missed.length}>
           {missed.map(({ b, p }) => <RosterRow key={b.id} name={p?.name ?? b.user_id} initials={p?.initials} plan={planLabel(p, b, lang)} status={b.status as 'no_show' | 'late_cancel'}
-            actions={canWrite && b.status === 'no_show' && <Button size="sm" variant="ghost" onClick={() => setStatus(b, 'checked_in')} icon="user-check">{t('staff.checkin.checkin')}</Button>} />)}
+            actions={canWrite && b.status === 'no_show' && <Button size="sm" variant="tonal" onClick={() => setStatus(b, 'checked_in')} icon="check">{t('staff.checkin.checkin')}</Button>} />)}
         </Group>}
         {waitlist.length > 0 && <Group title={t('core.common.waitlist')} n={waitlist.length}>
-          {waitlist.sort((a, b) => a.position - b.position).map((w) => { const p = byId.get(w.user_id); return <RosterRow key={w.id} name={p?.name ?? w.user_id} initials={p?.initials} phone={maskPhone(p?.phone)} plan={p?.plan ? bi({ es: p.plan.name_es, en: p.plan.name_en }) : undefined} status="waiting" time={`#${w.position}`}
-            actions={canBookAny && <Button size="sm" variant="secondary" disabled={full} loading={busy === w.id} title={full ? t('core.common.full') : undefined} onClick={() => promote(w)} icon="promote">{t('staff.checkin.promote')}</Button>} />; })}
+          {waitlist.sort((a, b) => a.position - b.position).map((w) => { const p = byId.get(w.user_id); return <RosterRow key={w.id} name={p?.name ?? w.user_id} initials={p?.initials} phone={maskPhone(p?.phone)} plan={p?.plan ? bi({ es: p.plan.name_es, en: p.plan.name_en }) : undefined} status="waiting" showStatus={false} time={`#${w.position}`}
+            actions={canBookAny && <Button size="sm" variant="tonal" disabled={full} loading={busy === w.id} title={full ? t('core.common.full') : undefined} onClick={() => promote(w)} icon="promote">{t('staff.checkin.promote')}</Button>} />; })}
         </Group>}
       </div>
     ) : null,
@@ -190,8 +190,8 @@ export function CheckinPage() {
         <div className="stack-sm" style={{ padding: 'var(--sp-xs)' }}>
           <p className="xs muted">{t('staff.checkin.walkin.body')}</p>
           {q.trim().length >= 2 && walkIns.length === 0 && <p className="small muted">{t('staff.checkin.walkin.none')}</p>}
-          {walkIns.map((p) => <RosterRow key={p.id} name={p.name} initials={p.initials} phone={maskPhone(p.phone)} plan={p.plan ? bi({ es: p.plan.name_es, en: p.plan.name_en }) : t('staff.checkin.noPlan')} status="booked"
-            actions={canWrite && selected && <Button size="sm" variant="secondary" disabled={full} loading={busy === p.id} onClick={() => walkIn(p)} icon="user-plus">{t('staff.checkin.walkin.add')}</Button>} />)}
+          {walkIns.map((p) => <RosterRow key={p.id} name={p.name} initials={p.initials} phone={maskPhone(p.phone)} plan={p.plan ? bi({ es: p.plan.name_es, en: p.plan.name_en }) : t('staff.checkin.noPlan')} status="booked" showStatus={false}
+            actions={canWrite && selected && <Button size="sm" variant="tonal" disabled={full} loading={busy === p.id} onClick={() => walkIn(p)} icon="user-plus">{t('staff.checkin.walkin.add')}</Button>} />)}
           {can('payments.write') && <Link to={`/staff/register${selectedId ? `?session=${selectedId}` : ''}`}><Button block variant={walkIns.length ? 'ghost' : 'primary'} size="sm" icon="user-plus">{t('staff.checkin.walkin.register')}</Button></Link>}
         </div>
       </Card>

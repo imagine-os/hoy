@@ -3,7 +3,8 @@
 //   · lists the vertical gaps between visible sibling blocks inside <main> (the page rhythm) and flags any gap
 //     that is not on the 4 px grid, or that differs between siblings of the same parent,
 //   · lists the inner padding of every card (.card, .surf2, .listgroup-body) and flags unequal sides,
-//   · lists interactive targets smaller than 44 × 44 px (inline text links excepted),
+//   · lists interactive targets smaller than 44 × 44 px (inline text links excepted; a transparent ::before hit area
+//     with negative insets counts — the dense-row exception, 0049),
 //   · with --grid, saves <out>/<slug>-<width>-grid.jpg with a 4 px / 16 px grid drawn over the page.
 // All measurements are divided by the page's --ui factor, so a 3840 capture reports base-size px.
 // Usage: node scripts/spacing-audit.mjs --route=/app [--as=usr_cust] [--widths=390,1280] [--grid] [--all] [--out=dir]
@@ -71,7 +72,11 @@ try {
         if (!visible(el)) return false;
         const r = el.getBoundingClientRect();
         const inline = el.tagName === 'A' && getComputedStyle(el).display === 'inline';
-        return !inline && (r.width / ui < 43.5 || r.height / ui < 43.5);
+        // 0049 dense-row exception: a transparent absolutely positioned ::before with negative insets extends the hit area
+        const hit = getComputedStyle(el, '::before');
+        const grow = (v) => (hit.content !== 'none' && hit.position === 'absolute' && parseFloat(v) < 0 ? -parseFloat(v) : 0);
+        const w = r.width + grow(hit.left) + grow(hit.right), hgt = r.height + grow(hit.top) + grow(hit.bottom);
+        return !inline && (w / ui < 43.5 || hgt / ui < 43.5);
       }).map((el) => { const r = el.getBoundingClientRect(); return `${name(el)} "${(el.textContent ?? "").trim().slice(0, 28)}" ${px(r.width)}×${px(r.height)}`; });
       return { ui, gaps: all ? gaps : gaps.filter((g) => g.uneven || g.offGrid.length), cards: all ? cards : cards.filter((c) => !c.equal), small };
     }, ALL);

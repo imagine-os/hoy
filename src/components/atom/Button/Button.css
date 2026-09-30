@@ -11,6 +11,14 @@
 /* .surf2 — paper tile */
 .btn-secondary { background-color: var(--color-surface); color: var(--color-text); border-color: var(--color-card-border); box-shadow: var(--shadow-card); }
 .btn-secondary:hover:not(:disabled) { background-color: var(--color-surface-elevated); box-shadow: var(--shadow-raised); }
+/* tonal — quiet brand action for repeated rows: light brand-blue tint (mid blue --color-accent), brand text, no shadow (0049) */
+.btn-tonal { background: color-mix(in srgb, var(--color-accent) 24%, transparent); color: var(--color-primary); }
+.btn-tonal:hover:not(:disabled) { background: color-mix(in srgb, var(--color-accent) 34%, transparent); }
+.btn-tonal:active:not(:disabled) { background: color-mix(in srgb, var(--color-accent) 40%, transparent); }
+/* outline — a plain button that still reads as a button: 1 px control border (--color-border-strong), default text, no fill (0049) */
+.btn-outline { background: transparent; color: var(--color-text); border-color: var(--color-border-strong); }
+.btn-outline:hover:not(:disabled) { background: var(--color-surface-2); }
+.btn-outline:active:not(:disabled) { background: var(--color-surface-3); }
 .btn-ghost { background: transparent; color: var(--color-primary); }
 .btn-ghost:hover:not(:disabled) { background: color-mix(in srgb, var(--color-primary) 10%, transparent); }
 .btn-danger { background: var(--color-danger); color: var(--brand-cream); box-shadow: var(--shadow-contact); }
@@ -18,4 +26,10 @@
 .btn.is-loading .btn-label { opacity: .6; }
 .btn-spinner { width: var(--icon-xs); height: var(--icon-xs); border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; animation: btn-spin var(--dur-spin) linear infinite; }
 .btn-icon { display: inline-flex; }
+/* Dense row (RowActions, 0049): sm is 36 visible (--h-ctl-sm), one type step smaller, no shadow; a transparent
+   ::before extends the hit area to --h-ctl (44) vertically — the one documented exception to "visible height = 44". */
+.is-dense .btn { box-shadow: none; }
+/* .btn.btn-sm outranks the global `button:not(…) { min-height: var(--h-ctl) }` in global.css */
+.is-dense .btn.btn-sm { min-height: var(--h-ctl-sm); font-size: var(--fs-xs); }
+.is-dense .btn.btn-sm::before { content: ''; position: absolute; inset: calc((var(--h-ctl-sm) - var(--h-ctl)) / 2) 0; }
 @keyframes btn-spin { to { transform: rotate(360deg); } }
