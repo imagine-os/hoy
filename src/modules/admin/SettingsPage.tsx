@@ -2,11 +2,11 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { useI18n } from '../../i18n/I18nProvider';
 import { useSession } from '../../auth/SessionProvider';
-import type { Role } from '../../auth/roles';
+import { ROLES, ROLE_LABEL, STAFF_ROLES, type Role } from '../../auth/roles';
 import { useData, useTable } from '../../data/DataContext';
 import type { BaseRow, LegalDocumentRow, ModalityRow, RoomRow, TeacherRow } from '../../data/schema';
 import { rateFor } from '../../data/payrollCalc';
-import { formatCOP, formatDate, digitsOf } from '../../i18n/format';
+import { formatCOP, formatDate, digitsOf, isPhone } from '../../i18n/format';
 import { tenant } from '../../tenant/tenant';
 import { SegmentedControl } from '../../components/molecule/SegmentedControl/SegmentedControl';
 import { MapSlot } from '../../components/molecule/MapSlot/MapSlot';
@@ -20,7 +20,8 @@ import { Notice } from '../../components/molecule/Notice/Notice';
 import { EmptyState } from '../../components/molecule/EmptyState/EmptyState';
 import { Wordmark } from '../../components/atom/Wordmark/Wordmark';
 import { useAudit } from '../staff/audit';
-import { contactOf, useOpeningHours, useSettings, type SettingsSection, type StudioSettings, type TenantRow, CONTACT_FIELDS } from './settings';
+import { contactOf, useOpeningHours, useSettings, whatsappLinksOf, type SettingsSection, type StudioSettings, type TenantRow, CONTACT_FIELDS } from './settings';
+import { CONTACT_HOURS, CONTACT_HOURS_LABEL, CONTACT_INTENTS, CONTACT_INTENT_LABEL, CONTACT_INTENT_USES, mergeContacts, type ContactHours, type ContactIntent, type ContactRoute } from '../../tenant/contacts';
 import { HoursSettings } from './HoursSettings';
 import { useActions } from '../../actions/bus';
 import type { ActionHandler } from '../../actions/types';
@@ -49,7 +50,9 @@ const validDay = (v: { open: string; close: string }) => /^\d{2}:\d{2}$/.test(v.
 /** What a day reopens with: its tenant.ts default, or the first open day's (never a time typed here). */
 const defaultDay = (day: string) => ({ ...(tenant.openingHours[day as keyof typeof tenant.openingHours] ?? Object.values(tenant.openingHours).find((v) => !!v)!) });
 /** 0030: one glyph per settings section (M-08a…f); the rail uses SETTINGS_GROUPS[].icon. */
-const SECTION_ICON: Record<SettingsSection, IconName> = { profile: 'identity', openingHours: 'clock', studio: 'capacity', policies: 'policies', features: 'features', payments: 'credit-card', tax: 'tax', payroll: 'payroll', quietHours: 'quiet-hours', comms: 'send', content: 'content', branding: 'branding', integrations: 'integrations' };
+const SECTION_ICON: Record<SettingsSection, IconName> = { profile: 'identity', openingHours: 'clock', studio: 'capacity', policies: 'policies', features: 'features', payments: 'credit-card', tax: 'tax', payroll: 'payroll', quietHours: 'quiet-hours', comms: 'send', content: 'content', branding: 'branding', integrations: 'integrations', contacts: 'whatsapp' };
+/** 0047: a contact row is valid when its number is empty (falls back to the front desk) or carries at least 10 digits. */
+const validContact = (c: ContactRoute) => !c.whatsapp?.trim() || isPhone(c.whatsapp);
 /** Flags whose page is load-bearing for the demo and cannot be switched off. */
 const LOCKED_PAGES = ['A-06', 'E-04'];
 interface FlagRow extends BaseRow { key: string; page_code: string | null; label: string; enabled: boolean }
@@ -143,6 +146,38 @@ export function SettingsPage({ group = 'general' }: { group?: SettingsGroup }) {
                   <p className="xs muted">{t('admin.settings.f.confirmed.hint')}</p>
                 </>
               ))}
+              {S('contacts', t('admin.settings.sec.contacts'), (d, set) => {
+                // Who receives each topic right now, from the draft, so the owner sees the effect before saving.
+                const draft = whatsappLinksOf({ ...settings, contacts: d }, hours);
+                const now = (i: ContactIntent) => { const r = draft.resolve(i); return `${r.name ? `${r.name} · ` : ''}${bi(CONTACT_INTENT_LABEL[r.resolvedIntent])} · ${r.whatsapp}${r.note ? ` · ${bi(r.note)}` : ''}`; };
+                return (
+                  <>
+                    <p className="small muted" style={{ maxWidth: '60ch' }}>{t('admin.settings.contacts.note')}</p>
+                    <div className="stack-sm" role="list" aria-label={t('admin.settings.sec.contacts')}>
+                      {CONTACT_INTENTS.map((i) => {
+                        const row = d[i];
+                        const isFront = i === 'frontDesk';
+                        const empty = !row.whatsapp?.trim();
+                        const upd = (patch: Partial<ContactRoute>) => set({ ...d, [i]: { ...row, ...patch } });
+                        return (
+                          <div key={i} role="listitem" className="settings-contact" data-intent={i} aria-label={bi(CONTACT_INTENT_LABEL[i])}>
+                            <div className="settings-contact-head">
+                              <strong className="small">{bi(CONTACT_INTENT_LABEL[i])}</strong>
+                              <span className="xs muted">{t('admin.settings.contacts.uses')}: <span className="mono">{CONTACT_INTENT_USES[i]}</span></span>
+                              <span className="xs muted" data-testid={`contact-now-${i}`}>{t('admin.settings.contacts.now')}: {now(i)}</span>
+                            </div>
+                            <Field label={t('admin.settings.contacts.f.name')}>{(id) => <Input id={id} value={row.name ?? ''} disabled={!canWrite} autoComplete="off" onChange={(e) => upd({ name: e.target.value })} />}</Field>
+                            <Field label="WhatsApp" hint={empty ? (isFront ? t('admin.settings.contacts.frontDesk.default') : t('admin.settings.contacts.fallback')) : t('admin.settings.f.whatsapp.hint', { dial: tenant.dialCode })} error={validContact(row) ? undefined : t('admin.settings.contacts.invalid')}>{(id) => <Input id={id} inputMode="tel" value={row.whatsapp ?? ''} placeholder={isFront ? contact.whatsapp : `${tenant.dialCode} 3xx xxx xxxx`} disabled={!canWrite} invalid={!validContact(row)} onChange={(e) => upd({ whatsapp: e.target.value })} />}</Field>
+                            <Field label={t('admin.settings.contacts.f.role')}>{(id) => <Select id={id} value={row.role ?? ''} disabled={!canWrite} onChange={(e) => upd({ role: (e.target.value || undefined) as Role | undefined })}><option value="">—</option>{STAFF_ROLES.map((r) => <option key={r} value={r}>{bi(ROLE_LABEL[r])}</option>)}</Select>}</Field>
+                            <Field label={t('admin.settings.contacts.f.hours')} hint={t(`admin.settings.contacts.hours.${row.hours}`)}>{(id) => <Select id={id} value={row.hours} disabled={!canWrite} onChange={(e) => upd({ hours: e.target.value as ContactHours })}>{CONTACT_HOURS.map((h) => <option key={h} value={h}>{bi(CONTACT_HOURS_LABEL[h])}</option>)}</Select>}</Field>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <p className="xs muted">{t('admin.settings.contacts.rules')} <Link to="/teach/payroll">S-03</Link> · <Link to="/app/account">C-26</Link> · <Link to="/site/contact">W-06</Link></p>
+                  </>
+                );
+              }, undefined, (d) => CONTACT_INTENTS.every((i) => validContact(d[i])))}
               {S('openingHours', t('admin.settings.sec.openingHours'), (d, set) => (
                 <div className="stack-sm">
                   <p className="small" data-testid="hours-today"><strong>{bi(hours.today)}</strong></p>
@@ -410,6 +445,26 @@ function GeneralActions() {
       await data.update<TenantRow>('tenants', row.id, { settings: { ...(row.settings ?? {}), openingHours: next } });
       await audit('settings.update', 'tenants', tenant.id, { section: 'openingHours', before, after: next, via: 'action' });
       return `day ${day}: ${next[day] ? `${next[day]!.open}–${next[day]!.close}` : 'closed'}`;
+    },
+    // 0047: one contact row, merged field by field, saved exactly as the card does (same section, same audit row).
+    'settings.contacts.update': async (p) => {
+      if (!can('settings.write')) throw new Error('settings.write required');
+      const intent = need(p, 'intent') as ContactIntent;
+      if (!CONTACT_INTENTS.includes(intent)) throw new Error(`intent must be one of ${CONTACT_INTENTS.join(', ')}`);
+      const row = await data.get<TenantRow>('tenants', tenant.id);
+      if (!row) throw new Error('tenant row not found');
+      const stored = mergeContacts(row.settings?.contacts);
+      const before = stored[intent];
+      const after: ContactRoute = { ...before };
+      if (p?.name !== undefined) after.name = p.name.trim();
+      if (p?.whatsapp !== undefined) { const v = p.whatsapp.trim(); if (v && !isPhone(v)) throw new Error('whatsapp needs at least 10 digits with the country code'); after.whatsapp = v; }
+      if (p?.role !== undefined) { const r = p.role.trim(); if (r && !(ROLES as readonly string[]).includes(r)) throw new Error(`role must be one of ${ROLES.join(', ')}`); after.role = (r || undefined) as Role | undefined; }
+      if (p?.hours !== undefined) { const h = p.hours.trim() as ContactHours; if (!CONTACT_HOURS.includes(h)) throw new Error(`hours must be one of ${CONTACT_HOURS.join(', ')}`); after.hours = h; }
+      // Store the whole table (defaults filled in), so the saved shape matches what the card writes.
+      const contacts = { ...stored, [intent]: after };
+      await data.update<TenantRow>('tenants', row.id, { settings: { ...(row.settings ?? {}), contacts } });
+      await audit('settings.update', 'tenants', tenant.id, { section: 'contacts', intent, before, after, via: 'action' });
+      return `${intent}: ${after.whatsapp || 'front desk (fallback)'} · ${after.hours}`;
     },
   }), [can, data, audit]);
   useActions(M08a, impl);

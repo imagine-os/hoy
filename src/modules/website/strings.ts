@@ -169,6 +169,7 @@ export const strings: StringTable = {
   'site.first.body': { es: 'Una clase de prueba por {price}, sin complicaciones y sin permanencia. Si te gusta, seguimos.', en: 'One trial class for {price}, no complications and no commitment. If it suits you, we carry on.' },
   'site.first.cta': { es: 'Reservar clase de prueba', en: 'Book a trial class' },
   'site.first.cta2': { es: 'Escríbenos por WhatsApp', en: 'Write to us on WhatsApp' },
+  'site.first.wa': { es: 'Hola HOY, quiero una clase de prueba.', en: 'Hi HOY, I would like a trial class.' },
 
   'site.about.values': { es: 'Así hablamos', en: 'How we speak' },
   'site.about.media': { es: 'Fundadores e interior del estudio', en: 'Founders and studio interior' },
@@ -233,6 +234,7 @@ export const strings: StringTable = {
   'site.contact.fSend': { es: 'Enviar por WhatsApp', en: 'Send on WhatsApp' },
   'site.contact.specials': { es: 'Especiales', en: 'Specials' },
   'site.contact.specialsBody': { es: 'Eventos privados, cumpleaños, sesiones para equipos y pedidos especiales se arman directamente con el estudio. Cuéntanos qué tienes en mente y te respondemos por WhatsApp.', en: 'Private events, birthdays, team sessions and special requests are arranged directly with the studio. Tell us what you have in mind and we will answer on WhatsApp.' },
+  'site.contact.wa': { es: 'Hola HOY, quiero información.', en: 'Hi HOY, I would like some information.' },
   'site.contact.fTemplate': { es: 'Hola HOY, soy {name} ({phone}). {message}', en: 'Hi HOY, I am {name} ({phone}). {message}' },
 
   'site.legal.terms': { es: 'Términos y condiciones', en: 'Terms & conditions' },

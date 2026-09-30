@@ -116,6 +116,8 @@ export const strings: StringTable = {
   'teacher.payroll.prev': { es: 'Mes anterior', en: 'Previous month' },
   'teacher.payroll.next': { es: 'Mes siguiente', en: 'Next month' },
   'teacher.payroll.ask': { es: 'Preguntar por este extracto', en: 'Ask about this statement' },
+  'teacher.payroll.ask.to': { es: 'Tu pregunta llega a {name} (nómina).', en: 'Your question reaches {name} (payroll).' },
+  'teacher.payroll.ask.toFrontDesk': { es: 'Tu pregunta llega a recepción, que la pasa a finanzas.', en: 'Your question reaches the front desk, who pass it to finance.' },
   'teacher.payroll.ask.text': { es: 'Hola, tengo una pregunta sobre mi nómina de {period} (total {total}).', en: 'Hi, I have a question about my {period} payroll (total {total}).' },
   'teacher.payroll.runBy': { es: 'La nómina la corre finanzas del estudio · Wompi simulado', en: 'Payroll is run by the studio’s finance team · Wompi simulated' },
   // S-03 Mis números (practice analytics): own numbers against the studio average, never colleagues

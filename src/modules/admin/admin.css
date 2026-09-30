@@ -54,6 +54,12 @@
 .settings-brand { display: flex; align-items: center; gap: var(--sp-md); flex-wrap: wrap; padding: var(--sp-md); border-radius: var(--r-md); background: var(--color-surface-2); }
 /* 0041 · M-08a today line + links; M-08g next-30-days grid */
 .settings-hours-links { display: flex; flex-wrap: wrap; gap: var(--gap-control); }
+/* 0047 — M-08a WhatsApp contacts by topic: one row per intent (head · name · number · role · hours). Columns collapse to two, then one. */
+.settings-contact { display: grid; grid-template-columns: minmax(12rem, 1.4fr) repeat(4, minmax(0, 1fr)); gap: var(--gap-control); align-items: start; padding: var(--sp-md) 0; border-bottom: 1px solid var(--color-border); }
+.settings-contact:last-child { border-bottom: 0; padding-bottom: 0; }
+.settings-contact-head { display: flex; flex-direction: column; gap: var(--stack-tight); min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 1280px) { .settings-contact { grid-template-columns: repeat(2, minmax(0, 1fr)); } .settings-contact-head { grid-column: 1 / -1; } }
+@media (max-width: 600px) { .settings-contact { grid-template-columns: minmax(0, 1fr); } }
 .hours-days { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); gap: var(--sp-sm); }
 .hours-day { display: flex; flex-direction: column; gap: var(--stack-tight); padding: var(--sp-sm) var(--sp-md); border-radius: var(--r-md); background: var(--color-surface-2); min-height: var(--h-ctl); }
 .hours-day.is-closed strong { color: var(--color-text-muted); }

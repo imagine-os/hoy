@@ -3,14 +3,14 @@ import { useI18n } from '../../i18n/I18nProvider';
 import { useTable } from '../../data/DataContext';
 import type { BaseRow, BookingRow, ClassSessionRow, PaymentMethodRow, PayrollLineRow, PayrollRunRow, TeacherRow } from '../../data/schema';
 import { classLinesFor, isWholeMonth, periodAt, rateFor, runTotal, type DraftLine, type Period } from '../../data/payrollCalc';
-import { formatCOP, formatDate, formatDateTime, formatTime, waLink } from '../../i18n/format';
+import { formatCOP, formatDate, formatDateTime, formatTime } from '../../i18n/format';
 import { StatTile } from '../../components/molecule/StatTile/StatTile';
 import { Card } from '../../components/molecule/Card/Card';
 import { Button } from '../../components/atom/Button/Button';
 import { Badge } from '../../components/atom/Badge/Badge';
 import { Chip } from '../../components/atom/Chip/Chip';
 import { EmptyState } from '../../components/molecule/EmptyState/EmptyState';
-import { useContact, useSettings } from '../admin/settings';
+import { useSettings, useWhatsappLink } from '../admin/settings';
 import { periodLabel } from '../admin/payouts';
 import { useTeacherSelf } from './useTeacherSelf';
 import './teacher.css';
@@ -29,7 +29,7 @@ const STATUS_TONE = { draft: 'warn', approved: 'primary', paid: 'success' } as c
  * bonuses and adjustments included.
  */
 export function TeacherPayrollPage() {
-  const { t, lang } = useI18n();
+  const { t, bi, lang } = useI18n();
   const { me } = useTeacherSelf();
   const { settings } = useSettings();
   const [offset, setOffset] = useState(0);
@@ -37,7 +37,9 @@ export function TeacherPayrollPage() {
   // 0018: the period follows the M-08c cadence — a month, or a quincena (1–15 · 16–end) — and the arrows step by period.
   const cadence = settings.payroll.cadence;
   const rateCard = settings.payroll.rateCard;
-  const contact = useContact();
+  // 0047: the question goes to the `payroll` contact (M-08a), not the front desk — unless none is set.
+  const wa = useWhatsappLink();
+  const payrollContact = wa.resolve('payroll');
   const period: Period = useMemo(() => periodAt(cadence, new Date(), offset), [cadence, offset]);
   const meId = me?.id;
 
@@ -73,7 +75,7 @@ export function TeacherPayrollPage() {
   const subs = classLines.filter((l) => isSub(l.class_session_id)).length;
   const method = methods.find((m) => m.is_default) ?? methods[0];
 
-  const ask = waLink(contact.whatsapp, t('teacher.payroll.ask.text', { period: label, total: formatCOP(total, lang) }));
+  const ask = wa.link('payroll', t('teacher.payroll.ask.text', { period: label, total: formatCOP(total, lang) }));
 
   return (
     <div className="container page stack teach">
@@ -165,10 +167,13 @@ export function TeacherPayrollPage() {
             </section>
           )}
 
-          <div className="row wrap">
-            <Button size="sm" variant="ghost" onClick={() => window.print()} icon="download">{t('teacher.payroll.download')}</Button>
-            <a href={ask} target="_blank" rel="noreferrer"><Button size="sm" variant="ghost" icon="whatsapp">{t('teacher.payroll.ask')}</Button></a>
-            <Chip>{t('teacher.payroll.runBy')}</Chip>
+          <div className="stack-sm">
+            <div className="row wrap">
+              <Button size="sm" variant="ghost" onClick={() => window.print()} icon="download">{t('teacher.payroll.download')}</Button>
+              <a href={ask} target="_blank" rel="noreferrer" data-testid="payroll-ask"><Button size="sm" variant="ghost" icon="whatsapp">{t('teacher.payroll.ask')}</Button></a>
+              <Chip>{t('teacher.payroll.runBy')}</Chip>
+            </div>
+            <p className="xs muted" data-testid="payroll-ask-to">{payrollContact.resolvedIntent === 'payroll' ? t('teacher.payroll.ask.to', { name: payrollContact.name ?? payrollContact.whatsapp }) : t('teacher.payroll.ask.toFrontDesk')}{payrollContact.note ? ` · ${bi(payrollContact.note)}` : ''}</p>
           </div>
         </>
       )}

@@ -13,7 +13,8 @@ import { Card } from '../../../components/molecule/Card/Card';
 import { ClassRow } from '../../../components/molecule/ClassRow/ClassRow';
 import { TeacherCard } from '../../../components/organism/TeacherCard/TeacherCard';
 import { MediaSlot } from '../../../components/molecule/MediaSlot/MediaSlot';
-import { SectionHead, SiteShell, useWaHref } from '../SiteShell';
+import { SectionHead, SiteShell } from '../SiteShell';
+import { useWhatsappLink } from '../../admin/settings';
 import { siteSpecs } from '../specs';
 import { useTodaySessions } from '../hooks';
 
@@ -21,7 +22,9 @@ const FAMILIES: PlanFamily[] = ['bienvenida', 'membresia', 'pausas', 'regalos', 
 
 export function ClassicHomePage() {
   const { t, bi, lang } = useI18n();
-  const waHref = useWaHref();
+  // 0047: the trial-class button is a sales handoff (M-08a contacts → front desk by default).
+  const wa = useWhatsappLink();
+  const salesNote = wa.resolve('sales').note;
   const nav = useNavigate();
   const { sections, isVisible } = useLayout({ ...siteSpecs.home, layout: ['Hero', 'Classes', 'TodayClasses', 'ValueModel', 'Philosophy', 'Teachers', 'Testimonials', 'FirstStep'] });
   const today = useTodaySessions();
@@ -146,9 +149,12 @@ export function ClassicHomePage() {
           </div>
           <div className="row wrap">
             <Link to="/site/plans"><Button size="lg">{t('site.first.cta')}</Button></Link>
-            <a href={waHref(bi({ es: 'Hola HOY, quiero una clase de prueba.', en: 'Hi HOY, I would like a trial class.' }))} target="_blank" rel="noreferrer">
-              <Button size="lg" variant="secondary">{t('site.first.cta2')}</Button>
-            </a>
+            <div className="stack-sm">
+              <a href={wa.link('sales', t('site.first.wa'))} target="_blank" rel="noreferrer">
+                <Button size="lg" variant="secondary">{t('site.first.cta2')}</Button>
+              </a>
+              {salesNote && <p className="xs muted">{bi(salesNote)}</p>}
+            </div>
           </div>
         </div>
       </section>

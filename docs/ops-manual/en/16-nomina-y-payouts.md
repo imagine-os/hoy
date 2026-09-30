@@ -2,8 +2,8 @@
 title: Teacher payroll and payouts
 role: finance, owner, coordination
 part: IV
-version: 0.13.3
-updated: 2026-09-29
+version: 0.21.0
+updated: 2026-09-30
 summary: From closed attendance to the teacher's pay: generating the draft, reviewing, approving, paying and the teacher's statement.
 ---
 
@@ -71,8 +71,10 @@ This is what you see in your app, under Payroll.
    **estimate**.
 2. Once the draft exists, the app shows exactly what finance will pay, with bonuses, adjustments and Specials, and
    its state: draft, approved or paid.
-3. It also shows class by class, earlier runs, the payment method, a print view and a WhatsApp button to finance
-   with the period and the total already written.
+3. It also shows class by class, earlier runs, the payment method, a print view and a WhatsApp button with the period
+   and the total already written. The button writes to the **payroll** person the administration named in Settings →
+   General → *WhatsApp contacts by topic*, Monday to Friday excluding holidays; when nobody is named it writes to the
+   front desk, who pass it to finance. Under the button it says who receives it.
 4. The statement settles any doubt: if it isn't there, it wasn't paid.
 
 ![The statement in the teacher app](../../screenshots/S-03/en-390-payroll.jpg "S-03 · /teach/payroll")

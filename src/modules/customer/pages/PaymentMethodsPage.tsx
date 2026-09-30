@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useI18n } from '../../../i18n/I18nProvider';
-import { useContact, useSettings } from '../../admin/settings';
+import { useContact, useSettings, useWhatsappLink } from '../../admin/settings';
 import { formatCOP } from '../../../i18n/format';
 import { tenant } from '../../../tenant/tenant';
 import { Card } from '../../../components/molecule/Card/Card';
@@ -19,6 +19,8 @@ export function PaymentMethodsPage() {
   const { t, bi, lang } = useI18n();
   const contact = useContact();
   const { settings } = useSettings();
+  // 0047: the transfer receipt goes to the `finance` contact (M-08a contacts; the front desk by default).
+  const wa = useWhatsappLink();
   const { rows: saved, add, remove, makeDefault } = usePaymentMethods();
   const [test, setTest] = useState<{ busy: boolean; ref?: string }>({ busy: false });
   const [adding, setAdding] = useState<ElectronicMethod | null>(null);
@@ -87,7 +89,7 @@ export function PaymentMethodsPage() {
         <Card eyebrow={t('customer.pay.transfer.title')} className="stack-sm">
           <ol className="cust-steps small">
             <li>{t('customer.pay.transfer.step1', { bank: settings.payments.bankName || bi(contact.pendingLabel) })}</li>
-            <li>{t('customer.pay.transfer.step2', { whatsapp: contact.whatsapp })}</li>
+            <li>{t('customer.pay.transfer.step2', { whatsapp: wa.display('finance', lang) })}</li>
             <li>{t('customer.pay.transfer.step3')}</li>
           </ol>
           <p className="xs muted">{t('customer.pay.transfer.account')}</p>

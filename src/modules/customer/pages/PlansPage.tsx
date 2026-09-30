@@ -2,10 +2,10 @@ import { useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useMinWidth } from '../../../layout/useMinWidth';
 import { useI18n } from '../../../i18n/I18nProvider';
-import { useContact } from '../../admin/settings';
+import { useWhatsappLink } from '../../admin/settings';
 import { useSession } from '../../../auth/SessionProvider';
 import { useData } from '../../../data/DataContext';
-import { formatCOP, formatDate, addMonths, dateKey, waLink } from '../../../i18n/format';
+import { formatCOP, formatDate, addMonths, dateKey } from '../../../i18n/format';
 import { tenant } from '../../../tenant/tenant';
 import { pricingByFamily, type PriceItem } from '../../../tenant/pricing';
 import { Card } from '../../../components/molecule/Card/Card';
@@ -32,7 +32,9 @@ const DATE_OPTS: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', 
 /** C-06 Membership plans — sell the plan without blocking the booking. */
 export function PlansPage() {
   const { t, bi, lang } = useI18n();
-  const contact = useContact();
+  // 0047: the specials line is a `specials` handoff (M-08a contacts; the front desk by default).
+  const wa = useWhatsappLink();
+  const specials = wa.resolve('specials');
   const nav = useNavigate();
   const data = useData();
   const { user } = useSession();
@@ -127,7 +129,8 @@ export function PlansPage() {
           </Card>
           <Card tone="muted" className="row-between wrap">
             <span className="small">{t('customer.plans.specials')}</span>
-            <a href={waLink(contact.whatsapp, t('customer.plans.specials.wa'))} target="_blank" rel="noreferrer"><Button size="sm" variant="ghost">{t('customer.plans.specials.cta')} →</Button></a>
+            <a href={wa.link('specials', t('customer.plans.specials.wa'))} target="_blank" rel="noreferrer"><Button size="sm" variant="ghost">{t('customer.plans.specials.cta')} →</Button></a>
+            {specials.note && <p className="xs muted" style={{ flexBasis: '100%' }}>{bi(specials.note)}</p>}
           </Card>
         </div>
       </div>

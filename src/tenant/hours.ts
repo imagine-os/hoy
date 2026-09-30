@@ -18,7 +18,8 @@ export type WeeklyHours = Record<string, DayHours | undefined>;
 export type OverrideLike = Pick<HoursOverrideRow, 'start_date' | 'end_date' | 'closed' | 'open' | 'close' | 'label' | 'kind'>;
 
 const DAY_ABBR = { es: ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'], en: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] };
-const DAY_NAME = { es: ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'], en: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] };
+/** Weekday names, lowercase in Spanish; exported for src/tenant/contacts.ts (the reply note). */
+export const DAY_NAME = { es: ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'], en: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] };
 const GOOGLE_DAY = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'] as const;
 const SCHEMA_DAY = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as const;
 /** Monday first — how the studio (and Google) reads a week. */
@@ -31,7 +32,8 @@ export const KIND_LABEL: Record<HoursOverrideRow['kind'], { es: string; en: stri
 
 const pad = (n: number) => String(n).padStart(2, '0');
 const clock = (hhmm: string) => hhmm.replace(/^0/, '');
-const minutesOf = (hhmm: string) => { const [h, m] = hhmm.split(':').map(Number); return h * 60 + (m || 0); };
+/** '06:30' → 390. Exported for src/tenant/contacts.ts. */
+export const minutesOf = (hhmm: string) => { const [h, m] = hhmm.split(':').map(Number); return h * 60 + (m || 0); };
 
 /* ---------------------------------------------------------------------------------------------
  * Date keys (YYYY-MM-DD), computed in UTC so the answer never depends on the machine's zone.
@@ -134,14 +136,18 @@ const overrideName = (o: OverrideLike, lang: Lang) => {
   return label && label !== kind ? `${kind} (${label})` : kind;
 };
 
-function whenLabel(next: { date: string; open: string; offset: number }, lang: Lang): string {
-  if (next.offset === 0) return lang === 'es' ? `abre hoy ${next.open}` : `opens today ${next.open}`;
-  if (next.offset === 1) return lang === 'es' ? `abre mañana ${next.open}` : `opens tomorrow ${next.open}`;
-  const wd = weekdayOf(next.date);
-  if (next.offset < 7) return lang === 'es' ? `abre el ${DAY_NAME.es[wd]} ${next.open}` : `opens ${DAY_NAME.en[wd]} ${next.open}`;
-  const { month, day } = dateParts(next.date);
-  return lang === 'es' ? `abre el ${day}/${month} ${next.open}` : `opens ${month}/${day} ${next.open}`;
+/** A day relative to today, for people: "hoy" · "mañana" · "el lunes" · "12/10" (EN: "today" · "tomorrow" · "Monday" · "10/12"). */
+export function relativeDayLabel(date: string, offset: number, lang: Lang): string {
+  if (offset === 0) return lang === 'es' ? 'hoy' : 'today';
+  if (offset === 1) return lang === 'es' ? 'mañana' : 'tomorrow';
+  const wd = weekdayOf(date);
+  if (offset < 7) return lang === 'es' ? `el ${DAY_NAME.es[wd]}` : DAY_NAME.en[wd];
+  const { month, day } = dateParts(date);
+  return lang === 'es' ? `el ${day}/${month}` : `${month}/${day}`;
 }
+
+const whenLabel = (next: { date: string; open: string; offset: number }, lang: Lang) =>
+  `${lang === 'es' ? 'abre' : 'opens'} ${relativeDayLabel(next.date, next.offset, lang)} ${next.open}`;
 
 /**
  * Today's line for customers, in the studio's time zone:

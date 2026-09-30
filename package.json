@@ -1,7 +1,7 @@
 {
   "name": "hoyos",
   "private": true,
-  "version": "0.20.0",
+  "version": "0.21.0",
   "type": "module",
   "description": "HoyOS — operations system for HOY Wellness Center (multi-tenant ready)",
   "scripts": {
@@ -25,6 +25,7 @@
     "test:dates": "node --experimental-strip-types scripts/test-date-keys.mjs",
     "test:holidays": "node --experimental-strip-types scripts/test-holidays.mjs",
     "test:hours": "node --experimental-strip-types scripts/test-hours.mjs",
+    "test:contacts": "node scripts/test-contacts.mjs",
     "test:analytics": "node scripts/test-analytics.mjs"
   },
   "dependencies": {

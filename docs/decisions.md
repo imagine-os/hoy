@@ -363,6 +363,30 @@ Fields: **Date**, **Status** (accepted · superseded by D-NNNN), **Context**, **
   Supabase Realtime presence cannot do, consistent with ROADMAP P7 ("Supabase Realtime presence preferred, no new
   vendor"); silent last-write-wins (the current mock behaviour, acceptable only while one person edits at a time).
 
+### D-0022 — Contact routing by intent; the front desk is the universal fallback
+
+- **Date** 2026-09-30 · **Status** accepted · **Changelog** `docs/changelog/0047-whatsapp-contact-routing.md`
+- **Context.** The product had one WhatsApp number, `contact.whatsapp` (+57 312 776 5000, the front desk, confirmed by the
+  owner in 0036), and 16 places that opened a chat with it. Justin: the number is for the front desk, "not necessarily the
+  person who handles bigger issues like payroll". A teacher's payroll question (S-03) and a Ley 1581 complaint (C-26) were
+  reaching reception because nothing in the product could name anyone else.
+- **Decision.** (1) **Every WhatsApp handoff names an intent**, one of nine (`frontDesk`, `sales`, `specials`, `support`,
+  `finance`, `payroll`, `legal`, `coordinator`, `owner`), and never a number. (2) **Who receives an intent is settings
+  data**, per tenant, in `tenants.settings.contacts` edited in M-08a: name, WhatsApp, role and an hours rule (`always`,
+  `studioHours`, `businessDays`). (3) **The front desk is the universal fallback**: an intent with no number resolves to it;
+  an intent whose contact is off duty resolves to it while the studio is open; when the studio is closed too, the message
+  still goes to the contact's own number with a visible "we reply on the next open day (…)" note computed from the M-08a
+  hours, the M-08g exceptions and the country's holidays. The front desk's own number is the M-08a profile WhatsApp (then
+  tenant.ts) unless its row names another. (4) One pure resolver (`src/tenant/contacts.ts`, tested) and one React reader
+  (`useWhatsappLink()`); `waLink()` stays the low-level builder. (5) The table ships with roles and hours but **no numbers**:
+  the owner supplies them (ROADMAP §E 48); until then the behaviour is exactly the old one, but visible and explained.
+- **Alternative rejected.** A second constant in `tenant.ts` (multi-tenant rule; the owner edits contact facts in M-08a,
+  not in code). A `finance_whatsapp` column on `tenants` (a routing table with fallbacks is settings, like the profile
+  fields). A number per button (the intents are the vocabulary the voice controller and the manual need; nine rows are what
+  an owner can hold in mind). Routing by the sender's role (a teacher asking about payroll and a member sending a receipt
+  are different topics reaching the same finance contact). Sending off-hours messages to the front desk *always* (it would
+  hide the real recipient and leave nobody to answer at night either; the note is more honest).
+
 ---
 **Resumen (ES).** Este archivo es la lista corta y citable de las decisiones de ingeniería, una por
 bloque, solo se añade: una decisión que deja de ser cierta se reemplaza con un bloque nuevo, nunca

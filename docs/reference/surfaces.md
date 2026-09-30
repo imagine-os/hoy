@@ -1,8 +1,20 @@
 # Machine surfaces — MCP / WebMCP, CLI, API
 
 What something other than a person can drive in HoyOS today, and what it cannot.
-**Checked 2026-09-29** (v0.20.0; previous check 2026-09-29, v0.19.0). Re-check and date this file every pass; a line that is not
+**Checked 2026-09-30** (v0.21.0; previous check 2026-09-29, v0.20.0). Re-check and date this file every pass; a line that is not
 re-checked is not current.
+
+**0047 delta (v0.21.0).** Two new action ids. `settings.contacts.update` on M-08a (`src/modules/admin/actions.ts`; params
+`intent: enum:frontDesk,sales,specials,support,finance,payroll,legal,coordinator,owner`, `name?`, `whatsapp?` (empty falls
+back to the front desk), `role?` (a staff role; empty clears), `hours?: enum:always,studioHours,businessDays`;
+`settings.write`) merges one row of `tenants.settings.contacts` and writes the same `settings.update` audit row as the card.
+`contact.whatsapp` on C-25 (`src/modules/customer/actions.ts`; params `intent?` default `frontDesk`, `text?`; no permission)
+is read-only: it answers the resolved recipient, number and wa.me link — hours, M-08g exceptions and Colombia's holidays
+applied by `resolveContact()` (`src/tenant/contacts.ts`, D-0022) — plus the "we reply on the next open day" note when the
+contact is off duty; it opens nothing. New CLI: `npm run test:contacts`. `public/actions.json` lists 59 actions (was 57), 13
+permissions, 18 declaring pages, version 0.21.0; `public/hub-map.json` version 0.21.0, no schema or text change. Not
+machine-reachable: the routing table as a whole (read it through `DataProvider` on `tenants.settings.contacts`, or one intent
+at a time through `contact.whatsapp`).
 
 **0046 delta (v0.20.0).** Six new action ids on M-03, declared in `src/modules/admin/actions.ts`: `tables.setDateColumn`
 (`column`, `endColumn?`), `tables.calendarMode` (`mode: enum:month,week,agenda`), `tables.timelineZoom`
@@ -109,11 +121,13 @@ window.__hoyos.actions.filter((a) => a.mounted);
 | `app.goHome` | C-01 (also C-02, C-04, C-06, C-08, C-27) | Llévame al inicio de la app | — | — · customer, teacher |
 | `app.openSchedule` | C-01 (also C-02, C-04, C-06, C-08, C-27) | Muéstrame el horario de clases | — | `classes.read` · customer, teacher |
 | `app.openPractice` | C-01 (also C-27, C-02, C-04, C-06, C-08) | Muéstrame mi práctica | — | — · customer, teacher |
+| `contact.whatsapp` | C-25 | Dame el WhatsApp para {intent} | `intent?: enum:frontDesk,sales,specials,support,finance,payroll,legal,coordinator,owner` (default frontDesk), `text?` — answers `<recipient> <number> <wa.me link>` and the off-duty note; opens nothing | — · customer, teacher |
 | `app.setGoal` | C-01 (also C-27) | Quiero practicar {target} veces por semana | `target: number 0–7 (0 = sin meta)` — a whole number; ends the active `practice_goals` row, inserts the new one and writes a `goal.set` event; answers `goal N/week` | `bookings.write` · customer, teacher |
 | `analytics.setRange` | M-12 | Muéstrame la analítica de los últimos {range} días | `range: enum:7,30,90` | `members.read` · super_admin, admin, coordinator, finance |
 | `analytics.openMember` | M-12 | Abre la ficha de {userId} | `userId: string — users.id (usr_cust)` → `/admin/crm/:id` | `members.read` · super_admin, admin, coordinator, finance |
 | `auth.signIn` | A-02 | Entra como {user} | `user: enum:usr_super,usr_admin,usr_coord,usr_desk,usr_fin,usr_teach,usr_maint,usr_mkt,usr_dev,usr_cust` | — · public (anyone on `/auth/sign-in`) |
 | `settings.hours.update` | M-08a | Abre el {day} de {open} a {close} (o ciérralo) | `day: enum:0–6 (0 = Sunday)`, `open: HH:MM \| closed`, `close: HH:MM` | `settings.write` · super_admin, admin, coordinator, finance (the page; only super_admin and admin hold the permission) |
+| `settings.contacts.update` | M-08a | Las preguntas de {intent} las recibe {name} en el WhatsApp {whatsapp} | `intent: enum:frontDesk,…,owner`, `name?`, `whatsapp?` (empty = front desk fallback), `role?` (staff role), `hours?: enum:always,studioHours,businessDays` — merges one row, stores the full table | `settings.write` · super_admin, admin, coordinator, finance (the page; only super_admin and admin hold the permission) |
 | `settings.hours.override.add` | M-08g | El {start} cerramos por {label} / abrimos de {open} a {close} | `start: YYYY-MM-DD`, `end?`, `label`, `label_en?`, `closed: enum:true,false`, `open?`, `close?`, `kind?: enum:holiday,special,event` — same validation as the drawer | `hours.write` · admin, super_admin, coordinator |
 | `settings.hours.override.remove` | M-08g | Quita la excepción del {date} | `id` or `date: YYYY-MM-DD` | `hours.write` |
 | `settings.hours.holidays.import` | M-08g | Importa los festivos de Colombia de este año y el próximo | — (skips dates that already have an exception) | `hours.write` |
@@ -236,6 +250,7 @@ Everything is Node, in `scripts/`, and safe to run from a clean checkout.
 | `npm run audit:spacing` | Since 0037. `scripts/spacing-audit.mjs --route=/app [--as=usr_cust] [--widths=390,1280,3840] [--grid] [--all] [--out=dir]`: serves `dist/` on :4174, prints uneven or off-grid sibling gaps, unequal card padding and targets under 44 px (divided by `--ui`); `--grid` saves a 4 / 16 px grid overlay. Run `npm run build` first | `spacing-audit/<route>-<width>-grid.jpg` with `--grid` |
 | `npm run test:dates` | The local-date-key regression test | — |
 | `npm run test:holidays` | Since 0041. `scripts/test-holidays.mjs`: `src/tenant/holidays.co.ts` against the official 2026 Colombian calendar (18 dates, Easter 5 April), Meeus Easter for seven years, every Emiliani holiday on a Monday 2025–2028 | — |
+| `npm run test:contacts` | Since 0047. `scripts/test-contacts.mjs` (esbuild bundle): `resolveContact` in `src/tenant/contacts.ts` — every intent without a number falls back to the front desk, payroll routing on business days / weekends / holidays, `always`, `studioHours`, the "we reply on the next open day" note, `isBusinessDay`, `nextBusinessDay` (26 checks) | — |
 | `npm run test:hours` | Since 0041. `scripts/test-hours.mjs`: `effectiveHoursFor` (override wins, inclusive, narrowest), `toGoogleBusinessHours` (Business Information API shape, one special period per date, overnight close), `toSchemaOrgHours`, `todayStatus` in America/Bogota | — |
 | `npm run test:analytics` | Since 0040. `scripts/test-analytics.mjs`: bundles `src/data/analytics.ts` with esbuild and proves the streak rules (Mon–Sun weeks in America/Bogota, met / at-risk / rest week / paused / broken / best), session-dated month counts, the goal suggestion, the studio arithmetic and the seeded demo member's facts. Exit 1 on any failed check; run with the build before every `src/data` commit | — |
 | `node scripts/test-mat-bookings.mjs` | The 16-mat booking rules against `MockProvider` (bounds, collisions, release, persistence); run with the build before every `src/` commit since 0025 | — |
@@ -288,7 +303,7 @@ consumer checklist: [`hub-map.md`](./hub-map.md).
 | File | URL | What |
 | --- | --- | --- |
 | `public/hub-map.json` | `https://imagine-os.github.io/hoy/hub-map.json` | Schema `hoy.hub-map/1`: product, embed pattern, 11 roles, 15 experiences (the hub cards; `marketing` carries `comingSoon: true`, 0031), every page code (92 after the 0041 build — M-08g, M-10a and D-07 join the 89; each with a `group`; the 9 template pages with a `sampleRoute`), 9 tools, 3 lens hints |
-| `public/actions.json` | `https://imagine-os.github.io/hoy/actions.json` | Since 0043. Schema `hoy.actions/1` (contract `src/actions/manifest.types.ts`): product, `run` (how to execute — in the page, `window.__hoyos.run(id, params)`; no MCP server yet), the 11 permissions the actions reference with the roles that hold each, and the actions sorted by id (57 at v0.20.0) — `label` / `intent` `{es,en}`, `params?`, `permission?`, `roles` (union of the declaring routes) and `pages` (`code`, `route`). The vocabulary without opening the page; written by `npm run actions` |
+| `public/actions.json` | `https://imagine-os.github.io/hoy/actions.json` | Since 0043. Schema `hoy.actions/1` (contract `src/actions/manifest.types.ts`): product, `run` (how to execute — in the page, `window.__hoyos.run(id, params)`; no MCP server yet), the 11 permissions the actions reference with the roles that hold each, and the actions sorted by id (59 at v0.21.0) — `label` / `intent` `{es,en}`, `params?`, `permission?`, `roles` (union of the declaring routes) and `pages` (`code`, `route`). The vocabulary without opening the page; written by `npm run actions` |
 | `public/source/<id>.pdf` (+ `<id>-cover.jpg`) | `https://imagine-os.github.io/hoy/source/<id>.pdf` | Since 0031: the owner's source documents (`modelo-de-valor`, `contenido-completo`, `manual-de-marca`); index `docs/source/index.json`; shown on K-05 `/#/docs/source` |
 | `dist/hub-map/shots/<CODE>/…` | `https://imagine-os.github.io/hoy/hub-map/shots/<CODE>/<file>.jpg` | The thumbs (`thumb-<lang>-<phone\|desktop>[-dark].jpg`) and captures (`<lang>-390.jpg`, `<lang>-1280.jpg`, W-xx `<lang>-390-full.jpg`) the map's `shots` point at, relative to `product.baseUrl` |
 
@@ -296,7 +311,7 @@ consumer checklist: [`hub-map.md`](./hub-map.md).
 `frameUrl()` builds; a host substitutes and iframes it. Same-origin only under `imagine-os.github.io`.
 
 ---
-**Resumen (ES).** Qué puede manejar una máquina hoy (revisado 2026-09-29, v0.20.0; 0046 añade seis acciones `tables.*` — fecha, modo del calendario, zoom, ir a una fecha, renombrar y eliminar vistas —, amplía `tables.setView` a calendario y línea de tiempo y suma los parámetros `?date=`, `?mode=` y `?zoom=`; 0044 añade once acciones `tables.*` en M-03, los parámetros de URL `?id=`, `?view=`, `?v=`, `?focus=` y `?where=` como vistas enlazables, y la tabla `table_views`; 0041 añade las acciones de horario — `settings.hours.*` —, de Google Business Profile — `integrations.google.*`, conectar y enviar responden «aún no conectado» — y de llaves de desarrollador — `dev.apiKeys.*` —; 0043 publica el vocabulario como archivo): en la página, `window.__hoyos` publica las rutas,
+**Resumen (ES).** Qué puede manejar una máquina hoy (revisado 2026-09-30, v0.21.0; 0047 añade `settings.contacts.update` en M-08a — quién recibe cada tema de WhatsApp — y la lectura `contact.whatsapp` en C-25 — el número y el enlace resueltos por tema, con horario y festivos —, 59 acciones; 0046 añade seis acciones `tables.*` — fecha, modo del calendario, zoom, ir a una fecha, renombrar y eliminar vistas —, amplía `tables.setView` a calendario y línea de tiempo y suma los parámetros `?date=`, `?mode=` y `?zoom=`; 0044 añade once acciones `tables.*` en M-03, los parámetros de URL `?id=`, `?view=`, `?v=`, `?focus=` y `?where=` como vistas enlazables, y la tabla `table_views`; 0041 añade las acciones de horario — `settings.hours.*` —, de Google Business Profile — `integrations.google.*`, conectar y enviar responden «aún no conectado» — y de llaves de desarrollador — `dev.apiKeys.*` —; 0043 publica el vocabulario como archivo): en la página, `window.__hoyos` publica las rutas,
 los usuarios demo, las acciones declaradas y `run(id, params)` para ejecutarlas (superficie WebMCP; no
 hay servidor MCP todavía), `__hoyos.hubMap` con el mapa del hub y `__hoyos.actionsUrl`. Archivos publicados: `hub-map.json`
 (esquema `hoy.hub-map/1`), con sus capturas en `hub-map/shots/`, para que aluzina y between-gigs dibujen el hub a su manera
