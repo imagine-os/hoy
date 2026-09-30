@@ -18,9 +18,9 @@ export default defineMeta({
     { name: 'title', type: 'string', description: { es: '`CODE` o `CODE · /ruta`: el código es el chip, la ruta hace la figura clicable.', en: '`CODE` or `CODE · /route`: the code is the chip, the route makes the figure clickable.' } },
     { name: 'captured', type: 'string (YYYY-MM-DD)', description: { es: 'Día de la captura; se muestra bajo la leyenda. El manual lo lee de src/app/captureDates.ts (historial git).', en: 'Day of the capture; shown under the caption. The manual reads it from src/app/captureDates.ts (git history).' } },
     { name: 'stale', type: 'boolean', default: 'false', description: { es: 'La página cambió (changelog) después de la captura: muestra «puede estar desactualizada».', en: 'The page changed (changelog) after the capture: shows "may be out of date".' } },
-    { name: 'device', type: "'mobile' | 'desktop'", description: { es: 'Ancho del marco; se deduce del nombre del archivo (`-390` = móvil).', en: 'Frame width; inferred from the file name (`-390` = mobile).' } },
+    { name: 'device', type: "'mobile' | 'desktop'", description: { es: 'Ancho del marco; se deduce del nombre del archivo (`-390`, también con el hash del build = móvil) o, si no dice nada, de la proporción al cargar (ancho / alto < 0,7). Móvil = 360 px centrado, borde de 1 px y --r-lg.', en: 'Frame width; inferred from the file name (`-390`, also with the build hash = mobile) or, when it says nothing, from the loaded aspect ratio (width / height < 0.7). Mobile = 360 px centred, 1 px border and --r-lg.' } },
   ],
-  states: ['desktop capture', 'mobile capture', 'with route link', 'without caption', 'with capture date', 'stale (may be out of date)'],
+  states: ['desktop capture', 'mobile capture (360 px, centred)', 'mobile by aspect ratio (portrait on load)', 'in a FigurePair', 'with route link', 'without caption', 'with capture date', 'stale (may be out of date)'],
   usages: [
     { title: { es: 'Captura de escritorio con ruta', en: 'Desktop capture with a route' }, render: () => h(Figure, { url: SHOT, caption: 'Recepción · tira del día y acciones', title: 'S-02 · /staff/desk' }) },
     { title: { es: 'Captura móvil', en: 'Mobile capture' }, render: () => h(Figure, { url: SHOT, caption: 'Horario del socio', title: 'C-02 · /app/schedule', device: 'mobile' }) },

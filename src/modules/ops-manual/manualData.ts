@@ -11,8 +11,16 @@ import { useAudit } from '../staff/audit';
 import { SIGNOFF } from './training';
 import type { EditLevel } from './sections';
 
-/** Who may edit a section at `level`: owner = admin + super admin; coordinator = coordination too. */
+/** Who may edit a policy or section at `level`: owner = admin + super admin; coordinator = coordination too. */
 export const canEditLevel = (role: Role, level: EditLevel): boolean => role === 'admin' || role === 'super_admin' || (level === 'coordinator' && role === 'coordinator');
+/** Admin and super admin: the owner level, who may rewrite any `##` section in place (0050). */
+export const isOwner = (role: Role): boolean => role === 'admin' || role === 'super_admin';
+/**
+ * Who may rewrite one `##` section in place (0050): admin and super admin every section, marked or not;
+ * coordination only the sections marked `{{editable:coordinator}}`; everyone else none (they request or suggest).
+ */
+export const canEditSection = (role: Role, section: { heading: string; editable?: EditLevel }): boolean =>
+  !!section.heading && (isOwner(role) || (!!section.editable && canEditLevel(role, section.editable)));
 /** Coordination and up sign training stages, see the team view and answer change requests. */
 export const isLead = (role: Role): boolean => role === 'admin' || role === 'super_admin' || role === 'coordinator';
 /** People on the team (the LMS applies to them; customers and visitors just read). */
@@ -51,6 +59,19 @@ export function useMarkRead() {
     const row = await data.insert<ManualProgressRow>('manual_progress', { user_id: user.id, chapter_slug: slug, version: version || '—', read_at: now() });
     await audit('manual.read', 'manual_progress', row.id, { chapter: slug, version });
     return row;
+  }, [data, user.id, audit]);
+}
+
+/** Back to unread (0050): removes the person's read rows for the chapter (the newest wins, so all go); the audit keeps the trail. */
+export function useMarkUnread() {
+  const data = useData();
+  const { user } = useSession();
+  const audit = useAudit('admin');
+  return useCallback(async (slug: string) => {
+    const rows = await data.list<ManualProgressRow>('manual_progress', { where: { user_id: user.id, chapter_slug: slug } });
+    for (const r of rows) await data.remove('manual_progress', r.id);
+    await audit('manual.unread', 'manual_progress', rows[0]?.id ?? null, { chapter: slug, removed: rows.length });
+    return rows.length;
   }, [data, user.id, audit]);
 }
 

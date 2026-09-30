@@ -1,3 +1,4 @@
+import { useState, type SyntheticEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { useT } from '../../../i18n/I18nProvider';
 import './Figure.css';
@@ -20,6 +21,12 @@ export interface FigureProps {
   stale?: boolean;
 }
 
+/**
+ * A phone capture by its file name: `es-390.jpg`, `en-390-dark.jpg`, `es-390-class.jpg`, and the hashed name Vite
+ * gives it in a build (`es-390-B3kd9aQz.jpg`) — the 0050 fix: the old `-390.jpg$` test missed every built URL.
+ */
+export const isPhoneCapture = (path: string): boolean => /[-_]390(?=[-_.])/.test(path.split(/[?#]/)[0].split('/').pop() ?? '');
+
 /** Splits `S-02 · /staff/desk` into its chip and its route. */
 function parseFigureTitle(title: string | undefined): { code?: string; to?: string } {
   if (!title) return {};
@@ -35,8 +42,11 @@ function parseFigureTitle(title: string | undefined): { code?: string; to?: stri
 export function Figure({ url, caption, title, device, captured, stale = false }: FigureProps) {
   const t = useT();
   const { code, to } = parseFigureTitle(title);
-  const kind = device ?? (/-390(-dark)?\.(jpg|jpeg|png|webp)$/.test(url) ? 'mobile' : 'desktop');
-  const img = <img className="figure-img" src={url} alt={caption ?? code ?? ''} loading="lazy" />;
+  // No hint and a name that says nothing: a portrait image (width / height < 0.7) is a phone capture once it loads.
+  const [portrait, setPortrait] = useState(false);
+  const kind = device ?? (isPhoneCapture(url) || portrait ? 'mobile' : 'desktop');
+  const onLoad = (e: SyntheticEvent<HTMLImageElement>) => { const i = e.currentTarget; if (!device && i.naturalHeight && i.naturalWidth / i.naturalHeight < 0.7) setPortrait(true); };
+  const img = <img className="figure-img" src={url} alt={caption ?? code ?? ''} loading="lazy" onLoad={onLoad} />;
   return (
     <figure className={`figure figure-${kind}`}>
       <div className="figure-frame">

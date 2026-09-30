@@ -35,6 +35,12 @@ export interface MarkdownViewerProps {
    * When absent such an image renders as a plain `<img>`, exactly as before.
    */
   figure?: (fig: MarkdownFigure) => ReactNode;
+  /**
+   * Wraps a paragraph that holds only titled images (two or more, one per line) once each is a figure — e.g. two
+   * phone captures side by side (FigurePair). When absent such a paragraph renders its figures in a plain
+   * `.mdv-figures` block.
+   */
+  figureGroup?: (figures: ReactNode) => ReactNode;
   /** Adds an `id` to every `##` heading so an in-page table of contents can link to it. */
   headingIds?: boolean;
   /**
@@ -205,7 +211,7 @@ function liveOf(node: any): { kind: string; arg?: string } | null {
 const urlTransform = (url: string) => (url.startsWith('placeholder:') ? url : defaultUrlTransform(url));
 
 /** Renders markdown with the `.prose` styles, rewriting relative images and .md links. */
-export function MarkdownViewer({ source, path, resolveAsset, resolveLink, components, directive, figure, headingIds, scope }: MarkdownViewerProps) {
+export function MarkdownViewer({ source, path, resolveAsset, resolveLink, components, directive, figure, figureGroup, headingIds, scope }: MarkdownViewerProps) {
   const assetUrl = (src: string) => (/^(https?:)?\/\//.test(src) ? src : resolveAsset?.(resolveRel(path, src)) ?? src);
   const builtIn: Components = {
     img: ({ src = '', alt, title }) => {
@@ -222,6 +228,11 @@ export function MarkdownViewer({ source, path, resolveAsset, resolveLink, compon
       const kids = (node?.children ?? []).filter((c) => !(c.type === 'text' && !String(c.value ?? '').trim()));
       const only = kids.length === 1 ? kids[0] : undefined;
       if (figure && only && (only as any).tagName === 'img' && (only as any).properties?.title) return <>{children}</>;
+      // Several titled images and nothing else (one per line): a group of figures, not a paragraph.
+      const titled = (c: unknown) => (c as any).tagName === 'img' && (c as any).properties?.title;
+      if (figure && kids.length > 1 && kids.every((c) => titled(c) || (c.type === 'element' && (c as any).tagName === 'br'))) {
+        return <>{figureGroup ? figureGroup(children) : <div className="mdv-figures">{children}</div>}</>;
+      }
       return <p>{children}</p>;
     },
     h2: ({ node, children }) => (headingIds ? <h2 id={headingSlug(textOf(node))}>{children}</h2> : <h2>{children}</h2>),

@@ -19,9 +19,12 @@
 }
 .figure-code code { background: none; padding: 0; }
 .figure-cap { font-size: var(--fs-sm); color: var(--color-text-muted); overflow-wrap: anywhere; }
-.figure-mobile { max-width: 18.75rem; }
-
-@media (max-width: 640px) { .figure-mobile { max-width: 100%; } }
+/* 0050: a phone capture is shown at phone width — 360 px, centred, caption below — in a quiet device-ish frame
+   (hairline border, --r-lg outside, inner radius = --r-lg − frame padding); a desktop capture keeps the column. */
+.figure-mobile { width: 100%; max-width: 22.5rem; margin-inline: auto; }
+.figure-mobile .figure-frame { border-radius: var(--r-lg); box-shadow: none; }
+.figure-mobile .figure-img { border-radius: calc(var(--r-lg) - var(--sp-sm)); }
+.figure-mobile .figure-link { border-radius: calc(var(--r-lg) - var(--sp-sm)); }
 @media print { .figure { break-inside: avoid; } .figure-frame { box-shadow: none; } }
 
 /* 0031: capture date + stale flag under the caption */

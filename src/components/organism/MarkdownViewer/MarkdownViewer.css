@@ -26,3 +26,7 @@
 .mdv .mdv-scope { border-left: 3px dashed var(--color-border-strong); padding-left: var(--sp-lg); margin: 0 0 1em; }
 .mdv .mdv-scope-label { font-size: var(--fs-xs); color: var(--color-text-muted); margin-bottom: var(--sp-1, var(--sp-xs)); }
 @media print { .mdv .mdv-callout-hoyos { break-inside: avoid; } }
+
+/* 0050: a paragraph of titled images only (no figureGroup renderer) */
+.mdv-figures { display: flex; flex-wrap: wrap; gap: var(--grid-gap); margin: var(--block) 0; }
+.mdv-figures > .figure { margin: 0; }

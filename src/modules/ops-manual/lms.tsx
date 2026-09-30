@@ -1,5 +1,5 @@
 // The manual as a staff LMS (0031): the lens selector, the per-role cover ("Tu manual"), the level chip and
-// the read button of a chapter, the audience matrix directive, the training sign-off and the team view.
+// the read toggle and foot of a chapter, the audience matrix directive, the training sign-off and the team view.
 import { useMemo, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useI18n } from '../../i18n/I18nProvider';
@@ -15,12 +15,14 @@ import { Select } from '../../components/atom/Input/Input';
 import { ProgressRing } from '../../components/molecule/ProgressRing/ProgressRing';
 import { StatTile } from '../../components/molecule/StatTile/StatTile';
 import { DataTable, type DataTableColumn } from '../../components/organism/DataTable/DataTable';
+import { ReadToggle } from '../../components/molecule/ReadToggle/ReadToggle';
+import { ChapterFoot } from '../../components/molecule/ChapterFoot/ChapterFoot';
 import { AUDIENCE, AUDIENCE_COLUMNS, LENS_ROLES, START_PATHS, chaptersForRole, levelFor, rolesFor, type Level } from './audience';
 import { chaptersFor, decisionsFor, type Chapter } from './manualIndex';
 import { MANUAL_ICON, chapterIcon } from './chapterIcons';
 import { SOURCES } from './sources';
 import { STAGES, SIGNOFF, trainingFor } from './training';
-import { TEAM_PEOPLE, isLead, isTeam, useMarkRead, useNames, useProgress, useRequests, useTraining, useTrainingWrites } from './manualData';
+import { TEAM_PEOPLE, isLead, isTeam, useMarkRead, useMarkUnread, useNames, useProgress, useRequests, useTraining, useTrainingWrites } from './manualData';
 import { useLens, type Lens } from './lens';
 import { useManualCtx } from './context';
 
@@ -112,22 +114,64 @@ export function AudienceMatrix() {
   );
 }
 
-/** Chapter read state + the 44 px "Marcar como leído" button (team roles only). */
+/** Chapter read state as a toggle (0050): "Marcar como leído" ↔ "Leído el … · Marcar como no leído" (team roles only). */
 export function ReadButton({ chapter }: { chapter: Chapter }) {
   const { t, lang } = useI18n();
   const { user, role } = useSession();
   const { readOf } = useProgress(user.id);
   const markRead = useMarkRead();
-  const [busy, setBusy] = useState(false);
+  const markUnread = useMarkUnread();
+  const [busy, setBusy] = useState<'mark' | 'unmark'>();
   if (!isTeam(role)) return null;
   const read = readOf(user.id, chapter.slug);
   const outdated = !!read && !!chapter.version && read.version !== chapter.version;
-  if (read && !outdated) return <Badge tone="success">✓ {t('manual.read.done', { date: shortDate(read.read_at, lang) })}</Badge>;
+  const run = (kind: 'mark' | 'unmark') => async () => {
+    setBusy(kind);
+    try { if (kind === 'mark') await markRead(chapter.slug, chapter.version); else await markUnread(chapter.slug); }
+    finally { setBusy(undefined); }
+  };
   return (
-    <span className="manual-read">
-      {outdated && <Badge tone="warn">{t('manual.read.newVersion')}</Badge>}
-      <Button variant="primary" loading={busy} onClick={async () => { setBusy(true); try { await markRead(chapter.slug, chapter.version); } finally { setBusy(false); } }}>{t('manual.read.mark')}</Button>
-    </span>
+    <ReadToggle
+      state={!read ? 'unread' : outdated ? 'outdated' : 'read'}
+      readLabel={read ? t('manual.read.done', { date: shortDate(read.read_at, lang) }) : undefined}
+      labels={{ mark: t('manual.read.mark'), unmark: t('manual.read.unmark'), newVersion: t('manual.read.newVersion') }}
+      onMark={run('mark')} onUnmark={run('unmark')} busy={busy}
+    />
+  );
+}
+
+/**
+ * The next chapter for the reader (0050): the next one, by number, in the role's list (required + recommended) —
+ * the lens role when one is chosen, else the signed-in role; past the end of that list, the next chapter overall.
+ */
+export function useNextChapter(chapter: Chapter): Chapter | undefined {
+  const { lang } = useI18n();
+  const { role } = useSession();
+  const { lens } = useLens();
+  return useMemo(() => {
+    const all = chaptersFor(lang);
+    const who = lens !== 'all' ? lens : role;
+    const { required, recommended } = chaptersForRole(lang, who);
+    const mine = new Set([...required, ...recommended].map((c) => c.slug));
+    const after = all.slice(all.findIndex((c) => c.slug === chapter.slug) + 1);
+    return after.find((c) => mine.has(c.slug)) ?? after[0];
+  }, [lang, role, lens, chapter.slug]);
+}
+
+/** The foot of a chapter body (0050): "¿Terminaste este capítulo?", the read toggle and "Siguiente: …" (team roles only). */
+export function ChapterFootBlock({ chapter }: { chapter: Chapter }) {
+  const { t } = useI18n();
+  const { role } = useSession();
+  const { link } = useLens();
+  const next = useNextChapter(chapter);
+  if (!isTeam(role)) return null;
+  return (
+    <ChapterFoot
+      title={t('manual.foot.title')}
+      next={next ? { to: link(`/manual/${next.slug}`), label: t('manual.next'), title: `${next.number} · ${next.title}`, icon: <Icon name={chapterIcon(next.number)} size={16} /> } : undefined}
+    >
+      <ReadButton chapter={chapter} />
+    </ChapterFoot>
   );
 }
 

@@ -11,7 +11,7 @@
       "es": "Un solo sistema para cada puesto del estudio: quien practica, quien enseña, quien recibe en la puerta, quien administra y quien lo construye.",
       "en": "One system for every seat at the studio: members, teachers, front desk, admin, and the people who build it."
     },
-    "version": "0.21.2",
+    "version": "0.21.3",
     "baseUrl": "https://imagine-os.github.io/hoy/",
     "hubRoute": "/",
     "brand": {
@@ -4526,8 +4526,8 @@
         "en": "Operations manual"
       },
       "purpose": {
-        "es": "Cómo funciona el club en persona y en el software, en siete partes, leído como un LMS del equipo: cada persona ve su manual filtrado por rol (obligatorio / recomendado), marca lo que leyó, sigue su formación Día 1 / Semana 1 / Mes 1 con la firma de quien la entrena, y el owner o coordinación ajustan las secciones y políticas marcadas como editables sin tocar el repositorio. Español primero, inglés como espejo.",
-        "en": "How the club runs in person and in software, in seven parts, read as a team LMS: each person sees their manual filtered by role (required / recommended), marks what they read, follows their Day 1 / Week 1 / Month 1 training with their trainer’s sign-off, and the owner or coordination adjust the sections and policies marked editable without touching the repository. Spanish first, English as a mirror."
+        "es": "Cómo funciona el club en persona y en el software, en siete partes, leído como un LMS del equipo: cada persona ve su manual filtrado por rol (obligatorio / recomendado), marca lo que leyó, sigue su formación Día 1 / Semana 1 / Mes 1 con la firma de quien la entrena, y el owner (admin y super admin) edita cualquier sección aquí mismo mientras coordinación ajusta las secciones y políticas marcadas para ella, sin tocar el repositorio. Español primero, inglés como espejo.",
+        "en": "How the club runs in person and in software, in seven parts, read as a team LMS: each person sees their manual filtered by role (required / recommended), marks what they read, follows their Day 1 / Week 1 / Month 1 training with their trainer’s sign-off, and the owner (admin and super admin) edits any section right there while coordination adjusts the sections and policies marked for it, without touching the repository. Spanish first, English as a mirror."
       },
       "surface": "docs",
       "roles": [
@@ -4549,6 +4549,7 @@
       "actions": [
         "manual.setLens",
         "manual.markRead",
+        "manual.markUnread",
         "manual.signTraining",
         "manual.editSection",
         "manual.restoreSection",
