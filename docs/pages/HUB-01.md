@@ -45,6 +45,13 @@ The page's own thumbnails (what the canvas shows for it):
 
 [screenshot: HUB-01 — the live-frame state: the first six cards running the real page. A capture pass cannot photograph it (`navigator.webdriver` switches live frames off); open the hub in a normal browser.]
 
+## 0048 — Mensajes transaccionales
+- **Mensajes transaccionales / Transactional messages** in the team band, right after CRM: the button enters as Valentina
+  (coordinator) at `/admin/emails` (M-04: receipt, welcome, class reminder, waitlist and sign-in code emails, with versions
+  and a test send; card copy "Los correos y WhatsApp que el estudio envía solo: se editan y se prueban aquí."); the secondary link **WhatsApp →** enters as the same user at `/admin/whatsapp`
+  (templates, automations, quiet hours). Mail icon, the inbox card's hue (`CARD_UI.hue`, no new token). The team band is
+  eight cards: 3 + 3 + 2 at 1280, 2 × 4 from 768, one column on a phone. `hub.enterAs` accepts `messages`.
+
 ## 0031 — two cards and two roles
 - **Kit de marketing — próximamente / Marketing kit — coming soon** in the team band: announced, not built. Dashed card,
   "Próximamente" badge, its button is a `Placeholder` (tooltip + "not wired yet" toast, dashed in dev mode) and a
@@ -59,7 +66,7 @@ The page's own thumbnails (what the canvas shows for it):
 2. **Hero** — eyebrow `tenant.legalName · tenant.city`, `h1`, the one-sentence lead, the brand tagline (`src/tenant/brand.ts` → `taglines.start`), and `BreathingRings` under a radial mask (hidden under 900 px).
 3. **SessionBar** — floats over the band edge: `RoleSwitcher`, a `Placeholder`-wrapped "Reportar un problema", and the `Ctrl + .` hint in dev mode.
 4. **Band A · Fuera del estudio** — Customer app (featured, full width, phone preview, secondary "Entrar o crear cuenta" → `/auth/sign-in`), Website, Teacher app.
-5. **Band B · El equipo** — Recepción, Bandeja de mensajes, Caja, Panel de administración, CRM, Finanzas.
+5. **Band B · El equipo** — Recepción, Bandeja de mensajes, Caja, Panel de administración, CRM, Mensajes transaccionales (M-04, with a secondary link to M-05), Finanzas, Kit de marketing — próximamente.
 6. **Band C · Construcción y pruebas** (tinted lane) — Manual de operaciones, Documentación y changelog, Kanban y knowledgebase, Herramientas de desarrollo.
 7. **ToolsRow · Hub de pruebas** — nine compact tool cards: lienzo, simulador, specs, editor de layout, tablas, componentes, tokens, decisiones, capturas.
 8. **StatStrip** — a `<dl>`: routes, page codes, tables, components, actions, manual chapters.
@@ -133,6 +140,7 @@ framed (inside a preview or the simulator) · no captures yet (idle tiles) · En
 - **Mock / pending**: the data behind every surface is the browser-local `MockProvider` seed. "Reportar un problema" is a `Placeholder` — in-product annotations are on the backlog.
 
 ## Changelog
+- `docs/changelog/0048-hub-transactional-messages.md` — Mensajes transaccionales card → M-04, secondary link → M-05 (v0.21.1)
 - `docs/changelog/0031-manual-lms.md` — marketing-kit (coming soon) and source-documents cards; marketing and developer roles (v0.13.0)
 - `docs/changelog/0001-initial-build.md` — first version (card grid, staff role picker, developer links)
 - `docs/changelog/0022-hub-home-redesign.md` — rebuilt around real previews ([before](../screenshots/HUB-01/es-1280-before.jpg) → [after](../screenshots/HUB-01/es-1280.jpg))

@@ -6,7 +6,7 @@
       "es": "HoyOS",
       "en": "HoyOS"
     },
-    "version": "0.21.0",
+    "version": "0.21.1",
     "baseUrl": "https://imagine-os.github.io/hoy/"
   },
   "generatedAt": "2026-09-30T00:00:00.000Z",
@@ -593,7 +593,7 @@
         "en": "Enter {surface} as its demo user"
       },
       "params": {
-        "surface": "enum:app,site,teacher,desk,inbox,pos,admin,crm,finance,marketing,manual,sources,docs,kb,dev"
+        "surface": "enum:app,site,teacher,desk,inbox,pos,admin,crm,messages,finance,marketing,manual,sources,docs,kb,dev"
       },
       "roles": [
         "super_admin",

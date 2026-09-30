@@ -11,7 +11,7 @@
       "es": "Un solo sistema para cada puesto del estudio: quien practica, quien enseña, quien recibe en la puerta, quien administra y quien lo construye.",
       "en": "One system for every seat at the studio: members, teachers, front desk, admin, and the people who build it."
     },
-    "version": "0.21.0",
+    "version": "0.21.1",
     "baseUrl": "https://imagine-os.github.io/hoy/",
     "hubRoute": "/",
     "brand": {
@@ -614,8 +614,6 @@
         "M-12",
         "M-02",
         "M-03",
-        "M-04",
-        "M-05",
         "M-07",
         "M-08a",
         "M-10",
@@ -686,6 +684,54 @@
           "en-390": "hub-map/shots/M-06/en-390.jpg",
           "es-1280": "hub-map/shots/M-06/es-1280.jpg",
           "en-1280": "hub-map/shots/M-06/en-1280.jpg"
+        }
+      }
+    },
+    {
+      "id": "messages",
+      "code": "M-04",
+      "label": {
+        "es": "Mensajes transaccionales",
+        "en": "Transactional messages"
+      },
+      "purpose": {
+        "es": "Los correos y WhatsApp que el estudio envía solo: se editan y se prueban aquí.",
+        "en": "The emails and WhatsApp messages the studio sends on its own: edit and test them here."
+      },
+      "roleId": "coordinator",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "marketing"
+      ],
+      "band": "team",
+      "device": "desktop",
+      "route": "/admin/emails",
+      "url": "https://imagine-os.github.io/hoy/#/admin/emails",
+      "secondary": {
+        "label": {
+          "es": "WhatsApp →",
+          "en": "WhatsApp →"
+        },
+        "route": "/admin/whatsapp"
+      },
+      "pageCodes": [
+        "M-04",
+        "M-05"
+      ],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/M-04/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/M-04/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/M-04/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/M-04/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/M-04/es-390.jpg",
+          "en-390": "hub-map/shots/M-04/en-390.jpg",
+          "es-1280": "hub-map/shots/M-04/es-1280.jpg",
+          "en-1280": "hub-map/shots/M-04/en-1280.jpg"
         }
       }
     },
@@ -1394,7 +1440,7 @@
         "coordinator",
         "marketing"
       ],
-      "experienceId": "admin",
+      "experienceId": "messages",
       "device": "desktop",
       "status": "built",
       "actions": [],
@@ -1413,12 +1459,12 @@
         }
       },
       "group": {
-        "id": "content",
+        "id": "messages",
         "label": {
-          "es": "Contenido",
-          "en": "Content"
+          "es": "Mensajes",
+          "en": "Messages"
         },
-        "order": 20
+        "order": 10
       }
     },
     {
@@ -1440,7 +1486,7 @@
         "marketing",
         "front_desk"
       ],
-      "experienceId": "admin",
+      "experienceId": "messages",
       "device": "desktop",
       "status": "built",
       "actions": [],
@@ -1459,12 +1505,12 @@
         }
       },
       "group": {
-        "id": "content",
+        "id": "messages",
         "label": {
-          "es": "Contenido",
-          "en": "Content"
+          "es": "Mensajes",
+          "en": "Messages"
         },
-        "order": 20
+        "order": 10
       }
     },
     {
