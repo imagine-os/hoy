@@ -7788,6 +7788,21 @@
      "permission": "docs.read"
     },
     {
+     "id": "manual.markUnread",
+     "label": {
+      "es": "Marcar como no leído",
+      "en": "Mark as unread"
+     },
+     "intent": {
+      "es": "Marca el capítulo {chapter} como no leído",
+      "en": "Mark chapter {chapter} as unread"
+     },
+     "params": {
+      "chapter": "string — chapter slug (04-recepcion-y-check-in) or number (04); default the open chapter"
+     },
+     "permission": "docs.read"
+    },
+    {
      "id": "manual.signTraining",
      "label": {
       "es": "Firmar etapa de formación",
@@ -8164,6 +8179,21 @@
      "intent": {
       "es": "Marca el capítulo {chapter} como leído",
       "en": "Mark chapter {chapter} as read"
+     },
+     "params": {
+      "chapter": "string — chapter slug (04-recepcion-y-check-in) or number (04); default the open chapter"
+     },
+     "permission": "docs.read"
+    },
+    {
+     "id": "manual.markUnread",
+     "label": {
+      "es": "Marcar como no leído",
+      "en": "Mark as unread"
+     },
+     "intent": {
+      "es": "Marca el capítulo {chapter} como no leído",
+      "en": "Mark chapter {chapter} as unread"
      },
      "params": {
       "chapter": "string — chapter slug (04-recepcion-y-check-in) or number (04); default the open chapter"
