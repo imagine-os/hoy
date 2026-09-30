@@ -32,7 +32,9 @@ function experienceOf(path, surface) {
     case 'customer': return 'app';
     case 'teacher': return 'teacher';
     case 'staff': return under('/staff/inbox') ? 'inbox' : under('/staff/register') ? 'pos' : 'desk';
-    case 'admin': return under('/admin/crm') ? 'crm' : under('/admin/finance') ? 'finance' : 'admin';
+    case 'admin':
+      if (under('/admin/emails') || under('/admin/whatsapp')) return 'messages'; // 0048: M-04 + M-05, one card
+      return under('/admin/crm') ? 'crm' : under('/admin/finance') ? 'finance' : 'admin';
     case 'dev': return under('/dev/knowledgebase') ? 'kb' : 'dev';
     case 'docs': return under('/manual') ? 'manual' : under('/docs/source') ? 'sources' : 'docs';
     case 'public':

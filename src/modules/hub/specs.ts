@@ -3,7 +3,7 @@ import { EVERYONE } from '../../auth/roles';
 import type { ActionDef } from '../../actions/types';
 
 /** The card families the hub lays out, in document order. Also the `surface` enum of `hub.enterAs`. */
-export const HUB_SURFACES = ['app', 'site', 'teacher', 'desk', 'inbox', 'pos', 'admin', 'crm', 'finance', 'marketing', 'manual', 'sources', 'docs', 'kb', 'dev'] as const;
+export const HUB_SURFACES = ['app', 'site', 'teacher', 'desk', 'inbox', 'pos', 'admin', 'crm', 'messages', 'finance', 'marketing', 'manual', 'sources', 'docs', 'kb', 'dev'] as const;
 export type HubSurfaceKey = (typeof HUB_SURFACES)[number];
 
 /** The testing-hub row, in document order. Also the `tool` enum of `hub.openTool`. */
@@ -44,7 +44,7 @@ export const hubSpec = defineSpec({
     'Hero (eyebrow tenant · city, h1, lead, tagline, BreathingRings art ≥ 900 px)',
     'SessionBar (RoleSwitcher, Ctrl + . hint in dev mode)',
     'BandA · Fuera del estudio (Customer app featured with a phone preview, Website, Teacher app)',
-    'BandB · El equipo (Front desk, Inbox, Caja, Admin, CRM, Finanzas, Kit de marketing — próximamente)',
+    'BandB · El equipo (Front desk, Inbox, Caja, Admin, CRM, Mensajes transaccionales → M-04 + M-05 link, Finanzas, Kit de marketing — próximamente)',
     'BandC · Construcción y pruebas (Manual, Documentos fuente, Docs, Kanban, Dev tools)',
     'ToolsRow · Hub de pruebas (9 tool cards)',
     'StatStrip (routes, codes, tables, components, actions, manual chapters)',

@@ -43,7 +43,9 @@ interface SurfaceCard {
   icon: IconName;
   shape?: ThumbShape;
   featured?: boolean;
-  secondary?: { to: string; key: string };
+  secondary?: { to: string; key: string; asRole?: boolean };
+  /** Hue family for the medallion and preview tile (default: the card's own key). */
+  hue?: HubSurfaceKey;
   /** 0031: announced, not built — "Próximamente" badge and a Placeholder instead of the enter button. */
   comingSoon?: boolean;
 }
@@ -53,7 +55,7 @@ interface SurfaceCard {
  * band, role, label, purpose — comes from the hub map data (src/hub/hubMap.data.ts), the same module
  * `npm run hub-map` publishes as public/hub-map.json for other hosts.
  */
-const CARD_UI: Record<HubSurfaceKey, { icon: IconName; shape?: ThumbShape }> = {
+const CARD_UI: Record<HubSurfaceKey, { icon: IconName; shape?: ThumbShape; hue?: HubSurfaceKey; secondaryAsRole?: boolean }> = {
   app: { icon: 'smartphone', shape: 'phone' },
   site: { icon: 'globe' },
   teacher: { icon: 'sparkle' },
@@ -62,6 +64,8 @@ const CARD_UI: Record<HubSurfaceKey, { icon: IconName; shape?: ThumbShape }> = {
   pos: { icon: 'receipt' },
   admin: { icon: 'gauge' },
   crm: { icon: 'users' },
+  // 0048: the inbox's hue family (no new token); its M-05 link enters as the same demo user, like the button
+  messages: { icon: 'mail', hue: 'inbox', secondaryAsRole: true },
   finance: { icon: 'wallet' },
   marketing: { icon: 'palette' },
   manual: { icon: 'book' },
@@ -73,11 +77,12 @@ const CARD_UI: Record<HubSurfaceKey, { icon: IconName; shape?: ThumbShape }> = {
 
 const ALL_CARDS: SurfaceCard[] = HUB_EXPERIENCES.map((e) => {
   const key = e.id as HubSurfaceKey;
+  const { secondaryAsRole, ...ui } = CARD_UI[key];
   return {
-    key, code: e.code, to: e.route, band: e.band, ...CARD_UI[key],
+    key, code: e.code, to: e.route, band: e.band, ...ui,
     role: e.switchUser ? (e.roleId as Role) : undefined,
     featured: e.featured,
-    secondary: e.secondary ? { to: e.secondary.route, key: `hub.card.${key}.secondary` } : undefined,
+    secondary: e.secondary ? { to: e.secondary.route, key: `hub.card.${key}.secondary`, asRole: secondaryAsRole } : undefined,
     comingSoon: e.comingSoon,
   };
 });
@@ -116,7 +121,7 @@ function SurfaceTile({ card, order, status, here, live, ui, onEnter }: {
   const tone = status === 'built' ? 'success' : status === 'stub' ? 'warn' : 'neutral';
 
   return (
-    <article className={`hub-card ${card.featured ? 'is-featured' : ''} ${card.comingSoon ? 'is-soon' : ''}`} style={{ ['--hue' as string]: `var(--hue-${card.key})` }}>
+    <article className={`hub-card ${card.featured ? 'is-featured' : ''} ${card.comingSoon ? 'is-soon' : ''}`} style={{ ['--hue' as string]: `var(--hue-${card.hue ?? card.key})` }}>
       <div className="hub-card-body">
         <div className="hub-card-top">
           <span className="hub-medallion" aria-hidden><Icon name={card.icon} size={Math.round(22 * ui)} /></span>
@@ -138,7 +143,12 @@ function SurfaceTile({ card, order, status, here, live, ui, onEnter }: {
               {person ? t('hub.enterAs', { name: person.name.split(' ')[0] }) : t('hub.open')}
             </Button>
           )}
-          {card.secondary && <Link className="hub-card-secondary small" to={card.secondary.to}>{t(card.secondary.key)}</Link>}
+          {card.secondary && (
+            <Link
+              className="hub-card-secondary small" to={card.secondary.to}
+              onClick={card.secondary.asRole ? (e) => { e.preventDefault(); onEnter({ ...card, to: card.secondary!.to }); } : undefined}
+            >{t(card.secondary.key)}</Link>
+          )}
         </div>
         <p className="hub-card-meta xs">
           <span>{card.role ? bi(ROLE_LABEL[card.role]) : bi(ROLE_LABEL.public)}</span>

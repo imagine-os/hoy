@@ -109,7 +109,7 @@ export const HUB_GROUPS: Record<string, HubGroup> = Object.fromEntries(([
   ['site', 'Sitio', 'Website', 10],
   ['teach', 'Enseñar', 'Teach', 10],
   ['desk', 'Recepción', 'Front desk', 10], ['inbox', 'Bandeja', 'Inbox', 20], ['pos', 'Caja', 'Register', 30],
-  ['admin', 'Administración', 'Admin', 10], ['content', 'Contenido', 'Content', 20], ['crm', 'CRM', 'CRM', 30], ['finance', 'Finanzas', 'Finance', 40], ['tables', 'Tablas', 'Tables', 50],
+  ['admin', 'Administración', 'Admin', 10], ['content', 'Contenido', 'Content', 20], ['crm', 'CRM', 'CRM', 30], ['messages', 'Mensajes', 'Messages', 10], ['finance', 'Finanzas', 'Finance', 40], ['tables', 'Tablas', 'Tables', 50],
   ['dev', 'Desarrollo', 'Dev tools', 10], ['docs', 'Documentación', 'Docs', 10], ['manual', 'Manual', 'Manual', 10],
   ['sources', 'Documentos fuente', 'Source documents', 10],
 ] as [string, string, string, number][]).map(([id, es, en, order]) => [id, { id, label: { es, en }, order }]));
@@ -137,14 +137,14 @@ export const HUB_GROUP_RULES: { prefix: string; group: string; exact?: boolean }
   { prefix: '/staff', group: 'desk' },
   { prefix: '/staff/inbox', group: 'inbox' },
   { prefix: '/staff/register', group: 'pos' },
-  // admin (emails and WhatsApp automations are content the studio writes)
+  // admin (0048: emails and WhatsApp automations left the content group for their own card, `messages`)
   { prefix: '/admin', group: 'admin' },
   { prefix: '/admin/settings', group: 'admin' },
   { prefix: '/admin/integrations', group: 'admin' },
   { prefix: '/admin/activity', group: 'admin' },
   { prefix: '/admin/content', group: 'content' },
-  { prefix: '/admin/emails', group: 'content' },
-  { prefix: '/admin/whatsapp', group: 'content' },
+  { prefix: '/admin/emails', group: 'messages' },
+  { prefix: '/admin/whatsapp', group: 'messages' },
   { prefix: '/admin/crm', group: 'crm' },
   { prefix: '/admin/finance', group: 'finance' },
   { prefix: '/admin/tables', group: 'tables' },
@@ -201,7 +201,7 @@ export interface HubExperienceSeed extends Omit<HubExperience, 'roles' | 'url' |
 const exp = (id: string, code: string, band: HubBand, device: HubDevice, route: string, roleId: string, switchUser: boolean, label: Bi, purpose: Bi, extra: Partial<HubExperienceSeed> = {}): HubExperienceSeed =>
   ({ id, code, label, purpose, roleId, band, device, route, switchUser, ...extra });
 
-/** The 15 hub cards, in document order (= `HUB_SURFACES` in src/modules/hub/specs.ts). */
+/** The 16 hub cards, in document order (= `HUB_SURFACES` in src/modules/hub/specs.ts). */
 export const HUB_EXPERIENCES: HubExperienceSeed[] = [
   exp('app', 'C-01', 'outside', 'phone', '/app', 'customer', true,
     { es: 'App de clientes', en: 'Customer app' },
@@ -228,6 +228,11 @@ export const HUB_EXPERIENCES: HubExperienceSeed[] = [
   exp('crm', 'M-06', 'team', 'desktop', '/admin/crm', 'coordinator', true,
     { es: 'CRM', en: 'CRM' },
     { es: 'La ficha de cada persona: conversación, reservas, pagos, consentimientos y notas.', en: 'Each person’s record: conversation, bookings, payments, consents and notes.' }),
+  // 0048 · one card, two pages: the emails (M-04) and the WhatsApp automations (M-05) the studio sends on its own
+  exp('messages', 'M-04', 'team', 'desktop', '/admin/emails', 'coordinator', true,
+    { es: 'Mensajes transaccionales', en: 'Transactional messages' },
+    { es: 'Los correos y WhatsApp que el estudio envía solo: se editan y se prueban aquí.', en: 'The emails and WhatsApp messages the studio sends on its own: edit and test them here.' },
+    { secondary: { label: { es: 'WhatsApp →', en: 'WhatsApp →' }, route: '/admin/whatsapp' } }),
   exp('finance', 'M-09', 'team', 'desktop', '/admin/finance', 'finance', true,
     { es: 'Finanzas', en: 'Finance' },
     { es: 'Ingresos, gastos, nómina de profesores e impuestos, con el libro detrás.', en: 'Revenue, expenses, teacher payroll and tax, with the ledger behind it.' }),
