@@ -165,7 +165,7 @@ answer is tokens plus a lint (D-0012), explained for people in `.claude/skills/u
 | `--gutter` | 16 | 24 | 32 | `.container`, AppShell / DesktopShell side padding |
 | `--grid-gap` | 16 | 24 | | `.grid`, card grids |
 | `--row-pad` | 12 × 16 | | | `ListRow`, `RosterRow`, choice rows (min-height `--h-ctl`) |
-| `--btn-pad-x` | 16 | | | `Button` md (sm 12, lg 24; vertical 0, height `--h-ctl` / `--h-ctl-lg` 48) |
+| `--btn-pad-x` | 16 | | | `Button` md (sm 12, lg 24; vertical 0, height `--h-ctl` / `--h-ctl-lg` 48; `--h-ctl-sm` 36 for `sm` in a dense row, 0049) |
 | `--measure` | 65ch | | | `.prose` line length |
 
 **Rules**
@@ -177,7 +177,9 @@ answer is tokens plus a lint (D-0012), explained for people in `.claude/skills/u
 4. Eyebrow → h2 and heading → lead `--stack-tight`; lead → body `--stack`.
 5. Buttons pad `0 × --btn-pad-x`; icon-only controls are square (`.ctl-round`).
 6. List rows `--row-pad`, grids `--grid-gap`, sections `--section`, consecutive sections one `--section` apart.
-7. Every target ≥ 44 × 44 px, text links in a card head included; nothing hover-only.
+7. Every target ≥ 44 × 44 px, text links in a card head included; nothing hover-only. **Dense-row exception (0049):**
+   inside `RowActions` a `Button size="sm"` is 36 px visible (`--h-ctl-sm`) and keeps a 44 px hit area through a
+   transparent `::before` that extends ±4 px vertically; `npm run audit:spacing` counts that hit area.
 8. Blocks inside a section start on the section's left edge (no stray centring).
 
 **Enforcement.** `npm run lint:spacing` (`scripts/spacing-lint.mjs`) scans `src/**/*.css` and inline

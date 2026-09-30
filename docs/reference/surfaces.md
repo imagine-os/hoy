@@ -1,8 +1,12 @@
 # Machine surfaces — MCP / WebMCP, CLI, API
 
 What something other than a person can drive in HoyOS today, and what it cannot.
-**Checked 2026-09-30** (v0.21.1; previous check 2026-09-30, v0.21.0). Re-check and date this file every pass; a line that is not
+**Checked 2026-09-30** (v0.21.2; previous check 2026-09-30, v0.21.1). Re-check and date this file every pass; a line that is not
 re-checked is not current.
+
+**0049 delta (v0.21.2).** No new action id and no changed parameters: the S-02 and S-03 row buttons changed presentation
+only (tonal / outline, 36 px visible, 44 px hit area); the check-in, no-show, undo, promote and walk-in actions, their
+permissions and their audit rows are identical. Action count unchanged.
 
 **0048 delta (v0.21.1).** No new action id. `hub.enterAs` (HUB-01) accepts a 16th surface, `messages`: it switches to the
 coordinator's demo user and opens `/admin/emails` (M-04); the card's secondary link opens `/admin/whatsapp` (M-05) as the same

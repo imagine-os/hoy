@@ -42,6 +42,7 @@ Old names `--sp-1 … --sp-16` still resolve (aliases) — do not use them in ne
 | `--btn-pad-x` | 16 | button side padding (sm 12, lg 24); vertical padding 0 |
 | `--measure` | 65ch | body text line length (`.prose`) |
 | `--h-ctl` / `--h-ctl-lg` | 44 / 48 | control height and square targets |
+| `--h-ctl-sm` | 36 | visible height of `sm` buttons in a dense row (`RowActions`); hit area stays 44 |
 
 Utilities already wired: `.stack` (stack-loose), `.stack-sm` (stack), `.row` / `.row-between` (gap-control),
 `.grid` (grid-gap), `.container` (gutter), `.page-head` (block below it), `Card padding="md|lg"`, `.ctl-round`.
@@ -57,7 +58,9 @@ Utilities already wired: `.stack` (stack-loose), `.stack-sm` (stack), `.row` / `
 5. Buttons pad `0 × --btn-pad-x`; their height comes from `--h-ctl`. Icon-only controls are square (`.ctl-round`).
 6. List rows use `--row-pad` and min-height `--h-ctl`. Grids use `--grid-gap`. Sections use `--section`;
    consecutive sections are one `--section` apart, not two.
-7. Every target is ≥ 44 × 44 (text links in a card head included); nothing hover-only.
+7. Every target is ≥ 44 × 44 (text links in a card head included); nothing hover-only. Dense-row exception: inside
+   `RowActions` a `Button size="sm"` is 36 px visible (`--h-ctl-sm`) and keeps a 44 px hit area through a transparent
+   `::before` that extends ±4 px vertically (the audit counts it). Nowhere else is a visible control under 44.
 8. Align to one edge: a block inside a section starts where the section heading starts (no stray centring).
 9. Reuse the component; if the component's spacing is wrong, fix it in the component, not per page.
 
