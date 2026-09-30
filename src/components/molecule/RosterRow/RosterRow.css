@@ -9,7 +9,6 @@
 .rosterrow-sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .rosterrow-flag { color: var(--color-warn); font-size: var(--fs-sm); }
 .rosterrow-state { display: flex; align-items: center; gap: var(--sp-sm); flex: 0 0 auto; }
-.rosterrow-actions { display: flex; gap: var(--sp-xs); flex: 0 0 auto; }
 .rosterrow-checked_in .rosterrow-name strong { color: var(--color-text); }
 .rosterrow-no_show .rosterrow-name strong, .rosterrow-late_cancel .rosterrow-name strong, .rosterrow-cancelled .rosterrow-name strong { color: var(--color-text-muted); }
 @media (max-width: 600px) {

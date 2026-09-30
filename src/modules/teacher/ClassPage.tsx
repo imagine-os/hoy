@@ -108,8 +108,8 @@ export function TeacherClassPage() {
               const late = !!b.checked_in_at && new Date(b.checked_in_at).getTime() > start + graceMs;
               return <RosterRow key={b.id} name={p?.name ?? b.user_id} initials={p?.initials} phone={isMine ? undefined : maskPhone(p?.phone)} plan={b.paid_with} status={b.status as 'booked' | 'checked_in' | 'no_show'} late={late} flag={p?.notes ?? undefined} time={b.checked_in_at ? formatTime(b.checked_in_at, lang) : undefined}
                 actions={canMark && (b.status === 'booked'
-                  ? <><Button size="sm" loading={busy === b.id} onClick={() => mark(b, 'checked_in')} icon="user-check">{t('teacher.class.present.mark')}</Button><Button size="sm" variant="ghost" onClick={() => mark(b, 'no_show')} icon="user-x">{t('teacher.class.absent.mark')}</Button></>
-                  : <Button size="sm" variant="ghost" onClick={() => mark(b, 'booked')} icon="undo">{t('staff.checkin.undo')}</Button>)} />;
+                  ? <><Button size="sm" variant="tonal" loading={busy === b.id} onClick={() => mark(b, 'checked_in')} icon="check">{t('teacher.class.present.mark')}</Button><Button size="sm" variant="outline" onClick={() => mark(b, 'no_show')} icon="user-x">{t('teacher.class.absent.mark')}</Button></>
+                  : <Button size="sm" variant="outline" onClick={() => mark(b, 'booked')} icon="undo">{t('staff.checkin.undo')}</Button>)} />;
             })}
           </Card>
         )}

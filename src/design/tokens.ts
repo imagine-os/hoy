@@ -336,10 +336,12 @@ export type IconSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
  * Layout widths and heights, all in rem so they scale with the `--ui` band (1120 → 1960 px at 3840). The phone
  * bezel width lives in the hub's DeviceFrame presets (D-0006), not here.
  * `h-ctl` is the minimum height (and the minimum width of a square target) of every interactive control (44 px).
+ * `h-ctl-sm` (36 px) is the visible height of a compact `Button size="sm"` inside a dense row (`RowActions`); its
+ * hit area still reaches `h-ctl` through a transparent `::before` (0049 dense-row exception, D-0012).
  */
 const layoutTokens = {
   'w-content': '70rem', 'w-app': '75rem', 'w-teach': '60rem', 'w-auth': '30rem', 'w-auth-wide': '36rem',
-  'h-topbar': '3.5rem', 'h-bottomnav': '4rem', 'h-ctl': '2.75rem', 'h-ctl-lg': '3rem', 'w-sidebar': '15rem', 'w-rail': '3.5rem',
+  'h-topbar': '3.5rem', 'h-bottomnav': '4rem', 'h-ctl': '2.75rem', 'h-ctl-sm': '2.25rem', 'h-ctl-lg': '3rem', 'w-sidebar': '15rem', 'w-rail': '3.5rem',
 } as const;
 
 /**

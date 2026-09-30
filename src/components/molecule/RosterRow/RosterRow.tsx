@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { Avatar } from '../../atom/Avatar/Avatar';
 import { Badge, toneForStatus } from '../../atom/Badge/Badge';
+import { RowActions } from '../RowActions/RowActions';
 import './RosterRow.css';
 
 export type RosterStatus = 'booked' | 'checked_in' | 'no_show' | 'late_cancel' | 'cancelled' | 'waiting';
@@ -19,7 +20,10 @@ export interface RosterRowProps {
   flag?: string;
   /** Right-hand time (check-in time, position in waitlist…). */
   time?: string;
+  /** Compact buttons rendered in `RowActions` (36 px, no shadow): main action `tonal`, secondary `outline`. */
   actions?: ReactNode;
+  /** Show the status chip (default true). Hide it when the section header already names the state (S-02 "Esperados"). */
+  showStatus?: boolean;
   selected?: boolean;
   onClick?: () => void;
 }
@@ -34,7 +38,7 @@ const LABEL: Record<RosterStatus, { es: string; en: string }> = {
 };
 
 /** One person on a class roster: identity, how they paid, arrival state and the desk actions. */
-export function RosterRow({ name, initials, phone, plan, status, late, flag, time, actions, selected, onClick }: RosterRowProps) {
+export function RosterRow({ name, initials, phone, plan, status, late, flag, time, actions, showStatus = true, selected, onClick }: RosterRowProps) {
   const { t, bi } = useI18n();
   const Tag = onClick ? 'button' : 'div';
   return (
@@ -47,12 +51,12 @@ export function RosterRow({ name, initials, phone, plan, status, late, flag, tim
         </div>
         <div className="xs muted rosterrow-sub">{[phone, plan].filter(Boolean).join(' · ')}</div>
       </div>
-      <div className="rosterrow-state">
-        <Badge tone={toneForStatus(status)}>{bi(LABEL[status])}</Badge>
+      {(showStatus || late || time) && <div className="rosterrow-state">
+        {showStatus && <Badge tone={toneForStatus(status)}>{bi(LABEL[status])}</Badge>}
         {late && <Badge tone="warn">{t('core.status.late')}</Badge>}
         {time && <span className="xs muted mono">{time}</span>}
-      </div>
-      {actions && <div className="rosterrow-actions" onClick={(e) => e.stopPropagation()}>{actions}</div>}
+      </div>}
+      {actions && <RowActions className="rosterrow-actions">{actions}</RowActions>}
     </Tag>
   );
 }
