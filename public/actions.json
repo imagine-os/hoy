@@ -6,7 +6,7 @@
       "es": "HoyOS",
       "en": "HoyOS"
     },
-    "version": "0.21.2",
+    "version": "0.21.3",
     "baseUrl": "https://imagine-os.github.io/hoy/"
   },
   "generatedAt": "2026-09-30T00:00:00.000Z",
@@ -1054,6 +1054,44 @@
       "intent": {
         "es": "Marca el capítulo {chapter} como leído",
         "en": "Mark chapter {chapter} as read"
+      },
+      "params": {
+        "chapter": "string — chapter slug (04-recepcion-y-check-in) or number (04); default the open chapter"
+      },
+      "permission": "docs.read",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "finance",
+        "teacher",
+        "maintenance",
+        "marketing",
+        "developer",
+        "customer",
+        "public"
+      ],
+      "pages": [
+        {
+          "code": "K-03",
+          "route": "/manual"
+        },
+        {
+          "code": "K-03",
+          "route": "/manual/:chapter"
+        }
+      ]
+    },
+    {
+      "id": "manual.markUnread",
+      "label": {
+        "es": "Marcar como no leído",
+        "en": "Mark as unread"
+      },
+      "intent": {
+        "es": "Marca el capítulo {chapter} como no leído",
+        "en": "Mark chapter {chapter} as unread"
       },
       "params": {
         "chapter": "string — chapter slug (04-recepcion-y-check-in) or number (04); default the open chapter"

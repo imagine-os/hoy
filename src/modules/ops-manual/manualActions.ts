@@ -14,7 +14,7 @@ import type { ActionHandler } from '../../actions';
 import { loadDoc } from '../docs/docsIndex';
 import { LENS_ROLES, chapterNumber } from './audience';
 import { chapterFor, chapters, type Chapter } from './manualIndex';
-import { canEditLevel, isLead, isTeam, useMarkRead, useOverrideWrites, useRequestWrites, useTrainingWrites } from './manualData';
+import { canEditSection, isLead, isOwner, isTeam, useMarkRead, useMarkUnread, useOverrideWrites, useRequestWrites, useTrainingWrites } from './manualData';
 import { splitSections } from './sections';
 import { useLens, type Lens } from './lens';
 import { SOURCES, sourceById } from './sources';
@@ -43,6 +43,7 @@ export function useManualHandlers(): Record<string, ActionHandler> {
   const { chapter: openSlug } = useParams();
   const { setLens } = useLens();
   const markRead = useMarkRead();
+  const markUnread = useMarkUnread();
   const { sign } = useTrainingWrites();
   const { save, restore } = useOverrideWrites();
   const { add } = useRequestWrites();
@@ -75,6 +76,12 @@ export function useManualHandlers(): Record<string, ActionHandler> {
         await markRead(c.slug, c.version);
         return `read ${c.slug} v${c.version}`;
       },
+      'manual.markUnread': async (p) => {
+        if (!isTeam(role)) throw new Error('reading progress is for team roles');
+        const c = need(p?.chapter, openSlug);
+        const n = await markUnread(c.slug);
+        return n ? `unread ${c.slug}` : `${c.slug} was not marked read`;
+      },
       'manual.signTraining': async (p) => {
         if (!isLead(role)) throw new Error('requires coordinator, admin or super_admin');
         const stage = p?.stage as TrainingStage;
@@ -92,8 +99,9 @@ export function useManualHandlers(): Record<string, ActionHandler> {
       'manual.editSection': async (p) => {
         const l = langOf(p);
         const { target, section } = await sectionOf(need(p?.chapter, openSlug), p?.section, l);
-        if (!section.editable) throw new Error(`section "${section.heading}" is not marked {{editable:…}} — use manual.suggestEdit`);
-        if (!canEditLevel(role, section.editable)) throw new Error(`requires ${section.editable === 'owner' ? 'admin or super_admin' : 'coordinator, admin or super_admin'}`);
+        // 0050: admin and super admin edit any section; coordination only {{editable:coordinator}}; others suggest.
+        if (!isOwner(role) && !section.editable) throw new Error(`section "${section.heading}" is not marked {{editable:…}} — only admin or super_admin edit it; use manual.suggestEdit`);
+        if (!canEditSection(role, section)) throw new Error(`requires ${section.editable === 'coordinator' ? 'coordinator, admin or super_admin' : 'admin or super_admin'}`);
         if (!p?.body?.trim()) throw new Error('body is required (markdown)');
         const row = await save(target.slug, l, section.heading, p.body, p.note ?? null, 'live');
         return `edited ${target.slug} · ${section.heading} v${row.version}`;
@@ -101,7 +109,7 @@ export function useManualHandlers(): Record<string, ActionHandler> {
       'manual.restoreSection': async (p) => {
         const l = langOf(p);
         const { target, section } = await sectionOf(need(p?.chapter, openSlug), p?.section, l);
-        if (!section.editable || !canEditLevel(role, section.editable)) throw new Error('not allowed to restore this section');
+        if (!canEditSection(role, section)) throw new Error('not allowed to restore this section');
         const n = await restore(target.slug, l, section.heading);
         return n ? `restored ${target.slug} · ${section.heading}` : 'nothing to restore: the section shows the original';
       },
@@ -127,7 +135,7 @@ export function useManualHandlers(): Record<string, ActionHandler> {
         return `opened ${s.id}`;
       },
     };
-  }, [lang, role, user.id, data, navigate, openSlug, setLens, markRead, sign, save, restore, add]);
+  }, [lang, role, user.id, data, navigate, openSlug, setLens, markRead, markUnread, sign, save, restore, add]);
 }
 
 /** Handlers for the K-04 actions. */

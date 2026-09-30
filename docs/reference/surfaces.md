@@ -1,8 +1,16 @@
 # Machine surfaces — MCP / WebMCP, CLI, API
 
 What something other than a person can drive in HoyOS today, and what it cannot.
-**Checked 2026-09-30** (v0.21.2; previous check 2026-09-30, v0.21.1). Re-check and date this file every pass; a line that is not
+**Checked 2026-09-30** (v0.21.3; previous check 2026-09-30, v0.21.2). Re-check and date this file every pass; a line that is not
 re-checked is not current.
+
+**0050 delta (v0.21.3).** One new action, `manual.markUnread` (K-03, `docs.read`, team roles): it deletes the caller's
+`manual_progress` rows for the chapter (default the open one) and appends a `manual.unread` audit row, so the cover
+("Tu manual"), the sidebar marks and the team view count the chapter as unread again. `manual.editSection` and
+`manual.restoreSection` now follow `canEditSection`: admin and super admin may edit and restore **any** `##` section, marked
+or not; coordinator only `{{editable:coordinator}}` sections; the "not marked {{editable:…}}" error remains for everyone
+else. `manual.suggestEdit`, `manual.requestChange` and the K-04 request actions are unchanged. `public/actions.json` lists
+60 actions (was 59).
 
 **0049 delta (v0.21.2).** No new action id and no changed parameters: the S-02 and S-03 row buttons changed presentation
 only (tonal / outline, 36 px visible, 44 px hit area); the check-in, no-show, undo, promote and walk-in actions, their
@@ -164,8 +172,9 @@ window.__hoyos.actions.filter((a) => a.mounted);
 | `tables.toggleTechnicalNames` | M-03 | Muestra (u oculta) los nombres técnicos | — | `dev.tools` |
 | `manual.setLens` | K-03 | Muéstrame el manual de {role} | `role: enum:all,super_admin,admin,coordinator,front_desk,finance,teacher,maintenance,marketing,developer` | `docs.read` |
 | `manual.markRead` | K-03 | Marca el capítulo {chapter} como leído | `chapter: slug or number` (default the open chapter) | `docs.read` · team roles |
+| `manual.markUnread` | K-03 | Marca el capítulo {chapter} como no leído | `chapter: slug or number` (default the open chapter) — removes the caller's read rows | `docs.read` · team roles |
 | `manual.signTraining` | K-03 | Firma {stage} de {user} | `user: users.id`, `stage: enum:day1,week1,month1`, `role?` (default the person's role) | `manual.train` · coordinator, admin, super_admin |
-| `manual.editSection` | K-03 | Reescribe la sección {section} del capítulo {chapter} | `chapter`, `section: ## heading`, `body: markdown`, `note?`, `lang?: es,en` — only sections marked `{{editable:…}}` | `manual.edit` · owner level: admin, super_admin; coordinator level: + coordinator |
+| `manual.editSection` | K-03 | Reescribe la sección {section} del capítulo {chapter} | `chapter`, `section: ## heading`, `body: markdown`, `note?`, `lang?: es,en` — admin / super_admin: any section; coordinator: only sections marked `{{editable:coordinator}}` (0050) | `manual.edit` · admin, super_admin (all sections); coordinator (marked sections) |
 | `manual.restoreSection` | K-03 | Vuelve al texto original de {section} | `chapter`, `section`, `lang?` | `manual.edit` |
 | `manual.requestChange` | K-03 | Pide que el capítulo {chapter} diga {request} | `chapter`, `request`, `section?` | `docs.read` · team roles |
 | `manual.suggestEdit` | K-03 | Sugiere este texto para {section} | `chapter`, `section`, `body`, `note?`, `lang?` — any section; an owner accepts it from "Sugerencias" | `docs.read` · team roles |

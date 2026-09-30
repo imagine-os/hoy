@@ -5,7 +5,8 @@ import { useSession } from '../../auth/SessionProvider';
 import { useActions } from '../../actions';
 import { MarkdownViewer, headingSlug } from '../../components/organism/MarkdownViewer/MarkdownViewer';
 import { LiveBlock } from '../../components/organism/LiveBlock/LiveBlock';
-import { Figure } from '../../components/organism/Figure/Figure';
+import { Figure, isPhoneCapture } from '../../components/organism/Figure/Figure';
+import { FigurePair } from '../../components/organism/FigurePair/FigurePair';
 import { SourceEmbed } from '../../components/organism/SourceEmbed/SourceEmbed';
 import { ChapterCard } from '../../components/molecule/ChapterCard/ChapterCard';
 import { Toc } from '../../components/molecule/Toc/Toc';
@@ -25,9 +26,9 @@ import { levelFor } from './audience';
 import { chapterIcon, partIcon, MANUAL_ICON } from './chapterIcons';
 import { ManualCtx } from './context';
 import { useLens } from './lens';
-import { AudienceChips, AudienceMatrix, LensSelect, LevelChip, LmsCover, ManualTiles, ReadButton, ScopedBlock, TeamView, TrainingBlock, useLensSubject, useRoleName } from './lms';
+import { AudienceChips, AudienceMatrix, ChapterFootBlock, LensSelect, LevelChip, LmsCover, ManualTiles, ReadButton, ScopedBlock, TeamView, TrainingBlock, useLensSubject, useRoleName } from './lms';
 import { PolicyWithNote, RequestBox, SectionBlock, StudioValue } from './editing';
-import { useOverrides, useProgress, useStudioPolicies } from './manualData';
+import { canEditSection, useOverrides, useProgress, useStudioPolicies } from './manualData';
 import { splitSections } from './sections';
 import { sourceById, sourceView } from './sources';
 import { useManualHandlers } from './manualActions';
@@ -37,6 +38,12 @@ import './manual.css';
 const HOME = '/manual';
 const chapterPath = (slug: string) => `/manual/${slug}`;
 const splitRoles = (role: string) => role.split(/[,·]/).map((r) => r.trim()).filter(Boolean);
+
+// 0050: two phone captures written in adjacent paragraphs become one paragraph of two images, which the viewer
+// hands to FigurePair (side by side from 768 px). Pairs only two; a third phone capture stays on its own.
+const PHONE_IMG = String.raw`!\[[^\]\n]*\]\([^)\s]*[-_]390[-_.][^)\s]*\s+"[^"\n]*"\)`;
+const PHONE_PAIR = new RegExp(`^(${PHONE_IMG})[ \\t]*\\n[ \\t]*\\n(${PHONE_IMG})[ \\t]*$`, 'gm');
+const pairPhoneFigures = (md: string) => md.replace(PHONE_PAIR, '$1\n$2');
 
 /** The manual's own version and date: the newest any chapter declares. */
 function manualVersion(list: Chapter[]) {
@@ -286,13 +293,17 @@ export function ManualPage() {
   });
   const render = (md: string) => chapter ? (
     <MarkdownViewer
-      source={inline(md)} path={chapter.path} resolveAsset={assetUrl} resolveLink={manualRoute} headingIds
+      source={pairPhoneFigures(inline(md))} path={chapter.path} resolveAsset={assetUrl} resolveLink={manualRoute} headingIds
       directive={(kind, arg) => <ManualDirective kind={kind} arg={arg} />}
       scope={(roles, content) => <ScopedBlock roles={roles}>{content}</ScopedBlock>}
-      figure={(f) => { const code = f.title.split('·')[0].trim(); const info = captureInfo(code); return <Figure url={f.url} caption={f.alt} title={f.title} captured={info.captured} stale={info.stale} />; }}
+      figure={(f) => { const code = f.title.split('·')[0].trim(); const info = captureInfo(code); return <Figure url={f.url} caption={f.alt} title={f.title} captured={info.captured} stale={info.stale} device={isPhoneCapture(f.src) ? 'mobile' : 'desktop'} />; }}
+      figureGroup={(figs) => <FigurePair>{figs}</FigurePair>}
     />
   ) : null;
-  const editableCount = sections.filter((s) => s.editable).length;
+  // 0050: the badge counts what this person may edit (every section for admin / super admin); a reader who
+  // cannot edit still sees how many sections the studio adjusts.
+  const markedCount = sections.filter((s) => s.heading && s.editable).length;
+  const mineCount = sections.filter((s) => canEditSection(role, s)).length;
   return (
     <ManualCtx.Provider value={{ chapter, lens }}>
       <div className="manual">
@@ -322,7 +333,8 @@ export function ManualPage() {
                   {chapter.version && <span>{t('manual.version')}: <strong>{chapter.version}</strong></span>}
                   {chapter.updated && <span>{t('manual.updated')}: <strong>{chapter.updated}</strong></span>}
                   {pending > 0 && <Badge>{t('manual.placeholders.count', { n: pending })}</Badge>}
-                  {editableCount > 0 && role !== 'customer' && role !== 'public' && <Badge tone="primary">{t('manual.edit.count', { n: editableCount })}</Badge>}
+                  {mineCount > 0 ? <Badge tone="primary">{t('manual.edit.countYou', { n: mineCount })}</Badge>
+                    : markedCount > 0 && role !== 'customer' && role !== 'public' && <Badge tone="primary">{t('manual.edit.count', { n: markedCount })}</Badge>}
                   {chapter.role && <span className="xs">{t('manual.role')}: {chapter.role}</span>}
                 </div>
               </header>
@@ -333,6 +345,7 @@ export function ManualPage() {
                   {body !== undefined && sections.map((s, k) => (
                     <SectionBlock key={`${s.heading}-${k}`} chapter={chapter} section={s} overrides={overrides} render={render} />
                   ))}
+                  {body !== undefined && <ChapterFootBlock chapter={chapter} />}
                   {body !== undefined && <RequestBox chapter={chapter} headings={headings.map((h) => h.text)} />}
                 </div>
                 <div className="manual-aside"><Toc items={headings} label={t('manual.onThisPage')} /></div>

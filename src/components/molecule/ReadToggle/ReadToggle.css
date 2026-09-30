@@ -1,0 +1,7 @@
+.read-toggle { display: inline-flex; flex-wrap: wrap; gap: var(--gap-control); align-items: center; }
+.read-toggle-done {
+  display: inline-flex; align-items: center; gap: var(--gap-inline);
+  min-height: var(--h-ctl); font-size: var(--fs-sm); font-weight: var(--fw-medium);
+  color: var(--color-success);
+}
+.read-toggle-done svg { flex: none; }

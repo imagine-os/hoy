@@ -31,7 +31,7 @@ Cómo se escribe (el registro, qué no va en el texto, dónde van las pantallas)
 | `{{stats}}`, `{{kpi:occupancy}}` | conteos y KPIs en vivo de la capa de datos |
 | `> EN HOYOS: S-02 Check-in → …` (EN: `> IN HOYOS:`) | la caja de pantalla al final de una sección: códigos y pasos fuera de la prosa (una por sección como máximo) |
 | `{{audience}}` · `{{audience:04-recepcion-y-check-in}}` | la matriz de quién lee qué · la fila "Para:" bajo el título de un capítulo |
-| `{{editable:owner}}` / `{{editable:coordinator}}` (sola, bajo el `##`) | la sección es una regla de la casa que ese nivel ajusta |
+| `{{editable:owner}}` / `{{editable:coordinator}}` (sola, bajo el `##`) | la sección es una regla de la casa: muestra la etiqueta y, con `coordinator`, coordinación la edita (admin y super admin editan cualquier sección, marcada o no, desde 0050) |
 | `{{studio:lost_items_days}}` (sola en su línea, con una frase antes) | una regla del estudio de `studio_policies`, editable en el manual |
 | `{{for:teacher,front_desk}}` … `{{/for}}` | un pasaje que solo aplica a esos roles |
 | `{{source:modelo-de-valor}}` · `contenido-completo` · `manual-de-marca` | el documento fuente incrustado |

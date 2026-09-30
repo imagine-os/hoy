@@ -63,6 +63,11 @@ Esta es la ventana de cancelación vigente:
    alquiler, calendario de redes, reglas de la casa, checklists, ejemplos de tono) lleva, en su propia línea
    justo debajo del título `##`, `{{editable:owner}}` o `{{editable:coordinator}}`.
 2. No marques como editable una sección que solo muestra valores de Ajustes: esos se cambian en Ajustes.
+   Quién edita en la app (desde 0050, `canEditSection`): **admin y super admin editan cualquier sección `##`**, esté
+   marcada o no; **coordinación** solo las marcadas `{{editable:coordinator}}`; el resto del equipo usa "Pedir un
+   cambio" al final del capítulo (llega a K-04) o un agente propone con `manual.suggestEdit`. La marca sirve para dos
+   cosas: la etiqueta "Ajustable por…" que ve todo el equipo y el permiso de coordinación; `{{editable:owner}}` ya no
+   cambia quién edita (admin edita todo), pero sigue diciendo que esa regla es del estudio.
 3. Un valor que el estudio decide (días, minutos, una frase) no se escribe a mano: va en su propia línea como
    `{{studio:<clave>}}`, con una frase antes que diga qué es ("Cuánto tiempo los guardamos:"). Se ve como una
    tarjeta con su título, y quien tiene permiso la edita ahí mismo. La clave vive en la lista de reglas del

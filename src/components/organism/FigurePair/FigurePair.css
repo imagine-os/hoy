@@ -1,0 +1,5 @@
+.figure-pair { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--grid-gap); margin: var(--block) 0; justify-items: center; align-items: start; }
+.figure-pair > .figure { margin: 0; width: 100%; }
+@media (min-width: 768px) {
+  .figure-pair { grid-template-columns: repeat(2, minmax(0, 22.5rem)); justify-content: center; }
+}

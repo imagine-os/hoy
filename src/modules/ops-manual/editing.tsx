@@ -1,5 +1,5 @@
 // Editing the manual from the app (0031): a section marked `{{editable:owner|coordinator}}` can be rewritten
-// by that role and up; the edit is stored beside the markdown (manual_overrides), shown in place with a badge,
+// by that role and up, and since 0050 admin and super admin rewrite any section (canEditSection); the edit is stored beside the markdown (manual_overrides), shown in place with a badge,
 // a "see original" toggle, a history and "restore original". `{{studio:<key>}}` text policies edit inline;
 // M-08 policies link to Settings. Any team member can request a change; an agent can suggest an edit.
 import { useMemo, useState, type ReactNode } from 'react';
@@ -15,7 +15,7 @@ import { Placeholder } from '../../components/atom/Placeholder/Placeholder';
 import { MarkdownEditor } from '../../components/molecule/MarkdownEditor/MarkdownEditor';
 import { LiveBlock, policyField } from '../../components/organism/LiveBlock/LiveBlock';
 import { toast } from '../../app/toast';
-import { canEditLevel, isLead, isTeam, useNames, useOverrideWrites, useRequestWrites, useRequests, useStudioPolicies, useStudioPolicyWrite } from './manualData';
+import { canEditLevel, canEditSection, isLead, isOwner, isTeam, useNames, useOverrideWrites, useRequestWrites, useRequests, useStudioPolicies, useStudioPolicyWrite } from './manualData';
 import { chapterFor, type Chapter } from './manualIndex';
 import type { Section } from './sections';
 import { useRoleName } from './lms';
@@ -39,8 +39,9 @@ export function SectionBlock({ chapter, section, overrides, render }: { chapter:
   const history = section.heading ? overrides.historyOf(section.heading) : [];
   const suggestions = section.heading ? overrides.suggestionsOf(section.heading) : [];
   const level = section.editable;
-  const canEdit = !!level && canEditLevel(role, level);
-  const canDecide = canEdit || role === 'admin' || role === 'super_admin';
+  // 0050: admin and super admin edit any `##` section in place; coordination only the ones marked for it.
+  const canEdit = canEditSection(role, section);
+  const canDecide = canEdit || isOwner(role);
   const body = live ? live.body_md : section.body;
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(body);
@@ -56,9 +57,9 @@ export function SectionBlock({ chapter, section, overrides, render }: { chapter:
   };
   const onRestore = async () => { await restore(chapter.slug, chapter.lang, section.heading); toast(t('manual.edit.restored'), 'success'); };
 
-  const tools = section.heading && isTeam(role) && (level || suggestions.length > 0 || history.length > 0);
+  const tools = section.heading && isTeam(role) && (level || canEdit || suggestions.length > 0 || history.length > 0);
   return (
-    <div className={`manual-section ${level ? 'is-editable' : ''} ${live ? 'is-overridden' : ''}`} data-section={section.heading || undefined}>
+    <div className={`manual-section ${level ? 'is-editable' : ''} ${canEdit && !level ? 'is-admin-editable' : ''} ${live ? 'is-overridden' : ''}`} data-section={section.heading || undefined}>
       {section.headingLine && render(section.headingLine)}
       {tools && (
         <div className="manual-section-tools">
@@ -72,7 +73,7 @@ export function SectionBlock({ chapter, section, overrides, render }: { chapter:
           {canDecide && suggestions.length > 0 && <Button size="md" variant="secondary" onClick={() => setPanel(panel === 'suggestions' ? 'none' : 'suggestions')} aria-expanded={panel === 'suggestions'}>{t('manual.edit.suggestions', { n: suggestions.length })}</Button>}
           {history.length > 0 && (canEdit || live) && <Button size="md" variant="ghost" onClick={() => setPanel(panel === 'history' ? 'none' : 'history')} aria-expanded={panel === 'history'}>{t('manual.edit.history', { n: history.length })}</Button>}
           {canEdit && live && !editing && <Button size="md" variant="ghost" onClick={onRestore}>{t('manual.edit.restore')}</Button>}
-          {canEdit && !editing && <Button size="md" variant="secondary" icon="edit" onClick={start}>{t('manual.edit.edit')}</Button>}
+          {canEdit && !editing && <Button size="md" variant="secondary" icon="edit" onClick={start} title={level ? t('manual.edit.levelHint') : t('manual.edit.adminHint')}>{t('manual.edit.edit')}</Button>}
         </div>
       )}
       {panel === 'suggestions' && (
@@ -218,6 +219,8 @@ export function RequestBox({ chapter, headings }: { chapter: Chapter; headings: 
     <section className="manual-request" aria-labelledby="manual-req-title">
       <h2 id="manual-req-title" className="manual-h3">{t('manual.req.title')}</h2>
       <p className="small muted">{t('manual.req.lead')}</p>
+      {isOwner(role) && <p className="small muted">{t('manual.req.adminLead')}</p>}
+      {isLead(role) && <Link className="manual-request-see small" to="/manual/decisions">{t('manual.req.see')} →</Link>}
       <div className="manual-request-form">
         <label>
           <span className="eyebrow">{t('manual.req.section')}</span>

@@ -260,3 +260,6 @@
 }
 /* 0037 · the pending-decisions badge on the cover is a link: a 44 px target around the pill, without growing the meta line */
 .manual-cover-meta > a { display: inline-flex; align-items: center; min-height: var(--h-ctl); margin-block: calc((var(--h-ctl) - 1.5em) / -2); }
+
+/* 0050: the request box points leads to K-04; admin-editable sections carry no tag (the Editar button says it) */
+.manual-request-see { display: inline-flex; align-items: center; align-self: flex-start; min-height: var(--h-ctl); }
