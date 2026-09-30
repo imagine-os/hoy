@@ -1,18 +1,19 @@
 import { Link } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
-import { useContact } from '../../admin/settings';
+import { useWhatsappLink } from '../../admin/settings';
 import { Button } from '../../../components/atom/Button/Button';
 import { Card } from '../../../components/molecule/Card/Card';
 import { Accordion } from '../../../components/molecule/Accordion/Accordion';
 import { EmptyState } from '../../../components/molecule/EmptyState/EmptyState';
 import { useFaq } from '../hooks';
 import { PageHead } from '../ui';
-import { waLink } from '../../../i18n/format';
 
 /** C-14 / C-15 FAQ — questions come from `faq_entries`, grouped by section, two pages so the accordion stays short. */
 export function FaqPage({ page }: { page: 1 | 2 }) {
   const { t, bi } = useI18n();
-  const contact = useContact();
+  // 0047: the concierge button is a `support` handoff; the message has no name here (the page does not know it).
+  const wa = useWhatsappLink();
+  const support = wa.resolve('support');
   const { groups, totalPages, loading } = useFaq(page);
   return (
     <div className="container page cust-page">
@@ -28,7 +29,7 @@ export function FaqPage({ page }: { page: 1 | 2 }) {
         ))}
         {page === 1
           ? <Link to="/app/faq/2"><Button block variant="secondary">{t('customer.faq.next')} →</Button></Link>
-          : <Card tone="highlight" className="row-between wrap"><span className="small">{t('customer.faq.concierge')}</span><a href={waLink(contact.whatsapp, t('customer.more.whatsapp.text', { name: '' }))} target="_blank" rel="noreferrer"><Button size="sm" variant="secondary">WhatsApp →</Button></a></Card>}
+          : <Card tone="highlight" className="stack-sm"><div className="row-between wrap"><span className="small">{t('customer.faq.concierge')}</span><a href={wa.link('support', t('customer.more.whatsapp.textAnon'))} target="_blank" rel="noreferrer"><Button size="sm" variant="secondary">WhatsApp →</Button></a></div>{support.note && <p className="xs muted">{bi(support.note)}</p>}</Card>}
       </div>
     </div>
   );

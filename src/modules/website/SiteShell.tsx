@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, type ReactNode } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useI18n } from '../../i18n/I18nProvider';
-import { useContact, useOpeningHours, pendingSuffix, type ContactField } from '../admin/settings';
+import { useContact, useOpeningHours, useWhatsappLink, pendingSuffix, type ContactField } from '../admin/settings';
 import { useStudioJsonLd } from './jsonLd';
 import { useTheme } from '../../design/ThemeProvider';
 import { tenant } from '../../tenant/tenant';
@@ -16,25 +16,12 @@ import './sanctuary.css';
 import { useSiteEdition } from './edition';
 import { Icon } from '../../components/atom/Icon/Icon';
 import { SiteVersionSelect } from '../../components/molecule/SiteVersionSelect/SiteVersionSelect';
-import { waLink } from '../../i18n/format';
 
 const NAV = [
   ['/site/about', 'about'], ['/site/classes', 'classes'], ['/site/schedule', 'schedule'],
   ['/site/teachers', 'teachers'], ['/site/plans', 'plans'], ['/site/contact', 'contact'],
 ] as const;
 
-/**
- * wa.me deep link with the studio's WhatsApp. 0018: the number comes from M-08a (`useContact()`), so the
- * site pages call `useWaHref()`; `waHref()` stays for the rare non-hook call site and reads the last
- * number the shell rendered with (tenant.ts until M-08a is saved).
- */
-let currentWhatsapp: string = tenant.contact.whatsapp;
-export const waHref = (message?: string) => waLink(currentWhatsapp, message);
-export function useWaHref() {
-  const contact = useContact();
-  currentWhatsapp = contact.whatsapp;
-  return (message?: string) => waLink(contact.whatsapp, message);
-}
 
 /** Public website chrome: header with nav + a footer that carries hours, address and social. */
 export function SiteShell({ children }: { children: ReactNode }) {
@@ -71,7 +58,8 @@ export function SiteShell({ children }: { children: ReactNode }) {
   // 0041: the hours in the footer follow M-08a / M-08g, and the same hours go out as LocalBusiness JSON-LD.
   const hours = useOpeningHours();
   useStudioJsonLd();
-  const wa = useWaHref();
+  // 0047: the footer is a front desk handoff; pages with a topic call useWhatsappLink() with their own intent (D-0022).
+  const wa = useWhatsappLink();
   // 0036: per field — the phone and the address are confirmed, the email and Instagram still carry the label.
   const pending = (f: ContactField) => pendingSuffix(contact, f, lang);
   return (
@@ -114,7 +102,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
           </div>
           <div className="stack-sm">
             <span className="eyebrow">{t('site.footer.follow')}</span>
-            <a className="small" href={wa()} target="_blank" rel="noreferrer" data-testid="footer-whatsapp">WhatsApp {contact.whatsapp}{pending('whatsapp')}</a>
+            <a className="small" href={wa.link('frontDesk')} target="_blank" rel="noreferrer" data-testid="footer-whatsapp">WhatsApp {contact.whatsapp}{pending('whatsapp')}</a>
             <a className="small" href={contact.instagramUrl} target="_blank" rel="noreferrer">Instagram {contact.instagram}{pending('instagram')}</a>
             <a className="small" href={`mailto:${contact.email}`}>{contact.email}{pending('email')}</a>
           </div>

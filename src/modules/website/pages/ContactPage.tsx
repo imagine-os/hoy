@@ -2,14 +2,14 @@ import { Fragment, useState, type ReactNode } from 'react';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useLayout } from '../../../layout/useLayout';
 import { tenant } from '../../../tenant/tenant';
-import { useContact, useOpeningHours, type ContactField } from '../../admin/settings';
+import { useContact, useOpeningHours, useWhatsappLink, type ContactField } from '../../admin/settings';
 import { overrideLine, upcomingOverrides } from '../../../tenant/hours';
 import { Card } from '../../../components/molecule/Card/Card';
 import { Button } from '../../../components/atom/Button/Button';
 import { Field } from '../../../components/molecule/Field/Field';
 import { Input } from '../../../components/atom/Input/Input';
 import { MapSlot } from '../../../components/molecule/MapSlot/MapSlot';
-import { PageHead, SiteShell, useWaHref } from '../SiteShell';
+import { PageHead, SiteShell } from '../SiteShell';
 import { siteSpecs } from '../specs';
 
 /** W-06 — contact details from the tenant config, the studio map, and a WhatsApp form with no backend. */
@@ -21,15 +21,18 @@ export function ContactPage() {
   // 0041: M-08a weekly hours + the M-08g exceptions of the next 30 days.
   const hours = useOpeningHours();
   const soon = upcomingOverrides(hours.overrides, hours.todayKey, 30).slice(0, 3);
-  const waHref = useWaHref();
+  // 0047: the card, the CTA and the form are front desk handoffs; the Especiales card is `specials` (M-08a contacts).
+  const wa = useWhatsappLink();
+  const frontNote = wa.resolve('frontDesk').note;
+  const specialsNote = wa.resolve('specials').note;
 
   const send = () => {
     const text = t('site.contact.fTemplate', { name: form.name || '—', phone: form.phone || '—', message: form.message });
-    window.open(waHref(text), '_blank', 'noreferrer');
+    window.open(wa.link('frontDesk', text), '_blank', 'noreferrer');
   };
 
   const cards = [
-    [t('site.contact.whatsapp'), contact.whatsapp, waHref(), 'whatsapp'],
+    [t('site.contact.whatsapp'), contact.whatsapp, wa.link('frontDesk'), 'whatsapp'],
     [t('site.contact.email'), contact.email, `mailto:${contact.email}`, 'email'],
     [t('site.contact.instagram'), contact.instagram, contact.instagramUrl, 'instagram'],
     [t('site.contact.address'), `${contact.address} · ${contact.city}`, contact.location.link ?? undefined, 'address'],
@@ -54,10 +57,13 @@ export function ContactPage() {
             </Card>
           ))}
         </div>
-        <div className="row wrap" style={{ marginTop: 'var(--sp-lg)' }}>
-          <a href={waHref(bi({ es: 'Hola HOY, quiero información.', en: 'Hi HOY, I would like some information.' }))} target="_blank" rel="noreferrer">
-            <Button size="lg">{t('site.contact.waCta')}</Button>
-          </a>
+        <div className="stack-sm" style={{ marginTop: 'var(--sp-lg)' }}>
+          <div className="row wrap">
+            <a href={wa.link('frontDesk', t('site.contact.wa'))} target="_blank" rel="noreferrer">
+              <Button size="lg">{t('site.contact.waCta')}</Button>
+            </a>
+          </div>
+          {frontNote && <p className="xs muted">{bi(frontNote)}</p>}
         </div>
       </section>
     ),
@@ -66,8 +72,9 @@ export function ContactPage() {
       <section className="container site-section" style={{ paddingTop: 0 }}>
         <Card eyebrow={t('site.contact.specials')} tone="muted" className="site-specials">
           <p className="small" style={{ maxWidth: '60ch' }}>{t('site.contact.specialsBody')}</p>
-          <div className="row wrap" style={{ marginTop: 'var(--sp-md)' }}>
-            <a href={waHref(t('site.plans.specials.wa'))} target="_blank" rel="noreferrer"><Button size="sm" variant="secondary">{t('site.plans.specials.cta')}</Button></a>
+          <div className="stack-sm" style={{ marginTop: 'var(--sp-md)' }}>
+            <div className="row wrap"><a href={wa.link('specials', t('site.plans.specials.wa'))} target="_blank" rel="noreferrer"><Button size="sm" variant="secondary">{t('site.plans.specials.cta')}</Button></a></div>
+            {specialsNote && <p className="xs muted">{bi(specialsNote)}</p>}
           </div>
         </Card>
       </section>

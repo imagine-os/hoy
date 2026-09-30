@@ -8,7 +8,8 @@ import { useTable } from '../../../data/DataContext';
 import { TABLE_GROUPS, tableRegistry, tables } from '../../../data/schema';
 import { ROLES, ROLE_HOME, ROLE_LABEL } from '../../../auth/roles';
 import { getRoutes } from '../../../app/registry';
-import { useContact, useOpeningHours, usePolicy, type StudioSettings, pendingSuffix, type ContactField } from '../../../modules/admin/settings';
+import { useContact, useOpeningHours, usePolicy, useWhatsappLink, type StudioSettings, pendingSuffix, type ContactField } from '../../../modules/admin/settings';
+import { CONTACT_INTENTS, CONTACT_INTENT_LABEL } from '../../../tenant/contacts';
 import { overrideLine, upcomingOverrides } from '../../../tenant/hours';
 import { FAMILY_LABEL, FAMILY_RATIONALE, FAMILY_ROLE, pricing, pricingByFamily, type PlanFamily, type PriceItem } from '../../../tenant/pricing';
 import { tenant } from '../../../tenant/tenant';
@@ -159,6 +160,7 @@ const TENANT_KEYS = ['hours', 'contact', 'capacity', 'all'] as const;
 function TenantFacts({ what }: { what?: string }) {
   const { t, bi, lang } = useI18n();
   const contact = useContact();
+  const wa = useWhatsappLink();
   // 0041: the hours the owner saved in M-08a and the exceptions of the next 30 days from M-08g.
   const hours = useOpeningHours();
   const pend = (f: ContactField) => pendingSuffix(contact, f, lang);
@@ -173,6 +175,11 @@ function TenantFacts({ what }: { what?: string }) {
   }
   if (key === 'contact' || key === 'all') rows.push(
     ['WhatsApp', `${contact.whatsapp}${pend('whatsapp')}`],
+    // 0047: the other WhatsApp contacts the owner named in M-08a (name · role · number), by topic.
+    ...CONTACT_INTENTS.filter((i) => i !== 'frontDesk' && wa.contacts[i].whatsapp?.trim()).map((i): [string, ReactNode] => {
+      const c = wa.contacts[i];
+      return [`WhatsApp · ${bi(CONTACT_INTENT_LABEL[i])}`, [c.name?.trim(), c.role ? bi(ROLE_LABEL[c.role]) : '', c.whatsapp?.trim()].filter(Boolean).join(' · ')];
+    }),
     [t('manual.live.tenant.email'), `${contact.email}${pend('email')}`],
     [t('manual.live.tenant.address'), `${contact.address}${pend('address')}`],
     ['Instagram', `${contact.instagram}${pend('instagram')}`],

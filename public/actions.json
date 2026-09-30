@@ -6,10 +6,10 @@
       "es": "HoyOS",
       "en": "HoyOS"
     },
-    "version": "0.20.0",
+    "version": "0.21.0",
     "baseUrl": "https://imagine-os.github.io/hoy/"
   },
-  "generatedAt": "2026-09-29T00:00:00.000Z",
+  "generatedAt": "2026-09-30T00:00:00.000Z",
   "run": {
     "how": "window.__hoyos.run(id, params)",
     "note": "in-page only; no MCP server yet"
@@ -473,6 +473,31 @@
         {
           "code": "A-02",
           "route": "/auth/sign-in"
+        }
+      ]
+    },
+    {
+      "id": "contact.whatsapp",
+      "label": {
+        "es": "WhatsApp del estudio por tema",
+        "en": "Studio WhatsApp by topic"
+      },
+      "intent": {
+        "es": "Dame el WhatsApp para {intent}",
+        "en": "Give me the WhatsApp for {intent}"
+      },
+      "params": {
+        "intent": "enum:frontDesk,sales,specials,support,finance,payroll,legal,coordinator,owner (default frontDesk)",
+        "text": "string — prefilled message (optional)"
+      },
+      "roles": [
+        "customer",
+        "teacher"
+      ],
+      "pages": [
+        {
+          "code": "C-25",
+          "route": "/app/more"
         }
       ]
     },
@@ -1301,6 +1326,37 @@
         {
           "code": "K-03",
           "route": "/manual/:chapter"
+        }
+      ]
+    },
+    {
+      "id": "settings.contacts.update",
+      "label": {
+        "es": "Cambiar un contacto de WhatsApp",
+        "en": "Change a WhatsApp contact"
+      },
+      "intent": {
+        "es": "Las preguntas de {intent} las recibe {name} en el WhatsApp {whatsapp}",
+        "en": "Questions about {intent} go to {name} on WhatsApp {whatsapp}"
+      },
+      "params": {
+        "intent": "enum:frontDesk,sales,specials,support,finance,payroll,legal,coordinator,owner",
+        "name": "string (optional)",
+        "whatsapp": "string — +57 3xx xxx xxxx; empty falls back to the front desk (optional)",
+        "role": "enum:super_admin,admin,coordinator,front_desk,finance,maintenance,marketing,developer (optional; empty clears)",
+        "hours": "enum:always,studioHours,businessDays (optional)"
+      },
+      "permission": "settings.write",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "finance"
+      ],
+      "pages": [
+        {
+          "code": "M-08a",
+          "route": "/admin/settings"
         }
       ]
     },

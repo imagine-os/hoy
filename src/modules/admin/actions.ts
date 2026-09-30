@@ -32,6 +32,14 @@ export const settingsHoursHolidaysImport: ActionDef = {
   permission: 'hours.write',
 };
 
+/** 0047 — M-08a WhatsApp contacts by topic (D-0022): who receives each intent, with the front desk as the fallback. */
+export const settingsContactsUpdate: ActionDef = {
+  id: 'settings.contacts.update', label: { es: 'Cambiar un contacto de WhatsApp', en: 'Change a WhatsApp contact' },
+  intent: { es: 'Las preguntas de {intent} las recibe {name} en el WhatsApp {whatsapp}', en: 'Questions about {intent} go to {name} on WhatsApp {whatsapp}' },
+  params: { intent: 'enum:frontDesk,sales,specials,support,finance,payroll,legal,coordinator,owner', name: 'string (optional)', whatsapp: 'string — +57 3xx xxx xxxx; empty falls back to the front desk (optional)', role: 'enum:super_admin,admin,coordinator,front_desk,finance,maintenance,marketing,developer (optional; empty clears)', hours: 'enum:always,studioHours,businessDays (optional)' },
+  permission: 'settings.write',
+};
+
 export const integrationsGoogleCopyHours: ActionDef = {
   id: 'integrations.google.copyHours', label: { es: 'Copiar el horario para Google', en: 'Copy the hours for Google' },
   intent: { es: 'Copia el horario para pegarlo en Google Business Profile', en: 'Copy the hours to paste into Google Business Profile' },
@@ -72,7 +80,7 @@ export const TABLES_ACTIONS: ActionDef[] = [
 
 /** Page code → the actions it declares. Merged into the specs in `./specs.ts`. */
 export const ADMIN_ACTIONS: Record<string, ActionDef[]> = {
-  'M-08a': [settingsHoursUpdate],
+  'M-08a': [settingsHoursUpdate, settingsContactsUpdate],
   'M-08g': [settingsHoursOverrideAdd, settingsHoursOverrideRemove, settingsHoursHolidaysImport],
   'M-10a': [integrationsGoogleCopyHours, integrationsGoogleConnect, integrationsGooglePush],
   'M-03': TABLES_ACTIONS,

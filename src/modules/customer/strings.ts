@@ -659,6 +659,7 @@ export const strings: StringTable = {
   'customer.more.rules.sub': { es: 'Sala caliente · etiqueta · tour', en: 'Hot room · etiquette · tour' },
   'customer.more.whatsapp': { es: 'Escribir al estudio', en: 'WhatsApp the studio' },
   'customer.more.whatsapp.text': { es: 'Hola, soy {name}. Tengo una pregunta:', en: 'Hi, it is {name}. I have a question:' },
+  'customer.more.whatsapp.textAnon': { es: 'Hola. Tengo una pregunta:', en: 'Hi. I have a question:' },
   'customer.more.visit': { es: 'Cómo llegar', en: 'Getting here' },
   'customer.more.hours': { es: 'Horario', en: 'Opening hours' },
   'customer.more.email': { es: 'Correo al estudio', en: 'Email the studio' },

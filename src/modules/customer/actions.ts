@@ -28,6 +28,13 @@ export const appSetGoal: ActionDef = {
   params: { target: 'number 0–7 (0 = sin meta)' }, permission: 'bookings.write',
 };
 
+/** 0047: the WhatsApp number (and wa.me link) for a topic, resolved through M-08a contacts, hours and holidays. Read-only. */
+export const contactWhatsapp: ActionDef = {
+  id: 'contact.whatsapp', label: { es: 'WhatsApp del estudio por tema', en: 'Studio WhatsApp by topic' },
+  intent: { es: 'Dame el WhatsApp para {intent}', en: 'Give me the WhatsApp for {intent}' },
+  params: { intent: 'enum:frontDesk,sales,specials,support,finance,payroll,legal,coordinator,owner (default frontDesk)', text: 'string — prefilled message (optional)' },
+};
+
 export const appReserve: ActionDef = {
   id: 'app.reserve', label: { es: 'Reservar una clase', en: 'Reserve a class' },
   intent: { es: 'Reserva la clase {session}', en: 'Reserve the class {session}' },
@@ -61,6 +68,7 @@ export const CUSTOMER_ACTIONS: Record<string, ActionDef[]> = {
   'C-04': [appPickMat, appConfirmReservation, ...APP_NAV_ACTIONS],
   'C-06': [appChoosePlan, ...APP_NAV_ACTIONS],
   'C-08': APP_NAV_ACTIONS,
+  'C-25': [contactWhatsapp],
   'A-02': [authSignIn],
 };
 

@@ -5,8 +5,10 @@ import { EMPTY_RATE_CARD, type PayrollCadence, type RateCard } from '../../data/
 import type { MapProvider } from '../../components/molecule/MapSlot/MapSlot';
 import { tenant } from '../../tenant/tenant';
 import { DEFAULT_IVA_PCT, splitIva } from '../../data/tax';
-import { MS, dateKey } from '../../i18n/format';
+import { MS, dateKey, waLink } from '../../i18n/format';
 import { effectiveHoursFor, hoursSentence, todayStatus, type EffectiveHours, type WeeklyHours } from '../../tenant/hours';
+import { DEFAULT_CONTACT_ROUTES, mergeContacts, resolveContact, type ContactIntent, type ContactRoutes, type ResolvedContact } from '../../tenant/contacts';
+import { colombianHolidays } from '../../tenant/holidays.co';
 
 /**
  * M-08 — the operating parameters every other screen reads. Stored in `tenants.settings` (json)
@@ -53,6 +55,13 @@ export interface StudioSettings {
    * modality; a stored object that still carries the key is read without it, see mergeSettings.)
    */
   content: { breathworkOwnClass: boolean; mapProvider: MapProvider };
+  /**
+   * M-08a — WhatsApp contacts by topic (0047, D-0022). One row per intent (`frontDesk`, `sales`, `specials`, `support`,
+   * `finance`, `payroll`, `legal`, `coordinator`, `owner`): name, number, role and an hours rule. `frontDesk` with no
+   * number is `profile.whatsapp` (then tenant.ts); every other intent with no number falls back to the front desk.
+   * `useWhatsappLink()` is the one reader; `resolveContact()` in src/tenant/contacts.ts holds the rules.
+   */
+  contacts: ContactRoutes;
 }
 
 export const DEFAULT_SETTINGS: StudioSettings = {
@@ -69,6 +78,7 @@ export const DEFAULT_SETTINGS: StudioSettings = {
   branding: { displayName: '', wordmarkVariant: 'auto', defaultLang: tenant.defaultLocale },
   payroll: { cadence: 'monthly', payoutMethod: 'wompi', signedBy: '', withholding: false, rateCard: EMPTY_RATE_CARD },
   content: { breathworkOwnClass: false, mapProvider: 'none' },
+  contacts: DEFAULT_CONTACT_ROUTES,
 };
 
 export interface TenantRow extends BaseRow { settings: Partial<StudioSettings> | null }
@@ -91,6 +101,7 @@ function mergeSettings(stored: Partial<StudioSettings> | null | undefined): Stud
     payroll: { ...DEFAULT_SETTINGS.payroll, ...(s.payroll ?? {}), rateCard: { byModality: { ...(s.payroll?.rateCard?.byModality ?? {}) }, byTeacher: { ...(s.payroll?.rateCard?.byTeacher ?? {}) } } },
     // Known keys only: a row saved before 0039 may still hold `publicNaming`, which is ignored.
     content: { breathworkOwnClass: s.content?.breathworkOwnClass ?? DEFAULT_SETTINGS.content.breathworkOwnClass, mapProvider: s.content?.mapProvider ?? DEFAULT_SETTINGS.content.mapProvider },
+    contacts: mergeContacts(s.contacts),
   };
 }
 
@@ -237,6 +248,49 @@ export function useOpeningHours(): StudioHours {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => { const id = setInterval(() => setNow(Date.now()), 60_000); return () => clearInterval(id); }, []);
   return useMemo(() => ({ ...hoursOf(settings, rows, new Date(now)), loading }), [settings, rows, loading, now]);
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * 0047 — WhatsApp contacts by intent (D-0022). Every handoff in the product names an intent and reads the number
+ * through this hook, so the front desk stops receiving payroll and habeas-data questions once M-08a names who does.
+ * ---------------------------------------------------------------------------------------------- */
+
+export interface WhatsappLinks {
+  /** Who receives `intent` right now (hours and holidays applied), with the front desk as the fallback. */
+  resolve: (intent: ContactIntent) => ResolvedContact;
+  /** The wa.me link for `intent`, with `text` prefilled. */
+  link: (intent: ContactIntent, text?: string) => string;
+  /** The number to print in copy: the resolved one, with the M-08a pending label when it is the (unconfirmed) front desk number. */
+  display: (intent: ContactIntent, lang: 'es' | 'en') => string;
+  /** The routing table itself (M-08a), for lists such as the manual's {{tenant:contact}}. */
+  contacts: ContactRoutes;
+}
+
+/** The holiday date keys `resolveContact` treats as non-business days: the country's computed calendar, this year and next. */
+export function holidayKeys(now: Date = new Date()): string[] {
+  if (tenant.country !== 'CO') return [];
+  const y = now.getFullYear();
+  return [...colombianHolidays(y), ...colombianHolidays(y + 1)].map((h) => h.date);
+}
+
+/** Pure version of the hook for non-React callers (actions, tests): settings + hours → the three readers. */
+export function whatsappLinksOf(settings: StudioSettings, hours: Pick<StudioHours, 'weekly' | 'overrides'>, now: Date = new Date()): WhatsappLinks {
+  const contact = contactOf(settings);
+  const holidays = holidayKeys(now);
+  const resolve = (intent: ContactIntent) => resolveContact({ contacts: settings.contacts, frontDeskWhatsapp: contact.whatsapp }, hours, intent, { now, tz: tenant.timezone, holidays });
+  return {
+    resolve,
+    link: (intent, text) => waLink(resolve(intent).whatsapp, text),
+    display: (intent, lang) => { const r = resolve(intent); return r.resolvedIntent === 'frontDesk' && r.whatsapp === contact.whatsapp ? `${r.whatsapp}${pendingSuffix(contact, 'whatsapp', lang)}` : r.whatsapp; },
+    contacts: settings.contacts,
+  };
+}
+
+/** The WhatsApp links, live: M-08a contacts + hours + M-08g exceptions; re-resolves with the hours' 60 s tick. */
+export function useWhatsappLink(): WhatsappLinks {
+  const { settings } = useSettings();
+  const hours = useOpeningHours();
+  return useMemo(() => whatsappLinksOf(settings, hours), [settings, hours]);
 }
 
 /** Slug of the modality that only exists as its own class when M-08f says so. */
