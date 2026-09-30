@@ -7,7 +7,12 @@ dónde estamos, qué sigue y en qué orden (con dependencias explícitas y lo qu
 paralelo), qué significa "terminado" en cada fase, cómo trabajar en el repo y qué debe decidir el
 owner del estudio. Está escrito para que otra cuenta de Claude (o una persona) lo retome sin contexto.
 
-## A. Where we are (v0.19.0, 2026-09-29)
+## A. Where we are (v0.21.1, 2026-09-30)
+
+- **v0.21.1 — Hub card: Mensajes transaccionales** (`docs/changelog/0048-hub-transactional-messages.md`, prompt
+  `docs/prompts/0048-hub-transactional-messages.md`; Justin: "Lets add an item in the hub to get straight to the
+  Transactional Messages"): HUB-01's team band has a card that enters as the coordinator at M-04 (emails) with a link to
+  M-05 (WhatsApp automations); 16 hub experiences. Still needed: report emails as M-04 templates (kanban 0048 follow-up).
 
 - **v0.19.0 — Tables system redesign** (`docs/changelog/0044-tables-views.md`, prompt `docs/prompts/0044-tables-views.md`;
   Justin: "the tables system can look nicer… airtable, notion are baseline… I also like graph views… is ontology built in?…

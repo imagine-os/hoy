@@ -1,8 +1,12 @@
 # Machine surfaces — MCP / WebMCP, CLI, API
 
 What something other than a person can drive in HoyOS today, and what it cannot.
-**Checked 2026-09-30** (v0.21.0; previous check 2026-09-29, v0.20.0). Re-check and date this file every pass; a line that is not
+**Checked 2026-09-30** (v0.21.1; previous check 2026-09-30, v0.21.0). Re-check and date this file every pass; a line that is not
 re-checked is not current.
+
+**0048 delta (v0.21.1).** No new action id. `hub.enterAs` (HUB-01) accepts a 16th surface, `messages`: it switches to the
+coordinator's demo user and opens `/admin/emails` (M-04); the card's secondary link opens `/admin/whatsapp` (M-05) as the same
+user. `public/hub-map.json` has 16 experiences (M-04 and M-05 moved from `admin` to `messages`). Action count unchanged.
 
 **0047 delta (v0.21.0).** Two new action ids. `settings.contacts.update` on M-08a (`src/modules/admin/actions.ts`; params
 `intent: enum:frontDesk,sales,specials,support,finance,payroll,legal,coordinator,owner`, `name?`, `whatsapp?` (empty falls
@@ -105,7 +109,7 @@ window.__hoyos.actions.filter((a) => a.mounted);
 
 | id | Page | Intent (ES) | Params | Permission |
 | --- | --- | --- | --- | --- |
-| `hub.enterAs` | HUB-01 | Entra a {surface} como su usuario demo | `surface: enum:app,site,teacher,desk,inbox,pos,admin,crm,finance,marketing,manual,sources,docs,kb,dev` — `marketing` is coming soon and answers `ok: false` | — |
+| `hub.enterAs` | HUB-01 | Entra a {surface} como su usuario demo | `surface: enum:app,site,teacher,desk,inbox,pos,admin,crm,messages,finance,marketing,manual,sources,docs,kb,dev` — `marketing` is coming soon and answers `ok: false`; `messages` (0048) enters as the coordinator at `/admin/emails` (M-04) | — |
 | `hub.openCanvas` | HUB-01 | Muéstrame todas las páginas en el lienzo | — | `dev.tools` |
 | `hub.openSimulator` | HUB-01 | Abre el simulador de dispositivos | — | `dev.tools` |
 | `hub.openTool` | HUB-01 | Abre {tool} | `tool: enum:canvas,simulator,specs,layout,tables,components,tokens,decisions,screenshots` | — |
