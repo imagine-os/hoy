@@ -537,6 +537,13 @@ chapter or spec and close the card.
 47. **Charged bookings by an agent.** May an agent book on a member's behalf when the pass would be charged, or does
     paying stay a person's click (the 0025 limit, kept today)?
 
+**From the WhatsApp handoff audit, 2026-09-30 (0047, `docs/reference/whatsapp-handoffs.md`, D-0022)**
+48. **Who receives WhatsApp by topic.** M-08a → *Contactos de WhatsApp por tema* has nine rows with roles and hours but no
+    numbers: the owner supplies the **finance / payroll** number (S-03 statement questions, C-05 transfer receipts) and the
+    **legal / data-controller** number (C-26, Ley 1581 — a fifteen-business-day duty), and decides whether **Especiales**
+    (P-01, W-06, C-06) and the **trial-class** button get a coordination / sales number or stay with the front desk. Until
+    then every topic reaches +57 312 776 5000, the front desk, visibly ("recae en recepción").
+
 ## F. What remains after this pass (for Justin)
 
 Everything below is known and written down; nothing here is a surprise found late. Read it as

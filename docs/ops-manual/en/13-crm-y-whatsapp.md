@@ -2,8 +2,8 @@
 title: CRM, WhatsApp and email
 role: front desk, coordination
 part: III
-version: 0.13.3
-updated: 2026-09-29
+version: 0.21.0
+updated: 2026-09-30
 summary: The member record and its conversation, the WhatsApp rules, automated messages, how to write and the front desk's Inbox.
 ---
 
@@ -50,6 +50,23 @@ You can read the conversation and the payments, but not write, and you don't see
 | Always sent | A class cancelled by the studio, and a freed waitlist spot |
 | Reply time | During desk hours, as soon as possible (see below); outside them, first thing |
 | Email | Confirmations, receipts, cancellations and newsletters. It backs up WhatsApp, it doesn't replace it |
+
+The studio number is the **front desk's**. Not everything that arrives on WhatsApp is for the front desk: in Settings →
+General → *WhatsApp contacts by topic* the administration says who receives each topic, and when. A topic with nobody
+assigned reaches the front desk. This is how it is split:
+
+| Topic | Who receives it | When |
+|---|---|---|
+| General questions, member support, locked account | Front desk | Studio hours |
+| Trial class (the website button) | Front desk, unless Sales has a number | Studio hours |
+| Specials and events | Front desk, who pass it to coordination the same day, unless coordination has a number | Studio hours |
+| Transfer receipts | Finance, if it has a number; otherwise the front desk | Monday to Friday, no holidays |
+| Teacher payroll | The payroll person, if they have a number; otherwise the front desk, who pass it to finance | Monday to Friday, no holidays |
+| Personal data, corrections and complaints (habeas data) | The data controller (administration), if they have a number; otherwise the front desk | Monday to Friday, no holidays |
+
+Outside that person's hours the message goes to the front desk while the studio is open; when the studio is closed too, it
+still goes to that person and the app says so: "We reply on the next open day". Holidays are Colombia's and those in
+Holidays and special hours.
 
 The longest we take to reply during desk hours:
 

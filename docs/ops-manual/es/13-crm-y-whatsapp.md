@@ -2,8 +2,8 @@
 title: CRM, WhatsApp y correo
 role: recepción, coordinación
 part: III
-version: 0.13.3
-updated: 2026-09-29
+version: 0.21.0
+updated: 2026-09-30
 summary: La ficha del socio y su conversación, las reglas de WhatsApp, los mensajes automáticos, cómo escribir y la Bandeja de recepción.
 ---
 
@@ -51,6 +51,23 @@ Tú puedes leer la conversación y los pagos, pero no escribir, y no ves las not
 | Siempre salen | Una clase cancelada por el estudio y un cupo liberado de la lista de espera |
 | Tiempo de respuesta | En horario de recepción, lo antes posible (ver abajo); fuera de horario, a primera hora |
 | Correo | Confirmaciones, recibos, cancelaciones y newsletters. Acompaña a WhatsApp, no lo reemplaza |
+
+El número del estudio es el de **recepción**. No todo lo que llega por WhatsApp es de recepción: en Ajustes → General →
+*Contactos de WhatsApp por tema* la administración dice quién recibe cada tema, con su horario. Un tema sin nadie asignado
+llega a recepción. Así está repartido:
+
+| Tema | Quién lo recibe | Cuándo |
+|---|---|---|
+| Preguntas generales, soporte a socios, cuenta bloqueada | Recepción | En horario del estudio |
+| Clase de prueba (botón de la web) | Recepción, salvo que Ventas tenga número | En horario del estudio |
+| Especiales y eventos | Recepción, que lo pasa a coordinación el mismo día, salvo que coordinación tenga número | En horario del estudio |
+| Comprobantes de transferencia | Finanzas, si tiene número; si no, recepción | Lunes a viernes sin festivos |
+| Nómina de maestros | La persona de nómina, si tiene número; si no, recepción, que lo pasa a finanzas | Lunes a viernes sin festivos |
+| Datos personales, correcciones y quejas (habeas data) | El responsable de datos (administración), si tiene número; si no, recepción | Lunes a viernes sin festivos |
+
+Fuera del horario de la persona, el mensaje va a recepción si el estudio está abierto; si también está cerrado, va igual a
+esa persona y la app avisa: «Respondemos el próximo día hábil». Los festivos son los de Colombia y los que estén en
+Festivos y horarios especiales.
 
 Cuánto tardamos, como máximo, en responder en horario de recepción:
 

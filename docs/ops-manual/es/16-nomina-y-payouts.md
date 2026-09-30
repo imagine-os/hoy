@@ -2,8 +2,8 @@
 title: Nómina de maestros y payouts
 role: finanzas, owner, coordinación
 part: IV
-version: 0.13.3
-updated: 2026-09-29
+version: 0.21.0
+updated: 2026-09-30
 summary: De la asistencia cerrada al pago del maestro: generar el borrador, revisar, aprobar, pagar y el extracto del maestro.
 ---
 
@@ -74,7 +74,9 @@ Esto es lo que ves en tu app, en Nómina.
 2. Cuando ya existe el borrador, la app muestra exactamente lo que finanzas va a pagar, con bonos, ajustes y
    Especiales, y en qué estado está: borrador, aprobado o pagado.
 3. También muestra clase por clase, los pagos anteriores, el medio de pago, una vista para imprimir y un botón
-   de WhatsApp a finanzas con el periodo y el total ya escritos.
+   de WhatsApp con el periodo y el total ya escritos. El botón escribe a la persona de **nómina** que la administración
+   haya puesto en Ajustes → General → *Contactos de WhatsApp por tema*, de lunes a viernes sin festivos; si nadie está
+   puesto, escribe a recepción, que lo pasa a finanzas. Debajo del botón dice a quién llega.
 4. El extracto resuelve cualquier duda: si no está ahí, no se pagó.
 
 ![El extracto en la app del maestro](../../screenshots/S-03/es-390-payroll.jpg "S-03 · /teach/payroll")

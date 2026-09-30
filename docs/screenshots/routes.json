@@ -680,7 +680,7 @@
     "Kanban: one lane per value of an enum / boolean column (default status); a drag of the grip or the “Mover a…” menu writes data.update(table, id, { column: value }). Read-only without tables.write.",
     "Technical names (snake_case) show only as a quiet mono line when dev mode is on and the toggle is on (default on in dev mode). Sensitive columns (api_keys.key_hash) are hidden from roles without tables.write.",
     "Per-viewer conveniences (sidebar state, open groups, pinned, recent, technical names) persist in localStorage hoyos.tables.prefs; saved views are shared rows in table_views.",
-    "Calendar and timeline (0045) place rows by the view’s date column (config.dateColumn, default dateColumnOf: the first date / timestamp column) and end column (config.endColumn, default endColumnOf: starts_at → ends_at, start_date → end_date, period_start → period_end, then end_* / *_until / expires_at); the toolbar’s Fecha / Hasta selects change them and saved views keep them. Both are disabled (with a hint) for tables without a date column of their own.",
+    "Calendar and timeline (0046) place rows by the view’s date column (config.dateColumn, default dateColumnOf: the first date / timestamp column) and end column (config.endColumn, default endColumnOf: starts_at → ends_at, start_date → end_date, period_start → period_end, then end_* / *_until / expires_at); the toolbar’s Fecha / Hasta selects change them and saved views keep them. Both are disabled (with a hint) for tables without a date column of their own.",
     "Calendar: month (Monday first, up to three chips a day and “+N más” → the day’s list), week (all-day strip and hour rows from the first to the last timed row, overlapping chips side by side, a now line) and agenda (30 days from the cursor, grouped by day; the default under 768 px). Clicking an empty day (or a free hour in the week) with tables.write inserts a row with the date prefilled and opens the drawer. Chip tone: the row’s tone → the tone of the row it points at (a class’s modality) → toneForStatus(status); cancelled / expired rows are dimmed.",
     "Timeline: bars from the date column to the end column (a diamond when there is no end) on a day · week · month · quarter axis, lanes by the view’s groupBy (teacher, room, status…) with sticky labels, a today line, scroll with snap; below 768 px one lane with the group as a chip on each bar. Bars open the row; moving a row’s dates is not a timeline gesture.",
     "URL: ?view=calendar|timeline, ?date=YYYY-MM-DD (the cursor; absent = today when the period around today has rows, otherwise the nearest row), ?mode=month|week|agenda, ?zoom=day|week|month|quarter. The mode and zoom also go into the view state, so “Guardar vista” keeps them.",
@@ -988,7 +988,7 @@
    "notes": [
     "0044 redesign (Justin: “looks like it’s only for developers… Airtable, Notion are baseline… I also like graph views”). The canvas layout (EntityGrid / RelationMap / MigrationLog) is superseded by the views above; the relation map is the graph view.",
     "Column labels come from the dictionary until a later pass fills ColumnDef.label per column (Sonnet, mechanical).",
-    "0045 (Justin: “it looks like the other views aren’t wired. Finish it up please”): calendar and timeline built as the CalendarView / TimelineView organisms; saved views can be renamed and deleted."
+    "0046 (Justin: “it looks like the other views aren’t wired. Finish it up please”): calendar and timeline built as the CalendarView / TimelineView organisms; saved views can be renamed and deleted."
    ]
   }
  },
@@ -1039,7 +1039,7 @@
     "Kanban: one lane per value of an enum / boolean column (default status); a drag of the grip or the “Mover a…” menu writes data.update(table, id, { column: value }). Read-only without tables.write.",
     "Technical names (snake_case) show only as a quiet mono line when dev mode is on and the toggle is on (default on in dev mode). Sensitive columns (api_keys.key_hash) are hidden from roles without tables.write.",
     "Per-viewer conveniences (sidebar state, open groups, pinned, recent, technical names) persist in localStorage hoyos.tables.prefs; saved views are shared rows in table_views.",
-    "Calendar and timeline (0045) place rows by the view’s date column (config.dateColumn, default dateColumnOf: the first date / timestamp column) and end column (config.endColumn, default endColumnOf: starts_at → ends_at, start_date → end_date, period_start → period_end, then end_* / *_until / expires_at); the toolbar’s Fecha / Hasta selects change them and saved views keep them. Both are disabled (with a hint) for tables without a date column of their own.",
+    "Calendar and timeline (0046) place rows by the view’s date column (config.dateColumn, default dateColumnOf: the first date / timestamp column) and end column (config.endColumn, default endColumnOf: starts_at → ends_at, start_date → end_date, period_start → period_end, then end_* / *_until / expires_at); the toolbar’s Fecha / Hasta selects change them and saved views keep them. Both are disabled (with a hint) for tables without a date column of their own.",
     "Calendar: month (Monday first, up to three chips a day and “+N más” → the day’s list), week (all-day strip and hour rows from the first to the last timed row, overlapping chips side by side, a now line) and agenda (30 days from the cursor, grouped by day; the default under 768 px). Clicking an empty day (or a free hour in the week) with tables.write inserts a row with the date prefilled and opens the drawer. Chip tone: the row’s tone → the tone of the row it points at (a class’s modality) → toneForStatus(status); cancelled / expired rows are dimmed.",
     "Timeline: bars from the date column to the end column (a diamond when there is no end) on a day · week · month · quarter axis, lanes by the view’s groupBy (teacher, room, status…) with sticky labels, a today line, scroll with snap; below 768 px one lane with the group as a chip on each bar. Bars open the row; moving a row’s dates is not a timeline gesture.",
     "URL: ?view=calendar|timeline, ?date=YYYY-MM-DD (the cursor; absent = today when the period around today has rows, otherwise the nearest row), ?mode=month|week|agenda, ?zoom=day|week|month|quarter. The mode and zoom also go into the view state, so “Guardar vista” keeps them.",
@@ -1347,7 +1347,7 @@
    "notes": [
     "0044 redesign (Justin: “looks like it’s only for developers… Airtable, Notion are baseline… I also like graph views”). The canvas layout (EntityGrid / RelationMap / MigrationLog) is superseded by the views above; the relation map is the graph view.",
     "Column labels come from the dictionary until a later pass fills ColumnDef.label per column (Sonnet, mechanical).",
-    "0045 (Justin: “it looks like the other views aren’t wired. Finish it up please”): calendar and timeline built as the CalendarView / TimelineView organisms; saved views can be renamed and deleted."
+    "0046 (Justin: “it looks like the other views aren’t wired. Finish it up please”): calendar and timeline built as the CalendarView / TimelineView organisms; saved views can be renamed and deleted."
    ]
   }
  },
@@ -2012,6 +2012,25 @@
       "day": "enum:0,1,2,3,4,5,6 (0 = Sunday)",
       "open": "HH:MM (24 h) | closed",
       "close": "HH:MM (24 h) (omit when closed)"
+     },
+     "permission": "settings.write"
+    },
+    {
+     "id": "settings.contacts.update",
+     "label": {
+      "es": "Cambiar un contacto de WhatsApp",
+      "en": "Change a WhatsApp contact"
+     },
+     "intent": {
+      "es": "Las preguntas de {intent} las recibe {name} en el WhatsApp {whatsapp}",
+      "en": "Questions about {intent} go to {name} on WhatsApp {whatsapp}"
+     },
+     "params": {
+      "intent": "enum:frontDesk,sales,specials,support,finance,payroll,legal,coordinator,owner",
+      "name": "string (optional)",
+      "whatsapp": "string — +57 3xx xxx xxxx; empty falls back to the front desk (optional)",
+      "role": "enum:super_admin,admin,coordinator,front_desk,finance,maintenance,marketing,developer (optional; empty clears)",
+      "hours": "enum:always,studioHours,businessDays (optional)"
      },
      "permission": "settings.write"
     }
@@ -5667,7 +5686,24 @@
    ],
    "layerTree": "MoreSheet\n├ IdentityCard → C-19\n├ PrimaryGroup\n│ ├ My Profile → C-19\n│ ├ Club Rules → C-13\n│ ├ WhatsApp the studio (outbound)\n│ └ Email the studio (outbound)\n├ SecondaryGroup\n│ ├ Invite a guest → C-16\n│ ├ Gift card → C-17\n│ └ Settings → C-19\n├ SignOut\n└ BottomNav (More active)",
    "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#C-25",
-   "notes": []
+   "notes": [],
+   "actions": [
+    {
+     "id": "contact.whatsapp",
+     "label": {
+      "es": "WhatsApp del estudio por tema",
+      "en": "Studio WhatsApp by topic"
+     },
+     "intent": {
+      "es": "Dame el WhatsApp para {intent}",
+      "en": "Give me the WhatsApp for {intent}"
+     },
+     "params": {
+      "intent": "enum:frontDesk,sales,specials,support,finance,payroll,legal,coordinator,owner (default frontDesk)",
+      "text": "string — prefilled message (optional)"
+     }
+    }
+   ]
   }
  },
  {
