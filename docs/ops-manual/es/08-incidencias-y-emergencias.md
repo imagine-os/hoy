@@ -2,8 +2,8 @@
 title: Incidencias y emergencias
 role: todos
 part: II
-version: 0.13.3
-updated: 2026-09-29
+version: 0.22.0
+updated: 2026-10-01
 summary: Emergencia médica, mareo por calor, evacuación, a quién llamar y cómo se deja registro de un incidente.
 ---
 
@@ -29,7 +29,8 @@ La regla es siempre la misma: **primero la persona, después el registro**. Nunc
 > EN HOYOS: S-02 → Perfil del socio (abre M-06) → contacto de emergencia. Nota: M-06 → Notas → Añadir nota.
 
 ## 2. Calor: mareo, náusea, golpe de calor
-En la sala caliente es lo que más puede pasar. Casi siempre se resuelve si se actúa temprano.
+En las clases intensas (Fuego, Sólido) es lo que más puede pasar. Casi siempre se resuelve si se actúa
+temprano.
 
 1. Señales: palidez, mareo, náusea, deja de sudar, habla raro. El maestro lo ve desde el frente.
 2. Saca a la persona de la sala y siéntala. No la acuestes de golpe.

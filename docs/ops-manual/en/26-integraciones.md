@@ -2,8 +2,8 @@
 title: Integrations and what is simulated
 role: admin, owner, finance, developer
 part: VII
-version: 0.13.3
-updated: 2026-09-29
+version: 0.22.0
+updated: 2026-10-01
 summary: Which outside systems HOY uses, what state each one is in, what you can say today without over-promising and what is left to connect.
 ---
 
@@ -83,7 +83,7 @@ The Integrations screen repeats this order at the bottom.
 | Address, WhatsApp, email, Instagram, map and "details confirmed" | Settings → General ([01](01-quienes-somos-y-filosofia.md)) |
 | Payout account, NIT, VAT, DIAN resolution, Wompi environment, payroll frequency and rates | Settings → Payments ([16](16-nomina-y-payouts.md)) |
 | WhatsApp number, studio email and quiet hours | Settings → Communications |
-| Map provider, breathwork as its own class, legal versions | Settings → Content ([02](02-nuestras-clases.md), [22](22-documentos-legales.md)) |
+| Map provider, legal versions | Settings → Content ([02](02-nuestras-clases.md), [22](22-documentos-legales.md)) |
 | Switching a flow on or off | Settings → Features |
 
 ![Settings · General: the contact details with their pending state](../../screenshots/M-08a/en-1280.jpg "M-08a · /admin/settings")

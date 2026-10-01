@@ -2,8 +2,8 @@
 title: Content in the CMS
 role: coordination, admin, marketing
 part: V
-version: 0.13.3
-updated: 2026-09-29
+version: 0.22.0
+updated: 2026-10-01
 summary: Which texts are edited in Content, how they go from draft to published, the club rules and the FAQ.
 ---
 
@@ -63,7 +63,7 @@ This is how articles and FAQs are kept:
 
 ## 4. Price changes
 1. Finance proposes them and the owner approves them.
-2. They never change a membership that is already active.
+2. They never change a package already bought: its classes and its expiry stay as they were.
 3. The desk and the website change at the same moment, because they read the same price.
 
 ## 5. What is missing today

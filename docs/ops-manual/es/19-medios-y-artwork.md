@@ -2,8 +2,8 @@
 title: Biblioteca de medios y artwork
 role: coordinación, admin, marketing
 part: V
-version: 0.13.3
-updated: 2026-09-29
+version: 0.22.0
+updated: 2026-10-01
 summary: Las reglas del logo, los colores y las tipografías del manual de marca, qué fotos necesita el sistema, en qué formato y qué falta producir.
 ---
 
@@ -65,7 +65,7 @@ Los tonos claros dan luz y ligereza; los azules dan profundidad y estabilidad. L
 1. Una imagen publicada está **aprobada**: coordinación la revisó, el owner la aprobó si es de marca, y quien
    aparece firmó su permiso.
 2. El nombre del archivo describe lo que se ve, en minúsculas, sin tildes ni espacios:
-   `sala-caliente-manana-01.jpg`.
+   `sala-principal-manana-01.jpg`.
 3. JPG para fotos, PNG solo para logos y gráficos con transparencia, SVG para íconos.
 4. Se guarda el original en tamaño grande. El sistema no es el archivo de la sesión de fotos.
 5. No se usan caras reconocibles de socios sin permiso escrito (ver [Datos personales](23-habeas-data.md)).
@@ -92,12 +92,12 @@ Los tonos claros dan luz y ligereza; los azules dan profundidad y estabilidad. L
 | # | Pieza | Para | Estado |
 |---|---|---|---|
 | 1 | Imagen de portada: la sala con luz de mañana | inicio del sitio | pendiente |
-| 2 | Una foto por disciplina (5) | clases en la app y el sitio | pendiente |
-| 3 | Retrato de cada maestro activo | maestros | pendiente |
+| 2 | Una foto por clase (7), para llenar su arco en el sitio | clases en la app y el sitio | pendiente |
+| 3 | Retrato de cada maestro activo (hoy el sitio muestra sus iniciales) | maestros | pendiente |
 | 4 | Video corto del recorrido por el estudio | reglas del club | pendiente |
 | 5 | Fachada y mapa | contacto | pendiente |
-| 6 | Detalle de la sala caliente, sin personas | [02](02-nuestras-clases.md), redes | pendiente |
-| 7 | Pausas: alguien 20 minutos, con ropa de oficina | [03](03-modelo-de-valor.md), [11](11-pausas-y-regalos.md) | pendiente |
+| 6 | La zona de hidratación y los vestieres, sin personas | [02](02-nuestras-clases.md), redes | pendiente |
+| 7 | Una tarjeta de regalo impresa, sobre la mesa de recepción | [03](03-modelo-de-valor.md), [11](11-pausas-y-regalos.md) | pendiente |
 | 8 | El espacio vacío, para el catálogo de alquiler | [12](12-espacio-b2b.md) | pendiente |
 | 9 | El logo en las tres versiones, fondo claro y oscuro | app, sitio | listo |
 | 10 | Plantilla del bono de regalo | regalar | pendiente |

@@ -2,8 +2,8 @@
 title: Voz y tono
 role: todos
 part: V
-version: 0.13.3
-updated: 2026-09-29
+version: 0.22.0
+updated: 2026-10-01
 summary: El manifiesto, el propósito y la misión; las cuatro palabras clave y los cinco rasgos de la marca; cómo saludamos, cómo decimos no y lo que nunca escribimos.
 ---
 
@@ -42,7 +42,7 @@ menos una de las cuatro, probablemente no suena a HOY.
 | Rasgo | Qué significa | Sí | No |
 |---|---|---|---|
 | Presente | Vive el momento con atención, sin adelantarse ni quedarse atrás | "Hay cupo a las 9:30, ¿te lo guardo?" | "En el futuro podría haber disponibilidad." |
-| Humana | Cada persona es diferente; lo real importa más que lo perfecto | "Te devolvimos tu crédito." | "Su crédito ha sido reintegrado." |
+| Humana | Cada persona es diferente; lo real importa más que lo perfecto | "La clase ya volvió a tu paquete." | "Su clase ha sido reintegrada a su saldo." |
 | Cercana | Natural, sencilla y directa, sin discursos ni pretensiones | "Hola, Mariana. Tu clase de las 7:00 se canceló." | "Estimada usuaria, lamentamos informarle que…" |
 | Sensorial | Cuida los detalles; cada interacción es agradable y se recuerda | "Te dejamos agua y una toalla en la entrada." | "Se recomienda traer implementos." |
 | Contemporánea | Actual, estética y fresca, sin los códigos de siempre del bienestar | "Ven a moverte un rato." | "Transforma tu cuerpo en 30 días." |
@@ -57,7 +57,8 @@ Si un mensaje no pasa por los cinco rasgos, se reescribe.
 2. **En WhatsApp:** en la primera línea, el nombre y el dato; en la segunda, la acción. Máximo un emoji (🌿 es
    el nuestro). Nada de mayúsculas sostenidas.
 3. **Siempre de tú.** Si alguien pide que lo traten de usted, se respeta con esa persona.
-4. **Sin palabras internas** delante del cliente: decimos "crédito", "reserva", "membresía".
+4. **Sin palabras internas** delante del cliente: decimos "clase", "reserva", "paquete". Nunca "crédito":
+   HOY no tiene créditos.
 5. **Español primero.** En inglés cuando la persona lo prefiera, con el mismo tono.
 
 ## 5. Cómo decimos no

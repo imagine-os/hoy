@@ -2,8 +2,8 @@
 title: Glossary
 role: everyone
 part: VII
-version: 0.13.3
-updated: 2026-09-29
+version: 0.22.0
+updated: 2026-10-01
 summary: The words we use, what they mean, what we say in front of customers and how to read the codes in the In HoyOS boxes.
 ---
 
@@ -16,26 +16,28 @@ The studio's words, on one page. If a word in this manual isn't here, ask coordi
 ## 1. Business
 | Word | What it means | In front of customers we say |
 |---|---|---|
-| Member (socio) | someone with an active plan or pass | their name, or "member" |
-| Pass | a product from the Welcome line | "pass" |
-| Membership | access that renews, monthly or yearly | "membership" |
-| Credit | a prepaid class, with an expiry date | "credit" |
-| Pause (product) | a short 15 to 30-minute session | "pause" |
-| Unlimited Pauses | a monthly add-on that stacks with Membership | "unlimited pauses" |
-| Pausing | freezing a membership | "pausing your membership" |
-| Voucher | prepaid money with a code, to give as a gift | "gift voucher" |
-| Guest | someone a Membership member brings along; included, not charged | "guest" |
+| Member (socio) | someone with classes on their account or a history with the studio | their name |
+| Trial class | the first class, one per person | "trial class" |
+| Individual class | one class, paid one at a time | "individual class" |
+| 12-class package | 12 classes to use within 3 months; frozen once; non-refundable | "your package" |
+| Freeze | stopping the package for up to 30 days; the expiry moves by those days | "freeze your package" |
+| Private class | a class just for 1 to 3 people | "private class" |
+| Gift card | an individual class or a 12-class package, to give, with a code | "gift card" |
+| SMTC affiliate | a Santa María Tennis Club affiliate: a special package price, nothing else | "affiliate price" |
+| Credit | **does not exist at HOY**: say "class" | never "credit" |
+| Membership | **does not exist at launch** | never "membership" |
+| Guest | someone coming for the first time through another person; registered and booked like everyone | "guest" |
 | Space | renting the studio to a third party | "renting the space" |
 | Special | a sale with the concept and price typed by hand (birthday, team session, rental with extras) | the concept: "your private session" |
-| Corporate Experiences | the sixth line, **in preparation**: wellbeing for work teams (team session, recurring programme, tailored workshop) | "we're preparing a programme for teams" |
-| Discipline | hot yoga, barre, pilates, meditation, breathwork: each class's public name | the class name |
+| Corporate experiences | wellbeing for work teams (team session, recurring programme, tailored workshop), quoted case by case | "we'll build the proposal with your company" |
+| Class (on the schedule) | Ligereza, Híbrido, Fuego, Sólido, Centro, Alineación or Pulso | the class name |
 
 ## 2. Operations
 | Word | What it means |
 |---|---|
-| Check-in | marking that the person has arrived |
+| Check-in | marking that the person has arrived; only at the front desk |
 | No-show | booked and didn't come |
-| Late cancellation | cancelled outside the window; the credit is used |
+| Late cancellation | cancelled with less than 12 hours' notice; the class is used |
 | Waitlist | the queue for a full class; the spot is offered in order |
 | Window | the time limit a policy sets (cancellation, waitlist, grace) |
 | Quiet hours | the hours when nothing non-urgent is sent |

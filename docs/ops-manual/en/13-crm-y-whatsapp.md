@@ -2,8 +2,8 @@
 title: CRM, WhatsApp and email
 role: front desk, coordination
 part: III
-version: 0.21.0
-updated: 2026-09-30
+version: 0.22.0
+updated: 2026-10-01
 summary: The member record and its conversation, the WhatsApp rules, automated messages, how to write and the front desk's Inbox.
 ---
 
@@ -88,10 +88,10 @@ These are the quiet hours in force, and what they mean in practice:
 | Class cancelled | straight away, always |
 | Waitlist spot freed | straight away, always, with time to take it |
 | Receipt | on payment |
-| Charge notice or membership ending | the days ahead the policy sets, at 8:00 |
+| Package expiring | when the package's classes have only a few days left, at 8:00 |
 | Ask for feedback | the same day as the class |
 | Happy birthday | on the day, at 8:00 |
-| Guest invitation | when a member invites someone |
+| Invitation | when someone invites another person from their app |
 | Failed payment | when the payment is declined |
 
 Every template needs Meta's approval in each language. Every automated message also shows up in the person's
@@ -117,8 +117,8 @@ The reply box sits under the conversation, on the record and in the Inbox. It ha
 1. First line: the name and the fact. Second line: the action. One 🌿 at most.
 2. Examples:
    - "Hi, Camila. The 7:00 is full; I've put you on the waitlist and I'll let you know if a spot opens up 🌿"
-   - "Hi, Andrés. We got your transfer, your 3-Class Pack is active. See you soon."
-   - "Hi, Mariana. Your membership renews on 3 October. If you'd like to pause it, just tell me and we'll do it."
+   - "Hi, Andrés. We got your transfer, your 12-class package is active. See you soon."
+   - "Hi, Mariana. You have 3 classes left in your package and they expire on 3 October. If you need to, you can freeze it from the app."
 3. If you write a WhatsApp at night, the box tells you it is queued and goes out when quiet hours end. Email always
    goes out.
 4. If the number isn't verified, the WhatsApp tab locks and tells you why. Confirm the number with the person, or

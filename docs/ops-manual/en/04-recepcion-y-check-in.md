@@ -2,8 +2,8 @@
 title: Front desk and check-in
 role: front desk, coordination
 part: II
-version: 0.13.3
-updated: 2026-09-29
+version: 0.22.0
+updated: 2026-10-01
 summary: The door step by step: opening, greeting, checking people in, walk-ins, cancellations, the waitlist, lost and found and handoffs.
 ---
 
@@ -50,9 +50,15 @@ The greeting for someone coming for the first time:
 What we say and what we don't: [Voice and tone](20-voz-y-tono.md).
 
 ## 3. Checking people in
+Check-in happens **only at the front desk**. There is no check-in from the person's app or from the teacher's
+list: you do it, when the person arrives.
+
+{{studio:checkin_rule}}
+
 1. Pick the class. You will see three groups: Expected, Checked in and Waitlist.
 2. Look the person up by name, phone, email or ID. Tap them and mark **Checked in**.
-3. If it says "already checked in", don't do it again: it is the same person, or the teacher already marked them.
+3. If it says "already checked in", don't do it again: it is the same person and someone at the desk already
+   checked them in.
 4. If you see a health marker, do not mention it out loud. The teacher sees it on their list too.
 5. Once the late-arrival grace has passed, anyone who didn't come is a no-show. Confirm it so the spot goes to the
    waitlist.
@@ -80,11 +86,11 @@ The rules are the ones in Settings, not the ones we remember. This is the cancel
 
 | Situation | What happens | What you say |
 |---|---|---|
-| Cancels inside the window | The credit comes back straight away | "Done, your credit is back." |
-| Cancels outside the window | The credit is used | "It's too close to the class now, so this one counts. Shall I move you to another one today?" |
-| Wants to switch class | Cancel and book in one step; free inside the window | "I'll move you to the 9:30, same credit." |
+| Cancels 12 hours or more ahead | The class goes straight back to their package | "Done, the class is back in your package." |
+| Cancels with less than 12 hours | The class counts as taken | "It's less than 12 hours to the class, so this one counts. Shall I move you to another one today?" |
+| Wants to switch class | Cancel and book in one step; free if there is a spot | "I'll move you to the 9:30, same class." |
 | Arrives late | Comes in if inside the grace period | "Go on in quietly; the teacher has started." |
-| Didn't come | The no-show is confirmed and the credit is used | They get a WhatsApp from the template, with no reproach |
+| Didn't come | The no-show is confirmed and the class is used. If they were sick, coordination reschedules the class | They get a WhatsApp from the template, with no reproach |
 
 > DECISION NEEDED: how many minutes of grace for arriving late, and whether a no-show also costs money.
 
@@ -124,7 +130,7 @@ what happened, when and what you did, and tell coordination the same day.
 ## 9. What goes to whom
 | To whom | What |
 |---|---|
-| Coordination | incidents, complaints, pause requests outside the rule, repeat no-shows |
+| Coordination | incidents, complaints, package freeze requests outside the rule, absences through illness, repeat no-shows |
 | Finance | the day's till closing, pending transfers, refund requests |
 | Admin | access, permissions, anything HoyOS won't let you do |
 

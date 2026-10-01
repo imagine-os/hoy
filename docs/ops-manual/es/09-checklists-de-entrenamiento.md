@@ -2,8 +2,8 @@
 title: Checklists de entrenamiento
 role: todos
 part: II
-version: 0.13.3
-updated: 2026-09-29
+version: 0.22.0
+updated: 2026-10-01
 summary: Día 1, Semana 1 y Mes 1 para cada rol, incluidos marketing y desarrollo, con la firma de quien entrena.
 ---
 
@@ -38,7 +38,7 @@ Los números son capítulos de este manual: 01 Quiénes somos, 04 Recepción, 06
 | Etapa | Qué tienes que haber hecho |
 |---|---|
 | Día 1 | Leer 01, 02, 06 y 08 · entrar a la app de maestros con tu usuario · observar una clase · conocer la sala y los accesorios |
-| Semana 1 | Dar una clase acompañado · marcar la asistencia a tiempo · enviar tu bio y tu foto a revisión |
+| Semana 1 | Dar una clase acompañado · cerrar la clase a tiempo · enviar tu bio y tu foto a revisión |
 | Mes 1 | Horario fijo · gestionar bien un reemplazo · revisar tu extracto de pago antes de que cierre el periodo |
 
 ## 3. Coordinación

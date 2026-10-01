@@ -2,8 +2,8 @@
 title: Contenido en el CMS
 role: coordinación, admin, marketing
 part: V
-version: 0.13.3
-updated: 2026-09-29
+version: 0.22.0
+updated: 2026-10-01
 summary: Qué textos se editan en Contenido, cómo pasan de borrador a publicado, las reglas del club y las preguntas frecuentes.
 ---
 
@@ -64,7 +64,7 @@ Así están guardados los artículos y las preguntas frecuentes:
 
 ## 4. Cambios de precio
 1. Los propone finanzas y los aprueba el owner.
-2. Nunca cambian una membresía que ya está activa.
+2. Nunca cambian un paquete que ya está comprado: sus clases y su vencimiento se quedan como estaban.
 3. El mostrador y el sitio cambian al mismo tiempo, porque leen el mismo precio.
 
 ## 5. Lo que falta hoy

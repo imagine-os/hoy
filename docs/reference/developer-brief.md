@@ -316,7 +316,7 @@ Live: [M-10 Integraciones](https://imagine-os.github.io/hoy/#/admin/integrations
 
 ### 8.5 Wompi (ROADMAP P3)
 
-- Payments (link, card, PSE, Nequi) and teacher payroll dispersion. Today `wompiCheckout()` / `wompiPayout()` resolve
+- Payments (link, card, PSE, QR; no Nequi since 0051) and teacher payroll dispersion. Today `wompiCheckout()` / `wompiPayout()` resolve
   with a fake reference while `payments` and payroll runs are written as real rows; `payment_methods.token_ref` is a
   `tok_demo_…` placeholder from `wompiTokenise()`. Manual cash / transfer always remain.
 - **Developer checklist:** create the merchant and get sandbox + production credentials; private key and events secret
@@ -366,7 +366,7 @@ Source: [ai-distribution.md](https://github.com/imagine-os/hoy/blob/main/docs/re
 | `bookings.list` | Members | own bookings | `bookings.read` | 8 |
 | `bookings.create` | Members | `app.reserve` + `app.confirmReservation` (free-now only) | `bookings.write` | 8 |
 | `bookings.cancel` | Members | own booking | `bookings.write` | 8 |
-| `plan.balance` | Members | credits / membership | `payments.read` | 8 |
+| `plan.balance` | Members | package classes left (0051; was credits / membership) | `payments.read` | 8 |
 | `practice.stats` | Members | C-27 numbers | `bookings.read` | 8 |
 | `practice.setGoal` | Members | `app.setGoal` | `bookings.write` | 8 |
 | `checkin.mark` | Staff | front-desk check-in | `checkin.write` | 8 |

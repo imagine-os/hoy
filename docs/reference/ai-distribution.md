@@ -84,7 +84,7 @@ and the MCP tool.
 | `bookings.list` | Members | The member's own bookings | `bookings.read` | 8 |
 | `bookings.create` | Members | = `app.reserve` + `app.confirmReservation`; books only what costs nothing now — a pass that would be charged answers `ok: false` (the 0025 limit) | `bookings.write` | 8 |
 | `bookings.cancel` | Members | The member's own booking | `bookings.write` | 8 |
-| `plan.balance` | Members | Credits / membership | `payments.read` | 8 |
+| `plan.balance` | Members | Package classes left (0051; was credits / membership) | `payments.read` | 8 |
 | `practice.stats` | Members | C-27 numbers (`src/data/analytics.ts`) | `bookings.read` | 8 |
 | `practice.setGoal` | Members | = `app.setGoal` | `bookings.write` | 8 |
 | `checkin.mark` | Staff | Front-desk check-in | `checkin.write` | 8 |

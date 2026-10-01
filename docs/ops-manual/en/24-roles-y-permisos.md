@@ -2,8 +2,8 @@
 title: Roles and permissions
 role: everyone
 part: VII
-version: 0.13.3
-updated: 2026-09-29
+version: 0.22.0
+updated: 2026-10-01
 summary: The org chart, what each role does (marketing and developer included), which screens it uses, who approves what and how to ask for access.
 ---
 
@@ -58,10 +58,10 @@ tools.
 ## 4. Who approves what
 | Decision | Proposed by | Approved by |
 |---|---|---|
-| A price or a plan | admin or finance | owner |
+| A price or a package | admin or finance | owner |
 | A policy | coordination | owner |
 | A cash refund | front desk or finance | finance (up to one class's value) · owner (more) |
-| Giving back a credit as a courtesy | front desk | coordination |
+| Giving a class back to the package as a courtesy | front desk | coordination |
 | Cancelling a studio class | coordination | coordination (and tells the owner) |
 | A teacher substitution | the teacher | coordination |
 | Publishing a teacher's profile | the teacher | coordination |

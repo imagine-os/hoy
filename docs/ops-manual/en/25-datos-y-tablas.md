@@ -2,8 +2,8 @@
 title: Data and tables
 role: admin, owner, developer
 part: VII
-version: 0.13.3
-updated: 2026-09-29
+version: 0.22.0
+updated: 2026-10-01
 summary: Why knowing the data helps, the full model, how to read who can see each table and the rules for touching data.
 ---
 
@@ -45,8 +45,8 @@ For example, bookings:
 ### Bookings and waitlist
 {{table:waitlist}}
 
-### Memberships
-{{table:memberships}}
+### Package classes
+{{table:class_ledger}}
 
 ### Messages
 {{table:message_log}}

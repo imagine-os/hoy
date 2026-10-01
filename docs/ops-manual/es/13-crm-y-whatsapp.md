@@ -2,8 +2,8 @@
 title: CRM, WhatsApp y correo
 role: recepción, coordinación
 part: III
-version: 0.21.0
-updated: 2026-09-30
+version: 0.22.0
+updated: 2026-10-01
 summary: La ficha del socio y su conversación, las reglas de WhatsApp, los mensajes automáticos, cómo escribir y la Bandeja de recepción.
 ---
 
@@ -89,10 +89,10 @@ Estas son las horas silenciosas vigentes, y lo que significan en la práctica:
 | Clase cancelada | de inmediato, siempre |
 | Cupo liberado en lista de espera | de inmediato, siempre, con tiempo para tomarlo |
 | Recibo | al pagar |
-| Aviso de cobro o membresía por vencer | los días antes que fija la política, a las 8:00 |
+| Paquete por vencer | cuando a las clases del paquete les quedan pocos días, a las 8:00 |
 | Pedir opinión | el mismo día de la clase |
 | Feliz cumpleaños | ese día, a las 8:00 |
-| Invitación a un invitado | cuando el socio invita |
+| Invitación | cuando alguien invita a otra persona desde su app |
 | Pago fallido | cuando el pago se rechaza |
 
 Cada plantilla necesita la aprobación de Meta en cada idioma. Todo mensaje automático aparece también en la
@@ -118,8 +118,8 @@ La caja para escribir está debajo de la conversación, en la ficha y en la Band
 1. Primera línea: el nombre y el dato. Segunda línea: la acción. Máximo un 🌿.
 2. Ejemplos:
    - "Hola, Camila. La de las 7:00 está llena; te dejo en lista de espera y te aviso si se libera un cupo 🌿"
-   - "Hola, Andrés. Recibimos tu transferencia, tu Paquete de 3 ya está activo. Te esperamos."
-   - "Hola, Mariana. Tu membresía se renueva el 3 de octubre. Si quieres pausarla, dime y lo hacemos."
+   - "Hola, Andrés. Recibimos tu transferencia, tu paquete de 12 clases ya está activo. Te esperamos."
+   - "Hola, Mariana. Te quedan 3 clases en tu paquete y vencen el 3 de octubre. Si necesitas, lo congelas desde la app."
 3. Si escribes un WhatsApp de noche, la caja te avisa que queda en cola y sale cuando terminan las horas
    silenciosas. El correo sale siempre.
 4. Si el número no está verificado, la pestaña WhatsApp se bloquea y te dice por qué. Confirma el número con la

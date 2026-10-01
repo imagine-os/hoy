@@ -1,91 +1,90 @@
 ---
-title: Pauses and gifts
+title: Frozen packages and gifts
 role: front desk, coordination
 part: III
-version: 0.13.3
-updated: 2026-09-29
-summary: Pausing and cancelling a membership, the short Pause sessions, gift vouchers, guests and referrals.
+version: 0.22.0
+updated: 2026-10-01
+summary: Freezing and resuming the 12-class package, gift cards, guests and referrals.
 ---
 
-# Pauses and gifts
+# Frozen packages and gifts
 
-Two things with similar names. **Pauses** are short sessions we sell. **Pausing** means freezing a membership.
-This chapter covers both, and gifts as well.
+This chapter explains how the 12-class package is **frozen** and how **gift cards** are sold and redeemed. It
+also covers guests and referrals. HOY has no membership and no credits: what a person has is classes.
 
 {{audience:11-pausas-y-regalos}}
 
-## 1. Pausing a membership
-1. A member can freeze their membership from their app, without calling anyone.
-2. If they ask you at the desk, you do it from their record and leave a note.
-3. The limits come from the policy, not from whoever is at the desk:
+## 1. Freezing the 12-class package
+1. The package can be frozen **once**, for up to the number of days in the policy. The expiry date moves by
+   the same days.
+2. The person freezes it from their app, in My classes, without calling anyone.
+3. If they ask at the desk, help them do it from their app or pass it to coordination, and leave a note on
+   their record.
+4. While the package is frozen, nothing can be booked with it. If they want to come back sooner, they
+   **resume** it from the app: the days they did not use come back off the expiry date. The freeze still counts
+   as used.
+5. The limits are set by the policy, not by whoever is at the desk:
 
-{{policy:pause_days_per_year}}
+{{policy:freeze_max_days}}
 
-4. They always get a notice before every charge. If they ask "when will I be charged?", the date is on their
-   record under Payments, and in their app.
-5. If they want to cancel, they keep access until the end of what they paid for. Don't push. Note the reason.
+**What to say if they ask to freeze it:** "Of course. You can freeze it once, for up to 30 days, and your
+expiry date moves by those same days."
 
-**What to say if they want to cancel:** "Of course. You have access until [date]. Would you tell me why, so we
-can do better?"
+**What to say if they ask for a refund:** "The package is non-refundable. What you can do is freeze it once if
+you won't be able to come."
 
-![Pause, cancel and see the next charge date](../../screenshots/C-22/en-390.jpg "C-22 · /app/membership")
+![My classes: the package, the expiry and the freeze](../../screenshots/C-07b/en-390.jpg "C-07b · /app/classes")
 
-> DECISION NEEDED: how many days ahead a pause has to be requested (the app suggests 15 days).
+> IN HOYOS: C-07b My classes → Freeze the package (the person) · M-06 CRM → record (the desk sees the classes and the expiry).
 
-> IN HOYOS: C-22 Manage membership (the member) · M-06 CRM → record → Membership (the desk).
+## 2. When someone does not come
+1. If the person does not come, or cancels with less than 12 hours' notice, the class counts as taken. There
+   is no refund.
+2. If they missed it because they were sick, **the class is rescheduled**: coordination returns the class to
+   their package and leaves the note.
 
-## 2. Pauses (the product)
-15 to 30-minute sessions: breathwork, meditation, a pause between meetings. They are there so people come more
-often (see [Value model](03-modelo-de-valor.md)).
+This is the cancellation window in force:
 
-{{pricing:pausas}}
+{{policy:cancellation_window_hours}}
 
-1. A Pause needs no class mat and no full set-up: the person comes in and goes.
-2. **Unlimited Pauses** is a monthly add-on: it stacks with Membership, it does not replace it.
+> DECISION NEEDED: how an absence through illness is reported or supported (the Terms leave it to be defined).
 
-**What to say:** "It's a short session, 15 to 30 minutes. If you already have a membership, the unlimited ones add
-on to your plan."
-
-> DECISION NEEDED: whether a Pause counts as the class of the day (the one-class-per-person-per-day limit) or sits outside it.
-
-## 3. Gift vouchers
-1. They are bought in the app, under Gift, with a design and a message. They are delivered by WhatsApp or email.
-2. A voucher is prepaid money with a code. It is used at the desk by choosing "voucher" as the payment method, and
-   the system takes it off the balance.
-3. The voucher's validity is the one the system shows. It is not changed at the desk.
+## 3. Gift cards
+1. There are two cards, at the same price as the classes: **an individual class** or **a 12-class package**.
+2. They are bought in the app, in Give, with a design and a message. One person can buy several individual
+   classes, or two or more packages. They are delivered by WhatsApp or email, each with its own code.
+3. Whoever receives one **redeems it at the front desk**: register them if they are new, sell them the card's
+   class or package in "Register and charge" with an amount paid of 0 and write the code in the note.
 
 {{pricing:regalos}}
 
-![Giving a class as a gift](../../screenshots/C-17/en-390.jpg "C-17 · /app/gift")
+![Giving a class or a package](../../screenshots/C-17/en-390.jpg "C-17 · /app/gift")
 
-> IN HOYOS: C-17 Gift (buying) · S-04 → How they pay → Voucher (redeeming).
+> IN HOYOS: C-17 Give (purchase) · S-04 Register and charge → the card's product → amount paid 0 + a note with the code (redemption).
 
 ## 4. Guests
 {{editable:owner}}
 
-1. The guest is **included** for Membership members: there is no charge.
-2. The guest takes a real place in the room, so they are booked like anyone else.
-3. The guest is registered: name, WhatsApp and data consent. Nobody comes in "as a plus-one" without registering:
-   in an emergency we wouldn't know who to call.
-4. If the guest asks about prices, offer the Trial Class. Never an invented discount.
+1. A guest takes a real place in the room, so they are booked like anyone else.
+2. The guest is registered: name, WhatsApp and data consent. Nobody comes in "as a companion" without
+   registering: in an emergency we wouldn't know who to call.
+3. If the guest asks about prices, offer the trial class. Never an invented discount.
 
-The guest rule in force at the studio today:
+The studio's rule on Santa María Tennis Club affiliates:
 
-{{studio:guest_allowance_note}}
+{{studio:smtc_benefit}}
 
-**What to say to the guest:** "Welcome. I'll register you in a minute — name and WhatsApp, so you're on the class
-list."
-
-> DECISION NEEDED: how many guests a Membership member may bring each month, and whether a guest takes one of the class's mats or comes in above capacity. Until the owner confirms it, the studio rule above applies.
+**What to say to the guest:** "Welcome. I'll register you in a minute: name and WhatsApp, so you're on the
+class list."
 
 ## 5. Referrals
-1. Every member has their code in the app, under Invite. When someone joins with that code, the member gets a
-   credit.
-2. The reward is given by the system, not by the desk. If a member says it never arrived, check their record and
-   pass it to admin.
+1. Each person has their code in the app, in Invite. When someone joins with that code and attends, the studio
+   may give the person who invited them a class.
+2. The gift class is given by the system, not by the desk. If someone says they didn't get it, check their
+   record and pass it to admin.
 
-![The member's referral code](../../screenshots/C-16/en-390.jpg "C-16 · /app/invite")
+![The invite code](../../screenshots/C-16/en-390.jpg "C-16 · /app/invite")
 
-This is how the system keeps invitations:
+This is how the system stores invitations:
 
 {{table:invites}}

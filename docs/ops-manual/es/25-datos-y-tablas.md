@@ -2,8 +2,8 @@
 title: Datos y tablas
 role: admin, owner, desarrollo
 part: VII
-version: 0.13.3
-updated: 2026-09-29
+version: 0.22.0
+updated: 2026-10-01
 summary: Para qué sirve conocer los datos, el modelo completo, cómo se lee quién puede ver cada tabla y las reglas para tocar datos.
 ---
 
@@ -45,8 +45,8 @@ Por ejemplo, las reservas:
 ### Reservas y lista de espera
 {{table:waitlist}}
 
-### Membresías
-{{table:memberships}}
+### Clases de los paquetes
+{{table:class_ledger}}
 
 ### Mensajes
 {{table:message_log}}

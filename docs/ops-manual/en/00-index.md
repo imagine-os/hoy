@@ -2,8 +2,8 @@
 title: Index and how to use this manual
 role: everyone
 part: I
-version: 0.13.3
-updated: 2026-09-29
+version: 0.22.0
+updated: 2026-10-01
 summary: What the manual is for, how to read it for your role, which parts the studio adjusts and where the source documents live.
 ---
 
@@ -54,7 +54,7 @@ checklists.
 |---|---|---|
 | I · HOY | Who we are, the philosophy, the classes and the value model | everyone |
 | II · Daily operations | The door, classes, teachers, the room, incidents, training | front desk, teachers, maintenance, coordination |
-| III · Members and plans | Sales, pauses, gifts, space rental, WhatsApp | front desk, coordination |
+| III · Members and plans | Sales, frozen packages, gifts, space rental, WhatsApp | front desk, coordination |
 | IV · Money | The till, invoicing, teacher payroll | finance, owner |
 | V · Content and brand | Content, web and social, images, voice and tone | coordination, marketing |
 | VI · Legal and policies | Policies in force, legal documents, personal data | owner, admin, everyone |

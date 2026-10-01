@@ -2,105 +2,116 @@
 title: Nuestras clases
 role: todos
 part: I
-version: 0.13.3
-updated: 2026-09-29
-summary: Las cinco disciplinas de HOY, qué decir de cada una en la puerta y cómo se guardan en el sistema.
+version: 0.22.0
+updated: 2026-10-01
+summary: Las siete clases de HOY, qué decir de cada una en la puerta, quién la guía y cómo se guardan en el sistema.
 ---
 
 # Nuestras clases
 
-En HOY hay cinco formas de moverse y de estar: hot yoga, barre, pilates, meditación y respiración. Este
-capítulo te dice qué es cada una y qué decir cuando alguien pregunta.
+HOY tiene siete clases: Ligereza, Híbrido, Fuego, Sólido, Centro, Alineación y Pulso. Son siete
+metodologías que combinan Pilates, Yoga, Barre, movilidad, fuerza, cardio y respiración, con diferentes
+niveles de intensidad. Este capítulo te dice qué es cada una y qué decir cuando alguien pregunta.
 
 {{audience:02-nuestras-clases}}
 
 ## 1. Cómo hablamos de las clases
 Así lo dice el sitio:
 
-> En HOY encuentras varias formas de moverte y de estar bajo un mismo techo: hot yoga, barre, pilates,
-> meditación y respiración. No son disciplinas aisladas ni categorías con niveles y etiquetas: son distintos
-> caminos hacia el mismo lugar, tu cuerpo, tu respiración, tu presente.
+> No venimos a entrenar cuerpos. Venimos a despertar presencia. Tenemos siete clases, y cada una es un camino
+> distinto. Algunas te dan base y fuerza. Otras te encienden. Otras te centran, te hacen sentir cada detalle,
+> te ayudan a soltar o a entender cómo funciona tu cuerpo. Todas llegan al mismo lugar: aquí, ahora.
 
-1. Delante del cliente usamos siempre **el nombre de la disciplina**: "la de hot yoga de las 7", "barre a
-   las 9:30".
-2. No hablamos de niveles. Ninguna clase es "para avanzados": todas se adaptan a quien llega.
+1. Delante del cliente usamos siempre **el nombre de la clase**: "Fuego de las 7", "Centro a las 9:30".
+2. Las clases son retadoras y se hacen con la alineación correcta. La intensidad cambia de una a otra; ninguna
+   es "para avanzados".
 3. Nadie tiene que elegir "la correcta" el primer día. Puede probar todas, quedarse con una o alternar.
+4. HOY pone el mat y todos los implementos. La persona puede traer una toalla pequeña y su botella.
 
-**Qué decir si no sabe cuál elegir:** "Todas sirven para empezar. Si quieres sudar, hot yoga o barre. Si
-quieres algo más tranquilo, pilates o meditación."
+**Qué decir si no sabe cuál elegir:** "Si quieres sudar, Fuego. Si quieres fuerza, Sólido. Si quieres soltar
+o descansar, Ligereza o Centro. Todas sirven para empezar."
 
-## 2. Hot Yoga
-> Hay algo que pasa cuando el cuerpo se mueve en calor: la mente deja de resistirse y empieza a ceder. En HOY,
-> el hot yoga se practica en una sala donde la temperatura sube a propósito, no para castigarte, sino para
-> ayudarte a llegar más rápido a ese lugar donde el cuerpo se abre. No es una clase para "sudar más": es una
-> clase para sentir más.
+En qué idioma son las clases:
 
-1. La sala está caliente a propósito. El maestro enseña cuándo bajar la intensidad, cuándo tomar agua y
-   cuándo quedarse quieto en la postura del niño.
-2. No hace falta experiencia previa.
-3. Revisa que la persona traiga agua y toalla, o que sepa dónde conseguirlas.
+{{studio:class_language}}
 
-**Qué decir en la puerta:** "Es en sala caliente. Trae agua y toalla. Si en algún momento es mucho, te quedas
-quieto un momento y ya. Nadie te va a mirar."
+## 2. Ligereza — suelto lo que no me sirve
+> Liberación. Apertura. Fluidez. Movimiento consciente.
 
-Cómo se prepara la sala caliente: [Sala, calor y mantenimiento](07-sala-calor-y-mantenimiento.md).
+1. **Método:** movilidad, stretching y yoga yin. **Baja intensidad.** Cierra con una savasana de 3 a 4 minutos.
+2. Es para soltar tensiones guardadas y salir más ligero.
+3. La guía Sara Crismatt Duque.
 
-## 3. Barre
-> Barre en HOY combina lo mejor de tres mundos: la precisión del pilates, la elegancia del ballet y la
-> energía del entrenamiento funcional. El resultado es una clase de alta intensidad pero bajo impacto, donde
-> trabajas todos los grupos musculares principales sin un solo salto brusco ni golpe en las articulaciones.
+**Qué decir en la puerta:** "Es una clase suave, de movilidad y estiramiento. Sales más ligero."
 
-1. Es intensa pero no tiene saltos. Se trabaja con movimientos pequeños y controlados, al ritmo de la música.
-2. Nuestros maestros de barre se preparan específicamente para esta disciplina.
-3. Se adapta a cualquier nivel.
+## 3. Híbrido — soy fuerte y flexible
+> Fusión. Completitud. Balance. Lo mejor de ambos mundos.
 
-**Qué decir en la puerta:** "Es bajo impacto pero intensa. Si es tu primera vez, el maestro te ajusta la
-postura. Si prefieres que no te toque, díselo y lo respeta."
+1. **Método:** Pilates y yoga dinámico. **Intensidad media.**
+2. Une fuerza y flexibilidad en la misma clase.
+3. La guía Raghu.
 
-## 4. Pilates
-> Pilates empieza en un solo lugar: el centro. Ahí se activa la fuerza que después sostiene cada movimiento,
-> cada postura, cada gesto del cuerpo entero. En HOY, esta disciplina te enseña a moverte con más control,
-> más conciencia y más precisión.
+**Qué decir en la puerta:** "Es mitad Pilates y mitad yoga dinámico. Trabajas fuerza y flexibilidad a la vez."
 
-1. Parece lento, pero exige: fortalece el centro del cuerpo y mejora la postura.
-2. El maestro trabaja desde el detalle: la columna, la respiración, el pequeño ajuste.
-3. No promete cambios rápidos. Promete algo más duradero.
+## 4. Fuego — enciende tu energía
+> Encendimiento. Despertar. Energía vital desatada.
 
-**Qué decir en la puerta:** "Es una clase de control y postura. Se siente simple y exige más de lo que
-parece. Vale para quien nunca ha practicado."
+1. **Método:** Pilates dinámico y rumba. **Alta intensidad, sin descanso.**
+2. Es la clase de cardio: el ritmo de la música lleva la clase.
+3. La guía Sara Estrada.
 
-## 5. Meditación
-> En medio del ruido constante, meditar es un acto casi radical: detenerte, aunque sea por unos minutos, sin
-> la necesidad de producir, responder o resolver nada.
+**Qué decir en la puerta:** "Es la más intensa: Pilates dinámico con rumba, sin pausas. Trae agua."
 
-1. Son sesiones guiadas, dentro del horario regular.
-2. Nadie tiene que quedarse en silencio absoluto ni "hacerlo bien".
+## 5. Sólido — tu base se construye desde adentro
+> Enraizamiento. Construcción. Solidez desde adentro.
 
-**Qué decir en la puerta:** "Es guiada. No tienes que saber meditar: solo sentarte y seguir la voz."
+1. **Método:** Pilates con pesas y resistencia. Cuerpo completo. **Intensidad media-alta.**
+2. Construye fuerza desde el centro, con control y precisión.
+3. La guía Andre Cardona.
 
-## 6. Respiración (breathwork)
-> No se trata de dominar una técnica compleja, sino de reconectar con algo que ya sabes hacer. Por eso también
-> está presente en nuestras clases guiadas: una pausa breve, sin esfuerzo, que te acompaña mucho después de
-> salir del estudio.
+**Qué decir en la puerta:** "Es Pilates con pesas. Trabajas todo el cuerpo con control; no necesitas
+experiencia."
 
-1. La respiración está **presente en nuestras clases guiadas**, como una pausa breve dentro de ellas.
-2. Si en el horario aparece como clase propia, es porque el estudio la activó en Ajustes.
+## 6. Centro — estoy aquí, ahora
+> Presencia. Anclaje. Silencio profundo. Vuelta a ti.
 
-**Qué decir en la puerta:** "La respiración está en todas las clases guiadas. Es una pausa corta: no
-necesitas practicar antes."
+1. **Método:** meditación, respiración consciente y sound healing. Cierra con una savasana profunda.
+2. Es la clase de la pausa: aquí no hay prisas.
+3. La guía Tatiana Ramirez.
 
-> EN HOYOS: M-08f Ajustes → Contenido → "Respiración es una clase propia" (encendido o apagado).
+**Qué decir en la puerta:** "Es guiada. No tienes que saber meditar: solo acostarte, respirar y seguir la
+voz."
 
-## 7. La lista de clases en el sistema
+## 7. Alineación — entiendo cómo funciono
+> Inteligencia. Funcionalidad. Biomecánica clara. Movimiento inteligente.
+
+1. **Método:** yoga dinámico funcional y vinyasas. **Intensidad media.** Savasana de 3 a 4 minutos.
+2. Enseña a moverse con propósito y a entender la propia biomecánica.
+3. La guía María Camila Pinzón.
+
+**Qué decir en la puerta:** "Es yoga dinámico con mucha atención a la alineación. Vas a entender cómo se
+mueve tu cuerpo."
+
+## 8. Pulso — siento cada fibra de mi ser
+> Sensibilidad. Micro-movimientos. Inteligencia muscular profunda.
+
+1. **Método:** Barre, isometrías y pulsos. **Intensidad media, concentración total.**
+2. La magia está en lo pequeño: movimientos cortos y precisos, al ritmo de la música.
+3. La guía Carolina Cifuentes.
+
+**Qué decir en la puerta:** "Es Barre con movimientos pequeños y sostenidos. No tiene saltos, pero se siente
+en cada músculo."
+
+## 9. La lista de clases en el sistema
 En el horario cada clase tiene su propio color, para que el equipo y los socios la reconozcan de un vistazo.
 
-![Cuatro clases al día, cada una con su color](../../screenshots/C-02/es-390.jpg "C-02 · /app/schedule")
+![Las clases del día, cada una con su color](../../screenshots/C-02/es-390.jpg "C-02 · /app/schedule")
 
-Nombre, descripción, intensidad, duración y si la sala es caliente: así las guarda el sistema y así salen en
-el sitio y en la app. Coordinación las edita.
+Nombre, descripción, intensidad y duración: así las guarda el sistema y así salen en el sitio y en la app.
+Coordinación las edita.
 
 {{table:modalities}}
 
-![Las clases publicadas en el sitio](../../screenshots/W-03/es-1280.jpg "W-03 · /site/modalities")
+![Las siete clases publicadas en el sitio](../../screenshots/W-03/es-1280.jpg "W-03 · /site/modalities")
 
 > EN HOYOS: M-02 Contenido → Modalidades → editar → Publicar.

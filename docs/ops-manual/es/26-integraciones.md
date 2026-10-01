@@ -2,8 +2,8 @@
 title: Integraciones y qué está simulado
 role: admin, owner, finanzas, desarrollo
 part: VII
-version: 0.13.3
-updated: 2026-09-29
+version: 0.22.0
+updated: 2026-10-01
 summary: Qué sistemas externos usa HOY, en qué estado está cada uno, qué se puede decir hoy sin prometer de más y qué falta conectar.
 ---
 
@@ -83,7 +83,7 @@ La pantalla de Integraciones repite este orden al final.
 | Dirección, WhatsApp, correo, Instagram, mapa y "datos confirmados" | Ajustes → General ([01](01-quienes-somos-y-filosofia.md)) |
 | Cuenta de pagos, NIT, IVA, resolución DIAN, ambiente de Wompi, frecuencia de nómina y tarifas | Ajustes → Pagos ([16](16-nomina-y-payouts.md)) |
 | Número de WhatsApp, correo del estudio y horas silenciosas | Ajustes → Comunicaciones |
-| Proveedor del mapa, Respiración como clase propia, versiones legales | Ajustes → Contenido ([02](02-nuestras-clases.md), [22](22-documentos-legales.md)) |
+| Proveedor del mapa, versiones legales | Ajustes → Contenido ([02](02-nuestras-clases.md), [22](22-documentos-legales.md)) |
 | Encender o apagar un flujo | Ajustes → Funciones |
 
 ![Ajustes · General: el contacto con su estado pendiente](../../screenshots/M-08a/es-1280.jpg "M-08a · /admin/settings")

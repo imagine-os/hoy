@@ -2,8 +2,8 @@
 title: Roles y permisos
 role: todos
 part: VII
-version: 0.13.3
-updated: 2026-09-29
+version: 0.22.0
+updated: 2026-10-01
 summary: El organigrama, qué hace cada rol (también marketing y desarrollo), qué pantallas usa, quién aprueba qué y cómo se piden accesos.
 ---
 
@@ -58,10 +58,10 @@ pantalla y las herramientas de desarrollo.
 ## 4. Quién aprueba qué
 | Decisión | La propone | La aprueba |
 |---|---|---|
-| Un precio o un plan | admin o finanzas | owner |
+| Un precio o un paquete | admin o finanzas | owner |
 | Una política | coordinación | owner |
 | Un reembolso en dinero | recepción o finanzas | finanzas (hasta el valor de una clase) · owner (más) |
-| Devolver un crédito como cortesía | recepción | coordinación |
+| Devolver una clase al paquete como cortesía | recepción | coordinación |
 | Cancelar una clase del estudio | coordinación | coordinación (y avisa al owner) |
 | Un reemplazo de maestro | el maestro | coordinación |
 | Publicar el perfil de un maestro | el maestro | coordinación |

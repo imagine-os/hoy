@@ -10,11 +10,11 @@ Design: contemporary editorial wellness; cream #F1E7D2, blues #35597D / #5F85B1,
 | mountains.webp | 01_IMAGES HOME landscape | Supplemental background |
 | philosophy.webp | PHILOSOPHY.png | Editorial breathing portrait; not a teacher |
 | community.webp | FACILITIES.png | Community editorial image; not actual staff |
-| hot-yoga.webp | Classes/06.png | Hot yoga |
-| barre.webp | Classes/05.png | Barre |
-| pilates.webp | Classes/04.png | Pilates |
-| meditacion.webp | Classes/02.png | Meditation |
-| respiracion.webp | Classes/09.png | Breathwork |
+| hot-yoga.webp | Classes/06.png | Hot yoga · unused since 0051 (no hot class); kept as supplied art |
+| barre.webp | Classes/05.png | Barre · unused since 0051 (the seven classes use tone arches); kept as supplied art |
+| pilates.webp | Classes/04.png | Pilates · unused since 0051; kept as supplied art |
+| meditacion.webp | Classes/02.png | Meditation · unused since 0051; kept as supplied art |
+| respiracion.webp | Classes/09.png | Breathwork · unused since 0051; kept as supplied art |
 | texture-foliage.webp | TEXTURE 01.png | Supplemental material |
 | texture-sunlight.webp | TEXTURE 02.png | Pricing background |
 | texture-limestone.webp | TEXTURE 03.png | Cards and panels |
@@ -26,6 +26,12 @@ Design: contemporary editorial wellness; cream #F1E7D2, blues #35597D / #5F85B1,
 | hero-sanctuary.webp | New built-in OpenAI image generation | Hero / video anchor |
 | ritual-stillness.webp | New built-in OpenAI image generation | Closing scene / video anchor |
 | practice-flow.webp | New built-in OpenAI image generation | Supplemental editorial asset |
+
+## 0051 — the seven classes and the real teachers
+
+- The class pages and the home strip draw each class as an arch in its tone (`ClassArch`, D-02); a `site.classes.<slug>` photo marked ready in M-02d fills the arch. The five supplied class stills above stay in the repo, unused, until the studio maps them to the new classes.
+- The eight fictional demo portraits (`teacher-*.webp`) and their loops (`video/living-teacher-*.mp4`) were deleted: the teachers on the site are now the studio's real team, and a generated face must never stand next to a real name. A teacher without `photo_url` shows a monogram in the tone of the class they guide.
+- The five class loops (`video/living-{hot-yoga,barre,pilates,meditacion,respiracion}.mp4`) were deleted with them; nothing played them any more.
 
 ## New image prompts
 

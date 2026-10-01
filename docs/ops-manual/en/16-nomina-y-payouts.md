@@ -2,8 +2,8 @@
 title: Teacher payroll and payouts
 role: finance, owner, coordination
 part: IV
-version: 0.21.0
-updated: 2026-09-30
+version: 0.22.0
+updated: 2026-10-01
 summary: From closed attendance to the teacher's pay: generating the draft, reviewing, approving, paying and the teacher's statement.
 ---
 
@@ -71,20 +71,19 @@ This is what you see in your app, under Payroll.
    **estimate**.
 2. Once the draft exists, the app shows exactly what finance will pay, with bonuses, adjustments and Specials, and
    its state: draft, approved or paid.
-3. It also shows class by class, earlier runs, the payment method, a print view and a WhatsApp button with the period
-   and the total already written. The button writes to the **payroll** person the administration named in Settings →
-   General → *WhatsApp contacts by topic*, Monday to Friday excluding holidays; when nobody is named it writes to the
-   front desk, who pass it to finance. Under the button it says who receives it.
+3. It also shows class by class, earlier runs, the payment method and a print view. The statement no longer has
+   a WhatsApp button to ask about it (the studio removed it): if the teacher has a question, they take it straight to
+   finance.
 4. The statement settles any doubt: if it isn't there, it wasn't paid.
 
 ![The statement in the teacher app](../../screenshots/S-03/en-390-payroll.jpg "S-03 · /teach/payroll")
 
 ## 6. Rates
-Rates live in Settings → Payments, on the **rate card**: one per discipline (what a hot yoga, pilates or barre class
-pays) and, if needed, one per teacher that overrides the discipline rate.
+Rates live in Settings → Payments, on the **rate card**: one per class (what a Fuego, Centro or Pulso class pays)
+and, if needed, one per teacher that overrides the class rate.
 
 1. If the teacher has their own rate, that one is used.
-2. If not, the discipline's.
+2. If not, the class's.
 3. If there is neither, the one on their profile.
 
 Changing a rate moves the teacher's estimate and the next draft. Anything already approved or paid doesn't change.

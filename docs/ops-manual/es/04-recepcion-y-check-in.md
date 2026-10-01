@@ -2,8 +2,8 @@
 title: Recepción y check-in
 role: recepción, coordinación
 part: II
-version: 0.13.3
-updated: 2026-09-29
+version: 0.22.0
+updated: 2026-10-01
 summary: La puerta paso a paso: abrir, saludar, registrar la llegada, walk-ins, cancelaciones, lista de espera, objetos perdidos y traspasos.
 ---
 
@@ -51,9 +51,14 @@ El saludo para alguien que viene por primera vez:
 Qué decimos y qué no: [Voz y tono](20-voz-y-tono.md).
 
 ## 3. Registrar la llegada (check-in)
+El check-in se hace **solo en recepción**. No hay check-in desde la app de la persona ni desde la lista del
+maestro: lo haces tú, cuando la persona llega.
+
+{{studio:checkin_rule}}
+
 1. Elige la clase. Verás tres grupos: Esperados, Registrados y Lista de espera.
 2. Busca a la persona por nombre, teléfono, correo o documento. Tócala y marca **Registrado**.
-3. Si dice "ya registrado", no lo repitas: es la misma persona, o el maestro ya marcó su asistencia.
+3. Si dice "ya registrado", no lo repitas: es la misma persona y alguien de recepción ya la registró.
 4. Si ves una marca de salud, no la comentes en voz alta. El maestro también la ve en su lista.
 5. Cuando pasa la tolerancia de llegada, quien no vino es un no-show. Confírmalo para que el cupo pase a la
    lista de espera.
@@ -80,11 +85,11 @@ Las reglas son las de Ajustes, no las que recordamos. Esta es la ventana de canc
 
 | Situación | Qué pasa | Qué dices |
 |---|---|---|
-| Cancela dentro de la ventana | El crédito vuelve de inmediato | "Listo, tu crédito ya está de vuelta." |
-| Cancela fuera de la ventana | El crédito se usa | "Como faltan menos horas que la ventana, esta clase cuenta. ¿Te muevo a otra del día?" |
-| Quiere moverse de clase | Se cancela y se reserva en un paso; sin costo dentro de la ventana | "Te paso a la de las 9:30, con el mismo crédito." |
+| Cancela con 12 horas o más | La clase vuelve de inmediato a su paquete | "Listo, la clase ya está de vuelta en tu paquete." |
+| Cancela con menos de 12 horas | La clase se cuenta como tomada | "Como faltan menos de 12 horas, esta clase cuenta. ¿Te muevo a otra del día?" |
+| Quiere moverse de clase | Se cancela y se reserva en un paso; sin costo si hay cupo | "Te paso a la de las 9:30, con la misma clase." |
 | Llega tarde | Entra si está dentro de la tolerancia | "Entra con cuidado; el maestro ya empezó." |
-| No vino | Se confirma el no-show y el crédito se usa | Se le escribe por WhatsApp con la plantilla, sin reproches |
+| No vino | Se confirma el no-show y la clase se usa. Si fue por enfermedad, coordinación le reprograma la clase | Se le escribe por WhatsApp con la plantilla, sin reproches |
 
 > DECISIÓN PENDIENTE: los minutos de tolerancia para llegar tarde y si faltar sin avisar tiene un cargo en dinero.
 
@@ -124,7 +129,7 @@ con qué pasó, a qué hora y qué hiciste, y avisa a coordinación el mismo dí
 ## 9. A quién le pasas qué
 | A quién | Qué |
 |---|---|
-| Coordinación | incidentes, quejas, pedidos de pausa fuera de la regla, no-shows repetidos |
+| Coordinación | incidentes, quejas, pedidos de congelar el paquete fuera de la regla, ausencias por enfermedad, no-shows repetidos |
 | Finanzas | el cierre de caja del día, las transferencias pendientes, los pedidos de reembolso |
 | Admin | accesos, permisos, algo que HoyOS no te deja hacer |
 

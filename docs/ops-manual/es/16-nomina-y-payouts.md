@@ -2,8 +2,8 @@
 title: Nómina de maestros y payouts
 role: finanzas, owner, coordinación
 part: IV
-version: 0.21.0
-updated: 2026-09-30
+version: 0.22.0
+updated: 2026-10-01
 summary: De la asistencia cerrada al pago del maestro: generar el borrador, revisar, aprobar, pagar y el extracto del maestro.
 ---
 
@@ -73,20 +73,19 @@ Esto es lo que ves en tu app, en Nómina.
    marca como **estimado**.
 2. Cuando ya existe el borrador, la app muestra exactamente lo que finanzas va a pagar, con bonos, ajustes y
    Especiales, y en qué estado está: borrador, aprobado o pagado.
-3. También muestra clase por clase, los pagos anteriores, el medio de pago, una vista para imprimir y un botón
-   de WhatsApp con el periodo y el total ya escritos. El botón escribe a la persona de **nómina** que la administración
-   haya puesto en Ajustes → General → *Contactos de WhatsApp por tema*, de lunes a viernes sin festivos; si nadie está
-   puesto, escribe a recepción, que lo pasa a finanzas. Debajo del botón dice a quién llega.
+3. También muestra clase por clase, los pagos anteriores, el medio de pago y una vista para imprimir. El
+   extracto ya no tiene botón de WhatsApp para preguntar por él (lo retiró el estudio): si el maestro tiene una
+   duda, la habla directamente con finanzas.
 4. El extracto resuelve cualquier duda: si no está ahí, no se pagó.
 
 ![El extracto en la app del maestro](../../screenshots/S-03/es-390-payroll.jpg "S-03 · /teach/payroll")
 
 ## 6. Las tarifas
-Las tarifas están en Ajustes → Pagos, en la **tarjeta de tarifas**: una por disciplina (cuánto se paga por una
-clase de hot yoga, de pilates, de barre…) y, si hace falta, una por maestro que manda sobre la de la disciplina.
+Las tarifas están en Ajustes → Pagos, en la **tarjeta de tarifas**: una por clase (cuánto se paga por una
+clase de Fuego, de Centro, de Pulso…) y, si hace falta, una por maestro que manda sobre la de la clase.
 
 1. Si el maestro tiene tarifa propia, se usa esa.
-2. Si no, la de la disciplina.
+2. Si no, la de la clase.
 3. Si no hay ninguna, la de su perfil.
 
 Cambiar una tarifa mueve el estimado del maestro y el próximo borrador. Lo ya aprobado o pagado no cambia. En la
