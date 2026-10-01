@@ -2,8 +2,8 @@
 title: Training checklists
 role: everyone
 part: II
-version: 0.13.3
-updated: 2026-09-29
+version: 0.22.0
+updated: 2026-10-01
 summary: Day 1, Week 1 and Month 1 for every role, marketing and developer included, signed off by whoever trains you.
 ---
 
@@ -38,7 +38,7 @@ the till, 18 Web and social, 20 Voice and tone, 24 Roles.
 | Stage | What you should have done |
 |---|---|
 | Day 1 | Read 01, 02, 06 and 08 · sign in to the teacher app with your user · observe a class · get to know the room and the props |
-| Week 1 | Teach a class with someone beside you · mark attendance on time · send your bio and photo for review |
+| Week 1 | Teach a class with someone beside you · close the class on time · send your bio and photo for review |
 | Month 1 | A fixed schedule · handle a substitution properly · check your pay statement before the period closes |
 
 ## 3. Coordination

@@ -54,13 +54,14 @@ export function MorePage() {
           <Avatar name={name} initials={profile?.initials ?? user.initials} src={profile?.photo_url} size={52} />
           <div className="grow stack-sm">
             <strong>{name}</strong>
-            <div className="row wrap small muted">{planLine}{ent.membership?.status !== 'active' && <span>· {t('customer.checkout.credit.sub', { n: ent.creditBalance })}</span>}{!ent.membership && <Badge tone="highlight">{t('customer.more.planPrompt')}</Badge>}</div>
+            <div className="row wrap small muted">{planLine}{ent.pkg.left > 0 && <span>· {t('customer.checkout.package.sub', { n: ent.pkg.left })}</span>}{!ent.pkg.purchase && !ent.membership && <Badge tone="highlight">{t('customer.more.planPrompt')}</Badge>}</div>
           </div>
           <span className="listrow-chevron" aria-hidden><Icon name="chevron-right" size="sm" /></span>
         </Card>
 
         <ListGroup>
-          <ListRow icon="profile" title={t('core.nav.profile')} subtitle={`${t('customer.profile.edit')} · ${t('customer.membership.title')}`} to="/app/profile" />
+          <ListRow icon="profile" title={t('core.nav.profile')} subtitle={`${t('customer.profile.edit')} · ${t('customer.classes.title')}`} to="/app/profile" />
+          <ListRow icon="coins" title={t('customer.classes.title')} subtitle={t('customer.more.classes.sub')} to="/app/classes" />
           <ListRow icon="flame" title={t('customer.practice.title')} subtitle={t('customer.practice.more.sub')} to="/app/practice" />
           <ListRow icon="ticket" title={t('core.nav.plans')} subtitle={t('customer.more.plans.sub')} to="/app/plans" />
           <ListRow icon="policies" title={t('customer.rules.title')} subtitle={t('customer.more.rules.sub')} to="/app/rules" />

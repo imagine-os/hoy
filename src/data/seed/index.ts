@@ -1,4 +1,4 @@
-import type { ActivityEventRow, BaseRow, BookingRow, ClassSessionRow, CreditRow, EventRow, InviteRow, MembershipRow, MessageLogRow, NotificationRow, NotificationPrefRow, PaymentMethodRow, PaymentRow, PracticeGoalRow, ProfileRow, ReviewRow, TeacherRow, UserRow } from '../schema';
+import type { ActivityEventRow, BaseRow, BookingRow, ClassLedgerRow, ClassSessionRow, EventRow, InviteRow, MembershipRow, MessageLogRow, NotificationRow, NotificationPrefRow, PaymentMethodRow, PaymentRow, PracticeGoalRow, ProfileRow, ReviewRow, TeacherRow, UserRow } from '../schema';
 import { tableNames } from '../schema';
 import { demoUsers } from '../../auth/demoUsers';
 import { tenant } from '../../tenant/tenant';
@@ -19,22 +19,36 @@ import { buildDeletionRequests } from './deletion';
 import { automationText, buildMessages } from './messages';
 import { buildStudioPolicies } from './studioPolicies';
 import { LATE_ROLES, buildLateStaff, buildManual } from './manual';
-import { dateKey, addDays, addDaysKey, addMonths, MS } from '../../i18n/format';
+import { dateKey, addDays, addDaysKey, MS } from '../../i18n/format';
 import { practiceStats, weekStartKey } from '../analytics';
 import { DEFAULT_IVA_PCT, splitIva } from '../tax';
 import { isRetired } from '../../specs/retired';
+import { priceItem } from '../../tenant/pricing';
+
+const giftPrice = (id: string) => priceItem(id)?.price ?? 0;
 
 const FIRST = ['Camila', 'Nicolás', 'Sara', 'Tomás', 'Mariana', 'Julián', 'Daniela', 'Sebastián', 'Gabriela', 'Alejandro', 'Antonia', 'Samuel', 'Salomé', 'Emilio', 'Luciana', 'Martín', 'Elena', 'David', 'Paulina', 'Jerónimo', 'Amelia', 'Simón', 'Renata', 'Lucas', 'Violeta', 'Benjamín', 'Catalina', 'Joaquín', 'Isabel', 'Gael'];
 const LAST = ['García', 'Rodríguez', 'Martínez', 'López', 'González', 'Hernández', 'Pérez', 'Sánchez', 'Ramírez', 'Torres', 'Flores', 'Rivera', 'Gómez', 'Díaz', 'Cruz', 'Morales', 'Reyes', 'Jiménez', 'Ruiz', 'Álvarez', 'Castro', 'Vargas', 'Romero', 'Suárez', 'Moreno', 'Muñoz', 'Rojas', 'Medina', 'Guerrero', 'Cortés'];
 
-/** Weekly timetable: 4 classes/day Mon–Sat. [weekday, 'HH:MM', modality, teacher] */
+/**
+ * Weekly timetable: 4 classes/day Mon–Sat. [weekday, 'HH:MM', modality, teacher]. 0051 — the seven classes, each with
+ * the teacher who guides it, three or four times a week. Saturday runs inside the 08:00–13:00 opening hours. The times
+ * are demo values until the studio publishes its real timetable.
+ */
+const T: Record<string, [string, string]> = {
+  ligereza: ['mod_ligereza', 'tea_sara_c'], hibrido: ['mod_hibrido', 'tea_raghu'], fuego: ['mod_fuego', 'tea_sara_e'], solido: ['mod_solido', 'tea_andre'],
+  centro: ['mod_centro', 'tea_tatiana'], alineacion: ['mod_alineacion', 'tea_maria_camila'], pulso: ['mod_pulso', 'tea_carolina'],
+};
+const WEEK: Record<number, [string, string][]> = {
+  1: [['06:30', 'alineacion'], ['08:00', 'pulso'], ['17:30', 'fuego'], ['19:00', 'centro']],
+  2: [['06:30', 'ligereza'], ['08:00', 'solido'], ['17:30', 'hibrido'], ['19:00', 'pulso']],
+  3: [['06:30', 'alineacion'], ['08:00', 'hibrido'], ['17:30', 'fuego'], ['19:00', 'ligereza']],
+  4: [['06:30', 'solido'], ['08:00', 'pulso'], ['17:30', 'hibrido'], ['19:00', 'centro']],
+  5: [['06:30', 'ligereza'], ['08:00', 'alineacion'], ['17:30', 'fuego'], ['19:00', 'solido']],
+  6: [['08:00', 'pulso'], ['09:15', 'hibrido'], ['10:30', 'fuego'], ['11:45', 'centro']],
+};
 const TIMETABLE: [number, string, string, string][] = [];
-for (const wd of [1, 2, 3, 4, 5, 6]) {
-  TIMETABLE.push([wd, '06:30', wd % 2 ? 'mod_morning_flow' : 'mod_hot_vinyasa', wd % 2 ? 'tea_manuela' : 'tea_isabela']);
-  TIMETABLE.push([wd, '08:00', wd % 2 ? 'mod_pilates' : 'mod_barre', wd % 2 ? 'tea_paula' : 'tea_daniel']);
-  TIMETABLE.push([wd, wd === 6 ? '10:00' : '17:30', wd % 3 === 0 ? 'mod_yin' : 'mod_hot_vinyasa', wd % 3 === 0 ? 'tea_santiago' : 'tea_andres']);
-  TIMETABLE.push([wd, wd === 6 ? '11:30' : '19:00', wd % 2 ? 'mod_meditacion' : 'mod_pilates', wd % 2 ? 'tea_felipe' : 'tea_carolina']);
-}
+for (const wd of [1, 2, 3, 4, 5, 6]) for (const [time, cls] of WEEK[wd]) TIMETABLE.push([wd, time, T[cls][0], T[cls][1]]);
 
 export function buildSeed(): Record<string, BaseRow[]> {
   const r = rng(2026);
@@ -90,29 +104,26 @@ export function buildSeed(): Record<string, BaseRow[]> {
     });
   }
 
-  // memberships, credits, payments
-  const memberships = db.memberships as MembershipRow[], credits = db.credits as CreditRow[], payments = db.payments as PaymentRow[];
+  // packages (class_ledger) and payments — 0051: HOY sells classes and the 12-class package; no memberships, no credits
+  const memberships = db.memberships as MembershipRow[], ledger = db.class_ledger as ClassLedgerRow[], payments = db.payments as PaymentRow[];
   customerIds.forEach((uid, i) => {
-    const kind = uid === 'usr_cust' ? 'monthly' : r.pick(['monthly', 'monthly', 'annual', 'pack10', 'pack3', 'single', 'trial', 'none'] as const);
+    const kind = uid === 'usr_cust' ? 'pack12' : r.pick(['pack12', 'pack12', 'pack12', 'pack12_smtc', 'single', 'single', 'trial', 'none'] as const);
     if (kind === 'none') return;
     const plan = plans.find((p) => p.slug === kind)!;
     const daysAgo = r.int(1, 60);
     const payId = `pay_${i}_${kind}`;
     const paidAt = new Date(NOW); paidAt.setDate(paidAt.getDate() - daysAgo);
-    payments.push({ ...base(payId, daysAgo), user_id: uid, plan_id: plan.id, amount: plan.price, amount_paid: plan.price, note: null, currency: 'COP', method: r.pick(['card', 'pse', 'nequi', 'cash', 'transfer']), provider: r.chance(0.7) ? 'wompi' : 'manual', provider_ref: r.chance(0.7) ? `wmp_${r.int(100000, 999999)}` : null, status: 'approved', paid_at: iso(paidAt), taken_by: r.chance(0.3) ? 'usr_desk' : null });
+    payments.push({ ...base(payId, daysAgo), user_id: uid, plan_id: plan.id, amount: plan.price, amount_paid: plan.price, note: null, currency: 'COP', method: r.pick(['card', 'pse', 'qr', 'cash', 'transfer']), provider: r.chance(0.7) ? 'wompi' : 'manual', provider_ref: r.chance(0.7) ? `wmp_${r.int(100000, 999999)}` : null, status: 'approved', paid_at: iso(paidAt), taken_by: r.chance(0.3) ? 'usr_desk' : null });
     db.invoices.push({ ...base(`inv_${i}`, daysAgo), payment_id: payId, number: `${tenant.invoicePrefix}-${String(1000 + i)}`, ...splitIva(plan.price, DEFAULT_IVA_PCT / 100), issued_at: iso(paidAt), pdf_url: null, dian_cufe: null });
-    if (plan.family === 'membresia') {
-      // The renewal date rolls forward until it is in the future: an "active" membership never shows a past renewal.
-      let renews = addMonths(paidAt, kind === 'annual' ? 12 : 1);
-      while (renews < NOW) renews = addMonths(renews, kind === 'annual' ? 12 : 1);
-      memberships.push({ ...base(`mem_${i}`, daysAgo), user_id: uid, plan_id: plan.id, status: r.chance(0.9) ? 'active' : 'paused', starts_at: dateKey(paidAt), renews_at: dateKey(renews), ends_at: null, paused_until: null });
-    } else if (plan.credits) {
+    if (plan.classes) {
+      // A package (or a single / trial class bought ahead) opens its classes in the ledger, with the plan's validity.
       const exp = new Date(paidAt); exp.setDate(exp.getDate() + (plan.validity_days ?? 30));
-      credits.push({ ...base(`crd_${i}_buy`, daysAgo), user_id: uid, plan_id: plan.id, payment_id: payId, delta: plan.credits, reason: 'purchase', expires_at: dateKey(exp) });
+      ledger.push({ ...base(`cls_${i}_buy`, daysAgo), user_id: uid, plan_id: plan.id, payment_id: payId, delta: plan.classes, reason: 'purchase', expires_at: dateKey(exp), frozen_from: null, frozen_until: null });
     }
   });
 
   // bookings: fill sessions
+  const hasPackage = (uid: string) => ledger.some((c) => c.user_id === uid && c.reason === 'purchase' && c.delta > 1);
   const bookings = db.bookings as BookingRow[];
   let b = 0;
   const custDays = new Set<string>(); // the demo customer books at most one class per day (tenant.studio.perPersonPerDay)
@@ -125,7 +136,7 @@ export function buildSeed(): Record<string, BaseRow[]> {
       if (uid === 'usr_cust') { const day = s.starts_at.slice(0, 10); if (custDays.has(day)) continue; custDays.add(day); }
       const past = s.status === 'completed';
       const status = past ? (r.chance(0.85) ? 'checked_in' : r.chance(0.5) ? 'no_show' : 'late_cancel') : 'booked';
-      bookings.push({ ...base(`bk_${b++}`, 3), user_id: uid, session_id: s.id, status, paid_with: memberships.some((m) => m.user_id === uid) ? 'membership' : 'credit', credit_id: null, checked_in_at: status === 'checked_in' ? s.starts_at : null, cancelled_at: status === 'late_cancel' ? s.starts_at : null, rated: past && r.chance(0.4) });
+      bookings.push({ ...base(`bk_${b++}`, 3), user_id: uid, session_id: s.id, status, paid_with: hasPackage(uid) ? 'package' : 'single', ledger_id: null, checked_in_at: status === 'checked_in' ? s.starts_at : null, cancelled_at: status === 'late_cancel' ? s.starts_at : null, rated: past && r.chance(0.4) });
       if (status !== 'late_cancel') s.booked_count++;
     }
     if (s.booked_count >= s.capacity) {
@@ -145,7 +156,7 @@ export function buildSeed(): Record<string, BaseRow[]> {
     const fillers = customerIds.filter((uid) => uid !== 'usr_cust' && !bookedIn(fullToday.id, uid)).sort((a, b) => Number(hasEarlier(b)) - Number(hasEarlier(a)));
     for (const uid of fillers) {
       if (fullToday.booked_count >= fullToday.capacity) break;
-      bookings.push({ ...base(`bk_full_${fullToday.booked_count}`, 1), user_id: uid, session_id: fullToday.id, status: 'booked', paid_with: memberships.some((m) => m.user_id === uid) ? 'membership' : 'credit', credit_id: null, checked_in_at: null, cancelled_at: null, rated: false });
+      bookings.push({ ...base(`bk_full_${fullToday.booked_count}`, 1), user_id: uid, session_id: fullToday.id, status: 'booked', paid_with: hasPackage(uid) ? 'package' : 'single', ledger_id: null, checked_in_at: null, cancelled_at: null, rated: false });
       fullToday.booked_count++;
     }
     const waiter = customerIds.find((uid) => uid !== 'usr_cust' && !bookedIn(fullToday.id, uid));
@@ -188,26 +199,26 @@ export function buildSeed(): Record<string, BaseRow[]> {
 
   // saved payment methods (C-05): one for anyone who paid electronically, two for the demo customer.
   const methods = db.payment_methods as PaymentMethodRow[];
-  const BRANDS: Record<string, string> = { card: 'Visa', pse: 'Bancolombia', nequi: 'Nequi' };
+  const BRANDS: Record<string, string> = { card: 'Visa', pse: 'Bancolombia' };
   customerIds.forEach((uid, i) => {
-    const pay = payments.find((p) => p.user_id === uid && p.provider === 'wompi' && p.status === 'approved' && p.method !== 'cash' && p.method !== 'transfer');
+    const pay = payments.find((p) => p.user_id === uid && p.provider === 'wompi' && p.status === 'approved' && (p.method === 'card' || p.method === 'pse'));
     if (!pay) return;
-    const kind = pay.method as 'card' | 'pse' | 'nequi';
+    const kind = pay.method as 'card' | 'pse';
     methods.push({ ...base(`pm_${i}_${kind}`, r.int(5, 90)), user_id: uid, provider: 'wompi', kind, brand: BRANDS[kind] ?? 'Wompi', last4: kind === 'card' ? String(r.int(1000, 9999)) : null, token_ref: `tok_demo_${r.int(100000, 999999)}`, is_default: true, expires: kind === 'card' ? `0${r.int(1, 9)}/2${r.int(7, 9)}` : null });
   });
   if (!methods.some((m) => m.user_id === 'usr_cust')) methods.push({ ...base('pm_cust_card', 40), user_id: 'usr_cust', provider: 'wompi', kind: 'card', brand: 'Visa', last4: '4242', token_ref: 'tok_demo_424242', is_default: true, expires: '08/28' });
-  methods.push({ ...base('pm_cust_nequi', 12), user_id: 'usr_cust', provider: 'wompi', kind: 'nequi', brand: 'Nequi', last4: null, token_ref: 'tok_demo_900112', is_default: false, expires: null });
+  methods.push({ ...base('pm_cust_pse', 12), user_id: 'usr_cust', provider: 'wompi', kind: 'pse', brand: 'Bancolombia', last4: null, token_ref: 'tok_demo_900112', is_default: false, expires: null });
 
   // invites (C-16): the demo customer has one pending and one rewarded; a few others have sent one.
   const inviteCode = (uid: string) => `${tenant.invoicePrefix}-${uid.slice(-4).toUpperCase()}`;
-  const rewardCredit: CreditRow = { ...base('crd_invite_reward', 30), user_id: 'usr_cust', plan_id: null, payment_id: null, delta: 1, reason: 'gift', expires_at: null } as CreditRow;
-  credits.push(rewardCredit);
+  const rewardClass: ClassLedgerRow = { ...base('cls_invite_reward', 30), user_id: 'usr_cust', plan_id: null, payment_id: null, delta: 1, reason: 'gift', expires_at: null, frozen_from: null, frozen_until: null };
+  ledger.push(rewardClass);
   const invites = db.invites as InviteRow[];
   invites.push(
-    { ...base('inv_cust_1', 6), inviter_user_id: 'usr_cust', invitee_phone: '+57 300 000 0002', invitee_email: null, invitee_user_id: null, channel: 'whatsapp', code: inviteCode('usr_cust'), session_id: null, status: 'sent', reward_credit_id: null },
-    { ...base('inv_cust_2', 30), inviter_user_id: 'usr_cust', invitee_phone: null, invitee_email: 'invitada@demo.hoyos.test', invitee_user_id: 'usr_c11', channel: 'email', code: inviteCode('usr_cust'), session_id: null, status: 'rewarded', reward_credit_id: rewardCredit.id },
+    { ...base('inv_cust_1', 6), inviter_user_id: 'usr_cust', invitee_phone: '+57 300 000 0002', invitee_email: null, invitee_user_id: null, channel: 'whatsapp', code: inviteCode('usr_cust'), session_id: null, status: 'sent', reward_ledger_id: null },
+    { ...base('inv_cust_2', 30), inviter_user_id: 'usr_cust', invitee_phone: null, invitee_email: 'invitada@demo.hoyos.test', invitee_user_id: 'usr_c11', channel: 'email', code: inviteCode('usr_cust'), session_id: null, status: 'rewarded', reward_ledger_id: rewardClass.id },
   );
-  ['usr_c02', 'usr_c05', 'usr_c09'].forEach((uid, i) => invites.push({ ...base(`inv_${uid}`, r.int(3, 45)), inviter_user_id: uid, invitee_phone: null, invitee_email: null, invitee_user_id: null, channel: 'link', code: inviteCode(uid), session_id: null, status: i === 0 ? 'joined' : 'opened', reward_credit_id: null }));
+  ['usr_c02', 'usr_c05', 'usr_c09'].forEach((uid, i) => invites.push({ ...base(`inv_${uid}`, r.int(3, 45)), inviter_user_id: uid, invitee_phone: null, invitee_email: null, invitee_user_id: null, channel: 'link', code: inviteCode(uid), session_id: null, status: i === 0 ? 'joined' : 'opened', reward_ledger_id: null }));
 
   // notifications (C-24): a real inbox per person, built from what actually happened to them.
   const notifications = db.notifications as NotificationRow[];
@@ -220,12 +231,12 @@ export function buildSeed(): Record<string, BaseRow[]> {
   for (const uid of customerIds) {
     const mine = bookings.filter((b) => b.user_id === uid);
     const upcoming = mine.filter((b) => b.status === 'booked').map((b) => sessions.find((s) => s.id === b.session_id)).filter((s): s is ClassSessionRow => !!s).sort((a, b) => a.starts_at.localeCompare(b.starts_at))[0];
-    if (upcoming) notify(uid, 'booking', { es: `Reserva confirmada · ${upcoming.title}`, en: `Booking confirmed · ${upcoming.title}` }, { es: 'Llega 10 minutos antes. Puedes cambiarla hasta 2 horas antes.', en: 'Arrive 10 minutes early. You can change it until 2 hours before.' }, { at: hoursBefore(upcoming.starts_at, 26), link: `/app/class/${upcoming.id}`, via: 'whatsapp' });
+    if (upcoming) notify(uid, 'booking', { es: `Reserva confirmada · ${upcoming.title}`, en: `Booking confirmed · ${upcoming.title}` }, { es: 'Llega 10 minutos antes y haz el check-in en recepción. Puedes cancelarla hasta 12 horas antes.', en: 'Arrive 10 minutes early and check in at the front desk. You can cancel it until 12 hours before.' }, { at: hoursBefore(upcoming.starts_at, 26), link: `/app/class/${upcoming.id}`, via: 'whatsapp' });
     const lastPay = payments.filter((p) => p.user_id === uid && p.status === 'approved').sort((a, b) => (b.paid_at ?? '').localeCompare(a.paid_at ?? ''))[0];
     if (lastPay) notify(uid, 'payment', { es: 'Recibo de pago', en: 'Payment receipt' }, { es: 'Tu recibo está en Historial → Pagos.', en: 'Your receipt is in History → Payments.' }, { at: lastPay.paid_at ?? undefined, link: '/app/history', via: 'email', read: true });
     const toRate = mine.filter((b) => b.status === 'checked_in' && !b.rated).map((b) => sessions.find((s) => s.id === b.session_id)).filter((s): s is ClassSessionRow => !!s).sort((a, b) => b.ends_at.localeCompare(a.ends_at))[0];
     if (toRate) notify(uid, 'review', { es: `¿Cómo estuvo ${toRate.title}?`, en: `How was ${toRate.title}?` }, { es: 'Dos toques y nos ayudas a cuidar la calidad de la sala.', en: 'Two taps and you help us keep the room’s quality.' }, { at: toRate.ends_at, link: `/app/rate/${toRate.id}`, via: 'push' });
-    if (r.chance(0.55)) notify(uid, 'event', { es: 'Nuevo en la agenda: Baño de sonido · Luna llena', en: 'New on the calendar: Full Moon Sound Bath' }, { es: 'Cupos limitados. Incluido para socios de Membresía.', en: 'Limited spots. Included for Membership members.' }, { at: iso(new Date(NOW.getTime() - r.int(1, 5) * MS.day)), link: '/app/events/evt_sound_bath', via: 'email', read: r.chance(0.5) });
+    if (r.chance(0.55)) notify(uid, 'event', { es: 'Nuevo en la agenda: Baño de sonido · Luna llena', en: 'New on the calendar: Full Moon Sound Bath' }, { es: 'Cupos limitados. Reserva desde la app.', en: 'Limited spots. Book from the app.' }, { at: iso(new Date(NOW.getTime() - r.int(1, 5) * MS.day)), link: '/app/events/evt_sound_bath', via: 'email', read: r.chance(0.5) });
   }
   for (const w of db.waitlist as (BaseRow & { user_id: string; session_id: string; status: string })[]) {
     if (w.status !== 'waiting') continue;
@@ -233,7 +244,7 @@ export function buildSeed(): Record<string, BaseRow[]> {
     if (!s || r.chance(0.6)) continue;
     notify(w.user_id, 'waitlist', { es: `Estás en lista de espera · ${s.title}`, en: `You are on the waitlist · ${s.title}` }, { es: 'Te escribimos por WhatsApp si se libera un cupo; tienes 30 minutos para reclamarlo.', en: 'We message you on WhatsApp if a spot opens; you have 30 minutes to claim it.' }, { at: hoursBefore(s.starts_at, 30), link: `/app/waitlist/${s.id}`, via: 'whatsapp' });
   }
-  notify('usr_cust', 'invite', { es: 'Tu invitada reservó su primera clase', en: 'Your guest booked her first class' }, { es: 'Te abonamos una clase de regalo. Está en Créditos.', en: 'We credited you one class. It is in Credits.' }, { at: iso(new Date(NOW.getTime() - 29 * MS.day)), link: '/app/credits', via: 'push', read: true });
+  notify('usr_cust', 'invite', { es: 'Tu invitada reservó su primera clase', en: 'Your guest booked her first class' }, { es: 'Te regalamos una clase. Está en Mis clases.', en: 'We gave you one class. It is in My classes.' }, { at: iso(new Date(NOW.getTime() - 29 * MS.day)), link: '/app/classes', via: 'push', read: true });
 
   // notification prefs (C-24 / C-19): no row means enabled, so only real choices are stored.
   const prefs = db.notification_prefs as NotificationPrefRow[];
@@ -275,8 +286,9 @@ export function buildSeed(): Record<string, BaseRow[]> {
   db.payroll_lines.push(...payroll.lines);
 
   db.gift_cards.push(
-    { ...base('gc_1', 10), code: 'HOY-REGALO-2401', buyer_user_id: 'usr_c03', recipient_name: 'Ana', recipient_contact: '+57 300 000 0001', amount: 110000, balance: 110000, deliver_at: iso(NOW), redeemed_by: null, status: 'sent' },
-    { ...base('gc_2', 40), code: 'HOY-REGALO-2377', buyer_user_id: 'usr_c07', recipient_name: 'Pedro', recipient_contact: 'pedro@example.com', amount: 58000, balance: 0, deliver_at: null, redeemed_by: 'usr_c11', status: 'redeemed' },
+    // 0051: gift cards are worth classes at the class price — two individual classes, and one 12-class package.
+    { ...base('gc_1', 10), code: 'HOY-REGALO-2401', buyer_user_id: 'usr_c03', recipient_name: 'Ana', recipient_contact: '+57 300 000 0001', amount: giftPrice('gift_single') * 2, balance: giftPrice('gift_single') * 2, deliver_at: iso(NOW), redeemed_by: null, status: 'sent' },
+    { ...base('gc_2', 40), code: 'HOY-REGALO-2377', buyer_user_id: 'usr_c07', recipient_name: 'Pedro', recipient_contact: 'pedro@example.com', amount: giftPrice('gift_pack12'), balance: 0, deliver_at: null, redeemed_by: 'usr_c11', status: 'redeemed' },
   );
 
   db.email_templates.push(
@@ -338,11 +350,11 @@ export function buildSeed(): Record<string, BaseRow[]> {
   const currentWeek = weekStartKey(NOW);
   const dayOf = (isoStamp: string) => dateKey(new Date(isoStamp));
   const bookedDays = (uid: string) => new Set(bookings.filter((bk) => bk.user_id === uid).map((bk) => { const ses = sessions.find((x) => x.id === bk.session_id); return ses ? dayOf(ses.starts_at) : ''; }));
-  const paidWith = (uid: string) => (memberships.some((m) => m.user_id === uid) ? 'membership' : 'credit');
+  const paidWith = (uid: string) => (hasPackage(uid) ? 'package' : 'single');
   let extra = 0;
   const checkIn = (uid: string, ses: ClassSessionRow, status: BookingRow['status'] = 'checked_in') => {
     const daysAgo = Math.max(1, Math.round((NOW.getTime() - new Date(ses.starts_at).getTime()) / MS.day) + 1);
-    bookings.push({ ...base(`bk_pr_${extra++}`, daysAgo), user_id: uid, session_id: ses.id, status, paid_with: paidWith(uid), credit_id: null, checked_in_at: status === 'checked_in' ? ses.starts_at : null, cancelled_at: null, rated: false });
+    bookings.push({ ...base(`bk_pr_${extra++}`, daysAgo), user_id: uid, session_id: ses.id, status, paid_with: paidWith(uid), ledger_id: null, checked_in_at: status === 'checked_in' ? ses.starts_at : null, cancelled_at: null, rated: false });
     if (status !== 'late_cancel') ses.booked_count++;
   };
   for (let back = 7; back >= 1; back--) {
@@ -356,7 +368,7 @@ export function buildSeed(): Record<string, BaseRow[]> {
       if (mine.has(dayOf(ses.starts_at)) || bookings.some((bk) => bk.user_id === 'usr_cust' && bk.session_id === ses.id)) continue;
       checkIn('usr_cust', ses); mine.add(dayOf(ses.starts_at)); have++;
     }
-    // Then her usual slot — Tuesday and Thursday at 08:00 (Pilates / Barre, "practica en la mañana") — on days with no class yet.
+    // Then her usual slot — Tuesday and Thursday at 08:00 (Sólido / Pulso, "practica en la mañana") — on days with no class yet.
     for (const weekday of [2, 4, 1, 3, 5, 6]) {
       if (have >= need) break;
       const day = addDays(new Date(`${week}T12:00:00`), weekday - 1); day.setHours(0, 0, 0, 0);

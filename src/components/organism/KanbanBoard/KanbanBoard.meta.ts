@@ -4,7 +4,7 @@ import { KanbanBoard, type KanbanCard } from './KanbanBoard';
 
 function Demo() {
   const [cards, setCards] = useState<KanbanCard[]>([
-    { id: 'b1', column: 'booked', title: 'Camila García', name: 'Camila García', meta: 'Hot Vinyasa · 06:30' },
+    { id: 'b1', column: 'booked', title: 'Camila García', name: 'Camila García', meta: 'Fuego · 06:30' },
     { id: 'b2', column: 'booked', title: 'Tomás López', name: 'Tomás López', meta: 'Pilates · 08:00' },
     { id: 'b3', column: 'checked_in', title: 'Sara Martínez', name: 'Sara Martínez', meta: 'Barre · 08:00' },
   ]);

@@ -162,7 +162,7 @@ function screenBoxes(source: string): string {
  * Documentation conventions applied before parsing:
  * 1. `[screenshot: C-02 — caption]` on its own line is a placeholder for a capture that does not
  *    exist yet. It becomes an image with the `placeholder:` scheme, rendered as a dashed box.
- * 2. `{{pricing}}` / `{{pricing:membresia}}` on its own line is a live-data directive. It becomes a
+ * 2. `{{pricing}}` / `{{pricing:paquetes}}` on its own line is a live-data directive. It becomes a
  *    fenced ```live block, which the `directive` prop renders (a fenced block is passed through
  *    react-markdown intact, unlike a custom element, which the default HTML handling drops).
  * 3. `{{for:teacher,front_desk}}` … `{{/for}}` wraps a role-scoped passage (a tilde fence → `scope`).

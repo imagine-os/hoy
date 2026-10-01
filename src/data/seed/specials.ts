@@ -49,16 +49,17 @@ export function buildSpecials(input: { invoiceCount: number }): { bookings: Spac
   };
 
   // 1 · Birthday session, delivered two days ago in the small room — the manual payroll line of the month.
-  const bday: SpaceBookingRow = { ...base('spb_cumple', 9), room_id: 'room_meditacion', kind: 'private_event', title: 'Cumpleaños de Mariana · meditación y respiración', starts_at: iso(at(-2, 17, 0)), ends_at: iso(at(-2, 18, 30)), customer_id: 'usr_c05', contact_name: null, teacher_id: 'tea_felipe', special_charge_id: null, status: 'done', note: '8 personas · traen su torta, nosotros el té', created_by: 'usr_desk' };
+  const bday: SpaceBookingRow = { ...base('spb_cumple', 9), room_id: 'room_meditacion', kind: 'private_event', title: 'Cumpleaños de Mariana · Centro en privado', starts_at: iso(at(-2, 17, 0)), ends_at: iso(at(-2, 18, 30)), customer_id: 'usr_c05', contact_name: null, teacher_id: 'tea_tatiana', special_charge_id: null, status: 'done', note: '8 personas · traen su torta, nosotros el té', created_by: 'usr_desk' };
   bookings.push(bday);
-  const bdayCharge = sell('cumple', { concept: bday.title, amount: 480000, customerId: 'usr_c05', contact: null, teacherId: 'tea_felipe', payout: 150000, bookingId: bday.id, source: 'privada', method: 'nequi', daysAgo: 9, note: 'Precio acordado por coordinación: sala pequeña + profe, 90 min.' });
+  const bdayCharge = sell('cumple', { concept: bday.title, amount: 480000, customerId: 'usr_c05', contact: null, teacherId: 'tea_tatiana', payout: 150000, bookingId: bday.id, source: 'private', method: 'qr', daysAgo: 9, note: 'Precio acordado por coordinación: sala pequeña + profe, 90 min.' });
   bday.special_charge_id = bdayCharge.id;
 
   // 2 · Private team session next Saturday in the main room, after the last class — confirmed and paid by transfer.
   const sat = toSaturday();
-  const team: SpaceBookingRow = { ...base('spb_equipo', 4), room_id: 'room_main', kind: 'private_class', title: 'Sesión privada · equipo Lumen Studio', starts_at: iso(at(sat, 16, 0)), ends_at: iso(at(sat, 17, 30)), customer_id: null, contact_name: 'Lumen Studio · Ana Restrepo', teacher_id: 'tea_paula', special_charge_id: null, status: 'confirmed', note: '12 personas · barre suave · facturan a la empresa', created_by: 'usr_coord' };
+  const team: SpaceBookingRow = { ...base('spb_equipo', 4), room_id: 'room_main', kind: 'private_class', title: 'Sesión privada · equipo Lumen Studio', starts_at: iso(at(sat, 16, 0)), ends_at: iso(at(sat, 17, 30)), customer_id: null, contact_name: 'Lumen Studio · Ana Restrepo', teacher_id: 'tea_andre', special_charge_id: null, status: 'confirmed', note: '12 personas · barre suave · facturan a la empresa', created_by: 'usr_coord' };
   bookings.push(team);
-  const teamCharge = sell('equipo', { concept: team.title, amount: priceItem('privada')?.price ?? 600000, customerId: null, contact: team.contact_name, teacherId: 'tea_paula', payout: 180000, bookingId: team.id, source: 'privada', method: 'transfer', daysAgo: 4 });
+  // 0051: a private class for up to 3 people is the launch price; a team session beyond that is quoted by hand (an Especial).
+  const teamCharge = sell('equipo', { concept: team.title, amount: (priceItem('private')?.price ?? 0) + 2 * (priceItem('private_extra')?.price ?? 0), customerId: null, contact: team.contact_name, teacherId: 'tea_andre', payout: 180000, bookingId: team.id, source: 'private', method: 'transfer', daysAgo: 4 });
   team.special_charge_id = teamCharge.id;
 
   // 3 · Photo shoot on hold: quoted, not paid — S-05 draws it dashed until the deposit lands.

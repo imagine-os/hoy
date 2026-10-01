@@ -1,22 +1,28 @@
 /**
- * Modelo de Valor v3 — the ONLY place a price is written. P-01, C-06, C-07, S-04 and the `plans`
- * seed all read from here. Amounts in COP (integers).
+ * Launch price list (0051) — the ONLY place a price is written. P-01, C-04, C-06, C-07, C-17, S-04,
+ * the FAQ seed and the `plans` seed all read from here. Amounts in COP (integers), IVA included.
  *
- * Six families since 0032 (the owner's "Modelo de Valor — sin precios" deck): the sixth,
- * `corporativo` (Experiencias Corporativas), is "en camino" — it has a label, a role and a
- * rationale but **no priced items**, so nothing can sell it; `COMING_SOON_FAMILIES` marks it and
- * `CORPORATE_FORMATS` lists its three planned formats without prices.
+ * Source: the owner's verified launch list (WEBSITE MODIF, the FAQ and the Términos y Condiciones,
+ * 2026-10-01). HOY sells classes, never credits: a trial class, a single class, the 12-class package
+ * (3 months, freeze once for up to 30 days, non-refundable), the same package at a special price for
+ * Santa María Tennis Club affiliates, private classes for up to 3 people and gift cards at the class
+ * price. The studio rental and corporate experiences are quoted case by case, so their families carry
+ * a label, a role and a rationale but **no priced item** (`ON_REQUEST_FAMILIES`).
+ *
+ * The 0032 value model (Membresía, Pausas, packs of 3 and 10) is retired: there is no recurring plan
+ * at launch. Final post-launch prices are an owner decision (manual chapter 03).
  */
 import { tenant } from './tenant';
-import { formatCOP } from '../i18n/format';
 
-export type PlanFamily = 'bienvenida' | 'membresia' | 'pausas' | 'regalos' | 'espacio' | 'corporativo';
+export type PlanFamily = 'bienvenida' | 'paquetes' | 'privadas' | 'regalos' | 'espacio' | 'corporativo';
 
-/** Families that are announced but not sold yet: no `pricing` item may use them. */
-export const COMING_SOON_FAMILIES: readonly PlanFamily[] = ['corporativo'];
+/** Families that are offered but quoted case by case: no `pricing` item may use them. */
+export const ON_REQUEST_FAMILIES: readonly PlanFamily[] = ['espacio', 'corporativo'];
 /** The families a priced item (and so a `plans` row) can belong to. */
-export type SellableFamily = Exclude<PlanFamily, 'corporativo'>;
-export const isComingSoon = (family: PlanFamily) => COMING_SOON_FAMILIES.includes(family);
+export type SellableFamily = Exclude<PlanFamily, 'espacio' | 'corporativo'>;
+export const isOnRequest = (family: PlanFamily) => ON_REQUEST_FAMILIES.includes(family);
+/** Every family, in the order the plans page and the manual list them. */
+export const FAMILY_ORDER: readonly PlanFamily[] = ['bienvenida', 'paquetes', 'privadas', 'regalos', 'espacio', 'corporativo'];
 
 export interface PriceItem {
   id: string;
@@ -25,66 +31,83 @@ export interface PriceItem {
   description: { es: string; en: string };
   /** COP; null when the price reads "included". */
   price: number | null;
+  /** A recurring charge. No launch item is recurring; the field stays for a future plan. */
   period?: 'month' | 'year';
-  credits?: number;
+  /** How many classes the item gives (1 for a trial or single class, 12 for the package). */
+  classes?: number;
+  /** Days the classes can be used from the purchase (the package: 3 months). */
   validityDays?: number;
+  /** The package can be frozen this many times, each for at most this many days (the M-08 freeze policy). */
+  freezable?: boolean;
+  /** False when the purchase is not refundable (the 12-class package). */
+  refundable?: boolean;
+  /** Most people one booking covers (private class: 3). */
+  maxPeople?: number;
+  /** An add-on charged per extra person (the private class's additional person). */
+  perPerson?: boolean;
+  /** Who may buy it, when not everyone can (Santa María Tennis Club affiliates). */
+  audience?: { es: string; en: string };
+  /** A gift card: the id of the item it gives, at the same price. */
+  giftOf?: string;
   from?: boolean;
   badge?: { es: string; en: string };
 }
 
 export const FAMILY_LABEL: Record<PlanFamily, { es: string; en: string }> = {
-  bienvenida: { es: 'Bienvenida', en: 'Welcome' },
-  membresia: { es: 'Membresía', en: 'Membership' },
-  pausas: { es: 'Pausas', en: 'Pauses' },
-  regalos: { es: 'Regalos', en: 'Gifts' },
-  espacio: { es: 'Espacio', en: 'Space' },
-  corporativo: { es: 'Experiencias Corporativas', en: 'Corporate Experiences' },
+  bienvenida: { es: 'Para empezar', en: 'To begin' },
+  paquetes: { es: 'Paquete de 12 clases', en: '12-class package' },
+  privadas: { es: 'Clases privadas', en: 'Private classes' },
+  regalos: { es: 'Tarjetas de regalo', en: 'Gift cards' },
+  espacio: { es: 'Alquiler del espacio', en: 'Studio rental' },
+  corporativo: { es: 'Experiencias corporativas', en: 'Corporate experiences' },
 };
 
 export const pricing: PriceItem[] = [
-  { id: 'trial', family: 'bienvenida', name: { es: 'Clase de Prueba', en: 'Trial Class' }, description: { es: 'una clase, sin costo de entrada', en: 'one class, no entry cost' }, price: 39000, credits: 1, validityDays: 30 },
-  { id: 'single', family: 'bienvenida', name: { es: 'Pase Individual', en: 'Single Pass' }, description: { es: 'una visita, sin permanencia', en: 'one visit, no commitment' }, price: 58000, credits: 1, validityDays: 30 },
-  { id: 'pack3', family: 'bienvenida', name: { es: 'Paquete de 3 Clases', en: '3-Class Pack' }, description: { es: 'para usar en un mes', en: 'use within a month' }, price: 110000, credits: 3, validityDays: 30 },
-  { id: 'pack10', family: 'bienvenida', name: { es: 'Paquete de 10 Clases', en: '10-Class Pack' }, description: { es: 'para usar en 3 meses', en: 'use within 3 months' }, price: 490000, credits: 10, validityDays: 90 },
-  { id: 'monthly', family: 'membresia', name: { es: 'Plan Mensual', en: 'Monthly Plan' }, description: { es: 'acceso completo, mes a mes', en: 'full access, month to month' }, price: 520000, period: 'month' },
-  { id: 'annual', family: 'membresia', name: { es: 'Plan Anual', en: 'Annual Plan' }, description: { es: 'acceso completo, pago anual', en: 'full access, paid yearly' }, price: 4990000, period: 'year', badge: { es: 'Mejor valor', en: 'Best value' } },
-  { id: 'pausa1', family: 'pausas', name: { es: 'Pausa Individual', en: 'Single Pause' }, description: { es: 'un ingreso', en: 'one entry' }, price: 24000 },
-  { id: 'pausa10', family: 'pausas', name: { es: 'Paquete de 10 Pausas', en: '10-Pause Pack' }, description: { es: 'para usar en 3 meses', en: 'use within 3 months' }, price: 190000, validityDays: 90 },
-  { id: 'pausaUnl', family: 'pausas', name: { es: 'Pausas Ilimitadas', en: 'Unlimited Pauses' }, description: { es: 'complemento mensual', en: 'monthly add-on' }, price: 95000, period: 'month' },
-  { id: 'bono', family: 'regalos', name: { es: 'Bono de Regalo', en: 'Gift Voucher' }, description: { es: 'para regalar', en: 'to give away' }, price: 58000, from: true },
-  { id: 'guest', family: 'regalos', name: { es: 'Invitado', en: 'Guest' }, description: { es: 'para socios de Membresía', en: 'for Membership members' }, price: null },
-  { id: 'foto', family: 'espacio', name: { es: 'Foto & Video', en: 'Photo & Video' }, description: { es: 'medio día', en: 'half day' }, price: 700000, from: true },
-  { id: 'taller', family: 'espacio', name: { es: 'Talleres', en: 'Workshops' }, description: { es: 'por sesión', en: 'per session' }, price: 350000, from: true },
-  { id: 'privada', family: 'espacio', name: { es: 'Sesión Privada', en: 'Private Session' }, description: { es: 'por sesión', en: 'per session' }, price: 600000, from: true },
-  { id: 'rodaje', family: 'espacio', name: { es: 'Rodajes', en: 'Shoots' }, description: { es: 'por día', en: 'per day' }, price: 1500000, from: true },
-  { id: 'popup', family: 'espacio', name: { es: 'Pop-ups', en: 'Pop-ups' }, description: { es: 'por evento', en: 'per event' }, price: 2200000, from: true },
+  { id: 'trial', family: 'bienvenida', name: { es: 'Clase de prueba', en: 'Trial class' }, description: { es: 'tu primera clase en el estudio', en: 'your first class at the studio' }, price: 35000, classes: 1 },
+  { id: 'single', family: 'bienvenida', name: { es: 'Clase individual', en: 'Individual class' }, description: { es: 'una clase, sin compromiso', en: 'one class, no commitment' }, price: 55000, classes: 1 },
+  { id: 'pack12', family: 'paquetes', name: { es: 'Paquete de 12 clases', en: '12-class package' }, description: { es: 'para usar en 3 meses', en: 'to use within 3 months' }, price: 600000, classes: 12, validityDays: 90, freezable: true, refundable: false },
+  { id: 'pack12_smtc', family: 'paquetes', name: { es: 'Paquete de 12 clases · Santa María', en: '12-class package · Santa María' }, description: { es: 'precio especial para afiliados de Santa María Tennis Club', en: 'special price for Santa María Tennis Club affiliates' }, price: 480000, classes: 12, validityDays: 90, freezable: true, refundable: false, audience: { es: 'Afiliados de Santa María Tennis Club', en: 'Santa María Tennis Club affiliates' }, badge: { es: 'Afiliados', en: 'Affiliates' } },
+  { id: 'private', family: 'privadas', name: { es: 'Clase privada', en: 'Private class' }, description: { es: 'hasta 3 personas', en: 'up to 3 people' }, price: 250000, maxPeople: 3 },
+  { id: 'private_extra', family: 'privadas', name: { es: 'Persona adicional', en: 'Additional person' }, description: { es: 'en una clase privada, por persona', en: 'in a private class, per person' }, price: 60000, perPerson: true },
+  { id: 'gift_single', family: 'regalos', name: { es: 'Tarjeta de regalo · clase individual', en: 'Gift card · individual class' }, description: { es: 'una clase para regalar', en: 'one class to give' }, price: 55000, classes: 1, giftOf: 'single' },
+  { id: 'gift_pack12', family: 'regalos', name: { es: 'Tarjeta de regalo · paquete de 12 clases', en: 'Gift card · 12-class package' }, description: { es: 'el paquete completo para regalar', en: 'the full package to give' }, price: 600000, classes: 12, validityDays: 90, giftOf: 'pack12' },
 ];
 
 export const pricingByFamily = (family: PlanFamily) => pricing.filter((p) => p.family === family);
-
-/**
- * The three formats Experiencias Corporativas is being prepared in — descriptions only, no price,
- * no validity, no checkout. Scope and prices are an open owner decision (manual chapter 03).
- */
-export const CORPORATE_FORMATS: { id: string; name: { es: string; en: string }; description: { es: string; en: string } }[] = [
-  { id: 'corp-team', name: { es: 'Sesión para equipos', en: 'Team session' }, description: { es: 'una experiencia grupal en el estudio o en la oficina', en: 'a group experience at the studio or at the office' } },
-  { id: 'corp-program', name: { es: 'Programa recurrente', en: 'Recurring programme' }, description: { es: 'encuentros periódicos para un mismo equipo', en: 'regular sessions for the same team' } },
-  { id: 'corp-workshop', name: { es: 'Taller a medida', en: 'Tailored workshop' }, description: { es: 'una sesión temática, diseñada según la necesidad del equipo', en: 'a themed session designed around what the team needs' } },
-];
 export const priceItem = (id: string) => pricing.find((p) => p.id === id);
+/** The items a member pays a class with (trial and single first, then the packages), cheapest first. */
+export const CLASS_ITEMS = ['trial', 'single', 'pack12', 'pack12_smtc'] as const;
+/** The items that open a class balance (a package), as opposed to paying one class. */
+export const isPackage = (item: PriceItem | undefined) => !!item && (item.classes ?? 0) > 1;
 
 /**
- * Why each family exists — the "Por qué existe" rationale from the Modelo de Valor deck, so the
- * public plans page can explain the model instead of only listing prices. Additive: prices,
- * `FAMILY_LABEL` and `pricing` above are unchanged.
+ * The formats each on-request family is offered in — descriptions only, no price, no checkout. The studio
+ * quotes each request (WhatsApp → the desk prices it by hand in S-04).
+ */
+export const ON_REQUEST_FORMATS: Record<'espacio' | 'corporativo', { id: string; name: { es: string; en: string }; description: { es: string; en: string } }[]> = {
+  espacio: [
+    { id: 'space-shoot', name: { es: 'Fotos y video', en: 'Photo and video' }, description: { es: 'sesiones y rodajes en el estudio', en: 'shoots and filming at the studio' } },
+    { id: 'space-workshop', name: { es: 'Talleres', en: 'Workshops' }, description: { es: 'una sesión temática con tu comunidad', en: 'a themed session with your community' } },
+    { id: 'space-event', name: { es: 'Experiencias y eventos', en: 'Experiences and events' }, description: { es: 'lanzamientos, encuentros y actividades especiales', en: 'launches, gatherings and special activities' } },
+  ],
+  corporativo: [
+    { id: 'corp-team', name: { es: 'Sesión para equipos', en: 'Team session' }, description: { es: 'una experiencia grupal en el estudio o en la oficina', en: 'a group experience at the studio or at the office' } },
+    { id: 'corp-program', name: { es: 'Programa recurrente', en: 'Recurring programme' }, description: { es: 'encuentros periódicos para un mismo equipo', en: 'regular sessions for the same team' } },
+    { id: 'corp-workshop', name: { es: 'Taller a medida', en: 'Tailored workshop' }, description: { es: 'una sesión temática, diseñada según la necesidad del equipo', en: 'a themed session designed around what the team needs' } },
+  ],
+};
+
+/**
+ * Why each family exists — the commercial role and one paragraph, so the plans page and the manual can
+ * explain the offer instead of only listing prices.
  */
 export const FAMILY_ROLE: Record<PlanFamily, { es: string; en: string }> = {
-  bienvenida: { es: 'Adquisición', en: 'Acquisition' },
-  membresia: { es: 'Ingreso recurrente', en: 'Recurring revenue' },
-  pausas: { es: 'Frecuencia', en: 'Frequency' },
-  regalos: { es: 'Referido y comunidad', en: 'Referral and community' },
-  espacio: { es: 'Ingreso B2B', en: 'B2B revenue' },
-  corporativo: { es: 'En camino', en: 'On the way' },
+  bienvenida: { es: 'Primera visita', en: 'First visit' },
+  paquetes: { es: 'Constancia', en: 'Consistency' },
+  privadas: { es: 'A tu medida', en: 'Made for you' },
+  regalos: { es: 'Para compartir', en: 'To share' },
+  espacio: { es: 'Bajo solicitud', en: 'On request' },
+  corporativo: { es: 'Bajo solicitud', en: 'On request' },
 };
 
 export interface FamilyRationale {
@@ -92,90 +115,81 @@ export interface FamilyRationale {
   role: { es: string; en: string };
   /** One line under the family name. */
   subtitle: { es: string; en: string };
-  /** The "Por qué existe" paragraph. */
+  /** The "why it exists" paragraph. */
   why: { es: string; en: string };
-  /** Optional footnote (the annual plan's monthly equivalent, the referral cost). */
+  /** Optional footnote. */
   note?: { es: string; en: string };
 }
 
 export const FAMILY_RATIONALE: Record<PlanFamily, FamilyRationale> = {
   bienvenida: {
     role: FAMILY_ROLE.bienvenida,
-    subtitle: { es: 'Para quien llega — el primer paso, sin complicaciones.', en: 'For whoever arrives — the first step, no complications.' },
+    subtitle: { es: 'Una clase para conocernos, o una clase cuando la quieras.', en: 'One class to meet us, or one class whenever you want it.' },
     why: {
-      es: 'Puntos de entrada a precio bajo, pensados para bajar la barrera de la primera visita. No buscan rentabilidad inmediata: buscan que la persona pruebe una clase y decida seguir, alimentando el paso hacia la Membresía.',
-      en: 'Low-priced entry points, designed to lower the barrier to a first visit. They are not built for immediate margin: they are built so a person tries one class and decides to keep going, feeding the step up into Membership.',
+      es: 'La clase de prueba baja la barrera de la primera visita; la clase individual es para quien viene de vez en cuando o todavía no decide.',
+      en: 'The trial class lowers the barrier to a first visit; the individual class is for whoever comes now and then or has not decided yet.',
     },
   },
-  membresia: {
-    role: FAMILY_ROLE.membresia,
-    subtitle: { es: 'Un solo nivel de acceso, dos formas simples de pagarlo.', en: 'One level of access, two simple ways to pay for it.' },
+  paquetes: {
+    role: FAMILY_ROLE.paquetes,
+    subtitle: { es: 'Doce clases, tres meses, cualquier metodología.', en: 'Twelve classes, three months, any methodology.' },
     why: {
-      es: 'El núcleo económico del negocio, simplificado a dos opciones claras: mensual o anual. Mismo acceso completo a las clases en ambos casos — menos opciones, decisión más fácil, e ingreso recurrente (MRR/ARR) más predecible para el estudio.',
-      en: 'The economic core of the business, simplified into two clear options: monthly or yearly. Full class access in both cases — fewer options, an easier decision, and recurring revenue (MRR/ARR) the studio can forecast.',
+      es: 'El paquete es la forma de practicar con constancia: 12 clases para usar en 3 meses, en cualquiera de las siete metodologías. Puedes congelarlo una sola vez, hasta por 30 días. No es reembolsable.',
+      en: 'The package is how you practise with consistency: 12 classes to use within 3 months, in any of the seven methodologies. You can freeze it once, for up to 30 days. It is non-refundable.',
     },
     note: {
-      es: `El Plan Anual equivale a cerca de ${formatCOP(Math.round((priceItem('annual')?.price ?? 0) / 12), 'es')} al mes: una forma simple de premiar el compromiso, sin necesidad de niveles intermedios.`,
-      en: `The Annual Plan works out at roughly ${formatCOP(Math.round((priceItem('annual')?.price ?? 0) / 12), 'en')} a month: a simple way to reward commitment, with no need for tiers in between.`,
+      es: 'Afiliados de Santa María Tennis Club: precio especial en el paquete de 12 clases. Es el único beneficio entre el club y el estudio.',
+      en: 'Santa María Tennis Club affiliates: a special price on the 12-class package. It is the only benefit between the club and the studio.',
     },
   },
-  pausas: {
-    role: FAMILY_ROLE.pausas,
-    subtitle: { es: 'Sesiones cortas de 15 a 30 minutos.', en: 'Short sessions of 15 to 30 minutes.' },
+  privadas: {
+    role: FAMILY_ROLE.privadas,
+    subtitle: { es: 'Una clase solo para ti, o para ti y dos personas más.', en: 'A class just for you, or for you and two more people.' },
     why: {
-      es: 'Micro-sesiones entre clases completas: elevan la frecuencia semanal por persona con costo marginal casi nulo para el estudio.',
-      en: 'Micro-sessions between full classes: they raise weekly visits per person at almost no marginal cost to the studio.',
+      es: 'Una clase privada se diseña para quien la toma: máximo 3 personas. El valor cubre la clase y cada persona adicional suma un valor fijo.',
+      en: 'A private class is designed for whoever takes it: 3 people at most. The price covers the class and each additional person adds a fixed amount.',
     },
   },
   regalos: {
     role: FAMILY_ROLE.regalos,
-    subtitle: { es: 'Para compartir la experiencia.', en: 'To share the experience.' },
+    subtitle: { es: 'Regala una clase o un paquete, al mismo precio.', en: 'Give a class or a package, at the same price.' },
     why: {
-      es: 'Regalar y compartir la experiencia son, en la práctica, el canal de referido de HOY: nuevas personas llegan a través de alguien que ya conoce el estudio.',
-      en: 'Gifting and sharing the experience are, in practice, HOY’s referral channel: new people arrive through someone who already knows the studio.',
-    },
-    note: {
-      es: 'Cada bono trae a alguien nuevo al estudio, a un costo de adquisición cercano a cero.',
-      en: 'Every voucher brings someone new into the studio, at an acquisition cost close to zero.',
+      es: 'Hay dos tarjetas de regalo, al mismo precio de las clases: una clase individual o un paquete de 12 clases. Puedes comprar varias clases individuales, o dos o más paquetes, para regalar a quien quieras.',
+      en: 'There are two gift cards, at the same price as the classes: an individual class or a 12-class package. You can buy several individual classes, or two or more packages, to give to whoever you like.',
     },
   },
   espacio: {
     role: FAMILY_ROLE.espacio,
-    subtitle: { es: 'Alquiler del estudio — el activo físico como línea de negocio.', en: 'Studio rental — the physical asset as a line of business.' },
+    subtitle: { es: 'El estudio para tus experiencias y actividades especiales.', en: 'The studio for your experiences and special activities.' },
     why: {
-      es: 'El estudio genera ingreso más allá de las clases: producciones, marcas y comunidades alquilan el espacio fuera de las horas de mayor demanda. Es la línea de ingreso menos dependiente del ciclo de membresías y con mayor techo por transacción.',
-      en: 'The studio earns beyond its classes: productions, brands and communities rent the space outside peak hours. It is the revenue line least tied to the membership cycle, and the one with the highest ceiling per transaction.',
+      es: 'HOY alquila el espacio para experiencias y actividades especiales. Cada solicitud se analiza de forma individual y su valor depende de las características y necesidades de cada caso.',
+      en: 'HOY rents the space for experiences and special activities. Each request is reviewed on its own, and its price depends on what each case involves and needs.',
     },
   },
   corporativo: {
     role: FAMILY_ROLE.corporativo,
-    subtitle: { es: 'Bienestar para equipos que rinden alto y descansan poco.', en: 'Wellbeing for teams that perform hard and rest little.' },
+    subtitle: { es: 'Bienestar para equipos, desde el lanzamiento.', en: 'Wellbeing for teams, from launch.' },
     why: {
-      es: 'Llevar HOY a los equipos que más lo necesitan: pausas activas, movimiento y respiración como parte de la cultura de trabajo, no como un beneficio aislado. Tres formatos en preparación: sesión para equipos, programa recurrente y taller a medida.',
-      en: 'Taking HOY to the teams that need it most: active breaks, movement and breathing as part of the work culture, not an isolated perk. Three formats in preparation: team session, recurring programme and tailored workshop.',
-    },
-    note: {
-      es: 'Aún en preparación: alcance, formatos y precios están por confirmar antes del lanzamiento.',
-      en: 'Still in preparation: scope, formats and prices are to be confirmed before launch.',
+      es: 'Llevar HOY a los equipos: movimiento y respiración como parte de la cultura de trabajo. Tres formatos: sesión para equipos, programa recurrente y taller a medida. Cada propuesta se arma con la empresa.',
+      en: 'Taking HOY to teams: movement and breathing as part of the work culture. Three formats: team session, recurring programme and tailored workshop. Each proposal is built with the company.',
     },
   },
 };
 
 /**
- * The discipline behind the model — four numbers and the paragraph that ties the six families
- * together. The numbers are read from src/tenant/tenant.ts (studio capacity) and from the number of
- * families here, so nothing is written twice.
+ * The studio behind the offer — four numbers read from src/tenant/tenant.ts (studio capacity) and from the
+ * private-class rule here, so nothing is written twice.
  */
 export const DISCIPLINE = {
   numbers: [
-    { value: tenant.studio.mats, label: { es: 'tapetes por sesión', en: 'mats per session' } },
+    { value: tenant.studio.mats, label: { es: 'mats por clase', en: 'mats per class' } },
     { value: tenant.studio.classesPerDay, label: { es: 'clases al día', en: 'classes a day' } },
-    { value: tenant.studio.perPersonPerDay, label: { es: 'clase diaria por persona en cualquier plan', en: 'class per person per day on any plan' } },
-    { value: (Object.keys(FAMILY_LABEL) as PlanFamily[]).length, label: { es: 'líneas de ingreso', en: 'revenue lines' } },
+    { value: tenant.studio.perPersonPerDay, label: { es: 'clase al día por persona', en: 'class a day per person' } },
+    { value: priceItem('private')?.maxPeople ?? 3, label: { es: 'personas como máximo en una clase privada', en: 'people at most in a private class' } },
   ],
   paragraph: {
-    es: 'La Bienvenida capta y la Membresía retiene; Pausas y Regalos suben la frecuencia y el referido a costo marginal bajo; el Espacio abre ingreso B2B sin depender del ciclo de membresías, y las Experiencias Corporativas suman un canal adicional en preparación. Seis palancas, un mismo estudio — con un límite de capacidad claro que protege la experiencia.',
-    en: 'Welcome brings people in and Membership keeps them; Pauses and Gifts raise frequency and referrals at low marginal cost; Space opens B2B revenue that does not depend on the membership cycle; and Corporate Experiences add one more channel, still in preparation. Six levers, one studio — with a clear capacity limit that protects the experience.',
+    es: 'Un salón con cupos contados para que cada clase se viva con calma: reservas tu lugar, eliges tu mat y llegas a una sala preparada para ti.',
+    en: 'One room with a set number of places so every class is lived calmly: you book your place, choose your mat and arrive at a room ready for you.',
   },
   tagline: { es: 'La vida es HOY.', en: 'Life is HOY.' },
 } as const;

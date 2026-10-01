@@ -15,8 +15,11 @@ of truth from now on. Nothing here is imported by the app except `public/brand/*
 | `brand/p8-0.png` | Deep-blue wordmark (same as `public/brand/hoy-blue.png`). |
 | `brand/p8-1.png` | Brand board: lockups + palette swatches + studio photo. |
 | `uploads/Manual de marca HOY.pdf` | Brand manual 2026 (12 pages, Spanish). Palette `#F1E7D2 #F7F3B2 #35597D #5F85B1`; Akzidenz-Grotesk (unlicensed → Inter) + DM Sans. |
-| `uploads/HOY_Modelo_de_Valor_v3.pptx` | Pricing model v3 (COP). Ported to `src/modules/website/pricing.ts`. |
+| `uploads/HOY_Modelo_de_Valor_v3.pptx` | Pricing model v3 (COP). Ported to `src/tenant/pricing.ts`; retired in 0051 by the launch price list. |
 | `uploads/screens/` | UI reference screenshots, sketches (`draw-*`) and phone mockups (`pasted-*`). |
+| `uploads/WEBSITE_MODIF.md` | 0051 — text extract of Lorena's `WEBSITE_MODIF.pdf` (2026-10-01): verified website copy, the seven classes and their teachers, launch prices, contact. The 14 MB PDF stays in the shared drive. |
+| `uploads/HOY_FAQ_Corrections_Remove.docx` | 0051 — the studio's FAQ (five sections), the corrections applied and the REMOVE list (credits, self check-in, Nequi/Daviplata, the teacher payroll WhatsApp option). Seeded into `faq_entries`. |
+| `uploads/HOY_Terminos_y_Condiciones.docx` | 0051 — the owner's Términos y Condiciones (14 sections; yellow "Por definir" items still open). Published as terms v2.0 in `src/data/seed/legal.ts`. |
 
 Wordmarks and lockups used by the app live in `public/brand/` (`hoy-blue`, `hoy-cream`,
 `hoy-yellow`, `p8-2`, `p8-3`).

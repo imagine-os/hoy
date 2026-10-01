@@ -2,15 +2,18 @@
 title: Value model
 role: owner, admin, finance, front desk, marketing
 part: I
-version: 0.13.3
-updated: 2026-09-29
-summary: HOY's six revenue lines, why each one exists, what to offer at the desk and the prices in force.
+version: 0.22.0
+updated: 2026-10-01
+summary: HOY's launch price list, why each option exists, what to offer at the desk and the rules of the 12-class package.
 ---
 
 # Value model
 
-HOY sells six different things and each one does a different job. At the desk you don't need to know the margins,
-but you do need to know why each line exists: that way you offer the right thing without improvising.
+HOY sells classes, never credits. At launch there are four things you can buy (the trial class, the
+individual class, the 12-class package and the private class), gift cards at the same price and two services
+quoted case by case: the studio rental and corporate experiences. At the desk you don't need to know the
+margins, but you do need to know why each option exists: that way you offer the right thing without
+improvising.
 
 {{audience:03-modelo-de-valor}}
 
@@ -18,10 +21,10 @@ No price in this chapter is typed by hand. The price blocks are the current ones
 here, on the website and at the desk at the same time.
 
 ## 1. The capacity rule
-One studio, six revenue lines and one rule that protects the experience:
+One studio and one rule that protects the experience:
 
 1. Every class has a fixed number of mats.
-2. Each person takes **one class a day, on any plan**.
+2. Each person takes **one class a day**.
 3. We never sell more spots than fit.
 
 This is the capacity in force:
@@ -29,94 +32,94 @@ This is the capacity in force:
 {{tenant:capacity}}
 
 That is the whole inventory for the day. The business is not about selling more spots, but about offering the
-right spot to the right person — and about charging for what does not take a mat: pauses, gifts, space.
+right spot to the right person, and charging for what does not take up a mat: gifts, private classes, space.
 
-## 2. The six lines
-| Line | Its job | How we know it works |
+## 2. The options
+| Option | Its job | How we know it works |
 |---|---|---|
-| Welcome | Acquisition: the first visit, at a low price | how many passes end up as Memberships |
-| Membership | Recurring revenue: one access level, monthly or yearly | active members and how many stay each month |
-| Pauses | Frequency: short 15 to 30-minute sessions | visits per member per week |
-| Gifts | Referral and community: vouchers and guests | vouchers used and guests who come back |
-| Space | B2B revenue: renting the studio outside peak hours | hours rented per month |
-| Corporate Experiences | On the way: wellbeing for work teams | not on sale yet |
+| First visit | The trial class and the individual class: come in with no commitment | how many trials end in a package |
+| 12-class package | Consistency: 12 classes to use within 3 months | packages sold and how many renew |
+| Private classes | A class made to measure, for 1 to 3 people | private classes per month |
+| Gift cards | Bringing new people in through someone who already knows us | cards redeemed |
+| Space | Renting the studio for experiences and special activities | requests quoted and closed |
+| Corporate experiences | Wellbeing for work teams | proposals sent and closed |
 
-The original document, without prices:
+At launch there is **no monthly or yearly membership, no credits and no short pauses**. The previous value
+model (Membership, Pauses, 3- and 10-class packs) was retired on 1 October 2026.
 
-{{source:modelo-de-valor}}
-
-## 3. Welcome — the first visit
-The way in. Low price and no commitment, so the person decides with their body. This line is not meant to make
-money: it is meant to make the person come back and move up to Membership.
+## 3. First visit — the trial class and the individual class
+The way in. A low price and no lock-in, so the person decides with their body.
 
 {{pricing:bienvenida}}
 
-1. The **3-Class Pack** is used within **one month**.
-2. The **10-Class Pack** is used within **three months**.
+1. The **trial class** is one per person.
+2. The **individual class** is for whoever comes now and then or has not decided yet.
 
-**What to offer:** the first time, the Trial Class. The second time, the 3-Class Pack. The 10-Class Pack is for
-someone who knows they will come back but does not want a monthly plan yet.
+**What to offer:** the first time, the trial class. If the person comes back, the 12-class package.
 
-> DECISION NEEDED: the value model describes the Trial Class as "one class, no entry cost", but the system prices it today. We need to confirm whether the trial is free or whether "no entry cost" means no joining fee.
+## 4. The 12-class package — the heart of the business
+Twelve classes to use within three months, in any of the seven classes on the schedule.
 
-## 4. Membership — the heart of the business
-One access level: there is no "plus plan". It is paid month by month or once a year. The access is the same; the
-annual plan is cheaper per month, and that is the only difference.
+{{pricing:paquetes}}
 
-{{pricing:membresia}}
+1. The 12 classes are used within **3 months** of the purchase.
+2. The package can be **frozen once, for up to 30 days**. The expiry date moves by the same days. While it
+   is frozen, nothing can be booked with it.
+3. **It is non-refundable.**
+4. **Santa María Tennis Club affiliates** get a special price on the package. It is the only benefit between
+   the club and the studio. The front desk checks the affiliation.
 
-**What to say if they ask whether the annual plan is worth it:** "It's the same access. Paying for the year makes
-each month cheaper." The note under the block above says how much it works out at per month.
+**What to say if they ask why the package:** "It's 12 classes to use within three months, in whichever class
+you like. If you travel or get sick, you freeze it once for up to 30 days."
 
-Pausing, the charge notice and cancelling without a maze: [Pauses and gifts](11-pausas-y-regalos.md) and
-[Policies](21-politicas.md).
+This is the freeze rule in force:
 
-![The plans as the public sees them](../../screenshots/P-01/en-1280.jpg "P-01 · /site/plans")
+{{policy:freeze_max_days}}
 
-## 5. Pauses — coming more often
-Short 15 to 30-minute sessions: breathwork, meditation, a pause between meetings. They cost the studio almost
-nothing. Their job is to bring the person in more times a week.
+How to freeze and how to resume: [Frozen packages and gifts](11-pausas-y-regalos.md).
 
-{{pricing:pausas}}
+![Prices as the public sees them](../../screenshots/P-01/en-1280.jpg "P-01 · /site/plans")
 
-**Unlimited Pauses** is a monthly add-on: it stacks with Membership, it does not replace it. What is still open
-about Pauses is in [Pauses and gifts](11-pausas-y-regalos.md).
+## 5. Private classes — made for you
+A class designed for whoever takes it: **3 people at most**. The price covers the class and each additional
+person adds a fixed amount.
 
-## 6. Gifts — bringing new people
-Giving HOY as a gift and bringing someone along is, in practice, our referral channel: new people arrive with
-someone who already knows us.
+{{pricing:privadas}}
+
+Private classes are arranged on WhatsApp: the person writes, coordination proposes a time and a teacher, and
+the front desk charges it in "Register and charge" with the number of people.
+
+## 6. Gift cards — to share
+There are two gift cards, at the same price as the classes: an individual class or a 12-class package. One
+person can buy several individual classes, or two or more packages, to give to whoever they like.
 
 {{pricing:regalos}}
 
-1. The **Gift Voucher** is bought to give away.
-2. The **Guest** is **included** for Membership members: it is a benefit, not something we charge for.
-
-How many guests a member may bring and how they count in the room: [Pauses and gifts](11-pausas-y-regalos.md).
+Whoever receives it redeems it at the front desk. How to sell and redeem it: [Frozen packages and gifts](11-pausas-y-regalos.md).
 
 ## 7. Space — renting the studio
-The studio is rented outside the busiest hours: photo and video, workshops, private sessions, shoots and pop-ups.
-They are "from" prices and end in a conversation, not an online payment.
+HOY rents the space for experiences and special activities. Each request is reviewed on its own and its price
+depends on what each case needs. There is no published price and no online payment.
 
 {{pricing:espacio}}
 
-How to quote, book and charge: [Space — B2B rental](12-espacio-b2b.md).
+How it is quoted, scheduled and charged: [Space — B2B rental](12-espacio-b2b.md).
 
-## 8. Corporate Experiences — on the way
-The sixth line is **in preparation**. The idea is to take HOY to work teams that perform hard and rest little:
-active breaks, movement and breathing as part of the company's culture.
+## 8. Corporate experiences
+Taking HOY to work teams: movement and breathing as part of the company's culture.
 
-Three formats are planned:
+It has three formats:
 
 1. **Team session:** a group experience, at the studio or at the office.
 2. **Recurring programme:** regular sessions for the same team.
-3. **Tailored workshop:** a themed session designed around what the team needs.
+3. **Tailored workshop:** a themed session, designed around what the team needs.
 
 {{pricing:corporativo}}
 
-**What to say if a company asks:** "We're preparing a programme for teams. Leave me your details and coordination
-will write to you." Pass the contact to coordination the same day. Do not give prices or dates.
+**What to say if a company asks:** "We build each proposal with the company. Leave me your details and
+coordination will write to you." Pass the contact to coordination the same day. Don't give prices or dates.
 
-> DECISION NEEDED: the scope, formats and prices of Corporate Experiences, and whether a session at the company's office counts against the studio's capacity.
+> DECISION NEEDED: the price of corporate experiences and whether a session at the company's office counts against the studio's capacity.
 
 ## 9. All together
 The full catalogue, as it stands today:
@@ -127,14 +130,14 @@ The full catalogue, as it stands today:
 {{for:super_admin,admin,finance}}
 | Indicator | What to look at |
 |---|---|
-| Revenue this month | sales already paid, against the same month last year |
-| Mix by line | how much comes from Membership and how much from Welcome |
+| Monthly revenue | sales already paid, against the same month last year |
+| Mix | how much comes from packages, single classes and private classes |
 | Occupancy | people who came over spots offered |
-| Welcome conversion | passes that later bought a Membership |
+| Trial conversion | trials that later bought a package |
 {{/for}}
 
 This is occupancy right now:
 
 {{kpi:occupancy}}
 
-> IN HOYOS: M-01 Dashboard (revenue, occupancy) · M-09 Finance (mix by line) · M-06 CRM → segments (conversion).
+> IN HOYOS: M-01 Dashboard (revenue, occupancy) · M-09 Finance (mix by product) · M-06 CRM → segments (conversion).

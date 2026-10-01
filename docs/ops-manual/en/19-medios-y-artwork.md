@@ -2,8 +2,8 @@
 title: Media library and artwork
 role: coordination, admin, marketing
 part: V
-version: 0.13.3
-updated: 2026-09-29
+version: 0.22.0
+updated: 2026-10-01
 summary: The brand manual's logo, colour and type rules, which images the system needs, in what format, and what still has to be produced.
 ---
 
@@ -64,7 +64,7 @@ The light tones bring light and lightness; the blues bring depth and stability. 
 
 1. A published image is **approved**: coordination reviewed it, the owner approved it if it is a brand image, and
    whoever appears in it signed their permission.
-2. The file name describes what you see, in lower case, with no accents or spaces: `sala-caliente-manana-01.jpg`.
+2. The file name describes what you see, in lower case, with no accents or spaces: `sala-principal-manana-01.jpg`.
 3. JPG for photos, PNG only for logos and graphics with transparency, SVG for icons.
 4. Keep the original at full size. The system is not the photo shoot's archive.
 5. No recognisable members' faces without written permission (see [Personal data](23-habeas-data.md)). People from
@@ -91,12 +91,12 @@ The light tones bring light and lightness; the blues bring depth and stability. 
 | # | Piece | For | Status |
 |---|---|---|---|
 | 1 | Home image: the room in morning light | website home | to do |
-| 2 | One photo per discipline (5) | classes in the app and on the website | to do |
-| 3 | A portrait of every active teacher | teachers | to do |
+| 2 | One photo per class (7), to fill its arch on the website | classes in the app and on the website | to do |
+| 3 | A portrait of every active teacher (the website shows their initials today) | teachers | to do |
 | 4 | A short studio tour video | club rules | to do |
 | 5 | Storefront and map | contact | to do |
-| 6 | A detail of the heated room, no people | [02](02-nuestras-clases.md), social | to do |
-| 7 | Pauses: someone for 20 minutes, in office clothes | [03](03-modelo-de-valor.md), [11](11-pausas-y-regalos.md) | to do |
+| 6 | The hydration zone and the changing rooms, no people | [02](02-nuestras-clases.md), social | to do |
+| 7 | A printed gift card on the front desk | [03](03-modelo-de-valor.md), [11](11-pausas-y-regalos.md) | to do |
 | 8 | The empty space, for the rental catalogue | [12](12-espacio-b2b.md) | to do |
 | 9 | The logo in its three versions, light and dark backgrounds | app, website | done |
 | 10 | The gift voucher template | gift | to do |

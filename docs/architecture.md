@@ -75,7 +75,7 @@ module (no React, no provider) and `src/data/useAnalytics.ts` its hooks (`usePra
 for C-01, C-27 and M-06, `usePracticeStats` also for C-22; `usePracticeGoal` to set or clear the goal; `useMilestoneRecorder` to write the record;
 `useStudioStats` / `useTeacherStats` for M-12 and S-03). Inputs: `bookings` × `class_sessions` (a visit is a
 `checked_in` booking dated by the **session's** start, never the booking's `created_at`), `memberships` (pauses,
-who is entitled), `credits` (live balances) and `practice_goals` (the target, one active row per person; a new
+who is entitled), `class_ledger` (the classes left in each package; `credits` until 0051) and `practice_goals` (the target, one active row per person; a new
 goal ends the old one so history survives). `activity_events` is an append-only record the app writes for the
 member's timeline (goal set, milestone reached, rest week that saved the streak…); no metric reads it. The streak,
 in three lines: weeks run Monday–Sunday in local time and a week is met when visits ≥ the member's target (target 0

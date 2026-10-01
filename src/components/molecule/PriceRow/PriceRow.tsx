@@ -17,6 +17,7 @@ export function PriceRow({ item, onSelect }: { item: PriceItem; onSelect?: (item
       </div>
       <div className="pricerow-price">
         {item.from && <span className="xs muted">{t('core.common.from')} </span>}
+        {item.perPerson && <span className="xs muted">+</span>}
         <span className="pricerow-amount">{price}</span>
         {per && <span className="xs muted"> {per}</span>}
       </div>

@@ -124,6 +124,8 @@ export const coreStrings: StringTable = {
   'core.common.perYear': { es: '/ año', en: '/ year' },
   'core.common.from': { es: 'desde', en: 'from' },
   'core.common.included': { es: 'incluido', en: 'included' },
+  'core.price.option': { es: 'Opción', en: 'Option' },
+  'core.price.column': { es: 'Precio (COP)', en: 'Price (COP)' },
   'core.common.new': { es: 'Nuevo', en: 'New' },
   'core.common.filter': { es: 'Filtrar', en: 'Filter' },
   'core.nav.group.staff': { es: 'Operación', en: 'Operations' },

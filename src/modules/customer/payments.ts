@@ -9,8 +9,9 @@
  * (`https://checkout.wompi.co/p/?public-key=…&currency=COP&amount-in-cents=…&reference=…`)
  * and resolve from the redirect / webhook. Pages and the `payments` table do not change.
  *
- * Manual transfer and cash never touch Wompi: they create a `payments` row with
- * provider 'manual' and status 'pending' that the front desk settles (S-04).
+ * 0051 — the verified methods: online, card on the website, a Wompi QR code or PSE (all through Wompi); at the front
+ * desk, cash and the desk's other methods. No Nequi, no Daviplata. Cash never touches Wompi: it creates a `payments`
+ * row with provider 'manual' and status 'pending' that the front desk settles (S-04).
  */
 import type { DataProvider } from '../../data/types';
 import type { PaymentRow } from '../../data/schema';
@@ -18,9 +19,11 @@ import { splitIva } from '../../data/tax';
 import { tenant } from '../../tenant/tenant';
 import type { IconName } from '../../components/atom/Icon/Icon';
 
-export type ElectronicMethod = 'card' | 'pse' | 'nequi';
+export type ElectronicMethod = 'card' | 'pse' | 'qr';
 export type ManualMethod = 'transfer' | 'cash';
 export type PayMethod = ElectronicMethod | ManualMethod;
+/** A QR code is scanned each time; only a card or a PSE bank can be saved (C-05). */
+export type SavableMethod = 'card' | 'pse';
 
 export interface WompiResult { status: 'approved' | 'declined'; ref: string; reason?: { es: string; en: string } }
 
@@ -32,13 +35,12 @@ export interface PaymentMethodOption {
   glyph: IconName;
 }
 
-/** The Colombian payment reality from C-05, in display order. Flags come from feature_flags later. */
+/** The methods a member sees (C-04, C-05), in display order: the three online ones, then cash at the front desk. */
 export const PAYMENT_METHODS: PaymentMethodOption[] = [
   { id: 'card', provider: 'wompi', label: { es: 'Tarjeta', en: 'Card' }, hint: { es: 'Crédito o débito · vía Wompi', en: 'Credit or debit · via Wompi' }, glyph: 'credit-card' },
   { id: 'pse', provider: 'wompi', label: { es: 'PSE', en: 'PSE' }, hint: { es: 'Débito desde tu banco · vía Wompi', en: 'Bank debit · via Wompi' }, glyph: 'bank' },
-  { id: 'nequi', provider: 'wompi', label: { es: 'Nequi', en: 'Nequi' }, hint: { es: 'Billetera · vía Wompi', en: 'Wallet · via Wompi' }, glyph: 'smartphone' },
-  { id: 'transfer', provider: 'manual', label: { es: 'Transferencia', en: 'Transfer' }, hint: { es: 'Transferencia bancaria · la confirma recepción', en: 'Bank transfer · front desk confirms' }, glyph: 'move' },
-  { id: 'cash', provider: 'manual', label: { es: 'Efectivo', en: 'Cash' }, hint: { es: 'Solo en recepción · cupo retenido 60 min', en: 'Front desk only · spot held 60 min' }, glyph: 'cash' },
+  { id: 'qr', provider: 'wompi', label: { es: 'Código QR', en: 'QR code' }, hint: { es: 'Escanea el QR de Wompi con la app de tu banco', en: 'Scan the Wompi QR with your bank app' }, glyph: 'qr' },
+  { id: 'cash', provider: 'manual', label: { es: 'En recepción', en: 'At the front desk' }, hint: { es: 'Efectivo u otro medio de recepción · cupo retenido 60 min', en: 'Cash or another desk method · spot held 60 min' }, glyph: 'cash' },
 ];
 
 const wait = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
@@ -77,13 +79,12 @@ export async function recordPayment(data: DataProvider, input: { userId: string;
 /**
  * INTEGRATION SEAM — Wompi tokenisation (C-05 "save this method").
  * Today it fabricates a demo reference so `payment_methods.token_ref` is never a real token.
- * With Wompi live, the widget returns `tokenized_card.token` (or the Nequi/PSE mandate) and this
+ * With Wompi live, the widget returns `tokenized_card.token` (or the PSE mandate) and this
  * function resolves with it; the row shape and every page stay the same.
  */
-export async function wompiTokenise(input: { kind: ElectronicMethod }): Promise<{ tokenRef: string; brand: string; last4: string | null; expires: string | null }> {
+export async function wompiTokenise(input: { kind: SavableMethod }): Promise<{ tokenRef: string; brand: string; last4: string | null; expires: string | null }> {
   await wait(700);
   const n = Math.random().toString().slice(2, 6);
   if (input.kind === 'card') return { tokenRef: `tok_demo_${n}${n}`, brand: Math.random() < 0.5 ? 'Visa' : 'Mastercard', last4: n, expires: '12/29' };
-  if (input.kind === 'nequi') return { tokenRef: `tok_demo_nequi_${n}`, brand: 'Nequi', last4: null, expires: null };
   return { tokenRef: `tok_demo_pse_${n}`, brand: 'Bancolombia', last4: null, expires: null };
 }

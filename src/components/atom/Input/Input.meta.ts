@@ -12,7 +12,7 @@ export default defineMeta({
   states: ['default', 'focus', 'disabled', 'invalid'],
   usages: [
     { title: { es: 'Texto', en: 'Text' }, render: () => h('div', { className: 'stack-sm', style: { maxWidth: 320 } }, h(Input, { placeholder: 'correo@ejemplo.com' }), h(Input, { invalid: true, defaultValue: 'no-es-un-correo' }), h(Input, { disabled: true, placeholder: 'Deshabilitado' })) },
-    { title: { es: 'Select', en: 'Select' }, render: () => h(Select, { defaultValue: 'a', style: { maxWidth: 320 } }, h('option', { value: 'a' }, 'Todas las modalidades'), h('option', { value: 'b' }, 'Hot Vinyasa')) },
+    { title: { es: 'Select', en: 'Select' }, render: () => h(Select, { defaultValue: 'a', style: { maxWidth: 320 } }, h('option', { value: 'a' }, 'Todas las modalidades'), h('option', { value: 'b' }, 'Fuego')) },
   ],
   a11y: [{ es: 'Siempre con <label> (Field lo hace); aria-invalid en error.', en: 'Always labelled (Field does it); aria-invalid on error.' }],
   usedBy: ['A-02', 'M-03', 'S-04', 'MessageComposer', 'ConversationList', 'D-06'],

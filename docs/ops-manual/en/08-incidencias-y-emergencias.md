@@ -2,8 +2,8 @@
 title: Incidents and emergencies
 role: everyone
 part: II
-version: 0.13.3
-updated: 2026-09-29
+version: 0.22.0
+updated: 2026-10-01
 summary: A medical emergency, heat dizziness, evacuation, who to call and how an incident is recorded.
 ---
 
@@ -29,7 +29,8 @@ The rule never changes: **the person first, the record second**. Never the other
 > IN HOYOS: S-02 → Member profile (opens M-06) → emergency contact. Note: M-06 → Notes → Add note.
 
 ## 2. Heat: dizziness, nausea, heat stroke
-In the heated room this is the most likely incident. It almost always resolves if you act early.
+In the intense classes (Fuego, Sólido) this is the most likely incident. It almost always resolves if you act
+early.
 
 1. Signs: paleness, dizziness, nausea, stops sweating, speaks oddly. The teacher sees it from the front.
 2. Take the person out of the room and sit them down. Do not lay them down suddenly.

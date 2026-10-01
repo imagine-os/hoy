@@ -1,6 +1,10 @@
 import type { Role } from './roles';
 
-/** Fictional people, one per role. No real data. Ids match `users` seed rows. */
+/**
+ * Fictional people, one per role. No real data. Ids match `users` seed rows. One exception since 0051: the teacher
+ * persona signs in as Carolina Cifuentes, one of the studio's real teachers (the names the owner publishes on the
+ * site), so the teacher app shows a real class (Pulso); her account email and phone stay fictional.
+ */
 export interface DemoUser {
   id: string;
   role: Role;
@@ -16,11 +20,11 @@ export const demoUsers: DemoUser[] = [
   { id: 'usr_coord', role: 'coordinator', name: 'Valentina Ríos', initials: 'VR', email: 'valentina@demo.hoyos.test', blurb: { es: 'Coordina horario, profes y comunicaciones.', en: 'Runs schedule, teachers and comms.' } },
   { id: 'usr_desk', role: 'front_desk', name: 'Camilo Duque', initials: 'CD', email: 'camilo@demo.hoyos.test', blurb: { es: 'Recepción: check-in y cobros.', en: 'Front desk: check-in and payments.' } },
   { id: 'usr_fin', role: 'finance', name: 'Laura Betancur', initials: 'LB', email: 'laura@demo.hoyos.test', blurb: { es: 'Pagos, facturas y nómina.', en: 'Payments, invoices and payroll.' } },
-  { id: 'usr_teach', role: 'teacher', name: 'Andrés Quintero', initials: 'AQ', email: 'andres@demo.hoyos.test', blurb: { es: 'Profesor de Hot Vinyasa.', en: 'Hot Vinyasa teacher.' } },
+  { id: 'usr_teach', role: 'teacher', name: 'Carolina Cifuentes', initials: 'CC', email: 'carolina@demo.hoyos.test', blurb: { es: 'Profesora de Pulso.', en: 'Pulso teacher.' } },
   { id: 'usr_maint', role: 'maintenance', name: 'Rosa Cárdenas', initials: 'RC', email: 'rosa@demo.hoyos.test', blurb: { es: 'Salas, incidencias e inventario.', en: 'Rooms, incidents and inventory.' } },
   { id: 'usr_mkt', role: 'marketing', name: 'Camila Herrera', initials: 'CH', email: 'camila@demo.hoyos.test', blurb: { es: 'Marketing: contenido, campañas y la voz de la marca.', en: 'Marketing: content, campaigns and the brand voice.' } },
   { id: 'usr_dev', role: 'developer', name: 'Julián Mesa', initials: 'JM', email: 'julian@demo.hoyos.test', blurb: { es: 'Desarrollo: herramientas dev, specs, tablas y docs, con modo dev.', en: 'Developer: dev tools, specs, tables and docs, with dev mode.' } },
-  { id: 'usr_cust', role: 'customer', name: 'Juliana Ospina', initials: 'JO', email: 'juliana@demo.hoyos.test', blurb: { es: 'Socia mensual, practica en la mañana.', en: 'Monthly member, morning practice.' } },
+  { id: 'usr_cust', role: 'customer', name: 'Juliana Ospina', initials: 'JO', email: 'juliana@demo.hoyos.test', blurb: { es: 'Paquete de 12 clases, practica en la mañana.', en: '12-class package, morning practice.' } },
   { id: 'usr_public', role: 'public', name: 'Visitante', initials: '·', email: '', blurb: { es: 'Sin sesión.', en: 'Not signed in.' } },
 ];
 

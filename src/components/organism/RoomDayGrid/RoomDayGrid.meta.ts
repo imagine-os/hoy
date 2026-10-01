@@ -5,8 +5,8 @@ import { RoomDayGrid, type RoomBlock } from './RoomDayGrid';
 const day = (hh: number, mm = 0) => { const d = new Date(); d.setHours(hh, mm, 0, 0); return d.toISOString(); };
 const rooms = [{ id: 'a', name: 'Sala principal', capacity: 15 }, { id: 'b', name: 'Sala de meditación', capacity: 8 }];
 const blocks: RoomBlock[] = [
-  { id: '1', roomId: 'a', startsAt: day(6), endsAt: day(7), title: 'Morning Flow', sub: 'Manuela · 9/15', tone: 'river', status: 'class' },
-  { id: '2', roomId: 'a', startsAt: day(12), endsAt: day(13), title: 'Hot Vinyasa', sub: 'Andrés · 15/15', tone: 'clay', status: 'class' },
+  { id: '1', roomId: 'a', startsAt: day(6), endsAt: day(7), title: 'Ligereza', sub: 'Manuela · 9/15', tone: 'river', status: 'class' },
+  { id: '2', roomId: 'a', startsAt: day(12), endsAt: day(13), title: 'Fuego', sub: 'Andrés · 15/15', tone: 'clay', status: 'class' },
   { id: '3', roomId: 'a', startsAt: day(16), endsAt: day(17, 30), title: 'Sesión privada · equipo', sub: 'Paula · Lumen Studio', tone: 'private', status: 'confirmed' },
   { id: '4', roomId: 'b', startsAt: day(8), endsAt: day(11), title: 'Mantenimiento', tone: 'maintenance', status: 'confirmed' },
   { id: '5', roomId: 'b', startsAt: day(17), endsAt: day(18, 30), title: 'Cumpleaños de Mariana', sub: 'Felipe · 8 personas', tone: 'event', status: 'held' },

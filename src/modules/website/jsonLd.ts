@@ -40,3 +40,24 @@ export function useStudioJsonLd() {
     return () => { document.getElementById(SCRIPT_ID)?.remove(); };
   }, [json]);
 }
+
+const FAQ_SCRIPT_ID = 'hoyos-faqpage';
+
+/**
+ * 0051 — the FAQ (W-10) as schema.org `FAQPage` JSON-LD, in the reader's language. A `{{pricing:…}}` line in an
+ * answer is written out as "name: price" pairs, so the structured data carries the same live prices as the table.
+ */
+export function useFaqJsonLd(entries: { question: string; answer: string }[]) {
+  const json = useMemo(() => JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: entries.map((e) => ({ '@type': 'Question', name: e.question, acceptedAnswer: { '@type': 'Answer', text: e.answer } })),
+  }), [entries]);
+  useEffect(() => {
+    if (typeof document === 'undefined' || entries.length === 0) return undefined;
+    let el = document.getElementById(FAQ_SCRIPT_ID) as HTMLScriptElement | null;
+    if (!el) { el = document.createElement('script'); el.type = 'application/ld+json'; el.id = FAQ_SCRIPT_ID; document.head.appendChild(el); }
+    el.textContent = json;
+    return () => { document.getElementById(FAQ_SCRIPT_ID)?.remove(); };
+  }, [json, entries.length]);
+}

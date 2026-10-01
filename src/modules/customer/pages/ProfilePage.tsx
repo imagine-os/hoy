@@ -4,7 +4,7 @@ import { useI18n } from '../../../i18n/I18nProvider';
 import { useContact } from '../../admin/settings';
 import { useSession } from '../../../auth/SessionProvider';
 import { useData } from '../../../data/DataContext';
-import { formatDate, isPhone } from '../../../i18n/format';
+import { isPhone } from '../../../i18n/format';
 import { useLayout } from '../../../layout/useLayout';
 import { tenant } from '../../../tenant/tenant';
 import { Card } from '../../../components/molecule/Card/Card';
@@ -26,7 +26,7 @@ import { Icon } from '../../../components/atom/Icon/Icon';
 
 const spec = canvasSpecs['C-19'];
 
-/** C-19 Profile, settings & membership. */
+/** C-19 Profile, settings and the 12-class package (0051: was membership). */
 export function ProfilePage() {
   const { t, bi, lang } = useI18n();
   const contact = useContact();
@@ -81,7 +81,7 @@ export function ProfilePage() {
         <div className="grow stack-sm">
           {profile ? <h1 className="cust-title" style={{ fontSize: 'var(--fs-xl)' }}>{name}</h1> : <Skeleton width={180} height={24} />}
           <div className="row wrap">
-            {ent.membership && ent.plan ? <Badge tone={ent.membership.status === 'active' ? 'success' : 'warn'}>{bi({ es: ent.plan.name_es, en: ent.plan.name_en })}</Badge> : <Badge tone="neutral">{t('customer.profile.noPlan')}</Badge>}
+            {ent.plan ? <Badge tone={ent.membership?.status === 'paused' || ent.pkg.frozen ? 'warn' : 'success'}>{bi({ es: ent.plan.name_es, en: ent.plan.name_en })}</Badge> : <Badge tone="neutral">{t('customer.profile.noPlan')}</Badge>}
             {profile && !profile.whatsapp_verified && <button type="button" className="cust-linkbtn" onClick={verifyWhatsapp}><Badge tone="warn">{t('customer.profile.whatsapp.verify')}</Badge></button>}
           </div>
           <span className="small muted">{account?.email ?? user.email}{account?.phone ? ` · ${account.phone}` : ''}</span>
@@ -91,8 +91,7 @@ export function ProfilePage() {
     EditProfile: () => <Button block variant="secondary" onClick={openEdit}>{t('customer.profile.edit')}</Button>,
     'MembershipRow → plan management': () => (
       <ListGroup title={t('customer.profile.account')}>
-        <ListRow icon="ticket" title={t('customer.membership.title')} subtitle={ent.membership ? t('customer.home.membership.active', { date: formatDate(ent.membership.renews_at ?? ent.membership.starts_at, lang) }) : t('customer.profile.noPlan')} to="/app/membership" trailing={ent.membership ? <Badge tone={ent.membership.status === 'active' ? 'success' : 'warn'}>{t(`customer.membership.status.${ent.membership.status}`)}</Badge> : undefined} />
-        <ListRow icon="coins" title={t('customer.credits.title')} subtitle={t('customer.checkout.credit.sub', { n: ent.creditBalance })} to="/app/credits" />
+        <ListRow icon="coins" title={t('customer.classes.title')} subtitle={ent.pkg.purchase ? t('customer.checkout.package.sub', { n: ent.pkg.left }) : t('customer.profile.noPlan')} to="/app/classes" trailing={ent.pkg.frozen ? <Badge tone="warn">{t('customer.classes.frozen.badge')}</Badge> : undefined} />
         <ListRow icon="history" title={t('core.nav.history')} to="/app/history" />
         <ListRow icon="flame" title={t('customer.practice.title')} subtitle={t('customer.practice.more.sub')} to="/app/practice" />
       </ListGroup>

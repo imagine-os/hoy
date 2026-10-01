@@ -2,8 +2,8 @@
 title: Payments and the till
 role: finance, front desk, owner
 part: IV
-version: 0.13.3
-updated: 2026-09-29
+version: 0.22.0
+updated: 2026-10-01
 summary: Payment methods, closing the till, daily reconciliation, Wompi, refunds, expenses and the balance, and the monthly reports.
 ---
 
@@ -19,9 +19,14 @@ bank.
 |---|---|---|
 | Cash | straight away | the front desk, on receiving it |
 | Card terminal | when Wompi confirms it | finance, in the Wompi dashboard |
-| Wompi link | when Wompi confirms it | automatic; finance checks it |
-| Transfer or Nequi | when finance sees the money in the account | finance, in the member's payments |
-| Gift voucher | straight away (takes off the balance) | the system |
+| Wompi link (card on the website) | when Wompi confirms it | automatic; finance checks it |
+| PSE | when Wompi confirms it | automatic; finance checks it |
+| Wompi QR | when Wompi confirms it | automatic; finance checks it |
+| Transfer | when finance sees the money in the account | finance, in the person's payments |
+
+On the website people pay by card, PSE or the Wompi QR; at the front desk there is also cash, the card terminal
+and transfer. **Nequi and Daviplata are not accepted.** A gift card is not a payment method: it is redeemed at the
+front desk for the class or package it gives (see [Frozen packages and gifts](11-pausas-y-regalos.md)).
 
 A pending sale **is not a sale**. Until it is paid, it doesn't count in the month's revenue.
 
@@ -68,10 +73,11 @@ The till difference that goes to the owner:
 ## 5. Refunds
 | Case | What we do | Who approves |
 |---|---|---|
-| The studio cancelled the class | The credit comes back on its own | nobody, it's automatic |
-| Double charge or error | Refund to the same method from Wompi, noted in the member's payments | finance |
-| Courtesy after a complaint | Credit, not money | coordination |
-| Leaving an annual membership | Pro-rated as the terms say | owner |
+| The studio cancelled the class | The class goes back to the package on its own | nobody, it's automatic |
+| Double charge or error | Refund to the same method from Wompi, noted in the person's payments | finance |
+| Courtesy after a complaint | A class, not money | coordination |
+| Asks to return the 12-class package | It is non-refundable; offer to freeze it once | nobody: it is the rule |
+| Missed it through illness | The class is rescheduled | coordination |
 
 Every refund is recorded with who did it and the before and after values.
 
@@ -103,7 +109,7 @@ The legal pages and the emergency flow cannot be switched off.
 
 1. **Every Monday:** occupancy by class and time slot, sales by product, no-shows.
 2. **Every month (on the 5th):** revenue, payroll, expenses and the month's balance; Wompi deposits reconciled;
-   "At risk" members; the reasons people cancelled their membership.
+   "At risk" members; packages about to expire.
 
 > IN HOYOS: M-01 Dashboard → M-07 Export CSV → M-06 groups → M-09 Finance.
 

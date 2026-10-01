@@ -82,10 +82,10 @@ Walla's instructor stats (fill, client retention, popularity, reliability) are t
 | Miembros activos · nuevos · visitas/semana | distinct users with a check-in · first ever check-in in range · check-ins / active / (range ÷ 7) | ≥ 2 visits a week |
 | Horarios populares | mean per-class fill by weekday × start hour (heatmap) | same 70–85 % guide |
 | Segunda visita | first-timers of 30–60 days ago who attended again within 30 days | goal > 60 % (industry < 50 %) |
-| Sin venir (at risk) | active membership or live credits AND last check-in ≥ 14 days ago | ladder 14 / 30 / 60 / 90 days; a list of who to call, not a ranking |
+| Sin venir (at risk) | a live package (or a dormant active membership; credits until 0051) AND last check-in ≥ 14 days ago | ladder 14 / 30 / 60 / 90 days; a list of who to call, not a ranking |
 | Por modalidad · por profesor | fill and attendance per completed class | — |
 | Logros recientes | milestones reached in range, newest first | to congratulate in person |
-| Créditos por vencer | members with a balance whose next expiry falls within 14 / 7 days | nudge at 14 and 7 days |
+| Paquetes por vencer (Créditos por vencer until 0051) | people with package classes left whose expiry falls within 14 / 7 days | nudge at 14 and 7 days |
 | Metas | members with a goal · on track this week · average goal | adoption of the picker |
 
 Benchmarks: annual retention 66.4 % across the industry, 75–80 % for well-run boutiques

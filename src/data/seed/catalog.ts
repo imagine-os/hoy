@@ -9,15 +9,19 @@ export const base = (id: string, daysAgo = 30): BaseRow => {
   return { id, tenant_id: tenant.id, created_at: iso(d), updated_at: iso(d) };
 };
 
+/**
+ * 0051 — the seven classes of the verified launch brief, one schedule modality each (the slug matches the class
+ * route in src/tenant/brand.ts). Intensity follows the owner's class cards (baja 1 · media 3 · media-alta 4 ·
+ * alta 5). Durations are demo values until the studio publishes its timetable; coordination edits them in M-02.
+ */
 export const modalities: ModalityRow[] = [
-  { ...base('mod_hot_vinyasa', 200), slug: 'hot-vinyasa', name_es: 'Hot Vinyasa', name_en: 'Hot Vinyasa', tone: 'clay', description: { es: 'Flujo dinámico en sala caliente. Sudor, fuerza y foco.', en: 'Dynamic flow in a heated room. Sweat, strength and focus.' }, intensity: 4, heated: true, duration_min: 60, active: true },
-  { ...base('mod_morning_flow', 200), slug: 'morning-flow', name_es: 'Morning Flow', name_en: 'Morning Flow', tone: 'river', description: { es: 'Vinyasa suave para despertar el cuerpo y ordenar el día.', en: 'Gentle vinyasa to wake the body and order the day.' }, intensity: 2, heated: false, duration_min: 60, active: true },
-  { ...base('mod_pilates', 200), slug: 'pilates', name_es: 'Pilates', name_en: 'Pilates', tone: 'moss', description: { es: 'Control, centro y precisión en mat.', en: 'Control, core and precision on the mat.' }, intensity: 3, heated: false, duration_min: 55, active: true },
-  { ...base('mod_barre', 200), slug: 'barre', name_es: 'Barre', name_en: 'Barre', tone: 'sage', description: { es: 'Fuerza y postura con inspiración en ballet.', en: 'Strength and posture with a ballet lineage.' }, intensity: 3, heated: false, duration_min: 50, active: true },
-  { ...base('mod_yin', 200), slug: 'yin', name_es: 'Yin', name_en: 'Yin', tone: 'sun', description: { es: 'Posturas largas y quietas para soltar tejido profundo.', en: 'Long, still holds to release deep tissue.' }, intensity: 1, heated: false, duration_min: 60, active: true },
-  // 0018: Respiración has its own row; M-08f decides whether the public sees it (breathworkOwnClass) or it stays inside meditación.
-  { ...base('mod_respiracion', 200), slug: 'respiracion', name_es: 'Respiración', name_en: 'Breathwork', tone: 'slate', description: { es: 'Pranayama y respiración consciente, sentados o acostados. Sin esfuerzo.', en: 'Pranayama and conscious breathing, seated or lying down. No effort.' }, intensity: 1, heated: false, duration_min: 45, active: true },
-  { ...base('mod_meditacion', 200), slug: 'meditacion', name_es: 'Meditación', name_en: 'Meditation', tone: 'plum', description: { es: 'Respiración guiada y silencio compartido.', en: 'Guided breath and shared silence.' }, intensity: 1, heated: false, duration_min: 40, active: true },
+  { ...base('mod_ligereza', 200), slug: 'ligereza', name_es: 'Ligereza', name_en: 'Ligereza', tone: 'river', description: { es: 'Movilidad, stretching y yoga yin. Baja intensidad.', en: 'Mobility, stretching and yin yoga. Low intensity.' }, intensity: 1, heated: false, duration_min: 60, active: true },
+  { ...base('mod_hibrido', 200), slug: 'hibrido', name_es: 'Híbrido', name_en: 'Híbrido', tone: 'plum', description: { es: 'Pilates y yoga dinámico. Media intensidad.', en: 'Pilates and dynamic yoga. Medium intensity.' }, intensity: 3, heated: false, duration_min: 60, active: true },
+  { ...base('mod_fuego', 200), slug: 'fuego', name_es: 'Fuego', name_en: 'Fuego', tone: 'clay', description: { es: 'Pilates dinámico y rumba. Alta intensidad, sin descanso.', en: 'Dynamic pilates and rumba. High intensity, no rest.' }, intensity: 5, heated: false, duration_min: 60, active: true },
+  { ...base('mod_solido', 200), slug: 'solido', name_es: 'Sólido', name_en: 'Sólido', tone: 'slate', description: { es: 'Pilates con pesas y resistencia. Full body, intensidad media-alta.', en: 'Pilates with weights and resistance. Full body, medium-high intensity.' }, intensity: 4, heated: false, duration_min: 60, active: true },
+  { ...base('mod_centro', 200), slug: 'centro', name_es: 'Centro', name_en: 'Centro', tone: 'moss', description: { es: 'Meditación, respiración consciente y sound healing.', en: 'Meditation, conscious breathing and sound healing.' }, intensity: 1, heated: false, duration_min: 60, active: true },
+  { ...base('mod_alineacion', 200), slug: 'alineacion', name_es: 'Alineación', name_en: 'Alineación', tone: 'sage', description: { es: 'Yoga dinámico funcional y vinyasas. Media intensidad.', en: 'Functional dynamic yoga and vinyasas. Medium intensity.' }, intensity: 3, heated: false, duration_min: 60, active: true },
+  { ...base('mod_pulso', 200), slug: 'pulso', name_es: 'Pulso', name_en: 'Pulso', tone: 'sun', description: { es: 'Barre, isometrías y pulsos. Media intensidad.', en: 'Barre, isometrics and pulses. Medium intensity.' }, intensity: 3, heated: false, duration_min: 60, active: true },
 ];
 
 export const rooms: RoomRow[] = [
@@ -27,30 +31,43 @@ export const rooms: RoomRow[] = [
   { ...base('room_meditacion', 200), name: 'Sala de meditación', capacity: 8, heated: false },
 ];
 
+/**
+ * 0051 — the studio's teachers as the owner listed them for the website (names exactly as given), each with the
+ * one class they guide. The bio only states that class: nothing else about a real person is invented. Portraits
+ * stay empty until the photo session (the site shows the portrait-pending state). `rate_per_class` is the demo
+ * fallback the payroll seed reads; the owner sets the real rate card in M-08c. The teacher demo sign-in
+ * (`usr_teach`) opens Carolina's teacher app; the account's email and phone stay fictional.
+ */
+const teacher = (id: string, name: string, mod: string, cls: string, userId: string | null = null): TeacherRow => ({
+  ...base(id, 180), user_id: userId, display_name: name,
+  bio: { es: `Guía las clases de ${cls}.`, en: `Guides the ${cls} classes.` },
+  photo_url: null, specialties: [mod], rate_per_class: 90000, active: true, rating_avg: null,
+});
+
 export const teachers: TeacherRow[] = [
-  { ...base('tea_andres', 180), user_id: 'usr_teach', display_name: 'Andrés Quintero', bio: { es: 'Hot Vinyasa con humor y disciplina. 8 años enseñando.', en: 'Hot Vinyasa with humour and discipline. 8 years teaching.' }, photo_url: null, specialties: ['mod_hot_vinyasa', 'mod_morning_flow'], rate_per_class: 110000, active: true, rating_avg: 4.8 },
-  { ...base('tea_paula', 180), user_id: null, display_name: 'Paula Mejía', bio: { es: 'Pilates clásico y contemporáneo. Precisión amable.', en: 'Classical and contemporary Pilates. Kind precision.' }, photo_url: null, specialties: ['mod_pilates', 'mod_barre'], rate_per_class: 95000, active: true, rating_avg: 4.9 },
-  { ...base('tea_santiago', 180), user_id: null, display_name: 'Santiago Vélez', bio: { es: 'Yin y meditación. Menos es más.', en: 'Yin and meditation. Less is more.' }, photo_url: null, specialties: ['mod_yin', 'mod_meditacion'], rate_per_class: 85000, active: true, rating_avg: 4.7 },
-  { ...base('tea_manuela', 180), user_id: null, display_name: 'Manuela Torres', bio: { es: 'Morning Flow con música y respiración.', en: 'Morning Flow with music and breath.' }, photo_url: null, specialties: ['mod_morning_flow', 'mod_yin'], rate_per_class: 95000, active: true, rating_avg: 4.6 },
-  { ...base('tea_daniel', 180), user_id: null, display_name: 'Daniel Ochoa', bio: { es: 'Barre y fuerza funcional.', en: 'Barre and functional strength.' }, photo_url: null, specialties: ['mod_barre', 'mod_pilates'], rate_per_class: 85000, active: true, rating_avg: 4.5 },
-  { ...base('tea_isabela', 180), user_id: null, display_name: 'Isabela Cano', bio: { es: 'Hot Vinyasa exigente y clara.', en: 'Demanding, clear Hot Vinyasa.' }, photo_url: null, specialties: ['mod_hot_vinyasa'], rate_per_class: 110000, active: true, rating_avg: 4.9 },
-  { ...base('tea_felipe', 180), user_id: null, display_name: 'Felipe Zapata', bio: { es: 'Meditación y pranayama para gente ocupada.', en: 'Meditation and pranayama for busy people.' }, photo_url: null, specialties: ['mod_meditacion'], rate_per_class: 80000, active: true, rating_avg: 4.7 },
-  { ...base('tea_carolina', 180), user_id: null, display_name: 'Carolina Pardo', bio: { es: 'Pilates mat y rehabilitación suave.', en: 'Mat Pilates and gentle rehab.' }, photo_url: null, specialties: ['mod_pilates'], rate_per_class: 95000, active: true, rating_avg: 4.8 },
+  teacher('tea_carolina', 'Carolina Cifuentes', 'mod_pulso', 'Pulso', 'usr_teach'),
+  teacher('tea_raghu', 'Raghu', 'mod_hibrido', 'Híbrido'),
+  teacher('tea_sara_e', 'Sara Estrada', 'mod_fuego', 'Fuego'),
+  teacher('tea_andre', 'Andre Cardona', 'mod_solido', 'Sólido'),
+  teacher('tea_sara_c', 'Sara Crismatt Duque', 'mod_ligereza', 'Ligereza'),
+  teacher('tea_maria_camila', 'María Camila Pinzón', 'mod_alineacion', 'Alineación'),
+  teacher('tea_tatiana', 'Tatiana Ramirez', 'mod_centro', 'Centro'),
 ];
 
 export const plans: PlanRow[] = pricing.map((p, i) => ({
   ...base(`plan_${p.id}`, 200),
   slug: p.id, family: p.family, name_es: p.name.es, name_en: p.name.en, description: p.description,
-  price: p.price ?? 0, period: p.period ?? 'once', credits: p.credits ?? null, validity_days: p.validityDays ?? null,
+  price: p.price ?? 0, period: p.period ?? 'once', classes: p.classes ?? null, validity_days: p.validityDays ?? null,
   is_from_price: !!p.from, badge: p.badge ?? null, active: true, sort: i,
 }));
 
 /**
  * 0018 — the demo rate card M-08c opens with (COP per class by modality). It lives on the seeded
  * `tenants.settings.payroll.rateCard`, not on the teacher rows: `teachers.rate_per_class` stays as the
- * last fallback `payrollCalc.rateFor()` reads. The owner replaces these numbers in M-08c.
+ * last fallback `payrollCalc.rateFor()` reads. 0051: one flat demo rate for the seven classes — the owner
+ * replaces it in M-08c.
  */
 export const SEED_RATE_CARD = {
-  byModality: { mod_hot_vinyasa: 110000, mod_morning_flow: 95000, mod_pilates: 95000, mod_barre: 90000, mod_yin: 85000, mod_meditacion: 80000, mod_respiracion: 80000 } as Record<string, number>,
+  byModality: Object.fromEntries(modalities.map((m) => [m.id, 90000])) as Record<string, number>,
   byTeacher: {} as Record<string, number>,
 };

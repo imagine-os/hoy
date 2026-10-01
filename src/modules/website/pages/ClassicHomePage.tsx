@@ -18,7 +18,7 @@ import { useWhatsappLink } from '../../admin/settings';
 import { siteSpecs } from '../specs';
 import { useTodaySessions } from '../hooks';
 
-const FAMILIES: PlanFamily[] = ['bienvenida', 'membresia', 'pausas', 'regalos', 'espacio'];
+const FAMILIES: PlanFamily[] = ['bienvenida', 'paquetes', 'privadas', 'regalos'];
 
 export function ClassicHomePage() {
   const { t, bi, lang } = useI18n();
@@ -65,9 +65,9 @@ export function ClassicHomePage() {
             const c = classes[slug];
             return (
               <Link key={slug} to={`/site/classes/${slug}`} className={`site-classcard tonecard-${c.tone}`}>
-                <p className="eyebrow">{bi(c.eyebrow)}</p>
+                <p className="eyebrow">{bi(c.keywords[0])} · {bi(c.keywords[1] ?? c.keywords[0])}</p>
                 <h3>{bi(c.name)}</h3>
-                <p className="small">{bi(c.summary)}</p>
+                <p className="small">{bi(c.tagline)}. {bi(c.method)}.</p>
                 <span className="site-classcard-more">{t('site.classes.read')} →</span>
               </Link>
             );
@@ -91,7 +91,7 @@ export function ClassicHomePage() {
         <SectionHead title={t('site.value.title')} body={t('site.value.body')} action={<Link to="/site/plans">{t('site.value.all')} →</Link>} />
         <div className="site-valuegrid">
           {FAMILIES.map((fam) => (
-            <Card key={fam} eyebrow={bi(FAMILY_RATIONALE[fam].role)} title={bi(FAMILY_LABEL[fam])} tone={fam === 'membresia' ? 'highlight' : 'surface'}>
+            <Card key={fam} eyebrow={bi(FAMILY_RATIONALE[fam].role)} title={bi(FAMILY_LABEL[fam])} tone={fam === 'paquetes' ? 'highlight' : 'surface'}>
               <p className="small muted">{bi(FAMILY_RATIONALE[fam].subtitle)}</p>
             </Card>
           ))}
@@ -106,8 +106,7 @@ export function ClassicHomePage() {
           <hr className="site-panel-rule" />
           <p className="site-quote">{bi(philosophy.pullQuote)}</p>
           <div className="site-panel-cols">
-            <p>{bi(philosophy.paragraphs[0])}</p>
-            <p>{bi(philosophy.paragraphs[2])}</p>
+            {philosophy.sections.map((sec) => <p key={sec.title.es}>{bi(sec.paragraphs[0])}</p>)}
           </div>
           <p><Link to="/site/about">{t('site.philosophy.more')} →</Link></p>
         </div>

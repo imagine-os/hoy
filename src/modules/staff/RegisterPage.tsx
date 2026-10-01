@@ -24,26 +24,30 @@ import { useAudit } from './audit';
 import { maskPhone, personMatches, usePeople } from './people';
 import { BOOKING_KINDS, KIND_FOR_ITEM, KIND_LABEL, dateInputValue, findConflicts, localIso, timeInputValue } from './rooms';
 import './staff.css';
-import { addDays, addMonths, dateKey, digitsOf, parseDigits } from '../../i18n/format';
+import { addDays, dateKey, digitsOf, parseDigits } from '../../i18n/format';
 import { fakeRef } from '../customer/payments';
 
-type Method = 'cash' | 'datafono' | 'transfer' | 'nequi' | 'wompi';
-const METHODS: Method[] = ['cash', 'datafono', 'transfer', 'nequi', 'wompi'];
+/** 0051: the desk's methods — cash, the card terminal, a transfer, the Wompi QR shown at the desk, and a Wompi payment link. No Nequi. */
+type Method = 'cash' | 'datafono' | 'transfer' | 'qr' | 'wompi';
+const METHODS: Method[] = ['cash', 'datafono', 'transfer', 'qr', 'wompi'];
 const METHOD_DB: Record<Method, { method: string; provider: 'wompi' | 'manual' }> = {
-  cash: { method: 'cash', provider: 'manual' }, datafono: { method: 'card', provider: 'manual' }, transfer: { method: 'transfer', provider: 'manual' }, nequi: { method: 'nequi', provider: 'manual' }, wompi: { method: 'card', provider: 'wompi' },
+  cash: { method: 'cash', provider: 'manual' }, datafono: { method: 'card', provider: 'manual' }, transfer: { method: 'transfer', provider: 'manual' }, qr: { method: 'qr', provider: 'wompi' }, wompi: { method: 'card', provider: 'wompi' },
 };
-const SELLABLE: PlanFamily[] = ['bienvenida', 'membresia', 'pausas'];
+/** What the desk sells from the list: the trial and individual class, and the 12-class package (0051). */
+const SELLABLE: PlanFamily[] = ['bienvenida', 'paquetes'];
+/** A desk sale: a priced item, or an Especial typed by hand (a private class, a rental, a corporate session). */
+type DeskItem = Omit<PriceItem, 'family'> & { family: PlanFamily };
 type Mode = 'new' | 'existing' | 'contact';
 
-interface Sale { payment: PaymentRow; number: string; subtotal: number; tax: number; total: number; customer: string; contact: string; item: PriceItem; checkedIn?: string; isNew: boolean; booking?: string; payout?: { name: string; amount: number } }
+interface Sale { payment: PaymentRow; number: string; subtotal: number; tax: number; total: number; customer: string; contact: string; item: DeskItem; checkedIn?: string; isNew: boolean; booking?: string; payout?: { name: string; amount: number } }
 
 /**
- * Especiales (0017): the one item whose concept and price are typed by hand. Started from a
- * pricing.ts "desde" item of the espacio family (source) or free. Optional teacher + payout, optional
+ * Especiales (0017): the one item whose concept and price are typed by hand. Started from the private class
+ * (0051: 250.000 for one person + 60.000 per additional person, max 3 — prefilled from pricing.ts) or free. Optional teacher + payout, optional
  * room window; `bookingId` is set when S-05 sent the desk here to charge an existing booking.
  */
-interface Special { on: boolean; source: string | null; concept: string; amountRaw: string; teacherId: string; payoutRaw: string; roomId: string; kind: SpaceBookingKind; date: string; start: string; end: string; note: string; bookingId: string | null }
-const NO_SPECIAL: Special = { on: false, source: null, concept: '', amountRaw: '', teacherId: '', payoutRaw: '', roomId: '', kind: 'private_event', date: '', start: '', end: '', note: '', bookingId: null };
+interface Special { on: boolean; source: string | null; people: number; concept: string; amountRaw: string; teacherId: string; payoutRaw: string; roomId: string; kind: SpaceBookingKind; date: string; start: string; end: string; note: string; bookingId: string | null }
+const NO_SPECIAL: Special = { on: false, source: null, people: 1, concept: '', amountRaw: '', teacherId: '', payoutRaw: '', roomId: '', kind: 'private_event', date: '', start: '', end: '', note: '', bookingId: null };
 
 /** S-04 — who · what · how, then a printable receipt. Prices from pricing.ts, IVA from M-08. */
 export function RegisterPage() {
@@ -80,8 +84,8 @@ export function RegisterPage() {
   const canWrite = can('payments.write');
   const specialAmount = parseDigits(special.amountRaw);
   // An Especial is a PriceItem whose name and price were typed by hand; everything downstream (IVA, receipt, "Valor pagado") treats it like any other item.
-  const item: PriceItem = special.on
-    ? { id: 'especial', family: 'espacio', name: { es: special.concept.trim() || t('staff.register.especial.title'), en: special.concept.trim() || t('staff.register.especial.title') }, description: { es: '', en: '' }, price: specialAmount }
+  const item: DeskItem = special.on
+    ? { id: 'especial', family: special.source === 'private' ? 'privadas' : 'espacio', name: { es: special.concept.trim() || t('staff.register.especial.title'), en: special.concept.trim() || t('staff.register.especial.title') }, description: { es: '', en: '' }, price: specialAmount }
     : (priceItem(itemId) ?? pricing[0]);
   const totals = splitTax(item.price ?? 0, settings.tax);
   const specialTeacher = special.teacherId ? teachers.find((x) => x.id === special.teacherId) : undefined;
@@ -93,12 +97,15 @@ export function RegisterPage() {
   const linkedBooking = special.bookingId ? spaceBookings.find((b) => b.id === special.bookingId) : undefined;
   const specialOk = !special.on || (special.concept.trim().length > 0 && specialAmount > 0 && (!special.roomId || (windowOk && conflicts.length === 0)));
 
-  /** Start an Especial from a "desde" item of the espacio family (concept and reference price prefilled) or free. */
+  /** The private-class price for `people` people: the class plus each additional person (pricing.ts). */
+  const privatePrice = (people: number) => (priceItem('private')?.price ?? 0) + Math.max(0, people - 1) * (priceItem('private_extra')?.price ?? 0);
+  /** Start an Especial from the private class (concept and price prefilled for one person) or free. */
   const startSpecial = (source: string | null) => {
     const src = source ? priceItem(source) : undefined;
-    setSpecial({ ...NO_SPECIAL, on: true, source, concept: src ? bi(src.name) : '', amountRaw: src?.price ? String(src.price) : '', kind: source ? (KIND_FOR_ITEM[source] ?? 'private_event') : 'private_event', date: dateInputValue(new Date()) });
+    setSpecial({ ...NO_SPECIAL, on: true, source, concept: src ? bi(src.name) : '', amountRaw: source === 'private' ? String(privatePrice(1)) : src?.price ? String(src.price) : '', kind: source ? (KIND_FOR_ITEM[source] ?? 'private_event') : 'private_event', date: dateInputValue(new Date()) });
     setPaidRaw(null);
   };
+  const setPeople = (people: number) => { setSpecial((sp) => ({ ...sp, people, amountRaw: String(privatePrice(people)) })); setPaidRaw(null); };
   const pickItem = (id: string) => { setItemId(id); setSpecial(NO_SPECIAL); if (mode === 'contact') setMode('new'); setPaidRaw(null); };
 
   // S-05 sent the desk here to charge an existing booking: load it once, into an Especial.
@@ -107,9 +114,8 @@ export function RegisterPage() {
     if (!bookingParam || special.bookingId === bookingParam) return;
     const b = spaceBookings.find((x) => x.id === bookingParam);
     if (!b) return;
-    const source = b.kind === 'private_class' ? 'privada' : b.kind === 'rental' ? (b.title.toLowerCase().includes('foto') ? 'foto' : 'taller') : null;
-    const src = source ? priceItem(source) : undefined;
-    setSpecial({ on: true, source, concept: b.title, amountRaw: src?.price ? String(src.price) : '', teacherId: b.teacher_id ?? '', payoutRaw: '', roomId: b.room_id, kind: b.kind, date: dateInputValue(new Date(b.starts_at)), start: timeInputValue(b.starts_at), end: timeInputValue(b.ends_at), note: b.note ?? '', bookingId: b.id });
+    const source = b.kind === 'private_class' ? 'private' : null;
+    setSpecial({ on: true, source, people: 1, concept: b.title, amountRaw: source === 'private' ? String(privatePrice(1)) : '', teacherId: b.teacher_id ?? '', payoutRaw: '', roomId: b.room_id, kind: b.kind, date: dateInputValue(new Date(b.starts_at)), start: timeInputValue(b.starts_at), end: timeInputValue(b.ends_at), note: b.note ?? '', bookingId: b.id });
     if (b.customer_id) { setMode('existing'); setPersonId(b.customer_id); } else { setMode('contact'); setContactName(b.contact_name ?? ''); }
   }, [bookingParam, spaceBookings, special.bookingId]);
   const person = personId ? people.find((p) => p.id === personId) : undefined;
@@ -176,21 +182,20 @@ export function RegisterPage() {
       }
 
       if (special.on) {
-        // no plan, no credits, no class check-in: an Especial is its own thing
-      } else if (item.family === 'membresia') {
-        const m = await data.insert('memberships', { user_id: userId, plan_id: `plan_${item.id}`, status: pending ? 'past_due' : 'active', starts_at: dateKey(now), renews_at: dateKey(addMonths(now, item.period === 'year' ? 12 : 1)), ends_at: null, paused_until: null });
-        await audit('membership.create', 'memberships', m.id, { plan: item.id, user_id: userId });
-      } else if (item.credits) {
-        const c = await data.insert('credits', { user_id: userId, plan_id: `plan_${item.id}`, payment_id: payment.id, delta: item.credits, reason: 'purchase', expires_at: item.validityDays ? dateKey(addDays(now, item.validityDays)) : null });
-        await audit('credits.purchase', 'credits', c.id, { delta: item.credits, user_id: userId });
+        // no package, no class check-in: an Especial is its own thing
+      } else if (item.classes) {
+        // 0051: the classes open in the ledger (12 for the package, 1 for a class bought ahead) with their validity.
+        const c = await data.insert('class_ledger', { user_id: userId, plan_id: `plan_${item.id}`, payment_id: payment.id, delta: item.classes, reason: 'purchase', expires_at: item.validityDays ? dateKey(addDays(now, item.validityDays)) : null, frozen_from: null, frozen_until: null });
+        await audit('classes.purchase', 'class_ledger', c.id, { delta: item.classes, user_id: userId });
       }
 
       let checkedIn: string | undefined;
       if (session && settings.features.autoCheckinOnSale && userId && !special.on) {
-        const paidWith = item.family === 'membresia' ? 'membership' : item.id === 'trial' ? 'trial' : item.credits ? 'credit' : 'single';
-        const b = await data.insert<BookingRow>('bookings', { user_id: userId, session_id: session.session.id, status: 'checked_in', paid_with: paidWith, credit_id: null, checked_in_at: now.toISOString(), cancelled_at: null, rated: false });
+        const paidWith = item.id === 'trial' ? 'trial' : (item.classes ?? 0) > 1 ? 'package' : 'single';
+        const b = await data.insert<BookingRow>('bookings', { user_id: userId, session_id: session.session.id, status: 'checked_in', paid_with: paidWith, ledger_id: null, checked_in_at: now.toISOString(), cancelled_at: null, rated: false });
         await data.update('class_sessions', session.session.id, { booked_count: session.session.booked_count + 1 });
-        if (paidWith === 'credit') await data.insert('credits', { user_id: userId, plan_id: `plan_${item.id}`, payment_id: payment.id, delta: -1, reason: 'booking', expires_at: null });
+        // The class just bought (or the first of the package) is the one checked in: one class leaves the ledger.
+        if (item.classes) await data.insert('class_ledger', { user_id: userId, plan_id: `plan_${item.id}`, payment_id: payment.id, delta: -1, reason: 'booking', expires_at: null, frozen_from: null, frozen_until: null });
         await audit('booking.checkin', 'bookings', b.id, { after: 'checked_in', session_id: session.session.id, user_id: userId, source_sale: payment.id });
         checkedIn = `${session.session.title} · ${formatTime(session.session.starts_at, lang)}`;
       }
@@ -273,7 +278,7 @@ export function RegisterPage() {
             <div className="register-family">
               <div className="eyebrow">{t('staff.register.especial.family')}</div>
               <p className="xs muted" style={{ marginBottom: 'var(--sp-sm)' }}>{t('staff.register.especial.family.hint')}</p>
-              {pricing.filter((p) => p.family === 'espacio' && p.price != null).map((p) => <div key={p.id} className={`register-item ${special.on && special.source === p.id ? 'is-selected' : ''}`}><PriceRow item={p} onSelect={() => startSpecial(p.id)} /></div>)}
+              {pricing.filter((p) => p.id === 'private').map((p) => <div key={p.id} className={`register-item ${special.on && special.source === p.id ? 'is-selected' : ''}`}><PriceRow item={p} onSelect={() => startSpecial(p.id)} /></div>)}
               <div className={`register-item ${special.on && special.source === null ? 'is-selected' : ''}`}>
                 <button type="button" className="register-custom" onClick={() => startSpecial(null)} aria-pressed={special.on && special.source === null}>
                   <span className="grow"><strong className="small">{t('staff.register.especial.custom')}</strong><span className="xs muted" style={{ display: 'block' }}>{t('staff.register.especial.custom.hint')}</span></span>
@@ -289,6 +294,7 @@ export function RegisterPage() {
               {linkedBooking && <p className="small" style={{ marginBottom: 'var(--sp-md)' }}><Badge tone="primary">S-05</Badge> {t('staff.register.especial.fromBooking', { title: linkedBooking.title })}</p>}
               <div className="register-special">
                 <div className="register-full"><Field label={t('staff.register.especial.concept')} required>{(id) => <Input id={id} value={special.concept} onChange={(e) => setSpecial({ ...special, concept: e.target.value })} placeholder={t('staff.register.especial.concept.ph')} invalid={!special.concept.trim()} autoFocus={!linkedBooking} />}</Field></div>
+                {special.source === 'private' && <Field label={t('staff.register.especial.people')} hint={t('staff.register.especial.people.hint', { max: priceItem('private')?.maxPeople ?? 3, extra: formatCOP(priceItem('private_extra')?.price ?? 0, lang) })}>{(id) => <Select id={id} value={special.people} onChange={(e) => setPeople(Number(e.target.value))}>{Array.from({ length: priceItem('private')?.maxPeople ?? 3 }, (_, i) => i + 1).map((n) => <option key={n} value={n}>{t('staff.register.especial.peopleN', { n })}</option>)}</Select>}</Field>}
                 <Field label={t('staff.register.especial.amount')} required hint={t('staff.register.especial.amount.hint')}>{(id) => <Input id={id} inputMode="numeric" value={special.amountRaw} onChange={(e) => { setSpecial({ ...special, amountRaw: e.target.value }); setPaidRaw(null); }} invalid={specialAmount <= 0} />}</Field>
                 <Field label={t('staff.register.especial.teacher')}>{(id) => <Select id={id} value={special.teacherId} onChange={(e) => setSpecial({ ...special, teacherId: e.target.value })}><option value="">{t('staff.register.especial.teacher.none')}</option>{teachers.map((x) => <option key={x.id} value={x.id}>{x.display_name}</option>)}</Select>}</Field>
                 {specialTeacher && <div className="register-full"><Field label={t('staff.register.especial.payout')} hint={t('staff.register.especial.payout.hint', { rate: formatCOP(specialTeacher.rate_per_class ?? 0, lang) })}>{(id) => <Input id={id} inputMode="numeric" value={special.payoutRaw} onChange={(e) => setSpecial({ ...special, payoutRaw: e.target.value })} placeholder={String(specialTeacher.rate_per_class ?? '')} />}</Field></div>}

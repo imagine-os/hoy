@@ -1,32 +1,29 @@
-import { siteImage, siteVideo } from '../artwork';
-import { useSiteEdition } from '../edition';
 import { Fragment, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
-import { useVisibleModalities } from '../../admin/settings';
 import { useLayout } from '../../../layout/useLayout';
 import { useTable } from '../../../data/DataContext';
-import type { ModalityRow } from '../../../data/schema';
+import type { ModalityRow, TeacherRow } from '../../../data/schema';
 import { formatCOP } from '../../../i18n/format';
 import { priceItem } from '../../../tenant/pricing';
-import { brandClass, classes, classOrder, taglines } from '../../../tenant/brand';
+import { brandClass, classes, classOrder, taglines, type ClassSlug } from '../../../tenant/brand';
 import { Button } from '../../../components/atom/Button/Button';
 import { Chip } from '../../../components/atom/Chip/Chip';
-import { Badge } from '../../../components/atom/Badge/Badge';
 import { Card } from '../../../components/molecule/Card/Card';
-import { MediaSlot } from '../../../components/molecule/MediaSlot/MediaSlot';
+import { ClassArch } from '../../../components/molecule/ClassArch/ClassArch';
 import { PageHead, SiteShell, useBrandHeading } from '../SiteShell';
 import { siteSpecs } from '../specs';
+import { useClassPhotos } from '../hooks';
 
-/** W-08 — one class essay, joined to its modality rows through brand.classes[slug].modalitySlugs. */
+/** W-08 — one of the seven classes (0051), joined to its schedule row through brand.classes[slug].modalitySlugs. */
 export function ClassDetailPage() {
-  const { edition, motion, videoEnabled } = useSiteEdition();
   const { slug = '' } = useParams();
   const { t, bi, lang } = useI18n();
   const brand = useBrandHeading();
   const { sections, isVisible } = useLayout(siteSpecs.classDetail);
-  const { rows: modalitiesAll } = useTable<ModalityRow>('modalities', { where: { active: true } });
-  const modalities = useVisibleModalities(modalitiesAll); // 0018: M-08f decides whether Respiración has its own row
+  const { rows: modalities } = useTable<ModalityRow>('modalities', { where: { active: true } });
+  const { rows: teachers } = useTable<TeacherRow>('teachers', { where: { active: true } });
+  const photos = useClassPhotos();
   const c = brandClass(slug);
   const trial = priceItem('trial');
   const trialPrice = trial?.price != null ? formatCOP(trial.price, lang) : '';
@@ -46,20 +43,39 @@ export function ClassDetailPage() {
 
   const mods = modalities.filter((m) => c.modalitySlugs.includes(m.slug));
   const primary = mods[0];
-  const bring = [...new Set(c.heated ? ['towel', 'water', ...c.bring] : c.bring)];
+  const guides = teachers.filter((te) => te.specialties.some((id) => mods.some((m) => m.id === id))).map((te) => te.display_name);
+  const index = classOrder.indexOf(slug as ClassSlug);
 
   const SECTIONS: Record<string, () => ReactNode> = {
     Hero: () => (
       <>
-        <PageHead eyebrow={bi(c.eyebrow)} title={bi(c.name)} body={bi(c.summary)} back={{ to: '/site/classes', label: t('site.classes.back') }} />
-        <section className="container site-section" style={{ paddingTop: 0 }}>
-          <MediaSlot ratio="16:9" kind="photo" tone={c.tone} slotKey={`site.classes.${slug}`} fallbackSrc={edition === "sanctuary" ? siteImage(slug) : undefined} fallbackVideo={edition === "sanctuary" && videoEnabled ? siteVideo(slug) : undefined} motion={motion} label={t('site.classes.media', { name: bi(c.name) })} brief={c.brief} />
+        <PageHead eyebrow={`${String(index + 1).padStart(2, '0')} · ${t(`site.classes.level.${c.intensity}`)}`} title={bi(c.name)} body={bi(c.tagline)} back={{ to: '/site/classes', label: t('site.classes.back') }} />
+        <section className="container site-section site-classhero" style={{ paddingTop: 0 }}>
+          <ClassArch slug={slug as ClassSlug} index={index + 1} size="lg" photoUrl={photos.get(slug)} tagline={false} />
+          <div className="site-classhero-copy">
+            <p className="eyebrow">{t('site.classes.concept')}</p>
+            <p className="site-lead">{bi(c.concept)}</p>
+            <p className="eyebrow">{t('site.classes.intention')}</p>
+            <blockquote className="site-classrow-intention" data-tone={c.tone}>“{bi(c.intention)}”</blockquote>
+            {guides.length > 0 && <p className="small muted">{t('site.classes.teacher', { name: guides.join(' · ') })}</p>}
+          </div>
         </section>
       </>
     ),
     Essay: () => (
       <section className="container site-section">
-        <div className="site-prose">{c.paragraphs.map((p, i) => <p key={i}>{bi(p)}</p>)}</div>
+        <div className="site-classdetail-grid">
+          <Card eyebrow={t('site.classes.keys')}>
+            <div className="row wrap">{c.keys.map((k) => <Chip key={k.es} tone={c.tone} dot>{bi(k)}</Chip>)}</div>
+          </Card>
+          <Card eyebrow={t('site.classes.messages')}>
+            <ul className="site-bring">{c.messages.map((m) => <li key={m.es}>{bi(m)}</li>)}</ul>
+          </Card>
+          <Card eyebrow={t('site.classes.method')}>
+            <p className="site-classdetail-method">{bi(c.method)}</p>
+            <p className="small muted">{bi(c.methodNote)}</p>
+          </Card>
+        </div>
       </section>
     ),
     Facts: () => (
@@ -77,7 +93,6 @@ export function ClassDetailPage() {
           {mods.length > 0 && (
             <div className="row wrap" style={{ marginTop: 'var(--sp-lg)' }}>
               {mods.map((m) => <Chip key={m.id} tone={m.tone} dot>{lang === 'es' ? m.name_es : m.name_en}</Chip>)}
-              {c.heated && <Badge tone="warn">{t('site.modalities.heated')}</Badge>}
             </div>
           )}
         </Card>
@@ -87,7 +102,7 @@ export function ClassDetailPage() {
       <section className="container site-section">
         <Card eyebrow={t('site.classes.bring')}>
           <ul className="site-bring small">
-            {bring.map((k) => <li key={k}>{t(`site.classes.bring.${k}`)}</li>)}
+            {c.bring.map((k) => <li key={k}>{t(`site.classes.bring.${k}`)}</li>)}
           </ul>
         </Card>
       </section>
@@ -95,14 +110,8 @@ export function ClassDetailPage() {
     Other: () => (
       <section className="container site-section">
         <p className="eyebrow">{t('site.classes.other')}</p>
-        <div className="site-classgrid" style={{ marginTop: 'var(--sp-md)' }}>
-          {classOrder.filter((s) => s !== slug).map((s) => (
-            <Link key={s} to={`/site/classes/${s}`} className={`site-classcard tonecard-${classes[s].tone}`}>
-              <p className="eyebrow">{bi(classes[s].eyebrow)}</p>
-              <h3>{bi(classes[s].name)}</h3>
-              <span className="site-classcard-more">{t('site.classes.read')} →</span>
-            </Link>
-          ))}
+        <div className="site-otherarches">
+          {classOrder.filter((s) => s !== slug).map((s) => <ClassArch key={s} slug={s} index={classOrder.indexOf(s) + 1} to={`/site/classes/${s}`} photoUrl={photos.get(s)} />)}
         </div>
       </section>
     ),

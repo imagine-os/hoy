@@ -2,8 +2,8 @@
 title: Quiénes somos y nuestra filosofía
 role: todos
 part: I
-version: 0.13.3
-updated: 2026-09-29
+version: 0.22.0
+updated: 2026-10-01
 summary: Sobre HOY, nuestra filosofía, por qué somos pequeños a propósito y las cuatro promesas que cumplimos siempre.
 ---
 
@@ -43,15 +43,21 @@ que más te acomode.
 **En una frase, para la puerta:** "Es un espacio para moverte, respirar y bajar el ritmo. No necesitas
 experiencia: solo llegar."
 
-Estos son los datos de contacto del estudio. El WhatsApp y la dirección ya están confirmados:
+Estos son los datos de contacto del estudio. El WhatsApp Business, la dirección, el correo y el Instagram ya
+están confirmados:
 
 {{tenant:contact}}
 
-> DECISIÓN PENDIENTE: el correo del estudio, el usuario de Instagram y el NIT. Mientras el owner no los confirme, la web, la app, los correos y este manual los muestran como pendientes.
+> DECISIÓN PENDIENTE: el NIT del estudio. Mientras el owner no lo confirme, los recibos y este manual lo muestran como pendiente.
 
 > EN HOYOS: M-08a Ajustes → General → correo, Instagram → "Datos confirmados" · M-08c Ajustes → Pagos → NIT.
 
 ## 2. Nuestra filosofía
+Así lo dice el sitio, en "La filosofía de HOY":
+
+> Creamos experiencias que transformen el bienestar en una forma de vivir: más consciente, presente y
+> conectada. No venimos a entrenar cuerpos. Venimos a despertar presencia.
+
 Entre lo que fue y lo que todavía no llega, existe este momento. Ese es el punto de partida de todo lo que
 hacemos en HOY: un espacio para detenerte, respirar, moverte, sentir y volver a ti mismo, no como un lujo
 aparte de tu vida, sino como algo que se vive en lo cotidiano.
@@ -60,10 +66,10 @@ No buscamos que escapes de la rutina, sino que aprendas a habitarla de otra mane
 también pausa. Es energía y equilibrio. Es cuerpo, mente y conexión. No siempre hay que ir más rápido, hacer
 más o llegar más lejos: a veces, simplemente hay que volver.
 
-Nuestro propósito es hacer del movimiento y la respiración un camino para volver a nosotros mismos y habitar
-el presente. Por eso creamos un espacio donde el bienestar se integra de forma natural a tu vida: cada
-experiencia en HOY es una oportunidad para conectar con tu cuerpo, respirar con intención, compartir en
-comunidad y volver a ti mismo.
+**Nuestro propósito** es hacer del movimiento y la respiración un camino para volver a nosotros mismos y
+habitar el presente. En HOY, cuerpo, mente y espíritu se integran. El movimiento es la herramienta física. La
+pausa es el espacio consciente. La energía es la vitalidad que despierta. Y el equilibrio es la sabiduría que
+sostiene. Todo empieza con una pregunta: ¿cómo vuelvo a mí?
 
 Esto se nota en cada detalle de HOY. En cómo recibimos a cada persona tal como llega, sin pedirle una
 versión perfecta de sí misma. En cómo hablamos, con la calma de quien no tiene prisa por impresionar. Y en
@@ -98,12 +104,14 @@ Esta es la capacidad del estudio:
 ![El inicio de la app del socio: su próxima clase y las de hoy](../../screenshots/C-01/es-390.jpg "C-01 · /app")
 
 ## 5. Cuatro promesas que cumplimos
-Prometemos cuatro cosas a cada socio. No son frases bonitas: son reglas que el sistema aplica solo.
+Prometemos cuatro cosas a cada persona que practica con nosotros. No son frases bonitas: son reglas que el
+sistema aplica solo.
 
-1. **Pausar la membresía** sin llamar a nadie, desde su app, hasta el máximo que fija la política.
-2. **Salir sin laberintos.** Si cancela, mantiene el acceso hasta el fin de lo que pagó. No insistimos.
-3. **Cancelar con tiempo no cuesta.** Si cancela dentro de la ventana, el crédito vuelve de inmediato.
-4. **Avisar antes de cobrar**, con los días que fija la política.
+1. **Congelar el paquete** una vez, sin llamar a nadie, desde su app, hasta el máximo que fija la política.
+2. **Sin letra pequeña.** Las clases vencen cuando dice su paquete, y su app siempre muestra cuántas le quedan.
+3. **Cancelar con tiempo no cuesta.** Si cancela con la anticipación de la ventana, la clase vuelve de
+   inmediato a su paquete.
+4. **Reservar hasta el último minuto**, siempre que haya cupo.
 
 Estos son los valores vigentes:
 

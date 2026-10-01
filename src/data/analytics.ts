@@ -5,7 +5,7 @@
  *
  * Everything derives from the raw tables: `bookings` × `class_sessions` (a visit = a `checked_in` booking,
  * dated by the SESSION's start, never by the booking's created_at), `memberships` (pauses, at-risk),
- * `credits` (live balances), `practice_goals` (the target). `activity_events` is a record the app
+ * `class_ledger` (the classes left in each package, 0051), `practice_goals` (the target). `activity_events` is a record the app
  * writes for the member's timeline; this module never reads it.
  *
  * Streak rules ("semanas de práctica", research §5 — implemented exactly):
@@ -35,7 +35,7 @@
  *     resets the run without counting as a break. `target`, `hasGoal` and `thisWeek` are the current active goal.
  */
 import type { Bi } from '../specs/types';
-import type { BookingRow, ClassSessionRow, CreditRow, MembershipRow, ModalityRow, PracticeGoalRow, ProfileRow, ReviewRow, TeacherRow, UserRow } from './schema';
+import type { BookingRow, ClassSessionRow, ClassLedgerRow, MembershipRow, ModalityRow, PracticeGoalRow, ProfileRow, ReviewRow, TeacherRow, UserRow } from './schema';
 import { addDays, addDaysKey, dateKey, fromDateKey, MS, startOfDay } from '../i18n/format';
 
 export type GoalCadence = 'week';
@@ -320,7 +320,7 @@ export function practiceStats(input: PracticeInput): PracticeStats {
 
 export interface StudioInput {
   bookings: BookingRow[]; sessions: ClassSessionRow[]; memberships: MembershipRow[]; profiles: ProfileRow[]; users?: UserRow[];
-  credits: CreditRow[]; goals: PracticeGoalRow[]; teachers: TeacherRow[]; modalities: ModalityRow[]; now?: Date;
+  ledger: ClassLedgerRow[]; goals: PracticeGoalRow[]; teachers: TeacherRow[]; modalities: ModalityRow[]; now?: Date;
   /** 7 | 30 | 90 */
   rangeDays: number;
 }
@@ -343,7 +343,7 @@ export interface StudioStats {
   /** Members whose first visit was 30–60 days before now: did they attend a second class within 30 days? */
   secondVisitConversion: { firstTimers: number; cameBack: number; rate: number };
   visitsPerActiveMemberPerWeek: number;
-  /** Members with an active membership or live credits whose last check-in is ≥ 14 days ago, sorted by daysSince desc. */
+  /** People with classes left in a live package (or a dormant active membership) whose last check-in is ≥ 14 days ago, sorted by daysSince desc. */
   atRisk: AtRiskMember[];
   /** weekday 1..6 Mon..Sat, 0 Sun (JS getDay); fill 0–100 */
   heatmap: { weekday: number; hour: number; classes: number; fill: number }[];
@@ -351,7 +351,8 @@ export interface StudioStats {
   byTeacher: { id: string; name: string; classes: number; attended: number; fill: number; noShowRate: number; newFaces: number; regulars: number }[];
   goals: { withGoal: number; onTrackThisWeek: number; avgTarget: number };
   /** Members with a live credit balance whose next expiry falls within 14 / 7 days. */
-  creditsExpiring14d: number; creditsExpiring7d: number;
+  /** People whose package classes run out within 14 / 7 days (0051, was creditsExpiring*). */
+  packagesExpiring14d: number; packagesExpiring7d: number;
   milestonesThisRange: { userId: string; name: string; count: number; at: string }[];
 }
 
@@ -426,11 +427,11 @@ export function studioStats(input: StudioInput): StudioStats {
     if (vs.some((v, i) => i > 0 && new Date(v.session.starts_at).getTime() <= first.getTime() + 30 * MS.day)) cameBack++;
   }
 
-  // At risk: active membership or live credits, last visit ≥ 14 days ago.
+  // At risk: classes left in a live package (or a dormant active membership), last visit ≥ 14 days ago.
   const activeGoal = new Set(input.goals.filter((g) => g.active && g.target > 0).map((g) => g.user_id));
   const balance = new Map<string, number>();
   const nextExpiry = new Map<string, string>();
-  for (const c of input.credits) {
+  for (const c of input.ledger) {
     if (c.delta > 0 && c.expires_at && c.expires_at < today) continue; // expired purchase
     balance.set(c.user_id, (balance.get(c.user_id) ?? 0) + c.delta);
     if (c.delta > 0 && c.expires_at && c.expires_at >= today && (!nextExpiry.has(c.user_id) || c.expires_at < nextExpiry.get(c.user_id)!)) nextExpiry.set(c.user_id, c.expires_at);
@@ -507,8 +508,8 @@ export function studioStats(input: StudioInput): StudioStats {
     byModality,
     byTeacher,
     goals: { withGoal: goals.length, onTrackThisWeek: onTrack, avgTarget: goals.length ? round1(goals.reduce((a, g) => a + g.target, 0) / goals.length) : 0 },
-    creditsExpiring14d: expiring(14),
-    creditsExpiring7d: expiring(7),
+    packagesExpiring14d: expiring(14),
+    packagesExpiring7d: expiring(7),
     milestonesThisRange,
   };
 }

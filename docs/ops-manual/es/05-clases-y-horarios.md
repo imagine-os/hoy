@@ -2,8 +2,8 @@
 title: Clases y horarios
 role: coordinación
 part: II
-version: 0.13.3
-updated: 2026-09-29
+version: 0.22.0
+updated: 2026-10-01
 summary: Armar el horario, asignar maestros, cancelar una clase del estudio y publicar eventos y talleres.
 ---
 
@@ -44,8 +44,8 @@ Con cuánta anticipación se avisa un cambio de horario:
 1. Cada maestro tiene su disponibilidad en su perfil. No le pongas dos clases a la misma hora.
 2. Si hay un reemplazo, cámbialo en el horario el mismo día que se acuerda. Así el socio ve el nombre
    correcto.
-3. Si un maestro no alcanzó a marcar la asistencia a tiempo, la corriges tú, con una razón. Cómo trabaja el
-   maestro: [Maestros](06-maestros.md).
+3. La asistencia la registra recepción en el check-in; el maestro no la marca. Si recepción se equivocó, la
+   corriges tú, con una razón. Cómo trabaja el maestro: [Maestros](06-maestros.md).
 
 ![Los maestros como los ve el socio](../../screenshots/C-18/es-390.jpg "C-18 · /app/teachers")
 
@@ -53,7 +53,7 @@ Con cuánta anticipación se avisa un cambio de horario:
 
 ## 3. Cancelar una clase del estudio
 1. Abre la clase en el horario y elige **Cancelar**, con la razón.
-2. El sistema devuelve los créditos, avisa por WhatsApp y correo de inmediato (aunque sea de noche) y propone
+2. El sistema devuelve las clases a los paquetes, avisa por WhatsApp y correo de inmediato (aunque sea de noche) y propone
    otras clases del mismo día.
 3. Avisa al owner en el grupo interno.
 4. Una clase cancelada por el estudio no cuenta en contra de nadie.
@@ -64,7 +64,13 @@ Con cuánta anticipación se avisa un cambio de horario:
 
 ## 4. Lo que ve el socio
 Lo que el cliente lee antes de reservar sale de lo que publicas: nombre, descripción, maestro, intensidad,
-duración y si la sala es caliente. Si algo está mal escrito ahí, se corrige en Contenido.
+duración y qué traer. Si algo está mal escrito ahí, se corrige en Contenido.
+
+Las reglas de reserva que la persona ve en el sitio y en la app:
+
+{{studio:booking_lead}}
+
+{{studio:no_show_rule}}
 
 ![Detalle de la clase](../../screenshots/C-03/es-390.jpg "C-03 · /app/class/:id")
 
@@ -73,7 +79,7 @@ Así guarda el sistema cada clase del horario:
 {{table:class_sessions}}
 
 ## 5. Eventos y talleres
-1. Un evento tiene su propio precio, su cupo y su regla de invitados.
+1. Un evento tiene su propio precio y su cupo, y no usa clases del paquete.
 2. Los alquileres del espacio (talleres externos, sesiones privadas, foto y video, rodajes, pop-ups) no se
    venden en línea: terminan en una conversación. Ver [Espacio — alquiler B2B](12-espacio-b2b.md).
 3. Un evento no reemplaza las clases del día sin la aprobación del owner.

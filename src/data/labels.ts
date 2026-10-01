@@ -20,12 +20,12 @@ const TERMS: Record<string, Term> = {
   created_by: ['Creado por', 'Created by'], updated_by: ['Actualizado por', 'Updated by'], edited_by: ['Editado por', 'Edited by'],
   user_id: ['Usuario', 'User'], teacher_id: ['Profesor', 'Teacher'], room_id: ['Sala', 'Room'], modality_id: ['Modalidad', 'Modality'],
   session_id: ['Clase', 'Class session'], class_session_id: ['Clase', 'Class session'], template_id: ['Plantilla', 'Template'],
-  plan_id: ['Plan', 'Plan'], payment_id: ['Pago', 'Payment'], credit_id: ['Crédito', 'Credit'], event_id: ['Evento', 'Event'],
+  plan_id: ['Plan', 'Plan'], payment_id: ['Pago', 'Payment'], ledger_id: ['Movimiento del paquete', 'Package movement'], event_id: ['Evento', 'Event'],
   customer_id: ['Cliente', 'Customer'], special_charge_id: ['Especial', 'Special charge'], space_booking_id: ['Reserva de espacio', 'Space booking'],
   legal_document_id: ['Documento', 'Document'], document_id: ['Documento', 'Document'], automation_id: ['Automatización', 'Automation'],
   run_id: ['Corrida de nómina', 'Payroll run'], replaces_id: ['Reemplaza a', 'Replaces'], actor_id: ['Quién', 'Actor'], entity_id: ['ID de la entidad', 'Entity id'],
   ref_id: ['ID de referencia', 'Reference id'], ref_table: ['Tabla de referencia', 'Reference table'], host_teacher_id: ['Anfitrión', 'Host teacher'],
-  buyer_user_id: ['Comprador', 'Buyer'], inviter_user_id: ['Quien invita', 'Inviter'], invitee_user_id: ['Invitado', 'Invitee'], reward_credit_id: ['Crédito de premio', 'Reward credit'],
+  buyer_user_id: ['Comprador', 'Buyer'], inviter_user_id: ['Quien invita', 'Inviter'], invitee_user_id: ['Invitado', 'Invitee'], reward_ledger_id: ['Clase de regalo', 'Gift class'],
   // time
   starts_at: ['Inicio', 'Starts'], ends_at: ['Fin', 'Ends'], starts_on: ['Empieza el', 'Starts on'], start_date: ['Desde', 'From'], end_date: ['Hasta', 'To'],
   start_time: ['Hora', 'Start time'], open: ['Abre', 'Opens'], close: ['Cierra', 'Closes'], weekday: ['Día de la semana', 'Weekday'],
@@ -42,7 +42,7 @@ const TERMS: Record<string, Term> = {
   total: ['Total', 'Total'], subtotal: ['Subtotal', 'Subtotal'], tax: ['Impuesto', 'Tax'], balance: ['Saldo', 'Balance'], rate: ['Tarifa', 'Rate'], rate_per_class: ['Tarifa por clase', 'Rate per class'],
   teacher_payout: ['Pago al profesor', 'Teacher payout'], currency: ['Moneda', 'Currency'], method: ['Método', 'Method'], paid_method: ['Método de pago', 'Payment method'], paid_with: ['Pagado con', 'Paid with'],
   provider: ['Proveedor', 'Provider'], provider_ref: ['Referencia del proveedor', 'Provider reference'], taken_by: ['Registrado por', 'Taken by'], is_from_price: ['Precio “desde”', '“From” price'],
-  credits: ['Créditos', 'Credits'], delta: ['Movimiento', 'Change'], concept: ['Concepto', 'Concept'], vendor: ['Proveedor', 'Vendor'], number: ['Número', 'Number'],
+  classes: ['Clases', 'Classes'], frozen_from: ['Congelado desde', 'Frozen from'], frozen_until: ['Congelado hasta', 'Frozen until'], delta: ['Movimiento', 'Change'], concept: ['Concepto', 'Concept'], vendor: ['Proveedor', 'Vendor'], number: ['Número', 'Number'],
   pdf_url: ['PDF', 'PDF'], dian_cufe: ['CUFE (DIAN)', 'CUFE (DIAN)'], last4: ['Últimos 4', 'Last 4'], brand: ['Marca', 'Brand'], token_ref: ['Token', 'Token'], is_default: ['Predeterminado', 'Default'],
   // people and text
   name: ['Nombre', 'Name'], name_es: ['Nombre (ES)', 'Name (ES)'], name_en: ['Nombre (EN)', 'Name (EN)'], full_name: ['Nombre completo', 'Full name'], display_name: ['Nombre visible', 'Display name'],
@@ -71,7 +71,7 @@ const TERMS: Record<string, Term> = {
   sent_via: ['Enviado por', 'Sent via'], quiet_hours: ['Horas de silencio', 'Quiet hours'], timezone: ['Zona horaria', 'Time zone'], page_code: ['Página', 'Page'], page_codes: ['Páginas', 'Pages'],
   table_name: ['Tabla', 'Table'], sections: ['Secciones', 'Sections'], hidden: ['Ocultas', 'Hidden'], states: ['Estados', 'States'], used_by: ['Usado en', 'Used by'], lang: ['Idioma', 'Language'],
   chapter: ['Capítulo', 'Chapter'], chapter_slug: ['Capítulo', 'Chapter'], section_heading: ['Sección', 'Section'], item_key: ['Tarea', 'Item'], editable_by: ['Lo edita', 'Editable by'],
-  value_es: ['Valor (ES)', 'Value (ES)'], value_en: ['Valor (EN)', 'Value (EN)'], slot_key: ['Lugar', 'Slot'], ratio: ['Proporción', 'Ratio'], credit: ['Crédito', 'Credit'], icon: ['Icono', 'Icon'],
+  value_es: ['Valor (ES)', 'Value (ES)'], value_en: ['Valor (EN)', 'Value (EN)'], slot_key: ['Lugar', 'Slot'], ratio: ['Proporción', 'Ratio'], credit: ['Autoría', 'Attribution'], icon: ['Icono', 'Icon'],
   video_label: ['Video', 'Video'], checklist: ['Lista de chequeo', 'Checklist'], group_key: ['Grupo', 'Group'], group_title: ['Título del grupo', 'Group title'], group_lead: ['Entrada del grupo', 'Group lead'],
   cover_key: ['Portada', 'Cover'], bring: ['Qué traer', 'What to bring'], tags: ['Etiquetas', 'Tags'], badge: ['Distintivo', 'Badge'], source_item: ['Concepto de origen', 'Source item'], hours: ['Horas', 'Hours'],
   // common enum values (badges)
@@ -97,7 +97,7 @@ const TERMS: Record<string, Term> = {
 
 /** Single words for the Spanish guess when a whole identifier is not in TERMS. */
 const WORDS: Record<string, string> = {
-  user: 'usuario', users: 'usuarios', teacher: 'profesor', room: 'sala', class: 'clase', session: 'sesión', plan: 'plan', payment: 'pago', credit: 'crédito', event: 'evento',
+  user: 'usuario', users: 'usuarios', teacher: 'profesor', room: 'sala', class: 'clase', session: 'sesión', plan: 'plan', payment: 'pago', ledger: 'movimiento', package: 'paquete', event: 'evento',
   date: 'fecha', time: 'hora', at: '', on: '', by: 'por', count: 'cantidad', min: 'min', max: 'máx', total: 'total', name: 'nombre', type: 'tipo', status: 'estado', key: 'clave',
   url: 'enlace', email: 'correo', phone: 'teléfono', price: 'precio', amount: 'monto', start: 'inicio', end: 'fin', last: 'último', first: 'primero', is: '', has: 'tiene', code: 'código',
   template: 'plantilla', message: 'mensaje', notes: 'notas', note: 'nota', group: 'grupo', page: 'página', title: 'título', label: 'etiqueta', days: 'días', day: 'día', rate: 'tarifa',

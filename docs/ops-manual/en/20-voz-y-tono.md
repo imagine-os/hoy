@@ -2,8 +2,8 @@
 title: Voice and tone
 role: everyone
 part: V
-version: 0.13.3
-updated: 2026-09-29
+version: 0.22.0
+updated: 2026-10-01
 summary: The manifesto, purpose and mission; the brand's four keywords and five traits; how we greet, how we say no and what we never write.
 ---
 
@@ -43,7 +43,7 @@ probably doesn't sound like HOY.
 | Trait | What it means | Do | Don't |
 |---|---|---|---|
 | Present | Lives the moment with attention, neither running ahead nor falling behind | "There's room at 9:30, shall I hold it?" | "Availability may arise in the future." |
-| Human | Every person is different; what is real matters more than what is perfect | "We've given your credit back." | "Your credit has been reinstated." |
+| Human | Every person is different; what is real matters more than what is perfect | "The class is back in your package." | "Your class has been reinstated to your balance." |
 | Close | Natural, simple and direct, with no speeches or pretension | "Hi, Mariana. Your 7:00 class was cancelled." | "Dear user, we regret to inform you that…" |
 | Sensory | Cares for the details; every interaction is pleasant and memorable | "We've left water and a towel for you at the door." | "Participants are advised to bring equipment." |
 | Contemporary | Current, aesthetic and fresh, without wellness's usual codes | "Come and move for a while." | "Transform your body in 30 days." |
@@ -58,7 +58,8 @@ If a message doesn't pass all five traits, rewrite it.
 2. **On WhatsApp:** the name and the fact on the first line; the action on the second. One emoji at most (🌿 is
    ours). No shouting in capitals.
 3. **Always informal** (in Spanish, "tú"). If someone asks to be addressed formally, respect it with that person.
-4. **No internal words** in front of customers: we say "credit", "booking", "membership".
+4. **No internal words** in front of customers: we say "class", "booking", "package". Never "credit": HOY has
+   no credits.
 5. **Spanish first.** English when the person prefers it, in the same tone.
 
 ## 5. How we say no

@@ -16,10 +16,10 @@ export default defineMeta({
   usages: [{ title: { es: 'Clase cancelada', en: 'Class cancelled' }, render: () => h(EmailPreview, {
     envelope: 'HOY <hola@hoy.co> → mariana@…  ·  ES',
     subject: 'Tu clase de {{class_name}} fue cancelada',
-    body: 'Hola {{first_name}},\n\nLa clase de {{class_name}} del {{class_datetime}} con {{teacher_name}} fue cancelada. Te devolvimos {{credit_returned}} crédito.\n\nElige otra clase cuando quieras.',
+    body: 'Hola {{first_name}},\n\nLa clase de {{class_name}} del {{class_datetime}} con {{teacher_name}} fue cancelada. Te devolvimos {{classes_returned}} clase a tu paquete.\n\nElige otra clase cuando quieras.',
     cta: { label: 'Ver horario', href: 'hoyapp://classes?date={{date}}' },
     footer: `${tenant.legalName} · ${tenant.city} · Recibes este correo porque tienes una cuenta en ${tenant.name}.`,
-    vars: { first_name: 'Mariana', class_name: 'Hot Vinyasa', teacher_name: 'Andrés', credit_returned: '1' },
+    vars: { first_name: 'Mariana', class_name: 'Fuego', teacher_name: 'Andrés', classes_returned: '1' },
   }) }],
   a11y: [{ es: 'role=img con el asunto como nombre; el CTA no navega en la vista previa.', en: 'role=img named by the subject; the CTA does not navigate in preview.' }],
   usedBy: ['M-04'],

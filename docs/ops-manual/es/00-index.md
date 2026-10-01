@@ -2,8 +2,8 @@
 title: Índice y cómo usar este manual
 role: todos
 part: I
-version: 0.13.3
-updated: 2026-09-29
+version: 0.22.0
+updated: 2026-10-01
 summary: Para qué sirve el manual, cómo leerlo según tu rol, qué partes ajusta el estudio y dónde están los documentos fuente.
 ---
 
@@ -54,7 +54,7 @@ términos de alquiler, el calendario de redes, los checklists de entrenamiento.
 |---|---|---|
 | I · HOY | Quiénes somos, la filosofía, las clases y el modelo de valor | todos |
 | II · Operación diaria | Puerta, clases, maestros, sala, incidencias, entrenamiento | recepción, maestros, mantenimiento, coordinación |
-| III · Clientes y planes | Ventas, pausas, regalos, alquiler del espacio, WhatsApp | recepción, coordinación |
+| III · Clientes y planes | Ventas, paquetes congelados, regalos, alquiler del espacio, WhatsApp | recepción, coordinación |
 | IV · Dinero | Caja, facturación, nómina de maestros | finanzas, owner |
 | V · Contenido y marca | Contenido, web y redes, fotos, voz y tono | coordinación, marketing |
 | VI · Legal y políticas | Políticas vigentes, documentos legales, datos personales | owner, admin, todos |

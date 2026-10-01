@@ -44,7 +44,7 @@ export function EventsAdminPage() {
     const body: Partial<EventRow> = {
       slug: '', title: { es: '', en: '' }, kind: { es: 'Taller', en: 'Workshop' }, description: { es: '', en: '' }, bring: null,
       starts_at: start.toISOString(), ends_at: end.toISOString(), room_id: rooms[0]?.id ?? null, host_teacher_id: null,
-      capacity: tenant.studio.mats, price_cop: priceItem('taller')?.price ?? 0, member_price_cop: 0, cover_key: 'event.cover', status: 'draft',
+      capacity: tenant.studio.mats, price_cop: priceItem('single')?.price ?? 0, member_price_cop: priceItem('single')?.price ?? 0, cover_key: 'event.cover', status: 'draft',
     };
     const created = await data.insert<EventRow>('events', body);
     await audit('content.create', 'events', created.id, { after: { starts_at: body.starts_at } });

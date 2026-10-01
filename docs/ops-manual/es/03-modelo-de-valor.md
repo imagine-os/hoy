@@ -2,15 +2,18 @@
 title: Modelo de valor
 role: owner, admin, finanzas, recepción, marketing
 part: I
-version: 0.13.3
-updated: 2026-09-29
-summary: Las seis líneas de ingreso de HOY, para qué existe cada una, qué ofrecer en el mostrador y los precios vigentes.
+version: 0.22.0
+updated: 2026-10-01
+summary: La lista de precios de lanzamiento de HOY, para qué existe cada opción, qué ofrecer en el mostrador y las reglas del paquete de 12 clases.
 ---
 
 # Modelo de valor
 
-HOY vende seis cosas distintas y cada una tiene un trabajo diferente. En el mostrador no necesitas saber
-márgenes, pero sí para qué existe cada línea: así ofreces lo correcto sin improvisar.
+HOY vende clases, nunca créditos. En el lanzamiento hay cuatro cosas que se compran (la clase de prueba,
+la clase individual, el paquete de 12 clases y la clase privada), tarjetas de regalo al mismo precio y dos
+servicios que se cotizan caso a caso: el alquiler del espacio y las experiencias corporativas. En el
+mostrador no necesitas saber márgenes, pero sí para qué existe cada opción: así ofreces lo correcto sin
+improvisar.
 
 {{audience:03-modelo-de-valor}}
 
@@ -18,10 +21,10 @@ Ningún precio está escrito a mano en este capítulo. Los bloques de precios so
 cambia, cambia aquí, en el sitio y en el mostrador al mismo tiempo.
 
 ## 1. La regla de capacidad
-Un solo estudio, seis líneas de ingreso y una regla que protege la experiencia:
+Un solo estudio y una regla que protege la experiencia:
 
-1. Cada clase tiene un número fijo de tapetes.
-2. Cada persona toma **una clase al día, en cualquier plan**.
+1. Cada clase tiene un número fijo de mats.
+2. Cada persona toma **una clase al día**.
 3. No se venden más cupos de los que caben.
 
 Esta es la capacidad vigente:
@@ -29,84 +32,84 @@ Esta es la capacidad vigente:
 {{tenant:capacity}}
 
 Ese es todo el inventario del día. El negocio no consiste en vender más cupos, sino en ofrecer el cupo
-correcto a la persona correcta, y en cobrar también por lo que no ocupa un tapete: pausas, regalos, espacio.
+correcto a la persona correcta, y en cobrar también por lo que no ocupa un mat: regalos, clases privadas,
+espacio.
 
-## 2. Las seis líneas
-| Línea | Su trabajo | Cómo sabemos que funciona |
+## 2. Las opciones
+| Opción | Su trabajo | Cómo sabemos que funciona |
 |---|---|---|
-| Bienvenida | Adquisición: la primera visita, a precio bajo | cuántos pases terminan en Membresía |
-| Membresía | Ingreso recurrente: un solo nivel de acceso, mensual o anual | socios activos y cuántos se quedan cada mes |
-| Pausas | Frecuencia: sesiones cortas de 15 a 30 minutos | visitas por socio por semana |
-| Regalos | Referido y comunidad: bonos e invitados | bonos usados e invitados que vuelven |
-| Espacio | Ingreso B2B: alquiler del estudio fuera de horas pico | horas alquiladas por mes |
-| Experiencias Corporativas | En camino: bienestar para equipos de trabajo | todavía no se vende |
+| Primera visita | La clase de prueba y la clase individual: entrar sin compromiso | cuántas pruebas terminan en un paquete |
+| Paquete de 12 clases | Constancia: 12 clases para usar en 3 meses | paquetes vendidos y cuántos se renuevan |
+| Clases privadas | Una clase a la medida, para 1 a 3 personas | privadas por mes |
+| Tarjetas de regalo | Traer gente nueva de la mano de alguien que ya nos conoce | tarjetas redimidas |
+| Espacio | Alquiler del estudio para experiencias y actividades especiales | solicitudes cotizadas y cerradas |
+| Experiencias corporativas | Bienestar para equipos de trabajo | propuestas enviadas y cerradas |
 
-El documento original, sin precios:
+En el lanzamiento **no hay membresía mensual ni anual, ni créditos, ni pausas cortas**. El modelo de valor
+anterior (Membresía, Pausas, paquetes de 3 y de 10 clases) quedó retirado el 1 de octubre de 2026.
 
-{{source:modelo-de-valor}}
-
-## 3. Bienvenida — la primera visita
-La puerta de entrada. Precio bajo y sin permanencia, para que la persona decida con el cuerpo. Esta línea no
-busca ganar dinero: busca que la persona vuelva y pase a la Membresía.
+## 3. Primera visita — la clase de prueba y la clase individual
+La puerta de entrada. Precio bajo y sin permanencia, para que la persona decida con el cuerpo.
 
 {{pricing:bienvenida}}
 
-1. El **Paquete de 3 Clases** se usa en **un mes**.
-2. El **Paquete de 10 Clases** se usa en **tres meses**.
+1. La **clase de prueba** es una por persona.
+2. La **clase individual** es para quien viene de vez en cuando o todavía no decide.
 
-**Qué ofrecer:** la primera vez, la Clase de Prueba. La segunda, el Paquete de 3. El Paquete de 10 es para
-quien ya sabe que va a volver pero todavía no quiere mensualidad.
+**Qué ofrecer:** la primera vez, la clase de prueba. Si la persona vuelve, el paquete de 12 clases.
 
-> DECISIÓN PENDIENTE: el modelo de valor describe la Clase de Prueba como "una clase, sin costo de entrada", pero hoy tiene precio en el sistema. Hay que confirmar si la prueba es gratis o si "sin costo de entrada" quiere decir sin cuota de inscripción.
+## 4. El paquete de 12 clases — el corazón del negocio
+Doce clases para usar en tres meses, en cualquiera de las siete clases del horario.
 
-## 4. Membresía — el corazón del negocio
-Un solo nivel de acceso: no hay "plan plus". Se paga mes a mes o una vez al año. Es el mismo acceso completo;
-el anual sale más barato por mes, y esa es la única diferencia.
+{{pricing:paquetes}}
 
-{{pricing:membresia}}
+1. Las 12 clases se usan en **3 meses** desde la compra.
+2. El paquete se puede **congelar una sola vez, hasta por 30 días**. La fecha de vencimiento se corre los
+   mismos días. Mientras está congelado no se reserva con él.
+3. **No es reembolsable.**
+4. Los **afiliados de Santa María Tennis Club** tienen un precio especial en el paquete. Es el único
+   beneficio entre el club y el estudio. Recepción verifica la afiliación.
 
-**Qué decir si pregunta si el anual vale la pena:** "Es el mismo acceso. Pagando el año te sale más barato
-cada mes." La nota del bloque de arriba dice cuánto sale al mes.
+**Qué decir si pregunta por qué el paquete:** "Son 12 clases para usar en tres meses, en la clase que
+quieras. Si viajas o te enfermas, lo congelas una vez hasta 30 días."
 
-Pausar, recibir el aviso de cobro y cancelar sin laberintos: [Pausas y regalos](11-pausas-y-regalos.md) y
-[Políticas](21-politicas.md).
+Esta es la regla de congelamiento vigente:
 
-![Los planes como los ve el público](../../screenshots/P-01/es-1280.jpg "P-01 · /site/plans")
+{{policy:freeze_max_days}}
 
-## 5. Pausas — venir más seguido
-Sesiones cortas de 15 a 30 minutos: respiración, meditación, una pausa entre reuniones. Casi no tienen costo
-para el estudio. Su trabajo es que la persona venga más veces por semana.
+Cómo se congela y cómo se reanuda: [Paquetes congelados y regalos](11-pausas-y-regalos.md).
 
-{{pricing:pausas}}
+![Los precios como los ve el público](../../screenshots/P-01/es-1280.jpg "P-01 · /site/plans")
 
-**Pausas Ilimitadas** es un complemento mensual: se suma a la Membresía, no la reemplaza. Lo que falta
-decidir sobre las Pausas está en [Pausas y regalos](11-pausas-y-regalos.md).
+## 5. Clases privadas — a tu medida
+Una clase diseñada para quien la toma: **máximo 3 personas**. El precio cubre la clase y cada persona
+adicional suma un valor fijo.
 
-## 6. Regalos — traer gente nueva
-Regalar y traer a alguien es, en la práctica, nuestro canal de referidos: la gente nueva llega de la mano de
-alguien que ya nos conoce.
+{{pricing:privadas}}
+
+Las privadas se arreglan por WhatsApp: la persona escribe, coordinación propone horario y profesor, y
+recepción cobra en "Registrar y cobrar" con el número de personas.
+
+## 6. Tarjetas de regalo — para compartir
+Hay dos tarjetas de regalo, al mismo precio de las clases: una clase individual o un paquete de 12 clases.
+Una persona puede comprar varias clases individuales, o dos o más paquetes, para regalar a quien quiera.
 
 {{pricing:regalos}}
 
-1. El **Bono de Regalo** se compra para regalar.
-2. El **Invitado** está **incluido** para los socios de Membresía: es un beneficio, no un producto que se
-   cobra.
-
-Cuántos invitados puede traer un socio y cómo cuentan en la sala: [Pausas y regalos](11-pausas-y-regalos.md).
+Quien la recibe la redime en recepción. Cómo se vende y se redime: [Paquetes congelados y regalos](11-pausas-y-regalos.md).
 
 ## 7. Espacio — alquilar el estudio
-El estudio se alquila fuera de las horas de mayor demanda: foto y video, talleres, sesiones privadas, rodajes
-y pop-ups. Son precios "desde" y terminan en una conversación, no en un pago en línea.
+HOY alquila el espacio para experiencias y actividades especiales. Cada solicitud se analiza de forma
+individual y su valor depende de lo que necesita cada caso. No hay precio publicado ni pago en línea.
 
 {{pricing:espacio}}
 
 Cómo se cotiza, se agenda y se cobra: [Espacio — alquiler B2B](12-espacio-b2b.md).
 
-## 8. Experiencias Corporativas — en camino
-La sexta línea está **en preparación**. La idea es llevar HOY a los equipos de trabajo que rinden alto y
-descansan poco: pausas activas, movimiento y respiración como parte de la cultura de la empresa.
+## 8. Experiencias corporativas
+Llevar HOY a los equipos de trabajo: movimiento y respiración como parte de la cultura de la empresa.
 
-Tiene tres formatos pensados:
+Tiene tres formatos:
 
 1. **Sesión para equipos:** una experiencia grupal, en el estudio o en la oficina.
 2. **Programa recurrente:** encuentros periódicos para un mismo equipo.
@@ -114,10 +117,10 @@ Tiene tres formatos pensados:
 
 {{pricing:corporativo}}
 
-**Qué decir si una empresa pregunta:** "Estamos preparando un programa para equipos. Déjame tus datos y
+**Qué decir si una empresa pregunta:** "Armamos cada propuesta con la empresa. Déjame tus datos y
 coordinación te escribe." Pasa el contacto a coordinación el mismo día. No des precios ni fechas.
 
-> DECISIÓN PENDIENTE: el alcance, los formatos y los precios de Experiencias Corporativas, y si una sesión en la oficina de la empresa cuenta contra la capacidad del estudio.
+> DECISIÓN PENDIENTE: el precio de las experiencias corporativas y si una sesión en la oficina de la empresa cuenta contra la capacidad del estudio.
 
 ## 9. Todo junto
 El catálogo completo, tal como está hoy:
@@ -129,13 +132,13 @@ El catálogo completo, tal como está hoy:
 | Indicador | Qué mirar |
 |---|---|
 | Ingresos del mes | ventas ya pagadas, contra el mismo mes del año anterior |
-| Mezcla por línea | cuánto viene de Membresía y cuánto de Bienvenida |
+| Mezcla | cuánto viene de paquetes, de clases sueltas y de privadas |
 | Ocupación | personas que vinieron sobre cupos ofrecidos |
-| Conversión de Bienvenida | pases que después compraron Membresía |
+| Conversión de la prueba | pruebas que después compraron un paquete |
 {{/for}}
 
 Esta es la ocupación ahora mismo:
 
 {{kpi:occupancy}}
 
-> EN HOYOS: M-01 Panel (ingresos, ocupación) · M-09 Finanzas (mezcla por línea) · M-06 CRM → segmentos (conversión).
+> EN HOYOS: M-01 Panel (ingresos, ocupación) · M-09 Finanzas (mezcla por producto) · M-06 CRM → segmentos (conversión).

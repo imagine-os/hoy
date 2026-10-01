@@ -2,8 +2,8 @@
 title: Pagos y caja
 role: finanzas, recepción, owner
 part: IV
-version: 0.13.3
-updated: 2026-09-29
+version: 0.22.0
+updated: 2026-10-01
 summary: Los medios de pago, el cierre de caja, la conciliación diaria, Wompi, los reembolsos, los gastos y el balance, y los reportes del mes.
 ---
 
@@ -19,9 +19,14 @@ al banco.
 |---|---|---|
 | Efectivo | de inmediato | recepción, al recibirlo |
 | Datáfono | cuando Wompi lo confirma | finanzas, en el panel de Wompi |
-| Link de Wompi | cuando Wompi lo confirma | automático; finanzas lo revisa |
-| Transferencia o Nequi | cuando finanzas ve el dinero en la cuenta | finanzas, en los pagos del socio |
-| Bono de regalo | de inmediato (descuenta el saldo) | el sistema |
+| Link de Wompi (tarjeta en la web) | cuando Wompi lo confirma | automático; finanzas lo revisa |
+| PSE | cuando Wompi lo confirma | automático; finanzas lo revisa |
+| QR de Wompi | cuando Wompi lo confirma | automático; finanzas lo revisa |
+| Transferencia | cuando finanzas ve el dinero en la cuenta | finanzas, en los pagos de la persona |
+
+En la web se paga con tarjeta, PSE o el QR de Wompi; en recepción hay además efectivo, datáfono y
+transferencia. **No se recibe Nequi ni Daviplata.** Una tarjeta de regalo no es un medio de pago: se redime en
+recepción por la clase o el paquete que regala (ver [Paquetes congelados y regalos](11-pausas-y-regalos.md)).
 
 Una venta pendiente **no es una venta**. Hasta que queda pagada, no cuenta en los ingresos del mes.
 
@@ -69,10 +74,11 @@ La diferencia de caja que se le avisa al owner:
 ## 5. Reembolsos
 | Caso | Qué se hace | Quién aprueba |
 |---|---|---|
-| El estudio canceló la clase | El crédito vuelve solo | nadie, es automático |
-| Cobro doble o error | Se devuelve al mismo medio desde Wompi y se anota en los pagos del socio | finanzas |
-| Cortesía por una queja | Crédito, no dinero | coordinación |
-| Retiro de una membresía anual | Se prorratea según los términos | owner |
+| El estudio canceló la clase | La clase vuelve sola al paquete | nadie, es automático |
+| Cobro doble o error | Se devuelve al mismo medio desde Wompi y se anota en los pagos de la persona | finanzas |
+| Cortesía por una queja | Una clase, no dinero | coordinación |
+| Pide devolver el paquete de 12 clases | No es reembolsable; se ofrece congelarlo una vez | nadie: es la regla |
+| No vino por enfermedad | Se le reprograma la clase | coordinación |
 
 Todo reembolso queda registrado con quién lo hizo y los valores de antes y después.
 
@@ -104,7 +110,7 @@ cuándo. Las páginas legales y el flujo de emergencia no se pueden apagar.
 
 1. **Cada lunes:** ocupación por clase y franja, ventas por producto, no-shows.
 2. **Cada mes (día 5):** ingresos, nómina, gastos y balance del mes; depósitos de Wompi conciliados; socios "En
-   riesgo"; motivos de cancelación de membresía.
+   riesgo"; paquetes por vencer.
 
 > EN HOYOS: M-01 Panel → M-07 Exportar CSV → M-06 grupos → M-09 Finanzas.
 

@@ -57,7 +57,7 @@ export function CancelledDemoPage() {
     <div className="container page cust-page">
       <PageHead back="/app" title={t('customer.cancelled.title')} />
       <Notice tone="info">{t('customer.state.demo', { code: 'E-03' })}</Notice>
-      {picked ? <StudioCancelledBlock joined={picked} booking={{ paid_with: 'credit' } as never} /> : <EmptyState title={t('core.common.empty')} />}
+      {picked ? <StudioCancelledBlock joined={picked} booking={{ paid_with: 'package' } as never} /> : <EmptyState title={t('core.common.empty')} />}
     </div>
   );
 }

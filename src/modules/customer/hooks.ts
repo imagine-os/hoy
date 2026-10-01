@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSession } from '../../auth/SessionProvider';
 import { useData, useTable } from '../../data/DataContext';
-import type { BaseRow, BookingRow, ClassSessionRow, ContentArticleRow, CreditRow, EventRow, EventRsvpRow, FaqEntryRow, InviteRow, MembershipRow, ModalityRow, NotificationPrefRow, NotificationRow, PaymentMethodRow, PaymentRow, PlanRow, ProfileRow, ReviewRow, RoomRow, TeacherRow, UserRow } from '../../data/schema';
-import { isSameDay, dateKey, MS } from '../../i18n/format';
+import type { BaseRow, BookingRow, ClassSessionRow, ContentArticleRow, ClassLedgerRow, EventRow, EventRsvpRow, FaqEntryRow, InviteRow, MembershipRow, ModalityRow, NotificationPrefRow, NotificationRow, PaymentMethodRow, PaymentRow, PlanRow, ProfileRow, ReviewRow, RoomRow, TeacherRow, UserRow } from '../../data/schema';
+import { isSameDay, MS } from '../../i18n/format';
 import { tenant } from '../../tenant/tenant';
 import { priceItem, type PriceItem } from '../../tenant/pricing';
 import { insideCancelWindow, policy } from './policy';
+import { freezePatch, packageState, resumePatch } from '../../data/packages';
 
 export interface WaitlistRow extends BaseRow { user_id: string; session_id: string; position: number; status: 'waiting' | 'offered' | 'claimed' | 'expired' | 'left'; offered_at: string | null; claim_until: string | null }
 export interface EmergencyContact { name: string; phone: string }
@@ -50,27 +51,40 @@ export function useMyProfile() {
   return { profile: profiles[0] ?? null, account: users[0] ?? null };
 }
 
-export type EntitlementKind = 'credit' | 'membership' | 'trial' | 'single';
+export type EntitlementKind = 'package' | 'membership' | 'trial' | 'single';
 
-/** What the signed-in person can pay a class with, in the C-04 order: credits → membership → trial → single purchase. */
+/**
+ * What the signed-in person can pay a class with, in the C-04 order: a class of their package → trial → single class.
+ * 0051: HOY has no credits and no membership at launch; the balance is the package's classes (src/data/packages.ts).
+ * `membership` stays readable for a future recurring plan but nothing sells one.
+ */
 export function useEntitlements() {
   const { user } = useSession();
   const { rows: memberships } = useTable<MembershipRow>('memberships', { where: { user_id: user.id } });
-  const { rows: credits } = useTable<CreditRow>('credits', { where: { user_id: user.id } });
+  const { rows: ledger } = useTable<ClassLedgerRow>('class_ledger', { where: { user_id: user.id } });
   const { rows: payments } = useTable<PaymentRow>('payments', { where: { user_id: user.id } });
   const { rows: bookings } = useTable<BookingRow>('bookings', { where: { user_id: user.id } });
   const { rows: plans } = useTable<PlanRow>('plans');
   return useMemo(() => {
     const membership = memberships.find((m) => m.status === 'active') ?? memberships.find((m) => m.status === 'paused') ?? null;
-    const plan = membership ? plans.find((p) => p.id === membership.plan_id) ?? null : null;
-    const today = dateKey();
-    const live = credits.filter((c) => !c.expires_at || c.expires_at >= today || c.delta < 0);
-    const creditBalance = Math.max(0, live.reduce((a, c) => a + c.delta, 0));
-    const nextExpiry = credits.filter((c) => c.delta > 0 && c.expires_at && c.expires_at >= today).map((c) => c.expires_at!).sort()[0] ?? null;
+    const pkg = packageState(ledger);
+    const plan = membership ? plans.find((p) => p.id === membership.plan_id) ?? null : pkg.purchase?.plan_id ? plans.find((p) => p.id === pkg.purchase!.plan_id) ?? null : null;
     const trialUsed = bookings.some((b) => b.paid_with === 'trial') || payments.some((p) => p.plan_id === 'plan_trial' && p.status === 'approved');
-    const defaultKind: EntitlementKind = creditBalance > 0 ? 'credit' : membership?.status === 'active' ? 'membership' : !trialUsed ? 'trial' : 'single';
-    return { membership, plan, credits, creditBalance, nextExpiry, trialUsed, payments, defaultKind, hasAnyEntitlement: creditBalance > 0 || membership?.status === 'active' };
-  }, [memberships, credits, payments, bookings, plans]);
+    const defaultKind: EntitlementKind = pkg.balance > 0 ? 'package' : membership?.status === 'active' ? 'membership' : !trialUsed ? 'trial' : 'single';
+    return { membership, plan, ledger, pkg, classBalance: pkg.balance, nextExpiry: pkg.expiresAt, trialUsed, payments, defaultKind, hasAnyEntitlement: pkg.balance > 0 || membership?.status === 'active' };
+  }, [memberships, ledger, payments, bookings, plans]);
+}
+
+/** C-07b: freeze the package (once, up to the M-08 freezeMaxDays) and end a freeze early. */
+export function usePackageActions() {
+  const data = useData();
+  const freeze = useCallback(async (purchase: ClassLedgerRow, days: number) => {
+    if (purchase.frozen_from) throw new Error('freeze_used');
+    if (days < 1 || days > policy.freezeMaxDays) throw new Error('freeze_days');
+    await data.update('class_ledger', purchase.id, freezePatch(purchase, days));
+  }, [data]);
+  const resume = useCallback(async (purchase: ClassLedgerRow) => { await data.update('class_ledger', purchase.id, resumePatch(purchase)); }, [data]);
+  return { freeze, resume };
 }
 
 export function useWaitlistFor(sessionId: string | undefined) {
@@ -101,18 +115,18 @@ export function useBookingActions() {
     return hit?.session_id ?? null;
   }, []);
 
-  const book = useCallback(async (session: ClassSessionRow, paidWith: EntitlementKind, opts?: { creditPlanId?: string | null; matNumber?: number | null }) => {
+  const book = useCallback(async (session: ClassSessionRow, paidWith: EntitlementKind, opts?: { packagePlanId?: string | null; matNumber?: number | null }) => {
     // Race guard: re-read the session so a spot that filled during checkout is caught (C-04 "Race" state).
     const fresh = await data.get<ClassSessionRow>('class_sessions', session.id);
     if (!fresh || fresh.status !== 'scheduled') throw new Error('session_unavailable');
     if (fresh.booked_count >= fresh.capacity) throw new Error('session_full');
     const existing = await data.list<BookingRow>('bookings', { where: { user_id: user.id, session_id: fresh.id } });
     if (existing.some(b => b.status === 'booked' || b.status === 'checked_in')) throw new Error('booking_exists');
-    const booking = await data.insert<BookingRow>('bookings', { user_id: user.id, session_id: fresh.id, status: 'booked', paid_with: paidWith, credit_id: null, checked_in_at: null, cancelled_at: null, rated: false, mat_number: opts?.matNumber ?? null });
-    if (paidWith === 'credit') {
-      const c = await data.insert<CreditRow>('credits', { user_id: user.id, plan_id: opts?.creditPlanId ?? null, payment_id: null, delta: -1, reason: 'booking', expires_at: null } as Partial<CreditRow>);
-      await data.update('bookings', booking.id, { credit_id: c.id });
-      booking.credit_id = c.id;
+    const booking = await data.insert<BookingRow>('bookings', { user_id: user.id, session_id: fresh.id, status: 'booked', paid_with: paidWith, ledger_id: null, checked_in_at: null, cancelled_at: null, rated: false, mat_number: opts?.matNumber ?? null });
+    if (paidWith === 'package') {
+      const c = await data.insert<ClassLedgerRow>('class_ledger', { user_id: user.id, plan_id: opts?.packagePlanId ?? null, payment_id: null, delta: -1, reason: 'booking', expires_at: null } as Partial<ClassLedgerRow>);
+      await data.update('bookings', booking.id, { ledger_id: c.id });
+      booking.ledger_id = c.id;
     }
     await data.update('class_sessions', fresh.id, { booked_count: fresh.booked_count + 1 });
     return booking;
@@ -131,8 +145,8 @@ export function useBookingActions() {
     const late = reason === 'customer' && insideCancelWindow(session.starts_at);
     const status = late ? 'late_cancel' : 'cancelled';
     await data.update('bookings', booking.id, { status, cancelled_at: new Date().toISOString() });
-    // Credit returns automatically outside the window, or always when the studio cancelled (E-03).
-    if (booking.paid_with === 'credit' && !late) await data.insert('credits', { user_id: booking.user_id, plan_id: null, payment_id: null, delta: 1, reason: reason === 'studio' ? 'refund' : 'cancel_return', expires_at: null });
+    // The class returns to the package outside the window, or always when the studio cancelled (E-03).
+    if (booking.paid_with === 'package' && !late) await data.insert('class_ledger', { user_id: booking.user_id, plan_id: null, payment_id: null, delta: 1, reason: reason === 'studio' ? 'refund' : 'cancel_return', expires_at: null });
     if (session.status === 'scheduled') {
       await data.update('class_sessions', session.id, { booked_count: Math.max(0, session.booked_count - 1) });
       await promoteWaitlist(session.id);
@@ -144,7 +158,7 @@ export function useBookingActions() {
   const reschedule = useCallback(async (booking: BookingRow, from: ClassSessionRow, to: ClassSessionRow) => {
     const fresh = await data.get<ClassSessionRow>('class_sessions', to.id);
     if (!fresh || fresh.booked_count >= fresh.capacity || fresh.status !== 'scheduled') throw new Error('session_full');
-    const next = await data.insert<BookingRow>('bookings', { user_id: booking.user_id, session_id: fresh.id, status: 'booked', paid_with: booking.paid_with, credit_id: booking.credit_id, checked_in_at: null, cancelled_at: null, rated: false });
+    const next = await data.insert<BookingRow>('bookings', { user_id: booking.user_id, session_id: fresh.id, status: 'booked', paid_with: booking.paid_with, ledger_id: booking.ledger_id, checked_in_at: null, cancelled_at: null, rated: false });
     await data.update('bookings', booking.id, { status: 'cancelled', cancelled_at: new Date().toISOString() });
     await data.update('class_sessions', from.id, { booked_count: Math.max(0, from.booked_count - 1) });
     await data.update('class_sessions', fresh.id, { booked_count: fresh.booked_count + 1 });
@@ -171,7 +185,10 @@ export function useBookingActions() {
 
 /** Pricing helpers shared by C-04 / C-07 / C-17 — every figure comes from pricing.ts. */
 export const priceOf = (id: string): PriceItem => { const p = priceItem(id); if (!p) throw new Error(`unknown price ${id}`); return p; };
-export const PASS_IDS = ['trial', 'single', 'pack3', 'pack10'] as const;
+/** Pay-per-class items (C-07): the trial class and the individual class. */
+export const PASS_IDS = ['trial', 'single'] as const;
+/** The packages a member can buy (C-06, C-04): the 12-class package and its Santa María Tennis Club price. */
+export const PACKAGE_IDS = ['pack12', 'pack12_smtc'] as const;
 
 /**
  * Small localStorage-backed per-viewer preference. Since 0008 the faked data (notification prefs,
@@ -273,7 +290,7 @@ export function useMyInvites() {
     const email = input.target.includes('@');
     return data.insert<InviteRow>('invites', {
       inviter_user_id: user.id, invitee_phone: !email && /\d/.test(input.target) ? input.target : null, invitee_email: email ? input.target : null,
-      invitee_user_id: null, channel: input.channel, code, session_id: input.sessionId ?? null, status: 'sent', reward_credit_id: null,
+      invitee_user_id: null, channel: input.channel, code, session_id: input.sessionId ?? null, status: 'sent', reward_ledger_id: null,
     } as Partial<InviteRow>);
   }, [code, data, user.id]);
   return { rows, code, send };

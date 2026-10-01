@@ -2,9 +2,9 @@
 title: Sala, calor y mantenimiento
 role: mantenimiento, recepción, maestros
 part: II
-version: 0.13.3
-updated: 2026-09-29
-summary: Limpieza, montaje de la sala, la sala caliente, insumos, revisión de equipos y seguridad.
+version: 0.22.0
+updated: 2026-10-01
+summary: Limpieza, montaje de la sala, temperatura y ventilación, insumos, revisión de equipos y seguridad.
 ---
 
 # Sala, calor y mantenimiento
@@ -37,22 +37,20 @@ El tiempo que hay entre una clase y la siguiente:
 3. Temperatura y humedad a lo que pide la clase.
 4. Luz y música según la clase y su intensidad.
 
-## 3. La sala caliente
-El hot yoga se practica en calor a propósito (ver [Nuestras clases](02-nuestras-clases.md)). Eso cambia el
-trabajo:
+## 3. Temperatura y ventilación
+Ninguna de las siete clases se da en sala caliente (ver [Nuestras clases](02-nuestras-clases.md)). Lo que sí
+cambia de una clase a otra es la intensidad: después de Fuego o Sólido la sala queda húmeda y caliente.
 
-1. Calienta la sala antes de que llegue el grupo. Nunca subas la temperatura con gente adentro.
-2. El piso tiene que estar seco antes de que entren, y hay que revisarlo entre bloques. El sudor en un piso
-   caliente es la causa más común de caídas.
-3. Deja agua en la sala y toallas limpias en la entrada.
-4. Ventila por completo entre una clase caliente y la siguiente clase sin calor.
-5. Si el clima falla, la clase se da sin calor. Recepción lo avisa en la puerta y ofrece otra opción: "Si
-   prefieres, te muevo a la de mañana y no te cuenta." No se cancela por temperatura sin hablar con
-   coordinación.
-6. Mareo o golpe de calor: es una emergencia médica. Sigue
+1. Ventila por completo entre una clase intensa y la siguiente, sobre todo antes de Centro o Ligereza.
+2. El piso tiene que estar seco antes de que entren, y hay que revisarlo entre bloques. El sudor en el piso es
+   la causa más común de caídas.
+3. La zona de hidratación queda lista antes de la primera clase; después de clase la persona la usa.
+4. Si el aire acondicionado falla, recepción lo avisa en la puerta y ofrece otra opción: "Si prefieres, te
+   muevo a la de mañana y no te cuenta." No se cancela una clase por temperatura sin hablar con coordinación.
+5. Mareo o golpe de calor: es una emergencia médica. Sigue
    [Incidencias y emergencias](08-incidencias-y-emergencias.md).
 
-> DECISIÓN PENDIENTE: la temperatura objetivo de cada tipo de clase y cuánto tiempo antes hay que empezar a calentar la sala.
+> DECISIÓN PENDIENTE: la temperatura objetivo de la sala para cada clase (más fresca para Fuego y Sólido, más templada para Centro).
 
 ## 4. Insumos
 {{for:maintenance,coordinator}}
@@ -67,7 +65,7 @@ trabajo:
 
 | Equipo | Cada cuánto | Quién |
 |---|---|---|
-| Clima y calefacción | Todos los días (mirar la lectura) · cada mes (técnico) | Mantenimiento |
+| Aire acondicionado y ventilación | Todos los días (mirar la lectura) · cada mes (técnico) | Mantenimiento |
 | Sonido | Todos los días, antes de la primera clase | Recepción |
 | Iluminación | Cada semana | Mantenimiento |
 | Extintores y botiquín | Cada mes, con la fecha en la etiqueta | Mantenimiento |
@@ -75,7 +73,7 @@ trabajo:
 
 ## 6. Seguridad
 1. Las salidas siempre libres. Nada apilado frente a las puertas.
-2. El piso de la sala caliente seco antes de que entre el grupo.
+2. El piso de la sala seco antes de que entre el grupo, sobre todo después de una clase intensa.
 3. Cualquier daño o riesgo se reporta a coordinación el mismo día, con foto en el grupo interno.
 
 ## 7. Dónde se firman los checklists

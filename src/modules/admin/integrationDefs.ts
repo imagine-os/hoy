@@ -74,7 +74,7 @@ export const INTEGRATIONS: IntegrationDef[] = [
   {
     key: 'wompi',
     name: { es: 'Wompi · pagos y payouts', en: 'Wompi · payments and payouts' },
-    body: { es: 'Link de pago, tarjeta, PSE y Nequi para los clientes; dispersión de la nómina de profesores.', en: 'Payment link, card, PSE and Nequi for members; teacher payroll dispersion.' },
+    body: { es: 'Link de pago, tarjeta, PSE y QR para los clientes; dispersión de la nómina de profesores.', en: 'Payment link, card, PSE and QR for members; teacher payroll dispersion.' },
     simulated: { es: 'wompiCheckout() y wompiPayout() esperan y resuelven con una referencia ficticia; los pagos y las corridas ya se escriben como filas reales.', en: 'wompiCheckout() and wompiPayout() wait and resolve with a fake reference; payments and runs are already written as real rows.' },
     fields: [
       { name: 'merchantId', label: { es: 'ID de comercio', en: 'Merchant id' }, placeholder: 'mer_…' },

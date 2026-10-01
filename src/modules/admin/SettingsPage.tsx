@@ -213,8 +213,8 @@ export function SettingsPage({ group = 'general' }: { group?: SettingsGroup }) {
                     <Field label={t('admin.settings.f.waitlistClaim')} hint="C-20">{(id) => <Input id={id} type="number" min={5} value={d.waitlistClaimMin} disabled={!canWrite} onChange={(e) => set({ ...d, waitlistClaimMin: Number(e.target.value) })} />}</Field>
                     <Field label={t('admin.settings.f.lateGrace')} hint="S-02 · S-03">{(id) => <Input id={id} type="number" min={0} value={d.lateGraceMin} disabled={!canWrite} onChange={(e) => set({ ...d, lateGraceMin: Number(e.target.value) })} />}</Field>
                     <Field label={t('admin.settings.f.noShowFee')} hint={settings.features.noShowFee ? 'COP' : t('admin.settings.f.noShowFee.off')}>{(id) => <Input id={id} type="number" min={0} value={d.noShowFee} disabled={!canWrite || !settings.features.noShowFee} onChange={(e) => set({ ...d, noShowFee: Number(e.target.value) })} />}</Field>
-                    <Field label={t('admin.settings.f.pauseDays')} hint="C-22">{(id) => <Input id={id} type="number" min={0} value={d.pauseDaysPerYear} disabled={!canWrite} onChange={(e) => set({ ...d, pauseDaysPerYear: Number(e.target.value) })} />}</Field>
-                    <Field label={t('admin.settings.f.maxPauses')}>{(id) => <Input id={id} type="number" min={0} value={d.maxPausesPerYear} disabled={!canWrite} onChange={(e) => set({ ...d, maxPausesPerYear: Number(e.target.value) })} />}</Field>
+                    <Field label={t('admin.settings.f.freezeDays')} hint="C-07b">{(id) => <Input id={id} type="number" min={0} value={d.freezeMaxDays} disabled={!canWrite} onChange={(e) => set({ ...d, freezeMaxDays: Number(e.target.value) })} />}</Field>
+                    <Field label={t('admin.settings.f.freezes')} hint="C-07b">{(id) => <Input id={id} type="number" min={0} value={d.freezesPerPackage} disabled={!canWrite} onChange={(e) => set({ ...d, freezesPerPackage: Number(e.target.value) })} />}</Field>
                     <Field label={t('admin.settings.f.paymentHold')} hint="E-02">{(id) => <Input id={id} type="number" min={0} value={d.paymentHoldMin} disabled={!canWrite} onChange={(e) => set({ ...d, paymentHoldMin: Number(e.target.value) })} />}</Field>
                     <Field label={t('admin.settings.f.chargeNotice')} hint="C-22">{(id) => <Input id={id} type="number" min={0} value={d.chargeNoticeDays} disabled={!canWrite} onChange={(e) => set({ ...d, chargeNoticeDays: Number(e.target.value) })} />}</Field>
                     <Field label={t('admin.settings.f.lockoutAttempts')} hint="A-02 · E-04">{(id) => <Input id={id} type="number" min={1} value={d.lockoutAttempts} disabled={!canWrite} onChange={(e) => set({ ...d, lockoutAttempts: Number(e.target.value) })} />}</Field>
@@ -357,8 +357,6 @@ export function SettingsPage({ group = 'general' }: { group?: SettingsGroup }) {
                   <div className="grid grid-2">
                     <Field label={t('admin.settings.f.mapProvider')} hint={t('admin.settings.f.mapProvider.hint')}>{(id) => <Select id={id} value={d.mapProvider} disabled={!canWrite} onChange={(e) => set({ ...d, mapProvider: e.target.value as StudioSettings['content']['mapProvider'] })}>{(['none', 'osm', 'google'] as const).map((v) => <option key={v} value={v}>{t(`admin.settings.f.mapProvider.${v}`)}</option>)}</Select>}</Field>
                   </div>
-                  <Toggle checked={d.breathworkOwnClass} disabled={!canWrite} label={t('admin.settings.f.breathwork')} onChange={(on) => set({ ...d, breathworkOwnClass: on })} />
-                  <p className="xs muted">{t('admin.settings.f.breathwork.hint')} <Link to="/site/classes/respiracion">W-08</Link></p>
                   <div className="settings-map"><MapSlot provider={d.mapProvider} ratio="21:9" /></div>
                   <p className="xs muted">{t('admin.settings.content.note')}</p>
                 </>

@@ -18,8 +18,8 @@ export default defineMeta({
   states: ['default', 'selected', 'unread rows first', 'filtered (unread / whatsapp / email)', 'search no match', 'empty', 'compact'],
   usages: [{ title: { es: 'Bandeja con tres hilos', en: 'Inbox with three threads' }, render: () => h(ConversationList, { selectedKey: 'usr_c01', linkTo: (k: string) => `#/staff/inbox/${k}`, conversations: [
     { key: 'usr_cust', name: 'Juliana Ospina', initials: 'JO', snippet: '¿Me cambias la reserva de mañana a la de 5:30 p. m.?', lastAt: d(1.5), unread: 2, channel: 'whatsapp', channels: ['whatsapp', 'email', 'note'] },
-    { key: 'usr_c01', name: 'Camila García', initials: 'CG', snippet: 'Claro: Nequi, tarjeta, PSE o efectivo. Te esperamos', lastAt: d(29), unread: 0, channel: 'whatsapp' },
-    { key: 'usr_c09', name: 'Gabriela Rojas', initials: 'GR', snippet: 'Re: Factura de mi membresía', lastAt: d(58), unread: 0, channel: 'email', channels: ['email'] },
+    { key: 'usr_c01', name: 'Camila García', initials: 'CG', snippet: 'Claro: tarjeta, PSE o QR en la web, o efectivo en recepción', lastAt: d(29), unread: 0, channel: 'whatsapp' },
+    { key: 'usr_c09', name: 'Gabriela Rojas', initials: 'GR', snippet: 'Re: Factura de mi paquete', lastAt: d(58), unread: 0, channel: 'email', channels: ['email'] },
   ] }) }],
   a11y: [{ es: 'Lista <ul> con aria-label; cada fila es un <a> con aria-current en la seleccionada; el buscador lleva aria-label; los filtros son un tablist.', en: '<ul> with an aria-label; each row is an <a> with aria-current on the selected one; the search has an aria-label; filters form a tablist.' }],
   usedBy: ['S-06'],

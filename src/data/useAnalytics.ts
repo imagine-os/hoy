@@ -7,7 +7,7 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useData, useTable } from './DataContext';
 import { useSession } from '../auth/SessionProvider';
 import { dateKey } from '../i18n/format';
-import type { ActivityEventRow, BookingRow, ClassSessionRow, CreditRow, GoalSource, MembershipRow, ModalityRow, PracticeGoalRow, ProfileRow, ReviewRow, TeacherRow, UserRow } from './schema';
+import type { ActivityEventRow, BookingRow, ClassSessionRow, ClassLedgerRow, GoalSource, MembershipRow, ModalityRow, PracticeGoalRow, ProfileRow, ReviewRow, TeacherRow, UserRow } from './schema';
 import { activeGoalOf, practiceStats, studioStats, teacherStats, type PracticeStats, type StudioStats, type TeacherStats } from './analytics';
 
 /** The one active goal of a person (the latest by starts_on, then created_at, when the data ever holds two). */
@@ -97,11 +97,11 @@ function useStudioInput(rangeDays: number) {
   const { rows: memberships } = useTable<MembershipRow>('memberships');
   const { rows: profiles } = useTable<ProfileRow>('profiles');
   const { rows: users } = useTable<UserRow>('users');
-  const { rows: credits } = useTable<CreditRow>('credits');
+  const { rows: ledger } = useTable<ClassLedgerRow>('class_ledger');
   const { rows: goals } = useTable<PracticeGoalRow>('practice_goals', { where: { active: true } });
   const { rows: teachers } = useTable<TeacherRow>('teachers');
   const { rows: modalities } = useTable<ModalityRow>('modalities');
-  return useMemo(() => ({ bookings, sessions, memberships, profiles, users, credits, goals, teachers, modalities, rangeDays }), [bookings, sessions, memberships, profiles, users, credits, goals, teachers, modalities, rangeDays]);
+  return useMemo(() => ({ bookings, sessions, memberships, profiles, users, ledger, goals, teachers, modalities, rangeDays }), [bookings, sessions, memberships, profiles, users, ledger, goals, teachers, modalities, rangeDays]);
 }
 
 /** M-12: the studio over the last 7 / 30 / 90 days. */

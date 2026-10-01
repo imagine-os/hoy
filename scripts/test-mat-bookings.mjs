@@ -14,8 +14,8 @@ try {
   const db = new MockProvider();
   const seed = await db.list('class_sessions');
   assert(seed.some(s => new Date(s.starts_at) - Date.now() > 30 * 86400000), 'demo horizon exceeds one month');
-  const session = await db.insert('class_sessions', { modality_id: 'mod_hot_vinyasa', teacher_id: 'tea_andres', room_id: 'room_main', starts_at: new Date(Date.now() + 86400000).toISOString(), ends_at: new Date(Date.now() + 90000000).toISOString(), capacity: 16, booked_count: 0, status: 'scheduled', title: 'Mat transaction test' });
-  const row = (user, mat) => ({ user_id: user, session_id: session.id, status: 'booked', paid_with: 'membership', mat_number: mat });
+  const session = await db.insert('class_sessions', { modality_id: 'mod_ligereza', teacher_id: 'tea_sara_c', room_id: 'room_main', starts_at: new Date(Date.now() + 86400000).toISOString(), ends_at: new Date(Date.now() + 90000000).toISOString(), capacity: 16, booked_count: 0, status: 'scheduled', title: 'Mat transaction test' });
+  const row = (user, mat) => ({ user_id: user, session_id: session.id, status: 'booked', paid_with: 'package', mat_number: mat });
   const a = await db.insert('bookings', row('test-a', 16));
   assert.equal(a.mat_number, 16);
   await assert.rejects(db.insert('bookings', row('test-b', 16)), /mat_taken/);

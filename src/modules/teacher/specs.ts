@@ -8,37 +8,37 @@ const data = ['teachers', 'class_sessions', 'bookings', 'modalities', 'users', '
 export const S03 = defineSpec({
   ...base,
   layout: ['NextClassCard', 'PayrollTile', 'MyNumbers (30 días: own fill, attendance, no-shows, new faces, regulars, first-timer return, rating vs studio average)', 'TodayClasses (roster count)', 'Specials (own space_bookings, S-05)', 'ScheduleList (week)', 'SubstitutionRequest'],
-  data: [...data, 'space_bookings', 'special_charges', 'rooms', 'reviews', 'memberships', 'credits', 'practice_goals'],
+  data: [...data, 'space_bookings', 'special_charges', 'rooms', 'reviews', 'memberships', 'class_ledger', 'practice_goals'],
   checkedAt: [390, 768, 1280, 1920, 3840],
   notes: [...(base.notes ?? []), 'Mobile-first inside AppShell (column + dock below 900 px; from 900 px a --w-teach column of 60rem with the top-bar nav, 0026).', 'Substitution requests are written to audit_log (action substitution.request) for the coordinator.', 'MyNumbers reads teacherStats(me, 30) and studioStats(30) from src/data/analytics.ts: the teacher sees only their own numbers against the studio average, never a ranked list of colleagues (research §B; the per-teacher table is M-12, staff only). The rating stays hidden until 5 reviews in the range (research §3). "Solo tú y coordinación ven estos números."'],
 });
 
-/** /teach/class/:id — roster, attendance, notes. */
+/** /teach/class/:id — roster (read-only: check-in is at reception, 0051), reviews, notes. */
 export const S03Class = defineSpec({
   ...base,
-  name: { es: 'Clase · lista y asistencia', en: 'Class · roster & attendance' },
-  purpose: { es: 'Marcar asistencia desde el mat y dejar notas de la clase.', en: 'Mark attendance from the mat and leave class notes.' },
-  layout: ['ClassHeader', 'AttendanceWindow', 'RosterSheet → attendance marks', 'ReviewSummary (read-only)', 'ClassNotes'],
+  name: { es: 'Clase · lista', en: 'Class · roster' },
+  purpose: { es: 'Ver quién viene y quién ya llegó (recepción hace el check-in), cerrar la clase y dejar notas.', en: 'See who is coming and who has arrived (the front desk checks people in), close the class and leave notes.' },
+  layout: ['ClassHeader', 'CheckinAtReceptionNote + CloseClass', 'RosterSheet (read-only, live)', 'ReviewSummary (read-only)', 'ClassNotes'],
   data: [...data, 'reviews'],
-  states: ['Attendance open (T−15m … T+2h)', 'Attendance locked: read-only with reason', 'Coordinator override', 'Class not found'],
-  notes: ['Marks write bookings.status (checked_in / no_show) and an audit_log row.', 'Notes are audit_log rows (action session.note) so they appear in M-07.', 'Reviews are read-only here: the average, count and tags of the `reviews` rows for this session (C-10). Anonymous reviews never show who wrote them.'],
+  states: ['Before start: roster only', 'After start: Close class (own class, or coordinator override)', 'Completed', 'Class not found'],
+  notes: ['0051 (studio FAQ): check-in happens only at reception (S-02 writes bookings.status checked_in); the teacher sees the roster update live and does not mark attendance. Closing the class sets class_sessions.status completed; no-shows are settled by the front desk.', 'Notes are audit_log rows (action session.note) so they appear in M-07.', 'Reviews are read-only here: the average, count and tags of the `reviews` rows for this session (C-10). Anonymous reviews never show who wrote them.'],
 });
 
 /** /teach/payroll — the teacher's own statement, from payroll_runs / payroll_lines. */
 export const S03Payroll = defineSpec({
   ...base,
   name: { es: 'Nómina', en: 'Payroll' },
-  purpose: { es: 'El extracto del profesor: clases dictadas × tarifa del mes, el desglose por clase, el historial de corridas y cómo preguntar por un monto.', en: 'The teacher’s statement: classes taught × rate for the month, the per-class breakdown, the run history and how to ask about an amount.' },
-  layout: ['MonthPicker', 'RunStateCard (borrador / aprobada / pagada / estimado)', 'SummaryTiles (clases, tarifa, total)', 'Breakdown (fecha, clase, asistentes, monto)', 'ExtrasLines (bono, ajuste, Especial)', 'PayoutMethodCard', 'RunHistory', 'PrintStatement + AskFinance (WhatsApp)'],
+  purpose: { es: 'El extracto del profesor: clases dictadas × tarifa del mes, el desglose por clase y el historial de corridas.', en: 'The teacher’s statement: classes taught × rate for the month, the per-class breakdown and the run history.' },
+  layout: ['MonthPicker', 'RunStateCard (borrador / aprobada / pagada / estimado)', 'SummaryTiles (clases, tarifa, total)', 'Breakdown (fecha, clase, asistentes, monto)', 'ExtrasLines (bono, ajuste, Especial)', 'PayoutMethodCard', 'RunHistory', 'PrintStatement'],
   data: ['payroll_runs', 'payroll_lines', 'special_charges', 'teachers', 'class_sessions', 'bookings', 'class_templates', 'payment_methods', 'tenants'],
-  integrations: ['Wompi', 'WhatsApp'],
+  integrations: ['Wompi'],
   logic: [
     'Before finance generates the run, the month is computed live from completed sessions × teachers.rate_per_class (src/data/payrollCalc.ts) and labelled as an estimate.',
     'Once a payroll_runs row covers the period, the page reads payroll_lines instead — so what the teacher sees is what finance will pay, bonuses and adjustments included.',
     'A line of kind manual is a teacher payout agreed on an Especial (special_charges.teacher_payout, S-04); it prints as "Especial: <concept>" here and in M-09b (0017).',
     'A substitution is a session whose template teacher differs from the session teacher; it is a badge, not a different rate.',
     'The payout method on file comes from payment_methods for the teacher’s user; the method of the run itself is shown next to it.',
-    '“Ask about this statement” opens WhatsApp to the studio contact from M-08 with the period and total prefilled.',
+    '0051: the “Ask about this statement” WhatsApp option was removed at the studio’s request; questions about payroll go to finance directly.',
   ],
   states: ['Estimate (no run yet)', 'Draft run', 'Approved run', 'Paid run (with date)', 'No classes this month', 'Substitutions present', 'Negative adjustment', 'No payout method on file', 'Not linked to a teacher profile'],
   notes: [

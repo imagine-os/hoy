@@ -42,7 +42,7 @@ export function StudioCancelledBlock({ joined, booking }: { joined: JoinedSessio
   return (
     <div className="stack">
       <Notice tone="danger" title={t('customer.cancelled.title')}>{s.cancel_reason ? t('customer.cancelled.reason', { reason: s.cancel_reason }) : t('customer.cancelled.body')} · {s.title} · {formatDate(s.starts_at, lang)} {formatTime(s.starts_at, lang)}</Notice>
-      <Notice tone="success" title={booking?.paid_with === 'credit' ? t('customer.cancelled.refund.credit') : t('customer.cancelled.refund.none')}>{t('customer.cancelled.refund.body')}</Notice>
+      <Notice tone="success" title={booking?.paid_with === 'package' ? t('customer.cancelled.refund.credit') : t('customer.cancelled.refund.none')}>{t('customer.cancelled.refund.body')}</Notice>
       <section className="stack-sm">
         <h2 className="cust-h2">{t('customer.cancelled.alternatives')}</h2>
         {alts.length === 0 ? (

@@ -7,7 +7,15 @@ dónde estamos, qué sigue y en qué orden (con dependencias explícitas y lo qu
 paralelo), qué significa "terminado" en cada fase, cómo trabajar en el repo y qué debe decidir el
 owner del estudio. Está escrito para que otra cuenta de Claude (o una persona) lo retome sin contexto.
 
-## A. Where we are (v0.21.1, 2026-09-30)
+## A. Where we are (v0.22.0, 2026-10-01)
+
+- **v0.22.0 — The studio's verified content, FAQ and terms** (`docs/changelog/0051-website-verified-content.md`, prompt
+  `docs/prompts/0051-website-verified-content.md`; Lorena's WEBSITE MODIF, FAQ and Términos y Condiciones): the website
+  copy, seven classes with their seven real teachers, the launch price list (classes, never credits — `class_ledger`,
+  the 12-class package frozen once on C-07b, C-22 retired, memberships dormant), the new W-10 Preguntas frecuentes,
+  terms v2.0 with "Por definir" callouts, check-in only at reception, no Nequi / Daviplata, no payroll WhatsApp ask;
+  the ops manual in both languages. Still needed: the terms' open items, a gift-card redemption step at the desk,
+  photos for the arches and the teachers (kanban 0051 follow-ups).
 
 - **v0.21.1 — Hub card: Mensajes transaccionales** (`docs/changelog/0048-hub-transactional-messages.md`, prompt
   `docs/prompts/0048-hub-transactional-messages.md`; Justin: "Lets add an item in the hub to get straight to the
@@ -403,13 +411,13 @@ chapter or spec and close the card.
 2. Do published prices include IVA (19 %), or does the S-04 rail add it? (also decides the website copy) **→ setting in M-08c `pricesIncludeIva` (fill in)**
 3. Electronic invoicing provider (DIAN) and who is the legal issuer.
 4. Wompi settlement cycle and destination bank account.
-5. Notice days to pause a membership (C-22 proposes 15) and maximum freeze (30 days assumed).
+5. ~~Notice days to pause a membership and maximum freeze.~~ **Closed 2026-10-01 (0051, FAQ): no membership at launch; the 12-class package is frozen once for up to 30 days (M-08a), from the app, no notice period.**
 
 **Policies (fields in M-08)**
 6. Late-arrival grace minutes and no-show fee.
 7. Minimum students to run a class (if any) and substitution rate for teachers.
 8. Exact hours of the 4 daily classes and days of operation (6 or 7 days). _(0041: the opening hours are now editable in M-08a, with holidays and special hours in M-08g, and reach every screen; the decision itself is still open.)_
-9. Target room temperature per class type and exact pre-heat time.
+9. Target room temperature per class (0051: no class is heated any more; cooler for Fuego and Sólido, milder for Centro?).
 
 **People and payroll**
 10. Names of the people in each role and front-desk coverage per shift.

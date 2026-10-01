@@ -142,3 +142,41 @@
 /* 0037 · footer links are 44 px targets (they were 21 px lines 8 px apart); the list drops its gap so the pitch is 44 */
 .site-foot-grid .stack-sm:has(> a) { gap: 0; }
 .site-foot-grid .stack-sm > a, .site-foot-bottom > a { display: inline-flex; align-items: center; align-self: flex-start; min-height: var(--h-ctl); min-width: var(--h-ctl); }
+
+/* ---------- 0051 · W-02 "La filosofía de HOY" ---------- */
+.site-philosophy-part { display: flex; flex-direction: column; gap: var(--stack); }
+.site-philosophy-sign { font-size: var(--fs-sm); letter-spacing: .16em; text-transform: uppercase; }
+.site[data-edition="sanctuary"] .site-philosophy-part h3 { font-family: var(--font-editorial); font-size: 1.875rem; font-weight: 400; color: var(--brand-cream); }
+.site[data-edition="sanctuary"] .site-philosophy .site-quote { font-family: var(--font-editorial); font-style: italic; font-size: clamp(1.5rem, 2.8vw, 2.25rem); line-height: 1.25; color: var(--brand-cream); max-width: 40ch; }
+.site-philosophy-part p { line-height: 1.8; }
+
+/* ---------- 0051 · W-07 "Nuestras clases" ---------- */
+.site-classes-intro { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: var(--sp-3xl); align-items: start; }
+.site-classes-statement { font-family: var(--font-heading); font-size: clamp(1.75rem, 3.6vw, 3rem); line-height: 1.12; letter-spacing: -.02em; color: var(--color-primary); }
+.site[data-edition="sanctuary"] .site-classes-statement { font-family: var(--font-editorial); font-size: clamp(2.25rem, 4.4vw, 3.75rem); line-height: 1.04; }
+.site-classes-question, .site-classes-close { font-family: var(--font-heading); font-size: var(--fs-lg) !important; color: var(--color-ink); }
+.site[data-edition="sanctuary"] .site-classes-question, .site[data-edition="sanctuary"] .site-classes-close { font-family: var(--font-editorial); font-style: italic; font-size: 1.5rem !important; }
+.site-classlist { display: flex; flex-direction: column; gap: var(--section); }
+.site-classrow-copy { display: flex; flex-direction: column; gap: var(--stack-loose); max-width: 38rem; }
+.site-classrow-copy h2 { margin: 0; }
+.site-classrow-copy .eyebrow + h2 { margin-top: calc(var(--stack-tight) - var(--stack-loose)); }
+.site-classrow-tagline { font-family: var(--font-heading); font-size: var(--fs-lg); color: var(--color-text-muted); }
+.site[data-edition="sanctuary"] .site-classrow-tagline { font-family: var(--font-editorial); font-style: italic; font-size: 1.5rem; }
+.site-classrow-intention { margin: 0; padding: var(--sp-md) var(--sp-lg); border-left: 2px solid var(--t-dot); background: var(--color-surface); border-radius: 0 var(--r-sm) var(--r-sm) 0; font-style: italic; line-height: 1.7; color: var(--color-ink); }
+.site-classrow-media { display: flex; justify-content: center; }
+@media (max-width: 860px) { .site-classes-intro { grid-template-columns: 1fr; gap: var(--block); } }
+
+/* ---------- 0051 · W-08 one class ---------- */
+.site-classhero { display: grid; grid-template-columns: minmax(0, 26rem) minmax(0, 1fr); gap: var(--sp-3xl); align-items: center; }
+.site-classhero-copy { display: flex; flex-direction: column; gap: var(--stack); max-width: 38rem; }
+.site-classhero-copy .eyebrow:not(:first-child) { margin-top: var(--stack-loose); }
+.site-classdetail-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--grid-gap); align-items: stretch; }
+.site-classdetail-method { font-family: var(--font-heading); font-size: var(--fs-lg); color: var(--color-ink); }
+.site[data-edition="sanctuary"] .site-classdetail-method { font-family: var(--font-editorial); font-size: 1.625rem; line-height: 1.2; }
+.site-otherarches { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: var(--grid-gap); margin-top: var(--block); }
+@media (max-width: 1023px) {
+  .site-classhero { grid-template-columns: 1fr; justify-items: center; gap: var(--block); }
+  .site-classdetail-grid { grid-template-columns: 1fr; }
+  .site-otherarches { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: var(--block); scrollbar-width: thin; }
+  .site-otherarches > .classarch { flex: 0 0 auto; width: 12rem; scroll-snap-align: start; }
+}

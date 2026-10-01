@@ -4,7 +4,6 @@ import { useI18n } from '../../../i18n/I18nProvider';
 import { useLayout } from '../../../layout/useLayout';
 import { useTable } from '../../../data/DataContext';
 import type { BookingRow, ModalityRow } from '../../../data/schema';
-import { useVisibleModalities } from '../../admin/settings';
 import { usesMats, occupiesMat } from '../../../data/mats';
 import { MatPicker } from '../../../components/organism/MatPicker/MatPicker';
 import { SessionCalendar } from '../../../components/organism/SessionCalendar/SessionCalendar';
@@ -29,7 +28,7 @@ export function SchedulePage() {
   const [picked, setPicked] = useState<string | null>(null);
   const all = useSessionsJoined();
   const { rows: modalitiesAll } = useTable<ModalityRow>('modalities', { where: { active: true } });
-  const modalities = useVisibleModalities(modalitiesAll);
+  const modalities = modalitiesAll;
   // 0039: the filter is the class (modality slug) in ?modality=; an unknown slug (or an old ?movement= link) shows everything.
   const modFilter = modalities.find((m) => m.slug === params.get('modality'))?.slug ?? null;
   const list = all.filter(({ modality }) => !modFilter || modality?.slug === modFilter);

@@ -11,6 +11,7 @@ import { useData, useTable } from '../../data/DataContext';
 import type { LegalAcceptanceRow, LegalDocumentRow, LegalKind } from '../../data/schema';
 import { formatDate, formatDateTime, formatCOP } from '../../i18n/format';
 import { tenant } from '../../tenant/tenant';
+import { pricing } from '../../tenant/pricing';
 import { usePolicy, contactOf, useSettings } from '../admin/settings';
 import { LegalDocument, resolveLegalTokens, type LegalTokens } from '../../components/organism/LegalDocument/LegalDocument';
 import { Button } from '../../components/atom/Button/Button';
@@ -45,13 +46,20 @@ function useLegalTokens(): LegalTokens {
       whatsapp: contact.pendingFields.whatsapp ? `${contact.whatsapp} ${t('customer.legal.token.pending')}` : contact.whatsapp,
       mats: settings.studio.mats,
       perPersonPerDay: settings.studio.perPersonPerDay,
+      landmark: tenant.contact.landmark[lang],
+      instagram: contact.instagram,
     },
+    // 0051: {{price.<id>}} — a price from src/tenant/pricing.ts, formatted for the reader.
+    price: Object.fromEntries(pricing.map((p) => [p.id, p.price == null ? '' : formatCOP(p.price, lang)])),
     policy: {
       cancellationHours: policy.cancellationHours,
       waitlistClaimMin: policy.waitlistClaimMin,
       lateGraceMin: policy.lateGraceMin,
-      pauseDaysPerYear: policy.pauseDaysPerYear,
-      maxPausesPerYear: policy.maxPausesPerYear,
+      freezeMaxDays: policy.freezeMaxDays,
+      freezesPerPackage: policy.freezesPerPackage,
+      // the Terms v1.0 (kept as history) still name the pre-0051 membership-pause tokens
+      pauseDaysPerYear: policy.freezeMaxDays,
+      maxPausesPerYear: policy.freezesPerPackage,
       chargeNoticeDays: policy.chargeNoticeDays,
       noShowFeeClause: policy.features.noShowFee && policy.noShowFee > 0
         ? t('customer.legal.token.noShowFee', { amount: formatCOP(policy.noShowFee, lang) })

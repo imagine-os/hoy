@@ -1,0 +1,12 @@
+.pricetable { width: 100%; overflow-x: auto; border: 1px solid var(--color-border); border-radius: var(--r-md); background: var(--color-surface-elevated); }
+.pricetable table { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
+.pricetable thead th { padding: var(--row-pad); text-align: left; font-size: var(--fs-2xs); font-weight: 500; letter-spacing: .14em; text-transform: uppercase; color: var(--color-text-faint); border-bottom: 1px solid var(--color-border); }
+.pricetable tbody th, .pricetable tbody td { padding: var(--row-pad); border-bottom: 1px solid var(--color-border); vertical-align: baseline; }
+.pricetable tbody:last-child tr:last-child th, .pricetable tbody:last-child tr:last-child td { border-bottom: 0; }
+.pricetable tbody th { text-align: left; font-weight: 400; }
+.pricetable-name { display: block; color: var(--color-ink); font-weight: 500; }
+.pricetable-desc { display: block; margin-top: var(--sp-2xs); font-size: var(--fs-xs); color: var(--color-text-muted); }
+.pricetable-num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--color-ink); font-weight: 500; }
+.pricetable thead .pricetable-num { color: var(--color-text-faint); font-weight: 500; }
+.pricetable-plus { margin-right: var(--sp-2xs); color: var(--color-text-muted); }
+.pricetable-group th { padding: var(--sp-md) var(--sp-lg) var(--sp-xs); font-size: var(--fs-2xs); font-weight: 500; letter-spacing: .14em; text-transform: uppercase; color: var(--color-primary); border-bottom: 0 !important; background: var(--color-surface); }

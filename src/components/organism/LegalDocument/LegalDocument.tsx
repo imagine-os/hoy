@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { Children, isValidElement, type ReactNode } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Badge } from '../../atom/Badge/Badge';
 import { Chip } from '../../atom/Chip/Chip';
@@ -65,25 +65,35 @@ export function LegalDocument({ title, summary, body, version, status, effective
         </div>
       )}
       <div className="prose legaldoc-body">
-        <ReactMarkdown>{body}</ReactMarkdown>
+        <ReactMarkdown components={{ blockquote: ({ children }) => <blockquote className={isPending(children) ? 'legaldoc-pending' : undefined}>{children}</blockquote> }}>{body}</ReactMarkdown>
       </div>
       {footer && <footer className="legaldoc-foot small">{footer}</footer>}
     </article>
   );
 }
 
-/** Values the {{token}}s in a legal body resolve against. */
-export interface LegalTokens { tenant: Record<string, string | number>; policy: Record<string, string | number> }
+/** Plain text of rendered markdown children (to recognise a callout by its first words). */
+const textOf = (node: ReactNode): string => Children.toArray(node).map((c) => (typeof c === 'string' || typeof c === 'number' ? String(c) : isValidElement<{ children?: ReactNode }>(c) ? textOf(c.props.children) : '')).join('');
 
 /**
- * Resolves `{{tenant.*}}` and `{{policy.*}}` in a legal body. Studio identity comes from
- * src/tenant/tenant.ts + M-08, policy numbers from usePolicy(), so the copy never repeats a number
+ * 0051 — a blockquote that starts with "Por definir" / "To be defined" is an item the owner still has to write
+ * (the Términos y Condiciones draft marks them in yellow). It renders as a highlighted callout, so the page is
+ * honest about what is not decided yet instead of hiding it.
+ */
+const isPending = (children: ReactNode) => /^\s*(por definir|to be defined)/i.test(textOf(children));
+
+/** Values the {{token}}s in a legal body resolve against. */
+export interface LegalTokens { tenant: Record<string, string | number>; policy: Record<string, string | number>; price?: Record<string, string | number> }
+
+/**
+ * Resolves `{{tenant.*}}`, `{{policy.*}}` and (0051) `{{price.<id>}}` in a legal body. Studio identity comes from
+ * src/tenant/tenant.ts + M-08, policy numbers from usePolicy(), prices from src/tenant/pricing.ts, so the copy never repeats a number
  * that a screen can change. An unknown token is left visible as `⟨token⟩` rather than silently
  * dropped, the same way a missing i18n key behaves.
  */
 export function resolveLegalTokens(body: string, tokens: LegalTokens): string {
-  return body.replace(/\{\{(tenant|policy)\.([a-zA-Z]+)\}\}/g, (_m, ns: 'tenant' | 'policy', key: string) => {
-    const v = tokens[ns][key];
+  return body.replace(/\{\{(tenant|policy|price)\.([a-zA-Z0-9_]+)\}\}/g, (_m, ns: 'tenant' | 'policy' | 'price', key: string) => {
+    const v = tokens[ns]?.[key];
     return v === undefined || v === null ? `⟨${ns}.${key}⟩` : String(v);
   });
 }

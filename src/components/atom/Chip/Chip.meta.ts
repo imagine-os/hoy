@@ -15,7 +15,7 @@ export default defineMeta({
   usages: [
     { title: { es: 'Filtros', en: 'Filters' }, render: () => h('div', { className: 'row wrap' }, h(Chip, { selected: true, onClick: () => {} }, 'Todas'), h(Chip, { onClick: () => {} }, 'Mañana'), h(Chip, { onClick: () => {} }, 'Tarde')) },
     { title: { es: 'Tonos', en: 'Tones' }, render: () => h('div', { className: 'row wrap' }, ...TONES.map((tone) => h(Chip, { key: tone, tone, dot: true }, tone))) },
-    { title: { es: 'Clases', en: 'Classes' }, render: () => h('div', { className: 'row wrap' }, h(Chip, { tone: 'clay', dot: true, selected: true, onClick: () => {} }, 'Hot Vinyasa'), h(Chip, { tone: 'river', dot: true, onClick: () => {} }, 'Morning Flow'), h(Chip, { tone: 'moss', dot: true, onClick: () => {} }, 'Pilates'), h(Chip, { tone: 'sage', dot: true, onClick: () => {} }, 'Barre')) },
+    { title: { es: 'Clases', en: 'Classes' }, render: () => h('div', { className: 'row wrap' }, h(Chip, { tone: 'clay', dot: true, selected: true, onClick: () => {} }, 'Fuego'), h(Chip, { tone: 'river', dot: true, onClick: () => {} }, 'Ligereza'), h(Chip, { tone: 'moss', dot: true, onClick: () => {} }, 'Centro'), h(Chip, { tone: 'sage', dot: true, onClick: () => {} }, 'Alineación')) },
   ],
   a11y: [{ es: 'Botón con aria-pressed cuando es interactivo; span cuando es solo etiqueta.', en: 'Button with aria-pressed when interactive; span when label only.' }],
   usedBy: ['C-02', 'M-03', 'M-06', 'S-04', 'ConversationList'],

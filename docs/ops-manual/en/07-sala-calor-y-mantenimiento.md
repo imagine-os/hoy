@@ -2,9 +2,9 @@
 title: Room, heat and maintenance
 role: maintenance, front desk, teachers
 part: II
-version: 0.13.3
-updated: 2026-09-29
-summary: Cleaning, setting up the room, the heated room, supplies, equipment checks and safety.
+version: 0.22.0
+updated: 2026-10-01
+summary: Cleaning, setting up the room, temperature and ventilation, supplies, equipment checks and safety.
 ---
 
 # Room, heat and maintenance
@@ -37,21 +37,21 @@ The time between one class and the next:
 3. Temperature and humidity to what the class needs.
 4. Light and music to match the class and its intensity.
 
-## 3. The heated room
-Hot yoga is practised in heat on purpose (see [Our classes](02-nuestras-clases.md)). That changes the work:
+## 3. Temperature and ventilation
+None of the seven classes is taught in a heated room (see [Our classes](02-nuestras-clases.md)). What does change
+from one class to the next is the intensity: after Fuego or Sólido the room is left humid and warm.
 
-1. Heat the room before the group arrives. Never raise the temperature with people inside.
-2. The floor must be dry before they go in, and checked between blocks. Sweat on a hot floor is the most common
+1. Air the room fully between an intense class and the next one, above all before Centro or Ligereza.
+2. The floor must be dry before they go in, and checked between blocks. Sweat on the floor is the most common
    cause of falls.
-3. Leave water in the room and clean towels at the entrance.
-4. Air the room fully between a heated class and the next unheated one.
-5. If the climate control fails, the class goes ahead without heat. The front desk says so at the door and offers
-   a way out: "If you'd rather, I'll move you to tomorrow's and it won't count." Nobody cancels over temperature
-   without talking to coordination.
-6. Dizziness or heat stroke: it is a medical emergency. Follow
+3. The hydration zone is ready before the first class; people use it after class.
+4. If the air conditioning fails, the front desk says so at the door and offers a way out: "If you'd rather, I'll
+   move you to tomorrow's and it won't count." Nobody cancels a class over temperature without talking to
+   coordination.
+5. Dizziness or heat stroke: it is a medical emergency. Follow
    [Incidents and emergencies](08-incidencias-y-emergencias.md).
 
-> DECISION NEEDED: the target temperature for each class type and how long before class the room has to start heating.
+> DECISION NEEDED: the target room temperature for each class (cooler for Fuego and Sólido, milder for Centro).
 
 ## 4. Supplies
 {{for:maintenance,coordinator}}
@@ -66,7 +66,7 @@ Hot yoga is practised in heat on purpose (see [Our classes](02-nuestras-clases.m
 
 | Equipment | How often | Who |
 |---|---|---|
-| Climate control and heating | Every day (read the display) · every month (technician) | Maintenance |
+| Air conditioning and ventilation | Every day (read the display) · every month (technician) | Maintenance |
 | Sound | Every day, before the first class | Front desk |
 | Lighting | Every week | Maintenance |
 | Fire extinguishers and first-aid kit | Every month, with the date on the label | Maintenance |
@@ -74,7 +74,7 @@ Hot yoga is practised in heat on purpose (see [Our classes](02-nuestras-clases.m
 
 ## 6. Safety
 1. Exits always clear. Nothing stacked in front of doors.
-2. The heated room's floor dry before the group goes in.
+2. The room's floor dry before the group goes in, above all after an intense class.
 3. Any damage or risk is reported to coordination the same day, with a photo in the team group.
 
 ## 7. Where the checklists are signed

@@ -2,8 +2,8 @@
 title: Glosario
 role: todos
 part: VII
-version: 0.13.3
-updated: 2026-09-29
+version: 0.22.0
+updated: 2026-10-01
 summary: Las palabras que usamos, qué significan, qué decimos delante del cliente y cómo leer los códigos de los recuadros En HoyOS.
 ---
 
@@ -17,26 +17,28 @@ que la agregue.
 ## 1. Del negocio
 | Palabra | Qué significa | Delante del cliente decimos |
 |---|---|---|
-| Socio | persona con un plan o un pase activo | su nombre, o "socio" |
-| Pase | un producto de la línea Bienvenida | "pase" |
-| Membresía | acceso que se renueva, mensual o anual | "membresía" |
-| Crédito | una clase prepagada, con fecha de vencimiento | "crédito" |
-| Pausa (producto) | sesión corta de 15 a 30 minutos | "pausa" |
-| Pausas Ilimitadas | complemento mensual que se suma a la Membresía | "pausas ilimitadas" |
-| Pausar | congelar una membresía | "pausar tu membresía" |
-| Bono | dinero prepagado con código, para regalar | "bono de regalo" |
-| Invitado | acompañante de un socio de Membresía; incluido, no se cobra | "invitado" |
+| Socio | persona con clases en su cuenta o un historial con el estudio | su nombre |
+| Clase de prueba | la primera clase, una por persona | "clase de prueba" |
+| Clase individual | una clase, pagada una a la vez | "clase individual" |
+| Paquete de 12 clases | 12 clases para usar en 3 meses; se congela una vez; no es reembolsable | "tu paquete" |
+| Congelar | detener el paquete hasta 30 días; el vencimiento se corre esos días | "congelar tu paquete" |
+| Clase privada | una clase solo para 1 a 3 personas | "clase privada" |
+| Tarjeta de regalo | una clase individual o un paquete de 12 clases, para regalar, con código | "tarjeta de regalo" |
+| Afiliado SMTC | afiliado de Santa María Tennis Club: precio especial en el paquete, nada más | "precio de afiliados" |
+| Crédito | **no existe en HOY**: se dice "clase" | nunca "crédito" |
+| Membresía | **no existe en el lanzamiento** | nunca "membresía" |
+| Invitado | alguien que viene por primera vez de la mano de otra persona; se registra y reserva como todos | "invitado" |
 | Espacio | alquiler del estudio a un tercero | "alquiler del espacio" |
 | Especial | venta con concepto y precio escritos a mano (cumpleaños, sesión de equipo, alquiler con extras) | el concepto: "tu sesión privada" |
-| Experiencias Corporativas | la sexta línea, **en preparación**: bienestar para equipos de trabajo (sesión para equipos, programa recurrente, taller a medida) | "estamos preparando un programa para equipos" |
-| Disciplina | hot yoga, barre, pilates, meditación, respiración: el nombre público de cada clase | el nombre de la clase |
+| Experiencias corporativas | bienestar para equipos de trabajo (sesión para equipos, programa recurrente, taller a medida), cotizado caso a caso | "armamos la propuesta con tu empresa" |
+| Clase (del horario) | Ligereza, Híbrido, Fuego, Sólido, Centro, Alineación o Pulso | el nombre de la clase |
 
 ## 2. De la operación
 | Palabra | Qué significa |
 |---|---|
-| Check-in | marcar que la persona llegó |
+| Check-in | marcar que la persona llegó; solo en recepción |
 | No-show | reservó y no vino |
-| Cancelación tardía | canceló fuera de la ventana; el crédito se usa |
+| Cancelación tardía | canceló con menos de 12 horas; la clase se usa |
 | Lista de espera | la fila para una clase llena; el cupo se ofrece en orden |
 | Ventana | el plazo que fija una política (cancelación, lista de espera, tolerancia) |
 | Horas silenciosas | las horas en que no se envía nada que no sea urgente |

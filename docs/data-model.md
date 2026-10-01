@@ -447,8 +447,8 @@ _Un cupo de una persona en una sesión._
 | `user_id` | uuid | → `users`  |
 | `session_id` | uuid | → `class_sessions`  |
 | `status` | enum (booked \| checked_in \| cancelled \| no_show \| late_cancel) |  |
-| `paid_with` | enum (membership \| credit \| single \| trial \| guest \| comp) |  |
-| `credit_id` | uuid, null | → `credits`  |
+| `paid_with` | enum (package \| single \| trial \| guest \| comp \| membership) | package = one class of the person's 12-class package (class_ledger); membership is dormant since 0051 |
+| `ledger_id` | uuid, null | → `class_ledger` the −1 row a package booking wrote |
 | `checked_in_at` | timestamptz, null |  |
 | `cancelled_at` | timestamptz, null |  |
 | `rated` | bool |  |
@@ -578,9 +578,9 @@ _Los momentos que las tablas crudas no guardan: una meta fijada, un hito alcanza
 | `created_at` | timestamptz |  |
 | `updated_at` | timestamptz |  |
 | `user_id` | uuid, null | → `users` null = studio-level event |
-| `kind` | enum (goal.set \| milestone \| streak.saved \| streak.broken \| first.visit \| plan.purchased \| plan.renewed \| credit.expiring) |  |
+| `kind` | enum (goal.set \| milestone \| streak.saved \| streak.broken \| first.visit \| plan.purchased \| plan.renewed \| package.expiring) |  |
 | `occurred_at` | timestamptz | when it happened, which may be earlier than when the app noticed (created_at) |
-| `ref_table` | text, null | the row it points at (bookings, practice_goals, credits…) |
+| `ref_table` | text, null | the row it points at (bookings, practice_goals, class_ledger…) |
 | `ref_id` | text, null |  |
 | `payload` | json, null | kind-specific: { target } for goal.set, { count } for milestone, { week } for streak.saved |
 
@@ -592,8 +592,8 @@ _Los momentos que las tablas crudas no guardan: una meta fijada, un hito alcanza
 ### Commerce · Comercio
 
 #### `plans`
-Value model v3: passes, memberships, pauses, gifts, space.  
-_Modelo de Valor v3: pases, membresías, pausas, regalos, espacio._
+Launch list (0051): trial class, individual class, 12-class package, private classes and gift cards. Generated from src/tenant/pricing.ts.  
+_Lista de lanzamiento (0051): clase de prueba, clase individual, paquete de 12 clases, clases privadas y tarjetas de regalo. Se genera desde src/tenant/pricing.ts._
 
 | column | type | notes |
 | --- | --- | --- |
@@ -602,13 +602,13 @@ _Modelo de Valor v3: pases, membresías, pausas, regalos, espacio._
 | `created_at` | timestamptz |  |
 | `updated_at` | timestamptz |  |
 | `slug` | text |  |
-| `family` | enum (bienvenida \| membresia \| pausas \| regalos \| espacio) |  |
+| `family` | enum (bienvenida \| paquetes \| privadas \| regalos) |  |
 | `name_es` | text |  |
 | `name_en` | text |  |
 | `description` | json |  |
 | `price` | int | COP, integer |
 | `period` | enum (once \| month \| year), null |  |
-| `credits` | int, null |  |
+| `classes` | int, null | classes the plan gives (1, or 12 for the package) |
 | `validity_days` | int, null |  |
 | `is_from_price` | bool |  |
 | `badge` | json, null |  |
@@ -616,8 +616,8 @@ _Modelo de Valor v3: pases, membresías, pausas, regalos, espacio._
 | `sort` | int |  |
 
 #### `memberships`
-A person’s active subscription to a plan.  
-_Suscripción activa de una persona a un plan._
+A person’s recurring subscription to a plan. Unused since 0051: the launch list has no recurring plan; the table stays for post-launch pricing.  
+_Suscripción recurrente de una persona a un plan. Sin uso desde 0051: la lista de lanzamiento no tiene plan recurrente; la tabla queda para los precios después del lanzamiento._
 
 | column | type | notes |
 | --- | --- | --- |
@@ -633,9 +633,9 @@ _Suscripción activa de una persona a un plan._
 | `ends_at` | date, null |  |
 | `paused_until` | date, null |  |
 
-#### `credits`
-Ledger of purchased and used classes.  
-_Libro mayor de clases compradas y usadas._
+#### `class_ledger`
+The classes of each package: bought (+), used (−), returned and expired. HOY has no credits (0051): the balance is in classes.  
+_Las clases de cada paquete: compradas (+), usadas (−), devueltas y vencidas. HOY no maneja créditos (0051): el saldo es de clases._
 
 | column | type | notes |
 | --- | --- | --- |
@@ -647,8 +647,10 @@ _Libro mayor de clases compradas y usadas._
 | `plan_id` | uuid, null | → `plans`  |
 | `payment_id` | uuid, null | → `payments`  |
 | `delta` | int | + purchase, − use |
-| `reason` | enum (purchase \| booking \| refund \| expiry \| gift \| comp \| cancel_return) |  |
+| `reason` | enum (purchase \| booking \| refund \| expiry \| gift \| comp \| cancel_return \| reschedule) |  |
 | `expires_at` | date, null |  |
+| `frozen_from` | date, null | purchase rows: the day a package freeze started (once per package) |
+| `frozen_until` | date, null | purchase rows: the last frozen day; expires_at moved by the same days |
 
 #### `payments`
 Each charge, via Wompi or manual.  
@@ -665,7 +667,7 @@ _Cada cobro, por Wompi o manual._
 | `amount` | int | COP, integer |
 | `amount_paid` | int, null | COP, integer — what the desk actually received; equals amount unless a note explains why |
 | `currency` | text |  |
-| `method` | enum (card \| pse \| nequi \| cash \| transfer \| gift_card) |  |
+| `method` | enum (card \| pse \| qr \| cash \| transfer \| gift_card) | online: card, PSE or a Wompi QR code; at the desk: cash and the other desk methods (0051 — no Nequi, no Daviplata) |
 | `provider` | enum (wompi \| manual) |  |
 | `provider_ref` | text, null |  |
 | `status` | enum (pending \| approved \| declined \| refunded \| voided) |  |
@@ -724,8 +726,8 @@ _Métodos que la persona guardó (C-05). El token es de Wompi; nunca guardamos l
 | `updated_at` | timestamptz |  |
 | `user_id` | uuid | → `users`  |
 | `provider` | enum (wompi \| manual) |  |
-| `kind` | enum (card \| pse \| nequi \| transfer \| cash) |  |
-| `brand` | text | Visa, Mastercard, Nequi, Bancolombia… |
+| `kind` | enum (card \| pse \| transfer \| cash) |  |
+| `brand` | text | Visa, Mastercard, Bancolombia… |
 | `last4` | text, null |  |
 | `token_ref` | text, null | Wompi token placeholder — never a real PAN or token in the mock |
 | `is_default` | bool |  |
@@ -737,8 +739,8 @@ _Métodos que la persona guardó (C-05). El token es de Wompi; nunca guardamos l
 - nobody: token_ref is never selectable from the client once Wompi is live (vault column)
 
 #### `invites`
-Invites members send (C-16) and the reward credit once the guest joins.  
-_Invitaciones enviadas por miembros (C-16) y el crédito de recompensa cuando el invitado entra._
+Invites members send (C-16) and the gift class once the guest joins.  
+_Invitaciones enviadas por miembros (C-16) y la clase de regalo cuando el invitado entra._
 
 | column | type | notes |
 | --- | --- | --- |
@@ -754,12 +756,12 @@ _Invitaciones enviadas por miembros (C-16) y el crédito de recompensa cuando el
 | `code` | text |  |
 | `session_id` | uuid, null | → `class_sessions` class the invite was sent from |
 | `status` | enum (sent \| opened \| joined \| rewarded) |  |
-| `reward_credit_id` | uuid, null | → `credits`  |
+| `reward_ledger_id` | uuid, null | → `class_ledger`  |
 
 **Who may read / write**
 - customer: insert + read own rows (inviter_user_id = auth.uid())
 - front_desk: read by code, to honour a pass at the desk
-- admin/finance: write status and reward_credit_id (the reward is granted server-side)
+- admin/finance: write status and reward_ledger_id (the reward class is granted server-side)
 
 #### `special_charges`
 A charge whose concept and price were typed by hand at the desk (S-04): a private event, a rental, a group session, a special request. It may carry a manual teacher payout and a room booking.  

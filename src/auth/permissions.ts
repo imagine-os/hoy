@@ -33,7 +33,7 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   coordinator: ['bookings.read', 'bookings.write_any', 'classes.read', 'classes.write', 'checkin.write', 'payments.read', 'members.read', 'members.write', 'content.write', 'comms.write', 'manual.edit', 'manual.train', 'docs.read', 'audit.read', 'hours.write'],
   front_desk: ['bookings.read', 'bookings.write_any', 'classes.read', 'checkin.write', 'payments.read', 'payments.write', 'members.read', 'members.write', 'docs.read'],
   finance: ['payments.read', 'payments.write', 'payments.refund', 'members.read', 'payroll.read', 'payroll.write', 'expenses.read', 'expenses.write', 'tables.read', 'docs.read', 'audit.read'],
-  teacher: ['classes.read', 'bookings.read', 'checkin.write', 'payroll.read', 'docs.read'],
+  teacher: ['classes.read', 'bookings.read', 'payroll.read', 'docs.read'],
   maintenance: ['classes.read', 'maintenance.write', 'docs.read'],
   // 0031: content and comms write, CRM read — no settings, payments or member edits.
   marketing: ['classes.read', 'content.write', 'comms.write', 'members.read', 'docs.read'],

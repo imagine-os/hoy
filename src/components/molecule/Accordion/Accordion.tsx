@@ -8,10 +8,12 @@ export interface AccordionProps {
   /** Only one item open at a time within the group (FAQ rule). */
   single?: boolean;
   defaultOpen?: string[];
+  /** card = the app's boxed list (default); editorial = the website's open list with hairlines and serif questions (0051). */
+  variant?: 'card' | 'editorial';
 }
 
 /** Collapsed-by-default question list. With `single`, opening one closes the others. */
-export function Accordion({ items, single = true, defaultOpen = [] }: AccordionProps) {
+export function Accordion({ items, single = true, defaultOpen = [], variant = 'card' }: AccordionProps) {
   const [open, setOpen] = useState<Set<string>>(() => new Set(defaultOpen));
   const base = useId();
   const toggle = (id: string) => setOpen((prev) => {
@@ -20,7 +22,7 @@ export function Accordion({ items, single = true, defaultOpen = [] }: AccordionP
     return next;
   });
   return (
-    <div className="accordion">
+    <div className={`accordion${variant === 'editorial' ? ' accordion-editorial' : ''}`}>
       {items.map((it) => {
         const isOpen = open.has(it.id);
         const panelId = `${base}-${it.id}`;

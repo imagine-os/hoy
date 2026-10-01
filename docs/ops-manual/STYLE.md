@@ -12,8 +12,8 @@ finanzas, marketing o desarrollo. No sabe cómo está hecho el software y no le 
 2. **Frases cortas.** Una idea por frase y una idea por párrafo.
 3. **Primero la acción.** Cada procedimiento sigue el orden **qué hacer → qué decir → qué revisar**.
 4. **Los pasos van numerados.** Si el orden importa, es una lista con números.
-5. **Palabras de la puerta.** Escribe como habla una recepcionista o un maestro: "reserva", "crédito",
-   "membresía", "lista de espera". Nunca "entitlement", "order", "flag", "registro de la tabla".
+5. **Palabras de la puerta.** Escribe como habla una recepcionista o un maestro: "reserva", "clase",
+   "paquete", "lista de espera". Nunca "crédito" (HOY no tiene créditos), "entitlement", "order", "flag", "registro de la tabla".
 6. **Lo que se dice en voz alta va entre comillas**, completo, listo para leerlo tal cual.
 7. **Sin culpas y sin promesas.** Explica la regla y lo que la persona sí puede hacer.
 

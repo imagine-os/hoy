@@ -2,8 +2,8 @@
 title: Classes and schedule
 role: coordination
 part: II
-version: 0.13.3
-updated: 2026-09-29
+version: 0.22.0
+updated: 2026-10-01
 summary: Building the schedule, assigning teachers, cancelling a studio class and publishing events and workshops.
 ---
 
@@ -44,8 +44,8 @@ How far ahead a schedule change is announced:
 1. Each teacher has their availability on their profile. Never give one teacher two classes at the same time.
 2. If there is a substitute, change it in the schedule on the day it is agreed. That way the member sees the right
    name.
-3. If a teacher missed the window to mark attendance, you correct it, with a reason. How teachers work:
-   [Teachers](06-maestros.md).
+3. Attendance is recorded by the front desk at check-in; the teacher does not mark it. If the desk got it wrong,
+   you correct it, with a reason. How teachers work: [Teachers](06-maestros.md).
 
 ![The teachers as the member sees them](../../screenshots/C-18/en-390.jpg "C-18 · /app/teachers")
 
@@ -53,7 +53,7 @@ How far ahead a schedule change is announced:
 
 ## 3. Cancelling a studio class
 1. Open the class in the schedule and choose **Cancel**, with the reason.
-2. The system gives the credits back, sends WhatsApp and email straight away (even at night) and suggests other
+2. The system returns the classes to the packages, sends WhatsApp and email straight away (even at night) and suggests other
    classes the same day.
 3. Tell the owner in the team group.
 4. A class the studio cancels never counts against anyone.
@@ -64,7 +64,13 @@ How far ahead a schedule change is announced:
 
 ## 4. What the member sees
 What a customer reads before booking comes from what you publish: name, description, teacher, intensity, length
-and whether the room is heated. If something is wrong there, fix it in Content.
+and what to bring. If something is wrong there, fix it in Content.
+
+The booking rules the person sees on the website and in the app:
+
+{{studio:booking_lead}}
+
+{{studio:no_show_rule}}
 
 ![Class detail](../../screenshots/C-03/en-390.jpg "C-03 · /app/class/:id")
 
@@ -73,7 +79,7 @@ This is how the system keeps each class on the schedule:
 {{table:class_sessions}}
 
 ## 5. Events and workshops
-1. An event has its own price, capacity and guest rule.
+1. An event has its own price and capacity, and does not use package classes.
 2. Space rentals (outside workshops, private sessions, photo and video, shoots, pop-ups) are not sold online: they
    end in a conversation. See [Space — B2B rental](12-espacio-b2b.md).
 3. An event never replaces the day's classes without the owner's approval.

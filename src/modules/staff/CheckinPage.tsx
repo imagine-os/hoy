@@ -77,7 +77,7 @@ export function CheckinPage() {
     if (!selected || !canWrite) return;
     setBusy(p.id); setError(null);
     try {
-      const b = await data.insert<BookingRow>('bookings', { user_id: p.id, session_id: selected.session.id, status: 'checked_in', paid_with: p.membership ? 'membership' : 'single', credit_id: null, checked_in_at: new Date().toISOString(), cancelled_at: null, rated: false });
+      const b = await data.insert<BookingRow>('bookings', { user_id: p.id, session_id: selected.session.id, status: 'checked_in', paid_with: p.membership ? 'membership' : 'single', ledger_id: null, checked_in_at: new Date().toISOString(), cancelled_at: null, rated: false });
       await data.update('class_sessions', selected.session.id, { booked_count: selected.session.booked_count + 1 });
       await audit('booking.walkin', 'bookings', b.id, { after: 'checked_in', session_id: selected.session.id, user_id: p.id });
       setQ('');
@@ -88,7 +88,7 @@ export function CheckinPage() {
     setBusy(w.id); setError(null);
     try {
       const p = byId.get(w.user_id);
-      const b = await data.insert<BookingRow>('bookings', { user_id: w.user_id, session_id: selected.session.id, status: 'booked', paid_with: p?.membership ? 'membership' : 'credit', credit_id: null, checked_in_at: null, cancelled_at: null, rated: false });
+      const b = await data.insert<BookingRow>('bookings', { user_id: w.user_id, session_id: selected.session.id, status: 'booked', paid_with: p?.membership ? 'membership' : 'package', ledger_id: null, checked_in_at: null, cancelled_at: null, rated: false });
       await data.update('waitlist', w.id, { status: 'claimed' });
       await data.update('class_sessions', selected.session.id, { booked_count: selected.session.booked_count + 1 });
       await audit('waitlist.promote', 'waitlist', w.id, { booking_id: b.id, session_id: selected.session.id, user_id: w.user_id });
@@ -157,15 +157,15 @@ export function CheckinPage() {
         {loading && bookings.length === 0 && <EmptyState compact tone="loading" title={t('core.common.loading')} />}
         {!loading && roster.length === 0 && waitlist.length === 0 && <EmptyState compact title={q ? t('staff.checkin.noMatch') : t('staff.checkin.emptyRoster')} body={q ? t('staff.checkin.noMatch.body') : undefined} />}
         <Group title={t('staff.checkin.expected')} n={expected.length}>
-          {expected.map(({ b, p }) => <RosterRow key={b.id} name={p?.name ?? b.user_id} initials={p?.initials} phone={maskPhone(p?.phone)} plan={planLabel(p, b, lang)} status="booked" showStatus={false} flag={p?.notes ?? undefined}
+          {expected.map(({ b, p }) => <RosterRow key={b.id} name={p?.name ?? b.user_id} initials={p?.initials} phone={maskPhone(p?.phone)} plan={planLabel(p, b, lang, t)} status="booked" showStatus={false} flag={p?.notes ?? undefined}
             actions={canWrite && <><Button size="sm" variant="tonal" loading={busy === b.id} onClick={() => setStatus(b, 'checked_in')} icon="check">{t('staff.checkin.checkin')}</Button><Button size="sm" variant="outline" onClick={() => setStatus(b, 'no_show')} icon="user-x">{t('staff.checkin.noShow')}</Button></>} />)}
         </Group>
         <Group title={t('staff.checkin.arrived')} n={arrived.length}>
-          {arrived.map(({ b, p }) => <RosterRow key={b.id} name={p?.name ?? b.user_id} initials={p?.initials} phone={maskPhone(p?.phone)} plan={planLabel(p, b, lang)} status="checked_in" late={isLate(b)} time={b.checked_in_at ? formatTime(b.checked_in_at, lang) : undefined} flag={p?.notes ?? undefined}
+          {arrived.map(({ b, p }) => <RosterRow key={b.id} name={p?.name ?? b.user_id} initials={p?.initials} phone={maskPhone(p?.phone)} plan={planLabel(p, b, lang, t)} status="checked_in" late={isLate(b)} time={b.checked_in_at ? formatTime(b.checked_in_at, lang) : undefined} flag={p?.notes ?? undefined}
             actions={canWrite && <Button size="sm" variant="outline" onClick={() => setStatus(b, 'booked')} icon="undo">{t('staff.checkin.undo')}</Button>} />)}
         </Group>
         {missed.length > 0 && <Group title={t('staff.checkin.missed')} n={missed.length}>
-          {missed.map(({ b, p }) => <RosterRow key={b.id} name={p?.name ?? b.user_id} initials={p?.initials} plan={planLabel(p, b, lang)} status={b.status as 'no_show' | 'late_cancel'}
+          {missed.map(({ b, p }) => <RosterRow key={b.id} name={p?.name ?? b.user_id} initials={p?.initials} plan={planLabel(p, b, lang, t)} status={b.status as 'no_show' | 'late_cancel'}
             actions={canWrite && b.status === 'no_show' && <Button size="sm" variant="tonal" onClick={() => setStatus(b, 'checked_in')} icon="check">{t('staff.checkin.checkin')}</Button>} />)}
         </Group>}
         {waitlist.length > 0 && <Group title={t('core.common.waitlist')} n={waitlist.length}>
@@ -210,9 +210,10 @@ export function CheckinPage() {
   );
 }
 
-function planLabel(p: Person | undefined, b: BookingRow, lang: Lang) {
+/** The roster's plan line: the person's package name, else how the booking was paid, translated (0051, was the raw value). */
+function planLabel(p: Person | undefined, b: BookingRow, lang: Lang, t: (key: string) => string) {
   if (p?.plan) return lang === 'en' ? p.plan.name_en : p.plan.name_es;
-  return b.paid_with;
+  return b.paid_with ? t(`customer.paidWith.${b.paid_with}`) : '';
 }
 
 function Group({ title, n, children }: { title: string; n: number; children: ReactNode }) {

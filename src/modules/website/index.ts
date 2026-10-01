@@ -18,6 +18,7 @@ export const routes: RouteDef[] = [
   { ...pub, path: '/site/schedule', element: page('SchedulePage'), spec: siteSpecs.schedule },
   { ...pub, path: '/site/teachers', element: page('TeachersPage'), spec: siteSpecs.teachers },
   { ...pub, path: '/site/plans', element: page('PlansPage'), spec: siteSpecs.plans },
+  { ...pub, path: '/site/faq', element: page('FaqPage'), spec: siteSpecs.faq },
   { ...pub, path: '/site/contact', element: page('ContactPage'), spec: siteSpecs.contact },
   { ...pub, path: '/site/delete-account', element: page('DeleteAccountPage'), spec: siteSpecs.deleteAccount },
   { ...pub, path: '/site/legal/terms', element: page('LegalPage', { kind: 'terms' }), spec: canvasSpecs['A-06'] },

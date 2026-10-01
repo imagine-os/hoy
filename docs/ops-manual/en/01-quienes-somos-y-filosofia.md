@@ -2,8 +2,8 @@
 title: Who we are and our philosophy
 role: everyone
 part: I
-version: 0.13.3
-updated: 2026-09-29
+version: 0.22.0
+updated: 2026-10-01
 summary: About HOY, our philosophy, why we are small on purpose and the four promises we always keep.
 ---
 
@@ -41,15 +41,21 @@ best.
 **In one line, for the door:** "It's a place to move, breathe and slow down. You don't need any experience: just
 show up."
 
-These are the studio's contact details. The WhatsApp number and the address are confirmed:
+These are the studio's contact details. The WhatsApp Business number, the address, the email and the Instagram
+handle are confirmed:
 
 {{tenant:contact}}
 
-> DECISION NEEDED: the studio's email, Instagram handle and tax ID (NIT). Until the owner confirms them, the website, the app, the emails and this manual show them as pending.
+> DECISION NEEDED: the studio's tax ID (NIT). Until the owner confirms it, the receipts and this manual show it as pending.
 
 > IN HOYOS: M-08a Settings → General → email, Instagram → "Details confirmed" · M-08c Settings → Payments → NIT.
 
 ## 2. Our philosophy
+This is how the website puts it, in "The HOY philosophy":
+
+> We create experiences that turn wellbeing into a way of living: more aware, more present, more connected. We
+> are not here to train bodies. We are here to awaken presence.
+
 Between what was and what has not yet arrived, there is this moment. That is the starting point of everything we
 do at HOY: a space to stop, breathe, move, feel and come back to yourself — not as a luxury set apart from your
 life, but as something you live in the ordinary day.
@@ -58,9 +64,10 @@ We are not asking you to escape your routine, but to learn to inhabit it differe
 also pause. It is energy and balance. It is body, mind and connection. You do not always have to go faster, do
 more or get further: sometimes you simply have to come back.
 
-Our purpose is to make movement and breath a way back to ourselves and into the present. So we built a place
-where wellbeing folds naturally into your life: every experience at HOY is a chance to connect with your body,
-breathe with intention, share in community and return to yourself.
+**Our purpose** is to make movement and breath a way back to ourselves and into the present. At HOY, body, mind
+and spirit come together. Movement is the physical tool. The pause is the conscious space. Energy is the vitality
+that wakes up. And balance is the wisdom that holds it all. It all starts with one question: how do I come back
+to myself?
 
 You can feel it in every detail of HOY. In how we welcome each person exactly as they arrive, without asking for a
 perfect version of themselves. In how we speak, with the calm of people in no hurry to impress. And in how we look
@@ -94,12 +101,12 @@ This is the studio's capacity:
 ![The member app home: the next class and today's classes](../../screenshots/C-01/en-390.jpg "C-01 · /app")
 
 ## 5. Four promises we keep
-We promise every member four things. They are not slogans: they are rules the system applies on its own.
+We promise everyone who practises with us four things. They are not slogans: they are rules the system applies on its own.
 
-1. **Pause the membership** without calling anyone, from their app, up to the maximum the policy allows.
-2. **Leave without a maze.** If they cancel, they keep access until the end of what they paid for. We do not push.
-3. **Cancelling in time costs nothing.** Inside the window, the credit comes back straight away.
-4. **Notice before every charge**, with the number of days the policy sets.
+1. **Freeze the package** once, without calling anyone, from their app, up to the maximum the policy allows.
+2. **No small print.** The classes expire when their package says, and their app always shows how many are left.
+3. **Cancelling in time costs nothing.** With the window's notice, the class goes straight back to their package.
+4. **Book up to the last minute**, as long as there is a spot.
 
 These are the values in force:
 

@@ -19,7 +19,7 @@ import { SiteVersionSelect } from '../../components/molecule/SiteVersionSelect/S
 
 const NAV = [
   ['/site/about', 'about'], ['/site/classes', 'classes'], ['/site/schedule', 'schedule'],
-  ['/site/teachers', 'teachers'], ['/site/plans', 'plans'], ['/site/contact', 'contact'],
+  ['/site/teachers', 'teachers'], ['/site/plans', 'plans'], ['/site/faq', 'faq'], ['/site/contact', 'contact'],
 ] as const;
 
 
@@ -110,6 +110,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
             <span className="eyebrow">{t('site.footer.explore')}</span>
             <Link className="small" to="/site/classes">{t('site.nav.classes')}</Link>
             <Link className="small" to="/site/plans">{t('site.nav.plans')}</Link>
+            <Link className="small" to="/site/faq">{t('site.footer.faq')}</Link>
             <Link className="small" to="/site/legal/terms">{t('site.legal.terms')}</Link>
             <Link className="small" to="/site/legal/privacy">{t('site.legal.privacy')}</Link>
             <Link className="small" to="/site/delete-account">{t('site.delete.nav')}</Link>

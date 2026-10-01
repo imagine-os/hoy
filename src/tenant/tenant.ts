@@ -40,20 +40,22 @@ export const tenant = {
   locales: ['es', 'en'] as const,
   defaultLocale: 'es' as const,
   /**
-   * 0036 — the phone and the street address come from the owner (Justin, Slack #hoy, 2026-09-29): the WhatsApp
-   * number from the studio's own contact card, the address because the studio shares the Santa María Tenis Club
-   * premises (the club's site, santamariatenisclub.com, checked 2026-09-29). The email and the Instagram handle are
-   * still PLACEHOLDERS. `confirmed` says which fields are real; every screen labels the others as pending instead of
-   * presenting a fake value as fact. M-08a can override each value and each flag.
+   * 0036 — the phone and the street address come from the owner (Justin, Slack #hoy, 2026-09-29). 0051 — the email and
+   * the Instagram handle are confirmed by the studio's verified website brief and Términos y Condiciones (2026-10-01):
+   * info@humanclub.com, @hoyhumanclub, WhatsApp Business +57 312 776 5000, and the landmark next to the address.
+   * `confirmed` says which fields are real; a field that is not confirmed is labelled as pending on every screen.
+   * M-08a can override each value and each flag.
    */
   contact: {
-    /** Display form; `waLink()` strips it to digits for the wa.me link (E.164 +573127765000). */
+    /** Display form; `waLink()` strips it to digits for the wa.me link (E.164 +573127765000). It is a WhatsApp Business line. */
     whatsapp: '+57 312 776 5000',
-    email: 'hola@example.com',
+    email: 'info@humanclub.com',
     /** Colombian street format, as the club publishes it. */
     address: 'Cl. 7B Sur # 29C-100, El Poblado',
-    instagram: '@hoy',
-    confirmed: { whatsapp: true, address: true, email: false, instagram: false },
+    /** How to find it (Términos y Condiciones §1). */
+    landmark: { es: 'Contiguo al Colegio Santa María del Rosario', en: 'Next to Colegio Santa María del Rosario' },
+    instagram: '@hoyhumanclub',
+    confirmed: { whatsapp: true, address: true, email: true, instagram: true },
     pendingLabel: { es: 'pendiente', en: 'pending' },
   },
   /**
@@ -69,8 +71,8 @@ export const tenant = {
   },
   /** Public profiles. `null` = the account does not exist yet. */
   social: {
-    instagram: '@hoy',
-    instagramUrl: 'https://www.instagram.com/hoy',
+    instagram: '@hoyhumanclub',
+    instagramUrl: 'https://www.instagram.com/hoyhumanclub',
     tiktok: null,
     youtube: null,
   },

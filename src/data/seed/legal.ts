@@ -408,190 +408,463 @@ Where the practitioner is under 18, a parent or legal guardian signs this waiver
 I accept this document electronically, with the evidential value granted by **Ley 527 de 1999**. The studio stores the date, the time, the version accepted and the channel, and lets me read it at any time in the app.`;
 
 // ---------------------------------------------------------------------------------------------
-// 4 · Política de cancelaciones (numbers from M-08, live)
+// 4 · Política de cancelaciones (numbers from M-08, live) — 0051: the verified launch rules
 // ---------------------------------------------------------------------------------------------
 const CANCEL_ES = `> Los números de esta política se leen en vivo de la configuración del estudio. Si cambian, este texto cambia con ellos.
 
 ## 1. La regla, en una línea
 
-Cancela **hasta {{policy.cancellationHours}} horas antes** del inicio de la clase y no pierdes nada.
+Puedes cancelar tu reserva **hasta {{policy.cancellationHours}} horas antes** del inicio de la clase.
 
-## 2. Por qué existe la ventana
+## 2. Reservar
 
-La sala tiene {{tenant.mats}} mats. Un cupo que se libera tarde es un cupo que nadie más alcanza a tomar: la persona que estaba en lista de espera ya organizó su día. La ventana no es una multa, es lo que hace que la lista de espera funcione.
+No hay un tiempo mínimo para reservar: puedes reservar una clase hasta el último minuto, siempre que haya cupos disponibles. La sala tiene {{tenant.mats}} mats.
 
 ## 3. Cómo se aplica
 
-- **Más de {{policy.cancellationHours}} h antes** — sin costo. La clase vuelve a tu saldo o tu membresía no registra uso.
-- **Menos de {{policy.cancellationHours}} h antes** — la clase se consume. Con membresía, cuenta como asistencia.
-- **No llegas y no cancelas (no-show)** — la clase se consume{{policy.noShowFeeClause}}.
-- **Llegas más de {{policy.lateGraceMin}} min tarde** — no se permite el ingreso; la clase se consume.
+- **Hasta {{policy.cancellationHours}} h antes** — la clase vuelve a tu paquete.
+- **Después de esa hora** — la clase se usa.
+- **No llegas (no-show)** — no hay reembolso: la clase se usa{{policy.noShowFeeClause}}. Si no viniste por enfermedad, reprogramamos tu clase.
+- **Llegas más de {{policy.lateGraceMin}} min tarde** — no se permite el ingreso; la clase se usa.
 
-Cancelas desde la app: **Mis reservas → la clase → Cambiar o cancelar**. Puedes también mover la reserva a otra clase del mismo día sin costo, si hay cupo; mover equivale a cancelar y reservar en un solo paso.
+El check-in se hace únicamente en recepción, al llegar.
 
 ## 4. Lista de espera
 
-Si la clase está llena puedes entrar a la lista de espera. Cuando se libera un cupo te escribimos y tienes **{{policy.waitlistClaimMin}} minutos** para reclamarlo; pasado ese tiempo pasa a la siguiente persona. Salir de la lista de espera nunca tiene costo.
+Si la clase está llena puedes entrar a la lista de espera. Cuando se libera un cupo te escribimos y tienes **{{policy.waitlistClaimMin}} minutos** para reclamarlo; pasado ese tiempo pasa a la siguiente persona.
 
-## 5. Cuando el estudio cancela
+## 5. Cuando el estudio cambia o cancela una clase
 
-Si cancelamos una clase por fuerza mayor, mantenimiento, clima, enfermedad del profesor o número insuficiente de asistentes, te devolvemos la clase a tu saldo de inmediato y te avisamos por WhatsApp, correo y notificación en la app. Si preferías el dinero, escríbenos y lo devolvemos según la Política de reembolsos.
+Si cancelamos una clase, la clase vuelve a tu paquete de inmediato y te avisamos. Los cambios de programación los publicamos en el calendario de clases; si tienes dudas, escríbenos por WhatsApp {{tenant.whatsapp}} o a {{tenant.email}}.
 
-## 6. Membresías: pausas y cancelación
+## 6. El paquete de 12 clases
 
-Puedes **pausar** hasta {{policy.pauseDaysPerYear}} días por año, en máximo {{policy.maxPausesPerYear}} pausas, y la renovación se corre por los días pausados. Puedes **cancelar la renovación** cuando quieras: conservas el acceso hasta el final del periodo pagado y no se cobra el siguiente. Te avisamos {{policy.chargeNoticeDays}} días antes de cada cobro para que no haya sorpresas.
+Tiene una vigencia de 3 meses y no es reembolsable. Lo puedes **congelar {{policy.freezesPerPackage}} vez**, hasta por **{{policy.freezeMaxDays}} días**; la fecha de vencimiento se corre por los días congelados.
 
-## 7. Vigencia de pases y paquetes
-
-Cada pase y paquete tiene una vigencia expresa, publicada al comprarlo. Las clases no usadas se extinguen al terminar la vigencia. Por una razón médica documentada podemos extender la vigencia una vez; escríbenos antes de que venza.
-
-## 8. Eventos y talleres
-
-Los eventos con cupo limitado y costo propio se cancelan sin costo hasta **cinco (5) días** antes. Después, el cupo no se reembolsa, pero puedes cederlo a otra persona avisándonos su nombre.
-
-## 9. Excepciones humanas
-
-Una enfermedad, un duelo o una emergencia no son un caso de reglamento. Escríbenos a WhatsApp {{tenant.whatsapp}} y lo resolvemos como personas.`;
+> **Por definir:** qué pasa si cancelas con menos de {{policy.cancellationHours}} horas de anticipación más allá de usar la clase, y cómo se informa o se soporta una ausencia por enfermedad.`;
 
 const CANCEL_EN = `> The numbers in this policy are read live from the studio's settings. If they change, this text changes with them.
 
 ## 1. The rule, in one line
 
-Cancel **up to {{policy.cancellationHours}} hours before** the class starts and you lose nothing.
+You can cancel your booking **up to {{policy.cancellationHours}} hours before** the class starts.
 
-## 2. Why the window exists
+## 2. Booking
 
-The room holds {{tenant.mats}} mats. A spot released late is a spot nobody else can take: the person on the waitlist has already planned their day. The window is not a fine — it is what makes the waitlist work.
+There is no minimum time to book: you can book a class up to the last minute, as long as there are spots available. The room holds {{tenant.mats}} mats.
 
 ## 3. How it applies
 
-- **More than {{policy.cancellationHours}} h before** — free. The class returns to your balance, or your membership records no use.
-- **Less than {{policy.cancellationHours}} h before** — the class is consumed. On a membership it counts as attendance.
-- **You do not show up and do not cancel (no-show)** — the class is consumed{{policy.noShowFeeClause}}.
-- **You arrive more than {{policy.lateGraceMin}} min late** — entry is not allowed; the class is consumed.
+- **Up to {{policy.cancellationHours}} h before** — the class returns to your package.
+- **After that** — the class counts as used.
+- **You do not come (no-show)** — no refund: the class counts as used{{policy.noShowFeeClause}}. If you missed it because you were sick, we reschedule your class.
+- **You arrive more than {{policy.lateGraceMin}} min late** — entry is not allowed; the class counts as used.
 
-You cancel in the app: **My bookings → the class → Change or cancel**. You can also move the booking to another class on the same day at no cost if there is space; moving is cancel-and-rebook in one step.
+Check-in happens only at the front desk, when you arrive.
 
 ## 4. Waitlist
 
-If the class is full you can join the waitlist. When a spot opens we message you and you have **{{policy.waitlistClaimMin}} minutes** to claim it; after that it passes to the next person. Leaving the waitlist never costs anything.
+If the class is full you can join the waitlist. When a spot opens we message you and you have **{{policy.waitlistClaimMin}} minutes** to claim it; after that it passes to the next person.
 
-## 5. When the studio cancels
+## 5. When the studio changes or cancels a class
 
-If we cancel a class for force majeure, maintenance, weather, a teacher's illness or insufficient attendance, we return the class to your balance immediately and notify you on WhatsApp, by email and in the app. If you would rather have the money, write to us and we refund it under the Refund policy.
+If we cancel a class, the class returns to your package immediately and we let you know. Schedule changes are published on the class calendar; if in doubt, write to us on WhatsApp {{tenant.whatsapp}} or at {{tenant.email}}.
 
-## 6. Memberships: pauses and cancellation
+## 6. The 12-class package
 
-You can **pause** for up to {{policy.pauseDaysPerYear}} days per year, across at most {{policy.maxPausesPerYear}} pauses, and the renewal shifts by the paused days. You can **cancel the renewal** whenever you like: you keep access until the end of the paid period and the next charge is not made. We notify you {{policy.chargeNoticeDays}} days before each charge so there are no surprises.
+It is valid for 3 months and is non-refundable. You can **freeze it {{policy.freezesPerPackage}} time**, for up to **{{policy.freezeMaxDays}} days**; the expiry date moves by the frozen days.
 
-## 7. Validity of passes and packs
-
-Every pass and pack has an express validity period, published when you buy it. Classes not used lapse when the period ends. For a documented medical reason we can extend the validity once; write to us before it expires.
-
-## 8. Events and workshops
-
-Events with limited capacity and their own price can be cancelled free of charge up to **five (5) days** before. After that the spot is not refunded, but you may pass it to someone else by telling us their name.
-
-## 9. Human exceptions
-
-Illness, grief or an emergency is not a rulebook case. Write to us on WhatsApp {{tenant.whatsapp}} and we sort it out as people.`;
+> **To be defined:** what happens when you cancel less than {{policy.cancellationHours}} hours ahead beyond the class counting as used, and how an absence through illness is reported or supported.`;
 
 // ---------------------------------------------------------------------------------------------
-// 5 · Política de reembolsos
+// 5 · Política de reembolsos — 0051: what the owner has decided, and what is still to be defined
 // ---------------------------------------------------------------------------------------------
 const REFUND_ES = `## 1. Alcance
 
-Esta política explica cuándo devolvemos dinero, cómo lo pedimos y en cuánto tiempo llega. Complementa los Términos y condiciones y la Política de cancelaciones, y no limita los derechos que la **Ley 1480 de 2011** reconoce al consumidor.
+Esta política explica cuándo hay devolución de dinero. Complementa los Términos y condiciones y la Política de cancelaciones, y no limita los derechos que la **Ley 1480 de 2011** reconoce al consumidor.
 
-## 2. Derecho de retracto (compras por internet)
+## 2. Lo que ya está definido
 
-Si compraste un plan, un pase o un evento **por medios electrónicos**, tienes **cinco (5) días hábiles** desde la compra para retractarte, siempre que **no hayas empezado a usar el servicio**: ninguna clase tomada del plan y, en el caso de un evento, que el evento no haya ocurrido. Devolvemos el **100 %** de lo pagado por el mismo medio de pago, sin penalidad.
+- El **paquete de 12 clases** no es reembolsable.
+- Si no asistes a una clase reservada (no-show), **no hay reembolso**. Si no asististe por enfermedad, reprogramamos tu clase.
+- Las **tarjetas de regalo** se compran al mismo precio de las clases y se usan como clases.
 
-Cómo: escribe a {{tenant.email}} con el asunto "Retracto" y el número de la compra, o dilo por WhatsApp {{tenant.whatsapp}}.
+> **Por definir:** el derecho de retracto (plazo, condiciones y procedimiento), la reversión del pago (casos en los que aplica y cómo se pide) y la política de reembolsos completa.
 
-## 3. Reversión del pago
+## 3. Cómo escribirnos
 
-Cuando aplique alguno de los casos del artículo 51 de la Ley 1480 de 2011 —operación no autorizada, producto no recibido o distinto al comprado— puedes solicitar la reversión del pago ante el estudio, tu banco y la pasarela dentro de los cinco (5) días hábiles siguientes a conocer el hecho. Colaboramos con el trámite y no cobramos nada por gestionarlo.
+Escribe a {{tenant.email}} o por WhatsApp {{tenant.whatsapp}} con tu nombre, la compra (la encuentras en *Historial → Pagos*) y el motivo.
 
-## 4. Fuera del retracto: qué devolvemos
-
-- **El estudio cancela una clase** — clase de vuelta al saldo, o el dinero si lo prefieres.
-- **El estudio cierra por más de 7 días seguidos** — congelamos el plan por los días cerrados, o devolvemos la parte no usada.
-- **Cobro duplicado o error nuestro** — devolución del 100 % del valor cobrado por error.
-- **Plan comprado y no usado, pasados los 5 días hábiles** — nota de crédito por el valor pagado, válida un año.
-- **Plan ya usado (una o más clases)** — devolución proporcional de lo no usado, descontando las clases tomadas a la tarifa del pase individual.
-- **Impedimento médico documentado** — congelación del plan o nota de crédito; con incapacidad mayor a 60 días, devolución proporcional.
-- **Clases vencidas por no usarlas** — no hay devolución (ver vigencias en la Política de cancelaciones).
-- **Terminación por incumplimiento de las Reglas de casa** — devolución proporcional de lo no usado.
-
-Un **bono de regalo** no se cambia por dinero, no vence antes de un año y puede transferirse una vez.
-
-## 5. Cómo lo pides
-
-1. Escribe a {{tenant.email}} o por WhatsApp {{tenant.whatsapp}}.
-2. Dinos tu nombre, la compra (la encuentras en *Historial → Pagos*) y el motivo.
-3. Si aplica una razón médica, adjunta el soporte. Ese documento se trata como dato sensible según la Política de privacidad.
-
-## 6. Tiempos
-
-Respondemos en máximo **quince (15) días hábiles**. Aprobada la devolución:
-
-- **Tarjeta:** se reversa por el mismo medio; el abono depende de tu banco, normalmente entre 5 y 30 días calendario.
-- **PSE, Nequi o transferencia:** consignamos a la cuenta a tu nombre en un máximo de **diez (10) días hábiles**.
-- **Efectivo:** en recepción, con tu documento, o por transferencia si lo prefieres.
-
-No cobramos comisión por la devolución. Si la factura electrónica ya se emitió, emitimos la nota crédito correspondiente.
-
-## 7. Si no estás de acuerdo
+## 4. Si no estás de acuerdo
 
 Puedes insistir con nosotros —lo revisamos con gusto— y en cualquier momento acudir a la **Superintendencia de Industria y Comercio**.`;
 
 const REFUND_EN = `## 1. Scope
 
-This policy explains when we return money, how you ask for it and how long it takes. It complements the Terms & conditions and the Cancellation policy, and does not limit the rights **Ley 1480 de 2011** grants consumers.
+This policy explains when money is returned. It complements the Terms & conditions and the Cancellation policy, and does not limit the rights **Ley 1480 de 2011** grants consumers.
 
-## 2. Right of withdrawal (online purchases)
+## 2. What is already decided
 
-If you bought a plan, a pass or an event **electronically**, you have **five (5) business days** from the purchase to withdraw, provided you **have not started using the service**: no class taken from the plan and, for an event, the event has not happened. We return **100 %** of what you paid, through the same payment method, with no penalty.
+- The **12-class package** is non-refundable.
+- If you do not attend a booked class (no-show), **there is no refund**. If you missed it because you were sick, we reschedule your class.
+- **Gift cards** are bought at the same price as the classes and are used as classes.
 
-How: write to {{tenant.email}} with the subject "Retracto" and the purchase number, or say so on WhatsApp {{tenant.whatsapp}}.
+> **To be defined:** the right of withdrawal (period, conditions and procedure), payment reversal (when it applies and how to ask for it) and the full refund policy.
 
-## 3. Payment reversal
+## 3. How to write to us
 
-Where one of the cases in article 51 of Ley 1480 de 2011 applies — an unauthorised transaction, a service not received or different from the one bought — you may request a payment reversal from the studio, your bank and the gateway within five (5) business days of learning of the fact. We cooperate with the process and charge nothing to handle it.
+Write to {{tenant.email}} or on WhatsApp {{tenant.whatsapp}} with your name, the purchase (you will find it in *History → Payments*) and the reason.
 
-## 4. Outside withdrawal: what we return
-
-- **The studio cancels a class** — the class returns to your balance, or the money if you prefer.
-- **The studio closes for more than 7 days in a row** — we freeze the plan for the closed days, or refund the unused part.
-- **Duplicate charge or our mistake** — 100 % of the amount charged in error.
-- **Plan bought and not used, after the 5 business days** — credit note for the amount paid, valid one year.
-- **Plan already used (one or more classes)** — pro-rata refund of the unused part, deducting classes taken at the single-pass price.
-- **Documented medical impediment** — plan freeze or credit note; with more than 60 days' medical leave, a pro-rata refund.
-- **Classes expired unused** — no refund (see validity in the Cancellation policy).
-- **Termination for breach of the House rules** — pro-rata refund of the unused part.
-
-A **gift voucher** is not exchanged for cash, does not expire in under a year and may be transferred once.
-
-## 5. How to ask
-
-1. Write to {{tenant.email}} or message WhatsApp {{tenant.whatsapp}}.
-2. Tell us your name, the purchase (you will find it in *History → Payments*) and the reason.
-3. Where a medical reason applies, attach the supporting document. That document is treated as sensitive data under the Privacy policy.
-
-## 6. Timing
-
-We answer within **fifteen (15) business days** at most. Once approved:
-
-- **Card:** reversed through the same method; the credit depends on your bank, usually 5 to 30 calendar days.
-- **PSE, Nequi or transfer:** deposited to an account in your name within **ten (10) business days**.
-- **Cash:** at the front desk with your ID, or by transfer if you prefer.
-
-We charge no fee for a refund. If the electronic invoice was already issued, we issue the matching credit note.
-
-## 7. If you disagree
+## 4. If you disagree
 
 You can press the point with us — we are glad to review it — and you may at any time go to the **Superintendencia de Industria y Comercio**.`;
+
+// ---------------------------------------------------------------------------------------------
+// 1b · Términos y Condiciones v2.0 — 0051: the owner's document ("Términos y Condiciones · HOY Human Club",
+// 2026-10-01). What it marks "por definir" (in yellow in the draft) renders as a highlighted callout.
+// ---------------------------------------------------------------------------------------------
+const TERMS2_ES = `> Borrador del estudio. Lo marcado como **Por definir** se completa antes de la versión final.
+
+## 1. Quiénes somos
+
+{{tenant.name}} es un espacio de movimiento y bienestar en El Poblado, Medellín, Colombia. A través del Método {{tenant.name}} reunimos diferentes metodologías de entrenamiento y movimiento, para que entrenes, te muevas y disfrutes el presente, en comunidad.
+
+{{tenant.name}} opera el espacio físico y la plataforma digital. Desde la plataforma puedes consultar clases, reservar y pagar.
+
+- **Dirección:** {{tenant.address}} — {{tenant.landmark}}.
+- **Correo electrónico:** {{tenant.email}}
+- **WhatsApp:** {{tenant.whatsapp}}
+- **Instagram:** {{tenant.instagram}}
+
+## 2. Qué aceptas al usar la plataforma
+
+Al crear una cuenta, comprar un paquete, reservar una clase o usar cualquier servicio de {{tenant.name}}, aceptas estos Términos y Condiciones. También aceptas la Política de Privacidad, la Exoneración de Responsabilidad y las Reglas de Casa vigentes.
+
+> **Por definir:**
+> - Edad mínima para crear una cuenta.
+> - Condiciones para menores de edad.
+
+## 3. Tu cuenta
+
+- La información que registres debe ser verdadera, completa y estar actualizada.
+- Tu cuenta es personal. Solo tú puedes usarla.
+- Cada reserva queda asociada a la persona que la hace.
+- El check-in se hace únicamente en recepción, antes de entrar a la clase.
+
+> **Por definir:**
+> - Política sobre cuentas compartidas, credenciales y uso indebido.
+
+## 4. Clases, paquetes y precios
+
+Para el lanzamiento, {{tenant.name}} ofrece estas opciones (precios de lanzamiento, en pesos colombianos):
+
+- **Clase de prueba:** {{price.trial}}
+- **Clase individual:** {{price.single}}
+- **Paquete de 12 clases:** {{price.pack12}}
+- **Paquete de 12 clases para afiliados de Santa María Tennis Club:** {{price.pack12_smtc}}
+- **Clase privada (máximo 3 personas):** {{price.private}}
+- **Persona adicional en clase privada:** {{price.private_extra}}
+
+**Paquete de 12 clases**
+
+- Tiene una vigencia de 3 meses.
+- No es reembolsable.
+- Puedes congelarlo una sola vez, por un máximo de {{policy.freezeMaxDays}} días.
+
+**Afiliados de Santa María Tennis Club**
+
+El precio especial del paquete de 12 clases es el único beneficio entre Santa María Tennis Club y {{tenant.name}}.
+
+**Tarjetas de regalo**
+
+Puedes comprar una clase individual o un paquete de 12 clases como tarjeta de regalo, al mismo precio. Una persona puede comprar varias clases individuales, o dos o más paquetes de 12 clases.
+
+**Créditos**
+
+{{tenant.name}} no maneja un sistema de créditos.
+
+> **Por definir:**
+> - Precios definitivos después del lanzamiento.
+> - Vigencia de las tarjetas de regalo.
+
+## 5. Reservas, cancelaciones y no-show
+
+- Puedes reservar una clase sin un tiempo mínimo de anticipación, siempre que haya cupos disponibles.
+- Puedes cancelar tu reserva hasta {{policy.cancellationHours}} horas antes del inicio de la clase.
+- Si no asistes a una clase reservada (no-show), no hay reembolso.
+- Si no asististe por enfermedad, reprogramamos tu clase.
+
+> **Por definir:**
+> - Qué pasa si cancelas con menos de {{policy.cancellationHours}} horas de anticipación.
+> - Cómo se informa o se soporta una ausencia por enfermedad.
+
+## 6. Pagos
+
+- En la página web puedes pagar con Wompi, código QR y PSE.
+- En recepción hay diferentes medios de pago, incluido el efectivo.
+
+## 7. Derecho de retracto y reversión del pago
+
+El paquete de 12 clases tiene una vigencia de 3 meses y no es reembolsable.
+
+> **Por definir:**
+> - Derecho de retracto: plazo, condiciones y procedimiento para ejercerlo.
+> - Reversión del pago: casos en los que aplica y procedimiento para solicitarla.
+> - Política de reembolsos completa.
+
+## 8. Cambios en la programación
+
+{{tenant.name}} cuenta con diferentes profesores, metodologías y horarios, que pueden variar según la programación vigente. La información actualizada de clases, profesores y horarios está en el calendario de clases de la página web.
+
+Si hay cambios o cancelaciones, escríbenos:
+
+- **WhatsApp Business:** {{tenant.whatsapp}}
+- **Correo electrónico:** {{tenant.email}}
+
+## 9. Conducta y permanencia
+
+{{tenant.name}} tendrá unas Reglas de Casa para que la experiencia sea segura, respetuosa y agradable para todas las personas de la comunidad.
+
+> **Por definir:**
+> - Reglas de Casa definitivas.
+> - Causales para negar el ingreso al estudio.
+> - Causales para suspender un plan.
+> - Causales para finalizar la relación con un usuario.
+> - Política frente a conductas que afecten la seguridad o tranquilidad de otros usuarios.
+> - Política frente al acoso o la discriminación.
+> - Devolución proporcional del saldo no utilizado en caso de terminación por conducta.
+
+## 10. Uso del espacio para fotos, video y eventos
+
+{{tenant.name}} ofrece el alquiler del espacio para experiencias y actividades especiales. Cada solicitud se analiza de forma individual, y su valor depende de las características y necesidades de cada caso.
+
+{{tenant.name}} ofrece experiencias corporativas desde el lanzamiento.
+
+> **Por definir:**
+> - Contrato específico para rodajes, talleres o eventos.
+> - Política para tomar fotografías dentro del estudio.
+> - Política para grabar videos dentro del estudio.
+> - Consentimiento para fotografiar o grabar a otros usuarios.
+
+## 11. Propiedad intelectual
+
+{{tenant.name}} cuenta con el Método {{tenant.name}}, bajo el cual se organizan sus diferentes experiencias y metodologías de entrenamiento.
+
+> **Por definir:**
+> - Titularidad legal de la marca.
+> - Protección y condiciones de uso del Método {{tenant.name}}.
+> - Propiedad de las secuencias y metodologías de clase.
+> - Derechos sobre fotografías, videos, textos y demás contenidos.
+> - Derechos sobre el diseño y el contenido de la plataforma.
+> - Autorización para reproducir o usar comercialmente el contenido.
+
+## 12. Responsabilidad
+
+{{tenant.name}} tendrá una Exoneración de Responsabilidad asociada a la práctica de las actividades físicas y experiencias que ofrece en el estudio.
+
+> **Por definir:**
+> - Contenido definitivo de la Exoneración de Responsabilidad.
+> - Aceptación de los riesgos asociados a la actividad física.
+> - Responsabilidad frente a lesiones o accidentes.
+> - Limitaciones de responsabilidad.
+> - Procedimiento en caso de accidente o emergencia dentro del estudio.
+
+## 13. Modificaciones de los Términos y Condiciones
+
+> **Por definir:**
+> - Facultad para modificar o actualizar estos Términos y Condiciones.
+> - Publicación de la versión vigente en la plataforma.
+> - Identificación de cada versión con fecha o número.
+> - Plazo de aviso previo ante cambios importantes.
+> - Canal para comunicar las modificaciones.
+> - Posibilidad de finalizar un plan si no estás de acuerdo con un cambio importante, y devolución del saldo no utilizado en ese caso.
+
+## 14. Atención al consumidor, ley y jurisdicción
+
+Puedes contactarnos por estos canales:
+
+- **Correo electrónico:** {{tenant.email}}
+- **WhatsApp Business:** {{tenant.whatsapp}}
+- **Instagram:** {{tenant.instagram}}
+
+> **Por definir:**
+> - Canal específico para peticiones, quejas y reclamos (PQR).
+> - Tiempo máximo de respuesta a las PQR.
+> - Legislación aplicable.
+> - Jurisdicción para resolver controversias.
+> - Procedimiento para reclamaciones ante las autoridades de protección al consumidor.`;
+
+const TERMS2_EN = `> The studio's draft. Items marked **To be defined** are completed before the final version.
+
+## 1. Who we are
+
+{{tenant.name}} is a space for movement and wellbeing in El Poblado, Medellín, Colombia. Through the {{tenant.name}} Method we bring together different training and movement methodologies, so you train, move and enjoy the present, in community.
+
+{{tenant.name}} runs the physical space and the digital platform. On the platform you can look up classes, book and pay.
+
+- **Address:** {{tenant.address}} — {{tenant.landmark}}.
+- **Email:** {{tenant.email}}
+- **WhatsApp:** {{tenant.whatsapp}}
+- **Instagram:** {{tenant.instagram}}
+
+## 2. What you accept when you use the platform
+
+When you create an account, buy a package, book a class or use any {{tenant.name}} service, you accept these Terms and Conditions. You also accept the Privacy Policy, the Liability Waiver and the House Rules in force.
+
+> **To be defined:**
+> - Minimum age to create an account.
+> - Conditions for minors.
+
+## 3. Your account
+
+- The information you register must be true, complete and up to date.
+- Your account is personal. Only you can use it.
+- Each booking belongs to the person who makes it.
+- Check-in happens only at the front desk, before entering the class.
+
+> **To be defined:**
+> - Policy on shared accounts, credentials and misuse.
+
+## 4. Classes, packages and prices
+
+For the launch, {{tenant.name}} offers these options (launch prices, in Colombian pesos):
+
+- **Trial class:** {{price.trial}}
+- **Individual class:** {{price.single}}
+- **12-class package:** {{price.pack12}}
+- **12-class package for Santa María Tennis Club affiliates:** {{price.pack12_smtc}}
+- **Private class (maximum 3 people):** {{price.private}}
+- **Additional person in a private class:** {{price.private_extra}}
+
+**12-class package**
+
+- It is valid for 3 months.
+- It is non-refundable.
+- You can freeze it once, for up to {{policy.freezeMaxDays}} days.
+
+**Santa María Tennis Club affiliates**
+
+The special price on the 12-class package is the only benefit between Santa María Tennis Club and {{tenant.name}}.
+
+**Gift cards**
+
+You can buy an individual class or a 12-class package as a gift card, at the same price. One person can buy several individual classes, or two or more 12-class packages.
+
+**Credits**
+
+{{tenant.name}} does not run a credit system.
+
+> **To be defined:**
+> - Final prices after the launch.
+> - Validity of gift cards.
+
+## 5. Booking, cancellation and no-show
+
+- You can book a class with no minimum notice, as long as there are spots available.
+- You can cancel your booking up to {{policy.cancellationHours}} hours before the class starts.
+- If you do not attend a booked class (no-show), there is no refund.
+- If you missed it because you were sick, we reschedule your class.
+
+> **To be defined:**
+> - What happens if you cancel less than {{policy.cancellationHours}} hours ahead.
+> - How an absence through illness is reported or supported.
+
+## 6. Payments
+
+- On the website you can pay with Wompi, a QR code and PSE.
+- At the front desk there are several payment methods, cash included.
+
+## 7. Right of withdrawal and payment reversal
+
+The 12-class package is valid for 3 months and is non-refundable.
+
+> **To be defined:**
+> - Right of withdrawal: period, conditions and procedure.
+> - Payment reversal: when it applies and how to request it.
+> - The full refund policy.
+
+## 8. Schedule changes
+
+{{tenant.name}} has different teachers, methodologies and schedules, which may change with the schedule in force. The current classes, teachers and times are on the class calendar on the website.
+
+If there are changes or cancellations, write to us:
+
+- **WhatsApp Business:** {{tenant.whatsapp}}
+- **Email:** {{tenant.email}}
+
+## 9. Conduct and membership of the community
+
+{{tenant.name}} will have House Rules so the experience is safe, respectful and pleasant for everyone in the community.
+
+> **To be defined:**
+> - The final House Rules.
+> - Grounds for refusing entry to the studio.
+> - Grounds for suspending a plan.
+> - Grounds for ending the relationship with a user.
+> - Policy on behaviour that affects other users' safety or peace.
+> - Policy on harassment or discrimination.
+> - Pro-rata refund of the unused balance when ended for conduct.
+
+## 10. Using the space for photos, video and events
+
+{{tenant.name}} rents the space for experiences and special activities. Each request is reviewed on its own, and its price depends on what each case involves and needs.
+
+{{tenant.name}} offers corporate experiences from the launch.
+
+> **To be defined:**
+> - A specific contract for shoots, workshops or events.
+> - Policy on taking photographs in the studio.
+> - Policy on recording video in the studio.
+> - Consent to photograph or record other users.
+
+## 11. Intellectual property
+
+{{tenant.name}} has the {{tenant.name}} Method, under which its experiences and training methodologies are organised.
+
+> **To be defined:**
+> - Legal ownership of the brand.
+> - Protection and terms of use of the {{tenant.name}} Method.
+> - Ownership of class sequences and methodologies.
+> - Rights over photographs, videos, texts and other content.
+> - Rights over the platform's design and content.
+> - Authorisation to reproduce or commercially use the content.
+
+## 12. Liability
+
+{{tenant.name}} will have a Liability Waiver for the physical activities and experiences it offers at the studio.
+
+> **To be defined:**
+> - The final content of the Liability Waiver.
+> - Acceptance of the risks of physical activity.
+> - Liability for injuries or accidents.
+> - Limits of liability.
+> - Procedure for an accident or emergency in the studio.
+
+## 13. Changes to these Terms and Conditions
+
+> **To be defined:**
+> - The power to change or update these Terms and Conditions.
+> - Publication of the version in force on the platform.
+> - Identifying each version by date or number.
+> - Notice period before important changes.
+> - The channel used to announce changes.
+> - Ending a plan if you do not agree with an important change, and refunding the unused balance in that case.
+
+## 14. Consumer service, law and jurisdiction
+
+You can reach us through these channels:
+
+- **Email:** {{tenant.email}}
+- **WhatsApp Business:** {{tenant.whatsapp}}
+- **Instagram:** {{tenant.instagram}}
+
+> **To be defined:**
+> - A specific channel for requests, complaints and claims (PQR).
+> - Maximum response time for PQR.
+> - Applicable law.
+> - Jurisdiction for disputes.
+> - Procedure for claims before the consumer-protection authorities.`;
+
 
 // ---------------------------------------------------------------------------------------------
 // 6 · Reglas de casa
@@ -706,6 +979,13 @@ const DRAFTS: Draft[] = [
     body: { es: TERMS_ES, en: TERMS_EN },
   },
   {
+    // 0051 — the owner's Términos y Condiciones (v2.0) replace the studio's first draft (v1.0, kept as history).
+    id: 'leg_terms_20', kind: 'terms', version: '2.0', status: 'published', requiresAcceptance: true, monthsOld: 0,
+    title: { es: 'Términos y Condiciones', en: 'Terms and Conditions' },
+    summary: { es: 'Quiénes somos, tu cuenta, clases, paquetes y precios de lanzamiento, reservas, cancelaciones, pagos y lo que aún está por definir.', en: 'Who we are, your account, classes, packages and launch prices, booking, cancellation, payments and what is still to be defined.' },
+    body: { es: TERMS2_ES, en: TERMS2_EN },
+  },
+  {
     id: 'leg_privacy_es', kind: 'privacy', version: '1.0', status: 'published', requiresAcceptance: true, monthsOld: 8,
     title: { es: 'Política de privacidad', en: 'Privacy policy' },
     summary: { es: 'Qué datos tratamos, para qué, con quién y cómo ejerces tus derechos (Ley 1581 de 2012).', en: 'What data we process, why, with whom, and how you exercise your rights (Ley 1581 de 2012).' },
@@ -729,13 +1009,13 @@ const DRAFTS: Draft[] = [
   {
     id: 'leg_cancellation_10', kind: 'cancellation', version: '1.0', status: 'draft', monthsOld: 0,
     title: { es: 'Política de cancelaciones', en: 'Cancellation policy' },
-    summary: { es: 'La ventana de cancelación, la lista de espera, las pausas y los no-shows.', en: 'The cancellation window, the waitlist, pauses and no-shows.' },
+    summary: { es: 'La ventana de cancelación, reservar sin tiempo mínimo, la lista de espera, el no-show y el congelamiento del paquete.', en: 'The cancellation window, booking with no minimum notice, the waitlist, no-shows and the package freeze.' },
     body: { es: CANCEL_ES, en: CANCEL_EN },
   },
   {
     id: 'leg_refunds_10', kind: 'refunds', version: '1.0', status: 'draft', monthsOld: 0,
     title: { es: 'Política de reembolsos', en: 'Refund policy' },
-    summary: { es: 'Retracto de 5 días hábiles, reversión del pago y qué devolvemos en cada caso.', en: 'Five-business-day withdrawal, payment reversal and what we refund in each case.' },
+    summary: { es: 'Lo que ya está definido (el paquete no es reembolsable, el no-show) y lo que está por definir (retracto, reversión del pago).', en: 'What is decided (the package is non-refundable, no-shows) and what is to be defined (withdrawal, payment reversal).' },
     body: { es: REFUND_ES, en: REFUND_EN },
   },
   {

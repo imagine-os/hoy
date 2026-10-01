@@ -2,9 +2,9 @@
 title: Sales and plans
 role: front desk, coordination, finance
 part: III
-version: 0.13.3
-updated: 2026-09-29
-summary: Registering and taking payment at the desk, what to offer each person and everything members can do on their own in the app.
+version: 0.22.0
+updated: 2026-10-01
+summary: Registering and taking payment at the desk, what to offer each person, private classes and everything people can do on their own in the app.
 ---
 
 # Sales and plans
@@ -19,16 +19,21 @@ validity periods: you pick them.
    email, emergency contact and birthday.
 2. **Data consent.** Ask whether they agree to the processing of their data. They say yes out loud and you tick
    it. It is saved with the time, your name and the policy version (see [Personal data](23-habeas-data.md)).
-3. **What they buy.** Pick the pass or the plan. For anything without a button (a birthday, a team session, a
-   rental with extras) there is **Space · Specials**: concept and price typed by hand (see
+3. **What they buy.** Pick the trial class, the individual class or the 12-class package. The Santa María
+   Tennis Club affiliate price is sold only after checking the affiliation. A **private class** is charged as a
+   Special: you choose how many people (3 at most) and the price is worked out for you. For anything without a
+   button (a birthday, a rental with extras) there is **Space · Specials**: concept and price typed by hand (see
    [Space — B2B rental](12-espacio-b2b.md)).
 4. **How they pay:**
    - **Wompi link:** send the link by WhatsApp. The sale stays pending until the payment is confirmed.
    - **Card terminal:** take the payment. The sale stays pending until it is confirmed.
    - **Cash:** paid straight away. Put the money in the till and hand over the receipt.
-   - **Transfer or Nequi:** ask to see the proof, leave the sale pending and note it for finance.
-5. **Complete.** When you complete the sale, the person is checked in to the class they bought. The receipt goes
-   out by WhatsApp and email.
+   - **Wompi QR:** the person scans the desk QR with their bank app. The sale stays pending until the payment
+     is confirmed.
+   - **Transfer:** ask to see the proof, leave the sale pending and note it for finance.
+   - Nequi and Daviplata are not accepted.
+5. **Complete.** When you complete the sale, the classes land on their account: one for the trial or the
+   individual class, twelve for the package, with their expiry date. The receipt goes out by WhatsApp and email.
 6. **If the payment fails:** the sale stays pending with the reason. Offer another method. Never retry the charge
    blindly.
 
@@ -48,54 +53,63 @@ This is the VAT applied today:
 ## 2. What to offer each person
 | Who is in front of you | What you offer | Why |
 |---|---|---|
-| First time, not sure they'll like it | Trial Class | they decide with their body, not their head |
-| Came back and is asking about prices | 3-Class Pack | a short commitment, no monthly plan |
-| Comes 2 or 3 times a week | Monthly membership | better value for them, stability for us |
-| Knows they're staying all year | Annual membership | the best price per month |
-| Comes between meetings, for 20 minutes | Pauses | doesn't take a class mat |
-| Wants to give a gift | Gift Voucher | it's how new people arrive |
-| Wants the space for an event, a birthday or their team | A Special, using the "from" price as a reference | agreed in conversation and charged at the desk |
+| First time, not sure they'll like it | Trial class | they decide with their body, not their head |
+| Comes now and then | Individual class | they pay one class at a time, no commitment |
+| Came back and wants to come often | 12-class package | 12 classes in 3 months, can be frozen once |
+| Is a Santa María Tennis Club affiliate | 12-class package, affiliate price | it is the only benefit of the agreement |
+| Wants a class just for themselves, or with one or two more people | Private class | it is designed for whoever takes it |
+| Wants to give a gift | Gift card | it's how new people arrive |
+| Wants the space for an event, a birthday or their team | A Special, quoted case by case | agreed in conversation and charged at the desk |
 
 These are the prices in force:
 
 {{pricing:bienvenida}}
 
-{{pricing:membresia}}
+{{pricing:paquetes}}
 
-## 3. What members can do on their own
-Almost everything. It is better if they do it from their app: they learn how, and they don't depend on the desk.
+{{pricing:privadas}}
+
+What the studio gives Santa María Tennis Club affiliates:
+
+{{studio:smtc_benefit}}
+
+## 3. What people can do on their own
+Almost everything. It's better if they do it from their app: that way they learn and don't depend on the desk.
 
 | They want to | Where, in their app |
 |---|---|
 | See and book classes | Schedule |
-| See their passes and credits | My passes |
-| Buy a plan | Plans → pay |
+| Pay for a trial or individual class | Trial or individual class |
+| Buy the 12-class package | Packages → pay |
+| See how many classes they have left, when they expire, and freeze the package | My classes |
 | Change or cancel a booking | My bookings |
-| Pause or cancel the membership | Manage membership |
 | See their payments and receipts | History |
 | Change their details or language | Profile |
 | Save a payment method | Payment methods |
 
-**What to say:** "You can do that yourself in the app, under My bookings. Want me to show you?"
+**What to say:** "You can do that yourself in the app, under My bookings. I can show you if you like."
 
-![Paying in the member app, with VAT worked out](../../screenshots/C-04/en-390.jpg "C-04 · /app/checkout/:id")
+![Checkout in the app, with VAT worked out](../../screenshots/C-04/en-390.jpg "C-04 · /app/checkout/:id")
 
-![The plans in the app](../../screenshots/C-06/en-390.jpg "C-06 · /app/plans")
+![The 12-class package in the app](../../screenshots/C-06/en-390.jpg "C-06 · /app/plans")
 
-> IN HOYOS: C-02 Schedule · C-07 Passes · C-06 Plans → C-04 Checkout · C-08 Bookings · C-22 Membership · C-11 History · C-19 Profile · C-05 Payment methods.
+> IN HOYOS: C-02 Schedule · C-07 Trial or individual · C-06 Packages → C-04 Checkout · C-07b My classes · C-08 Bookings · C-11 History · C-19 Profile · C-05 Payment methods.
 
-## 4. Credits and validity
-1. A Welcome pass gives **credits** with an expiry date. A Membership gives access, not credits.
-2. If the person cancels inside the window, the credit comes back with its original date. It is not extended.
-3. A courtesy is given as **credit, not money**, and coordination approves it (see
-   [Payments and the till](14-pagos-y-caja.md)).
+## 4. Classes and expiry
+1. HOY sells **classes, not credits**. The trial and the individual class give one class; the package gives
+   twelve, which expire **3 months** after the purchase.
+2. If the person cancels 12 hours or more ahead, the class goes back to their package with the same expiry
+   date. It is not extended. With less than 12 hours, or if they don't come, the class counts as taken.
+3. The package can be frozen once (see [Frozen packages and gifts](11-pausas-y-regalos.md)).
+4. The package is **non-refundable**. A courtesy is given **in classes, not money**, and coordination approves
+   it (see [Payments and the till](14-pagos-y-caja.md)).
 
-This is how the system keeps credits:
+This is how the system stores each person's classes:
 
-{{table:credits}}
+{{table:class_ledger}}
 
 ## 5. Receipts
-Every paid sale produces a receipt by WhatsApp and email. Once electronic invoicing is switched on, the receipt
+Every paid sale generates a receipt by WhatsApp and email. Once electronic invoicing is switched on, the receipt
 will also carry the invoice reference (see [Invoicing](15-facturacion-y-dian.md)).
 
-![The receipt in the member app](../../screenshots/C-11/en-390.jpg "C-11 · /app/history")
+![The receipt in the app](../../screenshots/C-11/en-390.jpg "C-11 · /app/history")

@@ -8,11 +8,11 @@ import { CalendarView, type CalendarMode } from './CalendarView';
 interface DemoRow { id: string; title: string; starts_at: string; ends_at: string | null; status: string; tone: 'moss' | 'river' | 'clay' | 'sun' }
 const at = (days: number, h: number, m = 0) => { const d = new Date(); d.setDate(d.getDate() + days); d.setHours(h, m, 0, 0); return d.toISOString(); };
 const ROWS: DemoRow[] = [
-  { id: 'c1', title: 'Hot Vinyasa', starts_at: at(0, 6, 30), ends_at: at(0, 7, 30), status: 'scheduled', tone: 'clay' },
+  { id: 'c1', title: 'Fuego', starts_at: at(0, 6, 30), ends_at: at(0, 7, 30), status: 'scheduled', tone: 'clay' },
   { id: 'c2', title: 'Pilates Mat', starts_at: at(0, 7, 0), ends_at: at(0, 7, 50), status: 'scheduled', tone: 'river' },
-  { id: 'c3', title: 'Yin', starts_at: at(1, 19, 0), ends_at: at(1, 20, 15), status: 'scheduled', tone: 'moss' },
+  { id: 'c3', title: 'Centro', starts_at: at(1, 19, 0), ends_at: at(1, 20, 15), status: 'scheduled', tone: 'moss' },
   { id: 'c4', title: 'Barre', starts_at: at(2, 8, 0), ends_at: at(2, 8, 55), status: 'cancelled', tone: 'sun' },
-  { id: 'c5', title: 'Hatha', starts_at: at(-2, 17, 30), ends_at: at(-2, 18, 30), status: 'completed', tone: 'moss' },
+  { id: 'c5', title: 'Alineación', starts_at: at(-2, 17, 30), ends_at: at(-2, 18, 30), status: 'completed', tone: 'moss' },
   { id: 'h1', title: 'Festivo', starts_at: addDaysKey(dateKey(), 4), ends_at: null, status: 'holiday', tone: 'sun' },
 ];
 
