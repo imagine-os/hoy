@@ -20,8 +20,8 @@ export function buildTableViews(): TableViewRow[] {
     view('tvw_payments_board', 'payments', { es: 'Pagos por estado', en: 'Payments by status' }, 'kanban', { kanbanColumn: 'status', cardFields: ['amount', 'method', 'paid_at'] }),
     view('tvw_modalities_gallery', 'modalities', { es: 'Modalidades', en: 'Modalities' }, 'gallery', { cardFields: ['tone', 'intensity', 'duration_min', 'heated'] }, true),
     view('tvw_events_month', 'events', { es: 'Eventos del mes', en: 'Events this month' }, 'calendar', { dateColumn: 'starts_at', endColumn: 'ends_at', calendarMode: 'month' }, true),
-    // memberships.ends_at is empty while a membership runs; renews_at closes the paid period, so the bar reads start → renewal
-    view('tvw_memberships_timeline', 'memberships', { es: 'Membresías por plan', en: 'Memberships by plan' }, 'timeline', { dateColumn: 'starts_at', endColumn: 'renews_at', groupBy: 'plan_id', timelineZoom: 'quarter' }, true),
+    // 0051: packages instead of memberships — a purchase row runs from the day it was bought to the day its classes expire.
+    view('tvw_packages_timeline', 'class_ledger', { es: 'Paquetes por vencimiento', en: 'Packages by expiry' }, 'timeline', { dateColumn: 'created_at', endColumn: 'expires_at', groupBy: 'plan_id', timelineZoom: 'quarter', filters: [{ column: 'reason', op: 'is', value: 'purchase' }] }, true),
     view('tvw_hours_calendar', 'hours_overrides', { es: 'Calendario de festivos', en: 'Holiday calendar' }, 'calendar', { dateColumn: 'start_date', endColumn: 'end_date', calendarMode: 'month' }, true),
     view('tvw_payroll_timeline', 'payroll_runs', { es: 'Nóminas en el tiempo', en: 'Payroll over time' }, 'timeline', { dateColumn: 'period_start', endColumn: 'period_end', groupBy: 'status', timelineZoom: 'quarter' }, true),
   ];

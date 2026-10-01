@@ -40,7 +40,9 @@ const POLICY_ALIAS: Record<string, string> = {
   waitlist_claim_minutes: 'waitlistClaimMin', waitlist_claim_min: 'waitlistClaimMin',
   late_grace_minutes: 'lateGraceMin', late_grace_min: 'lateGraceMin',
   no_show_fee: 'noShowFee',
-  pause_days_per_year: 'pauseDaysPerYear', max_pauses_per_year: 'maxPausesPerYear',
+  // 0051: the membership pause became the package freeze; the old names still resolve so an older chapter keeps working.
+  freeze_max_days: 'freezeMaxDays', freezes_per_package: 'freezesPerPackage',
+  pause_days_per_year: 'freezeMaxDays', max_pauses_per_year: 'freezesPerPackage', pauseDaysPerYear: 'freezeMaxDays', maxPausesPerYear: 'freezesPerPackage',
   payment_hold_minutes: 'paymentHoldMin', payment_hold_min: 'paymentHoldMin',
   charge_notice_days: 'chargeNoticeDays',
   lockout_attempts: 'lockoutAttempts', lockout_minutes: 'lockoutMinutes',
@@ -49,14 +51,14 @@ const POLICY_ALIAS: Record<string, string> = {
 };
 
 /** The policy fields a chapter may quote, in display order; labels and units are `manual.live.policy.*` keys. */
-const POLICY_KEYS = ['cancellationHours', 'waitlistClaimMin', 'lateGraceMin', 'noShowFee', 'pauseDaysPerYear', 'maxPausesPerYear', 'paymentHoldMin', 'chargeNoticeDays', 'lockoutAttempts', 'lockoutMinutes', 'quietHours', 'ivaPct', 'pricesIncludeIva', 'payrollCadence', 'payoutMethod', 'payrollSignedBy'] as const;
+const POLICY_KEYS = ['cancellationHours', 'waitlistClaimMin', 'lateGraceMin', 'noShowFee', 'freezeMaxDays', 'freezesPerPackage', 'paymentHoldMin', 'chargeNoticeDays', 'lockoutAttempts', 'lockoutMinutes', 'quietHours', 'ivaPct', 'pricesIncludeIva', 'payrollCadence', 'payoutMethod', 'payrollSignedBy'] as const;
 type PolicyKey = typeof POLICY_KEYS[number];
 const UNIT: Partial<Record<PolicyKey, 'hours' | 'minutes' | 'days'>> = {
-  cancellationHours: 'hours', waitlistClaimMin: 'minutes', lateGraceMin: 'minutes', pauseDaysPerYear: 'days', paymentHoldMin: 'minutes', chargeNoticeDays: 'days', lockoutMinutes: 'minutes',
+  cancellationHours: 'hours', waitlistClaimMin: 'minutes', lateGraceMin: 'minutes', freezeMaxDays: 'days', paymentHoldMin: 'minutes', chargeNoticeDays: 'days', lockoutMinutes: 'minutes',
 };
 const PAYROLL_KEYS: PolicyKey[] = ['payrollCadence', 'payoutMethod', 'payrollSignedBy'];
 /** The numeric policy fields live flat on the policy record; the grouped ones (tax, payroll, quiet hours) are read explicitly. */
-type FlatPolicy = Pick<StudioSettings['policies'], 'cancellationHours' | 'waitlistClaimMin' | 'lateGraceMin' | 'noShowFee' | 'pauseDaysPerYear' | 'maxPausesPerYear' | 'paymentHoldMin' | 'chargeNoticeDays' | 'lockoutAttempts' | 'lockoutMinutes'>;
+type FlatPolicy = Pick<StudioSettings['policies'], 'cancellationHours' | 'waitlistClaimMin' | 'lateGraceMin' | 'noShowFee' | 'freezeMaxDays' | 'freezesPerPackage' | 'paymentHoldMin' | 'chargeNoticeDays' | 'lockoutAttempts' | 'lockoutMinutes'>;
 
 /** 0031: the M-08 policy a `{{policy:…}}` / `{{studio:…}}` key names (alias resolved), and whether it lives in Payments (M-08c). */
 export function policyField(key: string): { key: string; payroll: boolean } | undefined {
@@ -94,11 +96,13 @@ function Frame({ title, eyebrow, source, children }: { title: string; eyebrow?: 
 
 function PricingTable({ items }: { items: PriceItem[] }) {
   const { t, lang, bi } = useI18n();
-  if (!items.length) return null; // a coming-soon family (corporativo) has a rationale and no priced items
+  if (!items.length) return null; // an on-request family (espacio, corporativo) has a rationale and no priced items
   const period = (p: PriceItem) => (p.period === 'month' ? t('core.common.perMonth') : p.period === 'year' ? t('core.common.perYear') : '');
   const validity = (p: PriceItem) => {
     const bits: string[] = [];
-    if (p.credits) bits.push(t(p.credits === 1 ? 'manual.live.pricing.class' : 'manual.live.pricing.classes', { n: p.credits }));
+    if (p.classes) bits.push(t(p.classes === 1 ? 'manual.live.pricing.class' : 'manual.live.pricing.classes', { n: p.classes }));
+    if (p.maxPeople) bits.push(t('manual.live.pricing.people', { n: p.maxPeople }));
+    if (p.perPerson) bits.push(t('manual.live.pricing.perPerson'));
     if (p.validityDays) bits.push(t('manual.live.pricing.days', { n: p.validityDays }));
     if (p.period === 'month') bits.push(t('manual.live.pricing.renewsMonthly'));
     if (p.period === 'year') bits.push(t('manual.live.pricing.renewsYearly'));
@@ -388,7 +392,7 @@ function Unknown({ kind, arg, options }: { kind: string; arg?: string; options: 
 const KINDS = ['pricing', 'tenant', 'policy', 'tables', 'table', 'roles', 'routes', 'stats', 'kpi'] as const;
 
 /**
- * One live-data block for the operations manual. A chapter writes `{{pricing:membresia}}` and this
+ * One live-data block for the operations manual. A chapter writes `{{pricing:paquetes}}` and this
  * renders the current value from the app's own sources — pricing.ts, tenant.ts, M-08 settings, the
  * table registry, the role list, the route manifest and the data layer — so the manual cannot go stale.
  * Every label is a `manual.live.*` string (src/modules/ops-manual/strings.ts).

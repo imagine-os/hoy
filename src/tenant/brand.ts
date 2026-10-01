@@ -1,44 +1,55 @@
 /**
  * Brand content — the studio's own words, as typed data.
  *
- * Source: the owner's brand PDF "Contenido de marca — Sobre nosotros, filosofía y clases"
- * (Medellín · 2026, 5 pages). Spanish is the original; English is a written translation, not a
- * literal one. This is the ONLY place the manifesto, the "Sobre HOY" text, the philosophy, the
- * class essays and the taglines are written — pages read them, they are never re-typed in a page.
+ * Sources: the owner's brand PDF "Contenido de marca — Sobre nosotros, filosofía y clases" (Medellín · 2026)
+ * for the manifesto and "Sobre HOY"; since 0051 the verified "WEBSITE MODIF" brief (2026-10-01) for the
+ * philosophy, the "Nuestras clases" introduction and the seven classes (Ligereza, Híbrido, Fuego, Sólido,
+ * Centro, Alineación, Pulso — each with its concept, intention, keys, messages and method, transcribed from the
+ * owner's class cards). Spanish is the original; English is a written translation, not a literal one. This is
+ * the ONLY place the manifesto, the "Sobre HOY" text, the philosophy, the class texts and the taglines are
+ * written — pages read them, they are never re-typed in a page.
  *
  * Prices live in ./pricing.ts, physical facts in ./tenant.ts. Nothing here repeats either.
  */
 import type { Bi } from '../specs/types';
 import type { Tone } from '../design/tokens';
 
-/** The slugs the site routes on: /site/classes/:slug. */
-export type ClassSlug = 'hot-yoga' | 'barre' | 'pilates' | 'meditacion' | 'respiracion';
+/** The slugs the site routes on: /site/classes/:slug. One per class, in the owner's order. */
+export type ClassSlug = 'ligereza' | 'hibrido' | 'fuego' | 'solido' | 'centro' | 'alineacion' | 'pulso';
 
-/** Things to bring, as keys the website resolves through `site.classes.bring.*`. */
-export type BringKey = 'towel' | 'water' | 'socks' | 'comfy' | 'layers' | 'nothing';
+/** Things to bring, as keys the website resolves through `site.classes.bring.*` (0051: the FAQ's list). */
+export type BringKey = 'props' | 'towel' | 'water';
+
+/** How hard a class works, as the owner's cards say it ("Baja", "Media", "Media-alta", "Alta"). */
+export type Intensity = 'low' | 'medium' | 'mediumHigh' | 'high';
 
 export interface BrandClass {
-  /** Display name. */
+  /** Display name — a brand name, the same in both languages. */
   name: Bi;
-  /** Three-to-four-word descriptor above the name. */
-  eyebrow: Bi;
-  /** One-line summary for cards and teasers. */
-  summary: Bi;
-  /** The full essay, in order. */
-  paragraphs: Bi[];
-  /** Colour tone of this class on cards, chips and empty media frames (D-01 `classTones`); a hue name, never shown as a word. */
+  /** The class in one first-person line ("Suelto lo que no me sirve"). */
+  tagline: Bi;
+  /** Three or four words for the home arches and the cards (the brief's "keywords"). */
+  keywords: Bi[];
+  /** "Concepto" — one sentence of nouns. */
+  concept: Bi;
+  /** "Intención" — the quote the class is built around. */
+  intention: Bi;
+  /** "Clave" — the four chips. */
+  keys: Bi[];
+  /** "Mensajes" — four lines a teacher can say. */
+  messages: Bi[];
+  /** "Método" — what the class combines. */
+  method: Bi;
+  /** The rest of the method line (intensity, closing). */
+  methodNote: Bi;
+  intensity: Intensity;
+  /** Colour tone of this class on arches, chips and calendar marks (D-01 `classTones`); a hue name, never shown as a word. */
   tone: Tone;
-  /**
-   * `modalities.slug` values this essay covers, so a later worker can join the essay to the
-   * catalogue rows (duration, intensity, heated) without editing the seed.
-   * Empty = no modality exists for it yet (Respiración is taught inside other classes today).
-   */
+  /** `modalities.slug` values this class covers, so the essay joins the schedule rows (duration, intensity). */
   modalitySlugs: string[];
-  /** True when the room is heated — drives the "what to bring" list. */
+  /** True when the room is heated. No class is heated since 0051 (hot yoga is not on the launch list). */
   heated: boolean;
   bring: BringKey[];
-  /** Art direction for the class's 16:9 media slot. */
-  brief: string;
 }
 
 /** Page 1 — the cover. */
@@ -101,204 +112,178 @@ export const about = {
   ] satisfies Bi[],
 } as const;
 
-/** Page 3 (dark panel) — "Nuestra filosofía". */
+/** "La filosofía de HOY" — the About page's dark panel (0051, verified copy). */
 export const philosophy = {
   eyebrow: { es: 'Cómo pensamos', en: 'How we think' } satisfies Bi,
-  title: { es: 'Nuestra filosofía', en: 'Our philosophy' } satisfies Bi,
-  paragraphs: [
+  title: { es: 'La filosofía de HOY', en: 'The HOY philosophy' } satisfies Bi,
+  sections: [
     {
-      es: 'Entre lo que fue y lo que todavía no llega, existe este momento. Ese es el punto de partida de todo lo que hacemos en HOY: un espacio para detenerte, respirar, moverte, sentir y volver a ti mismo, no como un lujo aparte de tu vida, sino como algo que se vive en lo cotidiano.',
-      en: 'Between what was and what has not yet arrived, there is this moment. That is the starting point of everything we do at HOY: a space to stop, breathe, move, feel and come back to yourself — not as a luxury set apart from your life, but as something you live in the ordinary day.',
+      title: { es: 'Nuestra filosofía', en: 'Our philosophy' },
+      paragraphs: [{
+        es: 'Creamos experiencias que transformen el bienestar en una forma de vivir: más consciente, presente y conectada. No venimos a entrenar cuerpos. Venimos a despertar presencia.',
+        en: 'We create experiences that turn wellbeing into a way of living: more aware, more present, more connected. We are not here to train bodies. We are here to awaken presence.',
+      }],
     },
     {
-      es: 'No buscamos que escapes de la rutina, sino que aprendas a habitarla de otra manera. HOY es movimiento, pero también pausa. Es energía y equilibrio. Es cuerpo, mente y conexión. No siempre hay que ir más rápido, hacer más o llegar más lejos: a veces, simplemente hay que volver.',
-      en: 'We are not asking you to escape your routine, but to learn to inhabit it differently. HOY is movement, and it is also pause. It is energy and balance. It is body, mind and connection. You do not always have to go faster, do more or get further: sometimes you simply have to come back.',
+      title: { es: 'Nuestro propósito', en: 'Our purpose' },
+      paragraphs: [{
+        es: 'Hacer del movimiento y la respiración un camino para volver a nosotros mismos y habitar el presente. En HOY, cuerpo, mente y espíritu se integran. El movimiento es la herramienta física. La pausa es el espacio consciente. La energía es la vitalidad que despierta. Y el equilibrio es la sabiduría que sostiene.',
+        en: 'To make movement and breath a way back to ourselves and into the present. At HOY, body, mind and spirit come together. Movement is the physical tool. The pause is the conscious space. Energy is the vitality that wakes up. And balance is the wisdom that holds it all.',
+      }],
     },
-    {
-      es: 'Nuestro propósito es hacer del movimiento y la respiración un camino para volver a nosotros mismos y habitar el presente. Por eso creamos un espacio donde el bienestar se integra de forma natural a tu vida: cada experiencia en HOY es una oportunidad para conectar con tu cuerpo, respirar con intención, compartir en comunidad y volver a ti mismo.',
-      en: 'Our purpose is to make movement and breath a way back to ourselves and into the present. So we built a place where wellbeing folds naturally into your life: every experience at HOY is a chance to connect with your body, breathe with intention, share in community and return to yourself.',
-    },
-    {
-      es: 'Esto se nota en cada detalle de HOY. En cómo recibimos a cada persona tal como llega, sin pedirle una versión perfecta de sí misma. En cómo hablamos, con la calma de quien no tiene prisa por impresionar. Y en cómo cuidamos cada gesto pequeño, porque el bienestar no se anuncia: se siente.',
-      en: 'You can feel it in every detail of HOY. In how we welcome each person exactly as they arrive, without asking for a perfect version of themselves. In how we speak, with the calm of people in no hurry to impress. And in how we look after every small gesture, because wellbeing is not announced: it is felt.',
-    },
-  ] satisfies Bi[],
-  /** The pull-quote the home page prints on the dark panel. */
+  ] satisfies { title: Bi; paragraphs: Bi[] }[],
+  /** The closing lines, printed after the two sections. */
+  closing: {
+    es: 'Todo empieza con una pregunta: ¿cómo vuelvo a mí? Cada clase es un camino diferente hacia la misma verdad: tu presencia es tu poder.',
+    en: 'It all starts with one question: how do I come back to myself? Every class is a different path to the same truth: your presence is your power.',
+  } satisfies Bi,
+  /** The pull-quote a page prints large. */
   pullQuote: {
-    es: 'No siempre hay que ir más rápido, hacer más o llegar más lejos: a veces, simplemente hay que volver.',
-    en: 'You do not always have to go faster, do more or get further: sometimes you simply have to come back.',
+    es: 'No venimos a entrenar cuerpos. Venimos a despertar presencia.',
+    en: 'We are not here to train bodies. We are here to awaken presence.',
   } satisfies Bi,
 } as const;
 
-/** Page 3 (lower half) — "Nuestras clases" intro. */
+/** "Nuestras clases" — the W-07 introduction (0051, verified copy). */
 export const classesIntro = {
   eyebrow: { es: 'Cómo te mueves en HOY', en: 'How you move at HOY' } satisfies Bi,
   title: { es: 'Nuestras clases', en: 'Our classes' } satisfies Bi,
+  lead: {
+    es: 'HOY no es un estudio de Pilates y Yoga. Es un espacio donde el movimiento es la puerta para volver a tu presencia.',
+    en: 'HOY is not a Pilates and Yoga studio. It is a space where movement is the door back to your presence.',
+  } satisfies Bi,
+  /** Printed large, between the lead and the paragraphs. */
+  statement: {
+    es: 'No venimos a entrenar cuerpos. Venimos a despertar presencia.',
+    en: 'We are not here to train bodies. We are here to awaken presence.',
+  } satisfies Bi,
   paragraphs: [
     {
-      es: 'En HOY encuentras varias formas de moverte y de estar bajo un mismo techo: hot yoga, barre, pilates, meditación y respiración. No son disciplinas aisladas ni categorías con niveles y etiquetas: son distintos caminos hacia el mismo lugar, tu cuerpo, tu respiración, tu presente. Cada una tiene su propio ritmo, pero todas comparten la misma intención, ayudarte a salir del piloto automático y volver a sentirte en tu cuerpo.',
-      en: 'At HOY you will find several ways to move and to be, under one roof: hot yoga, barre, pilates, meditation and breathwork. They are not isolated disciplines, or categories with levels and labels: they are different paths to the same place — your body, your breath, your present. Each one has its own rhythm, and all of them share the same intention: to help you step out of autopilot and feel yourself in your body again.',
+      es: 'Tenemos siete clases, y cada una es un camino distinto. Algunas te dan base y fuerza. Otras te encienden. Otras te centran, te hacen sentir cada detalle, te ayudan a soltar o a entender cómo funciona tu cuerpo. Todas llegan al mismo lugar: aquí, ahora.',
+      en: 'We have seven classes, and each one is a different path. Some give you a base and strength. Others light you up. Others centre you, make you feel every detail, help you let go or understand how your body works. They all arrive at the same place: here, now.',
     },
     {
-      es: 'No necesitas elegir "la correcta" desde el primer día. Puedes probar todas, quedarte con la que más te acomode, o alternar según cómo te sientas cada semana. Lo único que te pedimos es que llegues con ganas de estar presente, el resto lo construimos juntos, clase a clase.',
-      en: 'You do not have to pick “the right one” on day one. You can try them all, settle into the one that fits you best, or alternate depending on how you feel that week. The only thing we ask is that you arrive wanting to be present; the rest we build together, class by class.',
+      es: 'Nuestras clases son retadoras y se hacen con la alineación correcta. El trabajo muscular es intenso y tiene un protocolo de cuidado. Conocemos tu cuerpo gracias a una ficha técnica personal, así que el movimiento es inteligente, informado y hecho para ti. Vas a ver resultados físicos sin dejar de lado tu bienestar.',
+      en: 'Our classes are challenging and done with the right alignment. The muscular work is intense and follows a care protocol. We know your body through a personal technical record, so the movement is intelligent, informed and made for you. You will see physical results without setting your wellbeing aside.',
+    },
+    {
+      es: 'Aquí el movimiento es la herramienta. La pausa es el espacio para darte cuenta. La energía es lo que despierta. El equilibrio es lo que te sostiene.',
+      en: 'Here, movement is the tool. The pause is the space to notice. Energy is what wakes up. Balance is what holds you.',
     },
   ] satisfies Bi[],
+  question: { es: 'Todo empieza con una pregunta: ¿cómo vuelvo a mí?', en: 'It all starts with one question: how do I come back to myself?' } satisfies Bi,
+  close: { es: 'Elige tu camino. Tu presencia es tu poder.', en: 'Choose your path. Your presence is your power.' } satisfies Bi,
+  /** The home page's sub-head under the statement. */
+  methods: {
+    es: 'Siete metodologías que combinan Pilates, Yoga, Barre, movilidad, fuerza, cardio y respiración, con diferentes niveles de intensidad.',
+    en: 'Seven methodologies that combine Pilates, Yoga, Barre, mobility, strength, cardio and breathwork, at different levels of intensity.',
+  } satisfies Bi,
 } as const;
 
-/** Pages 4–5 — one essay per class, keyed by route slug. */
+const b = (es: string, en: string): Bi => ({ es, en });
+const ALL_BRING: BringKey[] = ['props', 'towel', 'water'];
+
+/** The seven classes, from the owner's class cards (0051). Keyed by route slug. */
 export const classes: Record<ClassSlug, BrandClass> = {
-  'hot-yoga': {
-    name: { es: 'Hot Yoga', en: 'Hot Yoga' },
-    eyebrow: { es: 'Calor y entrega', en: 'Heat and surrender' },
-    summary: {
-      es: 'Sala caliente a propósito: el cuerpo se abre y la respiración se vuelve el centro de todo.',
-      en: 'A room heated on purpose: the body opens and the breath becomes the centre of everything.',
-    },
-    paragraphs: [
-      {
-        es: 'Hay algo que pasa cuando el cuerpo se mueve en calor: la mente deja de resistirse y empieza a ceder. En HOY, el hot yoga se practica en una sala donde la temperatura sube a propósito, no para castigarte, sino para ayudarte a llegar más rápido a ese lugar donde el cuerpo se abre, los músculos responden distinto y la respiración se vuelve el centro de todo. No es una clase para "sudar más": es una clase para sentir más.',
-        en: 'Something happens when the body moves in heat: the mind stops resisting and starts to give. At HOY, hot yoga is practised in a room where the temperature rises on purpose — not to punish you, but to get you sooner to the place where the body opens, the muscles answer differently and the breath becomes the centre of everything. This is not a class about sweating more: it is a class about feeling more.',
-      },
-      {
-        es: 'El calor cambia la forma en que te mueves. Las posturas que en frío se sienten rígidas, en calor se sienten posibles. El cuerpo se vuelve más flexible, la circulación se activa, y con cada respiración profunda vas soltando lo que traías cargado desde antes de entrar: la tensión del día, el ruido de la cabeza, la prisa de la ciudad. Sales distinto a como entraste. No porque hayas hecho más, sino porque te permitiste sentir todo lo que el cuerpo tenía guardado.',
-        en: 'Heat changes the way you move. Postures that feel rigid when you are cold feel possible when you are warm. The body becomes more pliable, circulation switches on, and with every deep breath you let go of what you were carrying before you walked in: the tension of the day, the noise in your head, the hurry of the city. You leave different from how you came in — not because you did more, but because you let yourself feel everything the body had been keeping.',
-      },
-      {
-        es: 'No necesitas experiencia previa para tu primera clase de hot yoga en HOY. El calor puede sonar intimidante al principio, pero nuestros maestros te enseñan a moverte con él, no contra él: cuándo bajar la intensidad, cuándo hidratarte, cuándo simplemente quedarte quieto un momento en la postura del niño. Cada cuerpo encuentra su propio ritmo dentro de la misma sala, y eso también es parte de la práctica: aprender a escucharte en vez de compararte.',
-        en: 'You need no previous experience for your first hot yoga class at HOY. The heat can sound intimidating at first, but our teachers show you how to move with it instead of against it: when to ease off, when to drink, when to simply stay still for a moment in child’s pose. Every body finds its own rhythm inside the same room, and that is part of the practice too — learning to listen to yourself instead of comparing yourself.',
-      },
-      {
-        es: 'Con el tiempo, el hot yoga se vuelve menos sobre lo que logras en la esterilla y más sobre lo que te llevas fuera de ella: más claridad, más fuerza, más capacidad de estar presente incluso cuando las cosas se ponen intensas. Practicar en calor te enseña a mantener la calma cuando todo pide que te alteres, una habilidad que se queda contigo mucho después de salir del estudio. Esa es, quizás, la razón real por la que la gente vuelve.',
-        en: 'Over time, hot yoga becomes less about what you achieve on the mat and more about what you take away from it: more clarity, more strength, more capacity to stay present even when things get intense. Practising in heat teaches you to keep calm when everything is asking you to come undone — a skill that stays with you long after you leave the studio. That is perhaps the real reason people come back.',
-      },
-    ],
-    tone: 'clay',
-    modalitySlugs: ['hot-vinyasa'],
-    heated: true,
-    bring: ['towel', 'water', 'comfy'],
-    brief: 'hot room mid-class, low warm key light, steam on the glass, one figure in downward dog',
+  ligereza: {
+    name: b('Ligereza', 'Ligereza'),
+    tagline: b('Suelto lo que no me sirve', 'I let go of what I don’t need'),
+    keywords: [b('liberación', 'release'), b('apertura', 'opening'), b('fluidez', 'flow'), b('movimiento consciente', 'conscious movement')],
+    concept: b('Liberación. Apertura. Fluidez. Movimiento consciente.', 'Release. Opening. Flow. Conscious movement.'),
+    intention: b('Mi cuerpo se mueve libremente. Suelto lo que no me sirve. Estoy en paz y en movimiento.', 'My body moves freely. I let go of what I don’t need. I am at peace and in motion.'),
+    keys: [b('Liberación', 'Release'), b('Movilidad', 'Mobility'), b('Paz', 'Peace'), b('Consciencia', 'Awareness')],
+    messages: [b('Suelta tensiones guardadas', 'Let go of stored tension'), b('Abre espacios cerrados', 'Open closed spaces'), b('Sales más ligero', 'You leave lighter'), b('Tu cuerpo respira', 'Your body breathes')],
+    method: b('Movilidad + Stretching + Yoga yin', 'Mobility + Stretching + Yin yoga'),
+    methodNote: b('Baja intensidad. Savasana de 3 a 4 minutos.', 'Low intensity. A 3 to 4 minute savasana.'),
+    intensity: 'low', tone: 'river', modalitySlugs: ['ligereza'], heated: false, bring: ALL_BRING,
   },
-  barre: {
-    name: { es: 'Barre', en: 'Barre' },
-    eyebrow: { es: 'Precisión y pulso', en: 'Precision and pulse' },
-    summary: {
-      es: 'Alta intensidad, bajo impacto: micro-movimientos sostenidos al ritmo de la música.',
-      en: 'High intensity, low impact: micro-movements held to the pulse of the music.',
-    },
-    paragraphs: [
-      {
-        es: 'Barre en HOY combina lo mejor de tres mundos: la precisión del pilates, la elegancia del ballet y la energía del entrenamiento funcional. El resultado es una clase de alta intensidad pero bajo impacto, donde trabajas todos los grupos musculares principales sin un solo salto brusco ni golpe en las articulaciones. Es exigente, pero se siente amable con tu cuerpo.',
-        en: 'Barre at HOY brings together the best of three worlds: the precision of pilates, the elegance of ballet and the energy of functional training. The result is a high-intensity, low-impact class where you work every major muscle group without a single jarring jump or impact on the joints. It is demanding, and it feels kind to your body.',
-      },
-      {
-        es: 'Lo que hace diferente a barre no es el tamaño del movimiento, sino su precisión. Trabajamos con micro-movimientos, repeticiones pequeñas y controladas, sostenidas justo el tiempo suficiente para que el músculo tiemble antes de soltar. La música marca el ritmo de cada serie, y ese pulso constante es lo que te ayuda a llegar a esas últimas diez repeticiones que, al principio, parecían imposibles.',
-        en: 'What makes barre different is not the size of the movement but its precision. We work with micro-movements: small, controlled repetitions held just long enough for the muscle to shake before it lets go. The music sets the pace of each set, and that steady pulse is what carries you through the last ten repetitions that looked impossible when you started.',
-      },
-      {
-        es: 'Nuestros maestros de barre se preparan específicamente para esta disciplina, porque creemos que la calidad de una clase se nota en los detalles: en la corrección justo a tiempo, en el ajuste de postura antes de que te lesiones, en saber cuándo empujarte un poco más y cuándo dejarte descansar. No es una clase genérica de tonificación con música de fondo: es una experiencia diseñada con intención, clase a clase.',
-        en: 'Our barre teachers train specifically for this discipline, because we believe the quality of a class shows in the details: the correction that lands just in time, the adjustment made before you hurt yourself, knowing when to push you a little further and when to let you rest. This is not a generic toning class with music in the background: it is an experience designed with intention, class after class.',
-      },
-      {
-        es: 'No te preocupes si es tu primera vez: la clase se adapta a cualquier nivel, desde quien nunca ha tomado una clase de este estilo hasta quien ya conoce cada postura de memoria. Al final, lo que se queda contigo no es solo un cuerpo más fuerte, sino la certeza de que pudiste llegar más lejos de lo que pensabas.',
-        en: 'Do not worry if it is your first time: the class adapts to any level, from someone who has never taken this kind of class to someone who knows every position by heart. What stays with you in the end is not only a stronger body, but the certainty that you could go further than you thought.',
-      },
-    ],
-    tone: 'sage',
-    modalitySlugs: ['barre'],
-    heated: false,
-    bring: ['socks', 'water', 'comfy'],
-    brief: 'hands on the barre, shallow depth of field, calf and heel lifted, cream wall behind',
+  hibrido: {
+    name: b('Híbrido', 'Híbrido'),
+    tagline: b('Soy fuerte y flexible', 'I am strong and flexible'),
+    keywords: [b('fusión', 'fusion'), b('completitud', 'wholeness'), b('balance', 'balance')],
+    concept: b('Fusión. Completitud. Balance. Lo mejor de ambos mundos.', 'Fusion. Wholeness. Balance. The best of both worlds.'),
+    intention: b('Soy fuerte y flexible. Estoy completo. Mi cuerpo es inteligente y adaptable.', 'I am strong and flexible. I am whole. My body is intelligent and adaptable.'),
+    keys: [b('Fusión', 'Fusion'), b('Fuerza', 'Strength'), b('Flexibilidad', 'Flexibility'), b('Equilibrio', 'Balance')],
+    messages: [b('Fuerte y flexible a la vez', 'Strong and flexible at once'), b('Aquí somos completos', 'Here we are whole'), b('Lo mejor de dos mundos', 'The best of two worlds'), b('Te sientes entero', 'You feel whole')],
+    method: b('Pilates + Yoga dinámico', 'Pilates + Dynamic yoga'),
+    methodNote: b('Media intensidad. Movimiento consciente.', 'Medium intensity. Conscious movement.'),
+    intensity: 'medium', tone: 'plum', modalitySlugs: ['hibrido'], heated: false, bring: ALL_BRING,
   },
-  pilates: {
-    name: { es: 'Pilates', en: 'Pilates' },
-    eyebrow: { es: 'Centro y control', en: 'Core and control' },
-    summary: {
-      es: 'Empieza en el centro: control, conciencia y precisión en cada gesto.',
-      en: 'It starts at the centre: control, awareness and precision in every gesture.',
-    },
-    paragraphs: [
-      {
-        es: 'Pilates empieza en un solo lugar: el centro. Ahí se activa la fuerza que después sostiene cada movimiento, cada postura, cada gesto del cuerpo entero. En HOY, esta disciplina te enseña a moverte con más control, más conciencia y más precisión, no a base de repeticiones interminables, sino de intención en cada gesto.',
-        en: 'Pilates starts in one place: the centre. That is where the strength that later holds every movement, every posture, every gesture of the whole body switches on. At HOY, this discipline teaches you to move with more control, more awareness and more precision — not through endless repetitions, but through intention in every gesture.',
-      },
-      {
-        es: 'A diferencia de otras formas de movimiento, es un trabajo lento en apariencia, pero profundo en resultado: fortaleces el core, mejoras tu postura y aprendes a alinear un cuerpo que, en el día a día, se acostumbra a encorvarse frente a una pantalla o a cargar peso sin darse cuenta. Cada ejercicio se siente simple al principio, pero exige más de lo que parece.',
-        en: 'Unlike other forms of movement, the work looks slow and lands deep: you strengthen the core, improve your posture and learn to realign a body that, day to day, gets used to curving over a screen or carrying weight without noticing. Every exercise feels simple at first, and asks more of you than it looks.',
-      },
-      {
-        es: 'Nuestros maestros de pilates trabajan contigo desde el detalle: la posición de tu columna, la respiración que acompaña cada movimiento, el pequeño ajuste que hace que un ejercicio pase de ser mecánico a ser efectivo. No importa si nunca has practicado o si llevas años haciéndolo, la clase se adapta a tu cuerpo y a tu ritmo, sin comparaciones ni presión por llegar a un nivel específico.',
-        en: 'Our pilates teachers work with you from the detail: the position of your spine, the breath that accompanies each movement, the small adjustment that turns an exercise from mechanical into effective. It makes no difference whether you have never practised or have practised for years — the class adapts to your body and your pace, with no comparisons and no pressure to reach a particular level.',
-      },
-      {
-        es: 'Lo que empieza como fuerza en el centro del cuerpo termina notándose en todo lo demás: en cómo caminas, en cómo te sientas, en cómo respondes cuando algo te toma por sorpresa. Pilates no promete cambios rápidos ni dramáticos, promete algo más duradero, una relación distinta con tu propio cuerpo, hecha de precisión, paciencia y presencia.',
-        en: 'What begins as strength in the centre of the body ends up showing everywhere else: in how you walk, how you sit, how you respond when something takes you by surprise. Pilates does not promise fast or dramatic change; it promises something that lasts longer — a different relationship with your own body, made of precision, patience and presence.',
-      },
-    ],
-    tone: 'moss',
-    modalitySlugs: ['pilates'],
-    heated: false,
-    bring: ['socks', 'water', 'comfy'],
-    brief: 'mat work from above, spine long, teacher’s hand cueing the ribcage, morning light',
+  fuego: {
+    name: b('Fuego', 'Fuego'),
+    tagline: b('Enciende tu energía', 'Light up your energy'),
+    keywords: [b('encendimiento', 'ignition'), b('despertar', 'awakening'), b('energía vital', 'life energy')],
+    concept: b('Encendimiento. Despertar. Energía vital desatada.', 'Ignition. Awakening. Life energy set free.'),
+    intention: b('Estoy encendido. Mis células vibran con presencia. Mis movimientos tienen fuego.', 'I am lit up. My cells vibrate with presence. My movements have fire.'),
+    keys: [b('Energía', 'Energy'), b('Ritmo', 'Rhythm'), b('Cardio', 'Cardio'), b('Vitalidad', 'Vitality')],
+    messages: [b('Encenderás tu energía', 'You will light up your energy'), b('Aquí el ritmo te lleva', 'Here the rhythm carries you'), b('Termina sintiéndote imparable', 'Finish feeling unstoppable'), b('Tu fuego es tuyo', 'Your fire is yours')],
+    method: b('Pilates dinámico + Rumba', 'Dynamic pilates + Rumba'),
+    methodNote: b('Alta intensidad. Sin descanso.', 'High intensity. No rest.'),
+    intensity: 'high', tone: 'clay', modalitySlugs: ['fuego'], heated: false, bring: ALL_BRING,
   },
-  meditacion: {
-    name: { es: 'Meditación', en: 'Meditation' },
-    eyebrow: { es: 'Quietud y permiso', en: 'Stillness and permission' },
-    summary: {
-      es: 'Detenerse unos minutos sin tener que producir, responder ni resolver nada.',
-      en: 'Stopping for a few minutes with nothing to produce, answer or resolve.',
-    },
-    paragraphs: [
-      {
-        es: 'En medio del ruido constante, meditar es un acto casi radical: detenerte, aunque sea por unos minutos, sin la necesidad de producir, responder o resolver nada. En HOY entendemos la meditación como eso, un espacio de quietud donde la mente encuentra permiso para simplemente estar, sin exigirle silencio absoluto ni una versión perfecta de calma.',
-        en: 'In the middle of constant noise, meditating is an almost radical act: stopping, even for a few minutes, with no need to produce, answer or resolve anything. At HOY we understand meditation exactly that way — a space of stillness where the mind is given permission simply to be, without demanding absolute silence or a perfect version of calm.',
-      },
-      {
-        es: 'La incluimos entre nuestras experiencias porque creemos que el bienestar no vive solo en el movimiento del cuerpo, también vive en la pausa. Practicar con regularidad ayuda a reducir el estrés acumulado, mejora la claridad mental y entrena una capacidad que se vuelve cada vez más escasa: la de estar presente. Por eso, además de sesiones guiadas dentro de nuestro horario regular, la meditación es una extensión natural de lo que HOY ya propone, volver a ti mismo, un momento a la vez.',
-        en: 'We include it among our experiences because we believe wellbeing does not live only in the movement of the body; it also lives in the pause. Practising regularly helps release accumulated stress, sharpens mental clarity and trains a capacity that grows scarcer all the time: being present. So alongside guided sessions in our regular schedule, meditation is a natural extension of what HOY already proposes — coming back to yourself, one moment at a time.',
-      },
-    ],
-    tone: 'plum',
-    modalitySlugs: ['meditacion', 'yin'],
-    heated: false,
-    bring: ['layers', 'nothing'],
-    brief: 'seated circle at dusk, one lamp, eyes closed, no faces identifiable',
+  solido: {
+    name: b('Sólido', 'Sólido'),
+    tagline: b('Tu base se construye desde adentro', 'Your base is built from within'),
+    keywords: [b('enraizamiento', 'rooting'), b('solidez', 'solidity'), b('construcción', 'building')],
+    concept: b('Enraizamiento. Construcción. Solidez desde adentro.', 'Rooting. Building. Solidity from within.'),
+    intention: b('Cada movimiento me ancla. Construyo desde mi centro. Estoy enraizado en mi fuerza.', 'Every movement anchors me. I build from my centre. I am rooted in my strength.'),
+    keys: [b('Enraizamiento', 'Rooting'), b('Base', 'Base'), b('Control', 'Control'), b('Precisión', 'Precision')],
+    messages: [b('Construye tu casa desde adentro', 'Build your house from within'), b('No necesitas lo más difícil', 'You don’t need the hardest thing'), b('Llevas esta solidez contigo', 'You carry this solidity with you'), b('Tu poder comienza aquí', 'Your power starts here')],
+    method: b('Pilates + pesas y resistencia', 'Pilates + weights and resistance'),
+    methodNote: b('Full body. Intensidad media-alta.', 'Full body. Medium-high intensity.'),
+    intensity: 'mediumHigh', tone: 'slate', modalitySlugs: ['solido'], heated: false, bring: ALL_BRING,
   },
-  respiracion: {
-    name: { es: 'Respiración', en: 'Breathwork' },
-    eyebrow: { es: 'Respirar a propósito', en: 'Breathing on purpose' },
-    summary: {
-      es: 'Algo que ya sabes hacer, hecho con atención: más calma y más energía de la que imaginas.',
-      en: 'Something you already know how to do, done with attention: more calm and more energy than you would expect.',
-    },
-    paragraphs: [
-      {
-        es: 'Hay algo curioso en la respiración: la hacemos sin parar y casi nunca la notamos. En HOY te invitamos a hacer justo eso, notarla, y descubrir que ahí, en algo tan simple, hay más calma y más energía de la que imaginas.',
-        en: 'There is something curious about breathing: we do it without stopping and we almost never notice it. At HOY we invite you to do exactly that — notice it, and discover that in something so simple there is more calm and more energy than you imagine.',
-      },
-      {
-        es: 'No se trata de dominar una técnica compleja, sino de reconectar con algo que ya sabes hacer. Por eso también está presente en nuestras clases guiadas: una pausa breve, sin esfuerzo, que te acompaña mucho después de salir del estudio.',
-        en: 'It is not about mastering a complex technique, but about reconnecting with something you already know how to do. That is why it is present in our guided classes too: a short, effortless pause that stays with you long after you leave the studio.',
-      },
-    ],
-    tone: 'slate',
-    // 0018: the `respiracion` modality row exists in the seed; M-08f (breathworkOwnClass) decides whether the public sees it.
-    modalitySlugs: ['respiracion'],
-    heated: false,
-    bring: ['comfy', 'nothing'],
-    brief: 'close crop of a chest and shoulders mid-inhale, soft backlight, cream tones',
+  centro: {
+    name: b('Centro', 'Centro'),
+    tagline: b('Estoy aquí, ahora', 'I am here, now'),
+    keywords: [b('presencia', 'presence'), b('anclaje', 'anchoring'), b('silencio', 'silence')],
+    concept: b('Presencia. Anclaje. Silencio profundo. Vuelta a ti.', 'Presence. Anchoring. Deep silence. Back to yourself.'),
+    intention: b('Estoy aquí. Mi respiración es mi ancla. El ahora es mi verdad. Vuelvo a mí.', 'I am here. My breath is my anchor. Now is my truth. I come back to myself.'),
+    keys: [b('Presencia', 'Presence'), b('Respiración', 'Breath'), b('Paz', 'Peace'), b('Interiorización', 'Turning inward')],
+    messages: [b('Aquí no hay prisas', 'There is no rush here'), b('El silencio sana', 'Silence heals'), b('Tu respiración te ancla', 'Your breath anchors you'), b('Sales renovado', 'You leave renewed')],
+    method: b('Meditación + Respiración consciente + Sound healing', 'Meditation + Conscious breathing + Sound healing'),
+    methodNote: b('Savasana profunda.', 'A deep savasana.'),
+    intensity: 'low', tone: 'moss', modalitySlugs: ['centro'], heated: false, bring: ALL_BRING,
+  },
+  alineacion: {
+    name: b('Alineación', 'Alineación'),
+    tagline: b('Entiendo cómo funciono', 'I understand how I work'),
+    keywords: [b('movimiento inteligente', 'intelligent movement'), b('funcionalidad', 'function')],
+    concept: b('Inteligencia. Funcionalidad. Biomecánica clara. Movimiento inteligente.', 'Intelligence. Function. Clear biomechanics. Intelligent movement.'),
+    intention: b('Mi cuerpo se alinea con inteligencia. Entiendo cómo funciono. Practico consciente.', 'My body aligns with intelligence. I understand how I work. I practise with awareness.'),
+    keys: [b('Inteligencia', 'Intelligence'), b('Alineación', 'Alignment'), b('Funcional', 'Functional'), b('Consciencia', 'Awareness')],
+    messages: [b('Tu cuerpo es inteligente', 'Your body is intelligent'), b('Practicas consciente', 'You practise with awareness'), b('Comprendes tu biomecánica', 'You understand your biomechanics'), b('Te mueves con propósito', 'You move with purpose')],
+    method: b('Yoga dinámico funcional + Vinyasas', 'Functional dynamic yoga + Vinyasas'),
+    methodNote: b('Media intensidad. Savasana de 3 a 4 minutos.', 'Medium intensity. A 3 to 4 minute savasana.'),
+    intensity: 'medium', tone: 'sage', modalitySlugs: ['alineacion'], heated: false, bring: ALL_BRING,
+  },
+  pulso: {
+    name: b('Pulso', 'Pulso'),
+    tagline: b('Siento cada fibra de mi ser', 'I feel every fibre of my being'),
+    keywords: [b('sensibilidad', 'sensitivity'), b('micro-movimientos', 'micro-movements'), b('inteligencia muscular', 'muscle intelligence')],
+    concept: b('Sensibilidad. Micro-movimientos. Inteligencia muscular profunda.', 'Sensitivity. Micro-movements. Deep muscle intelligence.'),
+    intention: b('Siento cada fibra de mi ser. Mi cuerpo late con presencia. Estoy vivo en cada célula.', 'I feel every fibre of my being. My body beats with presence. I am alive in every cell.'),
+    keys: [b('Precisión', 'Precision'), b('Escucha', 'Listening'), b('Detalle', 'Detail'), b('Pulso', 'Pulse')],
+    messages: [b('La magia está en lo pequeño', 'The magic is in the small things'), b('Requiere atención profunda', 'It asks for deep attention'), b('Tu cuerpo tiene inteligencia', 'Your body has intelligence'), b('Eso no desaparece', 'That does not go away')],
+    method: b('Barre + isometrías + pulsos', 'Barre + isometrics + pulses'),
+    methodNote: b('Media intensidad. Concentración total.', 'Medium intensity. Total focus.'),
+    intensity: 'medium', tone: 'sun', modalitySlugs: ['pulso'], heated: false, bring: ALL_BRING,
   },
 };
 
-/** Route order for the classes page and the home strip. */
-export const classOrder: ClassSlug[] = ['hot-yoga', 'barre', 'pilates', 'meditacion', 'respiracion'];
+/** Route order for the classes page and the home arches — the owner's order. */
+export const classOrder: ClassSlug[] = ['ligereza', 'hibrido', 'fuego', 'solido', 'centro', 'alineacion', 'pulso'];
 
 export const taglines = {
   life: { es: 'La vida es HOY.', en: 'Life is HOY.' } satisfies Bi,
   start: { es: 'Todo empieza HOY.', en: 'Everything starts HOY.' } satisfies Bi,
+  /** 0051 — the hero line under "Tu espacio, tu tiempo." */
+  present: { es: 'Muévete. Respira. Vive el presente.', en: 'Move. Breathe. Live the present.' } satisfies Bi,
 } as const;
-
-/** One import for pages that want the whole board. */
 
 export const brandClass = (slug: string): BrandClass | undefined =>
   (classOrder as string[]).includes(slug) ? classes[slug as ClassSlug] : undefined;
+
+/** The class a schedule modality belongs to (the join every class mark and thumbnail uses). */
+export const classForModality = (modalitySlug: string | undefined): ClassSlug | undefined =>
+  modalitySlug ? classOrder.find((s) => classes[s].modalitySlugs.includes(modalitySlug)) : undefined;

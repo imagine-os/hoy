@@ -22,10 +22,10 @@ import { useTeacherSelf } from './useTeacherSelf';
 import './teacher.css';
 import { Icon } from '../../components/atom/Icon/Icon';
 
-const OPEN_BEFORE_MS = 15 * MS.min;
-const OPEN_AFTER_MS = 2 * MS.hour;
-
-/** /teach/class/:id — roster, attendance marks inside the window, class notes. */
+/**
+ * /teach/class/:id — the roster (read-only), reviews and class notes. 0051: check-in happens only at the front desk
+ * (S-02), so the teacher sees who arrived but marks nobody; the old in-window attendance buttons are gone.
+ */
 export function TeacherClassPage() {
   const { id } = useParams();
   const { t, lang } = useI18n();
@@ -42,30 +42,18 @@ export function TeacherClassPage() {
   const { byId } = usePeople();
   const reviews = useSessionReviews(id);
   const [note, setNote] = useState('');
-  const [busy, setBusy] = useState<string | null>(null);
 
   if (!session) return <div className="container page stack teach"><EmptyState tone={loading ? 'loading' : 'error'} title={loading ? t('core.common.loading') : t('teacher.class.notFound')} body={loading ? undefined : t('teacher.class.notFound.body')} action={<Link to="/teach"><Button size="sm" variant="secondary">{t('core.nav.back')}</Button></Link>} /></div>;
 
   const now = Date.now();
-  const start = new Date(session.starts_at).getTime(), end = new Date(session.ends_at).getTime();
-  const inWindow = now >= start - OPEN_BEFORE_MS && now <= end + OPEN_AFTER_MS;
+  const start = new Date(session.starts_at).getTime();
   const override = can('bookings.write_any');
   const isMine = !!me && me.id === session.teacher_id;
-  const canMark = can('checkin.write') && (inWindow || override) && (isMine || override) && session.status !== 'cancelled';
-  const lockReason = !inWindow ? (now < start ? t('teacher.class.locked.early') : t('teacher.class.locked.late')) : !isMine ? t('teacher.class.locked.notMine') : null;
+  const canComplete = (isMine || override) && session.status === 'scheduled' && now >= start;
   const active = bookings.filter((b) => b.status !== 'cancelled' && b.status !== 'late_cancel');
   const present = active.filter((b) => b.status === 'checked_in').length;
   const graceMs = settings.policies.lateGraceMin * MS.min;
 
-  const mark = async (b: BookingRow, status: BookingRow['status']) => {
-    if (!canMark) return;
-    setBusy(b.id);
-    try {
-      await data.update('bookings', b.id, { status, checked_in_at: status === 'checked_in' ? new Date().toISOString() : null });
-      await audit(status === 'checked_in' ? 'attendance.present' : status === 'no_show' ? 'attendance.absent' : 'attendance.reset', 'bookings', b.id, { before: b.status, after: status, session_id: session.id, override: !isMine || !inWindow });
-    } finally { setBusy(null); }
-  };
-  const markAll = async () => { for (const b of active.filter((x) => x.status === 'booked')) await mark(b, 'checked_in'); };
   const complete = async () => {
     await data.update('class_sessions', session.id, { status: 'completed' });
     await audit('session.complete', 'class_sessions', session.id, { before: 'scheduled', after: 'completed', present, booked: session.booked_count });
@@ -86,15 +74,12 @@ export function TeacherClassPage() {
         <CapacityMeter booked={session.booked_count} capacity={session.capacity} />
       </Card>
 
-      <Card tone={canMark ? 'surface' : 'muted'} padding="sm" className="row-between wrap">
+      <Card tone="muted" padding="sm" className="row-between wrap">
         <div className="small">
-          <strong>{canMark ? t('teacher.class.window.open') : t('teacher.class.window.locked')}</strong>
-          <div className="xs muted">{canMark && !inWindow ? t('teacher.class.window.override') : lockReason ?? t('teacher.class.window.rule')}</div>
+          <strong>{t('teacher.class.checkin.title')}</strong>
+          <div className="xs muted">{t('teacher.class.checkin.body')}</div>
         </div>
-        <div className="row wrap">
-          {canMark && active.some((b) => b.status === 'booked') && <Button size="sm" variant="secondary" onClick={markAll} icon="list-checks">{t('teacher.class.markAll')}</Button>}
-          {canMark && session.status === 'scheduled' && now >= start && <Button size="sm" onClick={complete} icon="circle-check">{t('teacher.class.complete')}</Button>}
-        </div>
+        {canComplete && <Button size="sm" onClick={complete} icon="circle-check">{t('teacher.class.complete')}</Button>}
       </Card>
 
       <section className="stack-sm">
@@ -106,10 +91,7 @@ export function TeacherClassPage() {
             {active.map((b) => {
               const p = byId.get(b.user_id);
               const late = !!b.checked_in_at && new Date(b.checked_in_at).getTime() > start + graceMs;
-              return <RosterRow key={b.id} name={p?.name ?? b.user_id} initials={p?.initials} phone={isMine ? undefined : maskPhone(p?.phone)} plan={b.paid_with} status={b.status as 'booked' | 'checked_in' | 'no_show'} late={late} flag={p?.notes ?? undefined} time={b.checked_in_at ? formatTime(b.checked_in_at, lang) : undefined}
-                actions={canMark && (b.status === 'booked'
-                  ? <><Button size="sm" variant="tonal" loading={busy === b.id} onClick={() => mark(b, 'checked_in')} icon="check">{t('teacher.class.present.mark')}</Button><Button size="sm" variant="outline" onClick={() => mark(b, 'no_show')} icon="user-x">{t('teacher.class.absent.mark')}</Button></>
-                  : <Button size="sm" variant="outline" onClick={() => mark(b, 'booked')} icon="undo">{t('staff.checkin.undo')}</Button>)} />;
+              return <RosterRow key={b.id} name={p?.name ?? b.user_id} initials={p?.initials} phone={isMine ? undefined : maskPhone(p?.phone)} plan={b.paid_with ? t(`customer.paidWith.${b.paid_with}`) : undefined} status={b.status as 'booked' | 'checked_in' | 'no_show'} late={late} flag={p?.notes ?? undefined} time={b.checked_in_at ? formatTime(b.checked_in_at, lang) : undefined} />;
             })}
           </Card>
         )}

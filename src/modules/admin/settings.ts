@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useData, useTable } from '../../data/DataContext';
-import type { BaseRow, HoursOverrideRow, ModalityRow } from '../../data/schema';
+import type { BaseRow, HoursOverrideRow } from '../../data/schema';
 import { EMPTY_RATE_CARD, type PayrollCadence, type RateCard } from '../../data/payrollCalc';
 import type { MapProvider } from '../../components/molecule/MapSlot/MapSlot';
 import { tenant } from '../../tenant/tenant';
+import { DEFAULT_POLICIES } from '../../tenant/policies';
 import { DEFAULT_IVA_PCT, splitIva } from '../../data/tax';
 import { MS, dateKey, waLink } from '../../i18n/format';
 import { effectiveHoursFor, hoursSentence, todayStatus, type EffectiveHours, type WeeklyHours } from '../../tenant/hours';
@@ -29,8 +30,12 @@ export interface StudioSettings {
   profile: { nit: string; address: string; city: string; whatsapp: string; email: string; instagram: string; instagramUrl: string; mapLat: number; mapLng: number; mapLabel: string; mapLink: string; confirmed: boolean; confirmedFields: Record<ContactField, boolean> };
   /** 0 = Sunday … 6 = Saturday; null = closed. */
   openingHours: Record<string, OpeningHours | null>;
-  /** Read by the customer app through usePolicy() → src/modules/customer/policy.ts (cancel window, claim window, hold, pause cap, charge notice, lockout). */
-  policies: { cancellationHours: number; waitlistClaimMin: number; lateGraceMin: number; noShowFee: number; pauseDaysPerYear: number; maxPausesPerYear: number; paymentHoldMin: number; chargeNoticeDays: number; lockoutAttempts: number; lockoutMinutes: number };
+  /**
+   * Read by the customer app through usePolicy() → src/modules/customer/policy.ts (cancel window, claim window, hold, package
+   * freeze, charge notice, lockout). 0051: the verified launch rules — cancel up to 12 h before; the 12-class package can be
+   * frozen once (`freezesPerPackage`) for up to 30 days (`freezeMaxDays`); was pauseDaysPerYear / maxPausesPerYear (memberships).
+   */
+  policies: { cancellationHours: number; waitlistClaimMin: number; lateGraceMin: number; noShowFee: number; freezeMaxDays: number; freezesPerPackage: number; paymentHoldMin: number; chargeNoticeDays: number; lockoutAttempts: number; lockoutMinutes: number };
   quietHours: { from: string; to: string };
   tax: { ivaPct: number; pricesIncludeIva: boolean; dianResolution: string; eInvoicing: boolean };
   integrations: Record<'wompi' | 'whatsapp' | 'email' | 'calendar', 'pending' | 'connected' | 'error'>;
@@ -49,12 +54,11 @@ export interface StudioSettings {
    */
   payroll: { cadence: PayrollCadence; payoutMethod: 'wompi' | 'transfer' | 'cash'; signedBy: string; withholding: boolean; rateCard: RateCard };
   /**
-   * M-08f — content decisions (0018). `breathworkOwnClass`
-   * shows or hides the Respiración modality row (W-08 facts vs the “lives inside meditation” sentence);
-   * `mapProvider` is what MapSlot embeds. (0039 retired `publicNaming`: classes are always titled by their
-   * modality; a stored object that still carries the key is read without it, see mergeSettings.)
+   * M-08f — content decisions (0018). `mapProvider` is what MapSlot embeds. (0039 retired `publicNaming`: classes
+   * are always titled by their modality; 0051 retired `breathworkOwnClass`: the seven classes have no Respiración
+   * row to hide. A stored object that still carries either key is read without it, see mergeSettings.)
    */
-  content: { breathworkOwnClass: boolean; mapProvider: MapProvider };
+  content: { mapProvider: MapProvider };
   /**
    * M-08a — WhatsApp contacts by topic (0047, D-0022). One row per intent (`frontDesk`, `sales`, `specials`, `support`,
    * `finance`, `payroll`, `legal`, `coordinator`, `owner`): name, number, role and an hours rule. `frontDesk` with no
@@ -68,7 +72,7 @@ export const DEFAULT_SETTINGS: StudioSettings = {
   studio: { ...tenant.studio },
   profile: { nit: '', address: tenant.contact.address, city: tenant.city, whatsapp: tenant.contact.whatsapp, email: tenant.contact.email, instagram: tenant.social.instagram, instagramUrl: tenant.social.instagramUrl, mapLat: tenant.location.lat, mapLng: tenant.location.lng, mapLabel: '', mapLink: '', confirmed: false, confirmedFields: { ...tenant.contact.confirmed } },
   openingHours: { ...tenant.openingHours },
-  policies: { cancellationHours: 2, waitlistClaimMin: 30, lateGraceMin: 15, noShowFee: 0, pauseDaysPerYear: 30, maxPausesPerYear: 2, paymentHoldMin: 10, chargeNoticeDays: 3, lockoutAttempts: 5, lockoutMinutes: 15 },
+  policies: { ...DEFAULT_POLICIES },
   quietHours: { from: '21:00', to: '07:00' },
   tax: { ivaPct: DEFAULT_IVA_PCT, pricesIncludeIva: true, dianResolution: '', eInvoicing: false },
   integrations: { wompi: 'pending', whatsapp: 'pending', email: 'pending', calendar: 'pending' },
@@ -77,7 +81,7 @@ export const DEFAULT_SETTINGS: StudioSettings = {
   comms: { whatsappSender: tenant.name, emailSender: tenant.legalName, emailReplyTo: tenant.contact.email },
   branding: { displayName: '', wordmarkVariant: 'auto', defaultLang: tenant.defaultLocale },
   payroll: { cadence: 'monthly', payoutMethod: 'wompi', signedBy: '', withholding: false, rateCard: EMPTY_RATE_CARD },
-  content: { breathworkOwnClass: false, mapProvider: 'none' },
+  content: { mapProvider: 'none' },
   contacts: DEFAULT_CONTACT_ROUTES,
 };
 
@@ -99,8 +103,8 @@ function mergeSettings(stored: Partial<StudioSettings> | null | undefined): Stud
     comms: { ...DEFAULT_SETTINGS.comms, ...(s.comms ?? {}) },
     branding: { ...DEFAULT_SETTINGS.branding, ...(s.branding ?? {}) },
     payroll: { ...DEFAULT_SETTINGS.payroll, ...(s.payroll ?? {}), rateCard: { byModality: { ...(s.payroll?.rateCard?.byModality ?? {}) }, byTeacher: { ...(s.payroll?.rateCard?.byTeacher ?? {}) } } },
-    // Known keys only: a row saved before 0039 may still hold `publicNaming`, which is ignored.
-    content: { breathworkOwnClass: s.content?.breathworkOwnClass ?? DEFAULT_SETTINGS.content.breathworkOwnClass, mapProvider: s.content?.mapProvider ?? DEFAULT_SETTINGS.content.mapProvider },
+    // Known keys only: a row saved before 0039 / 0051 may still hold `publicNaming` / `breathworkOwnClass`, which are ignored.
+    content: { mapProvider: s.content?.mapProvider ?? DEFAULT_SETTINGS.content.mapProvider },
     contacts: mergeContacts(s.contacts),
   };
 }
@@ -291,20 +295,6 @@ export function useWhatsappLink(): WhatsappLinks {
   const { settings } = useSettings();
   const hours = useOpeningHours();
   return useMemo(() => whatsappLinksOf(settings, hours), [settings, hours]);
-}
-
-/** Slug of the modality that only exists as its own class when M-08f says so. */
-const BREATHWORK_SLUG = 'respiracion';
-
-/** Filters the modalities the public sees: Respiración is hidden while it "lives inside meditación". */
-export function visibleModalities<T extends Pick<ModalityRow, 'slug'>>(rows: T[], content: StudioSettings['content']): T[] {
-  return content.breathworkOwnClass ? rows : rows.filter((m) => m.slug !== BREATHWORK_SLUG);
-}
-
-/** Live version of `visibleModalities` for pages that list the catalogue. */
-export function useVisibleModalities<T extends Pick<ModalityRow, 'slug'>>(rows: T[]): T[] {
-  const { settings } = useSettings();
-  return useMemo(() => visibleModalities(rows, settings.content), [rows, settings.content]);
 }
 
 /**

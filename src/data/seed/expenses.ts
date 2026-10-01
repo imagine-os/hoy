@@ -28,7 +28,7 @@ export const expenseTemplates: ExpenseTemplateRow[] = [
 const VARIABLE: [daysAgo: number, concept: string, category: ExpenseRow['category'], amount: number, method: ExpenseRow['method'], vendor: string | null][] = [
   [84, 'Reposición de 6 mats y bloques', 'supplies', 720000, 'card', 'Yoga Shop Medellín'],
   [79, 'Mantenimiento de los calentadores de la sala', 'maintenance', 450000, 'transfer', 'Técnico Hernán Ospina'],
-  [72, 'Toallas para la sala caliente (30 unidades)', 'supplies', 390000, 'card', 'Textiles La Ceja'],
+  [72, 'Toallas para duchas y vestieres (30 unidades)', 'supplies', 390000, 'card', 'Textiles La Ceja'],
   [66, 'Pauta en Instagram · campaña Bienvenida', 'marketing', 300000, 'card', 'Meta Ads'],
   [60, 'Honorarios contabilidad (mes)', 'fees', 650000, 'transfer', 'Contadora Luz Marina Ríos'],
   [53, 'Velas, incienso y aceites para Yin', 'supplies', 128000, 'cash', null],

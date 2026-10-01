@@ -9,6 +9,18 @@
  */
 import type { MediaAssetRow } from '../schema';
 import { base } from './catalog';
+import { classes, classOrder } from '../../tenant/brand';
+
+/** 0051 — the photo each of the seven classes still owes (W-07 / W-08 / the schedule thumbnails). */
+const CLASS_BRIEFS: Record<string, { es: string; en: string }> = {
+  ligereza: { es: 'Movilidad lenta en el mat, exhalación larga, luz suave de mañana, ropa holgada.', en: 'Slow mobility on the mat, a long exhale, soft morning light, loose clothing.' },
+  hibrido: { es: 'Una postura de pilates que fluye a una zancada de yoga: dos momentos en un cuadro, luz cálida de día.', en: 'A pilates hold flowing into a yoga lunge: two moments in one frame, warm daylight.' },
+  fuego: { es: 'Un grupo en movimiento con la música, desenfoque de movimiento en los bordes, luz cálida de tarde.', en: 'A group moving to music, motion blur at the edges, warm evening light.' },
+  solido: { es: 'Mancuernas livianas sobre el mat, postura firme, ángulo bajo, paredes crema en calma.', en: 'Light dumbbells on the mat, a steady stance, low angle, calm cream walls.' },
+  centro: { es: 'Círculo sentado al atardecer, cuencos de sonido, una sola lámpara, ninguna cara identificable.', en: 'Seated circle at dusk, singing bowls, one lamp, no faces identifiable.' },
+  alineacion: { es: 'Guerrero II de perfil, la mano del profesor guiando la cadera, líneas limpias, luz de día.', en: 'Warrior II from the side, the teacher’s hand guiding the hip, clean lines, daylight.' },
+  pulso: { es: 'Manos en la barra, talón arriba, un pulso pequeño sostenido, poca profundidad de campo.', en: 'Hands on the barre, heel lifted, a small pulse held, shallow depth of field.' },
+};
 
 interface Slot {
   key: string;
@@ -31,7 +43,7 @@ const SLOTS: Slot[] = [
     key: 'teacher.portrait', kind: 'photo', ratio: '4 / 3', tone: 'moss',
     label: { es: 'Profesor · retrato', en: 'Teacher · portrait' },
     alt: { es: 'Retrato del profesor', en: 'Portrait of the teacher' },
-    brief: { es: 'Retrato de medio cuerpo sobre fondo arena, mirada a cámara, ropa de práctica propia. Mismo encuadre y misma luz para los ocho profesores. Esta fila es el encargo; cada archivo final se pega en teachers.photo_url (M-02b).', en: 'Half-body portrait on a sand background, looking at camera, their own practice clothes. Same framing and same light for all eight teachers. This row is the brief; each finished file goes on teachers.photo_url (M-02b).' },
+    brief: { es: 'Retrato de medio cuerpo sobre fondo arena, mirada a cámara, ropa de práctica propia. Mismo encuadre y misma luz para los siete profesores. Esta fila es el encargo; cada archivo final se pega en teachers.photo_url (M-02b).', en: 'Half-body portrait on a sand background, looking at camera, their own practice clothes. Same framing and same light for all seven teachers. This row is the brief; each finished file goes on teachers.photo_url (M-02b).' },
   },
   {
     key: 'event.cover', kind: 'photo', ratio: '4 / 5', tone: 'sun',
@@ -63,36 +75,12 @@ const SLOTS: Slot[] = [
     alt: { es: 'Mapa de la ubicación del estudio', en: 'Map of the studio location' },
     brief: { es: 'Mientras no haya proveedor de mapas: ilustración del barrio con la cuadra marcada y las dos referencias que la gente usa para llegar. Exportar a 2x.', en: 'Until there is a map provider: an illustration of the neighbourhood with the block marked and the two landmarks people actually navigate by. Export at 2x.' },
   },
-  {
-    key: 'site.classes.hot-yoga', kind: 'photo', ratio: '16 / 9', tone: 'clay',
-    label: { es: 'Web · clase Hot Yoga', en: 'Website · Hot Yoga class' },
-    alt: { es: 'Sala caliente en plena clase', en: 'The hot room mid-class' },
-    brief: { es: 'Sala caliente en plena clase, luz cálida baja, vapor en el vidrio, una figura en perro boca abajo.', en: 'Hot room mid-class, low warm key light, steam on the glass, one figure in downward dog.' },
-  },
-  {
-    key: 'site.classes.barre', kind: 'photo', ratio: '16 / 9', tone: 'sage',
-    label: { es: 'Web · clase Barre', en: 'Website · Barre class' },
-    alt: { es: 'Manos en la barra', en: 'Hands on the barre' },
-    brief: { es: 'Manos en la barra, poca profundidad de campo, pantorrilla y talón elevados, pared crema detrás.', en: 'Hands on the barre, shallow depth of field, calf and heel lifted, cream wall behind.' },
-  },
-  {
-    key: 'site.classes.pilates', kind: 'photo', ratio: '16 / 9', tone: 'moss',
-    label: { es: 'Web · clase Pilates', en: 'Website · Pilates class' },
-    alt: { es: 'Trabajo en mat visto desde arriba', en: 'Mat work seen from above' },
-    brief: { es: 'Trabajo en mat desde arriba, columna larga, la mano del profesor indicando las costillas, luz de mañana.', en: 'Mat work from above, spine long, the teacher’s hand cueing the ribcage, morning light.' },
-  },
-  {
-    key: 'site.classes.meditacion', kind: 'photo', ratio: '16 / 9', tone: 'plum',
-    label: { es: 'Web · clase Meditación', en: 'Website · Meditation class' },
-    alt: { es: 'Círculo sentado al atardecer', en: 'Seated circle at dusk' },
-    brief: { es: 'Círculo sentado al atardecer, una sola lámpara, ojos cerrados, ninguna cara identificable.', en: 'Seated circle at dusk, one lamp, eyes closed, no faces identifiable.' },
-  },
-  {
-    key: 'site.classes.respiracion', kind: 'photo', ratio: '16 / 9', tone: 'slate',
-    label: { es: 'Web · clase Respiración', en: 'Website · Breathwork class' },
-    alt: { es: 'Pecho y hombros en plena inhalación', en: 'Chest and shoulders mid-inhale' },
-    brief: { es: 'Plano cercano de pecho y hombros en plena inhalación, contraluz suave, tonos crema.', en: 'Close crop of a chest and shoulders mid-inhale, soft backlight, cream tones.' },
-  },
+  ...classOrder.map((slug): Slot => ({
+    key: `site.classes.${slug}`, kind: 'photo', ratio: '16 / 9', tone: classes[slug].tone,
+    label: { es: `Web · clase ${classes[slug].name.es}`, en: `Website · ${classes[slug].name.en} class` },
+    alt: { es: `Clase de ${classes[slug].name.es} en el estudio`, en: `A ${classes[slug].name.en} class at the studio` },
+    brief: CLASS_BRIEFS[slug],
+  })),
 ];
 
 export const mediaAssets: MediaAssetRow[] = SLOTS.map((s, i) => ({

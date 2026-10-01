@@ -1,0 +1,10 @@
+/* 0051: the class's tone tile when no photo is uploaded yet — same box as the photo, the initial in the display face. */
+.class-thumbnail-tile {
+  display: grid;
+  place-items: center;
+  background: linear-gradient(160deg, var(--t-bg), color-mix(in srgb, var(--t-dot) 38%, var(--t-bg)));
+  color: var(--t-fg);
+  font-family: var(--font-editorial);
+  font-size: var(--fs-xl);
+  line-height: 1;
+}

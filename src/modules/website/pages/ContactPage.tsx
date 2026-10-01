@@ -1,4 +1,5 @@
 import { Fragment, useState, type ReactNode } from 'react';
+import { Link } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useLayout } from '../../../layout/useLayout';
 import { tenant } from '../../../tenant/tenant';
@@ -47,6 +48,7 @@ export function ContactPage() {
           {cards.map(([label, value, href, field]) => (
             <Card key={label} eyebrow={label}>
               {href ? <a href={href} target="_blank" rel="noreferrer">{value}</a> : <span>{value}</span>}
+              {field === 'address' && <p className="small muted" style={{ marginTop: 'var(--sp-sm)' }}>{bi(tenant.contact.landmark)}</p>}
               {field && contact.pendingFields[field] && <p className="xs muted" style={{ marginTop: 'var(--sp-sm)' }}>{t('site.contact.pending')}</p>}
               {label === t('site.contact.hours') && (
                 <div className="stack-sm" style={{ marginTop: 'var(--sp-sm)' }}>
@@ -62,6 +64,7 @@ export function ContactPage() {
             <a href={wa.link('frontDesk', t('site.contact.wa'))} target="_blank" rel="noreferrer">
               <Button size="lg">{t('site.contact.waCta')}</Button>
             </a>
+            <Link to="/site/faq"><Button size="lg" variant="secondary">{t('site.footer.faq')}</Button></Link>
           </div>
           {frontNote && <p className="xs muted">{bi(frontNote)}</p>}
         </div>

@@ -1,6 +1,6 @@
 {
   "note": "Raw px/rem spacing values still allowed (scripts/spacing-lint.mjs). Lower it, never raise it.",
-  "total": 61,
+  "total": 60,
   "files": {
     "src/components/atom/Placeholder/Placeholder.css": 2,
     "src/components/atom/Toggle/Toggle.css": 3,
@@ -23,6 +23,6 @@
     "src/modules/dev/dev.css": 1,
     "src/modules/hub/hub.css": 2,
     "src/modules/ops-manual/manual.css": 3,
-    "src/modules/website/sanctuary.css": 5
+    "src/modules/website/sanctuary.css": 4
   }
 }

@@ -1,5 +1,5 @@
 /**
- * Booking and payment policy for the customer app. Numbers the canvas cites (C-04, C-08, C-08b, C-20, C-22, E-02, E-04, C-21).
+ * Booking and payment policy for the customer app. Numbers the canvas cites (C-04, C-07b, C-08, C-08b, C-20, E-02, E-04, C-21).
  *
  * Source of truth: M-08 Studio settings (`tenants.settings`). Since 0.5.0 this module no longer keeps its own
  * provider subscription: it reads `usePolicy()` from src/modules/admin/settings.ts (the live reader that follows
@@ -13,7 +13,7 @@ import { DEFAULT_SETTINGS, usePolicy, type StudioSettings } from '../admin/setti
 import { MS } from '../../i18n/format';
 
 export interface PolicyValues {
-  /** Free cancellation until this many hours before start; inside, the credit is forfeited (late_cancel). */
+  /** Free cancellation until this many hours before start; inside, the class counts as used (late_cancel). */
   cancelWindowHours: number;
   /** A released spot is offered to the next waitlisted person for this long. */
   claimWindowMinutes: number;
@@ -21,8 +21,9 @@ export interface PolicyValues {
   paymentHoldMinutes: number;
   /** IVA rate as a fraction. Prices in pricing.ts are IVA-inclusive by default; the tax is always computed, never typed. */
   ivaRate: number;
-  /** Self-service membership pause cap (C-22). */
-  pauseMaxDays: number;
+  /** The 12-class package: longest freeze in days, and how many freezes one package allows (C-07b, 0051). */
+  freezeMaxDays: number;
+  freezesPerPackage: number;
   /** Days before a renewal charge the member is notified. */
   chargeNoticeDays: number;
   /** Sign-in lockout (A-02 / E-04). */
@@ -34,7 +35,7 @@ export interface PolicyValues {
   otpValidMinutes: number;
   /** Invites expire after this many days (C-16). */
   inviteValidityDays: number;
-  /** Countdown switches to "check in" inside this window (C-08). */
+  /** Countdown switches to "check in at the front desk" inside this window (C-08); check-in itself is only at reception. */
   checkinOpensMinutes: number;
   /** Gift card message length (C-17). */
   giftMessageMax: number;
@@ -59,7 +60,8 @@ function toPolicyValues(p: StudioSettings['policies'], tax: StudioSettings['tax'
     claimWindowMinutes: p.waitlistClaimMin,
     paymentHoldMinutes: p.paymentHoldMin,
     ivaRate: tax.ivaPct / 100,
-    pauseMaxDays: p.pauseDaysPerYear,
+    freezeMaxDays: p.freezeMaxDays,
+    freezesPerPackage: p.freezesPerPackage,
     chargeNoticeDays: p.chargeNoticeDays,
     lockoutAttempts: p.lockoutAttempts,
     lockoutMinutes: p.lockoutMinutes,

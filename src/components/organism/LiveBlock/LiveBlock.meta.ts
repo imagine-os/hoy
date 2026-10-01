@@ -5,8 +5,8 @@ import { LiveBlock } from './LiveBlock';
 export default defineMeta({
   tier: 'organism', name: 'LiveBlock',
   description: {
-    es: 'Bloque de datos en vivo para el manual de operaciones. Un capítulo escribe una directiva `{{pricing:membresia}}` y el bloque la renderiza leyendo la fuente real: pricing.ts, tenant.ts, las políticas de M-08 (usePolicy), el registro de tablas, la lista de roles, el manifiesto de rutas y la capa de datos. Cada bloque lleva la leyenda «Datos en vivo del sistema · Live from the system» y una directiva desconocida se explica en lugar de romperse.',
-    en: 'Live-data block for the operations manual. A chapter writes a `{{pricing:membresia}}` directive and the block renders it from the real source: pricing.ts, tenant.ts, the M-08 policies (usePolicy), the table registry, the role list, the route manifest and the data layer. Every block carries the bilingual "Live from the system" caption, and an unknown directive explains itself instead of breaking.',
+    es: 'Bloque de datos en vivo para el manual de operaciones. Un capítulo escribe una directiva `{{pricing:paquetes}}` y el bloque la renderiza leyendo la fuente real: pricing.ts, tenant.ts, las políticas de M-08 (usePolicy), el registro de tablas, la lista de roles, el manifiesto de rutas y la capa de datos. Cada bloque lleva la leyenda «Datos en vivo del sistema · Live from the system» y una directiva desconocida se explica en lugar de romperse.',
+    en: 'Live-data block for the operations manual. A chapter writes a `{{pricing:paquetes}}` directive and the block renders it from the real source: pricing.ts, tenant.ts, the M-08 policies (usePolicy), the table registry, the role list, the route manifest and the data layer. Every block carries the bilingual "Live from the system" caption, and an unknown directive explains itself instead of breaking.',
   },
   props: [
     { name: 'kind', type: "'pricing' | 'tenant' | 'policy' | 'tables' | 'table' | 'roles' | 'routes' | 'stats' | 'kpi'", required: true, description: { es: 'Nombre de la directiva.', en: 'Directive name.' } },
@@ -14,7 +14,7 @@ export default defineMeta({
   ],
   states: ['pricing (all families)', 'pricing (one family)', 'tenant facts', 'policy (all)', 'policy (one field)', 'tables', 'one table', 'roles', 'routes', 'stats', 'kpi', 'unknown directive'],
   usages: [
-    { title: { es: 'Precios de Membresía', en: 'Membership pricing' }, render: () => h(LiveBlock, { kind: 'pricing', arg: 'membresia' }) },
+    { title: { es: 'Precios de paquetes', en: 'Package pricing' }, render: () => h(LiveBlock, { kind: 'pricing', arg: 'paquetes' }) },
     { title: { es: 'Capacidad del estudio', en: 'Studio capacity' }, render: () => h(LiveBlock, { kind: 'tenant', arg: 'capacity' }) },
     { title: { es: 'Una política', en: 'One policy value' }, render: () => h(LiveBlock, { kind: 'policy', arg: 'cancellation_window_hours' }) },
     { title: { es: 'Una tabla', en: 'One table' }, render: () => h(LiveBlock, { kind: 'table', arg: 'bookings' }) },

@@ -125,6 +125,7 @@
   --btn-pad-x: var(--sp-lg);
   --measure: 65ch;
   --r-arch-card: 50% 50% 1rem 1rem / 11.25rem 11.25rem 1rem 1rem;
+  --r-arch: 999px 999px 0.25rem 0.25rem;
   --r-2xs: 0.125rem;
   --r-xs: 0.25rem;
   --r-sm: 0.5rem;

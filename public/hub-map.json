@@ -1,6 +1,6 @@
 {
   "schema": "hoy.hub-map/1",
-  "generatedAt": "2026-09-30T00:00:00.000Z",
+  "generatedAt": "2026-10-01T00:00:00.000Z",
   "product": {
     "id": "hoy",
     "name": {
@@ -11,7 +11,7 @@
       "es": "Un solo sistema para cada puesto del estudio: quien practica, quien enseña, quien recibe en la puerta, quien administra y quien lo construye.",
       "en": "One system for every seat at the studio: members, teachers, front desk, admin, and the people who build it."
     },
-    "version": "0.21.3",
+    "version": "0.22.0",
     "baseUrl": "https://imagine-os.github.io/hoy/",
     "hubRoute": "/",
     "brand": {
@@ -34,8 +34,8 @@
         "en": "Customer"
       },
       "description": {
-        "es": "Quien practica: reserva, paga y lleva su membresía y su historial desde el teléfono.",
-        "en": "Whoever practises: books, pays and keeps their membership and history on the phone."
+        "es": "Quien practica: reserva, paga y lleva su paquete de clases y su historial desde el teléfono.",
+        "en": "Whoever practises: books, pays and keeps their class package and history on the phone."
       },
       "band": "outside",
       "home": "/app",
@@ -84,7 +84,7 @@
       "device": "phone",
       "demoUser": {
         "id": "usr_teach",
-        "firstName": "Andrés"
+        "firstName": "Carolina"
       },
       "look": "teacher",
       "props": [
@@ -286,8 +286,8 @@
         "en": "Customer app"
       },
       "purpose": {
-        "es": "Móvil primero: las clases de hoy, reservar, pagar, la membresía y el historial.",
-        "en": "Mobile first: today’s classes, booking, paying, membership and history."
+        "es": "Móvil primero: las clases de hoy, reservar, pagar, el paquete y el historial.",
+        "en": "Mobile first: today’s classes, booking, paying, the package and history."
       },
       "roleId": "customer",
       "roles": [
@@ -329,7 +329,6 @@
         "C-18",
         "C-19",
         "C-20",
-        "C-22",
         "C-23",
         "C-24",
         "C-26",
@@ -402,6 +401,7 @@
         "W-04",
         "W-05",
         "P-01",
+        "W-10",
         "W-06",
         "W-09"
       ],
@@ -1095,8 +1095,8 @@
         "en": "Practice analytics"
       },
       "purpose": {
-        "es": "Cómo va el estudio en asistencia y retención: ocupación, asistencia, no-shows, horarios populares, segunda visita, quién lleva días sin venir, modalidades, profesores, logros para felicitar en persona y créditos por vencer. Sin cifras de ingresos.",
-        "en": "How the studio is doing on attendance and retention: fill, attendance, no-shows, popular slots, second visit, who has not come in for a while, modalities, teachers, milestones to congratulate in person and credits about to expire. No revenue figures."
+        "es": "Cómo va el estudio en asistencia y retención: ocupación, asistencia, no-shows, horarios populares, segunda visita, quién lleva días sin venir, modalidades, profesores, logros para felicitar en persona y paquetes por vencer. Sin cifras de ingresos.",
+        "en": "How the studio is doing on attendance and retention: fill, attendance, no-shows, popular slots, second visit, who has not come in for a while, modalities, teachers, milestones to congratulate in person and packages about to expire. No revenue figures."
       },
       "surface": "admin",
       "roles": [
@@ -2525,8 +2525,8 @@
       "code": "C-06",
       "route": "/app/plans",
       "name": {
-        "es": "Planes de membresía",
-        "en": "Membership plans"
+        "es": "Paquetes",
+        "en": "Packages"
       },
       "purpose": {
         "es": "Comparar y comprar planes de membresía; muestra el estado del plan actual.",
@@ -2577,8 +2577,8 @@
       "code": "C-07",
       "route": "/app/passes",
       "name": {
-        "es": "Pases Bienvenida",
-        "en": "Bienvenida passes"
+        "es": "Prueba o clase individual",
+        "en": "Trial or individual class"
       },
       "purpose": {
         "es": "Los pases Bienvenida: prueba, individual, paquetes de 3 y 10; elegibilidad de la clase de prueba.",
@@ -2622,10 +2622,10 @@
     },
     {
       "code": "C-07b",
-      "route": "/app/credits",
+      "route": "/app/classes",
       "name": {
-        "es": "Créditos y paquetes",
-        "en": "Credits & class packs"
+        "es": "Mis clases",
+        "en": "My classes"
       },
       "purpose": {
         "es": "Saldo de créditos, vencimientos y el libro mayor de cada movimiento.",
@@ -3238,53 +3238,6 @@
         "order": 10
       },
       "sampleRoute": "/app/waitlist/sample"
-    },
-    {
-      "code": "C-22",
-      "route": "/app/membership",
-      "name": {
-        "es": "Gestionar membresía",
-        "en": "Manage membership"
-      },
-      "purpose": {
-        "es": "Pausar, cambiar o cancelar la membresía y ver los ciclos de facturación.",
-        "en": "Give members the three controls they actually need — freeze, change, cancel — without a phone call, while keeping the studio's notice periods intact."
-      },
-      "surface": "customer",
-      "roles": [
-        "customer",
-        "teacher"
-      ],
-      "experienceId": "app",
-      "device": "phone",
-      "status": "built",
-      "actions": [],
-      "shots": {
-        "thumbs": {
-          "es-phone": "hub-map/shots/C-22/thumb-es-phone.jpg",
-          "en-phone": "hub-map/shots/C-22/thumb-en-phone.jpg",
-          "es-desktop": "hub-map/shots/C-22/thumb-es-desktop.jpg",
-          "en-desktop": "hub-map/shots/C-22/thumb-en-desktop.jpg",
-          "es-phone-dark": "hub-map/shots/C-22/thumb-es-phone-dark.jpg",
-          "en-phone-dark": "hub-map/shots/C-22/thumb-en-phone-dark.jpg",
-          "es-desktop-dark": "hub-map/shots/C-22/thumb-es-desktop-dark.jpg",
-          "en-desktop-dark": "hub-map/shots/C-22/thumb-en-desktop-dark.jpg"
-        },
-        "full": {
-          "es-390": "hub-map/shots/C-22/es-390.jpg",
-          "en-390": "hub-map/shots/C-22/en-390.jpg",
-          "es-1280": "hub-map/shots/C-22/es-1280.jpg",
-          "en-1280": "hub-map/shots/C-22/en-1280.jpg"
-        }
-      },
-      "group": {
-        "id": "pay",
-        "label": {
-          "es": "Pagar",
-          "en": "Pay"
-        },
-        "order": 20
-      }
     },
     {
       "code": "C-23",
@@ -4976,8 +4929,8 @@
         "en": "Site · Home"
       },
       "purpose": {
-        "es": "La portada pública: el manifiesto de marca, las cinco clases, las clases de hoy, el modelo de valor, la filosofía, los profesores, reseñas reales y el primer paso (clase de prueba).",
-        "en": "The public front page: the brand manifesto, the five classes, today’s classes, the value model, the philosophy, the teachers, real reviews and the first step (a trial class)."
+        "es": "La portada pública: \"Muévete. Respira. Vive el presente.\", Movimiento para todos, las siete clases como arcos con su título y sus palabras clave, las clases de hoy (\"¿Cómo te quieres mover hoy?\"), los profesores, los planes, reseñas y el primer paso (clase de prueba).",
+        "en": "The public front page: “Move. Breathe. Live the present.”, Movement for everyone, the seven classes as arches with their title and keywords, today’s classes (“How do you want to move today?”), the teachers, the plans, reviews and the first step (a trial class)."
       },
       "surface": "public",
       "roles": [
@@ -5030,8 +4983,8 @@
         "en": "Site · About HOY"
       },
       "purpose": {
-        "es": "El texto completo de \"Sobre HOY\", los cuatro valores, la filosofía en panel oscuro y el tablero de marca.",
-        "en": "The full “About HOY” text, the four values, the philosophy on a dark panel and the brand board."
+        "es": "El texto completo de \"Sobre HOY\", los valores, \"La filosofía de HOY\" (nuestra filosofía y nuestro propósito) en panel oscuro y el tablero de marca.",
+        "en": "The full “About HOY” text, the values, “The HOY philosophy” (our philosophy and our purpose) on a dark panel and the brand board."
       },
       "surface": "public",
       "roles": [
@@ -5084,8 +5037,8 @@
         "en": "Site · Classes"
       },
       "purpose": {
-        "es": "La introducción \"Nuestras clases\" y una tarjeta rica por clase (hot yoga, barre, pilates, meditación, respiración) con su hueco de foto 16:9.",
-        "en": "The “Our classes” introduction and one rich card per class (hot yoga, barre, pilates, meditation, breathwork), each with its 16:9 photo slot."
+        "es": "La introducción \"Nuestras clases\" (no venimos a entrenar cuerpos, venimos a despertar presencia) y una fila por cada una de las siete clases: concepto, intención, clave, mensajes y método, con su arco.",
+        "en": "The “Our classes” introduction (we are not here to train bodies, we are here to awaken presence) and one row for each of the seven classes: concept, intention, keys, messages and method, with its arch."
       },
       "surface": "public",
       "roles": [
@@ -5138,8 +5091,8 @@
         "en": "Site · Class"
       },
       "purpose": {
-        "es": "El ensayo completo de una clase, los datos de la modalidad que le corresponde, qué traer, el enlace al horario y la llamada a la clase de prueba.",
-        "en": "One class’s full essay, the facts of its matching modality, what to bring, the link into the schedule and the trial-class call to action."
+        "es": "Una de las siete clases completa: frase, concepto, intención, clave, mensajes y método; los datos de su fila del horario, quién la guía, qué traer, el enlace al horario y la llamada a la clase de prueba.",
+        "en": "One of the seven classes in full: line, concept, intention, keys, messages and method; the facts of its schedule row, who guides it, what to bring, the link into the schedule and the trial-class call to action."
       },
       "surface": "public",
       "roles": [
@@ -5183,7 +5136,7 @@
         },
         "order": 10
       },
-      "sampleRoute": "/site/classes/hot-yoga"
+      "sampleRoute": "/site/classes/ligereza"
     },
     {
       "code": "W-03",
@@ -5193,8 +5146,8 @@
         "en": "Site · Modalities"
       },
       "purpose": {
-        "es": "Las prácticas del horario agrupadas por clase (hot yoga, barre, pilates, meditación, respiración), con intensidad, duración y sala caliente — y el enlace al ensayo de la clase a la que pertenece cada una.",
-        "en": "The scheduled practices grouped by class (hot yoga, barre, pilates, meditation, breathwork), with intensity, duration and heated room — each cross-linked to the class essay it belongs to."
+        "es": "Las filas del horario de las siete clases (Ligereza, Híbrido, Fuego, Sólido, Centro, Alineación, Pulso), con intensidad y duración, y el enlace a la página de cada clase.",
+        "en": "The schedule rows of the seven classes (Ligereza, Híbrido, Fuego, Sólido, Centro, Alineación, Pulso), with intensity and duration, each linked to its class page."
       },
       "surface": "public",
       "roles": [
@@ -5301,8 +5254,8 @@
         "en": "Site · Teachers"
       },
       "purpose": {
-        "es": "Galería pública de profesores con retrato (hueco de foto reservado), bio y especialidades.",
-        "en": "Public teacher gallery with a portrait (a booked photo slot), bio and specialties."
+        "es": "Los siete profesores del estudio, cada uno con la clase que guía. El retrato llega con la sesión de fotos; mientras tanto, sus iniciales en el tono de su clase.",
+        "en": "The studio’s seven teachers, each with the class they guide. The portrait arrives with the photo session; until then, their initials in the tone of their class."
       },
       "surface": "public",
       "roles": [
@@ -5351,8 +5304,8 @@
       "code": "P-01",
       "route": "/site/plans",
       "name": {
-        "es": "Planes y precios — Modelo de Valor v3",
-        "en": "Plans & prices — Modelo de Valor v3"
+        "es": "Planes y precios",
+        "en": "Plans & prices"
       },
       "purpose": {
         "es": "La única fuente de precios: Bienvenida, Membresía, Pausas, Regalos y Espacio, leída por todas las superficies.",
@@ -5388,6 +5341,60 @@
           "en-390": "hub-map/shots/P-01/en-390.jpg",
           "es-1280": "hub-map/shots/P-01/es-1280.jpg",
           "en-1280": "hub-map/shots/P-01/en-1280.jpg"
+        }
+      },
+      "group": {
+        "id": "site",
+        "label": {
+          "es": "Sitio",
+          "en": "Website"
+        },
+        "order": 10
+      }
+    },
+    {
+      "code": "W-10",
+      "route": "/site/faq",
+      "name": {
+        "es": "Sitio · Preguntas frecuentes",
+        "en": "Site · FAQ"
+      },
+      "purpose": {
+        "es": "Las preguntas frecuentes del estudio en cinco temas (clases y precios; reservas, cancelaciones y no-show; tarjetas de regalo; pagos; qué traer y el espacio), con búsqueda, índice de temas y tablas de precios en vivo.",
+        "en": "The studio’s frequently asked questions in five topics (classes and prices; booking, cancellation and no-show; gift cards; payments; what to bring and the space), with search, a topic index and live price tables."
+      },
+      "surface": "public",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "finance",
+        "teacher",
+        "maintenance",
+        "marketing",
+        "developer",
+        "customer",
+        "public"
+      ],
+      "experienceId": "site",
+      "device": "page",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {
+          "es-desktop": "hub-map/shots/W-10/thumb-es-desktop.jpg",
+          "en-desktop": "hub-map/shots/W-10/thumb-en-desktop.jpg",
+          "es-desktop-dark": "hub-map/shots/W-10/thumb-es-desktop-dark.jpg",
+          "en-desktop-dark": "hub-map/shots/W-10/thumb-en-desktop-dark.jpg"
+        },
+        "full": {
+          "es-390": "hub-map/shots/W-10/es-390.jpg",
+          "en-390": "hub-map/shots/W-10/en-390.jpg",
+          "es-1280": "hub-map/shots/W-10/es-1280.jpg",
+          "en-1280": "hub-map/shots/W-10/en-1280.jpg",
+          "es-390-full": "hub-map/shots/W-10/es-390-full.jpg",
+          "en-390-full": "hub-map/shots/W-10/en-390-full.jpg"
         }
       },
       "group": {

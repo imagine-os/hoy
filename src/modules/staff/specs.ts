@@ -25,7 +25,7 @@ export const S02 = defineSpec({
 export const S04 = defineSpec({
   ...canvasSpecs['S-04'],
   layout: ['Step1 · Who (new / existing)', 'Step2 · What (pricing.ts)', 'Step3 · How they pay', 'SummaryRail (IVA + total)', 'Receipt'],
-  data: ['users', 'profiles', 'user_roles', 'consents', 'payments', 'invoices', 'memberships', 'credits', 'bookings', 'class_sessions', 'message_log', 'audit_log', 'tenants'],
+  data: ['users', 'profiles', 'user_roles', 'consents', 'payments', 'invoices', 'memberships', 'class_ledger', 'bookings', 'class_sessions', 'message_log', 'audit_log', 'tenants'],
   states: [...(canvasSpecs['S-04'].states ?? []), 'No permission: form read-only', 'Sale complete: receipt view'],
   notes: [...(canvasSpecs['S-04'].notes ?? []), 'Prices only from src/tenant/pricing.ts; IVA from M-08 tax settings.', 'Wompi link is a placeholder: payment stays pending until the gateway confirms.'],
 });

@@ -1,7 +1,6 @@
 import { Fragment, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
-import { useVisibleModalities } from '../../admin/settings';
 import { useLayout } from '../../../layout/useLayout';
 import { useTable } from '../../../data/DataContext';
 import type { ModalityRow } from '../../../data/schema';
@@ -20,8 +19,8 @@ export function ModalitiesPage() {
   const { t, lang, bi } = useI18n();
   const { sections, isVisible } = useLayout(siteSpecs.modalities);
   const { rows: rowsAll } = useTable<ModalityRow>('modalities', { where: { active: true } });
-  const rows = useVisibleModalities(rowsAll); // 0018: M-08f decides whether Respiración has its own row
-  // 0039: grouped by the five brand classes (classOrder); a modality no class essay covers (Morning Flow) closes the list.
+  const rows = rowsAll;
+  // 0039 → 0051: grouped by the seven brand classes (classOrder); a modality no class covers closes the list.
   const groups: { key: string; slug?: ClassSlug; list: ModalityRow[] }[] = [
     ...classOrder.map((slug) => ({ key: slug, slug, list: classes[slug].modalitySlugs.map((s) => rows.find((m) => m.slug === s)).filter((m): m is ModalityRow => !!m) })),
     { key: 'other', list: rows.filter((m) => !classForModality(m.slug)) },

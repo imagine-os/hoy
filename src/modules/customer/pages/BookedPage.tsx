@@ -139,7 +139,7 @@ function ChangeSheet({ open, onClose, booking, joined, inside, deadline, onResul
     setBusy(true);
     try {
       const { late } = await cancel(booking, s);
-      onResult({ tone: late ? 'warn' : 'success', text: late ? t('customer.change.cancelled.late') : booking.paid_with === 'credit' ? t('customer.change.cancelled.creditBack') : t('customer.change.cancelled.ok') });
+      onResult({ tone: late ? 'warn' : 'success', text: late ? t('customer.change.cancelled.late') : booking.paid_with === 'package' ? t('customer.change.cancelled.creditBack') : t('customer.change.cancelled.ok') });
       close();
     } finally { setBusy(false); }
   };

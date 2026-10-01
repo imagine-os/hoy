@@ -7,7 +7,11 @@ import { canvasSpecs } from './specs';
 export { strings } from './strings';
 
 /** 0030: A-05 (daily intention) is retired; old links and bookmarks land on Home. */
-export const redirects: RedirectDef[] = [{ from: '/app/intention', to: '/app', reason: 'A-05 retired in 0030 (daily intention removed from the customer experience)' }];
+export const redirects: RedirectDef[] = [
+  { from: '/app/intention', to: '/app', reason: 'A-05 retired in 0030 (daily intention removed from the customer experience)' },
+  { from: '/app/credits', to: '/app/classes', reason: '0051: HOY has no credits — C-07b is "Mis clases" (the 12-class package) at /app/classes' },
+  { from: '/app/membership', to: '/app/classes', reason: 'C-22 retired in 0051: no membership at launch; the package and its freeze live in C-07b' },
+];
 // The customer app and its auth screens: one chunk, fetched when a member opens /app or /auth.
 const page = lazyPages(() => import('./pages'));
 
@@ -25,7 +29,7 @@ export const routes: RouteDef[] = [
   { ...base, path: '/app/payment-methods', element: page('PaymentMethodsPage'), spec: canvasSpecs['C-05'] },
   { ...base, path: '/app/plans', element: page('PlansPage'), spec: canvasSpecs['C-06'] },
   { ...base, path: '/app/passes', element: page('PassesPage'), spec: canvasSpecs['C-07'] },
-  { ...base, path: '/app/credits', element: page('CreditsPage'), spec: canvasSpecs['C-07b'] },
+  { ...base, path: '/app/classes', element: page('ClassesPage'), spec: canvasSpecs['C-07b'] },
   { ...base, path: '/app/booking/:id', element: page('BookedPage'), spec: canvasSpecs['C-08'] },
   { ...base, path: '/app/booking/:id/change', element: page('BookedPage', { change: true }), spec: canvasSpecs['C-08b'] },
   { ...base, path: '/app/rate/:id', element: page('RatePage'), spec: canvasSpecs['C-10'] },
@@ -39,7 +43,6 @@ export const routes: RouteDef[] = [
   { ...base, path: '/app/teachers/:id', element: page('TeacherProfilePage'), spec: canvasSpecs['C-18'] },
   { ...base, path: '/app/profile', element: page('ProfilePage'), spec: canvasSpecs['C-19'] },
   { ...base, path: '/app/waitlist/:id', element: page('WaitlistPage'), spec: canvasSpecs['C-20'] },
-  { ...base, path: '/app/membership', element: page('MembershipPage'), spec: canvasSpecs['C-22'] },
   { ...base, path: '/app/events', element: page('EventsListPage'), spec: canvasSpecs['C-23'] },
   { ...base, path: '/app/events/:id', element: page('EventPage'), spec: canvasSpecs['C-23'] },
   { ...base, path: '/app/notifications', element: page('NotificationsPage'), spec: canvasSpecs['C-24'] },

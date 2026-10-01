@@ -18,7 +18,7 @@ export default defineMeta({
     { name: 'cta', type: '{ label, onClick, variant? }', description: { es: 'Botón.', en: 'Button.' } },
   ],
   states: ['default', 'next (countdown)', 'next (weekday)', 'hover', 'full'],
-  usages: [{ title: { es: 'Próxima + normal', en: 'Next + default' }, render: () => h('div', { className: 'grid grid-2' }, h(ClassCard, { variant: 'next', title: 'Hot Vinyasa', teacher: 'Andrés Quintero', room: 'Sala principal', startsAt: soon, endsAt: soonEnd, tone: 'clay', booked: 12, capacity: 15, cta: { label: 'Ver clase', onClick: () => {} } }), h(ClassCard, { title: 'Yin', teacher: 'Santiago Vélez', startsAt: tmr, endsAt: tmrEnd, tone: 'plum', booked: 15, capacity: 15, cta: { label: 'Lista de espera', onClick: () => {} }, onClick: () => {} })) }],
+  usages: [{ title: { es: 'Próxima + normal', en: 'Next + default' }, render: () => h('div', { className: 'grid grid-2' }, h(ClassCard, { variant: 'next', title: 'Fuego', teacher: 'Andrés Quintero', room: 'Sala principal', startsAt: soon, endsAt: soonEnd, tone: 'clay', booked: 12, capacity: 15, cta: { label: 'Ver clase', onClick: () => {} } }), h(ClassCard, { title: 'Centro', teacher: 'Santiago Vélez', startsAt: tmr, endsAt: tmrEnd, tone: 'plum', booked: 15, capacity: 15, cta: { label: 'Lista de espera', onClick: () => {} }, onClick: () => {} })) }],
   a11y: [{ es: 'El CTA detiene la propagación para no disparar el onClick de la tarjeta.', en: 'CTA stops propagation so it does not trigger the card onClick.' }],
   usedBy: ['C-01', 'C-02', 'C-03', 'S-03'],
 });

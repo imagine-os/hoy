@@ -15,7 +15,7 @@ export default defineMeta({
   ],
   states: ['default', 'empty', 'limited'],
   usages: [{ title: { es: 'Ficha de miembro', en: 'Member record' }, render: () => h(Timeline, { items: [
-    { id: '1', at: d(1), kind: 'whatsapp', title: 'Recordatorio de clase enviado', body: 'Hola Mariana, tu clase de Hot Vinyasa empieza a las 17:30.', meta: 'automatización · leído' },
+    { id: '1', at: d(1), kind: 'whatsapp', title: 'Recordatorio de clase enviado', body: 'Hola Mariana, tu clase de Fuego empieza a las 17:30.', meta: 'automatización · leído' },
     { id: '2', at: d(5), kind: 'email', title: 'Recibo de pago', meta: 'entregado' },
     { id: '3', at: d(30), kind: 'note', title: 'Nota de recepción', body: 'Preguntó por pase de invitado. Mencionó molestia en la rodilla.', meta: 'Camilo · recepción' },
     { id: '4', at: d(50), kind: 'payment', title: 'Pago aprobado · Plan Mensual', meta: 'Wompi · tarjeta' },

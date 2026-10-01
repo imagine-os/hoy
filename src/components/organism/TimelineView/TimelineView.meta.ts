@@ -7,11 +7,11 @@ import { TimelineView, type TimelineZoom } from './TimelineView';
 interface DemoRow { id: string; title: string; from: string; to: string | null; plan: string; status: 'active' | 'paused' | 'expired' }
 const k = (n: number) => addDaysKey(dateKey(), n);
 const ROWS: DemoRow[] = [
-  { id: 'm1', title: 'Camila García', from: k(-40), to: k(-10), plan: 'Mensual', status: 'expired' },
-  { id: 'm2', title: 'Camila García', from: k(-9), to: k(21), plan: 'Mensual', status: 'active' },
-  { id: 'm3', title: 'Tomás López', from: k(-20), to: k(70), plan: 'Trimestral', status: 'active' },
-  { id: 'm4', title: 'Sara Martínez', from: k(-5), to: k(25), plan: 'Mensual', status: 'paused' },
-  { id: 'm5', title: 'Julián Rey', from: k(3), to: null, plan: 'Clase suelta', status: 'active' },
+  { id: 'm1', title: 'Camila García', from: k(-100), to: k(-10), plan: 'Paquete 12', status: 'expired' },
+  { id: 'm2', title: 'Camila García', from: k(-9), to: k(81), plan: 'Paquete 12', status: 'active' },
+  { id: 'm3', title: 'Tomás López', from: k(-20), to: k(84), plan: 'Paquete 12 · SMTC', status: 'paused' },
+  { id: 'm4', title: 'Sara Martínez', from: k(-5), to: k(85), plan: 'Paquete 12', status: 'active' },
+  { id: 'm5', title: 'Julián Rey', from: k(3), to: k(33), plan: 'Clase individual', status: 'active' },
 ];
 const TONE = { active: 'success', paused: 'warn', expired: 'danger' } as const;
 
@@ -20,7 +20,7 @@ function Demo({ zoom: z0, grouped }: { zoom: TimelineZoom; grouped: boolean }) {
   const [zoom, setZoom] = useState<TimelineZoom>(z0);
   const [cursor, setCursor] = useState(dateKey());
   return h(TimelineView<DemoRow>, {
-    rows: ROWS, zoom, onZoomChange: setZoom, cursor, onCursorChange: setCursor, lang, ariaLabel: 'Membresías',
+    rows: ROWS, zoom, onZoomChange: setZoom, cursor, onCursorChange: setCursor, lang, ariaLabel: 'Paquetes',
     getDate: (r) => r.from, getEnd: (r) => r.to, getTitle: (r) => r.title, getTone: (r) => TONE[r.status], getMuted: (r) => r.status === 'expired',
     getGroup: grouped ? (r) => ({ key: r.plan, label: r.plan }) : undefined, groupLabel: 'Plan', onOpen: () => {},
   });
@@ -43,7 +43,7 @@ export default defineMeta({
   ],
   states: ['day · week · month · quarter zoom', 'lanes by group', 'single lane (no group, or phone with group chips)', 'bar', 'point marker', 'bar cut at the range edge (dashed end)', 'stacked overlapping bars', 'today line', 'muted', 'selected', 'empty range with jump to the previous / next row'],
   usages: [
-    { title: { es: 'Membresías por plan · mes', en: 'Memberships by plan · month' }, render: () => h(Demo, { zoom: 'month', grouped: true }) },
+    { title: { es: 'Paquetes por tipo · mes', en: 'Packages by kind · month' }, render: () => h(Demo, { zoom: 'month', grouped: true }) },
     { title: { es: 'Un carril · trimestre', en: 'One lane · quarter' }, render: () => h(Demo, { zoom: 'quarter', grouped: false }) },
   ],
   a11y: [

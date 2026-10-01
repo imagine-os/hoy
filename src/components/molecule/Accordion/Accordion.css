@@ -8,3 +8,15 @@
 .accordion-a { padding: 0 var(--sp-lg) var(--sp-lg); font-size: var(--fs-sm); color: var(--color-text-muted); line-height: 1.55; animation: accordion-in var(--dur-base) var(--ease-out); }
 .accordion-a a { color: var(--color-primary); }
 @keyframes accordion-in { from { opacity: 0; transform: translateY(-4px); } }
+/* 0051 — editorial: the website FAQ (W-10). No box: hairlines between questions, the question in the editorial serif,
+   a round plus that turns into a minus, and the answer at reading measure. */
+.accordion-editorial { background: transparent; border: 0; border-radius: 0; box-shadow: none; overflow: visible; border-top: 1px solid var(--color-border-strong); }
+.accordion-editorial .accordion-item { border-bottom: 1px solid var(--color-border-strong); }
+.accordion-editorial .accordion-item:last-child { border-bottom: 1px solid var(--color-border-strong); }
+.accordion-editorial .accordion-q { min-height: var(--h-ctl-lg); padding: var(--sp-xl) 0; gap: var(--block); font-family: var(--font-editorial); font-weight: 400; font-size: clamp(1.375rem, 2.1vw, 1.75rem); line-height: 1.2; letter-spacing: -.01em; color: var(--color-primary); }
+.accordion-editorial .accordion-q:hover { background: transparent; }
+.accordion-editorial .accordion-q:hover .accordion-chev { background: var(--color-accent-fill); color: var(--color-text-on-primary); border-color: var(--color-accent-fill); }
+.accordion-editorial .accordion-chev { width: var(--h-ctl); height: var(--h-ctl); background: transparent; border: 1px solid var(--color-border-strong); color: var(--color-primary); font-family: var(--font-body); font-size: var(--fs-lg); transition: background var(--dur-base), color var(--dur-base), border-color var(--dur-base); }
+.accordion-editorial .accordion-item.is-open .accordion-chev { background: var(--color-accent-fill); color: var(--color-text-on-primary); border-color: var(--color-accent-fill); }
+.accordion-editorial .accordion-a { max-width: var(--measure); padding: 0 0 var(--sp-xl); font-size: 1.0625rem; line-height: 1.75; color: var(--color-text); }
+@media (prefers-reduced-motion: reduce) { .accordion-a { animation: none; } .accordion-editorial .accordion-chev { transition: none; } }

@@ -6,6 +6,7 @@ export { ModalitiesPage } from './pages/ModalitiesPage';
 export { SchedulePage } from './pages/SchedulePage';
 export { TeachersPage } from './pages/TeachersPage';
 export { PlansPage } from './pages/PlansPage';
+export { FaqPage } from './pages/FaqPage';
 export { ContactPage } from './pages/ContactPage';
 export { LegalPage } from './pages/LegalPage';
 export { DeleteAccountPage } from './pages/DeleteAccountPage';

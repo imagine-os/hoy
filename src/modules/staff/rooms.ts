@@ -27,7 +27,8 @@ export const STATUS_LABEL: Record<SpaceBookingStatus, Bi> = {
 };
 
 /** Which pricing.ts espacio item maps to which booking kind when the desk starts an Especial from it. */
-export const KIND_FOR_ITEM: Record<string, SpaceBookingKind> = { privada: 'private_class', taller: 'rental', foto: 'rental', rodaje: 'rental', popup: 'rental' };
+/** The booking kind an Especial started from a price item opens (0051: only the private class is priced). */
+export const KIND_FOR_ITEM: Record<string, SpaceBookingKind> = { private: 'private_class' };
 
 export interface Conflict { kind: 'class' | 'booking'; id: string; title: string; starts_at: string; ends_at: string }
 

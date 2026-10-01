@@ -55,12 +55,22 @@ export function AboutPage() {
     ),
     Philosophy: () => (
       <section className="container site-section">
-        <div className="site-panel">
+        {/* 0051 — "La filosofía de HOY": two titled parts (nuestra filosofía, nuestro propósito) and the closing question. */}
+        <div className="site-panel site-philosophy">
           <p className="eyebrow">{bi(philosophy.eyebrow)}</p>
           <h2>{bi(philosophy.title)}</h2>
           <hr className="site-panel-rule" />
-          {philosophy.paragraphs.map((p, i) => <p key={i}>{bi(p)}</p>)}
-          <p className="site-quote">{bi(taglines.life)}</p>
+          <div className="site-panel-cols">
+            {philosophy.sections.map((sec) => (
+              <div key={sec.title.es} className="site-philosophy-part">
+                <h3>{bi(sec.title)}</h3>
+                {sec.paragraphs.map((p, i) => <p key={i}>{bi(p)}</p>)}
+              </div>
+            ))}
+          </div>
+          <hr className="site-panel-rule" />
+          <p className="site-quote">{bi(philosophy.closing)}</p>
+          <p className="site-philosophy-sign">{bi(taglines.life)}</p>
         </div>
       </section>
     ),

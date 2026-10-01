@@ -1,0 +1,2 @@
+.faqanswer { display: flex; flex-direction: column; gap: var(--stack-loose); }
+.faqanswer p { margin: 0; }

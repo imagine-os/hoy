@@ -54,7 +54,7 @@ const DARK = (args.find((a) => a.startsWith('--dark='))?.slice(7) ?? '').split('
 const PORT = 4173;
 const BASE = `http://localhost:${PORT}/#`;
 export const KEY_PAGES = new Set(['HUB-01', 'W-01', 'C-01', 'S-02', 'M-01', 'M-03', 'D-02', 'K-03']);
-const STATIC_PARAMS = { ':table': 'class_sessions', ':pageCode': 'C-01', ':kind': 'terms', ':chapter': '03-modelo-de-valor', ':code': 'C-01', ':slug': 'hot-yoga' };
+const STATIC_PARAMS = { ':table': 'class_sessions', ':pageCode': 'C-01', ':kind': 'terms', ':chapter': '03-modelo-de-valor', ':code': 'C-01', ':slug': 'ligereza' };
 /** The demo user each surface is captured as; a route whose roles exclude that user falls back to the first allowed role. */
 const SURFACE_USER = { customer: 'customer', teacher: 'teacher', staff: 'front_desk', admin: 'admin', dev: 'super_admin', docs: 'super_admin', public: 'public' };
 const DB_KEY = 'hoyos.db.v1';

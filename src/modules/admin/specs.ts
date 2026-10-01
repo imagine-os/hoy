@@ -111,10 +111,10 @@ export const M05 = defineSpec({
 export const M06 = defineSpec({
   ...canvasSpecs['M-06'],
   roles: [...new Set([...canvasSpecs['M-06'].roles, 'marketing' as const])], // 0031
-  layout: ['SegmentRail (all, at risk, new, no membership, birthdays)', 'MemberList (search, sort)', 'MemberDetail (IdentityHeader → S-06, MetricRow, Tabs: Conversación · Reservas · Pagos · Práctica)', 'Conversación: filter chips Todo / WhatsApp / Email / Notas / Sistema → MessageThread + MessageComposer'],
-  data: ['users', 'profiles', 'memberships', 'plans', 'bookings', 'class_sessions', 'payments', 'credits', 'message_log', 'consents', 'audit_log', 'practice_goals'],
+  layout: ['SegmentRail (all, at risk, new, no classes left, birthdays)', 'MemberList (search, sort)', 'MemberDetail (IdentityHeader → S-06, MetricRow, Tabs: Conversación · Reservas · Pagos · Práctica)', 'Conversación: filter chips Todo / WhatsApp / Email / Notas / Sistema → MessageThread + MessageComposer'],
+  data: ['users', 'profiles', 'memberships', 'plans', 'bookings', 'class_sessions', 'payments', 'class_ledger', 'message_log', 'consents', 'audit_log', 'practice_goals'],
   states: [...(canvasSpecs['M-06'].states ?? []), 'Conversación: unread inbound (blue ring) → read on open', 'Composer read-only (no members.write)', 'WhatsApp blocked (unverified number)', 'Quiet hours (queued hint)', 'Sistema filter: events only, no composer'],
-  notes: [...(canvasSpecs['M-06'].notes ?? []), 'At risk = member with plan or credits and no check-in in 21 days.', 'Since 0.8.0 the conversation is message_log: inbound and outbound WhatsApp/email (manual, automation, newsletter, system) and internal notes (channel note, direction internal) — never visible to the member. Bookings, payments and consents appear inline as system lines.', 'Sending and notes go through useMessaging() (src/data/comms.ts): audit_log keeps member.message / member.note as a trail without content. Opening the tab marks the member’s inbound rows read.', 'Opening a record writes member.view to audit_log (Ley 1581).', 'Práctica tab (read-only): useMemberPractice(id) — streak (StreakBadge), this week (WeekDots), classes this month / all time, last visit, the active weekly goal and milestones (MilestoneList). Same practiceStats() the member sees in C-27, so the desk and the member never read different numbers.'],
+  notes: [...(canvasSpecs['M-06'].notes ?? []), 'At risk = person with a live package and no check-in in 21 days (0051: no credits, no membership at launch).', 'Since 0.8.0 the conversation is message_log: inbound and outbound WhatsApp/email (manual, automation, newsletter, system) and internal notes (channel note, direction internal) — never visible to the member. Bookings, payments and consents appear inline as system lines.', 'Sending and notes go through useMessaging() (src/data/comms.ts): audit_log keeps member.message / member.note as a trail without content. Opening the tab marks the member’s inbound rows read.', 'Opening a record writes member.view to audit_log (Ley 1581).', 'Práctica tab (read-only): useMemberPractice(id) — streak (StreakBadge), this week (WeekDots), classes this month / all time, last visit, the active weekly goal and milestones (MilestoneList). Same practiceStats() the member sees in C-27, so the desk and the member never read different numbers.'],
 });
 
 export const M07 = defineSpec({
@@ -204,7 +204,7 @@ export const M09 = defineSpec({
   roles: ['super_admin', 'admin', 'finance'],
   logic: [
     'Revenue = approved payments in the selected range grouped by plan and by method.',
-    'Refund flips payments.status to refunded and writes audit_log payment.refund; the credit return is a follow-up.',
+    'Refund flips payments.status to refunded and writes audit_log payment.refund; returning the class to the package is a follow-up.',
     'E-invoicing requires a DIAN resolution in M-08; until then the CUFE column shows a badge instead.',
     'The invoice filter is the status of the payment behind the invoice (invoices carry no status of their own).',
     'Ranges are 7 / 15 / 30 / 90 days and all time: 15 days is there because Colombian studios settle biweekly, and it drives both the KPI tiles and the invoice table.',
@@ -354,9 +354,9 @@ export const M10a = defineSpec({
 export const M12 = defineSpec({
   code: 'M-12',
   name: { es: 'Analítica de práctica', en: 'Practice analytics' },
-  purpose: { es: 'Cómo va el estudio en asistencia y retención: ocupación, asistencia, no-shows, horarios populares, segunda visita, quién lleva días sin venir, modalidades, profesores, logros para felicitar en persona y créditos por vencer. Sin cifras de ingresos.', en: 'How the studio is doing on attendance and retention: fill, attendance, no-shows, popular slots, second visit, who has not come in for a while, modalities, teachers, milestones to congratulate in person and credits about to expire. No revenue figures.' },
+  purpose: { es: 'Cómo va el estudio en asistencia y retención: ocupación, asistencia, no-shows, horarios populares, segunda visita, quién lleva días sin venir, modalidades, profesores, logros para felicitar en persona y paquetes por vencer. Sin cifras de ingresos.', en: 'How the studio is doing on attendance and retention: fill, attendance, no-shows, popular slots, second visit, who has not come in for a while, modalities, teachers, milestones to congratulate in person and packages about to expire. No revenue figures.' },
   layout: ['KPIRow ×4', 'Heatmap', 'Retention', 'AtRiskList', 'ByModality', 'ByTeacher', 'Milestones', 'CreditsExpiring'],
-  data: ['bookings', 'class_sessions', 'memberships', 'credits', 'practice_goals', 'profiles', 'users', 'teachers', 'modalities'],
+  data: ['bookings', 'class_sessions', 'memberships', 'class_ledger', 'practice_goals', 'profiles', 'users', 'teachers', 'modalities'],
   roles: ['super_admin', 'admin', 'coordinator', 'finance'],
   logic: [
     'Every number comes from studioStats() in src/data/analytics.ts through useStudioStats(range); the page computes nothing itself. Range chips 7 / 30 / 90 days, default 30.',
@@ -365,10 +365,10 @@ export const M12 = defineSpec({
     'Miembros activos = distinct users with ≥ 1 check-in in range; nuevos = their first ever check-in falls in range; visitas / semana = check-ins / active members / (range ÷ 7).',
     'Heatmap cell = mean per-class fill of completed classes at that weekday × start hour; rows Lun–Sáb (Dom only when a Sunday class ran), columns = the hours present. 70–85 % healthy, > 90 % add a class, < 60 % for 4 weeks review the slot (research §4).',
     'Segunda visita = members whose first visit was 30–60 days ago and who attended again within 30 days / those members (goal > 60 %).',
-    'En riesgo = active membership or live credits AND last check-in ≥ 14 days ago; band = largest of 14 / 30 / 60 / 90 ≤ days since. Sorted by days since, descending. Each row opens the M-06 record.',
+    'En riesgo = a live package (or a dormant membership) AND last check-in ≥ 14 days ago; band = largest of 14 / 30 / 60 / 90 ≤ days since. Sorted by days since, descending. Each row opens the M-06 record.',
     'Por profesor = completed classes per teacher: classes, mean attendance (check-ins / classes), fill, no-show rate, new faces (first check-in with that teacher in range), regulars (≥ 3 check-ins with that teacher in range); sorted by classes.',
     'Logros = MILESTONES (1, 5, 10, 25, 50, 100, 250) reached inside the range, newest first, first 8, each linking to M-06.',
-    'Créditos por vencer = members with a live balance whose next purchase expiry falls within 14 / 7 days (notify at 14 and 7).',
+    'Paquetes por vencer (0051, was Créditos por vencer) = people with classes left whose package expiry falls within 14 / 7 days (notify at 14 and 7).',
   ],
   integrations: [],
   states: ['Loading (empty tables)', 'Range with no classes held', 'Nobody at risk (EmptyState)', 'No milestones in range', 'No goals set yet', 'Heatmap scrolls inside its card on phones'],

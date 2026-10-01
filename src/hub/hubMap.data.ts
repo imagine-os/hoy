@@ -47,7 +47,7 @@ export const HOY_PRODUCT: { id: 'hoy'; name: Bi; tagline: Bi; accent: string; wo
 export const HUB_ROLES: HubRole[] = [
   {
     id: 'customer', label: { es: 'Cliente', en: 'Customer' },
-    description: { es: 'Quien practica: reserva, paga y lleva su membresía y su historial desde el teléfono.', en: 'Whoever practises: books, pays and keeps their membership and history on the phone.' },
+    description: { es: 'Quien practica: reserva, paga y lleva su paquete de clases y su historial desde el teléfono.', en: 'Whoever practises: books, pays and keeps their class package and history on the phone.' },
     band: 'outside', home: '/app', device: 'phone', demoUser: { id: 'usr_cust', firstName: 'Juliana' }, look: 'customer', props: ['phone', 'rating'],
   },
   {
@@ -58,7 +58,7 @@ export const HUB_ROLES: HubRole[] = [
   {
     id: 'teacher', label: { es: 'Profesor/a', en: 'Teacher' },
     description: { es: 'Enseña: sus clases, la lista de asistentes, la asistencia desde el mat y su nómina.', en: 'Teaches: their classes, the roster, attendance from the mat and their payroll.' },
-    band: 'outside', home: '/teach', device: 'phone', demoUser: { id: 'usr_teach', firstName: 'Andrés' }, look: 'teacher', props: ['phone', 'clipboard'],
+    band: 'outside', home: '/teach', device: 'phone', demoUser: { id: 'usr_teach', firstName: 'Carolina' }, look: 'teacher', props: ['phone', 'clipboard'],
   },
   {
     id: 'front_desk', label: { es: 'Recepción', en: 'Front desk' },
@@ -119,14 +119,14 @@ export const HUB_GROUPS: Record<string, HubGroup> = Object.fromEntries(([
  * (`prefix/...`); with `exact` only the path itself matches. The longest matching prefix wins, so a rule
  * for `/app/schedule` beats the one for `/app`. Every page must match a rule (the generator fails the
  * build otherwise). Customer app: book (schedule, class, booking, waitlist, rate, events),
- * pay (checkout, payment methods, plans, passes, credits, membership, gift, invite, history), account
+ * pay (checkout, payment methods, plans, passes, classes, gift, invite, history), account
  * (profile, account, notifications, more, rules, faq, teachers, legal, edge states, /no-access), auth.
  */
 export const HUB_GROUP_RULES: { prefix: string; group: string; exact?: boolean }[] = [
   // customer app
   { prefix: '/app', group: 'book', exact: true },
   ...['schedule', 'class', 'booking', 'waitlist', 'rate', 'events'].map((p) => ({ prefix: `/app/${p}`, group: 'book' })),
-  ...['checkout', 'payment-methods', 'plans', 'passes', 'credits', 'membership', 'gift', 'invite', 'history'].map((p) => ({ prefix: `/app/${p}`, group: 'pay' })),
+  ...['checkout', 'payment-methods', 'plans', 'passes', 'classes', 'gift', 'invite', 'history'].map((p) => ({ prefix: `/app/${p}`, group: 'pay' })),
   ...['profile', 'account', 'practice', 'notifications', 'more', 'rules', 'faq', 'teachers', 'legal', 'state'].map((p) => ({ prefix: `/app/${p}`, group: 'account' })),
   { prefix: '/no-access', group: 'account' },
   { prefix: '/auth', group: 'auth' },
@@ -188,7 +188,7 @@ export const HUB_SAMPLE_ROUTES: Record<string, { route: string; pick?: SamplePic
   '/app/rate/:id': { route: '/app/rate/sample', pick: 'attendedSession' },
   '/app/waitlist/:id': { route: '/app/waitlist/sample', pick: 'fullSession' },
   '/app/legal/:kind': { route: '/app/legal/terms' },
-  '/site/classes/:slug': { route: '/site/classes/hot-yoga' },
+  '/site/classes/:slug': { route: '/site/classes/ligereza' },
   '/admin/finance/payouts/:id': { route: '/admin/finance/payouts/sample', pick: 'payrollRun' },
 };
 
@@ -205,7 +205,7 @@ const exp = (id: string, code: string, band: HubBand, device: HubDevice, route: 
 export const HUB_EXPERIENCES: HubExperienceSeed[] = [
   exp('app', 'C-01', 'outside', 'phone', '/app', 'customer', true,
     { es: 'App de clientes', en: 'Customer app' },
-    { es: 'Móvil primero: las clases de hoy, reservar, pagar, la membresía y el historial.', en: 'Mobile first: today’s classes, booking, paying, membership and history.' },
+    { es: 'Móvil primero: las clases de hoy, reservar, pagar, el paquete y el historial.', en: 'Mobile first: today’s classes, booking, paying, the package and history.' },
     { featured: true, secondary: { label: { es: 'Entrar o crear cuenta', en: 'Sign in or create an account' }, route: '/auth/sign-in' } }),
   exp('site', 'W-01', 'outside', 'page', '/site', 'public', false,
     { es: 'Sitio web', en: 'Website' },

@@ -157,8 +157,8 @@ export function AnalyticsPage() {
     'CreditsExpiring': () => (
       <Card title={t('admin.analytics.credits.title')} eyebrow={t('admin.analytics.credits.eyebrow')}>
         <div className="grid grid-2">
-          <StatTile label={t('admin.analytics.credits.d14')} value={s.creditsExpiring14d} hint={t('admin.analytics.credits.hint')} />
-          <StatTile label={t('admin.analytics.credits.d7')} value={s.creditsExpiring7d} hint={t('admin.analytics.credits.hint')} />
+          <StatTile label={t('admin.analytics.credits.d14')} value={s.packagesExpiring14d} hint={t('admin.analytics.credits.hint')} />
+          <StatTile label={t('admin.analytics.credits.d7')} value={s.packagesExpiring7d} hint={t('admin.analytics.credits.hint')} />
         </div>
       </Card>
     ),

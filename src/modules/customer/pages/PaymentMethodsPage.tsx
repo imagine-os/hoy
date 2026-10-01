@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useI18n } from '../../../i18n/I18nProvider';
-import { useContact, useSettings, useWhatsappLink } from '../../admin/settings';
 import { formatCOP } from '../../../i18n/format';
 import { tenant } from '../../../tenant/tenant';
 import { Card } from '../../../components/molecule/Card/Card';
@@ -9,7 +8,7 @@ import { Badge } from '../../../components/atom/Badge/Badge';
 import { Notice } from '../../../components/molecule/Notice/Notice';
 import { ListGroup, ListRow } from '../../../components/molecule/ListRow/ListRow';
 import { EmptyState } from '../../../components/molecule/EmptyState/EmptyState';
-import { PAYMENT_METHODS, wompiCheckout, wompiTokenise, type ElectronicMethod } from '../payments';
+import { PAYMENT_METHODS, wompiCheckout, wompiTokenise, type SavableMethod } from '../payments';
 import { priceOf, usePaymentMethods } from '../hooks';
 import { PageHead } from '../ui';
 import { Icon } from '../../../components/atom/Icon/Icon';
@@ -17,13 +16,9 @@ import { Icon } from '../../../components/atom/Icon/Icon';
 /** C-05 Payment methods — saved methods live in `payment_methods`; the token is Wompi's, never ours. */
 export function PaymentMethodsPage() {
   const { t, bi, lang } = useI18n();
-  const contact = useContact();
-  const { settings } = useSettings();
-  // 0047: the transfer receipt goes to the `finance` contact (M-08a contacts; the front desk by default).
-  const wa = useWhatsappLink();
   const { rows: saved, add, remove, makeDefault } = usePaymentMethods();
   const [test, setTest] = useState<{ busy: boolean; ref?: string }>({ busy: false });
-  const [adding, setAdding] = useState<ElectronicMethod | null>(null);
+  const [adding, setAdding] = useState<SavableMethod | null>(null);
   const electronic = PAYMENT_METHODS.filter((m) => m.provider === 'wompi');
   const manual = PAYMENT_METHODS.filter((m) => m.provider === 'manual');
   const testAmount = priceOf('single').price ?? 0;
@@ -34,7 +29,7 @@ export function PaymentMethodsPage() {
     setTest({ busy: false, ref: r.ref });
   };
 
-  const save = async (kind: ElectronicMethod) => {
+  const save = async (kind: SavableMethod) => {
     setAdding(kind);
     try {
       const tok = await wompiTokenise({ kind }); // INTEGRATION SEAM: Wompi tokenisation.
@@ -79,21 +74,13 @@ export function PaymentMethodsPage() {
         <ListGroup title={t('customer.pay.electronic')}>
           {electronic.map((m) => (
             <ListRow key={m.id} icon={m.glyph} title={bi(m.label)} subtitle={bi(m.hint)}
-              trailing={<Button size="sm" variant="secondary" loading={adding === m.id} onClick={() => { void save(m.id as ElectronicMethod); }}>{t('customer.pay.add')}</Button>} />
+              trailing={m.id === 'qr' ? <Badge tone="neutral">{t('customer.pay.qr.each')}</Badge> : <Button size="sm" variant="secondary" loading={adding === m.id} onClick={() => { void save(m.id as SavableMethod); }}>{t('customer.pay.add')}</Button>} />
           ))}
         </ListGroup>
 
         <ListGroup title={t('customer.pay.manual')}>
           {manual.map((m) => <ListRow key={m.id} icon={m.glyph} title={bi(m.label)} subtitle={bi(m.hint)} trailing={<Badge tone="warn">{t('customer.pay.manual.desk')}</Badge>} />)}
         </ListGroup>
-        <Card eyebrow={t('customer.pay.transfer.title')} className="stack-sm">
-          <ol className="cust-steps small">
-            <li>{t('customer.pay.transfer.step1', { bank: settings.payments.bankName || bi(contact.pendingLabel) })}</li>
-            <li>{t('customer.pay.transfer.step2', { whatsapp: wa.display('finance', lang) })}</li>
-            <li>{t('customer.pay.transfer.step3')}</li>
-          </ol>
-          <p className="xs muted">{t('customer.pay.transfer.account')}</p>
-        </Card>
 
         <Notice tone="info" title={t('customer.pay.comply.title')}>{t('customer.pay.comply.body')}</Notice>
       </div>

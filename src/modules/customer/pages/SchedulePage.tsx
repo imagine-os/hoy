@@ -1,7 +1,6 @@
 import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
-import { useVisibleModalities } from '../../admin/settings';
 import { useSession } from '../../../auth/SessionProvider';
 import { useTable } from '../../../data/DataContext';
 import type { ClassSessionRow, ModalityRow, TeacherRow } from '../../../data/schema';
@@ -56,7 +55,7 @@ export function SchedulePage({ view: routeView }: SchedulePageProps) {
 
   const all = useAllSessionsJoined();
   const { rows: modalities } = useTable<ModalityRow>('modalities', { where: { active: true } });
-  const visibleMods = useVisibleModalities(modalities);
+  const visibleMods = modalities;
   const { rows: teachers } = useTable<TeacherRow>('teachers', { where: { active: true } });
   const { rows: myBookings } = useMyBookings();
   const mine = useMemo(() => new Set(myBookings.filter((b) => b.status === 'booked').map((b) => b.session_id)), [myBookings]);

@@ -310,6 +310,8 @@ export const SPACING_BANDS: readonly { minWidth: number; vars: Record<string, st
  */
 export const radii = {
   'r-arch-card': '50% 50% 1rem 1rem / 11.25rem 11.25rem 1rem 1rem',
+  /** 0051 — a door-shaped arch: a full semicircle on top at any width (the browser scales the 999px radii to half the width). */
+  'r-arch': '999px 999px 0.25rem 0.25rem',
   'r-2xs': '0.125rem', // hairline tracks (bar lists, token bars)
   'r-xs': '0.25rem', 'r-sm': '0.5rem', 'r-ctl': '0.75rem', 'r-md': '1rem', 'r-frame': '1.125rem', 'r-lg': '1.5rem', 'r-xl': '2rem', 'r-phone': '2.125rem', 'r-full': '999px',
 } as const;

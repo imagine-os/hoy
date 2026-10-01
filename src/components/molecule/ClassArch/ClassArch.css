@@ -1,0 +1,32 @@
+/* 0051 — the class arch. The tone hook ([data-tone]) gives --t-dot (the saturated mark) and --t-fg (the deep ink);
+   the arch runs from the light of the dot at the crown to the deep ink at the base, where the name sits in cream. */
+.classarch { display: flex; flex-direction: column; gap: var(--stack-loose); min-width: 0; margin: 0; color: var(--color-text); text-decoration: none; }
+.classarch:hover { text-decoration: none; }
+.classarch-arch { position: relative; isolation: isolate; display: flex; flex-direction: column; justify-content: flex-end; aspect-ratio: 3 / 5; overflow: hidden; border-radius: var(--r-arch); padding: var(--card-pad); color: var(--brand-white);
+  background-color: var(--t-fg);
+  background-image: radial-gradient(120% 70% at 50% 8%, color-mix(in srgb, var(--t-dot) 70%, var(--brand-white)) 0%, transparent 62%), linear-gradient(180deg, var(--t-dot) 0%, color-mix(in srgb, var(--t-dot) 45%, var(--t-fg)) 48%, var(--t-fg) 100%);
+  box-shadow: var(--shadow-stone); transition: transform var(--dur-slow) var(--ease-out), box-shadow var(--dur-slow) var(--ease-out); }
+/* the limestone grain the site's panels carry, laid over the colour */
+.classarch-arch::before { content: ''; position: absolute; inset: 0; z-index: -1; background: url('../../../../public/images/sanctuary/texture-limestone.webp') center / cover; mix-blend-mode: soft-light; opacity: .55; }
+.classarch-arch.has-photo { background-size: cover; background-position: center; }
+.classarch-arch.has-photo::before { background: linear-gradient(180deg, transparent 35%, color-mix(in srgb, var(--t-fg) 88%, transparent) 100%); mix-blend-mode: normal; opacity: 1; }
+/* an inner hairline that repeats the arch, like a door inside a door */
+.classarch-ring { position: absolute; inset: var(--sp-sm); border: 1px solid rgba(251, 247, 239, .34); border-radius: var(--r-arch); pointer-events: none; }
+.classarch-num { position: absolute; top: 22%; left: 0; right: 0; text-align: center; font-family: var(--font-editorial); font-size: 0.9375rem; letter-spacing: .14em; opacity: .85; }
+.classarch-copy { position: relative; display: flex; flex-direction: column; gap: var(--stack-tight); text-align: center; }
+.classarch-name { font-family: var(--font-editorial); font-size: clamp(1.125rem, 1.45vw, 1.75rem); line-height: 1.05; letter-spacing: -.01em; overflow-wrap: normal; white-space: nowrap; }
+.classarch-tagline { font-family: var(--font-editorial); font-style: italic; font-size: 1.0625rem; line-height: 1.3; opacity: .92; }
+.classarch-keys { display: flex; flex-wrap: wrap; justify-content: center; column-gap: var(--sp-xs); row-gap: var(--sp-2xs); font-size: 0.75rem; line-height: 1.5; color: var(--color-text-muted); text-align: center; }
+.classarch-sep { margin-right: var(--sp-xs); color: var(--t-dot); }
+a.classarch:hover .classarch-arch, a.classarch:focus-visible .classarch-arch { transform: translateY(-6px); box-shadow: var(--shadow-raised); }
+a.classarch:hover .classarch-name { text-decoration: underline; text-underline-offset: 0.3em; text-decoration-thickness: 1px; }
+a.classarch:focus-visible { outline: none; }
+a.classarch:focus-visible .classarch-arch { outline: 2px solid var(--color-focus); outline-offset: 4px; }
+/* lg — the classes page and the class page: a wide, calm door with the tagline */
+.classarch-lg { max-width: 26rem; width: 100%; }
+.classarch-lg .classarch-arch { aspect-ratio: 4 / 5; padding: var(--card-pad-lg); }
+.classarch-lg .classarch-name { font-size: clamp(2.5rem, 4.4vw, 3.5rem); }
+.classarch-lg .classarch-tagline { font-size: clamp(1.125rem, 1.6vw, 1.375rem); }
+.classarch-lg .classarch-num { font-size: 1.125rem; top: 18%; }
+.classarch-lg .classarch-keys { font-size: 0.875rem; }
+@media (prefers-reduced-motion: reduce) { .classarch-arch { transition: none; } a.classarch:hover .classarch-arch { transform: none; } }

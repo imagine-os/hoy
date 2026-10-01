@@ -20,9 +20,9 @@ export default defineMeta({
   states: ['default', 'empty', 'with system events', 'scrolling pane', 'unread inbound'],
   usages: [{ title: { es: 'Hilo con nota, automatización y evento', en: 'Thread with a note, an automation and an event' }, render: () => h(MessageThread, {
     personName: 'Juliana Ospina', authorOf: () => 'Camilo Duque · Recepción', autoScroll: false,
-    events: [{ id: 'e1', at: d(26), kind: 'booking', title: 'Check-in · Hot Vinyasa', meta: 'membership' }],
+    events: [{ id: 'e1', at: d(26), kind: 'booking', title: 'Check-in · Fuego', meta: 'paquete' }],
     messages: [
-      msg('1', 27, { direction: 'outbound', source: 'automation', status: 'read', body: 'Hola Juliana, tu clase de Hot Vinyasa empieza a las 5:30 p. m.', template_key: 'class_reminder' }),
+      msg('1', 27, { direction: 'outbound', source: 'automation', status: 'read', body: 'Hola Juliana, tu clase de Fuego empieza a las 5:30 p. m.', template_key: 'class_reminder' }),
       msg('2', 3, { body: 'Hola! ¿El sábado sí hay hot yoga temprano?' }),
       msg('3', 2.9, { direction: 'outbound', status: 'read', sent_by: 'usr_desk', body: 'Sí: 6:30 a. m. con Isabela. ¿Te reservo?' }),
       msg('4', 2.8, { channel: 'note', direction: 'internal', status: 'sent', sent_by: 'usr_desk', body: 'Prefiere primera fila, cerca del ventilador.' }),

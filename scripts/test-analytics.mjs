@@ -32,7 +32,7 @@ try {
       const s = { id: `s${n++}`, tenant_id: 't', created_at: starts.toISOString(), updated_at: starts.toISOString(), template_id: null, title: 'x', modality_id: modality, teacher_id: teacher, room_id: 'r', starts_at: starts.toISOString(), ends_at: ends.toISOString(), capacity, booked_count: 0, level: 'all', status: status ?? (ends < NOW ? 'completed' : 'scheduled'), cancel_reason: null };
       sessions.push(s); return s;
     };
-    const book = (user, s, status = 'checked_in', createdAt = s.starts_at) => { const b = { id: `b${n++}`, tenant_id: 't', created_at: createdAt, updated_at: createdAt, user_id: user, session_id: s.id, status, paid_with: 'membership', credit_id: null, checked_in_at: status === 'checked_in' ? s.starts_at : null, cancelled_at: null, rated: false }; bookings.push(b); return b; };
+    const book = (user, s, status = 'checked_in', createdAt = s.starts_at) => { const b = { id: `b${n++}`, tenant_id: 't', created_at: createdAt, updated_at: createdAt, user_id: user, session_id: s.id, status, paid_with: 'membership', ledger_id: null, checked_in_at: status === 'checked_in' ? s.starts_at : null, cancelled_at: null, rated: false }; bookings.push(b); return b; };
     /** Attend `count` classes in the week starting `weekKey` (Tue, Thu, Sat…). */
     const attendWeek = (user, weekKey, count) => { const [y, m, d] = weekKey.split('-').map(Number); for (let i = 0; i < count; i++) book(user, session(new Date(y, m - 1, d + 1 + i * 2, 8, 0))); };
     return { sessions, bookings, session, book, attendWeek };
@@ -163,13 +163,13 @@ try {
     w.book('u9', s2, 'no_show'); w.book('u10', s2, 'booked');
     const teachers = [{ id: 'tea_a', display_name: 'A' }, { id: 'tea_b', display_name: 'B' }];
     const modalities = [{ id: 'mod_a', name_es: 'A', name_en: 'A' }, { id: 'mod_b', name_es: 'B', name_en: 'B' }];
-    const st = studioStats({ bookings: w.bookings, sessions: w.sessions, memberships: [], profiles: [], credits: [], goals: [], teachers, modalities, now: NOW, rangeDays: 7 });
+    const st = studioStats({ bookings: w.bookings, sessions: w.sessions, memberships: [], profiles: [], ledger: [], goals: [], teachers, modalities, now: NOW, rangeDays: 7 });
     // seats taken: s1 → 4 checked in + 1 no-show = 5; s2 → 3 + 1 + 1 booked = 5 → 10 of 20 = 50 %; attended 7 of 10 = 70 %; no-shows 2 of 10 = 20 %; late cancels 1 of 11 = 9 %
     check('(h) classesHeld 2, seatsOffered 20, seatsBooked 10, seatsAttended 7', st.classesHeld === 2 && st.seatsOffered === 20 && st.seatsBooked === 10 && st.seatsAttended === 7, JSON.stringify({ c: st.classesHeld, o: st.seatsOffered, b: st.seatsBooked, a: st.seatsAttended }));
     check('(h) fillRate 50, attendanceRate 70, noShowRate 20, lateCancelRate 9', st.fillRate === 50 && st.attendanceRate === 70 && st.noShowRate === 20 && st.lateCancelRate === 9, JSON.stringify({ f: st.fillRate, a: st.attendanceRate, n: st.noShowRate, l: st.lateCancelRate }));
     check('(h) activeMembers 5, all new in range', st.activeMembers === 5 && st.newMembers === 5 && st.returningMembers === 0);
     check('(h) byTeacher / byModality / heatmap', st.byTeacher.length === 2 && st.byTeacher[0].id === 'tea_a' && st.byTeacher[0].fill === 50 && st.byTeacher[0].noShowRate === 20 && st.byModality.length === 2 && st.heatmap.length === 2 && st.heatmap[0].weekday === 1 && st.heatmap[0].hour === 8 && st.heatmap[0].fill === 50, JSON.stringify(st.heatmap));
-    const empty = studioStats({ bookings: [], sessions: [], memberships: [], profiles: [], credits: [], goals: [], teachers, modalities, now: NOW, rangeDays: 30 });
+    const empty = studioStats({ bookings: [], sessions: [], memberships: [], profiles: [], ledger: [], goals: [], teachers, modalities, now: NOW, rangeDays: 30 });
     check('(h) empty range → every rate 0, no division by zero', empty.fillRate === 0 && empty.attendanceRate === 0 && empty.visitsPerActiveMemberPerWeek === 0 && empty.secondVisitConversion.rate === 0);
   }
   // (i) atRisk band assignment
@@ -181,9 +181,9 @@ try {
     const memberships = ['u13', 'u14', 'u45', 'u90'].map((u) => ({ id: `m_${u}`, tenant_id: 't', created_at: '', updated_at: '', user_id: u, plan_id: 'p', status: 'active', starts_at: '2026-01-01', renews_at: null, ends_at: null }));
     const profiles = [{ id: 'p', tenant_id: 't', created_at: '', updated_at: '', user_id: 'u45', full_name: 'Sara Díaz', initials: 'SD', photo_url: null, marketing_optin: false, whatsapp_verified: false }];
     const goals = [{ id: 'g', tenant_id: 't', created_at: '', updated_at: '', user_id: 'u45', cadence: 'week', target: 2, source: 'member', starts_on: '2026-08-01', active: true, note: null }];
-    const st = studioStats({ bookings: w.bookings, sessions: w.sessions, memberships, profiles, credits: [], goals, teachers: [], modalities: [], now: NOW, rangeDays: 90 });
+    const st = studioStats({ bookings: w.bookings, sessions: w.sessions, memberships, profiles, ledger: [], goals, teachers: [], modalities: [], now: NOW, rangeDays: 90 });
     check('(i) atRisk lists entitled members ≥ 14 days, sorted by daysSince desc, with bands and names', st.atRisk.map((x) => `${x.userId}:${x.band}`).join(',') === 'u90:90,u45:30,u14:14' && st.atRisk[1].name === 'Sara Díaz' && st.atRisk[1].hadGoal === true && st.atRisk[0].hadGoal === false, JSON.stringify(st.atRisk));
-    check('(i) a member without a live plan or credits is not listed', !st.atRisk.some((x) => x.userId === 'noplan'));
+    check('(i) a member without a live package is not listed', !st.atRisk.some((x) => x.userId === 'noplan'));
   }
 
   // (j) rule 8 — each week is graded by the goal it was lived under: goal 2 for weeks 1–4, goal 3 from week 5
@@ -256,7 +256,7 @@ try {
       return added.length > 0 && new Set(added.map(dayOf)).size === added.length && added.every((b) => !others.has(dayOf(b)));
     })());
     check('seed: booked_count matches non-cancelled bookings on every session', db.class_sessions.every((s) => s.booked_count === db.bookings.filter((b) => b.session_id === s.id && b.status !== 'cancelled' && b.status !== 'late_cancel').length));
-    const studio = studioStats({ bookings: db.bookings, sessions: db.class_sessions, memberships: db.memberships, profiles: db.profiles, users: db.users, credits: db.credits, goals: db.practice_goals, teachers: db.teachers, modalities: db.modalities, rangeDays: 30 });
+    const studio = studioStats({ bookings: db.bookings, sessions: db.class_sessions, memberships: db.memberships, profiles: db.profiles, users: db.users, ledger: db.class_ledger, goals: db.practice_goals, teachers: db.teachers, modalities: db.modalities, rangeDays: 30 });
     console.log(`     studio 30d: ${studio.classesHeld} classes · fill ${studio.fillRate} % · attendance ${studio.attendanceRate} % · active ${studio.activeMembers} · at risk ${studio.atRisk.length} · goals ${studio.goals.withGoal} (${studio.goals.onTrackThisWeek} on track) · milestones ${studio.milestonesThisRange.length}`);
     check('seed: studio stats over 30 days have classes and members', studio.classesHeld > 0 && studio.activeMembers > 0 && studio.goals.withGoal === 7);
   }

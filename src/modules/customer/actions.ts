@@ -2,7 +2,6 @@ import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { ActionDef, ActionHandler } from '../../actions/types';
 import { demoUsers } from '../../auth/demoUsers';
-import { pricingByFamily } from '../../tenant/pricing';
 import { tenant } from '../../tenant/tenant';
 
 /**
@@ -11,7 +10,8 @@ import { tenant } from '../../tenant/tenant';
  * `permission` is advisory metadata, as on HUB-01: the route's roles decide whether the page (and so the handler)
  * is mounted at all, and each handler refuses what a person has to do themselves (paying).
  */
-const PLAN_IDS = pricingByFamily('membresia').map((p) => p.id);
+/** 0051: the packages C-06 sells (no membership at launch). */
+const PLAN_IDS = ['pack12', 'pack12_smtc'];
 const SIGN_IN_IDS = demoUsers.filter((u) => u.role !== 'public').map((u) => u.id);
 
 export const appGoHome: ActionDef = { id: 'app.goHome', label: { es: 'Ir al inicio', en: 'Go home' }, intent: { es: 'Llévame al inicio de la app', en: 'Take me to the app home' } };
@@ -50,8 +50,8 @@ export const appConfirmReservation: ActionDef = {
   intent: { es: 'Confirma mi reserva', en: 'Confirm my reservation' }, permission: 'bookings.write',
 };
 export const appChoosePlan: ActionDef = {
-  id: 'app.choosePlan', label: { es: 'Elegir un plan', en: 'Choose a plan' },
-  intent: { es: 'Quiero el plan {plan}', en: 'I want the {plan} plan' },
+  id: 'app.choosePlan', label: { es: 'Elegir un paquete', en: 'Choose a package' },
+  intent: { es: 'Quiero el paquete {plan}', en: 'I want the {plan} package' },
   params: { plan: `enum:${PLAN_IDS.join(',')}` }, permission: 'payments.read',
 };
 export const authSignIn: ActionDef = {

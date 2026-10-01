@@ -44,6 +44,7 @@ export function CustomerHomePage() {
 
   const { rows: myBookings, loading: bookingsLoading } = useTable<BookingRow>('bookings', { where: { user_id: user.id } });
   const { rows: memberships } = useTable<MembershipRow>('memberships', { where: { user_id: user.id, status: 'active' } });
+  const ent = useEntitlements();
   const all = useSessionsJoined();
   const now = Date.now();
 
@@ -60,9 +61,10 @@ export function CustomerHomePage() {
   const SECTIONS: Record<string, () => ReactNode> = {
     'TopBar (logo, avatar, bell)': () => <h1 className="cust-greeting">{t('customer.home.greeting', { name: user.name.split(' ')[0] })}</h1>,
     'FeedbackPrompt (conditional)': () => null,
+    // 0051: the nudge reads the package (no membership at launch); a member with classes left sees nothing here.
     'MembershipNudge (if no plan)': () => membership
       ? <p className="small muted">{t('customer.home.membership.active', { date: formatDate(membership.renews_at ?? membership.starts_at, lang) })}</p>
-      : <Card tone="highlight" className="row-between wrap"><span className="small">{t('customer.home.membership.nudge')}</span><Link to="/app/plans"><Button size="sm" variant="secondary">{t('customer.home.membership.cta')}</Button></Link></Card>,
+      : ent.pkg.left > 0 ? null : <Card tone="highlight" className="row-between wrap"><span className="small">{t('customer.home.membership.nudge')}</span><Link to="/app/plans"><Button size="sm" variant="secondary">{t('customer.home.membership.cta')}</Button></Link></Card>,
     'AnnouncementCard (if active)': () => <Card tone="muted" eyebrow={t('customer.home.announcement')}><p className="small">{t('customer.home.announcement.body')}</p></Card>,
     'NextClassCard + countdown': () => (
       <section className="stack-sm">
@@ -116,15 +118,15 @@ function PracticeBlock({ stats, goal }: { stats: PracticeStats; goal: PracticeGo
   const save = useSaveGoal(stats.suggestedTarget);
   const asked = goal != null;
   const m = ent.membership;
-  const unlimited = !!m && ent.plan?.credits == null;
+  const unlimited = !!m && ent.plan?.classes == null;
   const upcoming = stats.bookedUpcoming > 0 ? plural(t, 'customer.home.stats.upcoming', stats.bookedUpcoming) : t('customer.home.stats.upcoming.none');
 
   const planTile = m?.status === 'active' && unlimited
     ? <StatTile label={t('customer.home.stats.membership')} value={t('customer.home.stats.unlimited')} hint={t('customer.home.stats.renews', { date: formatDate(m.renews_at ?? m.starts_at, lang, { day: 'numeric', month: 'short' }) })} />
     : m?.status === 'paused' && unlimited
       ? <StatTile label={t('customer.home.stats.membership')} value={t('customer.home.stats.paused')} hint={m.paused_until ? t('customer.home.stats.pausedUntil', { date: formatDate(m.paused_until, lang, { day: 'numeric', month: 'short' }) }) : undefined} />
-      : <StatTile label={t('customer.home.stats.credits')} value={ent.creditBalance}
-          hint={ent.creditBalance > 0 && ent.nextExpiry ? t('customer.home.stats.expires', { date: formatDate(ent.nextExpiry, lang, { day: 'numeric', month: 'short' }) }) : ent.creditBalance === 0 && !m ? t('customer.home.stats.noPlan') : undefined} />;
+      : <StatTile label={t('customer.home.stats.package')} value={ent.pkg.left}
+          hint={ent.pkg.frozen && ent.pkg.frozenUntil ? t('customer.home.stats.frozenUntil', { date: formatDate(ent.pkg.frozenUntil, lang, { day: 'numeric', month: 'short' }) }) : ent.pkg.left > 0 && ent.nextExpiry ? t('customer.home.stats.expires', { date: formatDate(ent.nextExpiry, lang, { day: 'numeric', month: 'short' }) }) : ent.pkg.left === 0 && !m ? t('customer.home.stats.noPlan') : undefined} />;
 
   return (
     <section className="stack-sm cust-practice" aria-labelledby="cust-practice-title">

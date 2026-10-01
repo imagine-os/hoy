@@ -580,8 +580,10 @@ create table if not exists public.bookings (
   user_id uuid not null references public.users(id) on delete set null,
   session_id uuid not null references public.class_sessions(id) on delete set null,
   status text not null check (status in ('booked', 'checked_in', 'cancelled', 'no_show', 'late_cancel')),
-  paid_with text not null check (paid_with in ('membership', 'credit', 'single', 'trial', 'guest', 'comp')),
-  credit_id uuid,
+  -- package = one class of the person's 12-class package (class_ledger); membership is dormant since 0051
+  paid_with text not null check (paid_with in ('package', 'single', 'trial', 'guest', 'comp', 'membership')),
+  -- the −1 row a package booking wrote
+  ledger_id uuid,
   checked_in_at timestamptz,
   cancelled_at timestamptz,
   rated boolean not null default false
@@ -589,7 +591,7 @@ create table if not exists public.bookings (
 create index if not exists bookings_tenant_idx on public.bookings(tenant_id);
 create index if not exists bookings_user_id_idx on public.bookings(user_id);
 create index if not exists bookings_session_id_idx on public.bookings(session_id);
-create index if not exists bookings_credit_id_idx on public.bookings(credit_id);
+create index if not exists bookings_ledger_id_idx on public.bookings(ledger_id);
 create trigger bookings_touch before update on public.bookings for each row execute function public.touch_updated_at();
 alter table public.bookings enable row level security;
 create policy "bookings: tenant read" on public.bookings for select using (tenant_id = public.current_tenant_id());
@@ -762,10 +764,10 @@ create table if not exists public.activity_events (
   updated_at timestamptz not null default now(),
   -- null = studio-level event
   user_id uuid references public.users(id) on delete set null,
-  kind text not null check (kind in ('goal.set', 'milestone', 'streak.saved', 'streak.broken', 'first.visit', 'plan.purchased', 'plan.renewed', 'credit.expiring')),
+  kind text not null check (kind in ('goal.set', 'milestone', 'streak.saved', 'streak.broken', 'first.visit', 'plan.purchased', 'plan.renewed', 'package.expiring')),
   -- when it happened, which may be earlier than when the app noticed (created_at)
   occurred_at timestamptz not null,
-  -- the row it points at (bookings, practice_goals, credits…)
+  -- the row it points at (bookings, practice_goals, class_ledger…)
   ref_table text,
   ref_id text,
   -- kind-specific: { target } for goal.set, { count } for milestone, { week } for streak.saved
@@ -778,7 +780,7 @@ alter table public.activity_events enable row level security;
 create policy "activity_events: tenant read" on public.activity_events for select using (tenant_id = public.current_tenant_id());
 create policy "activity_events: staff write" on public.activity_events for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
 
--- commerce · Value model v3: passes, memberships, pauses, gifts, space.
+-- commerce · Launch list (0051): trial class, individual class, 12-class package, private classes and gift cards. Generated from src/tenant/pricing.ts.
 create table if not exists public.plans (
   -- Primary key
   id uuid primary key default gen_random_uuid(),
@@ -787,14 +789,15 @@ create table if not exists public.plans (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   slug text not null,
-  family text not null check (family in ('bienvenida', 'membresia', 'pausas', 'regalos', 'espacio')),
+  family text not null check (family in ('bienvenida', 'paquetes', 'privadas', 'regalos')),
   name_es text not null,
   name_en text not null,
   description jsonb not null,
   -- COP, integer
   price integer not null,
   period text check (period in ('once', 'month', 'year')),
-  credits integer,
+  -- classes the plan gives (1, or 12 for the package)
+  classes integer,
   validity_days integer,
   is_from_price boolean not null default false,
   badge jsonb,
@@ -807,7 +810,7 @@ alter table public.plans enable row level security;
 create policy "plans: tenant read" on public.plans for select using (tenant_id = public.current_tenant_id());
 create policy "plans: staff write" on public.plans for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
 
--- commerce · A person’s active subscription to a plan.
+-- commerce · A person’s recurring subscription to a plan. Unused since 0051: the launch list has no recurring plan; the table stays for post-launch pricing.
 create table if not exists public.memberships (
   -- Primary key
   id uuid primary key default gen_random_uuid(),
@@ -831,8 +834,8 @@ alter table public.memberships enable row level security;
 create policy "memberships: tenant read" on public.memberships for select using (tenant_id = public.current_tenant_id());
 create policy "memberships: staff write" on public.memberships for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
 
--- commerce · Ledger of purchased and used classes.
-create table if not exists public.credits (
+-- commerce · The classes of each package: bought (+), used (−), returned and expired. HOY has no credits (0051): the balance is in classes.
+create table if not exists public.class_ledger (
   -- Primary key
   id uuid primary key default gen_random_uuid(),
   -- Owning studio (multi-tenant)
@@ -844,17 +847,21 @@ create table if not exists public.credits (
   payment_id uuid,
   -- + purchase, − use
   delta integer not null,
-  reason text not null check (reason in ('purchase', 'booking', 'refund', 'expiry', 'gift', 'comp', 'cancel_return')),
-  expires_at date
+  reason text not null check (reason in ('purchase', 'booking', 'refund', 'expiry', 'gift', 'comp', 'cancel_return', 'reschedule')),
+  expires_at date,
+  -- purchase rows: the day a package freeze started (once per package)
+  frozen_from date,
+  -- purchase rows: the last frozen day; expires_at moved by the same days
+  frozen_until date
 );
-create index if not exists credits_tenant_idx on public.credits(tenant_id);
-create index if not exists credits_user_id_idx on public.credits(user_id);
-create index if not exists credits_plan_id_idx on public.credits(plan_id);
-create index if not exists credits_payment_id_idx on public.credits(payment_id);
-create trigger credits_touch before update on public.credits for each row execute function public.touch_updated_at();
-alter table public.credits enable row level security;
-create policy "credits: tenant read" on public.credits for select using (tenant_id = public.current_tenant_id());
-create policy "credits: staff write" on public.credits for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
+create index if not exists class_ledger_tenant_idx on public.class_ledger(tenant_id);
+create index if not exists class_ledger_user_id_idx on public.class_ledger(user_id);
+create index if not exists class_ledger_plan_id_idx on public.class_ledger(plan_id);
+create index if not exists class_ledger_payment_id_idx on public.class_ledger(payment_id);
+create trigger class_ledger_touch before update on public.class_ledger for each row execute function public.touch_updated_at();
+alter table public.class_ledger enable row level security;
+create policy "class_ledger: tenant read" on public.class_ledger for select using (tenant_id = public.current_tenant_id());
+create policy "class_ledger: staff write" on public.class_ledger for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
 
 -- commerce · Each charge, via Wompi or manual.
 create table if not exists public.payments (
@@ -873,7 +880,8 @@ create table if not exists public.payments (
   -- COP, integer — what the desk actually received; equals amount unless a note explains why
   amount_paid integer,
   currency text not null,
-  method text not null check (method in ('card', 'pse', 'nequi', 'cash', 'transfer', 'gift_card')),
+  -- online: card, PSE or a Wompi QR code; at the desk: cash and the other desk methods (0051 — no Nequi, no Daviplata)
+  method text not null check (method in ('card', 'pse', 'qr', 'cash', 'transfer', 'gift_card')),
   provider text not null check (provider in ('wompi', 'manual')),
   provider_ref text,
   status text not null check (status in ('pending', 'approved', 'declined', 'refunded', 'voided')),
@@ -961,8 +969,8 @@ create table if not exists public.payment_methods (
   updated_at timestamptz not null default now(),
   user_id uuid not null references public.users(id) on delete set null,
   provider text not null check (provider in ('wompi', 'manual')),
-  kind text not null check (kind in ('card', 'pse', 'nequi', 'transfer', 'cash')),
-  -- Visa, Mastercard, Nequi, Bancolombia…
+  kind text not null check (kind in ('card', 'pse', 'transfer', 'cash')),
+  -- Visa, Mastercard, Bancolombia…
   brand text not null,
   last4 text,
   -- Wompi token placeholder — never a real PAN or token in the mock
@@ -978,11 +986,11 @@ alter table public.payment_methods enable row level security;
 create policy "payment_methods: tenant read" on public.payment_methods for select using (tenant_id = public.current_tenant_id());
 create policy "payment_methods: staff write" on public.payment_methods for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
 
--- commerce · Invites members send (C-16) and the reward credit once the guest joins.
+-- commerce · Invites members send (C-16) and the gift class once the guest joins.
 -- access:
 --   · customer: insert + read own rows (inviter_user_id = auth.uid())
 --   · front_desk: read by code, to honour a pass at the desk
---   · admin/finance: write status and reward_credit_id (the reward is granted server-side)
+--   · admin/finance: write status and reward_ledger_id (the reward class is granted server-side)
 create table if not exists public.invites (
   -- Primary key
   id uuid primary key default gen_random_uuid(),
@@ -999,13 +1007,13 @@ create table if not exists public.invites (
   -- class the invite was sent from
   session_id uuid references public.class_sessions(id) on delete set null,
   status text not null check (status in ('sent', 'opened', 'joined', 'rewarded')),
-  reward_credit_id uuid references public.credits(id) on delete set null
+  reward_ledger_id uuid references public.class_ledger(id) on delete set null
 );
 create index if not exists invites_tenant_idx on public.invites(tenant_id);
 create index if not exists invites_inviter_user_id_idx on public.invites(inviter_user_id);
 create index if not exists invites_invitee_user_id_idx on public.invites(invitee_user_id);
 create index if not exists invites_session_id_idx on public.invites(session_id);
-create index if not exists invites_reward_credit_id_idx on public.invites(reward_credit_id);
+create index if not exists invites_reward_ledger_id_idx on public.invites(reward_ledger_id);
 create trigger invites_touch before update on public.invites for each row execute function public.touch_updated_at();
 alter table public.invites enable row level security;
 create policy "invites: tenant read" on public.invites for select using (tenant_id = public.current_tenant_id());
@@ -1687,9 +1695,9 @@ alter table public.deletion_requests add constraint deletion_requests_resolved_b
 alter table public.consents add constraint consents_user_id_fk foreign key (user_id) references public.users(id) on delete set null;
 alter table public.legal_acceptances add constraint legal_acceptances_user_id_fk foreign key (user_id) references public.users(id) on delete set null;
 alter table public.space_bookings add constraint space_bookings_special_charge_id_fk foreign key (special_charge_id) references public.special_charges(id) on delete set null;
-alter table public.bookings add constraint bookings_credit_id_fk foreign key (credit_id) references public.credits(id) on delete set null;
+alter table public.bookings add constraint bookings_ledger_id_fk foreign key (ledger_id) references public.class_ledger(id) on delete set null;
 alter table public.event_rsvps add constraint event_rsvps_payment_id_fk foreign key (payment_id) references public.payments(id) on delete set null;
-alter table public.credits add constraint credits_payment_id_fk foreign key (payment_id) references public.payments(id) on delete set null;
+alter table public.class_ledger add constraint class_ledger_payment_id_fk foreign key (payment_id) references public.payments(id) on delete set null;
 
 -- ---------------------------------------------------------------------------------------------
 -- RLS notes per role (refine per table when the real backend lands):

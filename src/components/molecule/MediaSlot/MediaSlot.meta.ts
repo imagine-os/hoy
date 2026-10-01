@@ -25,9 +25,9 @@ export default defineMeta({
   ],
   states: ['living fallback', 'paused fallback', 'CMS overrides loop', 'empty photo', 'empty video', 'pending library row', 'ready library row', 'with src', 'with caption'],
   usages: [
-    { title: { es: 'Foto viva', en: 'Living photo' }, render: () => h(MediaSlot, { ratio: '4:5', fallbackSrc: './images/sanctuary/hot-yoga.webp', fallbackVideo: './video/living-hot-yoga.mp4', label: { es: 'Yoga', en: 'Yoga' } }) },
-    { title: { es: 'Arte de concepto', en: 'Concept artwork' }, render: () => h(MediaSlot, { ratio: '4:5', fallbackSrc: './images/sanctuary/hot-yoga.webp', label: { es: 'Práctica de yoga', en: 'Yoga practice' } }) },
-    { title: { es: 'Vacío · foto 4:3 con tono', en: 'Empty · 4:3 photo with a tone' }, render: () => h(MediaSlot, { ratio: '4:3', kind: 'photo', tone: 'clay', label: { es: 'Interior del estudio', en: 'Studio interior' }, brief: 'hot room at golden hour, steam on the glass' }) },
+    { title: { es: 'Foto viva', en: 'Living photo' }, render: () => h(MediaSlot, { ratio: '4:5', fallbackSrc: './images/sanctuary/philosophy.webp', fallbackVideo: './video/living-philosophy.mp4', label: { es: 'Respira', en: 'Breathe' } }) },
+    { title: { es: 'Arte de concepto', en: 'Concept artwork' }, render: () => h(MediaSlot, { ratio: '4:5', fallbackSrc: './images/sanctuary/arch.webp', label: { es: 'El estudio', en: 'The studio' } }) },
+    { title: { es: 'Vacío · foto 4:3 con tono', en: 'Empty · 4:3 photo with a tone' }, render: () => h(MediaSlot, { ratio: '4:3', kind: 'photo', tone: 'clay', label: { es: 'Interior del estudio', en: 'Studio interior' }, brief: 'studio at golden hour, light across the mats' }) },
     { title: { es: 'Vacío · video 21:9', en: 'Empty · 21:9 video' }, render: () => h(MediaSlot, { ratio: '21:9', kind: 'video', label: { es: 'Video de portada', en: 'Hero video' }, brief: 'studio at golden hour, slow dolly' }) },
     { title: { es: 'Con archivo real', en: 'With a real asset' }, render: () => h(MediaSlot, { ratio: '16:9', kind: 'photo', src: './brand/p8-2.png', label: { es: 'Tablero de marca', en: 'Brand board' } }) },
     { title: { es: 'Desde la biblioteca de medios', en: 'From the media library' }, render: () => h(MediaSlot, { ratio: '21:9', kind: 'video', slotKey: 'site.hero', label: { es: 'Web · hero principal', en: 'Website · main hero' } }) },

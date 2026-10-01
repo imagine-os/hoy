@@ -1,6 +1,9 @@
 import type { BookingRow, ModalityRow } from './schema';
-/** Keep this catalogue predicate aligned with the studio's yoga modalities. */
-export const usesMats = (modality?: Pick<ModalityRow, 'slug'> | null) => !!modality && /yoga|vinyasa|flow|yin/.test(modality.slug);
+/**
+ * Keep this catalogue predicate aligned with the studio's yoga modalities. 0051: the seven classes — the ones whose method
+ * is yoga-based (Ligereza: yoga yin · Híbrido: yoga dinámico · Alineación: vinyasas) let the member choose a mat.
+ */
+export const usesMats = (modality?: Pick<ModalityRow, 'slug'> | null) => !!modality && /yoga|vinyasa|flow|yin|ligereza|hibrido|alineacion/.test(modality.slug);
 export const occupiesMat = (b: Pick<BookingRow, 'status'>) => b.status === 'booked' || b.status === 'checked_in';
 export function chooseMat(bookings: BookingRow[], capacity: number, requested?: number | null): number {
   const taken = new Set(bookings.filter(occupiesMat).map(b => b.mat_number));

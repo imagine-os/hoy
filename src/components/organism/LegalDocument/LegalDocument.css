@@ -18,3 +18,9 @@
   .legaldoc-versions, .legaldoc-foot { display: none; }
   .legaldoc-body { max-width: none; }
 }
+
+/* 0051 — "Por definir": what the owner still has to decide, highlighted like the draft's yellow marker. */
+.legaldoc-body blockquote.legaldoc-pending { margin: var(--stack-loose) 0; padding: var(--sp-md) var(--sp-lg); border-left: 3px solid var(--brand-yellow); border-radius: 0 var(--r-sm) var(--r-sm) 0; background: color-mix(in srgb, var(--color-highlight) 70%, transparent); color: var(--color-on-highlight); font-style: normal; }
+.legaldoc-body blockquote.legaldoc-pending p { color: inherit; margin: 0; }
+.legaldoc-body blockquote.legaldoc-pending ul { margin: var(--sp-xs) 0 0; padding-left: var(--sp-xl); color: inherit; }
+:root[data-theme="dark"] .legaldoc-body blockquote.legaldoc-pending { background: color-mix(in srgb, var(--brand-yellow) 16%, transparent); color: var(--brand-yellow); }

@@ -15,7 +15,7 @@ export default defineMeta({
   ],
   states: ['default', 'hover', 'with trailing value', 'danger', 'disabled'],
   usages: [{ title: { es: 'Grupo de ajustes (C-19)', en: 'Settings group (C-19)' }, render: () => h(ListGroup, { title: 'Cuenta', children: [
-    h(ListRow, { key: 'm', icon: 'ticket', title: 'Membresía', subtitle: 'Plan Mensual · renueva 12 oct', trailing: h(Badge, { tone: 'success' }, 'Activa'), onClick: () => {} }),
+    h(ListRow, { key: 'm', icon: 'ticket', title: 'Mis clases', subtitle: 'Paquete de 12 · 8 clases · vence 12 dic', trailing: h(Badge, { tone: 'success' }, 'Activo'), onClick: () => {} }),
     h(ListRow, { key: 'p', icon: 'credit-card', title: 'Métodos de pago', subtitle: 'Visa •••• 4242', onClick: () => {} }),
     h(ListRow, { key: 'l', icon: 'languages', title: 'Idioma', trailing: 'Español' }),
     h(ListRow, { key: 'out', icon: 'log-out', title: 'Cerrar sesión', tone: 'danger', onClick: () => {} }),

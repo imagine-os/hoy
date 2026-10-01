@@ -20,7 +20,7 @@ export default defineMeta({
     h(RosterRow, { name: 'Mariana Restrepo', phone: '+57 300 ··· 4412', plan: 'Plan Mensual', status: 'checked_in', time: '6:52', actions: h(Button, { size: 'sm', variant: 'outline', icon: 'undo' }, 'Deshacer') }),
     h(RosterRow, { name: 'Andrés Gómez', phone: '+57 310 ··· 2201', plan: 'Paquete de 10 · 3', status: 'booked', flag: 'Rodilla izquierda', actions: [h(Button, { key: 'in', size: 'sm', variant: 'tonal', icon: 'check' }, 'Check-in'), h(Button, { key: 'x', size: 'sm', variant: 'outline', icon: 'user-x' }, 'No vino')] }),
     h(RosterRow, { name: 'Valentina Ruiz', plan: 'Pase Individual', status: 'checked_in', late: true, time: '7:12' }),
-    h(RosterRow, { name: 'Julián Mesa', plan: 'Membresía', status: 'no_show' }),
+    h(RosterRow, { name: 'Julián Mesa', plan: 'Paquete 12', status: 'no_show' }),
     h(RosterRow, { name: 'Camila Ossa', status: 'waiting', time: '#1', actions: h(Button, { size: 'sm', variant: 'tonal', icon: 'promote' }, 'Dar cupo') }),
   ) }, { title: { es: 'Sección que ya nombra el estado (sin chip)', en: 'Section that already names the state (no chip)' }, render: () => h('div', { className: 'card card-pad-none' },
     h(RosterRow, { name: 'Andrés Gómez', phone: '+57 310 ··· 2201', plan: 'Paquete de 10 · 3', status: 'booked', showStatus: false, actions: [h(Button, { key: 'in', size: 'sm', variant: 'tonal', icon: 'check' }, 'Check-in'), h(Button, { key: 'x', size: 'sm', variant: 'outline', icon: 'user-x' }, 'No vino')] }),

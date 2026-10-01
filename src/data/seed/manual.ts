@@ -37,7 +37,7 @@ export function buildManual(): { progress: ManualProgressRow[]; training: Manual
     ...['read', 'user', 'tour', 'checkin', 'greeting'].map((k) => item('usr_desk', 'front_desk', 'day1', k, 11)),
     item('usr_desk', 'front_desk', 'day1', '__signoff', 10, 'usr_coord'),
     item('usr_desk', 'front_desk', 'week1', 'openclose', 6), item('usr_desk', 'front_desk', 'week1', 'registrations', 4),
-    // Andrés (teacher): two Day 1 items.
+    // Carolina (teacher): two Day 1 items.
     item('usr_teach', 'teacher', 'day1', 'read', 8), item('usr_teach', 'teacher', 'day1', 'app', 8),
   ];
   const requests: ManualRequestRow[] = [

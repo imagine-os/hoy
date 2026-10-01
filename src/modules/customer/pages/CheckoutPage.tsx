@@ -16,8 +16,8 @@ import { OrderSummary } from '../../../components/molecule/OrderSummary/OrderSum
 import { EmptyState } from '../../../components/molecule/EmptyState/EmptyState';
 import { Skeleton } from '../../../components/atom/Skeleton/Skeleton';
 import { canvasSpecs } from '../specs';
-import { PASS_IDS, priceOf, useBookingActions, useEntitlements, useMyBookings, useSessionJoined, type EntitlementKind } from '../hooks';
-import { PAYMENT_METHODS, recordPayment, wompiCheckout, type PayMethod, type WompiResult } from '../payments';
+import { PACKAGE_IDS, PASS_IDS, priceOf, useBookingActions, useEntitlements, useMyBookings, useSessionJoined, type EntitlementKind } from '../hooks';
+import { PAYMENT_METHODS, recordPayment, wompiCheckout, type ElectronicMethod, type PayMethod, type WompiResult } from '../payments';
 import { policy } from '../policy';
 import { PageHead, durationMin, toneOf, roomName, teacherName } from '../ui';
 import { MatPicker } from '../../../components/organism/MatPicker/MatPicker';
@@ -30,8 +30,10 @@ import { need, useAppNavHandlers } from '../actions';
 import { Icon } from '../../../components/atom/Icon/Icon';
 
 const spec = canvasSpecs['C-04'];
-type Choice = 'credit' | 'membership' | 'trial' | 'single' | 'pack3' | 'pack10';
-const isPass = (c: Choice): c is 'trial' | 'single' | 'pack3' | 'pack10' => (PASS_IDS as readonly string[]).includes(c);
+/** 0051: a class of the person's package, or something bought now — a trial or individual class, or a 12-class package. */
+type Choice = 'package' | 'membership' | 'trial' | 'single' | 'pack12' | 'pack12_smtc';
+const BUYABLE: readonly string[] = [...PASS_IDS, ...PACKAGE_IDS];
+const isPass = (c: Choice): c is 'trial' | 'single' | 'pack12' | 'pack12_smtc' => BUYABLE.includes(c);
 
 /** C-04 Reserve & checkout — one screen from intent to confirmed. */
 export function CheckoutPage() {
@@ -74,9 +76,8 @@ export function CheckoutPage() {
   const methodOpt = PAYMENT_METHODS.find((m) => m.id === method)!;
 
   const choices: { id: Choice; title: string; sub: string; price: string; available: boolean }[] = [
-    { id: 'credit', title: t('customer.checkout.credit'), sub: t('customer.checkout.credit.sub', { n: ent.creditBalance }), price: t('core.common.included'), available: ent.creditBalance > 0 },
-    { id: 'membership', title: t('customer.checkout.membership'), sub: ent.plan ? bi({ es: ent.plan.name_es, en: ent.plan.name_en }) : t('customer.checkout.membership.none'), price: t('core.common.included'), available: ent.membership?.status === 'active' },
-    ...PASS_IDS.map((pid) => { const p = priceOf(pid); return { id: pid as Choice, title: bi(p.name), sub: bi(p.description), price: formatCOP(p.price ?? 0, lang), available: pid !== 'trial' || !ent.trialUsed }; }),
+    { id: 'package', title: t('customer.checkout.package'), sub: ent.pkg.frozen ? t('customer.classes.frozen.title') : t('customer.checkout.package.sub', { n: ent.classBalance }), price: t('core.common.included'), available: ent.classBalance > 0 },
+    ...BUYABLE.map((pid) => { const p = priceOf(pid); return { id: pid as Choice, title: bi(p.name), sub: bi(p.description), price: formatCOP(p.price ?? 0, lang), available: pid !== 'trial' || !ent.trialUsed }; }),
   ];
 
   /** Books (and pays, when a pass is chosen). Resolves the outcome so the WebMCP action can report it. */
@@ -91,25 +92,26 @@ export function CheckoutPage() {
       if (alreadyBooked) throw new Error('booking_exists');
       if (joined.session.status !== 'scheduled' || new Date(joined.session.starts_at).getTime() <= Date.now()) throw new Error('session_unavailable');
       if (conflict) { setError('conflict'); return 'conflict'; }
-      let paidWith: EntitlementKind = kind === 'credit' ? 'credit' : kind === 'membership' ? 'membership' : kind === 'trial' ? 'trial' : kind === 'single' ? 'single' : 'credit';
-      let creditPlanId: string | null = null;
+      let paidWith: EntitlementKind = kind === 'package' ? 'package' : kind === 'membership' ? 'membership' : kind === 'trial' ? 'trial' : kind === 'single' ? 'single' : 'package';
+      let packagePlanId: string | null = null;
       let pending = false;
       if (amount > 0 && isPass(kind)) {
         const item = priceOf(kind);
         let result: WompiResult | undefined;
-        if (methodOpt.provider === 'wompi') result = await wompiCheckout({ amount, method: method as 'card' | 'pse' | 'nequi', simulate: simulateDecline ? 'declined' : 'approved' });
+        if (methodOpt.provider === 'wompi') result = await wompiCheckout({ amount, method: method as ElectronicMethod, simulate: simulateDecline ? 'declined' : 'approved' });
         const payment = await recordPayment(data, { userId: user.id, planId: `plan_${item.id}`, amount, method, result, ivaRate: policy.ivaRate });
         if (result?.status === 'declined') {
           setDeclined((d) => ({ reason: result?.reason ?? null, holdUntil: d?.holdUntil ?? new Date(Date.now() + policy.paymentHoldMinutes * MS.min).toISOString(), attempts: (d?.attempts ?? 0) + 1, method }));
           return 'declined';
         }
         pending = payment.status === 'pending';
-        if (item.credits && item.credits > 1) {
-          await data.insert('credits', { user_id: user.id, plan_id: `plan_${item.id}`, payment_id: payment.id, delta: item.credits, reason: 'purchase', expires_at: dateKey(addDays(new Date(), item.validityDays ?? 30)) });
-          paidWith = 'credit'; creditPlanId = `plan_${item.id}`;
+        if (item.classes && item.classes > 1) {
+          // A package bought with this booking: its classes open in the ledger and this class is the first one used.
+          await data.insert('class_ledger', { user_id: user.id, plan_id: `plan_${item.id}`, payment_id: payment.id, delta: item.classes, reason: 'purchase', expires_at: dateKey(addDays(new Date(), item.validityDays ?? 90)), frozen_from: null, frozen_until: null });
+          paidWith = 'package'; packagePlanId = `plan_${item.id}`;
         }
       }
-      const booking = await book(joined.session, paidWith, { creditPlanId, matNumber: yoga ? mat : null });
+      const booking = await book(joined.session, paidWith, { packagePlanId, matNumber: yoga ? mat : null });
       if (claimId) await data.update('waitlist', claimId, { status: 'claimed' });
       setDeclined(null);
       setDone({ booking, pending });
@@ -122,7 +124,7 @@ export function CheckoutPage() {
   };
 
   // WebMCP (0025). The handlers read the latest render through a ref so they are memoized once.
-  // app.confirmReservation only books what costs nothing now (credit / membership); a charge stays a person's click.
+  // app.confirmReservation only books what costs nothing now (a class of the package); a charge stays a person's click.
   const live = useRef({ confirm, joined, yoga, matValid, amount, alreadyBooked, conflict, roomBookings });
   live.current = { confirm, joined, yoga, matValid, amount, alreadyBooked, conflict, roomBookings };
   const navHandlers = useAppNavHandlers();
@@ -178,7 +180,8 @@ export function CheckoutPage() {
           ))}
         </div>
         {kind === 'trial' && <p className="xs muted">{t('customer.checkout.trialNote')}</p>}
-        {(kind === 'pack3' || kind === 'pack10') && <p className="xs muted">{t('customer.checkout.packNote', { n: (priceOf(kind).credits ?? 1) - 1, days: priceOf(kind).validityDays ?? 30 })}</p>}
+        {(kind === 'pack12' || kind === 'pack12_smtc') && <p className="xs muted">{t('customer.checkout.packNote', { n: (priceOf(kind).classes ?? 12) - 1, months: Math.round((priceOf(kind).validityDays ?? 90) / 30) })}</p>}
+        {kind === 'pack12_smtc' && <p className="xs muted">{t('customer.plans.benefit.affiliates')}</p>}
       </section>
     ),
     PaymentMethodRow: () => amount === 0 || declined ? null : (
@@ -192,7 +195,7 @@ export function CheckoutPage() {
       </section>
     ),
     'OrderSummary (subtotal, IVA, total)': () => declined ? null : amount === 0 ? (
-      <Notice tone="success" title={t('customer.checkout.noCharge')}>{kind === 'credit' ? t('customer.checkout.noCharge.credit') : t('customer.checkout.noCharge.membership')}</Notice>
+      <Notice tone="success" title={t('customer.checkout.noCharge')}>{t('customer.checkout.noCharge.package', { h: policy.cancelWindowHours })}</Notice>
     ) : (
       <OrderSummary lines={[{ label: bi(priceOf(kind as 'single').name), amount }]} taxRate={policy.ivaRate} subtotalLabel={t('customer.checkout.subtotal')} taxLabel={t('customer.checkout.iva')} totalLabel={t('customer.checkout.total')} note={t('customer.checkout.receiptNote')} />
     ),
