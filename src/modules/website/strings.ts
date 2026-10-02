@@ -88,7 +88,6 @@ export const strings: StringTable = {
   'site.new.classesTitle': { es: 'No venimos a entrenar cuerpos.', en: 'We are not here to train bodies.' },
   'site.new.classesEm': { es: 'Venimos a despertar presencia.', en: 'We are here to awaken presence.' },
   'site.new.scheduleTitle': { es: '¿Cómo te quieres mover hoy?', en: 'How do you want to move today?' },
-  "site.new.scheduleBody": { es: "Tu próxima pausa empieza aquí.", en: "Your next pause starts here." },
   "site.new.teachersTitle": { es: "Personas que te acompañan.", en: "People who move with you." },
   "site.new.teachersBody": { es: "Cada práctica, una forma de conectar. Conoce a quienes te guían.", en: "Every practice is a way to connect. Meet the people who guide you." },
   "site.new.plansTitle": { es: "Un comienzo a tu medida.", en: "A beginning that fits you." },

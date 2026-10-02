@@ -78,24 +78,32 @@ export const about = {
   title: { es: 'Sobre HOY', en: 'About HOY' } satisfies Bi,
   paragraphs: [
     {
-      es: 'HOY nace de una idea simple: la vida está pasando ahora. En medio del ritmo cotidiano de Medellín, el tráfico, el trabajo, la lista de pendientes, HOY crea un espacio para detenerte, respirar, moverte, sentir y volver a ti.',
-      en: 'HOY grew out of a simple idea: life is happening now. In the middle of Medellín’s everyday rhythm — the traffic, the work, the to-do list — HOY makes a space to stop, breathe, move, feel and come back to yourself.',
+      es: "HOY nace para disfrutar el presente a través del movimiento.",
+      en: "HOY was born to enjoy the present through movement.",
     },
     {
-      es: 'No buscamos que escapes de tu rutina. Buscamos que la habites de otra manera: con más presencia, más conciencia y más conexión. Por eso HOY no es un gimnasio más ni un estudio de yoga como los que ya conoces, es un santuario urbano, hecho para que el bienestar deje de ser una meta lejana y se vuelva parte de tu día a día.',
-      en: 'We are not here to help you escape your routine. We want you to inhabit it differently: with more presence, more awareness, more connection. That is why HOY is not one more gym, and not a yoga studio like the ones you already know — it is an urban sanctuary, built so wellbeing stops being a distant goal and becomes part of your ordinary day.',
+      es: "Creamos un lugar donde puedes entrenar, moverte, conectar con otros y hacer una pausa en medio de tu rutina.",
+      en: "We created a place where you can train, move, connect with others and take a pause in your everyday routine.",
     },
     {
-      es: 'Aquí no hay una sola forma de llegar. Vivimos el momento con atención, sin adelantarnos a lo que viene ni quedarnos en lo que ya pasó, y te invitamos a hacer lo mismo: solo necesitas llegar, sin experiencia previa ni un camino de bienestar ya recorrido. Nuestros maestros te acompañan desde ahí, con la cercanía de quien entiende que el verdadero progreso empieza por aceptar dónde estás hoy.',
-      en: 'There is no single way to arrive. We live this moment with attention, without running ahead to what is coming or staying behind in what is already gone — and we invite you to do the same. All you need is to show up, with no previous experience and no wellness path already walked. Our teachers meet you right there, with the closeness of people who understand that real progress starts by accepting where you are today.',
+      es: "A través del Método HOY, reunimos diferentes formas de entrenamiento y clases para que encuentres la que mejor se adapta a ti, a tu energía y a tu momento.",
+      en: "Through the HOY Method, we bring together different forms of training and classes so you can find what best suits you, your energy and this moment in your life.",
     },
     {
-      es: 'Si nunca has practicado, si ya lo has hecho toda tu vida, o si solo necesitas quince minutos entre reuniones para bajar el ritmo: HOY es para ti. No tienes que cambiar tu vida para venir. Solo tienes que volver a este momento. Porque todo empieza HOY.',
-      en: 'If you have never practised, if you have practised all your life, or if you just need fifteen minutes between meetings to slow down: HOY is for you. You do not have to change your life to come here. You only have to come back to this moment. Because everything starts HOY.',
+      es: "No importa si estás empezando o si entrenas todos los días.",
+      en: "Whether you are just starting out or train every day, you are welcome.",
     },
     {
-      es: 'Conocer HOY es solo el primer paso. El siguiente es sentirlo: una clase de prueba, sin complicaciones, para que decidas con el cuerpo y no solo con la cabeza. Descubre nuestros planes y encuentra la puerta de entrada que más te acomode.',
-      en: 'Getting to know HOY is only the first step. The next one is feeling it: a trial class, no complications, so you decide with your body and not only with your head. Look through our plans and find the way in that suits you best.',
+      es: "Solo tienes que llegar.",
+      en: "All you have to do is show up.",
+    },
+    {
+      es: "HOY es movimiento, comunidad y bienestar de una forma simple y cercana.",
+      en: "HOY is movement, community and wellbeing in a simple, welcoming way.",
+    },
+    {
+      es: "Ven a vivirlo. Todo empieza HOY.",
+      en: "Come experience it. It all starts HOY.",
     },
   ] satisfies Bi[],
   /**
