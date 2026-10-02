@@ -1,5 +1,10 @@
 # HoyOS kanban
 
+## Completed · 0053 (v0.22.2 · 2026-10-02)
+- C-26: Removed data-controller contact card (W-14).
+- S-03: Payroll question button already removed; cleaned its remaining paid-state contact copy (W-15).
+
+
 ## Completed · 0052 (v0.22.1 · 2026-10-02)
 - W-02: Lorena’s new Sobre HOY copy in Spanish, with matching English translation.
 - W-01: Removed “Tu próxima pausa empieza aquí.” and its subtitle element.

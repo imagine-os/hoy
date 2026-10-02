@@ -76,7 +76,7 @@ export const strings: StringTable = {
   'teacher.payroll.state.approved': { es: 'Aprobada', en: 'Approved' },
   'teacher.payroll.state.approved.body': { es: 'Aprobada por finanzas. El pago sale en los próximos días.', en: 'Approved by finance. Payment goes out in the next few days.' },
   'teacher.payroll.state.paid': { es: 'Pagada', en: 'Paid' },
-  'teacher.payroll.state.paid.body': { es: 'Liquidada. Si algo no cuadra, escríbenos: la corrección va como ajuste en la siguiente.', en: 'Settled. If something is off, write to us: the correction goes as an adjustment in the next run.' },
+  'teacher.payroll.state.paid.body': { es: 'Liquidada.', en: 'Settled.' },
   'teacher.payroll.rate.hint': { es: 'la fija coordinación', en: 'set by the coordinator' },
   'teacher.payroll.paidOn': { es: 'pagada el {date}', en: 'paid {date}' },
   'teacher.payroll.breakdown': { es: 'Clase por clase', en: 'Class by class' },

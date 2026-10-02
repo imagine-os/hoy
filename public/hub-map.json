@@ -11,7 +11,7 @@
       "es": "Un solo sistema para cada puesto del estudio: quien practica, quien enseña, quien recibe en la puerta, quien administra y quien lo construye.",
       "en": "One system for every seat at the studio: members, teachers, front desk, admin, and the people who build it."
     },
-    "version": "0.22.1",
+    "version": "0.22.2",
     "baseUrl": "https://imagine-os.github.io/hoy/",
     "hubRoute": "/",
     "brand": {
@@ -3390,8 +3390,8 @@
         "en": "Account & data"
       },
       "purpose": {
-        "es": "Los derechos sobre la cuenta en un solo lugar: quién es el responsable del tratamiento, los consentimientos que la persona controla, una copia de sus propios datos, los documentos legales y la solicitud de eliminar la cuenta con lo que se conserva explicado en lenguaje llano.",
-        "en": "Account-level rights in one place: who the data controller is, the consents the member controls, a copy of their own data, the legal documents and the request to delete the account, with what is kept explained in plain words."
+        "es": "Los derechos sobre la cuenta en un solo lugar: los consentimientos que la persona controla, una copia de sus propios datos, los documentos legales y la solicitud de eliminar la cuenta con lo que se conserva explicado en lenguaje llano.",
+        "en": "Account-level rights in one place: the consents the member controls, a copy of their own data, the legal documents and the request to delete the account, with what is kept explained in plain words."
       },
       "surface": "customer",
       "roles": [

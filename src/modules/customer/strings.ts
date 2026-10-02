@@ -781,8 +781,6 @@ export const strings: StringTable = {
   // C-26 Cuenta y datos (0019)
   'customer.account.title': { es: 'Cuenta y datos', en: 'Account & data' },
   'customer.account.sub': { es: 'Tus derechos sobre tu información: verla, llevártela, decidir y borrar.', en: 'Your rights over your information: see it, take it with you, decide and delete.' },
-  'customer.account.controller': { es: 'Responsable del tratamiento', en: 'Data controller' },
-  'customer.account.controller.body': { es: '{name} ({legal}, {address}) es quien guarda y trata tus datos, bajo la Ley 1581 de 2012. Para cualquier consulta, corrección o queja escribe a {email} o por WhatsApp al {whatsapp}: respondemos en máximo quince días hábiles.', en: '{name} ({legal}, {address}) holds and processes your data under Ley 1581 de 2012. For any enquiry, correction or complaint write to {email} or WhatsApp {whatsapp}: we answer within fifteen business days at most.' },
   'customer.account.consents': { es: 'Consentimientos', en: 'Consents' },
   'customer.account.consent.marketingWa': { es: 'Novedades por WhatsApp', en: 'News on WhatsApp' },
   'customer.account.consent.marketingEmail': { es: 'Novedades por email', en: 'News by email' },

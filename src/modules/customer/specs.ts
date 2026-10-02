@@ -74,8 +74,8 @@ export const canvasSpecs: Record<string, PageSpec> = {
   'C-26': defineSpec({
     code: 'C-26',
     name: { es: 'Cuenta y datos', en: 'Account & data' },
-    purpose: { es: 'Los derechos sobre la cuenta en un solo lugar: quién es el responsable del tratamiento, los consentimientos que la persona controla, una copia de sus propios datos, los documentos legales y la solicitud de eliminar la cuenta con lo que se conserva explicado en lenguaje llano.', en: 'Account-level rights in one place: who the data controller is, the consents the member controls, a copy of their own data, the legal documents and the request to delete the account, with what is kept explained in plain words.' },
-    layout: ['DataController', 'ConsentToggles', 'ExportData', 'LegalLinks', 'DeleteAccount'],
+    purpose: { es: 'Los derechos sobre la cuenta en un solo lugar: los consentimientos que la persona controla, una copia de sus propios datos, los documentos legales y la solicitud de eliminar la cuenta con lo que se conserva explicado en lenguaje llano.', en: 'Account-level rights in one place: the consents the member controls, a copy of their own data, the legal documents and the request to delete the account, with what is kept explained in plain words.' },
+    layout: ['ConsentToggles', 'ExportData', 'LegalLinks', 'DeleteAccount'],
     data: ['deletion_requests', 'profiles', 'users', 'notification_prefs', 'legal_acceptances', 'legal_documents', 'payments', 'invoices', 'bookings', 'audit_log', 'tenants'],
     roles: ['customer', 'teacher'],
     logic: [
@@ -83,7 +83,6 @@ export const canvasSpecs: Record<string, PageSpec> = {
       'Two-step confirm: step one explains what is kept (invoices and payment history for the legal retention period, anonymised) and what ends (access, profile, notifications) and requires the "I understand" switch; step two is the destructive button. While a request is open the row is replaced by its status and a "cancel request" that flips status to cancelled (only from requested).',
       'Export builds one JSON with the member’s own rows from every table that points at their user id, plus the invoices of their payments, and logs account.export.',
       'Marketing consent is the notification_prefs marketing category per channel (WhatsApp, email); profiles.marketing_optin mirrors “any channel on”. Data-processing consent is read-only here: it shows the privacy version accepted (legal_acceptances kind privacy) and links to A-06 to accept the current one.',
-      'The data controller line reads the display name from M-08 (tenants.settings) with tenant.legalName and the studio email — nothing about the studio is typed here.',
     ],
     integrations: ['Supabase Auth'],
     states: ['No request: delete row available', 'Step 1: explanation, switch off → next disabled', 'Step 2: destructive confirm', 'Request pending (requested) with cancel', 'Request processing (no cancel)', 'Privacy policy not accepted yet', 'Exporting'],
