@@ -1,5 +1,9 @@
 # HoyOS kanban
 
+## Completed · 0054 (v0.22.3 · 2026-10-02)
+- W-02: Removed Así hablamos and its five personality chips.
+
+
 ## Completed · 0053 (v0.22.2 · 2026-10-02)
 - C-26: Removed data-controller contact card (W-14).
 - S-03: Payroll question button already removed; cleaned its remaining paid-state contact copy (W-15).

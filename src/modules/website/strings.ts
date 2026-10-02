@@ -180,7 +180,6 @@ export const strings: StringTable = {
   'site.first.cta2': { es: 'Escríbenos por WhatsApp', en: 'Write to us on WhatsApp' },
   'site.first.wa': { es: 'Hola HOY, quiero una clase de prueba.', en: 'Hi HOY, I would like a trial class.' },
 
-  'site.about.values': { es: 'Así hablamos', en: 'How we speak' },
   'site.about.media': { es: 'Fundadores e interior del estudio', en: 'Founders and studio interior' },
   'site.about.board': { es: 'Tablero de marca', en: 'Brand board' },
   'site.about.boardNote': { es: 'Manual de marca 2026 — tipografía, color y wordmark.', en: 'Brand manual 2026 — type, colour and wordmark.' },

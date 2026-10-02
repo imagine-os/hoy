@@ -14,7 +14,7 @@ export const siteSpecs = {
     integrations: ['Supabase Realtime'], states: ['default', 'no classes today', 'no published reviews'] }),
   about: defineSpec({ ...pub, code: 'W-02', name: { es: 'Sitio · Sobre HOY', en: 'Site · About HOY' },
     purpose: { es: 'El texto completo de "Sobre HOY", los valores, "La filosofía de HOY" (nuestra filosofía y nuestro propósito) en panel oscuro y el tablero de marca.', en: 'The full “About HOY” text, the values, “The HOY philosophy” (our philosophy and our purpose) on a dark panel and the brand board.' },
-    layout: ['Head', 'About', 'Values', 'Media', 'Philosophy', 'BrandBoard'],
+    layout: ['Head', 'About', 'Media', 'Philosophy', 'BrandBoard'],
     data: [],
     logic: ['Every paragraph comes from src/tenant/brand.ts (transcribed from the owner’s brand manual).', 'The 4:3 media slot is a booked photograph: founders / studio interior.'],
     states: ['default'] }),

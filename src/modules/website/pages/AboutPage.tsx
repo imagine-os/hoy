@@ -10,8 +10,6 @@ import { useLayout } from '../../../layout/useLayout';
 import { tenant } from '../../../tenant/tenant';
 import { about, philosophy, taglines } from '../../../tenant/brand';
 import { Card } from '../../../components/molecule/Card/Card';
-import { Chip } from '../../../components/atom/Chip/Chip';
-import { TONES } from '../../../design/tokens';
 import { Button } from '../../../components/atom/Button/Button';
 import { MediaSlot } from '../../../components/molecule/MediaSlot/MediaSlot';
 import { PageHead, SiteShell } from '../SiteShell';
@@ -35,14 +33,6 @@ export function AboutPage() {
         <div className="row wrap" style={{ marginTop: 'var(--sp-xl)' }}>
           <Link to="/site/classes"><Button>{t('site.about.classes')}</Button></Link>
           <Link to="/site/plans"><Button variant="secondary">{t('site.plans.all')}</Button></Link>
-        </div>
-      </section>
-    ),
-    Values: () => (
-      <section className="container site-section">
-        <p className="eyebrow">{t('site.about.values')}</p>
-        <div className="row wrap" style={{ marginTop: 'var(--sp-sm)' }}>
-          {about.values.map((v, i) => <Chip key={i} dot tone={TONES[i % TONES.length]}>{bi(v)}</Chip>)}
         </div>
       </section>
     ),
