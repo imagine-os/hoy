@@ -5,6 +5,7 @@
  * customer app share one account, so their emails are one set and an entry lists every inventory row it answers.
  *
  * The seed writes one `email_templates` row per entry; M-04 offers to recreate any entry whose row was deleted.
+ * Every entry is a suggestion an admin edits in M-04; `adminNotesFor()` says what to confirm before turning it on.
  * Nothing here sends: the automation runner (Supabase) emits the trigger and renders the row, not this file.
  */
 import type { Bi } from '../specs/types';
@@ -15,7 +16,7 @@ export type EmailAudience = 'customer' | 'teacher' | 'studio';
 /** When it has to exist: before launch, in the first 60 days, or later. */
 export type EmailPriority = 'launch' | 'first_60' | 'later';
 /** What the 2026-10-02 inventory said about it. */
-export type EmailIntake = 'sending' | 'designed' | 'whatsapp_only' | 'whatsapp_off' | 'not_designed' | 'missing';
+export type EmailIntake = 'sending' | 'designed' | 'whatsapp_only' | 'whatsapp_off' | 'not_designed' | 'missing' | 'proposed';
 /**
  * Which preference gates it. `account` and `team` always send (security, legal, money owed, work); the others follow
  * the member's `notification_prefs` row for the email channel; `marketing` needs an explicit opt-in.
@@ -34,7 +35,8 @@ export interface EmailCatalogEntry {
   priority: EmailPriority;
   intake: EmailIntake;
   category: EmailCategory;
-  /** Inventory rows it answers: `web-e3` = website, existing #3; `app-m1` = customer app, missing #1; `tea-m7` = teacher app. */
+  /** Inventory rows it answers: `web-e3` = website, existing #3; `app-m1` = customer app, missing #1; `tea-m7` = teacher app;
+   *  `gap` = in no inventory, proposed in 0055 (`intake: 'proposed'`) for Lore to confirm or delete. */
   refs: string[];
   /** A screen already tells the person this email will arrive. */
   promised?: boolean;
@@ -428,7 +430,163 @@ export const EMAIL_CATALOG: EmailCatalogEntry[] = [
     teach({ priority: 'later', intake: 'missing', refs: ['tea-m32'] }),
     { es: 'Tu cuenta de profesor se desactivó', en: 'Your teacher account was deactivated' },
     { es: 'Hola {{first_name}},\n\nDesactivamos tu acceso a la app de profesores de {{studio}} desde el {{effective_date}}. Tu última liquidación ({{period}}) se paga en la fecha de siempre y su comprobante te llega por este medio.\n\nGracias por todo lo que diste en el club.', en: 'Hi {{first_name}},\n\nYour access to the {{studio}} teacher app ends on {{effective_date}}. Your last statement ({{period}}) is paid on the usual date and its receipt reaches you here.\n\nThank you for everything you gave the club.' }),
+  // ───────────── 0055 gaps · in no inventory, proposed for Lore to confirm (docs/reference/automated-emails.md) ─────────────
+  // Customers
+  e('booking_cancelled_late', 'customer', { es: 'Cancelación tardía', en: 'Late cancellation' }, 'booking.cancelled_late', { es: 'Un cliente cancela dentro de la ventana de cancelación', en: 'A customer cancels inside the cancellation window' },
+    { priority: 'launch', intake: 'proposed', category: 'bookings', refs: ['gap'] },
+    { es: 'Cancelaste {{class_name}} con menos de {{cancel_hours}} h', en: 'You cancelled {{class_name}} less than {{cancel_hours}} h ahead' },
+    { es: 'Hola {{first_name}},\n\nCancelaste tu cupo en {{class_name}} del {{class_datetime}} con menos de {{cancel_hours}} horas de anticipación. Según las reglas del club, esa clase se descuenta de tu paquete: te quedan {{classes_left}}.\n\nEl cupo quedó libre para alguien en lista de espera.', en: 'Hi {{first_name}},\n\nYou cancelled your spot in {{class_name}} on {{class_datetime}} less than {{cancel_hours}} hours ahead. Under the club rules, that class comes off your package: you have {{classes_left}} left.\n\nThe spot went to someone on the waitlist.' },
+    cta('Reglas del club', 'Club rules', `${APP}rules`)),
+  e('email_changed', 'customer', { es: 'Correo cambiado', en: 'Email changed' }, 'auth.email_changed', { es: 'Se cambia el correo de la cuenta (se envía al correo anterior)', en: 'The account email changes (sent to the old address)' },
+    { priority: 'launch', intake: 'proposed', category: 'account', refs: ['gap'] },
+    { es: 'El correo de tu cuenta cambió', en: 'Your account email was changed' },
+    { es: 'Hola {{first_name}},\n\nEl correo de tu cuenta en {{studio}} cambió a {{new_email}} el {{changed_at}}. Desde ahora los recibos y avisos llegan allá.\n\nSi no fuiste tú, escríbenos por WhatsApp ya para recuperar tu cuenta.', en: 'Hi {{first_name}},\n\nThe email of your {{studio}} account changed to {{new_email}} on {{changed_at}}. Receipts and notices now go there.\n\nIf this was not you, message us on WhatsApp right away to recover your account.' },
+    cta('No fui yo', 'This was not me', `${APP}auth/recover`)),
+  e('payment_pending', 'customer', { es: 'Pago pendiente', en: 'Payment pending' }, 'payment.pending', { es: 'Un pago queda pendiente (PSE o transferencia)', en: 'A payment is pending (PSE or bank transfer)' },
+    { priority: 'launch', intake: 'proposed', category: 'account', refs: ['gap'] },
+    { es: 'Estamos esperando la confirmación de tu pago', en: 'We are waiting for your payment to clear' },
+    { es: 'Hola {{first_name}},\n\nTu pago de {{amount}} por {{product}} está pendiente de confirmación del banco. Apenas se apruebe te llega el recibo y tus clases quedan activas.\n\nSi en {{pending_hours}} horas no se aprueba, lo cancelamos y no se te cobra.', en: 'Hi {{first_name}},\n\nYour payment of {{amount}} for {{product}} is waiting for the bank to confirm it. As soon as it is approved you get the receipt and your classes are active.\n\nIf it is not approved within {{pending_hours}} hours, we cancel it and you are not charged.' },
+    cta('Ver historial', 'View history', `${APP}history`)),
+  e('deletion_request_received', 'customer', { es: 'Solicitud de eliminación recibida', en: 'Deletion request received' }, 'account.deletion_requested', { es: 'Alguien pide eliminar su cuenta', en: 'Someone asks to delete their account' },
+    { priority: 'first_60', intake: 'proposed', category: 'account', refs: ['gap'] },
+    { es: 'Recibimos tu solicitud para eliminar tu cuenta', en: 'We received your account deletion request' },
+    { es: 'Hola {{first_name}},\n\nRecibimos tu solicitud del {{requested_date}} para eliminar tu cuenta de {{studio}}. La completamos a más tardar el {{due_date}} y te confirmamos por este medio.\n\nSi te quedan clases en tu paquete, se pierden al eliminar la cuenta. Si cambias de opinión antes, escríbenos.', en: 'Hi {{first_name}},\n\nWe received your request of {{requested_date}} to delete your {{studio}} account. We will complete it by {{due_date}} and confirm here.\n\nAny classes left in your package are lost when the account is deleted. If you change your mind before then, message us.' }),
+  e('event_changed', 'customer', { es: 'Evento cambiado por el estudio', en: 'Event changed by studio' }, 'event.changed', { es: 'El estudio cambia la fecha, hora o lugar de un evento', en: 'The studio changes an event date, time or place' },
+    { priority: 'first_60', intake: 'proposed', category: 'events', refs: ['gap'] },
+    { es: 'Cambió {{event_name}}', en: '{{event_name}} changed' },
+    { es: 'Hola {{first_name}},\n\n{{event_name}} ahora es el {{event_datetime}}. Antes: {{old_details}}. Tu lugar sigue reservado; si ya no puedes, cancélalo desde la app.', en: 'Hi {{first_name}},\n\n{{event_name}} is now on {{event_datetime}}. Before: {{old_details}}. Your place is still booked; if you can no longer come, cancel it from the app.' },
+    cta('Ver evento', 'View event', `${APP}events/{{event_id}}`)),
+  e('event_cancelled', 'customer', { es: 'Evento cancelado por el estudio', en: 'Event cancelled by studio' }, 'event.cancelled', { es: 'El estudio cancela un evento', en: 'The studio cancels an event' },
+    { priority: 'first_60', intake: 'proposed', category: 'events', refs: ['gap'] },
+    { es: 'Cancelamos {{event_name}}', en: '{{event_name}} was cancelled' },
+    { es: 'Hola {{first_name}},\n\nCancelamos {{event_name}} del {{event_datetime}}. {{refund_line}}\n\nSentimos el cambio; te avisamos de los próximos eventos.', en: 'Hi {{first_name}},\n\nWe cancelled {{event_name}} on {{event_datetime}}. {{refund_line}}\n\nSorry for the change; we will tell you about upcoming events.' },
+    cta('Ver eventos', 'See events', `${APP}events`)),
+  e('waitlist_joined', 'customer', { es: 'Estás en lista de espera', en: 'Waitlist joined' }, 'waitlist.joined', { es: 'Alguien entra a la lista de espera de una clase', en: 'Someone joins a class waitlist' },
+    { priority: 'first_60', intake: 'proposed', category: 'waitlist', refs: ['gap'] },
+    { es: 'Estás en lista de espera para {{class_name}}', en: 'You are on the waitlist for {{class_name}}' },
+    { es: 'Hola {{first_name}},\n\nEstás de {{waitlist_position}} en la lista de espera de {{class_name}} del {{class_datetime}}. Si se libera un cupo te avisamos y tienes {{claim_minutes}} minutos para tomarlo.', en: 'Hi {{first_name}},\n\nYou are number {{waitlist_position}} on the waitlist for {{class_name}} on {{class_datetime}}. If a spot opens we will tell you and you will have {{claim_minutes}} minutes to take it.' },
+    cta('Ver mi lista de espera', 'View my waitlist', `${APP}waitlist/{{waitlist_id}}`)),
+  e('waitlist_expired', 'customer', { es: 'Oferta de cupo vencida', en: 'Waitlist offer expired' }, 'waitlist.offer_expired', { es: 'Nadie reclama el cupo a tiempo y pasa al siguiente', en: 'A spot offer is not claimed in time and moves on' },
+    { priority: 'first_60', intake: 'proposed', category: 'waitlist', refs: ['gap'] },
+    { es: 'El cupo en {{class_name}} pasó a la siguiente persona', en: 'The spot in {{class_name}} went to the next person' },
+    { es: 'Hola {{first_name}},\n\nEl cupo que se liberó en {{class_name}} del {{class_datetime}} venció sin reclamarse y pasó a la siguiente persona de la lista. No se descontó nada de tu paquete.', en: 'Hi {{first_name}},\n\nThe spot that opened in {{class_name}} on {{class_datetime}} expired unclaimed and went to the next person on the list. Nothing came off your package.' },
+    cta('Ver horario', 'View schedule', `${APP}schedule`)),
+  e('special_confirmed_customer', 'customer', { es: 'Especial confirmado (a quien reserva)', en: 'Special confirmed (to the customer)' }, 'special.confirmed', { es: 'Se confirma una clase privada o evento reservado en recepción', en: 'A private class or event booked at the desk is confirmed' },
+    { priority: 'first_60', intake: 'proposed', category: 'bookings', refs: ['gap'] },
+    { es: 'Confirmado: {{special_name}}', en: 'Confirmed: {{special_name}}' },
+    { es: 'Hola {{first_name}},\n\n{{special_name}} está confirmado para el {{class_datetime}} en {{room_name}} con {{teacher_name}}. Llega 10 minutos antes.', en: 'Hi {{first_name}},\n\n{{special_name}} is confirmed for {{class_datetime}} in {{room_name}} with {{teacher_name}}. Arrive 10 minutes early.' }),
+  e('gift_card_expiring', 'customer', { es: 'Tarjeta de regalo por vencer', en: 'Gift card expiring' }, 'gift_card.expiring', { es: 'Antes de que venza una tarjeta de regalo sin usar', en: 'Before an unused gift card expires' },
+    { priority: 'later', intake: 'proposed', category: 'account', refs: ['gap'] },
+    { es: 'Tu regalo de {{studio}} vence el {{expires_at}}', en: 'Your {{studio}} gift expires on {{expires_at}}' },
+    { es: 'Hola {{first_name}},\n\nLa tarjeta de regalo que te dio {{buyer_name}} vence el {{expires_at}} y todavía no la has usado. Código: {{code}}.', en: 'Hi {{first_name}},\n\nThe gift card {{buyer_name}} gave you expires on {{expires_at}} and you have not used it yet. Code: {{code}}.' },
+    cta('Canjear', 'Redeem', `${APP}gift/{{code}}`)),
+  e('terms_updated', 'customer', { es: 'Términos actualizados', en: 'Terms updated' }, 'legal.updated', { es: 'Cambian los términos o la política de privacidad', en: 'The terms or the privacy policy change' },
+    { priority: 'later', intake: 'proposed', category: 'account', refs: ['gap'] },
+    { es: 'Actualizamos nuestros {{document_name}}', en: 'We updated our {{document_name}}' },
+    { es: 'Hola {{first_name}},\n\nActualizamos los {{document_name}} de {{studio}} (versión {{version}}). Rigen desde el {{effective_date}}. Lo principal: {{summary}}', en: 'Hi {{first_name}},\n\nWe updated the {{studio}} {{document_name}} (version {{version}}). They apply from {{effective_date}}. In short: {{summary}}' },
+    cta('Leer', 'Read', `${APP}legal/terms`)),
+  // Teachers
+  e('teacher_password_changed', 'teacher', { es: 'Contraseña cambiada (profesor)', en: 'Password changed (teacher)' }, 'auth.password_changed', { es: 'Un profesor cambia su contraseña', en: 'A teacher changes their password' },
+    teach({ priority: 'launch', intake: 'proposed', refs: ['gap'] }),
+    { es: 'Tu contraseña cambió', en: 'Your password was changed' },
+    { es: 'Hola {{first_name}},\n\nLa contraseña de tu cuenta de profesor cambió el {{changed_at}}. Si no fuiste tú, cámbiala ya y avisa a coordinación.', en: 'Hi {{first_name}},\n\nYour teacher account password changed on {{changed_at}}. If it was not you, reset it now and tell coordination.' },
+    cta('No fui yo', 'This was not me', `${APP}auth/recover`)),
+  e('teacher_sign_in_paused', 'teacher', { es: 'Acceso pausado (profesor)', en: 'Sign-in paused (teacher)' }, 'auth.locked', { es: 'La cuenta del profesor se bloquea tras intentos fallidos', en: "A teacher's account is locked after failed attempts" },
+    teach({ priority: 'launch', intake: 'proposed', refs: ['gap'] }),
+    { es: 'Pausamos el acceso a tu cuenta', en: 'We paused sign-in to your account' },
+    { es: 'Hola {{first_name}},\n\nHubo {{attempts}} intentos fallidos de entrar a tu cuenta de profesor, así que pausamos el acceso por {{lock_minutes}} minutos. Si no fuiste tú, cambia tu contraseña.', en: 'Hi {{first_name}},\n\nThere were {{attempts}} failed attempts to sign in to your teacher account, so we paused sign-in for {{lock_minutes}} minutes. If it was not you, reset your password.' },
+    cta('Cambiar contraseña', 'Reset password', `${APP}auth/recover`)),
+  e('availability_request', 'teacher', { es: 'Envía tu disponibilidad', en: 'Send your availability' }, 'schedule.availability_requested', { es: 'Coordinación pide disponibilidad antes de armar el horario del mes', en: 'Coordination asks for availability before building next month' },
+    teach({ priority: 'first_60', intake: 'proposed', refs: ['gap'] }),
+    { es: 'Tu disponibilidad para {{period}}', en: 'Your availability for {{period}}' },
+    { es: 'Hola {{first_name}},\n\nEstamos armando el horario de {{period}}. Envía tu disponibilidad antes del {{due_date}} para tenerte en cuenta.', en: 'Hi {{first_name}},\n\nWe are building the {{period}} schedule. Send your availability before {{due_date}} so we can count on you.' },
+    cta('Enviar disponibilidad', 'Send availability', `${APP}teach/profile`)),
+  // Team
+  e('lead_received', 'studio', { es: 'Nueva solicitud corporativa (a recepción)', en: 'New corporate request (to the front desk)' }, 'lead.corporate', { es: 'Una empresa envía una solicitud; llega a recepción y marketing', en: 'A company submits a request; it goes to the front desk and marketing' },
+    { priority: 'later', intake: 'proposed', category: 'team', refs: ['gap'] },
+    { es: 'Solicitud de {{company}}: {{format}}', en: 'Request from {{company}}: {{format}}' },
+    { es: 'Hola {{first_name}},\n\n{{contact_name}} de {{company}} pidió {{format}} para {{group_size}} personas. Mensaje: {{message}}\n\nLe prometimos respuesta en {{reply_days}} días hábiles.', en: 'Hi {{first_name}},\n\n{{contact_name}} from {{company}} asked for {{format}} for {{group_size}} people. Message: {{message}}\n\nWe promised a reply within {{reply_days}} business days.' }),
+  e('payroll_flagged', 'studio', { es: 'Profesor marcó un error en la nómina (a finanzas)', en: 'Teacher flagged a payroll error (to finance)' }, 'payroll.line_flagged', { es: 'Un profesor marca un error en su borrador de nómina', en: 'A teacher flags an error on their payroll draft' },
+    { priority: 'first_60', intake: 'proposed', category: 'team', refs: ['gap'] },
+    { es: '{{teacher_name}} marcó un error en {{period}}', en: '{{teacher_name}} flagged an error in {{period}}' },
+    { es: 'Hola {{first_name}},\n\n{{teacher_name}} marcó un error en su liquidación de {{period}}: {{note}}\n\nRevísalo antes de aprobar la nómina el {{close_date}}.', en: 'Hi {{first_name}},\n\n{{teacher_name}} flagged an error in their {{period}} statement: {{note}}\n\nCheck it before approving the payroll on {{close_date}}.' }),
+  e('payroll_ready_for_approval', 'studio', { es: 'Nómina lista para aprobar (a finanzas)', en: 'Payroll ready for approval (to finance)' }, 'payroll.ready', { es: 'Cierra el plazo para marcar errores y la nómina espera aprobación', en: 'The flagging window closes and the payroll waits for approval' },
+    { priority: 'first_60', intake: 'proposed', category: 'team', refs: ['gap'] },
+    { es: 'Nómina de {{period}} lista para aprobar', en: '{{period}} payroll ready for approval' },
+    { es: 'Hola {{first_name}},\n\nLa nómina de {{period}} está lista: {{teachers_count}} profesores, {{amount}} en total, {{flags_count}} errores marcados por resolver. {{missing_accounts}} profesores no tienen cuenta de pago.', en: 'Hi {{first_name}},\n\nThe {{period}} payroll is ready: {{teachers_count}} teachers, {{amount}} in total, {{flags_count}} flagged errors to resolve. {{missing_accounts}} teachers have no payout account.' }),
+  e('profile_submitted', 'studio', { es: 'Perfil por revisar (a coordinación)', en: 'Profile to review (to coordination)' }, 'teacher_profile.submitted', { es: 'Un profesor envía cambios de perfil para revisión', en: 'A teacher submits profile changes for review' },
+    { priority: 'first_60', intake: 'proposed', category: 'team', refs: ['gap'] },
+    { es: '{{teacher_name}} envió cambios de perfil', en: '{{teacher_name}} submitted profile changes' },
+    { es: 'Hola {{first_name}},\n\n{{teacher_name}} cambió su perfil ({{changed_fields}}). Apruébalo o devuélvelo con una nota.', en: 'Hi {{first_name}},\n\n{{teacher_name}} changed their profile ({{changed_fields}}). Approve it or send it back with a note.' }),
+  e('deletion_request_staff', 'studio', { es: 'Solicitud de eliminación (a admin)', en: 'Deletion request (to admin)' }, 'account.deletion_requested', { es: 'Entra una solicitud de eliminación de cuenta (plazo legal)', en: 'An account deletion request comes in (legal deadline)' },
+    { priority: 'first_60', intake: 'proposed', category: 'team', refs: ['gap'] },
+    { es: 'Eliminar la cuenta de {{member_name}} antes del {{due_date}}', en: "Delete {{member_name}}'s account by {{due_date}}" },
+    { es: 'Hola {{first_name}},\n\n{{member_name}} pidió eliminar su cuenta el {{requested_date}} desde {{channel}}. Por ley hay que completarla a más tardar el {{due_date}}. Está en la cola de eliminaciones.', en: 'Hi {{first_name}},\n\n{{member_name}} asked to delete their account on {{requested_date}} from {{channel}}. By law it must be completed by {{due_date}}. It is in the deletions queue.' }),
+  e('class_unclosed_escalation', 'studio', { es: 'Clase sin cerrar (a coordinación)', en: 'Class still open (to coordination)' }, 'session.not_closed_escalated', { es: 'Una clase sigue abierta después del recordatorio al profesor', en: 'A class is still open after the teacher reminder' },
+    { priority: 'first_60', intake: 'proposed', category: 'team', refs: ['gap'] },
+    { es: '{{class_name}} del {{class_datetime}} sigue abierta', en: '{{class_name}} on {{class_datetime}} is still open' },
+    { es: 'Hola {{first_name}},\n\n{{teacher_name}} no ha cerrado {{class_name}} del {{class_datetime}}. Hasta que se cierre no cuenta para la nómina de {{period}}. Ciérrala tú o recuérdale.', en: 'Hi {{first_name}},\n\n{{teacher_name}} has not closed {{class_name}} on {{class_datetime}}. Until it is closed it does not count for the {{period}} payroll. Close it yourself or remind them.' }),
+  e('report_daily_close', 'studio', { es: 'Reporte: cierre del día (a recepción)', en: 'Report: daily close (to the front desk)' }, 'report.daily', { es: 'Cada noche al cerrar', en: 'Every night at closing' },
+    { priority: 'later', intake: 'proposed', category: 'team', refs: ['gap'] },
+    { es: 'Cierre del {{date_label}}: {{revenue}}', en: 'Close for {{date_label}}: {{revenue}}' },
+    { es: 'Hola {{first_name}},\n\nHoy: {{classes_count}} clases, {{attended}} asistencias, {{no_shows}} no vinieron. Ventas {{revenue}} (efectivo {{cash}} · transferencia {{transfer}} · tarjeta {{card}}). Primeras veces: {{first_timers}}.', en: 'Hi {{first_name}},\n\nToday: {{classes_count}} classes, {{attended}} check-ins, {{no_shows}} no-shows. Sales {{revenue}} (cash {{cash}} · transfer {{transfer}} · card {{card}}). First-timers: {{first_timers}}.' }),
+  e('report_weekly_owner', 'studio', { es: 'Reporte: semana (al owner)', en: 'Report: the week (to the owner)' }, 'report.weekly', { es: 'Cada lunes', en: 'Every Monday' },
+    { priority: 'later', intake: 'proposed', category: 'team', refs: ['gap'] },
+    { es: 'Tu semana en {{studio}}: {{revenue}} · {{occupancy}} de ocupación', en: 'Your week at {{studio}}: {{revenue}} · {{occupancy}} occupancy' },
+    { es: 'Hola {{first_name}},\n\nLa semana pasada: {{revenue}} en ventas, {{classes_count}} clases, {{occupancy}} de ocupación, {{new_members}} personas nuevas y {{packages_sold}} paquetes vendidos. {{packages_expiring}} paquetes vencen esta semana.', en: 'Hi {{first_name}},\n\nLast week: {{revenue}} in sales, {{classes_count}} classes, {{occupancy}} occupancy, {{new_members}} new people and {{packages_sold}} packages sold. {{packages_expiring}} packages expire this week.' }),
+  e('report_monthly_payroll', 'studio', { es: 'Reporte: nómina del mes (a finanzas)', en: 'Report: monthly payroll (to finance)' }, 'report.monthly_payroll', { es: 'Cuando se paga la nómina del mes', en: 'When the month’s payroll is paid' },
+    { priority: 'later', intake: 'proposed', category: 'team', refs: ['gap'] },
+    { es: 'Nómina de {{period}} pagada: {{amount}}', en: '{{period}} payroll paid: {{amount}}' },
+    { es: 'Hola {{first_name}},\n\nSe pagó la nómina de {{period}}: {{teachers_count}} profesores, {{classes_count}} clases, {{amount}} en total. {{failed_count}} pagos fallaron y quedan por reenviar.', en: 'Hi {{first_name}},\n\nThe {{period}} payroll is paid: {{teachers_count}} teachers, {{classes_count}} classes, {{amount}} in total. {{failed_count}} payouts failed and wait to be resent.' }),
 ];
+
+/**
+ * Notes for the admin who edits these drafts in M-04 (0055: every email here is a suggestion, not final copy).
+ * `adminNotesFor()` adds the notes that follow from an entry's flags (proposed, marketing, channel, promised).
+ */
+const ADMIN_NOTES: Record<string, Bi> = {
+  welcome: { es: 'El inventario lo marcaba como sin diseñar: este texto es una primera versión.', en: 'The inventory listed it as not designed yet: this copy is a first draft.' },
+  receipt: { es: 'Cuando se conecte la facturación electrónica, el recibo debe adjuntar la factura DIAN (PDF y XML).', en: 'Once e-invoicing is connected, the receipt must attach the DIAN invoice (PDF and XML).' },
+  how_to_prepare: { es: 'Confirma que el estudio ofrece mats, toallas y duchas antes de activarlo: el texto lo promete.', en: 'Confirm the studio provides mats, towels and showers before turning it on: the copy promises them.' },
+  class_reminder: { es: 'Hoy sale por WhatsApp. Decide si el email también sale o si la preferencia de canal de cada persona escoge uno.', en: "It goes out on WhatsApp today. Decide whether the email also goes, or each person's channel preference picks one." },
+  waitlist_promoted: { es: 'Hoy es solo WhatsApp y está apagado. {{claim_minutes}} debe coincidir con el tiempo real para reclamar el cupo.', en: 'Today it is WhatsApp only and turned off. {{claim_minutes}} must match the real time to claim the spot.' },
+  package_expiring: { es: 'Define cuántos días antes se envía (sugerido: 14 y 7 días antes del vencimiento).', en: 'Decide how many days ahead it sends (suggested: 14 and 7 days before expiry).' },
+  invite: { es: 'El enlace usa hoy.co, que no está confirmado: cámbialo por la dirección real del sitio.', en: 'The link uses hoy.co, which is not confirmed: replace it with the real website address.' },
+  verify_email: { es: 'La pantalla de verificación todavía no existe en la app. El código y su vencimiento los pone el sistema de acceso.', en: 'The verification screen does not exist in the app yet. The code and its expiry come from the sign-in system.' },
+  reset_code: { es: 'El código y su vencimiento ({{code_minutes}}) los pone el sistema de acceso: no los cambies a mano.', en: 'The code and its expiry ({{code_minutes}}) come from the sign-in system: do not edit them by hand.' },
+  booking_cancelled_by_you: { es: 'Este texto asume que la clase vuelve al paquete. Las cancelaciones tardías usan «Cancelación tardía».', en: 'This copy assumes the class goes back to the package. Late cancellations use "Late cancellation".' },
+  booking_cancelled_late: { es: 'La regla de cancelación tardía sigue «Por definir» en los términos. No lo actives hasta que el owner la defina.', en: 'The late-cancellation rule is still "Por definir" in the terms. Do not turn it on until the owner sets it.' },
+  after_first_class: { es: 'Revisa qué plan recomendar en {{plan_name}} (hoy, el paquete de 12 clases).', en: 'Check which plan {{plan_name}} recommends (today, the 12-class package).' },
+  no_show: { es: 'Confirma que una inasistencia descuenta la clase del paquete: el texto lo afirma.', en: 'Confirm that a no-show takes the class off the package: the copy says so.' },
+  upcoming_charge: { es: 'No hay membresía recurrente al lanzamiento (decisión 0051). Bórralo si no habrá membresías.', en: 'There is no recurring membership at launch (decision 0051). Delete it if memberships are not coming.' },
+  refund_processed: { es: '{{refund_days}} depende del banco y del medio de pago: confirma el plazo con finanzas.', en: '{{refund_days}} depends on the bank and payment method: confirm the timing with finance.' },
+  account_deleted: { es: 'Revisa el texto con quien maneje protección de datos (Ley 1581): qué se conserva y por cuánto tiempo.', en: 'Review the copy with whoever handles data protection (Ley 1581): what is kept and for how long.' },
+  deletion_request_received: { es: 'Revisa el texto con quien maneje protección de datos (Ley 1581). {{due_date}} es el plazo legal de respuesta.', en: 'Review the copy with whoever handles data protection (Ley 1581). {{due_date}} is the legal response deadline.' },
+  corporate_inquiry: { es: 'Pon en {{reply_days}} el plazo real en que el estudio responde a empresas.', en: 'Set {{reply_days}} to the real time the studio takes to reply to companies.' },
+  event_cancelled: { es: '{{refund_line}} cambia según si el evento se pagó y cómo: ajústalo antes de activarlo.', en: '{{refund_line}} depends on whether and how the event was paid: adjust it before turning it on.' },
+  terms_updated: { es: 'Envíalo cuando se completen los «Por definir» de los términos y suba la versión.', en: 'Send it once the terms\' "Por definir" items are filled in and the version goes up.' },
+  sub_request_coordinator: { es: 'Hoy sale por WhatsApp, pero no hay coordinador configurado en Ajustes › Contactos: nómbralo primero.', en: 'It goes out on WhatsApp today, but no coordinator is set in Settings › Contacts: name one first.' },
+  class_heads_up: { es: 'El inventario pide incluir lesiones. No van en el correo (dato sensible, Ley 1581): el texto remite a la lista en la app. Mantenlo así.', en: 'The inventory asks for injuries. They stay out of email (sensitive data, Ley 1581): the copy points to the roster in the app. Keep it that way.' },
+  payout_sent: { es: 'El comprobante en PDF se adjunta cuando exista el motor de envío.', en: 'The statement PDF is attached once the sending engine exists.' },
+  team_invite: { es: 'La pantalla de activación de profesores todavía no existe.', en: 'The teacher activation screen does not exist yet.' },
+  no_cover_yet: { es: 'Define cuántas horas antes de la clase se envía (la «X» del inventario).', en: 'Decide how many hours before class it sends (the inventory\'s "X").' },
+  reviews_summary: { es: 'Nunca envíes menos de 5 opiniones juntas: se rompería el anonimato.', en: 'Never send fewer than 5 reviews together: it would break anonymity.' },
+  low_signups: { es: 'Define el mínimo de inscritos y cuántas horas antes se decide cancelar.', en: 'Set the minimum sign-ups and how many hours ahead the cancel decision is made.' },
+  report_daily_close: { es: 'Confirma con recepción qué números quiere ver al cerrar.', en: 'Confirm with the front desk which numbers they want at closing.' },
+  report_weekly_owner: { es: 'Confirma con el owner qué números quiere cada lunes.', en: 'Confirm with the owner which numbers they want every Monday.' },
+  report_monthly_payroll: { es: 'Confirma con finanzas si quiere el detalle por profesor adjunto.', en: 'Confirm with finance whether they want the per-teacher detail attached.' },
+};
+
+/** Every note for one entry: the ones its flags imply, then its own. */
+export function adminNotesFor(m: EmailCatalogEntry): Bi[] {
+  const out: Bi[] = [];
+  if (m.intake === 'proposed') out.push({ es: 'No estaba en ningún inventario del 2 oct: es una propuesta. Confírmala o bórrala.', en: 'It was in none of the 2 Oct inventories: it is a proposal. Confirm or delete it.' });
+  if (m.category === 'marketing') out.push({ es: 'Es marketing: solo puede llegar a quien aceptó recibirlo, y necesita un enlace para darse de baja.', en: 'It is marketing: it may only reach people who opted in, and it needs an unsubscribe link.' });
+  if (m.channelTbd) out.push({ es: 'Falta decidir si va por email o por WhatsApp. Por WhatsApp, la plantilla necesita aprobación de Meta antes de enviarse.', en: 'Email or WhatsApp is still undecided. On WhatsApp, the template needs Meta approval before it can send.' });
+  if (m.promised) out.push({ es: 'Una pantalla ya promete este correo: si decides no enviarlo, cambia también ese texto.', en: 'A screen already promises this email: if you decide not to send it, change that copy too.' });
+  if (ADMIN_NOTES[m.key]) out.push(ADMIN_NOTES[m.key]);
+  return out;
+}
 
 export const emailEntry = (key: string) => EMAIL_CATALOG.find((x) => x.key === key);
 
@@ -441,6 +599,9 @@ export const EMAIL_SAMPLE: Record<string, string> = {
   charge_date: '1 oct', refund_days: '10', event_name: 'Sound bath de luna llena', event_datetime: 'sáb 27 sep · 19:00', event_notes: 'Trae ropa cómoda.', guest_name: 'Pedro', days_away: '30', period: 'septiembre', next_class: 'Fuego, jue 25 sep · 17:30', company: 'Acme',
   reply_days: '2', room_name: 'Sala principal', booked: '14', first_timers: '2', hours_left: '6', special_name: 'Cumpleaños de Mariana', teacher_payout: '$150.000', classes_count: '22', payout_account: '•••• 1234', close_date: '28 sep',
   note: 'Cambia la foto por una con fondo claro.', classes_summary: 'Fuego 7:00 (12 inscritos), Raíz 17:30 (9 inscritos)', effective_date: '1 oct', new_rate: '$60.000', old_rate: '$55.000', chapter: 'Cancelaciones y reemplazos', chapter_slug: '12-reemplazos', training: 'Primeros auxilios',
+  new_email: 'mariana.r@…', pending_hours: '24', refund_line: 'Te devolvimos el valor a tu medio de pago.', waitlist_position: '2', document_name: 'Términos y Condiciones', version: '2.1', summary: 'definimos la cancelación tardía.',
+  format: 'Sesión para equipos', contact_name: 'Carolina', group_size: '15', message: 'Queremos una sesión mensual para el equipo.', teachers_count: '7', flags_count: '1', missing_accounts: '1', changed_fields: 'foto, biografía', member_name: 'Nicolás Gómez', channel: 'la app',
+  date_label: 'jue 18 sep', revenue: '$1.840.000', attended: '96', no_shows: '4', cash: '$220.000', transfer: '$960.000', card: '$660.000', new_members: '9', packages_sold: '6', packages_expiring: '3', failed_count: '0',
   due_date: '15 oct', min_booked: '4', decision_hours: '12', reviews_count: '5', avg_rating: '4,8', avg_attendance: '11', studio_avg: '9', occupancy: '78 %', answer: 'Sí: avisa con 24 horas y coordinación busca reemplazo.',
 };
 export const EMAIL_SAMPLE_TEACHER: Record<string, string> = { first_name: 'Andrés', teacher_name: 'Laura', amount: '$1.320.000' };

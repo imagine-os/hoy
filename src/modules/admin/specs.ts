@@ -97,7 +97,7 @@ export const M04 = defineSpec({
   roles: [...new Set([...canvasSpecs['M-04'].roles, 'marketing' as const])], // 0031
   layout: ['TemplateList (audience → priority, trigger, locale, status)', 'Canvas (EmailPreview)', 'VariablePanel + Editor', 'LocaleSwitch ES / EN', 'Versions + TestSend + SendLog'],
   data: ['email_templates', 'message_log', 'audit_log'],
-  notes: [...(canvasSpecs['M-04'].notes ?? []), 'body_mjml stores a JSON {es,en} plain-text body until the MJML designer exists.', '0055: the default set is src/data/emailCatalog.ts (72 emails to customers, teachers and the team, from the 2026-10-02 inventories); the list is filtered by audience and grouped by priority.', 'Versions are the audit_log rows of the template; rollback restores the before value.', 'Test send writes message_log with payload.test = true.'],
+  notes: [...(canvasSpecs['M-04'].notes ?? []), 'body_mjml stores a JSON {es,en} plain-text body until the MJML designer exists.', '0055: the default set is src/data/emailCatalog.ts (95 emails to customers, teachers and the team: 72 from the 2026-10-02 inventories, 23 proposed); the list is filtered by audience and grouped by priority; every email is a suggestion with a note for the admin.', 'Versions are the audit_log rows of the template; rollback restores the before value.', 'Test send writes message_log with payload.test = true.'],
 });
 
 export const M05 = defineSpec({

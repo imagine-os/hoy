@@ -7,6 +7,12 @@ Source: Claude Code session · 2026-10-03 · requester Justin (owner) · attachm
 
 heres instructions for needing to add the following transactional emails and automated type eamils and stuff to hoy. Please tell me if anything important was missed. go ahead and update the hoy system where the emails are
 
+## Follow-up prompts
+
+> claude is reconnected. If you need to do additional things based on what else was missing, do them and merge
+
+> these emails wil lneed to be edited by an admin later, so if there's anything you should notate for them, go for it.   These are more suggestion
+
 ## Response
 
 Shipped as **v0.23.0**. M-04 (`/#/admin/emails`) now holds every email in the three inventories: **72 templates**
@@ -28,5 +34,14 @@ in ES and EN, each with its trigger, deep link, recipient and priority.
   profile reviews, deletion requests, reports), eight customer and three teacher emails no list names, and the
   rules for the whole set (marketing consent and unsubscribe, no health data in email, the DIAN invoice attachment,
   trigger emission, SPF / DKIM / DMARC).
+
+- **Follow-up: the gaps, as proposals, with notes for the admin.** 23 proposed drafts (badge **Propuesto**) cover
+  what no inventory named: late cancellation, email changed, payment pending, deletion request received, event
+  changed / cancelled, waitlist joined / expired, Special confirmed to the customer, gift card expiring, terms
+  updated; teacher password changed, sign-in paused, availability request; and nine team emails (corporate lead,
+  payroll flagged, payroll ready, profile to review, deletion request with its legal deadline, class still open,
+  and the daily, weekly and monthly reports). M-04 now says at the top that every email is a suggestion, and each
+  email shows a yellow **Nota para el admin** with what to confirm or decide before turning it on. Marketing
+  previews carry an unsubscribe line. **95 templates.**
 
 Changelog: `docs/changelog/0055-automated-emails-inventory.md`.

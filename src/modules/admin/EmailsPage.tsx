@@ -17,8 +17,9 @@ import { Toggle } from '../../components/atom/Toggle/Toggle';
 import { EmailPreview } from '../../components/organism/EmailPreview/EmailPreview';
 import { DataTable } from '../../components/organism/DataTable/DataTable';
 import { EmptyState } from '../../components/molecule/EmptyState/EmptyState';
+import { Notice } from '../../components/molecule/Notice/Notice';
 import { useAudit, type AuditRow } from '../staff/audit';
-import { APP, EMAIL_AUDIENCES, EMAIL_CATALOG, EMAIL_PRIORITIES, emailEntry, sampleFor, type EmailAudience, type EmailPriority } from '../../data/emailCatalog';
+import { APP, EMAIL_AUDIENCES, EMAIL_CATALOG, EMAIL_PRIORITIES, adminNotesFor, emailEntry, sampleFor, type EmailAudience, type EmailPriority } from '../../data/emailCatalog';
 import { usePeople } from '../staff/people';
 import './admin.css';
 
@@ -92,6 +93,7 @@ export function EmailsPage() {
       </div>
       {loading && templates.length === 0 && <EmptyState tone="loading" title={t('core.common.loading')} />}
       {!loading && templates.length === 0 && <EmptyState title={t('admin.emails.empty')} body={t('admin.emails.empty.body')} action={canWrite && <Button size="sm" onClick={createMissing}>{t('admin.emails.createMissing', { n: missing.length })}</Button>} />}
+      {templates.length > 0 && <Notice title={t('admin.emails.suggested.title')}>{t('admin.emails.suggested.body')}</Notice>}
       {templates.length > 0 && (
         <div className="stack-sm">
           <div className="row wrap" role="tablist" aria-label={t('admin.emails.f.audience')}>
@@ -164,14 +166,18 @@ function Canvas({ row, lang }: { row: EmailRow; lang: 'es' | 'en' }) {
   const body = lang === 'en' ? b.en || b.es : b.es;
   const subject = lang === 'en' ? row.subject.en || row.subject.es : row.subject.es;
   const vars = sampleFor(audienceOf(row), row.key);
-  return <EmailPreview envelope={`${tenant.name} <${contact.email}>${pendingSuffix(contact, 'email', lang)} → ${vars.first_name.toLowerCase()}@…  ·  ${lang.toUpperCase()} · v${row.version}`} subject={subject} body={body} cta={b.cta ? { label: lang === 'en' ? b.cta.label.en || b.cta.label.es : b.cta.label.es, href: b.cta.href } : undefined} footer={`${tenant.legalName} · ${contact.address}, ${contact.city}${pendingSuffix(contact, 'address', lang)} · WhatsApp ${contact.whatsapp}${pendingSuffix(contact, 'whatsapp', lang)} · ${t('admin.emails.footer', { studio: tenant.name })}`} vars={vars} />;
+  return <EmailPreview envelope={`${tenant.name} <${contact.email}>${pendingSuffix(contact, 'email', lang)} → ${vars.first_name.toLowerCase()}@…  ·  ${lang.toUpperCase()} · v${row.version}`} subject={subject} body={body} cta={b.cta ? { label: lang === 'en' ? b.cta.label.en || b.cta.label.es : b.cta.label.es, href: b.cta.href } : undefined} footer={`${tenant.legalName} · ${contact.address}, ${contact.city}${pendingSuffix(contact, 'address', lang)} · WhatsApp ${contact.whatsapp}${pendingSuffix(contact, 'whatsapp', lang)} · ${t('admin.emails.footer', { studio: tenant.name })}${emailEntry(row.key)?.category === 'marketing' ? ` ${t('admin.emails.unsubscribe')}` : ''}`} vars={vars} />;
 }
+
+/** `{{var}}` in a note reads as code so the admin sees which variable it means. */
+const renderNote = (text: string) => text.split(/(\{\{\s*[\w.]+\s*\}\})/g).map((part, i) => (part.startsWith('{{') ? <code key={i} className="emails-var">{part}</code> : part));
 
 /** What the catalog knows about this email: when it sends, its priority, the 2026-10-02 inventory state and its rows. */
 function Facts({ row }: { row: EmailRow }) {
   const { t, bi } = useI18n();
   const m = emailEntry(row.key);
   const p = priorityOf(row);
+  const notes = m ? adminNotesFor(m) : [];
   if (!m && !p) return null;
   return (
     <div className="stack-sm">
@@ -181,8 +187,14 @@ function Facts({ row }: { row: EmailRow }) {
         {m?.promised && <Badge tone="warn">{t('admin.emails.promised')}</Badge>}
         {m?.category === 'marketing' && <Badge>{t('admin.emails.consent')}</Badge>}
         {m?.channelTbd && <Badge>{t('admin.emails.channelTbd')}</Badge>}
+        {m?.intake === 'proposed' && <Badge tone="highlight">{t('admin.emails.proposed')}</Badge>}
         {m && <span className="xs muted">{t('admin.emails.intake')}: {t(`admin.emails.intake.${m.intake}`)} · <span className="mono">{m.refs.join(' · ')}</span></span>}
       </div>
+      {notes.length > 0 && (
+        <Notice tone="warn" icon="info" title={t('admin.emails.adminNote')}>
+          <ul className="emails-notes">{notes.map((n, i) => <li key={i}>{renderNote(bi(n))}</li>)}</ul>
+        </Notice>
+      )}
     </div>
   );
 }

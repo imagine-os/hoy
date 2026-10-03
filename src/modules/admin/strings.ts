@@ -318,6 +318,12 @@ export const strings: StringTable = {
   'admin.emails.intake.whatsapp_off': { es: 'solo WhatsApp, apagado', en: 'WhatsApp only, turned off' },
   'admin.emails.intake.not_designed': { es: 'sin diseñar', en: 'not designed yet' },
   'admin.emails.intake.missing': { es: 'faltaba', en: 'missing' },
+  'admin.emails.intake.proposed': { es: 'no estaba (propuesto en 0055)', en: 'not listed (proposed in 0055)' },
+  'admin.emails.unsubscribe': { es: 'Para dejar de recibir estos correos, cambia tus preferencias en la app o responde «BAJA».', en: 'To stop these emails, change your preferences in the app or reply "UNSUBSCRIBE".' },
+  'admin.emails.proposed': { es: 'Propuesto', en: 'Proposed' },
+  'admin.emails.adminNote': { es: 'Nota para el admin', en: 'Note for the admin' },
+  'admin.emails.suggested.title': { es: 'Todos estos emails son sugerencias', en: 'Every email here is a suggestion' },
+  'admin.emails.suggested.body': { es: 'Revisa el texto, los enlaces y las variables de cada uno antes de activarlo; la nota amarilla dice qué decidir o confirmar. Activar no envía nada todavía: el envío llega con el motor de automatizaciones.', en: 'Check each one’s copy, links and variables before turning it on; the yellow note says what to decide or confirm. Turning one on sends nothing yet: sending arrives with the automation engine.' },
   'admin.emails.f.audience': { es: 'Destinatario', en: 'Recipient' },
   'admin.emails.f.priority': { es: 'Prioridad', en: 'Priority' },
 

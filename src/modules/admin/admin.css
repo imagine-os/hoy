@@ -11,6 +11,7 @@
 .emails-item > .row > .row { flex: none; }
 .emails-trigger { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .emails-var { font-size: var(--fs-xs); background: color-mix(in srgb, var(--color-warn) 25%, transparent); padding: var(--sp-2xs) var(--sp-sm); border-radius: var(--r-xs); }
+.emails-notes { display: flex; flex-direction: column; gap: var(--sp-xs); margin: 0; padding-inline-start: var(--sp-lg); }
 .emails-version { display: flex; align-items: center; gap: var(--sp-sm); padding: var(--sp-sm) var(--sp-sm); border-bottom: 1px solid var(--color-border); }
 .emails-version:last-child { border-bottom: 0; }
 @media (max-width: 1200px) { .emails { grid-template-columns: 13.75rem minmax(0, 1fr); } .emails-side { grid-column: 1 / -1; } }
