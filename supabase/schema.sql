@@ -1198,7 +1198,7 @@ alter table public.expenses enable row level security;
 create policy "expenses: tenant read" on public.expenses for select using (tenant_id = public.current_tenant_id());
 create policy "expenses: staff write" on public.expenses for all using (tenant_id = public.current_tenant_id() and (public.has_role('super_admin') or public.has_role('admin') or public.has_role('coordinator')));
 
--- comms · Versioned transactional emails (M-04).
+-- comms · Versioned automated emails (M-04): to customers, teachers and the team.
 create table if not exists public.email_templates (
   -- Primary key
   id uuid primary key default gen_random_uuid(),
@@ -1208,7 +1208,11 @@ create table if not exists public.email_templates (
   updated_at timestamptz not null default now(),
   key text not null,
   name text not null,
+  -- who receives it (0055): a member or prospect, a teacher, or the studio team
+  audience text not null check (audience in ('customer', 'teacher', 'studio')),
   trigger text not null,
+  -- when it has to exist (0055): before launch, first 60 days, later
+  priority text check (priority in ('launch', 'first_60', 'later')),
   subject jsonb not null,
   body_mjml text not null,
   version integer not null,
