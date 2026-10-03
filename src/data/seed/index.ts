@@ -24,6 +24,7 @@ import { practiceStats, weekStartKey } from '../analytics';
 import { DEFAULT_IVA_PCT, splitIva } from '../tax';
 import { isRetired } from '../../specs/retired';
 import { priceItem } from '../../tenant/pricing';
+import { EMAIL_CATALOG } from '../emailCatalog';
 
 const giftPrice = (id: string) => priceItem(id)?.price ?? 0;
 
@@ -291,11 +292,8 @@ export function buildSeed(): Record<string, BaseRow[]> {
     { ...base('gc_2', 40), code: 'HOY-REGALO-2377', buyer_user_id: 'usr_c07', recipient_name: 'Pedro', recipient_contact: 'pedro@example.com', amount: giftPrice('gift_pack12'), balance: 0, deliver_at: null, redeemed_by: 'usr_c11', status: 'redeemed' },
   );
 
-  db.email_templates.push(
-    { ...base('em_receipt', 90), key: 'receipt', name: 'Recibo de pago', trigger: 'payment.approved', subject: { es: 'Tu recibo de HOY', en: 'Your HOY receipt' }, body_mjml: '<mjml>…</mjml>', version: 1, active: true },
-    { ...base('em_welcome', 90), key: 'welcome', name: 'Bienvenida', trigger: 'user.created', subject: { es: 'Bienvenido a HOY', en: 'Welcome to HOY' }, body_mjml: '<mjml>…</mjml>', version: 2, active: true },
-    { ...base('em_reminder', 90), key: 'class_reminder', name: 'Recordatorio de clase', trigger: 'booking.t-2h', subject: { es: 'Tu clase es en 2 horas', en: 'Your class is in 2 hours' }, body_mjml: '<mjml>…</mjml>', version: 1, active: false },
-  );
+  // 0055: every email in the catalog (customers, teachers, team) as a row; only the receipt is sending today.
+  db.email_templates.push(...EMAIL_CATALOG.map((m) => ({ ...base(`em_${m.key}`, 90), key: m.key, name: m.name.es, audience: m.audience, trigger: m.trigger, priority: m.priority, subject: m.subject, body_mjml: JSON.stringify({ es: m.body.es, en: m.body.en, cta: m.cta }), version: 1, active: m.intake === 'sending' })));
   db.wa_templates.push(
     { ...base('wa_otp', 90), key: 'otp', name: 'Código de acceso', category: 'authentication', body: { es: 'Tu código HOY es {{1}}.', en: 'Your HOY code is {{1}}.' }, approval_status: 'approved', active: true },
     { ...base('wa_reminder', 90), key: 'class_reminder', name: 'Recordatorio de clase', category: 'utility', body: { es: 'Hola {{1}}, tu clase de {{2}} empieza a las {{3}}.', en: 'Hi {{1}}, your {{2}} class starts at {{3}}.' }, approval_status: 'approved', active: true },

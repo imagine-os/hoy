@@ -22,8 +22,9 @@ const KEY = 'hoyos.db.v1';
  *       class_sessions opens on the week calendar; a v7 copy reseeds so the new default views appear
  *   9 · 0051 the studio's verified launch content: seven classes and their teachers, the launch price list, `credits`
  *       renamed `class_ledger` (with frozen_from / frozen_until), the new FAQ and terms v2.0; a v8 copy reseeds
+ *  10 · 0055 email_templates gains audience + priority and the seed carries the whole email catalog (72 templates); a v9 copy reseeds
  */
-export const SEED_VERSION = 9;
+export const SEED_VERSION = 10;
 
 /** 0039: a v3 copy still carries `movement`; give each row its seed tone (or the old colour's tone) and drop intentions. */
 const LEGACY_TONE: Record<string, string> = { enraiza: 'moss', fluye: 'river', arde: 'clay', libera: 'sun' };

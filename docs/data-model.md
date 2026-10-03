@@ -898,8 +898,8 @@ _Cada gasto del estudio, fijo (generado de una plantilla) o variable (registrado
 ### Comms · Comunicaciones
 
 #### `email_templates`
-Versioned transactional emails (M-04).  
-_Emails transaccionales versionados (M-04)._
+Versioned automated emails (M-04): to customers, teachers and the team.  
+_Emails automáticos versionados (M-04): a clientes, profesores y equipo._
 
 | column | type | notes |
 | --- | --- | --- |
@@ -909,7 +909,9 @@ _Emails transaccionales versionados (M-04)._
 | `updated_at` | timestamptz |  |
 | `key` | text |  |
 | `name` | text |  |
+| `audience` | enum (customer \| teacher \| studio) | who receives it (0055): a member or prospect, a teacher, or the studio team |
 | `trigger` | text |  |
+| `priority` | enum (launch \| first_60 \| later), null | when it has to exist (0055): before launch, first 60 days, later |
 | `subject` | json |  |
 | `body_mjml` | text |  |
 | `version` | int |  |

@@ -1373,7 +1373,7 @@
     "en": "Every automated email as a real design, editable and previewable, in both languages, with the trigger and the deep link it carries."
    },
    "layout": [
-    "TemplateList (trigger, locale, status)",
+    "TemplateList (audience → priority, trigger, locale, status)",
     "Canvas (EmailPreview)",
     "VariablePanel + Editor",
     "LocaleSwitch ES / EN",
@@ -1437,6 +1437,7 @@
    "canvasRef": "reference/canvas/Hoy Wellness System.dc.html#M-04",
    "notes": [
     "body_mjml stores a JSON {es,en} plain-text body until the MJML designer exists.",
+    "0055: the default set is src/data/emailCatalog.ts (72 emails to customers, teachers and the team, from the 2026-10-02 inventories); the list is filtered by audience and grouped by priority.",
     "Versions are the audit_log rows of the template; rollback restores the before value.",
     "Test send writes message_log with payload.test = true."
    ]
@@ -5627,11 +5628,10 @@
     "en": "Account & data"
    },
    "purpose": {
-    "es": "Los derechos sobre la cuenta en un solo lugar: quién es el responsable del tratamiento, los consentimientos que la persona controla, una copia de sus propios datos, los documentos legales y la solicitud de eliminar la cuenta con lo que se conserva explicado en lenguaje llano.",
-    "en": "Account-level rights in one place: who the data controller is, the consents the member controls, a copy of their own data, the legal documents and the request to delete the account, with what is kept explained in plain words."
+    "es": "Los derechos sobre la cuenta en un solo lugar: los consentimientos que la persona controla, una copia de sus propios datos, los documentos legales y la solicitud de eliminar la cuenta con lo que se conserva explicado en lenguaje llano.",
+    "en": "Account-level rights in one place: the consents the member controls, a copy of their own data, the legal documents and the request to delete the account, with what is kept explained in plain words."
    },
    "layout": [
-    "DataController",
     "ConsentToggles",
     "ExportData",
     "LegalLinks",
@@ -5658,8 +5658,7 @@
     "Deleting is a request, not a client-side delete: the page inserts one deletion_requests row (status requested, channel app, optional reason) plus an audit_log row (account.deletion_request). Admin follows it in M-11; the anonymisation of profiles + users and the removal of the auth user run server-side (Supabase function) once the backend exists. Nothing on the client alters the profile.",
     "Two-step confirm: step one explains what is kept (invoices and payment history for the legal retention period, anonymised) and what ends (access, profile, notifications) and requires the \"I understand\" switch; step two is the destructive button. While a request is open the row is replaced by its status and a \"cancel request\" that flips status to cancelled (only from requested).",
     "Export builds one JSON with the member’s own rows from every table that points at their user id, plus the invoices of their payments, and logs account.export.",
-    "Marketing consent is the notification_prefs marketing category per channel (WhatsApp, email); profiles.marketing_optin mirrors “any channel on”. Data-processing consent is read-only here: it shows the privacy version accepted (legal_acceptances kind privacy) and links to A-06 to accept the current one.",
-    "The data controller line reads the display name from M-08 (tenants.settings) with tenant.legalName and the studio email — nothing about the studio is typed here."
+    "Marketing consent is the notification_prefs marketing category per channel (WhatsApp, email); profiles.marketing_optin mirrors “any channel on”. Data-processing consent is read-only here: it shows the privacy version accepted (legal_acceptances kind privacy) and links to A-06 to accept the current one."
    ],
    "integrations": [
     "Supabase Auth"
@@ -9318,7 +9317,6 @@
    "layout": [
     "Head",
     "About",
-    "Values",
     "Media",
     "Philosophy",
     "BrandBoard"
