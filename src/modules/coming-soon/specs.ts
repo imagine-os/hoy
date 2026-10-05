@@ -7,13 +7,13 @@ export const comingSoonSpec = defineSpec({
   purpose: { es: 'La página de preapertura, separada del sitio completo y accesible desde su propia tarjeta en el hub.', en: 'A standalone pre-launch page, separate from the full website and accessible from its own hub card.' },
   layout: ['Landing'], data: [], roles: EVERYONE, integrations: [],
   logic: [
-    'Independent /coming-soon route: no SiteShell, edition selector, booking, launch date or lead collection.',
+    'Public root and /coming-soon share the pre-launch page; /hub is the separate public testing hub. No SiteShell, booking, launch date or lead collection.',
     'Uses the existing brand wordmark, tenant identity, approved brand tagline and concept sanctuary artwork.',
     'AmbientScene reuses the existing local loop with a still fallback, reduced-motion/save-data support and an explicit pause control.',
-    'Top-right Login opens the existing /auth/sign-in demo entry; it does not create or claim production authentication.',
+    'Top-right Login opens a Coming Soon dialog with Close, Escape, Back and focus restoration; no credentials, Clerk setup or authentication action.',
     'The only external link opens the existing studio Instagram profile; no visitor data is collected or submitted.',
     'Spanish and English share the normal language switch; the full website and its Latest default remain unchanged.',
   ],
-  states: ['Spanish', 'English', 'motion playing', 'motion paused', 'reduced motion', 'video unavailable'],
+  states: ['Spanish', 'English', 'login dialog', 'motion playing', 'motion paused', 'reduced motion', 'video unavailable'],
   checkedAt: [344, 390, 768, 1280],
 });

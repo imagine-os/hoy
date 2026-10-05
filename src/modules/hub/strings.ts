@@ -59,5 +59,5 @@ export const strings: StringTable = {
   'hub.stat.components': { es: 'Componentes', en: 'Components' },
   'hub.stat.actions': { es: 'Acciones', en: 'Actions' },
   'hub.stat.chapters': { es: 'Capítulos del manual', en: 'Manual chapters' },
-  'hub.footer': { es: 'HoyOS v{v} · pruebas privadas · datos demo', en: 'HoyOS v{v} · private testing · demo data' },
+  'hub.footer': { es: 'HoyOS v{v} · pruebas públicas · datos demo', en: 'HoyOS v{v} · public testing · demo data' },
 };

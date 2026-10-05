@@ -36,8 +36,8 @@ export const hubSpec = defineSpec({
   code: 'HUB-01',
   name: { es: 'Hub de pruebas', en: 'Testing hub' },
   purpose: {
-    es: 'La primera pantalla: enseña el sistema entero de un vistazo y deja entrar a cualquier puesto del estudio con su usuario demo. Cada tarjeta muestra la pantalla real (captura, y la página en vivo cuando cabe), su estado y su ruta; abajo, el sistema en números y el hub de pruebas (lienzo, simulador, specs, tablas, componentes, tokens, decisiones, capturas).',
-    en: 'The first screen: it shows the whole system at once and lets a tester enter any seat at the studio as its demo user. Every card shows the real screen (a capture, and the running page when there is room), its status and its route; below, the system in numbers and the testing hub (canvas, simulator, specs, tables, components, tokens, decisions, captures).',
+    es: 'El hub público de pruebas en /hub: enseña el sistema entero de un vistazo y deja entrar a cualquier puesto del estudio con su usuario demo. Cada tarjeta muestra la pantalla real (captura, y la página en vivo cuando cabe), su estado y su ruta; abajo, el sistema en números y el hub de pruebas (lienzo, simulador, specs, tablas, componentes, tokens, decisiones, capturas).',
+    en: 'The public testing hub at /hub: it shows the whole system at once and lets a tester enter any seat at the studio as its demo user. Every card shows the real screen (a capture, and the running page when there is room), its status and its route; below, the system in numbers and the testing hub (canvas, simulator, specs, tables, components, tokens, decisions, captures).',
   },
   layout: [
     'BrandBand (Wordmark, version Badge, LangToggle, theme, wireframe + dev toggles for super_admin)',
@@ -75,7 +75,7 @@ export const hubSpec = defineSpec({
   actions: hubActions,
   checkedAt: [360, 390, 768, 1280, 1920, 2560, 3840],
   notes: [
-    'Not part of the canvas; it is the private testing front door. A real splash (A-01) plus Supabase Auth replaces the role switching later.',
+    'Not part of the canvas; it is the public testing hub at /hub. The public root is Coming Soon; demo role switching remains isolated from production authentication.',
     'Referenced design: the cal-tenant-law hub (same stack) — brand band, floating session bar, 3fr/9fr surface bands, layered previews.',
   ],
 });

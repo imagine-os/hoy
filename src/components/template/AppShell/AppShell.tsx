@@ -35,7 +35,7 @@ export function AppShell({ surface, routes, homeTo, children, bare = false }: Ap
     <div className={`appshell ${wide ? 'is-wide' : 'is-narrow'}`} data-surface={surface}>
       {!bare && (
         <TopBar brand homeTo={homeTo} nav={wide && items.length > 0 ? <NavBar variant="top" items={items} /> : undefined}
-          actions={<><LangToggle size="sm" /><Link to="/" className="appshell-avatar" title={t('core.nav.hub')}><Avatar name={user.name} initials={user.initials} size={wide ? 36 : 30} /></Link></>} />
+          actions={<><LangToggle size="sm" /><Link to="/hub" className="appshell-avatar" title={t('core.nav.hub')}><Avatar name={user.name} initials={user.initials} size={wide ? 36 : 30} /></Link></>} />
       )}
       <main className="appshell-main">{children}</main>
       {!wide && items.length > 0 && <div className="appshell-dock"><NavBar items={items} /></div>}

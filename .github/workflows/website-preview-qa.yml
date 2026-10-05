@@ -4,6 +4,10 @@ on:
     branches: [main]
     paths:
       - 'src/modules/website/**'
+      - 'src/app/**'
+      - 'src/main.tsx'
+      - 'src/components/organism/Drawer/**'
+      - 'public/hub/**'
       - 'src/modules/coming-soon/**'
       - 'src/components/molecule/SiteVersionSelect/**'
       - 'src/components/molecule/SiteArchiveNotice/**'
@@ -12,6 +16,8 @@ on:
       - 'src/hub/**'
       - 'src/modules/hub/**'
       - 'scripts/test-website-preview.mjs'
+      - 'scripts/test-public-entry.mjs'
+      - 'scripts/test-clean-hub.mjs'
       - '.github/workflows/website-preview-qa.yml'
       - 'docs/screenshots/W-11/**'
 permissions:
@@ -33,6 +39,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run typecheck
+      - run: node --experimental-strip-types scripts/test-clean-hub.mjs
       - name: Check archived and current website flows
         run: node scripts/test-website-preview.mjs
         env:
@@ -43,6 +50,10 @@ jobs:
         env:
           BROWSER_BIN: /usr/bin/google-chrome
           QA_DIST: '1'
+      - name: Verify clean entries on static hosting
+        run: node scripts/test-public-entry.mjs
+        env:
+          BROWSER_BIN: /usr/bin/google-chrome
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -52,5 +63,6 @@ jobs:
             docs/screenshots/W-*/**/*-archive.jpg
             docs/screenshots/P-01/*-archive.jpg
             qa/website-preview.json
+            qa/public-entry.json
             qa/failure.jpg
           retention-days: 1

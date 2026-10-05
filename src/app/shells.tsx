@@ -25,7 +25,7 @@ export function withShell(route: RouteDef, children: ReactNode): ReactNode {
   if (route.surface === 'public') return children;
   const allRoutes = getRoutes();
   const mode = route.layout === 'mobile' || route.layout === 'desktop' ? route.layout : (route.surface === 'customer' || route.surface === 'teacher' ? 'mobile' : 'desktop');
-  if (mode === 'mobile') return <AppShell surface={route.surface} routes={allRoutes} homeTo={APP_HOME[route.surface] ?? '/'}>{children}</AppShell>;
+  if (mode === 'mobile') return <AppShell surface={route.surface} routes={allRoutes} homeTo={APP_HOME[route.surface] ?? '/hub'}>{children}</AppShell>;
   const d = DESKTOP[route.surface];
   return <DesktopShell surfaces={d.surfaces} routes={allRoutes} titleKey={d.titleKey}>{children}</DesktopShell>;
 }

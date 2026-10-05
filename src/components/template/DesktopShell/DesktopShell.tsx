@@ -139,7 +139,7 @@ export function DesktopShell({ surfaces, routes, titleKey, children }: DesktopSh
     <div className={`deskshell ${collapsed ? 'is-rail' : ''} ${drawer ? 'is-open' : ''}`}>
       <aside className="deskshell-side" aria-label={t('core.shell.sections')}>
         <div className="deskshell-brand">
-          <Link to="/" className="deskshell-mark" title={t('core.nav.hub')}><Wordmark height={collapsed ? 15 : 26} /></Link>
+          <Link to="/hub" className="deskshell-mark" title={t('core.nav.hub')}><Wordmark height={collapsed ? 15 : 26} /></Link>
           {!collapsed && <span className="deskshell-title">{title}</span>}
         </div>
         <nav className="deskshell-nav" aria-label={t('core.shell.sections')}>
@@ -185,18 +185,18 @@ export function DesktopShell({ surfaces, routes, titleKey, children }: DesktopSh
             {!collapsed && <span className="small">{t('core.shell.collapse')}</span>}
           </button>
           {collapsed ? (
-            <Link to="/" title={user.name} className="deskshell-me"><Avatar name={user.name} initials={user.initials} size={28} /></Link>
+            <Link to="/hub" title={user.name} className="deskshell-me"><Avatar name={user.name} initials={user.initials} size={28} /></Link>
           ) : (
             <>
               <div className="row"><Avatar name={user.name} initials={user.initials} size={32} /><div className="grow small"><div className="deskshell-who">{user.name}</div><div className="xs muted">{bi(ROLE_LABEL[role])}</div></div></div>
-              <Link to="/" className="small">← {t('core.nav.hub')}</Link>
+              <Link to="/hub" className="small">← {t('core.nav.hub')}</Link>
             </>
           )}
         </div>
       </aside>
       <div className="deskshell-col">
         <TopBar
-          brand homeTo="/" title={current ? (current.nav ? t(current.nav.labelKey) : bi(current.spec.name)) : title} code={current?.spec.code}
+          brand homeTo="/hub" title={current ? (current.nav ? t(current.nav.labelKey) : bi(current.spec.name)) : title} code={current?.spec.code}
           leading={<button type="button" className="topbar-lead" onClick={toggleSidebar} aria-label={sidebarLabel} aria-expanded={narrow ? drawer : !collapsed} title={sidebarLabel}>☰</button>}
           center={<GlobalSearch items={searchItems} />}
           actions={

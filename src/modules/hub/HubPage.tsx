@@ -276,7 +276,7 @@ export function HubPage() {
           <div className="hub-wrap">
             <header className="hub-head">
               <div className="hub-head-brand">
-                <Link to="/" aria-label={t('core.nav.hub')}><Wordmark height={Math.round(30 * ui)} variant="cream" /></Link>
+                <Link to="/hub" aria-label={t('core.nav.hub')}><Wordmark height={Math.round(30 * ui)} variant="cream" /></Link>
                 <Badge tone="highlight">{t('hub.version', { v: pkg.version })}</Badge>
               </div>
               <div className="hub-head-tools">

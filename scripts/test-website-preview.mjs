@@ -132,16 +132,46 @@ try {
   assert.equal(await page.locator('.coming-soon-motion').getAttribute('aria-pressed'), 'true');
   await page.waitForFunction(() => document.querySelectorAll('.coming-soon video').length === 0);
   await capture(page, 'W-11', 'en', 344);
-  const login = page.getByRole('link', {name:'Login',exact:true});
-  assert.equal(await login.getAttribute('href'), '#/auth/sign-in');
-  await login.click(); await page.waitForSelector('form input[type="email"]');
-  assert.ok(page.url().includes('/auth/sign-in'));
-  await page.goBack(); await page.waitForSelector('.coming-soon');
-  check('Coming Soon is independent, links to the existing login entry, has a real Instagram destination and pauses motion');
-  await page.goto(`${url}/#/`); await page.waitForSelector('.hub-card');
+  const login = page.getByRole('button', {name:'Login',exact:true});
+  const dialog = page.getByRole('dialog', {name:'Coming soon',exact:true});
+  await login.click(); await dialog.waitFor();
+  assert.ok(page.url().includes('login=soon'));
+  assert.equal(await page.locator('form input[type="email"]').count(),0);
+  await page.keyboard.press('Shift+Tab');
+  assert.ok(await dialog.evaluate(el=>el.contains(document.activeElement)));
+  await page.keyboard.press('Tab');
+  assert.ok(await dialog.evaluate(el=>el.contains(document.activeElement)));
+  await page.keyboard.press('Shift+Tab');
+  assert.ok(await dialog.evaluate(el=>el.contains(document.activeElement)));
+  await page.keyboard.press('Escape'); await dialog.waitFor({state:'hidden'});
+  assert.ok(await login.evaluate(el=>el===document.activeElement));
+  await login.click(); await dialog.waitFor();
+  await page.goBack(); await dialog.waitFor({state:'hidden'});
+  await page.goForward(); await dialog.waitFor();
+  await dialog.getByRole('button',{name:'Close',exact:true}).last().click(); await dialog.waitFor({state:'hidden'});
+  assert.ok(await login.evaluate(el=>el===document.activeElement));
+  await login.click(); await dialog.waitFor();
+  await page.locator('.drawer-overlay').click({position:{x:4,y:4}}); await dialog.waitFor({state:'hidden'});
+  assert.ok(await login.evaluate(el=>el===document.activeElement));
+  check('Coming Soon Login is an accessible placeholder: no auth, Close/Escape/Back/overlay and focus restoration work');
+  await page.goto(`${url}/#/?login=soon`); await page.getByRole('dialog').waitFor();
+  await page.getByRole('dialog').getByRole('button',{name:'Close',exact:true}).last().click();
+  await page.getByRole('dialog').waitFor({state:'hidden'}); assert.ok(!page.url().includes('login=soon'));
+  await page.goto(`${url}/`); await page.waitForSelector('.coming-soon');
+  assert.equal(await page.locator('.hub-card').count(),0);
+  await page.goto(`${url}/#/hub`); await page.waitForSelector('.hub-card');
   const hubCard = page.locator('.hub-card').filter({hasText:'/coming-soon'});
   assert.equal(await hubCard.count(),1); await hubCard.getByRole('button').first().click(); await page.waitForSelector('.coming-soon');
-  check('Hub opens the separate Coming Soon experience');
+  check('Root opens Coming Soon; the public hub remains at #/hub and its Coming Soon card works');
+  for (const lang of ['es','en']) {
+    await page.getByRole('button',{name:lang.toUpperCase(),exact:true}).first().click();
+    for (const width of [390,1280]) {
+      await page.setViewportSize({width,height:width<600?844:900});
+      await page.locator('.coming-soon-login').click(); await page.getByRole('dialog').waitFor();
+      await noOverflow(page,`${lang} ${width} login dialog`); await capture(page,'W-11',lang,width,'-login-coming-soon');
+      await page.keyboard.press('Escape'); await page.getByRole('dialog').waitFor({state:'hidden'});
+    }
+  }
   const reduced = await browser.newContext({ viewport: {width:1280,height:900}, reducedMotion:'reduce' });
   const quiet = await reduced.newPage();
   const reducedVideoRequests = []; quiet.on('request', r => { if (r.url().includes('/video/')) reducedVideoRequests.push(r.url()); });

@@ -23,8 +23,8 @@ export default defineMeta({
     { name: 'title / footer', type: 'ReactNode', description: { es: 'Cabecera y pie.', en: 'Header and footer.' } },
     { name: 'desktop', type: "'dialog' | 'sheet'", default: 'dialog', description: { es: 'Cómo se ve una hoja inferior desde 900 px: diálogo centrado o hoja completa.', en: 'How a bottom sheet renders from 900 px: centred dialog or full-width sheet.' } },
   ],
-  states: ['closed', 'open', 'mobile-fullwidth', 'bottom-sheet (< 900 px)', 'desktop-dialog (≥ 900 px)', 'focus-trapped (Tab cycles inside)', 'scroll-locked (body does not scroll behind the overlay)'],
+  states: ['closed', 'open', 'accessible title', 'mobile-fullwidth', 'bottom-sheet (< 900 px)', 'desktop-dialog (≥ 900 px)', 'focus-trapped (Tab cycles inside)', 'scroll-locked (body does not scroll behind the overlay)'],
   usages: [{ title: { es: 'Interactivo', en: 'Interactive' }, render: () => h(Demo) }, { title: { es: 'Hoja / diálogo (side="bottom")', en: 'Sheet / dialog (side="bottom")' }, render: () => h(DemoBottom) }],
   a11y: [{ es: 'role="dialog" aria-modal; el foco entra al abrir, queda atrapado (Tab / Shift+Tab ciclan dentro) y vuelve al disparador al cerrar; Escape cierra solo el diálogo más interno; el documento no se desplaza detrás.', en: 'role="dialog" aria-modal; focus enters on open, is trapped (Tab / Shift+Tab cycle inside) and returns to the trigger on close; Escape closes only the innermost dialog; the document does not scroll behind it.' }],
-  usedBy: ['M-03', 'InspectorPanel', 'C-02', 'C-04', 'C-06', 'C-08b', 'W-04', 'M-08g', 'D-07'],
+  usedBy: ['M-03', 'InspectorPanel', 'C-02', 'C-04', 'C-06', 'C-08b', 'W-04', 'M-08g', 'D-07', 'W-11'],
 });

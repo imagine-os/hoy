@@ -38,9 +38,9 @@ function experienceOf(path, surface) {
     case 'dev': return under('/dev/knowledgebase') ? 'kb' : 'dev';
     case 'docs': return under('/manual') ? 'manual' : under('/docs/source') ? 'sources' : 'docs';
     case 'public':
-      if (under('/coming-soon')) return 'coming-soon';
+      if (path === '/' || under('/coming-soon')) return 'coming-soon';
       if (under('/site')) return 'site';
-      if (path === '/') return 'dev'; // the testing hub itself sits with the dev tools
+      if (path === '/hub') return 'dev'; // the testing hub itself sits with the dev tools
       return 'app'; // /no-access (E-05): the edge state a signed-in member meets
     default: return null;
   }

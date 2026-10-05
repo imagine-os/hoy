@@ -18,7 +18,7 @@ export const HUB_MAP_SCHEMA = 'hoy.hub-map/1' as const;
 /** Where the product is published (GitHub Pages). Every URL in the map is relative to it. */
 export const HOY_BASE_URL = 'https://imagine-os.github.io/hoy/';
 /** The testing hub's own route. */
-export const HUB_ROUTE = '/';
+export const HUB_ROUTE = '/hub';
 /** The published file, relative to the base URL. */
 export const HUB_MAP_FILE = 'hub-map.json';
 /** Where the build copies the captures the map points at, relative to the base URL. */
@@ -150,7 +150,8 @@ export const HUB_GROUP_RULES: { prefix: string; group: string; exact?: boolean }
   { prefix: '/admin/finance', group: 'finance' },
   { prefix: '/admin/tables', group: 'tables' },
   // build
-  { prefix: '/', group: 'dev', exact: true }, // the testing hub itself
+  { prefix: '/hub', group: 'dev', exact: true }, // the testing hub itself
+  { prefix: '/', group: 'coming-soon', exact: true }, // the public landing
   { prefix: '/dev', group: 'dev' },
   { prefix: '/docs', group: 'docs' },
   { prefix: '/docs/source', group: 'sources' },
@@ -282,16 +283,16 @@ export const HUB_LENSES: Record<HubLensId, HubLensHint> = {
   aluzina: {
     title: { es: 'hoy en el estudio aluzina', en: 'hoy in the aluzina studio' },
     framing: { es: 'Un entregable del estudio: un mat por cada rol del cliente, con las pantallas de ese rol encima.', en: 'A studio deliverable: one mat per client role, with that role’s screens laid on it.' },
-    groupBy: 'role', showTools: false, entry: '/',
+    groupBy: 'role', showTools: false, entry: '/hub',
   },
   'between-gigs': {
     title: { es: 'hoy como gig', en: 'hoy as a gig' },
     framing: { es: 'Un gig con sus superficies y sus herramientas.', en: 'One gig with its surfaces and tools.' },
-    groupBy: 'experience', showTools: true, entry: '/',
+    groupBy: 'experience', showTools: true, entry: '/hub',
   },
   standalone: {
     title: { es: 'Hub de pruebas de hoy', en: 'hoy’s testing hub' },
     framing: { es: 'El hub de pruebas propio de hoy: cada superficie por banda y cada herramienta, como en /#/.', en: 'hoy’s own testing hub: every surface by band and every tool, as at /#/.' },
-    groupBy: 'surface', showTools: true, entry: '/',
+    groupBy: 'surface', showTools: true, entry: '/hub',
   },
 };

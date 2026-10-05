@@ -1,17 +1,17 @@
 ---
 title: HUB-01 — Testing hub
 code: HUB-01
-route: /#/
+route: /#/hub
 roles: super_admin, admin, coordinator, front_desk, finance, teacher, maintenance, customer, public
 status: built
 ---
 
 # HUB-01 — Testing hub
 
-**Route** `/#/` · **Roles** everyone (including the visitor) · **Surface** public · **Spec** `src/modules/hub/specs.ts` → `hubSpec` · **Checked at** 360 · 390 · 768 · 1280 · 1920 · 2560 · 3840
+**Route** `/#/hub` · **Roles** everyone (including the visitor) · **Surface** public · **Spec** `src/modules/hub/specs.ts` → `hubSpec` · **Checked at** 360 · 390 · 768 · 1280 · 1920 · 2560 · 3840
 
 ## Purpose
-The first screen: it shows the whole system at once and lets a tester enter any seat at the studio as
+The public testing hub at /hub: it shows the whole system at once and lets a tester enter any seat at the studio as
 that seat's demo user. Every card carries the real screen behind it — a committed capture, and on a
 real browser the running page — plus its status and its route. Below the surfaces, the system in
 numbers and the testing hub: canvas, simulator, specs, tables, components, tokens, decisions,
@@ -70,7 +70,7 @@ The page's own thumbnails (what the canvas shows for it):
 6. **Band C · Construcción y pruebas** (tinted lane) — Manual de operaciones, Documentación y changelog, Kanban y knowledgebase, Herramientas de desarrollo.
 7. **ToolsRow · Hub de pruebas** — nine compact tool cards: lienzo, simulador, specs, editor de layout, tablas, componentes, tokens, decisiones, capturas.
 8. **StatStrip** — a `<dl>`: routes, page codes, tables, components, actions, manual chapters.
-9. **Footer** — `HoyOS v{version} · pruebas privadas · datos demo` (v0.11.0 at 0027).
+9. **Footer** — `HoyOS v{version} · pruebas públicas · datos demo` (v0.11.0 at 0027).
 
 Each surface card: hue medallion + `Icon`, a built / stub / planned `Badge`, an "Estás aquí" badge
 when the route is the current role's home, title, one-line body, a `PagePreview`, one outline
@@ -150,3 +150,7 @@ framed (inside a preview or the simulator) · no captures yet (idle tiles) · En
 **Resumen (ES).** La puerta de entrada. Cada tarjeta muestra la pantalla real que abre — la captura y,
 en un navegador normal, la página funcionando — y entra como la persona demo de ese puesto. Abajo, el
 sistema en números y las herramientas de prueba.
+
+## Public landing and clean entry (0059)
+
+The public deployment root opens Coming Soon. This testing hub stays public, without a new password gate, at `/#/hub`; `/hub`, `/hub/` and `/hub/index.html` hand off to that route on the same deployment. All semantic “Hub” links return here. The full website, Latest and historical animated edition remain testable from the existing cards. No DNS, CNAME or authentication setting is changed.

@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useRef, useId, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { useT } from '../../../i18n/I18nProvider';
 import './Drawer.css';
@@ -25,6 +25,7 @@ const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), selec
  */
 export function Drawer({ open, onClose, title, side = 'right', width = 420, children, footer, desktop = 'dialog' }: DrawerProps) {
   const t = useT();
+  const titleId = useId();
   const ref = useRef<HTMLDivElement>(null);
   // The latest onClose lives in a ref so an inline callback does not re-run the effect (which would re-capture
   // the opener as the dialog itself and re-focus the container on every parent render).
@@ -39,7 +40,7 @@ export function Drawer({ open, onClose, title, side = 'right', width = 420, chil
       const items = Array.from(ref.current.querySelectorAll<HTMLElement>(FOCUSABLE)).filter((el) => el.offsetParent !== null || el === document.activeElement);
       if (items.length === 0) { e.preventDefault(); ref.current.focus(); return; }
       const first = items[0], last = items[items.length - 1], active = document.activeElement;
-      const outside = !ref.current.contains(active);
+      const outside = !ref.current.contains(active) || active === ref.current;
       if (e.shiftKey && (active === first || outside)) { e.preventDefault(); last.focus(); }
       else if (!e.shiftKey && (active === last || outside)) { e.preventDefault(); first.focus(); }
     };
@@ -59,9 +60,9 @@ export function Drawer({ open, onClose, title, side = 'right', width = 420, chil
   return createPortal(
     <div className="drawer-root">
       <div className="drawer-overlay" onClick={onClose} aria-hidden />
-      <div ref={ref} tabIndex={-1} role="dialog" aria-modal="true" className={`drawer drawer-${side} ${side === 'bottom' && desktop === 'dialog' ? 'is-dialog' : ''}`} style={side !== 'bottom' ? { width: `min(${width}px, 100vw)` } : undefined}>
+      <div ref={ref} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby={title ? titleId : undefined} className={`drawer drawer-${side} ${side === 'bottom' && desktop === 'dialog' ? 'is-dialog' : ''}`} style={side !== 'bottom' ? { width: `min(${width}px, 100vw)` } : undefined}>
         <header className="drawer-head">
-          <div className="grow">{typeof title === 'string' ? <h3>{title}</h3> : title}</div>
+          <div className="grow" id={titleId}>{typeof title === 'string' ? <h3>{title}</h3> : title}</div>
           <button type="button" className="drawer-close" onClick={onClose} aria-label={t('core.common.close')}>×</button>
         </header>
         <div className="drawer-body">{children}</div>

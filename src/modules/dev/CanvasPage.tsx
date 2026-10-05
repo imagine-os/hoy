@@ -26,7 +26,7 @@ const GROUPS: { key: GroupKey; label: Bi; hue: string }[] = [
 ];
 
 function groupOf(r: RouteDef): GroupKey {
-  if (r.path === '/' || r.path === '/no-access') return 'hub';
+  if (r.path === '/hub' || r.path === '/no-access') return 'hub';
   if (r.path.startsWith('/auth')) return 'auth';
   if (r.surface === 'public') return 'website';
   return r.surface;
