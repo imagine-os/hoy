@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HOY · Hub</title>
+  <meta name="robots" content="noindex">
+  <script>
+    // Stay on this origin and deployment root (/hoy/ today, / on a future verified domain).
+    const target = new URL(window.location.href);
+    target.pathname = target.pathname.replace(/hub(?:\/index\.html|\/)?$/, '');
+    if (!target.hash || target.hash === '#') target.hash = '/hub';
+    window.location.replace(target.href);
+  </script>
+</head>
+<body><p><a href="../#/hub">Abrir hub / Open hub</a></p></body>
+</html>

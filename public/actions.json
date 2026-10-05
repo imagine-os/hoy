@@ -6,7 +6,7 @@
       "es": "HoyOS",
       "en": "HoyOS"
     },
-    "version": "0.23.1",
+    "version": "0.23.2",
     "baseUrl": "https://imagine-os.github.io/hoy/"
   },
   "generatedAt": "2026-10-05T00:00:00.000Z",
@@ -611,7 +611,7 @@
       "pages": [
         {
           "code": "HUB-01",
-          "route": "/"
+          "route": "/hub"
         }
       ]
     },
@@ -641,7 +641,7 @@
       "pages": [
         {
           "code": "HUB-01",
-          "route": "/"
+          "route": "/hub"
         }
       ]
     },
@@ -672,7 +672,7 @@
       "pages": [
         {
           "code": "HUB-01",
-          "route": "/"
+          "route": "/hub"
         }
       ]
     },
@@ -703,7 +703,7 @@
       "pages": [
         {
           "code": "HUB-01",
-          "route": "/"
+          "route": "/hub"
         }
       ]
     },
@@ -736,7 +736,7 @@
       "pages": [
         {
           "code": "HUB-01",
-          "route": "/"
+          "route": "/hub"
         }
       ]
     },
@@ -769,7 +769,7 @@
       "pages": [
         {
           "code": "HUB-01",
-          "route": "/"
+          "route": "/hub"
         }
       ]
     },
@@ -800,7 +800,7 @@
       "pages": [
         {
           "code": "HUB-01",
-          "route": "/"
+          "route": "/hub"
         }
       ]
     },
@@ -830,7 +830,7 @@
       "pages": [
         {
           "code": "HUB-01",
-          "route": "/"
+          "route": "/hub"
         }
       ]
     },
@@ -861,7 +861,7 @@
       "pages": [
         {
           "code": "HUB-01",
-          "route": "/"
+          "route": "/hub"
         }
       ]
     },

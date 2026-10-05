@@ -16,7 +16,7 @@ export function NoAccessPage() {
         <h1 className="noaccess-title">{t('core.noAccess.title')}</h1>
         <p className="muted">{t('core.noAccess.body', { role: bi(ROLE_LABEL[role]) })}</p>
         <RoleSwitcher />
-        <div><Link to="/"><Button>{t('core.noAccess.cta')}</Button></Link></div>
+        <div><Link to="/hub"><Button>{t('core.noAccess.cta')}</Button></Link></div>
       </Card>
     </div>
   );

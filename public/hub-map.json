@@ -11,9 +11,9 @@
       "es": "Un solo sistema para cada puesto del estudio: quien practica, quien enseña, quien recibe en la puerta, quien administra y quien lo construye.",
       "en": "One system for every seat at the studio: members, teachers, front desk, admin, and the people who build it."
     },
-    "version": "0.23.1",
+    "version": "0.23.2",
     "baseUrl": "https://imagine-os.github.io/hoy/",
-    "hubRoute": "/",
+    "hubRoute": "/hub",
     "brand": {
       "accent": "#35597D",
       "wordmark": "brand/hoy-blue.png"
@@ -2265,7 +2265,7 @@
     },
     {
       "code": "W-11",
-      "route": "/coming-soon",
+      "route": "/",
       "name": {
         "es": "Próximamente",
         "en": "Coming soon"
@@ -4448,14 +4448,14 @@
     },
     {
       "code": "HUB-01",
-      "route": "/",
+      "route": "/hub",
       "name": {
         "es": "Hub de pruebas",
         "en": "Testing hub"
       },
       "purpose": {
-        "es": "La primera pantalla: enseña el sistema entero de un vistazo y deja entrar a cualquier puesto del estudio con su usuario demo. Cada tarjeta muestra la pantalla real (captura, y la página en vivo cuando cabe), su estado y su ruta; abajo, el sistema en números y el hub de pruebas (lienzo, simulador, specs, tablas, componentes, tokens, decisiones, capturas).",
-        "en": "The first screen: it shows the whole system at once and lets a tester enter any seat at the studio as its demo user. Every card shows the real screen (a capture, and the running page when there is room), its status and its route; below, the system in numbers and the testing hub (canvas, simulator, specs, tables, components, tokens, decisions, captures)."
+        "es": "El hub público de pruebas en /hub: enseña el sistema entero de un vistazo y deja entrar a cualquier puesto del estudio con su usuario demo. Cada tarjeta muestra la pantalla real (captura, y la página en vivo cuando cabe), su estado y su ruta; abajo, el sistema en números y el hub de pruebas (lienzo, simulador, specs, tablas, componentes, tokens, decisiones, capturas).",
+        "en": "The public testing hub at /hub: it shows the whole system at once and lets a tester enter any seat at the studio as its demo user. Every card shows the real screen (a capture, and the running page when there is room), its status and its route; below, the system in numbers and the testing hub (canvas, simulator, specs, tables, components, tokens, decisions, captures)."
       },
       "surface": "public",
       "roles": [
@@ -5879,7 +5879,7 @@
       },
       "groupBy": "role",
       "showTools": false,
-      "entry": "/"
+      "entry": "/hub"
     },
     "between-gigs": {
       "title": {
@@ -5892,7 +5892,7 @@
       },
       "groupBy": "experience",
       "showTools": true,
-      "entry": "/"
+      "entry": "/hub"
     },
     "standalone": {
       "title": {
@@ -5900,12 +5900,12 @@
         "en": "hoy’s testing hub"
       },
       "framing": {
-        "es": "El hub de pruebas propio de hoy: cada superficie por banda y cada herramienta, como en /#/.",
-        "en": "hoy’s own testing hub: every surface by band and every tool, as at /#/."
+        "es": "El hub de pruebas propio de hoy: cada superficie por banda y cada herramienta, como en /#/hub.",
+        "en": "hoy’s own testing hub: every surface by band and every tool, as at /#/hub."
       },
       "groupBy": "surface",
       "showTools": true,
-      "entry": "/"
+      "entry": "/hub"
     }
   }
 }

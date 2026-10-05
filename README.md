@@ -17,14 +17,15 @@ manual, the in-app documentation and the developer tooling.
 
 ## The testing hub and the seven perspectives
 
-The root route `/#/` is a **testing hub** for private testing between the studio team and the build
-team. One card per surface, each showing the real screen it opens — the committed capture, and the
-running page itself in a normal browser — and entering it as that seat's **demo user** (fictional
-people, one per role).
+The public root opens **Coming Soon**. The **public testing hub** remains at `/hub` (the same-site
+entry into `/#/hub`), with demo role switching and no new password gate. The complete website remains
+at `/#/site`, including Latest and its separate historical animated preview. Login on Coming Soon
+opens a placeholder dialog; no Clerk or production authentication service is configured.
 
 | Perspective | Entry route(s) | Who it is for | State (v0.12.0) |
 | --- | --- | --- | --- |
-| Testing hub | `/#/` | The studio team and the build team: one card per surface with a real capture (and the running page, live, in a normal browser), enter-as buttons for every seat, demo user switcher, dev mode, and a stat strip that counts the system | built (HUB-01) |
+| Testing hub | `/hub` → `/#/hub` | The studio team and the build team: one card per surface with a real capture (and the running page, live, in a normal browser), enter-as buttons for every seat, demo user switcher, dev mode, and a stat strip that counts the system | built (HUB-01) |
+| Coming Soon | `/` and `/#/coming-soon` | Public pre-launch page, ES/EN, motion controls and Login coming-soon dialog | built (W-11) |
 | Website | `/#/site` | Everyone, before login: home, about & philosophy, classes, class essay, modalities, schedule, teachers, plans (with the value model explained), contact with a map slot, legal, public account-deletion request | built (W-01…W-09, P-01, A-06) |
 | Customer app | `/#/auth/sign-in` → `/#/app` | Members and drop-ins (mobile-first, full-viewport from 900 px — no phone frame): sign in / create account, home, schedule, class, checkout, booking, waitlist, packages, trial / individual class, my classes, history, profile, rules, FAQ, invite, gift, teachers, events, notifications, account & data (consents, export, delete request) | built (A-01…A-03, C-01…C-26, C-21, E-01…E-04) |
 | Teacher app | `/#/teach` | Teachers (mobile-first, same responsive `AppShell`): my classes, attendance, notes, ratings, the payroll statement read from the finance run, profile | built (S-03) |

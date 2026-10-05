@@ -7,6 +7,6 @@ import { hubSpec, noAccessSpec } from './specs';
 export { strings } from './strings';
 
 export const routes: RouteDef[] = [
-  { path: '/', element: h(HubPage), spec: hubSpec, roles: EVERYONE, surface: 'public', layout: 'auto' },
+  { path: '/hub', element: h(HubPage), spec: hubSpec, roles: EVERYONE, surface: 'public', layout: 'auto' },
   { path: '/no-access', element: h(NoAccessPage), spec: noAccessSpec, roles: EVERYONE, surface: 'public', layout: 'auto' },
 ];

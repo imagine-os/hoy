@@ -10,7 +10,7 @@ export function RouteTitle({ routes }: { routes: RouteDef[] }) {
   const { bi, lang } = useI18n();
   useEffect(() => {
     const route = routes.find((r) => matchPath({ path: r.path, end: true }, pathname));
-    const name = route && route.path !== '/' ? bi(route.spec.name) : '';
+    const name = route && route.path !== '/hub' ? bi(route.spec.name) : '';
     document.title = name ? `${name} · ${tenant.name}` : `${tenant.name} · HoyOS`;
   }, [pathname, routes, bi, lang]);
   return null;

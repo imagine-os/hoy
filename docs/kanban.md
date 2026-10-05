@@ -1,5 +1,9 @@
 # HoyOS kanban
 
+## Completed · 0059 (v0.23.2 · 2026-10-05)
+
+- W-11/HUB-01: public Coming Soon root, separate clean /hub testing entry and accessible Login-coming-soon dialog. DNS/custom-domain activation is separate and unchanged. [Details](changelog/0059-public-landing-hub.md)
+
 ## Completed · 0058 (v0.23.1 · 2026-10-05)
 
 - W-11: English preview and top-right Login / Entrar wired to the existing demo sign-in entry; no auth or default-language changes. [Details](changelog/0058-coming-soon-login.md)

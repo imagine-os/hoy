@@ -1,5 +1,7 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useRef, useEffect } from 'react';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { Drawer } from '../../organism/Drawer/Drawer';
+import { Button } from '../../atom/Button/Button';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { tenant } from '../../../tenant/tenant';
 import { taglines } from '../../../tenant/brand';
@@ -13,7 +15,30 @@ import './ComingSoonLanding.css';
 export function ComingSoonLanding() {
   const { t, bi } = useI18n();
   const [motion, setMotion] = useState(true);
-  return <main className="coming-soon">
+  const [params, setParams] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const loginButton = useRef<HTMLButtonElement>(null);
+  const closing = useRef(false);
+  const wasOpen = useRef(false);
+  const loginOpen = params.get('login') === 'soon';
+  useEffect(() => { closing.current = false; }, [location.key]);
+  useEffect(() => {
+    if (wasOpen.current && !loginOpen) loginButton.current?.focus();
+    wasOpen.current = loginOpen;
+  }, [loginOpen]);
+  const openLogin = () => {
+    if (loginOpen) return;
+    const next = new URLSearchParams(params); next.set('login', 'soon');
+    setParams(next, { state: { comingSoonLogin: true } });
+  };
+  const closeLogin = () => {
+    if (closing.current) return;
+    closing.current = true;
+    if (location.state?.comingSoonLogin) navigate(-1);
+    else { const next = new URLSearchParams(params); next.delete('login'); setParams(next, { replace: true }); }
+  };
+  return <><main className="coming-soon">
     <AmbientScene
       className="coming-soon-scene" priority motion={motion}
       poster={`${import.meta.env.BASE_URL}images/sanctuary/hero-sanctuary.webp`}
@@ -24,7 +49,7 @@ export function ComingSoonLanding() {
     <div className="coming-soon-layout">
       <header className="coming-soon-header">
         <div className="coming-soon-brand"><Wordmark vector tone="cream" /><span>{bi(tenant.tagline)}</span></div>
-        <div className="coming-soon-tools"><LangToggle /><Link className="coming-soon-login" to="/auth/sign-in">{t('soon.login')}</Link></div>
+        <div className="coming-soon-tools"><LangToggle /><button ref={loginButton} type="button" className="coming-soon-login" onClick={openLogin} aria-haspopup="dialog" aria-expanded={loginOpen}>{t('soon.login')}</button></div>
       </header>
       <section className="coming-soon-message" aria-labelledby="coming-soon-title">
         <p className="coming-soon-status"><span aria-hidden="true" />{t('soon.status')}</p>
@@ -44,5 +69,7 @@ export function ComingSoonLanding() {
         </button>
       </footer>
     </div>
-  </main>;
+  </main><Drawer open={loginOpen} onClose={closeLogin} side="bottom" title={t('soon.loginTitle')} footer={<Button onClick={closeLogin}>{t('core.common.close')}</Button>}>
+    <p>{t('soon.loginBody')}</p>
+  </Drawer></>;
 }
