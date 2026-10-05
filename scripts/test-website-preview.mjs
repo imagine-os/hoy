@@ -132,7 +132,12 @@ try {
   assert.equal(await page.locator('.coming-soon-motion').getAttribute('aria-pressed'), 'true');
   await page.waitForFunction(() => document.querySelectorAll('.coming-soon video').length === 0);
   await capture(page, 'W-11', 'en', 344);
-  check('Coming Soon is independent, has a real Instagram destination and pauses motion');
+  const login = page.getByRole('link', {name:'Login',exact:true});
+  assert.equal(await login.getAttribute('href'), '#/auth/sign-in');
+  await login.click(); await page.waitForSelector('form input[type="email"]');
+  assert.ok(page.url().includes('/auth/sign-in'));
+  await page.goBack(); await page.waitForSelector('.coming-soon');
+  check('Coming Soon is independent, links to the existing login entry, has a real Instagram destination and pauses motion');
   await page.goto(`${url}/#/`); await page.waitForSelector('.hub-card');
   const hubCard = page.locator('.hub-card').filter({hasText:'/coming-soon'});
   assert.equal(await hubCard.count(),1); await hubCard.getByRole('button').first().click(); await page.waitForSelector('.coming-soon');

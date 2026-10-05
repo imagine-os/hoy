@@ -1,5 +1,9 @@
 # HoyOS kanban
 
+## Completed · 0058 (v0.23.1 · 2026-10-05)
+
+- W-11: English preview and top-right Login / Entrar wired to the existing demo sign-in entry; no auth or default-language changes. [Details](changelog/0058-coming-soon-login.md)
+
 ## Completed · 0056 (v0.23.1 · 2026-10-05)
 
 - W-01/W-02/W-03/W-05/W-07/W-08/P-01: selectable animated archive, explicit Latest default, restored historical loops and read-only preview boundaries. [Details](changelog/0056-animated-archive.md)

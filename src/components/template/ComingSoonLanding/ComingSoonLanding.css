@@ -15,6 +15,9 @@
   padding: var(--sp-2xl) var(--section);
 }
 .coming-soon-header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--block); }
+.coming-soon-tools { display: flex; align-items: center; gap: var(--gap-control); }
+.coming-soon-login { display: inline-flex; align-items: center; justify-content: center; min-height: var(--h-ctl); padding: 0 var(--sp-lg); border: 1px solid color-mix(in srgb, var(--brand-cream) 45%, transparent); border-radius: var(--r-full); color: var(--brand-cream); background: color-mix(in srgb, var(--brand-ink) 58%, transparent); font-size: var(--fs-sm); text-decoration: none; white-space: nowrap; }
+.coming-soon-login:hover { background: var(--brand-cream); color: var(--brand-ink); }
 .coming-soon-brand { display: flex; flex-direction: column; align-items: center; gap: var(--sp-xs); }
 .coming-soon-brand .wordmark-vector { width: 8rem; min-width: 0; }
 .coming-soon-brand > span:last-child { font-size: var(--fs-2xs); text-transform: uppercase; letter-spacing: .28em; }
@@ -37,6 +40,7 @@
 .coming-soon-motion:hover { background: var(--brand-ink); }
 .coming-soon :is(button, a):focus-visible { outline: 2px solid var(--brand-yellow); outline-offset: var(--sp-xs); }
 @media (max-width: 767px) {
+  .coming-soon-tools { flex-direction: column-reverse; align-items: flex-end; gap: var(--sp-sm); }
   .coming-soon-layout { padding: var(--sp-xl) var(--gutter); }
   .coming-soon-scene .ambient-scene-media { object-position: 72% center; }
   .coming-soon-veil { background: linear-gradient(90deg, color-mix(in srgb, var(--brand-ink) 86%, transparent), color-mix(in srgb, var(--brand-ink) 43%, transparent)), linear-gradient(0deg, color-mix(in srgb, var(--brand-ink) 85%, transparent), transparent 90%); }

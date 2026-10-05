@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { tenant } from '../../../tenant/tenant';
 import { taglines } from '../../../tenant/brand';
@@ -23,7 +24,7 @@ export function ComingSoonLanding() {
     <div className="coming-soon-layout">
       <header className="coming-soon-header">
         <div className="coming-soon-brand"><Wordmark vector tone="cream" /><span>{bi(tenant.tagline)}</span></div>
-        <LangToggle />
+        <div className="coming-soon-tools"><LangToggle /><Link className="coming-soon-login" to="/auth/sign-in">{t('soon.login')}</Link></div>
       </header>
       <section className="coming-soon-message" aria-labelledby="coming-soon-title">
         <p className="coming-soon-status"><span aria-hidden="true" />{t('soon.status')}</p>

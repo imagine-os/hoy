@@ -10,6 +10,7 @@ export const comingSoonSpec = defineSpec({
     'Independent /coming-soon route: no SiteShell, edition selector, booking, launch date or lead collection.',
     'Uses the existing brand wordmark, tenant identity, approved brand tagline and concept sanctuary artwork.',
     'AmbientScene reuses the existing local loop with a still fallback, reduced-motion/save-data support and an explicit pause control.',
+    'Top-right Login opens the existing /auth/sign-in demo entry; it does not create or claim production authentication.',
     'The only external link opens the existing studio Instagram profile; no visitor data is collected or submitted.',
     'Spanish and English share the normal language switch; the full website and its Latest default remain unchanged.',
   ],
