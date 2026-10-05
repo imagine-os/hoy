@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, type ReactNode } from 'react';
-import { Link, NavLink, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
+import { Link, NavLink } from './links';
 import { useI18n } from '../../i18n/I18nProvider';
 import { useContact, useOpeningHours, useWhatsappLink, pendingSuffix, type ContactField } from '../admin/settings';
 import { useStudioJsonLd } from './jsonLd';
@@ -15,6 +16,7 @@ import './site.css';
 import './sanctuary.css';
 import { useSiteEdition } from './edition';
 import { Icon } from '../../components/atom/Icon/Icon';
+import { SiteArchiveNotice } from '../../components/molecule/SiteArchiveNotice/SiteArchiveNotice';
 import { SiteVersionSelect } from '../../components/molecule/SiteVersionSelect/SiteVersionSelect';
 
 const NAV = [
@@ -26,7 +28,7 @@ const NAV = [
 /** Public website chrome: header with nav + a footer that carries hours, address and social. */
 export function SiteShell({ children }: { children: ReactNode }) {
   const { t, bi, lang } = useI18n();
-  const { edition, setEdition, videoEnabled, motion, setMotion } = useSiteEdition();
+  const { edition, version, archived, setEdition, videoEnabled, motion, setMotion } = useSiteEdition();
   const { pathname } = useLocation();
   const shell = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -57,13 +59,13 @@ export function SiteShell({ children }: { children: ReactNode }) {
   const contact = useContact();
   // 0041: the hours in the footer follow M-08a / M-08g, and the same hours go out as LocalBusiness JSON-LD.
   const hours = useOpeningHours();
-  useStudioJsonLd();
+  useStudioJsonLd(!archived);
   // 0047: the footer is a front desk handoff; pages with a topic call useWhatsappLink() with their own intent (D-0022).
   const wa = useWhatsappLink();
   // 0036: per field — the phone and the address are confirmed, the email and Instagram still carry the label.
   const pending = (f: ContactField) => pendingSuffix(contact, f, lang);
   return (
-    <div className="site" data-edition={edition} data-motion={motion ? "on" : "off"} ref={shell}>
+    <div className="site" data-edition={edition} data-site-version={version} data-motion={motion ? "on" : "off"} ref={shell}>
       <ElementCursor enabled={edition === 'sanctuary' && motion} />
       <header className="site-head">
         <div className="container site-head-in">
@@ -72,12 +74,12 @@ export function SiteShell({ children }: { children: ReactNode }) {
             {NAV.map(([to, k]) => <NavLink key={to} to={to} className={({ isActive }) => (isActive ? 'is-active' : '')} onClick={() => setOpen(false)}>{t(`site.nav.${k}`)}</NavLink>)}
             {/* on phones (≤ 600 px) the edition select and motion toggle move from the header into the open menu so the header fits without overflow */}
             <div className="site-nav-tools">
-              <SiteVersionSelect value={edition} videoEnabled={videoEnabled} onChange={setEdition} />
+              <SiteVersionSelect value={version} videoEnabled={videoEnabled} onChange={setEdition} />
               {edition === 'sanctuary' && <button type="button" className="site-iconbtn ctl-round" onClick={() => setMotion(!motion)} aria-pressed={!motion} aria-label={t(motion ? 'site.new.ambient' : 'site.new.static')}>{motion ? 'Ⅱ' : '▷'}</button>}
             </div>
           </nav>
           <div className="site-actions">
-            <SiteVersionSelect value={edition} videoEnabled={videoEnabled} onChange={setEdition} />
+            <SiteVersionSelect value={version} videoEnabled={videoEnabled} onChange={setEdition} />
             {edition === 'sanctuary' && <button type="button" className="site-iconbtn site-motion ctl-round" onClick={() => setMotion(!motion)} aria-pressed={!motion} aria-label={t(motion ? 'site.new.ambient' : 'site.new.static')}>{motion ? 'Ⅱ' : '▷'}</button>}
             <LangToggle size="sm" />
             <button type="button" className="site-iconbtn ctl-round" onClick={toggleTheme} aria-label={t('core.theme.toggle')}><Icon name={theme === 'dark' ? 'moon' : 'sun'} size={17} /></button>
@@ -86,6 +88,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
           </div>
         </div>
       </header>
+      {archived && <SiteArchiveNotice onLatest={() => setEdition('latest', true)} />}
       <main className="site-main" id="site-main">{children}</main>
       <footer className="site-foot">
         <div className="container site-foot-grid">

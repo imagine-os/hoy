@@ -8,6 +8,15 @@ import type { StringTable } from '../../i18n/types';
  * site.modalities · site.schedule · site.teachers · site.plans · site.contact · site.legal · site.footer
  */
 export const strings: StringTable = {
+  'site.edition.latest': { es: 'Latest · Actual', en: 'Latest · Current' },
+  'site.edition.archive': { es: 'Anterior · Animada', en: 'Previous · Animated' },
+  'site.archive.label': { es: 'Archivo · Vista previa de diseño', en: 'Archive · Design preview' },
+  'site.archive.notice': { es: 'Versión animada anterior al 1 de octubre de 2026. Los maestros de muestra son ficticios; las clases y los precios son históricos, no ofertas actuales. Reservas, contacto y políticas abren la versión actual.', en: 'Animated version before October 1, 2026. Sample teachers are fictional; classes and prices are historical, not current offers. Booking, contact and policies open the current version.' },
+  'site.archive.latest': { es: 'Volver a Latest', en: 'Back to Latest' },
+  'site.archive.currentContact': { es: 'Ver contacto actual', en: 'View current contact' },
+  'site.archive.currentPlans': { es: 'Ver planes actuales', en: 'View current plans' },
+  'site.archive.schedule': { es: 'Horario histórico no disponible. Abre el horario actual para reservar.', en: 'Historical timetable unavailable. Open the current schedule to book.' },
+
   'site.calendar.prev': { es: "Período anterior", en: "Previous period" },
   'site.calendar.next': { es: "Período siguiente", en: "Next period" },
   'site.calendar.view': { es: "Vista del calendario", en: "Calendar view" },
@@ -295,5 +304,5 @@ export const strings: StringTable = {
   'site.delete.sent.title': { es: 'Solicitud recibida', en: 'Request received' },
   'site.delete.sent.body': { es: 'Referencia {ref}. Te escribimos al contacto que dejaste cuando esté hecha, en máximo quince días hábiles. Si tienes cuenta en la app, verás el estado en Perfil → Cuenta y datos.', en: 'Reference {ref}. We write to the contact you left once it is done, within fifteen business days at most. If you have an account in the app, the status shows under Profile → Account & data.' },
   'site.edition.video': { es: 'V2.3 · Video', en: 'V2.3 · Video' },
-  'site.edition.still': { es: 'V2.3 · Sin video', en: 'V2.3 · Still' },
+  'site.edition.still': { es: 'Latest · Sin video', en: 'Latest · Still' },
 };

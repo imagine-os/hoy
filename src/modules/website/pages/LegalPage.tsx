@@ -1,3 +1,4 @@
+import { useSiteHref } from '../links';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { LegalDocument } from '../../../components/organism/LegalDocument/LegalDocument';
 import { EmptyState } from '../../../components/molecule/EmptyState/EmptyState';
@@ -12,6 +13,7 @@ import { SiteShell } from '../SiteShell';
  * numbers inside the body come from M-08 at render time, so the page cannot go stale.
  */
 export function LegalPage({ kind }: { kind: LegalKind }) {
+  const href = useSiteHref();
   const { t } = useI18n();
   const view = useLegalDoc(kind);
   const props = useLegalDocProps(view);
@@ -19,7 +21,7 @@ export function LegalPage({ kind }: { kind: LegalKind }) {
     <SiteShell>
       <section className="container site-section legal-body">
         {view.doc
-          ? <LegalDocument {...props} footer={<LegalFooterLinks current={kind} to={(k) => `/site/legal/${k}`} />} />
+          ? <LegalDocument {...props} footer={<LegalFooterLinks current={kind} to={(k) => href(`/site/legal/${k}`)} />} />
           : <EmptyState tone={view.loading ? 'loading' : 'empty'} title={t(view.loading ? 'core.common.loading' : 'customer.legal.notFound')} body={view.loading ? undefined : t(legalTitleKey(kind))} />}
       </section>
     </SiteShell>

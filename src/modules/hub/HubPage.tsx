@@ -58,6 +58,7 @@ interface SurfaceCard {
 const CARD_UI: Record<HubSurfaceKey, { icon: IconName; shape?: ThumbShape; hue?: HubSurfaceKey; secondaryAsRole?: boolean }> = {
   app: { icon: 'smartphone', shape: 'phone' },
   site: { icon: 'globe' },
+  'coming-soon': { icon: 'sparkle', hue: 'site' },
   teacher: { icon: 'sparkle' },
   desk: { icon: 'check' },
   inbox: { icon: 'inbox' },

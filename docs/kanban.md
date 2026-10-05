@@ -1,5 +1,9 @@
 # HoyOS kanban
 
+## Completed · 0056 (v0.23.1 · 2026-10-05)
+
+- W-01/W-02/W-03/W-05/W-07/W-08/P-01: selectable animated archive, explicit Latest default, restored historical loops and read-only preview boundaries. [Details](changelog/0056-animated-archive.md)
+
 ## Completed · 0055 (v0.23.0 · 2026-10-03)
 - M-04: The 72 automated emails from Lore's three inventories (38 customer, 33 teacher, 1 team) in ES and EN, filtered by recipient and grouped by priority; `email_templates.audience` + `priority`; inventory and gaps in `docs/reference/automated-emails.md`.
 - M-04: 23 proposed gap emails (badge Propuesto, incl. the team emails and the three reports), the "every email is a suggestion" notice and a per-email Nota para el admin; unsubscribe line on marketing previews (95 templates).
@@ -174,6 +178,8 @@ _Updated every turn. Codes reference `src/specs/canvasSpecs.ts` and the module `
 ## Doing
 
 ## Done
+
+- **0057 · W-11 Coming Soon**: separate `/coming-soon` route and hub card, bilingual living brand artwork, motion control and confirmed Instagram link; full website/Latest default unchanged. Final integrated QA and deployment tracked with 0056.
 
 ### 2026-10-01 · The studio's verified content, FAQ and terms (0051 · v0.22.0)
 - **0051 · Website verified content, W-10 FAQ, terms v2.0** (v0.22.0): Lorena's WEBSITE MODIF, FAQ and Términos y Condiciones, forwarded by Justin — "Please update the website … see if there's anywhere in the user manual or elsewhere this info applies to … make sure the FAQ section is beautiful" — hero, philosophy, classes band with seven `ClassArch` arches, "¿Cómo te quieres mover hoy?", About philosophy, W-07 / W-08 for the seven classes, W-05 the seven real teachers (monograms, no ratings), P-01 the launch price list, W-06 confirmed contact, **W-10 Preguntas frecuentes** (search, topic index, editorial accordion, live PriceTable), A-06 terms v2.0 with "Por definir" callouts.

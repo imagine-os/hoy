@@ -10,7 +10,7 @@
  * renders a live table from src/tenant/pricing.ts (FaqAnswer → PriceTable).
  */
 import { Fragment, useMemo, useState, type ReactNode } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from '../links';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useLayout } from '../../../layout/useLayout';
 import { formatCOP } from '../../../i18n/format';

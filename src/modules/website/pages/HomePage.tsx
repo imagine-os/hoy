@@ -1,5 +1,6 @@
+import { useSiteHref } from '../links';
 import { Fragment, type ReactNode } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from '../links';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useLayout } from '../../../layout/useLayout';
 import { useTable } from '../../../data/DataContext';
@@ -23,6 +24,7 @@ export function HomePage() {
   return edition === 'classic' ? <ClassicHomePage /> : <SanctuaryHome />;
 }
 function SanctuaryHome() {
+  const href = useSiteHref();
   const { t, bi, lang } = useI18n();
   const { sections, isVisible } = useLayout(siteSpecs.home);
   const today = useTodaySessions();
@@ -60,7 +62,7 @@ function SanctuaryHome() {
     </div></section>,
     Classes: () => <section className="container sanctuary-section" data-reveal>
       <div className="sanctuary-heading"><div><p className="eyebrow">{t('site.new.chapter2')}</p><h2>{t('site.new.classesTitle')}<br /><em>{t('site.new.classesEm')}</em></h2><p className="muted">{bi(classesIntro.methods)}</p></div><Link className="sanctuary-text-link" to="/site/classes">{t('site.classes.all')} <Icon name="arrow-right" /></Link></div>
-      <div className="sanctuary-arches">{classOrder.map((slug, index) => <ClassArch key={slug} slug={slug} index={index + 1} to={`/site/classes/${slug}`} photoUrl={photos.get(slug)} />)}</div>
+      <div className="sanctuary-arches">{classOrder.map((slug, index) => <ClassArch key={slug} slug={slug} index={index + 1} to={href(`/site/classes/${slug}`)} photoUrl={photos.get(slug)} />)}</div>
     </section>,
     TodayClasses: () => <section className="sanctuary-schedule" data-reveal><div className="container sanctuary-schedule-grid"><div className="sanctuary-schedule-intro"><p className="eyebrow">{t('site.new.chapter3')}</p><h2>{t('site.new.scheduleTitle')}</h2><Link className="sanctuary-button is-light" to="/site/schedule">{t('site.today.all')} <Icon name="arrow-right" /></Link></div>
       <div className="sanctuary-agenda"><div className="sanctuary-agenda-head"><span>{t('site.today.title')}</span><span>{new Intl.DateTimeFormat(lang === 'es' ? 'es-CO' : 'en-US', { day: 'numeric', month: 'short' }).format(new Date())}</span></div>
