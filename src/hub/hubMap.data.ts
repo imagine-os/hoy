@@ -292,7 +292,7 @@ export const HUB_LENSES: Record<HubLensId, HubLensHint> = {
   },
   standalone: {
     title: { es: 'Hub de pruebas de hoy', en: 'hoy’s testing hub' },
-    framing: { es: 'El hub de pruebas propio de hoy: cada superficie por banda y cada herramienta, como en /#/.', en: 'hoy’s own testing hub: every surface by band and every tool, as at /#/.' },
+    framing: { es: 'El hub de pruebas propio de hoy: cada superficie por banda y cada herramienta, como en /#/hub.', en: 'hoy’s own testing hub: every surface by band and every tool, as at /#/hub.' },
     groupBy: 'surface', showTools: true, entry: '/hub',
   },
 };
