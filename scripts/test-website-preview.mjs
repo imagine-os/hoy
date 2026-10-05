@@ -17,7 +17,7 @@ const check = (name) => { result.checks.push(name); console.log('PASS', name); }
 const archivedTeachers = ['Andrés Quintero', 'Paula Mejía', 'Santiago Vélez', 'Manuela Torres', 'Daniel Ochoa', 'Isabela Cano', 'Felipe Zapata', 'Carolina Pardo'];
 const capture = async (page, code, lang, width, suffix = '') => {
   await mkdir(`${root}/docs/screenshots/${code}`, { recursive: true });
-  await page.screenshot({ path: `${root}/docs/screenshots/${code}/${lang}-${width}${suffix}.jpg`, type: 'jpeg', quality: 68, fullPage: false });
+  await page.screenshot({ path: `${root}/docs/screenshots/${code}/${lang}-${width}${suffix}.jpg`, type: 'jpeg', quality: 68, fullPage: false, animations: 'disabled' });
 };
 const noOverflow = async (page, label) => {
   const dims = await page.evaluate(() => ({ body: document.documentElement.scrollWidth, width: innerWidth }));
@@ -168,6 +168,9 @@ try {
     for (const width of [390,1280]) {
       await page.setViewportSize({width,height:width<600?844:900});
       await page.locator('.coming-soon-login').click(); await page.getByRole('dialog').waitFor();
+      await page.getByRole('dialog').evaluate(async el => { await Promise.all(el.getAnimations({subtree:true}).filter(a=>a.effect?.getTiming().iterations !== Infinity).map(a=>a.finished.catch(()=>{}))); });
+      const box = await page.getByRole('dialog').boundingBox();
+      assert.ok(box && box.y >= -1 && box.y + box.height <= page.viewportSize().height + 1, 'Dialog must fit the settled viewport');
       await noOverflow(page,`${lang} ${width} login dialog`); await capture(page,'W-11',lang,width,'-login-coming-soon');
       await page.keyboard.press('Escape'); await page.getByRole('dialog').waitFor({state:'hidden'});
     }
