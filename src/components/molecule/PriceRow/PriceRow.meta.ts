@@ -1,6 +1,8 @@
 import { createElement as h } from 'react';
 import { defineMeta } from '../../../design/meta';
 import { PriceRow } from './PriceRow';
+import { PriceRow as ArchivedPriceRow } from '../../../modules/website/archive/PriceRow';
+import { pricing as archivedPricing } from '../../../modules/website/archive/pricing';
 import { pricing } from '../../../tenant/pricing';
 
 export default defineMeta({
@@ -12,6 +14,7 @@ export default defineMeta({
   ],
   states: ['static', 'clickable', 'badge', 'from-price', 'per-person add-on', 'included'],
   usages: [
+    { title: { es: 'Precio histórico (solo archivo)', en: 'Historical price (archive only)' }, render: () => h(ArchivedPriceRow, { item: archivedPricing[0] }) },
     { title: { es: 'Clases privadas', en: 'Private classes' }, render: () => h('div', null, ...pricing.filter((p) => p.family === 'privadas').map((p) => h(PriceRow, { key: p.id, item: p }))) },
     { title: { es: 'Tarjetas de regalo (seleccionable)', en: 'Gift cards (selectable)' }, render: () => h('div', null, ...pricing.filter((p) => p.family === 'regalos').map((p) => h(PriceRow, { key: p.id, item: p, onSelect: () => {} }))) },
   ],

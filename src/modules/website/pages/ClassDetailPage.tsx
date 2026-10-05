@@ -1,5 +1,6 @@
+import { useSiteHref } from '../links';
 import { Fragment, type ReactNode } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams } from '../links';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useLayout } from '../../../layout/useLayout';
 import { useTable } from '../../../data/DataContext';
@@ -17,6 +18,7 @@ import { useClassPhotos } from '../hooks';
 
 /** W-08 — one of the seven classes (0051), joined to its schedule row through brand.classes[slug].modalitySlugs. */
 export function ClassDetailPage() {
+  const href = useSiteHref();
   const { slug = '' } = useParams();
   const { t, bi, lang } = useI18n();
   const brand = useBrandHeading();
@@ -111,7 +113,7 @@ export function ClassDetailPage() {
       <section className="container site-section">
         <p className="eyebrow">{t('site.classes.other')}</p>
         <div className="site-otherarches">
-          {classOrder.filter((s) => s !== slug).map((s) => <ClassArch key={s} slug={s} index={classOrder.indexOf(s) + 1} to={`/site/classes/${s}`} photoUrl={photos.get(s)} />)}
+          {classOrder.filter((s) => s !== slug).map((s) => <ClassArch key={s} slug={s} index={classOrder.indexOf(s) + 1} to={href(`/site/classes/${s}`)} photoUrl={photos.get(s)} />)}
         </div>
       </section>
     ),

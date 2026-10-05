@@ -1,0 +1,38 @@
+/* Scoped historical visual details: do not affect Latest. */
+.site[data-site-version="archive"] .sanctuary-class-gallery { display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--sp-xl); }
+.site[data-site-version="archive"] .sanctuary-class { color: var(--color-text); min-width: 0; }
+.site[data-site-version="archive"] .sanctuary-class:hover { text-decoration: none; }
+.site[data-site-version="archive"] .sanctuary-class:nth-child(even) { padding-top: var(--sp-2xl); }
+.site[data-site-version="archive"] .sanctuary-class-photo { position: relative; overflow: hidden; border-radius: 48% 48% 3px 3px; }
+.site[data-site-version="archive"] .sanctuary-class-photo .mediaslot-fig { margin: 0; }
+.site[data-site-version="archive"] .sanctuary-class-photo .mediaslot { border: 0; border-radius: 0; aspect-ratio: 3/4 !important; box-shadow: none; }
+.site[data-site-version="archive"] .sanctuary-class-photo img { transition: transform var(--dur-reveal) var(--ease-out); }
+.site[data-site-version="archive"] .sanctuary-class:hover img { transform: scale(1.05); }
+.site[data-site-version="archive"] .sanctuary-class-open { position: absolute; right: var(--sp-md); bottom: var(--sp-lg); display: grid; place-items: center; width: var(--sp-2xl); height: var(--sp-2xl); border-radius: 50%; background: var(--brand-white); color: var(--brand-deepBlue); }
+.site[data-site-version="archive"] .sanctuary-class-meta { padding: var(--sp-xl) 0 0; }
+.site[data-site-version="archive"] .sanctuary-class-meta .eyebrow { font-size: 0.625rem !important; }
+.site[data-site-version="archive"][data-edition="sanctuary"] .sanctuary-class h3 { font-size: 1.6875rem; font-family: var(--font-editorial); margin-top: var(--sp-md); color: var(--color-primary); }
+.site[data-site-version="archive"] .sanctuary-class-meta p { font-size: 0.75rem; margin-top: var(--sp-sm); color: var(--color-text-muted); line-height: 1.6; }
+@media(max-width:1150px) {
+  .site[data-site-version="archive"] .sanctuary-class-gallery { grid-template-columns: repeat(3,1fr); gap: var(--sp-2xl) var(--sp-xl); }
+  .site[data-site-version="archive"] .sanctuary-class:nth-child(even) { padding-top:0; }
+}
+@media(max-width:600px) {
+  .site[data-site-version="archive"] .sanctuary-class-gallery { display:flex; gap:var(--sp-lg); overflow-x:auto; scroll-snap-type:x mandatory; padding-bottom:var(--sp-xl); margin-right:calc(var(--sp-xl) * -1); padding-right:var(--sp-xl); scrollbar-width:thin; }
+  .site[data-site-version="archive"] .sanctuary-class { width:70vw; max-width:18.125rem; flex:0 0 auto; scroll-snap-align:start; }
+  .site[data-site-version="archive"] .sanctuary-class-photo .mediaslot { aspect-ratio:4/5 !important; }
+  .site[data-site-version="archive"] .sanctuary-class-meta .eyebrow { font-size:0.6875rem !important; }
+  .site[data-site-version="archive"] .sanctuary-class-meta p { font-size:0.8125rem; }
+}
+.site[data-site-version="archive"][data-edition="sanctuary"] .site-teacher-monogram { aspect-ratio: 4/5; border-radius: 48% 48% 4px 4px; background: linear-gradient(color-mix(in srgb,var(--color-lane) 85%,transparent),color-mix(in srgb,var(--color-lane) 85%,transparent)),url('../../../../public/images/sanctuary/texture-limestone.webp') center/cover; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:var(--sp-xl); }
+.site[data-site-version="archive"] .site-teacher-monogram > span { font: 4.5rem var(--font-editorial); color:var(--color-primary); }
+.site[data-site-version="archive"] .site-teacher-monogram small { font-size:0.75rem; color:var(--color-text-muted); }
+.site[data-site-version="archive"] .sanctuary-portrait::after,.site[data-site-version="archive"] .sanctuary-community::after,.site[data-site-version="archive"] .sanctuary-class-photo::after { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; box-shadow: var(--shadow-photo-inset); z-index: 2; }
+.site[data-site-version="archive"] .sample-portrait-label { display: block; font-size: 0.625rem; color: var(--color-text-muted); margin-top: var(--sp-xs); }
+.site[data-site-version="archive"][data-edition="sanctuary"] .site-teacher .ambient-scene-media,
+.site[data-site-version="archive"][data-edition="sanctuary"] .sanctuary-class-photo .ambient-scene-media,
+.site[data-site-version="archive"][data-edition="sanctuary"] .community-living .ambient-scene-media,
+.site[data-site-version="archive"][data-edition="sanctuary"] .site-classrow .ambient-scene-media { transform: translate(calc(var(--depth-x,0) * -6px),calc(var(--depth-y,0) * -5px)); transition: transform var(--dur-slow) var(--ease-out); }
+
+.site[data-site-version="archive"] .teacher-avatar-living { width: var(--sp-3xl); height: var(--sp-4xl); flex: 0 0 var(--sp-3xl); border-radius: var(--r-full); }
+.site[data-site-version="archive"] .sanctuary-teacher-link .teacher-avatar-living img { width: 108%; height: 108%; border-radius: 0; transform: none; }

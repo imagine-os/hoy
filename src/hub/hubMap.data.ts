@@ -106,7 +106,7 @@ export const HUB_ROLES: HubRole[] = [
 /** The sub-mats. `order` sorts the groups inside one experience; ids are stable, labels are copy. */
 export const HUB_GROUPS: Record<string, HubGroup> = Object.fromEntries(([
   ['book', 'Reservar', 'Book', 10], ['pay', 'Pagar', 'Pay', 20], ['account', 'Cuenta', 'Account', 30], ['auth', 'Entrar', 'Sign in', 40],
-  ['site', 'Sitio', 'Website', 10],
+  ['site', 'Sitio', 'Website', 10], ['coming-soon', 'Próximamente', 'Coming soon', 10],
   ['teach', 'Enseñar', 'Teach', 10],
   ['desk', 'Recepción', 'Front desk', 10], ['inbox', 'Bandeja', 'Inbox', 20], ['pos', 'Caja', 'Register', 30],
   ['admin', 'Administración', 'Admin', 10], ['content', 'Contenido', 'Content', 20], ['crm', 'CRM', 'CRM', 30], ['messages', 'Mensajes', 'Messages', 10], ['finance', 'Finanzas', 'Finance', 40], ['tables', 'Tablas', 'Tables', 50],
@@ -132,6 +132,7 @@ export const HUB_GROUP_RULES: { prefix: string; group: string; exact?: boolean }
   { prefix: '/auth', group: 'auth' },
   // website, teacher app
   { prefix: '/site', group: 'site' },
+  { prefix: '/coming-soon', group: 'coming-soon' },
   { prefix: '/teach', group: 'teach' },
   // staff
   { prefix: '/staff', group: 'desk' },
@@ -210,6 +211,9 @@ export const HUB_EXPERIENCES: HubExperienceSeed[] = [
   exp('site', 'W-01', 'outside', 'page', '/site', 'public', false,
     { es: 'Sitio web', en: 'Website' },
     { es: 'Lo que ve cualquiera antes de entrar: filosofía, clases, horario, profesores, planes y contacto.', en: 'What anyone sees before signing in: philosophy, classes, schedule, teachers, plans and contact.' }),
+  exp('coming-soon', 'W-11', 'outside', 'page', '/coming-soon', 'public', false,
+    { es: 'Próximamente', en: 'Coming soon' },
+    { es: 'Página de preapertura con arte vivo y la marca del estudio. Independiente del sitio web completo.', en: 'A branded pre-launch page with living artwork. Separate from the full website.' }),
   exp('teacher', 'S-03', 'outside', 'phone', '/teach', 'teacher', true,
     { es: 'App de profesores', en: 'Teacher app' },
     { es: 'Sus clases, la lista de asistentes, la asistencia desde el mat y su nómina.', en: 'Their classes, the roster, attendance from the mat and their payroll.' }),

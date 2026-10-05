@@ -1,6 +1,6 @@
 import { useSiteEdition } from '../edition';
 import { Fragment, type ReactNode } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from '../links';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useLayout } from '../../../layout/useLayout';
 import { useTable } from '../../../data/DataContext';

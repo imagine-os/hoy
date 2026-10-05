@@ -1,0 +1,56 @@
+name: Website preview QA
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/modules/website/**'
+      - 'src/modules/coming-soon/**'
+      - 'src/components/molecule/SiteVersionSelect/**'
+      - 'src/components/molecule/SiteArchiveNotice/**'
+      - 'src/components/molecule/ArchivedMembershipCard/**'
+      - 'src/components/template/ComingSoonLanding/**'
+      - 'src/hub/**'
+      - 'src/modules/hub/**'
+      - 'scripts/test-website-preview.mjs'
+      - '.github/workflows/website-preview-qa.yml'
+      - 'docs/screenshots/W-11/**'
+permissions:
+  contents: read
+concurrency:
+  group: website-preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - name: Check archived and current website flows
+        run: node scripts/test-website-preview.mjs
+        env:
+          BROWSER_BIN: /usr/bin/google-chrome
+      - run: npm run build
+      - name: Verify the built production bundle
+        run: node scripts/test-website-preview.mjs
+        env:
+          BROWSER_BIN: /usr/bin/google-chrome
+          QA_DIST: '1'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: website-preview-${{ github.event.pull_request.head.sha }}
+          path: |
+            docs/screenshots/W-11/*.jpg
+            docs/screenshots/W-*/**/*-archive.jpg
+            docs/screenshots/P-01/*-archive.jpg
+            qa/website-preview.json
+            qa/failure.jpg
+          retention-days: 1

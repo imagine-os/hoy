@@ -11,7 +11,7 @@ const SCRIPT_ID = 'hoyos-localbusiness';
  * contact fields are published (0036): a pending placeholder never goes out as structured data. Language-neutral
  * on purpose; the names come from src/tenant/tenant.ts.
  */
-export function useStudioJsonLd() {
+export function useStudioJsonLd(enabled = true) {
   const contact = useContact();
   const hours = useOpeningHours();
   const json = useMemo(() => {
@@ -33,12 +33,12 @@ export function useStudioJsonLd() {
   }, [contact, hours]);
 
   useEffect(() => {
-    if (typeof document === 'undefined') return undefined;
+    if (typeof document === 'undefined' || !enabled) return undefined;
     let el = document.getElementById(SCRIPT_ID) as HTMLScriptElement | null;
     if (!el) { el = document.createElement('script'); el.type = 'application/ld+json'; el.id = SCRIPT_ID; document.head.appendChild(el); }
     el.textContent = json;
     return () => { document.getElementById(SCRIPT_ID)?.remove(); };
-  }, [json]);
+  }, [json, enabled]);
 }
 
 const FAQ_SCRIPT_ID = 'hoyos-faqpage';

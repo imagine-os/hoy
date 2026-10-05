@@ -1,0 +1,65 @@
+// Archived design snapshot from 46beed7 (before verified-content release).
+import { sampleTeacherPortrait, siteVideo } from './artwork';
+import { useSiteEdition } from '../edition';
+import { Fragment, type ReactNode } from 'react';
+import { useI18n } from './i18n';
+import { useLayout } from '../../../layout/useLayout';
+import { useTable } from '../../../data/DataContext';
+import type { ModalityRow, TeacherRow } from '../../../data/schema';
+import { Card } from '../../../components/molecule/Card/Card';
+import { Chip } from '../../../components/atom/Chip/Chip';
+import { MediaSlot } from '../../../components/molecule/MediaSlot/MediaSlot';
+import { PageHead, SiteShell } from '../SiteShell';
+import { siteSpecs } from './specs';
+
+export function TeachersPage() {
+  const { edition, motion, videoEnabled } = useSiteEdition();
+  const { t, lang, bi } = useI18n();
+  const { sections, isVisible } = useLayout(siteSpecs.teachers);
+  const { rows: teachers } = useTable<TeacherRow>('teachers', { where: { active: true } });
+  const { rows: modalities } = useTable<ModalityRow>('modalities');
+  const spec = (id: string) => {
+    const m = modalities.find((x) => x.id === id);
+    return { label: m ? (lang === 'es' ? m.name_es : m.name_en) : id, tone: m?.tone ?? ('river' as const) };
+  };
+
+  const SECTIONS: Record<string, () => ReactNode> = {
+    PageHead: () => <PageHead title={t('site.teachers.title')} body={t('site.teachers.body')} />,
+    TeacherGrid: () => (
+      <section className="container site-section" style={{ paddingTop: 0 }}>
+        <p className="xs muted" style={{ marginBottom: 'var(--sp-lg)' }}>{t('site.teachers.legend')} {edition === 'sanctuary' && t('site.new.samplePortraits')}</p>
+        <div className="site-teachergrid">
+          {teachers.map((te) => {
+            const first = te.specialties.map(spec)[0];
+            return (
+              <Card key={te.id} padding="sm" className="site-teacher">
+                {edition === 'sanctuary' && !te.photo_url && !sampleTeacherPortrait(te.id) ? <div className="site-teacher-monogram" aria-label={t('site.new.portraitPending')}><span aria-hidden>{te.display_name.split(' ').map(part => part[0]).slice(0,2).join('')}</span><small>{t('site.new.portraitPending')}</small></div> : (
+                <MediaSlot
+                  ratio={edition === 'sanctuary' ? "4:5" : "4:3"} kind="photo" tone={first?.tone} slotKey="teacher.portrait"
+                  src={te.photo_url ?? undefined}
+                  fallbackSrc={edition === 'sanctuary' ? sampleTeacherPortrait(te.id) : undefined}
+                  fallbackVideo={edition === 'sanctuary' && videoEnabled && sampleTeacherPortrait(te.id) ? siteVideo(`teacher-${te.id.slice(4)}`) : undefined} motion={motion}
+                  caption={edition === 'sanctuary' && !te.photo_url && sampleTeacherPortrait(te.id) ? t('site.new.samplePortrait') : undefined}
+                  label={t('site.teachers.portrait', { name: te.display_name })}
+                />
+                )}
+                <div className="site-teacher-copy"><div className="row-between">
+                  <h3>{te.display_name}</h3>
+                  {te.rating_avg != null && <span className="small muted">★ {te.rating_avg.toFixed(1)}</span>}
+                </div>
+                <p className="small">{bi(te.bio)}</p>
+                <div className="row wrap">{te.specialties.map(spec).map((s) => <Chip key={s.label} tone={s.tone} dot>{s.label}</Chip>)}</div>
+              </div></Card>
+            );
+          })}
+        </div>
+      </section>
+    ),
+  };
+
+  return (
+    <SiteShell>
+      {sections.filter(isVisible).map((name) => SECTIONS[name] ? <Fragment key={name}>{SECTIONS[name]()}</Fragment> : null)}
+    </SiteShell>
+  );
+}

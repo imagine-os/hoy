@@ -1,5 +1,5 @@
 import { Fragment, type ReactNode } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from '../links';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useLayout } from '../../../layout/useLayout';
 import { useTable } from '../../../data/DataContext';

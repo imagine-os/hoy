@@ -180,3 +180,10 @@
   .site-otherarches { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: var(--block); scrollbar-width: thin; }
   .site-otherarches > .classarch { flex: 0 0 auto; width: 12rem; scroll-snap-align: start; }
 }
+
+/* Historical previews are labeled independently of the current studio content. */
+.site-archive-notice { background: var(--color-surface); border-bottom: 1px solid var(--color-border); padding: var(--sp-lg) 0; }
+.site-archive-notice > div { display: flex; align-items: center; justify-content: space-between; gap: var(--grid-gap); }
+.site-archive-notice p { margin: var(--stack-tight) 0 0; max-width: var(--measure); font-size: var(--fs-sm); }
+.site-archive-notice button { flex-shrink: 0; }
+@media (max-width: 600px) { .site-archive-notice > div { align-items: flex-start; flex-direction: column; } }
