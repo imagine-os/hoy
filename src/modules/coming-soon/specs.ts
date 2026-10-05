@@ -14,5 +14,5 @@ export const comingSoonSpec = defineSpec({
     'Spanish and English share the normal language switch; the full website and its Latest default remain unchanged.',
   ],
   states: ['Spanish', 'English', 'motion playing', 'motion paused', 'reduced motion', 'video unavailable'],
-  checkedAt: [],
+  checkedAt: [344, 390, 768, 1280],
 });

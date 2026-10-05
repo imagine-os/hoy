@@ -1,6 +1,6 @@
 {
   "schema": "hoy.hub-map/1",
-  "generatedAt": "2026-10-03T00:00:00.000Z",
+  "generatedAt": "2026-10-05T00:00:00.000Z",
   "product": {
     "id": "hoy",
     "name": {
@@ -11,7 +11,7 @@
       "es": "Un solo sistema para cada puesto del estudio: quien practica, quien enseña, quien recibe en la puerta, quien administra y quien lo construye.",
       "en": "One system for every seat at the studio: members, teachers, front desk, admin, and the people who build it."
     },
-    "version": "0.23.0",
+    "version": "0.23.1",
     "baseUrl": "https://imagine-os.github.io/hoy/",
     "hubRoute": "/",
     "brand": {
@@ -419,6 +419,48 @@
           "en-1280": "hub-map/shots/W-01/en-1280.jpg",
           "es-390-full": "hub-map/shots/W-01/es-390-full.jpg",
           "en-390-full": "hub-map/shots/W-01/en-390-full.jpg"
+        }
+      }
+    },
+    {
+      "id": "coming-soon",
+      "code": "W-11",
+      "label": {
+        "es": "Próximamente",
+        "en": "Coming soon"
+      },
+      "purpose": {
+        "es": "Página de preapertura con arte vivo y la marca del estudio. Independiente del sitio web completo.",
+        "en": "A branded pre-launch page with living artwork. Separate from the full website."
+      },
+      "roleId": "public",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "finance",
+        "teacher",
+        "maintenance",
+        "marketing",
+        "developer",
+        "customer",
+        "public"
+      ],
+      "band": "outside",
+      "device": "page",
+      "route": "/coming-soon",
+      "url": "https://imagine-os.github.io/hoy/#/coming-soon",
+      "pageCodes": [
+        "W-11"
+      ],
+      "shots": {
+        "thumbs": {},
+        "full": {
+          "es-390": "hub-map/shots/W-11/es-390.jpg",
+          "en-390": "hub-map/shots/W-11/en-390.jpg",
+          "es-1280": "hub-map/shots/W-11/es-1280.jpg",
+          "en-1280": "hub-map/shots/W-11/en-1280.jpg"
         }
       }
     },
@@ -2219,6 +2261,53 @@
           "en": "Finance"
         },
         "order": 40
+      }
+    },
+    {
+      "code": "W-11",
+      "route": "/coming-soon",
+      "name": {
+        "es": "Próximamente",
+        "en": "Coming soon"
+      },
+      "purpose": {
+        "es": "La página de preapertura, separada del sitio completo y accesible desde su propia tarjeta en el hub.",
+        "en": "A standalone pre-launch page, separate from the full website and accessible from its own hub card."
+      },
+      "surface": "public",
+      "roles": [
+        "super_admin",
+        "admin",
+        "coordinator",
+        "front_desk",
+        "finance",
+        "teacher",
+        "maintenance",
+        "marketing",
+        "developer",
+        "customer",
+        "public"
+      ],
+      "experienceId": "coming-soon",
+      "device": "page",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {},
+        "full": {
+          "es-390": "hub-map/shots/W-11/es-390.jpg",
+          "en-390": "hub-map/shots/W-11/en-390.jpg",
+          "es-1280": "hub-map/shots/W-11/es-1280.jpg",
+          "en-1280": "hub-map/shots/W-11/en-1280.jpg"
+        }
+      },
+      "group": {
+        "id": "coming-soon",
+        "label": {
+          "es": "Próximamente",
+          "en": "Coming soon"
+        },
+        "order": 10
       }
     },
     {

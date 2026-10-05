@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import { chromium } from 'playwright-core';
 const root = new URL('..', import.meta.url).pathname;
 const url = 'http://127.0.0.1:5188';
-const server = spawn(process.execPath, ['node_modules/vite/bin/vite.js', '--host', '127.0.0.1', '--port', '5188', '--strictPort'], { cwd: root, stdio: ['ignore', 'pipe', 'pipe'] });
+const server = spawn(process.execPath, ['node_modules/vite/bin/vite.js', ...(process.env.QA_DIST === '1' ? ['preview'] : []), '--host', '127.0.0.1', '--port', '5188', '--strictPort'], { cwd: root, stdio: ['ignore', 'pipe', 'pipe'] });
 let serverLog = ''; server.stdout.on('data', b => serverLog += b); server.stderr.on('data', b => serverLog += b);
 const result = { checks: [], errors: [], media: [], widths: [344, 390, 768, 1280] };
 let browser;
@@ -62,7 +62,7 @@ try {
   assert.notEqual(before, after);
   check('Archived teacher video loads and advances');
   const mediaPaths = [...archivedTeachers.map((_, i) => ['andres','paula','santiago','manuela','daniel','isabela','felipe','carolina'][i]).map(n => `video/living-teacher-${n}.mp4`), ...['hot-yoga','barre','pilates','meditacion','respiracion'].map(n => `video/living-${n}.mp4`)];
-  for (const file of mediaPaths) { const response = await context.request.get(`${url}/${file}`); assert.equal(response.status(), 200, file); assert.ok((await response.body()).length > 1000, file); }
+  for (const file of mediaPaths) { const response = await context.request.get(`${url}/${file}`); assert.equal(response.status(), 200, file); assert.ok(response.headers()['content-type']?.includes('video/mp4'), `${file}: MIME type`); const bytes = await response.body(); assert.ok(bytes.length > 1000, file); assert.equal(bytes.subarray(4,8).toString(), 'ftyp', `${file}: MP4 signature`); }
   assert.equal(await page.evaluate(() => localStorage.getItem('hoyos.db.v1')), dbBefore);
   check('All thirteen historical loops load and archive leaves operational storage unchanged');
   await page.goto(`${url}/#/site/teachers?version=latest`); await page.waitForSelector('.site-teacher');
@@ -139,9 +139,12 @@ try {
   check('Hub opens the separate Coming Soon experience');
   const reduced = await browser.newContext({ viewport: {width:1280,height:900}, reducedMotion:'reduce' });
   const quiet = await reduced.newPage();
+  const reducedVideoRequests = []; quiet.on('request', r => { if (r.url().includes('/video/')) reducedVideoRequests.push(r.url()); });
   for (const route of ['/site/teachers?version=archive&motion=on&video=on','/coming-soon']) {
     await quiet.goto(`${url}/#${route}`); await quiet.waitForSelector(route.includes('coming')?'.coming-soon':'.site-teacher');
+    await quiet.waitForTimeout(300);
     assert.equal(await quiet.locator('video').count(), 0);
+    assert.deepEqual(reducedVideoRequests, []);
   }
   check('Reduced-motion uses static posters in both experiences');
   assert.deepEqual(result.errors,[]);

@@ -16,4 +16,8 @@ Archived purchase actions open current plans; schedule, FAQ, legal and contact l
 
 ## Verification
 
-Verification receipts and responsive screenshots are recorded after the final integrated build. No workflow, CI budget or artifact-retention setting was changed.
+Source review, TypeScript, unchanged spacing baseline (60), route-boundary tests and byte-for-byte media restoration pass. CI run 37337965055 passed all 15 browser-flow checks in both languages at 344/390/768/1280, including real teacher/class playback, Back/Forward, refresh, current-data preservation, historical purchase exits, standalone Coming Soon and reduced motion. Its build caught a malformed 0057 changelog header; corrected before release. The final exact-head workflow also checks the production bundle.
+
+[Archived teachers, desktop](../screenshots/W-05/en-1280-archive.jpg) · [archived teachers, phone](../screenshots/W-05/en-390-archive.jpg) · [archived home, desktop](../screenshots/W-01/es-1280-archive.jpg)
+
+The new focused QA workflow uploads only compact captures/report with one-day retention. Existing deploy workflow, CI budget and artifact-retention settings were not changed.
