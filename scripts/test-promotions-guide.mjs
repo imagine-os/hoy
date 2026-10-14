@@ -21,8 +21,10 @@ const as = async (userId, path, viewAs = null) => {
     localStorage.setItem('hoyos.session', JSON.stringify({ userId, devMode: false, viewAs }));
     localStorage.setItem('hoyos.lang', 'en');
   }, { userId, viewAs });
-  await page.goto(`${base}/#${path}`);
+  // Reload on an unguarded route before navigating with the newly selected test identity.
+  await page.goto(`${base}/#/hub`);
   await page.reload();
+  await page.goto(`${base}/#${path}`);
 };
 const stored = () => page.evaluate(() => ({ session: localStorage.getItem('hoyos.session'), data: localStorage.getItem('hoyos.db.v1') }));
 const capture = async (code, path) => {
