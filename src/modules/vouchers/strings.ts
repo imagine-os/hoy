@@ -155,8 +155,8 @@ export const strings: StringTable = {
     "en": "Available"
   },
   "vouchers.people": {
-    "es": "Hasta {n} participantes",
-    "en": "Up to {n} participants"
+    "es": "Participantes: hasta {n}",
+    "en": "Participant limit: {n}"
   },
   "vouchers.activate": {
     "es": "Activar con mi cuenta de prueba",

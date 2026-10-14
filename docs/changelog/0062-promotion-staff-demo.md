@@ -15,6 +15,7 @@ files: src/modules/promotions*; src/modules/vouchers; src/data/promotions.ts; sr
 - Recipient: explicit claim creates an individual voucher; repeat claims across links for the same campaign return the first entitlement and preserve attribution.
 - Reception: code or full URL lookup; verify the holder; confirm existing bookings; create a capacity/balance-checked walk-up booking; confirm and record attendance separately. Check-in never debits the benefit again. Cancellation is limited to before class start and attendance, following the voucher's restoration policy.
 - Admin: campaign/promoter results count claims, active bookings and attended participants. Only previously approved demo offers can be paused/resumed; draft publication is unchanged.
+- Visual review: preserve the shared raster wordmark’s proportions inside cards, add recipient-page gutters, and use count-neutral participant labels.
 - Existing Invite copy now says prepared/unverified rather than sent.
 - Review fixes: promotion/voucher codes share a collision-safe tenant namespace; voucher commands reject nonexistent or foreign actors; promotion attendance requires prior reception confirmation. Desk choices omit full, expired and already-booked sessions and honor remaining participant limits. Unpublished/draft previews render the unavailable state safely.
 - No dependency added. Shared design components and a documented PromotionPractice organism keep D-02 current. New CSS uses existing D-01 spacing tokens.
