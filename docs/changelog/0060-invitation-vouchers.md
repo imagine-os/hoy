@@ -15,3 +15,7 @@ The existing gift-card purchase screen now identifies its simulator and links to
 ## Verification boundary
 
 The cloud command executor blocks Chromium process sockets; its browser is on a separate host and cannot reach the local dev server. A documented exception permits a draft-only CI commit before the aggregate build: the unchanged hub generator needs real screenshots first. The dedicated CI job generates real ES/EN 390/1280 and dark-mode screenshots, runs the end-to-end lifecycle and then the full build. This is not a merge or completion waiver: all checks and screenshot review must pass before merging.
+
+## Checked sandbox receipt
+
+[Voucher sandbox QA run](https://github.com/imagine-os/hoy/actions/runs/38593816994) passed on `ba7cc1476c22ba50159d7d24898799a958c144c5`: TypeScript, domain regressions, real Chromium issuance → preview → claim → two-person booking → reload → attendance, responsive overflow/console checks, ES/EN 390/1280 captures, dark captures and the full production build. Screenshots in M-13/C-28 are actual CI browser renders containing fictional records. This validates the sandbox only, not production authentication, delivery, cross-tab transaction locking or purchased-card settlement.
