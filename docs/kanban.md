@@ -1,5 +1,12 @@
 # HoyOS kanban
 
+## In verification · 0062 (v0.25.0 · 2026-10-14)
+
+- HUB-01/P-02: direct promotions guide with isolated practice for all Hub visitors
+- S-07/C-29/M-14: approved demo offers, unique teacher links, individual claims and attributed results
+- S-08: code/full-link lookup, verified walk-up booking, separate booking confirmation and attendance with no second debit
+- Production integration remains pending. [Implementation](changelog/0062-promotion-staff-demo.md) · [Backend gates](promotion-backend-readiness.md)
+
 ## Completed · 0061 (v0.24.0 patch · 2026-10-14)
 
 - M-13/C-28: permit distinct guests with the same display name while retaining user-ID/email duplicate protection. [Details](changelog/0061-voucher-guest-identities.md)
