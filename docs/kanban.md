@@ -1,6 +1,3 @@
-Warning: truncated output (original token count: 30259)
-Total output lines: 589
-
 # HoyOS kanban
 
 ## Completed · 0061 (v0.24.0 patch · 2026-10-14)
@@ -158,7 +155,217 @@ _Updated every turn. Codes reference `src/specs/canvasSpecs.ts` and the module `
 - Supabase provider (auth, realtime) · Wompi payments/payroll · ~~WhatsApp CRM~~ **0021: the CRM thread and the S-06 inbox exist over `message_log`; what is left is the Cloud API itself (below)** · email designer
 - Live cursors / presence (nice to have)
 - ~~**Lift design-system control heights to 44 px system-wide**~~ **0025: done** — `--h-ctl` (2.75rem) plus a global `button` / `input` / `select` floor; `Button`, `Input`, `Chip`, `Toggle`, `SegmentedControl`, `LangToggle`, `ClassRow`, `RoleSwitcher`, `SessionCalendar`, `DesktopShell` links raised. **Still open**: delete the `.hub`-scoped "pointer targets" override in `src/modules/hub/hub.css` (now redundant), and the website controls below (0025 follow-ups).
-- **Left by 0022 (hub home redesign)**: ~~the `--ui` scale band applied to **every surface**, not only the hub~~ **0025: done, `--ui` on `:root` (D-0007 supersedes D-0004's deferral)** · `scripts/screenshots.mjs --state=` so a **live preview** and other intera…10259 tokens truncated…surface): `PageSpec.actions` declares, `useActions()` mounts, `listActions()` lists every declared action across all routes with a live `mounted`, `run(id, params)` → `{ ok, message }`; published as `window.__hoyos.actions` (getter) and `window.__hoyos.run`; HUB-01 declares and wires eight; the inspector shows them as "Acciones (WebMCP)"
+- **Left by 0022 (hub home redesign)**: ~~the `--ui` scale band applied to **every surface**, not only the hub~~ **0025: done, `--ui` on `:root` (D-0007 supersedes D-0004's deferral)** · `scripts/screenshots.mjs --state=` so a **live preview** and other interactive states can be captured (today `navigator.webdriver` switches live frames off, which is what makes the capture deterministic) · **remote / gamepad d-pad focus** on the hub (spatial navigation between cards, a visible focus ring readable from ten feet) · a **voice controller over `window.__hoyos.run`** using each action's `intent` as its vocabulary, plus actions declared beyond HUB-01 (~~booking~~ **0025: `app.reserve` / `app.pickMat` / `app.confirmReservation` / `app.choosePlan` / `auth.signIn`**; check-in, selling, sending still open) and server-side enforcement of `ActionDef.permission` · **in-product annotations**: the hub's "Reportar un problema" is a `Placeholder` today — testers should be able to comment, request and file a bug on the product itself, stored so an agent can triage from it
+- **Left by the 0020 polish pass** (ROADMAP §F 25–32): `TableDef.rls` for the 27 tables without one (`message_log` got its contract in 0021) · spec `data:` overrides for M-03 / C-01 / D-01 / D-02 / K-01 / P-01 / A-06 · `useLayout(spec)` on the ~70 fixed-order pages · module layering (`admin/settings.ts` readers → `src/tenant/`, `staff/people.ts` + `audit.ts` → `src/data/`) · one `sessionPhase()` predicate · eslint + prettier, then stricter TS · slim `canvasSpecs.ts`, stop shipping 63 MB of screenshots in `dist/`, per-surface string tables
+- **Add `remark-gfm`** (its own changelog entry, with the alternative rejected) and delete the pipe-table transform in `MarkdownViewer` (`preprocessMarkdown()` fences pipe tables into a ```table block because `react-markdown` alone cannot render them; the legal documents were written as lists for the same reason)
+- **Left by 0021 (Conversación CRM y bandeja)**: the real **WhatsApp Cloud API webhook → `message_log`** (inbound rows with `direction inbound`, `external_id = wamid`, plus status callbacks sent → delivered → read → failed on the outbound rows; the queued rows released when quiet hours end) · **email inbound (IMAP or SES) → `message_log`** (`channel email`, `direction inbound`, threading by `In-Reply-To` onto the person's `user_id`) and the newsletter sender writing `source newsletter` rows per recipient · an **"Equipo" conversation** in S-06 for `user_id`-null rows (the teacher's substitution request lives only in M-05's log today) · **RLS for `message_log`** applied server-side from the `TableDef.rls` contract (desk roles read / insert / update `read_at`; the customer reads own non-internal rows; the webhook service role inserts inbound) · a per-conversation "assigned to" or "waiting on us" state once two people answer from the same number · `MessageComposer` templates (the M-05 approved templates as one-tap replies) · `scripts/screenshots.mjs --state=` so the open bell popover is captured by the pass (today `S-06/es-1280-popover.jpg` is a hand-made capture)
+
+### Docs & content
+- Visual pass follow-ups: per-screen density check of C-03, C-04, S-04, M-03 against their canvas artboards at real size; photography placeholders (`data-ph`) once real imagery exists; consider vendoring Inter/DM Sans woff2 for offline captures
+- Canvas audit #9/#30: prune the 32 orphan dictionary keys (n_waiver, wv_sign, at_seg, at_nav, ph_qr, door_scan…) from `reference/canvas/strings.json` consumers
+- Canvas audit #24/#25: register in D-02 the components screens use but the library lacks; fix D-02 copy counts (49 sections, 4-tab dock)
+- Canvas audit #27: amend plan phase-3 text that still lists check-in and front desk (K-01) · #28: date the v0.1 decision entries · #33: add `data` and `roles` to the C-08b spec
+- Resolve the owner decisions listed at `/#/manual/decisions` (ROADMAP §E) and update the chapters — **since 0018 the blocking ones are fields to fill in**: contact details (M-08a), rate card and cadence (M-08c), legal versions and map provider (M-08f), IVA on prices (M-08c); what remains a decision is pack validity, DIAN provider / legal issuer, the Wompi settlement account and the pause rules
+- Remove the C-07b and 'C-14 / C-15' compatibility aliases from `scripts/gen-specs.mjs` (routes now use C-07b as the credits ledger and C-14/C-15 separately)
+- Enrich `docs/pages/<code>.md` (generated skeletons) with the hand-written "Real vs mock" and section notes per page
+- `scripts/screenshots.mjs` has no state parameter, so the collapsed sidebar / rail and the mobile drawer are not captured (0007 verified them by hand) — add `--state=` or a per-route hook
+- Photography, video and the drawn contact map for the 12 `media_assets` slots (all `pending`) — the owner supplies these; the map provider is now a setting in M-08f (`none` until chosen) · decide 12 vs the 16 slots `docs/website-vision.md` plans (ROADMAP §F 34)
+- **Visual follow-ups from the 0020 audit** (ROADMAP §F 32): one date / time format for admin tables · bilingual names for seed content shown as UI (template names, `cancel_reason`, expense concepts) · dark variant of the yellow accent surface · ~~HUB-01 card-grid composition~~ **0022: HUB-01 rebuilt around real previews, hue card families and the `--ui` scale band** · D-02 as per-tier routes · `scripts/screenshots.mjs --state=` for the rail and drawer
+- `docs/screenshots/_before/0006/` (13 files linked from 0006): keep as history or delete per the documentation rule (ROADMAP §F 33)
+- **ROADMAP §G — when nothing else is queued** (0018): SEO/OG + prerender · “next class in N minutes” widget · membership calculator · then the rest of `docs/website-vision.md`
+
+### Decisions
+- **0047 follow-up** · **Owner: the finance / payroll and legal WhatsApp numbers** (ROADMAP §E 48): M-08a → Contactos de WhatsApp por tema ships with roles and hours but no numbers, so payroll (S-03), the transfer receipt (C-05) and the Ley 1581 channel (C-26) still reach the front desk until Justin types who receives them (name, number, business days or always)
+- **0047 follow-up** · **Owner: do Especiales get a direct coordination number?** Manual ch. 12 says reception does not quote and relays to coordination the same day; a `specials` number in M-08a would skip the relay (P-01, W-06, C-06). Also whether `sales` (the trial-class button on the classic home) stays with the front desk
+- **0043 follow-up** · **Four owner decisions for AI distribution** (ROADMAP §E 44–47, `docs/reference/ai-distribution.md` §6): 44 server hostname and home (`server/` here or `imagine-os/mcp`) · 45 open-source the MCP server (Cursor Marketplace requires it) · 46 which accounts (paid Claude plan, OpenAI org verification, muse.ai/platform application, a DNS namespace) · 47 may an agent book when the pass would be charged, or does paying stay a person's click
+- **0041 follow-up** · **Owner decision: exact hours / 6 vs 7 days (ROADMAP §E 8)** — the hours are now editable in M-08a and reach every screen (and Google, once connected); 06:00–20:00 Mon–Fri, 08:00–13:00 Sat, Sun closed are still assumptions
+- **0032 follow-up** · **Three new owner decisions** (ROADMAP §E 37–39): is the Clase de Prueba free ("sin costo de entrada" vs 39,000 COP) · scope, prices and capacity rule of Experiencias Corporativas · drop "intención del día" from the next privacy-policy version
+- **Open questions from Jas's review (0014), with Justin to forward** — recorded as ROADMAP §E 31–34:
+  - **Sergio**: are teachers paid fortnightly or monthly? — **both are built since 0018**: the M-08c cadence switch drives M-09a (one or two runs per month), S-03 and the Finance range; Sergio picks
+  - **Sergio**: does the Coordinator see the monthly total-revenue KPI in the admin panel?
+  - **Lore**: do we need to store the customer's sex/gender? (no field today)
+  - **Lore**: is there a group-session product for birthdays/events (book room + teacher + an add-on)? — **structurally answered in 0017**: a birthday or event group session is an **Especial** (room in S-05 + teacher + hand price in S-04, payout to payroll); whether it becomes a standard product with a fixed price is still Lore's call
+
+### Spacing follow-ups (0037)
+- Retire the legacy `--sp-1 … --sp-16` aliases in `tokens.ts` once no open branch uses them
+- Lower the spacing baseline (63 since 0042): SessionCalendar and Timeline geometry, badge offsets onto tokens (~~ElementCursor art~~ done in 0042)
+- Website `border-radius` px values in `sanctuary.css` (arch corners 2–5 px) to rem
+- Run `npm run audit:spacing` across the remaining codes (C-03 … C-26, M-02 … M-11, D-*) and the full capture pass
+
+### Repo hygiene
+- empty10 placeholder: awaiting Justin's decision (reset to placeholder or delete)
+
+## Doing
+
+## Done
+
+- **0057 · W-11 Coming Soon**: separate `/coming-soon` route and hub card, bilingual living brand artwork, motion control and confirmed Instagram link; full website/Latest default unchanged. Final integrated QA and deployment tracked with 0056.
+
+### 2026-10-01 · The studio's verified content, FAQ and terms (0051 · v0.22.0)
+- **0051 · Website verified content, W-10 FAQ, terms v2.0** (v0.22.0): Lorena's WEBSITE MODIF, FAQ and Términos y Condiciones, forwarded by Justin — "Please update the website … see if there's anywhere in the user manual or elsewhere this info applies to … make sure the FAQ section is beautiful" — hero, philosophy, classes band with seven `ClassArch` arches, "¿Cómo te quieres mover hoy?", About philosophy, W-07 / W-08 for the seven classes, W-05 the seven real teachers (monograms, no ratings), P-01 the launch price list, W-06 confirmed contact, **W-10 Preguntas frecuentes** (search, topic index, editorial accordion, live PriceTable), A-06 terms v2.0 with "Por definir" callouts.
+- **Business model**: classes, never credits — `credits` → `class_ledger` with the 12-class package freeze (`frozen_from` / `frozen_until`, `src/data/packages.ts`), C-06 Paquetes, C-07 trial / individual, C-07b **Mis clases**, C-17 gift cards with quantity, C-22 retired; memberships dormant; policies in `src/tenant/policies.ts` (12 h, freeze 30 × 1).
+- **Removed everywhere**: credits, self check-in (S-03 read-only roster + "Cerrar clase", `checkin.write` off the teacher role), Nequi / Daviplata, the payroll WhatsApp ask; rosters translate `paid_with` (closes the 0049 follow-up).
+- **Docs**: ops manual 02, 03, 10, 11 rewritten and 19 more chapters (00, 01, 04–09, 13, 14, 16, 17, 19–21, 24–27) corrected, ES + EN, lint 0; prompt 0051, changelog 0051; page docs; `docs/website-assets.md`; reference uploads; schema.sql + data-model regenerated; seed v9.
+
+### 2026-09-30 · Manual: read toggle, admin edits, phone figures (0050 · v0.21.3)
+- **0050 · Read toggle top and foot, admin edits any section, phone figures at phone width** (v0.21.3): Justin's "need mark unread … top and bottom … Can a super admin edit right on the page … The mobile images are to big" — `ReadToggle` (new molecule) in the K-03 chapter head and in the new `ChapterFoot` (new molecule: "¿Terminaste este capítulo?", the toggle, "Siguiente →" in the role's list), `useMarkUnread()` + `manual.markUnread` (audit `manual.unread`), cover and team view update at once; `canEditSection`: admin / super admin every `##` section, coordinator its marked ones, no tag on unmarked sections, "{n} secciones editables por ti"; the request box links K-04 for leads and tells admins to edit directly; phone figures fixed (hashed build names defeated the `-390` check) at 360 px, centred, `--r-lg`, two adjacent ones in `FigurePair` (new organism) from 768 px; STYLE.md, surfaces, K-03 spec + page doc; before / after `docs/screenshots/_brand/manual-read-edit-figures-2026-09-30.jpg` (Opus 5.5: build)
+
+### 2026-09-30 · Check-in row actions (0049 · v0.21.2)
+- **0049 · Compact, clear row actions** (v0.21.2): Justin's "the button height for check in seems obnoxiously large, and novino isnt clear its a button" — S-02 Esperados rows now carry a tonal `check` "Check-in" and an outline `user-x` "No vino" of one height (36 px visible, 44 px hit area through a transparent `::before`, no shadow) in the new `RowActions` molecule; Llegaron outline "Deshacer", No vinieron tonal "Check-in", Lista de espera tonal "Dar cupo", walk-in tonal "Entrar"; the "Esperado" / "En espera" chips hidden where the section says it (`RosterRow showStatus`); the S-03 attendance roster gets the same pair; `Button` `tonal` + `outline` variants, `--h-ctl-sm` in D-01, the dense-row exception in the ui-spacing skill and `docs/design-system.md`, the audit counts `::before` hit areas; before / after `docs/screenshots/_brand/checkin-row-actions-2026-09-30.jpg` (Opus 5.5: build)
+
+### 2026-09-30 · Hub card: Mensajes transaccionales (0048 · v0.21.1)
+- **0048 · Mensajes transaccionales card** (v0.21.1): HUB-01 team band, after CRM — enters as Valentina (coordinator) at `/admin/emails` (M-04), secondary link "WhatsApp →" enters as the same user at `/admin/whatsapp`; mail icon on the inbox hue (page-only `CARD_UI.hue`, no new token); hub map 16 experiences (M-04 / M-05 moved from `admin` to `messages`, group "Mensajes"); `hub.enterAs` enum + surfaces.md; HUB-01 captures and thumbnails re-shot, which closes the 0045 card "Stale HUB-01 capture" (Opus 5.5 build, Fable 5.1 direction)
+
+### 2026-09-30 · WhatsApp contact routing by intent (0047 · v0.21.0)
+- **0047 · Contacts by topic** (v0.21.0): the 16-site inventory (`docs/reference/whatsapp-handoffs.md`; two misrouted: S-03 payroll, C-26 legal), `StudioSettings.contacts` with nine intents (name · WhatsApp · role · `always` / `studioHours` / `businessDays`), the pure `resolveContact()` in `src/tenant/contacts.ts` with the hours + holiday fallback and the "Respondemos el próximo día hábil (…)" note, `useWhatsappLink()` as the one reader, all 16 handoffs rewired by intent (W-02 / W-06 messages as string keys, the C-15 empty-name message fixed, S-03 says who receives the question, the manual's `{{tenant:contact}}` lists every configured contact), the M-08a card "Contactos de WhatsApp por tema" (five columns → two → one, live "ahora mismo llega a"), `settings.contacts.update` and `contact.whatsapp` (59 actions), `npm run test:contacts` (26 checks), D-0022, manual ch. 13 / 16, ROADMAP §E 48 (Fable 5.1: audit, shared code, docs)
+
+### 2026-09-29 · Tables calendar and timeline (0046 · v0.20.0)
+- **0046 · M-03 calendar and timeline views** (v0.20.0): `CalendarView` (month / week / agenda, keyboard, create on an empty day) and `TimelineView` (bars, lanes, zoom day to quarter, today line) organisms in D-02, the Fecha / Hasta date picker, six seeded calendar and timeline views (`SEED_VERSION` 8), rename and delete of saved views, six new `tables.*` actions (17 in all, 57 in `actions.json`), `?date=` `?mode=` `?zoom=`, and the `MockProvider.list()` copy fix; closes Pass B **B2**, the 0044 card "saved views cannot be renamed or deleted", and half of B6 (Opus 5.5 build, Sonnet 5.5 docs and integration, Fable 5.1 brief and review)
+
+### 2026-09-29 · Developer brief (0045 · v0.19.1)
+- **0045 · developer brief** (v0.19.1, docs only): `docs/reference/developer-brief.md` — the app and its deploy, extension points, roles and permissions, the 57-table data model and the provider seam, the multi-tenant rule, the machine surfaces (51 actions, `actions.json`, `hub-map.json`, the CLI, no HTTP API), MCP vs WebMCP, the integrations (Google Business Profile body, developer keys, hours and holidays, Supabase, Wompi, WhatsApp, email), the AI distribution plan, how we document, the quality bar, what is next and a screenshots table; plus a shareable report page with the captures (Opus 5.5)
+
+### 2026-09-29 · Tables system redesign (0044 · v0.19.0)
+- **0044 · M-03 tables system redesign** (v0.19.0): human labels (`src/data/labels.ts`, ES/EN), a toggleable sidebar (expanded / rail / phone sheet, pinned, recent, search), grid / list / gallery / kanban / graph views with filters, multi-sort, group by, hidden columns and JSON / CSV export, saved views as `table_views` rows (57 tables), row drawer with related rows, 11 `tables.*` actions, real `M03` spec; the schema is the ontology (D-0020), views are rows and realtime is Supabase first (D-0021); plan `docs/plans/tables-system.md`; calendar and timeline were Placeholders until B2, wired in 0046 (A1–A8 done: Opus 5.5 build, Sonnet 5.5 page doc and integration, Fable 5.1 plan and decisions)
+
+### 2026-09-29 · Machine surfaces audit, actions.json, AI distribution plan (0043 · v0.18.0)
+- **`public/actions.json`** (schema `hoy.actions/1`, 40 actions, 11 permissions, 16 declaring pages) written by `npm run actions` (`scripts/gen-actions.mjs`, Vite SSR loader) on every build; `window.__hoyos.actionsUrl`
+- **Surfaces audit**: `docs/reference/surfaces.md` checked against the code and re-dated v0.18.0 (page column, route roles, merged actions table, `capture-dates` row, 92 pages)
+- **AI distribution plan (D-0019)**: `docs/reference/ai-distribution.md` — MCP vs WebMCP, the marketplace landscape, abilities by audience, one multi-tenant MCP server over the actions vocabulary, twelve dependency-bound steps, four owner decisions
+
+### 2026-09-29 · Quiet site cursor (0042 · v0.17.1)
+- **ElementCursor rebuilt** (D-02 atom, mounted by `SiteShell` on W-01 … W-09, P-01, A-06): ink dot (`--color-ink`) + trailing primary ring (`--color-primary`, rAF lerp 0.22), ring 28 → 40 px over links / buttons, 22 px pressed, hidden over reading text; a class tone only tints the ring (60 % tone dot); glows, gradients and per-tone shapes removed; surface hairlines keep it visible in light and dark
+- Meta: new description, states and real `usedBy`; `ElementCursor.css` out of the spacing baseline (71 → 63)
+
+### 2026-09-29 · Hours, holidays, Google Business Profile, developer keys (0041 · v0.17.0)
+- **Hours read everywhere (D-0016)**: `useOpeningHours()` (M-08a weekly + `hours_overrides` + tenant.ts fallback) feeds the site footer, W-06 (today line + next exceptions), C-25 (new hours row), the manual's `{{tenant:hours}}` and a `LocalBusiness` JSON-LD in the website shell; pure readers in `src/tenant/hours.ts`, `npm run test:hours`
+- **M-08g Holidays & special hours** (`/admin/settings/hours`, admins + coordinator via `hours.write`): import the Colombian holidays (`src/tenant/holidays.co.ts`, Ley Emiliani, `npm run test:holidays` = the 18 dates of 2026), DataTable + Drawer with validation, 30-day preview, audited writes
+- **M-08a**: today's line, links to M-08g / M-10a instead of the "holiday calendar arrives later" note, per-day time labels, Save blocked on close ≤ open
+- **M-10a Google Business Profile (D-0017)**: status, the exact `locations.patch` body with Copy JSON, setup split "Platform, once" / "This studio, per location", Copy hours for Google + link; Connect / Push are Placeholders; M-10 gains the card, an Open button and the developer-keys notice
+- **D-07 API keys (D-0018)**: `api_keys` table (prefix + SHA-256, never the key), create → shown once, rotate with 24 h grace, revoke, audited; `api_keys.read` / `.write`
+- **Actions**: first admin actions (`settings.hours.*`, `integrations.google.*`) and `dev.apiKeys.*`; icons `copy`, `eye`, `eye-off`, `refresh-cw`, `store`; SEED_VERSION 6
+
+### 2026-09-29 · Practice analytics (0040 · v0.16.0)
+- **Research → proposal** (`docs/reference/analytics.md`): what members vs teachers vs the club track in on-location studios, with sources; one label per number, a weekly goal-based streak with slack, milestones, no comparison between members, teachers against the studio average; the thresholds M-12 uses; four open questions for Justin (ROADMAP §E 40–43); decisions D-0014 (derived from raw tables, events record moments) and D-0015 (the streak rules)
+- **Analytics core**: `src/data/analytics.ts` (`practiceStats`, `studioStats`, `teacherStats`, `suggestGoal`, `atRiskBand`; visits dated by the session, Mon–Sun weeks in America/Bogota) + `useAnalytics.ts` hooks; `npm run test:analytics` (all checks pass) · **per-week goal history** (D-0015, rule 8): `usePracticeStats` passes every `practice_goals` row and each past week is graded against the goal in force when it closed (latest row with `starts_on` ≤ that Sunday; earlier weeks use the first goal), so raising a goal never rewrites the past — proven for raise / lower / same-day double change / clear
+- **Two tables** in the new *Práctica y analítica* group (52 → 54): `practice_goals` (one active row per person, history kept, `cadence` reserves `month`) and `activity_events` (append-only: goal.set, milestone, streak.saved…); `supabase/schema.sql` and `docs/data-model.md` regenerated; `SEED_VERSION` 5; the demo member gets seven weeks of real morning classes (6 met, one rest week), an ended 1 / week goal under her active 2 / week one, six more members' goals, her events
+- **Five molecules** with metas (75 → 80 in D-02): `WeekDots`, `StreakBadge`, `GoalPicker` (manual activation: arrows move focus, Enter / Space / tap save once), `Heatmap`, `MilestoneList`
+- **C-01**: the `StatsRow ×3` section is the practice block — Clases tomadas este mes (+ reservadas próximas), Semanas seguidas (stamp), Membresía / Clases restantes en tu plan, the week as dots, the goal asked inline once, a one-time "¡Clase número N!" toast, link to C-27 · **C-27 Tu práctica** `/app/practice` (new): week ring + dots, the run and its rule, the month, "Últimas {n} semanas" from the first class (≤ 12), milestones, favourites, the goal, privacy notice · **C-22** shows the same month number · C-19 / C-25 link rows
+- **M-12 Analítica de práctica** `/admin/analytics` (new; same roles as M-01, no revenue while §E 32 is open): fill / attendance / no-shows / active, weekday × hour heatmap, second visit, at-risk 14 / 30 / 60 / 90 as who-to-call → M-06, by modality, by teacher, recent milestones, credits expiring; range 7 / 30 / 90 · **M-06** read-only Práctica tab · **M-01** link · **S-03** "Mis números · 30 días" against the studio average, rating hidden under 5 reviews
+- **Four actions**: `app.openPractice`, `app.setGoal`, `analytics.setRange`, `analytics.openMember` (`docs/reference/surfaces.md`, 0040 delta); routes 101 → 103, codes 87 → 89
+- **Docs**: prompt 0040, changelog 0040, `reference/analytics.md`, D-0014 / D-0015, page docs C-27 and M-12 (new) + C-01, C-22, M-06, S-03, M-01, README, ROADMAP §A / §E 40–43, architecture "Analytics seam"; ops manual unchanged (no chapter describes the home stats card; `lint:manual` 0 violations) · screenshots and the QA matrix: the Sonnet 5.5 pass after this entry
+
+### 2026-09-29 · The four movements retired (0039 · v0.15.0)
+- **Decision**: D-0013 — Enraíza / Fluye / Arde / Libera are gone everywhere (not public, not internal, not as data keys); it supersedes the "internal label" resolution of ROADMAP §E 22 (0032) and the D-01 `movements` set
+- **Customer app (C-02, C-02b, C-03, C-08b, C-13)**: the "Sobre HOY" article rewritten from the owner's source text; schedule chips and legend are the visible modalities ("Clases / Classes"); class rows and dots use the class tone
+- **Website (W-01, W-02, W-03, W-04, W-07, W-08)**: hero "varias formas de moverte", gallery eyebrow "01", W-03 grouped by the five classes, W-04 `?modality=<slug>`, W-08 loses the "Movimiento" fact, the four stone images deleted
+- **Data and tokens (D-01, D-02, M-02, M-02d, M-08f, S-05)**: `classTones` (moss, river, clay, sun, sage, slate, plum), `--tone-*`, `modalities.tone` and `media_assets.tone`, the `intentions` table dropped, the `publicNaming` setting removed
+- **Manual (ES + EN)**: chapter 02 section 7 removed; chapters 05, 07, 17, 19 and 27 reworded; `lint:manual` 0 violations
+- **Docs**: page docs, design system, ROADMAP §E 22 superseded and backlog 5 / 7 reworded, website assets / validation / vision, D-0013, `docs/changelog/0039-retire-movements.md`
+
+### 2026-09-29 · Spacing and sizing standard (0037 · v0.14.0)
+- **D-01**: one 4 px scale in rem (`--sp-2xs … --sp-5xl`), semantic tokens (`--gap-inline`, `--gap-control`, `--stack*`, `--block`, `--card-pad(-lg)`, `--section(-hero)`, `--gutter`, `--grid-gap`, `--row-pad`, `--btn-pad-x`, `--measure`) with 768 / 1280 steps, radii in rem; D-0012
+- **Guard**: `npm run lint:spacing` in the build, baseline 71 (was 774); `npm run audit:spacing` measures a live page
+- **Skill**: `.claude/skills/ui-spacing/SKILL.md`, pointed at from CLAUDE.md
+- **Sweep**: website on tokens and rem (4K hero, one section apart), hub double scaling removed, S-02 aside at 3840, page head → first block 24, P-01 alignment, capacity meter gap, rows / buttons / chips / cards on one rhythm, M-08a hours on a phone
+- **Evidence**: `docs/screenshots/_spacing/*-2026-09-29.jpg`; captures for 24 codes regenerated (reduced motion, so website sections render)
+
+### 2026-09-29 · Manual QA pass (0038 · v0.13.4)
+- **Screenshots out of date → done**: full `npm run screenshots` + `npm run thumbnails` dated today (840 refreshed, +9.2 MB); stale badges 23 → 1 (`A-05`, retired); 0 on the cover and chapters 01, 04, 09, 21, 24, ES and EN
+- **`npm run lint:manual`**: STYLE.md as 12 mechanical rules over 28 chapters × 2 languages, report mode in the build; 0 violations, empty baseline
+- **Small fixes**: chapter 22 no longer prints `{{policy.*}}` (`plainDescription()` in `LiveBlock`); `guest_allowance_note` is provisional and pending the owner; CLAUDE.md lists 11 roles; P-01 shows the "En camino" corporate card
+- **QA record** `docs/qa/manual-2026-09-29.md` with "Para Lorena": role lenses (8 roles × 390 / 1280 × ES / EN), smoke (edit / restore / read / sign / request) and keyboard walk, all passing
+
+### 2026-09-29 · Operations manual content (0032 · v0.13.3)
+- **K-03 plain language**: all 28 chapters rewritten ES-first with an EN mirror (56 files) — tú, short sentences, qué hacer → qué decir → qué revisar; screen codes moved into 47 `EN HOYOS` / `IN HOYOS` boxes per language; every live block and figure kept
+- **Style guide**: `docs/ops-manual/STYLE.md` (the register for hand and prompted edits)
+- **Directives in place** (0031 contract): `{{audience}}` + a "Para:" row per chapter, 32 editable sections, 18 studio-rule cards (13 keys appended to `studioPolicies.ts`), 8 role passages, 6 source embeds, 8 training blocks (marketing and developer included)
+- **Reconciled**: six revenue lines (`corporativo` coming soon in `pricing.ts`, no prices), 16 mats, disciplines public / movements internal, Pausas Ilimitadas stacks, guest included, brand manual (manifesto, 4 keywords, 5 traits, logo, palette, type) in 19–20, A-05 gone
+- **K-04 decisions**: closed 2, narrowed 6, added 3 (27 → 28); ROADMAP §E 1 and 22 closed with source and date, 37–39 added
+
+### 2026-09-29 · Round theme toggle (0035 · v0.13.2)
+- **Regression**: the DesktopShell theme toggle (28 × 44) and the bell (32 × 44) were ovals since 0025's 44 px control floor stretched their height, not their width (not 0030)
+- **Shared fix**: `.ctl-round` in `global.css` (width = height = `--h-ctl`, `aspect-ratio: 1`, `border-radius: 50%`) on every theme toggle (DesktopShell, website V1/V2 + motion button, AuthShell, hub band) and `NotificationBell`; the site hero's phone motion button too
+- **Phone dev bar**: below 480 px the spec chip replaces the wordmark; below 380 px the dev switch leaves the bar
+- **Evidence**: `docs/screenshots/_brand/theme-toggle-round-2026-09-29.jpg`; 44 × 44 measured at 390 + 1280, light + dark on W-01, S-02, HUB-01, K-03, A-02; captures regenerated
+
+### 2026-09-29 · Real phone and address (0036 · v0.13.1)
+- **tenant.ts**: WhatsApp +57 312 776 5000, address Cl. 7B Sur # 29C-100, El Poblado (Santa María Tenis Club, from the club's site), location 6.19281 / -75.56535 + Google Maps link
+- **M-08a**: four per-field "confirmed" switches (WhatsApp, address on; email, Instagram off) and an "N por confirmar" badge; `pendingFields` / `pendingSuffix()` in `useContact()`
+- **Consumers**: site footer (address links to the map), W-06, MapSlot, C-25 ("Cómo llegar" row), C-26 controller paragraph, A-06 legal tokens, M-04 email footer + envelope, manual `{{tenant:contact}}`
+- **Evidence**: W-06 and M-08a recaptured ES + EN, 390 + 1280, light + dark
+
+### 2026-09-29 · The operations manual as a staff LMS (0031 · v0.13.0)
+- Roles `marketing` (Camila Herrera, `/admin/content`) and `developer` (Julián Mesa, `/dev`, dev mode); permissions `comms.write`, `manual.edit`, `manual.train`
+- K-03: lens `?as=<role>`, "Tu manual" tiles + ProgressRing, dimmed grid, level chip, "Marcar como leído", Equipo view, `{{training:<role>}}` sign-off
+- K-03: editable sections (`{{editable:…}}`, `manual_overrides`, history, restore, suggestions), `{{studio:…}}` text policies, "Pedir un cambio"; K-04 Decisiones y solicitudes
+- K-05 Documentos fuente (`public/source/`, `docs/source/index.json`, `SourceEmbed`, `{{source:<id>}}`); `{{for}}`, `> EN HOYOS:`, `{{audience}}` directives; capture dates + stale badge on figures
+- Icons per part and chapter (`chapterIcons.ts`); hub cards "Kit de marketing — próximamente" (`comingSoon`) and "Documentos fuente"; five new tables; ten `manual.*` actions
+
+### 2026-09-29 · "How do you want to feel today" off the website (0034 · v0.12.2)
+- **W-01**: the `Movements` section removed from V2 (heading "¿Cómo quieres sentirte hoy?", four stone links) and V1 ("Cuatro movimientos"); id retired from `siteSpecs.home.layout` (layout editor); chapter eyebrows renumbered 01 / 02
+- **Cleanup**: `site.new.movements*`, `site.new.chapter1`, `site.movements.*`, `site.mv.*` strings and the `.sanctuary-stone*` CSS removed; movements stay as labels (class meta, W-04 legend filter, W-03, W-07, W-08)
+- **Evidence**: W-01 recaptured ES + EN, 390 + 1280, light + dark, plus 390 full-page and thumbnails
+
+### 2026-09-29 · Wordmark in website headings (0033 · v0.12.1)
+- **Asset**: `public/brand/hoy-wordmark.svg`, the script traced from the brand manual's artwork (raster in the PDF) — one path, `currentColor`, `<symbol id="hoy">`; metrics in `tenant.brand.vector`
+- **Atom**: `Wordmark` `vector` / `inline` + `tone`; `brandHeading(text)` swaps the standalone word HOY in a heading; D-01 `--wm-inline-h` 1.2em, `--wm-inline-gap` 0.12em, `--wm-min-w` 120px; baseline-aligned, `role="img"` `aria-label="HOY"`, prints blue
+- **Places (V2)**: header + footer brand links (every `#/site` route) · W-02 h1 "Sobre HOY" · W-07 panel h2 "Todo empieza HOY." · W-08 panel h2 "La vida es HOY."; paragraphs, buttons, nav, eyebrows, the W-02 lead / pull-quote, `<title>` and the adverb "hoy" stay text
+- **Evidence**: `docs/screenshots/_brand/wordmark-in-headings-2026-09-29.jpg` (before / after, light / dark, 1280 / 390); W-01/02/07/08 recaptured ES + EN, 390 + 1280, light + dark
+### 2026-09-29 · Icons + the daily intention retired (0030 · v0.12.0)
+- **Icon system** (D-0008): `lucide-react` behind `Icon` (29 → 135 names in five groups), D-01 `--icon-*` tokens, `renderIcon()` for the Button / ListRow / Card / EmptyState / Notice / NavBar slots, `nav.icon: IconName` (Opus 5.5 build, Fable 5.1 direction)
+- **Dock + top bar** (C-*, S-03): distinct glyphs, active pill + heavier stroke + semibold label, 44 px targets, focus ring
+- **Front desk / admin**: sidebar glyph per entry; labelled icons on S-01 quick actions, S-02 check-in / no-show / undo / promote / walk-in, S-04 charge, S-05 room actions, S-06 channels, M-06 inbox link; icon-only controls carry aria-label + title
+- **Settings** (M-08a…f): rail glyph per group, glyph tile per section card (`Card icon`)
+- **A-05 retired**: `/app/intention` → `/app` (module `redirects`), C-01 card + sort removed, sign-up lands on Home, C-02 link gone, A-05 flags no longer seeded (`src/specs/retired.ts`), `intentions` deprecated (history), strings deleted
+- **Follow-ups (Backlog)**: legal privacy text still lists "intention of the day" (change with the next legal version) · MediaSlot placeholder glyphs and the website's own icons are not on the set yet · capture the remaining desktop pages (their sidebars changed) in the next full screenshot pass
+
+### 2026-09-29 · Hub map sample routes (0029 · v0.11.2)
+- **`pages[].sampleRoute`** (additive, contract stays `hoy.hub-map/1`) on the 9 template pages, from `HUB_SAMPLE_ROUTES` in `src/hub/hubMap.data.ts`; the generator fails the build on a template page without a sample
+- **Live picks**: the seed reseeds daily with date-based ids, so class / checkout / booking / change / rate / waitlist / payout samples use the reserved `sample` segment, which `src/app/SampleRoute.tsx` resolves to today's record (`src/hub/sampleIds.ts`); legal `terms` and site `hot-yoga` are literal and seed-checked
+- **`npm run hub-map:check`** (`scripts/check-sample-routes.mjs`): 9 / 9 samples open real pages in a same-origin iframe (resolved route, > 20 words, no not-found, no ⟨key⟩)
+- **Host follow-up**: aluzina W-05 and between-gigs embed `sampleRoute ?? route`
+
+### 2026-09-29 · Hub map page groups (0028 · v0.11.1)
+- **aluzina client hub desk consumes hub-map** (imagine-os/aluzina, from the 0027 follow-ups): the W-05 desk at https://imagine-os.github.io/aluzina/#/founder/clients/hoy/hub lays hoy out on mats per client role from `hub-map.json` (three lenses, dev page D-16)
+- **`pages[].group`** (additive, contract stays `hoy.hub-map/1`): `{ id, label, order }` from `HUB_GROUPS` + `HUB_GROUP_RULES` (route prefix → group, longest prefix wins) in `src/hub/hubMap.data.ts`; the generator fails the build if a page matches no rule
+- **17 groups**: app book 10 / pay 9 / account 13 / auth 5; site 10; teach 1; desk 3 / inbox 1 / pos 1; admin 9 / content 7 / crm 2 / finance 4 / tables 1; dev 8 / docs 1 / manual 2
+
+### 2026-09-29 · Hub map for aluzina, between-gigs and the standalone hub (0027 · v0.11.0)
+- **Contract** `hoy.hub-map/1` (`src/hub/hubMap.types.ts`, `docs/reference/hub-map.md`): product, embed pattern, 9 roles, 13 experiences, 87 pages, 9 tools, 3 lens hints
+- **One source**: `src/hub/hubMap.data.ts` (pure data); HUB-01 renders its bands, cards and tools from it and derives their strings from it; `hubMap.check.ts` guards the copied role facts
+- **`npm run hub-map`** (first build step, Vite SSR loader, no browser, validated, deterministic) → `public/hub-map.json`; **`copy-shots.mjs`** (last build step) → `dist/hub-map/shots/` (854 files, 61.6 MB, under the 80 MB budget)
+- **Tall website pages**: `npm run screenshots -- --full` → W-01…W-09 `{es,en}-390-full.jpg`
+- **HUB-01**: `hub.map` action, `window.__hoyos.hubMap`; captures regenerated for v0.11.0
+
+### 2026-09-28 · Phone calendar, teacher width, mat grid (0026 · v0.10.1)
+- **Calendar on phones (C-02, C-02b, W-04)**: under 900 px the Week is a snap-scrolling strip of seven 44 px day chips with movement dots and the Month a compact 7-column grid of 44 px cells, both above the selected day's `ClassRow` list; no horizontal scroll region (QA I-05). C-02 movement chips wrap under 480 px of column (QA I-04). Desktop grids unchanged
+- **Teacher app (S-03)**: no horizontal overflow at 390 · 768 · 1280 · 1920 · 3840; the "too wide" was the 75rem app container from 900 px — new D-01 `--w-teach` (60rem) caps the teacher column
+- **Mat grid (`MatPicker`, C-04 / W-04)**: columns from the room's measured width and the tenant row length (`matColumns()`: 8, 4 or 2 per line), one grid per physical row with a "Fila n · mats a–b" label when it wraps, rem mat heights that beat the global button floor; 4 × 4 at 360–768, 2 × 8 from 1280, never clipped
+- Captures for the five codes at 360 · 390 · 768 · 1280 · 1920 · 3840 (ES + EN); `checkedAt` on C-02, C-02b, C-04, W-04, S-03
+
+### 2026-09-28 · Responsive app shell (0025 · v0.10.0)
+- **No phone mockup on desktop (D-0006)**: `AppShell` (customer + teacher) replaces `PhoneShell` — content column + sticky bottom dock below 900 px, full-viewport page from 900 px with the primary nav in the top bar (`NavBar variant="top"`), content in a centred `--w-app` container, document scroll, no bezel. `withShell()` honours `RouteDef.layout`. The bezel survives only in the hub's `DeviceFrame` (HUB-01 previews, D-06 simulator)
+- **One flow site → sign-in → app**: `AuthShell` (A-01…A-03, C-21, E-04) on the same `TopBar`, 480 → 576 px column; `Drawer side="bottom"` is a centred dialog from 900 px (W-04 reserve, C-04 success, C-06 confirm, C-08b change, C-02 filters)
+- **Desktop pass on the reserve and register pages**: `SplitSections` two-column layouts on C-01 (greeting across; next class + today | membership, notice, quick actions, stats), C-04 (class + mat | payment + confirm), C-08 (countdown + class | reminder, actions, calendar, policy); C-06 shows both cycles side by side and reads `?plan=` from W-05; A-05 four columns; C-02 filter chips wrap
+- **`--ui` band on every surface (D-0007)** and one `BREAKPOINTS` list (360 · 390 · 768 · 900 · 1280 · 1920 · 2560 · 3840) for CSS, `useMinWidth()` and `PageSpec.checkedAt`; spacing and layout tokens in rem
+- **44 px control floor** (`--h-ctl`) on every interactive control in the app, auth, staff and hub shells
+- **Website fonts via `<link>`**: the Sanctuary `@import` that blanked the website when Google Fonts was unreachable is gone
+- **WebMCP actions**: `app.reserve` (C-02), `app.pickMat` + `app.confirmReservation` (C-04), `app.choosePlan` (C-06), `app.goHome` + `app.openSchedule` (C-01, C-02, C-04, C-06, C-08), `auth.signIn` (A-02) — declared in the specs, mounted with `useActions()`, listed in `docs/reference/surfaces.md`
+- **Docs**: prompt + changelog 0025, D-0006 / D-0007, page docs for C-01, C-02, C-04, C-06, C-08, A-02, A-03, A-05, W-04, S-03 (≥ 900 px layout), README / ROADMAP §A / kanban at v0.10.0, surfaces re-dated
+- **Screenshot matrix 360 → 3840** (`scripts/screenshots.mjs --widths --pages --dark`, 138 captures) and the QA matrix `docs/qa/responsive-2026-09-28.md`
+- **Review and QA fixes** (`c62033e` … `9772100`): chip dot colours restored (blocker); D-01 `m-deep` (opaque dark top bar) and `fs-floor` (captions ≥ 16 px from 1920 px); 44 px brand link and ES/EN; Drawer focus trap + scroll lock + stable close; C-04 confirm bar static from 900 px and opaque below, 44 px mats (rows wrap 8 → 4 under 380 px); one calendar on C-02; `SplitSections` renders no empty column; site header fits at 360 / 390, scales with `--ui`, 44 px controls; W-05 teacher grid whole-word wrapping. Deferred QA items are the "QA 2026-09-28 follow-up" cards above
+
+### Website V2.1 to V2.3 back-fill (0024 · v0.9.4)
+- Docs back-fill only, written 2026-09-28: prompt and changelog 0024 for the four commits that shipped without one (`fc2d1d3` V2.1, `89b8375` V2.2, `6465f8a` V2.3, `d4c567e` calendar polish); the prompt text was never recorded, so the entry quotes the commit messages and says so
+- Shipped by those commits (already live): elemental cursor, membership cards (P-PLANS), shared day/week/month `SessionCalendar` and CMS class photos (P-SCHEDULE, C-02), 16-mat checkout and booking confirmation (C-03, C-04, C-08), 19 sample videos (3 ambient + 16 living) and 8 portraits (W-01, W-02, W-04, W-07, W-08), calendar typography and upcoming-week default
+
+### Hub home redesign (0022 · v0.9.0)
+- **HUB-01 rebuilt around real previews**: brand band (wordmark, `v0.9.0` badge, language, theme, wireframe + dev toggles, cream focus ring) with the hero (eyebrow · h1 · lead · brand tagline · `BreathingRings` under a radial mask); a floating session bar over the band edge (`RoleSwitcher`, "Reportar un problema" as a `Placeholder`, the `Ctrl + .` hint); four 3fr/9fr bands — Fuera del estudio (customer app featured with a phone preview, website, teacher app) · El equipo (recepción, bandeja, caja, admin, CRM, finanzas) · Construcción y pruebas on a tinted lane (manual, docs, kanban, dev tools) · Hub de pruebas (nine tool cards); a live `<dl>` stat strip (101 routes, 87 codes, 48 tables, 66 components, 8 actions, 28 chapters)
+- **`PagePreview` (organism)** — the thing Justin asked for: a hue-tinted idle tile, the real capture from `docs/screenshots/<code>/thumb-*` (eager, `object-fit: cover`, hidden on error), and the running page on top; `LivePreviewBudget` gives six live slots in document order to cards an `IntersectionObserver` reports on screen, and live frames are off inside a frame, with `live=0`, and under `navigator.webdriver` so a capture is deterministic
+- **`DeviceFrame` (organism)**: the real route in a same-origin iframe at phone 390×844 / tablet 768×1024 / desktop 1280×800 / TV 3840×2160, scaled by a `ResizeObserver`, never wider than the device, `maxScale` for 4K
+- **`frameSession.ts`**: a framed page runs as the role, language and theme its hash asks for by shadowing `hoyos.session` / `hoyos.lang` / `hoyos.theme` and swallowing writes — a preview never touches the tester's session
+- **Actions registry `src/actions/`** (the WebMCP surface): `PageSpec.actions` declares, `useActions()` mounts, `listActions()` lists every declared action across all routes with a live `mounted`, `run(id, params)` → `{ ok, message }`; published as `window.__hoyos.actions` (getter) and `window.__hoyos.run`; HUB-01 declares and wires eight; the inspector shows them as "Acciones (WebMCP)"
 - **Components** (61 → 66, all with metas): `Icon` (29 inline stroke glyphs — the literal ◎ ✦ ▦ are gone), `Placeholder` (the "not wired yet" rule as a component: tooltip, `aria-describedby`, click / Enter blocked in capture, toast, dashed outline in dev mode), `Toast` + the `src/app/toast.ts` bus and one `<Toasts/>` in `App.tsx`, `DeviceFrame`, `PagePreview`
 - **D-05 `/dev/canvas`** (new): 83 pages as capture tiles grouped by surface, name + code + route, four-step zoom driving the grid's minimum track, click or Enter opens the page, static captures only
 - **D-06 `/dev/simulator`** (new): device `SegmentedControl`, route / role selects, language and theme, one big `DeviceFrame`, "Abrir en pestaña", the whole view in the hash query
