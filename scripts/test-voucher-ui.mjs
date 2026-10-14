@@ -19,9 +19,9 @@ await page.getByRole('button',{name:'Activar con mi cuenta de prueba',exact:true
 await page.getByLabel('Elige una clase').waitFor();
 const options=await page.getByLabel('Elige una clase').locator('option').evaluateAll(nodes=>nodes.map(n=>n.value).filter(Boolean));
 assert(options.length>0);
-await page.getByLabel('Nombre ficticio · participante 1',{exact:true}).fill('Cliente ficticio');
+await page.getByLabel('Nombre ficticio · participante 1').fill('Cliente ficticio');
 await page.getByRole('button',{name:'Agregar acompañante',exact:true}).click();
-await page.getByLabel('Nombre ficticio · participante 2',{exact:true}).fill('Invitado ficticio');
+await page.getByLabel('Nombre ficticio · participante 2').fill('Invitado ficticio');
 await page.getByRole('checkbox').check();
 let booked=false;
 for(const sessionId of options){await page.getByLabel('Elige una clase').selectOption(sessionId);await page.getByRole('button',{name:'Confirmar reserva de prueba',exact:true}).click(); await page.waitForTimeout(60);if(await page.getByRole('button',{name:'Cancelar reserva de prueba',exact:true}).count()){booked=true;break;}}
@@ -33,5 +33,5 @@ for(const lang of ['es','en'])for(const width of [390,1280]){await page.evaluate
 await page.evaluate(()=>localStorage.setItem('hoyos.session',JSON.stringify({userId:'usr_super',devMode:false,viewAs:null})));await page.goto('http://127.0.0.1:5173/#/admin/vouchers');await page.reload();
 await page.getByRole('button',{name:'Record test attendance',exact:true}).click();await page.getByText('Attended',{exact:true}).waitFor();
 for(const lang of ['es','en'])for(const width of [390,1280]){await page.evaluate(lang=>localStorage.setItem('hoyos.lang',lang),lang);await page.reload();await page.setViewportSize({width,height:1000});await page.waitForTimeout(200);await page.screenshot({path:`docs/screenshots/M-13/${lang}-${width}.jpg`,fullPage:true});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'admin no overflow');}
-for(const [code,url] of [['M-13','http://127.0.0.1:5173/#/admin/vouchers'],['C-28',claimUrl]]){await page.goto(url);await page.evaluate(()=>localStorage.setItem('hoyos.theme','dark'));await page.reload();await page.screenshot({path:`docs/screenshots/${code}/en-1280-dark.jpg`,fullPage:true});}
+for(const [code,url] of [['M-13','http://127.0.0.1:5173/#/admin/vouchers'],['C-28',claimUrl]]){await page.goto(url);await page.evaluate(()=>localStorage.setItem('hoyos.theme',JSON.stringify({theme:'dark',skin:'styled'})));await page.reload();assert.equal(await page.evaluate(()=>document.documentElement.dataset.theme),'dark');await page.screenshot({path:`docs/screenshots/${code}/en-1280-dark.jpg`,fullPage:true});}
 assert.deepEqual(errors,[]); console.log('Voucher UI lifecycle, persistence, ES/EN 390/1280, overflow and console checks passed');await browser.close();
