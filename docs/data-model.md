@@ -591,6 +591,96 @@ _Los momentos que las tablas crudas no guardan: una meta fijada, un hito alcanza
 
 ### Commerce · Comercio
 
+#### `promotion_campaigns`
+Fictional approved demo offers. Only published, approved, unexpired campaigns can create shares or new claims; teachers cannot edit economics. Production authorization and publishing are not connected.  
+_Ofertas aprobadas ficticias del demo; sin publicación ni autorización de producción._
+
+| column | type | notes |
+| --- | --- | --- |
+| `id` | uuid | Primary key |
+| `tenant_id` | uuid | → `tenants` Owning studio (multi-tenant) |
+| `created_at` | timestamptz |  |
+| `updated_at` | timestamptz |  |
+| `name` | json |  |
+| `publicDescription` | json |  |
+| `title` | text |  |
+| `status` | enum (draft \| approved \| paused) |  |
+| `published` | bool |  |
+| `approvedBy` | text, null |  |
+| `startsAt` | timestamptz, null |  |
+| `maxClaims` | int, null |  |
+| `benefitKind` | text |  |
+| `benefitTotal` | int |  |
+| `participantCap` | int |  |
+| `capScope` | text |  |
+| `creditUnit` | text |  |
+| `expiresAt` | timestamptz, null |  |
+| `cancellationPolicy` | text |  |
+
+**Who may read / write**
+- Default deny until authenticated RPCs and scoped public preview exist; admin controls approved campaign pause/resume; teachers share approved published offers only.
+
+#### `promotion_shares`
+Case-insensitive unique tenant code, immutable creator attribution. Public preview allowlists terms and invitation message only; recipient label and context never enter URLs or public previews. A handoff is not verified delivery.  
+_Código único por invitación; contexto privado separado de la vista pública._
+
+| column | type | notes |
+| --- | --- | --- |
+| `id` | uuid | Primary key |
+| `tenant_id` | uuid | → `tenants` Owning studio (multi-tenant) |
+| `created_at` | timestamptz |  |
+| `updated_at` | timestamptz |  |
+| `campaignId` | uuid | → `promotion_campaigns`  |
+| `code` | text |  |
+| `createdBy` | text |  |
+| `recipientLabel` | text |  |
+| `privateContext` | text |  |
+| `message` | text |  |
+
+**Who may read / write**
+- Default deny; owner teacher or authorized admin reads private share context. Public preview must omit recipientLabel/privateContext and identities. Shares never authorize spending.
+
+#### `promotion_claims`
+One private voucher per tenant + campaign + claimant. Repeat claims return the original voucher and immutable original share/referrer, including attempts through another code. Only the customer may explicitly claim for themself.  
+_Un bono privado por persona y campaña, con atribución original fija._
+
+| column | type | notes |
+| --- | --- | --- |
+| `id` | uuid | Primary key |
+| `tenant_id` | uuid | → `tenants` Owning studio (multi-tenant) |
+| `created_at` | timestamptz |  |
+| `updated_at` | timestamptz |  |
+| `campaignId` | uuid | → `promotion_campaigns`  |
+| `shareId` | uuid | → `promotion_shares`  |
+| `userId` | text |  |
+| `voucherId` | uuid | → `vouchers`  |
+| `referrerId` | text |  |
+
+**Who may read / write**
+- Default deny; authenticated atomic claim with campaign row lock, unique claim constraint, immutable attribution and tenant-scoped owner reads. Staff cannot claim for customers.
+
+#### `promotion_events`
+Append-only actor-owned idempotency history. Handoff records copy/composer status only, never sent/delivered. Result snapshots may contain private data and must not be exposed publicly.  
+_Eventos inmutables de creación, traspaso y canje; sin prueba de entrega._
+
+| column | type | notes |
+| --- | --- | --- |
+| `id` | uuid | Primary key |
+| `tenant_id` | uuid | → `tenants` Owning studio (multi-tenant) |
+| `created_at` | timestamptz |  |
+| `updated_at` | timestamptz |  |
+| `campaignId` | uuid | → `promotion_campaigns`  |
+| `shareId` | uuid, null | → `promotion_shares`  |
+| `claimId` | uuid, null | → `promotion_claims`  |
+| `kind` | text |  |
+| `actorId` | text |  |
+| `requestId` | text |  |
+| `fingerprint` | text |  |
+| `payload` | json |  |
+
+**Who may read / write**
+- Default deny; immutable scoped audit via authenticated RPC only; unique tenant requestId and actor/fingerprint conflict checks.
+
 #### `vouchers`
 Demo contract only; production transactional RPCs and authorization are not connected. No real issuance, delivery or payment. Lifetime cap counts non-cancelled attendee seats across bookings; cancellation policy is explicitly selected. COP cost is a mock quotation, never client-authoritative in production.  
 _Contrato de demostración; backend transaccional pendiente._
@@ -618,6 +708,9 @@ _Contrato de demostración; backend transaccional pendiente._
 | `claimedBy` | text, null |  |
 | `status` | text |  |
 | `issuedBy` | text |  |
+| `campaignId` | uuid, null | → `promotion_campaigns`  |
+| `shareId` | uuid, null | → `promotion_shares`  |
+| `referrerId` | text, null |  |
 
 **Who may read / write**
 - Default deny until authenticated scoped RPCs are implemented; audit must be append-only; guest details private to owner and authorized staff.
@@ -639,6 +732,8 @@ _Contrato de demostración; backend transaccional pendiente._
 | `status` | text |  |
 | `restored` | bool |  |
 | `mats` | json |  |
+| `confirmedAt` | timestamptz, null | Verified reception confirmation only; booking remains booked and no additional credit is debited. Cancellation is allowed only before class starts. |
+| `confirmedBy` | text, null | First confirming staff actor; attendance is a separate booked-to-attended transition with no debit. |
 
 **Who may read / write**
 - Default deny until authenticated scoped RPCs are implemented; audit must be append-only; guest details private to owner and authorized staff.
@@ -828,7 +923,7 @@ _Invitaciones enviadas por miembros (C-16) y la clase de regalo cuando el invita
 | `channel` | enum (whatsapp \| email \| link) |  |
 | `code` | text |  |
 | `session_id` | uuid, null | → `class_sessions` class the invite was sent from |
-| `status` | enum (sent \| opened \| joined \| rewarded) |  |
+| `status` | enum (prepared \| sent \| opened \| joined \| rewarded) |  |
 | `reward_ledger_id` | uuid, null | → `class_ledger`  |
 
 **Who may read / write**

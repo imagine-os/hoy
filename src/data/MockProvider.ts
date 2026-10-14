@@ -1,3 +1,4 @@
+import { executePromotionCommand, ensureDemoPromotions, type PromotionCommand, type PromotionResult } from './promotions';
 import { executeVoucherCommand, voucherSeats, type VoucherCommand, type VoucherResult, type VoucherBookingRow } from './vouchers';
 import { chooseMat, occupiesMat, usesMats } from './mats';
 import type { BookingRow, ClassSessionRow, ModalityRow } from './schema';
@@ -112,6 +113,7 @@ export class MockProvider implements DataProvider {
     if (e.key !== KEY || !e.newValue) return;
     try {
       const parsed = JSON.parse(e.newValue) as Stored;
+      ensureDemoPromotions(parsed.db, tenant.id);
       if (parsed.version !== SEED_VERSION || !tableNames.every((t) => Array.isArray(parsed.db[t]))) return;
       this.db = parsed.db;
       for (const t of Object.keys(this.db)) this.emit({ table: t, type: 'reset' });
@@ -123,6 +125,8 @@ export class MockProvider implements DataProvider {
       const raw = localStorage.getItem(KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as Stored;
+        // Add only new promotion tables; preserve same-day vouchers, bookings and CMS edits.
+        ensureDemoPromotions(parsed.db, tenant.id);
         if ((parsed.version === SEED_VERSION || parsed.version === 2 || parsed.version === 3) && parsed.seededOn === new Date().toDateString() && tableNames.every((t) => Array.isArray(parsed.db[t]))) {
           if (parsed.version === 2) {
             // Preserve same-day CMS edits, members and bookings when upgrading this demo.
@@ -135,6 +139,7 @@ export class MockProvider implements DataProvider {
       }
     } catch { /* fall through to reseed */ }
     const db = buildSeed();
+    ensureDemoPromotions(db, tenant.id);
     this.persist(db);
     return db;
   }
@@ -157,6 +162,7 @@ export class MockProvider implements DataProvider {
   async get<T extends BaseRow>(table: string, id: string): Promise<T | null> { return structuredClone((this.rows(table).find((r) => r.id === id) as T) ?? null); }
 
   async insert<T extends BaseRow>(table: string, row: Partial<T>): Promise<T> {
+    if (['promotion_campaigns', 'promotion_shares', 'promotion_claims', 'promotion_events'].includes(table)) throw new Error('promotion_atomic_command_required');
     if (['vouchers', 'voucher_bookings', 'voucher_events'].includes(table)) throw new Error('voucher_atomic_command_required');
     const now = new Date().toISOString();
     let full = { id: newId(table.slice(0, 3)), tenant_id: tenant.id, created_at: now, updated_at: now, ...row } as T;
@@ -168,6 +174,7 @@ export class MockProvider implements DataProvider {
     return full;
   }
   async update<T extends BaseRow>(table: string, id: string, patch: Partial<T>): Promise<T> {
+    if (['promotion_campaigns', 'promotion_shares', 'promotion_claims', 'promotion_events'].includes(table)) throw new Error('promotion_atomic_command_required');
     if (['vouchers', 'voucher_bookings', 'voucher_events'].includes(table)) throw new Error('voucher_atomic_command_required');
     const rows = this.rows(table);
     const i = rows.findIndex((r) => r.id === id);
@@ -186,6 +193,7 @@ export class MockProvider implements DataProvider {
     return next;
   }
   async remove(table: string, id: string): Promise<void> {
+    if (['promotion_campaigns', 'promotion_shares', 'promotion_claims', 'promotion_events'].includes(table)) throw new Error('promotion_atomic_command_required');
     if (['vouchers', 'voucher_bookings', 'voucher_events'].includes(table)) throw new Error('voucher_atomic_command_required');
     this.db[table] = this.rows(table).filter((r) => r.id !== id);
     this.persist();
@@ -204,8 +212,16 @@ export class MockProvider implements DataProvider {
     for (const table of ['vouchers', 'voucher_bookings', 'voucher_events', 'class_sessions']) this.emit({ table, type: 'reset' });
     return transaction.result;
   }
+  async promotion(command: PromotionCommand): Promise<PromotionResult> {
+    const transaction = executePromotionCommand(this.db, command, { tenantId: tenant.id });
+    this.db = transaction.db;
+    this.persist();
+    for (const table of ['promotion_campaigns', 'promotion_shares', 'promotion_claims', 'promotion_events', 'vouchers', 'voucher_events']) this.emit({ table, type: 'reset' });
+    return transaction.result;
+  }
   async reset(): Promise<void> {
     this.db = buildSeed();
+    ensureDemoPromotions(this.db, tenant.id);
     this.expandDemoCalendar();
     this.assignLegacyMats();
     this.persist();
