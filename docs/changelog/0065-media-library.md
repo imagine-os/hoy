@@ -16,3 +16,6 @@ MediaLibrary component and metadata; mediaLibrary projection; generated catalog 
 
 ## Verification
 Hosted TypeScript/full build and model/file-integrity checks pass. Eighteen ES/EN desktop/mobile, light/dark, placement-detail and color-phase captures pass UI regression checks. Photography, timetable and voucher suites pass on the integrated feature. Deterministic catalog regeneration is verified. Original imagery is not modified.
+
+## Release reconciliation
+Rebased tree on deployed photography v0.24.0-photos.1 (main 9ae1ecd). Restored photo documentation, screenshot files and late-day seed sample fallback are preserved. The 14 UTC/Bogota sample-clock checks and 68-asset model pass again. Package version is 0.24.1. Content photo-picker and schedule-management work remain separate pending releases.
