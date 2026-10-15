@@ -1,3 +1,4 @@
+import { TIMETABLE } from './timetable';
 import type { BaseRow, ModalityRow, RoomRow, TeacherRow, PlanRow } from '../schema';
 import { pricing } from '../../tenant/pricing';
 import { tenant } from '../../tenant/tenant';
@@ -51,8 +52,22 @@ export const teachers: TeacherRow[] = [
   teacher('tea_andre', 'Andre Cardona', 'mod_solido', 'Sólido'),
   teacher('tea_sara_c', 'Sara Crismatt Duque', 'mod_ligereza', 'Ligereza'),
   teacher('tea_maria_camila', 'María Camila Pinzón', 'mod_alineacion', 'Alineación'),
-  teacher('tea_tatiana', 'Tatiana Ramirez', 'mod_centro', 'Centro'),
+  teacher('tea_tatiana', 'Tatiana Ramirez', 'mod_pulso', 'Pulso'),
+  // Andrea is not assumed to be Andre Cardona; retain the existing profile separately.
+  teacher('tea_andrea', 'Andrea', 'mod_fuego', 'Fuego'),
+  teacher('tea_jennifer', 'Jennifer Varela', 'mod_solido', 'Sólido'),
+  teacher('tea_clara', 'Clara Zuluaga', 'mod_fuego', 'Fuego'),
+  teacher('tea_leandro', 'Leandro Valencia', 'mod_fuego', 'Fuego'),
 ];
+
+// Public teaching assignments only; no compensation or private availability is imported.
+for (const person of teachers) {
+  const assigned = [...new Set(TIMETABLE.filter(row => row.teacher === person.id).map(row => row.modality))];
+  if (!assigned.length) continue;
+  person.specialties = assigned;
+  const names = assigned.map(id => modalities.find(m => m.id === id)!.name_es).join(', ');
+  person.bio = { es: `Guía las clases de ${names}.`, en: `Guides the ${names} classes.` };
+}
 
 export const plans: PlanRow[] = pricing.map((p, i) => ({
   ...base(`plan_${p.id}`, 200),

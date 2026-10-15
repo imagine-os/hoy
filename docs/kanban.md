@@ -1,5 +1,10 @@
 # HoyOS kanban
 
+## In verification · 0063 (2026-10-15)
+
+- Apply the owner-selected provisional 30-class timetable and public instructor names; keep reception hours unconfirmed until staff saves them. [Details](changelog/0063-fixed-weekly-schedule.md)
+- Studio follow-up: reconcile the four Monday/Tuesday evening assignments; preserve the selected version until told otherwise.
+
 ## Completed · 0061 (v0.24.0 patch · 2026-10-14)
 
 - M-13/C-28: permit distinct guests with the same display name while retaining user-ID/email duplicate protection. [Details](changelog/0061-voucher-guest-identities.md)

@@ -129,7 +129,7 @@ export const strings: StringTable = {
   'site.nav.book': { es: 'Reservar clase', en: 'Book a class' },
 
   'site.hero.eyebrow': { es: 'Human club · {city}', en: 'Human club · {city}' },
-  'site.hero.body': { es: 'Un santuario urbano en {city}: {mats} tapetes, {classes} clases al día y varias formas de moverte. Sin experiencia previa, sin prisa.', en: 'An urban sanctuary in {city}: {mats} mats, {classes} classes a day and several ways to move. No previous experience, no hurry.' },
+  'site.hero.body': { es: 'Un santuario urbano en {city}: {mats} tapetes, clases de lunes a domingo y varias formas de moverte. Sin experiencia previa, sin prisa.', en: 'An urban sanctuary in {city}: {mats} mats, classes Monday–Sunday and several ways to move. No previous experience, no hurry.' },
   'site.hero.cta': { es: 'Clase de prueba · {price}', en: 'Trial class · {price}' },
   'site.hero.cta2': { es: 'Ver horario', en: 'See schedule' },
   'site.hero.media': { es: 'Video de portada del estudio', en: 'Studio hero video' },
@@ -203,7 +203,7 @@ export const strings: StringTable = {
   'site.modalities.essays': { es: 'Cada fila del horario es una de nuestras siete clases. Lee de qué se trata antes de reservar.', en: 'Every schedule row is one of our seven classes. Read what it is about before you book.' },
 
   'site.schedule.title': { es: 'Horario', en: 'Schedule' },
-  'site.schedule.body': { es: '{classes} clases al día, {mats} tapetes, una clase por persona al día. Toca una clase para reservar.', en: '{classes} classes a day, {mats} mats, one class per person per day. Tap a class to book.' },
+  'site.schedule.body': { es: 'clases de lunes a domingo, {mats} tapetes, una clase por persona al día. Toca una clase para reservar.', en: 'classes Monday–Sunday, {mats} mats, one class per person per day. Tap a class to book.' },
   'site.schedule.loginTitle': { es: 'Para reservar, entra a tu cuenta', en: 'Sign in to book' },
   'site.schedule.loginBody': { es: 'Reservar y pagar ocurre dentro de la app. Entra o crea tu cuenta y volverás a esta clase.', en: 'Booking and paying happen inside the app. Sign in or create an account and you will come back to this class.' },
   'site.schedule.loginCta': { es: 'Entrar y reservar', en: 'Sign in and book' },
