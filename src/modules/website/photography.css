@@ -28,3 +28,10 @@
 .photo-facilities-grid { grid-template-columns:1fr 1fr; }
 .photo-facilities-grid img:first-child { grid-column:1/-1; }
 }
+/* Portraits own their aspect ratio; legacy viewport heights must not clip a stacked photo. */
+.site[data-site-version="photos"] .sanctuary-hero { max-height:none; }
+.site[data-site-version="photos"] .sanctuary-hero-inner { height:auto; }
+.site[data-site-version="photos"] .photo-hero-image { height:auto; }
+.site[data-site-version="photos"] .sanctuary-philosophy-art::before { display:none; }
+.site[data-site-version="photos"] .sanctuary-photo-caption { display:none; }
+.site[data-site-version="photos"] .photo-finale-image { flex-shrink:0; }

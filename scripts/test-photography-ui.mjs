@@ -14,7 +14,15 @@ try {
   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),`${path} ${width} overflow`);
   const images=await page.locator('img[src*="studio-2026"]').evaluateAll(ims=>ims.map(i=>({src:i.src,loaded:i.complete&&i.naturalWidth>0,alt:i.alt})));
   assert(images.length>0,`${path} has photos`);assert(images.every(i=>i.loaded),JSON.stringify(images));
+  if(path === '') {
+    for(const cls of ['.photo-hero-image','.photo-finale-image']) {
+      const box=await page.locator(cls).boundingBox();assert(box && box.width>200 && box.height>150,`${cls} has visible area`);
+      const parent=await page.locator(cls).evaluate(i=>{const r=i.parentElement.getBoundingClientRect();const c=i.getBoundingClientRect();return {top:c.top-r.top,bottom:c.bottom-r.bottom};});assert(parent.top>=-1 && parent.bottom<=1,`${cls} stays inside its section: ${JSON.stringify(parent)}`);
+    }
+  }
+  await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
   assert.equal(await page.locator('video').count(),0,'no old concept video in photo preview');
+  console.log('Photo geometry',lang,width,path,await page.locator('img[src*="studio-2026"]').evaluateAll(ims=>ims.map(i=>({class:i.className,src:i.currentSrc,w:i.getBoundingClientRect().width,h:i.getBoundingClientRect().height}))));
   await page.screenshot({path:`qa/photos/${path.slice(1)||'home'}-${lang}-${width}${dark?'-dark':''}.jpg`,fullPage:true});
  }
  await page.goto(`${base}/#/site?version=photos`);await page.locator('.photo-hero-image').waitFor();
