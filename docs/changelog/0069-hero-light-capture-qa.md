@@ -9,6 +9,10 @@ files: shared-hero QA script, W-01 extra-width captures/report and documentation
 
 ## Verification
 
-The original 768 capture visibly used a dark header after the preceding matrix's final dark case. Hosted full-build and actual Chromium assertions must pass, and refreshed images must be inspected and SHA-checked before merge. Website runtime and content are unchanged.
+The original 768 capture visibly used a dark header after the preceding matrix's final dark case. The [hosted Photography QA](https://github.com/imagine-os/hoy/actions/runs/38819101830) passed the full build, fresh/cached clock checks, hub routes, 30 photo captures, all 19 language/theme-asserted hero cases and actual customer cache routing. All three regenerated images were inspected and SHA-checked before merge. Exact final-head QA remains required. Website behavior and content are unchanged; release-version metadata is bumped.
 
 **Resumen (ES).** Se corrige la evidencia de pruebas: las capturas de 344/768/3840 se toman y verifican en inglés y modo claro. No cambia el sitio del cliente.
+
+[Previous mislabeled dark tablet capture](https://github.com/imagine-os/hoy/blob/4f8577e38d558ce259344c6afb2bdfd63b2827ee/docs/screenshots/W-01/studio-latest-en-768.jpg)
+
+![Verified English light tablet capture](../screenshots/W-01/studio-latest-en-768.jpg)

@@ -1,8 +1,8 @@
 # HoyOS kanban
 
-## In verification · 0069 (v0.24.5 · 2026-10-15)
+## Completed · 0069 (v0.24.5 · 2026-10-15)
 
-- W-01 QA: correct inherited dark-mode evidence at 344/768/3840; explicitly verify language/theme and refresh the light captures. Website runtime is unchanged. [Details](changelog/0069-hero-light-capture-qa.md)
+- W-01 QA: correct inherited dark-mode evidence at 344/768/3840; explicitly verify language/theme and refresh the light captures. Website behavior/content are unchanged. [Details](changelog/0069-hero-light-capture-qa.md)
 
 ## Completed · 0068 (v0.24.4 · 2026-10-15)
 
