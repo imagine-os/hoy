@@ -7,7 +7,7 @@ const checks=[], errors=[];
 await mkdir('docs/screenshots/M-02d',{recursive:true});
 try {
  for (const [role,userId] of [['admin','usr_admin'],['coordinator','usr_coord'],['marketing','usr_mkt']]) {
-  const context=await browser.newContext({viewport:{width:1280,height:1000}}), page=await context.newPage();
+  const context=await browser.newContext({viewport:{width:1280,height:1000},reducedMotion:'reduce'}), page=await context.newPage();
   page.on('pageerror',e=>errors.push(e.message));
   await page.goto(`${base}/#/coming-soon`);await page.locator('.coming-soon').waitFor();
   const slots=await page.evaluate(({userId})=>{
@@ -38,6 +38,7 @@ try {
    await page.getByRole('button',{name:lang.toUpperCase(),exact:true}).first().click();await page.setViewportSize({width,height:1000});
    assert(await card().getByText(lang==='es'?'Ver ficha documentada de la pantalla':'View documented screen preview',{exact:true}).count()>0,'visible localized preview label');
    await card().locator('[data-placement-preview="documented"]').first().scrollIntoViewIfNeeded();assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+   await page.evaluate(async()=>{await document.fonts.ready;await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));});
    await page.screenshot({path:`docs/screenshots/M-02d/preview-${role}-${lang}-${width}.jpg`,type:'jpeg',quality:72});
   }
   await page.setViewportSize({width:1280,height:1000});await page.getByRole('button',{name:'EN',exact:true}).first().click();
