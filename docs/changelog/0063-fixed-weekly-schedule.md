@@ -26,3 +26,12 @@ Local focused checks: typecheck, timetable/migration, analytics, opening-hours, 
 ## Real preview captures
 
 Twenty built-demo captures were produced and reviewed: ES/EN at 390/1280 plus EN dark desktop for W-04, W-05, W-06 and C-03. They show simulated bookings and availability, not a live operational database. See the [verified QA run](https://github.com/imagine-os/hoy/actions/runs/38690365989). The approved public evidence set is stored under docs/screenshots/{W-04,W-05,W-06,C-03}/schedule-*.jpg and linked from each page document.
+
+### Visual references
+
+Existing repository baseline captures are retained; each page document links all five new capture variants.
+
+- W-04: [prior repository baseline](../screenshots/W-04/es-1280.jpg) · [updated timetable](../screenshots/W-04/schedule-es-1280.jpg) · [all variants](../pages/W-04.md#provisional-timetable-qa--0063)
+- W-05: [prior repository baseline](../screenshots/W-05/es-1280.jpg) · [updated timetable](../screenshots/W-05/schedule-es-1280.jpg) · [all variants](../pages/W-05.md#provisional-timetable-qa--0063)
+- W-06: [prior repository baseline](../screenshots/W-06/es-1280.jpg) · [updated timetable](../screenshots/W-06/schedule-es-1280.jpg) · [all variants](../pages/W-06.md#provisional-timetable-qa--0063)
+- C-03: [prior repository baseline](../screenshots/C-03/es-1280.jpg) · [updated timetable](../screenshots/C-03/schedule-es-1280.jpg) · [all variants](../pages/C-03.md#provisional-timetable-qa--0063)
