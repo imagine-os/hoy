@@ -48,6 +48,7 @@ try {
  }
 
  await page.setViewportSize({width:1280,height:1000});await page.emulateMedia({reducedMotion:'no-preference'});
+ await page.locator('.slow-photo-pair button').first().click();await page.locator('.slow-photo-pair[data-motion=on]').first().waitFor();
  await page.evaluate(async()=>{await new Promise(requestAnimationFrame);for(const image of document.querySelectorAll('.slow-photo-pair-warm')){getComputedStyle(image).animationName;for(const animation of image.getAnimations()){animation.pause();await animation.ready;animation.currentTime=20000;}}await new Promise(requestAnimationFrame);});
  assert(await page.locator('.slow-photo-pair-warm').first().evaluate(e=>Number(getComputedStyle(e).opacity)>.99),'warm phase visible');
  await page.locator('.photo-facilities').screenshot({path:'docs/screenshots/M-02d/studio-pairs-warm-phase.png'});
