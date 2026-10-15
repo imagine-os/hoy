@@ -16,7 +16,7 @@ try {
  await page.getByLabel('Search name, tag or placement').fill('teacher leandro');assert.equal(await page.locator('.media-library-grid>.card').count(),1);
  await page.locator('.media-library summary').click();assert(await page.locator('.media-library-use a[href*="version=photos"]').count()>0);
  await page.getByLabel('Usage status').selectOption('live');assert.equal(await page.locator('.media-library-grid>.card').count(),0);
- await page.getByRole('button',{name:'Reset filters'}).first().click();await page.getByLabel('Source',{exact:true}).selectOption('studio');assert.equal(await page.locator('.media-library-grid>.card').count(),14);
+ await page.getByRole('button',{name:'Reset filters'}).first().click();await page.getByLabel('Source',{exact:true}).selectOption('studio');assert.equal(await page.locator('.media-library-grid>.card').count(),18);
  await page.getByLabel('Search name, tag or placement').fill('no-matching-file');assert.equal(await page.locator('.media-library-grid>.card').count(),0);
  await page.getByRole('button',{name:'Placements & briefs'}).click();await page.locator('.adm-media').waitFor();assert(await page.locator('.adm-media>.card').count()>0);
  const check=await page.evaluate(async()=>{
@@ -29,6 +29,20 @@ try {
   const blocked=buildMediaLibrary([{...slot,url:'javascript:alert(1)'}],[],[]);
   return {states:assetStates(a),uses:a.usages.length,draft:assetStates(draft),blocked:blocked.some(a=>a.url.startsWith('javascript:')),fallback:assets.find(a=>a.id.includes('teacher-leandro')).usages.map(u=>u.state)};
  });
- assert.deepEqual(check.states.sort(),['inactive','live']);assert.equal(check.uses,5);assert.deepEqual(check.draft,['draft']);assert.equal(check.blocked,false);assert(check.fallback.every(s=>s==='inactive'));
- assert.deepEqual(errors,[]);await writeFile('docs/screenshots/M-02d/media-qa.json',JSON.stringify({passed:true,captures:8,checks:['search','filter','empty state','slot editor preserved','per-usage mixed states','teacher fallback deactivation','unsafe URLs excluded','ES/EN and themes','no overflow','no runtime errors']},null,2));console.log('Media library QA passed');
+ assert.deepEqual(check.states.sort(),['inactive','live']);assert.equal(check.uses,9);assert.deepEqual(check.draft,['draft']);assert.equal(check.blocked,false);assert(check.fallback.every(s=>s==='inactive'));
+
+ await page.goto(`${base}/#/site/about?version=photos`);await page.locator('.slow-photo-pair').first().waitFor();
+ assert.equal(await page.locator('.slow-photo-pair').count(),2);
+ await page.locator('.slow-photo-pair button').first().click();assert.equal(await page.locator('.slow-photo-pair[data-motion=off]').count(),2);
+ await page.emulateMedia({reducedMotion:'reduce'});
+ assert.equal(await page.locator('.slow-photo-pair-warm').first().evaluate(e=>getComputedStyle(e).animationName),'none');
+ for(const theme of ['light','dark'])for(const width of [390,1280]){
+  await page.evaluate(theme=>localStorage.setItem('hoyos.theme',JSON.stringify({theme,skin:'styled'})),theme);
+  await page.setViewportSize({width,height:1000});await page.reload();await page.locator('.slow-photo-pair').first().waitFor();
+  await page.locator('.photo-facilities').scrollIntoViewIfNeeded();
+  assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+  await page.evaluate(async()=>{await Promise.all([...document.querySelectorAll('.slow-photo-pair img')].map(i=>i.decode()));});
+  await page.locator('.photo-facilities').screenshot({path:`docs/screenshots/M-02d/studio-pairs-${theme}-${width}.png`});
+ }
+ assert.deepEqual(errors,[]);await writeFile('docs/screenshots/M-02d/media-qa.json',JSON.stringify({passed:true,captures:12,checks:['search','filter','empty state','slot editor preserved','per-usage mixed states','teacher fallback deactivation','unsafe URLs excluded','ES/EN and themes','no overflow','no runtime errors']},null,2));console.log('Media library QA passed');
 }finally{await browser.close();}

@@ -142,6 +142,8 @@ for(const [file,label,path] of [
   for(const a of catalog)for(const url of a.variants)if(code.includes(url))add(url,label,path,'live',`${file}: literal asset reference. This is a code placement, not a runtime visibility guarantee.`);
 }
 for(const [url,path,label] of [['brand/hoy-wordmark.svg','/site','Website wordmark'],['brand/hoy-blue.png','/site?version=classic','Classic wordmark (light)'],['brand/hoy-cream.png','/site?version=classic','Classic wordmark (dark)']])add(url,label,path,'live',`${website}/SiteShell.tsx uses Wordmark; src/components/atom/Wordmark/Wordmark.tsx selects tenant.brand vector or theme-dependent raster.`);
+// Equipment pairs are opt-in About placements, preserving both color originals.
+for (const name of ['barre-blue','barre-warm','heater-blue','heater-warm']) add(`images/studio-2026/${name}-960.webp`,'Studio light','/site/about?version=photos','draft','src/modules/website/pages/AboutPage.tsx: SlowPhotoPair; 40-second dissolve, pause and reduced motion.');
 // Associate a poster only when an actual still exists; never invent thumbnails for videos.
 for(const a of catalog.filter(a=>a.kind==='video')) {
   const stem=a.url.split('/').at(-1).replace(/\.[^.]+$/,'').replace(/^living-/,'');

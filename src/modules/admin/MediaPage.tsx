@@ -1,6 +1,6 @@
 import { MediaLibrary } from '../../components/organism/MediaLibrary/MediaLibrary';
 import { buildMediaLibrary } from '../../data/mediaLibrary';
-import type { TeacherRow, ModalityRow } from '../../data/schema';
+import type { TeacherRow, ModalityRow, EventRow } from '../../data/schema';
 import { useEffect, useState } from 'react';
 import { useI18n } from '../../i18n/I18nProvider';
 import { useTable } from '../../data/DataContext';
@@ -31,6 +31,7 @@ export function MediaPage() {
   const { rows, loading } = useTable<MediaAssetRow>('media_assets', { orderBy: { column: 'sort' } });
   const { rows: teachers } = useTable<TeacherRow>('teachers');
   const { rows: modalities } = useTable<ModalityRow>('modalities');
+  const { rows: events } = useTable<EventRow>('events');
   const [view, setView] = useState<'catalog' | 'slots'>('catalog');
   const [filter, setFilter] = useState<'all' | MediaAssetRow['status']>('all');
   const ready = rows.filter((r) => r.status === 'ready');
@@ -53,7 +54,7 @@ export function MediaPage() {
 
       <p className="small muted">{t('media.library.demo')}</p>
       <div className="row wrap">{(['catalog','slots'] as const).map(v=><Button key={v} variant={view===v?'primary':'ghost'} onClick={()=>setView(v)} aria-pressed={view===v}>{t(`media.library.${v}`)}</Button>)}</div>
-      {view==='catalog' ? <MediaLibrary assets={buildMediaLibrary(rows, teachers, modalities)} /> : <>
+      {view==='catalog' ? <MediaLibrary assets={buildMediaLibrary(rows, teachers, modalities, events)} /> : <>
       <div className="grid grid-3">
         <StatTile label={t('admin.media.kpi.ready')} value={`${ready.length} / ${rows.length}`} hint={t('admin.media.kpi.ready.hint')} trend={ready.length === rows.length ? 'up' : 'flat'} />
         <StatTile label={t('admin.media.kpi.pending')} value={rows.length - ready.length} hint={t('admin.media.kpi.pending.hint')} />

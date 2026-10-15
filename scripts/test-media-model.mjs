@@ -12,7 +12,7 @@ try {
  const slot={...base,slot_key:'site.classes.pulso',kind:'photo',ratio:'3 / 4',label:{es:'Pulso',en:'Pulso'},alt:{es:'Barra',en:'Barre'},brief:{es:'',en:''},tone:null,url:'https://example.test/shared.jpg',credit:null,status:'ready',sort:0};
  const teacher={...base,id:'tea_leandro',display_name:'Leandro',active:false,photo_url:slot.url};
  const assets=buildMediaLibrary([slot],[teacher],[{...base,slug:'pulso',active:true}]);const a=assets.find(a=>a.url===slot.url);
- assert.deepEqual(assetStates(a).sort(),['inactive','live']);assert.equal(a.usages.length,5);assert.equal(a.orientation,'portrait');
+ assert.deepEqual(assetStates(a).sort(),['inactive','live']);assert.equal(a.usages.length,9);assert.equal(a.orientation,'portrait');
  assert.deepEqual(assetStates(buildMediaLibrary([{...slot,status:'pending'}],[],[]).find(a=>a.url===slot.url)),['draft']);
  assert(!buildMediaLibrary([{...slot,url:'javascript:alert(1)'}],[],[]).some(a=>a.url.startsWith('javascript:')));
  assert(assets.find(a=>a.id.includes('teacher-leandro')).usages.every(u=>u.state==='inactive'));

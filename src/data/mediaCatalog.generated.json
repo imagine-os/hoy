@@ -943,6 +943,62 @@
     ]
   },
   {
+    "id": "images/studio-2026/barre-blue.webp",
+    "url": "images/studio-2026/barre-blue-960.webp",
+    "thumbnail": "images/studio-2026/barre-blue-480.webp",
+    "name": "Barre blue",
+    "source": "studio",
+    "kind": "image",
+    "orientation": "portrait",
+    "width": 960,
+    "height": 1440,
+    "variants": [
+      "images/studio-2026/barre-blue-480.webp",
+      "images/studio-2026/barre-blue-960.webp"
+    ],
+    "tags": [
+      "studio",
+      "barre",
+      "blue"
+    ],
+    "usages": [
+      {
+        "label": "Studio light",
+        "path": "/site/about?version=photos",
+        "state": "draft",
+        "evidence": "src/modules/website/pages/AboutPage.tsx: SlowPhotoPair; 40-second dissolve, pause and reduced motion."
+      }
+    ]
+  },
+  {
+    "id": "images/studio-2026/barre-warm.webp",
+    "url": "images/studio-2026/barre-warm-960.webp",
+    "thumbnail": "images/studio-2026/barre-warm-480.webp",
+    "name": "Barre warm",
+    "source": "studio",
+    "kind": "image",
+    "orientation": "portrait",
+    "width": 960,
+    "height": 1441,
+    "variants": [
+      "images/studio-2026/barre-warm-480.webp",
+      "images/studio-2026/barre-warm-960.webp"
+    ],
+    "tags": [
+      "studio",
+      "barre",
+      "warm"
+    ],
+    "usages": [
+      {
+        "label": "Studio light",
+        "path": "/site/about?version=photos",
+        "state": "draft",
+        "evidence": "src/modules/website/pages/AboutPage.tsx: SlowPhotoPair; 40-second dissolve, pause and reduced motion."
+      }
+    ]
+  },
+  {
     "id": "images/studio-2026/facility-equipment.webp",
     "url": "images/studio-2026/facility-equipment-960.webp",
     "thumbnail": "images/studio-2026/facility-equipment-480.webp",
@@ -961,14 +1017,7 @@
       "facility",
       "equipment"
     ],
-    "usages": [
-      {
-        "label": "About",
-        "path": "/site/about?version=photos",
-        "state": "draft",
-        "evidence": "src/modules/website/pages/AboutPage.tsx; src/modules/website/photography.ts; src/modules/website/edition.ts. Opt-in photos edition only; teacher entries are conditional fallbacks for matching active teachers."
-      }
-    ]
+    "usages": []
   },
   {
     "id": "images/studio-2026/facility-heater.webp",
@@ -989,14 +1038,7 @@
       "facility",
       "heater"
     ],
-    "usages": [
-      {
-        "label": "About",
-        "path": "/site/about?version=photos",
-        "state": "draft",
-        "evidence": "src/modules/website/pages/AboutPage.tsx; src/modules/website/photography.ts; src/modules/website/edition.ts. Opt-in photos edition only; teacher entries are conditional fallbacks for matching active teachers."
-      }
-    ]
+    "usages": []
   },
   {
     "id": "images/studio-2026/facility-red-studio.webp",
@@ -1057,6 +1099,62 @@
         "path": "/site/about?version=photos",
         "state": "draft",
         "evidence": "src/modules/website/pages/AboutPage.tsx; src/modules/website/photography.ts; src/modules/website/edition.ts. Opt-in photos edition only; teacher entries are conditional fallbacks for matching active teachers. media_slots:site.about:fallback"
+      }
+    ]
+  },
+  {
+    "id": "images/studio-2026/heater-blue.webp",
+    "url": "images/studio-2026/heater-blue-960.webp",
+    "thumbnail": "images/studio-2026/heater-blue-480.webp",
+    "name": "Heater blue",
+    "source": "studio",
+    "kind": "image",
+    "orientation": "portrait",
+    "width": 960,
+    "height": 1440,
+    "variants": [
+      "images/studio-2026/heater-blue-480.webp",
+      "images/studio-2026/heater-blue-960.webp"
+    ],
+    "tags": [
+      "studio",
+      "heater",
+      "blue"
+    ],
+    "usages": [
+      {
+        "label": "Studio light",
+        "path": "/site/about?version=photos",
+        "state": "draft",
+        "evidence": "src/modules/website/pages/AboutPage.tsx: SlowPhotoPair; 40-second dissolve, pause and reduced motion."
+      }
+    ]
+  },
+  {
+    "id": "images/studio-2026/heater-warm.webp",
+    "url": "images/studio-2026/heater-warm-960.webp",
+    "thumbnail": "images/studio-2026/heater-warm-480.webp",
+    "name": "Heater warm",
+    "source": "studio",
+    "kind": "image",
+    "orientation": "portrait",
+    "width": 960,
+    "height": 1441,
+    "variants": [
+      "images/studio-2026/heater-warm-480.webp",
+      "images/studio-2026/heater-warm-960.webp"
+    ],
+    "tags": [
+      "studio",
+      "heater",
+      "warm"
+    ],
+    "usages": [
+      {
+        "label": "Studio light",
+        "path": "/site/about?version=photos",
+        "state": "draft",
+        "evidence": "src/modules/website/pages/AboutPage.tsx: SlowPhotoPair; 40-second dissolve, pause and reduced motion."
       }
     ]
   },

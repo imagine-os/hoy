@@ -1,5 +1,9 @@
 import type { StringTable } from '../../i18n/types';
 export const strings: StringTable = {
+  "media.pair.pause": {"es":"Pausar luz","en":"Pause light"},
+  "media.pair.play": {"es":"Transición lenta","en":"Slow transition"},
+  "media.pair.barre": {"es":"Barra · azul y ámbar","en":"Barre · blue & amber"},
+  "media.pair.heater": {"es":"Calor infrarrojo · azul y ámbar","en":"Infrared warmth · blue & amber"},
   "media.library.title": {
     "es": "Biblioteca de medios",
     "en": "Media library"
