@@ -14,7 +14,8 @@ try{
  await field.getByRole('button',{name:'Use this photo'}).click();assert((await field.locator('.shared-image-preview').getAttribute('src')).startsWith('data:image/webp'));
  const stored=await page.evaluate(async()=>{const {listLocalPhotos}=await import('/src/data/localMediaStore.ts');return {mine:(await listLocalPhotos('ten_hoy')).length,other:(await listLocalPhotos('other')).length};});assert.equal(stored.mine,1);assert.equal(stored.other,0);
  await field.getByRole('button',{name:'Choose from library or upload'}).click();await field.getByLabel('Search photos').fill('fictional-test');assert.equal(await field.locator('.shared-image-option').count(),1);
- await mkdir('docs/screenshots/media-picker',{recursive:true});for(const width of [390,1280]){await page.setViewportSize({width,height:1000});await field.scrollIntoViewIfNeeded();await field.screenshot({path:`docs/screenshots/media-picker/picker-${width}.png`});}
+ await field.getByLabel('Search photos').fill('');
+ await mkdir('docs/screenshots/media-picker',{recursive:true});for(const width of [390,1280]){await page.setViewportSize({width,height:2000});await field.scrollIntoViewIfNeeded();await field.screenshot({path:`docs/screenshots/media-picker/picker-${width}.png`});}
  await page.reload();await page.locator('#cmp-SharedImageField').waitFor();await field.getByRole('button',{name:'Choose from library or upload'}).click();await field.getByLabel('Search photos').fill('fictional-test');assert.equal(await field.locator('.shared-image-option').count(),1);
  console.log('Picker passed: catalog selection, preview, remove/undo, invalid upload, durable private upload, tenant isolation and reload');
 }finally{await browser.close();}
