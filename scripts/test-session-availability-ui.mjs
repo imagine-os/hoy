@@ -57,7 +57,7 @@ try {
     await mkdir(`docs/screenshots/${code}`, { recursive: true });
     for (const lang of ['es', 'en']) for (const width of [390, 1280]) {
       await page.evaluate(({ lang, user }) => { localStorage.setItem('hoyos.lang', lang); localStorage.setItem('hoyos.session', JSON.stringify({ userId: user, devMode: false, viewAs: null })); }, { lang, user });
-      await page.setViewportSize({ width, height: 1000 }); await page.goto(`${base}/#${route}`); await page.reload();
+      await page.setViewportSize({ width, height: 1000 }); await page.reload(); await page.goto(`${base}/#${route}`);
       await page.locator('.session-calendar').waitFor();
       await page.locator('.calendar-date-label input').fill('2026-10-15');
       const inactive = page.locator(width === 390 || route === '/app/schedule' ? '.classrow' : '.calendar-session').filter({ hasText: 'QA Past' });
