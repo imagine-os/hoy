@@ -1,6 +1,3 @@
-Warning: truncated output (original token count: 13614)
-Total output lines: 433
-
 import { canvasSpecs } from '../../specs/canvasSpecs';
 import { defineSpec } from '../../specs/define';
 import { ADMIN_ACTIONS } from './actions';
@@ -173,7 +170,132 @@ export const M08c = sub('M-08c',
   { es: 'Cuenta de consignación, NIT, IVA (incluido o no en los precios publicados) y resolución DIAN, el entorno de Wompi, y la nómina: cadencia mensual o quincenal, medio de pago, quién firma y la tarjeta de tarifas por modalidad y por profesor.', en: 'Payout account, NIT, IVA (included in published prices or not) and DIAN resolution, the Wompi environment, and payroll: monthly or biweekly cadence, payout method, who signs, and the rate card by modality and by teacher.' },
   ['SettingsSubNav', 'PayoutAccount', 'WompiEnvironment + SecretNotice', 'FiscalIdentity (NIT)', 'TaxAndInvoicing (pricesIncludeIva)', 'Payroll (cadence · payoutMethod · signedBy · withholding) + RateCard (byModality · byTeacher)'],
   { integrations: ['Wompi', 'DIAN e-invoicing'], data: ['tenants', 'modalities', 'teachers', 'audit_log'],
-    logic: ['pricesIncludeIva drives splitTax() (S-04), OrderSummary (C-04) and the P-01 “¿Incluye IVA?” card.', 'cadence is programmed both ways: payrollCalc.periodsFor() returns one period per month or two (1–15, 16–end); M-09a generates one run per period, S-03 navigates by period, M-09’s default range follows it (30 d vs 15 d).', 'The rate card is resolved by payrollCalc.rateFor(): teacher override → modality rate → teachers.rate_per_clas…3614 tokens truncated…ted to processing to done; cancelled closes it without deleting.' },
+    logic: ['pricesIncludeIva drives splitTax() (S-04), OrderSummary (C-04) and the P-01 “¿Incluye IVA?” card.', 'cadence is programmed both ways: payrollCalc.periodsFor() returns one period per month or two (1–15, 16–end); M-09a generates one run per period, S-03 navigates by period, M-09’s default range follows it (30 d vs 15 d).', 'The rate card is resolved by payrollCalc.rateFor(): teacher override → modality rate → teachers.rate_per_class → 0. Editing a rate changes the S-03 estimate and the next draft; approved and paid runs keep their lines.', 'Every save writes audit_log settings.update with before/after.'],
+    states: ['Monthly (default)', 'Biweekly', 'Rate row empty (falls through)', 'Saving', 'Read-only'],
+    notes: [...(M08.notes ?? []), 'Sub-page of M-08.', 'Wompi private keys live in server environment variables, never in tenants.settings nor in the browser.'] },
+);
+export const M08d = sub('M-08d',
+  { es: 'Ajustes · Comunicaciones', en: 'Settings · Communications' },
+  { es: 'Horas de silencio y nombres de remitente de WhatsApp y email, que M-04 y M-05 usan al enviar.', en: 'Quiet hours and the WhatsApp and email sender names M-04 and M-05 use when sending.' },
+  ['SettingsSubNav', 'QuietHours', 'SenderIdentity'],
+  { integrations: ['WhatsApp Cloud API', 'Email'] },
+);
+export const M08f = sub('M-08f',
+  { es: 'Ajustes · Contenido', en: 'Settings · Content' },
+  { es: 'Decisiones de contenido del owner como ajustes: si Respiración es una clase propia o vive dentro de meditación, qué proveedor de mapa usa el sitio, y qué versiones legales están publicadas.', en: 'The owner’s content decisions as settings: whether Respiración is its own class or lives inside meditation, which map provider the site embeds, and which legal versions are published.' },
+  ['SettingsSubNav', 'BreathworkOwnClass', 'MapProvider + MapSlot preview', 'LegalVersions (publish toggle per version)'],
+  { data: ['tenants', 'legal_documents', 'media_assets', 'audit_log'], integrations: ['Maps (OSM / Google embed)'],
+    logic: ['Classes are always titled by their modality (classDisplay() keeps the session title); the publicNaming switch was retired in 0039 and a stored value is ignored.', 'breathworkOwnClass: visibleModalities() hides the respiracion modality row from W-03, W-07, W-08 and the C-03 filter while it is off; W-08 then prints the “lives inside the guided classes” sentence.', 'mapProvider: MapSlot reads it when no prop is passed — none keeps the site offline-safe.', 'Publishing a legal version flips legal_documents.status and stamps published_at; A-06 shows the newest published version per kind. Each flip writes audit_log legal.publish / legal.unpublish.'],
+    states: ['Respiración hidden (default) / shown', 'Map none / osm / google', 'Legal: n of 7 published', 'Read-only'] },
+);
+export const M08e = sub('M-08e',
+  { es: 'Ajustes · Marca', en: 'Settings · Branding' },
+  { es: 'Nombre visible del estudio, variante del wordmark e idioma por defecto; la vista previa usa el wordmark real.', en: 'Studio display name, wordmark variant and default language; the preview uses the real wordmark.' },
+  ['SettingsSubNav', 'DisplayName', 'WordmarkVariant', 'DefaultLanguage', 'Preview'],
+  { notes: [...(M08.notes ?? []), 'Sub-page of M-08.', 'Empty display name falls back to src/tenant/tenant.ts; nothing is hardcoded per studio.'] },
+);
+
+/** New code: finance view (revenue, payouts, refunds, invoices). */
+export const M09 = defineSpec({
+  code: 'M-09',
+  name: { es: 'Finanzas', en: 'Finance' },
+  purpose: { es: 'Ingresos por producto y método, pagos pendientes, reembolsos, facturas con referencia DIAN y el resumen de la nómina de profesores.', en: 'Revenue by product and method, pending payments, refunds, invoices with the DIAN reference and the teacher-payroll roll-up.' },
+  layout: ['KPIRow', 'BalanceCard (Ingresos − Nómina − Gastos = Balance, enlaces a M-09a y M-09c)', 'RevenueByProduct', 'RevenueByMethod', 'PayoutsSummary (M-09a: próxima, por aprobar, pagado en el trimestre)', 'PaymentsList + Refund', 'InvoicesTable (DIAN) + StatusFilter'],
+  data: ['payments', 'invoices', 'plans', 'users', 'profiles', 'payroll_runs', 'payroll_lines', 'expenses', 'audit_log', 'tenants'],
+  roles: ['super_admin', 'admin', 'finance'],
+  logic: [
+    'Revenue = approved payments in the selected range grouped by plan and by method.',
+    'Refund flips payments.status to refunded and writes audit_log payment.refund; returning the class to the package is a follow-up.',
+    'E-invoicing requires a DIAN resolution in M-08; until then the CUFE column shows a badge instead.',
+    'The invoice filter is the status of the payment behind the invoice (invoices carry no status of their own).',
+    'Ranges are 7 / 15 / 30 / 90 days and all time: 15 days is there because Colombian studios settle biweekly, and it drives both the KPI tiles and the invoice table.',
+    'The payouts tiles read payroll_runs: the draft total, the sum of approved-not-yet-paid runs, and runs paid in the last three months.',
+    'Balance = approved payments in the range − payroll (every payroll_runs row whose period overlaps the range, at its current total; a draft counts because the classes were taught) − expenses (expenses rows with incurred_on in the range, paid or not). The card links to M-09a and M-09c; nothing on it is written here.',
+  ],
+  integrations: ['Wompi', 'DIAN e-invoicing'],
+  states: ['Loading', 'Empty range', 'No refund permission: action hidden', 'E-invoicing off: notice', 'No draft run yet', 'Negative balance (expenses above revenue in the range)'],
+  toggles: [{ label: 'Wompi payouts', on: true }, { label: 'Refunds', on: true }, { label: 'DIAN column', on: true }],
+  notes: ['Payouts are real rows now (payroll_runs / payroll_lines); only the Wompi dispersion call is simulated, and the page says so.', 'The balance card (0.6.1) is the answer to “what did the studio spend”: it reads payments, payroll_runs and expenses with the same range chips, so the three numbers always describe one window.'],
+});
+
+const PAYOUT_NOTES = [
+  'Teachers are paid per class taught: one completed class_sessions row = one payroll_lines row of kind class at teachers.rate_per_class. Bonuses and adjustments are lines finance adds by hand and are never derived.',
+  'src/data/payrollCalc.ts is the single arithmetic: the seed (historical runs), M-09a (generate draft) and S-03 (the teacher statement) all use it, so the three screens can never disagree.',
+  'A payout is NOT a payments row: payments is money in from members (it feeds M-09 revenue, C-11 history and M-01 KPIs). Money out lives on payroll_runs (status / paid_at / method / provider_ref) with an audit_log row per action.',
+  'wompiPayout() in src/modules/admin/payouts.ts is the dispersion seam — simulated today, with the rejected path included; the badge says simulated on both pages.',
+];
+
+/** M-09a — the payroll runs list. */
+export const M09a = defineSpec({
+  code: 'M-09a',
+  name: { es: 'Finanzas · Nóminas', en: 'Finance · Payroll runs' },
+  purpose: { es: 'Las liquidaciones mensuales de profesores: qué se debe, qué está aprobado y qué ya se pagó, y el botón que genera el borrador del periodo.', en: 'The monthly teacher payroll runs: what is owed, what is approved and what is paid, plus the button that generates the period’s draft.' },
+  layout: ['KPIRow (próxima corrida, por aprobar, pagado en el trimestre)', 'GeneratePanel (periodo + generar borrador)', 'RunsTable (periodo, estado, profesores, clases, total, medio, liquidada)', 'SeamNote'],
+  data: ['payroll_runs', 'payroll_lines', 'class_sessions', 'bookings', 'teachers', 'special_charges', 'space_bookings', 'audit_log'],
+  roles: ['super_admin', 'admin', 'finance'],
+  logic: [
+    'Generating a draft is idempotent: an existing draft for the same period has its lines deleted and recomputed, so pressing the button twice cannot double-pay. An approved or paid run is refused with a reason.',
+    'The draft is class lines + manual lines: every special_charges row with a teacher and a teacher_payout whose service date (its space booking, else the sale) falls in the period becomes one payroll_lines row of kind manual, sourced by special_charge_id (src/data/payrollCalc.ts draftLinesFor). 0017.',
+    'payroll.write gates every action; payroll.read is enough to look.',
+    ...PAYOUT_NOTES,
+  ],
+  integrations: ['Wompi'],
+  states: ['Loading', 'No runs yet', 'Draft exists for the period: regenerated', 'Period already approved/paid: blocked', 'Read-only (solo payroll.read)'],
+  notes: PAYOUT_NOTES,
+});
+
+/** M-09b — one run, with the per-teacher statement. */
+export const M09b = defineSpec({
+  ...M09a,
+  code: 'M-09b',
+  name: { es: 'Finanzas · Detalle de nómina', en: 'Finance · Payroll run' },
+  purpose: { es: 'Una corrida: el extracto por profesor con sus clases, bonos y ajustes, y las cuatro acciones de finanzas — aprobar, enviar por Wompi, marcar pagada por transferencia o efectivo, exportar CSV.', en: 'One run: the per-teacher statement with their classes, bonuses and adjustments, and finance’s four actions — approve, send via Wompi, mark paid by transfer or cash, export CSV.' },
+  layout: ['RunHeader (periodo, estado, simulado)', 'KPIRow (total, medio, estado)', 'ActionBar (regenerar · aprobar · Wompi · transferencia · efectivo · CSV · imprimir)', 'Statement → TeacherCard (estado de pago, clases, líneas, subtotal, marcar como pagado)'],
+  states: ['Draft: regenerate + approve', 'Approved: pay by Wompi / transfer / cash', 'Approved: one teacher settled, the rest pending', 'Paid: locked, read-only', 'Wompi rejected: reason shown', 'Run not found', 'Negative adjustment line'],
+  logic: [
+    'A run can be settled teacher by teacher: payroll_lines.paid_at + paid_method carry the stamp, so a bounced transfer for one teacher does not hold the other seven. The run closes itself as paid once every teacher is settled.',
+    'Each teacher card shows the classes taught, the total attendance, the payment method and the settlement date — the payment detail finance is asked for on the phone.',
+    'A run-level payment stamps every unpaid line with the same date and method, so the two paths can never disagree.',
+    ...(M09a.logic ?? []),
+  ],
+});
+
+const EXPENSE_NOTES = [
+  'An expense is neither a payments row (money in from members) nor a payroll row (teacher pay): it lives in expenses / expense_templates and subtracts in the M-09 balance. Mixing it into payments would corrupt every revenue number.',
+  'src/data/expenseCalc.ts is the single arithmetic: dueDatesFor() and fixedExpensesFor() are what the seed and the generator both call, so the fixed rows on screen and the ones a button creates cannot disagree.',
+  'Generating a period is idempotent: one row per template per due day; a due day that already has its row is skipped (paid or not), nothing is deleted, inactive templates generate nothing. Regenerating never duplicates, and a paid row is never touched.',
+  'expenses.write gates every action (finance, admin, super_admin); expenses.read is enough to look. Every write appends an audit_log row through useAudit(\'admin\').',
+];
+
+/** M-09c — the expenses ledger. */
+export const M09c = defineSpec({
+  code: 'M-09c',
+  name: { es: 'Finanzas · Gastos', en: 'Finance · Expenses' },
+  purpose: { es: 'El libro de gastos del estudio: fijos recurrentes (arriendo, servicios, aseo por quincena…) generados de plantillas con un botón idempotente, variables registrados a mano, pagado y por pagar, por categoría — la tercera pata del balance de M-09.', en: 'The studio’s expenses ledger: recurring fixed costs (rent, utilities, cleaning by the quincena…) generated from templates with one idempotent button, variable costs recorded by hand, paid and to pay, by category — the third leg of the M-09 balance.' },
+  layout: ['RangeChips (7 / 15 / 30 / 90 días / Todo, los mismos de M-09)', 'KPIRow (fijos, variables, pagado, por pagar)', 'ByCategory (BarList)', 'AddExpenseForm (tipo, concepto, categoría, valor, fecha, pagado/por pagar, método, proveedor, nota)', 'TemplatesPanel (periodo + generar gastos fijos, tabla de plantillas con activar/desactivar, nueva plantilla)', 'ExpensesTable (fecha, concepto, categoría, tipo, método, valor, estado + marcar pagado)'],
+  data: ['expenses', 'expense_templates', 'audit_log'],
+  roles: ['super_admin', 'admin', 'finance'],
+  logic: [
+    'A template falls due on anchor_day of every month; a biweekly template also falls due 15 days later (the Colombian quincena, clamped to the month’s last day). One due day inside the period = one expenses row of kind fixed pointing at the template.',
+    'Range = rows whose incurred_on is inside the window, paid or not; “por pagar” is paid_on = null. Marking paid stamps today as paid_on and writes expense.pay to audit_log.',
+    'Only an unpaid row can be deleted; a paid row is history and a correction is a new row with a note.',
+    ...EXPENSE_NOTES,
+  ],
+  integrations: [],
+  states: ['Loading', 'Empty range', 'No templates yet', 'Generate: n created / all skipped', 'Unpaid row: marcar pagado', 'Paid row: locked', 'Read-only (solo expenses.read)', 'Invalid form (empty concept, zero amount)'],
+  notes: EXPENSE_NOTES,
+});
+
+const DELETION_NOTES = [
+  'A deletion request is a row, never a client-side delete: C-26 (member, signed in), W-09 (public page, no session) and the desk (front_desk channel, by hand in M-03 today) all insert into deletion_requests; this page moves the status and ticks the checklist. The anonymisation itself — profiles and users overwritten, auth user removed, notifications purged, payments and invoices kept under an anonymous id — is a server-side job (Supabase function) once the backend exists; until then the admin performs the steps in M-03 and ticks them here.',
+  'Ley 1581 de 2012 gives fifteen business days for a deletion claim; App Store Review 5.1.1(v) and Google Play’s account-deletion policy require the request to be discoverable in-app and (Play) at a public URL. The queue is what proves the studio honoured each one: rows are never deleted.',
+];
+
+/** M-11 — the account-deletion queue (0019). */
+export const M11 = defineSpec({
+  code: 'M-11',
+  name: { es: 'CRM · Solicitudes de eliminación', en: 'CRM · Deletion requests' },
+  purpose: { es: 'La cola de peticiones de borrar una cuenta: quién la pidió y por dónde, en qué estado va, la lista de anonimización paso a paso, la nota interna y el enlace a la ficha del socio. Admin la mueve de pendiente a en proceso y a hecha; cancelada cierra sin borrar.', en: 'The queue of account-deletion requests: who asked and through which channel, its status, the step-by-step anonymisation checklist, the internal note and the link to the member record. Admin moves it from requested to processing to done; cancelled closes it without deleting.' },
   layout: ['KPIRow (abiertas · en proceso · hechas 90 días)', 'RuleNotice (15 días hábiles, qué se conserva)', 'StatusChips (abiertas / pendiente / en proceso / hecha / cancelada / todas)', 'RequestsTable (fecha + antigüedad, quién, canal, motivo, estado, checklist n/7)', 'RequestDrawer (ficha, enlace a M-06, checklist, nota, acciones)'],
   data: ['deletion_requests', 'users', 'profiles', 'audit_log'],
   roles: ['super_admin', 'admin'],
