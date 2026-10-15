@@ -20,9 +20,9 @@ files: src/data/seed/timetable.ts; src/data/seed/upgradeTimetable.ts; src/data/s
 
 ## Verification
 
-Local focused checks: typecheck, timetable/migration, analytics, opening-hours, contacts and vouchers. Full local aggregate build was resource-killed; Chromium launch is restricted by the cloud execution sandbox. Hosted Timetable QA runs the full build and built-screen checks with 20 real captures: ES/EN at 390/1280, plus dark desktop for W-04, W-05, W-06 and C-03. Hosted timetable QA passed on fb89764d, including the full build, sample routes, all 20 captures and core tests. The final static-entry test was updated for the eleven approved/current public profiles and will be rerun before merge.
+Local focused checks: typecheck, timetable/migration, analytics, opening-hours, contacts and vouchers. Full local aggregate build was resource-killed; Chromium launch is restricted by the cloud execution sandbox. Hosted Timetable QA runs the full build and built-screen checks with 20 real captures: ES/EN at 390/1280, plus dark desktop for W-04, W-05, W-06 and C-03. Hosted timetable QA passed on fb89764d, including the full build, sample routes, all 20 captures and core tests. Timetable, Website preview (including static entry) and Voucher QA all passed on eca9067a.
 
 
 ## Real preview captures
 
-Twenty built-demo captures were produced and reviewed: ES/EN at 390/1280 plus EN dark desktop for W-04, W-05, W-06 and C-03. They show simulated bookings and availability, not a live operational database. See the [verified QA run](https://github.com/imagine-os/hoy/actions/runs/38690365989). Public screenshot-file publication is deferred; the captures were retained as QA artifacts.
+Twenty built-demo captures were produced and reviewed: ES/EN at 390/1280 plus EN dark desktop for W-04, W-05, W-06 and C-03. They show simulated bookings and availability, not a live operational database. See the [verified QA run](https://github.com/imagine-os/hoy/actions/runs/38690365989). The approved public evidence set is stored under docs/screenshots/{W-04,W-05,W-06,C-03}/schedule-*.jpg and linked from each page document.

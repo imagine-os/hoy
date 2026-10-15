@@ -592,3 +592,7 @@ _Updated every turn. Codes reference `src/specs/canvasSpecs.ts` and the module `
 ### Backlog
 - Generate and inspect the three approved environmental loops; Magnific catalog unavailable at check, fal budget documented.
 - Confirm real studio photography, teacher portraits, final copy, contact values and pricing before replacing demo content.
+
+
+### Timetable evidence · 0063
+- Timetable, Website preview and Voucher hosted QA passed on eca9067a. Twenty approved public built-demo screenshots are linked from W-04, W-05, W-06 and C-03.
