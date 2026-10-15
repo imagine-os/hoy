@@ -13,6 +13,8 @@ jobs:
   photography:
     runs-on: ubuntu-latest
     timeout-minutes: 12
+    env:
+      CHROMIUM_PATH: /usr/bin/google-chrome
     steps:
       - uses: actions/checkout@v4
         with:
