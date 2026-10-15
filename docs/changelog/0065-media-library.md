@@ -15,4 +15,4 @@ One global published boolean, destructive asset replacement, and a disconnected 
 MediaLibrary component and metadata; mediaLibrary projection; generated catalog and generator; media strings; MediaPage, M-02d spec; build script; tests and screenshots.
 
 ## Verification
-Model and file-integrity checks pass locally. Deterministic catalog regeneration is verified. Hosted TypeScript/full-build and ES/EN desktop/mobile screenshot QA are pending; local Chromium is restricted and local full builds hit resource limits. Original imagery is not modified.
+Hosted TypeScript/full build and model/file-integrity checks pass. Eighteen ES/EN desktop/mobile, light/dark, placement-detail and color-phase captures pass UI regression checks. Photography, timetable and voucher suites pass on the integrated feature. Deterministic catalog regeneration is verified. Original imagery is not modified.
