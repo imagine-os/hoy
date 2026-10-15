@@ -371,6 +371,11 @@ _Reglas de recurrencia que generan sesiones._
 | `tenant_id` | uuid | → `tenants` Owning studio (multi-tenant) |
 | `created_at` | timestamptz |  |
 | `updated_at` | timestamptz |  |
+| `start_date` | date, null |  |
+| `end_date` | date, null |  |
+| `generation_mode` | enum (automatic \| manual), null | Legacy demo uses automatic; new templates explicitly generate a reviewed batch |
+| `theme` | json, null | Default bilingual theme {es,en} |
+| `description` | json, null | Default bilingual description {es,en}; null inherits modality |
 | `title` | text |  |
 | `modality_id` | uuid | → `modalities`  |
 | `teacher_id` | uuid | → `teachers`  |
@@ -392,6 +397,8 @@ _Cada clase concreta en el calendario, con cupos en vivo._
 | `tenant_id` | uuid | → `tenants` Owning studio (multi-tenant) |
 | `created_at` | timestamptz |  |
 | `updated_at` | timestamptz |  |
+| `theme_override` | json, null | Null inherits template; empty text clears theme |
+| `description_override` | json, null | Null inherits template/modality; empty text clears description |
 | `template_id` | uuid, null | → `class_templates`  |
 | `title` | text |  |
 | `modality_id` | uuid | → `modalities`  |
@@ -663,6 +670,32 @@ _Contrato de demostración; backend transaccional pendiente._
 
 **Who may read / write**
 - Default deny until authenticated scoped RPCs are implemented; audit must be append-only; guest details private to owner and authorized staff.
+
+#### `class_pay_rules`
+Immutable private compensation configuration revisions; preview only, no payments.
+_Revisiones inmutables de configuración privada; solo vista previa, no pagos._
+
+| column | type | notes |
+| --- | --- | --- |
+| `id` | uuid | Primary key |
+| `tenant_id` | uuid | → `tenants` Owning studio (multi-tenant) |
+| `created_at` | timestamptz |  |
+| `updated_at` | timestamptz |  |
+| `template_id` | uuid, null | → `class_templates`  |
+| `session_id` | uuid, null | → `class_sessions`  |
+| `effective_from` | date |  |
+| `mode` | enum (flat \| attendance) |  |
+| `flat_amount` | int, null |  |
+| `base_amount` | int, null |  |
+| `per_attendee` | int, null |  |
+| `attendance_basis` | enum (checked_in \| booked), null |  |
+| `revision_of` | uuid, null | → `class_pay_rules`  |
+| `created_by` | uuid, null | → `users`  |
+
+**Who may read / write**
+- super_admin/admin/finance only: select and append; no update/delete
+- Deny anonymous, customer, teacher, marketing, coordinator and developer access
+- Exactly one scope: template_id or session_id; production backend pending
 
 #### `plans`
 Launch list (0051): trial class, individual class, 12-class package, private classes and gift cards. Generated from src/tenant/pricing.ts.  
@@ -1359,10 +1392,3 @@ _Orden de secciones por página guardado desde el editor drag-and-drop._
 2. Seed it in `src/data/seed/index.ts`.
 3. `npm run sql` → regenerates `supabase/schema.sql` and this file.
 4. Reference it in the page's `PageSpec.data` so the inspector links to it.
-
-
-## 0063 · Timetable and reception-hour provenance
-
-`tenants.settings.openingHoursConfirmed` is an optional persisted boolean, default false. The existing weekly opening-hour values remain demo settings until staff explicitly saves M-08a. Class timetable entries do not establish reception hours. Unconfirmed hours are not published as structured opening-hour data. No table or column was added.
-
-The demo timetable uses stable `tpl_fixed_<weekday>_<HHMM>` identifiers. Historical booked sessions can keep their retired legacy template reference; migration never reassigns those bookings.

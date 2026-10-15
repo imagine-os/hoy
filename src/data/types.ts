@@ -1,3 +1,8 @@
+import type { AppendClassPayRuleCommand, ClassPayRuleRow } from './classPayRules';
+import type { GenerateRecurrence } from './classRecurrence';
+import type { SessionEdit } from './sessionEditorial';
+import type { ClassSessionRow } from './schema';
+import type { ContentBatch, ContentBatchResult } from './contentBatch';
 import type { VoucherCommand, VoucherResult } from './vouchers';
 import type { BaseRow } from './schema';
 
@@ -21,6 +26,10 @@ export interface ChangeEvent<T extends BaseRow = BaseRow> {
  */
 export interface DataProvider {
   readonly name: string;
+  appendClassPayRule?(command: AppendClassPayRuleCommand): Promise<ClassPayRuleRow>;
+  generateRecurrence?(command: GenerateRecurrence): Promise<{ created: number; skipped: number }>;
+  editSession?(command: SessionEdit): Promise<ClassSessionRow>;
+  contentBatch?(command: ContentBatch): Promise<ContentBatchResult>;
   /** Atomic demo transaction; absent until real backend RPCs are implemented. */
   voucher?(command: VoucherCommand): Promise<VoucherResult>;
   list<T extends BaseRow = BaseRow>(table: string, query?: Query): Promise<T[]>;
