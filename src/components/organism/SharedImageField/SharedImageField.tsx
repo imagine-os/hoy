@@ -5,7 +5,7 @@ import {useData} from '../../../data/DataContext';
 import {MockProvider} from '../../../data/MockProvider';
 import {useMediaLibrary} from '../../../data/useMediaLibrary';
 import {safeMediaUrl} from '../../../data/mediaLibrary';
-import {importLocalPhoto} from '../../../data/localMediaStore';
+import {importLocalPhoto,isLocalPhotoUrl} from '../../../data/localMediaStore';
 import {tenant} from '../../../tenant/tenant';
 import {Button} from '../../atom/Button/Button';
 import {Input,Select} from '../../atom/Input/Input';
@@ -17,8 +17,8 @@ export function SharedImageField({value,onChange,disabled=false,label}:SharedIma
  const [open,setOpen]=useState(false),[query,setQuery]=useState(''),[source,setSource]=useState('all'),[candidate,setCandidate]=useState<string|null>(null),[previous,setPrevious]=useState<string|null|undefined>(undefined),[busy,setBusy]=useState(false),[error,setError]=useState('');
  const alive=useRef(true);useEffect(()=>{alive.current=true;return()=>{alive.current=false;};},[]);
  const current=assets.find(a=>a.url===value||a.variants.includes(value||''));
- const shown=assets.filter(a=>a.kind!=='video'&&safeMediaUrl(a.url)&&(source==='all'||a.source===source)&&`${a.name} ${a.tags.join(' ')}`.toLowerCase().includes(query.toLowerCase()));
- const choose=(url:string|null)=>{setPrevious(value);onChange(url);setOpen(false);setCandidate(null);};
+ const shown=assets.filter(a=>a.kind!=='video'&&safeMediaUrl(a.url)&&(!isLocalPhotoUrl(a.url)||data instanceof MockProvider)&&(source==='all'||a.source===source)&&`${a.name} ${a.tags.join(' ')}`.toLowerCase().includes(query.toLowerCase()));
+ const choose=(url:string|null)=>{if(url&&isLocalPhotoUrl(url)&&!(data instanceof MockProvider))return;setPrevious(value);onChange(url);setOpen(false);setCandidate(null);};
  const upload=async(file?:File)=>{if(!file||busy||disabled||!(data instanceof MockProvider))return;setBusy(true);setError('');try{const p=await importLocalPhoto(file,tenant.id);if(alive.current){setCandidate(p.url);setOpen(true);}}catch(e){if(alive.current)setError(['format','size','dimensions','storage'].includes((e as Error).message)?(e as Error).message:'storage');}finally{if(alive.current)setBusy(false);}};
  return <section className="shared-image-field stack-sm" aria-label={label||text('title')}>
  <strong>{label||text('title')}</strong>
