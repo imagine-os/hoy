@@ -1,5 +1,22 @@
 import type { StringTable } from '../../i18n/types';
 export const strings: StringTable = {
+  "media.usage.Classic wordmark (light)": {"es": "Logotipo clásico (claro)", "en": "Classic wordmark (light)"},
+  "media.usage.Classic wordmark (dark)": {"es": "Logotipo clásico (oscuro)", "en": "Classic wordmark (dark)"},
+  "media.usage.Website wordmark": {"es": "Logotipo del sitio", "en": "Website wordmark"},
+  "media.usage.Component library": {"es": "Biblioteca de componentes", "en": "Component library"},
+  "media.usage.About": {"es": "Sobre nosotros", "en": "About"},
+  "media.usage.Home": {"es": "Inicio", "en": "Home"},
+  "media.usage.Classes": {"es": "Clases", "en": "Classes"},
+  "media.usage.Class detail": {"es": "Detalle de clase", "en": "Class detail"},
+  "media.usage.Coming soon": {"es": "Próximamente", "en": "Coming soon"},
+  "media.usage.Teachers": {"es": "Profesores", "en": "Teachers"},
+  "media.usage.Website materials": {"es": "Materiales del sitio", "en": "Website materials"},
+  "media.usage.FAQ": {"es": "Preguntas frecuentes", "en": "FAQ"},
+  "media.usage.Class arch material": {"es": "Material del arco de clase", "en": "Class arch material"},
+  "media.usage.Studio light": {"es": "Luz del estudio", "en": "Studio light"},
+  "media.usage.Plans": {"es": "Planes", "en": "Plans"},
+  "media.usage.Schedule": {"es": "Horario", "en": "Schedule"},
+
   "media.pair.pause": {"es":"Pausar luz","en":"Pause light"},
   "media.pair.play": {"es":"Transición lenta","en":"Slow transition"},
   "media.pair.barre": {"es":"Barra · azul y ámbar","en":"Barre · blue & amber"},
