@@ -41,7 +41,7 @@ export function ComingSoonLanding() {
       className="coming-soon-scene"
       src={`${import.meta.env.BASE_URL}images/studio-2026/facility-red-studio-1600.webp`}
       srcSet={`${import.meta.env.BASE_URL}images/studio-2026/facility-red-studio-480.webp 480w, ${import.meta.env.BASE_URL}images/studio-2026/facility-red-studio-960.webp 960w, ${import.meta.env.BASE_URL}images/studio-2026/facility-red-studio-1600.webp 1600w`}
-      sizes="100vw" width={1600} height={1067} loading="eager" fetchPriority="high" decoding="async"
+      sizes="(max-aspect-ratio: 3/2) 150vh, 100vw" width={1600} height={1067} loading="eager" fetchPriority="high" decoding="async"
       alt={t('soon.art')}
     />
     <div className="coming-soon-veil" aria-hidden="true" />

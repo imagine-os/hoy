@@ -19,6 +19,7 @@ const capture = async (page, code, lang, width, suffix = '') => {
   await mkdir(`${root}/docs/screenshots/${code}`, { recursive: true });
   if (code === 'W-11') {
     await page.locator('img.coming-soon-scene').evaluate(async image => { await image.decode(); });
+    assert.ok(await page.locator('img.coming-soon-scene').evaluate(image => { const box = image.getBoundingClientRect(); return image.complete && image.naturalWidth > 0 && box.width > 0 && box.height > 0; }), 'Studio photo is decoded and visible');
     await page.evaluate(async () => { await document.fonts.ready; await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))); });
   }
   await page.screenshot({ path: `${root}/docs/screenshots/${code}/${lang}-${width}${suffix}.jpg`, type: 'jpeg', quality: 68, fullPage: false, animations: 'disabled' });
