@@ -1,3 +1,6 @@
+Warning: truncated output (original token count: 30440)
+Total output lines: 603
+
 # HoyOS kanban
 
 ## Implemented · 0063 (2026-10-15; deployment verification pending)
@@ -251,11 +254,7 @@ _Updated every turn. Codes reference `src/specs/canvasSpecs.ts` and the module `
 - **Actions**: first admin actions (`settings.hours.*`, `integrations.google.*`) and `dev.apiKeys.*`; icons `copy`, `eye`, `eye-off`, `refresh-cw`, `store`; SEED_VERSION 6
 
 ### 2026-09-29 · Practice analytics (0040 · v0.16.0)
-- **Research → proposal** (`docs/reference/analytics.md`): what members vs teachers vs the club track in on-location studios, with sources; one label per number, a weekly goal-based streak with slack, milestones, no comparison between members, teachers against the studio average; the thresholds M-12 uses; four open questions for Justin (ROADMAP §E 40–43); decisions D-0014 (derived from raw tables, events record moments) and D-0015 (the streak rules)
-- **Analytics core**: `src/data/analytics.ts` (`practiceStats`, `studioStats`, `teacherStats`, `suggestGoal`, `atRiskBand`; visits dated by the session, Mon–Sun weeks in America/Bogota) + `useAnalytics.ts` hooks; `npm run test:analytics` (all checks pass) · **per-week goal history** (D-0015, rule 8): `usePracticeStats` passes every `practice_goals` row and each past week is graded against the goal in force when it closed (latest row with `starts_on` ≤ that Sunday; earlier weeks use the first goal), so raising a goal never rewrites the past — proven for raise / lower / same-day double change / clear
-- **Two tables** in the new *Práctica y analítica* group (52 → 54): `practice_goals` (one active row per person, history kept, `cadence` reserves `month`) and `activity_events` (append-only: goal.set, milestone, streak.saved…); `supabase/schema.sql` and `docs/data-model.md` regenerated; `SEED_VERSION` 5; the demo member gets seven weeks of real morning classes (6 met, one rest week), an ended 1 / week goal under her active 2 / week one, six more members' goals, her events
-- **Five molecules** with metas (75 → 80 in D-02): `WeekDots`, `StreakBadge`, `GoalPicker` (manual activation: arrows move focus, Enter / Space / tap save once), `Heatmap`, `MilestoneList`
-- **C-01**: the `StatsRow ×3` section is the practice block — Clases tomadas este mes (+ reservadas próximas), Semanas seguidas (stamp), Membresía / Clases restantes en tu plan, the week as dots, the goal asked inline once, a one-time "¡Clase número N!" toast, link to C-27 · **C-27 Tu práctica** `/app/practice` (new): week ring + dots, the run and its rule, the month, "Últimas {n} semanas" from the first class (≤ 12), milestones, favourites, the goal, privacy notice · **C-22** shows the same month number · C-19 / C-25 link rows
+- **Research → proposal** (`docs/reference/analytics.md`): what members vs teachers vs the club track in on-location studios, with sources; one label per number, a weekly goal-based streak with slack, milestones, no comparison between members, teachers against the studio average; the th…440 tokens truncated…ica** `/app/practice` (new): week ring + dots, the run and its rule, the month, "Últimas {n} semanas" from the first class (≤ 12), milestones, favourites, the goal, privacy notice · **C-22** shows the same month number · C-19 / C-25 link rows
 - **M-12 Analítica de práctica** `/admin/analytics` (new; same roles as M-01, no revenue while §E 32 is open): fill / attendance / no-shows / active, weekday × hour heatmap, second visit, at-risk 14 / 30 / 60 / 90 as who-to-call → M-06, by modality, by teacher, recent milestones, credits expiring; range 7 / 30 / 90 · **M-06** read-only Práctica tab · **M-01** link · **S-03** "Mis números · 30 días" against the studio average, rating hidden under 5 reviews
 - **Four actions**: `app.openPractice`, `app.setGoal`, `analytics.setRange`, `analytics.openMember` (`docs/reference/surfaces.md`, 0040 delta); routes 101 → 103, codes 87 → 89
 - **Docs**: prompt 0040, changelog 0040, `reference/analytics.md`, D-0014 / D-0015, page docs C-27 and M-12 (new) + C-01, C-22, M-06, S-03, M-01, README, ROADMAP §A / §E 40–43, architecture "Analytics seam"; ops manual unchanged (no chapter describes the home stats card; `lint:manual` 0 violations) · screenshots and the QA matrix: the Sonnet 5.5 pass after this entry
@@ -596,3 +595,8 @@ _Updated every turn. Codes reference `src/specs/canvasSpecs.ts` and the module `
 
 ### Timetable evidence · 0063
 - Timetable, Website preview and Voucher hosted QA passed on eca9067a. Twenty approved public built-demo screenshots are linked from W-04, W-05, W-06 and C-03.
+
+## Studio photography
+
+### Doing
+- W-01 / W-02 / W-04 / W-05 / P-01: responsive studio-photo preview, hosted QA and release verification
