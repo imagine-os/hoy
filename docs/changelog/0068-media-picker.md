@@ -1,7 +1,7 @@
 # 0068 · Shared photo picker
 
-- Version: 0.24.2
-- Date: 2026-10-15
+version: 0.24.2
+date: 2026-10-15
 - Intent: select Content photos from the media library or upload.
 - Decision: reusable bilingual SharedImageField with search/source filtering, preview and explicit draft selection; reversible remove/replace. Existing per-placement references follow saved provider rows.
 - Browser-private uploads: JPEG/PNG/WebP, 10 MB input, 40 MP decoded limit, optimized WebP up to 1600 px. Canvas re-encoding strips metadata. IndexedDB commit must complete before selection is offered; failures keep the current image. Originals remain with the user. Clearing browser storage loses local copies; no server upload or shared storage is claimed. Non-mock providers cannot import local uploads.
