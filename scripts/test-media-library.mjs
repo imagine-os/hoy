@@ -17,7 +17,7 @@ try {
  await page.locator('.media-library summary').click();assert(await page.locator('.media-library-use a[href*="version=photos"]').count()>0);
  await page.getByLabel('Usage status').selectOption('live');assert.equal(await page.locator('.media-library-grid>.card').count(),0);
  await page.getByRole('button',{name:'Reset filters'}).first().click();await page.getByLabel('Source',{exact:true}).selectOption('studio');assert.equal(await page.locator('.media-library-grid>.card').count(),18);
- await page.getByLabel('Search name, tag or placement').fill('heater blue');await page.locator('.media-library summary').click();await page.locator('.media-library-grid').screenshot({path:'docs/screenshots/M-02d/library-placement-detail.png'});
+ await page.getByLabel('Search name, tag or placement').fill('heater blue');await page.locator('.media-library summary').click();await page.locator('.media-library-grid>.card').screenshot({path:'docs/screenshots/M-02d/library-placement-detail.png'});
  await page.getByLabel('Search name, tag or placement').fill('no-matching-file');assert.equal(await page.locator('.media-library-grid>.card').count(),0);
  await page.getByRole('button',{name:'Placements & briefs'}).click();await page.locator('.adm-media').waitFor();assert(await page.locator('.adm-media>.card').count()>0);
  const check=await page.evaluate(async()=>{
@@ -48,7 +48,8 @@ try {
  }
 
  await page.setViewportSize({width:1280,height:1000});await page.emulateMedia({reducedMotion:'no-preference'});
- await page.evaluate(()=>{for(const image of document.querySelectorAll('.slow-photo-pair-warm'))for(const animation of image.getAnimations()){animation.pause();animation.currentTime=20000;}});
+ await page.evaluate(async()=>{await new Promise(requestAnimationFrame);for(const image of document.querySelectorAll('.slow-photo-pair-warm')){getComputedStyle(image).animationName;for(const animation of image.getAnimations()){animation.pause();await animation.ready;animation.currentTime=20000;}}await new Promise(requestAnimationFrame);});
+ assert(await page.locator('.slow-photo-pair-warm').first().evaluate(e=>Number(getComputedStyle(e).opacity)>.99),'warm phase visible');
  await page.locator('.photo-facilities').screenshot({path:'docs/screenshots/M-02d/studio-pairs-warm-phase.png'});
  assert.deepEqual(errors,[]);await writeFile('docs/screenshots/M-02d/media-qa.json',JSON.stringify({passed:true,captures:18,checks:['search','filter','empty state','slot editor preserved','per-usage mixed states','teacher fallback deactivation','unsafe URLs excluded','ES/EN and themes','no overflow','no runtime errors']},null,2));console.log('Media library QA passed');
 }finally{await browser.close();}
