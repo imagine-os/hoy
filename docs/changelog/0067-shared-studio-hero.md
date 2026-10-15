@@ -9,9 +9,13 @@ files: website HomePage, photography and sanctuary styles, strings and specifica
 
 The voucher UI test now reloads the persisted staff identity before navigating into its guarded admin route, removing a reproduced test-only role-switch race. No runtime role permissions change.
 
+## Before and after
+
+![Previous regular hero](../screenshots/W-01/studio-before-en-1280.jpg)
+
 ## Verification
 
-Hosted verification covers Latest and Photos in Spanish and English, desktop/mobile and dark mode, narrow/tablet/wide layouts, decoded images, no hero video, cross-edition navigation, CTA targets, Coming Soon image parity and preservation of Archive/Classic. Exact source and capture hashes are checked before release.
+The [hosted photography suite](https://github.com/imagine-os/hoy/actions/runs/38800549013) passed the full build, hub checks, 30 photo captures and 19 shared-hero captures. It covers Latest and Photos in Spanish and English, desktop/mobile and dark mode, narrow/tablet/wide layouts, decoded images, no hero video, cross-edition navigation, CTA targets, Coming Soon image parity and preservation of Archive/Classic. Exact source and capture hashes are checked before release.
 
 ![Regular Spanish mobile](../screenshots/W-01/studio-latest-es-390.jpg)
 ![Regular English desktop](../screenshots/W-01/studio-latest-en-1280.jpg)
