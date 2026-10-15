@@ -13,8 +13,14 @@ files: MediaLibrary component, metadata, CSS and placement helper; media search 
 - Cached version-10 and already-open provider regression: 37 checks pass across UTC/Bogota, exact-start, weekday/weekend and late-night cases
 - Original fresh-seed clock test passes all 14 fixtures
 - Existing local booking/CMS/profile rows, cancellations, voucher allocations and valid mat assignments are preserved
-- Hosted initial head b9d7dd3 passed all five suites, including [full Photography/cached-route QA](https://github.com/imagine-os/hoy/actions/runs/38816534619) and [genuine content-role browser QA](https://github.com/imagine-os/hoy/actions/runs/38816534493). Final-head checks and capture saves are required before release
+- Reviewed source head 4e3b229 passed all five suites, including [Photography/cached-route QA](https://github.com/imagine-os/hoy/actions/runs/38817611324) and [content-role browser QA](https://github.com/imagine-os/hoy/actions/runs/38817611182). Genuine ES/EN mobile/desktop placement captures and both customer cache scenarios are saved and SHA-checked before merge. Exact final-head checks are required before release.
 
 New browser regressions use genuine admin, coordinator and marketing identities and actual link navigation. The sample regression uses the real customer role, a cached morning DB and an already-open provider after advancing the clock. No production-provider synthetic writes are introduced.
 
 **Resumen (ES).** Los enlaces respetan los permisos del rol y ofrecen vistas documentadas cuando hace falta. La búsqueda reconoce Inicio y Próximamente. Las muestras del navegador se mantienen válidas al avanzar el día sin borrar cambios locales.
+
+## Genuine browser captures
+
+![Spanish placement preview, mobile](../screenshots/M-02d/preview-admin-es-390.jpg)
+![English placement preview, desktop](../screenshots/M-02d/preview-admin-en-1280.jpg)
+![Cached full-class sample, actual customer](../screenshots/C-20/cached-reload-390.jpg)

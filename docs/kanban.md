@@ -1,6 +1,6 @@
 # HoyOS kanban
 
-## In verification · 0068 (v0.24.4 · 2026-10-15)
+## Completed · 0068 (v0.24.4 · 2026-10-15)
 
 - M-02d: role-safe placement previews and bilingual placement search; C-20/sample hub: same-day cached full-class fixtures and complete Photography QA dependency coverage. [Details](changelog/0068-media-navigation-demo-clock.md)
 
