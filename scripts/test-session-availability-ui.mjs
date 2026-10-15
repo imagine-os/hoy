@@ -60,7 +60,6 @@ try {
       await page.setViewportSize({ width, height: 1000 }); await page.goto(`${base}/#${route}`); await page.reload();
       await page.locator('.session-calendar').waitFor();
       await page.locator('.calendar-date-label input').fill('2026-10-15');
-      if (width === 390) await page.getByRole('button', { name: lang === 'es' ? 'Día' : 'Day', exact: true }).click();
       const inactive = page.locator(width === 390 || route === '/app/schedule' ? '.classrow' : '.calendar-session').filter({ hasText: 'QA Past' });
       assert(await inactive.isDisabled(), `${code} ${lang} ${width}: past class disabled`);
       assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `${code} ${lang} ${width}: no overflow`);
@@ -70,9 +69,15 @@ try {
     await page.reload(); await page.locator('.session-calendar').waitFor(); await page.screenshot({ path: `docs/screenshots/${code}/inactive-en-1280-dark.jpg`, fullPage: true, quality: 72 });
     await page.evaluate(() => localStorage.setItem('hoyos.theme', JSON.stringify({ theme: 'light', skin: 'styled' })));
   }
+  await page.locator('.calendar-session').filter({ hasText: 'QA Full' }).click();
+  await page.waitForURL('**/#/app/waitlist/qa_full');
+  await page.goBack(); await page.locator('.session-calendar').waitFor();
+  await page.locator('.calendar-session').filter({ hasText: 'QA Active' }).click();
+  await page.waitForURL('**/#/app/class/qa_active');
+  await page.goBack(); await page.locator('.session-calendar').waitFor();
   assert.deepEqual(errors, []);
   await mkdir('qa', { recursive: true });
-  await writeFile('qa/session-availability.json', JSON.stringify({ passed: true, screenshots: 15, checks: ['day/week disabled states', 'native disabled programmatic clicks', 'active drawer Escape', 'full remains clickable', 'clock boundary without reload', 'ES/EN mobile/desktop/dark', 'no overflow', 'no page errors'] }, null, 2));
+  await writeFile('qa/session-availability.json', JSON.stringify({ passed: true, screenshots: 15, checks: ['day/week disabled states', 'native disabled programmatic clicks', 'active drawer Escape', 'full navigates to waitlist; active to details; Back restores schedule', 'clock boundary without reload', 'ES/EN mobile/desktop/dark', 'no overflow', 'no page errors'] }, null, 2));
   console.log('PASS: inactive session UI and 15 screenshots');
 } catch (error) { await mkdir('qa', { recursive: true }); await page.screenshot({ path: 'qa/session-availability-failure.jpg', fullPage: true }); throw error; }
 finally { await browser.close(); }
