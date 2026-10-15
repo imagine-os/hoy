@@ -8,6 +8,7 @@ on:
       - 'src/modules/website/**'
       - 'scripts/test-timetable*.mjs'
       - 'scripts/test-analytics.mjs'
+      - 'scripts/test-public-entry.mjs'
       - '.github/workflows/timetable-qa.yml'
 permissions:
   contents: read

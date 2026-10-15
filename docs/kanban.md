@@ -1,6 +1,6 @@
 # HoyOS kanban
 
-## In verification · 0063 (2026-10-15)
+## Implemented · 0063 (2026-10-15; deployment verification pending)
 
 - Apply the owner-selected provisional 30-class timetable and public instructor names; keep reception hours unconfirmed until staff saves them. [Details](changelog/0063-fixed-weekly-schedule.md)
 - Studio follow-up: reconcile the four Monday/Tuesday evening assignments; preserve the selected version until told otherwise.
