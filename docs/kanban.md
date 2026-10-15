@@ -1,5 +1,9 @@
 # HoyOS kanban
 
+## In verification · 0067 (2026-10-15)
+
+- M-14/M-02: Class Schedule views, Content batch preview/apply/undo, recurrence controls, 50-minute new-class defaults and dated-session theme overrides. Browser-local demo; production backend integration remains pending. [Details](changelog/0067-class-management.md)
+
 ## Implemented · 0063 (2026-10-15; deployment verification pending)
 
 - Apply the owner-selected provisional 30-class timetable and public instructor names; keep reception hours unconfirmed until staff saves them. [Details](changelog/0063-fixed-weekly-schedule.md)
