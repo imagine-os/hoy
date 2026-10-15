@@ -1,3 +1,11 @@
+version: 0.24.0 patch
+date: 2026-10-15
+prompt: docs/prompts/0066-inactive-sessions-capacity.md
+intent: Ghost inactive classes and respect the configured class maximum.
+decision: Disabled calendar states and capacity inheritance for new occurrences only.
+rejected: Hiding history or rewriting booked sessions.
+files: SessionCalendar; ClassRow; sessionAvailability; joined hooks; MockProvider; tests; hosted QA
+
 # 0066 — Inactive calendar classes and capacity inheritance
 
 - Version: 0.24.0, additive repair
