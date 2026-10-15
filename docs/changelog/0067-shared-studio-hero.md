@@ -7,6 +7,8 @@ decision: Latest and Photos share the actual red-lit studio image, full-bleed co
 rejected: Leaving the regular page on generated concept art, retaining a portrait image in the Photos hero, or overwriting historical Archive/Classic treatments.
 files: website HomePage, photography and sanctuary styles, strings and specification; media catalog generator and manifest; photography/media-model/shared-hero regression checks; W-01 documentation and captures; package version.
 
+The voucher UI test now reloads the persisted staff identity before navigating into its guarded admin route, removing a reproduced test-only role-switch race. No runtime role permissions change.
+
 ## Verification
 
 Hosted verification covers Latest and Photos in Spanish and English, desktop/mobile and dark mode, narrow/tablet/wide layouts, decoded images, no hero video, cross-edition navigation, CTA targets, Coming Soon image parity and preservation of Archive/Classic. Exact source and capture hashes are checked before release.
