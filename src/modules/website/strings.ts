@@ -212,7 +212,7 @@ export const strings: StringTable = {
 
   'site.teachers.title': { es: 'Profesores', en: 'Teachers' },
   'site.teachers.body': { es: 'Personas que enseñan desde la práctica, no desde el guion.', en: 'People who teach from practice, not from a script.' },
-  'site.teachers.legend': { es: 'Los retratos llegan con la sesión de fotos del estudio. Cada profesor guía una de las siete clases.', en: 'The portraits arrive with the studio’s photo session. Each teacher guides one of the seven classes.' },
+  'site.teachers.legend': { es: 'Los retratos llegan con la sesión de fotos del estudio. Consulta las clases de cada profesor en el horario semanal.', en: 'The portraits arrive with the studio’s photo session. See each teacher’s classes in the weekly timetable.' },
   'site.teachers.portrait': { es: 'Retrato de {name}', en: 'Portrait of {name}' },
 
   'site.plans.title': { es: 'Planes', en: 'Plans' },
