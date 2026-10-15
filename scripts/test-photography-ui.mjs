@@ -11,6 +11,8 @@ try {
   await page.goto(`${base}/#/site?version=photos`);await page.evaluate(({lang,dark})=>{localStorage.setItem('hoyos.lang',lang);localStorage.setItem('hoyos.theme',JSON.stringify({theme:dark?'dark':'light',skin:'styled'}));},{lang,dark});await page.setViewportSize({width,height:1000});await page.goto(`${base}/#/site${path}?version=photos`);await page.reload();await page.locator('.site[data-site-version=photos]').waitFor();
   await page.waitForTimeout(500);
   await page.evaluate(async()=>{for(const im of document.images){im.loading='eager';}await Promise.all([...document.images].map(i=>i.decode().catch(()=>{})));});
+  for(const img of await page.locator('img[src*="studio-2026"]').all()) { await img.scrollIntoViewIfNeeded(); await img.evaluate(async i=>{await i.decode();}); await page.waitForTimeout(80); }
+  await page.evaluate(()=>scrollTo(0,0));await page.waitForTimeout(250);
   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),`${path} ${width} overflow`);
   const images=await page.locator('img[src*="studio-2026"]').evaluateAll(ims=>ims.map(i=>({src:i.src,loaded:i.complete&&i.naturalWidth>0,alt:i.alt})));
   assert(images.length>0,`${path} has photos`);assert(images.every(i=>i.loaded),JSON.stringify(images));
