@@ -24,7 +24,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run build && npm run hub-map:check
+      - run: node scripts/test-sample-clock.mjs && npm run build && npm run hub-map:check
       - name: Check real photo preview
         run: |
           npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/preview.log 2>&1 &
