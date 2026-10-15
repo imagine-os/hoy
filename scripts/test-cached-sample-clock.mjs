@@ -273,7 +273,7 @@ try {
     assert.deepEqual(dbFrom(liveProvider, liveApi).bookings, liveAfter.bookings);
   });
 
-  // Workflow dependency audit. The current omission is expected in --reproduce.
+  // Workflow dependency audit: changes to clock inputs must trigger Photography QA.
   const workflow = await readFile(join(repo, '.github/workflows/photography-qa.yml'), 'utf8');
   const pathSection = workflow.slice(workflow.indexOf('    paths:'), workflow.indexOf('permissions:'));
   const globs = [...pathSection.matchAll(/- '([^']+)'/g)].map(m => m[1]);

@@ -25,7 +25,7 @@ try {
   const card=()=>page.locator('.media-library-grid>.card').filter({has:page.locator('img[src*="/facility-studio-"]')});
   await card().locator('summary').click();
   const placements=await card().locator('.media-library-use[data-placement-path^="/app/"]').evaluateAll(nodes=>nodes.map(n=>({path:n.dataset.placementPath,preview:n.dataset.placementPreview,href:n.querySelector('a')?.getAttribute('href')})));
-  for(const prefix of ['/app/teachers/','/app/events/','/app/rules','/app/schedule'])assert(placements.some(p=>p.path.startsWith(prefix)),`${role}: ${prefix}`);
+  for(const [prefix,code] of [['/app/teachers/','C-18'],['/app/events/','C-23'],['/app/rules','C-13'],['/app/schedule','C-02']]){const matching=placements.filter(p=>p.path.startsWith(prefix));assert(matching.length>0,`${role}: ${prefix}`);assert(matching.every(p=>p.href?.endsWith(`#/docs/pages/${code}`)),`${role}: correct ${code} documentation`);}
   assert(placements.every(p=>p.preview==='documented'&&p.href?.includes('#/docs/pages/')),`${role}: role-safe documented destinations`);
   assert.equal(await page.locator('.media-library-use a[href*="#/app/"]').count(),0,'no customer-only runtime link offered to content staff');
   const destinations=[...new Set(placements.map(p=>p.href))];
@@ -36,8 +36,9 @@ try {
   }
   if(role==='admin')for(const lang of ['es','en'])for(const width of [390,1280]){
    await page.getByRole('button',{name:lang.toUpperCase(),exact:true}).first().click();await page.setViewportSize({width,height:1000});
-   await card().scrollIntoViewIfNeeded();assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
-   await card().screenshot({path:`docs/screenshots/M-02d/preview-${role}-${lang}-${width}.jpg`,type:'jpeg',quality:72});
+   assert(await card().getByText(lang==='es'?'Ver ficha documentada de la pantalla':'View documented screen preview',{exact:true}).count()>0,'visible localized preview label');
+   await card().locator('[data-placement-preview="documented"]').first().scrollIntoViewIfNeeded();assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+   await page.screenshot({path:`docs/screenshots/M-02d/preview-${role}-${lang}-${width}.jpg`,type:'jpeg',quality:72});
   }
   await page.setViewportSize({width:1280,height:1000});await page.getByRole('button',{name:'EN',exact:true}).first().click();
   await card().locator('.media-library-use a[href*="#/site/about"]').first().click();await page.locator('.site').waitFor();assert(!page.url().includes('/no-access'));
