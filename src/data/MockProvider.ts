@@ -1,7 +1,7 @@
 import { upgradeTimetable } from './seed/upgradeTimetable';
 import { executeVoucherCommand, voucherSeats, type VoucherCommand, type VoucherResult, type VoucherBookingRow } from './vouchers';
 import { chooseMat, occupiesMat, usesMats } from './mats';
-import type { BookingRow, ClassSessionRow, ModalityRow } from './schema';
+import type { BookingRow, ClassSessionRow, ModalityRow, RoomRow } from './schema';
 import type { BaseRow } from './schema';
 import { tableNames } from './schema';
 import { applyQuery, type ChangeEvent, type DataProvider, type Query } from './types';
@@ -79,7 +79,10 @@ export class MockProvider implements DataProvider {
         if (sessions.some(s => s.template_id === template.id && s.starts_at === start.toISOString())) continue;
         const id = `demo_${template.id}_${start.getFullYear()}_${start.getMonth()}_${start.getDate()}`;
         if (sessions.some(s => s.id === id)) continue;
-        sessions.push({ id, tenant_id: tenant.id, created_at: now, updated_at: now, template_id: template.id, title: template.title, modality_id: template.modality_id, teacher_id: template.teacher_id, room_id: template.room_id, starts_at: start.toISOString(), ends_at: new Date(start.getTime() + template.duration_min * 60000).toISOString(), capacity: template.room_id === 'room_main' ? tenant.studio.mats : template.capacity, booked_count: 0, level: template.level, status: 'scheduled', cancel_reason: null });
+        // Snapshot the class limit only for new occurrences; existing bookings keep their session capacity.
+        const room = (this.db.rooms as RoomRow[]).find(row => row.id === template.room_id);
+        const capacity = Math.min(template.capacity, room?.capacity ?? template.capacity, template.room_id === 'room_main' ? tenant.studio.mats : Infinity);
+        sessions.push({ id, tenant_id: tenant.id, created_at: now, updated_at: now, template_id: template.id, title: template.title, modality_id: template.modality_id, teacher_id: template.teacher_id, room_id: template.room_id, starts_at: start.toISOString(), ends_at: new Date(start.getTime() + template.duration_min * 60000).toISOString(), capacity, booked_count: 0, level: template.level, status: 'scheduled', cancel_reason: null });
       }
     }
   }
