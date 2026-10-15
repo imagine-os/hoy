@@ -2,7 +2,7 @@ import { chromium } from 'playwright-core';
 import assert from 'node:assert/strict';
 import { mkdir, writeFile } from 'node:fs/promises';
 const base=process.env.QA_BASE||'http://127.0.0.1:5185';
-const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',headless:true,args:['--no-sandbox']});
+const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',headless:true,args:['--no-sandbox','--disable-gpu','--disable-dev-shm-usage']});
 const page=await browser.newPage({viewport:{width:1440,height:1000},reducedMotion:'reduce'}), errors=[];
 page.on('pageerror',e=>errors.push(e.message));
 await mkdir('qa/photos',{recursive:true});
@@ -25,6 +25,11 @@ try {
   await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
   assert.equal(await page.locator('video').count(),0,'no old concept video in photo preview');
   console.log('Photo geometry',lang,width,path,await page.locator('img[src*="studio-2026"]').evaluateAll(ims=>ims.map(i=>({class:i.className,src:i.currentSrc,w:i.getBoundingClientRect().width,h:i.getBoundingClientRect().height}))));
+  // Full-height viewport avoids Chromium's offscreen image raster eviction in fullPage capture.
+  const captureHeight=await page.evaluate(()=>document.documentElement.scrollHeight);
+  await page.setViewportSize({width,height:captureHeight});
+  await page.evaluate(async()=>{await Promise.all([...document.images].map(i=>i.decode().catch(()=>{})));});
+  await page.waitForTimeout(300);
   await page.screenshot({path:`qa/photos/${path.slice(1)||'home'}-${lang}-${width}${dark?'-dark':''}.jpg`,fullPage:true});
  }
  await page.goto(`${base}/#/site?version=photos`);await page.locator('.photo-hero-image').waitFor();
