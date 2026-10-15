@@ -596,3 +596,7 @@ _Updated every turn. Codes reference `src/specs/canvasSpecs.ts` and the module `
 
 ### Timetable evidence · 0063
 - Timetable, Website preview and Voucher hosted QA passed on eca9067a. Twenty approved public built-demo screenshots are linked from W-04, W-05, W-06 and C-03.
+
+## Class availability repair (0066)
+### Doing
+- C-02 / C-02b / W-04: Ghost inactive calendar sessions; preserve waitlist and staff history; fix new-session capacity inheritance. Focused tests pass; hosted build and browser QA pending.
