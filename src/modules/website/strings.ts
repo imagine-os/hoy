@@ -203,7 +203,7 @@ export const strings: StringTable = {
   'site.modalities.essays': { es: 'Cada fila del horario es una de nuestras siete clases. Lee de qué se trata antes de reservar.', en: 'Every schedule row is one of our seven classes. Read what it is about before you book.' },
 
   'site.schedule.title': { es: 'Horario', en: 'Schedule' },
-  'site.schedule.body': { es: 'clases de lunes a domingo, {mats} tapetes, una clase por persona al día. Toca una clase para reservar.', en: 'classes Monday–Sunday, {mats} mats, one class per person per day. Tap a class to book.' },
+  'site.schedule.body': { es: 'Clases de lunes a domingo, {mats} tapetes, una clase por persona al día. Toca una clase para reservar.', en: 'Classes Monday–Sunday, {mats} mats, one class per person per day. Tap a class to book.' },
   'site.schedule.loginTitle': { es: 'Para reservar, entra a tu cuenta', en: 'Sign in to book' },
   'site.schedule.loginBody': { es: 'Reservar y pagar ocurre dentro de la app. Entra o crea tu cuenta y volverás a esta clase.', en: 'Booking and paying happen inside the app. Sign in or create an account and you will come back to this class.' },
   'site.schedule.loginCta': { es: 'Entrar y reservar', en: 'Sign in and book' },
