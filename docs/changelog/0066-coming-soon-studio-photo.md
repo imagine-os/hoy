@@ -11,7 +11,14 @@ files: ComingSoonLanding component, CSS and metadata; coming-soon strings; media
 
 W-11 is the only changed public page. The source image is already approved and packaged; no original is replaced. The media library records this actual landing placement as live while existing opt-in photo-page placements retain their draft-preview state. The catalog generator also preserves existing direct-photo placements on Plans and Schedule during regeneration.
 
-Build, type and regression results are recorded with the pull request. Browser captures cover Spanish and English on desktop and phone, narrow/tablet layout, static/reduced-motion imagery, image loading and Login dismissal/history/focus behavior.
+Full local build, TypeScript, spacing and sample-clock checks passed. The [hosted website suite](https://github.com/imagine-os/hoy/actions/runs/38796916318) passed development, production-bundle and clean root/subpath static-hosting checks against source 166cbd6, with no runtime or media errors; media-library and voucher checks also passed. Browser captures cover Spanish and English on desktop and phone, narrow/tablet layout, static/reduced-motion imagery, image loading and Login dismissal/history/focus behavior.
+
+Baseline before this release, from the previously deployed W-11 captures:
+
+![Before, English desktop](../screenshots/W-11/en-1280-before.jpg)
+![Before, Spanish desktop](../screenshots/W-11/es-1280-before.jpg)
+
+Updated running-page captures:
 
 ![Spanish phone](../screenshots/W-11/es-390.jpg)
 ![Spanish desktop](../screenshots/W-11/es-1280.jpg)
