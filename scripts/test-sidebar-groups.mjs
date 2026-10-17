@@ -39,6 +39,7 @@ try {
  for(const [user,route,absent] of [['usr_admin','/admin',['Design system']],['usr_coord','/admin',['Finance','Design system']],['usr_fin','/admin',['Content','Design system']],['usr_desk','/staff',['Overview','Finance','Administration','Design system']],['usr_mkt','/admin/content',['Overview','Finance','Administration','Design system']],['usr_dev','/dev/specs',['Overview','Community','Finance','Content']],['usr_maint','/staff',['Overview','Community','Finance','Content','Administration','Design system']]]) {
   const {page,ctx}=await start(user,'en',1280,route);const names=await page.locator('.deskshell-grouplabel').allTextContents();for(const label of absent)assert(!names.includes(label),`${user}: no ${label}`);
   for(const el of await page.locator('.deskshell-groupitems').all())assert(await el.locator('a').count()>0);
+  await page.screenshot({animations:'disabled',path:`docs/screenshots/M-01/sidebar-${user}-en-1280.jpg`,quality:85});
   checks.push(`${user}: filtered, nonempty categories`);await ctx.close();
  }
  for(const lang of ['es','en'])for(const width of [390,768,1280,1920,3840]) {
@@ -46,8 +47,10 @@ try {
   if(width<=900)await page.locator('.topbar-lead').click();
   const bounds=await page.locator('.deskshell-grouplabel').evaluateAll(els=>els.map(el=>({h:el.getBoundingClientRect().height,w:el.getBoundingClientRect().width,scroll:el.scrollWidth,client:el.clientWidth})));
   assert(bounds.every(b=>b.h>=44 && b.w>=44 && b.scroll<=b.client));
-  const file=`docs/screenshots/M-01/sidebar-${lang}-${width}.jpg`;await page.screenshot({path:file,quality:85});
-  if(width===1280){await page.locator('.deskshell-iconbtn').click();await page.screenshot({path:`docs/screenshots/M-01/sidebar-${lang}-${width}-dark.jpg`,quality:85});}
+  await page.waitForTimeout(350);
+  if(width<=900)assert.equal(Math.round((await page.locator('.deskshell-side').boundingBox()).x),0);
+  const file=`docs/screenshots/M-01/sidebar-${lang}-${width}.jpg`;await page.screenshot({animations:'disabled',path:file,quality:85});
+  if(width===1280){await page.locator('.deskshell-iconbtn').click();await page.screenshot({animations:'disabled',path:`docs/screenshots/M-01/sidebar-${lang}-${width}-dark.jpg`,quality:85});}
   checks.push(`${lang} ${width}: targets, label fit, capture`);await ctx.close();
  }
  assert.deepEqual(errors,[]);await writeFile('qa/sidebar/results.json',JSON.stringify({checks,errors},null,2));console.log(JSON.stringify({checks,errors},null,2));

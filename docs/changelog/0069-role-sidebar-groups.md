@@ -6,7 +6,7 @@ date: 2026-10-17
 - Version: 0.24.5
 - Date: 2026-10-17
 - Intent: Make longer admin and super-admin sidebars easier to scan and collapse.
-- Decision: Reuse RouteDef.nav.group and DesktopShell. Filter by the existing role access first; show only nonempty categories. Keep Overview and Staff visible initially, fold secondary categories until needed, and reveal the active category on navigation. Users can fold the current category too. Persist per user, effective role and surface without copying one user's preferences to another.
+- Decision: Reuse RouteDef.nav.group and DesktopShell. Filter by the existing role access first; show only nonempty categories. Keep Overview visible initially, fold secondary categories until needed, and reveal the active category on navigation. Users can fold the current category too. Persist per user, effective role and surface without copying one user's preferences to another.
 - Alternative rejected: New navigation/permission registry or one huge Administration accordion. The existing route registry remains authoritative.
 - Files: admin/voucher route metadata, shared bilingual strings, DesktopShell and D-02 metadata, focused browser regression, manifests/version and documentation.
 

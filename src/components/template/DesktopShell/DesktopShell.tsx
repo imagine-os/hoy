@@ -60,6 +60,7 @@ function usePreference<T>(key: string, fallback: T) {
   return [value, update] as const;
 }
 const DEFAULT_FOLDED: Record<string, boolean> = {
+  'core.nav.group.staff': true,
   'core.nav.group.publishing': true, 'core.nav.group.community': true,
   'core.nav.group.finance': true, 'core.nav.group.system': true, 'core.nav.group.design': true,
 };
@@ -227,7 +228,7 @@ export function DesktopShell({ surfaces, routes, titleKey, children }: DesktopSh
                 <div id={panelId} className="deskshell-groupitems" hidden={!open && !rail}>
                 {items.filter((i) => i.group === g).map(({ to, route: r }) => (
                   <NavLink
-                    key={`${r.path}-${to}`} to={to} end={isRoot(to)}
+                    key={`${r.path}-${to}`} to={to} end={isRoot(to)} aria-current={to === activeTo ? 'page' : false}
                     className={() => `deskshell-link ${to === activeTo ? 'is-active' : ''}`}
                     title={rail ? t(r.nav!.labelKey) : undefined}
                     onClick={() => setDrawer(false)}
