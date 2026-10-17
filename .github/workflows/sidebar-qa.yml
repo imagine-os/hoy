@@ -8,6 +8,9 @@ on:
       - 'src/i18n/core.ts'
       - 'scripts/test-sidebar-groups.mjs'
       - '.github/workflows/sidebar-qa.yml'
+      - 'docs/screenshots/M-01/sidebar-*'
+      - 'docs/pages/M-01.md'
+      - 'docs/changelog/0069-role-sidebar-groups.md'
 permissions:
   contents: read
 jobs:
