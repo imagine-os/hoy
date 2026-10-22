@@ -1,0 +1,126 @@
+{
+  "batch": 45,
+  "requirement": "RC-02",
+  "providedBase": "4c062d9",
+  "stage": "READ-ONLY SOURCE AUDIT; no runtime implementation/execution",
+  "criterion": "The front desk marks 'Arrived' or 'No-show' per class and can undo; the counter and spots update instantly. This is the official attendance at launch.",
+  "sourcePreserved": {
+    "phase": "MVP Oct 30",
+    "priority": "Urgent",
+    "role": "Recepci\u00f3n",
+    "sourceStatus": "Not verified",
+    "implementationStatus": "partial",
+    "verificationStatus": "not-run"
+  },
+  "fixtures": [
+    {
+      "source": "src/modules/staff/CheckinPage.tsx",
+      "fixture": "scripts/fixtures/checkin-undo-original/CheckinPage.tsx.txt",
+      "sha256": "093e104df2816f8fd41a1380c1225a8b48a35ec8e3152382159459c39e544c59",
+      "kind": "exact full source bytes"
+    },
+    {
+      "source": "src/modules/staff/audit.ts",
+      "fixture": "scripts/fixtures/checkin-undo-original/audit.ts.txt",
+      "sha256": "9ec096be3152e06d64a084803f5a063fc946252c1d4f07f18920c2443ca3abc7",
+      "kind": "exact full source bytes"
+    },
+    {
+      "source": "src/data/MockProvider.ts",
+      "fixture": "scripts/fixtures/checkin-undo-original/MockProvider.ts.txt",
+      "sha256": "e12e1ce69745ad109995c8095ea47168edf38560a1e555c3889b32cdfe7a7ed7",
+      "kind": "exact full source bytes"
+    },
+    {
+      "source": "src/data/mats.ts",
+      "fixture": "scripts/fixtures/checkin-undo-original/mats.ts.txt",
+      "sha256": "7c6a8da475b522837b489c8a0d83a421ac8c6f5b648a48ce947037938653bdab",
+      "kind": "exact full source bytes"
+    },
+    {
+      "source": "src/auth/permissions.ts",
+      "fixture": "scripts/fixtures/checkin-undo-original/permissions.ts.txt",
+      "sha256": "593caa1eb4e43b5d4e797100a96cdfa51f85d90db0c78bf3cc92672aad02f80b",
+      "kind": "exact full source bytes"
+    },
+    {
+      "source": "src/modules/staff/index.ts",
+      "fixture": "scripts/fixtures/checkin-undo-original/index.ts.txt",
+      "sha256": "151a57f3abe1d5262fd9cf742e812217f377194fa4058ce698633bb8d64ec051",
+      "kind": "exact full source bytes"
+    },
+    {
+      "source": "src/modules/staff/CheckinPage.tsx",
+      "fixture": "scripts/fixtures/checkin-undo-original/setStatus-closure.ts.txt",
+      "sha256": "e3e94b27a26b6aa6f22c73c9e86bdfa89e20fedc0ca5931263cd5ba97cbfaf21",
+      "kind": "exact byte substring, original trailing newline retained",
+      "startByte": 4920,
+      "endByte": 5496,
+      "firstLine": 76,
+      "lastLine": 83
+    }
+  ],
+  "protectedSource": {
+    "src/data/schema.ts": "35ee85e2db065a9a6a85c9279c7915bf686bfe1bfa36525e1975207c8f229933",
+    "src/data/deskBooking.ts": "3cef1c5ab813b8e82cdd0c68928ffbd9bb0ba795da54335cb9d1919b5348474b",
+    "src/data/packages.ts": "0a518e4dccc0626fe643b9ee0a8cb282c5baa3499d1c1a57a11bf291e45955cd",
+    "src/data/vouchers.ts": "4870205d7938f39aa4cd3f54a7c6e90c9860159bb5999ea90f4fdfe30a88f80f",
+    "src/modules/teacher/ClassPage.tsx": "b136625781cbfaba294b6bbc7eff71a007064654e7716519650cdb54eb48ba8c",
+    "src/auth/roles.ts": "11002363462521d77e8b3aee4cd17ac738fa68d95a370d1f3ef9d03f5f326bc9",
+    "src/modules/staff/strings.ts": "b67b7e640471758504be0104e11b8dbe9347edefe3cb2e417f9a9c952e1852d4",
+    "src/components/atom/Button/Button.tsx": "4f82443f83a16b7262a0362f56ba47ac0c9695472f4d7bd80107ffd42f363fc4",
+    "docs/frontend-completion/features.json": "5c4972dd41061652a352a951ff301eabdb43e1ac5a6640f8264dcba637b85b69",
+    "docs/frontend-completion/owner-queues.md": "abf81d4c2294e5c0a7337a042fea9182e9ccbd55edb3445d8bf9f9ef3cce62ff",
+    "docs/frontend-completion/README.md": "2295f879ad629d6013016b48382fe98011cda00e9c2420c6e7678ccd6f45c345",
+    "src/modules/website/hooks.ts": "bd5cc409f3fffcc46b5a346bdc8ff58453af10c6b046104a483869eb86e51852"
+  },
+  "sourceFindings": [
+    {
+      "source": "src/modules/staff/CheckinPage.tsx:47-70,76-83,193-203",
+      "finding": "Undo is displayed on checked_in rows of any selected noncancelled occurrence, with no time cutoff; sequential trusted-input booking update then independent audit; no immediate undo latch, status precondition, cancellation or context fence."
+    },
+    {
+      "source": "src/data/MockProvider.ts:136-144,274-285",
+      "finding": "checked_in to booked invokes prepareBooking and rejects started or completed occurrence before mutation; this is a new-admission check applied to an occupancy-neutral same-session/same-mat transition."
+    },
+    {
+      "source": "src/data/MockProvider.ts:130-144;src/data/mats.ts:7-17",
+      "finding": "booked and checked_in both occupy mats and derived count; no_show occupies derived count but not mats. Undo between the two occupying states does not require resolving no_show policy."
+    },
+    {
+      "source": "src/modules/staff/audit.ts:15-22;CheckinPage.tsx:190",
+      "finding": "audit is a separate insert; audit storage/write failure can leave attendance changed without audit. Retry UI only clears error, does not retain or replay a command."
+    },
+    {
+      "source": "src/modules/staff/index.ts:10,19;src/auth/permissions.ts:28-34",
+      "finding": "Existing route and checkin.write allow super_admin/admin/coordinator/front_desk; teacher attendance remains read-only. No role change proposed."
+    },
+    {
+      "source": "src/modules/website/hooks.ts:7-16",
+      "finding": "Shared session join applies the caller filter only; no hidden future/day cutoff restricts explicit noncancelled S02 selection."
+    }
+  ],
+  "scopeRecommendation": "One mock-only checked_in\u2192booked occupancy-neutral undo command, status+audit atomic and scoped idempotent lifecycle; narrow positive provider transition preserving same booking/user/tenant/session/mat and all admission checks for actual new/re-admitted bookings. No direct no_show undo/new policies in this slice.",
+  "dependencyGate": "Eventual release depends checked main70 and root42 provider changes; provider file must be reconciled against that actual source before implementation/integration.",
+  "execution": "Repository reads plus exact source fixture/document copies and Python byte hashes only. No Git, compiler/typecheck/esbuild/build/browser/application/domain execution. All counterexamples below are source-derived NOT RUN.",
+  "data": "Source and fictional test recipes only; no customer data, credentials, correspondence, real provider/payment/external-message action.",
+  "runtimeSourceFingerprintAtAudit": "44cd9267bbdb0e4dd30d07e3893e1fea579c0cc91c8df843763f8a671c1986bf",
+  "fingerprintBasis": "Sorted relative src path UTF8 + raw bytes, excludes exact src/app/captureDates.ts; then raw vite.config.ts BYTES only. NO delimiters.",
+  "staticVerification": "PASS7 exact original fixtures (including source substring),12 protected hashes, and no runtime source implementation. All baseline/domain/rendered recipes NOT RUN.",
+  "auditFiles": [
+    "docs/frontend-completion/batch-45.md",
+    "docs/changelog/0131-attendance-undo-contract-audit.md"
+  ],
+  "writtenRecipes": [
+    "after-start original Undo refusal",
+    "past/completed explicit selection compatibility",
+    "full-class same-mat control",
+    "status/audit write split and quota",
+    "immediate duplicate audit",
+    "stale target/status and resurrection",
+    "actor/provider/selection/unmount/cancel fences",
+    "historical replay versus newer check-in",
+    "no-show occupancy observation only",
+    "new-admission nonregression and42 reconciliation"
+  ]
+}
