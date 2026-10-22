@@ -1,0 +1,49 @@
+{
+  "stage": "FULLBUILD EXIT0; named immutable production/native-dev/library gates PASS; no full RC02/production acceptance",
+  "sourceBefore": "3ecd36ed4378fc81af67ccbe04782e04d7864d77f127c1dee68d9d0ac095728e",
+  "basis": "Recursively component-sorted src relative UTF8 path+rawbytes, exact src/app/captureDates.ts excluded; Vite rawbytes only; NO delimiters",
+  "typecheck": {
+    "session": 48077,
+    "exit": 0
+  },
+  "domain": {
+    "session": 92410,
+    "exit": 0,
+    "groups": 7
+  },
+  "originalBaseline": {
+    "session": 55447,
+    "exit": 0,
+    "groups": 4
+  },
+  "runtimeSourceEditsSinceCopied45": "NONE; fixture wrapper/expense assertion and QA standalone/native-commit/telemetry sources corrected before build",
+  "warnings": "Expected ReactRouter6.30.6 exact two dev deprecations will be asserted/recorded; no routerflags/filters",
+  "buildSession": 76534,
+  "buildExit": 0,
+  "sourceAfter": "3ecd36ed4378fc81af67ccbe04782e04d7864d77f127c1dee68d9d0ac095728e",
+  "sourceUnchanged": true,
+  "entry": "./assets/index-BhT2FXXb.js",
+  "entrySha256": "b300f079f70d3e7e1766df7c3d1f1f3d185628ff9270574c8872473d9a29cb59",
+  "snapshot": "/workspace/hoy-qa-archive/attendance-undo-proof-3ecd36ed4378-b300f079",
+  "fullDistBefore": "0142ddd726e54a32cea5317f21814da69d65381ada4bd9ef5584a75dbd6ca4fa",
+  "fullDistAfter": "0142ddd726e54a32cea5317f21814da69d65381ada4bd9ef5584a75dbd6ca4fa",
+  "snapshotFullTree": "0142ddd726e54a32cea5317f21814da69d65381ada4bd9ef5584a75dbd6ca4fa",
+  "treeBasis": "Recursively component-sorted relative UTF8 path+rawbytes; NO delimiters",
+  "fileCount": 5050,
+  "byteCount": 402667086,
+  "snapshotMethod": "Hardlinks under workspace; never tmp; no more builds while browser runs",
+  "releaseManifestBaseOnly": "feaff4e970174fa501106dcb8819b9c81b2fa3c9 (uncommitted45 runtime proven by fingerprint; no current-main acceptance)",
+  "sourceAfterQA": "3ecd36ed4378fc81af67ccbe04782e04d7864d77f127c1dee68d9d0ac095728e",
+  "fullDistAfterQA": {
+    "sha256": "0142ddd726e54a32cea5317f21814da69d65381ada4bd9ef5584a75dbd6ca4fa",
+    "files": 5050,
+    "bytes": 402667086
+  },
+  "snapshotAfterQA": {
+    "sha256": "0142ddd726e54a32cea5317f21814da69d65381ada4bd9ef5584a75dbd6ca4fa",
+    "files": 5050,
+    "bytes": 402667086
+  },
+  "browserClosure": "All45/46 production/library/dev browsers closed via finally; idle known local servers remain",
+  "captureMap": "batch-45-capture-map.json"
+}

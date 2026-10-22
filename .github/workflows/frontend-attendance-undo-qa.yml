@@ -1,0 +1,67 @@
+name: Attendance undo frontend QA
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'scripts/*checkin-undo*'
+      - 'scripts/fixtures/checkin-undo-original/**'
+      - 'scripts/test-coming-soon-image-priority.mjs'
+      - '.github/workflows/frontend-attendance-undo-qa.yml'
+permissions:
+  contents: read
+jobs:
+  fictional-attendance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Verify original admission and atomic undo invariants
+        run: |
+          node scripts/test-checkin-undo-baseline.mjs
+          node scripts/test-checkin-undo.mjs
+      - run: npm run build
+      - name: Verify actual production, roles, library and public image priority
+        run: |
+          npm run preview -- --host 127.0.0.1 --strictPort --port 5189 > /tmp/hoy-undo-production.log 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:5189/ >/dev/null && break; sleep 1; done
+          node scripts/test-checkin-undo-ui.mjs
+          node scripts/test-checkin-undo-library.mjs
+          QA_LABEL=production node scripts/test-coming-soon-image-priority.mjs
+        env:
+          QA_BASE: http://127.0.0.1:5189
+          CHROMIUM_PATH: /usr/bin/google-chrome
+      - name: Verify actual delayed, cancel, actor, retry and uncertain acknowledgement states
+        run: |
+          QA_VITE_FORCE=1 QA_DEV_PORT=5190 node scripts/start-checkin-undo-dev.mjs > /tmp/hoy-undo-dev.log 2>&1 &
+          for i in $(seq 1 45); do curl -fsS http://127.0.0.1:5190/ >/dev/null && break; sleep 1; done
+          node scripts/test-checkin-undo-states.mjs
+          QA_LABEL=dev node scripts/test-coming-soon-image-priority.mjs
+        env:
+          QA_BASE: http://127.0.0.1:5190
+          CHROMIUM_PATH: /usr/bin/google-chrome
+      - name: Print controlled failure diagnostics
+        if: failure()
+        run: |
+          if [ -f /tmp/hoy-undo-dev.log ]; then tail -n 100 /tmp/hoy-undo-dev.log; fi
+          for file in docs/frontend-completion/evidence/batch-45-undo-*-failure.json docs/frontend-completion/evidence/batch46-image-priority-*-failure.json; do
+            if [ -f "$file" ]; then cat "$file"; fi
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fictional-attendance-undo-${{ github.event.pull_request.head.sha }}
+          retention-days: 14
+          path: |
+            docs/frontend-completion/evidence/batch-45*.json
+            docs/frontend-completion/evidence/batch46-image-priority*.json
+            qa/checkin-undo/
+            docs/screenshots/W-11/*image-priority*
+            /tmp/hoy-undo-production.log
+            /tmp/hoy-undo-dev.log

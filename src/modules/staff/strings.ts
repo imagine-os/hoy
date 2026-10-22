@@ -1,5 +1,7 @@
+import {undoStrings} from './undoStrings';
 import type { StringTable } from '../../i18n/types';
 export const strings: StringTable = {
+  ...undoStrings,
   'staff.count.codes': {es:'Valores registrados (método/proveedor/estado)', en:'Recorded values (method/provider/status)'},
   'staff.count.unrecognized': {es:'Valor no reconocido', en:'Unrecognized value'},
   'staff.count.status.voided': {es:'Anulado', en:'Voided'},

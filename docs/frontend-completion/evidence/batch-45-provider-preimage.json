@@ -1,0 +1,14 @@
+{
+  "batch": 45,
+  "providedSourceCommit": "6f7d6e7",
+  "source": "/workspace/hoy-finance-safeguard-integration/src/data/MockProvider.ts",
+  "fixture": "scripts/fixtures/checkin-undo-original/MockProvider.integrated42-preimage.ts.txt",
+  "sha256": "6b5807d329081f2fe6a847e2f5c25507faa2440058aeae448b02b13229152acd",
+  "status": "Exact integrated42 preimage copied before bounded attendance exception. Original45 audit fixture stays unchanged. No execution.",
+  "protectedContracts": [
+    "expense paid-marker clear guard",
+    "paid expense removal guard and strict persistence rollback",
+    "all existing new-booking prepareBooking checks",
+    "detached mock transaction semantics"
+  ]
+}

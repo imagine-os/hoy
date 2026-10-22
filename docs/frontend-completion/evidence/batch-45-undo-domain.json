@@ -1,0 +1,13 @@
+{
+  "batch": 45,
+  "checks": [
+    "Future full/in-progress or past/completed occupied booking: both writes and quota roll back with zero events; exact same mat/count/history/financial rows; scoped receipt/current read and replay exactly once. No subject user/profile required.",
+    "Every required read/duplicate/foreign row, stale terminal/cancelled target, existing seven denied roles and disconnected real provider fail closed; four current reception roles only.",
+    "Input snapshot; original live callback/AbortSignal; held digest required actor/booking/session loss; staged abort; postcommit lost ack/cancel/inactive/reassignment withholds stale success without claiming rollback.",
+    "Fresh required replay rows; newer legitimate arrival is not undone by an old receipt; exact concurrent intents yield one audit.",
+    "After-commit end-session read actor/booking/session loss withholds acknowledgement; actor inactive inside actual stage after preflight prevents any new undo/audit.",
+    "Fictional corrupt legacy missing/conflicting mat and mismatched counter remain unverified with no reassignment or history repair.",
+    "Non-allowlisted status-only/identity/session/mat patches and new/no-show admission after start remain guarded; integrated42 paid-expense clear/remove protections retained."
+  ],
+  "scope": "Fictional undo only; no_show/current other attendance/provider entry authorization remain unverified. Rendered/build gates separate."
+}

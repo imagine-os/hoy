@@ -1,0 +1,195 @@
+{
+  "base": "http://127.0.0.1:5288",
+  "label": "dev",
+  "assetChecks": [
+    "images/studio-2026/facility-red-studio-1600.webp",
+    "images/studio-2026/facility-red-studio-480.webp",
+    "images/studio-2026/facility-red-studio-960.webp"
+  ],
+  "checks": [
+    {
+      "lang": "en",
+      "width": 390,
+      "theme": "light",
+      "route": "/",
+      "priority": "high",
+      "originalImageAttributes": true,
+      "noDispatch": true,
+      "placeholderCancelFocus": true
+    },
+    {
+      "lang": "en",
+      "width": 390,
+      "theme": "light",
+      "route": "/coming-soon",
+      "priority": "high",
+      "originalImageAttributes": true,
+      "noDispatch": true,
+      "placeholderCancelFocus": true
+    },
+    {
+      "lang": "en",
+      "width": 390,
+      "theme": "dark",
+      "route": "/",
+      "priority": "high",
+      "originalImageAttributes": true,
+      "noDispatch": true,
+      "placeholderCancelFocus": true
+    },
+    {
+      "lang": "en",
+      "width": 390,
+      "theme": "dark",
+      "route": "/coming-soon",
+      "priority": "high",
+      "originalImageAttributes": true,
+      "noDispatch": true,
+      "placeholderCancelFocus": true
+    },
+    {
+      "lang": "en",
+      "width": 1280,
+      "theme": "light",
+      "route": "/",
+      "priority": "high",
+      "originalImageAttributes": true,
+      "noDispatch": true,
+      "placeholderCancelFocus": true
+    },
+    {
+      "lang": "en",
+      "width": 1280,
+      "theme": "light",
+      "route": "/coming-soon",
+      "priority": "high",
+      "originalImageAttributes": true,
+      "noDispatch": true,
+      "placeholderCancelFocus": true
+    },
+    {
+      "lang": "en",
+      "width": 1280,
+      "theme": "dark",
+      "route": "/",
+      "priority": "high",
+      "originalImageAttributes": true,
+      "noDispatch": true,
+      "placeholderCancelFocus": true
+    },
+    {
+      "lang": "en",
+      "width": 1280,
+      "theme": "dark",
+      "route": "/coming-soon",
+      "priority": "high",
+      "originalImageAttributes": true,
+      "noDispatch": true,
+      "placeholderCancelFocus": true
+    },
+    {
+      "lang": "es",
+      "width": 390,
+      "theme": "light",
+      "route": "/",
+      "priority": "high",
+      "originalImageAttributes": true,
+      "noDispatch": true,
+      "placeholderCancelFocus": true
+    },
+    {
+      "lang": "es",
+      "width": 390,
+      "theme": "light",
+      "route": "/coming-soon",
+      "priority": "high",
+      "originalImageAttributes": true,
+      "noDispatch": true,
+      "placeholderCancelFocus": true
+    },
+    {
+      "lang": "es",
+      "width": 390,
+      "theme": "dark",
+      "route": "/",
+      "priority": "high",
+      "originalImageAttributes": true,
+      "noDispatch": true,
+      "placeholderCancelFocus": true
+    },
+    {
+      "lang": "es",
+      "width": 390,
+      "theme": "dark",
+      "route": "/coming-soon",
+      "priority": "high",
+      "originalImageAttributes": true,
+      "noDispatch": true,
+      "placeholderCancelFocus": true
+    },
+    {
+      "lang": "es",
+      "width": 1280,
+      "theme": "light",
+      "route": "/",
+      "priority": "high",
+      "originalImageAttributes": true,
+      "noDispatch": true,
+      "placeholderCancelFocus": true
+    },
+    {
+      "lang": "es",
+      "width": 1280,
+      "theme": "light",
+      "route": "/coming-soon",
+      "priority": "high",
+      "originalImageAttributes": true,
+      "noDispatch": true,
+      "placeholderCancelFocus": true
+    },
+    {
+      "lang": "es",
+      "width": 1280,
+      "theme": "dark",
+      "route": "/",
+      "priority": "high",
+      "originalImageAttributes": true,
+      "noDispatch": true,
+      "placeholderCancelFocus": true
+    },
+    {
+      "lang": "es",
+      "width": 1280,
+      "theme": "dark",
+      "route": "/coming-soon",
+      "priority": "high",
+      "originalImageAttributes": true,
+      "noDispatch": true,
+      "placeholderCancelFocus": true
+    }
+  ],
+  "errors": [],
+  "warnings": [
+    "⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.",
+    "⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.",
+    "⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.",
+    "⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.",
+    "⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.",
+    "⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.",
+    "⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.",
+    "⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.",
+    "⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.",
+    "⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.",
+    "⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.",
+    "⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.",
+    "⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.",
+    "⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.",
+    "⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.",
+    "⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath."
+  ],
+  "unexpected": [],
+  "limits": [
+    "Actual local route/image behavior only; no external font provider, real publication/launch or sender verification.",
+    "A production pass alone cannot prove React development warning absent; separate dev execution required."
+  ]
+}

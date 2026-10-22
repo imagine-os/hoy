@@ -1,0 +1,32 @@
+{
+  "status": "SOURCE PREPARED UNRUN; no compiler/type/build/browser/Git execution",
+  "runtimeChange": "Exactly one JSX image attribute representation; reverse substitution recovers original complete source hash",
+  "runtimeBeforeSHA256": "662ac5a8f699ea53004d99a25925181175a43df25ad990458faed5869e41fc2a",
+  "runtimeAfterSHA256": "b2cc4d8247f102cf4973058021f06dd552c7028132157ba10fc826c18ee83539",
+  "filesSHA256": {
+    "src/components/template/ComingSoonLanding/ComingSoonLanding.tsx": "b2cc4d8247f102cf4973058021f06dd552c7028132157ba10fc826c18ee83539",
+    "scripts/test-coming-soon-image-priority.mjs": "7b4a2e1dcc2edd9ecea72d73408a13b9e983ad11b49ca8bf4f25f2b0368fa848",
+    "scripts/fixtures/coming-soon-image-priority-before.json": "83bc8b38f041691bd7d7b8168193d9f2bd4d5f4cddc92e20e6da5b6a4a49dee0",
+    "docs/frontend-completion/batch-46-image-priority.md": "d742d492bea4f0b02eb4799b422dc1eb37a9b2a77f052a8539b724ea9e14895a",
+    "docs/changelog/0130-coming-soon-image-priority.md": "0670d7e23353cbe1fa410cdb4763cf1195bad6cdbe97134c5569096487602d5f"
+  },
+  "originalAuditFilesUnchangedSHA256": {
+    "docs/frontend-completion/batch-46-source-audit.md": "8fd5fc69b1a0f784c9235c2e7694e1fd8caf14438041422d996a3a5f7a804386",
+    "docs/frontend-completion/evidence/batch46-source-audit.json": "d614754983e1115800218fa782c49befb05d09506b045035779a19f1d6eae43f"
+  },
+  "imageFilesUnchangedSHA256": {
+    "public/images/studio-2026/facility-red-studio-1600.webp": "5ef98fe2d2e1d73b11a9c34a823702c9914b691f1e4dc237aa814563b5b88c63",
+    "public/images/studio-2026/facility-red-studio-480.webp": "29139da0dc307eb868490d48c462cc441c7baf216fefcfe5e87842f3c7869181",
+    "public/images/studio-2026/facility-red-studio-960.webp": "893fb22ec8b54d822a610df66ad4a9d8e3b3d484573fb92fb747fc9c0f28b342"
+  },
+  "verificationRequired": [
+    "Root current-main reconciliation",
+    "Typecheck/fullbuild",
+    "Actual dev16 route cases including zero warning/errors",
+    "Immutable production16 route cases +before/after source/assets proof",
+    "Existing website/archive regression as applicable",
+    "Root exact-head CI/deployment receipt"
+  ],
+  "acceptanceBoundary": "No SW08/NT01 implementation-status/source-phase/acceptance change, no launch activation or email/DNS/backend effect.",
+  "manifestSelfHashExcluded": true
+}

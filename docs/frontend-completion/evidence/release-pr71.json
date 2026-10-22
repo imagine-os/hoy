@@ -1,0 +1,4487 @@
+{
+  "head": "feaff4e970174fa501106dcb8819b9c81b2fa3c9",
+  "workflowCount": 17,
+  "jobCount": 41,
+  "runs": [
+    {
+      "run": {
+        "id": 39761787410,
+        "name": "Subscription directory QA",
+        "status": "completed",
+        "conclusion": "success",
+        "run_number": 27,
+        "jobs_url": "https://api.github.com/repos/imagine-os/hoy/actions/runs/39761787410/jobs",
+        "logs_url": "https://api.github.com/repos/imagine-os/hoy/actions/runs/39761787410/logs",
+        "workflow_id": 387601979
+      },
+      "data": {
+        "jobs": [
+          {
+            "id": 119767468869,
+            "name": "verify",
+            "status": "completed",
+            "conclusion": "success",
+            "run_id": 39761787410,
+            "logs_url": null,
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3
+              },
+              {
+                "name": "Run npm ci",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4
+              },
+              {
+                "name": "Run npm run test:subscriptions",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5
+              },
+              {
+                "name": "Run npm run build",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6
+              },
+              {
+                "name": "Check service catalog and manual receipts",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 13
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 14
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 15
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "run": {
+        "id": 39761787191,
+        "name": "Voucher sandbox QA",
+        "status": "completed",
+        "conclusion": "success",
+        "run_number": 71,
+        "jobs_url": "https://api.github.com/repos/imagine-os/hoy/actions/runs/39761787191/jobs",
+        "logs_url": "https://api.github.com/repos/imagine-os/hoy/actions/runs/39761787191/logs",
+        "workflow_id": 384507009
+      },
+      "data": {
+        "jobs": [
+          {
+            "id": 119767469694,
+            "name": "voucher",
+            "status": "completed",
+            "conclusion": "success",
+            "run_id": 39761787191,
+            "logs_url": null,
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3
+              },
+              {
+                "name": "Run npm ci",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4
+              },
+              {
+                "name": "Run npm run typecheck",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5
+              },
+              {
+                "name": "Run npm run test:vouchers",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6
+              },
+              {
+                "name": "Verify sandbox lifecycle and capture real screens",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7
+              },
+              {
+                "name": "Run npm run build",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 8
+              },
+              {
+                "name": "Run actions/upload-artifact@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 9
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 17
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 18
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 19
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "run": {
+        "id": 39761787197,
+        "name": "Media picker QA",
+        "status": "completed",
+        "conclusion": "success",
+        "run_number": 40,
+        "jobs_url": "https://api.github.com/repos/imagine-os/hoy/actions/runs/39761787197/jobs",
+        "logs_url": "https://api.github.com/repos/imagine-os/hoy/actions/runs/39761787197/logs",
+        "workflow_id": 385741868
+      },
+      "data": {
+        "jobs": [
+          {
+            "id": 119767468331,
+            "name": "picker",
+            "status": "completed",
+            "conclusion": "success",
+            "run_id": 39761787197,
+            "logs_url": null,
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3
+              },
+              {
+                "name": "Run npm ci",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4
+              },
+              {
+                "name": "Run npm run build",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5
+              },
+              {
+                "name": "Run npm run dev -- --host 127.0.0.1 --port 5187 &",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6
+              },
+              {
+                "name": "Run actions/upload-artifact@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 13
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 14
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 15
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "run": {
+        "id": 39761787350,
+        "name": "Booking and payment frontend QA",
+        "status": "completed",
+        "conclusion": "success",
+        "run_number": 27,
+        "jobs_url": "https://api.github.com/repos/imagine-os/hoy/actions/runs/39761787350/jobs",
+        "logs_url": "https://api.github.com/repos/imagine-os/hoy/actions/runs/39761787350/logs",
+        "workflow_id": 392252116
+      },
+      "data": {
+        "jobs": [
+          {
+            "id": 119767468787,
+            "name": "mock-transactions",
+            "status": "completed",
+            "conclusion": "success",
+            "run_id": 39761787350,
+            "logs_url": null,
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3
+              },
+              {
+                "name": "Run npm ci",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4
+              },
+              {
+                "name": "Run npm run build",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5
+              },
+              {
+                "name": "Verify isolated mock rules and transactions",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6
+              },
+              {
+                "name": "Verify built customer and desk flows",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7
+              },
+              {
+                "name": "Verify asynchronous receipt queue states",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 8
+              },
+              {
+                "name": "Run actions/upload-artifact@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 9
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 17
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 18
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 19
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "run": {
+        "id": 39761787267,
+        "name": "Class Management QA",
+        "status": "completed",
+        "conclusion": "success",
+        "run_number": 35,
+        "jobs_url": "https://api.github.com/repos/imagine-os/hoy/actions/runs/39761787267/jobs",
+        "logs_url": "https://api.github.com/repos/imagine-os/hoy/actions/runs/39761787267/logs",
+        "workflow_id": 385745829
+      },
+      "data": {
+        "jobs": [
+          {
+            "id": 119767468737,
+            "name": "verify",
+            "status": "completed",
+            "conclusion": "success",
+            "run_id": 39761787267,
+            "logs_url": null,
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3
+              },
+              {
+                "name": "Run npm ci",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4
+              },
+              {
+                "name": "Run node scripts/test-content-batch.mjs && node scripts/test-class-management.mjs && node scripts/test-class-management-provider.mjs && node scripts/test-class-pay-rules.mjs && node scripts/test-private-capture-policy.mjs",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5
+              },
+              {
+                "name": "Run npm run build && npm run hub-map:check",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6
+              },
+              {
+                "name": "Exercise editor flows",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7
+              },
+              {
+                "name": "Run actions/upload-artifact@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 8
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 15
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 16
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 17
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "run": {
+        "id": 39761787345,
+        "name": "Frontend completion QA",
+        "status": "completed",
+        "conclusion": "success",
+        "run_number": 23,
+        "jobs_url": "https://api.github.com/repos/imagine-os/hoy/actions/runs/39761787345/jobs",
+        "logs_url": "https://api.github.com/repos/imagine-os/hoy/actions/runs/39761787345/logs",
+        "workflow_id": 392237697
+      },
+      "data": {
+        "jobs": [
+          {
+            "id": 119767468405,
+            "name": "crm",
+            "status": "completed",
+            "conclusion": "success",
+            "run_id": 39761787345,
+            "logs_url": null,
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3
+              },
+              {
+                "name": "Run npm ci",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4
+              },
+              {
+                "name": "Run npm run build",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5
+              },
+              {
+                "name": "Verify built CRM frontend",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6
+              },
+              {
+                "name": "Verify asynchronous product read states",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7
+              },
+              {
+                "name": "Run actions/upload-artifact@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 8
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 15
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 16
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 17
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "run": {
+        "id": 39761787248,
+        "name": "Frontend control contracts QA",
+        "status": "completed",
+        "conclusion": "success",
+        "run_number": 12,
+        "jobs_url": "https://api.github.com/repos/imagine-os/hoy/actions/runs/39761787248/jobs",
+        "logs_url": "https://api.github.com/repos/imagine-os/hoy/actions/runs/39761787248/logs",
+        "workflow_id": 392332777
+      },
+      "data": {
+        "jobs": [
+          {
+            "id": 119767468262,
+            "name": "identity-and-fixtures",
+            "status": "completed",
+            "conclusion": "success",
+            "run_id": 39761787248,
+            "logs_url": null,
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3
+              },
+              {
+                "name": "Run npm ci",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4
+              },
+              {
+                "name": "Run npm run build",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5
+              },
+              {
+                "name": "Run node scripts/test-api-request-fixture.mjs",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6
+              },
+              {
+                "name": "Run node scripts/test-teacher-ownership.mjs",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7
+              },
+              {
+                "name": "Verify symbolic responses and existing teacher ownership",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 8
+              },
+              {
+                "name": "Verify teacher loading and ownership changes",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 9
+              },
+              {
+                "name": "Run actions/upload-artifact@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 10
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 19
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 20
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 21
+              }
+            ]
+          },
+          {
+            "id": 119767468654,
+            "name": "pending-payments",
+            "status": "completed",
+            "conclusion": "success",
+            "run_id": 39761787248,
+            "logs_url": null,
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3
+              },
+              {
+                "name": "Run npm ci",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4
+              },
+              {
+                "name": "Run npm run build",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5
+              },
+              {
+                "name": "Run node scripts/test-pending-payments.mjs",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6
+              },
+              {
+                "name": "Verify all pending payment entries",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7
+              },
+              {
+                "name": "Verify contained pending queue read failures",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 8
+              },
+              {
+                "name": "Run actions/upload-artifact@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 9
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 17
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 18
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 19
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "run": {
+        "id": 39761787259,
+        "name": "Photography QA",
+        "status": "completed",
+        "conclusion": "success",
+        "run_number": 67,
+        "jobs_url": "https://api.github.com/repos/imagine-os/hoy/actions/runs/39761787259/jobs",
+        "logs_url": "https://api.github.com/repos/imagine-os/hoy/actions/runs/39761787259/logs",
+        "workflow_id": 385202445
+      },
+      "data": {
+        "jobs": [
+          {
+            "id": 119767468873,
+            "name": "photography",
+            "status": "completed",
+            "conclusion": "success",
+            "run_id": 39761787259,
+            "logs_url": null,
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3
+              },
+              {
+                "name": "Run npm ci",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4
+              },
+              {
+                "name": "Run node scripts/test-sample-clock.mjs && node scripts/test-cached-sample-clock.mjs && npm run build && npm run hub-map:check",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5
+              },
+              {
+                "name": "Check real photo preview",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6
+              },
+              {
+                "name": "Run actions/upload-artifact@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 13
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 14
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 15
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "run": {
+        "id": 39761787422,
+        "name": "Session Availability QA",
+        "status": "completed",
+        "conclusion": "success",
+        "run_number": 36,
+        "jobs_url": "https://api.github.com/repos/imagine-os/hoy/actions/runs/39761787422/jobs",
+        "logs_url": "https://api.github.com/repos/imagine-os/hoy/actions/runs/39761787422/logs",
+        "workflow_id": 385717708
+      },
+      "data": {
+        "jobs": [
+          {
+            "id": 119767469126,
+            "name": "verify",
+            "status": "completed",
+            "conclusion": "success",
+            "run_id": 39761787422,
+            "logs_url": null,
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3
+              },
+              {
+                "name": "Run npm ci",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4
+              },
+              {
+                "name": "Run node scripts/test-session-availability.mjs && node scripts/test-class-capacity.mjs && node scripts/test-mat-bookings.mjs && npm run test:vouchers",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5
+              },
+              {
+                "name": "Run npm run build && npm run hub-map:check",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6
+              },
+              {
+                "name": "Verify inactive classes and capture bilingual responsive screens",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7
+              },
+              {
+                "name": "Run actions/upload-artifact@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 8
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 15
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 16
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 17
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "run": {
+        "id": 39761787229,
+        "name": "Future frontend mock QA",
+        "status": "completed",
+        "conclusion": "success",
+        "run_number": 18,
+        "jobs_url": "https://api.github.com/repos/imagine-os/hoy/actions/runs/39761787229/jobs",
+        "logs_url": "https://api.github.com/repos/imagine-os/hoy/actions/runs/39761787229/logs",
+        "workflow_id": 392305931
+      },
+      "data": {
+        "jobs": [
+          {
+            "id": 119767468024,
+            "name": "maintenance",
+            "status": "completed",
+            "conclusion": "success",
+            "run_id": 39761787229,
+            "logs_url": null,
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3
+              },
+              {
+                "name": "Run npm ci",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4
+              },
+              {
+                "name": "Run npm run build",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5
+              },
+              {
+                "name": "Run node scripts/test-maintenance.mjs",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6
+              },
+              {
+                "name": "Run node scripts/test-maintenance-fences.mjs",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7
+              },
+              {
+                "name": "Run node scripts/test-mock-additive-upgrade.mjs",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 8
+              },
+              {
+                "name": "Run node scripts/test-draft-receipt-schema.mjs",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 9
+              },
+              {
+                "name": "Verify fictional maintenance workspace",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 10
+              },
+              {
+                "name": "Verify asynchronous maintenance read states",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 11
+              },
+              {
+                "name": "Run actions/upload-artifact@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 12
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 23
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 24
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 25
+              }
+            ]
+          },
+          {
+            "id": 119767468354,
+            "name": "marketing-fences",
+            "status": "completed",
+            "conclusion": "success",
+            "run_id": 39761787229,
+            "logs_url": null,
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3
+              },
+              {
+                "name": "Run npm ci",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4
+              },
+              {
+                "name": "Run npm run build",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5
+              },
+              {
+                "name": "Run node scripts/test-marketing-drafts.mjs",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6
+              },
+              {
+                "name": "Run node scripts/test-marketing-draft-fences.mjs",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7
+              },
+              {
+                "name": "Verify local draft production and inventory",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 8
+              },
+              {
+                "name": "Verify contained local draft asynchronous states",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 9
+              },
+              {
+                "name": "Run actions/upload-artifact@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 10
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 19
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 20
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 21
+              }
+            ]
+          },
+          {
+            "id": 119767468489,
+            "name": "google-hours",
+            "status": "completed",
+            "conclusion": "success",
+            "run_id": 39761787229,
+            "logs_url": null,
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3
+              },
+              {
+                "name": "Run npm ci",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4
+              },
+              {
+                "name": "Run npm run build",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5
+              },
+              {
+                "name": "Run node scripts/test-google-business-dry-run.mjs",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6
+              },
+              {
+                "name": "Run npm run test:hours",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7
+              },
+              {
+                "name": "Verify disconnected hours simulation",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 8
+              },
+              {
+                "name": "Run actions/upload-artifact@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 9
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 17
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 18
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 19
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "run": {
+        "id": 39761787395,
+        "name": "Local problem report frontend QA",
+        "status": "completed",
+        "conclusion": "success",
+        "run_number": 9,
+        "jobs_url": "https://api.github.com/repos/imagine-os/hoy/actions/runs/39761787395/jobs",
+        "logs_url": "https://api.github.com/repos/imagine-os/hoy/actions/runs/39761787395/logs",
+        "workflow_id": 392290492
+      },
+      "data": {
+        "jobs": [
+          {
+            "id": 119767468905,
+            "name": "local-drafts",
+            "status": "completed",
+            "conclusion": "success",
+            "run_id": 39761787395,
+            "logs_url": null,
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3
+              },
+              {
+                "name": "Run npm ci",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4
+              },
+              {
+                "name": "Run npm run build",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5
+              },
+              {
+                "name": "Run node scripts/test-problem-draft.mjs",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6
+              },
+              {
+                "name": "Verify rendered local report drafts",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7
+              },
+              {
+                "name": "Run actions/upload-artifact@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 8
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 15
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 16
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 17
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "run": {
+        "id": 39761787268,
+        "name": "Timetable QA",
+        "status": "completed",
+        "conclusion": "success",
+        "run_number": 65,
+        "jobs_url": "https://api.github.com/repos/imagine-os/hoy/actions/runs/39761787268/jobs",
+        "logs_url": "https://api.github.com/repos/imagine-os/hoy/actions/runs/39761787268/logs",
+        "workflow_id": 384985016
+      },
+      "data": {
+        "jobs": [
+          {
+            "id": 119767468836,
+            "name": "timetable",
+            "status": "completed",
+            "conclusion": "success",
+            "run_id": 39761787268,
+            "logs_url": null,
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3
+              },
+              {
+                "name": "Run npm ci",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4
+              },
+              {
+                "name": "Run npm run typecheck && node scripts/test-timetable.mjs && npm run test:analytics && npm run test:hours && npm run test:contacts && npm run test:vouchers",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5
+              },
+              {
+                "name": "Run npm run build && npm run hub-map:check",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6
+              },
+              {
+                "name": "Verify built screens and capture timetable",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7
+              },
+              {
+                "name": "Run actions/upload-artifact@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 8
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 15
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 16
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 17
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "run": {
+        "id": 39761787397,
+        "name": "Frontend finance safeguards QA",
+        "status": "completed",
+        "conclusion": "success",
+        "run_number": 4,
+        "jobs_url": "https://api.github.com/repos/imagine-os/hoy/actions/runs/39761787397/jobs",
+        "logs_url": "https://api.github.com/repos/imagine-os/hoy/actions/runs/39761787397/logs",
+        "workflow_id": 392702121
+      },
+      "data": {
+        "jobs": [
+          {
+            "id": 119767469165,
+            "name": "fictional-finance (payroll-settlement)",
+            "status": "completed",
+            "conclusion": "success",
+            "run_id": 39761787397,
+            "logs_url": null,
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3
+              },
+              {
+                "name": "Run npm ci",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4
+              },
+              {
+                "name": "Run npm run build",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5
+              },
+              {
+                "name": "Verify actual fictional commands and lifecycle invariants",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6
+              },
+              {
+                "name": "Verify immutable production behavior",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7
+              },
+              {
+                "name": "Verify actual delayed, cancel, actor, retry and uncertain acknowledgement states",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 8
+              },
+              {
+                "name": "Print controlled QA failure diagnostics",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 9
+              },
+              {
+                "name": "Run actions/upload-artifact@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 10
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 19
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 20
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 21
+              }
+            ]
+          },
+          {
+            "id": 119767469492,
+            "name": "fictional-finance (expense-delete)",
+            "status": "completed",
+            "conclusion": "success",
+            "run_id": 39761787397,
+            "logs_url": null,
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3
+              },
+              {
+                "name": "Run npm ci",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4
+              },
+              {
+                "name": "Run npm run build",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5
+              },
+              {
+                "name": "Verify actual fictional commands and lifecycle invariants",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6
+              },
+              {
+                "name": "Verify immutable production behavior",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7
+              },
+              {
+                "name": "Verify actual delayed, cancel, actor, retry and uncertain acknowledgement states",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 8
+              },
+              {
+                "name": "Print controlled QA failure diagnostics",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 9
+              },
+              {
+                "name": "Run actions/upload-artifact@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 10
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 19
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 20
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 21
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "run": {
+        "id": 39761787389,
+        "name": "Frontend lifecycle mock QA",
+        "status": "completed",
+        "conclusion": "success",
+        "run_number": 6,
+        "jobs_url": "https://api.github.com/repos/imagine-os/hoy/actions/runs/39761787389/jobs",
+        "logs_url": "https://api.github.com/repos/imagine-os/hoy/actions/runs/39761787389/logs",
+        "workflow_id": 392633139
+      },
+      "data": {
+        "jobs": [
+          {
+            "id": 119767468944,
+            "name": "local-lifecycle (team-proposals)",
+            "status": "completed",
+            "conclusion": "success",
+            "run_id": 39761787389,
+            "logs_url": null,
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3
+              },
+              {
+                "name": "Run npm ci",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4
+              },
+              {
+                "name": "Run npm run build",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5
+              },
+              {
+                "name": "Verify current fictional command invariants and original counterexamples",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6
+              },
+              {
+                "name": "Verify rendered production behavior and all presentation states",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7
+              },
+              {
+                "name": "Verify actual asynchronous loading, cancel, failure and retry states",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 8
+              },
+              {
+                "name": "Run actions/upload-artifact@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 9
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 17
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 18
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 19
+              }
+            ]
+          },
+          {
+            "id": 119767469320,
+            "name": "local-lifecycle (cash-count)",
+            "status": "completed",
+            "conclusion": "success",
+            "run_id": 39761787389,
+            "logs_url": null,
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3
+              },
+              {
+                "name": "Run npm ci",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4
+              },
+              {
+                "name": "Run npm run build",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5
+              },
+              {
+                "name": "Verify current fictional command invariants and original counterexamples",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6
+              },
+              {
+                "name": "Verify rendered production behavior and all presentation states",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7
+              },
+              {
+                "name": "Verify actual asynchronous loading, cancel, failure and retry states",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 8
+              },
+              {
+                "name": "Run actions/upload-artifact@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 9
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 17
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 18
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 19
+              }
+            ]
+          },
+          {
+            "id": 119767469562,
+            "name": "local-lifecycle (studio-cancel)",
+            "status": "completed",
+            "conclusion": "success",
+            "run_id": 39761787389,
+            "logs_url": null,
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3
+              },
+              {
+                "name": "Run npm ci",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4
+              },
+              {
+                "name": "Run npm run build",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5
+              },
+              {
+                "name": "Verify current fictional command invariants and original counterexamples",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6
+              },
+              {
+                "name": "Verify rendered production behavior and all presentation states",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7
+              },
+              {
+                "name": "Verify actual asynchronous loading, cancel, failure and retry states",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 8
+              },
+              {
+                "name": "Run actions/upload-artifact@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 9
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 17
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 18
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 19
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "run": {
+        "id": 39761787425,
+        "name": "Promotion staff-demo QA",
+        "status": "completed",
+        "conclusion": "success",
+        "run_number": 21,
+        "jobs_url": "https://api.github.com/repos/imagine-os/hoy/actions/runs/39761787425/jobs",
+        "logs_url": "https://api.github.com/repos/imagine-os/hoy/actions/runs/39761787425/logs",
+        "workflow_id": 384915470
+      },
+      "data": {
+        "jobs": [
+          {
+            "id": 119767469257,
+            "name": "promotion",
+            "status": "completed",
+            "conclusion": "success",
+            "run_id": 39761787425,
+            "logs_url": null,
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3
+              },
+              {
+                "name": "Run npm ci",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4
+              },
+              {
+                "name": "Run npm run typecheck",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5
+              },
+              {
+                "name": "Run npm run test:vouchers && npm run test:promotions && node scripts/test-seed-samples.mjs && node scripts/test-promotion-desk.mjs",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6
+              },
+              {
+                "name": "Capture and verify real bilingual screens",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7
+              },
+              {
+                "name": "Run npm run build && npm run hub-map:check",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 8
+              },
+              {
+                "name": "Verify the built promotion flow",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 9
+              },
+              {
+                "name": "Run actions/upload-artifact@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 10
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 19
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 20
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 21
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "run": {
+        "id": 39761787407,
+        "name": "Frontend continuation QA",
+        "status": "completed",
+        "conclusion": "success",
+        "run_number": 21,
+        "jobs_url": "https://api.github.com/repos/imagine-os/hoy/actions/runs/39761787407/jobs",
+        "logs_url": "https://api.github.com/repos/imagine-os/hoy/actions/runs/39761787407/logs",
+        "workflow_id": 392364602
+      },
+      "data": {
+        "jobs": [
+          {
+            "id": 119767469306,
+            "name": "operational-quotes",
+            "status": "completed",
+            "conclusion": "success",
+            "run_id": 39761787407,
+            "logs_url": null,
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3
+              },
+              {
+                "name": "Run npm ci",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4
+              },
+              {
+                "name": "Run npm run build",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5
+              },
+              {
+                "name": "Verify isolated fictional contracts",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6
+              },
+              {
+                "name": "Verify actual production components",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7
+              },
+              {
+                "name": "Run actions/upload-artifact@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 8
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 15
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 16
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 17
+              }
+            ]
+          },
+          {
+            "id": 119767469760,
+            "name": "marketing-drafts",
+            "status": "completed",
+            "conclusion": "success",
+            "run_id": 39761787407,
+            "logs_url": null,
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3
+              },
+              {
+                "name": "Run npm ci",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4
+              },
+              {
+                "name": "Run npm run build",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5
+              },
+              {
+                "name": "Verify isolated fictional contracts",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6
+              },
+              {
+                "name": "Verify actual production components",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7
+              },
+              {
+                "name": "Run actions/upload-artifact@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 8
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 15
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 16
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 17
+              }
+            ]
+          },
+          {
+            "id": 119767470055,
+            "name": "fictional-registration",
+            "status": "completed",
+            "conclusion": "success",
+            "run_id": 39761787407,
+            "logs_url": null,
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3
+              },
+              {
+                "name": "Run npm ci",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4
+              },
+              {
+                "name": "Run npm run build",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5
+              },
+              {
+                "name": "Verify isolated fictional contracts",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6
+              },
+              {
+                "name": "Verify actual production components",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7
+              },
+              {
+                "name": "Verify delayed commands and cancellation",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 8
+              },
+              {
+                "name": "Run actions/upload-artifact@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 9
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 17
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 18
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 19
+              }
+            ]
+          },
+          {
+            "id": 119767470698,
+            "name": "studio-calendar",
+            "status": "completed",
+            "conclusion": "success",
+            "run_id": 39761787407,
+            "logs_url": null,
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3
+              },
+              {
+                "name": "Run npm ci",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4
+              },
+              {
+                "name": "Run npm run build",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5
+              },
+              {
+                "name": "Verify isolated fictional contracts",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6
+              },
+              {
+                "name": "Verify actual production components",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7
+              },
+              {
+                "name": "Run actions/upload-artifact@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 8
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 15
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 16
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 17
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "run": {
+        "id": 39761787246,
+        "name": "Frontend correctness QA",
+        "status": "completed",
+        "conclusion": "success",
+        "run_number": 17,
+        "jobs_url": "https://api.github.com/repos/imagine-os/hoy/actions/runs/39761787246/jobs",
+        "logs_url": "https://api.github.com/repos/imagine-os/hoy/actions/runs/39761787246/logs",
+        "workflow_id": 392399733
+      },
+      "data": {
+        "jobs": [
+          {
+            "id": 119767468947,
+            "name": "mock-correctness (contact-mask)",
+            "status": "completed",
+            "conclusion": "success",
+            "run_id": 39761787246,
+            "logs_url": null,
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3
+              },
+              {
+                "name": "Run npm ci",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4
+              },
+              {
+                "name": "Run npm run build",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5
+              },
+              {
+                "name": "Verify fictional command invariants",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6
+              },
+              {
+                "name": "Verify required-row replay fences",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 7
+              },
+              {
+                "name": "Verify public preference acknowledgement lifecycle",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 8
+              },
+              {
+                "name": "Verify payroll acknowledgement lifecycle",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 9
+              },
+              {
+                "name": "Verify active-account command boundaries",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 10
+              },
+              {
+                "name": "Verify added command acknowledgement lifecycle",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 11
+              },
+              {
+                "name": "Verify rendered production behavior",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 12
+              },
+              {
+                "name": "Verify rendered active-account command boundaries",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 13
+              },
+              {
+                "name": "Verify shared expense feedback inventory",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 14
+              },
+              {
+                "name": "Verify shared receipt alert library inventory",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 15
+              },
+              {
+                "name": "Verify contained asynchronous states",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 16
+              },
+              {
+                "name": "Print bounded account marketing failure controls",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 17
+              },
+              {
+                "name": "Run actions/upload-artifact@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 18
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 35
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 36
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 37
+              }
+            ]
+          },
+          {
+            "id": 119767469203,
+            "name": "mock-correctness (account-data)",
+            "status": "completed",
+            "conclusion": "success",
+            "run_id": 39761787246,
+            "logs_url": null,
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3
+              },
+              {
+                "name": "Run npm ci",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4
+              },
+              {
+                "name": "Run npm run build",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5
+              },
+              {
+                "name": "Verify fictional command invariants",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6
+              },
+              {
+                "name": "Verify required-row replay fences",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7
+              },
+              {
+                "name": "Verify public preference acknowledgement lifecycle",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 8
+              },
+              {
+                "name": "Verify payroll acknowledgement lifecycle",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 9
+              },
+              {
+                "name": "Verify active-account command boundaries",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 10
+              },
+              {
+                "name": "Verify added command acknowledgement lifecycle",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 11
+              },
+              {
+                "name": "Verify rendered production behavior",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 12
+              },
+              {
+                "name": "Verify rendered active-account command boundaries",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 13
+              },
+              {
+                "name": "Verify shared expense feedback inventory",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 14
+              },
+              {
+                "name": "Verify shared receipt alert library inventory",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 15
+              },
+              {
+                "name": "Verify contained asynchronous states",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 16
+              },
+              {
+                "name": "Print bounded account marketing failure controls",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 17
+              },
+              {
+                "name": "Run actions/upload-artifact@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 18
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 35
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 36
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 37
+              }
+            ]
+          },
+          {
+            "id": 119767469242,
+            "name": "mock-correctness (event-rsvp)",
+            "status": "completed",
+            "conclusion": "success",
+            "run_id": 39761787246,
+            "logs_url": null,
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3
+              },
+              {
+                "name": "Run npm ci",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4
+              },
+              {
+                "name": "Run npm run build",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5
+              },
+              {
+                "name": "Verify fictional command invariants",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6
+              },
+              {
+                "name": "Verify required-row replay fences",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 7
+              },
+              {
+                "name": "Verify public preference acknowledgement lifecycle",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 8
+              },
+              {
+                "name": "Verify payroll acknowledgement lifecycle",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 9
+              },
+              {
+                "name": "Verify active-account command boundaries",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 10
+              },
+              {
+                "name": "Verify added command acknowledgement lifecycle",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 11
+              },
+              {
+                "name": "Verify rendered production behavior",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 12
+              },
+              {
+                "name": "Verify rendered active-account command boundaries",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 13
+              },
+              {
+                "name": "Verify shared expense feedback inventory",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 14
+              },
+              {
+                "name": "Verify shared receipt alert library inventory",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 15
+              },
+              {
+                "name": "Verify contained asynchronous states",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 16
+              },
+              {
+                "name": "Print bounded account marketing failure controls",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 17
+              },
+              {
+                "name": "Run actions/upload-artifact@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 18
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 35
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 36
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 37
+              }
+            ]
+          },
+          {
+            "id": 119767469245,
+            "name": "mock-correctness (receipt-alert)",
+            "status": "completed",
+            "conclusion": "success",
+            "run_id": 39761787246,
+            "logs_url": null,
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3
+              },
+              {
+                "name": "Run npm ci",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4
+              },
+              {
+                "name": "Run npm run build",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5
+              },
+              {
+                "name": "Verify fictional command invariants",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6
+              },
+              {
+                "name": "Verify required-row replay fences",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 7
+              },
+              {
+                "name": "Verify public preference acknowledgement lifecycle",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 8
+              },
+              {
+                "name": "Verify payroll acknowledgement lifecycle",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 9
+              },
+              {
+                "name": "Verify active-account command boundaries",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 10
+              },
+              {
+                "name": "Verify added command acknowledgement lifecycle",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 11
+              },
+              {
+                "name": "Verify rendered production behavior",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 12
+              },
+              {
+                "name": "Verify rendered active-account command boundaries",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 13
+              },
+              {
+                "name": "Verify shared expense feedback inventory",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 14
+              },
+              {
+                "name": "Verify shared receipt alert library inventory",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 15
+              },
+              {
+                "name": "Verify contained asynchronous states",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 16
+              },
+              {
+                "name": "Print bounded account marketing failure controls",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 17
+              },
+              {
+                "name": "Run actions/upload-artifact@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 18
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 35
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 36
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 37
+              }
+            ]
+          },
+          {
+            "id": 119767469246,
+            "name": "mock-correctness (expense-ledger)",
+            "status": "completed",
+            "conclusion": "success",
+            "run_id": 39761787246,
+            "logs_url": null,
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3
+              },
+              {
+                "name": "Run npm ci",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4
+              },
+              {
+                "name": "Run npm run build",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5
+              },
+              {
+                "name": "Verify fictional command invariants",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6
+              },
+              {
+                "name": "Verify required-row replay fences",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 7
+              },
+              {
+                "name": "Verify public preference acknowledgement lifecycle",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 8
+              },
+              {
+                "name": "Verify payroll acknowledgement lifecycle",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 9
+              },
+              {
+                "name": "Verify active-account command boundaries",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 10
+              },
+              {
+                "name": "Verify added command acknowledgement lifecycle",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 11
+              },
+              {
+                "name": "Verify rendered production behavior",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 12
+              },
+              {
+                "name": "Verify rendered active-account command boundaries",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 13
+              },
+              {
+                "name": "Verify shared expense feedback inventory",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 14
+              },
+              {
+                "name": "Verify shared receipt alert library inventory",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 15
+              },
+              {
+                "name": "Verify contained asynchronous states",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 16
+              },
+              {
+                "name": "Print bounded account marketing failure controls",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 17
+              },
+              {
+                "name": "Run actions/upload-artifact@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 18
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 35
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 36
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 37
+              }
+            ]
+          },
+          {
+            "id": 119767469259,
+            "name": "mock-correctness (email-test)",
+            "status": "completed",
+            "conclusion": "success",
+            "run_id": 39761787246,
+            "logs_url": null,
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3
+              },
+              {
+                "name": "Run npm ci",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4
+              },
+              {
+                "name": "Run npm run build",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5
+              },
+              {
+                "name": "Verify fictional command invariants",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6
+              },
+              {
+                "name": "Verify required-row replay fences",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 7
+              },
+              {
+                "name": "Verify public preference acknowledgement lifecycle",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 8
+              },
+              {
+                "name": "Verify payroll acknowledgement lifecycle",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 9
+              },
+              {
+                "name": "Verify active-account command boundaries",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 10
+              },
+              {
+                "name": "Verify added command acknowledgement lifecycle",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 11
+              },
+              {
+                "name": "Verify rendered production behavior",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 12
+              },
+              {
+                "name": "Verify rendered active-account command boundaries",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 13
+              },
+              {
+                "name": "Verify shared expense feedback inventory",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 14
+              },
+              {
+                "name": "Verify shared receipt alert library inventory",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 15
+              },
+              {
+                "name": "Verify contained asynchronous states",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 16
+              },
+              {
+                "name": "Print bounded account marketing failure controls",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 17
+              },
+              {
+                "name": "Run actions/upload-artifact@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 18
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 35
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 36
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 37
+              }
+            ]
+          },
+          {
+            "id": 119767469271,
+            "name": "mock-correctness (api-key-mutations)",
+            "status": "completed",
+            "conclusion": "success",
+            "run_id": 39761787246,
+            "logs_url": null,
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3
+              },
+              {
+                "name": "Run npm ci",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4
+              },
+              {
+                "name": "Run npm run build",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5
+              },
+              {
+                "name": "Verify fictional command invariants",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6
+              },
+              {
+                "name": "Verify required-row replay fences",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 7
+              },
+              {
+                "name": "Verify public preference acknowledgement lifecycle",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 8
+              },
+              {
+                "name": "Verify payroll acknowledgement lifecycle",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 9
+              },
+              {
+                "name": "Verify active-account command boundaries",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 10
+              },
+              {
+                "name": "Verify added command acknowledgement lifecycle",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 11
+              },
+              {
+                "name": "Verify rendered production behavior",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 12
+              },
+              {
+                "name": "Verify rendered active-account command boundaries",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 13
+              },
+              {
+                "name": "Verify shared expense feedback inventory",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 14
+              },
+              {
+                "name": "Verify shared receipt alert library inventory",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 15
+              },
+              {
+                "name": "Verify contained asynchronous states",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 16
+              },
+              {
+                "name": "Print bounded account marketing failure controls",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 17
+              },
+              {
+                "name": "Run actions/upload-artifact@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 18
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 35
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 36
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 37
+              }
+            ]
+          },
+          {
+            "id": 119767469309,
+            "name": "mock-correctness (email-edit)",
+            "status": "completed",
+            "conclusion": "success",
+            "run_id": 39761787246,
+            "logs_url": null,
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3
+              },
+              {
+                "name": "Run npm ci",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4
+              },
+              {
+                "name": "Run npm run build",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5
+              },
+              {
+                "name": "Verify fictional command invariants",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6
+              },
+              {
+                "name": "Verify required-row replay fences",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 7
+              },
+              {
+                "name": "Verify public preference acknowledgement lifecycle",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 8
+              },
+              {
+                "name": "Verify payroll acknowledgement lifecycle",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 9
+              },
+              {
+                "name": "Verify active-account command boundaries",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 10
+              },
+              {
+                "name": "Verify added command acknowledgement lifecycle",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 11
+              },
+              {
+                "name": "Verify rendered production behavior",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 12
+              },
+              {
+                "name": "Verify rendered active-account command boundaries",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 13
+              },
+              {
+                "name": "Verify shared expense feedback inventory",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 14
+              },
+              {
+                "name": "Verify shared receipt alert library inventory",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 15
+              },
+              {
+                "name": "Verify contained asynchronous states",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 16
+              },
+              {
+                "name": "Print bounded account marketing failure controls",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 17
+              },
+              {
+                "name": "Run actions/upload-artifact@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 18
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 35
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 36
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 37
+              }
+            ]
+          },
+          {
+            "id": 119767469311,
+            "name": "mock-correctness (recovery)",
+            "status": "completed",
+            "conclusion": "success",
+            "run_id": 39761787246,
+            "logs_url": null,
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3
+              },
+              {
+                "name": "Run npm ci",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4
+              },
+              {
+                "name": "Run npm run build",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5
+              },
+              {
+                "name": "Verify fictional command invariants",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6
+              },
+              {
+                "name": "Verify required-row replay fences",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 7
+              },
+              {
+                "name": "Verify public preference acknowledgement lifecycle",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 8
+              },
+              {
+                "name": "Verify payroll acknowledgement lifecycle",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 9
+              },
+              {
+                "name": "Verify active-account command boundaries",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 10
+              },
+              {
+                "name": "Verify added command acknowledgement lifecycle",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 11
+              },
+              {
+                "name": "Verify rendered production behavior",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 12
+              },
+              {
+                "name": "Verify rendered active-account command boundaries",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 13
+              },
+              {
+                "name": "Verify shared expense feedback inventory",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 14
+              },
+              {
+                "name": "Verify shared receipt alert library inventory",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 15
+              },
+              {
+                "name": "Verify contained asynchronous states",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 16
+              },
+              {
+                "name": "Print bounded account marketing failure controls",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 17
+              },
+              {
+                "name": "Run actions/upload-artifact@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 18
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 35
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 36
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 37
+              }
+            ]
+          },
+          {
+            "id": 119767469315,
+            "name": "mock-correctness (profile-save)",
+            "status": "completed",
+            "conclusion": "success",
+            "run_id": 39761787246,
+            "logs_url": null,
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3
+              },
+              {
+                "name": "Run npm ci",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4
+              },
+              {
+                "name": "Run npm run build",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5
+              },
+              {
+                "name": "Verify fictional command invariants",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6
+              },
+              {
+                "name": "Verify required-row replay fences",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 7
+              },
+              {
+                "name": "Verify public preference acknowledgement lifecycle",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 8
+              },
+              {
+                "name": "Verify payroll acknowledgement lifecycle",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 9
+              },
+              {
+                "name": "Verify active-account command boundaries",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 10
+              },
+              {
+                "name": "Verify added command acknowledgement lifecycle",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 11
+              },
+              {
+                "name": "Verify rendered production behavior",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 12
+              },
+              {
+                "name": "Verify rendered active-account command boundaries",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 13
+              },
+              {
+                "name": "Verify shared expense feedback inventory",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 14
+              },
+              {
+                "name": "Verify shared receipt alert library inventory",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 15
+              },
+              {
+                "name": "Verify contained asynchronous states",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 16
+              },
+              {
+                "name": "Print bounded account marketing failure controls",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 17
+              },
+              {
+                "name": "Run actions/upload-artifact@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 18
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 35
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 36
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 37
+              }
+            ]
+          },
+          {
+            "id": 119767469324,
+            "name": "mock-correctness (account-marketing)",
+            "status": "completed",
+            "conclusion": "success",
+            "run_id": 39761787246,
+            "logs_url": null,
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3
+              },
+              {
+                "name": "Run npm ci",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4
+              },
+              {
+                "name": "Run npm run build",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5
+              },
+              {
+                "name": "Verify fictional command invariants",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6
+              },
+              {
+                "name": "Verify required-row replay fences",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 7
+              },
+              {
+                "name": "Verify public preference acknowledgement lifecycle",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 8
+              },
+              {
+                "name": "Verify payroll acknowledgement lifecycle",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 9
+              },
+              {
+                "name": "Verify active-account command boundaries",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 10
+              },
+              {
+                "name": "Verify added command acknowledgement lifecycle",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 11
+              },
+              {
+                "name": "Verify rendered production behavior",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 12
+              },
+              {
+                "name": "Verify rendered active-account command boundaries",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 13
+              },
+              {
+                "name": "Verify shared expense feedback inventory",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 14
+              },
+              {
+                "name": "Verify shared receipt alert library inventory",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 15
+              },
+              {
+                "name": "Verify contained asynchronous states",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 16
+              },
+              {
+                "name": "Print bounded account marketing failure controls",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 17
+              },
+              {
+                "name": "Run actions/upload-artifact@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 18
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 35
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 36
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 37
+              }
+            ]
+          },
+          {
+            "id": 119767469328,
+            "name": "mock-correctness (payroll-draft)",
+            "status": "completed",
+            "conclusion": "success",
+            "run_id": 39761787246,
+            "logs_url": null,
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3
+              },
+              {
+                "name": "Run npm ci",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4
+              },
+              {
+                "name": "Run npm run build",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5
+              },
+              {
+                "name": "Verify fictional command invariants",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6
+              },
+              {
+                "name": "Verify required-row replay fences",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 7
+              },
+              {
+                "name": "Verify public preference acknowledgement lifecycle",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 8
+              },
+              {
+                "name": "Verify payroll acknowledgement lifecycle",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 9
+              },
+              {
+                "name": "Verify active-account command boundaries",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 10
+              },
+              {
+                "name": "Verify added command acknowledgement lifecycle",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 11
+              },
+              {
+                "name": "Verify rendered production behavior",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 12
+              },
+              {
+                "name": "Verify rendered active-account command boundaries",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 13
+              },
+              {
+                "name": "Verify shared expense feedback inventory",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 14
+              },
+              {
+                "name": "Verify shared receipt alert library inventory",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 15
+              },
+              {
+                "name": "Verify contained asynchronous states",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 16
+              },
+              {
+                "name": "Print bounded account marketing failure controls",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 17
+              },
+              {
+                "name": "Run actions/upload-artifact@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 18
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 35
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 36
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 37
+              }
+            ]
+          },
+          {
+            "id": 119767469358,
+            "name": "mock-correctness (substitute-request)",
+            "status": "completed",
+            "conclusion": "success",
+            "run_id": 39761787246,
+            "logs_url": null,
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3
+              },
+              {
+                "name": "Run npm ci",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4
+              },
+              {
+                "name": "Run npm run build",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5
+              },
+              {
+                "name": "Verify fictional command invariants",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6
+              },
+              {
+                "name": "Verify required-row replay fences",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 7
+              },
+              {
+                "name": "Verify public preference acknowledgement lifecycle",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 8
+              },
+              {
+                "name": "Verify payroll acknowledgement lifecycle",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 9
+              },
+              {
+                "name": "Verify active-account command boundaries",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 10
+              },
+              {
+                "name": "Verify added command acknowledgement lifecycle",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 11
+              },
+              {
+                "name": "Verify rendered production behavior",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 12
+              },
+              {
+                "name": "Verify rendered active-account command boundaries",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 13
+              },
+              {
+                "name": "Verify shared expense feedback inventory",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 14
+              },
+              {
+                "name": "Verify shared receipt alert library inventory",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 15
+              },
+              {
+                "name": "Verify contained asynchronous states",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 16
+              },
+              {
+                "name": "Print bounded account marketing failure controls",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 17
+              },
+              {
+                "name": "Run actions/upload-artifact@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 18
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 35
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 36
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 37
+              }
+            ]
+          },
+          {
+            "id": 119767469372,
+            "name": "mock-correctness (notification-prefs)",
+            "status": "completed",
+            "conclusion": "success",
+            "run_id": 39761787246,
+            "logs_url": null,
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3
+              },
+              {
+                "name": "Run npm ci",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4
+              },
+              {
+                "name": "Run npm run build",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5
+              },
+              {
+                "name": "Verify fictional command invariants",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6
+              },
+              {
+                "name": "Verify required-row replay fences",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 7
+              },
+              {
+                "name": "Verify public preference acknowledgement lifecycle",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 8
+              },
+              {
+                "name": "Verify payroll acknowledgement lifecycle",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 9
+              },
+              {
+                "name": "Verify active-account command boundaries",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 10
+              },
+              {
+                "name": "Verify added command acknowledgement lifecycle",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 11
+              },
+              {
+                "name": "Verify rendered production behavior",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 12
+              },
+              {
+                "name": "Verify rendered active-account command boundaries",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 13
+              },
+              {
+                "name": "Verify shared expense feedback inventory",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 14
+              },
+              {
+                "name": "Verify shared receipt alert library inventory",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 15
+              },
+              {
+                "name": "Verify contained asynchronous states",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 16
+              },
+              {
+                "name": "Print bounded account marketing failure controls",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 17
+              },
+              {
+                "name": "Run actions/upload-artifact@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 18
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 35
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 36
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 37
+              }
+            ]
+          },
+          {
+            "id": 119767469452,
+            "name": "mock-correctness (trial-eligibility)",
+            "status": "completed",
+            "conclusion": "success",
+            "run_id": 39761787246,
+            "logs_url": null,
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3
+              },
+              {
+                "name": "Run npm ci",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4
+              },
+              {
+                "name": "Run npm run build",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5
+              },
+              {
+                "name": "Verify fictional command invariants",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6
+              },
+              {
+                "name": "Verify required-row replay fences",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 7
+              },
+              {
+                "name": "Verify public preference acknowledgement lifecycle",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 8
+              },
+              {
+                "name": "Verify payroll acknowledgement lifecycle",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 9
+              },
+              {
+                "name": "Verify active-account command boundaries",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 10
+              },
+              {
+                "name": "Verify added command acknowledgement lifecycle",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 11
+              },
+              {
+                "name": "Verify rendered production behavior",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 12
+              },
+              {
+                "name": "Verify rendered active-account command boundaries",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 13
+              },
+              {
+                "name": "Verify shared expense feedback inventory",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 14
+              },
+              {
+                "name": "Verify shared receipt alert library inventory",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 15
+              },
+              {
+                "name": "Verify contained asynchronous states",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 16
+              },
+              {
+                "name": "Print bounded account marketing failure controls",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 17
+              },
+              {
+                "name": "Run actions/upload-artifact@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 18
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 35
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 36
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 37
+              }
+            ]
+          },
+          {
+            "id": 119767469457,
+            "name": "mock-correctness (payroll-approval)",
+            "status": "completed",
+            "conclusion": "success",
+            "run_id": 39761787246,
+            "logs_url": null,
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3
+              },
+              {
+                "name": "Run npm ci",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4
+              },
+              {
+                "name": "Run npm run build",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5
+              },
+              {
+                "name": "Verify fictional command invariants",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6
+              },
+              {
+                "name": "Verify required-row replay fences",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 7
+              },
+              {
+                "name": "Verify public preference acknowledgement lifecycle",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 8
+              },
+              {
+                "name": "Verify payroll acknowledgement lifecycle",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 9
+              },
+              {
+                "name": "Verify active-account command boundaries",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 10
+              },
+              {
+                "name": "Verify added command acknowledgement lifecycle",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 11
+              },
+              {
+                "name": "Verify rendered production behavior",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 12
+              },
+              {
+                "name": "Verify rendered active-account command boundaries",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 13
+              },
+              {
+                "name": "Verify shared expense feedback inventory",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 14
+              },
+              {
+                "name": "Verify shared receipt alert library inventory",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 15
+              },
+              {
+                "name": "Verify contained asynchronous states",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 16
+              },
+              {
+                "name": "Print bounded account marketing failure controls",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 17
+              },
+              {
+                "name": "Run actions/upload-artifact@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 18
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 35
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 36
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 37
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "pr": 71,
+  "mergeCommit": "016c16f8ce81f25e3ac125da275f985bebd4b1e5",
+  "version": "0.25.0",
+  "deployment": {
+    "run": 39763267697,
+    "build": 119772410550,
+    "deploy": 119772981046,
+    "hostedVerify": 119773172679,
+    "state": "verified live",
+    "manifest": "Release manifest: 0.25.0 016c16f8ce81f25e3ac125da275f985bebd4b1e5",
+    "hosted": "Verified https://imagine-os.github.io/hoy/#/admin/finance/subscriptions",
+    "limits": "Exact deployedsource +selected subscription fixture; finance rendered QA local/CI."
+  },
+  "rollback": "50449d0298ceb01118bd3aaa9ddc00c9b189c8d6",
+  "limits": [
+    "No owner/backend acceptance; all124 original requirements/phases preserved.",
+    "No real payment/database/storage/credentials/access-policy changes."
+  ]
+}

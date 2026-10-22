@@ -1,0 +1,156 @@
+{
+  "fictionalOnly": true,
+  "scope": "Actual fictional seeded studio/browser-only QA; own QA subject IDs explicitly have no profile; no private customer data, contacts, exports, secrets or correspondence.",
+  "selectedRepositoryCaptures": [
+    {
+      "source": "qa/checkin-undo/en-1280-dark-review.jpg",
+      "repository": "docs/screenshots/S-02/attendance-undo/en-1280-dark-review.jpg",
+      "sha256": "7bdfd19d86e26ca6b668552ef43c7aee5da51d4cc27e93a62c825ea3fd9253e7"
+    },
+    {
+      "source": "qa/checkin-undo/en-1280-dark-verified.jpg",
+      "repository": "docs/screenshots/S-02/attendance-undo/en-1280-dark-verified.jpg",
+      "sha256": "536726f03a1b8367ca6cef11ce22e4681c2130420e9bdb98f51cf4e53381d4ea"
+    },
+    {
+      "source": "qa/checkin-undo/en-1280-light-library-9.jpg",
+      "repository": "docs/screenshots/S-02/attendance-undo/en-1280-light-library-9.jpg",
+      "sha256": "25bac2b1d232d4d4bda590b4a95e2f242af8cbd3c0868ccfb290fc233988829b"
+    },
+    {
+      "source": "qa/checkin-undo/en-1280-light-quota.jpg",
+      "repository": "docs/screenshots/S-02/attendance-undo/en-1280-light-quota.jpg",
+      "sha256": "c0269cea69f90c05a54465a4f9b6da7b7bd61eb939d3e9a25ed31b7820e29d9e"
+    },
+    {
+      "source": "qa/checkin-undo/en-1280-light-review.jpg",
+      "repository": "docs/screenshots/S-02/attendance-undo/en-1280-light-review.jpg",
+      "sha256": "4d0fec8163d7369420da5e96c6b6bff37df9526603e7f771a33aea825a1fa84e"
+    },
+    {
+      "source": "qa/checkin-undo/en-1280-light-verified.jpg",
+      "repository": "docs/screenshots/S-02/attendance-undo/en-1280-light-verified.jpg",
+      "sha256": "1accdb4d359e9b09698fca539cee5949e6df01a6e38c1153c98293cb3566f1d1"
+    },
+    {
+      "source": "qa/checkin-undo/en-390-dark-review.jpg",
+      "repository": "docs/screenshots/S-02/attendance-undo/en-390-dark-review.jpg",
+      "sha256": "d271af2d4b0b9476ed80d93087285888787eeb240b8b38b85f91760537a8b416"
+    },
+    {
+      "source": "qa/checkin-undo/en-390-dark-verified.jpg",
+      "repository": "docs/screenshots/S-02/attendance-undo/en-390-dark-verified.jpg",
+      "sha256": "e95e50eda2c510301d50f33888de444138b3f4aade3e8648d97fc5afeff6622e"
+    },
+    {
+      "source": "qa/checkin-undo/en-390-light-library-3.jpg",
+      "repository": "docs/screenshots/S-02/attendance-undo/en-390-light-library-3.jpg",
+      "sha256": "21921788895d97093a359c72f01ab503f27a93547d33e8c4416d93f4f425b1ec"
+    },
+    {
+      "source": "qa/checkin-undo/en-390-light-quota.jpg",
+      "repository": "docs/screenshots/S-02/attendance-undo/en-390-light-quota.jpg",
+      "sha256": "61082bec84b54b2dafea65f18ad9448500077aafa980a442847647977312be2a"
+    },
+    {
+      "source": "qa/checkin-undo/en-390-light-review.jpg",
+      "repository": "docs/screenshots/S-02/attendance-undo/en-390-light-review.jpg",
+      "sha256": "f44dbde459a4b9172c045db5aa0e58e44809ca4f856c1b81d9596f86a0b81eec"
+    },
+    {
+      "source": "qa/checkin-undo/en-390-light-verified.jpg",
+      "repository": "docs/screenshots/S-02/attendance-undo/en-390-light-verified.jpg",
+      "sha256": "6cad12be075f1b88d3d602124253ed5e6a3a4a473a496f003ab30dc1df49d496"
+    },
+    {
+      "source": "qa/checkin-undo/en-dev-read.jpg",
+      "repository": "docs/screenshots/S-02/attendance-undo/en-dev-read.jpg",
+      "sha256": "9f879f7cde7d194bd1e76bf059e0e38170769dbc378e7c7277610da8d0607c28"
+    },
+    {
+      "source": "qa/checkin-undo/en-dev-replay.jpg",
+      "repository": "docs/screenshots/S-02/attendance-undo/en-dev-replay.jpg",
+      "sha256": "dd36b5a8aea6da1ce5a261e683b80f0fdfcc1f93c7e7356a1d0ad13adef26805"
+    },
+    {
+      "source": "qa/checkin-undo/es-1280-dark-library-14.jpg",
+      "repository": "docs/screenshots/S-02/attendance-undo/es-1280-dark-library-14.jpg",
+      "sha256": "1595c82bc48e6054b5bd2e2b2ed190abc8b0632b01e46257bf3fb28127e4a70b"
+    },
+    {
+      "source": "qa/checkin-undo/es-1280-dark-review.jpg",
+      "repository": "docs/screenshots/S-02/attendance-undo/es-1280-dark-review.jpg",
+      "sha256": "b72306a3935bbe64a30fdc1672633319d58d13711167d1c06cf864feca2384b2"
+    },
+    {
+      "source": "qa/checkin-undo/es-1280-dark-verified.jpg",
+      "repository": "docs/screenshots/S-02/attendance-undo/es-1280-dark-verified.jpg",
+      "sha256": "ce5b698d4a84fd45baa5689e1fd0d5c62831727c5732379912cbcb82bdb05df3"
+    },
+    {
+      "source": "qa/checkin-undo/es-1280-light-quota.jpg",
+      "repository": "docs/screenshots/S-02/attendance-undo/es-1280-light-quota.jpg",
+      "sha256": "c15ad09745b63ac8c1aeaf5ac41722555c83a20508109e516e0cd45e4c527b23"
+    },
+    {
+      "source": "qa/checkin-undo/es-1280-light-review.jpg",
+      "repository": "docs/screenshots/S-02/attendance-undo/es-1280-light-review.jpg",
+      "sha256": "8529962adbae082e7a0eba6e1819981f33d5dbe0063b9b53e289a7d9c4fc6434"
+    },
+    {
+      "source": "qa/checkin-undo/es-1280-light-verified.jpg",
+      "repository": "docs/screenshots/S-02/attendance-undo/es-1280-light-verified.jpg",
+      "sha256": "f1d9c7c803e134233e7939a7ef3f06e7bd7a2d8e6e926c3d14dae71b44b9d7bc"
+    },
+    {
+      "source": "qa/checkin-undo/es-390-dark-library-6.jpg",
+      "repository": "docs/screenshots/S-02/attendance-undo/es-390-dark-library-6.jpg",
+      "sha256": "b7b6ed61af2b5f9e5ec79adbab6653b705f2faf2ad157a0fe4866f599586ecbc"
+    },
+    {
+      "source": "qa/checkin-undo/es-390-dark-review.jpg",
+      "repository": "docs/screenshots/S-02/attendance-undo/es-390-dark-review.jpg",
+      "sha256": "dcb1560af441cc8d4bdada69ac2767e6d008464c40cbd3cd1eb59cf004d03025"
+    },
+    {
+      "source": "qa/checkin-undo/es-390-dark-verified.jpg",
+      "repository": "docs/screenshots/S-02/attendance-undo/es-390-dark-verified.jpg",
+      "sha256": "4fd4eecdb1fe33d39d59f6695c1392cc3951f806763d8950625ab3f64def8c15"
+    },
+    {
+      "source": "qa/checkin-undo/es-390-light-quota.jpg",
+      "repository": "docs/screenshots/S-02/attendance-undo/es-390-light-quota.jpg",
+      "sha256": "0fab886b33effd411f4e3ada577158b443529a43d1279726fa58823691a58137"
+    },
+    {
+      "source": "qa/checkin-undo/es-390-light-review.jpg",
+      "repository": "docs/screenshots/S-02/attendance-undo/es-390-light-review.jpg",
+      "sha256": "9901c751be09383488b6ee4a7f15c1efa8f6dafe214453ee12f050abb79955bf"
+    },
+    {
+      "source": "qa/checkin-undo/es-390-light-verified.jpg",
+      "repository": "docs/screenshots/S-02/attendance-undo/es-390-light-verified.jpg",
+      "sha256": "1927ec9fce62b1a8113c6dd23828c3298a38f22dba31ef4726997e00109e39ff"
+    },
+    {
+      "source": "qa/checkin-undo/es-dev-read.jpg",
+      "repository": "docs/screenshots/S-02/attendance-undo/es-dev-read.jpg",
+      "sha256": "4b5d894a852d74ed7eaf93e2b2e313b6f6a0907c892b0c9aebd93421dc80cc88"
+    },
+    {
+      "source": "qa/checkin-undo/es-dev-replay.jpg",
+      "repository": "docs/screenshots/S-02/attendance-undo/es-dev-replay.jpg",
+      "sha256": "d6aa4343e3bddde5ea5399993394bf801b0c9fc2b13a2c6b9ff00158bdd1ed37"
+    }
+  ],
+  "allFinalLocalCaptureCount": 144,
+  "libraryFullMatrix": "qa/checkin-undo/*-library-*.jpg; CI14day artifacts; selected examples mirrored here",
+  "visualInspection": [
+    "es-390-dark-review.jpg",
+    "en-390-light-verified.jpg",
+    "es-dev-read.jpg",
+    "es-1280-dark-library-6.jpg",
+    "en-1280-light-review.jpg"
+  ],
+  "visualResult": "Inspected actual captures: readable widget body/actions/status, wrapping within mobile/desktop bounds. Disabled D02 controls remain visibly disabled. No claim of full-app visual acceptance."
+}

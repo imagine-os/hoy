@@ -1,0 +1,33 @@
+// Focused actual public-route regression. Run separately on dev (React warning) and immutable production.
+import assert from 'node:assert/strict';
+import {readFile,mkdir,writeFile} from 'node:fs/promises';
+import {chromium} from 'playwright-core';
+import {createHash} from 'node:crypto';
+import {settledCapture} from './qa-rendered-capture.mjs';
+import {expectedRouterWarnings} from './checkin-undo-browser-audit.mjs';
+const base=process.env.QA_BASE;if(!base)throw Error('QA_BASE must explicitly identify checked dev or immutable production server');
+const baseUrl=new URL(base);if(!['127.0.0.1','localhost'].includes(baseUrl.hostname))throw Error('Only local checked preview/dev QA is allowed');
+const label=process.env.QA_LABEL;if(!['dev','production'].includes(label))throw Error('QA_LABEL must be dev or production; dev is required to establish React warning regression');
+const original=JSON.parse(await readFile(new URL('./fixtures/coming-soon-image-priority-before.json',import.meta.url),'utf8')),expected=original.runtimeExpected;
+const fonts=['https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..600&display=swap','https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap'];
+const assetChecks=[];for(const [file,hash] of Object.entries(original.imageFileSHA256)){const path=file.replace(/^public\//,'');const response=await fetch(new URL(path,base.endsWith('/')?base:base+'/'));assert(response.ok,`Original image must load: ${path}`);assert.equal(createHash('sha256').update(new Uint8Array(await response.arrayBuffer())).digest('hex'),hash,`Original image bytes unchanged: ${path}`);assetChecks.push(path);}
+const checks=[],errors=[],warnings=[],unexpected=[];let active,phase='setup';await mkdir('docs/screenshots/W-11',{recursive:true});
+const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH??'/usr/bin/chromium',args:['--no-sandbox']});
+try{for(const lang of ['en','es'])for(const width of [390,1280])for(const theme of ['light','dark']){
+ const ctx=await browser.newContext({viewport:{width,height:width===390?844:1000},reducedMotion:'reduce'});
+ await ctx.route(/^https?:\/\/(?!127\.0\.0\.1|localhost)/,r=>{if(fonts.includes(r.request().url()))return r.fulfill({status:200,contentType:'text/css',body:'/* Exact known offline font CSS; provider rendering not verified. */'});unexpected.push(r.request().url());return r.abort();});
+ await ctx.addInitScript(({lang,theme})=>{localStorage.setItem('hoyos.lang',lang);localStorage.setItem('hoyos.theme',JSON.stringify({theme,skin:'styled'}));localStorage.setItem('hoyos.session',JSON.stringify({userId:'usr_public',viewAs:null,devMode:false}));},{lang,theme});
+ const p=await ctx.newPage();active=p;p.setDefaultTimeout(30000);p.on('pageerror',e=>errors.push(e.message));p.on('console',m=>{if(m.type()==='error')errors.push(m.text());if(m.type()==='warning')warnings.push(m.text());});p.on('request',r=>{if(!['GET','HEAD'].includes(r.method()))unexpected.push(r.method()+':'+r.url());});await p.clock.install({time:new Date('2026-10-22T15:00:00Z')});
+ for(const route of ['/','/coming-soon']){
+  phase=`${label}:${lang}:${width}:${theme}:${route}`;await p.goto(`${base}/#${route}`);const image=p.locator('img.coming-soon-scene');await image.waitFor();await image.evaluate(img=>img.decode());
+  const attrs=await image.evaluate(img=>Object.fromEntries(['class','src','srcset','sizes','width','height','loading','fetchpriority','decoding','alt'].map(key=>[key,img.getAttribute(key)])));
+  const prefix=attrs.src.slice(0,-expected.srcSuffix.length);assert.equal(attrs.src,prefix+expected.srcSuffix);assert.equal(attrs.srcset,expected.srcSetSuffixes.map(part=>prefix+part).join(', '));
+  for(const key of ['class','sizes','width','height','loading','fetchpriority','decoding'])assert.equal(attrs[key],expected[key],`${phase}: original ${key}`);assert.equal(attrs.alt,expected.alt[lang]);
+  assert(await image.evaluate(img=>img.complete&&img.naturalWidth>0&&img.getBoundingClientRect().width>0));assert.equal(await p.locator('form,input[type=email],input[type=password],input[type=file]').count(),0);
+  const before=await p.evaluate(()=>localStorage.getItem('hoyos.db.v1'));const login=p.locator('.coming-soon-login');await login.click();await p.getByRole('dialog').waitFor();assert.equal(await p.getByRole('dialog').locator('form,input,a[href*="checkout"],a[href*="payment"]').count(),0);await p.keyboard.press('Escape');await p.getByRole('dialog').waitFor({state:'hidden'});assert(await login.evaluate(el=>el===document.activeElement));assert.equal(await p.evaluate(()=>localStorage.getItem('hoyos.db.v1')),before,'placeholder interaction never writes provider rows');
+  assert.equal(await p.locator('form,[data-payment],iframe').count(),0);assert.equal(await p.locator('.coming-soon').evaluate(el=>el.scrollWidth>document.documentElement.clientWidth+1),false);
+  await settledCapture(p,{path:`docs/screenshots/W-11/${lang}-${width}-${theme}-image-priority-${label}-${route==='/'?'root':'soon'}.jpg`,type:'jpeg',quality:80,fullPage:false});checks.push({lang,width,theme,route,priority:attrs.fetchpriority,originalImageAttributes:true,noDispatch:true,placeholderCancelFocus:true});
+ }
+ await ctx.close();
+}assert.deepEqual(errors,[],'No React unknown-prop warning or unexpected console/page error');assert.deepEqual([...warnings].sort(),label==='dev'?Array.from({length:8},()=>expectedRouterWarnings).flat().sort():[],'Only exact installed ReactRouter development warnings; no warnings filtered');assert.deepEqual(unexpected,[],'Only local GET/HEAD and exact offline font CSS allowed');await writeFile(`docs/frontend-completion/evidence/batch46-image-priority-${label}.json`,JSON.stringify({base,label,assetChecks,checks,errors,warnings,unexpected,limits:['Actual local route/image behavior only; no external font provider, real publication/launch or sender verification.','A production pass alone cannot prove React development warning absent; separate dev execution required.']},null,2)+'\n');console.log(`PASS ${label} ComingSoon image priority: ${checks.length} route cases`);
+}catch(error){if(active&&!active.isClosed())await settledCapture(active,{path:`docs/screenshots/W-11/image-priority-${label}-failure.jpg`,type:'jpeg',quality:80,fullPage:false}).catch(()=>{});await writeFile(`docs/frontend-completion/evidence/batch46-image-priority-${label}-failure.json`,JSON.stringify({base,label,phase,error:String(error),checks,errors,warnings,unexpected},null,2)+'\n');throw error;}finally{await browser.close();}

@@ -1,0 +1,145 @@
+{
+  "status": "SOURCE/DOCS STABLE; named gates PASS; root review/integration/exact-head CI still required",
+  "source": "3ecd36ed4378fc81af67ccbe04782e04d7864d77f127c1dee68d9d0ac095728e",
+  "artifact": {
+    "sha256": "0142ddd726e54a32cea5317f21814da69d65381ada4bd9ef5584a75dbd6ca4fa",
+    "files": 5050,
+    "bytes": 402667086
+  },
+  "snapshot": {
+    "sha256": "0142ddd726e54a32cea5317f21814da69d65381ada4bd9ef5584a75dbd6ca4fa",
+    "files": 5050,
+    "bytes": 402667086
+  },
+  "runtimeSourceEditsDuringExecution": false,
+  "gates": {
+    "baseline": 55447,
+    "domain": 92410,
+    "type": 48077,
+    "build": 76534,
+    "production": 87817,
+    "library": 34452,
+    "development": 60248,
+    "imageProduction": 67849,
+    "imageDevelopment": 39151
+  },
+  "ciCompatibility": "Root-added workflow env/launcher reviewed source-only: QA_BASE, CHROMIUM_PATH, QA_DEV_PORT and QA_VITE_FORCE supported; public optimizer completes before listen; includes all actual dependencies/subpaths; standalone actual native provider harness. Workflow not locally executed.",
+  "captures": "28 selected fictional repository captures hash-mapped; full144 local final captures available14day CI artifacts. No private/customer/secret/export-body/source-correspondence captures.",
+  "limits": [
+    "Only bounded fictional checked_in\u2192booked repair; no official production/full RC02/commercial acceptance",
+    "Other attendance actions/no_show occupancy and generic-entry/server authorization remain gaps",
+    "Teacher/dashboard readback beyond named tested routes unverified",
+    "Offline exact font CSS fixture; external font provider unverified",
+    "No43 runtime source in this base; root checked-main integration/CI required"
+  ],
+  "files": [
+    {
+      "path": "docs/changelog/0131-attendance-undo-contract-audit.md",
+      "sha256": "c5b7a7457b204f4cc4c9be3fba44b55e425dbf14a12169980ecd51cb4657a985"
+    },
+    {
+      "path": "docs/frontend-completion/batch-45.md",
+      "sha256": "05ae77c7ace594d710ba22dc56609d81e8d40726f054df818da76dd930f929f4"
+    },
+    {
+      "path": "docs/frontend-completion/evidence/batch-45-capture-map.json",
+      "sha256": "b76f0ea318eb31c6c9000eaa16c0708e42b4770bb5c3addbd0ace9775a52964f"
+    },
+    {
+      "path": "docs/frontend-completion/evidence/batch-45-checkin-undo-source.json",
+      "sha256": "ffd8ead3c7c91a26aa75de4b2bc98e17a516e0933129cb792097bb01d6be51ce"
+    },
+    {
+      "path": "docs/frontend-completion/evidence/batch-45-execution-history.json",
+      "sha256": "a77fe887d5e4a9872be11bc3622af72acc5fdf0d41d67ec6c66105982d5f80af"
+    },
+    {
+      "path": "docs/frontend-completion/evidence/batch-45-provider-preimage.json",
+      "sha256": "804f0b410922b63cf1cb21a2ae42ef5462eab168003343d56bff9de330172649"
+    },
+    {
+      "path": "docs/frontend-completion/evidence/batch-45-root-review.json",
+      "sha256": "2d28aed7a628ba30829d96e6922a39e4ea4c35c810f344877ac365839a77de1d"
+    },
+    {
+      "path": "docs/frontend-completion/evidence/batch-45-undo-baseline.json",
+      "sha256": "720527c4845bb6128937629ff0ad9ca6b27879010bec2209fd05184256db0b09"
+    },
+    {
+      "path": "docs/frontend-completion/evidence/batch-45-undo-build.json",
+      "sha256": "42215c5c00bd686968a4413cd8ad9970f0b16c8cbe05177214de025d217c23f8"
+    },
+    {
+      "path": "docs/frontend-completion/evidence/batch-45-undo-checkpoint.json",
+      "sha256": "ce38b695cbb16cc21a3619ef0c5b0cb8e4c4137b267f055d10f66a176d785c4b"
+    },
+    {
+      "path": "docs/frontend-completion/evidence/batch-45-undo-domain.json",
+      "sha256": "fb03f91b23b0b011abd682c3d0e70bb32546ad72a7624cc7e090b9f9a5991a12"
+    },
+    {
+      "path": "docs/frontend-completion/evidence/batch-45-undo-library.json",
+      "sha256": "631a8183516a0c365a8764b9dec8f2092849551246a309218bae97db2affd4ee"
+    },
+    {
+      "path": "docs/frontend-completion/evidence/batch-45-undo-states.json",
+      "sha256": "80ac1096e93c5971b9064ae3dc63a2bccbb1fe689deebf6fa9683d107e892f45"
+    },
+    {
+      "path": "docs/frontend-completion/evidence/batch-45-undo-ui.json",
+      "sha256": "7e429558fcba1ea8bb3902fda329a04dd8ca3bd22850d309b9b320aa59f9f877"
+    },
+    {
+      "path": "docs/pages/S-02.md",
+      "sha256": "e8bab604bcd3039382809556dd8d7bca5b29d6be18afa55b0e49269c283be809"
+    },
+    {
+      "path": "scripts/checkin-undo-browser-audit.mjs",
+      "sha256": "6abf73981e64d0ee967485a86ce780d0f05c62ed0194025ebccb09c171b5c347"
+    },
+    {
+      "path": "scripts/checkin-undo-browser-fixture.mjs",
+      "sha256": "db22f9a84fd8d8c5ba17864a7d9439577723fdee35d845bea56bfc70444b7c31"
+    },
+    {
+      "path": "scripts/checkin-undo-fixture.mjs",
+      "sha256": "9c0db372d640017fbb74b248596fe37852ab25028b24cad98b5ae344505adff7"
+    },
+    {
+      "path": "scripts/checkin-undo-harness.html",
+      "sha256": "f18cc142948ade71abf13daf96b12036068e76b6a9b10f2744296822c3198666"
+    },
+    {
+      "path": "scripts/checkin-undo-harness.tsx",
+      "sha256": "7184ec0f927a57dd955787f5b741d08758885334be185e0b5854264173d7465f"
+    },
+    {
+      "path": "scripts/start-checkin-undo-dev.mjs",
+      "sha256": "941ce1a0046f615a09af81166439c6c39721a57b75e809b02be88d68ab847c9f"
+    },
+    {
+      "path": "scripts/test-checkin-undo-baseline.mjs",
+      "sha256": "99205db0aa10b31e89a4841071a6c90a88b7461e106796ec0b96aece41e9a89e"
+    },
+    {
+      "path": "scripts/test-checkin-undo-library.mjs",
+      "sha256": "54459488521c986a629b0fd381514c39a927c1d6907c0d6ed53a9050853f85f7"
+    },
+    {
+      "path": "scripts/test-checkin-undo-states.mjs",
+      "sha256": "fadb1d4d26af44d9dad88f5063f23e82daeaaf7836e15ece6ffa2e7941a64496"
+    },
+    {
+      "path": "scripts/test-checkin-undo-ui.mjs",
+      "sha256": "a407d70326822104b227ea15bd4e9a6826b177d26dfbc6e6f28ca7c0aa54ccfc"
+    },
+    {
+      "path": "scripts/test-checkin-undo.mjs",
+      "sha256": "00ddbbb88045802b79f63fc22f05c210dc472e79db9d2e20a905baef84650532"
+    },
+    {
+      "path": "scripts/test-coming-soon-image-priority.mjs",
+      "sha256": "f12e74a5924dbbd3074f74102f43b05f0ba2fa4c72b8d12bf63d3621d01c6604"
+    }
+  ]
+}

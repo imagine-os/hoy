@@ -1,0 +1,120 @@
+{
+  "events": [
+    {
+      "gate": "exact original baseline",
+      "session": 55447,
+      "exit": 0,
+      "result": "PASS4 groups"
+    },
+    {
+      "gate": "first domain",
+      "session": 64651,
+      "exit": 1,
+      "result": "Rejection regex mismatch; underlying error detail omitted by draft catch; unclassified pending safe diagnostics"
+    },
+    {
+      "gate": "domain diagnostic rerun",
+      "session": 84517,
+      "exit": 1,
+      "cause": "Fixture wrapper assignment shadowed inherited nonwritable staged update method; actual provider uses Object.defineProperty for staged write injection.",
+      "repair": "Define own wrapper methods with Object.defineProperty, retaining actual staged provider/identity; no runtime helper/assertion/policy change."
+    },
+    {
+      "gate": "domain after wrapper repair",
+      "session": 48265,
+      "exit": 1,
+      "cause": "Draft assert expected a snapshot that deliberately excludes expenses to change after expense insertion.",
+      "repair": "Assert protected attendance/finance snapshot unchanged AND exact expense-table bytes unchanged after paid clear/remove rejection; retain strict unpaid delete/quota assertions."
+    },
+    {
+      "gate": "final corrected domain",
+      "session": 92410,
+      "exit": 0,
+      "groups": 7
+    },
+    {
+      "gate": "standalone typecheck",
+      "session": 48077,
+      "exit": 0
+    },
+    {
+      "gate": "fullbuild",
+      "session": 76534,
+      "exit": 0,
+      "source": "3ecd36ed4378fc81af67ccbe04782e04d7864d77f127c1dee68d9d0ac095728e"
+    },
+    {
+      "gate": "immutable production initial",
+      "session": 92297,
+      "exit": 1,
+      "result": "Reached final strict browser-console audit after8 functional matrices; unexpected console error, payload omitted by draft catch. Browserclosed; NOT accepted.",
+      "next": "Persist exact per-context audit and failure evidence before assertions; same immutable artifact reproduction; no runtime edit or weakened assertion."
+    },
+    {
+      "gate": "production diagnostic",
+      "session": 46143,
+      "exit": 1,
+      "cause": "QA offline font CSS allowlist typo: actual index uses italic DM Sans300..600, monitor used300..700. Strict console/network gate correctly rejected3 aborted stylesheet fetches. No runtime defect identified.",
+      "repair": "Use exactly the existing index.html stylesheet URL; no extra URLs, no console/network filtering, no source/artifact rebuild.",
+      "failureProof": {
+        "historical-font-contract-production-failure.json": "44304d09d415ce5d23c49d7e371e277dc8db9e37f6eeceb5f5f1e2fe784266b5",
+        "historical-font-contract-production-failure.jpg": "2987de269ea29b3bd45a86b7e1085f84cfde24ed90cbcfa53400a41ca2ce6731"
+      }
+    },
+    {
+      "gate": "immutable production final",
+      "session": 87817,
+      "exit": 0,
+      "matrices": 8,
+      "roles": 11
+    },
+    {
+      "gate": "D02 actual library",
+      "session": 34452,
+      "exit": 0,
+      "states": 15,
+      "matrices": 8
+    },
+    {
+      "gate": "native standalone dev lifecycle",
+      "session": 60248,
+      "exit": 0,
+      "languages": [
+        "en",
+        "es"
+      ],
+      "warnings": "Exact installed ReactRouter6.30.6 two warnings per context asserted; no filters/future flags."
+    },
+    {
+      "gate": "46 public image production",
+      "session": 67849,
+      "exit": 0,
+      "routeCases": 16
+    },
+    {
+      "gate": "46 public image development",
+      "session": 39151,
+      "exit": 0,
+      "routeCases": 16,
+      "warnings": "Exact two Router deprecations per document asserted; no unexpected errors/warnings."
+    },
+    {
+      "gate": "afterQA canonical check",
+      "result": "Exact source/dist/snapshot beforeafter matched",
+      "hashes": {
+        "source": "3ecd36ed4378fc81af67ccbe04782e04d7864d77f127c1dee68d9d0ac095728e",
+        "dist": {
+          "sha256": "0142ddd726e54a32cea5317f21814da69d65381ada4bd9ef5584a75dbd6ca4fa",
+          "files": 5050,
+          "bytes": 402667086
+        },
+        "snapshot": {
+          "sha256": "0142ddd726e54a32cea5317f21814da69d65381ada4bd9ef5584a75dbd6ca4fa",
+          "files": 5050,
+          "bytes": 402667086
+        }
+      },
+      "diagnostic": "Initial Python whole-path sorting yielded a different ordering hash; corrected to existing ROOT recursively component-sorted traversal and independently reproduced all original hashes. No file/source/artifact change."
+    }
+  ]
+}

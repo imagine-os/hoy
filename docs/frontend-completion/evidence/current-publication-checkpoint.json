@@ -1,0 +1,19 @@
+{
+  "recordedAt": "2026-10-22T10:34:00Z",
+  "writer": "root only",
+  "verifiedLive": "016c16f8ce81f25e3ac125da275f985bebd4b1e5",
+  "pendingPR": 72,
+  "pendingHead": "223c4619c197852a09ab1898953973a56d399ca1",
+  "pendingRuntime": "541ae1151ef7d0bd6e123f510429bc6c277f7c277a2c159edd2b45e14c558e09",
+  "state": "PR72 exact-head CI pending, not merged or deployed; local43 baseline/domain/build/production/dev/library reviewed pass.",
+  "transport": "Shell Git fetch and push could not obtain HTTPS credentials; no credentials read or changed. Connected GitHub published a verified identical local tree with main016c16f8 second parent and checked nonforce branch update.",
+  "denied": {
+    "action": "GitHub create_blob",
+    "target": "docs/kanban.md",
+    "reason": "Automatic approval review flagged potentially nonpublic operational owner/backlog details in a large upload.",
+    "state": "denied; no further retry or alternate upload",
+    "resolution": "Existing remote59752705 backlog retained unchanged; concise nonsensitive continuation/release evidence published separately."
+  },
+  "trackerPublication": "Full features.json upload for one-route correction also rejected by automatic approval review for potentially nonpublic operational owner/source-tracker details. No retry or alternate full upload. Existing tracker retained; concise batch-43-route-erratum.json published: use /#/app/booking/:id, not obsolete /#/app/booked. No runtime change.",
+  "next": "Inspect all PR72 exact-head workflows/jobs, merge only if green, verify normal deployment; root review45/46 when existing agent completes real rendered QA. No new development owner."
+}

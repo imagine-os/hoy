@@ -144,6 +144,22 @@ export class MockProvider implements DataProvider {
     return usesMats(modality) ? { ...row, mat_number: chooseMat([...others, ...(this.db.voucher_bookings as VoucherBookingRow[]).filter(b => b.sessionId === session.id && b.status !== 'cancelled').flatMap(b => b.mats.map(mat_number => ({ status: 'booked', mat_number } as BookingRow)))], Math.min(session.capacity, tenant.studio.mats), row.mat_number) } : { ...row, mat_number: null };
   }
 
+  /** Existing occupied place, not admission: undo only status/arrival with identity and mat unchanged.
+   * No time cutoff. Invalid legacy occupancy is reported rather than repaired/reallocated.
+   */
+  private assertAttendanceUndo(row: BookingRow) {
+    const sessions = (this.db.class_sessions as ClassSessionRow[]).filter(s => s.id === row.session_id && s.tenant_id === row.tenant_id);
+    const matching = (this.db.bookings as BookingRow[]).filter(b => b.id === row.id);
+    if (row.tenant_id !== tenant.id || matching.length !== 1 || sessions.length !== 1 || !['scheduled','completed'].includes(sessions[0].status)) throw new Error('attendance_undo_unverifiable');
+    const session = sessions[0], others = (this.db.bookings as BookingRow[]).filter(b => b.id !== row.id && b.session_id === session.id && occupiesMat(b));
+    const vouchers = (this.db.voucher_bookings as VoucherBookingRow[]).filter(b => b.sessionId === session.id && b.status !== 'cancelled');
+    if (others.some(b => b.user_id === row.user_id) || vouchers.some(b => b.participants.some(p => p.userId === row.user_id))) throw new Error('attendance_undo_unverifiable');
+    const modality = (this.db.modalities as ModalityRow[]).find(m => m.id === session.modality_id);
+    if (usesMats(modality)) {
+      if (!Number.isInteger(row.mat_number) || row.mat_number! < 1 || row.mat_number! > Math.min(session.capacity, tenant.studio.mats) || others.some(b => b.mat_number === row.mat_number) || vouchers.some(b => b.mats.includes(row.mat_number!))) throw new Error('attendance_undo_unverifiable');
+    } else if (row.mat_number != null) throw new Error('attendance_undo_unverifiable');
+  }
+
   private onStorage(e: StorageEvent) {
     if (e.key !== KEY || !e.newValue) return;
     try {
@@ -274,7 +290,9 @@ export class MockProvider implements DataProvider {
       if (Object.keys(checked).length) applyContentBatch(this.db, { table, role: 'admin', actorId: 'validation', changes: [{ id, before: structuredClone(rows[i]), patch: checked }] }, tenant.id);
     }
     let next = { ...rows[i], ...patch, updated_at: new Date().toISOString() } as T;
-    if (table === 'bookings' && ('mat_number' in patch || 'session_id' in patch || ((patch as Partial<BookingRow>).status === 'booked' && (rows[i] as BookingRow).status !== 'booked'))) next = this.prepareBooking(next as unknown as BookingRow) as unknown as T;
+    const neutralUndo = table === 'bookings' && (rows[i] as BookingRow).status === 'checked_in' && patch.status === 'booked' && patch.checked_in_at === null && Object.keys(patch).length === 2 && Object.keys(patch).every(key => key === 'status' || key === 'checked_in_at');
+    if (neutralUndo) this.assertAttendanceUndo(rows[i] as BookingRow);
+    else if (table === 'bookings' && ('mat_number' in patch || 'session_id' in patch || ((patch as Partial<BookingRow>).status === 'booked' && (rows[i] as BookingRow).status !== 'booked'))) next = this.prepareBooking(next as unknown as BookingRow) as unknown as T;
     const previousSession = table === 'bookings' ? (rows[i] as BookingRow).session_id : null;
     const previousDb = structuredClone(this.db);
     rows[i] = next;

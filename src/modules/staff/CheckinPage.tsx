@@ -1,3 +1,5 @@
+import {AttendanceUndoReview} from '../../components/organism/AttendanceUndoReview/AttendanceUndoReview';
+import {useAttendanceUndo} from './useAttendanceUndo';
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useI18n } from '../../i18n/I18nProvider';
@@ -59,6 +61,8 @@ export function CheckinPage() {
   const wanted = params.get('session');
   const selected = allSessions.find((x) => x.session.id === wanted) ?? todayAll.find((x) => x.session.id === autoId);
   const selectedId = selected?.session.id;
+  const undo = useAttendanceUndo(selectedId);
+  const actionBusy = useRef(false);
 
   const { rows: bookings, loading } = useTable<BookingRow>('bookings', { where: { session_id: selectedId ?? '__none__' } });
   const { rows: waitlist } = useTable<WaitlistRow>('waitlist', { where: { session_id: selectedId ?? '__none__', status: 'waiting' } });
@@ -74,12 +78,14 @@ export function CheckinPage() {
   const isLate = (b: BookingRow) => !!selected && !!b.checked_in_at && new Date(b.checked_in_at).getTime() > new Date(selected.session.starts_at).getTime() + graceMs;
 
   const setStatus = async (b: BookingRow, status: BookingRow['status']) => {
-    if (!canWrite) return;
+    if (!canWrite || actionBusy.current || undo.isBlocked()) return;
+    if (status === 'booked') { undo.open(b.id); return; }
+    actionBusy.current=true;
     setBusy(b.id); setError(null);
     try {
       await data.update('bookings', b.id, { status, checked_in_at: status === 'checked_in' ? new Date().toISOString() : null });
       await audit(status === 'checked_in' ? 'booking.checkin' : status === 'no_show' ? 'booking.no_show' : 'booking.undo', 'bookings', b.id, { before: b.status, after: status, session_id: b.session_id, user_id: b.user_id });
-    } catch (e) { setError(String(e)); } finally { setBusy(null); }
+    } catch (e) { setError(String(e)); } finally { actionBusy.current=false; setBusy(null); }
   };
   const commandError = (error: unknown) => {
     const code = error instanceof Error ? error.message : '';
@@ -103,7 +109,8 @@ export function CheckinPage() {
     return `${t('staff.checkin.package.balance', { n: state.balance })}${state.expiresAt ? ` · ${t('staff.checkin.package.expires', { date: formatDate(state.expiresAt, lang) })}` : ''}`;
   };
   const walkIn = async (p: Person, status: 'booked' | 'checked_in' = 'checked_in') => {
-    if (!selected || (status === 'booked' ? !canBookAny : !canWrite) || busy) return;
+    if (!selected || (status === 'booked' ? !canBookAny : !canWrite) || busy || actionBusy.current || undo.isBlocked()) return;
+    actionBusy.current=true;
     setBusy(p.id); setError(null);
     try {
       if (!data.atomic) throw new Error('disconnected');
@@ -112,10 +119,11 @@ export function CheckinPage() {
         await tx.insert('audit_log', { actor_id: user.id, action: status === 'booked' ? 'booking.create' : 'booking.walkin', entity: 'bookings', entity_id: b.id, ip: null, diff: { role, source: 'front_desk', after: status, session_id: selected.session.id, user_id: p.id } });
       });
       setQ('');
-    } catch (e) { setError(commandError(e)); } finally { setBusy(null); }
+    } catch (e) { setError(commandError(e)); } finally { actionBusy.current=false; setBusy(null); }
   };
   const promote = async (w: WaitlistRow) => {
-    if (!selected || !canBookAny || busy) return;
+    if (!selected || !canBookAny || busy || actionBusy.current || undo.isBlocked()) return;
+    actionBusy.current=true;
     setBusy(w.id); setError(null);
     try {
       if (!data.atomic) throw new Error('disconnected');
@@ -124,7 +132,7 @@ export function CheckinPage() {
         await tx.update('waitlist', w.id, { status: 'claimed' });
         await tx.insert('audit_log', { actor_id: user.id, action: 'waitlist.promote', entity: 'waitlist', entity_id: w.id, ip: null, diff: { role, source: 'front_desk', booking_id: b.id, session_id: selected.session.id, user_id: w.user_id } });
       });
-    } catch (e) { setError(commandError(e)); } finally { setBusy(null); }
+    } catch (e) { setError(commandError(e)); } finally { actionBusy.current=false; setBusy(null); }
   };
 
   // keyboard: "/" focuses search; Enter checks in the first expected match (or the single walk-in candidate); Esc clears
@@ -187,24 +195,25 @@ export function CheckinPage() {
     ) : null,
     'RosterList (expected / checked in / waitlist)': () => selected ? (
       <div className="stack">
+        {undo.target && <AttendanceUndoReview phase={undo.phase} currentStatus={undo.currentStatus} canClose={undo.canClose} onConfirm={undo.confirm} onRetry={undo.retry} onReload={undo.reload} onInspect={undo.inspect} onStop={undo.stop} onClose={undo.close}/>}
         {error && <EmptyState compact tone="error" title={t('core.common.error')} body={error} action={<Button size="sm" variant="secondary" onClick={() => setError(null)}>{t('core.common.retry')}</Button>} />}
         {loading && bookings.length === 0 && <EmptyState compact tone="loading" title={t('core.common.loading')} />}
         {!loading && roster.length === 0 && waitlist.length === 0 && <EmptyState compact title={q ? t('staff.checkin.noMatch') : t('staff.checkin.emptyRoster')} body={q ? t('staff.checkin.noMatch.body') : undefined} />}
         <Group title={t('staff.checkin.expected')} n={expected.length}>
           {expected.map(({ b, p }) => <RosterRow key={b.id} name={p?.name ?? b.user_id} initials={p?.initials} phone={maskPhone(p?.phone)} plan={planLabel(p, b, lang, t)} status="booked" showStatus={false} flag={p?.notes ?? undefined}
-            actions={canWrite && <><Button size="sm" variant="tonal" loading={busy === b.id} onClick={() => setStatus(b, 'checked_in')} icon="check">{t('staff.checkin.checkin')}</Button><Button size="sm" variant="outline" onClick={() => setStatus(b, 'no_show')} icon="user-x">{t('staff.checkin.noShow')}</Button></>} />)}
+            actions={canWrite && <><Button size="sm" variant="tonal" loading={busy === b.id} disabled={undo.blocking || !!busy} onClick={() => setStatus(b, 'checked_in')} icon="check">{t('staff.checkin.checkin')}</Button><Button size="sm" variant="outline" disabled={undo.blocking || !!busy} onClick={() => setStatus(b, 'no_show')} icon="user-x">{t('staff.checkin.noShow')}</Button></>} />)}
         </Group>
         <Group title={t('staff.checkin.arrived')} n={arrived.length}>
           {arrived.map(({ b, p }) => <RosterRow key={b.id} name={p?.name ?? b.user_id} initials={p?.initials} phone={maskPhone(p?.phone)} plan={planLabel(p, b, lang, t)} status="checked_in" late={isLate(b)} time={b.checked_in_at ? formatTime(b.checked_in_at, lang) : undefined} flag={p?.notes ?? undefined}
-            actions={canWrite && <Button size="sm" variant="outline" onClick={() => setStatus(b, 'booked')} icon="undo">{t('staff.checkin.undo')}</Button>} />)}
+            actions={canWrite && <Button size="sm" variant="outline" disabled={undo.blocking || !!busy} onClick={() => setStatus(b, 'booked')} icon="undo">{t('staff.checkin.undo')}</Button>} />)}
         </Group>
         {missed.length > 0 && <Group title={t('staff.checkin.missed')} n={missed.length}>
           {missed.map(({ b, p }) => <RosterRow key={b.id} name={p?.name ?? b.user_id} initials={p?.initials} plan={planLabel(p, b, lang, t)} status={b.status as 'no_show' | 'late_cancel'}
-            actions={canWrite && b.status === 'no_show' && <Button size="sm" variant="tonal" onClick={() => setStatus(b, 'checked_in')} icon="check">{t('staff.checkin.checkin')}</Button>} />)}
+            actions={canWrite && b.status === 'no_show' && <Button size="sm" variant="tonal" disabled={undo.blocking || !!busy} onClick={() => setStatus(b, 'checked_in')} icon="check">{t('staff.checkin.checkin')}</Button>} />)}
         </Group>}
         {waitlist.length > 0 && <Group title={t('core.common.waitlist')} n={waitlist.length}>
           {waitlist.sort((a, b) => a.position - b.position).map((w) => { const p = byId.get(w.user_id); return <RosterRow key={w.id} name={p?.name ?? w.user_id} initials={p?.initials} phone={maskPhone(p?.phone)} plan={`${packageLabel(w.user_id)}${unavailable(w.user_id) ? ` · ${unavailable(w.user_id)}` : ''}`} status="waiting" showStatus={false} time={`#${w.position}`}
-            actions={canBookAny && <Button size="sm" variant="tonal" disabled={!!unavailable(w.user_id) || !!busy} loading={busy === w.id} title={unavailable(w.user_id) ?? undefined} onClick={() => promote(w)} icon="promote">{t('staff.checkin.promote')}</Button>} />; })}
+            actions={canBookAny && <Button size="sm" variant="tonal" disabled={!!unavailable(w.user_id) || !!busy || undo.blocking} loading={busy === w.id} title={unavailable(w.user_id) ?? undefined} onClick={() => promote(w)} icon="promote">{t('staff.checkin.promote')}</Button>} />; })}
         </Group>}
       </div>
     ) : null,
@@ -228,7 +237,7 @@ export function CheckinPage() {
             <RosterRow name={p.name} initials={p.initials} phone={maskPhone(p.phone)} status="booked" showStatus={false} />
             <p className="xs muted">{packageLabel(p.id)}</p>
             {unavailable(p.id) && <p className="xs" role="status">{unavailable(p.id)}</p>}
-            {selected && <div className="row wrap">{canBookAny && <Button variant="outline" disabled={!!unavailable(p.id) || !!busy} loading={busy === p.id} title={unavailable(p.id) ?? undefined} onClick={() => walkIn(p, 'booked')} icon="user-plus">{t('staff.checkin.package.book')}</Button>}{canWrite && <Button variant="tonal" disabled={!!unavailable(p.id) || !!busy} loading={busy === p.id} title={unavailable(p.id) ?? undefined} onClick={() => walkIn(p)} icon="check">{t('staff.checkin.walkin.add')}</Button>}</div>}
+            {selected && <div className="row wrap">{canBookAny && <Button variant="outline" disabled={!!unavailable(p.id) || !!busy || undo.blocking} loading={busy === p.id} title={unavailable(p.id) ?? undefined} onClick={() => walkIn(p, 'booked')} icon="user-plus">{t('staff.checkin.package.book')}</Button>}{canWrite && <Button variant="tonal" disabled={!!unavailable(p.id) || !!busy || undo.blocking} loading={busy === p.id} title={unavailable(p.id) ?? undefined} onClick={() => walkIn(p)} icon="check">{t('staff.checkin.walkin.add')}</Button>}</div>}
           </div>)}
           {can('payments.write') && <Link to={`/staff/register${selectedId ? `?session=${selectedId}` : ''}`}><Button block variant={walkIns.length ? 'ghost' : 'primary'} size="sm" icon="user-plus">{t('staff.checkin.walkin.register')}</Button></Link>}
         </div>

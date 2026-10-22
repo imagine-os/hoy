@@ -1,0 +1,18 @@
+import type{StringTable}from'../../i18n/types';
+export const undoStrings:StringTable={
+ 'staff.undo.title':{es:'Deshacer llegada · demostración ficticia',en:'Undo arrival · fictional demonstration'},
+ 'staff.undo.boundary':{es:'Solo cambia la llegada de esta reserva en este navegador. Mantiene clase, lugar y términos; no crea una reserva ni cambia pagos.',en:'Changes this booking’s arrival in this browser only. Keeps its class, place and terms; creates no booking and changes no payments.'},
+ 'staff.undo.loading':{es:'Verificando la reserva y tu acceso actual…',en:'Verifying the booking and your current access…'},
+ 'staff.undo.read_error':{es:'No se pudo verificar el registro. No se habilitan cambios.',en:'The record could not be verified. Changes are unavailable.'},
+ 'staff.undo.ready':{es:'La llegada se cambiará a Esperado. No se libera ni se reasigna el lugar existente, aunque la clase ya haya comenzado o terminado.',en:'Arrival will change to Expected. The existing place is neither released nor reassigned, including after the class starts or ends.'},
+ 'staff.undo.confirm':{es:'Confirmar deshacer llegada',en:'Confirm undo arrival'},
+ 'staff.undo.busy':{es:'Verificando y guardando… Las otras acciones de asistencia están en pausa.',en:'Verifying and saving… Other attendance actions are paused.'},
+ 'staff.undo.stopped':{es:'Espera detenida. Un cambio ya guardado no se revierte. Reintenta el mismo comando o verifica el estado actual.',en:'Stopped waiting. A committed change is not undone. Retry the same command or verify current state.'},
+ 'staff.undo.unconfirmed':{es:'Resultado sin confirmar. Puede haberse guardado; no supongas que se deshizo. Reintenta el mismo comando o verifica el estado actual.',en:'Outcome unconfirmed. It may have committed; do not assume rollback. Retry the same command or verify current state.'},
+ 'staff.undo.stale':{es:'El registro cambió. No se sobrescribe la asistencia más reciente. Reintenta para verificar el comando original o consulta el estado actual.',en:'The record changed. Newer attendance is not overwritten. Retry to verify the original command or inspect current state.'},
+ 'staff.undo.unverifiable':{es:'Este prototipo no puede verificar el lugar existente. No reasigna lugares ni repara el historial. Verifica el estado actual antes de continuar.',en:'This prototype cannot verify the existing place. It does not reassign places or repair history. Verify current state before continuing.'},
+ 'staff.undo.success':{es:'Cambio ficticio verificado: la reserva quedó como Esperado y conserva su lugar y términos.',en:'Fictional change verified: the booking became Expected and retained its place and terms.'},
+ 'staff.undo.current':{es:'Estado actual verificado. Esto no afirma si la confirmación anterior se recibió; no se repite ni se revierte ningún cambio.',en:'Current state verified. This does not assert whether the earlier acknowledgement was received; no change is repeated or reversed.'},
+ 'staff.undo.status.booked':{es:'Esperado',en:'Expected'},'staff.undo.status.checked_in':{es:'Llegó',en:'Checked in'},'staff.undo.status.cancelled':{es:'Cancelada',en:'Cancelled'},'staff.undo.status.late_cancel':{es:'Cancelación tardía',en:'Late cancellation'},'staff.undo.status.no_show':{es:'No vino',en:'No-show'},
+ 'staff.undo.retry':{es:'Reintentar el mismo comando',en:'Retry the same command'},'staff.undo.reload':{es:'Volver a verificar',en:'Verify again'},'staff.undo.inspect':{es:'Verificar estado actual',en:'Verify current state'},'staff.undo.stop':{es:'Detener espera',en:'Stop waiting'},'staff.undo.close':{es:'Cerrar revisión',en:'Close review'},
+};

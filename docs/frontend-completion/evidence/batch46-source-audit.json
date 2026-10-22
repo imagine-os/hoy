@@ -1,0 +1,153 @@
+{
+  "status": "READ-ONLY SOURCE AUDIT; predictions and proposed tests UNRUN; no implementation/acceptance/status promotion",
+  "sourceWorktree": "/workspace/hoy-finance-safeguard-integration",
+  "checkedHead": "ba856e57a349284aa13668c92b3ed35e8df334ab",
+  "sourceStatusPorcelain": "",
+  "manifestFeatureCount": 124,
+  "literalManifestEntriesUnmodified": [
+    {
+      "id": "SW-08",
+      "module": "Website",
+      "feature": "Pre-opening page",
+      "criterion": "From October 30 the pre-opening page redirects to the public website.",
+      "role": "Público",
+      "source": {
+        "status": "Not verified",
+        "demoStatus": "Visto / Seen"
+      },
+      "phase": "MVP Oct 30",
+      "priority": "Low",
+      "relatedTests": "PUB-07",
+      "implementationStatus": "absent",
+      "verificationStatus": "not-run",
+      "candidateEvidence": [
+        "src/modules/coming-soon/index.ts"
+      ],
+      "routes": [],
+      "tests": [],
+      "screenshots": [],
+      "blockers": [],
+      "nextAction": "Implement owner-approved date/config-based public launch redirect with archive/demo controls preserved.",
+      "candidateRoutes": [
+        "/#/",
+        "/#/coming-soon"
+      ],
+      "sourceAssessment": {
+        "basis": "source inspection only; not owner acceptance",
+        "missingFrontend": [
+          "Root and /coming-soon always render ComingSoonPage; no October 30 redirect condition in route module."
+        ],
+        "remainingBackend": []
+      },
+      "sourceNextAction": "Implement owner-approved date/config-based public launch redirect with archive/demo controls preserved.",
+      "baselineImplementationStatus": "absent"
+    },
+    {
+      "id": "NT-01",
+      "module": "Notifications",
+      "feature": "Email from the club's domain",
+      "criterion": "Emails are sent from the club's domain with correct SPF, DKIM and DMARC and do not land in spam.",
+      "role": "Todos",
+      "source": {
+        "status": "Not verified",
+        "demoStatus": "Simulado / Simulated"
+      },
+      "phase": "MVP Oct 30",
+      "priority": "Urgent",
+      "relatedTests": "INT-04",
+      "implementationStatus": "absent",
+      "verificationStatus": "not-run",
+      "candidateEvidence": [
+        "src/modules/admin/integrationDefs.ts",
+        "src/modules/admin/IntegrationsPage.tsx",
+        "src/data/comms.ts"
+      ],
+      "routes": [],
+      "tests": [],
+      "screenshots": [],
+      "blockers": [
+        "Backend/operations work excluded from frontend execution; Anu or Justin must supply approved integration."
+      ],
+      "nextAction": "Keep disconnected UI explicit and define sender readiness/status contract for Anu; do not send real messages.",
+      "candidateRoutes": [
+        "/#/admin/integrations"
+      ],
+      "sourceAssessment": {
+        "basis": "source inspection only; not owner acceptance",
+        "missingFrontend": [
+          "Only integration checklist/config and simulated send status exist; no truthful connected-domain or deliverability evidence."
+        ],
+        "remainingBackend": [
+          "Approved sender provider/domain SPF/DKIM/DMARC and real delivery/bounce monitoring."
+        ]
+      },
+      "sourceNextAction": "Keep disconnected UI explicit and define sender readiness/status contract for Anu; do not send real messages.",
+      "baselineImplementationStatus": "absent"
+    }
+  ],
+  "canonicalRuntimeSHA256": "dd7e0f14f4b1d129d16f0e543436907ac5597cb3499df6b632ec2c8f05de2815",
+  "canonicalRuntimeDefinition": "SHA256 sorted src relative path+bytes excluding src/app/captureDates.ts, then vite.config.ts bytes",
+  "sourceSHA256": {
+    "docs/frontend-completion/features.json": "22fb2a3ade19d294775d8b4165a18bb64de963ebe9a425bbb01d03cfa9c18b57",
+    "src/components/template/ComingSoonLanding/ComingSoonLanding.tsx": "662ac5a8f699ea53004d99a25925181175a43df25ad990458faed5869e41fc2a",
+    "src/components/template/ComingSoonLanding/ComingSoonLanding.meta.ts": "d9b2fefc51a33eecb189b5ca1f428a01e5e79ff8d5c81111b605485647614a7f",
+    "src/modules/coming-soon/index.ts": "f54b1ded1fc4556bd912f1b83a4a9c71b2e95ddd3dd1597307b5ba36db659e23",
+    "src/modules/coming-soon/pages.tsx": "7a59160f85722ae817482ba2ab5e95305cd9cfb2fcc618f91a86bf607b84789a",
+    "src/modules/coming-soon/specs.ts": "efaf46d8ad5d77867d31c81ca8bde051fb772bd90e0f9fe5c28b1fcb08b4452a",
+    "src/modules/coming-soon/strings.ts": "ecc99264f8b764a9acbcf1f398eb6b9e6429f44e9882ea76f00c9717975ac1d4",
+    "src/modules/website/index.ts": "442860144f917ef81659b74a08311a92971b602901bdc9157bdbe9b1880feb32",
+    "src/modules/website/edition.ts": "b8ba1e33b537d2ce83a92dd7b82dbdfcfb24a97e4c8ce3e3eda0c290f4831344",
+    "src/modules/website/links.tsx": "301495f6e02c0b787ff026db47b7a4bb443fd257f9b4cf32c6ae87f1247da641",
+    "src/app/App.tsx": "0313df0401fca998af7d59ab7bc1ead015c59bea03c73a32650912d4da3f5fc1",
+    "src/app/registry.ts": "82c72c2cb6444a1203261e27469535b8e3724ce9e3c1192942dced38b275da27",
+    "src/modules/admin/IntegrationsPage.tsx": "4a519eaace4b8e31d500999288f27859ff2dd0f61a34cd1e5f19b9eecb346b15",
+    "src/modules/admin/integrations.ts": "fb0e3942758eb7a4bf9cf7b529e3717556fcb460c50c7d9e5c05fd26cabb5c0b",
+    "src/modules/admin/integrationDefs.ts": "67443cadda3f86df933292614d2ae5fd7e50989f81698ae02808b4e842d2475d",
+    "src/modules/admin/settings.ts": "3f478c48c9d6b1553f1db2eba073a569e571da8ceb40d1b71f57718f63a1bd70",
+    "src/modules/admin/SettingsPage.tsx": "24af7667e1ed8a6cbe502291ae7f9619f1bb5aa8093180a5f75e5e5acc35e17c",
+    "src/modules/admin/index.ts": "b1009f7886f179622580e0a7be69d8a87e8cd9ff9f3be6809a86d5620949486e",
+    "src/auth/permissions.ts": "593caa1eb4e43b5d4e797100a96cdfa51f85d90db0c78bf3cc92672aad02f80b",
+    "src/data/schema.ts": "35ee85e2db065a9a6a85c9279c7915bf686bfe1bfa36525e1975207c8f229933",
+    "src/data/seed/integrations.ts": "dc735dd6fe0fe21c5ab8478917f80c5362dc0d8d5cd30d20cfca3034a66db5f2",
+    "src/data/comms.ts": "ea3168c3b7549e2468e19c5f9bddbb78944d0e6395456fbe15d86b6a4b2aea83",
+    "src/modules/admin/emailTest.ts": "a9294eedb6b015a6f0a8ec193957ad43f2eb8e4427c85958713f7cc1205ddb86",
+    "src/i18n/format.ts": "3115d284da4bd9ff92b11e90d49eea3b859b15cbe8c84ebf40d88dc0c476f976",
+    "src/tenant/tenant.ts": "b6bc47f8a9eb805ac5e19cdf9f6392ee05c4911e5c2423ad149f4645e2aaf14e",
+    "package.json": "06c989107ddfb32ab0ac20261d6c95d43e6be04b503243cc11a86b0c421e7e1b",
+    "package-lock.json": "b1bfafb26ba7846579afda8dddc548e40c1f2760665deb88c172543ba4ea6725",
+    "node_modules/react-dom/package.json": "d2f29e31bd48b833e48cd7bbf41f192e8ee4ff8da249fdbe10d4ac4114b8b12e",
+    "node_modules/react-dom/cjs/react-dom.development.js": "1459b808bc6991de5a1ec3a86d8beee32dbb6c14282cf13f84e00dfebfbdc025",
+    "node_modules/@types/react/index.d.ts": "09ddcfcfbe77a8232d155ca1030005106b1328f6210df43629d0be750da07c16",
+    "scripts/test-website-preview.mjs": "091e12b96bc9373876276c70034d31869e1d57b4fe18c7fd23300a5bec313930",
+    "docs/pages/W-11.md": "32bbf2970eafe7f91fadd0a6a58640551c0121134c197eefe912b36a851349ed"
+  },
+  "technicalFindings": {
+    "SW-08": "Both public root and /coming-soon render ComingSoonPage unconditionally; /site is existing public website. No launch date/config condition found in coming-soon/tenant/settings source.",
+    "NT-01": "Manual simulated/configured/connected status and non-secret draft strings exist; no DNS/provider evidence is stored by IntegrationRow or read by email sender seam. Local sent rows do not prove delivery.",
+    "React18": "Installed and lockfile ReactDOM18.3.1; JSX fetchPriority camel-case absent from ReactDOM possibleStandardNames, matches unknown camel-case warning branch3745–3759. Types include fetchPriority but runtime does not recognize it. No browser reproduction in this audit."
+  },
+  "proposedUnblockedSlices": [
+    "React18-compatible lowercase fetchpriority DOM attribute, preserving eager responsive image; focused console/attribute/regression QA.",
+    "Pure disabled-by-default launch resolver + deterministic configuration/clock previews; no live date activation or route policy change.",
+    "Read-only sender-readiness projection distinguishing local draft/manual status from unavailable provider evidence; no DNS/network/send/settings writes."
+  ],
+  "activationGates": {
+    "SW-08": [
+      "Owner confirms exact launch year/instant/timezone and activation approval; October30 criterion does not provide complete timestamp or rollback/archive behavior.",
+      "Owner confirms whether explicit /coming-soon remains an archive/testing route after root redirect, and how login=soon/query/history should behave."
+    ],
+    "NT-01": [
+      "Owner/Justin confirms actual owned sending domain/address/reply-to and approved provider; placeholders are not evidence.",
+      "Anu implements authenticated server sender/DNS verification, secrets, provider transport/webhooks, durable delivery/bounce/complaint/readiness evidence.",
+      "Real inbox/spam outcome requires observed delivery across recipients; never infer from local sent/configured/connected flags."
+    ]
+  },
+  "separateExistingRisk": "IntegrationCard doSave updates integration then separately writes audit and starts unmanaged timer; failure/stale/cancel correctness is an independent mock-only repair candidate, not NT01 delivery acceptance.",
+  "noActions": [
+    "No browser/compiler/build/provider/DNS probe/external message/Git or runtime/source edits.",
+    "Only owned batch46 advisory Markdown and evidence JSON written.",
+    "No batch42 runtime/proof or global tracker/kanban/owner queue changes."
+  ],
+  "advisoryMarkdown": "docs/frontend-completion/batch-46-source-audit.md",
+  "advisoryMarkdownSHA256": "8fd5fc69b1a0f784c9235c2e7694e1fd8caf14438041422d996a3a5f7a804386"
+}

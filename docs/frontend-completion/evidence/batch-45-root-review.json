@@ -1,0 +1,17 @@
+{
+  "reviewer": "root integration coordinator",
+  "recordedAt": "2026-10-22",
+  "runtime": "3ecd36ed4378fc81af67ccbe04782e04d7864d77f127c1dee68d9d0ac095728e",
+  "runtimeMethod": "Sorted pathlib src paths, path bytes +raw file bytes, exclude generated captureDates; append raw Vite bytes; no delimiters.",
+  "frozenArtifact": "attendance-undo-proof-3ecd36ed4378-b300f079",
+  "artifactTree": "0142ddd726e54a32cea5317f21814da69d65381ada4bd9ef5584a75dbd6ca4fa",
+  "artifactMethod": "Sorted pathlib relative UTF8 paths +raw file bytes; no delimiters.",
+  "files": 5050,
+  "bytes": 402667086,
+  "independentHashVerification": "PASS after all actual QA browsers closed; runtime and whole immutable tree exactly match build receipt.",
+  "actualCapturesViewed": ["qa/checkin-undo/en-390-light-verified.jpg", "qa/checkin-undo/es-1280-dark-review.jpg"],
+  "visualFinding": "Readable fictional browser-only intent, retained place/terms and truthful returned Expected status; no observed viewport/panel overflow in reviewed captures.",
+  "sourceReview": "Positive exact-two-field checked_in->booked/checked_in_at-null provider branch preserves occupied place rather than admission/reallocation. Atomic helper scopes actor, booking, session, receipt and acknowledgement. Other admission/status paths keep original prepareBooking guards.",
+  "preservedBoundaries": ["No new attendance time cutoff or requirement for subject active/profile row.", "Existing four staff roles only; no legal/payment/entitlement/refund change.", "Cancelled fresh session rejects a new undo; original occupied mat/identity/terms stay unchanged.", "No claim all invalid historical occupancy/capacity cases are repaired or comprehensively verified."],
+  "remainingGates": ["Root inspect final intended-file manifest and evidence links.", "Reconcile checked main/customer43 changes and execute combined actual regressions at final head.", "All triggered exact-head CI jobs and ordinary hosted deployment receipt.", "Owner/backend production acceptance remains separate; original RC-02 phase unchanged."]
+}

@@ -1,0 +1,10 @@
+{
+  "batch": 45,
+  "method": "Exact original hash-verified handler/audit/provider; fictional Map only.",
+  "checks": [
+    "Exact original handler catches after-start/completed undo refusal; occupied existing row remains checked_in without audit.",
+    "Full-class before-start control succeeds with same mat/count: occupancy-neutral, not a double-count bug.",
+    "Independent audit failure leaves changed attendance persisted without its undo audit.",
+    "Immediate original calls can append duplicate undo audits without an intent/latch."
+  ]
+}

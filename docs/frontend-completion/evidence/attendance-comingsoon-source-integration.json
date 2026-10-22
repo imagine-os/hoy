@@ -1,0 +1,241 @@
+{
+  "state": "SOURCE COPIED/RECONCILED, ALL45/46compiler/runtime/browser gates NOT RUN",
+  "base": "feaff4e970174fa501106dcb8819b9c81b2fa3c9",
+  "mainIndependentlyFetched": "50449d0298ceb01118bd3aaa9ddc00c9b189c8d6",
+  "dependency": "Unmerged PR71 final candidate; publication requires checked current main/reconciliation.43 customer cancellation is separate, not in this base.",
+  "providerPreimage": "6b5807d329081f2fe6a847e2f5c25507faa2440058aeae448b02b13229152acd",
+  "providerCopiedOnlyAfterExactMatch": true,
+  "source45RuntimeHistorical": "39a1ca9b0b2079b1af24eb59bc1506383fa91c553c9198d56ce18a0abc052281",
+  "source46RuntimeDiff": "Exactly one React18 attribute representation; all3artwork hashes unchanged.",
+  "changelogReconciliation": "46 original0130 renamed0135 to preserve existing0130PL06audit. Upstream source manifest remains historical exactbytes; mapped target path recorded here.",
+  "files": [
+    {
+      "source": "docs/changelog/0131-attendance-undo-contract-audit.md",
+      "target": "docs/changelog/0131-attendance-undo-contract-audit.md",
+      "sourceSha256": "63f5b49aace8b1d31e08cf7f18b795f657ac2ef4bbde7b7c83f59eeda30238fa",
+      "targetSha256": "63f5b49aace8b1d31e08cf7f18b795f657ac2ef4bbde7b7c83f59eeda30238fa"
+    },
+    {
+      "source": "docs/frontend-completion/batch-45.md",
+      "target": "docs/frontend-completion/batch-45.md",
+      "sourceSha256": "ffda8d590cb02698d3a30e4ae1e44018ac2ebf71bc20d88e569b2004c675385a",
+      "targetSha256": "ffda8d590cb02698d3a30e4ae1e44018ac2ebf71bc20d88e569b2004c675385a"
+    },
+    {
+      "source": "docs/frontend-completion/evidence/batch-45-checkin-undo-source.json",
+      "target": "docs/frontend-completion/evidence/batch-45-checkin-undo-source.json",
+      "sourceSha256": "ffd8ead3c7c91a26aa75de4b2bc98e17a516e0933129cb792097bb01d6be51ce",
+      "targetSha256": "ffd8ead3c7c91a26aa75de4b2bc98e17a516e0933129cb792097bb01d6be51ce"
+    },
+    {
+      "source": "docs/frontend-completion/evidence/batch-45-provider-preimage.json",
+      "target": "docs/frontend-completion/evidence/batch-45-provider-preimage.json",
+      "sourceSha256": "804f0b410922b63cf1cb21a2ae42ef5462eab168003343d56bff9de330172649",
+      "targetSha256": "804f0b410922b63cf1cb21a2ae42ef5462eab168003343d56bff9de330172649"
+    },
+    {
+      "source": "docs/pages/S-02.md",
+      "target": "docs/pages/S-02.md",
+      "sourceSha256": "5ed29c133df5e4f577bc8a4b156c42cefc1a07af6ff948bf7a8b988968cc6b3d",
+      "targetSha256": "5ed29c133df5e4f577bc8a4b156c42cefc1a07af6ff948bf7a8b988968cc6b3d"
+    },
+    {
+      "source": "scripts/checkin-undo-browser-fixture.mjs",
+      "target": "scripts/checkin-undo-browser-fixture.mjs",
+      "sourceSha256": "db22f9a84fd8d8c5ba17864a7d9439577723fdee35d845bea56bfc70444b7c31",
+      "targetSha256": "db22f9a84fd8d8c5ba17864a7d9439577723fdee35d845bea56bfc70444b7c31"
+    },
+    {
+      "source": "scripts/checkin-undo-fixture.mjs",
+      "target": "scripts/checkin-undo-fixture.mjs",
+      "sourceSha256": "793897ba2bb27e5b5e681218f3fb425a85d140fb8ad2231a013c49e26b3653bb",
+      "targetSha256": "793897ba2bb27e5b5e681218f3fb425a85d140fb8ad2231a013c49e26b3653bb"
+    },
+    {
+      "source": "scripts/checkin-undo-harness.tsx",
+      "target": "scripts/checkin-undo-harness.tsx",
+      "sourceSha256": "91a5b2617f05d20cef90d98f40cdaab5a49077da87584bdd527c6dc2b35fe1e1",
+      "targetSha256": "91a5b2617f05d20cef90d98f40cdaab5a49077da87584bdd527c6dc2b35fe1e1"
+    },
+    {
+      "source": "scripts/fixtures/checkin-undo-original/CheckinPage.tsx.txt",
+      "target": "scripts/fixtures/checkin-undo-original/CheckinPage.tsx.txt",
+      "sourceSha256": "093e104df2816f8fd41a1380c1225a8b48a35ec8e3152382159459c39e544c59",
+      "targetSha256": "093e104df2816f8fd41a1380c1225a8b48a35ec8e3152382159459c39e544c59"
+    },
+    {
+      "source": "scripts/fixtures/checkin-undo-original/MockProvider.integrated42-preimage.ts.txt",
+      "target": "scripts/fixtures/checkin-undo-original/MockProvider.integrated42-preimage.ts.txt",
+      "sourceSha256": "6b5807d329081f2fe6a847e2f5c25507faa2440058aeae448b02b13229152acd",
+      "targetSha256": "6b5807d329081f2fe6a847e2f5c25507faa2440058aeae448b02b13229152acd"
+    },
+    {
+      "source": "scripts/fixtures/checkin-undo-original/MockProvider.ts.txt",
+      "target": "scripts/fixtures/checkin-undo-original/MockProvider.ts.txt",
+      "sourceSha256": "e12e1ce69745ad109995c8095ea47168edf38560a1e555c3889b32cdfe7a7ed7",
+      "targetSha256": "e12e1ce69745ad109995c8095ea47168edf38560a1e555c3889b32cdfe7a7ed7"
+    },
+    {
+      "source": "scripts/fixtures/checkin-undo-original/audit.ts.txt",
+      "target": "scripts/fixtures/checkin-undo-original/audit.ts.txt",
+      "sourceSha256": "9ec096be3152e06d64a084803f5a063fc946252c1d4f07f18920c2443ca3abc7",
+      "targetSha256": "9ec096be3152e06d64a084803f5a063fc946252c1d4f07f18920c2443ca3abc7"
+    },
+    {
+      "source": "scripts/fixtures/checkin-undo-original/index.ts.txt",
+      "target": "scripts/fixtures/checkin-undo-original/index.ts.txt",
+      "sourceSha256": "151a57f3abe1d5262fd9cf742e812217f377194fa4058ce698633bb8d64ec051",
+      "targetSha256": "151a57f3abe1d5262fd9cf742e812217f377194fa4058ce698633bb8d64ec051"
+    },
+    {
+      "source": "scripts/fixtures/checkin-undo-original/mats.ts.txt",
+      "target": "scripts/fixtures/checkin-undo-original/mats.ts.txt",
+      "sourceSha256": "7c6a8da475b522837b489c8a0d83a421ac8c6f5b648a48ce947037938653bdab",
+      "targetSha256": "7c6a8da475b522837b489c8a0d83a421ac8c6f5b648a48ce947037938653bdab"
+    },
+    {
+      "source": "scripts/fixtures/checkin-undo-original/permissions.ts.txt",
+      "target": "scripts/fixtures/checkin-undo-original/permissions.ts.txt",
+      "sourceSha256": "593caa1eb4e43b5d4e797100a96cdfa51f85d90db0c78bf3cc92672aad02f80b",
+      "targetSha256": "593caa1eb4e43b5d4e797100a96cdfa51f85d90db0c78bf3cc92672aad02f80b"
+    },
+    {
+      "source": "scripts/fixtures/checkin-undo-original/setStatus-closure.ts.txt",
+      "target": "scripts/fixtures/checkin-undo-original/setStatus-closure.ts.txt",
+      "sourceSha256": "e3e94b27a26b6aa6f22c73c9e86bdfa89e20fedc0ca5931263cd5ba97cbfaf21",
+      "targetSha256": "e3e94b27a26b6aa6f22c73c9e86bdfa89e20fedc0ca5931263cd5ba97cbfaf21"
+    },
+    {
+      "source": "scripts/test-checkin-undo-baseline.mjs",
+      "target": "scripts/test-checkin-undo-baseline.mjs",
+      "sourceSha256": "99205db0aa10b31e89a4841071a6c90a88b7461e106796ec0b96aece41e9a89e",
+      "targetSha256": "99205db0aa10b31e89a4841071a6c90a88b7461e106796ec0b96aece41e9a89e"
+    },
+    {
+      "source": "scripts/test-checkin-undo-library.mjs",
+      "target": "scripts/test-checkin-undo-library.mjs",
+      "sourceSha256": "bceba0ba862a46cf5c1906a0e48af4f1dc6d156b04dfc4dfba7a74e81a31da8e",
+      "targetSha256": "bceba0ba862a46cf5c1906a0e48af4f1dc6d156b04dfc4dfba7a74e81a31da8e"
+    },
+    {
+      "source": "scripts/test-checkin-undo-states.mjs",
+      "target": "scripts/test-checkin-undo-states.mjs",
+      "sourceSha256": "28f571f7eacf1a79cdb038726a8ae5ed26a6c17fb8856b0039c19987c984e36d",
+      "targetSha256": "28f571f7eacf1a79cdb038726a8ae5ed26a6c17fb8856b0039c19987c984e36d"
+    },
+    {
+      "source": "scripts/test-checkin-undo-ui.mjs",
+      "target": "scripts/test-checkin-undo-ui.mjs",
+      "sourceSha256": "d540aae28f2cdf715ea649b14e7f82e2b079b1850d20e415453139561be81664",
+      "targetSha256": "d540aae28f2cdf715ea649b14e7f82e2b079b1850d20e415453139561be81664"
+    },
+    {
+      "source": "scripts/test-checkin-undo.mjs",
+      "target": "scripts/test-checkin-undo.mjs",
+      "sourceSha256": "e06dfad40733e1bc354549d144ca4f84b16447bc55f21aa3c47a5f2f4978d666",
+      "targetSha256": "e06dfad40733e1bc354549d144ca4f84b16447bc55f21aa3c47a5f2f4978d666"
+    },
+    {
+      "source": "src/components/organism/AttendanceUndoReview/AttendanceUndoReview.meta.ts",
+      "target": "src/components/organism/AttendanceUndoReview/AttendanceUndoReview.meta.ts",
+      "sourceSha256": "512a1f55ec6a205feef95e6473f5e6a0afe4570ecfab516a9738419e48c3e4b3",
+      "targetSha256": "512a1f55ec6a205feef95e6473f5e6a0afe4570ecfab516a9738419e48c3e4b3"
+    },
+    {
+      "source": "src/components/organism/AttendanceUndoReview/AttendanceUndoReview.tsx",
+      "target": "src/components/organism/AttendanceUndoReview/AttendanceUndoReview.tsx",
+      "sourceSha256": "585f7960ae8ac956d0d30fc48e410a3bc4dc9c3e2906c355513d908472485eda",
+      "targetSha256": "585f7960ae8ac956d0d30fc48e410a3bc4dc9c3e2906c355513d908472485eda"
+    },
+    {
+      "source": "src/data/MockProvider.ts",
+      "target": "src/data/MockProvider.ts",
+      "sourceSha256": "c32d084037a21ab180ab7b227da11f3cc4479b40258eacd2b60d6ba7be184ec9",
+      "targetSha256": "c32d084037a21ab180ab7b227da11f3cc4479b40258eacd2b60d6ba7be184ec9"
+    },
+    {
+      "source": "src/modules/staff/CheckinPage.tsx",
+      "target": "src/modules/staff/CheckinPage.tsx",
+      "sourceSha256": "ade93440914899bedfda392e735cac947e7869ad547b5624633ce02ecb58999f",
+      "targetSha256": "ade93440914899bedfda392e735cac947e7869ad547b5624633ce02ecb58999f"
+    },
+    {
+      "source": "src/modules/staff/attendanceUndo.ts",
+      "target": "src/modules/staff/attendanceUndo.ts",
+      "sourceSha256": "299c4642d400306c18ee1ad92e713eef4ff36a04f118177de3690344fed5dacd",
+      "targetSha256": "299c4642d400306c18ee1ad92e713eef4ff36a04f118177de3690344fed5dacd"
+    },
+    {
+      "source": "src/modules/staff/specs.ts",
+      "target": "src/modules/staff/specs.ts",
+      "sourceSha256": "b74ba4837ec0931042127249b11bc26ccca8aea84d1b1614900e82b0950ff0cf",
+      "targetSha256": "b74ba4837ec0931042127249b11bc26ccca8aea84d1b1614900e82b0950ff0cf"
+    },
+    {
+      "source": "src/modules/staff/strings.ts",
+      "target": "src/modules/staff/strings.ts",
+      "sourceSha256": "776651f6cb9fc62c0357f54a8ae74c1a8ae421bffe7752b9b29b77b86334a1b9",
+      "targetSha256": "776651f6cb9fc62c0357f54a8ae74c1a8ae421bffe7752b9b29b77b86334a1b9"
+    },
+    {
+      "source": "src/modules/staff/undoStrings.ts",
+      "target": "src/modules/staff/undoStrings.ts",
+      "sourceSha256": "d935b34edcf9c24c42addacf487fcf42187cfa582e185967623fce97375ee29f",
+      "targetSha256": "d935b34edcf9c24c42addacf487fcf42187cfa582e185967623fce97375ee29f"
+    },
+    {
+      "source": "src/modules/staff/useAttendanceUndo.ts",
+      "target": "src/modules/staff/useAttendanceUndo.ts",
+      "sourceSha256": "6a842c2a4b98b5e088cc1d853e708a589cb6bb172e458659eebdc95cd18cecfa",
+      "targetSha256": "6a842c2a4b98b5e088cc1d853e708a589cb6bb172e458659eebdc95cd18cecfa"
+    },
+    {
+      "source": "src/components/template/ComingSoonLanding/ComingSoonLanding.tsx",
+      "target": "src/components/template/ComingSoonLanding/ComingSoonLanding.tsx",
+      "sourceSha256": "b2cc4d8247f102cf4973058021f06dd552c7028132157ba10fc826c18ee83539",
+      "targetSha256": "b2cc4d8247f102cf4973058021f06dd552c7028132157ba10fc826c18ee83539"
+    },
+    {
+      "source": "scripts/test-coming-soon-image-priority.mjs",
+      "target": "scripts/test-coming-soon-image-priority.mjs",
+      "sourceSha256": "7b4a2e1dcc2edd9ecea72d73408a13b9e983ad11b49ca8bf4f25f2b0368fa848",
+      "targetSha256": "7b4a2e1dcc2edd9ecea72d73408a13b9e983ad11b49ca8bf4f25f2b0368fa848"
+    },
+    {
+      "source": "scripts/fixtures/coming-soon-image-priority-before.json",
+      "target": "scripts/fixtures/coming-soon-image-priority-before.json",
+      "sourceSha256": "83bc8b38f041691bd7d7b8168193d9f2bd4d5f4cddc92e20e6da5b6a4a49dee0",
+      "targetSha256": "83bc8b38f041691bd7d7b8168193d9f2bd4d5f4cddc92e20e6da5b6a4a49dee0"
+    },
+    {
+      "source": "docs/frontend-completion/batch-46-image-priority.md",
+      "target": "docs/frontend-completion/batch-46-image-priority.md",
+      "sourceSha256": "d742d492bea4f0b02eb4799b422dc1eb37a9b2a77f052a8539b724ea9e14895a",
+      "targetSha256": "d742d492bea4f0b02eb4799b422dc1eb37a9b2a77f052a8539b724ea9e14895a"
+    },
+    {
+      "source": "docs/changelog/0130-coming-soon-image-priority.md",
+      "target": "docs/changelog/0135-coming-soon-image-priority.md",
+      "sourceSha256": "0670d7e23353cbe1fa410cdb4763cf1195bad6cdbe97134c5569096487602d5f",
+      "targetSha256": "0670d7e23353cbe1fa410cdb4763cf1195bad6cdbe97134c5569096487602d5f"
+    },
+    {
+      "source": "docs/frontend-completion/batch-46-source-audit.md",
+      "target": "docs/frontend-completion/batch-46-source-audit.md",
+      "sourceSha256": "8fd5fc69b1a0f784c9235c2e7694e1fd8caf14438041422d996a3a5f7a804386",
+      "targetSha256": "8fd5fc69b1a0f784c9235c2e7694e1fd8caf14438041422d996a3a5f7a804386"
+    },
+    {
+      "source": "docs/frontend-completion/evidence/batch46-source-audit.json",
+      "target": "docs/frontend-completion/evidence/batch46-source-audit.json",
+      "sourceSha256": "d614754983e1115800218fa782c49befb05d09506b045035779a19f1d6eae43f",
+      "targetSha256": "d614754983e1115800218fa782c49befb05d09506b045035779a19f1d6eae43f"
+    },
+    {
+      "source": "docs/frontend-completion/evidence/batch46-image-priority-source.json",
+      "target": "docs/frontend-completion/evidence/batch46-image-priority-source.json",
+      "sourceSha256": "7ebab0f35c7dce63d336ca57472d3ddd693481c4e4ef5f8f15399d1c08fb0aa7",
+      "targetSha256": "7ebab0f35c7dce63d336ca57472d3ddd693481c4e4ef5f8f15399d1c08fb0aa7"
+    }
+  ]
+}

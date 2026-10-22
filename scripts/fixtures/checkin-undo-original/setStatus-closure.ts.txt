@@ -1,0 +1,8 @@
+  const setStatus = async (b: BookingRow, status: BookingRow['status']) => {
+    if (!canWrite) return;
+    setBusy(b.id); setError(null);
+    try {
+      await data.update('bookings', b.id, { status, checked_in_at: status === 'checked_in' ? new Date().toISOString() : null });
+      await audit(status === 'checked_in' ? 'booking.checkin' : status === 'no_show' ? 'booking.no_show' : 'booking.undo', 'bookings', b.id, { before: b.status, after: status, session_id: b.session_id, user_id: b.user_id });
+    } catch (e) { setError(String(e)); } finally { setBusy(null); }
+  };
