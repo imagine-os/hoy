@@ -26,6 +26,8 @@ jobs:
   admission:
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      CHROMIUM_PATH: /usr/bin/google-chrome
     steps:
       - uses: actions/checkout@v4
         with:
@@ -35,7 +37,10 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - run: npx playwright-core install --with-deps chromium
+      - name: Verify runner browser
+        run: |
+          test -x "$CHROMIUM_PATH"
+          "$CHROMIUM_PATH" --version
       - name: Domain and preserved transaction contracts
         run: |
           node scripts/test-session-admission.mjs
@@ -54,7 +59,6 @@ jobs:
       - name: Actual production pages and paused contexts
         shell: bash
         run: |
-          export CHROMIUM_PATH="$(node --input-type=module -e "import {chromium} from 'playwright-core';process.stdout.write(chromium.executablePath())")"
           npm run preview -- --host 127.0.0.1 --port 5480 --strictPort > /tmp/admission-preview.log 2>&1 &
           preview_pid=$!
           QA_PORT=5481 QA_CACHE_DIR=/tmp/admission-deps node scripts/qa-pending-payments-dev.mjs > /tmp/admission-dev.log 2>&1 &
