@@ -3,6 +3,9 @@ on:
   pull_request:
     paths:
       - 'src/modules/customer/auth/**'
+      - 'src/modules/customer/profileSave.ts'
+      - 'src/auth/**'
+      - 'src/data/DataContext.tsx'
       - 'src/modules/customer/legal.tsx'
       - 'src/modules/customer/legalContent.ts'
       - 'src/components/organism/LegalDocument/**'
