@@ -15,7 +15,7 @@ SW-02, SW-05 (PC-08), SW-06 (Q-14), AD-05 (Q-15) and future SW-07/AD-12/AD-13/MK
 
 ## Checks and evidence
 
-- `npm run build`: passed, zero TypeScript errors; spacing/manual checks passed. Frozen runtime fingerprint (all sorted `src` files, path + NUL + bytes, SHA256): `97ddb8c4c80010099a384aeec5507a7656e040f98b32edd7f6425189b4cf7804`. Build manifest names base HEAD because source changes were not yet committed; this is a local dirty-tree production test, not an exact-commit/live release claim.
+- `npm run build`: passed, zero TypeScript errors; spacing/manual checks passed. Frozen runtime fingerprint (all sorted `src` files, path + NUL + bytes, SHA256): `97ddb8c4c80010099a384aeec5507a7656e040f98b32edd7f6425189b4cf7804`. Initial browser suites tested the uncommitted production tree against that fingerprint. A final full build at committed source `c92c446e90fd0ac746b0a445a34b7ebb0de90258` also passed and emitted that exact SHA in the release manifest, with the same runtime fingerprint. This establishes local build provenance, not live release acceptance.
 - `node scripts/test-public-launch.mjs`: studio midnight ±1ms, before/after, later year, invalid date and timezone passed.
 - `npm run test:contacts`: existing routing, fallback, holidays and off-duty domain checks passed.
 - `node scripts/test-public-content-ui.mjs`: production preview at localhost:5180, ES/EN, 390/1280, launch transition/history, configured contact links, Unicode form URL, FAQ empty state and topic fallback passed. [Results](../screenshots/public-content-launch/results.json).
@@ -34,3 +34,7 @@ SW-03 interface to account owner: website emits encoded local `next` containing 
 Readiness/image test owner: existing `scripts/test-website-preview.mjs` assumes W-11 remains permanently visible. The separate, unapplied [clock fixture patch](evidence/public-prelaunch-test-contract.patch) pins its historical prelaunch cases to October 29. Apply through its owner before/with launch integration; never weaken the real post-launch redirect. Our public-entry regression pins its own historical prelaunch clock. No shared test file was overwritten.
 
 Parent/integration owner coordinates final main reconciliation, exact-head CI, draft PR and release; no independent merge/deploy. Source row manifest/workbook statuses deliberately unchanged; parent can reconcile this evidence at the row/slice level. Public GitHub read request (`gh pr list`) returned `Forbidden`; no retry or alternate API used. Publication status is recorded in the final handoff.
+
+## Publication receipt
+
+Implementation commit `c92c446e90fd0ac746b0a445a34b7ebb0de90258` is pushed to `origin/codex/public-content-launch-20261023`; `git ls-remote` confirmed the exact remote SHA. Draft PR creation (`gh pr create --draft`, imagine-os/hoy, base main, this branch) was denied by `https://api.github.com/graphql` with `Forbidden`. No PR URL was returned and no retry or alternate API was used. Parent/integration owner must create the draft using the [prepared PR description](evidence/public-content-draft-pr.md), then run exact-head CI and coordinate merge/release. This receipt update changes documentation only.

@@ -1,0 +1,24 @@
+{
+  "implementationSource": "c92c446e90fd0ac746b0a445a34b7ebb0de90258",
+  "baseSource": "c2c0f37fe5cb4e3ebb4abfba9d1f87759c661748",
+  "branch": "codex/public-content-launch-20261023",
+  "runtimeFingerprint": "97ddb8c4c80010099a384aeec5507a7656e040f98b32edd7f6425189b4cf7804",
+  "fullBuild": "passed at implementation commit; release manifest exact source c92c446e90fd0ac746b0a445a34b7ebb0de90258",
+  "checks": [
+    "launch domain \u00b11ms studio boundary, invalid clock, later year/timezone",
+    "existing contacts routing domain suite",
+    "ES/EN production UI 390/1280, prelaunch/postlaunch/open-tab/history, configured contacts/topic fallback, form empty and Unicode, FAQ no-match",
+    "ES/EN studio calendar display, chosen checkout/waitlist sign-in target, empty home light/dark",
+    "static host root and /hoy project path prelaunch/hub/archive/Latest",
+    "typecheck and diff whitespace"
+  ],
+  "acceptance": "Named frontend slices only; no row/backend/owner acceptance, CI or deployment claim",
+  "publication": {
+    "branchPush": "confirmed exact SHA with git ls-remote",
+    "draftPr": "denied",
+    "target": "https://api.github.com/graphql during gh pr create --draft",
+    "reason": "Forbidden",
+    "retry": "none"
+  },
+  "integrationAction": "Image/readiness owner review separate unapplied prelaunch fixture patch; account owner retain post-login return verification; parent creates draft and coordinates CI/release"
+}
