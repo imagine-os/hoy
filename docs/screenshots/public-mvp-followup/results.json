@@ -1,0 +1,17 @@
+{
+  "base": "http://127.0.0.1:5180",
+  "checks": [
+    "es: Home/Plans share published name, price and 8-class/45-day terms; draft isolation; republished price update; open-tab effective date; withdrawal, missing/unpriced offers, explicit zero; Classic trial suppresses stale price",
+    "es: valid/missing contacts; malformed topic → reception; malformed reception → configured profile; all invalid → no WhatsApp links, bilingual alternatives and disabled form; encoded Unicode valid form handoff; contact/Plans/FAQ/Classic 390/1280",
+    "es: empty teacher directory/Home/Classic translated guidance and schedule/contact actions; populated recovery, portrait fallback and light/dark 390/1280",
+    "en: Home/Plans share published name, price and 8-class/45-day terms; draft isolation; republished price update; open-tab effective date; withdrawal, missing/unpriced offers, explicit zero; Classic trial suppresses stale price",
+    "en: valid/missing contacts; malformed topic → reception; malformed reception → configured profile; all invalid → no WhatsApp links, bilingual alternatives and disabled form; encoded Unicode valid form handoff; contact/Plans/FAQ/Classic 390/1280",
+    "en: empty teacher directory/Home/Classic translated guidance and schedule/contact actions; populated recovery, portrait fallback and light/dark 390/1280",
+    "actual D-02 PublicWhatsappLink direct/fallback/unavailable states render; unavailable state has no WhatsApp anchor"
+  ],
+  "errors": [],
+  "limits": [
+    "Fictional local fixtures; no real message, publication service, backend, number ownership or security change.",
+    "Q-14/Q-15 remain unresolved. Archive content remains the historical design preview; shared footer uses safe live Settings presentation."
+  ]
+}

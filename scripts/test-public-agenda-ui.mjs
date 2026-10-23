@@ -43,6 +43,8 @@ try {
   await page.goto(`${base}/#/site`);await page.reload();await page.locator('.sanctuary-agenda-empty').waitFor();
   for(const width of [390,1280])for(const theme of ['light','dark']) {
    await page.setViewportSize({width,height:900});await page.evaluate(theme=>{document.documentElement.dataset.theme=theme;window.scrollTo(0,0);},theme);
+   await page.evaluate(async()=>{await document.fonts.ready;await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));});
+   await page.waitForFunction(()=>document.documentElement.scrollWidth<=innerWidth+1,{},{timeout:5000,polling:'raf'});
    assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
    await page.screenshot({path:`${out}/${lang}-home-empty-${theme}-${width}.jpg`,quality:65,fullPage:true});
   }

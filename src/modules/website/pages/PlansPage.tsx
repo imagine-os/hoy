@@ -1,3 +1,5 @@
+import { usePublicWhatsapp } from '../publicWhatsapp';
+import { PublicWhatsappLink } from '../../../components/molecule/PublicWhatsappLink/PublicWhatsappLink';
 import {isQuotedClassPlan,localCatalogMode,quotePurchaseDate,resolveOperationalQuote} from '../../../data/operationalQuotes';
 import { useTable } from '../../../data/DataContext';
 import { quotePublishedProduct } from '../../../data/catalogPublication';
@@ -10,7 +12,7 @@ import { useI18n } from '../../../i18n/I18nProvider';
 import { useLayout } from '../../../layout/useLayout';
 import { FAMILY_LABEL, FAMILY_RATIONALE, ON_REQUEST_FORMATS, pricingByFamily, priceItem } from '../../../tenant/pricing';
 import { tenant } from '../../../tenant/tenant';
-import { usePolicy, useWhatsappLink } from '../../admin/settings';
+import { usePolicy } from '../../admin/settings';
 import { Card } from '../../../components/molecule/Card/Card';
 import { Button } from '../../../components/atom/Button/Button';
 import { PackageCard } from '../../../components/molecule/PackageCard/PackageCard';
@@ -31,7 +33,7 @@ export function PlansPage() {
   const { photoEdition } = useSiteEdition();
   const { t, bi, lang } = useI18n();
   // 0047: private classes, the space rental and corporate experiences are a `specials` handoff (M-08a contacts).
-  const wa = useWhatsappLink();
+  const wa = usePublicWhatsapp();
   const specialsNote = wa.resolve('specials').note;
   const nav = useNavigate();
   const { sections, isVisible } = useLayout(siteSpecs.plans);
@@ -82,7 +84,7 @@ export function PlansPage() {
             <p className="small muted">{bi(FAMILY_RATIONALE.privadas.why)}</p>
             {pricingByFamily('privadas').map((p) => <PriceRow key={p.id} item={p} />)}
             <div className="stack-sm" style={{ marginTop: 'var(--stack-loose)' }}>
-              <a href={wa.link('specials', t('site.plans.private.wa'))} target="_blank" rel="noreferrer"><Button variant="secondary">{t('site.plans.private.cta')} ↗</Button></a>
+              <PublicWhatsappLink target={wa.target('specials', t('site.plans.private.wa'))}><Button variant="secondary">{t('site.plans.private.cta')} ↗</Button></PublicWhatsappLink>
               {specialsNote && <p className="xs muted">{bi(specialsNote)}</p>}
             </div>
           </Card>
@@ -110,7 +112,7 @@ export function PlansPage() {
             ))}
           </div>
           <div className="stack-sm" style={{ marginTop: 'var(--block)' }}>
-            <div className="row wrap"><a href={wa.link('specials', t('site.plans.specials.wa'))} target="_blank" rel="noreferrer"><Button variant="secondary">{t('site.plans.specials.cta')}</Button></a></div>
+            <div className="row wrap"><PublicWhatsappLink target={wa.target('specials', t('site.plans.specials.wa'))}><Button variant="secondary">{t('site.plans.specials.cta')}</Button></PublicWhatsappLink></div>
             {specialsNote && <p className="xs muted">{bi(specialsNote)}</p>}
           </div>
         </Card>

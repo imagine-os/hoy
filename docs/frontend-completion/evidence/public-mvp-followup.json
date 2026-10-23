@@ -1,0 +1,35 @@
+{
+  "baseSource": "e1d704cdb65c500d000164a194bcf63c9255d33e",
+  "preservedBranch": "codex/public-content-launch-20261023",
+  "branch": "codex/public-mvp-followup-20261023",
+  "runtimeFingerprint": "caeb9abdfcb1d5fd371b9e3f706f9b405c642cf3a4b5280f79cede4ad9463b8d",
+  "runtimeFingerprintMethod": "SHA256 of lexically sorted src file paths + NUL + file bytes",
+  "checks": {
+    "fullBuild": "passed; typecheck, unchanged spacing baseline60, zero manual violations",
+    "domain": "public MVP helper + launch + existing contacts passed",
+    "productionUi": "ES/EN390/1280 + dark key states; actual D-02 usages; no page exceptions",
+    "productEditorCommandUi": "publish/save-draft/republish/withdraw \u2192 actual Home/Plans consumer passed",
+    "priorLaunchContactUi": "passed",
+    "priorStudioAgendaAndSelectedClassUi": "passed after layout/font settling before unchanged overflow assertion"
+  },
+  "bounds": [
+    "Published Home snapshots only after local publication mode; no silent legacy restoration.",
+    "WhatsApp shape validation only; no ownership or registration verification.",
+    "Teacher empty states and populated recovery only; central provider errors remain separate.",
+    "Q14 manual visibility and Q15 payment details unresolved.",
+    "No backend/auth/schema/security/domain/notification/image-loading edits."
+  ],
+  "priorFailure": {
+    "test": "agenda responsive capture",
+    "symptom": "immediate post-resize overflow assertion false",
+    "resolution": "await fonts and layout frames; wait for the same overflow bound with5s timeout; full suite then passed",
+    "applicationAssertionRelaxed": false
+  },
+  "release": {
+    "githubApiRetry": "none; existing GraphQL Forbidden denial retained",
+    "merge": "not performed",
+    "deploy": "not performed",
+    "exactHeadCi": "pending integration owner"
+  },
+  "acceptance": "Named frontend slices only; original rows/phases/decision fields unchanged"
+}

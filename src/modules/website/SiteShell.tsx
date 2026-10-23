@@ -1,9 +1,11 @@
+import { usePublicWhatsapp } from './publicWhatsapp';
+import { PublicWhatsappLink } from '../../components/molecule/PublicWhatsappLink/PublicWhatsappLink';
 import { studioParts } from '../../i18n/format';
 import { useState, useEffect, useRef, type ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Link, NavLink } from './links';
 import { useI18n } from '../../i18n/I18nProvider';
-import { useContact, useOpeningHours, useWhatsappLink, pendingSuffix, type ContactField } from '../admin/settings';
+import { useContact, useOpeningHours, pendingSuffix, type ContactField } from '../admin/settings';
 import { useStudioJsonLd } from './jsonLd';
 import { useTheme } from '../../design/ThemeProvider';
 import { tenant } from '../../tenant/tenant';
@@ -62,8 +64,8 @@ export function SiteShell({ children }: { children: ReactNode }) {
   // 0041: the hours in the footer follow M-08a / M-08g, and the same hours go out as LocalBusiness JSON-LD.
   const hours = useOpeningHours();
   useStudioJsonLd(!archived);
-  // 0047: the footer is a front desk handoff; pages with a topic call useWhatsappLink() with their own intent (D-0022).
-  const wa = useWhatsappLink();
+  // 0047: the footer is a front desk handoff; pages with a topic call usePublicWhatsapp() with their own intent (D-0022).
+  const wa = usePublicWhatsapp();
   // 0036: per field — the phone and the address are confirmed, the email and Instagram still carry the label.
   const pending = (f: ContactField) => pendingSuffix(contact, f, lang);
   return (
@@ -108,7 +110,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
           </div>
           <div className="stack-sm">
             <span className="eyebrow">{t('site.footer.follow')}</span>
-            <a className="small" href={wa.link('frontDesk')} target="_blank" rel="noreferrer" data-testid="footer-whatsapp">WhatsApp {wa.display('frontDesk', lang)}</a>
+            <PublicWhatsappLink className="small" target={wa.target('frontDesk')} testId="footer-whatsapp">WhatsApp {wa.display('frontDesk', lang)}</PublicWhatsappLink>
             <a className="small" href={contact.instagramUrl} target="_blank" rel="noreferrer">Instagram {contact.instagram}{pending('instagram')}</a>
             <a className="small" href={`mailto:${contact.email}`}>{contact.email}{pending('email')}</a>
           </div>

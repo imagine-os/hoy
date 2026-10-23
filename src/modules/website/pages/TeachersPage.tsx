@@ -1,3 +1,4 @@
+import { EmptyState } from '../../../components/molecule/EmptyState/EmptyState';
 import { teacherStudioPhoto } from '../photography';
 import { useSiteEdition } from '../edition';
 import { Fragment, type ReactNode } from 'react';
@@ -22,7 +23,7 @@ export function TeachersPage() {
   const { edition, photoEdition } = useSiteEdition();
   const { t, lang, bi } = useI18n();
   const { sections, isVisible } = useLayout(siteSpecs.teachers);
-  const { rows: teachers } = useTable<TeacherRow>('teachers', { where: { active: true } });
+  const { rows: teachers, loading } = useTable<TeacherRow>('teachers', { where: { active: true } });
   const { rows: modalities } = useTable<ModalityRow>('modalities');
   const spec = (id: string) => {
     const m = modalities.find((x) => x.id === id);
@@ -34,6 +35,7 @@ export function TeachersPage() {
     TeacherGrid: () => (
       <section className="container site-section" style={{ paddingTop: 0 }}>
         <p className="xs muted" style={{ marginBottom: 'var(--sp-lg)' }}>{t(photoEdition ? 'site.photos.teacherLegend' : 'site.teachers.legend')}</p>
+        {teachers.length === 0 && <EmptyState tone={loading ? 'loading' : 'empty'} title={t(loading ? 'core.common.loading' : 'site.teachers.empty.title')} body={loading ? undefined : t('site.teachers.empty.body')} action={loading ? undefined : <Link to="/site/schedule">{t('site.today.all')}</Link>} secondary={loading ? undefined : <Link to="/site/contact">{t('site.whatsapp.contactOptions')}</Link>} />}
         <div className="site-teachergrid">
           {teachers.map((te) => {
             const photo = te.photo_url || (photoEdition ? teacherStudioPhoto(te.id) : undefined);

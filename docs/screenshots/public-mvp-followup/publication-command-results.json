@@ -1,0 +1,10 @@
+{
+  "base": "http://127.0.0.1:5180",
+  "checks": [
+    "Actual fictional admin product-editor publish → Home 100000; save draft150000 → Home remains100000; republish → Home and Plans150000; withdrawal → Home guidance with no stale price. Same browser provider, no consumer reload."
+  ],
+  "errors": [],
+  "limits": [
+    "Fictional local browser editor/atomic commands only; no real authorization, backend publication or customer transaction."
+  ]
+}

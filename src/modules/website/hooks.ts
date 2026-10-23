@@ -1,7 +1,10 @@
-import { useMemo } from 'react';
+import type { CatalogPlan } from '../../data/productCatalog';
+import { quotePurchaseDate } from '../../data/operationalQuotes';
+import { publicHomeOffer } from './publicHomePricing';
+import { useEffect, useMemo, useState } from 'react';
 import { useTable } from '../../data/DataContext';
 import type { BaseRow, ClassSessionRow, FaqEntryRow, MediaAssetRow, ModalityRow, TeacherRow } from '../../data/schema';
-import { isSameDay, addDays, startOfDay } from '../../i18n/format';
+import { isSameDay, addDays, startOfDay, studioDate, studioParts } from '../../i18n/format';
 
 /** Sessions joined with modality and teacher — shared by site and customer pages. */
 export function useSessionsJoined(filter?: (s: ClassSessionRow) => boolean) {
@@ -47,4 +50,25 @@ export function useFaqGroups() {
 export function useClassPhotos(): Map<string, string> {
   const { rows } = useTable<MediaAssetRow>('media_assets');
   return useMemo(() => new Map(rows.filter((a) => a.slot_key.startsWith('site.classes.') && a.status === 'ready' && a.kind === 'photo' && a.url).map((a) => [a.slot_key.slice('site.classes.'.length), a.url as string])), [rows]);
+}
+
+/** Current studio date, refreshed at midnight and when a suspended tab resumes. */
+export function usePublicHomePricing() {
+  const { rows } = useTable<CatalogPlan>('plans');
+  const [date, setDate] = useState(() => quotePurchaseDate());
+  useEffect(() => {
+    let timer = 0;
+    const refresh = () => setDate(quotePurchaseDate());
+    const tick = () => {
+      refresh();
+      const now = new Date(), p = studioParts(now);
+      const delay = Math.min(60000, Math.max(1, studioDate(p.year, p.month, p.day + 1).getTime() - now.getTime() + 1));
+      timer = window.setTimeout(tick, delay);
+    };
+    tick();
+    window.addEventListener('focus', refresh);
+    document.addEventListener('visibilitychange', refresh);
+    return () => { window.clearTimeout(timer); window.removeEventListener('focus', refresh); document.removeEventListener('visibilitychange', refresh); };
+  }, []);
+  return { trial: publicHomeOffer(rows, 'trial', date), pack: publicHomeOffer(rows, 'pack12', date), private: publicHomeOffer(rows, 'private', date) };
 }

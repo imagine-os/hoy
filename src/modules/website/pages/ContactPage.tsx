@@ -1,9 +1,11 @@
+import { usePublicWhatsapp } from '../publicWhatsapp';
+import { PublicWhatsappLink } from '../../../components/molecule/PublicWhatsappLink/PublicWhatsappLink';
 import { Fragment, useState, type ReactNode } from 'react';
 import { Link } from '../links';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useLayout } from '../../../layout/useLayout';
 import { tenant } from '../../../tenant/tenant';
-import { useContact, useOpeningHours, useWhatsappLink, type ContactField } from '../../admin/settings';
+import { useContact, useOpeningHours, type ContactField } from '../../admin/settings';
 import { overrideLine, upcomingOverrides } from '../../../tenant/hours';
 import { Card } from '../../../components/molecule/Card/Card';
 import { Button } from '../../../components/atom/Button/Button';
@@ -23,17 +25,18 @@ export function ContactPage() {
   const hours = useOpeningHours();
   const soon = upcomingOverrides(hours.overrides, hours.todayKey, 30).slice(0, 3);
   // 0047: the card, the CTA and the form are front desk handoffs; the Especiales card is `specials` (M-08a contacts).
-  const wa = useWhatsappLink();
+  const wa = usePublicWhatsapp();
   const frontNote = wa.resolve('frontDesk').note;
   const specialsNote = wa.resolve('specials').note;
 
   const send = () => {
     const text = t('site.contact.fTemplate', { name: form.name || '—', phone: form.phone || '—', message: form.message });
-    window.open(wa.link('frontDesk', text), '_blank', 'noreferrer');
+    const target = wa.target('frontDesk', text);
+    if (target.href) window.open(target.href, '_blank', 'noreferrer');
   };
 
   const cards = [
-    [t('site.contact.whatsapp'), wa.resolve('frontDesk').whatsapp, wa.link('frontDesk'), 'whatsapp'],
+    [t('site.contact.whatsapp'), wa.resolve('frontDesk').whatsapp, wa.target('frontDesk').href ?? undefined, 'whatsapp'],
     [t('site.contact.email'), contact.email, `mailto:${contact.email}`, 'email'],
     [t('site.contact.instagram'), contact.instagram, contact.instagramUrl, 'instagram'],
     [t('site.contact.address'), `${contact.address} · ${contact.city}`, contact.location.link ?? undefined, 'address'],
@@ -47,7 +50,7 @@ export function ContactPage() {
         <div className="grid grid-3">
           {cards.map(([label, value, href, field]) => (
             <Card key={label} eyebrow={label}>
-              {href ? <a href={href} target="_blank" rel="noreferrer">{value}</a> : <span>{value}</span>}
+              {field === 'whatsapp' ? <PublicWhatsappLink target={wa.target('frontDesk')}>{value}</PublicWhatsappLink> : href ? <a href={href} target="_blank" rel="noreferrer">{value}</a> : <span>{value}</span>}
               {field === 'address' && <p className="small muted" style={{ marginTop: 'var(--sp-sm)' }}>{bi(tenant.contact.landmark)}</p>}
               {field && contact.pendingFields[field] && <p className="xs muted" style={{ marginTop: 'var(--sp-sm)' }}>{t('site.contact.pending')}</p>}
               {label === t('site.contact.hours') && (
@@ -61,9 +64,9 @@ export function ContactPage() {
         </div>
         <div className="stack-sm" style={{ marginTop: 'var(--sp-lg)' }}>
           <div className="row wrap">
-            <a href={wa.link('frontDesk', t('site.contact.wa'))} target="_blank" rel="noreferrer">
+            <PublicWhatsappLink target={wa.target('frontDesk', t('site.contact.wa'))}>
               <Button size="lg">{t('site.contact.waCta')}</Button>
-            </a>
+            </PublicWhatsappLink>
             <Link to="/site/faq"><Button size="lg" variant="secondary">{t('site.footer.faq')}</Button></Link>
           </div>
           {frontNote && <p className="xs muted">{bi(frontNote)}</p>}
@@ -76,7 +79,7 @@ export function ContactPage() {
         <Card eyebrow={t('site.contact.specials')} tone="muted" className="site-specials">
           <p className="small" style={{ maxWidth: '60ch' }}>{t('site.contact.specialsBody')}</p>
           <div className="stack-sm" style={{ marginTop: 'var(--sp-md)' }}>
-            <div className="row wrap"><a href={wa.link('specials', t('site.plans.specials.wa'))} target="_blank" rel="noreferrer"><Button size="sm" variant="secondary">{t('site.plans.specials.cta')}</Button></a></div>
+            <div className="row wrap"><PublicWhatsappLink target={wa.target('specials', t('site.plans.specials.wa'))}><Button size="sm" variant="secondary">{t('site.plans.specials.cta')}</Button></PublicWhatsappLink></div>
             {specialsNote && <p className="xs muted">{bi(specialsNote)}</p>}
           </div>
         </Card>
@@ -106,7 +109,8 @@ export function ContactPage() {
               </Field>
             </div>
             <div className="site-form-full">
-              <Button size="lg" onClick={send} disabled={!form.message.trim()}>{t('site.contact.fSend')}</Button>
+              <Button size="lg" onClick={send} disabled={!form.message.trim() || !wa.target('frontDesk').href}>{t('site.contact.fSend')}</Button>
+              {!wa.target('frontDesk').href && <PublicWhatsappLink target={wa.target('frontDesk')} />}
             </div>
           </div>
         </Card>

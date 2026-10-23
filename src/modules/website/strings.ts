@@ -8,6 +8,16 @@ import type { StringTable } from '../../i18n/types';
  * site.modalities · site.schedule · site.teachers · site.plans · site.contact · site.legal · site.footer
  */
 export const strings: StringTable = {
+  'site.whatsapp.unavailable': { es: 'WhatsApp no está disponible en este momento. Puedes escribirnos por correo o visitar el estudio.', en: 'WhatsApp is unavailable right now. You can email us or visit the studio.' },
+  'site.whatsapp.contactOptions': { es: 'Ver opciones de contacto', en: 'View contact options' },
+  'site.whatsapp.fallback': { es: 'Este contacto no está disponible; te conectamos con recepción.', en: 'This contact is unavailable; we will connect you with reception.' },
+  'site.pricing.unavailable': { es: 'Sin precio publicado vigente. Consulta los planes disponibles.', en: 'No current published price. See available plans.' },
+  'site.pricing.terms': { es: '{n} clases · {days} días', en: '{n} classes · {days} days' },
+  'site.hero.ctaWithoutPrice': { es: 'Ver planes disponibles', en: 'See available plans' },
+  'site.first.bodyWithoutPrice': { es: 'Consulta los planes publicados y encuentra tu forma de empezar.', en: 'Explore the published plans and find your way to begin.' },
+  'site.teachers.empty.title': { es: 'Pronto conocerás a quienes guían la práctica', en: 'Meet your practice guides soon' },
+  'site.teachers.empty.body': { es: 'Aún no hay perfiles de profesores publicados. Puedes consultar el horario o contactarnos para saber más.', en: 'No teacher profiles are published yet. You can browse the schedule or contact us to learn more.' },
+
   'site.photos.teacherLegend': { es: 'Conoce a quienes guían la práctica. Los retratos pendientes se muestran con iniciales.', en: 'Meet the people who guide the practice. Pending portraits are shown with initials.' },
   'site.edition.photos': { es: 'Fotos · vista previa', en: 'Photos · preview' },
   'site.photos.notice': { es: 'Vista previa con las fotos del estudio. La versión pública actual sigue disponible en Latest.', en: 'Preview with the studio photographs. The current public edition remains available in Latest.' },

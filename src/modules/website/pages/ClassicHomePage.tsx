@@ -1,3 +1,6 @@
+import { EmptyState } from '../../../components/molecule/EmptyState/EmptyState';
+import { usePublicWhatsapp } from '../publicWhatsapp';
+import { PublicWhatsappLink } from '../../../components/molecule/PublicWhatsappLink/PublicWhatsappLink';
 import { Fragment, type ReactNode } from 'react';
 import { Link, useNavigate } from '../links';
 import { useI18n } from '../../../i18n/I18nProvider';
@@ -6,7 +9,7 @@ import { useTable } from '../../../data/DataContext';
 import type { TeacherRow, ModalityRow, ReviewRow } from '../../../data/schema';
 import { formatCOP } from '../../../i18n/format';
 import { tenant } from '../../../tenant/tenant';
-import { priceItem, FAMILY_LABEL, FAMILY_RATIONALE, type PlanFamily } from '../../../tenant/pricing';
+import { FAMILY_LABEL, FAMILY_RATIONALE, type PlanFamily } from '../../../tenant/pricing';
 import { manifesto, philosophy, classesIntro, classes, classOrder, taglines } from '../../../tenant/brand';
 import { Button } from '../../../components/atom/Button/Button';
 import { Card } from '../../../components/molecule/Card/Card';
@@ -14,16 +17,15 @@ import { ClassRow } from '../../../components/molecule/ClassRow/ClassRow';
 import { TeacherCard } from '../../../components/organism/TeacherCard/TeacherCard';
 import { MediaSlot } from '../../../components/molecule/MediaSlot/MediaSlot';
 import { SectionHead, SiteShell } from '../SiteShell';
-import { useWhatsappLink } from '../../admin/settings';
 import { siteSpecs } from '../specs';
-import { useTodaySessions } from '../hooks';
+import { usePublicHomePricing, useTodaySessions } from '../hooks';
 
 const FAMILIES: PlanFamily[] = ['bienvenida', 'paquetes', 'privadas', 'regalos'];
 
 export function ClassicHomePage() {
   const { t, bi, lang } = useI18n();
   // 0047: the trial-class button is a sales handoff (M-08a contacts → front desk by default).
-  const wa = useWhatsappLink();
+  const wa = usePublicWhatsapp();
   const salesNote = wa.resolve('sales').note;
   const nav = useNavigate();
   const { sections, isVisible } = useLayout({ ...siteSpecs.home, layout: ['Hero', 'Classes', 'TodayClasses', 'ValueModel', 'Philosophy', 'Teachers', 'Testimonials', 'FirstStep'] });
@@ -33,7 +35,7 @@ export function ClassicHomePage() {
   const { rows: modalities } = useTable<ModalityRow>('modalities');
   const { rows: reviews } = useTable<ReviewRow>('reviews', { orderBy: { column: 'created_at', dir: 'desc' } });
   const modName = (id: string) => { const m = modalities.find((x) => x.id === id); return m ? (lang === 'es' ? m.name_es : m.name_en) : ''; };
-  const trial = priceItem('trial');
+  const { trial } = usePublicHomePricing();
   const trialPrice = trial?.price != null ? formatCOP(trial.price, lang) : '';
   // one card per distinct comment: the seed repeats a handful of phrases across many reviews
   const quotes = [...new Map(reviews.filter((r) => r.comment && r.visibility !== 'private').map((r) => [r.comment, r])).values()].slice(0, 3);
@@ -46,7 +48,7 @@ export function ClassicHomePage() {
           <h1>{bi(manifesto.lead)} <em>{bi(manifesto.emphasis)}</em></h1>
           <p className="site-lead muted">{t('site.hero.body', { city: tenant.city, mats: tenant.studio.mats, classes: tenant.studio.classesPerDay })}</p>
           <div className="row wrap">
-            <Link to="/site/plans"><Button size="lg">{t('site.hero.cta', { price: trialPrice })}</Button></Link>
+            <Link to="/site/plans"><Button size="lg">{t(trial.available ? 'site.hero.cta' : 'site.hero.ctaWithoutPrice', { price: trialPrice })}</Button></Link>
             <Link to="/site/schedule"><Button size="lg" variant="secondary">{t('site.hero.cta2')}</Button></Link>
           </div>
         </div>
@@ -116,6 +118,7 @@ export function ClassicHomePage() {
       <section className="container site-section">
         <SectionHead title={t('site.teachers.title')} body={t('site.teachers.body')} action={<Link to="/site/teachers">{t('site.teachers.title')} →</Link>} />
         <div className="grid grid-4">
+          {teachers.length === 0 && <EmptyState compact title={t('site.teachers.empty.title')} body={t('site.teachers.empty.body')} action={<Link to="/site/schedule">{t('site.today.all')}</Link>} />}
           {teachers.map((te) => <TeacherCard key={te.id} name={te.display_name} bio={te.bio} rating={te.rating_avg} specialties={te.specialties.map((id) => ({ label: modName(id), tone: modalities.find((m) => m.id === id)?.tone ?? 'river' }))} onClick={() => nav('/site/teachers')} />)}
         </div>
       </section>
@@ -144,14 +147,14 @@ export function ClassicHomePage() {
           <div className="site-cta-copy">
             <p className="eyebrow">{t('site.first.eyebrow')}</p>
             <h2>{t('site.first.title')}</h2>
-            <p>{t('site.first.body', { price: trialPrice })}</p>
+            <p>{t(trial.available ? 'site.first.body' : 'site.first.bodyWithoutPrice', { price: trialPrice })}</p>
           </div>
           <div className="row wrap">
             <Link to="/site/plans"><Button size="lg">{t('site.first.cta')}</Button></Link>
             <div className="stack-sm">
-              <a href={wa.link('sales', t('site.first.wa'))} target="_blank" rel="noreferrer">
+              <PublicWhatsappLink target={wa.target('sales', t('site.first.wa'))}>
                 <Button size="lg" variant="secondary">{t('site.first.cta2')}</Button>
-              </a>
+              </PublicWhatsappLink>
               {salesNote && <p className="xs muted">{bi(salesNote)}</p>}
             </div>
           </div>

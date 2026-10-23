@@ -1,3 +1,5 @@
+import { usePublicWhatsapp } from '../publicWhatsapp';
+import { PublicWhatsappLink } from '../../../components/molecule/PublicWhatsappLink/PublicWhatsappLink';
 /**
  * W-10 — Preguntas frecuentes (0051).
  *
@@ -14,7 +16,7 @@ import { Link } from '../links';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useLayout } from '../../../layout/useLayout';
 import { formatCOP } from '../../../i18n/format';
-import { useContact, useWhatsappLink } from '../../admin/settings';
+import { useContact } from '../../admin/settings';
 import { Accordion } from '../../../components/molecule/Accordion/Accordion';
 import { FaqAnswer } from '../../../components/molecule/FaqAnswer/FaqAnswer';
 import { itemsForFamilies } from '../../../components/molecule/PriceTable/PriceTable';
@@ -47,7 +49,7 @@ export function FaqPage() {
   const { groups, loading } = useFaqGroups();
   const contact = useContact();
   // A question the FAQ does not answer is a support handoff (M-08a contacts, 0047).
-  const wa = useWhatsappLink();
+  const wa = usePublicWhatsapp();
   const support = wa.resolve('support');
   const [query, setQuery] = useState('');
 
@@ -103,7 +105,7 @@ export function FaqPage() {
           {loading && groups.length === 0 && <EmptyState compact tone="loading" title={t('core.common.loading')} />}
           {!loading && query && matches === 0 && (
             <EmptyState icon="search" title={t('site.faq.none', { q: query })} body={t('site.faq.none.body')}
-              action={<a href={wa.link('support', t('site.faq.wa.text', { q: query }))} target="_blank" rel="noreferrer" className="sanctuary-button">{t('site.faq.wa')}<Icon name="whatsapp" size={18} /></a>} />
+              action={<PublicWhatsappLink target={wa.target('support', t('site.faq.wa.text', { q: query }))} className="sanctuary-button">{t('site.faq.wa')}<Icon name="whatsapp" size={18} /></PublicWhatsappLink>} />
           )}
           {view.filter((g) => g.items.length > 0).map((g, gi) => (
             <section key={g.key} id={`faq-${g.key}`} className="faq-group" aria-labelledby={`faq-${g.key}-h`}>
@@ -132,7 +134,7 @@ export function FaqPage() {
             <p>{t('site.faq.more.body')}</p>
           </div>
           <div className="faq-contact-actions">
-            <a href={wa.link('support', t('site.faq.wa.plain'))} target="_blank" rel="noreferrer" className="sanctuary-button is-light">{t('site.faq.wa')}<Icon name="whatsapp" size={18} /></a>
+            <PublicWhatsappLink target={wa.target('support', t('site.faq.wa.plain'))} className="sanctuary-button is-light">{t('site.faq.wa')}<Icon name="whatsapp" size={18} /></PublicWhatsappLink>
             <a href={`mailto:${contact.email}`} className="faq-contact-link">{contact.email}</a>
             <Link to="/site/plans" className="faq-contact-link">{t('site.value.all')} →</Link>
             {support.note && <p className="xs faq-contact-note">{bi(support.note)}</p>}
