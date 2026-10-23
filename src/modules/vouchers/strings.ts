@@ -288,6 +288,14 @@ export const strings: StringTable = {
     "es": "Revocación",
     "en": "Revocation"
   },
+  "vouchers.duplicateBooking": {
+    "es": "Esta persona ya tiene una reserva para esta clase. No se guardó otra reserva ni se descontaron clases del bono.",
+    "en": "This person already has a booking for this class. No second booking was saved or voucher credits deducted."
+  },
+  "vouchers.dailyConflict": {
+    "es": "Esta persona ya tiene una clase ese día. No se guardó otra reserva ni se descontaron clases del bono.",
+    "en": "This person already has a class on this day. No second booking was saved or voucher credits deducted."
+  },
   "vouchers.error": {
     "es": "No se pudo completar. Verifica el saldo, el aforo, los participantes y el estado del bono.",
     "en": "Could not complete. Check the balance, capacity, participants and voucher status."

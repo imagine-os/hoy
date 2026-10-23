@@ -1,5 +1,5 @@
 import { sessionAdmissionAvailable } from '../../../data/sessionAdmission';
-import { Fragment, useEffect, useState, type ReactNode } from 'react';
+import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useSession } from '../../../auth/SessionProvider';
@@ -42,7 +42,15 @@ export function WaitlistPage() {
   const cancelled = joined?.session.status === 'cancelled';
   const admissionBlocked=!!joined && !sessionAdmissionAvailable(joined.session,joined.modality,joined.session.template_id?{id:joined.session.template_id,active:joined.templateActive}:undefined,now);
   const [admissionError,setAdmissionError]=useState(false);
-  useEffect(()=>{setAdmissionError(false);},[id,user.id,role,data]);
+  const [dailyConflict,setDailyConflict]=useState(false);
+  const [duplicateConflict,setDuplicateConflict]=useState(false);
+  const mounted = useRef(true);
+  const context = useRef({ id, userId: user.id, role, data });
+  if (context.current.id !== id || context.current.userId !== user.id || context.current.role !== role || context.current.data !== data) context.current = { id, userId: user.id, role, data };
+  const capture = () => { const current = context.current; return () => mounted.current && context.current === current; };
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
+  const failedAdmission = (error: unknown) => { setDailyConflict(error instanceof Error && error.message === 'same_day_conflict'); setDuplicateConflict(error instanceof Error && error.message === 'booking_exists'); setAdmissionError(true); };
+  useEffect(()=>{setAdmissionError(false);setDailyConflict(false);setDuplicateConflict(false);setBusy(false);},[id,user.id,role,data]);
   const offered = !admissionError && !admissionBlocked && mine?.status === 'offered' && mine.claim_until && new Date(mine.claim_until).getTime() > now;
   const expired = !cancelled && mine?.status === 'offered' && mine.claim_until && new Date(mine.claim_until).getTime() <= now;
   const waiting = !cancelled && mine?.status === 'waiting';
@@ -50,16 +58,17 @@ export function WaitlistPage() {
 
   // An offer that ran out passes to the next person (C-20 rule).
   useEffect(() => {
-    if (!admissionError && !admissionBlocked && expired && mine && joined) { expireWaitlist(mine).catch(()=>setAdmissionError(true)); }
+    if (!admissionError && !admissionBlocked && expired && mine && joined) { const current = capture(); expireWaitlist(mine).catch(error=>{if(current() && !(error instanceof Error && error.message === 'admission_context_changed'))failedAdmission(error);}); }
   }, [admissionError,admissionBlocked,expired, mine, joined, expireWaitlist]);
 
   // Auto-claim consumes a credit the moment the spot is offered (C-20 rule).
   useEffect(() => {
-    if (offered && autoClaim && mine && joined && ent.hasAnyEntitlement && !busy) {
+    if (!admissionError && offered && autoClaim && mine && joined && ent.hasAnyEntitlement && !busy) {
+      const current = capture();
       setBusy(true);
-      claimWaitlist(mine, joined.session, ent.defaultKind).then((b) => nav(`/app/booking/${b.id}`, { replace: true })).catch(() => {setAdmissionError(true);setBusy(false);});
+      claimWaitlist(mine, joined.session, ent.defaultKind).then((b) => {if(current())nav(`/app/booking/${b.id}`, { replace: true });}).catch(error => {if(current() && !(error instanceof Error && error.message === 'admission_context_changed'))failedAdmission(error);}).finally(()=>{if(current())setBusy(false);});
     }
-  }, [offered, autoClaim, mine, joined, ent.hasAnyEntitlement, ent.defaultKind, claimWaitlist, nav, busy]);
+  }, [admissionError, offered, autoClaim, mine, joined, ent.hasAnyEntitlement, ent.defaultKind, claimWaitlist, nav, busy]);
 
   if (!joined) {
     return (
@@ -76,15 +85,16 @@ export function WaitlistPage() {
   const claim = async () => {
     if (!mine || admissionBlocked) return;
     if (!ent.hasAnyEntitlement || /yoga|vinyasa|flow|yin/.test(joined.modality?.slug ?? '')) { nav(`/app/checkout/${s.id}?claim=${mine.id}`); return; }
+    const current = capture();
     setBusy(true);
-    try { const b = await claimWaitlist(mine, s, ent.defaultKind); nav(`/app/booking/${b.id}`); } catch { setAdmissionError(true); } finally { setBusy(false); }
+    try { const b = await claimWaitlist(mine, s, ent.defaultKind); if(current())nav(`/app/booking/${b.id}`); } catch (error) { if(current() && !(error instanceof Error && error.message === 'admission_context_changed'))failedAdmission(error); } finally { if(current())setBusy(false); }
   };
 
   const SECTIONS: Record<string, () => ReactNode> = {
     'StatusCard (PositionRing + RuleExplainer)': () => {
       if (cancelled) return <Notice tone="warn" title={t('customer.cancelled.title')}>{lang === 'en' ? 'This class has been cancelled. Waitlist offers and claims are unavailable; no new place is offered.' : 'Esta clase fue cancelada. Las ofertas y los reclamos de la lista no están disponibles; no se ofrece un cupo nuevo.'}</Notice>;
       if (admissionBlocked) return <Notice tone="warn" title={t('customer.checkout.unavailable')} />;
-      if (admissionError) return <Notice tone="warn" title={t('core.common.error')} action={<Button onClick={()=>setAdmissionError(false)}>{t('core.common.retry')}</Button>} />;
+      if (admissionError) return <Notice tone="warn" title={t('core.common.error')} action={<Button onClick={()=>{setAdmissionError(false);setDailyConflict(false);setDuplicateConflict(false);}}>{t('core.common.retry')}</Button>}>{dailyConflict ? t('customer.book.oneADay') : duplicateConflict ? t('customer.home.booked') : null}</Notice>;
       if (alreadyBooked) return <Notice tone="success" title={t('customer.home.booked')} action={<Button size="sm" variant="secondary" onClick={() => nav(`/app/booking/${s.id}`)}>{t('customer.class.viewBooking')}</Button>} />;
       if (started) return <Notice tone="info" title={t('customer.waitlist.started')}>{t('customer.waitlist.started.body')}</Notice>;
       if (waiting) return (
@@ -94,14 +104,14 @@ export function WaitlistPage() {
           <p className="small muted">{t('customer.waitlist.rule', { min: policy.claimWindowMinutes })}</p>
         </Card>
       );
-      if (expired) return <Notice tone="warn" title={t('customer.waitlist.expired')} action={<Button size="sm" loading={busy} onClick={async () => { setBusy(true); try { await joinWaitlist(s); } catch { setAdmissionError(true); } finally { setBusy(false); } }}>{t('customer.waitlist.rejoin')}</Button>}>{t('customer.waitlist.expired.body')}</Notice>;
+      if (expired) return <Notice tone="warn" title={t('customer.waitlist.expired')} action={<Button size="sm" loading={busy} onClick={async () => { const current = capture(); setBusy(true); try { await joinWaitlist(s); } catch (error) { if(current() && !(error instanceof Error && error.message === 'admission_context_changed'))failedAdmission(error); } finally { if(current())setBusy(false); } }}>{t('customer.waitlist.rejoin')}</Button>}>{t('customer.waitlist.expired.body')}</Notice>;
       if (offered) return null;
       if (left > 0) return <Notice tone="success" title={t('customer.waitlist.spotsOpen', { n: left })} action={<Button size="sm" onClick={() => nav(`/app/checkout/${s.id}`)}>{t('core.common.book')}</Button>} />;
       return (
         <Card className="cust-center stack-sm" padding="lg">
           <strong>{t('customer.waitlist.full', { n: active.filter((w) => w.status === 'waiting').length })}</strong>
           <p className="small muted">{t('customer.waitlist.rule', { min: policy.claimWindowMinutes })}</p>
-          <Button size="lg" loading={busy} onClick={async () => { setBusy(true); try { await joinWaitlist(s); } catch { setAdmissionError(true); } finally { setBusy(false); } }}>{t('customer.class.joinWaitlist')}</Button>
+          <Button size="lg" loading={busy} onClick={async () => { const current = capture(); setBusy(true); try { await joinWaitlist(s); } catch (error) { if(current() && !(error instanceof Error && error.message === 'admission_context_changed'))failedAdmission(error); } finally { if(current())setBusy(false); } }}>{t('customer.class.joinWaitlist')}</Button>
         </Card>
       );
     },

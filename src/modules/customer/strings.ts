@@ -7,6 +7,20 @@ import type { StringTable } from '../../i18n/types';
 
 /** Every user-facing string of the customer app (C-xx, A-xx, E-xx). Spanish first; English always present. */
 export const strings: StringTable = {
+  'customer.checkout.recovery.checking': { es: 'Verificando tu reserva…', en: 'Checking your booking…' },
+  'customer.checkout.recovery.checking.body': { es: 'Revisamos el resultado guardado antes de volver a intentar.', en: 'Checking the saved outcome before another attempt.' },
+  'customer.checkout.recovery.unconfirmed': { es: 'No pudimos verificar el resultado', en: 'Could not verify the outcome' },
+  'customer.checkout.recovery.unconfirmed.body': { es: 'La reserva podría estar guardada. Vuelve a consultar antes de intentar reservar otra vez; no se descontará otra clase al consultar.', en: 'The booking may be saved. Check again before another booking attempt; checking does not deduct a class.' },
+  'customer.checkout.recovery.missing': { es: 'No se encontró una reserva guardada', en: 'No saved booking found' },
+  'customer.checkout.recovery.missing.body': { es: 'No se pudo confirmar una reserva activa con estas lecturas. Puedes volver a consultar o reintentar la reserva si sigue disponible.', en: 'These reads did not confirm an active saved booking. Check again or retry the booking if it is still available.' },
+  'customer.checkout.recovery.existing': { es: 'Ya tienes una reserva guardada', en: 'You already have a saved booking' },
+  'customer.checkout.recovery.existing.body': { es: 'Verificamos tu reserva y su clase descontada. Puedes abrirla sin reservar ni descontar otra clase.', en: 'Your booking and its class debit were verified. Open it without booking or deducting another class.' },
+  'customer.checkout.recovery.duplicate': { es: 'Ya tienes una reserva para esta clase', en: 'You already have a booking for this class' },
+  'customer.checkout.recovery.duplicate.body': { es: 'La reserva se rechazó por duplicada. No confirmamos una nueva reserva con paquete ni descontamos otra clase. Vuelve al horario para consultar tus reservas.', en: 'The booking was rejected as a duplicate. No new package booking was confirmed or additional class deducted. Return to the schedule to check your bookings.' },
+  'customer.checkout.recovery.backToSchedule': { es: 'Volver al horario', en: 'Back to schedule' },
+  'customer.checkout.recovery.checkAgain': { es: 'Volver a consultar', en: 'Check again' },
+  'customer.checkout.recovery.saved.body': { es: 'Verificamos tu reserva guardada. No se descontó otra clase. Ábrela para consultar su estado actual.', en: 'Your saved booking was verified. No additional class was deducted. Open it to see its current status.' },
+  'customer.checkout.recovery.retryBooking': { es: 'Reintentar reserva', en: 'Retry booking' },
   ...supportStrings,
   ...signupLegalStrings,
   ...signInPreviewStrings,

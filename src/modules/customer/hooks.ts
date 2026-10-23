@@ -1,3 +1,4 @@
+import { dailyAdmissionConflict, requireDailyAdmission } from '../../data/dailyAdmission';
 import { requireSessionAdmission, assertAdmissionContext } from '../../data/sessionAdmission';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {useTrialAssessment} from './useTrialAssessment';
@@ -5,7 +6,7 @@ import { useSession } from '../../auth/SessionProvider';
 import type { DataProvider } from '../../data/types';
 import { useData, useTable } from '../../data/DataContext';
 import type { BaseRow, BookingRow, ClassSessionRow, ContentArticleRow, ClassLedgerRow, EventRow, EventRsvpRow, FaqEntryRow, InviteRow, MembershipRow, ModalityRow, NotificationRow, PaymentMethodRow, PaymentRow, PlanRow, ProfileRow, ReviewRow, RoomRow, TeacherRow, UserRow } from '../../data/schema';
-import { dateKey, isSameDay } from '../../i18n/format';
+import { dateKey } from '../../i18n/format';
 import { tenant } from '../../tenant/tenant';
 import { priceItem, type PriceItem } from '../../tenant/pricing';
 import { policy } from './policy';
@@ -114,6 +115,7 @@ export function useNow(ms = 30_000) {
 export function useBookingActions() {
   const data = useData();
   const { user, role } = useSession();
+  const { rows: dailyVouchers } = useTable('voucher_bookings', { where: { tenant_id: tenant.id } });
   const live = useRef({data,actorId:user.id,role,mounted:true});
   live.current = {data,actorId:user.id,role,mounted:true};
   useEffect(()=>{live.current.mounted=true;return()=>{live.current.mounted=false;};},[]);
@@ -121,11 +123,8 @@ export function useBookingActions() {
 
   /** Rule: one class per person per day. Returns the conflicting booking's session id when there is one. */
   const sameDayConflict = useCallback((myBookings: BookingRow[], sessions: ClassSessionRow[], target: ClassSessionRow): string | null => {
-    if (tenant.studio.perPersonPerDay !== 1) return null;
-    const active = myBookings.filter((b) => b.status === 'booked' && b.session_id !== target.id);
-    const hit = active.find((b) => { const s = sessions.find((x) => x.id === b.session_id); return s && isSameDay(s.starts_at, target.starts_at); });
-    return hit?.session_id ?? null;
-  }, []);
+    return dailyAdmissionConflict({ bookings: myBookings.filter(row => row.session_id !== target.id), voucher_bookings: dailyVouchers, class_sessions: sessions }, target, user.id);
+  }, [dailyVouchers, user.id]);
 
   const book = useCallback(async (session: ClassSessionRow, paidWith: EntitlementKind, opts?: { packagePlanId?: string | null; paymentId?: string; matNumber?: number | null; data?: DataProvider; isCurrent?: () => boolean; claimId?: string | null }) => {
     const control={isCurrent:()=>isCurrent() && (!opts?.isCurrent || opts.isCurrent())};
@@ -137,6 +136,7 @@ export function useBookingActions() {
     if (fresh.booked_count >= fresh.capacity) throw new Error('session_full');
     const existing = await transaction.list<BookingRow>('bookings', { where: { user_id: user.id, session_id: fresh.id } });
     if (existing.some(b => b.status === 'booked' || b.status === 'checked_in')) throw new Error('booking_exists');
+    await requireDailyAdmission(transaction, fresh, user.id, control);
     if(opts?.claimId){
       const entry=await transaction.get<WaitlistRow>('waitlist',opts.claimId);
       assertAdmissionContext(control);

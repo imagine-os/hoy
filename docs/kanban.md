@@ -1,3 +1,5 @@
+RS-02 package checkout: verify saved booking/debit evidence after uncertain acknowledgement, with read-only recovery and context-bound confirmation. Existing-package frontend verification is separate from backend and owner acceptance. See frontend-completion/rs02-package-booking-recovery.md.
+
 Shared admission integration: replay the bounded publication/context guard onto PR85 main; original saved candidates remain separate. Current-source build, regression and independent review are required. See frontend-completion/session-admission-repair.md.
 
 Desk receipt label repair: retain the scoped queue customer in the settled preview, keep the genuine unknown fallback, and guard provider/persona changes. See frontend-completion/desk-receipt-customer.md.
@@ -806,3 +808,9 @@ Protected-capture clarification: M14 schedule/pay screenshots remain local/ignor
 
 ### Done
 - C-37 / C-28: isolated fictional class-gift rehearsal and invitation availability states; scoped verification and payment/account integration gates in `docs/frontend-completion/voucher-gifts-integration.md`. No row-wide acceptance or backend completion.
+
+## Booking frontend acceptance follow-up
+
+- RS-02: saved package-booking confirmation recovery and truthful duplicate feedback; final combined review and release pending. No new charge is inferred from missing confirmation.
+- RS-04: scoped studio-day admission checks across regular and identified voucher bookings, offered claims and rescheduling; synthetic regression coverage, no server enforcement claim.
+- RS-05: current availability and fresh navigation checks on customer/public class drawers; final paused-context regressions and combined release pending.
