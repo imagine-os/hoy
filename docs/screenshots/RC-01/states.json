@@ -1,0 +1,11 @@
+{
+  "base": "http://127.0.0.1:5237",
+  "checks": [
+    "en390: loading, error/retry, actor-change stale result, subscription latest read wins, empty, unmount/late read, repeated return",
+    "es390: loading, error/retry, actor-change stale result, subscription latest read wins, empty, unmount/late read, repeated return"
+  ],
+  "errors": [],
+  "limits": [
+    "Development-only real-component provider fault harness; no server/auth acceptance."
+  ]
+}

@@ -1,0 +1,43 @@
+import assert from 'node:assert/strict';
+import { build } from 'esbuild';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
+const RealDate = Date, clock = '2026-10-23T17:00:00Z';
+globalThis.Date = class extends RealDate { constructor(...args) { super(...(args.length ? args : [clock])); } static now() { return new RealDate(clock).getTime(); } };
+const values = new Map(); globalThis.localStorage = { getItem: k => values.get(k) ?? null, setItem: (k, v) => values.set(k, v) };
+const dir = await mkdtemp(join(tmpdir(), 'hoy-home-'));
+try {
+ const file = join(dir, 'test.mjs');
+ await build({ stdin: { contents: "export * from './src/modules/staff/homeData';export {MockProvider} from './src/data/MockProvider';export {tenant} from './src/tenant/tenant';export {isSameDay} from './src/i18n/format';export * from './src/modules/transfers/pendingQueue';", resolveDir: process.cwd() }, bundle: true, platform: 'node', format: 'esm', outfile: file, logLevel: 'silent' });
+ const { MockProvider, tenant, readHome, projectHome, homeTables, isSameDay, projectQueue, entryMatches } = await import(pathToFileURL(file));
+ const data = new MockProvider(), now = new Date(), snapshot = await readHome(data, tenant.id, true, true), before = JSON.stringify(snapshot);
+ const projected = projectHome(snapshot, tenant.id, now);
+ const ids = new Set(snapshot.class_sessions.filter(s => s.status !== 'cancelled' && isSameDay(s.starts_at, now)).map(s => s.id));
+ const arrivals = snapshot.bookings.filter(b => ids.has(b.session_id) && b.status === 'checked_in').length;
+ assert.equal(projected.arrivals, arrivals); assert(projected.todayAll.length > 0, 'actual demo has day sessions');
+ assert.equal(projected.pending, projectQueue({ payments: snapshot.payments, receipts: snapshot.transfer_receipts, profiles: snapshot.profiles, plans: snapshot.plans }, tenant.id).filter(e => entryMatches(e, 'pending')).length);
+ assert.equal(JSON.stringify(snapshot), before, 'pure projection preserves existing demo data');
+ // Preserve all demo bookings while changing only a copied session's status.
+ const booked = snapshot.class_sessions.find(s => ids.has(s.id) && snapshot.bookings.some(b => b.session_id === s.id && b.status === 'checked_in'));
+ assert(booked, 'demo has checked-in arrival');
+ const completed = { ...snapshot, class_sessions: snapshot.class_sessions.map(s => s.id === booked.id ? { ...s, status: 'completed' } : s) };
+ assert.equal(projectHome(completed, tenant.id, now).arrivals, arrivals, 'completion never drops arrivals');
+ assert(!projectHome(completed, tenant.id, now).today.some(x => x.session.id === booked.id));
+ const cancelled = { ...snapshot, class_sessions: snapshot.class_sessions.map(s => s.id === booked.id ? { ...s, status: 'cancelled' } : s) };
+ assert.equal(projectHome(cancelled, tenant.id, now).arrivals, arrivals - snapshot.bookings.filter(b => b.session_id === booked.id && b.status === 'checked_in').length);
+ const foreign = Object.fromEntries(homeTables.map(table => [table, [...snapshot[table], ...snapshot[table].map(row => ({ ...row, id: 'foreign-' + row.id, tenant_id: 'foreign' }))]]));
+ assert.deepEqual(projectHome(foreign, tenant.id, now), projected);
+ for (const failed of homeTables) await assert.rejects(readHome({ list: async (table, q) => { assert.equal(q.where.tenant_id, tenant.id); if (table === failed) throw Error('read_failed'); return snapshot[table]; } }, tenant.id, true, true), /read_failed/);
+ assert.deepEqual(await readHome(data, tenant.id, true, true), snapshot, 'retry recovers unchanged snapshot');
+ const readTables = []; await readHome({ list: async table => { readTables.push(table); return []; } }, tenant.id, false, false);
+ for (const restricted of ['payments', 'transfer_receipts', 'plans', 'message_log']) assert(!readTables.includes(restricted));
+ const empty = Object.fromEntries(homeTables.map(table => [table, []])); assert.equal(projectHome(empty, tenant.id, now).arrivals, 0); assert.equal(projectHome(empty, tenant.id, now).next, undefined);
+ const midnight = { ...empty, class_sessions: [{ tenant_id: tenant.id, id: 'late', starts_at: '2026-10-24T04:00:00Z', ends_at: '2026-10-24T04:50:00Z', status: 'scheduled' }], bookings: [{ tenant_id: tenant.id, session_id: 'late', status: 'checked_in' }], payments: [{ tenant_id: tenant.id, id: 'late-pay', status: 'approved', paid_at: '2026-10-24T04:30:00Z', amount: 123 }] };
+ assert.equal(projectHome(midnight, tenant.id, new Date('2026-10-24T04:59:00Z')).arrivals, 1);
+ assert.equal(projectHome(midnight, tenant.id, new Date('2026-10-24T04:59:00Z')).paidToday, 123);
+ assert.equal(projectHome(midnight, tenant.id, new Date('2026-10-24T05:00:00Z')).arrivals, 0);
+ assert.equal(projectHome(midnight, tenant.id, new Date('2026-10-24T05:00:00Z')).paidToday, 0);
+ console.log(JSON.stringify({ pass: true, demo: { classes: projected.todayAll.length, arrivals, expected: projected.expected, pending: projected.pending }, checks: ['actual demo parity', 'completed/cancelled classes', 'pending queue parity', 'tenant isolation', 'all eleven read failures and retry', 'permission-specific reads', 'empty', 'no mutations'] }, null, 2));
+} finally { await rm(dir, { recursive: true, force: true }); }

@@ -1,0 +1,13 @@
+{
+  "base": "http://127.0.0.1:5238",
+  "checks": [
+    "en390: actual staff shell, Tokyo browser/studio day, completed-class arrivals 16, all 5 rosters, exact next CTA, pending2 queue parity/foreign exclusion, repeat/back/forward, light/dark, no DB changes/overflow",
+    "en1280: actual staff shell, Tokyo browser/studio day, completed-class arrivals 16, all 5 rosters, exact next CTA, pending2 queue parity/foreign exclusion, repeat/back/forward, light/dark, no DB changes/overflow",
+    "es390: actual staff shell, Tokyo browser/studio day, completed-class arrivals 16, all 5 rosters, exact next CTA, pending2 queue parity/foreign exclusion, repeat/back/forward, light/dark, no DB changes/overflow",
+    "es1280: actual staff shell, Tokyo browser/studio day, completed-class arrivals 16, all 5 rosters, exact next CTA, pending2 queue parity/foreign exclusion, repeat/back/forward, light/dark, no DB changes/overflow"
+  ],
+  "errors": [],
+  "limits": [
+    "Local production bundle and fictional browser data; no backend/owner acceptance or deployment."
+  ]
+}

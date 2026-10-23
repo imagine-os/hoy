@@ -1,11 +1,8 @@
-import { useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useI18n } from '../../i18n/I18nProvider';
 import { useSession } from '../../auth/SessionProvider';
 import { ROLE_LABEL } from '../../auth/roles';
-import { useTable } from '../../data/DataContext';
-import type { BaseRow, BookingRow, PaymentRow } from '../../data/schema';
-import { isSameDay, formatCOP } from '../../i18n/format';
+import { formatCOP } from '../../i18n/format';
 import { StatTile } from '../../components/molecule/StatTile/StatTile';
 import { Card } from '../../components/molecule/Card/Card';
 import { Button } from '../../components/atom/Button/Button';
@@ -14,9 +11,12 @@ import { ClassCard } from '../../components/organism/ClassCard/ClassCard';
 import { Timeline, type TimelineItem } from '../../components/organism/Timeline/Timeline';
 import { EmptyState } from '../../components/molecule/EmptyState/EmptyState';
 import { ConversationList } from '../../components/organism/ConversationList/ConversationList';
-import { toSummary, useConversations } from '../../data/comms';
-import { useTodaySessions } from '../website/hooks';
-import { usePeople } from './people';
+import type { ConversationSummary } from '../../components/organism/ConversationList/ConversationList';
+import { messageAt } from '../../components/organism/MessageThread/MessageThread';
+import { isConversationRow } from '../../data/comms';
+import { tenant } from '../../tenant/tenant';
+import { projectHome } from './homeData';
+import { useHomeData } from './useHomeData';
 import type { AuditRow } from './audit';
 import './staff.css';
 import { auditTitle } from './audit';
@@ -26,30 +26,25 @@ export function StaffHomePage() {
   const { t, bi, lang, dict } = useI18n();
   const nav = useNavigate();
   const { role, can } = useSession();
-  const today = useTodaySessions();
-  const todayAll = useTodaySessions(true);
-  const todayIds = useMemo(() => today.map((x) => x.session.id), [today]);
-  const { rows: bookings } = useTable<BookingRow>('bookings', { where: { session_id: todayIds } });
-  const { rows: waitlist } = useTable<BaseRow>('waitlist', { where: { status: 'waiting' } });
-  const { rows: payments } = useTable<PaymentRow>('payments');
-  const { rows: audit } = useTable<AuditRow>('audit_log', { orderBy: { column: 'created_at', dir: 'desc' }, limit: 8 });
-  const { byId } = usePeople();
-  const { conversations } = useConversations();
-  const unreadMsgs = conversations.reduce((a, c) => a + c.unread, 0);
-  const unreadThreads = conversations.filter((c) => c.unread > 0).length;
-  const recent = useMemo(() => conversations.map(toSummary), [conversations]);
-  const now = Date.now();
-  const next = today.find((x) => new Date(x.session.ends_at).getTime() > now);
-  const arrivals = bookings.filter((b) => b.status === 'checked_in').length;
-  const expected = bookings.filter((b) => b.status === 'booked').length;
-  const openShifts = today.filter((x) => new Date(x.session.starts_at).getTime() > now).length;
-  const paidToday = payments.filter((p) => p.status === 'approved' && p.paid_at && isSameDay(p.paid_at, new Date())).reduce((a, p) => a + p.amount, 0);
-  const pending = payments.filter((p) => p.status === 'pending').length;
+  const { snapshot, status, now, retry } = useHomeData();
+  const { today, todayAll, next, arrivals, expected, openShifts, paidToday, pending, waitlist, profiles, messages } = projectHome(snapshot, tenant.id, now);
+  const byId = new Map(profiles.map(p => [p.user_id, { name: p.full_name }]));
+  const groups = new Map<string, typeof messages>();
+  for (const message of messages.filter(isConversationRow)) groups.set(message.user_id!, [...(groups.get(message.user_id!) ?? []), message]);
+  const recent: ConversationSummary[] = [...groups].map(([key, rows]) => {
+    const sorted = [...rows].sort((a, b) => messageAt(a).localeCompare(messageAt(b)));
+    const last = sorted[sorted.length - 1], profile = profiles.find(p => p.user_id === key);
+    return { key, name: profile?.full_name ?? key, initials: profile?.initials ?? undefined, snippet: (last.channel === 'email' && last.subject) || last.body || last.template_key || '', lastAt: messageAt(last), unread: rows.filter(m => m.direction === 'inbound' && !m.read_at).length, channel: last.channel, channels: [...new Set(rows.map(m => m.channel))] };
+  }).sort((a, b) => b.lastAt.localeCompare(a.lastAt));
+  const unreadMsgs = recent.reduce((sum, c) => sum + (c.unread ?? 0), 0);
+  const unreadThreads = recent.filter(c => (c.unread ?? 0) > 0).length;
+  const audit = [...(snapshot.audit_log as AuditRow[])].sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, 8);
   const activity: TimelineItem[] = audit.map((a) => ({ id: a.id, at: a.created_at, kind: a.action.startsWith('payment') ? 'payment' : a.action.startsWith('booking') ? 'booking' : a.action.includes('note') ? 'note' : 'system', title: auditTitle(a.action, t, dict), meta: `${byId.get(a.actor_id ?? '')?.name ?? t('staff.home.system')} · ${a.entity}${a.entity_id ? ` · ${a.entity_id}` : ''}` }));
 
   return (
     <div className="stack">
       <div className="page-head"><div><h1>{t('staff.home.title')}</h1><p className="muted small">{t('staff.home.role', { role: bi(ROLE_LABEL[role]) })}</p></div></div>
+      {status !== 'ready' ? <EmptyState compact tone={status === 'error' ? 'error' : 'loading'} title={t(status === 'error' ? 'core.common.error' : 'core.common.loading')} action={status === 'error' ? <Button onClick={retry}>{t('core.common.retry')}</Button> : undefined} /> : <>
       <div className="grid grid-4">
         <StatTile label={t('staff.home.arrivals')} value={arrivals} hint={t('staff.home.arrivals.hint', { n: expected })} trend={arrivals > 0 ? 'up' : 'flat'} />
         <StatTile label={t('staff.home.openShifts')} value={openShifts} hint={t('staff.home.openShifts.hint', { n: today.length })} />
@@ -58,6 +53,7 @@ export function StaffHomePage() {
           ? <StatTile label={t('staff.home.unread')} value={unreadMsgs} hint={unreadThreads ? t('staff.home.unread.hint', { n: unreadThreads }) : undefined} trend={unreadMsgs > 0 ? 'down' : 'flat'} />
           : <StatTile label={t('staff.home.waitlist')} value={waitlist.length} />}
       </div>
+      {can('payments.read') && ['super_admin', 'admin', 'front_desk'].includes(role) && <Link to="/staff/transfers"><Button variant="secondary" block>{t('transfers.title')} · {t('staff.home.pending', { n: pending })}</Button></Link>}
       <div className="grid grid-2">
         <div className="stack">
           <section className="stack-sm">
@@ -93,6 +89,7 @@ export function StaffHomePage() {
           </Card>
         </div>
       </div>
+      </>}
     </div>
   );
 }

@@ -793,3 +793,5 @@ Protected-capture clarification: M14 schedule/pay screenshots remain local/ignor
 
 ### Done
 - C-37 / C-28: isolated fictional class-gift rehearsal and invitation availability states; scoped verification and payment/account integration gates in `docs/frontend-completion/voucher-gifts-integration.md`. No row-wide acceptance or backend completion.
+
+RC-01 reception dashboard (2026-10-23, isolated draft handoff): whole-day arrivals/expected counts, existing pending queue parity/action, local scoped loading/error/retry/empty and stale-read suppression implemented. Home/queue domain, full build/typecheck and EN/ES390/1280 production plus EN/ES390 fault checks pass. Owner/backend/source acceptance stays pending. See frontend-completion/reception-dashboard.md; integration owns shared metadata and final release.
