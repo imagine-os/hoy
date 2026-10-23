@@ -799,3 +799,5 @@ Protected-capture clarification: M14 schedule/pay screenshots remain local/ignor
 ### Done
 
 - M-06 · AD-07/PL-11 scoped read recovery, responsive containment and Spanish history labels; local build/domain/browser matrix verified. [Evidence and remaining gaps](frontend-completion/crm-read-recovery.md). Draft review only; source/owner feature acceptance unchanged.
+
+- M-06 integration correction · Known guest/comp booking sources now show Invitado/Guest and Cortesía/Complimentary, with unknown values still unconfirmed. Focused bilingual mobile/desktop table/timeline regression added; no booking or receipt policy changed.

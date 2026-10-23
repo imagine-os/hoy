@@ -13,3 +13,15 @@ Run applicable build, type, domain and browser checks on final code, with real r
 ## Response
 
 Implemented the bounded M-06 recovery/translation/responsive slice. [Change record](../changelog/0145-crm-read-recovery.md); [checks, captures and unverified boundaries](../frontend-completion/crm-read-recovery.md). No whole-row completion or backend acceptance claim. Repository has no AGENTS.md or .agents skill files; CLAUDE.md and .claude/skills/ui-spacing/SKILL.md were read and followed.
+
+## Integration follow-up prompt
+
+Integration review mentioned a remaining CRM label fix in your candidate. Please inspect your current CRM/MemberPage EN/ES labels against receipt-only launch semantics and source requirements, identify and repair the concrete label issue if reproducible within owned files. Do not invent policy or edit shared providers. Ask in your recorded response for exact reproduction if not determinable; I am asking integration to record it. Preserve branch and tests, verify changed UI and remote head. The existing normal CLI GraphQL route remains proxy-blocked; don't attempt PR creation or alternate routes. Integration reports read-only merge preview against PR83 is clean. Return exact changed labels and any unresolved discrepancy.
+
+### Clarification
+
+The integration owner's final report identifies the exact CRM issue as the guest/comp label defect, rather than receipt wording. Please prioritize reproducing guest and complimentary booking labels in both languages against source statuses, then repair only the incorrect mappings. Keep unknown statuses honest and do not change business policies. Preserve existing responsive/read-recovery tests.
+
+### Follow-up response
+
+Reproduced guest/comp as incorrectly unconfirmed in CRM history. Added only the two known mappings using existing source labels: Invitado/Guest and Cortesía/Complimentary. Unknown remains Sin confirmar/Unconfirmed. Added a failing-before/passing-after bilingual table/timeline regression. No policy, receipt/invoice, provider or other copy change. No PR creation attempted.

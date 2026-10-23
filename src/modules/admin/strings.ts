@@ -34,6 +34,8 @@ export const strings: StringTable = {
   'admin.crm.value.paid.voucher': { es: 'Bono', en: 'Voucher' },
   'admin.crm.value.paid.dropin': { es: 'Clase individual', en: 'Single class' },
   'admin.crm.value.paid.free': { es: 'Sin costo', en: 'Free' },
+  'admin.crm.value.paid.guest': { es: 'Invitado', en: 'Guest' },
+  'admin.crm.value.paid.comp': { es: 'Cortesía', en: 'Complimentary' },
   'admin.crm.value.paid.unknown': { es: 'Sin confirmar', en: 'Unconfirmed' },
 
   'admin.emails.edit.mock': {es:'Versiones ficticias en este navegador. Editar o restaurar no envía correos ni conecta el proveedor. El historial real y su conservación siguen pendientes.',en:'Fictional versions in this browser. Editing or restoring does not send email or connect a provider. Real history storage and retention remain pending.'},

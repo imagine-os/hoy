@@ -159,7 +159,7 @@ const CRM_VALUES: Record<string, Record<string, boolean>> = {
   method: Object.fromEntries(['card', 'pse', 'qr', 'cash', 'transfer', 'gift_card'].map(v => [v, true])),
   provider: { wompi: true, manual: true },
   status: { approved: true, pending: true, declined: true, refunded: true },
-  paid: Object.fromEntries(['package', 'single', 'trial', 'membership', 'credits', 'voucher', 'dropin', 'free'].map(v => [v, true])),
+  paid: Object.fromEntries(['package', 'single', 'trial', 'membership', 'credits', 'voucher', 'dropin', 'free', 'guest', 'comp'].map(v => [v, true])),
 };
 
 const EN_DAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
