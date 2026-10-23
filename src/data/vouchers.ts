@@ -1,3 +1,4 @@
+import { dailyAdmissionConflict } from './dailyAdmission';
 import { sessionAdmissionAvailable } from './sessionAdmission';
 import type { BaseRow, BookingRow, ClassSessionRow, ModalityRow } from './schema';
 
@@ -112,6 +113,7 @@ export function executeVoucherCommand(database: VoucherDb, command: VoucherComma
       const regular = (db.bookings as BookingRow[]).filter(b => b.tenant_id === context.tenantId && b.session_id === session.id && b.status !== 'cancelled' && b.status !== 'late_cancel');
       if (regular.length + voucherSeats(db, session.id, context.tenantId) + c.participants.length > session.capacity) fail('session_full');
       if (bookings.some(b => b.tenant_id === context.tenantId && b.sessionId === session.id && b.status !== 'cancelled' && b.participants.some(p => participantIdentities(p).some(identity => identities.includes(identity)))) || c.participants.some(p => p.userId && regular.some(b => b.user_id === p.userId))) fail('booking_exists');
+      if (c.participants.some(person => person.userId && dailyAdmissionConflict(db, session, person.userId))) fail('same_day_conflict');
       if (voucher.benefitKind === 'cop' && !positive(c.costPerPerson ?? 0)) fail('voucher_price_required');
       const cost = voucher.benefitKind === 'cop' ? c.costPerPerson! * c.participants.length : voucher.creditUnit === 'per_person' ? c.participants.length : 1;
       if (!positive(cost) || cost > voucher.balance) fail('voucher_insufficient_balance');

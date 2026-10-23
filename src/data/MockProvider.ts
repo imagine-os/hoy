@@ -1,3 +1,4 @@
+import { dailyAdmissionConflict, identifiedSessionAdmission } from './dailyAdmission';
 import { sessionAdmissionAvailable } from './sessionAdmission';
 import { ensureFullDemoSession } from './seed/ensureFullDemoSession';
 import { appendClassPayRule, defaultClassPayRule, type AppendClassPayRuleCommand, type ClassPayRuleRow } from './classPayRules';
@@ -140,6 +141,8 @@ export class MockProvider implements DataProvider {
     if (!session || session.status !== 'scheduled' || new Date(session.starts_at).getTime() <= Date.now()) throw new Error('session_unavailable');
     const others = (this.db.bookings as BookingRow[]).filter(b => b.session_id === row.session_id && b.id !== row.id && occupiesMat(b));
     if (others.some(b => b.user_id === row.user_id) || (this.db.voucher_bookings as VoucherBookingRow[]).some(b => b.sessionId === session.id && b.status !== 'cancelled' && b.participants.some(p => p.userId === row.user_id))) throw new Error('booking_exists');
+    if (admission && identifiedSessionAdmission(this.db, session, row.user_id, row.id)) throw new Error('booking_exists');
+    if (admission && dailyAdmissionConflict(this.db, session, row.user_id, row.id)) throw new Error('same_day_conflict');
     if (others.length + voucherSeats(this.db, session.id) >= session.capacity) throw new Error('session_full');
     const modality = (this.db.modalities as ModalityRow[]).find(m => m.id === session.modality_id && m.tenant_id === session.tenant_id);
     const template = this.db.class_templates.find(t => t.id === session.template_id && t.tenant_id === session.tenant_id);

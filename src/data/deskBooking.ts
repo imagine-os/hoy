@@ -1,8 +1,9 @@
+import { requireDailyAdmission } from './dailyAdmission';
 import { requireSessionAdmission, assertAdmissionContext, type AdmissionControl } from './sessionAdmission';
 import type { DataProvider } from './types';
-import type { BookingRow, ClassLedgerRow, ClassSessionRow, PaymentRow } from './schema';
+import type { BookingRow, ClassLedgerRow, PaymentRow } from './schema';
 import { approvedPackageRows, packageState, packageLots, selectPackagePurchase } from './packages';
-import { dateKey, isSameDay } from '../i18n/format';
+import { dateKey } from '../i18n/format';
 import { tenant } from '../tenant/tenant';
 
 /** Called inside atomic() only. Fictional browser adapter; production requires an authorized RPC. */
@@ -13,10 +14,7 @@ export async function bookWithPackage(data: DataProvider, input: { userId: strin
   const bookings = await data.list<BookingRow>('bookings', { where: { user_id: input.userId } });
   const active = bookings.filter(b => b.status !== 'cancelled' && b.status !== 'late_cancel');
   if (active.some(b => b.session_id === session.id)) throw new Error('booking_exists');
-  if (tenant.studio.perPersonPerDay === 1) {
-    const sessions = await data.list<ClassSessionRow>('class_sessions');
-    if (active.some(b => sessions.some(s => s.id === b.session_id && isSameDay(s.starts_at, session.starts_at)))) throw new Error('same_day_conflict');
-  }
+  await requireDailyAdmission(data, session, input.userId, input.control);
   // MockProvider's booking insertion also checks actual occupancy, voucher seats and duplicates.
   if (session.booked_count >= session.capacity) throw new Error('session_full');
   const rows = await data.list<ClassLedgerRow>('class_ledger', { where: { user_id: input.userId } });
