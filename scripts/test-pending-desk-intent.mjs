@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import {build} from 'esbuild';
 const result=await build({stdin:{contents:"export * from './src/data/pendingDeskIntent'; export {freezeSaleQuote,resolveOperationalQuote} from './src/data/operationalQuotes'; export {MockProvider} from './src/data/MockProvider';",resolveDir:process.cwd()},bundle:true,write:false,format:'esm',platform:'node',logLevel:'silent'});
-const {makePendingDeskIntent,readPendingDeskIntent,findPendingDeskRequest,freezeSaleQuote,resolveOperationalQuote,MockProvider}=await import(`data:text/javascript;base64,${Buffer.from(result.outputFiles[0].text).toString('base64')}`);
+const {makePendingDeskIntent,readPendingDeskIntent,findPendingDeskRequest,freezeSaleQuote,resolveOperationalQuote,MockProvider}=await import(`data:text/javascript;base64,${Buffer.from(result.outputFiles[0].text+'\n//# sourceURL=pending-desk-intent-fixture.mjs').toString('base64')}`);
 globalThis.localStorage={getItem:()=>null,setItem:()=>{}};
 const data=new MockProvider(), quote=freezeSaleQuote(resolveOperationalQuote(data.peek('plans'),'pack12'));
 const scope={tenantId:quote.tenantId,customerId:'synthetic_customer',sessionId:'synthetic_session',matNumber:null,planId:quote.planId};
@@ -29,4 +29,7 @@ check(()=>assert.equal(findPendingDeskRequest([{...linked,method:'transfer'}],sc
 check(()=>assert.equal(findPendingDeskRequest([linked],{...scope,sessionId:'another_session'}),null));
 check(()=>assert.throws(()=>readPendingDeskIntent({...linked,frontend_quote:{...quote,chargedAmount:quote.chargedAmount+1}}),/invalid/));
 check(()=>assert.throws(()=>makePendingDeskIntent({...scope,customerId:''},quote),/scope/));
+const optionalQuote={...quote,taxTotals:undefined},optionalIntent=makePendingDeskIntent(scope,optionalQuote);
+check(()=>assert.equal(optionalIntent.quoteFingerprint,intent.quoteFingerprint));
+check(()=>assert.deepEqual(readPendingDeskIntent(JSON.parse(JSON.stringify({...row,frontend_quote:optionalQuote,frontend_desk_intent:optionalIntent}))),optionalIntent));
 console.log(`PASS pending desk intent: ${n} metadata/scope/reconciliation cases`);

@@ -17,9 +17,11 @@ function canonical(value: unknown): string {
   if (value && typeof value === 'object') return `{${Object.keys(value).sort().map(k => `${JSON.stringify(k)}:${canonical((value as Record<string,unknown>)[k])}`).join(',')}}`;
   return JSON.stringify(value);
 }
+// Fingerprint exactly what JSON persistence retains (optional undefined fields are omitted).
+const quoteFingerprint=(quote:FrozenSaleQuote)=>canonical(JSON.parse(JSON.stringify(quote)));
 export function makePendingDeskIntent(scope: DeskIntentScope, quote: FrozenSaleQuote): PendingDeskIntent {
   if (!validScope(scope) || quote.tenantId !== scope.tenantId || quote.planId !== scope.planId || quote.kind !== 'class' || quote.quantity !== 1) throw Error('desk_intent_scope');
-  return { version:1,kind:'booking',...scope,quoteFingerprint:canonical(quote),requestKey:key(scope) };
+  return { version:1,kind:'booking',...scope,quoteFingerprint:quoteFingerprint(quote),requestKey:key(scope) };
 }
 export function readPendingDeskIntent(payment: PaymentRow): PendingDeskIntent | null {
   const raw = payment.frontend_desk_intent;
@@ -27,7 +29,7 @@ export function readPendingDeskIntent(payment: PaymentRow): PendingDeskIntent | 
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw Error('desk_intent_invalid');
   const i=raw as PendingDeskIntent, quote=readPaymentQuote(payment);
   if (i.version!==1 || i.kind!=='booking' || !validScope(i) || i.tenantId!==payment.tenant_id || i.customerId!==payment.user_id || i.planId!==payment.plan_id
-    || !quote || quote.kind!=='class' || quote.quantity!==1 || i.quoteFingerprint!==canonical(quote) || i.requestKey!==key(i)) throw Error('desk_intent_invalid');
+    || !quote || quote.kind!=='class' || quote.quantity!==1 || i.quoteFingerprint!==quoteFingerprint(quote) || i.requestKey!==key(i)) throw Error('desk_intent_invalid');
   return {version:1,kind:'booking',tenantId:i.tenantId,customerId:i.customerId,sessionId:i.sessionId,matNumber:i.matNumber,planId:i.planId,quoteFingerprint:i.quoteFingerprint,requestKey:i.requestKey};
 }
 /** Scoped pending reconciliation: never reinterpret old product-only rows or silently replace a conflict. */

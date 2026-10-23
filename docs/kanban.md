@@ -1,6 +1,6 @@
 RS-02 package checkout: verify saved booking/debit evidence after uncertain acknowledgement, with read-only recovery and context-bound confirmation. Existing-package frontend verification is separate from backend and owner acceptance. See frontend-completion/rs02-package-booking-recovery.md.
 
-- Local frontend repair0162: retained pending desk booking intent and reload reconciliation; shared settlement integration and combined checks remain pending. No release or real services.
+- Local frontend repair0162: retained pending desk booking intent and reload reconciliation, with scoped failure feedback and JSON persistence checks; shared settlement integration and combined checks remain pending. No release or real services.
 
 Shared admission integration: replay the bounded publication/context guard onto PR85 main; original saved candidates remain separate. Current-source build, regression and independent review are required. See frontend-completion/session-admission-repair.md.
 

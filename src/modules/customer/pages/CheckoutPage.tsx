@@ -172,12 +172,14 @@ export function CheckoutPage() {
     if(isPass(kind)&&!review.available)return 'quote_changed';
     const transferProvider=data,transferOwnerContext=transferContext;
     const transferValid=()=>transferLive.current.mounted&&transferLive.current.data===transferProvider&&transferLive.current.context===transferOwnerContext;
+    const cashRequest=method==='cash'&&isPass(kind);
+    const requestValid=()=>transferValid()&&(!cashRequest||deskLive.current.scope===deskScopeKey&&deskLive.current.method==='cash');
     confirmBusy.current=true;
     setBusy(true); setError(null); setTransferError(false);
     try {
       const control={isCurrent:transferValid};
       if(method==='cash'&&isPass(kind)){
-        const deskControl={isCurrent:()=>transferValid()&&deskLive.current.scope===deskScopeKey&&deskLive.current.method==='cash'};
+        const deskControl={isCurrent:requestValid};
         if(claimId)throw Error('desk_claim_unsupported');
         if(!data.atomic||data.name!=='mock')throw Error('atomic_unavailable');
         const payment=await data.atomic(async tx=>{
@@ -259,7 +261,7 @@ export function CheckoutPage() {
       setPackageRecovery(null); setDone({ ...outcome, provider:data, context:transferOwnerContext });
       return outcome.booking ? `booked ${outcome.booking.id}` : 'payment pending; no classes activated or spot held';
     } catch (e) {
-      if (!transferValid()) return 'admission_context_changed';
+      if (!requestValid()) return 'admission_context_changed';
       const failure = e instanceof Error ? e.message : '';
       if(failure.startsWith('desk_intent_')){setDeskRead({provider:data,context:transferOwnerContext,scope:deskScopeKey,phase:'error',payment:null});return 'desk_request_review_required';}
       if (kind === 'package' && !['session_full', 'session_unavailable', 'package_balance', 'same_day_conflict'].includes(failure) && !failure.startsWith('mat_')) {

@@ -16,3 +16,7 @@ files: pendingDeskIntent; CheckoutPage; focused tests; bounded integration hando
 - Version: frontend demo only. Shared immutable metadata and atomic settlement/admission integration require the integration owner's follow-up. No bank services, deadlines, invoices, messages or backend permissions changed.
 
 Validation: full build;32 metadata cases;4 production request workflows;12 context/read-Retry plus2 lost-ack groups;8 unchanged package-booking whole-flow groups passed. Combined settlement integration and independent review remain pending.
+
+Review follow-up: cash scope/method fencing now also suppresses stale failure feedback after the selection changes. Quote fingerprints represent JSON-persisted values, including omission of optional undefined properties. Actual paused method/product/mat regressions require rollback, no stale alert and a successful fresh action; the earlier transaction assertions remain unchanged.
+
+Follow-up validation: full build and TypeScript pass;34 pure cases and12 paused selection regressions pass. Original checked commit/bundle retained separately. Combined shared-model/settlement review remains pending.
