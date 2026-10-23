@@ -1,0 +1,11 @@
+# RS-05 booking-control handoff
+
+Base: ea440c82e4e6b98338ef125eb68abecf07377e6f. Separate local branch; no website candidate code, Checkout/strings changes, sheet writes or publication.
+
+C-03 class detail and W-04 public schedule drawer use the existing shared admission predicate for visible controls. Timers refresh mounted controls at the next start/end boundary and on foreground return. New navigation reads the current scoped session/modality/template, fences actor/role/provider/route/unmount changes, and preserves selected checkout/mat or full-class waitlist targets. Existing owned booked/checked-in records open their detail even after the session ends. No new consent, refund, hold, timing or backend policy is introduced.
+
+D-02 mapping: existing Button disabled/loading, Notice warning and Drawer variants are reused. No new component variant is introduced. Integration must append W-04 to Notice.meta.ts usedBy (the shared metadata file is owned by another concurrent batch); do not replace its existing usage list. The scoped actual-page tests cover these usages together; historical component-library fixtures remain unchanged.
+
+Verification: `npm run build`; `QA_BASE=<production> node scripts/test-rs05-cta.mjs`; `QA_BASE=<prepared development server> QA_DEV=1 node scripts/test-rs05-cta.mjs`. Set QA_OUTPUT to a private directory. The dev-only harness imports actual pages and a fictional MockProvider; application routes never import it. Browser cases cover EN/ES390/1280 withdrawal/republish while open, suppressed notification plus fresh action read, exact start/end, completed status, existing history, full waitlists and selected session/mat through sign-in. No external requests or financial writes are expected. CI integration and hosted release remain with the integration owner.
+
+Local verification completed: full build/typecheck; production36 groups; mounted development52 groups plus4 focused mat-target groups; zero browser errors. Narrow Spanish started-detail and English desktop withdrawn-drawer captures were visually checked. Initial QA setup used an occupied dev port and a mobile-only calendar selector; corrected without changing product assertions. Integration still owns exact-head CI, shared Notice usage metadata and any publication.

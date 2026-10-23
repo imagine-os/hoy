@@ -1,8 +1,11 @@
+import { requireSessionAdmission, sessionAdmissionAvailable } from '../../../data/sessionAdmission';
+import { sessionUnavailableReason } from '../../../data/sessionAvailability';
+import { useSession } from '../../../auth/SessionProvider';
 import { SessionEditorial } from '../../../components/molecule/SessionEditorial/SessionEditorial';
-import { Fragment, useMemo, useState, type ReactNode } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
-import { useTable } from '../../../data/DataContext';
+import { useData, useTable } from '../../../data/DataContext';
 import type { ClassSessionRow } from '../../../data/schema';
 import { formatDate, formatTime } from '../../../i18n/format';
 import { useLayout } from '../../../layout/useLayout';
@@ -27,6 +30,7 @@ const spec = canvasSpecs['C-03'];
 /** C-03 Class detail. */
 export function ClassDetailPage() {
   const { id } = useParams();
+  const data = useData(), { user, role } = useSession();
   const { t, bi, lang } = useI18n();
   const nav = useNavigate();
   const { sections, isVisible } = useLayout(spec);
@@ -38,8 +42,33 @@ export function ClassDetailPage() {
   const ent = useEntitlements();
   const [shared, setShared] = useState<string | null>(null);
 
-  const myBooking = useMemo(() => myBookings.find((b) => b.session_id === id && b.status === 'booked'), [myBookings, id]);
+  const myBooking = useMemo(() => myBookings.find((b) => b.session_id === id && (b.status === 'booked' || b.status === 'checked_in')), [myBookings, id]);
   const conflict = useMemo(() => joined ? sameDayConflict(myBookings, sessions, joined.session) : null, [joined, myBookings, sessions, sameDayConflict]);
+
+  const [now, setNow] = useState(Date.now);
+  useEffect(() => {
+    const refresh = () => setNow(Date.now());
+    const next = [joined?.session.starts_at, joined?.session.ends_at].map(value => Date.parse(value ?? '')).filter(at => at > now).sort((a, b) => a - b)[0];
+    const timer = window.setTimeout(refresh, Math.min(60000, next ? Math.max(1, next - Date.now()) : 60000));
+    window.addEventListener('focus', refresh); document.addEventListener('visibilitychange', refresh);
+    return () => { window.clearTimeout(timer); window.removeEventListener('focus', refresh); document.removeEventListener('visibilitychange', refresh); };
+  }, [now, joined?.session.starts_at, joined?.session.ends_at]);
+  const [navigating, setNavigating] = useState(false), [navigationError, setNavigationError] = useState(false);
+  const navigationLock = useRef(false), operation = useRef(0), live = useRef({ data, actor: user.id, role, id, mounted: true });
+  live.current = { data, actor: user.id, role, id, mounted: true };
+  useEffect(() => { live.current.mounted = true; return () => { live.current.mounted = false; }; }, []);
+  useEffect(() => { operation.current++; navigationLock.current = false; setNavigating(false); setNavigationError(false); }, [data, user.id, role, id]);
+  const openAdmission = async () => {
+    if (!joined || navigationLock.current) return;
+    const captured = live.current, version = ++operation.current;
+    const current = () => operation.current === version && live.current.mounted && live.current.data === captured.data && live.current.actor === captured.actor && live.current.role === captured.role && live.current.id === captured.id;
+    navigationLock.current = true; setNavigating(true); setNavigationError(false);
+    try {
+      const fresh = await requireSessionAdmission(data, joined.session.id, { isCurrent: current });
+      if (current()) nav(fresh.booked_count >= fresh.capacity ? `/app/waitlist/${fresh.id}` : `/app/checkout/${fresh.id}`);
+    } catch { if (current()) setNavigationError(true); }
+    finally { if (operation.current === version) { navigationLock.current = false; if (current()) setNavigating(false); } }
+  };
 
   if (!joined) {
     return (
@@ -52,9 +81,11 @@ export function ClassDetailPage() {
 
   const { session: s, modality: m, teacher: te } = joined;
   const left = s.capacity - s.booked_count;
-  const past = new Date(s.ends_at).getTime() < Date.now();
+  const past = new Date(s.ends_at).getTime() <= now;
   const cancelled = s.status === 'cancelled';
   const full = left <= 0;
+  const admissionAvailable = sessionAdmissionAvailable(s, m, s.template_id ? { id: s.template_id, active: joined.templateActive } : undefined, now);
+  const unavailableReason = sessionUnavailableReason(joined, now) ?? 'unavailable';
 
   const share = async () => {
     const r = await shareText(`${s.title} · ${formatDate(s.starts_at, lang)} ${formatTime(s.starts_at, lang)} · ${tenant.name}`, window.location.href);
@@ -63,17 +94,16 @@ export function ClassDetailPage() {
   };
 
   const cta = (): ReactNode => {
-    if (cancelled) return null;
-    if (past) return <Button block size="lg" variant="secondary" disabled>{t('customer.class.past')}</Button>;
     if (myBooking) return <Button block size="lg" variant="secondary" onClick={() => nav(`/app/booking/${myBooking.id}`)}>{t('customer.class.viewBooking')}</Button>;
-    if (full) return <Button block size="lg" onClick={() => nav(`/app/waitlist/${s.id}`)}>{myWait && (myWait.status === 'waiting' || myWait.status === 'offered') ? t('customer.class.viewWaitlist') : t('customer.class.joinWaitlist')}</Button>;
+    if (!admissionAvailable) return <Button block size="lg" variant="secondary" disabled>{t(`site.calendar.status.${unavailableReason}`)}</Button>;
+    if (full) return <Button block size="lg" loading={navigating} disabled={navigating} onClick={() => void openAdmission()}>{myWait && (myWait.status === 'waiting' || myWait.status === 'offered') ? t('customer.class.viewWaitlist') : t('customer.class.joinWaitlist')}</Button>;
     if (conflict) return (
       <div className="stack-sm">
         <Button block size="lg" disabled>{t('core.common.book')}</Button>
         <p className="xs muted" style={{ textAlign: 'center' }}>{t('customer.book.oneADay')} <Link to={`/app/class/${conflict}`}>{t('customer.class.seeOther')}</Link></p>
       </div>
     );
-    return <Button block size="lg" onClick={() => nav(`/app/checkout/${s.id}`)}>{ent.hasAnyEntitlement ? t('core.common.book') : ent.trialUsed ? t('customer.class.bookAndPay') : t('customer.class.bookTrial')}</Button>;
+    return <Button block size="lg" loading={navigating} disabled={navigating} onClick={() => void openAdmission()}>{ent.hasAnyEntitlement ? t('core.common.book') : ent.trialUsed ? t('customer.class.bookAndPay') : t('customer.class.bookTrial')}</Button>;
   };
 
   const SECTIONS: Record<string, () => ReactNode> = {
@@ -128,6 +158,7 @@ export function ClassDetailPage() {
     ),
     'StickyCTA (Reserve / Waitlist)': () => (
       <div className="cust-sticky">
+        {navigationError && <Notice tone="warn">{t('core.common.error')}</Notice>}
         {cta()}
         <div className="row" style={{ justifyContent: 'center' }}>
           <Button variant="ghost" size="sm" onClick={share} icon="share">{t('customer.class.share')}</Button>
