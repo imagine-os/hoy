@@ -5,7 +5,7 @@ import { useSiteEdition } from '../edition';
 import { studioPhoto } from '../photography';
 import { SessionEditorial } from '../../../components/molecule/SessionEditorial/SessionEditorial';
 import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useLayout } from '../../../layout/useLayout';
 import { useData, useTable } from '../../../data/DataContext';
@@ -28,7 +28,8 @@ export function SchedulePage() {
   const { t, bi } = useI18n();
   const { user, role } = useSession();
   const data = useData();
-  const nav = useNavigate();
+  const nav = useNavigate(), location = useLocation();
+  const navigationRoute = location.pathname + location.search;
   const [params, setParams] = useSearchParams();
   const { sections, isVisible } = useLayout(siteSpecs.schedule);
   const [mat, setMat] = useState<number | null>(null);
@@ -50,10 +51,10 @@ export function SchedulePage() {
     return () => { window.clearTimeout(timer); window.removeEventListener('focus', refresh); document.removeEventListener('visibilitychange', refresh); };
   }, [now, chosen?.session.starts_at, chosen?.session.ends_at]);
   const [navigating, setNavigating] = useState(false), [navigationError, setNavigationError] = useState(false);
-  const navigationLock = useRef(false), operation = useRef(0), live = useRef({ data, actor: user.id, role, picked, mounted: true });
-  live.current = { data, actor: user.id, role, picked, mounted: true };
+  const navigationLock = useRef(false), operation = useRef(0), live = useRef({ data, actor: user.id, role, picked, navigationRoute, mounted: true });
+  live.current = { data, actor: user.id, role, picked, navigationRoute, mounted: true };
   useEffect(() => { live.current.mounted = true; return () => { live.current.mounted = false; }; }, []);
-  useEffect(() => { operation.current++; navigationLock.current = false; setNavigating(false); setNavigationError(false); }, [data, user.id, role, picked]);
+  useEffect(() => { operation.current++; navigationLock.current = false; setNavigating(false); setNavigationError(false); }, [data, user.id, role, picked, navigationRoute]);
   const yoga = usesMats(chosen?.modality);
   const taken = new Set(bookings.filter(b => b.session_id === picked && occupiesMat(b)).map(b => b.mat_number));
   const full = !!chosen && chosen.session.booked_count >= chosen.session.capacity;
@@ -62,7 +63,7 @@ export function SchedulePage() {
   const signInAndBook = async () => {
     if (!chosen || navigationLock.current || !sessionAdmissionAvailable(chosen.session, chosen.modality, chosen.session.template_id ? { id: chosen.session.template_id, active: chosen.templateActive } : undefined)) return;
     const captured = live.current, version = ++operation.current;
-    const current = () => operation.current === version && live.current.mounted && live.current.data === captured.data && live.current.actor === captured.actor && live.current.role === captured.role && live.current.picked === captured.picked;
+    const current = () => operation.current === version && live.current.mounted && live.current.data === captured.data && live.current.actor === captured.actor && live.current.role === captured.role && live.current.navigationRoute === captured.navigationRoute && live.current.picked === captured.picked;
     navigationLock.current = true; setNavigating(true); setNavigationError(false);
     try {
       const fresh = await requireSessionAdmission(data, chosen.session.id, { isCurrent: current });

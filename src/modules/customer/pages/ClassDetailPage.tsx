@@ -3,7 +3,7 @@ import { sessionUnavailableReason } from '../../../data/sessionAvailability';
 import { useSession } from '../../../auth/SessionProvider';
 import { SessionEditorial } from '../../../components/molecule/SessionEditorial/SessionEditorial';
 import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useData, useTable } from '../../../data/DataContext';
 import type { ClassSessionRow } from '../../../data/schema';
@@ -32,7 +32,8 @@ export function ClassDetailPage() {
   const { id } = useParams();
   const data = useData(), { user, role } = useSession();
   const { t, bi, lang } = useI18n();
-  const nav = useNavigate();
+  const nav = useNavigate(), location = useLocation();
+  const navigationRoute = location.pathname + location.search;
   const { sections, isVisible } = useLayout(spec);
   const { joined, loading } = useSessionJoined(id);
   const { rows: myBookings } = useMyBookings();
@@ -54,14 +55,14 @@ export function ClassDetailPage() {
     return () => { window.clearTimeout(timer); window.removeEventListener('focus', refresh); document.removeEventListener('visibilitychange', refresh); };
   }, [now, joined?.session.starts_at, joined?.session.ends_at]);
   const [navigating, setNavigating] = useState(false), [navigationError, setNavigationError] = useState(false);
-  const navigationLock = useRef(false), operation = useRef(0), live = useRef({ data, actor: user.id, role, id, mounted: true });
-  live.current = { data, actor: user.id, role, id, mounted: true };
+  const navigationLock = useRef(false), operation = useRef(0), live = useRef({ data, actor: user.id, role, id, navigationRoute, mounted: true });
+  live.current = { data, actor: user.id, role, id, navigationRoute, mounted: true };
   useEffect(() => { live.current.mounted = true; return () => { live.current.mounted = false; }; }, []);
-  useEffect(() => { operation.current++; navigationLock.current = false; setNavigating(false); setNavigationError(false); }, [data, user.id, role, id]);
+  useEffect(() => { operation.current++; navigationLock.current = false; setNavigating(false); setNavigationError(false); }, [data, user.id, role, id, navigationRoute]);
   const openAdmission = async () => {
     if (!joined || navigationLock.current) return;
     const captured = live.current, version = ++operation.current;
-    const current = () => operation.current === version && live.current.mounted && live.current.data === captured.data && live.current.actor === captured.actor && live.current.role === captured.role && live.current.id === captured.id;
+    const current = () => operation.current === version && live.current.mounted && live.current.data === captured.data && live.current.actor === captured.actor && live.current.role === captured.role && live.current.navigationRoute === captured.navigationRoute && live.current.id === captured.id;
     navigationLock.current = true; setNavigating(true); setNavigationError(false);
     try {
       const fresh = await requireSessionAdmission(data, joined.session.id, { isCurrent: current });
