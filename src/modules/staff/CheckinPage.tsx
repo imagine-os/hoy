@@ -16,7 +16,9 @@ import { EmptyState } from '../../components/molecule/EmptyState/EmptyState';
 import { useSessionsJoined } from '../website/hooks';
 import { useSettings } from '../admin/settings';
 import { receptionUndoEligible, setReceptionAttendance } from '../../data/receptionAttendance';
-import { maskPhone, personMatches, usePeople, type Person } from './people';
+import { maskPhone, type Person } from './people';
+import { receptionPersonMatches as personMatches } from './receptionSearch';
+import { useReceptionPeople } from './useReceptionPeople';
 import { S02 } from './specs';
 import { tenant } from '../../tenant/tenant';
 import { approvedPackageRows, packageState } from '../../data/packages';
@@ -64,15 +66,15 @@ export function CheckinPage() {
   const selected = allSessions.find((x) => x.session.id === wanted) ?? todayAll.find((x) => x.session.id === autoId);
   const selectedId = selected?.session.id;
 
-  const { rows: bookings, loading } = useTable<BookingRow>('bookings', { where: { session_id: selectedId ?? '__none__' } });
-  const { rows: waitlist } = useTable<WaitlistRow>('waitlist', { where: { session_id: selectedId ?? '__none__', status: 'waiting' } });
-  const { people, byId } = usePeople();
+  const { rows: bookings, loading } = useTable<BookingRow>('bookings', { where: { tenant_id: tenant.id, session_id: selectedId ?? '__none__' } });
+  const { rows: waitlist } = useTable<WaitlistRow>('waitlist', { where: { tenant_id: tenant.id, session_id: selectedId ?? '__none__', status: 'waiting' } });
+  const { people, byId } = useReceptionPeople();
 
-  const roster = useMemo(() => bookings.filter((b) => b.status !== 'cancelled').map((b) => ({ b, p: byId.get(b.user_id) })).filter((x) => !x.p || personMatches(x.p, q)), [bookings, byId, q]);
+  const roster = useMemo(() => bookings.filter((b) => b.tenant_id === tenant.id && b.status !== 'cancelled').map((b) => ({ b, p: byId.get(b.user_id) })).filter((x) => x.p ? personMatches(x.p, q) : !q.trim()), [bookings, byId, q]);
   const expected = roster.filter((x) => x.b.status === 'booked');
   const arrived = roster.filter((x) => x.b.status === 'checked_in');
   const missed = roster.filter((x) => x.b.status === 'no_show' || x.b.status === 'late_cancel');
-  const onRoster = useMemo(() => new Set(bookings.filter((b) => b.status !== 'cancelled').map((b) => b.user_id)), [bookings]);
+  const onRoster = useMemo(() => new Set(bookings.filter((b) => b.tenant_id === tenant.id && b.status !== 'cancelled').map((b) => b.user_id)), [bookings]);
   const walkIns = useMemo(() => (q.trim().length < 2 ? [] : people.filter((p) => p.role === 'customer' && !onRoster.has(p.id) && personMatches(p, q)).slice(0, 6)), [people, onRoster, q]);
   const graceMs = settings.policies.lateGraceMin * MS.min;
   const isLate = (b: BookingRow) => !!selected && !!b.checked_in_at && new Date(b.checked_in_at).getTime() > new Date(selected.session.starts_at).getTime() + graceMs;

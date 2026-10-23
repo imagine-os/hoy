@@ -1,0 +1,1807 @@
+{
+  "base": "http://127.0.0.1:5242",
+  "source": "local repair over 455843fd; see receipt",
+  "results": [
+    {
+      "lang": "en",
+      "width": 320,
+      "surface": "checkin",
+      "test": "roster_exact",
+      "q": "QA Ángela Núñez",
+      "roster": [
+        "QA Ángela Núñez"
+      ],
+      "walkin": []
+    },
+    {
+      "lang": "en",
+      "width": 320,
+      "surface": "checkin",
+      "test": "roster_case",
+      "q": "  qA ÁNGELA NÚÑEZ  ",
+      "roster": [
+        "QA Ángela Núñez"
+      ],
+      "walkin": []
+    },
+    {
+      "lang": "en",
+      "width": 320,
+      "surface": "checkin",
+      "test": "roster_partial",
+      "q": "Núñ",
+      "roster": [
+        "QA Ángela Núñez"
+      ],
+      "walkin": []
+    },
+    {
+      "lang": "en",
+      "width": 320,
+      "surface": "checkin",
+      "test": "roster_unaccented",
+      "q": "Angela Nunez",
+      "roster": [
+        "QA Ángela Núñez"
+      ],
+      "walkin": []
+    },
+    {
+      "lang": "en",
+      "width": 320,
+      "surface": "checkin",
+      "test": "roster_email",
+      "q": "QA.ANGELA@EXAMPLE.INVALID",
+      "roster": [
+        "QA Ángela Núñez"
+      ],
+      "walkin": []
+    },
+    {
+      "lang": "en",
+      "width": 320,
+      "surface": "checkin",
+      "test": "roster_phone_digits",
+      "q": "3001112233",
+      "roster": [
+        "QA Ángela Núñez"
+      ],
+      "walkin": []
+    },
+    {
+      "lang": "en",
+      "width": 320,
+      "surface": "checkin",
+      "test": "roster_phone_formatted",
+      "q": "+57 300 111 2233",
+      "roster": [
+        "QA Ángela Núñez"
+      ],
+      "walkin": []
+    },
+    {
+      "lang": "en",
+      "width": 320,
+      "surface": "checkin",
+      "test": "roster_phone_punctuation",
+      "q": "300-111-2233",
+      "roster": [
+        "QA Ángela Núñez"
+      ],
+      "walkin": []
+    },
+    {
+      "lang": "en",
+      "width": 320,
+      "surface": "checkin",
+      "test": "roster_phone_country",
+      "q": "(+57) 300.111.2233",
+      "roster": [
+        "QA Ángela Núñez"
+      ],
+      "walkin": []
+    },
+    {
+      "lang": "en",
+      "width": 320,
+      "surface": "checkin",
+      "test": "walkin_exact",
+      "q": "QA Tomás Pérez",
+      "roster": [],
+      "walkin": [
+        "QA Tomás Pérez"
+      ]
+    },
+    {
+      "lang": "en",
+      "width": 320,
+      "surface": "checkin",
+      "test": "walkin_partial",
+      "q": "Tomás",
+      "roster": [],
+      "walkin": [
+        "Tomás Vargas",
+        "QA Tomás Pérez"
+      ]
+    },
+    {
+      "lang": "en",
+      "width": 320,
+      "surface": "checkin",
+      "test": "walkin_case",
+      "q": "QA TOMÁS PÉREZ",
+      "roster": [],
+      "walkin": [
+        "QA Tomás Pérez"
+      ]
+    },
+    {
+      "lang": "en",
+      "width": 320,
+      "surface": "checkin",
+      "test": "walkin_unaccented",
+      "q": "Tomas Perez",
+      "roster": [],
+      "walkin": [
+        "QA Tomás Pérez"
+      ]
+    },
+    {
+      "lang": "en",
+      "width": 320,
+      "surface": "checkin",
+      "test": "walkin_email",
+      "q": "qa.tomas@EXAMPLE.INVALID",
+      "roster": [],
+      "walkin": [
+        "QA Tomás Pérez"
+      ]
+    },
+    {
+      "lang": "en",
+      "width": 320,
+      "surface": "checkin",
+      "test": "walkin_phone",
+      "q": "3004445566",
+      "roster": [],
+      "walkin": [
+        "QA Tomás Pérez"
+      ]
+    },
+    {
+      "lang": "en",
+      "width": 320,
+      "surface": "checkin",
+      "test": "walkin_phone_punctuation",
+      "q": "(+57) 300-444-5566",
+      "roster": [],
+      "walkin": [
+        "QA Tomás Pérez"
+      ]
+    },
+    {
+      "lang": "en",
+      "width": 320,
+      "surface": "checkin",
+      "test": "no_match",
+      "q": "zzzzmissing",
+      "roster": [],
+      "walkin": []
+    },
+    {
+      "lang": "en",
+      "width": 320,
+      "surface": "checkin",
+      "test": "staff_exclusion",
+      "q": "qa.operator@example.invalid",
+      "roster": [],
+      "walkin": []
+    },
+    {
+      "lang": "en",
+      "width": 320,
+      "surface": "checkin",
+      "test": "tenant_scope",
+      "q": "qa.foreign@example.invalid",
+      "roster": [],
+      "walkin": []
+    },
+    {
+      "lang": "en",
+      "width": 320,
+      "surface": "checkin",
+      "test": "class_change",
+      "roster": [],
+      "walkin": [
+        "QA Ángela Núñez"
+      ]
+    },
+    {
+      "lang": "en",
+      "width": 320,
+      "surface": "register",
+      "test": "roster_exact",
+      "q": "QA Ángela Núñez",
+      "candidates": [
+        "QAQA Ángela Núñez · +573 ··· 2233"
+      ]
+    },
+    {
+      "lang": "en",
+      "width": 320,
+      "surface": "register",
+      "test": "roster_case",
+      "q": "  qA ÁNGELA NÚÑEZ  ",
+      "candidates": [
+        "QAQA Ángela Núñez · +573 ··· 2233"
+      ]
+    },
+    {
+      "lang": "en",
+      "width": 320,
+      "surface": "register",
+      "test": "roster_partial",
+      "q": "Núñ",
+      "candidates": [
+        "QAQA Ángela Núñez · +573 ··· 2233"
+      ]
+    },
+    {
+      "lang": "en",
+      "width": 320,
+      "surface": "register",
+      "test": "roster_unaccented",
+      "q": "Angela Nunez",
+      "candidates": [
+        "QAQA Ángela Núñez · +573 ··· 2233"
+      ]
+    },
+    {
+      "lang": "en",
+      "width": 320,
+      "surface": "register",
+      "test": "roster_email",
+      "q": "QA.ANGELA@EXAMPLE.INVALID",
+      "candidates": [
+        "QAQA Ángela Núñez · +573 ··· 2233"
+      ]
+    },
+    {
+      "lang": "en",
+      "width": 320,
+      "surface": "register",
+      "test": "roster_phone_digits",
+      "q": "3001112233",
+      "candidates": [
+        "QAQA Ángela Núñez · +573 ··· 2233"
+      ]
+    },
+    {
+      "lang": "en",
+      "width": 320,
+      "surface": "register",
+      "test": "roster_phone_formatted",
+      "q": "+57 300 111 2233",
+      "candidates": [
+        "QAQA Ángela Núñez · +573 ··· 2233"
+      ]
+    },
+    {
+      "lang": "en",
+      "width": 320,
+      "surface": "register",
+      "test": "roster_phone_punctuation",
+      "q": "300-111-2233",
+      "candidates": [
+        "QAQA Ángela Núñez · +573 ··· 2233"
+      ]
+    },
+    {
+      "lang": "en",
+      "width": 320,
+      "surface": "register",
+      "test": "roster_phone_country",
+      "q": "(+57) 300.111.2233",
+      "candidates": [
+        "QAQA Ángela Núñez · +573 ··· 2233"
+      ]
+    },
+    {
+      "lang": "en",
+      "width": 320,
+      "surface": "register",
+      "test": "walkin_exact",
+      "q": "QA Tomás Pérez",
+      "candidates": [
+        "QAQA Tomás Pérez · +57 300 ··· 5566"
+      ]
+    },
+    {
+      "lang": "en",
+      "width": 320,
+      "surface": "register",
+      "test": "walkin_partial",
+      "q": "Tomás",
+      "candidates": [
+        "TVTomás Vargas · +57 345 ··· 7070",
+        "QAQA Tomás Pérez · +57 300 ··· 5566"
+      ]
+    },
+    {
+      "lang": "en",
+      "width": 320,
+      "surface": "register",
+      "test": "walkin_case",
+      "q": "QA TOMÁS PÉREZ",
+      "candidates": [
+        "QAQA Tomás Pérez · +57 300 ··· 5566"
+      ]
+    },
+    {
+      "lang": "en",
+      "width": 320,
+      "surface": "register",
+      "test": "walkin_unaccented",
+      "q": "Tomas Perez",
+      "candidates": [
+        "QAQA Tomás Pérez · +57 300 ··· 5566"
+      ]
+    },
+    {
+      "lang": "en",
+      "width": 320,
+      "surface": "register",
+      "test": "walkin_email",
+      "q": "qa.tomas@EXAMPLE.INVALID",
+      "candidates": [
+        "QAQA Tomás Pérez · +57 300 ··· 5566"
+      ]
+    },
+    {
+      "lang": "en",
+      "width": 320,
+      "surface": "register",
+      "test": "walkin_phone",
+      "q": "3004445566",
+      "candidates": [
+        "QAQA Tomás Pérez · +57 300 ··· 5566"
+      ]
+    },
+    {
+      "lang": "en",
+      "width": 320,
+      "surface": "register",
+      "test": "walkin_phone_punctuation",
+      "q": "(+57) 300-444-5566",
+      "candidates": [
+        "QAQA Tomás Pérez · +57 300 ··· 5566"
+      ]
+    },
+    {
+      "lang": "en",
+      "width": 320,
+      "surface": "register",
+      "test": "no_match",
+      "q": "zzzzmissing",
+      "candidates": []
+    },
+    {
+      "lang": "en",
+      "width": 320,
+      "surface": "register",
+      "test": "staff_exclusion",
+      "q": "qa.operator@example.invalid",
+      "candidates": []
+    },
+    {
+      "lang": "en",
+      "width": 320,
+      "surface": "register",
+      "test": "tenant_scope",
+      "q": "qa.foreign@example.invalid",
+      "candidates": []
+    },
+    {
+      "lang": "en",
+      "width": 320,
+      "surface": "register",
+      "test": "empty",
+      "q": "",
+      "candidates": []
+    },
+    {
+      "lang": "en",
+      "width": 320,
+      "surface": "register",
+      "test": "one_character",
+      "q": "Q",
+      "candidates": []
+    },
+    {
+      "lang": "en",
+      "width": 320,
+      "test": "interrupted_repeated_keyboard",
+      "pass": true,
+      "overflow": false
+    },
+    {
+      "lang": "en",
+      "width": 390,
+      "surface": "checkin",
+      "test": "roster_exact",
+      "q": "QA Ángela Núñez",
+      "roster": [
+        "QA Ángela Núñez"
+      ],
+      "walkin": []
+    },
+    {
+      "lang": "en",
+      "width": 390,
+      "surface": "checkin",
+      "test": "roster_case",
+      "q": "  qA ÁNGELA NÚÑEZ  ",
+      "roster": [
+        "QA Ángela Núñez"
+      ],
+      "walkin": []
+    },
+    {
+      "lang": "en",
+      "width": 390,
+      "surface": "checkin",
+      "test": "roster_partial",
+      "q": "Núñ",
+      "roster": [
+        "QA Ángela Núñez"
+      ],
+      "walkin": []
+    },
+    {
+      "lang": "en",
+      "width": 390,
+      "surface": "checkin",
+      "test": "roster_unaccented",
+      "q": "Angela Nunez",
+      "roster": [
+        "QA Ángela Núñez"
+      ],
+      "walkin": []
+    },
+    {
+      "lang": "en",
+      "width": 390,
+      "surface": "checkin",
+      "test": "roster_email",
+      "q": "QA.ANGELA@EXAMPLE.INVALID",
+      "roster": [
+        "QA Ángela Núñez"
+      ],
+      "walkin": []
+    },
+    {
+      "lang": "en",
+      "width": 390,
+      "surface": "checkin",
+      "test": "roster_phone_digits",
+      "q": "3001112233",
+      "roster": [
+        "QA Ángela Núñez"
+      ],
+      "walkin": []
+    },
+    {
+      "lang": "en",
+      "width": 390,
+      "surface": "checkin",
+      "test": "roster_phone_formatted",
+      "q": "+57 300 111 2233",
+      "roster": [
+        "QA Ángela Núñez"
+      ],
+      "walkin": []
+    },
+    {
+      "lang": "en",
+      "width": 390,
+      "surface": "checkin",
+      "test": "roster_phone_punctuation",
+      "q": "300-111-2233",
+      "roster": [
+        "QA Ángela Núñez"
+      ],
+      "walkin": []
+    },
+    {
+      "lang": "en",
+      "width": 390,
+      "surface": "checkin",
+      "test": "roster_phone_country",
+      "q": "(+57) 300.111.2233",
+      "roster": [
+        "QA Ángela Núñez"
+      ],
+      "walkin": []
+    },
+    {
+      "lang": "en",
+      "width": 390,
+      "surface": "checkin",
+      "test": "walkin_exact",
+      "q": "QA Tomás Pérez",
+      "roster": [],
+      "walkin": [
+        "QA Tomás Pérez"
+      ]
+    },
+    {
+      "lang": "en",
+      "width": 390,
+      "surface": "checkin",
+      "test": "walkin_partial",
+      "q": "Tomás",
+      "roster": [],
+      "walkin": [
+        "Tomás Vargas",
+        "QA Tomás Pérez"
+      ]
+    },
+    {
+      "lang": "en",
+      "width": 390,
+      "surface": "checkin",
+      "test": "walkin_case",
+      "q": "QA TOMÁS PÉREZ",
+      "roster": [],
+      "walkin": [
+        "QA Tomás Pérez"
+      ]
+    },
+    {
+      "lang": "en",
+      "width": 390,
+      "surface": "checkin",
+      "test": "walkin_unaccented",
+      "q": "Tomas Perez",
+      "roster": [],
+      "walkin": [
+        "QA Tomás Pérez"
+      ]
+    },
+    {
+      "lang": "en",
+      "width": 390,
+      "surface": "checkin",
+      "test": "walkin_email",
+      "q": "qa.tomas@EXAMPLE.INVALID",
+      "roster": [],
+      "walkin": [
+        "QA Tomás Pérez"
+      ]
+    },
+    {
+      "lang": "en",
+      "width": 390,
+      "surface": "checkin",
+      "test": "walkin_phone",
+      "q": "3004445566",
+      "roster": [],
+      "walkin": [
+        "QA Tomás Pérez"
+      ]
+    },
+    {
+      "lang": "en",
+      "width": 390,
+      "surface": "checkin",
+      "test": "walkin_phone_punctuation",
+      "q": "(+57) 300-444-5566",
+      "roster": [],
+      "walkin": [
+        "QA Tomás Pérez"
+      ]
+    },
+    {
+      "lang": "en",
+      "width": 390,
+      "surface": "checkin",
+      "test": "no_match",
+      "q": "zzzzmissing",
+      "roster": [],
+      "walkin": []
+    },
+    {
+      "lang": "en",
+      "width": 390,
+      "surface": "checkin",
+      "test": "staff_exclusion",
+      "q": "qa.operator@example.invalid",
+      "roster": [],
+      "walkin": []
+    },
+    {
+      "lang": "en",
+      "width": 390,
+      "surface": "checkin",
+      "test": "tenant_scope",
+      "q": "qa.foreign@example.invalid",
+      "roster": [],
+      "walkin": []
+    },
+    {
+      "lang": "en",
+      "width": 390,
+      "surface": "checkin",
+      "test": "class_change",
+      "roster": [],
+      "walkin": [
+        "QA Ángela Núñez"
+      ]
+    },
+    {
+      "lang": "en",
+      "width": 390,
+      "surface": "register",
+      "test": "roster_exact",
+      "q": "QA Ángela Núñez",
+      "candidates": [
+        "QAQA Ángela Núñez · +573 ··· 2233"
+      ]
+    },
+    {
+      "lang": "en",
+      "width": 390,
+      "surface": "register",
+      "test": "roster_case",
+      "q": "  qA ÁNGELA NÚÑEZ  ",
+      "candidates": [
+        "QAQA Ángela Núñez · +573 ··· 2233"
+      ]
+    },
+    {
+      "lang": "en",
+      "width": 390,
+      "surface": "register",
+      "test": "roster_partial",
+      "q": "Núñ",
+      "candidates": [
+        "QAQA Ángela Núñez · +573 ··· 2233"
+      ]
+    },
+    {
+      "lang": "en",
+      "width": 390,
+      "surface": "register",
+      "test": "roster_unaccented",
+      "q": "Angela Nunez",
+      "candidates": [
+        "QAQA Ángela Núñez · +573 ··· 2233"
+      ]
+    },
+    {
+      "lang": "en",
+      "width": 390,
+      "surface": "register",
+      "test": "roster_email",
+      "q": "QA.ANGELA@EXAMPLE.INVALID",
+      "candidates": [
+        "QAQA Ángela Núñez · +573 ··· 2233"
+      ]
+    },
+    {
+      "lang": "en",
+      "width": 390,
+      "surface": "register",
+      "test": "roster_phone_digits",
+      "q": "3001112233",
+      "candidates": [
+        "QAQA Ángela Núñez · +573 ··· 2233"
+      ]
+    },
+    {
+      "lang": "en",
+      "width": 390,
+      "surface": "register",
+      "test": "roster_phone_formatted",
+      "q": "+57 300 111 2233",
+      "candidates": [
+        "QAQA Ángela Núñez · +573 ··· 2233"
+      ]
+    },
+    {
+      "lang": "en",
+      "width": 390,
+      "surface": "register",
+      "test": "roster_phone_punctuation",
+      "q": "300-111-2233",
+      "candidates": [
+        "QAQA Ángela Núñez · +573 ··· 2233"
+      ]
+    },
+    {
+      "lang": "en",
+      "width": 390,
+      "surface": "register",
+      "test": "roster_phone_country",
+      "q": "(+57) 300.111.2233",
+      "candidates": [
+        "QAQA Ángela Núñez · +573 ··· 2233"
+      ]
+    },
+    {
+      "lang": "en",
+      "width": 390,
+      "surface": "register",
+      "test": "walkin_exact",
+      "q": "QA Tomás Pérez",
+      "candidates": [
+        "QAQA Tomás Pérez · +57 300 ··· 5566"
+      ]
+    },
+    {
+      "lang": "en",
+      "width": 390,
+      "surface": "register",
+      "test": "walkin_partial",
+      "q": "Tomás",
+      "candidates": [
+        "TVTomás Vargas · +57 345 ··· 7070",
+        "QAQA Tomás Pérez · +57 300 ··· 5566"
+      ]
+    },
+    {
+      "lang": "en",
+      "width": 390,
+      "surface": "register",
+      "test": "walkin_case",
+      "q": "QA TOMÁS PÉREZ",
+      "candidates": [
+        "QAQA Tomás Pérez · +57 300 ··· 5566"
+      ]
+    },
+    {
+      "lang": "en",
+      "width": 390,
+      "surface": "register",
+      "test": "walkin_unaccented",
+      "q": "Tomas Perez",
+      "candidates": [
+        "QAQA Tomás Pérez · +57 300 ··· 5566"
+      ]
+    },
+    {
+      "lang": "en",
+      "width": 390,
+      "surface": "register",
+      "test": "walkin_email",
+      "q": "qa.tomas@EXAMPLE.INVALID",
+      "candidates": [
+        "QAQA Tomás Pérez · +57 300 ··· 5566"
+      ]
+    },
+    {
+      "lang": "en",
+      "width": 390,
+      "surface": "register",
+      "test": "walkin_phone",
+      "q": "3004445566",
+      "candidates": [
+        "QAQA Tomás Pérez · +57 300 ··· 5566"
+      ]
+    },
+    {
+      "lang": "en",
+      "width": 390,
+      "surface": "register",
+      "test": "walkin_phone_punctuation",
+      "q": "(+57) 300-444-5566",
+      "candidates": [
+        "QAQA Tomás Pérez · +57 300 ··· 5566"
+      ]
+    },
+    {
+      "lang": "en",
+      "width": 390,
+      "surface": "register",
+      "test": "no_match",
+      "q": "zzzzmissing",
+      "candidates": []
+    },
+    {
+      "lang": "en",
+      "width": 390,
+      "surface": "register",
+      "test": "staff_exclusion",
+      "q": "qa.operator@example.invalid",
+      "candidates": []
+    },
+    {
+      "lang": "en",
+      "width": 390,
+      "surface": "register",
+      "test": "tenant_scope",
+      "q": "qa.foreign@example.invalid",
+      "candidates": []
+    },
+    {
+      "lang": "en",
+      "width": 390,
+      "surface": "register",
+      "test": "empty",
+      "q": "",
+      "candidates": []
+    },
+    {
+      "lang": "en",
+      "width": 390,
+      "surface": "register",
+      "test": "one_character",
+      "q": "Q",
+      "candidates": []
+    },
+    {
+      "lang": "en",
+      "width": 390,
+      "test": "interrupted_repeated_keyboard",
+      "pass": true,
+      "overflow": false
+    },
+    {
+      "lang": "es",
+      "width": 320,
+      "surface": "checkin",
+      "test": "roster_exact",
+      "q": "QA Ángela Núñez",
+      "roster": [
+        "QA Ángela Núñez"
+      ],
+      "walkin": []
+    },
+    {
+      "lang": "es",
+      "width": 320,
+      "surface": "checkin",
+      "test": "roster_case",
+      "q": "  qA ÁNGELA NÚÑEZ  ",
+      "roster": [
+        "QA Ángela Núñez"
+      ],
+      "walkin": []
+    },
+    {
+      "lang": "es",
+      "width": 320,
+      "surface": "checkin",
+      "test": "roster_partial",
+      "q": "Núñ",
+      "roster": [
+        "QA Ángela Núñez"
+      ],
+      "walkin": []
+    },
+    {
+      "lang": "es",
+      "width": 320,
+      "surface": "checkin",
+      "test": "roster_unaccented",
+      "q": "Angela Nunez",
+      "roster": [
+        "QA Ángela Núñez"
+      ],
+      "walkin": []
+    },
+    {
+      "lang": "es",
+      "width": 320,
+      "surface": "checkin",
+      "test": "roster_email",
+      "q": "QA.ANGELA@EXAMPLE.INVALID",
+      "roster": [
+        "QA Ángela Núñez"
+      ],
+      "walkin": []
+    },
+    {
+      "lang": "es",
+      "width": 320,
+      "surface": "checkin",
+      "test": "roster_phone_digits",
+      "q": "3001112233",
+      "roster": [
+        "QA Ángela Núñez"
+      ],
+      "walkin": []
+    },
+    {
+      "lang": "es",
+      "width": 320,
+      "surface": "checkin",
+      "test": "roster_phone_formatted",
+      "q": "+57 300 111 2233",
+      "roster": [
+        "QA Ángela Núñez"
+      ],
+      "walkin": []
+    },
+    {
+      "lang": "es",
+      "width": 320,
+      "surface": "checkin",
+      "test": "roster_phone_punctuation",
+      "q": "300-111-2233",
+      "roster": [
+        "QA Ángela Núñez"
+      ],
+      "walkin": []
+    },
+    {
+      "lang": "es",
+      "width": 320,
+      "surface": "checkin",
+      "test": "roster_phone_country",
+      "q": "(+57) 300.111.2233",
+      "roster": [
+        "QA Ángela Núñez"
+      ],
+      "walkin": []
+    },
+    {
+      "lang": "es",
+      "width": 320,
+      "surface": "checkin",
+      "test": "walkin_exact",
+      "q": "QA Tomás Pérez",
+      "roster": [],
+      "walkin": [
+        "QA Tomás Pérez"
+      ]
+    },
+    {
+      "lang": "es",
+      "width": 320,
+      "surface": "checkin",
+      "test": "walkin_partial",
+      "q": "Tomás",
+      "roster": [],
+      "walkin": [
+        "Tomás Vargas",
+        "QA Tomás Pérez"
+      ]
+    },
+    {
+      "lang": "es",
+      "width": 320,
+      "surface": "checkin",
+      "test": "walkin_case",
+      "q": "QA TOMÁS PÉREZ",
+      "roster": [],
+      "walkin": [
+        "QA Tomás Pérez"
+      ]
+    },
+    {
+      "lang": "es",
+      "width": 320,
+      "surface": "checkin",
+      "test": "walkin_unaccented",
+      "q": "Tomas Perez",
+      "roster": [],
+      "walkin": [
+        "QA Tomás Pérez"
+      ]
+    },
+    {
+      "lang": "es",
+      "width": 320,
+      "surface": "checkin",
+      "test": "walkin_email",
+      "q": "qa.tomas@EXAMPLE.INVALID",
+      "roster": [],
+      "walkin": [
+        "QA Tomás Pérez"
+      ]
+    },
+    {
+      "lang": "es",
+      "width": 320,
+      "surface": "checkin",
+      "test": "walkin_phone",
+      "q": "3004445566",
+      "roster": [],
+      "walkin": [
+        "QA Tomás Pérez"
+      ]
+    },
+    {
+      "lang": "es",
+      "width": 320,
+      "surface": "checkin",
+      "test": "walkin_phone_punctuation",
+      "q": "(+57) 300-444-5566",
+      "roster": [],
+      "walkin": [
+        "QA Tomás Pérez"
+      ]
+    },
+    {
+      "lang": "es",
+      "width": 320,
+      "surface": "checkin",
+      "test": "no_match",
+      "q": "zzzzmissing",
+      "roster": [],
+      "walkin": []
+    },
+    {
+      "lang": "es",
+      "width": 320,
+      "surface": "checkin",
+      "test": "staff_exclusion",
+      "q": "qa.operator@example.invalid",
+      "roster": [],
+      "walkin": []
+    },
+    {
+      "lang": "es",
+      "width": 320,
+      "surface": "checkin",
+      "test": "tenant_scope",
+      "q": "qa.foreign@example.invalid",
+      "roster": [],
+      "walkin": []
+    },
+    {
+      "lang": "es",
+      "width": 320,
+      "surface": "checkin",
+      "test": "class_change",
+      "roster": [],
+      "walkin": [
+        "QA Ángela Núñez"
+      ]
+    },
+    {
+      "lang": "es",
+      "width": 320,
+      "surface": "register",
+      "test": "roster_exact",
+      "q": "QA Ángela Núñez",
+      "candidates": [
+        "QAQA Ángela Núñez · +573 ··· 2233"
+      ]
+    },
+    {
+      "lang": "es",
+      "width": 320,
+      "surface": "register",
+      "test": "roster_case",
+      "q": "  qA ÁNGELA NÚÑEZ  ",
+      "candidates": [
+        "QAQA Ángela Núñez · +573 ··· 2233"
+      ]
+    },
+    {
+      "lang": "es",
+      "width": 320,
+      "surface": "register",
+      "test": "roster_partial",
+      "q": "Núñ",
+      "candidates": [
+        "QAQA Ángela Núñez · +573 ··· 2233"
+      ]
+    },
+    {
+      "lang": "es",
+      "width": 320,
+      "surface": "register",
+      "test": "roster_unaccented",
+      "q": "Angela Nunez",
+      "candidates": [
+        "QAQA Ángela Núñez · +573 ··· 2233"
+      ]
+    },
+    {
+      "lang": "es",
+      "width": 320,
+      "surface": "register",
+      "test": "roster_email",
+      "q": "QA.ANGELA@EXAMPLE.INVALID",
+      "candidates": [
+        "QAQA Ángela Núñez · +573 ··· 2233"
+      ]
+    },
+    {
+      "lang": "es",
+      "width": 320,
+      "surface": "register",
+      "test": "roster_phone_digits",
+      "q": "3001112233",
+      "candidates": [
+        "QAQA Ángela Núñez · +573 ··· 2233"
+      ]
+    },
+    {
+      "lang": "es",
+      "width": 320,
+      "surface": "register",
+      "test": "roster_phone_formatted",
+      "q": "+57 300 111 2233",
+      "candidates": [
+        "QAQA Ángela Núñez · +573 ··· 2233"
+      ]
+    },
+    {
+      "lang": "es",
+      "width": 320,
+      "surface": "register",
+      "test": "roster_phone_punctuation",
+      "q": "300-111-2233",
+      "candidates": [
+        "QAQA Ángela Núñez · +573 ··· 2233"
+      ]
+    },
+    {
+      "lang": "es",
+      "width": 320,
+      "surface": "register",
+      "test": "roster_phone_country",
+      "q": "(+57) 300.111.2233",
+      "candidates": [
+        "QAQA Ángela Núñez · +573 ··· 2233"
+      ]
+    },
+    {
+      "lang": "es",
+      "width": 320,
+      "surface": "register",
+      "test": "walkin_exact",
+      "q": "QA Tomás Pérez",
+      "candidates": [
+        "QAQA Tomás Pérez · +57 300 ··· 5566"
+      ]
+    },
+    {
+      "lang": "es",
+      "width": 320,
+      "surface": "register",
+      "test": "walkin_partial",
+      "q": "Tomás",
+      "candidates": [
+        "TVTomás Vargas · +57 345 ··· 7070",
+        "QAQA Tomás Pérez · +57 300 ··· 5566"
+      ]
+    },
+    {
+      "lang": "es",
+      "width": 320,
+      "surface": "register",
+      "test": "walkin_case",
+      "q": "QA TOMÁS PÉREZ",
+      "candidates": [
+        "QAQA Tomás Pérez · +57 300 ··· 5566"
+      ]
+    },
+    {
+      "lang": "es",
+      "width": 320,
+      "surface": "register",
+      "test": "walkin_unaccented",
+      "q": "Tomas Perez",
+      "candidates": [
+        "QAQA Tomás Pérez · +57 300 ··· 5566"
+      ]
+    },
+    {
+      "lang": "es",
+      "width": 320,
+      "surface": "register",
+      "test": "walkin_email",
+      "q": "qa.tomas@EXAMPLE.INVALID",
+      "candidates": [
+        "QAQA Tomás Pérez · +57 300 ··· 5566"
+      ]
+    },
+    {
+      "lang": "es",
+      "width": 320,
+      "surface": "register",
+      "test": "walkin_phone",
+      "q": "3004445566",
+      "candidates": [
+        "QAQA Tomás Pérez · +57 300 ··· 5566"
+      ]
+    },
+    {
+      "lang": "es",
+      "width": 320,
+      "surface": "register",
+      "test": "walkin_phone_punctuation",
+      "q": "(+57) 300-444-5566",
+      "candidates": [
+        "QAQA Tomás Pérez · +57 300 ··· 5566"
+      ]
+    },
+    {
+      "lang": "es",
+      "width": 320,
+      "surface": "register",
+      "test": "no_match",
+      "q": "zzzzmissing",
+      "candidates": []
+    },
+    {
+      "lang": "es",
+      "width": 320,
+      "surface": "register",
+      "test": "staff_exclusion",
+      "q": "qa.operator@example.invalid",
+      "candidates": []
+    },
+    {
+      "lang": "es",
+      "width": 320,
+      "surface": "register",
+      "test": "tenant_scope",
+      "q": "qa.foreign@example.invalid",
+      "candidates": []
+    },
+    {
+      "lang": "es",
+      "width": 320,
+      "surface": "register",
+      "test": "empty",
+      "q": "",
+      "candidates": []
+    },
+    {
+      "lang": "es",
+      "width": 320,
+      "surface": "register",
+      "test": "one_character",
+      "q": "Q",
+      "candidates": []
+    },
+    {
+      "lang": "es",
+      "width": 320,
+      "test": "interrupted_repeated_keyboard",
+      "pass": true,
+      "overflow": false
+    },
+    {
+      "lang": "es",
+      "width": 390,
+      "surface": "checkin",
+      "test": "roster_exact",
+      "q": "QA Ángela Núñez",
+      "roster": [
+        "QA Ángela Núñez"
+      ],
+      "walkin": []
+    },
+    {
+      "lang": "es",
+      "width": 390,
+      "surface": "checkin",
+      "test": "roster_case",
+      "q": "  qA ÁNGELA NÚÑEZ  ",
+      "roster": [
+        "QA Ángela Núñez"
+      ],
+      "walkin": []
+    },
+    {
+      "lang": "es",
+      "width": 390,
+      "surface": "checkin",
+      "test": "roster_partial",
+      "q": "Núñ",
+      "roster": [
+        "QA Ángela Núñez"
+      ],
+      "walkin": []
+    },
+    {
+      "lang": "es",
+      "width": 390,
+      "surface": "checkin",
+      "test": "roster_unaccented",
+      "q": "Angela Nunez",
+      "roster": [
+        "QA Ángela Núñez"
+      ],
+      "walkin": []
+    },
+    {
+      "lang": "es",
+      "width": 390,
+      "surface": "checkin",
+      "test": "roster_email",
+      "q": "QA.ANGELA@EXAMPLE.INVALID",
+      "roster": [
+        "QA Ángela Núñez"
+      ],
+      "walkin": []
+    },
+    {
+      "lang": "es",
+      "width": 390,
+      "surface": "checkin",
+      "test": "roster_phone_digits",
+      "q": "3001112233",
+      "roster": [
+        "QA Ángela Núñez"
+      ],
+      "walkin": []
+    },
+    {
+      "lang": "es",
+      "width": 390,
+      "surface": "checkin",
+      "test": "roster_phone_formatted",
+      "q": "+57 300 111 2233",
+      "roster": [
+        "QA Ángela Núñez"
+      ],
+      "walkin": []
+    },
+    {
+      "lang": "es",
+      "width": 390,
+      "surface": "checkin",
+      "test": "roster_phone_punctuation",
+      "q": "300-111-2233",
+      "roster": [
+        "QA Ángela Núñez"
+      ],
+      "walkin": []
+    },
+    {
+      "lang": "es",
+      "width": 390,
+      "surface": "checkin",
+      "test": "roster_phone_country",
+      "q": "(+57) 300.111.2233",
+      "roster": [
+        "QA Ángela Núñez"
+      ],
+      "walkin": []
+    },
+    {
+      "lang": "es",
+      "width": 390,
+      "surface": "checkin",
+      "test": "walkin_exact",
+      "q": "QA Tomás Pérez",
+      "roster": [],
+      "walkin": [
+        "QA Tomás Pérez"
+      ]
+    },
+    {
+      "lang": "es",
+      "width": 390,
+      "surface": "checkin",
+      "test": "walkin_partial",
+      "q": "Tomás",
+      "roster": [],
+      "walkin": [
+        "Tomás Vargas",
+        "QA Tomás Pérez"
+      ]
+    },
+    {
+      "lang": "es",
+      "width": 390,
+      "surface": "checkin",
+      "test": "walkin_case",
+      "q": "QA TOMÁS PÉREZ",
+      "roster": [],
+      "walkin": [
+        "QA Tomás Pérez"
+      ]
+    },
+    {
+      "lang": "es",
+      "width": 390,
+      "surface": "checkin",
+      "test": "walkin_unaccented",
+      "q": "Tomas Perez",
+      "roster": [],
+      "walkin": [
+        "QA Tomás Pérez"
+      ]
+    },
+    {
+      "lang": "es",
+      "width": 390,
+      "surface": "checkin",
+      "test": "walkin_email",
+      "q": "qa.tomas@EXAMPLE.INVALID",
+      "roster": [],
+      "walkin": [
+        "QA Tomás Pérez"
+      ]
+    },
+    {
+      "lang": "es",
+      "width": 390,
+      "surface": "checkin",
+      "test": "walkin_phone",
+      "q": "3004445566",
+      "roster": [],
+      "walkin": [
+        "QA Tomás Pérez"
+      ]
+    },
+    {
+      "lang": "es",
+      "width": 390,
+      "surface": "checkin",
+      "test": "walkin_phone_punctuation",
+      "q": "(+57) 300-444-5566",
+      "roster": [],
+      "walkin": [
+        "QA Tomás Pérez"
+      ]
+    },
+    {
+      "lang": "es",
+      "width": 390,
+      "surface": "checkin",
+      "test": "no_match",
+      "q": "zzzzmissing",
+      "roster": [],
+      "walkin": []
+    },
+    {
+      "lang": "es",
+      "width": 390,
+      "surface": "checkin",
+      "test": "staff_exclusion",
+      "q": "qa.operator@example.invalid",
+      "roster": [],
+      "walkin": []
+    },
+    {
+      "lang": "es",
+      "width": 390,
+      "surface": "checkin",
+      "test": "tenant_scope",
+      "q": "qa.foreign@example.invalid",
+      "roster": [],
+      "walkin": []
+    },
+    {
+      "lang": "es",
+      "width": 390,
+      "surface": "checkin",
+      "test": "class_change",
+      "roster": [],
+      "walkin": [
+        "QA Ángela Núñez"
+      ]
+    },
+    {
+      "lang": "es",
+      "width": 390,
+      "surface": "register",
+      "test": "roster_exact",
+      "q": "QA Ángela Núñez",
+      "candidates": [
+        "QAQA Ángela Núñez · +573 ··· 2233"
+      ]
+    },
+    {
+      "lang": "es",
+      "width": 390,
+      "surface": "register",
+      "test": "roster_case",
+      "q": "  qA ÁNGELA NÚÑEZ  ",
+      "candidates": [
+        "QAQA Ángela Núñez · +573 ··· 2233"
+      ]
+    },
+    {
+      "lang": "es",
+      "width": 390,
+      "surface": "register",
+      "test": "roster_partial",
+      "q": "Núñ",
+      "candidates": [
+        "QAQA Ángela Núñez · +573 ··· 2233"
+      ]
+    },
+    {
+      "lang": "es",
+      "width": 390,
+      "surface": "register",
+      "test": "roster_unaccented",
+      "q": "Angela Nunez",
+      "candidates": [
+        "QAQA Ángela Núñez · +573 ··· 2233"
+      ]
+    },
+    {
+      "lang": "es",
+      "width": 390,
+      "surface": "register",
+      "test": "roster_email",
+      "q": "QA.ANGELA@EXAMPLE.INVALID",
+      "candidates": [
+        "QAQA Ángela Núñez · +573 ··· 2233"
+      ]
+    },
+    {
+      "lang": "es",
+      "width": 390,
+      "surface": "register",
+      "test": "roster_phone_digits",
+      "q": "3001112233",
+      "candidates": [
+        "QAQA Ángela Núñez · +573 ··· 2233"
+      ]
+    },
+    {
+      "lang": "es",
+      "width": 390,
+      "surface": "register",
+      "test": "roster_phone_formatted",
+      "q": "+57 300 111 2233",
+      "candidates": [
+        "QAQA Ángela Núñez · +573 ··· 2233"
+      ]
+    },
+    {
+      "lang": "es",
+      "width": 390,
+      "surface": "register",
+      "test": "roster_phone_punctuation",
+      "q": "300-111-2233",
+      "candidates": [
+        "QAQA Ángela Núñez · +573 ··· 2233"
+      ]
+    },
+    {
+      "lang": "es",
+      "width": 390,
+      "surface": "register",
+      "test": "roster_phone_country",
+      "q": "(+57) 300.111.2233",
+      "candidates": [
+        "QAQA Ángela Núñez · +573 ··· 2233"
+      ]
+    },
+    {
+      "lang": "es",
+      "width": 390,
+      "surface": "register",
+      "test": "walkin_exact",
+      "q": "QA Tomás Pérez",
+      "candidates": [
+        "QAQA Tomás Pérez · +57 300 ··· 5566"
+      ]
+    },
+    {
+      "lang": "es",
+      "width": 390,
+      "surface": "register",
+      "test": "walkin_partial",
+      "q": "Tomás",
+      "candidates": [
+        "TVTomás Vargas · +57 345 ··· 7070",
+        "QAQA Tomás Pérez · +57 300 ··· 5566"
+      ]
+    },
+    {
+      "lang": "es",
+      "width": 390,
+      "surface": "register",
+      "test": "walkin_case",
+      "q": "QA TOMÁS PÉREZ",
+      "candidates": [
+        "QAQA Tomás Pérez · +57 300 ··· 5566"
+      ]
+    },
+    {
+      "lang": "es",
+      "width": 390,
+      "surface": "register",
+      "test": "walkin_unaccented",
+      "q": "Tomas Perez",
+      "candidates": [
+        "QAQA Tomás Pérez · +57 300 ··· 5566"
+      ]
+    },
+    {
+      "lang": "es",
+      "width": 390,
+      "surface": "register",
+      "test": "walkin_email",
+      "q": "qa.tomas@EXAMPLE.INVALID",
+      "candidates": [
+        "QAQA Tomás Pérez · +57 300 ··· 5566"
+      ]
+    },
+    {
+      "lang": "es",
+      "width": 390,
+      "surface": "register",
+      "test": "walkin_phone",
+      "q": "3004445566",
+      "candidates": [
+        "QAQA Tomás Pérez · +57 300 ··· 5566"
+      ]
+    },
+    {
+      "lang": "es",
+      "width": 390,
+      "surface": "register",
+      "test": "walkin_phone_punctuation",
+      "q": "(+57) 300-444-5566",
+      "candidates": [
+        "QAQA Tomás Pérez · +57 300 ··· 5566"
+      ]
+    },
+    {
+      "lang": "es",
+      "width": 390,
+      "surface": "register",
+      "test": "no_match",
+      "q": "zzzzmissing",
+      "candidates": []
+    },
+    {
+      "lang": "es",
+      "width": 390,
+      "surface": "register",
+      "test": "staff_exclusion",
+      "q": "qa.operator@example.invalid",
+      "candidates": []
+    },
+    {
+      "lang": "es",
+      "width": 390,
+      "surface": "register",
+      "test": "tenant_scope",
+      "q": "qa.foreign@example.invalid",
+      "candidates": []
+    },
+    {
+      "lang": "es",
+      "width": 390,
+      "surface": "register",
+      "test": "empty",
+      "q": "",
+      "candidates": []
+    },
+    {
+      "lang": "es",
+      "width": 390,
+      "surface": "register",
+      "test": "one_character",
+      "q": "Q",
+      "candidates": []
+    },
+    {
+      "lang": "es",
+      "width": 390,
+      "test": "interrupted_repeated_keyboard",
+      "pass": true,
+      "overflow": false
+    }
+  ],
+  "roles": [
+    {
+      "role": "super_admin",
+      "route": "/staff/checkin",
+      "allowed": true
+    },
+    {
+      "role": "super_admin",
+      "route": "/staff/register",
+      "allowed": true
+    },
+    {
+      "role": "admin",
+      "route": "/staff/checkin",
+      "allowed": true
+    },
+    {
+      "role": "admin",
+      "route": "/staff/register",
+      "allowed": true
+    },
+    {
+      "role": "coordinator",
+      "route": "/staff/checkin",
+      "allowed": true
+    },
+    {
+      "role": "coordinator",
+      "route": "/staff/register",
+      "allowed": false
+    },
+    {
+      "role": "front_desk",
+      "route": "/staff/checkin",
+      "allowed": true
+    },
+    {
+      "role": "front_desk",
+      "route": "/staff/register",
+      "allowed": true
+    },
+    {
+      "role": "finance",
+      "route": "/staff/checkin",
+      "allowed": false
+    },
+    {
+      "role": "finance",
+      "route": "/staff/register",
+      "allowed": false
+    },
+    {
+      "role": "teacher",
+      "route": "/staff/checkin",
+      "allowed": false
+    },
+    {
+      "role": "teacher",
+      "route": "/staff/register",
+      "allowed": false
+    },
+    {
+      "role": "maintenance",
+      "route": "/staff/checkin",
+      "allowed": false
+    },
+    {
+      "role": "maintenance",
+      "route": "/staff/register",
+      "allowed": false
+    },
+    {
+      "role": "marketing",
+      "route": "/staff/checkin",
+      "allowed": false
+    },
+    {
+      "role": "marketing",
+      "route": "/staff/register",
+      "allowed": false
+    },
+    {
+      "role": "developer",
+      "route": "/staff/checkin",
+      "allowed": false
+    },
+    {
+      "role": "developer",
+      "route": "/staff/register",
+      "allowed": false
+    },
+    {
+      "role": "customer",
+      "route": "/staff/checkin",
+      "allowed": false
+    },
+    {
+      "role": "customer",
+      "route": "/staff/register",
+      "allowed": false
+    },
+    {
+      "role": "public",
+      "route": "/staff/checkin",
+      "allowed": false
+    },
+    {
+      "role": "public",
+      "route": "/staff/register",
+      "allowed": false
+    }
+  ],
+  "errors": []
+}

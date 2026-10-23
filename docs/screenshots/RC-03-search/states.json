@@ -1,0 +1,10 @@
+{
+  "base": "http://127.0.0.1:5241",
+  "checks": [
+    "actual hook: missing tenant no reads; delayed old scope, latest subscription, role switch, failure/recovery and unmount suppress stale people; no late storage writes"
+  ],
+  "errors": [],
+  "limits": [
+    "Dev-only scoped hook/provider fixture; no server authorization claim"
+  ]
+}
