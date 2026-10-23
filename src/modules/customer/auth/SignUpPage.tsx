@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useSession } from '../../../auth/SessionProvider';
 import { useData } from '../../../data/DataContext';
@@ -31,28 +31,45 @@ export function SignUpPage() {
   const { t } = useI18n();
   const nav = useNavigate();
   const data = useData();
-  const { switchUser } = useSession();
+  const { switchUser, user, role } = useSession();
+  const location=useLocation();
+  const contextKey=JSON.stringify([user.id,role,location.pathname,location.search]);
+  const active = useRef<{ cancelled: boolean } | null>(null);
+  const request = useRef(crypto.randomUUID());
+  const mounted=useRef(false);
+  const context=useRef({data,key:contextKey});
+  if(context.current.data!==data||context.current.key!==contextKey){
+    if(active.current)active.current.cancelled=true;
+    active.current=null;request.current=crypto.randomUUID();
+    context.current={data,key:contextKey};
+  }
+  const scope=context.current;
   const [params] = useSearchParams();
   const [f,setF]=useState<Form>(EMPTY);
   const [legal,setLegal]=useState<SignupLegalReference[]>([]);
+  const [legalOwner,setLegalOwner]=useState<typeof scope|null>(null);
+  const [consentOwner,setConsentOwner]=useState<typeof scope|null>(null);
   const [legalState,setLegalState]=useState<SignupLegalConsentProps['state']>('loading');
   const legalRef=useRef<SignupLegalReference[]>([]),legalEpoch=useRef(0),legalChanged=useRef(false);
   const loadLegal=useCallback(async()=>{
+    const owner=scope;
+    if(context.current!==owner)return;
     const epoch=++legalEpoch.current;
+    setLegalOwner(owner);
     setLegalState('loading');
     try {
       const next=await readSignupLegal(data);
-      if(epoch!==legalEpoch.current)return;
+      if(epoch!==legalEpoch.current||context.current!==owner||!mounted.current)return;
       const changed=legalRef.current.length>0&&signupLegalKey(next)!==signupLegalKey(legalRef.current);
       if(changed){legalChanged.current=true;setF(value=>({...value,consent:false}));}
       legalRef.current=next;setLegal(next);
       setLegalState(legalChanged.current?'changed':'ready');
     } catch(error) {
-      if(epoch!==legalEpoch.current)return;
+      if(epoch!==legalEpoch.current||context.current!==owner||!mounted.current)return;
       setF(value=>({...value,consent:false}));
       setLegalState(error instanceof Error&&error.message==='registration_legal_unavailable'?'unavailable':'error');
     }
-  },[data]);
+  },[scope]);
   useEffect(()=>{
     void loadLegal();
     const off=data.subscribe('legal_documents',()=>void loadLegal());
@@ -63,9 +80,11 @@ export function SignUpPage() {
   const [busy, setBusy] = useState(false);
   const [dup, setDup] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
-  const active = useRef<{ cancelled: boolean } | null>(null);
-  const request = useRef(crypto.randomUUID());
-  useEffect(() => () => { if (active.current) active.current.cancelled = true; active.current = null; }, []);
+  useEffect(() => {mounted.current=true;return()=>{mounted.current=false;if(active.current)active.current.cancelled=true;active.current=null;};}, []);
+  const previousScope=useRef(scope);
+  useEffect(()=>{if(previousScope.current===scope)return;previousScope.current=scope;setBusy(false);setDup(false);setFailure(null);setErrors({});setF(value=>({...value,consent:false}));},[scope]);
+  const currentLegalState=legalOwner===scope?legalState:'loading';
+  const currentConsent=consentOwner===scope&&f.consent;
   const cancel = () => { if (active.current) active.current.cancelled = true; active.current = null; setBusy(false); setFailure(t('customer.signup.cancelled')); };
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setF((s) => ({ ...s, [k]: v }));
   const strength = passwordStrength(f.password);
@@ -78,21 +97,23 @@ export function SignUpPage() {
     const er: typeof errors = Object.fromEntries(Object.entries(signupErrors(f)).map(([field,key])=>[field,t(key)]));
     if (f.password.length < 8) er.password = t('customer.form.password.err');
     else if (f.password.length > SIGNUP_LIMITS.password) er.password = t('customer.signup.tooLong');
-    if (!f.consent) er.consent = t('customer.signup.consent.err');
+    if (!currentConsent) er.consent = t('customer.signup.consent.err');
     setErrors(er);
     setDup(false);
-    if (Object.keys(er).length || !['ready','changed'].includes(legalState)) return;
+    if (Object.keys(er).length || !['ready','changed'].includes(currentLegalState)) return;
     const attempt = { cancelled: false };
     active.current = attempt;
+    const isCurrent=()=>mounted.current&&context.current===scope&&active.current===attempt&&!attempt.cancelled;
     setBusy(true);
     try {
       // Intentionally omit the validated demo password from command arguments and receipts.
-      const userId = await registerMockCustomer(data, { first: f.first, last: f.last, email: f.email, whatsapp: f.whatsapp, birthday: f.birthday, ecName: f.ecName, ecPhone: f.ecPhone, photo: f.photo, consent: f.consent, legal, marketing: f.marketing, invite }, request.current, () => attempt.cancelled);
-      if (attempt.cancelled) return;
+      const userId = await registerMockCustomer(data, { first: f.first, last: f.last, email: f.email, whatsapp: f.whatsapp, birthday: f.birthday, ecName: f.ecName, ecPhone: f.ecPhone, photo: f.photo, consent: currentConsent, legal, marketing: f.marketing, invite }, request.current, () => !isCurrent());
+      if (!isCurrent()) return;
       switchUser(userId);
+      if (!isCurrent()) return;
       nav(customerReturn(params.get('next')) ?? '/app');
     } catch (error) {
-      if (attempt.cancelled) return;
+      if (!isCurrent()) return;
       if (error instanceof Error && error.message === 'registration_duplicate') setDup(true);
       else if(error instanceof Error&&/^registration_legal_/.test(error.message)){setF(v=>({...v,consent:false}));legalChanged.current=true;setLegalState('changed');void loadLegal();}
       else setFailure(t('customer.signup.failed'));
@@ -101,7 +122,7 @@ export function SignUpPage() {
     }
   };
 
-  const onPhoto = (file: File | undefined) => { if (!file || file.size > 1_500_000) return; const r = new FileReader(); r.onload = () => set('photo', String(r.result)); r.readAsDataURL(file); };
+  const onPhoto = (file: File | undefined) => { if (!file || file.size > 1_500_000) return; const owner=context.current,r = new FileReader(); r.onload = () => {if(mounted.current&&context.current===owner)set('photo', String(r.result));}; r.readAsDataURL(file); };
 
   return (
     <AuthShell>
@@ -138,11 +159,11 @@ export function SignUpPage() {
                 <span className="xs muted">{t('customer.form.optional')}</span>
               </div>
             )}</Field>
-            <SignupLegalConsent state={legalState} documents={legal} accepted={f.consent} disabled={busy} error={errors.consent} onChange={value=>{set('consent',value);if(value){legalChanged.current=false;setLegalState('ready');setErrors(e=>({...e,consent:undefined}));}}} onRetry={()=>void loadLegal()}/>
+            <SignupLegalConsent state={currentLegalState} documents={legal} accepted={currentConsent} disabled={busy} error={errors.consent} onChange={value=>{setConsentOwner(scope);set('consent',value);if(value){legalChanged.current=false;setLegalState('ready');setErrors(e=>({...e,consent:undefined}));}}} onRetry={()=>void loadLegal()}/>
             {dup && <Notice tone="warn" title={t('customer.signup.dup')} action={<Link to={customerAuthLink('/auth/sign-in', params)}><Button size="sm" variant="secondary">{t('customer.signin.cta')}</Button></Link>}>{t('customer.signup.dup.body')}</Notice>}
             {failure && <Notice tone="warn">{failure}</Notice>}
             {busy && <Button type="button" variant="secondary" onClick={cancel}>{t('customer.signup.cancel')}</Button>}
-            <Button type="submit" block size="lg" loading={busy} disabled={!['ready','changed'].includes(legalState)}>{t('customer.signup.cta')}</Button>
+            <Button type="submit" block size="lg" loading={busy} disabled={!['ready','changed'].includes(currentLegalState)}>{t('customer.signup.cta')}</Button>
           </form>
         </Card>
         <p className="small" style={{ textAlign: 'center' }}>{t('customer.signup.have')} <Link to={customerAuthLink('/auth/sign-in', params)}>{t('customer.signin.cta')}</Link></p>

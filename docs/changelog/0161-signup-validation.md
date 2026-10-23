@@ -1,7 +1,7 @@
 version: 0.25.0
 date: 2026-10-23
 codes: A-03
-prompt: docs/prompts/0157-signup-validation.md
+prompt: docs/prompts/0161-signup-validation.md
 intent: Prevent oversized signup fields and impossible birthdays from being saved by the browser demo.
 decision: Share form and registration-command validation. Bound trimmed first/last names to100 code units each, emergency name200, email254, phone text40 and digits15. Retain existing minimums and reuse validBirthday calendar semantics. The memory-only demo password is bounded at128 in the form and still never enters registration arguments or persistence.
 rejected: Truncating saved text, stripping Unicode/symbols, changing consent records, or presenting these local safeguards as identity-provider policy.

@@ -1,0 +1,3 @@
+Fix the reproduced same-mounted signup actor/provider/route race in a separate recoverable followup. Capture immutable provider, actor, effective role and path/search. Stop old pending commands before writes or session/navigation acknowledgement, retain the draft, require explicit current-context resubmission and preserve legal evidence/replay. Test actor/role/provider/route/unmount delayed success and failure with fresh valid retry. No real identity service changes.
+
+Response: current-context ownership fences the existing cancellation callback, legal reads, consent control and asynchronous photo draft reads. Old commands and acknowledgements are suppressed; the entered draft stays available for explicit retry.

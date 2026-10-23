@@ -818,3 +818,5 @@ Protected-capture clarification: M14 schedule/pay screenshots remain local/ignor
 ## PL07 signup validation
 
 - Reproduced and bounded oversized account fields and invalid calendar birthdays in A-03 and its mock registration command. Literal Unicode/symbol storage and exact consent replay are retained. Checked local implementation awaits independent review and integration; no real identity-provider changes or whole-platform validation claim.
+
+- A-03 pending signup scope: reproduced same-mounted actor/provider/query changes; fenced old command/session/navigation and retained the draft for explicit retry. Current legal proof and consent stay scoped; final exact tests/review and release remain pending.
