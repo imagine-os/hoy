@@ -117,7 +117,7 @@ export const CAPTURED: Record<string, string> = {
 export const CHANGED: Record<string, string> = {
   'A-01': '2026-09-28',
   'A-02': '2026-10-22',
-  'A-03': '2026-09-29',
+  'A-03': '2026-10-23',
   'A-05': '2026-09-29',
   'A-06': '2026-10-01',
   'C-01': '2026-10-01',

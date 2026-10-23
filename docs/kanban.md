@@ -814,3 +814,7 @@ Protected-capture clarification: M14 schedule/pay screenshots remain local/ignor
 - RS-02: saved package-booking confirmation recovery and truthful duplicate feedback; final combined review and release pending. No new charge is inferred from missing confirmation.
 - RS-04: scoped studio-day admission checks across regular and identified voucher bookings, offered claims and rescheduling; synthetic regression coverage, no server enforcement claim.
 - RS-05: current availability and fresh navigation checks on customer/public class drawers; final paused-context regressions and combined release pending.
+
+## PL07 signup validation
+
+- Reproduced and bounded oversized account fields and invalid calendar birthdays in A-03 and its mock registration command. Literal Unicode/symbol storage and exact consent replay are retained. Checked local implementation awaits independent review and integration; no real identity-provider changes or whole-platform validation claim.

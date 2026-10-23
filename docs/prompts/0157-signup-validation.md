@@ -1,0 +1,3 @@
+Repair reproduced PL07 signup validation in an isolated frontend-only batch. Reject oversized fields and impossible calendar birthdays through the command and actual bilingual form. Preserve literal Unicode/symbol text, existing consent evidence, atomic rollback and replay. No provider, profile, booking, real authentication or email integration changes.
+
+Response: shared signup validation adds finite field-size bounds and reuses the existing profile calendar-date validator. UI maxlength and localized errors accompany command validation. Synthetic domain and responsive actual-form checks cover rejected and valid paths; final combined review/release belongs to integration.

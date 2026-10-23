@@ -12,7 +12,7 @@ import { Field } from '../../../components/molecule/Field/Field';
 import { Notice } from '../../../components/molecule/Notice/Notice';
 import { Avatar } from '../../../components/atom/Avatar/Avatar';
 import { AuthShell } from './AuthShell';
-import { isPhone } from '../../../i18n/format';
+import { SIGNUP_LIMITS, signupErrors } from './signupValidation';
 import { customerAuthLink, customerReturn } from './customerReturn';
 import { registerMockCustomer } from './mockRegistration';
 import { tenant } from '../../../tenant/tenant';
@@ -75,14 +75,9 @@ export function SignUpPage() {
     e.preventDefault();
     if (active.current) return;
     setFailure(null);
-    const er: typeof errors = {};
-    if (f.first.trim().length < 2) er.first = t('customer.form.required');
-    if (f.last.trim().length < 2) er.last = t('customer.form.required');
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(f.email.trim())) er.email = t('customer.form.email.err');
-    if (!isPhone(f.whatsapp, 12)) er.whatsapp = t('customer.form.phone');
+    const er: typeof errors = Object.fromEntries(Object.entries(signupErrors(f)).map(([field,key])=>[field,t(key)]));
     if (f.password.length < 8) er.password = t('customer.form.password.err');
-    if (f.ecName.trim().length < 2) er.ecName = t('customer.form.required');
-    if (!isPhone(f.ecPhone)) er.ecPhone = t('customer.form.phone');
+    else if (f.password.length > SIGNUP_LIMITS.password) er.password = t('customer.signup.tooLong');
     if (!f.consent) er.consent = t('customer.signup.consent.err');
     setErrors(er);
     setDup(false);
@@ -117,24 +112,24 @@ export function SignUpPage() {
         <Card padding="lg">
           <form className="stack" onSubmit={submit} noValidate>
             <div className="grid grid-2">
-              <Field label={t('customer.form.first')} required error={errors.first}>{(id) => <Input id={id} value={f.first} onChange={(e) => set('first', e.target.value)} autoComplete="given-name" />}</Field>
-              <Field label={t('customer.form.last')} required error={errors.last}>{(id) => <Input id={id} value={f.last} onChange={(e) => set('last', e.target.value)} autoComplete="family-name" />}</Field>
+              <Field label={t('customer.form.first')} required error={errors.first}>{(id) => <Input id={id} maxLength={SIGNUP_LIMITS.first} value={f.first} onChange={(e) => set('first', e.target.value)} autoComplete="given-name" />}</Field>
+              <Field label={t('customer.form.last')} required error={errors.last}>{(id) => <Input id={id} maxLength={SIGNUP_LIMITS.last} value={f.last} onChange={(e) => set('last', e.target.value)} autoComplete="family-name" />}</Field>
             </div>
-            <Field label={t('customer.form.email')} required error={errors.email}>{(id) => <Input id={id} type="email" value={f.email} onChange={(e) => set('email', e.target.value)} autoComplete="email" />}</Field>
-            <Field label={t('customer.form.whatsapp')} required hint={t('customer.form.whatsapp.hint', { dial: tenant.dialCode })} error={errors.whatsapp}>{(id) => <Input id={id} inputMode="tel" value={f.whatsapp} onChange={(e) => set('whatsapp', e.target.value)} autoComplete="tel" />}</Field>
+            <Field label={t('customer.form.email')} required error={errors.email}>{(id) => <Input id={id} type="email" maxLength={SIGNUP_LIMITS.email} value={f.email} onChange={(e) => set('email', e.target.value)} autoComplete="email" />}</Field>
+            <Field label={t('customer.form.whatsapp')} required hint={t('customer.form.whatsapp.hint', { dial: tenant.dialCode })} error={errors.whatsapp}>{(id) => <Input id={id} inputMode="tel" maxLength={SIGNUP_LIMITS.whatsapp} value={f.whatsapp} onChange={(e) => set('whatsapp', e.target.value)} autoComplete="tel" />}</Field>
             <Field label={t('customer.form.password')} required hint={t('customer.form.password.hint')} error={errors.password}>{(id) => (
               <div className="stack-sm">
-                <Input id={id} type="password" value={f.password} onChange={(e) => set('password', e.target.value)} autoComplete="new-password" />
+                <Input id={id} type="password" maxLength={SIGNUP_LIMITS.password} value={f.password} onChange={(e) => set('password', e.target.value)} autoComplete="new-password" />
                 <div className={`auth-strength auth-strength-${strength}`} aria-hidden><i /><i /><i /></div>
                 {f.password && <span className="xs muted">{t(`customer.form.strength.${strength}`)}</span>}
               </div>
             )}</Field>
-            <Field label={t('customer.form.birthday')} hint={t('customer.form.birthday.hint')}>{(id) => <Input id={id} type="date" value={f.birthday} onChange={(e) => set('birthday', e.target.value)} />}</Field>
+            <Field label={t('customer.form.birthday')} error={errors.birthday} hint={t('customer.form.birthday.hint')}>{(id) => <Input id={id} type="date" value={f.birthday} onChange={(e) => set('birthday', e.target.value)} />}</Field>
             <div className="eyebrow">{t('customer.form.emergency')}</div>
             <p className="xs muted">{t('customer.signup.emergency.why')}</p>
             <div className="grid grid-2">
-              <Field label={t('customer.form.name')} required error={errors.ecName}>{(id) => <Input id={id} value={f.ecName} onChange={(e) => set('ecName', e.target.value)} />}</Field>
-              <Field label={t('customer.form.phone')} required error={errors.ecPhone}>{(id) => <Input id={id} inputMode="tel" value={f.ecPhone} onChange={(e) => set('ecPhone', e.target.value)} />}</Field>
+              <Field label={t('customer.form.name')} required error={errors.ecName}>{(id) => <Input id={id} maxLength={SIGNUP_LIMITS.ecName} value={f.ecName} onChange={(e) => set('ecName', e.target.value)} />}</Field>
+              <Field label={t('customer.form.phone')} required error={errors.ecPhone}>{(id) => <Input id={id} inputMode="tel" maxLength={SIGNUP_LIMITS.ecPhone} value={f.ecPhone} onChange={(e) => set('ecPhone', e.target.value)} />}</Field>
             </div>
             <Field label={t('customer.form.photo')} hint={t('customer.form.photo.hint')}>{(id) => (
               <div className="row">

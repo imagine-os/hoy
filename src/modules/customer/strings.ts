@@ -29,6 +29,7 @@ export const strings: StringTable = {
   'customer.profile.atomic.loading': {es: 'Cargando tus datos…', en: 'Loading your details…'},
   'customer.profile.atomic.readError': {es: 'No pudimos cargar tus dos registros. No se puede editar todavía.', en: 'We could not load both of your records. Editing is unavailable.'},
   'customer.profile.atomic.retry': {es: 'Reintentar', en: 'Retry'},
+  'customer.signup.tooLong': { es: 'El texto supera el máximo permitido para este campo.', en: 'The text exceeds this field’s maximum length.' },
   'customer.profile.atomic.birthday': {es: 'Ingresa una fecha válida.', en: 'Enter a valid calendar date.'},
   'customer.profile.atomic.failure': {es: 'No se guardó. Reintenta o cancela; si el problema continúa, vuelve a abrir el editor.', en: 'Save failed. Retry or cancel; if the problem continues, reopen the editor.'},
   'customer.profile.atomic.stale': {es: 'Tus datos cambiaron. Cancela y vuelve a abrir para revisar la versión actual.', en: 'Your details changed. Cancel and reopen to review the current version.'},
