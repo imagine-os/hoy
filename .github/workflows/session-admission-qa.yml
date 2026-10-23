@@ -12,6 +12,7 @@ on:
       - 'scripts/*admission*'
       - 'scripts/*package-booking*'
       - 'scripts/test-package-voucher-duplicate-ui.mjs'
+      - 'scripts/test-schedule-criterion-ui.mjs'
       - 'scripts/*rs05-cta*'
       - 'scripts/test-desk-transactions.mjs'
       - 'scripts/test-reschedule-atomic.mjs'
@@ -23,7 +24,7 @@ permissions:
 jobs:
   admission:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
         with:
@@ -63,6 +64,7 @@ jobs:
           done
           QA_BASE=http://127.0.0.1:5480 QA_OUTPUT=/tmp/admission-production node scripts/test-session-admission-ui.mjs
           QA_BASE=http://127.0.0.1:5481 QA_OUTPUT=/tmp/admission-context node scripts/test-session-admission-context.mjs
+          QA_BASE=http://127.0.0.1:5480 QA_OUTPUT=/tmp/booking-schedule-criterion node scripts/test-schedule-criterion-ui.mjs
           QA_BASE=http://127.0.0.1:5480 QA_OUTPUT=/tmp/booking-package-flow node scripts/test-package-booking-flow-ui.mjs
           QA_BASE=http://127.0.0.1:5481 QA_OUTPUT=/tmp/booking-package-recovery node scripts/test-package-booking-recovery-ui.mjs
           QA_BASE=http://127.0.0.1:5481 QA_OUTPUT=/tmp/booking-voucher-duplicate node scripts/test-package-voucher-duplicate-ui.mjs

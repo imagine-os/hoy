@@ -8,8 +8,10 @@ globalThis.localStorage={getItem:k=>values.get(k)??null,setItem:(k,v)=>{if(quota
 try{
  const file=join(scratch,'attendance.mjs');await build({stdin:{contents:"export {MockProvider} from './src/data/MockProvider'; export {setReceptionAttendance,receptionUndoEligible} from './src/data/receptionAttendance';",resolveDir:process.cwd()},bundle:true,format:'esm',platform:'node',outfile:file,logLevel:'silent'});
  const {MockProvider,setReceptionAttendance:run,receptionUndoEligible}=await import(pathToFileURL(file));const data=new MockProvider(),now=Date.now(),stamp=new Date(now).toISOString(),base=data.peek('class_sessions')[0];
+ // Isolate attendance transitions from unrelated seeded daily admissions.
+ const attendee=await data.insert('users',{...data.peek('users').find(row=>row.id==='usr_cust'),id:'qa_attendance_user',name:'FICTIONAL ATTENDANCE',email:'attendance@example.invalid'});
  await data.insert('class_sessions',{...base,id:'qa_attendance_class',template_id:null,modality_id:'mod_alineacion',starts_at:new Date(now+86400000).toISOString(),ends_at:new Date(now+89400000).toISOString(),status:'scheduled',booked_count:0});
- const booking=await data.insert('bookings',{user_id:'usr_cust',session_id:'qa_attendance_class',status:'booked',paid_with:'package',mat_number:1,checked_in_at:null,ledger_id:null});
+ const booking=await data.insert('bookings',{user_id:attendee.id,session_id:'qa_attendance_class',status:'booked',paid_with:'package',mat_number:1,checked_in_at:null,ledger_id:null});
  const input=(status,requestId='fictional-request')=>{const b=data.peek('bookings').find(b=>b.id===booking.id);return {actorId:'usr_desk',role:'front_desk',bookingId:b.id,sessionId:b.session_id,userId:b.user_id,requestId,status,before:{status:b.status,checked_in_at:b.checked_in_at,updated_at:b.updated_at}};};
  const snapshot=()=>JSON.stringify(data.peek('bookings'))+JSON.stringify(data.peek('class_sessions'))+JSON.stringify(data.peek('audit_log'));let events=0;data.subscribe('*',()=>events++);
  const checkin=input('checked_in');
