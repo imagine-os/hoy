@@ -1,3 +1,4 @@
+import { dailyAdmissionConflict } from '../../data/dailyAdmission';
 import type { BookingRow, ClassSessionRow } from '../../data/schema';
 import type { VoucherBookingRow, VoucherRow } from '../../data/vouchers';
 
@@ -26,6 +27,7 @@ export function availableWalkupSessions(
     const promotional = voucherBookings.filter(booking => booking.tenant_id === voucher.tenant_id && booking.sessionId === session.id && booking.status !== 'cancelled');
     if (regular.some(booking => booking.user_id === voucher.claimedBy)
       || promotional.some(booking => booking.participants.some(participant => participant.userId === voucher.claimedBy))) return false;
+    if (dailyAdmissionConflict({bookings:regularBookings, voucher_bookings:voucherBookings, class_sessions:sessions}, session, voucher.claimedBy!)) return false;
     const occupied = regular.length + promotional.reduce((count, booking) => count + booking.participants.length, 0);
     return occupied + partySize <= session.capacity;
   }).sort((a, b) => a.starts_at.localeCompare(b.starts_at));
