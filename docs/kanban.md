@@ -821,3 +821,8 @@ Protected-capture clarification: M14 schedule/pay screenshots remain local/ignor
 
 - BO-01/04: coherent local purchase, proof retention, admin-reviewed issuance, account return, recipient activation and voucher booking implemented. Eight EN/ES390/1280 sign-in/sign-up journeys and28 fault/context groups passed before frozen build. Independent review and combined release pending.
 - BO-02/06: persistent same-browser recipient link and buyer/recipient previews only; no actual email delivery or production claim. BO-03 courtesy behavior retained; final gift policy and real services remain separate.
+
+## Retained desk booking settlement
+
+- C-04 / S-09: atomic simulated collection, exact retained booking/debit, immutable proof and unavailable rollback implemented; targeted checking and combined release pending. Legacy product-only and gift paths remain separate.
+- Mounted customer pending confirmation needs the integration owner's read-only proof follow-up; no whole-row or backend acceptance claim.

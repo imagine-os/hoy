@@ -1,3 +1,5 @@
+import {readPendingDeskIntent} from './pendingDeskIntent';
+import type {PaymentRow} from './schema';
 import {executeGiftPurchaseCommand,type GiftPurchaseCommand,type GiftPurchaseResult} from '../modules/voucher-gifts/purchaseCommand';
 import {checkSaleQuote} from './operationalQuotes';
 import { dailyAdmissionConflict, identifiedSessionAdmission } from './dailyAdmission';
@@ -73,6 +75,10 @@ function upgradeAdditiveMockTables(db: Db) {
   for (const table of ['class_pay_rules', 'transfer_receipts', 'maintenance_records', 'email_change_previews', 'teacher_profile_proposals', 'gift_purchase_intents', 'gift_purchase_requests']) {
     if (!Object.prototype.hasOwnProperty.call(db, table)) db[table] = [];
   }
+}
+
+function validateDeskPaymentIntent(payment:PaymentRow){
+ const intent=readPendingDeskIntent(payment);if(intent&&Object.keys(payment.frontend_desk_intent as object).some(k=>!Object.prototype.hasOwnProperty.call(intent,k)))throw Error('desk_intent_invalid');return intent;
 }
 
 const newId = (prefix = 'row'): string => `${prefix}_${Math.random().toString(36).slice(2, 10)}`;
@@ -250,6 +256,7 @@ export class MockProvider implements DataProvider {
   async get<T extends BaseRow>(table: string, id: string): Promise<T | null> { return structuredClone((this.rows(table).find((r) => r.id === id) as T) ?? null); }
 
   async insert<T extends BaseRow>(table: string, row: Partial<T>): Promise<T> {
+    if(table==='payments'&&row.id&&this.rows(table).some(r=>r.id===row.id&&r.frontend_desk_intent!==undefined))throw Error('desk_intent_immutable');
     if (table === 'payments' && row.id && this.rows(table).some(r => r.id === row.id && r.frontend_receipt)) throw new Error('receipt_immutable');
     if (table === 'legal_documents' && row.id && this.rows(table).some(r=>r.id===row.id)) throw new Error('legal_document_duplicate');
     if (table === 'email_change_previews' && this.rows(table).some(r=>r.id===row.id)) throw new Error('email_preview_append_only');
@@ -261,6 +268,7 @@ export class MockProvider implements DataProvider {
     if (['vouchers', 'voucher_bookings', 'voucher_events'].includes(table)) throw new Error('voucher_atomic_command_required');
     const now = new Date().toISOString();
     let full = { id: newId(table.slice(0, 3)), tenant_id: tenant.id, created_at: now, updated_at: now, ...row } as T;
+    if(table==='payments'&&full.frontend_desk_intent!==undefined){validateDeskPaymentIntent(full as unknown as PaymentRow);if(full.status!=='pending'||full.provider!=='manual'||full.method!=='cash')throw Error('desk_intent_invalid');}
     if (table === 'bookings') full = this.prepareBooking(full as unknown as BookingRow) as unknown as T;
     const previousDb = structuredClone(this.db);
     this.rows(table).push(full);
@@ -295,6 +303,11 @@ export class MockProvider implements DataProvider {
       if (Object.keys(checked).length) applyContentBatch(this.db, { table, role: 'admin', actorId: 'validation', changes: [{ id, before: structuredClone(rows[i]), patch: checked }] }, tenant.id);
     }
     let next = { ...rows[i], ...patch, updated_at: new Date().toISOString() } as T;
+    if(table==='payments'&&(rows[i].frontend_desk_intent!==undefined||next.frontend_desk_intent!==undefined)){
+      const before=validateDeskPaymentIntent(rows[i] as PaymentRow),after=validateDeskPaymentIntent(next as unknown as PaymentRow);
+      if(before&&JSON.stringify(before)!==JSON.stringify(after))throw Error('desk_intent_immutable');
+      if(!before&&after&&(next.status!=='pending'||next.provider!=='manual'||next.method!=='cash'))throw Error('desk_intent_invalid');
+    }
     if (table === 'bookings' && ('mat_number' in patch || 'session_id' in patch || ((patch as Partial<BookingRow>).status === 'booked' && (rows[i] as BookingRow).status !== 'booked'))) next = this.prepareBooking(next as unknown as BookingRow, (rows[i] as BookingRow).session_id !== (next as unknown as BookingRow).session_id || !occupiesMat(rows[i] as BookingRow)) as unknown as T;
     const previousSession = table === 'bookings' ? (rows[i] as BookingRow).session_id : null;
     const previousDb = structuredClone(this.db);
@@ -309,6 +322,7 @@ export class MockProvider implements DataProvider {
     return next;
   }
   async remove(table: string, id: string): Promise<void> {
+    if(table==='payments'&&this.rows(table).some(r=>r.id===id&&r.frontend_desk_intent!==undefined))throw Error('desk_intent_immutable');
     if (table === 'payments' && this.rows(table).some(r => r.id === id && r.frontend_receipt)) throw new Error('receipt_immutable');
     if (table === 'legal_documents' && this.rows(table).some(r=>r.id===id&&r.status==='published')) throw new Error('legal_document_immutable');
     if(table==='email_change_previews')throw Error('email_preview_append_only');
