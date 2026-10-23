@@ -28,3 +28,5 @@ PG08 receipt previews, historical invoices, consent evidence, RC03 tenant/search
 ## Current-main reconciliation
 
 The production regression first caught reception controls lacking the old combined branch's withdrawn-state display guard. The new branch applies the shared admission predicate directly at those controls, while final commands still reread the target. The transfer-review fixture now supplies its intended active synthetic modality; its capacity and rollback assertions are retained, with an added withdrawn-target approval/grant rollback assertion.
+
+The original cancellation regression now bundles its existing hash-verified original waitlist fixture, preserving all frozen-source hashes and baseline behavior assertions while allowing the current helper to evolve. Promotion fixtures explicitly supply their intended active modality and assert withdrawn-target rejection. No baseline fixture, source manifest or runtime assertion is loosened.
