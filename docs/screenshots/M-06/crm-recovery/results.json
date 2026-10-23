@@ -1,0 +1,10 @@
+{
+  "checks": [
+    "en: repeated rejection/retry, failed live refresh with retained search, timeout, interrupted and superseded read, list/detail, long identity, all detail tabs at 320/390/768/1280",
+    "es: repeated rejection/retry, failed live refresh with retained search, timeout, interrupted and superseded read, list/detail, long identity, all detail tabs at 320/390/768/1280"
+  ],
+  "errors": [],
+  "limits": [
+    "Fictional MockProvider in development; server and cross-device behavior unverified"
+  ]
+}

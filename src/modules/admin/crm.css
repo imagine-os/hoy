@@ -1,0 +1,7 @@
+/* M-06 only: contain long identities and keep tables scrollable within the page. */
+.crm-page, .crm-page > *, .crm-page .grow { min-width: 0; max-width: 100%; }
+.crm-page .member-head, .crm-page .crm-person-link { overflow-wrap: anywhere; }
+.crm-page .crm-search { width: calc(var(--sp-4xl) * 4); max-width: 100%; }
+.crm-page .page-head { flex-wrap: wrap; }
+.crm-page .member-name { overflow-wrap: anywhere; }
+.crm-page .member-conv { overflow: hidden; }

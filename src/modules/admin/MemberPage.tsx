@@ -23,6 +23,8 @@ import { useMemberPractice } from '../../data/useAnalytics';
 import { StreakBadge } from '../../components/molecule/StreakBadge/StreakBadge';
 import { WeekDots } from '../../components/molecule/WeekDots/WeekDots';
 import { MilestoneList } from '../../components/molecule/MilestoneList/MilestoneList';
+import { CrmReadBoundary } from './CrmReadBoundary';
+import './crm.css';
 import './admin.css';
 
 interface ConsentRow extends BaseRow { user_id: string; legal_document_id: string; accepted_at: string }
@@ -32,6 +34,11 @@ const FILTERS: Filter[] = ['all', 'whatsapp', 'email', 'note', 'system'];
 
 /** M-06 detail — identity header, metric row, the unified conversation (WhatsApp, email, notes, system events) with its reply box, bookings, payments. */
 export function MemberPage() {
+  const { id } = useParams();
+  return <CrmReadBoundary key={id} detail><MemberContent /></CrmReadBoundary>;
+}
+
+function MemberContent() {
   const { id } = useParams();
   const { t, lang, bi } = useI18n();
   const { can, user } = useSession();
@@ -67,9 +74,12 @@ export function MemberPage() {
   const ltv = payments.filter((p) => p.status === 'approved').reduce((a, p) => a + p.amount, 0);
   const active = bookings.filter((b) => b.status !== 'cancelled');
 
+  const label = (kind: string, value: string) => t(`admin.crm.value.${kind}.${Object.prototype.hasOwnProperty.call(CRM_VALUES[kind], value) ? value : 'unknown'}`);
+  const product = (id: string | null) => { const p = plan.get(id ?? ''); return p ? bi({ es: p.name_es, en: p.name_en }) : '—'; };
+
   const events: ThreadEvent[] = [
-    ...(canPayments ? payments.map<ThreadEvent>((p) => ({ id: p.id, at: p.paid_at ?? p.created_at, kind: 'payment', title: `${t('admin.member.payment')} · ${plan.get(p.plan_id ?? '')?.name_es ?? ''}`, meta: `${formatCOP(p.amount, lang)} · ${p.method} · ${p.status}` })) : []),
-    ...active.map<ThreadEvent>((b) => { const s = sess.get(b.session_id); return { id: b.id, at: b.checked_in_at ?? b.created_at, kind: 'booking', title: `${t(`admin.member.booking.${b.status}`)} · ${s?.title ?? ''}`, meta: s ? `${formatDate(s.starts_at, lang)} ${formatTime(s.starts_at, lang)} · ${b.paid_with}` : b.paid_with }; }),
+    ...(canPayments ? payments.map<ThreadEvent>((p) => ({ id: p.id, at: p.paid_at ?? p.created_at, kind: 'payment', title: `${t('admin.member.payment')} · ${product(p.plan_id)}`, meta: `${formatCOP(p.amount, lang)} · ${label('method', p.method)} · ${label('status', p.status)}` })) : []),
+    ...active.map<ThreadEvent>((b) => { const s = sess.get(b.session_id); return { id: b.id, at: b.checked_in_at ?? b.created_at, kind: 'booking', title: `${t(`admin.member.booking.${b.status}`)} · ${s?.title ?? ''}`, meta: s ? `${formatDate(s.starts_at, lang)} ${formatTime(s.starts_at, lang)} · ${label('paid', b.paid_with)}` : label('paid', b.paid_with) }; }),
     ...consents.map<ThreadEvent>((c) => ({ id: c.id, at: c.accepted_at ?? c.created_at, kind: 'system', title: t('admin.member.conversation.event.consent') })),
   ];
   const shownMessages = filter === 'all' ? messages : filter === 'system' ? [] : messages.filter((m) => m.channel === filter);
@@ -78,19 +88,19 @@ export function MemberPage() {
   const bookingCols = [
     { key: 'when', label: t('admin.member.col.when'), render: (b: BookingRow) => { const s = sess.get(b.session_id); return s ? <span className="small">{formatDate(s.starts_at, lang)} · {formatTime(s.starts_at, lang)}</span> : b.session_id; } },
     { key: 'class', label: t('admin.member.col.class'), render: (b: BookingRow) => sess.get(b.session_id)?.title ?? '—' },
-    { key: 'status', label: t('admin.member.col.status'), render: (b: BookingRow) => <Badge tone={toneForStatus(b.status)}>{b.status}</Badge> },
-    { key: 'paid_with', label: t('admin.member.col.paidWith') },
+    { key: 'status', label: t('admin.member.col.status'), render: (b: BookingRow) => <Badge tone={toneForStatus(b.status)}>{t(`admin.member.booking.${b.status}`)}</Badge> },
+    { key: 'paid_with', label: t('admin.member.col.paidWith'), render: (b: BookingRow) => label('paid', b.paid_with) },
   ];
   const paymentCols = [
     { key: 'paid_at', label: t('admin.member.col.when'), render: (p: PaymentRow) => <span className="mono small">{formatDateTime(p.paid_at ?? p.created_at, lang)}</span> },
-    { key: 'plan_id', label: t('admin.member.col.product'), render: (p: PaymentRow) => plan.get(p.plan_id ?? '')?.name_es ?? '—' },
+    { key: 'plan_id', label: t('admin.member.col.product'), render: (p: PaymentRow) => product(p.plan_id) },
     { key: 'amount', label: t('admin.member.col.amount'), align: 'right' as const, render: (p: PaymentRow) => formatCOP(p.amount, lang) },
-    { key: 'method', label: t('admin.member.col.method'), render: (p: PaymentRow) => `${p.method} · ${p.provider}` },
-    { key: 'status', label: t('admin.member.col.status'), render: (p: PaymentRow) => <Badge tone={toneForStatus(p.status)}>{p.status}</Badge> },
+    { key: 'method', label: t('admin.member.col.method'), render: (p: PaymentRow) => `${label('method', p.method)} · ${label('provider', p.provider)}` },
+    { key: 'status', label: t('admin.member.col.status'), render: (p: PaymentRow) => <Badge tone={toneForStatus(p.status)}>{label('status', p.status)}</Badge> },
   ];
 
   return (
-    <div className="stack">
+    <div className="stack crm-page">
       <Link to="/admin/crm" className="small">← {t('admin.crm.title')}</Link>
       <Card className="member-head">
         <Avatar name={person.name} initials={person.initials} size={64} />
@@ -144,6 +154,13 @@ export function MemberPage() {
     </div>
   );
 }
+
+const CRM_VALUES: Record<string, Record<string, boolean>> = {
+  method: Object.fromEntries(['card', 'pse', 'qr', 'cash', 'transfer', 'gift_card'].map(v => [v, true])),
+  provider: { wompi: true, manual: true },
+  status: { approved: true, pending: true, declined: true, refunded: true },
+  paid: Object.fromEntries(['package', 'single', 'trial', 'membership', 'credits', 'voucher', 'dropin', 'free'].map(v => [v, true])),
+};
 
 const EN_DAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 

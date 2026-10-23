@@ -15,6 +15,8 @@ import { Avatar } from '../../components/atom/Avatar/Avatar';
 import { DataTable, type DataTableColumn } from '../../components/organism/DataTable/DataTable';
 import { EmptyState } from '../../components/molecule/EmptyState/EmptyState';
 import { maskPhone, personMatches, usePeople, type Person } from '../staff/people';
+import { CrmReadBoundary } from './CrmReadBoundary';
+import './crm.css';
 import './admin.css';
 
 export type Segment = 'all' | 'at_risk' | 'new' | 'no_membership' | 'birthdays';
@@ -66,6 +68,10 @@ function inSegment(p: Person, s: MemberStats | undefined, seg: Segment): boolean
 
 /** M-06 list — segment rail, search, member table. */
 export function CrmPage() {
+  return <CrmReadBoundary><CrmContent /></CrmReadBoundary>;
+}
+
+function CrmContent() {
   const { t, lang, bi } = useI18n();
   const nav = useNavigate();
   const desktop = useMinWidth('shell');
@@ -86,7 +92,7 @@ export function CrmPage() {
 
   const columns: DataTableColumn<Row>[] = [
     { key: 'name', label: t('admin.crm.col.member'), render: (r) => <span className="row"><Avatar name={r.name} initials={r.initials} size={26} /><span><span className="small">{r.name}</span><span className="xs muted"> · {maskPhone(r.phone)}</span></span></span> },
-    { key: 'plan_name', label: t('admin.crm.col.plan'), render: (r) => r.plan_name ? <span className="row"><span className="small">{r.plan_name}</span>{r.frozen ? <Badge tone="warn">{t('admin.crm.frozen')}</Badge> : r.mstatus !== 'none' ? <Badge tone={toneForStatus(r.mstatus)}>{r.mstatus}</Badge> : null}</span> : <span className="muted small">{t('admin.crm.noPlan')}</span> },
+    { key: 'plan_name', label: t('admin.crm.col.plan'), render: (r) => r.plan_name ? <span className="row"><span className="small">{r.plan_name}</span>{r.frozen ? <Badge tone="warn">{t('admin.crm.frozen')}</Badge> : r.mstatus !== 'none' ? <Badge tone={toneForStatus(r.mstatus)}>{t(`admin.crm.membership.${['active', 'paused', 'past_due'].includes(r.mstatus) ? r.mstatus : 'unknown'}`)}</Badge> : null}</span> : <span className="muted small">{t('admin.crm.noPlan')}</span> },
     { key: 'remaining', label: t('admin.crm.col.remaining'), align: 'right' },
     { key: 'expires', label: t('admin.crm.col.expires'), render: (r) => r.expires ? formatDate(r.expires, lang) : '—' },
     { key: 'vouchers', label: t('admin.crm.col.vouchers'), align: 'right' },
@@ -97,10 +103,10 @@ export function CrmPage() {
   ];
 
   return (
-    <div className="stack">
+    <div className="stack crm-page">
       <div className="page-head">
         <div><h1>{t('admin.crm.title')}</h1><p className="muted small">{t('admin.crm.subtitle')}</p></div>
-        <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('admin.crm.search')} style={{ width: 260 }} aria-label={t('core.common.search')} />
+        <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('admin.crm.search')} className="crm-search" aria-label={t('core.common.search')} />
       </div>
       <p className="small muted">{t('admin.crm.demo')}</p>
       <div className="row wrap" role="tablist">{SEGMENTS.map((s) => <Chip key={s} selected={seg === s} onClick={() => setSeg(s)}>{t(`admin.crm.seg.${s}`)} · {counts[s]}</Chip>)}</div>

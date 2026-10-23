@@ -793,3 +793,9 @@ Protected-capture clarification: M14 schedule/pay screenshots remain local/ignor
 
 ### Done
 - C-37 / C-28: isolated fictional class-gift rehearsal and invitation availability states; scoped verification and payment/account integration gates in `docs/frontend-completion/voucher-gifts-integration.md`. No row-wide acceptance or backend completion.
+
+## Administration — CRM recovery draft (2026-10-23)
+
+### Done
+
+- M-06 · AD-07/PL-11 scoped read recovery, responsive containment and Spanish history labels; local build/domain/browser matrix verified. [Evidence and remaining gaps](frontend-completion/crm-read-recovery.md). Draft review only; source/owner feature acceptance unchanged.
