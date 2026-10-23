@@ -32,7 +32,8 @@
     "media-catalog": "node scripts/gen-media-catalog.mjs",
     "test:subscriptions": "node --experimental-strip-types scripts/test-subscriptions.mjs && node scripts/test-subscription-expenses.mjs",
     "test:content-recovery": "node scripts/test-content-recovery.mjs && node scripts/test-content-recovery-context.mjs && node scripts/test-content-batch.mjs",
-    "test:content-recovery:ui": "node scripts/test-content-recovery-ui.mjs && node scripts/test-content-recovery-context-ui.mjs"
+    "test:content-recovery:ui": "node scripts/test-content-recovery-ui.mjs && node scripts/test-content-recovery-context-ui.mjs",
+    "test:session-admission": "node scripts/test-session-admission.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.1.0",

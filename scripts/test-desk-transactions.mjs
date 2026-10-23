@@ -15,6 +15,7 @@ try {
  const data = new MockProvider(), userId='qa_fictional';
  const base = data.peek('users')[0], now=new Date(), stamp=now.toISOString();
  const sessionId='qa_session';
+ await data.insert('modalities',{id:'qa',name_es:'FICTICIA',name_en:'FICTIONAL',slug:'qa',active:true});
  const s=await data.insert('class_sessions',{id:sessionId,tenant_id:base.tenant_id,title:'QA class',starts_at:new Date(+now+86400000).toISOString(),ends_at:new Date(+now+89400000).toISOString(),status:'scheduled',capacity:1,booked_count:0,modality_id:'qa',room_id:'qa'});
  const pay=await data.insert('payments',{user_id:userId,status:'approved'});
  const buy=await data.insert('class_ledger',{user_id:userId,payment_id:pay.id,delta:12,reason:'purchase',expires_at:'2099-01-01'});

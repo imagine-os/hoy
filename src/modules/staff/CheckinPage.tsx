@@ -1,3 +1,4 @@
+import { assertAdmissionContext, sessionAdmissionAvailable } from '../../data/sessionAdmission';
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useI18n } from '../../i18n/I18nProvider';
@@ -100,6 +101,7 @@ export function CheckinPage() {
   };
   const packageFor = (userId: string) => packageState(approvedPackageRows(ledger.filter(row => row.user_id === userId), payments));
   const unavailable = (userId: string) => {
+    if (selected && !sessionAdmissionAvailable(selected.session, selected.modality, selected.session.template_id ? { id: selected.session.template_id, active: selected.templateActive } : undefined)) return t('staff.checkin.error.session_unavailable');
     if (!selected || selected.session.status !== 'scheduled' || Date.parse(selected.session.starts_at) <= Date.now()) return t('staff.checkin.package.unavailable');
     if (selected.session.booked_count >= selected.session.capacity) return t('core.common.full');
     const state = packageFor(userId);
@@ -115,26 +117,32 @@ export function CheckinPage() {
     return `${t('staff.checkin.package.balance', { n: state.balance })}${state.expiresAt ? ` · ${t('staff.checkin.package.expires', { date: formatDate(state.expiresAt, lang) })}` : ''}`;
   };
   const walkIn = async (p: Person, status: 'booked' | 'checked_in' = 'checked_in') => {
-    if (!selected || (status === 'booked' ? !canBookAny : !canWrite) || busy) return;
+    if (!selected || (status === 'booked' ? !canBookAny : !canWrite) || busy || unavailable(p.id)) return;
+    const provider=data,actorId=user.id,effectiveRole=role;
+    const isCurrent=()=>attendanceContext.current.mounted && attendanceContext.current.data===provider && attendanceContext.current.actorId===actorId && attendanceContext.current.role===effectiveRole;
     setBusy(p.id); setError(null);
     try {
       if (!data.atomic) throw new Error('disconnected');
       await data.atomic(async tx => {
-        const b = await bookWithPackage(tx, { userId: p.id, sessionId: selected.session.id, status });
+        const b = await bookWithPackage(tx, { userId: p.id, sessionId: selected.session.id, status,control:{isCurrent} });
         await tx.insert('audit_log', { actor_id: user.id, action: status === 'booked' ? 'booking.create' : 'booking.walkin', entity: 'bookings', entity_id: b.id, ip: null, diff: { role, source: 'front_desk', after: status, session_id: selected.session.id, user_id: p.id } });
+        assertAdmissionContext({isCurrent});
       });
-      setQ('');
+      if(isCurrent())setQ('');
     } catch (e) { setError(commandError(e)); } finally { setBusy(null); }
   };
   const promote = async (w: WaitlistRow) => {
-    if (!selected || !canBookAny || busy) return;
+    if (!selected || !canBookAny || busy || unavailable(w.user_id)) return;
+    const provider=data,actorId=user.id,effectiveRole=role;
+    const isCurrent=()=>attendanceContext.current.mounted && attendanceContext.current.data===provider && attendanceContext.current.actorId===actorId && attendanceContext.current.role===effectiveRole;
     setBusy(w.id); setError(null);
     try {
       if (!data.atomic) throw new Error('disconnected');
       await data.atomic(async tx => {
-        const b = await bookWithPackage(tx, { userId: w.user_id, sessionId: selected.session.id, status: 'booked' });
+        const b = await bookWithPackage(tx, { userId: w.user_id, sessionId: selected.session.id, status: 'booked',control:{isCurrent} });
         await tx.update('waitlist', w.id, { status: 'claimed' });
         await tx.insert('audit_log', { actor_id: user.id, action: 'waitlist.promote', entity: 'waitlist', entity_id: w.id, ip: null, diff: { role, source: 'front_desk', booking_id: b.id, session_id: selected.session.id, user_id: w.user_id } });
+        assertAdmissionContext({isCurrent});
       });
     } catch (e) { setError(commandError(e)); } finally { setBusy(null); }
   };

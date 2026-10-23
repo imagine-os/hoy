@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { requireSessionAdmission, assertAdmissionContext } from '../../data/sessionAdmission';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {useTrialAssessment} from './useTrialAssessment';
 import { useSession } from '../../auth/SessionProvider';
 import type { DataProvider } from '../../data/types';
@@ -24,11 +25,12 @@ export function useSessionJoined(id: string | undefined): { joined: JoinedSessio
   const { rows: modalities } = useTable<ModalityRow>('modalities');
   const { rows: teachers } = useTable<TeacherRow>('teachers');
   const { rows: rooms } = useTable<RoomRow>('rooms');
+  const { rows: templates } = useTable<BaseRow & {active:boolean}>('class_templates');
   return useMemo(() => {
     const s = id ? rows.find((r) => r.id === id) : undefined;
     if (!s) return { joined: null, loading };
-    return { joined: { session: s, modality: modalities.find((m) => m.id === s.modality_id), teacher: teachers.find((t) => t.id === s.teacher_id), room: rooms.find((r) => r.id === s.room_id) }, loading };
-  }, [id, rows, modalities, teachers, rooms, loading]);
+    return { joined: { session: s, templateActive: templates.find(t=>t.id===s.template_id)?.active, modality: modalities.find((m) => m.id === s.modality_id), teacher: teachers.find((t) => t.id === s.teacher_id), room: rooms.find((r) => r.id === s.room_id) }, loading };
+  }, [id, rows, modalities, teachers, rooms, templates, loading]);
 }
 
 /** All sessions joined (for lists). */
@@ -112,6 +114,10 @@ export function useNow(ms = 30_000) {
 export function useBookingActions() {
   const data = useData();
   const { user, role } = useSession();
+  const live = useRef({data,actorId:user.id,role,mounted:true});
+  live.current = {data,actorId:user.id,role,mounted:true};
+  useEffect(()=>{live.current.mounted=true;return()=>{live.current.mounted=false;};},[]);
+  const isCurrent = useCallback(()=>live.current.mounted && live.current.data===data && live.current.actorId===user.id && live.current.role===role && ['customer','teacher','super_admin'].includes(role),[data,user.id,role]);
 
   /** Rule: one class per person per day. Returns the conflicting booking's session id when there is one. */
   const sameDayConflict = useCallback((myBookings: BookingRow[], sessions: ClassSessionRow[], target: ClassSessionRow): string | null => {
@@ -121,14 +127,21 @@ export function useBookingActions() {
     return hit?.session_id ?? null;
   }, []);
 
-  const book = useCallback(async (session: ClassSessionRow, paidWith: EntitlementKind, opts?: { packagePlanId?: string | null; paymentId?: string; matNumber?: number | null; data?: DataProvider }) => {
+  const book = useCallback(async (session: ClassSessionRow, paidWith: EntitlementKind, opts?: { packagePlanId?: string | null; paymentId?: string; matNumber?: number | null; data?: DataProvider; isCurrent?: () => boolean; claimId?: string | null }) => {
+    const control={isCurrent:()=>isCurrent() && (!opts?.isCurrent || opts.isCurrent())};
+    assertAdmissionContext(control);
     const run = async (transaction: DataProvider) => {
     // Race guard: re-read the session so a spot that filled during checkout is caught (C-04 "Race" state).
-    const fresh = await transaction.get<ClassSessionRow>('class_sessions', session.id);
+    const fresh = await requireSessionAdmission(transaction,session.id,control);
     if (!fresh || fresh.status !== 'scheduled' || !Number.isFinite(Date.parse(fresh.starts_at)) || Date.parse(fresh.starts_at) <= Date.now()) throw new Error('session_unavailable');
     if (fresh.booked_count >= fresh.capacity) throw new Error('session_full');
     const existing = await transaction.list<BookingRow>('bookings', { where: { user_id: user.id, session_id: fresh.id } });
     if (existing.some(b => b.status === 'booked' || b.status === 'checked_in')) throw new Error('booking_exists');
+    if(opts?.claimId){
+      const entry=await transaction.get<WaitlistRow>('waitlist',opts.claimId);
+      assertAdmissionContext(control);
+      if(!entry || entry.tenant_id!==tenant.id || entry.user_id!==user.id || entry.session_id!==fresh.id || entry.status!=='offered' || !entry.claim_until || Date.parse(entry.claim_until)<=Date.now() || !Number.isFinite(Date.parse(entry.claim_until)))throw new Error('session_unavailable');
+    }
     let purchase: ClassLedgerRow | undefined;
     if (paidWith === 'package') {
       const ledger = await transaction.list<ClassLedgerRow>('class_ledger', { where: { user_id: user.id } });
@@ -139,6 +152,7 @@ export function useBookingActions() {
       if (opts?.paymentId && purchase?.reason !== 'purchase') throw new Error('package_balance');
       if (!purchase) throw new Error('package_balance');
     }
+    await requireSessionAdmission(transaction,session.id,control);
     const booking = await transaction.insert<BookingRow>('bookings', { user_id: user.id, session_id: fresh.id, status: 'booked', paid_with: paidWith, ledger_id: null, checked_in_at: null, cancelled_at: null, rated: false, mat_number: opts?.matNumber ?? null });
     if (paidWith === 'package') {
       const c = await transaction.insert<ClassLedgerRow>('class_ledger', { purchase_ledger_id: purchase?.id ?? null, user_id: user.id, plan_id: purchase?.plan_id ?? null, payment_id: purchase?.payment_id ?? null, delta: -1, reason: 'booking', expires_at: null } as Partial<ClassLedgerRow>);
@@ -148,17 +162,21 @@ export function useBookingActions() {
     await transaction.update('class_sessions', fresh.id, { booked_count: fresh.booked_count + 1 });
     await transaction.insert('audit_log', { actor_id: user.id, action: 'booking.create', entity: 'bookings', entity_id: booking.id, ip: null,
       diff: { role, source: 'app', session_id: fresh.id, paid_with: paidWith } });
+    if(opts?.claimId)await transaction.update('waitlist',opts.claimId,{status:'claimed'});
+    assertAdmissionContext(control);
     return booking;
     };
     if (opts?.data) return run(opts.data);
     if (!data.atomic) throw new Error('atomic_adapter_required');
-    return data.atomic(run);
-  }, [data, user.id, role]);
+    const result=await data.atomic(run);
+    assertAdmissionContext(control);
+    return result;
+  }, [data, user.id, role, isCurrent]);
 
   /** Offers the freed spot to the first waiting person (C-20: 30-minute claim window). */
   const promoteWaitlist = useCallback(async (sessionId: string) => {
-    await promoteStudioWaitlist(data, sessionId);
-  }, [data]);
+    await promoteStudioWaitlist(data, sessionId,{isCurrent});
+  }, [data,isCurrent]);
 
   /** Legacy entry point: privileged studio reason stays rejected; customers must use the reviewed command. */
   const cancel = useCallback(async (_booking: BookingRow, _session: ClassSessionRow, reason: 'customer' | 'studio' = 'customer') => {
@@ -169,28 +187,52 @@ export function useBookingActions() {
   /** Reschedule keeps the same entitlement; RS-09 permits it only through the 12-hour deadline. */
   const reschedule = useCallback(async (booking: BookingRow, from: ClassSessionRow, to: ClassSessionRow) => {
     if (!data.atomic) throw new Error('atomic_adapter_required');
-    return data.atomic(tx => rescheduleBooking(tx, { userId: user.id, role, bookingId: booking.id, fromSessionId: from.id, toSessionId: to.id }), { idempotencyKey: `reschedule:${user.id}:${booking.id}:${from.id}:${to.id}` });
-  }, [data, user.id, role]);
+    assertAdmissionContext({isCurrent});
+    const result=await data.atomic(tx => rescheduleBooking(tx, { userId: user.id, role, bookingId: booking.id, fromSessionId: from.id, toSessionId: to.id,control:{isCurrent} }), { idempotencyKey: `reschedule:${user.id}:${booking.id}:${from.id}:${to.id}` });
+    assertAdmissionContext({isCurrent});
+    return result;
+  }, [data, user.id, role,isCurrent]);
 
   const joinWaitlist = useCallback(async (session: ClassSessionRow) => {
     const run = async (transaction: DataProvider) => {
-      await guardStudioWaitlist(transaction, session.id);
+      await guardStudioWaitlist(transaction, session.id,{isCurrent});
     const existing = await transaction.list<WaitlistRow>('waitlist', { where: { session_id: session.id } });
     const position = existing.filter((w) => w.status === 'waiting' || w.status === 'offered').length + 1;
-    return transaction.insert<WaitlistRow>('waitlist', { user_id: user.id, session_id: session.id, position, status: 'waiting', offered_at: null, claim_until: null } as Partial<WaitlistRow>);
+    await guardStudioWaitlist(transaction,session.id,{isCurrent});
+    const result=await transaction.insert<WaitlistRow>('waitlist', { user_id: user.id, session_id: session.id, position, status: 'waiting', offered_at: null, claim_until: null } as Partial<WaitlistRow>);
+    assertAdmissionContext({isCurrent});
+    return result;
     };
-    return data.atomic ? data.atomic(run) : run(data);
-  }, [data, user.id]);
+    assertAdmissionContext({isCurrent});
+    if(!data.atomic)throw new Error('atomic_adapter_required');
+    const result=await data.atomic(run);
+    assertAdmissionContext({isCurrent});
+    return result;
+  }, [data, user.id,isCurrent]);
 
-  const leaveWaitlist = useCallback(async (entry: WaitlistRow) => data.update('waitlist', entry.id, { status: 'left' }), [data]);
+  const changeWaitlist = useCallback(async (entry: WaitlistRow, status:'left'|'expired') => {
+    assertAdmissionContext({isCurrent});
+    if(!data.atomic)throw new Error('atomic_adapter_required');
+    await data.atomic(async tx=>{
+      const fresh=await tx.get<WaitlistRow>('waitlist',entry.id);
+      assertAdmissionContext({isCurrent});
+      if(!fresh || fresh.tenant_id!==tenant.id || fresh.user_id!==user.id || fresh.session_id!==entry.session_id)throw new Error('session_unavailable');
+      if(!['waiting','offered'].includes(fresh.status))return;
+      if(status==='expired' && (fresh.status!=='offered' || !fresh.claim_until || !Number.isFinite(Date.parse(fresh.claim_until)) || Date.parse(fresh.claim_until)>Date.now()))return;
+      await tx.update('waitlist',fresh.id,{status});
+      if(status==='expired')await promoteStudioWaitlist(tx,fresh.session_id,{isCurrent},true);
+      assertAdmissionContext({isCurrent});
+    });
+    assertAdmissionContext({isCurrent});
+  },[data,user.id,isCurrent]);
+  const leaveWaitlist=useCallback((entry:WaitlistRow)=>changeWaitlist(entry,'left'),[changeWaitlist]);
+  const expireWaitlist=useCallback((entry:WaitlistRow)=>changeWaitlist(entry,'expired'),[changeWaitlist]);
 
   const claimWaitlist = useCallback(async (entry: WaitlistRow, session: ClassSessionRow, paidWith: EntitlementKind) => {
-    const booking = await book(session, paidWith);
-    await data.update('waitlist', entry.id, { status: 'claimed' });
-    return booking;
+    return book(session,paidWith,{claimId:entry.id});
   }, [book, data]);
 
-  return { book, cancel, reschedule, joinWaitlist, leaveWaitlist, claimWaitlist, sameDayConflict, promoteWaitlist };
+  return { book, cancel, reschedule, joinWaitlist, leaveWaitlist, claimWaitlist, sameDayConflict, promoteWaitlist,expireWaitlist };
 }
 
 /** Pricing helpers shared by C-04 / C-07 / C-17 — every figure comes from pricing.ts. */

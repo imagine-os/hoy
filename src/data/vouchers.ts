@@ -1,4 +1,5 @@
-import type { BaseRow, BookingRow, ClassSessionRow } from './schema';
+import { sessionAdmissionAvailable } from './sessionAdmission';
+import type { BaseRow, BookingRow, ClassSessionRow, ModalityRow } from './schema';
 
 /** Demo contract only. Production needs authenticated transactional RPCs, row locks,
  * secure claim tokens, server quotations and scoped RLS; this is not a live backend. */
@@ -104,6 +105,9 @@ export function executeVoucherCommand(database: VoucherDb, command: VoucherComma
       const priorSeats = voucher.capScope === 'lifetime' ? bookings.filter(b => b.tenant_id === context.tenantId && b.voucherId === voucher.id && b.status !== 'cancelled').reduce((n,b) => n+b.participants.length,0) : 0;
       if (priorSeats + c.participants.length > voucher.participantCap) fail('voucher_participant_cap');
       const session = (db.class_sessions as ClassSessionRow[]).find(s => s.id === c.sessionId && s.tenant_id === context.tenantId) ?? fail('session_unavailable');
+      const modality=(db.modalities as ModalityRow[]|undefined)?.find(m=>m.id===session.modality_id&&m.tenant_id===context.tenantId);
+      const template=db.class_templates?.find(t=>t.id===session.template_id&&t.tenant_id===context.tenantId);
+      if(!sessionAdmissionAvailable(session,modality,template,Date.parse(now),context.tenantId))fail('session_unavailable');
       if (session.status !== 'scheduled' || !Number.isFinite(Date.parse(session.starts_at)) || Date.parse(session.starts_at) <= Date.parse(now) || (voucher.expiresAt && Date.parse(session.starts_at) >= Date.parse(voucher.expiresAt))) fail('session_unavailable');
       const regular = (db.bookings as BookingRow[]).filter(b => b.tenant_id === context.tenantId && b.session_id === session.id && b.status !== 'cancelled' && b.status !== 'late_cancel');
       if (regular.length + voucherSeats(db, session.id, context.tenantId) + c.participants.length > session.capacity) fail('session_full');

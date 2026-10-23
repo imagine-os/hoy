@@ -1,0 +1,68 @@
+name: Session admission QA
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'src/data/**'
+      - 'src/modules/customer/**'
+      - 'src/modules/staff/**'
+      - 'src/modules/website/hooks.ts'
+      - 'src/auth/**'
+      - 'scripts/*admission*'
+      - 'scripts/test-desk-transactions.mjs'
+      - 'scripts/test-reschedule-atomic.mjs'
+      - 'scripts/test-vouchers.mjs'
+      - 'scripts/test-transfer-receipts.mjs'
+      - '.github/workflows/session-admission-qa.yml'
+permissions:
+  contents: read
+jobs:
+  admission:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright-core install --with-deps chromium
+      - name: Domain and preserved transaction contracts
+        run: |
+          node scripts/test-session-admission.mjs
+          node scripts/test-desk-transactions.mjs
+          node scripts/test-reschedule-atomic.mjs
+          node scripts/test-reception-attendance.mjs
+          node scripts/test-customer-cancel.mjs
+          node scripts/test-studio-cancel.mjs
+          node scripts/test-launch-receipts.mjs
+          node scripts/test-transfer-receipts.mjs
+          node scripts/test-vouchers.mjs
+      - run: npm run build
+      - name: Actual production pages and paused contexts
+        shell: bash
+        run: |
+          export CHROMIUM_PATH="$(node --input-type=module -e "import {chromium} from 'playwright-core';process.stdout.write(chromium.executablePath())")"
+          npm run preview -- --host 127.0.0.1 --port 5480 --strictPort > /tmp/admission-preview.log 2>&1 &
+          preview_pid=$!
+          QA_PORT=5481 QA_CACHE_DIR=/tmp/admission-deps node scripts/qa-pending-payments-dev.mjs > /tmp/admission-dev.log 2>&1 &
+          dev_pid=$!
+          trap 'kill "$preview_pid" "$dev_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..90}; do
+            if curl -fsS http://127.0.0.1:5480/ > /dev/null && curl -fsS http://127.0.0.1:5481/ > /dev/null; then break; fi
+            sleep 1
+          done
+          QA_BASE=http://127.0.0.1:5480 QA_OUTPUT=/tmp/admission-production node scripts/test-session-admission-ui.mjs
+          QA_BASE=http://127.0.0.1:5481 QA_OUTPUT=/tmp/admission-context node scripts/test-session-admission-context.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: session-admission-evidence
+          path: |
+            /tmp/admission-production
+            /tmp/admission-context
+            /tmp/admission-preview.log
+            /tmp/admission-dev.log

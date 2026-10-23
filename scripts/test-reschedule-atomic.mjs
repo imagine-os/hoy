@@ -32,13 +32,13 @@ try {
  const before=snapshot(); storageFailure=true;
  await assert.rejects(data.atomic(tx=>rescheduleBooking(tx,input)),/quota/);storageFailure=false;assert.equal(snapshot(),before);
  const reject=async(message)=>{const before=snapshot();await assert.rejects(data.atomic(tx=>rescheduleBooking(tx,input)),message);assert.equal(snapshot(),before);};
- await data.update('class_sessions',target.id,{starts_at:day(6)});await reject(/package_expired/);
+ await data.update('class_sessions',target.id,{starts_at:day(6),ends_at:day(6.04)});await reject(/package_expired/);
  for (const paid_with of ['trial','single']) {
   await data.update('bookings',booking.id,{paid_with});await reject(/package_expired/);
  }
  await data.update('bookings',booking.id,{ledger_id:null});await reject(/reschedule_entitlement_unresolved/);
  await data.update('bookings',booking.id,{ledger_id:debit.id,paid_with:'package'});
- await data.update('class_sessions',target.id,{starts_at:day(4)});
+ await data.update('class_sessions',target.id,{starts_at:day(4),ends_at:day(4.04)});
  await data.update('class_ledger',purchase.id,{frozen_from:dateKey(new Date(day(3))),frozen_until:dateKey(new Date(day(5)))});await reject(/package_frozen/);
  await data.update('class_ledger',purchase.id,{frozen_from:null,frozen_until:null});
  await data.update('class_sessions',target.id,{tenant_id:'qa_other_tenant'});await reject(/session_unavailable/);
