@@ -18,7 +18,7 @@ export function mountPackageBookingRecovery() {
   provider.atomic = async (action, options) => {
     const mode = options?.idempotencyKey?.startsWith('checkout:') ? state.mode : '';
     if (mode) state.mode = '';
-    if (['session_full', 'mat_taken', 'session_unavailable', 'same_day_conflict'].includes(mode)) throw Error(mode);
+    if (['session_full', 'mat_taken', 'session_unavailable', 'same_day_conflict', 'booking_exists'].includes(mode)) throw Error(mode);
     const result = await atomic(action, { ...options, ...(mode === 'precommit' ? { failAfterWrites: 2 } : {}) });
     if (mode === 'lost') throw Error('fictional_checkout_ack_lost');
     return result;

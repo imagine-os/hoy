@@ -808,3 +808,9 @@ Protected-capture clarification: M14 schedule/pay screenshots remain local/ignor
 
 ### Done
 - C-37 / C-28: isolated fictional class-gift rehearsal and invitation availability states; scoped verification and payment/account integration gates in `docs/frontend-completion/voucher-gifts-integration.md`. No row-wide acceptance or backend completion.
+
+## Booking frontend acceptance follow-up
+
+- RS-02: saved package-booking confirmation recovery and truthful duplicate feedback; final combined review and release pending. No new charge is inferred from missing confirmation.
+- RS-04: scoped studio-day admission checks across regular and identified voucher bookings, offered claims and rescheduling; synthetic regression coverage, no server enforcement claim.
+- RS-05: current availability and fresh navigation checks on customer/public class drawers; final paused-context regressions and combined release pending.

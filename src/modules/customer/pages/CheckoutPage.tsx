@@ -93,7 +93,7 @@ export function CheckoutPage() {
   const [declined, setDeclined] = useState<DeclinedState | null>(null);
   const [done, setDone] = useState<{ booking: BookingRow | null; pending: boolean; receiptId?:string; receiptContext?:string; recovered?:boolean; provider: DataProvider; context: string } | null>(null);
   const recoveryGeneration = useRef(0);
-  const [packageRecovery, setPackageRecovery] = useState<{ provider: DataProvider; context: string; request: PackageConfirmationRequest; phase: 'checking' | 'unconfirmed' | 'missing' | 'existing'; booking?: BookingRow } | null>(null);
+  const [packageRecovery, setPackageRecovery] = useState<{ provider: DataProvider; context: string; request: PackageConfirmationRequest; knownDuplicate?: boolean; phase: 'checking' | 'unconfirmed' | 'missing' | 'existing' | 'duplicate'; booking?: BookingRow } | null>(null);
   const recovery = packageRecovery?.provider === data && packageRecovery.context === transferContext ? packageRecovery : null;
   const shownDone = done?.provider === data && done.context === transferContext ? done : null;
   const recoveryBlocked = !!recovery && recovery.phase !== 'missing';
@@ -103,20 +103,20 @@ export function CheckoutPage() {
     return () => { recoveryGeneration.current++; };
   }, [data, transferContext]);
 
-  const recoverPackageBooking = async (request: PackageConfirmationRequest) => {
+  const recoverPackageBooking = async (request: PackageConfirmationRequest, knownDuplicate = false) => {
     const provider = data, context = transferContext, generation = ++recoveryGeneration.current;
     const isCurrent = () => transferLive.current.mounted && transferLive.current.data === provider && transferLive.current.context === context && recoveryGeneration.current === generation;
-    setPackageRecovery({ provider, context, request, phase: 'checking' }); setError(null);
+    setPackageRecovery({ provider, context, request, knownDuplicate, phase: 'checking' }); setError(null);
     try {
       const result = await readPackageBookingConfirmation(provider, request, isCurrent);
       if (!isCurrent()) return undefined;
       if (result.kind === 'saved' && result.source === 'attempt') {
         setDone({ booking: result.booking, pending: false, recovered: true, provider, context }); setPackageRecovery(null);
       } else if (result.kind === 'saved') {
-        setPackageRecovery({ provider, context, request, phase: 'existing', booking: result.booking });
-      } else setPackageRecovery({ provider, context, request, phase: 'missing' });
+        setPackageRecovery({ provider, context, request, knownDuplicate, phase: 'existing', booking: result.booking });
+      } else setPackageRecovery({ provider, context, request, knownDuplicate, phase: knownDuplicate ? 'duplicate' : 'missing' });
       return result;
-    } catch { if (isCurrent()) setPackageRecovery({ provider, context, request, phase: 'unconfirmed' }); return undefined; }
+    } catch { if (isCurrent()) setPackageRecovery({ provider, context, request, knownDuplicate, phase: 'unconfirmed' }); return undefined; }
   };
 
   const conflict = useMemo(() => joined ? sameDayConflict(myBookings, sessions, joined.session) : null, [joined, myBookings, sessions, sameDayConflict]);
@@ -202,7 +202,7 @@ export function CheckoutPage() {
       if (!transferValid()) return 'admission_context_changed';
       const failure = e instanceof Error ? e.message : '';
       if (kind === 'package' && !['session_full', 'session_unavailable', 'package_balance', 'same_day_conflict'].includes(failure) && !failure.startsWith('mat_')) {
-        const recovered = await recoverPackageBooking({ userId:user.id, sessionId:joined.session.id, checkoutKey:checkoutKey.current });
+        const recovered = await recoverPackageBooking({ userId:user.id, sessionId:joined.session.id, checkoutKey:checkoutKey.current }, failure === 'booking_exists');
         return recovered?.kind === 'saved' && recovered.source === 'attempt' ? `booked ${recovered.booking.id}` : 'package_confirmation_checked';
       }
       const code = trialErrorKey(e) ?? (failure.startsWith('mat_') ? 'mat' : failure === 'session_full' ? 'full' : failure === 'same_day_conflict' ? 'conflict' : 'unavailable');
@@ -297,7 +297,7 @@ export function CheckoutPage() {
         {error?.startsWith('customer.trialGuard.')&&<Notice tone="warn">{t(error)}</Notice>}
         {error === 'mat' && <Notice tone="warn">{t('site.mat.error')}</Notice>}
         {alreadyBooked && !recovery && !shownDone && <Notice tone="info" action={myBookings.some(b => b.session_id === id && b.paid_with === 'package' && occupiesMat(b)) ? <Button variant="secondary" onClick={() => recoverPackageBooking({ userId:user.id, sessionId:s.id })}>{t('customer.class.viewBooking')}</Button> : undefined}>{t('customer.home.booked')}</Notice>}
-        {recovery && <Notice tone={recovery.phase === 'existing' ? 'success' : recovery.phase === 'checking' ? 'info' : 'warn'} title={t(`customer.checkout.recovery.${recovery.phase}`)} action={recovery.phase === 'checking' ? undefined : recovery.phase === 'existing' && recovery.booking ? <Button variant="secondary" onClick={() => nav(`/app/booking/${recovery.booking!.id}`)}>{t('customer.class.viewBooking')}</Button> : recovery.phase === 'missing' && recovery.request.checkoutKey ? <Button variant="secondary" disabled={busy || kind !== 'package' || alreadyBooked || !admissionAvailable} onClick={confirm}>{t('customer.checkout.recovery.retryBooking')}</Button> : <Button variant="secondary" onClick={() => recoverPackageBooking(recovery.request)}>{t('customer.checkout.recovery.checkAgain')}</Button>}>{t(`customer.checkout.recovery.${recovery.phase}.body`)}</Notice>}
+        {recovery && <Notice tone={recovery.phase === 'existing' ? 'success' : recovery.phase === 'checking' ? 'info' : 'warn'} title={t(`customer.checkout.recovery.${recovery.phase}`)} action={recovery.phase === 'checking' ? undefined : recovery.phase === 'duplicate' ? <Button variant="secondary" onClick={() => nav('/app/schedule')}>{t('customer.checkout.recovery.backToSchedule')}</Button> : recovery.phase === 'existing' && recovery.booking ? <Button variant="secondary" onClick={() => nav(`/app/booking/${recovery.booking!.id}`)}>{t('customer.class.viewBooking')}</Button> : recovery.phase === 'missing' && recovery.request.checkoutKey ? <Button variant="secondary" disabled={busy || kind !== 'package' || alreadyBooked || !admissionAvailable} onClick={confirm}>{t('customer.checkout.recovery.retryBooking')}</Button> : <Button variant="secondary" onClick={() => recoverPackageBooking(recovery.request, recovery.knownDuplicate)}>{t('customer.checkout.recovery.checkAgain')}</Button>}>{t(`customer.checkout.recovery.${recovery.phase}.body`)}</Notice>}
         {error === 'full' && <Notice tone="warn" title={t('customer.checkout.race.title')} action={<Button size="sm" onClick={() => nav(`/app/waitlist/${s.id}`)}>{t('core.common.waitlist')}</Button>}>{t('customer.checkout.race.body')}</Notice>}
         {!shownDone && recovery?.phase !== 'existing' && (!admissionAvailable || error === 'unavailable') && <Notice tone="danger" title={t('core.common.error')}>{t('customer.checkout.unavailable')}</Notice>}
         {(error === 'conflict' || conflict) && <Notice tone="warn">{t('customer.book.oneADay')} {conflict && <Link to={`/app/class/${conflict}`}>{t('customer.class.seeOther')}</Link>}</Notice>}
