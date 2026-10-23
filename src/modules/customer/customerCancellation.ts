@@ -1,3 +1,4 @@
+import { requireSessionAdmission } from '../../data/sessionAdmission';
 /** RS-10 fictional own-booking command. No money refund, delivery or server authorization. */
 import type {DataProvider} from '../../data/types';
 import type {BaseRow,BookingRow,ClassLedgerRow,ClassSessionRow,PaymentRow,UserRow} from '../../data/schema';
@@ -82,6 +83,8 @@ export async function readCustomerCancellation(data:DataProvider,identity:Cancel
 }
 async function offer(data:DataProvider,state:Scope,who:CancellationActor,c:CancellationControl):Promise<{state:CancellationOutcome['waitlist'];id:string|null;identityDigest:string|null}>{
  if(!state.bookable)return {state:'not_bookable',id:null,identityDigest:null};
+ try { await requireSessionAdmission(data,state.session.id,{now:c.now!()}); } catch(error) { if(error instanceof Error && error.message==='session_unavailable')return {state:'not_bookable',id:null,identityDigest:null}; throw error; }
+ fence(data,who,c);
  const session=await one<ClassSessionRow>(data,'class_sessions',{id:state.session.id},who,c);sessionShape(session);if(session.status!=='scheduled'||Date.parse(session.starts_at)<=c.now!()||session.booked_count>=session.capacity)fail('stale');
  const waiting=await scoped<Waiter>(data,'waitlist',{session_id:session.id,status:'waiting'},who,c);
  if(waiting.some(w=>!Number.isSafeInteger(w.position)||w.position<1||typeof w.user_id!=='string'||!w.user_id)||new Set(waiting.map(w=>w.position)).size!==waiting.length)fail('unverifiable');

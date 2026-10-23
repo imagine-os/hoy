@@ -1,3 +1,4 @@
+import { requireSessionAdmission, assertAdmissionContext, sessionAdmissionAvailable } from '../../../data/sessionAdmission';
 import {assertTrialAvailable,trialErrorKey} from '../../../data/trialEligibility';
 import { useOperationalCatalog, useReviewedQuote } from '../../quotes/hooks';
 import { QuoteNotice } from '../../../components/molecule/QuoteNotice/QuoteNotice';
@@ -57,6 +58,7 @@ export function CheckoutPage() {
   useEffect(()=>{transferLive.current.mounted=true;return()=>{transferLive.current.mounted=false;};},[]);
   const { sections, isVisible } = useLayout(spec);
   const { joined, loading } = useSessionJoined(id);
+  const admissionAvailable=!!joined && sessionAdmissionAvailable(joined.session,joined.modality,joined.session.template_id?{id:joined.session.template_id,active:joined.templateActive}:undefined);
   const ent = useEntitlements();
   const { book, sameDayConflict } = useBookingActions();
   const { rows: myBookings } = useMyBookings();
@@ -111,6 +113,8 @@ export function CheckoutPage() {
     confirmBusy.current=true;
     setBusy(true); setError(null); setTransferError(false);
     try {
+      const control={isCurrent:transferValid};
+      await requireSessionAdmission(data,joined.session.id,control);
       if(isPass(kind)&&review.quote)await checkSaleQuote(data,review.quote);
       if (yoga) {
         if (!matValid) { setError('mat'); return 'mat'; }
@@ -129,6 +133,7 @@ export function CheckoutPage() {
         }catch{if(transferValid())setTransferError(true);return 'transfer_save_failed';}
       }
       const outcome = await data.atomic(async transaction => {
+        await requireSessionAdmission(transaction,joined.session.id,{isCurrent:transferValid});
         if(kind==='trial')await assertTrialAvailable(transaction,user.id);
         let paidWith: EntitlementKind = kind === 'package' ? 'package' : kind === 'membership' ? 'membership' : kind === 'trial' ? 'trial' : kind === 'single' ? 'single' : 'package';
         let packagePlanId: string | null = null;
@@ -139,6 +144,8 @@ export function CheckoutPage() {
           let result: WompiResult | undefined;
           if (methodOpt.provider === 'wompi') result = await wompiCheckout({ amount, method: method as ElectronicMethod, simulate: simulateDecline ? 'declined' : 'approved' });
           const payment = await recordPayment(transaction, { userId: user.id, planId: `plan_${item.id}`, amount, method, result, ivaRate: policy.ivaRate,quote:review.quote! });
+          assertAdmissionContext({isCurrent:transferValid});
+          await requireSessionAdmission(transaction,joined.session.id,{isCurrent:transferValid});
           if (result?.status === 'declined') {
             setDeclined((d) => ({ reason: result?.reason ?? null, holdUntil: d?.holdUntil ?? new Date(Date.now() + policy.paymentHoldMinutes * MS.min).toISOString(), attempts: (d?.attempts ?? 0) + 1, method }));
             return null;
@@ -153,10 +160,11 @@ export function CheckoutPage() {
             paidWith = 'package'; packagePlanId = `plan_${item.id}`; packagePaymentId=payment.id;
           }
         }
-        const booking = await book(joined.session, paidWith, { packagePlanId, paymentId:packagePaymentId, matNumber: yoga ? mat : null, data: transaction });
-        if (claimId) await transaction.update('waitlist', claimId, { status: 'claimed' });
+        const booking = await book(joined.session, paidWith, { packagePlanId, paymentId:packagePaymentId, matNumber: yoga ? mat : null, data: transaction,isCurrent:transferValid,claimId });
+        assertAdmissionContext({isCurrent:transferValid});
         return { booking, pending };
       },{idempotencyKey:`checkout:${user.id}:${checkoutKey.current}`});
+      assertAdmissionContext({isCurrent:transferValid});
       if (!outcome){checkoutKey.current=crypto.randomUUID();return 'declined';}
       setDeclined(null);
       setDone(outcome);
@@ -255,9 +263,9 @@ export function CheckoutPage() {
         {error === 'mat' && <Notice tone="warn">{t('site.mat.error')}</Notice>}
         {alreadyBooked && <Notice tone="warn">{t('customer.home.booked')}</Notice>}
         {error === 'full' && <Notice tone="warn" title={t('customer.checkout.race.title')} action={<Button size="sm" onClick={() => nav(`/app/waitlist/${s.id}`)}>{t('core.common.waitlist')}</Button>}>{t('customer.checkout.race.body')}</Notice>}
-        {error === 'unavailable' && <Notice tone="danger" title={t('core.common.error')}>{t('customer.checkout.unavailable')}</Notice>}
+        {(!admissionAvailable || error === 'unavailable') && <Notice tone="danger" title={t('core.common.error')}>{t('customer.checkout.unavailable')}</Notice>}
         {(error === 'conflict' || conflict) && <Notice tone="warn">{t('customer.book.oneADay')} {conflict && <Link to={`/app/class/${conflict}`}>{t('customer.class.seeOther')}</Link>}</Notice>}
-        <Button block size="lg" loading={busy} disabled={(kind==='trial'&&ent.trial.status!=='eligible')||(isPass(kind)&&!review.available)||(method==='transfer'&&amount>0&&!receiptImage) || !!conflict || alreadyBooked || (yoga && !matValid) || s.status !== 'scheduled' || new Date(s.starts_at).getTime() <= Date.now()} onClick={confirm}>
+        <Button block size="lg" loading={busy} disabled={!admissionAvailable||(kind==='trial'&&ent.trial.status!=='eligible')||(isPass(kind)&&!review.available)||(method==='transfer'&&amount>0&&!receiptImage) || !!conflict || alreadyBooked || (yoga && !matValid) || s.status !== 'scheduled' || new Date(s.starts_at).getTime() <= Date.now()} onClick={confirm}>
           {isPass(kind)&&!review.available?t('quotes.review'):method==='transfer'&&amount>0 ? t('transfers.submit') : amount > 0 ? (methodOpt.provider === 'wompi' ? t('customer.checkout.payWompi', { amount: formatCOP(amount, lang) }) : t('customer.checkout.confirmManual', { amount: formatCOP(amount, lang) })) : t('customer.checkout.confirm')}
         </Button>
         <p className="xs muted" style={{ textAlign: 'center' }}>{t('customer.checkout.policy', { h: policy.cancelWindowHours })}</p>

@@ -1,3 +1,4 @@
+import { requireSessionAdmission, assertAdmissionContext, type AdmissionControl } from './sessionAdmission';
 import type { DataProvider } from './types';
 import type { BookingRow, ClassLedgerRow, ClassSessionRow, PaymentRow } from './schema';
 import { approvedPackageRows, packageState, packageLots, selectPackagePurchase } from './packages';
@@ -5,9 +6,9 @@ import { dateKey, isSameDay } from '../i18n/format';
 import { tenant } from '../tenant/tenant';
 
 /** Called inside atomic() only. Fictional browser adapter; production requires an authorized RPC. */
-export async function bookWithPackage(data: DataProvider, input: { userId: string; sessionId: string; status: 'booked' | 'checked_in'; now?: string; paymentId?: string; paidWith?: 'trial' | 'single' | 'package' }): Promise<BookingRow> {
+export async function bookWithPackage(data: DataProvider, input: { userId: string; sessionId: string; status: 'booked' | 'checked_in'; now?: string; paymentId?: string; paidWith?: 'trial' | 'single' | 'package'; control?: AdmissionControl }): Promise<BookingRow> {
   const now = input.now ?? new Date().toISOString();
-  const session = await data.get<ClassSessionRow>('class_sessions', input.sessionId);
+  const session = await requireSessionAdmission(data, input.sessionId, { ...input.control, now: Date.parse(now) });
   if (!session || session.tenant_id !== tenant.id || session.status !== 'scheduled' || !Number.isFinite(Date.parse(now)) || !Number.isFinite(Date.parse(session.starts_at)) || Date.parse(session.starts_at) <= Date.parse(now)) throw new Error('session_unavailable');
   const bookings = await data.list<BookingRow>('bookings', { where: { user_id: input.userId } });
   const active = bookings.filter(b => b.status !== 'cancelled' && b.status !== 'late_cancel');
@@ -44,6 +45,11 @@ export async function bookWithPackage(data: DataProvider, input: { userId: strin
     purchase = selectPackagePurchase(available, dateKey(new Date(now)), dateKey(new Date(session.starts_at)));
     if (!purchase) throw new Error('package_expired');
   }
+  assertAdmissionContext(input.control);
+  await requireSessionAdmission(data, input.sessionId, { ...input.control, now: Date.parse(now) });
   const debit = await data.insert<ClassLedgerRow>('class_ledger', { purchase_ledger_id: purchase?.id ?? null, user_id: input.userId, plan_id: purchase?.plan_id ?? null, payment_id: purchase?.payment_id ?? null, delta: -1, reason: 'booking', expires_at: null, frozen_from: null, frozen_until: null });
-  return data.insert<BookingRow>('bookings', { user_id: input.userId, session_id: session.id, status: input.status, paid_with: input.paymentId ? input.paidWith ?? 'package' : 'package', ledger_id: debit.id, checked_in_at: input.status === 'checked_in' ? now : null, cancelled_at: null, rated: false });
+  assertAdmissionContext(input.control);
+  const result = await data.insert<BookingRow>('bookings', { user_id: input.userId, session_id: session.id, status: input.status, paid_with: input.paymentId ? input.paidWith ?? 'package' : 'package', ledger_id: debit.id, checked_in_at: input.status === 'checked_in' ? now : null, cancelled_at: null, rated: false });
+  assertAdmissionContext(input.control);
+  return result;
 }

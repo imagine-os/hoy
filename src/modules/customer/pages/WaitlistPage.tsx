@@ -1,3 +1,4 @@
+import { sessionAdmissionAvailable } from '../../../data/sessionAdmission';
 import { Fragment, useEffect, useState, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
@@ -27,33 +28,36 @@ export function WaitlistPage() {
   const { t, lang } = useI18n();
   const nav = useNavigate();
   const data = useData();
-  const { devMode } = useSession();
+  const { devMode,user,role } = useSession();
   const { sections, isVisible } = useLayout(spec);
   const { joined, loading } = useSessionJoined(id);
   const { mine, active, position } = useWaitlistFor(id);
   const { rows: myBookings } = useMyBookings();
   const ent = useEntitlements();
-  const { joinWaitlist, leaveWaitlist, claimWaitlist, promoteWaitlist } = useBookingActions();
+  const { joinWaitlist, leaveWaitlist, claimWaitlist, promoteWaitlist,expireWaitlist } = useBookingActions();
   const [autoClaim, setAutoClaim] = useLocalPref('waitlist.autoClaim', true);
   const [busy, setBusy] = useState(false);
   const now = useNow(1000);
 
   const cancelled = joined?.session.status === 'cancelled';
-  const offered = !cancelled && mine?.status === 'offered' && mine.claim_until && new Date(mine.claim_until).getTime() > now;
+  const admissionBlocked=!!joined && !sessionAdmissionAvailable(joined.session,joined.modality,joined.session.template_id?{id:joined.session.template_id,active:joined.templateActive}:undefined,now);
+  const [admissionError,setAdmissionError]=useState(false);
+  useEffect(()=>{setAdmissionError(false);},[id,user.id,role,data]);
+  const offered = !admissionError && !admissionBlocked && mine?.status === 'offered' && mine.claim_until && new Date(mine.claim_until).getTime() > now;
   const expired = !cancelled && mine?.status === 'offered' && mine.claim_until && new Date(mine.claim_until).getTime() <= now;
   const waiting = !cancelled && mine?.status === 'waiting';
   const alreadyBooked = myBookings.some((b) => b.session_id === id && b.status === 'booked');
 
   // An offer that ran out passes to the next person (C-20 rule).
   useEffect(() => {
-    if (expired && mine && joined) { data.update('waitlist', mine.id, { status: 'expired' }).then(() => promoteWaitlist(joined.session.id)); }
-  }, [expired, mine, joined, data, promoteWaitlist]);
+    if (!admissionError && !admissionBlocked && expired && mine && joined) { expireWaitlist(mine).catch(()=>setAdmissionError(true)); }
+  }, [admissionError,admissionBlocked,expired, mine, joined, expireWaitlist]);
 
   // Auto-claim consumes a credit the moment the spot is offered (C-20 rule).
   useEffect(() => {
     if (offered && autoClaim && mine && joined && ent.hasAnyEntitlement && !busy) {
       setBusy(true);
-      claimWaitlist(mine, joined.session, ent.defaultKind).then((b) => nav(`/app/booking/${b.id}`, { replace: true })).catch(() => setBusy(false));
+      claimWaitlist(mine, joined.session, ent.defaultKind).then((b) => nav(`/app/booking/${b.id}`, { replace: true })).catch(() => {setAdmissionError(true);setBusy(false);});
     }
   }, [offered, autoClaim, mine, joined, ent.hasAnyEntitlement, ent.defaultKind, claimWaitlist, nav, busy]);
 
@@ -70,15 +74,17 @@ export function WaitlistPage() {
   const left = s.capacity - s.booked_count;
 
   const claim = async () => {
-    if (!mine || cancelled) return;
+    if (!mine || admissionBlocked) return;
     if (!ent.hasAnyEntitlement || /yoga|vinyasa|flow|yin/.test(joined.modality?.slug ?? '')) { nav(`/app/checkout/${s.id}?claim=${mine.id}`); return; }
     setBusy(true);
-    try { const b = await claimWaitlist(mine, s, ent.defaultKind); nav(`/app/booking/${b.id}`); } finally { setBusy(false); }
+    try { const b = await claimWaitlist(mine, s, ent.defaultKind); nav(`/app/booking/${b.id}`); } catch { setAdmissionError(true); } finally { setBusy(false); }
   };
 
   const SECTIONS: Record<string, () => ReactNode> = {
     'StatusCard (PositionRing + RuleExplainer)': () => {
       if (cancelled) return <Notice tone="warn" title={t('customer.cancelled.title')}>{lang === 'en' ? 'This class has been cancelled. Waitlist offers and claims are unavailable; no new place is offered.' : 'Esta clase fue cancelada. Las ofertas y los reclamos de la lista no están disponibles; no se ofrece un cupo nuevo.'}</Notice>;
+      if (admissionBlocked) return <Notice tone="warn" title={t('customer.checkout.unavailable')} />;
+      if (admissionError) return <Notice tone="warn" title={t('core.common.error')} action={<Button onClick={()=>setAdmissionError(false)}>{t('core.common.retry')}</Button>} />;
       if (alreadyBooked) return <Notice tone="success" title={t('customer.home.booked')} action={<Button size="sm" variant="secondary" onClick={() => nav(`/app/booking/${s.id}`)}>{t('customer.class.viewBooking')}</Button>} />;
       if (started) return <Notice tone="info" title={t('customer.waitlist.started')}>{t('customer.waitlist.started.body')}</Notice>;
       if (waiting) return (
@@ -88,14 +94,14 @@ export function WaitlistPage() {
           <p className="small muted">{t('customer.waitlist.rule', { min: policy.claimWindowMinutes })}</p>
         </Card>
       );
-      if (expired) return <Notice tone="warn" title={t('customer.waitlist.expired')} action={<Button size="sm" loading={busy} onClick={async () => { setBusy(true); try { await joinWaitlist(s); } finally { setBusy(false); } }}>{t('customer.waitlist.rejoin')}</Button>}>{t('customer.waitlist.expired.body')}</Notice>;
+      if (expired) return <Notice tone="warn" title={t('customer.waitlist.expired')} action={<Button size="sm" loading={busy} onClick={async () => { setBusy(true); try { await joinWaitlist(s); } catch { setAdmissionError(true); } finally { setBusy(false); } }}>{t('customer.waitlist.rejoin')}</Button>}>{t('customer.waitlist.expired.body')}</Notice>;
       if (offered) return null;
       if (left > 0) return <Notice tone="success" title={t('customer.waitlist.spotsOpen', { n: left })} action={<Button size="sm" onClick={() => nav(`/app/checkout/${s.id}`)}>{t('core.common.book')}</Button>} />;
       return (
         <Card className="cust-center stack-sm" padding="lg">
           <strong>{t('customer.waitlist.full', { n: active.filter((w) => w.status === 'waiting').length })}</strong>
           <p className="small muted">{t('customer.waitlist.rule', { min: policy.claimWindowMinutes })}</p>
-          <Button size="lg" loading={busy} onClick={async () => { setBusy(true); try { await joinWaitlist(s); } finally { setBusy(false); } }}>{t('customer.class.joinWaitlist')}</Button>
+          <Button size="lg" loading={busy} onClick={async () => { setBusy(true); try { await joinWaitlist(s); } catch { setAdmissionError(true); } finally { setBusy(false); } }}>{t('customer.class.joinWaitlist')}</Button>
         </Card>
       );
     },
@@ -115,7 +121,7 @@ export function WaitlistPage() {
     PolicyNote: () => (
       <div className="stack-sm">
         <p className="xs muted" style={{ textAlign: 'center' }}>{t('customer.waitlist.policy', { min: policy.claimWindowMinutes })}</p>
-        {devMode && waiting && position === 1 && <Button variant="ghost" size="sm" onClick={() => promoteWaitlist(s.id)}>{t('customer.waitlist.devRelease')}</Button>}
+        {devMode && !admissionBlocked && waiting && position === 1 && <Button variant="ghost" size="sm" onClick={() => promoteWaitlist(s.id)}>{t('customer.waitlist.devRelease')}</Button>}
       </div>
     ),
   };

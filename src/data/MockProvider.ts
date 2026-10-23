@@ -1,3 +1,4 @@
+import { sessionAdmissionAvailable } from './sessionAdmission';
 import { ensureFullDemoSession } from './seed/ensureFullDemoSession';
 import { appendClassPayRule, defaultClassPayRule, type AppendClassPayRuleCommand, type ClassPayRuleRow } from './classPayRules';
 import { dateKey, addDays, atStudioTime, studioParts, STUDIO_TIMEZONE } from '../i18n/format';
@@ -133,14 +134,16 @@ export class MockProvider implements DataProvider {
     session.booked_count = (this.db.bookings as BookingRow[]).filter(b => b.session_id === sessionId && b.status !== 'cancelled' && b.status !== 'late_cancel').length + voucherSeats(this.db, sessionId);
     this.emit({ table: 'class_sessions', type: 'update', row: session, id: session.id });
   }
-  private prepareBooking(row: BookingRow) {
+  private prepareBooking(row: BookingRow, admission = true) {
     if (!occupiesMat(row)) return row;
     const session = (this.db.class_sessions as ClassSessionRow[]).find(s => s.id === row.session_id);
     if (!session || session.status !== 'scheduled' || new Date(session.starts_at).getTime() <= Date.now()) throw new Error('session_unavailable');
     const others = (this.db.bookings as BookingRow[]).filter(b => b.session_id === row.session_id && b.id !== row.id && occupiesMat(b));
     if (others.some(b => b.user_id === row.user_id) || (this.db.voucher_bookings as VoucherBookingRow[]).some(b => b.sessionId === session.id && b.status !== 'cancelled' && b.participants.some(p => p.userId === row.user_id))) throw new Error('booking_exists');
     if (others.length + voucherSeats(this.db, session.id) >= session.capacity) throw new Error('session_full');
-    const modality = (this.db.modalities as ModalityRow[]).find(m => m.id === session.modality_id);
+    const modality = (this.db.modalities as ModalityRow[]).find(m => m.id === session.modality_id && m.tenant_id === session.tenant_id);
+    const template = this.db.class_templates.find(t => t.id === session.template_id && t.tenant_id === session.tenant_id);
+    if (admission && !sessionAdmissionAvailable(session, modality, template)) throw new Error('session_unavailable');
     return usesMats(modality) ? { ...row, mat_number: chooseMat([...others, ...(this.db.voucher_bookings as VoucherBookingRow[]).filter(b => b.sessionId === session.id && b.status !== 'cancelled').flatMap(b => b.mats.map(mat_number => ({ status: 'booked', mat_number } as BookingRow)))], Math.min(session.capacity, tenant.studio.mats), row.mat_number) } : { ...row, mat_number: null };
   }
 
@@ -285,7 +288,7 @@ export class MockProvider implements DataProvider {
       if (Object.keys(checked).length) applyContentBatch(this.db, { table, role: 'admin', actorId: 'validation', changes: [{ id, before: structuredClone(rows[i]), patch: checked }] }, tenant.id);
     }
     let next = { ...rows[i], ...patch, updated_at: new Date().toISOString() } as T;
-    if (table === 'bookings' && ('mat_number' in patch || 'session_id' in patch || ((patch as Partial<BookingRow>).status === 'booked' && (rows[i] as BookingRow).status !== 'booked'))) next = this.prepareBooking(next as unknown as BookingRow) as unknown as T;
+    if (table === 'bookings' && ('mat_number' in patch || 'session_id' in patch || ((patch as Partial<BookingRow>).status === 'booked' && (rows[i] as BookingRow).status !== 'booked'))) next = this.prepareBooking(next as unknown as BookingRow, (rows[i] as BookingRow).session_id !== (next as unknown as BookingRow).session_id || !occupiesMat(rows[i] as BookingRow)) as unknown as T;
     const previousSession = table === 'bookings' ? (rows[i] as BookingRow).session_id : null;
     const previousDb = structuredClone(this.db);
     rows[i] = next;

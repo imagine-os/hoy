@@ -13,7 +13,7 @@ try {
   let n = 0, request = 0;
   const context = { tenantId: 'tenant', now: '2026-10-14T12:00:00Z', id: () => `row-${++n}`, code: () => `AUTO-${++n}-CODE` };
   const newDb = () => {
-    const db = { users: ['teacher', 'teacher2', 'admin', 'member', 'member2', 'member3', 'desk'].map(id => ({ ...base, id })), vouchers: [], voucher_bookings: [], voucher_events: [], bookings: [], class_sessions: [{ ...base, id: 'session', starts_at: '2026-10-15T12:00:00Z', ends_at: '2026-10-15T13:00:00Z', status: 'scheduled', capacity: 20, booked_count: 0 }] };
+    const db = { users: ['teacher', 'teacher2', 'admin', 'member', 'member2', 'member3', 'desk'].map(id => ({ ...base, id })), vouchers: [], voucher_bookings: [], voucher_events: [], bookings: [], modalities: [{ ...base, id: 'qa_promotion_mod', active: true }], class_sessions: [{ ...base, id: 'session', modality_id: 'qa_promotion_mod', starts_at: '2026-10-15T12:00:00Z', ends_at: '2026-10-15T13:00:00Z', status: 'scheduled', capacity: 20, booked_count: 0 }] };
     ensureDemoPromotions(db, 'tenant', context.now); return db;
   };
   let db = newDb();
@@ -78,6 +78,9 @@ try {
   reject({ ...book, verificationConfirmed: false }, 'voucher_verification_required', voucher);
   reject({ ...book, verificationConfirmed: 'yes' }, 'voucher_verification_required', voucher);
   reject({ ...book, role: 'teacher' }, 'voucher_forbidden', voucher);
+  db.modalities[0].active = false;
+  reject(book, 'session_unavailable', voucher);
+  db.modalities[0].active = true;
   const booked = voucher(book).booking;
   assert.equal(db.vouchers.find(v => v.id === claimed.voucher.id).balance, 0);
   assert.equal(db.vouchers.find(v => v.id === member2.voucher.id).balance, 1);

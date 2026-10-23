@@ -1,3 +1,4 @@
+import { requireSessionAdmission, assertAdmissionContext, sessionAdmissionAvailable } from '../../data/sessionAdmission';
 import { captureLaunchReceipt, receiptReference } from '../../data/launchReceipts';
 import { LaunchPaymentReceipt } from '../../components/organism/LaunchPaymentReceipt/LaunchPaymentReceipt';
 import {DailyCountDraft} from '../../components/organism/DailyCountDraft/DailyCountDraft';
@@ -92,6 +93,9 @@ export function RegisterPage() {
   const [done, setDone] = useState<Sale | null>(null);
 
   const canWrite = can('payments.write');
+  const saleContext=useRef({data,actorId:user.id,role,canWrite,mounted:true});
+  saleContext.current={data,actorId:user.id,role,canWrite,mounted:true};
+  useEffect(()=>{saleContext.current.mounted=true;return()=>{saleContext.current.mounted=false;};},[]);
   const specialAmount = parseDigits(special.amountRaw);
   // An Especial is a PriceItem whose name and price were typed by hand; everything downstream (IVA, receipt, "Valor pagado") treats it like any other item.
   const item: DeskItem = special.on
@@ -131,7 +135,8 @@ export function RegisterPage() {
   const person = personId ? people.find((p) => p.id === personId) : undefined;
   const candidates = useMemo(() => (existingQ.trim().length < 2 ? [] : people.filter((p) => p.role === 'customer' && personMatches(p, existingQ)).slice(0, 6)), [people, existingQ]);
   const session = today.find((x) => x.session.id === sessionId);
-  const upcoming = today.filter((x) => new Date(x.session.ends_at).getTime() > Date.now());
+  const upcoming = today.filter(x=>sessionAdmissionAvailable(x.session,x.modality,x.session.template_id?{id:x.session.template_id,active:x.templateActive}:undefined));
+  const admissionBlocked=!!sessionId && (!session || !sessionAdmissionAvailable(session.session,session.modality,session.session.template_id?{id:session.session.template_id,active:session.templateActive}:undefined));
   const items = pricing.filter(p=>SELLABLE.includes(p.family)).flatMap(p=>{const q=catalog.quote(p.id);return q?[quotedItem(q)]:[];});
 
   // Jas review: the desk can record a different amount received, but only with an observation attached.
@@ -139,17 +144,21 @@ export function RegisterPage() {
   const paidDiffers = amountPaid !== totals.total;
   const noteOk = !paidDiffers || note.trim().length > 0;
   const who = mode === 'existing' ? !!person : mode === 'contact' ? special.on && contactName.trim().length > 0 : form.first.trim() && form.phone.trim() && form.consent;
-  const valid = who && noteOk && specialOk && (special.on||review.available)&&(special.on||itemId!=='trial'||trial.status==='eligible');
+  const valid = !admissionBlocked && who && noteOk && specialOk && (special.on||review.available)&&(special.on||itemId!=='trial'||trial.status==='eligible');
   const displayName = mode === 'existing' ? person?.name ?? '' : mode === 'contact' ? contactName.trim() : `${form.first.trim()} ${form.last.trim()}`.trim();
 
   const complete = async () => {
     if (!canWrite || !valid || saleBusy.current) return;
+    const provider=data,actorId=user.id,effectiveRole=role;
+    const isCurrent=()=>saleContext.current.mounted && saleContext.current.data===provider && saleContext.current.actorId===actorId && saleContext.current.role===effectiveRole && saleContext.current.canWrite;
     saleBusy.current = true;
     setBusy(true); setError(null);
     try {
       if (!data.atomic) throw new Error('mock_atomic_adapter_required');
       const frozen=!special.on&&review.quote?withQuoteTotals(review.quote,totals):null;
       const result = await data.atomic<Sale>(async data => {
+      assertAdmissionContext({isCurrent});
+      if(sessionId)await requireSessionAdmission(data,sessionId,{isCurrent});
       if(frozen)await checkSaleQuote(data,frozen);
       const audit = (action: string, entity: string, entityId: string, diff: Record<string, unknown>) => data.insert('audit_log', { actor_id: user.id, action, entity, entity_id: entityId, diff: { role, source: 'front_desk', ...diff }, ip: null });
       const now = new Date();
@@ -209,14 +218,15 @@ export function RegisterPage() {
 
       let checkedIn: string | undefined;
       if (session && settings.features.autoCheckinOnSale && userId && !special.on) {
-        const b = await bookWithPackage(data, { userId, sessionId: session.session.id, status: 'checked_in', now: now.toISOString(), paymentId: payment.id, paidWith: item.id === 'trial' ? 'trial' : (item.classes ?? 0) > 1 ? 'package' : 'single' });
+        const b = await bookWithPackage(data, { userId, sessionId: session.session.id, status: 'checked_in', now: now.toISOString(), paymentId: payment.id, paidWith: item.id === 'trial' ? 'trial' : (item.classes ?? 0) > 1 ? 'package' : 'single',control:{isCurrent} });
         await audit('booking.checkin', 'bookings', b.id, { after: 'checked_in', session_id: session.session.id, user_id: userId, source_sale: payment.id });
         checkedIn = `${session.session.title} · ${formatTime(session.session.starts_at, lang)}`;
       }
       const contact = mode === 'existing' ? maskPhone(person?.phone) : mode === 'contact' ? '—' : maskPhone(form.phone);
+      assertAdmissionContext({isCurrent});
       return { payment, number, subtotal: totals.subtotal, tax: totals.tax, total: totals.total, customer: displayName, contact, item, checkedIn, isNew, booking: bookingTitle, payout: payoutDone };
       }, { idempotencyKey: saleKey.current });
-      setDone(result);
+      if(isCurrent())setDone(result);
     } catch (e) { const code = e instanceof Error ? e.message : ''; setError(trialErrorKey(e)??(['payment_confirmation_required','session_unavailable','session_full','booking_exists','same_day_conflict','insufficient_classes','package_frozen','package_expired','mock_atomic_adapter_required'].includes(code) ? code : 'failed')); } finally { setBusy(false); saleBusy.current = false; }
   };
 
@@ -372,7 +382,7 @@ export function RegisterPage() {
                 </>
               )}
               <Field label={t('staff.register.checkinTo')} hint={settings.features.autoCheckinOnSale ? t('staff.register.checkinTo.hint') : t('staff.register.checkinTo.off')}>
-                {(id) => <Select id={id} value={sessionId} onChange={(e) => setSessionId(e.target.value)} disabled={!settings.features.autoCheckinOnSale || special.on || mode === 'contact'}><option value="">{t('staff.register.checkinTo.none')}</option>{upcoming.map(({ session: s, teacher: te }) => <option key={s.id} value={s.id}>{formatTime(s.starts_at, lang)} · {s.title} · {te?.display_name} ({s.booked_count}/{s.capacity})</option>)}</Select>}
+                {(id) => <Select id={id} value={sessionId} onChange={(e) => setSessionId(e.target.value)} disabled={!settings.features.autoCheckinOnSale || special.on || mode === 'contact'}><option value="">{t('staff.register.checkinTo.none')}</option>{admissionBlocked&&<option value={sessionId} disabled>{t('customer.checkout.unavailable')}</option>}{upcoming.map(({ session: s, teacher: te }) => <option key={s.id} value={s.id}>{formatTime(s.starts_at, lang)} · {s.title} · {te?.display_name} ({s.booked_count}/{s.capacity})</option>)}</Select>}
               </Field>
               {error && <EmptyState compact tone="error" title={t('core.common.error')} body={t(error.startsWith('customer.')?error:`staff.booking.error.${error}`)} />}
               <Button block size="lg" disabled={!valid} loading={busy} onClick={complete} icon={method === 'wompi' ? 'link' : 'payment'}>{method === 'wompi' ? t('staff.register.cta.link') : t('staff.register.cta')}</Button>
