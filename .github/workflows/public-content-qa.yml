@@ -1,0 +1,43 @@
+name: Public content launch QA
+on:
+  pull_request:
+    paths:
+      - 'src/modules/coming-soon/**'
+      - 'src/modules/website/**'
+      - 'src/modules/admin/settings.ts'
+      - 'src/tenant/contacts.ts'
+      - 'scripts/test-public-launch.mjs'
+      - 'scripts/test-public-content-ui.mjs'
+      - 'scripts/test-public-agenda-ui.mjs'
+      - '.github/workflows/public-content-qa.yml'
+permissions:
+  contents: read
+jobs:
+  public-content:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CHROMIUM_PATH: /usr/bin/google-chrome
+      QA_BASE: http://127.0.0.1:5180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: node scripts/test-public-launch.mjs && npm run test:contacts && npm run build
+      - name: Verify fictional public browser flows
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 5180 > /tmp/public-preview.log 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:5180/ >/dev/null && break; sleep 1; done
+          node scripts/test-public-content-ui.mjs
+          node scripts/test-public-agenda-ui.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: public-content-${{ github.event.pull_request.head.sha }}
+          retention-days: 2
+          path: docs/screenshots/public-content-launch/

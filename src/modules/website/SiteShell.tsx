@@ -108,7 +108,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
           </div>
           <div className="stack-sm">
             <span className="eyebrow">{t('site.footer.follow')}</span>
-            <a className="small" href={wa.link('frontDesk')} target="_blank" rel="noreferrer" data-testid="footer-whatsapp">WhatsApp {contact.whatsapp}{pending('whatsapp')}</a>
+            <a className="small" href={wa.link('frontDesk')} target="_blank" rel="noreferrer" data-testid="footer-whatsapp">WhatsApp {wa.display('frontDesk', lang)}</a>
             <a className="small" href={contact.instagramUrl} target="_blank" rel="noreferrer">Instagram {contact.instagram}{pending('instagram')}</a>
             <a className="small" href={`mailto:${contact.email}`}>{contact.email}{pending('email')}</a>
           </div>

@@ -1,0 +1,13 @@
+{
+  "base": "http://127.0.0.1:5180",
+  "checks": [
+    "es: prelaunch both routes; open-tab boundary; exact launch both routes replaces route and drops obsolete queries across Tokyo/Honolulu device zones",
+    "en: prelaunch both routes; open-tab boundary; exact launch both routes replaces route and drops obsolete queries across Tokyo/Honolulu device zones",
+    "es: contact/footer exact configured front desk display and link; contact special/Plans/FAQ topic destinations; empty topic fallback; blank form disabled; encoded Unicode message builds direct URL only; 9 public pages translated and responsive at 390/1280",
+    "en: contact/footer exact configured front desk display and link; contact special/Plans/FAQ topic destinations; empty topic fallback; blank form disabled; encoded Unicode message builds direct URL only; 9 public pages translated and responsive at 390/1280"
+  ],
+  "errors": [],
+  "limits": [
+    "Fictional local browser Settings fixtures; external HTTP aborted. No real messages, auth, backend or location acceptance."
+  ]
+}

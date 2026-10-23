@@ -1,0 +1,11 @@
+{
+  "base": "http://127.0.0.1:5180",
+  "checks": [
+    "es: Tokyo device studio-day and class-time display at Bogotá 23:30; selected class to sign-in next checkout and full-class waitlist; empty home agenda at 390/1280 light/dark",
+    "en: Tokyo device studio-day and class-time display at Bogotá 23:30; selected class to sign-in next checkout and full-class waitlist; empty home agenda at 390/1280 light/dark"
+  ],
+  "errors": [],
+  "limits": [
+    "Booking verified only through sign-in handoff; auth/signup/return execution belongs to account owner."
+  ]
+}

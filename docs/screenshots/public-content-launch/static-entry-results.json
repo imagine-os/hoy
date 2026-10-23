@@ -1,0 +1,7 @@
+{
+  "checks": [
+    "/: root landing, clean hub variants, refresh, map, site/back-to-hub, archive/Latest",
+    "/hoy: root landing, clean hub variants, refresh, map, site/back-to-hub, archive/Latest"
+  ],
+  "errors": []
+}

@@ -33,7 +33,7 @@ export function ContactPage() {
   };
 
   const cards = [
-    [t('site.contact.whatsapp'), contact.whatsapp, wa.link('frontDesk'), 'whatsapp'],
+    [t('site.contact.whatsapp'), wa.resolve('frontDesk').whatsapp, wa.link('frontDesk'), 'whatsapp'],
     [t('site.contact.email'), contact.email, `mailto:${contact.email}`, 'email'],
     [t('site.contact.instagram'), contact.instagram, contact.instagramUrl, 'instagram'],
     [t('site.contact.address'), `${contact.address} · ${contact.city}`, contact.location.link ?? undefined, 'address'],

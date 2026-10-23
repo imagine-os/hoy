@@ -25,8 +25,13 @@ const server=createServer(async(req,res)=>{
 await new Promise(r=>server.listen(5191,'127.0.0.1',r));
 let browser;const checks=[];const errors=[];
 try{
-  browser=await chromium.launch({executablePath:process.env.BROWSER_BIN||'/usr/bin/google-chrome',args:['--no-sandbox','--disable-dev-shm-usage']});
+  browser=await chromium.launch({executablePath:process.env.BROWSER_BIN||'/usr/bin/google-chrome',args:['--no-sandbox','--disable-dev-shm-usage','--no-proxy-server']});
   const page=await browser.newPage({viewport:{width:1280,height:900}});
+  // Exercise the historical pre-launch surface deterministically after SW-08 goes live.
+  await page.addInitScript(() => {
+    const RealDate = Date; const fixed = '2026-10-29T12:00:00Z';
+    window.Date = class extends RealDate { constructor(...args) { super(...(args.length ? args : [fixed])); } static now() { return new RealDate(fixed).getTime(); } };
+  });
   page.on('pageerror',e=>errors.push(e.message));
   for(const prefix of ['','/hoy']){
     const base=`http://127.0.0.1:5191${prefix}/`;
