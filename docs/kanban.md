@@ -815,8 +815,7 @@ Protected-capture clarification: M14 schedule/pay screenshots remain local/ignor
 - RS-04: scoped studio-day admission checks across regular and identified voucher bookings, offered claims and rescheduling; synthetic regression coverage, no server enforcement claim.
 - RS-05: current availability and fresh navigation checks on customer/public class drawers; final paused-context regressions and combined release pending.
 
-## PL07 signup validation
+## Signup frontend validation and context
 
-- Reproduced and bounded oversized account fields and invalid calendar birthdays in A-03 and its mock registration command. Literal Unicode/symbol storage and exact consent replay are retained. Checked local implementation awaits independent review and integration; no real identity-provider changes or whole-platform validation claim.
-
-- A-03 pending signup scope: reproduced same-mounted actor/provider/query changes; fenced old command/session/navigation and retained the draft for explicit retry. Current legal proof and consent stay scoped; final exact tests/review and release remain pending.
+- PL-07 / A-03: bounded account fields and calendar birthdays; literal Unicode/symbol storage and exact consent replay retained.
+- Pending signup commands, legal proof, session updates and navigation are fenced to their actor, role, provider and route. Drafts survive for explicit retry. Combined local checks and independent source review passed; hosted CI/release remain pending. No real identity-provider or whole-platform validation claim.
