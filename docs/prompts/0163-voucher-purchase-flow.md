@@ -1,0 +1,3 @@
+Complete the requested BO-01/02/04 simulated frontend journey on the explicitly frozen booking base. Connect pending gift purchase and local proof, explicit administrative review, preview link, narrow sign-in/sign-up return, recipient-bound activation and usable voucher booking balance. Preserve tenant, role, context, replay, package/receipt history and demo boundaries. Do not invent gift policy, enable real services, bypass protected writes or publish before independent review.
+
+Response: replaced the operational C-37 rehearsal with a provider-backed local flow, added protected mock-only intent/request storage and dedicated dispatch, and covered whole journeys and interruptions. Actual delivery, real authentication/settlement and final policy remain separate.

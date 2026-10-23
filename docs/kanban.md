@@ -814,3 +814,8 @@ Protected-capture clarification: M14 schedule/pay screenshots remain local/ignor
 - RS-02: saved package-booking confirmation recovery and truthful duplicate feedback; final combined review and release pending. No new charge is inferred from missing confirmation.
 - RS-04: scoped studio-day admission checks across regular and identified voucher bookings, offered claims and rescheduling; synthetic regression coverage, no server enforcement claim.
 - RS-05: current availability and fresh navigation checks on customer/public class drawers; final paused-context regressions and combined release pending.
+
+## Purchased class-gift frontend flow
+
+- BO-01/04: coherent local purchase, proof retention, admin-reviewed issuance, account return, recipient activation and voucher booking implemented. Eight EN/ES390/1280 sign-in/sign-up journeys and28 fault/context groups passed before frozen build. Independent review and combined release pending.
+- BO-02/06: persistent same-browser recipient link and buyer/recipient previews only; no actual email delivery or production claim. BO-03 courtesy behavior retained; final gift policy and real services remain separate.

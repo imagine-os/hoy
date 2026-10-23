@@ -1,3 +1,4 @@
+import {assertPurchasedGiftClaim} from '../modules/voucher-gifts/purchaseFacts';
 import { dailyAdmissionConflict } from './dailyAdmission';
 import { sessionAdmissionAvailable } from './sessionAdmission';
 import type { BaseRow, BookingRow, ClassSessionRow, ModalityRow } from './schema';
@@ -70,6 +71,7 @@ export function executeVoucherCommand(database: VoucherDb, command: VoucherComma
   const base = (): BaseRow => ({ id: id(), tenant_id: context.tenantId, created_at: now, updated_at: now });
   const vouchers = (db.vouchers ??= []) as VoucherRow[], bookings = (db.voucher_bookings ??= []) as VoucherBookingRow[], events = (db.voucher_events ??= []) as VoucherEventRow[];
   if (!c.requestId?.trim() || !c.actorId?.trim() || !(db.users ?? []).some(u => u.id === c.actorId && u.tenant_id === context.tenantId)) fail('voucher_identity_required');
+  if(c.type==='claim'){const purchased=vouchers.find(v=>v.id===c.voucherId&&v.tenant_id===context.tenantId);if(purchased?.source==='purchased_gift')assertPurchasedGiftClaim(db,purchased,context.tenantId,c.actorId,c.role);}
   const fingerprint = JSON.stringify(c);
   const prior = events.find(e => e.tenant_id === context.tenantId && e.requestId === c.requestId);
   if (prior) {
@@ -92,6 +94,7 @@ export function executeVoucherCommand(database: VoucherDb, command: VoucherComma
     if (['preview_delivery', 'revoke'].includes(c.type) ? !staff(c.role) : ['attendance', 'confirm_booking'].includes(c.type) ? !reception(c.role) : c.type !== 'claim' && !(owner && c.role === 'customer') && !reception(c.role)) fail('voucher_forbidden');
     if (['claim', 'book'].includes(c.type) && (voucher.status === 'revoked' || (voucher.expiresAt !== null && (!Number.isFinite(Date.parse(voucher.expiresAt)) || Date.parse(voucher.expiresAt) <= Date.parse(now))))) fail('voucher_unavailable');
     if (c.type === 'claim') {
+
       if (c.userId !== c.actorId || c.role !== 'customer' || !(db.users ?? []).some(u => u.id === c.userId && u.tenant_id === context.tenantId)) fail('voucher_identity_required');
       if (voucher.claimedBy && voucher.claimedBy !== c.userId) fail('voucher_already_claimed');
       voucher.claimedBy = c.userId; voucher.status = 'claimed';

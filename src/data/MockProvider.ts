@@ -1,3 +1,5 @@
+import {executeGiftPurchaseCommand,type GiftPurchaseCommand,type GiftPurchaseResult} from '../modules/voucher-gifts/purchaseCommand';
+import {checkSaleQuote} from './operationalQuotes';
 import { dailyAdmissionConflict, identifiedSessionAdmission } from './dailyAdmission';
 import { sessionAdmissionAvailable } from './sessionAdmission';
 import { ensureFullDemoSession } from './seed/ensureFullDemoSession';
@@ -68,7 +70,7 @@ function isCurrentSnapshot(stored: Stored, now = new Date()): boolean {
  */
 function upgradeAdditiveMockTables(db: Db) {
   if (!db || typeof db !== 'object') return;
-  for (const table of ['class_pay_rules', 'transfer_receipts', 'maintenance_records', 'email_change_previews', 'teacher_profile_proposals']) {
+  for (const table of ['class_pay_rules', 'transfer_receipts', 'maintenance_records', 'email_change_previews', 'teacher_profile_proposals', 'gift_purchase_intents', 'gift_purchase_requests']) {
     if (!Object.prototype.hasOwnProperty.call(db, table)) db[table] = [];
   }
 }
@@ -255,6 +257,7 @@ export class MockProvider implements DataProvider {
     if (table === 'audit_log' && this.rows(table).some(r => r.id === row.id)) throw new Error('audit_append_only');
     if (table === 'class_pay_rules') throw new Error('class_pay_atomic_command_required');
     if (['promotion_campaigns', 'promotion_shares', 'promotion_claims', 'promotion_events'].includes(table)) throw new Error('promotion_atomic_command_required');
+    if (['gift_purchase_intents','gift_purchase_requests'].includes(table)) throw new Error('gift_atomic_command_required');
     if (['vouchers', 'voucher_bookings', 'voucher_events'].includes(table)) throw new Error('voucher_atomic_command_required');
     const now = new Date().toISOString();
     let full = { id: newId(table.slice(0, 3)), tenant_id: tenant.id, created_at: now, updated_at: now, ...row } as T;
@@ -278,6 +281,7 @@ export class MockProvider implements DataProvider {
     if (table === 'audit_log') throw new Error('audit_append_only');
     if (table === 'class_pay_rules') throw new Error('class_pay_atomic_command_required');
     if (['promotion_campaigns', 'promotion_shares', 'promotion_claims', 'promotion_events'].includes(table)) throw new Error('promotion_atomic_command_required');
+    if (['gift_purchase_intents','gift_purchase_requests'].includes(table)) throw new Error('gift_atomic_command_required');
     if (['vouchers', 'voucher_bookings', 'voucher_events'].includes(table)) throw new Error('voucher_atomic_command_required');
     const rows = this.rows(table);
     const i = rows.findIndex((r) => r.id === id);
@@ -312,6 +316,7 @@ export class MockProvider implements DataProvider {
     if (table === 'audit_log') throw new Error('audit_append_only');
     if (table === 'class_pay_rules') throw new Error('class_pay_atomic_command_required');
     if (['promotion_campaigns', 'promotion_shares', 'promotion_claims', 'promotion_events'].includes(table)) throw new Error('promotion_atomic_command_required');
+    if (['gift_purchase_intents','gift_purchase_requests'].includes(table)) throw new Error('gift_atomic_command_required');
     if (['vouchers', 'voucher_bookings', 'voucher_events'].includes(table)) throw new Error('voucher_atomic_command_required');
     if (table === 'expenses') {
       const rows = this.rows(table);
@@ -332,6 +337,18 @@ export class MockProvider implements DataProvider {
     this.listeners.get(table)!.add(cb);
     return () => { this.listeners.get(table)?.delete(cb); };
   }
+  async purchasedGift(command:GiftPurchaseCommand,isCurrent:()=>boolean=()=>true):Promise<GiftPurchaseResult>{
+    if(this.name!=='mock')throw Error('gift_disconnected');
+    const input=structuredClone(command),check=()=>{if(!isCurrent())throw Error('gift_context_changed');};check();
+    return this.atomic(async tx=>{
+      check();const staged=tx as MockProvider;
+      const prior=staged.db.gift_purchase_requests?.some(r=>r.id===`gift-purchase-request:${input.actorId}:${input.requestId}`);
+      const currentQuote=input.type==='purchase'&&!prior?await checkSaleQuote(tx,input.quote):undefined;check();
+      const transaction=executeGiftPurchaseCommand(staged.db,input,{tenantId:tenant.id,currentQuote});check();
+      staged.db=transaction.db;return transaction.result;
+    });
+  }
+
   async voucher(command: VoucherCommand): Promise<VoucherResult> {
     const transaction = executeVoucherCommand(this.db, command, { tenantId: tenant.id,
       usesMats: session => usesMats((this.db.modalities as ModalityRow[]).find(m => m.id === session.modality_id)), matCapacity: tenant.studio.mats });
