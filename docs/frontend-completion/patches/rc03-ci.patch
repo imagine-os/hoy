@@ -1,0 +1,58 @@
+diff --git a/.github/workflows/reception-search-qa.yml b/.github/workflows/reception-search-qa.yml
+new file mode 100644
+--- /dev/null
++++ b/.github/workflows/reception-search-qa.yml
+@@ -0,0 +1,53 @@
++name: Reception search frontend QA
++on:
++  pull_request:
++    paths:
++      - 'src/modules/staff/CheckinPage.tsx'
++      - 'src/modules/staff/RegisterPage.tsx'
++      - 'src/modules/staff/receptionSearch.ts'
++      - 'src/modules/staff/useReceptionPeople.ts'
++      - 'src/modules/staff/strings.ts'
++      - 'scripts/*reception-search*'
++      - '.github/workflows/reception-search-qa.yml'
++permissions:
++  contents: read
++jobs:
++  reception-search:
++    runs-on: ubuntu-latest
++    timeout-minutes: 15
++    steps:
++      - uses: actions/checkout@v4
++        with:
++          ref: ${{ github.event.pull_request.head.sha }}
++      - uses: actions/setup-node@v4
++        with:
++          node-version: 22
++          cache: npm
++      - run: npm ci
++      - run: npm run build
++      - run: node scripts/test-reception-search.mjs
++      - name: Verify actual pages and scoped read recovery
++        env:
++          CHROMIUM_PATH: /usr/bin/google-chrome
++        run: |
++          npm run dev -- --host 127.0.0.1 --port 5241 --strictPort > /tmp/rc03-dev.log 2>&1 &
++          dev_pid=$!
++          npm run preview -- --host 127.0.0.1 --port 5242 --strictPort > /tmp/rc03-preview.log 2>&1 &
++          preview_pid=$!
++          trap 'kill "$dev_pid" "$preview_pid" 2>/dev/null || true' EXIT
++          for port in 5241 5242; do
++            for i in $(seq 1 30); do curl -fsS http://127.0.0.1:$port/ >/dev/null && break; sleep 1; done
++            curl -fsS http://127.0.0.1:$port/ >/dev/null
++          done
++          QA_BASE=http://127.0.0.1:5241 node scripts/test-reception-search-states.mjs
++          QA_BASE=http://127.0.0.1:5241 node scripts/test-reception-search-recovery.mjs
++          QA_BASE=http://127.0.0.1:5242 QA_SOURCE=${{ github.event.pull_request.head.sha }} node scripts/test-reception-search-ui.mjs
++      - uses: actions/upload-artifact@v4
++        if: always()
++        with:
++          name: reception-search-${{ github.event.pull_request.head.sha }}
++          path: |
++            docs/screenshots/RC-03-search/
++            /tmp/rc03-dev.log
++            /tmp/rc03-preview.log
++          retention-days: 7

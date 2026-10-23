@@ -1,0 +1,13 @@
+{
+  "base": "http://127.0.0.1:5241",
+  "checks": [
+    "en320 checkin: initial and refresh failure, failed retry, clear replacement/loading, retry success, latest query/class, selected-person clearing, actor switch old read ignored, unmount no late writes",
+    "en320 register: initial and refresh failure, failed retry, clear replacement/loading, retry success, latest query, selected-person clearing, actor switch old read ignored, unmount no late writes",
+    "es320 checkin: initial and refresh failure, failed retry, clear replacement/loading, retry success, latest query/class, selected-person clearing, actor switch old read ignored, unmount no late writes",
+    "es320 register: initial and refresh failure, failed retry, clear replacement/loading, retry success, latest query, selected-person clearing, actor switch old read ignored, unmount no late writes"
+  ],
+  "errors": [],
+  "limits": [
+    "Actual page/provider fault harness on dev build; production positive flow matrix is separate; no backend authorization claim"
+  ]
+}

@@ -1,5 +1,7 @@
 import type { StringTable } from '../../i18n/types';
 export const strings: StringTable = {
+  'staff.search.loading': { es: 'Cargando personas…', en: 'Loading people…' },
+  'staff.search.readError': { es: 'No se pudieron cargar las personas. Reintenta antes de seleccionar un cliente.', en: 'People could not be loaded. Retry before selecting a customer.' },
   'staff.count.codes': {es:'Valores registrados (método/proveedor/estado)', en:'Recorded values (method/provider/status)'},
   'staff.count.unrecognized': {es:'Valor no reconocido', en:'Unrecognized value'},
   'staff.count.status.voided': {es:'Anulado', en:'Voided'},

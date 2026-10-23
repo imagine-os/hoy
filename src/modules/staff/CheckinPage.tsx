@@ -68,9 +68,10 @@ export function CheckinPage() {
 
   const { rows: bookings, loading } = useTable<BookingRow>('bookings', { where: { tenant_id: tenant.id, session_id: selectedId ?? '__none__' } });
   const { rows: waitlist } = useTable<WaitlistRow>('waitlist', { where: { tenant_id: tenant.id, session_id: selectedId ?? '__none__', status: 'waiting' } });
-  const { people, byId } = useReceptionPeople();
+  const { people, byId, status: peopleStatus, retry: retryPeople } = useReceptionPeople();
+  const peopleReady = peopleStatus === 'ready';
 
-  const roster = useMemo(() => bookings.filter((b) => b.tenant_id === tenant.id && b.status !== 'cancelled').map((b) => ({ b, p: byId.get(b.user_id) })).filter((x) => x.p ? personMatches(x.p, q) : !q.trim()), [bookings, byId, q]);
+  const roster = useMemo(() => (peopleReady ? bookings : []).filter((b) => b.tenant_id === tenant.id && b.status !== 'cancelled').map((b) => ({ b, p: byId.get(b.user_id) })).filter((x) => x.p ? personMatches(x.p, q) : !q.trim()), [bookings, byId, q, peopleReady]);
   const expected = roster.filter((x) => x.b.status === 'booked');
   const arrived = roster.filter((x) => x.b.status === 'checked_in');
   const missed = roster.filter((x) => x.b.status === 'no_show' || x.b.status === 'late_cancel');
@@ -152,7 +153,7 @@ export function CheckinPage() {
   }, []);
   const onSearchKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Escape') { setQ(''); return; }
-    if (e.key !== 'Enter' || !q.trim()) return;
+    if (e.key !== 'Enter' || !q.trim() || !peopleReady) return;
     if (expected[0]) setStatus(expected[0].b, 'checked_in');
     else if (walkIns.length === 1) walkIn(walkIns[0]);
   };
@@ -187,7 +188,7 @@ export function CheckinPage() {
         <div className="row-between wrap">
           <div>
             <div className="row wrap"><h2 className="checkin-title">{selected.session.title}</h2><span className="muted small">{formatTime(selected.session.starts_at, lang)} · {selected.teacher?.display_name}</span>{full && <Badge tone="danger">{t('core.common.full')}</Badge>}</div>
-            <div className="xs muted">{t('staff.checkin.arrivals', { n: arrived.length, total: bookings.filter((b) => b.status !== 'cancelled' && b.status !== 'late_cancel').length })} · {t('staff.checkin.grace', { n: settings.policies.lateGraceMin })}</div>
+            {peopleReady && <div className="xs muted">{t('staff.checkin.arrivals', { n: arrived.length, total: bookings.filter((b) => b.status !== 'cancelled' && b.status !== 'late_cancel').length })} · {t('staff.checkin.grace', { n: settings.policies.lateGraceMin })}</div>}
           </div>
           <div className="checkin-cap"><CapacityMeter booked={selected.session.booked_count} capacity={selected.session.capacity} /></div>
         </div>
@@ -196,6 +197,8 @@ export function CheckinPage() {
           <kbd className="checkin-kbd" title={t('staff.checkin.kbd')}>/</kbd>
           {q && <Button size="sm" variant="ghost" onClick={() => setQ('')}>{t('core.common.cancel')}</Button>}
         </div>
+        {peopleStatus === 'loading' && <EmptyState compact tone="loading" title={t('staff.search.loading')} />}
+        {peopleStatus === 'error' && <EmptyState compact tone="error" title={t('staff.search.readError')} action={<Button onClick={retryPeople}>{t('core.common.retry')}</Button>} />}
         {!canWrite && <p className="xs muted">{t('staff.checkin.readonly')}</p>}
       </Card>
     ) : null,
@@ -203,7 +206,7 @@ export function CheckinPage() {
       <div className="stack">
         {error && <EmptyState compact tone="error" title={t('core.common.error')} body={error} action={<Button size="sm" variant="secondary" onClick={() => setError(null)}>{t('core.common.retry')}</Button>} />}
         {loading && bookings.length === 0 && <EmptyState compact tone="loading" title={t('core.common.loading')} />}
-        {!loading && roster.length === 0 && waitlist.length === 0 && <EmptyState compact title={q ? t('staff.checkin.noMatch') : t('staff.checkin.emptyRoster')} body={q ? t('staff.checkin.noMatch.body') : undefined} />}
+        {peopleReady && !loading && roster.length === 0 && waitlist.length === 0 && <EmptyState compact title={q ? t('staff.checkin.noMatch') : t('staff.checkin.emptyRoster')} body={q ? t('staff.checkin.noMatch.body') : undefined} />}
         <Group title={t('staff.checkin.expected')} n={expected.length}>
           {expected.map(({ b, p }) => <RosterRow key={b.id} name={p?.name ?? b.user_id} initials={p?.initials} phone={maskPhone(p?.phone)} plan={planLabel(p, b, lang, t)} status="booked" showStatus={false} flag={p?.notes ?? undefined}
             actions={canWrite && <><Button size="sm" variant="tonal" disabled={!!busy} loading={busy === b.id} onClick={() => setStatus(b, 'checked_in')} icon="check">{t('staff.checkin.checkin')}</Button><Button size="sm" variant="outline" disabled={!!busy} onClick={() => setStatus(b, 'no_show')} icon="user-x">{t('staff.checkin.noShow')}</Button></>} />)}
@@ -217,7 +220,7 @@ export function CheckinPage() {
           {missed.map(({ b, p }) => <RosterRow key={b.id} name={p?.name ?? b.user_id} initials={p?.initials} plan={planLabel(p, b, lang, t)} status={b.status as 'no_show' | 'late_cancel'}
             actions={canWrite && b.status === 'no_show' && <Button size="sm" variant="tonal" disabled={!!busy} loading={busy === b.id} onClick={() => setStatus(b, 'checked_in')} icon="check">{t('staff.checkin.checkin')}</Button>} />)}
         </Group>}
-        {waitlist.length > 0 && <Group title={t('core.common.waitlist')} n={waitlist.length}>
+        {peopleReady && waitlist.length > 0 && <Group title={t('core.common.waitlist')} n={waitlist.length}>
           {waitlist.sort((a, b) => a.position - b.position).map((w) => { const p = byId.get(w.user_id); return <RosterRow key={w.id} name={p?.name ?? w.user_id} initials={p?.initials} phone={maskPhone(p?.phone)} plan={`${packageLabel(w.user_id)}${unavailable(w.user_id) ? ` · ${unavailable(w.user_id)}` : ''}`} status="waiting" showStatus={false} time={`#${w.position}`}
             actions={canBookAny && <Button size="sm" variant="tonal" disabled={!!unavailable(w.user_id) || !!busy} loading={busy === w.id} title={unavailable(w.user_id) ?? undefined} onClick={() => promote(w)} icon="promote">{t('staff.checkin.promote')}</Button>} />; })}
         </Group>}
@@ -238,7 +241,7 @@ export function CheckinPage() {
       <Card title={t('staff.checkin.walkin')} padding="sm">
         <div className="stack-sm" style={{ padding: 'var(--sp-xs)' }}>
           <p className="xs muted">{t('staff.checkin.walkin.body')}</p>
-          {q.trim().length >= 2 && walkIns.length === 0 && <p className="small muted">{t('staff.checkin.walkin.none')}</p>}
+          {peopleReady && q.trim().length >= 2 && walkIns.length === 0 && <p className="small muted">{t('staff.checkin.walkin.none')}</p>}
           {walkIns.map((p) => <div key={p.id} className="stack-sm">
             <RosterRow name={p.name} initials={p.initials} phone={maskPhone(p.phone)} status="booked" showStatus={false} />
             <p className="xs muted">{packageLabel(p.id)}</p>

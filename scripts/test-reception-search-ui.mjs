@@ -3,7 +3,7 @@ import {chromium} from 'playwright-core';
 import {mkdir,writeFile} from 'node:fs/promises';
 const base=process.env.QA_BASE??'http://127.0.0.1:5242',out=process.env.QA_OUTPUT??'docs/screenshots/RC-03-search',results=[],errors=[],roles=[];await mkdir(out,{recursive:true});
 const normalized=['roster_unaccented','walkin_unaccented','roster_phone_punctuation','roster_phone_country','walkin_phone_punctuation'];
-const browser=await chromium.launch({executablePath:'/usr/bin/chromium',args:['--no-sandbox']});
+const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH??'/usr/bin/chromium',args:['--no-sandbox']});
 try{
 for(const lang of ['en','es'])for(const width of [320,390]){
 const ctx=await browser.newContext({viewport:{width,height:900},reducedMotion:'reduce'});
