@@ -25,6 +25,7 @@ import { parseEmailBody, type EmailRow, type ParsedBody } from './emailTest';
 import { useEmailRows, useEmailTest } from './useEmailTest';
 import { useEmailEdit } from './useEmailEdit';
 import type { EmailPatch, EmailVersionAudit } from './emailEdit';
+import { LaunchEmailPreviews } from '../../components/organism/LaunchEmailPreviews/LaunchEmailPreviews';
 import './admin.css';
 import './emailTest.css';
 
@@ -90,6 +91,7 @@ export function EmailsPage() {
         <div><h1>{t('admin.emails.title')}</h1><p className="muted small">{t('admin.emails.subtitle')}</p></div>
         {canWrite && missing.length > 0 && <Button size="sm" variant="secondary" disabled={!readsReady} onClick={createMissing}>{t('admin.emails.createMissing', { n: missing.length })}</Button>}
       </div>
+      <LaunchEmailPreviews />
       <Notice>{t('admin.emails.local.notice')}</Notice>
       {readError&&<Notice tone="danger">{t('admin.emails.local.readError')} <Button variant="ghost" onClick={()=>reads.forEach(r=>r.retry())}>{t('admin.emails.local.retry')}</Button></Notice>}
       {!readError&&!readsReady&&<Notice>{t('admin.emails.local.loading')}</Notice>}

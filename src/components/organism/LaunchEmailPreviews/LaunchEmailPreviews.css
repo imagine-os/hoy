@@ -1,0 +1,7 @@
+.launch-email-previews { min-width: 0; }
+.launch-email-controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); gap: var(--gap-control); }
+.launch-email-previews .emailpreview-paper { overflow-wrap: anywhere; }
+/* The email paper stays cream in both themes; retain ink for themed heading/muted utilities. */
+.launch-email-previews .emailpreview-paper .emailpreview-subject,
+.launch-email-previews .emailpreview-paper .emailpreview-p,
+.launch-email-previews .emailpreview-paper .muted { color: var(--brand-ink); }

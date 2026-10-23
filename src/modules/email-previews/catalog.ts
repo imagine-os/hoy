@@ -1,0 +1,34 @@
+/** NT-02's exact ten requirements, in source order. These are preview identifiers, NOT emitter names.
+ * Source: docs/frontend-completion/features.json, NT-02. No live templates are read or edited.
+ */
+type Copy = { es: string; en: string };
+export type PreviewLocale = 'es' | 'en';
+export interface LaunchEmailEvent { id: string; name: Copy; when: Copy; body: Copy; gap: Copy; catalogKey: string | null }
+const event = (id: string, name: Copy, when: Copy, body: Copy, gap: Copy, catalogKey: string | null): LaunchEmailEvent => ({ id, name, when, body, gap, catalogKey });
+export const LAUNCH_EMAIL_EVENTS: readonly LaunchEmailEvent[] = [
+  event('welcome', {es:'Bienvenida',en:'Welcome'}, {es:'Al crear una cuenta.',en:'When an account is created.'}, {es:'Tu cuenta ficticia está lista. Puedes explorar las clases.',en:'Your fictional account is ready. You can explore the classes.'}, {es:'La identidad real y la entrega siguen desconectadas.',en:'Real identity and delivery remain disconnected.'}, 'welcome'),
+  event('sign-in-code', {es:'Código de acceso',en:'Sign-in code'}, {es:'Al solicitar un código para iniciar sesión.',en:'When a sign-in code is requested.'}, {es:'Código de muestra: DEMO-000. No permite iniciar sesión.',en:'Sample code: DEMO-000. It cannot sign you in.'}, {es:'Código, vigencia y bloqueo requieren el contrato de acceso; no es recuperación de contraseña.',en:'Code, expiry and lockout require the sign-in contract; this is not password recovery.'}, null),
+  event('booking-pending-payment', {es:'Reserva pendiente de pago',en:'Booking pending payment'}, {es:'Cuando una reserva queda pendiente de pago.',en:'When a booking awaits payment.'}, {es:'Tu reserva ficticia para Fuego está pendiente de pago. Todavía no está confirmada.',en:'Your fictional Fuego booking awaits payment. It is not confirmed yet.'}, {es:'PC-01/PC-02: plazo y condición de retención pendientes; no se inicia un temporizador.',en:'PC-01/PC-02: hold timing and condition remain unresolved; no timer starts.'}, null),
+  event('payment-confirmed', {es:'Pago confirmado',en:'Payment confirmed'}, {es:'Cuando se confirma un pago.',en:'When a payment is confirmed.'}, {es:'El pago ficticio SIM-PAY-01 aparece confirmado en este ejemplo.',en:'Fictional payment SIM-PAY-01 appears confirmed in this example.'}, {es:'La confirmación real, la activación de clases y el comprobante requieren integración.',en:'Real confirmation, class activation and receipt require integration.'}, null),
+  event('payment-rejected', {es:'Pago rechazado',en:'Payment rejected'}, {es:'Cuando se rechaza un pago.',en:'When a payment is rejected.'}, {es:'El pago ficticio SIM-PAY-01 fue rechazado. Revisa el estado antes de intentar de nuevo.',en:'Fictional payment SIM-PAY-01 was rejected. Review its status before trying again.'}, {es:'El rechazo no demuestra liberación de reserva ni define reintentos.',en:'Rejection does not establish booking release or define retries.'}, 'payment_failed'),
+  event('booking-released', {es:'Reserva liberada',en:'Booking released'}, {es:'Cuando se libera una reserva pendiente.',en:'When a pending booking is released.'}, {es:'La reserva ficticia SIM-BOOK-01 ya no retiene un cupo en este ejemplo.',en:'Fictional booking SIM-BOOK-01 no longer holds a spot in this example.'}, {es:'PC-01/PC-02: causa y plazo pendientes; no se libera ningún cupo real.',en:'PC-01/PC-02: cause and timing remain unresolved; no real spot is released.'}, null),
+  event('rescheduled', {es:'Reserva reprogramada',en:'Rescheduled'}, {es:'Cuando se reprograma una reserva.',en:'When a booking is rescheduled.'}, {es:'La reserva ficticia de Fuego cambió del 23 al 24 de octubre, a las 17:30.',en:'The fictional Fuego booking moved from October 23 to October 24, at 17:30.'}, {es:'La política aprobada y el cambio atómico de capacidad siguen pendientes de integración.',en:'Approved policy and atomic capacity changes still require integration.'}, 'booking_changed'),
+  event('class-cancelled', {es:'Clase cancelada',en:'Class cancelled'}, {es:'Cuando el estudio cancela una clase con reservas.',en:'When the studio cancels a class with bookings.'}, {es:'La clase ficticia de Fuego del 24 de octubre se canceló en este ejemplo.',en:'The fictional October 24 Fuego class was cancelled in this example.'}, {es:'No se acredita ninguna clase aquí; destinatarios, preferencias y devolución requieren verificación.',en:'No class is credited here; recipients, preferences and restoration require verification.'}, 'class_cancelled'),
+  event('voucher-received', {es:'Bono recibido',en:'Voucher received'}, {es:'Cuando el bono queda listo para su destinatario tras confirmar el pago.',en:'When the voucher is ready for its recipient after payment confirmation.'}, {es:'Recibiste un bono ficticio. Enlace de muestra: https://example.invalid/voucher/SIM-01. No es canjeable.',en:'You received a fictional voucher. Sample link: https://example.invalid/voucher/SIM-01. It cannot be redeemed.'}, {es:'El catálogo antiguo propone entrega programada; confirmar el contrato de BO-02. No se emite token.',en:'The older catalog proposes scheduled delivery; confirm the BO-02 contract. No token is issued.'}, 'gift_card_delivered'),
+  event('receipt', {es:'Recibo de pago',en:'Receipt'}, {es:'Por cada pago confirmado, además de su confirmación.',en:'For each confirmed payment, alongside its confirmation.'}, {es:'Recibo ficticio SIM-REC-01 · Pago SIM-PAY-01 · Importe de muestra: COP 35.000. No se emite factura.',en:'Fictional receipt SIM-REC-01 · Payment SIM-PAY-01 · Sample amount: COP 35,000. No invoice is issued.'}, {es:'PG-08 exige recibo sin factura. El catálogo antiguo contiene texto DIAN incompatible; no se utiliza aquí.',en:'PG-08 requires a receipt without an invoice. The older catalog contains conflicting DIAN copy; it is not used here.'}, 'receipt'),
+];
+export type PreviewResult = { status: 'ready'; subject: string; body: string } | { status: 'empty' | 'error' };
+export function renderLaunchPreview(event: LaunchEmailEvent | undefined, locale: PreviewLocale, scenario: 'ready' | 'empty' | 'error' = 'ready'): PreviewResult {
+  if (scenario === 'error') return {status:'error'};
+  if (!event || scenario === 'empty') return {status:'empty'};
+  if (!event.name?.[locale]?.trim() || !event.body?.[locale]?.trim()) return {status:'error'};
+  return {status:'ready',subject:`[SIM] ${event.name[locale]}`,body:event.body[locale]};
+}
+export function filterLaunchEvents(events: readonly LaunchEmailEvent[], query: string, locale: PreviewLocale) {
+  const q = query.trim().toLocaleLowerCase(locale);
+  return events.filter(e => `${e.id} ${e.name[locale]}`.toLocaleLowerCase(locale).includes(q));
+}
+export function adjacentLaunchEvent(events: readonly LaunchEmailEvent[], id: string, step: -1 | 1) {
+  const index = events.findIndex(e => e.id === id);
+  return events[Math.max(0, Math.min(events.length - 1, index + step))]?.id ?? null;
+}

@@ -1,0 +1,13 @@
+{
+  "base": "http://127.0.0.1:5233",
+  "checks": [
+    "en/light: ten events x two email locales x390/768/1280/3840; navigation bounds; empty search/sample; error retry; collapse/reopen; repeated click; reload; database unchanged; no viewport overflow; keyboard Home/End selection; text contrast >=4.5:1",
+    "en/dark: ten events x two email locales x390/768/1280/3840; navigation bounds; empty search/sample; error retry; collapse/reopen; repeated click; reload; database unchanged; no viewport overflow; keyboard Home/End selection; text contrast >=4.5:1",
+    "es/light: ten events x two email locales x390/768/1280/3840; navigation bounds; empty search/sample; error retry; collapse/reopen; repeated click; reload; database unchanged; no viewport overflow; keyboard Home/End selection; text contrast >=4.5:1",
+    "es/dark: ten events x two email locales x390/768/1280/3840; navigation bounds; empty search/sample; error retry; collapse/reopen; repeated click; reload; database unchanged; no viewport overflow; keyboard Home/End selection; text contrast >=4.5:1"
+  ],
+  "errors": [],
+  "limits": [
+    "Local fictional previews only. No real trigger, authentication, entitlement, payment, email or delivery verified."
+  ]
+}

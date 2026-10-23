@@ -1,0 +1,23 @@
+import type {StringTable} from '../../i18n/types';
+export const strings: StringTable = {
+ 'launchEmails.title':{es:'Simular los 10 emails de lanzamiento',en:'Simulate the 10 launch emails'},
+ 'launchEmails.notice':{es:'Simulación con datos ficticios. No se envía ni registra ningún email. No cambia reservas, pagos, preferencias ni plantillas.',en:'Simulation with fictional data. No email is sent or recorded. Bookings, payments, preferences and templates are unchanged.'},
+ 'launchEmails.search':{es:'Buscar evento',en:'Find event'},
+ 'launchEmails.event':{es:'Evento de lanzamiento',en:'Launch event'},
+ 'launchEmails.language':{es:'Idioma del email',en:'Email language'},
+ 'launchEmails.navigation':{es:'Navegar muestras',en:'Browse samples'},
+ 'launchEmails.previous':{es:'Anterior',en:'Previous'},
+ 'launchEmails.next':{es:'Siguiente',en:'Next'},
+ 'launchEmails.scenario':{es:'Escenario de muestra',en:'Sample scenario'},
+ 'launchEmails.ready':{es:'Vista previa disponible',en:'Preview available'},
+ 'launchEmails.empty':{es:'Sin muestra',en:'No sample'},
+ 'launchEmails.error':{es:'Vista previa no disponible',en:'Preview unavailable'},
+ 'launchEmails.emptyBody':{es:'No hay una muestra para mostrar. Cambia el evento o restablece la simulación.',en:'There is no sample to display. Change the event or reset the simulation.'},
+ 'launchEmails.errorBody':{es:'No se pudo mostrar esta muestra. Puedes reintentar sin enviar nada.',en:'This sample could not be displayed. You can retry without sending anything.'},
+ 'launchEmails.noMatch':{es:'Ningún evento coincide con la búsqueda.',en:'No events match your search.'},
+ 'launchEmails.reset':{es:'Restablecer simulación',en:'Reset simulation'},
+ 'launchEmails.retry':{es:'Reintentar vista previa',en:'Retry preview'},
+ 'launchEmails.trigger':{es:'Cuándo corresponde',en:'When it applies'},
+ 'launchEmails.gap':{es:'Pendiente de integración o decisión',en:'Pending integration or decision'},
+ 'launchEmails.footer':{es:'SIMULACIÓN · Destinatario ficticio: demo@example.invalid · No entregado',en:'SIMULATION · Fictional recipient: demo@example.invalid · Not delivered'},
+};
