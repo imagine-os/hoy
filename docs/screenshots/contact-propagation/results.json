@@ -1,0 +1,247 @@
+{
+  "status": "passed",
+  "testFailure": null,
+  "sourceRows": [
+    {
+      "id": "SW-05",
+      "criterion": "Website, app, emails and manual use the same brand name and contact email.",
+      "phase": "MVP Oct 30",
+      "decision": "PC-08"
+    },
+    {
+      "id": "AD-05",
+      "criterion": "Contact, front-desk hours, holidays, Bancolombia account, QR image and Bre-B key are edited in Settings and show on the website, app and emails.",
+      "phase": "MVP Oct 30",
+      "decision": "Q-15"
+    }
+  ],
+  "artifacts": [
+    {
+      "label": "main-455843fd",
+      "sourceCommit": "455843fda97c7a0c9979b3331d11690d9653f5e7",
+      "base": "http://127.0.0.1:5180"
+    },
+    {
+      "label": "saved-website-candidate",
+      "sourceCommit": "a4303bd9ef703c5751cc7257a06bd7d258bbfec7",
+      "base": "http://127.0.0.1:5182"
+    }
+  ],
+  "checks": [
+    {
+      "target": "main-455843fd",
+      "lang": "es",
+      "state": "changed-pending",
+      "nativeCustomerSnapshotReload": true,
+      "liveMountedConsumers": [
+        "ContactPage",
+        "SiteShell",
+        "MorePage (same-role live observers)",
+        "EmailsPage preview",
+        "LiveBlock contact"
+      ],
+      "reloadReadback": true,
+      "confirmationLabels": true
+    },
+    {
+      "target": "main-455843fd",
+      "lang": "es",
+      "state": "changed-confirmed",
+      "nativeCustomerSnapshotReload": true,
+      "liveMountedConsumers": [
+        "ContactPage",
+        "SiteShell",
+        "MorePage (same-role live observers)",
+        "EmailsPage preview",
+        "LiveBlock contact"
+      ],
+      "reloadReadback": true,
+      "confirmationLabels": true
+    },
+    {
+      "target": "main-455843fd",
+      "lang": "es",
+      "state": "blank-fallback-pending",
+      "nativeCustomerSnapshotReload": true,
+      "liveMountedConsumers": [
+        "ContactPage",
+        "SiteShell",
+        "MorePage (same-role live observers)",
+        "EmailsPage preview",
+        "LiveBlock contact"
+      ],
+      "reloadReadback": true,
+      "confirmationLabels": true
+    },
+    {
+      "target": "main-455843fd",
+      "lang": "es",
+      "state": "legacy-confirmed-and-missing-profile",
+      "passed": true,
+      "noMessageOrEmailConfigurationEffects": true
+    },
+    {
+      "target": "main-455843fd",
+      "lang": "en",
+      "state": "changed-pending",
+      "nativeCustomerSnapshotReload": true,
+      "liveMountedConsumers": [
+        "ContactPage",
+        "SiteShell",
+        "MorePage (same-role live observers)",
+        "EmailsPage preview",
+        "LiveBlock contact"
+      ],
+      "reloadReadback": true,
+      "confirmationLabels": true
+    },
+    {
+      "target": "main-455843fd",
+      "lang": "en",
+      "state": "changed-confirmed",
+      "nativeCustomerSnapshotReload": true,
+      "liveMountedConsumers": [
+        "ContactPage",
+        "SiteShell",
+        "MorePage (same-role live observers)",
+        "EmailsPage preview",
+        "LiveBlock contact"
+      ],
+      "reloadReadback": true,
+      "confirmationLabels": true
+    },
+    {
+      "target": "main-455843fd",
+      "lang": "en",
+      "state": "blank-fallback-pending",
+      "nativeCustomerSnapshotReload": true,
+      "liveMountedConsumers": [
+        "ContactPage",
+        "SiteShell",
+        "MorePage (same-role live observers)",
+        "EmailsPage preview",
+        "LiveBlock contact"
+      ],
+      "reloadReadback": true,
+      "confirmationLabels": true
+    },
+    {
+      "target": "main-455843fd",
+      "lang": "en",
+      "state": "legacy-confirmed-and-missing-profile",
+      "passed": true,
+      "noMessageOrEmailConfigurationEffects": true
+    },
+    {
+      "target": "saved-website-candidate",
+      "lang": "es",
+      "state": "changed-pending",
+      "nativeCustomerSnapshotReload": true,
+      "liveMountedConsumers": [
+        "ContactPage",
+        "SiteShell",
+        "MorePage (same-role live observers)",
+        "EmailsPage preview",
+        "LiveBlock contact"
+      ],
+      "reloadReadback": true,
+      "confirmationLabels": true
+    },
+    {
+      "target": "saved-website-candidate",
+      "lang": "es",
+      "state": "changed-confirmed",
+      "nativeCustomerSnapshotReload": true,
+      "liveMountedConsumers": [
+        "ContactPage",
+        "SiteShell",
+        "MorePage (same-role live observers)",
+        "EmailsPage preview",
+        "LiveBlock contact"
+      ],
+      "reloadReadback": true,
+      "confirmationLabels": true
+    },
+    {
+      "target": "saved-website-candidate",
+      "lang": "es",
+      "state": "blank-fallback-pending",
+      "nativeCustomerSnapshotReload": true,
+      "liveMountedConsumers": [
+        "ContactPage",
+        "SiteShell",
+        "MorePage (same-role live observers)",
+        "EmailsPage preview",
+        "LiveBlock contact"
+      ],
+      "reloadReadback": true,
+      "confirmationLabels": true
+    },
+    {
+      "target": "saved-website-candidate",
+      "lang": "es",
+      "state": "legacy-confirmed-and-missing-profile",
+      "passed": true,
+      "noMessageOrEmailConfigurationEffects": true
+    },
+    {
+      "target": "saved-website-candidate",
+      "lang": "en",
+      "state": "changed-pending",
+      "nativeCustomerSnapshotReload": true,
+      "liveMountedConsumers": [
+        "ContactPage",
+        "SiteShell",
+        "MorePage (same-role live observers)",
+        "EmailsPage preview",
+        "LiveBlock contact"
+      ],
+      "reloadReadback": true,
+      "confirmationLabels": true
+    },
+    {
+      "target": "saved-website-candidate",
+      "lang": "en",
+      "state": "changed-confirmed",
+      "nativeCustomerSnapshotReload": true,
+      "liveMountedConsumers": [
+        "ContactPage",
+        "SiteShell",
+        "MorePage (same-role live observers)",
+        "EmailsPage preview",
+        "LiveBlock contact"
+      ],
+      "reloadReadback": true,
+      "confirmationLabels": true
+    },
+    {
+      "target": "saved-website-candidate",
+      "lang": "en",
+      "state": "blank-fallback-pending",
+      "nativeCustomerSnapshotReload": true,
+      "liveMountedConsumers": [
+        "ContactPage",
+        "SiteShell",
+        "MorePage (same-role live observers)",
+        "EmailsPage preview",
+        "LiveBlock contact"
+      ],
+      "reloadReadback": true,
+      "confirmationLabels": true
+    },
+    {
+      "target": "saved-website-candidate",
+      "lang": "en",
+      "state": "legacy-confirmed-and-missing-profile",
+      "passed": true,
+      "noMessageOrEmailConfigurationEffects": true
+    }
+  ],
+  "errors": [],
+  "limits": [
+    "Only fictional contact-email changes and existing confirmation/fallback flags. No final brand/email decision.",
+    "Preview envelope only; no real email dispatch or configuration. Sender/reply-to settings, templates and message_log must remain unchanged.",
+    "Same-origin local MockProvider storage events and reload only; no backend/cross-device persistence claim.",
+    "No publication, WhatsApp, pricing, Q14/Q15 policy or Sheet changes."
+  ]
+}

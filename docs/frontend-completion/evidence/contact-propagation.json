@@ -1,0 +1,76 @@
+{
+  "baseSource": "455843fda97c7a0c9979b3331d11690d9653f5e7",
+  "comparedSource": "a4303bd9ef703c5751cc7257a06bd7d258bbfec7",
+  "branch": "codex/contact-propagation-20261023",
+  "runtimeChanges": [],
+  "runtimeFingerprint": "41d17da270041c9b0266d342ddcc0a6bf0f76dd55c933afa2984c021f8255f60",
+  "fullBaselineBuild": "passed at main455843fd; typecheck/spacing/manual gates passed",
+  "testScript": "scripts/test-contact-propagation-ui.mjs",
+  "testResult": {
+    "status": "passed",
+    "caseGroups": 16,
+    "pageErrors": [],
+    "captures": 60,
+    "languages": [
+      "es",
+      "en"
+    ],
+    "viewports": [
+      390,
+      1280
+    ]
+  },
+  "verified": [
+    "actual fictional Settings profile Save",
+    "already-mounted ContactPage/SiteShell/MorePage/EmailsPage/LiveBlock before reload",
+    "consumer reload and Settings input/confirmation readback",
+    "isolated native customer persisted-snapshot/reload",
+    "pending and confirmed labels, blank fallback, legacy all-confirmed override, missing profile defaults",
+    "unchanged email_templates/message_log/communication sender and reply-to settings"
+  ],
+  "readerComparison": [
+    {
+      "path": "src/modules/admin/settings.ts",
+      "mainBlob": "cb42a2a7d5252efab2c696d79b11526c69237920",
+      "candidateBlob": "cb42a2a7d5252efab2c696d79b11526c69237920",
+      "identical": true
+    },
+    {
+      "path": "src/modules/admin/SettingsPage.tsx",
+      "mainBlob": "492451bbce411cd125ae2e4efad3694adef9061c",
+      "candidateBlob": "492451bbce411cd125ae2e4efad3694adef9061c",
+      "identical": true
+    },
+    {
+      "path": "src/modules/admin/EmailsPage.tsx",
+      "mainBlob": "b6584852c049b12791bf472aa78ca978587f0a78",
+      "candidateBlob": "b6584852c049b12791bf472aa78ca978587f0a78",
+      "identical": true
+    },
+    {
+      "path": "src/components/organism/LiveBlock/LiveBlock.tsx",
+      "mainBlob": "24cc2b60167bf11848b27c236e236322ebe7530a",
+      "candidateBlob": "24cc2b60167bf11848b27c236e236322ebe7530a",
+      "identical": true
+    }
+  ],
+  "harnessCorrections": [
+    "Click visible Toggle label instead of hidden input",
+    "Use relative card descendant locator and literal existing confirmation wording",
+    "Normalize incidental whitespace only in the preview locale marker",
+    "Avoid ambiguous mixed-role shared-localStorage reloads; isolate native customer snapshots"
+  ],
+  "productFailures": [],
+  "unverified": [
+    "Final identity/email decision PC-08",
+    "Other AD-05 hours/holidays/bank/QR/Bre-B criteria and Q-15",
+    "Real email configuration/dispatch, backend authentication/persistence and cross-device behavior",
+    "Full source-row and owner acceptance"
+  ],
+  "boundaries": [
+    "No AD-01 publication files or runtime changes",
+    "No WhatsApp/pricing regression repeated",
+    "No auth/provider/schema/security/domain configuration changes",
+    "No GitHub API PR attempt, Sheet write, merge or deployment"
+  ]
+}
