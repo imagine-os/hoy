@@ -1,3 +1,5 @@
+PR88 verification repair: preserve signup drafts across public-session serialization rewrites in legal popups. Retain genuine cross-tab logout and duplicate-charge guards; repair valid-room, cold-persona, independent-purchase and artifact-name fixtures without relaxing assertions. See frontend-completion/public-session-popup-noop.md.
+
 CU-04 remote demo signout: close mounted private tabs and invalidate pending signup/zero-charge checkout only on current explicit remote logout. Keep persona switches independent and retained history intact; real session revocation/email delivery remain separate. See frontend-completion/remote-demo-signout.md.
 
 RS-02 package checkout: verify saved booking/debit evidence after uncertain acknowledgement, with read-only recovery and context-bound confirmation. Existing-package frontend verification is separate from backend and owner acceptance. See frontend-completion/rs02-package-booking-recovery.md.

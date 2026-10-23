@@ -47,6 +47,16 @@ function read(): SessionState {
   return DEFAULT;
 }
 
+/** Public serialization rewrites are not a new logout (e.g. a legal popup mounting). */
+function isPublicSession(raw: string | null): boolean {
+  if (raw === null) return false;
+  try {
+    const value: unknown = JSON.parse(raw);
+    return !!value && typeof value === 'object' && 'userId' in value && value.userId === 'usr_public'
+      && 'devMode' in value && value.devMode === false && 'viewAs' in value && value.viewAs === null;
+  } catch { return false; }
+}
+
 interface UserRoleRow extends BaseRow { user_id: string; role: string }
 
 /** Must sit inside DataProviderRoot: non-demo users are resolved from users + profiles + user_roles. */
@@ -58,12 +68,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const signOut = (event: StorageEvent) => {
       if (event.key !== KEY || event.storageArea !== localStorage) return;
-      if (event.newValue !== null) {
-        try {
-          const next: unknown = JSON.parse(event.newValue);
-          if (!next || typeof next !== 'object' || !('userId' in next) || next.userId !== 'usr_public' || !('devMode' in next) || next.devMode !== false || !('viewAs' in next) || next.viewAs !== null) return;
-        } catch { return; }
-      }
+      if (event.newValue !== null && (!isPublicSession(event.newValue) || isPublicSession(event.oldValue))) return;
       // A queued old logout must not erase a newer sign-in written before this event arrived.
       try { if (localStorage.getItem(KEY) !== event.newValue) return; } catch { return; }
       // Removal must remain public on reload. Existing public payloads need no rewrite or later re-emission.

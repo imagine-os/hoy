@@ -1,0 +1,3 @@
+Diagnose the exact-head signup consent quota-stage failure without weakening assertions. Independently reproduce the normal signout → signup → legal popup flow without per-popup fixture session injection. Repair only the listener's semantic public-to-public no-op distinction, preserve genuine logout/removal/stale-event/context protections and add an actual bilingual responsive popup regression. Keep original quota/no-write/consent tests intact. No real auth services or publication.
+
+Response: normal-use reproduction confirmed a harmless JSON key-order rewrite was classified as logout. A strict public-session predicate now distinguishes that no-op from a real transition; root owns the single combined build and release verification.

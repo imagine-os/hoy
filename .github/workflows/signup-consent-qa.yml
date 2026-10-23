@@ -3,6 +3,8 @@ on:
   pull_request:
     paths:
       - 'src/modules/customer/auth/**'
+      - 'src/auth/SessionProvider.tsx'
+      - 'scripts/test-signup-legal-popup-session-ui.mjs'
       - 'src/modules/customer/profileSave.ts'
       - 'src/auth/**'
       - 'src/data/DataContext.tsx'
@@ -53,6 +55,7 @@ jobs:
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:5333/ >/dev/null && break; sleep 1; done
           node scripts/test-signup-consent-recovery-ui.mjs
           node scripts/test-signup-consent-ui.mjs
+          QA_OUTPUT=qa/signup-consent/normal-legal-popup node scripts/test-signup-legal-popup-session-ui.mjs
           QA_OUTPUT=qa/signup-consent/validation node scripts/test-signup-validation-ui.mjs
           node scripts/test-signup-consent-library.mjs
           QA_OUTPUT=qa/signup-consent/customer-return node scripts/test-customer-return-ui.mjs

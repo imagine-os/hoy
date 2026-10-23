@@ -1,7 +1,7 @@
 import {expectPrivateDenial} from './qa-private-denial.mjs';
 // OT-02 future prototype: fictional records only; no real studio operations.
 import assert from 'node:assert/strict';import{mkdir,writeFile}from'node:fs/promises';import{chromium}from'playwright-core';
-const base=process.env.QA_BASE??'http://127.0.0.1:5191',output='docs/screenshots/S-10';await mkdir(output,{recursive:true});
+const base=process.env.QA_BASE??'http://127.0.0.1:5191',output=process.env.QA_OUTPUT??'docs/screenshots/S-10';await mkdir(output,{recursive:true});
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH??'/usr/bin/chromium',args:['--no-sandbox']});const errors=[],checks=[],dispatch=[];
 const labels={en:{checklist:'Checklists',incident:'Incidents',supply:'Supplies',equipment:'Equipment'},es:{checklist:'Checklists',incident:'Incidentes',supply:'Insumos',equipment:'Equipos'}};
 try{for(const lang of ['en','es']){
@@ -32,7 +32,7 @@ try{for(const lang of ['en','es']){
   for(const kind of ['checklist','incident','supply','equipment']){await tab(kind).click();await edit().waitFor();for(const width of [390,1280]){await page.setViewportSize({width,height:1000});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));await shot({path:`${output}/${lang}-${width}-${theme}-${kind}.jpg`,quality:68,fullPage:true});if(theme==='light'&&kind==='checklist')await shot({path:`${output}/${lang}-${width}.jpg`,quality:72,fullPage:true});}}
  }
  for(const [role,userId]of[['admin','usr_admin'],['super_admin','usr_super']]){await page.evaluate(userId=>localStorage.setItem('hoyos.session',JSON.stringify({userId,viewAs:null,devMode:false})),userId);await page.reload();await tab('checklist').waitFor();for(const width of [390,1280]){await page.setViewportSize({width,height:1000});await shot({path:`${output}/${lang}-${width}-maintenance-${role}.jpg`,quality:68,fullPage:true});}}
- for(const userId of ['usr_desk','usr_fin','usr_coord','usr_cust','usr_public','usr_teach','usr_mkt','usr_dev']){await page.evaluate(userId=>localStorage.setItem('hoyos.session',JSON.stringify({userId,viewAs:null,devMode:false})),userId);await page.goto(`${base}/#/staff/maintenance`);await page.reload();await expectPrivateDenial(page,userId);assert.equal(await tab('checklist').count(),0);}
+ for(const userId of ['usr_desk','usr_fin','usr_coord','usr_cust','usr_public','usr_teach','usr_mkt','usr_dev']){await page.evaluate(userId=>localStorage.setItem('hoyos.session',JSON.stringify({userId,viewAs:null,devMode:false})),userId);await page.goto(`${base}/?qa_persona=${userId}#/staff/maintenance`);await expectPrivateDenial(page,userId);assert.equal(await tab('checklist').count(),0);}
  checks.push(`${lang}:maintenance/admin/super_admin route;8 denied roles;390/1280 light/dark four-kind captures;checklist cancel/save;incident and quantity validation;storage rollback/retry;no operations or dispatch`);await ctx.close();
 }
 assert.deepEqual(errors,[]);assert.deepEqual(dispatch,[]);await writeFile(`${output}/maintenance-results.json`,JSON.stringify({feature:'OT-02',phase:'After Nov 30',base,checks,errors,dispatch,limits:['Fictional browser-only prototype; no operational readiness, signoff, alerts, procurement, attachments or device control.','Frontend role routes do not prove server authorization.','Backend and real checklist ownership/thresholds remain pending.']},null,2));console.log(checks.join('\n'));
