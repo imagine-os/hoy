@@ -10,6 +10,7 @@ on:
       - 'src/modules/website/pages/SchedulePage.tsx'
       - 'src/auth/**'
       - 'scripts/*admission*'
+      - 'scripts/*physical-admission*'
       - 'scripts/*package-booking*'
       - 'scripts/test-package-voucher-duplicate-ui.mjs'
       - 'scripts/test-schedule-criterion-ui.mjs'
@@ -24,7 +25,7 @@ permissions:
 jobs:
   admission:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
         with:
@@ -38,6 +39,7 @@ jobs:
       - name: Domain and preserved transaction contracts
         run: |
           node scripts/test-session-admission.mjs
+          node scripts/test-physical-admission-capacity.mjs
           node scripts/test-package-booking-confirmation.mjs
           node scripts/test-daily-admission.mjs
           node scripts/test-desk-transactions.mjs
@@ -64,6 +66,8 @@ jobs:
           done
           QA_BASE=http://127.0.0.1:5480 QA_OUTPUT=/tmp/admission-production node scripts/test-session-admission-ui.mjs
           QA_BASE=http://127.0.0.1:5481 QA_OUTPUT=/tmp/admission-context node scripts/test-session-admission-context.mjs
+          QA_BASE=http://127.0.0.1:5480 QA_OUTPUT=/tmp/booking-physical-capacity node scripts/test-physical-admission-capacity-ui.mjs
+          QA_BASE=http://127.0.0.1:5480 QA_OUTPUT=/tmp/booking-physical-desk node scripts/test-physical-admission-desk-ui.mjs
           QA_BASE=http://127.0.0.1:5480 QA_OUTPUT=/tmp/booking-schedule-criterion node scripts/test-schedule-criterion-ui.mjs
           QA_BASE=http://127.0.0.1:5480 QA_OUTPUT=/tmp/booking-package-flow node scripts/test-package-booking-flow-ui.mjs
           QA_BASE=http://127.0.0.1:5481 QA_OUTPUT=/tmp/booking-package-recovery node scripts/test-package-booking-recovery-ui.mjs

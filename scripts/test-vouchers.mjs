@@ -9,7 +9,7 @@ try {
  const file=join(scratch,'vouchers.mjs');await build({entryPoints:['src/data/vouchers.ts'],bundle:true,platform:'node',format:'esm',outfile:file,logLevel:'silent'});
  const {executeVoucherCommand: run}=await import(pathToFileURL(file));
  const base={tenant_id:'tenant',created_at:'2026-01-01',updated_at:'2026-01-01'};
- let db={modalities:[{...base,id:'qa_voucher_mod',active:true}],vouchers:[],voucher_bookings:[],voucher_events:[],users:[{...base,id:'admin'},{...base,id:'member'}],bookings:[],class_sessions:[{...base,id:'s1',modality_id:'qa_voucher_mod',starts_at:'2027-01-01',ends_at:'2027-01-01T01:00:00Z',status:'scheduled',capacity:4,booked_count:0},{...base,id:'s2',modality_id:'qa_voucher_mod',starts_at:'2027-01-02',ends_at:'2027-01-02T01:00:00Z',status:'scheduled',capacity:1,booked_count:0}]};
+ let db={rooms:[{...base,id:'qa_voucher_room',name:'FICTIONAL room',capacity:20,heated:false}],modalities:[{...base,id:'qa_voucher_mod',active:true}],vouchers:[],voucher_bookings:[],voucher_events:[],users:[{...base,id:'admin'},{...base,id:'member'}],bookings:[],class_sessions:[{...base,id:'s1',modality_id:'qa_voucher_mod',room_id:'qa_voucher_room',starts_at:'2027-01-01',ends_at:'2027-01-01T01:00:00Z',status:'scheduled',capacity:4,booked_count:0},{...base,id:'s2',modality_id:'qa_voucher_mod',room_id:'qa_voucher_room',starts_at:'2027-01-02',ends_at:'2027-01-02T01:00:00Z',status:'scheduled',capacity:1,booked_count:0}]};
  let n=0, requests=0;
  const ctx={tenantId:'tenant',now:'2026-10-14T12:00:00Z',id:()=>`id-${++n}`,usesMats:()=>true,matCapacity:4};
  const exec=(cmd)=>{const out=run(db,{requestId:`req-${++requests}`,actorId:'admin',role:'admin',...cmd},ctx);db=out.db;return out.result};
@@ -64,7 +64,7 @@ try {
  const recordedConsent=db.voucher_events.find(e=>e.kind==='book').payload;assert.equal(recordedConsent.contactConsent,true);assert.equal(recordedConsent.marketingConsent,false);assert.equal(recordedConsent.consentRecordedAt,ctx.now);
  // Names do not identify people. Each scenario starts with ample independent capacity.
  const identityScenario=()=>{
-  let state={modalities:[{...base,id:'qa_voucher_mod',active:true}],vouchers:[],voucher_bookings:[],voucher_events:[],users:[{...base,id:'admin'},{...base,id:'member'},{...base,id:'other-member'}],bookings:[],class_sessions:[{...base,id:'identity-session',modality_id:'qa_voucher_mod',starts_at:'2027-01-01',ends_at:'2027-01-01T01:00:00Z',status:'scheduled',capacity:20,booked_count:0}]};
+  let state={rooms:[{...base,id:'qa_voucher_room',name:'FICTIONAL room',capacity:20,heated:false}],modalities:[{...base,id:'qa_voucher_mod',active:true}],vouchers:[],voucher_bookings:[],voucher_events:[],users:[{...base,id:'admin'},{...base,id:'member'},{...base,id:'other-member'}],bookings:[],class_sessions:[{...base,id:'identity-session',modality_id:'qa_voucher_mod',room_id:'qa_voucher_room',starts_at:'2027-01-01',ends_at:'2027-01-01T01:00:00Z',status:'scheduled',capacity:20,booked_count:0}]};
   const act=cmd=>{const out=run(state,{requestId:`identity-${++requests}`,actorId:'admin',role:'admin',...cmd},{...ctx,usesMats:()=>false});state=out.db;return out.result;};
   const makeVoucher=()=>{const voucher=act({...issue,benefitTotal:20,participantCap:10}).voucher;act({type:'claim',voucherId:voucher.id,userId:'member',actorId:'member',role:'customer'});return voucher.id;};
   const firstVoucher=makeVoucher(), secondVoucher=makeVoucher();

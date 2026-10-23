@@ -5559,6 +5559,7 @@
       },
       "surface": "customer",
       "roles": [
+        "public",
         "super_admin",
         "admin",
         "customer"

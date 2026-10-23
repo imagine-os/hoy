@@ -1,3 +1,4 @@
+import {readPendingDeskIntent} from '../../../data/pendingDeskIntent';
 import { useEffect, useRef, useState } from 'react';
 import { useData } from '../../../data/DataContext';
 import { useSession } from '../../../auth/SessionProvider';
@@ -21,6 +22,7 @@ export function DeskPaymentSettlement({ payment, onSettled }: { payment: Payment
     operation.current++; lock.current = false; setBusy(false); setError(null);
     setAmount(''); setNote(''); setMethod('cash'); setAcknowledged(false);
   }, [data, user.id, role, payment.id]);
+  let hasBookingIntent=false;try{hasBookingIntent=!!readPendingDeskIntent(payment);}catch{/* malformed intent stays unavailable */}
   const eligible = canSettleAtDesk(payment) && data.name === 'mock' && ['super_admin', 'admin', 'front_desk'].includes(role);
   const valid = amount.trim() !== '' && Number.isSafeInteger(Number(amount)) && Number(amount) === payment.amount && note.trim() && acknowledged;
   async function confirm() {
@@ -31,12 +33,12 @@ export function DeskPaymentSettlement({ payment, onSettled }: { payment: Payment
     try {
       const result = await settleAtDesk(data, { paymentId: payment.id, actorId: user.id, role, method, amount: Number(amount), note }, cancelled);
       if (!cancelled()) onSettled(result);
-    } catch (cause) { if (!cancelled()) setError(trialErrorKey(cause) ?? 'transfers.desk.error'); }
+    } catch (cause) { if (!cancelled()) setError(trialErrorKey(cause) ?? (hasBookingIntent&&cause instanceof Error&&['session_unavailable','session_full','mat_taken','mat_invalid','same_day_conflict','booking_exists','package_expired','package_frozen','insufficient_classes'].includes(cause.message)?'transfers.desk.bookingUnavailable':'transfers.desk.error')); }
     finally { if (version === operation.current) { lock.current = false; if (!cancelled()) setBusy(false); } }
   }
   return <section className="stack" aria-label={t('transfers.desk.title')}>
     <h2>{t('transfers.desk.title')}</h2>
-    <Notice tone="warn">{t('transfers.desk.boundary')}</Notice>
+    <Notice tone="warn">{t(hasBookingIntent?'transfers.desk.bookingBoundary':'transfers.desk.boundary')}</Notice>
     {!eligible ? <Notice>{t('transfers.desk.unavailable')}</Notice> : <>
       <p>{t('transfers.desk.due')}: <strong>{formatCOP(payment.amount, lang)}</strong></p>
       <p>{t('transfers.desk.staff')}: <strong>{user.name}</strong></p>

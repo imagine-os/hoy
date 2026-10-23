@@ -1,5 +1,9 @@
+import {readPendingDeskIntent} from './pendingDeskIntent';
+import type {PaymentRow} from './schema';
+import {executeGiftPurchaseCommand,type GiftPurchaseCommand,type GiftPurchaseResult} from '../modules/voucher-gifts/purchaseCommand';
+import {checkSaleQuote} from './operationalQuotes';
 import { dailyAdmissionConflict, identifiedSessionAdmission } from './dailyAdmission';
-import { sessionAdmissionAvailable } from './sessionAdmission';
+import { effectiveAdmissionCapacity, sessionAdmissionAvailable } from './sessionAdmission';
 import { ensureFullDemoSession } from './seed/ensureFullDemoSession';
 import { appendClassPayRule, defaultClassPayRule, type AppendClassPayRuleCommand, type ClassPayRuleRow } from './classPayRules';
 import { dateKey, addDays, atStudioTime, studioParts, STUDIO_TIMEZONE } from '../i18n/format';
@@ -68,9 +72,13 @@ function isCurrentSnapshot(stored: Stored, now = new Date()): boolean {
  */
 function upgradeAdditiveMockTables(db: Db) {
   if (!db || typeof db !== 'object') return;
-  for (const table of ['class_pay_rules', 'transfer_receipts', 'maintenance_records', 'email_change_previews', 'teacher_profile_proposals']) {
+  for (const table of ['class_pay_rules', 'transfer_receipts', 'maintenance_records', 'email_change_previews', 'teacher_profile_proposals', 'gift_purchase_intents', 'gift_purchase_requests']) {
     if (!Object.prototype.hasOwnProperty.call(db, table)) db[table] = [];
   }
+}
+
+function validateDeskPaymentIntent(payment:PaymentRow){
+ const intent=readPendingDeskIntent(payment);if(intent&&Object.keys(payment.frontend_desk_intent as object).some(k=>!Object.prototype.hasOwnProperty.call(intent,k)))throw Error('desk_intent_invalid');return intent;
 }
 
 const newId = (prefix = 'row'): string => `${prefix}_${Math.random().toString(36).slice(2, 10)}`;
@@ -143,11 +151,13 @@ export class MockProvider implements DataProvider {
     if (others.some(b => b.user_id === row.user_id) || (this.db.voucher_bookings as VoucherBookingRow[]).some(b => b.sessionId === session.id && b.status !== 'cancelled' && b.participants.some(p => p.userId === row.user_id))) throw new Error('booking_exists');
     if (admission && identifiedSessionAdmission(this.db, session, row.user_id, row.id)) throw new Error('booking_exists');
     if (admission && dailyAdmissionConflict(this.db, session, row.user_id, row.id)) throw new Error('same_day_conflict');
-    if (others.length + voucherSeats(this.db, session.id) >= session.capacity) throw new Error('session_full');
     const modality = (this.db.modalities as ModalityRow[]).find(m => m.id === session.modality_id && m.tenant_id === session.tenant_id);
     const template = this.db.class_templates.find(t => t.id === session.template_id && t.tenant_id === session.tenant_id);
     if (admission && !sessionAdmissionAvailable(session, modality, template)) throw new Error('session_unavailable');
-    return usesMats(modality) ? { ...row, mat_number: chooseMat([...others, ...(this.db.voucher_bookings as VoucherBookingRow[]).filter(b => b.sessionId === session.id && b.status !== 'cancelled').flatMap(b => b.mats.map(mat_number => ({ status: 'booked', mat_number } as BookingRow)))], Math.min(session.capacity, tenant.studio.mats), row.mat_number) } : { ...row, mat_number: null };
+    const capacity = admission ? effectiveAdmissionCapacity(session, (this.db.rooms as RoomRow[]).find(r => r.id === session.room_id && r.tenant_id === session.tenant_id), modality) : session.capacity;
+    const seats = (this.db.bookings as BookingRow[]).filter(b => b.tenant_id === session.tenant_id && b.session_id === session.id && b.id !== row.id && !['cancelled', 'late_cancel'].includes(b.status));
+    if (seats.length + voucherSeats(this.db, session.id, session.tenant_id) >= capacity) throw new Error('session_full');
+    return usesMats(modality) ? { ...row, mat_number: chooseMat([...others, ...(this.db.voucher_bookings as VoucherBookingRow[]).filter(b => b.sessionId === session.id && b.status !== 'cancelled').flatMap(b => b.mats.map(mat_number => ({ status: 'booked', mat_number } as BookingRow)))], Math.min(capacity, tenant.studio.mats), row.mat_number) } : { ...row, mat_number: null };
   }
 
   private onStorage(e: StorageEvent) {
@@ -248,6 +258,7 @@ export class MockProvider implements DataProvider {
   async get<T extends BaseRow>(table: string, id: string): Promise<T | null> { return structuredClone((this.rows(table).find((r) => r.id === id) as T) ?? null); }
 
   async insert<T extends BaseRow>(table: string, row: Partial<T>): Promise<T> {
+    if(table==='payments'&&row.id&&this.rows(table).some(r=>r.id===row.id&&r.frontend_desk_intent!==undefined))throw Error('desk_intent_immutable');
     if (table === 'payments' && row.id && this.rows(table).some(r => r.id === row.id && r.frontend_receipt)) throw new Error('receipt_immutable');
     if (table === 'legal_documents' && row.id && this.rows(table).some(r=>r.id===row.id)) throw new Error('legal_document_duplicate');
     if (table === 'email_change_previews' && this.rows(table).some(r=>r.id===row.id)) throw new Error('email_preview_append_only');
@@ -255,9 +266,11 @@ export class MockProvider implements DataProvider {
     if (table === 'audit_log' && this.rows(table).some(r => r.id === row.id)) throw new Error('audit_append_only');
     if (table === 'class_pay_rules') throw new Error('class_pay_atomic_command_required');
     if (['promotion_campaigns', 'promotion_shares', 'promotion_claims', 'promotion_events'].includes(table)) throw new Error('promotion_atomic_command_required');
+    if (['gift_purchase_intents','gift_purchase_requests'].includes(table)) throw new Error('gift_atomic_command_required');
     if (['vouchers', 'voucher_bookings', 'voucher_events'].includes(table)) throw new Error('voucher_atomic_command_required');
     const now = new Date().toISOString();
     let full = { id: newId(table.slice(0, 3)), tenant_id: tenant.id, created_at: now, updated_at: now, ...row } as T;
+    if(table==='payments'&&full.frontend_desk_intent!==undefined){validateDeskPaymentIntent(full as unknown as PaymentRow);if(full.status!=='pending'||full.provider!=='manual'||full.method!=='cash')throw Error('desk_intent_invalid');}
     if (table === 'bookings') full = this.prepareBooking(full as unknown as BookingRow) as unknown as T;
     const previousDb = structuredClone(this.db);
     this.rows(table).push(full);
@@ -278,6 +291,7 @@ export class MockProvider implements DataProvider {
     if (table === 'audit_log') throw new Error('audit_append_only');
     if (table === 'class_pay_rules') throw new Error('class_pay_atomic_command_required');
     if (['promotion_campaigns', 'promotion_shares', 'promotion_claims', 'promotion_events'].includes(table)) throw new Error('promotion_atomic_command_required');
+    if (['gift_purchase_intents','gift_purchase_requests'].includes(table)) throw new Error('gift_atomic_command_required');
     if (['vouchers', 'voucher_bookings', 'voucher_events'].includes(table)) throw new Error('voucher_atomic_command_required');
     const rows = this.rows(table);
     const i = rows.findIndex((r) => r.id === id);
@@ -291,6 +305,11 @@ export class MockProvider implements DataProvider {
       if (Object.keys(checked).length) applyContentBatch(this.db, { table, role: 'admin', actorId: 'validation', changes: [{ id, before: structuredClone(rows[i]), patch: checked }] }, tenant.id);
     }
     let next = { ...rows[i], ...patch, updated_at: new Date().toISOString() } as T;
+    if(table==='payments'&&(rows[i].frontend_desk_intent!==undefined||next.frontend_desk_intent!==undefined)){
+      const before=validateDeskPaymentIntent(rows[i] as PaymentRow),after=validateDeskPaymentIntent(next as unknown as PaymentRow);
+      if(before&&JSON.stringify(before)!==JSON.stringify(after))throw Error('desk_intent_immutable');
+      if(!before&&after&&(next.status!=='pending'||next.provider!=='manual'||next.method!=='cash'))throw Error('desk_intent_invalid');
+    }
     if (table === 'bookings' && ('mat_number' in patch || 'session_id' in patch || ((patch as Partial<BookingRow>).status === 'booked' && (rows[i] as BookingRow).status !== 'booked'))) next = this.prepareBooking(next as unknown as BookingRow, (rows[i] as BookingRow).session_id !== (next as unknown as BookingRow).session_id || !occupiesMat(rows[i] as BookingRow)) as unknown as T;
     const previousSession = table === 'bookings' ? (rows[i] as BookingRow).session_id : null;
     const previousDb = structuredClone(this.db);
@@ -305,6 +324,7 @@ export class MockProvider implements DataProvider {
     return next;
   }
   async remove(table: string, id: string): Promise<void> {
+    if(table==='payments'&&this.rows(table).some(r=>r.id===id&&r.frontend_desk_intent!==undefined))throw Error('desk_intent_immutable');
     if (table === 'payments' && this.rows(table).some(r => r.id === id && r.frontend_receipt)) throw new Error('receipt_immutable');
     if (table === 'legal_documents' && this.rows(table).some(r=>r.id===id&&r.status==='published')) throw new Error('legal_document_immutable');
     if(table==='email_change_previews')throw Error('email_preview_append_only');
@@ -312,6 +332,7 @@ export class MockProvider implements DataProvider {
     if (table === 'audit_log') throw new Error('audit_append_only');
     if (table === 'class_pay_rules') throw new Error('class_pay_atomic_command_required');
     if (['promotion_campaigns', 'promotion_shares', 'promotion_claims', 'promotion_events'].includes(table)) throw new Error('promotion_atomic_command_required');
+    if (['gift_purchase_intents','gift_purchase_requests'].includes(table)) throw new Error('gift_atomic_command_required');
     if (['vouchers', 'voucher_bookings', 'voucher_events'].includes(table)) throw new Error('voucher_atomic_command_required');
     if (table === 'expenses') {
       const rows = this.rows(table);
@@ -332,6 +353,18 @@ export class MockProvider implements DataProvider {
     this.listeners.get(table)!.add(cb);
     return () => { this.listeners.get(table)?.delete(cb); };
   }
+  async purchasedGift(command:GiftPurchaseCommand,isCurrent:()=>boolean=()=>true):Promise<GiftPurchaseResult>{
+    if(this.name!=='mock')throw Error('gift_disconnected');
+    const input=structuredClone(command),check=()=>{if(!isCurrent())throw Error('gift_context_changed');};check();
+    return this.atomic(async tx=>{
+      check();const staged=tx as MockProvider;
+      const prior=staged.db.gift_purchase_requests?.some(r=>r.id===`gift-purchase-request:${input.actorId}:${input.requestId}`);
+      const currentQuote=input.type==='purchase'&&!prior?await checkSaleQuote(tx,input.quote):undefined;check();
+      const transaction=executeGiftPurchaseCommand(staged.db,input,{tenantId:tenant.id,currentQuote});check();
+      staged.db=transaction.db;return transaction.result;
+    });
+  }
+
   async voucher(command: VoucherCommand): Promise<VoucherResult> {
     const transaction = executeVoucherCommand(this.db, command, { tenantId: tenant.id,
       usesMats: session => usesMats((this.db.modalities as ModalityRow[]).find(m => m.id === session.modality_id)), matCapacity: tenant.studio.mats });

@@ -1,3 +1,5 @@
+import {strings as adminStrings} from './strings';
+import {SavedPaymentInstructions} from '../../components/organism/PaymentInstructions/PaymentInstructions';
 import { useEffect, useMemo, useState } from 'react';
 import { useI18n } from '../../i18n/I18nProvider';
 import { useContact , pendingSuffix } from './settings';
@@ -110,6 +112,11 @@ export function EmailsPage() {
           </div>
         </div>
       )}
+      <section className="stack-sm" aria-label={t('admin.paymentInstructions.emailPreview')}>
+        <h2 className="adm-h2">{t('admin.paymentInstructions.emailPreview')}</h2>
+        <div className="row" role="group" aria-label={t('admin.paymentInstructions.emailPreview')}><Button size="sm" variant={preview==='es'?'primary':'secondary'} onClick={()=>setPreview('es')}>ES</Button><Button size="sm" variant={preview==='en'?'primary':'secondary'} onClick={()=>setPreview('en')}>EN</Button></div>
+        <EmailPreview subject={adminStrings['admin.paymentInstructions.emailPreview'][preview]??adminStrings['admin.paymentInstructions.emailPreview'].es} body={adminStrings['admin.paymentInstructions.emailBody'][preview]??adminStrings['admin.paymentInstructions.emailBody'].es} previewContent={<SavedPaymentInstructions locale={preview}/>}/>
+      </section>
       {templates.length > 0 && !row && <EmptyState title={t('admin.emails.filter.empty')} />}
       {row && (
         <div className="emails">

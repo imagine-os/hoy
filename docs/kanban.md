@@ -1,3 +1,5 @@
+CU-04 remote demo signout: close mounted private tabs and invalidate pending signup/zero-charge checkout only on current explicit remote logout. Keep persona switches independent and retained history intact; real session revocation/email delivery remain separate. See frontend-completion/remote-demo-signout.md.
+
 RS-02 package checkout: verify saved booking/debit evidence after uncertain acknowledgement, with read-only recovery and context-bound confirmation. Existing-package frontend verification is separate from backend and owner acceptance. See frontend-completion/rs02-package-booking-recovery.md.
 
 Shared admission integration: replay the bounded publication/context guard onto PR85 main; original saved candidates remain separate. Current-source build, regression and independent review are required. See frontend-completion/session-admission-repair.md.
@@ -819,3 +821,5 @@ Protected-capture clarification: M14 schedule/pay screenshots remain local/ignor
 
 - PL-07 / A-03: bounded account fields and calendar birthdays; literal Unicode/symbol storage and exact consent replay retained.
 - Pending signup commands, legal proof, session updates and navigation are fenced to their actor, role, provider and route. Drafts survive for explicit retry. Combined local checks and independent source review passed; hosted CI/release remain pending. No real identity-provider or whole-platform validation claim.
+
+- Local frontend integration: retained desk fulfillment, private customer read scopes and saved transfer instructions; mounted confirmation uses read-only immutable proof. Combined build, regressions and review required before release.

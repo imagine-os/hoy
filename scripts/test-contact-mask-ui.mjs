@@ -1,3 +1,4 @@
+import {expectPrivateDenial} from './qa-private-denial.mjs';
 // Fictional contact formatting only. No raw phone screenshots, edits, sends or payment actions.
 import assert from 'node:assert/strict';import {chromium} from 'playwright-core';import {mkdir,writeFile} from 'node:fs/promises';
 import {settledCapture} from './qa-rendered-capture.mjs';
@@ -25,9 +26,9 @@ try{for(const lang of ['en','es'])for(const theme of ['light','dark'])for(const 
  // Existing route matrix only; no new role access or field readership is granted.
  if(lang==='en'&&theme==='light'&&width===1280){
   for(const id of ['usr_super','usr_admin','usr_coord','usr_desk','usr_fin','usr_mkt']){await as(id,'/admin/crm/usr_cust');await page.getByRole('heading',{name:'FICTIONAL Mask Contact',exact:true}).waitFor();await page.getByText(masked,{exact:false}).waitFor();await noRaw();}
-  for(const id of ['usr_teach','usr_maint','usr_dev','usr_cust','usr_public']){await as(id,'/admin/crm/usr_cust');await page.waitForURL(/no-access|auth\/sign-in/);assert.equal(await page.getByRole('heading',{name:'FICTIONAL Mask Contact',exact:true}).count(),0);}
+  for(const id of ['usr_teach','usr_maint','usr_dev','usr_cust','usr_public']){await as(id,'/admin/crm/usr_cust');await expectPrivateDenial(page,id);assert.equal(await page.getByRole('heading',{name:'FICTIONAL Mask Contact',exact:true}).count(),0);}
   for(const id of ['usr_super','usr_admin','usr_coord','usr_desk']){await as(id,'/staff/register');await page.getByRole('heading',{name:'Register & take payment',exact:true}).waitFor();}
-  for(const id of ['usr_fin','usr_mkt','usr_teach','usr_maint','usr_dev','usr_cust','usr_public']){await as(id,'/staff/register');await page.waitForURL(/no-access|auth\/sign-in/);assert.equal(await page.getByRole('heading',{name:'Register & take payment',exact:true}).count(),0);}
+  for(const id of ['usr_fin','usr_mkt','usr_teach','usr_maint','usr_dev','usr_cust','usr_public']){await as(id,'/staff/register');await expectPrivateDenial(page,id);assert.equal(await page.getByRole('heading',{name:'Register & take payment',exact:true}).count(),0);}
   await unchanged();checks.push('Existing roles: CRM6allowed5denied; desk4allowed7denied; no new readership');
  }
  const afterAudit=await page.evaluate(()=>JSON.parse(localStorage.getItem('hoyos.db.v1')).db.audit_log);const previous=new Set(before.audit_log.map(r=>r.id));assert(afterAudit.filter(r=>!previous.has(r.id)).every(r=>r.action==='member.view'),'no new actions beyond existing member view audits');

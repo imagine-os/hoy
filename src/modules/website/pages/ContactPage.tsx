@@ -1,3 +1,4 @@
+import {SavedPaymentInstructions} from '../../../components/organism/PaymentInstructions/PaymentInstructions';
 import { Fragment, useState, type ReactNode } from 'react';
 import { Link } from '../links';
 import { useI18n } from '../../../i18n/I18nProvider';
@@ -59,6 +60,7 @@ export function ContactPage() {
             </Card>
           ))}
         </div>
+        <SavedPaymentInstructions />
         <div className="stack-sm" style={{ marginTop: 'var(--sp-lg)' }}>
           <div className="row wrap">
             <a href={wa.link('frontDesk', t('site.contact.wa'))} target="_blank" rel="noreferrer">

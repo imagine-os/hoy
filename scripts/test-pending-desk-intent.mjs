@@ -1,0 +1,35 @@
+// Synthetic metadata/reconciliation only; no timer, bank, booking hold or membership policy.
+import assert from 'node:assert/strict';
+import {build} from 'esbuild';
+const result=await build({stdin:{contents:"export * from './src/data/pendingDeskIntent'; export {freezeSaleQuote,resolveOperationalQuote} from './src/data/operationalQuotes'; export {MockProvider} from './src/data/MockProvider';",resolveDir:process.cwd()},bundle:true,write:false,format:'esm',platform:'node',logLevel:'silent'});
+const {makePendingDeskIntent,readPendingDeskIntent,findPendingDeskRequest,freezeSaleQuote,resolveOperationalQuote,MockProvider}=await import(`data:text/javascript;base64,${Buffer.from(result.outputFiles[0].text+'\n//# sourceURL=pending-desk-intent-fixture.mjs').toString('base64')}`);
+globalThis.localStorage={getItem:()=>null,setItem:()=>{}};
+const data=new MockProvider(), quote=freezeSaleQuote(resolveOperationalQuote(data.peek('plans'),'pack12'));
+const scope={tenantId:quote.tenantId,customerId:'synthetic_customer',sessionId:'synthetic_session',matNumber:null,planId:quote.planId};
+const row={id:'synthetic_payment',tenant_id:scope.tenantId,user_id:scope.customerId,plan_id:quote.planId,amount:quote.chargedAmount,currency:'COP',status:'pending',method:'cash',provider:'manual',frontend_quote:quote};
+const intent=makePendingDeskIntent(scope,quote), linked={...row,frontend_desk_intent:intent};
+let n=0;
+const check=(fn)=>{fn();n++;};
+check(()=>assert.equal(readPendingDeskIntent(row),null));
+check(()=>assert.equal(findPendingDeskRequest([row],scope),null));
+check(()=>assert.deepEqual(readPendingDeskIntent(linked),intent));
+check(()=>assert.equal(findPendingDeskRequest([linked],scope),linked));
+// Changed current catalog/date does not enter reconciliation: accepted quote remains the stored object.
+check(()=>assert.equal(findPendingDeskRequest([linked],scope).frontend_quote,quote));
+check(()=>assert.equal(makePendingDeskIntent(scope,Object.fromEntries(Object.entries(quote).reverse())).quoteFingerprint,intent.quoteFingerprint));
+for(const patch of [{tenantId:'other'},{customerId:'other'},{planId:'other'},{sessionId:''},{matNumber:0},{matNumber:1.5},{version:2},{kind:'gift'},{quoteFingerprint:'changed'},{requestKey:'changed'}]) check(()=>assert.throws(()=>readPendingDeskIntent({...linked,frontend_desk_intent:{...intent,...patch}}),/desk_intent_invalid/));
+for(const value of [null,'',false,[],42,{}]) check(()=>assert.throws(()=>readPendingDeskIntent({...linked,frontend_desk_intent:value}),/desk_intent_invalid/));
+check(()=>assert.throws(()=>findPendingDeskRequest([linked,{...linked,id:'duplicate'}],scope),/duplicate/));
+check(()=>assert.throws(()=>findPendingDeskRequest([linked],{...scope,matNumber:2}),/conflict/));
+check(()=>assert.throws(()=>findPendingDeskRequest([linked],{...scope,planId:'plan_single'}),/conflict/));
+check(()=>assert.equal(findPendingDeskRequest([{...linked,tenant_id:'other'}],scope),null));
+check(()=>assert.equal(findPendingDeskRequest([{...linked,user_id:'other'}],scope),null));
+check(()=>assert.equal(findPendingDeskRequest([{...linked,status:'approved'}],scope),null));
+check(()=>assert.equal(findPendingDeskRequest([{...linked,method:'transfer'}],scope),null));
+check(()=>assert.equal(findPendingDeskRequest([linked],{...scope,sessionId:'another_session'}),null));
+check(()=>assert.throws(()=>readPendingDeskIntent({...linked,frontend_quote:{...quote,chargedAmount:quote.chargedAmount+1}}),/invalid/));
+check(()=>assert.throws(()=>makePendingDeskIntent({...scope,customerId:''},quote),/scope/));
+const optionalQuote={...quote,taxTotals:undefined},optionalIntent=makePendingDeskIntent(scope,optionalQuote);
+check(()=>assert.equal(optionalIntent.quoteFingerprint,intent.quoteFingerprint));
+check(()=>assert.deepEqual(readPendingDeskIntent(JSON.parse(JSON.stringify({...row,frontend_quote:optionalQuote,frontend_desk_intent:optionalIntent}))),optionalIntent));
+console.log(`PASS pending desk intent: ${n} metadata/scope/reconciliation cases`);

@@ -1,0 +1,126 @@
+name: Private customer entry and read isolation QA
+on:
+  pull_request:
+    paths:
+      - 'src/auth/RequireRole.tsx'
+      - 'src/auth/visitorSignIn.ts'
+      - 'src/auth/SessionProvider.tsx'
+      - 'src/auth/roles.ts'
+      - 'src/auth/permissions.ts'
+      - 'src/modules/hub/NoAccessPage.tsx'
+      - 'src/modules/customer/auth/**'
+      - 'src/modules/customer/hooks.ts'
+      - 'src/modules/customer/scopedSessionRows.ts'
+      - 'src/modules/customer/useScopedCustomerRead.ts'
+      - 'src/modules/customer/pages/**'
+      - 'src/modules/customer/HomePage.tsx'
+      - 'src/modules/customer/strings.ts'
+      - 'src/data/DataContext.tsx'
+      - 'src/data/MockProvider.ts'
+      - 'src/data/schema.ts'
+      - 'src/data/types.ts'
+      - 'scripts/test-visitor-signin*.mjs'
+      - 'scripts/test-private-denial-assertion.mjs'
+      - 'scripts/qa-private-denial.mjs'
+      - 'scripts/test-customer-read-scope*.mjs'
+      - 'scripts/test-customer-read-context-ui.mjs'
+      - 'scripts/test-customer-inbox-cards-scope-ui.mjs'
+      - 'scripts/test-customer-remaining-read-scope-ui.mjs'
+      - 'scripts/test-customer-derived-read-scope-ui.mjs'
+      - 'scripts/customer-read-context-harness.tsx'
+      - 'scripts/test-remote-signout*.mjs'
+      - 'scripts/remote-signout-context-harness.*'
+      - 'scripts/qa-pending-payments-dev.mjs'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'vite.config.*'
+      - '.github/workflows/private-customer-read-qa.yml'
+permissions:
+  contents: read
+concurrency:
+  group: private-customer-read-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  private-customer-read:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Record exact checked head
+        shell: bash
+        env:
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          mkdir -p qa/pl04
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          git rev-parse HEAD > qa/pl04/source-head.txt
+          git rev-parse HEAD^{tree} > qa/pl04/source-tree.txt
+      - name: Verify visitor returns, denial assertions and scoped joins
+        shell: bash
+        run: |
+          node scripts/test-visitor-signin.mjs 2>&1 | tee qa/pl04/visitor-domain.log
+          node scripts/test-private-denial-assertion.mjs 2>&1 | tee qa/pl04/denial-assertion-domain.log
+          node scripts/test-customer-read-scope.mjs 2>&1 | tee qa/pl04/read-scope-domain.log
+      - name: Build exact head
+        shell: bash
+        run: |
+          npm run build 2>&1 | tee qa/pl04/build.log
+          cp dist/release.json qa/pl04/release.json
+          node --input-type=module -e "import fs from 'node:fs'; import assert from 'node:assert/strict'; assert.equal(JSON.parse(fs.readFileSync('dist/release.json','utf8')).sourceCommit,fs.readFileSync('qa/pl04/source-head.txt','utf8').trim());"
+      - name: Verify production visitor entry and current private customer data
+        shell: bash
+        env:
+          QA_BASE: http://127.0.0.1:5333
+          CHROMIUM_PATH: /usr/bin/google-chrome
+        run: |
+          npm run preview -- --host 127.0.0.1 --strictPort --port 5333 > qa/pl04/preview.log 2>&1 &
+          preview_pid=$!
+          trap 'kill "$preview_pid" 2>/dev/null || true' EXIT
+          ready=0
+          for i in $(seq 1 60); do
+            if curl -fsS "$QA_BASE/" >/dev/null; then ready=1; break; fi
+            if ! kill -0 "$preview_pid" 2>/dev/null; then cat qa/pl04/preview.log; exit 1; fi
+            sleep 1
+          done
+          test "$ready" = 1
+          QA_OUTPUT=qa/pl04/production/visitor node scripts/test-visitor-signin-ui.mjs 2>&1 | tee qa/pl04/production-visitor.log
+          QA_OUTPUT=qa/pl04/production/history node scripts/test-customer-read-scope-ui.mjs 2>&1 | tee qa/pl04/production-history.log
+          QA_OUTPUT=qa/pl04/production/inbox-cards node scripts/test-customer-inbox-cards-scope-ui.mjs 2>&1 | tee qa/pl04/production-inbox-cards.log
+          QA_OUTPUT=qa/pl04/production/remote-signout node scripts/test-remote-signout-ui.mjs 2>&1 | tee qa/pl04/production-remote-signout.log
+          QA_OUTPUT=qa/pl04/production/account-class-invites node scripts/test-customer-remaining-read-scope-ui.mjs 2>&1 | tee qa/pl04/production-account-class-invites.log
+          QA_OUTPUT=qa/pl04/production/entitlement-queue-review node scripts/test-customer-derived-read-scope-ui.mjs 2>&1 | tee qa/pl04/production-entitlement-queue-review.log
+      - name: Verify actual-hook delayed context ownership
+        shell: bash
+        env:
+          QA_BASE: http://127.0.0.1:5334
+          QA_PORT: 5334
+          QA_CACHE_DIR: /tmp/hoy-pl04-vite-cache
+          QA_OUTPUT: qa/pl04/development/context
+          CHROMIUM_PATH: /usr/bin/google-chrome
+        run: |
+          node scripts/qa-pending-payments-dev.mjs > qa/pl04/prepared-dev.log 2>&1 &
+          dev_pid=$!
+          trap 'kill "$dev_pid" 2>/dev/null || true' EXIT
+          ready=0
+          for i in $(seq 1 60); do
+            if curl -fsS "$QA_BASE/" >/dev/null; then ready=1; break; fi
+            if ! kill -0 "$dev_pid" 2>/dev/null; then cat qa/pl04/prepared-dev.log; exit 1; fi
+            sleep 1
+          done
+          test "$ready" = 1
+          node scripts/test-customer-read-context-ui.mjs 2>&1 | tee qa/pl04/development-context.log
+          QA_OUTPUT=qa/pl04/development/remote-signout-context node scripts/test-remote-signout-context-ui.mjs 2>&1 | tee qa/pl04/development-remote-signout-context.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: private-customer-read-${{ github.event.pull_request.head.sha }}
+          retention-days: 14
+          path: qa/pl04/

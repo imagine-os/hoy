@@ -1,3 +1,4 @@
+import {expectPrivateDenial} from './qa-private-denial.mjs';
 // CU-06 real browser UI against immutable local production; fictional fixtures only.
 import assert from 'node:assert/strict';import {chromium} from 'playwright-core';import {mkdir,writeFile} from 'node:fs/promises';import {createHash} from 'node:crypto';
 const base=process.env.QA_BASE??'http://127.0.0.1:5221',out='docs/screenshots/C-26',checks=[],errors=[];await mkdir(out,{recursive:true});await mkdir('docs/frontend-completion/evidence',{recursive:true});
@@ -38,7 +39,7 @@ try{for(const lang of ['en','es']){
  phase='role_and_theme_matrix';async function as(id){await page.evaluate(id=>localStorage.setItem('hoyos.session',JSON.stringify({userId:id,devMode:false,viewAs:null})),id);await page.reload();await page.goto(`${base}/#/app/account`);}
  await as('usr_cust');await ready();await shots('customer-dark');
  await as('usr_super');await ready();await prepare().click();await offer().waitFor();await dialog().getByRole('button',{name:en?'Cancel':'Cancelar',exact:true}).click();await ready();
- for(const role of ['usr_admin','usr_coord','usr_desk','usr_fin','usr_maint','usr_mkt','usr_dev','usr_public']){await as(role);await page.waitForURL(/no-access/);assert.equal(await prepare().count(),0);}
+ for(const role of ['usr_admin','usr_coord','usr_desk','usr_fin','usr_maint','usr_mkt','usr_dev','usr_public']){await as(role);await expectPrivateDenial(page,role);assert.equal(await prepare().count(),0);}
  checks.push(`${lang}: scoped fictional export canaries/unknown-token omission, required-row read failure/recovery, preview cancel/no audit, quota rollback/retry and cancelled native download/no saved guarantee, immediate duplicate request, request/cancel rollback/retry, stale processing conflict, committed/lost-ack replay, preparation cancel and real SPA identity/unmount race, no financial/account effects, customer/teacher/super own access +8 denied,390/1280 light/dark captures`);await ctx.close();
 }assert.deepEqual(errors,[]);assert.deepEqual(await artifact(),fingerprint);await writeFile('docs/frontend-completion/evidence/batch-24-account-ui.json',JSON.stringify({batch:24,base,fingerprint,checks,errors,limits:['Fictional browser-only preview, not complete legal export; no deletion/anonymisation.','No guarantee a browser saves a file.','Actual per-table thrown read faults additionally covered in dev-state UI/domain tests.']},null,2));console.log('PASS CU-06 production account UI EN/ES;11roles; no private bodies in logs or receipts.');}catch(error){
  await mkdir('qa/batch24-failures',{recursive:true});

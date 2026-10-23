@@ -89,7 +89,7 @@ export const noAccessSpec = defineSpec({
   layout: ['Illustration', 'Title', 'Body (role name)', 'RoleSwitcher', 'CTA → hub'],
   data: ['user_roles'],
   roles: EVERYONE,
-  logic: ['RequireRole redirects here with ?from=<path>.', 'A hub tool card whose route the role cannot open lands here rather than disappearing.'],
+  logic: ['Authenticated forbidden roles arrive with ?from=<path>; visitors go to sign-in with an allowlisted customer return.', 'A hub tool card whose route the role cannot open lands here rather than disappearing.'],
   integrations: [],
   states: ['default'],
   checkedAt: [360, 390, 768, 1280, 1920],

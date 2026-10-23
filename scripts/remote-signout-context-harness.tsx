@@ -1,0 +1,18 @@
+// Development-only isolated actual-page fixture; no production route imports this module.
+import * as React from 'react';import{createRoot}from'react-dom/client';import{MemoryRouter,Routes,Route,useLocation}from'react-router-dom';import{ThemeProvider}from'../src/design/ThemeProvider';import{DataProviderRoot}from'../src/data/DataContext';import{MockProvider}from'../src/data/MockProvider';import{SessionProvider,useSession}from'../src/auth/SessionProvider';import{RequireRole}from'../src/auth/RequireRole';import{I18nProvider}from'../src/i18n/I18nProvider';import{getStrings}from'../src/app/registry';import{SignUpPage}from'../src/modules/customer/auth/SignUpPage';import{CheckoutPage}from'../src/modules/customer/pages/CheckoutPage';import'../src/design/tokens.css';import'../src/styles/global.css';
+export function mountRemoteSignoutContext(kind:'signup'|'checkout',afterCommit:boolean){
+ if(!localStorage.getItem('hoyos.db.v1'))new MockProvider();
+ if(kind==='checkout'){
+  const stored=JSON.parse(localStorage.getItem('hoyos.db.v1')!),db=stored.db,session=db.class_sessions.find((s:{modality_id:string})=>db.modalities.some((m:{id:string;active:boolean})=>m.id===s.modality_id&&m.active));
+  let start=new Date(Date.now()+86_400_000);for(let i=0;i<25;i++){if(!db.bookings.some((b:{user_id:string;session_id:string})=>b.user_id==='usr_cust'&&db.class_sessions.some((s:{id:string;starts_at:string})=>s.id===b.session_id&&s.starts_at.slice(0,10)===start.toISOString().slice(0,10))))break;start=new Date(start.getTime()+86_400_000);}
+  db.class_sessions.push({...session,id:'remote_signout_class',title:'FICTIONAL REMOTE LOGOUT CLASS',starts_at:start.toISOString(),ends_at:new Date(start.getTime()+3_600_000).toISOString(),template_id:null,status:'scheduled',capacity:10,booked_count:0});
+  db.class_ledger.push({id:'remote_signout_grant',tenant_id:session.tenant_id,created_at:new Date().toISOString(),updated_at:new Date().toISOString(),user_id:'usr_cust',plan_id:'plan_pack12',payment_id:null,purchase_ledger_id:null,delta:2,reason:'purchase',expires_at:'2027-01-31',frozen_from:null,frozen_until:null,freeze_used:false});
+  localStorage.setItem('hoyos.db.v1',JSON.stringify(stored));
+ }
+ const provider=new MockProvider(),state={paused:false,hold:true,afterCommit,path:'',actor:'',release:()=>{}};const atomic=provider.atomic.bind(provider);
+ provider.atomic=async(action,options)=>{const pause=async()=>{state.paused=true;await new Promise<void>(resolve=>state.release=()=>{state.paused=false;state.hold=false;resolve();});};if(state.hold&&!afterCommit)await pause();const result=await atomic(action,options);if(state.hold&&afterCommit)await pause();return result;};
+ (window as unknown as{qaRemoteSignout:typeof state}).qaRemoteSignout=state;
+ function Observer(){const session=useSession(),location=useLocation();state.path=location.pathname+location.search;state.actor=session.user.id;return <output data-actor>{session.user.id}</output>;}
+ const initial=kind==='signup'?'/auth/sign-up?next=%2Fapp%2Fplans':'/app/checkout/remote_signout_class?mat=1';
+ createRoot(document.getElementById('root')!).render(<ThemeProvider><I18nProvider tables={getStrings()}><DataProviderRoot provider={provider}><SessionProvider><MemoryRouter initialEntries={[initial]}><Observer/><Routes><Route path='/auth/sign-up' element={<SignUpPage/>}/><Route path='/app/checkout/:id' element={<RequireRole roles={['customer','teacher']}><CheckoutPage/></RequireRole>}/><Route path='/auth/sign-in' element={<p data-signed-out>Signed out</p>}/><Route path='*' element={<p data-stale-destination>FICTIONAL DESTINATION</p>}/></Routes></MemoryRouter></SessionProvider></DataProviderRoot></I18nProvider></ThemeProvider>);
+}

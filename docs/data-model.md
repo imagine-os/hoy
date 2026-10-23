@@ -1582,3 +1582,9 @@ _Orden de secciones por página guardado desde el editor drag-and-drop._
 2. Seed it in `src/data/seed/index.ts`.
 3. `npm run sql` → regenerates `supabase/schema.sql` and this file.
 4. Reference it in the page's `PageSpec.data` so the inspector links to it.
+
+## Mock-only purchased-gift storage
+
+`gift_purchase_intents` and `gift_purchase_requests` are frontend-only local tables. The typed intent retains a buyer/payment, reserved fictional recipient, accepted gift quote, local image proof and explicit approved voucher terms/link. The request row retains actor-scoped fingerprints and durable results for replay. Both reject generic insert/update/remove; only the serialized `purchasedGift` command may change them. Sensitive fields are marked in the frontend inventory. General audit facts contain only request/purchase/voucher IDs and simulation state.
+
+Missing tables are added empty to compatible browser snapshots without version bump or discarding existing payments, bookings, legal evidence or content. Malformed tables still fail normal cache validation. No SQL schema, policy, migration or server storage is changed; authenticated production storage and private proof access require a separately approved backend contract. Existing class transfer receipts retain their original expiry semantics. Gift validity is an explicit administrative term, never inferred from proof retention or package validity.

@@ -1,3 +1,4 @@
+import {expectPrivateDenial} from './qa-private-denial.mjs';
 // Run against Vite: QA_BASE=http://127.0.0.1:5174 node scripts/test-promotions-guide.mjs
 // CAPTURE=1 also writes the guide and Hub ES/EN, light/dark, 390/1280 captures and guide thumbnails.
 import assert from 'node:assert/strict';
@@ -90,7 +91,7 @@ try {
   await page.reload();
   assert(await page.getByRole('button', { name: 'Simulate sharing', exact: true }).isEnabled(), 'reload clears practice');
   await as('usr_public', '/staff/vouchers');
-  await page.waitForURL(/#\/no-access/);
+  await expectPrivateDenial(page,'usr_public');
   await as('usr_teach', '/admin/vouchers');
   await page.waitForURL(/#\/no-access/);
 
