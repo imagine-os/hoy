@@ -1,0 +1,7 @@
+# 0146 — AD-01 publication propagation
+
+> Next authorized MVP scope is verification-first AD01 publication propagation. Add a focused local test scripts/test-content-surface-propagation.mjs and verify one fictional admin publish/generate/edit/unpublish cycle across website schedule, customer schedule/detail and reception, preserving bookings/history. Existing implementation and PR82 recovery tests do not establish cross-surface acceptance. Read literal saved source requirements; use current main and compare the checked PR82 candidate where relevant. Do not rerun unrelated completed suites or edit Sheet. Runtime repair only after reproducing a concrete failure, staying in publication propagation scope and reporting file ownership needed before shared provider/schema edits. Keep your checked PR82 branch/head unchanged while its release approval is pending; use a separate branch for new work. No ready/merge/deploy attempts, no real data/services or policy invention. Return exact acceptance evidence, defects, source row IDs and files. All other writers except website contact verification are idle.
+
+## Response
+
+Read saved AD-01/COO-10 requirements, reproduced downstream withdrawal and assigned-room defects with real admin/consumer pages, and isolated local repairs and verification in a separate worktree/branch. PR82 stayed unchanged. Shared admission, CI/readiness and source-row acceptance remain integration-owner work. [Exact receipt](../frontend-completion/content-surface-propagation.md).

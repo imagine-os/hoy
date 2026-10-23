@@ -100,6 +100,7 @@ export function CheckinPage() {
   };
   const packageFor = (userId: string) => packageState(approvedPackageRows(ledger.filter(row => row.user_id === userId), payments));
   const unavailable = (userId: string) => {
+    if (selected?.templateActive === false || selected?.modality?.active === false) return t('staff.checkin.error.session_unavailable');
     if (!selected || selected.session.status !== 'scheduled' || Date.parse(selected.session.starts_at) <= Date.now()) return t('staff.checkin.package.unavailable');
     if (selected.session.booked_count >= selected.session.capacity) return t('core.common.full');
     const state = packageFor(userId);

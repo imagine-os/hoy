@@ -6,7 +6,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useLayout } from '../../../layout/useLayout';
 import { useTable } from '../../../data/DataContext';
-import type { BookingRow, ModalityRow } from '../../../data/schema';
+import type { BookingRow, ModalityRow, RoomRow } from '../../../data/schema';
 import { usesMats, occupiesMat } from '../../../data/mats';
 import { MatPicker } from '../../../components/organism/MatPicker/MatPicker';
 import { SessionCalendar } from '../../../components/organism/SessionCalendar/SessionCalendar';
@@ -29,6 +29,7 @@ export function SchedulePage() {
   const { sections, isVisible } = useLayout(siteSpecs.schedule);
   const [mat, setMat] = useState<number | null>(null);
   const { rows: bookings } = useTable<BookingRow>('bookings');
+  const { rows: rooms } = useTable<RoomRow>('rooms');
   const [picked, setPicked] = useState<string | null>(null);
   const all = useSessionsJoined();
   const { rows: modalitiesAll } = useTable<ModalityRow>('modalities', { where: { active: true } });
@@ -76,7 +77,7 @@ export function SchedulePage() {
       <Drawer open={!!chosen} onClose={() => setPicked(null)} title={t('site.schedule.loginTitle')} side="bottom">
         {chosen && (
           <div className="stack">
-            <ClassCard title={chosen.session.title} teacher={chosen.teacher?.display_name ?? ''} room={t('site.mat.room')} startsAt={chosen.session.starts_at} endsAt={chosen.session.ends_at} tone={chosen.modality?.tone ?? 'river'} booked={chosen.session.booked_count} capacity={chosen.session.capacity} />
+            <ClassCard title={chosen.session.title} teacher={chosen.teacher?.display_name ?? ''} room={rooms.find(room => room.id === chosen.session.room_id)?.name ?? t('site.mat.room')} startsAt={chosen.session.starts_at} endsAt={chosen.session.ends_at} tone={chosen.modality?.tone ?? 'river'} booked={chosen.session.booked_count} capacity={chosen.session.capacity} />
             <SessionEditorial session={chosen.session} />
             {yoga && !full && !unavailable && <MatPicker sessionId={chosen.session.id} capacity={chosen.session.capacity} value={mat} onChange={setMat} />}
             <p className="muted small">{t('site.schedule.loginBody')}</p>

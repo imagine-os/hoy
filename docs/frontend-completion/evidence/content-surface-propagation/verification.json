@@ -1,0 +1,46 @@
+{
+  "requirement": "AD-01",
+  "sourceRelatedTest": "COO-10",
+  "sourceStatus": "Not verified; full row remains partial",
+  "base": "455843fda97c7a0c9979b3331d11690d9653f5e7",
+  "pr82CheckedHeadPreserved": "b6c4600d429e9a23562204c899e56d6f9b9a14e2",
+  "mainBaseline": {
+    "passedObservations": 30,
+    "defectInstances": 4,
+    "browserErrors": 0
+  },
+  "pr82Comparison": {
+    "passedObservations": 30,
+    "defectInstances": 6,
+    "browserErrors": 0
+  },
+  "finalProduction": {
+    "passedObservations": 36,
+    "defects": [],
+    "browserErrors": [],
+    "command": "QA_BASE=http://127.0.0.1:5223 QA_OUTPUT=/tmp/hoy-propagation-final-production node scripts/test-content-surface-propagation.mjs"
+  },
+  "build": "passed (includes tsc --noEmit); spacing60/baseline60; manual lint0",
+  "scriptSyntax": "node --check passed",
+  "scriptSHA256": "62b525fa6944d83ada77d2a767220c69ffd68611a948d57ad62873b725952874",
+  "runtimeSHA256": {
+    "src/modules/admin/ContentPage.tsx": "358392469e0bdd8f81f7a27e69a65b70a5103352675f4ca570df7d6b43a4f9f1",
+    "src/modules/website/pages/SchedulePage.tsx": "9c7563f512f1d3f9fc36e53eaa04de873b5d785ffcec9f027f3d9ea145418965",
+    "src/modules/website/hooks.ts": "bd5cc409f3fffcc46b5a346bdc8ff58453af10c6b046104a483869eb86e51852",
+    "src/modules/customer/pages/SchedulePage.tsx": "a68eb03fca41f5edfb6ae3c161ada3889556040693c386857302e86e1861a8bd",
+    "src/modules/customer/pages/ClassDetailPage.tsx": "71be8dac7d01a8a46c590629488b97307e1a4d9b744ebdd1b2d5ed44af6e192c",
+    "src/modules/customer/hooks.ts": "a8c6282ec051a3ee95bac02c94e2213c69452ffdfc337fb654f0c5df392f20c3",
+    "src/modules/staff/CheckinPage.tsx": "defdd8048b5425b3d3e1155d35e18716810028f482c7d81a6abf8d539ff550d9",
+    "src/data/MockProvider.ts": "30a2e495fbf4212085e2694b644ac8084b764b023160730d71808f54d621e0b8",
+    "src/data/classRecurrence.ts": "f3e6cd2664013fbde2cccd22280bde74ab22691eefaf18918c78e538ad8c35b5",
+    "src/data/sessionAvailability.ts": "e522714e1c2642b3b312834e6f62e19222d25a0de61e0a9e9630eb9042386ebd"
+  },
+  "unrelatedSuitesRerun": false,
+  "sharedRuntimeFilesChanged": false,
+  "limits": [
+    "One occurrence cycle with navigation/reload readback, not whole AD-01 acceptance.",
+    "Shared admission-command publication checks and direct checkout/waitlist deep links need integration-owner follow-up.",
+    "Mounted cross-tab live-update behavior and server/cross-device guarantees remain unverified.",
+    "No real data/services, Sheet edits, ready/merge/deploy actions."
+  ]
+}

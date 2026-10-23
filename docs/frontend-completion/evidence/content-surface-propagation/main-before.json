@@ -1,0 +1,354 @@
+{
+  "requirement": {
+    "id": "AD-01",
+    "relatedTests": "COO-10",
+    "criterion": "Administration creates, edits, publishes and unpublishes classes, schedules, teachers, rooms and FAQ; changes show on the website, app and front desk.",
+    "status": "partial",
+    "source": "docs/frontend-completion/features.json"
+  },
+  "head": "455843fda97c7a0c9979b3331d11690d9653f5e7",
+  "base": "http://127.0.0.1:5221",
+  "source": "/workspace/hoy-propagation",
+  "ids": {
+    "template": "qa_prop_template",
+    "teacher": "qa_prop_teacher",
+    "modality": "qa_prop_modality",
+    "room": "qa_prop_room",
+    "customer": "qa_prop_customer",
+    "other": "qa_prop_other",
+    "history": "qa_prop_history",
+    "historyBooking": "qa_prop_history_booking",
+    "booking": "qa_prop_existing_booking",
+    "grant": "qa_prop_historical_grant"
+  },
+  "hashes": {
+    "src/modules/admin/ContentPage.tsx": "358392469e0bdd8f81f7a27e69a65b70a5103352675f4ca570df7d6b43a4f9f1",
+    "src/modules/website/pages/SchedulePage.tsx": "b7f45bea7ba22f1d6a7071bb7d00decffc2d65919aa79206be314b618e38e0f3",
+    "src/modules/website/hooks.ts": "bd5cc409f3fffcc46b5a346bdc8ff58453af10c6b046104a483869eb86e51852",
+    "src/modules/customer/pages/SchedulePage.tsx": "a68eb03fca41f5edfb6ae3c161ada3889556040693c386857302e86e1861a8bd",
+    "src/modules/customer/pages/ClassDetailPage.tsx": "72483a34f1605eafb396a4cd14bdb1252c18ea1a30ed27c4a242e8a4d1f0729d",
+    "src/modules/customer/hooks.ts": "a8c6282ec051a3ee95bac02c94e2213c69452ffdfc337fb654f0c5df392f20c3",
+    "src/modules/staff/CheckinPage.tsx": "2d5de7ab80641302b577908b7d9cb81d631472e19f2b9fd3f5d11ee2c608ef22",
+    "src/data/MockProvider.ts": "30a2e495fbf4212085e2694b644ac8084b764b023160730d71808f54d621e0b8",
+    "src/data/classRecurrence.ts": "f3e6cd2664013fbde2cccd22280bde74ab22691eefaf18918c78e538ad8c35b5",
+    "src/data/sessionAvailability.ts": "e522714e1c2642b3b312834e6f62e19222d25a0de61e0a9e9630eb9042386ebd"
+  },
+  "checks": [
+    {
+      "lang": "en",
+      "name": "manual draft has no generated sessions",
+      "ids": {
+        "template": "qa_prop_template",
+        "teacher": "qa_prop_teacher",
+        "modality": "qa_prop_modality",
+        "room": "qa_prop_room",
+        "customer": "qa_prop_customer",
+        "other": "qa_prop_other",
+        "history": "qa_prop_history",
+        "historyBooking": "qa_prop_history_booking",
+        "booking": "qa_prop_existing_booking",
+        "grant": "qa_prop_historical_grant"
+      }
+    },
+    {
+      "lang": "en",
+      "name": "admin publish/generate and repeat produces one dated session",
+      "sessionId": "session_f906c697-45b5-49a1-8a85-0ca16a19888b"
+    },
+    {
+      "lang": "en",
+      "name": "site-published: published calendar admission",
+      "evidence": {
+        "sessionId": "session_f906c697-45b5-49a1-8a85-0ca16a19888b",
+        "disabled": false,
+        "text": "F\n6:00 PM\n50 min\nFICTIONAL PROPAGATION CLASS\nFICTIONAL PROPAGATION TEACHER\n8 spots"
+      },
+      "files": [
+        "src/data/sessionAvailability.ts"
+      ]
+    },
+    {
+      "lang": "en",
+      "name": "customer-published: published calendar admission",
+      "evidence": {
+        "sessionId": "session_f906c697-45b5-49a1-8a85-0ca16a19888b",
+        "disabled": false,
+        "text": "F\n6:00 PM\n50 min\nFICTIONAL PROPAGATION CLASS\nFICTIONAL PROPAGATION TEACHER\n8 spots"
+      },
+      "files": [
+        "src/data/sessionAvailability.ts"
+      ]
+    },
+    {
+      "lang": "en",
+      "name": "published customer detail joins teacher and offers admission",
+      "sessionId": "session_f906c697-45b5-49a1-8a85-0ca16a19888b"
+    },
+    {
+      "lang": "en",
+      "name": "published reception selected session joins same title and teacher",
+      "sessionId": "session_f906c697-45b5-49a1-8a85-0ca16a19888b"
+    },
+    {
+      "lang": "en",
+      "name": "site-edited: published calendar admission",
+      "evidence": {
+        "sessionId": "session_f906c697-45b5-49a1-8a85-0ca16a19888b",
+        "disabled": false,
+        "text": "F\n6:00 PM\n50 min\nFICTIONAL PROPAGATION CLASS\nFICTIONAL EDITED TEACHER\n6 spots"
+      },
+      "files": [
+        "src/data/sessionAvailability.ts"
+      ]
+    },
+    {
+      "lang": "en",
+      "name": "website reflects teacher, inherited theme and dated capacity edit",
+      "sessionId": "session_f906c697-45b5-49a1-8a85-0ca16a19888b"
+    },
+    {
+      "lang": "en",
+      "name": "customer-edited: published calendar admission",
+      "evidence": {
+        "sessionId": "session_f906c697-45b5-49a1-8a85-0ca16a19888b",
+        "disabled": false,
+        "text": "F\n6:00 PM\n50 min\nFICTIONAL PROPAGATION CLASS\nFICTIONAL EDITED TEACHER\n6 spots"
+      },
+      "files": [
+        "src/data/sessionAvailability.ts"
+      ]
+    },
+    {
+      "lang": "en",
+      "name": "customer detail reflects joined teacher/room and inherited theme",
+      "sessionId": "session_f906c697-45b5-49a1-8a85-0ca16a19888b"
+    },
+    {
+      "lang": "en",
+      "name": "reception reflects edited teacher and dated capacity with roster preserved",
+      "sessionId": "session_f906c697-45b5-49a1-8a85-0ca16a19888b"
+    },
+    {
+      "lang": "en",
+      "name": "unpublish preserves dated session, existing booking and all historical rows",
+      "sessionId": "session_f906c697-45b5-49a1-8a85-0ca16a19888b"
+    },
+    {
+      "lang": "en",
+      "name": "site-unpublished: unpublished calendar admission",
+      "evidence": {
+        "sessionId": "session_f906c697-45b5-49a1-8a85-0ca16a19888b",
+        "disabled": true,
+        "text": "F\n6:00 PM\n50 min\nFICTIONAL PROPAGATION CLASS\nFICTIONAL EDITED TEACHER\nUnpublished"
+      },
+      "files": [
+        "src/data/sessionAvailability.ts"
+      ]
+    },
+    {
+      "lang": "en",
+      "name": "customer-unpublished: unpublished calendar admission",
+      "evidence": {
+        "sessionId": "session_f906c697-45b5-49a1-8a85-0ca16a19888b",
+        "disabled": true,
+        "text": "F\n6:00 PM\n50 min\nFICTIONAL PROPAGATION CLASS\nFICTIONAL EDITED TEACHER\nUnpublished"
+      },
+      "files": [
+        "src/data/sessionAvailability.ts"
+      ]
+    },
+    {
+      "lang": "en",
+      "name": "existing customer booking remains reachable after unpublish",
+      "bookingId": "qa_prop_existing_booking"
+    },
+    {
+      "lang": "es",
+      "name": "manual draft has no generated sessions",
+      "ids": {
+        "template": "qa_prop_template",
+        "teacher": "qa_prop_teacher",
+        "modality": "qa_prop_modality",
+        "room": "qa_prop_room",
+        "customer": "qa_prop_customer",
+        "other": "qa_prop_other",
+        "history": "qa_prop_history",
+        "historyBooking": "qa_prop_history_booking",
+        "booking": "qa_prop_existing_booking",
+        "grant": "qa_prop_historical_grant"
+      }
+    },
+    {
+      "lang": "es",
+      "name": "admin publish/generate and repeat produces one dated session",
+      "sessionId": "session_ab9dceba-d8bc-4602-884f-1b96acd1e197"
+    },
+    {
+      "lang": "es",
+      "name": "site-published: published calendar admission",
+      "evidence": {
+        "sessionId": "session_ab9dceba-d8bc-4602-884f-1b96acd1e197",
+        "disabled": false,
+        "text": "F\n6:00 p. m.\n50 min\nFICTIONAL PROPAGATION CLASS\nFICTIONAL PROPAGATION TEACHER\n8 cupos"
+      },
+      "files": [
+        "src/data/sessionAvailability.ts"
+      ]
+    },
+    {
+      "lang": "es",
+      "name": "customer-published: published calendar admission",
+      "evidence": {
+        "sessionId": "session_ab9dceba-d8bc-4602-884f-1b96acd1e197",
+        "disabled": false,
+        "text": "F\n6:00 p. m.\n50 min\nFICTIONAL PROPAGATION CLASS\nFICTIONAL PROPAGATION TEACHER\n8 cupos"
+      },
+      "files": [
+        "src/data/sessionAvailability.ts"
+      ]
+    },
+    {
+      "lang": "es",
+      "name": "published customer detail joins teacher and offers admission",
+      "sessionId": "session_ab9dceba-d8bc-4602-884f-1b96acd1e197"
+    },
+    {
+      "lang": "es",
+      "name": "published reception selected session joins same title and teacher",
+      "sessionId": "session_ab9dceba-d8bc-4602-884f-1b96acd1e197"
+    },
+    {
+      "lang": "es",
+      "name": "site-edited: published calendar admission",
+      "evidence": {
+        "sessionId": "session_ab9dceba-d8bc-4602-884f-1b96acd1e197",
+        "disabled": false,
+        "text": "F\n6:00 p. m.\n50 min\nFICTIONAL PROPAGATION CLASS\nFICTIONAL EDITED TEACHER\n6 cupos"
+      },
+      "files": [
+        "src/data/sessionAvailability.ts"
+      ]
+    },
+    {
+      "lang": "es",
+      "name": "website reflects teacher, inherited theme and dated capacity edit",
+      "sessionId": "session_ab9dceba-d8bc-4602-884f-1b96acd1e197"
+    },
+    {
+      "lang": "es",
+      "name": "customer-edited: published calendar admission",
+      "evidence": {
+        "sessionId": "session_ab9dceba-d8bc-4602-884f-1b96acd1e197",
+        "disabled": false,
+        "text": "F\n6:00 p. m.\n50 min\nFICTIONAL PROPAGATION CLASS\nFICTIONAL EDITED TEACHER\n6 cupos"
+      },
+      "files": [
+        "src/data/sessionAvailability.ts"
+      ]
+    },
+    {
+      "lang": "es",
+      "name": "customer detail reflects joined teacher/room and inherited theme",
+      "sessionId": "session_ab9dceba-d8bc-4602-884f-1b96acd1e197"
+    },
+    {
+      "lang": "es",
+      "name": "reception reflects edited teacher and dated capacity with roster preserved",
+      "sessionId": "session_ab9dceba-d8bc-4602-884f-1b96acd1e197"
+    },
+    {
+      "lang": "es",
+      "name": "unpublish preserves dated session, existing booking and all historical rows",
+      "sessionId": "session_ab9dceba-d8bc-4602-884f-1b96acd1e197"
+    },
+    {
+      "lang": "es",
+      "name": "site-unpublished: unpublished calendar admission",
+      "evidence": {
+        "sessionId": "session_ab9dceba-d8bc-4602-884f-1b96acd1e197",
+        "disabled": true,
+        "text": "F\n6:00 p. m.\n50 min\nFICTIONAL PROPAGATION CLASS\nFICTIONAL EDITED TEACHER\nNo publicada"
+      },
+      "files": [
+        "src/data/sessionAvailability.ts"
+      ]
+    },
+    {
+      "lang": "es",
+      "name": "customer-unpublished: unpublished calendar admission",
+      "evidence": {
+        "sessionId": "session_ab9dceba-d8bc-4602-884f-1b96acd1e197",
+        "disabled": true,
+        "text": "F\n6:00 p. m.\n50 min\nFICTIONAL PROPAGATION CLASS\nFICTIONAL EDITED TEACHER\nNo publicada"
+      },
+      "files": [
+        "src/data/sessionAvailability.ts"
+      ]
+    },
+    {
+      "lang": "es",
+      "name": "existing customer booking remains reachable after unpublish",
+      "bookingId": "qa_prop_existing_booking"
+    }
+  ],
+  "defects": [
+    {
+      "lang": "en",
+      "name": "unpublished direct customer detail must not offer new admission",
+      "evidence": {
+        "sessionId": "session_f906c697-45b5-49a1-8a85-0ca16a19888b",
+        "label": "Book",
+        "enabled": true
+      },
+      "files": [
+        "src/modules/customer/pages/ClassDetailPage.tsx",
+        "src/modules/customer/hooks.ts"
+      ]
+    },
+    {
+      "lang": "en",
+      "name": "unpublished reception must block new admission while retaining roster",
+      "evidence": {
+        "sessionId": "session_f906c697-45b5-49a1-8a85-0ca16a19888b",
+        "enabled": true,
+        "label": "Book · 1 class"
+      },
+      "files": [
+        "src/modules/staff/CheckinPage.tsx",
+        "src/data/deskBooking.ts"
+      ]
+    },
+    {
+      "lang": "es",
+      "name": "unpublished direct customer detail must not offer new admission",
+      "evidence": {
+        "sessionId": "session_ab9dceba-d8bc-4602-884f-1b96acd1e197",
+        "label": "Reservar",
+        "enabled": true
+      },
+      "files": [
+        "src/modules/customer/pages/ClassDetailPage.tsx",
+        "src/modules/customer/hooks.ts"
+      ]
+    },
+    {
+      "lang": "es",
+      "name": "unpublished reception must block new admission while retaining roster",
+      "evidence": {
+        "sessionId": "session_ab9dceba-d8bc-4602-884f-1b96acd1e197",
+        "enabled": true,
+        "label": "Reservar · 1 clase"
+      },
+      "files": [
+        "src/modules/staff/CheckinPage.tsx",
+        "src/data/deskBooking.ts"
+      ]
+    }
+  ],
+  "errors": [],
+  "limits": [
+    "Fictional browser-local fixture only; no real authentication/payments/messages or server/cross-device acceptance.",
+    "One class occurrence cycle; FAQ/modality create/publish cycles and all source-row criteria remain unaccepted.",
+    "No new admissions executed; existing booking/history rows are checked byte-for-byte."
+  ]
+}

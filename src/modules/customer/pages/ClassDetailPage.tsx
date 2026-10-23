@@ -3,7 +3,7 @@ import { Fragment, useMemo, useState, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useTable } from '../../../data/DataContext';
-import type { ClassSessionRow } from '../../../data/schema';
+import type { BaseRow, ClassSessionRow } from '../../../data/schema';
 import { formatDate, formatTime } from '../../../i18n/format';
 import { useLayout } from '../../../layout/useLayout';
 import { tenant } from '../../../tenant/tenant';
@@ -31,6 +31,7 @@ export function ClassDetailPage() {
   const nav = useNavigate();
   const { sections, isVisible } = useLayout(spec);
   const { joined, loading } = useSessionJoined(id);
+  const { rows: templates } = useTable<BaseRow>('class_templates');
   const { rows: myBookings } = useMyBookings();
   const { rows: sessions } = useTable<ClassSessionRow>('class_sessions');
   const { sameDayConflict } = useBookingActions();
@@ -55,6 +56,7 @@ export function ClassDetailPage() {
   const past = new Date(s.ends_at).getTime() < Date.now();
   const cancelled = s.status === 'cancelled';
   const full = left <= 0;
+  const unpublished = m?.active === false || templates.find(template => template.id === s.template_id)?.active === false;
 
   const share = async () => {
     const r = await shareText(`${s.title} · ${formatDate(s.starts_at, lang)} ${formatTime(s.starts_at, lang)} · ${tenant.name}`, window.location.href);
@@ -66,6 +68,7 @@ export function ClassDetailPage() {
     if (cancelled) return null;
     if (past) return <Button block size="lg" variant="secondary" disabled>{t('customer.class.past')}</Button>;
     if (myBooking) return <Button block size="lg" variant="secondary" onClick={() => nav(`/app/booking/${myBooking.id}`)}>{t('customer.class.viewBooking')}</Button>;
+    if (unpublished) return <Button block size="lg" variant="secondary" disabled>{t('site.calendar.status.unpublished')}</Button>;
     if (full) return <Button block size="lg" onClick={() => nav(`/app/waitlist/${s.id}`)}>{myWait && (myWait.status === 'waiting' || myWait.status === 'offered') ? t('customer.class.viewWaitlist') : t('customer.class.joinWaitlist')}</Button>;
     if (conflict) return (
       <div className="stack-sm">
