@@ -38,6 +38,8 @@ import { Icon } from '../../../components/atom/Icon/Icon';
 import { ReceiptAlertResult } from '../../../components/organism/ReceiptAlertResult/ReceiptAlertResult';
 import { ReceiptUpload } from '../../../components/organism/ReceiptUpload/ReceiptUpload';
 import { submitTransfer, type ReceiptImage } from '../../transfers/receipts';
+import { readPackageBookingConfirmation, type PackageConfirmationRequest } from '../packageBookingConfirmation';
+import type { DataProvider } from '../../../data/types';
 
 const spec = canvasSpecs['C-04'];
 /** 0051: a class of the person's package, or something bought now — a trial or individual class, or a 12-class package. */
@@ -89,7 +91,33 @@ export function CheckoutPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [declined, setDeclined] = useState<DeclinedState | null>(null);
-  const [done, setDone] = useState<{ booking: BookingRow | null; pending: boolean; receiptId?:string; receiptContext?:string } | null>(null);
+  const [done, setDone] = useState<{ booking: BookingRow | null; pending: boolean; receiptId?:string; receiptContext?:string; recovered?:boolean; provider: DataProvider; context: string } | null>(null);
+  const recoveryGeneration = useRef(0);
+  const [packageRecovery, setPackageRecovery] = useState<{ provider: DataProvider; context: string; request: PackageConfirmationRequest; phase: 'checking' | 'unconfirmed' | 'missing' | 'existing'; booking?: BookingRow } | null>(null);
+  const recovery = packageRecovery?.provider === data && packageRecovery.context === transferContext ? packageRecovery : null;
+  const shownDone = done?.provider === data && done.context === transferContext ? done : null;
+  const recoveryBlocked = !!recovery && recovery.phase !== 'missing';
+  useEffect(() => {
+    checkoutKey.current = crypto.randomUUID();
+    setPackageRecovery(null); setDone(null); setError(null);
+    return () => { recoveryGeneration.current++; };
+  }, [data, transferContext]);
+
+  const recoverPackageBooking = async (request: PackageConfirmationRequest) => {
+    const provider = data, context = transferContext, generation = ++recoveryGeneration.current;
+    const isCurrent = () => transferLive.current.mounted && transferLive.current.data === provider && transferLive.current.context === context && recoveryGeneration.current === generation;
+    setPackageRecovery({ provider, context, request, phase: 'checking' }); setError(null);
+    try {
+      const result = await readPackageBookingConfirmation(provider, request, isCurrent);
+      if (!isCurrent()) return undefined;
+      if (result.kind === 'saved' && result.source === 'attempt') {
+        setDone({ booking: result.booking, pending: false, recovered: true, provider, context }); setPackageRecovery(null);
+      } else if (result.kind === 'saved') {
+        setPackageRecovery({ provider, context, request, phase: 'existing', booking: result.booking });
+      } else setPackageRecovery({ provider, context, request, phase: 'missing' });
+      return result;
+    } catch { if (isCurrent()) setPackageRecovery({ provider, context, request, phase: 'unconfirmed' }); return undefined; }
+  };
 
   const conflict = useMemo(() => joined ? sameDayConflict(myBookings, sessions, joined.session) : null, [joined, myBookings, sessions, sameDayConflict]);
   const selectedItem=review.quote?quotedItem(review.quote):isPass(kind)?priceOf(kind):null;
@@ -107,6 +135,7 @@ export function CheckoutPage() {
   const confirm = async (): Promise<string> => {
     if (!joined) return 'unavailable';
     if(confirmBusy.current)return 'busy';
+    if(recoveryBlocked)return 'confirmation_unverified';
     if(isPass(kind)&&!review.available)return 'quote_changed';
     const transferProvider=data,transferOwnerContext=transferContext;
     const transferValid=()=>transferLive.current.mounted&&transferLive.current.data===transferProvider&&transferLive.current.context===transferOwnerContext;
@@ -129,7 +158,7 @@ export function CheckoutPage() {
         const item=selectedItem!;
         try {
           const receipt=await submitTransfer(data,{key:transferKey.current,userId:user.id,sessionId:joined.session.id,matNumber:yoga?mat:null,productId:`plan_${item.id}`,productName:item.name,amount,classes:item.classes??1,expiresAt:review.quote!.entitlementExpiresAt!,image:receiptImage,quote:review.quote!},()=>!transferValid());
-          if(transferValid())setDone({booking:null,pending:true,receiptId:receipt.id,receiptContext:transferOwnerContext});return 'fictional transfer pending; no active booking or hold';
+          if(transferValid())setDone({booking:null,pending:true,receiptId:receipt.id,receiptContext:transferOwnerContext,provider:data,context:transferOwnerContext});return 'fictional transfer pending; no active booking or hold';
         }catch{if(transferValid())setTransferError(true);return 'transfer_save_failed';}
       }
       const outcome = await data.atomic(async transaction => {
@@ -167,10 +196,16 @@ export function CheckoutPage() {
       assertAdmissionContext({isCurrent:transferValid});
       if (!outcome){checkoutKey.current=crypto.randomUUID();return 'declined';}
       setDeclined(null);
-      setDone(outcome);
+      setPackageRecovery(null); setDone({ ...outcome, provider:data, context:transferOwnerContext });
       return outcome.booking ? `booked ${outcome.booking.id}` : 'payment pending; no classes activated or spot held';
     } catch (e) {
-      const code = trialErrorKey(e) ?? ((e as Error).message.startsWith('mat_') ? 'mat' : (e as Error).message === 'session_full' ? 'full' : 'unavailable');
+      if (!transferValid()) return 'admission_context_changed';
+      const failure = e instanceof Error ? e.message : '';
+      if (kind === 'package' && !['session_full', 'session_unavailable', 'package_balance', 'same_day_conflict'].includes(failure) && !failure.startsWith('mat_')) {
+        const recovered = await recoverPackageBooking({ userId:user.id, sessionId:joined.session.id, checkoutKey:checkoutKey.current });
+        return recovered?.kind === 'saved' && recovered.source === 'attempt' ? `booked ${recovered.booking.id}` : 'package_confirmation_checked';
+      }
+      const code = trialErrorKey(e) ?? (failure.startsWith('mat_') ? 'mat' : failure === 'session_full' ? 'full' : failure === 'same_day_conflict' ? 'conflict' : 'unavailable');
       setError(code);
       return code;
     } finally { setBusy(false);confirmBusy.current=false; }
@@ -261,11 +296,12 @@ export function CheckoutPage() {
         {transferError&&<Notice tone="danger">{t('transfers.submitError')}</Notice>}
         {error?.startsWith('customer.trialGuard.')&&<Notice tone="warn">{t(error)}</Notice>}
         {error === 'mat' && <Notice tone="warn">{t('site.mat.error')}</Notice>}
-        {alreadyBooked && <Notice tone="warn">{t('customer.home.booked')}</Notice>}
+        {alreadyBooked && !recovery && !shownDone && <Notice tone="info" action={myBookings.some(b => b.session_id === id && b.paid_with === 'package' && occupiesMat(b)) ? <Button variant="secondary" onClick={() => recoverPackageBooking({ userId:user.id, sessionId:s.id })}>{t('customer.class.viewBooking')}</Button> : undefined}>{t('customer.home.booked')}</Notice>}
+        {recovery && <Notice tone={recovery.phase === 'existing' ? 'success' : recovery.phase === 'checking' ? 'info' : 'warn'} title={t(`customer.checkout.recovery.${recovery.phase}`)} action={recovery.phase === 'checking' ? undefined : recovery.phase === 'existing' && recovery.booking ? <Button variant="secondary" onClick={() => nav(`/app/booking/${recovery.booking!.id}`)}>{t('customer.class.viewBooking')}</Button> : recovery.phase === 'missing' && recovery.request.checkoutKey ? <Button variant="secondary" disabled={busy || kind !== 'package' || alreadyBooked || !admissionAvailable} onClick={confirm}>{t('customer.checkout.recovery.retryBooking')}</Button> : <Button variant="secondary" onClick={() => recoverPackageBooking(recovery.request)}>{t('customer.checkout.recovery.checkAgain')}</Button>}>{t(`customer.checkout.recovery.${recovery.phase}.body`)}</Notice>}
         {error === 'full' && <Notice tone="warn" title={t('customer.checkout.race.title')} action={<Button size="sm" onClick={() => nav(`/app/waitlist/${s.id}`)}>{t('core.common.waitlist')}</Button>}>{t('customer.checkout.race.body')}</Notice>}
-        {(!admissionAvailable || error === 'unavailable') && <Notice tone="danger" title={t('core.common.error')}>{t('customer.checkout.unavailable')}</Notice>}
+        {!shownDone && recovery?.phase !== 'existing' && (!admissionAvailable || error === 'unavailable') && <Notice tone="danger" title={t('core.common.error')}>{t('customer.checkout.unavailable')}</Notice>}
         {(error === 'conflict' || conflict) && <Notice tone="warn">{t('customer.book.oneADay')} {conflict && <Link to={`/app/class/${conflict}`}>{t('customer.class.seeOther')}</Link>}</Notice>}
-        <Button block size="lg" loading={busy} disabled={!admissionAvailable||(kind==='trial'&&ent.trial.status!=='eligible')||(isPass(kind)&&!review.available)||(method==='transfer'&&amount>0&&!receiptImage) || !!conflict || alreadyBooked || (yoga && !matValid) || s.status !== 'scheduled' || new Date(s.starts_at).getTime() <= Date.now()} onClick={confirm}>
+        <Button block size="lg" loading={busy} disabled={recoveryBlocked||!admissionAvailable||(kind==='trial'&&ent.trial.status!=='eligible')||(isPass(kind)&&!review.available)||(method==='transfer'&&amount>0&&!receiptImage) || !!conflict || alreadyBooked || (yoga && !matValid) || s.status !== 'scheduled' || new Date(s.starts_at).getTime() <= Date.now()} onClick={confirm}>
           {isPass(kind)&&!review.available?t('quotes.review'):method==='transfer'&&amount>0 ? t('transfers.submit') : amount > 0 ? (methodOpt.provider === 'wompi' ? t('customer.checkout.payWompi', { amount: formatCOP(amount, lang) }) : t('customer.checkout.confirmManual', { amount: formatCOP(amount, lang) })) : t('customer.checkout.confirm')}
         </Button>
         <p className="xs muted" style={{ textAlign: 'center' }}>{t('customer.checkout.policy', { h: policy.cancelWindowHours })}</p>
@@ -280,14 +316,14 @@ export function CheckoutPage() {
       {isPass(kind)&&<QuoteNotice catalog={catalog} review={review}/>}
       {/* ≥ 900 px: what you are booking (class + mat) on the left, how you pay + confirm on the right (D-0006). */}
       <SplitSections narrowClassName="stack" className="cust-checkout" names={sections.filter(isVisible)} render={(n) => SECTIONS[n]?.() ?? null} side={(n) => n !== 'ClassSummary'} />
-      <Drawer open={!!done&&(!done.receiptId||done.receiptContext===transferContext)} onClose={() => done && nav(done.booking ? `/app/booking/${done.booking.id}` : '/app/classes')} title={t(done?.pending ? method==='transfer'?'transfers.pending':'customer.checkout.pending.title' : 'customer.book.ok')} side="bottom">
-        {done && (
+      <Drawer open={!!shownDone&&(!shownDone.receiptId||shownDone.receiptContext===transferContext)} onClose={() => shownDone && nav(shownDone.booking ? `/app/booking/${shownDone.booking.id}` : '/app/classes')} title={t(shownDone?.pending ? method==='transfer'?'transfers.pending':'customer.checkout.pending.title' : 'customer.book.ok')} side="bottom">
+        {shownDone && (
           <div className="stack">
             <ClassCard variant="next" title={s.title} teacher={teacherName(joined)} room={roomName(joined)} startsAt={s.starts_at} endsAt={s.ends_at} tone={toneOf(joined)} booked={s.booked_count} capacity={s.capacity} />
-            {done.booking?.mat_number && <p className="small">{t('site.mat.confirmed', { n: done.booking.mat_number })}</p>}
-            {done.pending ? <Notice tone="warn" title={t(method==='transfer'?'transfers.pending':'customer.checkout.pending.title')}>{t(method==='transfer'?'transfers.pendingBody':'customer.checkout.pending.body')}</Notice> : <p className="small muted">{t('customer.checkout.success.body', { min: durationMin(joined) })}</p>}
-            {done.receiptId&&<ReceiptAlertResult receiptId={done.receiptId}/>}
-            {done.booking && <Button block size="lg" onClick={() => nav(`/app/booking/${done.booking!.id}`)}>{t('customer.class.viewBooking')}</Button>}
+            {shownDone.booking?.mat_number && <p className="small">{t('site.mat.confirmed', { n: shownDone.booking.mat_number })}</p>}
+            {shownDone.pending ? <Notice tone="warn" title={t(method==='transfer'?'transfers.pending':'customer.checkout.pending.title')}>{t(method==='transfer'?'transfers.pendingBody':'customer.checkout.pending.body')}</Notice> : <p className="small muted">{shownDone.recovered ? t('customer.checkout.recovery.saved.body') : t('customer.checkout.success.body', { min: durationMin(joined) })}</p>}
+            {shownDone.receiptId&&<ReceiptAlertResult receiptId={shownDone.receiptId}/>}
+            {shownDone.booking && <Button block size="lg" onClick={() => nav(`/app/booking/${shownDone.booking!.id}`)}>{t('customer.class.viewBooking')}</Button>}
             <Button block variant="ghost" onClick={() => nav('/app/schedule')}>{t('customer.class.backToSchedule')}</Button>
           </div>
         )}
