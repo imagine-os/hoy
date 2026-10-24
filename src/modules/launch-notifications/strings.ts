@@ -1,0 +1,22 @@
+import type { StringTable } from '../../i18n/types';
+export const strings: StringTable = {
+  'launchNotifications.title': { es: 'Vista previa de email sin enviar', en: 'Unsent email preview' },
+  'launchNotifications.dismiss': { es: 'Descartar', en: 'Dismiss' },
+  'launchNotifications.boundary': { es: 'Solo una vista previa local. No se envió ningún email ni se creó una notificación persistente.', en: 'Local preview only. No email was sent and no persistent notification was created.' },
+  'launchNotifications.loading': { es: 'Verificando la vista previa sin enviar…', en: 'Checking the unsent preview…' },
+  'launchNotifications.error': { es: 'No se pudo verificar la vista previa. La acción original no se modifica.', en: 'The preview could not be verified. The original action is unchanged.' },
+  'launchNotifications.unavailable': { es: 'Vista previa no disponible', en: 'Preview unavailable' },
+  'launchNotifications.reason.source-unavailable': { es: 'No hay un resultado exacto observado para crear esta vista previa. No se busca un pago o una reserva reciente por aproximación.', en: 'No exact observed result is available for this preview. A recent payment or booking is never guessed.' },
+  'launchNotifications.reason.source-unverified': { es: 'El resultado guardado no coincide con esta acción y esta cuenta.', en: 'The saved result does not match this action and account.' },
+  'launchNotifications.reason.recipient-unavailable': { es: 'No se pudo verificar una sola cuenta destinataria con email válido.', en: 'A single recipient account with a valid email could not be verified.' },
+  'launchNotifications.reason.template-unavailable': { es: 'No se pudo verificar una plantilla guardada compatible y completa para este evento.', en: 'A complete compatible saved template could not be verified for this event.' },
+  'launchNotifications.reason.unsupported-provider': { es: 'Esta vista previa solo funciona con el proveedor ficticio local.', en: 'This preview is available only with the local fictional provider.' },
+  'launchNotifications.reason.policy-pending': { es: 'La definición de este evento sigue pendiente. No se inventa un envío ni una política.', en: 'This event definition is still pending. No send or policy is invented.' },
+  'launchNotifications.recipient': { es: 'Destinatario guardado', en: 'Saved recipient' },
+  'launchNotifications.recipientLocale': { es: 'Idioma guardado', en: 'Saved locale' },
+  'launchNotifications.demoRecipient': { es: 'Código ficticio actual. No hay una dirección de email verificada.', en: 'Current fictional code. No verified email address is selected.' },
+  'launchNotifications.saved': { es: 'Plantilla guardada · v{version}', en: 'Saved template · v{version}' },
+  'launchNotifications.inactive': { es: 'La plantilla guardada está inactiva. Solo es una vista previa sin enviar.', en: 'Saved template is inactive. This is only an unsent preview.' },
+  'launchNotifications.active': { es: 'La plantilla guardada está activa; eso no demuestra un envío.', en: 'The saved template is active; this does not establish a send.' },
+  'launchNotifications.builtin': { es: 'Vista previa mock integrada · contrato {revision}. No es una plantilla editable guardada.', en: 'Built-in mock preview · contract {revision}. This is not a saved editable template.' },
+};

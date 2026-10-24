@@ -1,9 +1,9 @@
 import { Suspense } from 'react';
-import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { ThemeProvider } from '../design/ThemeProvider';
 import { I18nProvider } from '../i18n/I18nProvider';
-import { SessionProvider } from '../auth/SessionProvider';
-import { DataProviderRoot } from '../data/DataContext';
+import { SessionProvider, useSession } from '../auth/SessionProvider';
+import { DataProviderRoot, useData } from '../data/DataContext';
 import { RequireRole } from '../auth/RequireRole';
 import { DevTools } from '../dev/DevTools';
 import { getRedirects, getRoutes, getStrings } from './registry';
@@ -14,6 +14,15 @@ import { RouteTitle } from './RouteTitle';
 import { publishManifest } from './manifest';
 import { PolicySync } from '../modules/customer/policy';
 import { Toasts } from '../components/molecule/Toast/Toast';
+import { LaunchNotificationHost } from '../modules/launch-notifications';
+import { tenant } from '../tenant/tenant';
+
+/** Preview-only, in-memory action handoff. It never starts a send or changes route/session state. */
+function LaunchNotificationBridge() {
+  const provider = useData(), { user, role } = useSession(), location = useLocation();
+  return <LaunchNotificationHost provider={provider} tenantId={tenant.id} actorId={user.id} role={role} path={location.pathname + location.search} />;
+}
+
 
 export function App() {
   const allRoutes = getRoutes();
@@ -43,6 +52,7 @@ export function App() {
               <DevTools />
               {/* The one toast stack; anything calls toast() from src/app/toast.ts. */}
               <Toasts />
+              <LaunchNotificationBridge />
             </HashRouter>
           </SessionProvider>
         </DataProviderRoot>
