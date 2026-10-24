@@ -1,0 +1,6 @@
+/* Local status stays above the existing mobile dock; opening a preview is always explicit. */
+.launch-notification-control { position: fixed; z-index: 40; right: var(--sp-md); bottom: calc(var(--h-bottomnav) + var(--sp-md) + env(safe-area-inset-bottom)); max-width: calc(100vw - var(--sp-md) * 2); display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-xs); padding: var(--sp-sm); border: 1px solid var(--color-card-border); border-radius: var(--r-md); background: var(--color-surface); box-shadow: var(--shadow-card); }
+.launch-notification-control p { flex-basis: 100%; margin: 0; }
+.launch-notification-control .btn-label { white-space: normal; overflow-wrap: anywhere; }
+[data-launch-preview] { min-width: 0; overflow-wrap: anywhere; }
+@media (min-width: 900px) { .launch-notification-control { bottom: var(--sp-md); } }

@@ -16,6 +16,7 @@ import { SIGNUP_LIMITS, signupErrors } from './signupValidation';
 import { customerAuthLink, customerReturn } from './customerReturn';
 import { registerMockCustomer } from './mockRegistration';
 import { tenant } from '../../../tenant/tenant';
+import { publishLaunchNotification } from '../../launch-notifications';
 
 interface Form { first: string; last: string; email: string; whatsapp: string; password: string; birthday: string; ecName: string; ecPhone: string; photo: string | null; consent: boolean; marketing: boolean }
 const EMPTY: Form = { first: '', last: '', email: '', whatsapp: `${tenant.dialCode} `, password: '', birthday: '', ecName: '', ecPhone: `${tenant.dialCode} `, photo: null, consent: false, marketing: false };
@@ -109,9 +110,11 @@ export function SignUpPage() {
       // Intentionally omit the validated demo password from command arguments and receipts.
       const userId = await registerMockCustomer(data, { first: f.first, last: f.last, email: f.email, whatsapp: f.whatsapp, birthday: f.birthday, ecName: f.ecName, ecPhone: f.ecPhone, photo: f.photo, consent: currentConsent, legal, marketing: f.marketing, invite }, request.current, () => !isCurrent());
       if (!isCurrent()) return;
+      const targetPath = customerReturn(params.get('next')) ?? '/app';
+      publishLaunchNotification(data, { type: 'welcome', ownerId: userId, requestId: request.current }, { tenantId: tenant.id, actorId: user.id, role, sourcePath: location.pathname + location.search, targetPath, isCurrent });
       switchUser(userId);
       if (!isCurrent()) return;
-      nav(customerReturn(params.get('next')) ?? '/app');
+      nav(targetPath);
     } catch (error) {
       if (!isCurrent()) return;
       if (error instanceof Error && error.message === 'registration_duplicate') setDup(true);

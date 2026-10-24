@@ -1,3 +1,5 @@
+NT-02: five canonical action-to-unsent-preview producers implemented locally; three event mappings remain pending policy/semantics, and receipt/cancellation paths are preserved. Contract/domain and canonical payment gates passed; remaining build/auth/reschedule/review gates pending. No delivery or whole-row completion claim. See changelog/0195-unsent-event-previews.md.
+
 PR88 verification repair: preserve signup drafts across public-session serialization rewrites in legal popups. Retain genuine cross-tab logout and duplicate-charge guards; repair valid-room, cold-persona, independent-purchase and artifact-name fixtures without relaxing assertions. See frontend-completion/public-session-popup-noop.md.
 
 CU-04 remote demo signout: close mounted private tabs and invalidate pending signup/zero-charge checkout only on current explicit remote logout. Keep persona switches independent and retained history intact; real session revocation/email delivery remain separate. See frontend-completion/remote-demo-signout.md.

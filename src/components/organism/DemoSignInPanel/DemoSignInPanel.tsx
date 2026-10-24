@@ -2,6 +2,7 @@ import { useState } from 'react';
 import {useI18n} from '../../../i18n/I18nProvider';
 import type {DemoSignInPolicy,DemoSignInState} from '../../../modules/customer/auth/mockSignIn';
 import {DEMO_MEMBER_EMAIL} from '../../../modules/customer/auth/mockSignIn';
+import {DemoSignInNotificationPreview} from '../../../modules/launch-notifications';
 import {Card} from '../../molecule/Card/Card';
 import {Notice} from '../../molecule/Notice/Notice';
 import {OtpInput} from '../../molecule/OtpInput/OtpInput';
@@ -33,6 +34,7 @@ export function DemoSignInPanel({state,policy,now,disabled,onSend,onVerify,onGoo
      {state.wrong>0&&<Notice tone="warn">{t('customer.signin.preview.wrong',{n:Math.max(0,policy.attempts-state.wrong)})}</Notice>}
     </>}
    </div>
+   <DemoSignInNotificationPreview key={`${state.code}:${state.expiresAt}`} active={!disabled&&state.status==='active'} code={state.code} expiresAt={state.expiresAt} now={now}/>
    {state.status==='active'&&<OtpInput value={entered} onChange={setEntered} onComplete={verify} disabled={disabled} invalid={state.wrong>0} label={t('customer.signin.preview.enter')}/>}
    {state.status==='google'?<section className="stack" aria-label={t('customer.signin.preview.googleTitle')}>
     <Notice tone="info" title={t('customer.signin.preview.googleTitle')}>{t('customer.signin.preview.googleBody')}</Notice>

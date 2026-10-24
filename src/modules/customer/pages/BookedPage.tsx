@@ -4,8 +4,10 @@ import { useContact, pendingSuffix } from '../../admin/settings';
 import { useCustomerRows } from '../useCustomerRows';
 import {CustomerCancellationReview} from '../../../components/organism/CustomerCancellationReview/CustomerCancellationReview';
 import {useCustomerCancellation} from '../useCustomerCancellation';
-import { useMemo, useRef, useState, type ReactNode } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useData } from '../../../data/DataContext';
+import { publishLaunchNotification } from '../../launch-notifications';
 import { useI18n } from '../../../i18n/I18nProvider';
 import type { BookingRow, ClassLedgerRow, PaymentRow, ClassSessionRow, ModalityRow, TeacherRow, RoomRow } from '../../../data/schema';
 import { useSession } from '../../../auth/SessionProvider';
@@ -175,6 +177,16 @@ export function BookedPage({ change = false }: { change?: boolean }) {
 function ChangeSheet({ open, onClose, booking, joined, inside, deadline, onResult }: { open: boolean; onClose: () => void; booking: BookingRow; joined: NonNullable<ReturnType<typeof useSessionJoined>['joined']>; inside: boolean; deadline: Date; onResult: (f: { tone: 'success' | 'warn'; text: string }) => void }) {
   const { t, lang } = useI18n();
   const nav = useNavigate();
+  const data = useData();
+  const { user, role } = useSession();
+  const location = useLocation();
+  const sourcePath = location.pathname + location.search;
+  const publicationContext = useRef({ data, actorId: user.id, role, sourcePath, mounted: true });
+  publicationContext.current = { data, actorId: user.id, role, sourcePath, mounted: true };
+  useEffect(() => {
+    publicationContext.current.mounted = true;
+    return () => { publicationContext.current.mounted = false; };
+  }, []);
   const { reschedule } = useBookingActions();
   const allSessions = useAllSessionsJoined();
   const { ledger, payments } = useEntitlements();
@@ -205,7 +217,17 @@ function ChangeSheet({ open, onClose, booking, joined, inside, deadline, onResul
   const doMove = async (toId: string) => {
     const to = alts.find((a) => a.session.id === toId)?.session; if (!to) return;
     setBusy(true); setErr(null);
-    try { const next = await reschedule(booking, s, to); close(); nav(`/app/booking/${next.id}`, { replace: true }); }
+    try {
+      const next = await reschedule(booking, s, to);
+      publishLaunchNotification(data, { type: 'rescheduled', ownerId: user.id, oldBookingId: booking.id, newBookingId: next.id }, {
+        tenantId: tenant.id, actorId: user.id, role, sourcePath, targetPath: `/app/booking/${next.id}`,
+        isCurrent: () => {
+          const current = publicationContext.current;
+          return current.mounted && current.data === data && current.actorId === user.id && current.role === role && current.sourcePath === sourcePath;
+        },
+      });
+      close(); nav(`/app/booking/${next.id}`, { replace: true });
+    }
     catch (e) {
       const key = e instanceof Error && e.message === 'booking_contact_required' ? 'customer.book.contactRequired' : e instanceof Error && e.message === 'reschedule_cutoff' ? 'customer.change.move.closed' : e instanceof Error && e.message === 'same_day_conflict' ? 'customer.change.move.conflict' : e instanceof Error && (e.message === 'package_expired' || e.message === 'package_frozen' || e.message === 'reschedule_entitlement_unresolved') ? 'customer.change.move.validity' : 'customer.change.move.failed';
       setErr(t(key, { h: RESCHEDULE_CUTOFF_HOURS }));

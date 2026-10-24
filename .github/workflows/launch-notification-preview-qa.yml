@@ -1,0 +1,78 @@
+name: Unsent launch notification preview QA
+on:
+  pull_request:
+    paths:
+      - 'src/app/App.tsx'
+      - 'src/modules/launch-notifications/**'
+      - 'src/components/organism/LaunchNotificationPreview/**'
+      - 'src/components/organism/DemoSignInPanel/**'
+      - 'src/components/organism/EmailPreview/**'
+      - 'src/modules/customer/auth/**'
+      - 'src/modules/customer/pages/CheckoutPage.tsx'
+      - 'src/modules/customer/pages/BookedPage.tsx'
+      - 'src/modules/customer/specs.ts'
+      - 'src/data/**'
+      - 'src/auth/**'
+      - 'src/cms/**'
+      - 'scripts/*nt02*'
+      - 'scripts/test-launch-notifications.mjs'
+      - 'scripts/check-cms-contracts.mjs'
+      - 'scripts/qa-pending-payments-dev.mjs'
+      - '.github/workflows/launch-notification-preview-qa.yml'
+permissions:
+  contents: read
+jobs:
+  unsent-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Verify read-only event contracts and retained command domains
+        run: |
+          node scripts/test-launch-notifications.mjs
+          node scripts/check-cms-contracts.mjs --self-test
+          node scripts/test-signup-consent.mjs
+          node scripts/test-reschedule-atomic.mjs
+          node scripts/test-reschedule-cutoff.mjs
+          node scripts/test-direct-reschedule-terms.mjs
+      - name: Verify actual action-to-unsent-preview journeys
+        env:
+          CHROMIUM_PATH: /usr/bin/google-chrome
+        run: |
+          QA_PORT=5791 QA_CACHE_DIR="$RUNNER_TEMP/nt02-deps" node scripts/qa-pending-payments-dev.mjs > "$RUNNER_TEMP/nt02-dev.log" 2>&1 &
+          dev_pid=$!
+          npm run preview -- --host 127.0.0.1 --port 5792 --strictPort > "$RUNNER_TEMP/nt02-preview.log" 2>&1 &
+          preview_pid=$!
+          trap 'kill "$dev_pid" "$preview_pid" 2>/dev/null || true' EXIT
+          for port in 5791 5792; do
+            ready=0
+            for i in $(seq 1 60); do
+              if curl -fsS http://127.0.0.1:$port/ >/dev/null; then ready=1; break; fi
+              sleep 1
+            done
+            if [ "$ready" != 1 ]; then cat "$RUNNER_TEMP/nt02-dev.log" "$RUNNER_TEMP/nt02-preview.log"; exit 1; fi
+          done
+          QA_BASE=http://127.0.0.1:5791 QA_OUTPUT="$RUNNER_TEMP/nt02-evidence/welcome" node scripts/test-nt02-auth-welcome.mjs
+          QA_BASE=http://127.0.0.1:5791 QA_OUTPUT="$RUNNER_TEMP/nt02-evidence/signin" node scripts/test-nt02-auth-signin.mjs
+          QA_BASE=http://127.0.0.1:5791 QA_OUTPUT="$RUNNER_TEMP/nt02-evidence/payments" node scripts/test-nt02-payment-ui.mjs
+          QA_BASE=http://127.0.0.1:5792 QA_OUTPUT="$RUNNER_TEMP/nt02-evidence/reschedule" node scripts/test-nt02-reschedule-ui.mjs
+          QA_DEV_BASE=http://127.0.0.1:5791 QA_OUTPUT="$RUNNER_TEMP/nt02-evidence/reschedule-context" node scripts/test-nt02-reschedule-context.mjs
+          QA_BASE=http://127.0.0.1:5792 QA_OUTPUT="$RUNNER_TEMP/nt02-evidence/retained-consent" node scripts/test-signup-consent-ui.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nt02-preview-${{ github.event.pull_request.head.sha }}
+          path: |
+            ${{ runner.temp }}/nt02-evidence/
+            ${{ runner.temp }}/nt02-dev.log
+            ${{ runner.temp }}/nt02-preview.log
+          retention-days: 7

@@ -8,7 +8,7 @@ import { findPendingDeskRequest, makePendingDeskIntent, type DeskIntentScope } f
 import { checkSaleQuote, quotedItem, readPaymentQuote } from '../../../data/operationalQuotes';
 import { SessionEditorial } from '../../../components/molecule/SessionEditorial/SessionEditorial';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useSession } from '../../../auth/SessionProvider';
 import { useData, useTable } from '../../../data/DataContext';
@@ -44,6 +44,7 @@ import { submitTransfer, type ReceiptImage } from '../../transfers/receipts';
 import { readPackageBookingConfirmation, type PackageConfirmationRequest } from '../packageBookingConfirmation';
 import type { DataProvider } from '../../../data/types';
 import { readDeskBookingConfirmation } from '../../transfers/deskSettlement';
+import { LaunchNotificationPreview, buildLaunchNotificationPreview, launchSourceUnavailable, type LaunchPreviewResult } from '../../launch-notifications';
 
 const spec = canvasSpecs['C-04'];
 /** 0051: a class of the person's package, or something bought now — a trial or individual class, or a 12-class package. */
@@ -55,6 +56,8 @@ const isPass = (c: Choice): c is 'trial' | 'single' | 'pack12' | 'pack12_smtc' =
 export function CheckoutPage() {
   const { id } = useParams();
   const [params] = useSearchParams();
+  const location = useLocation(), notificationPath = location.pathname + location.search;
+  const notificationPathLive = useRef(notificationPath); notificationPathLive.current = notificationPath;
   const { t, bi, lang } = useI18n();
   const nav = useNavigate();
   const data = useData();
@@ -95,6 +98,14 @@ export function CheckoutPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [declined, setDeclined] = useState<DeclinedState | null>(null);
+  const [paymentPreview, setPaymentPreview] = useState<{ provider: DataProvider; context: string; path: string; selection: string; result: LaunchPreviewResult } | null>(null);
+  const paymentPreviewGeneration = useRef(0);
+  // Entitlement/catalog refresh can change the implicit default after a committed purchase.
+  // Only explicit selection state invalidates its immutable payment preview.
+  const paymentPreviewSelection = JSON.stringify([choice, method, simulateDecline, mat]);
+  const paymentSelectionLive = useRef(paymentPreviewSelection); paymentSelectionLive.current = paymentPreviewSelection;
+  const currentPaymentPreview = paymentPreview?.provider === data && paymentPreview.context === transferContext && paymentPreview.path === notificationPath && paymentPreview.selection === paymentPreviewSelection ? paymentPreview : null;
+  useEffect(() => { paymentPreviewGeneration.current++; setPaymentPreview(null); }, [paymentPreviewSelection]);
   const [done, setDone] = useState<{ booking: BookingRow | null; pending: boolean; deskPaymentId?: string; receiptId?:string; receiptContext?:string; recovered?:boolean; provider: DataProvider; context: string } | null>(null);
   const recoveryGeneration = useRef(0);
   const [packageRecovery, setPackageRecovery] = useState<{ provider: DataProvider; context: string; request: PackageConfirmationRequest; knownDuplicate?: boolean; phase: 'checking' | 'unconfirmed' | 'missing' | 'existing' | 'duplicate'; booking?: BookingRow } | null>(null);
@@ -160,8 +171,8 @@ export function CheckoutPage() {
 
   useEffect(() => {
     checkoutKey.current = crypto.randomUUID();
-    setPackageRecovery(null); setDone(null); setError(null);
-    return () => { recoveryGeneration.current++; };
+    setPackageRecovery(null); setDone(null); setError(null); setPaymentPreview(null);
+    return () => { recoveryGeneration.current++; paymentPreviewGeneration.current++; };
   }, [data, transferContext]);
 
   const recoverPackageBooking = async (request: PackageConfirmationRequest, knownDuplicate = false) => {
@@ -203,8 +214,31 @@ export function CheckoutPage() {
     const transferValid=()=>transferLive.current.mounted&&transferLive.current.data===transferProvider&&transferLive.current.context===transferOwnerContext;
     const cashRequest=method==='cash'&&isPass(kind);
     const requestValid=()=>transferValid()&&(!cashRequest||deskLive.current.scope===deskScopeKey&&deskLive.current.method==='cash');
+    const previewPath = notificationPath, previewOwnerId = user.id, previewRole = role, previewSelection = paymentPreviewSelection;
+    const previewGeneration = ++paymentPreviewGeneration.current;
+    const previewCurrent = () => transferValid() && notificationPathLive.current === previewPath && paymentSelectionLive.current === previewSelection && paymentPreviewGeneration.current === previewGeneration;
+    // Ancillary read-only preview work must never enter the financial failure/retry path.
+    const previewCommittedPayment = (observed: PaymentRow | null, event: 'payment-confirmed' | 'payment-rejected') => {
+      if (!previewCurrent()) return;
+      const update = (result: LaunchPreviewResult) => { if (previewCurrent()) setPaymentPreview({ provider: transferProvider, context: transferOwnerContext, path: previewPath, selection: previewSelection, result }); };
+      const unavailable = () => update(launchSourceUnavailable(event));
+      if (!observed) { unavailable(); return; }
+      update({ status: 'loading', event });
+      void (async () => {
+        try {
+          const saved = await transferProvider.get<PaymentRow>('payments', observed.id);
+          if (!previewCurrent()) return;
+          if (!saved || saved.id !== observed.id || saved.tenant_id !== tenant.id || saved.user_id !== previewOwnerId
+            || saved.status !== (event === 'payment-confirmed' ? 'approved' : 'declined') || JSON.stringify(saved) !== JSON.stringify(observed)) { unavailable(); return; }
+          const result = await buildLaunchNotificationPreview(transferProvider, { type: event, ownerId: previewOwnerId, paymentId: saved.id }, {
+            tenantId: tenant.id, actorId: previewOwnerId, role: previewRole, path: previewPath,
+          }, { isCurrent: previewCurrent });
+          update(result);
+        } catch { unavailable(); }
+      })();
+    };
     confirmBusy.current=true;
-    setBusy(true); setError(null); setTransferError(false);
+    setBusy(true); setError(null); setTransferError(false); setPaymentPreview(null);
     try {
       const control={isCurrent:transferValid};
       if(method==='cash'&&isPass(kind)){
@@ -254,6 +288,7 @@ export function CheckoutPage() {
           if(transferValid())setDone({booking:null,pending:true,receiptId:receipt.id,receiptContext:transferOwnerContext,provider:data,context:transferOwnerContext});return 'fictional transfer pending; no active booking or hold';
         }catch{if(transferValid())setTransferError(true);return 'transfer_save_failed';}
       }
+      let observedPayment: PaymentRow | null = null;
       const outcome = await data.atomic(async transaction => {
         await requireSessionAdmission(transaction,joined.session.id,{isCurrent:transferValid});
         await requireExistingBookingContact(transaction,user.id,tenant.id,{isCurrent:transferValid});
@@ -267,6 +302,8 @@ export function CheckoutPage() {
           let result: WompiResult | undefined;
           if (methodOpt.provider === 'wompi') result = await wompiCheckout({ amount, method: method as ElectronicMethod, simulate: simulateDecline ? 'declined' : 'approved' });
           const payment = await recordPayment(transaction, { userId: user.id, planId: `plan_${item.id}`, amount, method, result, ivaRate: policy.ivaRate,quote:review.quote! });
+          // Ancillary observation must never reject the financial callback.
+          try { observedPayment = structuredClone(payment); } catch { observedPayment = null; }
           assertAdmissionContext({isCurrent:transferValid});
           await requireSessionAdmission(transaction,joined.session.id,{isCurrent:transferValid});
           if (result?.status === 'declined') {
@@ -289,6 +326,8 @@ export function CheckoutPage() {
         return { booking, pending };
       },{idempotencyKey:`checkout:${user.id}:${checkoutKey.current}`});
       assertAdmissionContext({isCurrent:transferValid});
+      // Cached outcomes skip the callback; without an observed exact payment, never infer a source.
+      if (amount > 0 && isPass(kind) && !outcome?.pending) previewCommittedPayment(observedPayment, outcome ? 'payment-confirmed' : 'payment-rejected');
       if (!outcome){checkoutKey.current=crypto.randomUUID();return 'declined';}
       setDeclined(null);
       setPackageRecovery(null); setDone({ ...outcome, provider:data, context:transferOwnerContext });
@@ -387,7 +426,10 @@ export function CheckoutPage() {
       <OrderSummary lines={[{ label: bi(selectedItem?.name??priceOf(kind as 'single').name), amount }]} taxRate={policy.ivaRate} subtotalLabel={t('customer.checkout.subtotal')} taxLabel={t('customer.checkout.iva')} totalLabel={t('customer.checkout.total')} note={t(method==='transfer'?'transfers.summary':'customer.checkout.receiptNote')} />
     ),
     ConfirmButton: () => declined ? (
+      <div className="stack">
+      {currentPaymentPreview && <LaunchNotificationPreview result={currentPaymentPreview.result} />}
       <DeclinedBlock state={declined} amount={amount} onRetry={(m) => { setMethod(m); setDeclined(null); setSimulateDecline(false); }} onRelease={() => nav(`/app/class/${s.id}`)} onExpired={() => setDeclined(null)} />
+      </div>
     ) : (
       <div className="stack-sm cust-sticky">
         {claimDeskUnsupported&&<Notice tone="warn">{deskText.claim}</Notice>}
@@ -415,12 +457,14 @@ export function CheckoutPage() {
     <div className="container page cust-page">
       <PageHead back={`/app/class/${s.id}`} title={t('customer.checkout.title')} sub={claimId ? t('customer.checkout.claiming') : undefined} />
       <Notice tone="info">{t('customer.checkout.demo')}</Notice>
-      {isPass(kind)&&<QuoteNotice catalog={catalog} review={review}/>}
+      {!shownDone && !declined && currentPaymentPreview && <LaunchNotificationPreview result={currentPaymentPreview.result} />}
+      {isPass(kind)&&<QuoteNotice catalog={catalog} review={{ ...review, review: () => { paymentPreviewGeneration.current++; setPaymentPreview(null); review.review(); } }}/>}
       {/* ≥ 900 px: what you are booking (class + mat) on the left, how you pay + confirm on the right (D-0006). */}
       <SplitSections narrowClassName="stack" className="cust-checkout" names={sections.filter(isVisible)} render={(n) => SECTIONS[n]?.() ?? null} side={(n) => n !== 'ClassSummary'} />
       <Drawer open={!!shownDone&&(!shownDone.receiptId||shownDone.receiptContext===transferContext)} onClose={() => shownDone && nav(shownDone.booking ? `/app/booking/${shownDone.booking.id}` : '/app/classes')} title={shownDone?.deskPaymentId ? shownDone.pending ? deskText.request : deskText.record : t(shownDone?.pending ? method==='transfer'?'transfers.pending':'customer.checkout.pending.title' : 'customer.book.ok')} side="bottom">
         {shownDone && (
           <div className="stack">
+            {currentPaymentPreview && <LaunchNotificationPreview result={currentPaymentPreview.result} />}
             <ClassCard variant="next" title={s.title} teacher={teacherName(joined)} room={roomName(joined)} startsAt={s.starts_at} endsAt={s.ends_at} tone={toneOf(joined)} booked={s.booked_count} capacity={s.capacity} />
             {shownDone.booking?.mat_number && <p className="small">{t('site.mat.confirmed', { n: shownDone.booking.mat_number })}</p>}
             {shownDone.pending&&currentDesk?.payment&&(!shownDone.deskPaymentId||currentDeskConfirmation?.phase==='pending')&&<Notice title={deskText.saved}>{formatCOP(currentDesk.payment.amount,lang)} · {bi(savedDeskQuote!.name)} · {savedDeskQuote!.classes} {deskText.classes} · {t('customer.classes.expires')} {savedDeskQuote!.entitlementExpiresAt??'—'} · {currentDesk.payment.id}<p>{deskText.body}</p></Notice>}
