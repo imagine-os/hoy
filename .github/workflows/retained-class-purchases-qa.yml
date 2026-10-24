@@ -14,6 +14,7 @@ on:
       - 'scripts/*retained-class-active-owner*'
       - 'scripts/test-receipt-email-capture-paths.mjs'
       - 'scripts/test-pending-package-ui.mjs'
+      - 'scripts/qa-pending-payments-dev.mjs'
       - '.github/workflows/retained-class-purchases-qa.yml'
 permissions:
   contents: read
@@ -37,7 +38,7 @@ jobs:
       - run: npm run build
       - name: Verify page recovery and changing contexts
         run: |
-          npm run dev -- --host 127.0.0.1 --strictPort --port 5221 > /tmp/hoy-retained-dev.log 2>&1 &
+          QA_PORT=5221 node scripts/qa-pending-payments-dev.mjs > /tmp/hoy-retained-dev.log 2>&1 &
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:5221/ >/dev/null && break; sleep 1; done
           curl -fsS http://127.0.0.1:5221/ >/dev/null
           node scripts/test-retained-class-purchase-ui.mjs

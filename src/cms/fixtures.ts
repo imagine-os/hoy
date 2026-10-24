@@ -110,7 +110,7 @@ export default (
         }
       }
     ],
-    "sourceDigest": "f5dcd05eda14e2ef134e6d8f358868f18a46dafb893261d63d55cce7b77d5feb"
+    "sourceDigest": "e03b2c197ef1ebc42548f34c8efea7ac1d3b07de675193d984f2a107fbd36e05"
   },
   {
     "id": "classes-c-06-approved",
@@ -133,7 +133,7 @@ export default (
         }
       }
     ],
-    "sourceDigest": "f5dcd05eda14e2ef134e6d8f358868f18a46dafb893261d63d55cce7b77d5feb"
+    "sourceDigest": "e03b2c197ef1ebc42548f34c8efea7ac1d3b07de675193d984f2a107fbd36e05"
   },
   {
     "id": "classes-c-06-declined",
@@ -156,7 +156,7 @@ export default (
         }
       }
     ],
-    "sourceDigest": "f5dcd05eda14e2ef134e6d8f358868f18a46dafb893261d63d55cce7b77d5feb"
+    "sourceDigest": "e03b2c197ef1ebc42548f34c8efea7ac1d3b07de675193d984f2a107fbd36e05"
   },
   {
     "id": "classes-c-07b-pending",
@@ -179,7 +179,7 @@ export default (
         }
       }
     ],
-    "sourceDigest": "f5dcd05eda14e2ef134e6d8f358868f18a46dafb893261d63d55cce7b77d5feb"
+    "sourceDigest": "e03b2c197ef1ebc42548f34c8efea7ac1d3b07de675193d984f2a107fbd36e05"
   },
   {
     "id": "classes-c-07b-approved",
@@ -202,7 +202,7 @@ export default (
         }
       }
     ],
-    "sourceDigest": "f5dcd05eda14e2ef134e6d8f358868f18a46dafb893261d63d55cce7b77d5feb"
+    "sourceDigest": "e03b2c197ef1ebc42548f34c8efea7ac1d3b07de675193d984f2a107fbd36e05"
   },
   {
     "id": "classes-c-07b-declined",
@@ -225,7 +225,7 @@ export default (
         }
       }
     ],
-    "sourceDigest": "f5dcd05eda14e2ef134e6d8f358868f18a46dafb893261d63d55cce7b77d5feb"
+    "sourceDigest": "e03b2c197ef1ebc42548f34c8efea7ac1d3b07de675193d984f2a107fbd36e05"
   },
   {
     "id": "transfers-s-09-pending",

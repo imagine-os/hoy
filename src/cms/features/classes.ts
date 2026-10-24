@@ -13,6 +13,10 @@ export default (
   "actorScope": "Tenant and current actor/role context; UI scope is not backend authorization.",
   "sources": [
     {
+      "path": "scripts/qa-pending-payments-dev.mjs",
+      "sha256": "81dfa4991a90b2990d0a34164fe747ea561fdff3391067415441d1c14eba048f"
+    },
+    {
       "path": "scripts/retained-class-purchase-harness.tsx",
       "sha256": "1395ec9d385889f1b6884cf931016407915ef7b860bf3bb7716291e996b3eec8"
     },
@@ -102,25 +106,25 @@ export default (
       "path": "scripts/test-retained-class-purchase.mjs",
       "sha256": "48d5eeae10e28b0cb4359b524227d1cde9ffefd752c0bf55467ffd8068f0982f",
       "verifies": "Actual MockProvider payment/grant transaction: retained intent, replay, faults and expiry.",
-      "reviewedSourceDigest": "f5dcd05eda14e2ef134e6d8f358868f18a46dafb893261d63d55cce7b77d5feb"
+      "reviewedSourceDigest": "e03b2c197ef1ebc42548f34c8efea7ac1d3b07de675193d984f2a107fbd36e05"
     },
     {
       "path": "scripts/test-retained-class-active-owner-native.mjs",
       "sha256": "cf3e74ce5584abb6484460022e16edaf55377652743443dca4af83ec0b37dc31",
       "verifies": "Browser-native active owner invalidation; run by existing feature QA.",
-      "reviewedSourceDigest": "f5dcd05eda14e2ef134e6d8f358868f18a46dafb893261d63d55cce7b77d5feb"
+      "reviewedSourceDigest": "e03b2c197ef1ebc42548f34c8efea7ac1d3b07de675193d984f2a107fbd36e05"
     },
     {
       "path": "scripts/test-pending-package-ui.mjs",
       "sha256": "6c65a7149f766c97f1bb949229b547df16a21ae8640347ebe8bb5fbb11a07c7a",
       "verifies": "Compiled native EN/ES pending and confirmed package controls; actual persistence fault, unchanged financial history, same retained intent retry, once-only grant, readonly reload and explicit acknowledgement.",
-      "reviewedSourceDigest": "f5dcd05eda14e2ef134e6d8f358868f18a46dafb893261d63d55cce7b77d5feb"
+      "reviewedSourceDigest": "e03b2c197ef1ebc42548f34c8efea7ac1d3b07de675193d984f2a107fbd36e05"
     },
     {
       "path": "scripts/test-retained-class-purchase-ui.mjs",
       "sha256": "3fe44d5494c310b40269394b0b25953d757c43dde0688967750d69565fe33978",
-      "verifies": "Actual native DEV32 purchase recovery and caller contexts after complete app/harness graph warm-up; exact source/raw/transformed bytes remain equal across the frozen matrix.",
-      "reviewedSourceDigest": "f5dcd05eda14e2ef134e6d8f358868f18a46dafb893261d63d55cce7b77d5feb"
+      "verifies": "Actual native DEV32 purchase recovery and caller contexts using the preoptimized pending-payments QA startup; exact source/raw/transformed bytes remain equal across the frozen matrix.",
+      "reviewedSourceDigest": "e03b2c197ef1ebc42548f34c8efea7ac1d3b07de675193d984f2a107fbd36e05"
     }
   ],
   "entities": [
