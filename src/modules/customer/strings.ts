@@ -771,12 +771,12 @@ export const strings: StringTable = {
 
   // E-04 locked
   'customer.locked.title': { es: 'Acceso en pausa', en: 'Sign-in paused' },
-  'customer.locked.body': { es: 'Tras {n} intentos fallidos pausamos el acceso {min} minutos y avisamos por email al titular de la cuenta.', en: 'After {n} failed attempts we pause sign-in for {min} minutes and email the account holder.' },
+  'customer.locked.body': { es: 'Tras {n} intentos fallidos, esta demo pausa el acceso durante {min} minutos.', en: 'After {n} failed attempts, this demo pauses sign-in for {min} minutes.' },
   'customer.locked.wait': { es: 'para reintentar', en: 'to retry' },
   'customer.locked.recover': { es: 'Recuperar contraseña', en: 'Recover password' },
   'customer.locked.whatsapp': { es: 'Escribir al estudio', en: 'WhatsApp the studio' },
   'customer.locked.whatsappText': { es: 'Hola, no puedo entrar a mi cuenta.', en: 'Hi, I cannot sign in to my account.' },
-  'customer.locked.security': { es: 'La recuperación no está limitada por esta pausa. El contador es del servidor: reinstalar la app no lo reinicia.', en: 'Recovery is not rate-limited by this pause. The countdown is server-side: reinstalling the app does not reset it.' },
+  'customer.locked.security': { es: 'El contador solo se aplica a esta demo del navegador. No se envió ningún email y no se bloqueó ninguna cuenta real.', en: 'The countdown only applies to this browser demo. No email was sent and no real account was locked.' },
 
   // 0008 · notifications table (C-24) + prefs
   'customer.notifications.open': { es: 'Abrir', en: 'Open' },

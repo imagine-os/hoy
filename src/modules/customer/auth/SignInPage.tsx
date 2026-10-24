@@ -1,8 +1,8 @@
 import {useData} from '../../../data/DataContext';
 import {useMockSignIn} from './useMockSignIn';
 import {DemoSignInPanel} from '../../../components/organism/DemoSignInPanel/DemoSignInPanel';
-import { useMemo, useRef, useState, type FormEvent } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useLayoutEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useSession } from '../../../auth/SessionProvider';
 import { demoUsers } from '../../../auth/demoUsers';
@@ -33,7 +33,8 @@ const readAttempts = () => { try { return Number(sessionStorage.getItem(ATTEMPTS
 export function SignInPage() {
   const { t, bi } = useI18n();
   const nav = useNavigate();
-  const { switchUser } = useSession();
+  const { switchUser, user, role } = useSession();
+  const location = useLocation();
   const data=useData();
   const [params] = useSearchParams();
   const next = params.get('next');
@@ -43,8 +44,44 @@ export function SignInPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const people = demoUsers.filter((u) => u.role !== 'public');
+  // A delayed demo form result belongs to the exact mounted form and session that submitted it.
+  // Only memory holds these form values; credentials and attempt details are never persisted here.
+  const live = useRef({ data, userId: user.id, role, route: '', email, password, mounted: false });
+  live.current = { data, userId: user.id, role, route: `${location.pathname}${location.search}:${location.key}`, email, password, mounted: live.current.mounted };
+  type LegacyAttempt = { scope: typeof live.current; attempts: number; cancelled: boolean };
+  const legacyAttempt = useRef<LegacyAttempt | null>(null);
+  const legacyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const currentAttempt = (request: LegacyAttempt) => {
+    const now = live.current, then = request.scope;
+    return now.mounted && !request.cancelled && legacyAttempt.current === request
+      && now.data === then.data && now.userId === then.userId && now.role === then.role
+      && now.route === then.route && now.email === then.email && now.password === then.password;
+  };
+  const cancelLegacy = () => {
+    if (legacyAttempt.current) legacyAttempt.current.cancelled = true;
+    legacyAttempt.current = null;
+    if (legacyTimer.current !== null) clearTimeout(legacyTimer.current);
+    legacyTimer.current = null;
+  };
+  useLayoutEffect(() => {
+    live.current.mounted = true;
+    return () => { live.current.mounted = false; cancelLegacy(); };
+  }, []);
+  useLayoutEffect(() => {
+    if (legacyAttempt.current && !currentAttempt(legacyAttempt.current)) {
+      cancelLegacy(); setBusy(false); setError(null);
+    }
+  }, [data, user.id, role, location.pathname, location.search, location.key, email, password]);
 
-  const enterAs = (id: string) => { const u = demoUsers.find((x) => x.id === id)!; switchUser(u.id); try { sessionStorage.removeItem(ATTEMPTS_KEY); } catch { /* ignore */ } nav(u.role === 'customer' && customerReturn(next) ? customerReturn(next)! : ROLE_HOME[u.role]); };
+  const enterAs = (id: string, isCurrent: () => boolean = () => true) => {
+    if (!isCurrent()) return;
+    const u = demoUsers.find((x) => x.id === id)!;
+    switchUser(u.id);
+    if (!isCurrent()) return;
+    try { sessionStorage.removeItem(ATTEMPTS_KEY); } catch { /* ignore */ }
+    if (!isCurrent()) return;
+    nav(u.role === 'customer' && customerReturn(next) ? customerReturn(next)! : ROLE_HOME[u.role]);
+  };
 
   const preview=useMockSignIn(()=>enterAs('usr_cust'),data.name==='mock');
 
@@ -63,19 +100,32 @@ export function SignInPage() {
   useActions(spec, handlers);
 
   const submit = (e: FormEvent) => {
-    e.preventDefault(); setBusy(true); setError(null);
-    setTimeout(() => {
-      const u = demoUsers.find((x) => x.email && x.email.toLowerCase() === email.trim().toLowerCase());
-      if (u && password.length > 0) { enterAs(u.id); return; }
-      const n = attempts + 1;
+    e.preventDefault();
+    if (legacyAttempt.current || !live.current.mounted) return;
+    const request: LegacyAttempt = { scope: { ...live.current }, attempts, cancelled: false };
+    legacyAttempt.current = request;
+    setBusy(true); setError(null);
+    legacyTimer.current = setTimeout(() => {
+      const current = () => currentAttempt(request);
+      if (!current()) return;
+      legacyTimer.current = null;
+      const finish = () => { if (legacyAttempt.current === request) legacyAttempt.current = null; if (live.current.mounted) setBusy(false); };
+      const u = demoUsers.find((x) => x.email && x.email.toLowerCase() === request.scope.email.trim().toLowerCase());
+      if (u && request.scope.password.length > 0) { enterAs(u.id, current); finish(); return; }
+      const n = request.attempts + 1;
+      if (!current()) return;
       setAttempts(n);
+      if (!current()) return;
       try { sessionStorage.setItem(ATTEMPTS_KEY, String(n)); } catch { /* ignore */ }
+      if (!current()) return;
       if (n >= policy.lockoutAttempts) {
         try { sessionStorage.setItem(LOCK_KEY, new Date(Date.now() + policy.lockoutMinutes * MS.min).toISOString()); } catch { /* ignore */ }
-        nav('/auth/locked'); return;
+        if (!current()) return;
+        nav('/auth/locked'); finish(); return;
       }
+      if (!current()) return;
       setError(t('customer.signin.wrong', { n: policy.lockoutAttempts - n }));
-      setBusy(false);
+      finish();
     }, 500);
   };
 
