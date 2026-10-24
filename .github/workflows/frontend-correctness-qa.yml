@@ -21,6 +21,7 @@ on:
       - 'scripts/test-recovery*.mjs'
       - 'scripts/test-account-data*.mjs'
       - 'scripts/account-data-harness.tsx'
+      - 'scripts/qa-pending-payments-dev.mjs'
       - 'scripts/test-contact-mask*.mjs'
       - 'scripts/test-substitute-request*.mjs'
       - 'scripts/substitute-request-harness.tsx'
@@ -117,8 +118,17 @@ jobs:
       - name: Verify contained asynchronous states
         if: matrix.scope == 'trial-eligibility' || matrix.scope == 'profile-save' || matrix.scope == 'account-data' || matrix.scope == 'substitute-request' || matrix.scope == 'account-marketing' || matrix.scope == 'email-test' || matrix.scope == 'event-rsvp' || matrix.scope == 'email-edit' || matrix.scope == 'expense-ledger' || matrix.scope == 'receipt-alert' || matrix.scope == 'payroll-approval'
         run: |
-          npm run dev -- --host 127.0.0.1 --port 5188 > /tmp/hoy-correctness-dev.log 2>&1 &
+          if [ '${{ matrix.scope }}' = 'account-data' ]; then
+            trap 'cat /tmp/hoy-correctness-dev.log' ERR
+            QA_PORT=5188 node scripts/qa-pending-payments-dev.mjs > /tmp/hoy-correctness-dev.log 2>&1 &
+          else
+            npm run dev -- --host 127.0.0.1 --port 5188 > /tmp/hoy-correctness-dev.log 2>&1 &
+          fi
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:5188/ >/dev/null && break; sleep 1; done
+          if [ '${{ matrix.scope }}' = 'account-data' ]; then
+            curl -fsS http://127.0.0.1:5188/ >/dev/null
+            cat /tmp/hoy-correctness-dev.log
+          fi
           node scripts/test-${{ matrix.scope }}-states.mjs
         env:
           QA_BASE: http://127.0.0.1:5188
