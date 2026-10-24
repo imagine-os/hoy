@@ -147,6 +147,12 @@ export default (
       "sha256": "fa6ba65ab2d34e7b84072e59c9cb87e479ffd81e925b5cfb7286b51e15144e10",
       "verifies": "Browser-native exact evidence review; run by existing feature QA.",
       "reviewedSourceDigest": "ae77133d8d9891ab3ff112c1394767f8fd698fd841e7d21310e3aadfcc5193af"
+    },
+    {
+      "path": "scripts/test-sensitive-audit-ui.mjs",
+      "sha256": "378c07b34ce7cbf58661e415f39a2887f90d5162522efc7d8d3f894c289339f5",
+      "verifies": "Compiled front-desk approval and rejection audit receipts with a genuine positive PNG fixture; actor/time, private-note export fencing and read-only sensitive tables.",
+      "reviewedSourceDigest": "ae77133d8d9891ab3ff112c1394767f8fd698fd841e7d21310e3aadfcc5193af"
     }
   ],
   "entities": [

@@ -8,3 +8,5 @@ rejected: Trusting a comparison checkbox without the receipt; accepting a caller
 files: Transfer receipt command, retained-proof helper, queue review UI, focused regressions and mechanical positive image fixtures.
 
 The queue previously displayed Receipt unavailable yet allowed approval and class activation. Fresh approval now fails before financial or admission writes. No upload proof is created for legacy receipts, and no real bank notification or backend authorization is implied. Full combined build, compiled regressions and independent review remain integration gates.
+
+The existing sensitive-audit success fixture now uses the same genuine synthetic-image helper, preserving all 25 original privacy/financial assertions. The full audit browser regression is included in the receipt-evidence workflow and CMS test inventory.
