@@ -5,6 +5,7 @@ on:
       - 'src/**'
       - 'scripts/test-studio-cancel*.mjs'
       - 'scripts/studio-cancel-*.mjs'
+      - 'scripts/studio-direct-paid-native-fixture.mjs'
       - 'scripts/test-cancelled-seat-ui.mjs'
       - 'scripts/test-team-proposal*.mjs'
       - 'scripts/test-team-presentation-fixtures.mjs'
@@ -37,6 +38,7 @@ jobs:
           if [ '${{ matrix.scope }}' = 'studio-cancel' ]; then
             node scripts/test-studio-cancel-baseline.mjs
             node scripts/test-studio-cancel.mjs
+            node scripts/test-studio-cancel-direct-paid.mjs
             node scripts/test-private-capture-policy.mjs
           elif [ '${{ matrix.scope }}' = 'team-proposals' ]; then
             node scripts/test-team-proposals.mjs
@@ -53,6 +55,7 @@ jobs:
           if [ '${{ matrix.scope }}' = 'studio-cancel' ]; then
             node scripts/test-cancelled-seat-ui.mjs
             node scripts/test-studio-cancel-library.mjs
+            QA_OUTPUT=qa/studio-direct-paid node scripts/test-studio-cancel-direct-native.mjs
           elif [ '${{ matrix.scope }}' = 'team-proposals' ]; then
             node scripts/test-team-proposal-library-ui.mjs
           else
@@ -86,3 +89,4 @@ jobs:
             docs/screenshots/D-02/*cash-count*
             qa/studio-cancel/
             qa/studio-cancel-seat/
+            qa/studio-direct-paid/
