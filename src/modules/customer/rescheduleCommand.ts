@@ -8,6 +8,10 @@ import { approvedPackageRows, packageLots } from '../../data/packages';
 import { dateKey, isSameDay, MS } from '../../i18n/format';
 import { tenant } from '../../tenant/tenant';
 import { policy } from './policy';
+import { readLaunchReceipt } from '../../data/launchReceipts';
+import { bookingPaymentStatus } from './bookingPaymentStatus';
+
+type RescheduleTerms = Pick<ClassLedgerRow, 'expires_at' | 'frozen_from' | 'frozen_until'>;
 
 /** Preserve the class already spent, rather than spending a different live package. */
 export function reschedulePurchase(rows: ClassLedgerRow[], booking: BookingRow): ClassLedgerRow | null {
@@ -17,7 +21,25 @@ export function reschedulePurchase(rows: ClassLedgerRow[], booking: BookingRow):
   return lots[0].purchase;
 }
 
-export function assertRescheduleValidity(purchase: ClassLedgerRow | null, startsAt: string): void {
+/** Use recorded purchased terms only; a known single/trial charge is not an ambiguous legacy booking. */
+export function rescheduleEntitlement(rows: ClassLedgerRow[], payments: PaymentRow[], booking: BookingRow): RescheduleTerms | null {
+  if (booking.ledger_id != null && (typeof booking.ledger_id !== 'string' || !booking.ledger_id.trim())) throw Error('reschedule_entitlement_unresolved');
+  if (booking.payment_id != null && bookingPaymentStatus(booking, rows, payments) !== 'confirmed') throw Error('reschedule_entitlement_unresolved');
+  if (booking.ledger_id || booking.paid_with === 'package') return reschedulePurchase(rows, booking);
+  if (!['single', 'trial'].includes(booking.paid_with) || booking.payment_id == null) return null;
+  const matches = payments.filter(payment => payment.id === booking.payment_id);
+  if (typeof booking.payment_id !== 'string' || !booking.payment_id.trim() || matches.length !== 1) throw Error('reschedule_entitlement_unresolved');
+  const payment = matches[0];
+  if (payment.user_id !== booking.user_id || payment.tenant_id !== booking.tenant_id || payment.status !== 'approved') throw Error('reschedule_entitlement_unresolved');
+  const quote = readLaunchReceipt(payment)?.facts.quote;
+  // Unusable legacy terms retain the existing same-day fallback; never invent expiry for another day.
+  if (!quote) return null;
+  if (quote.kind !== 'class' || quote.itemId !== booking.paid_with || quote.classes !== 1 || quote.quantity !== 1) throw Error('reschedule_entitlement_unresolved');
+  if (!quote.entitlementExpiresAt) return null;
+  return { expires_at: quote.entitlementExpiresAt, frozen_from: null, frozen_until: null };
+}
+
+export function assertRescheduleValidity(purchase: RescheduleTerms | null, startsAt: string): void {
   if (!purchase) return;
   const targetDay = dateKey(new Date(startsAt));
   if (purchase.expires_at && targetDay > purchase.expires_at) throw new Error('package_expired');
@@ -43,7 +65,7 @@ export async function rescheduleBooking(data: DataProvider, input: { userId: str
   {
     const rows = await data.list<ClassLedgerRow>('class_ledger', { where: { user_id: input.userId } });
     const payments = await data.list<PaymentRow>('payments', { where: { user_id: input.userId } });
-    const purchase = reschedulePurchase(approvedPackageRows(rows, payments), booking);
+    const purchase = rescheduleEntitlement(approvedPackageRows(rows, payments), payments, booking);
     if (!purchase && !isSameDay(original.starts_at, target.starts_at)) throw new Error('reschedule_entitlement_unresolved');
     assertRescheduleValidity(purchase, target.starts_at);
   }
@@ -52,7 +74,7 @@ export async function rescheduleBooking(data: DataProvider, input: { userId: str
   assertAdmissionContext(input.control);
   // Both writes remain inside the caller's atomic transaction; exclude the replaced admission.
   await data.update('bookings', booking.id, { status: 'cancelled', cancelled_at: new Date(now).toISOString() });
-  const next = await data.insert<BookingRow>('bookings', { user_id: booking.user_id, session_id: target.id, status: 'booked', paid_with: booking.paid_with, ledger_id: booking.ledger_id, checked_in_at: null, cancelled_at: null, rated: false });
+  const next = await data.insert<BookingRow>('bookings', { user_id: booking.user_id, session_id: target.id, status: 'booked', paid_with: booking.paid_with, ledger_id: booking.ledger_id, payment_id: booking.payment_id ?? null, checked_in_at: null, cancelled_at: null, rated: false });
   // MockProvider recalculates both occupancies from bookings; do not add or subtract capacity again.
   const waiting = await data.list('waitlist', { where: { session_id: original.id, status: 'waiting' }, orderBy: { column: 'position' } });
   let offerAllowed = false;

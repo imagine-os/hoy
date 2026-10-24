@@ -162,6 +162,12 @@ export class MockProvider implements DataProvider {
     return usesMats(modality) ? { ...row, mat_number: chooseMat([...others, ...(this.db.voucher_bookings as VoucherBookingRow[]).filter(b => b.sessionId === session.id && b.status !== 'cancelled').flatMap(b => b.mats.map(mat_number => ({ status: 'booked', mat_number } as BookingRow)))], Math.min(capacity, tenant.studio.mats), row.mat_number) } : { ...row, mat_number: null };
   }
 
+  private requireBookingPayment(row: BookingRow) {
+    if (row.payment_id == null) return;
+    const matches = (this.db.payments as PaymentRow[]).filter(payment => payment.id === row.payment_id);
+    if (typeof row.payment_id !== 'string' || !row.payment_id.trim() || matches.length !== 1 || matches[0].tenant_id !== row.tenant_id || matches[0].user_id !== row.user_id || matches[0].status !== 'approved') throw Error('booking_payment_invalid');
+  }
+
   private onStorage(e: StorageEvent) {
     if (e.key !== KEY || !e.newValue) return;
     try {
@@ -274,7 +280,10 @@ export class MockProvider implements DataProvider {
     let full = { id: newId(table.slice(0, 3)), tenant_id: tenant.id, created_at: now, updated_at: now, ...row } as T;
     if(table==='payments'&&full.frontend_desk_intent!==undefined){validateDeskPaymentIntent(full as unknown as PaymentRow);if(full.status!=='pending'||full.provider!=='manual'||full.method!=='cash')throw Error('desk_intent_invalid');}
     if (table === 'waitlist' && ['waiting', 'offered'].includes(String(full.status)) && (full.tenant_id !== tenant.id || !customerBookingContactValid(this.db.users as UserRow[], this.db.profiles as ProfileRow[], String(full.user_id), tenant.id))) throw new Error('booking_contact_required');
-    if (table === 'bookings') full = this.prepareBooking(full as unknown as BookingRow) as unknown as T;
+    if (table === 'bookings') {
+      this.requireBookingPayment(full as unknown as BookingRow);
+      full = this.prepareBooking(full as unknown as BookingRow) as unknown as T;
+    }
     const previousDb = structuredClone(this.db);
     this.rows(table).push(full);
     if (table === 'class_templates' || table === 'class_sessions' && !full.template_id && Date.parse(String(full.starts_at)) > Date.now()) {
@@ -308,6 +317,10 @@ export class MockProvider implements DataProvider {
       if (Object.keys(checked).length) applyContentBatch(this.db, { table, role: 'admin', actorId: 'validation', changes: [{ id, before: structuredClone(rows[i]), patch: checked }] }, tenant.id);
     }
     let next = { ...rows[i], ...patch, updated_at: new Date().toISOString() } as T;
+    if (table === 'bookings') {
+      const before = rows[i] as BookingRow, after = next as unknown as BookingRow;
+      if ((before.payment_id ?? null) !== (after.payment_id ?? null) || before.payment_id && (before.user_id !== after.user_id || before.tenant_id !== after.tenant_id)) throw Error('booking_payment_immutable');
+    }
     if(table==='payments'&&(rows[i].frontend_desk_intent!==undefined||next.frontend_desk_intent!==undefined)){
       const before=validateDeskPaymentIntent(rows[i] as PaymentRow),after=validateDeskPaymentIntent(next as unknown as PaymentRow);
       if(before&&JSON.stringify(before)!==JSON.stringify(after))throw Error('desk_intent_immutable');

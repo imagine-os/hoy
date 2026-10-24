@@ -876,6 +876,8 @@ create table if not exists public.bookings (
   paid_with text not null check (paid_with in ('package', 'single', 'trial', 'guest', 'comp', 'membership')),
   -- the −1 row a package booking wrote
   ledger_id uuid,
+  -- Draft contract only: exact new single/trial payment; legacy records remain null.
+  payment_id uuid,
   checked_in_at timestamptz,
   cancelled_at timestamptz,
   rated boolean not null default false
@@ -2083,6 +2085,7 @@ alter table public.class_pay_rules add constraint class_pay_rules_template_id_fk
 alter table public.class_pay_rules add constraint class_pay_rules_session_id_fk foreign key (session_id) references public.class_sessions(id) on delete set null;
 alter table public.space_bookings add constraint space_bookings_special_charge_id_fk foreign key (special_charge_id) references public.special_charges(id) on delete set null;
 alter table public.bookings add constraint bookings_ledger_id_fk foreign key (ledger_id) references public.class_ledger(id) on delete set null;
+alter table public.bookings add constraint bookings_payment_id_fk foreign key (payment_id) references public.payments(id) on delete set null;
 alter table public.event_rsvps add constraint event_rsvps_payment_id_fk foreign key (payment_id) references public.payments(id) on delete set null;
 alter table public.class_ledger add constraint class_ledger_payment_id_fk foreign key (payment_id) references public.payments(id) on delete set null;
 
