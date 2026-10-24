@@ -155,4 +155,6 @@ jobs:
             docs/screenshots/C-04/*receipt-alert*
             docs/screenshots/D-02/*receipt-alert*
             docs/frontend-completion/evidence/batch-3*.json
+            docs/screenshots/trial-eligibility/
+            /tmp/hoy-correctness-dev.log
           retention-days: 7

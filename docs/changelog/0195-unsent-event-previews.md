@@ -11,3 +11,6 @@ Five canonical producers use one read-only preview contract: committed account r
 Saved welcome, rejection and reschedule templates retain their actual version and active flag, including inactive previews. Demo sign-in and distinct payment confirmation use visibly labeled, versioned mock-copy contracts, not invented saved template versions. Existing receipt and studio-cancellation previews remain unchanged. Pending booking, released booking and voucher receipt have no new producer because event/timing/recipient semantics remain unresolved.
 
 Alternative rejected: sending messages, guessing a latest payment or recipient, treating a countdown/navigation as a booking release, reusing a receipt as a second confirmation event, storing notification records or rewriting existing business commands. CMS entity mappings, per-page configurations, fictional fixtures and source/test bindings accompany the changed surfaces. Backend authorization and delivery remain separate.
+
+
+Retained booking-detail tests wait for the actual destination before checking payment facts. Trial-state diagnostics retain every assertion and save React error stacks, module requests and navigation traces on failure; CI also retains the DEV log. This improves evidence for an unreproduced startup error and does not claim a diagnosed runtime fix.
