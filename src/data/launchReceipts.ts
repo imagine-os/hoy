@@ -1,5 +1,6 @@
+import { buildReceiptEmailPreview, buildReceiptRecorderSnapshot, receiptEmailPreviewValid, receiptRecorderSnapshotValid, type ReceiptEmailPreview, type ReceiptRecorderSnapshot } from './receiptEmailPreview';
 import type { DataProvider } from './types';
-import type { PaymentRow } from './schema';
+import type { PaymentRow, UserRow, ProfileRow } from './schema';
 import { readPaymentQuote } from './operationalQuotes';
 import { tenant } from '../tenant/tenant';
 import type { Bi } from '../specs/types';
@@ -14,6 +15,9 @@ export interface LaunchReceipt {
   recordedTax: { subtotal: number; tax: number; total: number } | null;
   previewChannels: ('email' | 'whatsapp')[];
   delivery: 'preview-only';
+  /** Additive snapshots: legacy receipts stay unmodified and never recapture current contact. */
+  emailPreview?: ReceiptEmailPreview;
+  recordedBySnapshot?: ReceiptRecorderSnapshot | null;
 }
 const sources = ['checkout', 'transfer-review', 'desk-sale', 'desk-settlement'];
 const methods = ['card', 'pse', 'qr', 'cash', 'transfer'];
@@ -37,6 +41,8 @@ export function readLaunchReceipt(payment: PaymentRow): LaunchReceipt | null {
     || !Array.isArray(r.previewChannels) || r.previewChannels.some(c => !['email', 'whatsapp'].includes(c))
     || r.item !== null && (!r.item || typeof r.item.es !== 'string' || typeof r.item.en !== 'string')
     || r.recordedTax !== null && (!r.recordedTax || !money(r.recordedTax.subtotal) || !money(r.recordedTax.tax) || r.recordedTax.total !== payment.amount || r.recordedTax.subtotal + r.recordedTax.tax !== r.recordedTax.total)) return null;
+  const hasEmail = Object.prototype.hasOwnProperty.call(r, 'emailPreview'), hasRecorder = Object.prototype.hasOwnProperty.call(r, 'recordedBySnapshot');
+  if (hasEmail !== hasRecorder || hasEmail && (!receiptEmailPreviewValid(r.emailPreview, r) || !receiptRecorderSnapshotValid(r.recordedBySnapshot, r))) return null;
   return structuredClone(r);
 }
 /** Call only with the staged provider of the existing purchase/review transaction. No invoice or outbox. */
@@ -58,6 +64,12 @@ export async function captureLaunchReceipt(data: DataProvider, payment: PaymentR
     recordedTax: structuredClone(options.recordedTax ?? quote?.taxTotals ?? null),
     previewChannels: [...new Set(options.previewChannels ?? ['email' as const])], delivery: 'preview-only',
   };
+  const users = current.user_id ? await data.list<UserRow>('users', { where: { tenant_id: current.tenant_id, id: current.user_id } }) : [];
+  const profiles = current.user_id ? await data.list<ProfileRow>('profiles', { where: { tenant_id: current.tenant_id, user_id: current.user_id } }) : [];
+  const recorders = current.taken_by ? await data.list<UserRow>('users', { where: { tenant_id: current.tenant_id, id: current.taken_by } }) : [];
+  const recorderProfiles = current.taken_by ? await data.list<ProfileRow>('profiles', { where: { tenant_id: current.tenant_id, user_id: current.taken_by } }) : [];
+  receipt.emailPreview = buildReceiptEmailPreview(receipt, users, profiles);
+  receipt.recordedBySnapshot = buildReceiptRecorderSnapshot(receipt, recorders, recorderProfiles);
   if (!readLaunchReceipt({ ...current, frontend_receipt: receipt })) throw Error('receipt_facts');
   return data.update<PaymentRow>('payments', current.id, { frontend_receipt: receipt });
 }

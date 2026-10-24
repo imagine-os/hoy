@@ -25,5 +25,5 @@ export default defineMeta({
     vars: { first_name: 'Mariana', class_name: 'Fuego', teacher_name: 'Andrés', classes_returned: '1' },
   }) }],
   a11y: [{ es: 'role=img (group con contenido adicional) con el asunto como nombre; el CTA no navega en la vista previa.', en: 'role=img (group with additional content) named by the subject; the CTA does not navigate in preview.' }],
-  usedBy: ['M-04'],
+  usedBy: ['M-04', 'M-14', 'C-11', 'S-04', 'S-09', 'C-37'],
 });

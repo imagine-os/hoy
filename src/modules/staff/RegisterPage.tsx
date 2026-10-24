@@ -85,7 +85,7 @@ export function RegisterPage() {
   const [itemId, setItemId] = useState('trial');
   const catalog=useOperationalCatalog(),review=useReviewedQuote(catalog,special.on?null:itemId,1,null);
   const [method, setMethod] = useState<Method>('cash');
-  const [receipt, setReceipt] = useState({ wa: true, email: true });
+  const [receipt, setReceipt] = useState({ wa: true });
   const [paidRaw, setPaidRaw] = useState<string | null>(null); // null = untouched, so it follows the invoiced total
   const [note, setNote] = useState('');
   const [sessionId, setSessionId] = useState(params.get('session') ?? '');
@@ -180,7 +180,7 @@ export function RegisterPage() {
         const u = await data.insert<UserRow>('users', { email: form.email.trim() || `${digitsOf(form.phone)}@sin-email.hoyos.test`, phone: form.phone.trim(), status: 'active', last_sign_in_at: null, locale: lang });
         userId = u.id;
         const initials = displayName.split(' ').map((s) => s[0]).join('').slice(0, 2).toUpperCase();
-        await data.insert<ProfileRow>('profiles', { user_id: u.id, full_name: displayName, initials, photo_url: null, birthday: form.birthday || null, emergency_contact: form.emergency ? { name: form.emergency } : null, marketing_optin: receipt.wa, whatsapp_verified: false, notes: null } as Partial<ProfileRow>);
+        await data.insert<ProfileRow>('profiles', { user_id: u.id, full_name: displayName, initials, photo_url: null, birthday: form.birthday || null, emergency_contact: form.emergency ? { name: form.emergency } : null, marketing_optin: false, whatsapp_verified: false, notes: null } as Partial<ProfileRow>);
         await data.insert('user_roles', { user_id: u.id, role: 'customer', granted_by: user.id });
         await data.insert('consents', { user_id: u.id, legal_document_id: 'leg_terms_es', accepted_at: now.toISOString(), ip: null });
         await audit('user.create', 'users', u.id, { after: { name: displayName, phone: form.phone }, consent: 'leg_terms_es' });
@@ -190,7 +190,7 @@ export function RegisterPage() {
       if(frozen?.itemId==='trial'&&userId)await assertTrialAvailable(data,userId);
       let payment = await data.insert<PaymentRow>('payments', { ...(frozen?{frontend_quote:structuredClone(frozen)}:{}),user_id: userId, plan_id: special.on ? null : `plan_${item.id}`, amount: totals.total, amount_paid: amountPaid, note: paidDiffers ? note.trim() : null, currency: tenant.currency, method: db.method, provider: db.provider, provider_ref: pending ? fakeRef('wmp_link') : null, status: pending ? 'pending' : 'approved', paid_at: pending ? null : now.toISOString(), taken_by: user.id } as Partial<PaymentRow>);
       const number = receiptReference(payment.id);
-      if (!pending) payment = await captureLaunchReceipt(data, payment, { source: 'desk-sale', item: item.name, recordedTax: totals, previewChannels: [receipt.email ? 'email' as const : null, receipt.wa ? 'whatsapp' as const : null].filter((c): c is 'email' | 'whatsapp' => c !== null) });
+      if (!pending) payment = await captureLaunchReceipt(data, payment, { source: 'desk-sale', item: item.name, recordedTax: totals, previewChannels: ['email' as const, ...(receipt.wa ? ['whatsapp' as const] : [])] });
       await audit('payment.take', 'payments', payment.id, { amount: totals.total, amount_paid: amountPaid, note: paidDiffers ? note.trim() : null, method, item: item.id, receipt_reference: number, status: payment.status, contact: mode === 'contact' ? contactName.trim() : undefined });
 
       // Especial: the room window (new or the one S-05 sent us) and the special_charges row that joins money in, teacher payout and booking.
@@ -366,7 +366,7 @@ export function RegisterPage() {
             {method === 'wompi' && <p className="xs muted" style={{ marginTop: 'var(--sp-sm)' }}>{t('staff.register.wompi.note')}</p>}
             <div className="row wrap" style={{ marginTop: 'var(--sp-lg)' }}>
               <Toggle size="sm" checked={receipt.wa} onChange={(on) => setReceipt({ ...receipt, wa: on })} label={t('launchReceipt.whatsapp')} />
-              <Toggle size="sm" checked={receipt.email} onChange={(on) => setReceipt({ ...receipt, email: on })} label={t('launchReceipt.email')} />
+              <p className="small muted">{t('launchReceipt.email.always')}</p>
             </div>
           </Card>
         </div>
