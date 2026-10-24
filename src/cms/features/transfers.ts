@@ -13,6 +13,10 @@ export default (
   "actorScope": "Tenant and current actor/role context; UI scope is not backend authorization.",
   "sources": [
     {
+      "path": "scripts/qa-pending-payments-dev.mjs",
+      "sha256": "81dfa4991a90b2990d0a34164fe747ea561fdff3391067415441d1c14eba048f"
+    },
+    {
       "path": "scripts/synthetic-transfer-review-image.mjs",
       "sha256": "bb4e96e50df6d6b630e6256e1e11fa2d8c2353da5f885436cade97751654bfb8"
     },
@@ -134,31 +138,31 @@ export default (
       "path": "scripts/test-transfer-review-evidence.mjs",
       "sha256": "ab5df6136cb35cdaa15e79b8669dd1fe1db2c80fea61b9afe4e8244bc4ba3149",
       "verifies": "Actual MockProvider review evidence identity, bytes, stale proof, scope and transaction refusal.",
-      "reviewedSourceDigest": "ae77133d8d9891ab3ff112c1394767f8fd698fd841e7d21310e3aadfcc5193af"
+      "reviewedSourceDigest": "348f31c929e4a7247e03be15a236f4af9f675a6ecdc50b6e13815f32cf4714b4"
     },
     {
       "path": "scripts/test-transfer-receipts.mjs",
       "sha256": "099ec7dcf852d15c1bb42c8ca4c680f214d7ee980092eb05adf5b489b6cb7c90",
       "verifies": "Actual MockProvider transfer submission/review, atomic failures and replay.",
-      "reviewedSourceDigest": "ae77133d8d9891ab3ff112c1394767f8fd698fd841e7d21310e3aadfcc5193af"
+      "reviewedSourceDigest": "348f31c929e4a7247e03be15a236f4af9f675a6ecdc50b6e13815f32cf4714b4"
     },
     {
       "path": "scripts/test-transfer-review-evidence-native.mjs",
       "sha256": "fa6ba65ab2d34e7b84072e59c9cb87e479ffd81e925b5cfb7286b51e15144e10",
       "verifies": "Browser-native exact evidence review; run by existing feature QA.",
-      "reviewedSourceDigest": "ae77133d8d9891ab3ff112c1394767f8fd698fd841e7d21310e3aadfcc5193af"
+      "reviewedSourceDigest": "348f31c929e4a7247e03be15a236f4af9f675a6ecdc50b6e13815f32cf4714b4"
     },
     {
       "path": "scripts/test-sensitive-audit-ui.mjs",
       "sha256": "378c07b34ce7cbf58661e415f39a2887f90d5162522efc7d8d3f894c289339f5",
       "verifies": "Compiled front-desk approval and rejection audit receipts with a genuine positive PNG fixture; actor/time, private-note export fencing and read-only sensitive tables.",
-      "reviewedSourceDigest": "ae77133d8d9891ab3ff112c1394767f8fd698fd841e7d21310e3aadfcc5193af"
+      "reviewedSourceDigest": "348f31c929e4a7247e03be15a236f4af9f675a6ecdc50b6e13815f32cf4714b4"
     },
     {
       "path": "scripts/test-transfer-review-evidence-ui.mjs",
-      "sha256": "9053ee8ee76e13a442cdfb8a84edba342fc7689ba433861145da88750d971597",
-      "verifies": "Actual browser receipt evidence and actor-context matrix; frozen run rejects Vite reloads and records navigation, WebSocket and failure-phase diagnostics without retrying failed actions.",
-      "reviewedSourceDigest": "ae77133d8d9891ab3ff112c1394767f8fd698fd841e7d21310e3aadfcc5193af"
+      "sha256": "310102fdb69763e15e4a3b831420d81e4d18af5d6f1b54943b5031cdd0d39221",
+      "verifies": "Actual browser receipt evidence and actor-context matrix; frozen run rejects typed Vite reload/update/error frames and console HMR, with navigation/WebSocket/failure-phase diagnostics and no retries.",
+      "reviewedSourceDigest": "348f31c929e4a7247e03be15a236f4af9f675a6ecdc50b6e13815f32cf4714b4"
     }
   ],
   "entities": [

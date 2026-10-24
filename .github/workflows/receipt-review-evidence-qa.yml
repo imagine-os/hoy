@@ -10,6 +10,7 @@ on:
       - 'scripts/*transfer-review-evidence*'
       - 'scripts/synthetic-transfer-review-image.mjs'
       - 'scripts/test-sensitive-audit-ui.mjs'
+      - 'scripts/qa-pending-payments-dev.mjs'
       - '.github/workflows/receipt-review-evidence-qa.yml'
 permissions:
   contents: read
@@ -31,11 +32,13 @@ jobs:
       - run: npm run build
       - name: Verify actual browser decoding and pending-review contexts
         run: |
-          npm run dev -- --host 127.0.0.1 --strictPort --port 5217 > /tmp/hoy-receipt-evidence-dev.log 2>&1 &
+          node scripts/qa-pending-payments-dev.mjs > /tmp/hoy-receipt-evidence-dev.log 2>&1 &
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:5217/ >/dev/null && break; sleep 1; done
           curl -fsS http://127.0.0.1:5217/ >/dev/null
+          cat /tmp/hoy-receipt-evidence-dev.log
           node scripts/test-transfer-review-evidence-ui.mjs
         env:
+          QA_PORT: 5217
           QA_BASE: http://127.0.0.1:5217
           QA_OUTPUT: ${{ runner.temp }}/transfer-review-evidence
           CHROMIUM_PATH: /usr/bin/google-chrome

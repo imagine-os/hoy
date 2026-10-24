@@ -14,3 +14,7 @@ The existing sensitive-audit success fixture now uses the same genuine synthetic
 CI evidence output uses the runner temporary directory. Writing new captures under `docs/screenshots` invalidates the eagerly imported documentation image glob and sends a Vite full reload, which can destroy the next browser evaluation. The focused browser matrix records navigation/reload diagnostics and rejects reloads; receipt and context assertions remain unchanged.
 
 The documentation-image watcher is a separately reproduced reload hazard, not an established cause of every navigation failure. A subsequent CI failure persisted with external output; a cold local run with the default Vite configuration passed. Failure diagnostics now preserve navigation, Vite WebSocket and phase evidence in the job log before rethrowing the original error.
+
+CI diagnostics subsequently recorded a typed Vite `full-reload` with wildcard path immediately before the failed desktop storage read and a new document request. The installed Vite dependency optimizer emits that payload when optimized dependencies change. The matrix now reuses the existing QA startup, which prepares all declared browser dependencies and React entries before listening with the actual repository configuration. Source HMR, receipt validation and all browser assertions remain enabled.
+
+The browser matrix explicitly rejects typed Vite reload/update/error frames as well as console HMR messages; wildcard reloads are not guaranteed to produce a console message. The original 21 assertions remain intact.
