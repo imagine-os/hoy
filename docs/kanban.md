@@ -825,3 +825,5 @@ Protected-capture clarification: M14 schedule/pay screenshots remain local/ignor
 - Pending signup commands, legal proof, session updates and navigation are fenced to their actor, role, provider and route. Drafts survive for explicit retry. Combined local checks and independent source review passed; hosted CI/release remain pending. No real identity-provider or whole-platform validation claim.
 
 - Local frontend integration: retained desk fulfillment, private customer read scopes and saved transfer instructions; mounted confirmation uses read-only immutable proof. Combined build, regressions and review required before release.
+
+- CU-01 / S-04 local contact checkpoint (0176): selected standard-class Register sale rejects missing or generated email, re-reads existing contacts before writes and preserves history. Local tests/build/review and shared admission integration are separate gates; no whole-criterion completion or release claim. [Details](frontend-completion/desk-booking-contact.md)

@@ -3,7 +3,7 @@ import {settledCapture} from './qa-rendered-capture.mjs';
 import assert from 'node:assert/strict';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { chromium } from 'playwright-core';
-const base=process.env.QA_BASE??'http://127.0.0.1:5173', output='docs/screenshots/S-04';
+const base=process.env.QA_BASE??'http://127.0.0.1:5173', output=process.env.QA_OUTPUT??'docs/screenshots/S-04';
 await mkdir(output,{recursive:true});
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH??'/usr/bin/chromium',args:['--no-sandbox']});
 const errors=[],checks=[];
@@ -34,7 +34,7 @@ async function fixture(kind='open',lang='en',actor='usr_desk') {
 const snapshot=page=>page.evaluate(()=>JSON.parse(localStorage.getItem('hoyos.db.v1')).db);
 async function fill(page,lang='en',existing=false,query='mariana') {
  if(existing){await page.getByRole('button',{name:'Existing member',exact:true}).click();await page.getByPlaceholder('Search by name, WhatsApp or email…').fill(query);await page.locator('.register-candidate').first().click();}
- else {await page.getByLabel(lang==='en'?'First name':'Nombre',{exact:false}).fill('QA Fictional Sale');await page.getByRole('textbox',{name:'WhatsApp',exact:true}).fill('+573000000099');await page.getByText(lang==='en'?'Accepts terms and data policy (verbal)':'Acepta términos y política de datos (verbal)',{exact:true}).click();}
+ else {await page.getByLabel(lang==='en'?'First name':'Nombre',{exact:false}).fill('QA Fictional Sale');await page.getByRole('textbox',{name:'WhatsApp',exact:true}).fill('+573000000099');await page.locator('input[type=email]').fill('fictional-desk-sale@example.test');await page.getByText(lang==='en'?'Accepts terms and data policy (verbal)':'Acepta términos y política de datos (verbal)',{exact:true}).click();}
  await page.getByLabel(lang==='en'?'Check in to class':'Check-in a la clase',{exact:true}).selectOption('qa_sale_session');
 }
 try {
