@@ -1,3 +1,4 @@
+import {createSyntheticAdmissionCustomer} from './synthetic-admission-contact.mjs';
 // AD01: synthetic mock admission only; no production/backend policy claim.
 import assert from 'node:assert/strict';
 import {build} from 'esbuild';
@@ -9,6 +10,7 @@ try{
  const file=join(temp,'domain.mjs');await build({stdin:{contents:"export {MockProvider} from './src/data/MockProvider';export * from './src/data/sessionAdmission';export {bookWithPackage} from './src/data/deskBooking';export {rescheduleBooking} from './src/modules/customer/rescheduleCommand';export {guardStudioWaitlist,promoteStudioWaitlist} from './src/modules/customer/studioWaitlist';export {setReceptionAttendance} from './src/data/receptionAttendance';",resolveDir:process.cwd()},bundle:true,format:'esm',platform:'node',outfile:file,logLevel:'silent'});
  const {MockProvider,requireSessionAdmission,bookWithPackage,rescheduleBooking,guardStudioWaitlist,promoteStudioWaitlist,setReceptionAttendance}=await import(pathToFileURL(file));
  async function fixture(){values.clear();const data=new MockProvider(),now=Date.now(),stamp=new Date(now).toISOString(),base=data.peek('class_sessions')[0],mod=data.peek('modalities').find(m=>m.active&&!/yoga|vinyasa|flow|yin/.test(m.slug)),template=data.peek('class_templates')[0];
+ await createSyntheticAdmissionCustomer(data,'qa_admission_customer');
  await data.insert('modalities',{...mod,id:'qa_admission_mod',active:true});await data.insert('class_templates',{...template,id:'qa_admission_template',active:true,modality_id:'qa_admission_mod',generation_mode:'manual'});
  await data.insert('class_sessions',{...base,id:'qa_admission_target',template_id:'qa_admission_template',modality_id:'qa_admission_mod',starts_at:new Date(now+3*86400000).toISOString(),ends_at:new Date(now+3*86400000+3600000).toISOString(),capacity:8,booked_count:0,status:'scheduled'});
  await data.insert('class_ledger',{user_id:'qa_admission_customer',delta:3,reason:'comp',plan_id:null,payment_id:null,expires_at:new Date(now+40*86400000).toISOString().slice(0,10),frozen_from:null,frozen_until:null});

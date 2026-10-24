@@ -1,3 +1,4 @@
+import {createSyntheticAdmissionCustomer} from './synthetic-admission-contact.mjs';
 // RS-09 fictional mock-only transaction; no backend or customer data.
 import assert from 'node:assert/strict';
 import { build } from 'esbuild';
@@ -13,6 +14,7 @@ try {
  await build({stdin:{contents:"export { dateKey } from './src/i18n/format'; export { MockProvider } from './src/data/MockProvider'; export { rescheduleBooking } from './src/modules/customer/rescheduleCommand';",resolveDir:process.cwd()},bundle:true,platform:'node',format:'esm',outfile:out,logLevel:'silent'});
  const {MockProvider,rescheduleBooking,dateKey}=await import(pathToFileURL(out));
  const data=new MockProvider(), userId='qa_reschedule', now=Date.now(), stamp=new Date(now).toISOString();
+ await createSyntheticAdmissionCustomer(data,userId);await createSyntheticAdmissionCustomer(data,'qa_waiter');
  const day=n=>new Date(now+n*86400000).toISOString();
  const template=data.peek('class_sessions').find(s=>s.status==='scheduled');
  const original=await data.insert('class_sessions',{...template,id:'qa_rs_from',starts_at:day(2),ends_at:day(2.04),status:'scheduled',booked_count:0,capacity:4,template_id:null});
@@ -47,7 +49,7 @@ try {
  await data.update('class_sessions',target.id,{starts_at:'invalid'});await reject(/session_unavailable/);
  await data.update('class_sessions',target.id,{starts_at:day(4),capacity:0});await reject(/session_unavailable/);
  await data.update('class_sessions',target.id,{capacity:1});
- await data.insert('users',{id:'qa_rs_full_holder',email:'full-reschedule@example.invalid',status:'active'});
+ await createSyntheticAdmissionCustomer(data,'qa_rs_full_holder',{email:'full-reschedule@example.invalid'});
  const fullBooking=await data.insert('bookings',{id:'qa_rs_target_full',user_id:'qa_rs_full_holder',session_id:target.id,status:'booked',paid_with:'comp',checked_in_at:null,ledger_id:null});
  await reject(/session_full/);
  await data.remove('bookings',fullBooking.id);await data.update('class_sessions',target.id,{capacity:4});

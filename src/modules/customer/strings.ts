@@ -7,6 +7,7 @@ import type { StringTable } from '../../i18n/types';
 
 /** Every user-facing string of the customer app (C-xx, A-xx, E-xx). Spanish first; English always present. */
 export const strings: StringTable = {
+  'customer.book.contactRequired': { es: 'Para reservar una clase se requieren nombre, WhatsApp y email. Revisa los datos de la cuenta con recepción antes de reintentar. Las reservas y los pagos existentes no cambiaron.', en: 'Class booking requires a name, WhatsApp and email. Review the account details with reception before retrying. Existing bookings and payments were not changed.' },
   'customer.checkout.recovery.checking': { es: 'Verificando tu reserva…', en: 'Checking your booking…' },
   'customer.checkout.recovery.checking.body': { es: 'Revisamos el resultado guardado antes de volver a intentar.', en: 'Checking the saved outcome before another attempt.' },
   'customer.checkout.recovery.unconfirmed': { es: 'No pudimos verificar el resultado', en: 'Could not verify the outcome' },

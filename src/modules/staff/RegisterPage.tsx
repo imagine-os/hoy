@@ -1,3 +1,4 @@
+import { validBookingContact, requireExistingBookingContact } from './bookingContact';
 import { requireSessionAdmission, assertAdmissionContext, sessionAdmissionAvailable } from '../../data/sessionAdmission';
 import { captureLaunchReceipt, receiptReference } from '../../data/launchReceipts';
 import { LaunchPaymentReceipt } from '../../components/organism/LaunchPaymentReceipt/LaunchPaymentReceipt';
@@ -84,7 +85,7 @@ export function RegisterPage() {
   const [itemId, setItemId] = useState('trial');
   const catalog=useOperationalCatalog(),review=useReviewedQuote(catalog,special.on?null:itemId,1,null);
   const [method, setMethod] = useState<Method>('cash');
-  const [receipt, setReceipt] = useState({ wa: true, email: true });
+  const [receipt, setReceipt] = useState({ wa: true });
   const [paidRaw, setPaidRaw] = useState<string | null>(null); // null = untouched, so it follows the invoiced total
   const [note, setNote] = useState('');
   const [sessionId, setSessionId] = useState(params.get('session') ?? '');
@@ -144,11 +145,15 @@ export function RegisterPage() {
   const paidDiffers = amountPaid !== totals.total;
   const noteOk = !paidDiffers || note.trim().length > 0;
   const who = mode === 'existing' ? !!person : mode === 'contact' ? special.on && contactName.trim().length > 0 : form.first.trim() && form.phone.trim() && form.consent;
-  const valid = !admissionBlocked && who && noteOk && specialOk && (special.on||review.available)&&(special.on||itemId!=='trial'||trial.status==='eligible');
+  const needsBookingContact = !special.on && !!sessionId;
+  const bookingContactValid = !needsBookingContact || (mode === 'existing' ? !!person && validBookingContact(person) : mode === 'new' && validBookingContact({ name: `${form.first} ${form.last}`, email: form.email, phone: form.phone }));
+  const valid = bookingContactValid && !admissionBlocked && who && noteOk && specialOk && (special.on||review.available)&&(special.on||itemId!=='trial'||trial.status==='eligible');
   const displayName = mode === 'existing' ? person?.name ?? '' : mode === 'contact' ? contactName.trim() : `${form.first.trim()} ${form.last.trim()}`.trim();
 
   const complete = async () => {
-    if (!canWrite || !valid || saleBusy.current) return;
+    if (!canWrite || saleBusy.current) return;
+    if (!bookingContactValid) { setError('booking_contact_required'); return; }
+    if (!valid) return;
     const provider=data,actorId=user.id,effectiveRole=role;
     const isCurrent=()=>saleContext.current.mounted && saleContext.current.data===provider && saleContext.current.actorId===actorId && saleContext.current.role===effectiveRole && saleContext.current.canWrite;
     saleBusy.current = true;
@@ -158,6 +163,11 @@ export function RegisterPage() {
       const frozen=!special.on&&review.quote?withQuoteTotals(review.quote,totals):null;
       const result = await data.atomic<Sale>(async data => {
       assertAdmissionContext({isCurrent});
+      if (needsBookingContact) {
+        if (mode === 'existing' && person) await requireExistingBookingContact(data, person.id, tenant.id);
+        else if (mode !== 'new' || !validBookingContact({ name: displayName, email: form.email, phone: form.phone })) throw new Error('booking_contact_required');
+        assertAdmissionContext({isCurrent});
+      }
       if(sessionId)await requireSessionAdmission(data,sessionId,{isCurrent});
       if(frozen)await checkSaleQuote(data,frozen);
       const audit = (action: string, entity: string, entityId: string, diff: Record<string, unknown>) => data.insert('audit_log', { actor_id: user.id, action, entity, entity_id: entityId, diff: { role, source: 'front_desk', ...diff }, ip: null });
@@ -170,7 +180,7 @@ export function RegisterPage() {
         const u = await data.insert<UserRow>('users', { email: form.email.trim() || `${digitsOf(form.phone)}@sin-email.hoyos.test`, phone: form.phone.trim(), status: 'active', last_sign_in_at: null, locale: lang });
         userId = u.id;
         const initials = displayName.split(' ').map((s) => s[0]).join('').slice(0, 2).toUpperCase();
-        await data.insert<ProfileRow>('profiles', { user_id: u.id, full_name: displayName, initials, photo_url: null, birthday: form.birthday || null, emergency_contact: form.emergency ? { name: form.emergency } : null, marketing_optin: receipt.wa, whatsapp_verified: false, notes: null } as Partial<ProfileRow>);
+        await data.insert<ProfileRow>('profiles', { user_id: u.id, full_name: displayName, initials, photo_url: null, birthday: form.birthday || null, emergency_contact: form.emergency ? { name: form.emergency } : null, marketing_optin: false, whatsapp_verified: false, notes: null } as Partial<ProfileRow>);
         await data.insert('user_roles', { user_id: u.id, role: 'customer', granted_by: user.id });
         await data.insert('consents', { user_id: u.id, legal_document_id: 'leg_terms_es', accepted_at: now.toISOString(), ip: null });
         await audit('user.create', 'users', u.id, { after: { name: displayName, phone: form.phone }, consent: 'leg_terms_es' });
@@ -180,7 +190,7 @@ export function RegisterPage() {
       if(frozen?.itemId==='trial'&&userId)await assertTrialAvailable(data,userId);
       let payment = await data.insert<PaymentRow>('payments', { ...(frozen?{frontend_quote:structuredClone(frozen)}:{}),user_id: userId, plan_id: special.on ? null : `plan_${item.id}`, amount: totals.total, amount_paid: amountPaid, note: paidDiffers ? note.trim() : null, currency: tenant.currency, method: db.method, provider: db.provider, provider_ref: pending ? fakeRef('wmp_link') : null, status: pending ? 'pending' : 'approved', paid_at: pending ? null : now.toISOString(), taken_by: user.id } as Partial<PaymentRow>);
       const number = receiptReference(payment.id);
-      if (!pending) payment = await captureLaunchReceipt(data, payment, { source: 'desk-sale', item: item.name, recordedTax: totals, previewChannels: [receipt.email ? 'email' as const : null, receipt.wa ? 'whatsapp' as const : null].filter((c): c is 'email' | 'whatsapp' => c !== null) });
+      if (!pending) payment = await captureLaunchReceipt(data, payment, { source: 'desk-sale', item: item.name, recordedTax: totals, previewChannels: ['email' as const, ...(receipt.wa ? ['whatsapp' as const] : [])] });
       await audit('payment.take', 'payments', payment.id, { amount: totals.total, amount_paid: amountPaid, note: paidDiffers ? note.trim() : null, method, item: item.id, receipt_reference: number, status: payment.status, contact: mode === 'contact' ? contactName.trim() : undefined });
 
       // Especial: the room window (new or the one S-05 sent us) and the special_charges row that joins money in, teacher payout and booking.
@@ -227,7 +237,7 @@ export function RegisterPage() {
       return { payment, number, subtotal: totals.subtotal, tax: totals.tax, total: totals.total, customer: displayName, contact, item, checkedIn, isNew, booking: bookingTitle, payout: payoutDone };
       }, { idempotencyKey: saleKey.current });
       if(isCurrent())setDone(result);
-    } catch (e) { const code = e instanceof Error ? e.message : ''; setError(trialErrorKey(e)??(['payment_confirmation_required','session_unavailable','session_full','booking_exists','same_day_conflict','insufficient_classes','package_frozen','package_expired','mock_atomic_adapter_required'].includes(code) ? code : 'failed')); } finally { setBusy(false); saleBusy.current = false; }
+    } catch (e) { const code = e instanceof Error ? e.message : ''; setError(trialErrorKey(e)??(['booking_contact_required','payment_confirmation_required','session_unavailable','session_full','booking_exists','same_day_conflict','insufficient_classes','package_frozen','package_expired','mock_atomic_adapter_required'].includes(code) ? code : 'failed')); } finally { setBusy(false); saleBusy.current = false; }
   };
 
   const reset = () => { saleKey.current = crypto.randomUUID(); setDone(null); setForm({ first: '', last: '', phone: '', email: '', birthday: '', emergency: '', consent: false }); setPersonId(null); setExistingQ(''); setMode('new'); setItemId('trial'); setMethod('cash'); setPaidRaw(null); setNote(''); setSpecial(NO_SPECIAL); setContactName(''); };
@@ -269,7 +279,7 @@ export function RegisterPage() {
                 <Field label={t('staff.register.f.first')} required>{(id) => <Input id={id} value={form.first} onChange={(e) => setForm({ ...form, first: e.target.value })} autoFocus />}</Field>
                 <Field label={t('staff.register.f.last')}>{(id) => <Input id={id} value={form.last} onChange={(e) => setForm({ ...form, last: e.target.value })} />}</Field>
                 <Field label={t('staff.register.f.whatsapp')} required hint={t('staff.register.f.whatsapp.hint')}>{(id) => <Input id={id} inputMode="tel" placeholder={`${tenant.dialCode} 300 000 0000`} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />}</Field>
-                <Field label={t('staff.register.f.email')}>{(id) => <Input id={id} type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />}</Field>
+                <Field label={t('staff.register.f.email')} required={needsBookingContact}>{(id) => <Input id={id} type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />}</Field>
                 <Field label={t('staff.register.f.emergency')}>{(id) => <Input id={id} value={form.emergency} onChange={(e) => setForm({ ...form, emergency: e.target.value })} placeholder={t('staff.register.f.emergency.ph')} />}</Field>
                 <Field label={t('staff.register.f.birthday')}>{(id) => <Input id={id} type="date" value={form.birthday} onChange={(e) => setForm({ ...form, birthday: e.target.value })} />}</Field>
                 <div className="register-consent"><Toggle checked={form.consent} onChange={(on) => setForm({ ...form, consent: on })} label={t('staff.register.consent')} /><p className="xs muted">{t('staff.register.consent.hint', { staff: user.name })}</p></div>
@@ -356,7 +366,7 @@ export function RegisterPage() {
             {method === 'wompi' && <p className="xs muted" style={{ marginTop: 'var(--sp-sm)' }}>{t('staff.register.wompi.note')}</p>}
             <div className="row wrap" style={{ marginTop: 'var(--sp-lg)' }}>
               <Toggle size="sm" checked={receipt.wa} onChange={(on) => setReceipt({ ...receipt, wa: on })} label={t('launchReceipt.whatsapp')} />
-              <Toggle size="sm" checked={receipt.email} onChange={(on) => setReceipt({ ...receipt, email: on })} label={t('launchReceipt.email')} />
+              <p className="small muted">{t('launchReceipt.email.always')}</p>
             </div>
           </Card>
         </div>
@@ -384,6 +394,7 @@ export function RegisterPage() {
               <Field label={t('staff.register.checkinTo')} hint={settings.features.autoCheckinOnSale ? t('staff.register.checkinTo.hint') : t('staff.register.checkinTo.off')}>
                 {(id) => <Select id={id} value={sessionId} onChange={(e) => setSessionId(e.target.value)} disabled={!settings.features.autoCheckinOnSale || special.on || mode === 'contact'}><option value="">{t('staff.register.checkinTo.none')}</option>{admissionBlocked&&<option value={sessionId} disabled>{t('customer.checkout.unavailable')}</option>}{upcoming.map(({ session: s, teacher: te }) => <option key={s.id} value={s.id}>{formatTime(s.starts_at, lang)} · {s.title} · {te?.display_name} ({s.booked_count}/{s.capacity})</option>)}</Select>}
               </Field>
+              {needsBookingContact && !bookingContactValid && <EmptyState compact tone="error" title={t('staff.register.contact.required')} body={t(mode === 'existing' ? 'staff.register.contact.existing' : 'staff.register.contact.new')} />}
               {error && <EmptyState compact tone="error" title={t('core.common.error')} body={t(error.startsWith('customer.')?error:`staff.booking.error.${error}`)} />}
               <Button block size="lg" disabled={!valid} loading={busy} onClick={complete} icon={method === 'wompi' ? 'link' : 'payment'}>{method === 'wompi' ? t('staff.register.cta.link') : t('staff.register.cta')}</Button>
               <p className="xs muted">{t('staff.register.audit', { staff: user.name })}</p>

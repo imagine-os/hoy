@@ -1,3 +1,4 @@
+import { requireExistingBookingContact } from '../../data/bookingContact';
 import { dailyAdmissionConflict, requireDailyAdmission } from '../../data/dailyAdmission';
 import { useScopedCustomerRead } from './useScopedCustomerRead';
 import { joinTenantSessions, ownBookingRows } from './scopedSessionRows';
@@ -137,6 +138,7 @@ export function useBookingActions() {
     // Race guard: re-read the session so a spot that filled during checkout is caught (C-04 "Race" state).
     const fresh = await requireSessionAdmission(transaction,session.id,control);
     if (!fresh || fresh.status !== 'scheduled' || !Number.isFinite(Date.parse(fresh.starts_at)) || Date.parse(fresh.starts_at) <= Date.now()) throw new Error('session_unavailable');
+    await requireExistingBookingContact(transaction, user.id, tenant.id, control);
     if (fresh.booked_count >= fresh.capacity) throw new Error('session_full');
     const existing = await transaction.list<BookingRow>('bookings', { where: { user_id: user.id, session_id: fresh.id } });
     if (existing.some(b => b.status === 'booked' || b.status === 'checked_in')) throw new Error('booking_exists');
@@ -200,6 +202,7 @@ export function useBookingActions() {
   const joinWaitlist = useCallback(async (session: ClassSessionRow) => {
     const run = async (transaction: DataProvider) => {
       await guardStudioWaitlist(transaction, session.id,{isCurrent});
+      await requireExistingBookingContact(transaction, user.id, tenant.id, {isCurrent});
     const existing = await transaction.list<WaitlistRow>('waitlist', { where: { session_id: session.id } });
     const position = existing.filter((w) => w.status === 'waiting' || w.status === 'offered').length + 1;
     await guardStudioWaitlist(transaction,session.id,{isCurrent});

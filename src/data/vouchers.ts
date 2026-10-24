@@ -1,7 +1,8 @@
+import { customerBookingContactValid } from './bookingContact';
 import {assertPurchasedGiftClaim} from '../modules/voucher-gifts/purchaseFacts';
 import { dailyAdmissionConflict } from './dailyAdmission';
 import { effectiveAdmissionCapacity, sessionAdmissionAvailable } from './sessionAdmission';
-import type { BaseRow, BookingRow, ClassSessionRow, ModalityRow, RoomRow } from './schema';
+import type { BaseRow, BookingRow, ClassSessionRow, ModalityRow, RoomRow, UserRow, ProfileRow } from './schema';
 
 /** Demo contract only. Production needs authenticated transactional RPCs, row locks,
  * secure claim tokens, server quotations and scoped RLS; this is not a live backend. */
@@ -114,6 +115,7 @@ export function executeVoucherCommand(database: VoucherDb, command: VoucherComma
       if(!sessionAdmissionAvailable(session,modality,template,Date.parse(now),context.tenantId))fail('session_unavailable');
       const capacity = effectiveAdmissionCapacity(session, (db.rooms as RoomRow[] | undefined)?.find(r => r.id === session.room_id && r.tenant_id === context.tenantId), modality, context.tenantId);
       if (session.status !== 'scheduled' || !Number.isFinite(Date.parse(session.starts_at)) || Date.parse(session.starts_at) <= Date.parse(now) || (voucher.expiresAt && Date.parse(session.starts_at) >= Date.parse(voucher.expiresAt))) fail('session_unavailable');
+      if (!voucher.claimedBy || !customerBookingContactValid((db.users ?? []) as UserRow[], (db.profiles ?? []) as ProfileRow[], voucher.claimedBy, context.tenantId)) fail('booking_contact_required');
       const regular = (db.bookings as BookingRow[]).filter(b => b.tenant_id === context.tenantId && b.session_id === session.id && b.status !== 'cancelled' && b.status !== 'late_cancel');
       if (regular.length + voucherSeats(db, session.id, context.tenantId) + c.participants.length > capacity) fail('session_full');
       if (bookings.some(b => b.tenant_id === context.tenantId && b.sessionId === session.id && b.status !== 'cancelled' && b.participants.some(p => participantIdentities(p).some(identity => identities.includes(identity)))) || c.participants.some(p => p.userId && regular.some(b => b.user_id === p.userId))) fail('booking_exists');

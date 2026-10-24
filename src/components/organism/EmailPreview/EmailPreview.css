@@ -11,5 +11,5 @@
 .emailpreview .phonebubble-var { background: rgba(var(--m-sun), .45); }
 @media (max-width: 600px) { .emailpreview { padding: var(--sp-md); } .emailpreview-paper { padding: var(--sp-lg); } }
 
-/* Opt-in embedded preview content stays readable on the fixed light email paper. */
-.emailpreview-content { --color-ink: var(--brand-ink); --color-text: var(--brand-ink); --color-text-muted: var(--brand-deepBlue); --color-text-faint: var(--brand-ink); }
+/* All text on the fixed light paper, including headings and footer, uses its existing ink palette. */
+.emailpreview-paper { --color-ink: var(--brand-ink); --color-text: var(--brand-ink); --color-text-muted: var(--brand-deepBlue); --color-text-faint: var(--brand-ink); }

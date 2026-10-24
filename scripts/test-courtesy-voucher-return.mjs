@@ -1,0 +1,13 @@
+// Navigation allowlist only; does not change destination authorization or voucher policy.
+import assert from 'node:assert/strict';
+import {build} from 'esbuild';
+import {mkdtemp,rm} from 'node:fs/promises';
+import {tmpdir} from 'node:os';import {join} from 'node:path';import {pathToFileURL} from 'node:url';
+const temp=await mkdtemp(join(tmpdir(),'hoy-courtesy-return-'));
+try{const file=join(temp,'return.mjs');await build({stdin:{contents:"export{customerReturn,customerAuthLink}from'./src/modules/customer/auth/customerReturn';export{visitorSignIn}from'./src/auth/visitorSignIn';",resolveDir:process.cwd()},bundle:true,platform:'node',format:'esm',outfile:file,logLevel:'silent'});const{customerReturn,customerAuthLink,visitorSignIn}=await import(pathToFileURL(file));let count=0;
+for(const id of ['qa_courtesy_0180','DEMO-12','a','12345678-1234-1234-1234-123456789012']){const target=`/app/vouchers/${id}`;assert.equal(customerReturn(target),target);assert.equal(new URLSearchParams(visitorSignIn(target).split('?')[1]).get('next'),target);for(const auth of ['/auth/sign-in','/auth/sign-up']){const link=customerAuthLink(auth,new URLSearchParams({next:target}));assert.equal(new URLSearchParams(link.split('?')[1]).get('next'),target);}count++;}
+for(const value of ['/app/vouchers','/app/vouchers/','/app/vouchers/x/','/app/vouchers/x/y','/app/vouchers/../admin','/app/vouchers/.','/app/vouchers/..','/app/vouchers/x?','/app/vouchers/x?next=/admin','/app/vouchers/x?gift=a','/app/vouchers/x?x=1?x=2','/app/vouchers/x#admin','/app/vouchers/x%2fadmin','/app/vouchers/%252fadmin','/app/vouchers/x\\admin','/app/vouchers/x\n','/app/vouchers/x y','//evil.test/app/vouchers/x','https://evil.test/app/vouchers/x','javascript:alert(1)','/APP/vouchers/x','/app/vouchers/á','/app/vouchers/x;admin',null,undefined]){assert.equal(customerReturn(value),null,String(value));assert.equal(visitorSignIn(value),'/auth/sign-in');assert.equal(customerAuthLink('/auth/sign-up',new URLSearchParams({next:String(value)})),'/auth/sign-up');count++;}
+for(const target of ['/app/checkout/x','/app/checkout/x?mat=2','/app/waitlist/x','/app/plans','/app/plans?plan=qa_plan','/app/gift','/app/voucher-gifts','/app/voucher-gifts?gift=qa_payment']){assert.equal(customerReturn(target),target);count++;}
+for(const target of ['/app/checkout/x?mat=0','/app/checkout/x?mat=2&mat=3','/app/plans?plan=x&next=/admin','/app/voucher-gifts?gift=x&gift=y','/admin','/auth/sign-up','/app/gift?next=/admin']){assert.equal(customerReturn(target),null);count++;}
+console.log(`PASS courtesy return allowlist: ${count} cases; strict IDs, both auth links, unsafe denial and existing targets retained`);
+}finally{await rm(temp,{recursive:true,force:true});}

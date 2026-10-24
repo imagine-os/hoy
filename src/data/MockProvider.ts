@@ -1,3 +1,4 @@
+import { customerBookingContactValid } from './bookingContact';
 import {readPendingDeskIntent} from './pendingDeskIntent';
 import type {PaymentRow} from './schema';
 import {executeGiftPurchaseCommand,type GiftPurchaseCommand,type GiftPurchaseResult} from '../modules/voucher-gifts/purchaseCommand';
@@ -14,7 +15,7 @@ import { upgradeTimetable } from './seed/upgradeTimetable';
 import { executePromotionCommand, ensureDemoPromotions, type PromotionCommand, type PromotionResult } from './promotions';
 import { executeVoucherCommand, voucherSeats, type VoucherCommand, type VoucherResult, type VoucherBookingRow } from './vouchers';
 import { chooseMat, occupiesMat, usesMats } from './mats';
-import type { BookingRow, ClassSessionRow, ModalityRow, RoomRow } from './schema';
+import type { BookingRow, ClassSessionRow, ModalityRow, RoomRow, UserRow, ProfileRow } from './schema';
 import type { BaseRow } from './schema';
 import { tableNames } from './schema';
 import { applyQuery, type ChangeEvent, type DataProvider, type Query } from './types';
@@ -154,6 +155,7 @@ export class MockProvider implements DataProvider {
     const modality = (this.db.modalities as ModalityRow[]).find(m => m.id === session.modality_id && m.tenant_id === session.tenant_id);
     const template = this.db.class_templates.find(t => t.id === session.template_id && t.tenant_id === session.tenant_id);
     if (admission && !sessionAdmissionAvailable(session, modality, template)) throw new Error('session_unavailable');
+    if (admission && (row.tenant_id !== session.tenant_id || !customerBookingContactValid(this.db.users as UserRow[], this.db.profiles as ProfileRow[], row.user_id, session.tenant_id))) throw new Error('booking_contact_required');
     const capacity = admission ? effectiveAdmissionCapacity(session, (this.db.rooms as RoomRow[]).find(r => r.id === session.room_id && r.tenant_id === session.tenant_id), modality) : session.capacity;
     const seats = (this.db.bookings as BookingRow[]).filter(b => b.tenant_id === session.tenant_id && b.session_id === session.id && b.id !== row.id && !['cancelled', 'late_cancel'].includes(b.status));
     if (seats.length + voucherSeats(this.db, session.id, session.tenant_id) >= capacity) throw new Error('session_full');
@@ -271,6 +273,7 @@ export class MockProvider implements DataProvider {
     const now = new Date().toISOString();
     let full = { id: newId(table.slice(0, 3)), tenant_id: tenant.id, created_at: now, updated_at: now, ...row } as T;
     if(table==='payments'&&full.frontend_desk_intent!==undefined){validateDeskPaymentIntent(full as unknown as PaymentRow);if(full.status!=='pending'||full.provider!=='manual'||full.method!=='cash')throw Error('desk_intent_invalid');}
+    if (table === 'waitlist' && ['waiting', 'offered'].includes(String(full.status)) && (full.tenant_id !== tenant.id || !customerBookingContactValid(this.db.users as UserRow[], this.db.profiles as ProfileRow[], String(full.user_id), tenant.id))) throw new Error('booking_contact_required');
     if (table === 'bookings') full = this.prepareBooking(full as unknown as BookingRow) as unknown as T;
     const previousDb = structuredClone(this.db);
     this.rows(table).push(full);
@@ -310,7 +313,8 @@ export class MockProvider implements DataProvider {
       if(before&&JSON.stringify(before)!==JSON.stringify(after))throw Error('desk_intent_immutable');
       if(!before&&after&&(next.status!=='pending'||next.provider!=='manual'||next.method!=='cash'))throw Error('desk_intent_invalid');
     }
-    if (table === 'bookings' && ('mat_number' in patch || 'session_id' in patch || ((patch as Partial<BookingRow>).status === 'booked' && (rows[i] as BookingRow).status !== 'booked'))) next = this.prepareBooking(next as unknown as BookingRow, (rows[i] as BookingRow).session_id !== (next as unknown as BookingRow).session_id || !occupiesMat(rows[i] as BookingRow)) as unknown as T;
+    if (table === 'bookings' && ('mat_number' in patch || 'session_id' in patch || 'user_id' in patch || 'tenant_id' in patch || ((patch as Partial<BookingRow>).status === 'booked' && (rows[i] as BookingRow).status !== 'booked'))) next = this.prepareBooking(next as unknown as BookingRow, (rows[i] as BookingRow).session_id !== (next as unknown as BookingRow).session_id || (rows[i] as BookingRow).user_id !== (next as unknown as BookingRow).user_id || rows[i].tenant_id !== next.tenant_id || !occupiesMat(rows[i] as BookingRow)) as unknown as T;
+    if (table === 'waitlist' && ['waiting', 'offered'].includes(String(next.status)) && (!['waiting', 'offered'].includes(String(rows[i].status)) || rows[i].user_id !== next.user_id || rows[i].tenant_id !== next.tenant_id || rows[i].session_id !== next.session_id) && (next.tenant_id !== tenant.id || !customerBookingContactValid(this.db.users as UserRow[], this.db.profiles as ProfileRow[], String(next.user_id), tenant.id))) throw new Error('booking_contact_required');
     const previousSession = table === 'bookings' ? (rows[i] as BookingRow).session_id : null;
     const previousDb = structuredClone(this.db);
     rows[i] = next;

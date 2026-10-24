@@ -1,4 +1,5 @@
-import type {BaseRow,PaymentRow,UserRow} from '../../data/schema';
+import { buildReceiptEmailPreview, buildReceiptRecorderSnapshot } from '../../data/receiptEmailPreview';
+import type {BaseRow,PaymentRow,UserRow,ProfileRow} from '../../data/schema';
 import {readPaymentQuote,type FrozenSaleQuote} from '../../data/operationalQuotes';
 import {executeVoucherCommand,type VoucherDb,type VoucherRow,type VoucherTerms} from '../../data/vouchers';
 import {readLaunchReceipt,receiptReference,type LaunchReceipt} from '../../data/launchReceipts';
@@ -66,6 +67,8 @@ export function executeGiftPurchaseCommand(database:VoucherDb,command:GiftPurcha
     const issuedEvent=db.voucher_events.find(e=>e.id===issued.result.event.id);if(issuedEvent)((issuedEvent.payload as{result:{voucher:VoucherRow}}).result.voucher).source='purchased_gift';
     const current=db.payments.find(p=>p.id===payment.id) as PaymentRow;Object.assign(current,{status:'approved',amount_paid:c.amount,note:c.reason.trim(),taken_by:actor.id,paid_at:now,updated_at:now});
     const receipt:LaunchReceipt={version:1,kind:'fictional-payment-receipt',reference:receiptReference(current.id),source:'transfer-review',facts:{paymentId:current.id,tenantId:current.tenant_id,customerId:current.user_id,planId:current.plan_id,amountCharged:current.amount,amountReceived:current.amount_paid,currency:current.currency,method:current.method,provider:current.provider,confirmedAt:current.paid_at,recordedBy:current.taken_by??null,quote:readPaymentQuote(current)},item:structuredClone(intent.quote.name),recordedTax:structuredClone(intent.quote.taxTotals??null),previewChannels:['email'],delivery:'preview-only'};
+    receipt.emailPreview=buildReceiptEmailPreview(receipt,(db.users??[]) as UserRow[],(db.profiles??[]) as ProfileRow[]);
+    receipt.recordedBySnapshot=buildReceiptRecorderSnapshot(receipt,(db.users??[]) as UserRow[],(db.profiles??[]) as ProfileRow[]);
     current.frontend_receipt=receipt;if(!readLaunchReceipt(current))fail('gift_receipt');
     const retained=db.gift_purchase_intents.find(r=>r.id===intent.id) as GiftPurchaseIntent;Object.assign(retained,{voucherId:voucher.id,terms:structuredClone(c.terms),approvalRequestId:requestId,updated_at:now});
     result={purchaseId:intent.id,payment:current,voucher,state:'approved'};

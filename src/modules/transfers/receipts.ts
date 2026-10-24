@@ -1,3 +1,5 @@
+import { assertAdmissionContext } from '../../data/sessionAdmission';
+import { requireExistingBookingContact } from '../../data/bookingContact';
 import { captureLaunchReceipt, readLaunchReceipt } from '../../data/launchReceipts';
 import {receiptDigest,assertReceiptOwner,ownedReceipt,insertAlertIntent,verifyUploadIntent} from './receiptAlert';
 import { type FrozenSaleQuote } from '../../data/operationalQuotes';
@@ -48,17 +50,21 @@ export async function submitTransfer(data:DataProvider,request:TransferRequest,c
       await verifyUploadIntent(tx,receipt,fingerprint);check();return receipt;}
     if(!Number.isInteger(input.amount)||input.amount<1||!Number.isInteger(input.classes)||input.classes<1||!input.image.dataUrl.startsWith(`data:${input.image.mimeType};base64,`)||!Number.isInteger(input.image.bytes)||input.image.bytes<1||input.image.bytes>RECEIPT_MAX_BYTES)throw Error('invalid');
     if(input.quote&&(input.quote.kind!=='class'||input.quote.quantity!==1||input.quote.classes!==input.classes||input.quote.entitlementExpiresAt!==input.expiresAt||JSON.stringify(input.quote.name)!==JSON.stringify(input.productName)))throw Error('quote_scope');
+    if(input.sessionId)await requireExistingBookingContact(tx,input.userId,tenant.id,{isCurrent:()=>{check();return true;}});
     const payment=await recordPayment(tx,{userId:input.userId,planId:input.productId,amount:input.amount,method:'transfer',ivaRate:policy.ivaRate,quote:input.quote});
     check();const receipt=await tx.insert<TransferReceiptRow>('transfer_receipts',{id:input.key,user_id:input.userId,payment_id:payment.id,session_id:input.sessionId,mat_number:input.matNumber,product_id:input.productId,product_name:input.productName,classes:input.classes,expires_at:input.expiresAt,image_data_url:input.image.dataUrl,file_name:input.image.fileName,mime_type:input.image.mimeType,byte_size:input.image.bytes,status:'pending',amount_received:null,review_reason:null,reviewed_by:null,reviewed_at:null,booking_id:null});
     check();await insertAlertIntent(tx,receipt,fingerprint);await assertReceiptOwner(tx,input.userId);check();return receipt;
   });
   const current=await ownedReceipt(data,input.userId,result.id);await verifyUploadIntent(data,current.receipt,fingerprint);check();return current.receipt;
 }
-export async function reviewTransfer(data:DataProvider,input:{id:string;actorId:string;role:string;decision:'approved'|'rejected';amount:number;reason:string;compared:boolean}):Promise<TransferReceiptRow>{
+export async function reviewTransfer(data:DataProvider,input:{id:string;actorId:string;role:string;decision:'approved'|'rejected';amount:number;reason:string;compared:boolean},isCurrent:()=>boolean=()=>true):Promise<TransferReceiptRow>{
+  const check=()=>assertAdmissionContext({isCurrent});check();
   if(data.name!=='mock'||!data.atomic)throw Error('disconnected');
   // Demo guard only; production requires authenticated authorization and authoritative bank evidence.
   if(!['super_admin','admin','front_desk'].includes(input.role))throw Error('forbidden');
-  return data.atomic(async tx=>{
+  return data.atomic(async staged=>{
+    check();
+    const tx=new Proxy({} as DataProvider,{get(_target,key){const value=Reflect.get(staged,key);if(['get','list','insert','update','remove'].includes(String(key)))return async(...args:unknown[])=>{check();const result=await value.apply(staged,args);check();return result;};return typeof value==='function'?value.bind(staged):value;}});
     const receipt=await tx.get<TransferReceiptRow>('transfer_receipts',input.id);
     if(!receipt||receipt.tenant_id!==tenant.id)throw Error('missing');
     if(receipt.status!=='pending'){
@@ -76,6 +82,7 @@ export async function reviewTransfer(data:DataProvider,input:{id:string;actorId:
     if(input.decision==='approved'&&receipt.product_id==='plan_trial'){
       await assertTrialAvailable(tx,receipt.user_id,payment.id);
     }
+    if(input.decision==='approved'&&receipt.session_id)await requireExistingBookingContact(tx,receipt.user_id,tenant.id,{isCurrent});
     const now=new Date().toISOString();let booking:BookingRow|null=null;
     const reviewedPayment = await tx.update<PaymentRow>('payments',payment.id,{status:input.decision==='approved'?'approved':'declined',amount_paid:input.amount,note:input.reason.trim(),taken_by:input.actorId,paid_at:input.decision==='approved'?now:null});
     if(input.decision==='approved'){

@@ -825,3 +825,17 @@ Protected-capture clarification: M14 schedule/pay screenshots remain local/ignor
 - Pending signup commands, legal proof, session updates and navigation are fenced to their actor, role, provider and route. Drafts survive for explicit retry. Combined local checks and independent source review passed; hosted CI/release remain pending. No real identity-provider or whole-platform validation claim.
 
 - Local frontend integration: retained desk fulfillment, private customer read scopes and saved transfer instructions; mounted confirmation uses read-only immutable proof. Combined build, regressions and review required before release.
+
+- CU-01 / S-04 local contact checkpoint (0176): selected standard-class Register sale rejects missing or generated email, re-reads existing contacts before writes and preserves history. Local tests/build/review and shared admission integration are separate gates; no whole-criterion completion or release claim. [Details](frontend-completion/desk-booking-contact.md)
+## Buyer notification template
+
+- BO-06 / C-37 (Feature Log75): conditional buyer sent-event template explicitly unsent; existing ready/used previews retained. Typecheck, full build, focused24 browser groups, compiled4 bilingual responsive journeys and independent source review passed locally; final combined integration/release remains separate. Real triggers/delivery remain backend-only.
+
+- CU-01 / Feature Log25 (0178): shared final booking-owner contact guards and context fences integrated locally; historical actions, product-only purchases and explicitly requested companions retained. Literal guest-versus-companion interpretation remains open. Final combined build/browser/review/CI and publication are separate gates. [Details](frontend-completion/shared-booking-contact.md)
+## Courtesy invitation navigation
+
+- C-28 / CU-01 bounded navigation slice: preserve a single safe invitation ID through sign-in/signup without automatic activation or booking. Strict domain44, typecheck, full build, actual auth8 and compiled auth8 passed locally; independent source review accepted. Account-holder contact and existing companion semantics remain separately coordinated; combined release remains separate.
+
+- PG-07/08 / Feature Log60/61 (0181): immutable addressed UNSENT receipt preview and saved collector contract implemented locally; legacy documents/replay and independent marketing consent preserved. Source-mapped writer tests and component/native/browser/build/review/CI are separate gates. Real sending and unresolved document/tax policy remain external. [Contract](frontend-completion/receipt-email-preview.md)
+
+- Admission regression fixtures (0182): complete intended valid synthetic owners for capacity, mats, promotions, historical cancellation and teacher ownership state tests. Existing assertions and frozen implementation fixtures retained; runtime unchanged. Focused local repair checks pass; exact-head CI and release remain separate gates.

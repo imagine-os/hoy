@@ -1,3 +1,4 @@
+import { requireExistingBookingContact } from '../../data/bookingContact';
 import {readPendingDeskIntent,type PendingDeskIntent} from '../../data/pendingDeskIntent';
 import {bookWithPackage} from '../../data/deskBooking';
 import {requireSessionAdmission} from '../../data/sessionAdmission';
@@ -109,7 +110,7 @@ export async function settleAtDesk(data: DataProvider, command: DeskSettlement, 
       tx.list<ClassLedgerRow>('class_ledger', { where: { tenant_id: tenant.id, payment_id: payment.id } }),
     ]); check();
     if (!customer || customer.tenant_id !== tenant.id || customer.status !== 'active' || receipts.length || grants.length) throw Error('fulfillment_scope');
-    if(intent)await requestedTarget(tx,intent,check);
+    if(intent){await requestedTarget(tx,intent,check);await requireExistingBookingContact(tx,payment.user_id!,tenant.id,{isCurrent:()=>{check();return true;}});}
     if (quote.itemId === 'trial') { await assertTrialAvailable(tx, payment.user_id!, payment.id); check(); }
     let approved = await tx.update<PaymentRow>('payments', payment.id, {
       status: 'approved', amount_paid: input.amount, method: input.method, taken_by: input.actorId,

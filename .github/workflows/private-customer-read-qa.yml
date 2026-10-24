@@ -20,6 +20,7 @@ on:
       - 'src/data/schema.ts'
       - 'src/data/types.ts'
       - 'scripts/test-visitor-signin*.mjs'
+      - 'scripts/test-courtesy-voucher-return*.mjs'
       - 'scripts/test-private-denial-assertion.mjs'
       - 'scripts/qa-private-denial.mjs'
       - 'scripts/test-customer-read-scope*.mjs'
@@ -66,6 +67,7 @@ jobs:
       - name: Verify visitor returns, denial assertions and scoped joins
         shell: bash
         run: |
+          node scripts/test-courtesy-voucher-return.mjs 2>&1 | tee qa/pl04/courtesy-return-domain.log
           node scripts/test-visitor-signin.mjs 2>&1 | tee qa/pl04/visitor-domain.log
           node scripts/test-private-denial-assertion.mjs 2>&1 | tee qa/pl04/denial-assertion-domain.log
           node scripts/test-customer-read-scope.mjs 2>&1 | tee qa/pl04/read-scope-domain.log
@@ -91,6 +93,7 @@ jobs:
             sleep 1
           done
           test "$ready" = 1
+          QA_OUTPUT=qa/pl04/production/courtesy-return node scripts/test-courtesy-voucher-return-ui.mjs 2>&1 | tee qa/pl04/production-courtesy-return.log
           QA_OUTPUT=qa/pl04/production/visitor node scripts/test-visitor-signin-ui.mjs 2>&1 | tee qa/pl04/production-visitor.log
           QA_OUTPUT=qa/pl04/production/history node scripts/test-customer-read-scope-ui.mjs 2>&1 | tee qa/pl04/production-history.log
           QA_OUTPUT=qa/pl04/production/inbox-cards node scripts/test-customer-inbox-cards-scope-ui.mjs 2>&1 | tee qa/pl04/production-inbox-cards.log

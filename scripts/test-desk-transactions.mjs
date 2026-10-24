@@ -1,3 +1,4 @@
+import {createSyntheticAdmissionCustomer} from './synthetic-admission-contact.mjs';
 // Fictional isolated mock adapter; no real payments, credentials or network calls.
 import assert from 'node:assert/strict';
 import { build } from 'esbuild';
@@ -14,6 +15,7 @@ try {
  const {MockProvider,bookWithPackage}=await import(pathToFileURL(out));
  const data = new MockProvider(), userId='qa_fictional';
  const base = data.peek('users')[0], now=new Date(), stamp=now.toISOString();
+ await createSyntheticAdmissionCustomer(data,userId);await createSyntheticAdmissionCustomer(data,'qa_other');
  const sessionId='qa_session';
  await data.insert('modalities',{id:'qa',name_es:'FICTICIA',name_en:'FICTIONAL',slug:'qa',active:true});
  await data.insert('rooms',{id:'qa',tenant_id:base.tenant_id,name:'FICTIONAL ROOM',capacity:10,heated:false});
@@ -55,6 +57,7 @@ try {
  await data.update('class_sessions',sessionId,{capacity:10});
  for (const [i,paidWith] of ['trial','single','package'].entries()) {
   const uid=`qa_returning_${paidWith}`, planId=`plan_${paidWith}`, quantity=paidWith==='package'?12:1;
+  await createSyntheticAdmissionCustomer(data,uid);
   const oldPay=await data.insert('payments',{user_id:uid,plan_id:'plan_old',status:'approved'});
   const history=[await data.insert('class_ledger',{user_id:uid,plan_id:'plan_old',payment_id:oldPay.id,delta:12,reason:'purchase',expires_at:'2000-01-01'}),await data.insert('class_ledger',{user_id:uid,plan_id:'plan_old',payment_id:oldPay.id,delta:-12,reason:'booking',expires_at:null})];
   if(i===1) history.push(await data.insert('class_ledger',{user_id:uid,plan_id:'plan_frozen',delta:12,reason:'purchase',expires_at:'2099-01-01',frozen_from:'2000-01-01',frozen_until:'2099-01-01'}));

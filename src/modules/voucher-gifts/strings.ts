@@ -46,6 +46,8 @@ export const strings:StringTable={
  'giftFlow.missing':{es:'No hay una compra disponible para esta cuenta y enlace.',en:'No purchase is available for this account and link.'},
  'giftFlow.other':{es:'Ver mis compras de bonos',en:'View my voucher purchases'},
  'giftFlow.readyPreview':{es:'Vista previa para el destinatario: bono disponible. Vista previa para el comprador: bono preparado. Nada enviado. Abre el enlace del destinatario:',en:'Recipient preview: voucher available. Buyer preview: voucher ready. Nothing sent. Open the recipient link:'},
+ 'giftFlow.sentTemplateTitle':{es:'Cuando se envíe el bono · PLANTILLA SIN ENVIAR',en:'When the voucher is sent · UNSENT TEMPLATE'},
+ 'giftFlow.sentTemplateBody':{es:'Notificación condicional para el comprador: «Tu bono se envió a su destinatario». Este texto solo correspondería tras confirmar un evento de envío. Esta demo no ha enviado este email ni registrado ese evento; no confirma la entrega.',en:'Conditional buyer notification: “Your voucher was sent to its recipient.” This text would apply only after a confirmed send event. This demo has not sent this email or recorded that event; it does not confirm delivery.'},
  'giftFlow.usedPreview':{es:'Vista previa para el comprador: el bono se usó para reservar. Nada enviado.',en:'Buyer preview: voucher used for a booking. Nothing sent.'},
  'giftFlow.reviewTerms':{es:'Condiciones del bono · revisión explícita',en:'Voucher terms · explicit review'},
  'giftFlow.recipientName':{es:'Nombre del destinatario de prueba',en:'Fictional recipient name'},

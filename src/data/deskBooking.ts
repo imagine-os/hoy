@@ -1,3 +1,4 @@
+import { requireExistingBookingContact } from './bookingContact';
 import { requireDailyAdmission } from './dailyAdmission';
 import { requireSessionAdmission, assertAdmissionContext, type AdmissionControl } from './sessionAdmission';
 import type { DataProvider } from './types';
@@ -11,6 +12,7 @@ export async function bookWithPackage(data: DataProvider, input: { userId: strin
   const now = input.now ?? new Date().toISOString();
   const session = await requireSessionAdmission(data, input.sessionId, { ...input.control, now: Date.parse(now) });
   if (!session || session.tenant_id !== tenant.id || session.status !== 'scheduled' || !Number.isFinite(Date.parse(now)) || !Number.isFinite(Date.parse(session.starts_at)) || Date.parse(session.starts_at) <= Date.parse(now)) throw new Error('session_unavailable');
+  await requireExistingBookingContact(data, input.userId, session.tenant_id, input.control);
   const bookings = await data.list<BookingRow>('bookings', { where: { user_id: input.userId } });
   const active = bookings.filter(b => b.status !== 'cancelled' && b.status !== 'late_cancel');
   if (active.some(b => b.session_id === session.id)) throw new Error('booking_exists');
