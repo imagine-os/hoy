@@ -845,3 +845,5 @@ Protected-capture clarification: M14 schedule/pay screenshots remain local/ignor
 - RS-09 / Feature Log47 (0184): future-day paid single/trial moves use exact finite receipt terms; package allocation, 12-hour cutoff and unresolved legacy fallback retained. Local and remote validation/release remain separate gates. [Contract](frontend-completion/direct-reschedule-terms.md)
 
 - AD-02 / Feature Log88 (0189): studio cancellation restores a verified directly paid single/trial class under its recorded terms. Persisted staff roles are checked; no bank refund or new voucher-cancellation rule is introduced. [Contract](frontend-completion/studio-direct-paid-return.md)
+
+- PG-04 / Feature Log57 (0185): fresh transfer approval requires inspectable saved receipt evidence; rejection and completed-history replay remain independent of current image availability. Local domain/browser/review evidence is separate from combined build, compiled CI and release. [Contract](frontend-completion/transfer-review-evidence.md)

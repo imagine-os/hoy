@@ -1,3 +1,4 @@
+import{syntheticTransferReviewFields}from'./synthetic-transfer-review-image.mjs';
 import assert from 'node:assert/strict';
 import {build} from 'esbuild';
 import {mkdtemp,rm} from 'node:fs/promises';
@@ -25,7 +26,7 @@ try{
  await data.update('payments',p.id,{amount_paid:p.amount_paid-1});assert.equal(readLaunchReceipt(await data.get('payments',p.id)),null,'changed financial facts are not silently acknowledged');const changed=snapshot();await assert.rejects(data.atomic(tx=>captureLaunchReceipt(tx,p,{source:'checkout'})),/receipt_conflict/);assert.equal(snapshot(),changed);await data.update('payments',p.id,{amount_paid:p.amount_paid});
  // Original pending transfer fixtures are reviewed through the actual command, not a receipt helper mock.
  const pending=await data.insert('payments',{user_id:'usr_cust',plan_id:quote.planId,amount:quote.chargedAmount,amount_paid:null,currency:'COP',status:'pending',method:'transfer',provider:'manual',paid_at:null,frontend_quote:quote});
- const upload=await data.insert('transfer_receipts',{payment_id:pending.id,user_id:'usr_cust',product_id:quote.planId,product_name:quote.name,classes:quote.classes,expires_at:quote.entitlementExpiresAt,status:'pending',session_id:null,mat_number:null});
+ const upload=await data.insert('transfer_receipts',{...syntheticTransferReviewFields(),payment_id:pending.id,user_id:'usr_cust',product_id:quote.planId,product_name:quote.name,classes:quote.classes,expires_at:quote.entitlementExpiresAt,status:'pending',session_id:null,mat_number:null});
  const review={id:upload.id,actorId:'usr_desk',role:'front_desk',decision:'approved',amount:pending.amount,reason:'FICTIONAL comparison',compared:true};
  assert.equal(readLaunchReceipt(pending),null);await reviewTransfer(data,review);const transferred=await data.get('payments',pending.id);assert.equal(readLaunchReceipt(transferred).source,'transfer-review');const reviewed=snapshot();await reviewTransfer(data,review);assert.equal(snapshot(),reviewed,'transfer replay preserves the exact receipt without invoice/regrant');
  const desk=await data.insert('payments',{user_id:'usr_cust',plan_id:quote.planId,amount:quote.chargedAmount,amount_paid:null,currency:'COP',status:'pending',method:'cash',provider:'manual',paid_at:null,frontend_quote:quote});
