@@ -841,3 +841,5 @@ Protected-capture clarification: M14 schedule/pay screenshots remain local/ignor
 - Admission regression fixtures (0182): complete intended valid synthetic owners for capacity, mats, promotions, historical cancellation and teacher ownership state tests. Existing assertions and frozen implementation fixtures retained; runtime unchanged. Focused local repair checks pass; exact-head CI and release remain separate gates.
 
 - RS-08 / Feature Log46 (0183): new single/trial bookings retain their exact approved payment link through a supported reschedule; historical unknown and package-debit states retained. Independent final review/build/browser/CI/release are separate gates. [Contract](frontend-completion/single-booking-payment-link.md)
+
+- RS-09 / Feature Log47 (0184): future-day paid single/trial moves use exact finite receipt terms; package allocation, 12-hour cutoff and unresolved legacy fallback retained. Local and remote validation/release remain separate gates. [Contract](frontend-completion/direct-reschedule-terms.md)

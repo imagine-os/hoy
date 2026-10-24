@@ -15,10 +15,13 @@ on:
       - 'src/modules/customer/rescheduleCommand.ts'
       - 'src/data/MockProvider.ts'
       - 'src/data/schema.ts'
+      - 'src/data/launchReceipts.ts'
+      - 'src/data/operationalQuotes.ts'
       - 'src/modules/customer/directions.ts'
       - 'src/modules/customer/supportStrings.ts'
       - 'scripts/*schedule-support*'
       - 'scripts/*single-booking-payment*'
+      - 'scripts/*direct-reschedule-terms*'
       - '.github/workflows/schedule-support-qa.yml'
 permissions:
   contents: read
@@ -38,7 +41,6 @@ jobs:
       - name: Verify scoped read models and unchanged cancellation rules
         run: |
           node scripts/test-schedule-support.mjs
-          node scripts/test-single-booking-payment.mjs
           node scripts/test-customer-cancel.mjs
           node scripts/test-reschedule-atomic.mjs
           node scripts/test-reschedule-cutoff.mjs
@@ -58,7 +60,6 @@ jobs:
           npm run preview -- --host 127.0.0.1 --strictPort --port 5218 > /tmp/hoy-schedule-preview.log 2>&1 &
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:5218/ >/dev/null && break; sleep 1; done
           node scripts/test-schedule-support-routes.mjs
-          node scripts/test-single-booking-payment-ui.mjs
         env:
           QA_BASE: http://127.0.0.1:5218
           CHROMIUM_PATH: /usr/bin/google-chrome
@@ -69,6 +70,40 @@ jobs:
           retention-days: 7
           path: |
             docs/screenshots/schedule-booking-support/
-            docs/screenshots/single-booking-payment/
             /tmp/hoy-schedule-support.log
             /tmp/hoy-schedule-preview.log
+  direct-paid-bookings:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Verify exact charge and retained reschedule terms
+        run: |
+          node scripts/test-single-booking-payment.mjs
+          node scripts/test-direct-reschedule-terms.mjs
+      - run: npm run build
+      - name: Verify actual compiled checkout and future-day moves
+        run: |
+          npm run preview -- --host 127.0.0.1 --strictPort --port 5219 > /tmp/hoy-direct-booking-preview.log 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:5219/ >/dev/null && break; sleep 1; done
+          node scripts/test-single-booking-payment-ui.mjs
+          QA_OUTPUT=docs/screenshots/direct-reschedule-terms node scripts/test-direct-reschedule-terms-ui.mjs
+        env:
+          QA_BASE: http://127.0.0.1:5219
+          CHROMIUM_PATH: /usr/bin/google-chrome
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: direct-paid-bookings-${{ github.event.pull_request.head.sha }}
+          retention-days: 7
+          path: |
+            docs/screenshots/single-booking-payment/
+            docs/screenshots/direct-reschedule-terms/
+            /tmp/hoy-direct-booking-preview.log

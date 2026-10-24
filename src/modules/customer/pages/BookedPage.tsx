@@ -33,7 +33,7 @@ import { useAppNavHandlers } from '../actions';
 import { useAllSessionsJoined, useBookingActions, useEntitlements, useNow, useSessionJoined } from '../hooks';
 import { cancelDeadline, insideCancelWindow, policy } from '../policy';
 import { canReschedule, RESCHEDULE_CUTOFF_HOURS } from '../reschedule';
-import { assertRescheduleValidity, reschedulePurchase } from '../rescheduleCommand';
+import { assertRescheduleValidity, rescheduleEntitlement } from '../rescheduleCommand';
 import { PageHead, downloadIcs, toneOf, roomName, shareText, teacherName } from '../ui';
 import { StudioCancelledBlock } from './blocks';
 
@@ -188,7 +188,7 @@ function ChangeSheet({ open, onClose, booking, joined, inside, deadline, onResul
   const now = useNow(1_000);
   const moveAllowed = canReschedule(s.starts_at, now);
   const validity = useMemo(() => {
-    try { return { purchase: reschedulePurchase(approvedPackageRows(ledger, payments), booking), unresolved: false }; }
+    try { return { purchase: rescheduleEntitlement(approvedPackageRows(ledger, payments), payments, booking), unresolved: false }; }
     catch { return { purchase: null, unresolved: true }; }
   }, [ledger, payments, booking]);
   const entitlementUnresolved = validity.unresolved || (!validity.purchase && day !== dateKey(new Date(s.starts_at)));
