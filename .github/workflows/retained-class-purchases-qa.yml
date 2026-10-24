@@ -13,6 +13,7 @@ on:
       - 'scripts/*retained-class-purchase*'
       - 'scripts/*retained-class-active-owner*'
       - 'scripts/test-receipt-email-capture-paths.mjs'
+      - 'scripts/test-pending-package-ui.mjs'
       - '.github/workflows/retained-class-purchases-qa.yml'
 permissions:
   contents: read
@@ -51,6 +52,7 @@ jobs:
           curl -fsS http://127.0.0.1:5222/ >/dev/null
           node scripts/test-retained-class-purchase-native.mjs
           QA_OUTPUT=docs/screenshots/retained-class-active-owner-native node scripts/test-retained-class-active-owner-native.mjs
+          QA_OUTPUT=docs/screenshots/pending-package-retained node scripts/test-pending-package-ui.mjs
         env:
           QA_BASE: http://127.0.0.1:5222
           QA_OUTPUT: docs/screenshots/retained-class-purchase-native
@@ -64,5 +66,6 @@ jobs:
             docs/screenshots/retained-class-purchase/
             docs/screenshots/retained-class-purchase-native/
             docs/screenshots/retained-class-active-owner-native/
+            docs/screenshots/pending-package-retained/
             /tmp/hoy-retained-dev.log
             /tmp/hoy-retained-preview.log

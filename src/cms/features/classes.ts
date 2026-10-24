@@ -109,6 +109,18 @@ export default (
       "sha256": "cf3e74ce5584abb6484460022e16edaf55377652743443dca4af83ec0b37dc31",
       "verifies": "Browser-native active owner invalidation; run by existing feature QA.",
       "reviewedSourceDigest": "f5dcd05eda14e2ef134e6d8f358868f18a46dafb893261d63d55cce7b77d5feb"
+    },
+    {
+      "path": "scripts/test-pending-package-ui.mjs",
+      "sha256": "6c65a7149f766c97f1bb949229b547df16a21ae8640347ebe8bb5fbb11a07c7a",
+      "verifies": "Compiled native EN/ES pending and confirmed package controls; actual persistence fault, unchanged financial history, same retained intent retry, once-only grant, readonly reload and explicit acknowledgement.",
+      "reviewedSourceDigest": "f5dcd05eda14e2ef134e6d8f358868f18a46dafb893261d63d55cce7b77d5feb"
+    },
+    {
+      "path": "scripts/test-retained-class-purchase-ui.mjs",
+      "sha256": "3fe44d5494c310b40269394b0b25953d757c43dde0688967750d69565fe33978",
+      "verifies": "Actual native DEV32 purchase recovery and caller contexts after complete app/harness graph warm-up; exact source/raw/transformed bytes remain equal across the frozen matrix.",
+      "reviewedSourceDigest": "f5dcd05eda14e2ef134e6d8f358868f18a46dafb893261d63d55cce7b77d5feb"
     }
   ],
   "entities": [

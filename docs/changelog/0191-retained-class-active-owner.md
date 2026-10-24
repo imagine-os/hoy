@@ -16,3 +16,7 @@ Files: the retained class-purchase helper, existing domain suite, compiled activ
 Scope: fictional browser data only. This does not add backend authorization, real charging or delivery.
 
 Isolation on live PR91 preserves its directly paid cancellation and persisted role checks. The retained-purchase domain fixture calls that current module and explicitly verifies its package ledger proof identifiers and digests before recovery/acknowledgement. Fresh build/browser/domain validation remains a coordinated gate.
+
+PR94 sensitive UI fixture repair: the unchanged pending-package test still expected a definitive no-commit message after storage failure. It now waits for the actual storage fault and settled operation, checks truthful retained uncertainty, retries the same saved intent, verifies one grant and unchanged prior history, then checks read-only reload and explicit marker acknowledgement. All original assertions are preserved. The compiled fixture is bound in the classes CMS adapter inventory and retained-purchase CI. Runtime source and its reviewed digest are unchanged.
+
+Retained DEV32 setup now loads the actual app and complete bound module/harness import graph before freezing source and transformed response bytes. Full strict before/after equality and all journey assertions remain; transformed texts are retained for diagnosis. The exact CI drift cause remains unproven: the preserved local cold/default-config matrix passed. No runtime behavior or reviewed source digest changed.
