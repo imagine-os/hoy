@@ -1,0 +1,64 @@
+name: Retained monetary gift QA
+on:
+  pull_request:
+    paths:
+      - 'src/cms/**'
+      - 'scripts/check-cms-contracts.mjs'
+      - 'src/data/**'
+      - 'src/modules/customer/**'
+      - 'src/modules/monetary-gift/**'
+      - 'src/modules/quotes/**'
+      - 'src/auth/**'
+      - 'src/components/organism/LaunchPaymentReceipt/**'
+      - 'scripts/*retained-monetary-gift*'
+      - 'scripts/test-receipt-email-capture-paths.mjs'
+      - '.github/workflows/retained-monetary-gift-qa.yml'
+permissions:
+  contents: read
+jobs:
+  retained-monetary-gift:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Verify retained gift domain proof and receipt compatibility
+        run: |
+          node scripts/test-retained-monetary-gift.mjs
+          node scripts/test-receipt-email-capture-paths.mjs
+      - run: npm run build
+      - name: Verify all 36 gift page and changing-context groups
+        run: |
+          npm run dev -- --host 127.0.0.1 --strictPort --port 5223 > /tmp/hoy-retained-monetary-gift-dev.log 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:5223/ >/dev/null && break; sleep 1; done
+          curl -fsS http://127.0.0.1:5223/ >/dev/null
+          node scripts/test-retained-monetary-gift-ui.mjs
+        env:
+          QA_BASE: http://127.0.0.1:5223
+          QA_OUTPUT: docs/screenshots/retained-monetary-gift
+          CHROMIUM_PATH: /usr/bin/google-chrome
+      - name: Verify all four compiled gift journeys without source imports
+        run: |
+          npm run preview -- --host 127.0.0.1 --strictPort --port 5224 > /tmp/hoy-retained-monetary-gift-preview.log 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:5224/ >/dev/null && break; sleep 1; done
+          curl -fsS http://127.0.0.1:5224/ >/dev/null
+          node scripts/test-retained-monetary-gift-native.mjs
+        env:
+          QA_BASE: http://127.0.0.1:5224
+          QA_OUTPUT: docs/screenshots/retained-monetary-gift-native
+          CHROMIUM_PATH: /usr/bin/google-chrome
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: retained-monetary-gift-qa-${{ github.event.pull_request.head.sha }}
+          path: |
+            docs/screenshots/retained-monetary-gift/
+            docs/screenshots/retained-monetary-gift-native/
+            /tmp/hoy-retained-monetary-gift-dev.log
+            /tmp/hoy-retained-monetary-gift-preview.log

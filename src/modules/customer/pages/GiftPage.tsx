@@ -1,9 +1,9 @@
 import {useOperationalCatalog,useReviewedQuote} from '../../quotes/hooks';
 import {QuoteNotice} from '../../../components/molecule/QuoteNotice/QuoteNotice';
-import {checkSaleQuote,quotedItem} from '../../../data/operationalQuotes';
-import {purchaseQuotedGift} from '../giftPurchase';
-import { useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import {quotedItem} from '../../../data/operationalQuotes';
+import { acknowledgeRetainedMonetaryGift, discardRetainedMonetaryGift, executeRetainedMonetaryGift, readRetainedMonetaryGift, recoverRetainedMonetaryGift, retainMonetaryGift, type RetainedMonetaryGift, type RetainedMonetaryGiftResult } from '../retainedMonetaryGift';
+import { useEffect, useRef, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useSession } from '../../../auth/SessionProvider';
 import { useData } from '../../../data/DataContext';
@@ -17,7 +17,6 @@ import { Notice } from '../../../components/molecule/Notice/Notice';
 import { Wordmark } from '../../../components/atom/Wordmark/Wordmark';
 import { OrderSummary } from '../../../components/molecule/OrderSummary/OrderSummary';
 import { priceOf } from '../hooks';
-import { wompiCheckout } from '../payments';
 import { policy } from '../policy';
 import { PageHead } from '../ui';
 
@@ -31,7 +30,8 @@ const MAX_QTY = 10;
 export function GiftPage() {
   const { t, bi, lang } = useI18n();
   const data = useData();
-  const { user } = useSession();
+  const { user, role } = useSession();
+  const location = useLocation(), path = location.pathname + location.search;
   const [amountId, setAmountId] = useState<string>('gift_single');
   const [qty, setQty] = useState(1);
   const [name, setName] = useState('');
@@ -41,39 +41,84 @@ export function GiftPage() {
   const [design, setDesign] = useState<Design>('cream');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
-  const [done, setDone] = useState<string | null>(null);
+  const [revision, setRevision] = useState(0);
+  const operation = useRef<object | null>(null);
+  const boundary = useRef({ data, userId: user.id, role, path });
+  if (boundary.current.data !== data || boundary.current.userId !== user.id || boundary.current.role !== role || boundary.current.path !== path) { boundary.current = { data, userId: user.id, role, path }; operation.current = null; }
+  const scope = boundary.current;
+  type View = { scope: typeof scope; phase: 'checking' | 'ready' | 'retryable' | 'unknown' | 'blocked' | 'settled'; attempt?: RetainedMonetaryGift; result?: RetainedMonetaryGiftResult };
+  const [view, setView] = useState<View | null>(null);
+  const currentView: View = view?.scope === scope ? view : { scope, phase: 'checking' };
+  const previewIsCurrent = view?.scope === scope;
+  const mounted = useRef(true);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
+  const same = () => mounted.current && boundary.current === scope;
+  useEffect(() => {
+    let alive = true;
+    const isCurrent = () => alive && mounted.current && boundary.current === scope;
+    setBusy(false); setErrors({}); setName(''); setContact(''); setMessage(''); setDate(dateKey()); setQty(1); setAmountId('gift_single'); setDesign('cream'); setView({ scope, phase: 'checking' });
+    void (async () => {
+      try {
+        const attempt = readRetainedMonetaryGift(user.id);
+        if (!isCurrent()) return;
+        if (!attempt) { setView({ scope, phase: 'ready' }); return; }
+        setName(attempt.recipientName); setContact(attempt.recipientContact); setDate(attempt.deliveryDate); setQty(attempt.quote.quantity); setAmountId(attempt.quote.itemId);
+        setView({ scope, phase: 'checking', attempt });
+        const result = await recoverRetainedMonetaryGift(data, attempt, { isCurrent, role });
+        if (isCurrent()) setView({ scope, phase: result ? 'settled' : 'retryable', attempt, ...(result ? { result } : {}) });
+      } catch { if (isCurrent()) setView({ scope, phase: 'blocked' }); }
+    })();
+    return () => { alive = false; };
+  }, [data, user.id, role, path, revision]);
 
   const catalog=useOperationalCatalog(),review=useReviewedQuote(catalog,amountId,qty,null);
-  const giftKey=useRef(crypto.randomUUID()),giftBusy=useRef(false);
-  const item = review.quote?quotedItem(review.quote):priceOf(amountId);
-  const amount = review.quote?.chargedAmount??0;
+  const quote = currentView.attempt?.quote ?? review.quote;
+  const item = quote?quotedItem(quote):priceOf(amountId);
+  const amount = quote?.chargedAmount??0;
   const label = qty > 1 ? `${qty} × ${bi(item.name)}` : bi(item.name);
   const today = dateKey();
 
   const buy = async () => {
-    if(!review.available||!review.quote||giftBusy.current)return;
+    if(!same() || !review.available || !review.quote || currentView.phase !== 'ready' || operation.current)return;
     const e: Record<string, string> = {};
     if (qty < 1 || qty > MAX_QTY) e.amount = t('customer.gift.qty.err', { max: MAX_QTY });
     if (name.trim().length < 2) e.name = t('customer.form.required');
     if (!contact.includes('@') && !isPhone(contact)) e.contact = t('customer.gift.contact.err');
     if (date < today) e.date = t('customer.gift.date.past');
     setErrors(e); if (Object.keys(e).length) return;
-    giftBusy.current=true;setBusy(true);
+    let attempt: RetainedMonetaryGift;
     try {
-      await checkSaleQuote(data,review.quote);
-      const result = await wompiCheckout({ amount, method: 'card' }); // INTEGRATION SEAM: Wompi
-      const stored=await purchaseQuotedGift(data,{key:giftKey.current,userId:user.id,quote:review.quote,recipientName:name,recipientContact:contact,deliveryDate:date,result,ivaRate:policy.ivaRate});
-      if(stored.code)setDone(stored.code);else{giftKey.current=crypto.randomUUID();setErrors({payment:t('quotes.failed')});}
-    }catch{setErrors({payment:t('quotes.failed')});}
-    finally{setBusy(false);giftBusy.current=false;}
+      attempt = retainMonetaryGift({ userId: user.id, role, quote: review.quote, recipientName: name, recipientContact: contact, deliveryDate: date });
+    } catch { if (same()) setView({ scope, phase: 'blocked' }); return; }
+    await act('execute', attempt);
   };
+  async function act(action: 'execute' | 'check' | 'acknowledge' | 'discard', attempt: RetainedMonetaryGift) {
+    if (!same() || operation.current) return;
+    const ticket = {}; operation.current = ticket; setBusy(true);
+    const isCurrent = () => same() && operation.current === ticket;
+    try {
+      if (action === 'acknowledge') {
+        if (!currentView.result) return;
+        await acknowledgeRetainedMonetaryGift(data, attempt, currentView.result, { isCurrent, role });
+        if (isCurrent()) { setName(''); setContact(''); setDate(dateKey()); setMessage(''); setQty(1); setAmountId('gift_single'); setView({ scope, phase: 'ready' }); }
+      } else if (action === 'discard') {
+        await discardRetainedMonetaryGift(data, attempt, { isCurrent, role });
+        if (isCurrent()) setView({ scope, phase: 'ready' });
+      } else {
+        setView({ scope, phase: 'checking', attempt });
+        const result = action === 'check' ? await recoverRetainedMonetaryGift(data, attempt, { isCurrent, role }) : await executeRetainedMonetaryGift(data, attempt, { isCurrent, role, ivaRate: policy.ivaRate });
+        if (isCurrent()) setView({ scope, phase: result ? 'settled' : 'retryable', attempt, ...(result ? { result } : {}) });
+      }
+    } catch { if (isCurrent()) setView({ scope, phase: 'unknown', attempt }); }
+    finally { if (operation.current === ticket) { operation.current = null; if (same()) setBusy(false); } }
+  }
 
   return (
     <div className="container page cust-page">
       <PageHead back="/app/more" title={t('customer.gift.title')} sub={t('quotes.giftIntro')} />
       <div className="stack">
-        <QuoteNotice catalog={catalog} review={review}/>
-        {!review.available&&!catalog.loading&&<Notice tone="warn">{t('quotes.giftBlocked')}</Notice>}
+        {!currentView.attempt && <QuoteNotice catalog={catalog} review={review}/>}
+        {!currentView.attempt && !review.available&&!catalog.loading&&<Notice tone="warn">{t('quotes.giftBlocked')}</Notice>}
         {errors.payment&&<Notice tone="danger">{errors.payment}</Notice>}
         <Notice tone="warn" title={t('vouchers.demo')}>{t('vouchers.demoBody')}</Notice>
         <Link to="/app/vouchers">{t('vouchers.giftLink')}</Link>
@@ -81,13 +126,21 @@ export function GiftPage() {
         <div className={`cust-giftcard cust-giftcard-${design}`} role="img" aria-label={t('customer.gift.preview')}>
           <Wordmark variant={design === 'blue' ? 'cream' : 'blue'} height={28} />
           <strong>{formatCOP(amount, lang)}</strong>
-          <span className="small">{name ? t('customer.gift.for', { name }) : t('customer.gift.preview')}</span>
-          {message && <em className="xs">“{message}”</em>}
+          <span className="small">{previewIsCurrent && name ? t('customer.gift.for', { name }) : t('customer.gift.preview')}</span>
+          {previewIsCurrent && message && <em className="xs">“{message}”</em>}
         </div>
 
-        {done ? (
-          <Notice tone="success" title={t('vouchers.saved')}>{t('vouchers.giftSimulated', { code: done })}</Notice>
-        ) : (
+        {currentView.phase !== 'ready' ? <div className="stack-sm" data-retained-gift-state={currentView.phase}>
+          <Notice tone={currentView.phase === 'settled' ? 'success' : currentView.phase === 'checking' ? 'info' : 'warn'}>
+            <p role={currentView.phase === 'checking' ? 'status' : undefined}>{t(`giftRetained.${currentView.phase === 'settled' ? currentView.result?.status === 'approved' ? 'saved' : 'declined' : currentView.phase}`)}</p>
+            {currentView.result?.gift && <p>{t('vouchers.giftSimulated', { code: currentView.result.gift.code })}</p>}
+          </Notice>
+          {currentView.attempt && <Card className="stack-sm"><p>{t('giftRetained.snapshot')}</p><p>{currentView.attempt.recipientName} · {currentView.attempt.recipientContact}</p><p>{currentView.attempt.deliveryDate} · {label} · {formatCOP(amount, lang)}</p></Card>}
+          {currentView.phase === 'checking' ? null : currentView.phase === 'settled' && currentView.attempt && currentView.result ? <Button loading={busy} onClick={() => void act('acknowledge', currentView.attempt!)}>{t('giftRetained.acknowledge')}</Button>
+            : <Button loading={busy} onClick={() => currentView.attempt ? void act('check', currentView.attempt) : setRevision(n => n + 1)}>{t('giftRetained.check')}</Button>}
+          {currentView.phase === 'retryable' && currentView.attempt && <div className="row wrap"><Button loading={busy} onClick={() => void act('execute', currentView.attempt!)}>{t('giftRetained.retry')}</Button><Button variant="secondary" disabled={busy} onClick={() => void act('discard', currentView.attempt!)}>{t('giftRetained.cancel')}</Button></div>}
+          <p className="small muted">{t('giftRetained.boundary')}</p>
+        </div> : (
           <>
             <Field label={`1 · ${t('customer.gift.amount')}`} error={errors.amount}>{() => (
               <div className="stack-sm">
