@@ -10,9 +10,15 @@ on:
       - 'src/modules/customer/pages/MorePage.tsx'
       - 'src/modules/customer/useCustomerRows.ts'
       - 'src/modules/customer/bookingPaymentStatus.ts'
+      - 'src/modules/customer/pages/CheckoutPage.tsx'
+      - 'src/modules/customer/hooks.ts'
+      - 'src/modules/customer/rescheduleCommand.ts'
+      - 'src/data/MockProvider.ts'
+      - 'src/data/schema.ts'
       - 'src/modules/customer/directions.ts'
       - 'src/modules/customer/supportStrings.ts'
       - 'scripts/*schedule-support*'
+      - 'scripts/*single-booking-payment*'
       - '.github/workflows/schedule-support-qa.yml'
 permissions:
   contents: read
@@ -32,6 +38,7 @@ jobs:
       - name: Verify scoped read models and unchanged cancellation rules
         run: |
           node scripts/test-schedule-support.mjs
+          node scripts/test-single-booking-payment.mjs
           node scripts/test-customer-cancel.mjs
           node scripts/test-reschedule-atomic.mjs
           node scripts/test-reschedule-cutoff.mjs
@@ -51,6 +58,7 @@ jobs:
           npm run preview -- --host 127.0.0.1 --strictPort --port 5218 > /tmp/hoy-schedule-preview.log 2>&1 &
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:5218/ >/dev/null && break; sleep 1; done
           node scripts/test-schedule-support-routes.mjs
+          node scripts/test-single-booking-payment-ui.mjs
         env:
           QA_BASE: http://127.0.0.1:5218
           CHROMIUM_PATH: /usr/bin/google-chrome
@@ -61,5 +69,6 @@ jobs:
           retention-days: 7
           path: |
             docs/screenshots/schedule-booking-support/
+            docs/screenshots/single-booking-payment/
             /tmp/hoy-schedule-support.log
             /tmp/hoy-schedule-preview.log

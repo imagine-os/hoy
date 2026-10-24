@@ -159,7 +159,7 @@ export function useBookingActions() {
       if (!purchase) throw new Error('package_balance');
     }
     await requireSessionAdmission(transaction,session.id,control);
-    const booking = await transaction.insert<BookingRow>('bookings', { user_id: user.id, session_id: fresh.id, status: 'booked', paid_with: paidWith, ledger_id: null, checked_in_at: null, cancelled_at: null, rated: false, mat_number: opts?.matNumber ?? null });
+    const booking = await transaction.insert<BookingRow>('bookings', { user_id: user.id, session_id: fresh.id, status: 'booked', paid_with: paidWith, ledger_id: null, payment_id: paidWith === 'single' || paidWith === 'trial' ? opts?.paymentId ?? null : null, checked_in_at: null, cancelled_at: null, rated: false, mat_number: opts?.matNumber ?? null });
     if (paidWith === 'package') {
       const c = await transaction.insert<ClassLedgerRow>('class_ledger', { purchase_ledger_id: purchase?.id ?? null, user_id: user.id, plan_id: purchase?.plan_id ?? null, payment_id: purchase?.payment_id ?? null, delta: -1, reason: 'booking', expires_at: null } as Partial<ClassLedgerRow>);
       await transaction.update('bookings', booking.id, { ledger_id: c.id });

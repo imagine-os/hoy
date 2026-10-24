@@ -260,7 +260,7 @@ export function CheckoutPage() {
         if(kind==='trial')await assertTrialAvailable(transaction,user.id);
         let paidWith: EntitlementKind = kind === 'package' ? 'package' : kind === 'membership' ? 'membership' : kind === 'trial' ? 'trial' : kind === 'single' ? 'single' : 'package';
         let packagePlanId: string | null = null;
-        let packagePaymentId: string | undefined;
+        let bookingPaymentId: string | undefined;
         let pending = false;
         if (amount > 0 && isPass(kind)) {
           const item = selectedItem!;
@@ -277,13 +277,14 @@ export function CheckoutPage() {
           if (pending) {
             return { booking: null, pending: true };
           }
+          bookingPaymentId = payment.id;
           if (item.classes && item.classes > 1) {
             // A package bought with this booking: its classes open in the ledger and this class is the first one used.
             await activatePaidPackage(transaction, { paymentId: payment.id, userId: user.id, planId: `plan_${item.id}`, classes: item.classes, expiresAt: review.quote!.entitlementExpiresAt! });
-            paidWith = 'package'; packagePlanId = `plan_${item.id}`; packagePaymentId=payment.id;
+            paidWith = 'package'; packagePlanId = `plan_${item.id}`;
           }
         }
-        const booking = await book(joined.session, paidWith, { packagePlanId, paymentId:packagePaymentId, matNumber: yoga ? mat : null, data: transaction,isCurrent:transferValid,claimId });
+        const booking = await book(joined.session, paidWith, { packagePlanId, paymentId:bookingPaymentId, matNumber: yoga ? mat : null, data: transaction,isCurrent:transferValid,claimId });
         assertAdmissionContext({isCurrent:transferValid});
         return { booking, pending };
       },{idempotencyKey:`checkout:${user.id}:${checkoutKey.current}`});

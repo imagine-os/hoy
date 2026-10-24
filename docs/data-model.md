@@ -497,6 +497,7 @@ _Un cupo de una persona en una sesión._
 | `status` | enum (booked \| checked_in \| cancelled \| no_show \| late_cancel) |  |
 | `paid_with` | enum (package \| single \| trial \| guest \| comp \| membership) | package = one class of the person's 12-class package (class_ledger); membership is dormant since 0051 |
 | `ledger_id` | uuid, null | → `class_ledger` the −1 row a package booking wrote |
+| `payment_id` | uuid, optional/null | → `payments` exact new single/trial checkout charge; historical records are not inferred or backfilled. Package bookings retain debit lineage. |
 | `checked_in_at` | timestamptz, null |  |
 | `cancelled_at` | timestamptz, null |  |
 | `rated` | bool |  |

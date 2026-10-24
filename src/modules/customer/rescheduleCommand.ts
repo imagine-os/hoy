@@ -52,7 +52,7 @@ export async function rescheduleBooking(data: DataProvider, input: { userId: str
   assertAdmissionContext(input.control);
   // Both writes remain inside the caller's atomic transaction; exclude the replaced admission.
   await data.update('bookings', booking.id, { status: 'cancelled', cancelled_at: new Date(now).toISOString() });
-  const next = await data.insert<BookingRow>('bookings', { user_id: booking.user_id, session_id: target.id, status: 'booked', paid_with: booking.paid_with, ledger_id: booking.ledger_id, checked_in_at: null, cancelled_at: null, rated: false });
+  const next = await data.insert<BookingRow>('bookings', { user_id: booking.user_id, session_id: target.id, status: 'booked', paid_with: booking.paid_with, ledger_id: booking.ledger_id, payment_id: booking.payment_id ?? null, checked_in_at: null, cancelled_at: null, rated: false });
   // MockProvider recalculates both occupancies from bookings; do not add or subtract capacity again.
   const waiting = await data.list('waitlist', { where: { session_id: original.id, status: 'waiting' }, orderBy: { column: 'position' } });
   let offerAllowed = false;
