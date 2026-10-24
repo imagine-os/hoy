@@ -843,3 +843,5 @@ Protected-capture clarification: M14 schedule/pay screenshots remain local/ignor
 - RS-08 / Feature Log46 (0183): new single/trial bookings retain their exact approved payment link through a supported reschedule; historical unknown and package-debit states retained. Independent final review/build/browser/CI/release are separate gates. [Contract](frontend-completion/single-booking-payment-link.md)
 
 - RS-09 / Feature Log47 (0184): future-day paid single/trial moves use exact finite receipt terms; package allocation, 12-hour cutoff and unresolved legacy fallback retained. Local and remote validation/release remain separate gates. [Contract](frontend-completion/direct-reschedule-terms.md)
+
+- AD-02 / Feature Log88 (0189): studio cancellation restores a verified directly paid single/trial class under its recorded terms. Persisted staff roles are checked; no bank refund or new voucher-cancellation rule is introduced. [Contract](frontend-completion/studio-direct-paid-return.md)
