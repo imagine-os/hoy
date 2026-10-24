@@ -845,3 +845,9 @@ Protected-capture clarification: M14 schedule/pay screenshots remain local/ignor
 - RS-09 / Feature Log47 (0184): future-day paid single/trial moves use exact finite receipt terms; package allocation, 12-hour cutoff and unresolved legacy fallback retained. Local and remote validation/release remain separate gates. [Contract](frontend-completion/direct-reschedule-terms.md)
 
 - AD-02 / Feature Log88 (0189): studio cancellation restores a verified directly paid single/trial class under its recorded terms. Persisted staff roles are checked; no bank refund or new voucher-cancellation rule is introduced. [Contract](frontend-completion/studio-direct-paid-return.md)
+
+- PG-09 / Feature Log62 (0186): retain uncertain Plans/Classes purchases, reconcile exact stored outcomes before retry, and preserve legitimate later history. Source review and local/remote validation remain separate gates; this does not certify all entry points or real processor idempotency. [Contract](frontend-completion/retained-class-purchases.md)
+
+- D-02 (0187): restore keyboard dismissal after focus leaves a disabled control; nested portal paint order follows the active layer. Component and integrated regressions remain separate gates. [Contract](frontend-completion/drawer-keyboard-dismiss.md)
+
+- PG-09 / Feature Log62 (0191): keep the scoped owner active through late proof reads and acknowledgement/cancellation boundaries. Saved financial history and existing role policy are unchanged; local, remote and release gates remain separate. [Contract](frontend-completion/retained-class-active-owner.md)
