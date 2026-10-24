@@ -37,7 +37,7 @@ jobs:
           node scripts/test-transfer-review-evidence-ui.mjs
         env:
           QA_BASE: http://127.0.0.1:5217
-          QA_OUTPUT: docs/screenshots/transfer-review-evidence
+          QA_OUTPUT: ${{ runner.temp }}/transfer-review-evidence
           CHROMIUM_PATH: /usr/bin/google-chrome
       - name: Verify native compiled review without source imports
         run: |
@@ -48,7 +48,7 @@ jobs:
           node scripts/test-sensitive-audit-ui.mjs
         env:
           QA_BASE: http://127.0.0.1:5218
-          QA_OUTPUT: docs/screenshots/transfer-review-evidence-native
+          QA_OUTPUT: ${{ runner.temp }}/transfer-review-evidence-native
           CHROMIUM_PATH: /usr/bin/google-chrome
       - uses: actions/upload-artifact@v4
         if: always()
@@ -56,8 +56,8 @@ jobs:
           name: transfer-review-evidence-${{ github.event.pull_request.head.sha }}
           retention-days: 7
           path: |
-            docs/screenshots/transfer-review-evidence/
-            docs/screenshots/transfer-review-evidence-native/
+            ${{ runner.temp }}/transfer-review-evidence/
+            ${{ runner.temp }}/transfer-review-evidence-native/
             qa/sensitive-audit/
             /tmp/hoy-receipt-evidence-dev.log
             /tmp/hoy-receipt-evidence-preview.log

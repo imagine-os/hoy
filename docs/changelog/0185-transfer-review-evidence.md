@@ -10,3 +10,5 @@ files: Transfer receipt command, retained-proof helper, queue review UI, focused
 The queue previously displayed Receipt unavailable yet allowed approval and class activation. Fresh approval now fails before financial or admission writes. No upload proof is created for legacy receipts, and no real bank notification or backend authorization is implied. Full combined build, compiled regressions and independent review remain integration gates.
 
 The existing sensitive-audit success fixture now uses the same genuine synthetic-image helper, preserving all 25 original privacy/financial assertions. The full audit browser regression is included in the receipt-evidence workflow and CMS test inventory.
+
+CI evidence output uses the runner temporary directory. Writing new captures under `docs/screenshots` invalidates the eagerly imported documentation image glob and sends a Vite full reload, which can destroy the next browser evaluation. The focused browser matrix records navigation/reload diagnostics and rejects reloads; receipt and context assertions remain unchanged.
