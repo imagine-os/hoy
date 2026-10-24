@@ -845,3 +845,5 @@ Protected-capture clarification: M14 schedule/pay screenshots remain local/ignor
 - RS-09 / Feature Log47 (0184): future-day paid single/trial moves use exact finite receipt terms; package allocation, 12-hour cutoff and unresolved legacy fallback retained. Local and remote validation/release remain separate gates. [Contract](frontend-completion/direct-reschedule-terms.md)
 
 - AD-02 / Feature Log88 (0189): studio cancellation restores a verified directly paid single/trial class under its recorded terms. Persisted staff roles are checked; no bank refund or new voucher-cancellation rule is introduced. [Contract](frontend-completion/studio-direct-paid-return.md)
+
+- CU-04 / Feature Log28 (0190): obsolete legacy demo sign-in callbacks cannot restore a closed session; current failures still use the existing lock policy. E-04 copy labels the browser-only demonstration without real-email/server claims. [Contract](frontend-completion/legacy-demo-signin-context.md)
