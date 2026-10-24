@@ -1,6 +1,7 @@
 // Written source-only first. Execute only after root grants the compiler/runtime lane.
 // Invokes the EXACT frozen cancellation closure and hash-verified original waitlist.
 // Current policy/provider remain real; new admission behavior is tested separately.
+import {createSyntheticAdmissionCustomer} from './synthetic-admission-contact.mjs';
 import assert from 'node:assert/strict';import{build}from'esbuild';import{readFile,mkdir,writeFile}from'node:fs/promises';import{createHash}from'node:crypto';
 import{customerActor,customerNow,installCustomerMemory,seedCustomerCancellation,wrapCustomerProvider}from'./customer-cancel-fixture.mjs';
 try{
@@ -12,7 +13,7 @@ try{
  const{MockProvider,originalCancellation,packageState}=await import('data:text/javascript;base64,'+Buffer.from(output.outputFiles[0].text).toString('base64'));
  const store=installCustomerMemory(),checks=[],originalNow=Date.now;Date.now=()=>customerNow;
  try{
-  const setup=async options=>{store.memory.clear();const data=new MockProvider(),rows=await seedCustomerCancellation(data,options);return{data,...rows};};
+  const setup=async options=>{store.memory.clear();const data=new MockProvider();await createSyntheticAdmissionCustomer(data,'qa_foreign_owner');const rows=await seedCustomerCancellation(data,options);return{data,...rows};};
   {const{data,booking,session}=await setup();const run=originalCancellation(data);await run(booking,session);await run(booking,session);const returns=data.peek('class_ledger').filter(row=>row.user_id===customerActor.actorId&&row.reason==='cancel_return');assert.equal(returns.length,2);assert(returns.every(row=>row.expires_at===null&&!row.purchase_ledger_id));assert.equal(packageState(data.peek('class_ledger').filter(row=>row.user_id===customerActor.actorId),'2030-02-01').balance,2);checks.push('Exact original closure repeats unlinked nonexpiring free-package returns beyond original expiry.');}
   for(const target of ['class_ledger','class_sessions','waitlist']){
    const{data,booking,session}=await setup();const wrapped=wrapCustomerProvider(data,{insert:async(tx,table,row)=>{if(table===target)throw Error('FICTIONAL insert');return tx.insert(table,row);},update:async(tx,table,id,patch)=>{if(table===target)throw Error('FICTIONAL update');return tx.update(table,id,patch);}});

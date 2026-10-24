@@ -12,8 +12,9 @@ try {
   const base = { tenant_id: 'tenant', created_at: '2026-10-14T12:00:00Z', updated_at: '2026-10-14T12:00:00Z' };
   let n = 0, request = 0;
   const context = { tenantId: 'tenant', now: '2026-10-14T12:00:00Z', id: () => `row-${++n}`, code: () => `AUTO-${++n}-CODE` };
+  // Complete only valid fictional owners before applying foreign/role/campaign/capacity faults.
   const newDb = () => {
-    const db = { rooms: [{ ...base, id: 'qa_promotion_room', name: 'FICTIONAL room', capacity: 20, heated: false }], users: ['teacher', 'teacher2', 'admin', 'member', 'member2', 'member3', 'desk'].map(id => ({ ...base, id })), vouchers: [], voucher_bookings: [], voucher_events: [], bookings: [], modalities: [{ ...base, id: 'qa_promotion_mod', active: true }], class_sessions: [{ ...base, id: 'session', room_id: 'qa_promotion_room', modality_id: 'qa_promotion_mod', starts_at: '2026-10-15T12:00:00Z', ends_at: '2026-10-15T13:00:00Z', status: 'scheduled', capacity: 20, booked_count: 0 }] };
+    const db = { rooms: [{ ...base, id: 'qa_promotion_room', name: 'FICTIONAL room', capacity: 20, heated: false }], users: ['teacher', 'teacher2', 'admin', 'member', 'member2', 'member3', 'desk'].map(id => ({ ...base, id, ...(id.startsWith('member') ? { status: 'active', email: `${id}@example.test`, phone: '+573000000099' } : {}) })), profiles: ['member', 'member2', 'member3'].map(id => ({ ...base, id: `qa_${id}_profile`, user_id: id, full_name: `FICTIONAL ${id}`, initials: 'QA' })), vouchers: [], voucher_bookings: [], voucher_events: [], bookings: [], modalities: [{ ...base, id: 'qa_promotion_mod', active: true }], class_sessions: [{ ...base, id: 'session', room_id: 'qa_promotion_room', modality_id: 'qa_promotion_mod', starts_at: '2026-10-15T12:00:00Z', ends_at: '2026-10-15T13:00:00Z', status: 'scheduled', capacity: 20, booked_count: 0 }] };
     ensureDemoPromotions(db, 'tenant', context.now); return db;
   };
   let db = newDb();

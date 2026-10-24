@@ -38,6 +38,11 @@ try {
   }
   const session = sessions.find(row => row.template_id === 'capacity-lower-main');
   const regular = user_id => ({ user_id, session_id: session.id, status: 'booked', paid_with: 'package', mat_number: null });
+  // Valid fictional admissions need complete scoped contact before capacity/rollback faults are exercised.
+  for (const id of ['capacity-regular-a', 'capacity-regular-b', 'capacity-regular-c', 'capacity-overflow', 'capacity-mixed-overflow', 'capacity-after-voucher-cancel']) {
+    await db.insert('users', { id, tenant_id: base.tenant_id, status: 'active', email: `${id}@example.test`, phone: '+573000000099' });
+    await db.insert('profiles', { id: `qa_${id}_profile`, tenant_id: base.tenant_id, user_id: id, full_name: `FICTIONAL ${id}`, initials: 'QA' });
+  }
   const a = await db.insert('bookings', regular('capacity-regular-a'));
   const b = await db.insert('bookings', regular('capacity-regular-b'));
   const c = await db.insert('bookings', regular('capacity-regular-c'));
