@@ -1,0 +1,66 @@
+name: Transfer receipt evidence QA
+on:
+  pull_request:
+    paths:
+      - 'src/cms/**'
+      - 'scripts/check-cms-contracts.mjs'
+      - 'src/modules/transfers/**'
+      - 'src/data/MockProvider.ts'
+      - 'src/data/schema.ts'
+      - 'scripts/*transfer-review-evidence*'
+      - 'scripts/synthetic-transfer-review-image.mjs'
+      - 'scripts/test-sensitive-audit-ui.mjs'
+      - 'scripts/qa-pending-payments-dev.mjs'
+      - '.github/workflows/receipt-review-evidence-qa.yml'
+permissions:
+  contents: read
+jobs:
+  receipt-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Verify retained evidence and unchanged review history
+        run: node scripts/test-transfer-review-evidence.mjs
+      - run: npm run build
+      - name: Verify actual browser decoding and pending-review contexts
+        run: |
+          node scripts/qa-pending-payments-dev.mjs > /tmp/hoy-receipt-evidence-dev.log 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:5217/ >/dev/null && break; sleep 1; done
+          curl -fsS http://127.0.0.1:5217/ >/dev/null
+          cat /tmp/hoy-receipt-evidence-dev.log
+          node scripts/test-transfer-review-evidence-ui.mjs
+        env:
+          QA_PORT: 5217
+          QA_BASE: http://127.0.0.1:5217
+          QA_OUTPUT: ${{ runner.temp }}/transfer-review-evidence
+          CHROMIUM_PATH: /usr/bin/google-chrome
+      - name: Verify native compiled review without source imports
+        run: |
+          npm run preview -- --host 127.0.0.1 --strictPort --port 5218 > /tmp/hoy-receipt-evidence-preview.log 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:5218/ >/dev/null && break; sleep 1; done
+          curl -fsS http://127.0.0.1:5218/ >/dev/null
+          node scripts/test-transfer-review-evidence-native.mjs
+          node scripts/test-sensitive-audit-ui.mjs
+        env:
+          QA_BASE: http://127.0.0.1:5218
+          QA_OUTPUT: ${{ runner.temp }}/transfer-review-evidence-native
+          CHROMIUM_PATH: /usr/bin/google-chrome
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: transfer-review-evidence-${{ github.event.pull_request.head.sha }}
+          retention-days: 7
+          path: |
+            ${{ runner.temp }}/transfer-review-evidence/
+            ${{ runner.temp }}/transfer-review-evidence-native/
+            qa/sensitive-audit/
+            /tmp/hoy-receipt-evidence-dev.log
+            /tmp/hoy-receipt-evidence-preview.log

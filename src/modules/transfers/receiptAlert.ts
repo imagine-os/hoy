@@ -25,6 +25,11 @@ export async function insertAlertIntent(data:DataProvider,receipt:TransferReceip
  const {payment}=await ownedReceipt(data,receipt.user_id,receipt.id),receipt_digest=await immutableReceiptDigest(receipt,payment);
  return data.insert<Event>('audit_log',{id:alertIntentId(receipt.user_id,receipt.id),actor_id:null,action:'receipt.alert_intent.local',entity:'transfer_receipts',entity_id:receipt.id,diff:{source:SOURCE,owner_id:receipt.user_id,payment_id:receipt.payment_id,fingerprint,receipt_digest,intended_roles:['front_desk','admin'],status:'pending',simulation:'local'},ip:null});
 }
+/** Check an existing upload proof only; legacy receipts are never backfilled. */
+export async function verifyRetainedReceiptUpload(data:DataProvider,receipt:TransferReceiptRow){
+ const row=await data.get<Event>('audit_log',alertIntentId(receipt.user_id,receipt.id));
+ if(row){assertAlertEvent(row,receipt.user_id,receipt,'receipt.alert_intent.local');await verifyIntentContents(data,row,receipt);}
+}
 export async function verifyUploadIntent(data:DataProvider,receipt:TransferReceiptRow,fingerprint:string){
  const row=await data.get<Event>('audit_log',alertIntentId(receipt.user_id,receipt.id));
  if(row){await verifyIntentContents(data,row,receipt);assertAlertEvent(row,receipt.user_id,receipt,'receipt.alert_intent.local');if(row.diff.fingerprint!==fingerprint)throw Error('request_conflict');}

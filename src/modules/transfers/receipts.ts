@@ -1,7 +1,7 @@
 import { assertAdmissionContext } from '../../data/sessionAdmission';
 import { requireExistingBookingContact } from '../../data/bookingContact';
 import { captureLaunchReceipt, readLaunchReceipt } from '../../data/launchReceipts';
-import {receiptDigest,assertReceiptOwner,ownedReceipt,insertAlertIntent,verifyUploadIntent} from './receiptAlert';
+import {receiptDigest,assertReceiptOwner,ownedReceipt,insertAlertIntent,verifyUploadIntent,verifyRetainedReceiptUpload} from './receiptAlert';
 import { type FrozenSaleQuote } from '../../data/operationalQuotes';
 import type { DataProvider } from '../../data/types';
 import type { BookingRow, PaymentRow, TransferReceiptRow } from '../../data/schema';
@@ -29,6 +29,31 @@ export async function readReceipt(file: File): Promise<ReceiptImage> {
   const image = new Image(); image.src=dataUrl;
   try { await image.decode(); if(!image.naturalWidth || !image.naturalHeight || image.naturalWidth*image.naturalHeight>20_000_000)throw Error(); } catch {throw Error('decode');}
   return {dataUrl,fileName:file.name,mimeType:file.type as ReceiptImage['mimeType'],bytes:file.size};
+}
+const reviewEvidenceFields=['id','tenant_id','user_id','payment_id','status','image_data_url','file_name','mime_type','byte_size'] as const;
+/** Immutable scope/image key for async inspection and its visible result. */
+export function sameTransferReviewEvidence(a:TransferReceiptRow,b:TransferReceiptRow):boolean{return reviewEvidenceFields.every(key=>a[key]===b[key]);}
+/** Fresh review only. Browser decode is the same raster inspection used at upload.
+ * Non-browser mock domains validate structural bytes and retained proof; not a server image decoder. */
+export async function requireTransferReviewEvidence(data:DataProvider,receipt:TransferReceiptRow,isCurrent:()=>boolean=()=>true):Promise<void>{
+ const check=()=>assertAdmissionContext({isCurrent});check();
+ receipt=structuredClone(receipt);
+ const fresh=async()=>{const saved=await data.get<TransferReceiptRow>('transfer_receipts',receipt.id);check();if(!saved||!sameTransferReviewEvidence(receipt,saved))throw Error('receipt_evidence_unavailable');};
+ try{
+  await fresh();
+  if(typeof receipt.image_data_url!=='string'||typeof receipt.file_name!=='string'||!Number.isInteger(receipt.byte_size)||receipt.byte_size<1||receipt.byte_size>RECEIPT_MAX_BYTES)throw Error();
+  const match=/^data:(image\/png|image\/jpeg);base64,([A-Za-z0-9+/]+={0,2})$/.exec(receipt.image_data_url);
+  if(!match||match[1]!==receipt.mime_type)throw Error();
+  const raw=atob(match[2]);if(btoa(raw)!==match[2]||raw.length!==receipt.byte_size)throw Error();
+  validateReceiptBytes(receipt.file_name,receipt.mime_type,Uint8Array.from(raw,ch=>ch.charCodeAt(0)));
+  await verifyRetainedReceiptUpload(data,receipt);check();
+  if(typeof Image!=='undefined'){
+   const image=new Image();image.src=receipt.image_data_url;await image.decode();check();
+   if(!image.naturalWidth||!image.naturalHeight||image.naturalWidth*image.naturalHeight>20_000_000)throw Error();
+  }
+  await fresh();
+ }catch{check();throw Error('receipt_evidence_unavailable');}
+ check();
 }
 /** Deliberately fictional image, generated locally; never a real bank QR or receipt. */
 export async function fictionalReceipt(): Promise<ReceiptImage> {
@@ -79,6 +104,7 @@ export async function reviewTransfer(data:DataProvider,input:{id:string;actorId:
     if(!Number.isInteger(input.amount)||input.amount<0||!input.compared||!input.reason.trim())throw Error('review_required');
     // Under/overpayments are retained for explicit rejection; no invented partial-settlement rule.
     if(input.decision==='approved'&&input.amount!==payment.amount)throw Error('amount_mismatch');
+    if(input.decision==='approved'){await requireTransferReviewEvidence(tx,receipt,isCurrent);check();}
     if(input.decision==='approved'&&receipt.product_id==='plan_trial'){
       await assertTrialAvailable(tx,receipt.user_id,payment.id);
     }

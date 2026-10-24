@@ -1,3 +1,4 @@
+import{syntheticTransferReviewImage}from'./synthetic-transfer-review-image.mjs';
 import {createSyntheticAdmissionCustomer} from './synthetic-admission-contact.mjs';
 // Isolated fictional MockProvider; no network, payments or real files.
 import assert from 'node:assert/strict';
@@ -16,7 +17,7 @@ try{
  const data=new MockProvider(),userId='qa_receipt';await data.insert('rooms',{id:'qa',name:{es:'SALA FICTICIA',en:'FICTIONAL ROOM'},capacity:6});await data.insert('modalities',{id:'qa',slug:'qa-fixture',name:{es:'FICTICIA',en:'FICTIONAL'},active:true});
  const session=await data.insert('class_sessions',{id:'qa_transfer_session',title:'FICTIONAL transfer class',modality_id:'qa',room_id:'qa',starts_at:new Date(Date.now()+86400000).toISOString(),ends_at:new Date(Date.now()+90000000).toISOString(),status:'scheduled',capacity:6,booked_count:0});
  await createSyntheticAdmissionCustomer(data,userId,{email:'fictional@example.invalid'});
- const input={key:'qa_receipt_1',userId,sessionId:session.id,matNumber:null,productId:'plan_pack12',productName:{es:'Paquete FICTICIO',en:'FICTIONAL package'},amount:12345,classes:12,expiresAt:'2099-01-01',image:{dataUrl:'data:image/png;base64,iVBORw0KGgo=',fileName:'fictional.png',mimeType:'image/png',bytes:9}};
+ const input={key:'qa_receipt_1',userId,sessionId:session.id,matNumber:null,productId:'plan_pack12',productName:{es:'Paquete FICTICIO',en:'FICTIONAL package'},amount:12345,classes:12,expiresAt:'2099-01-01',image:syntheticTransferReviewImage()};
  const snap=()=>JSON.stringify(['payments','transfer_receipts','class_ledger','bookings','invoices','audit_log','class_sessions'].map(t=>data.peek(t)));
  const normalAtomic=data.atomic.bind(data);
  for(const failAfterWrites of [1,2,3]){const before=snap();data.atomic=(action,options)=>normalAtomic(action,{...options,failAfterWrites});await assert.rejects(submitTransfer(data,input),/mock_injected/);assert.equal(snap(),before);}data.atomic=normalAtomic;
