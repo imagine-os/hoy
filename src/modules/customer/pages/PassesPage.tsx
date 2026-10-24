@@ -1,12 +1,11 @@
 import {useRef} from 'react';
 import {useOperationalCatalog,useReviewedQuote} from '../../quotes/hooks';
 import {QuoteNotice} from '../../../components/molecule/QuoteNotice/QuoteNotice';
-import {checkSaleQuote,quotedItem,readPaymentQuote} from '../../../data/operationalQuotes';
-import { useState } from 'react';
+import {quotedItem,readPaymentQuote} from '../../../data/operationalQuotes';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useSession } from '../../../auth/SessionProvider';
-import { useData } from '../../../data/DataContext';
 import { formatCOP, formatDate, addDaysKey, dateKey, fromDateKey, MS } from '../../../i18n/format';
 import { type PriceItem } from '../../../tenant/pricing';
 import { Card } from '../../../components/molecule/Card/Card';
@@ -22,7 +21,9 @@ import { ListGroup, ListRow } from '../../../components/molecule/ListRow/ListRow
 import { Drawer } from '../../../components/organism/Drawer/Drawer';
 import { EmptyState } from '../../../components/molecule/EmptyState/EmptyState';
 import { PACKAGE_IDS, PASS_IDS, priceOf, useEntitlements, usePackageActions } from '../hooks';
-import { activatePaidPackage, recordPayment, wompiCheckout } from '../payments';
+import { useRetainedClassPurchase } from '../useRetainedClassPurchase';
+import { PurchaseRecoveryNotice } from '../../../components/molecule/PurchaseRecoveryNotice/PurchaseRecoveryNotice';
+import { LaunchPaymentReceipt } from '../../../components/organism/LaunchPaymentReceipt/LaunchPaymentReceipt';
 import { policy } from '../policy';
 import { PageHead } from '../ui';
 
@@ -77,19 +78,22 @@ export function PassesPage() {
  */
 export function ClassesPage() {
   const { t, bi, lang } = useI18n();
-  const data = useData();
   const { user } = useSession();
+  const retained = useRetainedClassPurchase();
   const ent = useEntitlements();
   const { freeze, resume } = usePackageActions();
   const [buying, setBuying] = useState<PriceItem | null>(null);
   const catalog=useOperationalCatalog(),review=useReviewedQuote(catalog,buying?.id??null,1,30);
-  const purchaseKey=useRef(crypto.randomUUID()),purchaseBusy=useRef(false);
-  const [purchaseError,setPurchaseError]=useState(false);
-  const shownBuying=review.quote?quotedItem(review.quote):buying;
+  const quote=retained.attempt?.quote??review.quote;
+  const shownBuying=quote?quotedItem(quote):buying;
+  const shownAttempt=useRef('');
+  useEffect(()=>{const key=retained.attempt?`${retained.attempt.userId}:${retained.attempt.id}`:'';if(key&&shownAttempt.current!==key){shownAttempt.current=key;setBuying(quotedItem(retained.attempt!.quote));}else if(!key&&retained.ready)shownAttempt.current='';},[retained.attempt,retained.ready]);
+  const choose=(plan:PriceItem)=>{if(!retained.ready||retained.busy)return;setBuying(retained.attempt?quotedItem(retained.attempt.quote):plan);};
+  const close=async()=>{if(retained.result){if(await retained.finish())setBuying(null);}else{setBuying(null);retained.cancel();}};
   const [sheet, setSheet] = useState(false);
   const [days, setDays] = useState(() => Math.min(14, policy.freezeMaxDays));
   const [busy, setBusy] = useState(false);
-  const [done, setDone] = useState(false);
+  const done=retained.result?.status==='approved';
   const [flash, setFlash] = useState<string | null>(null);
   const { pkg } = ent;
   const packs = [...PACKAGE_IDS, 'single'].flatMap(id=>{const q=catalog.quote(id);return q?[quotedItem(q)]:[];});
@@ -102,19 +106,8 @@ export function ClassesPage() {
   const options = [7, 14, 21, 30].filter((d) => d <= policy.freezeMaxDays);
 
   const buy = async () => {
-    if(!buying||!review.quote||!review.available||purchaseBusy.current)return;
-    purchaseBusy.current=true;setBusy(true);setPurchaseError(false);const frozen=review.quote;
-    try{
-      await checkSaleQuote(data,frozen);
-      const result=await wompiCheckout({amount:frozen.chargedAmount,method:'card'});
-      if(!data.atomic)throw Error('atomic_unavailable');
-      await data.atomic(async tx=>{
-        const payment=await recordPayment(tx,{userId:user.id,planId:frozen.planId,amount:frozen.chargedAmount,method:'card',result,ivaRate:policy.ivaRate,quote:frozen});
-        if(result.status!=='approved')return;
-        await activatePaidPackage(tx,{paymentId:payment.id,userId:user.id,planId:frozen.planId,classes:frozen.classes,expiresAt:frozen.entitlementExpiresAt!});
-      },{idempotencyKey:`classes:${user.id}:${purchaseKey.current}`});
-      if(result.status==='approved')setDone(true);else{purchaseKey.current=crypto.randomUUID();setPurchaseError(true);}
-    }catch{setPurchaseError(true);}finally{setBusy(false);purchaseBusy.current=false;}
+    if(!buying||!quote||(!retained.attempt&&!review.available)||retained.busy)return;
+    await retained.pay(quote);
   };
   const doFreeze = async () => {
     if (!purchase) return;
@@ -126,7 +119,7 @@ export function ClassesPage() {
   const packGrid = (
     <section className="stack-sm">
       <h2 className="cust-h2">{t('customer.classes.topUp')}</h2>
-      <Card padding="none">{packs.map((p) => <PriceRow key={p.id} item={p} onSelect={p=>{purchaseKey.current=crypto.randomUUID();setDone(false);setPurchaseError(false);setBuying(p);}} />)}</Card>
+      <Card padding="none">{packs.map((p) => <PriceRow key={p.id} item={p} onSelect={p=>choose(p)} />)}</Card>
       <p className="xs muted">{t('customer.classes.topUp.note')}</p>
     </section>
   );
@@ -168,17 +161,21 @@ export function ClassesPage() {
         <p className="xs muted" style={{ textAlign: 'center' }}>{t('customer.classes.note', { h: policy.cancelWindowHours })}</p>
       </div>
 
-      <Drawer open={!!buying} onClose={() => { setBuying(null); setDone(false); }} side="bottom" title={done ? t('customer.classes.done.title') : t('customer.classes.buy.title')}>
+      {!buying&&(retained.attempt||retained.error)&&<PurchaseRecoveryNotice blocked={!retained.attempt} failed={!!retained.error} onReview={()=>{if(retained.attempt)setBuying(quotedItem(retained.attempt.quote));void retained.refresh();}}/>}
+      <Drawer open={!!buying} onClose={() => {void close();}} side="bottom" title={done ? t('customer.classes.done.title') : t('customer.classes.buy.title')}>
         {buying && shownBuying && !done && (
           <div className="stack">
-            <QuoteNotice catalog={catalog} review={review}/>
-            {purchaseError&&<Notice tone="danger">{t('quotes.failed')}</Notice>}
-            <OrderSummary lines={[{ label: bi(shownBuying.name), amount:review.quote?.chargedAmount??0 }]} taxRate={policy.ivaRate} subtotalLabel={t('customer.checkout.subtotal')} taxLabel={t('customer.checkout.iva')} totalLabel={t('customer.checkout.total')} note={t('customer.checkout.receiptNote')} />
+            {retained.attempt?<Notice>{t('customer.purchase.savedTerms')}</Notice>:<QuoteNotice catalog={catalog} review={review}/>}
+            {(retained.error||retained.attempt&&!retained.result)&&<PurchaseRecoveryNotice blocked={!retained.attempt} failed={!!retained.error} onReview={retained.error&&!retained.attempt?()=>{void retained.refresh();}:undefined}/>}
+            {retained.result?.status==='declined'&&<Notice tone="danger">{t('customer.plans.paymentError')}</Notice>}
+            <OrderSummary lines={[{ label: bi(shownBuying.name), amount:quote?.chargedAmount??0 }]} taxRate={policy.ivaRate} subtotalLabel={t('customer.checkout.subtotal')} taxLabel={t('customer.checkout.iva')} totalLabel={t('customer.checkout.total')} note={t('customer.checkout.receiptNote')} />
             {buying.audience && <Notice tone="info">{t('customer.plans.benefit.affiliates')}</Notice>}
-            <Button block size="lg" disabled={!review.available} loading={busy} onClick={buy}>{t('customer.checkout.payWompi', { amount: formatCOP(review.quote?.chargedAmount??0,lang) })}</Button>
+            <Button data-class-purchase-confirm block size="lg" disabled={!retained.ready||!quote||(!retained.attempt&&!review.available)||!!retained.result||!!retained.error&&!retained.attempt} loading={retained.busy} onClick={buy}>{t(retained.attempt?'customer.purchase.retry':'customer.checkout.payWompi', { amount: formatCOP(quote?.chargedAmount??0,lang) })}</Button>
+            {retained.attempt&&!retained.busy&&!retained.result&&<Button block variant="ghost" onClick={()=>{void retained.discard().then(ok=>{if(ok)setBuying(null);});}}>{t('customer.purchase.discard')}</Button>}
+            {retained.result?.status==='declined'&&<Button block variant="secondary" onClick={()=>{void retained.finish().then(ok=>{if(ok)setBuying(null);});}}>{t('customer.purchase.acknowledge')}</Button>}
           </div>
         )}
-        {done && buying && <Notice tone="success" title={t('customer.classes.done.title')}>{t('customer.classes.done.body', { n:review.quote?.classes??buying.classes??1 })}</Notice>}
+        {done && buying && <div className="stack"><Notice tone="success" title={t('customer.classes.done.title')}>{t('customer.classes.done.body', { n:retained.result?.quote.classes??1 })}</Notice>{retained.result&&<LaunchPaymentReceipt payment={retained.result.payment} customer={retained.result.payment.frontend_receipt?.emailPreview?.recipient.name||user.name}/>} {retained.error&&<PurchaseRecoveryNotice failed/>}<Button block onClick={()=>{void retained.finish().then(ok=>{if(ok)setBuying(null);});}}>{t('customer.purchase.acknowledge')}</Button></div>}
       </Drawer>
 
       <Drawer open={sheet} onClose={() => setSheet(false)} side="bottom" title={t('customer.classes.freeze')}>

@@ -1,0 +1,72 @@
+name: Retained class purchase QA
+on:
+  pull_request:
+    paths:
+      - 'src/cms/**'
+      - 'scripts/check-cms-contracts.mjs'
+      - 'src/data/**'
+      - 'src/modules/customer/**'
+      - 'src/auth/**'
+      - 'src/components/molecule/PurchaseRecoveryNotice/**'
+      - 'src/components/organism/LaunchPaymentReceipt/**'
+      - 'src/components/organism/Drawer/**'
+      - 'scripts/*retained-class-purchase*'
+      - 'scripts/*retained-class-active-owner*'
+      - 'scripts/test-receipt-email-capture-paths.mjs'
+      - 'scripts/test-pending-package-ui.mjs'
+      - 'scripts/qa-pending-payments-dev.mjs'
+      - '.github/workflows/retained-class-purchases-qa.yml'
+permissions:
+  contents: read
+jobs:
+  retained-purchases:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Verify retained transaction proof and historical compatibility
+        run: |
+          node scripts/test-retained-class-purchase.mjs
+          node scripts/test-receipt-email-capture-paths.mjs
+      - run: npm run build
+      - name: Verify page recovery and changing contexts
+        run: |
+          QA_PORT=5221 node scripts/qa-pending-payments-dev.mjs > /tmp/hoy-retained-dev.log 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:5221/ >/dev/null && break; sleep 1; done
+          curl -fsS http://127.0.0.1:5221/ >/dev/null
+          node scripts/test-retained-class-purchase-ui.mjs
+        env:
+          QA_BASE: http://127.0.0.1:5221
+          QA_OUTPUT: docs/screenshots/retained-class-purchase
+          CHROMIUM_PATH: /usr/bin/google-chrome
+      - name: Verify compiled purchase recovery without source imports
+        run: |
+          npm run preview -- --host 127.0.0.1 --strictPort --port 5222 > /tmp/hoy-retained-preview.log 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:5222/ >/dev/null && break; sleep 1; done
+          curl -fsS http://127.0.0.1:5222/ >/dev/null
+          node scripts/test-retained-class-purchase-native.mjs
+          QA_OUTPUT=docs/screenshots/retained-class-active-owner-native node scripts/test-retained-class-active-owner-native.mjs
+          QA_OUTPUT=docs/screenshots/pending-package-retained node scripts/test-pending-package-ui.mjs
+        env:
+          QA_BASE: http://127.0.0.1:5222
+          QA_OUTPUT: docs/screenshots/retained-class-purchase-native
+          CHROMIUM_PATH: /usr/bin/google-chrome
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: retained-class-purchases-${{ github.event.pull_request.head.sha }}
+          retention-days: 7
+          path: |
+            docs/screenshots/retained-class-purchase/
+            docs/screenshots/retained-class-purchase-native/
+            docs/screenshots/retained-class-active-owner-native/
+            docs/screenshots/pending-package-retained/
+            /tmp/hoy-retained-dev.log
+            /tmp/hoy-retained-preview.log

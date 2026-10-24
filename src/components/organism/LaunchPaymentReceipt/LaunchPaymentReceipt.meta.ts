@@ -23,5 +23,5 @@ export default defineMeta({
   { title: { es: 'Anterior sin captura / captura inválida / pendiente', en: 'Legacy snapshot absent / malformed snapshot / pending' }, render: () => { const malformed = saved(); malformed.frontend_receipt!.emailPreview!.body.en = undefined as unknown as string; return h('div', { className: 'stack' }, example({ ...payment, frontend_receipt: receipt }), example(malformed), example({ ...payment, status: 'pending', frontend_receipt: undefined })); } },
  ],
  a11y: [{ es: 'Email sin acciones, contenido literal en párrafos y motivos escritos; no depende del color.', en: 'Email has no actions, literal paragraph content and written reasons; never color alone.' }],
- usedBy: ['C-11', 'S-04', 'S-09', 'C-37'],
+ usedBy: ['C-06', 'C-07b', 'C-11', 'S-04', 'S-09', 'C-37'],
 });

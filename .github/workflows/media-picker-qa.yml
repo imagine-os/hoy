@@ -1,7 +1,7 @@
 name: Media picker QA
 on:
   pull_request:
-    paths: ['src/**', 'scripts/test-media-picker.mjs', 'scripts/test-content-photo-picker.mjs', '.github/workflows/media-picker-qa.yml']
+    paths: ['src/**', 'scripts/test-media-picker.mjs', 'scripts/test-content-photo-picker.mjs', 'scripts/qa-pending-payments-dev.mjs', '.github/workflows/media-picker-qa.yml']
 permissions:
   contents: read
 jobs:
@@ -18,8 +18,9 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: |
-          npm run dev -- --host 127.0.0.1 --port 5187 &
-          sleep 5
+          QA_PORT=5187 node scripts/qa-pending-payments-dev.mjs &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:5187/ >/dev/null && break; sleep 1; done
+          curl -fsS http://127.0.0.1:5187/ >/dev/null
           CHROMIUM_PATH=/usr/bin/google-chrome node scripts/test-media-picker.mjs
           CHROMIUM_PATH=/usr/bin/google-chrome node scripts/test-content-photo-picker.mjs
       - uses: actions/upload-artifact@v4

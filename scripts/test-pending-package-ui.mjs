@@ -6,12 +6,13 @@ import { mkdir, writeFile } from 'node:fs/promises';
 const base=process.env.QA_BASE??'http://127.0.0.1:5173';
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH??'/usr/bin/chromium',args:['--no-sandbox']});
 const errors=[],checks=[],output=process.env.QA_OUTPUT??'docs/screenshots/C-04';await mkdir(output,{recursive:true});
+let debugPage;
 try {
  for(const lang of ['en','es']) {
   const ctx=await browser.newContext({viewport:{width:1280,height:900},reducedMotion:'reduce'});
   await ctx.route(/^https?:\/\/(?!127\.0\.0\.1|localhost)/,r=>r.abort());
   await ctx.addInitScript(lang=>{if(sessionStorage.getItem('pending-init'))return;sessionStorage.setItem('pending-init','1');localStorage.setItem('hoyos.lang',lang);localStorage.setItem('hoyos.session',JSON.stringify({userId:'usr_cust',devMode:false,viewAs:null}));},lang);
-  const page=await ctx.newPage();page.on('pageerror',e=>errors.push(e.message));await page.clock.install({time:new Date('2026-10-21T17:00:00Z')});
+  const page=await ctx.newPage();debugPage=page;page.on('pageerror',e=>errors.push(e.message));await page.clock.install({time:new Date('2026-10-21T17:00:00Z')});
   await page.goto(`${base}/#/app/classes`);await page.waitForFunction(()=>localStorage.getItem('hoyos.db.v1'));
   await page.evaluate(()=>{
    const stored=JSON.parse(localStorage.getItem('hoyos.db.v1')),db=stored.db,stamp=new Date().toISOString(),user='usr_cust';
@@ -60,15 +61,49 @@ try {
   await page.goto(`${base}/#/app/plans?plan=pack12`);
   await page.getByRole('button',{name:lang==='en'?/Pay .* with Wompi/:/Pagar .* con Wompi/}).waitFor();
   const beforeFailure=await page.evaluate(()=>JSON.parse(localStorage.getItem('hoyos.db.v1')).db);
-  await page.evaluate(()=>{const original=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){if(k==='hoyos.db.v1')throw new Error('QA storage failure');return original.call(this,k,v);};});
+  await page.evaluate(()=>{window.qaStorageFaults=0;window.qaOriginalSetItem=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){if(k==='hoyos.db.v1'){window.qaStorageFaults++;throw new Error('QA storage failure');}return window.qaOriginalSetItem.call(this,k,v);};});
   await page.getByRole('button',{name:lang==='en'?/Pay .* with Wompi/:/Pagar .* con Wompi/}).click();
-  await page.getByText(lang==='en'?'The demo purchase could not be saved. No classes were activated. You can retry.':'No se pudo guardar la compra demo. No se activaron clases. Puedes reintentar.',{exact:true}).waitFor();
+  // Wait for the actual persistence fault and settled operation, not the notice shown while checkout is running.
+  await page.waitForFunction(()=>window.qaStorageFaults>0&&document.querySelector('[data-class-purchase-confirm]')?.disabled===false);
+  await page.getByText(lang==='en'?'The purchase may already be recorded. Its result is checked before retrying; do not start another purchase to resolve this one.':'Puede que la compra ya esté registrada. Revisaremos su resultado antes de reintentar; no empieces otra compra para resolver esta.',{exact:true}).waitFor();
+  await page.getByText(lang==='en'?'These are the saved details of the earlier purchase.':'Estos son los datos guardados de la compra anterior.',{exact:true}).waitFor();
+  const retained=await page.evaluate(()=>JSON.parse(localStorage.getItem('hoyos.retained-class-purchase.v1:ten_hoy:usr_cust')));
+  assert(retained?.id,'storage failure retains the exact purchase intent');
+  const amount=new Intl.NumberFormat(lang==='en'?'en-US':'es-CO',{style:'currency',currency:'COP',currencyDisplay:'narrowSymbol',maximumFractionDigits:0}).format(retained.quote.chargedAmount);
+  const retry=page.getByRole('dialog').getByRole('button',{name:(lang==='en'?'Retry saved purchase · ':'Reintentar la compra guardada · ')+amount,exact:true});
+  assert(await retry.isEnabled());
   const afterFailure=await page.evaluate(()=>JSON.parse(localStorage.getItem('hoyos.db.v1')).db);
   for(const table of ['payments','invoices','class_ledger','bookings','audit_log'])assert.deepEqual(afterFailure[table],beforeFailure[table],`${table} unchanged after package purchase save failure`);
   const failureOutput=process.env.QA_OUTPUT?`${output}/failure`:'docs/screenshots/C-06';await mkdir(failureOutput,{recursive:true});
   for(const width of [390,1280]){await page.setViewportSize({width,height:900});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));await settledCapture(page,{path:`${failureOutput}/${lang}-${width}-purchase-failure.jpg`,quality:72,fullPage:false});}
-  checks.push(`${lang}: package-only persistence failure reports retry, rolls back payment/invoice/grant, EN/ES desktop/mobile error notice`);
+  await page.evaluate(()=>Storage.prototype.setItem=window.qaOriginalSetItem);
+  await retry.dblclick();
+  await page.getByRole('dialog').getByRole('heading',{name:lang==='en'?'Purchase recorded':'Compra registrada',exact:true}).waitFor();
+  const afterRetry=await page.evaluate(()=>JSON.parse(localStorage.getItem('hoyos.db.v1')).db);
+  const savedAttempt=await page.evaluate(()=>JSON.parse(localStorage.getItem('hoyos.retained-class-purchase.v1:ten_hoy:usr_cust')));
+  assert.equal(savedAttempt.id,retained.id,'retry reuses the retained intent, never a new purchase id');
+  assert.deepEqual(savedAttempt.quote,retained.quote,'retry retains the exact saved terms');
+  const retryPayments=afterRetry.payments.filter(p=>!beforeFailure.payments.some(old=>old.id===p.id));
+  const retryGrants=afterRetry.class_ledger.filter(r=>!beforeFailure.class_ledger.some(old=>old.id===r.id));
+  assert.equal(retryPayments.length,1);assert.equal(retryPayments[0].status,'approved');assert.equal(retryPayments[0].amount,retained.quote.chargedAmount);
+  assert.deepEqual(retryPayments[0].frontend_quote,retained.quote);
+  assert.equal(retryGrants.length,1);assert.equal(retryGrants[0].reason,'purchase');assert.equal(retryGrants[0].payment_id,retryPayments[0].id);assert.equal(retryGrants[0].delta,retained.quote.classes);
+  for(const table of ['invoices','bookings','class_sessions'])assert.deepEqual(afterRetry[table],beforeFailure[table],`${table} unchanged by package-only retry`);
+  for(const table of ['payments','class_ledger','audit_log'])for(const row of beforeFailure[table])assert.deepEqual(afterRetry[table].find(saved=>saved.id===row.id),row,`${table} historical row unchanged after retry`);
+  await page.reload();
+  await page.getByRole('dialog').getByRole('heading',{name:lang==='en'?'Purchase recorded':'Compra registrada',exact:true}).waitFor();
+  assert.deepEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('hoyos.db.v1')).db),afterRetry,'reload recovers the exact committed purchase without a second write');
+  assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('hoyos.retained-class-purchase.v1:ten_hoy:usr_cust')).id),retained.id);
+  await page.getByRole('dialog').getByRole('button',{name:lang==='en'?'See my classes':'Ver mis clases',exact:true}).click();
+  await page.waitForURL(/app\/classes/);
+  await page.waitForFunction(()=>localStorage.getItem('hoyos.retained-class-purchase.v1:ten_hoy:usr_cust')===null);
+  assert.deepEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('hoyos.db.v1')).db),afterRetry,'explicit acknowledgement clears only the retained marker');
+  checks.push(`${lang}: package-only persistence fault leaves financial history unchanged; truthful uncertainty, same-intent retry/double-click one grant, read-only reload and explicit acknowledgement; EN/ES desktop/mobile notice`);
   await ctx.close();
  }
  assert.deepEqual(errors,[]);await writeFile(`${output}/pending-results.json`,JSON.stringify({feature:'PR-06',base,checks,errors,limits:['Frontend MockProvider only; no real charge, server approval or capacity hold.','Pending checkout creates request only; backend settlement and replay integration remains Anu work.']},null,2));console.log(checks.join('\n'));
+} catch(error) {
+ errors.push(String(error));
+ if(debugPage&&!debugPage.isClosed()){await writeFile(`${output}/failure.txt`,await debugPage.locator('body').innerText().catch(()=>'<document unavailable>'));await debugPage.screenshot({path:`${output}/failure.jpg`,fullPage:true}).catch(()=>{});}
+ await writeFile(`${output}/failure-results.json`,JSON.stringify({feature:'PR-06',base,checks,errors},null,2));throw error;
 } finally {await browser.close();}
