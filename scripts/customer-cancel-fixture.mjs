@@ -1,3 +1,4 @@
+import {createSyntheticAdmissionCustomer} from './synthetic-admission-contact.mjs';
 // Fictional Map-only data shared by the domain and later rendered cancellation checks.
 export const customerActor={actorId:'qa_customer_cancel_user',role:'customer'};
 export const customerNow=Date.parse('2026-10-22T15:00:00Z');
@@ -5,7 +6,8 @@ export function installCustomerMemory(){const memory=new Map();let quota=false;g
 export async function seedCustomerCancellation(data,{paidWith='package',start=customerNow+2*86400000,expiry='2030-01-31',freeze=false,waiter=true}={}){
  const original=data.peek('class_sessions').find(row=>row.status==='scheduled');
  if(!original)throw Error('FICTIONAL seed occurrence required');
- await data.insert('users',{id:customerActor.actorId,email:'qa-cancel@example.invalid',phone:null,status:'active',locale:'en'});
+ await createSyntheticAdmissionCustomer(data,customerActor.actorId,{email:'qa-cancel@example.invalid'});
+ for(const id of ['qa_customer_cancel_other','qa_customer_cancel_other2'])await createSyntheticAdmissionCustomer(data,id);
  // Book a future occurrence through the real provider, then advance that existing occurrence.
  // This never bypasses the provider's ban on creating a NEW booking after its start.
  const bookableStart=Math.max(start,Date.now()+86400000);

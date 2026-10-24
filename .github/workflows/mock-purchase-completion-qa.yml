@@ -28,6 +28,7 @@ on:
       - 'src/components/organism/PaymentInstructions/**'
       - 'src/components/template/AppShell/**'
       - 'scripts/*gift-purchase*'
+      - 'scripts/*gift-notification*'
       - 'scripts/*pending-desk*'
       - 'scripts/*desk-confirmation*'
       - 'scripts/*desk-settlement*'
@@ -112,6 +113,7 @@ jobs:
           for i in $(seq 1 60); do curl -fsS http://127.0.0.1:5376/ >/dev/null && break; sleep 1; done
           curl -fsS http://127.0.0.1:5376/release.json > qa/purchase-completion/served-release.json
           cmp qa/purchase-completion/release.json qa/purchase-completion/served-release.json
+          QA_BASE=http://127.0.0.1:5376 QA_OUTPUT=qa/purchase-completion/production/buyer-preview node scripts/test-gift-notification-preview-production.mjs
           QA_OUTPUT=qa/purchase-completion/production/gift node scripts/test-gift-purchase-flow-ui.mjs
           QA_OUTPUT=qa/purchase-completion/production/desk node scripts/test-pending-desk-confirmation-ui.mjs
       - name: Verify actual asynchronous purchase and confirmation contexts
@@ -124,6 +126,7 @@ jobs:
           trap 'kill "$dev_pid" 2>/dev/null || true' EXIT
           for i in $(seq 1 60); do curl -fsS http://127.0.0.1:5377/ >/dev/null && break; sleep 1; done
           curl -fsS http://127.0.0.1:5377/ >/dev/null
+          QA_BASE=http://127.0.0.1:5377 QA_OUTPUT=qa/purchase-completion/context/buyer-preview node scripts/test-gift-notification-previews-ui.mjs
           QA_OUTPUT=qa/purchase-completion/context/gift node scripts/test-gift-purchase-context-ui.mjs
           QA_OUTPUT=qa/purchase-completion/context/desk-settlement node scripts/test-pending-desk-settlement-context.mjs
           QA_OUTPUT=qa/purchase-completion/context/desk-confirmation node scripts/test-desk-confirmation-context.mjs

@@ -47,7 +47,14 @@ export function TransferQueuePage(){
  function provider(pay:PaymentRow|null){return pay?.provider==='manual'?t('transfers.manualProvider'):pay?.provider==='wompi'?'Wompi':t('transfers.unknownProvider');}
  function facts(entry:QueueEntry){return <div className="stack-sm" style={{overflowWrap:'anywhere'}}><strong>{entry.customer??t('transfers.unknownCustomer')}</strong><p>{product(entry)} · {money(entry.payment)}</p>{entry.quote?.kind==='class'&&!entry.receipts[0]?.product_name&&<p className="small">{t('transfers.quoteSummary',{date:entry.quote.purchaseDate,revision:entry.quote.catalogRevision,classes:entry.quote.classes,quantity:entry.quote.quantity,validity:entry.quote.validityDays??entry.quote.fallbackValidityDays??t('transfers.quoteUndefined'),expiry:entry.quote.entitlementExpiresAt??t('transfers.quoteUndefined')})}</p>}<p>{t('transfers.paymentMethod')}: {method(entry.payment)} · {provider(entry.payment)}</p><p>{t('transfers.when')} · {date(entry.payment?.created_at??entry.receipts[0]?.created_at)}</p><p>{t(entry.gift?.image?.dataUrl?.startsWith('data:image/')||entry.receipts.some(r=>r.image_data_url?.startsWith('data:image/'))?'transfers.receiptAvailable':'transfers.receiptMissing')}</p></div>;}
  function open(r:TransferReceiptRow){setParams({receipt:r.id});setAmount('');setReason('');setCompared(false);setError(null);}
- async function decide(decision:'approved'|'rejected'){if(!selected||!ready)return;setBusy(true);setError(null);try{await reviewTransfer(data,{id:selected.id,actorId:user.id,role,decision,amount:amount.trim()===''?NaN:Number(amount),reason,compared});setParams({});setRevision(n=>n+1);}catch(e){setError(trialErrorKey(e)??'transfers.reviewError');}finally{setBusy(false);}}
+ async function decide(decision:'approved'|'rejected'){
+  if(!selected||!ready||busy)return;
+  const provider=data,context=giftLive.current.context,current=()=>giftLive.current.mounted&&giftLive.current.data===provider&&giftLive.current.context===context;
+  setBusy(true);setError(null);
+  try{await reviewTransfer(provider,{id:selected.id,actorId:user.id,role,decision,amount:amount.trim()===''?NaN:Number(amount),reason,compared},current);if(current()){setParams({});setRevision(n=>n+1);}}
+  catch(e){if(current())setError(e instanceof Error&&e.message==='booking_contact_required'?'customer.book.contactRequired':trialErrorKey(e)??'transfers.reviewError');}
+  finally{if(current())setBusy(false);}
+ }
  async function decideGift(decision:'approved'|'rejected'){
   if(!detail?.gift||!ready||busy)return;const provider=data,context=giftLive.current.context,current=()=>giftLive.current.mounted&&giftLive.current.data===provider&&giftLive.current.context===context;
   setBusy(true);setError(null);try{

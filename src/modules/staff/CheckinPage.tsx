@@ -96,6 +96,7 @@ export function CheckinPage() {
   };
   const commandError = (error: unknown) => {
     const code = error instanceof Error ? error.message : '';
+    if (code === 'booking_contact_required') return t('customer.book.contactRequired');
     const known = ['session_full', 'session_unavailable', 'booking_exists', 'same_day_conflict', 'insufficient_classes', 'package_frozen', 'package_expired', 'disconnected'];
     return t(`staff.checkin.error.${known.includes(code) ? code : 'failed'}`);
   };

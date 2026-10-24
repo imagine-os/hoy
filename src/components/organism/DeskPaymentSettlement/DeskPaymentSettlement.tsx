@@ -33,7 +33,7 @@ export function DeskPaymentSettlement({ payment, onSettled }: { payment: Payment
     try {
       const result = await settleAtDesk(data, { paymentId: payment.id, actorId: user.id, role, method, amount: Number(amount), note }, cancelled);
       if (!cancelled()) onSettled(result);
-    } catch (cause) { if (!cancelled()) setError(trialErrorKey(cause) ?? (hasBookingIntent&&cause instanceof Error&&['session_unavailable','session_full','mat_taken','mat_invalid','same_day_conflict','booking_exists','package_expired','package_frozen','insufficient_classes'].includes(cause.message)?'transfers.desk.bookingUnavailable':'transfers.desk.error')); }
+    } catch (cause) { if (!cancelled()) setError(cause instanceof Error&&cause.message==='booking_contact_required'?'customer.book.contactRequired':trialErrorKey(cause) ?? (hasBookingIntent&&cause instanceof Error&&['session_unavailable','session_full','mat_taken','mat_invalid','same_day_conflict','booking_exists','package_expired','package_frozen','insufficient_classes'].includes(cause.message)?'transfers.desk.bookingUnavailable':'transfers.desk.error')); }
     finally { if (version === operation.current) { lock.current = false; if (!cancelled()) setBusy(false); } }
   }
   return <section className="stack" aria-label={t('transfers.desk.title')}>

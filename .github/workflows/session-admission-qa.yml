@@ -12,6 +12,7 @@ on:
       - 'scripts/*admission*'
       - 'scripts/*physical-admission*'
       - 'scripts/*package-booking*'
+      - 'scripts/*booking-contact*'
       - 'scripts/test-package-voucher-duplicate-ui.mjs'
       - 'scripts/test-schedule-criterion-ui.mjs'
       - 'scripts/*rs05-cta*'
@@ -43,6 +44,8 @@ jobs:
           "$CHROMIUM_PATH" --version
       - name: Domain and preserved transaction contracts
         run: |
+          node scripts/test-booking-contact.mjs
+          node scripts/test-shared-booking-contact.mjs
           node scripts/test-session-admission.mjs
           node scripts/test-physical-admission-capacity.mjs
           node scripts/test-package-booking-confirmation.mjs
@@ -68,6 +71,8 @@ jobs:
             if curl -fsS http://127.0.0.1:5480/ > /dev/null && curl -fsS http://127.0.0.1:5481/ > /dev/null; then break; fi
             sleep 1
           done
+          QA_BASE=http://127.0.0.1:5480 QA_PRODUCTION_ONLY=1 QA_OUTPUT=/tmp/booking-contact-production node scripts/test-shared-booking-contact-ui.mjs
+          QA_BASE=http://127.0.0.1:5481 QA_OUTPUT=/tmp/booking-contact-context node scripts/test-shared-booking-contact-ui.mjs
           QA_BASE=http://127.0.0.1:5480 QA_OUTPUT=/tmp/admission-production node scripts/test-session-admission-ui.mjs
           QA_BASE=http://127.0.0.1:5481 QA_OUTPUT=/tmp/admission-context node scripts/test-session-admission-context.mjs
           QA_BASE=http://127.0.0.1:5480 QA_OUTPUT=/tmp/booking-physical-capacity node scripts/test-physical-admission-capacity-ui.mjs

@@ -830,3 +830,5 @@ Protected-capture clarification: M14 schedule/pay screenshots remain local/ignor
 ## Buyer notification template
 
 - BO-06 / C-37 (Feature Log75): conditional buyer sent-event template explicitly unsent; existing ready/used previews retained. Typecheck, full build, focused24 browser groups, compiled4 bilingual responsive journeys and independent source review passed locally; final combined integration/release remains separate. Real triggers/delivery remain backend-only.
+
+- CU-01 / Feature Log25 (0178): shared final booking-owner contact guards and context fences integrated locally; historical actions, product-only purchases and explicitly requested companions retained. Literal guest-versus-companion interpretation remains open. Final combined build/browser/review/CI and publication are separate gates. [Details](frontend-completion/shared-booking-contact.md)

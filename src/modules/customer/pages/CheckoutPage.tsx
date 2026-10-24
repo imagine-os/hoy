@@ -1,3 +1,4 @@
+import { requireExistingBookingContact } from '../../../data/bookingContact';
 import {SavedPaymentInstructions} from '../../../components/organism/PaymentInstructions/PaymentInstructions';
 import { requireSessionAdmission, assertAdmissionContext, sessionAdmissionAvailable } from '../../../data/sessionAdmission';
 import {assertTrialAvailable,trialErrorKey} from '../../../data/trialEligibility';
@@ -217,6 +218,7 @@ export function CheckoutPage() {
           const existing=findPendingDeskRequest(rows,deskScope);
           if(existing)return existing;
           await requireSessionAdmission(tx,joined.session.id,deskControl);
+          await requireExistingBookingContact(tx,user.id,tenant.id,deskControl);
           if(!review.quote)throw Error('quote_changed');
           await checkSaleQuote(tx,review.quote);assertAdmissionContext(deskControl);
           if(yoga){if(!matValid)throw Error('mat_invalid');chooseMat(await tx.list<BookingRow>('bookings',{where:{session_id:joined.session.id}}),Math.min(joined.session.capacity,tenant.studio.mats),mat);assertAdmissionContext(deskControl);}
@@ -234,6 +236,7 @@ export function CheckoutPage() {
       }
 
       await requireSessionAdmission(data,joined.session.id,control);
+      await requireExistingBookingContact(data,user.id,tenant.id,control);
       if(isPass(kind)&&review.quote)await checkSaleQuote(data,review.quote);
       if (yoga) {
         if (!matValid) { setError('mat'); return 'mat'; }
@@ -253,6 +256,7 @@ export function CheckoutPage() {
       }
       const outcome = await data.atomic(async transaction => {
         await requireSessionAdmission(transaction,joined.session.id,{isCurrent:transferValid});
+        await requireExistingBookingContact(transaction,user.id,tenant.id,{isCurrent:transferValid});
         if(kind==='trial')await assertTrialAvailable(transaction,user.id);
         let paidWith: EntitlementKind = kind === 'package' ? 'package' : kind === 'membership' ? 'membership' : kind === 'trial' ? 'trial' : kind === 'single' ? 'single' : 'package';
         let packagePlanId: string | null = null;
@@ -292,6 +296,7 @@ export function CheckoutPage() {
       if (!requestValid()) return 'admission_context_changed';
       const failure = e instanceof Error ? e.message : '';
       if(failure.startsWith('desk_intent_')){setDeskRead({provider:data,context:transferOwnerContext,scope:deskScopeKey,phase:'error',payment:null});return 'desk_request_review_required';}
+      if (failure === 'booking_contact_required') { setError('contact'); return 'booking_contact_required'; }
       if (kind === 'package' && !['session_full', 'session_unavailable', 'package_balance', 'same_day_conflict'].includes(failure) && !failure.startsWith('mat_')) {
         const recovered = await recoverPackageBooking({ userId:user.id, sessionId:joined.session.id, checkoutKey:checkoutKey.current }, failure === 'booking_exists');
         return recovered?.kind === 'saved' && recovered.source === 'attempt' ? `booked ${recovered.booking.id}` : 'package_confirmation_checked';
@@ -390,6 +395,7 @@ export function CheckoutPage() {
         {isPass(kind)&&currentDesk?.payment&&<Notice tone="info" title={deskText.saved} action={<Button variant="secondary" onClick={()=>setDone({booking:null,pending:true,deskPaymentId:currentDesk.payment!.id,provider:data,context:transferContext})}>{deskText.view}</Button>}>{formatCOP(currentDesk.payment.amount,lang)} · {bi(savedDeskQuote!.name)} · {savedDeskQuote!.classes} {deskText.classes} · {t('customer.classes.expires')} {savedDeskQuote!.entitlementExpiresAt??'—'} · {currentDesk.payment.id}<p>{deskText.body}</p><Link to="/app/history">{deskText.history}</Link></Notice>}
         {transferError&&<Notice tone="danger">{t('transfers.submitError')}</Notice>}
         {error?.startsWith('customer.trialGuard.')&&<Notice tone="warn">{t(error)}</Notice>}
+        {error === 'contact' && <Notice tone="warn">{t('customer.book.contactRequired')}</Notice>}
         {error === 'mat' && <Notice tone="warn">{t('site.mat.error')}</Notice>}
         {alreadyBooked && !recovery && !shownDone && <Notice tone="info" action={myBookings.some(b => b.session_id === id && b.paid_with === 'package' && occupiesMat(b)) ? <Button variant="secondary" onClick={() => recoverPackageBooking({ userId:user.id, sessionId:s.id })}>{t('customer.class.viewBooking')}</Button> : undefined}>{t('customer.home.booked')}</Notice>}
         {recovery && <Notice tone={recovery.phase === 'existing' ? 'success' : recovery.phase === 'checking' ? 'info' : 'warn'} title={t(`customer.checkout.recovery.${recovery.phase}`)} action={recovery.phase === 'checking' ? undefined : recovery.phase === 'duplicate' ? <Button variant="secondary" onClick={() => nav('/app/schedule')}>{t('customer.checkout.recovery.backToSchedule')}</Button> : recovery.phase === 'existing' && recovery.booking ? <Button variant="secondary" onClick={() => nav(`/app/booking/${recovery.booking!.id}`)}>{t('customer.class.viewBooking')}</Button> : recovery.phase === 'missing' && recovery.request.checkoutKey ? <Button variant="secondary" disabled={busy || kind !== 'package' || alreadyBooked || !admissionAvailable} onClick={confirm}>{t('customer.checkout.recovery.retryBooking')}</Button> : <Button variant="secondary" onClick={() => recoverPackageBooking(recovery.request, recovery.knownDuplicate)}>{t('customer.checkout.recovery.checkAgain')}</Button>}>{t(`customer.checkout.recovery.${recovery.phase}.body`)}</Notice>}

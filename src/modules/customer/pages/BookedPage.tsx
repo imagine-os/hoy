@@ -207,7 +207,7 @@ function ChangeSheet({ open, onClose, booking, joined, inside, deadline, onResul
     setBusy(true); setErr(null);
     try { const next = await reschedule(booking, s, to); close(); nav(`/app/booking/${next.id}`, { replace: true }); }
     catch (e) {
-      const key = e instanceof Error && e.message === 'reschedule_cutoff' ? 'customer.change.move.closed' : e instanceof Error && e.message === 'same_day_conflict' ? 'customer.change.move.conflict' : e instanceof Error && (e.message === 'package_expired' || e.message === 'package_frozen' || e.message === 'reschedule_entitlement_unresolved') ? 'customer.change.move.validity' : 'customer.change.move.failed';
+      const key = e instanceof Error && e.message === 'booking_contact_required' ? 'customer.book.contactRequired' : e instanceof Error && e.message === 'reschedule_cutoff' ? 'customer.change.move.closed' : e instanceof Error && e.message === 'same_day_conflict' ? 'customer.change.move.conflict' : e instanceof Error && (e.message === 'package_expired' || e.message === 'package_frozen' || e.message === 'reschedule_entitlement_unresolved') ? 'customer.change.move.validity' : 'customer.change.move.failed';
       setErr(t(key, { h: RESCHEDULE_CUTOFF_HOURS }));
     }
     finally { setBusy(false); }

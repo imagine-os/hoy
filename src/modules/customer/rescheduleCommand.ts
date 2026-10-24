@@ -1,3 +1,4 @@
+import { requireExistingBookingContact } from '../../data/bookingContact';
 import { requireDailyAdmission } from '../../data/dailyAdmission';
 import { requireSessionAdmission, assertAdmissionContext, type AdmissionControl } from '../../data/sessionAdmission';
 import { assertRescheduleAllowed } from './reschedule';
@@ -33,6 +34,7 @@ export async function rescheduleBooking(data: DataProvider, input: { userId: str
   assertRescheduleAllowed(original.starts_at, now);
   const target = await requireSessionAdmission(data, input.toSessionId, { ...input.control, now });
   if (!target || target.id === original.id || target.tenant_id !== tenant.id || target.status !== 'scheduled' || !Number.isFinite(Date.parse(target.starts_at)) || Date.parse(target.starts_at) <= now) throw new Error('session_unavailable');
+  await requireExistingBookingContact(data, input.userId, tenant.id, input.control);
   if (target.booked_count >= target.capacity) throw new Error('session_full');
   const bookings = await data.list<BookingRow>('bookings', { where: { user_id: input.userId } });
   const others = bookings.filter(b => b.id !== booking.id && b.status !== 'cancelled' && b.status !== 'late_cancel');

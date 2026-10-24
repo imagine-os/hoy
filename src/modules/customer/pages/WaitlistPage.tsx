@@ -44,13 +44,14 @@ export function WaitlistPage() {
   const [admissionError,setAdmissionError]=useState(false);
   const [dailyConflict,setDailyConflict]=useState(false);
   const [duplicateConflict,setDuplicateConflict]=useState(false);
+  const [contactError,setContactError]=useState(false);
   const mounted = useRef(true);
   const context = useRef({ id, userId: user.id, role, data });
   if (context.current.id !== id || context.current.userId !== user.id || context.current.role !== role || context.current.data !== data) context.current = { id, userId: user.id, role, data };
   const capture = () => { const current = context.current; return () => mounted.current && context.current === current; };
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
-  const failedAdmission = (error: unknown) => { setDailyConflict(error instanceof Error && error.message === 'same_day_conflict'); setDuplicateConflict(error instanceof Error && error.message === 'booking_exists'); setAdmissionError(true); };
-  useEffect(()=>{setAdmissionError(false);setDailyConflict(false);setDuplicateConflict(false);setBusy(false);},[id,user.id,role,data]);
+  const failedAdmission = (error: unknown) => { setContactError(error instanceof Error && error.message === 'booking_contact_required'); setDailyConflict(error instanceof Error && error.message === 'same_day_conflict'); setDuplicateConflict(error instanceof Error && error.message === 'booking_exists'); setAdmissionError(true); };
+  useEffect(()=>{setAdmissionError(false);setDailyConflict(false);setDuplicateConflict(false);setContactError(false);setBusy(false);},[id,user.id,role,data]);
   const offered = !admissionError && !admissionBlocked && mine?.status === 'offered' && mine.claim_until && new Date(mine.claim_until).getTime() > now;
   const expired = !cancelled && mine?.status === 'offered' && mine.claim_until && new Date(mine.claim_until).getTime() <= now;
   const waiting = !cancelled && mine?.status === 'waiting';
@@ -94,7 +95,7 @@ export function WaitlistPage() {
     'StatusCard (PositionRing + RuleExplainer)': () => {
       if (cancelled) return <Notice tone="warn" title={t('customer.cancelled.title')}>{lang === 'en' ? 'This class has been cancelled. Waitlist offers and claims are unavailable; no new place is offered.' : 'Esta clase fue cancelada. Las ofertas y los reclamos de la lista no están disponibles; no se ofrece un cupo nuevo.'}</Notice>;
       if (admissionBlocked) return <Notice tone="warn" title={t('customer.checkout.unavailable')} />;
-      if (admissionError) return <Notice tone="warn" title={t('core.common.error')} action={<Button onClick={()=>{setAdmissionError(false);setDailyConflict(false);setDuplicateConflict(false);}}>{t('core.common.retry')}</Button>}>{dailyConflict ? t('customer.book.oneADay') : duplicateConflict ? t('customer.home.booked') : null}</Notice>;
+      if (admissionError) return <Notice tone="warn" title={t('core.common.error')} action={<Button onClick={()=>{setAdmissionError(false);setDailyConflict(false);setDuplicateConflict(false);setContactError(false);}}>{t('core.common.retry')}</Button>}>{contactError ? t('customer.book.contactRequired') : dailyConflict ? t('customer.book.oneADay') : duplicateConflict ? t('customer.home.booked') : null}</Notice>;
       if (alreadyBooked) return <Notice tone="success" title={t('customer.home.booked')} action={<Button size="sm" variant="secondary" onClick={() => nav(`/app/booking/${s.id}`)}>{t('customer.class.viewBooking')}</Button>} />;
       if (started) return <Notice tone="info" title={t('customer.waitlist.started')}>{t('customer.waitlist.started.body')}</Notice>;
       if (waiting) return (
