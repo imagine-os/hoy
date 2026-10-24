@@ -4,4 +4,4 @@ Sanitized implementation request: diagnose recoverable exact-head CI failures, e
 
 ## Response
 
-Completed missing contact records for intended valid synthetic booking owners in five existing regression setups. Frozen implementation fixtures and existing test assertions remain unchanged; source runtime behavior is unchanged.
+Completed missing contact records for intended valid synthetic booking owners in six existing regression setups, including the downstream mat suite exposed after capacity passed. Frozen implementation fixtures and existing test assertions remain unchanged; source runtime behavior is unchanged.

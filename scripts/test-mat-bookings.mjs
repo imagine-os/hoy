@@ -16,6 +16,11 @@ try {
   assert(seed.some(s => new Date(s.starts_at) - Date.now() > 30 * 86400000), 'demo horizon exceeds one month');
   const session = await db.insert('class_sessions', { modality_id: 'mod_ligereza', teacher_id: 'tea_sara_c', room_id: 'room_main', starts_at: new Date(Date.now() + 86400000).toISOString(), ends_at: new Date(Date.now() + 90000000).toISOString(), capacity: 16, booked_count: 0, status: 'scheduled', title: 'Mat transaction test' });
   const row = (user, mat) => ({ user_id: user, session_id: session.id, status: 'booked', paid_with: 'package', mat_number: mat });
+  // Complete valid fictional customers before testing mat collisions, bounds and full capacity.
+  for (const id of ['test-a', 'test-b', 'test-c', 'test-d', ...Array.from({ length: 14 }, (_, n) => `fill-${n}`), 'overflow']) {
+    await db.insert('users', { id, tenant_id: session.tenant_id, status: 'active', email: `${id}@example.test`, phone: '+573000000099' });
+    await db.insert('profiles', { id: `qa_mat_${id}_profile`, tenant_id: session.tenant_id, user_id: id, full_name: `FICTIONAL ${id}`, initials: 'QA' });
+  }
   const a = await db.insert('bookings', row('test-a', 16));
   assert.equal(a.mat_number, 16);
   await assert.rejects(db.insert('bookings', row('test-b', 16)), /mat_taken/);
