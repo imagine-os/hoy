@@ -1,8 +1,9 @@
 import {readSignupLegal,validSignupLegal,signupLegalKey,type SignupLegalReference} from './signupLegal';
 import type { DataProvider } from '../../../data/types';
 import type { BaseRow, UserRow } from '../../../data/schema';
-import { digitsOf, isPhone } from '../../../i18n/format';
+import { digitsOf } from '../../../i18n/format';
 import { tenant } from '../../../tenant/tenant';
+import { signupErrors } from './signupValidation';
 
 /** Fictional browser account only. Passwords never enter this command, digest or receipt. */
 export interface MockRegistration {
@@ -15,7 +16,7 @@ export async function registerMockCustomer(data: DataProvider, input: MockRegist
   if (!/^[A-Za-z0-9_-]{16,80}$/.test(requestId)) throw Error('registration_request');
   const form = { first: input.first.trim(), last: input.last.trim(), email: input.email.trim().toLowerCase(), whatsapp: input.whatsapp.trim(),
     birthday: input.birthday, ecName: input.ecName.trim(), ecPhone: input.ecPhone.trim(), photo: input.photo, consent: input.consent, legal: structuredClone(input.legal), marketing: input.marketing, invite: input.invite };
-  if (form.first.length < 2 || form.last.length < 2 || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(form.email) || !isPhone(form.whatsapp, 12) || form.ecName.length < 2 || !isPhone(form.ecPhone) || form.consent !== true) throw Error('registration_invalid');
+  if (Object.keys(signupErrors(form)).length || form.consent !== true) throw Error('registration_invalid');
   if (!validSignupLegal(form.legal)) throw Error('registration_legal_required');
   const digest = [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(form))))].map(v => v.toString(16).padStart(2, '0')).join('');
   const check = () => { if (cancelled()) throw Error('registration_cancelled'); };

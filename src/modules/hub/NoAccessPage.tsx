@@ -1,4 +1,5 @@
-import { Link } from 'react-router-dom';
+import { Link, Navigate, useSearchParams } from 'react-router-dom';
+import { visitorSignIn } from '../../auth/visitorSignIn';
 import { useI18n } from '../../i18n/I18nProvider';
 import { useSession } from '../../auth/SessionProvider';
 import { ROLE_LABEL } from '../../auth/roles';
@@ -8,7 +9,9 @@ import { RoleSwitcher } from '../../components/molecule/RoleSwitcher/RoleSwitche
 
 export function NoAccessPage() {
   const { t, bi } = useI18n();
-  const { role } = useSession();
+  const { role, user } = useSession();
+  const [params]=useSearchParams();
+  if(user.role==='public')return <Navigate to={visitorSignIn(params.get('from'))} replace />;
   return (
     <div className="container page" style={{ maxWidth: 560 }}>
       <Card padding="lg" className="stack">

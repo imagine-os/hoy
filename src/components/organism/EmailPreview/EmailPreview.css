@@ -10,3 +10,6 @@
 .emailpreview-foot { border-top: 1px solid rgba(var(--m-primary), .16); padding-top: var(--sp-md); margin-top: var(--sp-sm); white-space: pre-wrap; }
 .emailpreview .phonebubble-var { background: rgba(var(--m-sun), .45); }
 @media (max-width: 600px) { .emailpreview { padding: var(--sp-md); } .emailpreview-paper { padding: var(--sp-lg); } }
+
+/* Opt-in embedded preview content stays readable on the fixed light email paper. */
+.emailpreview-content { --color-ink: var(--brand-ink); --color-text: var(--brand-ink); --color-text-muted: var(--brand-deepBlue); --color-text-faint: var(--brand-ink); }

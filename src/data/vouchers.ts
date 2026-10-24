@@ -1,6 +1,7 @@
+import {assertPurchasedGiftClaim} from '../modules/voucher-gifts/purchaseFacts';
 import { dailyAdmissionConflict } from './dailyAdmission';
-import { sessionAdmissionAvailable } from './sessionAdmission';
-import type { BaseRow, BookingRow, ClassSessionRow, ModalityRow } from './schema';
+import { effectiveAdmissionCapacity, sessionAdmissionAvailable } from './sessionAdmission';
+import type { BaseRow, BookingRow, ClassSessionRow, ModalityRow, RoomRow } from './schema';
 
 /** Demo contract only. Production needs authenticated transactional RPCs, row locks,
  * secure claim tokens, server quotations and scoped RLS; this is not a live backend. */
@@ -70,6 +71,7 @@ export function executeVoucherCommand(database: VoucherDb, command: VoucherComma
   const base = (): BaseRow => ({ id: id(), tenant_id: context.tenantId, created_at: now, updated_at: now });
   const vouchers = (db.vouchers ??= []) as VoucherRow[], bookings = (db.voucher_bookings ??= []) as VoucherBookingRow[], events = (db.voucher_events ??= []) as VoucherEventRow[];
   if (!c.requestId?.trim() || !c.actorId?.trim() || !(db.users ?? []).some(u => u.id === c.actorId && u.tenant_id === context.tenantId)) fail('voucher_identity_required');
+  if(c.type==='claim'){const purchased=vouchers.find(v=>v.id===c.voucherId&&v.tenant_id===context.tenantId);if(purchased?.source==='purchased_gift')assertPurchasedGiftClaim(db,purchased,context.tenantId,c.actorId,c.role);}
   const fingerprint = JSON.stringify(c);
   const prior = events.find(e => e.tenant_id === context.tenantId && e.requestId === c.requestId);
   if (prior) {
@@ -92,6 +94,7 @@ export function executeVoucherCommand(database: VoucherDb, command: VoucherComma
     if (['preview_delivery', 'revoke'].includes(c.type) ? !staff(c.role) : ['attendance', 'confirm_booking'].includes(c.type) ? !reception(c.role) : c.type !== 'claim' && !(owner && c.role === 'customer') && !reception(c.role)) fail('voucher_forbidden');
     if (['claim', 'book'].includes(c.type) && (voucher.status === 'revoked' || (voucher.expiresAt !== null && (!Number.isFinite(Date.parse(voucher.expiresAt)) || Date.parse(voucher.expiresAt) <= Date.parse(now))))) fail('voucher_unavailable');
     if (c.type === 'claim') {
+
       if (c.userId !== c.actorId || c.role !== 'customer' || !(db.users ?? []).some(u => u.id === c.userId && u.tenant_id === context.tenantId)) fail('voucher_identity_required');
       if (voucher.claimedBy && voucher.claimedBy !== c.userId) fail('voucher_already_claimed');
       voucher.claimedBy = c.userId; voucher.status = 'claimed';
@@ -109,9 +112,10 @@ export function executeVoucherCommand(database: VoucherDb, command: VoucherComma
       const modality=(db.modalities as ModalityRow[]|undefined)?.find(m=>m.id===session.modality_id&&m.tenant_id===context.tenantId);
       const template=db.class_templates?.find(t=>t.id===session.template_id&&t.tenant_id===context.tenantId);
       if(!sessionAdmissionAvailable(session,modality,template,Date.parse(now),context.tenantId))fail('session_unavailable');
+      const capacity = effectiveAdmissionCapacity(session, (db.rooms as RoomRow[] | undefined)?.find(r => r.id === session.room_id && r.tenant_id === context.tenantId), modality, context.tenantId);
       if (session.status !== 'scheduled' || !Number.isFinite(Date.parse(session.starts_at)) || Date.parse(session.starts_at) <= Date.parse(now) || (voucher.expiresAt && Date.parse(session.starts_at) >= Date.parse(voucher.expiresAt))) fail('session_unavailable');
       const regular = (db.bookings as BookingRow[]).filter(b => b.tenant_id === context.tenantId && b.session_id === session.id && b.status !== 'cancelled' && b.status !== 'late_cancel');
-      if (regular.length + voucherSeats(db, session.id, context.tenantId) + c.participants.length > session.capacity) fail('session_full');
+      if (regular.length + voucherSeats(db, session.id, context.tenantId) + c.participants.length > capacity) fail('session_full');
       if (bookings.some(b => b.tenant_id === context.tenantId && b.sessionId === session.id && b.status !== 'cancelled' && b.participants.some(p => participantIdentities(p).some(identity => identities.includes(identity)))) || c.participants.some(p => p.userId && regular.some(b => b.user_id === p.userId))) fail('booking_exists');
       if (c.participants.some(person => person.userId && dailyAdmissionConflict(db, session, person.userId))) fail('same_day_conflict');
       if (voucher.benefitKind === 'cop' && !positive(c.costPerPerson ?? 0)) fail('voucher_price_required');
@@ -120,7 +124,7 @@ export function executeVoucherCommand(database: VoucherDb, command: VoucherComma
       const mats: number[] = [];
       if (context.usesMats?.(session)) {
         const taken = new Set([...regular.map(b => b.mat_number), ...bookings.filter(b => b.tenant_id === context.tenantId && b.sessionId === session.id && b.status !== 'cancelled').flatMap(b => b.mats)]);
-        for (let n = 1; n <= Math.min(session.capacity, context.matCapacity ?? session.capacity) && mats.length < c.participants.length; n++) if (!taken.has(n)) mats.push(n);
+        for (let n = 1; n <= Math.min(capacity, context.matCapacity ?? capacity) && mats.length < c.participants.length; n++) if (!taken.has(n)) mats.push(n);
         if (mats.length !== c.participants.length) fail('session_full');
       }
       voucher.balance -= cost;

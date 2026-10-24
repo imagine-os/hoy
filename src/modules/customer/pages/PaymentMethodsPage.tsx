@@ -1,3 +1,4 @@
+import {SavedPaymentInstructions} from '../../../components/organism/PaymentInstructions/PaymentInstructions';
 import { useState } from 'react';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { formatCOP } from '../../../i18n/format';
@@ -82,6 +83,7 @@ export function PaymentMethodsPage() {
           {manual.map((m) => <ListRow key={m.id} icon={m.glyph} title={bi(m.label)} subtitle={bi(m.hint)} trailing={<Badge tone="warn">{t('customer.pay.manual.desk')}</Badge>} />)}
         </ListGroup>
 
+        <SavedPaymentInstructions />
         <Notice tone="info" title={t('customer.pay.comply.title')}>{t('customer.pay.comply.body')}</Notice>
       </div>
     </div>

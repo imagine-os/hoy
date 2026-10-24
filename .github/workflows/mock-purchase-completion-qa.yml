@@ -1,0 +1,136 @@
+name: Mock purchase completion QA
+on:
+  pull_request:
+    paths:
+      - 'src/data/**'
+      - 'src/auth/**'
+      - 'src/i18n/**'
+      - 'src/tenant/**'
+      - 'src/modules/customer/**'
+      - 'src/modules/quotes/**'
+      - 'src/modules/voucher-gifts/**'
+      - 'src/modules/vouchers/**'
+      - 'src/modules/transfers/**'
+      - 'src/modules/launch-receipts/**'
+      - 'src/modules/admin/settings.ts'
+      - 'src/modules/admin/strings.ts'
+      - 'src/modules/admin/paymentInstructions.ts'
+      - 'src/modules/admin/usePaymentInstructions.ts'
+      - 'src/components/molecule/Notice/**'
+      - 'src/components/molecule/QuoteNotice/**'
+      - 'src/components/organism/DeskPaymentSettlement/**'
+      - 'src/components/organism/EmailPreview/**'
+      - 'src/components/organism/GiftTermsReview/**'
+      - 'src/components/organism/LaunchPaymentReceipt/**'
+      - 'src/components/organism/Receipt/**'
+      - 'src/components/organism/ReceiptUpload/**'
+      - 'src/components/organism/SharedImageField/**'
+      - 'src/components/organism/PaymentInstructions/**'
+      - 'src/components/template/AppShell/**'
+      - 'scripts/*gift-purchase*'
+      - 'scripts/*pending-desk*'
+      - 'scripts/*desk-confirmation*'
+      - 'scripts/*desk-settlement*'
+      - 'scripts/*launch-receipts*'
+      - 'scripts/test-transfer-receipts.mjs'
+      - 'scripts/test-draft-receipt-schema.mjs'
+      - 'scripts/session-admission-fixture.mjs'
+      - 'scripts/qa-pending-payments-dev.mjs'
+      - 'scripts/qa-rendered-capture.mjs'
+      - 'scripts/write-release.mjs'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'vite.config.ts'
+      - '.github/workflows/mock-purchase-completion-qa.yml'
+permissions:
+  contents: read
+concurrency:
+  group: mock-purchase-completion-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  fictional-purchase-completion:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      CHROMIUM_PATH: /usr/bin/google-chrome
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Record exact checked source
+        env:
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          mkdir -p qa/purchase-completion/domain qa/purchase-completion/logs
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {execFileSync} from 'node:child_process';
+          import {writeFileSync} from 'node:fs';
+          const head=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
+          const tree=execFileSync('git',['rev-parse','HEAD^{tree}'],{encoding:'utf8'}).trim();
+          assert.match(head,/^[a-f0-9]{40}$/);
+          assert.equal(head,process.env.EXPECTED_HEAD);
+          writeFileSync('qa/purchase-completion/source.json',JSON.stringify({head,tree})+'\n');
+          NODE
+      - run: npm ci
+      - name: Verify gift, desk intent, settlement and retained receipt contracts
+        run: |
+          set -euo pipefail
+          QA_OUTPUT=qa/purchase-completion/domain/gift-command.json node scripts/test-gift-purchase-command.mjs 2>&1 | tee qa/purchase-completion/logs/gift-command.log
+          node scripts/test-gift-purchase-provider.mjs 2>&1 | tee qa/purchase-completion/logs/gift-provider.log
+          node scripts/test-pending-desk-intent.mjs 2>&1 | tee qa/purchase-completion/logs/desk-intent.log
+          QA_OUTPUT=qa/purchase-completion/domain/desk-settlement node scripts/test-pending-desk-settlement.mjs 2>&1 | tee qa/purchase-completion/logs/pending-desk-settlement.log
+          node scripts/test-desk-settlement.mjs 2>&1 | tee qa/purchase-completion/logs/retained-desk-settlement.log
+          node scripts/test-launch-receipts.mjs 2>&1 | tee qa/purchase-completion/logs/launch-receipts.log
+          node scripts/test-transfer-receipts.mjs 2>&1 | tee qa/purchase-completion/logs/transfer-receipts.log
+          node scripts/test-draft-receipt-schema.mjs 2>&1 | tee qa/purchase-completion/logs/draft-receipt-schema.log
+      - name: Build complete frontend
+        run: |
+          set -euo pipefail
+          npm run build 2>&1 | tee qa/purchase-completion/logs/build.log
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync,copyFileSync} from 'node:fs';
+          const source=JSON.parse(readFileSync('qa/purchase-completion/source.json','utf8'));
+          const release=JSON.parse(readFileSync('dist/release.json','utf8'));
+          assert.equal(release.sourceCommit,source.head);
+          copyFileSync('dist/release.json','qa/purchase-completion/release.json');
+          NODE
+      - name: Verify actual production gift and desk completion journeys
+        env:
+          QA_BASE: http://127.0.0.1:5376
+        run: |
+          set -euo pipefail
+          node node_modules/vite/bin/vite.js preview --host 127.0.0.1 --strictPort --port 5376 > qa/purchase-completion/logs/preview.log 2>&1 &
+          preview_pid=$!
+          trap 'kill "$preview_pid" 2>/dev/null || true' EXIT
+          for i in $(seq 1 60); do curl -fsS http://127.0.0.1:5376/ >/dev/null && break; sleep 1; done
+          curl -fsS http://127.0.0.1:5376/release.json > qa/purchase-completion/served-release.json
+          cmp qa/purchase-completion/release.json qa/purchase-completion/served-release.json
+          QA_OUTPUT=qa/purchase-completion/production/gift node scripts/test-gift-purchase-flow-ui.mjs
+          QA_OUTPUT=qa/purchase-completion/production/desk node scripts/test-pending-desk-confirmation-ui.mjs
+      - name: Verify actual asynchronous purchase and confirmation contexts
+        env:
+          QA_BASE: http://127.0.0.1:5377
+        run: |
+          set -euo pipefail
+          QA_PORT=5377 QA_CACHE_DIR="$RUNNER_TEMP/purchase-completion-vite" QA_VITE_FORCE=1 node scripts/qa-pending-payments-dev.mjs > qa/purchase-completion/logs/prepared-dev.log 2>&1 &
+          dev_pid=$!
+          trap 'kill "$dev_pid" 2>/dev/null || true' EXIT
+          for i in $(seq 1 60); do curl -fsS http://127.0.0.1:5377/ >/dev/null && break; sleep 1; done
+          curl -fsS http://127.0.0.1:5377/ >/dev/null
+          QA_OUTPUT=qa/purchase-completion/context/gift node scripts/test-gift-purchase-context-ui.mjs
+          QA_OUTPUT=qa/purchase-completion/context/desk-settlement node scripts/test-pending-desk-settlement-context.mjs
+          QA_OUTPUT=qa/purchase-completion/context/desk-confirmation node scripts/test-desk-confirmation-context.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mock-purchase-completion-${{ github.event.pull_request.head.sha }}
+          path: qa/purchase-completion/
+          retention-days: 7
+          if-no-files-found: warn

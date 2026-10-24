@@ -1,3 +1,4 @@
+import type {GiftPurchaseCommand,GiftPurchaseResult} from '../modules/voucher-gifts/purchaseCommand';
 import type { AppendClassPayRuleCommand, ClassPayRuleRow } from './classPayRules';
 import type { GenerateRecurrence } from './classRecurrence';
 import type { SessionEdit } from './sessionEditorial';
@@ -36,6 +37,8 @@ export interface DataProvider {
   editSession?(command: SessionEdit): Promise<ClassSessionRow>;
   contentBatch?(command: ContentBatch): Promise<ContentBatchResult>;
   /** Atomic demo transaction; absent until real backend RPCs are implemented. */
+  /** Protected local-demo purchase/approval/claim command; absent on real providers. */
+  purchasedGift?(command:GiftPurchaseCommand,isCurrent?:()=>boolean):Promise<GiftPurchaseResult>;
   voucher?(command: VoucherCommand): Promise<VoucherResult>;
   /** Approved campaign share and explicit claim, mock-only until authenticated RPCs exist. */
   promotion?(command: PromotionCommand): Promise<PromotionResult>;

@@ -1,0 +1,4 @@
+.payment-instructions{min-width:0;overflow-wrap:anywhere}
+.payment-instructions-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,var(--w-sidebar)),1fr));gap:var(--sp-md)}
+.payment-instructions-fields dd{margin:0}
+.payment-instructions-qr{display:block;max-width:min(100%,var(--w-sidebar));height:auto;object-fit:contain}

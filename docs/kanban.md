@@ -1,3 +1,7 @@
+PR88 verification repair: preserve signup drafts across public-session serialization rewrites in legal popups. Retain genuine cross-tab logout and duplicate-charge guards; repair valid-room, cold-persona, independent-purchase and artifact-name fixtures without relaxing assertions. See frontend-completion/public-session-popup-noop.md.
+
+CU-04 remote demo signout: close mounted private tabs and invalidate pending signup/zero-charge checkout only on current explicit remote logout. Keep persona switches independent and retained history intact; real session revocation/email delivery remain separate. See frontend-completion/remote-demo-signout.md.
+
 RS-02 package checkout: verify saved booking/debit evidence after uncertain acknowledgement, with read-only recovery and context-bound confirmation. Existing-package frontend verification is separate from backend and owner acceptance. See frontend-completion/rs02-package-booking-recovery.md.
 
 Shared admission integration: replay the bounded publication/context guard onto PR85 main; original saved candidates remain separate. Current-source build, regression and independent review are required. See frontend-completion/session-admission-repair.md.
@@ -814,3 +818,10 @@ Protected-capture clarification: M14 schedule/pay screenshots remain local/ignor
 - RS-02: saved package-booking confirmation recovery and truthful duplicate feedback; final combined review and release pending. No new charge is inferred from missing confirmation.
 - RS-04: scoped studio-day admission checks across regular and identified voucher bookings, offered claims and rescheduling; synthetic regression coverage, no server enforcement claim.
 - RS-05: current availability and fresh navigation checks on customer/public class drawers; final paused-context regressions and combined release pending.
+
+## Signup frontend validation and context
+
+- PL-07 / A-03: bounded account fields and calendar birthdays; literal Unicode/symbol storage and exact consent replay retained.
+- Pending signup commands, legal proof, session updates and navigation are fenced to their actor, role, provider and route. Drafts survive for explicit retry. Combined local checks and independent source review passed; hosted CI/release remain pending. No real identity-provider or whole-platform validation claim.
+
+- Local frontend integration: retained desk fulfillment, private customer read scopes and saved transfer instructions; mounted confirmation uses read-only immutable proof. Combined build, regressions and review required before release.

@@ -10,6 +10,7 @@ on:
       - 'src/modules/website/pages/SchedulePage.tsx'
       - 'src/auth/**'
       - 'scripts/*admission*'
+      - 'scripts/*physical-admission*'
       - 'scripts/*package-booking*'
       - 'scripts/test-package-voucher-duplicate-ui.mjs'
       - 'scripts/test-schedule-criterion-ui.mjs'
@@ -24,7 +25,9 @@ permissions:
 jobs:
   admission:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 45
+    env:
+      CHROMIUM_PATH: /usr/bin/google-chrome
     steps:
       - uses: actions/checkout@v4
         with:
@@ -34,10 +37,14 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - run: npx playwright-core install --with-deps chromium
+      - name: Verify runner browser
+        run: |
+          test -x "$CHROMIUM_PATH"
+          "$CHROMIUM_PATH" --version
       - name: Domain and preserved transaction contracts
         run: |
           node scripts/test-session-admission.mjs
+          node scripts/test-physical-admission-capacity.mjs
           node scripts/test-package-booking-confirmation.mjs
           node scripts/test-daily-admission.mjs
           node scripts/test-desk-transactions.mjs
@@ -52,7 +59,6 @@ jobs:
       - name: Actual production pages and paused contexts
         shell: bash
         run: |
-          export CHROMIUM_PATH="$(node --input-type=module -e "import {chromium} from 'playwright-core';process.stdout.write(chromium.executablePath())")"
           npm run preview -- --host 127.0.0.1 --port 5480 --strictPort > /tmp/admission-preview.log 2>&1 &
           preview_pid=$!
           QA_PORT=5481 QA_CACHE_DIR=/tmp/admission-deps node scripts/qa-pending-payments-dev.mjs > /tmp/admission-dev.log 2>&1 &
@@ -64,6 +70,8 @@ jobs:
           done
           QA_BASE=http://127.0.0.1:5480 QA_OUTPUT=/tmp/admission-production node scripts/test-session-admission-ui.mjs
           QA_BASE=http://127.0.0.1:5481 QA_OUTPUT=/tmp/admission-context node scripts/test-session-admission-context.mjs
+          QA_BASE=http://127.0.0.1:5480 QA_OUTPUT=/tmp/booking-physical-capacity node scripts/test-physical-admission-capacity-ui.mjs
+          QA_BASE=http://127.0.0.1:5480 QA_OUTPUT=/tmp/booking-physical-desk node scripts/test-physical-admission-desk-ui.mjs
           QA_BASE=http://127.0.0.1:5480 QA_OUTPUT=/tmp/booking-schedule-criterion node scripts/test-schedule-criterion-ui.mjs
           QA_BASE=http://127.0.0.1:5480 QA_OUTPUT=/tmp/booking-package-flow node scripts/test-package-booking-flow-ui.mjs
           QA_BASE=http://127.0.0.1:5481 QA_OUTPUT=/tmp/booking-package-recovery node scripts/test-package-booking-recovery-ui.mjs

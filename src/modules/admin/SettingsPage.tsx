@@ -1,3 +1,7 @@
+import {SharedImageField} from '../../components/organism/SharedImageField/SharedImageField';
+import {SavedPaymentInstructions} from '../../components/organism/PaymentInstructions/PaymentInstructions';
+import {validPaymentSettings,type PaymentSettings} from './paymentInstructions';
+import {usePaymentSettingsSave} from './usePaymentSettingsSave';
 import {TeamProposalPanel} from '../../components/organism/TeamProposalPanel/TeamProposalPanel';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, NavLink } from 'react-router-dom';
@@ -258,18 +262,7 @@ export function SettingsPage({ group = 'general' }: { group?: SettingsGroup }) {
 
           {group === 'payments' && (
             <>
-              {S('payments', t('admin.settings.sec.payments'), (d, set) => (
-                <>
-                  <div className="grid grid-2">
-                    <Field label={t('admin.settings.f.bank')}>{(id) => <Input id={id} value={d.bankName} disabled={!canWrite} onChange={(e) => set({ ...d, bankName: e.target.value })} placeholder={t('admin.settings.f.bank.ph')} />}</Field>
-                    <Field label={t('admin.settings.f.accountType')}>{(id) => <Select id={id} value={d.accountType} disabled={!canWrite} onChange={(e) => set({ ...d, accountType: e.target.value as StudioSettings['payments']['accountType'] })}><option value="savings">{t('admin.settings.f.savings')}</option><option value="checking">{t('admin.settings.f.checking')}</option></Select>}</Field>
-                    <Field label={t('admin.settings.f.accountNumber')}>{(id) => <Input id={id} value={d.accountNumber} disabled={!canWrite} onChange={(e) => set({ ...d, accountNumber: e.target.value })} />}</Field>
-                    <Field label={t('admin.settings.f.accountHolder')}>{(id) => <Input id={id} value={d.accountHolder} disabled={!canWrite} onChange={(e) => set({ ...d, accountHolder: e.target.value })} />}</Field>
-                    <Field label={t('admin.settings.f.wompiEnv')} hint="Wompi">{(id) => <Select id={id} value={d.wompiEnv} disabled={!canWrite} onChange={(e) => set({ ...d, wompiEnv: e.target.value as StudioSettings['payments']['wompiEnv'] })}><option value="sandbox">{t('admin.settings.f.sandbox')}</option><option value="production">{t('admin.settings.f.production')}</option></Select>}</Field>
-                  </div>
-                  <Notice tone="warn" title={t('admin.settings.pay.keys.title')}>{t('admin.settings.pay.keys.body')}</Notice>
-                </>
-              ))}
+              <PaymentSettingsCard value={settings.payments} />
               {S('profile', t('admin.settings.sec.fiscal'), (d, set) => (
                 <div className="grid grid-2"><Field label="NIT" hint={t('admin.settings.f.nit.hint')}>{(id) => <Input id={id} value={d.nit} disabled={!canWrite} onChange={(e) => set({ ...d, nit: e.target.value })} placeholder="901.xxx.xxx-1" />}</Field><Field label={t('admin.settings.f.legal')}>{(id) => <Input id={id} value={tenant.legalName} disabled />}</Field></div>
               ), 'fiscal')}
@@ -469,4 +462,34 @@ function GeneralActions() {
   }), [can, data, audit]);
   useActions(M08a, impl);
   return null;
+}
+
+/** Payment instructions have a separate mock-only atomic save/audit and stable retry command. */
+function PaymentSettingsCard({value}:{value:PaymentSettings}){
+ const{t}=useI18n(),save=usePaymentSettingsSave();
+ const[draft,setDraft]=useState({data:save.data,context:save.context,before:value,after:value});
+ const current=draft.data===save.data&&draft.context===save.context?draft:{data:save.data,context:save.context,before:value,after:value};
+ useEffect(()=>{setDraft(prior=>prior.data!==save.data||prior.context!==save.context?{data:save.data,context:save.context,before:value,after:value}:prior);},[save.data,save.context,value]);
+ const d=current.after,busy=save.state==='busy',dirty=JSON.stringify(current.before)!==JSON.stringify(d),stale=JSON.stringify(value)!==JSON.stringify(current.before)&&JSON.stringify(value)!==JSON.stringify(d),valid=validPaymentSettings(d),disabled=!save.canWrite||busy;
+ const set=(next:PaymentSettings)=>{save.changed();setDraft({...current,after:next});};
+ const commit=async()=>{const saved=await save.run(current.before,d);if(saved)setDraft({data:save.data,context:save.context,before:saved,after:saved});};
+ return <Card title={t('admin.settings.sec.payments')} icon="credit-card" actions={save.canWrite&&<div className="row"><span className="xs muted">{save.state==='saved'?t('admin.settings.saved'):dirty?t('admin.settings.unsaved'):''}</span><Button size="sm" disabled={busy||!valid||(!dirty&&save.state!=='error')||stale} loading={busy} onClick={commit}>{t(save.state==='error'?'core.common.retry':'core.common.save')}</Button></div>}>
+  <div className="stack">
+   <div className="grid grid-2">
+    <Field label={t('admin.settings.f.bank')}>{id=><Input id={id} value={d.bankName} disabled={disabled} onChange={e=>set({...d,bankName:e.target.value})}/>}</Field>
+    <Field label={t('admin.settings.f.accountType')}>{id=><Select id={id} value={d.accountType} disabled={disabled} onChange={e=>set({...d,accountType:e.target.value as PaymentSettings['accountType']})}><option value="savings">{t('admin.settings.f.savings')}</option><option value="checking">{t('admin.settings.f.checking')}</option></Select>}</Field>
+    <Field label={t('admin.settings.f.accountNumber')}>{id=><Input id={id} value={d.accountNumber} disabled={disabled} onChange={e=>set({...d,accountNumber:e.target.value})}/>}</Field>
+    <Field label={t('admin.settings.f.accountHolder')}>{id=><Input id={id} value={d.accountHolder} disabled={disabled} onChange={e=>set({...d,accountHolder:e.target.value})}/>}</Field>
+    <Field label={t('admin.paymentInstructions.breBKey')} hint={t('admin.paymentInstructions.keyHint')}>{id=><Input id={id} value={d.breBKey} maxLength={256} disabled={disabled} onChange={e=>set({...d,breBKey:e.target.value})}/>}</Field>
+    <Field label={t('admin.settings.f.wompiEnv')} hint="Wompi">{id=><Select id={id} value={d.wompiEnv} disabled={disabled} onChange={e=>set({...d,wompiEnv:e.target.value as PaymentSettings['wompiEnv']})}><option value="sandbox">{t('admin.settings.f.sandbox')}</option><option value="production">{t('admin.settings.f.production')}</option></Select>}</Field>
+   </div>
+   <SharedImageField label={t('admin.paymentInstructions.qrImageUrl')} value={d.qrImageUrl} disabled={disabled} onChange={qrImageUrl=>set({...d,qrImageUrl})}/>
+   {!valid&&<Notice tone="warn">{t('admin.paymentInstructions.invalid')}</Notice>}
+   {save.state==='error'&&<Notice tone="warn">{t('admin.paymentInstructions.saveError')}</Notice>}
+   {stale&&<Notice tone="warn">{t('admin.paymentInstructions.changed')}</Notice>}
+   {(stale||save.state==='error')&&<Button variant="secondary" disabled={busy} onClick={()=>{save.changed();setDraft({data:save.data,context:save.context,before:value,after:value});}}>{t('admin.paymentInstructions.reload')}</Button>}
+   <Notice tone="warn" title={t('admin.settings.pay.keys.title')}>{t('admin.settings.pay.keys.body')}</Notice>
+   <SavedPaymentInstructions/>
+  </div>
+ </Card>;
 }

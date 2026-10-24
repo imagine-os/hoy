@@ -45,8 +45,12 @@ try {
  await data.update('class_sessions',target.id,{tenant_id:original.tenant_id,status:'cancelled'});await reject(/session_unavailable/);
  await data.update('class_sessions',target.id,{status:'scheduled',starts_at:new Date(now-1000).toISOString()});await reject(/session_unavailable/);
  await data.update('class_sessions',target.id,{starts_at:'invalid'});await reject(/session_unavailable/);
- await data.update('class_sessions',target.id,{starts_at:day(4),capacity:0});await reject(/session_full/);
- await data.update('class_sessions',target.id,{capacity:4});
+ await data.update('class_sessions',target.id,{starts_at:day(4),capacity:0});await reject(/session_unavailable/);
+ await data.update('class_sessions',target.id,{capacity:1});
+ await data.insert('users',{id:'qa_rs_full_holder',email:'full-reschedule@example.invalid',status:'active'});
+ const fullBooking=await data.insert('bookings',{id:'qa_rs_target_full',user_id:'qa_rs_full_holder',session_id:target.id,status:'booked',paid_with:'comp',checked_in_at:null,ledger_id:null});
+ await reject(/session_full/);
+ await data.remove('bookings',fullBooking.id);await data.update('class_sessions',target.id,{capacity:4});
  const conflictSession=await data.insert('class_sessions',{...target,id:'qa_rs_conflict',starts_at:target.starts_at,ends_at:day(4.1)});
  const conflict=await data.insert('bookings',{user_id:userId,session_id:conflictSession.id,status:'checked_in',paid_with:'comp'});await reject(/same_day_conflict/);
  await data.update('bookings',conflict.id,{status:'cancelled'});

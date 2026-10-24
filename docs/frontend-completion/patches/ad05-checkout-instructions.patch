@@ -1,0 +1,16 @@
+--- a/src/modules/customer/pages/CheckoutPage.tsx
++++ b/src/modules/customer/pages/CheckoutPage.tsx
+@@ -1,3 +1,4 @@
++import {SavedPaymentInstructions} from '../../../components/organism/PaymentInstructions/PaymentInstructions';
+ import { requireSessionAdmission, assertAdmissionContext, sessionAdmissionAvailable } from '../../../data/sessionAdmission';
+ import {assertTrialAvailable,trialErrorKey} from '../../../data/trialEligibility';
+ import { useOperationalCatalog, useReviewedQuote } from '../../quotes/hooks';
+@@ -245,7 +246,7 @@
+           {methods.map((m) => <button key={m.id} type="button" className={`cust-method ${method === m.id ? 'is-active' : ''}`} aria-pressed={method === m.id} onClick={() => setMethod(m.id)}><Icon name={m.glyph} size="sm" />{bi(m.label)}{m.provider === 'wompi' && <Badge tone="neutral">Wompi</Badge>}</button>)}
+         </div>
+         <p className="xs muted">{bi(methodOpt.hint)}</p>
+-        {method==='transfer'&&<><Notice tone="warn">{t('transfers.noQr')}</Notice><ReceiptUpload value={receiptImage} onChange={setReceiptImage}/><Notice>{t('transfers.timing')}</Notice></>}
++        {method==='transfer'&&<><SavedPaymentInstructions /><ReceiptUpload value={receiptImage} onChange={setReceiptImage}/><Notice>{t('transfers.timing')}</Notice></>}
+         {devMode && methodOpt.provider === 'wompi' && <Toggle size="sm" checked={simulateDecline} onChange={setSimulateDecline} label={t('customer.checkout.simulateDecline')} />}
+       </section>
+     ),

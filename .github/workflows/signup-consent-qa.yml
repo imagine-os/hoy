@@ -3,6 +3,11 @@ on:
   pull_request:
     paths:
       - 'src/modules/customer/auth/**'
+      - 'src/auth/SessionProvider.tsx'
+      - 'scripts/test-signup-legal-popup-session-ui.mjs'
+      - 'src/modules/customer/profileSave.ts'
+      - 'src/auth/**'
+      - 'src/data/DataContext.tsx'
       - 'src/modules/customer/legal.tsx'
       - 'src/modules/customer/legalContent.ts'
       - 'src/components/organism/LegalDocument/**'
@@ -13,6 +18,9 @@ on:
       - 'src/data/MockProvider.ts'
       - 'src/modules/admin/TablesPage.tsx'
       - 'scripts/test-signup-consent*.mjs'
+      - 'scripts/test-signup-validation*.mjs'
+      - 'scripts/test-signup-context-ui.mjs'
+      - 'scripts/signup-context-harness.tsx'
       - 'scripts/test-customer-registration*.mjs'
       - 'scripts/test-customer-return-ui.mjs'
       - 'scripts/customer-registration-harness.tsx'
@@ -22,7 +30,7 @@ permissions:
 jobs:
   fictional-registration:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
         with:
@@ -34,6 +42,7 @@ jobs:
       - run: npm ci
       - name: Verify registration and existing audit/report contracts
         run: |
+          node scripts/test-signup-validation.mjs
           node scripts/test-signup-consent-recovery.mjs
           node scripts/test-signup-consent.mjs
           node scripts/test-customer-registration.mjs
@@ -46,6 +55,8 @@ jobs:
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:5333/ >/dev/null && break; sleep 1; done
           node scripts/test-signup-consent-recovery-ui.mjs
           node scripts/test-signup-consent-ui.mjs
+          QA_OUTPUT=qa/signup-consent/normal-legal-popup node scripts/test-signup-legal-popup-session-ui.mjs
+          QA_OUTPUT=qa/signup-consent/validation node scripts/test-signup-validation-ui.mjs
           node scripts/test-signup-consent-library.mjs
           QA_OUTPUT=qa/signup-consent/customer-return node scripts/test-customer-return-ui.mjs
         env:
@@ -53,9 +64,11 @@ jobs:
           CHROMIUM_PATH: /usr/bin/google-chrome
       - name: Verify real form delayed provider, read failure, retry and cancellation
         run: |
-          npm run dev -- --host 127.0.0.1 --strictPort --port 5334 > /tmp/hoy-signup-dev.log 2>&1 &
+          QA_PORT=5334 QA_CACHE_DIR=/tmp/hoy-signup-deps node scripts/qa-pending-payments-dev.mjs > /tmp/hoy-signup-dev.log 2>&1 &
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:5334/ >/dev/null && break; sleep 1; done
           node scripts/test-customer-registration-states.mjs
+          QA_OUTPUT=qa/signup-consent/context node scripts/test-signup-context-ui.mjs
+          QA_AFTER_COMMIT=1 QA_OUTPUT=qa/signup-consent/postcommit-context node scripts/test-signup-context-ui.mjs
         env:
           QA_BASE: http://127.0.0.1:5334
           QA_OUTPUT: qa/signup-consent/async

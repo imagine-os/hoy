@@ -1,0 +1,5 @@
+<!doctype html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head><body><div id="root"></div><script type="module">
+import { mountRemoteSignoutContext } from './remote-signout-context-harness.tsx';
+const query=new URLSearchParams(location.search);
+if(!query.has('driver'))mountRemoteSignoutContext(query.get('kind')==='checkout'?'checkout':'signup',query.get('phase')==='postcommit');
+</script></body></html>

@@ -18,6 +18,7 @@ try {
    db.memberships=db.memberships.filter(r=>r.user_id!==user);db.class_ledger=db.class_ledger.filter(r=>r.user_id!==user);db.bookings=db.bookings.filter(r=>r.user_id!==user);db.payments=db.payments.filter(r=>r.user_id!==user);
    const source=db.class_sessions.find(s=>s.status==='scheduled');const modality=db.modalities.find(m=>!/yoga|vinyasa|flow|yin|ligereza|hibrido|alineacion/.test(m.slug));
    db.class_sessions.push({...source,id:'qa_pending_class',title:'QA Pending Class',modality_id:modality.id,starts_at:'2026-10-24T17:10:00Z',ends_at:'2026-10-24T18:00:00Z',booked_count:0,capacity:6,created_at:stamp,updated_at:stamp});
+   const independent=db.class_sessions.find(s=>s.id==='qa_pending_class');db.class_sessions.push({...independent,id:'qa_confirmed_class',title:'QA Independent Confirmed Class',template_id:null,starts_at:'2026-10-25T17:10:00Z',ends_at:'2026-10-25T18:00:00Z'});
    localStorage.setItem('hoyos.db.v1',JSON.stringify(stored));
   });
   await page.goto(`${base}/#/app/checkout/qa_pending_class?pass=pack12`);await page.reload();
@@ -34,9 +35,20 @@ try {
   await page.evaluate(()=>{const stored=JSON.parse(localStorage.getItem('hoyos.db.v1')),db=stored.db,stamp=new Date().toISOString();db.class_ledger.push({id:'qa_older_grant',tenant_id:db.users[0].tenant_id,user_id:'usr_cust',plan_id:'plan_pack12',payment_id:null,delta:3,reason:'purchase',expires_at:'2026-10-30',frozen_from:null,frozen_until:null,created_at:stamp,updated_at:stamp});localStorage.setItem('hoyos.db.v1',JSON.stringify(stored));});
   await page.getByRole('button',{name:lang==='en'?'Back to schedule':'Volver al horario',exact:true}).click();
   await page.goto(`${base}/#/app/checkout/qa_pending_class?pass=pack12`);await page.reload();
+  await page.getByText(lang==='en'?'Saved pending demo request':'Solicitud demo pendiente guardada',{exact:true}).first().waitFor();
+  const duplicateCharge=page.getByRole('button',{name:lang==='en'?/Pay .* with Wompi/:/Pagar .* con Wompi/});
+  assert(await duplicateCharge.isDisabled(),'a retained pending desk request blocks a second same-class card charge');
+  const beforeDuplicate=await page.evaluate(()=>JSON.parse(localStorage.getItem('hoyos.db.v1')).db);
+  await duplicateCharge.evaluate(button=>button.click());
+  const afterDuplicate=await page.evaluate(()=>JSON.parse(localStorage.getItem('hoyos.db.v1')).db);
+  for(const table of ['payments','class_ledger','bookings','class_sessions','audit_log'])assert.deepEqual(afterDuplicate[table],beforeDuplicate[table],`${table} unchanged when same-class duplicate charge is blocked`);
+  checks.push(`${lang}: retained pending request blocks same-class card charge, with no payment/grant/booking/hold mutation`);
+  // A separate, explicitly available future class exercises the independent confirmed purchase.
+  await page.goto(`${base}/#/app/checkout/qa_confirmed_class?pass=pack12`);await page.reload();
   await page.getByRole('button',{name:lang==='en'?/Pay .* with Wompi/:/Pagar .* con Wompi/}).click();
   await page.getByRole('button',{name:lang==='en'?'View my booking':'Ver mi reserva',exact:true}).waitFor();
-  const approved=await page.evaluate(()=>{const db=JSON.parse(localStorage.getItem('hoyos.db.v1')).db;return {payments:db.payments.filter(p=>p.user_id==='usr_cust'),ledger:db.class_ledger.filter(r=>r.user_id==='usr_cust'),bookings:db.bookings.filter(r=>r.user_id==='usr_cust'),count:db.class_sessions.find(s=>s.id==='qa_pending_class').booked_count};});
+  const approved=await page.evaluate(()=>{const db=JSON.parse(localStorage.getItem('hoyos.db.v1')).db;return {payments:db.payments.filter(p=>p.user_id==='usr_cust'),ledger:db.class_ledger.filter(r=>r.user_id==='usr_cust'),bookings:db.bookings.filter(r=>r.user_id==='usr_cust'),count:db.class_sessions.find(s=>s.id==='qa_confirmed_class').booked_count,pendingCount:db.class_sessions.find(s=>s.id==='qa_pending_class').booked_count};});
+  assert.equal(approved.payments.length,2);assert.deepEqual(approved.payments.find(p=>p.id===result.payments[0].id),result.payments[0],'original pending payment and accepted terms remain unchanged');assert.equal(approved.pendingCount,0);assert(!approved.bookings.some(b=>b.session_id==='qa_pending_class'));assert.equal(approved.bookings[0].session_id,'qa_confirmed_class');
   assert.equal(approved.payments.filter(p=>p.status==='approved').length,1);assert.equal(approved.ledger.filter(r=>r.reason==='purchase').length,2);assert.equal(approved.ledger.reduce((n,r)=>n+r.delta,0),14);
   const newPurchase=approved.ledger.find(r=>r.reason==='purchase'&&r.payment_id===approved.payments.find(p=>p.status==='approved').id);
   assert.equal(approved.ledger.find(r=>r.delta===-1).purchase_ledger_id,newPurchase.id,'explicit new package consumes its own purchased grant');

@@ -1,4 +1,6 @@
 import { dailyAdmissionConflict, requireDailyAdmission } from '../../data/dailyAdmission';
+import { useScopedCustomerRead } from './useScopedCustomerRead';
+import { joinTenantSessions, ownBookingRows } from './scopedSessionRows';
 import { requireSessionAdmission, assertAdmissionContext } from '../../data/sessionAdmission';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {useTrialAssessment} from './useTrialAssessment';
@@ -22,41 +24,42 @@ export interface JoinedSession { session: ClassSessionRow; modality?: ModalityRo
 
 /** One session joined with its modality, teacher and room. Live. */
 export function useSessionJoined(id: string | undefined): { joined: JoinedSession | null; loading: boolean } {
-  const { rows, loading } = useTable<ClassSessionRow>('class_sessions', id ? { where: { id } } : undefined);
-  const { rows: modalities } = useTable<ModalityRow>('modalities');
-  const { rows: teachers } = useTable<TeacherRow>('teachers');
-  const { rows: rooms } = useTable<RoomRow>('rooms');
-  const { rows: templates } = useTable<BaseRow & {active:boolean}>('class_templates');
+  const sessions = useScopedCustomerRead<ClassSessionRow>('class_sessions', id ? { where: { id } } : undefined);
+  const modalities = useScopedCustomerRead<ModalityRow>('modalities');
+  const teachers = useScopedCustomerRead<TeacherRow>('teachers');
+  const rooms = useScopedCustomerRead<RoomRow>('rooms');
+  const templates = useScopedCustomerRead<BaseRow & { active: boolean }>('class_templates');
+  const loading = [sessions, modalities, teachers, rooms, templates].some(read => read.loading);
+  const failed = [sessions, modalities, teachers, rooms, templates].some(read => read.error);
   return useMemo(() => {
-    const s = id ? rows.find((r) => r.id === id) : undefined;
-    if (!s) return { joined: null, loading };
-    return { joined: { session: s, templateActive: templates.find(t=>t.id===s.template_id)?.active, modality: modalities.find((m) => m.id === s.modality_id), teacher: teachers.find((t) => t.id === s.teacher_id), room: rooms.find((r) => r.id === s.room_id) }, loading };
-  }, [id, rows, modalities, teachers, rooms, templates, loading]);
+    if (loading || failed || !id) return { joined: null, loading };
+    const joined = joinTenantSessions({ sessions: sessions.rows, modalities: modalities.rows, teachers: teachers.rows, rooms: rooms.rows, templates: templates.rows }, tenant.id).find(row => row.session.id === id) ?? null;
+    return { joined, loading };
+  }, [id, loading, failed, sessions.rows, modalities.rows, teachers.rows, rooms.rows, templates.rows]);
 }
 
 /** All sessions joined (for lists). */
 export function useAllSessionsJoined(): JoinedSession[] {
-  const { rows: templates } = useTable<BaseRow & { active: boolean }>('class_templates');
-  const { rows: sessions } = useTable<ClassSessionRow>('class_sessions', { orderBy: { column: 'starts_at' } });
-  const { rows: modalities } = useTable<ModalityRow>('modalities');
-  const { rows: teachers } = useTable<TeacherRow>('teachers');
-  const { rows: rooms } = useTable<RoomRow>('rooms');
-  return useMemo(() => {
-    const mod = new Map(modalities.map((m) => [m.id, m])), tea = new Map(teachers.map((t) => [t.id, t])), rm = new Map(rooms.map((r) => [r.id, r]));
-    return sessions.map((s) => ({ session: s, modality: mod.get(s.modality_id), teacher: tea.get(s.teacher_id), room: rm.get(s.room_id), templateActive: templates.find(t => t.id === s.template_id)?.active }));
-  }, [sessions, modalities, teachers, rooms, templates]);
+  const templates=useScopedCustomerRead<BaseRow & { active: boolean }>('class_templates');
+  const sessions=useScopedCustomerRead<ClassSessionRow>('class_sessions', { orderBy: { column: 'starts_at' } });
+  const modalities=useScopedCustomerRead<ModalityRow>('modalities');
+  const teachers=useScopedCustomerRead<TeacherRow>('teachers');
+  const rooms=useScopedCustomerRead<RoomRow>('rooms');
+  const ready=[templates,sessions,modalities,teachers,rooms].every(read=>!read.loading&&!read.error);
+  return useMemo(() => ready?joinTenantSessions({sessions:sessions.rows,modalities:modalities.rows,teachers:teachers.rows,rooms:rooms.rows,templates:templates.rows},tenant.id):[],[ready,sessions.rows,modalities.rows,teachers.rows,rooms.rows,templates.rows]);
 }
 
 export function useMyBookings() {
   const { user } = useSession();
-  return useTable<BookingRow>('bookings', { where: { user_id: user.id } });
+  const result=useScopedCustomerRead<BookingRow>('bookings', undefined, true);
+  return {...result,rows:ownBookingRows(result.rows,tenant.id,user.role==='public'?null:user.id)};
 }
 
 export function useMyProfile() {
   const { user } = useSession();
-  const { rows: profiles } = useTable<ProfileFull>('profiles', { where: { user_id: user.id } });
-  const { rows: users } = useTable<UserRow>('users', { where: { id: user.id } });
-  return { profile: profiles[0] ?? null, account: users[0] ?? null };
+  const { rows: profiles } = useScopedCustomerRead<ProfileFull>('profiles', undefined, true);
+  const { rows: users } = useScopedCustomerRead<UserRow>('users', { where: { id: user.id } });
+  return { profile: profiles.find(row => row.user_id === user.id) ?? null, account: users.find(row => row.id === user.id) ?? null };
 }
 
 export type EntitlementKind = 'package' | 'membership' | 'trial' | 'single';
@@ -69,11 +72,11 @@ export type EntitlementKind = 'package' | 'membership' | 'trial' | 'single';
 export function useEntitlements() {
   const { user } = useSession();
   const trial=useTrialAssessment(user.id);
-  const { rows: memberships } = useTable<MembershipRow>('memberships', { where: { user_id: user.id } });
-  const { rows: ledger } = useTable<ClassLedgerRow>('class_ledger', { where: { user_id: user.id } });
-  const { rows: payments } = useTable<PaymentRow>('payments', { where: { user_id: user.id } });
-  const { rows: bookings } = useTable<BookingRow>('bookings', { where: { user_id: user.id } });
-  const { rows: plans } = useTable<PlanRow>('plans');
+  const { rows: memberships } = useScopedCustomerRead<MembershipRow>('memberships', undefined, true);
+  const { rows: ledger } = useScopedCustomerRead<ClassLedgerRow>('class_ledger', undefined, true);
+  const { rows: payments } = useScopedCustomerRead<PaymentRow>('payments', undefined, true);
+  const { rows: bookings } = useScopedCustomerRead<BookingRow>('bookings', undefined, true);
+  const { rows: plans } = useScopedCustomerRead<PlanRow>('plans');
   return useMemo(() => {
     const membership = memberships.find((m) => m.status === 'active') ?? memberships.find((m) => m.status === 'paused') ?? null;
     const pkg = packageState(approvedPackageRows(ledger, payments));
@@ -98,7 +101,8 @@ export function usePackageActions() {
 
 export function useWaitlistFor(sessionId: string | undefined) {
   const { user } = useSession();
-  const { rows } = useTable<WaitlistRow>('waitlist', sessionId ? { where: { session_id: sessionId }, orderBy: { column: 'position' } } : undefined);
+  const { rows: scoped } = useScopedCustomerRead<WaitlistRow>('waitlist', sessionId ? { where: { session_id: sessionId }, orderBy: { column: 'position' } } : undefined);
+  const rows = sessionId ? scoped.filter(row => row.session_id === sessionId) : [];
   const active = rows.filter((w) => w.status === 'waiting' || w.status === 'offered');
   const mine = active.find((w) => w.user_id === user.id) ?? rows.filter((w) => w.user_id === user.id).sort((a, b) => b.created_at.localeCompare(a.created_at))[0] ?? null;
   return { entries: rows, active, mine, position: mine ? active.filter((w) => w.status === 'waiting').findIndex((w) => w.id === mine.id) + 1 : 0 };
@@ -264,8 +268,7 @@ export function useLocalPref<T>(key: string, initial: T): [T, (next: T | ((prev:
 /** C-24 inbox: my notifications, newest first, with the unread count and read/mark-all writers. */
 export function useMyNotifications() {
   const data = useData();
-  const { user } = useSession();
-  const { rows, loading } = useTable<NotificationRow>('notifications', { where: { user_id: user.id }, orderBy: { column: 'created_at', dir: 'desc' } });
+  const { rows, loading } = useScopedCustomerRead<NotificationRow>('notifications', { orderBy: { column: 'created_at', dir: 'desc' } }, true);
   const unread = rows.filter((n) => !n.read_at).length;
   const markRead = useCallback(async (n: NotificationRow) => { if (!n.read_at) await data.update('notifications', n.id, { read_at: new Date().toISOString() }); }, [data]);
   const markAllRead = useCallback(async () => { const at = new Date().toISOString(); for (const n of rows) if (!n.read_at) await data.update('notifications', n.id, { read_at: at }); }, [data, rows]);
@@ -279,7 +282,7 @@ export { useAtomicNotificationPrefs as useNotificationPrefs } from './useNotific
 export function useMyReviews() {
   const data = useData();
   const { user } = useSession();
-  const { rows } = useTable<ReviewRow>('reviews', { where: { user_id: user.id } });
+  const { rows } = useScopedCustomerRead<ReviewRow>('reviews', undefined, true);
   const forSession = useCallback((sessionId: string | undefined) => (sessionId ? rows.find((r) => r.class_session_id === sessionId) ?? null : null), [rows]);
   const rate = useCallback(async (input: { session: ClassSessionRow; rating: number; tags: string[]; comment: string; anonymous: boolean; booking?: BookingRow | null }) => {
     const review = await data.insert<ReviewRow>('reviews', {
@@ -314,7 +317,8 @@ export function useSessionReviews(sessionId: string | undefined) {
 export function useMyInvites() {
   const data = useData();
   const { user } = useSession();
-  const { rows } = useTable<InviteRow>('invites', { where: { inviter_user_id: user.id }, orderBy: { column: 'created_at', dir: 'desc' } });
+  const { rows: scoped } = useScopedCustomerRead<InviteRow>('invites', { where: { inviter_user_id: user.id }, orderBy: { column: 'created_at', dir: 'desc' } });
+  const rows = scoped.filter(row => row.inviter_user_id === user.id);
   const code = `${tenant.invoicePrefix}-${user.id.slice(-4).toUpperCase()}`;
   const send = useCallback(async (input: { channel: InviteRow['channel']; target: string; sessionId?: string | null }) => {
     const email = input.target.includes('@');
@@ -330,7 +334,7 @@ export function useMyInvites() {
 export function usePaymentMethods() {
   const data = useData();
   const { user } = useSession();
-  const { rows } = useTable<PaymentMethodRow>('payment_methods', { where: { user_id: user.id }, orderBy: { column: 'created_at', dir: 'desc' } });
+  const { rows } = useScopedCustomerRead<PaymentMethodRow>('payment_methods', { orderBy: { column: 'created_at', dir: 'desc' } }, true);
   const makeDefault = useCallback(async (row: PaymentMethodRow) => {
     for (const m of rows) if (m.is_default && m.id !== row.id) await data.update('payment_methods', m.id, { is_default: false });
     await data.update('payment_methods', row.id, { is_default: true });

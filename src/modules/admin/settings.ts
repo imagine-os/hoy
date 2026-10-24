@@ -44,7 +44,7 @@ export interface StudioSettings {
   integrations: Record<'wompi' | 'whatsapp' | 'email' | 'calendar', 'pending' | 'connected' | 'error'>;
   features: { multipleLocations: boolean; noShowFee: boolean; holidayCalendar: boolean; walkInRegistration: boolean; autoCheckinOnSale: boolean };
   /** M-08c — payout account and the Wompi environment. Secrets are never stored here (see the page notice). */
-  payments: { bankName: string; accountType: 'savings' | 'checking'; accountNumber: string; accountHolder: string; wompiEnv: 'sandbox' | 'production' };
+  payments: { bankName: string; accountType: 'savings' | 'checking'; accountNumber: string; accountHolder: string; qrImageUrl: string | null; breBKey: string; wompiEnv: 'sandbox' | 'production' };
   /** M-08d — sender identity for WhatsApp and email (quiet hours live in `quietHours`). */
   comms: { whatsappSender: string; emailSender: string; emailReplyTo: string };
   /** M-08e — tenant-facing identity. `displayName` empty falls back to src/tenant/tenant.ts. */
@@ -81,7 +81,7 @@ export const DEFAULT_SETTINGS: StudioSettings = {
   tax: { ivaPct: DEFAULT_IVA_PCT, pricesIncludeIva: true, dianResolution: '', eInvoicing: false },
   integrations: { wompi: 'pending', whatsapp: 'pending', email: 'pending', calendar: 'pending' },
   features: { multipleLocations: false, noShowFee: false, holidayCalendar: true, walkInRegistration: true, autoCheckinOnSale: true },
-  payments: { bankName: '', accountType: 'savings', accountNumber: '', accountHolder: tenant.legalName, wompiEnv: 'sandbox' },
+  payments: { bankName: '', accountType: 'savings', accountNumber: '', accountHolder: tenant.legalName, qrImageUrl: null, breBKey: '', wompiEnv: 'sandbox' },
   comms: { whatsappSender: tenant.name, emailSender: tenant.legalName, emailReplyTo: tenant.contact.email },
   branding: { displayName: '', wordmarkVariant: 'auto', defaultLang: tenant.defaultLocale },
   payroll: { cadence: 'monthly', payoutMethod: 'wompi', signedBy: '', withholding: false, rateCard: EMPTY_RATE_CARD },

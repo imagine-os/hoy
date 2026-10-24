@@ -9,6 +9,10 @@ on:
       - 'src/components/template/AppShell/**'
       - 'src/modules/customer/pages/GiftPage.tsx'
       - 'scripts/test-voucher*.mjs'
+      - 'scripts/*gift-purchase*'
+      - 'scripts/session-admission-fixture.mjs'
+      - 'src/modules/transfers/**'
+      - 'src/modules/customer/auth/**'
       - '.github/workflows/voucher-qa.yml'
 permissions:
   contents: read
@@ -18,7 +22,7 @@ concurrency:
 jobs:
   voucher:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
         with:
@@ -43,9 +47,9 @@ jobs:
         run: |
           npm run preview -- --host 127.0.0.1 --strictPort --port 5174 > /tmp/voucher-preview.log 2>&1 &
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:5174/ >/dev/null && break; sleep 1; done
-          node scripts/test-voucher-gifts-ui.mjs
+          QA_BASE=http://127.0.0.1:5174 QA_OUTPUT=qa/voucher-qa/actual-gift node scripts/test-gift-purchase-flow-ui.mjs
           node scripts/test-voucher-availability-ui.mjs
-          node scripts/test-voucher-gifts-states.mjs
+          QA_OUTPUT=qa/voucher-qa/presentation node scripts/test-voucher-gifts-library-states.mjs
           node scripts/test-voucher-responsive-ui.mjs
         env:
           HOY_TEST_URL: http://127.0.0.1:5174
@@ -59,5 +63,6 @@ jobs:
             docs/screenshots/C-28/*.jpg
             docs/screenshots/C-37/*.jpg
             docs/frontend-completion/evidence/voucher-*.json
+            qa/voucher-qa/
             /tmp/voucher-preview.log
             /tmp/vite.log

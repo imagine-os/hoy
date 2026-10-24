@@ -1,4 +1,5 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { flushSync } from 'react-dom';
 import { DEV_MODE_ROLES, ROLES, type Role } from './roles';
 import { demoUserById, demoUserByRole, type DemoUser } from './demoUsers';
 import { roleCan, type Permission } from './permissions';
@@ -46,12 +47,49 @@ function read(): SessionState {
   return DEFAULT;
 }
 
+/** Public serialization rewrites are not a new logout (e.g. a legal popup mounting). */
+function isPublicSession(raw: string | null): boolean {
+  if (raw === null) return false;
+  try {
+    const value: unknown = JSON.parse(raw);
+    return !!value && typeof value === 'object' && 'userId' in value && value.userId === 'usr_public'
+      && 'devMode' in value && value.devMode === false && 'viewAs' in value && value.viewAs === null;
+  } catch { return false; }
+}
+
 interface UserRoleRow extends BaseRow { user_id: string; role: string }
 
 /** Must sit inside DataProviderRoot: non-demo users are resolved from users + profiles + user_roles. */
 export function SessionProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<SessionState>(read);
-  useEffect(() => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch { /* ignore */ } }, [state]);
+  const [logoutRevision, setLogoutRevision] = useState(0);
+  const remoteLogout = useRef(false);
+  // Remote logout revokes this tab only; ordinary demo persona/view-as changes stay independent.
+  useEffect(() => {
+    const signOut = (event: StorageEvent) => {
+      if (event.key !== KEY || event.storageArea !== localStorage) return;
+      if (event.newValue !== null && (!isPublicSession(event.newValue) || isPublicSession(event.oldValue))) return;
+      // A queued old logout must not erase a newer sign-in written before this event arrived.
+      try { if (localStorage.getItem(KEY) !== event.newValue) return; } catch { return; }
+      // Removal must remain public on reload. Existing public payloads need no rewrite or later re-emission.
+      if (event.newValue === null) { try { localStorage.setItem(KEY, JSON.stringify({ userId: 'usr_public', devMode: false, viewAs: null })); } catch { /* local UI still closes */ } }
+      remoteLogout.current = true;
+      // Native storage events are outside React handlers: fence pending work before its next await resumes.
+      flushSync(() => {
+        setState({ userId: 'usr_public', devMode: false, viewAs: null });
+        // Even an anonymous pending signup must lose its old mounted attempt after explicit logout.
+        setLogoutRevision(n => n + 1);
+      });
+    };
+    window.addEventListener('storage', signOut);
+    return () => window.removeEventListener('storage', signOut);
+  }, []);
+  useEffect(() => {
+    const fromRemote = remoteLogout.current; remoteLogout.current = false;
+    // Do not re-emit an old public state after another tab has already signed in again.
+    if (fromRemote && state.userId === 'usr_public' && !state.devMode && state.viewAs === null) return;
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch { /* ignore */ }
+  }, [state]);
 
   const demo = demoUserById(state.userId);
   const lookupId = demo ? '__none__' : state.userId;
@@ -87,7 +125,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<SessionCtx>(() => ({ user, role, isSuperAdmin, canDevMode, devMode, viewAs: state.viewAs, switchUser, setDevMode, setViewAs, can, hasRole }),
     [user, role, isSuperAdmin, canDevMode, devMode, state.viewAs, switchUser, setDevMode, setViewAs, can, hasRole]);
-  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+  return <Ctx.Provider key={logoutRevision} value={value}>{children}</Ctx.Provider>;
 }
 
 export function useSession(): SessionCtx {

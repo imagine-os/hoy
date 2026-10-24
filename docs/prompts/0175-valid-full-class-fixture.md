@@ -1,0 +1,1 @@
+Diagnose the last admission CI failure without weakening assertions. Replace a zero-capacity full-class fixture with a valid occupied class, run production/development/context regressions, and retain every admission workflow check. Use the existing verified runner browser rather than downloading a second browser.

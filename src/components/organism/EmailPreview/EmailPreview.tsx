@@ -1,3 +1,4 @@
+import type {ReactNode} from 'react';
 import { Wordmark } from '../../atom/Wordmark/Wordmark';
 import { renderVars } from '../../molecule/PhoneBubble/PhoneBubble';
 import './EmailPreview.css';
@@ -9,15 +10,17 @@ export interface EmailPreviewProps {
   cta?: { label: string; href: string };
   vars?: Record<string, string>;
   footer?: string;
+  /** Explicit caller-supplied preview content; never sends or binds a trigger. */
+  previewContent?: ReactNode;
   /** Preheader-style line under the subject (from / to). */
   envelope?: string;
 }
 
 /** The rendered transactional email as the customer would see it: wordmark, subject, body, CTA, footer. */
-export function EmailPreview({ subject, body, cta, vars = {}, footer, envelope }: EmailPreviewProps) {
+export function EmailPreview({ subject, body, cta, vars = {}, footer, envelope, previewContent }: EmailPreviewProps) {
   const paragraphs = body.split(/\n\s*\n/).filter((p) => p.trim());
   return (
-    <div className="emailpreview" role="img" aria-label={subject}>
+    <div className="emailpreview" role={previewContent?'group':'img'} aria-label={subject}>
       {envelope && <div className="emailpreview-envelope xs muted mono">{envelope}</div>}
       <div className="emailpreview-paper">
         <header className="emailpreview-head"><Wordmark height={22} variant="blue" /></header>
@@ -25,6 +28,7 @@ export function EmailPreview({ subject, body, cta, vars = {}, footer, envelope }
         {paragraphs.map((p, i) => <p key={i} className="emailpreview-p">{renderVars(p, vars)}</p>)}
         {cta && <a className="emailpreview-cta" href={cta.href} onClick={(e) => e.preventDefault()}>{renderVars(cta.label, vars)}</a>}
         {cta && <div className="emailpreview-link xs muted mono">{renderVars(cta.href, vars)}</div>}
+        {previewContent&&<div className="emailpreview-content">{previewContent}</div>}
         {footer && <footer className="emailpreview-foot xs muted">{renderVars(footer, vars)}</footer>}
       </div>
     </div>

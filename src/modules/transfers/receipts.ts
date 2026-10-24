@@ -68,6 +68,7 @@ export async function reviewTransfer(data:DataProvider,input:{id:string;actorId:
       return receipt;
     }
     const payment=await tx.get<PaymentRow>('payments',receipt.payment_id);
+    if(payment?.frontend_quote && (payment.frontend_quote as {kind?:string}).kind==='gift')throw Error('gift_review_required');
     if(!payment||payment.tenant_id!==tenant.id||payment.status!=='pending'||payment.user_id!==receipt.user_id||payment.plan_id!==receipt.product_id)throw Error('payment_state');
     if(!Number.isInteger(input.amount)||input.amount<0||!input.compared||!input.reason.trim())throw Error('review_required');
     // Under/overpayments are retained for explicit rejection; no invented partial-settlement rule.

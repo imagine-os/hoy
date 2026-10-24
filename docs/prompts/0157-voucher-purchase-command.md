@@ -1,0 +1,3 @@
+Implement an isolated, mock-only voucher purchase command contract for the requested coherent frontend journey: pending simulated transfer, explicit staff-reviewed approval, purchased class voucher issuance, recipient claim and usable voucher booking balance. Preserve published prices, identity and tenant fences, idempotency, existing receipts and gift terms. Shared provider, transfer and auth-return glue remains serialized with the integration owner. No real settlement, delivery, authentication, policy invention or publication.
+
+Response: added the detached copy-on-write command and synthetic domain regressions. No application route invokes it yet; integrated frontend acceptance remains pending.
