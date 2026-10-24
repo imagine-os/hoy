@@ -527,6 +527,8 @@ export const strings: StringTable = {
   'admin.crm.seg.birthdays': { es: 'Cumpleaños', en: 'Birthdays' },
   'admin.crm.seg.birthdays.body': { es: 'Nadie cumple años este mes (o falta la fecha en el perfil).', en: 'No birthdays this month (or the date is missing on the profile).' },
   'admin.crm.emptySeg': { es: 'Nadie coincide todavía', en: 'Nobody matches yet' },
+  'admin.crm.readError': { es: 'No se pudo cargar la lista de clientes', en: 'Could not load the customer list' },
+  'admin.crm.readErrorBody': { es: 'Reintenta para verificar los clientes, sus paquetes, clases y bonos antes de mostrar los saldos.', en: 'Retry to verify customers, packages, classes and vouchers before showing balances.' },
   'admin.crm.voucher.issued': { es: 'Emitido', en: 'Issued' },
   'admin.crm.voucher.claimed': { es: 'Reclamado', en: 'Claimed' },
   'admin.crm.voucher.revoked': { es: 'Revocado', en: 'Revoked' },
