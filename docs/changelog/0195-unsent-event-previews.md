@@ -14,3 +14,6 @@ Alternative rejected: sending messages, guessing a latest payment or recipient, 
 
 
 Retained booking-detail tests wait for the actual destination before checking payment facts. Trial-state diagnostics retain every assertion and save React error stacks, module requests and navigation traces on failure; CI also retains the DEV log. This improves evidence for an unreproduced startup error and does not claim a diagnosed runtime fix.
+
+
+The shared DEV-state workflow now uses the existing dependency-prepared QA server before accepting harness requests, with fatal readiness checks and process cleanup. This closes the HTTP-only startup gap that permits late optimization/reload; it does not establish the cause of the earlier React dispatcher error. Production Vite settings and all functional assertions remain unchanged.
