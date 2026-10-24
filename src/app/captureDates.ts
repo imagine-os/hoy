@@ -116,8 +116,8 @@ export const CAPTURED: Record<string, string> = {
 /** Page code → date of the newest changelog entry whose `codes:` line names it. */
 export const CHANGED: Record<string, string> = {
   'A-01': '2026-09-28',
-  'A-02': '2026-10-23',
-  'A-03': '2026-10-23',
+  'A-02': '2026-10-24',
+  'A-03': '2026-10-24',
   'A-05': '2026-09-29',
   'A-06': '2026-10-01',
   'C-01': '2026-10-01',

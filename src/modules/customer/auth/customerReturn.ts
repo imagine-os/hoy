@@ -1,7 +1,8 @@
-/** Only destinations already emitted by the public website. This is navigation validation,
+/** Allowed customer destinations and issued invitation links. This is navigation validation,
  * not authorization; the destination retains its existing role/data guards. */
 export function customerReturn(value: string | null | undefined): string | null {
   if (!value || /[\\\s#%]/.test(value)) return null;
+  if (/^\/app\/vouchers\/[A-Za-z0-9_-]+$/.test(value)) return value;
   const [path, query = '', extra] = value.split('?');
   if (extra !== undefined) return null;
   const params = new URLSearchParams(query);
