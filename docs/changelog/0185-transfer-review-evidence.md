@@ -12,3 +12,5 @@ The queue previously displayed Receipt unavailable yet allowed approval and clas
 The existing sensitive-audit success fixture now uses the same genuine synthetic-image helper, preserving all 25 original privacy/financial assertions. The full audit browser regression is included in the receipt-evidence workflow and CMS test inventory.
 
 CI evidence output uses the runner temporary directory. Writing new captures under `docs/screenshots` invalidates the eagerly imported documentation image glob and sends a Vite full reload, which can destroy the next browser evaluation. The focused browser matrix records navigation/reload diagnostics and rejects reloads; receipt and context assertions remain unchanged.
+
+The documentation-image watcher is a separately reproduced reload hazard, not an established cause of every navigation failure. A subsequent CI failure persisted with external output; a cold local run with the default Vite configuration passed. Failure diagnostics now preserve navigation, Vite WebSocket and phase evidence in the job log before rethrowing the original error.

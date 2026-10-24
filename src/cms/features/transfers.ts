@@ -156,8 +156,8 @@ export default (
     },
     {
       "path": "scripts/test-transfer-review-evidence-ui.mjs",
-      "sha256": "d68003d26dcbc72c019e2c97577252860143a6f7441923c4f4613ac80d756c6b",
-      "verifies": "Actual browser receipt evidence and actor-context matrix; frozen run rejects Vite reloads and records navigation diagnostics. CI artifacts remain outside watched documentation assets.",
+      "sha256": "9053ee8ee76e13a442cdfb8a84edba342fc7689ba433861145da88750d971597",
+      "verifies": "Actual browser receipt evidence and actor-context matrix; frozen run rejects Vite reloads and records navigation, WebSocket and failure-phase diagnostics without retrying failed actions.",
       "reviewedSourceDigest": "ae77133d8d9891ab3ff112c1394767f8fd698fd841e7d21310e3aadfcc5193af"
     }
   ],
