@@ -105,6 +105,10 @@ A super admin can "view as" any role with dev tooling on or off.
    Stored under `docs/screenshots/<page-code>/…` and referenced from the page's doc. Regenerate with
    `npm run screenshots`. See `docs/rules/documentation.md`.
 
+## Frontend CMS contract maintenance
+
+For each added or changed frontend feature, follow `docs/rules/cms-contracts.md`: keep its adopted page/view configuration, entity and field mappings, fictional fixtures, source fingerprints and relevant provider tests synchronized in the same change. Adopt legacy features incrementally when changed; do not claim the registry already covers every page. `npm run check:cms` is a build preflight, and source hashes must never be silently refreshed to suppress a failure. Validate the combined preview against then-current main before merging parallel branches. Backend mappings and live connections remain separate work.
+
 ## Commit conventions
 Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:`, `refactor:`). One logical change per commit.
 Commit message body names the page codes touched. Never commit secrets or real personal data;

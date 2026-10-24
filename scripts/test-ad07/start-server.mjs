@@ -1,0 +1,13 @@
+import {createServer,optimizeDeps,resolveConfig} from 'vite';
+import react from '@vitejs/plugin-react';
+import {readFile,realpath,mkdir,mkdtemp} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {dirname,resolve,sep} from 'node:path';import {fileURLToPath} from 'node:url';
+const root=dirname(fileURLToPath(import.meta.url)),source=resolve(process.env.QA_SOURCE_ROOT??process.cwd()),port=Number(process.env.QA_PORT??5776),publicRoot=resolve(process.env.QA_PUBLIC_DIR??resolve(source,'public'));
+const cacheDir=process.env.QA_CACHE_DIR?resolve(process.env.QA_CACHE_DIR):await mkdtemp(resolve(tmpdir(),'hoy-ad07-vite-'));
+if(cacheDir===source||cacheDir.startsWith(source+sep))throw Error('QA_CACHE_DIR must be outside the source tree');
+await mkdir(cacheDir,{recursive:true});
+const {dependencies}=JSON.parse(await readFile(resolve(source,'package.json'),'utf8'));const include=[...Object.keys(dependencies),'react-dom/client','react/jsx-runtime','react/jsx-dev-runtime'];
+const config={configFile:false,root,publicDir:publicRoot,cacheDir,plugins:[react()],resolve:{alias:{'@app':resolve(source,'src')},dedupe:Object.keys(dependencies)},optimizeDeps:{include,noDiscovery:true,entries:[resolve(root,'index.html')]},server:{host:'127.0.0.1',port,strictPort:true,fs:{allow:[root,source,publicRoot,await realpath(resolve(source,'node_modules')),cacheDir]}}};
+const prepared=await optimizeDeps(await resolveConfig(config,'serve'),false);for(const dep of include)if(!prepared.optimized[dep])throw Error('Dependency not prepared '+dep);console.log('Prepared '+Object.keys(prepared.optimized).length+' dependencies; source '+source+'; cache '+cacheDir);
+const server=await createServer(config);await server.listen();server.printUrls();for(const sig of ['SIGINT','SIGTERM'])process.once(sig,async()=>{await server.close();process.exit(0);});

@@ -1,3 +1,5 @@
+AD-07 / M-06: isolated read lifecycle and one-page CMS contract checked locally: full build, 13 hook groups, 32 CRM groups, native CRM/desk-package/8 signup-consent UI cases and package/consent domain regressions pass. Independent final review pending; no backend, deployment or whole-row completion claim. See changelog/0193-crm-read-lifecycle.md.
+
 PR88 verification repair: preserve signup drafts across public-session serialization rewrites in legal popups. Retain genuine cross-tab logout and duplicate-charge guards; repair valid-room, cold-persona, independent-purchase and artifact-name fixtures without relaxing assertions. See frontend-completion/public-session-popup-noop.md.
 
 CU-04 remote demo signout: close mounted private tabs and invalidate pending signup/zero-charge checkout only on current explicit remote logout. Keep persona switches independent and retained history intact; real session revocation/email delivery remain separate. See frontend-completion/remote-demo-signout.md.

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useI18n } from '../../i18n/I18nProvider';
 import { useTable } from '../../data/DataContext';
@@ -14,6 +14,7 @@ import { Badge, toneForStatus } from '../../components/atom/Badge/Badge';
 import { Avatar } from '../../components/atom/Avatar/Avatar';
 import { DataTable, type DataTableColumn } from '../../components/organism/DataTable/DataTable';
 import { EmptyState } from '../../components/molecule/EmptyState/EmptyState';
+import { Button } from '../../components/atom/Button/Button';
 import { maskPhone, personMatches, usePeople, type Person } from '../staff/people';
 import './admin.css';
 
@@ -24,13 +25,21 @@ export type Risk = 'low' | 'medium' | 'high';
 export interface MemberStats { visits: number; lastVisit: string | null; risk: Risk; credits: number; pkg: PackageState; packagePlan?: PlanRow; vouchers: VoucherRow[] }
 
 /** Visits, last visit, credit balance and churn risk (cadence vs. own baseline) for every customer. */
-export function useMemberStats(people: Person[]) {
-  const { rows: bookings } = useTable<BookingRow>('bookings', { where: { status: 'checked_in' } });
-  const { rows: credits } = useTable<ClassLedgerRow>('class_ledger');
-  const { rows: plans } = useTable<PlanRow>('plans');
-  const { rows: payments } = useTable<PaymentRow>('payments');
-  const { rows: vouchers } = useTable<VoucherRow>('vouchers');
-  return useMemo(() => {
+export function useMemberStatsRead(people: Person[]) {
+  const bookingsRead = useTable<BookingRow>('bookings', { where: { status: 'checked_in' } });
+  const creditsRead = useTable<ClassLedgerRow>('class_ledger');
+  const plansRead = useTable<PlanRow>('plans');
+  const paymentsRead = useTable<PaymentRow>('payments');
+  const vouchersRead = useTable<VoucherRow>('vouchers');
+  const { rows: bookings, retry: retryBookings } = bookingsRead;
+  const { rows: credits, retry: retryCredits } = creditsRead;
+  const { rows: plans, retry: retryPlans } = plansRead;
+  const { rows: payments, retry: retryPayments } = paymentsRead;
+  const { rows: vouchers, retry: retryVouchers } = vouchersRead;
+  const reads = [bookingsRead, creditsRead, plansRead, paymentsRead, vouchersRead];
+  const loading = reads.some(read => read.loading), error = reads.some(read => read.error);
+  const retry = useCallback(() => { retryBookings(); retryCredits(); retryPlans(); retryPayments(); retryVouchers(); }, [retryBookings, retryCredits, retryPlans, retryPayments, retryVouchers]);
+  const stats = useMemo(() => {
     const now = Date.now();
     const out = new Map<string, MemberStats>();
     for (const p of people) {
@@ -50,7 +59,11 @@ export function useMemberStats(people: Person[]) {
     }
     return out;
   }, [people, bookings, credits, plans, vouchers, payments]);
+  return { stats, loading, error, retry };
 }
+
+/** Existing detail-page consumers retain their map-returning contract. */
+export function useMemberStats(people: Person[]) { return useMemberStatsRead(people).stats; }
 
 function inSegment(p: Person, s: MemberStats | undefined, seg: Segment): boolean {
   const now = new Date();
@@ -69,23 +82,26 @@ export function CrmPage() {
   const { t, lang, bi } = useI18n();
   const nav = useNavigate();
   const desktop = useMinWidth('shell');
-  const { people, loading } = usePeople();
+  const { people, loading: peopleLoading, error: peopleError, retry: retryPeople } = usePeople();
   const customers = useMemo(() => people.filter((p) => p.role === 'customer'), [people]);
-  const stats = useMemberStats(customers);
+  const { stats, loading: statsLoading, error: statsError, retry: retryStats } = useMemberStatsRead(customers);
+  const loading = peopleLoading || statsLoading, error = peopleError || statsError;
+  const ready = !loading && !error;
+  const retry = useCallback(() => { retryPeople(); retryStats(); }, [retryPeople, retryStats]);
   const [seg, setSeg] = useState<Segment>('all');
   const [search, setSearch] = useState('');
-  const rows = useMemo(() => customers.filter((p) => inSegment(p, stats.get(p.id), seg) && personMatches(p, search)).map((p) => {
+  const rows = useMemo(() => ready ? customers.filter((p) => inSegment(p, stats.get(p.id), seg) && personMatches(p, search)).map((p) => {
     const s = stats.get(p.id);
     const plan = s?.packagePlan ?? p.plan;
     return { ...p, plan_name: plan ? bi({ es: plan.name_es, en: plan.name_en }) : s?.pkg.purchase ? t('admin.crm.package') : '',
       remaining: s?.pkg.left ?? 0, expires: s?.pkg.expiresAt ?? '', frozen: s?.pkg.frozen ?? false,
       vouchers: s?.vouchers.length ?? 0, visits: s?.visits ?? 0, lastVisit: s?.lastVisit ?? '', risk: s?.risk ?? 'low', mstatus: p.membership?.status ?? 'none' };
-  }), [customers, stats, seg, bi, search, t]);
+  }) : [], [ready, customers, stats, seg, bi, search, t]);
   type Row = (typeof rows)[number];
   const counts = Object.fromEntries(SEGMENTS.map((s) => [s, customers.filter((p) => inSegment(p, stats.get(p.id), s)).length]));
 
   const columns: DataTableColumn<Row>[] = [
-    { key: 'name', label: t('admin.crm.col.member'), render: (r) => <span className="row"><Avatar name={r.name} initials={r.initials} size={26} /><span><span className="small">{r.name}</span><span className="xs muted"> · {maskPhone(r.phone)}</span></span></span> },
+    { key: 'name', label: t('admin.crm.col.member'), render: (r) => <span className="row"><Avatar name={r.name} initials={r.initials} size={26} /><span className="crm-person-name"><span className="small">{r.name}</span><span className="xs muted"> · {maskPhone(r.phone)}</span></span></span> },
     { key: 'plan_name', label: t('admin.crm.col.plan'), render: (r) => r.plan_name ? <span className="row"><span className="small">{r.plan_name}</span>{r.frozen ? <Badge tone="warn">{t('admin.crm.frozen')}</Badge> : r.mstatus !== 'none' ? <Badge tone={toneForStatus(r.mstatus)}>{r.mstatus}</Badge> : null}</span> : <span className="muted small">{t('admin.crm.noPlan')}</span> },
     { key: 'remaining', label: t('admin.crm.col.remaining'), align: 'right' },
     { key: 'expires', label: t('admin.crm.col.expires'), render: (r) => r.expires ? formatDate(r.expires, lang) : '—' },
@@ -103,8 +119,8 @@ export function CrmPage() {
         <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('admin.crm.search')} style={{ width: 260 }} aria-label={t('core.common.search')} />
       </div>
       <p className="small muted">{t('admin.crm.demo')}</p>
-      <div className="row wrap" role="tablist">{SEGMENTS.map((s) => <Chip key={s} selected={seg === s} onClick={() => setSeg(s)}>{t(`admin.crm.seg.${s}`)} · {counts[s]}</Chip>)}</div>
-      {loading && customers.length === 0 ? <EmptyState tone="loading" title={t('core.common.loading')} /> : rows.length === 0 ? <EmptyState title={t('admin.crm.emptySeg')} body={t(`admin.crm.seg.${seg}.body`)} /> : (
+      {ready && <div className="row wrap" role="tablist">{SEGMENTS.map((s) => <Chip key={s} selected={seg === s} onClick={() => setSeg(s)}>{t(`admin.crm.seg.${s}`)} · {counts[s]}</Chip>)}</div>}
+      {error ? <EmptyState tone="error" title={t('admin.crm.readError')} body={t('admin.crm.readErrorBody')} action={<Button onClick={retry}>{t('core.common.retry')}</Button>} /> : loading ? <EmptyState tone="loading" title={t('core.common.loading')} /> : rows.length === 0 ? <EmptyState title={t('admin.crm.emptySeg')} body={t(`admin.crm.seg.${seg}.body`)} /> : (
         desktop ? <DataTable<Row> columns={columns} rows={rows} rowKey={(r) => r.id} onRowClick={(r) => nav(`/admin/crm/${r.id}`)} dense /> :
         <div className="stack-sm">{rows.map(r => <Link key={r.id} to={`/admin/crm/${r.id}`} className="crm-person-link"><Card padding="sm">
           <div className="row"><Avatar name={r.name} initials={r.initials} size={26} /><strong>{r.name}</strong></div>

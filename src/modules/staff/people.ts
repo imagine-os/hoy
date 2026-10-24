@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useTable } from '../../data/DataContext';
 import type { BaseRow, MembershipRow, PlanRow, ProfileRow, UserRow } from '../../data/schema';
 
@@ -24,12 +24,20 @@ export interface Person {
 }
 
 /** Live join of users × profiles × user_roles × active memberships × plans. */
-export function usePeople(): { people: Person[]; byId: Map<string, Person>; loading: boolean } {
-  const { rows: users, loading } = useTable<UserRow>('users');
-  const { rows: profiles } = useTable<ProfileFull>('profiles');
-  const { rows: roles } = useTable<RoleRow>('user_roles');
-  const { rows: memberships } = useTable<MembershipRow>('memberships', { where: { status: ['active', 'paused', 'past_due'] } });
-  const { rows: plans } = useTable<PlanRow>('plans');
+export function usePeople(): { people: Person[]; byId: Map<string, Person>; loading: boolean; error: boolean; retry: () => void } {
+  const usersRead = useTable<UserRow>('users');
+  const profilesRead = useTable<ProfileFull>('profiles');
+  const rolesRead = useTable<RoleRow>('user_roles');
+  const membershipsRead = useTable<MembershipRow>('memberships', { where: { status: ['active', 'paused', 'past_due'] } });
+  const plansRead = useTable<PlanRow>('plans');
+  const { rows: users, retry: retryUsers } = usersRead;
+  const { rows: profiles, retry: retryProfiles } = profilesRead;
+  const { rows: roles, retry: retryRoles } = rolesRead;
+  const { rows: memberships, retry: retryMemberships } = membershipsRead;
+  const { rows: plans, retry: retryPlans } = plansRead;
+  const reads = [usersRead, profilesRead, rolesRead, membershipsRead, plansRead];
+  const loading = reads.some(read => read.loading), error = reads.some(read => read.error);
+  const retry = useCallback(() => { retryUsers(); retryProfiles(); retryRoles(); retryMemberships(); retryPlans(); }, [retryUsers, retryProfiles, retryRoles, retryMemberships, retryPlans]);
   return useMemo(() => {
     const prof = new Map(profiles.map((p) => [p.user_id, p]));
     const rol = new Map(roles.map((r) => [r.user_id, r.role]));
@@ -46,8 +54,8 @@ export function usePeople(): { people: Person[]; byId: Map<string, Person>; load
         membership: m, plan: m ? plan.get(m.plan_id) : undefined,
       };
     });
-    return { people, byId: new Map(people.map((p) => [p.id, p])), loading };
-  }, [users, profiles, roles, memberships, plans, loading]);
+    return { people, byId: new Map(people.map((p) => [p.id, p])), loading, error, retry };
+  }, [users, profiles, roles, memberships, plans, loading, error, retry]);
 }
 
 // Existing import contract retained; formatting is pure and never changes joined/stored data.
