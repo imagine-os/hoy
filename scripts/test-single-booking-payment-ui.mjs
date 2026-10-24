@@ -72,12 +72,14 @@ try {
   await page.waitForURL(url=>url.hash===`#/app/booking/${booking.id}`);
   for(const phase of ['first-read','reload']){
    if(phase==='reload')await page.reload();
+   const directions=page.locator('a[href*="google.com/maps"]');
+   await directions.waitFor({state:'visible'});
    await page.getByText(en?'Payment confirmed':'Pago confirmado',{exact:true}).waitFor();
    assert.equal(await page.getByText(en?'Payment status unavailable':'Estado del pago no disponible',{exact:true}).count(),0);
    const body=await page.locator('main').innerText();
    for(const value of [expected.title,expected.teacher,expected.room,en?'Fri, Oct 30':'vie, 30 de oct'])assert(body.includes(value),`${phase}: literal detail ${value}`);
    assert(body.includes(en?'1:30 PM':'1:30'));
-   const directions=page.locator('a[href*="google.com/maps"]');assert.equal(await directions.count(),1);
+   assert.equal(await directions.count(),1);
    assert.match(await directions.getAttribute('href'),/^https:\/\/www\.google\.com\/maps\//);
    const after=await readDb(page),persisted=after.payments.find(p=>p.id===payment.id);
    assert.equal(JSON.stringify(after),savedBytes,'detail/reload never rewrites any DB table');
