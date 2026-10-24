@@ -1,5 +1,7 @@
 import type { StringTable } from '../../i18n/types';
 export const strings: StringTable = {
+  'staff.search.loading': { es: 'Cargando personas…', en: 'Loading people…' },
+  'staff.search.readError': { es: 'No se pudieron cargar las personas. Reintenta antes de seleccionar un cliente.', en: 'People could not be loaded. Retry before selecting a customer.' },
   'staff.count.codes': {es:'Valores registrados (método/proveedor/estado)', en:'Recorded values (method/provider/status)'},
   'staff.count.unrecognized': {es:'Valor no reconocido', en:'Unrecognized value'},
   'staff.count.status.voided': {es:'Anulado', en:'Voided'},
@@ -143,7 +145,7 @@ export const strings: StringTable = {
   'staff.checkin.missed': { es: 'No vinieron', en: 'Did not come' },
   'staff.checkin.emptyRoster': { es: 'Nadie reservado todavía', en: 'Nobody booked yet' },
   'staff.checkin.noMatch': { es: 'Nadie en la lista coincide', en: 'Nobody on the roster matches' },
-  'staff.checkin.noMatch.body': { es: 'Mira “Walk-in” a la derecha para agregar a alguien que no reservó.', en: 'See “Walk-in” on the right to add someone who did not book.' },
+  'staff.checkin.noMatch.body': { es: 'Mira “Walk-in” para agregar a alguien que no reservó.', en: 'See “Walk-in” to add someone who did not book.' },
   'staff.checkin.checkin': { es: 'Check-in', en: 'Check in' },
   'staff.checkin.noShow': { es: 'No vino', en: 'No-show' },
   'staff.checkin.undoPolicy': { es: 'Deshacer no está habilitado para esta clase en la demo. La política de corrección de asistencia requiere confirmación.', en: 'Undo is not enabled for this class in the demo. Attendance correction policy needs confirmation.' },

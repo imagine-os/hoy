@@ -31,7 +31,9 @@ import { EmptyState } from '../../components/molecule/EmptyState/EmptyState';
 import { useTodaySessions } from '../website/hooks';
 import { splitTax, useSettings } from '../admin/settings';
 import { bookWithPackage } from '../../data/deskBooking';
-import { maskPhone, personMatches, usePeople } from './people';
+import { maskPhone } from './people';
+import { receptionPersonMatches as personMatches } from './receptionSearch';
+import { useReceptionPeople } from './useReceptionPeople';
 import { BOOKING_KINDS, KIND_FOR_ITEM, KIND_LABEL, dateInputValue, findConflicts, localIso, timeInputValue } from './rooms';
 import './staff.css';
 import { addDays, dateKey, digitsOf, parseDigits } from '../../i18n/format';
@@ -68,7 +70,7 @@ export function RegisterPage() {
   const saleBusy = useRef(false);
   const { settings } = useSettings();
   const [params] = useSearchParams();
-  const { people } = usePeople();
+  const { people, status: peopleStatus, retry: retryPeople } = useReceptionPeople();
   const today = useTodaySessions();
   const { rows: rooms } = useTable<RoomRow>('rooms', { orderBy: { column: 'created_at' } });
   const { rows: teachers } = useTable<TeacherRow>('teachers', { where: { active: true }, orderBy: { column: 'display_name' } });
@@ -286,6 +288,8 @@ export function RegisterPage() {
               </div>
             ) : (
               <div className="stack-sm">
+                {peopleStatus === 'loading' && <EmptyState compact tone="loading" title={t('staff.search.loading')} />}
+                {peopleStatus === 'error' && <EmptyState compact tone="error" title={t('staff.search.readError')} action={<Button onClick={retryPeople}>{t('core.common.retry')}</Button>} />}
                 {person ? (
                   <div className="register-found">
                     <Avatar name={person.name} initials={person.initials} size={44} />
@@ -296,7 +300,7 @@ export function RegisterPage() {
                   <>
                     <Input value={existingQ} onChange={(e) => setExistingQ(e.target.value)} placeholder={t('staff.register.search.ph')} autoFocus aria-label={t('core.common.search')} />
                     {candidates.map((p) => <button key={p.id} type="button" className="register-candidate" onClick={() => setPersonId(p.id)}><Avatar name={p.name} initials={p.initials} size={32} /><span className="grow"><span className="small">{p.name}</span><span className="xs muted"> · {maskPhone(p.phone)}</span></span>{p.plan && <Badge tone="success">{bi({ es: p.plan.name_es, en: p.plan.name_en })}</Badge>}</button>)}
-                    {existingQ.trim().length >= 2 && candidates.length === 0 && <p className="small muted">{t('staff.register.search.none')} <button type="button" className="register-link" onClick={() => setMode('new')}>{t('staff.register.new')}</button></p>}
+                    {peopleStatus === 'ready' && existingQ.trim().length >= 2 && candidates.length === 0 && <p className="small muted">{t('staff.register.search.none')} <button type="button" className="register-link" onClick={() => setMode('new')}>{t('staff.register.new')}</button></p>}
                   </>
                 )}
               </div>

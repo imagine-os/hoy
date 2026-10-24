@@ -1,3 +1,5 @@
+RC-03 / S-02, S-04 (Feature Log 79 / source 80): isolated search criterion checked locally: build, 252 observations in EN/ES at 320/390/1280, 22 role checks, 20 ready-state Enter groups, hook/recovery/domain and retained desk-sale regressions pass. CMS inventory and drift checks pass; final draft/CI status remains separate. No live, backend or owner-acceptance claim. See changelog/0194-reception-search-isolation.md.
+
 PR88 verification repair: preserve signup drafts across public-session serialization rewrites in legal popups. Retain genuine cross-tab logout and duplicate-charge guards; repair valid-room, cold-persona, independent-purchase and artifact-name fixtures without relaxing assertions. See frontend-completion/public-session-popup-noop.md.
 
 CU-04 remote demo signout: close mounted private tabs and invalidate pending signup/zero-charge checkout only on current explicit remote logout. Keep persona switches independent and retained history intact; real session revocation/email delivery remain separate. See frontend-completion/remote-demo-signout.md.
