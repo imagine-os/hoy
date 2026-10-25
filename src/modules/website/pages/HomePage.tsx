@@ -1,3 +1,4 @@
+import { usePublicHomePricing } from '../usePublicHomePricing';
 import { useSiteHref } from '../links';
 import { Fragment, type ReactNode } from 'react';
 import { Link } from '../links';
@@ -7,7 +8,7 @@ import { useTable } from '../../../data/DataContext';
 import type { TeacherRow, ModalityRow, ReviewRow } from '../../../data/schema';
 import { formatCOP } from '../../../i18n/format';
 import { tenant } from '../../../tenant/tenant';
-import { priceItem, FAMILY_LABEL, type PlanFamily } from '../../../tenant/pricing';
+import { FAMILY_LABEL, type PlanFamily } from '../../../tenant/pricing';
 import { classesIntro, classForModality, classes, classOrder, taglines } from '../../../tenant/brand';
 import { AmbientScene } from '../../../components/organism/AmbientScene/AmbientScene';
 import { ClassArch } from '../../../components/molecule/ClassArch/ClassArch';
@@ -35,12 +36,13 @@ function SanctuaryHome() {
   const { rows: modalities } = useTable<ModalityRow>('modalities');
   const { rows: reviews } = useTable<ReviewRow>('reviews', { orderBy: { column: 'created_at', dir: 'desc' } });
   const quotes = [...new Map(reviews.filter(r => r.comment && r.visibility !== 'private').map(r => [r.comment, r])).values()].slice(0, 2);
-  // 0051: the three ways in, each with its launch price — the trial class, the 12-class package, a private class.
-  const pack = priceItem('pack12'), priv = priceItem('private');
-  const families: { fam: PlanFamily; price?: number | null; sub: string }[] = [
-    { fam: 'bienvenida', price: priceItem('trial')?.price, sub: t('site.new.firstClass') },
-    { fam: 'paquetes', price: pack?.price, sub: t('site.new.packageSub', { n: pack?.classes ?? 12, months: Math.round((pack?.validityDays ?? 90) / 30) }) },
-    { fam: 'privadas', price: priv?.price, sub: t('site.new.privateSub', { n: priv?.maxPeople ?? 3 }) },
+  // Published product snapshots drive names, amounts and terms; drafts never leak.
+  const offers = usePublicHomePricing();
+  const pack = offers.pack, priv = offers.private, trial = offers.trial;
+  const families: { fam: PlanFamily; price: number | null; sub: string; name?: { es: string; en: string } }[] = [
+    { fam: 'bienvenida', price: trial.price, name: trial.name, sub: trial.published && trial.available ? t('site.pricing.terms', { n: trial.classes!, days: trial.validityDays! }) : t('site.new.firstClass') },
+    { fam: 'paquetes', price: pack.price, name: pack.name, sub: pack.published && pack.available ? t('site.pricing.terms', { n: pack.classes!, days: pack.validityDays! }) : t('site.new.packageSub', { n: pack.classes ?? pack.item.classes ?? 12, months: Math.round((pack.validityDays ?? pack.item.validityDays ?? 90) / 30) }) },
+    { fam: 'privadas', price: priv.price, name: priv.name, sub: priv.published && priv.available ? t('site.pricing.terms', { n: priv.classes!, days: priv.validityDays! }) : t('site.new.privateSub', { n: priv.item.maxPeople ?? 3 }) },
   ];
   const SECTIONS: Record<string, () => ReactNode> = {
     Hero: () => <section className="sanctuary-hero studio-hero">
@@ -84,7 +86,7 @@ function SanctuaryHome() {
         return <Link to="/site/teachers" key={te.id} className="sanctuary-teacher-link"><span className="sanctuary-teacher-number">{String(i + 1).padStart(2, '0')}</span>{photo ? <img src={photo} loading="lazy" alt="" className="sanctuary-teacher-photo" /> : <span className="sanctuary-teacher-initials" data-tone={mod?.tone ?? 'river'} aria-hidden>{te.display_name.split(' ').map((p) => p[0]).slice(0, 2).join('')}</span>}<span><h3>{te.display_name}</h3><p>{te.specialties.map(id => {const m = modalities.find(m => m.id === id); return m ? (lang === 'es' ? m.name_es : m.name_en) : '';}).filter(Boolean).join(' · ')}{cls ? ` · ${bi(classes[cls].tagline)}` : ''}</p></span><span aria-hidden>↗</span></Link>;
       })}</div></div>
     </section>,
-    ValueModel: () => <section className="sanctuary-plans" data-reveal><div className="container sanctuary-section"><div className="sanctuary-centered"><p className="eyebrow">{t('site.nav.plans')}</p><h2>{t('site.new.plansTitle')}</h2><p className="muted">{t('site.new.plansBody')}</p></div><div className="sanctuary-plan-grid">{families.map(({ fam, price, sub }, i) => <Link to={'/site/plans'} key={fam} className={`sanctuary-plan ${i === 1 ? 'is-blue' : ''}`}><p className="eyebrow">0{i + 1} / {t(`site.new.planLabel${i}`)}</p><h3>{bi(FAMILY_LABEL[fam])}</h3>{price != null && <p className="sanctuary-price">{formatCOP(price, lang)}<small>{sub}</small></p>}<span className="sanctuary-plan-cta">{t('site.plans.all')}<Icon name="arrow-right" /></span></Link>)}</div><div className="sanctuary-centered sanctuary-plans-more"><Link className="sanctuary-text-link" to="/site/plans">{t('site.value.all')} <Icon name="arrow-right" /></Link></div></div></section>,
+    ValueModel: () => <section className="sanctuary-plans" data-reveal><div className="container sanctuary-section"><div className="sanctuary-centered"><p className="eyebrow">{t('site.nav.plans')}</p><h2>{t('site.new.plansTitle')}</h2><p className="muted">{t('site.new.plansBody')}</p></div><div className="sanctuary-plan-grid">{families.map(({ fam, price, sub, name }, i) => <Link to={'/site/plans'} key={fam} className={`sanctuary-plan ${i === 1 ? 'is-blue' : ''}`}><p className="eyebrow">0{i + 1} / {t(`site.new.planLabel${i}`)}</p><h3>{bi(name ?? FAMILY_LABEL[fam])}</h3>{price != null ? <p className="sanctuary-price">{formatCOP(price, lang)}<small>{sub}</small></p> : <p className="small" role="status">{t('site.pricing.unavailable')}</p>}<span className="sanctuary-plan-cta">{t('site.plans.all')}<Icon name="arrow-right" /></span></Link>)}</div><div className="sanctuary-centered sanctuary-plans-more"><Link className="sanctuary-text-link" to="/site/plans">{t('site.value.all')} <Icon name="arrow-right" /></Link></div></div></section>,
     Testimonials: () => quotes.length > 0 ? <section className="container sanctuary-section sanctuary-quotes" data-reveal>{quotes.map(r => <blockquote key={r.id}><span className="sanctuary-quote-mark" aria-hidden>“</span><p>{r.comment}</p><footer>{t('site.testimonials.member')}</footer></blockquote>)}</section> : null,
     FirstStep: () => <section className="sanctuary-finale" data-reveal><>{photoEdition ? <img {...studioPhotoProps('facility-studio')} alt={t('site.photos.studio')} className="photo-finale-image" /> : <AmbientScene {...siteLoops.ritual} video={videoEnabled ? siteLoops.ritual.video : undefined} alt={t('site.new.ritualAlt')} className="sanctuary-finale-scene" motion={motion} />}</><div className="sanctuary-finale-card"><p className="eyebrow">{t('site.new.visit')}</p><h2>{t('site.new.endTitle')}<br /><em>{t('site.new.endEm')}</em></h2><p>{t('site.new.endBody')}</p><Link className="sanctuary-button" to="/site/schedule">{t('site.new.book')}<Icon name="arrow-right" /></Link></div></section>,
   };
