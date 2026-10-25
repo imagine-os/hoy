@@ -1,3 +1,7 @@
+import { FaqAnswer } from '../../../components/molecule/FaqAnswer/FaqAnswer';
+import { useFaqPricing } from '../../website/useFaqPricing';
+import { renderFaqPricing } from '../../website/faqPricingView';
+import { CUSTOMER_FAQ_PRICING_CONTRACT } from '../faqPricing.contract';
 import { Notice } from '../../../components/molecule/Notice/Notice';
 import { useCustomerRows } from '../useCustomerRows';
 import { Link } from 'react-router-dom';
@@ -14,10 +18,12 @@ import { PageHead } from '../ui';
 /** C-14 / C-15 FAQ — questions come from `faq_entries`, grouped by section, two pages so the accordion stays short. */
 export function FaqPage({ page }: { page: 1 | 2 }) {
   const { t, bi } = useI18n();
+  const prices = useFaqPricing();
+  const renderPricing = (families: string) => renderFaqPricing(families, prices, t);
   // 0047: the concierge button is a `support` handoff; the message has no name here (the page does not know it).
   const wa = useWhatsappLink();
   const support = wa.resolve('support');
-  const { rows, loading, error, retry } = useCustomerRows<FaqEntryRow>('faq_entries', { where: { published: true }, orderBy: { column: 'sort' } });
+  const { rows, loading, error, retry } = useCustomerRows<FaqEntryRow>(CUSTOMER_FAQ_PRICING_CONTRACT.faqRead.table, { where: { published: true }, orderBy: { column: 'sort' } });
   const groups: FaqGroup[] = [];
   for (const row of rows.filter(r => r.page === page)) {
     const group = groups.find(g => g.key === row.group_key);
@@ -36,7 +42,7 @@ export function FaqPage({ page }: { page: 1 | 2 }) {
         {groups.map((s) => (
           <section key={s.key} className="stack-sm">
             <div><h2 className="cust-h2">{bi(s.title)}</h2><p className="small muted">{bi(s.lead)}</p></div>
-            <Accordion items={s.items.map((q) => ({ id: q.id, question: bi(q.question), answer: <>{bi(q.answer)}{/planes|plans|precio|price|cuesta|cost/i.test(bi(q.answer)) && <> <Link to="/app/plans">{t('customer.faq.plansLink')} →</Link></>}</> }))} />
+            <Accordion items={s.items.map((q) => ({ id: q.id, question: bi(q.question), answer: <FaqAnswer text={bi(q.answer)} renderPricing={renderPricing} after={/planes|plans|precio|price|cuesta|cost|\{\{\s*pricing:/i.test(bi(q.answer)) ? <Link to="/app/plans">{t('customer.faq.plansLink')} →</Link> : undefined} /> }))} />
           </section>
         ))}
         {page === 1 && hasNext

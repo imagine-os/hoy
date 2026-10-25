@@ -5,18 +5,18 @@ import './FaqAnswer.css';
 export interface FaqAnswerProps {
   /** The answer in the reader's language: paragraphs split by a blank line. */
   text: string;
-  /** Appended after the last paragraph (the app adds "Ver planes →" to price answers). */
+  /** Appended to the last paragraph, or after generated blocks when no paragraph exists. */
   after?: ReactNode;
-  /** The public website resolves generated directives against confirmed published quotes. */
+  /** Website and customer FAQs resolve generated directives against confirmed published quotes. */
   renderPricing?: (families: string) => ReactNode;
 }
 
 const DIRECTIVE = /^\{\{\s*pricing:([^}]+?)\s*\}\}$/;
 
 /**
- * 0051 — one FAQ answer. Plain paragraphs, and a line that is only `{{pricing:<families>}}` becomes a live
+ * 0051 — one FAQ answer. Plain paragraphs, and a line that is only `{{pricing:<families>}}` becomes a generated
  * PriceTable unless the caller injects a published-price projection. Authored paragraphs remain unchanged.
- * The public website (W-10) supplies the confirmed projection.
+ * Website W-10 and customer C-14/C-15 supply the same confirmed projection.
  */
 export function FaqAnswer({ text, after, renderPricing }: FaqAnswerProps) {
   const blocks = text.split(/\n\s*\n/).map((b) => b.trim()).filter(Boolean);
@@ -32,6 +32,7 @@ export function FaqAnswer({ text, after, renderPricing }: FaqAnswerProps) {
         }
         return <p key={i}>{b}{i === lastText && after ? <> {after}</> : null}</p>;
       })}
+      {lastText === undefined && after ? <p>{after}</p> : null}
     </div>
   );
 }

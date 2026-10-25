@@ -8,8 +8,8 @@ function UnavailableExample() { const { t } = useI18n(); return h(PriceTable, { 
 export default defineMeta({
   tier: 'molecule', name: 'PriceTable',
   description: {
-    es: 'La lista de precios como la imprimen los documentos del dueño: "Opción | Precio (COP)". Recibe filas de precios; la usan las preguntas frecuentes públicas (directiva {{pricing:…}}).',
-    en: 'The price list as the owner’s documents print it: "Option | Price (COP)". Accepts price rows; used by the public FAQ ({{pricing:…}} directive).',
+    es: 'La lista de precios como la imprimen los documentos del dueño: "Opción | Precio (COP)". Recibe filas de precios; la usan las preguntas frecuentes del sitio y de la app (directiva {{pricing:…}}).',
+    en: 'The price list as the owner’s documents print it: "Option | Price (COP)". Accepts price rows; used by the website and customer FAQ ({{pricing:…}} directive).',
   },
   props: [
     { name: 'items', type: 'PriceItem[]', required: true, description: { es: 'Las filas, en orden.', en: 'The rows, in order.' } },
@@ -25,5 +25,5 @@ export default defineMeta({
     { title: { es: 'Tarjetas de regalo', en: 'Gift cards' }, render: () => h(PriceTable, { items: itemsForFamilies('regalos'), caption: 'Tarjeta de regalo' }) },
   ],
   a11y: [{ es: 'Tabla real con encabezados de columna y de fila; los montos usan cifras tabulares.', en: 'A real table with column and row headers; amounts use tabular figures.' }],
-  usedBy: ['W-10'],
+  usedBy: ['W-10', 'C-14', 'C-15'],
 });
