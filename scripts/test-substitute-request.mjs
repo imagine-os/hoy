@@ -12,7 +12,10 @@ try{const file=join(dir,'test.mjs');await build({stdin:{contents:"export {MockPr
  for(const role of ['customer','public','finance','front_desk','maintenance','marketing','developer'])await assert.rejects(queueSubstituteRequest(data,{...input,actor:{...input.actor,role}}),/denied/);
  await assert.rejects(queueSubstituteRequest({name:'supabase',atomic:data.atomic.bind(data)},input),/disconnected/);await assert.rejects(queueSubstituteRequest({name:'mock'},input),/disconnected/);
  for(const patch of [{teacherId:'missing'},{sessionId:'missing'},{actor:{...input.actor,userId:'missing'}},{reason:''}])await assert.rejects(queueSubstituteRequest(data,{...input,...patch}));
- await data.insert('class_sessions',{...fixture,id:'qa_foreign',tenant_id:'foreign'});await assert.rejects(queueSubstituteRequest(data,{...input,sessionId:'qa_foreign'}),/unavailable/);
+ // A valid foreign room keeps this a substitute-request tenant-boundary test,
+ // rather than an invalid prospective room-assignment fixture.
+ await data.insert('rooms',{id:'qa_foreign_room',tenant_id:'foreign',name:'FICTIONAL FOREIGN ROOM',capacity:16,active:true});
+ await data.insert('class_sessions',{...fixture,id:'qa_foreign',tenant_id:'foreign',room_id:'qa_foreign_room'});await assert.rejects(queueSubstituteRequest(data,{...input,sessionId:'qa_foreign'}),/unavailable/);
  const other=data.peek('teachers').find(t=>t.id!==teacher.id);await data.update('class_sessions',fixture.id,{teacher_id:other.id});await assert.rejects(queueSubstituteRequest(data,input),/unavailable/);await data.update('class_sessions',fixture.id,{teacher_id:teacher.id});
  for(const patch of [{status:'cancelled'},{ends_at:new Date(now-1000).toISOString()},{starts_at:new Date(now+8*86400000).toISOString()}]){await data.update('class_sessions',fixture.id,patch);await assert.rejects(queueSubstituteRequest(data,input,()=>false,now),/unavailable/);await data.update('class_sessions',fixture.id,fixture);}
  const clockProvider={name:'mock',atomic:async action=>{const real=Date.now;Date.now=()=>now+2*86400000;try{return await data.atomic(action);}finally{Date.now=real;}}};await assert.rejects(queueSubstituteRequest(clockProvider,input),/unavailable/,'eligibility clock is refreshed inside queued transaction');
