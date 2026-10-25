@@ -1,0 +1,36 @@
+name: Delivery Room QA
+
+on:
+  pull_request:
+    paths:
+      - 'public/delivery-room/**'
+      - 'scripts/test-delivery-room.cjs'
+      - '.github/workflows/delivery-room-qa.yml'
+      - 'package.json'
+      - 'package-lock.json'
+  push:
+    branches: [main]
+    paths:
+      - 'public/delivery-room/**'
+      - 'scripts/test-delivery-room.cjs'
+      - '.github/workflows/delivery-room-qa.yml'
+      - 'package.json'
+      - 'package-lock.json'
+
+permissions:
+  contents: read
+
+jobs:
+  public-tracker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run test:delivery-room
+      - run: npm run build
+      - name: Audit built tracker copied by Vite
+        run: DELIVERY_ROOM_DIR=dist/delivery-room npm run test:delivery-room
