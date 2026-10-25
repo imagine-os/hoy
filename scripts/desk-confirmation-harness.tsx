@@ -8,6 +8,7 @@ import { SessionProvider, useSession } from '../src/auth/SessionProvider';
 import { I18nProvider } from '../src/i18n/I18nProvider';
 import { getStrings } from '../src/app/registry';
 import { CheckoutPage } from '../src/modules/customer/pages/CheckoutPage';
+import { ThemeProvider } from '../src/design/ThemeProvider';
 
 export function mountDeskConfirmationHarness(path: string) {
   const provider = new MockProvider(), second = new MockProvider();
@@ -35,5 +36,5 @@ export function mountDeskConfirmationHarness(path: string) {
   const root = createRoot(element); state.unmount = () => root.unmount();
   function Controls() { const session = useSession(); state.actor = session.user.id; state.role = session.role; state.switchUser = session.switchUser; state.setViewAs = session.setViewAs; state.navigate = useNavigate(); return null; }
   function Harness() { const [index, setIndex] = React.useState(0); state.providerIndex = index; state.swap = () => setIndex(n => 1 - n); return <DataProviderRoot provider={index ? second : provider}><SessionProvider><MemoryRouter initialEntries={[path]}><Controls/><Routes><Route path="/app/checkout/:id" element={<CheckoutPage/>}/><Route path="*" element={<p>FICTIONAL RECORD DESTINATION</p>}/></Routes></MemoryRouter></SessionProvider></DataProviderRoot>; }
-  root.render(<I18nProvider tables={getStrings()}><Harness/></I18nProvider>);
+  root.render(<ThemeProvider><I18nProvider tables={getStrings()}><Harness/></I18nProvider></ThemeProvider>);
 }
