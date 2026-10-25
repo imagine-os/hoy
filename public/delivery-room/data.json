@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
-  "capturedAt": "2026-10-25T06:38:10Z",
+  "capturedAt": "2026-10-25T12:10:57Z",
   "sourceSpreadsheet": {
     "id": "19SWDF957P55Iw5QEPyVtoPDS50-eor0k76djVv1YyNU",
     "url": "https://docs.google.com/spreadsheets/d/19SWDF957P55Iw5QEPyVtoPDS50-eor0k76djVv1YyNU/edit",
     "title": "HOY — Front End Dev Log"
   },
-  "sourceCutoff": "Nine Sheet tabs and evidence notes reread 2026-10-25T06:38:10Z; all 124 feature/criterion rows and 70 MVP planning rows match the retained snapshot. Source ledger remains October 24 03:06 UTC through PR89. GitHub checked 2026-10-25T06:38:33Z: PR106 Home/Classic pricing exact 96bd700e has 18/18 successful checks across 12 workflows, held draft; dependent FAQ PR107 exact 5df4d775 has 16/19 successful checks and 3 running, none failed at cutoff. Both unmerged and undeployed; whole SW-02 remains incomplete. Tracker-only main 8783147a retains the app source from 0e4a6631. The older 3 Sheet-ready criteria remain separate from the nine qualified 05:19 mock-frontend recommendations; RS-02/RS-08 were not rerun. No production/backend/client acceptance or final business-price-policy promotion.",
+  "sourceCutoff": "Nine Sheet tabs and evidence notes reread 2026-10-25T12:10:57Z; all 124 feature/criterion rows and 70 MVP planning rows match the retained snapshot. Source ledger remains October 24 03:06 UTC through PR89. GitHub checked 2026-10-25T12:10:59Z: held PR107 has 19/19 checks across 13 workflows; PR109 has 42/42 across 20; PR110 has 56/56 latest checks across 31. PR109 depends on PR107/106; PR110 depends on PR103. All remain unmerged and undeployed. PR-06 is a separately dated supported-mock recommendation, bringing the qualified overlay to 10 while the older Sheet-ready count stays 3. Later notification and AD-05 reports are local, bounded evidence only; the AD-05 read-recovery emitted build has not passed. No whole AD-01/AD-05/NT-02/SW-02, production/backend or client acceptance promotion.",
   "caveats": [
     "68/124 and 48/70 are tested-deployed evidence coverage, NOT complete features.",
     "Only 3 rows are explicitly frontend-ready. The remaining 67 MVP rows are not certified complete; lack of assessment is not proof of failure.",
@@ -17,7 +17,7 @@
     "All 46 human record IDs are retained with public coordination summaries. Setup owners are proposals, not assignments; private setup notes and correspondence are excluded.",
     "GitHub checks are a separately dated snapshot, not continuous telemetry. Successful draft CI does not promote source readiness or deployed coverage.",
     "Owner priority is MVP, then explicitly November 30, then later scope. CMS synchronization is required throughout development; five adopted page definitions do not mean the full frontend CMS is finished.",
-    "The3 frontend-ready count is the retained Sheet assessment. Nine separately dated mock-frontend audit recommendations are displayed with source baseline, reported tests and exclusions; they do not establish production/backend/client acceptance. RS-02/RS-08 are evidence reconciliations, not fresh runs."
+    "The 3 frontend-ready count is the retained Sheet assessment. Ten separately qualified mock-frontend recommendations comprise the original nine plus the dated07:37 PR-06 supplement. They do not establish production/backend/client acceptance. RS-02/RS-08 are evidence reconciliations, not fresh runs."
   ],
   "features": [
     {
@@ -6211,7 +6211,7 @@
     ],
     "ownershipRule": "Separate feature lanes and one shared integration owner. All app-feature drafts remain held; tracker-only refresh has separate ownership and includes no held feature code."
   },
-  "activityCapturedAt": "2026-10-25T06:38:33Z",
+  "activityCapturedAt": "2026-10-25T12:10:59Z",
   "activityLanes": [
     {
       "title": "Readiness · Sheet assessment and separate audit recommendations",
@@ -6220,8 +6220,25 @@
         "PG-10",
         "RS-01"
       ],
-      "state": "3 Sheet-ready criteria · 9 dated qualified mock recommendations",
-      "text": "Sheet reread 2026-10-25T06:38:10Z still records3 ready criteria. A separate owner handoff dated 2026-10-25 05:19 UTC recommends nine mock-frontend criteria with named evidence and exclusions. Seven report fresh execution; RS-02/RS-08 reconcile earlier evidence, not fresh tests. Independent reviewers accepted scope without independently rerunning tests. Feature stages and source counts remain unchanged; backend, production and client acceptance remain separate."
+      "state": "3 Sheet-ready criteria · 10 dated qualified mock recommendations",
+      "text": "Sheet reread 2026-10-25T12:10:57Z still records 3 ready criteria. The original nine 05:19 mock-frontend recommendations are retained unchanged; a separate 07:37 PR-06 handoff adds supported mock activation/balance/expiry evidence, with 8 retained activation groups, 4 fresh model-fixture readbacks and 2 domain suites. RS-02/RS-08 reconcile earlier evidence, not fresh runs. The recommendations, source stages and real-service/client acceptance gates remain separate."
+    },
+    {
+      "title": "Prospective room publication · dependent draft PR110",
+      "ids": [
+        "AD-01"
+      ],
+      "state": "56/56 latest checks passed · dependent draft / release held",
+      "text": "GitHub checked 2026-10-25T12:10:59Z: exact head 0ddbf6ff2b2e176d37171a58af860d3d145c39c9 has 56/56 latest checks and 31/31 workflows successful. This 32-file bounded candidate targets and depends on held PR103. M-02 draft/publish/unpublish and prospective room-assignment guards preserve existing references, admission, attendance and history; the optional flag is browser-only and backend mapping remains pending. Reported validation: 76 domain groups, 16 DEV lifecycle groups, 4 compiled responsive room cases and retained AD-01 matrices. Independent diff review did not rerun tests. The original cash-count browser timeout remains recorded; unchanged assertions passed locally and on the same-SHA job retry, with the timeout mechanism unresolved. Held draft, unmerged and undeployed; whole AD-01 remains incomplete. https://github.com/imagine-os/hoy/pull/110"
+    },
+    {
+      "title": "Customer C14/C15 FAQ prices · dependent draft PR109",
+      "ids": [
+        "AD-01",
+        "SW-02"
+      ],
+      "state": "42/42 checks passed · dependent draft / release held",
+      "text": "GitHub checked 2026-10-25T12:10:59Z: exact head 2df35af730b55999ddecc2f811d76f1f89315545 has 42/42 successful checks across 20 workflows. This 18-file customer/shared-presentation slice targets PR107, which depends on PR106. C14/C15 reuse the shared renderer for generated published prices instead of exposing raw pricing directives. Reported validation: 24 customer DEV and 24 compiled groups, plus 12 DEV and 12 compiled retained W10 groups, with build/CMS checks and independent exact-tree review; no independent rerun was reported. Loading/error/unavailable/retry, native Plans navigation and history preservation were covered in synthetic fixtures. Held draft, unmerged and undeployed; no whole AD-01 or SW-02 acceptance. Three authored policy answers, PC-06/PC-01/PC-02 decisions, room publication and reception FAQ/room/theme gaps remain separate. No real backend/auth/payment/email or automatic content publication. https://github.com/imagine-os/hoy/pull/109"
     },
     {
       "title": "Home / Classic published pricing · draft PR106",
@@ -6229,15 +6246,39 @@
         "SW-02"
       ],
       "state": "18/18 checks passed · draft / release held",
-      "text": "GitHub checked 2026-10-25T06:38:33Z: exact head 96bd700e88f7ef794f5851dd7586899fd206a95b has 18/18 successful checks across 12 workflows. The 16-file bounded candidate reads saved locally published catalog names, amounts and terms, including unavailable-price states, on Home and Classic Home. Reported validation includes 9 projection groups, 18 reader lifecycle groups and 4 EN/ES 390/1280 native publication/withdrawal journeys. Independent review accepted the stated tree; tracker ownership has not rerun these app tests. Open draft, unmerged and undeployed. FAQ pricing is separate dependent PR107; whole SW-02 is incomplete. No real backend, final business-price policy, payment or history change. https://github.com/imagine-os/hoy/pull/106"
+      "text": "GitHub checked 2026-10-25T12:10:59Z: exact head 96bd700e88f7ef794f5851dd7586899fd206a95b has 18/18 successful checks across 12 workflows. The 16-file bounded candidate reads saved locally published catalog names, amounts and terms, including unavailable-price states, on Home and Classic Home. Reported validation includes 9 projection groups, 18 reader lifecycle groups and 4 EN/ES 390/1280 native publication/withdrawal journeys. Independent review accepted the stated tree; tracker ownership has not rerun these app tests. Open draft, unmerged and undeployed. FAQ pricing is separate dependent PR107; whole SW-02 is incomplete. No real backend, final business-price policy, payment or history change. https://github.com/imagine-os/hoy/pull/106"
     },
     {
       "title": "Generated FAQ pricing · dependent draft PR107",
       "ids": [
         "SW-02"
       ],
-      "state": "16/19 checks passed · 3 running at cutoff · draft / held",
-      "text": "GitHub checked 2026-10-25T06:38:33Z: exact head 5df4d775d3300c8d330676704c0168e1065d0461 has 16/19 successful checks,3 running and no failure at this cutoff. The 27-file FAQ/shared-reader slice targets PR106's branch and depends on that held candidate. Local report: 12 FAQ DEV and 12 compiled groups, search/JSON-LD, publication/date, retry/context/history and retained Home tests passed; independent review accepted the stated tree, without a tracker-side app rerun. Generated FAQ prices use published local catalog quotes; foreign/unpublished rows are excluded. The 06:38 feature-owner handoff confirms three authored FAQ policy answers require owner review; PC-06 final amounts remain unresolved, and customer C14/C15 still render pricing tokens directly. Whole SW-02 is incomplete. Draft, unmerged and undeployed; no real backend/auth/payment/email or automatic content publication. https://github.com/imagine-os/hoy/pull/107"
+      "state": "19/19 checks passed · dependent draft / release held",
+      "text": "GitHub checked 2026-10-25T12:10:59Z: exact head 5df4d775d3300c8d330676704c0168e1065d0461 has 19/19 successful checks across 13 workflows. The 27-file FAQ/shared-reader slice targets PR106's branch and depends on that held candidate. Its report records 12 FAQ DEV and 12 compiled groups plus retained Home tests and independent scope review; tracker ownership did not rerun app tests. Authored policy answers remain unchanged pending owner review; PC-06 final amounts remain separate. Customer C14/C15 propagation is a distinct held PR109 candidate. Whole SW-02 remains incomplete; draft, unmerged and undeployed. https://github.com/imagine-os/hoy/pull/107"
+    },
+    {
+      "title": "PR-06 · qualified mock activation recommendation",
+      "ids": [
+        "PR-06"
+      ],
+      "state": "07:37 owner handoff · supported mock criterion only",
+      "text": "Feature Log row 37, original source row 38; app-source 0e4a66310ab749e7851336df4d24dceb2b0bdb50. Dated 07:37 UTC feature-owner handoff records 8 retained activation groups, 4 fresh model-fixture native readbacks and 2 domain suites. Independent review accepted the supported mock package activation/balance/expiry criterion only. This is not a rerun by tracker ownership and does not update the older Sheet-ready count. Real payments, authentication, server durability and cross-device acceptance are excluded."
+    },
+    {
+      "title": "Notification composition · local report 10:38 UTC",
+      "ids": [
+        "NT-02"
+      ],
+      "state": "Local checks reported · no PR or deployment",
+      "text": "The 10:38 UTC owner handoff reports a repaired duplicate C-04/voucher inventory with 19 synthetic fixtures preserved. Local build, 3 domain suites, 154 DEV groups and 22 compiled journeys passed; independent exact-tree review was reported without an independent test rerun. This is composition evidence only, not remote CI, sending or deployment. Whole NT-02 remains incomplete."
+    },
+    {
+      "title": "AD-05 hours and read recovery · local reports",
+      "ids": [
+        "AD-05"
+      ],
+      "state": "Bounded local checks · full emitted build NOT passed",
+      "text": "The 10:38 handoff reports 29 hours-domain and 36 compiled-browser checks for weekly hours, closures, mounted website propagation, reload and customer readback on app-source 0e4a6631; source equivalence to main is not fresh execution there. The 11:38 handoff separately reports 400 lifecycle checks across 40 responsive groups, 20 initial-save, 24 model and 29 hours assertions, TypeScript/CMS/in-memory compilation and exact review. The full emitted build has NOT passed because of disk capacity. No checked PR, remote CI, deployment or whole AD-05 acceptance follows. The latest dated owner report says work is held idle, not live coding telemetry."
     },
     {
       "title": "Room-name propagation · draft PR103",
@@ -6338,13 +6379,13 @@
       "text": "Owner handoff dated 2026-10-25 05:19 UTC; Feature Log row 45, original source row 46. App-source baseline 0e4a66310ab749e7851336df4d24dceb2b0bdb50. 8 DEV races. One winner, one debit and losing-user feedback verified within ONE shared mock provider. Single-provider simulation only; no server or cross-device concurrency guarantee. Independent reviewers accepted the stated scope; they did not independently rerun tests. This recommendation does not update the Sheet readiness count or establish production/backend/client acceptance."
     },
     {
-      "title": "PR-06 / SW-02 · dated source coordination",
+      "title": "Pricing and propagation · remaining acceptance gaps",
       "ids": [
         "PR-06",
         "SW-02"
       ],
-      "state": "PR-06 details pending · pricing candidates held",
-      "text": "At the 2026-10-25T06:38:33Z source cutoff, PR-06 detailed audit evidence is still absent, so its reported literal-mock recommendation remains outside the nine-item overlay. The earlier 16 Home pricing failures refer to the released baseline; held PR106 now has checked candidate repairs, and dependent FAQ PR107 is in CI. Neither candidate is merged or deployed; whole SW-02 is incomplete. The FAQ stage is taken from the current feature-owner PR report, not live task telemetry."
+      "state": "Checked draft candidates · no whole-feature acceptance",
+      "text": "As of 2026-10-25T12:10:59Z, the released baseline still contains the recorded pricing and propagation defects. PR106/107/109 and room-publication PR110 contain checked but held candidates. Three authored policy answers and PC-06/PC-01/PC-02 decisions remain separate. The reception room-label candidate is local only; broader reception consumers and whole AD-01/SW-02 remain incomplete. PR-06 remains a separately dated supported-mock recommendation, with no source-stage or production promotion."
     },
     {
       "title": "Class-voucher recipient preview · draft PR100",
@@ -6437,18 +6478,18 @@
     {
       "title": "Public Delivery Room migration",
       "ids": [],
-      "state": "PR105 live · cloud tracker-only refresh",
-      "text": "PR99 introduced the tracker; PR102/104/105 refreshed its dated evidence. PR105 main 8783147ace6eed51db9025f8590bd295e3c10161 passed Pages build, deployment and hosted exact-SHA verification. Tracker-only publication does not release app-feature drafts. The snapshot is maintained cloud-first through the HOY repository; source links retain permissions. No browser Sheet access or writeback."
+      "state": "PR108 live · cloud tracker-only refresh",
+      "text": "PR99 introduced the tracker; later tracker-only refreshes are separate from feature releases. PR108 main 89811743e53322694e1cddb79e6949f57e1b5f38 passed Pages build, deployment and hosted exact-SHA verification. No held app-feature code was released. Source links retain permissions; no browser Sheet access or writeback."
     },
     {
       "title": "Historical MVP planning audit",
       "ids": [],
       "state": "Historical Sheet assessment · later audits shown separately",
-      "text": "The earlier23:18 UTC planning audit recorded3 frontend-ready criteria,19 known human/service gates and48 other unfinished or unassessed rows. This is historical planning, not a current count of unfinished frontend criteria. The latest Sheet still records3 ready; nine later mock-frontend recommendations are shown separately with dated evidence and exclusions. No production/backend/client acceptance is inferred."
+      "text": "The earlier23:18 UTC planning audit recorded3 frontend-ready criteria,19 known human/service gates and48 other unfinished or unassessed rows. This is historical planning, not a current count of unfinished frontend criteria. The latest Sheet still records3 ready; the initial nine recommendations plus the later PR-06 supplement are shown separately with dated evidence and exclusions. No production/backend/client acceptance is inferred."
     }
   ],
   "syncCoverage": {
-    "readAt": "2026-10-25T06:38:10Z",
+    "readAt": "2026-10-25T12:10:57Z",
     "tabsRead": [
       "Justin Actions",
       "Questions for Jas",
@@ -6464,17 +6505,17 @@
     "criteriaRowsChanged": 0,
     "planningRowsChanged": 0,
     "releaseLedgerGap": "PR90 and PR91 verified live outside Sheet; ledger remains PR89. No spreadsheet write performed.",
-    "ledgerHeaderReadAt": "2026-10-25T06:38:10Z",
+    "ledgerHeaderReadAt": "2026-10-25T12:10:57Z",
     "humanNotes": "All46 source human IDs reread and retained with public summaries. Source statuses unchanged; private setup provenance excluded. Later owner confirmations remain separate.",
-    "githubReadAt": "2026-10-25T06:38:33Z",
-    "additionalEvidence": "PR106 exact 96bd700e:18/18 successful across 12 workflows. PR107 exact 5df4d775:16/19 successful,3 running, no failure at cutoff; depends on PR106 and targets its branch. Both held drafts. PR101 44/44 and PR103 23/23 reverified held. PR105 tracker-only Pages verified at 8783147a. No feature stages or source readiness promoted.",
+    "githubReadAt": "2026-10-25T12:10:59Z",
+    "additionalEvidence": "PR97 48/48, PR101 44/44, PR103 23/23, PR106 18/18, PR107 19/19, PR109 42/42 and PR110 56/56 latest checks reverified on unchanged held draft heads. Workflow totals for PR107/109/110:13/20/31, all successful. Ten qualified mock recommendations remain separate from 3 Sheet-ready criteria. Local notification composition and AD-05 reports do not establish release readiness. No feature stage or Sheet promotion.",
     "sourceNotesRead": true
   },
-  "githubEvidenceCheckedAt": "2026-10-25T06:38:33Z",
+  "githubEvidenceCheckedAt": "2026-10-25T12:10:59Z",
   "publicSnapshot": {
     "mode": "Bundled read-only snapshot",
-    "sheetCapturedAt": "2026-10-25T06:38:10Z",
-    "githubCheckedAt": "2026-10-25T06:38:33Z",
+    "sheetCapturedAt": "2026-10-25T12:10:57Z",
+    "githubCheckedAt": "2026-10-25T12:10:59Z",
     "refresh": "Reviewed repository updates; no automatic or browser-authenticated Sheet sync",
     "writeback": false,
     "privacy": "Public coordination summaries; no correspondence, private setup notes, credentials or raw exports",
@@ -6482,7 +6523,7 @@
       "Sheet release ledger records PR89; verified PR90/91 evidence remains separate.",
       "PC-10/11 later owner confirmations are not reconciled into the Sheet snapshot; contract details are not published.",
       "Real services and client acceptance remain separate from frontend mock evidence.",
-      "PR-06 detailed audit evidence remains pending and is excluded from the nine-recommendation overlay. PR106 Home/Classic pricing and dependent PR107 generated FAQ pricing are held drafts, not deployed; whole SW-02 remains incomplete. Three authored FAQ policy answers require content-owner review; PC-06 final amounts remain unresolved, and customer C14/C15 still render pricing tokens directly."
+      "PR106/107/109/110 remain held and undeployed. C14/C15 propagation and prospective room publication have checked draft candidates, not live repairs. Three authored FAQ policy answers and PC-06/PC-01/PC-02 decisions remain unresolved. Broader reception consumers and whole AD-01 remain incomplete; the separate reception room-label candidate is local only. Local AD-05 read-recovery lacks a passed emitted build; whole AD-05 and NT-02 are unproven."
     ]
   },
   "githubPullRequests": [
@@ -6549,7 +6590,7 @@
       "state": "open",
       "checksTotal": 48,
       "checksSucceeded": 48,
-      "checkedAt": "2026-10-25T01:44:40Z",
+      "checkedAt": "2026-10-25T12:10:59Z",
       "checksPendingOrRunning": 0
     },
     {
@@ -6582,7 +6623,7 @@
       "state": "open",
       "checksTotal": 44,
       "checksSucceeded": 44,
-      "checkedAt": "2026-10-25T06:38:33Z",
+      "checkedAt": "2026-10-25T12:10:59Z",
       "checksPendingOrRunning": 0
     },
     {
@@ -6593,7 +6634,7 @@
       "state": "open",
       "checksTotal": 23,
       "checksSucceeded": 23,
-      "checkedAt": "2026-10-25T06:38:33Z",
+      "checkedAt": "2026-10-25T12:10:59Z",
       "checksPendingOrRunning": 0
     },
     {
@@ -6605,7 +6646,7 @@
       "checksTotal": 18,
       "checksSucceeded": 18,
       "checksPendingOrRunning": 0,
-      "checkedAt": "2026-10-25T06:38:33Z"
+      "checkedAt": "2026-10-25T12:10:59Z"
     },
     {
       "number": 107,
@@ -6614,18 +6655,44 @@
       "merged": false,
       "state": "open",
       "checksTotal": 19,
-      "checksSucceeded": 16,
-      "checksPendingOrRunning": 3,
-      "checkedAt": "2026-10-25T06:38:33Z",
+      "checksSucceeded": 19,
+      "checksPendingOrRunning": 0,
+      "checkedAt": "2026-10-25T12:10:59Z",
       "dependsOn": 106,
       "baseBranch": "fix/sw02-published-home-pricing-20261025"
+    },
+    {
+      "number": 109,
+      "head": "2df35af730b55999ddecc2f811d76f1f89315545",
+      "draft": true,
+      "merged": false,
+      "state": "open",
+      "checksTotal": 42,
+      "checksSucceeded": 42,
+      "checksPendingOrRunning": 0,
+      "checkedAt": "2026-10-25T12:10:59Z",
+      "dependsOn": 107,
+      "baseBranch": "fix/sw02-faq-published-pricing-20261025"
+    },
+    {
+      "number": 110,
+      "head": "0ddbf6ff2b2e176d37171a58af860d3d145c39c9",
+      "draft": true,
+      "merged": false,
+      "state": "open",
+      "checksTotal": 56,
+      "checksSucceeded": 56,
+      "checksPendingOrRunning": 0,
+      "checkedAt": "2026-10-25T12:10:59Z",
+      "dependsOn": 103,
+      "baseBranch": "verify/ad01-propagation-20261025"
     }
   ],
   "trackerRelease": {
-    "pr": 105,
-    "sha": "8783147ace6eed51db9025f8590bd295e3c10161",
+    "pr": 108,
+    "sha": "89811743e53322694e1cddb79e6949f57e1b5f38",
     "url": "https://imagine-os.github.io/hoy/delivery-room/",
-    "verifiedRun": "https://github.com/imagine-os/hoy/actions/runs/40165565332",
+    "verifiedRun": "https://github.com/imagine-os/hoy/actions/runs/40170135209",
     "scope": "Tracker only; no app feature readiness promotion"
   },
   "humanCoordinationEvidence": {
@@ -6635,14 +6702,14 @@
     "rowMappingEstablished": false
   },
   "frontendAuditRecommendations": {
-    "reportedAt": "2026-10-25 05:19 UTC",
+    "reportedAt": "2026-10-25 07:37 UTC",
     "sourceCommit": "0e4a66310ab749e7851336df4d24dceb2b0bdb50",
     "sourceKind": "Dated feature-owner handoff",
     "sheetReadyCount": 3,
-    "recommendationCount": 9,
+    "recommendationCount": 10,
     "promotion": "Separate qualified mock-frontend recommendations; no source stage or Sheet promotion",
-    "review": "Independent reviewers accepted the stated scope without independently rerunning tests.",
-    "sourceEquivalence": "Tracker-only main 09a072451df2900ab21781bc473c3a787512cb92 retains app source from 0e4a66310ab749e7851336df4d24dceb2b0bdb50. Source equivalence is not fresh execution.",
+    "review": "Original nine reviewers accepted scope without independently rerunning tests. The PR-06 handoff reports independent review of the supported mock criterion only. No tracker-side app test rerun or production acceptance is claimed.",
+    "sourceEquivalence": "Tracker-only main 89811743e53322694e1cddb79e6949f57e1b5f38 retains app source from 0e4a66310ab749e7851336df4d24dceb2b0bdb50. Equivalence is not fresh execution.",
     "items": [
       {
         "id": "RS-06",
@@ -6742,7 +6809,62 @@
         "reportedTests": "8 DEV races",
         "result": "One winner, one debit and losing-user feedback verified within ONE shared mock provider.",
         "exclusions": "Single-provider simulation only; no server or cross-device concurrency guarantee."
+      },
+      {
+        "id": "PR-06",
+        "featureLogRow": 37,
+        "originalSourceRow": 38,
+        "sourceUrl": "https://docs.google.com/spreadsheets/d/19SWDF957P55Iw5QEPyVtoPDS50-eor0k76djVv1YyNU/edit#gid=104&range=A37",
+        "criterionSourceUrl": "https://docs.google.com/spreadsheets/d/19SWDF957P55Iw5QEPyVtoPDS50-eor0k76djVv1YyNU/edit#gid=105&range=A37",
+        "reportedAt": "2026-10-25 07:37 UTC",
+        "sourceCommit": "0e4a66310ab749e7851336df4d24dceb2b0bdb50",
+        "evidenceKind": "Retained activation evidence plus fresh model-fixture readbacks",
+        "reportedTests": "8 retained activation groups, 4 fresh model-fixture native readbacks and 2 domain suites",
+        "result": "Supported mock package activation, balance and expiry criterion recommended by the dated owner handoff; independent review accepted only that supported mock scope.",
+        "exclusions": "Real payments, authentication, server durability and cross-device acceptance excluded. No Sheet, production/backend or client acceptance promotion."
       }
-    ]
-  }
+    ],
+    "initialReportedAt": "2026-10-25 05:19 UTC",
+    "reportNotes": "Original nine recommendations were supplied 05:19 UTC. The PR-06 supplement was supplied 07:37 UTC; its retained activation groups and fresh model-fixture readbacks remain distinct."
+  },
+  "localEvidenceReports": [
+    {
+      "id": "notification-composition",
+      "featureIds": [
+        "NT-02"
+      ],
+      "reportReceivedAt": "2026-10-25 10:38 UTC",
+      "evidenceKind": "Owner-reported local composition checks",
+      "scope": "Duplicate C-04/voucher inventory repaired; 19 synthetic fixtures preserved.",
+      "reportedChecks": "Build, 3 domain suites, 154 DEV groups and 22 compiled journeys passed.",
+      "review": "Independent exact-tree review reported; no independent test rerun.",
+      "releaseState": "No PR or deployment; whole NT-02 incomplete."
+    },
+    {
+      "id": "hours-propagation",
+      "featureIds": [
+        "AD-05"
+      ],
+      "featureLogRow": 91,
+      "originalSourceRow": 92,
+      "reportReceivedAt": "2026-10-25 10:38 UTC",
+      "sourceCommit": "0e4a66310ab749e7851336df4d24dceb2b0bdb50",
+      "evidenceKind": "Owner-reported bounded hours checks",
+      "reportedChecks": "29 hours-domain and 36 compiled-browser checks passed for weekly hours, closures, mounted website propagation, reload and customer readback.",
+      "sourceBasis": "App-equivalent to tracker-only main 89811743; equivalence is not fresh execution on main.",
+      "limits": "Whole AD-05 and error/retry/role/email-hours acceptance were not established by this bounded report."
+    },
+    {
+      "id": "hours-read-recovery",
+      "featureIds": [
+        "AD-05"
+      ],
+      "reportReceivedAt": "2026-10-25 11:38 UTC",
+      "evidenceKind": "Owner-reported local read-recovery checks; emitted build blocked",
+      "reportedChecks": "400 lifecycle checks across 40 EN/ES mobile/desktop groups; 20 initial-save, 24 model and 29 hours assertions; TypeScript, CMS drift and in-memory compilation passed.",
+      "review": "Exact review reported; frozen source/artifacts preserved by the feature owner.",
+      "build": "Full emitted build NOT passed because of disk-capacity failure. Local checks and in-memory compilation do not substitute for that build.",
+      "releaseState": "No checked PR, remote CI or deployment for this local slice. Whole AD-05 remains unproven."
+    }
+  ]
 }
