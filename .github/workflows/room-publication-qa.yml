@@ -1,0 +1,64 @@
+name: Prospective room publication QA
+on:
+  pull_request:
+    paths:
+      - 'src/data/**'
+      - 'src/cms/**'
+      - 'src/modules/admin/**'
+      - 'src/modules/classSchedule/**'
+      - 'src/modules/staff/**'
+      - 'scripts/*room-publication*'
+      - 'scripts/test-ad01-native-cycle.mjs'
+      - 'scripts/check-cms-contracts.mjs'
+      - 'package*.json'
+      - '.github/workflows/room-publication-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  prospective-room-publication:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: node node_modules/playwright-core/cli.js install --with-deps chromium
+      - name: Browser executable
+        run: echo "CHROMIUM_PATH=$(node -p 'require("playwright-core").chromium.executablePath()')" >> "$GITHUB_ENV"
+      - name: Domain and CMS contracts
+        run: |
+          node scripts/test-room-publication.mjs
+          node scripts/test-room-publication-contract.mjs
+          node scripts/check-cms-contracts.mjs
+          node scripts/check-cms-contracts.mjs --self-test
+          npm run test:content-recovery
+          node scripts/test-class-management.mjs
+          node scripts/test-class-management-provider.mjs
+      - name: Actual controls and interrupted contexts
+        run: |
+          node node_modules/vite/bin/vite.js --host 127.0.0.1 --strictPort --port 5833 > /tmp/room-publication-dev.log 2>&1 &
+          room_dev_pid=$!
+          trap 'kill "$room_dev_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..60}; do curl -fsS http://127.0.0.1:5833/ > /dev/null && break; sleep 1; done
+          curl -fsS http://127.0.0.1:5833/ > /dev/null
+          QA_BASE=http://127.0.0.1:5833 QA_OUTPUT=/tmp/room-publication-dev node scripts/test-room-publication-ui.mjs
+      - name: Full build
+        run: npm run build
+      - name: Native room and retained content propagation
+        run: |
+          node node_modules/vite/bin/vite.js preview --host 127.0.0.1 --strictPort --port 5832 > /tmp/room-publication-preview.log 2>&1 &
+          room_preview_pid=$!
+          trap 'kill "$room_preview_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..60}; do curl -fsS http://127.0.0.1:5832/ > /dev/null && break; sleep 1; done
+          curl -fsS http://127.0.0.1:5832/ > /dev/null
+          QA_BASE=http://127.0.0.1:5832 QA_OUTPUT=/tmp/room-publication-production node scripts/test-room-publication-production.mjs
+          QA_BASE=http://127.0.0.1:5832 QA_OUTPUT=/tmp/room-publication-content node scripts/test-ad01-native-cycle.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: prospective-room-publication
+          path: /tmp/room-publication-*

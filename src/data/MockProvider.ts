@@ -1,3 +1,4 @@
+import { requireAssignableRoom } from './roomPublication';
 import { customerBookingContactValid } from './bookingContact';
 import {readPendingDeskIntent} from './pendingDeskIntent';
 import type {PaymentRow} from './schema';
@@ -278,6 +279,7 @@ export class MockProvider implements DataProvider {
     if (['vouchers', 'voucher_bookings', 'voucher_events'].includes(table)) throw new Error('voucher_atomic_command_required');
     const now = new Date().toISOString();
     let full = { id: newId(table.slice(0, 3)), tenant_id: tenant.id, created_at: now, updated_at: now, ...row } as T;
+    if (full.room_id && (table === 'class_templates' || table === 'class_sessions' && full.status === 'scheduled' && Date.parse(String(full.starts_at)) > Date.now() || table === 'space_bookings' && ['held','confirmed'].includes(String(full.status)))) requireAssignableRoom(this.rows('rooms'), String(full.room_id), String(full.tenant_id));
     if(table==='payments'&&full.frontend_desk_intent!==undefined){validateDeskPaymentIntent(full as unknown as PaymentRow);if(full.status!=='pending'||full.provider!=='manual'||full.method!=='cash')throw Error('desk_intent_invalid');}
     if (table === 'waitlist' && ['waiting', 'offered'].includes(String(full.status)) && (full.tenant_id !== tenant.id || !customerBookingContactValid(this.db.users as UserRow[], this.db.profiles as ProfileRow[], String(full.user_id), tenant.id))) throw new Error('booking_contact_required');
     if (table === 'bookings') {
@@ -312,11 +314,12 @@ export class MockProvider implements DataProvider {
     // Preserve the existing paid-history rule; clearing the marker must not enable a later delete.
     if (table === 'expenses' && rows.some(r => r.id === id && r.paid_on) && Object.prototype.hasOwnProperty.call(patch, 'paid_on') && !patch.paid_on) throw new Error('expense_paid_history_protected');
     if (table === 'class_templates' || table === 'rooms') {
-      const checkedFields = ['capacity','room_id','teacher_id','modality_id','duration_min','weekday','start_time','level'];
+      const checkedFields = [...(table === 'rooms' ? ['active'] : []),'capacity','room_id','teacher_id','modality_id','duration_min','weekday','start_time','level'];
       const checked = Object.fromEntries(Object.entries(patch).filter(([key]) => checkedFields.includes(key)));
       if (Object.keys(checked).length) applyContentBatch(this.db, { table, role: 'admin', actorId: 'validation', changes: [{ id, before: structuredClone(rows[i]), patch: checked }] }, tenant.id);
     }
     let next = { ...rows[i], ...patch, updated_at: new Date().toISOString() } as T;
+    if (patch.room_id !== undefined && patch.room_id !== rows[i].room_id && (table === 'class_templates' || table === 'class_sessions' && next.status === 'scheduled' && Date.parse(String(next.starts_at)) > Date.now() || table === 'space_bookings' && ['held','confirmed'].includes(String(next.status)))) requireAssignableRoom(this.rows('rooms'), String(next.room_id), String(next.tenant_id));
     if (table === 'bookings') {
       const before = rows[i] as BookingRow, after = next as unknown as BookingRow;
       if ((before.payment_id ?? null) !== (after.payment_id ?? null) || before.payment_id && (before.user_id !== after.user_id || before.tenant_id !== after.tenant_id)) throw Error('booking_payment_immutable');

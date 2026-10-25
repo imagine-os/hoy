@@ -1,4 +1,5 @@
 import { tenant } from '../tenant/tenant';
+import { requireAssignableRoom } from './roomPublication';
 import type { BaseRow, ClassSessionRow, ModalityRow } from './schema';
 import type { Bi } from '../specs/types';
 import type { Role } from '../auth/roles';
@@ -18,6 +19,7 @@ export function applySessionEdit(db: Record<string, BaseRow[]>, command: Session
  const room = db.rooms.find(r => r.id === next.room_id && r.tenant_id === tenantId);
  if (!Number.isSafeInteger(next.capacity) || next.capacity < 1 || next.capacity < previous.booked_count || !room || next.capacity > Math.min(Number(room.capacity), room.id === 'room_main' ? tenant.studio.mats : Infinity)) throw new Error('schedule_capacity');
  for (const [key, table] of [['teacher_id','teachers'],['modality_id','modalities']] as const) if (next[key] !== previous[key] && !db[table].some(r => r.id === next[key] && r.tenant_id === tenantId && r.active !== false)) throw new Error('schedule_reference');
+ if (next.room_id !== previous.room_id) requireAssignableRoom(db.rooms, next.room_id, tenantId);
  if (next.room_id !== previous.room_id && previous.booked_count > 0) throw new Error('schedule_booked_room');
  if (db.class_sessions.some(s => s.id !== previous.id && s.tenant_id === tenantId && s.status === 'scheduled' && String(s.starts_at) < next.ends_at && String(s.ends_at) > next.starts_at && (next.teacher_id !== previous.teacher_id && s.teacher_id === next.teacher_id || next.room_id !== previous.room_id && s.room_id === next.room_id))) throw new Error('schedule_overlap');
  const copy = structuredClone(db);
