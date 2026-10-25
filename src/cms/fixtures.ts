@@ -5,7 +5,7 @@ const fixtures = (
 [
   {
     "id": "ad01-w-04-0",
-    "sourceDigest": "e8d7564942e422d0375f44119ea6a6d20d6cf776d40e55d246473b501cd75f5b",
+    "sourceDigest": "e7920c10c7d3a9818fb53b04c6f3f115dad1a3731a0c7c2c359aeabd147dd961",
     "feature": "ad01-content-propagation",
     "page": "W-04",
     "state": "Synthetic published shape",
@@ -59,7 +59,7 @@ const fixtures = (
   },
   {
     "id": "ad01-w-04-1",
-    "sourceDigest": "e8d7564942e422d0375f44119ea6a6d20d6cf776d40e55d246473b501cd75f5b",
+    "sourceDigest": "e7920c10c7d3a9818fb53b04c6f3f115dad1a3731a0c7c2c359aeabd147dd961",
     "feature": "ad01-content-propagation",
     "page": "W-04",
     "state": "Synthetic withdrawn shape",
@@ -113,7 +113,7 @@ const fixtures = (
   },
   {
     "id": "ad01-w-05-0",
-    "sourceDigest": "e8d7564942e422d0375f44119ea6a6d20d6cf776d40e55d246473b501cd75f5b",
+    "sourceDigest": "e7920c10c7d3a9818fb53b04c6f3f115dad1a3731a0c7c2c359aeabd147dd961",
     "feature": "ad01-content-propagation",
     "page": "W-05",
     "state": "Synthetic published shape",
@@ -133,7 +133,7 @@ const fixtures = (
   },
   {
     "id": "ad01-w-05-1",
-    "sourceDigest": "e8d7564942e422d0375f44119ea6a6d20d6cf776d40e55d246473b501cd75f5b",
+    "sourceDigest": "e7920c10c7d3a9818fb53b04c6f3f115dad1a3731a0c7c2c359aeabd147dd961",
     "feature": "ad01-content-propagation",
     "page": "W-05",
     "state": "Synthetic withdrawn shape",
@@ -153,7 +153,7 @@ const fixtures = (
   },
   {
     "id": "ad01-w-10-0",
-    "sourceDigest": "e8d7564942e422d0375f44119ea6a6d20d6cf776d40e55d246473b501cd75f5b",
+    "sourceDigest": "e7920c10c7d3a9818fb53b04c6f3f115dad1a3731a0c7c2c359aeabd147dd961",
     "feature": "ad01-content-propagation",
     "page": "W-10",
     "state": "Synthetic published shape",
@@ -183,7 +183,7 @@ const fixtures = (
   },
   {
     "id": "ad01-w-10-1",
-    "sourceDigest": "e8d7564942e422d0375f44119ea6a6d20d6cf776d40e55d246473b501cd75f5b",
+    "sourceDigest": "e7920c10c7d3a9818fb53b04c6f3f115dad1a3731a0c7c2c359aeabd147dd961",
     "feature": "ad01-content-propagation",
     "page": "W-10",
     "state": "Synthetic withdrawn shape",
@@ -213,7 +213,7 @@ const fixtures = (
   },
   {
     "id": "ad01-c-02-0",
-    "sourceDigest": "e8d7564942e422d0375f44119ea6a6d20d6cf776d40e55d246473b501cd75f5b",
+    "sourceDigest": "e7920c10c7d3a9818fb53b04c6f3f115dad1a3731a0c7c2c359aeabd147dd961",
     "feature": "ad01-content-propagation",
     "page": "C-02",
     "state": "Synthetic published shape",
@@ -267,7 +267,7 @@ const fixtures = (
   },
   {
     "id": "ad01-c-02-1",
-    "sourceDigest": "e8d7564942e422d0375f44119ea6a6d20d6cf776d40e55d246473b501cd75f5b",
+    "sourceDigest": "e7920c10c7d3a9818fb53b04c6f3f115dad1a3731a0c7c2c359aeabd147dd961",
     "feature": "ad01-content-propagation",
     "page": "C-02",
     "state": "Synthetic withdrawn shape",
@@ -321,7 +321,7 @@ const fixtures = (
   },
   {
     "id": "ad01-c-03-0",
-    "sourceDigest": "e8d7564942e422d0375f44119ea6a6d20d6cf776d40e55d246473b501cd75f5b",
+    "sourceDigest": "e7920c10c7d3a9818fb53b04c6f3f115dad1a3731a0c7c2c359aeabd147dd961",
     "feature": "ad01-content-propagation",
     "page": "C-03",
     "state": "Synthetic published shape",
@@ -375,7 +375,7 @@ const fixtures = (
   },
   {
     "id": "ad01-c-03-1",
-    "sourceDigest": "e8d7564942e422d0375f44119ea6a6d20d6cf776d40e55d246473b501cd75f5b",
+    "sourceDigest": "e7920c10c7d3a9818fb53b04c6f3f115dad1a3731a0c7c2c359aeabd147dd961",
     "feature": "ad01-content-propagation",
     "page": "C-03",
     "state": "Synthetic withdrawn shape",
@@ -429,7 +429,7 @@ const fixtures = (
   },
   {
     "id": "ad01-c-14-0",
-    "sourceDigest": "e8d7564942e422d0375f44119ea6a6d20d6cf776d40e55d246473b501cd75f5b",
+    "sourceDigest": "e7920c10c7d3a9818fb53b04c6f3f115dad1a3731a0c7c2c359aeabd147dd961",
     "feature": "ad01-content-propagation",
     "page": "C-14",
     "state": "Synthetic published shape",
@@ -459,7 +459,7 @@ const fixtures = (
   },
   {
     "id": "ad01-c-14-1",
-    "sourceDigest": "e8d7564942e422d0375f44119ea6a6d20d6cf776d40e55d246473b501cd75f5b",
+    "sourceDigest": "e7920c10c7d3a9818fb53b04c6f3f115dad1a3731a0c7c2c359aeabd147dd961",
     "feature": "ad01-content-propagation",
     "page": "C-14",
     "state": "Synthetic withdrawn shape",
@@ -489,7 +489,7 @@ const fixtures = (
   },
   {
     "id": "ad01-c-18-0",
-    "sourceDigest": "e8d7564942e422d0375f44119ea6a6d20d6cf776d40e55d246473b501cd75f5b",
+    "sourceDigest": "e7920c10c7d3a9818fb53b04c6f3f115dad1a3731a0c7c2c359aeabd147dd961",
     "feature": "ad01-content-propagation",
     "page": "C-18",
     "state": "Synthetic published shape",
@@ -509,7 +509,7 @@ const fixtures = (
   },
   {
     "id": "ad01-c-18-1",
-    "sourceDigest": "e8d7564942e422d0375f44119ea6a6d20d6cf776d40e55d246473b501cd75f5b",
+    "sourceDigest": "e7920c10c7d3a9818fb53b04c6f3f115dad1a3731a0c7c2c359aeabd147dd961",
     "feature": "ad01-content-propagation",
     "page": "C-18",
     "state": "Synthetic withdrawn shape",
@@ -529,7 +529,7 @@ const fixtures = (
   },
   {
     "id": "ad01-s-02-0",
-    "sourceDigest": "e8d7564942e422d0375f44119ea6a6d20d6cf776d40e55d246473b501cd75f5b",
+    "sourceDigest": "e7920c10c7d3a9818fb53b04c6f3f115dad1a3731a0c7c2c359aeabd147dd961",
     "feature": "ad01-content-propagation",
     "page": "S-02",
     "state": "Synthetic published shape",
@@ -583,7 +583,7 @@ const fixtures = (
   },
   {
     "id": "ad01-s-02-1",
-    "sourceDigest": "e8d7564942e422d0375f44119ea6a6d20d6cf776d40e55d246473b501cd75f5b",
+    "sourceDigest": "e7920c10c7d3a9818fb53b04c6f3f115dad1a3731a0c7c2c359aeabd147dd961",
     "feature": "ad01-content-propagation",
     "page": "S-02",
     "state": "Synthetic withdrawn shape",
@@ -637,10 +637,10 @@ const fixtures = (
   },
   {
     "id": "ad01-m-02-0",
-    "sourceDigest": "e8d7564942e422d0375f44119ea6a6d20d6cf776d40e55d246473b501cd75f5b",
+    "sourceDigest": "e7920c10c7d3a9818fb53b04c6f3f115dad1a3731a0c7c2c359aeabd147dd961",
     "feature": "ad01-content-propagation",
     "page": "M-02",
-    "state": "Synthetic draft catalog; room has no publication flag",
+    "state": "Synthetic draft catalog with unpublished room",
     "rows": [
       {
         "entity": "class_templates",
@@ -677,14 +677,15 @@ const fixtures = (
           "updated_at": "2026-10-25T00:00:00Z",
           "name": "FICTIONAL AD01 ROOM",
           "capacity": 8,
-          "heated": false
+          "heated": false,
+          "active": false
         }
       }
     ]
   },
   {
     "id": "ad01-m-02-1",
-    "sourceDigest": "e8d7564942e422d0375f44119ea6a6d20d6cf776d40e55d246473b501cd75f5b",
+    "sourceDigest": "e7920c10c7d3a9818fb53b04c6f3f115dad1a3731a0c7c2c359aeabd147dd961",
     "feature": "ad01-content-propagation",
     "page": "M-02",
     "state": "Synthetic published catalog; room unchanged",
@@ -731,7 +732,7 @@ const fixtures = (
   },
   {
     "id": "ad01-m-02-2",
-    "sourceDigest": "e8d7564942e422d0375f44119ea6a6d20d6cf776d40e55d246473b501cd75f5b",
+    "sourceDigest": "e7920c10c7d3a9818fb53b04c6f3f115dad1a3731a0c7c2c359aeabd147dd961",
     "feature": "ad01-content-propagation",
     "page": "M-02",
     "state": "Synthetic withdrawn catalog; room retained",
@@ -778,7 +779,7 @@ const fixtures = (
   },
   {
     "id": "ad01-m-02b-0",
-    "sourceDigest": "e8d7564942e422d0375f44119ea6a6d20d6cf776d40e55d246473b501cd75f5b",
+    "sourceDigest": "e7920c10c7d3a9818fb53b04c6f3f115dad1a3731a0c7c2c359aeabd147dd961",
     "feature": "ad01-content-propagation",
     "page": "M-02b",
     "state": "Synthetic unpublished FAQ draft",
@@ -808,7 +809,7 @@ const fixtures = (
   },
   {
     "id": "ad01-m-02b-1",
-    "sourceDigest": "e8d7564942e422d0375f44119ea6a6d20d6cf776d40e55d246473b501cd75f5b",
+    "sourceDigest": "e7920c10c7d3a9818fb53b04c6f3f115dad1a3731a0c7c2c359aeabd147dd961",
     "feature": "ad01-content-propagation",
     "page": "M-02b",
     "state": "Synthetic published FAQ",
@@ -838,7 +839,7 @@ const fixtures = (
   },
   {
     "id": "ad01-m-02b-2",
-    "sourceDigest": "e8d7564942e422d0375f44119ea6a6d20d6cf776d40e55d246473b501cd75f5b",
+    "sourceDigest": "e7920c10c7d3a9818fb53b04c6f3f115dad1a3731a0c7c2c359aeabd147dd961",
     "feature": "ad01-content-propagation",
     "page": "M-02b",
     "state": "Synthetic unpublished FAQ after withdrawal",
@@ -868,7 +869,7 @@ const fixtures = (
   },
   {
     "id": "ad01-m-14-0",
-    "sourceDigest": "e8d7564942e422d0375f44119ea6a6d20d6cf776d40e55d246473b501cd75f5b",
+    "sourceDigest": "e7920c10c7d3a9818fb53b04c6f3f115dad1a3731a0c7c2c359aeabd147dd961",
     "feature": "ad01-content-propagation",
     "page": "M-14",
     "state": "Synthetic generated dated occurrence",
@@ -922,7 +923,7 @@ const fixtures = (
   },
   {
     "id": "ad01-m-14-1",
-    "sourceDigest": "e8d7564942e422d0375f44119ea6a6d20d6cf776d40e55d246473b501cd75f5b",
+    "sourceDigest": "e7920c10c7d3a9818fb53b04c6f3f115dad1a3731a0c7c2c359aeabd147dd961",
     "feature": "ad01-content-propagation",
     "page": "M-14",
     "state": "Synthetic edited dated occurrence",
@@ -970,6 +971,354 @@ const fixtures = (
           "name": "FICTIONAL AD01 ROOM",
           "capacity": 8,
           "heated": false
+        }
+      }
+    ]
+  },
+  {
+    "id": "ad01-room-m-02-0",
+    "sourceDigest": "e7920c10c7d3a9818fb53b04c6f3f115dad1a3731a0c7c2c359aeabd147dd961",
+    "feature": "ad01-content-propagation",
+    "page": "M-02",
+    "state": "Synthetic draft room",
+    "rows": [
+      {
+        "entity": "rooms",
+        "values": {
+          "id": "cms-fictional-room",
+          "tenant_id": "cms-fictional-tenant",
+          "created_at": "2026-10-25T00:00:00Z",
+          "updated_at": "2026-10-25T00:00:00Z",
+          "name": "FICTIONAL ROOM",
+          "capacity": 8,
+          "heated": false,
+          "active": false
+        }
+      }
+    ]
+  },
+  {
+    "id": "ad01-room-m-02-1",
+    "sourceDigest": "e7920c10c7d3a9818fb53b04c6f3f115dad1a3731a0c7c2c359aeabd147dd961",
+    "feature": "ad01-content-propagation",
+    "page": "M-02",
+    "state": "Synthetic published room",
+    "rows": [
+      {
+        "entity": "rooms",
+        "values": {
+          "id": "cms-fictional-room",
+          "tenant_id": "cms-fictional-tenant",
+          "created_at": "2026-10-25T00:00:00Z",
+          "updated_at": "2026-10-25T00:00:00Z",
+          "name": "FICTIONAL ROOM",
+          "capacity": 8,
+          "heated": false,
+          "active": true
+        }
+      }
+    ]
+  },
+  {
+    "id": "ad01-room-m-02-2",
+    "sourceDigest": "e7920c10c7d3a9818fb53b04c6f3f115dad1a3731a0c7c2c359aeabd147dd961",
+    "feature": "ad01-content-propagation",
+    "page": "M-02",
+    "state": "Synthetic legacy room without publication flag",
+    "rows": [
+      {
+        "entity": "rooms",
+        "values": {
+          "id": "cms-fictional-room",
+          "tenant_id": "cms-fictional-tenant",
+          "created_at": "2026-10-25T00:00:00Z",
+          "updated_at": "2026-10-25T00:00:00Z",
+          "name": "FICTIONAL ROOM",
+          "capacity": 8,
+          "heated": false
+        }
+      }
+    ]
+  },
+  {
+    "id": "ad01-room-m-02-3",
+    "sourceDigest": "e7920c10c7d3a9818fb53b04c6f3f115dad1a3731a0c7c2c359aeabd147dd961",
+    "feature": "ad01-content-propagation",
+    "page": "M-02",
+    "state": "Synthetic retained unpublished room reference",
+    "rows": [
+      {
+        "entity": "rooms",
+        "values": {
+          "id": "cms-fictional-room",
+          "tenant_id": "cms-fictional-tenant",
+          "created_at": "2026-10-25T00:00:00Z",
+          "updated_at": "2026-10-25T00:00:00Z",
+          "name": "FICTIONAL ROOM",
+          "capacity": 8,
+          "heated": false,
+          "active": false
+        }
+      }
+    ]
+  },
+  {
+    "id": "ad01-room-m-14-0",
+    "sourceDigest": "e7920c10c7d3a9818fb53b04c6f3f115dad1a3731a0c7c2c359aeabd147dd961",
+    "feature": "ad01-content-propagation",
+    "page": "M-14",
+    "state": "Synthetic draft room",
+    "rows": [
+      {
+        "entity": "rooms",
+        "values": {
+          "id": "cms-fictional-room",
+          "tenant_id": "cms-fictional-tenant",
+          "created_at": "2026-10-25T00:00:00Z",
+          "updated_at": "2026-10-25T00:00:00Z",
+          "name": "FICTIONAL ROOM",
+          "capacity": 8,
+          "heated": false,
+          "active": false
+        }
+      }
+    ]
+  },
+  {
+    "id": "ad01-room-m-14-1",
+    "sourceDigest": "e7920c10c7d3a9818fb53b04c6f3f115dad1a3731a0c7c2c359aeabd147dd961",
+    "feature": "ad01-content-propagation",
+    "page": "M-14",
+    "state": "Synthetic published room",
+    "rows": [
+      {
+        "entity": "rooms",
+        "values": {
+          "id": "cms-fictional-room",
+          "tenant_id": "cms-fictional-tenant",
+          "created_at": "2026-10-25T00:00:00Z",
+          "updated_at": "2026-10-25T00:00:00Z",
+          "name": "FICTIONAL ROOM",
+          "capacity": 8,
+          "heated": false,
+          "active": true
+        }
+      }
+    ]
+  },
+  {
+    "id": "ad01-room-m-14-2",
+    "sourceDigest": "e7920c10c7d3a9818fb53b04c6f3f115dad1a3731a0c7c2c359aeabd147dd961",
+    "feature": "ad01-content-propagation",
+    "page": "M-14",
+    "state": "Synthetic legacy room without publication flag",
+    "rows": [
+      {
+        "entity": "rooms",
+        "values": {
+          "id": "cms-fictional-room",
+          "tenant_id": "cms-fictional-tenant",
+          "created_at": "2026-10-25T00:00:00Z",
+          "updated_at": "2026-10-25T00:00:00Z",
+          "name": "FICTIONAL ROOM",
+          "capacity": 8,
+          "heated": false
+        }
+      }
+    ]
+  },
+  {
+    "id": "ad01-room-m-14-3",
+    "sourceDigest": "e7920c10c7d3a9818fb53b04c6f3f115dad1a3731a0c7c2c359aeabd147dd961",
+    "feature": "ad01-content-propagation",
+    "page": "M-14",
+    "state": "Synthetic retained unpublished room reference",
+    "rows": [
+      {
+        "entity": "rooms",
+        "values": {
+          "id": "cms-fictional-room",
+          "tenant_id": "cms-fictional-tenant",
+          "created_at": "2026-10-25T00:00:00Z",
+          "updated_at": "2026-10-25T00:00:00Z",
+          "name": "FICTIONAL ROOM",
+          "capacity": 8,
+          "heated": false,
+          "active": false
+        }
+      }
+    ]
+  },
+  {
+    "id": "ad01-room-s-04-0",
+    "sourceDigest": "e7920c10c7d3a9818fb53b04c6f3f115dad1a3731a0c7c2c359aeabd147dd961",
+    "feature": "ad01-content-propagation",
+    "page": "S-04",
+    "state": "Synthetic draft room",
+    "rows": [
+      {
+        "entity": "rooms",
+        "values": {
+          "id": "cms-fictional-room",
+          "tenant_id": "cms-fictional-tenant",
+          "created_at": "2026-10-25T00:00:00Z",
+          "updated_at": "2026-10-25T00:00:00Z",
+          "name": "FICTIONAL ROOM",
+          "capacity": 8,
+          "heated": false,
+          "active": false
+        }
+      }
+    ]
+  },
+  {
+    "id": "ad01-room-s-04-1",
+    "sourceDigest": "e7920c10c7d3a9818fb53b04c6f3f115dad1a3731a0c7c2c359aeabd147dd961",
+    "feature": "ad01-content-propagation",
+    "page": "S-04",
+    "state": "Synthetic published room",
+    "rows": [
+      {
+        "entity": "rooms",
+        "values": {
+          "id": "cms-fictional-room",
+          "tenant_id": "cms-fictional-tenant",
+          "created_at": "2026-10-25T00:00:00Z",
+          "updated_at": "2026-10-25T00:00:00Z",
+          "name": "FICTIONAL ROOM",
+          "capacity": 8,
+          "heated": false,
+          "active": true
+        }
+      }
+    ]
+  },
+  {
+    "id": "ad01-room-s-04-2",
+    "sourceDigest": "e7920c10c7d3a9818fb53b04c6f3f115dad1a3731a0c7c2c359aeabd147dd961",
+    "feature": "ad01-content-propagation",
+    "page": "S-04",
+    "state": "Synthetic legacy room without publication flag",
+    "rows": [
+      {
+        "entity": "rooms",
+        "values": {
+          "id": "cms-fictional-room",
+          "tenant_id": "cms-fictional-tenant",
+          "created_at": "2026-10-25T00:00:00Z",
+          "updated_at": "2026-10-25T00:00:00Z",
+          "name": "FICTIONAL ROOM",
+          "capacity": 8,
+          "heated": false
+        }
+      }
+    ]
+  },
+  {
+    "id": "ad01-room-s-04-3",
+    "sourceDigest": "e7920c10c7d3a9818fb53b04c6f3f115dad1a3731a0c7c2c359aeabd147dd961",
+    "feature": "ad01-content-propagation",
+    "page": "S-04",
+    "state": "Synthetic retained unpublished room reference",
+    "rows": [
+      {
+        "entity": "rooms",
+        "values": {
+          "id": "cms-fictional-room",
+          "tenant_id": "cms-fictional-tenant",
+          "created_at": "2026-10-25T00:00:00Z",
+          "updated_at": "2026-10-25T00:00:00Z",
+          "name": "FICTIONAL ROOM",
+          "capacity": 8,
+          "heated": false,
+          "active": false
+        }
+      }
+    ]
+  },
+  {
+    "id": "ad01-room-s-05-0",
+    "sourceDigest": "e7920c10c7d3a9818fb53b04c6f3f115dad1a3731a0c7c2c359aeabd147dd961",
+    "feature": "ad01-content-propagation",
+    "page": "S-05",
+    "state": "Synthetic draft room",
+    "rows": [
+      {
+        "entity": "rooms",
+        "values": {
+          "id": "cms-fictional-room",
+          "tenant_id": "cms-fictional-tenant",
+          "created_at": "2026-10-25T00:00:00Z",
+          "updated_at": "2026-10-25T00:00:00Z",
+          "name": "FICTIONAL ROOM",
+          "capacity": 8,
+          "heated": false,
+          "active": false
+        }
+      }
+    ]
+  },
+  {
+    "id": "ad01-room-s-05-1",
+    "sourceDigest": "e7920c10c7d3a9818fb53b04c6f3f115dad1a3731a0c7c2c359aeabd147dd961",
+    "feature": "ad01-content-propagation",
+    "page": "S-05",
+    "state": "Synthetic published room",
+    "rows": [
+      {
+        "entity": "rooms",
+        "values": {
+          "id": "cms-fictional-room",
+          "tenant_id": "cms-fictional-tenant",
+          "created_at": "2026-10-25T00:00:00Z",
+          "updated_at": "2026-10-25T00:00:00Z",
+          "name": "FICTIONAL ROOM",
+          "capacity": 8,
+          "heated": false,
+          "active": true
+        }
+      }
+    ]
+  },
+  {
+    "id": "ad01-room-s-05-2",
+    "sourceDigest": "e7920c10c7d3a9818fb53b04c6f3f115dad1a3731a0c7c2c359aeabd147dd961",
+    "feature": "ad01-content-propagation",
+    "page": "S-05",
+    "state": "Synthetic legacy room without publication flag",
+    "rows": [
+      {
+        "entity": "rooms",
+        "values": {
+          "id": "cms-fictional-room",
+          "tenant_id": "cms-fictional-tenant",
+          "created_at": "2026-10-25T00:00:00Z",
+          "updated_at": "2026-10-25T00:00:00Z",
+          "name": "FICTIONAL ROOM",
+          "capacity": 8,
+          "heated": false
+        }
+      }
+    ]
+  },
+  {
+    "id": "ad01-room-s-05-3",
+    "sourceDigest": "e7920c10c7d3a9818fb53b04c6f3f115dad1a3731a0c7c2c359aeabd147dd961",
+    "feature": "ad01-content-propagation",
+    "page": "S-05",
+    "state": "Synthetic retained unpublished room reference",
+    "rows": [
+      {
+        "entity": "rooms",
+        "values": {
+          "id": "cms-fictional-room",
+          "tenant_id": "cms-fictional-tenant",
+          "created_at": "2026-10-25T00:00:00Z",
+          "updated_at": "2026-10-25T00:00:00Z",
+          "name": "FICTIONAL ROOM",
+          "capacity": 8,
+          "heated": false,
+          "active": false
         }
       }
     ]

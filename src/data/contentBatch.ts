@@ -1,4 +1,5 @@
 import { tenant } from '../tenant/tenant';
+import { requireAssignableRoom, roomIsPublished } from './roomPublication';
 import type { BaseRow } from './schema';
 import type { Role } from '../auth/roles';
 import { roleCan } from '../auth/permissions';
@@ -8,7 +9,7 @@ export interface ContentBatch { table: ContentEntity; changes: ContentChange[]; 
 export interface ContentBatchResult { changes: ContentChange[] }
 const FIELDS: Record<ContentEntity, string[]> = {
  class_templates: ['teacher_id', 'modality_id', 'room_id', 'weekday', 'start_time', 'duration_min', 'capacity', 'level', 'active'],
- teachers: ['active'], modalities: ['active', 'heated', 'duration_min', 'intensity', 'tone'], rooms: ['heated', 'capacity'],
+ teachers: ['active'], modalities: ['active', 'heated', 'duration_min', 'intensity', 'tone'], rooms: ['active', 'heated', 'capacity'],
 };
 /** Demo-only transaction. Production needs an authenticated, tenant-scoped RPC and row locks. */
 export function applyContentBatch(db: Record<string, BaseRow[]>, command: ContentBatch, tenantId: string, now = new Date().toISOString()): { db: Record<string, BaseRow[]>; result: ContentBatchResult } {
@@ -22,6 +23,7 @@ export function applyContentBatch(db: Record<string, BaseRow[]>, command: Conten
   const keys = Object.keys(change.patch);
   if (!keys.length || keys.some(k => !FIELDS[table].includes(k))) throw new Error('content_field');
   const next: BaseRow = { ...row, ...change.patch, updated_at: now };
+  if (table === 'rooms' && change.patch.active === true && (typeof next.name !== 'string' || !next.name.trim() || !Number.isSafeInteger(next.capacity) || Number(next.capacity) < 1)) throw new Error('content_value');
   for (const key of ['active', 'heated']) if (key in change.patch && typeof next[key] !== 'boolean') throw new Error('content_value');
   for (const key of ['capacity', 'duration_min', 'intensity']) if (key in change.patch && (!Number.isSafeInteger(next[key]) || Number(next[key]) < 1)) throw new Error('content_value');
   if ('intensity' in change.patch && Number(next.intensity) > 5) throw new Error('content_value');
@@ -29,7 +31,7 @@ export function applyContentBatch(db: Record<string, BaseRow[]>, command: Conten
   if ('start_time' in change.patch && !/^([01]\d|2[0-3]):[0-5]\d$/.test(String(next.start_time))) throw new Error('content_value');
   if ('level' in change.patch && !['all','beginner','intermediate','advanced'].includes(String(next.level))) throw new Error('content_value');
   if ('tone' in change.patch && !['moss','river','clay','sun','sage','slate','plum'].includes(String(next.tone))) throw new Error('content_value');
-  for (const [key, ref] of [['teacher_id','teachers'], ['modality_id','modalities'], ['room_id','rooms']]) if (key in change.patch && !copy[ref]?.some(x => x.id === next[key] && x.tenant_id === tenantId && x.active !== false)) throw new Error('content_reference');
+  for (const [key, ref] of [['teacher_id','teachers'], ['modality_id','modalities'], ['room_id','rooms']]) if (key in change.patch) { if (ref === 'rooms') { if (next[key] !== row[key]) requireAssignableRoom(copy.rooms, String(next[key]), tenantId); } else if (!copy[ref]?.some(x => x.id === next[key] && x.tenant_id === tenantId && x.active !== false)) throw new Error('content_reference'); }
   if (table === 'class_templates') {
    const room = copy.rooms.find(x => x.id === next.room_id && x.tenant_id === tenantId);
    if (!room || Number(next.capacity) > Math.min(Number(room.capacity), room.id === 'room_main' ? tenant.studio.mats : Infinity)) throw new Error('content_capacity');
@@ -38,7 +40,7 @@ export function applyContentBatch(db: Record<string, BaseRow[]>, command: Conten
   if (table === 'rooms' && 'capacity' in change.patch && copy.class_sessions.some(s => s.room_id === row.id && s.status === 'scheduled' && String(s.starts_at) > now && Math.max(Number(s.capacity), Number(s.booked_count)) > Number(next.capacity))) throw new Error('content_booked');
   const index = copy[table].findIndex(x => x.id === row.id);
   copy[table][index] = next;
-  reverse.push({ id: row.id, before: structuredClone(next), patch: Object.fromEntries(keys.map(k => [k, row[k]])) });
+  reverse.push({ id: row.id, before: structuredClone(next), patch: Object.fromEntries(keys.map(k => [k, table === 'rooms' && k === 'active' ? roomIsPublished(row, tenantId) : row[k]])) });
  }
  const audit: BaseRow = { id: `batch_${crypto.randomUUID()}`, tenant_id: tenantId, created_at: now, updated_at: now, actor_id: actorId, action: command.undo ? 'content.bulk.undo' : 'content.bulk.update', entity: table, entity_id: null, ip: null, diff: { role, source: 'admin', ids: changes.map(c => c.id), fields: [...new Set(changes.flatMap(c => Object.keys(c.patch)))] } };
  copy.audit_log = [...(copy.audit_log ?? []), audit];

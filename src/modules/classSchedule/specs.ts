@@ -4,7 +4,7 @@ export const scheduleSpec: PageSpec = {
  purpose: { es: 'Gestionar sesiones fechadas y sus vínculos con el catálogo.', en: 'Manage dated sessions and their catalogue links.' },
  roles: ['super_admin', 'admin'], layout: ['notice', 'filters', 'sessions'],
  data: ['class_sessions', 'class_templates', 'teachers', 'modalities', 'rooms', 'audit_log'],
- logic: ['Templates are recurrence definitions; sessions are individual dated occurrences.', 'Calendar, list and table share filters.', 'Past sessions are read-only. Capacity cannot fall below occupied seats.', 'Current provider is a browser-local demo; no production booking changes.'],
+ logic: ['Templates are recurrence definitions; sessions are individual dated occurrences.', 'Calendar, list and table share filters.', 'Past sessions are read-only. Capacity cannot fall below occupied seats.', 'New room assignments and recurrence generation require a published room; unchanged existing references remain readable. No existing session cancellation or admission rule changes.', 'Current provider is a browser-local demo; no production booking changes.'],
  integrations: ['Supabase (not connected)'], states: ['Loading', 'Empty', 'Filtered', 'Calendar', 'List', 'Table', 'Editing', 'Conflict', 'Error', 'Read-only history'],
 };
 

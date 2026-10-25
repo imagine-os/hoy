@@ -1,0 +1,15 @@
+# Prospective room publication
+
+AD-01's [room contract](../../src/modules/admin/roomPublication.contract.ts) covers M-02 catalogue publication and prospective room choices in M-14, S-05 and S-04. `rooms.active` is an optional client field, with backend mapping pending. It is not a new database column, table or authorization rule. Existing legacy rows with no value remain published; explicit `true` is published, while `false` or malformed values cannot be selected for a new room assignment. New room drafts start unpublished. Reading legacy rows does not backfill them; Undo of an explicit publication change restores a boolean with the same published meaning.
+
+Use the shared `roomIsPublished` and `requireAssignableRoom` helpers for the current-tenant room. Room publication governs new references, explicit generation and new space bookings. Keep unchanged references readable, including historical labels, existing session/space-booking readback and linked existing records. Unpublishing a room does not cancel existing classes, change their visibility/admission, refund payments or rewrite prior records.
+
+S-04 already encloses the entire sale in `data.atomic<Sale>(async data => { ... })`, including payment, receipt, audit and any new space-booking insertion. The baseline wrapper spans `RegisterPage.tsx:164–238`. A staged room-assignment failure must roll back the whole sale; no financial workflow rewrite is part of room publication. Keep this actual atomic boundary and test rollback before accepting a stale-choice repair.
+
+For every changed room field or consumer, update the contract, relevant page specs, synthetic fixtures, adapter tests and the bounded AD-01 CMS descriptor together. Declare `rooms.active` as a client-only boolean extension in that descriptor until its backend mapping exists. Preserve all existing room-name propagation coverage from the checked PR103 base. Do not refresh source/test hashes without reviewing the changed behavior and fixture adequacy.
+
+Run `node scripts/test-room-publication-contract.mjs` for actual schema/client-type, helper/caller/spec and fixture/test-reference drift. Then run the relevant room publication domain, lifecycle and native tests. The drift check inspects source bindings and does not execute or certify runtime tests. Keep all fixtures fictional. These controls do not establish real authorization, server concurrency, SQL migration, global CMS readiness or a new cancellation/booking policy.
+
+## Verification
+
+The isolated dependent slice passed the full build, 76 domain groups, 16 actual-control/interruption groups and four compiled EN/ES390/1280 room cases with dark captures. Retained native AD-01 development and compiled cycles each passed four groups/116 observations with zero defects or errors. Existing content-recovery/context/batch, class-management/provider and admission domains passed. CMS source bindings and checker negative cases passed. These are synthetic browser-local checks, not deployment, backend acceptance or whole AD-01 readiness.

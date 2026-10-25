@@ -260,6 +260,8 @@ export const strings: StringTable = {
   'staff.register.done.payout': { es: 'Pago al profesor {name}: {amount} (nómina)', en: 'Teacher payout {name}: {amount} (payroll)' },
 
   // S-05
+  'staff.rooms.unpublished': { es: 'Esta sala no está publicada para nuevas reservas de espacio.', en: 'This room is not published for new space bookings.' },
+  'staff.booking.error.room_unavailable': { es: 'La sala ya no está publicada. Revisa la reserva; no se guardó la venta.', en: 'The room is no longer published. Review the booking; the sale was not saved.' },
   'staff.rooms.title': { es: 'Salas y reservas de espacio', en: 'Rooms & space bookings' },
   'staff.rooms.subtitle': { es: 'Cada sala por día: sus clases y todo lo demás — eventos privados, alquileres, clases privadas, mantenimiento.', en: 'Every room by day: its classes and everything else — private events, rentals, private classes, maintenance.' },
   'staff.rooms.anyDate': { es: 'Ir a una fecha', en: 'Jump to a date' },

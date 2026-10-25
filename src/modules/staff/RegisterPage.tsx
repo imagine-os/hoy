@@ -1,3 +1,4 @@
+import { roomIsPublished } from '../../data/roomPublication';
 import { validBookingContact, requireExistingBookingContact } from './bookingContact';
 import { requireSessionAdmission, assertAdmissionContext, sessionAdmissionAvailable } from '../../data/sessionAdmission';
 import { captureLaunchReceipt, receiptReference } from '../../data/launchReceipts';
@@ -110,7 +111,7 @@ export function RegisterPage() {
   const windowOk = !!special.roomId && !!bookingStart && !!bookingEnd && bookingStart < bookingEnd;
   const conflicts = useMemo(() => (special.on && special.roomId ? findConflicts({ roomId: special.roomId, startsAt: bookingStart, endsAt: bookingEnd, excludeBookingId: special.bookingId }, sessions, spaceBookings) : []), [special.on, special.roomId, special.bookingId, bookingStart, bookingEnd, sessions, spaceBookings]);
   const linkedBooking = special.bookingId ? spaceBookings.find((b) => b.id === special.bookingId) : undefined;
-  const specialOk = !special.on || (special.concept.trim().length > 0 && specialAmount > 0 && (!special.roomId || (windowOk && conflicts.length === 0)));
+  const specialOk = !special.on || (special.concept.trim().length > 0 && specialAmount > 0 && (!special.roomId || ((!!linkedBooking || roomIsPublished(rooms.find(r => r.id === special.roomId))) && windowOk && conflicts.length === 0)));
 
   /** The private-class price for `people` people: the class plus each additional person (pricing.ts). */
   const privatePrice = (people: number) => (priceItem('private')?.price ?? 0) + Math.max(0, people - 1) * (priceItem('private_extra')?.price ?? 0);
@@ -237,7 +238,7 @@ export function RegisterPage() {
       return { payment, number, subtotal: totals.subtotal, tax: totals.tax, total: totals.total, customer: displayName, contact, item, checkedIn, isNew, booking: bookingTitle, payout: payoutDone };
       }, { idempotencyKey: saleKey.current });
       if(isCurrent())setDone(result);
-    } catch (e) { const code = e instanceof Error ? e.message : ''; setError(trialErrorKey(e)??(['booking_contact_required','payment_confirmation_required','session_unavailable','session_full','booking_exists','same_day_conflict','insufficient_classes','package_frozen','package_expired','mock_atomic_adapter_required'].includes(code) ? code : 'failed')); } finally { setBusy(false); saleBusy.current = false; }
+    } catch (e) { const code = e instanceof Error ? e.message : ''; setError(trialErrorKey(e)??(['booking_contact_required','payment_confirmation_required','session_unavailable','session_full','booking_exists','same_day_conflict','insufficient_classes','package_frozen','package_expired','mock_atomic_adapter_required','room_unavailable'].includes(code) ? code : 'failed')); } finally { setBusy(false); saleBusy.current = false; }
   };
 
   const reset = () => { saleKey.current = crypto.randomUUID(); setDone(null); setForm({ first: '', last: '', phone: '', email: '', birthday: '', emergency: '', consent: false }); setPersonId(null); setExistingQ(''); setMode('new'); setItemId('trial'); setMethod('cash'); setPaidRaw(null); setNote(''); setSpecial(NO_SPECIAL); setContactName(''); };
@@ -335,7 +336,8 @@ export function RegisterPage() {
                 <Field label={t('staff.register.especial.amount')} required hint={t('staff.register.especial.amount.hint')}>{(id) => <Input id={id} inputMode="numeric" value={special.amountRaw} onChange={(e) => { setSpecial({ ...special, amountRaw: e.target.value }); setPaidRaw(null); }} invalid={specialAmount <= 0} />}</Field>
                 <Field label={t('staff.register.especial.teacher')}>{(id) => <Select id={id} value={special.teacherId} onChange={(e) => setSpecial({ ...special, teacherId: e.target.value })}><option value="">{t('staff.register.especial.teacher.none')}</option>{teachers.map((x) => <option key={x.id} value={x.id}>{x.display_name}</option>)}</Select>}</Field>
                 {specialTeacher && <div className="register-full"><Field label={t('staff.register.especial.payout')} hint={t('staff.register.especial.payout.hint', { rate: formatCOP(specialTeacher.rate_per_class ?? 0, lang) })}>{(id) => <Input id={id} inputMode="numeric" value={special.payoutRaw} onChange={(e) => setSpecial({ ...special, payoutRaw: e.target.value })} placeholder={String(specialTeacher.rate_per_class ?? '')} />}</Field></div>}
-                <Field label={t('staff.register.especial.room')}>{(id) => <Select id={id} value={special.roomId} onChange={(e) => setSpecial({ ...special, roomId: e.target.value })} disabled={!!linkedBooking}><option value="">{t('staff.register.especial.room.none')}</option>{rooms.map((r) => <option key={r.id} value={r.id}>{r.name} · {t('core.common.capacity', { n: r.capacity })}</option>)}</Select>}</Field>
+                <Field label={t('staff.register.especial.room')}>{(id) => <Select id={id} value={special.roomId} onChange={(e) => setSpecial({ ...special, roomId: e.target.value })} disabled={!!linkedBooking}><option value="">{t('staff.register.especial.room.none')}</option>{rooms.map((r) => <option key={r.id} value={r.id} disabled={!roomIsPublished(r) && !linkedBooking}>{r.name} · {t('core.common.capacity', { n: r.capacity })}</option>)}</Select>}</Field>
+                {special.roomId && !linkedBooking && !roomIsPublished(rooms.find(r => r.id === special.roomId)) && <p className="small muted" role="status">{t('staff.rooms.unpublished')}</p>}
                 {special.roomId && (
                   <>
                     <Field label={t('staff.register.especial.kind')}>{(id) => <Select id={id} value={special.kind} onChange={(e) => setSpecial({ ...special, kind: e.target.value as SpaceBookingKind })} disabled={!!linkedBooking}>{BOOKING_KINDS.filter((k) => k !== 'maintenance' && k !== 'blocked').map((k) => <option key={k} value={k}>{bi(KIND_LABEL[k])}</option>)}</Select>}</Field>

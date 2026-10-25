@@ -1,3 +1,4 @@
+import { requireAssignableRoom } from './roomPublication';
 import { tenant } from '../tenant/tenant';
 import type { BaseRow, ClassSessionRow } from './schema';
 import type { Role } from '../auth/roles';
@@ -27,7 +28,7 @@ export function generateRecurrence(db: Record<string,BaseRow[]>, command: Genera
  if (!template.active) throw new Error('recurrence_unpublished');
  const expected = previewRecurrence(template,now);
  if (!command.occurrences.length || JSON.stringify(command.occurrences) !== JSON.stringify(expected)) throw new Error('recurrence_preview_changed');
- const room = db.rooms.find(r=>r.id===template.room_id && r.tenant_id===tenantId);
+ const room = requireAssignableRoom(db.rooms, String(template.room_id), tenantId);
  if (!room || !Number.isSafeInteger(template.capacity) || Number(template.capacity)<1 || Number(template.capacity)>Math.min(Number(room.capacity), room.id === 'room_main' ? tenant.studio.mats : Infinity)) throw new Error('recurrence_capacity');
  for (const [field,table] of [['teacher_id','teachers'],['modality_id','modalities']]) if (!db[table].some(r=>r.id===template[field] && r.tenant_id===tenantId && r.active !== false)) throw new Error('recurrence_reference');
  const copy = structuredClone(db); let created=0, skipped=0;

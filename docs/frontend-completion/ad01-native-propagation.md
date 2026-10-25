@@ -10,7 +10,7 @@ Fresh local development and compiled-preview matrices each passed four groups, 1
 
 ## Acceptance limits
 
-This is a bounded AD-01 slice. Rooms have no publication field/control. Reception has no FAQ consumer and does not display room/theme in its selected-class view. Mounted stale-response/error handling remains a separate dependency on held AD-07 work, rather than a claim established by these navigation-based checks. No whole-criterion readiness, real backend synchronization, timer/release policy, financial mutation or message sending is asserted. Merge and deployment remain held.
+This is a bounded AD-01 slice. The checked PR103 base had no room publication field/control; the dependent [prospective room publication contract](room-publication-contract.md) adds a browser-only active state for new assignments while preserving existing references. Reception has no FAQ consumer and does not display room/theme in its selected-class view. Mounted stale-response/error handling remains a separate dependency on held AD-07 work, rather than a claim established by these navigation-based checks. No whole-criterion readiness, real backend synchronization, timer/release policy, financial mutation or message sending is asserted. Merge and deployment remain held.
 
 Run `npm run check:cms`, `node scripts/check-cms-contracts.mjs --self-test`, `npm run build`, the retained content/admission domain suites and the native script against the built preview. CI runs the same default four-group browser matrix.
 

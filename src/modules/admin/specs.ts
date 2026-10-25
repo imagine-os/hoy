@@ -15,7 +15,7 @@ export const M02 = defineSpec({
   roles: [...new Set([...canvasSpecs['M-02'].roles, 'marketing' as const])],
   layout: ['ContentSubNav (Catálogo · Artículos · FAQ · Eventos · Medios)', 'EntityTabs (Classes / Teachers / Modalities / Rooms)', 'ListView (DataTable / cards, search, selection, publish toggle)', 'BulkEdit (preview, atomic apply, guarded undo)', 'RecurrencePreview (date range and explicit generation)', 'EditDrawer (fields, ES / EN, publish state)', 'PreviewPane'],
   data: ['class_templates', 'teachers', 'modalities', 'rooms', 'audit_log'],
-  notes: [...(canvasSpecs['M-02'].notes ?? []), 'Pricing is not editable here: prices live in src/tenant/pricing.ts (P-01).', 'Publish state = the active column of each table.', 'M-02 is now a family: this page is the catalogue (the four scheduling entities); M-02a…M-02d are articles, FAQ, events and the media library, behind one shared sub-navigation.'],
+  notes: [...(canvasSpecs['M-02'].notes ?? []), 'Pricing is not editable here: prices live in src/tenant/pricing.ts (P-01).', 'Publish state = the active column; room active is an optional browser-only extension with backend mapping pending. Missing legacy room state remains published; new rooms start unpublished. Prospective room selection/generation rejects unpublished rooms without cancelling existing classes or historical references.', 'M-02 is now a family: this page is the catalogue (the four scheduling entities); M-02a…M-02d are articles, FAQ, events and the media library, behind one shared sub-navigation.'],
 });
 
 /** M-02 family leaf. Each one keeps M-02's purpose and adds its own layout, data and rules. */

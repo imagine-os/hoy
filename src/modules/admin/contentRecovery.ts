@@ -4,6 +4,7 @@ import type { BaseRow, FaqEntryRow, UserRow } from '../../data/schema';
 import type { Role } from '../../auth/roles';
 import { roleCan } from '../../auth/permissions';
 import { tenant } from '../../tenant/tenant';
+import { requireAssignableRoom } from '../../data/roomPublication';
 
 type Table = 'class_templates' | 'teachers' | 'modalities' | 'rooms' | 'faq_entries';
 export type ContentIntent =
@@ -33,7 +34,7 @@ const allowed: Record<Table, string[]> = {
   class_templates: ['generation_mode','start_date','end_date','title','theme','description','modality_id','teacher_id','room_id','weekday','start_time','duration_min','capacity','level','active'],
   teachers: ['user_id','display_name','bio','photo_url','specialties','certifications','rate_per_class','active','rating_avg'],
   modalities: ['slug','name_es','name_en','tone','description','intensity','heated','duration_min','active'],
-  rooms: ['name','capacity','heated','notes'],
+  rooms: ['name','capacity','heated','notes','active'],
   faq_entries: ['group_key','group_title','group_lead','page','question','answer','sort','published'],
 };
 const same = (a: unknown, b: unknown): boolean => JSON.stringify(a) === JSON.stringify(b);
@@ -93,6 +94,7 @@ export async function writeContent(data: DataProvider, actor: ContentActor, inte
       const checked = Object.fromEntries(Object.entries(intent.patch).filter(([k,v]) => !(v === '' && ['title','display_name','name_es','name'].includes(k))));
       validate(table, checked, actor);
       if (intent.patch.active === true || intent.patch.published === true) throw Error('content_invalid');
+      if (table === 'class_templates' && intent.patch.room_id) requireAssignableRoom(await stage.list('rooms'), String(intent.patch.room_id), tenant.id);
       const row = await stage.insert(table, intent.patch); id = row.id;
       await audit('content.create', id, [id], Object.keys(intent.patch));
     } else if (intent.kind === 'reorder') {
@@ -114,6 +116,7 @@ export async function writeContent(data: DataProvider, actor: ContentActor, inte
       else {
         const patch = intent.patch ?? {}; validate(table, patch, actor);
         if ('rate_per_class' in patch && !roleCan(actor.role, 'payroll.write')) throw Error('content_denied');
+        if (table === 'class_templates' && patch.room_id && patch.room_id !== row.room_id) requireAssignableRoom(await stage.list('rooms'), String(patch.room_id), tenant.id);
         await stage.update(table, id, patch);
         const ids = [id];
         if (table === 'faq_entries') {

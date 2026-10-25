@@ -4,13 +4,21 @@ const feature = (
 /* cms-data:start */
 {
   "id": "ad01-content-propagation",
-  "revision": 1,
+  "revision": 2,
   "backendMapping": "pending",
   "subscription": "local-events",
   "tenantField": "tenant_id",
   "identityField": "id",
-  "actorScope": "AD-01 FeatureLog87/source88: bounded fictional local content inventory, not whole-criterion readiness. Existing route roles/content.write guards remain unchanged. Actual M-02 modes: DataTable/cards and entity Drawer; M-02b: section/review list and Drawer; M-14: calendar/list/DataTable and Drawer. views=[] because local view switches/search are not persisted TableViewConfig preferences. Consumers are calendars/cards/FAQ lists/roster; no forced TableTool adoption. Rooms have no publication field/control; reception has no FAQ consumer or room/theme display. Legacy specEntities are bound exactly, including legacy memberships/plans/tenants in S-02; class_templates/class_ledger consumer dependencies beyond legacy specs are declared separately. Local events only; backend mapping pending, no new policy/auth/timer/release guarantee.",
+  "actorScope": "AD-01 FeatureLog87/source88: bounded fictional local content inventory, not whole-criterion readiness. Existing route roles/content.write guards remain unchanged. Actual M-02 modes: DataTable/cards and entity Drawer; M-02b: section/review list and Drawer; M-14: calendar/list/DataTable and Drawer. views=[] because local view switches/search are not persisted TableViewConfig preferences. Consumers are calendars/cards/FAQ lists/roster; no forced TableTool adoption. Rooms now have a browser-only prospective active publication state: missing legacy is published, new drafts unpublished; existing class admission and historical references stay unchanged. Reception still has no FAQ consumer or class room/theme display. S-04/S-05 room-selection consumers are scoped separately. Legacy specEntities are bound exactly, including legacy memberships/plans/tenants in S-02; class_templates/class_ledger consumer dependencies beyond legacy specs are declared separately. Local events only; backend mapping pending, no new policy/auth/timer/release guarantee.",
   "sources": [
+    {
+      "path": "scripts/room-publication-fixture.mjs",
+      "sha256": "a4970100fe5adce2dd3b03defc3162595f81f89d50c46f267ada8cfd9976a96e"
+    },
+    {
+      "path": "scripts/room-publication-harness.tsx",
+      "sha256": "4cbe9e34fd834dec5f7be79c59d6525b473d584549c8ffe6f0720c8b3466bcd4"
+    },
     {
       "path": "src/components/organism/ClassCard/ClassCard.tsx",
       "sha256": "64bd8264828d3b3fbbe4e4727bee69f5d4214b01fb86f2bf2cf6d17e944fc550"
@@ -20,32 +28,36 @@ const feature = (
       "sha256": "d674d79766e669e4669662281b736f0f518e5f744d6e5ba9dd3f4f9352d49e7c"
     },
     {
-      "path": "src/data/DataContext.tsx",
-      "sha256": "3a161e57f0c9548e111e8e99ec714a2ab153507ae7180db66ad95839ac324f15"
-    },
-    {
-      "path": "src/data/MockProvider.ts",
-      "sha256": "d4956fdff4c49724ec5e52ed731651d849698c10ed39b6982ef961ab4a975048"
-    },
-    {
       "path": "src/data/bookingContact.ts",
       "sha256": "1225c53d18134aa29e830bd79e76ba2765d6838e3e2b10736b4ed78bc689c8fb"
     },
     {
       "path": "src/data/classRecurrence.ts",
-      "sha256": "f3e6cd2664013fbde2cccd22280bde74ab22691eefaf18918c78e538ad8c35b5"
+      "sha256": "4ed87836d58fc39a1f4c2933d3d7e3b0ab8af7fa4a30fe44a3eb1d17cd962839"
     },
     {
       "path": "src/data/contentBatch.ts",
-      "sha256": "545e26ed9c57fc8a57151bdafcd1f25730d7451e0d6aea0e536d04c280c9984f"
+      "sha256": "21d26863b6585131a409e992e056692fe7f4a316ecd88aa5e5dad994f3667294"
     },
     {
       "path": "src/data/dailyAdmission.ts",
       "sha256": "c77aa3e516ab1ef07b5f095fc7b1aea58f3dac83311cdd3a355dc160caed4823"
     },
     {
+      "path": "src/data/DataContext.tsx",
+      "sha256": "3a161e57f0c9548e111e8e99ec714a2ab153507ae7180db66ad95839ac324f15"
+    },
+    {
+      "path": "src/data/MockProvider.ts",
+      "sha256": "b24e5770850283445b9cdf1dc71ed1a159ab864aa811287f439c38ec26ca54cd"
+    },
+    {
+      "path": "src/data/roomPublication.ts",
+      "sha256": "d3f9f38ff4091eac68ff1776b6ff0f721cdf7044dbd4009afdfbd9ac49de9fcc"
+    },
+    {
       "path": "src/data/schema.ts",
-      "sha256": "c36b53dbb55139ba16ed284fe04d61504e55dfd2143c4f599fdd814bd5f16ed0"
+      "sha256": "66b229b0d71c70f3b187dac584338142a21536c5f2a21aa4588af6e555e1975a"
     },
     {
       "path": "src/data/sessionAdmission.ts",
@@ -56,6 +68,10 @@ const feature = (
       "sha256": "e522714e1c2642b3b312834e6f62e19222d25a0de61e0a9e9630eb9042386ebd"
     },
     {
+      "path": "src/data/sessionEditorial.ts",
+      "sha256": "46e6551359cb4fe47b29c3d1b75e6948f72f42ec9dbddb01bb07ebd68dd8aa6d"
+    },
+    {
       "path": "src/data/types.ts",
       "sha256": "e61845cd49fd4bf4625deeb46b6993c8023d2a077e416c0c6cca38b2cd80b5af"
     },
@@ -64,28 +80,32 @@ const feature = (
       "sha256": "3115d284da4bd9ff92b11e90d49eea3b859b15cbe8c84ebf40d88dc0c476f976"
     },
     {
+      "path": "src/modules/admin/contentNav.tsx",
+      "sha256": "a432792177a313999dae2c021a1dd2e5e2c05d0557d3529f7e8381eb23d4a184"
+    },
+    {
       "path": "src/modules/admin/ContentPage.tsx",
-      "sha256": "a1ec16026bc731dcfe772ac11223ee4e6f378d1916a69ec3b99bc63b0e5dcc86"
+      "sha256": "2146e5be7549f90c9464702543aa132c4a616cc4378aeb272f93c8cf018be874"
+    },
+    {
+      "path": "src/modules/admin/contentRecovery.ts",
+      "sha256": "7f910f2dc4714904d275cf683421dc41db2d63b6af01d5af18d46c9a9c938ee9"
     },
     {
       "path": "src/modules/admin/FaqAdminPage.tsx",
       "sha256": "cb6800895dd068e727031edc576c47119511db4272239ce43f073c8b7f015049"
     },
     {
-      "path": "src/modules/admin/contentNav.tsx",
-      "sha256": "a432792177a313999dae2c021a1dd2e5e2c05d0557d3529f7e8381eb23d4a184"
-    },
-    {
-      "path": "src/modules/admin/contentRecovery.ts",
-      "sha256": "2f2822553f04961dec40e80bf0cdc146624563d02273021272a6dde3988f2189"
-    },
-    {
       "path": "src/modules/admin/index.ts",
       "sha256": "b1009f7886f179622580e0a7be69d8a87e8cd9ff9f3be6809a86d5620949486e"
     },
     {
+      "path": "src/modules/admin/roomPublication.contract.ts",
+      "sha256": "7cea17638ca71fd0cb3ae7efa787c78d1a6dd11c416460d1432dee08fa10e381"
+    },
+    {
       "path": "src/modules/admin/specs.ts",
-      "sha256": "f13264e281830d9be3e2fe842ad7d3ddd53884a486e963fb60b7558b40f6b9ca"
+      "sha256": "a6d372d8e92db4848320350ab2e662dea913ba83d1c6dd3620550044c2fadb60"
     },
     {
       "path": "src/modules/admin/strings.ts",
@@ -101,11 +121,11 @@ const feature = (
     },
     {
       "path": "src/modules/classSchedule/pages.tsx",
-      "sha256": "59380038d755f2b22a53f048e9ada07ddfdbe0b4d93e15492c8796bf434cccea"
+      "sha256": "36cfc0e4d0c2cad05d9d458acacd5c8162014c7b3fe7824467b3e2520cee4e05"
     },
     {
       "path": "src/modules/classSchedule/specs.ts",
-      "sha256": "2f48d5e307d22702a2ee23d91065f0ffe969c0ed2660506d276c536b1e258f76"
+      "sha256": "674bb22278d1b84e320f4c4db5fc7489435a49449087059891c5ae87a50baa6c"
     },
     {
       "path": "src/modules/classSchedule/strings.ts",
@@ -168,12 +188,20 @@ const feature = (
       "sha256": "c497946aba7fdc844bc5364aed89c7fb99f85d1dd82605831d20a1d07067cef5"
     },
     {
+      "path": "src/modules/staff/RegisterPage.tsx",
+      "sha256": "006428987d41fde2f0a832a533921694c46f0aae818a434e532f2b620511909d"
+    },
+    {
+      "path": "src/modules/staff/RoomsPage.tsx",
+      "sha256": "99e0cef9c2bf2548772cb8d6a5428dd0e5684b26a10f62b563d0791182a32c1f"
+    },
+    {
       "path": "src/modules/staff/specs.ts",
-      "sha256": "ebccee5c0d1f6faef3625fccd7d21692afbb284f787cbc1761659e7e14b08449"
+      "sha256": "c2e74cd0d99a808bfc8174b9b4693d72b85d6218d3304ae911ad522f2281b3b4"
     },
     {
       "path": "src/modules/staff/strings.ts",
-      "sha256": "6c5cd486071f2b14a95fde099a54c941d20f2484dc09405fe10f2012d268691f"
+      "sha256": "27f26841ff38bc66f33d0d11a80944e6c8c869b8b1d185321bc4dacfaa1adcdd"
     },
     {
       "path": "src/modules/website/hooks.ts",
@@ -216,56 +244,80 @@ const feature = (
     {
       "path": "scripts/test-content-recovery.mjs",
       "sha256": "63890036b89211fcce768cc4942dab136c96a1836fa98b70a233a3964366f166",
-      "reviewedSourceDigest": "e8d7564942e422d0375f44119ea6a6d20d6cf776d40e55d246473b501cd75f5b",
+      "reviewedSourceDigest": "e7920c10c7d3a9818fb53b04c6f3f115dad1a3731a0c7c2c359aeabd147dd961",
       "verifies": "Actual MockProvider atomic writes, draft creation, rollback, exact retry, FAQ ordering, role and tenant rejection. Reference inventory only; no test execution claim."
     },
     {
       "path": "scripts/test-content-recovery-context.mjs",
       "sha256": "fe986e2f0077f9ed0b0abaff6ce690c2e0b2b5badf0650163543253c589d0441",
-      "reviewedSourceDigest": "e8d7564942e422d0375f44119ea6a6d20d6cf776d40e55d246473b501cd75f5b",
+      "reviewedSourceDigest": "e7920c10c7d3a9818fb53b04c6f3f115dad1a3731a0c7c2c359aeabd147dd961",
       "verifies": "Content command actor and role context fencing. Reference inventory only; no test execution claim."
     },
     {
       "path": "scripts/test-content-recovery-ui.mjs",
       "sha256": "8078023483e7b88bc700c904194a397dd3003f7777eac84c089a5a5afa466820",
-      "reviewedSourceDigest": "e8d7564942e422d0375f44119ea6a6d20d6cf776d40e55d246473b501cd75f5b",
+      "reviewedSourceDigest": "e7920c10c7d3a9818fb53b04c6f3f115dad1a3731a0c7c2c359aeabd147dd961",
       "verifies": "Actual editor retained drafts, errors, retry and FAQ ordering. Reference inventory only; no test execution claim."
     },
     {
       "path": "scripts/test-content-recovery-context-ui.mjs",
       "sha256": "1e3456f2033058d18d21d22052edac333989eecf21a75a591d8145b8b5d1c0aa",
-      "reviewedSourceDigest": "e8d7564942e422d0375f44119ea6a6d20d6cf776d40e55d246473b501cd75f5b",
+      "reviewedSourceDigest": "e7920c10c7d3a9818fb53b04c6f3f115dad1a3731a0c7c2c359aeabd147dd961",
       "verifies": "Actual editor context recovery. Reference inventory only; no test execution claim."
     },
     {
       "path": "scripts/test-class-management.mjs",
       "sha256": "b4644b57a7b6aa0c8f3761d835f2d2cccb5e55e5ddb70f9cdd5642bf6ad3d421",
-      "reviewedSourceDigest": "e8d7564942e422d0375f44119ea6a6d20d6cf776d40e55d246473b501cd75f5b",
+      "reviewedSourceDigest": "e7920c10c7d3a9818fb53b04c6f3f115dad1a3731a0c7c2c359aeabd147dd961",
       "verifies": "Recurrence preview and generation boundaries. Reference inventory only; no test execution claim."
     },
     {
       "path": "scripts/test-class-management-provider.mjs",
       "sha256": "cc63e0a9cbce9baf577119cdef31b35cb7e2cf35c2e7b5c5dc9038b962924255",
-      "reviewedSourceDigest": "e8d7564942e422d0375f44119ea6a6d20d6cf776d40e55d246473b501cd75f5b",
+      "reviewedSourceDigest": "e7920c10c7d3a9818fb53b04c6f3f115dad1a3731a0c7c2c359aeabd147dd961",
       "verifies": "Actual MockProvider occurrence generation and preservation. Reference inventory only; no test execution claim."
     },
     {
       "path": "scripts/test-class-management-ui.mjs",
       "sha256": "d64589b879b0de88c23bf4c7c7bccefed40f28bb5d6356b94f46e824fafdcf36",
-      "reviewedSourceDigest": "e8d7564942e422d0375f44119ea6a6d20d6cf776d40e55d246473b501cd75f5b",
+      "reviewedSourceDigest": "e7920c10c7d3a9818fb53b04c6f3f115dad1a3731a0c7c2c359aeabd147dd961",
       "verifies": "Actual class-management forms and generated occurrences. Reference inventory only; no test execution claim."
     },
     {
       "path": "scripts/test-session-admission.mjs",
       "sha256": "eb6efeb1e67607b407e576da1dea97fd350891f2b00c092fa1412871cfcdc264",
-      "reviewedSourceDigest": "e8d7564942e422d0375f44119ea6a6d20d6cf776d40e55d246473b501cd75f5b",
+      "reviewedSourceDigest": "e7920c10c7d3a9818fb53b04c6f3f115dad1a3731a0c7c2c359aeabd147dd961",
       "verifies": "Actual MockProvider withdrawal, republish and historical booking preservation. Reference inventory only; no test execution claim."
     },
     {
       "path": "scripts/test-ad01-native-cycle.mjs",
-      "sha256": "a321a68be01460e3fc6a985bea47fd1d386c4b4975c4522598b681080d1c83dd",
-      "reviewedSourceDigest": "e8d7564942e422d0375f44119ea6a6d20d6cf776d40e55d246473b501cd75f5b",
+      "sha256": "32db1c2e9a780c63a5c74248005c2e6d07905064ad54184aa85e3553fe22f2be",
+      "reviewedSourceDigest": "e7920c10c7d3a9818fb53b04c6f3f115dad1a3731a0c7c2c359aeabd147dd961",
       "verifies": "Native UI create/edit and supported publication across existing consumers, eligible existing fictional actor selection, preserved history, four default EN/ES390/1280 groups and rejection of invalid or empty selections. Reference inventory; test execution evidence is separate."
+    },
+    {
+      "path": "scripts/test-room-publication.mjs",
+      "sha256": "c22eb6ffe255426dff796633a7b2c604d2dd42100781b7bb3142d734d8f3ae53",
+      "reviewedSourceDigest": "e7920c10c7d3a9818fb53b04c6f3f115dad1a3731a0c7c2c359aeabd147dd961",
+      "verifies": "Prospective room publication, current mock adapter guards, retained references, rollback and native selection/retry/context. Inventory binding only; execution receipts remain separate."
+    },
+    {
+      "path": "scripts/test-room-publication-ui.mjs",
+      "sha256": "0973459d942629aa0f97236de6a0a59bbf4dfc20255e71fd6669969fabf38146",
+      "reviewedSourceDigest": "e7920c10c7d3a9818fb53b04c6f3f115dad1a3731a0c7c2c359aeabd147dd961",
+      "verifies": "Prospective room publication, current mock adapter guards, retained references, rollback and native selection/retry/context. Inventory binding only; execution receipts remain separate."
+    },
+    {
+      "path": "scripts/test-room-publication-production.mjs",
+      "sha256": "67fe206377fd6f12a54a1f306f9e41620974b325e9dc1d280067f1040e468b0c",
+      "reviewedSourceDigest": "e7920c10c7d3a9818fb53b04c6f3f115dad1a3731a0c7c2c359aeabd147dd961",
+      "verifies": "Prospective room publication, current mock adapter guards, retained references, rollback and native selection/retry/context. Inventory binding only; execution receipts remain separate."
+    },
+    {
+      "path": "scripts/test-room-publication-contract.mjs",
+      "sha256": "9b6ec2b1a044fa6a1056897f0fc56ee422e4f8bf1d00005609e3c156b4f56ad4",
+      "reviewedSourceDigest": "e7920c10c7d3a9818fb53b04c6f3f115dad1a3731a0c7c2c359aeabd147dd961",
+      "verifies": "Prospective room publication, current mock adapter guards, retained references, rollback and native selection/retry/context. Inventory binding only; execution receipts remain separate."
     }
   ],
   "entities": [
@@ -351,7 +403,8 @@ const feature = (
         "name",
         "capacity",
         "heated",
-        "notes"
+        "notes",
+        "active"
       ],
       "usage": [
         "read",
@@ -536,9 +589,101 @@ const feature = (
       "usage": [
         "dependency"
       ]
+    },
+    {
+      "name": "user_roles",
+      "fields": [
+        "id",
+        "tenant_id",
+        "created_at",
+        "updated_at"
+      ],
+      "usage": [
+        "dependency"
+      ]
+    },
+    {
+      "name": "consents",
+      "fields": [
+        "id",
+        "tenant_id",
+        "created_at",
+        "updated_at"
+      ],
+      "usage": [
+        "dependency"
+      ]
+    },
+    {
+      "name": "payments",
+      "fields": [
+        "id",
+        "tenant_id",
+        "created_at",
+        "updated_at"
+      ],
+      "usage": [
+        "dependency"
+      ]
+    },
+    {
+      "name": "invoices",
+      "fields": [
+        "id",
+        "tenant_id",
+        "created_at",
+        "updated_at"
+      ],
+      "usage": [
+        "dependency"
+      ]
+    },
+    {
+      "name": "message_log",
+      "fields": [
+        "id",
+        "tenant_id",
+        "created_at",
+        "updated_at"
+      ],
+      "usage": [
+        "dependency"
+      ]
+    },
+    {
+      "name": "space_bookings",
+      "fields": [
+        "id",
+        "tenant_id",
+        "created_at",
+        "updated_at"
+      ],
+      "usage": [
+        "dependency"
+      ]
+    },
+    {
+      "name": "special_charges",
+      "fields": [
+        "id",
+        "tenant_id",
+        "created_at",
+        "updated_at"
+      ],
+      "usage": [
+        "dependency"
+      ]
     }
   ],
-  "mockExtensions": [],
+  "mockExtensions": [
+    {
+      "entity": "rooms",
+      "field": "active",
+      "type": "bool",
+      "source": "src/data/roomPublication.ts",
+      "reason": "Optional browser-only prospective room publication; legacy missing state remains published. Backend mapping pending; no SQL or live connection change."
+    }
+  ],
   "pages": [
     {
       "code": "M-02",
@@ -559,14 +704,22 @@ const feature = (
       ],
       "views": [],
       "states": [
-        "Synthetic draft catalog; room has no publication flag",
+        "Synthetic draft catalog with unpublished room",
         "Synthetic published catalog; room unchanged",
-        "Synthetic withdrawn catalog; room retained"
+        "Synthetic withdrawn catalog; room retained",
+        "Synthetic draft room",
+        "Synthetic published room",
+        "Synthetic legacy room without publication flag",
+        "Synthetic retained unpublished room reference"
       ],
       "fixtureIds": [
         "ad01-m-02-0",
         "ad01-m-02-1",
-        "ad01-m-02-2"
+        "ad01-m-02-2",
+        "ad01-room-m-02-0",
+        "ad01-room-m-02-1",
+        "ad01-room-m-02-2",
+        "ad01-room-m-02-3"
       ]
     },
     {
@@ -616,11 +769,19 @@ const feature = (
       "views": [],
       "states": [
         "Synthetic generated dated occurrence",
-        "Synthetic edited dated occurrence"
+        "Synthetic edited dated occurrence",
+        "Synthetic draft room",
+        "Synthetic published room",
+        "Synthetic legacy room without publication flag",
+        "Synthetic retained unpublished room reference"
       ],
       "fixtureIds": [
         "ad01-m-14-0",
-        "ad01-m-14-1"
+        "ad01-m-14-1",
+        "ad01-room-m-14-0",
+        "ad01-room-m-14-1",
+        "ad01-room-m-14-2",
+        "ad01-room-m-14-3"
       ]
     },
     {
@@ -831,6 +992,81 @@ const feature = (
       "fixtureIds": [
         "ad01-s-02-0",
         "ad01-s-02-1"
+      ]
+    },
+    {
+      "code": "S-04",
+      "route": "/staff/register",
+      "routeSource": "src/modules/staff/index.ts",
+      "specSource": "src/modules/staff/specs.ts",
+      "specAnchor": "export const S04 =",
+      "routeSpec": "S04",
+      "componentSource": "src/modules/staff/RegisterPage.tsx",
+      "componentExport": "RegisterPage",
+      "viewKind": "form-preview",
+      "specEntities": [
+        "users",
+        "profiles",
+        "user_roles",
+        "consents",
+        "payments",
+        "invoices",
+        "memberships",
+        "class_ledger",
+        "bookings",
+        "class_sessions",
+        "message_log",
+        "audit_log",
+        "tenants",
+        "rooms"
+      ],
+      "views": [],
+      "states": [
+        "Synthetic draft room",
+        "Synthetic published room",
+        "Synthetic legacy room without publication flag",
+        "Synthetic retained unpublished room reference"
+      ],
+      "fixtureIds": [
+        "ad01-room-s-04-0",
+        "ad01-room-s-04-1",
+        "ad01-room-s-04-2",
+        "ad01-room-s-04-3"
+      ]
+    },
+    {
+      "code": "S-05",
+      "route": "/staff/rooms",
+      "routeSource": "src/modules/staff/index.ts",
+      "specSource": "src/modules/staff/specs.ts",
+      "specAnchor": "export const S05 =",
+      "routeSpec": "S05",
+      "componentSource": "src/modules/staff/RoomsPage.tsx",
+      "componentExport": "RoomsPage",
+      "viewKind": "form-preview",
+      "specEntities": [
+        "rooms",
+        "class_sessions",
+        "space_bookings",
+        "special_charges",
+        "teachers",
+        "modalities",
+        "users",
+        "profiles",
+        "audit_log"
+      ],
+      "views": [],
+      "states": [
+        "Synthetic draft room",
+        "Synthetic published room",
+        "Synthetic legacy room without publication flag",
+        "Synthetic retained unpublished room reference"
+      ],
+      "fixtureIds": [
+        "ad01-room-s-05-0",
+        "ad01-room-s-05-1",
+        "ad01-room-s-05-2",
+        "ad01-room-s-05-3"
       ]
     }
   ]

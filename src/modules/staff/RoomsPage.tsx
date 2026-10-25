@@ -1,3 +1,4 @@
+import { roomIsPublished } from '../../data/roomPublication';
 import { Fragment, useMemo, useState, type ReactNode } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useI18n } from '../../i18n/I18nProvider';
@@ -88,9 +89,10 @@ export function RoomsPage() {
   const candidates = useMemo(() => (form.customerQ.trim().length < 2 ? [] : people.filter((p) => p.role === 'customer' && personMatches(p, form.customerQ)).slice(0, 5)), [people, form.customerQ]);
   const customer = form.customerId ? people.find((p) => p.id === form.customerId) : undefined;
   const needsWho = form.kind === 'private_event' || form.kind === 'rental' || form.kind === 'private_class';
-  const valid = canWrite && !!form.roomId && windowOk && form.title.trim().length > 0 && conflicts.length === 0 && (!needsWho || !!customer || form.contact.trim().length > 0);
+  const valid = canWrite && roomIsPublished(rooms.find(r => r.id === form.roomId)) && windowOk && form.title.trim().length > 0 && conflicts.length === 0 && (!needsWho || !!customer || form.contact.trim().length > 0);
 
   const proposeSlot = (roomId: string, hour: number) => {
+    if (!roomIsPublished(rooms.find(r => r.id === roomId))) { setNotice({ tone: 'bad', text: t('staff.rooms.unpublished') }); return; }
     const hh = String(hour).padStart(2, '0');
     setForm((f) => ({ ...f, roomId, date, start: `${hh}:00`, end: f.end && f.end > `${hh}:00` ? f.end : `${String(Math.min(23, hour + 1)).padStart(2, '0')}:00` }));
     setSelectedId(null);
@@ -109,7 +111,7 @@ export function RoomsPage() {
       setNotice({ tone: 'ok', text: t('staff.rooms.msg.booked', { title: row.title, status: bi(STATUS_LABEL[status]) }) });
       setSelectedId(row.id);
       setForm(emptyForm(form.date, form.roomId));
-    } catch (e) { setNotice({ tone: 'bad', text: String(e) }); } finally { setBusy(null); }
+    } catch (e) { setNotice({ tone: 'bad', text: e instanceof Error && e.message === 'room_unavailable' ? t('staff.rooms.unpublished') : String(e) }); } finally { setBusy(null); }
   };
 
   const setStatus = async (b: SpaceBookingRow, status: SpaceBookingRow['status']) => {
@@ -152,7 +154,7 @@ export function RoomsPage() {
             <p className="xs muted">{t('staff.rooms.form.hint')}</p>
             <div className="grid grid-2 rooms-form">
               <Field label={t('staff.rooms.f.kind')}>{(id) => <Select id={id} value={form.kind} onChange={(e) => setForm({ ...form, kind: e.target.value as SpaceBookingKind })}>{BOOKING_KINDS.map((k) => <option key={k} value={k}>{bi(KIND_LABEL[k])}</option>)}</Select>}</Field>
-              <Field label={t('staff.rooms.f.room')} required>{(id) => <Select id={id} value={form.roomId} onChange={(e) => setForm({ ...form, roomId: e.target.value })} invalid={!form.roomId}><option value="">—</option>{rooms.map((r) => <option key={r.id} value={r.id}>{r.name} · {t('core.common.capacity', { n: r.capacity })}</option>)}</Select>}</Field>
+              <Field label={t('staff.rooms.f.room')} required>{(id) => <Select id={id} value={form.roomId} onChange={(e) => setForm({ ...form, roomId: e.target.value })} invalid={!form.roomId}><option value="">—</option>{rooms.map((r) => <option key={r.id} value={r.id} disabled={!roomIsPublished(r)}>{r.name} · {t('core.common.capacity', { n: r.capacity })}</option>)}</Select>}</Field>
               <Field label={t('staff.rooms.f.date')} required>{(id) => <Input id={id} type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />}</Field>
               <div className="row rooms-times">
                 <Field label={t('staff.rooms.f.start')} required>{(id) => <Input id={id} type="time" step={900} value={form.start} onChange={(e) => setForm({ ...form, start: e.target.value })} />}</Field>
