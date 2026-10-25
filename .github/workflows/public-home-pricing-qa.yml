@@ -22,7 +22,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npx playwright install --with-deps chromium
+      - run: node node_modules/playwright-core/cli.js install --with-deps chromium
       - name: Browser executable
         run: echo "CHROMIUM_PATH=$(node -p 'require("playwright-core").chromium.executablePath()')" >> "$GITHUB_ENV"
       - name: Projection and CMS contract
