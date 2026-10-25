@@ -5,7 +5,7 @@ const fixtures:CmsFixture[]=
 [
   {
     "id": "nt02-pending-request-0",
-    "sourceDigest": "b54b7e5d3d174d3c01c18e0bbb21a743984d11a39b521ee99a02c8465f518487",
+    "sourceDigest": "2e56c6fe149b8c6604d0616d2aa16f5f19a5bbac013e0182c37fabdb349742b7",
     "feature": "nt02-pending-request-preview",
     "page": "C-04",
     "state": "Pending-request preview loading",
@@ -25,7 +25,7 @@ const fixtures:CmsFixture[]=
   },
   {
     "id": "nt02-pending-request-1",
-    "sourceDigest": "b54b7e5d3d174d3c01c18e0bbb21a743984d11a39b521ee99a02c8465f518487",
+    "sourceDigest": "2e56c6fe149b8c6604d0616d2aa16f5f19a5bbac013e0182c37fabdb349742b7",
     "feature": "nt02-pending-request-preview",
     "page": "C-04",
     "state": "Pending-request preview ready cash",
@@ -82,7 +82,7 @@ const fixtures:CmsFixture[]=
   },
   {
     "id": "nt02-pending-request-2",
-    "sourceDigest": "b54b7e5d3d174d3c01c18e0bbb21a743984d11a39b521ee99a02c8465f518487",
+    "sourceDigest": "2e56c6fe149b8c6604d0616d2aa16f5f19a5bbac013e0182c37fabdb349742b7",
     "feature": "nt02-pending-request-preview",
     "page": "C-04",
     "state": "Pending-request preview ready transfer",
@@ -139,7 +139,7 @@ const fixtures:CmsFixture[]=
   },
   {
     "id": "nt02-pending-request-3",
-    "sourceDigest": "b54b7e5d3d174d3c01c18e0bbb21a743984d11a39b521ee99a02c8465f518487",
+    "sourceDigest": "2e56c6fe149b8c6604d0616d2aa16f5f19a5bbac013e0182c37fabdb349742b7",
     "feature": "nt02-pending-request-preview",
     "page": "C-04",
     "state": "Pending-request preview unavailable",
@@ -159,7 +159,7 @@ const fixtures:CmsFixture[]=
   },
   {
     "id": "nt02-pending-request-4",
-    "sourceDigest": "b54b7e5d3d174d3c01c18e0bbb21a743984d11a39b521ee99a02c8465f518487",
+    "sourceDigest": "2e56c6fe149b8c6604d0616d2aa16f5f19a5bbac013e0182c37fabdb349742b7",
     "feature": "nt02-pending-request-preview",
     "page": "C-04",
     "state": "Pending-request preview read failure / retry",
@@ -179,7 +179,7 @@ const fixtures:CmsFixture[]=
   },
   {
     "id": "nt02-pending-request-5",
-    "sourceDigest": "b54b7e5d3d174d3c01c18e0bbb21a743984d11a39b521ee99a02c8465f518487",
+    "sourceDigest": "2e56c6fe149b8c6604d0616d2aa16f5f19a5bbac013e0182c37fabdb349742b7",
     "feature": "nt02-pending-request-preview",
     "page": "C-04",
     "state": "Pending-request preview stale context / hidden",

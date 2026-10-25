@@ -12,6 +12,10 @@ const feature:CmsFeatureContract=
   "actorScope": "C-04 retains existing customer route. Preview reads the exact saved cash payment or transfer receipt for the active current customer and verifies canonical pending audit, retained class quote, recipient and no linked booking/ledger activation. Protected upload proof for transfer, retained request intent for cash. No email/outbox write, timing, release policy, financial mutation or connected backend. The unchanged existing C-04 spec declares a legacy invoices dependency; this preview never reads or writes invoices. Subscriptions are browser-local only.",
   "sources": [
     {
+      "path": "scripts/desk-confirmation-harness.tsx",
+      "sha256": "8021dc31795437742e14eb2d6e8ae8d1ea10d4fdbaef52811547407ec53cde9a"
+    },
+    {
       "path": "scripts/pending-request-preview-harness.tsx",
       "sha256": "85d6db12440b358371e9d6cddd6f0f934d7bc2907b3b5be5aafbbd6e728f6754"
     },
@@ -20,8 +24,16 @@ const feature:CmsFeatureContract=
       "sha256": "fc8212a31f330607823852353ea5d16686ca1e791b523a04290c7381139f44e4"
     },
     {
+      "path": "src/app/App.tsx",
+      "sha256": "0313df0401fca998af7d59ab7bc1ead015c59bea03c73a32650912d4da3f5fc1"
+    },
+    {
       "path": "src/auth/SessionProvider.tsx",
       "sha256": "587b4e3d2a7ed8a95cfb23e3a5184a238d02b7eac7c3512f05e5799eba01edaf"
+    },
+    {
+      "path": "src/components/atom/Wordmark/Wordmark.tsx",
+      "sha256": "b23c55748677a0bdc327068d9c1b43e578e250bc64161824f84e21c887e2d939"
     },
     {
       "path": "src/components/organism/EmailPreview/EmailPreview.css",
@@ -90,6 +102,10 @@ const feature:CmsFeatureContract=
     {
       "path": "src/data/types.ts",
       "sha256": "e61845cd49fd4bf4625deeb46b6993c8023d2a077e416c0c6cca38b2cd80b5af"
+    },
+    {
+      "path": "src/design/ThemeProvider.tsx",
+      "sha256": "3f7d7f64f2e1b2feabb674c3ee90a715c274cf94c54706644393b7550cb8cf4a"
     },
     {
       "path": "src/i18n/I18nProvider.tsx",
@@ -176,37 +192,43 @@ const feature:CmsFeatureContract=
     {
       "path": "scripts/test-pending-request-preview.mjs",
       "sha256": "7aec775dad738c8b573816d4bddb28649ca9962b3c87d9ccd79aabb206106e4f",
-      "reviewedSourceDigest": "b54b7e5d3d174d3c01c18e0bbb21a743984d11a39b521ee99a02c8465f518487",
+      "reviewedSourceDigest": "2e56c6fe149b8c6604d0616d2aa16f5f19a5bbac013e0182c37fabdb349742b7",
       "verifies": "Actual MockProvider cash/transfer producers, exact pending source/recipient/proof, nonactivation, read-only replay, source corruption and every guarded read boundary."
     },
     {
       "path": "scripts/test-pending-request-preview-ui.mjs",
       "sha256": "83d6309e0cfa041e033c5b44b67bffbae1647367b21d66317858e8005929fbdd",
-      "reviewedSourceDigest": "b54b7e5d3d174d3c01c18e0bbb21a743984d11a39b521ee99a02c8465f518487",
+      "reviewedSourceDigest": "2e56c6fe149b8c6604d0616d2aa16f5f19a5bbac013e0182c37fabdb349742b7",
       "verifies": "Actual compiled C-04 cash/transfer saves, EN/ES mobile/desktop literal UNSENT preview, inert CTA and unchanged persisted financial history; references are not executed by this inventory."
     },
     {
       "path": "scripts/test-pending-request-preview-context.mjs",
       "sha256": "78d939cc178ddfadaa44cd9ae9a5a5db07d4798a9ffe43f5c5b055056daa5240",
-      "reviewedSourceDigest": "b54b7e5d3d174d3c01c18e0bbb21a743984d11a39b521ee99a02c8465f518487",
+      "reviewedSourceDigest": "2e56c6fe149b8c6604d0616d2aa16f5f19a5bbac013e0182c37fabdb349742b7",
       "verifies": "Actual C-04 DEV delayed proof, independent actor/role/provider/route/query/unmount changes, read failure/retry, negative sources and rollback; inventory does not execute browser tests."
     },
     {
       "path": "scripts/test-pending-desk-intent.mjs",
       "sha256": "2f3844c6319c5895d4ed6960eccf6e65c936e09a612ed688bb4329ed4b6a5175",
-      "reviewedSourceDigest": "b54b7e5d3d174d3c01c18e0bbb21a743984d11a39b521ee99a02c8465f518487",
+      "reviewedSourceDigest": "2e56c6fe149b8c6604d0616d2aa16f5f19a5bbac013e0182c37fabdb349742b7",
       "verifies": "Retained saved cash-request metadata and reconciliation regression; no timer or hold policy."
     },
     {
       "path": "scripts/test-transfer-receipts.mjs",
       "sha256": "ded94b212b10938c22da76bef6daac3180548e44f148cb0f0f750da2677a67e4",
-      "reviewedSourceDigest": "b54b7e5d3d174d3c01c18e0bbb21a743984d11a39b521ee99a02c8465f518487",
+      "reviewedSourceDigest": "2e56c6fe149b8c6604d0616d2aa16f5f19a5bbac013e0182c37fabdb349742b7",
       "verifies": "Retained actual MockProvider transfer persistence, review, rollback and original financial-command regression."
+    },
+    {
+      "path": "scripts/test-desk-confirmation-context.mjs",
+      "sha256": "bca11b79f9e06bf566806a63812565af457cbd76900f6420f6dadf921be3360d",
+      "reviewedSourceDigest": "2e56c6fe149b8c6604d0616d2aa16f5f19a5bbac013e0182c37fabdb349742b7",
+      "verifies": "Retained actual C-04 desk confirmation, historical proof, read-only retry, independent provider/actor/role/route/unmount lifecycle cases; the harness supplies the same theme provider as the application."
     },
     {
       "path": "scripts/test-receipt-alert-intent.mjs",
       "sha256": "8630528329b620ffd1d271509a890342754e989c4222fa17388a292c74f98916",
-      "reviewedSourceDigest": "b54b7e5d3d174d3c01c18e0bbb21a743984d11a39b521ee99a02c8465f518487",
+      "reviewedSourceDigest": "2e56c6fe149b8c6604d0616d2aa16f5f19a5bbac013e0182c37fabdb349742b7",
       "verifies": "Retained protected upload-intent and local rehearsal proof; no real send."
     }
   ],

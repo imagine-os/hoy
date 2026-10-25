@@ -16,6 +16,8 @@ Isolated from live tracker main `a485b5eb50e2efa0683fb41b89e9faa3188a0c27`. No h
 
 Local verification passed full build/type and 170 actual MockProvider scenarios, including every guarded read boundary, malformed recipient/source proof, rollback and unchanged persisted data. Eight compiled browser groups cover cash/transfer, EN/ES, 390/1280, both themes, double submission prevention, immutable financial history, no booking/grant, inert link and reload. Separate DEV tests cover failed reads, read-only retry, independent actor/role changes, provider/disconnect/query/route/unmount, inconsistent source and persistence rollback. Final exact results and CI receipts belong to the checked draft; no deployment is claimed here.
 
+The retained desk-confirmation DEV harness also supplies the application’s theme context, required by the shared Wordmark. All 36 retained EN/ES 390/1280 confirmation cases passed, preserving read-failure/retry, historical and independent context assertions.
+
 Retained domain checks include pending desk intent/settlement, transfer receipts, protected upload intent and signup consent. The existing Delivery Room snapshot is unchanged. Booking-release preview remains blocked on an authoritative event and unresolved timing semantics; this slice does not supply either.
 
 ## Synthetic captures
