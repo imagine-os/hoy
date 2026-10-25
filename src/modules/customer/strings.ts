@@ -1,4 +1,5 @@
 import { supportStrings } from './supportStrings';
+import {pendingPreviewStrings} from './pendingPreviewStrings';
 import{profileReviewStrings}from'../profile-review/strings';
 import {signInPreviewStrings} from './auth/signInPreviewStrings';
 import {signupLegalStrings} from './auth/signupLegalStrings';
@@ -7,6 +8,7 @@ import type { StringTable } from '../../i18n/types';
 
 /** Every user-facing string of the customer app (C-xx, A-xx, E-xx). Spanish first; English always present. */
 export const strings: StringTable = {
+  ...pendingPreviewStrings,
   'customer.book.contactRequired': { es: 'Para reservar una clase se requieren nombre, WhatsApp y email. Revisa los datos de la cuenta con recepción antes de reintentar. Las reservas y los pagos existentes no cambiaron.', en: 'Class booking requires a name, WhatsApp and email. Review the account details with reception before retrying. Existing bookings and payments were not changed.' },
   'customer.checkout.recovery.checking': { es: 'Verificando tu reserva…', en: 'Checking your booking…' },
   'customer.checkout.recovery.checking.body': { es: 'Revisamos el resultado guardado antes de volver a intentar.', en: 'Checking the saved outcome before another attempt.' },

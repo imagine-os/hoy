@@ -1,0 +1,71 @@
+name: Pending request unsent preview QA
+on:
+  pull_request:
+    paths:
+      - 'src/modules/customer/**'
+      - 'src/modules/transfers/**'
+      - 'src/components/organism/PendingRequestPreview/**'
+      - 'src/components/organism/EmailPreview/**'
+      - 'src/data/**'
+      - 'src/auth/**'
+      - 'src/cms/**'
+      - 'scripts/*pending-request-preview*'
+      - 'scripts/qa-pending-payments-dev.mjs'
+      - 'scripts/check-cms-contracts.mjs'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/pending-request-preview-qa.yml'
+permissions:
+  contents: read
+jobs:
+  pending-request-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Verify read-only source proof and retained commands
+        run: |
+          node scripts/test-pending-request-preview.mjs
+          node scripts/check-cms-contracts.mjs --self-test
+          node scripts/test-pending-desk-intent.mjs
+          node scripts/test-pending-desk-settlement.mjs
+          node scripts/test-transfer-receipts.mjs
+          node scripts/test-receipt-alert-intent.mjs
+          node scripts/test-signup-consent.mjs
+      - name: Verify saved requests and stale preview contexts
+        env:
+          CHROMIUM_PATH: /usr/bin/google-chrome
+        run: |
+          QA_PORT=5804 QA_CACHE_DIR="$RUNNER_TEMP/pending-request-deps" node scripts/qa-pending-payments-dev.mjs > "$RUNNER_TEMP/pending-request-dev.log" 2>&1 &
+          dev_pid=$!
+          npm run preview -- --host 127.0.0.1 --port 5805 --strictPort > "$RUNNER_TEMP/pending-request-preview.log" 2>&1 &
+          preview_pid=$!
+          trap 'kill "$dev_pid" "$preview_pid" 2>/dev/null || true' EXIT
+          for port in 5804 5805; do
+            ready=0
+            for i in $(seq 1 60); do
+              if curl -fsS http://127.0.0.1:$port/ >/dev/null; then ready=1; break; fi
+              sleep 1
+            done
+            if [ "$ready" != 1 ]; then cat "$RUNNER_TEMP/pending-request-dev.log" "$RUNNER_TEMP/pending-request-preview.log"; exit 1; fi
+          done
+          QA_BASE=http://127.0.0.1:5805 QA_OUTPUT="$RUNNER_TEMP/pending-request-evidence/native" node scripts/test-pending-request-preview-ui.mjs
+          QA_BASE=http://127.0.0.1:5804 QA_OUTPUT="$RUNNER_TEMP/pending-request-evidence/context" node scripts/test-pending-request-preview-context.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pending-request-preview-${{ github.event.pull_request.head.sha }}
+          path: |
+            ${{ runner.temp }}/pending-request-evidence/
+            ${{ runner.temp }}/pending-request-dev.log
+            ${{ runner.temp }}/pending-request-preview.log
+          retention-days: 7

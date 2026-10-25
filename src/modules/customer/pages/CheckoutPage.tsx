@@ -44,6 +44,8 @@ import { submitTransfer, type ReceiptImage } from '../../transfers/receipts';
 import { readPackageBookingConfirmation, type PackageConfirmationRequest } from '../packageBookingConfirmation';
 import type { DataProvider } from '../../../data/types';
 import { readDeskBookingConfirmation } from '../../transfers/deskSettlement';
+import {usePendingRequestPreview} from '../usePendingRequestPreview';
+import {PendingRequestPreview} from '../../../components/organism/PendingRequestPreview/PendingRequestPreview';
 
 const spec = canvasSpecs['C-04'];
 /** 0051: a class of the person's package, or something bought now — a trial or individual class, or a 12-class package. */
@@ -100,6 +102,8 @@ export function CheckoutPage() {
   const [packageRecovery, setPackageRecovery] = useState<{ provider: DataProvider; context: string; request: PackageConfirmationRequest; knownDuplicate?: boolean; phase: 'checking' | 'unconfirmed' | 'missing' | 'existing' | 'duplicate'; booking?: BookingRow } | null>(null);
   const recovery = packageRecovery?.provider === data && packageRecovery.context === transferContext ? packageRecovery : null;
   const shownDone = done?.provider === data && done.context === transferContext ? done : null;
+  const pendingSource=shownDone?.pending?shownDone.deskPaymentId?{kind:'cash' as const,paymentId:shownDone.deskPaymentId}:shownDone.receiptId?{kind:'transfer' as const,receiptId:shownDone.receiptId}:null:null;
+  const pendingPreview=usePendingRequestPreview(pendingSource,!!shownDone?.pending,transferContext);
   const deskPaymentId = shownDone?.pending ? shownDone.deskPaymentId : undefined;
   const [deskConfirmationRetry, setDeskConfirmationRetry] = useState(0);
   const [deskConfirmation, setDeskConfirmation] = useState<{ provider: DataProvider; context: string; paymentId: string; phase: 'checking' | 'pending' | 'unavailable' | 'error' } | null>(null);
@@ -426,6 +430,7 @@ export function CheckoutPage() {
             {shownDone.pending&&currentDesk?.payment&&(!shownDone.deskPaymentId||currentDeskConfirmation?.phase==='pending')&&<Notice title={deskText.saved}>{formatCOP(currentDesk.payment.amount,lang)} · {bi(savedDeskQuote!.name)} · {savedDeskQuote!.classes} {deskText.classes} · {t('customer.classes.expires')} {savedDeskQuote!.entitlementExpiresAt??'—'} · {currentDesk.payment.id}<p>{deskText.body}</p></Notice>}
             {shownDone.pending && shownDone.deskPaymentId ? currentDeskConfirmation?.phase === 'pending' ? <Notice tone="warn" title={t('customer.checkout.pending.title')}>{t('customer.checkout.pending.body')}</Notice> : currentDeskConfirmation?.phase === 'error' || currentDeskConfirmation?.phase === 'unavailable' ? <Notice tone="warn" action={<Button variant="secondary" onClick={() => setDeskConfirmationRetry(n => n + 1)}>{t('core.common.retry')}</Button>}>{currentDeskConfirmation.phase === 'error' ? deskText.unconfirmedRecord : deskText.unavailableRecord} <Link to="/app/history">{deskText.history}</Link></Notice> : <p role="status">{deskText.checkingRecord}</p> : shownDone.pending ? <Notice tone="warn" title={t(method==='transfer'?'transfers.pending':'customer.checkout.pending.title')}>{t(method==='transfer'?'transfers.pendingBody':'customer.checkout.pending.body')}</Notice> : <p className="small muted">{shownDone.deskPaymentId ? deskText.recordBody : shownDone.recovered ? t('customer.checkout.recovery.saved.body') : t('customer.checkout.success.body', { min: durationMin(joined) })}</p>}
             {shownDone.receiptId&&<ReceiptAlertResult receiptId={shownDone.receiptId}/>}
+            {pendingPreview.result&&<PendingRequestPreview result={pendingPreview.result} onRetry={pendingPreview.retry}/>}
             {shownDone.booking && <Button block size="lg" onClick={() => nav(`/app/booking/${shownDone.booking!.id}`)}>{t('customer.class.viewBooking')}</Button>}
             <Button block variant="ghost" onClick={() => nav('/app/schedule')}>{t('customer.class.backToSchedule')}</Button>
           </div>
