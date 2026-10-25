@@ -1,0 +1,72 @@
+name: Voucher recipient unsent preview QA
+on:
+  pull_request:
+    paths:
+      - 'src/modules/voucher-gifts/**'
+      - 'src/modules/transfers/**'
+      - 'src/components/organism/VoucherRecipientPreview/**'
+      - 'src/components/organism/EmailPreview/**'
+      - 'src/data/**'
+      - 'src/auth/**'
+      - 'src/cms/**'
+      - 'scripts/*voucher-recipient-preview*'
+      - 'scripts/test-gift-purchase-*.mjs'
+      - 'scripts/qa-pending-payments-dev.mjs'
+      - 'scripts/check-cms-contracts.mjs'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/voucher-recipient-preview-qa.yml'
+permissions:
+  contents: read
+jobs:
+  recipient-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Verify read-only preview and preserved financial commands
+        run: |
+          node scripts/test-voucher-recipient-preview.mjs
+          node scripts/check-cms-contracts.mjs --self-test
+          node scripts/test-gift-purchase-command.mjs
+          node scripts/test-gift-purchase-provider.mjs
+          node scripts/test-transfer-receipts.mjs
+          node scripts/test-desk-settlement.mjs
+          node scripts/test-signup-consent.mjs
+      - name: Verify actual approval and stale-context preview behavior
+        env:
+          CHROMIUM_PATH: /usr/bin/google-chrome
+        run: |
+          QA_PORT=5801 QA_CACHE_DIR="$RUNNER_TEMP/recipient-deps" node scripts/qa-pending-payments-dev.mjs > "$RUNNER_TEMP/recipient-dev.log" 2>&1 &
+          dev_pid=$!
+          npm run preview -- --host 127.0.0.1 --port 5802 --strictPort > "$RUNNER_TEMP/recipient-preview.log" 2>&1 &
+          preview_pid=$!
+          trap 'kill "$dev_pid" "$preview_pid" 2>/dev/null || true' EXIT
+          for port in 5801 5802; do
+            ready=0
+            for i in $(seq 1 60); do
+              if curl -fsS http://127.0.0.1:$port/ >/dev/null; then ready=1; break; fi
+              sleep 1
+            done
+            if [ "$ready" != 1 ]; then cat "$RUNNER_TEMP/recipient-dev.log" "$RUNNER_TEMP/recipient-preview.log"; exit 1; fi
+          done
+          QA_BASE=http://127.0.0.1:5802 QA_OUTPUT="$RUNNER_TEMP/recipient-evidence/native" node scripts/test-voucher-recipient-preview-ui.mjs
+          QA_BASE=http://127.0.0.1:5801 QA_OUTPUT="$RUNNER_TEMP/recipient-evidence/context" node scripts/test-voucher-recipient-preview-context.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: voucher-recipient-preview-${{ github.event.pull_request.head.sha }}
+          path: |
+            ${{ runner.temp }}/recipient-evidence/
+            ${{ runner.temp }}/recipient-dev.log
+            ${{ runner.temp }}/recipient-preview.log
+          retention-days: 7

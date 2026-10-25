@@ -16,6 +16,9 @@ on:
       - 'scripts/test-api-key-mutations*.mjs'
       - 'scripts/test-trial-eligibility*.mjs'
       - 'scripts/trial-eligibility-harness.tsx'
+      - 'scripts/qa-pending-payments-dev.mjs'
+      - 'package.json'
+      - 'package-lock.json'
       - 'scripts/test-profile-save*.mjs'
       - 'scripts/profile-save-harness.tsx'
       - 'scripts/test-recovery*.mjs'
@@ -117,8 +120,16 @@ jobs:
       - name: Verify contained asynchronous states
         if: matrix.scope == 'trial-eligibility' || matrix.scope == 'profile-save' || matrix.scope == 'account-data' || matrix.scope == 'substitute-request' || matrix.scope == 'account-marketing' || matrix.scope == 'email-test' || matrix.scope == 'event-rsvp' || matrix.scope == 'email-edit' || matrix.scope == 'expense-ledger' || matrix.scope == 'receipt-alert' || matrix.scope == 'payroll-approval'
         run: |
-          npm run dev -- --host 127.0.0.1 --port 5188 > /tmp/hoy-correctness-dev.log 2>&1 &
-          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:5188/ >/dev/null && break; sleep 1; done
+          QA_PORT=5188 QA_CACHE_DIR="$RUNNER_TEMP/hoy-correctness-deps" node scripts/qa-pending-payments-dev.mjs > /tmp/hoy-correctness-dev.log 2>&1 &
+          dev_pid=$!
+          trap 'kill "$dev_pid" 2>/dev/null || true' EXIT
+          ready=0
+          for i in $(seq 1 60); do
+            if ! kill -0 "$dev_pid" 2>/dev/null; then cat /tmp/hoy-correctness-dev.log; exit 1; fi
+            if curl -fsS http://127.0.0.1:5188/ >/dev/null; then ready=1; break; fi
+            sleep 1
+          done
+          if [ "$ready" != 1 ]; then cat /tmp/hoy-correctness-dev.log; exit 1; fi
           node scripts/test-${{ matrix.scope }}-states.mjs
         env:
           QA_BASE: http://127.0.0.1:5188
@@ -155,4 +166,6 @@ jobs:
             docs/screenshots/C-04/*receipt-alert*
             docs/screenshots/D-02/*receipt-alert*
             docs/frontend-completion/evidence/batch-3*.json
+            docs/screenshots/trial-eligibility/
+            /tmp/hoy-correctness-dev.log
           retention-days: 7

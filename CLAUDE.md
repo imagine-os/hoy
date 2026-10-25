@@ -130,3 +130,7 @@ npm run screenshots  # Playwright, Chromium at /opt/pw-browsers (do not run play
 - WhatsApp: CRM threads, OTP, automations (`wa_templates`, `automations`, `message_log`).
 - Email designer: `email_templates` with versions; receipts, reports, push.
 - Later: marketing, social, content tools; multi-tenant sale to other studios.
+
+
+## Adopted frontend CMS contracts
+Keep each adopted feature's route/entity/view descriptor, synthetic fixtures and actual adapter-test references synchronized with its source changes. Run `npm run check:cms` and `node scripts/check-cms-contracts.mjs --self-test`; refresh hashes only after reviewing the source and assertion coverage. Mappings to a real backend remain pending. See `docs/rules/cms-contracts.md`.
