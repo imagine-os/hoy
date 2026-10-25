@@ -1,0 +1,62 @@
+name: Customer FAQ published pricing QA
+on:
+  pull_request:
+    paths:
+      - 'src/modules/customer/pages/FaqPage.tsx'
+      - 'src/modules/customer/specs.ts'
+      - 'src/modules/customer/faqPricing.contract.ts'
+      - 'src/modules/customer/useCustomerRows.ts'
+      - 'src/modules/website/**'
+      - 'src/components/molecule/FaqAnswer/**'
+      - 'src/components/molecule/PriceTable/**'
+      - 'src/data/**'
+      - 'src/tenant/**'
+      - 'scripts/*customer-faq-pricing*'
+      - 'scripts/*faq*pricing*'
+      - 'package*.json'
+      - '.github/workflows/customer-faq-pricing-qa.yml'
+  workflow_dispatch:
+jobs:
+  customer-faq-prices:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: node node_modules/playwright-core/cli.js install --with-deps chromium
+      - name: Browser executable
+        run: echo "CHROMIUM_PATH=$(node -p 'require("playwright-core").chromium.executablePath()')" >> "$GITHUB_ENV"
+      - name: Shared projection and CMS contracts
+        run: |
+          node scripts/test-faq-published-pricing.mjs
+          node scripts/test-faq-published-pricing-contract.mjs
+          node scripts/test-customer-faq-pricing-contract.mjs
+      - name: Customer and retained public FAQ lifecycles
+        run: |
+          node node_modules/vite/bin/vite.js --host 127.0.0.1 --strictPort --port 5823 > /tmp/customer-faq-dev.log 2>&1 &
+          customer_faq_dev_pid=$!
+          trap 'kill "$customer_faq_dev_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..60}; do curl -fsS http://127.0.0.1:5823/ > /dev/null && break; sleep 1; done
+          curl -fsS http://127.0.0.1:5823/ > /dev/null
+          QA_BASE=http://127.0.0.1:5823 QA_OUTPUT=/tmp/customer-faq-ui node scripts/test-customer-faq-pricing-ui.mjs
+          QA_BASE=http://127.0.0.1:5823 QA_OUTPUT=/tmp/customer-faq-public-ui node scripts/test-faq-published-pricing-ui.mjs
+      - name: Full build
+        run: npm run build
+      - name: Actual compiled customer and public FAQ routes
+        run: |
+          node node_modules/vite/bin/vite.js preview --host 127.0.0.1 --strictPort --port 5822 > /tmp/customer-faq-preview.log 2>&1 &
+          customer_faq_preview_pid=$!
+          trap 'kill "$customer_faq_preview_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..60}; do curl -fsS http://127.0.0.1:5822/ > /dev/null && break; sleep 1; done
+          curl -fsS http://127.0.0.1:5822/ > /dev/null
+          QA_BASE=http://127.0.0.1:5822 QA_OUTPUT=/tmp/customer-faq-production node scripts/test-customer-faq-pricing-production.mjs
+          QA_BASE=http://127.0.0.1:5822 QA_OUTPUT=/tmp/customer-faq-public-production node scripts/test-faq-published-pricing-production.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: customer-faq-published-pricing
+          path: /tmp/customer-faq-*

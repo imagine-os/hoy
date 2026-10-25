@@ -1,6 +1,6 @@
 import { useFaqPricing } from '../useFaqPricing';
 import { faqPrices } from '../faqPricing';
-import { Button } from '../../../components/atom/Button/Button';
+import { faqPricingLabel, renderFaqPricing } from '../faqPricingView';
 /**
  * W-10 — Preguntas frecuentes (0051).
  *
@@ -20,7 +20,6 @@ import { formatCOP } from '../../../i18n/format';
 import { useContact, useWhatsappLink } from '../../admin/settings';
 import { Accordion } from '../../../components/molecule/Accordion/Accordion';
 import { FaqAnswer } from '../../../components/molecule/FaqAnswer/FaqAnswer';
-import { PriceTable } from '../../../components/molecule/PriceTable/PriceTable';
 import { EmptyState } from '../../../components/molecule/EmptyState/EmptyState';
 import { Icon } from '../../../components/atom/Icon/Icon';
 import { PageHead, SiteShell } from '../SiteShell';
@@ -51,8 +50,8 @@ export function FaqPage() {
   const contact = useContact();
   const prices = useFaqPricing();
   const projectPrices = (families: string) => faqPrices(prices.rows, families, prices.date, prices.publicationObserved);
-  const unavailableLabel = t(prices.status === 'loading' ? 'site.faq.prices.loading' : prices.status === 'error' ? 'site.faq.prices.error' : 'site.faq.prices.unavailable');
-  const renderPricing = (families: string) => { const projected = projectPrices(families); return <div className="stack-sm"><PriceTable items={prices.status === 'ready' ? projected.items : projected.items.map(item => ({ ...item, description: { es: '', en: '' } }))} grouped={families.includes(',')} familyLabels={{ paquetes: t('site.faq.prices.packages') }} unavailable={{ ids: prices.status === 'ready' ? projected.unavailable : projected.items.map(item => item.id), label: unavailableLabel }} />{prices.status === 'error' && <Button variant="secondary" onClick={prices.retry}>{t('core.common.retry')}</Button>}</div>; };
+  const unavailableLabel = faqPricingLabel(prices, t);
+  const renderPricing = (families: string) => renderFaqPricing(families, prices, t);
   // A question the FAQ does not answer is a support handoff (M-08a contacts, 0047).
   const wa = useWhatsappLink();
   const support = wa.resolve('support');
