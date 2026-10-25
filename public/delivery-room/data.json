@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
-  "capturedAt": "2026-10-24T23:35:25Z",
+  "capturedAt": "2026-10-25T01:44:06Z",
   "sourceSpreadsheet": {
     "id": "19SWDF957P55Iw5QEPyVtoPDS50-eor0k76djVv1YyNU",
     "url": "https://docs.google.com/spreadsheets/d/19SWDF957P55Iw5QEPyVtoPDS50-eor0k76djVv1YyNU/edit",
     "title": "HOY — Front End Dev Log"
   },
-  "sourceCutoff": "Spreadsheet snapshot: 2026-10-24 23:35:25 UTC; nine tabs read, ledger last updated 03:06 UTC through PR89. GitHub draft evidence checked 2026-10-25T00:15:01Z. PR92–98 exact-head checks are all successful; drafts remain unmerged and release-held. PR91 is the latest verified feature release in this snapshot. Whole-criterion readiness and deployed coverage are unchanged.",
+  "sourceCutoff": "Nine Sheet tabs reread 2026-10-25 01:44:06 UTC. All124 feature/criterion rows and70 MVP planning rows unchanged; source ledger remains October24 03:06 UTC through PR89. GitHub checked01:44:40 UTC: PR92–98 and PR100 exact-head checks successful, all held drafts. PR101 current head e6a5c0d has7/44 checks successful and37 active/queued; no failure at this cutoff. PR91 remains the latest verified feature release in this snapshot; tracker-only PR99 is deployed separately. No readiness or deployed-feature coverage promotion.",
   "caveats": [
     "68/124 and 48/70 are tested-deployed evidence coverage, NOT complete features.",
     "Only 3 rows are explicitly frontend-ready. The remaining 67 MVP rows are not certified complete; lack of assessment is not proof of failure.",
@@ -6206,19 +6206,36 @@
       "PR94 class-purchase recovery has terminal successful CI and accepted exact-tree review; remains a held draft.",
       "One integration owner controls shared transaction/provider files, documentation, date capture and common test/CI wiring. Heavy local builds/browser gates serialize; remote draft CI can run in parallel.",
       "Keep CMS contracts, page configurations, mappings, fixtures and adapter checks synchronized in each feature change. Extend existing table settings; no competing storage model.",
-      "MVP first, then November 30, then later scope. PR92–98 remain held drafts; successful checks do not authorize a feature release. Shared integration requires combined-main validation."
+      "MVP first, then November30, then later scope. PR92–98 and PR100–101 remain held drafts; successful checks do not authorize feature release. PR101 pending-request previews create no booking or spot hold. Shared integration still requires combined-main validation."
     ],
-    "ownershipRule": "Separate lane file ownership and one shared integration owner. PR92–98 remain draft/unmerged with explicit release holds. No duplicate implementation writers; fresh combined-main validation is required before any separately authorized release."
+    "ownershipRule": "Separate feature lanes and one shared integration owner. All app-feature drafts remain held; tracker-only refresh has separate ownership and includes no held feature code."
   },
-  "activityCapturedAt": "2026-10-25T00:15:01Z",
+  "activityCapturedAt": "2026-10-25T01:44:40Z",
   "activityLanes": [
+    {
+      "title": "Class-voucher recipient preview · draft PR100",
+      "ids": [
+        "BO-02",
+        "NT-02"
+      ],
+      "state": "42/42 checks passed · draft / release held",
+      "text": "GitHub checked 2026-10-25T01:44:40Z: exact head 1a0bd0878806f082af8815d472d33adf7f9a53e6; all42 checks passed. Recipient-bound class-voucher email preview after fictional approval is explicitly UNSENT and read-only. Real sending, secure cross-device links and backend authorization remain separate; no whole BO-02 or NT-02 completion. https://github.com/imagine-os/hoy/pull/100"
+    },
+    {
+      "title": "Pending cash / transfer request preview · draft PR101",
+      "ids": [
+        "NT-02"
+      ],
+      "state": "7/44 checks passed · 37 active/queued · draft",
+      "text": "GitHub checked 2026-10-25T01:44:40Z: current exact head e6a5c0d97e88550e2766d5e1d277f3739f68f67f (supersedes earlier reported heads).7 checks passed;37 active or queued, no failure at this cutoff. Bounded saved cash/transfer request email preview is explicitly UNSENT. It creates no booking, spot hold or expiry deadline; no bank confirmation or real sending. Whole NT-02 remains incomplete; merge/deployment held. https://github.com/imagine-os/hoy/pull/101"
+    },
     {
       "title": "Gift recovery · draft PR93",
       "ids": [
         "PG-09"
       ],
       "state": "39/39 checks passed · draft / release held",
-      "text": "GitHub checked 2026-10-25T00:15:01Z: exact head 57c33489ac1f995847a804d53d44468438d5ae27, all 39 registered checks successful. Draft, open, unmerged and undeployed. Bounded frontend scope only; no whole-criterion, real-service or client acceptance promotion. https://github.com/imagine-os/hoy/pull/93"
+      "text": "GitHub checked 2026-10-25T01:44:40Z: exact head 57c33489ac1f995847a804d53d44468438d5ae27, all 39 registered checks successful. Draft, open, unmerged and undeployed. Bounded frontend scope only; no whole-criterion, real-service or client acceptance promotion. https://github.com/imagine-os/hoy/pull/93"
     },
     {
       "title": "Class purchase recovery · draft PR94",
@@ -6226,7 +6243,7 @@
         "PG-09"
       ],
       "state": "46/46 checks passed · draft / release held",
-      "text": "GitHub checked 2026-10-25T00:15:01Z: exact head 067bf859be057b434281ef973dfa0ae6232ff3bd, all 46 registered checks successful. Draft, open, unmerged and undeployed. Bounded frontend scope only; no whole-criterion, real-service or client acceptance promotion. https://github.com/imagine-os/hoy/pull/94"
+      "text": "GitHub checked 2026-10-25T01:44:40Z: exact head 067bf859be057b434281ef973dfa0ae6232ff3bd, all 46 registered checks successful. Draft, open, unmerged and undeployed. Bounded frontend scope only; no whole-criterion, real-service or client acceptance promotion. https://github.com/imagine-os/hoy/pull/94"
     },
     {
       "title": "Transfer evidence · draft PR95",
@@ -6234,7 +6251,7 @@
         "PG-04"
       ],
       "state": "41/41 checks passed · draft / release held",
-      "text": "GitHub checked 2026-10-25T00:15:01Z: exact head 195da401fc910d88b201bf295d00ee849c7b89e4, all 41 registered checks successful. Draft, open, unmerged and undeployed. Bounded frontend scope only; no whole-criterion, real-service or client acceptance promotion. https://github.com/imagine-os/hoy/pull/95"
+      "text": "GitHub checked 2026-10-25T01:44:40Z: exact head 195da401fc910d88b201bf295d00ee849c7b89e4, all 41 registered checks successful. Draft, open, unmerged and undeployed. Bounded frontend scope only; no whole-criterion, real-service or client acceptance promotion. https://github.com/imagine-os/hoy/pull/95"
     },
     {
       "title": "CMS / Table Tool foundation",
@@ -6248,7 +6265,7 @@
         "AD-07"
       ],
       "state": "48/48 checks passed · draft / release held",
-      "text": "GitHub checked 2026-10-25T00:15:01Z: exact head 81d7a9b38a1bccce917c794ccc038df373c17c3c, all 48 registered checks successful. Draft, open, unmerged and undeployed. Bounded frontend scope only; no whole-criterion, real-service or client acceptance promotion. https://github.com/imagine-os/hoy/pull/97"
+      "text": "GitHub checked 2026-10-25T01:44:40Z: exact head 81d7a9b38a1bccce917c794ccc038df373c17c3c, all 48 registered checks successful. Draft, open, unmerged and undeployed. Bounded frontend scope only; no whole-criterion, real-service or client acceptance promotion. https://github.com/imagine-os/hoy/pull/97"
     },
     {
       "title": "RC-03 · draft PR98",
@@ -6256,7 +6273,7 @@
         "RC-03"
       ],
       "state": "21/21 checks passed · draft / release held",
-      "text": "GitHub checked 2026-10-25T00:15:01Z: exact head 9d39b1db6b422d0454298a168a848772aa00ccaf, all 21 registered checks successful. Draft, open, unmerged and undeployed. Bounded frontend scope only; no whole-criterion, real-service or client acceptance promotion. https://github.com/imagine-os/hoy/pull/98"
+      "text": "GitHub checked 2026-10-25T01:44:40Z: exact head 9d39b1db6b422d0454298a168a848772aa00ccaf, all 21 registered checks successful. Draft, open, unmerged and undeployed. Bounded frontend scope only; no whole-criterion, real-service or client acceptance promotion. https://github.com/imagine-os/hoy/pull/98"
     },
     {
       "title": "NT-02 · draft PR96",
@@ -6264,7 +6281,7 @@
         "NT-02"
       ],
       "state": "44/44 checks passed · draft / release held",
-      "text": "GitHub checked 2026-10-25T00:15:01Z: exact head d9475d15934b3ce76602aaa0bc21a8dcd3dc8063, all 44 registered checks successful. Draft, open, unmerged and undeployed. Bounded frontend scope only; no whole-criterion, real-service or client acceptance promotion. https://github.com/imagine-os/hoy/pull/96 NT-02 remains incomplete: pending-payment booking, booking-release and voucher-receipt bindings are unresolved. Previews are explicitly unsent."
+      "text": "GitHub checked 2026-10-25T01:44:40Z: exact head d9475d15934b3ce76602aaa0bc21a8dcd3dc8063, all 44 registered checks successful. Draft, open, unmerged and undeployed. Bounded frontend scope only; no whole-criterion, real-service or client acceptance promotion. https://github.com/imagine-os/hoy/pull/96 NT-02 remains incomplete. Additional pending-request work is separately tracked in PR101; booking-release and other producer bindings are not certified. Previews are explicitly unsent."
     },
     {
       "title": "AD-02 released",
@@ -6289,13 +6306,13 @@
         "CU-04"
       ],
       "state": "39/39 checks passed · draft / release held",
-      "text": "GitHub checked 2026-10-25T00:15:01Z: exact head dbaa78c50f1a2e63d9540bd7b1be909b6d44c424, all 39 registered checks successful. Draft, open, unmerged and undeployed. Bounded frontend scope only; no whole-criterion, real-service or client acceptance promotion. https://github.com/imagine-os/hoy/pull/92"
+      "text": "GitHub checked 2026-10-25T01:44:40Z: exact head dbaa78c50f1a2e63d9540bd7b1be909b6d44c424, all 39 registered checks successful. Draft, open, unmerged and undeployed. Bounded frontend scope only; no whole-criterion, real-service or client acceptance promotion. https://github.com/imagine-os/hoy/pull/92"
     },
     {
       "title": "Public Delivery Room migration",
       "ids": [],
-      "state": "Public repository snapshot",
-      "text": "This read-only tracker is maintained with the HOY repository. The source spreadsheet retains its existing access controls; following a source row may require permission. This page does not read or write connected accounts."
+      "state": "PR99 live · tracker-only release",
+      "text": "PR99 merged a485b5eb50e2efa0683fb41b89e9faa3188a0c27; normal Pages build/deploy/exact-SHA verification passed. All35 public tracker files verified. This read-only public snapshot is maintained with the HOY repository; source links retain existing permissions. No Sheet access or writeback from this page."
     },
     {
       "title": "MVP completion and dependency audit",
@@ -6305,7 +6322,7 @@
     }
   ],
   "syncCoverage": {
-    "readAt": "2026-10-24T23:35:25Z",
+    "readAt": "2026-10-25T01:44:06Z",
     "tabsRead": [
       "Justin Actions",
       "Questions for Jas",
@@ -6321,16 +6338,16 @@
     "criteriaRowsChanged": 0,
     "planningRowsChanged": 0,
     "releaseLedgerGap": "PR90 and PR91 verified live outside Sheet; ledger remains PR89. No spreadsheet write performed.",
-    "ledgerHeaderReadAt": "2026-10-24T23:35:25Z",
-    "humanNotes": "46 public coordination records; setup correspondence and private context omitted.",
-    "githubReadAt": "2026-10-25T00:15:01Z",
-    "additionalEvidence": "PR92–98 exact-head checks all successful, separately recorded in githubPullRequests. All drafts/unmerged. No source readiness promotion."
+    "ledgerHeaderReadAt": "2026-10-25T01:44:06Z",
+    "humanNotes": "All46 source human IDs reread and retained with public summaries. Source statuses unchanged; private setup provenance excluded. Later owner confirmations remain separate.",
+    "githubReadAt": "2026-10-25T01:44:40Z",
+    "additionalEvidence": "PR10042/42 successful; PR101 current e6a5c0d7/44 successful,37 active/queued at cutoff. PR92–98 successful and held. Tracker-only PR99 deployed separately; no source readiness promotion."
   },
-  "githubEvidenceCheckedAt": "2026-10-25T00:15:01Z",
+  "githubEvidenceCheckedAt": "2026-10-25T01:44:40Z",
   "publicSnapshot": {
     "mode": "Bundled read-only snapshot",
-    "sheetCapturedAt": "2026-10-24T23:35:25Z",
-    "githubCheckedAt": "2026-10-25T00:15:01Z",
+    "sheetCapturedAt": "2026-10-25T01:44:06Z",
+    "githubCheckedAt": "2026-10-25T01:44:40Z",
     "refresh": "Reviewed repository updates; no automatic or browser-authenticated Sheet sync",
     "writeback": false,
     "privacy": "Public coordination summaries; no correspondence, private setup notes, credentials or raw exports",
@@ -6347,9 +6364,10 @@
       "draft": true,
       "merged": false,
       "state": "open",
-      "checksSucceeded": 39,
       "checksTotal": 39,
-      "checkedAt": "2026-10-25T00:15:01Z"
+      "checksSucceeded": 39,
+      "checkedAt": "2026-10-25T01:44:40Z",
+      "checksPendingOrRunning": 0
     },
     {
       "number": 93,
@@ -6357,9 +6375,10 @@
       "draft": true,
       "merged": false,
       "state": "open",
-      "checksSucceeded": 39,
       "checksTotal": 39,
-      "checkedAt": "2026-10-25T00:15:01Z"
+      "checksSucceeded": 39,
+      "checkedAt": "2026-10-25T01:44:40Z",
+      "checksPendingOrRunning": 0
     },
     {
       "number": 94,
@@ -6367,9 +6386,10 @@
       "draft": true,
       "merged": false,
       "state": "open",
-      "checksSucceeded": 46,
       "checksTotal": 46,
-      "checkedAt": "2026-10-25T00:15:01Z"
+      "checksSucceeded": 46,
+      "checkedAt": "2026-10-25T01:44:40Z",
+      "checksPendingOrRunning": 0
     },
     {
       "number": 95,
@@ -6377,9 +6397,10 @@
       "draft": true,
       "merged": false,
       "state": "open",
-      "checksSucceeded": 41,
       "checksTotal": 41,
-      "checkedAt": "2026-10-25T00:15:01Z"
+      "checksSucceeded": 41,
+      "checkedAt": "2026-10-25T01:44:40Z",
+      "checksPendingOrRunning": 0
     },
     {
       "number": 96,
@@ -6387,9 +6408,10 @@
       "draft": true,
       "merged": false,
       "state": "open",
-      "checksSucceeded": 44,
       "checksTotal": 44,
-      "checkedAt": "2026-10-25T00:15:01Z"
+      "checksSucceeded": 44,
+      "checkedAt": "2026-10-25T01:44:40Z",
+      "checksPendingOrRunning": 0
     },
     {
       "number": 97,
@@ -6397,9 +6419,10 @@
       "draft": true,
       "merged": false,
       "state": "open",
-      "checksSucceeded": 48,
       "checksTotal": 48,
-      "checkedAt": "2026-10-25T00:15:01Z"
+      "checksSucceeded": 48,
+      "checkedAt": "2026-10-25T01:44:40Z",
+      "checksPendingOrRunning": 0
     },
     {
       "number": 98,
@@ -6407,9 +6430,45 @@
       "draft": true,
       "merged": false,
       "state": "open",
-      "checksSucceeded": 21,
       "checksTotal": 21,
-      "checkedAt": "2026-10-25T00:15:01Z"
+      "checksSucceeded": 21,
+      "checkedAt": "2026-10-25T01:44:40Z",
+      "checksPendingOrRunning": 0
+    },
+    {
+      "number": 100,
+      "head": "1a0bd0878806f082af8815d472d33adf7f9a53e6",
+      "draft": true,
+      "merged": false,
+      "state": "open",
+      "checksTotal": 42,
+      "checksSucceeded": 42,
+      "checkedAt": "2026-10-25T01:44:40Z",
+      "checksPendingOrRunning": 0
+    },
+    {
+      "number": 101,
+      "head": "e6a5c0d97e88550e2766d5e1d277f3739f68f67f",
+      "draft": true,
+      "merged": false,
+      "state": "open",
+      "checksTotal": 44,
+      "checksSucceeded": 7,
+      "checkedAt": "2026-10-25T01:44:40Z",
+      "checksPendingOrRunning": 37
     }
-  ]
+  ],
+  "trackerRelease": {
+    "pr": 99,
+    "sha": "a485b5eb50e2efa0683fb41b89e9faa3188a0c27",
+    "url": "https://imagine-os.github.io/hoy/delivery-room/",
+    "verifiedRun": "https://github.com/imagine-os/hoy/actions/runs/40147089100",
+    "scope": "Tracker only; no app feature readiness promotion"
+  },
+  "humanCoordinationEvidence": {
+    "summary": "Nine questions were delivered to Jas; no answers are recorded in this evidence. The nine are not mapped to individual source rows here. PC-10/11 have later owner confirmations; detailed contract terms remain omitted and older Sheet statuses are preserved.",
+    "deliveredQuestionCount": 9,
+    "answersRecorded": false,
+    "rowMappingEstablished": false
+  }
 }
