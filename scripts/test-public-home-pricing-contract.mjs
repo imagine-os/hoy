@@ -17,20 +17,29 @@ function variable(file, key) {
   assert(found, `Missing declaration ${key}`);
   return found;
 }
-function literal(node) {
-  if (ts.isAsExpression(node) || ts.isSatisfiesExpression(node) || ts.isParenthesizedExpression(node)) return literal(node.expression);
+function literal(node, environment = {}) {
+  if (ts.isAsExpression(node) || ts.isSatisfiesExpression(node) || ts.isParenthesizedExpression(node)) return literal(node.expression, environment);
   if (ts.isStringLiteral(node)) return node.text;
   if (node.kind === ts.SyntaxKind.TrueKeyword) return true;
   if (node.kind === ts.SyntaxKind.FalseKeyword) return false;
-  if (ts.isArrayLiteralExpression(node)) return node.elements.map(literal);
-  if (ts.isObjectLiteralExpression(node)) return Object.fromEntries(node.properties.map(p => {
-    assert(ts.isPropertyAssignment(p), 'Contract must use explicit literal properties');
-    return [name(p.name), literal(p.initializer)];
-  }));
-  throw Error('Contract inventory must remain literal');
+  if (ts.isIdentifier(node) && Object.hasOwn(environment, node.text)) return environment[node.text];
+  if (ts.isPropertyAccessExpression(node)) {
+    const value = literal(node.expression, environment);
+    assert(value && Object.hasOwn(value, node.name.text), 'Unknown shared contract property');
+    return value[node.name.text];
+  }
+  if (ts.isArrayLiteralExpression(node)) return node.elements.flatMap(item => ts.isSpreadElement(item) ? literal(item.expression, environment) : [literal(item, environment)]);
+  if (ts.isObjectLiteralExpression(node)) return node.properties.reduce((value, item) => {
+    if (ts.isSpreadAssignment(item)) return { ...value, ...literal(item.expression, environment) };
+    assert(ts.isPropertyAssignment(item), 'Contract must use explicit properties or known shared spreads');
+    return { ...value, [name(item.name)]: literal(item.initializer, environment) };
+  }, {});
+  throw Error('Contract inventory must remain literal or use the known shared contract');
 }
+export function readPricingContract(path, key, environment = {}) { return literal(variable(ast(path), key), environment); }
+export const sharedPricing = readPricingContract('src/modules/website/publishedPricing.contract.ts', 'PUBLISHED_PRICING_CONTRACT');
 const symbol = 'PUBLIC_HOME_PRICING_CONTRACT';
-const contract = literal(variable(ast('src/modules/website/publicHomePricing.contract.ts'), symbol));
+const contract = readPricingContract('src/modules/website/publicHomePricing.contract.ts', symbol, { PUBLISHED_PRICING_CONTRACT: sharedPricing });
 assert.deepEqual(contract.featureIds, ['SW-02']);
 assert.deepEqual(contract.pages, ['W-01']);
 assert.equal(contract.view, 'public-offers');
@@ -71,12 +80,12 @@ assert(contract.dataFields.includes(contract.snapshotField));
 assert.equal(typedExtensions.get(contract.snapshotField)?.type?.getText(catalog), 'CatalogPublication');
 assert(/export interface CatalogPublication\b/.test(load('src/data/catalogPublication.ts')), 'Published snapshot type missing');
 
-function importsContract(path) {
+function importsContract(path, imported = symbol, module = '/publicHomePricing.contract') {
   const file = ast(path);
-  return file.statements.some(s => ts.isImportDeclaration(s) && s.moduleSpecifier.text.endsWith('/publicHomePricing.contract') &&
-    s.importClause?.namedBindings && ts.isNamedImports(s.importClause.namedBindings) && s.importClause.namedBindings.elements.some(e => name(e.propertyName ?? e.name) === symbol));
+  return file.statements.some(s => ts.isImportDeclaration(s) && s.moduleSpecifier.text.endsWith(module) &&
+    s.importClause?.namedBindings && ts.isNamedImports(s.importClause.namedBindings) && s.importClause.namedBindings.elements.some(e => name(e.propertyName ?? e.name) === imported));
 }
-for (const path of ['src/modules/website/publicHomePricing.ts', 'src/modules/website/usePublicHomePricing.ts', 'src/modules/website/specs.ts']) assert(importsContract(path), `${path} must bind the shared contract`);
+for (const path of ['src/modules/website/publicHomePricing.ts', 'src/modules/website/specs.ts']) assert(importsContract(path), `${path} must bind the shared contract`);
 assert(load('src/modules/website/publicHomePricing.ts').includes(`${symbol}.items`), 'Helper item type lost its contract binding');
 // Actual row/plan fields consumed by the projection must remain represented in its inventory.
 walk(ast('src/modules/website/publicHomePricing.ts'), node => {
@@ -86,8 +95,11 @@ walk(ast('src/modules/website/publicHomePricing.ts'), node => {
   }
 });
 
-const hook = load('src/modules/website/usePublicHomePricing.ts');
-for (const field of ['table', 'tenantField']) assert(hook.includes(`${symbol}.${field}`), `Hook lost ${field} binding`);
+assert(importsContract('src/modules/website/publicHomePricing.contract.ts', 'PUBLISHED_PRICING_CONTRACT', '/publishedPricing.contract'), 'Home contract lost shared import');
+assert(importsContract('src/modules/website/usePublishedPricingRows.ts', 'PUBLISHED_PRICING_CONTRACT', '/publishedPricing.contract'), 'Core reader lost shared import');
+const hook = load('src/modules/website/usePublishedPricingRows.ts');
+for (const field of ['table', 'tenantField']) assert(hook.includes(`PUBLISHED_PRICING_CONTRACT.${field}`), `Core reader lost ${field} binding`);
+assert(load('src/modules/website/usePublicHomePricing.ts').includes('usePublishedPricingRows'), 'Home wrapper lost shared reader');
 const specs = ast('src/modules/website/specs.ts');
 const homeCall = prop(variable(specs, 'siteSpecs'), 'home');
 assert(homeCall && ts.isCallExpression(homeCall), 'W-01 spec binding changed');

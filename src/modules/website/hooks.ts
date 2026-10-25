@@ -1,3 +1,4 @@
+import { tenant } from '../../tenant/tenant';
 import { useMemo } from 'react';
 import { useTable } from '../../data/DataContext';
 import type { BaseRow, ClassSessionRow, FaqEntryRow, MediaAssetRow, ModalityRow, TeacherRow } from '../../data/schema';
@@ -28,10 +29,10 @@ export function dayList(n = 7): Date[] {
 
 /** 0051 — every published FAQ entry, grouped by section in `sort` order (W-10 shows them all on one page). */
 export function useFaqGroups() {
-  const { rows, loading } = useTable<FaqEntryRow>('faq_entries', { where: { published: true }, orderBy: { column: 'sort' } });
+  const { rows, loading } = useTable<FaqEntryRow>('faq_entries', { where: { tenant_id: tenant.id, published: true }, orderBy: { column: 'sort' } });
   return useMemo(() => {
     const groups: { key: string; title: FaqEntryRow['group_title']; lead: FaqEntryRow['group_lead']; items: FaqEntryRow[] }[] = [];
-    for (const r of rows) {
+    for (const r of rows.filter(row => row.tenant_id === tenant.id && row.published === true)) {
       const g = groups.find((x) => x.key === r.group_key);
       if (g) g.items.push(r);
       else groups.push({ key: r.group_key, title: r.group_title, lead: r.group_lead, items: [r] });

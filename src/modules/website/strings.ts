@@ -8,6 +8,10 @@ import type { StringTable } from '../../i18n/types';
  * site.modalities · site.schedule · site.teachers · site.plans · site.contact · site.legal · site.footer
  */
 export const strings: StringTable = {
+  'site.faq.prices.packages': { es: 'Paquetes de clases', en: 'Class packages' },
+  'site.faq.prices.loading': { es: 'Cargando precios actuales…', en: 'Loading current prices…' },
+  'site.faq.prices.error': { es: 'No se pudieron verificar los precios. Reintenta.', en: 'Prices could not be verified. Retry.' },
+  'site.faq.prices.unavailable': { es: 'No disponible: consulta los planes publicados.', en: 'Unavailable: check the published plans.' },
   'site.pricing.unavailable': { es: 'Sin precio publicado vigente. Consulta los planes disponibles.', en: 'No current published price. See available plans.' },
   'site.pricing.terms': { es: '{n} clases · {days} días', en: '{n} classes · {days} days' },
   'site.hero.ctaWithoutPrice': { es: 'Ver planes disponibles', en: 'See available plans' },
