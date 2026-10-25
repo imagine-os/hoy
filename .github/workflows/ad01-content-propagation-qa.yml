@@ -1,0 +1,42 @@
+name: AD01 native content propagation QA
+on:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  native-content-cycle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      CHROMIUM_PATH: /usr/bin/google-chrome
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run test:content-recovery
+      - run: npm run test:session-admission
+      - run: npm run build
+      - name: Native EN/ES mobile and desktop content cycle
+        run: |
+          npm run preview -- --host 127.0.0.1 --strictPort --port 5696 > /tmp/hoy-ad01-preview.log 2>&1 &
+          ready=0
+          for i in $(seq 1 30); do if curl -fsS http://127.0.0.1:5696/ >/dev/null; then ready=1; break; fi; sleep 1; done
+          test "$ready" = 1
+          node scripts/test-ad01-native-cycle.mjs
+        env:
+          QA_BASE: http://127.0.0.1:5696
+          QA_OUTPUT: qa/ad01-native
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ad01-native-${{ github.event.pull_request.head.sha }}
+          path: |
+            qa/ad01-native/
+            /tmp/hoy-ad01-preview.log
+          retention-days: 7
