@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
-  "capturedAt": "2026-10-25T05:07:16Z",
+  "capturedAt": "2026-10-25T05:21:15Z",
   "sourceSpreadsheet": {
     "id": "19SWDF957P55Iw5QEPyVtoPDS50-eor0k76djVv1YyNU",
     "url": "https://docs.google.com/spreadsheets/d/19SWDF957P55Iw5QEPyVtoPDS50-eor0k76djVv1YyNU/edit",
     "title": "HOY — Front End Dev Log"
   },
-  "sourceCutoff": "Nine Sheet tabs reread 2026-10-25 05:07:16 UTC, including source evidence notes. All 124 feature/criterion rows and 70 MVP planning rows match the retained snapshot; source ledger remains October 24 03:06 UTC through PR89. GitHub checked at the same cutoff: PR101 exact head e6a5c0d has all 44 checks successful; PR103 exact head 07c0f7d8 has all 23 checks successful. Both are open held drafts. PR91 remains the latest verified app-feature release; tracker-only PR102 deployed at 0e4a6631. Voucher audit owner report dated05:08 UTC is separately qualified; nine earlier mock-frontend audit recommendations still await report reconciliation. No backend, production or client acceptance promotion.",
+  "sourceCutoff": "Nine Sheet tabs and source notes reread 2026-10-25T05:21:15Z; values match the retained snapshot. All124 feature records/criteria and70 MVP planning rows remain unchanged. Source ledger still ends October24 03:06 UTC through PR89; Sheet-ready count remains3. Separate owner handoff dated 2026-10-25 05:19 UTC provides nine qualified mock-frontend audit recommendations on app-source 0e4a66310ab749e7851336df4d24dceb2b0bdb50. Seven report fresh execution; RS-02/RS-08 reconcile prior evidence and are NOT fresh runs. Reviewers accepted scope without independently rerunning tests. Tracker-only main09a07245 preserves app source; equivalence is not execution. PR10144/44 and PR10323/23 remain held drafts at this cutoff. No production/backend/client acceptance promotion.",
   "caveats": [
     "68/124 and 48/70 are tested-deployed evidence coverage, NOT complete features.",
     "Only 3 rows are explicitly frontend-ready. The remaining 67 MVP rows are not certified complete; lack of assessment is not proof of failure.",
@@ -17,7 +17,7 @@
     "All 46 human record IDs are retained with public coordination summaries. Setup owners are proposals, not assignments; private setup notes and correspondence are excluded.",
     "GitHub checks are a separately dated snapshot, not continuous telemetry. Successful draft CI does not promote source readiness or deployed coverage.",
     "Owner priority is MVP, then explicitly November 30, then later scope. CMS synchronization is required throughout development; five adopted page definitions do not mean the full frontend CMS is finished.",
-    "The 3 frontend-ready count is the retained Sheet assessment, not the cutoff of all later audits. Separate mock-frontend audit recommendations require their dated source evidence and exclusions before publication; they do not establish backend, production or client acceptance."
+    "The3 frontend-ready count is the retained Sheet assessment. Nine separately dated mock-frontend audit recommendations are displayed with source baseline, reported tests and exclusions; they do not establish production/backend/client acceptance. RS-02/RS-08 are evidence reconciliations, not fresh runs."
   ],
   "features": [
     {
@@ -6211,17 +6211,17 @@
     ],
     "ownershipRule": "Separate feature lanes and one shared integration owner. All app-feature drafts remain held; tracker-only refresh has separate ownership and includes no held feature code."
   },
-  "activityCapturedAt": "2026-10-25T05:09:21Z",
+  "activityCapturedAt": "2026-10-25T05:21:15Z",
   "activityLanes": [
     {
-      "title": "Readiness count · retained Sheet assessment",
+      "title": "Readiness · Sheet assessment and separate audit recommendations",
       "ids": [
         "PL-10",
         "PG-10",
         "RS-01"
       ],
-      "state": "3 Sheet-ready criteria · later mock audits not yet reconciled",
-      "text": "Sheet reread 2026-10-25T05:07:16Z still names three audited-ready criteria. This is the older Sheet assessment, not a count of all later audit recommendations. Later recommendations require their dated source evidence and exclusions before publication; real backend, production and client acceptance remain separate."
+      "state": "3 Sheet-ready criteria · 9 dated qualified mock recommendations",
+      "text": "Sheet reread 2026-10-25T05:21:15Z still records3 ready criteria. A separate owner handoff dated 2026-10-25 05:19 UTC recommends nine mock-frontend criteria with named evidence and exclusions. Seven report fresh execution; RS-02/RS-08 reconcile earlier evidence, not fresh tests. Independent reviewers accepted scope without independently rerunning tests. Feature stages and source counts remain unchanged; backend, production and client acceptance remain separate."
     },
     {
       "title": "Room-name propagation · draft PR103",
@@ -6229,7 +6229,7 @@
         "AD-01"
       ],
       "state": "23/23 checks passed · draft / release held",
-      "text": "GitHub checked 2026-10-25T05:07:16Z: exact head 07c0f7d8a8caab4fe37504ac66ae5f7d08800c8b has all23 checks successful across17 workflows. Bounded room-name repair and fictional content propagation tests only. Rooms lack publication controls; reception lacks FAQ/room/theme consumers. Mounted stale-read handling remains separate held AD-07 work. No whole AD-01 readiness, backend or client acceptance. https://github.com/imagine-os/hoy/pull/103"
+      "text": "GitHub checked 2026-10-25T05:21:15Z: exact head 07c0f7d8a8caab4fe37504ac66ae5f7d08800c8b has all23 checks successful across17 workflows. Bounded room-name repair and fictional content propagation tests only. Rooms lack publication controls; reception lacks FAQ/room/theme consumers. Mounted stale-read handling remains separate held AD-07 work. No whole AD-01 readiness, backend or client acceptance. https://github.com/imagine-os/hoy/pull/103"
     },
     {
       "title": "Pending cash / transfer request preview · draft PR101",
@@ -6237,7 +6237,7 @@
         "NT-02"
       ],
       "state": "44/44 checks passed · draft / release held",
-      "text": "GitHub checked 2026-10-25T05:07:16Z: exact head e6a5c0d97e88550e2766d5e1d277f3739f68f67f has all44 checks successful across22 workflows. Open, draft and unmerged. Bounded saved cash/transfer request email preview is explicitly UNSENT. It creates no booking, spot hold or expiry deadline; no bank confirmation or real sending. Whole NT-02 remains incomplete; merge/deployment held. https://github.com/imagine-os/hoy/pull/101"
+      "text": "GitHub checked 2026-10-25T05:21:15Z: exact head e6a5c0d97e88550e2766d5e1d277f3739f68f67f has all44 checks successful across22 workflows. Open, draft and unmerged. Bounded saved cash/transfer request email preview is explicitly UNSENT. It creates no booking, spot hold or expiry deadline; no bank confirmation or real sending. Whole NT-02 remains incomplete; merge/deployment held. https://github.com/imagine-os/hoy/pull/101"
     },
     {
       "title": "Voucher audit · owner report 05:08 UTC",
@@ -6250,13 +6250,85 @@
       "text": "Feature-owner report dated 2026-10-25 05:08 UTC on main 0e4a66310ab749e7851336df4d24dceb2b0bdb50: BO-04 courtesy/purchased activation-to-booking16 native journeys; BO-03 configured count/expiry/usage-limit/UNSENT preview4 cases; BO-01 additional12-class purchase4 cases. Total24 native journeys plus4 domain suites, zero errors and independent review reported. No code change or new deployment. Real payments, authentication, email and backend excluded. Dated owner-reported mock evidence only; no automatic whole-criterion, production or Sheet readiness promotion."
     },
     {
-      "title": "Next audit focus · owner report 05:08 UTC",
+      "title": "RS-06 · mock-frontend audit recommendation",
+      "ids": [
+        "RS-06"
+      ],
+      "state": "Qualified recommendation · fresh reported execution",
+      "text": "Owner handoff dated 2026-10-25 05:19 UTC; Feature Log row 44, original source row 45. App-source baseline 0e4a66310ab749e7851336df4d24dceb2b0bdb50. 32 DEV + 32 compiled groups. Mock admission enforcement verified. Server and cross-device capacity excluded. Independent reviewers accepted the stated scope; they did not independently rerun tests. This recommendation does not update the Sheet readiness count or establish production/backend/client acceptance."
+    },
+    {
+      "title": "PR-01 · mock-frontend audit recommendation",
+      "ids": [
+        "PR-01"
+      ],
+      "state": "Qualified recommendation · fresh reported execution",
+      "text": "Owner handoff dated 2026-10-25 05:19 UTC; Feature Log row 32, original source row 33. App-source baseline 0e4a66310ab749e7851336df4d24dceb2b0bdb50. 4 groups, 28 observations, 32 route denials. Literal mock product metadata verified. Fulfillment and publication excluded. Independent reviewers accepted the stated scope; they did not independently rerun tests. This recommendation does not update the Sheet readiness count or establish production/backend/client acceptance."
+    },
+    {
+      "title": "PR-02 · mock-frontend audit recommendation",
+      "ids": [
+        "PR-02"
+      ],
+      "state": "Qualified recommendation · fresh reported execution",
+      "text": "Owner handoff dated 2026-10-25 05:19 UTC; Feature Log row 33, original source row 34. App-source baseline 0e4a66310ab749e7851336df4d24dceb2b0bdb50. 8 groups, 56 observations, 24 simulated approvals. Supported mock pricing and history verified. Durable cross-day and server history excluded. Independent reviewers accepted the stated scope; they did not independently rerun tests. This recommendation does not update the Sheet readiness count or establish production/backend/client acceptance."
+    },
+    {
+      "title": "CU-02 · mock-frontend audit recommendation",
+      "ids": [
+        "CU-02"
+      ],
+      "state": "Qualified recommendation · fresh reported execution",
+      "text": "Owner handoff dated 2026-10-25 05:19 UTC; Feature Log row 26, original source row 27. App-source baseline 0e4a66310ab749e7851336df4d24dceb2b0bdb50. 8 compiled groups + 2 domain suites. Mock consent verified. Legal-copy approval and real authentication excluded. Independent reviewers accepted the stated scope; they did not independently rerun tests. This recommendation does not update the Sheet readiness count or establish production/backend/client acceptance."
+    },
+    {
+      "title": "PG-07 · mock-frontend audit recommendation",
+      "ids": [
+        "PG-07"
+      ],
+      "state": "Qualified recommendation · fresh reported execution",
+      "text": "Owner handoff dated 2026-10-25 05:19 UTC; Feature Log row 60, original source row 61. App-source baseline 0e4a66310ab749e7851336df4d24dceb2b0bdb50. 24 payment journeys + 4 contact cases. Mock desk payment and recorder attribution verified. Real collection excluded. Independent reviewers accepted the stated scope; they did not independently rerun tests. This recommendation does not update the Sheet readiness count or establish production/backend/client acceptance."
+    },
+    {
+      "title": "RS-02 · mock-frontend audit recommendation",
+      "ids": [
+        "RS-02"
+      ],
+      "state": "Qualified recommendation · evidence reconciliation; not rerun",
+      "text": "Owner handoff dated 2026-10-25 05:19 UTC; Feature Log row 40, original source row 41. App-source baseline 0e4a66310ab749e7851336df4d24dceb2b0bdb50. 30 domain, 8 compiled and 67 DEV groups reconciled. Mock confirmation and one-class debit verified by reconciled evidence. No fresh execution. Source-equivalent terminal CI cited at held PR103 head 07c0f7d8a8caab4fe37504ac66ae5f7d08800c8b; real server transactions remain separate. Independent reviewers accepted the stated scope; they did not independently rerun tests. This recommendation does not update the Sheet readiness count or establish production/backend/client acceptance."
+    },
+    {
+      "title": "RS-08 · mock-frontend audit recommendation",
+      "ids": [
+        "RS-08"
+      ],
+      "state": "Qualified recommendation · evidence reconciliation; not rerun",
+      "text": "Owner handoff dated 2026-10-25 05:19 UTC; Feature Log row 46, original source row 47. App-source baseline 0e4a66310ab749e7851336df4d24dceb2b0bdb50. 36 DEV groups + 8 historical compiled journeys reconciled. Ordinary mock booking details verified by reconciled evidence. No fresh execution. Precommit build qualification retained: historical source 04015d79d5d8635e9f576fa2854fa70cbb393072; historical compiled manifest c0b62da11c3347eb275581611e0bb7bae85617a7. Independent reviewers accepted the stated scope; they did not independently rerun tests. This recommendation does not update the Sheet readiness count or establish production/backend/client acceptance."
+    },
+    {
+      "title": "RS-03 · mock-frontend audit recommendation",
+      "ids": [
+        "RS-03"
+      ],
+      "state": "Qualified recommendation · fresh reported execution",
+      "text": "Owner handoff dated 2026-10-25 05:19 UTC; Feature Log row 41, original source row 42. App-source baseline 0e4a66310ab749e7851336df4d24dceb2b0bdb50. 4 groups, 36 observations. Chosen class retained through the tested mock purchase flow. Product reselection may be required after reload. Independent reviewers accepted the stated scope; they did not independently rerun tests. This recommendation does not update the Sheet readiness count or establish production/backend/client acceptance."
+    },
+    {
+      "title": "RS-07 · mock-frontend audit recommendation",
+      "ids": [
+        "RS-07"
+      ],
+      "state": "Qualified recommendation · fresh reported execution",
+      "text": "Owner handoff dated 2026-10-25 05:19 UTC; Feature Log row 45, original source row 46. App-source baseline 0e4a66310ab749e7851336df4d24dceb2b0bdb50. 8 DEV races. One winner, one debit and losing-user feedback verified within ONE shared mock provider. Single-provider simulation only; no server or cross-device concurrency guarantee. Independent reviewers accepted the stated scope; they did not independently rerun tests. This recommendation does not update the Sheet readiness count or establish production/backend/client acceptance."
+    },
+    {
+      "title": "PR-06 / SW-02 · owner report 05:19 UTC",
       "ids": [
         "PR-06",
         "SW-02"
       ],
-      "state": "Reported next work · no result yet",
-      "text": "At 2026-10-25 05:08 UTC the feature owner reported starting the PR-06/SW-02 audit next. No test outcome or readiness claim is recorded here. This is a dated activity report, not live telemetry."
+      "state": "PR-06 evidence details pending · SW-02 not complete",
+      "text": "Owner handoff dated2026-10-25 05:19 UTC reports a literal-mock-ready recommendation for PR-06, but detailed tests and exclusions have not yet been supplied, so no recommendation is published in the nine-audit list. SW-02 has16 Home pricing failures and is not complete. Dated report only; no live telemetry or production acceptance."
     },
     {
       "title": "Class-voucher recipient preview · draft PR100",
@@ -6349,18 +6421,18 @@
     {
       "title": "Public Delivery Room migration",
       "ids": [],
-      "state": "PR102 live · tracker-only refresh",
-      "text": "PR99 introduced the public tracker. PR102 refreshed its dated evidence at main 0e4a66310ab749e7851336df4d24dceb2b0bdb50; Pages build/deploy/exact-SHA verifier passed. Tracker-only publication does not release app-feature drafts. The public snapshot is maintained cloud-first through the HOY repository; source row links retain existing permissions. No browser Sheet access or writeback."
+      "state": "PR104 live · cloud tracker-only refresh",
+      "text": "PR99 introduced the tracker; PR102 and PR104 refreshed its dated evidence. PR104 main09a072451df2900ab21781bc473c3a787512cb92 passed Pages build, deployment and hosted exact-SHA verification. Tracker-only publication does not release app-feature drafts. The snapshot is maintained cloud-first through the HOY repository; source row links retain permissions. No browser Sheet access or writeback."
     },
     {
       "title": "Historical MVP planning audit",
       "ids": [],
-      "state": "Historical Sheet assessment · later audits not reconciled",
-      "text": "The earlier 23:18 UTC planning audit recorded3 frontend-ready criteria,19 known human/service gates and48 other unfinished or unassessed rows. This is historical planning, not a current count of unfinished frontend criteria. The latest Sheet still records3 ready. Separate later mock-frontend audits require dated report reconciliation; no fresh run, backend readiness or client acceptance is inferred."
+      "state": "Historical Sheet assessment · later audits shown separately",
+      "text": "The earlier23:18 UTC planning audit recorded3 frontend-ready criteria,19 known human/service gates and48 other unfinished or unassessed rows. This is historical planning, not a current count of unfinished frontend criteria. The latest Sheet still records3 ready; nine later mock-frontend recommendations are shown separately with dated evidence and exclusions. No production/backend/client acceptance is inferred."
     }
   ],
   "syncCoverage": {
-    "readAt": "2026-10-25T05:07:16Z",
+    "readAt": "2026-10-25T05:21:15Z",
     "tabsRead": [
       "Justin Actions",
       "Questions for Jas",
@@ -6376,17 +6448,17 @@
     "criteriaRowsChanged": 0,
     "planningRowsChanged": 0,
     "releaseLedgerGap": "PR90 and PR91 verified live outside Sheet; ledger remains PR89. No spreadsheet write performed.",
-    "ledgerHeaderReadAt": "2026-10-25T05:07:16Z",
+    "ledgerHeaderReadAt": "2026-10-25T05:21:15Z",
     "humanNotes": "All46 source human IDs reread and retained with public summaries. Source statuses unchanged; private setup provenance excluded. Later owner confirmations remain separate.",
-    "githubReadAt": "2026-10-25T05:07:16Z",
-    "additionalEvidence": "PR101 exact head e6a5c0d:44/44 successful across22 workflows. PR103 exact head07c0f7d8:23/23 successful across17 workflows. Both held drafts. PR102 tracker-only Pages build/deploy/exact-SHA verifier passed. No source readiness promotion.",
+    "githubReadAt": "2026-10-25T05:21:15Z",
+    "additionalEvidence": "Nine qualified mock-frontend audit recommendations from05:19 owner handoff; RS-02/RS-08 not rerun. PR10144/44 and PR10323/23 reverified, both held. Tracker-only PR104 deployed separately at09a07245. Source readiness and feature stages unchanged.",
     "sourceNotesRead": true
   },
-  "githubEvidenceCheckedAt": "2026-10-25T05:07:16Z",
+  "githubEvidenceCheckedAt": "2026-10-25T05:21:15Z",
   "publicSnapshot": {
     "mode": "Bundled read-only snapshot",
-    "sheetCapturedAt": "2026-10-25T05:07:16Z",
-    "githubCheckedAt": "2026-10-25T05:07:16Z",
+    "sheetCapturedAt": "2026-10-25T05:21:15Z",
+    "githubCheckedAt": "2026-10-25T05:21:15Z",
     "refresh": "Reviewed repository updates; no automatic or browser-authenticated Sheet sync",
     "writeback": false,
     "privacy": "Public coordination summaries; no correspondence, private setup notes, credentials or raw exports",
@@ -6394,7 +6466,7 @@
       "Sheet release ledger records PR89; verified PR90/91 evidence remains separate.",
       "PC-10/11 later owner confirmations are not reconciled into the Sheet snapshot; contract details are not published.",
       "Real services and client acceptance remain separate from frontend mock evidence.",
-      "Nine earlier mock-frontend audit recommendations await dated report reconciliation; the Sheet count remains a separate assessment. The 05:08 voucher audit report is qualified owner-reported evidence, without a readiness promotion."
+      "PR-06 has a reported literal-mock recommendation but detailed evidence is not yet supplied; it is not added to the nine-audit list. SW-02 has16 reported Home pricing failures and is not complete."
     ]
   },
   "githubPullRequests": [
@@ -6494,7 +6566,7 @@
       "state": "open",
       "checksTotal": 44,
       "checksSucceeded": 44,
-      "checkedAt": "2026-10-25T05:07:16Z",
+      "checkedAt": "2026-10-25T05:21:15Z",
       "checksPendingOrRunning": 0
     },
     {
@@ -6505,15 +6577,15 @@
       "state": "open",
       "checksTotal": 23,
       "checksSucceeded": 23,
-      "checkedAt": "2026-10-25T05:07:16Z",
+      "checkedAt": "2026-10-25T05:21:15Z",
       "checksPendingOrRunning": 0
     }
   ],
   "trackerRelease": {
-    "pr": 102,
-    "sha": "0e4a66310ab749e7851336df4d24dceb2b0bdb50",
+    "pr": 104,
+    "sha": "09a072451df2900ab21781bc473c3a787512cb92",
     "url": "https://imagine-os.github.io/hoy/delivery-room/",
-    "verifiedRun": "https://github.com/imagine-os/hoy/actions/runs/40152255481",
+    "verifiedRun": "https://github.com/imagine-os/hoy/actions/runs/40164751455",
     "scope": "Tracker only; no app feature readiness promotion"
   },
   "humanCoordinationEvidence": {
@@ -6521,5 +6593,116 @@
     "deliveredQuestionCount": 9,
     "answersRecorded": false,
     "rowMappingEstablished": false
+  },
+  "frontendAuditRecommendations": {
+    "reportedAt": "2026-10-25 05:19 UTC",
+    "sourceCommit": "0e4a66310ab749e7851336df4d24dceb2b0bdb50",
+    "sourceKind": "Dated feature-owner handoff",
+    "sheetReadyCount": 3,
+    "recommendationCount": 9,
+    "promotion": "Separate qualified mock-frontend recommendations; no source stage or Sheet promotion",
+    "review": "Independent reviewers accepted the stated scope without independently rerunning tests.",
+    "sourceEquivalence": "Tracker-only main 09a072451df2900ab21781bc473c3a787512cb92 retains app source from 0e4a66310ab749e7851336df4d24dceb2b0bdb50. Source equivalence is not fresh execution.",
+    "items": [
+      {
+        "id": "RS-06",
+        "featureLogRow": 44,
+        "originalSourceRow": 45,
+        "sourceUrl": "https://docs.google.com/spreadsheets/d/19SWDF957P55Iw5QEPyVtoPDS50-eor0k76djVv1YyNU/edit#gid=104&range=A44",
+        "criterionSourceUrl": "https://docs.google.com/spreadsheets/d/19SWDF957P55Iw5QEPyVtoPDS50-eor0k76djVv1YyNU/edit#gid=105&range=A44",
+        "evidenceKind": "Fresh reported execution",
+        "reportedTests": "32 DEV + 32 compiled groups",
+        "result": "Mock admission enforcement verified.",
+        "exclusions": "Server and cross-device capacity excluded."
+      },
+      {
+        "id": "PR-01",
+        "featureLogRow": 32,
+        "originalSourceRow": 33,
+        "sourceUrl": "https://docs.google.com/spreadsheets/d/19SWDF957P55Iw5QEPyVtoPDS50-eor0k76djVv1YyNU/edit#gid=104&range=A32",
+        "criterionSourceUrl": "https://docs.google.com/spreadsheets/d/19SWDF957P55Iw5QEPyVtoPDS50-eor0k76djVv1YyNU/edit#gid=105&range=A32",
+        "evidenceKind": "Fresh reported execution",
+        "reportedTests": "4 groups, 28 observations, 32 route denials",
+        "result": "Literal mock product metadata verified.",
+        "exclusions": "Fulfillment and publication excluded."
+      },
+      {
+        "id": "PR-02",
+        "featureLogRow": 33,
+        "originalSourceRow": 34,
+        "sourceUrl": "https://docs.google.com/spreadsheets/d/19SWDF957P55Iw5QEPyVtoPDS50-eor0k76djVv1YyNU/edit#gid=104&range=A33",
+        "criterionSourceUrl": "https://docs.google.com/spreadsheets/d/19SWDF957P55Iw5QEPyVtoPDS50-eor0k76djVv1YyNU/edit#gid=105&range=A33",
+        "evidenceKind": "Fresh reported execution",
+        "reportedTests": "8 groups, 56 observations, 24 simulated approvals",
+        "result": "Supported mock pricing and history verified.",
+        "exclusions": "Durable cross-day and server history excluded."
+      },
+      {
+        "id": "CU-02",
+        "featureLogRow": 26,
+        "originalSourceRow": 27,
+        "sourceUrl": "https://docs.google.com/spreadsheets/d/19SWDF957P55Iw5QEPyVtoPDS50-eor0k76djVv1YyNU/edit#gid=104&range=A26",
+        "criterionSourceUrl": "https://docs.google.com/spreadsheets/d/19SWDF957P55Iw5QEPyVtoPDS50-eor0k76djVv1YyNU/edit#gid=105&range=A26",
+        "evidenceKind": "Fresh reported execution",
+        "reportedTests": "8 compiled groups + 2 domain suites",
+        "result": "Mock consent verified.",
+        "exclusions": "Legal-copy approval and real authentication excluded."
+      },
+      {
+        "id": "PG-07",
+        "featureLogRow": 60,
+        "originalSourceRow": 61,
+        "sourceUrl": "https://docs.google.com/spreadsheets/d/19SWDF957P55Iw5QEPyVtoPDS50-eor0k76djVv1YyNU/edit#gid=104&range=A60",
+        "criterionSourceUrl": "https://docs.google.com/spreadsheets/d/19SWDF957P55Iw5QEPyVtoPDS50-eor0k76djVv1YyNU/edit#gid=105&range=A60",
+        "evidenceKind": "Fresh reported execution",
+        "reportedTests": "24 payment journeys + 4 contact cases",
+        "result": "Mock desk payment and recorder attribution verified.",
+        "exclusions": "Real collection excluded."
+      },
+      {
+        "id": "RS-02",
+        "featureLogRow": 40,
+        "originalSourceRow": 41,
+        "sourceUrl": "https://docs.google.com/spreadsheets/d/19SWDF957P55Iw5QEPyVtoPDS50-eor0k76djVv1YyNU/edit#gid=104&range=A40",
+        "criterionSourceUrl": "https://docs.google.com/spreadsheets/d/19SWDF957P55Iw5QEPyVtoPDS50-eor0k76djVv1YyNU/edit#gid=105&range=A40",
+        "evidenceKind": "Evidence reconciliation; NOT rerun",
+        "reportedTests": "30 domain, 8 compiled and 67 DEV groups reconciled",
+        "result": "Mock confirmation and one-class debit verified by reconciled evidence.",
+        "exclusions": "No fresh execution. Source-equivalent terminal CI cited at held PR103 head 07c0f7d8a8caab4fe37504ac66ae5f7d08800c8b; real server transactions remain separate."
+      },
+      {
+        "id": "RS-08",
+        "featureLogRow": 46,
+        "originalSourceRow": 47,
+        "sourceUrl": "https://docs.google.com/spreadsheets/d/19SWDF957P55Iw5QEPyVtoPDS50-eor0k76djVv1YyNU/edit#gid=104&range=A46",
+        "criterionSourceUrl": "https://docs.google.com/spreadsheets/d/19SWDF957P55Iw5QEPyVtoPDS50-eor0k76djVv1YyNU/edit#gid=105&range=A46",
+        "evidenceKind": "Evidence reconciliation; NOT rerun",
+        "reportedTests": "36 DEV groups + 8 historical compiled journeys reconciled",
+        "result": "Ordinary mock booking details verified by reconciled evidence.",
+        "exclusions": "No fresh execution. Precommit build qualification retained: historical source 04015d79d5d8635e9f576fa2854fa70cbb393072; historical compiled manifest c0b62da11c3347eb275581611e0bb7bae85617a7."
+      },
+      {
+        "id": "RS-03",
+        "featureLogRow": 41,
+        "originalSourceRow": 42,
+        "sourceUrl": "https://docs.google.com/spreadsheets/d/19SWDF957P55Iw5QEPyVtoPDS50-eor0k76djVv1YyNU/edit#gid=104&range=A41",
+        "criterionSourceUrl": "https://docs.google.com/spreadsheets/d/19SWDF957P55Iw5QEPyVtoPDS50-eor0k76djVv1YyNU/edit#gid=105&range=A41",
+        "evidenceKind": "Fresh reported execution",
+        "reportedTests": "4 groups, 36 observations",
+        "result": "Chosen class retained through the tested mock purchase flow.",
+        "exclusions": "Product reselection may be required after reload."
+      },
+      {
+        "id": "RS-07",
+        "featureLogRow": 45,
+        "originalSourceRow": 46,
+        "sourceUrl": "https://docs.google.com/spreadsheets/d/19SWDF957P55Iw5QEPyVtoPDS50-eor0k76djVv1YyNU/edit#gid=104&range=A45",
+        "criterionSourceUrl": "https://docs.google.com/spreadsheets/d/19SWDF957P55Iw5QEPyVtoPDS50-eor0k76djVv1YyNU/edit#gid=105&range=A45",
+        "evidenceKind": "Fresh reported execution",
+        "reportedTests": "8 DEV races",
+        "result": "One winner, one debit and losing-user feedback verified within ONE shared mock provider.",
+        "exclusions": "Single-provider simulation only; no server or cross-device concurrency guarantee."
+      }
+    ]
   }
 }
