@@ -10,3 +10,6 @@
 .pricetable thead .pricetable-num { color: var(--color-text-faint); font-weight: 500; }
 .pricetable-plus { margin-right: var(--sp-2xs); color: var(--color-text-muted); }
 .pricetable-group th { padding: var(--sp-md) var(--sp-lg) var(--sp-xs); font-size: var(--fs-2xs); font-weight: 500; letter-spacing: .14em; text-transform: uppercase; color: var(--color-primary); border-bottom: 0 !important; background: var(--color-surface); }
+
+/* State copy may wrap so unavailable prices cannot collapse the option column. */
+.pricetable-state { white-space: normal; width: 50%; }

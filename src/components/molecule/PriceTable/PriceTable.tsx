@@ -10,13 +10,17 @@ export interface PriceTableProps {
   caption?: string;
   /** Group rows under their family name (the FAQ's "options" table spans three families). */
   grouped?: boolean;
+  /** Optional caller labels for generated families with variable published quantities. */
+  familyLabels?: Partial<Record<PlanFamily, string>>;
+  /** Optional generated-price state; null legacy prices keep their existing included meaning. */
+  unavailable?: { ids: readonly string[]; label: string };
 }
 
 /**
- * 0051 — the price list as the owner's documents print it: "Opción | Precio (COP)". Reads src/tenant/pricing.ts only,
- * so the FAQ, the plans page and the manual show the same numbers. Amounts are tabular, right-aligned.
+ * 0051 — the price list as the owner's documents print it: "Opción | Precio (COP)".
+ * The caller supplies display rows and may mark unverifiable prices unavailable. Amounts are tabular, right-aligned.
  */
-export function PriceTable({ items, caption, grouped = false }: PriceTableProps) {
+export function PriceTable({ items, caption, grouped = false, unavailable, familyLabels }: PriceTableProps) {
   const { t, bi, lang } = useI18n();
   const families = grouped ? [...new Set(items.map((p) => p.family))] : [null];
   return (
@@ -25,11 +29,11 @@ export function PriceTable({ items, caption, grouped = false }: PriceTableProps)
         <thead><tr><th scope="col">{caption ?? t('core.price.option')}</th><th scope="col" className="pricetable-num">{t('core.price.column')}</th></tr></thead>
         {families.map((fam) => (
           <tbody key={fam ?? 'all'}>
-            {fam && <tr className="pricetable-group"><th scope="rowgroup" colSpan={2}>{bi(FAMILY_LABEL[fam])}</th></tr>}
+            {fam && <tr className="pricetable-group"><th scope="rowgroup" colSpan={2}>{familyLabels?.[fam] ?? bi(FAMILY_LABEL[fam])}</th></tr>}
             {items.filter((p) => !fam || p.family === fam).map((p) => (
               <tr key={p.id}>
                 <th scope="row"><span className="pricetable-name">{bi(p.name)}</span><span className="pricetable-desc">{bi(p.description)}</span></th>
-                <td className="pricetable-num">{p.price == null ? t('core.common.included') : <>{p.perPerson && <span className="pricetable-plus" aria-hidden>+</span>}{formatCOP(p.price, lang)}</>}</td>
+                <td className={`pricetable-num${unavailable?.ids.includes(p.id) ? ' pricetable-state' : ''}`}>{unavailable?.ids.includes(p.id) ? <span role="status">{unavailable.label}</span> : p.price == null ? t('core.common.included') : <>{p.perPerson && <span className="pricetable-plus" aria-hidden>+</span>}{formatCOP(p.price, lang)}</>}</td>
               </tr>
             ))}
           </tbody>

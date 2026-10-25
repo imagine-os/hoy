@@ -1,3 +1,4 @@
+import { FAQ_PRICING_CONTRACT } from './faqPricing.contract';
 import { PUBLIC_HOME_PRICING_CONTRACT } from './publicHomePricing.contract';
 import { defineSpec } from '../../specs/define';
 import { canvasSpecs } from '../../specs/canvasSpecs';
@@ -65,14 +66,14 @@ export const siteSpecs = {
   faq: defineSpec({ ...pub, code: 'W-10', name: { es: 'Sitio · Preguntas frecuentes', en: 'Site · FAQ' },
     purpose: { es: 'Las preguntas frecuentes del estudio en cinco temas (clases y precios; reservas, cancelaciones y no-show; tarjetas de regalo; pagos; qué traer y el espacio), con búsqueda, índice de temas y tablas de precios en vivo.', en: 'The studio’s frequently asked questions in five topics (classes and prices; booking, cancellation and no-show; gift cards; payments; what to bring and the space), with search, a topic index and live price tables.' },
     layout: ['PageHead', 'Search', 'Groups', 'Contact'],
-    data: ['faq_entries'],
+    data: [...FAQ_PRICING_CONTRACT.tables],
     logic: [
-      'Reads published faq_entries in sort order and groups them by group_key — the rows C-14 / C-15 read and M-02c edits, so the site and the app never disagree.',
-      'A `{{pricing:<families>}}` line in an answer renders a live PriceTable from src/tenant/pricing.ts (FaqAnswer); numbers in sentences were filled from pricing.ts and the M-08 defaults at seed time.',
+      'Reads tenant-scoped published faq_entries in sort order and groups them by group_key. M-02c controls authored answers; W-10 projects generated price blocks from confirmed catalog reads.',
+      'A `{{pricing:<families>}}` line uses the published studio-date catalog for visible tables, search and JSON-LD; unavailable prices never revive launch amounts. Authored numbers and policy prose remain owner-reviewed content.',
       'Search folds accents and case over the question and the answer (prices written out); matches open their answers; zero matches offer a WhatsApp handoff (support intent) with the search prefilled.',
       'The page publishes schema.org FAQPage JSON-LD in the reader’s language.',
     ],
-    integrations: ['WhatsApp'], states: ['default', 'search: matches (answers open)', 'search: no matches', 'loading'] }),
+    integrations: ['WhatsApp'], states: ['default', 'search: matches (answers open)', 'search: no matches', 'loading', 'generated prices unavailable', 'price read failure and retry'] }),
   /** P-01 keeps its canvas code; only the layout, data and logic are brought up to what the page renders. */
   plans: defineSpec({
     ...canvasSpecs['P-01'],

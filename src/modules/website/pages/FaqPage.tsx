@@ -1,3 +1,6 @@
+import { useFaqPricing } from '../useFaqPricing';
+import { faqPrices } from '../faqPricing';
+import { Button } from '../../../components/atom/Button/Button';
 /**
  * W-10 — Preguntas frecuentes (0051).
  *
@@ -5,9 +8,9 @@
  *   1. Helpers — section number and title from the stored "01 · Clases y precios", plain text for search
  *   2. FaqPage — head, search, the index of sections, the sections, the closing contact card
  *
- * Every question comes from `faq_entries` (the same rows the app's C-14 / C-15 read, edited in M-02c), so the
- * website and the app always answer the same way. An answer that lists prices carries a `{{pricing:…}}` line and
- * renders a live table from src/tenant/pricing.ts (FaqAnswer → PriceTable).
+ * Authored questions come from published `faq_entries` edited in M-02c. The website adds a confirmed
+ * pricing projection; the customer FAQ renderer remains a separate consumer. An answer that lists prices carries a `{{pricing:…}}` line and
+ * renders confirmed published prices in the table, search and structured-data projection.
  */
 import { Fragment, useMemo, useState, type ReactNode } from 'react';
 import { Link } from '../links';
@@ -17,7 +20,7 @@ import { formatCOP } from '../../../i18n/format';
 import { useContact, useWhatsappLink } from '../../admin/settings';
 import { Accordion } from '../../../components/molecule/Accordion/Accordion';
 import { FaqAnswer } from '../../../components/molecule/FaqAnswer/FaqAnswer';
-import { itemsForFamilies } from '../../../components/molecule/PriceTable/PriceTable';
+import { PriceTable } from '../../../components/molecule/PriceTable/PriceTable';
 import { EmptyState } from '../../../components/molecule/EmptyState/EmptyState';
 import { Icon } from '../../../components/atom/Icon/Icon';
 import { PageHead, SiteShell } from '../SiteShell';
@@ -46,13 +49,20 @@ export function FaqPage() {
   const { sections, isVisible } = useLayout(siteSpecs.faq);
   const { groups, loading } = useFaqGroups();
   const contact = useContact();
+  const prices = useFaqPricing();
+  const projectPrices = (families: string) => faqPrices(prices.rows, families, prices.date, prices.publicationObserved);
+  const unavailableLabel = t(prices.status === 'loading' ? 'site.faq.prices.loading' : prices.status === 'error' ? 'site.faq.prices.error' : 'site.faq.prices.unavailable');
+  const renderPricing = (families: string) => { const projected = projectPrices(families); return <div className="stack-sm"><PriceTable items={prices.status === 'ready' ? projected.items : projected.items.map(item => ({ ...item, description: { es: '', en: '' } }))} grouped={families.includes(',')} familyLabels={{ paquetes: t('site.faq.prices.packages') }} unavailable={{ ids: prices.status === 'ready' ? projected.unavailable : projected.items.map(item => item.id), label: unavailableLabel }} />{prices.status === 'error' && <Button variant="secondary" onClick={prices.retry}>{t('core.common.retry')}</Button>}</div>; };
   // A question the FAQ does not answer is a support handoff (M-08a contacts, 0047).
   const wa = useWhatsappLink();
   const support = wa.resolve('support');
   const [query, setQuery] = useState('');
 
   // The price directive written out as words, for search and for the structured data.
-  const plain = (text: string) => text.replace(DIRECTIVE, (_m, fams: string) => itemsForFamilies(fams).map((p) => `${bi(p.name)}: ${p.price == null ? '' : formatCOP(p.price, lang)}`).join('; '));
+  const plain = (text: string) => text.replace(DIRECTIVE, (_m, families: string) => {
+    const projected = projectPrices(families);
+    return projected.items.map(item => `${bi(item.name)}: ${prices.status !== 'ready' || projected.unavailable.includes(item.id) ? unavailableLabel : item.price == null ? t('core.common.included') : formatCOP(item.price, lang)} ${prices.status === 'ready' ? bi(item.description) : ''}`).join('; ');
+  });
 
   const view = useMemo(() => {
     const q = fold(query).trim();
@@ -62,13 +72,13 @@ export function FaqPage() {
       items: q ? g.items.filter((it) => fold(`${bi(it.question)} ${plain(bi(it.answer))}`).includes(q)) : g.items,
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [groups, query, lang]);
+  }, [groups, query, lang, prices.rows, prices.status, prices.date, prices.publicationObserved]);
   const matches = view.reduce((n, g) => n + g.items.length, 0);
   const total = groups.reduce((n, g) => n + g.items.length, 0);
 
-  useFaqJsonLd(useMemo(() => groups.flatMap((g) => g.items.map((it) => ({ question: bi(it.question), answer: plain(bi(it.answer)) }))),
+  useFaqJsonLd(useMemo(() => groups.flatMap((g) => g.items.filter(it => prices.status === 'ready' || !new RegExp(DIRECTIVE.source).test(bi(it.answer))).map((it) => ({ question: bi(it.question), answer: plain(bi(it.answer)) }))),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [groups, lang]));
+    [groups, lang, prices.rows, prices.status, prices.date, prices.publicationObserved]));
 
   const SECTIONS: Record<string, () => ReactNode> = {
     PageHead: () => <PageHead eyebrow={t('site.faq.eyebrow')} title={t('site.faq.title')} body={t('site.faq.body', { n: total })} />,
@@ -117,7 +127,7 @@ export function FaqPage() {
               {/* A search opens every match; otherwise the first question ("¿Cuáles son las opciones?") starts open so the live prices show at once. */}
               <Accordion variant="editorial" single={false} defaultOpen={query ? g.items.map((it) => it.id) : gi === 0 && g.items[0] ? [g.items[0].id] : []}
                 key={query ? `q-${query}` : 'all'}
-                items={g.items.map((it) => ({ id: it.id, question: bi(it.question), answer: <FaqAnswer text={bi(it.answer)} /> }))} />
+                items={g.items.map((it) => ({ id: it.id, question: bi(it.question), answer: <FaqAnswer text={bi(it.answer)} renderPricing={renderPricing} /> }))} />
             </section>
           ))}
         </div>
