@@ -20,6 +20,7 @@ import { receptionUndoEligible, setReceptionAttendance } from '../../data/recept
 import { maskPhone, personMatches, usePeople, type Person } from './people';
 import { S02 } from './specs';
 import { tenant } from '../../tenant/tenant';
+import { useCheckinRoom } from './useCheckinRoom';
 import { approvedPackageRows, packageState } from '../../data/packages';
 import { bookWithPackage } from '../../data/deskBooking';
 import './staff.css';
@@ -64,6 +65,7 @@ export function CheckinPage() {
   const wanted = params.get('session');
   const selected = allSessions.find((x) => x.session.id === wanted) ?? todayAll.find((x) => x.session.id === autoId);
   const selectedId = selected?.session.id;
+  const room = useCheckinRoom(data, selected?.session, user.id, role, tenant.id);
 
   const { rows: bookings, loading } = useTable<BookingRow>('bookings', { where: { session_id: selectedId ?? '__none__' } });
   const { rows: waitlist } = useTable<WaitlistRow>('waitlist', { where: { session_id: selectedId ?? '__none__', status: 'waiting' } });
@@ -194,6 +196,12 @@ export function CheckinPage() {
         <div className="row-between wrap">
           <div>
             <div className="row wrap"><h2 className="checkin-title">{selected.session.title}</h2><span className="muted small">{formatTime(selected.session.starts_at, lang)} · {selected.teacher?.display_name}</span>{full && <Badge tone="danger">{t('core.common.full')}</Badge>}</div>
+            <div className="row wrap small muted" data-checkin-room={room.status}>
+              {room.status === 'ready' && <span>{t('staff.checkin.room.label', { name: room.name })}</span>}
+              {room.status === 'loading' && <span role="status">{t('staff.checkin.room.loading')}</span>}
+              {room.status === 'unavailable' && <span role="status">{t('staff.checkin.room.unavailable')}</span>}
+              {room.status === 'error' && <><span role="status">{t('staff.checkin.room.error')}</span><Button size="sm" variant="ghost" onClick={room.retry}>{t('core.common.retry')}</Button></>}
+            </div>
             <div className="xs muted">{t('staff.checkin.arrivals', { n: arrived.length, total: bookings.filter((b) => b.status !== 'cancelled' && b.status !== 'late_cancel').length })} · {t('staff.checkin.grace', { n: settings.policies.lateGraceMin })}</div>
           </div>
           <div className="checkin-cap"><CapacityMeter booked={selected.session.booked_count} capacity={selected.session.capacity} /></div>

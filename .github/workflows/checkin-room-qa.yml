@@ -1,0 +1,60 @@
+name: Check-in room label QA
+on:
+  pull_request:
+    paths:
+      - 'src/modules/staff/**'
+      - 'src/cms/**'
+      - 'src/data/**'
+      - 'scripts/*checkin-room*'
+      - 'scripts/check-cms-contracts.mjs'
+      - 'package*.json'
+      - '.github/workflows/checkin-room-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  checkin-room:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: node node_modules/playwright-core/cli.js install --with-deps chromium
+      - name: Browser executable
+        run: echo "CHROMIUM_PATH=$(node -p 'require("playwright-core").chromium.executablePath()')" >> "$GITHUB_ENV"
+      - name: Domain and synchronized CMS contracts
+        run: |
+          node scripts/test-checkin-room.mjs
+          node scripts/test-checkin-room-contract.mjs
+          node scripts/test-room-publication-contract.mjs
+          node scripts/check-cms-contracts.mjs
+          node scripts/check-cms-contracts.mjs --self-test
+      - name: Actual Check-in lifecycle and context changes
+        run: |
+          node node_modules/vite/bin/vite.js --host 127.0.0.1 --strictPort --port 5841 > /tmp/checkin-room-dev.log 2>&1 &
+          checkin_dev_pid=$!
+          trap 'kill "$checkin_dev_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..60}; do curl -fsS http://127.0.0.1:5841/ > /dev/null && break; sleep 1; done
+          curl -fsS http://127.0.0.1:5841/ > /dev/null
+          QA_BASE=http://127.0.0.1:5841 QA_OUTPUT=/tmp/checkin-room-dev node scripts/test-checkin-room-ui.mjs
+      - name: Full build
+        run: npm run build
+      - name: Native bilingual responsive Check-in
+        run: |
+          node node_modules/vite/bin/vite.js preview --host 127.0.0.1 --strictPort --port 5840 > /tmp/checkin-room-preview.log 2>&1 &
+          checkin_preview_pid=$!
+          trap 'kill "$checkin_preview_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..60}; do curl -fsS http://127.0.0.1:5840/ > /dev/null && break; sleep 1; done
+          curl -fsS http://127.0.0.1:5840/ > /dev/null
+          QA_BASE=http://127.0.0.1:5840 QA_OUTPUT=/tmp/checkin-room-production node scripts/test-checkin-room-production.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: checkin-room-${{ github.event.pull_request.head.sha }}-${{ github.run_attempt }}
+          path: /tmp/checkin-room-*

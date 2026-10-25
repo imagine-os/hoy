@@ -1,0 +1,11 @@
+# Selected room label at reception
+
+AD-01's [S-02 contract](../../src/modules/staff/checkinRoom.contract.ts) binds `/staff/checkin` to the selected session's room id, tenant and name. This adds a read-only label to an existing workflow. It neither introduces a reception FAQ screen nor certifies every reception content consumer.
+
+The scoped reader uses the actual selected session, actor, route role and provider context. Pending reads hide old names. Missing rooms are unavailable; rejected or invalid foreign/wrong-id/duplicate responses produce a generic error and retry. Provider, actor, role, selection and latest-request changes suppress old results, with subscription cleanup on exit. Assigned legacy and unpublished room names remain readable. No room-publication, admission, attendance, booking, payment or permission command changes here.
+
+The AD-01 descriptor advances incrementally to revision 3. Its existing 13 pages and 40 PR110 samples are retained, with S-02 room states appended. Samples describe read/display inputs or suppressed display state, not command proofs. Foreign raw rows are intentionally absent from the suppressed-display sample because the bounded fixture schema requires fictional-tenant rows; actual rejected foreign responses belong to the domain/UI fixture tests. Duplicate and wrong-id samples retain their actual invalid input shapes. Backend mapping remains pending, local events only, and `views=[]` means no saved TableTool preferences.
+
+Update contract, S-02 spec, entity mapping, fixtures and adapter tests together for every changed room-label field or state. Refresh descriptor source/test/fixture digests only after reviewing the frozen production and test files. Run `node scripts/test-checkin-room-contract.mjs`, the CMS drift check and retained room-publication contract check, then the relevant domain/lifecycle/native tests. Source checks inspect bindings without running browser tests. The bounded reader does not repair or depend on the separately held global `useTable` change.
+
+No real backend/authentication, live synchronization, global CMS readiness or whole AD-01 acceptance is claimed. Existing class visibility and stored financial/history rows remain separate verification invariants.
