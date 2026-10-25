@@ -1,3 +1,4 @@
+import { usePublicHomePricing } from '../usePublicHomePricing';
 import { Fragment, type ReactNode } from 'react';
 import { Link, useNavigate } from '../links';
 import { useI18n } from '../../../i18n/I18nProvider';
@@ -6,7 +7,7 @@ import { useTable } from '../../../data/DataContext';
 import type { TeacherRow, ModalityRow, ReviewRow } from '../../../data/schema';
 import { formatCOP } from '../../../i18n/format';
 import { tenant } from '../../../tenant/tenant';
-import { priceItem, FAMILY_LABEL, FAMILY_RATIONALE, type PlanFamily } from '../../../tenant/pricing';
+import { FAMILY_LABEL, FAMILY_RATIONALE, type PlanFamily } from '../../../tenant/pricing';
 import { manifesto, philosophy, classesIntro, classes, classOrder, taglines } from '../../../tenant/brand';
 import { Button } from '../../../components/atom/Button/Button';
 import { Card } from '../../../components/molecule/Card/Card';
@@ -33,7 +34,7 @@ export function ClassicHomePage() {
   const { rows: modalities } = useTable<ModalityRow>('modalities');
   const { rows: reviews } = useTable<ReviewRow>('reviews', { orderBy: { column: 'created_at', dir: 'desc' } });
   const modName = (id: string) => { const m = modalities.find((x) => x.id === id); return m ? (lang === 'es' ? m.name_es : m.name_en) : ''; };
-  const trial = priceItem('trial');
+  const { trial } = usePublicHomePricing();
   const trialPrice = trial?.price != null ? formatCOP(trial.price, lang) : '';
   // one card per distinct comment: the seed repeats a handful of phrases across many reviews
   const quotes = [...new Map(reviews.filter((r) => r.comment && r.visibility !== 'private').map((r) => [r.comment, r])).values()].slice(0, 3);
@@ -46,7 +47,7 @@ export function ClassicHomePage() {
           <h1>{bi(manifesto.lead)} <em>{bi(manifesto.emphasis)}</em></h1>
           <p className="site-lead muted">{t('site.hero.body', { city: tenant.city, mats: tenant.studio.mats, classes: tenant.studio.classesPerDay })}</p>
           <div className="row wrap">
-            <Link to="/site/plans"><Button size="lg">{t('site.hero.cta', { price: trialPrice })}</Button></Link>
+            <Link to="/site/plans"><Button size="lg">{t(trial.available ? 'site.hero.cta' : 'site.hero.ctaWithoutPrice', { price: trialPrice })}</Button></Link>
             <Link to="/site/schedule"><Button size="lg" variant="secondary">{t('site.hero.cta2')}</Button></Link>
           </div>
         </div>
@@ -144,7 +145,7 @@ export function ClassicHomePage() {
           <div className="site-cta-copy">
             <p className="eyebrow">{t('site.first.eyebrow')}</p>
             <h2>{t('site.first.title')}</h2>
-            <p>{t('site.first.body', { price: trialPrice })}</p>
+            <p>{t(trial.available ? 'site.first.body' : 'site.first.bodyWithoutPrice', { price: trialPrice })}</p>
           </div>
           <div className="row wrap">
             <Link to="/site/plans"><Button size="lg">{t('site.first.cta')}</Button></Link>

@@ -1,0 +1,56 @@
+name: Public Home published pricing QA
+on:
+  pull_request:
+    paths:
+      - 'src/modules/website/**'
+      - 'src/data/catalog*'
+      - 'src/data/productCatalog.ts'
+      - 'src/data/operationalQuotes.ts'
+      - 'src/tenant/**'
+      - 'scripts/*public-home-pricing*'
+      - 'package*.json'
+      - '.github/workflows/public-home-pricing-qa.yml'
+  workflow_dispatch:
+jobs:
+  public-home-prices:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Browser executable
+        run: echo "CHROMIUM_PATH=$(node -p 'require("playwright-core").chromium.executablePath()')" >> "$GITHUB_ENV"
+      - name: Projection and CMS contract
+        run: |
+          node scripts/test-public-home-pricing.mjs
+          node scripts/test-public-home-pricing-contract.mjs
+      - name: Actual reader lifecycle
+        run: |
+          node node_modules/vite/bin/vite.js --host 127.0.0.1 --strictPort --port 5813 > /tmp/public-home-dev.log 2>&1 &
+          dev_pid=$!
+          trap 'kill "$dev_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..60}; do curl -fsS http://127.0.0.1:5813/ > /dev/null && break; sleep 1; done
+          curl -fsS http://127.0.0.1:5813/ > /dev/null
+          QA_BASE=http://127.0.0.1:5813 QA_OUTPUT=/tmp/public-home-lifecycle node scripts/test-public-home-pricing-ui.mjs
+      - name: Full build
+        run: npm run build
+      - name: Native publication and public readback
+        run: |
+          node node_modules/vite/bin/vite.js preview --host 127.0.0.1 --strictPort --port 5812 > /tmp/public-home-preview.log 2>&1 &
+          preview_pid=$!
+          trap 'kill "$preview_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..60}; do curl -fsS http://127.0.0.1:5812/ > /dev/null && break; sleep 1; done
+          curl -fsS http://127.0.0.1:5812/ > /dev/null
+          QA_BASE=http://127.0.0.1:5812 QA_OUTPUT=/tmp/public-home-native node scripts/test-public-home-pricing-native.mjs
+      - name: Evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: public-home-pricing
+          path: |
+            /tmp/public-home-*

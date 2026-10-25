@@ -1,0 +1,24 @@
+// Pure public-offer contract: no browser, mutations, checkout, or publication service.
+import assert from 'node:assert/strict';
+import {build} from 'esbuild';
+import {mkdtemp,rm,mkdir,writeFile} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {pathToFileURL} from 'node:url';
+const temp=await mkdtemp(join(tmpdir(),'hoy-public-home-pricing-')),checks=[];
+try{
+ const file=join(temp,'offers.mjs');await build({stdin:{contents:"export {publicHomeOffer} from './src/modules/website/publicHomePricing';export {priceItem} from './src/tenant/pricing';export {tenant} from './src/tenant/tenant';",resolveDir:process.cwd()},bundle:true,platform:'node',format:'esm',outfile:file,logLevel:'silent'});const {publicHomeOffer:offer,priceItem,tenant}=await import(pathToFileURL(file));
+ const date='2026-10-23',definition={code:'FICTIONAL_PACK',name:{es:'PAQUETE FICTICIO',en:'FICTIONAL PACKAGE'},type:'paquetes',classes:8,validityDays:45,active:true,prices:[{id:'current',amount:123456,startsOn:'2026-10-01',endsOn:'2026-10-31'},{id:'future',amount:654321,startsOn:'2026-11-01',endsOn:null}]},draft={definition,history:[{revision:1,actorId:'usr_admin',at:'2026-10-23T15:00:00Z',definition:structuredClone(definition)}]},plan={id:'plan_pack12',tenant_id:tenant.id,created_at:'2026-10-23T15:00:00Z',updated_at:'2026-10-23T15:00:00Z',frontend_catalog:structuredClone(draft),frontend_publication:{snapshot:structuredClone(draft),revision:1,actorId:'usr_admin',at:'2026-10-23T15:00:00Z',withdrawnAt:null,history:[]}};
+ function read(rows,id='pack12',day=date,observed=false){const before=structuredClone(rows),result=offer(rows,id,day,observed);assert.deepEqual(rows,before,'pure offer resolution must not mutate source rows');return result;}
+ function unavailable(rows,id='pack12',day=date,observed=false){const result=read(rows,id,day,observed);assert.equal(result.price,null);assert.equal(result.available,false);assert.equal(result.published,true);}
+ for(const id of ['trial','pack12','private']){const result=read([],id);assert.equal(result.price,priceItem(id).price);assert.equal(result.available,true);assert.equal(result.published,false);}checks.push('legacy scalars remain available only before local publication is observed');
+ let result=read([plan]);assert.equal(result.price,123456);assert.equal(result.available,true);assert.equal(result.published,true);assert.deepEqual(result.name,definition.name);assert.equal(result.classes,8);assert.equal(result.validityDays,45);checks.push('published name, amount and terms come from the saved revision');
+ const edited=structuredClone(plan);edited.frontend_catalog.definition.prices[0].amount=222222;assert.equal(read([edited]).price,123456);checks.push('unpublished draft price cannot replace saved public price');
+ assert.equal(read([plan],'pack12','2026-11-01').price,654321);unavailable([plan],'pack12','2026-09-30');unavailable([plan],'pack12','invalid-date');checks.push('effective date changes and date gaps fail closed');
+ const zero=structuredClone(plan);zero.frontend_publication.snapshot.definition.prices[0].amount=0;assert.equal(read([zero]).price,0);assert.equal(read([zero]).available,true);checks.push('explicit zero is a valid published free offer');
+ const withdrawn=structuredClone(plan);withdrawn.frontend_publication.withdrawnAt='2026-10-23T18:00:00Z';unavailable([withdrawn]);unavailable([plan],'trial');unavailable([plan],'private');checks.push('withdrawn or absent mapped offers cannot restore legacy prices');
+ const wrong=structuredClone(plan);wrong.frontend_publication.snapshot.definition.type='privadas';unavailable([wrong]);for(const corrupt of [null,{},'broken']){const row=structuredClone(plan);row.frontend_publication.snapshot=corrupt;unavailable([row]);}const malformed=structuredClone(plan);malformed.frontend_publication.snapshot.definition.prices[0].amount=-1;unavailable([malformed]);checks.push('wrong family, malformed snapshots and invalid scalar price fail closed');
+ const foreign=structuredClone(plan);foreign.tenant_id='ten_fictional_other';assert.equal(read([foreign]).price,priceItem('pack12').price);assert.equal(read([foreign]).published,false);assert.equal(read([foreign,plan]).price,123456);unavailable([foreign],'pack12',date,true);checks.push('foreign tenant publication cannot supply or activate a local offer');
+ unavailable([],'pack12',date,true);unavailable([{...plan,frontend_publication:undefined}],'trial',date,true);checks.push('once-observed publication mode never silently falls back after records disappear');
+ console.log(`PASS public Home offer rules: ${checks.length} groups`);if(process.env.QA_OUTPUT){await mkdir(process.env.QA_OUTPUT,{recursive:true});await writeFile(join(process.env.QA_OUTPUT,'public-home-pricing.json'),JSON.stringify({checks,errors:[]},null,2));}
+}finally{await rm(temp,{recursive:true,force:true});}

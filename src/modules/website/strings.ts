@@ -8,6 +8,10 @@ import type { StringTable } from '../../i18n/types';
  * site.modalities · site.schedule · site.teachers · site.plans · site.contact · site.legal · site.footer
  */
 export const strings: StringTable = {
+  'site.pricing.unavailable': { es: 'Sin precio publicado vigente. Consulta los planes disponibles.', en: 'No current published price. See available plans.' },
+  'site.pricing.terms': { es: '{n} clases · {days} días', en: '{n} classes · {days} days' },
+  'site.hero.ctaWithoutPrice': { es: 'Ver planes disponibles', en: 'See available plans' },
+  'site.first.bodyWithoutPrice': { es: 'Consulta los planes publicados y encuentra tu forma de empezar.', en: 'Explore the published plans and find your way to begin.' },
   'site.photos.teacherLegend': { es: 'Conoce a quienes guían la práctica. Los retratos pendientes se muestran con iniciales.', en: 'Meet the people who guide the practice. Pending portraits are shown with initials.' },
   'site.edition.photos': { es: 'Fotos · vista previa', en: 'Photos · preview' },
   'site.photos.notice': { es: 'Vista previa con las fotos del estudio. La versión pública actual sigue disponible en Latest.', en: 'Preview with the studio photographs. The current public edition remains available in Latest.' },
