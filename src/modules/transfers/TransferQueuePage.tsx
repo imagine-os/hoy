@@ -1,3 +1,5 @@
+import {useRecipientPreview} from '../voucher-gifts/useRecipientPreview';
+import {VoucherRecipientPreview} from '../../components/organism/VoucherRecipientPreview/VoucherRecipientPreview';
 import {reviewGiftTransfer} from '../voucher-gifts/transfer';
 import {ReviewGiftTerms,emptyGiftTerms} from '../../components/organism/GiftTermsReview/GiftTermsReview';
 import type {DataProvider} from '../../data/types';
@@ -29,7 +31,7 @@ export function TransferQueuePage(){
  const {receipts:rows,payments}=snapshot;
  const [filter,setFilter]=useState('pending'),[amount,setAmount]=useState(''),[reason,setReason]=useState(''),[compared,setCompared]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState<string|null>(null);
  const [settled,setSettled]=useState<{payment:PaymentRow;actor:string;customer:string|null;provider:DataProvider;context:string}|null>(null);
- const [giftTerms,setGiftTerms]=useState(emptyGiftTerms);const giftRequest=useRef(crypto.randomUUID());
+ const [giftTerms,setGiftTerms]=useState(emptyGiftTerms);const giftRequest=useRef(crypto.randomUUID());const recipientPreview=useRecipientPreview();
  const giftLive=useRef({mounted:true,data,context:`${user.id}:${role}:${params.toString()}`});giftLive.current={...giftLive.current,data,context:`${user.id}:${role}:${params.toString()}`};
  useEffect(()=>{giftLive.current.mounted=true;return()=>{giftLive.current.mounted=false;};},[]);
  const settlementContext=`${user.id}:${role}`;
@@ -58,9 +60,9 @@ export function TransferQueuePage(){
  async function decideGift(decision:'approved'|'rejected'){
   if(!detail?.gift||!ready||busy)return;const provider=data,context=giftLive.current.context,current=()=>giftLive.current.mounted&&giftLive.current.data===provider&&giftLive.current.context===context;
   setBusy(true);setError(null);try{
-   const draft=giftTerms,expiresAt=draft.expiryMode==='none'?null:draft.expiry?new Date(`${draft.expiry}T23:59:59-05:00`).toISOString():null;
-   await reviewGiftTransfer(provider,{purchaseId:detail.gift.id,requestId:giftRequest.current,actorId:user.id,role,decision,amount:amount.trim()===''?NaN:Number(amount),reason,compared,termsReviewed:draft.reviewed&&!!draft.expiryMode&&(draft.expiryMode==='none'||!!draft.expiry)&&!!draft.scope&&!!draft.unit&&!!draft.cancel&&!!draft.name.trim(),terms:{title:detail.quote?bi(detail.quote.name):'DEMO',benefitKind:'classes',benefitTotal:detail.gift.quote.classes,participantCap:Number(draft.cap),capScope:draft.scope as 'per_booking'|'lifetime',creditUnit:draft.unit as 'per_person'|'per_booking',expiresAt,cancellationPolicy:draft.cancel as 'restore'|'forfeit',recipientName:draft.name.trim(),recipientContact:detail.gift.recipientEmail,message:''}},current);
-   if(current()){setRevision(n=>n+1);setParams({});}
+   const previewRequestId=giftRequest.current;const draft=giftTerms,expiresAt=draft.expiryMode==='none'?null:draft.expiry?new Date(`${draft.expiry}T23:59:59-05:00`).toISOString():null;
+   const result=await reviewGiftTransfer(provider,{purchaseId:detail.gift.id,requestId:previewRequestId,actorId:user.id,role,decision,amount:amount.trim()===''?NaN:Number(amount),reason,compared,termsReviewed:draft.reviewed&&!!draft.expiryMode&&(draft.expiryMode==='none'||!!draft.expiry)&&!!draft.scope&&!!draft.unit&&!!draft.cancel&&!!draft.name.trim(),terms:{title:detail.quote?bi(detail.quote.name):'DEMO',benefitKind:'classes',benefitTotal:detail.gift.quote.classes,participantCap:Number(draft.cap),capScope:draft.scope as 'per_booking'|'lifetime',creditUnit:draft.unit as 'per_person'|'per_booking',expiresAt,cancellationPolicy:draft.cancel as 'restore'|'forfeit',recipientName:draft.name.trim(),recipientContact:detail.gift.recipientEmail,message:''}},current);
+   if(current()){if(decision==='approved')recipientPreview.begin(result,previewRequestId);setRevision(n=>n+1);setParams({});}
   }catch{if(current()){setError('giftFlow.commandError');setRevision(n=>n+1);}}finally{if(current())setBusy(false);}
  }
  const boundary=<div className="stack-sm"><Notice tone="warn">{t('transfers.boundary')}</Notice><Notice>{t('transfers.queueTiming')}</Notice></div>;
@@ -77,6 +79,6 @@ export function TransferQueuePage(){
  const paymentDetail=<Drawer open={!!detail} onClose={()=>setParams({})} title={t('transfers.paymentDetail')} side="right">{detail&&<div className="stack">{facts(detail)}{detail.gift?<><Notice tone="warn">{t('giftFlow.boundary')}</Notice><img src={detail.gift.image.dataUrl} alt={t('transfers.preview')} style={{width:'100%',height:'auto'}}/>{detail.payment?.status==='pending'?['admin','super_admin'].includes(role)?<>
  <ReviewGiftTerms disabled={busy} value={giftTerms} onChange={setGiftTerms}/><label className="stack-sm">{t('transfers.amount')}<Input type="number" value={amount} onChange={e=>setAmount(e.target.value)}/></label><label className="stack-sm">{t('transfers.reason')}<Input value={reason} maxLength={500} onChange={e=>setReason(e.target.value)}/></label><label className="row"><input type="checkbox" checked={compared} onChange={e=>setCompared(e.target.checked)}/>{t('transfers.compared')}</label>{error&&<Notice tone="danger">{t(error)}</Notice>}<Button disabled={busy||!compared||!giftTerms.reviewed||!reason.trim()||Number(amount)!==detail.payment.amount} loading={busy} onClick={()=>void decideGift('approved')}>{t('transfers.approve')}</Button><Button variant="secondary" disabled={busy||!compared||!reason.trim()} onClick={()=>void decideGift('rejected')}>{t('transfers.reject')}</Button>
  </>:<Notice>{t('giftFlow.adminRequired')}</Notice>:<Notice>{t(detail.payment?.status==='approved'?'giftFlow.approved':'giftFlow.rejected')}</Notice>}</>:detail.deskIntent&&detail.payment?.status==='approved'?<LaunchPaymentReceipt payment={detail.payment} customer={detail.customer??t('transfers.unknownCustomer')}/>:detail.receipts.length===0&&detail.payment?.provider==='manual'&&(detail.payment.method==='cash'||!!detail.deskIntent)?<DeskPaymentSettlement key={`${settlementContext}:${detail.payment.id}`} payment={detail.payment} onSettled={payment=>{setSettled({payment,actor:user.name,customer:detail.customer,provider:data,context:settlementContext});setParams({});setRevision(n=>n+1);}}/>:<Notice>{t('transfers.readOnly')}</Notice>}<Notice>{t('transfers.queueTiming')}</Notice><Button onClick={()=>setParams({})}>{t('transfers.close')}</Button></div>}</Drawer>;
- const parts:Record<string,React.ReactNode>={Boundary:boundary,Queue:content,Review:<>{review}{paymentDetail}</>};
+ const parts:Record<string,React.ReactNode>={Boundary:boundary,Queue:content,Review:<>{recipientPreview.result&&<VoucherRecipientPreview result={recipientPreview.result} onRetry={recipientPreview.retry}/>}{review}{paymentDetail}</>};
  return <div className="stack"><div className="page-head"><h1>{t('transfers.title')}</h1></div>{sections.filter(isVisible).map(name=><div key={name}>{parts[name]}</div>)}</div>;
 }
