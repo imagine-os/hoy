@@ -15,3 +15,9 @@ Ready photo assets override packaged fallbacks through stable CMS slots; pending
 Browser regression coverage checks 32 Home/Plans captures across Latest/Photos, ES/EN, 390/768/1218/1280, light/dark, image decoding, complete practice proportions, the actual blue background pixels, prices, held content and CMS overrides after reload. Exact-head CI and independent review remain release gates.
 
 **Resumen (ES).** Las páginas actuales y la edición Fotos comparten las selecciones verificadas de inicio, siete prácticas y tres planes. Se conservan los precios y las fotos explícitas del CMS. La foto del plan de afiliados, las opciones inferiores y Carolina siguen pendientes.
+
+## Existing-cache compatibility review
+
+The initial seed-only addition left five editorial slots unavailable in a valid same-day saved demo. A regression reproduced the missing philosophy slot before repair. `MockProvider` now backfills only the missing editorial slots, persists the additive result, and applies the same bounded behavior to current cross-tab snapshots. Existing CMS rows, custom IDs, ready/pending edits and all other stored rows are preserved; the seed version does not change and no database reset occurs.
+
+Additional files: `src/data/MockProvider.ts`, `src/data/seed/ensureEditorialPhotoSlots.ts`, `scripts/test-editorial-photo-upgrade.mjs`. Tests exercise an old persisted database, exactly five additions, preservation of existing rows across every table, repeated constructor/storage loads, custom CMS IDs and edits, actual checklist visibility, and subsequent photo overrides without fixture-created slots.

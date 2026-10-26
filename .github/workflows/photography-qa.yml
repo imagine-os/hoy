@@ -10,6 +10,7 @@ on:
       - 'scripts/test-teacher-frames-ui.mjs'
       - 'scripts/test-home-photography.mjs'
       - 'scripts/test-home-photography-ui.mjs'
+      - 'scripts/test-editorial-photo-upgrade.mjs'
       - 'scripts/test-studio-hero.mjs'
       - 'scripts/test-sample-clock.mjs'
       - 'scripts/test-cached-sample-clock.mjs'
@@ -37,6 +38,7 @@ jobs:
       - run: npm ci
       - run: node scripts/test-teacher-photography.mjs
       - run: node scripts/test-home-photography.mjs
+      - run: node scripts/test-editorial-photo-upgrade.mjs
       - run: node scripts/test-sample-clock.mjs && node scripts/test-cached-sample-clock.mjs && npm run build && npm run hub-map:check
       - name: Check real photo preview
         run: |
