@@ -48,3 +48,9 @@ export function useClassPhotos(): Map<string, string> {
   const { rows } = useTable<MediaAssetRow>('media_assets');
   return useMemo(() => new Map(rows.filter((a) => a.slot_key.startsWith('site.classes.') && a.status === 'ready' && a.kind === 'photo' && a.url).map((a) => [a.slot_key.slice('site.classes.'.length), a.url as string])), [rows]);
 }
+
+/** Ready editorial photos only; drafts never replace a verified packaged selection. */
+export function useReadyPhotoSlots(): Map<string, MediaAssetRow> {
+  const { rows } = useTable<MediaAssetRow>('media_assets');
+  return useMemo(() => new Map(rows.filter(a => a.status === 'ready' && a.kind === 'photo' && a.url).map(a => [a.slot_key, a])), [rows]);
+}

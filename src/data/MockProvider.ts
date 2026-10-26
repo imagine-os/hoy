@@ -22,6 +22,7 @@ import { applyQuery, type ChangeEvent, type DataProvider, type Query } from './t
 import { buildSeed } from './seed';
 import { modalities as seedModalities } from './seed/catalog';
 import { mediaAssets as seedMedia } from './seed/media';
+import { ensureEditorialPhotoSlots } from './seed/ensureEditorialPhotoSlots';
 import { tenant } from '../tenant/tenant';
 
 const KEY = 'hoyos.db.v1';
@@ -175,8 +176,9 @@ export class MockProvider implements DataProvider {
       upgradeAdditiveMockTables(parsed.db);
       ensureDemoPromotions(parsed.db, tenant.id);
       if (parsed.version !== SEED_VERSION || !tableNames.every((t) => Array.isArray(parsed.db[t]))) return;
+      const editorialChanged = isCurrentSnapshot(parsed) && ensureEditorialPhotoSlots(parsed.db);
       this.db = parsed.db;
-      if (!parsed.timezone && isCurrentSnapshot(parsed)) this.persist(parsed.db);
+      if (editorialChanged || !parsed.timezone && isCurrentSnapshot(parsed)) this.persist(parsed.db);
       for (const t of Object.keys(this.db)) this.emit({ table: t, type: 'reset' });
     } catch { /* ignore a half-written value */ }
   }
@@ -196,7 +198,8 @@ export class MockProvider implements DataProvider {
             for (const session of sessions) if (session.room_id === 'room_main' && session.capacity === 15) session.capacity = tenant.studio.mats;
           }
           if (parsed.version !== SEED_VERSION) upgradeTones(parsed.db);
-          if (parsed.version !== SEED_VERSION || !parsed.timezone) this.persist(parsed.db);
+          const editorialChanged = ensureEditorialPhotoSlots(parsed.db);
+          if (editorialChanged || parsed.version !== SEED_VERSION || !parsed.timezone) this.persist(parsed.db);
           return parsed.db;
         }
       }

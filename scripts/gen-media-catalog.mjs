@@ -60,7 +60,7 @@ function dimensions(b, ext) {
 const files=(await Promise.all(['public/images','public/video','public/videos','public/brand'].map(walk))).flat().filter(f=>/\.(webp|png|jpe?g|gif|svg|avif|mp4|webm|mov)$/i.test(f)).sort();
 const groups=new Map();
 for(const file of files) {
-  const url=file.replace(/^public\//,''), ext=extname(url), base=url.slice(0,-ext.length).replace(/-(480|960|1600)$/,'');
+  const url=file.replace(/^public\//,''), ext=extname(url), base=url.slice(0,-ext.length).replace(/-(480|960|1280|1600)$/,'');
   // Keep different formats separate, but group responsive sizes of the same format.
   const id=`${base}${ext}`;
   if(!groups.has(id))groups.set(id,[]);
@@ -68,7 +68,7 @@ for(const file of files) {
 }
 const catalog=[];
 for(const [id,variants] of groups) {
-  const weight=p=>Number(p.match(/-(480|960|1600)\./)?.[1]??0);
+  const weight=p=>Number(p.match(/-(480|960|1280|1600)\./)?.[1]??0);
   variants.sort((a,b)=>weight(a)-weight(b)||a.localeCompare(b,'en'));
   const url=variants.find(p=>/-960\./.test(p))??variants[0];
   const [width,height]=dimensions(await readFile(resolve(root,'public',url)),extname(url));
@@ -94,6 +94,16 @@ const teacherPhotos=[...teacherPhotoIds.keys()];
 const currentTeacherPhotoText=photoText.match(/const currentTeacherPhotos[^=]*=\s*\{([^}]+)\}/)?.[1];
 if(!currentTeacherPhotoText)throw new Error('Review current teacher-photo configuration before rebuilding the media catalog.');
 const currentTeacherPhotos=[...currentTeacherPhotoText.matchAll(/(tea_\w+):\s*'([^']+)'/g)].map(m=>m[2]);
+const editorialConfig=await read('src/data/studioPhotography.ts');
+const practicePhotoText=editorialConfig.match(/export const practicePhotos[^=]*=\s*\{([^}]+)\}/)?.[1]??'';
+const practicePhotoEntries=[...practicePhotoText.matchAll(/(\w+):\s*'([^']+)'/g)].map(m=>[m[1],m[2]]);
+const planPhotoText=editorialConfig.match(/export const planPhotos[^=]*=\s*\{([^}]+)\}/)?.[1]??'';
+const planPhotoEntries=[...planPhotoText.matchAll(/(\w+):\s*'([^']+)'/g)].map(m=>[m[1],m[2]]);
+const editorialUse=(asset,label,path,slot)=>{for(const [suffix,state] of [['','live'],['?version=photos','draft']])add(asset,label,path+suffix,state,`Verified editorial photo fallback; ready CMS photo takes priority. photo_slots:${slot}:fallback`);};
+for(const [slug,name] of practicePhotoEntries)editorialUse(`images/studio-2026/${name}-960.webp`,'Home practice','/site',`site.classes.${slug}`);
+for(const [id,name] of planPhotoEntries)editorialUse(`images/studio-2026/${name}-960.webp`,'Plan photograph','/site/plans',`site.plans.${id}`);
+editorialUse('images/sanctuary/mountains.webp','Home philosophy','/site','site.home.philosophy');
+for(const [suffix,state] of [['','live'],['?version=photos','draft']])add('images/studio-2026/practice-background-1280.webp','Home practice background','/site'+suffix,state,'src/modules/website/photography.css: current Home practice background.');
 const archiveBrand=await read(`${website}/archive/brand.ts`);
 const classNames=(archiveBrand.match(/export const classOrder[^=]*=\s*\[([^\]]+)\]/)?.[1].match(/'([^']+)'/g)??[]).map(x=>x.slice(1,-1));
 const archiveCatalog=await read(`${website}/archive/catalog.ts`);
@@ -114,6 +124,7 @@ for(const archived of [false,true]) {
     for(const m of code.matchAll(/siteImage\(['"]([^'"]+)['"]\)/g))concept(m[1]);
     for(const m of code.matchAll(/siteVideo\(['"]([^'"]+)['"]\)/g))concept(m[1],true);
     for(const key of new Set([...code.matchAll(/siteLoops\.(\w+)/g)].map(m=>m[1]))) {
+      if(!archived&&page==='HomePage'&&key==='philosophy'&&code.includes('philosophyStudioPhoto(version)'))continue;
       const loop=loops.get(key)??'';
       for(const m of loop.matchAll(/siteImage\('([^']+)'\)/g))concept(m[1]);
       for(const m of loop.matchAll(/siteVideo\('([^']+)'\)/g))concept(m[1],true);
@@ -149,6 +160,8 @@ for(const [file,label,path] of [
   [`${website}/faq.css`,'FAQ','/site/faq'],
   ['src/components/molecule/ClassArch/ClassArch.css','Class arch material','/site/classes'],
   ['src/components/molecule/MediaSlot/MediaSlot.meta.ts','Component library','/dev/components'],
+  ['src/components/molecule/ClassArch/ClassArch.meta.ts','Component library','/dev/components'],
+  ['src/components/molecule/PackageCard/PackageCard.meta.ts','Component library','/dev/components'],
   ['src/components/organism/AmbientScene/AmbientScene.meta.ts','Component library','/dev/components'],
 ]) {
   const code=await read(file);

@@ -484,7 +484,20 @@
       "concept",
       "mountains"
     ],
-    "usages": []
+    "usages": [
+      {
+        "label": "Home philosophy",
+        "path": "/site",
+        "state": "live",
+        "evidence": "Verified editorial photo fallback; ready CMS photo takes priority. photo_slots:site.home.philosophy:fallback"
+      },
+      {
+        "label": "Home philosophy",
+        "path": "/site?version=photos",
+        "state": "draft",
+        "evidence": "Verified editorial photo fallback; ready CMS photo takes priority. photo_slots:site.home.philosophy:fallback"
+      }
+    ]
   },
   {
     "id": "images/sanctuary/philosophy.webp",
@@ -509,12 +522,6 @@
         "path": "/dev/components",
         "state": "live",
         "evidence": "src/components/molecule/MediaSlot/MediaSlot.meta.ts: literal asset reference. This is a code placement, not a runtime visibility guarantee."
-      },
-      {
-        "label": "Home",
-        "path": "/site",
-        "state": "live",
-        "evidence": "src/modules/website/pages/HomePage.tsx; src/modules/website/edition.ts. Source placement; layout, saved media and motion settings may override visibility."
       },
       {
         "label": "Home",
@@ -1313,12 +1320,352 @@
       "philosophy",
       "carolina"
     ],
+    "usages": []
+  },
+  {
+    "id": "images/studio-2026/plan-single.webp",
+    "url": "images/studio-2026/plan-single-960.webp",
+    "thumbnail": "images/studio-2026/plan-single-480.webp",
+    "name": "Plan single",
+    "source": "studio",
+    "kind": "image",
+    "orientation": "portrait",
+    "width": 960,
+    "height": 1431,
+    "variants": [
+      "images/studio-2026/plan-single-480.webp",
+      "images/studio-2026/plan-single-960.webp"
+    ],
+    "tags": [
+      "studio",
+      "plan",
+      "single"
+    ],
     "usages": [
       {
-        "label": "Home",
+        "label": "Plan photograph",
+        "path": "/site/plans",
+        "state": "live",
+        "evidence": "Verified editorial photo fallback; ready CMS photo takes priority. photo_slots:site.plans.single:fallback"
+      },
+      {
+        "label": "Plan photograph",
+        "path": "/site/plans?version=photos",
+        "state": "draft",
+        "evidence": "Verified editorial photo fallback; ready CMS photo takes priority. photo_slots:site.plans.single:fallback"
+      }
+    ]
+  },
+  {
+    "id": "images/studio-2026/plan-trial.webp",
+    "url": "images/studio-2026/plan-trial-960.webp",
+    "thumbnail": "images/studio-2026/plan-trial-480.webp",
+    "name": "Plan trial",
+    "source": "studio",
+    "kind": "image",
+    "orientation": "portrait",
+    "width": 960,
+    "height": 1434,
+    "variants": [
+      "images/studio-2026/plan-trial-480.webp",
+      "images/studio-2026/plan-trial-960.webp"
+    ],
+    "tags": [
+      "studio",
+      "plan",
+      "trial"
+    ],
+    "usages": [
+      {
+        "label": "Plan photograph",
+        "path": "/site/plans",
+        "state": "live",
+        "evidence": "Verified editorial photo fallback; ready CMS photo takes priority. photo_slots:site.plans.trial:fallback"
+      },
+      {
+        "label": "Plan photograph",
+        "path": "/site/plans?version=photos",
+        "state": "draft",
+        "evidence": "Verified editorial photo fallback; ready CMS photo takes priority. photo_slots:site.plans.trial:fallback"
+      }
+    ]
+  },
+  {
+    "id": "images/studio-2026/practice-alineacion.webp",
+    "url": "images/studio-2026/practice-alineacion-960.webp",
+    "thumbnail": "images/studio-2026/practice-alineacion-480.webp",
+    "name": "Practice alineacion",
+    "source": "studio",
+    "kind": "image",
+    "orientation": "portrait",
+    "width": 960,
+    "height": 1440,
+    "variants": [
+      "images/studio-2026/practice-alineacion-480.webp",
+      "images/studio-2026/practice-alineacion-960.webp"
+    ],
+    "tags": [
+      "studio",
+      "practice",
+      "alineacion"
+    ],
+    "usages": [
+      {
+        "label": "Home practice",
+        "path": "/site",
+        "state": "live",
+        "evidence": "Verified editorial photo fallback; ready CMS photo takes priority. photo_slots:site.classes.alineacion:fallback"
+      },
+      {
+        "label": "Home practice",
         "path": "/site?version=photos",
         "state": "draft",
-        "evidence": "src/modules/website/pages/HomePage.tsx; src/modules/website/photography.ts; src/modules/website/edition.ts. Opt-in photos edition only; teacher entries are conditional fallbacks for matching active teachers."
+        "evidence": "Verified editorial photo fallback; ready CMS photo takes priority. photo_slots:site.classes.alineacion:fallback"
+      }
+    ]
+  },
+  {
+    "id": "images/studio-2026/practice-background.webp",
+    "url": "images/studio-2026/practice-background-960.webp",
+    "thumbnail": "images/studio-2026/practice-background-480.webp",
+    "name": "Practice background",
+    "source": "studio",
+    "kind": "image",
+    "orientation": "landscape",
+    "width": 960,
+    "height": 550,
+    "variants": [
+      "images/studio-2026/practice-background-480.webp",
+      "images/studio-2026/practice-background-960.webp",
+      "images/studio-2026/practice-background-1280.webp"
+    ],
+    "tags": [
+      "studio",
+      "practice",
+      "background"
+    ],
+    "usages": [
+      {
+        "label": "Home practice background",
+        "path": "/site",
+        "state": "live",
+        "evidence": "src/modules/website/photography.css: current Home practice background."
+      },
+      {
+        "label": "Home practice background",
+        "path": "/site?version=photos",
+        "state": "draft",
+        "evidence": "src/modules/website/photography.css: current Home practice background."
+      }
+    ]
+  },
+  {
+    "id": "images/studio-2026/practice-centro.webp",
+    "url": "images/studio-2026/practice-centro-960.webp",
+    "thumbnail": "images/studio-2026/practice-centro-480.webp",
+    "name": "Practice centro",
+    "source": "studio",
+    "kind": "image",
+    "orientation": "portrait",
+    "width": 960,
+    "height": 1440,
+    "variants": [
+      "images/studio-2026/practice-centro-480.webp",
+      "images/studio-2026/practice-centro-960.webp"
+    ],
+    "tags": [
+      "studio",
+      "practice",
+      "centro"
+    ],
+    "usages": [
+      {
+        "label": "Home practice",
+        "path": "/site",
+        "state": "live",
+        "evidence": "Verified editorial photo fallback; ready CMS photo takes priority. photo_slots:site.classes.centro:fallback"
+      },
+      {
+        "label": "Home practice",
+        "path": "/site?version=photos",
+        "state": "draft",
+        "evidence": "Verified editorial photo fallback; ready CMS photo takes priority. photo_slots:site.classes.centro:fallback"
+      }
+    ]
+  },
+  {
+    "id": "images/studio-2026/practice-fuego.webp",
+    "url": "images/studio-2026/practice-fuego-960.webp",
+    "thumbnail": "images/studio-2026/practice-fuego-480.webp",
+    "name": "Practice fuego",
+    "source": "studio",
+    "kind": "image",
+    "orientation": "portrait",
+    "width": 960,
+    "height": 1440,
+    "variants": [
+      "images/studio-2026/practice-fuego-480.webp",
+      "images/studio-2026/practice-fuego-960.webp"
+    ],
+    "tags": [
+      "studio",
+      "practice",
+      "fuego"
+    ],
+    "usages": [
+      {
+        "label": "Home practice",
+        "path": "/site",
+        "state": "live",
+        "evidence": "Verified editorial photo fallback; ready CMS photo takes priority. photo_slots:site.classes.fuego:fallback"
+      },
+      {
+        "label": "Home practice",
+        "path": "/site?version=photos",
+        "state": "draft",
+        "evidence": "Verified editorial photo fallback; ready CMS photo takes priority. photo_slots:site.classes.fuego:fallback"
+      }
+    ]
+  },
+  {
+    "id": "images/studio-2026/practice-hibrido.webp",
+    "url": "images/studio-2026/practice-hibrido-960.webp",
+    "thumbnail": "images/studio-2026/practice-hibrido-480.webp",
+    "name": "Practice hibrido",
+    "source": "studio",
+    "kind": "image",
+    "orientation": "portrait",
+    "width": 960,
+    "height": 1440,
+    "variants": [
+      "images/studio-2026/practice-hibrido-480.webp",
+      "images/studio-2026/practice-hibrido-960.webp"
+    ],
+    "tags": [
+      "studio",
+      "practice",
+      "hibrido"
+    ],
+    "usages": [
+      {
+        "label": "Home practice",
+        "path": "/site",
+        "state": "live",
+        "evidence": "Verified editorial photo fallback; ready CMS photo takes priority. photo_slots:site.classes.hibrido:fallback"
+      },
+      {
+        "label": "Home practice",
+        "path": "/site?version=photos",
+        "state": "draft",
+        "evidence": "Verified editorial photo fallback; ready CMS photo takes priority. photo_slots:site.classes.hibrido:fallback"
+      }
+    ]
+  },
+  {
+    "id": "images/studio-2026/practice-ligereza.webp",
+    "url": "images/studio-2026/practice-ligereza-960.webp",
+    "thumbnail": "images/studio-2026/practice-ligereza-480.webp",
+    "name": "Practice ligereza",
+    "source": "studio",
+    "kind": "image",
+    "orientation": "portrait",
+    "width": 960,
+    "height": 1440,
+    "variants": [
+      "images/studio-2026/practice-ligereza-480.webp",
+      "images/studio-2026/practice-ligereza-960.webp"
+    ],
+    "tags": [
+      "studio",
+      "practice",
+      "ligereza"
+    ],
+    "usages": [
+      {
+        "label": "Component library",
+        "path": "/dev/components",
+        "state": "live",
+        "evidence": "src/components/molecule/ClassArch/ClassArch.meta.ts: literal asset reference. This is a code placement, not a runtime visibility guarantee."
+      },
+      {
+        "label": "Home practice",
+        "path": "/site",
+        "state": "live",
+        "evidence": "Verified editorial photo fallback; ready CMS photo takes priority. photo_slots:site.classes.ligereza:fallback"
+      },
+      {
+        "label": "Home practice",
+        "path": "/site?version=photos",
+        "state": "draft",
+        "evidence": "Verified editorial photo fallback; ready CMS photo takes priority. photo_slots:site.classes.ligereza:fallback"
+      }
+    ]
+  },
+  {
+    "id": "images/studio-2026/practice-pulso.webp",
+    "url": "images/studio-2026/practice-pulso-960.webp",
+    "thumbnail": "images/studio-2026/practice-pulso-480.webp",
+    "name": "Practice pulso",
+    "source": "studio",
+    "kind": "image",
+    "orientation": "portrait",
+    "width": 960,
+    "height": 1440,
+    "variants": [
+      "images/studio-2026/practice-pulso-480.webp",
+      "images/studio-2026/practice-pulso-960.webp"
+    ],
+    "tags": [
+      "studio",
+      "practice",
+      "pulso"
+    ],
+    "usages": [
+      {
+        "label": "Home practice",
+        "path": "/site",
+        "state": "live",
+        "evidence": "Verified editorial photo fallback; ready CMS photo takes priority. photo_slots:site.classes.pulso:fallback"
+      },
+      {
+        "label": "Home practice",
+        "path": "/site?version=photos",
+        "state": "draft",
+        "evidence": "Verified editorial photo fallback; ready CMS photo takes priority. photo_slots:site.classes.pulso:fallback"
+      }
+    ]
+  },
+  {
+    "id": "images/studio-2026/practice-solido.webp",
+    "url": "images/studio-2026/practice-solido-960.webp",
+    "thumbnail": "images/studio-2026/practice-solido-480.webp",
+    "name": "Practice solido",
+    "source": "studio",
+    "kind": "image",
+    "orientation": "portrait",
+    "width": 960,
+    "height": 1440,
+    "variants": [
+      "images/studio-2026/practice-solido-480.webp",
+      "images/studio-2026/practice-solido-960.webp"
+    ],
+    "tags": [
+      "studio",
+      "practice",
+      "solido"
+    ],
+    "usages": [
+      {
+        "label": "Home practice",
+        "path": "/site",
+        "state": "live",
+        "evidence": "Verified editorial photo fallback; ready CMS photo takes priority. photo_slots:site.classes.solido:fallback"
+      },
+      {
+        "label": "Home practice",
+        "path": "/site?version=photos",
+        "state": "draft",
+        "evidence": "Verified editorial photo fallback; ready CMS photo takes priority. photo_slots:site.classes.solido:fallback"
       }
     ]
   },
@@ -1342,6 +1689,24 @@
       "duo"
     ],
     "usages": [
+      {
+        "label": "Component library",
+        "path": "/dev/components",
+        "state": "live",
+        "evidence": "src/components/molecule/PackageCard/PackageCard.meta.ts: literal asset reference. This is a code placement, not a runtime visibility guarantee."
+      },
+      {
+        "label": "Plan photograph",
+        "path": "/site/plans",
+        "state": "live",
+        "evidence": "Verified editorial photo fallback; ready CMS photo takes priority. photo_slots:site.plans.pack12:fallback"
+      },
+      {
+        "label": "Plan photograph",
+        "path": "/site/plans?version=photos",
+        "state": "draft",
+        "evidence": "Verified editorial photo fallback; ready CMS photo takes priority. photo_slots:site.plans.pack12:fallback"
+      },
       {
         "label": "Plans",
         "path": "/site/plans?version=photos",
@@ -2051,12 +2416,6 @@
         "path": "/dev/components",
         "state": "live",
         "evidence": "src/components/molecule/MediaSlot/MediaSlot.meta.ts: literal asset reference. This is a code placement, not a runtime visibility guarantee."
-      },
-      {
-        "label": "Home",
-        "path": "/site",
-        "state": "live",
-        "evidence": "src/modules/website/pages/HomePage.tsx; src/modules/website/edition.ts. Source placement; layout, saved media and motion settings may override visibility."
       },
       {
         "label": "Home",

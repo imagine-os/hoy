@@ -9,6 +9,7 @@
 /* the limestone grain the site's panels carry, laid over the colour */
 .classarch-arch::before { content: ''; position: absolute; inset: 0; z-index: -1; background: url('../../../../public/images/sanctuary/texture-limestone.webp') center / cover; mix-blend-mode: soft-light; opacity: .55; }
 .classarch-arch.has-photo { background-size: cover; background-position: center; }
+.classarch-arch.natural-photo { aspect-ratio:2/3; background-size:contain; background-repeat:no-repeat; }
 .classarch-arch.has-photo::before { background: linear-gradient(180deg, transparent 35%, color-mix(in srgb, var(--t-fg) 88%, transparent) 100%); mix-blend-mode: normal; opacity: 1; }
 /* an inner hairline that repeats the arch, like a door inside a door */
 .classarch-ring { position: absolute; inset: var(--sp-sm); border: 1px solid rgba(251, 247, 239, .34); border-radius: var(--r-arch); pointer-events: none; }

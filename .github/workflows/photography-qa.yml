@@ -8,6 +8,9 @@ on:
       - 'scripts/test-teacher-photography.mjs'
       - 'scripts/test-teacher-current-ui.mjs'
       - 'scripts/test-teacher-frames-ui.mjs'
+      - 'scripts/test-home-photography.mjs'
+      - 'scripts/test-home-photography-ui.mjs'
+      - 'scripts/test-editorial-photo-upgrade.mjs'
       - 'scripts/test-studio-hero.mjs'
       - 'scripts/test-sample-clock.mjs'
       - 'scripts/test-cached-sample-clock.mjs'
@@ -34,6 +37,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: node scripts/test-teacher-photography.mjs
+      - run: node scripts/test-home-photography.mjs
+      - run: node scripts/test-editorial-photo-upgrade.mjs
       - run: node scripts/test-sample-clock.mjs && node scripts/test-cached-sample-clock.mjs && npm run build && npm run hub-map:check
       - name: Check real photo preview
         run: |
@@ -42,6 +47,7 @@ jobs:
           node scripts/test-photography-ui.mjs
           node scripts/test-teacher-current-ui.mjs
           node scripts/test-teacher-frames-ui.mjs
+          node scripts/test-home-photography-ui.mjs
           node scripts/test-studio-hero.mjs
           node scripts/test-cached-sample-ui.mjs
         env:
@@ -56,5 +62,6 @@ jobs:
             qa/photos
             qa/teacher-current
             qa/teacher-frames
+            qa/home-photography
             qa/cached-sample
             docs/screenshots/W-01/studio-*

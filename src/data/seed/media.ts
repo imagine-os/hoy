@@ -10,6 +10,7 @@
 import type { MediaAssetRow } from '../schema';
 import { base } from './catalog';
 import { classes, classOrder } from '../../tenant/brand';
+import { editorialPhotoSlots } from '../studioPhotography';
 
 /** 0051 — the photo each of the seven classes still owes (W-07 / W-08 / the schedule thumbnails). */
 const CLASS_BRIEFS: Record<string, { es: string; en: string }> = {
@@ -80,6 +81,10 @@ const SLOTS: Slot[] = [
     label: { es: `Web · clase ${classes[slug].name.es}`, en: `Website · ${classes[slug].name.en} class` },
     alt: { es: `Clase de ${classes[slug].name.es} en el estudio`, en: `A ${classes[slug].name.en} class at the studio` },
     brief: CLASS_BRIEFS[slug],
+  })),
+  ...editorialPhotoSlots.map((slot): Slot => ({
+    ...slot, kind: 'photo', ratio: slot.key === 'site.home.philosophy' ? '2 / 3' : '3 / 2',
+    brief: { es: 'Foto editorial verificada; una foto marcada lista tiene prioridad sobre la selección incluida.', en: 'Verified editorial photo; a photo marked ready takes priority over the packaged selection.' },
   })),
 ];
 
