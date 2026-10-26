@@ -7,6 +7,7 @@ on:
       - 'scripts/test-photography-ui.mjs'
       - 'scripts/test-teacher-photography.mjs'
       - 'scripts/test-teacher-current-ui.mjs'
+      - 'scripts/test-teacher-frames-ui.mjs'
       - 'scripts/test-studio-hero.mjs'
       - 'scripts/test-sample-clock.mjs'
       - 'scripts/test-cached-sample-clock.mjs'
@@ -40,6 +41,7 @@ jobs:
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/ >/dev/null && break; sleep 1; done
           node scripts/test-photography-ui.mjs
           node scripts/test-teacher-current-ui.mjs
+          node scripts/test-teacher-frames-ui.mjs
           node scripts/test-studio-hero.mjs
           node scripts/test-cached-sample-ui.mjs
         env:
@@ -53,5 +55,6 @@ jobs:
           path: |
             qa/photos
             qa/teacher-current
+            qa/teacher-frames
             qa/cached-sample
             docs/screenshots/W-01/studio-*
