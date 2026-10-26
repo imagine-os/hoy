@@ -5,6 +5,7 @@ on:
       - 'src/**'
       - 'public/images/studio-2026/**'
       - 'scripts/test-photography-ui.mjs'
+      - 'scripts/test-teacher-photography.mjs'
       - 'scripts/test-studio-hero.mjs'
       - 'scripts/test-sample-clock.mjs'
       - 'scripts/test-cached-sample-clock.mjs'
@@ -30,6 +31,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: node scripts/test-teacher-photography.mjs
       - run: node scripts/test-sample-clock.mjs && node scripts/test-cached-sample-clock.mjs && npm run build && npm run hub-map:check
       - name: Check real photo preview
         run: |

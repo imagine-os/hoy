@@ -19,6 +19,7 @@ export const strings: StringTable = {
   'site.photos.heater': { es: 'Detalle de la calefacción del estudio', en: 'A detail of the studio heating' },
   'site.photos.equipment': { es: 'Accesorios de práctica del estudio', en: 'Practice equipment in the studio' },
   'site.photos.duo': { es: 'Dos personas practicando movimiento juntas', en: 'Two people practicing movement together' },
+  'site.photos.teachersGroup': { es: 'Cuatro personas practicando movimiento frente a una pared de listones', en: 'Four people practicing movement in front of a slatted wall' },
   'site.photos.facilities': { es: 'Un espacio para estar presente', en: 'A space to be present' },
 
   'site.edition.latest': { es: 'Latest · Actual', en: 'Latest · Current' },
