@@ -10,6 +10,12 @@
 .plans-pass-photo { display:block; width:100%; height:auto; }
 .photo-philosophy { width:100%; height:auto; max-height:38rem; object-fit:contain; }
 .photo-community { width:100%; height:auto; max-height:inherit; object-fit:contain; display:block; }
+/* The verified group photo keeps its native height; its arch is measured from its width. */
+.site-community-frame { display:contents; }
+.site[data-edition="sanctuary"] .site-community-frame.has-studio-photo { display:block; container-type:inline-size; min-width:0; }
+.site[data-edition="sanctuary"] .site-community-frame.has-studio-photo .sanctuary-community { max-height:none; border-top-left-radius:50cqw; border-top-right-radius:50cqw; }
+.site[data-edition="sanctuary"] .site-community-frame.has-studio-photo .photo-community { max-height:none; height:auto; transform:none; }
+
 .photo-finale-image { width:50%; height:auto; object-fit:contain; }
 .site[data-site-version="photos"] .sanctuary-finale { min-height:0; gap:var(--sp-xl); padding:var(--sp-3xl) 5vw; }
 .site[data-site-version="photos"] .sanctuary-finale-card { box-shadow:none; padding:var(--sp-2xl); }

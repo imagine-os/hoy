@@ -10,6 +10,7 @@ on:
       - 'scripts/test-teacher-frames-ui.mjs'
       - 'scripts/test-home-photography.mjs'
       - 'scripts/test-home-photography-ui.mjs'
+      - 'scripts/test-home-group-frame-ui.mjs'
       - 'scripts/test-editorial-photo-upgrade.mjs'
       - 'scripts/test-studio-hero.mjs'
       - 'scripts/test-sample-clock.mjs'
@@ -48,6 +49,7 @@ jobs:
           node scripts/test-teacher-current-ui.mjs
           node scripts/test-teacher-frames-ui.mjs
           node scripts/test-home-photography-ui.mjs
+          node scripts/test-home-group-frame-ui.mjs
           node scripts/test-studio-hero.mjs
           node scripts/test-cached-sample-ui.mjs
         env:
@@ -63,5 +65,6 @@ jobs:
             qa/teacher-current
             qa/teacher-frames
             qa/home-photography
+            qa/home-group-frame
             qa/cached-sample
             docs/screenshots/W-01/studio-*
