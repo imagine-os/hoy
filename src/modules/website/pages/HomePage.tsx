@@ -14,10 +14,11 @@ import { ClassArch } from '../../../components/molecule/ClassArch/ClassArch';
 import { Icon } from '../../../components/atom/Icon/Icon';
 import { SiteShell } from '../SiteShell';
 import { siteSpecs } from '../specs';
-import { useClassPhotos, useTodaySessions } from '../hooks';
+import { useClassPhotos, useTodaySessions, useReadyPhotoSlots } from '../hooks';
 import { useSiteEdition } from '../edition';
 import { siteImage, siteVideo, siteLoops } from '../artwork';
-import { studioPhotoProps, teacherStudioPhoto } from '../photography';
+import { studioPhotoProps, teacherStudioPhoto, practiceStudioPhoto, philosophyStudioPhoto, usesCurrentStudioPhotos } from '../photography';
+import { editorialPhotoSlots } from '../../../data/studioPhotography';
 import { ClassicHomePage } from './ClassicHomePage';
 
 export function HomePage() {
@@ -33,6 +34,10 @@ function SanctuaryHome() {
   const teacherPhotoEdition = version === 'latest' || photoEdition;
   const { rows: teachers } = useTable<TeacherRow>('teachers', { where: { active: true } });
   const photos = useClassPhotos();
+  const sourcePhotos = usesCurrentStudioPhotos(version);
+  const photoOverrides = useReadyPhotoSlots();
+  const philosophyOverride = sourcePhotos ? photoOverrides.get('site.home.philosophy') : undefined;
+  const philosophyPhoto = philosophyOverride?.url || philosophyStudioPhoto(version);
   const { rows: modalities } = useTable<ModalityRow>('modalities');
   const { rows: reviews } = useTable<ReviewRow>('reviews', { orderBy: { column: 'created_at', dir: 'desc' } });
   const quotes = [...new Map(reviews.filter(r => r.comment && r.visibility !== 'private').map(r => [r.comment, r])).values()].slice(0, 2);
@@ -64,14 +69,14 @@ function SanctuaryHome() {
       </div>
       <div className="sanctuary-hero-bottom container"><span className="sanctuary-scroll"><span aria-hidden>↓</span>{t('site.new.scroll')}</span>{!photoEdition && <button type="button" className="sanctuary-motion" onClick={() => setMotion(!motion)} aria-pressed={!motion}>{motion ? 'Ⅱ' : '▷'} <span>{t(motion ? 'site.new.ambient' : 'site.new.static')}</span></button>}</div>
     </section>,
-    Philosophy: () => <section className="sanctuary-philosophy" data-reveal><div className="container sanctuary-philosophy-grid">
-      <div className="sanctuary-philosophy-art"><>{photoEdition ? <img {...studioPhotoProps('philosophy-carolina', true)} alt={t('site.photos.philosophy')} className="photo-philosophy" /> : <AmbientScene {...siteLoops.philosophy} video={videoEnabled ? siteLoops.philosophy.video : undefined} alt={t('site.new.philosophyAlt')} className="sanctuary-portrait" motion={motion} />}</><span className="sanctuary-photo-caption">{t('site.new.scroll')}</span></div>
+    Philosophy: () => <section className={`sanctuary-philosophy${sourcePhotos ? ' source-philosophy' : ''}`} data-reveal><div className="container sanctuary-philosophy-grid">
+      <div className="sanctuary-philosophy-art"><>{philosophyPhoto ? <img src={philosophyPhoto} alt={bi(philosophyOverride?.alt || editorialPhotoSlots[0].alt)} className="sanctuary-portrait source-philosophy-photo" style={philosophyOverride ? { objectPosition: 'center' } : undefined} width={1536} height={1024} loading="lazy" decoding="async" /> : <AmbientScene {...siteLoops.philosophy} video={videoEnabled ? siteLoops.philosophy.video : undefined} alt={t('site.new.philosophyAlt')} className="sanctuary-portrait" motion={motion} />}</><span className="sanctuary-photo-caption">{t('site.new.scroll')}</span></div>
       <div className="sanctuary-philosophy-copy"><p className="eyebrow">{t('site.new.philosophyLabel')}</p><h2>{t('site.new.philosophyTitle')}<br /><em>{t('site.new.philosophyEm')}</em></h2><p className="muted">{t('site.new.philosophyBody', { name: tenant.name })}</p><Link className="sanctuary-text-link" to="/site/about">{t('site.philosophy.more')} <Icon name="arrow-right" /></Link></div>
     </div></section>,
-    Classes: () => <section className="container sanctuary-section" data-reveal>
+    Classes: () => <section className={`sanctuary-section${sourcePhotos ? ' source-practice' : ''}`} data-reveal><div className="container">
       <div className="sanctuary-heading"><div><p className="eyebrow">{t('site.new.chapter2')}</p><h2>{t('site.new.classesTitle')}<br /><em>{t('site.new.classesEm')}</em></h2><p className="muted">{bi(classesIntro.methods)}</p></div><Link className="sanctuary-text-link" to="/site/classes">{t('site.classes.all')} <Icon name="arrow-right" /></Link></div>
-      <div className="sanctuary-arches">{classOrder.map((slug, index) => <ClassArch key={slug} slug={slug} index={index + 1} to={href(`/site/classes/${slug}`)} photoUrl={photos.get(slug)} />)}</div>
-    </section>,
+      <div className="sanctuary-arches">{classOrder.map((slug, index) => <ClassArch key={slug} slug={slug} index={index + 1} to={href(`/site/classes/${slug}`)} photoUrl={photos.get(slug) || practiceStudioPhoto(slug, version)} naturalPhoto={!photos.has(slug) && sourcePhotos} />)}</div>
+    </div></section>,
     TodayClasses: () => <section className="sanctuary-schedule" data-reveal><div className="container sanctuary-schedule-grid"><div className="sanctuary-schedule-intro"><p className="eyebrow">{t('site.new.chapter3')}</p><h2>{t('site.new.scheduleTitle')}</h2><Link className="sanctuary-button is-light" to="/site/schedule">{t('site.today.all')} <Icon name="arrow-right" /></Link></div>
       <div className="sanctuary-agenda"><div className="sanctuary-agenda-head"><span>{t('site.today.title')}</span><span>{new Intl.DateTimeFormat(lang === 'es' ? 'es-CO' : 'en-US', { day: 'numeric', month: 'short' }).format(new Date())}</span></div>
         {today.length ? today.slice(0, 4).map(({ session, modality, teacher }) => <Link key={session.id} to={modality ? `/site/schedule?modality=${modality.slug}` : '/site/schedule'} className="sanctuary-session"><span className="sanctuary-session-time">{new Intl.DateTimeFormat(lang === 'es' ? 'es-CO' : 'en-US', { hour: 'numeric', minute: '2-digit' }).format(new Date(session.starts_at))}</span><span><strong>{session.title}</strong><small>{teacher?.display_name} · {modality?.duration_min ?? 60} min</small></span><span aria-hidden>↗</span></Link>) : <p className="sanctuary-agenda-empty">{t('site.today.empty')}</p>}

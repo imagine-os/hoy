@@ -41,7 +41,7 @@ try {
           assert((await page.locator('.photo-community').getAttribute('src')).endsWith('hero-group-960.webp'));
           const group=await page.locator('.photo-community').evaluate(img=>{const box=img.getBoundingClientRect(),parent=img.parentElement.getBoundingClientRect();return {contained:box.top>=parent.top-1&&box.bottom<=parent.bottom+1,fit:getComputedStyle(img).objectFit};});
           assert(group.contained&&group.fit==='contain','selected group stays inside its existing frame without clipping');
-          assert.equal(await page.locator('.photo-philosophy').count(),version==='photos'?1:0,'other Photos sections remain opt-in');
+          assert.equal(await page.locator('.source-philosophy-photo').count(),1,'verified landscape is shared by Latest and Photos');
           assert.equal(await page.locator('.photo-finale-image').count(),version==='photos'?1:0,'Latest finale remains unchanged');
         }
         const images=page.locator(path===''?'.sanctuary-teachers img':'.site-teachergrid img');

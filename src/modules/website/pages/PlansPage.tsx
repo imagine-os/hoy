@@ -3,7 +3,9 @@ import { useTable } from '../../../data/DataContext';
 import { quotePublishedProduct } from '../../../data/catalogPublication';
 import type { CatalogPlan } from '../../../data/productCatalog';
 import { useSiteEdition } from '../edition';
-import { studioPhoto } from '../photography';
+import { studioPhoto, planStudioPhoto, usesCurrentStudioPhotos } from '../photography';
+import { useReadyPhotoSlots } from '../hooks';
+import { editorialPhotoSlots } from '../../../data/studioPhotography';
 import { Fragment, type ReactNode } from 'react';
 import { Link, useNavigate } from '../links';
 import { useI18n } from '../../../i18n/I18nProvider';
@@ -28,7 +30,8 @@ import { siteSpecs } from '../specs';
 export function PlansPage() {
   const {rows:catalogRows}=useTable<CatalogPlan>('plans');
   const localPublished=catalogRows.filter(p=>p.tenant_id===tenant.id&&p.frontend_publication&&!p.frontend_publication.withdrawnAt);
-  const { photoEdition } = useSiteEdition();
+  const { photoEdition, version } = useSiteEdition();
+  const photoOverrides = useReadyPhotoSlots();
   const { t, bi, lang } = useI18n();
   // 0047: private classes, the space rental and corporate experiences are a `specials` handoff (M-08a contacts).
   const wa = useWhatsappLink();
@@ -37,6 +40,13 @@ export function PlansPage() {
   const { sections, isVisible } = useLayout(siteSpecs.plans);
   const policy = usePolicy();
   const { tax } = policy;
+  const planPhoto = (id: string) => {
+    if (!usesCurrentStudioPhotos(version)) return undefined;
+    const key = `site.plans.${id}`, override = photoOverrides.get(key);
+    const src = override?.url || planStudioPhoto(id, version);
+    const alt = override?.alt || editorialPhotoSlots.find(slot => slot.key === key)?.alt;
+    return src && alt ? { src, alt: bi(alt) } : undefined;
+  };
   const buy = (id: string) => nav(`/auth/sign-in?next=${encodeURIComponent(`/app/plans?plan=${id}`)}`);
   const pack = priceItem('pack12');
   const months = Math.round((pack?.validityDays ?? 90) / 30);
@@ -68,14 +78,14 @@ export function PlansPage() {
             <PackageCard key={p.id} item={p} index={i + 1} total={all.length} tone={p.audience ? 'moss' : 'river'}
               eyebrow={p.audience ? bi(p.audience) : bi(FAMILY_RATIONALE.paquetes.role)} objectLabel={t('site.plans.package.objectLabel')}
               benefits={p.audience ? [...packageRules, t('site.plans.package.affiliates')] : packageRules}
-              ctaLabel={t('site.plans.package.cta')} onSelect={() => buy(p.id)} />
+              ctaLabel={t('site.plans.package.cta')} onSelect={() => buy(p.id)} photo={planPhoto(p.id)} />
           ))}
         </div>
       </section>
       {/* the trial class and the individual class */}
       <section className="container site-section">
         <div className="site-section-top"><div><p className="eyebrow">{bi(FAMILY_LABEL.bienvenida)}</p><h2>{t('site.plans.passesTitle')}</h2><p className="muted">{t('site.plans.passesBody')}</p></div></div>
-        <div className="plans-pass-grid">{pricingByFamily('bienvenida').map((p) => <article className="plans-pass" key={p.id}><span className="eyebrow">{t('site.plans.oneClass')}</span><h3>{bi(p.name)}</h3><p className="small muted">{bi(p.description)}</p><strong className="plans-pass-price">{formatCOP(p.price ?? 0, lang)}</strong><Button variant="secondary" onClick={() => buy(p.id)}>{t('site.plans.select')}</Button></article>)}</div>
+        <div className="plans-pass-grid">{pricingByFamily('bienvenida').map((p) => <article className={`plans-pass${planPhoto(p.id) ? ' has-photo' : ''}`} key={p.id}>{planPhoto(p.id) && <img className="plans-pass-photo" src={planPhoto(p.id)!.src} alt={planPhoto(p.id)!.alt} loading="lazy" decoding="async" />}<div className="plans-pass-copy"><span className="eyebrow">{t('site.plans.oneClass')}</span><h3>{bi(p.name)}</h3><p className="small muted">{bi(p.description)}</p><strong className="plans-pass-price">{formatCOP(p.price ?? 0, lang)}</strong><Button variant="secondary" onClick={() => buy(p.id)}>{t('site.plans.select')}</Button></div></article>)}</div>
         {/* private classes and gift cards */}
         <div className="plans-secondary">
           <Card eyebrow={bi(FAMILY_RATIONALE.privadas.role)} title={bi(FAMILY_LABEL.privadas)}>

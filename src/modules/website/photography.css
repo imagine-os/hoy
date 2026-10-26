@@ -1,5 +1,13 @@
 /* Other Photos features remain opt-in; Latest shares the verified teacher photos and studio hero. */
 .photo-preview-notice { padding: var(--sp-sm) var(--sp-lg); text-align:center; background:var(--color-surface); color:var(--color-text); font-size:.8rem; border-bottom:1px solid var(--color-border); }
+.site[data-edition="sanctuary"] .sanctuary-philosophy.source-philosophy { background-image:linear-gradient(180deg,color-mix(in srgb,var(--brand-deepBlue) 35%,var(--color-lane)),var(--color-lane) 30%,var(--color-lane) 65%,color-mix(in srgb,var(--brand-deepBlue) 70%,var(--color-lane))); }
+.source-philosophy-photo { display:block; width:100%; object-fit:cover; object-position:25% center; }
+.site[data-edition="sanctuary"] .sanctuary-section.source-practice { background:linear-gradient(color-mix(in srgb,var(--brand-deepBlue) 20%,transparent),color-mix(in srgb,var(--brand-deepBlue) 20%,transparent)),url('../../../public/images/studio-2026/practice-background-1280.webp') center/cover; color:var(--brand-cream); }
+.site[data-edition="sanctuary"] .source-practice h2,.site[data-edition="sanctuary"] .source-practice h2 em,.source-practice .sanctuary-text-link,.source-practice .classarch-keys,.source-practice .muted { color:var(--brand-cream); }
+.plans-pass-copy { display:flex; flex-direction:column; align-items:flex-start; gap:var(--sp-md); flex:1; }
+.plans-pass.has-photo { padding:0; overflow:hidden; }
+.plans-pass.has-photo .plans-pass-copy { padding:var(--card-pad); }
+.plans-pass-photo { display:block; width:100%; height:auto; }
 .photo-philosophy { width:100%; height:auto; max-height:38rem; object-fit:contain; }
 .photo-community { width:100%; height:auto; max-height:inherit; object-fit:contain; display:block; }
 .photo-finale-image { width:50%; height:auto; object-fit:contain; }

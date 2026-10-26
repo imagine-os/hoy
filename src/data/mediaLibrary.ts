@@ -6,15 +6,16 @@ export interface MediaUsage { label: string; path: string; state: UsageState; ev
 export interface LibraryAsset { id: string; url: string; thumbnail: string | null; name: string; source: string; kind: string; orientation: string; tags: string[]; variants: string[]; usages: MediaUsage[] }
 export const normalizeMediaUrl = (url: string) => url.replace(/^\.\//, '').replace(/^\//, '');
 export const safeMediaUrl = (url: string) => isLocalPhotoUrl(url) || /^(https?:\/\/|\.\/|\/|images\/|video\/|brand\/)/.test(url) && !url.startsWith('//');
-const slotRoutes = (key: string): string[] => key.startsWith('site.classes.') ? ['/site/classes', `/site/classes/${key.slice(13)}`, '/site/schedule', '/site', '/app/schedule'] : ({'site.about':['/site/about'],'site.hero':['/site?version=classic'],'site.contact.map':['/site/contact'],'class.hero':[],'teacher.portrait':['/app/teachers'],'event.cover':[],'studio.tour':['/app/rules']}[key] ?? []);
+const slotRoutes = (key: string): string[] => key.startsWith('site.plans.') ? ['/site/plans','/site/plans?version=photos'] : key === 'site.home.philosophy' ? ['/site','/site?version=photos'] : key.startsWith('site.classes.') ? ['/site/classes', `/site/classes/${key.slice(13)}`, '/site/schedule', '/site', '/app/schedule'] : ({'site.about':['/site/about'],'site.hero':['/site?version=classic'],'site.contact.map':['/site/contact'],'class.hero':[],'teacher.portrait':['/app/teachers'],'event.cover':[],'studio.tour':['/app/rules']}[key] ?? []);
 /** A projection over provider rows plus the build manifest. No invented backend or global publication flag. */
 export function buildMediaLibrary(slots: MediaAssetRow[], teachers: TeacherRow[], modalities: ModalityRow[], events: EventRow[] = [], local: LocalPhoto[] = []): LibraryAsset[] {
  const assets = (catalog as LibraryAsset[]).map(a => ({...a, usages: a.usages.map(u => {
    const teacherId=u.evidence.match(/teachers:(tea_\w+):fallback/)?.[1];
    const teacher=teacherId?teachers.find(t=>t.id===teacherId):undefined;
-   const slotKey=u.evidence.match(/media_slots:([\w.]+):fallback/)?.[1];
+   const photoSlotKey=u.evidence.match(/photo_slots:([\w.]+):fallback/)?.[1];
+   const slotKey=photoSlotKey??u.evidence.match(/media_slots:([\w.]+):fallback/)?.[1];
    const slot=slotKey?slots.find(s=>s.slot_key===slotKey):undefined;
-   const overridden=teacherId && (!teacher || !teacher.active || !!teacher.photo_url) || slot?.status==='ready' && !!slot.url;
+   const overridden=teacherId && (!teacher || !teacher.active || !!teacher.photo_url) || slot?.status==='ready' && !!slot.url && (!photoSlotKey || slot.kind==='photo');
    return overridden ? {...u,state:'inactive' as const} : {...u};
  }), tags: [...a.tags]}));
  for(const p of local) assets.push({id:`local:${p.id}`,url:p.url,thumbnail:p.url,name:p.name,source:'local',kind:'photo',orientation:p.width>p.height?'landscape':p.width<p.height?'portrait':'square',tags:['local'],variants:[p.url],usages:[]});

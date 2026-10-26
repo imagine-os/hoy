@@ -13,6 +13,8 @@ export interface ClassArchProps {
   to?: string;
   /** The studio's own photograph for the class, once uploaded (M-02d). It fills the arch under a tone wash. */
   photoUrl?: string | null;
+  /** Preserve the supplied 2:3 studio composition; CMS uploads retain the default crop. */
+  naturalPhoto?: boolean;
   /** Show the class's first-person line under the name (lg shows it by default). */
   tagline?: boolean;
 }
@@ -22,14 +24,14 @@ export interface ClassArchProps {
  * ("liberación · apertura · fluidez · movimiento consciente"). It replaces the concept photographs: the arch
  * shape is the brand's, the colour is the class's (D-01 class tones), and a real photo can fill it later.
  */
-export function ClassArch({ slug, index, size = 'md', to, photoUrl, tagline }: ClassArchProps) {
+export function ClassArch({ slug, index, size = 'md', to, photoUrl, naturalPhoto = false, tagline }: ClassArchProps) {
   const { bi } = useI18n();
   const c = classes[slug];
   const showTagline = tagline ?? size === 'lg';
   const keywords = c.keywords.map((k) => bi(k));
   const body = (
     <>
-      <span className={`classarch-arch${photoUrl ? ' has-photo' : ''}`} style={photoUrl ? { backgroundImage: `url(${photoUrl})` } : undefined}>
+      <span className={`classarch-arch${photoUrl ? ' has-photo' : ''}${photoUrl && naturalPhoto ? ' natural-photo' : ''}`} style={photoUrl ? { backgroundImage: `url(${photoUrl})` } : undefined}>
         {index != null && <span className="classarch-num" aria-hidden>{String(index).padStart(2, '0')}</span>}
         <span className="classarch-ring" aria-hidden />
         <span className="classarch-copy">
