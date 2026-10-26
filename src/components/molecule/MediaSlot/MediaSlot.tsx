@@ -8,9 +8,11 @@ import { AmbientScene } from '../../organism/AmbientScene/AmbientScene';
 import './MediaSlot.css';
 
 export type MediaRatio = '16:9' | '4:3' | '4:5' | '1:1' | '21:9';
+export type MediaSlotRatio = MediaRatio | 'natural';
 export type MediaKind = 'photo' | 'video' | 'illustration';
 
-const RATIO_CSS: Record<MediaRatio, string> = {
+const RATIO_CSS: Record<MediaSlotRatio, string> = {
+  natural: 'auto',
   '16:9': '16 / 9',
   '4:3': '4 / 3',
   '4:5': '4 / 5',
@@ -30,7 +32,7 @@ const PENDING: Bi = { es: 'arte pendiente', en: 'art pending' };
 
 export interface MediaSlotProps {
   /** Aspect ratio of the slot; the reserved space never collapses. Falls back to the library row. */
-  ratio?: MediaRatio;
+  ratio?: MediaSlotRatio;
   /**
    * Key into `media_assets` (M-02d, the media library). While that row is `pending` the slot stays
    * an empty branded frame and borrows the row's brief, label and tone; the moment the owner
@@ -82,9 +84,10 @@ export function MediaSlot({
   const tn = tone ?? asset?.tone ?? undefined;
   const hint = brief ?? (asset ? bi(asset.brief) : undefined);
   const cap = caption === undefined ? '' : typeof caption === 'string' ? caption : bi(caption);
-  const style = { aspectRatio: ratio ? RATIO_CSS[ratio] : asset?.ratio ?? RATIO_CSS['16:9'] };
+  const naturalPhoto = ratio === 'natural' && !!url && effKind === 'photo';
+  const style = { aspectRatio: ratio === 'natural' ? naturalPhoto ? 'auto' : '2 / 3' : ratio ? RATIO_CSS[ratio] : asset?.ratio ?? RATIO_CSS['16:9'] };
   const arLabel = ratio ?? (asset?.ratio ? asset.ratio.replace(/\s/g, '') : '16:9');
-  const cls = `mediaslot ${tn ? `mediaslot-${tn} is-toned` : ''} ${url ? 'has-src' : 'is-empty'} ${className}`;
+  const cls = `mediaslot ${tn ? `mediaslot-${tn} is-toned` : ''} ${url ? 'has-src' : 'is-empty'} ${naturalPhoto ? 'mediaslot-natural' : ''} ${className}`;
   const living = !!(url && fallbackVideo && !src && !ready && effKind !== 'video');
 
   return (

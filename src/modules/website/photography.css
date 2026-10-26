@@ -13,6 +13,13 @@
 .photo-booking-banner img { display:block; width:100%; height:clamp(12rem,30vw,25rem); object-fit:contain; background:var(--color-surface); }
 .site[data-site-version="photos"] .site-teacher .mediaslot img,
 .site[data-site-version="latest"] .teacher-studio-photo img { object-fit:contain; }
+/* Each teacher card measures its top radius from its own width, not its height.
+   Natural source proportions fill the verified portrait frame without gutters or cover crops. */
+.site-teacher-frame { display:contents; }
+.site[data-edition="sanctuary"] .site-teacher-frame { container-type:inline-size; display:grid; min-width:0; }
+.site[data-edition="sanctuary"] .site-teacher-frame .site-teacher { border-top-left-radius:50cqw; border-top-right-radius:50cqw; }
+.site[data-edition="sanctuary"] .site-teacher-frame .site-teacher-monogram { aspect-ratio:2/3; }
+.site[data-edition="sanctuary"] .site-teacher-frame .site-teacher:hover .teacher-studio-photo img { transform:none; }
 @media(max-width:700px) {
 .site[data-site-version="photos"] .sanctuary-finale { flex-direction:column; }
 .photo-finale-image, .site[data-site-version="photos"] .sanctuary-finale-card { width:100%; }

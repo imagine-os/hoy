@@ -42,18 +42,20 @@ export function TeachersPage() {
             const cls = first?.slug ? classes[first.slug] : undefined;
             const initials = te.display_name.split(' ').map((part) => part[0]).slice(0, 2).join('');
             return (
-              <Card key={te.id} padding="sm" className="site-teacher">
-                {photo
-                  ? <MediaSlot ratio={edition === 'sanctuary' ? '4:5' : '4:3'} kind="photo" tone={first?.tone} slotKey="teacher.portrait" src={photo} className={!te.photo_url ? 'teacher-studio-photo' : undefined} label={t('site.teachers.portrait', { name: te.display_name })} />
-                  : <div className="site-teacher-monogram" data-tone={first?.tone ?? 'river'} role="img" aria-label={`${te.display_name} · ${t('site.new.portraitPending')}`}><span aria-hidden>{initials}</span><small aria-hidden>{t('site.new.portraitPending')}</small></div>}
-                <div className="site-teacher-copy">
-                  <h3>{te.display_name}</h3>
-                  {cls && <p className="site-teacher-line">{bi(cls.tagline)}</p>}
-                  <div className="row wrap">{te.specialties.map(spec).map((s) => s.slug
-                    ? <Link key={s.label} to={`/site/classes/${s.slug}`}><Chip tone={s.tone} dot>{s.label}</Chip></Link>
-                    : <Chip key={s.label} tone={s.tone} dot>{s.label}</Chip>)}</div>
-                </div>
-              </Card>
+              <div key={te.id} className="site-teacher-frame">
+                <Card padding="sm" className="site-teacher">
+                  {photo
+                    ? <MediaSlot ratio={!te.photo_url ? 'natural' : edition === 'sanctuary' ? '4:5' : '4:3'} kind="photo" tone={first?.tone} slotKey="teacher.portrait" src={photo} className={!te.photo_url ? 'teacher-studio-photo' : undefined} label={t('site.teachers.portrait', { name: te.display_name })} />
+                    : <div className="site-teacher-monogram" data-tone={first?.tone ?? 'river'} role="img" aria-label={`${te.display_name} · ${t('site.new.portraitPending')}`}><span aria-hidden>{initials}</span><small aria-hidden>{t('site.new.portraitPending')}</small></div>}
+                  <div className="site-teacher-copy">
+                    <h3>{te.display_name}</h3>
+                    {cls && <p className="site-teacher-line">{bi(cls.tagline)}</p>}
+                    <div className="row wrap">{te.specialties.map(spec).map((s) => s.slug
+                      ? <Link key={s.label} to={`/site/classes/${s.slug}`}><Chip tone={s.tone} dot>{s.label}</Chip></Link>
+                      : <Chip key={s.label} tone={s.tone} dot>{s.label}</Chip>)}</div>
+                  </div>
+                </Card>
+              </div>
             );
           })}
         </div>
