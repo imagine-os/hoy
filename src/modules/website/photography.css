@@ -1,7 +1,7 @@
-/* Photo preview remains opt-in. Its shared studio hero is the owner-approved Latest hero. */
+/* Other Photos features remain opt-in; Latest shares the verified teacher photos and studio hero. */
 .photo-preview-notice { padding: var(--sp-sm) var(--sp-lg); text-align:center; background:var(--color-surface); color:var(--color-text); font-size:.8rem; border-bottom:1px solid var(--color-border); }
 .photo-philosophy { width:100%; height:auto; max-height:38rem; object-fit:contain; }
-.photo-community { width:100%; height:auto; display:block; }
+.photo-community { width:100%; height:auto; max-height:inherit; object-fit:contain; display:block; }
 .photo-finale-image { width:50%; height:auto; object-fit:contain; }
 .site[data-site-version="photos"] .sanctuary-finale { min-height:0; gap:var(--sp-xl); padding:var(--sp-3xl) 5vw; }
 .site[data-site-version="photos"] .sanctuary-finale-card { box-shadow:none; padding:var(--sp-2xl); }
@@ -11,7 +11,8 @@
 .photo-facilities-grid img { width:100%; height:auto; }
 .photo-booking-banner { margin-top:var(--sp-xl); }
 .photo-booking-banner img { display:block; width:100%; height:clamp(12rem,30vw,25rem); object-fit:contain; background:var(--color-surface); }
-.site[data-site-version="photos"] .site-teacher .mediaslot img { object-fit:contain; }
+.site[data-site-version="photos"] .site-teacher .mediaslot img,
+.site[data-site-version="latest"] .teacher-studio-photo img { object-fit:contain; }
 @media(max-width:700px) {
 .site[data-site-version="photos"] .sanctuary-finale { flex-direction:column; }
 .photo-finale-image, .site[data-site-version="photos"] .sanctuary-finale-card { width:100%; }

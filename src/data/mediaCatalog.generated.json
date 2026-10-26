@@ -1279,7 +1279,20 @@
       "hero",
       "group"
     ],
-    "usages": []
+    "usages": [
+      {
+        "label": "Home",
+        "path": "/site",
+        "state": "live",
+        "evidence": "src/modules/website/pages/HomePage.tsx: verified teacher group shared by Latest and Photos; other Photos features remain opt-in."
+      },
+      {
+        "label": "Home",
+        "path": "/site?version=photos",
+        "state": "draft",
+        "evidence": "src/modules/website/pages/HomePage.tsx; src/modules/website/photography.ts; src/modules/website/edition.ts. Opt-in photos edition only; teacher entries are conditional fallbacks for matching active teachers."
+      }
+    ]
   },
   {
     "id": "images/studio-2026/philosophy-carolina.webp",
@@ -1330,12 +1343,6 @@
     ],
     "usages": [
       {
-        "label": "Home",
-        "path": "/site?version=photos",
-        "state": "draft",
-        "evidence": "src/modules/website/pages/HomePage.tsx; src/modules/website/photography.ts; src/modules/website/edition.ts. Opt-in photos edition only; teacher entries are conditional fallbacks for matching active teachers."
-      },
-      {
         "label": "Plans",
         "path": "/site/plans?version=photos",
         "state": "draft",
@@ -1346,6 +1353,53 @@
         "path": "/site/schedule?version=photos",
         "state": "draft",
         "evidence": "src/modules/website/pages/SchedulePage.tsx; src/modules/website/photography.ts; src/modules/website/edition.ts. Opt-in photos edition only; teacher entries are conditional fallbacks for matching active teachers."
+      }
+    ]
+  },
+  {
+    "id": "images/studio-2026/teacher-andre-cardona.webp",
+    "url": "images/studio-2026/teacher-andre-cardona-960.webp",
+    "thumbnail": "images/studio-2026/teacher-andre-cardona-480.webp",
+    "name": "Teacher andre cardona",
+    "source": "studio",
+    "kind": "image",
+    "orientation": "portrait",
+    "width": 960,
+    "height": 1440,
+    "variants": [
+      "images/studio-2026/teacher-andre-cardona-480.webp",
+      "images/studio-2026/teacher-andre-cardona-960.webp"
+    ],
+    "tags": [
+      "studio",
+      "teacher",
+      "andre",
+      "cardona"
+    ],
+    "usages": [
+      {
+        "label": "Home",
+        "path": "/site",
+        "state": "live",
+        "evidence": "src/modules/website/pages/HomePage.tsx; src/modules/website/photography.ts. Latest verified teacher fallback; explicit CMS photo_url wins. teachers:tea_andre:fallback"
+      },
+      {
+        "label": "Home",
+        "path": "/site?version=photos",
+        "state": "draft",
+        "evidence": "src/modules/website/pages/HomePage.tsx; src/modules/website/photography.ts; src/modules/website/edition.ts. Opt-in photos edition only; teacher entries are conditional fallbacks for matching active teachers. teachers:tea_andre:fallback"
+      },
+      {
+        "label": "Teachers",
+        "path": "/site/teachers",
+        "state": "live",
+        "evidence": "src/modules/website/pages/TeachersPage.tsx; src/modules/website/photography.ts. Latest verified teacher fallback; explicit CMS photo_url wins. teachers:tea_andre:fallback"
+      },
+      {
+        "label": "Teachers",
+        "path": "/site/teachers?version=photos",
+        "state": "draft",
+        "evidence": "src/modules/website/pages/TeachersPage.tsx; src/modules/website/photography.ts; src/modules/website/edition.ts. Opt-in photos edition only; teacher entries are conditional fallbacks for matching active teachers. teachers:tea_andre:fallback"
       }
     ]
   },
@@ -1384,6 +1438,52 @@
     ]
   },
   {
+    "id": "images/studio-2026/teacher-clara.webp",
+    "url": "images/studio-2026/teacher-clara-960.webp",
+    "thumbnail": "images/studio-2026/teacher-clara-480.webp",
+    "name": "Teacher clara",
+    "source": "studio",
+    "kind": "image",
+    "orientation": "portrait",
+    "width": 960,
+    "height": 1440,
+    "variants": [
+      "images/studio-2026/teacher-clara-480.webp",
+      "images/studio-2026/teacher-clara-960.webp"
+    ],
+    "tags": [
+      "studio",
+      "teacher",
+      "clara"
+    ],
+    "usages": [
+      {
+        "label": "Home",
+        "path": "/site",
+        "state": "live",
+        "evidence": "src/modules/website/pages/HomePage.tsx; src/modules/website/photography.ts. Latest verified teacher fallback; explicit CMS photo_url wins. teachers:tea_clara:fallback"
+      },
+      {
+        "label": "Home",
+        "path": "/site?version=photos",
+        "state": "draft",
+        "evidence": "src/modules/website/pages/HomePage.tsx; src/modules/website/photography.ts; src/modules/website/edition.ts. Opt-in photos edition only; teacher entries are conditional fallbacks for matching active teachers. teachers:tea_clara:fallback"
+      },
+      {
+        "label": "Teachers",
+        "path": "/site/teachers",
+        "state": "live",
+        "evidence": "src/modules/website/pages/TeachersPage.tsx; src/modules/website/photography.ts. Latest verified teacher fallback; explicit CMS photo_url wins. teachers:tea_clara:fallback"
+      },
+      {
+        "label": "Teachers",
+        "path": "/site/teachers?version=photos",
+        "state": "draft",
+        "evidence": "src/modules/website/pages/TeachersPage.tsx; src/modules/website/photography.ts; src/modules/website/edition.ts. Opt-in photos edition only; teacher entries are conditional fallbacks for matching active teachers. teachers:tea_clara:fallback"
+      }
+    ]
+  },
+  {
     "id": "images/studio-2026/teacher-leandro.webp",
     "url": "images/studio-2026/teacher-leandro-960.webp",
     "thumbnail": "images/studio-2026/teacher-leandro-480.webp",
@@ -1392,7 +1492,7 @@
     "kind": "image",
     "orientation": "portrait",
     "width": 960,
-    "height": 1440,
+    "height": 1438,
     "variants": [
       "images/studio-2026/teacher-leandro-480.webp",
       "images/studio-2026/teacher-leandro-960.webp"
@@ -1405,9 +1505,21 @@
     "usages": [
       {
         "label": "Home",
+        "path": "/site",
+        "state": "live",
+        "evidence": "src/modules/website/pages/HomePage.tsx; src/modules/website/photography.ts. Latest verified teacher fallback; explicit CMS photo_url wins. teachers:tea_leandro:fallback"
+      },
+      {
+        "label": "Home",
         "path": "/site?version=photos",
         "state": "draft",
         "evidence": "src/modules/website/pages/HomePage.tsx; src/modules/website/photography.ts; src/modules/website/edition.ts. Opt-in photos edition only; teacher entries are conditional fallbacks for matching active teachers. teachers:tea_leandro:fallback"
+      },
+      {
+        "label": "Teachers",
+        "path": "/site/teachers",
+        "state": "live",
+        "evidence": "src/modules/website/pages/TeachersPage.tsx; src/modules/website/photography.ts. Latest verified teacher fallback; explicit CMS photo_url wins. teachers:tea_leandro:fallback"
       },
       {
         "label": "Teachers",
@@ -1440,9 +1552,21 @@
     "usages": [
       {
         "label": "Home",
+        "path": "/site",
+        "state": "live",
+        "evidence": "src/modules/website/pages/HomePage.tsx; src/modules/website/photography.ts. Latest verified teacher fallback; explicit CMS photo_url wins. teachers:tea_maria_camila:fallback"
+      },
+      {
+        "label": "Home",
         "path": "/site?version=photos",
         "state": "draft",
         "evidence": "src/modules/website/pages/HomePage.tsx; src/modules/website/photography.ts; src/modules/website/edition.ts. Opt-in photos edition only; teacher entries are conditional fallbacks for matching active teachers. teachers:tea_maria_camila:fallback"
+      },
+      {
+        "label": "Teachers",
+        "path": "/site/teachers",
+        "state": "live",
+        "evidence": "src/modules/website/pages/TeachersPage.tsx; src/modules/website/photography.ts. Latest verified teacher fallback; explicit CMS photo_url wins. teachers:tea_maria_camila:fallback"
       },
       {
         "label": "Teachers",
@@ -1461,7 +1585,7 @@
     "kind": "image",
     "orientation": "portrait",
     "width": 960,
-    "height": 1440,
+    "height": 1423,
     "variants": [
       "images/studio-2026/teacher-raghu-480.webp",
       "images/studio-2026/teacher-raghu-960.webp"
@@ -1474,9 +1598,21 @@
     "usages": [
       {
         "label": "Home",
+        "path": "/site",
+        "state": "live",
+        "evidence": "src/modules/website/pages/HomePage.tsx; src/modules/website/photography.ts. Latest verified teacher fallback; explicit CMS photo_url wins. teachers:tea_raghu:fallback"
+      },
+      {
+        "label": "Home",
         "path": "/site?version=photos",
         "state": "draft",
         "evidence": "src/modules/website/pages/HomePage.tsx; src/modules/website/photography.ts; src/modules/website/edition.ts. Opt-in photos edition only; teacher entries are conditional fallbacks for matching active teachers. teachers:tea_raghu:fallback"
+      },
+      {
+        "label": "Teachers",
+        "path": "/site/teachers",
+        "state": "live",
+        "evidence": "src/modules/website/pages/TeachersPage.tsx; src/modules/website/photography.ts. Latest verified teacher fallback; explicit CMS photo_url wins. teachers:tea_raghu:fallback"
       },
       {
         "label": "Teachers",
@@ -1509,9 +1645,21 @@
     "usages": [
       {
         "label": "Home",
+        "path": "/site",
+        "state": "live",
+        "evidence": "src/modules/website/pages/HomePage.tsx; src/modules/website/photography.ts. Latest verified teacher fallback; explicit CMS photo_url wins. teachers:tea_sara_c:fallback"
+      },
+      {
+        "label": "Home",
         "path": "/site?version=photos",
         "state": "draft",
         "evidence": "src/modules/website/pages/HomePage.tsx; src/modules/website/photography.ts; src/modules/website/edition.ts. Opt-in photos edition only; teacher entries are conditional fallbacks for matching active teachers. teachers:tea_sara_c:fallback"
+      },
+      {
+        "label": "Teachers",
+        "path": "/site/teachers",
+        "state": "live",
+        "evidence": "src/modules/website/pages/TeachersPage.tsx; src/modules/website/photography.ts. Latest verified teacher fallback; explicit CMS photo_url wins. teachers:tea_sara_c:fallback"
       },
       {
         "label": "Teachers",
@@ -1544,9 +1692,21 @@
     "usages": [
       {
         "label": "Home",
+        "path": "/site",
+        "state": "live",
+        "evidence": "src/modules/website/pages/HomePage.tsx; src/modules/website/photography.ts. Latest verified teacher fallback; explicit CMS photo_url wins. teachers:tea_sara_e:fallback"
+      },
+      {
+        "label": "Home",
         "path": "/site?version=photos",
         "state": "draft",
         "evidence": "src/modules/website/pages/HomePage.tsx; src/modules/website/photography.ts; src/modules/website/edition.ts. Opt-in photos edition only; teacher entries are conditional fallbacks for matching active teachers. teachers:tea_sara_e:fallback"
+      },
+      {
+        "label": "Teachers",
+        "path": "/site/teachers",
+        "state": "live",
+        "evidence": "src/modules/website/pages/TeachersPage.tsx; src/modules/website/photography.ts. Latest verified teacher fallback; explicit CMS photo_url wins. teachers:tea_sara_e:fallback"
       },
       {
         "label": "Teachers",
@@ -1578,9 +1738,21 @@
     "usages": [
       {
         "label": "Home",
+        "path": "/site",
+        "state": "live",
+        "evidence": "src/modules/website/pages/HomePage.tsx; src/modules/website/photography.ts. Latest verified teacher fallback; explicit CMS photo_url wins. teachers:tea_tatiana:fallback"
+      },
+      {
+        "label": "Home",
         "path": "/site?version=photos",
         "state": "draft",
         "evidence": "src/modules/website/pages/HomePage.tsx; src/modules/website/photography.ts; src/modules/website/edition.ts. Opt-in photos edition only; teacher entries are conditional fallbacks for matching active teachers. teachers:tea_tatiana:fallback"
+      },
+      {
+        "label": "Teachers",
+        "path": "/site/teachers",
+        "state": "live",
+        "evidence": "src/modules/website/pages/TeachersPage.tsx; src/modules/website/photography.ts. Latest verified teacher fallback; explicit CMS photo_url wins. teachers:tea_tatiana:fallback"
       },
       {
         "label": "Teachers",

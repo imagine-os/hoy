@@ -5,6 +5,8 @@ on:
       - 'src/**'
       - 'public/images/studio-2026/**'
       - 'scripts/test-photography-ui.mjs'
+      - 'scripts/test-teacher-photography.mjs'
+      - 'scripts/test-teacher-current-ui.mjs'
       - 'scripts/test-studio-hero.mjs'
       - 'scripts/test-sample-clock.mjs'
       - 'scripts/test-cached-sample-clock.mjs'
@@ -30,12 +32,14 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: node scripts/test-teacher-photography.mjs
       - run: node scripts/test-sample-clock.mjs && node scripts/test-cached-sample-clock.mjs && npm run build && npm run hub-map:check
       - name: Check real photo preview
         run: |
           npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/preview.log 2>&1 &
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/ >/dev/null && break; sleep 1; done
           node scripts/test-photography-ui.mjs
+          node scripts/test-teacher-current-ui.mjs
           node scripts/test-studio-hero.mjs
           node scripts/test-cached-sample-ui.mjs
         env:
@@ -48,5 +52,6 @@ jobs:
           retention-days: 2
           path: |
             qa/photos
+            qa/teacher-current
             qa/cached-sample
             docs/screenshots/W-01/studio-*

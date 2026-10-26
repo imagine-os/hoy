@@ -91,6 +91,9 @@ if(!edition.includes("photoEdition: version === 'photos'")||!edition.includes(":
 const photoText=await read(`${website}/photography.ts`);
 const teacherPhotoIds=new Map([...photoText.matchAll(/(tea_\w+):\s*'([^']+)'/g)].map(m=>[m[2],m[1]]));
 const teacherPhotos=[...teacherPhotoIds.keys()];
+const currentTeacherPhotoText=photoText.match(/const currentTeacherPhotos[^=]*=\s*\{([^}]+)\}/)?.[1];
+if(!currentTeacherPhotoText)throw new Error('Review current teacher-photo configuration before rebuilding the media catalog.');
+const currentTeacherPhotos=[...currentTeacherPhotoText.matchAll(/(tea_\w+):\s*'([^']+)'/g)].map(m=>m[2]);
 const archiveBrand=await read(`${website}/archive/brand.ts`);
 const classNames=(archiveBrand.match(/export const classOrder[^=]*=\s*\[([^\]]+)\]/)?.[1].match(/'([^']+)'/g)??[]).map(x=>x.slice(1,-1));
 const archiveCatalog=await read(`${website}/archive/catalog.ts`);
@@ -124,7 +127,11 @@ for(const archived of [false,true]) {
         add('images/studio-2026/facility-red-studio-1600.webp',label,'/site','live',evidence);
         add('images/studio-2026/facility-red-studio-1600.webp',label,'/site?version=photos','draft',evidence);
       }
-      if(code.includes('teacherStudioPhoto(te.id)'))teacherPhotos.forEach(n=>names.add(n));
+      if(code.includes('teacherStudioPhoto(te.id, version)')) {
+        teacherPhotos.forEach(n=>names.add(n));
+        for(const name of currentTeacherPhotos)add(`images/studio-2026/${name}-960.webp`,label,path,'live',`${file}; ${website}/photography.ts. Latest verified teacher fallback; explicit CMS photo_url wins. teachers:${teacherPhotoIds.get(name)}:fallback`);
+      }
+      if(page==='HomePage'&&code.includes("teacherPhotoEdition ? <img {...studioPhotoProps('hero-group'"))add('images/studio-2026/hero-group-960.webp',label,path,'live',`${file}: verified teacher group shared by Latest and Photos; other Photos features remain opt-in.`);
       if(code.includes('studioPhotoProps(name'))for(const m of code.matchAll(/\['(facility-[^']+)'/g))names.add(m[1]);
       for(const name of names)add(`images/studio-2026/${name}-960.webp`,label,path+'?version=photos','draft',`${file}; ${website}/photography.ts; ${website}/edition.ts. Opt-in photos edition only; teacher entries are conditional fallbacks for matching active teachers.${teacherPhotoIds.has(name)?` teachers:${teacherPhotoIds.get(name)}:fallback`:''}${page==='AboutPage'&&name==='facility-studio'?' media_slots:site.about:fallback':''}`);
     }

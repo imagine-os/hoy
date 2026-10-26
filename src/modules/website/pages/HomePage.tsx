@@ -29,7 +29,8 @@ function SanctuaryHome() {
   const { t, bi, lang } = useI18n();
   const { sections, isVisible } = useLayout(siteSpecs.home);
   const today = useTodaySessions();
-  const { motion, setMotion, videoEnabled, photoEdition } = useSiteEdition();
+  const { motion, setMotion, videoEnabled, photoEdition, version } = useSiteEdition();
+  const teacherPhotoEdition = version === 'latest' || photoEdition;
   const { rows: teachers } = useTable<TeacherRow>('teachers', { where: { active: true } });
   const photos = useClassPhotos();
   const { rows: modalities } = useTable<ModalityRow>('modalities');
@@ -76,11 +77,11 @@ function SanctuaryHome() {
         {today.length ? today.slice(0, 4).map(({ session, modality, teacher }) => <Link key={session.id} to={modality ? `/site/schedule?modality=${modality.slug}` : '/site/schedule'} className="sanctuary-session"><span className="sanctuary-session-time">{new Intl.DateTimeFormat(lang === 'es' ? 'es-CO' : 'en-US', { hour: 'numeric', minute: '2-digit' }).format(new Date(session.starts_at))}</span><span><strong>{session.title}</strong><small>{teacher?.display_name} · {modality?.duration_min ?? 60} min</small></span><span aria-hidden>↗</span></Link>) : <p className="sanctuary-agenda-empty">{t('site.today.empty')}</p>}
       </div></div></section>,
     Teachers: () => <section className="container sanctuary-section" data-reveal><div className="sanctuary-heading"><div><p className="eyebrow">{t('site.nav.teachers')}</p><h2>{t('site.new.teachersTitle')}</h2><p className="muted">{t('site.new.teachersBody')}</p></div><Link className="sanctuary-text-link" to="/site/teachers">{t('site.nav.teachers')} <Icon name="arrow-right" /></Link></div>
-      <div className="sanctuary-teachers"><div className="sanctuary-community"><>{photoEdition ? <img {...studioPhotoProps('pricing-duo')} alt={t('site.photos.duo')} className="photo-community" /> : <AmbientScene poster={siteImage('community')} video={videoEnabled ? siteVideo('community') : undefined} alt={t('site.new.community')} motion={motion} className="community-living" />}</><p>{t('site.new.community')}</p></div><div className="sanctuary-teacher-list">{teachers.map((te, i) => {
+      <div className="sanctuary-teachers"><div className="sanctuary-community"><>{teacherPhotoEdition ? <img {...studioPhotoProps('hero-group', true)} alt={t('site.photos.teachersGroup')} className="photo-community" /> : <AmbientScene poster={siteImage('community')} video={videoEnabled ? siteVideo('community') : undefined} alt={t('site.new.community')} motion={motion} className="community-living" />}</><p>{t('site.new.community')}</p></div><div className="sanctuary-teacher-list">{teachers.map((te, i) => {
         // 0051: real teachers, no generated portraits — the photo once uploaded, else initials in the tone of their class.
         const mod = modalities.find((m) => m.id === te.specialties[0]);
         const cls = classForModality(mod?.slug);
-        const photo = te.photo_url || (photoEdition ? teacherStudioPhoto(te.id) : undefined);
+        const photo = te.photo_url || teacherStudioPhoto(te.id, version);
         return <Link to="/site/teachers" key={te.id} className="sanctuary-teacher-link"><span className="sanctuary-teacher-number">{String(i + 1).padStart(2, '0')}</span>{photo ? <img src={photo} loading="lazy" alt="" className="sanctuary-teacher-photo" /> : <span className="sanctuary-teacher-initials" data-tone={mod?.tone ?? 'river'} aria-hidden>{te.display_name.split(' ').map((p) => p[0]).slice(0, 2).join('')}</span>}<span><h3>{te.display_name}</h3><p>{te.specialties.map(id => {const m = modalities.find(m => m.id === id); return m ? (lang === 'es' ? m.name_es : m.name_en) : '';}).filter(Boolean).join(' · ')}{cls ? ` · ${bi(classes[cls].tagline)}` : ''}</p></span><span aria-hidden>↗</span></Link>;
       })}</div></div>
     </section>,
