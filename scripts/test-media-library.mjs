@@ -17,7 +17,9 @@ try {
  }
  await page.getByLabel('Search name, tag or placement').fill('teacher leandro');assert.equal(await page.locator('.media-library-grid>.card').count(),1);
  await page.locator('.media-library summary').click();assert(await page.locator('.media-library-use a[href*="version=photos"]').count()>0);
- await page.getByLabel('Usage status').selectOption('live');assert.equal(await page.locator('.media-library-grid>.card').count(),0);
+ await page.getByLabel('Usage status').selectOption('live');assert.equal(await page.locator('.media-library-grid>.card').count(),1,'verified Leandro now has a Latest placement');
+ assert.equal(await page.locator('.media-library-grid>.card h3').textContent(),'Teacher leandro');
+ await page.getByLabel('Search name, tag or placement').fill('teacher carolina');assert.equal(await page.locator('.media-library-grid>.card').count(),0,'pending Carolina has no Latest placement');
  await page.getByRole('button',{name:'Reset filters'}).first().click();await page.getByLabel('Source',{exact:true}).selectOption('studio');
  assert.equal(await page.locator('.media-library-grid>.card').count(),studioAssets.length,'studio filter returns the full packaged studio inventory');
  assert.deepEqual((await page.locator('.media-library-grid>.card h3').allTextContents()).sort(),studioAssets.map(asset=>asset.name).sort(),'studio filter includes every expected asset and excludes other sources');

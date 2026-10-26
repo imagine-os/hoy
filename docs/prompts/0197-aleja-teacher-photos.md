@@ -16,6 +16,12 @@ Source: delegated implementation instruction · 2026-10-26 · owner
 
 ## Response
 
-Applied the clear blue-top Raghu/Leandro selections, Clara's wood-box portrait, the dark-blue arrow's Andre Cardona portrait, and the matching four-person group placement to the Photos edition. Kept the separate Andrea and Jennifer profiles and Carolina's conflicting directory assignment unchanged. CMS overrides and stable teacher IDs are preserved. Added provenance and catalogue-drift checks. Browser verification remains pending until the Wix task releases the browser; no merge or deployment performed. Kanban was left untouched per the explicit scope restriction.
+Applied the clear blue-top Raghu/Leandro selections, Clara's wood-box portrait, the dark-blue arrow's Andre Cardona portrait, and the matching four-person group placement to the Latest and Photos teacher surfaces. Kept the separate Andrea and Jennifer profiles and Carolina's conflicting directory assignment unchanged. CMS overrides and stable teacher IDs are preserved. Added provenance and catalogue-drift checks. Hosted browser CI passed on the first head; new exact-head CI must verify the Latest follow-up. Local browser verification remains pending until the Wix task releases the browser; no merge or deployment performed. Kanban was left untouched per the explicit scope restriction.
 
 See [changelog](../changelog/0197-aleja-teacher-photos.md) and [source receipt](../reference/aleja-teacher-photos-2026-10-26.md).
+
+## Integration scope follow-up
+
+> The source explicitly shows Latest · Current, so completing the user's requested teacher-photo changes requires those clear mappings on the default teacher surfaces too. Continue narrow implementation in the same PR: apply verified teacher/group photo corrections to bare /site and /site/teachers through their existing fallback/configuration mechanism, preserving CMS overrides, stable IDs, current edition selection and unrelated layout/features. Do not switch the whole site edition or bundle held feature code. Carolina conflict stays unchanged; separate Andrea/Jennifer unchanged.
+
+Applied only the verified teacher and group fallbacks to Latest, preserving the edition default and unrelated Photos sections. Added exact per-edition mapping, CMS, pending-profile and responsive/dark CI coverage. No tracker changes, merge or deployment.
