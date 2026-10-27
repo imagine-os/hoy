@@ -42,7 +42,9 @@ try {
           const group=await page.locator('.photo-community').evaluate(img=>{const box=img.getBoundingClientRect(),parent=img.parentElement.getBoundingClientRect();return {contained:box.top>=parent.top-1&&box.bottom<=parent.bottom+1,fit:getComputedStyle(img).objectFit};});
           assert(group.contained&&group.fit==='contain','selected group stays inside its existing frame without clipping');
           assert.equal(await page.locator('.source-philosophy-photo').count(),1,'verified landscape is shared by Latest and Photos');
-          assert.equal(await page.locator('.photo-finale-image').count(),version==='photos'?1:0,'Latest finale remains unchanged');
+          assert.equal(await page.locator('.option1-finale-arch img').count(),1,'selected finale is shared by Latest and Photos');
+          assert((await page.locator('.option1-finale-arch img').getAttribute('src')).endsWith('finale-red-slats-960.webp'),'approved left source');
+          assert((await page.locator('.option1-finale-background').getAttribute('src')).endsWith('facility-equipment-960.webp'),'approved equipment background');
         }
         const images=page.locator(path===''?'.sanctuary-teachers img':'.site-teachergrid img');
         for(const img of await images.all()) {
