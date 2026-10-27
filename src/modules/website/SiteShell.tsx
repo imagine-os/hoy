@@ -12,7 +12,6 @@ import { Wordmark, type WordmarkTone } from '../../components/atom/Wordmark/Word
 import { brandHeading } from '../../components/atom/Wordmark/brandHeading';
 import { LangToggle } from '../../components/molecule/LangToggle/LangToggle';
 import { Button } from '../../components/atom/Button/Button';
-import { ElementCursor } from '../../components/atom/ElementCursor/ElementCursor';
 import './site.css';
 import './sanctuary.css';
 import './photography.css';
@@ -68,7 +67,6 @@ export function SiteShell({ children }: { children: ReactNode }) {
   const pending = (f: ContactField) => pendingSuffix(contact, f, lang);
   return (
     <div className="site" data-edition={edition} data-site-version={version} data-motion={motion ? "on" : "off"} ref={shell}>
-      <ElementCursor enabled={edition === 'sanctuary' && motion} />
       <header className="site-head">
         <div className="container site-head-in">
           <Link to="/site" className="site-brand" onClick={() => setOpen(false)}>{edition === 'sanctuary' ? <Wordmark vector /> : <Wordmark height={34} />}<span className="site-brand-caption">{bi(tenant.tagline)}</span></Link>

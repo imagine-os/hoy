@@ -82,6 +82,12 @@ jobs:
         env:
           CHROMIUM_PATH: /usr/bin/google-chrome
           WEBSITE_BASE_URL: https://hoyhumanclub.com/
+      - name: Verify released native website cursor
+        run: node scripts/test-website-native-cursor.mjs "${{ github.sha }}"
+        env:
+          CHROMIUM_PATH: /usr/bin/google-chrome
+          WEBSITE_BASE_URL: https://hoyhumanclub.com/
+          CURSOR_OUTPUT: qa/website-release/native-cursor
       - uses: actions/upload-artifact@v4
         if: always()
         with:
