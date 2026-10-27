@@ -1,0 +1,43 @@
+name: Website native cursor QA
+on:
+  pull_request:
+    paths:
+      - 'src/modules/website/**'
+      - 'src/components/template/ComingSoonLanding/**'
+      - 'src/components/atom/ElementCursor/**'
+      - 'scripts/test-website-native-cursor.mjs'
+      - '.github/workflows/website-native-cursor-qa.yml'
+permissions:
+  contents: read
+jobs:
+  native-cursor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      CHROMIUM_PATH: /usr/bin/google-chrome
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npm run hub-map:check
+      - name: Check built website cursor and interactions
+        env:
+          CHROMIUM_PATH: /usr/bin/google-chrome
+          WEBSITE_BASE_URL: http://127.0.0.1:5490/
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 5490 --strictPort > /tmp/hoy-cursor-preview.log 2>&1 &
+          PREVIEW_PID=$!
+          trap 'kill "$PREVIEW_PID" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 30); do curl -fsS http://127.0.0.1:5490/ >/dev/null && break; sleep 1; done
+          node scripts/test-website-native-cursor.mjs "$(git rev-parse HEAD)"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: website-native-cursor-${{ github.event.pull_request.head.sha }}
+          path: qa/website-native-cursor
