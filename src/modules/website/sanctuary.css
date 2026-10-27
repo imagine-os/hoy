@@ -28,7 +28,7 @@
 .site[data-edition="sanctuary"] .btn-secondary { background-image: var(--tex-surf); }
 .site[data-edition="sanctuary"] .site-pagehead { padding-top: var(--sp-4xl); padding-bottom: var(--sp-3xl); position: relative; }
 .site[data-edition="sanctuary"] .site-pagehead h1 { font-size: clamp(3.25rem, 6vw, 5.75rem); }
-.site[data-edition="sanctuary"] .site-pagehead::after { content: ''; position: absolute; right: 5vw; top: var(--sp-2xl); width: 12.5rem; height: 8.75rem; opacity: .07; background: url('../../../public/images/sanctuary/texture-blue.webp') center/cover; pointer-events: none; }
+.site[data-edition="sanctuary"] .site-pagehead::after { content: ''; position: absolute; right: 5vw; top: var(--sp-2xl); width: 12.5rem; height: 8.75rem; opacity: .07; background: url('../../../public/images/sanctuary/texture-blue.webp') center/cover; -webkit-mask-image: radial-gradient(ellipse closest-side,#000 30%,transparent 100%); mask-image: radial-gradient(ellipse closest-side,#000 30%,transparent 100%); pointer-events: none; }
 .site[data-edition="sanctuary"] .site-lead { font-size: 1.125rem; line-height: 1.8; }
 .site[data-edition="sanctuary"] .site-section { padding-top: var(--section); padding-bottom: var(--section); }
 /* 0037 · consecutive sections are one --section apart, not two (the classic edition already did this) */
