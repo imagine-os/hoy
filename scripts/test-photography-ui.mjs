@@ -26,7 +26,7 @@ try {
     if(path === '') assert((await page.locator('.photo-community').getAttribute('src')).includes('hero-group-960.webp'),'teacher sidebar uses the selected group');
   }
   if(path === '') {
-    for(const cls of ['.photo-hero-image','.photo-finale-image']) {
+    for(const cls of ['.photo-hero-image','.option1-finale-arch img']) {
       const box=await page.locator(cls).boundingBox();assert(box && box.width>200 && box.height>150,`${cls} has visible area`);
       const parent=await page.locator(cls).evaluate(i=>{const r=i.parentElement.getBoundingClientRect();const c=i.getBoundingClientRect();return {top:c.top-r.top,bottom:c.bottom-r.bottom};});assert(parent.top>=-1 && parent.bottom<=1,`${cls} stays inside its section: ${JSON.stringify(parent)}`);
     }

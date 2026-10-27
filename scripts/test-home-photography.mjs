@@ -34,7 +34,12 @@ try{
   assert(a.usages.some(u=>u.path==='/site?version=photos'&&u.state==='draft'));
   for(const width of [480,960])assert((await readFile(`public/images/studio-2026/${name}-${width}.webp`)).length>0);
  }
- const base={id:'qa_photo',tenant_id:'hoy',created_at:'2026-10-26',updated_at:'2026-10-26',slot_key:'site.classes.fuego',kind:'photo',ratio:'2 / 3',label:{es:'QA',en:'QA'},alt:{es:'QA',en:'QA'},brief:{es:'',en:''},tone:null,url:'https://example.test/override.jpg',credit:null,status:'ready',sort:0};
+ for(const name of ['finale-red-slats','facility-equipment']){
+  const a=catalog.find(a=>a.id===`images/studio-2026/${name}.webp`);assert(a);
+  assert.deepEqual(a.usages.map(u=>[u.path,u.state]).sort(),[['/site','live'],['/site?version=photos','draft']]);
+ }
+ const finale=catalog.find(a=>a.id==='images/studio-2026/finale-red-slats.webp');assert.equal(finale.width/finale.height,2/3);assert.equal(finale.variants.length,3);
+ const base={id:'qa_photo' ,tenant_id:'hoy',created_at:'2026-10-26',updated_at:'2026-10-26',slot_key:'site.classes.fuego',kind:'photo',ratio:'2 / 3',label:{es:'QA',en:'QA'},alt:{es:'QA',en:'QA'},brief:{es:'',en:''},tone:null,url:'https://example.test/override.jpg',credit:null,status:'ready',sort:0};
  const get=(slots,id)=>buildMediaLibrary(slots,[],[]).find(a=>a.id===id);
  const id='images/studio-2026/practice-fuego.webp';
  assert(get([base],id).usages.every(u=>u.state==='inactive'),'ready photo deactivates packaged fallback');

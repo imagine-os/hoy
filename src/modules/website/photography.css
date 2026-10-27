@@ -45,3 +45,12 @@
 .site[data-site-version="photos"] .sanctuary-philosophy-art::before { display:none; }
 .site[data-site-version="photos"] .sanctuary-photo-caption { display:none; }
 .site[data-site-version="photos"] .photo-finale-image { flex-shrink:0; }
+
+/* Owner-selected primary finale pair; historical editions keep their existing treatment. */
+.site[data-edition="sanctuary"] .sanctuary-finale.option1-finale { display:grid; grid-template-columns:1fr 1fr; gap:var(--sp-3xl); min-height:0; padding:var(--section) var(--gutter); background:var(--brand-deepBlue); }
+.option1-finale-background { position:absolute; inset:0 0 0 auto; width:55%; height:100%; object-fit:cover; object-position:center; }
+.option1-finale-frame { position:relative; min-width:0; container-type:inline-size; }
+.option1-finale-arch { overflow:hidden; border-radius:50cqw 50cqw 0 0; box-shadow:var(--shadow-frame); }
+.option1-finale-arch img { display:block; width:100%; height:auto; }
+.site[data-edition="sanctuary"] .option1-finale .sanctuary-finale-card { width:100%; max-width:100%; min-width:0; }
+@media(max-width:700px) { .site[data-edition="sanctuary"] .sanctuary-finale.option1-finale { grid-template-columns:1fr; } .option1-finale-background { width:100%; } }
