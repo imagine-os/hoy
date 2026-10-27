@@ -124,6 +124,8 @@ for(const archived of [false,true]) {
     for(const m of code.matchAll(/siteImage\(['"]([^'"]+)['"]\)/g))concept(m[1]);
     for(const m of code.matchAll(/siteVideo\(['"]([^'"]+)['"]\)/g))concept(m[1],true);
     for(const key of new Set([...code.matchAll(/siteLoops\.(\w+)/g)].map(m=>m[1]))) {
+      // The current finale supersedes this conditional legacy fallback; historical pages are indexed separately.
+      if(!archived&&page==='HomePage'&&key==='ritual'&&code.includes('option1-finale'))continue;
       if(!archived&&page==='HomePage'&&key==='philosophy'&&code.includes('philosophyStudioPhoto(version)'))continue;
       const loop=loops.get(key)??'';
       for(const m of loop.matchAll(/siteImage\('([^']+)'\)/g))concept(m[1]);
@@ -137,6 +139,10 @@ for(const archived of [false,true]) {
         const evidence=`${file}: owner-approved real studio hero shared by Latest and Photos; ComingSoonLanding uses the same packaged image.`;
         add('images/studio-2026/facility-red-studio-1600.webp',label,'/site','live',evidence);
         add('images/studio-2026/facility-red-studio-1600.webp',label,'/site?version=photos','draft',evidence);
+      }
+      if(page==='HomePage'&&code.includes('option1-finale'))for(const name of ['finale-red-slats','facility-equipment']) {
+        names.delete(name);
+        for(const [suffix,state] of [['','live'],['?version=photos','draft']])add(`images/studio-2026/${name}-960.webp`,label,path+suffix,state,`${file}: owner-selected primary finale photo pair shared by Latest and Photos.`);
       }
       if(code.includes('teacherStudioPhoto(te.id, version)')) {
         teacherPhotos.forEach(n=>names.add(n));

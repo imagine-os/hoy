@@ -17,7 +17,7 @@ import { siteSpecs } from '../specs';
 import { useClassPhotos, useTodaySessions, useReadyPhotoSlots } from '../hooks';
 import { useSiteEdition } from '../edition';
 import { siteImage, siteVideo, siteLoops } from '../artwork';
-import { studioPhotoProps, teacherStudioPhoto, practiceStudioPhoto, philosophyStudioPhoto, usesCurrentStudioPhotos } from '../photography';
+import { studioPhoto, studioPhotoProps, teacherStudioPhoto, practiceStudioPhoto, philosophyStudioPhoto, usesCurrentStudioPhotos } from '../photography';
 import { editorialPhotoSlots } from '../../../data/studioPhotography';
 import { ClassicHomePage } from './ClassicHomePage';
 
@@ -92,7 +92,15 @@ function SanctuaryHome() {
     </section>,
     ValueModel: () => <section className="sanctuary-plans" data-reveal><div className="container sanctuary-section"><div className="sanctuary-centered"><p className="eyebrow">{t('site.nav.plans')}</p><h2>{t('site.new.plansTitle')}</h2><p className="muted">{t('site.new.plansBody')}</p></div><div className="sanctuary-plan-grid">{families.map(({ fam, price, sub }, i) => <Link to={'/site/plans'} key={fam} className={`sanctuary-plan ${i === 1 ? 'is-blue' : ''}`}><p className="eyebrow">0{i + 1} / {t(`site.new.planLabel${i}`)}</p><h3>{bi(FAMILY_LABEL[fam])}</h3>{price != null && <p className="sanctuary-price">{formatCOP(price, lang)}<small>{sub}</small></p>}<span className="sanctuary-plan-cta">{t('site.plans.all')}<Icon name="arrow-right" /></span></Link>)}</div><div className="sanctuary-centered sanctuary-plans-more"><Link className="sanctuary-text-link" to="/site/plans">{t('site.value.all')} <Icon name="arrow-right" /></Link></div></div></section>,
     Testimonials: () => quotes.length > 0 ? <section className="container sanctuary-section sanctuary-quotes" data-reveal>{quotes.map(r => <blockquote key={r.id}><span className="sanctuary-quote-mark" aria-hidden>“</span><p>{r.comment}</p><footer>{t('site.testimonials.member')}</footer></blockquote>)}</section> : null,
-    FirstStep: () => <section className="sanctuary-finale" data-reveal><>{photoEdition ? <img {...studioPhotoProps('facility-studio')} alt={t('site.photos.studio')} className="photo-finale-image" /> : <AmbientScene {...siteLoops.ritual} video={videoEnabled ? siteLoops.ritual.video : undefined} alt={t('site.new.ritualAlt')} className="sanctuary-finale-scene" motion={motion} />}</><div className="sanctuary-finale-card"><p className="eyebrow">{t('site.new.visit')}</p><h2>{t('site.new.endTitle')}<br /><em>{t('site.new.endEm')}</em></h2><p>{t('site.new.endBody')}</p><Link className="sanctuary-button" to="/site/schedule">{t('site.new.book')}<Icon name="arrow-right" /></Link></div></section>,
+    FirstStep: () => <section className={`sanctuary-finale${sourcePhotos ? ' option1-finale' : ''}`} data-reveal>
+      {sourcePhotos ? <>
+        <img {...studioPhotoProps('facility-equipment', true)} alt="" aria-hidden="true" className="option1-finale-background" />
+        <div className="option1-finale-frame"><div className="option1-finale-arch">
+          <img {...studioPhotoProps('finale-red-slats', true)} srcSet={`${studioPhoto('finale-red-slats', 480)} 480w, ${studioPhoto('finale-red-slats')} 960w, ${studioPhoto('finale-red-slats', 1600)} 1600w`} alt={t('site.photos.finaleSlats')} />
+        </div></div>
+      </> : <AmbientScene {...siteLoops.ritual} video={videoEnabled ? siteLoops.ritual.video : undefined} alt={t('site.new.ritualAlt')} className="sanctuary-finale-scene" motion={motion} />}
+      <div className="sanctuary-finale-card"><p className="eyebrow">{t('site.new.visit')}</p><h2>{t('site.new.endTitle')}<br /><em>{t('site.new.endEm')}</em></h2><p>{t('site.new.endBody')}</p><Link className="sanctuary-button" to="/site/schedule">{t('site.new.book')}<Icon name="arrow-right" /></Link></div>
+    </section>,
   };
   return <SiteShell><div className="sanctuary" data-motion={motion ? 'on' : 'off'}>{sections.filter(isVisible).map(name => SECTIONS[name] ? <Fragment key={name}>{SECTIONS[name]()}</Fragment> : null)}</div></SiteShell>;
 }

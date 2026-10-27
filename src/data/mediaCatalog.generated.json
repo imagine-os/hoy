@@ -668,12 +668,6 @@
     "usages": [
       {
         "label": "Home",
-        "path": "/site",
-        "state": "live",
-        "evidence": "src/modules/website/pages/HomePage.tsx; src/modules/website/edition.ts. Source placement; layout, saved media and motion settings may override visibility."
-      },
-      {
-        "label": "Home",
         "path": "/site?version=archive",
         "state": "archived",
         "evidence": "src/modules/website/archive/HomePage.tsx; src/modules/website/edition.ts. Source placement; layout, saved media and motion settings may override visibility."
@@ -1108,7 +1102,20 @@
       "facility",
       "equipment"
     ],
-    "usages": []
+    "usages": [
+      {
+        "label": "Home",
+        "path": "/site",
+        "state": "live",
+        "evidence": "src/modules/website/pages/HomePage.tsx: owner-selected primary finale photo pair shared by Latest and Photos."
+      },
+      {
+        "label": "Home",
+        "path": "/site?version=photos",
+        "state": "draft",
+        "evidence": "src/modules/website/pages/HomePage.tsx: owner-selected primary finale photo pair shared by Latest and Photos."
+      }
+    ]
   },
   {
     "id": "images/studio-2026/facility-heater.webp",
@@ -1198,16 +1205,46 @@
     ],
     "usages": [
       {
-        "label": "Home",
-        "path": "/site?version=photos",
-        "state": "draft",
-        "evidence": "src/modules/website/pages/HomePage.tsx; src/modules/website/photography.ts; src/modules/website/edition.ts. Opt-in photos edition only; teacher entries are conditional fallbacks for matching active teachers."
-      },
-      {
         "label": "About",
         "path": "/site/about?version=photos",
         "state": "draft",
         "evidence": "src/modules/website/pages/AboutPage.tsx; src/modules/website/photography.ts; src/modules/website/edition.ts. Opt-in photos edition only; teacher entries are conditional fallbacks for matching active teachers. media_slots:site.about:fallback"
+      }
+    ]
+  },
+  {
+    "id": "images/studio-2026/finale-red-slats.webp",
+    "url": "images/studio-2026/finale-red-slats-960.webp",
+    "thumbnail": "images/studio-2026/finale-red-slats-480.webp",
+    "name": "Finale red slats",
+    "source": "studio",
+    "kind": "image",
+    "orientation": "portrait",
+    "width": 960,
+    "height": 1440,
+    "variants": [
+      "images/studio-2026/finale-red-slats-480.webp",
+      "images/studio-2026/finale-red-slats-960.webp",
+      "images/studio-2026/finale-red-slats-1600.webp"
+    ],
+    "tags": [
+      "studio",
+      "finale",
+      "red",
+      "slats"
+    ],
+    "usages": [
+      {
+        "label": "Home",
+        "path": "/site",
+        "state": "live",
+        "evidence": "src/modules/website/pages/HomePage.tsx: owner-selected primary finale photo pair shared by Latest and Photos."
+      },
+      {
+        "label": "Home",
+        "path": "/site?version=photos",
+        "state": "draft",
+        "evidence": "src/modules/website/pages/HomePage.tsx: owner-selected primary finale photo pair shared by Latest and Photos."
       }
     ]
   },
@@ -2166,12 +2203,6 @@
       "ritual"
     ],
     "usages": [
-      {
-        "label": "Home",
-        "path": "/site",
-        "state": "live",
-        "evidence": "src/modules/website/pages/HomePage.tsx; src/modules/website/edition.ts. Source placement; layout, saved media and motion settings may override visibility."
-      },
       {
         "label": "Home",
         "path": "/site?version=archive",

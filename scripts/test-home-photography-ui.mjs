@@ -37,8 +37,16 @@ try{
    const cards=page.locator('.source-practice .classarch-arch');assert.equal(await cards.count(),7);
    for(let i=0;i<expected.length;i++){assert((await cards.nth(i).evaluate(e=>getComputedStyle(e).backgroundImage)).includes(`practice-${expected[i]}-960.webp`));assert(await cards.nth(i).evaluate(e=>e.classList.contains('natural-photo')));}
    assert.equal(await page.locator('.photo-preview-notice').count(),version==='photos'?1:0,'edition default is unchanged');
-   if(version==='latest')assert((await page.locator('.sanctuary-finale-scene img').getAttribute('src')).includes('studio-medellin'),'bottom choice stays held');
-   else assert((await page.locator('.photo-finale-image').getAttribute('src')).includes('facility-studio-960.webp'),'Photos bottom remains unchanged');
+   assert((await page.locator('.option1-finale-arch img').getAttribute('src')).includes('finale-red-slats-960.webp'),'selected Option1 left arch');
+   assert((await page.locator('.option1-finale-background').getAttribute('src')).includes('facility-equipment-960.webp'),'selected Option1 equipment background');
+   await page.locator('.option1-finale').scrollIntoViewIfNeeded();await decode();
+   const frame=await page.locator('.option1-finale').evaluate(section=>{
+    const image=section.querySelector('.option1-finale-arch img'),arch=image.parentElement,card=section.querySelector('.sanctuary-finale-card');
+    const i=image.getBoundingClientRect(),a=arch.getBoundingClientRect(),c=card.getBoundingClientRect(),style=getComputedStyle(arch);
+    return {natural:image.naturalWidth/image.naturalHeight,ratio:i.width/i.height,gutters:Math.abs(a.width-i.width),radius:parseFloat(style.borderTopLeftRadius),width:a.width,overlap:Math.min(a.right,c.right)>Math.max(a.left,c.left)+1&&Math.min(a.bottom,c.bottom)>Math.max(a.top,c.top)+1,href:card.querySelector('a').getAttribute('href'),fits:[...card.querySelectorAll('p,h2,a')].every(e=>e.scrollWidth<=e.clientWidth+1)};
+   });
+   assert(Math.abs(frame.ratio-frame.natural)<.002,'natural full source proportions');assert(frame.gutters<1,'no side gutters');assert(Math.abs(frame.radius-frame.width/2)<1,'width-based semicircular arch');assert(!frame.overlap,'photo and CTA do not overlap');assert(frame.fits,'CTA text fits');assert.equal(frame.href,`#/site/schedule${version==='photos'?'?version=photos':''}`,'booking route and edition preserved');
+   await page.locator('.option1-finale').screenshot({path:`qa/home-photography/finale-${version}-${lang}-${width}${dark?'-dark':''}.jpg`,style:'.site-head { visibility:hidden !important; }'});
   }else{
    assert((await page.locator('.package-card').nth(0).locator('img.package-photo').getAttribute('src')).includes('pricing-duo-960.webp'));
    assert.equal(await page.locator('.package-card').nth(1).locator('img.package-photo').count(),0,'unmatched affiliate original remains held');
@@ -57,6 +65,6 @@ try{
    await open('/plans',version);assert((await page.locator('.package-photo').getAttribute('src')).startsWith('data:image/png'));assert((await page.locator('.plans-pass-photo').first().getAttribute('src')).startsWith('data:image/png'));assert.equal((await plansPrice()).packages[0].replace(/\D/g,''),'600000');
   }
  }finally{await page.evaluate(db=>localStorage.setItem('hoyos.db.v1',db),original);}
- await open('','classic');assert.equal(await page.locator('.source-practice,.source-philosophy-photo').count(),0);await open('/plans','classic');assert.equal(await page.locator('.package-photo,.plans-pass-photo').count(),0,'Classic remains unchanged');
- assert.deepEqual(errors,[]);await writeFile('qa/home-photography/results.json',JSON.stringify({passed:true,captures:32,widths:[390,768,1218,1280],checks:['old same-day cache upgrades actual CMS checklist','existing CMS rows preserved and reload idempotent','override fixtures never create missing rows','exact seven practice selections','mountain and blue background','three verified plan selections','held fourth plan source and bottom choice','prices preserved','ready CMS overrides after reload','CMS class crop preserved','Classic/edition defaults preserved','ES/EN light/dark','decoded assets','no overflow','no page errors']},null,2));console.log('Home and plans photography UI passed:32 captures and CMS/price/hold checks');
+ await open('','classic');assert.equal(await page.locator('.source-practice,.source-philosophy-photo,.option1-finale').count(),0);await open('/plans','classic');assert.equal(await page.locator('.package-photo,.plans-pass-photo').count(),0,'Classic remains unchanged');
+ assert.deepEqual(errors,[]);await writeFile('qa/home-photography/results.json',JSON.stringify({passed:true,captures:32,widths:[390,768,1218,1280],checks:['old same-day cache upgrades actual CMS checklist','existing CMS rows preserved and reload idempotent','override fixtures never create missing rows','exact seven practice selections','mountain and blue background','three verified plan selections','held fourth plan source; selected Option1 finale','prices preserved','ready CMS overrides after reload','CMS class crop preserved','Classic/edition defaults preserved','ES/EN light/dark','decoded assets','no overflow','no page errors']},null,2));console.log('Home and plans photography UI passed:32 captures and CMS/price/hold checks');
 }finally{await browser.close();}
