@@ -1,0 +1,32 @@
+name: Website social sharing QA
+on:
+  pull_request:
+  push:
+    branches: [main]
+jobs:
+  social-and-decoration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: node scripts/test-social-sharing.mjs
+      - run: npm run build
+      - run: node node_modules/playwright-core/cli.js install --with-deps chromium
+      - name: Browser regressions
+        run: |
+          node scripts/test-heading-decoration.mjs
+          npm run preview -- --host 127.0.0.1 --port 4179 > /tmp/hoy-preview.log 2>&1 &
+          PREVIEW_PID=$!
+          trap 'kill "$PREVIEW_PID"' EXIT
+          for attempt in $(seq 1 30); do curl -fsS http://127.0.0.1:4179/ >/dev/null && break; sleep 1; done
+          node scripts/test-social-sharing-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: website-social-and-heading-evidence
+          path: evidence/
