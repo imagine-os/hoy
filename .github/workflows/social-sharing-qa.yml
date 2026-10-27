@@ -9,6 +9,8 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -25,8 +27,11 @@ jobs:
           trap 'kill "$PREVIEW_PID"' EXIT
           for attempt in $(seq 1 30); do curl -fsS http://127.0.0.1:4179/ >/dev/null && break; sleep 1; done
           node scripts/test-social-sharing-browser.mjs
+          WEBSITE_BASE_URL=http://127.0.0.1:4179/ node scripts/test-website-live.mjs "$(git rev-parse HEAD)"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: website-social-and-heading-evidence
-          path: evidence/
+          path: |
+            evidence/
+            qa/website-release/

@@ -4,7 +4,7 @@ import {mkdir,readFile,writeFile} from 'node:fs/promises';
 const studioAssets=JSON.parse(await readFile('src/data/mediaCatalog.generated.json','utf8')).filter(asset=>asset.source==='studio');
 assert(studioAssets.length>0,'the packaged catalogue must contain studio assets');
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',headless:true,args:['--no-sandbox','--disable-gpu']});
-const page=await browser.newPage({viewport:{width:1280,height:1000}});const errors=[];page.on('pageerror',e=>errors.push(e.message));
+const page=await browser.newPage({viewport:{width:1280,height:1000}});const errors=[];const browserErrors=[];page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')browserErrors.push(m.text());});
 const base=process.env.QA_BASE||'http://127.0.0.1:5187';
 await mkdir('docs/screenshots/M-02d',{recursive:true});
 try {
@@ -59,4 +59,10 @@ try {
  assert(await page.locator('.slow-photo-pair-warm').first().evaluate(e=>Number(getComputedStyle(e).opacity)>.99),'warm phase visible');
  await page.locator('.photo-facilities').screenshot({path:'docs/screenshots/M-02d/studio-pairs-warm-phase.png'});
  assert.deepEqual(errors,[]);await writeFile('docs/screenshots/M-02d/media-qa.json',JSON.stringify({passed:true,captures:18,checks:['search','filter','empty state','slot editor preserved','per-usage mixed states','teacher fallback deactivation','unsafe URLs excluded','ES/EN and themes','no overflow','no runtime errors']},null,2));console.log('Media library QA passed');
+}catch(error){
+ const diagnostic={url:page.url(),pageErrors:errors,browserErrors,body:await page.locator('body').innerText().catch(()=>'<unavailable>')};
+ console.error('Media library browser failure diagnostic',JSON.stringify(diagnostic));
+ await writeFile('docs/screenshots/M-02d/failure-diagnostic.json',JSON.stringify(diagnostic,null,2)).catch(saveError=>console.error('Could not save failure diagnostic',saveError.message));
+ await page.screenshot({path:'docs/screenshots/M-02d/failure-current-page.png'}).catch(()=>{});
+ throw error;
 }finally{await browser.close();}

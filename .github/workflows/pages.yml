@@ -63,3 +63,28 @@ jobs:
           name: subscriptions-live-${{ github.sha }}
           retention-days: 14
           path: qa/subscription-release
+
+  verify-website:
+    needs: deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Verify released primary website and previews
+        run: node scripts/test-website-live.mjs "${{ github.sha }}"
+        env:
+          CHROMIUM_PATH: /usr/bin/google-chrome
+          WEBSITE_BASE_URL: https://hoyhumanclub.com/
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: website-live-${{ github.sha }}
+          retention-days: 14
+          path: qa/website-release
