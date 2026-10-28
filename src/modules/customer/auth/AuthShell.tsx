@@ -5,6 +5,7 @@ import { useTheme } from '../../../design/ThemeProvider';
 import { tenant } from '../../../tenant/tenant';
 import { TopBar } from '../../../components/organism/TopBar/TopBar';
 import { LangToggle } from '../../../components/molecule/LangToggle/LangToggle';
+import { PRODUCTION_BUILD } from '../../../config/launch';
 import '../customer.css';
 
 /**
@@ -16,9 +17,9 @@ export function AuthShell({ children, bare = false }: { children: ReactNode; bar
   const { theme, toggleTheme } = useTheme();
   return (
     <div className="auth">
-      {!bare && <TopBar brand homeTo="/hub" actions={<><LangToggle size="sm" /><button type="button" className="auth-iconbtn ctl-round" onClick={toggleTheme} aria-label={t('core.theme.toggle')}>{theme === 'dark' ? '☾' : '☀'}</button></>} />}
+      {!bare && <TopBar brand homeTo={PRODUCTION_BUILD ? '/' : '/hub'} actions={<><LangToggle size="sm" /><button type="button" className="auth-iconbtn ctl-round" onClick={toggleTheme} aria-label={t('core.theme.toggle')}>{theme === 'dark' ? '☾' : '☀'}</button></>} />}
       <main className="auth-main">{children}</main>
-      {!bare && <footer className="auth-foot xs muted">{tenant.legalName} · {tenant.city} · <Link to="/site/legal/privacy">{t('customer.profile.legal.privacy')}</Link> · <Link to="/hub">{t('core.nav.hub')}</Link></footer>}
+      {!bare && <footer className="auth-foot xs muted">{tenant.legalName} · {tenant.city} · <Link to="/site/legal/privacy">{t('customer.profile.legal.privacy')}</Link>{!PRODUCTION_BUILD && <> · <Link to="/hub">{t('core.nav.hub')}</Link></>}</footer>}
     </div>
   );
 }

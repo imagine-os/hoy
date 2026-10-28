@@ -1,5 +1,49 @@
 # Project rules — HOY Wellness Center
 
+## Backend: Company OS (integrated since 2026-10-28)
+
+The production build (`npm run build:production`, `VITE_HOY_BUILD=production`) runs on Company OS; the review build
+(`npm run build`, `MockProvider`) is unchanged. Of the house rules in this file, only the tests and the changelog bind
+the Company OS work (decision P-05, 2026-10-28). Contract: `docs/customers/hoy/gap-analysis.md` and `decision-log.md`
+in `../Company-OS`; API reference: its `docs/integration-guide.md`.
+
+All production data lives in the Company OS API (`../Company-OS`, its own `CLAUDE.md` and rules); this app has no
+database of its own. Every read and write goes through `CompanyOSProvider` behind the `DataProvider` interface
+(`src/data/`), and every request goes through the Hoy server (`server/`, `/api/cos/t/<tenant>/…`), which checks the
+Clerk session. Identity is `src/auth/`: Clerk signs the person in (`ProductionSession.tsx`, `clerkFlows.ts`), Company OS
+`GET /t/:t/me` gives the role, `POST /t/:t/signup` creates the member (ADR 0038), and `getSessionToken()`
+(`src/auth/sessionToken.ts`) is the only way code gets a token. Nothing else calls the API.
+
+- **Vocabulary, no translation shim:** the app uses the backend's neutral keys (`'booked'`, `'checked_in'`,
+  `'pending'`…). Spanish and English text is display only, through `useT()` / the module `strings`. Role keys:
+  `member` (customer), `front_desk`, `administrator` (`src/auth/companyOsIdentity.ts` maps them to the app's roles).
+- **Dates** stay `YYYY-MM-DD` strings end to end; datetimes are ISO strings; "today" uses the tenant's timezone
+  (`America/Bogota`, ADR 0032).
+- **Business rules run in the backend** (people, files, comms, bookings, payments, credits). This app shows their
+  results and turns refusal codes (`{ error: code }`) into Spanish and English copy in the code→copy table; every new
+  backend code needs a line there. Do not re-implement a rule here; if a screen needs one the backend lacks, raise it
+  for Company OS.
+- **Writes:** one `/batch` per user action that writes more than one record, with an `Idempotency-Key` per submit
+  (reused on retry, ADR 0040); bulk buttons go item by item and name refusals.
+- **Reads:** batch with `Promise.all`; `include` for one hop; server aggregates for counts and sums; page past 500 rows
+  with a sort ending in `id`. A screen must not crash when a role may not read one of its sections.
+- **Capabilities** gate screens and buttons only; data access is decided by the backend's permissions and row
+  policies. The route guard (`RequireRole`, `src/config/roleMatrix.ts`) only shapes the screens.
+- **Launch scope:** the production build registers only `src/config/launchRoutes.ts` and leaves the hub, dev tools,
+  docs and manual out (`vite.config.ts`, `scripts/prune-production.mjs`). A new launch page is added to that list.
+- **Tenant setup** comes from `deploy/recipes/hoy.json` in `../Company-OS`; the local backend is built with
+  `pnpm install && pnpm db:up && pnpm db:migrate && pnpm dev` there (made-up data in the customer's real format).
+- **Real data** arrives only through the production app. Never commit or open the customer's files, exports or `.env*`.
+- **Releases (playbook rule E9):** production ships annotated `vX.Y.Z` tags on `main`, cut only with the *Cut release*
+  workflow, deployed with *Deploy frontend (prod)* after the Company OS release it needs. `company-os.json`
+  (`{ "requires": ">=A.B.C" }`) says which Company OS that is; bump it in the same PR that starts using something
+  newer. The check and the deploy refuse a missing or malformed file.
+- **Every code change ends with two review rounds** (playbook rule E11): any plan that changes code lists them as named
+  steps, whoever asks and whatever tool does the work: one independent round per lane when the work runs in parallel
+  lanes, then two independent rounds on the whole integrated change once every lane is merged (round 2 a fresh
+  reviewer after round 1's fixes).
+- **Git:** plain commit messages, no AI attribution lines, no force pushes; the owner pushes and merges.
+
 ## Component library is a living inventory
 The component library (D-02 in `Hoy Wellness System.dc.html`) must stay current at all times.
 Whenever a new UI element, variant, or state is introduced anywhere in the system:

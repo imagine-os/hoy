@@ -7,7 +7,8 @@ import { useTheme } from '../../../design/ThemeProvider';
 import { useTable } from '../../../data/DataContext';
 import type { ProfileRow } from '../../../data/schema';
 import { toSummary, useUnreadInbound } from '../../../data/comms';
-import { ROLE_LABEL } from '../../../auth/roles';
+import { ROLE_HOME, ROLE_LABEL } from '../../../auth/roles';
+import { PRODUCTION_BUILD } from '../../../config/launch';
 import { openInspector } from '../../../dev/inspectorBus';
 import { Wordmark } from '../../atom/Wordmark/Wordmark';
 import { LangToggle } from '../../molecule/LangToggle/LangToggle';
@@ -199,13 +200,15 @@ export function DesktopShell({ surfaces, routes, titleKey, children }: DesktopSh
   const inboxItems = useMemo(() => inbox.conversations.map(toSummary), [inbox.conversations]);
   const hasInbox = allowed.some((r) => r.path === '/staff/inbox');
 
+  // PL-03: the production build has no hub; the wordmark goes to the role's own home.
+  const hubOrHome = PRODUCTION_BUILD ? ROLE_HOME[role] : '/hub';
   const sidebarLabel = narrow ? (drawer ? t('core.shell.closeMenu') : t('core.shell.menu')) : collapsed ? t('core.shell.expand') : t('core.shell.collapse');
 
   return (
     <div className={`deskshell ${rail ? 'is-rail' : ''} ${drawer ? 'is-open' : ''}`}>
       <aside ref={sideRef} className="deskshell-side" aria-hidden={narrow && !drawer ? true : undefined} aria-label={t('core.shell.sections')}>
         <div className="deskshell-brand">
-          <Link to="/hub" className="deskshell-mark" title={t('core.nav.hub')}><Wordmark height={rail ? 15 : 26} /></Link>
+          <Link to={hubOrHome} className="deskshell-mark" title={PRODUCTION_BUILD ? undefined : t('core.nav.hub')}><Wordmark height={rail ? 15 : 26} /></Link>
           {!rail && <span className="deskshell-title">{title}</span>}
         </div>
         <nav className="deskshell-nav" aria-label={t('core.shell.sections')}>
@@ -254,18 +257,18 @@ export function DesktopShell({ surfaces, routes, titleKey, children }: DesktopSh
             {!rail && <span className="small">{t('core.shell.collapse')}</span>}
           </button>
           {rail ? (
-            <Link to="/hub" title={user.name} className="deskshell-me"><Avatar name={user.name} initials={user.initials} size={28} /></Link>
+            <Link to={hubOrHome} title={user.name} className="deskshell-me"><Avatar name={user.name} initials={user.initials} size={28} /></Link>
           ) : (
             <>
               <div className="row"><Avatar name={user.name} initials={user.initials} size={32} /><div className="grow small"><div className="deskshell-who">{user.name}</div><div className="xs muted">{bi(ROLE_LABEL[role])}</div></div></div>
-              <Link to="/hub" className="small">← {t('core.nav.hub')}</Link>
+              {!PRODUCTION_BUILD && <Link to="/hub" className="small">← {t('core.nav.hub')}</Link>}
             </>
           )}
         </div>
       </aside>
       <div className="deskshell-col">
         <TopBar
-          brand homeTo="/hub" title={current ? (current.nav ? t(current.nav.labelKey) : bi(current.spec.name)) : title} code={current?.spec.code}
+          brand homeTo={hubOrHome} title={current ? (current.nav ? t(current.nav.labelKey) : bi(current.spec.name)) : title} code={current?.spec.code}
           leading={<button ref={menuRef} type="button" className="topbar-lead" onClick={toggleSidebar} aria-label={sidebarLabel} aria-expanded={narrow ? drawer : !rail} title={sidebarLabel}>☰</button>}
           center={<GlobalSearch items={searchItems} />}
           actions={

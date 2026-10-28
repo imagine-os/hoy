@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
+import { PRODUCTION_BUILD } from '../../../config/launch';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useSession } from '../../../auth/SessionProvider';
@@ -27,7 +28,7 @@ export function passwordStrength(p: string): 0 | 1 | 2 | 3 {
 }
 
 /** A-03 Create account — the minimum the studio needs, with WhatsApp first-class and the emergency contact from day one. */
-export function SignUpPage() {
+function DemoSignUpPage() {
   const { t } = useI18n();
   const nav = useNavigate();
   const data = useData();
@@ -171,3 +172,14 @@ export function SignUpPage() {
     </AuthShell>
   );
 }
+
+/**
+ * H-2: the production build signs in with Clerk (src/modules/identity). `PRODUCTION_BUILD ? … : …` on the constant
+ * itself lets the bundler drop the unused side: no Clerk in the review build, no demo sign-in in production.
+ */
+function productionSignUpPage() {
+  const Page = lazy(() => import('../../identity/pages').then((m) => ({ default: () => <m.CosAuthPage mode="sign-up" /> })));
+  return function CosSignUpPage() { return <Suspense fallback={null}><Page /></Suspense>; };
+}
+
+export const SignUpPage = PRODUCTION_BUILD ? productionSignUpPage() : DemoSignUpPage;

@@ -1,4 +1,5 @@
 import type { RouteDef } from '../specs/types';
+import { PRODUCTION_BUILD } from '../config/launch';
 import { PageStub } from '../components/template/PageStub/PageStub';
 import { demoUsers } from '../auth/demoUsers';
 import { listActions, run, type DeclaredAction, type ActionResult } from '../actions';
@@ -37,7 +38,10 @@ export interface HoyosGlobal {
  * parsing TypeScript, plus the declared actions and the `run(id, params)` entry point an agent
  * (WebMCP, and later the voice controller) drives the app through.
  */
-export function publishManifest(routes: RouteDef[]): void {
+/** Review build only: the production build exposes no route manifest, demo users or agent entry point (PL-03). */
+export const publishManifest = PRODUCTION_BUILD ? (_routes: RouteDef[]) => {} : publishReviewManifest;
+
+function publishReviewManifest(routes: RouteDef[]): void {
   if (typeof window === 'undefined') return;
   const users = demoUsers.map((u) => ({ id: u.id, role: u.role }));
   // `actions` is a getter: `mounted` has to answer for the page that is open right now, not for

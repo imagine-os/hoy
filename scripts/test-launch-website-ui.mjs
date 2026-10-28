@@ -157,8 +157,9 @@ try {
     const tp = await tctx.newPage();
     await tp.goto(`${prod.base}/`); await tp.locator('.coming-soon').waitFor();
     check('production: a visitor\'s own localStorage cannot flip go-live', ['', '/'].includes(route(tp)) && (await tp.locator('.site-main').count()) === 0);
-    await tp.goto(`${prod.base}/#/manual`); await tp.waitForURL(/#\/auth\/sign-in/, { timeout: 10000 }).catch(() => {});
-    check('production: a visitor\'s own localStorage cannot make the manual public', route(tp).startsWith('/auth/sign-in'));
+    // H-2: the production build has no manual or docs at all (not in the bundle, no route), so nothing can open them.
+    await tp.goto(`${prod.base}/#/manual`); await tp.waitForTimeout(1500);
+    check('production: the manual does not exist, whatever a visitor\'s localStorage says', !route(tp).startsWith('/manual'), route(tp));
     await tctx.close(); await prod.close();
   }
 } finally {

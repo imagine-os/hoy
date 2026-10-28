@@ -1,5 +1,7 @@
 import type { RedirectDef, RouteDef } from '../specs/types';
 import type { StringTable } from '../i18n/types';
+import { PRODUCTION_BUILD } from '../config/launch';
+import { isLaunchRoute } from '../config/launchRoutes';
 
 /**
  * Collects every module. A module is src/modules/<name>/index.ts exporting { routes, strings } and, optionally,
@@ -12,14 +14,17 @@ import type { StringTable } from '../i18n/types';
  */
 interface ModuleExports { routes: RouteDef[]; strings: StringTable; redirects?: RedirectDef[] }
 
+// The production build leaves the review-only modules out of this glob (vite.config.ts, productionBuild) and keeps
+// only the launch routes (src/config/launchRoutes.ts): the rest, and their menu entries, do not exist there.
 const found = import.meta.glob<ModuleExports>('../modules/*/index.ts', { eager: true });
+const launchOnly = (routes: RouteDef[]) => (PRODUCTION_BUILD ? routes.filter((r) => isLaunchRoute(r.path)) : routes);
 
 let cache: { modules: { name: string; routes: RouteDef[]; strings: StringTable }[]; routes: RouteDef[]; strings: StringTable[]; redirects: RedirectDef[] } | null = null;
 
 function build() {
   if (cache) return cache;
   const modules = Object.entries(found)
-    .map(([path, m]) => ({ name: path.split('/')[2], routes: m.routes ?? [], strings: m.strings ?? {}, redirects: m.redirects ?? [] }))
+    .map(([path, m]) => ({ name: path.split('/')[2], routes: launchOnly(m.routes ?? []), strings: m.strings ?? {}, redirects: (m.redirects ?? []).filter((r) => !PRODUCTION_BUILD || isLaunchRoute(r.to)) }))
     .sort((a, b) => a.name.localeCompare(b.name));
   // Splat routes (`/docs/*`) go last, so a lookup that takes the first match (shell title, inspector, route title)
   // finds a static route of another module (`/docs/source`, 0031) before the catch-all.
