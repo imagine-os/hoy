@@ -25,6 +25,8 @@ import { PageHead } from '../ui';
 import { useActions } from '../../../actions';
 import { need, useAppNavHandlers } from '../actions';
 import { canvasSpecs } from '../specs';
+import { SERVER_RULES } from '../booking/bookingPolicy';
+import { safeCheckoutReturn } from '../booking/serverBooking';
 
 const spec = canvasSpecs['C-06'];
 const PENDING_PASS_KEY = 'hoyos.customer.pendingPass';
@@ -49,10 +51,15 @@ export function PlansPage() {
   const packages = PACKAGE_IDS.flatMap(id=>{const q=catalog.quote(id);return q?[quotedItem(q)]:[];});
   // W-xx → A-02 → here with ?plan=<id>: a package opens its confirmation; a single or trial class goes to the schedule with the pass ready.
   const wanted = params.get('plan');
-  const preselected = packages.find((p) => p.id === wanted) ?? null;
+  // RS-03 (production): checkout sends a trial or package purchase here with `next` = the chosen class; the trial opens its
+  // confirmation here (the production checkout books only from the balance or a held single class), and "done" goes back.
+  const next = SERVER_RULES ? safeCheckoutReturn(params.get('next')) : null;
+  const trialHere = SERVER_RULES && wanted === 'trial';
+  const trialItem = useMemo(() => { const q = trialHere ? catalog.quote('trial') : null; return q ? quotedItem(q) : null; }, [trialHere, catalog]);
+  const preselected = packages.find((p) => p.id === wanted) ?? trialItem;
   const [buying, setBuying] = useState<PriceItem | null>(preselected);
   const wantedHandled=useRef('');
-  useEffect(()=>{if(!wanted||wantedHandled.current===wanted||catalog.loading)return;const plan=packages.find(p=>p.id===wanted);if(plan){wantedHandled.current=wanted;buyKey.current=crypto.randomUUID();setBuying(plan);}},[wanted,catalog.loading,catalog.rows]);
+  useEffect(()=>{if(!wanted||wantedHandled.current===wanted||catalog.loading)return;const plan=packages.find(p=>p.id===wanted)??trialItem;if(plan){wantedHandled.current=wanted;buyKey.current=crypto.randomUUID();setBuying(plan);}},[wanted,catalog.loading,catalog.rows]);
   const review=useReviewedQuote(catalog,buying?.id??null,1,90);
   const buyKey=useRef(crypto.randomUUID()),buyBusy=useRef(false);
   const shownBuying=review.quote?quotedItem(review.quote):buying;
@@ -68,7 +75,7 @@ export function PlansPage() {
     t('customer.plans.benefit.noRefund'),
   ];
   useEffect(() => {
-    if (!wanted || !(PASS_IDS as readonly string[]).includes(wanted)) return;
+    if (!wanted || !(PASS_IDS as readonly string[]).includes(wanted) || trialHere) return;
     try { sessionStorage.setItem(PENDING_PASS_KEY, wanted); } catch { /* ignore */ }
     nav('/app/schedule', { replace: true });
   }, [wanted, nav]);
@@ -167,7 +174,9 @@ export function PlansPage() {
         {done && buying && (
           <div className="stack">
             <Notice tone="success" title={t('customer.plans.done.title')}>{t('customer.plans.done.body', { n:review.quote?.classes??buying.classes??12 })}</Notice>
-            <Button block size="lg" onClick={() => nav('/app/schedule')}>{t('customer.home.next.cta')}</Button>
+            {next
+              ? <Button block size="lg" onClick={() => nav(next)}>{t('customer.srv.buyFirst.back')}</Button>
+              : <Button block size="lg" onClick={() => nav('/app/schedule')}>{t('customer.home.next.cta')}</Button>}
             <Button block variant="ghost" onClick={() => nav('/app/classes')}>{t('customer.plans.manage')}</Button>
           </div>
         )}

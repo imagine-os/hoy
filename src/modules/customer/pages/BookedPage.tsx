@@ -36,6 +36,9 @@ import { canReschedule, RESCHEDULE_CUTOFF_HOURS } from '../reschedule';
 import { assertRescheduleValidity, rescheduleEntitlement } from '../rescheduleCommand';
 import { PageHead, downloadIcs, toneOf, roomName, shareText, teacherName } from '../ui';
 import { StudioCancelledBlock } from './blocks';
+import { SERVER_RULES, useBookingPolicy } from '../booking/bookingPolicy';
+import { holdView, serverPaymentStatus, type ServerBookingRow } from '../booking/serverBooking';
+import { HoldBlock, ServerChangeSheet } from './ServerBookingParts';
 
 const spec = canvasSpecs['C-08'];
 
@@ -69,7 +72,14 @@ export function BookedPage({ change = false }: { change?: boolean }) {
   const changeRecord = useRef<{ routeId: typeof id; userId: string; booking: BookingRow; joined: NonNullable<typeof joined> } | null>(null);
   if (!loading && !readError && booking && joined) changeRecord.current = { routeId: id, userId: user.id, booking, joined };
   const retained = changeRecord.current;
-  const changeSheet = change && retained && retained.routeId === id && retained.userId === user.id ? (
+  const bookingPolicy = useBookingPolicy();
+  const liveServerBooking = (b: BookingRow, startsAt: string) => b.status === 'booked' || (b as unknown as ServerBookingRow).status === 'held' && holdView(b as unknown as ServerBookingRow, startsAt, bookingPolicy, now)?.phase !== 'expired';
+  const changeSheet = change && retained && retained.routeId === id && retained.userId === user.id ? SERVER_RULES ? (
+    <ServerChangeSheet key="booking-change"
+      open={liveServerBooking(retained.booking, retained.joined.session.starts_at) && retained.joined.session.status !== 'cancelled' && Date.parse(retained.joined.session.starts_at) > now}
+      onClose={() => nav(`/app/booking/${retained.booking.id}`, { replace: true })}
+      booking={retained.booking as unknown as ServerBookingRow} joined={retained.joined} onResult={setFlash} />
+  ) : (
     <ChangeSheet key="booking-change"
       open={retained.booking.status === 'booked' && retained.joined.session.status !== 'cancelled' && Date.parse(retained.joined.session.ends_at) >= now}
       onClose={() => nav(`/app/booking/${retained.booking.id}`, { replace: true })}
@@ -96,10 +106,12 @@ export function BookedPage({ change = false }: { change?: boolean }) {
   const checkinOpen = !started && startsMs - now <= policy.checkinOpensMinutes * MS.min;
   const studioCancelled = s.status === 'cancelled';
   const myCancelled = booking.status === 'cancelled' || booking.status === 'late_cancel';
-  const active = !past && !studioCancelled && !myCancelled && booking.status === 'booked';
+  const server = booking as unknown as ServerBookingRow;
+  const held = SERVER_RULES && server.status === 'held';
+  const active = !past && !studioCancelled && !myCancelled && (SERVER_RULES ? liveServerBooking(booking, s.starts_at) : booking.status === 'booked');
   const deadline = cancelDeadline(s.starts_at);
   const inside = insideCancelWindow(s.starts_at, now);
-  const paymentStatus = bookingPaymentStatus(booking, ledger.rows, payments.rows);
+  const paymentStatus = SERVER_RULES ? serverPaymentStatus(server) : bookingPaymentStatus(booking, ledger.rows, payments.rows);
   const bookingBase = `/app/booking/${booking.id}`;
 
   const addToCalendar = () => downloadIcs({ title: `${s.title} · ${tenant.name}`, startsAt: s.starts_at, endsAt: s.ends_at, location: `${tenant.name} · ${roomName(joined)}`, description: `${teacherName(joined)}${booking.mat_number ? ` · ${t('site.mat.confirmed', { n: booking.mat_number })}` : ''}` });
@@ -108,6 +120,8 @@ export function BookedPage({ change = false }: { change?: boolean }) {
   const SECTIONS: Record<string, () => ReactNode> = {
     CountdownRing: () => {
       if (studioCancelled) return <StudioCancelledBlock joined={joined} booking={booking} />;
+      if (SERVER_RULES && myCancelled && server.cancel_reason === 'hold_expired') return <Notice tone="warn" title={t('customer.srv.hold.released.title')} action={<Link to="/app/schedule"><Button size="sm" variant="secondary">{t('customer.class.backToSchedule')}</Button></Link>}>{t('customer.srv.hold.released.body')}</Notice>;
+      if (held) return <HoldBlock booking={server} joined={joined} />;
       if (myCancelled) return <Notice tone="warn" title={booking.status === 'late_cancel' ? t('customer.booked.lateCancelled') : t('customer.booked.cancelled')} action={<Link to="/app/schedule"><Button size="sm" variant="secondary">{t('customer.class.backToSchedule')}</Button></Link>}>{booking.status === 'late_cancel' ? t('customer.booked.lateCancelled.body') : t('customer.booked.cancelled.body')}</Notice>;
       if (past) return (
         <Card className="stack-sm" tone="muted">
@@ -154,7 +168,7 @@ export function BookedPage({ change = false }: { change?: boolean }) {
     ) : null,
     PolicyNote: () => active ? (
       <p className="xs muted" style={{ textAlign: 'center' }}>
-        {inside ? t('customer.booked.policy.inside', { h: policy.cancelWindowHours }) : t('customer.booked.policy.outside', { time: formatTime(deadline.toISOString(), lang), h: policy.cancelWindowHours })}
+        {SERVER_RULES ? t('customer.srv.cancelRule') : inside ? t('customer.booked.policy.inside', { h: policy.cancelWindowHours }) : t('customer.booked.policy.outside', { time: formatTime(deadline.toISOString(), lang), h: policy.cancelWindowHours })}
         {' · '}{t('customer.booked.paidWith', { with: t(`customer.paidWith.${booking.paid_with}`) })}
       </p>
     ) : null,

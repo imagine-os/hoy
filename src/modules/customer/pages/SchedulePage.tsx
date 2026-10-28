@@ -18,6 +18,8 @@ import { PageHead } from '../ui';
 import { useActions } from '../../../actions';
 import { sessionUnavailableReason } from '../../../data/sessionAvailability';
 import { need, useAppNavHandlers } from '../actions';
+import { SERVER_RULES } from '../booking/bookingPolicy';
+import { holdsPlace, type ServerBookingRow } from '../booking/serverBooking';
 
 const specDay = canvasSpecs['C-02'];
 const specWeek = canvasSpecs['C-02b'];
@@ -69,7 +71,7 @@ export function SchedulePage({ view: routeView }: SchedulePageProps) {
   const visibleMods = modalities;
   const teachers = team.rows.filter(te => te.active);
   const myBookings = bookingsRead.rows;
-  const mine = useMemo(() => new Set(myBookings.filter((b) => b.status === 'booked').map((b) => b.session_id)), [myBookings]);
+  const mine = useMemo(() => new Set(myBookings.filter((b) => SERVER_RULES ? holdsPlace(b as unknown as ServerBookingRow) : b.status === 'booked').map((b) => b.session_id)), [myBookings]);
 
   const matches = (x: (typeof all)[number]) => {
     const h = studioParts(new Date(x.session.starts_at)).hour;
@@ -100,7 +102,8 @@ export function SchedulePage({ view: routeView }: SchedulePageProps) {
   useActions(specDay, handlers);
   const isFull = (s: ClassSessionRow) => s.status === 'scheduled' && s.booked_count >= s.capacity;
   // A class with no spots left cannot be booked: the row leads to the waitlist (C-20) instead of the booking screen.
-  const open = (s: ClassSessionRow) => nav(isFull(s) && !mine.has(s.id) ? `/app/waitlist/${s.id}` : `/app/class/${s.id}`);
+  // Production has no waitlist at launch: every row opens the class detail (H-4).
+  const open = (s: ClassSessionRow) => nav(!SERVER_RULES && isFull(s) && !mine.has(s.id) ? `/app/waitlist/${s.id}` : `/app/class/${s.id}`);
 
   const SECTIONS: Record<string, () => ReactNode> = {
     'ViewSwitch (Today / Week)': () => <PageHead title={t('customer.schedule.title')} sub={t('customer.schedule.sub')} />,
