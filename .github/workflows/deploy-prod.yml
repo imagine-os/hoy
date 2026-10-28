@@ -1,0 +1,284 @@
+# Deploy Hoy's frontend (the Hoy server + website + app) to PRODUCTION: Hoy's Railway project,
+# environment `production`, service `web`, next to Company OS's `api` (Company OS ADR 0025).
+#
+#   "Run workflow" (Use workflow from -> Tags -> vX.Y.Z) ─► guard ─► checks + bundle
+#                               ─► [approval] ─► infra + settings + deploy ─► release
+#
+# Production only ever runs a RELEASE TAG: semver (vX.Y.Z), annotated, on a commit that is on main.
+# The guard refuses anything else. It also reads company-os.json FROM THE TAGGED CODE (which Company
+# OS this release needs), refuses the release if the file is missing or malformed, and shows the
+# requirement to the reviewer before approving. The deploy job re-checks that the tag still points
+# at the commit the guard checked. Nothing deploys to production by itself.
+#
+# Cutting a release: Actions -> "Cut release" (version + one-line summary). Rollback = run this
+# workflow again with the previous tag.
+#
+# Order of a release: Company OS's "Deploy API (prod)" FIRST, with a release at least the version
+# company-os.json requires (this service's variables reference the `api` service), then this one.
+#
+# The GitHub Environment `production` must hold the following. Its protection rules (the owner as
+# required reviewer; deployment tags limited to `v*`) are GitHub settings: Settings -> Environments.
+#   secrets    RAILWAY_TOKEN          project token of Hoy's Railway project, environment `production`
+#              CLERK_SECRET_KEY       sk_live_… (Hoy's Clerk production instance, the same one the
+#                                     production `api` verifies)
+#   variables  CLERK_PUBLISHABLE_KEY  pk_live_…
+#              APP_URL                https://<Hoy's domain> (the custom domain on the web service)
+#              COMPANY_OS_TENANT      Hoy's production tenant slug in Company OS
+#              RAILWAY_PROJECT_NAME   Hoy's Railway project name (a label; the token picks the project)
+#              RAILWAY_REGION         optional: the api's region, e.g. us-east4-eqdc4a
+name: Deploy web (prod)
+run-name: Deploy web (prod) ${{ github.ref_name }}
+
+on:
+  # No inputs: choose the release tag in "Use workflow from" -> Tags. The run deploys that ref.
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-web-prod
+  cancel-in-progress: false
+
+permissions: {}
+
+env:
+  RAILWAY_CLI_VERSION: 5.62.1
+  RAILWAY_SDK_VERSION: 3.11.0
+  TAG: ${{ github.ref_name }}
+  RAILWAY_ENV: production
+  SERVICE: web
+
+jobs:
+  # Fail fast: production only ever runs an annotated semver tag on main.
+  # The tag (github.ref_name) reaches the scripts through env (TAG), never interpolated.
+  guard:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    outputs:
+      sha: ${{ steps.tag.outputs.sha }}
+    steps:
+      - name: Started from a well-formed release tag
+        run: |
+          if [ "${GITHUB_REF#refs/tags/}" = "$GITHUB_REF" ]; then
+            echo "::error::Start this workflow from a release TAG, not a branch: Run workflow -> Use workflow from -> Tags -> vX.Y.Z."
+            exit 1
+          fi
+          if ! printf '%s' "$TAG" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+            # The raw tag name is not echoed: it could carry workflow commands.
+            echo "::error::This run was started from a tag that is not a release tag (vMAJOR.MINOR.PATCH, e.g. v0.26.0)."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: The tag exists, is annotated and is on main
+        id: tag
+        run: |
+          if ! git fetch --quiet --force origin "refs/tags/$TAG:refs/tags/$TAG"; then
+            echo "::error::Tag $TAG does not exist on GitHub. Create it with the 'Cut release' workflow."
+            exit 1
+          fi
+          git fetch --quiet --no-tags origin "+refs/heads/main:refs/remotes/origin/main"
+          kind="$(git cat-file -t "refs/tags/$TAG")"
+          if [ "$kind" != "tag" ]; then
+            echo "::error::Tag $TAG is a lightweight tag (it points straight at a $kind). Release tags are annotated: create them with the 'Cut release' workflow."
+            exit 1
+          fi
+          sha="$(git rev-parse "$TAG^{commit}")"
+          if ! git merge-base --is-ancestor "$sha" origin/main; then
+            echo "::error::Tag $TAG points at $sha, which is not on main. Tag a commit on main after the pull request is merged."
+            exit 1
+          fi
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          # Which Company OS this release needs: company-os.json in the TAGGED code (the single source
+          # of truth; the tag message is only a copy). Missing or malformed = no deploy.
+          if ! requires="$(git show "$sha:company-os.json" 2>/dev/null | jq -er '.requires')"; then
+            echo "::error::$TAG has no readable company-os.json ({ \"requires\": \">=A.B.C\" }). Add it on main in a pull request, then cut a new release."
+            exit 1
+          fi
+          if ! printf '%s' "$requires" | grep -Eq '^>=[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::company-os.json in $TAG has an invalid \"requires\" (expected >=MAJOR.MINOR.PATCH). Fix it on main and cut a new release."
+            exit 1
+          fi
+          # The tag message is free text: never interpreted as workflow commands in the log, and shown
+          # as code in the summary, so it can't fake the requirement line above it.
+          stop="$(openssl rand -hex 16)"
+          echo "::stop-commands::$stop"
+          git tag -l --format='%(contents)' "$TAG"
+          echo "::$stop::"
+          {
+            echo "### Deploying $TAG ($sha) to production"
+            echo ""
+            echo "**Requires Company OS ${requires}**: deploy that Company OS release (Deploy API (prod)) to Hoy's production before approving this one."
+            echo ""
+            echo "Tag message:"
+            echo ""
+            # An indented code block: every line is indented, so no line of the message can end it.
+            git tag -l --format='%(contents)' "$TAG" | sed 's/^/    /'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  checks:
+    needs: guard
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.guard.outputs.sha }}
+          fetch-depth: 0 # the build dates screenshots from git history
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm ci --prefix server
+      - name: Company OS requirement
+        run: node scripts/check-company-os.mjs
+      - name: Hoy server tests
+        run: node scripts/test-hoy-server.mjs
+      - name: Build
+        run: npm run build
+      - name: Bundle (server + built frontend, secret scan)
+        run: node server/make-bundle.mjs "$RUNNER_TEMP/web"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web-bundle-${{ needs.guard.outputs.sha }}
+          path: ${{ runner.temp }}/web
+          retention-days: 1
+          if-no-files-found: error
+
+  deploy:
+    needs: [guard, checks]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment: production
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+
+      # The tag must still be the commit the guard checked (a tag can be moved).
+      - name: Same commit as the guard checked
+        env:
+          EXPECTED: ${{ needs.guard.outputs.sha }}
+        run: |
+          actual="$(git rev-parse HEAD)"
+          if [ "$actual" != "$EXPECTED" ]; then
+            echo "::error::Tag $TAG now points at $actual, not $EXPECTED as when the run started. Was it moved? Start a new run."
+            exit 1
+          fi
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      # The IaC file imports the `railway` SDK from node_modules (pinned here, not in package.json).
+      - run: npm ci && npm install --no-save "railway@${RAILWAY_SDK_VERSION}"
+
+      - name: Install the Railway CLI
+        run: npm install -g "@railway/cli@${RAILWAY_CLI_VERSION}"
+
+      # Check every setting BEFORE any infra, variable or service mutation.
+      - name: Require production configuration
+        env:
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+          CLERK_PUBLISHABLE_KEY: ${{ vars.CLERK_PUBLISHABLE_KEY }}
+          APP_URL: ${{ vars.APP_URL }}
+          COMPANY_OS_TENANT: ${{ vars.COMPANY_OS_TENANT }}
+          HOY_RAILWAY_PROJECT: ${{ vars.RAILWAY_PROJECT_NAME }}
+        run: |
+          case "$CLERK_SECRET_KEY" in sk_live_?*) ;; *) echo "::error::production requires a Clerk LIVE secret key (sk_live_…) in the production environment's secrets"; exit 1 ;; esac
+          case "$CLERK_PUBLISHABLE_KEY" in pk_live_?*) ;; *) echo "::error::production requires a Clerk LIVE publishable key (pk_live_…) in the production environment's variables"; exit 1 ;; esac
+          if ! printf '%s' "$APP_URL" | grep -Eq '^https://[a-zA-Z0-9.-]+$'; then echo "::error::Set the production variable APP_URL to https://<Hoy's domain> (no path)"; exit 1; fi
+          if ! printf '%s' "$COMPANY_OS_TENANT" | grep -Eq '^[a-z0-9][a-z0-9-]*$'; then echo "::error::Set the production variable COMPANY_OS_TENANT to Hoy's tenant slug"; exit 1; fi
+          if [ -z "$HOY_RAILWAY_PROJECT" ]; then echo "::error::Set the production variable RAILWAY_PROJECT_NAME"; exit 1; fi
+
+      - name: Infra plan
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          HOY_RAILWAY_PROJECT: ${{ vars.RAILWAY_PROJECT_NAME }}
+          HOY_RAILWAY_REGION: ${{ vars.RAILWAY_REGION }}
+        run: |
+          {
+            echo "### Railway infra plan (${RAILWAY_ENV})"
+            echo '```'
+            railway config plan
+            echo '```'
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Apply infra
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          HOY_RAILWAY_PROJECT: ${{ vars.RAILWAY_PROJECT_NAME }}
+          HOY_RAILWAY_REGION: ${{ vars.RAILWAY_REGION }}
+        run: railway config apply --yes
+
+      # The IaC declares these as preserve(); the values go in over stdin, without a redeploy.
+      - name: Sync secrets and settings
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+          CLERK_PUBLISHABLE_KEY: ${{ vars.CLERK_PUBLISHABLE_KEY }}
+          APP_URL: ${{ vars.APP_URL }}
+          COMPANY_OS_TENANT: ${{ vars.COMPANY_OS_TENANT }}
+        run: |
+          for name in CLERK_SECRET_KEY CLERK_PUBLISHABLE_KEY APP_URL COMPANY_OS_TENANT; do
+            printf '%s' "${!name}" | railway variable set "$name" --stdin \
+              --service "$SERVICE" --environment "$RAILWAY_ENV" --skip-deploys
+          done
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-bundle-${{ needs.guard.outputs.sha }}
+          path: ${{ runner.temp }}/web
+
+      # The same scan as the checks job, now with this environment's real secret values set: the bundle
+      # must contain none of them.
+      - name: No secret of this environment in the bundle
+        env:
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: node server/check-bundle.mjs "$RUNNER_TEMP/web/site"
+
+      # Uploads the checked bundle only (not the checkout).
+      - name: Deploy
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: railway up "$RUNNER_TEMP/web" --path-as-root --no-gitignore --ci --service "$SERVICE" --environment "$RAILWAY_ENV" --message "$TAG"
+
+      # The public address is the custom domain (APP_URL), added to the web service in Railway by hand
+      # after its first deploy: nothing to generate here.
+      - name: Summary
+        env:
+          APP_URL: ${{ vars.APP_URL }}
+        run: |
+          echo "### Site: ${APP_URL} (custom domain on the web service in Railway), release $TAG" >> "$GITHUB_STEP_SUMMARY"
+
+  # The GitHub Release is the record of what is live: created on the tag's first deploy (notes from
+  # the merged PRs), a dated line appended on every later one.
+  release:
+    needs: deploy
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Create or update the GitHub Release
+        run: |
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            gh release create "$TAG" --verify-tag --generate-notes --title "$TAG"
+          fi
+          run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          line="Deployed to production on $(date -u '+%Y-%m-%d %H:%M UTC') (run $run_url)"
+          gh release view "$TAG" --json body --jq .body > notes.md
+          printf '\n%s\n' "$line" >> notes.md
+          gh release edit "$TAG" --notes-file notes.md
+          echo "$line" >> "$GITHUB_STEP_SUMMARY"

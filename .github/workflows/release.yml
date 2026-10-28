@@ -1,0 +1,157 @@
+# Cut a release of Hoy's frontend: create the annotated tag vX.Y.Z on main. This is THE way to make a
+# release tag, so every tag looks the same and nobody has to remember the message format.
+#
+#   "Run workflow" (version X.Y.Z, one-line summary)
+#       ─► guard (main, version format, not taken, higher than the last tag, equal to package.json's
+#                 version, company-os.json valid) ─► checks (server tests + build + bundle)
+#       ─► tag (annotated, on the exact commit that was checked) ─► summary
+#
+# How to run it: Actions -> "Cut release" -> Run workflow -> keep "Branch: main" -> version (e.g.
+# 0.26.0, without the v) -> summary -> Run. Bump package.json's "version" in the release pull request
+# first (it is what /health reports). Then deploy it: Actions -> "Deploy web (prod)" -> Use workflow
+# from -> Tags -> the new tag, after the Company OS release it requires is live.
+#
+# Version rules (semver): patch = fixes · minor = new features / additive · major = breaking changes.
+# The tag message carries "Requires Company OS >=A.B.C", copied from company-os.json (the single
+# source of truth). A tag made by hand still deploys only if it is annotated, on main and its code has
+# a valid company-os.json (the deploy checks the file itself) — but use this workflow.
+name: Cut release
+run-name: Cut release v${{ inputs.version }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "New version, MAJOR.MINOR.PATCH without the v (e.g. 0.26.0). Must be higher than the last release and equal to package.json's version."
+        required: true
+        type: string
+      summary:
+        description: "One line: what this release brings (goes into the tag message)."
+        required: true
+        type: string
+
+concurrency:
+  group: cut-release
+  cancel-in-progress: false
+
+permissions: {}
+
+env:
+  VERSION: ${{ inputs.version }}
+  SUMMARY: ${{ inputs.summary }}
+
+jobs:
+  # Inputs reach the scripts only through env (VERSION, SUMMARY), never interpolated.
+  guard:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    outputs:
+      sha: ${{ steps.check.outputs.sha }}
+      requires: ${{ steps.check.outputs.requires }}
+    steps:
+      - name: Run from main, with a well-formed version
+        run: |
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "::error::Run this workflow from main (this run is on $GITHUB_REF)."
+            exit 1
+          fi
+          if ! printf '%s' "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::The version must be MAJOR.MINOR.PATCH without the v, e.g. 0.26.0."
+            exit 1
+          fi
+          if [ -z "$(printf '%s' "$SUMMARY" | tr -d '[:space:]')" ]; then
+            echo "::error::Write a one-line summary of the release."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Version is new, higher and package.json's; company-os.json is valid
+        id: check
+        run: |
+          git fetch --quiet --force --tags origin
+          tag="v$VERSION"
+          if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
+            echo "::error::$tag already exists. Choose the next version."
+            exit 1
+          fi
+          last="$(git tag -l 'v[0-9]*.[0-9]*.[0-9]*' | sort -V | tail -n 1)"
+          if [ -n "$last" ] && [ "$(printf '%s\n%s\n' "$last" "$tag" | sort -V | tail -n 1)" != "$tag" ]; then
+            echo "::error::$tag is not higher than the last release $last."
+            exit 1
+          fi
+          pkg="$(jq -er '.version' package.json)"
+          if [ "$pkg" != "$VERSION" ]; then
+            echo "::error::package.json says version $pkg, not $VERSION. Bump it on main in a pull request first."
+            exit 1
+          fi
+          if ! requires="$(jq -er '.requires' company-os.json)" || ! printf '%s' "$requires" | grep -Eq '^>=[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::company-os.json is missing or invalid (expected { \"requires\": \">=A.B.C\" }). Fix it on main in a pull request first."
+            exit 1
+          fi
+          echo "sha=$GITHUB_SHA" >> "$GITHUB_OUTPUT"
+          echo "requires=$requires" >> "$GITHUB_OUTPUT"
+          echo "Last release: ${last:-none} · new: $tag at $GITHUB_SHA · requires Company OS $requires"
+
+  checks:
+    needs: guard
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.guard.outputs.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm ci --prefix server
+      - name: Company OS requirement
+        run: node scripts/check-company-os.mjs
+      - name: Hoy server tests
+        run: node scripts/test-hoy-server.mjs
+      - name: Build
+        run: npm run build
+      - name: Bundle (server + built frontend, secret scan)
+        run: node server/make-bundle.mjs "$RUNNER_TEMP/web"
+
+  tag:
+    needs: [guard, checks]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    env:
+      SHA: ${{ needs.guard.outputs.sha }}
+      REQUIRES: ${{ needs.guard.outputs.requires }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.guard.outputs.sha }}
+          fetch-depth: 0
+      - name: Create and push the annotated tag
+        run: |
+          tag="v$VERSION"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          {
+            printf '%s: %s\n\n' "$tag" "$SUMMARY"
+            printf 'Requires Company OS %s\n\n' "$REQUIRES"
+            printf 'Cut by %s with the Cut release workflow: %s/%s/actions/runs/%s\n' \
+              "$GITHUB_ACTOR" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID"
+          } > "$RUNNER_TEMP/tag-message.txt"
+          git tag -a "$tag" "$SHA" -F "$RUNNER_TEMP/tag-message.txt"
+          git push origin "refs/tags/$tag"
+          {
+            echo "### Released $tag"
+            echo ""
+            echo "Commit \`$SHA\` · **requires Company OS $REQUIRES**."
+            echo ""
+            echo "Next: deploy the Company OS release it requires (Company OS repo -> Actions -> Deploy API (prod)) if it isn't live yet, then **Actions -> Deploy web (prod) -> Run workflow -> Use workflow from -> Tags -> \`$tag\`**."
+          } >> "$GITHUB_STEP_SUMMARY"

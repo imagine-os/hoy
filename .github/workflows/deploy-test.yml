@@ -1,0 +1,159 @@
+# Deploy Hoy's frontend (the Hoy server + website + app) to the `test` environment of Hoy's Railway
+# project: the `web` service, next to Company OS's `api` (Company OS ADR 0022 / 0025).
+#
+#   "Run workflow" button (any branch) ─► checks + bundle ─► infra + settings + deploy
+#
+# By hand only: GitHub -> Actions -> "Deploy web (test)" -> Run workflow -> pick the branch.
+# Company OS must have deployed its `api` to Hoy's `test` environment first: this service's
+# variables reference it.
+#
+# Needs a GitHub Environment named `test` with:
+#   secrets    RAILWAY_TOKEN          project token of Hoy's Railway project, environment `test`
+#              CLERK_SECRET_KEY       the Clerk development instance's secret key (sk_test_…), the
+#                                     same instance Hoy's test `api` verifies
+#   variables  CLERK_PUBLISHABLE_KEY  its publishable key (pk_test_…)
+#              RAILWAY_PROJECT_NAME   Hoy's Railway project name (a label; the token picks the project)
+#              RAILWAY_REGION         optional: the api's region, e.g. us-east4-eqdc4a
+# Any branch may be deployed, and the deploy job runs that branch's .railway/railway.ts with the test
+# token and the test Clerk key. To narrow who can, set "Deployment branches" on the `test` environment
+# (Settings -> Environments -> test), e.g. to main and companyos-launch/cos-* branches.
+name: Deploy web (test)
+run-name: Deploy web (test) ${{ github.ref_name }}
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-web-test
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  RAILWAY_CLI_VERSION: 5.62.1
+  RAILWAY_SDK_VERSION: 3.11.0
+  RAILWAY_ENV: test
+  SERVICE: web
+
+jobs:
+  # The gate: the server's tests, company-os.json, the frontend build, and the bundle that is deployed
+  # (secret scan included). The deploy job uploads exactly this bundle.
+  checks:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # the build dates screenshots from git history
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm ci --prefix server
+      - name: Company OS requirement
+        run: node scripts/check-company-os.mjs
+      - name: Hoy server tests
+        run: node scripts/test-hoy-server.mjs
+      - name: Build
+        run: npm run build
+      - name: Bundle (server + built frontend, secret scan)
+        run: node server/make-bundle.mjs "$RUNNER_TEMP/web"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web-bundle-${{ github.sha }}
+          path: ${{ runner.temp }}/web
+          retention-days: 1
+          if-no-files-found: error
+
+  deploy:
+    needs: checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment: test
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      # The IaC file imports the `railway` SDK from node_modules (pinned here, not in package.json).
+      - run: npm ci && npm install --no-save "railway@${RAILWAY_SDK_VERSION}"
+
+      - name: Install the Railway CLI
+        run: npm install -g "@railway/cli@${RAILWAY_CLI_VERSION}"
+
+      # Check the configuration BEFORE any infra, variable or service mutation.
+      - name: Require test Clerk configuration
+        env:
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+          CLERK_PUBLISHABLE_KEY: ${{ vars.CLERK_PUBLISHABLE_KEY }}
+          HOY_RAILWAY_PROJECT: ${{ vars.RAILWAY_PROJECT_NAME }}
+        run: |
+          case "$CLERK_SECRET_KEY" in sk_test_?*) ;; *) echo "::error::test requires a Clerk TEST secret key (sk_test_…) in the test environment's secrets"; exit 1 ;; esac
+          case "$CLERK_PUBLISHABLE_KEY" in pk_test_?*) ;; *) echo "::error::test requires a Clerk TEST publishable key (pk_test_…) in the test environment's variables"; exit 1 ;; esac
+          if [ -z "$HOY_RAILWAY_PROJECT" ]; then echo "::error::Set the test environment's variable RAILWAY_PROJECT_NAME"; exit 1; fi
+
+      - name: Infra plan
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          HOY_RAILWAY_PROJECT: ${{ vars.RAILWAY_PROJECT_NAME }}
+          HOY_RAILWAY_REGION: ${{ vars.RAILWAY_REGION }}
+        run: |
+          {
+            echo "### Railway infra plan (${RAILWAY_ENV})"
+            echo '```'
+            railway config plan
+            echo '```'
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Apply infra
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          HOY_RAILWAY_PROJECT: ${{ vars.RAILWAY_PROJECT_NAME }}
+          HOY_RAILWAY_REGION: ${{ vars.RAILWAY_REGION }}
+        run: railway config apply --yes
+
+      # The IaC declares these as preserve(); the values go in over stdin, without a redeploy.
+      # APP_URL is this service's own Railway-generated domain (created here if it has none yet).
+      - name: Sync settings
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+          CLERK_PUBLISHABLE_KEY: ${{ vars.CLERK_PUBLISHABLE_KEY }}
+        run: |
+          set_var() { printf '%s' "$2" | railway variable set "$1" --stdin --service "$SERVICE" --environment "$RAILWAY_ENV" --skip-deploys; }
+          out=$(railway domain --service "$SERVICE" --environment "$RAILWAY_ENV" 2>&1) || true
+          url=$(printf '%s' "$out" | grep -oE 'https://[a-zA-Z0-9.-]+\.up\.railway\.app' | head -1)
+          if [ -z "$url" ]; then echo "::error::Could not determine the test web service's public URL"; exit 1; fi
+          set_var APP_URL "$url"
+          set_var CLERK_SECRET_KEY "$CLERK_SECRET_KEY"
+          set_var CLERK_PUBLISHABLE_KEY "$CLERK_PUBLISHABLE_KEY"
+          echo "APP_URL=$url" >> "$GITHUB_ENV"
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-bundle-${{ github.sha }}
+          path: ${{ runner.temp }}/web
+
+      # The same scan as the checks job, now with this environment's real secret values set: the bundle
+      # must contain none of them.
+      - name: No secret of this environment in the bundle
+        env:
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: node server/check-bundle.mjs "$RUNNER_TEMP/web/site"
+
+      # Uploads the checked bundle only (not the checkout). --no-gitignore: the bundle's site/ must not
+      # be filtered by any ignore rule.
+      - name: Deploy
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: railway up "$RUNNER_TEMP/web" --path-as-root --no-gitignore --ci --service "$SERVICE" --environment "$RAILWAY_ENV" --message "test ${GITHUB_SHA::12}"
+
+      - name: Summary
+        run: |
+          echo "### Site: ${APP_URL} (branch ${GITHUB_REF_NAME}, ${GITHUB_SHA::12})" >> "$GITHUB_STEP_SUMMARY"
