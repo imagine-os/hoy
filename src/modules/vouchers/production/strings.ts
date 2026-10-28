@@ -1,0 +1,100 @@
+import type { StringTable } from '../../../i18n/types';
+
+/** H-6 production voucher screens (Company OS credits vouchers). Spanish first; English for the review of the copy. */
+export const productionStrings: StringTable = {
+  'vouchers.cos.class1': { es: '1 clase', en: '1 class' },
+  'vouchers.cos.classes': { es: '{n} clases', en: '{n} classes' },
+  'vouchers.cos.recipientName': { es: 'Nombre de quien recibe', en: "Recipient's name" },
+  'vouchers.cos.recipientEmail': { es: 'Correo de quien recibe', en: "Recipient's email" },
+  'vouchers.cos.validUntil': { es: 'Válido hasta (último día)', en: 'Valid until (last day)' },
+  'vouchers.cos.noEndHint': { es: 'Vacío: sin fecha de vencimiento.', en: 'Empty: no expiry date.' },
+  'vouchers.cos.classesLabel': { es: 'Número de clases', en: 'Number of classes' },
+  'vouchers.cos.maxUses': { es: 'Límite de usos', en: 'Usage limit' },
+  'vouchers.cos.maxUsesHint': { es: 'Cuántas personas pueden canjearlo. Cada persona lo canjea una sola vez.', en: 'How many people can redeem it. Each person redeems it once.' },
+  'vouchers.cos.kind.gift': { es: 'Regalo', en: 'Gift' },
+  'vouchers.cos.kind.courtesy': { es: 'Cortesía', en: 'Courtesy' },
+  'vouchers.cos.state.active': { es: 'Disponible', en: 'Available' },
+  'vouchers.cos.state.used_up': { es: 'Usado', en: 'Used' },
+  'vouchers.cos.state.expired': { es: 'Vencido', en: 'Expired' },
+
+  // C-28 · redeem
+  'vouchers.cos.redeem.title': { es: 'Canjear bono', en: 'Redeem a voucher' },
+  'vouchers.cos.redeem.intro': { es: 'Las clases del bono se suman a tu saldo y las usas para reservar como cualquier otra clase.', en: "The voucher's classes are added to your balance, and you book with them like any other class." },
+  'vouchers.cos.redeem.code': { es: 'Código del bono', en: 'Voucher code' },
+  'vouchers.cos.redeem.codeHint': { es: 'Son 8 letras y números; está en el correo que recibiste.', en: 'It has 8 letters and numbers, and it is in the email you received.' },
+  'vouchers.cos.redeem.cta': { es: 'Sumar las clases a mi saldo', en: 'Add the classes to my balance' },
+  'vouchers.cos.redeem.done': { es: 'Listo: sumamos {classes} a tu saldo.', en: 'Done: {classes} added to your balance.' },
+  'vouchers.cos.redeem.until': { es: 'Puedes usarlas hasta el {date}.', en: 'You can use them until {date}.' },
+  'vouchers.cos.redeem.noEnd': { es: 'No tienen fecha de vencimiento.', en: 'They have no expiry date.' },
+  'vouchers.cos.redeem.book': { es: 'Reservar una clase', en: 'Book a class' },
+
+  // C-38 · buy a gift voucher
+  'vouchers.cos.gift.title': { es: 'Regalar clases', en: 'Give classes as a gift' },
+  'vouchers.cos.gift.sub': { es: 'Elige el regalo, dinos a quién se lo envías y paga por transferencia.', en: 'Choose the gift, tell us who it is for, and pay by bank transfer.' },
+  'vouchers.cos.gift.none': { es: 'En este momento no hay regalos a la venta. Escríbenos y te ayudamos.', en: 'No gifts are on sale right now. Write to us and we will help you.' },
+  'vouchers.cos.gift.which': { es: '¿Qué quieres regalar?', en: 'What would you like to give?' },
+  'vouchers.cos.gift.who': { es: '¿Para quién es?', en: 'Who is it for?' },
+  'vouchers.cos.gift.emailHint': { es: 'Le enviaremos aquí el bono con su enlace para canjearlo.', en: 'We will send the voucher and its redemption link to this address.' },
+  'vouchers.cos.gift.howTitle': { es: 'Cómo funciona', en: 'How it works' },
+  'vouchers.cos.gift.how': { es: 'Cuando el estudio confirme tu transferencia, enviamos el bono por correo a esa persona. Te avisamos cuando se envíe y cuando lo use.', en: 'When the studio confirms your transfer, we email the voucher to that person. We let you know when it is sent and when it is used.' },
+  'vouchers.cos.gift.cta': { es: 'Continuar al pago por transferencia', en: 'Continue to bank transfer payment' },
+
+  // gifts waiting for the desk
+  'vouchers.cos.desk.page': { es: 'Bonos de regalo', en: 'Gift vouchers' },
+  'vouchers.cos.desk.title': { es: 'Regalos pagados por enviar', en: 'Paid gifts to send' },
+  'vouchers.cos.desk.sub': { es: 'Pagos de regalo ya aprobados. Al emitir el bono, quien lo recibe recibe su correo con el enlace, y quien lo compró, su aviso.', en: 'Approved gift payments. When you issue the voucher, the recipient gets the email with the link and the buyer gets a notice.' },
+  'vouchers.cos.desk.empty': { es: 'No hay regalos pagados pendientes de envío.', en: 'There are no paid gifts waiting to be sent.' },
+  'vouchers.cos.desk.waiting': { es: 'Por enviar', en: 'To send' },
+  'vouchers.cos.desk.paid': { es: 'Pagado: {date} · {amount}', en: 'Paid: {date} · {amount}' },
+  'vouchers.cos.desk.noRecipient': { es: 'El pago no trae los datos de quien recibe. Pídeselos a quien compró antes de emitir.', en: "The payment has no recipient details. Ask the buyer for them before issuing." },
+  'vouchers.cos.desk.issued': { es: 'Bono emitido para {email}.', en: 'Voucher issued for {email}.' },
+  'vouchers.cos.desk.issue': { es: 'Emitir y enviar el bono', en: 'Issue and send the voucher' },
+
+  // list
+  'vouchers.cos.list.title': { es: 'Bonos emitidos', en: 'Issued vouchers' },
+  'vouchers.cos.list.empty': { es: 'Todavía no hay bonos.', en: 'There are no vouchers yet.' },
+  'vouchers.cos.list.uses': { es: 'Usos: {uses} de {max}', en: 'Uses: {uses} of {max}' },
+  'vouchers.cos.list.sent': { es: 'Enviado a {email} el {date}', en: 'Sent to {email} on {date}' },
+  'vouchers.cos.list.until': { es: 'válido hasta el {date}', en: 'valid until {date}' },
+  'vouchers.cos.list.noEnd': { es: 'sin vencimiento', en: 'no expiry' },
+  'vouchers.cos.list.used': { es: 'último canje el {date}', en: 'last redeemed on {date}' },
+
+  // M-13 · courtesy
+  'vouchers.cos.studio.sub': { es: 'Cortesías del estudio y regalos comprados por clientes.', en: 'Studio courtesies and gifts bought by customers.' },
+  'vouchers.cos.courtesy.title': { es: 'Nueva cortesía o invitación', en: 'New courtesy or invitation' },
+  'vouchers.cos.courtesy.sub': { es: 'Se envía por correo con un enlace para canjearla. Quien la canjea suma las clases a su saldo.', en: 'It is sent by email with a redemption link. Whoever redeems it gets the classes in their balance.' },
+  'vouchers.cos.courtesy.cta': { es: 'Crear y enviar', en: 'Create and send' },
+  'vouchers.cos.courtesy.sent': { es: 'Cortesía creada. El correo a {email} sale en los próximos minutos.', en: 'Courtesy created. The email to {email} goes out within minutes.' },
+  'vouchers.cos.courtesy.sentBody': { es: 'Código: {code}', en: 'Code: {code}' },
+
+  // form errors
+  'vouchers.cos.err.code': { es: 'El código tiene 8 letras y números (sin I ni O).', en: 'The code has 8 letters and numbers (no I or O).' },
+  'vouchers.cos.err.product': { es: 'Elige un regalo.', en: 'Choose a gift.' },
+  'vouchers.cos.err.name': { es: 'Escribe el nombre (mínimo 2 letras).', en: 'Enter the name (at least 2 letters).' },
+  'vouchers.cos.err.email': { es: 'Escribe un solo correo válido.', en: 'Enter one valid email address.' },
+  'vouchers.cos.err.classes': { es: 'Entre 1 y 100 clases, en número entero.', en: 'Between 1 and 100 classes, as a whole number.' },
+  'vouchers.cos.err.maxUses': { es: 'Entre 1 y 500 usos, en número entero.', en: 'Between 1 and 500 uses, as a whole number.' },
+  'vouchers.cos.err.validUntil': { es: 'Elige hoy o una fecha futura.', en: 'Choose today or a future date.' },
+
+  // server refusal codes (gap analysis §4)
+  'vouchers.cos.refusal.voucher_invalid.title': { es: 'Ese código no existe', en: 'That code does not exist' },
+  'vouchers.cos.refusal.voucher_invalid.body': { es: 'Revisa que esté escrito igual que en el correo. Si sigue sin funcionar, escríbenos.', en: 'Check that it matches the email exactly. If it still does not work, write to us.' },
+  'vouchers.cos.refusal.voucher_expired.title': { es: 'Este bono venció', en: 'This voucher has expired' },
+  'vouchers.cos.refusal.voucher_expired.body': { es: 'Ya pasó su fecha de vencimiento, así que no se puede canjear. No se sumó nada a tu saldo.', en: 'Its expiry date has passed, so it cannot be redeemed. Nothing was added to your balance.' },
+  'vouchers.cos.refusal.voucher_used_up.title': { es: 'Este bono ya se usó', en: 'This voucher has already been used' },
+  'vouchers.cos.refusal.voucher_used_up.body': { es: 'Ya lo canjeaste con esta cuenta, o alcanzó su límite de usos. No se sumó nada a tu saldo.', en: 'You already redeemed it with this account, or it reached its usage limit. Nothing was added to your balance.' },
+  'vouchers.cos.refusal.voucher_redeemed.title': { es: 'Este bono ya fue canjeado', en: 'This voucher has already been redeemed' },
+  'vouchers.cos.refusal.voucher_redeemed.body': { es: 'Sus clases ya no se pueden cambiar.', en: 'Its classes can no longer be changed.' },
+  'vouchers.cos.refusal.invalid_quantity.title': { es: 'Número no válido', en: 'Invalid number' },
+  'vouchers.cos.refusal.invalid_quantity.body': { es: 'Las clases y el límite de usos deben ser números enteros mayores que cero.', en: 'Classes and the usage limit must be whole numbers greater than zero.' },
+  'vouchers.cos.refusal.lot_expired.title': { es: 'Este bono venció', en: 'This voucher has expired' },
+  'vouchers.cos.refusal.lot_expired.body': { es: 'Su fecha de vencimiento ya pasó. No se sumó nada a tu saldo.', en: 'Its expiry date has passed. Nothing was added to your balance.' },
+  'vouchers.cos.refusal.forbidden.title': { es: 'No tienes permiso', en: 'You do not have permission' },
+  'vouchers.cos.refusal.forbidden.body': { es: 'Tu cuenta no puede hacer esto. Si crees que es un error, avísale a la administración.', en: 'Your account cannot do this. If you think this is a mistake, tell the studio administration.' },
+  'vouchers.cos.refusal.write_forbidden.title': { es: 'No tienes permiso', en: 'You do not have permission' },
+  'vouchers.cos.refusal.write_forbidden.body': { es: 'Tu cuenta no puede hacer esto. Si crees que es un error, avísale a la administración.', en: 'Your account cannot do this. If you think this is a mistake, tell the studio administration.' },
+  'vouchers.cos.refusal.idempotency_conflict.title': { es: 'Los datos cambiaron', en: 'The details changed' },
+  'vouchers.cos.refusal.idempotency_conflict.body': { es: 'Ya enviaste esta solicitud con otros datos. Revísalos e inténtalo de nuevo.', en: 'You already sent this request with other details. Check them and try again.' },
+  'vouchers.cos.refusal.generic.title': { es: 'No se pudo completar', en: 'It could not be completed' },
+  'vouchers.cos.refusal.generic.body': { es: 'Inténtalo de nuevo en un momento; no se hizo ningún cambio doble.', en: 'Try again in a moment; nothing is done twice.' },
+};
