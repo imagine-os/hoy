@@ -7,6 +7,7 @@
  */
 import { useCallback, useMemo } from 'react';
 import { useData, useTable } from './DataContext';
+import { PRODUCTION_BUILD } from '../config/launch';
 import type { MessageChannel, MessageLogRow, MessageSource } from './schema';
 import { useSession } from '../auth/SessionProvider';
 import { useI18n } from '../i18n/I18nProvider';
@@ -31,6 +32,8 @@ export function useMessaging(auditSource: AuditSource = 'front_desk') {
   const audit = useAudit(auditSource);
 
   const send = useCallback(async (channel: Extract<MessageChannel, 'whatsapp' | 'email'>, input: SendInput & { subject?: string }) => {
+    // H-9: the production build sends email only through Company OS; a local row marked "sent" would be a simulated send.
+    if (PRODUCTION_BUILD && channel === 'email') throw new Error('email_not_connected');
     const now = new Date();
     // Quiet hours hold WhatsApp (Meta marketing/utility rules and the studio's own courtesy); email has no such window.
     const hold = channel === 'whatsapp' && inQuietHours(now, settings.quietHours);
