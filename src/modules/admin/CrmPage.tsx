@@ -16,6 +16,8 @@ import { DataTable, type DataTableColumn } from '../../components/organism/DataT
 import { EmptyState } from '../../components/molecule/EmptyState/EmptyState';
 import { maskPhone, personMatches, usePeople, type Person } from '../staff/people';
 import './admin.css';
+import { PRODUCTION_BUILD } from '../../config/launch';
+import { LiveCustomerList } from './customers/LiveCustomerList';
 
 export type Segment = 'all' | 'at_risk' | 'new' | 'no_membership' | 'birthdays';
 const SEGMENTS: Segment[] = ['all', 'at_risk', 'new', 'no_membership', 'birthdays'];
@@ -64,8 +66,12 @@ function inSegment(p: Person, s: MemberStats | undefined, seg: Segment): boolean
   }
 }
 
-/** M-06 list — segment rail, search, member table. */
+/** M-06 list. AD-07: the production build lists Company OS customers with their credits; the review build keeps the demo CRM. */
 export function CrmPage() {
+  return PRODUCTION_BUILD ? <LiveCustomerList /> : <ReviewCrmPage />;
+}
+
+function ReviewCrmPage() {
   const { t, lang, bi } = useI18n();
   const nav = useNavigate();
   const desktop = useMinWidth('shell');

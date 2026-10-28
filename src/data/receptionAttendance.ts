@@ -8,6 +8,8 @@ export type AttendanceStatus = 'booked' | 'checked_in' | 'no_show';
 export interface ReceptionAttendance {
   actorId: string; role: Role; bookingId: string; sessionId: string; userId: string;
   requestId: string; status: AttendanceStatus;
+  /** RC-02: why an arrival or no-show is undone (required for an undo; kept in the audit row). */
+  reason?: string;
   before: Pick<BookingRow, 'status' | 'checked_in_at' | 'updated_at'>;
 }
 interface Outcome { bookingId: string; status: AttendanceStatus; checkedInAt: string | null }
@@ -44,10 +46,11 @@ export async function setReceptionAttendance(data: DataProvider, input: Receptio
     const now = (control.now ?? Date.now)();
     if (!Number.isFinite(now)) throw new Error('attendance_conflict');
     if (input.status === 'booked' && !receptionUndoEligible(session, now)) throw new Error('attendance_undo_policy_pending');
+    if (input.status === 'booked' && !input.reason?.trim()) throw new Error('reason_required');
     const checkedInAt = input.status === 'checked_in' ? new Date(now).toISOString() : null;
     await tx.update('bookings', booking.id, { status: input.status, checked_in_at: checkedInAt }); guard();
     const outcome: Outcome = { bookingId: booking.id, status: input.status, checkedInAt };
-    await tx.insert('audit_log', { id: auditId, actor_id: input.actorId, action: input.status === 'checked_in' ? 'booking.checkin' : input.status === 'no_show' ? 'booking.no_show' : 'booking.undo', entity: 'bookings', entity_id: booking.id, ip: null, diff: { role: input.role, source: 'front_desk', before: booking.status, after: input.status, session_id: session.id, user_id: booking.user_id, fingerprint, outcome } }); guard();
+    await tx.insert('audit_log', { id: auditId, actor_id: input.actorId, action: input.status === 'checked_in' ? 'booking.checkin' : input.status === 'no_show' ? 'booking.no_show' : 'booking.undo', entity: 'bookings', entity_id: booking.id, ip: null, diff: { role: input.role, source: 'front_desk', before: booking.status, after: input.status, session_id: session.id, user_id: booking.user_id, ...(input.reason ? { reason: input.reason } : {}), fingerprint, outcome } }); guard();
     return outcome;
   }, { failAfterWrites: control.failAfterWrites });
 }

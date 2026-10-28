@@ -1,5 +1,12 @@
 import type { StringTable } from '../../i18n/types';
+import { deskStrings } from './desk/strings';
+import { teamStrings } from '../admin/team/strings';
+import { receptionHoursStrings } from '../admin/reception/strings';
 export const strings: StringTable = {
+  ...deskStrings,
+  // H-7 admin copy kept with the desk's, so lanes editing admin/strings.ts don't collide.
+  ...teamStrings,
+  ...receptionHoursStrings,
   'staff.count.codes': {es:'Valores registrados (método/proveedor/estado)', en:'Recorded values (method/provider/status)'},
   'staff.count.unrecognized': {es:'Valor no reconocido', en:'Unrecognized value'},
   'staff.count.status.voided': {es:'Anulado', en:'Voided'},

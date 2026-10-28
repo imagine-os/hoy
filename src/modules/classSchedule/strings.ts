@@ -1,7 +1,9 @@
 import { payRuleStrings } from '../../components/organism/ClassPayRulesPanel/strings';
+import { liveScheduleStrings } from './live/strings';
 import type { StringTable } from '../../i18n/types';
 export const strings: StringTable = {
  ...payRuleStrings,
+ ...liveScheduleStrings,
  'bulk.saveError': { es: 'No se pudo guardar. Puede que el almacenamiento del navegador esté lleno. El cambio sigue en el editor; revisa el almacenamiento y vuelve a intentar.', en: 'Could not save. Browser storage may be full. Your change is still in the editor; check browser storage and try again.' },
  'recurrence.title': { es: 'Cómo se repite esta clase', en: 'How this class repeats' },
  'recurrence.explain': { es: 'Una vez por semana, el día y la hora elegidos, entre las fechas opcionales. Guarda primero y revisa hasta 6 semanas en la zona horaria de este navegador. Crear agrega solo fechas faltantes; no mueve ni modifica reservas existentes. Las plantillas antiguas de la demo también generan fechas al recargar.', en: 'Once a week, on the chosen day and time, within the optional date range. Save first, then preview up to 6 weeks in this browser’s timezone. Create adds missing dates only; it does not move or modify existing bookings. Older demo templates also generate dates on reload.' },

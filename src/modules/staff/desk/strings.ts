@@ -1,0 +1,78 @@
+import type { StringTable } from '../../../i18n/types';
+
+/** H-7 · desk and admin copy for the Company OS refusal codes these screens can receive, plus the new desk controls. */
+export const DESK_CODES = [
+  'occurrence_full', 'occurrence_not_open', 'already_booked', 'daily_limit_reached', 'spot_required', 'spot_invalid', 'spot_taken',
+  'hold_expired', 'invalid_transition', 'booking_system_managed', 'reason_required',
+  'no_credits', 'lot_expired', 'lot_frozen', 'trial_used',
+  'product_inactive', 'audience_not_allowed', 'amount_mismatch', 'invalid_amount', 'invalid_status_transition',
+  'already_signed_up', 'person_email_mismatch', 'consent_required', 'duplicate_facet',
+  'idempotency_conflict', 'idempotency_key_invalid', 'forbidden', 'disconnected', 'conflict',
+  'person_linked_to_other_user', 'user_linked_to_other_person', 'role_mismatch', 'redirect_not_allowed', 'invitation_failed', 'invitations_not_supported',
+  'occurrence_generated', 'resource_overlap', 'invalid_settings',
+] as const;
+
+export const deskStrings: StringTable = {
+  'desk.error.occurrence_full': { es: 'La clase está llena. No se descontó ninguna clase.', en: 'The class is full. No class was deducted.' },
+  'desk.error.occurrence_not_open': { es: 'La clase ya empezó, terminó o fue cancelada.', en: 'The class has started, ended or was cancelled.' },
+  'desk.error.already_booked': { es: 'Esta persona ya tiene un cupo en esta clase.', en: 'This person already has a spot in this class.' },
+  'desk.error.daily_limit_reached': { es: 'Esta persona ya tiene una clase ese día.', en: 'This person already has a class that day.' },
+  'desk.error.spot_required': { es: 'Elige un tapete.', en: 'Choose a mat.' },
+  'desk.error.spot_invalid': { es: 'Ese tapete no existe en este salón.', en: 'That mat does not exist in this room.' },
+  'desk.error.spot_taken': { es: 'Ese tapete ya está ocupado.', en: 'That mat is already taken.' },
+  'desk.error.hold_expired': { es: 'La reserva en espera venció y el cupo se liberó.', en: 'The held booking expired and the spot was released.' },
+  'desk.error.invalid_transition': { es: 'Ese cambio no está permitido para esta reserva ahora.', en: 'That change is not allowed for this booking now.' },
+  'desk.error.booking_system_managed': { es: 'El sistema gestiona este cambio; no se puede hacer a mano.', en: 'The system manages this change; it cannot be made by hand.' },
+  'desk.error.reason_required': { es: 'Escribe el motivo (si ya se deshizo antes, uno distinto al anterior).', en: 'Write the reason (if it was undone before, a different one).' },
+  'desk.error.no_credits': { es: 'No tiene clases disponibles. Cobra primero.', en: 'No classes available. Take payment first.' },
+  'desk.error.lot_expired': { es: 'Su paquete venció.', en: 'Their package has expired.' },
+  'desk.error.lot_frozen': { es: 'Su paquete está congelado.', en: 'Their package is frozen.' },
+  'desk.error.trial_used': { es: 'Esta persona ya usó su clase de prueba.', en: 'This person has already used their trial class.' },
+  'desk.error.product_inactive': { es: 'Ese producto no está a la venta.', en: 'That product is not on sale.' },
+  'desk.error.audience_not_allowed': { es: 'Este precio es solo para afiliados.', en: 'This price is for affiliates only.' },
+  'desk.error.amount_mismatch': { es: 'El valor no coincide con el precio. Escribe el motivo de la diferencia.', en: 'The amount does not match the price. Write the reason for the difference.' },
+  'desk.error.invalid_amount': { es: 'El valor debe ser un número entero de pesos.', en: 'The amount must be a whole number of pesos.' },
+  'desk.error.invalid_status_transition': { es: 'Este pago ya fue revisado.', en: 'This payment has already been reviewed.' },
+  'desk.error.already_signed_up': { es: 'Esta persona ya tiene cuenta y puede entrar.', en: 'This person already has an account and can sign in.' },
+  'desk.error.person_email_mismatch': { es: 'El correo no coincide con el de la persona.', en: 'The email does not match the person’s.' },
+  'desk.error.consent_required': { es: 'Falta la aceptación de los términos.', en: 'Acceptance of the terms is missing.' },
+  'desk.error.duplicate_facet': { es: 'Esta persona ya está registrada como cliente.', en: 'This person is already registered as a customer.' },
+  'desk.error.idempotency_conflict': { es: 'Esta acción ya se envió con otros datos. Recarga la página.', en: 'This action was already sent with other data. Reload the page.' },
+  'desk.error.idempotency_key_invalid': { es: 'No se pudo enviar. Recarga la página.', en: 'Could not send. Reload the page.' },
+  'desk.error.forbidden': { es: 'Tu rol no permite esta acción.', en: 'Your role does not allow this action.' },
+  'desk.error.disconnected': { es: 'Sin conexión con el sistema. Vuelve a intentar.', en: 'No connection to the system. Try again.' },
+  'desk.error.conflict': { es: 'Otra persona cambió esto. Recarga y vuelve a intentar.', en: 'Someone else changed this. Reload and try again.' },
+  'desk.error.person_linked_to_other_user': { es: 'Esa persona ya está vinculada a otra cuenta.', en: 'That person is already linked to another account.' },
+  'desk.error.user_linked_to_other_person': { es: 'Esa cuenta ya está vinculada a otra persona.', en: 'That account is already linked to another person.' },
+  'desk.error.role_mismatch': { es: 'Esa cuenta ya tiene otro rol. Quítalo primero.', en: 'That account already has another role. Remove it first.' },
+  'desk.error.redirect_not_allowed': { es: 'La dirección de la app no está autorizada para invitaciones.', en: 'The app address is not authorised for invitations.' },
+  'desk.error.invitation_failed': { es: 'No se pudo crear la invitación. El acceso quedó guardado; vuelve a enviar.', en: 'The invitation could not be created. The access was saved; send it again.' },
+  'desk.error.invitations_not_supported': { es: 'Este entorno no envía invitaciones.', en: 'This environment does not send invitations.' },
+  'desk.error.occurrence_generated': { es: 'Esta clase se generó del horario: cancélala en vez de borrarla.', en: 'This class was generated from the schedule: cancel it instead of deleting it.' },
+  'desk.error.resource_overlap': { es: 'El salón ya está ocupado a esa hora.', en: 'The room is already in use at that time.' },
+  'desk.error.invalid_settings': { es: 'Revisa el formato del horario.', en: 'Check the hours format.' },
+  'desk.error.generic': { es: 'No se pudo guardar (código {code}). No se cambió nada.', en: 'Could not save (code {code}). Nothing was changed.' },
+
+  'desk.sale.checkInFailed': { es: 'Venta guardada, pero no se registró la llegada. Márcala en Check-in; no vuelvas a cobrar.', en: 'Sale saved, but the arrival was not recorded. Mark it on Check-in; do not charge again.' },
+  'desk.sale.reference': { es: 'Referencia (transferencia o voucher del datáfono)', en: 'Reference (transfer or card-terminal slip)' },
+  'admin.crm.live.capped': { es: 'La lista puede estar incompleta: hay más registros de los que se cargan de una vez.', en: 'The list may be incomplete: there are more records than load at once.' },
+  'desk.compose.failed': { es: 'No se pudo enviar. El mensaje sigue aquí; vuelve a intentar.', en: 'Could not send. The message is still here; try again.' },
+  'desk.undo.reason': { es: 'Motivo para deshacer', en: 'Reason to undo' },
+  'desk.undo.reason.ph': { es: 'Ej.: marcada por error', en: 'E.g. marked by mistake' },
+  'desk.undo.confirm': { es: 'Confirmar deshacer', en: 'Confirm undo' },
+  'desk.noShow.backToBooked': { es: 'Deshacer no asistió', en: 'Undo no-show' },
+  'desk.held.title': { es: 'En espera de pago', en: 'Waiting for payment' },
+  'desk.held.approveCheckin': { es: 'Aprobar pago y registrar llegada', en: 'Approve payment and check in' },
+  'desk.held.amount': { es: 'Valor recibido', en: 'Amount received' },
+  'desk.held.reason': { es: 'Motivo de la diferencia', en: 'Reason for the difference' },
+  'desk.held.noPayment': { es: 'Sin comprobante: cobra en el registro', en: 'No receipt: take payment at the register' },
+  'desk.figures.pending': { es: 'Pagos por revisar', en: 'Payments to review' },
+  'desk.figures.noShows': { es: '{n} no asistieron', en: '{n} no-shows' },
+  'desk.walkin.consent': { es: 'La persona aceptó de palabra los términos y la política de datos', en: 'The person accepted the terms and the data policy verbally' },
+  'desk.server.rules': { es: 'El sistema revisa cupos, saldo, vigencia y una clase por día al guardar.', en: 'The system checks spots, balance, validity and one class a day when saving.' },
+};
+
+/** The copy key for a refusal code; anything unknown shows the generic line with the code, so support can trace it. */
+export function deskErrorText(code: string, t: (key: string, vars?: Record<string, string | number>) => string): string {
+  return (DESK_CODES as readonly string[]).includes(code) ? t(`desk.error.${code}`) : t('desk.error.generic', { code });
+}

@@ -34,6 +34,9 @@ import { bookWithPackage } from '../../data/deskBooking';
 import { maskPhone, personMatches, usePeople } from './people';
 import { BOOKING_KINDS, KIND_FOR_ITEM, KIND_LABEL, dateInputValue, findConflicts, localIso, timeInputValue } from './rooms';
 import './staff.css';
+import { DeskSalePage } from './desk/DeskSalePage';
+import { useDeskCommands } from './desk/useDesk';
+import { PRODUCTION_BUILD } from '../../config/launch';
 import { addDays, dateKey, digitsOf, parseDigits } from '../../i18n/format';
 import { assertTrialAvailable, fakeRef } from '../customer/payments';
 
@@ -59,8 +62,14 @@ interface Sale { payment: PaymentRow; number: string; subtotal: number; tax: num
 interface Special { on: boolean; source: string | null; people: number; concept: string; amountRaw: string; teacherId: string; payoutRaw: string; roomId: string; kind: SpaceBookingKind; date: string; start: string; end: string; note: string; bookingId: string | null }
 const NO_SPECIAL: Special = { on: false, source: null, people: 1, concept: '', amountRaw: '', teacherId: '', payoutRaw: '', roomId: '', kind: 'private_event', date: '', start: '', end: '', note: '', bookingId: null };
 
-/** S-04 — who · what · how, then a printable receipt. Prices from pricing.ts, IVA from M-08. */
+/** S-04 — the production build sells through the server (DeskSalePage); the review build keeps the browser register below. */
 export function RegisterPage() {
+  const desk = useDeskCommands();
+  return PRODUCTION_BUILD || desk?.kind === 'server' ? <DeskSalePage /> : <ReviewRegisterPage />;
+}
+
+/** S-04 (review build) — who · what · how, then a printable receipt. Prices from pricing.ts, IVA from M-08. */
+function ReviewRegisterPage() {
   const { t, lang, bi } = useI18n();
   const data = useData();
   const { user, role, can } = useSession();

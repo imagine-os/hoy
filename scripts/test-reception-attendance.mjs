@@ -13,7 +13,7 @@ try{
  const attendee=await createSyntheticAdmissionCustomer(data,'qa_attendance_user',{name:'FICTIONAL ATTENDANCE',email:'attendance@example.invalid'});
  await data.insert('class_sessions',{...base,id:'qa_attendance_class',template_id:null,modality_id:'mod_alineacion',starts_at:new Date(now+86400000).toISOString(),ends_at:new Date(now+89400000).toISOString(),status:'scheduled',booked_count:0});
  const booking=await data.insert('bookings',{user_id:attendee.id,session_id:'qa_attendance_class',status:'booked',paid_with:'package',mat_number:1,checked_in_at:null,ledger_id:null});
- const input=(status,requestId='fictional-request')=>{const b=data.peek('bookings').find(b=>b.id===booking.id);return {actorId:'usr_desk',role:'front_desk',bookingId:b.id,sessionId:b.session_id,userId:b.user_id,requestId,status,before:{status:b.status,checked_in_at:b.checked_in_at,updated_at:b.updated_at}};};
+ const input=(status,requestId='fictional-request')=>{const b=data.peek('bookings').find(b=>b.id===booking.id);return {actorId:'usr_desk',role:'front_desk',bookingId:b.id,sessionId:b.session_id,userId:b.user_id,requestId,status,...(status==='booked'?{reason:'FICTIONAL correction'}:{}),before:{status:b.status,checked_in_at:b.checked_in_at,updated_at:b.updated_at}};};
  const snapshot=()=>JSON.stringify(data.peek('bookings'))+JSON.stringify(data.peek('class_sessions'))+JSON.stringify(data.peek('audit_log'));let events=0;data.subscribe('*',()=>events++);
  const checkin=input('checked_in');
  for(const failAfterWrites of [1,2]){const before=snapshot(),count=events;await assert.rejects(run(data,checkin,{failAfterWrites}),/mock_injected/);assert.equal(snapshot(),before);assert.equal(events,count);}
