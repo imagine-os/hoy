@@ -6,6 +6,7 @@ import { Input } from '../../atom/Input/Input';
 import { Button } from '../../atom/Button/Button';
 import './MessageComposer.css';
 import { LIMITS } from '../../../shared/limits';
+import { PRODUCTION_BUILD } from '../../../config/launch';
 
 export type ComposerChannel = Extract<MessageChannel, 'whatsapp' | 'email' | 'note'>;
 export interface ComposerMessage { channel: ComposerChannel; subject?: string; text: string }
@@ -29,9 +30,13 @@ export interface MessageComposerProps {
  * The reply box under a conversation: pick WhatsApp / Email / Nota, write (subject too for email), send.
  * Ctrl+Enter sends. Clears itself after a successful send. Sending itself is the caller's job (useMessaging()).
  */
-export function MessageComposer({ onSend, channels = ['whatsapp', 'email', 'note'], defaultChannel, whatsappBlocked, quietUntil, readOnly = false, author }: MessageComposerProps) {
+export function MessageComposer({ onSend, channels: offered = ['whatsapp', 'email', 'note'], defaultChannel, whatsappBlocked, quietUntil, readOnly = false, author }: MessageComposerProps) {
   const { t } = useI18n();
-  const [channel, setChannel] = useState<ComposerChannel>(defaultChannel ?? channels[0]);
+  // Production: no email channel from the staff composer at launch (sending by hand isn't wired; the launch emails are
+  // automations, lane H-9). Without this the send fails and the draft is left behind.
+  const channels = PRODUCTION_BUILD ? offered.filter((c) => c !== 'email') : offered;
+  const [channel, setChannel] = useState<ComposerChannel>(defaultChannel && channels.includes(defaultChannel) ? defaultChannel : channels[0]);
+  const [failed, setFailed] = useState(false);
   const [subject, setSubject] = useState('');
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
@@ -40,20 +45,23 @@ export function MessageComposer({ onSend, channels = ['whatsapp', 'email', 'note
 
   const send = async () => {
     if (!ready) return;
-    setBusy(true);
+    setBusy(true); setFailed(false);
     try {
       await onSend({ channel, text: text.trim(), subject: channel === 'email' ? subject.trim() : undefined });
       setText(''); setSubject('');
+    } catch {
+      // A failed send keeps the draft and says so, instead of an unhandled rejection.
+      setFailed(true);
     } finally { setBusy(false); }
   };
   const onKey = (e: KeyboardEvent<HTMLTextAreaElement>) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); void send(); } };
-  const hint = readOnly ? t('core.msg.compose.readonly') : channel === 'whatsapp' && whatsappBlocked ? whatsappBlocked : channel === 'whatsapp' && quietUntil ? t('core.msg.compose.quiet', { to: quietUntil }) : channel === 'note' ? t('core.msg.note.hint') : undefined;
+  const hint = failed ? t('desk.compose.failed') : readOnly ? t('core.msg.compose.readonly') : channel === 'whatsapp' && whatsappBlocked ? whatsappBlocked : channel === 'whatsapp' && quietUntil ? t('core.msg.compose.quiet', { to: quietUntil }) : channel === 'note' ? t('core.msg.note.hint') : undefined;
 
   return (
     <div className={`composer composer-${channel} ${blocked ? 'is-blocked' : ''}`}>
       <div className="composer-top">
         <SegmentedControl size="sm" ariaLabel={t('core.msg.compose.channel')} value={channel} onChange={setChannel} options={channels.map((c) => ({ value: c, label: t(`core.msg.channel.${c}`) }))} />
-        {hint && <p className={`composer-hint xs ${channel === 'whatsapp' && whatsappBlocked && !readOnly ? 'is-warn' : 'muted'}`}>{hint}</p>}
+        {hint && <p role={failed ? 'alert' : undefined} className={`composer-hint xs ${failed || (channel === 'whatsapp' && whatsappBlocked && !readOnly) ? 'is-warn' : 'muted'}`}>{hint}</p>}
       </div>
       {channel === 'email' && <Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder={t('core.msg.compose.subject')} aria-label={t('core.msg.compose.subject')} disabled={blocked} />}
       <textarea

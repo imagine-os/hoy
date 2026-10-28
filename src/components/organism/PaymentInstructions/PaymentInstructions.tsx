@@ -7,10 +7,13 @@ import {usePaymentInstructions} from '../../../modules/admin/usePaymentInstructi
 import {Button} from '../../atom/Button/Button';
 import {Notice} from '../../molecule/Notice/Notice';
 import './PaymentInstructions.css';
+import {PRODUCTION_BUILD} from '../../../config/launch';
+/** AD-05: in the production build these lines read the real-payment copy instead of the demo boundary. */
+const LIVE_KEYS=new Set(['title','boundary','qrAlt']);
 export interface PaymentInstructionsProps{view?:PaymentInstructionsView;status:'loading'|'ready'|'error';onRetry?:()=>void;locale?:Lang}
 export function PaymentInstructions({view,status,onRetry,locale}:PaymentInstructionsProps){
  const[failedImage,setFailedImage]=useState<string|null>(null);useEffect(()=>setFailedImage(null),[status,view?.values.qrImageUrl]);
- const{lang}=useI18n(),language=locale??lang,text=(key:string)=>{const entry=strings[`admin.paymentInstructions.${key}`];return(language==='en'?entry.en:entry.es)??entry.es;};
+ const{lang}=useI18n(),language=locale??lang,text=(key:string)=>{const entry=strings[`admin.paymentInstructions.${PRODUCTION_BUILD&&LIVE_KEYS.has(key)?`live.${key}`:key}`];return(language==='en'?entry.en:entry.es)??entry.es;};
  return <section className="payment-instructions stack-sm" aria-label={text('title')} data-payment-instructions={status}>
   <h3 className="small">{text('title')}</h3><p className="xs muted">{text('boundary')}</p>
   {status==='loading'?<div className="stack-sm"><p role="status" aria-busy="true">{text('loading')}</p>{onRetry&&<Button variant="secondary" onClick={onRetry}>{text('retry')}</Button>}</div>:status==='error'||!view?<Notice tone="warn" action={onRetry&&<Button variant="secondary" onClick={onRetry}>{text('retry')}</Button>}>{text('error')}</Notice>:<>

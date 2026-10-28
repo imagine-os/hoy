@@ -1,3 +1,5 @@
+import { PRODUCTION_BUILD } from '../../config/launch';
+import { LiveSchedulePage } from './live/LiveSchedulePage';
 import { StudioCancellationPanel } from './StudioCancellationPanel';
 import { tenant } from '../../tenant/tenant';
 import { ClassPayRulesPanel } from '../../components/organism/ClassPayRulesPanel/ClassPayRulesPanel';
@@ -22,7 +24,12 @@ import { resolveSessionEditorial } from '../../data/sessionEditorial';
 import type { Bi } from '../../specs/types';
 import { scheduleSpec } from './specs';
 
+/** AD-01: the production build edits Company OS schedules, dates, teachers and rooms; the review build keeps the demo editor. */
 export function ClassSchedulePage() {
+ return PRODUCTION_BUILD ? <LiveSchedulePage /> : <ReviewSchedulePage />;
+}
+
+function ReviewSchedulePage() {
  const { t, bi, lang } = useI18n();
  const { rows: sessions, loading } = useTable<ClassSessionRow>('class_sessions', { orderBy: { column: 'starts_at' } });
  const { rows: teachers } = useTable<TeacherRow>('teachers');

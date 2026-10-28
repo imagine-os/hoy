@@ -3,6 +3,8 @@ import {SavedPaymentInstructions} from '../../components/organism/PaymentInstruc
 import {validPaymentSettings,type PaymentSettings} from './paymentInstructions';
 import {usePaymentSettingsSave} from './usePaymentSettingsSave';
 import {TeamProposalPanel} from '../../components/organism/TeamProposalPanel/TeamProposalPanel';
+import { TeamUsersPanel } from './team/TeamUsersPanel';
+import { PRODUCTION_BUILD } from '../../config/launch';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { useI18n } from '../../i18n/I18nProvider';
@@ -127,7 +129,8 @@ export function SettingsPage({ group = 'general' }: { group?: SettingsGroup }) {
           {group === 'general' && (
             <>
               <GeneralActions />
-              <TeamProposalPanel />
+              {/* AD-06: the production build manages Company OS team users; the review build keeps the fictional proposals. */}
+              {PRODUCTION_BUILD ? <TeamUsersPanel /> : <TeamProposalPanel />}
               {S('profile', t('admin.settings.sec.profile'), (d, set) => (
                 <>
                   <div className="row-between wrap">

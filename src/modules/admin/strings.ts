@@ -3,6 +3,10 @@ import { directoryStrings } from '../../shared/subscriptions/strings';
 import type { StringTable } from '../../i18n/types';
 export const strings: StringTable = {
   'admin.paymentInstructions.title': {es:'Instrucciones de pago demo',en:'Demo payment instructions'},
+  // AD-05 · production copy: the same block shows the studio's real bank details, so it never says "demo" or "don't pay".
+  'admin.paymentInstructions.live.title': {es:'Datos para transferir',en:'Transfer details'},
+  'admin.paymentInstructions.live.boundary': {es:'Transfiere el valor exacto a esta cuenta y sube el comprobante. Recepción lo revisa y confirma tu clase.',en:'Transfer the exact amount to this account and upload the receipt. The front desk reviews it and confirms your class.'},
+  'admin.paymentInstructions.live.qrAlt': {es:'Código QR para transferir al estudio',en:'QR code to transfer to the studio'},
   'admin.paymentInstructions.boundary': {es:'Vista previa ficticia. No valida la cuenta ni la imagen QR y no inicia transferencias. No realices pagos reales con estos datos.',en:'Fictional preview. Does not validate the account or QR image and does not initiate transfers. Do not make real payments using these details.'},
   'admin.paymentInstructions.bankName': {es:'Banco',en:'Bank'},
   'admin.paymentInstructions.accountType': {es:'Tipo de cuenta',en:'Account type'},

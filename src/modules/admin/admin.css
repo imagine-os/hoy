@@ -155,3 +155,4 @@
 
 /* AD-07: customer balance cards remain readable at phone widths. */
 .crm-person-link { color: inherit; text-decoration: none; }
+.crm-name { overflow-wrap: anywhere; }
