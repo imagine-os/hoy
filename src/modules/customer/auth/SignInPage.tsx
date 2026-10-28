@@ -1,7 +1,8 @@
 import {useData} from '../../../data/DataContext';
+import { PRODUCTION_BUILD } from '../../../config/launch';
 import {useMockSignIn} from './useMockSignIn';
 import {DemoSignInPanel} from '../../../components/organism/DemoSignInPanel/DemoSignInPanel';
-import { useMemo, useRef, useState, type FormEvent } from 'react';
+import { lazy, Suspense, useMemo, useRef, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useSession } from '../../../auth/SessionProvider';
@@ -30,7 +31,7 @@ export const LOCK_KEY = 'hoyos.auth.lockUntil';
 const readAttempts = () => { try { return Number(sessionStorage.getItem(ATTEMPTS_KEY) ?? 0); } catch { return 0; } };
 
 /** A-02 Sign in — demo mode: pick a demo user, or type a demo email. Providers arrive with Supabase Auth. */
-export function SignInPage() {
+function DemoSignInPage() {
   const { t, bi } = useI18n();
   const nav = useNavigate();
   const { switchUser } = useSession();
@@ -110,3 +111,14 @@ export function SignInPage() {
     </AuthShell>
   );
 }
+
+/**
+ * H-2: the production build signs in with Clerk (src/modules/identity). `PRODUCTION_BUILD ? … : …` on the constant
+ * itself lets the bundler drop the unused side: no Clerk in the review build, no demo sign-in in production.
+ */
+function productionSignInPage() {
+  const Page = lazy(() => import('../../identity/pages').then((m) => ({ default: () => <m.CosAuthPage mode="sign-in" /> })));
+  return function CosSignInPage() { return <Suspense fallback={null}><Page /></Suspense>; };
+}
+
+export const SignInPage = PRODUCTION_BUILD ? productionSignInPage() : DemoSignInPage;

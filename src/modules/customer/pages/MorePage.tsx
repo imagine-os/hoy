@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { pendingSuffix, useContact, useOpeningHours, useWhatsappLink } from '../../admin/settings';
 import { useSession } from '../../../auth/SessionProvider';
+import { PRODUCTION_BUILD } from '../../../config/launch';
 import { tenant } from '../../../tenant/tenant';
 import { Card } from '../../../components/molecule/Card/Card';
 import { Avatar } from '../../../components/atom/Avatar/Avatar';
@@ -30,7 +31,7 @@ export function MorePage() {
   const wa = useWhatsappLink();
   const support = wa.resolve('support');
   const nav = useNavigate();
-  const { user, devMode, switchUser } = useSession();
+  const { user, devMode, signOut } = useSession();
   const { profile } = useMyProfile();
   const ent = useEntitlements();
   const name = profile?.full_name ?? user.name;
@@ -94,7 +95,9 @@ export function MorePage() {
         )}
 
         <ListGroup>
-          <ListRow icon="log-out" title={t('customer.profile.signOut')} onClick={() => { switchUser('public'); nav('/auth/sign-in'); }} />
+          {/* H-2 (CU-04): the production build changes the sign-in email in C-38. */}
+          {PRODUCTION_BUILD && <ListRow icon="key-round" title={t('identity.access.nav')} to="/app/access" />}
+          <ListRow icon="log-out" title={t('customer.profile.signOut')} onClick={async () => { await signOut(); nav('/auth/sign-in'); }} />
         </ListGroup>
         <p className="xs muted" style={{ textAlign: 'center' }}>{tenant.legalName} · {contact.city}</p>
       </div>

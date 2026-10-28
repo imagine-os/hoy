@@ -56,8 +56,12 @@ jobs:
         run: node scripts/check-company-os.mjs
       - name: Hoy server tests
         run: node scripts/test-hoy-server.mjs
-      - name: Build
-        run: npm run build
+      - name: Build (production: Clerk, launch routes, no review tools; H-2)
+        run: npm run build:production
+      - name: Production bundle checks (H-2; refuses demo data, review tools, docs, screenshots)
+        run: |
+          node scripts/test-auth-identity.mjs
+          QA_PROD_ONLY=1 QA_PROD_DIST=dist QA_STRICT_DEMO_DATA=1 node scripts/test-auth-builds.mjs
       - name: Bundle (server + built frontend, secret scan)
         run: node server/make-bundle.mjs "$RUNNER_TEMP/web"
       - uses: actions/upload-artifact@v4

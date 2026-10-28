@@ -37,7 +37,7 @@ export function ProfilePage() {
   const nav = useNavigate();
   const data = useData();
   const emailChange=useEmailChange();
-  const { user, role, switchUser } = useSession();
+  const { user, role, signOut: endSession } = useSession();
   const { sections, isVisible } = useLayout(spec);
   const own = useOwnProfile(data,user.id);
   const { profile, account } = own;
@@ -89,7 +89,7 @@ export function ProfilePage() {
     reader.readAsDataURL(file);
   };
   const verifyWhatsapp = async () => { if (profile) { await data.update('profiles', profile.id, { whatsapp_verified: true }); flash(t('customer.profile.whatsapp.verified')); } };
-  const signOut = () => { switchUser('public'); nav('/auth/sign-in'); };
+  const signOut = async () => { await endSession(); nav('/auth/sign-in'); };
 
   const name = profile?.full_name ?? user.name;
 

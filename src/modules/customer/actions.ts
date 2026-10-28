@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { PRODUCTION_BUILD } from '../../config/launch';
 import { useNavigate } from 'react-router-dom';
 import type { ActionDef, ActionHandler } from '../../actions/types';
 import { demoUsers } from '../../auth/demoUsers';
@@ -12,7 +13,8 @@ import { tenant } from '../../tenant/tenant';
  */
 /** 0051: the packages C-06 sells (no membership at launch). */
 const PLAN_IDS = ['pack12', 'pack12_smtc'];
-const SIGN_IN_IDS = demoUsers.filter((u) => u.role !== 'public').map((u) => u.id);
+// The production build signs in with Clerk: no demo user to name (PL-03).
+const SIGN_IN_IDS = PRODUCTION_BUILD ? [] : demoUsers.filter((u) => u.role !== 'public').map((u) => u.id);
 
 export const appGoHome: ActionDef = { id: 'app.goHome', label: { es: 'Ir al inicio', en: 'Go home' }, intent: { es: 'Llévame al inicio de la app', en: 'Take me to the app home' } };
 export const appOpenSchedule: ActionDef = { id: 'app.openSchedule', label: { es: 'Abrir el horario', en: 'Open the schedule' }, intent: { es: 'Muéstrame el horario de clases', en: 'Show me the class schedule' }, permission: 'classes.read' };
