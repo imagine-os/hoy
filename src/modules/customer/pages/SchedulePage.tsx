@@ -20,6 +20,7 @@ import { sessionUnavailableReason } from '../../../data/sessionAvailability';
 import { need, useAppNavHandlers } from '../actions';
 import { SERVER_RULES } from '../booking/bookingPolicy';
 import { holdsPlace, type ServerBookingRow } from '../booking/serverBooking';
+import { useLiveUpdates } from '../../../data/companyos/hooks';
 
 const specDay = canvasSpecs['C-02'];
 const specWeek = canvasSpecs['C-02b'];
@@ -43,6 +44,8 @@ function loadFilters(): Filters {
 
 /** C-02 Class schedule; with `view="week"` it is C-02b at /app/schedule/week (`?view=week` redirects there). */
 export function SchedulePage({ view: routeView }: SchedulePageProps) {
+  // Contract §1: this screen polls Company OS every 20 s in the production build (no-op on the review build).
+  useLiveUpdates(['class_sessions', 'bookings']);
   const { t, bi } = useI18n();
   const nav = useNavigate();
   const { user } = useSession();

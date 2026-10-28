@@ -30,6 +30,7 @@ import { approvedPackageRows, packageState } from '../../data/packages';
 import { bookWithPackage } from '../../data/deskBooking';
 import './staff.css';
 import { type Lang } from '../../i18n/types';
+import { useLiveUpdates } from '../../data/companyos/hooks';
 
 interface WaitlistRow extends BaseRow { user_id: string; session_id: string; position: number; status: string }
 
@@ -37,6 +38,8 @@ const MAIN = new Set(['TodayStrip (now / next / later)', 'MemberSearch + Capacit
 
 /** S-02 — the door board: today's strip, one roster, one search box, one-tap check-in, walk-ins and waitlist promotion. */
 export function CheckinPage() {
+  // Contract §1: this screen polls Company OS every 20 s in the production build (no-op on the review build).
+  useLiveUpdates(['bookings', 'class_sessions', 'payments', 'class_ledger']);
   const { t, lang } = useI18n();
   const data = useData();
   const { can, user, role } = useSession();

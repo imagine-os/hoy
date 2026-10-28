@@ -26,6 +26,7 @@ import { ClassThumbnail } from '../../../components/molecule/ClassThumbnail/Clas
 import { StudioCancelledBlock } from './blocks';
 import { SERVER_RULES } from '../booking/bookingPolicy';
 import { classPhase, holdsPlace, type ServerBookingRow } from '../booking/serverBooking';
+import { useLiveUpdates } from '../../../data/companyos/hooks';
 
 /** Production (H-4): no browser copy of the one-class-a-day rule; the server answers `daily_limit_reached`. */
 const NO_BROWSER_RULES = { sameDayConflict: () => null as string | null };
@@ -35,6 +36,8 @@ const spec = canvasSpecs['C-03'];
 
 /** C-03 Class detail. */
 export function ClassDetailPage() {
+  // Contract §1: this screen polls Company OS every 20 s in the production build (no-op on the review build).
+  useLiveUpdates(['class_sessions', 'bookings']);
   const { id } = useParams();
   const data = useData(), { user, role } = useSession();
   const { t, bi, lang } = useI18n();

@@ -96,7 +96,11 @@ export function PlansPage() {
   useActions(spec, handlers);
 
   const buy = async () => {
-    if (!buying||!review.available||!review.quote||buyBusy.current)return;
+    if (!buying)return;
+    // Production (SERVER_RULES): a pack is bought by bank transfer on H-5's payment page; Company OS prices it and issues the
+    // classes on approval. Its keys (pack12, pack12_smtc) are the recipe's product keys. The Wompi stand-in is review only.
+    if (SERVER_RULES && (PACKAGE_IDS as readonly string[]).includes(buying.id)) { nav(`/app/pay/product/${encodeURIComponent(buying.id)}`); return; }
+    if (!review.available||!review.quote||buyBusy.current)return;
     buyBusy.current=true;const frozen=review.quote;
     setBusy(true); setError(false);
     try {
@@ -167,7 +171,7 @@ export function PlansPage() {
             <OrderSummary lines={[{ label: bi(shownBuying.name), amount:review.quote?.chargedAmount??0 }]} taxRate={policy.ivaRate} subtotalLabel={t('customer.checkout.subtotal')} taxLabel={t('customer.checkout.iva')} totalLabel={t('customer.checkout.total')} note={t('quotes.packageTerms', {classes:review.quote?.classes??12,days:review.quote?.validityDays??90})} />
             {error && <Notice tone="danger">{t('customer.plans.paymentError')}</Notice>}
             {buying.audience && <Notice tone="info">{t('customer.plans.benefit.affiliates')}</Notice>}
-            <Button block size="lg" disabled={!review.available} loading={busy} onClick={buy}>{t('customer.checkout.payWompi', { amount: formatCOP(review.quote?.chargedAmount??0, lang) })}</Button>
+            <Button block size="lg" disabled={!review.available} loading={busy} onClick={buy}>{SERVER_RULES ? t('customer.checkout.payTransfer') : t('customer.checkout.payWompi', { amount: formatCOP(review.quote?.chargedAmount??0, lang) })}</Button>
             <p className="xs muted" style={{ textAlign: 'center' }}>{t('customer.pay.wompi.seam')}</p>
           </div>
         )}

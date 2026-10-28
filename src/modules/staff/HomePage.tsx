@@ -21,9 +21,12 @@ import type { AuditRow } from './audit';
 import './staff.css';
 import { auditTitle } from './audit';
 import { useDeskFigures } from './desk/useDesk';
+import { useLiveUpdates } from '../../data/companyos/hooks';
 
 /** S-01 Role home: live numbers (next class, arrivals, open shifts, payments, unread messages), the counter actions and the latest conversations (→ S-06). */
 export function StaffHomePage() {
+  // Contract §1: this screen polls Company OS every 20 s in the production build (no-op on the review build).
+  useLiveUpdates(['bookings', 'class_sessions', 'payments']);
   const { t, bi, lang, dict } = useI18n();
   const nav = useNavigate();
   const { role, can } = useSession();

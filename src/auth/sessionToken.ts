@@ -3,7 +3,7 @@
  * Callers never touch Clerk: they ask for a fresh session token per request and report a `401` back. The review
  * build never registers a source, so `getSessionToken()` answers null there.
  */
-type TokenSource = () => Promise<string | null>;
+type TokenSource = (options?: { refresh?: boolean }) => Promise<string | null>;
 
 let source: TokenSource | null = null;
 let waiters: ((s: TokenSource) => void)[] = [];
@@ -16,10 +16,10 @@ export function setSessionTokenSource(next: TokenSource | null) {
 }
 
 /** A fresh Clerk session token, or null when nobody is signed in. Waits for Clerk to load (production only). */
-export async function getSessionToken(): Promise<string | null> {
-  if (!import.meta.env || import.meta.env.VITE_HOY_BUILD !== 'production') return source ? source() : null;
+export async function getSessionToken(options?: { refresh?: boolean }): Promise<string | null> {
+  if (!import.meta.env || import.meta.env.VITE_HOY_BUILD !== 'production') return source ? source(options) : null;
   const s = source ?? await new Promise<TokenSource>((resolve) => waiters.push(resolve));
-  return s();
+  return s(options);
 }
 
 /** The server answered `401 unauthorized`: the session re-checks Clerk and `/me`. */

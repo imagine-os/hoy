@@ -228,6 +228,7 @@ export const strings: StringTable = {
   'customer.checkout.receiptNote': { es: 'Al confirmar se guarda un recibo demo. No se emite factura ni se envía email.', en: 'Confirmation saves a demo receipt. No invoice is issued and no email is sent.' },
   'customer.checkout.confirm': { es: 'Confirmar reserva', en: 'Confirm booking' },
   'customer.checkout.payWompi': { es: 'Pagar {amount} con Wompi', en: 'Pay {amount} with Wompi' },
+  'customer.checkout.payTransfer': { es: 'Pagar por transferencia', en: 'Pay by bank transfer' },
   'customer.checkout.confirmManual': { es: 'Solicitar pago demo de {amount} en recepción', en: 'Request demo desk payment of {amount}' },
   'customer.checkout.policy': { es: 'Cancelación gratis hasta {h} h antes.', en: 'Free cancellation up to {h} h before.' },
   'customer.checkout.race.title': { es: 'La clase se llenó mientras reservabas', en: 'The class filled while you were booking' },

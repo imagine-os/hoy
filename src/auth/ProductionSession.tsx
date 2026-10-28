@@ -62,7 +62,7 @@ function ClerkSession({ config, children }: { config: AppConfig; children: React
   // Company OS calls (here and in H-3's provider) ask this for a fresh token per request.
   useEffect(() => {
     if (!isLoaded) return;
-    setSessionTokenSource(async () => (clerk.session ? (await clerk.session.getToken()) ?? null : null));
+    setSessionTokenSource(async (options) => (clerk.session ? (await clerk.session.getToken({ skipCache: !!options?.refresh })) ?? null : null));
     return () => setSessionTokenSource(null);
   }, [clerk, isLoaded]);
   useEffect(() => subscribeUnauthorized(refresh), [refresh]);
