@@ -1,5 +1,7 @@
 import type { CatalogPublication } from './catalogPublication';
 import type { PlanRow } from './schema';
+/** The production build (`VITE_HOY_BUILD=production`); read inline so node tests that bundle this file without Vite still load it. */
+const PRODUCTION_BUILD = (import.meta as { env?: Record<string, unknown> }).env?.VITE_HOY_BUILD === 'production';
 
 /** Frontend draft contract. Legacy plan/public pricing is deliberately not published by this prototype. */
 export interface ProductPrice { id: string; amount: number; startsOn: string; endsOn: string | null }
@@ -44,6 +46,8 @@ export function quoteProduct(plan: CatalogPlan, purchaseDate: string): ProductQu
 }
 /** Append immutable history to the same mock row write. Server integration must make this transactional and append-only. */
 export function reviseProduct(previous: CatalogDraft | null, definition: ProductDefinition, actorId: string, at: string): CatalogDraft {
+  // Production: Company OS prices, quotes and numbers receipts (H-0 §3). This browser copy runs in the review build only.
+  if (PRODUCTION_BUILD) throw Error('server_decides');
   const problem = validateProduct(definition); if (problem) throw new Error(problem);
   if (!actorId || !Number.isFinite(new Date(at).getTime())) throw new Error('actor');
   const snapshot = structuredClone(definition);
