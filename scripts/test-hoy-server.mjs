@@ -1,5 +1,6 @@
 // The Hoy server (server/): static serving, the Company OS proxy (session check, token forwarding,
-// refusal without a session, path and header hygiene), the Resend webhook's raw body, /health,
+// refusal without a session, path and header hygiene), GET /files/<id> (the API decides, the bytes are
+// streamed, the signed storage link never leaves the server), the Resend webhook's raw body, /health,
 // /app-config.json, configuration checks and the bundle secret scan. A fake Company OS records what
 // reaches it; the real @clerk/backend check runs against a locally signed token (networkless jwtKey).
 // Needs `npm ci --prefix server`. Run: node scripts/test-hoy-server.mjs
@@ -61,6 +62,48 @@ const upstream = http.createServer((req, res) => {
 });
 await listen(upstream);
 
+/** A fake object storage behind signed links: what it saw, and its answers by path. */
+const storageSeen = [];
+const SIGNED = 'sig-token-must-stay-on-the-server';
+const receipt = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47]), Buffer.alloc(1500, 7)]);
+const storage = http.createServer((req, res) => {
+  storageSeen.push({ url: req.url, headers: req.headers });
+  const path = req.url.split('?')[0];
+  if (path === '/obj/receipt.png') {
+    res.writeHead(200, { 'content-type': 'image/png', 'content-length': receipt.length, 'set-cookie': 'sb=1', 'x-signed-url': req.url });
+    return res.end(receipt);
+  }
+  if (path === '/obj/page.svg') {
+    res.writeHead(200, { 'content-type': 'image/svg+xml' });
+    return res.end('<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>');
+  }
+  if (path === '/obj/declared-big') {
+    res.writeHead(200, { 'content-type': 'image/jpeg', 'content-length': 5000 });
+    return res.end(Buffer.alloc(5000));
+  }
+  if (path === '/obj/undeclared-big') {
+    res.writeHead(200, { 'content-type': 'image/jpeg' });
+    res.write(Buffer.alloc(3000));
+    return setTimeout(() => res.end(Buffer.alloc(3000)), 20);
+  }
+  if (path === '/obj/trickle') {
+    res.writeHead(200, { 'content-type': 'image/png' });
+    const drip = setInterval(() => res.write(Buffer.alloc(10)), 50);
+    return res.on('close', () => clearInterval(drip));
+  }
+  if (path === '/obj/slow') return setTimeout(() => res.end('late'), 2000).unref();
+  res.writeHead(path === '/obj/gone' ? 404 : 500, { 'content-type': 'text/plain' });
+  res.end(`no object at ${req.url}`);
+});
+await listen(storage);
+const storageOrigin = `http://127.0.0.1:${storage.address().port}`;
+const FILE_ID = '0b0f6e1c-3c6a-4c0e-9a51-6f3f2c1d9e01';
+/** The fake Company OS answers the download-link route with `link(path)` for the given object. */
+const linkTo = (object, status = 200, answer) => (req, res) => {
+  res.writeHead(status, { 'content-type': 'application/json', 'cache-control': 'no-store' });
+  res.end(JSON.stringify(answer ?? { url: `${storageOrigin}/obj/${object}?token=${SIGNED}`, expiresIn: 60 }));
+};
+
 const GOOD = 'good.session.token';
 const fakeVerify = async (token) => {
   if (token !== GOOD) throw new Error('invalid');
@@ -72,11 +115,13 @@ const config = loadConfig({
   COMPANY_OS_TENANT: 'hoy-dev',
   CLERK_SECRET_KEY: 'sk_test_example',
   CLERK_PUBLISHABLE_KEY: 'pk_test_ZXhhbXBsZS5jbGVyay5hY2NvdW50cy5kZXYk',
-  RAILWAY_ENVIRONMENT_NAME: 'test',
+  HOY_ENV: 'local', // the fakes speak plain http, which only `local` may fetch files over
   DIST_DIR: dist,
   WEBHOOK_BODY_LIMIT_BYTES: '4096',
   PROXY_BODY_LIMIT_BYTES: '8192',
   UPSTREAM_TIMEOUT_MS: '500',
+  FILE_SIZE_LIMIT_BYTES: '4096',
+  FILE_TIMEOUT_MS: '500',
 });
 const logs = [];
 const server = createHoyServer(await createHandler(config, { verifySession: fakeVerify, log: (e) => logs.push(e) }));
@@ -359,6 +404,180 @@ await test('proxy: logs carry the route shape, never the token, ids or query', a
 });
 
 // ---------------------------------------------------------------------------------------------
+// GET /files/<id> → the API's download link → the bytes
+// ---------------------------------------------------------------------------------------------
+const auth = { authorization: `Bearer ${GOOD}` };
+
+await test('proxy: the private download link route is never forwarded (the browser gets bytes from /files/<id>)', async () => {
+  seen.length = 0;
+  upstreamReply = linkTo('receipt.png');
+  for (const path of [`/api/cos/t/hoy-dev/files/${FILE_ID}/url`, `/api/cos/t/hoy-dev/files/${FILE_ID}/%75rl`, `/api/cos/t/hoy-dev/files/${FILE_ID}/url?x=1`]) {
+    const r = await request('GET', path, auth);
+    assert.equal(r.status, 404, path);
+    assert.ok(!r.body.includes(SIGNED));
+  }
+  assert.equal(seen.length, 0);
+  // Other file routes (listing, upload) still go through.
+  assert.equal((await request('GET', '/api/cos/t/hoy-dev/files?owner=x', auth)).status, 200);
+});
+
+await test('files: allowed → the API is asked with the user’s token, the bytes are streamed inline, never cached', async () => {
+  seen.length = 0;
+  storageSeen.length = 0;
+  upstreamReply = linkTo('receipt.png');
+  const r = await request('GET', `/files/${FILE_ID}`, { ...auth, cookie: 'c=1', 'x-real-ip': '203.0.113.9' });
+  assert.equal(r.status, 200);
+  assert.ok(r.body.equals(receipt));
+  assert.equal(r.headers['content-type'], 'image/png');
+  assert.equal(r.headers['content-disposition'], 'inline');
+  assert.equal(r.headers['cache-control'], 'private, no-store');
+  assert.equal(Number(r.headers['content-length']), receipt.length);
+  assert.match(r.headers['content-security-policy'], /default-src 'none'.*sandbox/);
+  assert.equal(r.headers['cross-origin-resource-policy'], 'same-origin');
+  assert.equal(r.headers['x-content-type-options'], 'nosniff');
+  assert.equal(seen.length, 1);
+  assert.equal(seen[0].method, 'GET');
+  assert.equal(seen[0].url, `/t/hoy-dev/files/${FILE_ID}/url`);
+  assert.equal(seen[0].headers.authorization, `Bearer ${GOOD}`);
+  assert.equal(seen[0].headers['x-real-ip'], '203.0.113.9');
+  assert.equal(seen[0].headers.cookie, undefined);
+  // Storage gets nothing of the user: no token, no cookie.
+  assert.equal(storageSeen.length, 1);
+  assert.equal(storageSeen[0].headers.authorization, undefined);
+  assert.equal(storageSeen[0].headers.cookie, undefined);
+});
+
+await test('files: the signed link never reaches the browser (headers, body, errors) or the log', async () => {
+  upstreamReply = linkTo('receipt.png');
+  const ok = await request('GET', `/files/${FILE_ID}`, auth);
+  const where = JSON.stringify(ok.headers);
+  assert.doesNotMatch(where, new RegExp(SIGNED));
+  assert.doesNotMatch(where, /127\.0\.0\.1:\d+\/obj|set-cookie|x-signed-url/);
+  assert.ok(!ok.body.includes(SIGNED));
+  upstreamReply = linkTo('broken'); // storage answers 500 with the link in its body
+  const failed = await request('GET', `/files/${FILE_ID}`, auth);
+  assert.equal(failed.status, 502);
+  assert.deepEqual(JSON.parse(failed.body), { error: 'storage_error' });
+  upstreamReply = linkTo('gone');
+  const gone = await request('GET', `/files/${FILE_ID}`, auth);
+  assert.equal(gone.status, 404);
+  assert.doesNotMatch(gone.body.toString() + JSON.stringify(gone.headers), new RegExp(SIGNED));
+  const text = JSON.stringify(logs);
+  assert.doesNotMatch(text, new RegExp(SIGNED));
+  assert.doesNotMatch(text, new RegExp(FILE_ID));
+  assert.ok(logs.some((l) => l.event === 'file' && l.outcome === 'served' && l.status === 200));
+});
+
+await test('files: forbidden, missing and not-ready come back exactly as the API answered; storage is never asked', async () => {
+  storageSeen.length = 0;
+  for (const [status, answer, expected] of [
+    [403, { error: 'forbidden' }, 'forbidden'],
+    [404, { error: 'not found' }, 'not_found'], // the API's text is not a code: the status' own code instead
+    [409, { error: 'file_not_ready', message: "the file hasn't been confirmed" }, 'file_not_ready'],
+    [401, { error: 'unauthorized' }, 'unauthorized'],
+  ]) {
+    upstreamReply = linkTo(null, status, answer);
+    const r = await request('GET', `/files/${FILE_ID}`, auth);
+    assert.equal(r.status, status);
+    assert.deepEqual(JSON.parse(r.body), { error: expected });
+  }
+  upstreamReply = linkTo(null, 500, { error: 'internal error' });
+  assert.equal((await request('GET', `/files/${FILE_ID}`, auth)).status, 502);
+  assert.equal(storageSeen.length, 0);
+});
+
+await test('files: no session, a bad token, a malformed id or another method → refused before the API', async () => {
+  seen.length = 0;
+  upstreamReply = linkTo('receipt.png');
+  assert.equal((await request('GET', `/files/${FILE_ID}`)).status, 401);
+  assert.equal((await request('GET', `/files/${FILE_ID}`, { authorization: 'Bearer forged' })).status, 401);
+  assert.equal((await request('GET', `/files/${FILE_ID}`, { authorization: 'Basic eDp5' })).status, 401);
+  for (const path of ['/files', '/files/', '/files/not-a-uuid', `/files/${FILE_ID}/url`, `/files/..%2F${FILE_ID}`, `/files/${FILE_ID}%2F..`]) {
+    assert.equal((await request('GET', path, auth)).status, 404, path);
+  }
+  assert.equal((await request('POST', `/files/${FILE_ID}`, auth, 'x')).status, 405);
+  assert.equal((await request('GET', `/files/${FILE_ID}`, { ...auth, 'content-length': '3' }, 'abc')).status, 400);
+  assert.equal(seen.length, 0);
+});
+
+await test('files: size cap — a declared size over it is refused, an undeclared one is cut off at the cap', async () => {
+  upstreamReply = linkTo('declared-big');
+  const declared = await request('GET', `/files/${FILE_ID}`, auth);
+  assert.equal(declared.status, 502);
+  assert.deepEqual(JSON.parse(declared.body), { error: 'file_too_large' });
+  upstreamReply = linkTo('undeclared-big');
+  const cut = await request('GET', `/files/${FILE_ID}`, auth).catch((err) => ({ error: err }));
+  // Either the connection is reset mid-answer, or it ends short: never more than the cap.
+  assert.ok(cut.error || cut.body.length <= 4096, 'more than the cap reached the browser');
+});
+
+await test('files: a slow storage or API → 504 within the deadline; an unreachable API → 502', async () => {
+  upstreamReply = linkTo('slow');
+  const started = Date.now();
+  const slow = await request('GET', `/files/${FILE_ID}`, auth);
+  assert.equal(slow.status, 504);
+  assert.ok(Date.now() - started < 1500);
+  upstreamReply = () => {}; // never answers
+  assert.equal((await request('GET', `/files/${FILE_ID}`, auth)).status, 504);
+  // The deadline also covers the stream: a trickling download is cut off, and logged as a timeout.
+  upstreamReply = linkTo('trickle');
+  const trickled = await request('GET', `/files/${FILE_ID}`, auth).catch((err) => ({ error: err }));
+  assert.ok(trickled.error, 'a trickling download must be cut off');
+  await new Promise((r) => setTimeout(r, 50));
+  assert.equal(logs.filter((l) => l.event === 'file').at(-1).outcome, 'timeout');
+  // A slow session check counts against the same deadline.
+  const stuck = createHoyServer(await createHandler(config, { verifySession: () => new Promise(() => {}), log: () => {} }));
+  await listen(stuck);
+  assert.equal((await request('GET', `/files/${FILE_ID}`, auth, undefined, stuck)).status, 504);
+  stuck.close();
+  const down = createHoyServer(await createHandler({ ...config, companyOsUrl: 'http://127.0.0.1:1' }, { verifySession: fakeVerify, log: () => {} }));
+  await listen(down);
+  assert.equal((await request('GET', `/files/${FILE_ID}`, auth, undefined, down)).status, 502);
+  down.close();
+});
+
+await test('files: anything but a safe image type is downloaded, never rendered on this origin', async () => {
+  upstreamReply = linkTo('page.svg');
+  const r = await request('GET', `/files/${FILE_ID}`, auth);
+  assert.equal(r.status, 200);
+  assert.equal(r.headers['content-type'], 'application/octet-stream');
+  assert.equal(r.headers['content-disposition'], 'attachment');
+});
+
+await test('files: links the server must not fetch — other origins, http outside local, production unpinned, credentials, garbage', async () => {
+  storageSeen.length = 0;
+  const pinned = { ...config, fileStorageOrigins: ['https://storage.example'] };
+  for (const [cfg, answer] of [
+    [pinned, undefined],
+    [{ ...config, environment: 'test' }, undefined], // http
+    [{ ...config, environment: 'production', fileStorageOrigins: [storageOrigin] }, undefined], // http, even pinned
+    [{ ...config, environment: 'production' }, { url: 'https://storage.example/obj/x?token=t' }], // production fetches nothing unpinned
+    [config, { url: `http://user:pw@127.0.0.1:${storage.address().port}/obj/receipt.png` }],
+    [config, { url: 'file:///etc/passwd' }],
+    [config, { url: 42 }],
+    [config, { nope: true }],
+  ]) {
+    const s = createHoyServer(await createHandler(cfg, { verifySession: fakeVerify, log: () => {} }));
+    await listen(s);
+    upstreamReply = linkTo('receipt.png', 200, answer);
+    const r = await request('GET', `/files/${FILE_ID}`, auth, undefined, s);
+    assert.equal(r.status, 502);
+    assert.deepEqual(JSON.parse(r.body), { error: 'bad_file_link' });
+    s.close();
+  }
+  assert.equal(storageSeen.length, 0);
+  const allowed = createHoyServer(await createHandler({ ...config, fileStorageOrigins: [storageOrigin] }, { verifySession: fakeVerify, log: () => {} }));
+  await listen(allowed);
+  upstreamReply = linkTo('receipt.png');
+  assert.equal((await request('GET', `/files/${FILE_ID}`, auth, undefined, allowed)).status, 200);
+  allowed.close();
+  upstreamReply = (req, res) => {
+    res.writeHead(200, { 'content-type': 'application/json' });
+    res.end('{"ok":true}');
+  };
+});
+
+// ---------------------------------------------------------------------------------------------
 // POST /webhooks/resend → /webhooks/messaging/resend
 // ---------------------------------------------------------------------------------------------
 await test('webhook: the raw body and the Svix headers reach the API byte for byte', async () => {
@@ -476,6 +695,9 @@ await test('config: refuses a missing API address, tenant or Clerk key, a secret
   assert.throws(() => loadConfig({ ...ok, RAILWAY_ENVIRONMENT_NAME: 'production' }), /APP_URL/);
   const prod = loadConfig({ ...ok, RAILWAY_ENVIRONMENT_NAME: 'production', APP_URL: 'https://hoy.example/app', CLERK_AUTHORIZED_PARTIES: 'https://www.hoy.example, https://hoy.example' });
   assert.deepEqual(prod.authorizedParties, ['https://hoy.example', 'https://www.hoy.example']);
+  assert.deepEqual(loadConfig({ ...ok, FILE_STORAGE_ORIGINS: 'https://p.supabase.co/storage/v1, https://p.supabase.co' }).fileStorageOrigins, ['https://p.supabase.co']);
+  assert.throws(() => loadConfig({ ...ok, FILE_STORAGE_ORIGINS: 'not a url' }), /FILE_STORAGE_ORIGINS/);
+  assert.equal(loadConfig(ok).fileSizeLimit, 10 * 1024 * 1024);
 });
 
 await test('check-bundle: finds secret shapes and this environment’s secret values; a clean dist passes', async () => {
@@ -494,6 +716,7 @@ await test('check-bundle: finds secret shapes and this environment’s secret va
 // ---------------------------------------------------------------------------------------------
 server.close();
 upstream.close();
+storage.close();
 await rm(root, { recursive: true, force: true });
 for (const [mark, name, err] of results) {
   console.log(`${mark} ${name}`);
@@ -515,6 +738,9 @@ function request(method, path, headers = {}, body, target = server) {
       const chunks = [];
       res.on('data', (c) => chunks.push(c));
       res.on('end', () => done({ status: res.statusCode, headers: res.headers, body: Buffer.concat(chunks) }));
+      // The server cut the answer off mid-body.
+      res.on('error', (err) => fail(err));
+      res.on('aborted', () => fail(new Error('answer cut off')));
     });
     req.on('error', (err) => fail(err));
     if (Array.isArray(body)) {

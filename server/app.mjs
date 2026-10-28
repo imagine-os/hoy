@@ -1,8 +1,10 @@
-// The Hoy server's request handler. Four jobs, nothing else:
+// The Hoy server's request handler. These jobs, nothing else:
 //   /health              liveness for Railway (and the release it is running);
 //   /app-config.json     the browser's public settings (tenant, API base, Clerk publishable key);
 //   /api/cos/*           a signed-in user's call, checked against Clerk, forwarded to Company OS on the
 //                        private network with the same token as the bearer;
+//   GET /files/<id>      a stored file (e.g. a transfer receipt), streamed from storage after the API has
+//                        checked the user may read it; the signed storage link never reaches the browser;
 //   POST /webhooks/resend Resend's delivery webhook, forwarded byte for byte to the API, which checks
 //                        the signature;
 //   everything else      the built frontend in dist/ (website + app; HashRouter, so no SPA fallback).
@@ -81,6 +83,10 @@ export async function createHandler(config, deps) {
       if (rawPath === '/api/cos' || rawPath.startsWith('/api/cos/')) {
         const route = await proxy(req, res, config, deps, rawPath.slice('/api/cos'.length), rawQuery);
         return log({ event: 'api.cos', method: req.method, route, status: res.statusCode, ms: Date.now() - started });
+      }
+      if (rawPath === '/files' || rawPath.startsWith('/files/')) {
+        const outcome = await file(req, res, config, deps, rawPath.slice('/files'.length));
+        return log({ event: 'file', outcome, status: res.statusCode, ms: Date.now() - started });
       }
       if (rawPath.startsWith('/api/') || rawPath.startsWith('/webhooks/')) return sendError(res, 404, 'not_found');
       return await serveStatic(req, res, distDir, rawPath, rawQuery);
@@ -165,7 +171,8 @@ async function proxy(req, res, config, deps, rest, query) {
   }
   const route = `${tenantPrefix}/${segments[2]}`;
   const tail = rest.slice(tenantPrefix.length);
-  if (BLOCKED_SECTIONS.has(segments[2])) {
+  // The private download link stays on this server (IN-028): the browser gets the bytes from /files/<id>.
+  if (BLOCKED_SECTIONS.has(segments[2]) || (segments[2] === 'files' && segments[4] === 'url')) {
     sendError(res, 404, 'not_found');
     return route;
   }
@@ -202,15 +209,19 @@ async function proxy(req, res, config, deps, rest, query) {
   const headers = pick(req.headers, FORWARD_REQUEST_HEADERS);
   if (req.method === 'GET' || req.method === 'HEAD') delete headers['content-length'];
   if (token !== undefined) headers.authorization = `Bearer ${token}`;
-  // The visitor's address as Railway's edge saw it (it sets X-Real-IP); never the browser's own
-  // X-Forwarded-For, which anyone can write.
-  const client = header(req.headers['x-real-ip']) ?? req.socket.remoteAddress ?? '';
-  headers['x-forwarded-for'] = client;
-  headers['x-real-ip'] = client;
-  headers['x-forwarded-proto'] = header(req.headers['x-forwarded-proto']) ?? 'http';
+  Object.assign(headers, clientHeaders(req));
 
   await forward(res, config, { method: req.method, path: rest + query, headers, body: req, limit: config.proxyBodyLimit });
   return route;
+}
+
+/**
+ * The visitor's address as Railway's edge saw it (it sets X-Real-IP); never the browser's own
+ * X-Forwarded-For, which anyone can write.
+ */
+function clientHeaders(req) {
+  const client = header(req.headers['x-real-ip']) ?? req.socket.remoteAddress ?? '';
+  return { 'x-forwarded-for': client, 'x-real-ip': client, 'x-forwarded-proto': header(req.headers['x-forwarded-proto']) ?? 'http' };
 }
 
 /** `Bearer <token>` → token; no header → undefined; anything else → '' (fails verification). */
@@ -316,6 +327,177 @@ function forward(res, config, { method, path, headers, body, limit }) {
     });
     body.pipe(upstream);
   });
+}
+
+// ---------------------------------------------------------------------------------------------
+// GET /files/<id> → the API's download link → the bytes (IN-028: this server serves every file)
+// ---------------------------------------------------------------------------------------------
+
+const FILE_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/** The API's `{ url, expiresIn }` answer is tiny; anything bigger is not it. */
+const LINK_ANSWER_LIMIT = 16 * 1024;
+/** Shown in the browser. Anything else (SVG, HTML, PDF, unknown) is downloaded, never rendered on this origin. */
+const INLINE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/avif']);
+const REFUSAL_CODES = { 400: 'bad_request', 401: 'unauthorized', 403: 'forbidden', 404: 'not_found', 409: 'conflict' };
+
+/**
+ * Asks the API for the file's download link with the user's own token (so the API's read permission
+ * decides, and audits it), then streams the bytes from storage. The link, the storage host's headers and
+ * its error bodies stay on this server. One deadline (FILE_TIMEOUT_MS) covers both calls and the stream;
+ * a file over FILE_SIZE_LIMIT_BYTES is refused, or cut off if storage didn't declare its size.
+ * Returns the outcome for the log (never the id or the link).
+ */
+async function file(req, res, config, deps, rest) {
+  if (req.method !== 'GET') {
+    res.setHeader('Allow', 'GET');
+    sendError(res, 405, 'method_not_allowed');
+    return 'refused';
+  }
+  const id = rest.slice(1);
+  if (!rest.startsWith('/') || !FILE_ID.test(id)) {
+    sendError(res, 404, 'not_found');
+    return 'refused';
+  }
+  if (Number(header(req.headers['content-length']) ?? 0) > 0 || req.headers['transfer-encoding'] !== undefined) {
+    sendError(res, 400, 'body_not_allowed');
+    return 'refused';
+  }
+  const token = bearer(req.headers.authorization);
+  if (!token) {
+    sendError(res, 401, 'unauthorized');
+    return 'refused';
+  }
+
+  // One deadline from here on, the session check included; the browser leaving aborts everything.
+  const deadline = Date.now() + config.fileTimeoutMs;
+  const abort = new AbortController();
+  const timer = setTimeout(() => abort.abort(), config.fileTimeoutMs);
+  res.on('close', () => abort.abort());
+  try {
+    const verified = await Promise.race([
+      deps.verifySession(token).then(() => true, () => false),
+      new Promise((done) => abort.signal.addEventListener('abort', () => done(null), { once: true })),
+    ]);
+    if (verified === null) throw new Error('session check timed out');
+    if (!verified) {
+      sendError(res, 401, 'unauthorized');
+      return 'refused';
+    }
+
+    // 1. The link, if the API lets this user read the file.
+    const linkUrl = new URL(`${config.companyOsUrl.replace(/\/+$/, '')}/t/${config.tenant}/files/${id}/url`);
+    const answer = await get(linkUrl, { accept: 'application/json', authorization: `Bearer ${token}`, ...clientHeaders(req) }, abort.signal);
+    const body = await readBody(answer, LINK_ANSWER_LIMIT, Math.max(1, deadline - Date.now()));
+    if (body === 'too_slow') abort.abort();
+    if (!Buffer.isBuffer(body)) throw new Error('link answer too large or slow');
+    if (answer.statusCode !== 200) {
+      const status = answer.statusCode ?? 502;
+      if (status >= 400 && status < 500) {
+        // The API's refusal, as it answered it: its machine code (e.g. `file_not_ready`), never its text.
+        const code = parseJson(body)?.error;
+        sendError(res, status, typeof code === 'string' && /^[a-z][a-z0-9_]{0,63}$/.test(code) ? code : REFUSAL_CODES[status] ?? 'refused');
+        return 'refused';
+      }
+      sendError(res, status === 503 ? 503 : 502, status === 503 ? 'storage_not_configured' : 'upstream_unavailable');
+      return 'upstream_error';
+    }
+    const link = storageLink(parseJson(body)?.url, config);
+    if (!link) {
+      sendError(res, 502, 'bad_file_link');
+      return 'bad_link';
+    }
+
+    // 2. The bytes, with nothing of the browser's request and nothing of storage's headers but the type and size.
+    const stored = await get(link, { accept: '*/*', 'accept-encoding': 'identity' }, abort.signal);
+    if (stored.statusCode !== 200) {
+      stored.resume();
+      sendError(res, stored.statusCode === 404 ? 404 : 502, stored.statusCode === 404 ? 'not_found' : 'storage_error');
+      return 'storage_error';
+    }
+    const declared = header(stored.headers['content-length']);
+    const size = declared !== undefined && /^\d+$/.test(declared) ? Number(declared) : undefined;
+    if (size !== undefined && size > config.fileSizeLimit) {
+      stored.destroy();
+      sendError(res, 502, 'file_too_large');
+      return 'too_large';
+    }
+    const type = (header(stored.headers['content-type']) ?? '').split(';')[0].trim().toLowerCase();
+    const inline = INLINE_TYPES.has(type);
+    res.writeHead(200, {
+      'Content-Type': inline ? type : 'application/octet-stream',
+      'Content-Disposition': inline ? 'inline' : 'attachment',
+      'Cache-Control': 'private, no-store',
+      // Even if storage lied about the type: no script, no plugin, no embedding by another site.
+      'Content-Security-Policy': "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; sandbox",
+      'Cross-Origin-Resource-Policy': 'same-origin',
+      ...(size !== undefined ? { 'Content-Length': size } : {}),
+    });
+    return await new Promise((done) => {
+      let seen = 0;
+      stored.on('data', (chunk) => {
+        seen += chunk.length;
+        if (seen > config.fileSizeLimit) {
+          // Undeclared size past the cap: the answer has started, so cut it off (the browser sees a failed download).
+          stored.destroy();
+          res.destroy();
+          done('too_large');
+        }
+      });
+      stored.on('error', () => {
+        res.destroy();
+        done(!abort.signal.aborted ? 'storage_error' : Date.now() >= deadline ? 'timeout' : 'client_gone');
+      });
+      stored.on('end', () => done('served'));
+      stored.pipe(res);
+    });
+  } catch {
+    if (res.headersSent || res.destroyed) {
+      res.destroy();
+      return abort.signal.aborted ? 'timeout' : 'storage_error';
+    }
+    if (abort.signal.aborted) sendError(res, 504, 'upstream_timeout');
+    else sendError(res, 502, 'upstream_unavailable');
+    return abort.signal.aborted ? 'timeout' : 'upstream_error';
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/** One GET; resolves with the answer (any status), rejects on a network error or when `signal` aborts. */
+function get(url, headers, signal) {
+  return new Promise((done, fail) => {
+    const client = url.protocol === 'https:' ? https : http;
+    const request = client.request(url, { method: 'GET', headers, signal }, done);
+    request.on('error', fail);
+    request.end();
+  });
+}
+
+function parseJson(buffer) {
+  try {
+    return JSON.parse(buffer.toString('utf8'));
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The API's link, only if it is one this server should fetch, so a bad answer can't point this server at
+ * another host on the private network: no credentials; https outside local; on FILE_STORAGE_ORIGINS
+ * when that is set, and production fetches nothing without it.
+ */
+function storageLink(value, config) {
+  if (typeof value !== 'string') return null;
+  let url;
+  try {
+    url = new URL(value);
+  } catch {
+    return null;
+  }
+  if (url.protocol !== 'https:' && (url.protocol !== 'http:' || config.environment !== 'local')) return null;
+  if (url.username || url.password) return null;
+  if (config.fileStorageOrigins.length ? !config.fileStorageOrigins.includes(url.origin) : config.environment === 'production') return null;
+  return url;
 }
 
 // ---------------------------------------------------------------------------------------------

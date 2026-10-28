@@ -36,6 +36,8 @@ export default defineRailway((ctx) => {
       // The bundle's layout (see the workflows' "Bundle" step): the built frontend sits in site/.
       DIST_DIR: "site",
       COMPANY_OS_URL: "http://${{api.RAILWAY_PRIVATE_DOMAIN}}:${{api.PORT}}",
+      // GET /files/<id> only fetches download links on the API's own storage (its Supabase project).
+      FILE_STORAGE_ORIGINS: "${{api.SUPABASE_URL}}",
       // test: Hoy's made-up tenant (Company OS registry `testTenants`); production: the real slug.
       COMPANY_OS_TENANT: prod ? preserve() : "hoy-dev",
       // The SAME Clerk instance as this environment's api (test: the development instance; production:

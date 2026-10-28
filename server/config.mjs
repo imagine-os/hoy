@@ -16,6 +16,9 @@ import { fileURLToPath } from 'node:url';
  * @property {number} proxyBodyLimit
  * @property {number} webhookBodyLimit
  * @property {number} upstreamTimeoutMs
+ * @property {number} fileSizeLimit      the largest file GET /files/<id> serves
+ * @property {number} fileTimeoutMs      the whole of GET /files/<id>: link, download and stream
+ * @property {string[]} fileStorageOrigins where download links may point (empty = any http(s); https only in production)
  */
 
 /** @returns {ServerConfig} Throws with every problem listed, so a bad deploy fails at start, not on first use. */
@@ -61,6 +64,19 @@ export function loadConfig(env = process.env) {
   }
   if (production && authorizedParties.length === 0) problems.push('production needs APP_URL (or CLERK_AUTHORIZED_PARTIES): the origins sessions may come from');
 
+  const fileStorageOrigins = [];
+  for (const raw of (env.FILE_STORAGE_ORIGINS ?? '').split(',')) {
+    const value = raw.trim();
+    if (!value) continue;
+    try {
+      const origin = new URL(value).origin;
+      if (origin === 'null') throw new Error('opaque');
+      if (!fileStorageOrigins.includes(origin)) fileStorageOrigins.push(origin);
+    } catch {
+      problems.push(`not an origin: ${JSON.stringify(value)} (FILE_STORAGE_ORIGINS)`);
+    }
+  }
+
   const config = {
     port: int(env.PORT, 3000),
     distDir: env.DIST_DIR || fileURLToPath(new URL('../dist', import.meta.url)),
@@ -74,6 +90,10 @@ export function loadConfig(env = process.env) {
     proxyBodyLimit: int(env.PROXY_BODY_LIMIT_BYTES, 10 * 1024 * 1024),
     webhookBodyLimit: int(env.WEBHOOK_BODY_LIMIT_BYTES, 1024 * 1024),
     upstreamTimeoutMs: int(env.UPSTREAM_TIMEOUT_MS, 30_000),
+    // Company OS's receipt kind takes up to 10 MiB (payments module).
+    fileSizeLimit: int(env.FILE_SIZE_LIMIT_BYTES, 10 * 1024 * 1024),
+    fileTimeoutMs: int(env.FILE_TIMEOUT_MS, 30_000),
+    fileStorageOrigins,
   };
   if (problems.length) throw new Error(`Hoy server configuration:\n  - ${problems.join('\n  - ')}`);
   return config;

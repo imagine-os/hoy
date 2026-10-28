@@ -14,6 +14,10 @@ try {
   process.exit(1);
 }
 
+if (config.environment === 'production' && config.fileStorageOrigins.length === 0) {
+  console.warn(JSON.stringify({ event: 'server.warning', message: 'FILE_STORAGE_ORIGINS is not set: GET /files/<id> refuses every file' }));
+}
+
 const handler = await createHandler(config, { verifySession: clerkSessionVerifier(config) });
 const server = createHoyServer(handler);
 server.listen(config.port, () => {
