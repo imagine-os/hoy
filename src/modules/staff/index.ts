@@ -1,7 +1,7 @@
 import { lazyPages } from '../../app/lazyPage';
 import type { RouteDef } from '../../specs/types';
 import { STAFF_ROLES, type Role } from '../../auth/roles';
-import { S01, S02, S04, S05, S06 } from './specs';
+import { S01, S02, S04, S05, S06, S11 } from './specs';
 export { strings } from './strings';
 // Front-desk pages (S-xx) load as one chunk on first visit.
 const page = lazyPages(() => import('./pages'));
@@ -18,5 +18,7 @@ export const routes: RouteDef[] = [
   { ...base, roles: desk, path: '/staff/inbox/:id', element: page('InboxPage'), spec: S06 },
   { ...base, roles: desk, path: '/staff/checkin', element: page('CheckinPage'), spec: S02, nav: { labelKey: 'core.nav.checkin', icon: 'checkin', order: 2, group: G } },
   { ...base, roles: desk, path: '/staff/register', element: page('RegisterPage'), spec: S04, nav: { labelKey: 'core.nav.register', icon: 'register', order: 3, group: G } },
+  // Q-13: reception records an expense here; the ledger itself (M-09c) stays administration and finance only.
+  { ...base, roles: ['super_admin', 'admin', 'front_desk'], path: '/staff/expense', element: page('DeskExpensePage'), spec: S11, nav: { labelKey: 'staff.expense.nav', icon: 'expenses', order: 3.5, group: G } },
   { ...base, roles: desk, path: '/staff/rooms', element: page('RoomsPage'), spec: S05, nav: { labelKey: 'core.nav.rooms', icon: 'rooms', order: 4, group: G } },
 ];

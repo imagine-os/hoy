@@ -10,7 +10,8 @@ import { Fragment, type ReactNode } from 'react';
 import { Link, useNavigate } from '../links';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useLayout } from '../../../layout/useLayout';
-import { FAMILY_LABEL, FAMILY_RATIONALE, ON_REQUEST_FORMATS, pricingByFamily, priceItem } from '../../../tenant/pricing';
+import { FAMILY_LABEL, FAMILY_RATIONALE, ON_REQUEST_FORMATS } from '../../../tenant/pricing';
+import { useLivePricing } from '../../../data/livePricing';
 import { tenant } from '../../../tenant/tenant';
 import { usePolicy, useWhatsappLink } from '../../admin/settings';
 import { Card } from '../../../components/molecule/Card/Card';
@@ -22,7 +23,7 @@ import { PageHead, SiteShell } from '../SiteShell';
 import { siteSpecs } from '../specs';
 
 /**
- * P-01 — the launch price list (0051). Prices, names and the "why it exists" rationale come from src/tenant/pricing.ts;
+ * P-01 — the launch price list (0051). Amounts come from the product master (useLivePricing, SW-02); names and the "why it exists" rationale from src/tenant/pricing.ts;
  * the package rules (freeze once, up to N days) from the M-08 policy through usePolicy(); the IVA note from M-08 tax.
  * Order: the 12-class package first (the way to practise with consistency), then the trial and the individual class,
  * private classes and gift cards, and what is quoted on request (the studio rental, corporate experiences).
@@ -48,7 +49,8 @@ export function PlansPage() {
     return src && alt ? { src, alt: bi(alt) } : undefined;
   };
   const buy = (id: string) => nav(`/auth/sign-in?next=${encodeURIComponent(`/app/plans?plan=${id}`)}`);
-  const pack = priceItem('pack12');
+  const prices = useLivePricing();
+  const pack = prices.item('pack12');
   const months = Math.round((pack?.validityDays ?? 90) / 30);
   const packageRules = [
     t('site.plans.package.classes', { n: pack?.classes ?? 12 }),
@@ -74,7 +76,7 @@ export function PlansPage() {
       <section className="container site-section" style={{ paddingTop: 0 }}>
         <div className="plans-heading"><p className="eyebrow">{bi(FAMILY_LABEL.paquetes)}</p><h2>{t('site.plans.package.title')}</h2><p className="muted">{bi(FAMILY_RATIONALE.paquetes.why)}</p></div>
         <div className="plans-packages">
-          {pricingByFamily('paquetes').map((p, i, all) => (
+          {prices.byFamily('paquetes').map((p, i, all) => (
             <PackageCard key={p.id} item={p} index={i + 1} total={all.length} tone={p.audience ? 'moss' : 'river'}
               eyebrow={p.audience ? bi(p.audience) : bi(FAMILY_RATIONALE.paquetes.role)} objectLabel={t('site.plans.package.objectLabel')}
               benefits={p.audience ? [...packageRules, t('site.plans.package.affiliates')] : packageRules}
@@ -85,12 +87,12 @@ export function PlansPage() {
       {/* the trial class and the individual class */}
       <section className="container site-section">
         <div className="site-section-top"><div><p className="eyebrow">{bi(FAMILY_LABEL.bienvenida)}</p><h2>{t('site.plans.passesTitle')}</h2><p className="muted">{t('site.plans.passesBody')}</p></div></div>
-        <div className="plans-pass-grid">{pricingByFamily('bienvenida').map((p) => <article className={`plans-pass${planPhoto(p.id) ? ' has-photo' : ''}`} key={p.id}>{planPhoto(p.id) && <img className="plans-pass-photo" src={planPhoto(p.id)!.src} alt={planPhoto(p.id)!.alt} loading="lazy" decoding="async" />}<div className="plans-pass-copy"><span className="eyebrow">{t('site.plans.oneClass')}</span><h3>{bi(p.name)}</h3><p className="small muted">{bi(p.description)}</p><strong className="plans-pass-price">{formatCOP(p.price ?? 0, lang)}</strong><Button variant="secondary" onClick={() => buy(p.id)}>{t('site.plans.select')}</Button></div></article>)}</div>
+        <div className="plans-pass-grid">{prices.byFamily('bienvenida').map((p) => <article className={`plans-pass${planPhoto(p.id) ? ' has-photo' : ''}`} key={p.id}>{planPhoto(p.id) && <img className="plans-pass-photo" src={planPhoto(p.id)!.src} alt={planPhoto(p.id)!.alt} loading="lazy" decoding="async" />}<div className="plans-pass-copy"><span className="eyebrow">{t('site.plans.oneClass')}</span><h3>{bi(p.name)}</h3><p className="small muted">{bi(p.description)}</p><strong className="plans-pass-price">{formatCOP(p.price ?? 0, lang)}</strong><Button variant="secondary" onClick={() => buy(p.id)}>{t('site.plans.select')}</Button></div></article>)}</div>
         {/* private classes and gift cards */}
         <div className="plans-secondary">
           <Card eyebrow={bi(FAMILY_RATIONALE.privadas.role)} title={bi(FAMILY_LABEL.privadas)}>
             <p className="small muted">{bi(FAMILY_RATIONALE.privadas.why)}</p>
-            {pricingByFamily('privadas').map((p) => <PriceRow key={p.id} item={p} />)}
+            {prices.byFamily('privadas').map((p) => <PriceRow key={p.id} item={p} />)}
             <div className="stack-sm" style={{ marginTop: 'var(--stack-loose)' }}>
               <a href={wa.link('specials', t('site.plans.private.wa'))} target="_blank" rel="noreferrer"><Button variant="secondary">{t('site.plans.private.cta')} ↗</Button></a>
               {specialsNote && <p className="xs muted">{bi(specialsNote)}</p>}
@@ -98,7 +100,7 @@ export function PlansPage() {
           </Card>
           <Card eyebrow={bi(FAMILY_RATIONALE.regalos.role)} title={bi(FAMILY_LABEL.regalos)}>
             <p className="small muted">{bi(FAMILY_RATIONALE.regalos.subtitle)}</p>
-            {pricingByFamily('regalos').map((p) => <PriceRow key={p.id} item={p} onSelect={() => nav('/auth/sign-in?next=%2Fapp%2Fgift')} />)}
+            {prices.byFamily('regalos').map((p) => <PriceRow key={p.id} item={p} onSelect={() => nav('/auth/sign-in?next=%2Fapp%2Fgift')} />)}
             <p className="small muted" style={{ marginTop: 'var(--stack)' }}>{t('site.plans.gift.note')}</p>
             <div style={{ marginTop: 'var(--stack-loose)' }}><Button variant="secondary" onClick={() => nav('/auth/sign-in?next=%2Fapp%2Fgift')}>{t('site.plans.gift.cta')}</Button></div>
           </Card>

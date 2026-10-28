@@ -13,9 +13,9 @@ export const strings: StringTable = {
   'site.photos.notice': { es: 'Vista previa con las fotos del estudio. La versión pública actual sigue disponible en Latest.', en: 'Preview with the studio photographs. The current public edition remains available in Latest.' },
   'site.photos.finaleSlats': { es: 'Pared de listones del estudio iluminada en rojo', en: 'Studio slat wall illuminated in red' },
   'site.photos.studioHero': { es: 'El estudio real con luz roja, espejos y colchonetas preparadas para la práctica', en: 'The real studio with red lighting, mirrors and mats prepared for practice' },
-  'site.photos.hero': { es: 'Movimiento en grupo en el estudio HOY', en: 'Group movement in the HOY studio' },
+  'site.photos.hero': { es: 'Movimiento en grupo en el estudio {brand}', en: 'Group movement in the {brand} studio' },
   'site.photos.philosophy': { es: 'Carolina Cifuentes en una postura de movimiento', en: 'Carolina Cifuentes in a movement pose' },
-  'site.photos.studio': { es: 'El estudio HOY preparado para la práctica', en: 'The HOY studio prepared for practice' },
+  'site.photos.studio': { es: 'El estudio {brand} preparado para la práctica', en: 'The {brand} studio prepared for practice' },
   'site.photos.red': { es: 'El espacio de práctica con iluminación roja', en: 'The practice space with red lighting' },
   'site.photos.heater': { es: 'Detalle de la calefacción del estudio', en: 'A detail of the studio heating' },
   'site.photos.equipment': { es: 'Accesorios de práctica del estudio', en: 'Practice equipment in the studio' },
@@ -137,7 +137,7 @@ export const strings: StringTable = {
   'site.new.packageSub': { es: '{n} clases · {months} meses', en: '{n} classes · {months} months' },
   'site.new.privateSub': { es: 'hasta {n} personas', en: 'up to {n} people' },
   'site.nav.home': { es: 'Inicio', en: 'Home' },
-  'site.nav.about': { es: 'Sobre HOY', en: 'About' },
+  'site.nav.about': { es: 'Sobre {brand}', en: 'About' },
   'site.nav.classes': { es: 'Clases', en: 'Classes' },
   'site.nav.modalities': { es: 'Modalidades', en: 'Modalities' },
   'site.nav.schedule': { es: 'Horario', en: 'Schedule' },
@@ -149,7 +149,7 @@ export const strings: StringTable = {
   'site.nav.signin': { es: 'Entrar', en: 'Sign in' },
   'site.nav.book': { es: 'Reservar clase', en: 'Book a class' },
 
-  'site.hero.eyebrow': { es: 'Human club · {city}', en: 'Human club · {city}' },
+  'site.hero.eyebrow': { es: '{tagline} · {city}', en: '{tagline} · {city}' },
   'site.hero.body': { es: 'Un santuario urbano en {city}: {mats} tapetes, clases de lunes a domingo y varias formas de moverte. Sin experiencia previa, sin prisa.', en: 'An urban sanctuary in {city}: {mats} mats, classes Monday–Sunday and several ways to move. No previous experience, no hurry.' },
   'site.hero.cta': { es: 'Clase de prueba · {price}', en: 'Trial class · {price}' },
   'site.hero.cta2': { es: 'Ver horario', en: 'See schedule' },
@@ -179,7 +179,7 @@ export const strings: StringTable = {
   'site.classes.schedule': { es: 'Ver esta clase en el horario', en: 'See this class in the schedule' },
   'site.classes.other': { es: 'Otras formas de moverte', en: 'Other ways to move' },
   'site.classes.back': { es: 'Todas las clases', en: 'All classes' },
-  'site.classes.notFound': { es: 'No encontramos esa clase. Mira todas las formas de moverte en HOY.', en: 'We could not find that class. Take a look at every way to move at HOY.' },
+  'site.classes.notFound': { es: 'No encontramos esa clase. Mira todas las formas de moverte en {brand}.', en: 'We could not find that class. Take a look at every way to move at {brand}.' },
   'site.classes.concept': { es: 'Concepto', en: 'Concept' },
   'site.classes.intention': { es: 'Intención', en: 'Intention' },
   'site.classes.keys': { es: 'Clave', en: 'Keys' },
@@ -200,7 +200,7 @@ export const strings: StringTable = {
 
   'site.testimonials.title': { es: 'Lo que dicen quienes ya vienen', en: 'What the people who come say' },
   'site.testimonials.body': { es: 'Reseñas reales dejadas en la app después de clase.', en: 'Real reviews left in the app after class.' },
-  'site.testimonials.member': { es: 'Socio HOY', en: 'HOY member' },
+  'site.testimonials.member': { es: 'Socio {brand}', en: '{brand} member' },
   'site.testimonials.empty': { es: 'Todavía no hay reseñas publicadas. Este espacio se llena con las reseñas que dejan los socios después de clase.', en: 'No published reviews yet. This space fills up with the reviews members leave after class.' },
 
   'site.first.eyebrow': { es: 'El primer paso', en: 'The first step' },
@@ -208,7 +208,7 @@ export const strings: StringTable = {
   'site.first.body': { es: 'Una clase de prueba por {price}, sin complicaciones y sin permanencia. Si te gusta, seguimos.', en: 'One trial class for {price}, no complications and no commitment. If it suits you, we carry on.' },
   'site.first.cta': { es: 'Reservar clase de prueba', en: 'Book a trial class' },
   'site.first.cta2': { es: 'Escríbenos por WhatsApp', en: 'Write to us on WhatsApp' },
-  'site.first.wa': { es: 'Hola HOY, quiero una clase de prueba.', en: 'Hi HOY, I would like a trial class.' },
+  'site.first.wa': { es: 'Hola {brand}, quiero una clase de prueba.', en: 'Hi {brand}, I would like a trial class.' },
 
   'site.about.media': { es: 'Fundadores e interior del estudio', en: 'Founders and studio interior' },
   'site.about.board': { es: 'Tablero de marca', en: 'Brand board' },
@@ -272,8 +272,8 @@ export const strings: StringTable = {
   'site.contact.fSend': { es: 'Enviar por WhatsApp', en: 'Send on WhatsApp' },
   'site.contact.specials': { es: 'Especiales', en: 'Specials' },
   'site.contact.specialsBody': { es: 'Eventos privados, cumpleaños, sesiones para equipos y pedidos especiales se arman directamente con el estudio. Cuéntanos qué tienes en mente y te respondemos por WhatsApp.', en: 'Private events, birthdays, team sessions and special requests are arranged directly with the studio. Tell us what you have in mind and we will answer on WhatsApp.' },
-  'site.contact.wa': { es: 'Hola HOY, quiero información.', en: 'Hi HOY, I would like some information.' },
-  'site.contact.fTemplate': { es: 'Hola HOY, soy {name} ({phone}). {message}', en: 'Hi HOY, I am {name} ({phone}). {message}' },
+  'site.contact.wa': { es: 'Hola {brand}, quiero información.', en: 'Hi {brand}, I would like some information.' },
+  'site.contact.fTemplate': { es: 'Hola {brand}, soy {name} ({phone}). {message}', en: 'Hi {brand}, I am {name} ({phone}). {message}' },
 
   // W-10 FAQ (0051)
   'site.faq.eyebrow': { es: 'Preguntas frecuentes', en: 'Frequently asked questions' },

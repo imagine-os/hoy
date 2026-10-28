@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { launchConfig } from '../../config/launch';
 
 /** Styling and historical content are separate: classic remains a skin of Latest. */
 export type SiteEdition = 'sanctuary' | 'classic';
@@ -11,7 +12,8 @@ export function useSiteEdition() {
   const { pathname, search } = useLocation();
   const navigate = useNavigate();
   const params = new URLSearchParams(search);
-  const raw = params.get('version');
+  // The production build has no edition picker: every visitor sees Latest (src/config/launch.ts `reviewTools`).
+  const raw = launchConfig().reviewTools ? params.get('version') : null;
   // A bare URL always means Latest, even after reviewing an archive in this browser.
   const version: SiteVersion = raw === 'archive' || raw === 'classic' || raw === 'photos' ? raw : 'latest';
   const edition: SiteEdition = version === 'classic' ? 'classic' : 'sanctuary';

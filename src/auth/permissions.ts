@@ -14,6 +14,8 @@ export type Permission =
   | 'api_keys.read' | 'api_keys.write'
   | 'payroll.read' | 'payroll.write'
   | 'expenses.read' | 'expenses.write'
+  // Q-13 (PL-05): `expenses.create` records one expense without reading the ledger; `revenue.read` sees studio income totals.
+  | 'expenses.create' | 'revenue.read'
   | 'maintenance.write'
   | 'dev.tools' | 'docs.read' | 'audit.read';
 
@@ -21,7 +23,7 @@ const ALL: Permission[] = [
   'bookings.read', 'bookings.write', 'bookings.write_any', 'classes.read', 'classes.write', 'checkin.write',
   'payments.read', 'payments.write', 'members.read', 'members.write', 'content.write', 'comms.write',
   'manual.edit', 'manual.train', 'tables.read', 'tables.write', 'settings.write', 'features.write', 'hours.write', 'api_keys.read', 'api_keys.write', 'payroll.read', 'payroll.write',
-  'expenses.read', 'expenses.write', 'maintenance.write', 'dev.tools', 'docs.read', 'audit.read',
+  'expenses.read', 'expenses.write', 'expenses.create', 'revenue.read', 'maintenance.write', 'dev.tools', 'docs.read', 'audit.read',
 ];
 
 export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
@@ -31,8 +33,9 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   // manual.edit for a coordinator covers only sections marked {{editable:coordinator}} (K-03 enforces the level).
   // 0041: hours.write — the coordinator keeps holidays and special hours current (M-08g); the weekly hours stay settings.write.
   coordinator: ['bookings.read', 'bookings.write_any', 'classes.read', 'classes.write', 'checkin.write', 'payments.read', 'members.read', 'members.write', 'content.write', 'comms.write', 'manual.edit', 'manual.train', 'docs.read', 'audit.read', 'hours.write'],
-  front_desk: ['bookings.read', 'bookings.write_any', 'classes.read', 'checkin.write', 'payments.read', 'payments.write', 'members.read', 'members.write', 'docs.read'],
-  finance: ['payments.read', 'payments.write', 'members.read', 'payroll.read', 'payroll.write', 'expenses.read', 'expenses.write', 'tables.read', 'docs.read', 'audit.read'],
+  // Q-13: reception records an expense (S-11) but sees no income totals (no `revenue.read`, no `expenses.read`).
+  front_desk: ['bookings.read', 'bookings.write_any', 'classes.read', 'checkin.write', 'payments.read', 'payments.write', 'members.read', 'members.write', 'expenses.create', 'docs.read'],
+  finance: ['payments.read', 'payments.write', 'members.read', 'payroll.read', 'payroll.write', 'expenses.read', 'expenses.write', 'expenses.create', 'revenue.read', 'tables.read', 'docs.read', 'audit.read'],
   teacher: ['classes.read', 'bookings.read', 'payroll.read', 'docs.read'],
   maintenance: ['classes.read', 'maintenance.write', 'docs.read'],
   // 0031: content and comms write, CRM read — no settings, payments or member edits.

@@ -5,6 +5,7 @@ import type { Role } from '../../auth/roles';
 import { roleCan } from '../../auth/permissions';
 import { tenant } from '../../tenant/tenant';
 import { fixedExpensesFor, type Period } from '../../data/expenseCalc';
+import { dateKey } from '../../i18n/format';
 
 export type ExpenseDraft = Pick<ExpenseRow,'kind'|'category'|'concept'|'amount'|'incurred_on'|'paid_on'|'method'|'vendor'|'note'>;
 export type TemplateDraft = Pick<ExpenseTemplateRow,'concept'|'category'|'amount'|'cadence'|'anchor_day'|'vendor'>;
@@ -25,9 +26,15 @@ interface Receipt extends BaseRow {actor_id:string;action:string;entity:string;d
 const ownControl=(c:ExpenseControl):ExpenseControl=>({signal:c.signal,currentActor:c.currentActor,failAfterWrites:c.failAfterWrites});
 const day=(s:unknown):s is string=>typeof s==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(s)&&Number.isFinite(Date.parse(s+'T12:00:00Z'))&&new Date(s+'T12:00:00Z').toISOString().slice(0,10)===s;
 const fail=(code:string):never=>{throw Error('expense_'+code);};
+const DESK_CREATE=Symbol('desk-create');
+/** Q-13 desk limits: one expense paid today (studio date), 1–5.000.000 COP. */
+export const DESK_EXPENSE_MAX_COP=5_000_000;
 function check(data:DataProvider,c:ExpenseIdentity,control:ExpenseControl,write=false){
  if(data.name!=='mock'||!data.atomic)fail('disconnected');
- if(!roleCan(c.role,write?'expenses.write':'expenses.read'))fail('denied');
+ // Q-13: `expenses.create` may run (and verify) a single create; it never reads the workspace. Only runExpenseCommand's own
+ // create marks the identity (DESK_CREATE, a module-private symbol), so a caller-shaped object cannot claim it.
+ const createOnly=(c as {[DESK_CREATE]?:true})[DESK_CREATE]===true&&roleCan(c.role,'expenses.create');
+ if(!roleCan(c.role,write?'expenses.write':'expenses.read')&&!createOnly)fail('denied');
  const current=control.currentActor?.()??c;
  if(current.actorId!==c.actorId||current.role!==c.role)fail('context');
  if(control.signal?.aborted)fail('cancelled');
@@ -73,7 +80,14 @@ async function acknowledge(data:DataProvider,result:ExpenseOutcome,c:ExpenseComm
 }
 /** Command, controls and result are private to one immutable intent; receipts contain no entered bodies. */
 export async function runExpenseCommand(data:DataProvider,command:ExpenseCommand,supplied:ExpenseControl={}):Promise<ExpenseOutcome>{
- const c=structuredClone(command),control=ownControl(supplied);check(data,c,control,true);
+ const c=structuredClone(command),control=ownControl(supplied);
+ // structuredClone drops symbols, so only this line can grant create-only access, and only for a create.
+ if(c.type==='create'&&!roleCan(c.role,'expenses.write')&&roleCan(c.role,'expenses.create')){
+  (c as {[DESK_CREATE]?:true})[DESK_CREATE]=true;
+  const today=dateKey(new Date());
+  if(!Number.isInteger(c.draft?.amount)||c.draft.amount<=0||c.draft.amount>DESK_EXPENSE_MAX_COP||c.draft.incurred_on!==today||c.draft.paid_on!==today)fail('validation');
+ }
+ check(data,c,control,true);
  if(typeof c.requestId!=='string'||!c.requestId||c.requestId.length>160||!['create','template.create','template.toggle','pay','delete','generate'].includes(c.type))fail('validation');
  if(c.type!=='generate'&&(typeof c.id!=='string'||!c.id||c.id.length>160))fail('validation');
  if(c.type==='create'){const r={...c.draft,template_id:null,created_by:c.actorId} as ExpenseRow;expenseShape(r);if(!Number.isInteger(r.amount)||r.amount<=0)fail('validation');}

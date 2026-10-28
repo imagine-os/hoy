@@ -52,7 +52,7 @@ export function InvitePage() {
         <Field label={t('customer.invite.to')} hint={t('customer.invite.to.hint')}>{(id) => <Input id={id} value={to} onChange={(e) => setTo(e.target.value)} placeholder={`${tenant.dialCode} 300 000 0000 · ana@correo.com`} />}</Field>
         <div className="grid grid-3 cust-channels">
           <Button variant="secondary" size="lg" onClick={viaWhatsapp} icon="whatsapp">WhatsApp</Button>
-          <Button variant="secondary" size="lg" onClick={viaEmail} icon="mail">Email</Button>
+          <Button variant="secondary" size="lg" onClick={viaEmail} icon="mail">{t('customer.notifications.channel.email')}</Button>
           <Button variant="secondary" size="lg" onClick={viaLink} icon="link">{t('customer.invite.link')}</Button>
         </div>
         {flash && <Notice tone="success">{flash}</Notice>}

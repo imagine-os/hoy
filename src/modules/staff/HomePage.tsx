@@ -53,7 +53,12 @@ export function StaffHomePage() {
       <div className="grid grid-4">
         <StatTile label={t('staff.home.arrivals')} value={arrivals} hint={t('staff.home.arrivals.hint', { n: expected })} trend={arrivals > 0 ? 'up' : 'flat'} />
         <StatTile label={t('staff.home.openShifts')} value={openShifts} hint={t('staff.home.openShifts.hint', { n: today.length })} />
-        <StatTile label={can('payments.read') ? t('staff.home.payments') : t('staff.home.waitlist')} value={can('payments.read') ? formatCOP(paidToday, lang) : waitlist.length} hint={can('payments.read') && pending ? t('staff.home.pending', { n: pending }) : undefined} />
+        {/* Q-13: today's takings are income — `revenue.read` only; reception sees how many payments wait for review. */}
+        {can('revenue.read')
+          ? <StatTile label={t('staff.home.payments')} value={formatCOP(paidToday, lang)} hint={pending ? t('staff.home.pending', { n: pending }) : undefined} />
+          : can('payments.read')
+            ? <StatTile label={t('staff.home.paymentsPending')} value={pending} />
+            : <StatTile label={t('staff.home.waitlist')} value={waitlist.length} />}
         {can('members.read')
           ? <StatTile label={t('staff.home.unread')} value={unreadMsgs} hint={unreadThreads ? t('staff.home.unread.hint', { n: unreadThreads }) : undefined} trend={unreadMsgs > 0 ? 'down' : 'flat'} />
           : <StatTile label={t('staff.home.waitlist')} value={waitlist.length} />}

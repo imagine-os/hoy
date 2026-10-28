@@ -70,3 +70,19 @@ export const S06 = defineSpec({
   states: ['Loading', 'No conversations', 'None selected (“Elige una conversación”)', 'All read', 'Thread with unread inbound (blue ring)', 'Filtered / searched list, no match', 'Read-only composer (no members.write)', 'WhatsApp blocked (unverified number)', 'Quiet hours (queued hint)', 'Thread not found (old link)', 'Narrow: list, then thread (≤ 900 px)'],
   notes: ['Route /staff/inbox lists; /staff/inbox/:id selects. The URL is the selection so the bell, S-01 and M-06 can deep-link.', 'The same three components (MessageThread, ChatBubble, MessageComposer) render the Conversación tab of M-06.', 'Every capture reseeds, so the six unread demo messages are always there at first load.'],
 });
+
+/** S-11 reception expense entry (Q-13, PL-05) — record only: no ledger, no totals, no income. */
+export const S11 = defineSpec({
+  code: 'S-11',
+  name: { es: 'Recepción · registrar gasto', en: 'Front desk · record expense' },
+  purpose: { es: 'Recepción anota un gasto pagado hoy (insumos, aseo, mantenimiento) sin ver el libro de gastos ni los ingresos del estudio.', en: 'The front desk notes an expense paid today (supplies, cleaning, maintenance) without seeing the expense ledger or the studio income.' },
+  layout: ['ExpenseForm (concept · kind fixed/variable · category · amount · method · vendor · note)'],
+  data: ['expenses', 'audit_log', 'users'],
+  roles: ['super_admin', 'admin', 'front_desk'],
+  logic: [
+    'Writes through runExpenseCommand type create (the M-09c command); `expenses.create` allows create and nothing else, and never reads the workspace.',
+    'Dated today and paid today, fixed or variable; amount 1–5.000.000 COP; text fields have the shared PL-07 limits.',
+  ],
+  integrations: [],
+  states: ['Empty form', 'Validation errors', 'Saving', 'Saved', 'Error', 'No permission (read-only)'],
+});

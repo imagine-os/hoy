@@ -1,7 +1,9 @@
 import type { RouteDef } from '../../specs/types';
 import type { StringTable } from '../../i18n/types';
 import { EVERYONE } from '../../auth/roles';
+import { createElement as h } from 'react';
 import { lazyPages } from '../../app/lazyPage';
+import { PrivateDocument } from '../../auth/PrivateDocument';
 import { docsSpec } from './specs';
 
 export const strings: StringTable = {
@@ -22,7 +24,8 @@ export const strings: StringTable = {
 };
 // The docs browser, its renderers and the markdown index load on first visit (K-02 is not on anyone's daily path).
 const page = lazyPages(() => import('./pages'));
-const el = () => page('DocsBrowser');
+// SW-06: internal; a visitor signs in first unless the owner made the path public (src/config/launch.ts).
+const el = () => h(PrivateDocument, null, page('DocsBrowser'));
 
 export const routes: RouteDef[] = [
   { path: '/docs', element: el(), spec: docsSpec, roles: EVERYONE, surface: 'docs', layout: 'desktop', nav: { labelKey: 'core.nav.docs', icon: 'docs', order: 1 } },
