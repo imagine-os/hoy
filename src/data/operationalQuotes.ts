@@ -5,6 +5,8 @@ import {validProductDate,type CatalogPlan} from './productCatalog';
 import { priceItem, type PriceItem } from '../tenant/pricing';
 import { tenant } from '../tenant/tenant';
 import { addDaysKey } from '../i18n/format';
+/** The production build (`VITE_HOY_BUILD=production`); read inline so node tests that bundle this file without Vite still load it. */
+const PRODUCTION_BUILD = (import.meta as { env?: Record<string, unknown> }).env?.VITE_HOY_BUILD === 'production';
 
 export const QUOTED_CLASS_ITEMS = ['trial','single','pack12','pack12_smtc'] as const;
 export const QUOTED_GIFT_ITEMS = ['gift_single','gift_pack12'] as const;
@@ -55,6 +57,8 @@ export function resolveOperationalQuote(rows:CatalogPlan[],itemId:string,purchas
 }
 /** Preserve each existing legacy purchase path's fallback; published terms are explicit. No old row is changed. */
 export function freezeSaleQuote(quote:OperationalQuote,quantity=1,fallbackValidityDays:number|null=90):FrozenSaleQuote {
+ // Production: Company OS prices, quotes and numbers receipts (H-0 §3). This browser copy runs in the review build only.
+ if(PRODUCTION_BUILD)throw Error('server_decides');
  if(!Number.isSafeInteger(quantity)||quantity<1||quantity>10||quote.kind==='class'&&quantity!==1)throw Error('quote_quantity');
  const days=quote.validityDays??fallbackValidityDays;
  return {...structuredClone(quote),quantity,chargedAmount:quote.amount*quantity,fallbackValidityDays,
@@ -71,6 +75,8 @@ export function withQuoteTotals(quote:FrozenSaleQuote,totals:{subtotal:number;ta
  return {...structuredClone(quote),chargedAmount:totals.total,taxTotals:{...totals}};
 }
 export async function checkSaleQuote(data:DataProvider,expected:FrozenSaleQuote):Promise<FrozenSaleQuote>{
+ // Production: Company OS prices, quotes and numbers receipts (H-0 §3). This browser copy runs in the review build only.
+ if(PRODUCTION_BUILD)throw Error('server_decides');
  if(data.name!=='mock')throw Error('quote_disconnected');
  const rows=await data.list<CatalogPlan>('plans');
  let current:OperationalQuote;try{current=resolveOperationalQuote(rows,expected.itemId,quotePurchaseDate());}catch{throw Error('quote_changed');}
