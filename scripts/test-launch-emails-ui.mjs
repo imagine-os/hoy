@@ -115,7 +115,7 @@ try {
         if (!production) {
           check(`review ${lang}: the M-04 workbench is unchanged (local simulation notice, no launch page)`, SIMULATED.test(text) && (await page.locator('[data-launch-emails]').count()) === 0);
         } else {
-          check(`production ${lang}: the launch emails page renders`, (await page.locator('[data-launch-email]').count()) === 11);
+          check(`production ${lang}: the launch emails page renders`, (await page.locator('[data-launch-email]').count()) === 13);
           check(`production ${lang}: no local send or simulated status`, !SIMULATED.test(text) && (await page.getByRole('button', { name: /prueba|test/i }).count()) === 0, text.match(SIMULATED)?.[0]);
           // Without the Company OS read seam the page says there is no status; with it, it shows exactly what Company OS
           // reported (the one fictional "bounced" row) and nothing else.
@@ -124,7 +124,8 @@ try {
           check(`production ${lang}: delivery status is Company OS's or none (never invented)`, unavailable
             ? !STATUS_WORDS.test(delivery)
             : queries.some((q) => q.entity === 'comms_log') && /Rebotado|Bounced/.test(delivery) && !/Enviado|Entregado|Sent\b|Delivered/.test(delivery), delivery.slice(0, 200));
-          check(`production ${lang}: blocked emails say so`, (await page.locator('[data-launch-email="class_cancelled"]').innerText()).match(/Aún no se envía|Not sent yet/) !== null);
+          check(`production ${lang}: blocked emails say so`, (await page.locator('[data-launch-email="receipt_uploaded_team"]').innerText()).match(/Aún no se envía|Not sent yet/) !== null
+            && (await page.locator('[data-launch-email="class_cancelled"]').innerText()).match(/Aún no se envía|Not sent yet/) === null);
           await page.locator('[data-launch-email="booking_released"] button').click();
           const preview = await page.locator('[data-launch-email="booking_released"] .emailpreview').innerText();
           check(`production ${lang}: the preview is the Spanish copy with sample data, every placeholder filled`, /Hola Valentina/.test(preview) && !/\{\{|\{brand\}/.test(preview));

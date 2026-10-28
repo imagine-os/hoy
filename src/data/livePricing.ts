@@ -12,7 +12,9 @@ import { tenant } from '../tenant/tenant';
  * table the product master edits (CompanyOSProvider fills the same table in production):
  * - once the master has a published catalog (M-17), the published revision's price for today's studio date;
  * - otherwise the `plans` row's `price`.
- * An item with no active row, or no price today, is left out rather than shown at a stale amount.
+ * An item with no active row, or no price today, is left out rather than shown at a stale amount. A price of 0 means
+ * the studio quotes it (J4: the private class has no public price), so it is left out too and the page shows only
+ * its contact button.
  */
 export function livePrice(rows: CatalogPlan[], itemId: string, purchaseDate: string): number | null {
   const row = rows.find((p) => p.id === `plan_${itemId}` && p.tenant_id === tenant.id);
@@ -20,7 +22,7 @@ export function livePrice(rows: CatalogPlan[], itemId: string, purchaseDate: str
   if (localCatalogMode(rows)) {
     try { return quotePublishedProduct(row, purchaseDate).amount; } catch { return null; }
   }
-  return row.active && Number.isInteger(row.price) && row.price >= 0 ? row.price : null;
+  return row.active && Number.isInteger(row.price) && row.price > 0 ? row.price : null;
 }
 
 /** The launch price list with every amount read from the product master; unpriced items are dropped. */

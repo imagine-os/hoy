@@ -46,6 +46,12 @@ export default defineRailway((ctx) => {
       CLERK_PUBLISHABLE_KEY: preserve(),
       // This service's public origin: session tokens must have been issued to it (Clerk `azp`).
       APP_URL: preserve(),
+      // The go-live switch (SW-08), set by hand in Railway on the day: SITE_LIVE=true opens the website at the root
+      // (else Coming Soon), or SITE_LIVE_AT opens it at an instant; PUBLIC_DOCUMENTS lists manual/docs pages a
+      // visitor may open. Kept across deploys; unset = Coming Soon and no public documents.
+      SITE_LIVE: preserve(),
+      SITE_LIVE_AT: preserve(),
+      PUBLIC_DOCUMENTS: preserve(),
     },
   });
 

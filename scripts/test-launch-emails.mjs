@@ -17,27 +17,29 @@ const brand = m.launchBrand();
 // ── the file the recipe loads is the generated one
 check(`${OUT} is current (node scripts/gen-launch-emails.mjs)`, json === templatesJson(m));
 
-// ── the ten NT-02 emails and the NT-03 alert, in the tracker's order
-const NT02 = ['welcome', 'sign_in_code', 'booking_pending_payment', 'payment_confirmed', 'payment_rejected', 'booking_released', 'booking_moved', 'class_cancelled', 'voucher_received', 'purchase_note'];
-check('NT-02 lists the ten launch emails in the tracker order', JSON.stringify(m.LAUNCH_EMAILS.filter((e) => e.row === 'NT-02').map((e) => e.key)) === JSON.stringify(NT02));
+// ── the ten NT-02 emails (plus the gift buyer's two notices, BO-06) and the NT-03 alert, in the tracker's order
+const NT02 = ['welcome', 'sign_in_code', 'booking_pending_payment', 'payment_confirmed', 'payment_rejected', 'booking_released', 'booking_moved', 'class_cancelled', 'voucher_received', 'gift_sent', 'gift_used', 'purchase_note'];
+check('NT-02 lists the ten launch emails and the two gift notices in the tracker order', JSON.stringify(m.LAUNCH_EMAILS.filter((e) => e.row === 'NT-02').map((e) => e.key)) === JSON.stringify(NT02));
 check('NT-03 has the receipt alert for the front desk and administration', m.LAUNCH_EMAILS.some((e) => e.row === 'NT-03' && e.key === 'receipt_uploaded_team'
   && (e.blocked?.automations ?? []).map((a) => a.name).join() === 'receipt_uploaded_front_desk,receipt_uploaded_admin'));
 check('keys are unique', new Set(m.LAUNCH_EMAILS.map((e) => e.key)).size === m.LAUNCH_EMAILS.length);
 check('only the sign-in code is Clerk\'s, and it has no automation', m.LAUNCH_EMAILS.filter((e) => e.sender === 'clerk').map((e) => `${e.key}:${e.automations.length}`).join() === 'sign_in_code:0');
 check('the Clerk email is documented in the file, not loaded as a template', doc.clerk.map((c) => c.key).join() === 'sign_in_code' && !doc.records[0].rows.some((r) => r.key === 'sign_in_code'));
 
-// ── every trigger maps to one template
+// ── every trigger maps to one template per recipient (a gift tells its recipient and its buyer)
 const templates = doc.records[0].rows, automations = doc.records[1].rows, all = [...automations, ...doc.blocked_automations];
-const triggerOf = (a) => `${a.event} ${JSON.stringify(Object.fromEntries(Object.entries(a.filter ?? {}).sort()))}`;
+const recipientOf = (a) => a.recipient ?? a.recipient_email;
+const triggerOf = (a) => `${a.event} ${JSON.stringify(Object.fromEntries(Object.entries(a.filter ?? {}).sort()))} → ${recipientOf(a)}`;
 const byTrigger = new Map();
 for (const a of all) byTrigger.set(triggerOf(a), new Set([...(byTrigger.get(triggerOf(a)) ?? []), a.template]));
 for (const [trigger, set] of byTrigger) check(`trigger ${trigger} → one template`, set.size === 1, [...set].join());
 check('every automation names a loaded template', all.every((a) => templates.some((r) => r.key === a.template)));
 check('every Company OS template has an automation (live or blocked)', templates.every((r) => all.some((a) => a.template === r.key)));
-// Filters are equality on event details: two automations on one event overlap unless they disagree on a shared key.
-const overlaps = (a, b) => a.event === b.event && Object.keys(a.filter ?? {}).every((k) => !(k in (b.filter ?? {})) || JSON.stringify(a.filter[k]) === JSON.stringify(b.filter[k]));
+// Filters are equality on event details: two automations on one event overlap unless they disagree on a shared key
+// or write to different recipients.
+const overlaps = (a, b) => a.event === b.event && recipientOf(a) === recipientOf(b) && Object.keys(a.filter ?? {}).every((k) => !(k in (b.filter ?? {})) || JSON.stringify(a.filter[k]) === JSON.stringify(b.filter[k]));
 const pairs = automations.flatMap((a, i) => automations.slice(i + 1).filter((b) => overlaps(a, b) && a.template !== b.template).map((b) => `${a.name}/${b.name}`));
-check('no event sends two different templates to the same occurrence (filters don\'t overlap)', pairs.length === 0, pairs.join(' '));
+check('no event sends one recipient two different templates (filters don\'t overlap)', pairs.length === 0, pairs.join(' '));
 check('overlap check itself: an empty filter overlaps any filter, conflicting values don\'t', overlaps({ event: 'e' }, { event: 'e', filter: { k: 1 } }) && !overlaps({ event: 'e', filter: { k: 1 } }, { event: 'e', filter: { k: 2 } }));
 check('the recipe\'s placeholder rows are retired, and none is reloaded under its old name', ['receipt', 'hold_released', 'gift'].every((n) => doc.retire.automation.includes(n) && doc.retire.message_template.includes(n)
   && !automations.some((a) => a.name === n) && !templates.some((r) => r.key === n)));
@@ -82,8 +84,10 @@ for (const dir of await readdir('src/modules')) {
 }
 const bodies = [...templates, ...doc.clerk].map((r) => `${r.subject}\n${r.body}`).join('\n');
 const links = [...bodies.matchAll(/\{\{links\.base\}\}(\S*)/g)].map((x) => x[1]);
-check('every email that links somewhere links to {{links.base}}/#/…', links.length >= 8 && links.every((l) => /^\/#\/[\w/-]*$/.test(l)), links.join(' '));
-check('every link is an app route', links.every((l) => routes.has(l.slice(2))), links.filter((l) => !routes.has(l.slice(2))).join(' '));
+// A segment may be one record field ({{record.code}}), matching a route parameter (:code).
+const asRoute = (l) => l.slice(2).replace(/\{\{record\.(\w+)\}\}/g, ':$1');
+check('every email that links somewhere links to {{links.base}}/#/…', links.length >= 8 && links.every((l) => /^\/#\/([\w-]+|\{\{record\.\w+\}\}|\/)*$/.test(l)), links.join(' '));
+check('every link is an app route', links.every((l) => routes.has(asRoute(l))), links.filter((l) => !routes.has(asRoute(l))).join(' '));
 const withoutContact = (s) => s.split(brand.contact_email).join('');
 const DOMAIN = /(https?:\/\/|www\.|\b[a-z0-9-]+\.(com|co|app|io|net|org|test|dev)\b)/i;
 check('no domain in the generated file except the configured contact email', !DOMAIN.test(withoutContact(json)), withoutContact(json).match(DOMAIN)?.[0]);

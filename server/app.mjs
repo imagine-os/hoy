@@ -1,6 +1,6 @@
 // The Hoy server's request handler. These jobs, nothing else:
 //   /health              liveness for Railway (and the release it is running);
-//   /app-config.json     the browser's public settings (tenant, API base, Clerk publishable key);
+//   /app-config.json     the browser's public settings (tenant, API base, Clerk publishable key, the go-live switch);
 //   /api/cos/*           a signed-in user's call, checked against Clerk, forwarded to Company OS on the
 //                        private network with the same token as the bearer;
 //   GET /files/<id>      a stored file (e.g. a transfer receipt), streamed from storage after the API has
@@ -64,6 +64,7 @@ export async function createHandler(config, deps) {
     apiBase: '/api/cos',
     clerkPublishableKey: config.clerkPublishableKey ?? null,
     environment: config.environment,
+    launch: config.launch,
   });
 
   return async function handle(req, res) {

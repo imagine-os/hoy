@@ -19,6 +19,8 @@ import { fileURLToPath } from 'node:url';
  * @property {number} fileSizeLimit      the largest file GET /files/<id> serves
  * @property {number} fileTimeoutMs      the whole of GET /files/<id>: link, download and stream
  * @property {string[]} fileStorageOrigins where download links may point (empty = any http(s); https only in production)
+ * @property {{ siteLive: boolean, siteLiveAt: string|null, publicDocuments: string[] }} launch
+ *   the go-live switch the app reads from /app-config.json (SW-08, Q-14): SITE_LIVE, SITE_LIVE_AT, PUBLIC_DOCUMENTS
  */
 
 /** @returns {ServerConfig} Throws with every problem listed, so a bad deploy fails at start, not on first use. */
@@ -77,6 +79,17 @@ export function loadConfig(env = process.env) {
     }
   }
 
+  // The go-live switch (SW-08): Coming Soon stays at the root until SITE_LIVE=true, or until SITE_LIVE_AT (an instant
+  // with its offset, e.g. 2026-11-01T06:00:00-05:00). Changing a variable restarts the service; nothing is rebuilt.
+  const siteLiveRaw = (env.SITE_LIVE ?? '').trim().toLowerCase();
+  if (siteLiveRaw && siteLiveRaw !== 'true' && siteLiveRaw !== 'false') problems.push('SITE_LIVE must be true or false');
+  const siteLiveAt = (env.SITE_LIVE_AT ?? '').trim() || null;
+  if (siteLiveAt && !(/T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2})$/.test(siteLiveAt) && Number.isFinite(Date.parse(siteLiveAt)))) {
+    problems.push('SITE_LIVE_AT must be an instant with its offset, e.g. 2026-11-01T06:00:00-05:00');
+  }
+  const publicDocuments = (env.PUBLIC_DOCUMENTS ?? '').split(',').map((p) => p.trim()).filter(Boolean);
+  for (const p of publicDocuments) if (!/^\/(manual|docs)(\/[A-Za-z0-9_-]+)*$/.test(p)) problems.push(`PUBLIC_DOCUMENTS: ${JSON.stringify(p)} is not a /manual or /docs path`);
+
   const config = {
     port: int(env.PORT, 3000),
     distDir: env.DIST_DIR || fileURLToPath(new URL('../dist', import.meta.url)),
@@ -94,6 +107,7 @@ export function loadConfig(env = process.env) {
     fileSizeLimit: int(env.FILE_SIZE_LIMIT_BYTES, 10 * 1024 * 1024),
     fileTimeoutMs: int(env.FILE_TIMEOUT_MS, 30_000),
     fileStorageOrigins,
+    launch: { siteLive: siteLiveRaw === 'true', siteLiveAt, publicDocuments },
   };
   if (problems.length) throw new Error(`Hoy server configuration:\n  - ${problems.join('\n  - ')}`);
   return config;

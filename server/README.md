@@ -34,9 +34,12 @@ sent on is Railway's `X-Real-IP`. Answers are always `Cache-Control: private, no
 | `PROXY_BODY_LIMIT_BYTES`, `WEBHOOK_BODY_LIMIT_BYTES`, `UPSTREAM_TIMEOUT_MS` | optional (10 MiB, 1 MiB, 30 s) | optional |
 | `FILE_SIZE_LIMIT_BYTES`, `FILE_TIMEOUT_MS` | optional (10 MiB, 30 s) | optional |
 | `FILE_STORAGE_ORIGINS` | IaC: `${{api.SUPABASE_URL}}`, the only origin download links may point to | same; without it production serves no file |
+| `SITE_LIVE`, `SITE_LIVE_AT` | by hand in Railway: the go-live switch (SW-08). Unset or `false` = Coming Soon at the root; `true` = the website; `SITE_LIVE_AT` = an instant with its offset (`2026-11-01T06:00:00-05:00`) | same; set on go-live day (no rebuild, the service restarts) |
+| `PUBLIC_DOCUMENTS` | optional, by hand: comma-separated `/manual/…` or `/docs/…` pages a visitor may open without signing in (Q-14) | same |
 
 The server refuses to start without `COMPANY_OS_URL`, a tenant slug and a Clerk key, with a secret in
-`CLERK_PUBLISHABLE_KEY`, or, in production, without `APP_URL`.
+`CLERK_PUBLISHABLE_KEY`, or, in production, without `APP_URL`. It also refuses a malformed `SITE_LIVE`,
+`SITE_LIVE_AT` or `PUBLIC_DOCUMENTS`.
 
 ## Run and test
 
