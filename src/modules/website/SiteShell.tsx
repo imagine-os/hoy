@@ -16,6 +16,7 @@ import './site.css';
 import './sanctuary.css';
 import './photography.css';
 import { useSiteEdition } from './edition';
+import { useLaunchConfig } from '../../config/launch';
 import { Icon } from '../../components/atom/Icon/Icon';
 import { SiteArchiveNotice } from '../../components/molecule/SiteArchiveNotice/SiteArchiveNotice';
 import { SiteVersionSelect } from '../../components/molecule/SiteVersionSelect/SiteVersionSelect';
@@ -30,6 +31,7 @@ const NAV = [
 export function SiteShell({ children }: { children: ReactNode }) {
   const { t, bi, lang } = useI18n();
   const { edition, version, archived, setEdition, videoEnabled, motion, setMotion } = useSiteEdition();
+  const { reviewTools } = useLaunchConfig();
   const { pathname } = useLocation();
   const shell = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -74,12 +76,12 @@ export function SiteShell({ children }: { children: ReactNode }) {
             {NAV.map(([to, k]) => <NavLink key={to} to={to} className={({ isActive }) => (isActive ? 'is-active' : '')} onClick={() => setOpen(false)}>{t(`site.nav.${k}`)}</NavLink>)}
             {/* on phones (≤ 600 px) the edition select and motion toggle move from the header into the open menu so the header fits without overflow */}
             <div className="site-nav-tools">
-              <SiteVersionSelect value={version} videoEnabled={videoEnabled} onChange={setEdition} />
+              {reviewTools && <SiteVersionSelect value={version} videoEnabled={videoEnabled} onChange={setEdition} />}
               {edition === 'sanctuary' && <button type="button" className="site-iconbtn ctl-round" onClick={() => setMotion(!motion)} aria-pressed={!motion} aria-label={t(motion ? 'site.new.ambient' : 'site.new.static')}>{motion ? 'Ⅱ' : '▷'}</button>}
             </div>
           </nav>
           <div className="site-actions">
-            <SiteVersionSelect value={version} videoEnabled={videoEnabled} onChange={setEdition} />
+            {reviewTools && <SiteVersionSelect value={version} videoEnabled={videoEnabled} onChange={setEdition} />}
             {edition === 'sanctuary' && <button type="button" className="site-iconbtn site-motion ctl-round" onClick={() => setMotion(!motion)} aria-pressed={!motion} aria-label={t(motion ? 'site.new.ambient' : 'site.new.static')}>{motion ? 'Ⅱ' : '▷'}</button>}
             <LangToggle size="sm" />
             <button type="button" className="site-iconbtn ctl-round" onClick={toggleTheme} aria-label={t('core.theme.toggle')}><Icon name={theme === 'dark' ? 'moon' : 'sun'} size={17} /></button>
@@ -118,7 +120,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
             <Link className="small" to="/site/legal/terms">{t('site.legal.terms')}</Link>
             <Link className="small" to="/site/legal/privacy">{t('site.legal.privacy')}</Link>
             <Link className="small" to="/site/delete-account">{t('site.delete.nav')}</Link>
-            <Link className="small" to="/hub">{t('site.footer.hub')}</Link>
+            {reviewTools && <Link className="small" to="/hub">{t('site.footer.hub')}</Link>}
           </div>
           <div className="stack-sm">
             <span className="eyebrow">{t('site.footer.lang')}</span>
@@ -126,8 +128,8 @@ export function SiteShell({ children }: { children: ReactNode }) {
           </div>
         </div>
         <div className="container site-foot-bottom">
-          {edition === "sanctuary" && version !== 'photos' && <p className="site-concept-note">{t("site.new.demo")}</p>}
-          <a className="small" href="https://github.com/imagine-os/hoy/blob/main/docs/website-versions.md" target="_blank" rel="noreferrer">{t("site.edition.history")} ↗</a>
+          {reviewTools && edition === "sanctuary" && version !== 'photos' && <p className="site-concept-note">{t("site.new.demo")}</p>}
+          {reviewTools && <a className="small" href="https://github.com/imagine-os/hoy/blob/main/docs/website-versions.md" target="_blank" rel="noreferrer">{t("site.edition.history")} ↗</a>}
           <span className="xs muted">{t('site.footer.rights', { year: studioParts(new Date()).year, name: tenant.legalName })}</span>
         </div>
       </footer>

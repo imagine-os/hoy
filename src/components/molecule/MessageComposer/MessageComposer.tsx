@@ -5,6 +5,7 @@ import { SegmentedControl } from '../SegmentedControl/SegmentedControl';
 import { Input } from '../../atom/Input/Input';
 import { Button } from '../../atom/Button/Button';
 import './MessageComposer.css';
+import { LIMITS } from '../../../shared/limits';
 
 export type ComposerChannel = Extract<MessageChannel, 'whatsapp' | 'email' | 'note'>;
 export interface ComposerMessage { channel: ComposerChannel; subject?: string; text: string }
@@ -56,7 +57,7 @@ export function MessageComposer({ onSend, channels = ['whatsapp', 'email', 'note
       </div>
       {channel === 'email' && <Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder={t('core.msg.compose.subject')} aria-label={t('core.msg.compose.subject')} disabled={blocked} />}
       <textarea
-        className="input composer-text" rows={channel === 'email' ? 5 : 3} value={text} disabled={blocked}
+        className="input composer-text" rows={channel === 'email' ? 5 : 3} maxLength={LIMITS.message} value={text} disabled={blocked}
         placeholder={t(`core.msg.compose.ph.${channel}`)} aria-label={t(`core.msg.channel.${channel}`)}
         onChange={(e) => setText(e.target.value)} onKeyDown={onKey}
       />

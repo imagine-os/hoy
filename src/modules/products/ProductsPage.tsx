@@ -6,7 +6,7 @@ import { tenant } from '../../tenant/tenant';
 import { useData } from '../../data/DataContext';
 import { useSession } from '../../auth/SessionProvider';
 import { useI18n } from '../../i18n/I18nProvider';
-import { dateKey, formatCOP } from '../../i18n/format';
+import { dateKey, formatCOP, formatDate, formatDateTime } from '../../i18n/format';
 import { Card } from '../../components/molecule/Card/Card';
 import { Field } from '../../components/molecule/Field/Field';
 import { EmptyState } from '../../components/molecule/EmptyState/EmptyState';
@@ -95,7 +95,7 @@ export function ProductsPage() {
     {error && <p role="alert">{t(error)}</p>}
    </fieldset></form>
    {selected?.frontend_catalog && <div className="stack products-quote"><h2>{t('products.quote')}</h2><Field label={t('products.quoteDate')}>{id=><Input id={id} name="quote_date" type="date" value={quoteDate} onChange={e=>setQuoteDate(e.target.value)}/>}</Field>{quote ? <div className="row wrap"><strong data-testid="quote-amount">{formatCOP(quote.amount,lang)}</strong><Button onClick={()=>setExamples(xs=>[...xs,structuredClone(quote!)])}>{t('products.snapshot')}</Button></div> : <p role="status">{t(quoteError)}</p>}
-    <h3>{t('products.history')}</h3>{selected.frontend_catalog.history.map(revision=><p className="small" key={revision.revision}>#{revision.revision} · {revision.at} · {revision.actorId} · {revision.definition.code} · {revision.definition.prices.map(p=>`${p.amount} COP (${p.startsOn} – ${p.endsOn??'∞'})`).join('; ')}</p>)}
+    <h3>{t('products.history')}</h3>{selected.frontend_catalog.history.map(revision=><p className="small" key={revision.revision}>#{revision.revision} · {formatDateTime(revision.at,lang)} · {revision.actorId} · {revision.definition.code} · {revision.definition.prices.map(p=>`${formatCOP(p.amount,lang)} (${formatDate(p.startsOn+'T12:00:00Z',lang,{day:'numeric',month:'short',year:'numeric'})} – ${p.endsOn?formatDate(p.endsOn+'T12:00:00Z',lang,{day:'numeric',month:'short',year:'numeric'}):'∞'})`).join('; ')}</p>)}
    </div>}
   </Card>}
   {examples.length>0 && <Card title={t('products.examples')}><p className="small muted">{t('products.snapshotNote')}</p>{examples.map((q,i)=><p key={i} data-testid="quote-snapshot">{q.code} · {q.purchaseDate} · {formatCOP(q.amount,lang)} · #{q.catalogRevision}</p>)}</Card>}

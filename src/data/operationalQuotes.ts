@@ -32,7 +32,8 @@ export function resolveOperationalQuote(rows:CatalogPlan[],itemId:string,purchas
  const plan=rows.find(p=>p.id===`plan_${itemId}`&&p.tenant_id===tenant.id);
  if(!plan)throw Error('quote_unavailable');
  const published=localCatalogMode(rows);
- let priceId=`legacy_${itemId}`,amount=legacy.price??0,name={...legacy.name},classes=legacy.classes??1,validityDays=legacy.validityDays??null,catalogRevision=0,code=itemId.toUpperCase(),publicationAt='';
+ // SW-02: before a catalog is published, the amount is the product master row's (`plans.price`), the same one the website shows.
+ let priceId=`legacy_${itemId}`,amount=Number.isInteger(plan.price)&&plan.price>=0?plan.price:legacy.price??0,name={...legacy.name},classes=legacy.classes??1,validityDays=legacy.validityDays??null,catalogRevision=0,code=itemId.toUpperCase(),publicationAt='';
  if(published){
   if(!plan.frontend_publication||plan.frontend_publication.withdrawnAt)throw Error('quote_unavailable');
   const value=quotePublishedProduct(plan,purchaseDate);

@@ -109,7 +109,7 @@ export function RoomsPage() {
       setNotice({ tone: 'ok', text: t('staff.rooms.msg.booked', { title: row.title, status: bi(STATUS_LABEL[status]) }) });
       setSelectedId(row.id);
       setForm(emptyForm(form.date, form.roomId));
-    } catch (e) { setNotice({ tone: 'bad', text: String(e) }); } finally { setBusy(null); }
+    } catch { setNotice({ tone: 'bad', text: t('staff.rooms.saveError') }); } finally { setBusy(null); }
   };
 
   const setStatus = async (b: SpaceBookingRow, status: SpaceBookingRow['status']) => {

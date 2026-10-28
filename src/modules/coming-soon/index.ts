@@ -5,6 +5,6 @@ import { comingSoonSpec } from './specs';
 export { strings } from './strings';
 const page = lazyPages(() => import('./pages'));
 export const routes: RouteDef[] = [
-  { path: '/', roles: EVERYONE, surface: 'public', layout: 'auto', element: page('ComingSoonPage'), spec: comingSoonSpec },
+  { path: '/', roles: EVERYONE, surface: 'public', layout: 'auto', element: page('RootEntry'), spec: comingSoonSpec },
   { path: '/coming-soon', roles: EVERYONE, surface: 'public', layout: 'auto', element: page('ComingSoonPage'), spec: comingSoonSpec },
 ];

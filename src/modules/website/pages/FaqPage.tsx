@@ -7,7 +7,7 @@
  *
  * Every question comes from `faq_entries` (the same rows the app's C-14 / C-15 read, edited in M-02c), so the
  * website and the app always answer the same way. An answer that lists prices carries a `{{pricing:…}}` line and
- * renders a live table from src/tenant/pricing.ts (FaqAnswer → PriceTable).
+ * renders a live table with the product master's current prices (FaqAnswer → PriceTable, SW-02).
  */
 import { Fragment, useMemo, useState, type ReactNode } from 'react';
 import { Link } from '../links';
@@ -18,6 +18,7 @@ import { useContact, useWhatsappLink } from '../../admin/settings';
 import { Accordion } from '../../../components/molecule/Accordion/Accordion';
 import { FaqAnswer } from '../../../components/molecule/FaqAnswer/FaqAnswer';
 import { itemsForFamilies } from '../../../components/molecule/PriceTable/PriceTable';
+import { useLivePricing } from '../../../data/livePricing';
 import { EmptyState } from '../../../components/molecule/EmptyState/EmptyState';
 import { Icon } from '../../../components/atom/Icon/Icon';
 import { PageHead, SiteShell } from '../SiteShell';
@@ -50,9 +51,10 @@ export function FaqPage() {
   const wa = useWhatsappLink();
   const support = wa.resolve('support');
   const [query, setQuery] = useState('');
+  const { items: live } = useLivePricing();
 
   // The price directive written out as words, for search and for the structured data.
-  const plain = (text: string) => text.replace(DIRECTIVE, (_m, fams: string) => itemsForFamilies(fams).map((p) => `${bi(p.name)}: ${p.price == null ? '' : formatCOP(p.price, lang)}`).join('; '));
+  const plain = (text: string) => text.replace(DIRECTIVE, (_m, fams: string) => itemsForFamilies(fams, live).map((p) => `${bi(p.name)}: ${p.price == null ? '' : formatCOP(p.price, lang)}`).join('; '));
 
   const view = useMemo(() => {
     const q = fold(query).trim();
@@ -62,13 +64,13 @@ export function FaqPage() {
       items: q ? g.items.filter((it) => fold(`${bi(it.question)} ${plain(bi(it.answer))}`).includes(q)) : g.items,
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [groups, query, lang]);
+  }, [groups, query, lang, live]);
   const matches = view.reduce((n, g) => n + g.items.length, 0);
   const total = groups.reduce((n, g) => n + g.items.length, 0);
 
   useFaqJsonLd(useMemo(() => groups.flatMap((g) => g.items.map((it) => ({ question: bi(it.question), answer: plain(bi(it.answer)) }))),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [groups, lang]));
+    [groups, lang, live]));
 
   const SECTIONS: Record<string, () => ReactNode> = {
     PageHead: () => <PageHead eyebrow={t('site.faq.eyebrow')} title={t('site.faq.title')} body={t('site.faq.body', { n: total })} />,

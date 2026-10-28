@@ -13,6 +13,7 @@ import { Input } from '../../../components/atom/Input/Input';
 import { MapSlot } from '../../../components/molecule/MapSlot/MapSlot';
 import { PageHead, SiteShell } from '../SiteShell';
 import { siteSpecs } from '../specs';
+import { LIMITS } from '../../../shared/limits';
 
 /** W-06 — contact details from the tenant config, the studio map, and a WhatsApp form with no backend. */
 export function ContactPage() {
@@ -97,14 +98,14 @@ export function ContactPage() {
           <p className="small muted" style={{ marginBottom: 'var(--sp-lg)' }}>{t('site.contact.formBody')}</p>
           <div className="site-form">
             <Field label={t('site.contact.fName')}>
-              {(id) => <Input id={id} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} autoComplete="name" />}
+              {(id) => <Input id={id} maxLength={LIMITS.name} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} autoComplete="name" />}
             </Field>
             <Field label={t('site.contact.fPhone')}>
-              {(id) => <Input id={id} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} inputMode="tel" autoComplete="tel" placeholder={`${tenant.dialCode} 3xx xxx xxxx`} />}
+              {(id) => <Input id={id} maxLength={LIMITS.phone} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} inputMode="tel" autoComplete="tel" placeholder={`${tenant.dialCode} 3xx xxx xxxx`} />}
             </Field>
             <div className="site-form-full">
               <Field label={t('site.contact.fMessage')}>
-                {(id) => <textarea id={id} className="input" rows={4} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} placeholder={t('site.contact.fMessagePh')} />}
+                {(id) => <textarea id={id} className="input" rows={4} maxLength={LIMITS.message} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} placeholder={t('site.contact.fMessagePh')} />}
               </Field>
             </div>
             <div className="site-form-full">

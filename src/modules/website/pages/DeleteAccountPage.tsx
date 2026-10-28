@@ -4,7 +4,7 @@ import { useI18n } from '../../../i18n/I18nProvider';
 import { useData } from '../../../data/DataContext';
 import { useLayout } from '../../../layout/useLayout';
 import { tenant } from '../../../tenant/tenant';
-import { useSettings } from '../../admin/settings';
+import { contactOf, useSettings } from '../../admin/settings';
 import type { DeletionRequestRow } from '../../../data/schema';
 import { Card } from '../../../components/molecule/Card/Card';
 import { Button } from '../../../components/atom/Button/Button';
@@ -15,6 +15,7 @@ import { Toggle } from '../../../components/atom/Toggle/Toggle';
 import { PageHead, SiteShell } from '../SiteShell';
 import { siteSpecs } from '../specs';
 import { isPhone } from '../../../i18n/format';
+import { LIMITS } from '../../../shared/limits';
 
 /**
  * W-09 `/site/delete-account` — the public account-deletion request Google Play asks every app to
@@ -33,7 +34,8 @@ export function DeleteAccountPage() {
   const [sent, setSent] = useState<DeletionRequestRow | null>(null);
 
   const controller = settings.branding.displayName || tenant.legalName;
-  const email = settings.profile.email || tenant.contact.email;
+  // SW-05: the one validated contact email (contactOf), not the raw setting.
+  const email = contactOf(settings).email;
 
   const submit = async () => {
     const e: Record<string, string> = {};
@@ -91,7 +93,7 @@ export function DeleteAccountPage() {
               </Field>
               <div className="site-form-full">
                 <Field label={t('customer.account.delete.reason')}>
-                  {(id) => <textarea id={id} className="input" rows={3} value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} placeholder={t('customer.account.delete.reason.ph')} />}
+                  {(id) => <textarea id={id} className="input" rows={3} maxLength={LIMITS.note} value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} placeholder={t('customer.account.delete.reason.ph')} />}
                 </Field>
               </div>
               <div className="site-form-full">

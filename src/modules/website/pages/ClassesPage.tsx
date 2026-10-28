@@ -5,7 +5,7 @@ import { useLayout } from '../../../layout/useLayout';
 import { useTable } from '../../../data/DataContext';
 import type { ModalityRow, TeacherRow } from '../../../data/schema';
 import { formatCOP } from '../../../i18n/format';
-import { priceItem } from '../../../tenant/pricing';
+import { useLivePricing } from '../../../data/livePricing';
 import { classesIntro, classes, classOrder, taglines } from '../../../tenant/brand';
 import { Button } from '../../../components/atom/Button/Button';
 import { Chip } from '../../../components/atom/Chip/Chip';
@@ -25,7 +25,8 @@ export function ClassesPage() {
   const { rows: modalities } = useTable<ModalityRow>('modalities', { where: { active: true } });
   const { rows: teachers } = useTable<TeacherRow>('teachers', { where: { active: true } });
   const photos = useClassPhotos();
-  const trial = priceItem('trial');
+  const prices = useLivePricing();
+  const trial = prices.item('trial');
   const trialPrice = trial?.price != null ? formatCOP(trial.price, lang) : '';
   /** The teachers who guide a class: anyone whose specialties hold one of its modalities. */
   const guides = (modalitySlugs: string[]) => {

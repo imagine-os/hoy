@@ -39,8 +39,11 @@ export function PriceTable({ items, caption, grouped = false }: PriceTableProps)
   );
 }
 
-/** `{{pricing:bienvenida,paquetes}}` → the items of those families, in pricing.ts order. Unknown families are skipped. */
-export function itemsForFamilies(arg: string): PriceItem[] {
+/**
+ * `{{pricing:bienvenida,paquetes}}` → the items of those families, in pricing.ts order. Unknown families are skipped.
+ * `from` is the live list (SW-02, `useLivePricing().items`); without it the static launch list is used.
+ */
+export function itemsForFamilies(arg: string, from?: PriceItem[]): PriceItem[] {
   const fams = arg.split(',').map((s) => s.trim()).filter((s): s is PlanFamily => s in FAMILY_LABEL);
-  return fams.flatMap((f) => pricingByFamily(f));
+  return fams.flatMap((f) => from ? from.filter((p) => p.family === f) : pricingByFamily(f));
 }

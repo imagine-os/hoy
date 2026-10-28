@@ -3,12 +3,19 @@ import type { ReactNode } from 'react';
 import type { Role } from './roles';
 import { useSession } from './SessionProvider';
 import { visitorSignIn } from './visitorSignIn';
+import { matrixAllows } from '../config/roleMatrix';
+import { isPublicDocument, useLaunchConfig } from '../config/launch';
 
-/** Guards a route. Public routes pass everyone; otherwise the effective role must match. */
+/**
+ * Guards a route. Public routes pass everyone; otherwise the effective role must match. PL-05: the launch permissions
+ * matrix (src/config/roleMatrix.ts) then applies on top and can only take access away; a manual or docs path the owner
+ * made public (SW-06) stays open.
+ */
 export function RequireRole({ roles, children }: { roles: Role[]; children: ReactNode }) {
-  const { hasRole, user } = useSession();
+  const { hasRole, user, role } = useSession();
+  const config = useLaunchConfig();
   const loc = useLocation();
-  if (hasRole(roles)) return <>{children}</>;
+  if (hasRole(roles) && (matrixAllows(role, loc.pathname) || isPublicDocument(config, loc.pathname))) return <>{children}</>;
   if(user.role==='public')return <Navigate to={visitorSignIn(loc.pathname+loc.search)} replace />;
   return <Navigate to={`/no-access?from=${encodeURIComponent(loc.pathname)}`} replace />;
 }

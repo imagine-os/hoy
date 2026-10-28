@@ -1,6 +1,6 @@
 {
   "schema": "hoy.hub-map/1",
-  "generatedAt": "2026-10-24T00:00:00.000Z",
+  "generatedAt": "2026-10-27T00:00:00.000Z",
   "product": {
     "id": "hoy",
     "name": {
@@ -584,6 +584,7 @@
       "pageCodes": [
         "S-01",
         "S-02",
+        "S-11",
         "S-09",
         "S-05",
         "S-10",
@@ -5411,6 +5412,45 @@
           "en": "Register"
         },
         "order": 30
+      }
+    },
+    {
+      "code": "S-11",
+      "route": "/staff/expense",
+      "name": {
+        "es": "Recepción · registrar gasto",
+        "en": "Front desk · record expense"
+      },
+      "purpose": {
+        "es": "Recepción anota un gasto pagado hoy (insumos, aseo, mantenimiento) sin ver el libro de gastos ni los ingresos del estudio.",
+        "en": "The front desk notes an expense paid today (supplies, cleaning, maintenance) without seeing the expense ledger or the studio income."
+      },
+      "surface": "staff",
+      "roles": [
+        "super_admin",
+        "admin",
+        "front_desk"
+      ],
+      "experienceId": "desk",
+      "device": "desktop",
+      "status": "built",
+      "actions": [],
+      "shots": {
+        "thumbs": {},
+        "full": {
+          "es-390": "hub-map/shots/S-11/es-390.jpg",
+          "en-390": "hub-map/shots/S-11/en-390.jpg",
+          "es-1280": "hub-map/shots/S-11/es-1280.jpg",
+          "en-1280": "hub-map/shots/S-11/en-1280.jpg"
+        }
+      },
+      "group": {
+        "id": "desk",
+        "label": {
+          "es": "Recepción",
+          "en": "Front desk"
+        },
+        "order": 10
       }
     },
     {
