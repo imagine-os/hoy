@@ -5,7 +5,12 @@ import type { BookingRow } from '../../../data/schema';
 import { occupiesMat } from '../../../data/mats';
 import { tenant } from '../../../tenant/tenant';
 import './MatPicker.css';
-export interface MatPickerProps { sessionId: string; capacity: number; value: number | null; onChange: (n: number) => void }
+export interface MatPickerProps {
+  sessionId: string; capacity: number; value: number | null; onChange: (n: number) => void;
+  /** Taken mats given by the caller. When set, the picker reads no bookings (production: a member can't read other people's
+   * bookings; the server answers `spot_taken`). When absent, it reads the class's bookings as before. */
+  taken?: readonly number[];
+}
 /** Minimum mat width and the grid gap, in rem (they follow the --ui band); `MAT_MIN_REM` matches `--mat-size` in MatPicker.css. */
 export const MAT_MIN_REM = 3.5, MAT_GAP_REM = 0.5;
 /**
@@ -34,10 +39,18 @@ function useMatColumns(ref: React.RefObject<HTMLElement>, perRow: number) {
  * bottom. Each physical row is its own grid whose column count comes from the available width (0026), so a row of 8 shows as
  * 8, 4 or 2 per line; when it wraps, a row label ("Fila 1 · mats 01–08") keeps the row readable.
  */
-export function MatPicker({ sessionId, capacity, value, onChange }: MatPickerProps) {
+export function MatPicker(props: MatPickerProps) {
+  return props.taken ? <MatRoom {...props} taken={new Set(props.taken)} /> : <LiveMatPicker {...props} />;
+}
+
+/** The review build: taken mats come from the class's bookings. */
+function LiveMatPicker(props: MatPickerProps) {
+  const { rows } = useTable<BookingRow>('bookings', { where: { session_id: props.sessionId } });
+  return <MatRoom {...props} taken={new Set(rows.filter(occupiesMat).map(b => b.mat_number as number))} />;
+}
+
+function MatRoom({ capacity, value, onChange, taken }: Omit<MatPickerProps, 'taken'> & { taken: Set<number> }) {
   const { t } = useI18n();
-  const { rows } = useTable<BookingRow>('bookings', { where: { session_id: sessionId } });
-  const taken = new Set(rows.filter(occupiesMat).map(b => b.mat_number));
   const valid = value != null && !taken.has(value) && value <= capacity;
   const { mats, matRows } = tenant.studio;
   const perRow = Math.ceil(mats / matRows);
