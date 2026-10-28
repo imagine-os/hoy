@@ -5,6 +5,7 @@ import { useData, useTable } from '../../data/DataContext';
 import { useSession } from '../../auth/SessionProvider';
 import { TEAM_ROLES, type Role } from '../../auth/roles';
 import { demoUserById, demoUsers } from '../../auth/demoUsers';
+import { PRODUCTION_BUILD } from '../../config/launch';
 import type { ManualOverrideRow, ManualProgressRow, ManualRequestRow, ManualTrainingRow, ProfileRow, StudioPolicyRow, TrainingStage } from '../../data/schema';
 import type { Lang } from '../../i18n/types';
 import { useAudit } from '../staff/audit';
@@ -28,15 +29,15 @@ export const isTeam = (role: Role): boolean => TEAM_ROLES.includes(role);
 
 const now = () => new Date().toISOString();
 
-/** user_id → display name, from the demo users and the profiles table. */
+/** user_id → display name, from the demo users (review build only, H-10) and the profiles table. */
 export function useNames(): (id: string | null | undefined) => string {
   const { rows } = useTable<ProfileRow>('profiles');
   const map = useMemo(() => new Map(rows.map((p) => [p.user_id, p.full_name])), [rows]);
-  return useCallback((id) => (id ? demoUserById(id)?.name ?? map.get(id) ?? id : '—'), [map]);
+  return useCallback((id) => (id ? (PRODUCTION_BUILD ? undefined : demoUserById(id)?.name) ?? map.get(id) ?? id : '—'), [map]);
 }
 
-/** The team roster the "Equipo" view and the training sign-off list: one demo user per team role. */
-export const TEAM_PEOPLE = demoUsers.filter((u) => TEAM_ROLES.includes(u.role) && u.role !== 'super_admin');
+/** The team roster the "Equipo" view and the training sign-off list: one demo user per team role (none in production, H-10). */
+export const TEAM_PEOPLE = PRODUCTION_BUILD ? [] : demoUsers.filter((u) => TEAM_ROLES.includes(u.role) && u.role !== 'super_admin');
 
 // ---- reading progress ----
 export function useProgress(userId?: string) {

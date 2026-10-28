@@ -36,13 +36,38 @@ const PRODUCTION = process.env.VITE_HOY_BUILD === 'production';
 export const REVIEW_ONLY_MODULES = ['dev', 'docs', 'hub'];
 const MODULES_GLOB = "import.meta.glob<ModuleExports>('../modules/*/index.ts', { eager: true })";
 const DOCS_DIR = join(here, 'docs') + '/';
+/**
+ * H-10: the review build's demo data — the demo personas (and the hub map that lists them), the in-browser
+ * MockProvider and the seed it builds. Real
+ * customers must never get a demo persona or write to localStorage, so none of these may ship in production. They
+ * are marked side-effect free (a reference left only in a `PRODUCTION_BUILD ? … : …` branch is dropped with its
+ * module) and the build fails if one is still rendered. The seed files left out of the list are the studio's verified
+ * launch content (classes, teachers, prices, rooms, legal texts, FAQ, media, policies; 0051), which the Company OS
+ * provider maps as defaults (src/data/companyos/mapping.ts).
+ */
+const SEED_LAUNCH_CONTENT = ['catalog', 'timetable', 'content', 'legal', 'media', 'studioPolicies'];
+export const REVIEW_ONLY_DATA = new RegExp(`/src/(hub/.+|auth/demoUsers|data/MockProvider|data/seed/(?!(${SEED_LAUNCH_CONTENT.join('|')})\\.ts$).+)\\.tsx?$`);
 
 function productionBuild(): Plugin {
   return {
     name: 'hoy-production-build',
     enforce: 'pre',
+    generateBundle(_, bundle) {
+      const rendered = new Set<string>();
+      for (const chunk of Object.values(bundle)) if (chunk.type === 'chunk') for (const [id, m] of Object.entries(chunk.modules)) if (m.renderedLength > 0) rendered.add(id);
+      const shipped: string[] = [];
+      for (const chunk of Object.values(bundle)) {
+        if (chunk.type !== 'chunk') continue;
+        for (const [id, m] of Object.entries(chunk.modules)) if (m.renderedLength > 0 && REVIEW_ONLY_DATA.test(id)) {
+          const by = this.getModuleInfo(id)?.importers.filter((i) => rendered.has(i) && !REVIEW_ONLY_DATA.test(i)).map((i) => i.replace(here, '')) ?? [];
+          shipped.push(`${id.replace(here, '')} in ${chunk.fileName} (imported by ${by.join(', ') || 'demo data only'})`);
+        }
+      }
+      if (shipped.length) this.error(`productionBuild: review-only demo data in the production bundle (H-10):\n  ${shipped.join('\n  ')}`);
+    },
     transform(code, id) {
       const file = id.split('?')[0];
+      if (REVIEW_ONLY_DATA.test(file)) return { code, map: null, moduleSideEffects: false };
       if (file.endsWith('/src/app/registry.ts')) {
         if (!code.includes(MODULES_GLOB)) throw new Error('productionBuild: the module glob in src/app/registry.ts changed; update vite.config.ts');
         const skip = REVIEW_ONLY_MODULES.map((m) => `'!../modules/${m}/index.ts'`).join(', ');

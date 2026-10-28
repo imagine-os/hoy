@@ -7,6 +7,7 @@ import { useI18n } from '../../i18n/I18nProvider';
 import { useSession } from '../../auth/SessionProvider';
 import { ROLE_LABEL, ROLES, type Role } from '../../auth/roles';
 import { demoUserByRole, demoUsers } from '../../auth/demoUsers';
+import { PRODUCTION_BUILD } from '../../config/launch';
 import { useTable } from '../../data/DataContext';
 import type { TrainingStage } from '../../data/schema';
 import { Badge } from '../../components/atom/Badge/Badge';
@@ -57,6 +58,7 @@ export function useLensSubject(lens: Lens): { id: string; name: string; own: boo
   const { user, role } = useSession();
   if (lens === 'all') return undefined;
   if (lens === role || (lens === user.role)) return { id: user.id, name: user.name, own: true };
+  if (PRODUCTION_BUILD) return undefined; // no demo people in production (H-10)
   const d = demoUserByRole(lens);
   return d.role === lens ? { id: d.id, name: d.name, own: false } : undefined;
 }
@@ -393,7 +395,7 @@ export function TrainingBlock({ role: roleArg }: { role?: string }) {
   const roster = useMemo(() => {
     if (!planRole) return [];
     const ids = new Set(userRoles.filter((r) => r.role === planRole).map((r) => r.user_id));
-    for (const d of demoUsers) if (d.role === planRole) ids.add(d.id);
+    if (!PRODUCTION_BUILD) for (const d of demoUsers) if (d.role === planRole) ids.add(d.id);
     return [...ids];
   }, [userRoles, planRole]);
   const ownPlan = myRole === role || (myRole === 'super_admin' && role === 'admin') || user.role === role;
