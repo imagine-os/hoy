@@ -64,8 +64,14 @@ const staff = (role: string) => ['super_admin', 'admin'].includes(role);
 const reception = (role: string) => staff(role) || ['front_desk', 'coordinator'].includes(role);
 export const voucherSeats = (db: VoucherDb, sessionId: string, tenantId?: string) => (db.voucher_bookings ?? []).filter(b => (!tenantId || b.tenant_id === tenantId) && b.sessionId === sessionId && b.status !== 'cancelled').reduce((n, b) => n + (b as VoucherBookingRow).participants.length, 0);
 
+/** The review build's demo rules. The production build has none (gap analysis §3, lane H-6): Company OS credits decide
+ * vouchers, so there this refuses every command (`voucher_demo_disabled`) and the rules are never reached. */
+type ExecuteVoucherCommand = typeof runDemoVoucherCommand;
+const productionBuild = (import.meta as { env?: Record<string, string | undefined> }).env?.VITE_HOY_BUILD === 'production';
+export const executeVoucherCommand: ExecuteVoucherCommand = productionBuild ? () => fail('voucher_demo_disabled') : runDemoVoucherCommand;
+
 /** Pure copy-on-write transaction: errors never mutate the supplied database. */
-export function executeVoucherCommand(database: VoucherDb, command: VoucherCommand, context: { tenantId: string; now?: string; id?: () => string; usesMats?: (session: ClassSessionRow) => boolean; matCapacity?: number }): { db: VoucherDb; result: VoucherResult } {
+function runDemoVoucherCommand(database: VoucherDb, command: VoucherCommand, context: { tenantId: string; now?: string; id?: () => string; usesMats?: (session: ClassSessionRow) => boolean; matCapacity?: number }): { db: VoucherDb; result: VoucherResult } {
   const db = structuredClone(database), c = command;
   const now = context.now ?? new Date().toISOString();
   const id = context.id ?? (() => crypto.randomUUID());
