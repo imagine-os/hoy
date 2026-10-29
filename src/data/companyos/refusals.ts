@@ -57,6 +57,12 @@ export const CONTRACT_REFUSALS = {
   idempotency_conflict: { es: 'Este envío no coincide con el anterior. Actualiza la página e inténtalo de nuevo.', en: 'This submission does not match the previous one. Refresh the page and try again.' },
   idempotency_key_invalid: { es: 'No pudimos enviar la solicitud. Actualiza la página e inténtalo de nuevo.', en: 'We could not send the request. Refresh the page and try again.' },
   forbidden: { es: 'No tienes permiso para hacer esto.', en: 'You do not have permission to do this.' },
+  // The cash book (Company OS expenses 1.0.0, ADR 0041).
+  invalid_option: { es: 'Elige una de las opciones de la lista.', en: 'Choose one of the options in the list.' },
+  invalid_date: { es: 'Revisa la fecha: no es válida, o la fecha de pago está en el futuro.', en: 'Check the date: it is not valid, or the payment date is in the future.' },
+  template_not_found: { es: 'Ese gasto fijo ya no existe. Actualiza la página.', en: 'That recurring expense no longer exists. Refresh the page.' },
+  invalid_day_of_month: { es: 'El día del mes debe estar entre 1 y 28.', en: 'The day of the month must be between 1 and 28.' },
+  template_in_use: { es: 'Hay gastos registrados con este gasto fijo: desactívalo en lugar de borrarlo.', en: 'Expenses were recorded with this recurring expense: deactivate it instead of deleting it.' },
 } as const satisfies Record<string, RefusalCopy>;
 
 /** The connector's own codes: transport, session and launch scope. */
@@ -66,7 +72,7 @@ export const CONNECTOR_REFUSALS = {
   email_not_verified: { es: 'Confirma tu correo para continuar.', en: 'Confirm your email to continue.' },
   network_error: { es: 'Sin conexión. Revisa tu internet e inténtalo de nuevo con el mismo botón.', en: 'No connection. Check your internet and try again with the same button.' },
   service_unavailable: { es: 'El servicio no responde ahora. Inténtalo en unos minutos con el mismo botón.', en: 'The service is not responding right now. Try again in a few minutes with the same button.' },
-  concept_required: { es: 'Falta el concepto del pago.', en: 'The payment needs a concept.' },
+  concept_required: { es: 'Falta el concepto.', en: 'A concept is needed.' },
   reference_required: { es: 'Escribe la referencia de la transferencia.', en: 'Enter the transfer reference.' },
   not_found: { es: 'No encontramos este registro. Puede que ya no exista.', en: 'We could not find this record. It may no longer exist.' },
   validation: { es: 'Faltan datos o hay un dato no válido. Revisa el formulario.', en: 'Some details are missing or not valid. Check the form.' },

@@ -49,7 +49,7 @@ try {
     stdin: {
       contents: `export { CompanyOSProvider } from './src/data/companyos/CompanyOSProvider.ts';
         export { adapters, adapterFor, toData } from './src/data/companyos/mapping.ts';
-        export { bookOnServer, moveOnServer, cancelOnServer, sendHoldReceipt } from './src/modules/customer/booking/serverCommands.ts';
+        export { bookOnServer, moveOnServer, cancelOnServer } from './src/modules/customer/booking/serverCommands.ts';
         export { serverDesk } from './src/modules/staff/desk/deskCommands.ts';
         export { transferOps, reviewOps, deskOps, runPaymentOps, registerApprovalOps } from './src/modules/transfers/launch/payments.ts';
         export { cosOf } from './src/modules/transfers/launch/cos.ts';
@@ -215,10 +215,8 @@ try {
     const [w] = only(await record(() => m.runPaymentOps(cos, m.deskOps({ person: PERSON, product: rec('product', 'prd-single'), amount: 38000, method: 'card_terminal', reference: 'TX-1', reason: '', today: '2026-11-02', concept: 'Clase suelta', booking: 'bk-hold' }), KEY())));
     keyed(w); keeps(w, { person: PERSON, product: 'prd-single', amount: 38000, method: 'card_terminal', status: 'approved', reference: 'TX-1', for_entity: 'booking', for_id: 'bk-hold' });
   });
-  await test('payments · receipt for a held class (J1): the mapped payments insert keeps person, product, amount, method, status and the booking', async () => {
-    const image = { dataUrl: 'data:image/png;base64,iVBORw0KGgo=', fileName: 'recibo.png', mimeType: 'image/png' };
-    const ws = await record(() => m.sendHoldReceipt(provider, { bookingId: 'bk-hold', userId: LOGIN, planId: 'prd-single', amount: 38000, image }, KEY()));
-    const [w] = only(ws.filter((x) => x.entity === 'payment'));
+  await test('payments · receipt for a held class (J1, /app/pay/booking/:id): the pending payment names the single-class product and the booking', async () => {
+    const [w] = only(await record(() => m.runPaymentOps(cos, m.transferOps({ person: PERSON, product: rec('product', 'prd-single'), today: '2026-11-02', reference: '', booking: 'bk-hold', concept: 'Clase suelta' }), KEY())));
     keyed(w); keeps(w, { person: PERSON, product: 'prd-single', amount: 38000, method: 'transfer', status: 'pending', for_entity: 'booking', for_id: 'bk-hold' });
   });
 
