@@ -29,7 +29,8 @@ export interface CompanyOSMe {
 }
 
 /** Signed out, the website still shows the catalogue shipped in the build (no Company OS read without a session). */
-const SIGNED_OUT: Record<string, () => BaseRow[]> = { plans: () => seedPlans, teachers: () => seedTeachers, rooms: () => seedRooms };
+// J4: the private class has no public price, so the signed-out catalogue leaves the private family out.
+const SIGNED_OUT: Record<string, () => BaseRow[]> = { plans: () => seedPlans.filter((p) => p.family !== 'privadas'), teachers: () => seedTeachers, rooms: () => seedRooms };
 
 type Op = { op: 'create' | 'update' | 'delete'; entity: string; id?: string; data?: Record<string, unknown>; token?: string; table: string; dropped?: boolean };
 type Pending = { body: { ops: unknown[] }; result: unknown; tokens: string[]; tables: string[] };

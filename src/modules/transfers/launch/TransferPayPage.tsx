@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useLocation, useParams } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router-dom';
+import { GIFT_PURCHASE_PATH } from '../../../config/launchRoutes';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { dateKey, formatCOP, formatDateTime } from '../../../i18n/format';
 import { Button } from '../../../components/atom/Button/Button';
@@ -11,13 +12,17 @@ import { EmptyState } from '../../../components/molecule/EmptyState/EmptyState';
 import { usePaymentInstructions } from '../../admin/usePaymentInstructions';
 import { isAffiliateOnly, rowOnDay, type ProductData, type ProductRow } from '../../products/launch/productMaster';
 import { batch, CosError, myPerson, queryAll, refusalKey, type CosPort } from './cos';
-import { giftNotes, RECEIPT_TYPES, transferOps, uploadReceipt, type BookingRec, type FileRec, type PaymentRec } from './payments';
+import { checkReceipt, giftNotes, RECEIPT_TYPES, transferOps, uploadReceipt, type BookingRec, type FileRec, type PaymentRec } from './payments';
 import { useAction, useCos, useLoad } from './useCos';
 
 export interface PayView { person: string; product: ProductRow | null; booking: BookingRec | null; pending: PaymentRec | null; pendingHasReceipt: boolean; affiliate: boolean | null }
 
-/** What the customer pays for: a held single-class booking (H-4 sends them here) or a product by key. */
-export async function readPay(cos: CosPort, what: string, id: string, today: string): Promise<PayView> {
+/**
+ * What the customer pays for: a held single-class booking (H-4 sends them here) or a product by key. The pending payment
+ * resumed is this purchase's own: the booking's, or for a product one that pays for no booking and, for a gift, names the
+ * same recipient (`notes`); any other pending payment never blocks a new purchase.
+ */
+export async function readPay(cos: CosPort, what: string, id: string, today: string, notes: string | null = null): Promise<PayView> {
   const person = await myPerson(cos);
   if (!person) throw new CosError('forbidden', 403);
   let booking: BookingRec | null = null, key = id;
@@ -28,7 +33,8 @@ export async function readPay(cos: CosPort, what: string, id: string, today: str
   const rows = await queryAll<ProductData>(cos, { entity: 'product', filter: { field: 'key', op: 'eq', value: key } });
   const product = rowOnDay(rows, key, today);
   const scope = booking ? { field: 'for_id', op: 'eq' as const, value: booking.id } : rows.length ? { field: 'product', op: 'in' as const, value: rows.map((r) => r.id) } : null;
-  const pending = scope ? (await queryAll<PaymentRec['data']>(cos, { entity: 'payment', filter: { and: [{ field: 'status', op: 'eq', value: 'pending' }, scope] } }))[0] ?? null : null;
+  const same = (p: PaymentRec) => booking ? true : !p.data.for_entity && (product?.data.kind !== 'gift' || (p.data.notes ?? null) === notes);
+  const pending = scope ? (await queryAll<PaymentRec['data']>(cos, { entity: 'payment', filter: { and: [{ field: 'status', op: 'eq', value: 'pending' }, scope] } })).find(same) ?? null : null;
   // A payment whose image never arrived (upload failed, page closed) is resumed, not shown as "already sent".
   const pendingHasReceipt = !!pending && (await queryAll<FileRec['data']>(cos, { entity: 'file', filter: { and: [{ field: 'owner_entity', op: 'eq', value: 'payment' }, { field: 'owner_id', op: 'eq', value: pending.id }] } }))
     .some((f) => f.data.kind === 'receipt' && f.data.status === 'ready');
@@ -53,7 +59,7 @@ function PayScreen({ what, id }: { what: string; id: string }) {
   const { t, lang } = useI18n();
   const cos = useCos();
   const today = dateKey();
-  const { state, reload } = useLoad((c) => readPay(c, what, id, today), [what, id, today]);
+  const { state, reload } = useLoad((c) => readPay(c, what, id, today, notes), [what, id, today, notes]);
   const pay = usePaymentInstructions();
   const action = useAction();
   const [reference, setReference] = useState('');
@@ -68,6 +74,8 @@ function PayScreen({ what, id }: { what: string; id: string }) {
   if (!v.product) return <EmptyState title={t('payLaunch.pay.notFound')} />;
   const product = v.product;
   if (product.data.kind === 'private') return <Notice>{t('payLaunch.pay.private')}</Notice>;
+  // A gift pays for a named recipient (H-6 passes it in router state); opened without one, it goes back to choose them.
+  if (product.data.kind === 'gift' && !notes) return <Notice action={<Link to={GIFT_PURCHASE_PATH}><Button size="sm" variant="secondary">{t('payLaunch.pay.giftRecipient.cta')}</Button></Link>}>{t('payLaunch.pay.giftRecipient')}</Notice>;
   if (done) return <Notice tone="success">{t(v.booking ? 'payLaunch.pay.sent' : 'payLaunch.pay.sentProduct')}</Notice>;
   if (v.pending && v.pendingHasReceipt) return <Notice tone="success">{t('payLaunch.pay.alreadyPending')}</Notice>;
   const resumeId = paymentId ?? v.pending?.id ?? null;
@@ -77,6 +85,9 @@ function PayScreen({ what, id }: { what: string; id: string }) {
   const send = () => action.run(async (key) => {
     if (!cos) throw new CosError('disconnected');
     if (!file) return;
+    // A file the server would refuse is refused before the payment exists: a pending payment freezes a hold.
+    const problem = checkReceipt(file, new Uint8Array(await file.slice(0, 8).arrayBuffer()));
+    if (problem) throw new CosError(problem, 422);
     const pid = resumeId ?? (await batch(cos, transferOps({ person: v.person, product, today, reference, booking: v.booking?.id ?? null, concept: product.data.name, notes: product.data.kind === 'gift' ? notes : null }), key))[0];
     setPaymentId(pid);
     await uploadReceipt(cos, pid, file);

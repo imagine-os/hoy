@@ -65,7 +65,7 @@ export function MorePage() {
         <ListGroup>
           <ListRow icon="profile" title={t('core.nav.profile')} subtitle={`${t('customer.profile.edit')} · ${t('customer.classes.title')}`} to="/app/profile" />
           <ListRow icon="coins" title={t('customer.classes.title')} subtitle={t('customer.more.classes.sub')} to="/app/classes" />
-          <ListRow icon="flame" title={t('customer.practice.title')} subtitle={t('customer.practice.more.sub')} to="/app/practice" />
+          {!PRODUCTION_BUILD && <ListRow icon="flame" title={t('customer.practice.title')} subtitle={t('customer.practice.more.sub')} to="/app/practice" />}
           <ListRow icon="ticket" title={t('core.nav.plans')} subtitle={t('customer.more.plans.sub')} to="/app/plans" />
           <ListRow icon="policies" title={t('customer.rules.title')} subtitle={t('customer.more.rules.sub')} to="/app/rules" />
           <ListRow icon="whatsapp" title={t('customer.more.whatsapp')} subtitle={`${wa.display('support', lang)} · ${support.note ? bi(support.note) : bi(policy.replyWindow)}`} href={wa.link('support', t('customer.more.whatsapp.text', { name: name.split(' ')[0] }))} />
@@ -75,13 +75,13 @@ export function MorePage() {
         </ListGroup>
 
         <ListGroup>
-          <ListRow icon="invite" title={t('customer.invite.title')} to="/app/invite" />
+          {!PRODUCTION_BUILD && <ListRow icon="invite" title={t('customer.invite.title')} to="/app/invite" />}
           <ListRow icon="gift" title={t('customer.gift.title')} to={GIFT_PURCHASE_PATH} />
           <ListRow icon="ticket" title={t('vouchers.title')} to="/app/vouchers" />
-          <ListRow icon="sparkle" title={t('customer.events.title')} to="/app/events" />
+          {!PRODUCTION_BUILD && <ListRow icon="sparkle" title={t('customer.events.title')} to="/app/events" />}
           <ListRow icon="users" title={t('customer.teachers.title')} to="/app/teachers" />
           <ListRow icon="help" title={t('customer.faq.title')} to="/app/faq" />
-          <ListRow icon="credit-card" title={t('customer.pay.title')} to="/app/payment-methods" />
+          {!PRODUCTION_BUILD && <ListRow icon="credit-card" title={t('customer.pay.title')} to="/app/payment-methods" />}
           <ListRow icon="bell" title={t('customer.notifications.title')} to="/app/notifications" />
           <ListRow icon="user-cog" title={t('customer.account.title')} subtitle={t('customer.account.sub')} to="/app/account" />
         </ListGroup>

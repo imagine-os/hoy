@@ -1,7 +1,5 @@
 import { useCallback, useRef } from 'react';
-import type { BaseRow } from '../../../data/schema';
 import type { DataProvider } from '../../../data/types';
-import type { ReceiptImage } from '../../transfers/receipts';
 import { refusalCode } from './refusals';
 import type { ServerBookingRow } from './serverBooking';
 
@@ -33,34 +31,6 @@ export function moveOnServer(data: DataProvider, input: { bookingId: string; toS
 /** J3 — the customer's cancel. The server stores `late_cancel` (the class is lost) for a booking; a held spot is just released. */
 export function cancelOnServer(data: DataProvider, input: { bookingId: string }, idempotencyKey: string): Promise<ServerBookingRow> {
   return run(data, idempotencyKey, (tx) => tx.update<ServerBookingRow>('bookings', input.bookingId, { status: 'cancelled' }));
-}
-
-/** The connector's file upload (H-3: `CompanyOSProvider.uploadFile`); absent on the review mock. */
-interface FileUploader { uploadFile?(input: { ownerEntity: string; ownerId: string; kind: string; file: File }): Promise<unknown> }
-
-/** A data URL back to a File for the upload route. */
-function receiptFile(image: ReceiptImage): File {
-  const [head, body] = image.dataUrl.split(',');
-  const bytes = /;base64$/.test(head) ? Uint8Array.from(atob(body), (c) => c.charCodeAt(0)) : new TextEncoder().encode(decodeURIComponent(body));
-  return new File([bytes], image.fileName, { type: image.mimeType });
-}
-
-/**
- * J1 / J1c — the transfer receipt for a held single class: a pending payment for the booking (while it is pending the hold
- * is frozen), then the image through the files route on that payment. The connector drops file data on a row, so the upload
- * is its own call after the write; a retry with the same key replays the payment and uploads again (H-3 note).
- */
-export async function sendHoldReceipt(data: DataProvider, input: { bookingId: string; userId: string; planId: string | null; amount: number | null; image: ReceiptImage; paymentId?: string | null }, idempotencyKey: string): Promise<{ id: string }> {
-  // A failed upload keeps its payment: the retry uploads to it instead of creating a second one.
-  const payment = input.paymentId ? { id: input.paymentId } : await run(data, idempotencyKey, (tx) => tx.insert<BaseRow>('payments', {
-    user_id: input.userId, plan_id: input.planId, amount: input.amount, method: 'transfer', status: 'pending',
-    for_entity: 'booking', for_id: input.bookingId,
-  } as Partial<BaseRow>));
-  const uploader = data as DataProvider & FileUploader;
-  try {
-    if (uploader.uploadFile) await uploader.uploadFile({ ownerEntity: 'payment', ownerId: payment.id, kind: 'receipt', file: receiptFile(input.image) });
-  } catch (error) { throw Object.assign(error instanceof Error ? error : new Error(String(error)), { paymentId: payment.id }); }
-  return payment;
 }
 
 /**

@@ -4,9 +4,11 @@
 import { build } from 'esbuild';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
+import { execFileSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import { fakeCos } from './lib/fake-cos.mjs';
+import { readFile } from 'node:fs/promises';
 
 let failed = 0;
 const check = (name, ok, detail = '') => { console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${detail && !ok ? ` — ${detail}` : ''}`); if (!ok) failed++; };
@@ -30,6 +32,8 @@ await build({
     "export { payLaunchStrings } from './src/modules/transfers/launch/strings';",
     "export { strings as productStrings } from './src/modules/products/strings';",
     "export { strings as policyStrings } from './src/modules/booking-policies';",
+    "export { CompanyOSProvider } from './src/data/companyos/CompanyOSProvider';",
+    "export { livePricing } from './src/data/livePricing';",
   ].join('\n'), resolveDir: process.cwd(), loader: 'ts' },
   bundle: true, platform: 'node', format: 'esm', outfile, logLevel: 'silent', jsx: 'automatic',
   loader: { '.css': 'empty', '.tsx': 'tsx' }, banner: { js: "import{createRequire}from'node:module';const require=createRequire(import.meta.url);" },
@@ -361,6 +365,19 @@ const png = () => new File([new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 
   check('PG-02 an unknown product key reads cleanly (no empty `in` filter)', (await M.readPay(cos, 'product', 'nope', today)).product === null);
 }
 {
+  // PG-02: the pending payment resumed is this purchase's own. A gift for another recipient, or a pack after a booking's
+  // single-class payment, starts a new payment instead of being shown as "already sent".
+  const { cos, carla, products, held } = setup(); const b = held('transfer'); cos.as('usr_cust');
+  const ana = 'gift-recipient:{"name":"Ana","email":"ana@example.test"}', luis = 'gift-recipient:{"name":"Luis","email":"luis@example.test"}';
+  await M.batch(cos, M.transferOps({ person: carla.id, product: products.gift, today, reference: '', concept: 'Bono', notes: ana }), M.newIdempotencyKey());
+  check('PG-02 gift: the same recipient resumes its pending payment', (await M.readPay(cos, 'product', 'gift_pack12', today, ana)).pending?.data.notes === ana);
+  check('PG-02 gift: another recipient starts a new payment', (await M.readPay(cos, 'product', 'gift_pack12', today, luis)).pending === null);
+  await M.batch(cos, M.transferOps({ person: carla.id, product: products.single, today, reference: '', booking: b.id, concept: 'Clase' }), M.newIdempotencyKey());
+  check('PG-02 a held class\'s pending payment never blocks buying a product', (await M.readPay(cos, 'product', 'single', today)).pending === null && !!(await M.readPay(cos, 'booking', b.id, today)).pending);
+  const page = await readFile('src/modules/transfers/launch/TransferPayPage.tsx', 'utf8');
+  check('PG-02 the receipt file is checked before the payment batch (a refused file leaves no pending payment)', page.indexOf('checkReceipt(file') > 0 && page.indexOf('checkReceipt(file') < page.indexOf('await batch(cos, transferOps('));
+}
+{
   // PG-04: receipt image type allowlist (never HTML in the app's origin)
   check('PG-04 a receipt image is shown only as PNG/JPEG', M.receiptImageType('image/png', 'text/html') === 'image/png' && M.receiptImageType(undefined, 'image/jpeg') === 'image/jpeg' && M.receiptImageType('text/html', 'text/html') === null && M.receiptImageType(undefined, '') === null);
   check('C7 refusal codes from the contract have copy (refunds, provider ref, invoice, file owner)', ['refunds_disabled', 'duplicate_provider_ref', 'invoice_system_managed', 'file_owner_not_found', 'file_not_pending', 'invalid_method'].every((c) => M.refusalKey(c) === `payLaunch.code.${c}`));
@@ -379,6 +396,26 @@ const png = () => new File([new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 
   check('gift: approving a gift payment appends the registered voucher op to the same batch', gOps.length === 2 && gOps[0].entity === 'payment' && gOps[1].entity === 'voucher' && gOps[1].data.note === `payment:${pid}`);
   check('gift: other products and declines get no voucher op', nonGift.length === 1 && dec.length === 1);
   check('gift: after unregistering, approvals carry no extra ops', M.reviewOps({ payment: it.payment, product: it.product, decision: 'approve', amountReceived: 600000, reason: '' }).length === 1);
+}
+
+// ── J4 / SW-02: the catalogue a signed-out visitor sees matches Hoy's recipe; the private class has no public price ──
+{
+  // The Company OS checkout sits next to this repo (`../Company-OS`, CLAUDE.md); from a worktree, next to its main checkout.
+  const root = dirname(execFileSync('git', ['rev-parse', '--path-format=absolute', '--git-common-dir']).toString().trim());
+  const candidates = [process.env.HOY_RECIPE, ...['.', root].flatMap((r) => ['.claude/worktrees/hoy-launch/deploy/recipes/hoy.json', 'deploy/recipes/hoy.json'].map((f) => join(r, '..', 'Company-OS', f)))].filter(Boolean);
+  let recipe = null, recipePath = candidates[0];
+  for (const c of candidates) { recipe = await readFile(c, 'utf8').then(JSON.parse, () => null); if (recipe) { recipePath = c; break; } }
+  const products = recipe?.records?.flatMap((r) => (r.entity === 'product' ? r.rows : [])) ?? [];
+  const provider = new M.CompanyOSProvider({ fetch: async () => { throw new Error('signed_out_read'); } });
+  const rows = await provider.list('plans');
+  const shown = M.livePricing(rows, '2026-11-01');
+  check('J4 signed out, no private-class price is public (no private family row, nothing priced in it)', !rows.some((r) => r.family === 'privadas') && !shown.some((p) => p.family === 'privadas'), shown.filter((p) => p.family === 'privadas').map((p) => p.id).join(','));
+  if (!products.length) { if (process.env.CI) check('SW-02 Hoy\'s recipe is readable (set HOY_RECIPE)', false, recipePath); else console.log(`skip SW-02 recipe comparison: ${recipePath} not found (set HOY_RECIPE)`); }
+  else {
+    const priced = products.filter((p) => p.price > 0).map((p) => `${p.key}=${p.price}`).sort();
+    const visible = shown.map((p) => `${p.id}=${p.price}`).sort();
+    check('SW-02 signed out, the catalogue keys and prices are the recipe\'s priced products', JSON.stringify(visible) === JSON.stringify(priced), `site ${visible.join(' ')} · recipe ${priced.join(' ')}`);
+  }
 }
 
 // ── Copy: every refusal code and every new string exists in Spanish and English ─────────────────────────────

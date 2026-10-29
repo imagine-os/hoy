@@ -3,6 +3,7 @@ import{EmailChangePanel}from'../../../components/organism/EmailChangePanel/Email
 import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
+import { PRODUCTION_BUILD } from '../../../config/launch';
 import { useContact } from '../../admin/settings';
 import { useSession } from '../../../auth/SessionProvider';
 import { useData } from '../../../data/DataContext';
@@ -117,10 +118,10 @@ export function ProfilePage() {
       <ListGroup title={t('customer.profile.account')}>
         <ListRow icon="coins" title={t('customer.classes.title')} subtitle={ent.pkg.purchase ? t('customer.checkout.package.sub', { n: ent.pkg.left }) : t('customer.profile.noPlan')} to="/app/classes" trailing={ent.pkg.frozen ? <Badge tone="warn">{t('customer.classes.frozen.badge')}</Badge> : undefined} />
         <ListRow icon="history" title={t('core.nav.history')} to="/app/history" />
-        <ListRow icon="flame" title={t('customer.practice.title')} subtitle={t('customer.practice.more.sub')} to="/app/practice" />
+        {!PRODUCTION_BUILD && <ListRow icon="flame" title={t('customer.practice.title')} subtitle={t('customer.practice.more.sub')} to="/app/practice" />}
       </ListGroup>
     ),
-    PaymentMethods: () => <ListGroup><ListRow icon="credit-card" title={t('customer.pay.title')} subtitle={t('customer.profile.pay.sub')} to="/app/payment-methods" /></ListGroup>,
+    PaymentMethods: () => PRODUCTION_BUILD ? null : <ListGroup><ListRow icon="credit-card" title={t('customer.pay.title')} subtitle={t('customer.profile.pay.sub')} to="/app/payment-methods" /></ListGroup>,
     'NotificationPrefs (push / email / WhatsApp)': () => (
       <section className="stack-sm" data-preference-surface="master" aria-label={t('customer.profile.notifications')}>
         <Notice tone="info">{t('customer.prefs.mock')}</Notice>

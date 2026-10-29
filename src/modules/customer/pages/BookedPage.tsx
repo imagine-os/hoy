@@ -122,11 +122,17 @@ export function BookedPage({ change = false }: { change?: boolean }) {
       if (studioCancelled) return <StudioCancelledBlock joined={joined} booking={booking} />;
       if (SERVER_RULES && myCancelled && server.cancel_reason === 'hold_expired') return <Notice tone="warn" title={t('customer.srv.hold.released.title')} action={<Link to="/app/schedule"><Button size="sm" variant="secondary">{t('customer.class.backToSchedule')}</Button></Link>}>{t('customer.srv.hold.released.body')}</Notice>;
       if (held) return <HoldBlock booking={server} joined={joined} />;
+      if (SERVER_RULES && myCancelled) {
+        // A single class is "released" only while no approved payment hangs on it; comp and guest classes never had a balance.
+        const paid = payments.rows.some((p) => (p as PaymentRow & { booking_id?: string | null }).booking_id === booking.id && p.status === 'approved');
+        const k = booking.status === 'late_cancel' ? 'lost' : booking.paid_with === 'single' ? (paid ? 'plain' : 'released') : booking.paid_with === 'package' || booking.paid_with === 'trial' ? 'returned' : 'plain';
+        return <Notice tone="warn" title={t(`customer.srv.cancelled.${k}.title`)} action={<Link to="/app/schedule"><Button size="sm" variant="secondary">{t('customer.class.backToSchedule')}</Button></Link>}>{t(`customer.srv.cancelled.${k}.body`)}</Notice>;
+      }
       if (myCancelled) return <Notice tone="warn" title={booking.status === 'late_cancel' ? t('customer.booked.lateCancelled') : t('customer.booked.cancelled')} action={<Link to="/app/schedule"><Button size="sm" variant="secondary">{t('customer.class.backToSchedule')}</Button></Link>}>{booking.status === 'late_cancel' ? t('customer.booked.lateCancelled.body') : t('customer.booked.cancelled.body')}</Notice>;
       if (past) return (
         <Card className="stack-sm" tone="muted">
           <div className="row wrap"><Badge tone={booking.status === 'checked_in' ? 'success' : booking.status === 'no_show' ? 'danger' : 'neutral'}>{t(`customer.history.status.${booking.status}`)}</Badge><span className="small muted">{formatDate(s.starts_at, lang)}</span></div>
-          {!booking.rated && booking.status === 'checked_in' && <Button size="sm" onClick={() => nav(`/app/rate/${s.id}`)}>{t('customer.booked.rate')}</Button>}
+          {!SERVER_RULES && !booking.rated && booking.status === 'checked_in' && <Button size="sm" onClick={() => nav(`/app/rate/${s.id}`)}>{t('customer.booked.rate')}</Button>}
         </Card>
       );
       return (
@@ -155,9 +161,9 @@ export function BookedPage({ change = false }: { change?: boolean }) {
       </Card>
     ) : null,
     'ActionRow (Change / Invite)': () => active ? (
-      <div className="grid grid-2">
+      <div className={SERVER_RULES ? 'grid' : 'grid grid-2'}>
         <Button variant="secondary" size="lg" onClick={() => nav(`${bookingBase}/change`)}>{t('customer.booked.change')}</Button>
-        <Button variant="secondary" size="lg" onClick={() => nav(`/app/invite?session=${s.id}`)}>{t('customer.home.quick.invite')}</Button>
+        {!SERVER_RULES && <Button variant="secondary" size="lg" onClick={() => nav(`/app/invite?session=${s.id}`)}>{t('customer.home.quick.invite')}</Button>}
       </div>
     ) : null,
     AddToCalendar: () => active ? (

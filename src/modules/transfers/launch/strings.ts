@@ -75,6 +75,8 @@ export const payLaunchStrings: StringTable = {
   'payLaunch.pay.frozen': { es: 'Tu comprobante está en revisión; tu cupo se conserva mientras recepción lo confirma.', en: 'Your receipt is being reviewed; your place is kept while the front desk confirms it.' },
   'payLaunch.pay.missingImage': { es: 'Registramos tu pago, pero falta la imagen del comprobante. Súbela para que recepción pueda confirmarlo.', en: 'We recorded your payment, but the receipt image is missing. Upload it so the front desk can confirm it.' },
   'payLaunch.pay.notHeld': { es: 'Esta reserva ya no está esperando pago.', en: 'This booking is no longer waiting for payment.' },
+  'payLaunch.pay.giftRecipient': { es: 'Para comprar un bono de regalo, primero dinos para quién es.', en: 'To buy a gift voucher, first tell us who it is for.' },
+  'payLaunch.pay.giftRecipient.cta': { es: 'Elegir a quién regalar', en: 'Choose who it is for' },
   'payLaunch.pay.private': { es: 'La clase privada no tiene precio público. Contacta al club para cotizarla.', en: 'Private classes have no public price. Contact the club for a quote.' },
   'payLaunch.pay.affiliate.ok': { es: 'Afiliación Santa María verificada.', en: 'Santa María membership verified.' },
   'payLaunch.pay.affiliate.no': { es: 'El paquete Santa María es solo para afiliados verificados. Recepción verifica tu afiliación antes de la compra.', en: 'The Santa María pack is for verified members only. The front desk verifies your membership before you buy.' },

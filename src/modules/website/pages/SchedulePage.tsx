@@ -7,6 +7,7 @@ import { SessionEditorial } from '../../../components/molecule/SessionEditorial/
 import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
+import { PRODUCTION_BUILD } from '../../../config/launch';
 import { useLayout } from '../../../layout/useLayout';
 import { useData, useTable } from '../../../data/DataContext';
 import type { BookingRow, ModalityRow } from '../../../data/schema';
@@ -68,7 +69,8 @@ export function SchedulePage() {
     try {
       const fresh = await requireSessionAdmission(data, chosen.session.id, { isCurrent: current });
       if (!current()) return;
-      const next = fresh.booked_count >= fresh.capacity ? `/app/waitlist/${fresh.id}` : `/app/checkout/${fresh.id}${mat ? `?mat=${mat}` : ''}`;
+      // Production has no waitlist at launch: a full class goes to checkout, where the server says it is full.
+      const next = !PRODUCTION_BUILD && fresh.booked_count >= fresh.capacity ? `/app/waitlist/${fresh.id}` : `/app/checkout/${fresh.id}${mat ? `?mat=${mat}` : ''}`;
       nav(user.role === 'public' ? `/auth/sign-in?next=${encodeURIComponent(next)}` : next);
     } catch { if (current()) setNavigationError(true); }
     finally { if (operation.current === version) { navigationLock.current = false; if (current()) setNavigating(false); } }

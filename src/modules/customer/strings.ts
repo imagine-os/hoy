@@ -862,6 +862,7 @@ export const strings: StringTable = {
   'customer.legal.liveNumbers': { es: 'Los números salen de la configuración del estudio', en: 'The numbers come from the studio settings' },
   'customer.legal.notFound': { es: 'Documento no encontrado', en: 'Document not found' },
   'customer.legal.notFound.body': { es: 'Puede que el enlace sea antiguo. Los documentos vigentes están en Más → Legal.', en: 'The link may be old. The documents in force are under More → Legal.' },
+  'customer.legal.token.onRequest': { es: 'a convenir con el estudio', en: 'quoted by the studio' },
   'customer.legal.token.pending': { es: '(pendiente)', en: '(pending)' },
   'customer.legal.token.noShowFee': { es: ' y se cobra la tarifa por inasistencia de {amount}', en: ' and the {amount} no-show fee is charged' },
   'customer.media.pending': { es: 'arte pendiente', en: 'art pending' },

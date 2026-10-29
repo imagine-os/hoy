@@ -17,11 +17,16 @@ export const BOOKING_REFUSALS = [
 export type BookingRefusal = (typeof BOOKING_REFUSALS)[number];
 
 /**
- * The server's refusal code (`err.code`, set by the connector on a 4xx answer), or null when no answer came back (offline,
- * timeout): then the same key is retried. A bare `Error(message)` never counts as an answer, so it never rotates the key.
+ * The server's refusal code (`err.code`, set by the connector on a 4xx answer), or null when the outcome is unknown: no
+ * answer (offline, timeout, `network_error`, `service_unavailable`), a 5xx, or an error the connector flags `ambiguous`.
+ * Then the same key is retried, so a write that did land is replayed, not repeated. A bare `Error(message)` never counts
+ * as an answer, so it never rotates the key. A browser-side refusal (status 0, e.g. `not_in_launch`) is final.
  */
 export function refusalCode(error: unknown): string | null {
-  const code = (error as { code?: unknown } | null)?.code;
+  const e = error as { code?: unknown; status?: unknown; ambiguous?: unknown } | null;
+  if (e?.ambiguous === true || (typeof e?.status === 'number' && e.status >= 500)) return null;
+  const code = e?.code;
+  if (code === 'network_error' || code === 'service_unavailable') return null;
   return typeof code === 'string' && /^[a-z][a-z0-9_]*$/.test(code) ? code : null;
 }
 
