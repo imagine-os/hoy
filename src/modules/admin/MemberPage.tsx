@@ -63,12 +63,14 @@ export function MemberPage() {
   const sess = new Map(sessions.map((s) => [s.id, s]));
   const plan = new Map(plans.map((p) => [p.id, p]));
   const canPayments = can('payments.read');
+  // PL-11: payment method and status in Spanish, never the raw stored value (an unknown value stays as stored).
+  const payLabel = (kind: 'method' | 'status', value: string) => { const s = t(`admin.finance.${kind}.${value}`); return s.startsWith('⟨') ? value : s; };
   const canWrite = can('members.write');
   const ltv = payments.filter((p) => p.status === 'approved').reduce((a, p) => a + p.amount, 0);
   const active = bookings.filter((b) => b.status !== 'cancelled');
 
   const events: ThreadEvent[] = [
-    ...(canPayments ? payments.map<ThreadEvent>((p) => ({ id: p.id, at: p.paid_at ?? p.created_at, kind: 'payment', title: `${t('admin.member.payment')} · ${plan.get(p.plan_id ?? '')?.name_es ?? ''}`, meta: `${formatCOP(p.amount, lang)} · ${p.method} · ${p.status}` })) : []),
+    ...(canPayments ? payments.map<ThreadEvent>((p) => ({ id: p.id, at: p.paid_at ?? p.created_at, kind: 'payment', title: `${t('admin.member.payment')} · ${plan.get(p.plan_id ?? '')?.name_es ?? ''}`, meta: `${formatCOP(p.amount, lang)} · ${payLabel('method', p.method)} · ${payLabel('status', p.status)}` })) : []),
     ...active.map<ThreadEvent>((b) => { const s = sess.get(b.session_id); return { id: b.id, at: b.checked_in_at ?? b.created_at, kind: 'booking', title: `${t(`admin.member.booking.${b.status}`)} · ${s?.title ?? ''}`, meta: s ? `${formatDate(s.starts_at, lang)} ${formatTime(s.starts_at, lang)} · ${b.paid_with}` : b.paid_with }; }),
     ...consents.map<ThreadEvent>((c) => ({ id: c.id, at: c.accepted_at ?? c.created_at, kind: 'system', title: t('admin.member.conversation.event.consent') })),
   ];
@@ -85,8 +87,8 @@ export function MemberPage() {
     { key: 'paid_at', label: t('admin.member.col.when'), render: (p: PaymentRow) => <span className="mono small">{formatDateTime(p.paid_at ?? p.created_at, lang)}</span> },
     { key: 'plan_id', label: t('admin.member.col.product'), render: (p: PaymentRow) => plan.get(p.plan_id ?? '')?.name_es ?? '—' },
     { key: 'amount', label: t('admin.member.col.amount'), align: 'right' as const, render: (p: PaymentRow) => formatCOP(p.amount, lang) },
-    { key: 'method', label: t('admin.member.col.method'), render: (p: PaymentRow) => `${p.method} · ${p.provider}` },
-    { key: 'status', label: t('admin.member.col.status'), render: (p: PaymentRow) => <Badge tone={toneForStatus(p.status)}>{p.status}</Badge> },
+    { key: 'method', label: t('admin.member.col.method'), render: (p: PaymentRow) => payLabel('method', p.method) },
+    { key: 'status', label: t('admin.member.col.status'), render: (p: PaymentRow) => <Badge tone={toneForStatus(p.status)}>{payLabel('status', p.status)}</Badge> },
   ];
 
   return (
@@ -114,7 +116,8 @@ export function MemberPage() {
       {stats?.vouchers.map(v => <div key={v.id} className="row wrap small"><strong>{v.title}</strong><span>{v.balance} {v.benefitKind === 'classes' ? t('admin.crm.col.remaining') : 'COP'}</span><span>{v.expiresAt ? formatDate(v.expiresAt, lang) : '—'}</span><Badge>{t(`admin.crm.voucher.${v.status}`)}</Badge></div>)}
       </Card>
       <div className="grid grid-4">
-        <StatTile label={t('admin.member.ltv')} value={canPayments ? formatCOP(ltv, lang) : '—'} />
+        {/* Q-13: lifetime value is income — reception does not see it. */}
+        <StatTile label={t('admin.member.ltv')} value={can('revenue.read') ? formatCOP(ltv, lang) : '—'} />
         <StatTile label={t('admin.member.visits')} value={stats?.visits ?? 0} hint={person.membership ? undefined : t('admin.member.credits', { n: stats?.credits ?? 0 })} />
         <StatTile label={t('admin.member.lastVisit')} value={stats?.lastVisit ? formatDate(stats.lastVisit, lang) : '—'} />
         <StatTile label={t('admin.crm.col.risk')} value={t(`admin.crm.risk.${stats?.risk ?? 'low'}`)} trend={stats?.risk === 'high' ? 'down' : stats?.risk === 'medium' ? 'flat' : 'up'} hint={t('admin.member.risk.hint')} />

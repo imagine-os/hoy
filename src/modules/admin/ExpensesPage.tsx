@@ -23,6 +23,7 @@ import type { ExpenseDraft, TemplateDraft } from './expenseLedger';
 import { ExpenseLedgerStatus } from '../../components/organism/ExpenseLedgerStatus/ExpenseLedgerStatus';
 import { monthPeriodFor } from './payouts';
 import { FINANCE_RANGES, expenseTotals, inRange, sinceDay, type FinanceRange } from './expenses';
+import { PRODUCTION_BUILD } from '../../config/launch';
 import './admin.css';
 
 type ListFilter = 'all' | 'fixed' | 'variable' | 'unpaid';
@@ -113,9 +114,9 @@ function ExpenseLedgerPage() {
         <StatTile label={t('admin.expenses.kpi.unpaid')} value={formatCOP(totals.unpaid, lang)} hint={t('admin.expenses.kpi.unpaid.hint', { n: totals.counts.unpaid })} trend={totals.counts.unpaid ? 'up' : 'flat'} />
       </div>
 
-      <ExpenseLedgerStatus boundary={t('admin.expenses.local.boundary')} readError={ledger.readError} error={ledger.error} notice={ledger.notice} busy={busy} blocked={blocked} retryable={ledger.retryable}
+      <ExpenseLedgerStatus boundary={t(PRODUCTION_BUILD?'admin.expenses.live.boundary':'admin.expenses.local.boundary')} readError={ledger.readError} error={ledger.error} notice={ledger.notice} busy={busy} blocked={blocked} retryable={ledger.retryable}
         readText={t('admin.expenses.local.readError')} errorText={t(ledger.error==='expense_paid_delete'?'admin.expenses.local.paid':ledger.error==='expense_stale'?'admin.expenses.local.stale':'admin.expenses.local.failed')}
-        noticeText={t(`admin.expenses.local.${ledger.notice||'saved'}`)} summary={ledger.outcome?t('admin.expenses.local.summary',{created:ledger.outcome.created,skipped:ledger.outcome.skipped,total:formatCOP(ledger.outcome.total,lang)}):undefined}
+        noticeText={t(PRODUCTION_BUILD&&ledger.notice!=='stopped'?'admin.expenses.live.saved':`admin.expenses.local.${ledger.notice||'saved'}`)} summary={ledger.outcome?t('admin.expenses.local.summary',{created:ledger.outcome.created,skipped:ledger.outcome.skipped,total:formatCOP(ledger.outcome.total,lang)}):undefined}
         retryText={t('core.common.retry')} cancelText={t(busy?'admin.expenses.local.stop':'core.common.cancel')} onRead={()=>{void ledger.refresh();}} onRetry={()=>{void ledger.retry();}} onCancel={ledger.cancel} />
 
       <div className="grid grid-2">

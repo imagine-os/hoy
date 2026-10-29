@@ -4,7 +4,8 @@ import { useI18n } from '../../../i18n/I18nProvider';
 import { useData } from '../../../data/DataContext';
 import { useLayout } from '../../../layout/useLayout';
 import { tenant } from '../../../tenant/tenant';
-import { useSettings } from '../../admin/settings';
+import { contactOf, useSettings, useWhatsappLink } from '../../admin/settings';
+import { PRODUCTION_BUILD } from '../../../config/launch';
 import type { DeletionRequestRow } from '../../../data/schema';
 import { Card } from '../../../components/molecule/Card/Card';
 import { Button } from '../../../components/atom/Button/Button';
@@ -15,11 +16,14 @@ import { Toggle } from '../../../components/atom/Toggle/Toggle';
 import { PageHead, SiteShell } from '../SiteShell';
 import { siteSpecs } from '../specs';
 import { isPhone } from '../../../i18n/format';
+import { LIMITS } from '../../../shared/limits';
 
 /**
  * W-09 `/site/delete-account` — the public account-deletion request Google Play asks every app to
  * publish at a URL that needs no sign-in (Apple accepts the in-app path, C-26). No session: the row
  * lands in `deletion_requests` with `user_id` null; admin matches the email or WhatsApp in M-11.
+ * Production (Company OS) has no `deletion_requests` at launch: the visitor writes to the studio instead, by email or
+ * WhatsApp with a prepared message (the contact from settings), and the studio handles it by hand.
  */
 export function DeleteAccountPage() {
   const { t } = useI18n();
@@ -31,9 +35,12 @@ export function DeleteAccountPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState<DeletionRequestRow | null>(null);
+  const [failed, setFailed] = useState(false);
+  const wa = useWhatsappLink();
 
   const controller = settings.branding.displayName || tenant.legalName;
-  const email = settings.profile.email || tenant.contact.email;
+  // SW-05: the one validated contact email (contactOf), not the raw setting.
+  const email = contactOf(settings).email;
 
   const submit = async () => {
     const e: Record<string, string> = {};
@@ -43,17 +50,17 @@ export function DeleteAccountPage() {
     if (form.email.trim() && !hasEmail) e.email = t('customer.form.email.err');
     if (form.phone.trim() && !hasPhone) e.phone = t('customer.form.phone');
     setErrors(e); if (Object.keys(e).length) return;
-    setBusy(true);
+    setBusy(true); setFailed(false);
     try {
       const row = await data.insert<DeletionRequestRow>('deletion_requests', { user_id: null, email: form.email.trim() || null, phone: form.phone.trim() || null, channel: 'website', status: 'requested', reason: form.reason.trim() || null, requested_at: new Date().toISOString(), resolved_at: null, resolved_by: null, checklist: null, note: null });
       // No signed-in actor: the audit row says so (actor null, role public) so M-07 lists it as the system.
       await data.insert('audit_log', { actor_id: null, action: 'account.deletion_request', entity: 'deletion_requests', entity_id: row.id, diff: { role: 'public', source: 'app', channel: 'website', after: 'requested' }, ip: null });
       setSent(row);
-    } finally { setBusy(false); }
+    } catch { setFailed(true); } finally { setBusy(false); }
   };
 
   const SECTIONS: Record<string, () => ReactNode> = {
-    PageHead: () => <PageHead title={t('site.delete.title')} body={t('site.delete.body', { name: controller })} />,
+    PageHead: () => <PageHead title={t('site.delete.title')} body={t(PRODUCTION_BUILD ? 'site.delete.body.write' : 'site.delete.body', { name: controller })} />,
     WhatHappens: () => (
       <section className="container site-section legal-body" style={{ paddingTop: 0 }}>
         <div className="grid grid-2">
@@ -75,7 +82,15 @@ export function DeleteAccountPage() {
     ),
     Form: () => (
       <section className="container site-section legal-body" style={{ paddingTop: 0 }}>
-        {sent ? (
+        {PRODUCTION_BUILD ? (
+          <Card eyebrow={t('site.delete.form')}>
+            <p className="small muted" style={{ marginBottom: 'var(--sp-lg)' }}>{t('site.delete.write.body')}</p>
+            <div className="row wrap">
+              <a className="btn btn-danger btn-md" href={`mailto:${email}?subject=${encodeURIComponent(t('site.delete.write.subject', { name: controller }))}&body=${encodeURIComponent(t('site.delete.write.message', { name: controller }))}`}>{t('site.delete.write.email')}</a>
+              <a className="btn btn-secondary btn-md" href={wa.link('support', t('site.delete.write.message', { name: controller }))} target="_blank" rel="noreferrer">{t('site.delete.write.whatsapp')} ↗</a>
+            </div>
+          </Card>
+        ) : sent ? (
           <Notice tone="success" title={t('site.delete.sent.title')}>
             {t('site.delete.sent.body', { ref: sent.id.slice(-6).toUpperCase() })}
           </Notice>
@@ -91,13 +106,14 @@ export function DeleteAccountPage() {
               </Field>
               <div className="site-form-full">
                 <Field label={t('customer.account.delete.reason')}>
-                  {(id) => <textarea id={id} className="input" rows={3} value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} placeholder={t('customer.account.delete.reason.ph')} />}
+                  {(id) => <textarea id={id} className="input" rows={3} maxLength={LIMITS.note} value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} placeholder={t('customer.account.delete.reason.ph')} />}
                 </Field>
               </div>
               <div className="site-form-full">
                 <Toggle size="sm" checked={understood} onChange={setUnderstood} label={t('customer.account.delete.understood')} />
               </div>
               {errors.contact && <p className="field-msg field-error site-form-full" role="alert">{errors.contact}</p>}
+              {failed && <div className="site-form-full"><Notice tone="danger" title={t('site.delete.failed.title')}>{t('site.delete.failed.body', { email })}</Notice></div>}
               <div className="site-form-full row wrap">
                 <Button variant="danger" disabled={!understood} loading={busy} onClick={submit}>{t('customer.account.delete.cta')}</Button>
                 <Link to="/auth/sign-in" className="small">{t('site.delete.inApp')}</Link>

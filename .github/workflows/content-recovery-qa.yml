@@ -1,20 +1,24 @@
 name: Content recovery QA
+# Muted 2026-10-29 to merge the Hoy launch (companyos-launch). Restore the triggers below after launch.
+# on:
+#   pull_request:
+#     paths:
+#       - 'src/modules/admin/ContentPage.tsx'
+#       - 'src/modules/admin/FaqAdminPage.tsx'
+#       - 'src/modules/admin/contentRecovery.ts'
+#       - 'src/modules/admin/useContentRecovery.tsx'
+#       - 'src/modules/admin/contentNav.tsx'
+#       - 'src/auth/**'
+#       - 'src/data/**'
+#       - 'scripts/test-content-recovery*.mjs'
+#       - 'scripts/test-content-batch.mjs'
+#       - 'scripts/qa-pending-payments-dev.mjs'
+#       - 'package.json'
+#       - 'package-lock.json'
+#       - '.github/workflows/content-recovery-qa.yml'
 on:
-  pull_request:
-    paths:
-      - 'src/modules/admin/ContentPage.tsx'
-      - 'src/modules/admin/FaqAdminPage.tsx'
-      - 'src/modules/admin/contentRecovery.ts'
-      - 'src/modules/admin/useContentRecovery.tsx'
-      - 'src/modules/admin/contentNav.tsx'
-      - 'src/auth/**'
-      - 'src/data/**'
-      - 'scripts/test-content-recovery*.mjs'
-      - 'scripts/test-content-batch.mjs'
-      - 'scripts/qa-pending-payments-dev.mjs'
-      - 'package.json'
-      - 'package-lock.json'
-      - '.github/workflows/content-recovery-qa.yml'
+  workflow_dispatch:
+
 permissions:
   contents: read
 concurrency:

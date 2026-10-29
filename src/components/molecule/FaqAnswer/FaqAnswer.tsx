@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { PriceTable, itemsForFamilies } from '../PriceTable/PriceTable';
+import { useLivePricing } from '../../../data/livePricing';
 import './FaqAnswer.css';
 
 export interface FaqAnswerProps {
@@ -13,10 +14,11 @@ const DIRECTIVE = /^\{\{\s*pricing:([^}]+?)\s*\}\}$/;
 
 /**
  * 0051 — one FAQ answer. Plain paragraphs, and a line that is only `{{pricing:<families>}}` becomes a live
- * PriceTable from src/tenant/pricing.ts — the same directive the operations manual uses — so an answer that lists
+ * PriceTable with the product master's current prices (SW-02, useLivePricing) — the same directive the operations manual uses — so an answer that lists
  * prices never repeats a number. Shared by the website FAQ (W-10) and the app (C-14 / C-15).
  */
 export function FaqAnswer({ text, after }: FaqAnswerProps) {
+  const { items: live } = useLivePricing();
   const blocks = text.split(/\n\s*\n/).map((b) => b.trim()).filter(Boolean);
   const lastText = blocks.map((b, i) => (DIRECTIVE.test(b) ? -1 : i)).filter((i) => i >= 0).pop();
   return (
@@ -24,7 +26,7 @@ export function FaqAnswer({ text, after }: FaqAnswerProps) {
       {blocks.map((b, i) => {
         const m = DIRECTIVE.exec(b);
         if (m) {
-          const items = itemsForFamilies(m[1]);
+          const items = itemsForFamilies(m[1], live);
           return items.length ? <PriceTable key={i} items={items} grouped={m[1].includes(',')} /> : null;
         }
         return <p key={i}>{b}{i === lastText && after ? <> {after}</> : null}</p>;

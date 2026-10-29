@@ -2,6 +2,7 @@ import { formatCOP } from '../../i18n/format';
 import type { Lang } from '../../i18n/types';
 import { tenant } from '../../tenant/tenant';
 import { pricing } from '../../tenant/pricing';
+import { PRODUCTION_BUILD } from '../../config/launch';
 import { contactOf, type StudioSettings } from '../admin/settings';
 import { resolveLegalTokens, type LegalTokens } from '../../components/organism/LegalDocument/legalTokens';
 import { strings } from './strings';
@@ -30,7 +31,8 @@ export function legalTokens(settings:StudioSettings,lang:Lang):LegalTokens {
       instagram: contact.instagram,
     },
     // 0051: {{price.<id>}} — a price from src/tenant/pricing.ts, formatted for the reader.
-    price: Object.fromEntries(pricing.map((p) => [p.id, p.price == null ? '' : formatCOP(p.price, lang)])),
+    // J4: in production the private class has no public price; the terms say the studio quotes it.
+    price: Object.fromEntries(pricing.map((p) => [p.id, PRODUCTION_BUILD && p.family === 'privadas' ? t('customer.legal.token.onRequest') : p.price == null ? '' : formatCOP(p.price, lang)])),
     policy: {
       cancellationHours: settings.policies.cancellationHours,
       waitlistClaimMin: settings.policies.waitlistClaimMin,

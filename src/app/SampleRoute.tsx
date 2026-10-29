@@ -4,12 +4,14 @@ import { useData } from '../data/DataContext';
 import { useSession } from '../auth/SessionProvider';
 import type { BookingRow, ClassSessionRow, PayrollRunRow } from '../data/schema';
 import { resolveSampleRoute, sampleOf, SAMPLE_CUSTOMER_ID } from '../hub/sampleIds';
+import { PRODUCTION_BUILD } from '../config/launch';
 
 /**
  * Swaps a hub-map sample route (`/app/class/sample`, `pages[].sampleRoute`) for today's real record,
  * keeping the query (`?as=…&lang=…`), so a host embedding a detail page opens a full page. Renders nothing.
+ * Review build only (H-10): the hub map and its demo personas stay out of production.
  */
-export function SampleRoute() {
+function ReviewSampleRoute() {
   const { pathname, search } = useLocation();
   const nav = useNavigate();
   const data = useData();
@@ -29,3 +31,5 @@ export function SampleRoute() {
   }, [pathname, search, data, user.id, nav]);
   return null;
 }
+
+export const SampleRoute = PRODUCTION_BUILD ? () => null : ReviewSampleRoute;

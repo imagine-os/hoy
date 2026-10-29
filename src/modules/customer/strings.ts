@@ -3,6 +3,7 @@ import{profileReviewStrings}from'../profile-review/strings';
 import {signInPreviewStrings} from './auth/signInPreviewStrings';
 import {signupLegalStrings} from './auth/signupLegalStrings';
 import {cancellationStrings} from './cancellationStrings';
+import { bookingStrings } from './booking/strings';
 import type { StringTable } from '../../i18n/types';
 
 /** Every user-facing string of the customer app (C-xx, A-xx, E-xx). Spanish first; English always present. */
@@ -27,6 +28,7 @@ export const strings: StringTable = {
   ...signInPreviewStrings,
   ...profileReviewStrings,
   ...cancellationStrings,
+  ...bookingStrings,
   'customer.profile.atomic.loading': {es: 'Cargando tus datos…', en: 'Loading your details…'},
   'customer.profile.atomic.readError': {es: 'No pudimos cargar tus dos registros. No se puede editar todavía.', en: 'We could not load both of your records. Editing is unavailable.'},
   'customer.profile.atomic.retry': {es: 'Reintentar', en: 'Retry'},
@@ -226,6 +228,7 @@ export const strings: StringTable = {
   'customer.checkout.receiptNote': { es: 'Al confirmar se guarda un recibo demo. No se emite factura ni se envía email.', en: 'Confirmation saves a demo receipt. No invoice is issued and no email is sent.' },
   'customer.checkout.confirm': { es: 'Confirmar reserva', en: 'Confirm booking' },
   'customer.checkout.payWompi': { es: 'Pagar {amount} con Wompi', en: 'Pay {amount} with Wompi' },
+  'customer.checkout.payTransfer': { es: 'Pagar por transferencia', en: 'Pay by bank transfer' },
   'customer.checkout.confirmManual': { es: 'Solicitar pago demo de {amount} en recepción', en: 'Request demo desk payment of {amount}' },
   'customer.checkout.policy': { es: 'Cancelación gratis hasta {h} h antes.', en: 'Free cancellation up to {h} h before.' },
   'customer.checkout.race.title': { es: 'La clase se llenó mientras reservabas', en: 'The class filled while you were booking' },
@@ -308,7 +311,7 @@ export const strings: StringTable = {
   'customer.plans.skip': { es: '¿Prefieres pagar por clase?', en: 'Prefer to pay per class?' },
   'customer.plans.skip.cta': { es: 'Prueba o clase individual', en: 'Trial or individual class' },
   'customer.plans.specials.cta': { es: 'Escríbenos', en: 'Write to us' },
-  'customer.plans.specials.wa': { es: 'Hola HOY, quiero preguntar por un especial: un evento privado o una sesión de grupo.', en: 'Hi HOY, I would like to ask about a special: a private event or a group session.' },
+  'customer.plans.specials.wa': { es: 'Hola {brand}, quiero preguntar por un especial: un evento privado o una sesión de grupo.', en: 'Hi {brand}, I would like to ask about a special: a private event or a group session.' },
   'customer.plans.confirm.title': { es: 'Confirmar paquete', en: 'Confirm package' },
   'customer.plans.confirm.note': { es: 'Tus 12 clases vencen en {months} meses desde hoy. Puedes congelarlo una vez. No es reembolsable.', en: 'Your 12 classes expire {months} months from today. You can freeze it once. Not refundable.' },
   'customer.plans.done.title': { es: 'Paquete activo', en: 'Package active' },
@@ -328,6 +331,8 @@ export const strings: StringTable = {
   'customer.passes.eyebrow': { es: 'Para empezar', en: 'To start' },
   'customer.passes.intro': { es: 'Dos opciones de una sola vez. Cada botón lleva al mismo checkout.', en: 'Two one-time options. Every button enters the same checkout.' },
   'customer.passes.cta': { es: 'Elegir clase con este pase', en: 'Pick a class with this pass' },
+  'customer.passes.intro.srv': { es: 'La clase de prueba se compra primero, por transferencia; después reservas con ella. La clase individual se paga al reservarla.', en: 'The trial class is bought first, by bank transfer; then you book with it. The individual class is paid when you book it.' },
+  'customer.passes.buyTrial': { es: 'Comprar la clase de prueba', en: 'Buy the trial class' },
   'customer.passes.bookWith': { es: 'Reservar con este pase', en: 'Book with this pass' },
   'customer.passes.trialUsed': { es: 'Ya usaste tu clase de prueba. Sigue con una clase individual o el paquete de 12.', en: 'You already used your trial class. Continue with an individual class or the 12-class package.' },
   'customer.passes.footer': { es: '¿Vienes seguido?', en: 'Coming often?' },
@@ -601,7 +606,7 @@ export const strings: StringTable = {
   'customer.profile.notif.whatsapp.sub': { es: 'Recordatorios, cupos liberados, cancelaciones', en: 'Reminders, released spots, cancellations' },
   'customer.profile.notif.push': { es: 'Push', en: 'Push' },
   'customer.profile.notif.push.sub': { es: 'En este dispositivo', en: 'On this device' },
-  'customer.profile.notif.email': { es: 'Email', en: 'Email' },
+  'customer.profile.notif.email': { es: 'Correo', en: 'Email' },
   'customer.profile.notif.email.sub': { es: 'Recibos y resúmenes', en: 'Receipts and summaries' },
   'customer.profile.language': { es: 'Idioma', en: 'Language' },
   'customer.profile.language.sub': { es: 'Por cuenta, no por dispositivo', en: 'Per account, not per device' },
@@ -782,7 +787,7 @@ export const strings: StringTable = {
   'customer.notifications.open': { es: 'Abrir', en: 'Open' },
   'customer.notifications.via.in_app': { es: 'en la app', en: 'in app' },
   'customer.notifications.via.whatsapp': { es: 'WhatsApp', en: 'WhatsApp' },
-  'customer.notifications.via.email': { es: 'Email', en: 'Email' },
+  'customer.notifications.via.email': { es: 'Correo', en: 'Email' },
   'customer.notifications.via.push': { es: 'Push', en: 'Push' },
   'customer.prefs.mock': { es: 'Preferencias ficticias solo en este navegador. El envío está desconectado: esto no detiene ni envía correos reales. No define cuáles avisos son obligatorios.', en: 'Fictional preferences in this browser only. Sending is disconnected: this does not stop or send real emails. It does not define which notices are mandatory.' },
   'customer.prefs.loading': { es: 'Cargando las preferencias de tu cuenta…', en: 'Loading your account preferences…' },
@@ -800,7 +805,7 @@ export const strings: StringTable = {
   'customer.notifications.prefs.byCategory': { es: 'Ajusta por canal y categoría', en: 'Tune by channel and category' },
   'customer.notifications.prefs.note': { es: 'Guardamos solo lo que cambias; lo demás queda activo.', en: 'We store only what you change; everything else stays on.' },
   'customer.notifications.channel.whatsapp': { es: 'WhatsApp', en: 'WhatsApp' },
-  'customer.notifications.channel.email': { es: 'Email', en: 'Email' },
+  'customer.notifications.channel.email': { es: 'Correo', en: 'Email' },
   'customer.notifications.channel.push': { es: 'Push', en: 'Push' },
   'customer.notifications.cat.bookings': { es: 'Reservas', en: 'Bookings' },
   'customer.notifications.cat.bookings.sub': { es: 'Confirmaciones, cambios y recordatorios de clase.', en: 'Confirmations, changes and class reminders.' },
@@ -859,8 +864,9 @@ export const strings: StringTable = {
   'customer.legal.liveNumbers': { es: 'Los números salen de la configuración del estudio', en: 'The numbers come from the studio settings' },
   'customer.legal.notFound': { es: 'Documento no encontrado', en: 'Document not found' },
   'customer.legal.notFound.body': { es: 'Puede que el enlace sea antiguo. Los documentos vigentes están en Más → Legal.', en: 'The link may be old. The documents in force are under More → Legal.' },
+  'customer.legal.token.onRequest': { es: 'a convenir con el estudio', en: 'quoted by the studio' },
   'customer.legal.token.pending': { es: '(pendiente)', en: '(pending)' },
-  'customer.legal.token.noShowFee': { es: ' y se cobra la tarifa de no-show de {amount}', en: ' and the {amount} no-show fee is charged' },
+  'customer.legal.token.noShowFee': { es: ' y se cobra la tarifa por inasistencia de {amount}', en: ' and the {amount} no-show fee is charged' },
   'customer.media.pending': { es: 'arte pendiente', en: 'art pending' },
 
   // C-26 Cuenta y datos (0019)

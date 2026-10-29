@@ -1,28 +1,32 @@
 name: Customer schedule booking support QA
+# Muted 2026-10-29 to merge the Hoy launch (companyos-launch). Restore the triggers below after launch.
+# on:
+#   pull_request:
+#     paths:
+#       - 'src/modules/customer/pages/SchedulePage.tsx'
+#       - 'src/modules/customer/pages/BookedPage.tsx'
+#       - 'src/modules/customer/pages/RulesPage.tsx'
+#       - 'src/modules/customer/pages/FaqPage.tsx'
+#       - 'src/modules/customer/pages/TeachersPage.tsx'
+#       - 'src/modules/customer/pages/MorePage.tsx'
+#       - 'src/modules/customer/useCustomerRows.ts'
+#       - 'src/modules/customer/bookingPaymentStatus.ts'
+#       - 'src/modules/customer/pages/CheckoutPage.tsx'
+#       - 'src/modules/customer/hooks.ts'
+#       - 'src/modules/customer/rescheduleCommand.ts'
+#       - 'src/data/MockProvider.ts'
+#       - 'src/data/schema.ts'
+#       - 'src/data/launchReceipts.ts'
+#       - 'src/data/operationalQuotes.ts'
+#       - 'src/modules/customer/directions.ts'
+#       - 'src/modules/customer/supportStrings.ts'
+#       - 'scripts/*schedule-support*'
+#       - 'scripts/*single-booking-payment*'
+#       - 'scripts/*direct-reschedule-terms*'
+#       - '.github/workflows/schedule-support-qa.yml'
 on:
-  pull_request:
-    paths:
-      - 'src/modules/customer/pages/SchedulePage.tsx'
-      - 'src/modules/customer/pages/BookedPage.tsx'
-      - 'src/modules/customer/pages/RulesPage.tsx'
-      - 'src/modules/customer/pages/FaqPage.tsx'
-      - 'src/modules/customer/pages/TeachersPage.tsx'
-      - 'src/modules/customer/pages/MorePage.tsx'
-      - 'src/modules/customer/useCustomerRows.ts'
-      - 'src/modules/customer/bookingPaymentStatus.ts'
-      - 'src/modules/customer/pages/CheckoutPage.tsx'
-      - 'src/modules/customer/hooks.ts'
-      - 'src/modules/customer/rescheduleCommand.ts'
-      - 'src/data/MockProvider.ts'
-      - 'src/data/schema.ts'
-      - 'src/data/launchReceipts.ts'
-      - 'src/data/operationalQuotes.ts'
-      - 'src/modules/customer/directions.ts'
-      - 'src/modules/customer/supportStrings.ts'
-      - 'scripts/*schedule-support*'
-      - 'scripts/*single-booking-payment*'
-      - 'scripts/*direct-reschedule-terms*'
-      - '.github/workflows/schedule-support-qa.yml'
+  workflow_dispatch:
+
 permissions:
   contents: read
 jobs:

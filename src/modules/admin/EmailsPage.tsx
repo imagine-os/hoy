@@ -26,6 +26,8 @@ import { Drawer } from '../../components/organism/Drawer/Drawer';
 import { parseEmailBody, type EmailRow, type ParsedBody } from './emailTest';
 import { useEmailRows, useEmailTest } from './useEmailTest';
 import { useEmailEdit } from './useEmailEdit';
+import { PRODUCTION_BUILD } from '../../config/launch';
+import { LaunchEmailsPage } from '../../notifications/LaunchEmailsPage';
 import type { EmailPatch, EmailVersionAudit } from './emailEdit';
 import './admin.css';
 import './emailTest.css';
@@ -42,8 +44,13 @@ const catalogOrder = (row: EmailRow) => { const i = EMAIL_CATALOG.findIndex((m) 
 const parseBody=parseEmailBody;
 const varsIn = (...texts: string[]) => [...new Set(texts.join(' ').match(/\{\{\s*[\w.]+\s*\}\}/g)?.map((v) => v.replace(/[{}\s]/g, '')) ?? [])];
 
-/** M-04 — template list by recipient and priority, rendered canvas with sample data, ES/EN switch, editor, versions, test send, send log. */
+/** M-04. The production build shows the launch emails and Company OS's delivery status only (H-9): no local sends. */
 export function EmailsPage() {
+  return PRODUCTION_BUILD ? <LaunchEmailsPage /> : <ReviewEmailsPage />;
+}
+
+/** M-04 (review build) — template list by recipient and priority, rendered canvas with sample data, ES/EN switch, editor, versions, test send, send log. */
+function ReviewEmailsPage() {
   const { t, lang, bi } = useI18n();
   const data = useData();
   const { can, user, role } = useSession();

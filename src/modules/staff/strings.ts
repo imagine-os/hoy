@@ -1,5 +1,12 @@
 import type { StringTable } from '../../i18n/types';
+import { deskStrings } from './desk/strings';
+import { teamStrings } from '../admin/team/strings';
+import { receptionHoursStrings } from '../admin/reception/strings';
 export const strings: StringTable = {
+  ...deskStrings,
+  // H-7 admin copy kept with the desk's, so lanes editing admin/strings.ts don't collide.
+  ...teamStrings,
+  ...receptionHoursStrings,
   'staff.count.codes': {es:'Valores registrados (método/proveedor/estado)', en:'Recorded values (method/provider/status)'},
   'staff.count.unrecognized': {es:'Valor no reconocido', en:'Unrecognized value'},
   'staff.count.status.voided': {es:'Anulado', en:'Voided'},
@@ -32,7 +39,7 @@ export const strings: StringTable = {
   'staff.count.inputs': {es:'Conteos ficticios propios (COP)', en:'Own fictional counts (COP)'},
   'staff.count.withheld': {es:'Total esperado, diferencia final, saldo neto, firma y cierre: sin determinar. Faltan reglas de corte/turno, base de monto, fondo inicial, retiros, gastos, reembolsos y confirmación de medios. No se calculan ni se marcan como conciliados.', en:'Expected total, final discrepancy, net balance, signoff and close: unresolved. Cutoff/shift, amount basis, opening float, withdrawals, expenses, refunds and method confirmation rules remain open. No such totals or reconciled state are calculated.'},
   'staff.count.unknown': {es:'No disponible', en:'Unavailable'},
-  'staff.count.missingAmounts': {es:'Suma completa no disponible: amount desconocido/no válido en {amount} filas; amount_paid en {paid}. No se convierte en cero.', en:'Complete sum unavailable: unknown/invalid amount in {amount} rows; amount_paid in {paid}. Never converted to zero.'},
+  'staff.count.missingAmounts': {es:'Suma completa no disponible: valor desconocido o no válido en {amount} filas y valor pagado en {paid}. No se cuenta como cero.', en:'Complete sum unavailable: unknown/invalid amount in {amount} rows; amount_paid in {paid}. Never converted to zero.'},
   'staff.count.amountPaid': {es:'Suma amount_paid (valor recibido registrado; no liquidación bancaria)', en:'Sum amount_paid (recorded received value; not bank settlement)'},
   'staff.count.amount': {es:'Suma amount (valor registrado; no caja esperada)', en:'Sum amount (recorded value; not expected cash)'},
   'staff.count.rows': {es:'{n} filas de referencia', en:'{n} reference rows'},
@@ -52,6 +59,15 @@ export const strings: StringTable = {
   'staff.count.title': {es:'Borrador ficticio de conteo diario', en:'Fictional daily count draft'},
   // S-01
   'staff.home.title': { es: 'Hoy en recepción', en: 'Front desk today' },
+  // S-11 (Q-13): reception records an expense; no ledger, no totals.
+  'staff.expense.nav': { es: 'Registrar gasto', en: 'Record expense' },
+  'staff.expense.title': { es: 'Registrar un gasto', en: 'Record an expense' },
+  'staff.expense.body': { es: 'Anota un gasto pagado hoy desde recepción. Administración lo revisa en el libro de gastos.', en: 'Note an expense paid today at the front desk. Administration reviews it in the expense ledger.' },
+  'staff.expense.hint': { es: 'Queda con fecha de hoy y pagado.', en: 'It is dated today and marked paid.' },
+  'staff.expense.saved': { es: 'Gasto registrado.', en: 'Expense recorded.' },
+  'staff.expense.error': { es: 'No se pudo registrar el gasto. Inténtalo de nuevo.', en: 'The expense could not be recorded. Try again.' },
+  'staff.expense.amountRange': { es: 'Escribe un valor entre 1 y 5.000.000 COP', en: 'Enter an amount between 1 and 5,000,000 COP' },
+  'staff.home.paymentsPending': { es: 'Pagos por revisar', en: 'Payments to review' },
   'staff.home.role': { es: 'Estás viendo el inicio de {role}.', en: 'You are viewing the {role} home.' },
   'staff.home.todayClasses': { es: 'Clases de hoy', en: 'Today’s classes' },
   'staff.home.arrivals': { es: 'Llegadas hoy', en: 'Arrivals today' },
@@ -291,7 +307,8 @@ export const strings: StringTable = {
   'staff.rooms.conflict': { es: 'La {room} ya está ocupada en esa ventana', en: '{room} is already taken in that window' },
   'staff.rooms.conflict.class': { es: 'clase del horario', en: 'timetable class' },
   'staff.rooms.conflict.booking': { es: 'reserva de espacio', en: 'space booking' },
-  'staff.rooms.conflict.hint': { es: 'Cambia la hora o la sala. Mover una clase publicada es decisión del owner (manual, cap. 12).', en: 'Change the time or the room. Moving a published class is the owner’s call (manual, ch. 12).' },
+  'staff.rooms.saveError': { es: 'No se pudo guardar la reserva. Revisa los datos e inténtalo de nuevo.', en: 'The booking could not be saved. Check the details and try again.' },
+  'staff.rooms.conflict.hint': { es: 'Cambia la hora o la sala. Mover una clase publicada lo decide la dirección (manual, cap. 12).', en: 'Change the time or the room. Moving a published class is the owner’s call (manual, ch. 12).' },
   'staff.rooms.free': { es: 'La {room} está libre en esa ventana.', en: '{room} is free in that window.' },
   'staff.rooms.badWindow': { es: 'El fin debe ser después del inicio.', en: 'End must be after start.' },
   'staff.rooms.cta.confirm': { es: 'Reservar confirmada', en: 'Book as confirmed' },

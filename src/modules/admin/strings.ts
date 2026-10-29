@@ -3,6 +3,10 @@ import { directoryStrings } from '../../shared/subscriptions/strings';
 import type { StringTable } from '../../i18n/types';
 export const strings: StringTable = {
   'admin.paymentInstructions.title': {es:'Instrucciones de pago demo',en:'Demo payment instructions'},
+  // AD-05 · production copy: the same block shows the studio's real bank details, so it never says "demo" or "don't pay".
+  'admin.paymentInstructions.live.title': {es:'Datos para transferir',en:'Transfer details'},
+  'admin.paymentInstructions.live.boundary': {es:'Transfiere el valor exacto a esta cuenta y sube el comprobante. Recepción lo revisa y confirma tu clase.',en:'Transfer the exact amount to this account and upload the receipt. The front desk reviews it and confirms your class.'},
+  'admin.paymentInstructions.live.qrAlt': {es:'Código QR para transferir al estudio',en:'QR code to transfer to the studio'},
   'admin.paymentInstructions.boundary': {es:'Vista previa ficticia. No valida la cuenta ni la imagen QR y no inicia transferencias. No realices pagos reales con estos datos.',en:'Fictional preview. Does not validate the account or QR image and does not initiate transfers. Do not make real payments using these details.'},
   'admin.paymentInstructions.bankName': {es:'Banco',en:'Bank'},
   'admin.paymentInstructions.accountType': {es:'Tipo de cuenta',en:'Account type'},
@@ -43,6 +47,8 @@ export const strings: StringTable = {
   'admin.emails.edit.cancel': {es:'Dejar de esperar',en:'Stop waiting'},
 
   'admin.expenses.local.boundary': { es: "Vista previa ficticia de gastos guardada solo en este navegador. No envía pagos ni cambia suscripciones; las integraciones reales siguen desconectadas.", en: "Fictional expense preview saved only in this browser. It sends no payments and changes no subscriptions; real integrations remain disconnected." },
+  'admin.expenses.live.boundary': { es: 'Gastos del estudio guardados en el sistema. Registrar un gasto no mueve dinero: solo lo anota.', en: 'Studio expenses saved in the system. Recording an expense moves no money: it only notes it.' },
+  'admin.expenses.live.saved': { es: 'Cambio guardado.', en: 'Change saved.' },
   'admin.expenses.local.readError': { es: "No se pudieron leer los registros propios. No se muestran datos anteriores y se bloquean cambios. Reintenta la lectura.", en: "Owned records could not be read. Previous rows are hidden and changes are blocked. Retry the read." },
   'admin.expenses.local.paid': { es: "El gasto ahora está pagado y no se puede eliminar. Revisa el estado actualizado.", en: "The expense is now paid and cannot be deleted. Review its current state." },
   'admin.expenses.local.stale': { es: "Los registros cambiaron. No se sobrescribió el resultado anterior. Cancela este intento y revisa los datos actuales.", en: "The records changed. The earlier result was not overwritten. Cancel this attempt and review current data." },
@@ -952,7 +958,7 @@ export const strings: StringTable = {
   'admin.content.bi.hint': { es: 'Español arriba, inglés abajo. Si el inglés queda vacío se usa el español.', en: 'Spanish above, English below. An empty English falls back to Spanish.' },
 
   'admin.articles.title': { es: 'Artículos', en: 'Articles' },
-  'admin.articles.subtitle': { es: 'Reglas del club, textos “sobre HOY” y guías. Se publican sin deploy y los lee la app (C-13, C-14/C-15).', en: 'Club rules, about-the-studio copy and guides. They publish without a deploy and the app reads them (C-13, C-14/C-15).' },
+  'admin.articles.subtitle': { es: 'Reglas del club, textos “sobre {brand}” y guías. Se publican sin deploy y los lee la app (C-13, C-14/C-15).', en: 'Club rules, about-the-studio copy and guides. They publish without a deploy and the app reads them (C-13, C-14/C-15).' },
   'admin.articles.add': { es: 'Nuevo artículo', en: 'New article' },
   'admin.articles.editor': { es: 'Artículo', en: 'Article' },
   'admin.articles.untitled': { es: 'Sin título', en: 'Untitled' },
@@ -1201,6 +1207,10 @@ export const strings: StringTable = {
   'admin.expenses.add': { es: 'Registrar un gasto', en: 'Record an expense' },
   'admin.expenses.noPermission': { es: 'Solo finanzas y administración registran gastos. Puedes consultar.', en: 'Only finance and admin record expenses. You can look.' },
   'admin.expenses.required': { es: 'Obligatorio', en: 'Required' },
+  'admin.settings.f.email': { es: 'Correo electrónico', en: 'Email' },
+  'admin.settings.f.email.invalid': { es: 'Escribe un correo válido, por ejemplo nombre@dominio.com', en: 'Enter a valid email, for example name@domain.com' },
+  'admin.settings.f.https': { es: 'Debe ser un enlace que empiece por https://', en: 'Must be a link that starts with https://' },
+  'admin.expenses.concept.required': { es: 'Escribe el concepto', en: 'Enter the concept' },
   'admin.expenses.amount.positive': { es: 'Debe ser mayor que cero', en: 'Must be greater than zero' },
   'admin.expenses.amount.hint': { es: 'COP, sin decimales', en: 'COP, no decimals' },
   'admin.expenses.concept.placeholder': { es: 'p. ej. Reposición de mats', en: 'e.g. Mat replacement' },

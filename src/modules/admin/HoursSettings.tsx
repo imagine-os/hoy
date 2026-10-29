@@ -25,6 +25,8 @@ import { useAudit } from '../staff/audit';
 import { useOpeningHours } from './settings';
 import { need } from './actions';
 import { M08g } from './specs';
+import { PRODUCTION_BUILD } from '../../config/launch';
+import { ReceptionHoursPanel } from './reception/ReceptionHoursPanel';
 
 const KINDS: readonly HoursOverrideKind[] = ['holiday', 'special', 'event'];
 const KIND_TONE: Record<HoursOverrideKind, BadgeTone> = { holiday: 'danger', special: 'highlight', event: 'primary' };
@@ -60,7 +62,12 @@ const toRow = (d: Draft, by: string): Partial<HoursOverrideRow> => ({
  * M-08g `/admin/settings/hours` — the dated exceptions to the weekly hours (D-0016). Rendered inside the
  * M-08 settings shell (SettingsPage group `hours`). hours.write gates every write; every write is audited.
  */
+/** AD-05: in the production build the reception hours and closed days live in the bookings module settings (J1b). */
 export function HoursSettings() {
+  return PRODUCTION_BUILD ? <ReceptionHoursPanel /> : <ReviewHoursSettings />;
+}
+
+function ReviewHoursSettings() {
   const { t, bi, lang } = useI18n();
   const { can, user } = useSession();
   const data = useData();

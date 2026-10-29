@@ -3,6 +3,8 @@ import {SavedPaymentInstructions} from '../../components/organism/PaymentInstruc
 import {validPaymentSettings,type PaymentSettings} from './paymentInstructions';
 import {usePaymentSettingsSave} from './usePaymentSettingsSave';
 import {TeamProposalPanel} from '../../components/organism/TeamProposalPanel/TeamProposalPanel';
+import { TeamUsersPanel } from './team/TeamUsersPanel';
+import { PRODUCTION_BUILD } from '../../config/launch';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { useI18n } from '../../i18n/I18nProvider';
@@ -34,6 +36,7 @@ import { need } from './actions';
 import { M08a } from './specs';
 import './admin.css';
 import { Icon, type IconName } from '../../components/atom/Icon/Icon';
+import { isEmail, safeHttpsUrl } from '../../shared/limits';
 
 /** The seven sub-pages of M-08. `general` is /admin/settings; the rest are /admin/settings/<key>. `content` (M-08f) arrived in 0018, `hours` (M-08g) in 0041. */
 export type SettingsGroup = 'general' | 'hours' | 'features' | 'payments' | 'communications' | 'branding' | 'content';
@@ -80,7 +83,8 @@ export function SettingsPage({ group = 'general' }: { group?: SettingsGroup }) {
   const { rows: modalities } = useTable<ModalityRow>('modalities', { orderBy: { column: 'name_es' } });
   const { rows: teachers } = useTable<TeacherRow>('teachers', { where: { active: true } });
   const { rows: legalDocs } = useTable<LegalDocumentRow>('legal_documents', { orderBy: { column: 'kind' } });
-  const canLegal = can('settings.write');
+  // Production: the legal texts are static launch content (a read-only adapter), so publishing is review-build only.
+  const canLegal = can('settings.write') && !PRODUCTION_BUILD;
   const contact = contactOf(settings);
   const canWrite = can('settings.write');
   const canFlags = can('features.write');
@@ -126,7 +130,8 @@ export function SettingsPage({ group = 'general' }: { group?: SettingsGroup }) {
           {group === 'general' && (
             <>
               <GeneralActions />
-              <TeamProposalPanel />
+              {/* AD-06: the production build manages Company OS team users; the review build keeps the fictional proposals. */}
+              {PRODUCTION_BUILD ? <TeamUsersPanel /> : <TeamProposalPanel />}
               {S('profile', t('admin.settings.sec.profile'), (d, set) => (
                 <>
                   <div className="row-between wrap">
@@ -135,14 +140,14 @@ export function SettingsPage({ group = 'general' }: { group?: SettingsGroup }) {
                   </div>
                   <div className="grid grid-2"><Field label={t('admin.settings.f.name')} hint={t('admin.settings.f.name.hint')}>{(id) => <Input id={id} value={tenant.name} disabled />}</Field><Field label={t('admin.settings.f.legal')}>{(id) => <Input id={id} value={tenant.legalName} disabled />}</Field></div>
                   <div className="grid grid-2"><Field label={t('admin.settings.f.address')}>{(id) => <Input id={id} value={d.address} disabled={!canWrite} onChange={(e) => set({ ...d, address: e.target.value })} />}</Field><Field label={t('admin.settings.f.city')}>{(id) => <Input id={id} value={d.city} disabled={!canWrite} placeholder={tenant.city} onChange={(e) => set({ ...d, city: e.target.value })} />}</Field></div>
-                  <div className="grid grid-2"><Field label="WhatsApp" hint={t('admin.settings.f.whatsapp.hint', { dial: tenant.dialCode })}>{(id) => <Input id={id} value={d.whatsapp} disabled={!canWrite} onChange={(e) => set({ ...d, whatsapp: e.target.value })} />}</Field><Field label="Email">{(id) => <Input id={id} type="email" value={d.email} disabled={!canWrite} onChange={(e) => set({ ...d, email: e.target.value })} />}</Field></div>
-                  <div className="grid grid-2"><Field label="Instagram" hint={t('admin.settings.f.instagram.hint')}>{(id) => <Input id={id} value={d.instagram} disabled={!canWrite} placeholder={tenant.social.instagram} onChange={(e) => set({ ...d, instagram: e.target.value })} />}</Field><Field label={t('admin.settings.f.instagramUrl')}>{(id) => <Input id={id} value={d.instagramUrl} disabled={!canWrite} placeholder="https://www.instagram.com/…" onChange={(e) => set({ ...d, instagramUrl: e.target.value })} />}</Field></div>
+                  <div className="grid grid-2"><Field label="WhatsApp" hint={t('admin.settings.f.whatsapp.hint', { dial: tenant.dialCode })}>{(id) => <Input id={id} value={d.whatsapp} disabled={!canWrite} onChange={(e) => set({ ...d, whatsapp: e.target.value })} />}</Field><Field label={t('admin.settings.f.email')} error={d.email && !isEmail(d.email) ? t('admin.settings.f.email.invalid') : undefined}>{(id) => <Input id={id} type="email" value={d.email} disabled={!canWrite} onChange={(e) => set({ ...d, email: e.target.value })} />}</Field></div>
+                  <div className="grid grid-2"><Field label="Instagram" hint={t('admin.settings.f.instagram.hint')}>{(id) => <Input id={id} value={d.instagram} disabled={!canWrite} placeholder={tenant.social.instagram} onChange={(e) => set({ ...d, instagram: e.target.value })} />}</Field><Field label={t('admin.settings.f.instagramUrl')} error={d.instagramUrl && !safeHttpsUrl(d.instagramUrl) ? t('admin.settings.f.https') : undefined}>{(id) => <Input id={id} value={d.instagramUrl} disabled={!canWrite} placeholder="https://www.instagram.com/…" onChange={(e) => set({ ...d, instagramUrl: e.target.value })} />}</Field></div>
                   <div className="grid grid-3">
                     <Field label={t('admin.settings.f.mapLat')}>{(id) => <Input id={id} type="number" step="0.0001" value={d.mapLat} disabled={!canWrite} onChange={(e) => set({ ...d, mapLat: Number(e.target.value) })} />}</Field>
                     <Field label={t('admin.settings.f.mapLng')}>{(id) => <Input id={id} type="number" step="0.0001" value={d.mapLng} disabled={!canWrite} onChange={(e) => set({ ...d, mapLng: Number(e.target.value) })} />}</Field>
                     <Field label={t('admin.settings.f.mapLabel')} hint={t('admin.settings.f.mapLabel.hint')}>{(id) => <Input id={id} value={d.mapLabel} disabled={!canWrite} placeholder={contact.location.label.es} onChange={(e) => set({ ...d, mapLabel: e.target.value })} />}</Field>
                   </div>
-                  <div className="grid grid-2"><Field label={t('admin.settings.f.mapLink')} hint={t('admin.settings.f.mapLink.hint')}>{(id) => <Input id={id} value={d.mapLink} disabled={!canWrite} placeholder="https://maps.app.goo.gl/…" onChange={(e) => set({ ...d, mapLink: e.target.value })} />}</Field><Field label="NIT" hint={t('admin.settings.f.nit.hint')}>{(id) => <Input id={id} value={d.nit} disabled={!canWrite} onChange={(e) => set({ ...d, nit: e.target.value })} placeholder="901.xxx.xxx-1" />}</Field></div>
+                  <div className="grid grid-2"><Field label={t('admin.settings.f.mapLink')} hint={t('admin.settings.f.mapLink.hint')} error={d.mapLink && !safeHttpsUrl(d.mapLink) ? t('admin.settings.f.https') : undefined}>{(id) => <Input id={id} value={d.mapLink} disabled={!canWrite} placeholder="https://maps.app.goo.gl/…" onChange={(e) => set({ ...d, mapLink: e.target.value })} />}</Field><Field label="NIT" hint={t('admin.settings.f.nit.hint')}>{(id) => <Input id={id} value={d.nit} disabled={!canWrite} onChange={(e) => set({ ...d, nit: e.target.value })} placeholder="901.xxx.xxx-1" />}</Field></div>
                   <fieldset className="stack-sm" style={{ border: 0, padding: 0, margin: 0 }}>
                     <legend className="eyebrow">{t('admin.settings.f.confirmed')}</legend>
                     <div className="grid grid-2">
@@ -151,7 +156,7 @@ export function SettingsPage({ group = 'general' }: { group?: SettingsGroup }) {
                   </fieldset>
                   <p className="xs muted">{t('admin.settings.f.confirmed.hint')}</p>
                 </>
-              ))}
+              ), undefined, (d) => (!d.email || isEmail(d.email)) && (!d.instagramUrl || !!safeHttpsUrl(d.instagramUrl)) && (!d.mapLink || !!safeHttpsUrl(d.mapLink)))}
               {S('contacts', t('admin.settings.sec.contacts'), (d, set) => {
                 // Who receives each topic right now, from the draft, so the owner sees the effect before saving.
                 const draft = whatsappLinksOf({ ...settings, contacts: d }, hours);
@@ -362,7 +367,7 @@ export function SettingsPage({ group = 'general' }: { group?: SettingsGroup }) {
                   {legalDocs.map((d) => (
                     <div key={d.id} className="row-between wrap settings-int">
                       <div className="grow"><strong className="small">{bi(d.title)}</strong> <span className="xs mono muted">v{d.version}</span><div className="xs muted">{d.kind} · {t('admin.settings.legal.effective', { date: formatDate(d.effective_from, lang) })}{d.requires_acceptance ? ` · ${t('admin.settings.legal.requiresAcceptance')}` : ''}</div></div>
-                      <div className="row"><Badge tone={d.status === 'published' ? 'success' : 'warn'}>{t(`admin.settings.legal.${d.status}`)}</Badge><Toggle size="sm" checked={d.status === 'published'} disabled={!canLegal} label={t('admin.settings.legal.publish')} onChange={(on) => toggleLegal(d, on)} /><Link to={`/site/legal/${d.kind}`} className="xs">{t('admin.settings.legal.view')} →</Link></div>
+                      <div className="row"><Badge tone={d.status === 'published' ? 'success' : 'warn'}>{t(`admin.settings.legal.${d.status}`)}</Badge>{!PRODUCTION_BUILD && <Toggle size="sm" checked={d.status === 'published'} disabled={!canLegal} label={t('admin.settings.legal.publish')} onChange={(on) => void toggleLegal(d, on)} />}<Link to={`/site/legal/${d.kind}`} className="xs">{t('admin.settings.legal.view')} →</Link></div>
                     </div>
                   ))}
                 </div>

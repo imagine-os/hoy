@@ -6,7 +6,8 @@ import { useTable } from '../../../data/DataContext';
 import type { TeacherRow, ModalityRow, ReviewRow } from '../../../data/schema';
 import { formatCOP } from '../../../i18n/format';
 import { tenant } from '../../../tenant/tenant';
-import { priceItem, FAMILY_LABEL, FAMILY_RATIONALE, type PlanFamily } from '../../../tenant/pricing';
+import { FAMILY_LABEL, FAMILY_RATIONALE, type PlanFamily } from '../../../tenant/pricing';
+import { useLivePricing } from '../../../data/livePricing';
 import { manifesto, philosophy, classesIntro, classes, classOrder, taglines } from '../../../tenant/brand';
 import { Button } from '../../../components/atom/Button/Button';
 import { Card } from '../../../components/molecule/Card/Card';
@@ -33,7 +34,8 @@ export function ClassicHomePage() {
   const { rows: modalities } = useTable<ModalityRow>('modalities');
   const { rows: reviews } = useTable<ReviewRow>('reviews', { orderBy: { column: 'created_at', dir: 'desc' } });
   const modName = (id: string) => { const m = modalities.find((x) => x.id === id); return m ? (lang === 'es' ? m.name_es : m.name_en) : ''; };
-  const trial = priceItem('trial');
+  const prices = useLivePricing();
+  const trial = prices.item('trial');
   const trialPrice = trial?.price != null ? formatCOP(trial.price, lang) : '';
   // one card per distinct comment: the seed repeats a handful of phrases across many reviews
   const quotes = [...new Map(reviews.filter((r) => r.comment && r.visibility !== 'private').map((r) => [r.comment, r])).values()].slice(0, 3);
@@ -42,11 +44,11 @@ export function ClassicHomePage() {
     Hero: () => (
       <section className="container site-hero">
         <div className="site-hero-copy">
-          <p className="eyebrow">{t('site.hero.eyebrow', { city: tenant.city })}</p>
+          <p className="eyebrow">{t('site.hero.eyebrow', { city: tenant.city, tagline: bi(tenant.tagline) })}</p>
           <h1>{bi(manifesto.lead)} <em>{bi(manifesto.emphasis)}</em></h1>
           <p className="site-lead muted">{t('site.hero.body', { city: tenant.city, mats: tenant.studio.mats, classes: tenant.studio.classesPerDay })}</p>
           <div className="row wrap">
-            <Link to="/site/plans"><Button size="lg">{t('site.hero.cta', { price: trialPrice })}</Button></Link>
+            <Link to="/site/plans"><Button size="lg">{trialPrice ? t('site.hero.cta', { price: trialPrice }) : t('site.first.cta')}</Button></Link>
             <Link to="/site/schedule"><Button size="lg" variant="secondary">{t('site.hero.cta2')}</Button></Link>
           </div>
         </div>
@@ -144,7 +146,7 @@ export function ClassicHomePage() {
           <div className="site-cta-copy">
             <p className="eyebrow">{t('site.first.eyebrow')}</p>
             <h2>{t('site.first.title')}</h2>
-            <p>{t('site.first.body', { price: trialPrice })}</p>
+            {trialPrice && <p>{t('site.first.body', { price: trialPrice })}</p>}
           </div>
           <div className="row wrap">
             <Link to="/site/plans"><Button size="lg">{t('site.first.cta')}</Button></Link>

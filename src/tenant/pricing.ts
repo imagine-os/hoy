@@ -162,16 +162,16 @@ export const FAMILY_RATIONALE: Record<PlanFamily, FamilyRationale> = {
     role: FAMILY_ROLE.espacio,
     subtitle: { es: 'El estudio para tus experiencias y actividades especiales.', en: 'The studio for your experiences and special activities.' },
     why: {
-      es: 'HOY alquila el espacio para experiencias y actividades especiales. Cada solicitud se analiza de forma individual y su valor depende de las características y necesidades de cada caso.',
-      en: 'HOY rents the space for experiences and special activities. Each request is reviewed on its own, and its price depends on what each case involves and needs.',
+      es: `${tenant.name} alquila el espacio para experiencias y actividades especiales. Cada solicitud se analiza de forma individual y su valor depende de las características y necesidades de cada caso.`,
+      en: `${tenant.name} rents the space for experiences and special activities. Each request is reviewed on its own, and its price depends on what each case involves and needs.`,
     },
   },
   corporativo: {
     role: FAMILY_ROLE.corporativo,
     subtitle: { es: 'Bienestar para equipos, desde el lanzamiento.', en: 'Wellbeing for teams, from launch.' },
     why: {
-      es: 'Llevar HOY a los equipos: movimiento y respiración como parte de la cultura de trabajo. Tres formatos: sesión para equipos, programa recurrente y taller a medida. Cada propuesta se arma con la empresa.',
-      en: 'Taking HOY to teams: movement and breathing as part of the work culture. Three formats: team session, recurring programme and tailored workshop. Each proposal is built with the company.',
+      es: `Llevar ${tenant.name} a los equipos: movimiento y respiración como parte de la cultura de trabajo. Tres formatos: sesión para equipos, programa recurrente y taller a medida. Cada propuesta se arma con la empresa.`,
+      en: `Taking ${tenant.name} to teams: movement and breathing as part of the work culture. Three formats: team session, recurring programme and tailored workshop. Each proposal is built with the company.`,
     },
   },
 };

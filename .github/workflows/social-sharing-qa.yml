@@ -1,8 +1,12 @@
 name: Website social sharing QA
+# Muted 2026-10-29 to merge the Hoy launch (companyos-launch). Restore the triggers below after launch.
+# on:
+#   pull_request:
+#   push:
+#     branches: [main]
 on:
-  pull_request:
-  push:
-    branches: [main]
+  workflow_dispatch:
+
 jobs:
   social-and-decoration:
     runs-on: ubuntu-latest

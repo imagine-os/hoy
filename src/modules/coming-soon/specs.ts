@@ -7,6 +7,7 @@ export const comingSoonSpec = defineSpec({
   purpose: { es: 'La página de preapertura, separada del sitio completo y accesible desde su propia tarjeta en el hub.', en: 'A standalone pre-launch page, separate from the full website and accessible from its own hub card.' },
   layout: ['Landing'], data: [], roles: EVERYONE, integrations: [],
   logic: [
+    'SW-08: the public root shows this page until the go-live setting (src/config/launch.ts siteLive / siteLiveAt) flips, then redirects to /site; /coming-soon keeps the page as a preview.',
     'Public root and /coming-soon share the pre-launch page; /hub is the separate public testing hub. No SiteShell, booking, launch date or lead collection.',
     'Uses the existing brand wordmark, tenant identity, approved brand tagline and concept sanctuary artwork.',
     'AmbientScene reuses the existing local loop with a still fallback, reduced-motion/save-data support and an explicit pause control.',

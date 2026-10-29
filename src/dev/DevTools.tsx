@@ -5,6 +5,7 @@ import { useT } from '../i18n/I18nProvider';
 import { getRoutes } from '../app/registry';
 import { InspectorPanel } from '../components/organism/InspectorPanel/InspectorPanel';
 import { onInspector } from './inspectorBus';
+import { PRODUCTION_BUILD } from '../config/launch';
 import './DevTools.css';
 
 /** Resolves the RouteDef for the current location. */
@@ -13,8 +14,10 @@ export function useCurrentRoute() {
   return getRoutes().find((r) => matchPath({ path: r.path, end: true }, pathname)) ?? null;
 }
 
-/** Floating spec chip + inspector panel. Only mounts its UI in dev mode; Ctrl+. toggles the panel. */
-export function DevTools() {
+/** Floating spec chip + inspector panel. Only mounts its UI in dev mode; Ctrl+. toggles the panel. Not in the production build (PL-03). */
+export const DevTools = PRODUCTION_BUILD ? () => null : ReviewDevTools;
+
+function ReviewDevTools() {
   const { devMode } = useSession();
   const t = useT();
   const route = useCurrentRoute();

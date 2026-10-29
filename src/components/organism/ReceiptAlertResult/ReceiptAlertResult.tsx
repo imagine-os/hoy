@@ -2,10 +2,16 @@ import {ReceiptAlertView,type ReceiptAlertViewMode} from './ReceiptAlertView';
 import {useEffect,useRef,useState} from 'react';
 import {useData} from '../../../data/DataContext';
 import {useSession} from '../../../auth/SessionProvider';
+import {PRODUCTION_BUILD} from '../../../config/launch';
 import {readReceiptAlert,simulateReceiptAlert,type ReceiptAlertState} from '../../../modules/transfers/receiptAlert';
 
-/** Own committed receipt only; no staff directory, recipient or dispatch capability. */
+/** Own committed receipt only; no staff directory, recipient or dispatch capability. The production build shows nothing:
+ *  the team alert is Company OS's (H-9, NT-03), so a local rehearsal would be a simulated "sent". */
 export function ReceiptAlertResult({receiptId}:{receiptId:string}){
+ return PRODUCTION_BUILD?null:<ReceiptAlertRehearsal receiptId={receiptId}/>;
+}
+
+function ReceiptAlertRehearsal({receiptId}:{receiptId:string}){
  const data=useData(),{user,role}=useSession();
  const context=`${user.id}:${role}:${receiptId}`,live=useRef({data,context});live.current={data,context};
  const loaded=useRef<{data:typeof data;context:string}|null>(null);

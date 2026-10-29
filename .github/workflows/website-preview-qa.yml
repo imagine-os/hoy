@@ -1,25 +1,29 @@
 name: Website preview QA
+# Muted 2026-10-29 to merge the Hoy launch (companyos-launch). Restore the triggers below after launch.
+# on:
+#   pull_request:
+#     branches: [main]
+#     paths:
+#       - 'src/modules/website/**'
+#       - 'src/app/**'
+#       - 'src/main.tsx'
+#       - 'src/components/organism/Drawer/**'
+#       - 'public/hub/**'
+#       - 'src/modules/coming-soon/**'
+#       - 'src/components/molecule/SiteVersionSelect/**'
+#       - 'src/components/molecule/SiteArchiveNotice/**'
+#       - 'src/components/molecule/ArchivedMembershipCard/**'
+#       - 'src/components/template/ComingSoonLanding/**'
+#       - 'src/hub/**'
+#       - 'src/modules/hub/**'
+#       - 'scripts/test-website-preview.mjs'
+#       - 'scripts/test-public-entry.mjs'
+#       - 'scripts/test-clean-hub.mjs'
+#       - '.github/workflows/website-preview-qa.yml'
+#       - 'docs/screenshots/W-11/**'
 on:
-  pull_request:
-    branches: [main]
-    paths:
-      - 'src/modules/website/**'
-      - 'src/app/**'
-      - 'src/main.tsx'
-      - 'src/components/organism/Drawer/**'
-      - 'public/hub/**'
-      - 'src/modules/coming-soon/**'
-      - 'src/components/molecule/SiteVersionSelect/**'
-      - 'src/components/molecule/SiteArchiveNotice/**'
-      - 'src/components/molecule/ArchivedMembershipCard/**'
-      - 'src/components/template/ComingSoonLanding/**'
-      - 'src/hub/**'
-      - 'src/modules/hub/**'
-      - 'scripts/test-website-preview.mjs'
-      - 'scripts/test-public-entry.mjs'
-      - 'scripts/test-clean-hub.mjs'
-      - '.github/workflows/website-preview-qa.yml'
-      - 'docs/screenshots/W-11/**'
+  workflow_dispatch:
+
 permissions:
   contents: read
 concurrency:

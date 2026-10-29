@@ -4,6 +4,8 @@ import type { PaymentRow, UserRow, ProfileRow } from './schema';
 import { readPaymentQuote } from './operationalQuotes';
 import { tenant } from '../tenant/tenant';
 import type { Bi } from '../specs/types';
+/** The production build (`VITE_HOY_BUILD=production`); read inline so node tests that bundle this file without Vite still load it. */
+const PRODUCTION_BUILD = (import.meta as { env?: Record<string, unknown> }).env?.VITE_HOY_BUILD === 'production';
 
 export interface LaunchReceipt {
   version: 1;
@@ -49,6 +51,8 @@ export function readLaunchReceipt(payment: PaymentRow): LaunchReceipt | null {
 export async function captureLaunchReceipt(data: DataProvider, payment: PaymentRow, options: {
   source: LaunchReceipt['source']; item?: Bi; recordedTax?: LaunchReceipt['recordedTax']; previewChannels?: LaunchReceipt['previewChannels'];
 }): Promise<PaymentRow> {
+  // Production: Company OS prices, quotes and numbers receipts (H-0 §3). This browser copy runs in the review build only.
+  if (PRODUCTION_BUILD) throw Error('server_decides');
   if (data.name !== 'mock') throw Error('receipt_disconnected');
   const current = await data.get<PaymentRow>('payments', payment.id);
   if (!current || current.id !== payment.id || current.tenant_id !== tenant.id || current.status !== 'approved') throw Error('receipt_payment_scope');

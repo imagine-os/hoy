@@ -1,6 +1,15 @@
 import type { RouteDef } from '../../specs/types';
 import type { StringTable } from '../../i18n/types';
-export const routes: RouteDef[] = [];
+import { lazyPages } from '../../app/lazyPage';
+import { PRODUCTION_BUILD } from '../../config/launch';
+import { myReceiptsSpec, receiptSpec } from './launch/specs';
+const page = lazyPages(() => import('./launch/pages'));
+/** PG-08: the Company OS "Nota de compra" (production build). The review build's receipts live in the customer history. */
+export const routes: RouteDef[] = PRODUCTION_BUILD ? [
+ { path: '/app/receipts', element: page('MyReceiptsPage'), spec: myReceiptsSpec, roles: myReceiptsSpec.roles, surface: 'customer', layout: 'mobile' },
+ { path: '/app/receipts/:paymentId', element: page('CustomerReceiptPage'), spec: receiptSpec, roles: ['customer'], surface: 'customer', layout: 'mobile' },
+ { path: '/staff/receipts/:paymentId', element: page('StaffReceiptPage'), spec: receiptSpec, roles: ['super_admin', 'admin', 'front_desk'], surface: 'staff', layout: 'desktop' },
+] : [];
 export const strings: StringTable = {
  'launchReceipt.title': { es: 'Vista previa del recibo', en: 'Receipt preview' },
  'launchReceipt.mock': { es: 'Demostración local con datos ficticios. No procesa pagos reales.', en: 'Local demonstration with fictional data. Does not process real payments.' },

@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { Lang, StringTable } from './types';
 import { coreStrings } from './core';
+import { tenant } from '../tenant/tenant';
 
 interface I18nCtx {
   lang: Lang;
@@ -28,7 +29,8 @@ function translate(dict: StringTable, lang: Lang, key: string, vars?: Record<str
   }
   let s = lang === 'en' ? entry.en ?? entry.es : entry.es;
   if (vars) for (const [k, v] of Object.entries(vars)) s = s.replaceAll(`{${k}}`, String(v));
-  return s;
+  // SW-05: `{brand}` is always the tenant's brand name (src/tenant/tenant.ts), so no string types the name itself.
+  return s.replaceAll('{brand}', tenant.name);
 }
 
 export function I18nProvider({ tables, children }: { tables: StringTable[]; children: ReactNode }) {

@@ -16,6 +16,7 @@ export const coreStrings: StringTable = {
   'core.dev.spec': { es: 'Spec', en: 'Spec' },
   'core.dev.viewAs': { es: 'Ver como', en: 'View as' },
   'core.session.switch': { es: 'Cambiar usuario', en: 'Switch user' },
+  'core.session.signOut': { es: 'Cerrar sesión', en: 'Sign out' },
   'core.nav.hub': { es: 'Hub', en: 'Hub' },
   'core.nav.canvas': { es: 'Lienzo', en: 'Canvas' },
   'core.nav.simulator': { es: 'Simulador', en: 'Simulator' },

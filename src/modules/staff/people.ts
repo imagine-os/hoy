@@ -53,9 +53,16 @@ export function usePeople(): { people: Person[]; byId: Map<string, Person>; load
 // Existing import contract retained; formatting is pure and never changes joined/stored data.
 export { maskPhone } from './maskPhone';
 
-/** Text match across name, phone and email. */
+/** Lower case without accents, so "maria" finds "María". */
+const fold = (v: string) => v.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+/** Phone digits without the Colombian country code, so "+57 300 123 4567", "3001234567" and "300-123-4567" are one number. */
+export const phoneKey = (v: string | null | undefined) => { const d = (v ?? '').replace(/\D/g, ''); return d.length > 10 && d.startsWith('57') ? d.slice(2) : d; };
+
+/** RC-03 · text match across name (accents ignored), WhatsApp (digits only, with or without +57) and email. */
 export const personMatches = (p: Person, q: string) => {
-  const s = q.trim().toLowerCase();
+  const s = fold(q.trim());
   if (!s) return true;
-  return p.name.toLowerCase().includes(s) || (p.phone ?? '').replace(/\s/g, '').includes(s.replace(/\s/g, '')) || p.email.toLowerCase().includes(s);
+  const digits = q.replace(/\D/g, ''), phone = phoneKey(p.phone);
+  // The query may carry the country code ("+57 300…") or not; the stored number is compared both ways.
+  return fold(p.name).includes(s) || p.email.toLowerCase().includes(s) || (digits.length >= 3 && !!phone && (phone.includes(digits) || `57${phone}`.includes(digits)));
 };

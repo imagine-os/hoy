@@ -6,7 +6,7 @@ import { useLayout } from '../../../layout/useLayout';
 import { useTable } from '../../../data/DataContext';
 import type { ModalityRow, TeacherRow } from '../../../data/schema';
 import { formatCOP } from '../../../i18n/format';
-import { priceItem } from '../../../tenant/pricing';
+import { useLivePricing } from '../../../data/livePricing';
 import { brandClass, classes, classOrder, taglines, type ClassSlug } from '../../../tenant/brand';
 import { Button } from '../../../components/atom/Button/Button';
 import { Chip } from '../../../components/atom/Chip/Chip';
@@ -27,7 +27,8 @@ export function ClassDetailPage() {
   const { rows: teachers } = useTable<TeacherRow>('teachers', { where: { active: true } });
   const photos = useClassPhotos();
   const c = brandClass(slug);
-  const trial = priceItem('trial');
+  const prices = useLivePricing();
+  const trial = prices.item('trial');
   const trialPrice = trial?.price != null ? formatCOP(trial.price, lang) : '';
 
   if (!c) {
@@ -123,7 +124,7 @@ export function ClassDetailPage() {
           <div className="site-cta-copy">
             <p className="eyebrow">{t('site.first.eyebrow')}</p>
             <h2>{brand(bi(taglines.life), 'current')}</h2>
-            <p>{t('site.first.body', { price: trialPrice })}</p>
+            {trialPrice && <p>{t('site.first.body', { price: trialPrice })}</p>}
           </div>
           <div className="row wrap">
             <Link to="/site/plans"><Button size="lg">{t('site.first.cta')}</Button></Link>

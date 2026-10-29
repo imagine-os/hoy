@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { PRODUCTION_BUILD } from '../../config/launch';
 import { useNavigate } from 'react-router-dom';
 import type { ActionDef, ActionHandler } from '../../actions/types';
 import { demoUsers } from '../../auth/demoUsers';
@@ -12,14 +13,16 @@ import { tenant } from '../../tenant/tenant';
  */
 /** 0051: the packages C-06 sells (no membership at launch). */
 const PLAN_IDS = ['pack12', 'pack12_smtc'];
-const SIGN_IN_IDS = demoUsers.filter((u) => u.role !== 'public').map((u) => u.id);
+// The production build signs in with Clerk: no demo user to name (PL-03).
+const SIGN_IN_IDS = PRODUCTION_BUILD ? [] : demoUsers.filter((u) => u.role !== 'public').map((u) => u.id);
 
 export const appGoHome: ActionDef = { id: 'app.goHome', label: { es: 'Ir al inicio', en: 'Go home' }, intent: { es: 'Llévame al inicio de la app', en: 'Take me to the app home' } };
 export const appOpenSchedule: ActionDef = { id: 'app.openSchedule', label: { es: 'Abrir el horario', en: 'Open the schedule' }, intent: { es: 'Muéstrame el horario de clases', en: 'Show me the class schedule' }, permission: 'classes.read' };
 /** 0040: C-27 Tu práctica, from anywhere in the app. */
 export const appOpenPractice: ActionDef = { id: 'app.openPractice', label: { es: 'Ver mi práctica', en: 'See my practice' }, intent: { es: 'Muéstrame mi práctica', en: 'Show me my practice' } };
 /** Shell-level navigation, declared on every page of the reserve / register flow (the registry has no shell scope). */
-export const APP_NAV_ACTIONS: ActionDef[] = [appGoHome, appOpenSchedule, appOpenPractice];
+// Production has no practice page at launch (C-27 is not a launch route).
+export const APP_NAV_ACTIONS: ActionDef[] = [appGoHome, appOpenSchedule, ...(PRODUCTION_BUILD ? [] : [appOpenPractice])];
 
 /** 0040: the member's weekly practice goal (C-01 inline picker, C-27 GoalSection). 0 = "sin meta": counts stay, the streak hides. */
 export const appSetGoal: ActionDef = {
@@ -78,7 +81,7 @@ export function useAppNavHandlers(): Record<string, ActionHandler> {
   return useMemo(() => ({
     'app.goHome': () => { nav('/app'); return 'opened /app'; },
     'app.openSchedule': () => { nav('/app/schedule'); return 'opened /app/schedule'; },
-    'app.openPractice': () => { nav('/app/practice'); return 'opened /app/practice'; },
+    ...(PRODUCTION_BUILD ? {} : { 'app.openPractice': () => { nav('/app/practice'); return 'opened /app/practice'; } }),
   }), [nav]);
 }
 

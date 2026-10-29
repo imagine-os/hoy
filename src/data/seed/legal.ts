@@ -17,8 +17,30 @@
 import type { LegalDocumentRow } from '../schema';
 import { base, iso, NOW } from './catalog';
 import { dateKey, atStudioTime, addMonths } from '../../i18n/format';
+import { PRODUCTION_BUILD } from '../../config/launch';
 
 const monthsAgo = (n: number) => { return atStudioTime(addMonths(NOW, -n), 0); };
+
+/**
+ * Launch (production build): no online payment gateway. Payment is a bank transfer with the receipt uploaded in the app,
+ * or at the front desk. The review build keeps the studio's gateway copy.
+ */
+const PAY_V1 = PRODUCTION_BUILD
+  ? { es: 'Puedes pagar por transferencia bancaria, subiendo el comprobante en la app, o en recepción (efectivo, transferencia y los demás medios disponibles). La compra o la reserva se confirma cuando el estudio aprueba el pago; un comprobante rechazado no la confirma.',
+      en: 'You can pay by bank transfer, uploading the receipt in the app, or at the front desk (cash, transfer and the other methods available). The purchase or booking is confirmed when the studio approves the payment; a rejected receipt confirms neither.' }
+  : { es: 'Los pagos electrónicos (tarjeta, PSE, Nequi) se procesan a través de nuestra pasarela de pagos; el estudio no almacena el número completo de tu tarjeta. Aceptamos además efectivo y transferencia en recepción. Un pago rechazado no confirma la compra ni la reserva.',
+      en: 'Electronic payments (card, PSE, Nequi) are processed through our payment gateway; the studio does not store your full card number. We also accept cash and bank transfer at the front desk. A declined payment confirms neither the purchase nor the booking.' };
+const PAY_V2 = PRODUCTION_BUILD
+  ? { es: '- Puedes pagar por transferencia bancaria, con el comprobante subido en la app.', en: '- You can pay by bank transfer, with the receipt uploaded in the app.' }
+  : { es: '- En la página web puedes pagar con Wompi, código QR y PSE.', en: '- On the website you can pay with Wompi, a QR code and PSE.' };
+/** The privacy policy's payment data and processors: no gateway at launch, so no card data and no gateway processor. */
+const PRIVACY_PAY = PRODUCTION_BUILD
+  ? { dataEs: '- **Datos de pago** — plan comprado, valor, medio de pago (transferencia o recepción), el comprobante que subes y la factura. No pedimos ni guardamos números de tarjeta.',
+      dataEn: '- **Payment data** — plan bought, amount, method (bank transfer or front desk), the receipt you upload and the invoice. We neither ask for nor store card numbers.',
+      processorEs: '', processorEn: '' }
+  : { dataEs: '- **Datos de pago** — plan comprado, valor, medio de pago, factura. *Nunca el número completo de tu tarjeta*: lo custodia la pasarela.',
+      dataEn: '- **Payment data** — plan bought, amount, method, invoice. *Never your full card number*: the gateway holds it.',
+      processorEs: 'pasarela de pagos (Colombia), ', processorEn: 'payment gateway (Colombia), ' };
 
 interface Draft {
   id: string;
@@ -67,7 +89,7 @@ La sala tiene {{tenant.mats}} mats y {{tenant.perPersonPerDay}} clase por person
 
 ## 6. Pagos
 
-Los pagos electrónicos (tarjeta, PSE, Nequi) se procesan a través de nuestra pasarela de pagos; el estudio no almacena el número completo de tu tarjeta. Aceptamos además efectivo y transferencia en recepción. Un pago rechazado no confirma la compra ni la reserva.
+${PAY_V1.es}
 
 La factura electrónica se emite conforme a la normativa DIAN vigente y se envía al correo registrado.
 
@@ -135,7 +157,7 @@ The room holds {{tenant.mats}} mats and {{tenant.perPersonPerDay}} class per per
 
 ## 6. Payments
 
-Electronic payments (card, PSE, Nequi) are processed through our payment gateway; the studio does not store your full card number. We also accept cash and bank transfer at the front desk. A declined payment confirms neither the purchase nor the booking.
+${PAY_V1.en}
 
 Electronic invoices are issued under the DIAN rules in force and sent to your registered email.
 
@@ -186,7 +208,7 @@ Esta política se expide en cumplimiento de la **Ley 1581 de 2012**, el **Decret
 - **Contacto de emergencia** — nombre y teléfono de la persona que designas.
 - **Datos de salud (sensibles)** — lesiones, embarazo, condiciones cardiovasculares o de presión arterial que declaras voluntariamente.
 - **Actividad en el estudio** — reservas, asistencia, lista de espera, reseñas, intención del día.
-- **Datos de pago** — plan comprado, valor, medio de pago, factura. *Nunca el número completo de tu tarjeta*: lo custodia la pasarela.
+${PRIVACY_PAY.dataEs}
 - **Datos técnicos** — dispositivo, idioma, sesión, registros de acceso.
 - **Imagen** — fotos o video en clases o eventos, solo con autorización expresa y separada.
 
@@ -205,7 +227,7 @@ Los datos de salud y la imagen son **datos sensibles**. Entregarlos es **faculta
 
 ## 5. Con quién los compartimos
 
-Con encargados que nos prestan servicios y tratan datos solo bajo nuestras instrucciones: alojamiento y base de datos, pasarela de pagos (Colombia), proveedor de WhatsApp Business, proveedor de correo y el proveedor de facturación electrónica. También con autoridades cuando una norma o una orden judicial lo exija. **No vendemos tus datos.**
+Con encargados que nos prestan servicios y tratan datos solo bajo nuestras instrucciones: alojamiento y base de datos, ${PRIVACY_PAY.processorEs}proveedor de WhatsApp Business, proveedor de correo y el proveedor de facturación electrónica. También con autoridades cuando una norma o una orden judicial lo exija. **No vendemos tus datos.**
 
 Algunos proveedores están fuera de Colombia; en ese caso la transferencia se hace con cláusulas contractuales que garantizan un nivel de protección equivalente al de la Ley 1581.
 
@@ -251,7 +273,7 @@ This policy is issued under **Ley 1581 de 2012**, **Decreto 1377 de 2013** and t
 - **Emergency contact** — name and phone of the person you name.
 - **Health data (sensitive)** — injuries, pregnancy, cardiovascular or blood-pressure conditions you declare voluntarily.
 - **Studio activity** — bookings, attendance, waitlist, reviews, intention of the day.
-- **Payment data** — plan bought, amount, method, invoice. *Never your full card number*: the gateway holds it.
+${PRIVACY_PAY.dataEn}
 - **Technical data** — device, language, session, access logs.
 - **Image** — photos or video in classes or events, only with express, separate authorisation.
 
@@ -270,7 +292,7 @@ Health data and your image are **sensitive data**. Providing them is **optional*
 
 ## 5. Who we share them with
 
-With processors who serve us and handle data only on our instructions: hosting and database, payment gateway (Colombia), WhatsApp Business provider, email provider and the electronic-invoicing provider. Also with authorities where a rule or a court order requires it. **We do not sell your data.**
+With processors who serve us and handle data only on our instructions: hosting and database, ${PRIVACY_PAY.processorEn}WhatsApp Business provider, email provider and the electronic-invoicing provider. Also with authorities where a rule or a court order requires it. **We do not sell your data.**
 
 Some providers are outside Colombia; in that case the transfer is made under contractual clauses guaranteeing a level of protection equivalent to Ley 1581.
 
@@ -600,7 +622,7 @@ Puedes comprar una clase individual o un paquete de 12 clases como tarjeta de re
 
 ## 6. Pagos
 
-- En la página web puedes pagar con Wompi, código QR y PSE.
+${PAY_V2.es}
 - En recepción hay diferentes medios de pago, incluido el efectivo.
 
 ## 7. Derecho de retracto y reversión del pago
@@ -771,7 +793,7 @@ You can buy an individual class or a 12-class package as a gift card, at the sam
 
 ## 6. Payments
 
-- On the website you can pay with Wompi, a QR code and PSE.
+${PAY_V2.en}
 - At the front desk there are several payment methods, cash included.
 
 ## 7. Right of withdrawal and payment reversal

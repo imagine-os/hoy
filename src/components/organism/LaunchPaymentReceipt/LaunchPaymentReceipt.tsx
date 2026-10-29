@@ -6,6 +6,7 @@ import { Card } from '../../molecule/Card/Card';
 import { Notice } from '../../molecule/Notice/Notice';
 import { Receipt } from '../Receipt/Receipt';
 import { EmailPreview } from '../EmailPreview/EmailPreview';
+import { PRODUCTION_BUILD } from '../../../config/launch';
 
 /** Saved local payment facts and unsent email copy; never queries live contact or sends anything. */
 export function LaunchPaymentReceipt({ payment, customer, historicalReference }: { payment: PaymentRow; customer: string; historicalReference?: string }) {
@@ -23,7 +24,8 @@ export function LaunchPaymentReceipt({ payment, customer, historicalReference }:
       lines={[{ label: receipt.item ? bi(receipt.item) : t('launchReceipt.item'), amount: facts.amountCharged }]}
       subtotal={tax?.subtotal ?? facts.amountCharged} tax={tax?.tax ?? 0} taxLabel={t('launchReceipt.tax')} showTaxBreakdown={!!tax}
       total={facts.amountCharged} amountReceived={facts.amountReceived!} method={t(methodKey)} status={t('launchReceipt.approved')} takenBy={takenBy} note={t('launchReceipt.mock')} printLabel={t('launchReceipt.print')} />
-    <section className="stack-sm" data-receipt-email={preview?.recipient.availability ?? 'not-recorded'} aria-label={t('launchReceipt.email')}>
+    {/* The unsent demo email preview is review-build only: production sends the real receipt email through comms (H-9). */}
+    {!PRODUCTION_BUILD && <section className="stack-sm" data-receipt-email={preview?.recipient.availability ?? 'not-recorded'} aria-label={t('launchReceipt.email')}>
       {preview ? <>
         <Notice title={t('launchReceipt.email.unsent')}>{t('launchReceipt.email.boundary')}</Notice>
         {preview.recipient.availability === 'available'
@@ -33,6 +35,6 @@ export function LaunchPaymentReceipt({ payment, customer, historicalReference }:
           previewContent={<div className="stack-sm"><p className="small" data-receipt-email-subject><strong>{t('launchReceipt.email.savedSubject')}</strong>{' '}{bi(preview.subject)}</p>
             <div data-receipt-email-body>{bi(preview.body).split(/\n\s*\n/).filter(paragraph => paragraph.trim()).map((paragraph, index) => <p key={index} className="emailpreview-p">{paragraph}</p>)}</div></div>} />
       </> : <Notice>{t('launchReceipt.email.legacy')}</Notice>}
-    </section>
+    </section>}
   </section>;
 }

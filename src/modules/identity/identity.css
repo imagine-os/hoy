@@ -1,0 +1,8 @@
+/* H-2 production sign-in screens. Spacing from the D-01 semantic tokens only. */
+.identity-center { text-align: center; }
+.identity-row { display: flex; flex-wrap: wrap; gap: var(--gap-control); align-items: center; }
+.identity-consent { display: flex; gap: var(--gap-inline); align-items: flex-start; }
+.identity-consent input { margin-top: var(--sp-2xs); }
+.identity-error { color: var(--color-danger); }
+.identity-narrow { max-width: var(--measure); }
+.identity-access { max-width: var(--measure); }

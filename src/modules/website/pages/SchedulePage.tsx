@@ -7,6 +7,7 @@ import { SessionEditorial } from '../../../components/molecule/SessionEditorial/
 import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
+import { PRODUCTION_BUILD } from '../../../config/launch';
 import { useLayout } from '../../../layout/useLayout';
 import { useData, useTable } from '../../../data/DataContext';
 import type { BookingRow, ModalityRow } from '../../../data/schema';
@@ -22,6 +23,8 @@ import { ClassCard } from '../../../components/organism/ClassCard/ClassCard';
 import { PageHead, SiteShell } from '../SiteShell';
 import { siteSpecs } from '../specs';
 import { useSessionsJoined } from '../hooks';
+import { EmptyState } from '../../../components/molecule/EmptyState/EmptyState';
+import { hidesSchedule, SCHEDULE_SIGN_IN } from '../signedOutSchedule';
 
 export function SchedulePage() {
   const { photoEdition } = useSiteEdition();
@@ -68,7 +71,8 @@ export function SchedulePage() {
     try {
       const fresh = await requireSessionAdmission(data, chosen.session.id, { isCurrent: current });
       if (!current()) return;
-      const next = fresh.booked_count >= fresh.capacity ? `/app/waitlist/${fresh.id}` : `/app/checkout/${fresh.id}${mat ? `?mat=${mat}` : ''}`;
+      // Production has no waitlist at launch: a full class goes to checkout, where the server says it is full.
+      const next = !PRODUCTION_BUILD && fresh.booked_count >= fresh.capacity ? `/app/waitlist/${fresh.id}` : `/app/checkout/${fresh.id}${mat ? `?mat=${mat}` : ''}`;
       nav(user.role === 'public' ? `/auth/sign-in?next=${encodeURIComponent(next)}` : next);
     } catch { if (current()) setNavigationError(true); }
     finally { if (operation.current === version) { navigationLock.current = false; if (current()) setNavigating(false); } }
@@ -83,7 +87,9 @@ export function SchedulePage() {
   const SECTIONS: Record<string, () => ReactNode> = {
     PageHead: () => <PageHead title={t('site.schedule.title')} body={t('site.schedule.body', { mats: tenant.studio.mats, classes: tenant.studio.classesPerDay })} />,
     DayTabs: () => null,
-    ClassList: () => <section className="container"><SessionCalendar sessions={list} onPick={s => { setPicked(s.id); setMat(null); }} /></section>,
+    ClassList: () => <section className="container">{hidesSchedule(user.role)
+      ? <EmptyState icon="calendar" title={t('site.schedule.signedOut')} action={<Button onClick={() => nav(SCHEDULE_SIGN_IN)}>{t('site.schedule.signedOut.cta')}</Button>} />
+      : <SessionCalendar sessions={list} onPick={s => { setPicked(s.id); setMat(null); }} />}</section>,
     Legend: () => (
       <section className="container" style={{ paddingBottom: 'var(--sp-4xl)' }}>
         <div className="site-legend">

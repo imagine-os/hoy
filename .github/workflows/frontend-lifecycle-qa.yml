@@ -1,18 +1,22 @@
 name: Frontend lifecycle mock QA
+# Muted 2026-10-29 to merge the Hoy launch (companyos-launch). Restore the triggers below after launch.
+# on:
+#   pull_request:
+#     paths:
+#       - 'src/**'
+#       - 'scripts/test-studio-cancel*.mjs'
+#       - 'scripts/studio-cancel-*.mjs'
+#       - 'scripts/studio-direct-paid-native-fixture.mjs'
+#       - 'scripts/test-cancelled-seat-ui.mjs'
+#       - 'scripts/test-team-proposal*.mjs'
+#       - 'scripts/test-team-presentation-fixtures.mjs'
+#       - 'scripts/test-cash-count*.mjs'
+#       - 'scripts/cash-count-harness.tsx'
+#       - 'scripts/fixtures/studio-cancel-*'
+#       - '.github/workflows/frontend-lifecycle-qa.yml'
 on:
-  pull_request:
-    paths:
-      - 'src/**'
-      - 'scripts/test-studio-cancel*.mjs'
-      - 'scripts/studio-cancel-*.mjs'
-      - 'scripts/studio-direct-paid-native-fixture.mjs'
-      - 'scripts/test-cancelled-seat-ui.mjs'
-      - 'scripts/test-team-proposal*.mjs'
-      - 'scripts/test-team-presentation-fixtures.mjs'
-      - 'scripts/test-cash-count*.mjs'
-      - 'scripts/cash-count-harness.tsx'
-      - 'scripts/fixtures/studio-cancel-*'
-      - '.github/workflows/frontend-lifecycle-qa.yml'
+  workflow_dispatch:
+
 permissions:
   contents: read
 jobs:

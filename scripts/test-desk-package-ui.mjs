@@ -67,7 +67,7 @@ try {
  state=await page.evaluate(()=>JSON.parse(localStorage.getItem('hoyos.db.v1')).db);
  assert.equal(state.class_ledger.filter(r=>r.user_id==='qa_desk_0'&&r.delta===-1).length,2);
  assert.equal(state.bookings.find(b=>b.user_id==='qa_desk_0'&&b.session_id==='qa_walkin_class').status,'checked_in');
- await search.fill('QA Balance'); await page.getByRole('button',{name:'Undo',exact:true}).click(); await page.getByRole('button',{name:'Check in',exact:true}).click();
+ await search.fill('QA Balance'); await page.getByRole('button',{name:'Undo',exact:true}).click(); await page.getByLabel('Reason to undo').fill('QA marked by mistake'); await page.getByRole('button',{name:'Confirm undo',exact:true}).click(); await page.getByRole('button',{name:'Check in',exact:true}).click();
  state=await page.evaluate(()=>JSON.parse(localStorage.getItem('hoyos.db.v1')).db); assert.equal(state.class_ledger.filter(r=>r.user_id==='qa_desk_0'&&r.delta===-1).length,2,'undo/check-in does not debit again');
  checks.push('legacy expired package/unlinked usage does not reduce the new lot; new debit retains source grant; historical terms unchanged; future booking and walk-in debit exactly once; booked attendance undo/recheck does not debit again; pending classes unavailable; EN/ES 390/1280 screenshots and overflow check');
  assert.deepEqual(errors,[]); await writeFile(`${output}/package-booking-results.json`,JSON.stringify({features:['RC-04','RC-05'],base,checks,errors,limits:['Fictional browser adapter only; real backend transaction/authorization remains pending.']},null,2));

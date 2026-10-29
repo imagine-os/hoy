@@ -2,6 +2,8 @@
 .cust-home { display: flex; flex-direction: column; gap: var(--block); padding-top: var(--sp-lg); }
 .cust-greeting { font-size: var(--fs-2xl); }
 .cust-quick { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--sp-sm); }
+/* Production has no invite page at launch: three quick actions. */
+.cust-quick.is-three { grid-template-columns: repeat(3, 1fr); }
 .cust-quick-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--sp-xs); padding: var(--sp-md) var(--sp-xs); border-radius: var(--r-ctl); background: var(--color-surface); border: 1px solid var(--color-card-border); box-shadow: var(--shadow-highlight), var(--shadow-contact); color: var(--color-text); font-size: var(--fs-xs); font-family: var(--font-body); font-weight: var(--fw-medium); text-decoration: none; min-height: var(--sp-4xl); transition: box-shadow var(--dur-fast), transform var(--dur-fast); }
 .cust-quick-btn:hover { text-decoration: none; box-shadow: var(--shadow-card); }
 .cust-quick-btn:active { transform: translateY(1px); }

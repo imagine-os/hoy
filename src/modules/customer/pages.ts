@@ -1,7 +1,11 @@
 export { CustomerHomePage } from './HomePage';
 export { SchedulePage } from './pages/SchedulePage';
 export { ClassDetailPage } from './pages/ClassDetailPage';
-export { CheckoutPage } from './pages/CheckoutPage';
+import { CheckoutPage as ReviewCheckoutPage } from './pages/CheckoutPage';
+import { ServerCheckoutPage } from './pages/ServerCheckoutPage';
+import { SERVER_RULES } from './booking/bookingPolicy';
+/** H-4: the production build books through the server (ServerCheckoutPage); the review build keeps the browser-rule checkout. */
+export const CheckoutPage = SERVER_RULES ? ServerCheckoutPage : ReviewCheckoutPage;
 export { PaymentMethodsPage } from './pages/PaymentMethodsPage';
 export { PlansPage } from './pages/PlansPage';
 export { ClassesPage, PassesPage } from './pages/PassesPage';

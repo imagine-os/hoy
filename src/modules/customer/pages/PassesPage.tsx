@@ -25,6 +25,8 @@ import { PACKAGE_IDS, PASS_IDS, priceOf, useEntitlements, usePackageActions } fr
 import { activatePaidPackage, recordPayment, wompiCheckout } from '../payments';
 import { policy } from '../policy';
 import { PageHead } from '../ui';
+import { SERVER_RULES } from '../booking/bookingPolicy';
+import { useLivePricing } from '../../../data/livePricing';
 
 const PENDING_PASS_KEY = 'hoyos.customer.pendingPass';
 
@@ -35,10 +37,14 @@ export function PassesPage() {
   const [params] = useSearchParams();
   const ent = useEntitlements();
   const catalog=useOperationalCatalog();
+  // Production: names and prices are Company OS's product master (live pricing); the browser quote is review only.
+  const prices = useLivePricing();
   const session = params.get('session');
 
   const pick = (id: string) => {
-    if (session) { nav(`/app/checkout/${session}?pass=${id}`); return; }
+    if (session) { nav(`/app/checkout/${encodeURIComponent(session)}?pass=${id}`); return; }
+    // Production: the trial is bought first by transfer (H-5's payment page); a single class is paid when it is booked.
+    if (SERVER_RULES && id === 'trial') { nav('/app/pay/product/trial'); return; }
     try { sessionStorage.setItem(PENDING_PASS_KEY, id); } catch { /* ignore */ }
     nav('/app/schedule');
   };
@@ -48,9 +54,23 @@ export function PassesPage() {
       <PageHead back="/app/plans" title={t('customer.passes.title')} sub={t('customer.passes.sub')} />
       <div className="stack">
         {ent.classBalance > 0 && <Notice tone="info" title={t('customer.passes.package', { n: ent.classBalance })} action={<Link to="/app/classes"><Button size="sm" variant="secondary">{t('customer.classes.title')}</Button></Link>}>{t('customer.passes.package.body')}</Notice>}
-        <div><div className="eyebrow">{t('customer.passes.eyebrow')}</div><p className="small muted">{t('customer.passes.intro')}</p></div>
+        <div><div className="eyebrow">{t('customer.passes.eyebrow')}</div><p className="small muted">{t(SERVER_RULES ? 'customer.passes.intro.srv' : 'customer.passes.intro')}</p></div>
         <div className="stack-sm">
           {PASS_IDS.map((id) => {
+            if (SERVER_RULES) {
+              const item = prices.item(id);
+              if (!item) return prices.loading ? null : <Card key={id} tone="muted"><p>{t('quotes.unavailable')}</p></Card>;
+              if (id === 'trial' && ent.trialUsed) return <Notice key={id} tone="info">{t('customer.passes.trialUsed')}</Notice>;
+              return (
+                <Card key={id} className="cust-pass" padding="md">
+                  <div className="row-between wrap">
+                    <div className="grow"><strong>{bi(item.name)}</strong><div className="small muted">{bi(item.description)}</div></div>
+                    <strong className="cust-pass-price">{formatCOP(item.price ?? 0, lang)}</strong>
+                  </div>
+                  <Button block onClick={() => pick(id)}>{session ? t('customer.passes.bookWith') : id === 'trial' ? t('customer.passes.buyTrial') : t('customer.passes.cta')}</Button>
+                </Card>
+              );
+            }
             const q=catalog.quote(id),p=q?quotedItem(q):priceOf(id);
             if(!q)return <Card key={id} tone="muted"><p>{t('quotes.unavailable')}</p></Card>;
             if (id === 'trial' && ent.trial.status!=='eligible') return <Notice key={id} tone="warn" action={ent.trial.status==='trial_check_failed'?<Button onClick={ent.trial.retry}>{t('core.common.retry')}</Button>:undefined}>{t(`customer.trialGuard.${ent.trial.status}`)}</Notice>;

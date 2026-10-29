@@ -25,6 +25,8 @@ import { useEntitlements } from './hooks';
 import { plural, weekInitials, PracticeGoalPicker, PracticeStreak, usePracticeHandlers, useSaveGoal } from './practice';
 import './customer.css';
 import { Icon } from '../../components/atom/Icon/Icon';
+import { SERVER_RULES } from './booking/bookingPolicy';
+import { holdsPlace, type ServerBookingRow } from './booking/serverBooking';
 
 const spec = canvasSpecs['C-01'];
 const HOME_SIDE = new Set(['MembershipNudge (if no plan)', 'AnnouncementCard (if active)', 'QuickActions ×4', 'StatsRow ×3', 'FeedbackPrompt (conditional)']);
@@ -48,7 +50,8 @@ export function CustomerHomePage() {
   const all = useSessionsJoined();
   const now = Date.now();
 
-  const activeBookingIds = useMemo(() => new Set(myBookings.filter((b) => b.status === 'booked').map((b) => b.session_id)), [myBookings]);
+  // Production (H-4): a live held spot is the customer's class too.
+  const activeBookingIds = useMemo(() => new Set(myBookings.filter((b) => SERVER_RULES ? holdsPlace(b as unknown as ServerBookingRow) && b.status !== 'checked_in' : b.status === 'booked').map((b) => b.session_id)), [myBookings]);
   const next = useMemo(() => all.filter((x) => activeBookingIds.has(x.session.id) && new Date(x.session.ends_at).getTime() > now && x.session.status === 'scheduled').sort((a, b) => a.session.starts_at.localeCompare(b.session.starts_at))[0], [all, activeBookingIds, now]);
   const today = useMemo(() => {
     // 0030: plain start-time order (the A-05 intention sort is retired with the question)
@@ -75,8 +78,8 @@ export function CustomerHomePage() {
       </section>
     ),
     'QuickActions ×4': () => (
-      <div className="cust-quick">
-        {([['/app/schedule', 'schedule', 'schedule'], ['/app/schedule', 'calendar-plus', 'book'], ['/app/plans', 'ticket', 'plans'], ['/app/invite', 'invite', 'invite']] as const).map(([to, icon, k]) => <Link key={k} to={to} className="cust-quick-btn"><span className="cust-quick-icon" aria-hidden><Icon name={icon} size="lg" /></span><span>{t(`customer.home.quick.${k}`)}</span></Link>)}
+      <div className={SERVER_RULES ? 'cust-quick is-three' : 'cust-quick'}>
+        {([['/app/schedule', 'schedule', 'schedule'], ['/app/schedule', 'calendar-plus', 'book'], ['/app/plans', 'ticket', 'plans'], ...(SERVER_RULES ? [] : [['/app/invite', 'invite', 'invite']] as const)] as const).map(([to, icon, k]) => <Link key={k} to={to} className="cust-quick-btn"><span className="cust-quick-icon" aria-hidden><Icon name={icon} size="lg" /></span><span>{t(`customer.home.quick.${k}`)}</span></Link>)}
       </div>
     ),
     'TodayList': () => (
@@ -85,7 +88,7 @@ export function CustomerHomePage() {
         <Card padding="sm">
           {today.length === 0 && <p className="muted small" style={{ padding: 'var(--sp-md)' }}>{t('customer.home.today.empty')}</p>}
           {today.map(({ session: s, modality: m, teacher: te }) => (
-            <ClassRow key={s.id} title={s.title} teacher={te?.display_name ?? ''} startsAt={s.starts_at} durationMin={m?.duration_min ?? 60} tone={m?.tone ?? 'river'} booked={s.booked_count} capacity={s.capacity} booked_by_me={activeBookingIds.has(s.id)} onClick={() => (activeBookingIds.has(s.id) ? nav(`/app/class/${s.id}`) : s.booked_count >= s.capacity ? nav(`/app/waitlist/${s.id}`) : book(s.id))} />
+            <ClassRow key={s.id} title={s.title} teacher={te?.display_name ?? ''} startsAt={s.starts_at} durationMin={m?.duration_min ?? 60} tone={m?.tone ?? 'river'} booked={s.booked_count} capacity={s.capacity} booked_by_me={activeBookingIds.has(s.id)} onClick={() => (activeBookingIds.has(s.id) ? nav(`/app/class/${s.id}`) : !SERVER_RULES && s.booked_count >= s.capacity ? nav(`/app/waitlist/${s.id}`) : book(s.id))} />
           ))}
         </Card>
       </section>
@@ -132,7 +135,7 @@ function PracticeBlock({ stats, goal }: { stats: PracticeStats; goal: PracticeGo
     <section className="stack-sm cust-practice" aria-labelledby="cust-practice-title">
       <div className="row-between wrap">
         <h2 className="eyebrow" id="cust-practice-title">{t('customer.home.stats.title')}</h2>
-        <Link to="/app/practice" className="cust-practice-link">{t('customer.home.stats.more')} <Icon name="arrow-right" size="xs" /></Link>
+        {!SERVER_RULES && <Link to="/app/practice" className="cust-practice-link">{t('customer.home.stats.more')} <Icon name="arrow-right" size="xs" /></Link>}
       </div>
       <div className={`grid cust-practice-tiles ${stats.hasGoal ? '' : 'is-two'}`}>
         <StatTile label={t('customer.home.stats.classes')} value={stats.attendedThisMonth} hint={upcoming} />

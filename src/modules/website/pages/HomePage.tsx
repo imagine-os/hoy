@@ -5,9 +5,10 @@ import { useI18n } from '../../../i18n/I18nProvider';
 import { useLayout } from '../../../layout/useLayout';
 import { useTable } from '../../../data/DataContext';
 import type { TeacherRow, ModalityRow, ReviewRow } from '../../../data/schema';
-import { formatCOP } from '../../../i18n/format';
+import { formatCOP, formatDate, formatTime } from '../../../i18n/format';
 import { tenant } from '../../../tenant/tenant';
-import { priceItem, FAMILY_LABEL, type PlanFamily } from '../../../tenant/pricing';
+import { FAMILY_LABEL, type PlanFamily } from '../../../tenant/pricing';
+import { useLivePricing } from '../../../data/livePricing';
 import { classesIntro, classForModality, classes, classOrder, taglines } from '../../../tenant/brand';
 import { AmbientScene } from '../../../components/organism/AmbientScene/AmbientScene';
 import { ClassArch } from '../../../components/molecule/ClassArch/ClassArch';
@@ -20,6 +21,8 @@ import { siteImage, siteVideo, siteLoops } from '../artwork';
 import { studioPhoto, studioPhotoProps, teacherStudioPhoto, practiceStudioPhoto, philosophyStudioPhoto, usesCurrentStudioPhotos } from '../photography';
 import { editorialPhotoSlots } from '../../../data/studioPhotography';
 import { ClassicHomePage } from './ClassicHomePage';
+import { useSession } from '../../../auth/SessionProvider';
+import { hidesSchedule, SCHEDULE_SIGN_IN } from '../signedOutSchedule';
 
 export function HomePage() {
   const { edition } = useSiteEdition();
@@ -30,6 +33,7 @@ function SanctuaryHome() {
   const { t, bi, lang } = useI18n();
   const { sections, isVisible } = useLayout(siteSpecs.home);
   const today = useTodaySessions();
+  const signedOut = hidesSchedule(useSession().user.role);
   const { motion, setMotion, videoEnabled, photoEdition, version } = useSiteEdition();
   const teacherPhotoEdition = version === 'latest' || photoEdition;
   const { rows: teachers } = useTable<TeacherRow>('teachers', { where: { active: true } });
@@ -42,9 +46,10 @@ function SanctuaryHome() {
   const { rows: reviews } = useTable<ReviewRow>('reviews', { orderBy: { column: 'created_at', dir: 'desc' } });
   const quotes = [...new Map(reviews.filter(r => r.comment && r.visibility !== 'private').map(r => [r.comment, r])).values()].slice(0, 2);
   // 0051: the three ways in, each with its launch price — the trial class, the 12-class package, a private class.
-  const pack = priceItem('pack12'), priv = priceItem('private');
+  const prices = useLivePricing();
+  const pack = prices.item('pack12'), priv = prices.item('private');
   const families: { fam: PlanFamily; price?: number | null; sub: string }[] = [
-    { fam: 'bienvenida', price: priceItem('trial')?.price, sub: t('site.new.firstClass') },
+    { fam: 'bienvenida', price: prices.item('trial')?.price, sub: t('site.new.firstClass') },
     { fam: 'paquetes', price: pack?.price, sub: t('site.new.packageSub', { n: pack?.classes ?? 12, months: Math.round((pack?.validityDays ?? 90) / 30) }) },
     { fam: 'privadas', price: priv?.price, sub: t('site.new.privateSub', { n: priv?.maxPeople ?? 3 }) },
   ];
@@ -78,8 +83,9 @@ function SanctuaryHome() {
       <div className="sanctuary-arches">{classOrder.map((slug, index) => <ClassArch key={slug} slug={slug} index={index + 1} to={href(`/site/classes/${slug}`)} photoUrl={photos.get(slug) || practiceStudioPhoto(slug, version)} naturalPhoto={!photos.has(slug) && sourcePhotos} />)}</div>
     </div></section>,
     TodayClasses: () => <section className="sanctuary-schedule" data-reveal><div className="container sanctuary-schedule-grid"><div className="sanctuary-schedule-intro"><p className="eyebrow">{t('site.new.chapter3')}</p><h2>{t('site.new.scheduleTitle')}</h2><Link className="sanctuary-button is-light" to="/site/schedule">{t('site.today.all')} <Icon name="arrow-right" /></Link></div>
-      <div className="sanctuary-agenda"><div className="sanctuary-agenda-head"><span>{t('site.today.title')}</span><span>{new Intl.DateTimeFormat(lang === 'es' ? 'es-CO' : 'en-US', { day: 'numeric', month: 'short' }).format(new Date())}</span></div>
-        {today.length ? today.slice(0, 4).map(({ session, modality, teacher }) => <Link key={session.id} to={modality ? `/site/schedule?modality=${modality.slug}` : '/site/schedule'} className="sanctuary-session"><span className="sanctuary-session-time">{new Intl.DateTimeFormat(lang === 'es' ? 'es-CO' : 'en-US', { hour: 'numeric', minute: '2-digit' }).format(new Date(session.starts_at))}</span><span><strong>{session.title}</strong><small>{teacher?.display_name} · {modality?.duration_min ?? 60} min</small></span><span aria-hidden>↗</span></Link>) : <p className="sanctuary-agenda-empty">{t('site.today.empty')}</p>}
+      <div className="sanctuary-agenda"><div className="sanctuary-agenda-head"><span>{t('site.today.title')}</span><span>{formatDate(new Date(), lang, { day: 'numeric', month: 'short' })}</span></div>
+        {signedOut ? <p className="sanctuary-agenda-empty">{t('site.schedule.signedOut')} <Link className="sanctuary-text-link" to={SCHEDULE_SIGN_IN}>{t('site.schedule.signedOut.cta')} <Icon name="arrow-right" /></Link></p>
+          : today.length ? today.slice(0, 4).map(({ session, modality, teacher }) => <Link key={session.id} to={modality ? `/site/schedule?modality=${modality.slug}` : '/site/schedule'} className="sanctuary-session"><span className="sanctuary-session-time">{formatTime(session.starts_at, lang)}</span><span><strong>{session.title}</strong><small>{teacher?.display_name} · {modality?.duration_min ?? 60} min</small></span><span aria-hidden>↗</span></Link>) : <p className="sanctuary-agenda-empty">{t('site.today.empty')}</p>}
       </div></div></section>,
     Teachers: () => <section className="container sanctuary-section" data-reveal><div className="sanctuary-heading"><div><p className="eyebrow">{t('site.nav.teachers')}</p><h2>{t('site.new.teachersTitle')}</h2><p className="muted">{t('site.new.teachersBody')}</p></div><Link className="sanctuary-text-link" to="/site/teachers">{t('site.nav.teachers')} <Icon name="arrow-right" /></Link></div>
       <div className="sanctuary-teachers"><div className={`site-community-frame${teacherPhotoEdition ? ' has-studio-photo' : ''}`}><div className="sanctuary-community"><>{teacherPhotoEdition ? <img {...studioPhotoProps('hero-group', true)} alt={t('site.photos.teachersGroup')} className="photo-community" /> : <AmbientScene poster={siteImage('community')} video={videoEnabled ? siteVideo('community') : undefined} alt={t('site.new.community')} motion={motion} className="community-living" />}</>{!teacherPhotoEdition && <p>{t('site.new.community')}</p>}</div>{teacherPhotoEdition && <p className="studio-community-caption">{t('site.new.community')}</p>}</div><div className="sanctuary-teacher-list">{teachers.map((te, i) => {

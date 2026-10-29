@@ -7,10 +7,11 @@ import { mapCoordinates } from '../../components/molecule/MapSlot/mapLocation';
 import { tenant } from '../../tenant/tenant';
 import { DEFAULT_POLICIES } from '../../tenant/policies';
 import { DEFAULT_IVA_PCT, splitIva } from '../../data/tax';
-import { MS, dateKey, waLink, studioParts } from '../../i18n/format';
+import { MS, dateKey, waLink, studioParts, isPhone } from '../../i18n/format';
 import { effectiveHoursFor, hoursSentence, todayStatus, type EffectiveHours, type WeeklyHours } from '../../tenant/hours';
 import { DEFAULT_CONTACT_ROUTES, mergeContacts, resolveContact, type ContactIntent, type ContactRoutes, type ResolvedContact } from '../../tenant/contacts';
 import { colombianHolidays } from '../../tenant/holidays.co';
+import { isEmail, safeHttpsUrl } from '../../shared/limits';
 
 /**
  * M-08 — the operating parameters every other screen reads. Stored in `tenants.settings` (json)
@@ -189,11 +190,12 @@ export function contactOf(settings: StudioSettings): StudioContact {
   return {
     address: p.address || tenant.contact.address,
     city: p.city || tenant.city,
-    whatsapp: p.whatsapp || tenant.contact.whatsapp,
-    email: p.email || tenant.contact.email,
+    whatsapp: p.whatsapp && isPhone(p.whatsapp) ? p.whatsapp : tenant.contact.whatsapp,
+    email: p.email && isEmail(p.email) ? p.email.trim() : tenant.contact.email,
     instagram,
-    instagramUrl: p.instagramUrl || (instagram ? `https://www.instagram.com/${instagram.replace('@', '')}` : tenant.social.instagramUrl),
-    location: { ...mapCoordinates(p.mapLat, p.mapLng, tenant.location), label, link: p.mapLink || tenant.location.link || null },
+    // PL-07: an admin-typed link becomes a public href only when it is an https URL; anything else falls back.
+    instagramUrl: safeHttpsUrl(p.instagramUrl) || (instagram ? `https://www.instagram.com/${encodeURIComponent(instagram.replace('@', ''))}` : tenant.social.instagramUrl),
+    location: { ...mapCoordinates(p.mapLat, p.mapLng, tenant.location), label, link: safeHttpsUrl(p.mapLink) || tenant.location.link || null },
     pendingFields,
     pending: CONTACT_FIELDS.some((f) => pendingFields[f]),
     pendingLabel: tenant.contact.pendingLabel,

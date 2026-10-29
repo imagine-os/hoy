@@ -24,11 +24,20 @@ import { policy } from '../policy';
 import {  PageHead, durationMin, roomName, shareText } from '../ui';
 import { ClassThumbnail } from '../../../components/molecule/ClassThumbnail/ClassThumbnail';
 import { StudioCancelledBlock } from './blocks';
+import { SERVER_RULES } from '../booking/bookingPolicy';
+import { classPhase, holdsPlace, type ServerBookingRow } from '../booking/serverBooking';
+import { useLiveUpdates } from '../../../data/companyos/hooks';
+
+/** Production (H-4): no browser copy of the one-class-a-day rule; the server answers `daily_limit_reached`. */
+const NO_BROWSER_RULES = { sameDayConflict: () => null as string | null };
+const NO_WAITLIST: { mine: ReturnType<typeof useWaitlistFor>['mine'] | null } = { mine: null };
 
 const spec = canvasSpecs['C-03'];
 
 /** C-03 Class detail. */
 export function ClassDetailPage() {
+  // Contract §1: this screen polls Company OS every 20 s in the production build (no-op on the review build).
+  useLiveUpdates(['class_sessions', 'bookings']);
   const { id } = useParams();
   const data = useData(), { user, role } = useSession();
   const { t, bi, lang } = useI18n();
@@ -38,15 +47,17 @@ export function ClassDetailPage() {
   const { joined, loading } = useSessionJoined(id);
   const { rows: myBookings } = useMyBookings();
   const { rows: sessions } = useTable<ClassSessionRow>('class_sessions');
-  const { sameDayConflict } = useBookingActions();
-  const { mine: myWait } = useWaitlistFor(id);
+  // SERVER_RULES is fixed per build, so the hook order never changes between renders.
+  const { sameDayConflict } = SERVER_RULES ? NO_BROWSER_RULES : useBookingActions();
+  // No waitlist at launch: production reads none (SERVER_RULES is fixed per build, so the hook order never changes).
+  const { mine: myWait } = SERVER_RULES ? NO_WAITLIST : useWaitlistFor(id);
   const ent = useEntitlements();
   const [shared, setShared] = useState<string | null>(null);
 
-  const myBooking = useMemo(() => myBookings.find((b) => b.session_id === id && (b.status === 'booked' || b.status === 'checked_in')), [myBookings, id]);
   const conflict = useMemo(() => joined ? sameDayConflict(myBookings, sessions, joined.session) : null, [joined, myBookings, sessions, sameDayConflict]);
 
   const [now, setNow] = useState(Date.now);
+  const myBooking = useMemo(() => myBookings.find((b) => b.session_id === id && (SERVER_RULES ? holdsPlace(b as unknown as ServerBookingRow, now) : b.status === 'booked' || b.status === 'checked_in')), [myBookings, id, now]);
   useEffect(() => {
     const refresh = () => setNow(Date.now());
     const next = [joined?.session.starts_at, joined?.session.ends_at].map(value => Date.parse(value ?? '')).filter(at => at > now).sort((a, b) => a - b)[0];
@@ -61,6 +72,8 @@ export function ClassDetailPage() {
   useEffect(() => { operation.current++; navigationLock.current = false; setNavigating(false); setNavigationError(false); }, [data, user.id, role, id, navigationRoute]);
   const openAdmission = async () => {
     if (!joined || navigationLock.current) return;
+    // Production: straight to checkout; capacity, the daily limit and the last spot are the server's answer there.
+    if (SERVER_RULES) { nav(`/app/checkout/${joined.session.id}`); return; }
     const captured = live.current, version = ++operation.current;
     const current = () => operation.current === version && live.current.mounted && live.current.data === captured.data && live.current.actor === captured.actor && live.current.role === captured.role && live.current.navigationRoute === captured.navigationRoute && live.current.id === captured.id;
     navigationLock.current = true; setNavigating(true); setNavigationError(false);
@@ -85,8 +98,9 @@ export function ClassDetailPage() {
   const past = new Date(s.ends_at).getTime() <= now;
   const cancelled = s.status === 'cancelled';
   const full = left <= 0;
-  const admissionAvailable = sessionAdmissionAvailable(s, m, s.template_id ? { id: s.template_id, active: joined.templateActive } : undefined, now);
-  const unavailableReason = sessionUnavailableReason(joined, now) ?? 'unavailable';
+  const phase = classPhase(s, now);
+  const admissionAvailable = SERVER_RULES ? phase === 'open' || phase === 'full' : sessionAdmissionAvailable(s, m, s.template_id ? { id: s.template_id, active: joined.templateActive } : undefined, now);
+  const unavailableReason = SERVER_RULES ? phase : sessionUnavailableReason(joined, now) ?? 'unavailable';
 
   const share = async () => {
     const r = await shareText(`${s.title} · ${formatDate(s.starts_at, lang)} ${formatTime(s.starts_at, lang)} · ${tenant.name}`, window.location.href);
@@ -97,6 +111,8 @@ export function ClassDetailPage() {
   const cta = (): ReactNode => {
     if (myBooking) return <Button block size="lg" variant="secondary" onClick={() => nav(`/app/booking/${myBooking.id}`)}>{t('customer.class.viewBooking')}</Button>;
     if (!admissionAvailable) return <Button block size="lg" variant="secondary" disabled>{t(`site.calendar.status.${unavailableReason}`)}</Button>;
+    // Production has no waitlist at launch: a full class says so (the server refuses `occurrence_full` anyway).
+    if (SERVER_RULES && full) return <Button block size="lg" variant="secondary" disabled>{t('customer.srv.phase.full')}</Button>;
     if (full) return <Button block size="lg" loading={navigating} disabled={navigating} onClick={() => void openAdmission()}>{myWait && (myWait.status === 'waiting' || myWait.status === 'offered') ? t('customer.class.viewWaitlist') : t('customer.class.joinWaitlist')}</Button>;
     if (conflict) return (
       <div className="stack-sm">
@@ -163,7 +179,7 @@ export function ClassDetailPage() {
         {cta()}
         <div className="row" style={{ justifyContent: 'center' }}>
           <Button variant="ghost" size="sm" onClick={share} icon="share">{t('customer.class.share')}</Button>
-          <Button variant="ghost" size="sm" onClick={() => nav(`/app/invite?session=${s.id}`)} icon="invite">{t('customer.home.quick.invite')}</Button>
+          {!SERVER_RULES && <Button variant="ghost" size="sm" onClick={() => nav(`/app/invite?session=${s.id}`)} icon="invite">{t('customer.home.quick.invite')}</Button>}
         </div>
         {shared && <Notice tone="success">{shared}</Notice>}
       </div>

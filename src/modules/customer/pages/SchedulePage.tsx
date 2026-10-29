@@ -18,6 +18,9 @@ import { PageHead } from '../ui';
 import { useActions } from '../../../actions';
 import { sessionUnavailableReason } from '../../../data/sessionAvailability';
 import { need, useAppNavHandlers } from '../actions';
+import { SERVER_RULES } from '../booking/bookingPolicy';
+import { holdsPlace, type ServerBookingRow } from '../booking/serverBooking';
+import { useLiveUpdates } from '../../../data/companyos/hooks';
 
 const specDay = canvasSpecs['C-02'];
 const specWeek = canvasSpecs['C-02b'];
@@ -41,6 +44,8 @@ function loadFilters(): Filters {
 
 /** C-02 Class schedule; with `view="week"` it is C-02b at /app/schedule/week (`?view=week` redirects there). */
 export function SchedulePage({ view: routeView }: SchedulePageProps) {
+  // Contract §1: this screen polls Company OS every 20 s in the production build (no-op on the review build).
+  useLiveUpdates(['class_sessions', 'bookings']);
   const { t, bi } = useI18n();
   const nav = useNavigate();
   const { user } = useSession();
@@ -69,7 +74,7 @@ export function SchedulePage({ view: routeView }: SchedulePageProps) {
   const visibleMods = modalities;
   const teachers = team.rows.filter(te => te.active);
   const myBookings = bookingsRead.rows;
-  const mine = useMemo(() => new Set(myBookings.filter((b) => b.status === 'booked').map((b) => b.session_id)), [myBookings]);
+  const mine = useMemo(() => new Set(myBookings.filter((b) => SERVER_RULES ? holdsPlace(b as unknown as ServerBookingRow) : b.status === 'booked').map((b) => b.session_id)), [myBookings]);
 
   const matches = (x: (typeof all)[number]) => {
     const h = studioParts(new Date(x.session.starts_at)).hour;
@@ -100,7 +105,8 @@ export function SchedulePage({ view: routeView }: SchedulePageProps) {
   useActions(specDay, handlers);
   const isFull = (s: ClassSessionRow) => s.status === 'scheduled' && s.booked_count >= s.capacity;
   // A class with no spots left cannot be booked: the row leads to the waitlist (C-20) instead of the booking screen.
-  const open = (s: ClassSessionRow) => nav(isFull(s) && !mine.has(s.id) ? `/app/waitlist/${s.id}` : `/app/class/${s.id}`);
+  // Production has no waitlist at launch: every row opens the class detail (H-4).
+  const open = (s: ClassSessionRow) => nav(!SERVER_RULES && isFull(s) && !mine.has(s.id) ? `/app/waitlist/${s.id}` : `/app/class/${s.id}`);
 
   const SECTIONS: Record<string, () => ReactNode> = {
     'ViewSwitch (Today / Week)': () => <PageHead title={t('customer.schedule.title')} sub={t('customer.schedule.sub')} />,

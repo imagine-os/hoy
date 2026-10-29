@@ -1,10 +1,13 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { flushSync } from 'react-dom';
 import { DEV_MODE_ROLES, ROLES, type Role } from './roles';
-import { demoUserById, demoUserByRole, type DemoUser } from './demoUsers';
+import { demoUserById, demoUserByRole } from './demoUsers';
 import { roleCan, type Permission } from './permissions';
 import { useTable } from '../data/DataContext';
 import type { BaseRow, ProfileRow, UserRow } from '../data/schema';
+import { PRODUCTION_BUILD } from '../config/launch';
+import { SessionContext as Ctx, type SessionCtx, type SessionUser } from './sessionContext';
+export { useSession, type SessionCtx, type SessionStatus, type SessionUser } from './sessionContext';
 
 interface SessionState {
   userId: string;
@@ -13,28 +16,6 @@ interface SessionState {
   viewAs: Role | null;
 }
 
-/** The signed-in person: a demo user, or any `users` row (e.g. an account created through A-03). */
-export type SessionUser = DemoUser;
-
-interface SessionCtx {
-  /** The real signed-in user. */
-  user: SessionUser;
-  /** The effective role (viewAs when active). Use this for UI decisions. */
-  role: Role;
-  isSuperAdmin: boolean;
-  /** The signed-in user may turn dev mode on: super_admin and developer (0031). Only super_admin may "view as". */
-  canDevMode: boolean;
-  devMode: boolean;
-  viewAs: Role | null;
-  /** Accepts a demo user id, a role (its demo user) or any `users` row id from the data provider. */
-  switchUser: (idOrRole: string | Role) => void;
-  setDevMode: (on: boolean) => void;
-  setViewAs: (role: Role | null) => void;
-  can: (permission: Permission) => boolean;
-  hasRole: (roles: Role[]) => boolean;
-}
-
-const Ctx = createContext<SessionCtx | null>(null);
 const KEY = 'hoyos.session';
 const DEFAULT: SessionState = { userId: 'usr_super', devMode: false, viewAs: null };
 const isRole = (s: string): s is Role => (ROLES as readonly string[]).includes(s);
@@ -59,8 +40,8 @@ function isPublicSession(raw: string | null): boolean {
 
 interface UserRoleRow extends BaseRow { user_id: string; role: string }
 
-/** Must sit inside DataProviderRoot: non-demo users are resolved from users + profiles + user_roles. */
-export function SessionProvider({ children }: { children: ReactNode }) {
+/** Review build. Must sit inside DataProviderRoot: non-demo users are resolved from users + profiles + user_roles. */
+function DemoSessionProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<SessionState>(read);
   const [logoutRevision, setLogoutRevision] = useState(0);
   const remoteLogout = useRef(false);
@@ -123,13 +104,23 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const can = useCallback((p: Permission) => roleCan(role, p), [role]);
   const hasRole = useCallback((roles: Role[]) => roles.includes('public') || roles.includes(role) || (isSuperAdmin && !state.viewAs), [role, isSuperAdmin, state.viewAs]);
 
-  const value = useMemo<SessionCtx>(() => ({ user, role, isSuperAdmin, canDevMode, devMode, viewAs: state.viewAs, switchUser, setDevMode, setViewAs, can, hasRole }),
-    [user, role, isSuperAdmin, canDevMode, devMode, state.viewAs, switchUser, setDevMode, setViewAs, can, hasRole]);
+  const signOut = useCallback(async () => { switchUser('usr_public'); }, [switchUser]);
+  const value = useMemo<SessionCtx>(() => ({ status: 'ready', signedIn: user.role !== 'public', user, role, isSuperAdmin, canDevMode, devMode, viewAs: state.viewAs, caps: [], switchUser, setDevMode, setViewAs, signOut, refresh: () => {}, can, hasRole }),
+    [user, role, isSuperAdmin, canDevMode, devMode, state.viewAs, switchUser, setDevMode, setViewAs, signOut, can, hasRole]);
   return <Ctx.Provider key={logoutRevision} value={value}>{children}</Ctx.Provider>;
 }
 
-export function useSession(): SessionCtx {
-  const v = useContext(Ctx);
-  if (!v) throw new Error('useSession outside SessionProvider');
-  return v;
+/**
+ * The production build (VITE_HOY_BUILD=production) signs in with Clerk and reads the role from Company OS `/me`
+ * (src/auth/ProductionSession.tsx); the review build keeps the demo personas. The production provider is a separate
+ * chunk; `PRODUCTION_BUILD ? … : …` on the constant lets the bundler drop the unused side, so Clerk never ships in the
+ * review build and the demo provider is not in the production one.
+ */
+function productionSession() {
+  const ProductionSession = lazy(() => import('./ProductionSession'));
+  return function ProductionSessionBoundary({ children }: { children: ReactNode }) {
+    return <Suspense fallback={null}><ProductionSession>{children}</ProductionSession></Suspense>;
+  };
 }
+
+export const SessionProvider = PRODUCTION_BUILD ? productionSession() : DemoSessionProvider;
