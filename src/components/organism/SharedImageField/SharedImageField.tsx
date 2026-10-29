@@ -5,7 +5,6 @@ import {placementTarget} from '../MediaLibrary/placementTarget';
 import {Link} from 'react-router-dom';
 import {useI18n} from '../../../i18n/I18nProvider';
 import {useData} from '../../../data/DataContext';
-import {MockProvider} from '../../../data/MockProvider';
 import {useMediaLibrary} from '../../../data/useMediaLibrary';
 import {safeMediaUrl} from '../../../data/mediaLibrary';
 import {importLocalPhoto,isLocalPhotoUrl} from '../../../data/localMediaStore';
@@ -18,14 +17,16 @@ const displayUrl=(url:string)=>/^(data:|https?:|\/)/.test(url)?url:`${import.met
 export function SharedImageField({value,onChange,disabled=false,label}:SharedImageFieldProps){
  const {hasRole}=useSession();const routes=useMemo(()=>getRoutes(),[]);
  const {t,dict}=useI18n();const text=(k:string)=>t(`media.picker.${k}`);const data=useData();const {assets,localError}=useMediaLibrary();
+ // Local photos (the device's own store) exist only with the review build's in-browser provider (H-10: name, not instanceof, so MockProvider stays out of production).
+ const localMedia=data.name==='mock';
  const [open,setOpen]=useState(false),[query,setQuery]=useState(''),[source,setSource]=useState('all'),[candidate,setCandidate]=useState<string|null>(null),[previous,setPrevious]=useState<string|null|undefined>(undefined),[busy,setBusy]=useState(false),[error,setError]=useState('');
  const root=useRef<HTMLElement>(null);
  const closeChooser=()=>{setOpen(false);setCandidate(null);root.current?.querySelector<HTMLButtonElement>('button')?.focus();};
  const alive=useRef(true);useEffect(()=>{alive.current=true;return()=>{alive.current=false;};},[]);
  const current=assets.find(a=>a.url===value||a.variants.includes(value||''));
- const shown=assets.filter(a=>a.kind!=='video'&&safeMediaUrl(a.url)&&(!isLocalPhotoUrl(a.url)||data instanceof MockProvider)&&(source==='all'||a.source===source)&&`${a.name} ${a.tags.join(' ')}`.toLowerCase().includes(query.toLowerCase()));
- const choose=(url:string|null)=>{if(url&&isLocalPhotoUrl(url)&&!(data instanceof MockProvider))return;setPrevious(value);onChange(url);closeChooser();};
- const upload=async(file?:File)=>{if(!file||busy||disabled||!(data instanceof MockProvider))return;setBusy(true);setError('');try{const p=await importLocalPhoto(file,tenant.id);if(alive.current){setCandidate(p.url);setOpen(true);}}catch(e){if(alive.current)setError(['format','size','dimensions','storage'].includes((e as Error).message)?(e as Error).message:'storage');}finally{if(alive.current)setBusy(false);}};
+ const shown=assets.filter(a=>a.kind!=='video'&&safeMediaUrl(a.url)&&(!isLocalPhotoUrl(a.url)||localMedia)&&(source==='all'||a.source===source)&&`${a.name} ${a.tags.join(' ')}`.toLowerCase().includes(query.toLowerCase()));
+ const choose=(url:string|null)=>{if(url&&isLocalPhotoUrl(url)&&!localMedia)return;setPrevious(value);onChange(url);closeChooser();};
+ const upload=async(file?:File)=>{if(!file||busy||disabled||!localMedia)return;setBusy(true);setError('');try{const p=await importLocalPhoto(file,tenant.id);if(alive.current){setCandidate(p.url);setOpen(true);}}catch(e){if(alive.current)setError(['format','size','dimensions','storage'].includes((e as Error).message)?(e as Error).message:'storage');}finally{if(alive.current)setBusy(false);}};
  return <section ref={root} className="shared-image-field stack-sm" aria-label={label||text('title')}>
  <strong>{label||text('title')}</strong>
  {value&&safeMediaUrl(value)?<img className="shared-image-preview" src={displayUrl(value)} alt={current?.name||text('preview')} />:<span className="muted">{text('none')}</span>}
@@ -37,8 +38,8 @@ export function SharedImageField({value,onChange,disabled=false,label}:SharedIma
  <label>{text('source')}<Select value={source} onChange={e=>setSource(e.target.value)}><option value="all">{text('all')}</option>{[...new Set(assets.map(a=>a.source))].map(s=><option key={s} value={s}>{t(`media.library.${s}`)}</option>)}</Select></label>
  <div className="shared-image-options">{shown.map(a=><button type="button" key={a.id} disabled={disabled||busy} className="shared-image-option" aria-pressed={candidate===a.url} onClick={()=>setCandidate(a.url)}><img loading="lazy" src={displayUrl(a.thumbnail||a.url)} alt=""/><span>{a.name}</span></button>)}</div>
  {!shown.length&&<p role="status">{text('empty')}</p>}
- <label>{text('upload')}<input type="file" accept="image/jpeg,image/png,image/webp" disabled={disabled||busy||!(data instanceof MockProvider)} onChange={e=>{const f=e.target.files?.[0];e.target.value='';void upload(f);}}/></label>
- <p className="muted small">{text('privacy')}</p>{!(data instanceof MockProvider)&&<p>{text('backend')}</p>}
+ <label>{text('upload')}<input type="file" accept="image/jpeg,image/png,image/webp" disabled={disabled||busy||!localMedia} onChange={e=>{const f=e.target.files?.[0];e.target.value='';void upload(f);}}/></label>
+ <p className="muted small">{text('privacy')}</p>{!localMedia&&<p>{text('backend')}</p>}
  {candidate&&<img className="shared-image-preview" src={displayUrl(candidate)} alt={text('preview')}/>}
  <div className="row wrap"><Button type="button" disabled={disabled||busy||!candidate} onClick={()=>choose(candidate)}>{text('use')}</Button><Button type="button" variant="ghost" disabled={busy} onClick={closeChooser}>{text('cancel')}</Button></div>
  </div>}
