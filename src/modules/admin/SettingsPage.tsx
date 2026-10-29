@@ -83,7 +83,8 @@ export function SettingsPage({ group = 'general' }: { group?: SettingsGroup }) {
   const { rows: modalities } = useTable<ModalityRow>('modalities', { orderBy: { column: 'name_es' } });
   const { rows: teachers } = useTable<TeacherRow>('teachers', { where: { active: true } });
   const { rows: legalDocs } = useTable<LegalDocumentRow>('legal_documents', { orderBy: { column: 'kind' } });
-  const canLegal = can('settings.write');
+  // Production: the legal texts are static launch content (a read-only adapter), so publishing is review-build only.
+  const canLegal = can('settings.write') && !PRODUCTION_BUILD;
   const contact = contactOf(settings);
   const canWrite = can('settings.write');
   const canFlags = can('features.write');
@@ -155,7 +156,7 @@ export function SettingsPage({ group = 'general' }: { group?: SettingsGroup }) {
                   </fieldset>
                   <p className="xs muted">{t('admin.settings.f.confirmed.hint')}</p>
                 </>
-              ))}
+              ), undefined, (d) => (!d.email || isEmail(d.email)) && (!d.instagramUrl || !!safeHttpsUrl(d.instagramUrl)) && (!d.mapLink || !!safeHttpsUrl(d.mapLink)))}
               {S('contacts', t('admin.settings.sec.contacts'), (d, set) => {
                 // Who receives each topic right now, from the draft, so the owner sees the effect before saving.
                 const draft = whatsappLinksOf({ ...settings, contacts: d }, hours);
@@ -366,7 +367,7 @@ export function SettingsPage({ group = 'general' }: { group?: SettingsGroup }) {
                   {legalDocs.map((d) => (
                     <div key={d.id} className="row-between wrap settings-int">
                       <div className="grow"><strong className="small">{bi(d.title)}</strong> <span className="xs mono muted">v{d.version}</span><div className="xs muted">{d.kind} · {t('admin.settings.legal.effective', { date: formatDate(d.effective_from, lang) })}{d.requires_acceptance ? ` · ${t('admin.settings.legal.requiresAcceptance')}` : ''}</div></div>
-                      <div className="row"><Badge tone={d.status === 'published' ? 'success' : 'warn'}>{t(`admin.settings.legal.${d.status}`)}</Badge><Toggle size="sm" checked={d.status === 'published'} disabled={!canLegal} label={t('admin.settings.legal.publish')} onChange={(on) => toggleLegal(d, on)} /><Link to={`/site/legal/${d.kind}`} className="xs">{t('admin.settings.legal.view')} →</Link></div>
+                      <div className="row"><Badge tone={d.status === 'published' ? 'success' : 'warn'}>{t(`admin.settings.legal.${d.status}`)}</Badge>{!PRODUCTION_BUILD && <Toggle size="sm" checked={d.status === 'published'} disabled={!canLegal} label={t('admin.settings.legal.publish')} onChange={(on) => void toggleLegal(d, on)} />}<Link to={`/site/legal/${d.kind}`} className="xs">{t('admin.settings.legal.view')} →</Link></div>
                     </div>
                   ))}
                 </div>

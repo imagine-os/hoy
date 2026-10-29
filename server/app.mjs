@@ -48,6 +48,7 @@ const TYPES = {
   '.ico': 'image/x-icon', '.mp4': 'video/mp4', '.webm': 'video/webm', '.woff': 'font/woff', '.woff2': 'font/woff2',
   '.ttf': 'font/ttf', '.otf': 'font/otf', '.pdf': 'application/pdf', '.csv': 'text/csv; charset=utf-8',
 };
+const HTML_CSP = "object-src 'none'; base-uri 'self'; frame-ancestors 'self'";
 const COMPRESSIBLE = new Set(['.html', '.js', '.mjs', '.css', '.json', '.map', '.md', '.txt', '.xml', '.webmanifest', '.svg', '.csv']);
 
 /**
@@ -597,6 +598,10 @@ async function serveStatic(req, res, distDir, rawPath, rawQuery) {
     'Cache-Control': path.startsWith('/assets/') ? 'public, max-age=31536000, immutable' : ext === '.html' ? 'no-cache' : 'public, max-age=300',
   };
   if (COMPRESSIBLE.has(ext)) headers.Vary = 'Accept-Encoding';
+  // A baseline policy for the pages: no plugins, no <base> hijack, framed only by this origin. Script and connect
+  // sources are left open on purpose for now: Clerk's frontend API, its bot check and the storage upload host differ
+  // per deployment, and the sign-in tests run against a fake Clerk, so a wrong list would only show up in production.
+  if (ext === '.html') headers['Content-Security-Policy'] = HTML_CSP;
 
   if (header(req.headers['if-none-match']) === etag) {
     res.writeHead(304, headers);

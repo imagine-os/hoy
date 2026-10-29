@@ -74,12 +74,13 @@ const MEMBERS = () => ({
 
 const browser = await launchBrowser();
 const errors = [];
-async function open(path = '/', { lang = 'es', width = 1280 } = {}) {
+async function open(path = '/', { lang = 'es', width = 1280, clerk = true } = {}) {
   api.members = MEMBERS(); api.meStatus = null; api.signupEnabled = true; api.signups = [];
   const ctx = await browser.newContext({ viewport: { width, height: 900 }, reducedMotion: 'reduce' });
   // Playwright tries the last route added first: everything outside is blocked, except Clerk's script (the fake).
+  // `clerk: false` blocks Clerk's script too (a CDN outage or a blocker).
   await ctx.route(/^https?:\/\/(?!127\.0\.0\.1)/, (r) => r.abort());
-  await ctx.route(`https://${HOST}/npm/@clerk/clerk-js@*/dist/clerk.browser.js`, (r) => r.fulfill({ status: 200, contentType: 'text/javascript', body: FAKE_CLERK }));
+  if (clerk) await ctx.route(`https://${HOST}/npm/@clerk/clerk-js@*/dist/clerk.browser.js`, (r) => r.fulfill({ status: 200, contentType: 'text/javascript', body: FAKE_CLERK }));
   await ctx.addInitScript(({ accounts, pk, lang }) => {
     window.__fakeClerkConfig = { accounts, publishableKey: pk };
     if (!sessionStorage.getItem('qa-init')) { sessionStorage.setItem('qa-init', '1'); localStorage.setItem('hoyos.lang', lang); }
@@ -258,6 +259,28 @@ try {
   await page.getByRole('button', { name: 'Reintentar' }).click();
   await page.waitForTimeout(1200);
   check('PL-04 retry after /me recovers signs the customer in', route(page) === '/app', route(page));
+  await ctx.close();
+
+  // ── Clerk never loads: sign-in and private routes say so with a retry instead of spinning ─────────────────────
+  ({ ctx, page } = await open('/auth/sign-in', { clerk: false }));
+  await page.locator('[data-session-problem="error"]').waitFor({ timeout: 15000 }).catch(() => {});
+  check('PL-04 Clerk blocked: sign-in shows the error with a retry (no endless spinner)', (await page.locator('[data-session-problem="error"]').count()) === 1 && (await page.getByRole('button', { name: 'Reintentar' }).count()) === 1);
+  await page.goto(`${BASE}/#/staff`); await page.waitForTimeout(800);
+  await page.locator('[data-session-problem="error"]').waitFor({ timeout: 15000 }).catch(() => {});
+  check('PL-04 Clerk blocked: a private route ends on the sign-in error, not a spinner', route(page).startsWith('/auth/sign-in') && (await page.locator('[data-session-problem="error"]').count()) === 1, route(page));
+  // Clerk's own loader reports its failure as an uncaught rejection: expected here, not a page error of the app.
+  for (let i = errors.length - 1; i >= 0; i--) if (/failed_to_load_clerk_js/.test(errors[i])) errors.splice(i, 1);
+  check('PL-04 Clerk blocked: the website still opens', await (async () => { await page.goto(`${BASE}/#/site`); await page.waitForTimeout(1500); return (await page.locator('[aria-busy="true"]').count()) === 0 && route(page).startsWith('/site'); })(), route(page));
+  await ctx.close();
+  for (let i = errors.length - 1; i >= 0; i--) if (/failed_to_load_clerk_js/.test(errors[i])) errors.splice(i, 1);
+
+  // ── CU-04: a session that ends outside the app (another tab, expiry) leaves no traces either ─────────────────
+  ({ ctx, page } = await open('/auth/sign-in'));
+  await signIn(page, 'ana@example.test');
+  await page.evaluate(() => { sessionStorage.setItem('hoyos.pendingPass', 'pln_1'); localStorage.setItem('hoyos.schedule.filters', '{}'); });
+  await page.evaluate(() => window.Clerk.signOut()); // Clerk's own sign-out, as another tab's would arrive: not the app's button
+  await page.waitForTimeout(1000);
+  check('CU-04 a session ended elsewhere clears the previous person\'s traces (language kept)', await page.evaluate(() => sessionStorage.getItem('hoyos.pendingPass') === null && localStorage.getItem('hoyos.schedule.filters') === null && localStorage.getItem('hoyos.lang') === 'es'));
   await ctx.close();
 
   // ── English and desktop/mobile ───────────────────────────────────────────────────────────────────────────────

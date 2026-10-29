@@ -22,7 +22,7 @@ export function LiveCustomerList() {
   const desktop = useMinWidth('shell');
   const [search, setSearch] = useState('');
   const q = useCosQueries({
-    people: { entity: 'person', filter: { exists: 'member', via: 'person', where: { all: true } }, sort: [{ field: 'name' }] },
+    people: { entity: 'person', filter: { exists: 'member', via: 'person', where: { all: true } }, sort: [{ field: 'name', dir: 'asc' }] },
     products: { entity: 'product' },
     ...BALANCE_QUERIES,
   } as never);

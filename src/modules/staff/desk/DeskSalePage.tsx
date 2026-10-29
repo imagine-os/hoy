@@ -93,7 +93,7 @@ export function DeskSalePage() {
       setDone({ ...result, name: mode === 'existing' ? person!.name : form.name.trim() });
     } catch (e) { setError(deskErrorText(errorCode(e), t)); } finally { busyRef.current = false; setBusy(false); }
   };
-  const reset = () => { setDone(null); setReference(''); setForm({ name: '', phone: '', email: '', consent: false }); setPersonId(null); setQ(''); setMode('new'); setProductId(''); setPaidRaw(null); setReason(''); setError(null); };
+  const reset = () => { setDone(null); setReference(''); setForm({ name: '', phone: '', email: '', consent: false }); setPersonId(null); setQ(''); setMode('new'); setProductId(''); setPaidRaw(null); setReason(''); setSessionId(''); setCheckIn(true); setError(null); };
 
   if (done) return (
     <div className="stack">

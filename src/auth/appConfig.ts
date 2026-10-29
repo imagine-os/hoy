@@ -34,9 +34,16 @@ export function loadAppConfig(fetchImpl: typeof fetch = fetch): Promise<AppConfi
         if (!res.ok) throw new Error('app_config_unavailable');
         return parseAppConfig(await res.json());
       });
-    pending.catch(() => { pending = null; });
+    pending.then(() => { for (const l of loadedListeners) { try { l(); } catch { /* a listener's failure is its own */ } } }, () => { pending = null; });
   }
   return pending;
+}
+
+const loadedListeners = new Set<() => void>();
+/** Called after each successful read of `/app-config.json` (the first, or a retry after a failure). */
+export function onAppConfigLoaded(listener: () => void): () => void {
+  loadedListeners.add(listener);
+  return () => { loadedListeners.delete(listener); };
 }
 
 /** `/api/cos/t/<tenant><path>`: every Company OS call goes through the Hoy server. */

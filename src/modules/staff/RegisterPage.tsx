@@ -262,7 +262,7 @@ function ReviewRegisterPage() {
           <div className="stack-sm">
             {done.payment.status === 'pending' && <Card tone="highlight"><p className="small">{t('staff.register.wompi.pending')}</p></Card>}
             <Button onClick={reset} icon="sell">{t('staff.register.newSale')}</Button>
-            {done.booking && <Link to="/staff/rooms"><Button block variant="secondary" icon="rooms">{t('staff.home.openRooms')}</Button></Link>}
+            {done.booking && !PRODUCTION_BUILD && <Link to="/staff/rooms"><Button block variant="secondary" icon="rooms">{t('staff.home.openRooms')}</Button></Link>}
             <Link to={`/staff/checkin${sessionId ? `?session=${sessionId}` : ''}`}><Button block variant="secondary" icon="checkin">{t('staff.home.openCheckin')}</Button></Link>
           </div>
         </div>

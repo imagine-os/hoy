@@ -314,6 +314,67 @@ try {
     assert.deepEqual(fix.calls.map(c => [c.method, c.body?.roleKey]), [['POST', 'super_admin']]);
   });
 
+  await row('AD-06 re-send an invitation, half-applied changes: Administration sets super_admin aside for /invitations and gets it back; a failed DELETE after the add says both roles are held', async () => {
+    /** Refuses the call whose `method path` matches, once; `/invitations` answers a fresh link. */
+    let listed = [];
+    const cosFailing = (match, code) => {
+      const calls = [];
+      let armed = !!match;
+      const request = async (method, path, body) => {
+        calls.push({ method, path, body: structuredClone(body) });
+        if (armed && `${method} ${path}` === match) { armed = false; throw Object.assign(new Error(code), { code, status: 422 }); }
+        if (method === 'GET' && path === '/admin/users') return { users: listed };
+        return path === '/invitations' ? { userId: 'u', invitationId: 'inv_2', url: 'https://accounts.example.invalid/inv_2' } : { data: {} };
+      };
+      return { request, calls };
+    };
+    const admin = { userId: 'u1', email: 'Admin@Example.invalid', name: 'Admin', memberships: [{ membershipId: 'm1', roleKey: 'administrator' }, { membershipId: 'm1s', roleKey: 'super_admin' }] };
+    const desk = { userId: 'u2', email: 'desk@example.invalid', name: 'Desk', memberships: [{ membershipId: 'm2', roleKey: 'front_desk' }] };
+    const r1 = cosFailing(); const res1 = await m.resendInvitation(r1.request, desk, 'https://app.example.invalid/#/auth/sign-in?next=/staff');
+    assert.deepEqual(res1, { kind: 'invited', url: 'https://accounts.example.invalid/inv_2' });
+    assert.deepEqual(r1.calls.map(c => [c.method, c.path, c.body?.roleKey, c.body?.email]), [['POST', '/invitations', 'front_desk', 'desk@example.invalid']]);
+    // The list as Company OS answers it during the resend: super_admin set aside.
+    listed = [{ ...admin, memberships: [admin.memberships[0]] }];
+    const r2 = cosFailing(); await m.resendInvitation(r2.request, admin, 'https://app.example.invalid/');
+    assert.deepEqual(r2.calls.map(c => [c.method, c.path, c.body?.roleKey]), [['DELETE', '/admin/memberships/m1s', undefined], ['POST', '/invitations', 'administrator'], ['GET', '/admin/users', undefined], ['POST', '/admin/users', 'super_admin']], 'super_admin is set aside, then back');
+    // Another administrator removed them meanwhile: their decision stands, super_admin is not given back.
+    listed = [];
+    const rGone = cosFailing(); assert.equal((await m.resendInvitation(rGone.request, admin, 'https://app.example.invalid/')).repair, undefined);
+    assert.ok(!rGone.calls.some(c => c.method === 'POST' && c.path === '/admin/users'), 'no super_admin for a removed administrator');
+    // The set-aside DELETE itself fails: nothing was taken, the refusal is shown.
+    listed = [admin];
+    const rDel = cosFailing('DELETE /admin/memberships/m1s', 'server_error');
+    await assert.rejects(m.resendInvitation(rDel.request, admin, 'https://app.example.invalid/'), e => e.code === 'server_error' && !e.repair);
+    assert.ok(!rDel.calls.some(c => c.path === '/invitations' || (c.method === 'POST' && c.path === '/admin/users')));
+    listed = [{ ...admin, memberships: [admin.memberships[0]] }];
+    // Already signed up: the role is in place; Administration still gets super_admin back.
+    const r3 = cosFailing('POST /invitations', 'already_signed_up');
+    assert.equal((await m.resendInvitation(r3.request, admin, 'https://app.example.invalid/')).kind, 'signed_up');
+    assert.equal(r3.calls.at(-1).body.roleKey, 'super_admin');
+    // The provider failed: the refusal is shown, and super_admin is back before it.
+    const r4 = cosFailing('POST /invitations', 'invitation_failed');
+    await assert.rejects(m.resendInvitation(r4.request, admin, 'https://app.example.invalid/'), e => e.code === 'invitation_failed');
+    assert.equal(r4.calls.at(-1).body.roleKey, 'super_admin');
+    // super_admin can't be added back: the link is still handed over, flagged for "Completar acceso".
+    const r5 = cosFailing('POST /admin/users', 'server_error');
+    assert.deepEqual(await m.resendInvitation(r5.request, admin, 'https://app.example.invalid/'), { kind: 'invited', url: 'https://accounts.example.invalid/inv_2', repair: true });
+    const r6 = cosFailing('POST /admin/users', 'server_error');
+    assert.equal((await m.invite(r6.request, 'boss3@example.invalid', 'administrator', 'https://app.example.invalid/')).repair, true, 'a new Administration invite keeps its link when super_admin fails');
+    // A desk user promoted to Administration whose super_admin add fails: incomplete, not "holds both".
+    const rInc = cosFailing('POST /admin/users', 'server_error');
+    let first = true;
+    const incReq = async (method, path, body) => { if (method === 'POST' && path === '/admin/users' && first) { first = false; return { data: {} }; } return rInc.request(method, path, body); };
+    await assert.rejects(m.changeRole(incReq, desk, 'administrator'), e => e instanceof m.PartialTeamChange && e.step === 'incomplete');
+    // change role: the add worked, the DELETE didn't → PartialTeamChange (not "nothing was changed"); a retry finishes.
+    const r7 = cosFailing('DELETE /admin/memberships/m2', 'server_error');
+    await assert.rejects(m.changeRole(r7.request, desk, 'administrator'), e => e instanceof m.PartialTeamChange && e.step === 'role_added' && e.cause.code === 'server_error');
+    // The first write failing changed nothing: the plain refusal.
+    const r8 = cosFailing('POST /admin/users', 'forbidden');
+    await assert.rejects(m.changeRole(r8.request, desk, 'administrator'), e => !(e instanceof m.PartialTeamChange) && e.code === 'forbidden');
+    const r9 = cosFailing('DELETE /admin/memberships/m1s', 'server_error');
+    await assert.rejects(m.removeFromTeam(r9.request, admin), e => e instanceof m.PartialTeamChange && e.step === 'partly_removed');
+  });
+
   await row('AD-07 customer list: package, classes left, expiry and vouchers from lots, entry sums and vouchers (expired and frozen lots handled)', () => {
     const today = '2026-11-02';
     const lot = (id, person, extra = {}) => ({ id, person, source: 'purchase', product: 'pack12', valid_from: '2026-10-01', valid_until: '2026-12-30', frozen_from: null, frozen_until: null, voucher: null, ...extra });

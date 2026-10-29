@@ -36,10 +36,10 @@ export function LiveSchedulePage() {
   const from = studioMidnight(dateKey(now));
   const until14 = studioMidnight(dateKey(addDays(now, 14)));
   const q = useCosQueries({
-    schedules: { entity: 'schedule', sort: [{ field: 'weekday' }, { field: 'start_time' }] },
-    resources: { entity: 'resource', filter: { field: 'kind', op: 'eq', value: 'room' }, sort: [{ field: 'name' }] },
+    schedules: { entity: 'schedule', sort: [{ field: 'weekday', dir: 'asc' }, { field: 'start_time', dir: 'asc' }] },
+    resources: { entity: 'resource', filter: { field: 'kind', op: 'eq', value: 'room' }, sort: [{ field: 'name', dir: 'asc' }] },
     coaches: { entity: 'coach', include: [{ field: 'person', fields: ['name', 'email', 'phone'] }] } as never,
-    occurrences: { entity: 'occurrence', filter: { and: [{ field: 'starts_at', op: 'gte', value: from }, { field: 'starts_at', op: 'lt', value: until14 }] }, sort: [{ field: 'starts_at' }] },
+    occurrences: { entity: 'occurrence', filter: { and: [{ field: 'starts_at', op: 'gte', value: from }, { field: 'starts_at', op: 'lt', value: until14 }] }, sort: [{ field: 'starts_at', dir: 'asc' }] },
   });
   const [message, setMessage] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null);
   const [busy, setBusy] = useState(false);

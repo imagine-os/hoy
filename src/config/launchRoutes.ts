@@ -29,10 +29,11 @@ export const LAUNCH_ROUTES: readonly string[] = [
   '/app/profile', '/app/notifications', '/app/more', '/app/account', '/app/access', '/app/legal/:kind', '/app/vouchers', '/app/vouchers/:code',
   // Payment by transfer, the "Nota de compra" and a gift voucher (PG, BO-01)
   '/app/pay/:what/:id', '/app/receipts', '/app/receipts/:paymentId', '/app/gift-voucher',
-  // Front desk (Role Matrix: home, check-in, pending payments, register and charge, inbox, rooms; S-11 expense entry)
-  '/staff', '/staff/checkin', '/staff/register', '/staff/expense', '/staff/rooms', '/staff/inbox/*', '/staff/transfers/*', '/staff/vouchers/*', '/staff/receipts/:paymentId',
+  // Front desk (Role Matrix: home, check-in, pending payments, register and charge, inbox; S-11 expense entry).
+  // `/staff/rooms` (S-05) is out for launch (owner decision, final review round 2): `space_bookings` has no Company OS adapter.
+  '/staff', '/staff/checkin', '/staff/register', '/staff/expense', '/staff/inbox/*', '/staff/transfers/*', '/staff/vouchers/*', '/staff/receipts/:paymentId',
   // Administration
-  '/admin', '/admin/analytics', '/admin/crm/*', '/admin/class-schedule/*', '/admin/vouchers/*', '/admin/products/*', '/admin/settings/*',
+  '/admin', '/admin/analytics', '/admin/crm', '/admin/crm/:id', '/admin/class-schedule/*', '/admin/vouchers/*', '/admin/products/*', '/admin/settings/*',
   '/admin/activity', '/admin/emails/*', '/admin/finance', '/admin/finance/expenses', '/admin/payments/report',
 ];
 
