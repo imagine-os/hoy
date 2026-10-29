@@ -2,7 +2,14 @@
 // Content." Loads each public page of the built site in Spanish (and English for load errors) and checks the approved
 // copy from reference/uploads/WEBSITE_MODIF.md (Lorena Medina, 2026-10-01): hero, philosophy, the seven classes with
 // their keywords, the class-to-teacher list, the launch prices and the contact data (tenant.ts / Settings).
-// Also checks no page shows a missing string key (⟨…⟩) or throws. Run: npm run build && node scripts/test-launch-website-content.mjs
+// Also checks no page shows a missing string key (⟨…⟩) or throws. Then the production build (built here unless
+// QA_PROD_DIST is set): a signed-out visitor sees the sign-in prompt instead of the timetable, and no public page states
+// a private-class price (J4) or promises an online payment gateway.
+// Run: npm run build && node scripts/test-launch-website-content.mjs
+import { execFileSync } from 'node:child_process';
+import { mkdtemp } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { serveDist, launchBrowser, newContext, reporter } from './lib/launch-qa.mjs';
 
 const { check, done } = reporter('SW-01');
@@ -71,5 +78,55 @@ try {
     }
     await ctx.close();
   }
+  // ── production build ─────────────────────────────────────────────────────────────────────────────────────────
+  let prodDir = process.env.QA_PROD_DIST;
+  if (!prodDir) {
+    prodDir = await mkdtemp(join(tmpdir(), 'hoy-prod-dist-'));
+    execFileSync('npx', ['vite', 'build', '--outDir', prodDir, '--emptyOutDir', '--logLevel', 'error'], { env: { ...process.env, VITE_HOY_BUILD: 'production' }, stdio: 'inherit' });
+  }
+  const prod = await serveDist(5326, prodDir);
+  try {
+    const PROMPT = { es: 'Inicia sesión para ver los horarios y reservar', en: 'Sign in to see the timetable and book' };
+    const EMPTY = { es: ['Hoy descansamos', 'Sin clases'], en: ['We rest today', 'No classes'] };
+    for (const lang of ['es', 'en']) {
+      const ctx = await newContext(browser, { lang });
+      const page = await ctx.newPage();
+      const errors = [];
+      page.on('pageerror', (e) => errors.push(e.message));
+      // textContent, not innerText: FAQ answers sit in collapsed sections.
+      const read = async (path, all = false) => {
+        await page.goto(`${prod.base}/#${path}`); await page.locator('.site-main').waitFor();
+        await page.waitForFunction(() => !document.querySelector('[aria-busy="true"]'), null, { timeout: 10000 }).catch(() => {});
+        await page.waitForTimeout(800);
+        return all ? (await page.locator('.site-main').textContent()) ?? '' : page.locator('.site-main').innerText();
+      };
+      for (const path of ['/site/schedule', '/site']) {
+        const text = await read(path);
+        check(`production ${lang} ${path}: signed out, the sign-in prompt replaces the timetable`, text.includes(PROMPT[lang]) && !EMPTY[lang].some((e) => text.includes(e)), text.slice(0, 200));
+      }
+      if (lang === 'es') {
+        const plans = await read('/site/plans', true);
+        check('production /site/plans: no private-class price (J4)', !/250\.000|60\.000/.test(plans));
+        // The FAQ opens only the first answer; its search opens every match.
+        await read('/site/faq');
+        const ask = async (q) => { await page.locator('.faq-search input').fill(q); await page.waitForTimeout(400); return (await page.locator('.faq-groups').textContent()) ?? ''; };
+        const priv = await ask('privada');
+        check('production /site/faq: the private class has no price and points to the studio (J4)', /privada/i.test(priv) && !/250\.000|60\.000/.test(priv), priv.slice(0, 300));
+        const pay = await ask('medios de pago');
+        check('production /site/faq: payment is by transfer with the receipt in the app, or at reception', pay.includes('transferencia (con comprobante en la app) o en recepción'), pay.slice(0, 300));
+        check('production /site/faq: no online gateway promised', !/Wompi|\bPSE\b|pasarela|en línea/i.test(pay));
+        for (const kind of ['privacy', 'terms']) {
+          await page.goto(`${prod.base}/#/site/legal/${kind}`); await page.locator('.site-main').waitFor(); await page.waitForTimeout(800);
+          const legal = (await page.locator('.site-main').textContent()) ?? '';
+          check(`production /site/legal/${kind}: no payment gateway described`, legal.length > 500 && !/Wompi|\bPSE\b|pasarela/i.test(legal), `${legal.length} chars`);
+        }
+        await read('/site/faq');
+        const options = await ask('opciones');
+        check('production /site/faq: the options table lists no private class', !/Clase privada|250\.000/.test(options));
+      }
+      check(`production ${lang}: no page threw`, errors.length === 0, errors.join(' | '));
+      await ctx.close();
+    }
+  } finally { await prod.close(); }
 } finally { await browser.close(); await srv.close(); }
 done();

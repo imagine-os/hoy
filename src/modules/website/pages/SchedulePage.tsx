@@ -23,6 +23,8 @@ import { ClassCard } from '../../../components/organism/ClassCard/ClassCard';
 import { PageHead, SiteShell } from '../SiteShell';
 import { siteSpecs } from '../specs';
 import { useSessionsJoined } from '../hooks';
+import { EmptyState } from '../../../components/molecule/EmptyState/EmptyState';
+import { hidesSchedule, SCHEDULE_SIGN_IN } from '../signedOutSchedule';
 
 export function SchedulePage() {
   const { photoEdition } = useSiteEdition();
@@ -85,7 +87,9 @@ export function SchedulePage() {
   const SECTIONS: Record<string, () => ReactNode> = {
     PageHead: () => <PageHead title={t('site.schedule.title')} body={t('site.schedule.body', { mats: tenant.studio.mats, classes: tenant.studio.classesPerDay })} />,
     DayTabs: () => null,
-    ClassList: () => <section className="container"><SessionCalendar sessions={list} onPick={s => { setPicked(s.id); setMat(null); }} /></section>,
+    ClassList: () => <section className="container">{hidesSchedule(user.role)
+      ? <EmptyState icon="calendar" title={t('site.schedule.signedOut')} action={<Button onClick={() => nav(SCHEDULE_SIGN_IN)}>{t('site.schedule.signedOut.cta')}</Button>} />
+      : <SessionCalendar sessions={list} onPick={s => { setPicked(s.id); setMat(null); }} />}</section>,
     Legend: () => (
       <section className="container" style={{ paddingBottom: 'var(--sp-4xl)' }}>
         <div className="site-legend">

@@ -21,6 +21,8 @@ import { siteImage, siteVideo, siteLoops } from '../artwork';
 import { studioPhoto, studioPhotoProps, teacherStudioPhoto, practiceStudioPhoto, philosophyStudioPhoto, usesCurrentStudioPhotos } from '../photography';
 import { editorialPhotoSlots } from '../../../data/studioPhotography';
 import { ClassicHomePage } from './ClassicHomePage';
+import { useSession } from '../../../auth/SessionProvider';
+import { hidesSchedule, SCHEDULE_SIGN_IN } from '../signedOutSchedule';
 
 export function HomePage() {
   const { edition } = useSiteEdition();
@@ -31,6 +33,7 @@ function SanctuaryHome() {
   const { t, bi, lang } = useI18n();
   const { sections, isVisible } = useLayout(siteSpecs.home);
   const today = useTodaySessions();
+  const signedOut = hidesSchedule(useSession().user.role);
   const { motion, setMotion, videoEnabled, photoEdition, version } = useSiteEdition();
   const teacherPhotoEdition = version === 'latest' || photoEdition;
   const { rows: teachers } = useTable<TeacherRow>('teachers', { where: { active: true } });
@@ -81,7 +84,8 @@ function SanctuaryHome() {
     </div></section>,
     TodayClasses: () => <section className="sanctuary-schedule" data-reveal><div className="container sanctuary-schedule-grid"><div className="sanctuary-schedule-intro"><p className="eyebrow">{t('site.new.chapter3')}</p><h2>{t('site.new.scheduleTitle')}</h2><Link className="sanctuary-button is-light" to="/site/schedule">{t('site.today.all')} <Icon name="arrow-right" /></Link></div>
       <div className="sanctuary-agenda"><div className="sanctuary-agenda-head"><span>{t('site.today.title')}</span><span>{formatDate(new Date(), lang, { day: 'numeric', month: 'short' })}</span></div>
-        {today.length ? today.slice(0, 4).map(({ session, modality, teacher }) => <Link key={session.id} to={modality ? `/site/schedule?modality=${modality.slug}` : '/site/schedule'} className="sanctuary-session"><span className="sanctuary-session-time">{formatTime(session.starts_at, lang)}</span><span><strong>{session.title}</strong><small>{teacher?.display_name} · {modality?.duration_min ?? 60} min</small></span><span aria-hidden>↗</span></Link>) : <p className="sanctuary-agenda-empty">{t('site.today.empty')}</p>}
+        {signedOut ? <p className="sanctuary-agenda-empty">{t('site.schedule.signedOut')} <Link className="sanctuary-text-link" to={SCHEDULE_SIGN_IN}>{t('site.schedule.signedOut.cta')} <Icon name="arrow-right" /></Link></p>
+          : today.length ? today.slice(0, 4).map(({ session, modality, teacher }) => <Link key={session.id} to={modality ? `/site/schedule?modality=${modality.slug}` : '/site/schedule'} className="sanctuary-session"><span className="sanctuary-session-time">{formatTime(session.starts_at, lang)}</span><span><strong>{session.title}</strong><small>{teacher?.display_name} · {modality?.duration_min ?? 60} min</small></span><span aria-hidden>↗</span></Link>) : <p className="sanctuary-agenda-empty">{t('site.today.empty')}</p>}
       </div></div></section>,
     Teachers: () => <section className="container sanctuary-section" data-reveal><div className="sanctuary-heading"><div><p className="eyebrow">{t('site.nav.teachers')}</p><h2>{t('site.new.teachersTitle')}</h2><p className="muted">{t('site.new.teachersBody')}</p></div><Link className="sanctuary-text-link" to="/site/teachers">{t('site.nav.teachers')} <Icon name="arrow-right" /></Link></div>
       <div className="sanctuary-teachers"><div className={`site-community-frame${teacherPhotoEdition ? ' has-studio-photo' : ''}`}><div className="sanctuary-community"><>{teacherPhotoEdition ? <img {...studioPhotoProps('hero-group', true)} alt={t('site.photos.teachersGroup')} className="photo-community" /> : <AmbientScene poster={siteImage('community')} video={videoEnabled ? siteVideo('community') : undefined} alt={t('site.new.community')} motion={motion} className="community-living" />}</>{!teacherPhotoEdition && <p>{t('site.new.community')}</p>}</div>{teacherPhotoEdition && <p className="studio-community-caption">{t('site.new.community')}</p>}</div><div className="sanctuary-teacher-list">{teachers.map((te, i) => {

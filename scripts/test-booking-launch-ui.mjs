@@ -72,8 +72,10 @@ try {
     await page.goto(`${server.base}#/app/checkout/${other.id}`);
     await page.getByRole('radio').filter({ hasText: /12/ }).first().click();
     await page.getByRole('button', { name: ES ? /Comprar y pagar por transferencia/ : /Buy and pay by transfer/ }).click();
-    await page.waitForURL(/#\/app\/pay\/product\/pack12$/, { timeout: 10000 }).catch(() => {});
-    check(`RS-03 [${tag}] buying the pack for a class opens its bank-transfer payment (no Wompi stand-in)`, page.url().endsWith('/app/pay/product/pack12'));
+    await page.waitForURL(/#\/app\/pay\/product\/pack12(\?|$)/, { timeout: 10000 }).catch(() => {});
+    const payUrl = new URL(page.url().replace('#', ''));
+    check(`RS-03 [${tag}] buying the pack for a class opens its bank-transfer payment (no Wompi stand-in)`, payUrl.pathname.endsWith('/app/pay/product/pack12'), page.url());
+    check(`RS-03 [${tag}] the payment keeps the class to come back to once the receipt is sent`, payUrl.searchParams.get('next') === `/app/checkout/${other.id}`, page.url());
     // A link from outside (a fresh load) with a hostile return goes to the same payment and never leaves the app.
     const outside = await ctx.newPage();
     outside.on('pageerror', (e) => errors.push(String(e)));

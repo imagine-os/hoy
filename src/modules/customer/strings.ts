@@ -331,6 +331,8 @@ export const strings: StringTable = {
   'customer.passes.eyebrow': { es: 'Para empezar', en: 'To start' },
   'customer.passes.intro': { es: 'Dos opciones de una sola vez. Cada botón lleva al mismo checkout.', en: 'Two one-time options. Every button enters the same checkout.' },
   'customer.passes.cta': { es: 'Elegir clase con este pase', en: 'Pick a class with this pass' },
+  'customer.passes.intro.srv': { es: 'La clase de prueba se compra primero, por transferencia; después reservas con ella. La clase individual se paga al reservarla.', en: 'The trial class is bought first, by bank transfer; then you book with it. The individual class is paid when you book it.' },
+  'customer.passes.buyTrial': { es: 'Comprar la clase de prueba', en: 'Buy the trial class' },
   'customer.passes.bookWith': { es: 'Reservar con este pase', en: 'Book with this pass' },
   'customer.passes.trialUsed': { es: 'Ya usaste tu clase de prueba. Sigue con una clase individual o el paquete de 12.', en: 'You already used your trial class. Continue with an individual class or the 12-class package.' },
   'customer.passes.footer': { es: '¿Vienes seguido?', en: 'Coming often?' },

@@ -11,6 +11,7 @@ import { priceItem } from '../../tenant/pricing';
 import { DEFAULT_POLICIES as P } from '../../tenant/policies';
 import { base, iso, NOW } from './catalog';
 import { formatCOP, MS, addDays, atStudioTime } from '../../i18n/format';
+import { PRODUCTION_BUILD } from '../../config/launch';
 
 const price = (id: string) => priceItem(id)?.price ?? 0;
 const cop = (id: string) => formatCOP(price(id), 'es');
@@ -59,12 +60,18 @@ interface FaqSeed { group: string; page: number; title: { es: string; en: string
  */
 const FAQ: FaqSeed[] = [
   { group: 's1', page: 1, title: { es: '01 · Clases y precios', en: '01 · Classes and prices' }, lead: { es: 'Las opciones, cuánto duran y qué incluyen.', en: 'The options, how long they last and what they include.' }, items: [
-    { q: { es: '¿Cuáles son las opciones?', en: 'What are the options?' }, a: { es: 'Estas son las opciones de lanzamiento, en pesos colombianos:\n\n{{pricing:bienvenida,paquetes,privadas}}', en: 'These are the launch options, in Colombian pesos:\n\n{{pricing:bienvenida,paquetes,privadas}}' } },
+    { q: { es: '¿Cuáles son las opciones?', en: 'What are the options?' }, a: PRODUCTION_BUILD
+      // J4: no private-class row in production; the private-class answer below points to the studio.
+      ? { es: 'Estas son las opciones de lanzamiento, en pesos colombianos:\n\n{{pricing:bienvenida,paquetes}}', en: 'These are the launch options, in Colombian pesos:\n\n{{pricing:bienvenida,paquetes}}' }
+      : { es: 'Estas son las opciones de lanzamiento, en pesos colombianos:\n\n{{pricing:bienvenida,paquetes,privadas}}', en: 'These are the launch options, in Colombian pesos:\n\n{{pricing:bienvenida,paquetes,privadas}}' } },
     { q: { es: '¿Cuánto tiempo tengo para usar mi paquete de 12 clases?', en: 'How long do I have to use my 12-class package?' }, a: { es: `Tienes ${Math.round((priceItem('pack12')?.validityDays ?? 90) / 30)} meses para usar tus 12 clases.`, en: `You have ${Math.round((priceItem('pack12')?.validityDays ?? 90) / 30)} months to use your 12 classes.` } },
     { q: { es: '¿Puedo pausar mi paquete?', en: 'Can I pause my package?' }, a: { es: `Sí. Puedes congelar tu paquete de 12 clases ${P.freezesPerPackage === 1 ? 'una sola vez' : `${P.freezesPerPackage} veces`}, hasta por ${P.freezeMaxDays} días.`, en: `Yes. You can freeze your 12-class package ${P.freezesPerPackage === 1 ? 'once' : `${P.freezesPerPackage} times`}, for up to ${P.freezeMaxDays} days.` } },
     { q: { es: '¿Hacen reembolsos?', en: 'Do you offer refunds?' }, a: { es: 'No. El paquete de 12 clases no es reembolsable.', en: 'No. The 12-class package is non-refundable.' } },
     { q: { es: 'Soy afiliado de Santa María Tennis Club. ¿Tengo beneficios en HOY?', en: 'I’m a Santa María Tennis Club affiliate. Do I get benefits at HOY?' }, a: { es: `Tienes un precio especial en el paquete de 12 clases: ${cop('pack12_smtc')}. No hay otros beneficios entre Santa María Tennis Club y HOY.`, en: `You get a special price on the 12-class package: ${usd('pack12_smtc')}. There are no other benefits between Santa María Tennis Club and HOY.` } },
-    { q: { es: '¿Tienen clases privadas?', en: 'Do you offer private classes?' }, a: { es: `Sí. Una clase privada cuesta ${cop('private')} y cada persona adicional, ${cop('private_extra')}. Máximo ${priceItem('private')?.maxPeople ?? 3} personas por clase privada.`, en: `Yes. A private class costs ${usd('private')}, and each additional person is ${usd('private_extra')}. Maximum ${priceItem('private')?.maxPeople ?? 3} people per private class.` } },
+    // J4 (production): the private class has no public price; the studio quotes it.
+    { q: { es: '¿Tienen clases privadas?', en: 'Do you offer private classes?' }, a: PRODUCTION_BUILD
+      ? { es: `Sí, para máximo ${priceItem('private')?.maxPeople ?? 3} personas. El precio se acuerda con el estudio: escríbenos por WhatsApp.`, en: `Yes, for up to ${priceItem('private')?.maxPeople ?? 3} people. The price is agreed with the studio: write to us on WhatsApp.` }
+      : { es: `Sí. Una clase privada cuesta ${cop('private')} y cada persona adicional, ${cop('private_extra')}. Máximo ${priceItem('private')?.maxPeople ?? 3} personas por clase privada.`, en: `Yes. A private class costs ${usd('private')}, and each additional person is ${usd('private_extra')}. Maximum ${priceItem('private')?.maxPeople ?? 3} people per private class.` } },
     { q: { es: '¿En qué idioma son las clases?', en: 'What language are the classes in?' }, a: { es: 'La mayoría son en español. Algunas pueden ser en inglés.', en: 'Most are in Spanish. Some may be taught in English.' } },
   ] },
   { group: 's2', page: 1, title: { es: '02 · Reservas, cancelaciones y no-show', en: '02 · Booking, cancellation and no-show' }, lead: { es: 'Cómo reservar, hasta cuándo cancelar y qué pasa si no llegas.', en: 'How to book, when you can cancel and what happens if you miss a class.' }, items: [
@@ -76,8 +83,11 @@ const FAQ: FaqSeed[] = [
   { group: 's3', page: 1, title: { es: '03 · Tarjetas de regalo', en: '03 · Gift cards' }, lead: { es: 'Regala una clase o un paquete.', en: 'Give a class or a package.' }, items: [
     { q: { es: '¿Puedo regalar HOY?', en: 'Can I give HOY as a gift?' }, a: { es: 'Sí. Hay dos tarjetas de regalo, al mismo precio de las clases:\n\n{{pricing:regalos}}\n\nPuedes comprar varias clases individuales, o dos o más paquetes de 12 clases, para regalar a quien quieras.', en: 'Yes. There are two gift cards, at the same price as the classes:\n\n{{pricing:regalos}}\n\nYou can buy several individual classes, or two or more 12-class packages, to give to whoever you like.' } },
   ] },
-  { group: 's4', page: 2, title: { es: '04 · Pagos', en: '04 · Payments' }, lead: { es: 'Cómo pagar en línea y en recepción.', en: 'How to pay online and at the front desk.' }, items: [
-    { q: { es: '¿Qué medios de pago aceptan?', en: 'What payment methods do you accept?' }, a: { es: 'Puedes pagar en línea en la página web, con código QR de Wompi o por PSE. En recepción hay diferentes medios de pago, incluido el efectivo.', en: 'You can pay online on the website, with a Wompi QR code or through PSE. At the front desk there are several payment methods, cash included.' } },
+  { group: 's4', page: 2, title: { es: '04 · Pagos', en: '04 · Payments' }, lead: PRODUCTION_BUILD ? { es: 'Cómo pagar por transferencia y en recepción.', en: 'How to pay by bank transfer and at the front desk.' } : { es: 'Cómo pagar en línea y en recepción.', en: 'How to pay online and at the front desk.' }, items: [
+    { q: { es: '¿Qué medios de pago aceptan?', en: 'What payment methods do you accept?' }, a: PRODUCTION_BUILD
+      // Launch: no online gateway; a bank transfer with the receipt uploaded in the app, or the front desk.
+      ? { es: 'Puedes pagar por transferencia (con comprobante en la app) o en recepción, donde hay diferentes medios de pago, incluido el efectivo.', en: 'You can pay by bank transfer (with the receipt uploaded in the app) or at the front desk, where there are several payment methods, cash included.' }
+      : { es: 'Puedes pagar en línea en la página web, con código QR de Wompi o por PSE. En recepción hay diferentes medios de pago, incluido el efectivo.', en: 'You can pay online on the website, with a Wompi QR code or through PSE. At the front desk there are several payment methods, cash included.' } },
   ] },
   { group: 's5', page: 2, title: { es: '05 · Qué traer y el espacio', en: '05 · What to bring and the space' }, lead: { es: 'Lo que ponemos nosotros y lo que encuentras en el estudio.', en: 'What we provide and what you will find at the studio.' }, items: [
     { q: { es: '¿Qué debo llevar?', en: 'What should I bring?' }, a: { es: 'Nosotros ponemos el mat y todos los implementos. Si quieres, trae una toalla pequeña para la cara y un termo para hidratarte.', en: 'We provide the mat and all the props. If you like, bring a small face towel and a bottle to stay hydrated.' } },

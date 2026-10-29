@@ -12,6 +12,8 @@ export function customerReturn(value: string | null | undefined): string | null 
     if (entries.length === 1 && entries[0][0] === 'mat' && /^[1-9]\d*$/.test(entries[0][1])) return `${path}?mat=${entries[0][1]}`;
   }
   if (/^\/app\/waitlist\/[A-Za-z0-9_-]+$/.test(path) && !entries.length) return path;
+  // The website's signed-out schedule prompt returns to the app's live timetable.
+  if (path === '/app/schedule' && !entries.length) return path;
   if (path === '/app/plans') {
     if (!entries.length) return path;
     if (entries.length === 1 && entries[0][0] === 'plan' && /^[A-Za-z0-9_-]+$/.test(entries[0][1])) return `${path}?plan=${entries[0][1]}`;
