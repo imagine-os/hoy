@@ -21,6 +21,7 @@ import { PriceRow } from '../../../components/molecule/PriceRow/PriceRow';
 import { formatCOP } from '../../../i18n/format';
 import { PageHead, SiteShell } from '../SiteShell';
 import { siteSpecs } from '../specs';
+import { GIFT_PURCHASE_PATH } from '../../../config/launchRoutes';
 
 /**
  * P-01 — the launch price list (0051). Amounts come from the product master (useLivePricing, SW-02); names and the "why it exists" rationale from src/tenant/pricing.ts;
@@ -100,9 +101,9 @@ export function PlansPage() {
           </Card>
           <Card eyebrow={bi(FAMILY_RATIONALE.regalos.role)} title={bi(FAMILY_LABEL.regalos)}>
             <p className="small muted">{bi(FAMILY_RATIONALE.regalos.subtitle)}</p>
-            {prices.byFamily('regalos').map((p) => <PriceRow key={p.id} item={p} onSelect={() => nav('/auth/sign-in?next=%2Fapp%2Fgift')} />)}
+            {prices.byFamily('regalos').map((p) => <PriceRow key={p.id} item={p} onSelect={() => nav(`/auth/sign-in?next=${encodeURIComponent(GIFT_PURCHASE_PATH)}`)} />)}
             <p className="small muted" style={{ marginTop: 'var(--stack)' }}>{t('site.plans.gift.note')}</p>
-            <div style={{ marginTop: 'var(--stack-loose)' }}><Button variant="secondary" onClick={() => nav('/auth/sign-in?next=%2Fapp%2Fgift')}>{t('site.plans.gift.cta')}</Button></div>
+            <div style={{ marginTop: 'var(--stack-loose)' }}><Button variant="secondary" onClick={() => nav(`/auth/sign-in?next=${encodeURIComponent(GIFT_PURCHASE_PATH)}`)}>{t('site.plans.gift.cta')}</Button></div>
           </Card>
         </div>
       </section>

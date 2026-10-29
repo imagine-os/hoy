@@ -27,6 +27,7 @@ import { need, useAppNavHandlers } from '../actions';
 import { canvasSpecs } from '../specs';
 import { SERVER_RULES } from '../booking/bookingPolicy';
 import { safeCheckoutReturn } from '../booking/serverBooking';
+import { GIFT_PURCHASE_PATH } from '../../../config/launchRoutes';
 
 const spec = canvasSpecs['C-06'];
 const PENDING_PASS_KEY = 'hoyos.customer.pendingPass';
@@ -159,7 +160,7 @@ export function PlansPage() {
           </Card>
           <Card tone="muted" className="row-between wrap">
             <span className="small">{t('customer.plans.gift')}</span>
-            <Link to="/app/gift"><Button size="sm" variant="secondary">{t('customer.plans.gift.cta')} →</Button></Link>
+            <Link to={GIFT_PURCHASE_PATH}><Button size="sm" variant="secondary">{t('customer.plans.gift.cta')} →</Button></Link>
           </Card>
         </div>
       </div>

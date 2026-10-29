@@ -18,6 +18,7 @@ import { useActions } from '../../../actions';
 import type { ActionHandler } from '../../../actions/types';
 import { CONTACT_INTENTS, type ContactIntent } from '../../../tenant/contacts';
 import { canvasSpecs } from '../specs';
+import { GIFT_PURCHASE_PATH } from '../../../config/launchRoutes';
 
 const spec = canvasSpecs['C-25'];
 
@@ -75,7 +76,7 @@ export function MorePage() {
 
         <ListGroup>
           <ListRow icon="invite" title={t('customer.invite.title')} to="/app/invite" />
-          <ListRow icon="gift" title={t('customer.gift.title')} to="/app/gift" />
+          <ListRow icon="gift" title={t('customer.gift.title')} to={GIFT_PURCHASE_PATH} />
           <ListRow icon="ticket" title={t('vouchers.title')} to="/app/vouchers" />
           <ListRow icon="sparkle" title={t('customer.events.title')} to="/app/events" />
           <ListRow icon="users" title={t('customer.teachers.title')} to="/app/teachers" />

@@ -17,7 +17,7 @@ export function customerReturn(value: string | null | undefined): string | null 
     if (entries.length === 1 && entries[0][0] === 'plan' && /^[A-Za-z0-9_-]+$/.test(entries[0][1])) return `${path}?plan=${entries[0][1]}`;
   }
   if(path==='/app/voucher-gifts'&&(!entries.length||entries.length===1&&entries[0][0]==='gift'&&/^[A-Za-z0-9_-]+$/.test(entries[0][1])))return `${path}${entries.length?`?gift=${entries[0][1]}`:''}`;
-  if (path === '/app/gift' && !entries.length) return path;
+  if ((path === '/app/gift' || path === '/app/gift-voucher') && !entries.length) return path;
   return null;
 }
 
