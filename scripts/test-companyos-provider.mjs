@@ -277,6 +277,30 @@ try {
     assert.equal(queriesOf(api, 'resource').length, 1); a[0].name = 'changed'; assert.equal(b[0].name, 'Sala principal');
     assert.equal(a[0].heated, true, 'room heating from build content');
   });
+  await test('list: a read after a write never joins a read that started before it (no stale rows)', async () => {
+    const api = fakeApi(); api.put('resource', { name: 'Sala principal', kind: 'room', capacity: 16 });
+    let release; const gate = new Promise((r) => { release = r; });
+    let held = false;
+    const fetch = async (url, init) => {
+      // The first room read is held until after the write: it answers with the rows of before the write.
+      if (!held && String(url).endsWith('/query') && JSON.parse(init.body).entity === 'resource') { held = true; const res = await api.fetch(url, init); await gate; return res; }
+      return api.fetch(url, init);
+    };
+    const p = make(api, { fetch });
+    const before = p.list('rooms');
+    await new Promise((r) => setTimeout(r, 5));
+    await p.insert('rooms', { name: 'Sala dos', capacity: 8 });
+    const after = p.list('rooms');
+    await new Promise((r) => setTimeout(r, 5)); // the refetch reaches the shared-read table while the old read is still out
+    release();
+    assert.equal((await before).length, 1, 'the old read keeps its own answer');
+    assert.deepEqual((await after).map((r) => r.name).sort(), ['Sala dos', 'Sala principal'], 'the refetch sent its own query');
+    assert.equal(queriesOf(api, 'resource').length, 2);
+    // The old read's cleanup leaves a newer shared read alone: two reads now still share one request.
+    const n = queriesOf(api, 'resource').length;
+    await Promise.all([p.list('rooms'), p.list('rooms')]);
+    assert.equal(queriesOf(api, 'resource').length, n + 1);
+  });
   await test('get: record by id; 404 → null; class_ledger reads through the query', async () => {
     const api = fakeApi(); const rec = api.put('occurrence', { title: 'Pulso', starts_at: '2026-11-01T12:00:00Z', ends_at: '2026-11-01T12:50:00Z', capacity: 16, status: 'scheduled' });
     const p = make(api);
@@ -390,6 +414,16 @@ try {
     };
     const p = new CompanyOSProvider({ fetch, getToken: async () => 'tok-1', retryDelayMs: 1, sleep: async () => {} });
     await assert.rejects(p.request('POST', '/invitations', { email: 'a@example.test' }, { idempotencyKey: 'key-inv-0001' }), (e) => e.code === 'invitation_failed' && e.status === 502 && !e.ambiguous);
+    assert.equal(n, 1);
+  });
+  await test('transport: 502 storage_unavailable is the API\'s answer (not retried, not ambiguous)', async () => {
+    let n = 0;
+    const fetch = async (url) => {
+      if (String(url).endsWith('app-config.json')) return new Response(JSON.stringify({ tenant: 'hoy', apiBase: '/api/cos' }), { status: 200 });
+      n++; return new Response(JSON.stringify({ error: 'storage_unavailable' }), { status: 502 });
+    };
+    const p = new CompanyOSProvider({ fetch, getToken: async () => 'tok-1', retryDelayMs: 1, sleep: async () => {} });
+    await assert.rejects(p.request('POST', '/files', { kind: 'receipt' }, { idempotencyKey: 'key-file-0001' }), (e) => e.code === 'storage_unavailable' && e.status === 502 && !e.ambiguous);
     assert.equal(n, 1);
   });
   await test('transport: refusal → CompanyOSError with the code; message is the code', async () => {

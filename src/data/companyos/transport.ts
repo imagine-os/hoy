@@ -234,8 +234,11 @@ export class Transport {
   }
 }
 
-/** 5xx answers that are the API's own result, not a lost answer: `502 invitation_failed` (the login was committed). */
-const API_5XX = new Set(['invitation_failed']);
+/**
+ * 5xx answers that are the API's own result, not a lost answer: `502 invitation_failed` (the login was committed) and
+ * `502 storage_unavailable` (the file store refused; the API answered, so retrying as if the answer were lost is wrong).
+ */
+const API_5XX = new Set(['invitation_failed', 'storage_unavailable']);
 
 /**
  * An answer that says the request may not have reached the API, or its answer was lost on the way back: a 502 or 504

@@ -139,6 +139,7 @@ await test('static: / serves dist/index.html, never cached stale', async () => {
   assert.match(r.body.toString(), /<title>Hoy<\/title>/);
   assert.equal(r.headers['x-content-type-options'], 'nosniff');
   assert.equal(r.headers['x-frame-options'], 'SAMEORIGIN');
+  assert.equal(r.headers['content-security-policy'], "object-src 'none'; base-uri 'self'; frame-ancestors 'self'", 'the pages carry the baseline policy');
 });
 
 await test('static: a folder without its slash redirects (query kept), with it serves its index.html', async () => {
@@ -158,6 +159,7 @@ await test('static: hashed assets are immutable and gzip on request', async () =
   assert.equal(r.status, 200);
   assert.equal(r.headers['content-encoding'], 'gzip');
   assert.match(r.headers['cache-control'], /immutable/);
+  assert.equal(r.headers['content-security-policy'], undefined, 'scripts need no page policy');
   assert.equal(gunzipSync(r.body).toString(), bigJs);
   const plain = await request('GET', '/assets/index-abc123.js');
   assert.equal(plain.headers['content-encoding'], undefined);

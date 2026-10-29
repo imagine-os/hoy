@@ -38,9 +38,8 @@ const REQUIRED = {
  * or whose fields the connector doesn't carry yet, each owned by another lane of the final review. Reported, not fixed.
  */
 const KNOWN_GAPS = {
-  deletion_requests: 'no adapter: P-/M- account deletion requests (CU-04) refuse not_in_launch; lane F2 (customer) / F3 (admin)',
+  deletion_requests: 'no adapter: P- account deletion requests (CU-04) refuse not_in_launch; customer lane (the admin queue /admin/crm/deletions is not a launch route since G2)',
   expenses: 'expense and expense_template fields (cadence, day_of_month) and permissions; lanes F3 (staff, S-11) and F5 (Company OS)',
-  space_bookings: 'no adapter: /staff/rooms (a launch route) lists, creates and updates room bookings; found by this test, lane F3 (staff)',
 };
 
 try {

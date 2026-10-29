@@ -101,7 +101,9 @@ export class CompanyOSProvider implements DataProvider {
     const key = `${table}|${JSON.stringify(q ?? null)}`;
     let p = this.inflight.get(key);
     if (!p) {
-      p = (this.listEntity(a, q) as Promise<Row[]>).finally(() => this.inflight.delete(key));
+      // A write drops the table's entries (`changed`), so the cleanup removes only this read's own entry.
+      const read: Promise<Row[]> = (this.listEntity(a, q) as Promise<Row[]>).finally(() => { if (this.inflight.get(key) === read) this.inflight.delete(key); });
+      p = read;
       this.inflight.set(key, p);
     }
     return (await p).map((r) => outbound(table, clone(r), self)) as unknown as T[];
@@ -430,6 +432,8 @@ export class CompanyOSProvider implements DataProvider {
   private changed(tables: string[]) {
     const all = new Set<string>();
     for (const t of tables) { all.add(t); for (const r of RELATED[t] ?? []) all.add(r); }
+    // A read that started before the write may answer with the old rows: the refetch below must not join it.
+    for (const key of [...this.inflight.keys()]) if (all.has(key.slice(0, key.indexOf('|')))) this.inflight.delete(key);
     for (const table of all) this.emit({ table, type: 'reset' });
   }
 

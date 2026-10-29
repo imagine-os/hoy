@@ -52,6 +52,11 @@ function visitorSession(status: SessionStatus, refresh: () => void, signOut: () 
 
 type MeState = { key: string; status: 'loading' | 'member' | 'not-member' | 'unverified' | 'error'; me?: MeInfo };
 
+/** How long sign-in and private routes wait for Clerk before they show the error state (a blocked or failed script). */
+export const CLERK_LOAD_TIMEOUT_MS = 10_000;
+/** Clerk can't be started again in place once its script failed: retrying is a fresh page load. */
+const reloadPage = () => window.location.reload();
+
 function ClerkSession({ config, children }: { config: AppConfig; children: ReactNode }) {
   const clerk = useClerk();
   const { isLoaded, isSignedIn, userId, sessionId } = useAuth();
@@ -59,12 +64,33 @@ function ClerkSession({ config, children }: { config: AppConfig; children: React
   const [me, setMe] = useState<MeState | null>(null);
   const refresh = useCallback(() => setNonce((n) => n + 1), []);
 
-  // Company OS calls (here and in H-3's provider) ask this for a fresh token per request.
+  // Clerk that never loads (`status: 'error'`, or still loading after the timeout) is an error, not an endless spinner.
+  // `'degraded'` counts as loaded (Clerk sets `isLoaded` for it). A Clerk that loads late still recovers on its own.
+  const clerkStatus = (clerk as { status?: string }).status;
+  const [timedOut, setTimedOut] = useState(false);
   useEffect(() => {
+    if (isLoaded) { setTimedOut(false); return; }
+    const timer = setTimeout(() => setTimedOut(true), CLERK_LOAD_TIMEOUT_MS);
+    return () => clearTimeout(timer);
+  }, [isLoaded]);
+  const clerkFailed = !isLoaded && (clerkStatus === 'error' || timedOut);
+
+  // Company OS calls (here and in H-3's provider) ask this for a fresh token per request. Once Clerk has failed they
+  // are answered as signed out at once, instead of each waiting for a Clerk that won't come.
+  useEffect(() => {
+    if (clerkFailed) { setSessionTokenSource(async () => null); return () => setSessionTokenSource(null); }
     if (!isLoaded) return;
     setSessionTokenSource(async (options) => (clerk.session ? (await clerk.session.getToken({ skipCache: !!options?.refresh })) ?? null : null));
     return () => setSessionTokenSource(null);
-  }, [clerk, isLoaded]);
+  }, [clerk, isLoaded, clerkFailed]);
+
+  // CU-04: a session that ends without our sign-out (expiry, or sign-out in another tab) leaves no traces either.
+  const wasSignedIn = useRef(false);
+  useEffect(() => {
+    if (!isLoaded) return;
+    if (wasSignedIn.current && !isSignedIn) clearLocalTraces();
+    wasSignedIn.current = !!isSignedIn;
+  }, [isLoaded, isSignedIn]);
   useEffect(() => subscribeUnauthorized(refresh), [refresh]);
 
   const key = isSignedIn ? `${userId}|${sessionId}|${nonce}` : '';
@@ -99,7 +125,7 @@ function ClerkSession({ config, children }: { config: AppConfig; children: React
   }, [clerk]);
 
   const value = useMemo<SessionCtx>(() => {
-    if (!isLoaded) return visitorSession('loading', refresh);
+    if (!isLoaded) return clerkFailed ? visitorSession('error', reloadPage) : visitorSession('loading', refresh);
     if (!isSignedIn) return visitorSession('ready', refresh);
     const current = me && me.key === key ? me : null;
     if (!current || current.status === 'loading') return visitorSession('loading', refresh, signOut, true);
@@ -119,7 +145,7 @@ function ClerkSession({ config, children }: { config: AppConfig; children: React
       can: (p) => roleCan(role, p),
       hasRole: (roles) => roles.includes('public') || roles.includes(role),
     };
-  }, [isLoaded, isSignedIn, me, key, refresh, signOut]);
+  }, [isLoaded, clerkFailed, isSignedIn, me, key, refresh, signOut]);
 
   // A different person (or none) remounts everything below: no screen state survives a sign-out or a switch.
   return <SessionContext.Provider key={isSignedIn ? `${userId}|${sessionId}` : 'visitor'} value={value}>{children}</SessionContext.Provider>;

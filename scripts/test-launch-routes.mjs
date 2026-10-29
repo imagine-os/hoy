@@ -29,6 +29,8 @@ for (const r of production) check(`production route is listed: ${r}`, listed(r.s
 const flows = ['/app/pay/:what/:id', '/app/receipts', '/app/receipts/:paymentId', '/staff/receipts/:paymentId', '/app/vouchers/:code',
   '/app/gift-voucher', '/admin/payments/report', '/app/checkout/:id', '/staff/transfers', '/admin/emails'];
 for (const f of flows) check(`launch flow is listed: ${f}`, listed(f));
+// Out of launch (final review round 2, G2): pages on tables without a Company OS adapter.
+for (const p of ['/staff/rooms', '/admin/crm/deletions', '/admin/tables']) check(`not a launch route (no Company OS data): ${p}`, !listed(p));
 check('the gift purchase goes to the production gift page in the production build', /GIFT_PURCHASE_PATH = PRODUCTION_BUILD \? '\/app\/gift-voucher'/.test(src));
 
 // Links in production code: every literal app path (`to="/app/…"`, `nav('/app/…')`, `/app/x/${id}`) in the customer,

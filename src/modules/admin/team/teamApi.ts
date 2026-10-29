@@ -8,8 +8,12 @@ import type { CosRequest } from '../../staff/desk/wire';
  * - invite: `POST /invitations { email, roleKey, redirectUrl }`; Company OS creates the login, the membership and the
  *   sign-in invitation and hands back its link. The provider sends no email: this app sends it (`comms_log` with
  *   `deliver: true`), as §12 asks. Re-sending is safe (the newest link stays valid).
+ * - re-send: the same `POST /invitations` (the membership is reused; the link created last stays valid, and a failed
+ *   re-send leaves the earlier link working). Company OS refuses it (`role_mismatch`) for a login holding any other
+ *   role, so for Administration the `super_admin` membership is set aside for the call and added back after it.
  * - change role: add the new membership first, then remove the old ones (there is no in-place role change), so a
- *   failure half-way leaves the person with too much access for a retry to fix, never with none.
+ *   failure half-way leaves the person with too much access for a retry to fix, never with none
+ *   (`PartialTeamChange`: the screen says so and offers the retry).
  * - remove: `DELETE /admin/memberships/:id`.
  *
  * Administration also holds the tenant `super_admin` membership (decision AD-04): Company OS reads `isSuperAdmin` from a
@@ -54,9 +58,20 @@ async function addMembership(request: CosRequest, email: string, name: string | 
  *   added with `POST /admin/users`. No email is sent; they sign in with their usual account.
  * - `signed_up`: `409 already_signed_up`: the role is in place, Company OS sent no invitation; they can sign in now.
  */
-export type InviteResult = { kind: 'invited'; url: string } | { kind: 'added' } | { kind: 'signed_up' };
+export type InviteResult = { kind: 'invited'; url: string } | { kind: 'added' } | { kind: 'signed_up' } | { kind: 'has_account' };
 
-export async function invite(request: CosRequest, rawEmail: string, roleKey: TeamRoleKey, redirectUrl: string): Promise<InviteResult> {
+/**
+ * A team write that stopped after its first step: `changeRole` added the new role but could not remove an old one
+ * (they now hold both) or could not add the role's second membership (`incomplete`: Administration without
+ * `super_admin`), or `removeFromTeam` removed only part of the access. Running the same action again finishes it.
+ */
+export class PartialTeamChange extends Error {
+  constructor(readonly step: 'role_added' | 'incomplete' | 'partly_removed', readonly cause: unknown) { super(step); this.name = 'PartialTeamChange'; }
+}
+/** The invitation exists but an Administration login is missing `super_admin`: the list offers "Completar acceso". */
+export type InviteOutcome = InviteResult & { repair?: boolean };
+
+export async function invite(request: CosRequest, rawEmail: string, roleKey: TeamRoleKey, redirectUrl: string): Promise<InviteOutcome> {
   const email = rawEmail.trim().toLowerCase();
   let result: InviteResult;
   try {
@@ -71,9 +86,56 @@ export async function invite(request: CosRequest, rawEmail: string, roleKey: Tea
       throw e;
     }
   }
-  // After the invitation: `/invitations` refuses (role_mismatch) a login already holding `super_admin`.
-  if (roleKey === 'administrator') await addMembership(request, email, null, SUPER_ADMIN);
+  // After the invitation: `/invitations` refuses (role_mismatch) a login already holding `super_admin`. The invitation
+  // exists by now, so a failure here doesn't hide its link: the caller still emails it and the list offers the repair.
+  if (roleKey === 'administrator') {
+    try { await addMembership(request, email, null, SUPER_ADMIN); } catch { return { ...result, repair: true }; }
+  }
   return result;
+}
+
+/**
+ * Re-sends a listed team user's invitation (integration guide §12). `already_signed_up` means they have an account and
+ * can sign in; `role_mismatch` (`has_account`) means the login holds another role (a customer account), so they sign in
+ * with it. Open for Company OS: `/invitations` could accept `super_admin` beside `administrator`, so nothing is set aside.
+ */
+export async function resendInvitation(request: CosRequest, user: TeamUser, redirectUrl: string): Promise<InviteOutcome> {
+  const roleKey = teamRoleOf(user);
+  if (!roleKey) throw Object.assign(new Error('not_on_team'), { code: 'not_on_team' });
+  const email = user.email.trim().toLowerCase();
+  let setAside = 0;
+  /**
+   * Gives `super_admin` back only when this call took it and the person is still Administration, read afresh: another
+   * administrator may have demoted or removed them meanwhile, and that decision must stand. `false` = it needs repair.
+   */
+  const restore = async (): Promise<boolean> => {
+    if (roleKey !== 'administrator') return true;
+    try {
+      const now = (await request<{ users: TeamUser[] }>('GET', '/admin/users')).users.find(u => u.userId === user.userId);
+      if (!now?.memberships.some(m => m.roleKey === 'administrator')) return true; // no longer Administration: nothing to give back
+      if (!setAside && now.memberships.some(m => m.roleKey === SUPER_ADMIN)) return true;
+      await addMembership(request, email, user.name, SUPER_ADMIN);
+      return true;
+    } catch { return false; }
+  };
+  let result: InviteResult;
+  try {
+    for (const m of roleKey === 'administrator' ? user.memberships.filter(m => m.roleKey === SUPER_ADMIN) : []) {
+      await request('DELETE', `/admin/memberships/${encodeURIComponent(m.membershipId)}`);
+      setAside++;
+    }
+    const res = await request<{ userId: string; invitationId: string; url: string }>('POST', '/invitations', { email, roleKey, redirectUrl });
+    result = { kind: 'invited', url: res.url };
+  } catch (e) {
+    if (code(e) === 'already_signed_up') result = { kind: 'signed_up' };
+    else if (code(e) === 'role_mismatch') result = { kind: 'has_account' };
+    else {
+      const ok = await restore();
+      throw ok ? e : Object.assign(e as object, { repair: true });
+    }
+  }
+  // Administration holds `super_admin` again afterwards (also when it was missing: the resend repairs it).
+  return (await restore()) ? result : { ...result, repair: true };
 }
 
 /** A team user missing one of their role's memberships (an Administration without `super_admin`): `changeRole` repairs it. */
@@ -81,12 +143,20 @@ export const needsRepair = (u: TeamUser) => { const role = teamRoleOf(u); return
 
 export async function changeRole(request: CosRequest, user: TeamUser, roleKey: TeamRoleKey) {
   const keep = KEYS_OF[roleKey];
-  for (const k of keep) if (!user.memberships.some(m => m.roleKey === k)) await addMembership(request, user.email, user.name, k);
-  for (const m of user.memberships.filter(m => isStaffKey(m.roleKey) && !keep.includes(m.roleKey))) await request('DELETE', `/admin/memberships/${encodeURIComponent(m.membershipId)}`);
+  let wrote = false; // something was written already: a later failure is half-applied, not "nothing changed"
+  const step = async (failed: PartialTeamChange['step'], work: () => Promise<unknown>) => {
+    try { await work(); wrote = true; } catch (e) { throw wrote ? new PartialTeamChange(failed, e) : e; }
+  };
+  for (const k of keep) if (!user.memberships.some(m => m.roleKey === k)) await step('incomplete', () => addMembership(request, user.email, user.name, k));
+  for (const m of user.memberships.filter(m => isStaffKey(m.roleKey) && !keep.includes(m.roleKey))) await step('role_added', () => request('DELETE', `/admin/memberships/${encodeURIComponent(m.membershipId)}`));
 }
 
 export async function removeFromTeam(request: CosRequest, user: TeamUser) {
-  for (const m of user.memberships.filter(m => isStaffKey(m.roleKey))) await request('DELETE', `/admin/memberships/${encodeURIComponent(m.membershipId)}`);
+  let removed = 0;
+  for (const m of user.memberships.filter(m => isStaffKey(m.roleKey))) {
+    try { await request('DELETE', `/admin/memberships/${encodeURIComponent(m.membershipId)}`); removed++; }
+    catch (e) { if (removed) throw new PartialTeamChange('partly_removed', e); throw e; }
+  }
 }
 
 /** Where an invitation lands: sign-in, then the role's home (the server compares the origin only). */

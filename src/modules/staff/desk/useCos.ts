@@ -4,7 +4,8 @@ import { cosRequest, errorCode, type CosRequest } from './wire';
 
 /** A Company OS row as `/query` returns it: id and stamps plus the entity's fields. */
 export type CosRow = { id: string; created_at?: string; updated_at?: string } & Record<string, unknown>;
-export interface QuerySpec { entity: string; filter?: unknown; sort?: { field: string; dir?: 'asc' | 'desc' }[]; limit?: number; offset?: number; aggregate?: unknown }
+/** `dir` is required: Company OS `/query` sorts descending when it is left out. */
+export interface QuerySpec { entity: string; filter?: unknown; sort?: { field: string; dir: 'asc' | 'desc' }[]; limit?: number; offset?: number; aggregate?: unknown }
 
 /** Every row of a query, 500 at a time (the API's page size). */
 export async function queryAll(request: CosRequest, spec: QuerySpec, max = 5000): Promise<CosRow[]> {
