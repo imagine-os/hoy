@@ -5,7 +5,7 @@
 export const BOOKING_REFUSALS = [
   // bookings
   'occurrence_full', 'occurrence_not_open', 'already_booked', 'daily_limit_reached', 'spot_required', 'spot_invalid', 'spot_taken',
-  'hold_expired', 'reschedule_window_closed', 'invalid_transition', 'booking_system_managed', 'reason_required',
+  'hold_expired', 'reschedule_window_closed', 'invalid_transition', 'booking_system_managed', 'reason_required', 'payment_under_review',
   // credits (a booking from the balance, a redeemed voucher)
   'no_credits', 'lot_expired', 'lot_frozen', 'trial_used', 'voucher_invalid', 'voucher_expired', 'voucher_redeemed', 'voucher_used_up',
   // payments and files (the receipt for a held class)

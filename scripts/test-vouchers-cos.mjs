@@ -18,7 +18,9 @@ const test = async (name, fn) => {
 try {
   const file = join(dir, 'model.mjs');
   const entry = "export * from './src/modules/vouchers/production/model.ts'; export { adapterFor, fromRecord } from './src/data/companyos/mapping.ts';";
-  await build({ stdin: { contents: entry, resolveDir: process.cwd(), loader: 'ts' }, bundle: true, platform: 'node', format: 'esm', outfile: file, logLevel: 'silent' });
+  await build({ stdin: { contents: entry, resolveDir: process.cwd(), loader: 'ts' }, bundle: true, platform: 'node', format: 'esm', outfile: file, logLevel: 'silent',
+    // The production screens and the connector read the build flag (src/config/launch.ts).
+    define: { 'import.meta.env': '{"VITE_HOY_BUILD":"production"}' } });
   const m = await import(pathToFileURL(file));
   const mapping = { adapterFor: m.adapterFor, fromRecord: m.fromRecord };
   /** A stored fixture row as the production `plans` / `payments` table reads it (the real mapping). */

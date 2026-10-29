@@ -18,6 +18,7 @@ export const CONTRACT_REFUSALS = {
   spot_invalid: { es: 'Ese tapete no existe en esta sala. Elige otro.', en: 'That mat does not exist in this room. Choose another.' },
   spot_taken: { es: 'Alguien acaba de tomar ese tapete. Elige otro.', en: 'Someone just took that mat. Choose another.' },
   hold_expired: { es: 'Se acabó el tiempo para pagar y el cupo se liberó. Reserva de nuevo si aún hay lugar.', en: 'The time to pay ran out and the place was released. Book again if there is still room.' },
+  payment_under_review: { es: 'Recepción está revisando el comprobante de esta reserva. Decide sobre el pago primero.', en: 'Reception is reviewing this booking\'s receipt. Decide on the payment first.' },
   reschedule_window_closed: { es: 'Ya no puedes mover esta reserva: el plazo para cambiarla terminó.', en: 'You can no longer move this booking: the window to change it has closed.' },
   invalid_transition: { es: 'Esta reserva ya no se puede cambiar así. Actualiza la página para ver su estado.', en: 'This booking can no longer be changed this way. Refresh to see its current status.' },
   booking_system_managed: { es: 'El estudio gestiona este cambio. Escríbenos si necesitas ayuda.', en: 'The studio handles this change. Write to us if you need help.' },

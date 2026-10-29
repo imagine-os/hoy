@@ -91,6 +91,7 @@ export const bookingStrings: StringTable = {
   'customer.refusal.spot_required': { es: 'Elige un mat para esta clase.', en: 'Pick a mat for this class.' },
   'customer.refusal.spot_invalid': { es: 'Ese mat no existe en esta sala. Elige otro.', en: 'That mat isn’t in this room. Pick another.' },
   'customer.refusal.spot_taken': { es: 'Alguien acaba de tomar ese mat. Elige otro.', en: 'Someone just took that mat. Pick another.' },
+  'customer.refusal.payment_under_review': { es: 'Recepción está revisando tu comprobante: tu cupo sigue guardado. Podrás cancelar cuando lo revise.', en: 'Reception is reviewing your receipt: your spot is still kept. You can cancel once they have reviewed it.' },
   'customer.refusal.hold_expired': { es: 'Se acabó el tiempo para pagar y el cupo se liberó.', en: 'The time to pay ran out and the spot was released.' },
   'customer.refusal.reschedule_window_closed': { es: 'Ya no se puede mover: el cambio cierra horas antes de la clase.', en: 'It can no longer be moved: moving closes hours before the class.' },
   'customer.refusal.invalid_transition': { es: 'Esta reserva ya no se puede cambiar así. Actualiza la página.', en: 'This booking can’t be changed that way any more. Refresh the page.' },

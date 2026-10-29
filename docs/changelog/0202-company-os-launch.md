@@ -18,4 +18,6 @@ files: server/*, .railway/railway.ts, .github/workflows/*, src/main.tsx, src/app
 
 **Final review round 1 (F1, F2, F3).** Vouchers moved onto the connector with a contract test; receipts visible to the desk; the held-class receipt goes through the transfer pay page; lost answers keep their key; production links only to launch routes; signed-out visitors see no review-build prices; the deletion request works without a backend form; the team panel handles the Super Admin membership; staff invitations land on sign-in; writes without a key are not retried.
 
+**Final review round 2 (G1, G2).** No private-class price anywhere in production, the FAQ describes transfer or desk payment, `/app/passes` priced from Company OS, a sign-in prompt instead of an empty public timetable, the reception rooms page out of launch, resending a team invitation, ascending lists, a clear error when Clerk fails to load, and a customer can't cancel a held class while reception reviews its receipt (`payment_under_review`).
+
 Non-launch features stay in the code, hidden from the production build by the route allowlist. Review notes and decisions: Company OS `docs/customers/hoy/decision-log.md`.
