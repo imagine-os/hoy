@@ -124,7 +124,7 @@ export function ClassDetailPage() {
           <div className="site-cta-copy">
             <p className="eyebrow">{t('site.first.eyebrow')}</p>
             <h2>{brand(bi(taglines.life), 'current')}</h2>
-            <p>{t('site.first.body', { price: trialPrice })}</p>
+            {trialPrice && <p>{t('site.first.body', { price: trialPrice })}</p>}
           </div>
           <div className="row wrap">
             <Link to="/site/plans"><Button size="lg">{t('site.first.cta')}</Button></Link>

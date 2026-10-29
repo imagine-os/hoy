@@ -82,7 +82,9 @@ export function useEntitlements() {
     const membership = memberships.find((m) => m.status === 'active') ?? memberships.find((m) => m.status === 'paused') ?? null;
     const pkg = packageState(approvedPackageRows(ledger, payments));
     const plan = membership ? plans.find((p) => p.id === membership.plan_id) ?? null : pkg.purchase?.plan_id ? plans.find((p) => p.id === pkg.purchase!.plan_id) ?? null : null;
-    const trialUsed = bookings.some((b) => b.paid_with === 'trial') || payments.some((p) => p.plan_id === 'plan_trial' && p.status === 'approved');
+    // The trial is matched by product key (`slug`): in production each dated product row has its own id, never `plan_trial`.
+    const trialPlans = new Set(['plan_trial', ...plans.filter((p) => p.slug === 'trial').map((p) => p.id)]);
+    const trialUsed = bookings.some((b) => b.paid_with === 'trial') || payments.some((p) => !!p.plan_id && trialPlans.has(p.plan_id) && p.status === 'approved');
     const defaultKind: EntitlementKind = pkg.balance > 0 ? 'package' : membership?.status === 'active' ? 'membership' : trial.status==='eligible' ? 'trial' : 'single';
     return { membership, plan, ledger, pkg, classBalance: pkg.balance, nextExpiry: pkg.expiresAt, trialUsed, trial, payments, defaultKind, hasAnyEntitlement: pkg.balance > 0 || membership?.status === 'active' };
   }, [memberships, ledger, payments, bookings, plans, trial.status]);

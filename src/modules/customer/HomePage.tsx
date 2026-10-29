@@ -78,8 +78,8 @@ export function CustomerHomePage() {
       </section>
     ),
     'QuickActions ×4': () => (
-      <div className="cust-quick">
-        {([['/app/schedule', 'schedule', 'schedule'], ['/app/schedule', 'calendar-plus', 'book'], ['/app/plans', 'ticket', 'plans'], ['/app/invite', 'invite', 'invite']] as const).map(([to, icon, k]) => <Link key={k} to={to} className="cust-quick-btn"><span className="cust-quick-icon" aria-hidden><Icon name={icon} size="lg" /></span><span>{t(`customer.home.quick.${k}`)}</span></Link>)}
+      <div className={SERVER_RULES ? 'cust-quick is-three' : 'cust-quick'}>
+        {([['/app/schedule', 'schedule', 'schedule'], ['/app/schedule', 'calendar-plus', 'book'], ['/app/plans', 'ticket', 'plans'], ...(SERVER_RULES ? [] : [['/app/invite', 'invite', 'invite']] as const)] as const).map(([to, icon, k]) => <Link key={k} to={to} className="cust-quick-btn"><span className="cust-quick-icon" aria-hidden><Icon name={icon} size="lg" /></span><span>{t(`customer.home.quick.${k}`)}</span></Link>)}
       </div>
     ),
     'TodayList': () => (
@@ -135,7 +135,7 @@ function PracticeBlock({ stats, goal }: { stats: PracticeStats; goal: PracticeGo
     <section className="stack-sm cust-practice" aria-labelledby="cust-practice-title">
       <div className="row-between wrap">
         <h2 className="eyebrow" id="cust-practice-title">{t('customer.home.stats.title')}</h2>
-        <Link to="/app/practice" className="cust-practice-link">{t('customer.home.stats.more')} <Icon name="arrow-right" size="xs" /></Link>
+        {!SERVER_RULES && <Link to="/app/practice" className="cust-practice-link">{t('customer.home.stats.more')} <Icon name="arrow-right" size="xs" /></Link>}
       </div>
       <div className={`grid cust-practice-tiles ${stats.hasGoal ? '' : 'is-two'}`}>
         <StatTile label={t('customer.home.stats.classes')} value={stats.attendedThisMonth} hint={upcoming} />

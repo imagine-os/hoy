@@ -48,7 +48,7 @@ export function ClassicHomePage() {
           <h1>{bi(manifesto.lead)} <em>{bi(manifesto.emphasis)}</em></h1>
           <p className="site-lead muted">{t('site.hero.body', { city: tenant.city, mats: tenant.studio.mats, classes: tenant.studio.classesPerDay })}</p>
           <div className="row wrap">
-            <Link to="/site/plans"><Button size="lg">{t('site.hero.cta', { price: trialPrice })}</Button></Link>
+            <Link to="/site/plans"><Button size="lg">{trialPrice ? t('site.hero.cta', { price: trialPrice }) : t('site.first.cta')}</Button></Link>
             <Link to="/site/schedule"><Button size="lg" variant="secondary">{t('site.hero.cta2')}</Button></Link>
           </div>
         </div>
@@ -146,7 +146,7 @@ export function ClassicHomePage() {
           <div className="site-cta-copy">
             <p className="eyebrow">{t('site.first.eyebrow')}</p>
             <h2>{t('site.first.title')}</h2>
-            <p>{t('site.first.body', { price: trialPrice })}</p>
+            {trialPrice && <p>{t('site.first.body', { price: trialPrice })}</p>}
           </div>
           <div className="row wrap">
             <Link to="/site/plans"><Button size="lg">{t('site.first.cta')}</Button></Link>

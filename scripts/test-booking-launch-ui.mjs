@@ -71,7 +71,7 @@ try {
     const other = pickSession(adb, now, [target.id]);
     await page.goto(`${server.base}#/app/checkout/${other.id}`);
     await page.getByRole('radio').filter({ hasText: /12/ }).first().click();
-    await page.getByRole('button', { name: ES ? /Comprar y volver a esta clase/ : /Buy and come back to this class/ }).click();
+    await page.getByRole('button', { name: ES ? /Comprar y pagar por transferencia/ : /Buy and pay by transfer/ }).click();
     await page.waitForURL(/#\/app\/pay\/product\/pack12$/, { timeout: 10000 }).catch(() => {});
     check(`RS-03 [${tag}] buying the pack for a class opens its bank-transfer payment (no Wompi stand-in)`, page.url().endsWith('/app/pay/product/pack12'));
     // A link from outside (a fresh load) with a hostile return goes to the same payment and never leaves the app.
@@ -92,24 +92,33 @@ try {
     await writeDb(page, fresh);
     await page.goto(`${server.base}#/app/booking/bkg_h4_held`);
     await page.reload();
-    check(`PG-03 [${tag}] a held spot shows the receipt upload and the hold explainer`, await seen(page.getByText(ES ? /Enviar comprobante/ : /Send receipt/)) && await page.getByText(ES ? /Un comprobante enviado antes de la clase guarda el cupo/ : /A receipt sent before the class keeps the spot/).count() === 1);
+    const sendLink = page.getByRole('link', { name: ES ? /Enviar comprobante/ : /Send receipt/ });
+    check(`PG-03 [${tag}] a held spot links to its transfer payment (receipt) and shows the hold explainer`, await seen(sendLink) && (await sendLink.first().getAttribute('href'))?.endsWith('#/app/pay/booking/bkg_h4_held') && await page.getByText(ES ? /Un comprobante enviado antes de la clase guarda el cupo/ : /A receipt sent before the class keeps the spot/).count() === 1);
     check(`J1 [${tag}] outside reception hours the clock "starts at" its opening time`, await page.getByText(ES ? /El reloj empieza a las/ : /The clock starts at/).count() === 1 && await page.getByText(ES ? /Fuera del horario de recepción/ : /Outside reception hours/).count() === 1);
 
     // J1c: once the receipt is with reception the spot is kept, past the class start too.
     const frozen = await readDb(page); (frozen.db ?? frozen).bookings.find((b) => b.id === 'bkg_h4_held').hold_frozen_at = new Date(now).toISOString();
     await writeDb(page, frozen); await page.reload();
     check(`J1c [${tag}] a sent receipt keeps the spot until reception reviews it`, await seen(page.getByText(ES ? /Recibimos tu comprobante/ : /We have your receipt/)) && await page.getByText(ES ? /aunque la clase ya haya empezado/ : /even if the class has started/).count() === 1);
-    // A receipt payment whose image didn't upload (remembered on this device) offers the upload again.
-    await page.evaluate(() => localStorage.setItem('hoyos.customer.unsentReceipt.bkg_h4_held', 'pay_unsent'));
-    await page.reload();
-    check(`J1c [${tag}] a receipt whose image didn't upload offers to send the image again`, await seen(page.getByText(ES ? /no se subió/ : /didn’t upload/)) && await page.getByRole('button', { name: ES ? /Enviar comprobante/ : /Send receipt/ }).count() === 1);
-    await page.evaluate(() => localStorage.removeItem('hoyos.customer.unsentReceipt.bkg_h4_held'));
+    // The frozen spot still links to the payment, which offers to resend an image that didn't upload (H-5).
+    check(`J1c [${tag}] the frozen spot links to its payment to check the image arrived`, (await page.getByRole('link', { name: ES ? /Ver el pago/ : /See the payment/ }).first().getAttribute('href').catch(() => null))?.endsWith('#/app/pay/booking/bkg_h4_held'));
+    await page.goto(`${server.base}#/app/booking/bkg_h4_held/change`);
+    check(`J1c [${tag}] the release row of a frozen spot doesn't say "not paid yet"`, await seen(page.getByText(ES ? /Ya enviaste el comprobante/ : /You already sent the receipt/)) && await page.getByText(ES ? /Aún no has pagado/ : /Not paid yet/).count() === 0);
+    await page.goto(`${server.base}#/app/booking/bkg_h4_held`);
 
     // RS-08: a released hold reads released.
     const released = await readDb(page), rb = (released.db ?? released).bookings.find((b) => b.id === 'bkg_h4_held');
     Object.assign(rb, { status: 'cancelled', cancel_reason: 'hold_expired', hold_frozen_at: null });
     await writeDb(page, released); await page.reload();
     check(`RS-08 [${tag}] a hold that ran out reads "released"`, await seen(page.getByText(ES ? /Cupo liberado/ : /Spot released/)));
+
+    // J3: a customer cancel reads "the class was lost"; a released (never paid) hold reads "nothing was charged".
+    const lost = await readDb(page); Object.assign((lost.db ?? lost).bookings.find((b) => b.id === 'bkg_h4_held'), { status: 'late_cancel', cancel_reason: null, paid_with: 'package' });
+    await writeDb(page, lost); await page.reload();
+    check(`J3 [${tag}] a cancelled booking says the class was lost (no "inside the window")`, await seen(page.getByText(ES ? /La clase se perdió/ : /The class was lost/)) && await page.getByText(ES ? /dentro de la ventana/ : /inside the window/).count() === 0);
+    const rel = await readDb(page); Object.assign((rel.db ?? rel).bookings.find((b) => b.id === 'bkg_h4_held'), { status: 'cancelled', cancel_reason: null, paid_with: 'single' });
+    await writeDb(page, rel); await page.reload();
+    check(`J3 [${tag}] a released hold says nothing was charged (no "outside the window")`, await seen(page.getByText(ES ? /no se cobró nada/ : /nothing was charged/)) && await page.getByText(ES ? /fuera de la ventana/ : /outside the window/).count() === 0);
 
     check(`H-4 [${tag}] no page errors and no missing strings`, errors.length === 0 && await page.locator('text=/⟨customer\\./').count() === 0, errors.join(' | '));
     await ctx.close();

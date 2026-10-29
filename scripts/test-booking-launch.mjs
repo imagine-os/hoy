@@ -2,6 +2,7 @@
 // their copy (RS-04…RS-07, rule C7), the held-spot display (PG-03, J1, J1c), payment status (RS-08), the move window (RS-09,
 // J3b), duplicate taps (Idempotency-Key) and the RS-13 support content. Fictional fixtures only.
 // Run: node scripts/test-booking-launch.mjs   (esbuild bundles the TS source with VITE_HOY_BUILD=production)
+import { readFileSync } from 'node:fs';
 import { build } from 'esbuild';
 
 let failed = 0;
@@ -13,7 +14,7 @@ const load = async (build_) => {
     stdin: { contents: [
       "export * from './src/modules/customer/booking/bookingPolicy';",
       "export * from './src/modules/customer/booking/serverBooking';",
-      "export { bookOnServer, moveOnServer, cancelOnServer, sendHoldReceipt } from './src/modules/customer/booking/serverCommands';",
+      "export { bookOnServer, moveOnServer, cancelOnServer } from './src/modules/customer/booking/serverCommands';",
       "export * from './src/modules/customer/booking/refusals';",
       "export { bookingStrings } from './src/modules/customer/booking/strings';",
       "export { strings as customerStrings } from './src/modules/customer/strings';",
@@ -113,6 +114,12 @@ check('C7 every bookings, credits, files and request refusal code has ES and EN 
 const unknown = M.refusalMessage(refuse('some_new_code'));
 check('C7 an unknown code shows the generic message with the code for support', unknown.key === 'customer.refusal.generic' && unknown.vars.code === 'some_new_code' && /\{code\}/.test(es('customer.refusal.generic')));
 check('Idempotency a bare Error whose message looks like a code (timeout) is not a server answer: the key is kept for the retry', M.refusalCode(new Error('timeout')) === null && M.refusalCode(new Error('network_error')) === null && M.refusalCode(refuse('spot_taken')) === 'spot_taken');
+check('Idempotency a lost answer (the connector\'s ambiguous network_error / service_unavailable, or a 5xx) keeps the key and shows the network copy', [
+  Object.assign(new Error('network_error'), { code: 'network_error', status: 0, ambiguous: true }),
+  Object.assign(new Error('service_unavailable'), { code: 'service_unavailable', status: 503, ambiguous: true }),
+  Object.assign(new Error('internal'), { code: 'internal', status: 500, ambiguous: false }),
+].every((e) => M.refusalCode(e) === null && M.refusalMessage(e).key === 'customer.refusal.network'));
+check('Idempotency a browser-side refusal (status 0, not ambiguous) and a 4xx are final answers', M.refusalCode(Object.assign(new Error('not_in_launch'), { code: 'not_in_launch', status: 0, ambiguous: false })) === 'not_in_launch' && M.refusalCode(Object.assign(new Error('spot_taken'), { code: 'spot_taken', status: 409 })) === 'spot_taken');
 check('C7 no answer (offline) is not a refusal: the network copy says it will not book twice', M.refusalCode(new TypeError('Failed to fetch')) === null && M.refusalMessage(new TypeError('Failed to fetch')).key === 'customer.refusal.network');
 const keys = Object.keys(M.bookingStrings);
 check('i18n every new H-4 string has Spanish and English', keys.every((k) => M.bookingStrings[k].es && M.bookingStrings[k].en), keys.filter((k) => !M.bookingStrings[k].es || !M.bookingStrings[k].en).join(', '));
@@ -173,19 +180,10 @@ check('i18n every new H-4 string has Spanish and English', keys.every((k) => M.b
   check('J2 a desk hold reads the desk length (60 min) when the booking has no copy', M.holdView({ id: 'd', status: 'held', payment_method: 'desk', hold_until: at(0.5) }, at(5), policy, NOW).minutes === 60);
   check('PG-03 a held spot can still be moved (a live hold moves, bookings 1.4.0)', M.moveOpen(held({ hold_until: at(0.2) }), at(20), policy, NOW) && !M.moveOpen(held({ hold_until: at(-0.2) }), at(20), policy, NOW));
   check('PG-03 the outside-hours notice names the start time (ES/EN)', /\{start\}/.test(es('customer.srv.hold.not_started.transfer')) && /\{start\}/.test(en('customer.srv.hold.not_started.transfer')) && /8:00/.test(es('customer.srv.hold.explain.transfer')));
-  const p = fakeServer(({ row }) => ({ id: 'pay_1', ...row }));
-  await M.sendHoldReceipt(p, { bookingId: 'bkg_h', userId: 'usr_ana', planId: 'plan_single', amount: 40000, image: { dataUrl: 'data:image/png;base64,AA', fileName: 'r.png', mimeType: 'image/png', bytes: 2 } }, 'rc-1');
-  const w = writes(p)[0];
-  check('J1c the receipt is a pending payment for the booking (for_entity booking), sent once with its key; no file data on the row', w.table === 'payments' && w.row.status === 'pending' && w.row.for_entity === 'booking' && w.row.for_id === 'bkg_h' && w.row.method === 'transfer' && !('receipt' in w.row) && p.calls[0].key === 'rc-1');
-  const uploads = [];
-  let failUpload = true;
-  const u = fakeServer(({ row }) => ({ id: 'pay_2', ...row }));
-  u.uploadFile = async (input) => { if (failUpload) { failUpload = false; throw new TypeError('Failed to fetch'); } uploads.push(input); };
-  const image = { dataUrl: 'data:image/png;base64,iVBORw==', fileName: 'r.png', mimeType: 'image/png', bytes: 4 };
-  const first = await rejects(M.sendHoldReceipt(u, { bookingId: 'bkg_h', userId: 'usr_ana', planId: 'plan_single', amount: 40000, image }, 'rc-2'));
-  await M.sendHoldReceipt(u, { bookingId: 'bkg_h', userId: 'usr_ana', planId: 'plan_single', amount: 40000, image, paymentId: first?.paymentId }, 'rc-2');
-  check('J1c the image goes through the files route on that payment (owner payment, kind receipt)', uploads.length === 1 && uploads[0].ownerEntity === 'payment' && uploads[0].ownerId === 'pay_2' && uploads[0].kind === 'receipt' && uploads[0].file.type === 'image/png' && uploads[0].file.size === 4);
-  check('J1c a failed upload keeps its payment: the retry uploads again without a second payment', first?.paymentId === 'pay_2' && writes(u).length === 1);
+  // The receipt of a held class goes through the transfer payment (H-5), which prices it by product key and resumes a
+  // payment whose image didn't upload; the booking page no longer builds its own payment (a review-build plan id was refused).
+  const parts = readFileSync('src/modules/customer/pages/ServerBookingParts.tsx', 'utf8');
+  check('J1c the held spot sends the receipt through /app/pay/booking/:id (no payment built on the booking page)', /\/app\/pay\/booking\/\$\{encodeURIComponent\(booking\.id\)\}/.test(parts) && !/plan_single|sendHoldReceipt|insert<[^>]*>\('payments'/.test(parts));
 }
 
 // ── RS-08 — booking details: payment status from the booking itself ──────────────────────────────────────────────────

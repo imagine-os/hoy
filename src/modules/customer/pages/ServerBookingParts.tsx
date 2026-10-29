@@ -1,9 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
-import { useSession } from '../../../auth/SessionProvider';
 import { useData } from '../../../data/DataContext';
-import { useLivePricing } from '../../../data/livePricing';
 import { usesMats } from '../../../data/mats';
 import { dateKey, formatDateTime, formatTime } from '../../../i18n/format';
 import { tenant } from '../../../tenant/tenant';
@@ -16,13 +14,10 @@ import { CountdownRing } from '../../../components/molecule/CountdownRing/Countd
 import { ClassRow } from '../../../components/molecule/ClassRow/ClassRow';
 import { ListGroup, ListRow } from '../../../components/molecule/ListRow/ListRow';
 import { Drawer } from '../../../components/organism/Drawer/Drawer';
-import { ReceiptUpload } from '../../../components/organism/ReceiptUpload/ReceiptUpload';
-import { SavedPaymentInstructions } from '../../../components/organism/PaymentInstructions/PaymentInstructions';
-import type { ReceiptImage } from '../../transfers/receipts';
 import { useAllSessionsJoined, useNow, type JoinedSession } from '../hooks';
 import { teacherName, toneOf } from '../ui';
 import { useBookingPolicy } from '../booking/bookingPolicy';
-import { cancelOnServer, moveOnServer, sendHoldReceipt, useSubmitKey } from '../booking/serverCommands';
+import { cancelOnServer, moveOnServer, useSubmitKey } from '../booking/serverCommands';
 import { refusalMessage } from '../booking/refusals';
 import { classPhase, holdView, moveDeadline, moveOpen, type ServerBookingRow } from '../booking/serverBooking';
 
@@ -35,69 +30,23 @@ function Refusal({ error }: { error: unknown }) {
 }
 
 /**
- * A receipt payment whose image didn't upload, remembered on this device per booking so a reload still offers to resend the
- * image to that payment (a pending payment freezes the hold, so without it reception would see a receipt with no image).
- */
-const UNSENT_KEY = (bookingId: string) => `hoyos.customer.unsentReceipt.${bookingId}`;
-const readUnsent = (bookingId: string) => { try { return localStorage.getItem(UNSENT_KEY(bookingId)); } catch { return null; } };
-const writeUnsent = (bookingId: string, paymentId: string | null) => {
-  try { if (paymentId) localStorage.setItem(UNSENT_KEY(bookingId), paymentId); else localStorage.removeItem(UNSENT_KEY(bookingId)); } catch { /* ignore */ }
-};
-
-/**
- * PG-03 / J1 / J1c — a held single class: the countdown, the "clock starts at 8:00" notice outside reception hours, the
- * transfer receipt that keeps the spot (through the class when sent before it), and the released state. Display only:
- * the server holds, freezes and releases.
+ * PG-03 / J1 / J1c — a held single class: the countdown, the "clock starts at 8:00" notice outside reception hours, and the
+ * released state. The receipt goes through the transfer payment (`/app/pay/booking/:id`, H-5), which prices today's single
+ * class by product key, checks the hold and resumes a payment whose image didn't upload. A sent receipt freezes the hold,
+ * which keeps the spot (through the class when sent before it). Display only: the server holds, freezes and releases.
  */
 export function HoldBlock({ booking, joined }: { booking: ServerBookingRow; joined: Pick<JoinedSession, 'session'> }) {
   const { t, lang } = useI18n();
-  const data = useData();
-  const { user } = useSession();
   const policy = useBookingPolicy();
-  const pricing = useLivePricing();
   const now = useNow(1_000);
-  const [image, setImage] = useState<ReceiptImage | null>(null);
-  const [busy, setBusy] = useState(false), [error, setError] = useState<unknown>(null), [sentOn, setSentOn] = useState<string | null>(null);
-  const [unsent, setUnsent] = useState<string | null>(() => readUnsent(booking.id));
-  const inFlight = useRef(false);
-  const key = useSubmitKey(`receipt:${booking.id}:${image?.fileName ?? ''}:${image?.bytes ?? 0}`);
   const view = holdView(booking, joined.session.starts_at, policy, now);
   if (!view) return null;
   const at = (iso: string | null) => (iso ? formatTime(iso, lang) : '');
+  const payLink = `/app/pay/booking/${encodeURIComponent(booking.id)}`;
 
-  const send = async () => {
-    if (!image || inFlight.current) return;
-    inFlight.current = true; setBusy(true); setError(null);
-    try {
-      await sendHoldReceipt(data, { bookingId: booking.id, userId: user.id, planId: 'plan_single', amount: pricing.item('single')?.price ?? null, image, paymentId: unsent }, key.take());
-      key.settle(); writeUnsent(booking.id, null); setUnsent(null); setSentOn(booking.updated_at);
-    } catch (e) {
-      // The payment exists but its image didn't upload: keep it, so the retry uploads to it (no second payment).
-      const saved = (e as { paymentId?: string }).paymentId;
-      if (saved) { writeUnsent(booking.id, saved); setUnsent(saved); } else key.settle(e);
-      setError(e);
-    }
-    finally { inFlight.current = false; setBusy(false); }
-  };
-
-  // "Sent" is shown while the row is the one we sent on (no clock comparison); once the server row changes, it decides
-  // (frozen → waiting for reception; declined → the clock restarts and the upload shows again).
-  const justSent = sentOn != null && sentOn === booking.updated_at;
-  const picker = (
-    <section className="stack-sm">
-      <ReceiptUpload value={image} onChange={(next) => { setImage(next); setError(null); }} />
-      <Refusal error={error} />
-      <Button block loading={busy} disabled={!image || busy} onClick={() => void send()}>{t('customer.srv.hold.send')}</Button>
-    </section>
-  );
-  if ((view.phase === 'waiting_reception' || justSent) && !unsent) return (
-    <Notice tone="success" title={t('customer.srv.hold.frozen.title')}>{t('customer.srv.hold.frozen.body')}</Notice>
-  );
-  if (view.phase === 'waiting_reception' && unsent) return (
-    <div className="stack-sm">
-      <Notice tone="warn" title={t('customer.srv.hold.unsent.title')}>{t('customer.srv.hold.unsent.body')}</Notice>
-      {picker}
-    </div>
+  // Frozen: a pending payment exists. The payment page says whether its image arrived and offers to send it again if not.
+  if (view.phase === 'waiting_reception') return (
+    <Notice tone="success" title={t('customer.srv.hold.frozen.title')} action={<Link to={payLink}><Button size="sm" variant="ghost">{t('customer.srv.hold.frozen.check')}</Button></Link>}>{t('customer.srv.hold.frozen.body')}</Notice>
   );
   if (view.phase === 'expired') return (
     <Notice tone="warn" title={t('customer.srv.hold.expired.title')} action={<Link to="/app/schedule"><Button size="sm" variant="secondary">{t('customer.class.backToSchedule')}</Button></Link>}>{t('customer.srv.hold.expired.body')}</Notice>
@@ -115,8 +64,7 @@ export function HoldBlock({ booking, joined }: { booking: ServerBookingRow; join
       </Notice>
       {view.method === 'transfer' && (
         <section className="stack-sm">
-          <SavedPaymentInstructions />
-          {picker}
+          <Link to={payLink}><Button block>{t('customer.srv.hold.send')}</Button></Link>
           <p className="xs muted">{t('customer.srv.hold.keeps')}</p>
         </section>
       )}
@@ -169,7 +117,7 @@ export function ServerChangeSheet({ open, onClose, booking, joined, onResult }: 
           <ListGroup>
             <ListRow icon="move" title={t('customer.change.move')} disabled={!canMove || busy} onClick={() => setMode('move')}
               subtitle={canMove && deadline != null ? t('customer.srv.move.until', { when: formatDateTime(new Date(deadline).toISOString(), lang), h: hours }) : hours > 0 ? t('customer.srv.move.closed', { h: hours }) : t('customer.srv.move.off')} />
-            <ListRow icon="cancel" tone="danger" title={t(held ? 'customer.srv.cancel.held.menu' : 'customer.change.drop')} subtitle={t(held ? 'customer.srv.cancel.held.sub' : 'customer.srv.cancel.sub')} disabled={busy} onClick={() => setMode('cancel')} />
+            <ListRow icon="cancel" tone="danger" title={t(held ? 'customer.srv.cancel.held.menu' : 'customer.change.drop')} subtitle={t(!held ? 'customer.srv.cancel.sub' : booking.hold_frozen_at ? 'customer.srv.cancel.held.subSent' : 'customer.srv.cancel.held.sub')} disabled={busy} onClick={() => setMode('cancel')} />
           </ListGroup>
         )}
         {mode === 'move' && (
@@ -196,7 +144,7 @@ export function ServerChangeSheet({ open, onClose, booking, joined, onResult }: 
         )}
         {mode === 'cancel' && (
           <section className="stack-sm">
-            <Notice tone="danger" title={t(held ? 'customer.srv.cancel.held.title' : 'customer.srv.cancel.title')}>{t(held ? 'customer.srv.cancel.held.body' : 'customer.srv.cancel.body')}</Notice>
+            <Notice tone="danger" title={t(held ? 'customer.srv.cancel.held.title' : 'customer.srv.cancel.title')}>{t(!held ? 'customer.srv.cancel.body' : booking.hold_frozen_at ? 'customer.srv.cancel.held.bodySent' : 'customer.srv.cancel.held.body')}</Notice>
             {!held && canMove && <p className="small">{t('customer.srv.cancel.tryMove')} <Button size="sm" variant="ghost" onClick={() => { setError(null); setMode('move'); }}>{t('customer.change.move')}</Button></p>}
             <Refusal error={error} />
             <Button block variant="danger" loading={busy} disabled={busy} onClick={() => void cancel()}>{t(held ? 'customer.srv.cancel.held.confirm' : 'customer.srv.cancel.confirm')}</Button>
