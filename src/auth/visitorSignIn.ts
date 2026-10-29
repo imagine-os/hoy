@@ -1,8 +1,8 @@
-import { customerAuthLink, customerReturn } from '../modules/customer/auth/customerReturn';
+import { authLink, signInReturn } from './signInReturn';
 
-/** Reuse the customer navigation allowlist; role/data authorization remains at the destination. */
+/** Sign-in keeping where the visitor was going: the customer allowlist or a launch route (`signInReturn`). */
 export function visitorSignIn(destination: string | null | undefined): string {
-  const next = customerReturn(destination);
+  const next = signInReturn(destination);
   return `/auth/sign-in${next ? `?${new URLSearchParams({next})}` : ''}`;
 }
 
@@ -13,5 +13,5 @@ export function visitorSignIn(destination: string | null | undefined): string {
 export function safeAuthBack(value: string | null): string {
   const [path, query = ''] = (value ?? '').split('?');
   if (path !== '/auth/sign-in' && path !== '/auth/sign-up') return '/auth/sign-in';
-  return customerAuthLink(path, new URLSearchParams(query));
+  return authLink(path, new URLSearchParams(query));
 }

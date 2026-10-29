@@ -3,15 +3,15 @@ import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { AuthenticateWithRedirectCallback, useClerk, useUser } from '@clerk/react';
 import { useI18n } from '../../i18n/I18nProvider';
 import { useSession } from '../../auth/SessionProvider';
-import { ROLE_HOME, ROLE_LABEL, type Role } from '../../auth/roles';
+import { ROLE_HOME, ROLE_LABEL } from '../../auth/roles';
 import { cosJson } from '../../auth/cosRequest';
 import { sendEmailCode, signInWithGoogle, verifyEmailCode, type ClerkLike, type CodeMode } from '../../auth/clerkFlows';
 import {
   asksEmergencyContact, classifySignup, clerkErrorKind, isEmail, parseSignupConfig, signupBody, signupFormErrors,
   SIGNUP_FORM_LIMITS, type AuthErrorKind, type SignupConfig, type SignupForm,
 } from '../../auth/companyOsIdentity';
-import { customerAuthLink, customerReturn } from '../customer/auth/customerReturn';
 import { safeAuthBack } from '../../auth/visitorSignIn';
+import { authLink, homeFor } from '../../auth/signInReturn';
 import { AuthShell } from '../customer/auth/AuthShell';
 import { Card } from '../../components/molecule/Card/Card';
 import { Button } from '../../components/atom/Button/Button';
@@ -20,8 +20,6 @@ import { Field } from '../../components/molecule/Field/Field';
 import { Notice } from '../../components/molecule/Notice/Notice';
 import './identity.css';
 
-/** Where a signed-in person lands: a customer follows the validated `next` (SW-03); staff go to their home. */
-const homeFor = (role: Role, next: string | null) => (role === 'customer' && customerReturn(next)) || ROLE_HOME[role];
 const errKey = (kind: AuthErrorKind) => `identity.err.${kind}`;
 const errorText = (err: unknown) => errKey(clerkErrorKind(err));
 
@@ -45,18 +43,18 @@ export function CosAuthPage({ mode }: { mode: CodeMode }) {
   if (session.status === 'loading') return <Shell title={t('identity.signin.title')}><p className="muted" aria-busy="true">{t('identity.loading')}</p></Shell>;
   if (session.status === 'ready' && session.signedIn) return <Navigate to={homeFor(session.role, next)} replace />;
   if (session.status === 'needs-signup') {
-    if (mode !== 'sign-up') return <Navigate to={customerAuthLink('/auth/sign-up', params)} replace />;
+    if (mode !== 'sign-up') return <Navigate to={authLink('/auth/sign-up', params)} replace />;
     return <Shell title={t('identity.register.title')} sub={t('identity.register.sub')}><RegisterForm /></Shell>;
   }
   if (session.status === 'unverified' || session.status === 'no-role' || session.status === 'error') return <SessionProblem />;
   const title = t(mode === 'sign-up' ? 'identity.signup.title' : 'identity.signin.title');
   return (
     <Shell title={title} sub={t(mode === 'sign-up' ? 'identity.signup.sub' : 'identity.signin.sub')}>
-      <EmailCodeCard back={customerAuthLink(mode === 'sign-up' ? '/auth/sign-up' : '/auth/sign-in', params)} />
+      <EmailCodeCard back={authLink(mode === 'sign-up' ? '/auth/sign-up' : '/auth/sign-in', params)} />
       <p className="small identity-center">
         {mode === 'sign-up'
-          ? <>{t('identity.have')} <Link to={customerAuthLink('/auth/sign-in', params)}>{t('identity.signin.title')}</Link></>
-          : <>{t('identity.new')} <Link to={customerAuthLink('/auth/sign-up', params)}>{t('identity.create')}</Link></>}
+          ? <>{t('identity.have')} <Link to={authLink('/auth/sign-in', params)}>{t('identity.signin.title')}</Link></>
+          : <>{t('identity.new')} <Link to={authLink('/auth/sign-up', params)}>{t('identity.create')}</Link></>}
       </p>
     </Shell>
   );
@@ -282,7 +280,7 @@ export function CosNoAccessPage() {
   const { t, bi } = useI18n();
   const { role, user, signedIn, status, signOut } = useSession();
   const [params] = useSearchParams();
-  if (!signedIn || status !== 'ready' || user.role === 'public') return <Navigate to={customerAuthLink('/auth/sign-in', new URLSearchParams({ next: params.get('from') ?? '' }))} replace />;
+  if (!signedIn || status !== 'ready' || user.role === 'public') return <Navigate to={authLink('/auth/sign-in', new URLSearchParams({ next: params.get('from') ?? '' }))} replace />;
   return (
     <div className="container page identity-narrow">
       <Card padding="lg" className="stack">

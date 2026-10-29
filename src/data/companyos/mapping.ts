@@ -441,16 +441,17 @@ const automations = entity({
   },
 });
 
-/** Reception expenses (Q-13): tenant entities `expense` / `expense_template` with the frontend's own field names. */
+/** Reception and admin expenses (Q-13, M-09c): tenant entities `expense` / `expense_template` with the frontend's own field names. */
 const expenseCols = (names: string[], days: string[] = []): Record<string, Col> =>
   Object.fromEntries(names.map((n) => [n, days.includes(n) ? { field: n, kind: 'day' as const } : { field: n }]));
 const expenses = entity({
   table: 'expenses', entity: 'expense',
   cols: { ...expenseCols(['kind', 'category', 'concept', 'amount', 'incurred_on', 'paid_on', 'method', 'vendor', 'note', 'template_id'], ['incurred_on', 'paid_on']), created_by: { derive: (r) => str(r.createdBy) } },
 });
+/** `ExpenseTemplateRow`: the app's `anchor_day` is the entity's `day_of_month`; a template has no kind or method. */
 const expenseTemplates = entity({
   table: 'expense_templates', entity: 'expense_template',
-  cols: expenseCols(['kind', 'category', 'concept', 'amount', 'method', 'vendor', 'note', 'active', 'day_of_month']),
+  cols: { ...expenseCols(['concept', 'category', 'amount', 'cadence', 'vendor', 'note', 'active']), anchor_day: { field: 'day_of_month' } },
 });
 
 const fixed = (table: string, rows: () => BaseRow[]): StaticAdapter => ({ kind: 'static', table, rows: () => rows() as Row[] });

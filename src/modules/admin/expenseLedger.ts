@@ -1,4 +1,4 @@
-/** FI04 fictional browser ledger only. Production authorization/ledger RPCs remain disconnected. */
+/** FI04 browser ledger (MockProvider); on Company OS the same commands run through `expenseServer.ts`. Other providers stay disconnected. */
 import type { DataProvider } from '../../data/types';
 import { EXPENSE_CATEGORIES, type BaseRow, type ExpenseRow, type ExpenseTemplateRow, type UserRow } from '../../data/schema';
 import type { Role } from '../../auth/roles';
@@ -6,6 +6,7 @@ import { roleCan } from '../../auth/permissions';
 import { tenant } from '../../tenant/tenant';
 import { fixedExpensesFor, type Period } from '../../data/expenseCalc';
 import { dateKey } from '../../i18n/format';
+import { readServerWorkspace, runServerCommand } from './expenseServer';
 
 export type ExpenseDraft = Pick<ExpenseRow,'kind'|'category'|'concept'|'amount'|'incurred_on'|'paid_on'|'method'|'vendor'|'note'>;
 export type TemplateDraft = Pick<ExpenseTemplateRow,'concept'|'category'|'amount'|'cadence'|'anchor_day'|'vendor'>;
@@ -29,8 +30,9 @@ const fail=(code:string):never=>{throw Error('expense_'+code);};
 const DESK_CREATE=Symbol('desk-create');
 /** Q-13 desk limits: one expense paid today (studio date), 1–5.000.000 COP. */
 export const DESK_EXPENSE_MAX_COP=5_000_000;
+const onServer=(data:DataProvider)=>data.name==='companyos';
 function check(data:DataProvider,c:ExpenseIdentity,control:ExpenseControl,write=false){
- if(data.name!=='mock'||!data.atomic)fail('disconnected');
+ if(!onServer(data)&&(data.name!=='mock'||!data.atomic))fail('disconnected');
  // Q-13: `expenses.create` may run (and verify) a single create; it never reads the workspace. Only runExpenseCommand's own
  // create marks the identity (DESK_CREATE, a module-private symbol), so a caller-shaped object cannot claim it.
  const createOnly=(c as {[DESK_CREATE]?:true})[DESK_CREATE]===true&&roleCan(c.role,'expenses.create');
@@ -63,7 +65,10 @@ async function target(data:DataProvider,table:Item['table'],id:string,c:ExpenseI
  const row=matches[0];if(!raw)fail('scope');if(table==='expenses')expenseShape(row as ExpenseRow);else templateShape(row as ExpenseTemplateRow);return row;
 }
 export async function readExpenseWorkspace(data:DataProvider,identity:ExpenseIdentity,supplied:ExpenseControl={}){
- const c={...identity},control=ownControl(supplied);await actor(data,c,control);
+ const c={...identity},control=ownControl(supplied);
+ // Company OS: its permissions decide who reads; the rows keep the server's own shape.
+ if(onServer(data)){check(data,c,control);const ws=await readServerWorkspace(data);check(data,c,control);return ws;}
+ await actor(data,c,control);
  const expenses=await scoped<ExpenseRow>(data,'expenses',c,control),templates=await scoped<ExpenseTemplateRow>(data,'expense_templates',c,control);expenses.forEach(expenseShape);templates.forEach(templateShape);await actor(data,c,control);return {expenses:expenses.sort((a,b)=>b.incurred_on.localeCompare(a.incurred_on)),templates:templates.sort((a,b)=>a.anchor_day-b.anchor_day)};
 }
 const actions={'create':'expense.create','template.create':'expense.template.create','template.toggle':'expense.template.toggle','pay':'expense.pay','delete':'expense.delete','generate':'expense.generate'} as const;
@@ -94,6 +99,7 @@ export async function runExpenseCommand(data:DataProvider,command:ExpenseCommand
  if(c.type==='template.create'){const r={...c.draft,active:true,note:null} as ExpenseTemplateRow;templateShape(r);if(!Number.isInteger(r.amount)||r.amount<=0||r.anchor_day>28)fail('validation');}
  if(c.type==='pay'&&!day(c.paidOn))fail('validation');
  if(c.type==='generate'&&(!c.period||!day(c.period.start)||!day(c.period.end)||c.period.end<c.period.start||!Array.isArray(c.templates)))fail('validation');
+ if(onServer(data)){const result=await runServerCommand(data,c,control,fail);check(data,c,control,true);return result;}
  await actor(data,c,control,true);const fingerprint=await hash(c),nonce=await hash({tenant:tenant.id,actor:c.actorId,role:c.role,requestId:c.requestId}),receiptId='expense_request_v1_'+nonce;check(data,c,control,true);
  const result=await data.atomic!(async tx=>{
   await actor(tx,c,control,true);const receipt=await tx.get<Receipt>('audit_log',receiptId);check(tx,c,control,true);
