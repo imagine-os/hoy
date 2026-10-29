@@ -3,7 +3,8 @@
 //  through sign-in (the full sign-in/sign-up return is test-customer-return-ui.mjs) · SW-04 WhatsApp buttons use the
 //  number in Settings · SW-05 brand name and contact email from one source · SW-06 manual and docs behind sign-in ·
 //  SW-08 Coming Soon at the root until the go-live setting flips. Then the production build (built here unless
-//  QA_PROD_DIST is set) hides the review tools and ignores localStorage overrides.
+//  QA_PROD_DIST is set) hides the review tools, ignores localStorage overrides and shows signed-out visitors a sign-in
+//  prompt in place of the timetable (schedule and home agenda).
 // Run: npm run build && node scripts/test-launch-website-ui.mjs
 import { execFileSync } from 'node:child_process';
 import { mkdtemp } from 'node:fs/promises';
@@ -152,6 +153,19 @@ try {
     check('production: no concept-imagery demo note', (await p.locator('.site-concept-note').count()) === 0);
     await p.goto(`${prod.base}/`); await p.locator('.coming-soon').waitFor();
     check('production: the root shows Coming Soon by default (SW-08)', true);
+    // Final review round 2 (owner decision): a signed-out visitor gets a sign-in prompt, not an empty timetable.
+    await p.goto(`${prod.base}/#/site/schedule`); await p.locator('.site-main').waitFor(); await p.waitForTimeout(800);
+    const promptText = 'Inicia sesión para ver los horarios y reservar';
+    check('production: the signed-out schedule shows the sign-in prompt', (await p.getByText(promptText).count()) === 1);
+    check('production: the signed-out schedule shows no empty calendar', (await p.locator('.calendar-empty, .calendar-dots').count()) === 0);
+    await p.getByRole('button', { name: 'Iniciar sesión' }).click();
+    await p.waitForURL(/#\/auth\/sign-in/, { timeout: 10000 }).catch(() => {});
+    check('production: the prompt signs in and returns to the live schedule', new URLSearchParams(route(p).split('?')[1] ?? '').get('next') === '/app/schedule', route(p));
+    await p.goto(`${prod.base}/#/site`); await p.locator('.site-main').waitFor(); await p.waitForTimeout(800);
+    const agenda = await p.locator('.sanctuary-agenda').innerText();
+    check('production: the signed-out home agenda shows the sign-in prompt, not "no classes"', agenda.includes(promptText) && !agenda.includes('Hoy descansamos'), agenda);
+    const signIn = p.locator('.sanctuary-agenda a[href*="#/auth/sign-in"]');
+    check('production: the home agenda links to sign-in, back to the schedule', (await signIn.count()) === 1 && /next=%2Fapp%2Fschedule/.test(await signIn.getAttribute('href') ?? ''));
     await pctx.close();
     const tctx = await newContext(browser, { launch: { siteLive: true, publicDocuments: ['/manual'] } });
     const tp = await tctx.newPage();

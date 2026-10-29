@@ -124,7 +124,8 @@ export function BookedPage({ change = false }: { change?: boolean }) {
       if (held) return <HoldBlock booking={server} joined={joined} />;
       if (SERVER_RULES && myCancelled) {
         // A single class is "released" only while no approved payment hangs on it; comp and guest classes never had a balance.
-        const paid = payments.rows.some((p) => (p as PaymentRow & { booking_id?: string | null }).booking_id === booking.id && p.status === 'approved');
+        // The production adapter names the paid record with `for_entity` / `for_id` (payments entity), not `booking_id`.
+        const paid = payments.rows.some((p) => { const r = p as PaymentRow & { for_entity?: string | null; for_id?: string | null }; return r.for_entity === 'booking' && r.for_id === booking.id && p.status === 'approved'; });
         const k = booking.status === 'late_cancel' ? 'lost' : booking.paid_with === 'single' ? (paid ? 'plain' : 'released') : booking.paid_with === 'package' || booking.paid_with === 'trial' ? 'returned' : 'plain';
         return <Notice tone="warn" title={t(`customer.srv.cancelled.${k}.title`)} action={<Link to="/app/schedule"><Button size="sm" variant="secondary">{t('customer.class.backToSchedule')}</Button></Link>}>{t(`customer.srv.cancelled.${k}.body`)}</Notice>;
       }

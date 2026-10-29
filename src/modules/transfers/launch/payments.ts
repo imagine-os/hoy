@@ -16,7 +16,7 @@ export interface PaymentData {
   approved_by?: string | null; approved_at?: string | null;
 }
 export type PaymentRec = CosRecord<PaymentData>;
-export interface BookingData { person?: string; occurrence?: string; status?: string; entitlement?: string; payment_method?: string | null; hold_until?: string | null; hold_frozen_at?: string | null; hold_left_minutes?: number | null; start?: string | null }
+export interface BookingData { person?: string; occurrence?: string; status?: string; entitlement?: string; payment_method?: string | null; hold_until?: string | null; hold_frozen_at?: string | null; hold_left_minutes?: number | null; policy_hold_minutes?: number | null; start?: string | null }
 export type BookingRec = CosRecord<BookingData>;
 export interface FileData { owner_entity?: string; owner_id?: string; kind?: string; status?: string; mime?: string }
 export type FileRec = CosRecord<FileData>;

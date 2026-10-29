@@ -31,7 +31,7 @@ import { GIFT_PURCHASE_PATH } from '../../../config/launchRoutes';
 import { useLivePricing } from '../../../data/livePricing';
 
 /** Production: a pack or the trial is bought by bank transfer on H-5's payment page, by product key; Company OS prices it. */
-const payPath = (key: string) => `/app/pay/product/${encodeURIComponent(key)}`;
+const payPath = (key: string, next: string | null = null) => `/app/pay/product/${encodeURIComponent(key)}${next ? `?next=${encodeURIComponent(next)}` : ''}`;
 
 const spec = canvasSpecs['C-06'];
 const PENDING_PASS_KEY = 'hoyos.customer.pendingPass';
@@ -127,7 +127,7 @@ export function PlansPage() {
   };
 
   // Production: ?plan=<pack or trial> (checkout's "buy and come back", A-02) goes straight to its transfer payment.
-  if (SERVER_RULES && wanted && ([...PACKAGE_IDS, 'trial'] as string[]).includes(wanted)) return <Navigate to={payPath(wanted)} replace />;
+  if (SERVER_RULES && wanted && ([...PACKAGE_IDS, 'trial'] as string[]).includes(wanted)) return <Navigate to={payPath(wanted, next)} replace />;
   return (
     <div className="container page cust-page">
       <PageHead title={t('customer.plans.title')} sub={t('quotes.packageIntro')} />
@@ -164,7 +164,8 @@ export function PlansPage() {
           </Card>
           <Card tone="muted" className="stack-sm">
             <strong className="small">{t('customer.plans.private.title')}</strong>
-            {pricingByFamily('privadas').map((p) => <PriceRow key={p.id} item={p} />)}
+            {/* J4: the private class has no public price in production; the customer contacts the studio. */}
+            {!SERVER_RULES && pricingByFamily('privadas').map((p) => <PriceRow key={p.id} item={p} />)}
             <div className="row wrap"><a href={wa.link('specials', t('customer.plans.specials.wa'))} target="_blank" rel="noreferrer"><Button size="sm" variant="ghost">{t('customer.plans.specials.cta')} →</Button></a></div>
             {specials.note && <p className="xs muted">{bi(specials.note)}</p>}
           </Card>

@@ -58,7 +58,8 @@ export function ServerCheckoutPage() {
   const [busy, setBusy] = useState(false);
   const inFlight = useRef(false);
   // No silent default to a paid single class: the balance may still be loading. Preselect the balance only once it shows classes.
-  const kind: Choice | null = choice ?? (ent.classBalance > 0 ? 'package' : null);
+  // One trial per person (decided by the product key in production): once used, it is neither offered nor kept from a link.
+  const kind: Choice | null = (choice === 'trial' && ent.trialUsed ? null : choice) ?? (ent.classBalance > 0 ? 'package' : null);
   const submitKey = useSubmitKey(`${user.id}:${id}:${kind ?? ''}:${method}:${mat ?? ''}`);
 
   if (!joined) {
@@ -78,6 +79,7 @@ export function ServerCheckoutPage() {
   const options: { id: Choice; title: string; sub: string; price: string }[] = [
     { id: 'package', title: t('customer.srv.pay.balance'), sub: t('customer.srv.pay.balance.sub', { n: ent.classBalance }), price: t('core.common.included') },
     ...(['single', 'trial', 'pack12', 'pack12_smtc'] as const).flatMap((pid) => {
+      if (pid === 'trial' && ent.trialUsed) return [];
       const item = pricing.item(pid), amount = price(pid);
       return item && amount != null ? [{ id: pid as Choice, title: bi(item.name), sub: bi(item.description), price: formatCOP(amount, lang) }] : [];
     }),

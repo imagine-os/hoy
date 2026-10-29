@@ -5,6 +5,7 @@ import { quotePublishedProduct } from './catalogPublication';
 import type { CatalogPlan } from './productCatalog';
 import { pricing, type PlanFamily, type PriceItem } from '../tenant/pricing';
 import { tenant } from '../tenant/tenant';
+import { PRODUCTION_BUILD } from '../config/launch';
 
 /**
  * SW-02 — the price a visitor sees is the product master's current price, never a number typed in a page.
@@ -33,6 +34,8 @@ export function livePrice(rows: CatalogPlan[], itemId: string, purchaseDate: str
 /** The launch price list with every amount read from the product master; unpriced items are dropped. */
 export function livePricing(rows: CatalogPlan[], purchaseDate: string): PriceItem[] {
   return pricing.flatMap((p) => {
+    // J4: in production the private class never has a public price, even if a row carries one by mistake.
+    if (PRODUCTION_BUILD && p.family === 'privadas') return [];
     const price = livePrice(rows, p.id, purchaseDate);
     return price == null ? [] : [{ ...p, price }];
   });

@@ -104,6 +104,9 @@ export const KNOWN_CODES = [
   'idempotency_conflict', 'idempotency_key_invalid', 'forbidden', 'write_forbidden', 'invalid_settings', 'module_not_installed',
   'stale', 'dates_unsupported', 'unauthorized', 'disconnected',
 ] as const;
-/** `ifMatch mismatch` (409): someone changed the row since this screen read it, e.g. two desks reviewing one payment. */
-const ALIASES: Record<string, string> = { 'ifMatch mismatch': 'stale' };
+/**
+ * `ifMatch mismatch` (409): someone changed the row since this screen read it, e.g. two desks reviewing one payment.
+ * The transport normalises the API's text to `ifmatch_mismatch` before it reaches here; the raw form is kept too.
+ */
+const ALIASES: Record<string, string> = { 'ifMatch mismatch': 'stale', ifmatch_mismatch: 'stale' };
 export const refusalKey = (code: string): string => { const c = ALIASES[code] ?? code; return (KNOWN_CODES as readonly string[]).includes(c) ? `payLaunch.code.${c}` : 'payLaunch.code.generic'; };

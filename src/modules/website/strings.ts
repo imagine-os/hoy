@@ -160,6 +160,8 @@ export const strings: StringTable = {
   'site.today.empty': { es: 'Hoy descansamos. Mira el horario de la semana.', en: 'We rest today. See the week’s schedule.' },
   'site.today.done': { es: 'Las clases de hoy ya terminaron. Mañana seguimos: mira el horario.', en: 'Today’s classes are done. We continue tomorrow: see the schedule.' },
   'site.today.all': { es: 'Ver la semana completa', en: 'See the whole week' },
+  'site.schedule.signedOut': { es: 'Inicia sesión para ver los horarios y reservar', en: 'Sign in to see the timetable and book' },
+  'site.schedule.signedOut.cta': { es: 'Iniciar sesión', en: 'Sign in' },
 
   'site.classes.title': { es: 'Nuestras clases', en: 'Our classes' },
   'site.classes.all': { es: 'Ver todas las clases', en: 'See all classes' },
