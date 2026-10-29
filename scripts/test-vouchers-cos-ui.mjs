@@ -21,7 +21,7 @@ const T = {
     issue: 'Emitir y enviar el bono', courtesy: 'Nueva cortesía o invitación', sent: 'Enviado a juliana@demo.hoyos.test', usedOn: 'último canje el', usedBadge: 'Usado', usesOf: 'Usos: 0 de 10', giftCta: 'Continuar al pago por transferencia', emailErr: 'Escribe un solo correo válido.', pick: 'Regalo: 12 clases', noRecipient: 'El pago no trae los datos de quien recibe' },
   en: { cta: 'Add the classes to my balance', added: 'Done: 2 classes added to your balance.', used: 'This voucher has already been used', expired: 'This voucher has expired', invalid: 'That code does not exist', format: 'The code has 8 letters and numbers (no I or O).', book: 'Book a class',
     create: 'Create and send', created: 'Courtesy created', classes: 'Number of classes', until: 'Valid until (last day)', uses: 'Usage limit', name: "Recipient's name", email: "Recipient's email", nameErr: 'Enter the name (at least 2 letters).',
-    issue: 'Issue and send the voucher', courtesy: 'New courtesy or invitation', sent: 'Sent to juliana@demo.hoyos.test', usedOn: 'last redeemed on', usedBadge: 'Used', usesOf: 'Uses: 0 of 10', giftCta: 'Continue to bank transfer payment', emailErr: 'Enter one valid email address.', pick: 'Gift: 12 classes', noRecipient: 'The payment has no recipient details' },
+    issue: 'Issue and send the voucher', courtesy: 'New courtesy or invitation', sent: 'Sent to juliana@demo.hoyos.test', usedOn: 'last redeemed on', usedBadge: 'Used', usesOf: 'Uses: 0 of 10', giftCta: 'Continue to bank transfer payment', emailErr: 'Enter one valid email address.', pick: 'Gift card · 12-class package', noRecipient: 'The payment has no recipient details' },
 };
 const plusDays = (n) => new Date(Date.now() + n * 864e5).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
 
@@ -62,13 +62,13 @@ try {
       check(`BO-04 ${tag} the link fills the code`, (await input.inputValue()) === code);
       await root.getByRole('button', { name: s.cta }).click();
       await root.getByText(s.added).waitFor();
-      check(`BO-04 ${tag} redeeming adds the classes to the balance and offers booking`, (await fake("return fake.balance('usr_cust')")) === 2 && (await root.getByRole('link', { name: s.book }).count()) === 1);
-      check(`BO-04 ${tag} the redemption sends only person and code, with an Idempotency-Key`, await fake("const w = fake.state.writes.at(-1); return w.table === 'credit_lots' && w.body.person === 'usr_cust' && w.body.voucher_code === arg && Object.keys(w.body).length === 2 && /^[0-9a-f-]{36}$/.test(w.key)", code));
+      check(`BO-04 ${tag} redeeming adds the classes to the balance and offers booking`, (await fake("return fake.balance('per_usr_cust')")) === 2 && (await root.getByRole('link', { name: s.book }).count()) === 1);
+      check(`BO-04 ${tag} the redemption is POST /api/credit_lot with only the caller's person (not the login id) and the code, with an Idempotency-Key`, await fake("const w = fake.state.writes.at(-1); return w.path === '/api/credit_lot' && w.body.person === 'per_usr_cust' && w.body.voucher_code === arg && Object.keys(w.body).length === 2 && /^[0-9a-f-]{36}$/.test(w.key)", code));
       check(`BO-04 ${tag} no horizontal scroll`, await noScroll());
       await go('/app/vouchers'); await go(`/app/vouchers/${code}`);
       await root.getByRole('button', { name: s.cta }).click();
       await root.getByText(s.used).waitFor();
-      check(`BO-05 ${tag} a used voucher says so, and nothing is added`, (await fake("return fake.balance('usr_cust')")) === 2);
+      check(`BO-05 ${tag} a used voucher says so, and nothing is added`, (await fake("return fake.balance('per_usr_cust')")) === 2);
       await go(`/app/vouchers/${expired}`);
       await root.getByRole('button', { name: s.cta }).click();
       check(`BO-05 ${tag} an expired voucher says so`, await root.getByText(s.expired).isVisible());
@@ -86,7 +86,7 @@ try {
       await root.getByText(lang === 'es' ? 'No se pudo completar' : 'It could not be completed').waitFor();
       await root.getByRole('button', { name: s.cta }).click();
       await root.getByText(lang === 'es' ? 'Listo: sumamos 3 clases a tu saldo.' : 'Done: 3 classes added to your balance.').waitFor();
-      check(`BO-05 ${tag} a committed but lost answer shows the generic message; the retry reuses its key and adds the classes once`, await fake("const k = fake.state.keys; return k.at(-1) === k.at(-2) && fake.state.writes.filter(w => w.body.voucher_code === arg).length === 1 && fake.balance('usr_cust') === 5", third));
+      check(`BO-05 ${tag} a committed but lost answer shows the generic message; the retry reuses its key and adds the classes once`, await fake("const k = fake.state.keys; return k.at(-1) === k.at(-2) && fake.state.writes.filter(w => w.body.voucher_code === arg).length === 1 && fake.balance('per_usr_cust') === 5", third));
       await ctx.close();
     }
 
@@ -121,6 +121,7 @@ try {
       await root.getByRole('button', { name: s.create }).click();
       await root.getByText(s.created).waitFor();
       check(`BO-03 ${tag} the courtesy is created with its limit, and listed`, (await fake("const v = fake.state.vouchers[0]; return v.kind === 'courtesy' && v.max_uses === 10 && v.classes === 1 && v.recipient_email === 'invitada@demo.hoyos.test'")) && (await all.getByText(s.usesOf).isVisible()));
+      check(`BO-03 ${tag} the courtesy is POST /api/voucher with every Company OS field, with an Idempotency-Key`, await fake("const w = fake.state.writes.at(-1); return w.path === '/api/voucher' && JSON.stringify(Object.keys(w.body).sort()) === JSON.stringify(['classes', 'kind', 'max_uses', 'recipient_email', 'recipient_name', 'valid_until']) && /^[0-9a-f-]{36}$/.test(w.key)"));
 
       const gifts = all.getByRole('button', { name: s.issue });
       check(`BO-02 ${tag} approved gift payments wait for their voucher (not pending, declined, without a status, or packs)`, (await gifts.count()) === 2 && (await all.getByText(s.noRecipient).count()) === 1);
@@ -128,9 +129,12 @@ try {
       await all.getByText(s.sent).waitFor();
       check(`BO-02 ${tag} a double click issues one gift voucher`, (await fake("return fake.state.vouchers.filter(v => v.kind === 'gift').length")) === 1);
       check(`BO-02 ${tag} issuing creates the gift voucher for the recipient and the payment leaves the list`, (await gifts.count()) === 1 && (await fake("const v = fake.state.vouchers.find(x => x.kind === 'gift'); return v.recipient_email === 'juliana@demo.hoyos.test' && v.buyer === 'usr_c01' && v.note === 'payment:pay_gift_ok' && v.classes === 12")));
-      await fake("const v = fake.state.vouchers.find(x => x.kind === 'gift'); fake.redeem({ person: 'usr_juliana', voucher_code: v.code }); window.qaVoucher.data.emit('vouchers')");
+      await fake("const v = fake.state.vouchers.find(x => x.kind === 'gift'); fake.redeem({ person: 'per_juliana', voucher_code: v.code }); window.qaVoucher.data.emit()");
       await all.getByText(s.usedOn).first().waitFor();
       check(`BO-06 ${tag} the studio sees when a gift was sent and when it was used`, (await all.getByText(s.sent).isVisible()) && (await all.getByText(s.usedBadge, { exact: true }).count()) >= 1);
+      await fake("fake.createVoucher({ kind: 'gift', product: 'prd_gift1', classes: 1, max_uses: 1, recipient_email: 'otro@demo.hoyos.test', note: 'payment:pay_gift_nonotes' }); window.qaVoucher.data.emit()");
+      await all.getByText(lang === 'es' ? 'No hay regalos pagados pendientes de envío.' : 'There are no paid gifts waiting to be sent.').waitFor();
+      check(`BO-02 ${tag} a gift voucher made in the approval batch is read back, so its payment is not offered for issue again`, (await gifts.count()) === 0);
       check(`BO-03 ${tag} no horizontal scroll`, await noScroll());
       await ctx.close();
     }

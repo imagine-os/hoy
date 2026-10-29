@@ -1,20 +1,23 @@
 import type { BaseRow } from '../../../data/schema';
 import type { DataProvider } from '../../../data/types';
 import { addDaysKey, dateKey } from '../../../i18n/format';
+import { CosError, cosOf, myPerson, outcomeUnknown, queryAll, type CosPort } from '../../transfers/launch/cos';
 
 /**
  * H-6 · vouchers on Company OS credits (production build). The server decides everything: the code, `uses`, expiry,
  * single use per person and the classes a redemption adds. The browser only builds the request, shows the result and
  * maps refusal codes to copy. No browser voucher rules (`src/data/vouchers.ts` is the review build's demo).
  *
- * The data seam is four tables (CompanyOSProvider, lane H-3, maps them):
- * - `vouchers`    ↔ `voucher` (credits), rows as Company OS sends them (kind, classes, valid_until, max_uses, code, uses…);
- * - `credit_lots` ↔ `credit_lot` (credits): a create with `{ person, voucher_code }` redeems;
- * - `plans`       ↔ `product` (payments): a gift product is `kind: gift` (frontend shape: family `regalos`);
- * - `payments`    ↔ `payment` (payments): the approved transfer of a gift product.
+ * Vouchers and lots are read and written in Company OS's own field names through the provider's raw port (`cosOf`,
+ * as lane H-5 does), not through the review build's `vouchers` table, whose mapping keeps the demo shape:
+ * - `voucher` (credits): `/query` lists them (staff only), `POST /api/voucher` issues a gift or a courtesy;
+ * - `credit_lot` (credits): `POST /api/credit_lot { person, voucher_code }` redeems, `person` being the caller's person.
+ * Products and payments are mapped tables (`plans` ↔ `product`, `payments` ↔ `payment`); both row shapes are read.
  */
-export const VOUCHER_TABLE = 'vouchers';
-export const LOT_TABLE = 'credit_lots';
+export const VOUCHER_ENTITY = 'voucher';
+export const VOUCHER_CHANGES = 'vouchers';
+/** The most vouchers a list reads (pages of 500); past it the list refuses instead of silently stopping. */
+export const VOUCHER_READ_MAX = 10_000;
 export const PRODUCT_TABLE = 'plans';
 export const PAYMENT_TABLE = 'payments';
 
@@ -103,7 +106,7 @@ export const giftCheckoutPath = (productKey: string) => `/app/pay/product/${enco
 
 type Loose = Record<string, unknown>;
 /** A raw Company OS record (`{ id, data: { … } }`) or an already flat row, as one flat row. */
-const flat = (r: Loose): Loose => (r.data && typeof r.data === 'object' && !Array.isArray(r.data) ? { ...(r.data as Loose), id: r.id, created_at: r.created_at ?? (r.data as Loose).created_at } : r);
+const flat = (r: Loose): Loose => (r.data && typeof r.data === 'object' && !Array.isArray(r.data) ? { ...(r.data as Loose), id: r.id, created_at: r.created_at ?? r.createdAt ?? (r.data as Loose).created_at } : r);
 const str = (v: unknown) => (typeof v === 'string' ? v : null);
 const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : null);
 
@@ -160,17 +163,56 @@ export function giftVoucherOps(payment: Loose, product: Loose, today: string = d
   return [{ op: 'create', entity: 'voucher', data: giftBody(p, g, r, giftValidUntil(g, today, addDaysKey)) }];
 }
 
-// ── writes ─────────────────────────────────────────────────────────────────────────────────────────────────────
-/** One create with an `Idempotency-Key` (one key per submit, reused on retry): `atomic` is the provider's keyed write. */
-export function keyedInsert<T extends BaseRow>(data: DataProvider, table: string, body: Loose, idempotencyKey: string): Promise<T> {
-  return data.atomic ? data.atomic((d) => d.insert<T>(table, body as Partial<T>), { idempotencyKey }) : data.insert<T>(table, body as Partial<T>);
+// ── Company OS calls ───────────────────────────────────────────────────────────────────────────────────────────
+/** The raw port; the review build has none (its voucher screens are the demo ones), so a call there refuses. */
+function port(data: DataProvider): CosPort {
+  const cos = cosOf(data);
+  if (!cos) throw new CosError('not_in_launch');
+  return cos;
 }
-export const createVoucher = (data: DataProvider, body: Loose, key: string) => keyedInsert<CosVoucher>(data, VOUCHER_TABLE, body, key);
-/** BO-02 for lane H-5: call right after approving a gift product's payment; the voucher's create sends the recipient's email. */
+/** A `voucher` record (`{ id, data, createdAt }`) as a flat row; anything else is not a voucher. */
+export function cosVoucher(rec: unknown): CosVoucher | null {
+  const r = rec && typeof rec === 'object' ? flat(rec as Loose) : null;
+  return isCosVoucher(r) && typeof r.id === 'string' ? ({ ...r, created_at: str(r.created_at) ?? '', updated_at: str(r.updated_at) ?? '' } as CosVoucher) : null;
+}
+/**
+ * Every voucher the caller may read, newest first (staff; a member has no `voucher` read). Pages are sorted by `code`,
+ * unique and server-set, so paging past 500 neither skips nor repeats a row (a sort on `id` reads a data field).
+ */
+export async function listVouchers(data: DataProvider): Promise<CosVoucher[]> {
+  const recs = await queryAll<Loose>(port(data), { entity: VOUCHER_ENTITY, sort: [{ field: 'code', dir: 'asc' }] }, VOUCHER_READ_MAX);
+  // A cut list would show issued gifts as still to issue: refuse rather than guess.
+  if (recs.length >= VOUCHER_READ_MAX) throw new CosError('too_many_vouchers');
+  // A voucher created while paging can shift a row onto the next page too.
+  const byId = new Map(recs.map((r) => [String(r.id), r]));
+  return [...byId.values()].flatMap((r) => cosVoucher(r) ?? []).sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? '') || b.id.localeCompare(a.id));
+}
+
+/** One create with an `Idempotency-Key` (one key per submit, reused on retry); answers the created row. */
+async function keyedCreate(data: DataProvider, entity: string, body: Loose, idempotencyKey: string): Promise<Loose> {
+  const res = await port(data).request<{ data: Loose }>('POST', `/api/${entity}`, body, { idempotencyKey });
+  return flat(res.data);
+}
+export async function createVoucher(data: DataProvider, body: Loose, key: string): Promise<CosVoucher> {
+  const v = cosVoucher(await keyedCreate(data, VOUCHER_ENTITY, body, key));
+  if (!v) throw new CosError('unknown');
+  return v;
+}
+/** BO-02: the desk issues a paid gift; the voucher's create sends the recipient's email. */
 export const issueGiftVoucher = (data: DataProvider, payment: GiftPayment, product: GiftProduct, recipient: Recipient, validUntil: string, key: string) =>
   createVoucher(data, giftBody(payment, product, recipient, validUntil), key);
 
 export interface RedeemedLot extends BaseRow { quantity?: number; valid_until?: string | null; source?: string }
-/** BO-04: a `credit_lot` create with the person and the code; the voucher decides the classes and the expiry. */
-export const redeemVoucher = (data: DataProvider, person: string, code: string, key: string) =>
-  keyedInsert<RedeemedLot>(data, LOT_TABLE, { person, voucher_code: normalizeCode(code) }, key);
+/**
+ * BO-04: a `credit_lot` create with the caller's person and the code; the voucher decides the classes and the expiry.
+ * The session's user id is the login, so the person is read first (the recipe's create policy checks `person` = own).
+ */
+export async function redeemVoucher(data: DataProvider, code: string, key: string): Promise<RedeemedLot> {
+  const cos = port(data);
+  const person = await myPerson(cos);
+  if (!person) throw new CosError('forbidden', 403);
+  return (await keyedCreate(data, 'credit_lot', { person: person.id, voucher_code: normalizeCode(code) }, key)) as unknown as RedeemedLot;
+}
+
+/** True when a failed write may have committed (no answer): its key must be kept for the retry. Any answer renews it. */
+export const writeMayHaveCommitted = (error: unknown) => outcomeUnknown(error);

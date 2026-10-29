@@ -1,20 +1,20 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { addDaysKey, dateKey, formatCOP, formatDate, fromDateKey } from '../../../i18n/format';
 import { useData, useTable } from '../../../data/DataContext';
+import { useLiveUpdates } from '../../../data/companyos/hooks';
 import type { BaseRow } from '../../../data/schema';
-import { useSession } from '../../../auth/SessionProvider';
 import { Card } from '../../../components/molecule/Card/Card';
 import { Button } from '../../../components/atom/Button/Button';
 import { Field } from '../../../components/molecule/Field/Field';
 import { Input } from '../../../components/atom/Input/Input';
 import { Notice } from '../../../components/molecule/Notice/Notice';
 import { Badge } from '../../../components/atom/Badge/Badge';
-import { codeFromLink, useCosVouchers, useGiftProducts, useKeyedSubmit } from './hooks';
+import { codeFromLink, useCosVouchers, useGiftProducts, useKeyedSubmit, type CosVoucherList } from './hooks';
 import {
-  PAYMENT_TABLE, courtesyBody, courtesyErrors, createVoucher, giftCheckoutPath, giftPaymentNotes, giftValidUntil, giftsToIssue,
-  isCode, isEmail, issueGiftVoucher, normalizeCode, redeemVoucher, voucherState,
+  PAYMENT_TABLE, VOUCHER_CHANGES, courtesyBody, courtesyErrors, createVoucher, giftCheckoutPath, giftPaymentNotes, giftValidUntil, giftsToIssue,
+  giftBody, isCode, isEmail, normalizeCode, redeemVoucher, voucherState,
   type CosVoucher, type CourtesyForm, type GiftPayment, type GiftProduct, type RedeemedLot,
 } from './model';
 import '../vouchers.css';
@@ -42,14 +42,13 @@ export function VoucherRedeemPage() {
 function RedeemCard({ linked }: { linked: string | undefined }) {
   const { t, lang } = useI18n();
   const data = useData();
-  const { user } = useSession();
   const [code, setCode] = useState(() => codeFromLink(linked) || normalizeCode(linked).slice(0, 8));
   const [done, setDone] = useState<RedeemedLot | null>(null);
   const submit = useKeyedSubmit();
   const valid = isCode(code);
   const redeem = async () => {
     if (!valid) return;
-    const lot = await submit.run((key) => redeemVoucher(data, user.id, code, key));
+    const lot = await submit.run((key) => redeemVoucher(data, code, key));
     if (lot) setDone(lot);
   };
   return (
@@ -67,7 +66,7 @@ function RedeemCard({ linked }: { linked: string | undefined }) {
               <p>{t('vouchers.cos.redeem.intro')}</p>
               <Field label={t('vouchers.cos.redeem.code')} hint={t('vouchers.cos.redeem.codeHint')} error={code && !valid ? t('vouchers.cos.err.code') : undefined} required>
                 {(id) => <Input id={id} value={code} autoComplete="off" autoCapitalize="characters" spellCheck={false} maxLength={12}
-                  onChange={(e) => { setCode(normalizeCode(e.target.value)); submit.renew(); submit.clearError(); }} />}
+                  onChange={(e) => { const next = normalizeCode(e.target.value); if (next !== code) { setCode(next); submit.renew(); } submit.clearError(); }} />}
               </Field>
               <RefusalNotice error={submit.error} />
               <Button loading={submit.busy} disabled={!valid || submit.busy} onClick={redeem}>{t('vouchers.cos.redeem.cta')}</Button>
@@ -141,7 +140,19 @@ function GiftToIssue({ payment, product, recipient }: { payment: GiftPayment; pr
   // One key per payment for this card: a double click or a retry replays the same voucher instead of issuing a second one.
   const submit = useKeyedSubmit({ keepAfterSuccess: true });
   const [issued, setIssued] = useState<CosVoucher | null>(null);
-  const edit = (set: (v: string) => void) => (e: { target: { value: string } }) => { if (issued) return; set(e.target.value); submit.renew(); };
+  // The body is fixed with the key at the first submit: a retry after a lost answer resends it exactly, even if the
+  // product or payment props refetch in between (a changed body under the same key would be refused, then re-issued).
+  const sent = useRef<Record<string, unknown> | null>(null);
+  const edit = (value: string, set: (v: string) => void) => (e: { target: { value: string } }) => {
+    if (issued || e.target.value === value) return;
+    set(e.target.value); submit.renew(); sent.current = null;
+  };
+  const issue = async () => {
+    sent.current ??= giftBody(payment, product, { name, email }, until);
+    const body = sent.current;
+    const v = await submit.run((key) => createVoucher(data, body, key));
+    if (v) setIssued(v); else if (!submit.keptKey()) sent.current = null;
+  };
   const ok = name.trim().length >= 2 && isEmail(email) && (!until || until >= today);
   return (
     <Card title={`${bi(product.name)} · ${classesText(t, product.classes)}`} actions={<Badge tone="warn">{t('vouchers.cos.desk.waiting')}</Badge>}>
@@ -149,42 +160,48 @@ function GiftToIssue({ payment, product, recipient }: { payment: GiftPayment; pr
         <p className="small muted">{t('vouchers.cos.desk.paid', { date: payment.date ? day(payment.date, lang) : '—', amount: payment.amount != null ? formatCOP(payment.amount, lang) : '—' })}</p>
         {!recipient && <Notice tone="warn">{t('vouchers.cos.desk.noRecipient')}</Notice>}
         <div className="voucher-grid">
-          <Field label={t('vouchers.cos.recipientName')} required>{(id) => <Input id={id} value={name} maxLength={120} onChange={edit(setName)} />}</Field>
-          <Field label={t('vouchers.cos.recipientEmail')} required error={email && !isEmail(email) ? t('vouchers.cos.err.email') : undefined}>{(id) => <Input id={id} type="email" value={email} maxLength={254} onChange={edit(setEmail)} />}</Field>
-          <Field label={t('vouchers.cos.validUntil')} hint={t('vouchers.cos.noEndHint')}>{(id) => <Input id={id} type="date" min={today} value={until} onChange={edit(setUntil)} />}</Field>
+          <Field label={t('vouchers.cos.recipientName')} required>{(id) => <Input id={id} value={name} maxLength={120} onChange={edit(name, setName)} />}</Field>
+          <Field label={t('vouchers.cos.recipientEmail')} required error={email && !isEmail(email) ? t('vouchers.cos.err.email') : undefined}>{(id) => <Input id={id} type="email" value={email} maxLength={254} onChange={edit(email, setEmail)} />}</Field>
+          <Field label={t('vouchers.cos.validUntil')} hint={t('vouchers.cos.noEndHint')}>{(id) => <Input id={id} type="date" min={today} value={until} onChange={edit(until, setUntil)} />}</Field>
         </div>
         <RefusalNotice error={submit.error} />
         {issued
           ? <Notice tone="success" title={t('vouchers.cos.desk.issued', { email: issued.recipient_email ?? '' })}>{t('vouchers.cos.courtesy.sentBody', { code: issued.code ?? '' })}</Notice>
-          : <Button loading={submit.busy} disabled={!ok || submit.busy} onClick={async () => { const v = await submit.run((key) => issueGiftVoucher(data, payment, product, { name, email }, until, key)); if (v) setIssued(v); }}>{t('vouchers.cos.desk.issue')}</Button>}
+          : <Button loading={submit.busy} disabled={!ok || submit.busy} onClick={issue}>{t('vouchers.cos.desk.issue')}</Button>}
       </div>
     </Card>
   );
 }
 
-function GiftsToIssue({ vouchers }: { vouchers: CosVoucher[] }) {
+type VoucherList = CosVoucherList;
+/** Until the vouchers are read (again, after any change), an approved gift could look unissued: nothing is offered then. */
+function GiftsToIssue({ list }: { list: VoucherList }) {
   const { t } = useI18n();
   const { products } = useGiftProducts();
-  const { rows: payments } = useTable<BaseRow>(PAYMENT_TABLE);
-  const waiting = giftsToIssue(payments as unknown as Record<string, unknown>[], products, vouchers);
+  const { rows: payments, loading } = useTable<BaseRow>(PAYMENT_TABLE);
+  const known = !list.loading && !list.stale && !list.failed && !loading;
+  const waiting = known ? giftsToIssue(payments as unknown as Record<string, unknown>[], products, list.vouchers) : [];
   return (
     <section className="stack" aria-labelledby="gifts-to-issue">
       <h2 id="gifts-to-issue">{t('vouchers.cos.desk.title')}</h2>
       <p className="muted">{t('vouchers.cos.desk.sub')}</p>
-      {!waiting.length && <Notice>{t('vouchers.cos.desk.empty')}</Notice>}
+      {list.failed && <Notice tone="warn">{t('vouchers.cos.list.failed')}</Notice>}
+      {!known && !list.failed && <Notice>{t('vouchers.cos.list.loading')}</Notice>}
+      {known && !waiting.length && <Notice>{t('vouchers.cos.desk.empty')}</Notice>}
       {waiting.map((w) => <GiftToIssue key={w.payment.id} {...w} />)}
     </section>
   );
 }
 
 // ── voucher list (BO-05, BO-06: sent and used, as the studio sees them) ─────────────────────────────────────────
-function VoucherList({ vouchers }: { vouchers: CosVoucher[] }) {
+function VoucherList({ list: { vouchers, loading, failed } }: { list: VoucherList }) {
   const { t, lang } = useI18n();
   const today = dateKey();
   return (
     <section className="stack" aria-labelledby="voucher-list">
       <h2 id="voucher-list">{t('vouchers.cos.list.title')}</h2>
-      {!vouchers.length && <Notice>{t('vouchers.cos.list.empty')}</Notice>}
+      {loading && <Notice>{t('vouchers.cos.list.loading')}</Notice>}
+      {!loading && !failed && !vouchers.length && <Notice>{t('vouchers.cos.list.empty')}</Notice>}
       {vouchers.map((v) => {
         const state = voucherState(v, today);
         return (
@@ -210,6 +227,9 @@ function VoucherList({ vouchers }: { vouchers: CosVoucher[] }) {
   );
 }
 
+/** Approvals and redemptions happen elsewhere: the studio and desk lists poll while open (contract §1). */
+const LIVE = [PAYMENT_TABLE, VOUCHER_CHANGES];
+
 // ── M-13 · administration: courtesy vouchers (BO-03), gifts to issue, list ───────────────────────────────────────
 const EMPTY: CourtesyForm = { classes: '1', validUntil: '', maxUses: '1', name: '', email: '' };
 
@@ -222,7 +242,10 @@ function CourtesyCard() {
   const [sent, setSent] = useState<CosVoucher | null>(null);
   const submit = useKeyedSubmit();
   const errors = courtesyErrors(form, today);
-  const set = (k: keyof CourtesyForm) => (e: { target: { value: string } }) => { setForm((f) => ({ ...f, [k]: e.target.value })); setSent(null); submit.renew(); };
+  const set = (k: keyof CourtesyForm) => (e: { target: { value: string } }) => {
+    if (e.target.value === form[k]) return;
+    setForm((f) => ({ ...f, [k]: e.target.value })); setSent(null); submit.renew();
+  };
   const err = (k: keyof CourtesyForm) => (tried && errors[k] ? t(errors[k]!) : undefined);
   const create = async () => {
     setTried(true);
@@ -251,14 +274,15 @@ function CourtesyCard() {
 
 export function VoucherStudioPage() {
   const { t } = useI18n();
-  const vouchers = useCosVouchers();
+  const list = useCosVouchers();
+  useLiveUpdates(LIVE);
   return (
     <div className="container page">
       <div className="page-head"><h1>{t('vouchers.title')}</h1><p className="muted">{t('vouchers.cos.studio.sub')}</p></div>
       <div className="stack">
         <CourtesyCard />
-        <GiftsToIssue vouchers={vouchers} />
-        <VoucherList vouchers={vouchers} />
+        <GiftsToIssue list={list} />
+        <VoucherList list={list} />
       </div>
     </div>
   );
@@ -267,13 +291,14 @@ export function VoucherStudioPage() {
 // ── S-08 · front desk: issue paid gift vouchers, see the list ────────────────────────────────────────────────────
 export function VoucherDeskPage() {
   const { t } = useI18n();
-  const vouchers = useCosVouchers();
+  const list = useCosVouchers();
+  useLiveUpdates(LIVE);
   return (
     <div className="container page">
       <div className="page-head"><h1>{t('vouchers.cos.desk.page')}</h1></div>
       <div className="stack">
-        <GiftsToIssue vouchers={vouchers} />
-        <VoucherList vouchers={vouchers} />
+        <GiftsToIssue list={list} />
+        <VoucherList list={list} />
       </div>
     </div>
   );
