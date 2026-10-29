@@ -1,21 +1,19 @@
-// H-4 launch rows in the browser, on the PRODUCTION build (VITE_HOY_BUILD=production): schedule → class → checkout → booked
-// (RS-01, RS-02, RS-03), the held spot with its countdown and the outside-hours notice (PG-03, J1, J1c), the move and cancel sheet
-// (RS-09, J3) and a server refusal shown as copy (RS-04…RS-07). ES and EN, 390 and 1280. Until the connector (H-3) is merged the
-// production build still runs on the browser mock, so the held booking is seeded into the mock store; nothing leaves 127.0.0.1.
-// Run: node scripts/test-booking-launch-ui.mjs   (builds the production dist into a temp dir unless QA_PROD_DIST names one)
-import { execFileSync } from 'node:child_process';
-import { mkdtempSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-import { serveDist, launchBrowser, newContext, reporter } from './lib/launch-qa.mjs';
+// H-4 launch rows in the browser, on the PRODUCTION routes and pages (a dev server with VITE_HOY_BUILD=production):
+// schedule → class → checkout → booked (RS-01, RS-02), a pack bought for a class goes to the bank-transfer payment (RS-03),
+// the held spot with its countdown and the outside-hours notice (PG-03, J1, J1c), and the move and cancel sheet (RS-09, J3).
+// ES and EN, 390 and 1280. Production signs in with Clerk and talks to Company OS, so the pages run in
+// scripts/booking-launch-harness.html: the production routes on the in-browser store (a held booking is seeded into it)
+// and a ready session for a fictional customer. Server rules are Company OS's own suite; nothing leaves 127.0.0.1.
+// Run: node scripts/test-booking-launch-ui.mjs
+import { createServer } from 'vite';
+import { launchBrowser, newContext, reporter } from './lib/launch-qa.mjs';
 
 const { check, done } = reporter('H-4 booking UI');
-let dir = process.env.QA_PROD_DIST;
-if (!dir) {
-  dir = mkdtempSync(join(tmpdir(), 'hoy-h4-prod-'));
-  execFileSync('npx', ['vite', 'build', '--outDir', dir, '--emptyOutDir', '--logLevel', 'error'], { env: { ...process.env, VITE_HOY_BUILD: 'production' }, stdio: 'inherit' });
-}
-const server = await serveDist(Number(process.env.QA_PORT ?? 5700 + Math.floor(Math.random() * 250)), dir);
+process.env.VITE_HOY_BUILD = 'production';
+const port = Number(process.env.QA_PORT ?? 5700 + Math.floor(Math.random() * 250));
+const dev = await createServer({ server: { port, strictPort: true, host: '127.0.0.1' }, logLevel: 'error', clearScreen: false });
+await dev.listen();
+const server = { base: `http://127.0.0.1:${port}/scripts/booking-launch-harness.html`, close: () => dev.close() };
 const browser = await launchBrowser();
 const USER = 'usr_cust';
 
@@ -36,7 +34,7 @@ try {
     const page = await ctx.newPage();
     const errors = [];
     page.on('pageerror', (e) => errors.push(String(e)));
-    await page.goto(`${server.base}/#/app/schedule`);
+    await page.goto(`${server.base}#/app/schedule`);
     await page.waitForLoadState('networkidle');
     check(`RS-01 [${tag}] the schedule renders with method filters`, await page.locator('.cust-filters').count() > 0);
 
@@ -47,7 +45,7 @@ try {
     if (!target) { await ctx.close(); continue; }
 
     // RS-02: class → checkout → book from the balance → booked page.
-    await page.goto(`${server.base}/#/app/class/${target.id}`);
+    await page.goto(`${server.base}#/app/class/${target.id}`);
     await page.locator('.cust-sticky button.btn-primary').first().click();
     await page.waitForURL(/#\/app\/checkout\//);
     check(`RS-02 [${tag}] class detail goes straight to checkout (no browser admission read)`, page.url().endsWith(`/app/checkout/${target.id}`));
@@ -62,28 +60,29 @@ try {
     check(`RS-08 [${tag}] the booking page shows the payment status (confirmed) and directions`, await page.getByText(ES ? 'Pago confirmado' : 'Payment confirmed').count() > 0 && await page.getByText(ES ? 'Cómo llegar' : 'Getting here').count() > 0);
 
     // RS-09 / J3: the change sheet offers the move with its deadline and warns that cancelling loses the class.
-    await page.goto(`${server.base}/#/app/booking/${bookingId}/change`);
+    await page.goto(`${server.base}#/app/booking/${bookingId}/change`);
     await page.getByText(ES ? /Puedes moverla hasta/ : /You can move it until/).first().waitFor({ timeout: 5000 });
     check(`RS-09 [${tag}] the move row shows the deadline (12 h before)`, await page.getByText(ES ? /12 h antes/ : /12 h before/).count() > 0);
     await page.getByText(ES ? /Pierdes la clase/ : /You lose the class/).first().click();
     check(`J3 [${tag}] the cancel step warns, every time, that the class is lost`, await page.getByText(ES ? /Si cancelas, pierdes esta clase/ : /If you cancel, you lose this class/).count() === 1 && await page.getByRole('button', { name: ES ? /cancelar y perder la clase/ : /cancel and lose the class/ }).count() === 1);
 
-    // RS-03: choosing a package sends the customer to buy it and the purchase comes back to the same class.
+    // RS-03: choosing a package for a class sends the customer to buy it by bank transfer (production): the pack is the
+    // desk's to approve, so the class is booked with it afterwards. A hostile return link changes nothing.
     const other = pickSession(adb, now, [target.id]);
-    await page.goto(`${server.base}/#/app/checkout/${other.id}`);
+    await page.goto(`${server.base}#/app/checkout/${other.id}`);
     await page.getByRole('radio').filter({ hasText: /12/ }).first().click();
     await page.getByRole('button', { name: ES ? /Comprar y volver a esta clase/ : /Buy and come back to this class/ }).click();
-    await page.waitForURL(/#\/app\/plans\?plan=pack12/);
-    await page.getByRole('dialog').getByRole('button', { name: ES ? /Pagar .* con Wompi/ : /Pay .* with Wompi/ }).click();
-    const back = page.getByRole('button', { name: ES ? /Volver a tu clase y reservar/ : /Back to your class to book/ });
-    check(`RS-03 [${tag}] after the purchase the customer is offered the way back to the chosen class`, await seen(back));
-    if (await back.count()) { await back.click(); await page.waitForURL(/#\/app\/checkout\//); }
-    check(`RS-03 [${tag}] … and lands on that class's checkout again`, page.url().endsWith(`/app/checkout/${other.id}`));
-    check(`RS-03 [${tag}] a hostile return link is ignored (stays on the plans screen)`, await (async () => {
-      await page.goto(`${server.base}/#/app/plans?plan=pack12&next=${encodeURIComponent('https://evil.test/')}`);
-      await page.getByRole('dialog').getByRole('button', { name: ES ? /Pagar .* con Wompi/ : /Pay .* with Wompi/ }).click();
-      return await seen(page.getByRole('dialog').getByText(ES ? 'Paquete activo' : 'Package active')) && await back.count() === 0;
-    })());
+    await page.waitForURL(/#\/app\/pay\/product\/pack12$/, { timeout: 10000 }).catch(() => {});
+    check(`RS-03 [${tag}] buying the pack for a class opens its bank-transfer payment (no Wompi stand-in)`, page.url().endsWith('/app/pay/product/pack12'));
+    // A link from outside (a fresh load) with a hostile return goes to the same payment and never leaves the app.
+    const outside = await ctx.newPage();
+    outside.on('pageerror', (e) => errors.push(String(e)));
+    await outside.goto(`${server.base}#/app/plans?plan=pack12&next=${encodeURIComponent('https://evil.test/')}`);
+    await outside.waitForURL(/#\/app\/pay\/product\/pack12$/, { timeout: 10000 }).catch(() => {});
+    check(`RS-03 [${tag}] a hostile return link is ignored`, outside.url().startsWith('http://127.0.0.1') && outside.url().endsWith('/app/pay/product/pack12'), outside.url());
+    await outside.close();
+    await page.goto(`${server.base}#/app/plans`);
+    check(`RS-03 [${tag}] the plans page lists the packs from the product master`, await seen(page.getByRole('button', { name: ES ? /Elegir|Comprar/ : /Choose|Buy/ })));
 
     // PG-03 / J1: a held single class booked outside reception hours: "the clock starts at" its opening, plus the receipt upload.
     const fresh = await readDb(page), fdb = fresh.db ?? fresh;
@@ -91,7 +90,7 @@ try {
     fdb.bookings = fdb.bookings.filter((b) => !(b.user_id === USER && b.session_id === other.id));
     fdb.bookings.push({ ...saved[0], id: 'bkg_h4_held', session_id: other.id, status: 'held', paid_with: 'single', payment_method: 'transfer', hold_until: open, policy_hold_minutes: 15, hold_frozen_at: null, created_at: new Date(now).toISOString() });
     await writeDb(page, fresh);
-    await page.goto(`${server.base}/#/app/booking/bkg_h4_held`);
+    await page.goto(`${server.base}#/app/booking/bkg_h4_held`);
     await page.reload();
     check(`PG-03 [${tag}] a held spot shows the receipt upload and the hold explainer`, await seen(page.getByText(ES ? /Enviar comprobante/ : /Send receipt/)) && await page.getByText(ES ? /Un comprobante enviado antes de la clase guarda el cupo/ : /A receipt sent before the class keeps the spot/).count() === 1);
     check(`J1 [${tag}] outside reception hours the clock "starts at" its opening time`, await page.getByText(ES ? /El reloj empieza a las/ : /The clock starts at/).count() === 1 && await page.getByText(ES ? /Fuera del horario de recepción/ : /Outside reception hours/).count() === 1);

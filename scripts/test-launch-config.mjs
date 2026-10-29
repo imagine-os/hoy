@@ -58,6 +58,12 @@ check('SW-02 an inactive or missing product is not shown at a stale amount', M.l
 const plansRows = rows.map((r) => ({ ...r, slug: r.id.slice(5), family: M.pricing.find((p) => `plan_${p.id}` === r.id).family }));
 check('SW-02 checkout charges the same product-master price the website shows', M.resolveOperationalQuote(plansRows.map((r) => (r.id === 'plan_trial' ? { ...r, price: 39000 } : r)), 'trial', '2026-10-28').amount === 39000);
 check('SW-02 another tenant\'s row is ignored', M.livePrice([{ ...row('trial', 1), tenant_id: 'ten_other' }], 'trial', '2026-10-28') === null);
+// Production (Company OS): product rows have their own ids and the item is the product key; one row per price period.
+const cos = (id, key, price, extra = {}) => ({ id, slug: key, tenant_id: T, price, active: true, ...extra });
+check('SW-02 Company OS rows are matched by product key, not by id', M.livePrice([cos('3f1c', 'pack12', 600000)], 'pack12', '2026-10-28') === 600000);
+const periods = [cos('a', 'pack12', 600000, { valid_until: '2026-10-31' }), cos('b', 'pack12', 650000, { valid_from: '2026-11-01' })];
+check('SW-02 Company OS dated prices: today\'s row (October, then November)', M.livePrice(periods, 'pack12', '2026-10-31') === 600000 && M.livePrice(periods, 'pack12', '2026-11-01') === 650000);
+check('SW-02 a price of 0 is quoted by the studio, not shown (J4)', M.livePrice([cos('p', 'private', 0)], 'private', '2026-10-28') === null);
 const definition = { code: 'TRIAL', name: { es: 'Clase de prueba', en: 'Trial class' }, type: 'bienvenida', classes: 1, validityDays: 30, active: true, prices: [{ id: 'p1', amount: 35000, startsOn: '2026-10-01', endsOn: '2026-10-31' }, { id: 'p2', amount: 40000, startsOn: '2026-11-01', endsOn: null }] };
 const draft = { definition, history: [{ revision: 1, actorId: 'usr_admin', at: '2026-10-20T12:00:00Z', definition }] };
 const published = [row('trial', 0, { frontend_catalog: draft, frontend_publication: { snapshot: draft, revision: 1, actorId: 'usr_admin', at: '2026-10-20T12:00:00Z', withdrawnAt: null, history: [] } }), ...rows.filter((r) => r.id !== 'plan_trial')];

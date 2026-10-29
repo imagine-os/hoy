@@ -250,6 +250,7 @@ const plans = entity({
     classes: { field: 'credits', from: num }, validity_days: { field: 'validity_days', from: num },
     active: { field: 'active', from: (v) => v !== false }, freezable: { field: 'freezable', from: bool },
     audience: { field: 'audience' },
+    valid_from: { field: 'valid_from', from: str }, valid_until: { field: 'valid_until', from: str },
     family: { field: 'kind', from: (v) => FAMILY_OF_KIND[String(v)] ?? 'paquetes', to: (v, row) => (row.kind as string | undefined) ?? KIND_OF_FAMILY[String(v)] ?? 'pack' },
   },
   /** English name, description, badge and order are website content, matched by the product key. */

@@ -4,7 +4,9 @@ import { createRoot } from 'react-dom/client';
 import { MemoryRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { MockProvider } from '../src/data/MockProvider';
 import { DataProviderRoot } from '../src/data/DataContext';
-import { SessionProvider } from '../src/auth/SessionProvider';
+import { SessionContext, type SessionCtx } from '../src/auth/sessionContext';
+import { demoUserById } from '../src/auth/demoUsers';
+import { roleCan } from '../src/auth/permissions';
 import { I18nProvider } from '../src/i18n/I18nProvider';
 import { getStrings } from '../src/app/registry';
 import { GiftVoucherPage, VoucherDeskPage, VoucherRedeemPage, VoucherStudioPage } from '../src/modules/vouchers/production/pages';
@@ -12,7 +14,22 @@ import { giftPaymentNotes } from '../src/modules/vouchers/production/model';
 import { fakeCredits, fixtures } from './lib/fake-credits.mjs';
 import { dateKey } from '../src/i18n/format';
 
-export function mountVoucherHarness(path: string) {
+/**
+ * The signed-in user the production screens read through `useSession()`. Production signs in with Clerk only, so the
+ * harness gives the screens a ready session for one fictional persona, shaped as ProductionSession builds it.
+ */
+export function qaSession(userId: string): SessionCtx {
+  const user = demoUserById(userId);
+  if (!user) throw new Error(`no fictional persona ${userId}`);
+  const noop = () => {};
+  return {
+    status: 'ready', signedIn: true, user, role: user.role, isSuperAdmin: false, canDevMode: false, devMode: false, viewAs: null, caps: [],
+    switchUser: noop, setDevMode: noop, setViewAs: noop, signOut: async () => {}, refresh: noop,
+    can: (p) => roleCan(user.role, p), hasRole: (roles) => roles.includes('public') || roles.includes(user.role),
+  };
+}
+
+export function mountVoucherHarness(path: string, userId: string) {
   const fake = fakeCredits({ today: dateKey(), products: fixtures.products, payments: fixtures.payments(giftPaymentNotes({ name: 'Juliana Ficticia', email: 'juliana@demo.hoyos.test' })) });
   const data = fake.wrap(new MockProvider());
   const q = { fake, data, ready: false, navigate: (_: string) => {} };
@@ -29,7 +46,7 @@ export function mountVoucherHarness(path: string) {
   createRoot(el).render(
     <I18nProvider tables={getStrings()}>
       <DataProviderRoot provider={data}>
-        <SessionProvider>
+        <SessionContext.Provider value={qaSession(userId)}>
           <MemoryRouter initialEntries={[path]}>
             <Routes>
               <Route path="/app/vouchers" element={<VoucherRedeemPage />} />
@@ -41,7 +58,7 @@ export function mountVoucherHarness(path: string) {
             </Routes>
             <Where />
           </MemoryRouter>
-        </SessionProvider>
+        </SessionContext.Provider>
       </DataProviderRoot>
     </I18nProvider>,
   );

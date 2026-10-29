@@ -17,12 +17,17 @@ import { tenant } from '../tenant/tenant';
  * its contact button.
  */
 export function livePrice(rows: CatalogPlan[], itemId: string, purchaseDate: string): number | null {
-  const row = rows.find((p) => p.id === `plan_${itemId}` && p.tenant_id === tenant.id);
-  if (!row) return null;
   if (localCatalogMode(rows)) {
+    const row = rows.find((p) => p.id === `plan_${itemId}` && p.tenant_id === tenant.id);
+    if (!row) return null;
     try { return quotePublishedProduct(row, purchaseDate).amount; } catch { return null; }
   }
-  return row.active && Number.isInteger(row.price) && row.price > 0 ? row.price : null;
+  // Company OS (production): product rows have their own ids and the item is the product `key` (`slug` here); with
+  // dated prices (payments 2.8.0) the key has one row per period, and today's active row is the price.
+  const today = rows.filter((p) => (p.slug === itemId || p.id === `plan_${itemId}`) && p.tenant_id === tenant.id && p.active
+    && (!p.valid_from || p.valid_from <= purchaseDate) && (!p.valid_until || purchaseDate <= p.valid_until));
+  const row = today.sort((a, b) => String(b.valid_from ?? '').localeCompare(String(a.valid_from ?? '')))[0];
+  return row && Number.isInteger(row.price) && row.price > 0 ? row.price : null;
 }
 
 /** The launch price list with every amount read from the product master; unpriced items are dropped. */

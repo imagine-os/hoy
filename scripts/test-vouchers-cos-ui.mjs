@@ -1,7 +1,8 @@
 // H-6 · vouchers on Company OS credits, in the browser. Named checks per tracker row BO-01…BO-06:
 //  1. The production screens (dev server with VITE_HOY_BUILD=production) against the fake credits API
 //     (scripts/lib/fake-credits.mjs via scripts/vouchers-cos-harness.tsx), ES and EN, 390 and 1280 px.
-//  2. The production build (built here unless QA_PROD_DIST is set): routes, sign-in return for the emailed link, no extras.
+//  2. The production build (built here unless QA_PROD_DIST is set), signed out (Clerk is its only sign-in): a launch
+//     page sends a visitor to sign-in and back (so it is registered); a page that isn't a route lands on `/`.
 //  3. The review build (dist/, from npm run build) keeps the demo vouchers and their extras.
 // Fictional data only; external requests are blocked. Run: npm run build && node scripts/test-vouchers-cos-ui.mjs
 import { execFileSync } from 'node:child_process';
@@ -35,7 +36,7 @@ async function harness(userId, lang, width, path) {
   page.setDefaultTimeout(20000);
   page.on('pageerror', (e) => errors.push(`${path}: ${e.message}`));
   await page.goto(`${base}/#/coming-soon`);
-  await page.evaluate(async (p) => (await import('/scripts/vouchers-cos-harness.tsx')).mountVoucherHarness(p), path);
+  await page.evaluate(async ([p, u]) => (await import('/scripts/vouchers-cos-harness.tsx')).mountVoucherHarness(p, u), [path, userId]);
   await page.waitForFunction(() => window.qaVoucher?.ready);
   const root = page.locator('#qa-voucher-root');
   // Navigates and waits for the new route's render (the location readout commits with it).
@@ -165,16 +166,13 @@ for (const [label, dir, port, prod] of [['production', prodDir, 5632, true], ['r
       await page.waitForURL(/sign-in/);
       check('BO-04 production: a visitor opening the emailed link goes to sign-in and comes back to it', decodeURIComponent(page.url()).includes('next=/app/vouchers/K7M2QX9A'));
       await ctx.close();
-      ({ ctx, page } = await open('usr_admin', '/admin/vouchers'));
-      await page.getByLabel(T.es.uses).waitFor();
-      check('production: the admin voucher screen has no value in pesos, attendee cap, booking scope or restore-on-cancel', (await page.getByText('Máximo de participantes').count()) === 0 && (await page.locator('main select, .page select').count()) === 0);
+      ({ ctx, page } = await open('usr_public', '/app/voucher-gifts'));
+      await page.waitForTimeout(1500);
+      check('production: the gift purchase demo (gift_purchase_*) is not a route', !page.url().includes('voucher-gifts') && !page.url().includes('sign-in'));
       await ctx.close();
-      ({ ctx, page } = await open('usr_cust', '/app/voucher-gifts'));
-      await page.waitForTimeout(800);
-      check('production: the gift purchase demo (gift_purchase_*) is not a route', !page.url().includes('voucher-gifts'));
-      await ctx.close();
-      ({ ctx, page } = await open('usr_cust', '/app/gift-voucher'));
-      check('BO-01 production: the gift purchase screen is a route', await page.getByRole('heading', { name: 'Regalar clases' }).isVisible({ timeout: 10000 }).catch(() => false) || (await page.getByRole('heading', { name: 'Regalar clases' }).waitFor().then(() => true, () => false)));
+      ({ ctx, page } = await open('usr_public', '/app/gift-voucher'));
+      await page.waitForURL(/sign-in/);
+      check('BO-01 production: the gift purchase screen is a route (a visitor signs in and comes back to it)', decodeURIComponent(page.url()).includes('next=/app/gift-voucher'));
       await ctx.close();
     } else {
       const { ctx, page } = await open('usr_admin', '/admin/vouchers');
