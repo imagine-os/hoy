@@ -53,6 +53,8 @@ export const productionStrings: StringTable = {
   // list
   'vouchers.cos.list.title': { es: 'Bonos emitidos', en: 'Issued vouchers' },
   'vouchers.cos.list.empty': { es: 'Todavía no hay bonos.', en: 'There are no vouchers yet.' },
+  'vouchers.cos.list.loading': { es: 'Cargando los bonos…', en: 'Loading the vouchers…' },
+  'vouchers.cos.list.failed': { es: 'No pudimos leer los bonos. Recarga la página en un momento; mientras tanto no se muestran regalos por enviar, para no emitir uno dos veces.', en: "We couldn't read the vouchers. Reload the page in a moment; until then no gifts to send are shown, so none is issued twice." },
   'vouchers.cos.list.uses': { es: 'Usos: {uses} de {max}', en: 'Uses: {uses} of {max}' },
   'vouchers.cos.list.sent': { es: 'Enviado a {email} el {date}', en: 'Sent to {email} on {date}' },
   'vouchers.cos.list.until': { es: 'válido hasta el {date}', en: 'valid until {date}' },

@@ -1,5 +1,6 @@
-// Development-only harness for the H-6 production voucher screens: the real pages, the real session and i18n, and the
-// fake Company OS credits API (scripts/lib/fake-credits.mjs) in place of CompanyOSProvider. Fictional data only.
+// Development-only harness for the H-6 production voucher screens: the real pages, the real session and i18n, the real
+// products/payments mapping, and the fake Company OS credits API (scripts/lib/fake-credits.mjs) behind the raw port in
+// place of CompanyOSProvider. Fictional data only.
 import { createRoot } from 'react-dom/client';
 import { MemoryRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { MockProvider } from '../src/data/MockProvider';
@@ -12,6 +13,7 @@ import { getStrings } from '../src/app/registry';
 import { GiftVoucherPage, VoucherDeskPage, VoucherRedeemPage, VoucherStudioPage } from '../src/modules/vouchers/production/pages';
 import { giftPaymentNotes } from '../src/modules/vouchers/production/model';
 import { fakeCredits, fixtures } from './lib/fake-credits.mjs';
+import { adapterFor, fromRecord } from '../src/data/companyos/mapping';
 import { dateKey } from '../src/i18n/format';
 
 /**
@@ -31,7 +33,10 @@ export function qaSession(userId: string): SessionCtx {
 
 export function mountVoucherHarness(path: string, userId: string) {
   const fake = fakeCredits({ today: dateKey(), products: fixtures.products, payments: fixtures.payments(giftPaymentNotes({ name: 'Juliana Ficticia', email: 'juliana@demo.hoyos.test' })) });
-  const data = fake.wrap(new MockProvider());
+  // The session's user id is the login; the person Company OS answers for it is another id (`person.user` = the login).
+  fake.state.me = `per_${userId}`;
+  fake.state.readVouchers = demoUserById(userId)?.role !== 'customer';
+  const data = fake.wrap(new MockProvider(), { adapterFor, fromRecord });
   const q = { fake, data, ready: false, navigate: (_: string) => {} };
   (window as unknown as { qaVoucher: typeof q }).qaVoucher = q;
   function Where() {
