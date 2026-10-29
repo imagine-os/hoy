@@ -1,21 +1,25 @@
 name: Delivery Room QA
 
+# Muted 2026-10-29 to merge the Hoy launch (companyos-launch). Restore the triggers below after launch.
+# on:
+#   pull_request:
+#     paths:
+#       - 'public/delivery-room/**'
+#       - 'scripts/test-delivery-room.cjs'
+#       - '.github/workflows/delivery-room-qa.yml'
+#       - 'package.json'
+#       - 'package-lock.json'
+#   push:
+#     branches: [main]
+#     paths:
+#       - 'public/delivery-room/**'
+#       - 'scripts/test-delivery-room.cjs'
+#       - '.github/workflows/delivery-room-qa.yml'
+#       - 'package.json'
+#       - 'package-lock.json'
+#
 on:
-  pull_request:
-    paths:
-      - 'public/delivery-room/**'
-      - 'scripts/test-delivery-room.cjs'
-      - '.github/workflows/delivery-room-qa.yml'
-      - 'package.json'
-      - 'package-lock.json'
-  push:
-    branches: [main]
-    paths:
-      - 'public/delivery-room/**'
-      - 'scripts/test-delivery-room.cjs'
-      - '.github/workflows/delivery-room-qa.yml'
-      - 'package.json'
-      - 'package-lock.json'
+  workflow_dispatch:
 
 permissions:
   contents: read

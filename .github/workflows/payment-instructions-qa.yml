@@ -1,17 +1,21 @@
 name: Payment instruction frontend QA
+# Muted 2026-10-29 to merge the Hoy launch (companyos-launch). Restore the triggers below after launch.
+# on:
+#   pull_request:
+#     paths:
+#       - 'src/modules/admin/**'
+#       - 'src/modules/customer/pages/PaymentMethodsPage.tsx'
+#       - 'src/modules/website/pages/ContactPage.tsx'
+#       - 'src/components/organism/PaymentInstructions/**'
+#       - 'src/components/organism/EmailPreview/**'
+#       - 'src/components/organism/SharedImageField/**'
+#       - 'src/auth/**'
+#       - 'src/data/**'
+#       - 'scripts/*payment-instructions*'
+#       - '.github/workflows/payment-instructions-qa.yml'
 on:
-  pull_request:
-    paths:
-      - 'src/modules/admin/**'
-      - 'src/modules/customer/pages/PaymentMethodsPage.tsx'
-      - 'src/modules/website/pages/ContactPage.tsx'
-      - 'src/components/organism/PaymentInstructions/**'
-      - 'src/components/organism/EmailPreview/**'
-      - 'src/components/organism/SharedImageField/**'
-      - 'src/auth/**'
-      - 'src/data/**'
-      - 'scripts/*payment-instructions*'
-      - '.github/workflows/payment-instructions-qa.yml'
+  workflow_dispatch:
+
 permissions:
   contents: read
 concurrency:

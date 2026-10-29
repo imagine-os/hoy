@@ -117,7 +117,7 @@ jobs:
         run: node scripts/check-company-os.mjs
       - name: Hoy server tests
         run: node scripts/test-hoy-server.mjs
-      - name: Build (production: Clerk, launch routes, no review tools; H-2)
+      - name: Build (production with Clerk, launch routes, no review tools; H-2)
         run: npm run build:production
       - name: Production bundle checks (H-2; refuses demo data, review tools, docs, screenshots)
         run: |

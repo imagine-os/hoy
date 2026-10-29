@@ -1,16 +1,20 @@
 name: Hoy server QA
+# Muted 2026-10-29 to merge the Hoy launch (companyos-launch). Restore the triggers below after launch.
+# on:
+#   pull_request:
+#     paths:
+#       - 'server/**'
+#       - '.railway/**'
+#       - 'company-os.json'
+#       - 'scripts/test-hoy-server.mjs'
+#       - 'scripts/check-company-os.mjs'
+#       - '.github/workflows/hoy-server-qa.yml'
+#       - '.github/workflows/deploy-test.yml'
+#       - '.github/workflows/deploy-prod.yml'
+#       - '.github/workflows/release.yml'
 on:
-  pull_request:
-    paths:
-      - 'server/**'
-      - '.railway/**'
-      - 'company-os.json'
-      - 'scripts/test-hoy-server.mjs'
-      - 'scripts/check-company-os.mjs'
-      - '.github/workflows/hoy-server-qa.yml'
-      - '.github/workflows/deploy-test.yml'
-      - '.github/workflows/deploy-prod.yml'
-      - '.github/workflows/release.yml'
+  workflow_dispatch:
+
 permissions:
   contents: read
 jobs:

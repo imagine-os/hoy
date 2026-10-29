@@ -14,7 +14,7 @@ const Ctx = createContext<DataProvider | null>(null);
  * applied at boot.
  */
 function createDefaultProvider(): DataProvider {
-  if (import.meta.env.VITE_HOY_BUILD !== 'production') return new MockProvider();
+  if (import.meta.env?.VITE_HOY_BUILD !== 'production') return new MockProvider();
   const provider = new CompanyOSProvider();
   let applied = false, applying = false;
   const apply = () => {

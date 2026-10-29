@@ -1,7 +1,11 @@
 name: Media picker QA
+# Muted 2026-10-29 to merge the Hoy launch (companyos-launch). Restore the triggers below after launch.
+# on:
+#   pull_request:
+#     paths: ['src/**', 'scripts/test-media-picker.mjs', 'scripts/test-content-photo-picker.mjs', '.github/workflows/media-picker-qa.yml']
 on:
-  pull_request:
-    paths: ['src/**', 'scripts/test-media-picker.mjs', 'scripts/test-content-photo-picker.mjs', '.github/workflows/media-picker-qa.yml']
+  workflow_dispatch:
+
 permissions:
   contents: read
 jobs:

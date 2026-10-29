@@ -1,15 +1,19 @@
 name: Subscription directory QA
+# Muted 2026-10-29 to merge the Hoy launch (companyos-launch). Restore the triggers below after launch.
+# on:
+#   pull_request:
+#     paths:
+#       - 'src/shared/subscriptions/**'
+#       - 'src/data/*[Ee]xpense*'
+#       - 'src/modules/admin/**'
+#       - 'src/modules/app-subscriptions/**'
+#       - 'scripts/test-subscription*'
+#       - 'scripts/test-service-catalog*'
+#       - 'public/brand/services/**'
+#       - '.github/workflows/subscriptions-qa.yml'
 on:
-  pull_request:
-    paths:
-      - 'src/shared/subscriptions/**'
-      - 'src/data/*[Ee]xpense*'
-      - 'src/modules/admin/**'
-      - 'src/modules/app-subscriptions/**'
-      - 'scripts/test-subscription*'
-      - 'scripts/test-service-catalog*'
-      - 'public/brand/services/**'
-      - '.github/workflows/subscriptions-qa.yml'
+  workflow_dispatch:
+
 permissions:
   contents: read
 jobs:

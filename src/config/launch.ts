@@ -19,7 +19,7 @@ export interface LaunchConfig {
   reviewTools: boolean;
 }
 
-export const PRODUCTION_BUILD = import.meta.env.VITE_HOY_BUILD === 'production';
+export const PRODUCTION_BUILD = import.meta.env?.VITE_HOY_BUILD === 'production';
 
 export const LAUNCH_DEFAULTS: LaunchConfig = { siteLive: false, siteLiveAt: null, publicDocuments: [], reviewTools: !PRODUCTION_BUILD };
 
