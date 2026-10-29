@@ -47,6 +47,8 @@ export const strings: StringTable = {
   'admin.emails.edit.cancel': {es:'Dejar de esperar',en:'Stop waiting'},
 
   'admin.expenses.local.boundary': { es: "Vista previa ficticia de gastos guardada solo en este navegador. No envía pagos ni cambia suscripciones; las integraciones reales siguen desconectadas.", en: "Fictional expense preview saved only in this browser. It sends no payments and changes no subscriptions; real integrations remain disconnected." },
+  'admin.expenses.live.boundary': { es: 'Gastos del estudio guardados en el sistema. Registrar un gasto no mueve dinero: solo lo anota.', en: 'Studio expenses saved in the system. Recording an expense moves no money: it only notes it.' },
+  'admin.expenses.live.saved': { es: 'Cambio guardado.', en: 'Change saved.' },
   'admin.expenses.local.readError': { es: "No se pudieron leer los registros propios. No se muestran datos anteriores y se bloquean cambios. Reintenta la lectura.", en: "Owned records could not be read. Previous rows are hidden and changes are blocked. Retry the read." },
   'admin.expenses.local.paid': { es: "El gasto ahora está pagado y no se puede eliminar. Revisa el estado actualizado.", en: "The expense is now paid and cannot be deleted. Review its current state." },
   'admin.expenses.local.stale': { es: "Los registros cambiaron. No se sobrescribió el resultado anterior. Cancela este intento y revisa los datos actuales.", en: "The records changed. The earlier result was not overwritten. Cancel this attempt and review current data." },

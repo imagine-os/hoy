@@ -86,9 +86,15 @@ try {
       const method = init.method ?? 'GET';
       const body = init.body ? JSON.parse(init.body) : undefined;
       const headers = init.headers ?? {};
-      calls.push({ method, path: u.pathname, body, headers });
+      calls.push({ method, path: u.pathname, body, headers, credentials: init.credentials });
       if (u.pathname === '/app-config.json') return json(200, { tenant: 'hoy', apiBase: '/api/cos', clerkPublishableKey: 'pk_test', launch: { siteLive: true } });
       if (headers.authorization !== `Bearer ${token}`) return refuse(401, 'unauthorized');
+      // The Hoy server's own GET /files/<id> (site root, not under apiBase): the stored bytes.
+      const served = u.pathname.match(/^\/files\/([^/]+)$/);
+      if (served && method === 'GET') {
+        const rec = table('file').get(decodeURIComponent(served[1]));
+        return rec ? new Response(new Uint8Array([0x89, 0x50, 0x4e, 0x47]), { status: 200, headers: { 'content-type': 'image/png' } }) : refuse(404, 'not_found');
+      }
       const path = u.pathname.replace(/^\/api\/cos\/t\/hoy/, '');
       const fault = faults[0] && faults[0].kind !== 'refuse' && (!faults[0].path || faults[0].path === path) ? faults.shift() : null;
       if (fault?.kind === '502') return json(502, { error: 'bad gateway' });
@@ -349,6 +355,43 @@ try {
     await assert.rejects(p.insert('payments', { user_id: 'p1', amount: 1, method: 'cash' }), (e) => e.code === 'service_unavailable' && e.ambiguous && e.status === 502);
     assert.equal(apiCalls(api, '/api/payment').length, 3);
   });
+  await test('transport: a write without a key is never retried (lost answer → ambiguous at once)', async () => {
+    const api = fakeApi(); const p = make(api);
+    const rec = api.put('resource', { name: 'Sala', kind: 'room' });
+    api.faults.push({ kind: '502', path: `/api/resource/${rec.id}` });
+    await assert.rejects(p.update('rooms', rec.id, { name: 'Sala 2' }), (e) => e.code === 'service_unavailable' && e.ambiguous && e.status === 502);
+    assert.equal(apiCalls(api, `/api/resource/${rec.id}`).length, 1, 'one PATCH only');
+    api.faults.push({ kind: 'lost', path: `/api/resource/${rec.id}` });
+    await assert.rejects(p.request('PATCH', `/api/resource/${rec.id}`, { name: 'Sala 3' }), (e) => e.code === 'network_error' && e.ambiguous);
+    assert.equal(apiCalls(api, `/api/resource/${rec.id}`).length, 2);
+    // A read is still retried.
+    api.faults.push({ kind: '502', path: '/query' });
+    assert.equal((await p.list('rooms')).length, 1);
+  });
+  await test('transport: a 503 is retried only when it is the Hoy server\'s own upstream code', async () => {
+    let n = 0;
+    const answers = [[503, { error: 'upstream_unavailable' }], [503, { error: 'upstream_timeout' }], [200, { data: [] }]];
+    const fetch = async (url) => {
+      if (String(url).endsWith('app-config.json')) return new Response(JSON.stringify({ tenant: 'hoy', apiBase: '/api/cos' }), { status: 200 });
+      const [status, body] = answers[n++]; return new Response(JSON.stringify(body), { status });
+    };
+    const p = new CompanyOSProvider({ fetch, getToken: async () => 'tok-1', retryDelayMs: 1, sleep: async () => {} });
+    assert.deepEqual(await p.request('POST', '/batch', { ops: [] }, { idempotencyKey: 'key-503-0001' }), { data: [] });
+    assert.equal(n, 3);
+    n = 0; answers.splice(0, 3, [503, { error: 'storage_not_configured' }], [200, { data: [] }]);
+    await assert.rejects(p.request('GET', '/me'), (e) => e.code === 'storage_unavailable' && e.status === 503 && !e.ambiguous);
+    assert.equal(n, 1, 'an API 503 is a refusal, not retried');
+  });
+  await test('transport: 502 invitation_failed is the API\'s answer (kept, not retried, not ambiguous)', async () => {
+    let n = 0;
+    const fetch = async (url) => {
+      if (String(url).endsWith('app-config.json')) return new Response(JSON.stringify({ tenant: 'hoy', apiBase: '/api/cos' }), { status: 200 });
+      n++; return new Response(JSON.stringify({ error: 'invitation_failed', userId: 'u9' }), { status: 502 });
+    };
+    const p = new CompanyOSProvider({ fetch, getToken: async () => 'tok-1', retryDelayMs: 1, sleep: async () => {} });
+    await assert.rejects(p.request('POST', '/invitations', { email: 'a@example.test' }, { idempotencyKey: 'key-inv-0001' }), (e) => e.code === 'invitation_failed' && e.status === 502 && !e.ambiguous);
+    assert.equal(n, 1);
+  });
   await test('transport: refusal → CompanyOSError with the code; message is the code', async () => {
     const api = fakeApi(); const p = make(api);
     api.faults.push({ kind: 'refuse', code: 'occurrence_full' });
@@ -569,6 +612,21 @@ try {
     const api = fakeApi(); const p = make(api);
     const out = await p.uploadFile({ ownerEntity: 'payment', ownerId: 'pay1', kind: 'receipt', file: new Blob([new Uint8Array([0xff, 0xd8])], { type: 'image/jpeg' }), filename: 'r.jpg' });
     assert.equal(out.status, 'ready'); assert.deepEqual(apiCalls(api, '/files')[0].body, { ownerEntity: 'payment', ownerId: 'pay1', kind: 'receipt', filename: 'r.jpg', mime: 'image/jpeg', sizeBytes: 2 });
+  });
+  await test('fileBlob: GET /files/<id> at the site root with the bearer token, refresh once on 401, refusal → code', async () => {
+    const api = fakeApi();
+    const asked = [];
+    const p = make(api, { getToken: async (o) => { asked.push(Boolean(o?.refresh)); return o?.refresh ? 'tok-2' : 'tok-old'; } });
+    api.setToken('tok-2');
+    const rec = api.put('file', { status: 'ready', mime: 'image/png' });
+    const blob = await p.fileBlob(rec.id);
+    assert.equal(blob.size, 4); assert.equal(blob.type, 'image/png');
+    const gets = api.calls.filter((c) => c.path === `/files/${rec.id}`);
+    assert.equal(gets.length, 2, 'the 401, then the refreshed retry'); assert.deepEqual(asked, [false, true]);
+    assert.equal(gets[1].headers.authorization, 'Bearer tok-2'); assert.equal(gets[1].method, 'GET'); assert.equal(gets[1].credentials, 'omit');
+    await assert.rejects(p.fileBlob('missing-id'), (e) => e instanceof CompanyOSError && e.code === 'not_found' && e.status === 404);
+    api.setToken('never');
+    await assert.rejects(p.fileBlob(rec.id), (e) => e.code === 'unauthorized' && e.status === 401);
   });
   await test('launch settings come from /app-config.json', async () => {
     const api = fakeApi(); const p = new CompanyOSProvider({ fetch: api.fetch, getToken: async () => 'tok-1' });

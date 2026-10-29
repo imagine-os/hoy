@@ -38,6 +38,7 @@ export function DeskSalePage() {
   const { people } = usePeople();
   const today = useTodaySessions();
   const { rows: plans } = useTable<PlanRow>('plans', { where: { active: true } });
+  const priceDay = dateKey(new Date());
   const [mode, setMode] = useState<'new' | 'existing'>('new');
   const [form, setForm] = useState({ name: '', phone: '', email: '', consent: false });
   const [q, setQ] = useState('');
@@ -48,17 +49,19 @@ export function DeskSalePage() {
   const [reason, setReason] = useState('');
   const [reference, setReference] = useState('');
   const busyRef = useRef(false);
-  // Payments asks for the bank or voucher reference on a transfer and a card-terminal payment (methods_requiring_reference).
-  const needsReference = method === 'transfer' || method === 'card_terminal';
-  // The studio day is fixed when the form opens (and after each sale), so a retry after midnight sends the same body.
-  const [saleDay, setSaleDay] = useState(() => dateKey(new Date()));
+  // Hoy's payments recipe asks for a reference on a card-terminal payment only (methods_requiring_reference).
+  const needsReference = method === 'card_terminal';
+  // The studio day is fixed when the action's key is first created, so a retry after midnight sends the same body,
+  // and the first sale of a new day carries that day.
+  const saleDays = useRef(new Map<string, string>());
   const [sessionId, setSessionId] = useState(params.get('session') ?? '');
   const [checkIn, setCheckIn] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<(SaleResult & { name: string }) | null>(null);
 
-  const products = useMemo(() => plans.filter(p => p.family !== 'regalos').sort((a, b) => a.sort - b.sort), [plans]);
+  // Today's price row only (payments 2.8.0 dated prices), as the website's price list reads it (livePricing.ts).
+  const products = useMemo(() => plans.filter(p => p.family !== 'regalos' && (!p.valid_from || p.valid_from <= priceDay) && (!p.valid_until || priceDay <= p.valid_until)).sort((a, b) => a.sort - b.sort), [plans, priceDay]);
   const product = products.find(p => p.id === productId);
   const price = product?.price ?? 0;
   const amount = paidRaw === null || paidRaw.trim() === '' ? price : parseDigits(paidRaw);
@@ -66,25 +69,31 @@ export function DeskSalePage() {
   const person = personId ? people.find(p => p.id === personId) : undefined;
   const candidates = useMemo(() => (q.trim().length < 2 ? [] : people.filter(p => p.role === 'customer' && personMatches(p, q)).slice(0, 6)), [people, q]);
   const whoOk = mode === 'existing' ? !!person : form.name.trim().length > 1 && form.phone.replace(/\D/g, '').length >= 7 && form.consent;
-  const valid = !!desk?.sell && whoOk && !!product && amount >= 0 && (!differs || reason.trim().length > 0) && (!needsReference || reference.trim().length > 0);
-  const intent = [mode, personId, form, productId, amount, reason.trim(), method, reference.trim(), sessionId, checkIn, saleDay];
+  // A product without a price (the private class, quoted by the studio) needs the amount charged and a reason.
+  const quoted = !!product && price === 0;
+  const valid = !!desk?.sell && whoOk && !!product && amount >= 0 && (!quoted || amount > 0) && (!differs || reason.trim().length > 0) && (!needsReference || reference.trim().length > 0);
+  const intent = [mode, personId, form, productId, amount, reason.trim(), method, needsReference ? reference.trim() : '', sessionId, checkIn];
 
   if (!can('payments.write')) return <div className="stack"><div className="page-head"><h1>{t('staff.register.title')}</h1></div><EmptyState tone="error" title={t('staff.register.noPermission')} body={t('staff.register.noPermission.body')} /></div>;
 
   const complete = async () => {
     if (!valid || busyRef.current || !desk?.sell || !product) return;
     busyRef.current = true; setBusy(true); setError(null);
+    const intentKey = JSON.stringify(intent);
+    const saleDay = saleDays.current.get(intentKey) ?? dateKey(new Date());
+    saleDays.current.set(intentKey, saleDay);
+    const action = [...intent, saleDay];
     try {
       const result = await desk.sell({
         person: mode === 'existing' ? { id: person!.id } : { new: { name: form.name, phone: form.phone, email: form.email }, consents: DESK_CONSENTS },
         productId: product.id, price, amountReceived: amount, concept: bi({ es: product.name_es, en: product.name_en }), reference: needsReference ? reference : undefined, today: saleDay, reason: differs ? reason.trim() : undefined, method,
-        sessionId: sessionId || undefined, checkIn: !!sessionId && checkIn, key: keys.keyFor(intent),
+        sessionId: sessionId || undefined, checkIn: !!sessionId && checkIn, key: keys.keyFor(action),
       });
-      keys.done(intent);
+      keys.done(action); saleDays.current.delete(intentKey);
       setDone({ ...result, name: mode === 'existing' ? person!.name : form.name.trim() });
     } catch (e) { setError(deskErrorText(errorCode(e), t)); } finally { busyRef.current = false; setBusy(false); }
   };
-  const reset = () => { setDone(null); setSaleDay(dateKey(new Date())); setReference(''); setForm({ name: '', phone: '', email: '', consent: false }); setPersonId(null); setQ(''); setMode('new'); setProductId(''); setPaidRaw(null); setReason(''); setError(null); };
+  const reset = () => { setDone(null); setReference(''); setForm({ name: '', phone: '', email: '', consent: false }); setPersonId(null); setQ(''); setMode('new'); setProductId(''); setPaidRaw(null); setReason(''); setError(null); };
 
   if (done) return (
     <div className="stack">
@@ -139,6 +148,7 @@ export function DeskSalePage() {
             <div className="stack-sm">
               <div className="row-between register-total"><span>{t('staff.register.total')}</span><span>{formatCOP(price, lang)}</span></div>
               <Field label={t('staff.register.paid')}>{id => <Input id={id} inputMode="numeric" value={paidRaw ?? String(price)} onChange={e => setPaidRaw(e.target.value)} />}</Field>
+              {quoted && amount <= 0 && <p className="xs muted" role="note">{t('desk.sale.quoted')}</p>}
               {differs && <Field label={t('staff.register.note')} required>{id => <Input id={id} value={reason} onChange={e => setReason(e.target.value)} placeholder={t('staff.register.note.ph')} invalid={!reason.trim()} />}</Field>}
               <Field label={t('staff.register.checkinTo')}>{id => <Select id={id} value={sessionId} onChange={e => setSessionId(e.target.value)}><option value="">{t('staff.register.checkinTo.none')}</option>{today.map(({ session: s, teacher: te }) => <option key={s.id} value={s.id}>{formatTime(s.starts_at, lang)} · {s.title}{te ? ` · ${te.display_name}` : ''} ({s.booked_count}/{s.capacity})</option>)}</Select>}</Field>
               {sessionId && <Toggle size="sm" checked={checkIn} onChange={setCheckIn} label={t('staff.checkin.checkin')} />}

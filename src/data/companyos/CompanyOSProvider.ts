@@ -6,7 +6,7 @@ import { tenant } from '../../tenant/tenant';
 import { plans as seedPlans, teachers as seedTeachers, rooms as seedRooms } from '../seed/catalog';
 import { adapterFor, fromRecord, toData, RELATED, ROLE_OF_KEY, type CosRecord, type EntityAdapter, type Row, type SettingsAdapter } from './mapping';
 import { planQuery, PAGE, type QuerySpec } from './query';
-import { CompanyOSError, Transport, newIdempotencyKey, onTokenSourceChange, wireKey, type TransportOptions } from './transport';
+import { CompanyOSError, Transport, newIdempotencyKey, normalizeCode, onTokenSourceChange, wireKey, type TransportOptions } from './transport';
 import { toDay } from './dates';
 
 /** Contract §1: `subscribe()` polls every 20 s on the screens that ask for it (`useLiveUpdates`). */
@@ -377,6 +377,19 @@ export class CompanyOSProvider implements DataProvider {
     const done = (await this.transport.request<{ file: Record<string, unknown> & { id: string; status?: string; data?: { status?: string } } }>('POST', `/files/${encodeURIComponent(link.file.id)}/confirm`)).body;
     this.changed(['transfer_receipts', 'payments']);
     return { ...done.file, id: done.file.id, status: String(done.file.data?.status ?? done.file.status ?? '') };
+  }
+
+  /**
+   * A stored file's bytes (a transfer receipt), from the Hoy server's `GET /files/<id>` at the site root: the server
+   * asks the API for the link with this user's token (the API's read permission decides) and streams the file.
+   */
+  async fileBlob(fileId: string): Promise<Blob> {
+    const res = await this.transport.authorizedGet(`/files/${encodeURIComponent(fileId)}`);
+    if (!res.ok) {
+      const body = (await res.json().catch(() => null)) as { error?: unknown } | null;
+      throw new CompanyOSError(normalizeCode(body?.error, res.status), { status: res.status });
+    }
+    return res.blob();
   }
 
   /** The launch settings the Hoy server publishes in /app-config.json (`launch`), for `configureLaunch`. */

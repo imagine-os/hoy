@@ -186,7 +186,7 @@
           "channel": "email",
           "locale": "",
           "subject": "Te damos la bienvenida a HOY, {{person.name}}",
-          "body": "Hola {{person.name}}:\n\nYa tienes tu cuenta en HOY. Desde la app reservas tus clases, compras tu paquete y ves tu historial.\n\nTu primera clase es el mejor comienzo: elige un horario y llega 15 minutos antes.\n\nReservar: {{links.base}}/#/app/schedule\n\nEquipo HOY\ninfo@humanclub.com",
+          "body": "Hola {{person.name}}:\n\nYa tienes tu cuenta en HOY. Desde la app reservas tus clases, compras tu paquete y ves tu historial.\n\nTu primera clase es el mejor comienzo: elige un horario y llega 10 minutos antes.\n\nReservar: {{links.base}}/#/app/schedule\n\nEquipo HOY\ninfo@humanclub.com",
           "active": true
         },
         {

@@ -63,7 +63,7 @@ export const LAUNCH_EMAILS: LaunchEmail[] = [
     name: { es: 'Bienvenida', en: 'Welcome' },
     trigger: { es: 'Alguien crea su cuenta de cliente', en: 'Someone creates a customer account' },
     subject: 'Te damos la bienvenida a {brand}, {{person.name}}',
-    body: 'Hola {{person.name}}:\n\nYa tienes tu cuenta en {brand}. Desde la app reservas tus clases, compras tu paquete y ves tu historial.\n\nTu primera clase es el mejor comienzo: elige un horario y llega 15 minutos antes.\n\nReservar: {{links.base}}/#/app/schedule',
+    body: 'Hola {{person.name}}:\n\nYa tienes tu cuenta en {brand}. Desde la app reservas tus clases, compras tu paquete y ves tu historial.\n\nTu primera clase es el mejor comienzo: elige un horario y llega 10 minutos antes.\n\nReservar: {{links.base}}/#/app/schedule',
     automations: [auto({ name: 'welcome', event: 'user.signed_up', filter: { role: 'member' }, recipient: 'event.personId', category: 'account',
       _note: 'Sign-up (ADR 0038) writes user.signed_up { userId, personId, facetId, role, linkedExisting }. Customers sign up as member.' })],
   }),

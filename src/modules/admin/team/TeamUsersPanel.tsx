@@ -11,7 +11,7 @@ import { Badge } from '../../../components/atom/Badge/Badge';
 import { EmptyState } from '../../../components/molecule/EmptyState/EmptyState';
 import { cosRequest, errorCode } from '../../staff/desk/wire';
 import { deskErrorText } from '../../staff/desk/strings';
-import { TEAM_ROLES, changeRole, invite, isTeamRole, listTeam, removeFromTeam, sendInvitationEmail, teamGuard, type TeamRoleKey, type TeamUser } from './teamApi';
+import { TEAM_ROLES, changeRole, invite, inviteRedirect, isTeamRole, listTeam, needsRepair, removeFromTeam, sendInvitationEmail, teamGuard, teamRoleOf, type TeamRoleKey, type TeamUser } from './teamApi';
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -33,16 +33,24 @@ export function TeamUsersPanel() {
   }, [request]);
   useEffect(() => { void load(); }, [load]);
   const roleLabel = (k: string) => t(`team.role.${isTeamRole(k) ? k : 'other'}`);
-  const act = async (id: string, work: () => Promise<unknown>, ok: string) => {
-    if (!request || busy) return;
+  // One action at a time: a ref, so a double click lands before React re-renders with `busy`.
+  const running = useRef(false);
+  const act = async (id: string, work: () => Promise<string>) => {
+    if (!request || running.current) return;
+    running.current = true;
     setBusy(id); setError(null); setNotice(null);
-    try { await work(); setNotice(ok); } catch (e) { setError(deskErrorText(errorCode(e), t)); } finally { setBusy(null); void load(); }
+    try { setNotice(await work()); } catch (e) { setError(deskErrorText(errorCode(e), t)); } finally { running.current = false; setBusy(null); void load(); }
   };
-  const sendInvite = () => act('invite', async () => {
-    const res = await invite(request!, form.email, form.role, `${location.origin}/`);
-    await sendInvitationEmail(request!, { email: form.email, subject: t('team.mail.subject', { studio: tenant.name }), body: t('team.mail.body', { studio: tenant.name, role: roleLabel(form.role), url: res.url }) });
-    setForm({ email: '', role: form.role });
-  }, t('team.invited', { email: form.email.trim() }));
+  const sendInvite = () => {
+    const email = form.email.trim().toLowerCase(), role = form.role;
+    if ((users ?? []).some(u => u.email.toLowerCase() === email)) { setNotice(null); setError(t('team.already')); return; }
+    void act('invite', async () => {
+      const res = await invite(request!, email, role, inviteRedirect(location.origin, role));
+      if (res.kind === 'invited') await sendInvitationEmail(request!, { email, subject: t('team.mail.subject', { studio: tenant.name }), body: t('team.mail.body', { studio: tenant.name, role: roleLabel(role), url: res.url }) });
+      setForm({ email: '', role });
+      return t(res.kind === 'invited' ? 'team.invited' : res.kind === 'added' ? 'team.added' : 'team.signedUp', { email, role: roleLabel(role) });
+    });
+  };
   const guarded = (u: TeamUser, next: TeamRoleKey | null) => { const g = teamGuard(users ?? [], u, next, user.id); if (g) setError(t(`team.guard.${g}`)); return !!g; };
 
   if (!request) return null;
@@ -58,12 +66,13 @@ export function TeamUsersPanel() {
         {notice && <p className="small rooms-free" role="status">{notice}</p>}
         {error && <p className="small register-diff" role="alert">{error}</p>}
         {!users ? <EmptyState compact tone="loading" title={t('core.common.loading')} /> : users.length === 0 ? <EmptyState compact title={t('team.empty')} /> : users.map(u => {
-          const current = u.memberships.find(m => isTeamRole(m.roleKey))?.roleKey as TeamRoleKey;
+          const current = teamRoleOf(u) as TeamRoleKey;
           return <div key={u.userId} className="row-between wrap">
             <span><strong className="small crm-name">{u.name || u.email}</strong> <span className="xs muted">{u.email}</span> <Badge tone={current === 'administrator' ? 'primary' : 'neutral'}>{roleLabel(current)}</Badge></span>
             <span className="row wrap">
-              <Select aria-label={t('team.role')} value={current} disabled={!!busy} onChange={e => { const next = e.target.value as TeamRoleKey; if (next !== current && !guarded(u, next)) void act(u.userId, () => changeRole(request, u, next), t('team.changed')); }}>{TEAM_ROLES.map(r => <option key={r} value={r}>{roleLabel(r)}</option>)}</Select>
-              <Button size="sm" variant="outline" disabled={!!busy} loading={busy === u.userId} onClick={() => { if (!guarded(u, null)) void act(u.userId, () => removeFromTeam(request, u), t('team.removed')); }}>{t('team.remove')}</Button>
+              <Select aria-label={t('team.role')} value={current} disabled={!!busy} onChange={e => { const next = e.target.value as TeamRoleKey; if (next !== current && !guarded(u, next)) void act(u.userId, async () => { await changeRole(request, u, next); return t('team.changed'); }); }}>{TEAM_ROLES.map(r => <option key={r} value={r}>{roleLabel(r)}</option>)}</Select>
+              {needsRepair(u) && <Button size="sm" variant="secondary" disabled={!!busy} onClick={() => { if (!guarded(u, current)) void act(u.userId, async () => { await changeRole(request, u, current); return t('team.repaired'); }); }}>{t('team.repair')}</Button>}
+              <Button size="sm" variant="outline" disabled={!!busy} loading={busy === u.userId} onClick={() => { if (!guarded(u, null)) void act(u.userId, async () => { await removeFromTeam(request, u); return t('team.removed'); }); }}>{t('team.remove')}</Button>
             </span>
           </div>;
         })}

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useSession } from '../../../auth/SessionProvider';
-import { addDays, dateKey, formatDateTime } from '../../../i18n/format';
+import { addDays, dateKey, formatDateTime, studioDate } from '../../../i18n/format';
 import { Card } from '../../../components/molecule/Card/Card';
 import { Button } from '../../../components/atom/Button/Button';
 import { Input, Select } from '../../../components/atom/Input/Input';
@@ -21,6 +21,8 @@ import {
 type Tab = 'classes' | 'dates' | 'teachers' | 'rooms';
 const str = (v: unknown) => (typeof v === 'string' ? v : '');
 const num = (v: unknown) => (typeof v === 'number' ? v : Number(v) || 0);
+/** The instant the studio day `key` (YYYY-MM-DD, studio timezone) starts. */
+const studioMidnight = (key: string) => { const [y, m, d] = key.split('-').map(Number); return studioDate(y, m - 1, d).toISOString(); };
 const idOf = (v: unknown) => (v && typeof v === 'object' ? str((v as { id?: unknown }).id) : str(v));
 
 /** AD-01 / AD-02 in the production build: classes (schedules), their dates (occurrences), teachers (coaches) and rooms. */
@@ -30,12 +32,14 @@ export function LiveSchedulePage() {
   const canWrite = can('classes.write');
   const [tab, setTab] = useState<Tab>('classes');
   const now = new Date();
-  const until14 = dateKey(addDays(now, 14));
+  // Studio days, not UTC ones: from the start of today in Medellín, so yesterday's evening classes are not listed.
+  const from = studioMidnight(dateKey(now));
+  const until14 = studioMidnight(dateKey(addDays(now, 14)));
   const q = useCosQueries({
     schedules: { entity: 'schedule', sort: [{ field: 'weekday' }, { field: 'start_time' }] },
     resources: { entity: 'resource', filter: { field: 'kind', op: 'eq', value: 'room' }, sort: [{ field: 'name' }] },
     coaches: { entity: 'coach', include: [{ field: 'person', fields: ['name', 'email', 'phone'] }] } as never,
-    occurrences: { entity: 'occurrence', filter: { and: [{ field: 'starts_at', op: 'gte', value: now.toISOString().slice(0, 10) }, { field: 'starts_at', op: 'lt', value: until14 }] }, sort: [{ field: 'starts_at' }] },
+    occurrences: { entity: 'occurrence', filter: { and: [{ field: 'starts_at', op: 'gte', value: from }, { field: 'starts_at', op: 'lt', value: until14 }] }, sort: [{ field: 'starts_at' }] },
   });
   const [message, setMessage] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null);
   const [busy, setBusy] = useState(false);

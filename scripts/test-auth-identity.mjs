@@ -14,6 +14,7 @@ const bundle = await build({
     "export * from './src/auth/companyOsIdentity';",
     "export * from './src/auth/clerkFlows';",
     "export { safeAuthBack, visitorSignIn } from './src/auth/visitorSignIn';",
+    "export { signInReturn, homeFor, authLink } from './src/auth/signInReturn';",
     "export { LAUNCH_ROUTES, isLaunchRoute } from './src/config/launchRoutes';",
     "export { getSessionToken, setSessionTokenSource } from './src/auth/sessionToken';",
   ].join('\n'), resolveDir: process.cwd(), loader: 'ts' },
@@ -152,6 +153,31 @@ check('PL-03 a prefix does not leak into a longer name (/admin/financeX)', !M.is
 check('return: sign-in with a valid next is kept', M.safeAuthBack('/auth/sign-in?next=/app/plans') === '/auth/sign-in?next=%2Fapp%2Fplans');
 check('return: an outside URL falls back to sign-in', ['https://evil.example', '//evil.example', '/admin', 'javascript:alert(1)', null].every((v) => M.safeAuthBack(v) === '/auth/sign-in'));
 check('return: an unsafe next is dropped', M.safeAuthBack('/auth/sign-up?next=https://evil.example') === '/auth/sign-up');
+
+// ── Deep links survive sign-in (F3): any internal launch route, as a strict path ────────────────────────────────
+const deep = ['/staff/transfers', '/staff/checkin', '/app/receipts/pay_123', '/app/booking/bk-1', '/app/pay/class/occ_9', '/admin/crm/per_1', '/admin/finance/expenses'];
+check('return: launch deep links are kept as next', deep.every((p) => M.visitorSignIn(p) === `/auth/sign-in?next=${encodeURIComponent(p)}`), deep.filter((p) => !M.visitorSignIn(p).includes('next')).join(', '));
+const bad = ['/staff/transfers?x=1', '/staff/../admin', '/app/receipts/a%2Fb', '/hub', '/dev/tokens', '/auth/sign-in', '/site', '/', '//evil.example', '/app/receipts/a/b', '/admin/tables', '/staff/maintenance', 'https://evil.example/staff'];
+check('return: anything but a strict launch path is dropped', bad.every((p) => M.signInReturn(p) === null), bad.filter((p) => M.signInReturn(p) !== null).join(', '));
+check('return: the customer allowlist still applies (query kept)', M.signInReturn('/app/checkout/occ_1?mat=3') === '/app/checkout/occ_1?mat=3');
+check('return: staff follow a staff next; a customer is not sent into staff', M.homeFor('front_desk', '/staff/transfers') === '/staff/transfers' && M.homeFor('customer', '/staff/transfers') === '/app' && M.homeFor('customer', '/app/receipts/p1') === '/app/receipts/p1' && M.homeFor('admin', '/app/booking/b1') === '/admin');
+check('return: the Google back link keeps a staff next', M.safeAuthBack('/auth/sign-in?next=/staff/transfers') === '/auth/sign-in?next=%2Fstaff%2Ftransfers');
+
+// ── Token wait: a Clerk that never loads answers null (production build) ────────────────────────────────────────
+{
+  const prod = await build({
+    stdin: { contents: "export { getSessionToken, setSessionTokenSource, TOKEN_WAIT_MS } from './src/auth/sessionToken';", resolveDir: process.cwd(), loader: 'ts' },
+    bundle: true, platform: 'node', format: 'esm', write: false, logLevel: 'silent', define: { 'import.meta.env': '{"VITE_HOY_BUILD":"production","DEV":false}' },
+  });
+  const P = await import('data:text/javascript;base64,' + Buffer.from(prod.outputFiles[0].text).toString('base64'));
+  const started = Date.now();
+  const none = await P.getSessionToken();
+  const waited = Date.now() - started;
+  check('token seam: no Clerk → null after the wait, not a hang', none === null && waited >= P.TOKEN_WAIT_MS - 50 && waited < P.TOKEN_WAIT_MS + 2000, `${waited} ms`);
+  const late = P.getSessionToken();
+  P.setSessionTokenSource(async () => 'tok_late');
+  check('token seam: a source registered while waiting answers', await late === 'tok_late');
+}
 
 console.log(failed ? `\n${failed} H-2 identity check(s) failed` : '\nH-2 identity passed');
 process.exitCode = failed ? 1 : 0;

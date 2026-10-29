@@ -54,7 +54,8 @@ export const deskStrings: StringTable = {
   'desk.error.generic': { es: 'No se pudo guardar (código {code}). No se cambió nada.', en: 'Could not save (code {code}). Nothing was changed.' },
 
   'desk.sale.checkInFailed': { es: 'Venta guardada, pero no se registró la llegada. Márcala en Check-in; no vuelvas a cobrar.', en: 'Sale saved, but the arrival was not recorded. Mark it on Check-in; do not charge again.' },
-  'desk.sale.reference': { es: 'Referencia (transferencia o voucher del datáfono)', en: 'Reference (transfer or card-terminal slip)' },
+  'desk.sale.reference': { es: 'Referencia (voucher del datáfono)', en: 'Reference (card-terminal slip)' },
+  'desk.sale.quoted': { es: 'Este producto no tiene precio fijo: escribe el valor acordado y el motivo.', en: 'This product has no fixed price: enter the agreed amount and the reason.' },
   'admin.crm.live.capped': { es: 'La lista puede estar incompleta: hay más registros de los que se cargan de una vez.', en: 'The list may be incomplete: there are more records than load at once.' },
   'desk.compose.failed': { es: 'No se pudo enviar. El mensaje sigue aquí; vuelve a intentar.', en: 'Could not send. The message is still here; try again.' },
   'desk.undo.reason': { es: 'Motivo para deshacer', en: 'Reason to undo' },

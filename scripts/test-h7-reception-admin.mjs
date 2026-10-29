@@ -247,28 +247,71 @@ try {
     assert.equal(m.sundayNeedsNotice(m.parseWeek('sun 08:00-12:00'), 2), false);
   });
 
-  await row('AD-06 team users: invite with the role, change role (remove then add), remove; last administrator and self are protected; customers are not listed', async () => {
+  await row('AD-06 team users: invite with the role, change role (add then remove), remove; Administration holds super_admin; last administrator and self are protected; customers are not listed', async () => {
     const users = [
-      { userId: 'u1', email: 'admin@example.invalid', name: 'Admin', memberships: [{ membershipId: 'm1', roleKey: 'administrator' }] },
+      { userId: 'u1', email: 'admin@example.invalid', name: 'Admin', memberships: [{ membershipId: 'm1', roleKey: 'administrator' }, { membershipId: 'm1s', roleKey: 'super_admin' }] },
       { userId: 'u2', email: 'desk@example.invalid', name: 'Desk', memberships: [{ membershipId: 'm2', roleKey: 'front_desk' }] },
       { userId: 'u3', email: 'cust@example.invalid', name: 'Cust', memberships: [{ membershipId: 'm3', roleKey: 'member' }] },
+      { userId: 'u4', email: 'owner@example.invalid', name: 'Owner', memberships: [{ membershipId: 'm4', roleKey: 'super_admin' }] },
     ];
-    assert.deepEqual(m.teamMembers(users).map(u => u.userId), ['u1', 'u2']);
-    assert.equal(m.teamGuard(users, users[0], 'front_desk', 'u2'), 'last_admin');
-    assert.equal(m.teamGuard(users, users[0], null, 'u2'), 'last_admin');
+    assert.deepEqual(m.teamMembers(users).map(u => u.userId), ['u1', 'u2', 'u4'], 'a super_admin-only login is on the team');
+    assert.equal(m.adminCount(users), 2, 'super_admin counts as Administration');
+    assert.equal(m.teamRoleOf(users[3]), 'administrator');
+    assert.equal(m.teamGuard(users.slice(0, 3), users[0], 'front_desk', 'u2'), 'last_admin');
+    assert.equal(m.teamGuard(users.slice(0, 3), users[0], null, 'u2'), 'last_admin');
+    assert.equal(m.teamGuard(users, users[0], null, 'u2'), null, 'another admin (super_admin) remains');
     assert.equal(m.teamGuard(users, users[1], null, 'u2'), 'self');
     assert.equal(m.teamGuard(users, users[1], 'administrator', 'u1'), null);
     const cos = fakeCos();
-    await m.invite(cos.request, ' New@Example.invalid ', 'front_desk', 'https://app.example.invalid/');
+    const res = await m.invite(cos.request, ' New@Example.invalid ', 'front_desk', m.inviteRedirect('https://app.example.invalid', 'front_desk'));
+    assert.equal(res.kind, 'invited');
     await m.changeRole(cos.request, users[1], 'administrator');
     await m.removeFromTeam(cos.request, users[1]);
     await m.sendInvitationEmail(cos.request, { email: ' New@example.invalid', subject: 'Invitación', body: 'Entra: https://clerk.example.invalid/x' });
-    assert.deepEqual(cos.calls.map(c => [c.method, c.path]), [['POST', '/invitations'], ['DELETE', '/admin/memberships/m2'], ['POST', '/admin/users'], ['DELETE', '/admin/memberships/m2'], ['POST', '/api/comms_log']]);
-    assert.deepEqual(cos.calls[0].body, { email: 'new@example.invalid', roleKey: 'front_desk', redirectUrl: 'https://app.example.invalid/' });
-    assert.deepEqual(cos.calls[2].body, { email: 'desk@example.invalid', name: 'Desk', roleKey: 'administrator' });
-    assert.equal(cos.calls[4].body.deliver, true);
-    assert.equal(cos.calls[4].body.address, 'new@example.invalid');
-    assert.match(cos.calls[4].body.body, /https:\/\/clerk\.example\.invalid\/x/);
+    assert.deepEqual(cos.calls.map(c => [c.method, c.path, c.body?.roleKey]), [['POST', '/invitations', 'front_desk'], ['POST', '/admin/users', 'administrator'], ['POST', '/admin/users', 'super_admin'], ['DELETE', '/admin/memberships/m2', undefined], ['DELETE', '/admin/memberships/m2', undefined], ['POST', '/api/comms_log', undefined]]);
+    assert.deepEqual(cos.calls[0].body, { email: 'new@example.invalid', roleKey: 'front_desk', redirectUrl: 'https://app.example.invalid/#/auth/sign-in?next=/staff' });
+    assert.equal(m.inviteRedirect('https://app.example.invalid', 'administrator'), 'https://app.example.invalid/#/auth/sign-in?next=/admin');
+    assert.deepEqual(cos.calls[1].body, { email: 'desk@example.invalid', name: 'Desk', roleKey: 'administrator' });
+    assert.equal(cos.calls[5].body.deliver, true);
+    assert.equal(cos.calls[5].body.address, 'new@example.invalid');
+    assert.match(cos.calls[5].body.body, /https:\/\/clerk\.example\.invalid\/x/);
+
+    // Demote an administrator: front_desk first, then administrator and super_admin go.
+    const demote = fakeCos();
+    await m.changeRole(demote.request, users[0], 'front_desk');
+    assert.deepEqual(demote.calls.map(c => [c.method, c.path, c.body?.roleKey]), [['POST', '/admin/users', 'front_desk'], ['DELETE', '/admin/memberships/m1', undefined], ['DELETE', '/admin/memberships/m1s', undefined]]);
+    const remove = fakeCos();
+    await m.removeFromTeam(remove.request, users[0]);
+    assert.deepEqual(remove.calls.map(c => c.path), ['/admin/memberships/m1', '/admin/memberships/m1s'], 'removing an administrator also deletes super_admin');
+    const keepsCustomer = fakeCos();
+    await m.removeFromTeam(keepsCustomer.request, { ...users[1], memberships: [...users[1].memberships, { membershipId: 'm9', roleKey: 'member' }] });
+    assert.deepEqual(keepsCustomer.calls.map(c => c.path), ['/admin/memberships/m2'], 'the customer membership stays');
+
+    // Invite to Administration: the invitation, then super_admin.
+    const admin = fakeCos();
+    await m.invite(admin.request, 'boss@example.invalid', 'administrator', 'https://app.example.invalid/');
+    assert.deepEqual(admin.calls.map(c => [c.path, c.body.roleKey]), [['/invitations', 'administrator'], ['/admin/users', 'super_admin']]);
+    // A customer login: role_mismatch → the role is added with /admin/users; no email.
+    const customer = fakeCos(); customer.refuseNext('role_mismatch');
+    assert.equal((await m.invite(customer.request, 'cust@example.invalid', 'front_desk', 'https://app.example.invalid/')).kind, 'added');
+    assert.deepEqual(customer.calls.map(c => [c.path, c.body.roleKey]), [['/invitations', 'front_desk'], ['/admin/users', 'front_desk']]);
+    // Already signed in: the role is in place; nothing else is sent for front desk.
+    const signed = fakeCos(); signed.refuseNext('already_signed_up');
+    assert.equal((await m.invite(signed.request, 'old@example.invalid', 'front_desk', 'https://app.example.invalid/')).kind, 'signed_up');
+    assert.equal(signed.calls.length, 1);
+    // An existing membership answered 409 by /admin/users is the goal, not an error.
+    const dup = fakeCos(); dup.refuseNext('user_already_has_this_role_in_this_scope');
+    await m.changeRole(dup.request, users[1], 'administrator');
+    assert.deepEqual(dup.calls.map(c => c.body?.roleKey ?? c.path), ['administrator', 'super_admin', '/admin/memberships/m2']);
+    // 502 invitation_failed for Administration: the committed login still gets super_admin, then the refusal is shown.
+    const failed = fakeCos(); failed.refuseNext('invitation_failed');
+    await assert.rejects(m.invite(failed.request, 'boss2@example.invalid', 'administrator', 'https://app.example.invalid/'), e => e.code === 'invitation_failed');
+    assert.deepEqual(failed.calls.map(c => [c.path, c.body.roleKey]), [['/invitations', 'administrator'], ['/admin/users', 'super_admin']]);
+    // An Administration missing super_admin (or a leftover front_desk) is repaired by changeRole to the same role.
+    const half = { userId: 'u5', email: 'half@example.invalid', name: null, memberships: [{ membershipId: 'm5', roleKey: 'administrator' }] };
+    assert.equal(m.needsRepair(half), true); assert.equal(m.needsRepair(users[0]), false); assert.equal(m.needsRepair(users[1]), false);
+    const fix = fakeCos(); await m.changeRole(fix.request, half, 'administrator');
+    assert.deepEqual(fix.calls.map(c => [c.method, c.body?.roleKey]), [['POST', 'super_admin']]);
   });
 
   await row('AD-07 customer list: package, classes left, expiry and vouchers from lots, entry sums and vouchers (expired and frozen lots handled)', () => {

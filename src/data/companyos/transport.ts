@@ -5,8 +5,9 @@
  * - Config: `{ tenant, apiBase }` from `GET /app-config.json` (the Hoy server's public settings), read once.
  * - Token: a fresh Clerk session token per request (`setCompanyOSTokenSource`, wired by the sign-in lane H-2).
  *   A 401 asks the source for a refreshed token once, then gives up with `unauthorized`.
- * - Retries: a lost response (network error, 502/503/504) is retried with the same body and the same
- *   `Idempotency-Key`, so the server answers the first attempt instead of writing twice (ADR 0040).
+ * - Retries: a lost response (network error, 502/504, or a 503 that is the Hoy server's own `upstream_unavailable` /
+ *   `upstream_timeout`) is retried with the same body and the same `Idempotency-Key`, so the server answers the first
+ *   attempt instead of writing twice (ADR 0040). A write without a key is never retried: it fails at once, `ambiguous`.
  */
 
 export interface CompanyOSConfig { tenant: string; apiBase: string; /** The rest of /app-config.json (e.g. `launch`). */ extra?: Record<string, unknown> }
@@ -165,12 +166,34 @@ export class Transport {
   /** A plain request outside the API (the file storage upload link). */
   raw(input: string, init: RequestInit): Promise<Response> { return this.fetchImpl(input, init); }
 
+  /**
+   * A GET on the Hoy server itself (not under `apiBase`), with the session's bearer token: the stored files at
+   * `/files/<id>`. A 401 asks the token source for a refreshed token once. Answers the response as it is.
+   */
+  async authorizedGet(path: string): Promise<Response> {
+    let refreshed = false;
+    for (;;) {
+      const token = await this.token(refreshed);
+      const headers: Record<string, string> = {};
+      if (token) headers.authorization = `Bearer ${token}`;
+      let res: Response;
+      try { res = await this.fetchImpl(path, { method: 'GET', headers, credentials: 'omit' }); }
+      catch { throw new CompanyOSError('network_error'); }
+      if (res.status === 401 && !refreshed) { refreshed = true; continue; }
+      // Only a token that was refused means the session ended (no token: Clerk not loaded yet, or signed out).
+      if (res.status === 401 && token) unauthorizedHandler?.();
+      return res;
+    }
+  }
+
   async request<T>(method: 'GET' | 'POST' | 'PATCH' | 'DELETE', path: string, options: RequestOptions = {}): Promise<CompanyOSResponse<T>> {
     const { apiBase, tenant } = await this.config();
     const url = `${apiBase}/t/${encodeURIComponent(tenant)}${path}`;
     const body = options.body === undefined ? undefined : JSON.stringify(options.body);
     const retries = this.opts.retries ?? 2;
     const sleep = this.opts.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
+    // `POST /query` only reads.
+    const read = method === 'GET' || (method === 'POST' && path === '/query');
     let refreshed = false;
     for (let attempt = 0; ; attempt++) {
       const token = await this.token(refreshed);
@@ -179,23 +202,25 @@ export class Transport {
       if (body !== undefined) headers['content-type'] = 'application/json';
       if (token) headers.authorization = `Bearer ${token}`;
       if (options.idempotencyKey) headers['idempotency-key'] = options.idempotencyKey;
+      // A write is retried only under a key: without one the server could do it twice.
+      const mayRetry = attempt < retries && (read || Boolean(options.idempotencyKey));
       let res: Response;
       try {
         res = await this.fetchImpl(url, { method, headers, body, credentials: 'omit' });
       } catch {
-        if (attempt < retries) { await sleep((this.opts.retryDelayMs ?? 400) * 2 ** attempt); continue; }
-        throw new CompanyOSError('network_error', { ambiguous: method !== 'GET' });
+        if (mayRetry) { await sleep((this.opts.retryDelayMs ?? 400) * 2 ** attempt); continue; }
+        throw new CompanyOSError('network_error', { ambiguous: !read });
       }
       const requestId = res.headers.get('x-request-id') ?? undefined;
       if (res.status === 401 && !refreshed) { refreshed = true; attempt--; continue; }
-      if ([502, 503, 504].includes(res.status)) {
-        if (attempt < retries) { await sleep((this.opts.retryDelayMs ?? 400) * 2 ** attempt); continue; }
-        throw new CompanyOSError('service_unavailable', { status: res.status, requestId, ambiguous: method !== 'GET' });
-      }
       const text = res.status === 204 ? '' : await res.text();
       let parsed: unknown = null;
       if (text) { try { parsed = JSON.parse(text); } catch { parsed = null; } }
-      if (res.status === 401) unauthorizedHandler?.();
+      if (lostAnswer(res.status, parsed)) {
+        if (mayRetry) { await sleep((this.opts.retryDelayMs ?? 400) * 2 ** attempt); continue; }
+        throw new CompanyOSError('service_unavailable', { status: res.status, requestId, ambiguous: !read });
+      }
+      if (res.status === 401 && token) unauthorizedHandler?.();
       if (!res.ok) {
         const e = (parsed ?? {}) as { error?: unknown; message?: unknown; opIndex?: unknown; details?: unknown };
         throw new CompanyOSError(normalizeCode(e.error, res.status), {
@@ -207,4 +232,19 @@ export class Transport {
       return { status: res.status, body: parsed as T, replayed: res.headers.get('idempotency-replayed') === 'true' };
     }
   }
+}
+
+/** 5xx answers that are the API's own result, not a lost answer: `502 invitation_failed` (the login was committed). */
+const API_5XX = new Set(['invitation_failed']);
+
+/**
+ * An answer that says the request may not have reached the API, or its answer was lost on the way back: a 502 or 504
+ * (the Hoy server's `upstream_unavailable` / `upstream_timeout`, or a gateway's), unless it carries one of the API's own
+ * codes; a 503 only with the Hoy server's codes. Any other 503 (`storage_not_configured`…) is the API's refusal.
+ */
+function lostAnswer(status: number, body: unknown): boolean {
+  const code = (body as { error?: unknown } | null)?.error;
+  if (status === 502 || status === 504) return !(typeof code === 'string' && API_5XX.has(code));
+  if (status !== 503) return false;
+  return code === 'upstream_unavailable' || code === 'upstream_timeout';
 }
