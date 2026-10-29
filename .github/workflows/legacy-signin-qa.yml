@@ -1,0 +1,63 @@
+name: Legacy demo sign-in QA
+on:
+  pull_request:
+    paths:
+      - 'src/modules/customer/auth/**'
+      - 'src/modules/customer/strings.ts'
+      - 'src/auth/**'
+      - 'src/data/**'
+      - 'scripts/*legacy-signin*'
+      - '.github/workflows/legacy-signin-qa.yml'
+permissions:
+  contents: read
+jobs:
+  session-context:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Preserve preview and return-destination rules
+        run: |
+          node scripts/test-signin-preview.mjs
+          node scripts/test-visitor-signin.mjs
+      - run: npm run build
+      - name: Verify obsolete queued callbacks and context changes
+        run: |
+          npm run dev -- --host 127.0.0.1 --strictPort --port 5225 > /tmp/hoy-legacy-dev.log 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:5225/ >/dev/null && break; sleep 1; done
+          curl -fsS http://127.0.0.1:5225/ >/dev/null
+          node scripts/test-legacy-signin-context-ui.mjs
+        env:
+          QA_BASE: http://127.0.0.1:5225
+          QA_OUTPUT: docs/screenshots/legacy-signin-context
+          CHROMIUM_PATH: /usr/bin/google-chrome
+      - name: Verify compiled logout, valid retry and lock boundaries
+        run: |
+          npm run preview -- --host 127.0.0.1 --strictPort --port 5226 > /tmp/hoy-legacy-preview.log 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:5226/ >/dev/null && break; sleep 1; done
+          curl -fsS http://127.0.0.1:5226/ >/dev/null
+          node scripts/test-legacy-signin-native.mjs
+          QA_OUTPUT=docs/screenshots/legacy-signin-lock node scripts/test-legacy-signin-lock-native.mjs
+        env:
+          QA_BASE: http://127.0.0.1:5226
+          QA_OUTPUT: docs/screenshots/legacy-signin-native
+          QA_COMPILED: '1'
+          CHROMIUM_PATH: /usr/bin/google-chrome
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: legacy-signin-${{ github.event.pull_request.head.sha }}
+          retention-days: 7
+          path: |
+            docs/screenshots/legacy-signin-context/
+            docs/screenshots/legacy-signin-native/
+            docs/screenshots/legacy-signin-lock/
+            /tmp/hoy-legacy-dev.log
+            /tmp/hoy-legacy-preview.log
