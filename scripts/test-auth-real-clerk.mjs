@@ -22,7 +22,13 @@ if (!/^sk_test_./.test(SECRET) || !/^pk_test_./.test(PK)) { console.error('Real 
 const DIST = resolve(process.env.QA_PROD_DIST ?? 'dist');
 if (!existsSync(join(DIST, 'index.html'))) { console.error(`${DIST}/index.html missing: run npm run build:production first`); process.exit(1); }
 
-const { check, done } = reporter('Real Clerk sign-in');
+const report = reporter('Real Clerk sign-in');
+const done = report.done;
+// On GitHub, a failed check is also an annotation, so its reason shows on the run's summary page.
+const annotate = (text) => process.env.GITHUB_ACTIONS && text && console.log(`::error title=Real Clerk sign-in::${text.replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A')}`);
+const check = (label, ok, detail = '') => { report.check(label, ok, detail); if (!ok) annotate(detail ? `${label} — ${detail}` : label); };
+// A browser step: on failure, also say what the screen and Clerk said at that moment.
+const step = async (label, ok, detail = '') => { check(label, ok, detail); if (!ok) await diagnose(); };
 const TENANT = 'hoy-qa';
 const PORT = 5332;
 const BASE = `http://localhost:${PORT}`;
@@ -98,11 +104,31 @@ async function emailCode(page, email) {
 }
 
 let browser;
+let page;
 const errors = [];
+const clerkFailures = []; // Clerk frontend API answers that were not 2xx: method, path, status, error codes
+const consoleErrors = [];
+let captchaOffLogged = false;
+const markBypass = (o) => { if (o && typeof o === 'object' && o.object === 'client') o.captcha_bypass = true; };
+// What the screen and Clerk said when a step stopped: printed (and annotated) so a CI failure explains itself.
+async function diagnose() {
+  try {
+    const lines = [];
+    const one = (s) => String(s).replace(/\s+/g, ' ').slice(0, 300); // one line each: nothing reads as a workflow command
+    try { const text = await page?.locator('[data-identity]').first().innerText({ timeout: 2000 }); if (text) lines.push(`screen: ${one(text)}`); } catch { /* no screen */ }
+    try { if (page) lines.push(`route: ${one(route(page))}`); } catch { /* malformed hash */ }
+    for (const f of clerkFailures.slice(-6)) lines.push(`clerk: ${one(f)}`);
+    for (const c of consoleErrors.filter((t) => !/status of 422/.test(t)).slice(-6)) lines.push(`console: ${one(c)}`);
+    if (!lines.length) return;
+    console.log(lines.map((l) => `  ${l}`).join('\n'));
+    annotate(lines.join('\n'));
+  } catch { /* a diagnosis never stops the clean-up */ }
+}
 try {
   const stale = (await usersWith('query=clerk_test')).filter((u) => isQaUser(u) && Date.now() - u.created_at > 30 * 60_000);
   if (stale.length) console.log(`  removed ${await deleteUsers(stale)} Clerk test user(s) a previous run left behind`);
   const { token } = await clerkApi('POST', '/testing_tokens');
+  if (process.env.GITHUB_ACTIONS) console.log(`::add-mask::${token}`);
   await new Promise((r) => server.listen(PORT, '127.0.0.1', r));
   browser = await launchBrowser();
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, reducedMotion: 'reduce' });
@@ -116,22 +142,37 @@ try {
     const res = await r.fetch({ url: url.toString(), maxRedirects: 0 });
     let body;
     try { body = await res.json(); } catch { return r.fulfill({ response: res }); }
-    if (body?.response && typeof body.response === 'object' && 'captcha_bypass' in body.response) body.response.captcha_bypass = true;
-    if (body?.client && typeof body.client === 'object' && 'captcha_bypass' in body.client) body.client.captcha_bypass = true;
+    // The app signs a new email in first and falls back to sign-up on `form_identifier_not_found`: expected, not news.
+    const codes = (body?.errors ?? []).map((e) => e.code).join(',');
+    if (res.status() >= 400 && codes !== 'form_identifier_not_found') {
+      clerkFailures.push(`${r.request().method()} ${url.pathname} → ${res.status()}${codes ? ` ${codes}` : ''}`);
+    }
+    // clerk-js skips its CAPTCHA only when the client it holds says so: mark every client object it receives. And in
+    // case no client arrives to mark (a fresh browser), the environment says CAPTCHA is off; the testing token already
+    // satisfies Clerk's server.
+    markBypass(body?.response); markBypass(body?.client); markBypass(body?.meta?.client);
+    if (url.pathname === '/v1/environment') {
+      const signUp = (body?.user_settings ?? body?.response?.user_settings)?.sign_up;
+      if (signUp && typeof signUp === 'object') {
+        signUp.captcha_enabled = false;
+        if (!captchaOffLogged) { captchaOffLogged = true; console.log('  (Clerk environment: CAPTCHA off for this test browser)'); }
+      }
+    }
     return r.fulfill({ response: res, json: body });
   });
   await ctx.addInitScript(() => { if (!sessionStorage.getItem('qa-init')) { sessionStorage.setItem('qa-init', '1'); localStorage.setItem('hoyos.lang', 'es'); } });
-  const page = await ctx.newPage();
+  page = await ctx.newPage();
   page.on('pageerror', (e) => errors.push(`${route(page)}: ${e.message}`));
+  page.on('console', (m) => { if (m.type() === 'error') consoleErrors.push(m.text()); });
 
   // 1. Coming Soon → sign-in
   await page.goto(`${BASE}/#/`);
   await page.locator('.coming-soon-login').click();
-  check('Coming Soon "Entrar" opens the sign-in form (real Clerk loaded)', await waitFor(page, () => signedOutForm(page)), route(page));
+  await step('Coming Soon "Entrar" opens the sign-in form (real Clerk loaded)', await waitFor(page, () => signedOutForm(page)), route(page));
 
   // 2. A new account: the code, then the studio's sign-up form
   await emailCode(page, EMAIL);
-  check('a new email gets a Clerk account and the studio sign-up form', await waitFor(page, async () => (await page.locator('[data-register]').count()) === 1), route(page));
+  await step('a new email gets a Clerk account and the studio sign-up form', await waitFor(page, async () => (await page.locator('[data-register]').count()) === 1), route(page));
   const inputs = page.locator('[data-register] input:not([type=checkbox])');
   await inputs.nth(0).fill('QA Prueba');
   await inputs.nth(1).fill('+57 300 555 0199');
@@ -139,29 +180,29 @@ try {
   await inputs.nth(3).fill('+57 300 555 0198');
   await page.locator('[data-register] input[type=checkbox]').check();
   await page.locator('[data-register] button[type=submit]').click();
-  check('after the studio sign-up the customer is in the app', await waitFor(page, async () => route(page).startsWith('/app')), route(page));
+  await step('after the studio sign-up the customer is in the app', await waitFor(page, async () => route(page).startsWith('/app')), route(page));
 
   // 3. Sign out from the access page
   await page.goto(`${BASE}/#/app/access`); await settle(page);
   await page.getByRole('button', { name: 'Cerrar sesión' }).click();
-  check('sign-out ends on the sign-in form (no spinner, no error)', await waitFor(page, () => signedOutForm(page), 15_000), route(page));
+  await step('sign-out ends on the sign-in form (no spinner, no error)', await waitFor(page, () => signedOutForm(page), 15_000), route(page));
 
   // 4. Sign in again with the same address
   await emailCode(page, EMAIL);
-  check('the same email signs back in to the app', await waitFor(page, async () => route(page).startsWith('/app')), route(page));
+  await step('the same email signs back in to the app', await waitFor(page, async () => route(page).startsWith('/app')), route(page));
 
   // 5. Sign out from "Más"
   await page.goto(`${BASE}/#/app/more`); await settle(page);
   await page.getByText('Cerrar sesión', { exact: true }).first().click();
-  check('sign-out from "Más" ends on the sign-in form (no spinner, no error)', await waitFor(page, () => signedOutForm(page), 15_000), route(page));
+  await step('sign-out from "Más" ends on the sign-in form (no spinner, no error)', await waitFor(page, () => signedOutForm(page), 15_000), route(page));
 
   check('no page errors', errors.length === 0, errors.slice(0, 5).join(' | '));
 
   // 6. Google: the button reaches Google (the account step itself can't be automated)
   await page.getByRole('button', { name: 'Continuar con Google' }).click();
-  check('"Continuar con Google" reaches Google\'s sign-in', await waitFor(page, async () => /(^|\.)google\.com$/.test(new URL(page.url()).hostname)), page.url().split('?')[0]);
+  await step('"Continuar con Google" reaches Google\'s sign-in', await waitFor(page, async () => /(^|\.)google\.com$/.test(new URL(page.url()).hostname)), page.url().split('?')[0]);
 } catch (e) {
-  check(`ran to the end (${e.message})`, false);
+  await step(`ran to the end (${String(e?.message ?? e).split('\n')[0]})`, false);
 } finally {
   await browser?.close();
   server.close();
