@@ -238,8 +238,13 @@ function RegisterForm() {
 /** A-07: back from Google. Clerk finishes the sign-in (or the sign-up of a new Google account) and returns. */
 export function AuthCallbackPage() {
   const { t } = useI18n();
+  const { status } = useSession();
   const [params] = useSearchParams();
   const target = `${window.location.origin}${window.location.pathname}#${safeAuthBack(params.get('back'))}`;
+  // Until the app configuration has loaded there is no ClerkProvider yet (ProductionSession), and Clerk's callback
+  // component throws outside one: wait, as the sign-in page does. A configuration that failed shows the problem.
+  if (status === 'loading') return <Shell title={t('identity.signin.title')}><p className="muted" aria-busy="true">{t('identity.callback')}</p></Shell>;
+  if (status === 'error') return <SessionProblem />;
   return (
     <Shell title={t('identity.signin.title')}>
       <p className="muted" aria-busy="true">{t('identity.callback')}</p>
