@@ -30,11 +30,21 @@ export default function ProductionSession({ children }: { children: ReactNode })
 
   if (!config) return <SessionContext.Provider value={visitorSession(failed ? 'error' : 'loading', retry)}>{children}</SessionContext.Provider>;
   return (
-    <ClerkProvider publishableKey={config.clerkPublishableKey} prefetchUI={false} afterSignOutUrl={`${window.location.pathname}#/auth/sign-in`}>
+    <ClerkProvider publishableKey={config.clerkPublishableKey} prefetchUI={false} afterSignOutUrl={`${window.location.pathname}#/auth/sign-in`}
+      routerPush={clerkPush} routerReplace={clerkReplace}>
       <ClerkSession config={config}>{children}</ClerkSession>
     </ClerkProvider>
   );
 }
+
+/**
+ * Clerk navigates through these (sign-out's `afterSignOutUrl`, its redirects). Without a router, clerk-js announces
+ * an unload (`clerk:beforeunload`) and leaves its session in the "transitive" state for the reload it expects; a hash
+ * change never reloads, so `isLoaded` stayed false and sign-out ended on "service did not answer" (test environment,
+ * 30 Oct). A URL that differs only in its hash stays in this page; any other URL is a normal page load.
+ */
+const clerkPush = (to: string) => window.location.assign(new URL(to, window.location.href).href);
+const clerkReplace = (to: string) => window.location.replace(new URL(to, window.location.href).href);
 
 // The signed-out visitor, as the screens expect it (same id as the review build's visitor; no persona data here).
 const VISITOR: SessionUser = { id: 'usr_public', role: 'public', name: 'Visitante', initials: '·', email: '', blurb: { es: 'Sin sesión.', en: 'Not signed in.' } };
@@ -54,6 +64,23 @@ type MeState = { key: string; status: 'loading' | 'member' | 'not-member' | 'unv
 
 /** How long sign-in and private routes wait for Clerk before they show the error state (a blocked or failed script). */
 export const CLERK_LOAD_TIMEOUT_MS = 10_000;
+/**
+ * A Clerk that had loaded and stays unloaded this long is stuck mid-navigation: a fresh page load recovers it. Longer
+ * than a slow sign-out request (Clerk is unloaded while it removes the session), and at most one reload a minute, so a
+ * Clerk that keeps stalling ends on the error screen instead of reloading forever.
+ */
+const CLERK_STUCK_RELOAD_MS = 15_000;
+const STUCK_RELOAD_KEY = 'clerk-stuck-reload-at';
+function reloadOnceIfStuck(): boolean {
+  try {
+    const last = Number(sessionStorage.getItem(STUCK_RELOAD_KEY) ?? 0);
+    if (Date.now() - last < 60_000) return false;
+    sessionStorage.setItem(STUCK_RELOAD_KEY, String(Date.now()));
+  } catch { return false; }
+  clearLocalTraces(); // a reload mid sign-out skips the sign-out's own clean-up
+  window.location.reload();
+  return true;
+}
 /** Clerk can't be started again in place once its script failed: retrying is a fresh page load. */
 const reloadPage = () => window.location.reload();
 
@@ -67,10 +94,13 @@ function ClerkSession({ config, children }: { config: AppConfig; children: React
   // Clerk that never loads (`status: 'error'`, or still loading after the timeout) is an error, not an endless spinner.
   // `'degraded'` counts as loaded (Clerk sets `isLoaded` for it). A Clerk that loads late still recovers on its own.
   const clerkStatus = (clerk as { status?: string }).status;
+  // A Clerk that had loaded and then stays unloaded is not a failed script: reload (at most once a minute) first.
   const [timedOut, setTimedOut] = useState(false);
+  const everLoaded = useRef(false);
   useEffect(() => {
-    if (isLoaded) { setTimedOut(false); return; }
-    const timer = setTimeout(() => setTimedOut(true), CLERK_LOAD_TIMEOUT_MS);
+    if (isLoaded) { everLoaded.current = true; setTimedOut(false); return; }
+    const stuck = everLoaded.current;
+    const timer = setTimeout(() => { if (!stuck || !reloadOnceIfStuck()) setTimedOut(true); }, stuck ? CLERK_STUCK_RELOAD_MS : CLERK_LOAD_TIMEOUT_MS);
     return () => clearTimeout(timer);
   }, [isLoaded]);
   const clerkFailed = !isLoaded && (clerkStatus === 'error' || timedOut);

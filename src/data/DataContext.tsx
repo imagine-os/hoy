@@ -3,7 +3,7 @@ import type { BaseRow } from './schema';
 import type { DataProvider, Query } from './types';
 import { MockProvider } from './MockProvider';
 import { CompanyOSProvider } from './companyos/CompanyOSProvider';
-import { configureLaunch, launchConfig, type LaunchConfig } from '../config/launch';
+import { configureLaunch, launchConfig, PRODUCTION_BUILD, type LaunchConfig } from '../config/launch';
 import { onAppConfigLoaded } from '../auth/appConfig';
 
 const Ctx = createContext<DataProvider | null>(null);
@@ -14,7 +14,7 @@ const Ctx = createContext<DataProvider | null>(null);
  * applied at boot.
  */
 function createDefaultProvider(): DataProvider {
-  if (import.meta.env?.VITE_HOY_BUILD !== 'production') return new MockProvider();
+  if (!PRODUCTION_BUILD) return new MockProvider();
   const provider = new CompanyOSProvider();
   let applied = false, applying = false;
   const apply = () => {

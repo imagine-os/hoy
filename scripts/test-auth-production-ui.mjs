@@ -93,6 +93,10 @@ async function open(path = '/', { lang = 'es', width = 1280, clerk = true } = {}
 }
 const route = (page) => decodeURIComponent(new URL(page.url()).hash.slice(1));
 const calls = (page) => page.evaluate(() => window.__fakeClerk?.calls ?? []);
+// Signed out for real: the sign-in form, not a spinner and not the session-problem screen (H-2 test environment:
+// Clerk's sign-out left a hash-routed app "loading" and then on "service did not answer").
+const signedOutForm = async (page) => route(page).startsWith('/auth/sign-in') && (await page.locator('[data-step="email"] input').count()) === 1
+  && (await page.locator('[data-session-problem]').count()) === 0 && (await page.locator('[aria-busy="true"]').count()) === 0;
 async function signIn(page, email) {
   await page.locator('[data-step="email"] input').fill(email);
   await page.locator('[data-step="email"] button[type=submit]').click();
@@ -120,6 +124,13 @@ try {
   check('PL-03 sign-in has no demo user list or demo note', !/Usuarios demo|Demo users|demo\.hoyos\.test|Sofía|Juliana/.test(signInText));
   check('PL-03 no persona switcher or spec chip on the page', (await page.locator('#rs-user, .specchip, [data-demo-signin]').count()) === 0);
   check('PL-03 no agent manifest (window.__hoyos) in production', await page.evaluate(() => typeof window.__hoyos === 'undefined'));
+  check('CU-01 sign-in carries the element Clerk\'s bot protection draws in (#clerk-captcha)', (await page.locator('#clerk-captcha').count()) === 1);
+  await page.goto(`${BASE}/#/auth/sign-up`); await page.waitForTimeout(500);
+  check('CU-01 sign-up carries #clerk-captcha too', (await page.locator('#clerk-captcha').count()) === 1);
+  // ── Coming Soon: "Entrar" opens sign-in (owner, 30 Oct) ──────────────────────────────────────────────────────
+  await page.goto(`${BASE}/#/`); await page.waitForTimeout(800);
+  await page.locator('.coming-soon-login').click(); await page.waitForTimeout(800);
+  check('Coming Soon "Entrar" opens the sign-in form', route(page).startsWith('/auth/sign-in') && (await page.locator('[data-step="email"] input').count()) === 1, route(page));
   check('CU-03 sign-in offers the email code and Google', (await page.locator('[data-step="email"] input[type=email]').count()) === 1 && /Continuar con Google/.test(signInText));
   check('CU-03 no password field (code or Google only)', (await page.locator('input[type=password]').count()) === 0);
   await ctx.close();
@@ -150,6 +161,7 @@ try {
   await page.waitForTimeout(1000);
   check('CU-04 sign-out ends the Clerk session', (await calls(page)).some((c) => c[0] === 'signOut') && await page.evaluate(() => window.__fakeClerk.state.active === null));
   check('CU-04 after sign-out the visitor is on sign-in', route(page).startsWith('/auth/sign-in'), route(page));
+  check('CU-04 after sign-out the sign-in form shows (no spinner, no error)', await signedOutForm(page), route(page));
   check('CU-04 sign-out leaves nothing of the previous person in this browser (language kept)', await page.evaluate(() => sessionStorage.getItem('hoyos.pendingPass') === null && localStorage.getItem('hoyos.schedule.filters') === null && localStorage.getItem('hoyos.lang') === 'es'));
   await page.goto(`${BASE}/#/app`); await page.waitForTimeout(600);
   check('CU-04 a private page after sign-out goes back to sign-in', route(page).startsWith('/auth/sign-in'), route(page));
@@ -248,6 +260,7 @@ try {
   await page.locator('[data-account-chip] button').first().click();
   await page.waitForTimeout(1000);
   check('CU-04 staff sign-out ends the session and leaves the private page', await page.evaluate(() => window.__fakeClerk.state.active === null) && route(page).startsWith('/auth/sign-in'), route(page));
+  check('CU-04 after staff sign-out the sign-in form shows (no spinner, no error)', await signedOutForm(page), route(page));
   await ctx.close();
 
   ({ ctx, page } = await open('/auth/sign-in'));
@@ -257,6 +270,10 @@ try {
   check('PL-04 administration opens settings', route(page) === '/admin/settings', route(page));
   const nav = await page.locator('nav, aside').allInnerTexts();
   check('PL-03 the admin menu lists no non-launch area (WhatsApp, payroll, tables, integrations, dev, hub)', !/WhatsApp|Nómina|Tablas|Integraciones|Herramientas dev|\bHub\b/i.test(nav.join('\n')), nav.join(' | ').slice(0, 300));
+  await page.goto(`${BASE}/#/admin`); await page.waitForTimeout(1000);
+  await page.locator('[data-account-chip] button').first().click();
+  await page.waitForTimeout(1000);
+  check('CU-04 administration sign-out ends on the sign-in form (no spinner, no error)', await page.evaluate(() => window.__fakeClerk.state.active === null) && await signedOutForm(page), route(page));
   await ctx.close();
 
   // ── PL-04: /me failing is an error with a retry, never a guessed role ────────────────────────────────────────
@@ -287,9 +304,21 @@ try {
   ({ ctx, page } = await open('/auth/sign-in'));
   await signIn(page, 'ana@example.test');
   await page.evaluate(() => { sessionStorage.setItem('hoyos.pendingPass', 'pln_1'); localStorage.setItem('hoyos.schedule.filters', '{}'); });
-  await page.evaluate(() => window.Clerk.signOut()); // Clerk's own sign-out, as another tab's would arrive: not the app's button
+  await page.evaluate(() => window.Clerk.setActive({ session: null })); // as another tab's sign-out arrives (clerk-js: setActive, no navigation)
   await page.waitForTimeout(1000);
+  check('CU-04 a session ended elsewhere ends on the sign-in form (no spinner, no error)', await signedOutForm(page), route(page));
   check('CU-04 a session ended elsewhere clears the previous person\'s traces (language kept)', await page.evaluate(() => sessionStorage.getItem('hoyos.pendingPass') === null && localStorage.getItem('hoyos.schedule.filters') === null && localStorage.getItem('hoyos.lang') === 'es'));
+  await ctx.close();
+
+  // ── CU-04: a Clerk stuck mid-navigation after having loaded reloads once instead of showing the error ───────
+  ({ ctx, page } = await open('/auth/sign-in'));
+  await signIn(page, 'ana@example.test');
+  await page.evaluate(() => { window.__fakeClerk.ignoreRouter = true; }); // Clerk navigates by itself and waits for an unload
+  await page.goto(`${BASE}/#/app/access`); await page.waitForTimeout(800);
+  await page.getByRole('button', { name: 'Cerrar sesión' }).click();
+  let recovered = false;
+  for (const end = Date.now() + 30_000; !recovered && Date.now() < end;) { await page.waitForTimeout(500); recovered = await signedOutForm(page).catch(() => false); }
+  check('CU-04 a Clerk stuck after sign-out reloads and ends on the sign-in form (no error)', recovered && await page.evaluate(() => window.__fakeClerk.state.active === null), route(page));
   await ctx.close();
 
   // ── English and desktop/mobile ───────────────────────────────────────────────────────────────────────────────

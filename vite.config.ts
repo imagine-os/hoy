@@ -92,6 +92,8 @@ export default defineConfig({
   cacheDir: join(here, '.vite'),
   define: {
     __COMPONENT_COUNT__: JSON.stringify(countFiles(join(here, 'src/components'), '.meta.ts')),
+    // Which build this is, as a constant the bundler folds (src/config/launch.ts `PRODUCTION_BUILD`).
+    __HOY_BUILD__: JSON.stringify(PRODUCTION ? 'production' : 'review'),
   },
   plugins: [react(), docMetaPlugin(), ...(PRODUCTION ? [productionBuild()] : [])],
   server: { port: 5173 },

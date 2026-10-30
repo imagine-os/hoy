@@ -1,3 +1,4 @@
+import { PRODUCTION_BUILD } from '../config/launch';
 import { customerBookingContactValid } from './bookingContact';
 import {assertPurchasedGiftClaim} from '../modules/voucher-gifts/purchaseFacts';
 import { dailyAdmissionConflict } from './dailyAdmission';
@@ -67,7 +68,7 @@ export const voucherSeats = (db: VoucherDb, sessionId: string, tenantId?: string
 /** The review build's demo rules. The production build has none (gap analysis §3, lane H-6): Company OS credits decide
  * vouchers, so there this refuses every command (`voucher_demo_disabled`) and the rules are never reached. */
 type ExecuteVoucherCommand = typeof runDemoVoucherCommand;
-const productionBuild = (import.meta as { env?: Record<string, string | undefined> }).env?.VITE_HOY_BUILD === 'production';
+const productionBuild = PRODUCTION_BUILD;
 export const executeVoucherCommand: ExecuteVoucherCommand = productionBuild ? () => fail('voucher_demo_disabled') : runDemoVoucherCommand;
 
 /** Pure copy-on-write transaction: errors never mutate the supplied database. */

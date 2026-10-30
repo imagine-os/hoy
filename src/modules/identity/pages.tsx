@@ -131,6 +131,9 @@ function EmailCodeCard({ back }: { back: string }) {
           </div>
         </form>
       )}
+      {/* Clerk's bot protection draws its challenge here when a new account is created (signUp.create, on send and
+          resend); without the element it falls back to an invisible check that can refuse real people. */}
+      <div id="clerk-captcha" data-cl-size="flexible" />
       <div className="auth-divider"><span>{t('identity.or')}</span></div>
       <Button block variant="secondary" icon="G" loading={busy === 'google'} onClick={() => void google()}>{t('identity.google')}</Button>
     </Card>

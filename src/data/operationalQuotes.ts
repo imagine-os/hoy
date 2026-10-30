@@ -1,3 +1,4 @@
+import { PRODUCTION_BUILD } from '../config/launch';
 import type { DataProvider } from './types';
 import type { PaymentRow } from './schema';
 import { quotePublishedProduct } from './catalogPublication';
@@ -5,8 +6,7 @@ import {validProductDate,type CatalogPlan} from './productCatalog';
 import { priceItem, type PriceItem } from '../tenant/pricing';
 import { tenant } from '../tenant/tenant';
 import { addDaysKey } from '../i18n/format';
-/** The production build (`VITE_HOY_BUILD=production`); read inline so node tests that bundle this file without Vite still load it. */
-const PRODUCTION_BUILD = (import.meta as { env?: Record<string, unknown> }).env?.VITE_HOY_BUILD === 'production';
+
 
 export const QUOTED_CLASS_ITEMS = ['trial','single','pack12','pack12_smtc'] as const;
 export const QUOTED_GIFT_ITEMS = ['gift_single','gift_pack12'] as const;

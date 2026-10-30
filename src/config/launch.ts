@@ -19,7 +19,13 @@ export interface LaunchConfig {
   reviewTools: boolean;
 }
 
-export const PRODUCTION_BUILD = import.meta.env?.VITE_HOY_BUILD === 'production';
+// Vite replaces `__HOY_BUILD__` with a string literal, so this folds to `true`/`false` at build time and the bundler
+// drops the other build's code (Clerk out of the review build, demo data out of production). `import.meta.env?.…`
+// did not fold, and Clerk shipped in the review build. `typeof` keeps scripts that bundle the app without Vite working
+// (they get the review build) unless they define `import.meta.env.VITE_HOY_BUILD`.
+export const PRODUCTION_BUILD = typeof __HOY_BUILD__ === 'string'
+  ? __HOY_BUILD__ === 'production'
+  : (typeof import.meta.env === 'object' && import.meta.env.VITE_HOY_BUILD === 'production');
 
 export const LAUNCH_DEFAULTS: LaunchConfig = { siteLive: false, siteLiveAt: null, publicDocuments: [], reviewTools: !PRODUCTION_BUILD };
 

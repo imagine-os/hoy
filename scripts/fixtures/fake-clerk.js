@@ -2,7 +2,8 @@
 // Clerk's CDN script (`…/npm/@clerk/clerk-js@*/dist/clerk.browser.js`), so the production bundle runs unchanged and
 // nothing in the bundle can switch to a fake. Fictional accounts only. It implements the classic resources the app
 // uses (client.signIn / client.signUp / user / session) and the listener contract @clerk/react reads.
-// The test steers it through `window.__fakeClerk` (accounts, the next code, lockout) and reads its call log.
+// The test steers it through `window.__fakeClerk` (accounts, the next code, lockout, `ignoreRouter` to force Clerk's
+// window navigation) and reads its call log.
 (() => {
   const STORE = 'fake-clerk-state';
   const saved = (() => { try { return JSON.parse(sessionStorage.getItem(STORE) || 'null'); } catch { return null; } })();
@@ -98,11 +99,21 @@
     for (const l of listeners) l(clerk.__internal_lastEmittedResources);
   }
 
+  // clerk-js 6.x navigation: with a `routerPush` option a same-origin URL goes to it as path + search + hash; without
+  // one, Clerk announces `clerk:beforeunload` and sets `location.href` (a hash-only change does not reload the page).
+  let options = {};
+  function windowNavigate(url) { window.dispatchEvent(new CustomEvent('clerk:beforeunload')); window.location.href = url.href; }
+  async function navigate(to) {
+    const url = new URL(to, window.location.href);
+    if (url.origin !== window.location.origin || !options.routerPush || control.ignoreRouter) return windowNavigate(url);
+    await options.routerPush(url.href.replace(url.origin, ''), { windowNavigate });
+  }
+
   const clerk = {
     loaded: false, status: 'loading', version: 'fake', sdkMetadata: { name: 'fake', version: '0' }, isSatellite: false, instanceType: 'development',
     frontendApi: 'fake.clerk.accounts.dev', publishableKey: cfg.publishableKey || '',
     __internal_lastEmittedResources: null,
-    async load() { control.calls.push(['load']); clerk.loaded = true; clerk.status = 'ready'; emit(); for (const l of statusListeners) l('ready'); },
+    async load(opts) { control.calls.push(['load']); options = opts || {}; clerk.loaded = true; clerk.status = 'ready'; emit(); for (const l of statusListeners) l('ready'); },
     addListener(cb, opts) { listeners.add(cb); if (!opts?.skipInitialEmit && clerk.loaded) cb(clerk.__internal_lastEmittedResources); return () => listeners.delete(cb); },
     // clerk-js drives @clerk/react's status: `on('status', cb, { notify })` answers the current one at once.
     on(event, cb, opts) { if (event === 'status') { statusListeners.add(cb); if (opts?.notify) cb(clerk.status); } },
@@ -112,7 +123,27 @@
       if (session && control.pendingSession?.id === session) state.active = control.pendingSession; else if (!session) state.active = null;
       persist(); emit();
     },
-    async signOut() { control.calls.push(['signOut']); state.active = null; persist(); emit(); },
+    // As clerk-js 6.x `signOut`: the session and user become `undefined` (its "transitive state", so @clerk/react
+    // reports not loaded), it navigates to `afterSignOutUrl` (or a callback's own navigation), and only restores the
+    // signed-out state when that navigation did not announce an unload. Without a router, a hash-routed app stays
+    // in the transitive state: the bug the test environment showed (sign-out ending on "service did not answer").
+    async signOut(arg, more) {
+      control.calls.push(['signOut']);
+      if (!state.active) return;
+      const callback = typeof arg === 'function' ? arg : undefined;
+      const opts = arg && typeof arg === 'object' ? arg : more || {};
+      state.active = null; persist();
+      const transitive = { ...resources(), session: undefined, user: undefined };
+      clerk.__internal_lastEmittedResources = transitive;
+      Object.assign(clerk, { session: undefined, user: undefined });
+      for (const l of listeners) l(transitive);
+      let unloading = false;
+      const mark = () => { unloading = true; };
+      window.addEventListener('beforeunload', mark); window.addEventListener('clerk:beforeunload', mark);
+      try { if (callback) await callback(); else await navigate(opts.redirectUrl || options.afterSignOutUrl || '/'); }
+      finally { window.removeEventListener('beforeunload', mark); window.removeEventListener('clerk:beforeunload', mark); }
+      if (!unloading) emit();
+    },
     async handleRedirectCallback() { control.calls.push(['handleRedirectCallback']); },
     __internal_getOption() { return undefined; },
     telemetry: { record() {} },

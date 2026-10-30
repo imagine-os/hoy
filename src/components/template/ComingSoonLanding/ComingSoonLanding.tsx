@@ -1,7 +1,4 @@
-import { useRef, useEffect } from 'react';
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { Drawer } from '../../organism/Drawer/Drawer';
-import { Button } from '../../atom/Button/Button';
+import { Link } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { tenant } from '../../../tenant/tenant';
 import { taglines } from '../../../tenant/brand';
@@ -10,33 +7,11 @@ import { Icon } from '../../atom/Icon/Icon';
 import { LangToggle } from '../../molecule/LangToggle/LangToggle';
 import './ComingSoonLanding.css';
 
-/** An independent launch surface: no website-edition state or mock conversion controls. */
+/** An independent launch surface: no website-edition state or mock conversion controls. "Entrar" opens sign-in, which
+ * also creates an account (owner, 30 Oct: replaces the "member login is coming soon" drawer). */
 export function ComingSoonLanding() {
   const { t, bi } = useI18n();
-  const [params, setParams] = useSearchParams();
-  const location = useLocation();
-  const navigate = useNavigate();
-  const loginButton = useRef<HTMLButtonElement>(null);
-  const closing = useRef(false);
-  const wasOpen = useRef(false);
-  const loginOpen = params.get('login') === 'soon';
-  useEffect(() => { closing.current = false; }, [location.key]);
-  useEffect(() => {
-    if (wasOpen.current && !loginOpen) loginButton.current?.focus();
-    wasOpen.current = loginOpen;
-  }, [loginOpen]);
-  const openLogin = () => {
-    if (loginOpen) return;
-    const next = new URLSearchParams(params); next.set('login', 'soon');
-    setParams(next, { state: { comingSoonLogin: true } });
-  };
-  const closeLogin = () => {
-    if (closing.current) return;
-    closing.current = true;
-    if (location.state?.comingSoonLogin) navigate(-1);
-    else { const next = new URLSearchParams(params); next.delete('login'); setParams(next, { replace: true }); }
-  };
-  return <><main className="coming-soon">
+  return <main className="coming-soon">
     <img
       className="coming-soon-scene"
       src={`${import.meta.env.BASE_URL}images/studio-2026/facility-red-studio-1600.webp`}
@@ -48,7 +23,7 @@ export function ComingSoonLanding() {
     <div className="coming-soon-layout">
       <header className="coming-soon-header">
         <div className="coming-soon-brand"><Wordmark vector tone="cream" /><span>{bi(tenant.tagline)}</span></div>
-        <div className="coming-soon-tools"><LangToggle /><button ref={loginButton} type="button" className="coming-soon-login" onClick={openLogin} aria-haspopup="dialog" aria-expanded={loginOpen}>{t('soon.login')}</button></div>
+        <div className="coming-soon-tools"><LangToggle /><Link to="/auth/sign-in" className="coming-soon-login">{t('soon.login')}</Link></div>
       </header>
       <section className="coming-soon-message" aria-labelledby="coming-soon-title">
         <p className="coming-soon-status"><span aria-hidden="true" />{t('soon.status')}</p>
@@ -65,7 +40,5 @@ export function ComingSoonLanding() {
         <p>{tenant.city}<span aria-hidden="true"> · </span>{bi(tenant.tagline)}</p>
       </footer>
     </div>
-  </main><Drawer open={loginOpen} onClose={closeLogin} side="bottom" title={t('soon.loginTitle')} footer={<Button onClick={closeLogin}>{t('core.common.close')}</Button>}>
-    <p>{t('soon.loginBody')}</p>
-  </Drawer></>;
+  </main>;
 }
