@@ -174,6 +174,15 @@ try {
   check('CU-03 Google sign-in returns to #/auth/callback on this origin', !!google && google[1].startsWith(`${BASE}/#/auth/callback?back=`), JSON.stringify(google));
   await ctx.close();
 
+  // The return from Google: a fresh page load on #/auth/callback. Its first render comes before /app-config.json, when
+  // there is no ClerkProvider yet; the page must wait for it instead of crashing into a blank screen.
+  ({ ctx, page } = await open('/auth/callback?back=%2Fauth%2Fsign-in'));
+  await page.waitForTimeout(800);
+  const callbackErrors = errors.filter((e) => e.startsWith('/auth/callback'));
+  check('CU-03 the Google return page loads without an error and finishes the sign-in with Clerk',
+    callbackErrors.length === 0 && (await calls(page)).some((c) => c[0] === 'handleRedirectCallback'), JSON.stringify({ callbackErrors, calls: await calls(page) }));
+  await ctx.close();
+
   // ── CU-01 / CU-02: a new person: Clerk code, then the studio's sign-up form, then the app ───────────────────
   ({ ctx, page } = await open('/auth/sign-up?next=/app/checkout/cls_1', { width: 390 }));
   await signIn(page, 'nueva@example.test');
