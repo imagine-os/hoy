@@ -1,11 +1,11 @@
+import { PRODUCTION_BUILD } from '../config/launch';
 import { buildReceiptEmailPreview, buildReceiptRecorderSnapshot, receiptEmailPreviewValid, receiptRecorderSnapshotValid, type ReceiptEmailPreview, type ReceiptRecorderSnapshot } from './receiptEmailPreview';
 import type { DataProvider } from './types';
 import type { PaymentRow, UserRow, ProfileRow } from './schema';
 import { readPaymentQuote } from './operationalQuotes';
 import { tenant } from '../tenant/tenant';
 import type { Bi } from '../specs/types';
-/** The production build (`VITE_HOY_BUILD=production`); read inline so node tests that bundle this file without Vite still load it. */
-const PRODUCTION_BUILD = (import.meta as { env?: Record<string, unknown> }).env?.VITE_HOY_BUILD === 'production';
+
 
 export interface LaunchReceipt {
   version: 1;

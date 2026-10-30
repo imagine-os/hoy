@@ -1,7 +1,7 @@
+import { PRODUCTION_BUILD } from '../config/launch';
 import type { CatalogPublication } from './catalogPublication';
 import type { PlanRow } from './schema';
-/** The production build (`VITE_HOY_BUILD=production`); read inline so node tests that bundle this file without Vite still load it. */
-const PRODUCTION_BUILD = (import.meta as { env?: Record<string, unknown> }).env?.VITE_HOY_BUILD === 'production';
+
 
 /** Frontend draft contract. Legacy plan/public pricing is deliberately not published by this prototype. */
 export interface ProductPrice { id: string; amount: number; startsOn: string; endsOn: string | null }

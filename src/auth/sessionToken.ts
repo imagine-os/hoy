@@ -1,3 +1,4 @@
+import { PRODUCTION_BUILD } from '../config/launch';
 /**
  * The seam between the production session (Clerk) and anything that calls Company OS (H-3's CompanyOSProvider).
  * Callers never touch Clerk: they ask for a fresh session token per request and report a `401` back. The review
@@ -22,7 +23,7 @@ export function setSessionTokenSource(next: TokenSource | null) {
  * `TOKEN_WAIT_MS`: then it answers null, so signed-out reads (the website catalogue) never hang. A later call waits again.
  */
 export async function getSessionToken(options?: { refresh?: boolean }): Promise<string | null> {
-  if (!import.meta.env || import.meta.env.VITE_HOY_BUILD !== 'production') return source ? source(options) : null;
+  if (!PRODUCTION_BUILD) return source ? source(options) : null;
   const s = source ?? await new Promise<TokenSource | null>((resolve) => {
     const waiter = (next: TokenSource) => { clearTimeout(timer); resolve(next); };
     const timer = setTimeout(() => { waiters = waiters.filter((w) => w !== waiter); resolve(null); }, TOKEN_WAIT_MS);
