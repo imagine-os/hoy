@@ -105,7 +105,7 @@ function DemoSessionProvider({ children }: { children: ReactNode }) {
   const hasRole = useCallback((roles: Role[]) => roles.includes('public') || roles.includes(role) || (isSuperAdmin && !state.viewAs), [role, isSuperAdmin, state.viewAs]);
 
   const signOut = useCallback(async () => { switchUser('usr_public'); }, [switchUser]);
-  const value = useMemo<SessionCtx>(() => ({ status: 'ready', signedIn: user.role !== 'public', user, role, isSuperAdmin, canDevMode, devMode, viewAs: state.viewAs, caps: [], switchUser, setDevMode, setViewAs, signOut, refresh: () => {}, can, hasRole }),
+  const value = useMemo<SessionCtx>(() => ({ status: 'ready', signedIn: user.role !== 'public', user, role, isSuperAdmin, canDevMode, devMode, viewAs: state.viewAs, viewAsPerson: null, caps: [], switchUser, setDevMode, setViewAs, signOut, refresh: () => {}, can, hasRole }),
     [user, role, isSuperAdmin, canDevMode, devMode, state.viewAs, switchUser, setDevMode, setViewAs, signOut, can, hasRole]);
   return <Ctx.Provider key={logoutRevision} value={value}>{children}</Ctx.Provider>;
 }

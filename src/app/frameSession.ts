@@ -82,6 +82,7 @@ export function installFrameSession(): void {
     userId: demoUserByRole(as && isRole(as) ? as : 'public').id,
     devMode: dev === '1',
     viewAs: null,
+    viewAsPerson: null,
   });
   if (lang === 'es' || lang === 'en') shadow[LANG_KEY] = lang;
   if (theme === 'light' || theme === 'dark') shadow[THEME_KEY] = JSON.stringify({ theme, skin: 'styled' });

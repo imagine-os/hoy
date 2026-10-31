@@ -54,7 +54,7 @@ const visitorHas = (roles: Role[]) => roles.includes('public');
 
 function visitorSession(status: SessionStatus, refresh: () => void, signOut: () => Promise<void> = async () => {}, signedIn = false): SessionCtx {
   return {
-    status, signedIn, user: VISITOR, role: 'public', isSuperAdmin: false, canDevMode: false, devMode: false, viewAs: null, caps: [],
+    status, signedIn, user: VISITOR, role: 'public', isSuperAdmin: false, canDevMode: false, devMode: false, viewAs: null, viewAsPerson: null, caps: [],
     switchUser: (id) => { if (signedIn && (id === 'public' || id === VISITOR.id)) void signOut(); },
     setDevMode: noop, setViewAs: noop, signOut, refresh, can: visitorCan, hasRole: visitorHas,
   };
@@ -169,7 +169,7 @@ function ClerkSession({ config, children }: { config: AppConfig; children: React
     const name = info.name || info.email;
     const user: SessionUser = { id: info.userId, role, name, initials: initialsOf(name), email: info.email, blurb: { es: '', en: '' } };
     return {
-      status: 'ready', signedIn: true, user, role, isSuperAdmin: false, canDevMode: false, devMode: false, viewAs: null, caps: info.caps,
+      status: 'ready', signedIn: true, user, role, isSuperAdmin: false, canDevMode: false, devMode: false, viewAs: null, viewAsPerson: null, caps: info.caps,
       switchUser: (id) => { if (id === 'public' || id === VISITOR.id) void signOut(); },
       setDevMode: noop, setViewAs: noop, signOut, refresh,
       can: (p) => roleCan(role, p),

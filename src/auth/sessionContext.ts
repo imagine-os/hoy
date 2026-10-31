@@ -29,6 +29,13 @@ export interface SessionCtx {
   canDevMode: boolean;
   devMode: boolean;
   viewAs: Role | null;
+  /**
+   * The sample person whose data the viewed role sees while a super admin views as that role (production view-as,
+   * read-only): the first active coach for teacher, the first member for customer, a seeded staff person otherwise.
+   * `user` stays the real person; the data provider aliases the session user to this one. `null` when not viewing as
+   * (and always in the review build, where view-as keeps the demo user).
+   */
+  viewAsPerson: SessionUser | null;
   /** Company OS capability strings from `/me` (production; empty in the review build). UI gates only. */
   caps: string[];
   /** Review build: a demo user id, a role (its demo user) or a `users` row id. Production: only `public` (signs out). */
