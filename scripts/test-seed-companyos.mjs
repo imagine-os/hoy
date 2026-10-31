@@ -11,7 +11,7 @@ const RECIPE = {
     { key: 'bookings', settings: { late_cancel_hours: 12, reschedule_hours: 12, policy_as_of_booking: true, max_bookings_per_person_per_day: 1 } },
     { key: 'payments', settings: { methods_requiring_reference: 'online_gateway,card_terminal,card' } },
   ],
-  records: [{
+  records: [{ entity: 'resource', rows: [{ name: 'Main room', kind: 'room' }, { name: 'Small room', kind: 'room' }] }, {
     entity: 'product',
     rows: [
       { key: 'trial', name: 'Trial class', kind: 'trial', price: 30000, credits: 1 },
@@ -23,6 +23,7 @@ const RECIPE = {
   }],
 };
 
+const PRODUCTS = RECIPE.records.find((s) => s.entity === 'product').rows;
 const failures = [];
 const check = async (name, fn) => { try { await fn(); console.log(`ok   ${name}`); } catch (err) { failures.push(name); console.log(`FAIL ${name}\n     ${err.message.split('\n').join('\n     ')}`); } };
 
@@ -169,7 +170,7 @@ await check('issues one lot per approved pack or trial payment, as payments and 
   const lots = of('credit_lot');
   for (const p of of('payment')) {
     assert.equal(p.data.status, 'approved');
-    const product = RECIPE.records[0].rows.find((r) => r.name === p.data.concept);
+    const product = PRODUCTS.find((r) => r.name === p.data.concept);
     assert.ok(product, `payment of ${p.data.concept}`);
     assert.equal(p.data.amount, product.price);
     const mine = lots.filter((l) => l.data.payment === p.id);
@@ -222,12 +223,37 @@ await check('gives the demo customer a pack with classes left and an upcoming cl
   assert.ok(of('booking').some((b) => b.data.person === juliana.id && b.data.status === 'booked'), 'an upcoming class');
 });
 
-await check('writes no product ids by default (the recipe makes them); --recipe-refs names them by key', async () => {
+await check('writes no recipe ids by default (the recipe makes them); --recipe-refs names products by key and rooms by name', async () => {
   for (const r of [...of('payment'), ...of('credit_lot'), ...of('invoice')]) assert.equal(r.data.product, undefined);
+  for (const o of of('occurrence')) assert.equal(o.data.resource, undefined);
   const withRefs = await buildCompanyOsSeed({ recipe: RECIPE, recipeRefs: true });
-  const pay = withRefs.records.find((r) => r.entity === 'payment');
-  const key = RECIPE.records[0].rows.find((r) => r.name === pay.data.concept).key;
-  assert.deepEqual(pay.data.product, { $ref: { entity: 'product', where: { key } } });
+  const mine = (entity) => withRefs.records.filter((r) => r.entity === entity);
+  const productOf = (key) => PRODUCTS.find((p) => p.key === key);
+  // Every payment, receipt and pack names a product of the recipe, as its own `key`; a pack's is the one it was sold as.
+  for (const r of [...mine('payment'), ...mine('invoice'), ...mine('credit_lot')]) {
+    assert.deepEqual(Object.keys(r.data.product ?? {}), ['$ref'], `${r.entity} ${r.id}`);
+    assert.equal(r.data.product.$ref.entity, 'product');
+    assert.ok(productOf(r.data.product.$ref.where.key), `${r.entity} ${r.id}: ${r.data.product.$ref.where.key}`);
+  }
+  const pay = mine('payment')[0];
+  assert.deepEqual(pay.data.product, { $ref: { entity: 'product', where: { key: PRODUCTS.find((r) => r.name === pay.data.concept).key } } });
+  for (const lot of mine('credit_lot')) {
+    const paid = withRefs.records.find((r) => r.id === lot.data.payment);
+    assert.deepEqual(lot.data.product, paid.data.product, 'a pack names the product it was paid as');
+  }
+  // Every class names a room of the recipe by its name (the sample's main room is the recipe's Main room).
+  const rooms = new Set(RECIPE.records[0].rows.map((r) => r.name));
+  for (const o of mine('occurrence')) {
+    assert.equal(o.data.resource?.$ref?.entity, 'resource', `${o.data.title} ${o.data.starts_at}`);
+    assert.ok(rooms.has(o.data.resource.$ref.where.name), o.data.resource.$ref.where.name);
+  }
+  // Only those: no other field holds a reference.
+  for (const r of withRefs.records) for (const [k, v] of Object.entries(r.data)) if (v && typeof v === 'object') assert.ok(['product', 'resource'].includes(k), `${r.entity}.${k}`);
+});
+
+await check('refuses a recipe without the room a class needs (--recipe-refs)', async () => {
+  const noRooms = { ...RECIPE, records: RECIPE.records.filter((s) => s.entity !== 'resource') };
+  await assert.rejects(buildCompanyOsSeed({ recipe: noRooms, recipeRefs: true }), /room/i);
 });
 
 // Determinism: the same file every run, on any machine's clock and timezone; a different date moves the dates.
