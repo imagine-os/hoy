@@ -1,53 +1,95 @@
 // Sign-in, sign-up and sign-out on the PRODUCTION build against the REAL Clerk (its development instance, the one the
 // test environment uses). test-auth-production-ui.mjs covers the same screens on a fake Clerk; this one catches what
 // only the real clerk-js does (its sign-out navigation, bot protection, its script and its API).
-// - Company OS is an in-memory fake here (`/me`, `/signup`, `/app-config.json`): nothing is written to any database.
+// Two modes:
+// - default: Company OS is an in-memory fake here (`/me`, `/signup`, `/app-config.json`): nothing is written to any
+//   database. Serves the local production build (QA_PROD_DIST or dist/).
+// - `--real-api`: the deployed TEST site (test-hoy: its Hoy server, its real Company OS, Clerk's development
+//   instance), so sign-up is proven end to end: a new QA user signs up, lands on /app, and Company OS says it is a
+//   customer (`member`, a `self_signup` member record). Afterwards its Company OS records (membership, person, member)
+//   are removed through the API as a test-hoy Administration login, then the Clerk user; a failed removal is logged
+//   with what was left behind (scripts/lib/real-signup.mjs). Refuses a site that says it is production or uses
+//   another Clerk instance. Needs, besides the Clerk keys:
+//     HOY_TEST_URL             the test site's origin, e.g. https://<test-hoy domain> (https; http only for localhost)
+//     HOY_CLEANUP_ADMIN_EMAIL  a test-hoy Administration login (holds the tenant Super Admin role) in the same Clerk
+//                              development instance; the run opens a short Clerk session for it (Backend API
+//                              `POST /sessions`, development instances only) to remove the QA records, then revokes it
 // - Accounts are Clerk test addresses (`qa-<run>+clerk_test@example.com`, code 424242): Clerk sends no email.
 // - Clerk's bot protection is passed with a Clerk testing token (Backend API), as Clerk documents for tests.
 // - Every Clerk user this run creates is deleted at the end, even when a check fails; users a crashed run left
 //   behind (older than 30 minutes) are deleted at the start.
 // Keys: CLERK_SECRET_KEY (sk_test_…) and CLERK_PUBLISHABLE_KEY (pk_test_…), the test environment's. Without them it
 // says it skipped (pull requests from forks get no secrets); a live key is refused.
+// Every value comes from the process environment; this script reads no file of secrets.
 // Run: npm run build:production && CLERK_SECRET_KEY=… CLERK_PUBLISHABLE_KEY=… node scripts/test-auth-real-clerk.mjs
+//      CLERK_SECRET_KEY=… CLERK_PUBLISHABLE_KEY=… HOY_TEST_URL=https://… HOY_CLEANUP_ADMIN_EMAIL=… \
+//        node scripts/test-auth-real-clerk.mjs --real-api
 import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { extname, join, resolve, sep } from 'node:path';
 import { launchBrowser, reporter } from './lib/launch-qa.mjs';
+import { QA_EMAIL, checkTestSite, cosOver, findSignup, realApiOptions, removeSignup, removeStaleSignups } from './lib/real-signup.mjs';
 
+let MODE;
+try { MODE = realApiOptions(process.argv.slice(2), process.env); } catch (e) { console.error(`Real Clerk sign-in: ${e.message}`); process.exit(1); }
+const REAL = MODE.mode === 'real-api';
 const SECRET = process.env.CLERK_SECRET_KEY ?? '';
 const PK = process.env.CLERK_PUBLISHABLE_KEY ?? '';
+// The real-API mode is always asked for on purpose: without its keys it fails instead of passing as "skipped".
+if ((!SECRET || !PK) && REAL) { console.error('Real Clerk sign-up on the test site: needs CLERK_SECRET_KEY and CLERK_PUBLISHABLE_KEY (the test environment\'s)'); process.exit(1); }
 if (!SECRET || !PK) { console.log('Real Clerk sign-in: skipped (no Clerk key in this run)'); process.exit(0); }
 if (!/^sk_test_./.test(SECRET) || !/^pk_test_./.test(PK)) { console.error('Real Clerk sign-in: needs the Clerk development keys (sk_test_… and pk_test_…), never live ones'); process.exit(1); }
 const DIST = resolve(process.env.QA_PROD_DIST ?? 'dist');
-if (!existsSync(join(DIST, 'index.html'))) { console.error(`${DIST}/index.html missing: run npm run build:production first`); process.exit(1); }
+if (!REAL && !existsSync(join(DIST, 'index.html'))) { console.error(`${DIST}/index.html missing: run npm run build:production first`); process.exit(1); }
 
-const report = reporter('Real Clerk sign-in');
+const report = reporter(REAL ? 'Real Clerk sign-up on the test site' : 'Real Clerk sign-in');
 const done = report.done;
 // On GitHub, a failed check is also an annotation, so its reason shows on the run's summary page.
 const annotate = (text) => process.env.GITHUB_ACTIONS && text && console.log(`::error title=Real Clerk sign-in::${text.replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A')}`);
 const check = (label, ok, detail = '') => { report.check(label, ok, detail); if (!ok) annotate(detail ? `${label} — ${detail}` : label); };
 // A browser step: on failure, also say what the screen and Clerk said at that moment.
 const step = async (label, ok, detail = '') => { check(label, ok, detail); if (!ok) await diagnose(); };
-const TENANT = 'hoy-qa';
 const PORT = 5332;
-const BASE = `http://localhost:${PORT}`;
+const BASE = REAL ? MODE.baseUrl : `http://localhost:${PORT}`;
+let TENANT = 'hoy-qa'; // real-api: the site's own tenant, from its /app-config.json
 const FAPI = Buffer.from(PK.slice('pk_test_'.length), 'base64').toString('utf8').replace(/\$$/, '');
 const RUN = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 const EMAIL = `qa-${RUN}+clerk_test@example.com`;
-const QA_EMAIL = /^qa-[a-z0-9]+\+clerk_test@example\.com$/;
 const CODE = '424242';
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.png': 'image/png', '.svg': 'image/svg+xml', '.mp4': 'video/mp4', '.woff2': 'font/woff2' };
 
 // ── Clerk Backend API: the testing token and the clean-up ──────────────────────────────────────────────────────
-async function clerkApi(method, path) {
-  const res = await fetch(`https://api.clerk.com/v1${path}`, { method, headers: { Authorization: `Bearer ${SECRET}` } });
+async function clerkApi(method, path, body) {
+  const headers = { Authorization: `Bearer ${SECRET}` };
+  if (body !== undefined) headers['Content-Type'] = 'application/json';
+  const res = await fetch(`https://api.clerk.com/v1${path}`, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) });
   if (!res.ok) throw new Error(`Clerk ${method} ${path.split('?')[0]}: ${res.status}`);
   return res.status === 204 ? null : res.json();
 }
 const usersWith = async (query) => (await clerkApi('GET', `/users?limit=100&${query}`)) ?? [];
 const isQaUser = (u) => (u.email_addresses ?? []).some((e) => QA_EMAIL.test(e.email_address));
 async function deleteUsers(users) { for (const u of users) await clerkApi('DELETE', `/users/${u.id}`); return users.length; }
+
+// ── real-api: Company OS as the test site's Administration (only to check the QA user and remove it) ─────────────
+// A short Clerk session for the clean-up login (Backend API, development instances only), a fresh session token per
+// call through the Hoy server (`/api/cos/t/<tenant>`), revoked at the end.
+let adminSession = null;
+async function adminCos() {
+  if (!adminSession) {
+    const found = (await usersWith(`email_address=${encodeURIComponent(MODE.adminEmail)}`)) ?? [];
+    if (found.length !== 1) throw new Error(`HOY_CLEANUP_ADMIN_EMAIL matches ${found.length} Clerk users in this instance (needs exactly 1)`);
+    adminSession = await clerkApi('POST', '/sessions', { user_id: found[0].id });
+  }
+  const token = async () => (await clerkApi('POST', `/sessions/${adminSession.id}/tokens`, {})).jwt;
+  return cosOver({ apiRoot: `${BASE}/api/cos/t/${encodeURIComponent(TENANT)}`, token });
+}
+async function endAdminSession() {
+  if (!adminSession) return;
+  try { await clerkApi('POST', `/sessions/${adminSession.id}/revoke`, {}); }
+  catch (e) { console.log(`  could not revoke the clean-up session (${e.message}); it expires on its own`); }
+  adminSession = null;
+}
 
 // ── The fake Hoy server + Company OS (in memory) ───────────────────────────────────────────────────────────────
 const members = {}; // Clerk user id → { name }
@@ -129,7 +171,16 @@ try {
   if (stale.length) console.log(`  removed ${await deleteUsers(stale)} Clerk test user(s) a previous run left behind`);
   const { token } = await clerkApi('POST', '/testing_tokens');
   if (process.env.GITHUB_ACTIONS) console.log(`::add-mask::${token}`);
-  await new Promise((r) => server.listen(PORT, '127.0.0.1', r));
+  if (REAL) {
+    // The site's public settings: a test environment on this Clerk instance, and its tenant.
+    const res = await fetch(`${BASE}/app-config.json`, { headers: { accept: 'application/json' } });
+    if (!res.ok) throw new Error(`${BASE}/app-config.json answered ${res.status}`);
+    const site = checkTestSite(await res.json(), PK);
+    TENANT = site.tenant;
+    console.log(`  test site ${BASE}: tenant ${TENANT}, SITE_LIVE ${site.siteLive ? 'on (/ opens /site)' : 'off (/ shows Coming Soon)'}`);
+    const staleCos = await removeStaleSignups(await adminCos());
+    if (staleCos) console.log(`  removed the Company OS records of ${staleCos} QA sign-up(s) a previous run left behind`);
+  } else await new Promise((r) => server.listen(PORT, '127.0.0.1', r));
   browser = await launchBrowser();
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, reducedMotion: 'reduce' });
   // Clerk's frontend API takes the testing token on every request, and its answers say bot protection is bypassed
@@ -165,10 +216,15 @@ try {
   page.on('pageerror', (e) => errors.push(`${route(page)}: ${e.message}`));
   page.on('console', (m) => { if (m.type() === 'error') consoleErrors.push(m.text()); });
 
-  // 1. Coming Soon → sign-in
-  await page.goto(`${BASE}/#/`);
-  await page.locator('.coming-soon-login').click();
-  await step('Coming Soon "Entrar" opens the sign-in form (real Clerk loaded)', await waitFor(page, () => signedOutForm(page)), route(page));
+  // 1. Coming Soon → sign-in (the test site may be live, `/` = the website: then sign-in is opened directly)
+  if (REAL) {
+    await page.goto(`${BASE}/#/auth/sign-in`);
+    await step('the test site\'s sign-in form opens (real Clerk loaded)', await waitFor(page, () => signedOutForm(page)), route(page));
+  } else {
+    await page.goto(`${BASE}/#/`);
+    await page.locator('.coming-soon-login').click();
+    await step('Coming Soon "Entrar" opens the sign-in form (real Clerk loaded)', await waitFor(page, () => signedOutForm(page)), route(page));
+  }
 
   // 2. A new account: the code, then the studio's sign-up form
   await emailCode(page, EMAIL);
@@ -181,6 +237,17 @@ try {
   await page.locator('[data-register] input[type=checkbox]').check();
   await page.locator('[data-register] button[type=submit]').click();
   await step('after the studio sign-up the customer is in the app', await waitFor(page, async () => route(page).startsWith('/app')), route(page));
+  if (REAL) {
+    // What Company OS itself says about the new login: its own /me (with the browser's session), and the records.
+    const me = await page.evaluate(async (tenant) => {
+      const token = await window.Clerk?.session?.getToken();
+      const res = await fetch(`/api/cos/t/${encodeURIComponent(tenant)}/me`, { headers: { authorization: `Bearer ${token}` } });
+      return { status: res.status, body: await res.json().catch(() => null) };
+    }, TENANT);
+    check('Company OS /me: the new login is a customer (member) and nothing else', me.status === 200 && JSON.stringify(me.body?.roleKeys) === '["member"]' && me.body?.isSuperAdmin === false, JSON.stringify({ status: me.status, roleKeys: me.body?.roleKeys }));
+    const found = await findSignup(await adminCos(), EMAIL);
+    check('Company OS holds one person and one self_signup member record for the new login', found.personIds.length === 1 && found.members.length === 1 && found.members[0].source === 'self_signup', JSON.stringify({ people: found.personIds.length, members: found.members }));
+  }
 
   // 3. Sign out from the access page
   await page.goto(`${BASE}/#/app/access`); await settle(page);
@@ -205,7 +272,15 @@ try {
   await step(`ran to the end (${String(e?.message ?? e).split('\n')[0]})`, false);
 } finally {
   await browser?.close();
-  server.close();
+  if (!REAL) server.close();
+  if (REAL) {
+    // Company OS first (the records name the login), then Clerk; each says what it left behind.
+    try {
+      const out = await removeSignup(await adminCos(), EMAIL);
+      check('the Company OS records this run created are removed (membership, person, member)', out.left.length === 0 && !out.refused, out.left.join(', '));
+    } catch (e) { check(`Company OS clean-up (${e.message}); LEFT BEHIND: the records of ${EMAIL}, remove by hand as a Super Admin`, false); }
+    await endAdminSession();
+  }
   try {
     const left = (await usersWith(`email_address=${encodeURIComponent(EMAIL)}`)).filter(isQaUser);
     await deleteUsers(left);
