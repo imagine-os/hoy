@@ -21,7 +21,8 @@ import { fileURLToPath } from 'node:url';
  * @property {string[]} fileStorageOrigins where download links may point (empty = any http(s); https only in production)
  * @property {string|null} companyOsReadToken the read-only service identity (ADR 0029, role public_site) the website's
  *   signed-out reads go out with; never sent to the browser. Null: signed-out reads stay refused
- * @property {{ perSecond: number, burst: number }} publicReadRate each visitor's limit on those reads
+ * @property {{ perSecond: number, burst: number, totalPerSecond: number, totalBurst: number }} publicReadRate each visitor's
+ *   limit on those reads, and all visitors' together (below the identity's own limit in Company OS)
  * @property {{ siteLive: boolean, siteLiveAt: string|null, publicDocuments: string[] }} launch
  *   the go-live switch the app reads from /app-config.json (SW-08, Q-14): SITE_LIVE, SITE_LIVE_AT, PUBLIC_DOCUMENTS
  */
@@ -117,7 +118,7 @@ export function loadConfig(env = process.env) {
     fileTimeoutMs: int(env.FILE_TIMEOUT_MS, 30_000),
     fileStorageOrigins,
     companyOsReadToken,
-    publicReadRate: { perSecond: int(env.PUBLIC_READ_RATE_PER_SECOND, 20), burst: int(env.PUBLIC_READ_BURST, 120) },
+    publicReadRate: { perSecond: int(env.PUBLIC_READ_RATE_PER_SECOND, 20), burst: int(env.PUBLIC_READ_BURST, 120), totalPerSecond: 150, totalBurst: 400 },
     launch: { siteLive: siteLiveRaw === 'true', siteLiveAt, publicDocuments },
   };
   if (problems.length) throw new Error(`Hoy server configuration:\n  - ${problems.join('\n  - ')}`);

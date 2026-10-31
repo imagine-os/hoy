@@ -12,7 +12,7 @@ import net from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { gunzipSync } from 'node:zlib';
-import { ANONYMOUS_ROUTES, createHandler, createHoyServer } from '../server/app.mjs';
+import { ANONYMOUS_ROUTES, createHandler, createHoyServer, publicReadLimiter } from '../server/app.mjs';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { clerkSessionVerifier } from '../server/clerk.mjs';
@@ -548,6 +548,25 @@ await test('public reads: one visitor is limited (429), another is still served'
   assert.equal((await request('POST', '/api/cos/t/hoy-dev/query', { ...one, authorization: `Bearer ${GOOD}` }, JSON.stringify({ entity: 'product' }), limited)).status, 200);
   assert.equal(seen.length, 5);
   limited.close();
+});
+
+await test('public reads: all visitors together stay under the read identity\'s own limit in Company OS (429 for everyone)', async () => {
+  upstreamReply = okUpstream;
+  const capped = createHoyServer(await createHandler({ ...publicConfig, publicReadRate: { perSecond: 20, burst: 120, totalPerSecond: 0.001, totalBurst: 4 } }, { verifySession: fakeVerify, log: () => {} }));
+  await listen(capped);
+  const statuses = [];
+  for (let i = 0; i < 6; i++) statuses.push((await request('POST', '/api/cos/t/hoy-dev/query', { ...json, 'x-real-ip': `10.0.1.${i}` }, JSON.stringify({ entity: 'product' }), capped)).status);
+  assert.deepEqual(statuses, [200, 200, 200, 200, 429, 429]);
+  capped.close();
+});
+
+await test('public reads: the per-visitor table forgets idle visitors first, never resets a busy one', async () => {
+  const take = publicReadLimiter({ perSecond: 1, burst: 2, totalPerSecond: 1e9, totalBurst: 1e9 }, 3);
+  assert.equal(take('busy', 0), true); assert.equal(take('busy', 0), true); assert.equal(take('busy', 0), false);
+  assert.equal(take('a', 0), true); assert.equal(take('b', 0), true);
+  assert.equal(take('c', 0), false, 'the table is full of busy visitors: a new one waits, nobody is reset');
+  assert.equal(take('busy', 0), false, 'the busy visitor is still limited');
+  assert.equal(take('c', 10_000), true, 'once others are idle again they are forgotten and a new visitor is served');
 });
 
 await test('config: COMPANY_OS_READ_TOKEN must be a Company OS service token; check-bundle finds one in the build', async () => {

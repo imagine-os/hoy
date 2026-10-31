@@ -271,20 +271,35 @@ async function publicProxy(req, res, config, deps, path, isQuery) {
 }
 
 /**
- * One token bucket per visitor address for the public reads, so one visitor can't use up the read identity's own
- * limit in Company OS (ADR 0029 §7). In memory, per instance; the map is emptied when it grows past `max`.
+ * The public reads' limits: one token bucket per visitor address, so one visitor can't spend the rest's share, and one
+ * for all visitors together, kept below the read identity's own limit in Company OS (ADR 0029 §7: 200/s, burst 500)
+ * so the site degrades for the excess instead of being cut off for everyone. In memory, per instance. Past `max`
+ * visitors, idle ones (bucket full again) are forgotten first; a busy visitor is never reset by others.
  */
-export function publicReadLimiter({ perSecond, burst }, max = 10_000) {
+export function publicReadLimiter({ perSecond, burst, totalPerSecond = 150, totalBurst = 400 }, max = 10_000) {
   const buckets = new Map();
-  return (client, now = Date.now()) => {
-    if (buckets.size > max) buckets.clear();
-    const b = buckets.get(client) ?? { tokens: burst, at: now };
-    b.tokens = Math.min(burst, b.tokens + (Math.max(0, now - b.at) / 1000) * perSecond);
+  const refill = (b, now, rate, cap) => {
+    b.tokens = Math.min(cap, b.tokens + (Math.max(0, now - b.at) / 1000) * rate);
     b.at = now;
-    const ok = b.tokens >= 1;
-    if (ok) b.tokens -= 1;
+  };
+  const total = { tokens: totalBurst, at: Date.now() };
+  return (client, now = Date.now()) => {
+    if (buckets.size >= max && !buckets.has(client)) {
+      for (const [k, b] of buckets) {
+        refill(b, now, perSecond, burst);
+        if (b.tokens >= burst) buckets.delete(k);
+      }
+      if (buckets.size >= max) return false;
+    }
+    const b = buckets.get(client) ?? { tokens: burst, at: now };
+    refill(b, now, perSecond, burst);
     buckets.set(client, b);
-    return ok;
+    if (b.tokens < 1) return false;
+    refill(total, now, totalPerSecond, totalBurst);
+    if (total.tokens < 1) return false;
+    b.tokens -= 1;
+    total.tokens -= 1;
+    return true;
   };
 }
 
