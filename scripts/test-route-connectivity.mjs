@@ -144,10 +144,11 @@ const STUBS = new Set([...classBody.matchAll(/^ {2}async\s+(\w+)\([^)]*\)[^{]*\{
 const dpBody = typesSrc.slice(typesSrc.indexOf('export interface DataProvider'), typesSrc.indexOf('\n}\n', typesSrc.indexOf('export interface DataProvider')));
 const OPTIONAL = [...dpBody.matchAll(/^\s*(\w+)\?\s*[(<:]/gm)].map((m) => m[1]);
 const MISSING = new Set(OPTIONAL.filter((m) => !PROVIDER_METHODS.has(m)));
-// Signed out, list() answers SIGNED_OUT[table] (the built-in catalogue) or nothing, until the public identity (lane F).
-const SIGNED_OUT_GUARD = /signedIn\(\)\)\)\s*return[^\n]*SIGNED_OUT/.test(providerSrc);
-// `const SIGNED_OUT: Record<string, () => BaseRow[]> = { plans: () => …, teachers: … };` (the type holds an `=>`).
-const SIGNED_OUT_TABLES = new Set([...(providerSrc.match(/const SIGNED_OUT\b[^\n]*?>\s*=\s*\{([^\n]*)\};/)?.[1] ?? '').matchAll(/(\w+):/g)].map((m) => m[1]));
+// Signed out (lane F), list() and get() answer the provider's PUBLIC_TABLES live through the Hoy server's public_site
+// identity, which forwards only the entities in server/app.mjs PUBLIC_ENTITIES; every other table reads as empty and
+// every write fails (no session). Lane G2: the model is derived in the next commit.
+const SIGNED_OUT_MODEL = { listGuard: false, getGuard: false, providerTables: [], serverEntities: [], unserved: [] };
+const SIGNED_OUT_LIVE = new Set();
 
 check('read the adapters (mapping.ts)', Object.keys(adapters).length >= 20, String(Object.keys(adapters).length));
 check('read the provider methods (CompanyOSProvider.ts)', ['list', 'insert', 'atomic', 'request'].every((m) => PROVIDER_METHODS.has(m)), [...PROVIDER_METHODS].join(','));
@@ -333,8 +334,7 @@ function judge(use, route) {
   if (write && a.kind === 'entity' && a.readOnly) return `read_only ${use.table}`;
   if (a.kind === 'session' && write) return `member ${use.table}`; // update/remove refuse; atomic() refuses an insert
   if (a.kind === 'settings' && use.op === 'remove') return `read_only ${use.table}`;
-  if (write && route.signedOut && SIGNED_OUT_GUARD) return `signed_out ${use.table} (write)`;
-  if (!write && route.signedOut && SIGNED_OUT_GUARD && a.kind !== 'static') return `signed_out ${use.table}${SIGNED_OUT_TABLES.has(use.table) ? ' (built-in catalogue)' : ' (empty)'}`;
+  // Signed-out reads and writes: judged against SIGNED_OUT_LIVE (lane G2, next commit).
   return null;
 }
 const byDesign = (finding, use) => BY_DESIGN.find((b) => b.finding === finding && (!b.op || b.op === use.op) && (!b.file || b.file === use.file));
@@ -368,11 +368,9 @@ const synth = {
   'UnknownPage.tsx': `import { useTable } from ${data};\nexport function UnknownPage() { return useTable('not_a_table').rows.length; }`,
   'StubPage.tsx': `import { useData } from ${data};\nexport function StubPage() { const d = useData(); return () => d.promotion?.({} as never); }`,
   'StaticWritePage.tsx': `import { useData } from ${data};\nexport function StaticWritePage() { const d = useData(); return () => d.insert('faq_entries', {}); }`,
-  'SignedOutPage.tsx': `import { useTable } from ${data};\nexport function SignedOutPage() { return useTable('class_sessions').rows.length; }`,
   'ReviewOnlyPage.tsx': `import { useTable } from ${data};\nimport { PRODUCTION_BUILD } from ${JSON.stringify(path.join(ROOT, 'src/config/launch'))};\nfunction Demo() { return useTable('audit_log').rows.length; }\nexport function ReviewOnlyPage() { return PRODUCTION_BUILD ? useTable('bookings').rows.length : Demo(); }`,
   'MockOnlyPage.tsx': `import { useData } from ${data};\nexport function MockOnlyPage() { const d = useData(); return () => { if (d.name !== 'mock') throw Error('x_disconnected'); return d.list('bookings'); }; }`,
   'RefusingPage.tsx': `export function RefusingPage() { return () => { throw new Error('not_in_launch'); }; }`,
-  'CataloguePage.tsx': `import { useTable } from ${data};\nexport function CataloguePage() { return useTable('plans').rows.length; }`,
   'NewTablePage.tsx': `import { useData } from ${data};\nexport function NewTablePage() { const d = useData(); return () => d.insert('brand_new_table', {}); }`,
   'ComputedPage.tsx': `import { useData } from ${data};\nexport function ComputedPage({ f }: { f: boolean }) { const d = useData(); const t = f ? 'faq_entries' : 'audit_log'; return () => d.insert(t, {}); }`,
   'ReassignedPage.tsx': `import { useData } from ${data};\nexport function ReassignedPage({ x }: { x: boolean }) { const d = useData(); let t = 'bookings'; if (x) t = String(Date.now()); return () => d.insert(t, {}); }`,
@@ -381,6 +379,14 @@ const synth = {
   'RoleInsertPage.tsx': `import { useData } from ${data};\nexport function RoleInsertPage() { const d = useData(); return () => d.insert('user_roles', {}); }`,
   'CleanPage.tsx': `import { useTable } from ${data};\nexport function CleanPage() { return useTable('bookings').rows.length + useTable('faq_entries').rows.length; }`,
 };
+// Signed-out pages: one reads every live table, one reads an entity table outside the live set, one reads the studio
+// settings row, one writes. The table names come from the derived model.
+const LIVE_LIST = [...SIGNED_OUT_LIVE];
+const OUTSIDE = Object.values(adapters).find((a) => a.kind === 'entity' && !SIGNED_OUT_LIVE.has(a.table))?.table ?? 'bookings';
+synth['SignedOutLivePage.tsx'] = `import { useTable, useData } from ${data};\nexport function SignedOutLivePage() { const d = useData(); return ${JSON.stringify(LIVE_LIST)}.length + ${LIVE_LIST.map((t) => `useTable('${t}').rows.length + (d.get('${t}', 'x') ? 1 : 0)`).join(' + ') || '0'}; }`;
+synth['SignedOutOutsidePage.tsx'] = `import { useTable } from ${data};\nexport function SignedOutOutsidePage() { return useTable('${OUTSIDE}').rows.length; }`;
+synth['SignedOutSettingsPage.tsx'] = `import { useTable } from ${data};\nexport function SignedOutSettingsPage() { return useTable('tenants').rows.length; }`;
+synth['SignedOutWritePage.tsx'] = `import { useData } from ${data};\nexport function SignedOutWritePage() { const d = useData(); return () => d.update('tenants', 't', {}); }`;
 for (const [f, c] of Object.entries(synth)) await writeFile(path.join(tmp, f), c);
 const fake = async (file, signedOut = false) => [...(await analyse({ path: '/synthetic', signedOut, entry: { from: path.relative(ROOT, path.join(tmp, file)), name: file.replace(/\.tsx?$/, '') } })).findings.keys()];
 const has = (list, f) => list.some((x) => x.startsWith(f));
@@ -389,9 +395,14 @@ check('hostile: a sink read two imports away fails (transitive)', has(await fake
 check('hostile: a table with no adapter fails', has(await fake('UnknownPage.tsx'), 'unknown not_a_table'));
 check('hostile: a stubbed provider method fails', STUBS.has('promotion') && has(await fake('StubPage.tsx'), 'stub promotion'));
 check('hostile: a write to a static table fails', has(await fake('StaticWritePage.tsx'), 'read_only faq_entries'));
-check('hostile: a signed-out page reading an entity table fails while signed-out reads are empty', !SIGNED_OUT_GUARD || has(await fake('SignedOutPage.tsx', true), 'signed_out class_sessions (empty)'));
-check('the signed-out model was read (the guard and its built-in catalogue)', SIGNED_OUT_GUARD === /\bSIGNED_OUT\[/.test(providerSrc) && (!SIGNED_OUT_GUARD || SIGNED_OUT_TABLES.has('plans')), [...SIGNED_OUT_TABLES].join(','));
-check('hostile: a signed-out read of the built-in catalogue fails (labelled)', !SIGNED_OUT_GUARD || has(await fake('CataloguePage.tsx', true), 'signed_out plans (built-in catalogue)'));
+check('the signed-out model was read (provider list() and get() guards, PUBLIC_TABLES, server PUBLIC_ENTITIES)',
+  SIGNED_OUT_MODEL.listGuard && SIGNED_OUT_MODEL.getGuard && SIGNED_OUT_MODEL.providerTables.length > 0 && SIGNED_OUT_MODEL.serverEntities.length > 0, JSON.stringify(SIGNED_OUT_MODEL));
+check('every table the provider reads live signed out is an entity the Hoy server forwards (else it answers 401)', SIGNED_OUT_MODEL.unserved.length === 0 && SIGNED_OUT_LIVE.size === SIGNED_OUT_MODEL.providerTables.length, SIGNED_OUT_MODEL.unserved.join(', '));
+check('a signed-out page reading the live tables passes (list and get)', SIGNED_OUT_LIVE.size > 0 && (await fake('SignedOutLivePage.tsx', true)).length === 0, (await fake('SignedOutLivePage.tsx', true)).join(', '));
+check('hostile: a signed-out page reading a table outside the live set fails', !SIGNED_OUT_LIVE.has(OUTSIDE) && has(await fake('SignedOutOutsidePage.tsx', true), `signed_out ${OUTSIDE} (empty)`), OUTSIDE);
+check('hostile: a signed-out read of the settings row fails (it reads as empty)', has(await fake('SignedOutSettingsPage.tsx', true), 'signed_out tenants (empty)'));
+check('hostile: a signed-out write fails', has(await fake('SignedOutWritePage.tsx', true), 'signed_out tenants (write)'));
+check('the same reads signed in are not signed-out findings', !has(await fake('SignedOutOutsidePage.tsx'), 'signed_out') && !has(await fake('SignedOutWritePage.tsx'), 'signed_out'));
 check('hostile: a write to a new table with no adapter fails', has(await fake('NewTablePage.tsx'), 'unknown brand_new_table'));
 check('hostile: a write whose table is computed fails (dynamic)', has(await fake('ComputedPage.tsx'), 'dynamic t'));
 check('hostile: a reassigned table name is not resolved to its first value', has(await fake('ReassignedPage.tsx'), 'dynamic t'));
