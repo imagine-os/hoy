@@ -13,9 +13,10 @@ node scripts/test-route-connectivity.mjs --report   # plus the inventory below, 
 
 ## What it proves
 
-For every route the production build registers (and the app shell every route renders in, shown as `*`), the page's
-code as the production build sees it reads and writes only through a working Company OS adapter
-(`src/data/companyos/mapping.ts`) and only calls provider methods `CompanyOSProvider` really has.
+For every route the production build registers (and the app shell every route renders in, shown as `*`): every table
+read or write, provider method and mock-only branch the check can see in the page's code, as the production build sees
+it, goes through a working Company OS adapter (`src/data/companyos/mapping.ts`) or a method `CompanyOSProvider` really
+has. It is a static check with the limits below; the Wave 5 walk covers what it cannot see.
 
 How it traces a route:
 
@@ -35,24 +36,34 @@ How it traces a route:
 |---|---|
 | `unknown <table>` | no adapter: reads are empty, writes refuse `not_in_launch` |
 | `sink <table>` | `audit_log`, `message_log`, `activity_events`: reads are empty, writes are dropped |
-| `read_only <table>` | a write to static content or a read-only entity refuses |
-| `member user_roles` | changing or removing a role row refuses `not_in_launch` |
+| `read_only <table>` | a write to static content or a read-only entity, or removing the settings row, refuses |
+| `member user_roles` | writing a role row refuses `not_in_launch` (update, remove, and an insert inside `atomic()`) |
 | `stub <method>` | the provider method only throws (`promotion()` → `promotions_disabled`) |
 | `missing <method>` | an optional `DataProvider` method `CompanyOSProvider` lacks (`editSession`, `contentBatch`, `appendClassPayRule`, `generateRecurrence`, `purchasedGift`, `peek`, `reset`…) |
 | `voucher voucher` | `voucher()`: only issue-with-classes and claim are connected; the extras refuse |
 | `not_in_launch <file>` | page code throws `not_in_launch` itself (the review build's `if (!cos) throw` guard after `cosOf()` is not one) |
 | `mock_only <file>` | the flow runs only on the review build's MockProvider: on Company OS it throws `…_disconnected` or the control is hidden |
-| `dynamic <arg>` | a table name the check cannot resolve: add a `DYNAMIC` entry naming where its values come from |
-| `signed_out <table>` | on a signed-out page, an entity read the provider answers from the built-in catalogue or with nothing (`SIGNED_OUT` in `CompanyOSProvider.ts`) |
+| `dynamic <arg>` | a table name the check cannot resolve (computed, reassigned, a template literal): add a `DYNAMIC` entry naming where its values come from. A write always needs a resolved name |
+| `signed_out <table> (built-in catalogue)` / `(empty)` / `(write)` | on a signed-out page: a read the provider answers from the catalogue built into the app (`SIGNED_OUT` in `CompanyOSProvider.ts`) or with nothing, or a write |
 
 Hostile checks in the script: synthetic pages that read a sink table (directly and two imports away), an unknown table,
-call a stub, write a static table, read an entity signed out, run a mock-only flow or throw `not_in_launch` must fail;
-a page on connected tables and a review-only branch must pass; a finding in no list, and a list entry whose finding is
-gone, must fail.
+write a new table, write through a computed or reassigned name or a template literal, call a stub (also destructured),
+insert a role row, write a static table, read an entity or the built-in catalogue signed out, run a mock-only flow or
+throw `not_in_launch` must fail; a page on connected tables and a review-only branch must pass; a finding in no list,
+and a list entry whose finding is gone, must fail.
 
-**Limits** (it over-reports rather than under-reports):
+**Limits.** It over-reports at module level, and it can miss what it cannot see in the text:
 - A module counts when any statement of it survives tree-shaking; a `mock_only` file is reported even if the route calls
-  only its safe part. Run-time switches other than `PRODUCTION_BUILD` (`data.name === 'companyos'`, `reviewTools`)
+  only its safe part.
+- Uses are found by pattern on the bundled code: `useTable`/`useRow`, `.list/.get/.peek/.insert/.update/.remove`,
+  `.method(` and destructured `{ method }`, `.name === 'mock'`. A provider reached another way (a method held in a
+  variable, a table name built and passed through an untraced helper, a branch on `name !== 'companyos'`) is not seen.
+- Known findings are keyed by `kind subject` per route pattern, not by file: a new use of an already listed table on the
+  same route does not fail. `BY_DESIGN` `sink audit_log` inserts are accepted everywhere.
+- `clientCreate` drops (a `class_ledger` insert other than comp, gift or voucher) are judged connected. The ones on launch
+  routes today sit inside flows already reported `mock_only`.
+- The `@__PURE__` marking drops a top-level `const x = call()` whose result is unused (none today).
+- The app shell `*` is traced as signed in. Run-time switches other than `PRODUCTION_BUILD` (`data.name === 'companyos'`, `reviewTools`)
   cannot be folded: the ones that send production elsewhere are listed in `RUNTIME_REVIEW` with the switch's text,
   which must stay in its file.
 - `request()` paths are listed, not checked against the Company OS API: a wrong path fails at run time, which the
@@ -70,7 +81,8 @@ gone, must fail.
   the route out of `LAUNCH_ROUTES` until it is connected.
 - **`BY_DESIGN`**: unconnected on purpose, with the reason the empty or dropped answer is right in production (the
   layout editor's stored order, `peek()` as a first-render snapshot, the client's audit-row copy, the staff home's
-  review-only timeline, device-local photos). Kept short; the check fails on an entry no launch route uses.
+  review-only timeline, device-local photos, the administrators' settings save that sits in the module the site reads
+  opening hours from). Kept short; the check fails on an entry no launch route uses.
 - **`DYNAMIC`**, **`RUNTIME_REVIEW`**: tracer inputs (helper hooks that forward a table name; run-time review branches).
 
 ## Findings on launch routes (2026-10-31)
@@ -81,7 +93,7 @@ gone, must fail.
 |---|---|---|---|
 | `unknown memberships` | `/app`, `/admin` | C | the your-plan card (`customer/HomePage.tsx`) and the members tile (`admin/DashboardPage.tsx`) switch to packs |
 | `sink audit_log` | `/admin/activity` | E | `ActivityPage` reads `GET /t/:t/audit` |
-| `signed_out plans, class_templates, class_sessions, teachers, rooms, bookings, tenants` | `/site/*` | F | the public_site identity (ADR 0029). Also read, outside the plan's list: `tenants` (opening hours, payment instructions) and `bookings` (places left, `MatPicker`, `SchedulePage`) |
+| `signed_out plans, teachers, rooms (built-in catalogue)`; `signed_out class_templates, class_sessions, bookings, tenants (empty)` | `/site/*` | F | the public_site identity (ADR 0029). Also read, outside the plan's list: `tenants` (opening hours, payment instructions) and `bookings` (places left, `MatPicker`, `SchedulePage`). When F lifts the signed-out model, the `BY_DESIGN` entry `signed_out tenants (write)` goes stale too: delete it |
 
 ### Found by this audit, no lane yet (`OPEN`)
 
@@ -190,15 +202,15 @@ W = written, with each table's adapter kind (`none` = no adapter). Findings name
 | `/app/vouchers` | R: —<br>W: — | POST /api/:x, POST /query | none |
 | `/app/vouchers/:code` | R: —<br>W: — | POST /api/:x, POST /query | none |
 | `/app/gift-voucher` | R: plans (entity)<br>W: — | — | none |
-| `/site` | R: class_sessions (entity), class_templates (entity), hours_overrides (none), media_assets (static), modalities (static), page_layouts (none), plans (entity), reviews (none), teachers (entity), tenants (settings)<br>W: page_layouts (none), tenants (settings) | — | signed_out tenants (empty) → lane F; unknown hours_overrides → unassigned (a recipe-defined entity, Wave 2 size S); signed_out plans (empty) → lane F; signed_out class_templates (empty) → lane F; signed_out class_sessions (empty) → lane F; signed_out teachers (empty) → lane F; unknown reviews → Wave 3 |
+| `/site` | R: class_sessions (entity), class_templates (entity), hours_overrides (none), media_assets (static), modalities (static), page_layouts (none), plans (entity), reviews (none), teachers (entity), tenants (settings)<br>W: page_layouts (none), tenants (settings) | — | signed_out tenants (empty) → lane F; unknown hours_overrides → unassigned (a recipe-defined entity, Wave 2 size S); signed_out plans (built-in catalogue) → lane F; signed_out class_templates (empty) → lane F; signed_out class_sessions (empty) → lane F; signed_out teachers (built-in catalogue) → lane F; unknown reviews → Wave 3 |
 | `/site/about` | R: hours_overrides (none), media_assets (static), page_layouts (none), tenants (settings)<br>W: page_layouts (none), tenants (settings) | — | signed_out tenants (empty) → lane F; unknown hours_overrides → unassigned (a recipe-defined entity, Wave 2 size S) |
-| `/site/classes` | R: hours_overrides (none), media_assets (static), modalities (static), page_layouts (none), plans (entity), teachers (entity), tenants (settings)<br>W: page_layouts (none), tenants (settings) | — | signed_out tenants (empty) → lane F; unknown hours_overrides → unassigned (a recipe-defined entity, Wave 2 size S); signed_out plans (empty) → lane F; signed_out teachers (empty) → lane F |
-| `/site/classes/:slug` | R: hours_overrides (none), media_assets (static), modalities (static), page_layouts (none), plans (entity), teachers (entity), tenants (settings)<br>W: page_layouts (none), tenants (settings) | — | signed_out tenants (empty) → lane F; unknown hours_overrides → unassigned (a recipe-defined entity, Wave 2 size S); signed_out plans (empty) → lane F; signed_out teachers (empty) → lane F |
+| `/site/classes` | R: hours_overrides (none), media_assets (static), modalities (static), page_layouts (none), plans (entity), teachers (entity), tenants (settings)<br>W: page_layouts (none), tenants (settings) | — | signed_out tenants (empty) → lane F; unknown hours_overrides → unassigned (a recipe-defined entity, Wave 2 size S); signed_out plans (built-in catalogue) → lane F; signed_out teachers (built-in catalogue) → lane F |
+| `/site/classes/:slug` | R: hours_overrides (none), media_assets (static), modalities (static), page_layouts (none), plans (entity), teachers (entity), tenants (settings)<br>W: page_layouts (none), tenants (settings) | — | signed_out tenants (empty) → lane F; unknown hours_overrides → unassigned (a recipe-defined entity, Wave 2 size S); signed_out plans (built-in catalogue) → lane F; signed_out teachers (built-in catalogue) → lane F |
 | `/site/modalities` | R: hours_overrides (none), media_assets (static), modalities (static), page_layouts (none), tenants (settings)<br>W: page_layouts (none), tenants (settings) | — | signed_out tenants (empty) → lane F; unknown hours_overrides → unassigned (a recipe-defined entity, Wave 2 size S) |
-| `/site/schedule` | R: bookings (entity), class_sessions (entity), class_templates (entity), hours_overrides (none), media_assets (static), modalities (static), page_layouts (none), rooms (entity), teachers (entity), tenants (settings)<br>W: page_layouts (none), tenants (settings) | — | signed_out class_sessions (empty) → lane F; signed_out class_templates (empty) → lane F; signed_out rooms (empty) → lane F; signed_out tenants (empty) → lane F; unknown hours_overrides → unassigned (a recipe-defined entity, Wave 2 size S); signed_out teachers (empty) → lane F; signed_out bookings (empty) → lane F |
-| `/site/teachers` | R: hours_overrides (none), media_assets (static), modalities (static), page_layouts (none), teachers (entity), tenants (settings)<br>W: page_layouts (none), tenants (settings) | — | signed_out tenants (empty) → lane F; unknown hours_overrides → unassigned (a recipe-defined entity, Wave 2 size S); signed_out teachers (empty) → lane F |
-| `/site/plans` | R: hours_overrides (none), media_assets (static), page_layouts (none), plans (entity), tenants (settings)<br>W: page_layouts (none), tenants (settings) | — | signed_out tenants (empty) → lane F; unknown hours_overrides → unassigned (a recipe-defined entity, Wave 2 size S); signed_out plans (empty) → lane F |
-| `/site/faq` | R: faq_entries (static), hours_overrides (none), media_assets (static), page_layouts (none), plans (entity), tenants (settings)<br>W: page_layouts (none), tenants (settings) | — | signed_out tenants (empty) → lane F; unknown hours_overrides → unassigned (a recipe-defined entity, Wave 2 size S); signed_out plans (empty) → lane F |
+| `/site/schedule` | R: bookings (entity), class_sessions (entity), class_templates (entity), hours_overrides (none), media_assets (static), modalities (static), page_layouts (none), rooms (entity), teachers (entity), tenants (settings)<br>W: page_layouts (none), tenants (settings) | — | signed_out class_sessions (empty) → lane F; signed_out class_templates (empty) → lane F; signed_out rooms (built-in catalogue) → lane F; signed_out tenants (empty) → lane F; unknown hours_overrides → unassigned (a recipe-defined entity, Wave 2 size S); signed_out teachers (built-in catalogue) → lane F; signed_out bookings (empty) → lane F |
+| `/site/teachers` | R: hours_overrides (none), media_assets (static), modalities (static), page_layouts (none), teachers (entity), tenants (settings)<br>W: page_layouts (none), tenants (settings) | — | signed_out tenants (empty) → lane F; unknown hours_overrides → unassigned (a recipe-defined entity, Wave 2 size S); signed_out teachers (built-in catalogue) → lane F |
+| `/site/plans` | R: hours_overrides (none), media_assets (static), page_layouts (none), plans (entity), tenants (settings)<br>W: page_layouts (none), tenants (settings) | — | signed_out tenants (empty) → lane F; unknown hours_overrides → unassigned (a recipe-defined entity, Wave 2 size S); signed_out plans (built-in catalogue) → lane F |
+| `/site/faq` | R: faq_entries (static), hours_overrides (none), media_assets (static), page_layouts (none), plans (entity), tenants (settings)<br>W: page_layouts (none), tenants (settings) | — | signed_out tenants (empty) → lane F; unknown hours_overrides → unassigned (a recipe-defined entity, Wave 2 size S); signed_out plans (built-in catalogue) → lane F |
 | `/site/contact` | R: hours_overrides (none), media_assets (static), page_layouts (none), tenants (settings)<br>W: page_layouts (none), tenants (settings) | — | signed_out tenants (empty) → lane F; unknown hours_overrides → unassigned (a recipe-defined entity, Wave 2 size S) |
 | `/site/delete-account` | R: hours_overrides (none), media_assets (static), page_layouts (none), tenants (settings)<br>W: audit_log (sink), deletion_requests (none), page_layouts (none), tenants (settings) | — | signed_out tenants (empty) → lane F; unknown hours_overrides → unassigned (a recipe-defined entity, Wave 2 size S); unknown deletion_requests → Wave 2 |
 | `/site/legal/terms` | R: hours_overrides (none), legal_documents (static), media_assets (static), page_layouts (none), tenants (settings)<br>W: page_layouts (none), tenants (settings) | — | signed_out tenants (empty) → lane F; unknown hours_overrides → unassigned (a recipe-defined entity, Wave 2 size S) |
@@ -218,8 +230,8 @@ The `/dev` pages (developer role, Wave 2) are in the same position (`dev` is rev
 | `/admin/content/faq` | R: faq_entries (static), users (entity)<br>W: audit_log (sink) | — | dynamic table; mock_only modules/admin/contentRecovery.ts |
 | `/admin/content/events` | R: event_rsvps (none), events (none), rooms (entity), teachers (entity)<br>W: audit_log (sink), events (none) | — | unknown events; unknown event_rsvps |
 | `/admin/content/media` | R: events (none), media_assets (static), modalities (static), teachers (entity)<br>W: audit_log (sink), media_assets (static) | — | unknown events; read_only media_assets |
-| `/admin/tables` | R: audit_log (sink), expenses (entity), table_views (none), users (entity)<br>W: expenses (entity), table_views (none) | peek(), reset() | sink audit_log; mock_only modules/admin/tables/expenseDelete.ts; dynamic table; dynamic def?.name; unknown table_views; missing peek; missing reset |
-| `/admin/tables/:table` | R: audit_log (sink), expenses (entity), table_views (none), users (entity)<br>W: expenses (entity), table_views (none) | peek(), reset() | sink audit_log; mock_only modules/admin/tables/expenseDelete.ts; dynamic table; dynamic def?.name; unknown table_views; missing peek; missing reset |
+| `/admin/tables` | R: audit_log (sink), expenses (entity), table_views (none), users (entity)<br>W: expenses (entity), table_views (none) | peek(), reset() | sink audit_log; mock_only modules/admin/tables/expenseDelete.ts; dynamic table; dynamic def?.name; unknown table_views; dynamic def.name; missing peek; missing reset |
+| `/admin/tables/:table` | R: audit_log (sink), expenses (entity), table_views (none), users (entity)<br>W: expenses (entity), table_views (none) | peek(), reset() | sink audit_log; mock_only modules/admin/tables/expenseDelete.ts; dynamic table; dynamic def?.name; unknown table_views; dynamic def.name; missing peek; missing reset |
 | `/admin/whatsapp` | R: automations (entity), memberships (none), message_log (sink), plans (entity), profiles (entity), tenants (settings), user_roles (session), users (entity), wa_templates (none)<br>W: audit_log (sink), automations (entity), message_log (sink), tenants (settings), wa_templates (none) | — | unknown memberships; unknown wa_templates; sink message_log |
 | `/admin/crm/deletions` | R: deletion_requests (none), memberships (none), plans (entity), profiles (entity), user_roles (session), users (entity)<br>W: audit_log (sink), deletion_requests (none) | — | unknown memberships; unknown deletion_requests |
 | `/admin/integrations` | R: integrations (none), page_layouts (none)<br>W: audit_log (sink), integrations (none), page_layouts (none) | — | unknown integrations |

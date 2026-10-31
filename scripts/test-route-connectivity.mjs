@@ -28,7 +28,7 @@
 //   node scripts/test-route-connectivity.mjs --report   also print every route's inventory (launch and cut routes)
 import * as esbuild from 'esbuild';
 import { readFile, readdir, mkdir, mkdtemp, writeFile, rm } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
+import { existsSync, rmSync } from 'node:fs';
 import path from 'node:path';
 import { reporter } from './lib/launch-qa.mjs';
 
@@ -44,7 +44,7 @@ const PENDING = [
   { finding: 'sink audit_log', lane: 'E', routes: ['/admin/activity'], note: 'ActivityPage reads GET /t/:t/audit' },
   // F: signed out, CompanyOSProvider answers SIGNED_OUT[table] or nothing; the public_site identity replaces it.
   // tenants (opening hours, payment instructions) and bookings (places left) are read too: outside the plan's list.
-  ...['tenants', 'plans', 'class_templates', 'class_sessions', 'teachers', 'rooms', 'bookings'].map((t) => ({ finding: `signed_out ${t} (empty)`, lane: 'F', routes: ['/site/*'], note: 'signed-out site on the public_site identity (ADR 0029)' })),
+  ...['plans (built-in catalogue)', 'teachers (built-in catalogue)', 'rooms (built-in catalogue)', 'tenants (empty)', 'class_templates (empty)', 'class_sessions (empty)', 'bookings (empty)'].map((t) => ({ finding: `signed_out ${t}`, lane: 'F', routes: ['/site/*'], note: 'signed-out site on the public_site identity (ADR 0029)' })),
 ];
 // OPEN: found by this audit (lane G, 2026-10-31) on routes already in LAUNCH_ROUTES, with no lane closing it yet.
 const OPEN = [
@@ -85,6 +85,7 @@ const BY_DESIGN = [
   { finding: 'sink audit_log', op: 'insert', why: 'the client\'s own audit row is dropped (mapping.ts sink); Company OS writes the audit entry for every write itself (GET /t/:t/audit)' },
   { finding: 'sink audit_log', op: 'read', file: 'src/modules/staff/HomePage.tsx', why: 'the hook runs, but the timeline it feeds renders only in the review build (`!PRODUCTION_BUILD &&`)' },
   { finding: 'mock_only components/organism/SharedImageField/SharedImageField.tsx', why: 'device-local photos exist only in the review build; production offers the shipped media catalogue' },
+  { finding: 'signed_out tenants (write)', file: 'src/modules/admin/settings.ts', why: 'the module that reads the opening hours also holds the administrators\' settings save; a signed-out visitor has no button that calls it (goes stale when lane F lifts the signed-out model: delete it then)' },
   { finding: 'mock_only data/useMediaLibrary.ts', why: 'device-local photos exist only in the review build; production lists the shipped media catalogue' },
 ];
 
@@ -145,7 +146,8 @@ const OPTIONAL = [...dpBody.matchAll(/^\s*(\w+)\?\s*[(<:]/gm)].map((m) => m[1]);
 const MISSING = new Set(OPTIONAL.filter((m) => !PROVIDER_METHODS.has(m)));
 // Signed out, list() answers SIGNED_OUT[table] (the built-in catalogue) or nothing, until the public identity (lane F).
 const SIGNED_OUT_GUARD = /signedIn\(\)\)\)\s*return[^\n]*SIGNED_OUT/.test(providerSrc);
-const SIGNED_OUT_TABLES = new Set([...(providerSrc.match(/const SIGNED_OUT[^=]*=\s*\{([^\n]*)\};/)?.[1] ?? '').matchAll(/(\w+):/g)].map((m) => m[1]));
+// `const SIGNED_OUT: Record<string, () => BaseRow[]> = { plans: () => …, teachers: … };` (the type holds an `=>`).
+const SIGNED_OUT_TABLES = new Set([...(providerSrc.match(/const SIGNED_OUT\b[^\n]*?>\s*=\s*\{([^\n]*)\};/)?.[1] ?? '').matchAll(/(\w+):/g)].map((m) => m[1]));
 
 check('read the adapters (mapping.ts)', Object.keys(adapters).length >= 20, String(Object.keys(adapters).length));
 check('read the provider methods (CompanyOSProvider.ts)', ['list', 'insert', 'atomic', 'request'].every((m) => PROVIDER_METHODS.has(m)), [...PROVIDER_METHODS].join(','));
@@ -256,7 +258,10 @@ async function trace(from, name) {
   return out;
 }
 
-const ARG = String.raw`("[^"]*"|[A-Za-z_$][\w$]*(?:\??\.[A-Za-z_$][\w$]*)*)`;
+// A table argument: a string, a template literal (never resolved: fails as `dynamic`) or a (dotted) identifier.
+const ARG = String.raw`("[^"]*"|\`[^\`]*\`|[A-Za-z_$][\w$]*(?:\??\.[A-Za-z_$][\w$]*)*)`;
+/** A literal that names a table: one the app declares or maps, or any snake_case name (a new table fails as unknown). */
+const looksTable = (lit) => KNOWN_TABLES.has(lit) || /^[a-z][a-z0-9]*(?:_[a-z0-9]+)+$/.test(lit);
 const unquote = (s) => (s.startsWith('"') ? s.slice(1, -1) : null);
 
 const escapeRe = (x) => x.replace(/[$.?*+()[\]{}|\\^]/g, '\\$&');
@@ -265,18 +270,23 @@ const escapeRe = (x) => x.replace(/[$.?*+()[\]{}|\\^]/g, '\\$&');
 function usesOf({ text, modules }, hits = new Set()) {
   const uses = [];
   // `var A = "x", B = "plans"`: esbuild merges consecutive declarations.
-  const resolveIdent = (id) => text.match(new RegExp(String.raw`(?:\b(?:var|let|const)\s+|,\s*)${escapeRe(id)}\s*=\s*"([a-z_]+)"`))?.[1] ?? null;
+  // Every assignment to the name must be a string literal (a reassigned or computed name stays dynamic).
+  const resolveIdent = (id) => {
+    const all = [...text.matchAll(new RegExp(String.raw`(?<![\w$.])${escapeRe(id)}\s*=(?![=>])\s*("[^"]*"|[^\s,;)]+)`, 'g'))].map((m) => m[1]);
+    return all.length && all.every((v) => /^"[a-z_]+"$/.test(v)) ? [...new Set(all.map((v) => v.slice(1, -1)))] : null;
+  };
   const runtimeReview = (file) => RUNTIME_REVIEW.find((r) => (r.file instanceof RegExp ? r.file.test(file) : r.file === file));
   for (const { file, code } of modules) {
     if (PROVIDER_FILES.test(file) || runtimeReview(file)) continue;
     const table = (arg, op, strict, at = file) => {
       const lit = unquote(arg);
-      if (lit !== null) { if (!strict || KNOWN_TABLES.has(lit)) uses.push({ file: at, op, table: lit }); return; }
-      const r = resolveIdent(arg);
-      if (r) { if (!strict || KNOWN_TABLES.has(r)) uses.push({ file: at, op, table: r }); return; }
+      if (lit !== null) { if (!strict || looksTable(lit)) uses.push({ file: at, op, table: lit }); return; }
+      const r = arg.startsWith('`') ? null : resolveIdent(arg);
+      if (r) { for (const t of r) if (!strict || looksTable(t)) uses.push({ file: at, op, table: t }); return; }
       const d = DYNAMIC.find((x) => x.file === file && x.arg === arg.replace(/\d+$/, ''));
       if (d) { hits.add(d); for (const t of d.tables ?? []) uses.push({ file, op, table: t }); return; }
-      if (!strict || /table|entity/i.test(arg)) uses.push({ file, op, dynamic: arg });
+      // Fail closed: a write's table must be known; a read through get/peek only when the name says it is a table.
+      if (!strict || op !== 'read' || /table|entity/i.test(arg)) uses.push({ file, op, dynamic: arg });
     };
     for (const m of code.matchAll(new RegExp(String.raw`\b(useTable|useRow)\(\s*${ARG}`, 'g'))) table(m[2], 'read', false);
     for (const m of code.matchAll(new RegExp(String.raw`\.(list|peek)\??\.?\(\s*${ARG}`, 'g'))) table(m[2], 'read', m[1] === 'peek');
@@ -287,7 +297,9 @@ function usesOf({ text, modules }, hits = new Set()) {
       const re = new RegExp(String.raw`\b${escapeRe(via)}\d*\(\s*${'(?:[\\w$.]+\\s*,\\s*)'.repeat(d.argIndex ?? 0)}${ARG}`, 'g');
       for (const m of code.matchAll(re)) { hits.add(d); table(m[1], d.op ?? 'read', false); }
     }
-    for (const m of code.matchAll(/\.(\w+)\??\.?\(/g)) {
+    // `data.promotion(…)`, and `const { promotion } = data` (destructured, then called bare).
+    const destructured = [...code.matchAll(/\{([^{}]*)\}\s*=/g)].flatMap((m) => m[1].split(',').map((x) => x.trim().split(/[\s:]/)[0])).map((n) => ({ 1: n }));
+    for (const m of [...code.matchAll(/\.(\w+)\??\.?\(/g), ...destructured]) {
       if (STUBS.has(m[1])) uses.push({ file, op: 'method', method: m[1], stub: true });
       else if (MISSING.has(m[1])) uses.push({ file, op: 'method', method: m[1], missing: true });
       else if (m[1] === 'voucher') uses.push({ file, op: 'method', method: 'voucher' });
@@ -319,7 +331,9 @@ function judge(use, route) {
   if (a.kind === 'sink') return `sink ${use.table}`;
   if (write && a.kind === 'static') return `read_only ${use.table}`;
   if (write && a.kind === 'entity' && a.readOnly) return `read_only ${use.table}`;
-  if (a.kind === 'session' && (use.op === 'update' || use.op === 'remove')) return `member ${use.table}`;
+  if (a.kind === 'session' && write) return `member ${use.table}`; // update/remove refuse; atomic() refuses an insert
+  if (a.kind === 'settings' && use.op === 'remove') return `read_only ${use.table}`;
+  if (write && route.signedOut && SIGNED_OUT_GUARD) return `signed_out ${use.table} (write)`;
   if (!write && route.signedOut && SIGNED_OUT_GUARD && a.kind !== 'static') return `signed_out ${use.table}${SIGNED_OUT_TABLES.has(use.table) ? ' (built-in catalogue)' : ' (empty)'}`;
   return null;
 }
@@ -345,6 +359,7 @@ async function analyse(route) {
 // ── Hostile checks: synthetic pages the check must catch (and one it must pass) ────────────────────────────────
 await mkdir(CACHE, { recursive: true });
 const tmp = await mkdtemp(path.join(CACHE, 'synthetic-'));
+process.on('exit', () => { try { rmSync(tmp, { recursive: true, force: true }); } catch { /* best effort */ } });
 const data = JSON.stringify(path.join(ROOT, 'src/data/DataContext'));
 const synth = {
   'SinkPage.tsx': `import { useTable } from ${data};\nexport function SinkPage() { const { rows } = useTable('audit_log'); return rows.length; }`,
@@ -357,6 +372,13 @@ const synth = {
   'ReviewOnlyPage.tsx': `import { useTable } from ${data};\nimport { PRODUCTION_BUILD } from ${JSON.stringify(path.join(ROOT, 'src/config/launch'))};\nfunction Demo() { return useTable('audit_log').rows.length; }\nexport function ReviewOnlyPage() { return PRODUCTION_BUILD ? useTable('bookings').rows.length : Demo(); }`,
   'MockOnlyPage.tsx': `import { useData } from ${data};\nexport function MockOnlyPage() { const d = useData(); return () => { if (d.name !== 'mock') throw Error('x_disconnected'); return d.list('bookings'); }; }`,
   'RefusingPage.tsx': `export function RefusingPage() { return () => { throw new Error('not_in_launch'); }; }`,
+  'CataloguePage.tsx': `import { useTable } from ${data};\nexport function CataloguePage() { return useTable('plans').rows.length; }`,
+  'NewTablePage.tsx': `import { useData } from ${data};\nexport function NewTablePage() { const d = useData(); return () => d.insert('brand_new_table', {}); }`,
+  'ComputedPage.tsx': `import { useData } from ${data};\nexport function ComputedPage({ f }: { f: boolean }) { const d = useData(); const t = f ? 'faq_entries' : 'audit_log'; return () => d.insert(t, {}); }`,
+  'ReassignedPage.tsx': `import { useData } from ${data};\nexport function ReassignedPage({ x }: { x: boolean }) { const d = useData(); let t = 'bookings'; if (x) t = String(Date.now()); return () => d.insert(t, {}); }`,
+  'TemplatePage.tsx': `import { useTable } from ${data};\nexport function TemplatePage({ k }: { k: string }) { return useTable(\`audit_\${k}\`).rows.length; }`,
+  'DestructuredStubPage.tsx': `import { useData } from ${data};\nexport function DestructuredStubPage() { const { promotion } = useData(); return () => promotion?.({} as never); }`,
+  'RoleInsertPage.tsx': `import { useData } from ${data};\nexport function RoleInsertPage() { const d = useData(); return () => d.insert('user_roles', {}); }`,
   'CleanPage.tsx': `import { useTable } from ${data};\nexport function CleanPage() { return useTable('bookings').rows.length + useTable('faq_entries').rows.length; }`,
 };
 for (const [f, c] of Object.entries(synth)) await writeFile(path.join(tmp, f), c);
@@ -367,7 +389,15 @@ check('hostile: a sink read two imports away fails (transitive)', has(await fake
 check('hostile: a table with no adapter fails', has(await fake('UnknownPage.tsx'), 'unknown not_a_table'));
 check('hostile: a stubbed provider method fails', STUBS.has('promotion') && has(await fake('StubPage.tsx'), 'stub promotion'));
 check('hostile: a write to a static table fails', has(await fake('StaticWritePage.tsx'), 'read_only faq_entries'));
-check('hostile: a signed-out page reading an entity table fails while signed-out reads are empty', !SIGNED_OUT_GUARD || has(await fake('SignedOutPage.tsx', true), 'signed_out class_sessions'));
+check('hostile: a signed-out page reading an entity table fails while signed-out reads are empty', !SIGNED_OUT_GUARD || has(await fake('SignedOutPage.tsx', true), 'signed_out class_sessions (empty)'));
+check('the signed-out model was read (the guard and its built-in catalogue)', SIGNED_OUT_GUARD === /\bSIGNED_OUT\[/.test(providerSrc) && (!SIGNED_OUT_GUARD || SIGNED_OUT_TABLES.has('plans')), [...SIGNED_OUT_TABLES].join(','));
+check('hostile: a signed-out read of the built-in catalogue fails (labelled)', !SIGNED_OUT_GUARD || has(await fake('CataloguePage.tsx', true), 'signed_out plans (built-in catalogue)'));
+check('hostile: a write to a new table with no adapter fails', has(await fake('NewTablePage.tsx'), 'unknown brand_new_table'));
+check('hostile: a write whose table is computed fails (dynamic)', has(await fake('ComputedPage.tsx'), 'dynamic t'));
+check('hostile: a reassigned table name is not resolved to its first value', has(await fake('ReassignedPage.tsx'), 'dynamic t'));
+check('hostile: a template-literal table name fails (dynamic)', has(await fake('TemplatePage.tsx'), 'dynamic `'));
+check('hostile: a destructured stub method fails', has(await fake('DestructuredStubPage.tsx'), 'stub promotion'));
+check('hostile: a role row inserted fails (member)', has(await fake('RoleInsertPage.tsx'), 'member user_roles'));
 check('hostile: a flow that runs only on the MockProvider fails', has(await fake('MockOnlyPage.tsx'), 'mock_only '));
 check('hostile: page code that throws not_in_launch fails', has(await fake('RefusingPage.tsx'), 'not_in_launch '));
 check('a review-only branch (PRODUCTION_BUILD false) is not traced', (await fake('ReviewOnlyPage.tsx')).length === 0, (await fake('ReviewOnlyPage.tsx')).join(', '));
