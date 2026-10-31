@@ -17,6 +17,7 @@ const bundle = await build({
     "export { signInReturn, homeFor, authLink } from './src/auth/signInReturn';",
     "export { LAUNCH_ROUTES, isLaunchRoute } from './src/config/launchRoutes';",
     "export { getSessionToken, setSessionTokenSource } from './src/auth/sessionToken';",
+    "export * as team from './src/modules/admin/team/teamApi';",
   ].join('\n'), resolveDir: process.cwd(), loader: 'ts' },
   bundle: true, platform: 'node', format: 'esm', write: false, logLevel: 'silent', define: { 'import.meta.env': '{"VITE_HOY_BUILD":"review","DEV":false}' },
 });
@@ -38,13 +39,25 @@ for (const [what, raw] of refused) check(`config: refuses ${what}`, (() => { try
 
 // ── PL-04: the role comes from /me, never from the browser ──────────────────────────────────────────────────────
 const me = (roleKeys, extra = {}) => M.parseMe({ user: { id: 'usr_1', name: 'Ana Prueba', email: 'ana@example.test' }, roleKeys, isSuperAdmin: false, caps: [], ...extra });
-check('PL-04 member → customer', M.roleFromMe(me(['member'])) === 'customer');
-check('PL-04 front_desk → front_desk', M.roleFromMe(me(['front_desk'])) === 'front_desk');
-check('PL-04 administrator → admin', M.roleFromMe(me(['administrator'])) === 'admin');
-check('PL-04 several roles: the widest launch role wins', M.roleFromMe(me(['member', 'front_desk'])) === 'front_desk' && M.roleFromMe(me(['member', 'administrator', 'front_desk'])) === 'admin');
-check('PL-04 a Company OS super admin works as Administration (no dev tools in production)', M.roleFromMe(me([], { isSuperAdmin: true })) === 'admin');
-check('PL-04 a role that is not a launch role opens nothing (fail closed)', M.roleFromMe(me(['coach'])) === null && M.roleFromMe(me([])) === null);
-check('PL-04 "super_admin" as a plain role key is not trusted (only isSuperAdmin)', M.roleFromMe(me(['super_admin'])) === null);
+// Hoy all-roles (lane C): one role-key table for every Company OS key; the super-admin rows below changed on purpose
+// (a super admin was folded into Administration at launch; it is now its own session role).
+const KEYS = { member: 'customer', front_desk: 'front_desk', administrator: 'admin', booking_manager: 'coordinator', treasurer: 'finance', coach: 'teacher', maintenance: 'maintenance', marketing: 'marketing', developer: 'developer' };
+for (const [key, role] of Object.entries(KEYS)) check(`PL-04 ${key} → ${role}`, M.roleFromMe(me([key])) === role, String(M.roleFromMe(me([key]))));
+check('roles: the table maps every Company OS key to a HoyOS role (and super_admin)', JSON.stringify(Object.fromEntries(Object.entries(M.ROLE_OF_KEY ?? {}).filter(([k]) => k !== 'super_admin'))) === JSON.stringify(Object.fromEntries(Object.keys(M.ROLE_OF_KEY ?? {}).filter((k) => k !== 'super_admin').map((k) => [k, KEYS[k]]))) && Object.keys(KEYS).every((k) => M.ROLE_OF_KEY?.[k] === KEYS[k]) && M.ROLE_OF_KEY?.super_admin === 'super_admin');
+check('roles: every signed-in HoyOS role has exactly one Company OS key', ['super_admin', 'admin', 'coordinator', 'front_desk', 'finance', 'teacher', 'maintenance', 'marketing', 'developer', 'customer'].every((r) => (M.ROLE_KEYS ?? []).filter((x) => x.role === r).length === 1) && !(M.ROLE_KEYS ?? []).some((x) => x.role === 'public'));
+check('roles: public_site (the signed-out service identity) is never a user role', M.roleFromMe(me(['public_site'])) === null && M.ROLE_OF_KEY?.public_site === undefined);
+check('PL-04 several roles: the documented primary order decides (administrator, super admin, coordinator, finance, front desk, marketing, maintenance, developer, teacher, customer)',
+  M.roleFromMe(me(['member', 'front_desk'])) === 'front_desk' && M.roleFromMe(me(['member', 'administrator', 'front_desk'])) === 'admin'
+  && M.roleFromMe(me(['coach', 'member'])) === 'teacher' && M.roleFromMe(me(['front_desk', 'treasurer'])) === 'finance' && M.roleFromMe(me(['booking_manager', 'treasurer'])) === 'coordinator'
+  && M.roleFromMe(me(['developer', 'maintenance', 'marketing'])) === 'marketing' && M.roleFromMe(me(['coach', 'developer'])) === 'developer');
+check('PL-04 the primary role does not depend on the order /me lists the keys', M.roleFromMe(me(['member', 'coach', 'treasurer'])) === M.roleFromMe(me(['treasurer', 'coach', 'member'])));
+// Changed on purpose (lane C): super admin is a real session role now.
+check('PL-04 a Company OS super admin (isSuperAdmin, no Administration) is the super_admin role', M.roleFromMe(me(['super_admin'], { isSuperAdmin: true })) === 'super_admin' && M.roleFromMe(me([], { isSuperAdmin: true })) === 'super_admin' && M.roleFromMe(me(['operator'], { isSuperAdmin: true })) === 'super_admin');
+check('PL-04 super admin outranks every role but Administration', M.roleFromMe(me(['super_admin', 'member', 'booking_manager'], { isSuperAdmin: true })) === 'super_admin');
+check('PL-04 Administration keeps its role although it holds the tenant super_admin membership (AD-04)', M.roleFromMe(me(['administrator', 'super_admin'], { isSuperAdmin: true })) === 'admin' && M.isSuperAdminMe?.(me(['administrator', 'super_admin'], { isSuperAdmin: true })) === false);
+check('PL-04 the session isSuperAdmin comes from /me (and only for the super_admin role)', M.isSuperAdminMe?.(me(['super_admin'], { isSuperAdmin: true })) === true && M.isSuperAdminMe?.(me(['member'])) === false && M.isSuperAdminMe?.(me(['super_admin'])) === false);
+check('PL-04 "super_admin" as a plain role key is not trusted (only with isSuperAdmin)', M.roleFromMe(me(['super_admin'])) === null && M.roleFromMe(me(['super_admin', 'member'])) === 'customer');
+check('PL-04 an unknown role key opens nothing (fail closed)', M.roleFromMe(me(['owner'])) === null && M.roleFromMe(me([])) === null && M.roleFromMe(me(['__proto__', 'constructor', 'toString'])) === null);
 check('PL-04 caps are carried from /me', JSON.stringify(me(['member'], { caps: ['x.read', 7] }).caps) === '["x.read"]');
 check('/me 200 with a valid body → member', M.classifyMe(200, { user: { id: 'u' }, roleKeys: ['member'] }).kind === 'member');
 check('/me 200 with a malformed body → error (no guessed role)', M.classifyMe(200, { roleKeys: 'member' }).kind === 'error');
@@ -143,8 +156,8 @@ check('token seam: a registered source answers', await M.getSessionToken() === '
 M.setSessionTokenSource(null);
 
 // ── PL-03: launch routes only ───────────────────────────────────────────────────────────────────────────────────
-const launch = ['/', '/site', '/site/plans', '/auth/sign-in', '/auth/sign-up', '/auth/callback', '/app', '/app/checkout/:id', '/app/access', '/staff', '/staff/checkin', '/staff/expense', '/admin', '/admin/crm/:id', '/admin/settings/hours', '/admin/products', '/no-access'];
-const hidden = ['/hub', '/hub/promotions', '/dev', '/dev/tokens', '/docs', '/docs/*', '/manual', '/manual/:chapter', '/teach', '/app/state/empty', '/app/events', '/app/rate/:id', '/app/gift', '/app/practice', '/auth/recover', '/auth/locked', '/admin/tables', '/admin/whatsapp', '/admin/finance/payouts', '/admin/class-pay', '/admin/integrations', '/admin/content', '/promotions', '/staff/maintenance', '/admin/marketing'];
+const launch = ['/', '/site', '/site/plans', '/auth/sign-in', '/auth/sign-up', '/auth/callback', '/app', '/app/checkout/:id', '/app/access', '/staff', '/staff/checkin', '/staff/expense', '/admin', '/admin/crm/:id', '/admin/settings/hours', '/admin/products', '/no-access', '/teach', '/dev', '/admin/content'];
+const hidden = ['/hub/promotions', '/dev/tokens', '/dev/api-keys', '/dev/layout/C-01', '/teach/payroll', '/admin/content/media', '/docs', '/docs/*', '/manual', '/manual/:chapter', '/app/state/empty', '/app/events', '/app/rate/:id', '/app/gift', '/app/practice', '/auth/recover', '/auth/locked', '/admin/tables', '/admin/whatsapp', '/admin/finance/payouts', '/admin/class-pay', '/admin/integrations', '/promotions', '/staff/maintenance', '/admin/marketing'];
 check(`PL-03 launch routes stay (${launch.length})`, launch.every((p) => M.isLaunchRoute(p)), launch.filter((p) => !M.isLaunchRoute(p)).join(', '));
 check(`PL-03 review tools and non-launch routes are gone (${hidden.length})`, hidden.every((p) => !M.isLaunchRoute(p)), hidden.filter((p) => M.isLaunchRoute(p)).join(', '));
 check('PL-03 a prefix does not leak into a longer name (/admin/financeX)', !M.isLaunchRoute('/admin/financeX') && !M.isLaunchRoute('/sitemap'));
@@ -157,11 +170,53 @@ check('return: an unsafe next is dropped', M.safeAuthBack('/auth/sign-up?next=ht
 // ── Deep links survive sign-in (F3): any internal launch route, as a strict path ────────────────────────────────
 const deep = ['/staff/transfers', '/staff/checkin', '/app/receipts/pay_123', '/app/booking/bk-1', '/app/pay/class/occ_9', '/admin/crm/per_1', '/admin/finance/expenses'];
 check('return: launch deep links are kept as next', deep.every((p) => M.visitorSignIn(p) === `/auth/sign-in?next=${encodeURIComponent(p)}`), deep.filter((p) => !M.visitorSignIn(p).includes('next')).join(', '));
-const bad = ['/staff/transfers?x=1', '/staff/../admin', '/app/receipts/a%2Fb', '/hub', '/dev/tokens', '/auth/sign-in', '/site', '/', '//evil.example', '/app/receipts/a/b', '/admin/tables', '/staff/maintenance', 'https://evil.example/staff'];
+const bad = ['/staff/transfers?x=1', '/staff/../admin', '/app/receipts/a%2Fb', '/hub/promotions', '/dev/tokens', '/teach/payroll', '/teach/../admin', '/auth/sign-in', '/site', '/', '//evil.example', '/app/receipts/a/b', '/admin/tables', '/staff/maintenance', 'https://evil.example/staff'];
 check('return: anything but a strict launch path is dropped', bad.every((p) => M.signInReturn(p) === null), bad.filter((p) => M.signInReturn(p) !== null).join(', '));
 check('return: the customer allowlist still applies (query kept)', M.signInReturn('/app/checkout/occ_1?mat=3') === '/app/checkout/occ_1?mat=3');
 check('return: staff follow a staff next; a customer is not sent into staff', M.homeFor('front_desk', '/staff/transfers') === '/staff/transfers' && M.homeFor('customer', '/staff/transfers') === '/app' && M.homeFor('customer', '/app/receipts/p1') === '/app/receipts/p1' && M.homeFor('admin', '/app/booking/b1') === '/admin');
+check('return: the teacher, hub and dev areas are sign-in returns (their launch routes only)', M.signInReturn('/teach') === '/teach' && M.signInReturn('/dev') === '/dev' && M.signInReturn('/teach/class/occ_1') === (M.isLaunchRoute('/teach/class/:id') ? '/teach/class/occ_1' : null));
+check('return: /hub is a return once it is a launch route (lane D)', M.signInReturn('/hub') === (M.isLaunchRoute('/hub') ? '/hub' : null));
+const HOMES = { super_admin: '/admin', admin: '/admin', coordinator: '/staff', front_desk: '/staff', finance: '/admin', teacher: '/teach', maintenance: '/staff', marketing: '/admin/content', developer: '/dev', customer: '/app' };
+for (const [role, home] of Object.entries(HOMES)) check(`home: ${role} lands on ${home}, a launch route`, M.homeFor(role, null) === home && M.isLaunchRoute(home), M.homeFor(role, null));
+check('return: a teacher follows a teacher next; others are not sent into the teacher app', M.homeFor('teacher', '/teach') === '/teach' && M.homeFor('front_desk', '/teach') === '/staff' && M.homeFor('customer', '/teach') === '/app');
+check('return: a developer follows /dev; Administration is not sent into dev tools', M.homeFor('developer', '/dev') === '/dev' && M.homeFor('admin', '/dev') === '/admin' && M.homeFor('super_admin', '/dev') === '/dev');
+check('return: a staff next outside the role\'s matrix goes home', M.homeFor('marketing', '/admin/finance') === '/admin/content' && M.homeFor('maintenance', '/admin/settings') === '/staff' && M.homeFor('finance', '/admin/finance') === '/admin/finance');
 check('return: the Google back link keeps a staff next', M.safeAuthBack('/auth/sign-in?next=/staff/transfers') === '/auth/sign-in?next=%2Fstaff%2Ftransfers');
+
+// ── AD-06 team panel: every staff role can be granted and changed (Hoy all-roles, lane C) ─────────────────────
+{
+  const T = M.team;
+  const fakeCos = () => { const calls = []; return { calls, request: async (method, path, body) => { calls.push([method, path, body?.roleKey]); return method === 'POST' && path === '/invitations' ? { userId: 'u', invitationId: 'i', url: 'https://clerk.example.invalid/x' } : {}; } }; };
+  const safe = async (f) => { try { return await f(); } catch (e) { return e; } };
+  const STAFF = ['front_desk', 'administrator', 'super_admin', 'booking_manager', 'treasurer', 'coach', 'maintenance', 'marketing', 'developer'];
+  check('team: every staff role key can be chosen (no customer)', STAFF.every((k) => T.TEAM_ROLES.includes(k)) && T.TEAM_ROLES.length === STAFF.length && !T.TEAM_ROLES.includes('member'));
+  const u = (id, ...keys) => ({ userId: id, email: `${id}@example.invalid`, name: id, memberships: keys.map((k, i) => ({ membershipId: `${id}_m${i}`, roleKey: k })) });
+  for (const k of STAFF.filter((k) => k !== 'super_admin')) check(`team: a ${k} login is on the team with that role`, T.teamMembers([u('x', k)]).length === 1 && T.teamRoleOf(u('x', k)) === k, String(T.teamRoleOf(u('x', k))));
+  check('team: Administration with its super_admin membership shows as Administration (AD-04)', T.teamRoleOf(u('a', 'administrator', 'super_admin')) === 'administrator');
+  // Changed on purpose (lane C): a super_admin-only login is the Super admin role, not Administration.
+  check('team: a super_admin-only login shows as Super admin', T.teamRoleOf(u('s', 'super_admin')) === 'super_admin');
+  check('team: a coach who is also a customer shows as Teacher; customers alone are not listed', T.teamRoleOf(u('c', 'member', 'coach')) === 'coach' && T.teamMembers([u('m', 'member')]).length === 0);
+  for (const k of STAFF.filter((k) => k !== 'super_admin')) {
+    const cos = fakeCos();
+    await safe(() => T.invite(cos.request, `${k}@example.invalid`, k, T.inviteRedirect('https://app.example.invalid', k)));
+    check(`team: inviting ${k} posts that role key${k === 'administrator' ? ' (and super_admin after it, AD-04)' : ''}`, cos.calls[0]?.[1] === '/invitations' && cos.calls[0][2] === k && (k === 'administrator' ? cos.calls[1][2] === 'super_admin' && cos.calls.length === 2 : cos.calls.length === 1), JSON.stringify(cos.calls));
+  }
+  const HOME = { front_desk: '/staff', administrator: '/admin', super_admin: '/admin', booking_manager: '/staff', treasurer: '/admin', coach: '/teach', maintenance: '/staff', marketing: '/admin/content', developer: '/dev' };
+  check('team: each invitation returns to the role\'s home', Object.entries(HOME).every(([k, h]) => T.inviteRedirect('https://app.example.invalid', k) === `https://app.example.invalid/#/auth/sign-in?next=${h}`), STAFF.map((k) => T.inviteRedirect('', k)).join(' '));
+  let cos = fakeCos();
+  await safe(() => T.changeRole(cos.request, u('d', 'front_desk', 'member'), 'coach'));
+  check('team: changing Front desk to Teacher adds coach first, then removes front_desk (the customer stays)', JSON.stringify(cos.calls) === JSON.stringify([['POST', '/admin/users', 'coach'], ['DELETE', '/admin/memberships/d_m0', null]].map(([a, b, c]) => [a, b, c ?? undefined])), JSON.stringify(cos.calls));
+  cos = fakeCos();
+  await safe(() => T.changeRole(cos.request, u('t', 'treasurer'), 'administrator'));
+  check('team: changing Finance to Administration adds administrator and super_admin, then removes treasurer', JSON.stringify(cos.calls.map((c) => c[2] ?? c[1])) === JSON.stringify(['administrator', 'super_admin', '/admin/memberships/t_m0']), JSON.stringify(cos.calls));
+  cos = fakeCos();
+  await safe(() => T.removeFromTeam(cos.request, u('r', 'marketing', 'member')));
+  check('team: removing a Marketing login removes marketing only', JSON.stringify(cos.calls.map((c) => c[1])) === JSON.stringify(['/admin/memberships/r_m0']));
+  const users = [u('a', 'administrator', 'super_admin'), u('s', 'super_admin'), u('d', 'front_desk')];
+  check('team: only a super admin grants or changes Super admin (the screen asks first; Company OS decides)', T.teamGuard(users, users[2], 'super_admin', 'a', false) === 'super_admin_only' && T.teamGuard(users, users[1], 'front_desk', 'a', false) === 'super_admin_only' && T.teamGuard(users, users[2], 'super_admin', 's', true) === null && T.teamGuard(users, users[2], 'coach', 'a', false) === null);
+  check('team: last administrator and self are still protected', T.teamGuard([users[0], users[2]], users[0], 'coach', 'd', true) === 'last_admin' && T.teamGuard(users, users[2], 'coach', 'd', true) === 'self');
+  check('team: an unknown role key is refused before anything is sent', await rejects(T.invite(fakeCos().request, 'x@example.invalid', 'owner', '')) !== null && await rejects(T.changeRole(fakeCos().request, u('z', 'front_desk'), 'member')) !== null);
+}
 
 // ── Token wait: a Clerk that never loads answers null (production build) ────────────────────────────────────────
 {

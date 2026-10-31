@@ -1,6 +1,9 @@
 import { useMemo } from 'react';
 import { useTable } from '../../data/DataContext';
-import type { BaseRow, MembershipRow, PlanRow, ProfileRow, UserRow } from '../../data/schema';
+import type { BaseRow, ClassLedgerRow, MembershipRow, PlanRow, ProfileRow, UserRow } from '../../data/schema';
+import { PRODUCTION_BUILD } from '../../config/launch';
+import { packMemberships } from '../../data/packMemberships';
+import { dateKey } from '../../i18n/format';
 
 interface RoleRow extends BaseRow { user_id: string; role: string }
 interface ProfileFull extends ProfileRow { birthday: string | null; notes: string | null }
@@ -23,12 +26,20 @@ export interface Person {
   plan?: PlanRow;
 }
 
-/** Live join of users × profiles × user_roles × active memberships × plans. */
+/**
+ * The person's current plan rows: the review build's memberships, or in production (no `memberships` table; R-05) one
+ * row per person from their active pack in the credits ledger (`packMemberships`). Chosen once per build.
+ */
+const usePlanRows: () => MembershipRow[] = PRODUCTION_BUILD
+  ? () => { const today = dateKey(new Date()); const { rows } = useTable<ClassLedgerRow>('class_ledger'); return useMemo(() => packMemberships(rows, today), [rows, today]); }
+  : () => useTable<MembershipRow>('memberships', { where: { status: ['active', 'paused', 'past_due'] } }).rows;
+
+/** Live join of users × profiles × user_roles × active plans (memberships, or packs in production) × plans. */
 export function usePeople(): { people: Person[]; byId: Map<string, Person>; loading: boolean } {
   const { rows: users, loading } = useTable<UserRow>('users');
   const { rows: profiles } = useTable<ProfileFull>('profiles');
   const { rows: roles } = useTable<RoleRow>('user_roles');
-  const { rows: memberships } = useTable<MembershipRow>('memberships', { where: { status: ['active', 'paused', 'past_due'] } });
+  const memberships = usePlanRows();
   const { rows: plans } = useTable<PlanRow>('plans');
   return useMemo(() => {
     const prof = new Map(profiles.map((p) => [p.user_id, p]));

@@ -118,13 +118,29 @@ const TAB = [
   ['/admin', 'full', 'none', 'none', 'none'], ['/admin/analytics', 'full', 'none', 'none', 'none'], ['/admin/activity', 'full', 'none', 'none', 'none'],
   ['/admin/emails', 'full', 'none', 'none', 'none'], ['/admin/whatsapp', 'full', 'none', 'none', 'none'],
   ['/admin/finance', 'full', 'none', 'none', 'none'], ['/admin/finance/expenses', 'full', 'none', 'none', 'none'], ['/admin/finance/payouts', 'full', 'none', 'none', 'none'],
-  ['/admin/integrations', 'full', 'none', 'none', 'none'], ['/dev', 'none', 'none', 'none', 'none'],
+  ['/admin/integrations', 'full', 'none', 'none', 'none'], ['/dev', 'none', 'none', 'none', 'none'], ['/teach', 'full', 'none', 'none', 'none'],
 ];
 const ROLES4 = ['admin', 'front_desk', 'customer', 'public'];
 const off = TAB.flatMap(([path, ...want]) => ROLES4.map((r, i) => [r, path, want[i], M.matrixAccess(r, path)]).filter(([, , w, got]) => w !== got).map(([r, p, w, got]) => `${r} ${p}: ${got} ≠ ${w}`));
 check(`PL-05 the config matrix matches the Role Matrix tab (${TAB.length} areas × 4 launch roles)`, off.length === 0, off.join('; '));
-check('PL-05 super admin and non-launch roles are not restricted by the matrix', M.matrixAccess('super_admin', '/admin/finance') === null && M.matrixAccess('finance', '/admin/finance') === null && M.matrixAllows('teacher', '/staff'));
-check('PL-05 paths outside the matrix keep their route roles (/, /auth, /hub)', ['/', '/auth/sign-in', '/coming-soon', '/no-access'].every((p) => M.matrixAccess('customer', p) === null));
+
+// Hoy all-roles (lane C): the matrix covers all 11 roles. The four launch columns above are unchanged; the other roles
+// follow their route roles until Jas confirms each one (A-02), so the matrix takes nothing away from them yet.
+const ROLES11 = ['super_admin', 'admin', 'coordinator', 'front_desk', 'finance', 'teacher', 'maintenance', 'marketing', 'developer', 'customer', 'public'];
+check('PL-05 every matrix area states an access for each of the 11 roles', M.LAUNCH_ROLE_MATRIX.every((a) => ROLES11.every((r) => ['full', 'own', 'read', 'limited', 'none'].includes(a.access[r])) && Object.keys(a.access).length === 11), M.LAUNCH_ROLE_MATRIX.filter((a) => Object.keys(a.access).length !== 11).map((a) => a.id).join(', '));
+// [path, super_admin, coordinator, finance, teacher, maintenance, marketing, developer]: allowed (not 'none') or not.
+const NEW = [
+  ['/site', 1, 1, 1, 1, 1, 1, 1], ['/app', 1, 0, 0, 1, 0, 0, 0], ['/staff', 1, 1, 1, 1, 1, 1, 1], ['/staff/checkin', 1, 1, 1, 1, 1, 1, 1], ['/staff/expense', 1, 0, 0, 0, 0, 0, 0],
+  ['/admin/crm', 1, 1, 1, 0, 0, 1, 0], ['/admin/content', 1, 1, 0, 0, 0, 1, 0], ['/admin/vouchers', 1, 0, 0, 0, 0, 0, 0], ['/admin/products', 1, 0, 0, 0, 0, 0, 0],
+  ['/admin/settings', 1, 1, 1, 0, 0, 0, 0], ['/admin', 1, 1, 1, 0, 0, 0, 0], ['/admin/activity', 1, 1, 1, 0, 0, 0, 0], ['/admin/emails', 1, 1, 0, 0, 0, 1, 0],
+  ['/admin/finance', 1, 0, 1, 0, 0, 0, 0], ['/admin/integrations', 1, 0, 0, 0, 0, 0, 0], ['/dev', 1, 0, 0, 0, 0, 0, 1], ['/teach', 1, 1, 1, 1, 0, 0, 0],
+];
+const R7 = ['super_admin', 'coordinator', 'finance', 'teacher', 'maintenance', 'marketing', 'developer'];
+const offNew = NEW.flatMap(([path, ...want]) => R7.map((r, i) => [r, path, !!want[i], M.matrixAllows(r, path)]).filter(([, , w, got]) => w !== got).map(([r, p, w, got]) => `${r} ${p}: ${got} ≠ ${w}`));
+check(`PL-05 the other seven roles: the matrix follows their route roles (${NEW.length} areas × 7)`, offNew.length === 0, offNew.join('; '));
+check('PL-05 super admin is open on every area', M.LAUNCH_ROLE_MATRIX.every((a) => a.access.super_admin === 'full'));
+check('PL-05 paths outside the matrix keep their route roles (/, /auth)', ['/', '/auth/sign-in', '/coming-soon', '/no-access'].every((p) => ROLES11.every((r) => M.matrixAccess(r, p) === null)));
+check('PL-05 an unknown role is refused by the matrix (fail closed)', M.matrixAllows('owner', '/site') === false && M.matrixAllows('__proto__', '/admin') === false);
 
 console.log(failed ? `\n${failed} launch config check(s) failed` : '\nlaunch config passed');
 process.exit(failed ? 1 : 0);

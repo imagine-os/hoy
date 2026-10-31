@@ -118,7 +118,7 @@ export function MemberPage() {
       <div className="grid grid-4">
         {/* Q-13: lifetime value is income — reception does not see it. */}
         <StatTile label={t('admin.member.ltv')} value={can('revenue.read') ? formatCOP(ltv, lang) : '—'} />
-        <StatTile label={t('admin.member.visits')} value={stats?.visits ?? 0} hint={person.membership ? undefined : t('admin.member.credits', { n: stats?.credits ?? 0 })} />
+        <StatTile label={t('admin.member.visits')} value={stats?.visits ?? 0} hint={person.membership && !(stats?.pkg.left) ? undefined : t('admin.member.credits', { n: stats?.credits ?? 0 })} />
         <StatTile label={t('admin.member.lastVisit')} value={stats?.lastVisit ? formatDate(stats.lastVisit, lang) : '—'} />
         <StatTile label={t('admin.crm.col.risk')} value={t(`admin.crm.risk.${stats?.risk ?? 'low'}`)} trend={stats?.risk === 'high' ? 'down' : stats?.risk === 'medium' ? 'flat' : 'up'} hint={t('admin.member.risk.hint')} />
       </div>

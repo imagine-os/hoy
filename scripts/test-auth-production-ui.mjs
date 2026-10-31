@@ -115,7 +115,8 @@ try {
     check(`PL-04 a visitor on ${p} is sent to sign-in`, route(page).startsWith('/auth/sign-in'), route(page));
   }
   // ── PL-03: no review tools in production ──────────────────────────────────────────────────────────────────────
-  for (const p of ['/hub', '/dev', '/dev/components', '/docs', '/manual', '/teach', '/app/state/empty', '/auth/recover', '/auth/locked', '/admin/tables']) {
+  // `/teach` and `/dev` are role homes since Hoy all-roles (lane C): only those pages ship, not the rest of their areas.
+  for (const p of ['/hub', '/dev/components', '/dev/api-keys', '/docs', '/manual', '/teach/payroll', '/app/state/empty', '/auth/recover', '/auth/locked', '/admin/tables']) {
     await page.goto(`${BASE}/#${p}`); await page.waitForTimeout(400);
     check(`PL-03 ${p} does not exist in production`, !route(page).startsWith(p), route(page));
   }

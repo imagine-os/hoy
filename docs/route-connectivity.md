@@ -91,7 +91,7 @@ and a list entry whose finding is gone, must fail.
 
 | Finding | Routes | Lane | Note |
 |---|---|---|---|
-| `unknown memberships` | `/app`, `/admin` | C | the your-plan card (`customer/HomePage.tsx`) and the members tile (`admin/DashboardPage.tsx`) switch to packs |
+| ~~`unknown memberships`~~ | `/app`, `/admin` | C (closed 2026-10-31) | the your-plan card (`customer/HomePage.tsx`) and the members tile (`admin/DashboardPage.tsx`) read packs |
 | `sink audit_log` | `/admin/activity` | E | `ActivityPage` reads `GET /t/:t/audit` |
 | `signed_out plans, teachers, rooms (built-in catalogue)`; `signed_out class_templates, class_sessions, bookings, tenants (empty)` | `/site/*` | F | the public_site identity (ADR 0029). Also read, outside the plan's list: `tenants` (opening hours, payment instructions) and `bookings` (places left, `MatPicker`, `SchedulePage`). When F lifts the signed-out model, the `BY_DESIGN` entry `signed_out tenants (write)` goes stale too: delete it |
 
@@ -99,7 +99,8 @@ and a list entry whose finding is gone, must fail.
 
 | Finding | Routes | Proposed | What breaks |
 |---|---|---|---|
-| `unknown memberships` | `*` and 15 staff, admin and customer routes | C (scope extension) or Wave 2 | `staff/people.ts` (the people join of every staff screen), `data/useAnalytics.ts`, `customer/hooks.ts` also read `memberships`; the plan names only the two screens above |
+| ~~`unknown memberships`~~ | `*` and 15 staff, admin and customer routes | C (closed 2026-10-31, scope extension) | `staff/people.ts`, `data/useAnalytics.ts` read the active pack (`data/packMemberships.ts`); `customer/hooks.ts` reads none in production (the pack is `pkg`) |
+| `unknown`/`sink`/`mock_only` (lane C homes) | `/teach`, `/admin/content` | decision pending | the Teacher (S-03) and Marketing (M-02) homes entered `LAUNCH_ROUTES` unconnected (OPEN entries in the check); accept until Waves 3–4 or remove |
 | `sink audit_log` | `/admin` | E (scope extension) | the dashboard's recent-activity card is always empty |
 | `sink message_log` | `*`, `/admin/crm/:id`, `/staff`, `/staff/inbox/*` | unassigned | `data/comms.ts`: the inbox, member messages and notes, the unread badge read nothing; a sent note is dropped |
 | `unknown hours_overrides` | `/admin/settings/*`, `/app/plans`, `/app/faq`, `/app/faq/2`, `/app/more`, `/site/*` | unassigned (recipe entity, size S) | `useOpeningHours()`: holidays and special hours are never read |

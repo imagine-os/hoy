@@ -40,12 +40,18 @@ const { check, done } = reporter('route connectivity');
 // `<kind> <subject>` the check prints. Delete a route (or the entry) when its finding is gone.
 // PENDING: another Wave 1 lane is closing it now.
 const PENDING = [
-  { finding: 'unknown memberships', lane: 'C', routes: ['/app', '/admin'], note: 'membership reads → pack reads (customer/HomePage.tsx your-plan card, admin/DashboardPage.tsx members tile)' },
   { finding: 'sink audit_log', lane: 'E', routes: ['/admin/activity'], note: 'ActivityPage reads GET /t/:t/audit' },
 ];
 // OPEN: found by this audit (lane G, 2026-10-31) on routes already in LAUNCH_ROUTES, with no lane closing it yet.
 const OPEN = [
-  { finding: 'unknown memberships', lane: 'C (scope extension) or Wave 2', routes: ['*', '/admin/analytics', '/admin/crm/:id', '/admin/activity', '/admin/finance', '/app/class/:id', '/app/checkout/:id', '/app/plans', '/app/passes', '/app/classes', '/app/profile', '/app/more', '/staff', '/staff/inbox/*', '/staff/checkin', '/staff/register'], note: 'also read by staff/people.ts (the people join every staff screen uses), data/useAnalytics.ts and customer/hooks.ts; the plan names only the home card and the dashboard tile' },
+  // Lane C's role homes (the lane brief: every one of the 11 roles lands on a production page): `/teach` (Teacher, S-03)
+  // and `/admin/content` (Marketing, M-02) entered LAUNCH_ROUTES before their areas are connected, against the rule
+  // above that a new launch route is green. No Wave 1 lane closes them: the coordinator/owner either accepts them until
+  // the waves named or removes the two homes (and gives Teacher and Marketing another home). See lane C's report.
+  ...['sink audit_log', 'sink message_log', 'mock_only modules/teacher/substituteRequest.ts', 'unknown practice_goals', 'unknown reviews', 'unknown space_bookings', 'unknown special_charges']
+    .map((finding) => ({ finding, lane: 'C home, decision pending (teacher app: Wave 4)', routes: ['/teach'], note: 'the Teacher home S-03: substitute requests, practice, reviews, rooms and special charges are not connected' })),
+  ...['unknown teacher_profile_proposals', 'sink audit_log', 'mock_only modules/profile-review/contracts.ts', 'unknown events', 'unknown class_pay_rules', 'missing appendClassPayRule', 'dynamic table', 'mock_only modules/admin/contentRecovery.ts', 'dynamic entity2', 'missing contentBatch', 'missing generateRecurrence']
+    .map((finding) => ({ finding, lane: 'C home, decision pending (content: Wave 3)', routes: ['/admin/content'], note: 'the Marketing home M-02: the content editor writes static tables (modalities, teachers, rooms) and unconnected ones' })),
   { finding: 'sink audit_log', lane: 'E (scope extension)', routes: ['/admin'], note: 'the dashboard recent-activity card (admin/DashboardPage.tsx) reads audit_log; GET /t/:t/audit like /admin/activity' },
   { finding: 'sink audit_log', lane: 'unassigned', routes: ['/admin/settings/*', '/app/profile'], note: 'a receipt read (tx.get(audit_log, id)) inside the mock-only flows below; goes with them' },
   { finding: 'sink message_log', lane: 'unassigned', routes: ['*', '/admin/crm/:id', '/staff', '/staff/inbox/*'], note: 'data/comms.ts: the staff inbox, member messages and notes, the unread badge; nothing is read and a sent note is dropped' },

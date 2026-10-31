@@ -1,13 +1,179 @@
-// PL-05 — "Customer, Front desk and Administration see and do only what the approved permissions matrix states",
-// including Q-13: reception records an expense but sees no income. Browser checks on the built app with fictional demo
-// users: which launch routes each role opens or is refused, the income figures each role sees, and the S-11 reception
-// expense form end to end. Saves the S-11 captures (ES/EN, 390/1280) the hub map needs.
-// The matrix below is the launch reading of docs/roles.md + Q-13; client checks do not prove server authorization.
-// Run: npm run build && node scripts/test-launch-roles-ui.mjs
-import { mkdir } from 'node:fs/promises';
+// Hoy all-roles (lane C) — "every one of Hoy's 11 roles signs in to its own home" on the PRODUCTION build
+// (VITE_HOY_BUILD=production): each role signs in through a fake Clerk, Company OS `/me` (faked here, fictional people)
+// gives it its role key, and it must land on its home, see its own menu, and be refused another role's screens. A
+// visitor (public) gets the website and is sent to sign-in from private pages. The customer home shows the active
+// pack and the admin dashboard counts customers with an active pack (memberships → packs, R-05).
+// Then, when dist/ is the review build, the PL-05 checks on the review build (demo users, MockProvider): the launch
+// matrix for the four launch columns and the S-11 reception expense (Q-13), unchanged.
+// Client checks shape the screens; Company OS and the Hoy server enforce access.
+// Run: npm run build:production && cp -R dist /tmp/prod && npm run build && QA_PROD_DIST=/tmp/prod node scripts/test-launch-roles-ui.mjs
+//      (QA_PROD_DIST defaults to dist/ when that is a production build; the review half then says it skipped)
+import { createServer } from 'node:http';
+import { mkdir, readFile, stat } from 'node:fs/promises';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { extname, join, resolve, sep } from 'node:path';
 import { serveDist, launchBrowser, newContext, reporter } from './lib/launch-qa.mjs';
 
-const { check, done } = reporter('PL-05');
+const { check, done } = reporter('11 roles');
+const isProd = (dir) => existsSync(join(dir, 'index.html')) && readdirSync(join(dir, 'assets')).filter((f) => f.endsWith('.js')).some((f) => readFileSync(join(dir, 'assets', f), 'utf8').includes('clerk-js'));
+const PROD = resolve(process.env.QA_PROD_DIST ?? 'dist');
+if (!isProd(PROD)) { console.error(`${PROD} is not a production build: run npm run build:production (or set QA_PROD_DIST)`); process.exit(1); }
+const REVIEW = resolve('dist');
+const reviewBuilt = existsSync(join(REVIEW, 'index.html')) && !isProd(REVIEW);
+
+const TENANT = 'hoy-test';
+const HOST = 'fake.clerk.accounts.dev';
+const PK = `pk_test_${Buffer.from(`${HOST}$`).toString('base64')}`;
+const FAKE_CLERK = readFileSync(new URL('./fixtures/fake-clerk.js', import.meta.url), 'utf8');
+const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.png': 'image/png', '.svg': 'image/svg+xml', '.mp4': 'video/mp4', '.woff2': 'font/woff2' };
+const TODAY = '2026-10-28';
+
+// One fictional person per role: the Company OS role keys /me answers (Hoy's recipe), the home and the menu entry it
+// must see, and screens of other roles it must be refused.
+const ROLES = {
+  super_admin: { keys: ['super_admin'], superAdmin: true, home: '/admin', opens: ['/admin/settings', '/staff/checkin', '/teach', '/dev', '/admin/finance'], refused: [] },
+  admin: { keys: ['administrator', 'super_admin'], superAdmin: true, home: '/admin', opens: ['/admin/settings', '/staff/checkin', '/teach'], refused: ['/dev', '/app'] },
+  coordinator: { keys: ['booking_manager'], home: '/staff', opens: ['/staff/checkin', '/admin/crm', '/teach'], refused: ['/admin/finance', '/staff/expense', '/app', '/dev'] },
+  front_desk: { keys: ['front_desk'], home: '/staff', opens: ['/staff/checkin', '/staff/expense'], refused: ['/admin/settings', '/admin', '/teach', '/app'] },
+  finance: { keys: ['treasurer'], home: '/admin', opens: ['/admin/finance'], refused: ['/staff/checkin', '/staff/expense', '/app', '/dev'] },
+  teacher: { keys: ['coach'], home: '/teach', opens: [], refused: ['/staff/checkin', '/admin', '/admin/finance', '/dev'] },
+  maintenance: { keys: ['maintenance'], home: '/staff', opens: [], refused: ['/admin', '/staff/checkin', '/admin/finance', '/app'] },
+  marketing: { keys: ['marketing'], home: '/admin/content', opens: ['/admin/crm', '/admin/emails'], refused: ['/admin/finance', '/admin/settings', '/staff/checkin', '/app'] },
+  developer: { keys: ['developer'], home: '/dev', opens: [], refused: ['/admin', '/admin/finance', '/staff/checkin', '/app'] },
+  customer: { keys: ['member'], home: '/app', opens: ['/app/plans'], refused: ['/staff', '/admin', '/teach', '/dev'] },
+};
+const ACCOUNTS = Object.fromEntries(Object.keys(ROLES).map((r) => [`user_${r}`, { emails: [{ id: `ea_${r}`, email: `${r}@example.test`, verified: true }], primary: `ea_${r}` }]));
+
+// ── the fake Hoy server + Company OS ────────────────────────────────────────────────────────────────────────────
+const userOf = (req) => /^Bearer fake\.([^.]+)\.[^.]+$/.exec(req.headers.authorization ?? '')?.[1] ?? null;
+const json = (res, status, body) => { res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(body)); };
+const readBody = (req) => new Promise((r) => { let s = ''; req.on('data', (c) => { s += c; }); req.on('end', () => { try { r(JSON.parse(s || '{}')); } catch { r({}); } }); });
+const roleOfUser = (user) => user?.startsWith('user_') ? user.slice(5) : null;
+// Credits for the customer (an 8-class pack to 31 Dec) and two other customers (one with classes, one used up).
+const LOTS = [
+  { id: 'lot_c1', data: { person: 'per_customer', source: 'purchase', product: 'prd_pack', valid_from: '2026-10-01', valid_until: '2026-12-31', frozen_from: null, frozen_until: null, voucher: null } },
+  { id: 'lot_c2', data: { person: 'per_other', source: 'purchase', product: 'prd_pack', valid_from: '2026-10-01', valid_until: '2026-12-31', frozen_from: null, frozen_until: null, voucher: null } },
+  { id: 'lot_c3', data: { person: 'per_done', source: 'purchase', product: 'prd_pack', valid_from: '2026-09-01', valid_until: '2026-11-30', frozen_from: null, frozen_until: null, voucher: null } },
+];
+const LEFT = [{ lot: 'lot_c1', left: 8 }, { lot: 'lot_c2', left: 3 }, { lot: 'lot_c3', left: 0 }];
+const queries = [];
+function answerQuery(user, q) {
+  queries.push({ user, entity: q.entity, aggregate: !!q.aggregate });
+  const role = roleOfUser(user);
+  if (q.entity === 'person') return [{ id: `per_${role}`, data: { name: `${role} Prueba`, user, email: `${role}@example.test` }, createdAt: '2026-10-01T10:00:00Z' }];
+  if (q.entity === 'credit_lot') return role === 'customer' ? LOTS.filter((l) => l.data.person === 'per_customer') : LOTS;
+  if (q.entity === 'credit_entry' && q.aggregate) return role === 'customer' ? LEFT.filter((l) => l.lot === 'lot_c1') : LEFT;
+  if (q.entity === 'credit_entry') {
+    const mine = role === 'customer';
+    return mine ? [{ id: 'ce_grant', data: { person: 'per_customer', delta: 8, reason: 'grant', lot: { id: 'lot_c1', source: 'purchase', valid_until: '2026-12-31', product: 'prd_pack', payment: null, freezable: true } }, createdAt: '2026-10-01T10:00:00Z' }] : [];
+  }
+  return [];
+}
+const server = createServer(async (req, res) => {
+  const path = new URL(req.url, 'http://127.0.0.1').pathname;
+  if (path === '/app-config.json') return json(res, 200, { tenant: TENANT, apiBase: '/api/cos', clerkPublishableKey: PK, environment: 'test' });
+  if (path.startsWith(`/api/cos/t/${TENANT}/`)) {
+    const user = userOf(req);
+    if (!user) return json(res, 401, { error: 'unauthorized' });
+    const role = roleOfUser(user);
+    const route = path.slice(`/api/cos/t/${TENANT}`.length);
+    if (route === '/me') {
+      const r = ROLES[role];
+      return r ? json(res, 200, { tenant: { slug: TENANT, timezone: 'America/Bogota' }, user: { id: user, name: `${role} Prueba`, email: `${role}@example.test` }, roleKeys: r.keys, isSuperAdmin: !!r.superAdmin, caps: [], entities: [] }) : json(res, 403, { error: 'no access to this tenant' });
+    }
+    if (route === '/query' && req.method === 'POST') return json(res, 200, { data: answerQuery(user, await readBody(req)) });
+    if (route === '/batch' && req.method === 'POST') return json(res, 200, { results: [] });
+    if (req.method === 'GET' && route.startsWith('/api/')) return json(res, 200, { data: [] });
+    if (req.method === 'GET') return json(res, 404, { error: 'not_found' });
+    return json(res, 403, { error: 'forbidden' });
+  }
+  try {
+    let file = resolve(PROD, '.' + decodeURIComponent(path));
+    if (file !== PROD && !file.startsWith(PROD + sep)) { res.writeHead(403); return res.end(); }
+    if ((await stat(file)).isDirectory()) file = join(file, 'index.html');
+    res.writeHead(200, { 'Content-Type': MIME[extname(file)] ?? 'application/octet-stream' }); res.end(await readFile(file));
+  } catch { res.writeHead(404); res.end('Not found'); }
+});
+await new Promise((r) => server.listen(5193, '127.0.0.1', r));
+const BASE = 'http://127.0.0.1:5193';
+
+const browser = await launchBrowser();
+const errors = [];
+const route = (page) => decodeURIComponent(new URL(page.url()).hash.slice(1));
+async function openProd(path, { width = 1280, lang = 'es' } = {}) {
+  const ctx = await browser.newContext({ viewport: { width, height: 900 }, reducedMotion: 'reduce' });
+  await ctx.route(/^https?:\/\/(?!127\.0\.0\.1)/, (r) => r.abort());
+  await ctx.route(`https://${HOST}/npm/@clerk/clerk-js@*/dist/clerk.browser.js`, (r) => r.fulfill({ status: 200, contentType: 'text/javascript', body: FAKE_CLERK }));
+  await ctx.addInitScript(({ accounts, pk, lang }) => {
+    window.__fakeClerkConfig = { accounts, publishableKey: pk };
+    if (!sessionStorage.getItem('qa-init')) { sessionStorage.setItem('qa-init', '1'); localStorage.setItem('hoyos.lang', lang); }
+  }, { accounts: ACCOUNTS, pk: PK, lang });
+  const page = await ctx.newPage();
+  await page.clock.install({ time: new Date(`${TODAY}T15:00:00Z`) });
+  page.on('pageerror', (e) => errors.push(`${path}: ${e.message}`));
+  await page.goto(`${BASE}/#${path}`);
+  await page.waitForTimeout(800);
+  return { ctx, page };
+}
+async function signIn(page, email) {
+  await page.locator('[data-step="email"] input').fill(email);
+  await page.locator('[data-step="email"] button[type=submit]').click();
+  await page.locator('[data-step="code"]').waitFor({ timeout: 5000 });
+  await page.locator('[data-step="code"] input').fill('424242');
+  await page.locator('[data-step="code"] button[type=submit]').click();
+  await page.waitForTimeout(1500);
+}
+const go = async (page, path) => { await page.goto(`${BASE}/#${path}`); await page.waitForTimeout(700); return route(page); };
+const refusedAt = (r) => r.startsWith('/no-access') || r.startsWith('/auth/sign-in');
+// The menu: links in the shell's navigation (sidebar, top bar or bottom dock), as hash paths.
+const menu = (page) => page.evaluate(() => [...document.querySelectorAll('nav a[href], aside a[href], header a[href]')].map((a) => decodeURIComponent((a.getAttribute('href') || '').replace(/^.*#/, ''))));
+
+try {
+  for (const [role, r] of Object.entries(ROLES)) {
+    const { ctx, page } = await openProd('/auth/sign-in');
+    await signIn(page, `${role}@example.test`);
+    check(`${role}: signs in and lands on its home ${r.home}`, route(page) === r.home, route(page));
+    check(`${role}: the home renders (no sign-in, no error screen, no endless spinner)`, (await page.locator('[data-session-problem]').count()) === 0 && (await page.locator('main').count()) > 0 && (await page.locator('[aria-busy="true"]').count()) === 0);
+    const links = await menu(page);
+    check(`${role}: its menu links its home`, links.includes(r.home), links.join(' '));
+    const foreign = Object.values(ROLES).map((x) => x.home).filter((h) => h !== r.home && r.refused.includes(h));
+    check(`${role}: its menu links no screen it is refused`, !links.some((l) => r.refused.includes(l)), links.filter((l) => r.refused.includes(l)).join(' ') + ` (foreign homes ${foreign.join(' ')})`);
+    for (const p of r.opens) { const at = await go(page, p); check(`${role}: opens ${p}`, at === p, at); }
+    for (const p of r.refused) { const at = await go(page, p); check(`${role}: is refused ${p}`, refusedAt(at), at); }
+    if (role === 'customer') {
+      await go(page, '/app');
+      await page.locator('[data-plan-card]').first().waitFor({ timeout: 5000 }).catch(() => {});
+      const card = await page.locator('[data-plan-card]').first().innerText().catch(() => '');
+      check('C-01 the customer home shows the active pack: classes left and expiry (from credits, not memberships)', /8/.test(card) && /31/.test(card) && /dic/i.test(card), card);
+      check('C-01 the home does not tell a pack holder they have no package', !/Aún no tienes paquete/.test(await page.locator('main').innerText()));
+    }
+    if (role === 'admin') {
+      await go(page, '/admin');
+      await page.waitForTimeout(800);
+      const tile = await page.locator('[data-members-tile]').first().innerText().catch(() => '');
+      check('M-01 the dashboard counts customers with an active pack (2 of 3)', /\b2\b/.test(tile), tile);
+      check('M-01 the dashboard reads credit lots and their balances, not memberships', queries.some((q) => q.user === 'user_admin' && q.entity === 'credit_lot') && queries.some((q) => q.user === 'user_admin' && q.entity === 'credit_entry' && q.aggregate) && !queries.some((q) => /membership/.test(q.entity)));
+    }
+    await ctx.close();
+  }
+
+  // public: the website opens, private screens send the visitor to sign-in
+  const { ctx, page } = await openProd('/site');
+  check('public: the website opens signed out', route(page).startsWith('/site'), route(page));
+  for (const p of ['/app', '/staff', '/admin', '/teach', '/dev']) { const at = await go(page, p); check(`public: ${p} sends the visitor to sign-in`, at.startsWith('/auth/sign-in'), at); }
+  await ctx.close();
+  check('no page threw on the production build', errors.length === 0, errors.slice(0, 5).join(' | '));
+} finally {
+  await browser.close();
+  server.close();
+}
+
+// ── review build: PL-05 (unchanged) ─────────────────────────────────────────────────────────────────────────────
+if (!reviewBuilt) console.log('note review build checks skipped: dist/ is not a review build (npm run build)');
+else await reviewChecks();
+done();
+
+async function reviewChecks() {
 const USERS = { customer: 'usr_c01', front_desk: 'usr_desk', admin: 'usr_admin', public: 'usr_public' };
 // route → roles that may open it (the rest must be refused).
 const MATRIX = {
@@ -110,4 +276,4 @@ try {
   check('no page threw while testing PL-05', errors.length === 0, errors.slice(0, 5).join(' | '));
   await browser.close(); await srv.close();
 }
-done();
+}

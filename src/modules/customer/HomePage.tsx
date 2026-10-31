@@ -6,7 +6,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useI18n } from '../../i18n/I18nProvider';
 import { useSession } from '../../auth/SessionProvider';
 import { useTable } from '../../data/DataContext';
-import type { ActivityEventRow, BookingRow, MembershipRow, PracticeGoalRow } from '../../data/schema';
+import type { ActivityEventRow, BookingRow, PracticeGoalRow } from '../../data/schema';
 import { formatDate, isSameDay, fromDateKey } from '../../i18n/format';
 import { useLayout } from '../../layout/useLayout';
 import { canvasSpecs } from './specs';
@@ -22,6 +22,7 @@ import { usePracticeStats, useMilestoneRecorder } from '../../data/useAnalytics'
 import type { PracticeStats } from '../../data/analytics';
 import { toast } from '../../app/toast';
 import { useEntitlements } from './hooks';
+import { planCard } from './planCard';
 import { plural, weekInitials, PracticeGoalPicker, PracticeStreak, usePracticeHandlers, useSaveGoal } from './practice';
 import './customer.css';
 import { Icon } from '../../components/atom/Icon/Icon';
@@ -45,8 +46,9 @@ export function CustomerHomePage() {
   useActions(spec, useMemo(() => ({ ...navHandlers, ...practiceHandlers }), [navHandlers, practiceHandlers]));
 
   const { rows: myBookings, loading: bookingsLoading } = useTable<BookingRow>('bookings', { where: { user_id: user.id } });
-  const { rows: memberships } = useTable<MembershipRow>('memberships', { where: { user_id: user.id, status: 'active' } });
   const ent = useEntitlements();
+  // R-05: the plan card reads the active pack (credits), not the recurring `memberships` table production lacks.
+  const plan = planCard({ membership: ent.membership, pkg: ent.pkg });
   const all = useSessionsJoined();
   const now = Date.now();
 
@@ -57,17 +59,23 @@ export function CustomerHomePage() {
     // 0030: plain start-time order (the A-05 intention sort is retired with the question)
     return all.filter((x) => isSameDay(x.session.starts_at, new Date()) && x.session.status === 'scheduled' && new Date(x.session.ends_at).getTime() > now);
   }, [all, now]);
-  const membership = memberships[0];
 
   const book = (sessionId: string) => nav(`/app/checkout/${sessionId}`);
 
   const SECTIONS: Record<string, () => ReactNode> = {
     'TopBar (logo, avatar, bell)': () => <h1 className="cust-greeting">{t('customer.home.greeting', { name: user.name.split(' ')[0] })}</h1>,
     'FeedbackPrompt (conditional)': () => null,
-    // 0051: the nudge reads the package (no membership at launch); a member with classes left sees nothing here.
-    'MembershipNudge (if no plan)': () => membership
-      ? <p className="small muted">{t('customer.home.membership.active', { date: formatDate(membership.renews_at ?? membership.starts_at, lang) })}</p>
-      : ent.pkg.left > 0 ? null : <Card tone="highlight" className="row-between wrap"><span className="small">{t('customer.home.membership.nudge')}</span><Link to="/app/plans"><Button size="sm" variant="secondary">{t('customer.home.membership.cta')}</Button></Link></Card>,
+    // 0051 + Hoy all-roles (R-05): the active pack (classes left, expiry or freeze), a review-build membership, or the
+    // nudge to buy a pack. The section keeps its name (stored layouts reference it).
+    'MembershipNudge (if no plan)': () => plan.kind === 'pack'
+      ? <Card eyebrow={t('customer.home.plan.eyebrow')} className="row-between wrap" data-plan-card="pack">
+          <span className="small"><strong>{plural(t, 'customer.home.plan.left', plan.left)}</strong>
+            {plan.frozenUntil ? ` · ${t('customer.home.plan.frozen', { date: formatDate(plan.frozenUntil, lang) })}` : plan.expires ? ` · ${t('customer.home.plan.expires', { date: formatDate(plan.expires, lang) })}` : ''}</span>
+          <Link to="/app/passes" className="small">{t('customer.home.membership.cta')}</Link>
+        </Card>
+      : plan.kind === 'membership'
+        ? <p className="small muted" data-plan-card="membership">{t('customer.home.membership.active', { date: formatDate(plan.date, lang) })}</p>
+        : <Card tone="highlight" className="row-between wrap" data-plan-card="none"><span className="small">{t('customer.home.membership.nudge')}</span><Link to="/app/plans"><Button size="sm" variant="secondary">{t('customer.home.membership.cta')}</Button></Link></Card>,
     'AnnouncementCard (if active)': () => <Card tone="muted" eyebrow={t('customer.home.announcement')}><p className="small">{t('customer.home.announcement.body')}</p></Card>,
     'NextClassCard + countdown': () => (
       <section className="stack-sm">
@@ -98,8 +106,9 @@ export function CustomerHomePage() {
     'EventsStrip → BottomNav': () => null,
   };
 
-  // E-01: day one — no booking, no history — teaches the next step instead of empty containers.
-  if (!bookingsLoading && myBookings.length === 0) return <div className="container page"><EmptyHomeBlock /></div>;
+  // E-01: day one — no booking, no history — teaches the next step instead of empty containers. A customer who bought
+  // a pack but has not booked yet sees the home with their pack instead (it would tell them they have no package).
+  if (!bookingsLoading && myBookings.length === 0 && plan.kind !== 'pack') return <div className="container page"><EmptyHomeBlock /></div>;
 
   return (
     <div className="container page cust-home">

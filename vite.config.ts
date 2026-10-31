@@ -33,7 +33,9 @@ function countFiles(dir: string, suffix: string): number {
  * - scripts/prune-production.mjs then removes the review-only files `public/` copies (hub map, source material).
  */
 const PRODUCTION = process.env.VITE_HOY_BUILD === 'production';
-export const REVIEW_ONLY_MODULES = ['dev', 'docs', 'hub'];
+// `dev` ships since Hoy all-roles (lane C, 2026-10-31): the developer's home `/dev` is a launch route; the module's other
+// pages stay unregistered in production (launchRoutes.ts) until R-08 is decided.
+export const REVIEW_ONLY_MODULES = ['docs', 'hub'];
 const MODULES_GLOB = "import.meta.glob<ModuleExports>('../modules/*/index.ts', { eager: true })";
 const DOCS_DIR = join(here, 'docs') + '/';
 /**
