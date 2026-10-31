@@ -64,6 +64,8 @@ export const CONTRACT_REFUSALS = {
   template_not_found: { es: 'Ese gasto fijo ya no existe. Actualiza la página.', en: 'That recurring expense no longer exists. Refresh the page.' },
   invalid_day_of_month: { es: 'El día del mes debe estar entre 1 y 28.', en: 'The day of the month must be between 1 and 28.' },
   template_in_use: { es: 'Hay gastos registrados con este gasto fijo: desactívalo en lugar de borrarlo.', en: 'Expenses were recorded with this recurring expense: deactivate it instead of deleting it.' },
+  // The activity log (GET /t/:t/audit, M-07): a filter the API refused.
+  invalid_query: { es: 'No pudimos leer el registro con ese filtro. Cambia el rango o la búsqueda e inténtalo de nuevo.', en: 'We could not read the log with that filter. Change the range or the search and try again.' },
 } as const satisfies Record<string, RefusalCopy>;
 
 /** The connector's own codes: transport, session and launch scope. */

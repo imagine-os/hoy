@@ -13,6 +13,14 @@ name: Auth checks
 # ever narrowed to main, or given required reviewers, this job can no longer run on (or waits on every) pull request.
 # Each run also shows as a "deployment" to `test` on the pull request; nothing is deployed.
 #
+#   real-signup  by hand only (Run workflow, tick "real_signup"): the real-Clerk script with --real-api against the
+#                deployed TEST site (test-hoy: its Hoy server, real Company OS, Clerk's development instance). A new QA
+#                user signs up, lands on /app as a customer (`member`), then its Company OS records (membership, person,
+#                member) are removed through the API as a test-hoy Administration login, and its Clerk user deleted.
+#                Reads, in the `test` environment: secret CLERK_SECRET_KEY, variables CLERK_PUBLISHABLE_KEY, HOY_TEST_URL
+#                (the test site's origin) and HOY_CLEANUP_ADMIN_EMAIL (a test-hoy Administration login in the same Clerk
+#                instance). It refuses a site that says it is production or uses another Clerk instance.
+#
 # Muted 2026-10-30: real-clerk runs only by hand (Run workflow) until it passes. Its last run got past Clerk's
 # CAPTCHA but Clerk refused the code step: POST /v1/client/sign_ups/<id>/prepare_verification → 400
 # client_state_invalid. Restore it on pull requests by deleting the `if:` on the real-clerk job.
@@ -21,6 +29,11 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      real_signup:
+        description: Also run the sign-up check against the deployed test site (writes a QA user, then removes it)
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -85,3 +98,27 @@ jobs:
           QA_PROD_DIST: ${{ runner.temp }}/prod
           CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
           CLERK_PUBLISHABLE_KEY: ${{ vars.CLERK_PUBLISHABLE_KEY }}
+
+  real-signup:
+    if: github.event_name == 'workflow_dispatch' && inputs.real_signup
+    # Never cancelled half-way (its clean-up runs at the end), and never two at once on the test site.
+    concurrency:
+      group: real-signup-test-site
+      cancel-in-progress: false
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: test
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Sign-up end to end on the test site (real Clerk, real Company OS)
+        run: node scripts/test-auth-real-clerk.mjs --real-api
+        env:
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+          CLERK_PUBLISHABLE_KEY: ${{ vars.CLERK_PUBLISHABLE_KEY }}
+          HOY_TEST_URL: ${{ vars.HOY_TEST_URL }}
+          HOY_CLEANUP_ADMIN_EMAIL: ${{ vars.HOY_CLEANUP_ADMIN_EMAIL }}
