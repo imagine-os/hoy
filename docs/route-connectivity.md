@@ -18,7 +18,7 @@ read or write, provider method and mock-only branch the check can see in the pag
 it, goes through a working Company OS adapter (`src/data/companyos/mapping.ts`) or a method `CompanyOSProvider` really
 has. It is a static check with the limits below; the Wave 5 walk covers what it cannot see.
 
-How it traces a route:
+How it traces a route (signed-out pages: see *Signed-out pages* after the limits):
 
 1. **Routes.** Each module's `index.ts` (minus vite.config.ts `REVIEW_ONLY_MODULES`): its production block when it has one
    (`PRODUCTION_BUILD ? [...]`, `productionRoutes()`), else every route; the page is the `lazyPages` export (or the
@@ -44,12 +44,13 @@ How it traces a route:
 | `not_in_launch <file>` | page code throws `not_in_launch` itself (the review build's `if (!cos) throw` guard after `cosOf()` is not one) |
 | `mock_only <file>` | the flow runs only on the review build's MockProvider: on Company OS it throws `…_disconnected` or the control is hidden |
 | `dynamic <arg>` | a table name the check cannot resolve (computed, reassigned, a template literal): add a `DYNAMIC` entry naming where its values come from. A write always needs a resolved name |
-| `signed_out <table> (built-in catalogue)` / `(empty)` / `(write)` | on a signed-out page: a read the provider answers from the catalogue built into the app (`SIGNED_OUT` in `CompanyOSProvider.ts`) or with nothing, or a write |
+| `signed_out <table> (empty)` / `(write)` | on a signed-out page: a read of a table outside the live public set, which the provider answers with nothing (no request), or any write (no session: the Hoy server answers 401). See *Signed-out pages* below |
 
 Hostile checks in the script: synthetic pages that read a sink table (directly and two imports away), an unknown table,
 write a new table, write through a computed or reassigned name or a template literal, call a stub (also destructured),
-insert a role row, write a static table, read an entity or the built-in catalogue signed out, run a mock-only flow or
-throw `not_in_launch` must fail; a page on connected tables and a review-only branch must pass; a finding in no list,
+insert a role row, write a static table, signed out read an entity outside the live set or the settings row, write
+signed out, run a mock-only flow or throw `not_in_launch` must fail; a page on connected tables, a signed-out page on
+every live table (`list` and `get`), the signed-out pages' tables read signed in, and a review-only branch must pass; a finding in no list,
 and a list entry whose finding is gone, must fail.
 
 **Limits.** It over-reports at module level, and it can miss what it cannot see in the text:
@@ -69,8 +70,23 @@ and a list entry whose finding is gone, must fail.
 - `request()` paths are listed, not checked against the Company OS API: a wrong path fails at run time, which the
   Wave 5 access walk below catches.
 - Signed-out pages are the public-surface routes, minus `/auth/callback` and `/no-access` (only a signed-in person
-  reaches them). When lane F removes the signed-out catalogue from `CompanyOSProvider.list()`, the check reads signed-out
-  pages like signed-in ones (the server decides), and the `signed_out` entries go stale.
+  reaches them). The check does not see what the `public_site` policies hide inside a live table (fields, rows): that is
+  Company OS's `public-site.integration.test.ts` and Hoy's `test-website-signed-out-live.mjs`.
+
+## Signed-out pages (lane F's model, lane G2)
+
+Signed out, `CompanyOSProvider` reads a few tables live through the Hoy server's read-only `public_site` identity
+(ADR 0029) and answers every other table with nothing, without asking Company OS. The check reads that model from the
+code, never from a copy of its own:
+
+- `PUBLIC_TABLES` and the signed-out guards of `list()` and `get()` in `src/data/companyos/CompanyOSProvider.ts`;
+- `PUBLIC_ENTITIES` in `server/app.mjs` (the entities the server forwards signed out; anything else stays 401).
+
+The **live set** is every `PUBLIC_TABLES` entry whose adapter is an entity the server forwards (today plans, teachers,
+rooms, class_templates, class_sessions). On a signed-out page, a read of a static table or a live table is connected; any
+other read is `signed_out <table> (empty)` (the visitor sees an empty or default answer); any write is
+`signed_out <table> (write)`. The check fails closed: when a guard changes shape or either list cannot be read, or when a
+`PUBLIC_TABLES` table is not forwarded by the server (the provider would ask and get 401).
 
 ## The lists in the script
 
@@ -81,8 +97,8 @@ and a list entry whose finding is gone, must fail.
   the route out of `LAUNCH_ROUTES` until it is connected.
 - **`BY_DESIGN`**: unconnected on purpose, with the reason the empty or dropped answer is right in production (the
   layout editor's stored order, `peek()` as a first-render snapshot, the client's audit-row copy, the staff home's
-  review-only timeline, device-local photos, the administrators' settings save that sits in the module the site reads
-  opening hours from). Kept short; the check fails on an entry no launch route uses.
+  review-only timeline, device-local photos, the administrators' settings save that `useSettings()` returns to every
+  reader and no visitor calls). Kept short; the check fails on an entry no launch route uses.
 - **`DYNAMIC`**, **`RUNTIME_REVIEW`**: tracer inputs (helper hooks that forward a table name; run-time review branches).
 
 ## Findings on launch routes (2026-10-31)
@@ -93,7 +109,7 @@ and a list entry whose finding is gone, must fail.
 |---|---|---|---|
 | ~~`unknown memberships`~~ | `/app`, `/admin` | C (closed 2026-10-31) | the your-plan card (`customer/HomePage.tsx`) and the members tile (`admin/DashboardPage.tsx`) read packs |
 | `sink audit_log` | `/admin/activity` | E | `ActivityPage` reads `GET /t/:t/audit` |
-| `signed_out plans, teachers, rooms (built-in catalogue)`; `signed_out class_templates, class_sessions, bookings, tenants (empty)` | `/site/*` | F | the public_site identity (ADR 0029). Also read, outside the plan's list: `tenants` (opening hours, payment instructions) and `bookings` (places left, `MatPicker`, `SchedulePage`). When F lifts the signed-out model, the `BY_DESIGN` entry `signed_out tenants (write)` goes stale too: delete it |
+| ~~`signed_out plans, teachers, rooms, class_templates, class_sessions`~~ | `/site/*` | F (closed 2026-10-31) | read live through the public_site identity; the check judges signed-out pages against that live set (lane G2). What remains signed out is in `OPEN` below |
 
 ### Found by this audit, no lane yet (`OPEN`)
 
@@ -101,6 +117,8 @@ and a list entry whose finding is gone, must fail.
 |---|---|---|---|
 | ~~`unknown memberships`~~ | `*` and 15 staff, admin and customer routes | C (closed 2026-10-31, scope extension) | `staff/people.ts`, `data/useAnalytics.ts` read the active pack (`data/packMemberships.ts`); `customer/hooks.ts` reads none in production (the pack is `pkg`) |
 | `unknown`/`sink`/`mock_only` (lane C homes) | `/teach`, `/admin/content` | decision pending | the Teacher (S-03) and Marketing (M-02) homes entered `LAUNCH_ROUTES` unconnected (OPEN entries in the check); accept until Waves 3–4 or remove |
+| `signed_out tenants (empty)` | `/site/*` (13 routes) | closes: lane H2 (owner-approved settings split) | `useSettings()` (opening hours, contact, policies, legal texts) and the payment instructions on `/site/contact` read the `studio_settings` row, which also holds the payroll rate card and payout account, so `public_site` may not read it (decision F-01): visitors see the app defaults, not what the studio saved |
+| `signed_out bookings (empty)` | `/site/schedule` (`/site/*`) | closes: lane H2 (public_site read of booked spots) | the schedule drawer's mat map (`SchedulePage` `taken`, `MatPicker` without `taken`) shows every mat free; checkout refuses `spot_taken` after sign-in. Places left are right (`booked_count` is live) |
 | `sink audit_log` | `/admin` | E (scope extension) | the dashboard's recent-activity card is always empty |
 | `sink message_log` | `*`, `/admin/crm/:id`, `/staff`, `/staff/inbox/*` | unassigned | `data/comms.ts`: the inbox, member messages and notes, the unread badge read nothing; a sent note is dropped |
 | `unknown hours_overrides` | `/admin/settings/*`, `/app/plans`, `/app/faq`, `/app/faq/2`, `/app/more`, `/site/*` | unassigned (recipe entity, size S) | `useOpeningHours()`: holidays and special hours are never read |
@@ -203,19 +221,19 @@ W = written, with each table's adapter kind (`none` = no adapter). Findings name
 | `/app/vouchers` | R: —<br>W: — | POST /api/:x, POST /query | none |
 | `/app/vouchers/:code` | R: —<br>W: — | POST /api/:x, POST /query | none |
 | `/app/gift-voucher` | R: plans (entity)<br>W: — | — | none |
-| `/site` | R: class_sessions (entity), class_templates (entity), hours_overrides (none), media_assets (static), modalities (static), page_layouts (none), plans (entity), reviews (none), teachers (entity), tenants (settings)<br>W: page_layouts (none), tenants (settings) | — | signed_out tenants (empty) → lane F; unknown hours_overrides → unassigned (a recipe-defined entity, Wave 2 size S); signed_out plans (built-in catalogue) → lane F; signed_out class_templates (empty) → lane F; signed_out class_sessions (empty) → lane F; signed_out teachers (built-in catalogue) → lane F; unknown reviews → Wave 3 |
-| `/site/about` | R: hours_overrides (none), media_assets (static), page_layouts (none), tenants (settings)<br>W: page_layouts (none), tenants (settings) | — | signed_out tenants (empty) → lane F; unknown hours_overrides → unassigned (a recipe-defined entity, Wave 2 size S) |
-| `/site/classes` | R: hours_overrides (none), media_assets (static), modalities (static), page_layouts (none), plans (entity), teachers (entity), tenants (settings)<br>W: page_layouts (none), tenants (settings) | — | signed_out tenants (empty) → lane F; unknown hours_overrides → unassigned (a recipe-defined entity, Wave 2 size S); signed_out plans (built-in catalogue) → lane F; signed_out teachers (built-in catalogue) → lane F |
-| `/site/classes/:slug` | R: hours_overrides (none), media_assets (static), modalities (static), page_layouts (none), plans (entity), teachers (entity), tenants (settings)<br>W: page_layouts (none), tenants (settings) | — | signed_out tenants (empty) → lane F; unknown hours_overrides → unassigned (a recipe-defined entity, Wave 2 size S); signed_out plans (built-in catalogue) → lane F; signed_out teachers (built-in catalogue) → lane F |
-| `/site/modalities` | R: hours_overrides (none), media_assets (static), modalities (static), page_layouts (none), tenants (settings)<br>W: page_layouts (none), tenants (settings) | — | signed_out tenants (empty) → lane F; unknown hours_overrides → unassigned (a recipe-defined entity, Wave 2 size S) |
-| `/site/schedule` | R: bookings (entity), class_sessions (entity), class_templates (entity), hours_overrides (none), media_assets (static), modalities (static), page_layouts (none), rooms (entity), teachers (entity), tenants (settings)<br>W: page_layouts (none), tenants (settings) | — | signed_out class_sessions (empty) → lane F; signed_out class_templates (empty) → lane F; signed_out rooms (built-in catalogue) → lane F; signed_out tenants (empty) → lane F; unknown hours_overrides → unassigned (a recipe-defined entity, Wave 2 size S); signed_out teachers (built-in catalogue) → lane F; signed_out bookings (empty) → lane F |
-| `/site/teachers` | R: hours_overrides (none), media_assets (static), modalities (static), page_layouts (none), teachers (entity), tenants (settings)<br>W: page_layouts (none), tenants (settings) | — | signed_out tenants (empty) → lane F; unknown hours_overrides → unassigned (a recipe-defined entity, Wave 2 size S); signed_out teachers (built-in catalogue) → lane F |
-| `/site/plans` | R: hours_overrides (none), media_assets (static), page_layouts (none), plans (entity), tenants (settings)<br>W: page_layouts (none), tenants (settings) | — | signed_out tenants (empty) → lane F; unknown hours_overrides → unassigned (a recipe-defined entity, Wave 2 size S); signed_out plans (built-in catalogue) → lane F |
-| `/site/faq` | R: faq_entries (static), hours_overrides (none), media_assets (static), page_layouts (none), plans (entity), tenants (settings)<br>W: page_layouts (none), tenants (settings) | — | signed_out tenants (empty) → lane F; unknown hours_overrides → unassigned (a recipe-defined entity, Wave 2 size S); signed_out plans (built-in catalogue) → lane F |
-| `/site/contact` | R: hours_overrides (none), media_assets (static), page_layouts (none), tenants (settings)<br>W: page_layouts (none), tenants (settings) | — | signed_out tenants (empty) → lane F; unknown hours_overrides → unassigned (a recipe-defined entity, Wave 2 size S) |
-| `/site/delete-account` | R: hours_overrides (none), media_assets (static), page_layouts (none), tenants (settings)<br>W: audit_log (sink), deletion_requests (none), page_layouts (none), tenants (settings) | — | signed_out tenants (empty) → lane F; unknown hours_overrides → unassigned (a recipe-defined entity, Wave 2 size S); unknown deletion_requests → Wave 2 |
-| `/site/legal/terms` | R: hours_overrides (none), legal_documents (static), media_assets (static), page_layouts (none), tenants (settings)<br>W: page_layouts (none), tenants (settings) | — | signed_out tenants (empty) → lane F; unknown hours_overrides → unassigned (a recipe-defined entity, Wave 2 size S) |
-| `/site/legal/privacy` | R: hours_overrides (none), legal_documents (static), media_assets (static), page_layouts (none), tenants (settings)<br>W: page_layouts (none), tenants (settings) | — | signed_out tenants (empty) → lane F; unknown hours_overrides → unassigned (a recipe-defined entity, Wave 2 size S) |
+| `/site` | R: class_sessions (entity), class_templates (entity), hours_overrides (none), media_assets (static), modalities (static), page_layouts (none), plans (entity), reviews (none), teachers (entity), tenants (settings)<br>W: page_layouts (none), tenants (settings) | — | signed_out tenants (empty) → H2 (owner-approved: settings split); unknown hours_overrides → unassigned (a recipe-defined entity, Wave 2 size S); unknown reviews → Wave 3 |
+| `/site/about` | R: hours_overrides (none), media_assets (static), page_layouts (none), tenants (settings)<br>W: page_layouts (none), tenants (settings) | — | signed_out tenants (empty) → H2 (owner-approved: settings split); unknown hours_overrides → unassigned (a recipe-defined entity, Wave 2 size S) |
+| `/site/classes` | R: hours_overrides (none), media_assets (static), modalities (static), page_layouts (none), plans (entity), teachers (entity), tenants (settings)<br>W: page_layouts (none), tenants (settings) | — | signed_out tenants (empty) → H2 (owner-approved: settings split); unknown hours_overrides → unassigned (a recipe-defined entity, Wave 2 size S) |
+| `/site/classes/:slug` | R: hours_overrides (none), media_assets (static), modalities (static), page_layouts (none), plans (entity), teachers (entity), tenants (settings)<br>W: page_layouts (none), tenants (settings) | — | signed_out tenants (empty) → H2 (owner-approved: settings split); unknown hours_overrides → unassigned (a recipe-defined entity, Wave 2 size S) |
+| `/site/modalities` | R: hours_overrides (none), media_assets (static), modalities (static), page_layouts (none), tenants (settings)<br>W: page_layouts (none), tenants (settings) | — | signed_out tenants (empty) → H2 (owner-approved: settings split); unknown hours_overrides → unassigned (a recipe-defined entity, Wave 2 size S) |
+| `/site/schedule` | R: bookings (entity), class_sessions (entity), class_templates (entity), hours_overrides (none), media_assets (static), modalities (static), page_layouts (none), rooms (entity), teachers (entity), tenants (settings)<br>W: page_layouts (none), tenants (settings) | — | signed_out tenants (empty) → H2 (owner-approved: settings split); unknown hours_overrides → unassigned (a recipe-defined entity, Wave 2 size S); signed_out bookings (empty) → H2 (owner-approved: public booked spots) |
+| `/site/teachers` | R: hours_overrides (none), media_assets (static), modalities (static), page_layouts (none), teachers (entity), tenants (settings)<br>W: page_layouts (none), tenants (settings) | — | signed_out tenants (empty) → H2 (owner-approved: settings split); unknown hours_overrides → unassigned (a recipe-defined entity, Wave 2 size S) |
+| `/site/plans` | R: hours_overrides (none), media_assets (static), page_layouts (none), plans (entity), tenants (settings)<br>W: page_layouts (none), tenants (settings) | — | signed_out tenants (empty) → H2 (owner-approved: settings split); unknown hours_overrides → unassigned (a recipe-defined entity, Wave 2 size S) |
+| `/site/faq` | R: faq_entries (static), hours_overrides (none), media_assets (static), page_layouts (none), plans (entity), tenants (settings)<br>W: page_layouts (none), tenants (settings) | — | signed_out tenants (empty) → H2 (owner-approved: settings split); unknown hours_overrides → unassigned (a recipe-defined entity, Wave 2 size S) |
+| `/site/contact` | R: hours_overrides (none), media_assets (static), page_layouts (none), tenants (settings)<br>W: page_layouts (none), tenants (settings) | — | signed_out tenants (empty) → H2 (owner-approved: settings split); unknown hours_overrides → unassigned (a recipe-defined entity, Wave 2 size S) |
+| `/site/delete-account` | R: hours_overrides (none), media_assets (static), page_layouts (none), tenants (settings)<br>W: audit_log (sink), deletion_requests (none), page_layouts (none), tenants (settings) | — | signed_out tenants (empty) → H2 (owner-approved: settings split); unknown hours_overrides → unassigned (a recipe-defined entity, Wave 2 size S); unknown deletion_requests → Wave 2 |
+| `/site/legal/terms` | R: hours_overrides (none), legal_documents (static), media_assets (static), page_layouts (none), tenants (settings)<br>W: page_layouts (none), tenants (settings) | — | signed_out tenants (empty) → H2 (owner-approved: settings split); unknown hours_overrides → unassigned (a recipe-defined entity, Wave 2 size S) |
+| `/site/legal/privacy` | R: hours_overrides (none), legal_documents (static), media_assets (static), page_layouts (none), tenants (settings)<br>W: page_layouts (none), tenants (settings) | — | signed_out tenants (empty) → H2 (owner-approved: settings split); unknown hours_overrides → unassigned (a recipe-defined entity, Wave 2 size S) |
 
 ## Inventory: routes Waves 1–4 add back (not in `LAUNCH_ROUTES`)
 
