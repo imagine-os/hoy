@@ -11,14 +11,16 @@ import { Badge } from '../../../components/atom/Badge/Badge';
 import { EmptyState } from '../../../components/molecule/EmptyState/EmptyState';
 import { cosRequest, errorCode } from '../../staff/desk/wire';
 import { deskErrorText } from '../../staff/desk/strings';
-import { PartialTeamChange, TEAM_ROLES, changeRole, invite, inviteRedirect, isTeamRole, listTeam, needsRepair, removeFromTeam, resendInvitation, sendInvitationEmail, teamGuard, teamRoleOf, type InviteOutcome, type TeamRoleKey, type TeamUser } from './teamApi';
+import { PartialTeamChange, SUPER_ADMIN, TEAM_ROLES, changeRole, invite, inviteRedirect, isTeamRole, listTeam, needsRepair, removeFromTeam, resendInvitation, sendInvitationEmail, teamGuard, teamRoleOf, type InviteOutcome, type TeamRoleKey, type TeamUser } from './teamApi';
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /** AD-06 in the production build: invite, re-send an invitation, change role and remove Front desk and Administration users. */
 export function TeamUsersPanel() {
   const { t } = useI18n();
-  const { user } = useSession();
+  const { user, isSuperAdmin } = useSession();
+  // Only a super admin offers Super admin (a screen rule; Company OS decides who may write memberships).
+  const grantable = (current?: TeamRoleKey) => TEAM_ROLES.filter(r => r !== SUPER_ADMIN || isSuperAdmin || r === current);
   const request = cosRequest(useData());
   const [users, setUsers] = useState<TeamUser[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -98,7 +100,7 @@ export function TeamUsersPanel() {
     if (!link) return;
     try { await navigator.clipboard.writeText(link.url); setCopied(true); } catch { setCopied(false); }
   };
-  const guarded = (u: TeamUser, next: TeamRoleKey | null) => { const g = teamGuard(users ?? [], u, next, user.id); if (g) setError(t(`team.guard.${g}`)); return !!g; };
+  const guarded = (u: TeamUser, next: TeamRoleKey | null) => { const g = teamGuard(users ?? [], u, next, user.id, isSuperAdmin); if (g) setError(t(`team.guard.${g}`)); return !!g; };
 
   if (!request) return null;
   return (
@@ -107,7 +109,7 @@ export function TeamUsersPanel() {
         <p className="xs muted">{t('team.body')}</p>
         <div className="row wrap">
           <Field label={t('team.email')}>{id => <Input id={id} type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />}</Field>
-          <Field label={t('team.role')}>{id => <Select id={id} value={form.role} onChange={e => setForm({ ...form, role: e.target.value as TeamRoleKey })}>{TEAM_ROLES.map(r => <option key={r} value={r}>{roleLabel(r)}</option>)}</Select>}</Field>
+          <Field label={t('team.role')}>{id => <Select id={id} value={form.role} onChange={e => setForm({ ...form, role: e.target.value as TeamRoleKey })}>{grantable().map(r => <option key={r} value={r}>{roleLabel(r)}</option>)}</Select>}</Field>
           <Button disabled={!EMAIL.test(form.email.trim()) || !!busy} loading={busy === 'invite'} onClick={sendInvite}>{t('team.invite')}</Button>
         </div>
         {notice && <p className="small rooms-free" role="status">{notice}</p>}
@@ -122,9 +124,9 @@ export function TeamUsersPanel() {
         {!users ? <EmptyState compact tone="loading" title={t('core.common.loading')} /> : users.length === 0 ? <EmptyState compact title={t('team.empty')} /> : users.map(u => {
           const current = teamRoleOf(u) as TeamRoleKey;
           return <div key={u.userId} className="row-between wrap">
-            <span><strong className="small crm-name">{u.name || u.email}</strong> <span className="xs muted">{u.email}</span> <Badge tone={current === 'administrator' ? 'primary' : 'neutral'}>{roleLabel(current)}</Badge></span>
+            <span><strong className="small crm-name">{u.name || u.email}</strong> <span className="xs muted">{u.email}</span> <Badge tone={current === 'administrator' || current === SUPER_ADMIN ? 'primary' : 'neutral'}>{roleLabel(current)}</Badge></span>
             <span className="row wrap">
-              <Select aria-label={t('team.role')} value={current} disabled={!!busy} onChange={e => { const next = e.target.value as TeamRoleKey; if (next !== current && !guarded(u, next)) void setRole(u, next, 'team.changed'); }}>{TEAM_ROLES.map(r => <option key={r} value={r}>{roleLabel(r)}</option>)}</Select>
+              <Select aria-label={t('team.role')} value={current} disabled={!!busy} onChange={e => { const next = e.target.value as TeamRoleKey; if (next !== current && !guarded(u, next)) void setRole(u, next, 'team.changed'); }}>{grantable(current).map(r => <option key={r} value={r}>{roleLabel(r)}</option>)}</Select>
               {needsRepair(u) && <Button size="sm" variant="secondary" disabled={!!busy} onClick={() => { if (!guarded(u, current)) void setRole(u, current, 'team.repaired'); }}>{t('team.repair')}</Button>}
               {/* The list can't tell who has signed up: Company OS answers `already_signed_up` and the notice says so. */}
               {u.userId !== user.id && <Button size="sm" variant="ghost" icon="mail" disabled={!!busy} loading={busy === `resend:${u.userId}`} onClick={() => resend(u)}>{t('team.resend')}</Button>}

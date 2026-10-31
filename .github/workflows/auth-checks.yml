@@ -68,12 +68,22 @@ jobs:
         run: node scripts/test-auth-identity.mjs
       - name: Launch routes
         run: node scripts/test-launch-routes.mjs
+      - name: Launch config and the role matrix (11 roles)
+        run: node scripts/test-launch-config.mjs
+      - name: Memberships read as packs (home plan card, dashboard tile)
+        run: node scripts/test-pack-reads.mjs
+      - name: A payment's date is its approval (approved_at)
+        run: node scripts/test-payment-paid-at.mjs
       - name: Route connectivity (every launch route on a working Company OS adapter; docs/route-connectivity.md)
         run: node scripts/test-route-connectivity.mjs
       - name: Review build
         run: npm run build
       - name: What each build ships
         run: node scripts/test-auth-builds.mjs
+        env:
+          QA_PROD_DIST: ${{ runner.temp }}/prod
+      - name: Every role signs in to its home (production build) and the review build's matrix
+        run: node scripts/test-launch-roles-ui.mjs
         env:
           QA_PROD_DIST: ${{ runner.temp }}/prod
 

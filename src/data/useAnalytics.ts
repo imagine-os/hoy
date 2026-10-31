@@ -9,6 +9,20 @@ import { useSession } from '../auth/SessionProvider';
 import { dateKey, fromDateKey } from '../i18n/format';
 import type { ActivityEventRow, BookingRow, ClassSessionRow, ClassLedgerRow, GoalSource, MembershipRow, ModalityRow, PracticeGoalRow, ProfileRow, ReviewRow, TeacherRow, UserRow } from './schema';
 import { activeGoalOf, practiceStats, studioStats, teacherStats, type PracticeStats, type StudioStats, type TeacherStats } from './analytics';
+import { PRODUCTION_BUILD } from '../config/launch';
+import { packMemberships } from './packMemberships';
+
+/**
+ * A person's plan rows (pauses, at-risk): the review build's memberships, or in production (no `memberships` table;
+ * R-05) their active pack from the credits ledger. Chosen once per build, so the hook order never changes.
+ */
+const usePersonPlanRows: (userId: string) => MembershipRow[] = PRODUCTION_BUILD
+  ? (userId) => { const today = dateKey(new Date()); const { rows } = useTable<ClassLedgerRow>('class_ledger', { where: { user_id: userId } }); return useMemo(() => packMemberships(rows, today), [rows, today]); }
+  : (userId) => useTable<MembershipRow>('memberships', { where: { user_id: userId } }).rows;
+/** Every plan row, for the studio numbers: in production derived from the ledger the studio input already reads. */
+const useStudioPlanRows: (ledger: ClassLedgerRow[]) => MembershipRow[] = PRODUCTION_BUILD
+  ? (ledger) => { const today = dateKey(new Date()); return useMemo(() => packMemberships(ledger, today), [ledger, today]); }
+  : () => useTable<MembershipRow>('memberships').rows;
 
 /** The one active goal of a person (the latest by starts_on, then created_at, when the data ever holds two). */
 const activeGoal = (rows: PracticeGoalRow[]): PracticeGoalRow | null => activeGoalOf(rows);
@@ -21,7 +35,7 @@ export function usePracticeStats(userId?: string): { stats: PracticeStats; goal:
   const { rows: sessions, loading: l2 } = useTable<ClassSessionRow>('class_sessions');
   // Every goal row, ended ones included: past weeks are graded by the goal they were lived under (analytics.ts rule 8).
   const { rows: goals, loading: l3 } = useTable<PracticeGoalRow>('practice_goals', { where: { user_id: id } });
-  const { rows: memberships } = useTable<MembershipRow>('memberships', { where: { user_id: id } });
+  const memberships = usePersonPlanRows(id);
   const goal = useMemo(() => activeGoal(goals), [goals]);
   const stats = useMemo(() => practiceStats({ userId: id, bookings, sessions, goals, memberships }), [id, bookings, sessions, goals, memberships]);
   return { stats, goal, loading: l1 || l2 || l3 };
@@ -94,10 +108,10 @@ export function useMilestoneRecorder(stats: PracticeStats): void {
 function useStudioInput(rangeDays: number) {
   const { rows: bookings } = useTable<BookingRow>('bookings');
   const { rows: sessions } = useTable<ClassSessionRow>('class_sessions');
-  const { rows: memberships } = useTable<MembershipRow>('memberships');
   const { rows: profiles } = useTable<ProfileRow>('profiles');
   const { rows: users } = useTable<UserRow>('users');
   const { rows: ledger } = useTable<ClassLedgerRow>('class_ledger');
+  const memberships = useStudioPlanRows(ledger);
   const { rows: goals } = useTable<PracticeGoalRow>('practice_goals', { where: { active: true } });
   const { rows: teachers } = useTable<TeacherRow>('teachers');
   const { rows: modalities } = useTable<ModalityRow>('modalities');

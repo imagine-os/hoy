@@ -79,6 +79,7 @@ const str = (v: unknown) => (v == null || v === '' ? null : String(v));
 const num = (v: unknown) => (v == null || v === '' ? null : Number(v));
 const bool = (v: unknown) => v === true || v === 'true' || v === 1;
 const fold = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+const validInstant = (v: unknown): string | null => { try { const t = toInstant(v); return t && !Number.isNaN(Date.parse(t)) ? t : null; } catch { return null; } };
 const refId = (v: unknown): unknown => (v && typeof v === 'object' && 'id' in (v as object) ? (v as { id: unknown }).id : v);
 const embedded = (rec: CosRecord, field: string): Record<string, unknown> | null => {
   const v = rec.data[field];
@@ -116,8 +117,8 @@ export const RECEIPT_STATUS = valueMap({ rejected: 'declined' }, { declined: 're
 /** plans.family ← product.kind. */
 const FAMILY_OF_KIND: Record<string, string> = { single: 'bienvenida', trial: 'bienvenida', pack: 'paquetes', private: 'privadas', gift: 'regalos' };
 const KIND_OF_FAMILY: Record<string, string> = { bienvenida: 'single', paquetes: 'pack', privadas: 'private', regalos: 'gift' };
-/** /me role keys → frontend roles (`src/auth/roles.ts`). */
-export const ROLE_OF_KEY: Record<string, string> = { super_admin: 'super_admin', administrator: 'admin', front_desk: 'front_desk', member: 'customer', treasurer: 'finance', booking_manager: 'coordinator', coach: 'teacher' };
+/** /me role keys → frontend roles: the one table in `src/auth/companyOsIdentity.ts` (`ROLE_KEYS`). */
+export { ROLE_OF_KEY } from '../../auth/companyOsIdentity';
 /** class_ledger.reason ← credit_entry.reason (and, for a grant, the lot's source). */
 function ledgerReason(rec: CosRecord): string {
   const reason = str(rec.data.reason);
@@ -271,7 +272,8 @@ const payments = entity({
     provider_ref: { field: 'provider_ref' }, status: { field: 'status' }, note: { field: 'notes' },
     reference: { field: 'reference' }, concept: { field: 'concept' }, price_override_reason: { field: 'price_override_reason' },
     for_entity: { field: 'for_entity' }, for_id: { field: 'for_id' }, date: { field: 'date', kind: 'day' },
-    paid_at: { derive: (r) => (r.data.status === 'approved' ? toInstant(r.updatedAt) : null) },
+    /** The day Company OS approved it (`approved_at`, server-set); the last update only when that is missing (lane B). */
+    paid_at: { derive: (r) => (r.data.status === 'approved' ? (validInstant(r.data.approved_at) ?? toInstant(r.updatedAt)) : null) },
     currency: { derive: () => 'COP' }, taken_by: { derive: () => null }, frontend_receipt: { derive: () => null },
   },
   /** `concept` is required by payments; the desk or the screen may send its own. */

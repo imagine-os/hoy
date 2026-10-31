@@ -256,7 +256,7 @@ try {
     ];
     assert.deepEqual(m.teamMembers(users).map(u => u.userId), ['u1', 'u2', 'u4'], 'a super_admin-only login is on the team');
     assert.equal(m.adminCount(users), 2, 'super_admin counts as Administration');
-    assert.equal(m.teamRoleOf(users[3]), 'administrator');
+    assert.equal(m.teamRoleOf(users[3]), 'super_admin', 'Hoy all-roles (lane C, on purpose): a super_admin-only login is the Super admin role, no longer shown as Administration');
     assert.equal(m.teamGuard(users.slice(0, 3), users[0], 'front_desk', 'u2'), 'last_admin');
     assert.equal(m.teamGuard(users.slice(0, 3), users[0], null, 'u2'), 'last_admin');
     assert.equal(m.teamGuard(users, users[0], null, 'u2'), null, 'another admin (super_admin) remains');
