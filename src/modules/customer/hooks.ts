@@ -15,7 +15,14 @@ import { priceItem, type PriceItem } from '../../tenant/pricing';
 import { policy } from './policy';
 import { guardStudioWaitlist, promoteStudioWaitlist } from './studioWaitlist';
 import { rescheduleBooking } from './rescheduleCommand';
+import { PRODUCTION_BUILD } from '../../config/launch';
 import { approvedPackageRows, freezePatch, packageState, resumePatch, selectPackagePurchase } from '../../data/packages';
+
+/**
+ * The customer's recurring memberships: the review build's rows; none in production (no `memberships` table; R-05:
+ * Hoy sells class packs, which `pkg` below already reads from the credits ledger). Chosen once per build.
+ */
+const useOwnMemberships: () => MembershipRow[] = PRODUCTION_BUILD ? () => [] : () => useScopedCustomerRead<MembershipRow>('memberships', undefined, true).rows;
 
 export interface WaitlistRow extends BaseRow { user_id: string; session_id: string; position: number; status: 'waiting' | 'offered' | 'claimed' | 'expired' | 'left'; offered_at: string | null; claim_until: string | null }
 export interface EmergencyContact { name: string; phone: string }
@@ -73,7 +80,7 @@ export type EntitlementKind = 'package' | 'membership' | 'trial' | 'single';
 export function useEntitlements() {
   const { user } = useSession();
   const trial=useTrialAssessment(user.id);
-  const { rows: memberships } = useScopedCustomerRead<MembershipRow>('memberships', undefined, true);
+  const memberships = useOwnMemberships();
   const { rows: ledger } = useScopedCustomerRead<ClassLedgerRow>('class_ledger', undefined, true);
   const { rows: payments } = useScopedCustomerRead<PaymentRow>('payments', undefined, true);
   const { rows: bookings } = useScopedCustomerRead<BookingRow>('bookings', undefined, true);
