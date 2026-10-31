@@ -69,7 +69,8 @@ const server = createServer(async (req, res) => {
       api.auditCalls.push(Object.fromEntries(url.searchParams));
       // Like Company OS: super admin only ("super-admin only"), zod-checked query, `before` is exclusive.
       if (!m?.isSuperAdmin) return json(res, 403, { error: 'super-admin only' });
-      if (api.auditStatus) return json(res, api.auditStatus, { error: 'server_error' });
+      // The Hoy server's own answer when Company OS is unreachable (502 upstream_unavailable).
+      if (api.auditStatus) return json(res, api.auditStatus, { error: 'upstream_unavailable' });
       for (const k of url.searchParams.keys()) if (!DOCUMENTED.has(k)) return json(res, 400, { error: 'invalid query' });
       const limit = Number(url.searchParams.get('limit') ?? 100);
       if (!Number.isInteger(limit) || limit < 1 || limit > 500) return json(res, 400, { error: 'invalid query' });
@@ -170,7 +171,7 @@ try {
   await ctx.close();
 
   // 5. Company OS is down: the service copy and a retry, not the empty state
-  api.events = trail(5); api.auditStatus = 500; api.auditCalls = [];
+  api.events = trail(5); api.auditStatus = 502; api.auditCalls = [];
   ({ ctx, page } = await openAs('admin@example.test'));
   await settled(page);
   text = await main(page);

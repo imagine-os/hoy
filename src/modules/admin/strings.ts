@@ -617,6 +617,15 @@ export const strings: StringTable = {
   'admin.activity.after': { es: 'Después', en: 'After' },
   'admin.activity.raw': { es: 'Detalle', en: 'Detail' },
   'admin.activity.immutable': { es: 'Esta fila es inmutable.', en: 'This row is immutable.' },
+  'admin.activity.superAdminOnly': { es: 'El registro de actividad lo leen solo quienes tienen el rol Super Admin del estudio (Administración).', en: 'Only people with the studio\'s Super Admin role (Administration) can read the activity log.' },
+  'admin.activity.truncated': { es: 'Se muestran las {n} acciones más recientes. Elige un rango más corto para ver el resto.', en: 'Showing the {n} most recent actions. Choose a shorter range to see the rest.' },
+  'admin.activity.platform': { es: 'Operador de la plataforma', en: 'Platform operator' },
+  'admin.activity.unknownActor': { es: 'Usuario {id}', en: 'User {id}' },
+  'admin.activity.retry': { es: 'Reintentar', en: 'Retry' },
+  'admin.activity.empty.none': { es: 'Todavía no hay actividad registrada en este rango.', en: 'No activity has been recorded in this range yet.' },
+  'admin.activity.source.api': { es: 'Servidor', en: 'Server' },
+  'admin.activity.source.platform': { es: 'Plataforma', en: 'Platform' },
+  'admin.activity.retention.live': { es: 'Solo anexar: Company OS guarda cada acción y nadie puede editarla ni borrarla desde la app.', en: 'Append-only: Company OS keeps every action and nobody can edit or delete it from the app.' },
 
   // M-08 settings
   'admin.settings.title': { es: 'Ajustes y políticas', en: 'Settings & policies' },

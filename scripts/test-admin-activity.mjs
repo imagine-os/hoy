@@ -177,6 +177,49 @@ try {
       assert.ok(s?.es && s?.en && s.es !== s.en, `missing or untranslated ${key}`);
     }
   });
+  // Against a REAL local Company OS (dev auth), when COS_LOCAL_API is set: the request shape is accepted and the
+  // answer parses; small pages walk the trail without gaps; a member (not Super Admin) is refused `forbidden`.
+  const API = process.env.COS_LOCAL_API ?? '';
+  if (!API) console.log('SKIP AC-20 (no COS_LOCAL_API: a local Company OS with the Hoy recipe applied)');
+  else await row('AC-20 a real Company OS accepts the request and pages its trail; a member is refused', async () => {
+    const ROOT = `${new URL(API).origin}/t/${process.env.COS_LOCAL_TENANT ?? 'hoy-e'}`;
+    const login = await fetch(`${ROOT}/auth/dev-login`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email: process.env.COS_LOCAL_ADMIN_EMAIL ?? 'admin-e@example.test' }) }).then((r) => r.json());
+    const as = (token) => async (method, path) => {
+      const res = await fetch(`${ROOT}${path}`, { method, headers: { authorization: `Bearer ${token}` } });
+      const body = await res.json().catch(() => null);
+      if (!res.ok) throw Object.assign(new Error(m.normalizeCode(body?.error, res.status)), { code: m.normalizeCode(body?.error, res.status), status: res.status });
+      return body;
+    };
+    const admin = as(login.token);
+    const all = await m.readAudit(admin, { since: '2000-01-01T00:00:00.000Z' });
+    assert.ok(all.events.length >= 3, `${all.events.length} events on the local tenant`);
+    // Walk it 10 rows at a time with the module's page reader and readAudit's rule (next page from one millisecond
+    // past the last row, seen ids dropped): the same ids as the one-shot read.
+    const walked = [];
+    let before;
+    for (let i = 0; i < 500; i++) {
+      const page = await m.readAuditPage(admin, { since: '2000-01-01T00:00:00.000Z', limit: 10, before });
+      const fresh = page.filter((e) => !walked.includes(e.id));
+      walked.push(...fresh.map((e) => e.id));
+      if (page.length < 10 || !fresh.length) break;
+      before = new Date(Date.parse(page[page.length - 1].at) + 1).toISOString();
+    }
+    // Rows written in one transaction share one timestamp, and Postgres orders exact ties differently between queries:
+    // compare the sets, and that the one-shot read is newest first.
+    assert.deepEqual([...walked].sort(), all.events.map((e) => e.id).sort(), `walked ${walked.length}, read ${all.events.length}`);
+    assert.ok(all.events.every((e, i) => i === 0 || Date.parse(all.events[i - 1].at) >= Date.parse(e.at)), 'newest first');
+    const filtered = await m.readAuditPage(admin, { event: 'record.', q: 'x&y%', actor: login.user?.id, limit: 5 });
+    assert.ok(Array.isArray(filtered));
+    const member = (await admin('GET', '/admin/users')).users.find((u) => u.memberships.every((x) => x.roleKey === 'member'));
+    if (member) {
+      // A member's own token (dev auth: HS256 { sub } with the local dev secret).
+      const { createHmac } = await import('node:crypto');
+      const b64 = (o) => Buffer.from(JSON.stringify(o)).toString('base64url');
+      const h = b64({ alg: 'HS256', typ: 'JWT' }), p = b64({ sub: member.userId, iat: Math.floor(Date.now() / 1000) });
+      const token = `${h}.${p}.${createHmac('sha256', process.env.COS_LOCAL_JWT_SECRET ?? 'dev-secret-change-me').update(`${h}.${p}`).digest('base64url')}`;
+      await assert.rejects(m.readAudit(as(token), {}), (e) => e.code === 'forbidden');
+    } else console.log('     (no member-only login on the local tenant: the refusal part was not run)');
+  });
 } catch (e) {
   failed++;
   console.log(`FAIL the audit module loads (${String(e?.message ?? e).split('\n')[0]})`);
