@@ -55,6 +55,8 @@ jobs:
         run: node scripts/test-auth-identity.mjs
       - name: Launch routes
         run: node scripts/test-launch-routes.mjs
+      - name: Route connectivity (every launch route on a working Company OS adapter; docs/route-connectivity.md)
+        run: node scripts/test-route-connectivity.mjs
       - name: Review build
         run: npm run build
       - name: What each build ships
