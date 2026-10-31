@@ -41,9 +41,6 @@ const { check, done } = reporter('route connectivity');
 // PENDING: another Wave 1 lane is closing it now.
 const PENDING = [
   { finding: 'sink audit_log', lane: 'E', routes: ['/admin/activity'], note: 'ActivityPage reads GET /t/:t/audit' },
-  // F: signed out, CompanyOSProvider answers SIGNED_OUT[table] or nothing; the public_site identity replaces it.
-  // tenants (opening hours, payment instructions) and bookings (places left) are read too: outside the plan's list.
-  ...['plans (built-in catalogue)', 'teachers (built-in catalogue)', 'rooms (built-in catalogue)', 'tenants (empty)', 'class_templates (empty)', 'class_sessions (empty)', 'bookings (empty)'].map((t) => ({ finding: `signed_out ${t}`, lane: 'F', routes: ['/site/*'], note: 'signed-out site on the public_site identity (ADR 0029)' })),
 ];
 // OPEN: found by this audit (lane G, 2026-10-31) on routes already in LAUNCH_ROUTES, with no lane closing it yet.
 const OPEN = [
@@ -81,6 +78,9 @@ const OPEN = [
   { finding: 'mock_only modules/customer/payments.ts', lane: 'unassigned (verify)', routes: ['/app/plans', '/app/classes'], note: 'recordPayment() is reachable: its audit row is mock-only, and a trial purchase calls assertTrialAvailable (trial_disconnected); check whether the production buy path calls it' },
   { finding: 'mock_only modules/quotes/hooks.ts', lane: 'unassigned', routes: ['/app/plans', '/app/passes', '/app/classes'], note: 'useOperationalCatalog().quote() answers null unless the provider is the mock' },
   { finding: 'mock_only modules/admin/paymentInstructions.ts', lane: 'unassigned', routes: ['/admin/settings/*'], note: 'saving the payment instructions throws payment_settings_disconnected' },
+  // Signed out (lane G2): reads outside the live public set (SIGNED_OUT_LIVE) come back empty without asking Company OS.
+  { finding: 'signed_out tenants (empty)', lane: 'H2 (owner-approved: settings split)', routes: ['/site/*'], note: 'useSettings() (admin/settings.ts: opening hours, contact, policies, legal texts) and readPaymentInstructions() on /site/contact read the studio_settings row, which also holds the payroll rate card and payout account, so the public_site identity cannot read it: every visitor sees the app defaults, not what the studio saved. Closes: lane H2 (the public sections move to a public studio_settings record public_site reads; PUBLIC_TABLES / PUBLIC_ENTITIES then include it)' },
+  { finding: 'signed_out bookings (empty)', lane: 'H2 (owner-approved: public booked spots)', routes: ['/site/*'], note: 'the schedule drawer\'s mat map (website/pages/SchedulePage.tsx taken, MatPicker without `taken`) reads bookings to grey out taken mats; signed out every mat looks free and checkout refuses spot_taken after sign-in. Places left are fine (occurrence.booked_count is live). Closes: lane H2 (a public_site read of booked spots per occurrence, no person, passed as MatPicker `taken`)' },
 ];
 
 // ── Uses that are unconnected on purpose: the production behaviour IS the empty read or the dropped write.
@@ -91,8 +91,8 @@ const BY_DESIGN = [
   { finding: 'sink audit_log', op: 'insert', why: 'the client\'s own audit row is dropped (mapping.ts sink); Company OS writes the audit entry for every write itself (GET /t/:t/audit)' },
   { finding: 'sink audit_log', op: 'read', file: 'src/modules/staff/HomePage.tsx', why: 'the hook runs, but the timeline it feeds renders only in the review build (`!PRODUCTION_BUILD &&`)' },
   { finding: 'mock_only components/organism/SharedImageField/SharedImageField.tsx', why: 'device-local photos exist only in the review build; production offers the shipped media catalogue' },
-  { finding: 'signed_out tenants (write)', file: 'src/modules/admin/settings.ts', why: 'the module that reads the opening hours also holds the administrators\' settings save; a signed-out visitor has no button that calls it (goes stale when lane F lifts the signed-out model: delete it then)' },
   { finding: 'mock_only data/useMediaLibrary.ts', why: 'device-local photos exist only in the review build; production lists the shipped media catalogue' },
+  { finding: 'signed_out tenants (write)', file: 'src/modules/admin/settings.ts', why: 'useSettings() returns save() next to the settings; no signed-out page calls it (the site, MapSlot and DeleteAccountPage take only `settings`), and signed out the row is empty, so save() writes nothing (`if (row)`)' },
 ];
 
 // ── Table names passed in a variable. `tables`: the values it takes (judged like literals). `via`: the helper forwards
@@ -150,10 +150,24 @@ const STUBS = new Set([...classBody.matchAll(/^ {2}async\s+(\w+)\([^)]*\)[^{]*\{
 const dpBody = typesSrc.slice(typesSrc.indexOf('export interface DataProvider'), typesSrc.indexOf('\n}\n', typesSrc.indexOf('export interface DataProvider')));
 const OPTIONAL = [...dpBody.matchAll(/^\s*(\w+)\?\s*[(<:]/gm)].map((m) => m[1]);
 const MISSING = new Set(OPTIONAL.filter((m) => !PROVIDER_METHODS.has(m)));
-// Signed out, list() answers SIGNED_OUT[table] (the built-in catalogue) or nothing, until the public identity (lane F).
-const SIGNED_OUT_GUARD = /signedIn\(\)\)\)\s*return[^\n]*SIGNED_OUT/.test(providerSrc);
-// `const SIGNED_OUT: Record<string, () => BaseRow[]> = { plans: () => …, teachers: … };` (the type holds an `=>`).
-const SIGNED_OUT_TABLES = new Set([...(providerSrc.match(/const SIGNED_OUT\b[^\n]*?>\s*=\s*\{([^\n]*)\};/)?.[1] ?? '').matchAll(/(\w+):/g)].map((m) => m[1]));
+// Signed out (lane F), list() and get() answer the provider's PUBLIC_TABLES live through the Hoy server's public_site
+// identity, which forwards only the entities in server/app.mjs PUBLIC_ENTITIES; every other table reads as empty without
+// a request, and a write has no session (the server answers 401). Both lists are read from the code, never copied here.
+const serverSrc = await readFile('server/app.mjs', 'utf8');
+const setOf = (src, name) => [...(src.match(new RegExp(String.raw`const ${name}\s*=\s*new Set\(\[([^\]]*)\]\)`))?.[1] ?? '').matchAll(/'([^']+)'/g)].map((m) => m[1]);
+const SIGNED_OUT_MODEL = {
+  // list(): `if (!(await this.transport.signedIn())) return (a.kind === 'entity' && PUBLIC_TABLES.has(table) ? … : [])`
+  listGuard: /if\s*\(!\(await this\.transport\.signedIn\(\)\)\)\s*return\s*\(a\.kind === 'entity' && PUBLIC_TABLES\.has\(table\)\s*\?[^:\n]*:\s*\[\]\)/.test(classBody),
+  // get(): `if (!signedIn && !PUBLIC_TABLES.has(table)) return null;`
+  getGuard: /if\s*\(!signedIn && !PUBLIC_TABLES\.has\(table\)\)\s*return null;/.test(classBody),
+  providerTables: setOf(providerSrc, 'PUBLIC_TABLES'),
+  serverEntities: setOf(serverSrc, 'PUBLIC_ENTITIES'),
+};
+SIGNED_OUT_MODEL.unserved = SIGNED_OUT_MODEL.providerTables.filter((t) => adapters[t]?.kind !== 'entity' || !SIGNED_OUT_MODEL.serverEntities.includes(adapters[t].entity));
+/** A request() the Hoy server forwards signed out (server/app.mjs publicRead()); `:x` is an interpolated id. */
+const publicRequest = (r) => r === 'POST /query' || SIGNED_OUT_MODEL.serverEntities.some((e) => r === `GET /api/${e}` || r === `GET /api/${e}/:x`);
+/** The tables a signed-out page reads live: in PUBLIC_TABLES, an entity adapter, and its entity forwarded by the server. */
+const SIGNED_OUT_LIVE = new Set(SIGNED_OUT_MODEL.providerTables.filter((t) => !SIGNED_OUT_MODEL.unserved.includes(t)));
 
 check('read the adapters (mapping.ts)', Object.keys(adapters).length >= 20, String(Object.keys(adapters).length));
 check('read the provider methods (CompanyOSProvider.ts)', ['list', 'insert', 'atomic', 'request'].every((m) => PROVIDER_METHODS.has(m)), [...PROVIDER_METHODS].join(','));
@@ -326,7 +340,8 @@ function usesOf({ text, modules }, hits = new Set()) {
 
 /** The finding a use is on this route, or null when it goes through a working adapter. */
 function judge(use, route) {
-  if (use.op === 'request') return null;
+  // Signed out, the Hoy server forwards only POST /query and GET /api/<public entity>[/<id>]; anything else is 401.
+  if (use.op === 'request') return route.signedOut && !publicRequest(use.request) ? `signed_out request ${use.request}` : null;
   if (use.op === 'method') return use.stub ? `stub ${use.method}` : use.missing ? `missing ${use.method}` : 'voucher voucher';
   if (use.op === 'throws') return `not_in_launch ${use.file.replace(/^src\//, '')}`;
   if (use.op === 'mock_only') return `mock_only ${use.file.replace(/^src\//, '')}`;
@@ -339,8 +354,9 @@ function judge(use, route) {
   if (write && a.kind === 'entity' && a.readOnly) return `read_only ${use.table}`;
   if (a.kind === 'session' && write) return `member ${use.table}`; // update/remove refuse; atomic() refuses an insert
   if (a.kind === 'settings' && use.op === 'remove') return `read_only ${use.table}`;
-  if (write && route.signedOut && SIGNED_OUT_GUARD) return `signed_out ${use.table} (write)`;
-  if (!write && route.signedOut && SIGNED_OUT_GUARD && a.kind !== 'static') return `signed_out ${use.table}${SIGNED_OUT_TABLES.has(use.table) ? ' (built-in catalogue)' : ' (empty)'}`;
+  // Signed out: a write has no session (401); a read of anything but a static table or a live one is silently empty.
+  if (route.signedOut && write) return `signed_out ${use.table} (write)`;
+  if (route.signedOut && a.kind !== 'static' && !SIGNED_OUT_LIVE.has(use.table)) return `signed_out ${use.table} (empty)`;
   return null;
 }
 const byDesign = (finding, use) => BY_DESIGN.find((b) => b.finding === finding && (!b.op || b.op === use.op) && (!b.file || b.file === use.file));
@@ -374,11 +390,9 @@ const synth = {
   'UnknownPage.tsx': `import { useTable } from ${data};\nexport function UnknownPage() { return useTable('not_a_table').rows.length; }`,
   'StubPage.tsx': `import { useData } from ${data};\nexport function StubPage() { const d = useData(); return () => d.promotion?.({} as never); }`,
   'StaticWritePage.tsx': `import { useData } from ${data};\nexport function StaticWritePage() { const d = useData(); return () => d.insert('faq_entries', {}); }`,
-  'SignedOutPage.tsx': `import { useTable } from ${data};\nexport function SignedOutPage() { return useTable('class_sessions').rows.length; }`,
   'ReviewOnlyPage.tsx': `import { useTable } from ${data};\nimport { PRODUCTION_BUILD } from ${JSON.stringify(path.join(ROOT, 'src/config/launch'))};\nfunction Demo() { return useTable('audit_log').rows.length; }\nexport function ReviewOnlyPage() { return PRODUCTION_BUILD ? useTable('bookings').rows.length : Demo(); }`,
   'MockOnlyPage.tsx': `import { useData } from ${data};\nexport function MockOnlyPage() { const d = useData(); return () => { if (d.name !== 'mock') throw Error('x_disconnected'); return d.list('bookings'); }; }`,
   'RefusingPage.tsx': `export function RefusingPage() { return () => { throw new Error('not_in_launch'); }; }`,
-  'CataloguePage.tsx': `import { useTable } from ${data};\nexport function CataloguePage() { return useTable('plans').rows.length; }`,
   'NewTablePage.tsx': `import { useData } from ${data};\nexport function NewTablePage() { const d = useData(); return () => d.insert('brand_new_table', {}); }`,
   'ComputedPage.tsx': `import { useData } from ${data};\nexport function ComputedPage({ f }: { f: boolean }) { const d = useData(); const t = f ? 'faq_entries' : 'audit_log'; return () => d.insert(t, {}); }`,
   'ReassignedPage.tsx': `import { useData } from ${data};\nexport function ReassignedPage({ x }: { x: boolean }) { const d = useData(); let t = 'bookings'; if (x) t = String(Date.now()); return () => d.insert(t, {}); }`,
@@ -387,6 +401,17 @@ const synth = {
   'RoleInsertPage.tsx': `import { useData } from ${data};\nexport function RoleInsertPage() { const d = useData(); return () => d.insert('user_roles', {}); }`,
   'CleanPage.tsx': `import { useTable } from ${data};\nexport function CleanPage() { return useTable('bookings').rows.length + useTable('faq_entries').rows.length; }`,
 };
+// Signed-out pages: one reads every live table, one reads an entity table outside the live set, one reads the studio
+// settings row, one writes. The table names come from the derived model.
+const LIVE_LIST = [...SIGNED_OUT_LIVE];
+const OUTSIDE = Object.values(adapters).find((a) => a.kind === 'entity' && !SIGNED_OUT_LIVE.has(a.table))?.table ?? 'bookings';
+synth['SignedOutLivePage.tsx'] = `import { useTable, useData } from ${data};\nexport function SignedOutLivePage() { const d = useData(); return ${JSON.stringify(LIVE_LIST)}.length + ${LIVE_LIST.map((t) => `useTable('${t}').rows.length + (d.get('${t}', 'x') ? 1 : 0)`).join(' + ') || '0'}; }`;
+synth['SignedOutOutsidePage.tsx'] = `import { useTable } from ${data};\nexport function SignedOutOutsidePage() { return useTable('${OUTSIDE}').rows.length; }`;
+synth['SignedOutSettingsPage.tsx'] = `import { useTable } from ${data};\nexport function SignedOutSettingsPage() { return useTable('tenants').rows.length; }`;
+synth['SignedOutLiveWritePage.tsx'] = `import { useData } from ${data};\nexport function SignedOutLiveWritePage() { const d = useData(); return () => d.update('${LIVE_LIST[0] ?? 'plans'}', 'x', {}); }`;
+synth['SignedOutRequestPage.tsx'] = `import { useData } from ${data};\nexport function SignedOutRequestPage() { const d = useData() as unknown as { request(m: string, p: string): unknown }; return () => d.request('POST', '/api/booking'); }`;
+synth['SignedOutPublicRequestPage.tsx'] = `import { useData } from ${data};\nexport function SignedOutPublicRequestPage() { const d = useData() as unknown as { request(m: string, p: string): unknown }; return () => [d.request('POST', '/query'), d.request('GET', \`/api/${SIGNED_OUT_MODEL.serverEntities[0] ?? 'product'}/\${String(Date.now())}\`)]; }`;
+synth['SignedOutWritePage.tsx'] = `import { useData } from ${data};\nexport function SignedOutWritePage() { const d = useData(); return () => d.update('tenants', 't', {}); }`;
 for (const [f, c] of Object.entries(synth)) await writeFile(path.join(tmp, f), c);
 const fake = async (file, signedOut = false) => [...(await analyse({ path: '/synthetic', signedOut, entry: { from: path.relative(ROOT, path.join(tmp, file)), name: file.replace(/\.tsx?$/, '') } })).findings.keys()];
 const has = (list, f) => list.some((x) => x.startsWith(f));
@@ -395,9 +420,19 @@ check('hostile: a sink read two imports away fails (transitive)', has(await fake
 check('hostile: a table with no adapter fails', has(await fake('UnknownPage.tsx'), 'unknown not_a_table'));
 check('hostile: a stubbed provider method fails', STUBS.has('promotion') && has(await fake('StubPage.tsx'), 'stub promotion'));
 check('hostile: a write to a static table fails', has(await fake('StaticWritePage.tsx'), 'read_only faq_entries'));
-check('hostile: a signed-out page reading an entity table fails while signed-out reads are empty', !SIGNED_OUT_GUARD || has(await fake('SignedOutPage.tsx', true), 'signed_out class_sessions (empty)'));
-check('the signed-out model was read (the guard and its built-in catalogue)', SIGNED_OUT_GUARD === /\bSIGNED_OUT\[/.test(providerSrc) && (!SIGNED_OUT_GUARD || SIGNED_OUT_TABLES.has('plans')), [...SIGNED_OUT_TABLES].join(','));
-check('hostile: a signed-out read of the built-in catalogue fails (labelled)', !SIGNED_OUT_GUARD || has(await fake('CataloguePage.tsx', true), 'signed_out plans (built-in catalogue)'));
+check('the signed-out model was read (provider list() and get() guards, PUBLIC_TABLES, server PUBLIC_ENTITIES)',
+  SIGNED_OUT_MODEL.listGuard && SIGNED_OUT_MODEL.getGuard && SIGNED_OUT_MODEL.providerTables.length > 0 && SIGNED_OUT_MODEL.serverEntities.length > 0, JSON.stringify(SIGNED_OUT_MODEL));
+check('every table the provider reads live signed out is an entity the Hoy server forwards (else it answers 401)', SIGNED_OUT_MODEL.unserved.length === 0 && SIGNED_OUT_LIVE.size === SIGNED_OUT_MODEL.providerTables.length, SIGNED_OUT_MODEL.unserved.join(', '));
+check('a signed-out page reading the live tables passes', SIGNED_OUT_LIVE.size > 0 && (await fake('SignedOutLivePage.tsx', true)).length === 0, (await fake('SignedOutLivePage.tsx', true)).join(', '));
+check('hostile: a signed-out page reading a table outside the live set fails', !SIGNED_OUT_LIVE.has(OUTSIDE) && has(await fake('SignedOutOutsidePage.tsx', true), `signed_out ${OUTSIDE} (empty)`), OUTSIDE);
+check('hostile: a signed-out read of the settings row fails (it reads as empty)', has(await fake('SignedOutSettingsPage.tsx', true), 'signed_out tenants (empty)'));
+check('hostile: a signed-out write fails', has(await fake('SignedOutWritePage.tsx', true), 'signed_out tenants (write)'));
+check('hostile: a signed-out write to a live table fails', has(await fake('SignedOutLiveWritePage.tsx', true), `signed_out ${LIVE_LIST[0]} (write)`), LIVE_LIST[0]);
+check('hostile: a signed-out request the Hoy server does not forward fails', has(await fake('SignedOutRequestPage.tsx', true), 'signed_out request POST /api/booking'));
+check('a signed-out request the Hoy server forwards (POST /query, GET /api/<public entity>) passes', (await fake('SignedOutPublicRequestPage.tsx', true)).length === 0, (await fake('SignedOutPublicRequestPage.tsx', true)).join(', '));
+// The BY_DESIGN settings save rests on the row being empty signed out: once the settings are read live, revisit it.
+check('BY_DESIGN signed_out tenants (write) still holds (tenants is not read live signed out)', !BY_DESIGN.some((b) => b.finding === 'signed_out tenants (write)') || !SIGNED_OUT_LIVE.has('tenants'));
+check('the same reads signed in are not signed-out findings', !has(await fake('SignedOutOutsidePage.tsx'), 'signed_out') && !has(await fake('SignedOutWritePage.tsx'), 'signed_out'));
 check('hostile: a write to a new table with no adapter fails', has(await fake('NewTablePage.tsx'), 'unknown brand_new_table'));
 check('hostile: a write whose table is computed fails (dynamic)', has(await fake('ComputedPage.tsx'), 'dynamic t'));
 check('hostile: a reassigned table name is not resolved to its first value', has(await fake('ReassignedPage.tsx'), 'dynamic t'));
