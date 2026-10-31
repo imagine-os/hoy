@@ -5,8 +5,9 @@
 import assert from 'node:assert/strict';
 import { buildCompanyOsSeed, loadHoySample, DEFAULT_AS_OF, ROLE_KEYS } from './seed-companyos.ts';
 
-// The recipe's products as the generator reads them (Company-OS deploy/recipes/hoy.json); prices made up for the check.
+// The recipe's products and booking policy as the generator reads them (Company-OS deploy/recipes/hoy.json); prices made up for the check.
 const RECIPE = {
+  modules: [{ key: 'bookings', settings: { late_cancel_hours: 12, reschedule_hours: 12, policy_as_of_booking: true } }],
   records: [{
     entity: 'product',
     rows: [
