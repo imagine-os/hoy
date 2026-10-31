@@ -5,7 +5,9 @@
 //   Customer); view-as survives a reload of the tab and ends with "Exit" or sign-out;
 // - while viewing as, nothing but reads reaches Company OS;
 // - an Administration login (which also holds the backend super_admin membership, AD-04), a front desk login and a
-//   visitor can't open /hub, and a view-as value planted in sessionStorage changes nothing for them.
+//   visitor can't open /hub, and a view-as value planted in sessionStorage changes nothing for them;
+// - one real write (a settings Save, viewing as admin) is refused in the browser with its copy (L8, review round 1);
+// - a role nobody holds shows an explicit empty state, never the super admin's own data (L2, review round 1).
 // Run: npm run build:production && QA_PROD_DIST=dist node scripts/test-view-as-ui.mjs
 import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
@@ -186,9 +188,31 @@ try {
   check('teacher sample: the first ACTIVE coach (Carlos), not the inactive one who sorts first (Beatriz)', /Carlos Coach/.test(b) && !/Beatriz/.test(b), b);
   check('viewing as teacher: front desk check-in is refused, as for a teacher', refusedAt(await go(page, '/staff/checkin')), route(page));
 
-  // ── view as front desk, then sign out from the staff shell ─────────────────────────────────────────────────────
+  // ── L8: one real write attempted while viewing as: refused in the browser, with its copy ─────────────────────────
   await go(page, '/teach');
   await exit(page);
+  log = [];
+  await viewAs(page, 'admin');
+  await go(page, '/admin/settings');
+  const section = page.locator('[data-settings-section]').filter({ has: page.locator('input[type=text], input:not([type])') }).first();
+  await section.locator('input[type=text], input:not([type])').first().fill('Cambio de prueba').catch(() => {});
+  await section.locator('[data-settings-save]').click({ timeout: 3000 }).catch(() => {});
+  await page.waitForTimeout(1500);
+  const said = await section.innerText().catch(() => '');
+  check('L8 viewing as admin, a settings Save is attempted and refused with the view-as copy', /solo lectura/.test(said) && /Ver como/.test(said), said.slice(0, 300));
+  check('L8 …and that write never reached Company OS', writes().length === 0, writes().map((w) => `${w.method} ${w.route}`).join(', '));
+  await exit(page);
+
+  // ── L2: a role nobody holds: an explicit empty state, never the super admin's own data ──────────────────────────
+  log = [];
+  await viewAs(page, 'maintenance');
+  b = await bannerText(page);
+  check('L2 view as a role nobody holds: the banner says so', /Mantenimiento/.test(b) && /sin persona de ejemplo/.test(b), b);
+  check('L2 …the screens are replaced by an empty state that explains it', (await page.locator('[data-view-as-empty]').count()) === 1, (await page.locator('main').innerText().catch(() => '')).slice(0, 200));
+  check('L2 …and nothing is read as the super admin\'s own person', !log.some((l) => l.kind === 'query' && /per_super/.test(l.filter)), log.filter((l) => l.kind === 'query').map((l) => `${l.entity} ${l.filter}`).join(' | '));
+  await exit(page);
+
+  // ── view as front desk, then sign out from the staff shell ─────────────────────────────────────────────────────
   await viewAs(page, 'front_desk');
   check('view as front desk lands on the staff home', route(page) === '/staff', route(page));
   check('front desk sample: the person holding front_desk', /Camilo Desk/.test(await bannerText(page)), await bannerText(page));
