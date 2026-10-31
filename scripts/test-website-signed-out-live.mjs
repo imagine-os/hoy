@@ -68,9 +68,12 @@ const match = (r, f) => {
   if (!f || f.all) return true;
   if (f.and) return f.and.every((x) => match(r, x));
   if (f.or) return f.or.some((x) => match(r, x));
+  // Lane H2: signed-out bookings are read for upcoming classes (a filter through the booking's class).
+  if (f.ref) { const target = (DATA[f.entity] ?? []).find((x) => x.id === r.data[f.ref]); return !!target && match(target, f.where); }
   const v = f.field === 'id' ? r.id : r.data[f.field];
   if (f.op === 'eq') return v === f.value;
   if (f.op === 'in') return f.value.includes(v);
+  if (f.op === 'gte') return v >= f.value;
   if (f.op === 'is_null') return v == null;
   if (f.op === 'is_not_null') return v != null;
   throw new Error(`fake: op ${f.op}`);
