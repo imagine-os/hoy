@@ -4,6 +4,7 @@ import type { BaseRow, FaqEntryRow, UserRow } from '../../data/schema';
 import type { Role } from '../../auth/roles';
 import { roleCan } from '../../auth/permissions';
 import { tenant } from '../../tenant/tenant';
+import { PRODUCTION_BUILD } from '../../config/launch';
 
 type Table = 'class_templates' | 'teachers' | 'modalities' | 'rooms' | 'faq_entries';
 export type ContentIntent =
@@ -64,7 +65,13 @@ async function current(data: DataProvider, table: Table, before: BaseRow) {
   if (!row || row.tenant_id !== tenant.id || before.tenant_id !== tenant.id || !same(row, before)) throw Error('content_conflict');
   return row;
 }
+/**
+ * Production: the content editor's tables are the build's own content or Company OS fields it cannot write yet (bios,
+ * photos, specialties, modality texts); Wave 3 brings the content entities. Until then a save is refused with copy
+ * (`content_later`) before anything is sent, never reported as saved.
+ */
 export async function writeContent(data: DataProvider, actor: ContentActor, intent: ContentIntent, requestId: string, options: ContentExecution) {
+  if (PRODUCTION_BUILD) throw Error('content_later');
   actor = { ...actor }; intent = structuredClone(intent);
   const check = () => assertContentActor(actor, options.currentActor());
   check();

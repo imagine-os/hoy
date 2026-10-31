@@ -15,9 +15,12 @@ export function confirmedPaymentReport(payments: PaymentRow[], options: { tenant
     const day = dateKey(new Date(p.paid_at)); if (day < options.from || day > options.to) continue;
     const matches = p.plan_id ? [] : (options.specialSales ?? []).filter(s => s.tenant_id === options.tenantId && s.payment_id === p.id);
     const special = matches.length === 1 && typeof matches[0].id === 'string' && matches[0].id.trim() && typeof matches[0].concept === 'string' && matches[0].concept.trim() ? matches[0] : null;
+    // A sale with no product (a private class, a special): the review build's special charge, else the payment's own
+    // concept (Company OS `payment.concept`, required on every payment).
+    const raw = (p as PaymentRow & { concept?: unknown }).concept, concept = typeof raw === 'string' ? raw.trim() : '';
     const productId = p.plan_id ?? (special ? `special_charge:${special.id}` : ''), confirmerId = typeof p.taken_by === 'string' ? p.taken_by : '';
-    const product = p.plan_id ? options.productName(p.plan_id) : special ? special.concept.trim() : options.missingProductLabel ?? '';
-    if (!p.plan_id && !special) unresolvedProducts++;
+    const product = p.plan_id ? options.productName(p.plan_id) : special ? special.concept.trim() : concept || (options.missingProductLabel ?? '');
+    if (!p.plan_id && !special && !concept) unresolvedProducts++;
     rows.push({ id: p.id, paidAt: p.paid_at, day, method: p.method, productId, product, amount: p.amount, amountReceived: p.amount_paid ?? null, confirmerId, confirmer: confirmerId ? options.personName(confirmerId) : '' });
   }
   rows.sort((a,b) => Date.parse(a.paidAt)-Date.parse(b.paidAt) || a.id.localeCompare(b.id));

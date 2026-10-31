@@ -20,6 +20,10 @@ import { canvasSpecs } from '../specs';
 import { useMarketingConsent } from '../useMarketingConsent';
 import './AccountMarketing.css';
 import { PageHead } from '../ui';
+import { PRODUCTION_BUILD } from '../../../config/launch';
+
+/** Production says what really happens (Company OS); the review build keeps its fictional-simulation copy. */
+const live = (key: string) => (PRODUCTION_BUILD ? `${key}.live` : key);
 
 import { checkAccount, prepareAccountCommand, prepareAccountPreview, readAccountState, offerAccountPreview, type AccountActor, type AccountCommand, type AccountIntent, type AccountOutcome } from '../accountData';
 
@@ -110,9 +114,9 @@ export function AccountPage() {
           const preview=await current.command.takePreview(control);
           if(!mounted.current||pending.current!==current||current.controller.signal.aborted||!sameContext(current.context,current.provider)){current.command.discard();return outcome;}
           if(!preview)throw Error('account_offer');
-          try{offerAccountPreview(`${tenant.slug}-fictional-account-${dateKey()}.json`,preview);}catch{current.command.discard();pending.current=null;setExportReady(null);throw Error('account_offer');}
-          setExportReady(null);say(t('customer.account.export.done'));
-        }else{setStep(0);setReason('');setUnderstood(false);say(t(outcome.replayed?'customer.account.mock.replayed':kind==='request'?'customer.account.delete.sent':'customer.account.delete.cancelled'));}
+          try{offerAccountPreview(`${tenant.slug}-${PRODUCTION_BUILD?'account':'fictional-account'}-${dateKey()}.json`,preview);}catch{current.command.discard();pending.current=null;setExportReady(null);throw Error('account_offer');}
+          setExportReady(null);say(t(live('customer.account.export.done')));
+        }else{setStep(0);setReason('');setUnderstood(false);say(t(outcome.replayed?live('customer.account.mock.replayed'):kind==='request'?live('customer.account.delete.sent'):'customer.account.delete.cancelled'));}
         current.command.discard();pending.current=null;return outcome;
       }catch(e){
         if(!current.command&&pending.current===current)pending.current=null;
@@ -132,8 +136,8 @@ export function AccountPage() {
   const SECTIONS: Record<string, () => ReactNode> = {
     ConsentToggles: () => (
       <div className="stack account-marketing" data-account-marketing>
-      <Notice tone="warn">{t('customer.account.marketing.boundary')}</Notice>
-      {marketing.message&&<Notice tone={['saved','replayed'].includes(marketing.message)?'success':marketing.message==='failed'||marketing.message==='stale'||marketing.message==='ambiguous'?'danger':'info'}>{t('customer.account.marketing.'+marketing.message)}</Notice>}
+      <Notice tone="warn">{t(live('customer.account.marketing.boundary'))}</Notice>
+      {marketing.message&&<Notice tone={['saved','replayed'].includes(marketing.message)?'success':marketing.message==='failed'||marketing.message==='stale'||marketing.message==='ambiguous'?'danger':'info'}>{t(['saved','replayed','failed'].includes(marketing.message)?live('customer.account.marketing.'+marketing.message):'customer.account.marketing.'+marketing.message)}</Notice>}
       {marketing.status==='error'&&<Notice tone="danger">{t('customer.account.marketing.read')}</Notice>}
       <ListGroup title={t('customer.account.consents')}>
         <ListRow icon="whatsapp" title={t('customer.account.consent.marketingWa')} subtitle={t('customer.account.consent.marketing.sub')} trailing={<Toggle size="sm" disabled={marketing.busy||marketing.status!=='ready'} checked={marketing.enabled('whatsapp')} onChange={(v) => marketing.set('whatsapp',v)} label={t('customer.account.marketing.whatsapp')} />} />
@@ -150,9 +154,9 @@ export function AccountPage() {
     ),
     ExportData: () => (
       <Card eyebrow={t('customer.account.export')} padding="md">
-        <p className="small">{t('customer.account.export.body')}</p>
+        <p className="small">{t(live('customer.account.export.body'))}</p>
         <div className="row wrap" style={{ marginTop: 'var(--sp-md)' }}>
-          <Button size="sm" variant="secondary" loading={busy&&pending.current?.kind==='export'} disabled={busy||reading||readError||!!exportReady} onClick={exportData}>{t('customer.account.export.cta')}</Button>
+          <Button size="sm" variant="secondary" loading={busy&&pending.current?.kind==='export'} disabled={busy||reading||readError||!!exportReady} onClick={exportData}>{t(live('customer.account.export.cta'))}</Button>
           <Link to="/app/history" className="small">{t('core.nav.history')} →</Link>
         </div>
       </Card>
@@ -182,7 +186,7 @@ export function AccountPage() {
   return (
     <div className="container page cust-page">
       <PageHead title={t('customer.account.title')} sub={t('customer.account.sub')} back="/app/profile" />
-      <Notice tone="warn">{t('customer.account.mock.boundary')}</Notice>
+      {!PRODUCTION_BUILD && <Notice tone="warn">{t('customer.account.mock.boundary')}</Notice>}
       {flash && <Notice tone="info">{flash}</Notice>}
       {error && <Notice tone="danger">{error}</Notice>}
       {reading && <p role="status">{t('core.common.loading')}</p>}
@@ -192,21 +196,21 @@ export function AccountPage() {
         {sections.filter(isVisible).map((name) => SECTIONS[name] ? <Fragment key={name}>{SECTIONS[name]()}</Fragment> : null)}
       </div>
 
-      <Drawer open={!!exportReady} onClose={cancelOperation} side="bottom" title={t('customer.account.mock.previewTitle')} footer={<><Button variant="ghost" onClick={cancelOperation}>{t('core.common.cancel')}</Button><Button disabled={busy||reading||readError} loading={busy} onClick={()=>{void operate('export');}}>{t('customer.account.mock.offer')}</Button></>}>
-        <div className="stack">{error&&<Notice tone="danger">{error}</Notice>}<Notice tone="warn">{t('customer.account.mock.previewBody')}</Notice><p>{t('customer.account.mock.counts',{tables:exportReady?.tables??0,rows:exportReady?.rows??0})}</p></div>
+      <Drawer open={!!exportReady} onClose={cancelOperation} side="bottom" title={t(live('customer.account.mock.previewTitle'))} footer={<><Button variant="ghost" onClick={cancelOperation}>{t('core.common.cancel')}</Button><Button disabled={busy||reading||readError} loading={busy} onClick={()=>{void operate('export');}}>{t(live('customer.account.mock.offer'))}</Button></>}>
+        <div className="stack">{error&&<Notice tone="danger">{error}</Notice>}<Notice tone="warn">{t(live('customer.account.mock.previewBody'))}</Notice><p>{t('customer.account.mock.counts',{tables:exportReady?.tables??0,rows:exportReady?.rows??0})}</p></div>
       </Drawer>
 
       {/* Step 1 — what deleting means. Step 2 — the confirmation itself. Two taps, nothing destructive on the first. */}
       <Drawer open={step === 1} onClose={cancelOperation} side="bottom" title={t('customer.profile.delete.confirm.title')}
         footer={<><Button variant="ghost" onClick={cancelOperation}>{t('core.common.cancel')}</Button><Button variant="danger" disabled={!understood||busy||reading||readError} onClick={() => setStep(2)}>{t('customer.account.delete.next')}</Button></>}>
         <div className="stack">
-          <Notice tone="warn">{t('customer.account.mock.boundary')}</Notice>
+          {!PRODUCTION_BUILD && <Notice tone="warn">{t('customer.account.mock.boundary')}</Notice>}
           <Notice tone="warn" title={t('customer.account.delete.what')}>{t('customer.account.delete.what.body')}</Notice>
           <ul className="cust-checklist small">
             <li>{t('customer.account.delete.keep.invoices')}</li>
             <li>{t('customer.account.delete.keep.profile')}</li>
             <li>{t('customer.account.delete.keep.access')}</li>
-            <li>{t('customer.account.delete.keep.time')}</li>
+            <li>{t(live('customer.account.delete.keep.time'))}</li>
           </ul>
           <label className="field-label"><span>{t('customer.account.delete.reason')}</span></label>
           <textarea className="input cust-textarea" disabled={busy} value={reason} onChange={(e) => setReason(e.target.value)} placeholder={t('customer.account.delete.reason.ph')} aria-label={t('customer.account.delete.reason')} />
@@ -216,10 +220,10 @@ export function AccountPage() {
       </Drawer>
       <Drawer open={step === 2} onClose={cancelOperation} side="bottom" title={t('customer.account.delete.confirm2.title')}>
         <div className="stack">
-          <Notice tone="warn">{t('customer.account.mock.boundary')}</Notice>
+          {!PRODUCTION_BUILD && <Notice tone="warn">{t('customer.account.mock.boundary')}</Notice>}
           {error && <Notice tone="danger">{error}</Notice>}
-          <Notice tone="danger">{t('customer.account.delete.confirm2.body', { name: controllerName })}</Notice>
-          <Button block variant="danger" loading={busy} disabled={busy||reading||readError||!understood} onClick={requestDeletion}>{t('customer.account.delete.cta')}</Button>
+          <Notice tone="danger">{t(live('customer.account.delete.confirm2.body'), { name: controllerName })}</Notice>
+          <Button block variant="danger" loading={busy} disabled={busy||reading||readError||!understood} onClick={requestDeletion}>{t(live('customer.account.delete.cta'))}</Button>
           <Button block variant="ghost" onClick={() => {if(!busyRef.current&&readyRef.current){discardPending();setError(null);setStep(1);}}}>{t('core.nav.back')}</Button>
         </div>
       </Drawer>

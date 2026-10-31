@@ -5,6 +5,7 @@ import {roleCan} from '../../auth/permissions';
 import {safeMediaUrl} from '../../data/mediaLibrary';
 import {tenant} from '../../tenant/tenant';
 import {mergeSettings,type StudioSettings,type TenantRow} from './settings';
+import {PRODUCTION_BUILD} from '../../config/launch';
 export type PaymentSettings=StudioSettings['payments'];
 export const PAYMENT_FIELDS=['bankName','accountType','accountNumber','accountHolder','qrImageUrl','breBKey'] as const;
 export type PaymentField=typeof PAYMENT_FIELDS[number];
@@ -32,10 +33,14 @@ export async function readPaymentInstructions(data:DataProvider,tenantId:string|
 export interface PaymentSettingsCommand{actorId:string;role:Role;requestId:string;before:PaymentSettings;after:PaymentSettings}
 export interface PaymentSettingsControl{isCurrent:()=>boolean;failAfterWrites?:number}
 const digest=async(value:unknown)=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify(value)))),n=>n.toString(16).padStart(2,'0')).join('');
-/** Payment settings only: one mock transaction retains draft/audit together. No real bank or credentials. */
+/**
+ * Payment settings only: one transaction. Production (Company OS): the studio settings record in one keyed `/batch`
+ * (Company OS audits the write itself); a retry after a lost answer finds the save already there and succeeds.
+ * Review build: the mock transaction keeps the draft and its audit receipt together. No real bank or credentials.
+ */
 export async function savePaymentSettings(data:DataProvider,input:PaymentSettingsCommand,control:PaymentSettingsControl):Promise<PaymentSettings>{
  const command=structuredClone(input),check=()=>{if(!control.isCurrent())throw Error('payment_settings_context');};check();
- if(data.name!=='mock'||!data.atomic)throw Error('payment_settings_disconnected');
+ if(!data.atomic)throw Error('payment_settings_disconnected');
  if(!roleCan(command.role,'settings.write')||!command.actorId||!/^[-\w]{1,120}$/.test(command.requestId))throw Error('payment_settings_denied');
  if(!validPaymentSettings(command.after)||!validPaymentSettings(command.before))throw Error('payment_settings_invalid');
  const fingerprint=await digest(command),id=`payment_settings_${command.requestId}`;check();
@@ -45,11 +50,12 @@ export async function savePaymentSettings(data:DataProvider,input:PaymentSetting
    if(!roles.some(row=>row.role===command.role||row.role==='super_admin'))throw Error('payment_settings_denied');};
   await authorize();
   const row=await tx.get<TenantRow>('tenants',tenant.id);check();if(!row||row.tenant_id!==tenant.id)throw Error('payment_settings_scope');
-  const current=mergeSettings(row.settings).payments,prior=await tx.get<BaseRow>('audit_log',id);check();
+  const current=mergeSettings(row.settings).payments,prior=PRODUCTION_BUILD?null:await tx.get<BaseRow>('audit_log',id);check();
+  if(PRODUCTION_BUILD&&JSON.stringify(current)===JSON.stringify(command.after)){await authorize();return current;}
   if(prior){const d=prior.diff as Record<string,unknown>|null;if(prior.tenant_id!==tenant.id||prior.actor_id!==command.actorId||prior.action!=='settings.update'||prior.entity!=='tenants'||prior.entity_id!==tenant.id||d?.fingerprint!==fingerprint||d.role!==command.role||d.section!=='payments'||JSON.stringify(current)!==JSON.stringify(command.after))throw Error('payment_settings_unconfirmed');await authorize();return current;}
   if(JSON.stringify(current)!==JSON.stringify(command.before))throw Error('payment_settings_stale');
   await tx.update<TenantRow>('tenants',row.id,{settings:{...(row.settings??{}),payments:command.after}});check();
   await tx.insert('audit_log',{id,actor_id:command.actorId,action:'settings.update',entity:'tenants',entity_id:tenant.id,ip:null,diff:{role:command.role,source:'admin',section:'payments',before:command.before,after:command.after,fingerprint}});check();
   const saved=await tx.get<TenantRow>('tenants',row.id);check();if(!saved||JSON.stringify(mergeSettings(saved.settings).payments)!==JSON.stringify(command.after))throw Error('payment_settings_unconfirmed');await authorize();return command.after;
- },{failAfterWrites:control.failAfterWrites});
+ },{...(PRODUCTION_BUILD?{idempotencyKey:id}:{}),failAfterWrites:control.failAfterWrites});
 }

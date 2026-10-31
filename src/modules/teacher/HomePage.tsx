@@ -23,9 +23,17 @@ import { useSubstituteRequest } from './useSubstituteRequest';
 import { KIND_LABEL, STATUS_LABEL } from '../staff/rooms';
 import { useTeacherSelf } from './useTeacherSelf';
 import { useStudioStats, useTeacherStats } from '../../data/useAnalytics';
+import { PRODUCTION_BUILD } from '../../config/launch';
+import type { ProfileRow } from '../../data/schema';
 import './teacher.css';
 
-/** S-03 Teacher home: next class, today's rosters, the week, substitution request and the payroll estimate. */
+/**
+ * S-03 Teacher home: next class, today's rosters, the week, substitution request and the payroll estimate.
+ * Production (Hoy all-roles, lane H1): the classes, today's rosters and the week read Company OS live (a coach reads
+ * their own classes' bookings and the people booked on them); the roster shows inline, since the class page
+ * (`/teach/class/:id`) is not in the launch yet. Substitute requests and specials (Wave 4, teacher app and pay), the
+ * payroll estimate (Wave 4) and the rating (Wave 3, reviews) say "available later" instead of showing empty data.
+ */
 export function TeacherHomePage() {
   const { t, lang, bi } = useI18n();
   const { settings: homeSettings } = useSettings();
@@ -72,14 +80,16 @@ export function TeacherHomePage() {
           <section className="stack-sm">
             <div className="eyebrow">{t('teacher.home.next')}</div>
             {next
-              ? <ClassCard variant="next" title={next.session.title} teacher={`${next.session.booked_count}/${next.session.capacity} · ${t('teacher.home.arrived', { n: arrived(next.session.id) })}`} startsAt={next.session.starts_at} endsAt={next.session.ends_at} tone={next.modality?.tone ?? 'river'} booked={next.session.booked_count} capacity={next.session.capacity} cta={{ label: t('teacher.home.openRoster'), onClick: () => nav(`/teach/class/${next.session.id}`) }} />
+              ? <ClassCard variant="next" title={next.session.title} teacher={`${next.session.booked_count}/${next.session.capacity} · ${t('teacher.home.arrived', { n: arrived(next.session.id) })}`} startsAt={next.session.starts_at} endsAt={next.session.ends_at} tone={next.modality?.tone ?? 'river'} booked={next.session.booked_count} capacity={next.session.capacity} cta={PRODUCTION_BUILD ? undefined : { label: t('teacher.home.openRoster'), onClick: () => nav(`/teach/class/${next.session.id}`) }} />
               : <EmptyState compact title={t('teacher.home.noNext')} body={t('teacher.home.noNext.body')} />}
           </section>
 
           <div className="grid grid-3">
             <StatTile label={t('teacher.home.today')} value={today.length} />
             <StatTile label={t('teacher.home.taughtMonth')} value={monthTaught} />
-            <StatTile label={t('teacher.home.payroll')} value={formatCOP(monthTaught * rateFor(me.id, (me.specialties as string[] | undefined)?.[0] ?? null, [me], homeSettings.payroll.rateCard), lang)} hint={t('teacher.home.payroll.hint')} />
+            {PRODUCTION_BUILD
+              ? <StatTile label={t('teacher.home.payroll')} value="—" hint={t('teacher.home.later')} />
+              : <StatTile label={t('teacher.home.payroll')} value={formatCOP(monthTaught * rateFor(me.id, (me.specialties as string[] | undefined)?.[0] ?? null, [me], homeSettings.payroll.rateCard), lang)} hint={t('teacher.home.payroll.hint')} />}
           </div>
 
           <MyNumbers teacherId={me.id} />
@@ -90,7 +100,8 @@ export function TeacherHomePage() {
               {today.length === 0 && <p className="muted small" style={{ padding: 'var(--sp-md)' }}>{t('teacher.home.emptyToday')}</p>}
               {today.map(({ session: s, modality: m }) => (
                 <div key={s.id} className="teach-todayrow">
-                  <ClassRow title={s.title} teacher={t('teacher.home.arrivedOf', { n: arrived(s.id), total: s.booked_count })} startsAt={s.starts_at} durationMin={m?.duration_min ?? 60} tone={m?.tone ?? 'river'} booked={s.booked_count} capacity={s.capacity} status={s.status} onClick={() => nav(`/teach/class/${s.id}`)} />
+                  <ClassRow title={s.title} teacher={t('teacher.home.arrivedOf', { n: arrived(s.id), total: s.booked_count })} startsAt={s.starts_at} durationMin={m?.duration_min ?? 60} tone={m?.tone ?? 'river'} booked={s.booked_count} capacity={s.capacity} status={s.status} onClick={PRODUCTION_BUILD ? undefined : () => nav(`/teach/class/${s.id}`)} />
+                  {PRODUCTION_BUILD && <Roster bookings={bookings.filter((b) => b.session_id === s.id)} />}
                 </div>
               ))}
             </Card>
@@ -98,7 +109,7 @@ export function TeacherHomePage() {
 
           <section className="stack-sm">
             <div className="eyebrow">{t('teacher.home.specials')}</div>
-            <Card padding="sm">
+            {PRODUCTION_BUILD ? <Notice>{t('teacher.home.specials.later')}</Notice> : <><Card padding="sm">
               {specials.length === 0 && <p className="muted small" style={{ padding: 'var(--sp-md)' }}>{t('teacher.home.specials.empty')}</p>}
               {specials.map((b) => {
                 const payout = payoutOf.get(b.id);
@@ -113,15 +124,16 @@ export function TeacherHomePage() {
                 );
               })}
             </Card>
-            <p className="xs muted">{t('teacher.home.specials.hint')}</p>
+            <p className="xs muted">{t('teacher.home.specials.hint')}</p></>}
           </section>
 
           <section className="stack-sm">
-            <div className="row-between"><div className="eyebrow">{t('teacher.home.week')}</div><Button size="sm" variant="ghost" onClick={sub.openDrawer}>{t('teacher.home.sub')}</Button></div>
+            <div className="row-between"><div className="eyebrow">{t('teacher.home.week')}</div>{!PRODUCTION_BUILD && <Button size="sm" variant="ghost" onClick={sub.openDrawer}>{t('teacher.home.sub')}</Button>}</div>
             <Card padding="sm">
               {week.length === 0 && <p className="muted small" style={{ padding: 'var(--sp-md)' }}>{t('teacher.home.empty')}</p>}
-              {week.map(({ session: s, modality: m }) => <ClassRow key={s.id} title={s.title} teacher={formatDate(s.starts_at, lang, { weekday: 'long', day: 'numeric' })} startsAt={s.starts_at} durationMin={m?.duration_min ?? 60} tone={m?.tone ?? 'river'} booked={s.booked_count} capacity={s.capacity} status={s.status} onClick={() => nav(`/teach/class/${s.id}`)} />)}
+              {week.map(({ session: s, modality: m }) => <ClassRow key={s.id} title={s.title} teacher={formatDate(s.starts_at, lang, { weekday: 'long', day: 'numeric' })} startsAt={s.starts_at} durationMin={m?.duration_min ?? 60} tone={m?.tone ?? 'river'} booked={s.booked_count} capacity={s.capacity} status={s.status} onClick={PRODUCTION_BUILD ? undefined : () => nav(`/teach/class/${s.id}`)} />)}
             </Card>
+            {PRODUCTION_BUILD && <p className="xs muted">{t('teacher.home.sub.later')}</p>}
           </section>
         </>
       )}
@@ -173,9 +185,27 @@ function MyNumbers({ teacherId }: { teacherId: string }) {
         <StatTile label={t('teacher.numbers.newFaces')} value={me.newFaces} hint={t('teacher.numbers.newFaces.hint')} />
         <StatTile label={t('teacher.numbers.regulars')} value={me.regulars} hint={t('teacher.numbers.regulars.hint')} />
         <StatTile label={t('teacher.numbers.return')} value={ret.n ? `${ret.rate}%` : '—'} hint={ret.n ? t('teacher.numbers.return.hint', { returned: ret.returned, n: ret.n }) : t('teacher.numbers.return.none')} />
-        <StatTile label={t('teacher.numbers.rating')} value={me.ratingCount >= MIN_REVIEWS && me.ratingAvg != null ? `${nf.format(me.ratingAvg)} / 5` : '—'} hint={me.ratingCount >= MIN_REVIEWS ? t('teacher.numbers.rating.hint', { n: me.ratingCount }) : t('teacher.numbers.rating.few', { n: me.ratingCount })} />
+        {PRODUCTION_BUILD
+          ? <StatTile label={t('teacher.numbers.rating')} value="—" hint={t('teacher.home.later')} />
+          : <StatTile label={t('teacher.numbers.rating')} value={me.ratingCount >= MIN_REVIEWS && me.ratingAvg != null ? `${nf.format(me.ratingAvg)} / 5` : '—'} hint={me.ratingCount >= MIN_REVIEWS ? t('teacher.numbers.rating.hint', { n: me.ratingCount }) : t('teacher.numbers.rating.few', { n: me.ratingCount })} />}
       </div>
       <p className="xs muted">{t('teacher.numbers.private')}</p>
     </section>
+  );
+}
+
+/** Today's roster for one class (production): who is booked and who has arrived, names only (Company OS lets a coach read
+ * the people booked on their own classes). A cancelled booking is not on the roster. */
+function Roster({ bookings }: { bookings: BookingRow[] }) {
+  const { t } = useI18n();
+  const active = bookings.filter((b) => b.status !== 'cancelled' && b.status !== 'late_cancel');
+  const ids = useMemo(() => [...new Set(active.map((b) => b.user_id))], [active.map((b) => b.user_id).join('|')]);
+  const { rows: people } = useTable<ProfileRow>('profiles', ids.length ? { where: { user_id: ids } } : { limit: 0 });
+  const name = new Map(people.map((p) => [p.user_id, p.full_name]));
+  if (!active.length) return <p className="xs muted">{t('teacher.home.roster.empty')}</p>;
+  return (
+    <ul className="stack-sm small" aria-label={t('teacher.home.roster')}>
+      {active.map((b) => <li key={b.id} className="row-between"><span>{name.get(b.user_id) ?? t('teacher.home.roster.unknown')}</span>{b.status === 'checked_in' && <Badge tone="success">{t('teacher.home.roster.arrived')}</Badge>}</li>)}
+    </ul>
   );
 }

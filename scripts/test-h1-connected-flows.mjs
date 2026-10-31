@@ -144,13 +144,14 @@ function fakeCos({ role = 'member', userId = 'usr_m1', personId = 'per_m1' } = {
     if (u.pathname.endsWith('app-config.json')) return json(200, { tenant: 'hoy', apiBase: '/api/cos' });
     const path = u.pathname.replace('/api/cos/t/hoy', '');
     calls.push({ method, path, body: structuredClone(body), key });
-    if (lose && lose.path === path && lose.n-- > 0) { const r = await run(); if (r.ok && key) keys.set(key, { body, status: r.status, response: await r.clone().json() }); throw new TypeError('fetch failed'); }
+    // A lost answer: the server did the work (and keeps the key's answer), the caller never hears back.
+    const dropAnswer = (r) => { if (lose && lose.path === path && lose.n > 0) { lose.n--; throw new TypeError('fetch failed'); } return r; };
     if (key && method !== 'GET') {
       const prior = keys.get(key);
-      if (prior) return JSON.stringify(prior.body) === JSON.stringify(body) ? json(prior.status, prior.response) : json(409, { error: 'idempotency_conflict' });
-      const r = await run(); if (r.ok) keys.set(key, { body, status: r.status, response: await r.clone().json() }); return r;
+      if (prior) return dropAnswer(JSON.stringify(prior.body) === JSON.stringify(body) ? json(prior.status, prior.response) : json(409, { error: 'idempotency_conflict' }));
+      const r = await run(); if (r.ok) keys.set(key, { body, status: r.status, response: await r.clone().json() }); return dropAnswer(r);
     }
-    return run();
+    return dropAnswer(await run());
     async function run() {
       try {
         if (path === '/me') return json(200, { user: { id: me.userId }, roleKeys: [me.role], caps: [], isSuperAdmin: false });
@@ -429,6 +430,19 @@ await test('studio return: a cancelled booking with a studio_cancel entry for it
   api.put('credit_entry', { lot: lot.id, person: 'per_m1', delta: 1, reason: 'studio_cancel', booking: bk.id });
   const r = await m.studioReturn.readOwnStudioReturn(p, { actorId: 'usr_m1', role: 'customer' }, bk.id, { now: () => Date.parse('2026-11-04T12:00:00Z') });
   assert.equal(r.status, 'verified'); assert.equal(r.units, 1); assert.equal(r.expiresAt, '2026-12-31'); assert.equal(r.balance, 12);
+});
+await test('studio return: a paid single class comes back as a new one-class lot whose only entry is studio_cancel (H3)', async () => {
+  const api = fakeCos(), p = provider(api);
+  const occ = api.put('occurrence', { title: 'Pulso', kind: 'class', starts_at: '2026-11-03T12:00:00Z', ends_at: '2026-11-03T13:00:00Z', capacity: 10, booked_count: 0, status: 'cancelled' });
+  const bk = api.put('booking', { person: 'per_m1', occurrence: occ.id, status: 'cancelled', entitlement: 'single' });
+  const lot = api.put('credit_lot', { person: 'per_m1', source: 'purchase', quantity: 1, valid_until: '2027-01-31' });
+  api.put('credit_entry', { lot: lot.id, person: 'per_m1', delta: 1, reason: 'studio_cancel', booking: bk.id });
+  const r = await m.studioReturn.readOwnStudioReturn(p, { actorId: 'usr_m1', role: 'customer' }, bk.id, { now: () => Date.parse('2026-11-04T12:00:00Z') });
+  assert.equal(r.status, 'verified'); assert.equal(r.units, 1); assert.equal(r.expiresAt, '2027-01-31');
+  // The balance counts that lot only once class_ledger reads a lot's opening studio_cancel entry as the lot (H2 request).
+  const rows = await p.list('class_ledger', { where: { user_id: 'usr_m1' } });
+  if (rows.some((x) => x.reason === 'cancel_return' && x.purchase_ledger_id)) return 'pending';
+  assert.equal(r.balance, 1);
 });
 await test('studio return: no return entry (or a booking the customer cancelled) reads as unverified, never a made-up return', async () => {
   const api = fakeCos(), p = provider(api);

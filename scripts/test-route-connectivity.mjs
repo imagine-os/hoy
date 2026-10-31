@@ -47,14 +47,14 @@ const PENDING = [
 ];
 // OPEN: found by this audit (lane G, 2026-10-31) on routes already in LAUNCH_ROUTES, with no lane closing it yet.
 const OPEN = [
-  // Lane C's role homes (the lane brief: every one of the 11 roles lands on a production page): `/teach` (Teacher, S-03)
-  // and `/admin/content` (Marketing, M-02) entered LAUNCH_ROUTES before their areas are connected, against the rule
-  // above that a new launch route is green. No Wave 1 lane closes them: the coordinator/owner either accepts them until
-  // the waves named or removes the two homes (and gives Teacher and Marketing another home). See lane C's report.
-  ...['sink audit_log', 'sink message_log', 'mock_only modules/teacher/substituteRequest.ts', 'unknown practice_goals', 'unknown reviews', 'unknown space_bookings', 'unknown special_charges']
-    .map((finding) => ({ finding, lane: 'C home, decision pending (teacher app: Wave 4)', routes: ['/teach'], note: 'the Teacher home S-03: substitute requests, practice, reviews, rooms and special charges are not connected' })),
+  // The role homes lane C added (`/teach` Teacher S-03, `/admin/content` Marketing M-02) stay in the launch (owner,
+  // 2026-10-31, lane H). Lane H1 made what is connected read live (the classes, today's rosters, the week; the content
+  // editor's lists) and the rest say "available later" in production (content saves are refused `content_later`).
+  // The code that waits for its wave is still on the route (hidden at run time), so each entry names its wave.
+  ...[['sink audit_log', 'Wave 4 (teacher app: substitute requests log to the audit)'], ['sink message_log', 'Wave 4 (teacher app: substitute requests notify the team)'], ['mock_only modules/teacher/substituteRequest.ts', 'Wave 4 (teacher app: substitute requests)'], ['unknown practice_goals', 'Wave 2 (practice goals; "Mis números")'], ['unknown reviews', 'Wave 3 (class reviews; the rating tile)'], ['unknown space_bookings', 'Wave 4 (teacher app: specials)'], ['unknown special_charges', 'Wave 4 (teacher pay: specials payouts)']]
+    .map(([finding, lane]) => ({ finding, lane, routes: ['/teach'], note: 'the Teacher home S-03: hidden in production ("available later"); the hooks still run on unconnected tables, which read empty with no request' })),
   ...['unknown teacher_profile_proposals', 'sink audit_log', 'mock_only modules/profile-review/contracts.ts', 'unknown events', 'unknown class_pay_rules', 'missing appendClassPayRule', 'dynamic table', 'mock_only modules/admin/contentRecovery.ts', 'dynamic entity2', 'missing contentBatch', 'missing generateRecurrence']
-    .map((finding) => ({ finding, lane: 'C home, decision pending (content: Wave 3)', routes: ['/admin/content'], note: 'the Marketing home M-02: the content editor writes static tables (modalities, teachers, rooms) and unconnected ones' })),
+    .map((finding) => ({ finding, lane: 'Wave 3 (content entities)', routes: ['/admin/content'], note: 'the Marketing home M-02: reads live; every save is refused content_later before anything is sent (contentRecovery.ts), bulk and recurrence are absent on Company OS' })),
   { finding: 'sink audit_log', lane: 'E (scope extension)', routes: ['/admin'], note: 'the dashboard recent-activity card (admin/DashboardPage.tsx) reads audit_log; GET /t/:t/audit like /admin/activity' },
   { finding: 'sink message_log', lane: 'unassigned', routes: ['*', '/admin/crm/:id', '/staff', '/staff/inbox/*'], note: 'data/comms.ts: the staff inbox, member messages and notes, the unread badge; nothing is read and a sent note is dropped' },
   { finding: 'unknown hours_overrides', lane: 'unassigned (a recipe-defined entity, Wave 2 size S)', routes: ['/admin/settings/*', '/app/plans', '/app/faq', '/app/faq/2', '/app/more', '/site/*'], note: 'useOpeningHours(): dated exceptions (holidays, special hours) are never read, so every screen shows the plain week' },
@@ -87,7 +87,6 @@ const BY_DESIGN = [
 const DYNAMIC = [
   { file: 'src/modules/customer/useScopedCustomerRead.ts', arg: 'table', via: ['useScopedCustomerRead'], scope: 'route', why: 'the customer read hook: its callers name the table' },
   { file: 'src/modules/customer/useCustomerRows.ts', arg: 'table', via: ['useCustomerRows'], scope: 'route', why: 'the customer rows hook: its callers name the table' },
-  { file: 'src/modules/classSchedule/studioCancellation.ts', arg: 'table', via: ['scoped', 'owned'], argIndex: 1, why: 'scoped(data, table, …) / owned(data, table, …) helpers in the same file' },
   { file: 'src/modules/customer/accountData.ts', arg: 'table', via: ['owned'], argIndex: 2, why: 'owned(data, actor, table, column) helper in the same file' },
 ];
 
