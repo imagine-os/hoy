@@ -56,5 +56,14 @@ check('people/analytics: a pack frozen today is a paused plan until the freeze e
 const two = rows([L('lotA', 'u1', 4, { plan_id: 'prd_a', expires_at: '2027-02-01' }), L('lotB', 'u1', 4, { plan_id: 'prd_b', expires_at: '2026-11-15', created_at: '2026-10-05T10:00:00Z' }), L('lotC', 'u2', 1, { plan_id: 'prd_a' })]);
 check('people/analytics: one row per person, the pack spent next (earliest expiry); an open-ended pack counts', two?.length === 2 && two.find((r) => r.user_id === 'u1')?.plan_id === 'prd_b' && two.find((r) => r.user_id === 'u2')?.ends_at === null, JSON.stringify(two));
 
+// Review round (lane C): the freeze's last day, when the pause began, product-less lots, several tenants.
+const lastDay = rows([L('lot1', 'u1', 5, { expires_at: '2027-01-31', frozen_from: '2026-10-20', frozen_until: '2026-10-31' })]);
+check('people/analytics: the freeze\'s last day is still paused (as booking sees it)', lastDay?.[0]?.status === 'paused', JSON.stringify(lastDay));
+check('people/analytics: a pause dates from the freeze, not the purchase (no earlier week counts as paused)', frozen?.[0]?.updated_at?.startsWith('2026-10-20'), JSON.stringify(frozen?.[0]));
+const comp = rows([L('lotP', 'u1', 4, { plan_id: 'prd_pack', expires_at: '2027-02-01' }), L('lotG', 'u1', 1, { expires_at: '2026-11-05' })]);
+check('people/analytics: a lot without a product (comp, gift) does not hide the pack\'s product', comp?.length === 1 && comp[0].plan_id === 'prd_pack', JSON.stringify(comp));
+check('people/analytics: a product-less lot alone is still an active plan', rows([L('lotG', 'u1', 1, { expires_at: '2026-11-05' })])?.[0]?.status === 'active');
+check('people/analytics: one person in two tenants gets a row per tenant', rows([L('a', 'u1', 2, { tenant_id: 't1' }), L('b', 'u1', 2, { tenant_id: 't2' })])?.length === 2);
+
 console.log(failed ? `\n${failed} pack read check(s) failed` : '\npack reads passed');
 process.exitCode = failed ? 1 : 0;
