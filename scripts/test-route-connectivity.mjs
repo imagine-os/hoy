@@ -48,21 +48,19 @@ const OPEN = [
   // and `/admin/content` (Marketing, M-02) entered LAUNCH_ROUTES before their areas are connected, against the rule
   // above that a new launch route is green. No Wave 1 lane closes them: the coordinator/owner either accepts them until
   // the waves named or removes the two homes (and gives Teacher and Marketing another home). See lane C's report.
-  ...['sink audit_log', 'sink message_log', 'mock_only modules/teacher/substituteRequest.ts', 'unknown practice_goals', 'unknown reviews', 'unknown space_bookings', 'unknown special_charges']
+  ...['sink audit_log', 'mock_only modules/teacher/substituteRequest.ts', 'unknown practice_goals', 'unknown reviews', 'unknown space_bookings', 'unknown special_charges']
     .map((finding) => ({ finding, lane: 'C home, decision pending (teacher app: Wave 4)', routes: ['/teach'], note: 'the Teacher home S-03: substitute requests, practice, reviews, rooms and special charges are not connected' })),
   ...['unknown teacher_profile_proposals', 'sink audit_log', 'mock_only modules/profile-review/contracts.ts', 'unknown events', 'unknown class_pay_rules', 'missing appendClassPayRule', 'dynamic table', 'mock_only modules/admin/contentRecovery.ts', 'dynamic entity2', 'missing contentBatch', 'missing generateRecurrence']
     .map((finding) => ({ finding, lane: 'C home, decision pending (content: Wave 3)', routes: ['/admin/content'], note: 'the Marketing home M-02: the content editor writes static tables (modalities, teachers, rooms) and unconnected ones' })),
   { finding: 'sink audit_log', lane: 'E (scope extension)', routes: ['/admin'], note: 'the dashboard recent-activity card (admin/DashboardPage.tsx) reads audit_log; GET /t/:t/audit like /admin/activity' },
   { finding: 'sink audit_log', lane: 'unassigned', routes: ['/admin/settings/*', '/app/profile'], note: 'a receipt read (tx.get(audit_log, id)) inside the mock-only flows below; goes with them' },
-  { finding: 'sink message_log', lane: 'unassigned', routes: ['*', '/admin/crm/:id', '/staff', '/staff/inbox/*'], note: 'data/comms.ts: the staff inbox, member messages and notes, the unread badge; nothing is read and a sent note is dropped' },
-  { finding: 'unknown hours_overrides', lane: 'unassigned (a recipe-defined entity, Wave 2 size S)', routes: ['/admin/settings/*', '/app/plans', '/app/faq', '/app/faq/2', '/app/more', '/site/*'], note: 'useOpeningHours(): dated exceptions (holidays, special hours) are never read, so every screen shows the plain week' },
-  { finding: 'read_only legal_documents', lane: 'unassigned', routes: ['/admin/settings/*'], note: 'publishing or unpublishing a legal document refuses read_only (legal_documents is static content in the build)' },
   { finding: 'unknown special_charges', lane: 'unassigned', routes: ['/admin/finance'], note: 'admin/paymentReportReads.ts reads special_charges (no adapter): those rows are missing from the finance totals' },
   { finding: 'unknown events', lane: 'Wave 3', routes: ['/admin/settings/*'], note: 'Events and RSVPs (reuse map); useMediaLibrary reads events for media use' },
   { finding: 'unknown reviews', lane: 'Wave 3', routes: ['/site/*'], note: 'Class reviews (reuse map); the site home reads reviews' },
   { finding: 'unknown practice_goals', lane: 'Wave 2', routes: ['/admin/analytics', '/admin/crm/:id', '/app'], note: 'Maintenance records, practice goals (reuse map); data/useAnalytics.ts' },
   { finding: 'sink activity_events', lane: 'Wave 2', routes: ['/app'], note: 'practice milestones and streaks (data/useAnalytics.ts, customer/HomePage.tsx): with practice goals' },
-  { finding: 'unknown deletion_requests', lane: 'Wave 2', routes: ['/app/account', '/site/*'], note: 'Account deletion (reuse map: forms 1.0.0 privacy_request)' },
+  // Lane H2 connected deletion_requests (a customer's privacy_request, forms); the signed-out page (W-09) still has no session.
+  { finding: 'signed_out deletion_requests (write)', lane: 'unassigned (needs a submit-only forms identity and a Hoy server submit route, ADR 0042, as Between Gigs)', routes: ['/site/*'], note: 'website DeleteAccountPage (W-09) inserts a deletion request signed out: the Hoy server answers 401. A signed-in customer asks from /app/account (C-26, H1).' },
   { finding: 'unknown waitlist', lane: 'Wave 2', routes: ['/staff', '/staff/checkin'], note: 'Waitlist (reuse map: bookings waitlist_entry)' },
   { finding: 'unknown payroll_runs', lane: 'Wave 4', routes: ['/admin/finance'], note: 'Teacher app and teacher pay (reuse map); admin/payouts.ts' },
   { finding: 'unknown payroll_lines', lane: 'Wave 4', routes: ['/admin/finance'], note: 'Teacher app and teacher pay (reuse map); admin/payouts.ts' },
@@ -79,8 +77,8 @@ const OPEN = [
   { finding: 'mock_only modules/quotes/hooks.ts', lane: 'unassigned', routes: ['/app/plans', '/app/passes', '/app/classes'], note: 'useOperationalCatalog().quote() answers null unless the provider is the mock' },
   { finding: 'mock_only modules/admin/paymentInstructions.ts', lane: 'unassigned', routes: ['/admin/settings/*'], note: 'saving the payment instructions throws payment_settings_disconnected' },
   // Signed out (lane G2): reads outside the live public set (SIGNED_OUT_LIVE) come back empty without asking Company OS.
-  { finding: 'signed_out tenants (empty)', lane: 'H2 (owner-approved: settings split)', routes: ['/site/*'], note: 'useSettings() (admin/settings.ts: opening hours, contact, policies, legal texts) and readPaymentInstructions() on /site/contact read the studio_settings row, which also holds the payroll rate card and payout account, so the public_site identity cannot read it: every visitor sees the app defaults, not what the studio saved. Closes: lane H2 (the public sections move to a public studio_settings record public_site reads; PUBLIC_TABLES / PUBLIC_ENTITIES then include it)' },
-  { finding: 'signed_out bookings (empty)', lane: 'H2 (owner-approved: public booked spots)', routes: ['/site/*'], note: 'the schedule drawer\'s mat map (website/pages/SchedulePage.tsx taken, MatPicker without `taken`) reads bookings to grey out taken mats; signed out every mat looks free and checkout refuses spot_taken after sign-in. Places left are fine (occurrence.booked_count is live). Closes: lane H2 (a public_site read of booked spots per occurrence, no person, passed as MatPicker `taken`)' },
+  // Lane H2 closed `signed_out tenants (empty)` and `signed_out bookings (empty)` (the public settings record and the
+  // booked mats are read live).
 ];
 
 // ── Uses that are unconnected on purpose: the production behaviour IS the empty read or the dropped write.
@@ -92,7 +90,7 @@ const BY_DESIGN = [
   { finding: 'sink audit_log', op: 'read', file: 'src/modules/staff/HomePage.tsx', why: 'the hook runs, but the timeline it feeds renders only in the review build (`!PRODUCTION_BUILD &&`)' },
   { finding: 'mock_only components/organism/SharedImageField/SharedImageField.tsx', why: 'device-local photos exist only in the review build; production offers the shipped media catalogue' },
   { finding: 'mock_only data/useMediaLibrary.ts', why: 'device-local photos exist only in the review build; production lists the shipped media catalogue' },
-  { finding: 'signed_out tenants (write)', file: 'src/modules/admin/settings.ts', why: 'useSettings() returns save() next to the settings; no signed-out page calls it (the site, MapSlot and DeleteAccountPage take only `settings`), and signed out the row is empty, so save() writes nothing (`if (row)`)' },
+  { finding: 'signed_out tenants (write)', file: 'src/modules/admin/settings.ts', why: 'useSettings() returns save() next to the settings; no signed-out page calls it (the site, MapSlot and DeleteAccountPage take only `settings`). Since lane H2 the site reads the public settings record live, so the row exists signed out: a call would still write nothing, since the save is sent without a session (the Hoy server answers 401) and the site\'s identity is read-only (ADR 0029)' },
 ];
 
 // ── Table names passed in a variable. `tables`: the values it takes (judged like literals). `via`: the helper forwards
@@ -157,13 +155,17 @@ const serverSrc = await readFile('server/app.mjs', 'utf8');
 const setOf = (src, name) => [...(src.match(new RegExp(String.raw`const ${name}\s*=\s*new Set\(\[([^\]]*)\]\)`))?.[1] ?? '').matchAll(/'([^']+)'/g)].map((m) => m[1]);
 const SIGNED_OUT_MODEL = {
   // list(): `if (!(await this.transport.signedIn())) return (a.kind === 'entity' && PUBLIC_TABLES.has(table) ? … : [])`
-  listGuard: /if\s*\(!\(await this\.transport\.signedIn\(\)\)\)\s*return\s*\(a\.kind === 'entity' && PUBLIC_TABLES\.has\(table\)\s*\?[^:\n]*:\s*\[\]\)/.test(classBody),
+  // (lane H2: `if (!(await this.transport.signedIn())) { if (!PUBLIC_TABLES.has(table)) return []; …settings… entity… }`)
+  listGuard: /if\s*\(!\(await this\.transport\.signedIn\(\)\)\)\s*return\s*\(a\.kind === 'entity' && PUBLIC_TABLES\.has\(table\)\s*\?[^:\n]*:\s*\[\]\)/.test(classBody)
+    || /if\s*\(!\(await this\.transport\.signedIn\(\)\)\)\s*\{\s*if\s*\(!PUBLIC_TABLES\.has\(table\)\)\s*return \[\];/.test(classBody),
   // get(): `if (!signedIn && !PUBLIC_TABLES.has(table)) return null;`
   getGuard: /if\s*\(!signedIn && !PUBLIC_TABLES\.has\(table\)\)\s*return null;/.test(classBody),
   providerTables: setOf(providerSrc, 'PUBLIC_TABLES'),
   serverEntities: setOf(serverSrc, 'PUBLIC_ENTITIES'),
 };
-SIGNED_OUT_MODEL.unserved = SIGNED_OUT_MODEL.providerTables.filter((t) => adapters[t]?.kind !== 'entity' || !SIGNED_OUT_MODEL.serverEntities.includes(adapters[t].entity));
+/** The entity a table reads signed out: an entity adapter's, or `setting` for the studio settings (lane H2). */
+const publicEntityOf = (a) => (a?.kind === 'entity' ? a.entity : a?.kind === 'settings' ? 'setting' : null);
+SIGNED_OUT_MODEL.unserved = SIGNED_OUT_MODEL.providerTables.filter((t) => !SIGNED_OUT_MODEL.serverEntities.includes(publicEntityOf(adapters[t])));
 /** A request() the Hoy server forwards signed out (server/app.mjs publicRead()); `:x` is an interpolated id. */
 const publicRequest = (r) => r === 'POST /query' || SIGNED_OUT_MODEL.serverEntities.some((e) => r === `GET /api/${e}` || r === `GET /api/${e}/:x`);
 /** The tables a signed-out page reads live: in PUBLIC_TABLES, an entity adapter, and its entity forwarded by the server. */
@@ -354,9 +356,11 @@ function judge(use, route) {
   if (write && a.kind === 'entity' && a.readOnly) return `read_only ${use.table}`;
   if (a.kind === 'session' && write) return `member ${use.table}`; // update/remove refuse; atomic() refuses an insert
   if (a.kind === 'settings' && use.op === 'remove') return `read_only ${use.table}`;
+  // Legal texts are in the build: only publishing (an update of status) reaches Company OS (lane H2).
+  if (a.kind === 'legal' && write && use.op !== 'update') return `read_only ${use.table}`;
   // Signed out: a write has no session (401); a read of anything but a static table or a live one is silently empty.
   if (route.signedOut && write) return `signed_out ${use.table} (write)`;
-  if (route.signedOut && a.kind !== 'static' && !SIGNED_OUT_LIVE.has(use.table)) return `signed_out ${use.table} (empty)`;
+  if (route.signedOut && a.kind !== 'static' && a.kind !== 'legal' && !SIGNED_OUT_LIVE.has(use.table)) return `signed_out ${use.table} (empty)`;
   return null;
 }
 const byDesign = (finding, use) => BY_DESIGN.find((b) => b.finding === finding && (!b.op || b.op === use.op) && (!b.file || b.file === use.file));
@@ -425,13 +429,15 @@ check('the signed-out model was read (provider list() and get() guards, PUBLIC_T
 check('every table the provider reads live signed out is an entity the Hoy server forwards (else it answers 401)', SIGNED_OUT_MODEL.unserved.length === 0 && SIGNED_OUT_LIVE.size === SIGNED_OUT_MODEL.providerTables.length, SIGNED_OUT_MODEL.unserved.join(', '));
 check('a signed-out page reading the live tables passes', SIGNED_OUT_LIVE.size > 0 && (await fake('SignedOutLivePage.tsx', true)).length === 0, (await fake('SignedOutLivePage.tsx', true)).join(', '));
 check('hostile: a signed-out page reading a table outside the live set fails', !SIGNED_OUT_LIVE.has(OUTSIDE) && has(await fake('SignedOutOutsidePage.tsx', true), `signed_out ${OUTSIDE} (empty)`), OUTSIDE);
-check('hostile: a signed-out read of the settings row fails (it reads as empty)', has(await fake('SignedOutSettingsPage.tsx', true), 'signed_out tenants (empty)'));
+// Lane H2: the studio's public settings record is read live signed out (decision F-01).
+check('a signed-out read of the settings row passes (the public record, read live)', SIGNED_OUT_LIVE.has('tenants') && !has(await fake('SignedOutSettingsPage.tsx', true), 'signed_out tenants'), (await fake('SignedOutSettingsPage.tsx', true)).join(', '));
 check('hostile: a signed-out write fails', has(await fake('SignedOutWritePage.tsx', true), 'signed_out tenants (write)'));
 check('hostile: a signed-out write to a live table fails', has(await fake('SignedOutLiveWritePage.tsx', true), `signed_out ${LIVE_LIST[0]} (write)`), LIVE_LIST[0]);
 check('hostile: a signed-out request the Hoy server does not forward fails', has(await fake('SignedOutRequestPage.tsx', true), 'signed_out request POST /api/booking'));
 check('a signed-out request the Hoy server forwards (POST /query, GET /api/<public entity>) passes', (await fake('SignedOutPublicRequestPage.tsx', true)).length === 0, (await fake('SignedOutPublicRequestPage.tsx', true)).join(', '));
 // The BY_DESIGN settings save rests on the row being empty signed out: once the settings are read live, revisit it.
-check('BY_DESIGN signed_out tenants (write) still holds (tenants is not read live signed out)', !BY_DESIGN.some((b) => b.finding === 'signed_out tenants (write)') || !SIGNED_OUT_LIVE.has('tenants'));
+// Revisited by lane H2: with tenants read live, the reason must not rest on an empty row.
+check('BY_DESIGN signed_out tenants (write) still holds (its reason matches the live read)', !BY_DESIGN.some((b) => b.finding === 'signed_out tenants (write)') || !SIGNED_OUT_LIVE.has('tenants') || BY_DESIGN.some((b) => b.finding === 'signed_out tenants (write)' && /read-only/.test(b.why) && !/the row is empty/.test(b.why)));
 check('the same reads signed in are not signed-out findings', !has(await fake('SignedOutOutsidePage.tsx'), 'signed_out') && !has(await fake('SignedOutWritePage.tsx'), 'signed_out'));
 check('hostile: a write to a new table with no adapter fails', has(await fake('NewTablePage.tsx'), 'unknown brand_new_table'));
 check('hostile: a write whose table is computed fails (dynamic)', has(await fake('ComputedPage.tsx'), 'dynamic t'));

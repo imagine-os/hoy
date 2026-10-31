@@ -449,7 +449,9 @@ await test('public reads: signed out, everything else stays 401 and nothing reac
   upstreamReply = okUpstream;
   seen.length = 0;
   const refusedQueries = [
-    ...['person', 'booking', 'payment', 'credit_lot', 'credit_entry', 'member', 'invoice', 'waitlist_entry', 'setting', 'comms_log', 'file', 'feature_flag', 'voucher'].map((entity) => JSON.stringify({ entity })),
+    // Lane H2 forwards setting, hours_override and booking too: the public_site policies narrow them to the public
+    // settings record, the holiday hours without their note, and a booking's class and mat.
+    ...['person', 'payment', 'credit_lot', 'credit_entry', 'member', 'invoice', 'waitlist_entry', 'comms_log', 'staff_note', 'form_submission', 'policy_acceptance', 'file', 'feature_flag', 'voucher'].map((entity) => JSON.stringify({ entity })),
     '{}', 'not json', '[]', 'null', JSON.stringify({ entity: ['occurrence'] }), JSON.stringify({ entity: { $ne: null } }), JSON.stringify({ entity: 'Occurrence' }),
     JSON.stringify({ entity: 'occurrence', entity2: 'x' }).replace('entity2', 'entity'), // a repeated key: the parser keeps the last one
   ];
@@ -460,7 +462,7 @@ await test('public reads: signed out, everything else stays 401 and nothing reac
   }
   const other = [
     ['GET', '/me'], ['GET', '/signup'], ['POST', '/signup'], ['POST', '/batch'], ['GET', '/query'],
-    ['GET', '/api/person'], ['GET', '/api/person/p1'], ['GET', '/api/booking'], ['GET', '/api/setting/s1'], ['GET', '/api/payment/x'],
+    ['GET', '/api/person'], ['GET', '/api/person/p1'], ['GET', '/api/staff_note'], ['GET', '/api/payment/x'],
     ['POST', '/api/occurrence'], ['PATCH', '/api/occurrence/o1'], ['DELETE', '/api/occurrence/o1'], ['PUT', '/api/product/p1'],
     ['GET', '/api/occurrence/o1/extra'], ['GET', '/api/%6fccurrence/o1/..'], ['HEAD', '/api/product'],
     ['GET', '/public-files/f1/url'], ['POST', '/public-files/urls'], ['GET', '/files/f1/url'], ['GET', '/audit'], ['GET', '/admin/roles'],

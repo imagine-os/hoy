@@ -3,10 +3,12 @@ import { applyQuery, type ChangeEvent, type DataProvider, type Query } from '../
 import type { VoucherCommand, VoucherResult, VoucherRow } from '../vouchers';
 import type { PromotionResult } from '../promotions';
 import { tenant } from '../../tenant/tenant';
-import { adapterFor, fromRecord, toData, RELATED, ROLE_OF_KEY, type CosRecord, type EntityAdapter, type Row, type SettingsAdapter } from './mapping';
+import { adapterFor, fromRecord, toData, RELATED, ROLE_OF_KEY, type CosRecord, type EntityAdapter, type LegalAdapter, type MessagesAdapter, type Row, type SettingsAdapter } from './mapping';
+import { mergeSettingsRecords, sameJson, splitSettings } from './settingsSplit';
+import { closedDatesOf, formatClosedDates, parseClosedDates } from './closedDates';
 import { planQuery, PAGE, type QuerySpec } from './query';
 import { CompanyOSError, Transport, newIdempotencyKey, normalizeCode, onTokenSourceChange, wireKey, type TransportOptions } from './transport';
-import { toDay } from './dates';
+import { toDay, today as studioToday } from './dates';
 
 /** Contract §1: `subscribe()` polls every 20 s on the screens that ask for it (`useLiveUpdates`). */
 export const POLL_MS = 20_000;
@@ -14,7 +16,13 @@ export const POLL_MS = 20_000;
 const MAX_PAGES = 20;
 const MAX_OPS = 200;
 
-export interface CompanyOSProviderOptions extends TransportOptions { pollMs?: number }
+export interface CompanyOSProviderOptions extends TransportOptions {
+  pollMs?: number;
+  /** How long after the last hours-override write the bookings closed dates are synced (coalesces an import). */
+  closedDatesDelayMs?: number;
+  /** The studio's today (YYYY-MM-DD); tests pin it. */
+  today?: () => string;
+}
 
 export interface CompanyOSMe {
   personId: string | null;
@@ -30,9 +38,11 @@ export interface CompanyOSMe {
 /**
  * Signed out, the website reads these live: the Hoy server answers them with its read-only identity (`public_site`,
  * ADR 0029), whose policies hide the private class (J4), who booked and people's contact details. Every other table
- * reads as empty signed out, without asking Company OS.
+ * reads as empty signed out, without asking Company OS. Lane H2 adds the studio's public settings record (`tenants`),
+ * the holiday hours and the booked mats (a booking's class and mat only).
  */
-const PUBLIC_TABLES = new Set(['plans', 'teachers', 'rooms', 'class_templates', 'class_sessions']);
+const PUBLIC_TABLES = new Set(['plans', 'teachers', 'rooms', 'class_templates', 'class_sessions', 'tenants', 'hours_overrides', 'bookings']);
+const isForbidden = (e: unknown) => e instanceof CompanyOSError && e.code === 'forbidden';
 
 type Op = { op: 'create' | 'update' | 'delete'; entity: string; id?: string; data?: Record<string, unknown>; token?: string; table: string; dropped?: boolean };
 type Pending = { body: { ops: unknown[] }; result: unknown; tokens: string[]; tables: string[] };
@@ -82,10 +92,16 @@ export class CompanyOSProvider implements DataProvider {
   private meFor: string | null = null;
   private tokenSeq = 0;
   private running = new Map<string, Promise<unknown>>();
+  private readonly closedDatesDelayMs: number;
+  private readonly today: () => string;
+  private closedTimer: ReturnType<typeof setTimeout> | null = null;
+  private closedRun: Promise<void> = Promise.resolve();
 
   constructor(options: CompanyOSProviderOptions = {}) {
     this.transport = new Transport(options);
     this.pollMs = options.pollMs ?? POLL_MS;
+    this.closedDatesDelayMs = options.closedDatesDelayMs ?? 1500;
+    this.today = options.today ?? studioToday;
     onTokenSourceChange(() => { this.meCache = null; this.emitAll(); });
     if (typeof document !== 'undefined') document.addEventListener('visibilitychange', () => { if (!document.hidden && this.watchers.size) this.tick(); });
   }
@@ -95,16 +111,24 @@ export class CompanyOSProvider implements DataProvider {
     const a = adapterFor(table);
     if (!a || a.kind === 'sink') return [];
     if (a.kind === 'static') return applyQuery(clone(a.rows()), query) as unknown as T[];
-    if (!(await this.transport.signedIn())) return (a.kind === 'entity' && PUBLIC_TABLES.has(table) ? await this.publicList(a, query) : []) as unknown as T[];
+    if (a.kind === 'legal') return applyQuery(await this.legalRows(a), query) as unknown as T[];
+    if (!(await this.transport.signedIn())) {
+      if (!PUBLIC_TABLES.has(table)) return [];
+      if (a.kind === 'settings') return applyQuery([tenantRow(await this.settingsRecords(a))], query) as unknown as T[];
+      return (a.kind === 'entity' ? await this.publicList(a, query) : []) as unknown as T[];
+    }
     if (a.kind === 'session') return applyQuery(await this.roleRows(), query) as unknown as T[];
-    if (a.kind === 'settings') return applyQuery([tenantRow(await this.settingsRecord(a))], query) as unknown as T[];
+    if (a.kind === 'settings') return applyQuery([tenantRow(await this.settingsRecords(a))], query) as unknown as T[];
+    if (a.kind === 'messages') return this.listMessages(a, query) as unknown as Promise<T[]>;
     const self = await this.self();
     const q = query?.where ? { ...query, where: inbound(table, query.where, self) } : query;
     const key = `${table}|${JSON.stringify(q ?? null)}`;
     let p = this.inflight.get(key);
     if (!p) {
       // A write drops the table's entries (`changed`), so the cleanup removes only this read's own entry.
-      const read: Promise<Row[]> = (this.listEntity(a, q) as Promise<Row[]>).finally(() => { if (this.inflight.get(key) === read) this.inflight.delete(key); });
+      const read: Promise<Row[]> = (this.listEntity(a, q) as Promise<Row[]>)
+        .catch((e) => { if (a.forbiddenAsEmpty && isForbidden(e)) return [] as Row[]; throw e; })
+        .finally(() => { if (this.inflight.get(key) === read) this.inflight.delete(key); });
       p = read;
       this.inflight.set(key, p);
     }
@@ -120,7 +144,18 @@ export class CompanyOSProvider implements DataProvider {
       p = read;
       this.inflight.set(key, p);
     }
-    return (await p).map((r) => clone(r));
+    return (await p).map((r) => (a.signedOutRow ? a.signedOutRow(clone(r)) : clone(r)));
+  }
+
+  /** The staff inbox: the comms log and the staff notes this role may read, as one list. */
+  private async listMessages(a: MessagesAdapter, query?: Query): Promise<Row[]> {
+    const self = await this.self();
+    const q = query?.where ? { ...query, where: inbound(a.table, query.where, self) } : query;
+    const parts = await Promise.all([a.log, a.note].map((part) => this.listEntity(part, q ? { where: q.where } : undefined).catch((e) => {
+      if (isForbidden(e)) return [] as Row[];
+      throw e;
+    })));
+    return applyQuery(parts.flat(), q).map((r) => outbound(a.table, clone(r), self));
   }
 
   /**
@@ -210,7 +245,7 @@ export class CompanyOSProvider implements DataProvider {
   async insert<T extends BaseRow = BaseRow>(table: string, row: Partial<T>, options: { idempotencyKey?: string } = {}): Promise<T> {
     const settings = this.settingsAdapter(table);
     if (settings) return this.saveSettings(settings, row as Record<string, unknown>) as unknown as Promise<T>;
-    const a = this.writable(table);
+    const a = this.writable(table, row as Record<string, unknown>);
     const self = a ? await this.self() : null;
     const r = inbound(table, row as Record<string, unknown>, self);
     if (!a || a !== 'member' && a.clientCreate && !a.clientCreate(r)) return this.sinkRow(r) as unknown as T;
@@ -230,9 +265,13 @@ export class CompanyOSProvider implements DataProvider {
   async update<T extends BaseRow = BaseRow>(table: string, id: string, patch: Partial<T>): Promise<T> {
     const settings = this.settingsAdapter(table);
     if (settings) return this.saveSettings(settings, patch as Record<string, unknown>) as unknown as Promise<T>;
+    const legal = adapterFor(table);
+    if (legal?.kind === 'legal') return this.updateLegal(legal, id, patch as Record<string, unknown>) as unknown as Promise<T>;
+    if (legal?.kind === 'messages') return this.updateMessage(legal, id, patch as Record<string, unknown>) as unknown as Promise<T>;
     const a = this.writable(table);
     if (!a) return { ...this.sinkRow(patch as Record<string, unknown>), id } as unknown as T;
     if (a === 'member') throw new CompanyOSError('not_in_launch');
+    if (a.createOnly) throw new CompanyOSError(a.createOnly);
     const self = await this.self();
     const target = selfId(table, id, self);
     const body = toData(a, inbound(table, patch as Record<string, unknown>, self), 'update');
@@ -245,9 +284,17 @@ export class CompanyOSProvider implements DataProvider {
   }
 
   async remove(table: string, id: string): Promise<void> {
+    const m = adapterFor(table);
+    if (m?.kind === 'messages') {
+      const part = await this.messagePartOf(m, id);
+      await this.transport.request('DELETE', `/api/${part.entity}/${encodeURIComponent(id)}`);
+      this.changed([table]);
+      return;
+    }
     const a = this.writable(table);
     if (!a) return;
     if (a === 'member') throw new CompanyOSError('not_in_launch');
+    if (a.createOnly) throw new CompanyOSError(a.createOnly);
     await this.transport.request('DELETE', `/api/${a.writeEntity ?? a.entity}/${encodeURIComponent(selfId(table, id, await this.self()))}`);
     this.changed([table]);
   }
@@ -258,36 +305,163 @@ export class CompanyOSProvider implements DataProvider {
     return a?.kind === 'settings' ? a : null;
   }
 
-  /** The `setting` record holding the studio settings, or null before the first save (or signed out). */
-  async settingsRecord(a: SettingsAdapter = this.settingsAdapter('tenants')!): Promise<CosRecord | null> {
-    if (!(await this.transport.signedIn())) return null;
-    return (await this.query({ entity: 'setting', filter: { field: 'key', op: 'eq', value: a.key }, limit: 1 }))[0] ?? null;
+  /**
+   * The two `setting` records behind the studio settings (decision F-01): the public one and `studio_private`, in one
+   * query. A role the policies keep from the private record (everyone but Administration and Finance), and the
+   * signed-out site, get the public one only. Either is null before its first save.
+   */
+  async settingsRecords(a: SettingsAdapter = this.settingsAdapter('tenants')!): Promise<SettingsRecords> {
+    const signedIn = await this.transport.signedIn();
+    const filter = signedIn ? { field: 'key', op: 'in', value: [a.key, a.privateKey] } : { field: 'key', op: 'eq', value: a.key };
+    const rows = await this.query({ entity: 'setting', filter, limit: 2 });
+    return { pub: rows.find((r) => r.data.key === a.key) ?? null, priv: rows.find((r) => r.data.key === a.privateKey) ?? null };
   }
 
-  /** The op that saves `settings` (whole JSON, like the mock's row update): an update of the record, or its create. */
-  async settingsOp(a: SettingsAdapter, patch: Record<string, unknown>): Promise<{ op: Op; rec: CosRecord | null } | null> {
+  /**
+   * The ops that save `settings` (the whole JSON, like the mock's row update), split into its two records: each is
+   * created or updated only when its part changed. A private part is written only when it has sections (a role that
+   * reads the defaults never creates one), and a legacy public record holding the pay data is rewritten without it.
+   */
+  async settingsOps(a: SettingsAdapter, patch: Record<string, unknown>): Promise<Op[] | null> {
     if (!('settings' in patch)) return null;
-    const rec = await this.settingsRecord(a);
-    const op: Op = rec ? { op: 'update', entity: 'setting', id: rec.id, data: { value: patch.settings }, table: a.table } : { op: 'create', entity: 'setting', data: { key: a.key, value: patch.settings }, table: a.table };
-    return { op, rec };
+    const recs = await this.settingsRecords(a);
+    const { pub, priv } = splitSettings(patch.settings);
+    const ops: Op[] = [];
+    const plan = (key: string, rec: CosRecord | null, value: Record<string, unknown>) => {
+      if (rec && sameJson(rec.data.value, value)) return;
+      ops.push(rec ? { op: 'update', entity: 'setting', id: rec.id, data: { value }, table: a.table } : { op: 'create', entity: 'setting', data: { key, value }, table: a.table });
+    };
+    plan(a.key, recs.pub, pub);
+    if (Object.keys(priv).length || recs.priv) plan(a.privateKey, recs.priv, priv);
+    return ops;
   }
 
   private async saveSettings(a: SettingsAdapter, patch: Record<string, unknown>): Promise<Row> {
-    const planned = await this.settingsOp(a, patch);
-    if (!planned) return tenantRow(await this.settingsRecord(a));
-    const { op } = planned;
-    const res = op.op === 'update'
-      ? await this.transport.request('PATCH', `/api/setting/${encodeURIComponent(op.id!)}`, { body: op.data })
-      : await this.transport.request('POST', '/api/setting', { body: op.data, idempotencyKey: newIdempotencyKey() });
+    const ops = await this.settingsOps(a, patch);
+    if (!ops) return tenantRow(await this.settingsRecords(a));
+    for (const op of ops) {
+      if (op.op === 'update') await this.transport.request('PATCH', `/api/setting/${encodeURIComponent(op.id!)}`, { body: op.data });
+      else await this.transport.request('POST', '/api/setting', { body: op.data, idempotencyKey: newIdempotencyKey() });
+    }
+    if (ops.length) this.changed([a.table]);
+    return tenantRow(await this.settingsRecords(a));
+  }
+
+  // ------------------------------------------------------------ the staff inbox (lane H2)
+  /** Which entity a new inbox row goes to: a note is a staff note, a WhatsApp a logged message; email is refused. */
+  messagePart(a: MessagesAdapter, row: Record<string, unknown>): EntityAdapter {
+    if (row.channel === 'note' || row.direction === 'internal') return a.note;
+    // H-9: email is sent only through Company OS (comms delivery, A-02); a hand-logged email would be a simulated send.
+    if (row.channel !== 'whatsapp') throw new CompanyOSError('email_not_connected');
+    return a.log;
+  }
+
+  private async messagePartOf(a: MessagesAdapter, id: string): Promise<EntityAdapter> {
+    const row = await this.get<Row>(a.table, id);
+    if (!row) throw new CompanyOSError('not_found');
+    return row.channel === 'note' ? a.note : a.log;
+  }
+
+  /** Read stamps aren't stored (no inbound messages, R-04); a note's text is Administration's to correct. */
+  private async updateMessage(a: MessagesAdapter, id: string, patch: Record<string, unknown>): Promise<Row> {
+    const fields = Object.keys(patch).filter((k) => !['read_at', 'read_by', 'id', 'tenant_id', 'updated_at'].includes(k));
+    if (!fields.length) return (await this.get<Row>(a.table, id)) ?? ({ ...this.sinkRow(patch), id } as Row);
+    const part = await this.messagePartOf(a, id);
+    if (part !== a.note || fields.some((k) => k !== 'body')) throw new CompanyOSError('read_only');
+    const res = await this.transport.request('PATCH', `/api/${part.entity}/${encodeURIComponent(id)}`, { body: toData(part, patch, 'update') });
     this.changed([a.table]);
-    return tenantRow(unwrap(res.body));
+    return outbound(a.table, fromRecord(part, unwrap(res.body)), await this.self());
+  }
+
+  // ------------------------------------------------------------ legal documents (lane H2)
+  /** The versions sign-up asks for: the people setting for a Super Admin, `GET /signup` for anyone else; null if unknown. */
+  private async signupConsents(): Promise<{ document: string; version: string }[] | null> {
+    if (!(await this.transport.signedIn())) return null;
+    try {
+      const me = await this.me();
+      if (me?.isSuperAdmin) {
+        const res = await this.transport.request<{ settings?: { signup_consents?: unknown } }>('GET', '/modules/people/settings');
+        return parseConsentList(res.body?.settings?.signup_consents);
+      }
+      const res = await this.transport.request<{ enabled?: boolean; consents?: { document?: unknown; version?: unknown }[] }>('GET', '/signup');
+      if (res.body?.enabled !== true || !Array.isArray(res.body.consents)) return null;
+      return res.body.consents.flatMap((c) => (typeof c.document === 'string' && typeof c.version === 'string' ? [{ document: c.document, version: c.version }] : []));
+    } catch { return null; }
+  }
+
+  /** The build's legal rows; when sign-up names a version the build has, that one is published and its siblings drafts. */
+  private async legalRows(a: LegalAdapter): Promise<Row[]> {
+    const rows = clone(a.rows());
+    const consents = await this.signupConsents();
+    for (const c of consents ?? []) {
+      if (!rows.some((r) => r.kind === c.document && r.version === c.version)) continue;
+      for (const r of rows) if (r.kind === c.document) r.status = r.version === c.version ? 'published' : 'draft';
+    }
+    return rows;
+  }
+
+  /**
+   * Publishing a legal version the customer accepts (`requires_acceptance`) sets it in the people setting
+   * `signup_consents` (the Super Admin; Hoy's Administration, AD-04): sign-up asks for it, and a signed-in customer
+   * accepts it in the app. The texts stay in the build, so every other change is refused.
+   */
+  private async updateLegal(a: LegalAdapter, id: string, patch: Record<string, unknown>): Promise<Row> {
+    const row = a.rows().find((r) => r.id === id);
+    if (!row) throw new CompanyOSError('not_found');
+    if (Object.keys(patch).some((k) => !['status', 'published_at', 'updated_at'].includes(k)) || !row.requires_acceptance) throw new CompanyOSError('legal_document_in_build');
+    if (!('status' in patch)) return (await this.legalRows(a)).find((r) => r.id === id)!;
+    const res = await this.transport.request<{ settings?: { signup_consents?: unknown } }>('GET', '/modules/people/settings');
+    const list = parseConsentList(res.body?.settings?.signup_consents);
+    const current = list.find((c) => c.document === row.kind);
+    if (patch.status === 'published') {
+      if (current?.version !== row.version) {
+        const next = current ? list.map((c) => (c.document === row.kind ? { document: c.document, version: String(row.version) } : c)) : [...list, { document: String(row.kind), version: String(row.version) }];
+        await this.transport.request('PATCH', '/modules/people/settings', { body: { settings: { signup_consents: next.map((c) => `${c.document}@${c.version}`).join(',') } } });
+        this.changed([a.table]);
+      }
+    } else if (current?.version === row.version) throw new CompanyOSError('legal_document_current');
+    return (await this.legalRows(a)).find((r) => r.id === id)!;
+  }
+
+  // ------------------------------------------------------------ holiday hours → bookings closed dates (lane H2)
+  /** Re-syncs bookings `review_closed_dates` shortly after the last hours-override write (an import coalesces). */
+  private scheduleClosedDates() {
+    if (this.closedTimer) clearTimeout(this.closedTimer);
+    this.closedTimer = setTimeout(() => {
+      this.closedTimer = null;
+      this.closedRun = this.closedRun.then(() => this.syncClosedDates());
+    }, this.closedDatesDelayMs);
+  }
+
+  /** Resolves once a scheduled closed-dates sync has run (tests, and a screen that must wait for it). */
+  async closedDatesSettled(): Promise<void> {
+    while (this.closedTimer) await new Promise((r) => setTimeout(r, Math.max(5, this.closedDatesDelayMs)));
+    await this.closedRun;
+  }
+
+  /** Every closed override's dates from today on → bookings `review_closed_dates`, written only when they differ. */
+  private async syncClosedDates(): Promise<void> {
+    try {
+      const rows = await this.list<Row>('hours_overrides');
+      const dates = closedDatesOf(rows as never, this.today());
+      const res = await this.transport.request<{ settings?: { review_closed_dates?: unknown } }>('GET', '/modules/bookings/settings');
+      if (sameJson(parseClosedDates(res.body?.settings?.review_closed_dates), dates)) return;
+      await this.transport.request('PATCH', '/modules/bookings/settings', { body: { settings: { review_closed_dates: formatClosedDates(dates) } } });
+    } catch (e) {
+      // Only the Super Admin edits module settings (Hoy's Administration holds it, AD-04); the override is saved anyway.
+      console.warn('[companyos] bookings review_closed_dates not synced:', e instanceof CompanyOSError ? e.code : e);
+    }
   }
 
   /** The adapter a write goes to; null for a sink (accepted and dropped); `member` for a customer role grant. */
-  private writable(table: string): EntityAdapter | 'member' | null {
+  private writable(table: string, row?: Record<string, unknown>): EntityAdapter | 'member' | null {
     const a = adapterFor(table);
     if (!a) throw new CompanyOSError('not_in_launch');
-    if (a.kind === 'settings') throw new CompanyOSError('read_only');
+    if (a.kind === 'messages') {
+      if (!row) throw new CompanyOSError('read_only');
+      return this.messagePart(a, row);
+    }
+    if (a.kind === 'settings' || a.kind === 'legal') throw new CompanyOSError('read_only');
     if (a.kind === 'sink') return null;
     if (a.kind === 'static') throw new CompanyOSError('read_only');
     if (a.kind === 'session') return 'member';
@@ -445,6 +619,7 @@ export class CompanyOSProvider implements DataProvider {
   }
 
   private changed(tables: string[]) {
+    if (tables.includes('hours_overrides')) this.scheduleClosedDates();
     const all = new Set<string>();
     for (const t of tables) { all.add(t); for (const r of RELATED[t] ?? []) all.add(r); }
     // A read that started before the write may answer with the old rows: the refetch below must not join it.
@@ -504,11 +679,13 @@ class Stage {
   }
 
   private async saveSettings(a: SettingsAdapter, table: string, id: string, patch: Record<string, unknown>): Promise<Row> {
-    const current = (this.touched.get(`${table}:${id}`) ?? (await this.real.get<Row>(table, id)) ?? tenantRow(null)) as Row;
-    const planned = await this.real.settingsOp(a, patch);
+    const current = (this.touched.get(`${table}:${id}`) ?? (await this.real.get<Row>(table, id)) ?? tenantRow({ pub: null, priv: null })) as Row;
+    const planned = await this.real.settingsOps(a, patch);
     if (!planned) return current;
-    const prior = this.ops.find((o) => o.table === table && !o.dropped);
-    if (prior) prior.data = { ...prior.data, ...planned.op.data }; else this.ops.push(planned.op);
+    for (const op of planned) {
+      const prior = this.ops.find((o) => o.table === table && !o.dropped && o.entity === op.entity && (op.op === 'update' ? o.id === op.id : o.op === 'create' && o.data?.key === op.data?.key));
+      if (prior) prior.data = { ...prior.data, ...op.data }; else this.ops.push(op);
+    }
     const merged = { ...current, settings: patch.settings } as Row;
     this.touched.set(`${table}:${id}`, merged);
     return merged;
@@ -516,10 +693,12 @@ class Stage {
   subscribe() { return () => {}; }
   atomic<T>(action: (data: DataProvider) => Promise<T>) { return action(this as unknown as DataProvider); }
 
-  private adapter(table: string): EntityAdapter | null {
+  private adapter(table: string, row?: Record<string, unknown>): EntityAdapter | null {
     const a = adapterFor(table);
     if (!a) throw new CompanyOSError('not_in_launch');
     if (a.kind === 'sink') return null;
+    if (a.kind === 'messages' && row) return this.real.messagePart(a, row);
+    if (a.kind === 'messages' || a.kind === 'legal') throw new CompanyOSError('read_only');
     if (a.kind === 'static') throw new CompanyOSError('read_only');
     if (a.kind === 'session') throw new CompanyOSError('not_in_launch');
     if (a.kind === 'settings') throw new CompanyOSError('read_only');
@@ -531,7 +710,7 @@ class Stage {
     const settings = this.real.settingsAdapter(table);
     if (settings) return this.saveSettings(settings, table, tenant.id, row as Record<string, unknown>) as unknown as Promise<T>;
     const at = stamp();
-    const a = this.adapter(table);
+    const a = this.adapter(table, row as Record<string, unknown>);
     const r = a ? inbound(table, row as Record<string, unknown>, await this.real.self()) : (row as Record<string, unknown>);
     if (!a || a.clientCreate && !a.clientCreate(r)) return { id: `local_${newIdempotencyKey()}`, tenant_id: tenant.id, created_at: at, updated_at: at, ...r } as unknown as T;
     // A profile is the person's name: written onto the person created (or existing) under that user id.
@@ -552,6 +731,7 @@ class Stage {
     if (settings) return this.saveSettings(settings, table, id, patch as Record<string, unknown>) as unknown as Promise<T>;
     const a = this.adapter(table);
     if (!a) return { ...(patch as Record<string, unknown>), id } as unknown as T;
+    if (a.createOnly) throw new CompanyOSError(a.createOnly);
     const self = await this.real.self();
     const p = inbound(table, patch as Record<string, unknown>, self);
     id = selfId(table, id, self);
@@ -574,6 +754,7 @@ class Stage {
   async remove(table: string, id: string): Promise<void> {
     const a = this.adapter(table);
     if (!a) return;
+    if (a.createOnly) throw new CompanyOSError(a.createOnly);
     id = selfId(table, id, await this.real.self());
     const own = this.ops.find((o) => o.token === id && !o.dropped);
     if (own) {
@@ -586,15 +767,21 @@ class Stage {
   }
 }
 
-/** The single `tenants` row the frontend reads: tenant config from the build, `settings` from Company OS. */
-function tenantRow(rec: CosRecord | null): Row {
-  const at = toInstantOr(rec?.updatedAt);
-  const value = rec?.data.value;
+type SettingsRecords = { pub: CosRecord | null; priv: CosRecord | null };
+/** The single `tenants` row the frontend reads: tenant config from the build, `settings` from the two records merged. */
+function tenantRow(recs: SettingsRecords): Row {
+  const { pub, priv } = recs;
+  const latest = [pub?.updatedAt, priv?.updatedAt].filter((v): v is string => Boolean(v)).sort().pop();
   return {
-    id: tenant.id, tenant_id: tenant.id, created_at: toInstantOr(rec?.createdAt), updated_at: at,
+    id: tenant.id, tenant_id: tenant.id, created_at: toInstantOr(pub?.createdAt ?? priv?.createdAt), updated_at: toInstantOr(latest),
     slug: tenant.slug, name: tenant.name, legal_name: tenant.legalName, timezone: tenant.timezone, currency: tenant.currency, default_locale: 'es',
-    settings: value && typeof value === 'object' ? value : {},
+    settings: mergeSettingsRecords(pub?.data.value, priv?.data.value),
   };
+}
+
+/** `"terms@2.0,privacy@2026-10-01"` → its entries. */
+function parseConsentList(value: unknown): { document: string; version: string }[] {
+  return (typeof value === 'string' ? value.split(',') : []).map((e) => e.trim()).filter((e) => /^[^@\s]+@[^@\s]+$/.test(e)).map((e) => ({ document: e.split('@')[0]!, version: e.split('@')[1]! }));
 }
 const toInstantOr = (v: unknown) => (typeof v === 'string' && v ? new Date(v).toISOString() : stamp());
 

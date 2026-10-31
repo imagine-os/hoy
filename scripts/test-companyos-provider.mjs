@@ -38,7 +38,7 @@ try {
   // ------------------------------------------------------------------ the fake API
   const UUID = () => crypto.randomUUID();
   /** Signed out, the Hoy server answers these with its read identity (lane F); Company OS hides the private class (J4). */
-  const PUBLIC = new Set(['occurrence', 'schedule', 'resource', 'coach', 'product']);
+  const PUBLIC = new Set(['occurrence', 'schedule', 'resource', 'coach', 'product', 'setting', 'hours_override', 'booking']); // + lane H2
   function fakeApi() {
     const db = new Map(); // entity -> Map(id -> record)
     const calls = [];
@@ -341,13 +341,14 @@ try {
     assert.ok(sent.length >= 7);
     assert.ok(sent.every((c) => c.headers.authorization === undefined && c.credentials === 'omit'), 'the browser never sends a token signed out');
   });
-  await test('signed out: nothing else is asked of Company OS (bookings, people, payments, settings, /me)', async () => {
+  await test('signed out: nothing else is asked of Company OS (people, payments, messages, /me)', async () => {
     const api = fakeApi(); const p = make(api, { getToken: async () => null });
-    for (const table of ['bookings', 'users', 'profiles', 'payments', 'class_ledger', 'vouchers', 'invoices', 'transfer_receipts', 'user_roles', 'tenants', 'feature_flags', 'notifications']) {
+    // Lane H2 reads the public settings record, holiday hours and booked mats signed out (test-companyos-studio-data.mjs).
+    for (const table of ['users', 'profiles', 'payments', 'class_ledger', 'vouchers', 'invoices', 'transfer_receipts', 'user_roles', 'feature_flags', 'notifications', 'message_log', 'deletion_requests']) {
       assert.deepEqual(await p.list(table), [], table);
     }
     assert.ok((await p.list('modalities')).length === 7);
-    assert.equal(await p.get('bookings', 'b1'), null); assert.equal(await p.get('users', 'u1'), null); assert.equal(await p.me(), null);
+    assert.equal(await p.get('users', 'u1'), null); assert.equal(await p.me(), null);
     assert.equal(api.calls.filter((c) => c.path.startsWith('/api/cos/')).length, 0);
   });
   await test('signed out, then signed in: the member\'s own read, never the public answer', async () => {
@@ -627,7 +628,8 @@ try {
     assert.equal(api.table('setting').size, 1, 'the second save updates the same record');
     assert.equal((await p.get('tenants', 'ten_hoy')).settings.contact.email, 'otro@example.test');
     await assert.rejects(p.remove('tenants', 'ten_hoy'), (e) => e.code === 'read_only');
-    assert.deepEqual(await make(api, { getToken: async () => null }).list('tenants'), []);
+    // Signed out the site reads the public record (lane H2, decision F-01).
+    assert.equal((await make(api, { getToken: async () => null }).list('tenants'))[0].settings.contact.email, 'otro@example.test');
   });
   await test('atomic: a read-back of a row the callback updated sees the change (payment settings pattern)', async () => {
     const api = fakeApi(); const p = make(api);

@@ -145,7 +145,11 @@ export function signupFormErrors(form: SignupForm, config: SignupConfig): Partia
   return errors;
 }
 
-export const asksEmergencyContact = (config: SignupConfig) => config.facetFields.includes('emergency_contact_name') && config.facetFields.includes('emergency_contact_phone');
+const EMERGENCY = ['emergency_contact_name', 'emergency_contact_phone'] as const;
+/** Where the tenant keeps the emergency contact: on the person (Hoy since lane H2) or, for an older setup, the facet. */
+export const emergencyContactOn = (config: SignupConfig): 'person' | 'facet' | null =>
+  EMERGENCY.every((f) => config.personFields.includes(f)) ? 'person' : EMERGENCY.every((f) => config.facetFields.includes(f)) ? 'facet' : null;
+export const asksEmergencyContact = (config: SignupConfig) => emergencyContactOn(config) !== null;
 
 /** The `POST /t/:t/signup` body: only fields the tenant allows, phones as `+57 300…` with the digits kept. */
 export function signupBody(form: SignupForm, config: SignupConfig) {
@@ -154,7 +158,8 @@ export function signupBody(form: SignupForm, config: SignupConfig) {
   if (config.personFields.includes('name')) person.name = form.name.trim();
   if (config.personFields.includes('phone')) person.phone = phone(form.whatsapp);
   const facet: Record<string, string> = {};
-  if (asksEmergencyContact(config)) { facet.emergency_contact_name = form.ecName.trim(); facet.emergency_contact_phone = phone(form.ecPhone); }
+  const on = emergencyContactOn(config);
+  if (on) { const into = on === 'person' ? person : facet; into.emergency_contact_name = form.ecName.trim(); into.emergency_contact_phone = phone(form.ecPhone); }
   return { person, facet, consents: form.accepted ? config.consents.map((c) => ({ document: c.document, version: c.version })) : [] };
 }
 

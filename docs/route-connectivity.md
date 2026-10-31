@@ -125,12 +125,12 @@ inside `list()`.
 |---|---|---|---|
 | ~~`unknown memberships`~~ | `*` and 15 staff, admin and customer routes | C (closed 2026-10-31, scope extension) | `staff/people.ts`, `data/useAnalytics.ts` read the active pack (`data/packMemberships.ts`); `customer/hooks.ts` reads none in production (the pack is `pkg`) |
 | `unknown`/`sink`/`mock_only` (lane C homes) | `/teach`, `/admin/content` | decision pending | the Teacher (S-03) and Marketing (M-02) homes entered `LAUNCH_ROUTES` unconnected (OPEN entries in the check); accept until Waves 3–4 or remove |
-| `signed_out tenants (empty)` | `/site/*` (13 routes) | closes: lane H2 (owner-approved settings split) | `useSettings()` (opening hours, contact, policies, legal texts) and the payment instructions on `/site/contact` read the `studio_settings` row, which also holds the payroll rate card and payout account, so `public_site` may not read it (decision F-01): visitors see the app defaults, not what the studio saved |
-| `signed_out bookings (empty)` | `/site/schedule` (`/site/*`) | closes: lane H2 (public_site read of booked spots) | the schedule drawer's mat map (`SchedulePage` `taken`, `MatPicker` without `taken`) shows every mat free; checkout refuses `spot_taken` after sign-in. Places left are right (`booked_count` is live) |
+| ~~`signed_out tenants (empty)`~~ | `/site/*` (13 routes) | H2 (closed 2026-10-31): the public `studio_settings` record is read live; the pay data is in `studio_private` (decision F-01) | `useSettings()` (opening hours, contact, policies, legal texts) and the payment instructions on `/site/contact` read the `studio_settings` row, which also holds the payroll rate card and payout account, so `public_site` may not read it (decision F-01): visitors see the app defaults, not what the studio saved |
+| ~~`signed_out bookings (empty)`~~ | `/site/schedule` (`/site/*`) | H2 (closed 2026-10-31): public_site reads a booking's class and mat only; the provider reads them as booked mats | the schedule drawer's mat map (`SchedulePage` `taken`, `MatPicker` without `taken`) shows every mat free; checkout refuses `spot_taken` after sign-in. Places left are right (`booked_count` is live) |
 | `sink audit_log` | `/admin` | E (scope extension) | the dashboard's recent-activity card is always empty |
-| `sink message_log` | `*`, `/admin/crm/:id`, `/staff`, `/staff/inbox/*` | unassigned | `data/comms.ts`: the inbox, member messages and notes, the unread badge read nothing; a sent note is dropped |
-| `unknown hours_overrides` | `/admin/settings/*`, `/app/plans`, `/app/faq`, `/app/faq/2`, `/app/more`, `/site/*` | unassigned (recipe entity, size S) | `useOpeningHours()`: holidays and special hours are never read |
-| `read_only legal_documents` | `/admin/settings/*` | unassigned | publishing a legal document refuses `read_only` |
+| ~~`sink message_log`~~ | `*`, `/admin/crm/:id`, `/staff`, `/staff/inbox/*` | H2 (closed 2026-10-31): `message_log` reads `comms_log` + `staff_note`; a WhatsApp is logged (`logged`, wa.me), a note is a staff note; the unread badge is 0 by design (no inbound WhatsApp, R-04) | `data/comms.ts`: the inbox, member messages and notes, the unread badge read nothing; a sent note is dropped |
+| ~~`unknown hours_overrides`~~ | `/admin/settings/*`, `/app/plans`, `/app/faq`, `/app/faq/2`, `/app/more`, `/site/*` | H2 (closed 2026-10-31): recipe entity `hours_override`; closed dates also go to bookings `review_closed_dates` | `useOpeningHours()`: holidays and special hours are never read |
+| ~~`read_only legal_documents`~~ | `/admin/settings/*` | H2 (closed 2026-10-31): publishing a version customers accept bumps people `signup_consents`; other texts refuse `legal_document_in_build` | publishing a legal document refuses `read_only` |
 | `unknown special_charges` | `/admin/finance` | unassigned | missing from the finance totals |
 | `mock_only customer/profileSave.ts` | `/app/profile` | unassigned | **saving the profile throws `profile_disconnected`** |
 | `mock_only customer/notificationPrefs.ts` | `/app/profile`, `/app/notifications` | unassigned | saving notification preferences throws `prefs_disconnected` |
@@ -144,7 +144,8 @@ inside `list()`.
 | `mock_only admin/paymentInstructions.ts`, `sink audit_log` (its receipt read) | `/admin/settings/*` | unassigned | saving the payment instructions throws `payment_settings_disconnected` |
 | `sink audit_log` (receipt read) | `/app/profile` | unassigned | goes with the profile mock-only flows |
 | `unknown practice_goals`, `sink activity_events` | `/app`, `/admin/analytics`, `/admin/crm/:id` | Wave 2 (practice goals) | practice goals, milestones and streaks are empty and never saved |
-| `unknown deletion_requests` | `/app/account`, `/site/delete-account` | Wave 2 (account deletion) | a deletion request is refused |
+| ~~`unknown deletion_requests`~~ | `/app/account` | H2 (closed 2026-10-31): a `privacy_request` form submission (forms) | the account screen's flow itself is `mock_only customer/accountData.ts` (H1) |
+| `signed_out deletion_requests (write)` | `/site/delete-account` (`/site/*`) | unassigned (a submit-only forms identity and a Hoy server submit route, ADR 0042, as Between Gigs) | the website's deletion form (W-09) has no session: 401 |
 | `unknown waitlist` | `/staff`, `/staff/checkin` | Wave 2 (waitlist) | the waitlist sections are empty |
 | `unknown events` | `/admin/settings/*` | Wave 3 (events) | media use by events is not counted |
 | `unknown reviews` | `/site` | Wave 3 (class reviews) | the site home's reviews are empty |

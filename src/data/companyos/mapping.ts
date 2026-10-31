@@ -6,6 +6,7 @@ import { mediaAssets } from '../seed/media';
 import { legalDocuments } from '../seed/legal';
 import { buildStudioPolicies } from '../seed/studioPolicies';
 import { toDay, toInstant } from './dates';
+import { PRIVATE_SETTINGS_KEY, PUBLIC_SETTINGS_KEY } from './settingsSplit';
 
 /**
  * Frontend table ↔ Company OS entity, field by field (contract §2). One adapter per launch table.
@@ -15,7 +16,9 @@ import { toDay, toInstant } from './dates';
  * Kinds of table:
  * - entity: read and written through the runtime API (`entity`, optionally written as `writeEntity`);
  * - static: content shipped in the production build (contract (F)): read only;
- * - sink: rows only the server writes (audit, message log): a client write is accepted and dropped, reads are empty;
+ * - sink: rows only the server writes (audit): a client write is accepted and dropped, reads are empty;
+ * - messages: the staff inbox (`message_log`) read from two entities, the comms log and staff notes (lane H2);
+ * - legal: the build's legal texts, whose published versions follow the people setting `signup_consents` (lane H2);
  * - anything not listed is hidden in production (contract (H)): reads are empty, writes refuse `not_in_launch`.
  */
 
@@ -39,6 +42,8 @@ export interface Col {
   readOnly?: boolean;
   /** Derived from the record; read only. Filters on it run in the browser. */
   derive?: (rec: CosRecord) => unknown;
+  /** More Company OS fields written from this column's value (the emergency contact's phone, next to its name). */
+  alsoTo?: (value: unknown, row: Record<string, unknown>) => Record<string, unknown>;
 }
 
 export interface EntityAdapter {
@@ -66,13 +71,26 @@ export interface EntityAdapter {
    * it's a real write. class_ledger: the server writes the booking debit and every return; the browser only comps.
    */
   clientCreate?: (row: Record<string, unknown>) => boolean;
+  /** A role that may not read this entity reads it as empty (the screen shows nothing rather than failing). */
+  forbiddenAsEmpty?: boolean;
+  /** Refuse updates and deletes with this code (rows are created, never changed from the app). */
+  createOnly?: string;
+  /** Signed out, the public identity reads only some fields: what the row means then (bookings: an occupied mat). */
+  signedOutRow?: (row: Row) => Row;
 }
 export interface StaticAdapter { kind: 'static'; table: string; rows: () => Row[] }
 export interface SinkAdapter { kind: 'sink'; table: string }
 export interface SessionAdapter { kind: 'session'; table: 'user_roles' }
-/** The studio settings (AD-05): the one `tenants` row's `settings` JSON is the comms `setting` record with this key. */
-export interface SettingsAdapter { kind: 'settings'; table: 'tenants'; key: string }
-export type Adapter = EntityAdapter | StaticAdapter | SinkAdapter | SessionAdapter | SettingsAdapter;
+/**
+ * The studio settings (AD-05): the one `tenants` row's `settings` JSON is two comms `setting` records (decision F-01,
+ * lane H2): `key` holds the public sections, `privateKey` the pay data (settingsSplit.ts), merged on read.
+ */
+export interface SettingsAdapter { kind: 'settings'; table: 'tenants'; key: string; privateKey: string }
+/** The staff inbox: comms_log rows (`log`) and staff notes (`note`) as one `message_log`. */
+export interface MessagesAdapter { kind: 'messages'; table: 'message_log'; log: EntityAdapter; note: EntityAdapter }
+/** The legal library: the build's rows; the versions sign-up asks for are the published ones. */
+export interface LegalAdapter { kind: 'legal'; table: 'legal_documents'; rows: () => Row[] }
+export type Adapter = EntityAdapter | StaticAdapter | SinkAdapter | SessionAdapter | SettingsAdapter | MessagesAdapter | LegalAdapter;
 
 // ---------------------------------------------------------------- helpers
 const str = (v: unknown) => (v == null || v === '' ? null : String(v));
@@ -164,7 +182,14 @@ const profiles = entity({
     full_name: { field: 'name' },
     birthday: { field: 'dob', kind: 'day' },
     initials: { derive: (r) => (str(r.data.name) ?? '').split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]!.toUpperCase()).join('') || null },
-    photo_url: { derive: () => null }, emergency_contact: { derive: () => null }, notes: { derive: () => null },
+    photo_url: { derive: () => null }, notes: { derive: () => null },
+    /** On the person (lane H2): the customer edits their own; `{ name, phone }` or null. */
+    emergency_contact: {
+      field: 'emergency_contact_name', browserOnly: true,
+      from: (v, rec) => (str(v) || str(rec.data.emergency_contact_phone) ? { name: str(v) ?? '', phone: str(rec.data.emergency_contact_phone) ?? '' } : null),
+      to: (v) => (v && typeof v === 'object' ? str((v as { name?: unknown }).name) : null),
+      alsoTo: (v) => ({ emergency_contact_phone: v && typeof v === 'object' ? str((v as { phone?: unknown }).phone) : null }),
+    },
     marketing_optin: { derive: () => false }, whatsapp_verified: { derive: () => false },
   },
 });
@@ -241,6 +266,8 @@ const bookings = entity({
     hold_left_minutes: { field: 'hold_left_minutes', from: num, readOnly: true },
     ledger_id: { derive: () => null }, payment_id: { derive: () => null }, rated: { derive: () => false },
   },
+  /** Signed out the public identity reads booked mats only (class and mat; lane H2): each row is an occupied mat. */
+  signedOutRow: (row) => ({ ...row, status: 'booked' }),
 });
 
 const plans = entity({
@@ -456,21 +483,86 @@ const expenseTemplates = entity({
   cols: { ...expenseCols(['concept', 'category', 'amount', 'cadence', 'vendor', 'note', 'active']), anchor_day: { field: 'day_of_month' } },
 });
 
+/** Holiday and special hours (M-08g; recipe entity `hours_override`, lane H2). Administration writes; everyone reads. */
+const hoursOverrides = entity({
+  table: 'hours_overrides', entity: 'hours_override',
+  cols: {
+    start_date: { field: 'start_date', kind: 'day' }, end_date: { field: 'end_date', kind: 'day' },
+    closed: { field: 'closed', from: (v) => v !== false }, open: { field: 'open', from: str }, close: { field: 'close', from: str },
+    label: { field: 'label', from: bi }, kind: { field: 'kind', from: (v) => str(v) ?? 'holiday' },
+    source: { field: 'source', from: (v) => str(v) ?? 'manual' }, note: { field: 'note', from: str },
+    google_synced_at: { derive: () => null }, created_by: { derive: (r) => str(r.createdBy) },
+  },
+});
+
+/** comms_log status → the inbox's: a hand-logged WhatsApp (`logged`, wa.me) reads as sent. */
+const MESSAGE_STATUS: Record<string, string> = { logged: 'sent', queued: 'queued', scheduled: 'queued', sent: 'sent', delivered: 'delivered', read: 'read', failed: 'failed', skipped: 'failed', bounced: 'failed' };
+const never = { derive: () => null };
+/** The comms log as inbox rows: every message to or from a person (automations' emails included). */
+const commsLogMessages = entity({
+  table: 'message_log', entity: 'comms_log', forbiddenAsEmpty: true,
+  cols: {
+    user_id: { field: 'recipient', from: (v) => str(refId(v)) },
+    channel: { field: 'channel', browserOnly: true, from: (v) => (v === 'in_app' ? 'push' : str(v) ?? 'email') },
+    direction: { field: 'direction', browserOnly: true, from: (v) => (v === 'in' ? 'inbound' : 'outbound') },
+    source: { derive: (r) => (r.data.automation || !r.data.sent_by ? 'automation' : 'manual') },
+    template_key: { field: 'message_key', from: str }, automation_id: { field: 'automation', from: (v) => str(refId(v)), readOnly: true },
+    subject: { field: 'subject', from: str }, body: { field: 'body', from: str },
+    status: { field: 'status', browserOnly: true, from: (v) => MESSAGE_STATUS[String(v)] ?? 'sent' },
+    sent_at: { field: 'sent_at', kind: 'instant' }, sent_by: { field: 'sent_by', from: (v) => str(refId(v)), readOnly: true },
+    read_at: never, read_by: never, external_id: never, payload: never,
+  },
+  /** A message staff sent by hand outside Company OS (WhatsApp is wa.me only, R-04): logged, never delivered here. */
+  toData: (p) => ({
+    recipient: p.user_id ?? null, direction: 'out', channel: p.channel, message_key: p.template_key ?? null, subject: p.subject ?? null,
+    body: p.body ?? '', status: 'logged', sent_at: toInstant(p.sent_at) ?? new Date().toISOString(),
+  }),
+});
+/** A staff note on a member's thread (recipe entity `staff_note`): staff only. */
+const staffNoteMessages = entity({
+  table: 'message_log', entity: 'staff_note', forbiddenAsEmpty: true,
+  cols: {
+    user_id: { field: 'person', from: str }, body: { field: 'body', from: str },
+    channel: { derive: () => 'note' }, direction: { derive: () => 'internal' }, source: { derive: () => 'manual' }, status: { derive: () => 'sent' },
+    sent_at: { derive: (r) => toInstant(r.createdAt) }, sent_by: { derive: (r) => str(r.createdBy) },
+    template_key: never, automation_id: never, subject: never, read_at: never, read_by: never, external_id: never, payload: never,
+  },
+  toData: (p, mode) => (mode === 'create' ? { person: p.user_id, body: p.body } : 'body' in p ? { body: p.body } : {}),
+});
+
+/** An account-deletion request (C-26) is a `privacy_request` submission (forms; lane H2): created, never changed. */
+const deletionRequests = entity({
+  table: 'deletion_requests', entity: 'form_submission', base: [{ field: 'form_key', op: 'eq', value: 'privacy_request' }],
+  forbiddenAsEmpty: true, createOnly: 'read_only',
+  cols: {
+    user_id: { field: 'person', from: (v) => str(refId(v)) }, email: { field: 'email', from: str }, phone: never,
+    channel: { field: 'placement', from: (v) => str(v) ?? 'app' }, status: { derive: () => 'requested' },
+    reason: { derive: (r) => str((r.data.answers as Record<string, unknown> | null)?.message) },
+    requested_at: { field: 'submitted_at', kind: 'instant', readOnly: true },
+    resolved_at: never, resolved_by: never, checklist: never, note: never,
+  },
+  toData: (p) => ({
+    form_key: 'privacy_request', person: p.user_id ?? null, email: p.email ?? null, placement: p.channel ?? 'app',
+    answers: { request: 'deletion', ...(str(p.reason) ? { message: str(p.reason) } : {}) },
+  }),
+});
+
 const fixed = (table: string, rows: () => BaseRow[]): StaticAdapter => ({ kind: 'static', table, rows: () => rows() as Row[] });
 
 const ADAPTERS: Adapter[] = [
   users, profiles, teachers, rooms, classTemplates, classSessions, bookings, plans, payments, transferReceipts,
   classLedger, vouchers, invoices, featureFlags, legalAcceptances, consents, notifications, notificationPrefs,
-  emailTemplates, automations, expenses, expenseTemplates,
+  emailTemplates, automations, expenses, expenseTemplates, hoursOverrides, deletionRequests,
   { kind: 'session', table: 'user_roles' },
-  { kind: 'settings', table: 'tenants', key: 'studio_settings' },
+  { kind: 'settings', table: 'tenants', key: PUBLIC_SETTINGS_KEY, privateKey: PRIVATE_SETTINGS_KEY },
+  { kind: 'messages', table: 'message_log', log: commsLogMessages, note: staffNoteMessages },
+  { kind: 'legal', table: 'legal_documents', rows: () => legalDocuments as Row[] },
   fixed('modalities', () => seedModalities),
   fixed('content_articles', () => contentArticles),
   fixed('faq_entries', () => faqEntries),
   fixed('media_assets', () => mediaAssets),
   fixed('studio_policies', buildStudioPolicies),
-  fixed('legal_documents', () => legalDocuments),
-  { kind: 'sink', table: 'audit_log' }, { kind: 'sink', table: 'message_log' }, { kind: 'sink', table: 'activity_events' },
+  { kind: 'sink', table: 'audit_log' }, { kind: 'sink', table: 'activity_events' },
 ];
 
 export const adapters: Record<string, Adapter> = Object.fromEntries(ADAPTERS.map((a) => [a.table, a]));
@@ -519,6 +611,7 @@ export function toData(a: EntityAdapter, patch: Record<string, unknown>, mode: '
     else if (c.kind === 'instant') v = toInstant(v);
     const out = c.to ? c.to(v, patch) : v;
     if (out !== undefined) data[c.field] = out;
+    if (c.alsoTo) Object.assign(data, c.alsoTo(v, patch));
   }
   return data;
 }

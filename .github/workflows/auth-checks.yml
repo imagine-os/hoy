@@ -74,6 +74,8 @@ jobs:
         run: node scripts/test-pack-reads.mjs
       - name: A payment's date is its approval (approved_at)
         run: node scripts/test-payment-paid-at.mjs
+      - name: Studio data adapters (settings split, holiday hours, inbox and notes, privacy request, legal publishing)
+        run: node scripts/test-companyos-studio-data.mjs
       - name: Route connectivity (every launch route on a working Company OS adapter; docs/route-connectivity.md)
         run: node scripts/test-route-connectivity.mjs
       - name: Review build

@@ -57,7 +57,7 @@ try {
       table(entity).set(id, rec); return rec;
     };
     const match = (rec, f) => {
-      if (!f) return true;
+      if (!f || f.all) return true;
       if (f.and) return f.and.every((x) => match(rec, x));
       if (f.or) return f.or.some((x) => match(rec, x));
       const v = f.field === 'id' ? rec.id : rec.data[f.field];
@@ -217,17 +217,14 @@ try {
     assert.deepEqual(batch[0].body.ops.map((o) => [o.op, o.entity, o.data?.key ?? o.id]).sort(), [['create', 'setting', 'studio_private'], ['update', 'setting', pubRec.id]].sort());
   });
   await test('settings split: a role that may not read the private record never writes it (a public save sends nothing private)', async () => {
-    const api = fakeApi({ role: 'treasurer', superAdmin: false });
-    const pubRec = api.put('setting', { key: 'studio_settings', value: PUBLIC_VALUE });
-    const p = make(api, {});
-    const apiMember = fakeApi({ role: 'front_desk', superAdmin: false });
-    apiMember.put('setting', { key: 'studio_settings', value: PUBLIC_VALUE });
-    apiMember.put('setting', { key: 'studio_private', value: PRIVATE_VALUE });
-    const q = make(apiMember);
-    const [row] = await q.list('tenants');
-    await q.update('tenants', row.id, { settings: { ...row.settings, policies: { cancellationHours: 6 } } }).catch(() => {});
-    assert.equal(writes(apiMember, '/api/setting').length, 0, 'no studio_private create from a role that reads defaults');
-    assert.ok(pubRec && p);
+    const api = fakeApi({ role: 'front_desk', superAdmin: false });
+    api.put('setting', { key: 'studio_settings', value: PUBLIC_VALUE });
+    api.put('setting', { key: 'studio_private', value: PRIVATE_VALUE });
+    const p = make(api);
+    const [row] = await p.list('tenants');
+    await p.update('tenants', row.id, { settings: { ...row.settings, policies: { cancellationHours: 6 } } });
+    assert.equal(writes(api, '/api/setting').length, 0, 'no studio_private create from a role that reads defaults');
+    assert.ok(!api.calls.some((c) => c.method !== 'GET' && c.path.startsWith('/api/setting/') && c.body?.value?.payroll), 'nothing private is sent');
   });
   await test('signed out: the website reads the public settings record (never studio_private)', async () => {
     const api = fakeApi();
