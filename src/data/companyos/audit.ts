@@ -47,7 +47,10 @@ export async function readAuditPage(request: AuditRequest, filter: AuditFilter):
   return events.map((e) => ({ ...e, result: typeof e.result === 'string' ? e.result : 'OK', details: e.details && typeof e.details === 'object' ? e.details : null }));
 }
 
-/** Every page of the filter, newest first, each event once, up to `maxRows` (`truncated` says the cap was hit). */
+/**
+ * Every page of the filter, newest first, each event once, up to `maxRows`. `truncated` says the cap was hit (it may
+ * also be set when exactly `maxRows` rows exist) or that a group of 500+ rows sharing one timestamp stopped the read.
+ */
 export async function readAudit(request: AuditRequest, filter: AuditFilter & { maxRows?: number }): Promise<{ events: AuditEvent[]; truncated: boolean }> {
   const maxRows = filter.maxRows ?? AUDIT_MAX_ROWS;
   const out: AuditEvent[] = [];
@@ -60,7 +63,10 @@ export async function readAudit(request: AuditRequest, filter: AuditFilter & { m
       if (out.length >= maxRows) return { events: out, truncated: true };
       seen.add(e.id); out.push(e);
     }
-    if (page.length < AUDIT_PAGE || fresh.length === 0) return { events: out, truncated: false };
+    if (page.length < AUDIT_PAGE) return { events: out, truncated: false };
+    // A full page with nothing new: 500+ rows share one timestamp (one transaction), so older rows can't be reached
+    // by time; say the list is incomplete rather than end as if it were all.
+    if (fresh.length === 0) return { events: out, truncated: true };
     if (out.length >= maxRows) return { events: out, truncated: true };
     // One millisecond past the last row, so its millisecond's other rows come again (dropped above if seen).
     before = new Date(Date.parse(page[page.length - 1].at) + 1).toISOString();

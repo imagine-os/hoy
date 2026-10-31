@@ -121,7 +121,7 @@ function ActivityView({ rows, loading, range, onRange, truncated, live = false }
       </div>
       {exportError && <p role="alert">{t('admin.reporting.activityFailed')}</p>}
       <Card padding="sm" className="row wrap act-filters">
-        <Select value={range} onChange={(e) => { onRange(e.target.value as Range); setSelected(null); }} aria-label={t('admin.activity.range')}>{RANGES.map((r) => <option key={r} value={r}>{t(`admin.activity.range.${r}`)}</option>)}</Select>
+        <Select value={range} onChange={(e) => { onRange(e.target.value as Range); setSelected(null); setActor(''); setEntity(''); }} aria-label={t('admin.activity.range')}>{RANGES.map((r) => <option key={r} value={r}>{t(`admin.activity.range.${r}`)}</option>)}</Select>
         <Select value={actor} onChange={(e) => setActor(e.target.value)} aria-label={t('admin.activity.col.who')}><option value="">{t('admin.activity.anyone')}</option>{actors.map(([id, name]) => <option key={id} value={id}>{name}</option>)}</Select>
         <Select value={entity} onChange={(e) => setEntity(e.target.value)} aria-label={t('admin.activity.col.object')}><option value="">{t('admin.activity.anyArea')}</option>{entities.map((e) => <option key={e} value={e}>{e}</option>)}</Select>
         <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('admin.reporting.activitySearch')} aria-label={t('core.common.search')} style={{ flex: '1 1 160px' }} />

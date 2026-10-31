@@ -45,7 +45,11 @@ function fakeAudit(n, { start = Date.parse('2026-10-30T12:00:00.000Z'), sameMsAt
     if (before && !ISO_OFFSET.test(before)) throw Object.assign(new Error('invalid_query'), { code: 'invalid_query', status: 400 });
     const since = url.searchParams.get('since');
     const rows = events.filter((e) => (!before || Date.parse(e.at) < Date.parse(before)) && (!since || Date.parse(e.at) >= Date.parse(since)));
-    return { events: rows.slice(0, limit) };
+    // Like Postgres: rows with the same timestamp come back in no fixed order (shuffled within each tie group).
+    const byAt = new Map();
+    for (const r of rows) byAt.set(r.at, [...(byAt.get(r.at) ?? []), r]);
+    const shuffled = [...byAt.values()].flatMap((g) => g.map((r) => [Math.random(), r]).sort((a, b) => a[0] - b[0]).map(([, r]) => r));
+    return { events: shuffled.slice(0, limit) };
   };
   return { request, calls, events };
 }
@@ -94,7 +98,8 @@ try {
     assert.equal(out.events.length, 1230);
     assert.equal(out.truncated, false);
     assert.equal(new Set(out.events.map((e) => e.id)).size, 1230, 'no duplicates');
-    assert.deepEqual(out.events.map((e) => e.id), api.events.map((e) => e.id), 'newest first, nothing skipped');
+    assert.deepEqual([...out.events.map((e) => e.id)].sort(), api.events.map((e) => e.id).sort(), 'nothing skipped');
+    assert.ok(out.events.every((e, i) => i === 0 || Date.parse(out.events[i - 1].at) >= Date.parse(e.at)), 'newest first');
     assert.ok(api.calls.length >= 3, `${api.calls.length} requests`);
     for (const c of api.calls) for (const k of new URL(c.path, 'http://x').searchParams.keys()) assert.ok(DOCUMENTED.has(k), k);
     const second = new URL(api.calls[1].path, 'http://x').searchParams.get('before');
@@ -122,6 +127,15 @@ try {
     const out = await m.readAudit(async () => { n++; return { events: page }; }, {});
     assert.equal(out.events.length, 500);
     assert.ok(n <= 3, `${n} requests`);
+    assert.equal(out.truncated, true, 'a full page with nothing new is reported as incomplete');
+  });
+
+  await row('AC-07b 600 rows sharing one timestamp (one transaction): the read stops and says it is incomplete', async () => {
+    const api = fakeAudit(800, { sameMsAt: 100 }); // rows 100…799 share one timestamp
+    const out = await m.readAudit((method, path) => api.request(method, path), {});
+    assert.equal(new Set(out.events.map((e) => e.id)).size, out.events.length);
+    assert.ok(out.events.length >= 500 && out.events.length <= 800);
+    if (out.events.length < 800) assert.equal(out.truncated, true, 'rows were unreachable: the screen must say so');
   });
 
   await row('AC-08 an empty trail is an empty list (the screen shows its empty state), one request', async () => {

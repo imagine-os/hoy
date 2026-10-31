@@ -49,6 +49,7 @@ await row('RS-05 the site must be a test environment on the same Clerk instance'
   assert.deepEqual(checkTestSite({ tenant: 'hoy', environment: 'test', clerkPublishableKey: pk, launch: { siteLive: true } }, pk), { tenant: 'hoy', siteLive: true });
   assert.deepEqual(checkTestSite({ tenant: 'hoy', environment: 'test', clerkPublishableKey: pk }, pk), { tenant: 'hoy', siteLive: false });
   throwsWith(() => checkTestSite({ tenant: 'hoy', environment: 'production', clerkPublishableKey: pk }, pk), /production/);
+  for (const environment of ['Production', 'prod', 'local', undefined, '']) throwsWith(() => checkTestSite({ tenant: 'hoy', environment, clerkPublishableKey: pk }, pk), /only against a test environment/);
   throwsWith(() => checkTestSite({ tenant: 'hoy', environment: 'test', clerkPublishableKey: 'pk_test_other' }, pk), /another Clerk instance/);
   throwsWith(() => checkTestSite({ environment: 'test', clerkPublishableKey: pk }, pk), /no tenant/);
   throwsWith(() => checkTestSite(null, pk), /no tenant/);

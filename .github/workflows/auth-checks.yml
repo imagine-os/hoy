@@ -101,6 +101,10 @@ jobs:
 
   real-signup:
     if: github.event_name == 'workflow_dispatch' && inputs.real_signup
+    # Never cancelled half-way (its clean-up runs at the end), and never two at once on the test site.
+    concurrency:
+      group: real-signup-test-site
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment: test

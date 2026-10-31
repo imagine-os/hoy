@@ -39,7 +39,8 @@ export function realApiOptions(argv = [], env = {}) {
  */
 export function checkTestSite(config, publishableKey) {
   if (!config || typeof config.tenant !== 'string' || !config.tenant) throw new Error('the site\'s /app-config.json names no tenant');
-  if (config.environment === 'production') throw new Error('the site says it is production: the real-API sign-up check runs only against a test environment');
+  // An allowlist: only an environment that says it is a test one (Railway's `test`, or `staging`).
+  if (!['test', 'staging'].includes(config.environment)) throw new Error(`the site says its environment is ${JSON.stringify(config.environment ?? null)}: the real-API sign-up check runs only against a test environment (test, staging)`);
   if (config.clerkPublishableKey !== publishableKey) throw new Error('the site uses another Clerk instance than CLERK_PUBLISHABLE_KEY: use the test environment\'s keys');
   return { tenant: config.tenant, siteLive: Boolean(config.launch?.siteLive) };
 }

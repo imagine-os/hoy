@@ -75,6 +75,8 @@ async function deleteUsers(users) { for (const u of users) await clerkApi('DELET
 // A short Clerk session for the clean-up login (Backend API, development instances only), a fresh session token per
 // call through the Hoy server (`/api/cos/t/<tenant>`), revoked at the end.
 let adminSession = null;
+// No admin session is opened, and no admin token sent, before the site passed checkTestSite.
+let siteVerified = false;
 async function adminCos() {
   if (!adminSession) {
     const found = (await usersWith(`email_address=${encodeURIComponent(MODE.adminEmail)}`)) ?? [];
@@ -177,6 +179,7 @@ try {
     if (!res.ok) throw new Error(`${BASE}/app-config.json answered ${res.status}`);
     const site = checkTestSite(await res.json(), PK);
     TENANT = site.tenant;
+    siteVerified = true;
     console.log(`  test site ${BASE}: tenant ${TENANT}, SITE_LIVE ${site.siteLive ? 'on (/ opens /site)' : 'off (/ shows Coming Soon)'}`);
     const staleCos = await removeStaleSignups(await adminCos());
     if (staleCos) console.log(`  removed the Company OS records of ${staleCos} QA sign-up(s) a previous run left behind`);
@@ -273,7 +276,8 @@ try {
 } finally {
   await browser?.close();
   if (!REAL) server.close();
-  if (REAL) {
+  if (REAL && !siteVerified) console.log('  site not verified: no Company OS clean-up attempted (nothing was signed up there)');
+  if (REAL && siteVerified) {
     // Company OS first (the records name the login), then Clerk; each says what it left behind.
     try {
       const out = await removeSignup(await adminCos(), EMAIL);
