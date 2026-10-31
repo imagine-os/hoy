@@ -91,7 +91,7 @@ try {
       calls.push({ method, path: u.pathname, body, headers, credentials: init.credentials });
       if (u.pathname === '/app-config.json') return json(200, { tenant: 'hoy', apiBase: '/api/cos', clerkPublishableKey: 'pk_test', launch: { siteLive: true } });
       const anonymous = headers.authorization === undefined;
-      const publicRead = anonymous && (method === 'POST' && u.pathname.endsWith('/query') ? PUBLIC.has(body?.entity) : method === 'GET' && PUBLIC.has(u.pathname.match(/\/api\/([a-z_]+)/)?.[1]));
+      const publicRead = anonymous && (method === 'POST' && u.pathname.endsWith('/query') ? PUBLIC.has(body?.entity) : method === 'GET' && PUBLIC.has(u.pathname.match(/\/t\/hoy\/api\/([a-z_]+)/)?.[1]));
       if (headers.authorization !== `Bearer ${token}` && !publicRead) return refuse(401, 'unauthorized');
       // The Hoy server's own GET /files/<id> (site root, not under apiBase): the stored bytes.
       const served = u.pathname.match(/^\/files\/([^/]+)$/);
@@ -350,15 +350,14 @@ try {
     assert.equal(await p.get('bookings', 'b1'), null); assert.equal(await p.get('users', 'u1'), null); assert.equal(await p.me(), null);
     assert.equal(api.calls.filter((c) => c.path.startsWith('/api/cos/')).length, 0);
   });
-  await test('signed out → signed in: a public read in flight never answers the signed-in screen', async () => {
+  await test('signed out, then signed in: the member\'s own read, never the public answer', async () => {
     const api = fakeApi(); let token = null; const p = make(api, { getToken: async () => token });
     api.put('product', { key: 'pack12', name: 'Paquete', kind: 'pack', price: 610000, active: true });
     api.put('product', { key: 'private', name: 'Clase privada', kind: 'private', price: 250000, active: true });
-    const signedOut = p.list('plans');
+    assert.deepEqual((await p.list('plans')).map((x) => x.slug), ['pack12']);
     token = 'tok-1';
-    const signedIn = await p.list('plans');
-    assert.deepEqual(signedIn.map((x) => x.slug).sort(), ['pack12', 'private'], 'signed in, the member\'s own read');
-    assert.deepEqual((await signedOut).map((x) => x.slug), ['pack12']);
+    assert.deepEqual((await p.list('plans')).map((x) => x.slug).sort(), ['pack12', 'private'], 'signed in, the member\'s own read');
+    assert.equal(apiCalls(api, '/query').at(-1).headers.authorization, 'Bearer tok-1');
   });
   await test('session: user_roles from /me for the signed-in person', async () => {
     const api = fakeApi(); const me = api.put('person', { name: 'Ana', user: 'user-1' });
@@ -732,7 +731,7 @@ try {
     assert.equal(es.size, CONTRACT_CODES.length, 'every Spanish line is distinct'); assert.equal(en.size, CONTRACT_CODES.length, 'every English line is distinct');
   });
   await test('refusals: connector codes have copy; an unknown code falls back to the generic line with the code', () => {
-    for (const code of ['unauthorized', 'network_error', 'service_unavailable', 'not_in_launch', 'promotions_disabled', 'read_only', 'not_found', 'validation', 'account_not_invited', 'email_not_verified'])
+    for (const code of ['unauthorized', 'network_error', 'service_unavailable', 'not_in_launch', 'promotions_disabled', 'read_only', 'not_found', 'validation', 'account_not_invited', 'email_not_verified', 'rate_limited'])
       assert.ok(hasRefusalCopy(code), code);
     assert.equal(refusalCopy('offer_expired', 'es'), 'No pudimos completar la acción. Si se repite, escríbenos con este código: offer_expired.');
     assert.match(refusalCopy('offer_expired', 'en'), /code: offer_expired\.$/);

@@ -147,7 +147,7 @@ try {
   await page.locator('.drawer, [role="dialog"]').first().waitFor({ timeout: 5000 }).catch(() => {});
   const drawer = (await page.locator('.drawer, [role="dialog"]').first().innerText().catch(() => '')) || '';
   check('schedule: the drawer shows the class with its live teacher', /Clara Zuluaga/.test(drawer), drawer.slice(0, 300));
-  check('schedule: the drawer shows the places left (13 of 16 booked)', /13|3 (cupos|lugares|spots|places)/i.test(drawer), drawer.slice(0, 300));
+  check('schedule: the drawer shows the places left (16 places, 13 booked: 3 left)', /\b3 cupos\b/.test(drawer), drawer.slice(0, 300));
   const go = page.locator('.drawer button, [role="dialog"] button').filter({ hasText: /Continuar|Continue|Reservar|Book/ }).last();
   if (await go.count()) {
     await go.click();

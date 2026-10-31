@@ -3,7 +3,6 @@ import { applyQuery, type ChangeEvent, type DataProvider, type Query } from '../
 import type { VoucherCommand, VoucherResult, VoucherRow } from '../vouchers';
 import type { PromotionResult } from '../promotions';
 import { tenant } from '../../tenant/tenant';
-import { plans as seedPlans, teachers as seedTeachers, rooms as seedRooms } from '../seed/catalog';
 import { adapterFor, fromRecord, toData, RELATED, ROLE_OF_KEY, type CosRecord, type EntityAdapter, type Row, type SettingsAdapter } from './mapping';
 import { planQuery, PAGE, type QuerySpec } from './query';
 import { CompanyOSError, Transport, newIdempotencyKey, normalizeCode, onTokenSourceChange, wireKey, type TransportOptions } from './transport';
@@ -28,9 +27,12 @@ export interface CompanyOSMe {
   timezone: string | null;
 }
 
-/** Signed out, the website still shows the catalogue shipped in the build (no Company OS read without a session). */
-// J4: the private class has no public price, so the signed-out catalogue leaves the private family out.
-const SIGNED_OUT: Record<string, () => BaseRow[]> = { plans: () => seedPlans.filter((p) => p.family !== 'privadas'), teachers: () => seedTeachers, rooms: () => seedRooms };
+/**
+ * Signed out, the website reads these live: the Hoy server answers them with its read-only identity (`public_site`,
+ * ADR 0029), whose policies hide the private class (J4), who booked and people's contact details. Every other table
+ * reads as empty signed out, without asking Company OS.
+ */
+const PUBLIC_TABLES = new Set(['plans', 'teachers', 'rooms', 'class_templates', 'class_sessions']);
 
 type Op = { op: 'create' | 'update' | 'delete'; entity: string; id?: string; data?: Record<string, unknown>; token?: string; table: string; dropped?: boolean };
 type Pending = { body: { ops: unknown[] }; result: unknown; tokens: string[]; tables: string[] };
@@ -93,7 +95,7 @@ export class CompanyOSProvider implements DataProvider {
     const a = adapterFor(table);
     if (!a || a.kind === 'sink') return [];
     if (a.kind === 'static') return applyQuery(clone(a.rows()), query) as unknown as T[];
-    if (!(await this.transport.signedIn())) return applyQuery(clone(SIGNED_OUT[table]?.() ?? []) as Row[], query) as unknown as T[];
+    if (!(await this.transport.signedIn())) return (a.kind === 'entity' && PUBLIC_TABLES.has(table) ? await this.publicList(a, query) : []) as unknown as T[];
     if (a.kind === 'session') return applyQuery(await this.roleRows(), query) as unknown as T[];
     if (a.kind === 'settings') return applyQuery([tenantRow(await this.settingsRecord(a))], query) as unknown as T[];
     const self = await this.self();
@@ -107,6 +109,18 @@ export class CompanyOSProvider implements DataProvider {
       this.inflight.set(key, p);
     }
     return (await p).map((r) => outbound(table, clone(r), self)) as unknown as T[];
+  }
+
+  /** A signed-out read of a public table, shared by concurrent callers; never shared with a signed-in read. */
+  private async publicList(a: EntityAdapter, query?: Query): Promise<Row[]> {
+    const key = `public|${a.table}|${JSON.stringify(query ?? null)}`;
+    let p = this.inflight.get(key);
+    if (!p) {
+      const read: Promise<Row[]> = this.listEntity(a, query).finally(() => { if (this.inflight.get(key) === read) this.inflight.delete(key); });
+      p = read;
+      this.inflight.set(key, p);
+    }
+    return (await p).map((r) => clone(r));
   }
 
   /**
@@ -151,8 +165,9 @@ export class CompanyOSProvider implements DataProvider {
       return row ? (outbound(table, row, self) as unknown as T) : null;
     }
     if (!a || a.kind !== 'entity' || a.idOf || a.base) return ((await this.list<T>(table, { where: { id } }))[0] ?? null);
-    if (!(await this.transport.signedIn())) return null;
-    const self = await this.self();
+    const signedIn = await this.transport.signedIn();
+    if (!signedIn && !PUBLIC_TABLES.has(table)) return null;
+    const self = signedIn ? await this.self() : null;
     try {
       const res = await this.transport.request('GET', `/api/${a.entity}/${encodeURIComponent(selfId(table, id, self))}`);
       return outbound(table, fromRecord(a, unwrap(res.body)), self) as unknown as T;

@@ -478,7 +478,7 @@ await test('public reads: signed out, everything else stays 401 and nothing reac
 
 await test('public reads: a query body over 16 KiB is refused, not buffered', async () => {
   seen.length = 0;
-  const big = JSON.stringify({ entity: 'occurrence', filter: { field: 'title', op: 'in', value: Array.from({ length: 2000 }, (_, i) => `t${i}`) } });
+  const big = JSON.stringify({ entity: 'occurrence', filter: { field: 'title', op: 'in', value: Array.from({ length: 4000 }, (_, i) => `t${i}`) } });
   assert.ok(big.length > 16 * 1024 && big.length < publicConfig.proxyBodyLimit);
   const r = await pub('POST', '/api/cos/t/hoy-dev/query', json, big);
   assert.equal(r.status, 413);

@@ -2,7 +2,8 @@
 //   /health              liveness for Railway (and the release it is running);
 //   /app-config.json     the browser's public settings (tenant, API base, Clerk publishable key, the go-live switch);
 //   /api/cos/*           a signed-in user's call, checked against Clerk, forwarded to Company OS on the
-//                        private network with the same token as the bearer;
+//                        private network with the same token as the bearer; signed out, only the website's
+//                        public reads (PUBLIC_ENTITIES), sent with the server's own read-only identity;
 //   GET /files/<id>      a stored file (e.g. a transfer receipt), streamed from storage after the API has
 //                        checked the user may read it; the signed storage link never reaches the browser;
 //   POST /webhooks/resend Resend's delivery webhook, forwarded byte for byte to the API, which checks
@@ -23,6 +24,18 @@ import { createGzip } from 'node:zlib';
  * enumerated), so every call needs a verified Clerk session here before it reaches the private network.
  */
 export const ANONYMOUS_ROUTES = [];
+
+/**
+ * What a visitor without a session may read (lane F, ADR 0029): the website's timetable, coaches, rooms and products,
+ * through `POST /query` or `GET /api/<entity>[/<id>]`. The server sends these with its own read-only service identity
+ * (`COMPANY_OS_READ_TOKEN`, role `public_site`), whose policies and field lists in Company OS decide the rows and
+ * fields (the private class, people's contact details and who booked never come back). Nothing else is forwarded
+ * signed out, and the visitor's own headers never become an identity. Without the token, signed-out reads stay 401.
+ */
+export const PUBLIC_ENTITIES = new Set(['occurrence', 'schedule', 'resource', 'coach', 'product']);
+/** A public query is a small JSON QuerySpec: read whole (to check its entity) only up to this size. */
+const PUBLIC_QUERY_LIMIT = 16 * 1024;
+const PUBLIC_QUERY_READ_MS = 10_000;
 
 /** Never forwarded, signed in or not (first segment after `/t/<tenant>`): the API's dev login hands out tokens. */
 const BLOCKED_SECTIONS = new Set(['auth']);
@@ -57,6 +70,7 @@ const COMPRESSIBLE = new Set(['.html', '.js', '.mjs', '.css', '.json', '.map', '
  *   verifySession resolves for a valid Clerk session token and rejects otherwise.
  */
 export async function createHandler(config, deps) {
+  deps = { takePublicRead: publicReadLimiter(config.publicReadRate ?? { perSecond: 20, burst: 120 }), ...deps };
   const distDir = resolve(config.distDir);
   const release = await readFile(resolve(distDir, 'release.json'), 'utf8').then(JSON.parse, () => null);
   const log = deps.log ?? ((entry) => console.log(JSON.stringify(entry)));
@@ -84,7 +98,7 @@ export async function createHandler(config, deps) {
       }
       if (rawPath === '/api/cos' || rawPath.startsWith('/api/cos/')) {
         const route = await proxy(req, res, config, deps, rawPath.slice('/api/cos'.length), rawQuery);
-        return log({ event: 'api.cos', method: req.method, route, status: res.statusCode, ms: Date.now() - started });
+        return log({ event: 'api.cos', method: req.method, route, status: res.statusCode, ms: Date.now() - started, ...(res.public ? { public: true } : {}) });
       }
       if (rawPath === '/files' || rawPath.startsWith('/files/')) {
         const outcome = await file(req, res, config, deps, rawPath.slice('/files'.length));
@@ -194,7 +208,11 @@ async function proxy(req, res, config, deps, rest, query) {
 
   const token = bearer(req.headers.authorization);
   if (token === undefined) {
-    // No session: only the routes the API itself serves to anyone.
+    // No session: the website's public reads, with the server's own identity; then the routes the API serves to anyone.
+    if (config.companyOsReadToken && publicRead(req.method, segments.slice(2))) {
+      await publicProxy(req, res, config, deps, rest + query, segments[2] === 'query');
+      return route;
+    }
     if (!ANONYMOUS_ROUTES.some((r) => r.method === req.method && r.path === tail)) {
       sendError(res, 401, 'unauthorized');
       return route;
@@ -215,6 +233,59 @@ async function proxy(req, res, config, deps, rest, query) {
 
   await forward(res, config, { method: req.method, path: rest + query, headers, body: req, limit: config.proxyBodyLimit });
   return route;
+}
+
+/** `POST /query` or `GET /api/<public entity>[/<id>]` (the path after `/t/<tenant>`, as decoded segments). */
+function publicRead(method, after) {
+  if (method === 'POST') return after.length === 1 && after[0] === 'query';
+  if (method === 'GET') return after[0] === 'api' && (after.length === 2 || after.length === 3) && PUBLIC_ENTITIES.has(after[1]);
+  return false;
+}
+
+/**
+ * A visitor's public read: limited per visitor, a query read whole and refused unless it names a public entity, then
+ * forwarded with the server's read identity and only the browser headers any call may carry.
+ */
+async function publicProxy(req, res, config, deps, path, isQuery) {
+  const client = header(req.headers['x-real-ip']) ?? req.socket.remoteAddress ?? '';
+  if (!deps.takePublicRead(client)) return sendError(res, 429, 'rate_limited');
+  let body;
+  if (isQuery) {
+    if (Number(header(req.headers['content-length']) ?? 0) > PUBLIC_QUERY_LIMIT) return sendError(res, 413, 'payload_too_large');
+    body = await readBody(req, PUBLIC_QUERY_LIMIT, PUBLIC_QUERY_READ_MS);
+    if (body === 'too_large') return sendError(res, 413, 'payload_too_large');
+    if (body === 'too_slow') return sendError(res, 408, 'request_timeout');
+    let spec;
+    try { spec = JSON.parse(body.toString('utf8')); } catch { spec = null; }
+    if (!spec || typeof spec !== 'object' || Array.isArray(spec) || typeof spec.entity !== 'string' || !PUBLIC_ENTITIES.has(spec.entity)) {
+      return sendError(res, 401, 'unauthorized');
+    }
+  }
+  const headers = pick(req.headers, FORWARD_REQUEST_HEADERS);
+  delete headers['content-length'];
+  if (body) headers['content-length'] = String(body.length);
+  headers.authorization = `Bearer ${config.companyOsReadToken}`;
+  Object.assign(headers, clientHeaders(req));
+  res.public = true;
+  await forward(res, config, { method: req.method, path, headers, body: body ?? req, limit: PUBLIC_QUERY_LIMIT });
+}
+
+/**
+ * One token bucket per visitor address for the public reads, so one visitor can't use up the read identity's own
+ * limit in Company OS (ADR 0029 §7). In memory, per instance; the map is emptied when it grows past `max`.
+ */
+export function publicReadLimiter({ perSecond, burst }, max = 10_000) {
+  const buckets = new Map();
+  return (client, now = Date.now()) => {
+    if (buckets.size > max) buckets.clear();
+    const b = buckets.get(client) ?? { tokens: burst, at: now };
+    b.tokens = Math.min(burst, b.tokens + (Math.max(0, now - b.at) / 1000) * perSecond);
+    b.at = now;
+    const ok = b.tokens >= 1;
+    if (ok) b.tokens -= 1;
+    buckets.set(client, b);
+    return ok;
+  };
 }
 
 /**

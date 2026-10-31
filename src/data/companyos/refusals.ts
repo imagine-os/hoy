@@ -73,6 +73,8 @@ export const CONNECTOR_REFUSALS = {
   email_not_verified: { es: 'Confirma tu correo para continuar.', en: 'Confirm your email to continue.' },
   network_error: { es: 'Sin conexión. Revisa tu internet e inténtalo de nuevo con el mismo botón.', en: 'No connection. Check your internet and try again with the same button.' },
   service_unavailable: { es: 'El servicio no responde ahora. Inténtalo en unos minutos con el mismo botón.', en: 'The service is not responding right now. Try again in a few minutes with the same button.' },
+  // The Hoy server's per-visitor limit on the website's signed-out reads (lane F).
+  rate_limited: { es: 'Demasiadas solicitudes seguidas. Espera un momento y vuelve a intentarlo.', en: 'Too many requests in a row. Wait a moment and try again.' },
   concept_required: { es: 'Falta el concepto.', en: 'A concept is needed.' },
   reference_required: { es: 'Escribe la referencia de la transferencia.', en: 'Enter the transfer reference.' },
   not_found: { es: 'No encontramos este registro. Puede que ya no exista.', en: 'We could not find this record. It may no longer exist.' },
