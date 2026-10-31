@@ -17,6 +17,7 @@ const tryImport = async (contents) => {
 };
 const C = await tryImport("export * from './src/modules/customer/planCard';");
 const A = await tryImport("export * from './src/modules/admin/activePacks';");
+const P = await tryImport("export * from './src/data/packMemberships';");
 
 // ── C-01 plan card ──────────────────────────────────────────────────────────────────────────────────────────────
 const pkg = (left, extra = {}) => ({ balance: left, left, purchase: null, expiresAt: null, frozen: false, frozenUntil: null, freezeUsed: false, ...extra });
@@ -41,6 +42,19 @@ check('M-01 a pack frozen today still counts (the customer still holds it)', cou
 check('M-01 three customers, one without classes: 2', count([lot('l1', 'p1'), lot('l2', 'p2'), lot('l3', 'p3')], [{ lot: 'l1', left: 1 }, { lot: 'l2', left: 9 }, { lot: 'l3', left: 0 }]) === 2);
 check('M-01 a lot without a person or with a hostile balance is ignored', count([lot('l1', ''), lot('l2', 'p2')], [{ lot: 'l1', left: 5 }, { lot: 'l2', left: 'x' }]) === 0);
 check('M-01 the queries read credit lots and the per-lot balance (server aggregate), not memberships', JSON.stringify(A.ACTIVE_PACK_QUERIES ?? null).includes('"credit_lot"') && JSON.stringify(A.ACTIVE_PACK_QUERIES ?? null).includes('"sum"') && !JSON.stringify(A.ACTIVE_PACK_QUERIES ?? null).includes('membership'));
+
+// ── The other `memberships` readers (lane G's route-connectivity finding): desk/CRM people join, practice and
+// studio analytics. In production they read packs: one plan row per person from their active credit lot.
+const L = (id, user, delta, extra = {}) => ({ id, tenant_id: 'hoy', created_at: '2026-10-01T10:00:00Z', updated_at: '2026-10-01T10:00:00Z', user_id: user, delta, reason: delta > 0 ? 'purchase' : 'booking', expires_at: null, plan_id: null, purchase_ledger_id: null, ...extra });
+const rows = (ledger, today = '2026-10-31') => P.packMemberships?.(ledger, today) ?? null;
+const one = rows([L('lot1', 'u1', 8, { plan_id: 'prd_pack', expires_at: '2026-12-31' }), L('b1', 'u1', -1, { purchase_ledger_id: 'lot1' })]);
+check('people/analytics: an active pack is the person\'s active plan (product, end date)', one?.length === 1 && one[0].user_id === 'u1' && one[0].plan_id === 'prd_pack' && one[0].status === 'active' && one[0].ends_at === '2026-12-31', JSON.stringify(one));
+check('people/analytics: a used-up pack is no plan', rows([L('lot1', 'u1', 2, { expires_at: '2026-12-31' }), L('b1', 'u1', -2, { purchase_ledger_id: 'lot1' })])?.length === 0);
+check('people/analytics: an expired pack is no plan', rows([L('lot1', 'u1', 5, { expires_at: '2026-10-30' })])?.length === 0);
+const frozen = rows([L('lot1', 'u1', 5, { expires_at: '2027-01-31', frozen_from: '2026-10-20', frozen_until: '2026-11-10' })]);
+check('people/analytics: a pack frozen today is a paused plan until the freeze ends', frozen?.length === 1 && frozen[0].status === 'paused' && frozen[0].paused_until === '2026-11-10', JSON.stringify(frozen));
+const two = rows([L('lotA', 'u1', 4, { plan_id: 'prd_a', expires_at: '2027-02-01' }), L('lotB', 'u1', 4, { plan_id: 'prd_b', expires_at: '2026-11-15', created_at: '2026-10-05T10:00:00Z' }), L('lotC', 'u2', 1, { plan_id: 'prd_a' })]);
+check('people/analytics: one row per person, the pack spent next (earliest expiry); an open-ended pack counts', two?.length === 2 && two.find((r) => r.user_id === 'u1')?.plan_id === 'prd_b' && two.find((r) => r.user_id === 'u2')?.ends_at === null, JSON.stringify(two));
 
 console.log(failed ? `\n${failed} pack read check(s) failed` : '\npack reads passed');
 process.exitCode = failed ? 1 : 0;
