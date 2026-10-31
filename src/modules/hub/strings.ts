@@ -11,6 +11,22 @@ const cardStrings: StringTable = Object.fromEntries([
 ]);
 
 export const strings: StringTable = {
+  // Production Hub and view-as (Hoy all-roles, lane D)
+  'hub.prod.title': { es: 'Hub', en: 'Hub' },
+  'hub.prod.lead': { es: 'Mira el estudio como lo ve cada rol, con los datos de una persona de ejemplo de ese rol. Es solo lectura: nada se guarda mientras ves como otro rol.', en: 'See the studio as each role sees it, with a sample person of that role. It is read-only: nothing is saved while you view as another role.' },
+  'hub.prod.roles': { es: 'Ver como', en: 'View as' },
+  'hub.prod.rolesBody': { es: 'Entra a la página de inicio del rol, con su menú y sus permisos.', en: 'Go to the role’s home, with its menu and its permissions.' },
+  'hub.prod.experiences': { es: 'Experiencias', en: 'Experiences' },
+  'hub.prod.experiencesBody': { es: 'Cada superficie del estudio que ya está en producción, como el rol que la usa.', en: 'Every studio surface already in production, as the role that uses it.' },
+  'hub.prod.viewAs': { es: 'Ver como {role}', en: 'View as {role}' },
+  'hub.prod.open': { es: 'Abrir', en: 'Open' },
+  'hub.prod.home': { es: 'Inicio: {path}', en: 'Home: {path}' },
+  'hub.viewAs.label': { es: 'Viendo como', en: 'Viewing as' },
+  'hub.viewAs.person': { es: 'con los datos de {name}', en: 'with {name}’s data' },
+  'hub.viewAs.noPerson': { es: 'sin persona de ejemplo para este rol', en: 'no sample person for this role' },
+  'hub.viewAs.readOnly': { es: 'Solo lectura', en: 'Read-only' },
+  'hub.viewAs.exit': { es: 'Salir', en: 'Exit' },
+  'hub.viewAs.exitLabel': { es: 'Salir de «Ver como» y volver al hub', en: 'Exit “View as” and go back to the hub' },
   // Header and hero
   'hub.title': { es: 'HoyOS · hub de pruebas', en: 'HoyOS · testing hub' },
   // The lead is the product tagline the hub map publishes (src/hub/hubMap.data.ts HOY_PRODUCT).

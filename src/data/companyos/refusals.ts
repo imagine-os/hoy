@@ -90,6 +90,8 @@ export const CONNECTOR_REFUSALS = {
   // Hoy all-roles, lane H1: refusals the app gives itself before asking Company OS.
   content_later: { es: 'Editar este contenido desde la app llega en una próxima actualización. Por ahora no se guardó nada.', en: 'Editing this content from the app arrives in a coming update. Nothing was saved for now.' },
   checkout_server_only: { es: 'Esta compra se hace desde la página de pago. Vuelve a elegir el paquete.', en: 'This purchase is made from the payment page. Choose the pack again.' },
+  // View-as (Hoy all-roles, lane D): a super admin viewing as another role can look, not change (src/auth/viewAs.ts).
+  view_as_read_only: { es: 'Estás viendo como otro rol: es solo lectura. Sal de «Ver como» para hacer cambios.', en: 'You are viewing as another role: it is read-only. Exit “View as” to make changes.' },
 } as const satisfies Record<string, RefusalCopy>;
 
 export type ContractRefusalCode = keyof typeof CONTRACT_REFUSALS;

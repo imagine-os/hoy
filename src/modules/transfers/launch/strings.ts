@@ -25,6 +25,7 @@ export const payLaunchStrings: StringTable = {
   'payLaunch.code.storage_unavailable': { es: 'El almacenamiento no respondió. Vuelve a intentarlo en un momento.', en: 'Storage did not respond. Try again in a moment.' },
   'payLaunch.code.idempotency_conflict': { es: 'Este envío cambió mientras se repetía. Vuelve a enviarlo.', en: 'This submission changed while being retried. Send it again.' },
   'payLaunch.code.idempotency_key_invalid': { es: 'No se pudo enviar. Recarga la página.', en: 'Could not send. Reload the page.' },
+  'payLaunch.code.view_as_read_only': { es: 'Estás viendo como otro rol: es solo lectura. Sal de «Ver como» para hacer cambios.', en: 'You are viewing as another role: it is read-only. Exit “View as” to make changes.' },
   'payLaunch.code.forbidden': { es: 'Tu rol no puede hacer este cambio.', en: 'Your role cannot make this change.' },
   'payLaunch.code.write_forbidden': { es: 'Tu rol no puede hacer este cambio.', en: 'Your role cannot make this change.' },
   'payLaunch.code.invalid_settings': { es: 'El servidor rechazó algún valor. Revisa los campos.', en: 'The server refused a value. Check the fields.' },

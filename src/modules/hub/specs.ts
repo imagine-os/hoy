@@ -82,6 +82,32 @@ export const hubSpec = defineSpec({
   ],
 });
 
+/**
+ * HUB-01 in the production build (Hoy all-roles, lane D): the super admin's Hub. No demo users, previews or toggles;
+ * the cards come from the hub map data (`src/hub/hubMap.data.ts` roles and experiences) and each one "views as" a role.
+ */
+export const hubProductionSpec = defineSpec({
+  code: 'HUB-01',
+  name: { es: 'Hub', en: 'Hub' },
+  purpose: {
+    es: 'El hub del super admin en producción: ver el estudio como cualquier otro rol, en solo lectura, con los datos de una persona de ejemplo de ese rol.',
+    en: 'The super admin’s Hub in production: view the studio as any other role, read-only, through a sample person of that role.',
+  },
+  layout: ['Page head (title, lead)', 'Ver como · one card per role (HUB_ROLES but super admin and public): label, description, home, “Ver como”', 'Experiencias · the hub map experiences whose route production registers: open as their role'],
+  data: [],
+  roles: ['super_admin'],
+  logic: [
+    'Only a super admin opens it (route roles); Administration logins, which also hold the backend super_admin membership (AD-04), do not (lane C rule).',
+    '“Ver como” keeps the role in sessionStorage (hoyos.viewAs), goes to the role’s home, and the session picks a sample person by membership (src/auth/viewAs.ts loadViewAsSample): the first active coach for Teacher, the first member for Customer, the person holding the role otherwise. Nobody is invented.',
+    'While viewing as, the effective role is the viewed one (menus, route guard, matrix), the provider aliases the session user to the sample person, and the transport refuses every request but GET and POST /query (view_as_read_only). The banner says who is being viewed and exits back here.',
+    'Public and super admin experiences open as the super admin (no view-as).',
+  ],
+  integrations: ['Company OS GET /admin/users (super admin), POST /query person and coach'],
+  states: ['default', 'English'],
+  checkedAt: [390, 1280],
+  notes: ['The review build’s HUB-01 (HubPage) stays the full testing hub with demo users.'],
+});
+
 export const noAccessSpec = defineSpec({
   code: 'E-05',
   name: { es: 'Sin acceso', en: 'No access' },

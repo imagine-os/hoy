@@ -6,8 +6,8 @@
  *
  * A pattern is a route path (`/app/class/:id`) or a prefix ending in `/*` that also matches the prefix itself.
  * Left out on purpose:
- * - review tools: `/hub*`, `/dev/*` (only the developer's home `/dev` ships), `/docs*`, `/manual*` (internal text,
- *   H-8 SW-06), demo states `/app/state/*`;
+ * - review tools: the rest of `/hub*` (only the super admin's Hub `/hub` ships, lane D), `/dev/*` (only the developer's
+ *   home `/dev` ships), `/docs*`, `/manual*` (internal text, H-8 SW-06), demo states `/app/state/*`;
  * - Clerk replaces them: `/auth/recover` (no passwords), `/auth/locked` (Clerk's attack protection locks);
  * - not yet back (gap analysis §2 (H) cut them; owner decision P-03b, 2026-10-31, reverses that: they return in Waves
  *   2–4): the rest of the teacher app, payroll and class pay, waitlist, events, reviews, practice, invites, the review
@@ -41,6 +41,8 @@ export const LAUNCH_ROUTES: readonly string[] = [
   // registers (`ROLE_HOME`). Only the home itself: the rest of each area comes back in Waves 2–4 through the
   // route-connectivity check. Teacher (S-03), Marketing (M-02 content), Developer (the dev specs index, R-08).
   '/teach', '/admin/content', '/dev',
+  // The super admin's Hub with read-only "view as" (Hoy all-roles, lane D): route roles `super_admin` only.
+  '/hub',
 ];
 
 export function isLaunchRoute(path: string, list: readonly string[] = LAUNCH_ROUTES): boolean {

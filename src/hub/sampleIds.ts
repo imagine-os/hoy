@@ -5,12 +5,13 @@
  * published map carries the `sample` segment and the app resolves it at load time.
  */
 import type { BookingRow, ClassSessionRow, PayrollRunRow } from '../data/schema';
-import { HUB_ROLES, HUB_SAMPLE_ROUTES, SAMPLE_TOKEN, type SamplePick } from './hubMap.data';
+import { HUB_SAMPLE_ROUTES, SAMPLE_TOKEN, type SamplePick } from './hubMap.data';
+import { HUB_DEMO_USERS } from './hubDemoUsers';
 
 export interface SampleTables { class_sessions: ClassSessionRow[]; bookings: BookingRow[]; payroll_runs: PayrollRunRow[] }
 
 /** The demo customer (Juliana): whose bookings the booking and rating samples open. */
-export const SAMPLE_CUSTOMER_ID = HUB_ROLES.find((r) => r.id === 'customer')?.demoUser?.id ?? 'usr_cust';
+export const SAMPLE_CUSTOMER_ID = HUB_DEMO_USERS.customer?.id ?? 'usr_cust';
 
 const byStart = (a: ClassSessionRow, b: ClassSessionRow) => a.starts_at.localeCompare(b.starts_at);
 
