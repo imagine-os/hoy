@@ -405,6 +405,9 @@ const OUTSIDE = Object.values(adapters).find((a) => a.kind === 'entity' && !SIGN
 synth['SignedOutLivePage.tsx'] = `import { useTable, useData } from ${data};\nexport function SignedOutLivePage() { const d = useData(); return ${JSON.stringify(LIVE_LIST)}.length + ${LIVE_LIST.map((t) => `useTable('${t}').rows.length + (d.get('${t}', 'x') ? 1 : 0)`).join(' + ') || '0'}; }`;
 synth['SignedOutOutsidePage.tsx'] = `import { useTable } from ${data};\nexport function SignedOutOutsidePage() { return useTable('${OUTSIDE}').rows.length; }`;
 synth['SignedOutSettingsPage.tsx'] = `import { useTable } from ${data};\nexport function SignedOutSettingsPage() { return useTable('tenants').rows.length; }`;
+synth['SignedOutLiveWritePage.tsx'] = `import { useData } from ${data};\nexport function SignedOutLiveWritePage() { const d = useData(); return () => d.update('${LIVE_LIST[0] ?? 'plans'}', 'x', {}); }`;
+synth['SignedOutRequestPage.tsx'] = `import { useData } from ${data};\nexport function SignedOutRequestPage() { const d = useData() as unknown as { request(m: string, p: string): unknown }; return () => d.request('POST', '/api/booking'); }`;
+synth['SignedOutPublicRequestPage.tsx'] = `import { useData } from ${data};\nexport function SignedOutPublicRequestPage() { const d = useData() as unknown as { request(m: string, p: string): unknown }; return () => [d.request('POST', '/query'), d.request('GET', \`/api/${SIGNED_OUT_MODEL.serverEntities[0] ?? 'product'}/\${String(Date.now())}\`)]; }`;
 synth['SignedOutWritePage.tsx'] = `import { useData } from ${data};\nexport function SignedOutWritePage() { const d = useData(); return () => d.update('tenants', 't', {}); }`;
 for (const [f, c] of Object.entries(synth)) await writeFile(path.join(tmp, f), c);
 const fake = async (file, signedOut = false) => [...(await analyse({ path: '/synthetic', signedOut, entry: { from: path.relative(ROOT, path.join(tmp, file)), name: file.replace(/\.tsx?$/, '') } })).findings.keys()];
@@ -417,10 +420,15 @@ check('hostile: a write to a static table fails', has(await fake('StaticWritePag
 check('the signed-out model was read (provider list() and get() guards, PUBLIC_TABLES, server PUBLIC_ENTITIES)',
   SIGNED_OUT_MODEL.listGuard && SIGNED_OUT_MODEL.getGuard && SIGNED_OUT_MODEL.providerTables.length > 0 && SIGNED_OUT_MODEL.serverEntities.length > 0, JSON.stringify(SIGNED_OUT_MODEL));
 check('every table the provider reads live signed out is an entity the Hoy server forwards (else it answers 401)', SIGNED_OUT_MODEL.unserved.length === 0 && SIGNED_OUT_LIVE.size === SIGNED_OUT_MODEL.providerTables.length, SIGNED_OUT_MODEL.unserved.join(', '));
-check('a signed-out page reading the live tables passes (list and get)', SIGNED_OUT_LIVE.size > 0 && (await fake('SignedOutLivePage.tsx', true)).length === 0, (await fake('SignedOutLivePage.tsx', true)).join(', '));
+check('a signed-out page reading the live tables passes', SIGNED_OUT_LIVE.size > 0 && (await fake('SignedOutLivePage.tsx', true)).length === 0, (await fake('SignedOutLivePage.tsx', true)).join(', '));
 check('hostile: a signed-out page reading a table outside the live set fails', !SIGNED_OUT_LIVE.has(OUTSIDE) && has(await fake('SignedOutOutsidePage.tsx', true), `signed_out ${OUTSIDE} (empty)`), OUTSIDE);
 check('hostile: a signed-out read of the settings row fails (it reads as empty)', has(await fake('SignedOutSettingsPage.tsx', true), 'signed_out tenants (empty)'));
 check('hostile: a signed-out write fails', has(await fake('SignedOutWritePage.tsx', true), 'signed_out tenants (write)'));
+check('hostile: a signed-out write to a live table fails', has(await fake('SignedOutLiveWritePage.tsx', true), `signed_out ${LIVE_LIST[0]} (write)`), LIVE_LIST[0]);
+check('hostile: a signed-out request the Hoy server does not forward fails', has(await fake('SignedOutRequestPage.tsx', true), 'signed_out request POST /api/booking'));
+check('a signed-out request the Hoy server forwards (POST /query, GET /api/<public entity>) passes', (await fake('SignedOutPublicRequestPage.tsx', true)).length === 0, (await fake('SignedOutPublicRequestPage.tsx', true)).join(', '));
+// The BY_DESIGN settings save rests on the row being empty signed out: once the settings are read live, revisit it.
+check('BY_DESIGN signed_out tenants (write) still holds (tenants is not read live signed out)', !BY_DESIGN.some((b) => b.finding === 'signed_out tenants (write)') || !SIGNED_OUT_LIVE.has('tenants'));
 check('the same reads signed in are not signed-out findings', !has(await fake('SignedOutOutsidePage.tsx'), 'signed_out') && !has(await fake('SignedOutWritePage.tsx'), 'signed_out'));
 check('hostile: a write to a new table with no adapter fails', has(await fake('NewTablePage.tsx'), 'unknown brand_new_table'));
 check('hostile: a write whose table is computed fails (dynamic)', has(await fake('ComputedPage.tsx'), 'dynamic t'));
