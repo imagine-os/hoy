@@ -800,7 +800,7 @@ export const strings: StringTable = {
   'customer.notifications.via.whatsapp': { es: 'WhatsApp', en: 'WhatsApp' },
   'customer.notifications.via.email': { es: 'Correo', en: 'Email' },
   'customer.notifications.via.push': { es: 'Push', en: 'Push' },
-  'customer.prefs.live': { es: 'Tu elección se guarda en tu cuenta y el estudio la respeta al enviarte avisos por correo o en la app.', en: 'Your choice is saved to your account, and the studio respects it when it sends you notices by email or in the app.' },
+  'customer.prefs.live': { es: 'Tu elección se guarda en tu cuenta y se respeta en los avisos que te llegan por correo o en la app. Los mensajes de WhatsApp los escribe el equipo del estudio.', en: 'Your choice is saved to your account and is respected for the notices you get by email or in the app. WhatsApp messages are written by the studio team.' },
   'customer.prefs.mock': { es: 'Preferencias ficticias solo en este navegador. El envío está desconectado: esto no detiene ni envía correos reales. No define cuáles avisos son obligatorios.', en: 'Fictional preferences in this browser only. Sending is disconnected: this does not stop or send real emails. It does not define which notices are mandatory.' },
   'customer.prefs.loading': { es: 'Cargando las preferencias de tu cuenta…', en: 'Loading your account preferences…' },
   'customer.prefs.read': { es: 'No se pudieron leer tus preferencias. Recarga antes de cambiar algo.', en: 'Your preferences could not be read. Reload before making a change.' },
@@ -884,7 +884,7 @@ export const strings: StringTable = {
 
   // C-26 Cuenta y datos (0019)
   // Production (Company OS) copy for C-26: what really happens.
-  'customer.account.marketing.boundary.live': { es: 'Tu elección se guarda en tu cuenta. Los avisos de tus reservas y pagos siempre llegan.', en: 'Your choice is saved to your account. Notices about your bookings and payments always arrive.' },
+  'customer.account.marketing.boundary.live': { es: 'Tu elección se guarda en tu cuenta. Este interruptor es solo para novedades, talleres y promociones; los avisos de reservas y pagos se eligen en Notificaciones.', en: 'Your choice is saved to your account. This switch is only for news, workshops and offers; booking and payment notices are chosen in Notifications.' },
   'customer.account.marketing.saved.live': { es: 'Elección guardada.', en: 'Choice saved.' },
   'customer.account.marketing.replayed.live': { es: 'Tu elección ya estaba guardada.', en: 'Your choice was already saved.' },
   'customer.account.marketing.failed.live': { es: 'No pudimos confirmar tu elección. Reintenta: no se guarda dos veces.', en: 'We could not confirm your choice. Retry: it is not saved twice.' },
@@ -897,7 +897,7 @@ export const strings: StringTable = {
   'customer.account.mock.replayed.live': { es: 'Tu solicitud ya estaba enviada; no se envió dos veces.', en: 'Your request was already sent; it was not sent twice.' },
   'customer.account.delete.confirm2.body.live': { es: 'Vas a enviar a {name} tu solicitud para eliminar la cuenta. El estudio te responde por correo; para cancelarla, escríbele al estudio.', en: 'You are about to send {name} your request to delete the account. The studio replies by email; to cancel it, write to the studio.' },
   'customer.account.delete.cta.live': { es: 'Enviar solicitud', en: 'Send request' },
-  'customer.account.delete.keep.time.live': { es: 'Tiempo: el estudio procesa la solicitud en máximo quince días hábiles y te confirma por correo. Para cancelarla antes, escríbele al estudio.', en: 'Timing: the studio processes the request within fifteen business days at most and confirms by email. To cancel it before then, write to the studio.' },
+  'customer.account.delete.keep.time.live': { es: 'Tiempo: el estudio procesa tu solicitud y te confirma por correo. Para cancelarla antes, escríbele al estudio.', en: 'Timing: the studio processes your request and confirms by email. To cancel it before then, write to the studio.' },
   'customer.account.delete.sent.live': { es: 'Solicitud enviada. El estudio te responde por correo.', en: 'Request sent. The studio replies by email.' },
   'customer.account.mock.boundary': { es: "Simulación FICTICIA solo en este navegador. La vista no es una exportación legal completa; las solicitudes no eliminan ni anonimizan datos ni acreditan plazos legales.", en: "FICTIONAL browser-only simulation. The preview is not a complete legal export; requests do not delete or anonymise data or establish legal handling times." },
   'customer.account.mock.cancelled': { es: "Operación cancelada. Se descarta lo pendiente; un cambio ya confirmado no se deshace. No se eliminan datos.", en: "Operation cancelled. Pending work is discarded; an already committed change is not undone. No data is deleted." },

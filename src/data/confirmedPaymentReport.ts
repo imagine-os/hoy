@@ -6,6 +6,8 @@ export interface PaymentReport { error: 'invalid' | 'inverted' | null; rows: Pay
 export const PAYMENT_REPORT_COLUMNS = ['payment_id','paid_at','studio_date','method','product_id','product','amount_cop','amount_received_cop','confirmed_by_id','confirmed_by'];
 export function validReportDay(day: string): boolean { return /^\d{4}-\d{2}-\d{2}$/.test(day) && dateKey(fromDateKey(day)) === day; }
 /** Read-only frontend projection. No settlement, date inference or currency conversion. */
+/** The concepts `mapping.ts` stamps when the screen sends none (payments, transfer receipts). */
+const DEFAULT_CONCEPTS = new Set(['Compra', 'Transferencia']);
 export function confirmedPaymentReport(payments: PaymentRow[], options: { tenantId: string; from: string; to: string; productName: (id: string) => string; personName: (id: string) => string; specialSales?: SpecialChargeRow[]; missingProductLabel?: string }): PaymentReport {
   const error = !validReportDay(options.from) || !validReportDay(options.to) ? 'invalid' : options.from > options.to ? 'inverted' : null;
   const rows: PaymentReportRow[] = []; let skipped = 0, unresolvedProducts = 0;
@@ -17,7 +19,9 @@ export function confirmedPaymentReport(payments: PaymentRow[], options: { tenant
     const special = matches.length === 1 && typeof matches[0].id === 'string' && matches[0].id.trim() && typeof matches[0].concept === 'string' && matches[0].concept.trim() ? matches[0] : null;
     // A sale with no product (a private class, a special): the review build's special charge, else the payment's own
     // concept (Company OS `payment.concept`, required on every payment).
-    const raw = (p as PaymentRow & { concept?: unknown }).concept, concept = typeof raw === 'string' ? raw.trim() : '';
+    const raw = (p as PaymentRow & { concept?: unknown }).concept, given = typeof raw === 'string' ? raw.trim() : '';
+    // The adapter's defaults (`Compra`, `Transferencia`) say nothing about what was sold: still unresolved.
+    const concept = DEFAULT_CONCEPTS.has(given) ? '' : given;
     const productId = p.plan_id ?? (special ? `special_charge:${special.id}` : ''), confirmerId = typeof p.taken_by === 'string' ? p.taken_by : '';
     const product = p.plan_id ? options.productName(p.plan_id) : special ? special.concept.trim() : concept || (options.missingProductLabel ?? '');
     if (!p.plan_id && !special && !concept) unresolvedProducts++;

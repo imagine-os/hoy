@@ -199,10 +199,15 @@ function MyNumbers({ teacherId }: { teacherId: string }) {
 function Roster({ bookings }: { bookings: BookingRow[] }) {
   const { t } = useI18n();
   const active = bookings.filter((b) => b.status !== 'cancelled' && b.status !== 'late_cancel');
-  const ids = useMemo(() => [...new Set(active.map((b) => b.user_id))], [active.map((b) => b.user_id).join('|')]);
-  const { rows: people } = useTable<ProfileRow>('profiles', ids.length ? { where: { user_id: ids } } : { limit: 0 });
+  // No bookings, no people read (a `/query` with no ids would be refused).
+  return active.length ? <RosterNames active={active} /> : <p className="xs muted">{t('teacher.home.roster.empty')}</p>;
+}
+function RosterNames({ active }: { active: BookingRow[] }) {
+  const { t } = useI18n();
+  const key = [...new Set(active.map((b) => b.user_id))].sort().join('|');
+  const ids = useMemo(() => key.split('|'), [key]);
+  const { rows: people } = useTable<ProfileRow>('profiles', { where: { user_id: ids } });
   const name = new Map(people.map((p) => [p.user_id, p.full_name]));
-  if (!active.length) return <p className="xs muted">{t('teacher.home.roster.empty')}</p>;
   return (
     <ul className="stack-sm small" aria-label={t('teacher.home.roster')}>
       {active.map((b) => <li key={b.id} className="row-between"><span>{name.get(b.user_id) ?? t('teacher.home.roster.unknown')}</span>{b.status === 'checked_in' && <Badge tone="success">{t('teacher.home.roster.arrived')}</Badge>}</li>)}

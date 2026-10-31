@@ -70,7 +70,9 @@ export async function accountDigest(value:unknown):Promise<string>{
   const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify(value)));
   return Array.from(new Uint8Array(bytes),b=>b.toString(16).padStart(2,'0')).join('');
 }
-export interface AccountPreview { kind:'fictional-account-preview'; completeLegalExport:false; preparedAt:string; subject:string; tenant:string; tables:Record<string,Record<string,Scalar>[]> }
+/** The file's kind: production's is a real (partial) copy of the account; the review build's is fictional. */
+const PREVIEW_KIND=PRODUCTION_BUILD?'account-export':'fictional-account-preview';
+export interface AccountPreview { kind:'fictional-account-preview'|'account-export'; completeLegalExport:false; preparedAt:string; subject:string; tenant:string; tables:Record<string,Record<string,Scalar>[]> }
 const preparedPreviews=new WeakSet<AccountPreview>();
 export async function prepareAccountPreview(data:DataProvider,actor:AccountActor,control:AccountControl={}):Promise<AccountPreview>{
   checkAccount(data,actor,control);
@@ -86,7 +88,7 @@ export async function prepareAccountPreview(data:DataProvider,actor:AccountActor
   const invoices=ids.length?await data.list('invoices',{where:{tenant_id:actor.tenantId,payment_id:ids}}):[];
   checkAccount(data,actor,control);
   tables.invoices=invoices.filter(r=>r.tenant_id===actor.tenantId&&typeof r.payment_id==='string'&&ids.includes(r.payment_id)).map(r=>project(r,['payment_id','number','subtotal','tax','total','issued_at'])).sort((a,b)=>String(a.id).localeCompare(String(b.id)));
-  const preview:AccountPreview={kind:'fictional-account-preview',completeLegalExport:false,preparedAt:new Date().toISOString(),subject:actor.userId,tenant:actor.tenantId,tables};
+  const preview:AccountPreview={kind:PREVIEW_KIND,completeLegalExport:false,preparedAt:new Date().toISOString(),subject:actor.userId,tenant:actor.tenantId,tables};
   for(const rows of Object.values(tables)){rows.forEach(Object.freeze);Object.freeze(rows);}Object.freeze(tables);Object.freeze(preview);
   preparedPreviews.add(preview);return preview;
 }
@@ -101,7 +103,7 @@ export async function prepareAccountCommand(data:DataProvider,actor:AccountActor
   const intent=input.kind==='request'?{kind:'request' as const,reason:input.reason.trim()}:input.kind==='cancel'?{kind:'cancel' as const,requestId:input.requestId}:{kind:'export' as const};
   if(input.kind==='export'&&!preparedPreviews.has(input.preview))failure('invalid');
   let preview=input.kind==='export'?structuredClone(input.preview):null;
-  if(preview&&(preview.subject!==actor.userId||preview.tenant!==actor.tenantId||preview.kind!=='fictional-account-preview'||preview.completeLegalExport!==false))failure('invalid');
+  if(preview&&(preview.subject!==actor.userId||preview.tenant!==actor.tenantId||preview.kind!==PREVIEW_KIND||preview.completeLegalExport!==false))failure('invalid');
   const digest=preview?await accountDigest(preview):null;
   const counts=preview?Object.fromEntries(Object.entries(preview.tables).map(([table,rows])=>[table,rows.length])):null;
   const ids=preview?Object.fromEntries(Object.entries(preview.tables).map(([table,rows])=>[table,rows.map(r=>String(r.id))])):null;

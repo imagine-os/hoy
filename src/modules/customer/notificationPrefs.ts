@@ -24,7 +24,10 @@ export async function readOwnPreferences(data: DataProvider, actor: PreferenceAc
   guard(data, actor);
   const account = await data.get<UserRow>('users', actor.userId);
   if (!account || account.id !== actor.userId || account.tenant_id !== tenant.id) throw Error('prefs_missing');
-  const rows = await data.list<NotificationPrefRow>('notification_prefs', { where: { tenant_id: tenant.id, user_id: actor.userId } });
+  const all = await data.list<NotificationPrefRow>('notification_prefs', { where: { tenant_id: tenant.id, user_id: actor.userId } });
+  // Company OS categories are free text: a row for a category or channel this page doesn't show (written by comms or the
+  // desk) is not this page's to judge, so production leaves it out instead of failing the page.
+  const rows = PRODUCTION_BUILD ? all.filter((r) => NOTIF_CHANNELS.includes(r.channel) && NOTIF_CATEGORIES.includes(r.category)) : all;
   const seen = new Set<string>();
   for (const row of rows) {
     if (row.tenant_id !== tenant.id || row.user_id !== actor.userId || !NOTIF_CHANNELS.includes(row.channel) || !NOTIF_CATEGORIES.includes(row.category) || typeof row.enabled !== 'boolean') throw Error('prefs_scope');
@@ -49,7 +52,10 @@ export async function savePreferences(data: DataProvider, actor: PreferenceActor
   guard(data, actor);
   const check = () => { if (cancelled()) throw Error('prefs_cancelled'); };
   if (!NOTIF_CHANNELS.includes(input.channel) || input.category !== null && !NOTIF_CATEGORIES.includes(input.category) || typeof input.enabled !== 'boolean' || !input.requestId || input.requestId.length > 128 || typeof input.expected !== 'string') throw Error('prefs_invalid');
-  check();await readOwnPreferences(data,actor);check();
+  check();const now=await readOwnPreferences(data,actor);check();
+  // Production: Company OS re-runs this callback on a retry, so a retry after a lost answer that committed finds the
+  // choice already stored. That is the same request succeeding, not a stale one.
+  if(PRODUCTION_BUILD&&categories(input).every(category=>(now.find(r=>r.channel===input.channel&&r.category===category)?.enabled??true)===input.enabled))return { status:'saved' as const };
   const fingerprint = await digest({ actor, input });check();
   const result = await data.atomic!(async tx => {
     check();const rows = await readOwnPreferences(tx,actor);check();

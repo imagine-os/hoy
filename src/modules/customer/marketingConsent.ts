@@ -42,7 +42,9 @@ export async function prepareMarketingCommand(data:DataProvider,actor:AccountAct
   let discarded=false,acknowledged=false;
   const check=(c:AccountControl)=>{guard(data,identity,c);if(discarded)fail('cancelled');};
   return {discard(){discarded=true;},async execute(c={}){
-    check(c);await readMarketingState(data,identity,c);check(c);let executed=false;
+    check(c);const now=await readMarketingState(data,identity,c);check(c);let executed=false;
+    // Production: a retry after a lost answer that committed finds the choice stored (Company OS re-runs the callback).
+    if(PRODUCTION_BUILD&&now.enabled(channel)===enabled){const replayed=acknowledged||revision(now,channel)!==expected;acknowledged=true;return {replayed};}
     const result=await data.atomic!(async tx=>{
       check(c);executed=true;const fresh=await readMarketingState(tx,identity,c);check(c);
       if(revision(fresh,channel)!==expected)fail('stale');
