@@ -7,10 +7,13 @@
  * (`src/modules/hub/strings.ts`), and `scripts/gen-hub-map.mjs` joins them with the route registry
  * into `public/hub-map.json` (contract: `./hubMap.types.ts`, `docs/reference/hub-map.md`).
  *
- * Role facts (labels, homes, demo first names) are duplicated from `src/auth/roles.ts` and
- * `src/auth/demoUsers.ts` because those files are imported without extensions elsewhere and this file
- * must stay import-free; `checkHubMapData()` in `./hubMap.check.ts` (dev) and the generator (every
- * build) fail loudly when the copies drift.
+ * Role facts (labels, homes) are duplicated from `src/auth/roles.ts` because that file is imported
+ * without extensions elsewhere and this file must stay import-free; `checkHubMapData()` in
+ * `./hubMap.check.ts` (dev) and the generator (every build) fail loudly when the copies drift.
+ *
+ * Since Hoy all-roles (lane D) the production build ships this file too: the production Hub draws its
+ * role cards from `HUB_ROLES`. So it holds no demo data: the demo users the review hub and the published
+ * map name live in `./hubDemoUsers.ts` (review-only, never in the production bundle).
  */
 import type { Bi, HubBand, HubDevice, HubExperience, HubGroup, HubLensHint, HubLensId, HubRole } from './hubMap.types';
 
@@ -48,7 +51,7 @@ export const HUB_ROLES: HubRole[] = [
   {
     id: 'customer', label: { es: 'Cliente', en: 'Customer' },
     description: { es: 'Quien practica: reserva, paga y lleva su paquete de clases y su historial desde el teléfono.', en: 'Whoever practises: books, pays and keeps their class package and history on the phone.' },
-    band: 'outside', home: '/app', device: 'phone', demoUser: { id: 'usr_cust', firstName: 'Juliana' }, look: 'customer', props: ['phone', 'rating'],
+    band: 'outside', home: '/app', device: 'phone', look: 'customer', props: ['phone', 'rating'],
   },
   {
     id: 'public', label: { es: 'Público', en: 'Public' },
@@ -58,48 +61,48 @@ export const HUB_ROLES: HubRole[] = [
   {
     id: 'teacher', label: { es: 'Profesor/a', en: 'Teacher' },
     description: { es: 'Enseña: sus clases, la lista de asistentes, la asistencia desde el mat y su nómina.', en: 'Teaches: their classes, the roster, attendance from the mat and their payroll.' },
-    band: 'outside', home: '/teach', device: 'phone', demoUser: { id: 'usr_teach', firstName: 'Carolina' }, look: 'teacher', props: ['phone', 'clipboard'],
+    band: 'outside', home: '/teach', device: 'phone', look: 'teacher', props: ['phone', 'clipboard'],
   },
   {
     id: 'front_desk', label: { es: 'Recepción', en: 'Front desk' },
     description: { es: 'La puerta del estudio: check-in, la bandeja de mensajes y la caja.', en: 'The studio’s door: check-in, the message inbox and the register.' },
-    band: 'team', home: '/staff', device: 'desktop', demoUser: { id: 'usr_desk', firstName: 'Camilo' }, look: 'frontdesk', props: ['stamp', 'keys'],
+    band: 'team', home: '/staff', device: 'desktop', look: 'frontdesk', props: ['stamp', 'keys'],
   },
   {
     id: 'coordinator', label: { es: 'Coordinación', en: 'Coordinator' },
     description: { es: 'Coordina el horario, los profesores y las comunicaciones, y lleva el CRM.', en: 'Runs the schedule, the teachers and communications, and owns the CRM.' },
-    band: 'team', home: '/staff', device: 'desktop', demoUser: { id: 'usr_coord', firstName: 'Valentina' }, look: 'coordinator', props: ['board', 'clipboard'],
+    band: 'team', home: '/staff', device: 'desktop', look: 'coordinator', props: ['board', 'clipboard'],
   },
   {
     id: 'finance', label: { es: 'Finanzas', en: 'Finance' },
     description: { es: 'Ingresos, gastos, nómina de profesores e impuestos, con el libro detrás.', en: 'Revenue, expenses, teacher payroll and tax, with the ledger behind it.' },
-    band: 'team', home: '/admin', device: 'desktop', demoUser: { id: 'usr_fin', firstName: 'Laura' }, look: 'finance', props: ['calculator', 'contract'],
+    band: 'team', home: '/admin', device: 'desktop', look: 'finance', props: ['calculator', 'contract'],
   },
   {
     id: 'admin', label: { es: 'Administración', en: 'Admin' },
     description: { es: 'El dueño del estudio: el panel, los ajustes, el contenido, las tablas y el manual.', en: 'The studio owner: the dashboard, settings, content, tables and the manual.' },
-    band: 'team', home: '/admin', device: 'desktop', demoUser: { id: 'usr_admin', firstName: 'Mateo' }, look: 'admin', props: ['laptop', 'keys'],
+    band: 'team', home: '/admin', device: 'desktop', look: 'admin', props: ['laptop', 'keys'],
   },
   {
     id: 'super_admin', label: { es: 'Super admin', en: 'Super admin' },
     description: { es: 'Quien construye el sistema: ve todo, incluido el modo dev, y puede ver como cualquier rol.', en: 'Whoever builds the system: sees everything, dev mode included, and can view as any role.' },
-    band: 'build', home: '/admin', device: 'desktop', demoUser: { id: 'usr_super', firstName: 'Sofía' }, look: 'superadmin', props: ['laptop', 'plans'],
+    band: 'build', home: '/admin', device: 'desktop', look: 'superadmin', props: ['laptop', 'plans'],
   },
   {
     id: 'maintenance', label: { es: 'Mantenimiento', en: 'Maintenance' },
     description: { es: 'Salas, incidencias e inventario, desde el panel del equipo.', en: 'Rooms, incidents and inventory, from the team dashboard.' },
-    band: 'team', home: '/staff', device: 'desktop', demoUser: { id: 'usr_maint', firstName: 'Rosa' }, look: 'maintenance', props: ['hardhat', 'tape'],
+    band: 'team', home: '/staff', device: 'desktop', look: 'maintenance', props: ['hardhat', 'tape'],
   },
   // 0031 · two new roles
   {
     id: 'marketing', label: { es: 'Marketing', en: 'Marketing' },
     description: { es: 'Contenido, campañas y la voz de la marca: el CMS, los correos y WhatsApp, y el CRM en lectura. El kit tiene un prototipo de borradores locales; sin publicación.', en: 'Content, campaigns and the brand voice: the CMS, emails and WhatsApp, and the CRM read-only. The kit has a local draft prototype; no publication.' },
-    band: 'team', home: '/admin/content', device: 'desktop', demoUser: { id: 'usr_mkt', firstName: 'Camila' }, look: 'marketing', props: ['board', 'swatches'],
+    band: 'team', home: '/admin/content', device: 'desktop', look: 'marketing', props: ['board', 'swatches'],
   },
   {
     id: 'developer', label: { es: 'Desarrollo', en: 'Developer' },
     description: { es: 'Quien construye y mantiene el software: herramientas dev, specs, tablas en lectura y la documentación, con modo dev; sin ajustes ni finanzas.', en: 'Whoever builds and maintains the software: dev tools, specs, read-only tables and the docs, with dev mode; no settings or finance.' },
-    band: 'build', home: '/dev', device: 'desktop', demoUser: { id: 'usr_dev', firstName: 'Julián' }, look: 'developer', props: ['laptop', 'plans'],
+    band: 'build', home: '/dev', device: 'desktop', look: 'developer', props: ['laptop', 'plans'],
   },
 ];
 

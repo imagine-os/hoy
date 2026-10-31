@@ -123,7 +123,7 @@ const viteSrc = await readFile('vite.config.ts', 'utf8');
 const REVIEW_ONLY_MODULES = [...(viteSrc.match(/REVIEW_ONLY_MODULES\s*=\s*\[([^\]]*)\]/)?.[1] ?? '').matchAll(/'([^']+)'/g)].map((m) => m[1]);
 const PROVIDER_FILES = /^src\/data\/(companyos\/|MockProvider\.ts|SupabaseProvider\.ts|DataContext\.tsx|types\.ts)/;
 // The demo data the production build marks side-effect free (vite.config.ts REVIEW_ONLY_DATA).
-const REVIEW_ONLY_DATA = /\/src\/(hub\/.+|auth\/demoUsers|data\/MockProvider|data\/seed\/(?!(catalog|timetable|content|legal|media|studioPolicies)\.ts$).+)\.tsx?$/;
+const REVIEW_ONLY_DATA = /\/src\/(hub\/(?!hubMap\.data\.ts$).+|auth\/demoUsers|data\/MockProvider|data\/seed\/(?!(catalog|timetable|content|legal|media|studioPolicies)\.ts$).+)\.tsx?$/;
 
 // ── The adapters and the provider, as the production code defines them ─────────────────────────────────────────
 const CACHE = path.join(ROOT, 'node_modules', '.cache', 'route-connectivity');

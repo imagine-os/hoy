@@ -84,6 +84,8 @@ export const CONNECTOR_REFUSALS = {
   not_in_launch: { es: 'Esta función aún no está disponible.', en: 'This feature is not available yet.' },
   promotions_disabled: { es: 'Las promociones aún no están disponibles.', en: 'Promotions are not available yet.' },
   read_only: { es: 'Este contenido no se edita desde la app.', en: 'This content is not edited from the app.' },
+  // View-as (Hoy all-roles, lane D): a super admin viewing as another role can look, not change (src/auth/viewAs.ts).
+  view_as_read_only: { es: 'Estás viendo como otro rol: es solo lectura. Sal de «Ver como» para hacer cambios.', en: 'You are viewing as another role: it is read-only. Exit “View as” to make changes.' },
 } as const satisfies Record<string, RefusalCopy>;
 
 export type ContractRefusalCode = keyof typeof CONTRACT_REFUSALS;

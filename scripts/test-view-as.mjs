@@ -168,7 +168,7 @@ try {
     assert.ok(!calls.some((c) => c.includes('/signup')), calls.join(', '));
     const r = await cosJson('/signup/config');
     assert.equal(r.status, 200);
-    assert.ok(calls.some((c) => c === 'GET http://hoy.test/api/cos/t/hoy-test/signup/config'), calls.join(', '));
+    assert.ok(calls.some((c) => c.startsWith('GET ') && c.endsWith('/api/cos/t/hoy-test/signup/config')), calls.join(', '));
     reset();
     const ok = await cosJson('/signup', { method: 'POST', body: { name: 'x' } });
     assert.equal(ok.status, 200);

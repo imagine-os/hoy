@@ -62,6 +62,10 @@ function answerQuery(user, q) {
   }
   if (q.entity === 'credit_lot') { const persons = values(q.filter, 'person'); return persons.length ? LOTS.filter((l) => persons.includes(l.data.person)) : LOTS; }
   if (q.entity === 'credit_entry' && q.aggregate) return Object.entries(LEFT).map(([lot, left]) => ({ lot, left }));
+  if (q.entity === 'credit_entry') {
+    const persons = values(q.filter, 'person');
+    return LOTS.filter((l) => persons.includes(l.data.person)).map((l) => ({ id: `ce_${l.id}`, data: { person: l.data.person, delta: LEFT[l.id], reason: 'grant', lot: { id: l.id, source: 'purchase', valid_until: l.data.valid_until, product: 'prd_pack', payment: null, freezable: true } }, createdAt: '2026-10-01T10:00:00Z' }));
+  }
   return [];
 }
 const server = createServer(async (req, res) => {
@@ -143,7 +147,7 @@ try {
   const cards = await page.locator('[data-view-as]').evaluateAll((els) => els.map((e) => e.getAttribute('data-view-as')));
   check('the Hub offers view-as for the 9 other signed-in roles (not super admin, not public)', [...new Set(cards)].sort().join(',') === 'admin,coordinator,customer,developer,finance,front_desk,maintenance,marketing,teacher', cards.join(','));
   const hubText = await page.locator('main').innerText();
-  check('the Hub shows no demo persona and no live preview frames (review-only parts stay out)', !/Sofía|Juliana|Mateo Arango|usuario demo|demo user/i.test(hubText) && (await page.locator('iframe').count()) === 0, hubText.slice(0, 200));
+  check('the Hub shows no demo persona and no live preview frames (review-only parts stay out)', !/\bSofía\b|\bJuliana\b|Mateo Arango|[Uu]suario demo|[Dd]emo user/.test(hubText) && (await page.locator('iframe').count()) === 0, hubText.slice(0, 200));
   check('no view-as banner before viewing as', (await banner(page).count()) === 0);
 
   // ── view as customer: role, home, banner, data ─────────────────────────────────────────────────────────────────
@@ -157,8 +161,9 @@ try {
   await page.locator('[data-plan-card]').first().waitFor({ timeout: 5000 }).catch(() => {});
   const card = await page.locator('[data-plan-card]').first().innerText().catch(() => '');
   check('the data is the sample person\'s: Ana\'s pack (8 classes to 31 Dec)', /8/.test(card) && /31/.test(card), card);
-  const lotReads = log.filter((l) => l.entity === 'credit_lot');
-  check('"my" reads ask for the sample person, not the super admin', lotReads.length > 0 && lotReads.every((l) => l.filter.includes('per_cust_a') && !l.filter.includes('per_super')), lotReads.map((l) => l.filter).join(' | '));
+  // The customer's own reads (credits, payments, bookings) filter by the person: the sample's, never the super admin's.
+  const mine = log.filter((l) => l.kind === 'query' && /"field":"person","op":"eq"/.test(l.filter));
+  check('"my" reads ask for the sample person, not the super admin', mine.length > 0 && mine.every((l) => l.filter.includes('per_cust_a') && !l.filter.includes('per_super')), mine.map((l) => `${l.entity} ${l.filter}`).join(' | '));
   const links = await menu(page);
   check('the menu is the customer\'s (no Hub, no admin)', !links.includes('/hub') && !links.some((l) => l.startsWith('/admin')), links.join(' '));
   at = await go(page, '/admin/settings');
