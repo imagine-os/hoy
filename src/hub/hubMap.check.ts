@@ -13,6 +13,7 @@ import { HUB_SURFACES, HUB_TOOLS } from '../modules/hub/specs';
 import { buildSeed } from '../data/seed';
 import { classOrder } from '../tenant/brand';
 import { HOY_PRODUCT, HUB_EXPERIENCES, HUB_ROLES, HUB_SAMPLE_ROUTES, HUB_TOOL_LIST } from './hubMap.data';
+import { HUB_DEMO_USERS } from './hubDemoUsers';
 import { pickSampleIds, type SampleTables } from './sampleIds';
 
 /** Literal sample params, checked against the seed: which values a `:param` may take. */
@@ -51,8 +52,11 @@ export function checkHubMapData(): string[] {
     if (r.label.es !== ROLE_LABEL[role].es || r.label.en !== ROLE_LABEL[role].en) problems.push(`role ${role}: label differs from ROLE_LABEL`);
     if (r.home !== ROLE_HOME[role]) problems.push(`role ${role}: home ${r.home} ≠ ROLE_HOME ${ROLE_HOME[role]}`);
     const demo = demoUserByRole(role);
-    if (role === 'public') { if (r.demoUser) problems.push('role public: the visitor has no demo user'); }
-    else if (!r.demoUser || r.demoUser.id !== demo.id || r.demoUser.firstName !== demo.name.split(' ')[0]) problems.push(`role ${role}: demoUser ≠ ${demo.id} ${demo.name.split(' ')[0]}`);
+    // The demo users live apart (./hubDemoUsers.ts, review-only): the production Hub ships HUB_ROLES.
+    if (r.demoUser) problems.push(`role ${role}: HUB_ROLES carries a demo user (keep it in hubDemoUsers.ts: hubMap.data.ts ships in production)`);
+    const d = Object.prototype.hasOwnProperty.call(HUB_DEMO_USERS, role) ? HUB_DEMO_USERS[role] : undefined;
+    if (role === 'public') { if (d) problems.push('role public: the visitor has no demo user'); }
+    else if (!d || d.id !== demo.id || d.firstName !== demo.name.split(' ')[0]) problems.push(`role ${role}: demoUser ≠ ${demo.id} ${demo.name.split(' ')[0]}`);
   }
   if (new Set(ids).size !== ids.length) problems.push('HUB_ROLES has a duplicate id');
   const exp = HUB_EXPERIENCES.map((e) => e.id).join(',');

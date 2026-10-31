@@ -34,8 +34,9 @@ function countFiles(dir: string, suffix: string): number {
  */
 const PRODUCTION = process.env.VITE_HOY_BUILD === 'production';
 // `dev` ships since Hoy all-roles (lane C, 2026-10-31): the developer's home `/dev` is a launch route; the module's other
-// pages stay unregistered in production (launchRoutes.ts) until R-08 is decided.
-export const REVIEW_ONLY_MODULES = ['docs', 'hub'];
+// pages stay unregistered in production (launchRoutes.ts) until R-08 is decided. `hub` ships since lane D: production
+// registers only its super-admin Hub with view-as (src/modules/hub/index.ts); the review hub stays out of the bundle.
+export const REVIEW_ONLY_MODULES = ['docs'];
 const MODULES_GLOB = "import.meta.glob<ModuleExports>('../modules/*/index.ts', { eager: true })";
 const DOCS_DIR = join(here, 'docs') + '/';
 /**
@@ -48,7 +49,8 @@ const DOCS_DIR = join(here, 'docs') + '/';
  * provider maps as defaults (src/data/companyos/mapping.ts).
  */
 const SEED_LAUNCH_CONTENT = ['catalog', 'timetable', 'content', 'legal', 'media', 'studioPolicies'];
-export const REVIEW_ONLY_DATA = new RegExp(`/src/(hub/.+|auth/demoUsers|data/MockProvider|data/seed/(?!(${SEED_LAUNCH_CONTENT.join('|')})\\.ts$).+)\\.tsx?$`);
+// `src/hub/hubMap.data.ts` is not demo data (roles and experiences, no people): the production Hub draws from it (lane D).
+export const REVIEW_ONLY_DATA = new RegExp(`/src/(hub/(?!hubMap\\.data\\.ts$).+|auth/demoUsers|data/MockProvider|data/seed/(?!(${SEED_LAUNCH_CONTENT.join('|')})\\.ts$).+)\\.tsx?$`);
 
 function productionBuild(): Plugin {
   return {

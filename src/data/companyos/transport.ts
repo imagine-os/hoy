@@ -8,7 +8,11 @@
  * - Retries: a lost response (network error, 502/504, or a 503 that is the Hoy server's own `upstream_unavailable` /
  *   `upstream_timeout`) is retried with the same body and the same `Idempotency-Key`, so the server answers the first
  *   attempt instead of writing twice (ADR 0040). A write without a key is never retried: it fails at once, `ambiguous`.
+ * - View-as (Hoy all-roles, lane D): while a super admin views the studio as another role, only reads leave the browser
+ *   (`GET`, `POST /query`); anything else fails at once with `view_as_read_only` (`src/auth/viewAs.ts`), never sent.
  */
+
+import { VIEW_AS_REFUSAL, viewAsActive, viewAsAllows } from '../../auth/viewAs';
 
 export interface CompanyOSConfig { tenant: string; apiBase: string; /** The rest of /app-config.json (e.g. `launch`). */ extra?: Record<string, unknown> }
 export type TokenSource = (options?: { refresh?: boolean }) => Promise<string | null>;
@@ -163,8 +167,11 @@ export class Transport {
     } catch { return 'session'; }
   }
 
-  /** A plain request outside the API (the file storage upload link). */
-  raw(input: string, init: RequestInit): Promise<Response> { return this.fetchImpl(input, init); }
+  /** A plain request outside the API (the file storage upload link). Viewing as, only a GET goes out. */
+  raw(input: string, init: RequestInit): Promise<Response> {
+    if (viewAsActive() && (init.method ?? 'GET') !== 'GET') return Promise.reject(new CompanyOSError(VIEW_AS_REFUSAL, { status: 403 }));
+    return this.fetchImpl(input, init);
+  }
 
   /**
    * A GET on the Hoy server itself (not under `apiBase`), with the session's bearer token: the stored files at
@@ -187,6 +194,8 @@ export class Transport {
   }
 
   async request<T>(method: 'GET' | 'POST' | 'PATCH' | 'DELETE', path: string, options: RequestOptions = {}): Promise<CompanyOSResponse<T>> {
+    // View-as is read-only: a write is refused here, before the config, the token or the network (nothing was done).
+    if (viewAsActive() && !viewAsAllows(method, path)) throw new CompanyOSError(VIEW_AS_REFUSAL, { status: 403 });
     const { apiBase, tenant } = await this.config();
     const url = `${apiBase}/t/${encodeURIComponent(tenant)}${path}`;
     const body = options.body === undefined ? undefined : JSON.stringify(options.body);

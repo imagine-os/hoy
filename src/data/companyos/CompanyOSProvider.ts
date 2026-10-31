@@ -9,6 +9,7 @@ import { closedDatesOf, formatClosedDates, parseClosedDates } from './closedDate
 import { planQuery, PAGE, type QuerySpec } from './query';
 import { CompanyOSError, Transport, newIdempotencyKey, normalizeCode, onTokenSourceChange, wireKey, type TransportOptions } from './transport';
 import { toDay, today as studioToday } from './dates';
+import { onViewAsChange, viewAsPersonId } from '../../auth/viewAs';
 
 /** Contract §1: `subscribe()` polls every 20 s on the screens that ask for it (`useLiveUpdates`). */
 export const POLL_MS = 20_000;
@@ -103,6 +104,8 @@ export class CompanyOSProvider implements DataProvider {
     this.closedDatesDelayMs = options.closedDatesDelayMs ?? 1500;
     this.today = options.today ?? studioToday;
     onTokenSourceChange(() => { this.meCache = null; this.emitAll(); });
+    // View-as (lane D): "my" records become the sample person's (or the real person's again); every screen reads again.
+    onViewAsChange(() => { this.inflight.clear(); this.emitAll(); });
     if (typeof document !== 'undefined') document.addEventListener('visibilitychange', () => { if (!document.hidden && this.watchers.size) this.tick(); });
   }
 
@@ -163,10 +166,13 @@ export class CompanyOSProvider implements DataProvider {
    * The signed-in user's two ids. The session (H-2) knows a Company OS **user** id; records point at the **person**.
    * Inbound, a `user_id` (and a `users` id) equal to the user id becomes the person id; outbound, the reverse, so
    * `where: { user_id: session.userId }` finds one's own rows. Other people's rows keep their person ids.
+   * While a super admin views as another role (lane D), the session user is aliased to the sample person instead, so the
+   * same screens show that person's records (read-only: the transport refuses writes).
    */
   async self(): Promise<{ userId: string; personId: string } | null> {
     const me = await this.me().catch(() => null);
-    return me?.userId && me.personId && me.userId !== me.personId ? { userId: me.userId, personId: me.personId } : null;
+    const personId = viewAsPersonId() ?? me?.personId;
+    return me?.userId && personId && me.userId !== personId ? { userId: me.userId, personId } : null;
   }
 
   /**
