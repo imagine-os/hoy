@@ -36,7 +36,9 @@
     "test:content-recovery:ui": "node scripts/test-content-recovery-ui.mjs && node scripts/test-content-recovery-context-ui.mjs",
     "test:session-admission": "node scripts/test-session-admission.mjs",
     "test:delivery-room": "node scripts/test-delivery-room.cjs",
-    "test:auth:real-clerk": "node scripts/test-auth-real-clerk.mjs"
+    "test:auth:real-clerk": "node scripts/test-auth-real-clerk.mjs",
+    "seed:companyos": "node scripts/seed-companyos.ts ../Company-OS/deploy/seeds",
+    "test:seed-companyos": "node scripts/test-seed-companyos.mjs"
   },
   "dependencies": {
     "@clerk/react": "6.17.8",
