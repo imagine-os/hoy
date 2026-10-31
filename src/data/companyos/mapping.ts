@@ -77,6 +77,8 @@ export interface EntityAdapter {
   createOnly?: string;
   /** Signed out, the public identity reads only some fields: what the row means then (bookings: an occupied mat). */
   signedOutRow?: (row: Row) => Row;
+  /** Signed out, also ANDed into reads (bookings: only classes still to come, so a visitor never pages the history). */
+  signedOutBase?: () => Filter[];
 }
 export interface StaticAdapter { kind: 'static'; table: string; rows: () => Row[] }
 export interface SinkAdapter { kind: 'sink'; table: string }
@@ -98,7 +100,7 @@ const num = (v: unknown) => (v == null || v === '' ? null : Number(v));
 const bool = (v: unknown) => v === true || v === 'true' || v === 1;
 const fold = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
 const validInstant = (v: unknown): string | null => { try { const t = toInstant(v); return t && !Number.isNaN(Date.parse(t)) ? t : null; } catch { return null; } };
-const refId = (v: unknown): unknown => (v && typeof v === 'object' && 'id' in (v as object) ? (v as { id: unknown }).id : v);
+export const refId = (v: unknown): unknown => (v && typeof v === 'object' && 'id' in (v as object) ? (v as { id: unknown }).id : v);
 const embedded = (rec: CosRecord, field: string): Record<string, unknown> | null => {
   const v = rec.data[field];
   return v && typeof v === 'object' ? (v as Record<string, unknown>) : null;
@@ -268,6 +270,8 @@ const bookings = entity({
   },
   /** Signed out the public identity reads booked mats only (class and mat; lane H2): each row is an occupied mat. */
   signedOutRow: (row) => ({ ...row, status: 'booked' }),
+  /** Classes from three hours ago on: the mat map only shows upcoming classes. */
+  signedOutBase: () => [{ ref: 'occurrence', entity: 'occurrence', where: { field: 'starts_at', op: 'gte', value: new Date(Date.now() - 3 * 3600_000).toISOString() } }],
 });
 
 const plans = entity({
@@ -357,6 +361,8 @@ const classLedger = entity({
     frozen_from: { derive: (r) => toDay(embedded(r, 'lot')?.frozen_from) },
     frozen_until: { derive: (r) => toDay(embedded(r, 'lot')?.frozen_until) },
     freezable: { derive: (r) => bool(embedded(r, 'lot')?.freezable) },
+    /** The lot's source (purchase, trial, gift, courtesy, comp…), null without a lot (lane H2, for H1's trial check). */
+    lot_source: { derive: (r) => str(embedded(r, 'lot')?.source) },
     booking_id: { field: 'booking', from: str, readOnly: true },
   },
   toData: (p, mode) => {

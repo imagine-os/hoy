@@ -1,14 +1,19 @@
-/** Fictional browser-only account preview/request commands. No deletion, purge or server rights enforcement. */
+/**
+ * C-26 account commands. Review build: the browser-only preview and request rows. Production (Company OS): the export
+ * is built from the tables a member may read, and a deletion request is a `deletion_requests` insert that lane H2's
+ * adapter sends as the forms module's `privacy_request` submission (a member may create it, never read it back).
+ */
 import type { DataProvider } from '../../data/types';
 import type { BaseRow, DeletionRequestRow, ProfileRow, UserRow } from '../../data/schema';
 import type { Role } from '../../auth/roles';
 import { tenant } from '../../tenant/tenant';
+import { PRODUCTION_BUILD } from '../../config/launch';
 
 export interface AccountActor { userId:string; tenantId:string; role:Role }
 export interface AccountControl { signal?:AbortSignal; currentActor?:()=>AccountActor; failAfterWrites?:number }
 const failure=(code:string):never=>{throw Error(`account_${code}`);};
 export function checkAccount(data:DataProvider,actor:AccountActor,control:AccountControl={}){
-  if(data.name!=='mock'||!data.atomic)failure('disconnected');
+  if(!data.atomic)failure('disconnected');
   if(actor.tenantId!==tenant.id||!actor.userId||!['customer','teacher','super_admin'].includes(actor.role))failure('forbidden');
   const now=control.currentActor?.()??actor;
   if(now.userId!==actor.userId||now.tenantId!==actor.tenantId||now.role!==actor.role)failure('context');
@@ -49,6 +54,9 @@ export const ACCOUNT_EXPORT_FIELDS:Readonly<Record<string,{owner:string;fields:r
   message_log:{owner:'user_id',fields:['user_id','channel','direction','source','status','sent_at','read_at']},
   deletion_requests:{owner:'user_id',fields:['user_id','channel','status','requested_at','resolved_at']},
 };
+/** The export's tables in production: those with a Company OS adapter a member reads (the rest are review-build data). */
+const CONNECTED_EXPORT=new Set(['users','profiles','user_roles','class_ledger','bookings','payments','notifications','notification_prefs','consents','legal_acceptances']);
+const exportTables=()=>Object.entries(ACCOUNT_EXPORT_FIELDS).filter(([table])=>!PRODUCTION_BUILD||CONNECTED_EXPORT.has(table));
 type Scalar=string|number|boolean|null;
 function project(row:BaseRow,fields:readonly string[]):Record<string,Scalar>{
   const out:Record<string,Scalar>={};
@@ -62,12 +70,14 @@ export async function accountDigest(value:unknown):Promise<string>{
   const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify(value)));
   return Array.from(new Uint8Array(bytes),b=>b.toString(16).padStart(2,'0')).join('');
 }
-export interface AccountPreview { kind:'fictional-account-preview'; completeLegalExport:false; preparedAt:string; subject:string; tenant:string; tables:Record<string,Record<string,Scalar>[]> }
+/** The file's kind: production's is a real (partial) copy of the account; the review build's is fictional. */
+const PREVIEW_KIND=PRODUCTION_BUILD?'account-export':'fictional-account-preview';
+export interface AccountPreview { kind:'fictional-account-preview'|'account-export'; completeLegalExport:false; preparedAt:string; subject:string; tenant:string; tables:Record<string,Record<string,Scalar>[]> }
 const preparedPreviews=new WeakSet<AccountPreview>();
 export async function prepareAccountPreview(data:DataProvider,actor:AccountActor,control:AccountControl={}):Promise<AccountPreview>{
   checkAccount(data,actor,control);
   const tables:AccountPreview['tables']={};
-  for(const [table,config] of Object.entries(ACCOUNT_EXPORT_FIELDS)){
+  for(const [table,config] of exportTables()){
     let rows=await owned(data,actor,table,config.owner,control);
     if((table==='users'||table==='profiles')&&rows.length!==1)failure('missing');
     if(table==='message_log')rows=rows.filter(r=>r.direction!=='internal'&&r.channel!=='note');
@@ -78,7 +88,7 @@ export async function prepareAccountPreview(data:DataProvider,actor:AccountActor
   const invoices=ids.length?await data.list('invoices',{where:{tenant_id:actor.tenantId,payment_id:ids}}):[];
   checkAccount(data,actor,control);
   tables.invoices=invoices.filter(r=>r.tenant_id===actor.tenantId&&typeof r.payment_id==='string'&&ids.includes(r.payment_id)).map(r=>project(r,['payment_id','number','subtotal','tax','total','issued_at'])).sort((a,b)=>String(a.id).localeCompare(String(b.id)));
-  const preview:AccountPreview={kind:'fictional-account-preview',completeLegalExport:false,preparedAt:new Date().toISOString(),subject:actor.userId,tenant:actor.tenantId,tables};
+  const preview:AccountPreview={kind:PREVIEW_KIND,completeLegalExport:false,preparedAt:new Date().toISOString(),subject:actor.userId,tenant:actor.tenantId,tables};
   for(const rows of Object.values(tables)){rows.forEach(Object.freeze);Object.freeze(rows);}Object.freeze(tables);Object.freeze(preview);
   preparedPreviews.add(preview);return preview;
 }
@@ -93,7 +103,7 @@ export async function prepareAccountCommand(data:DataProvider,actor:AccountActor
   const intent=input.kind==='request'?{kind:'request' as const,reason:input.reason.trim()}:input.kind==='cancel'?{kind:'cancel' as const,requestId:input.requestId}:{kind:'export' as const};
   if(input.kind==='export'&&!preparedPreviews.has(input.preview))failure('invalid');
   let preview=input.kind==='export'?structuredClone(input.preview):null;
-  if(preview&&(preview.subject!==actor.userId||preview.tenant!==actor.tenantId||preview.kind!=='fictional-account-preview'||preview.completeLegalExport!==false))failure('invalid');
+  if(preview&&(preview.subject!==actor.userId||preview.tenant!==actor.tenantId||preview.kind!==PREVIEW_KIND||preview.completeLegalExport!==false))failure('invalid');
   const digest=preview?await accountDigest(preview):null;
   const counts=preview?Object.fromEntries(Object.entries(preview.tables).map(([table,rows])=>[table,rows.length])):null;
   const ids=preview?Object.fromEntries(Object.entries(preview.tables).map(([table,rows])=>[table,rows.map(r=>String(r.id))])):null;
@@ -106,6 +116,14 @@ export async function prepareAccountCommand(data:DataProvider,actor:AccountActor
       check(control);
       const before=await readAccountState(data,identity,control);check(control);
       if(intent.kind==='cancel'&&!before.requests.some(row=>row.id===intent.requestId))failure('missing');
+      // Production: one keyed insert (a double tap or a retry is the same request); the studio follows it up and the
+      // member cannot read it back, so "sent" is the answer, not a read-back. Cancelling is with the studio.
+      if(PRODUCTION_BUILD&&intent.kind==='request'){
+        const insert=data.insert.bind(data) as (table:string,row:Partial<DeletionRequestRow>,options:{idempotencyKey:string})=>Promise<DeletionRequestRow>;
+        const row=await insert('deletion_requests',{user_id:identity.userId,email:before.account.email,phone:before.account.phone,channel:'app',reason:intent.reason||null},{idempotencyKey:`account_${scopedNonce}`});check(control);
+        const replayed=acknowledged;acknowledged=true;
+        return {actor:identity,fingerprint,nonce,kind:intent.kind,rowId:row.id??null,status:'requested',replayed};
+      }
       let executed=false;
       const result=await data.atomic!(async stage=>{
         check(control);checkAccount(stage,identity,control);executed=true;

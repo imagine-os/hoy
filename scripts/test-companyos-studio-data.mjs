@@ -60,11 +60,12 @@ try {
       if (!f || f.all) return true;
       if (f.and) return f.and.every((x) => match(rec, x));
       if (f.or) return f.or.some((x) => match(rec, x));
+      if (f.ref) { const target = table(f.entity).get(rec.data[f.ref]); return !!target && match(target, f.where); }
       const v = f.field === 'id' ? rec.id : rec.data[f.field];
       const want = f.value && typeof f.value === 'object' && f.value.$me ? 'user-1' : f.value;
       switch (f.op) {
         case 'eq': return v === want; case 'neq': return v !== want;
-        case 'in': return want.includes(v); case 'is_null': return v == null; case 'is_not_null': return v != null;
+        case 'in': return want.includes(v); case 'gte': return v >= want; case 'is_null': return v == null; case 'is_not_null': return v != null;
         default: throw new Error(`fake: op ${f.op}`);
       }
     };
@@ -100,7 +101,7 @@ try {
       if (path === '/query') {
         if (!anonymous && ROLE_READS[body.entity] && !ROLE_READS[body.entity].includes(role)) return refuse(403, 'forbidden');
         if (anonymous && body.entity === 'booking') {
-          for (const f of JSON.stringify(body.filter ?? {}).match(/"field":"(\w+)"/g) ?? []) if (!/occurrence|spot/.test(f)) return refuse(400, 'unknown field');
+          for (const f of JSON.stringify(body.filter ?? {}).match(/"field":"(\w+)"/g) ?? []) if (!/occurrence|spot|starts_at/.test(f)) return refuse(400, 'unknown field');
         }
         let rows = [...table(body.entity).values()].filter((r) => visible(body.entity, r, anonymous) && match(r, body.filter));
         if (anonymous && body.entity === 'booking') rows = rows.filter((r) => ['booked', 'held', 'checked_in'].includes(r.data.status));
@@ -201,8 +202,11 @@ try {
     await p.update('tenants', row.id, { settings: { ...row.settings, quietHours: { from: '22:00', to: '07:00' } } });
     assert.equal(legacy.data.value.payroll, undefined);
     assert.equal(legacy.data.value.integrations, undefined);
-    const created = writes(api, '/api/setting').map((c) => c.body);
-    assert.deepEqual(created, [{ key: 'studio_private', value: { payroll: PRIVATE_VALUE.payroll, integrations: PRIVATE_VALUE.integrations } }]);
+    // Both records in one /batch: the pay data is never in neither (review round 1).
+    const batch = api.calls.filter((c) => c.path === '/batch');
+    assert.equal(batch.length, 1);
+    assert.deepEqual(batch[0].body.ops.find((o) => o.op === 'create'), { op: 'create', entity: 'setting', data: { key: 'studio_private', value: { payroll: PRIVATE_VALUE.payroll, integrations: PRIVATE_VALUE.integrations } } });
+    assert.equal(writes(api, '/api/setting').length, 0);
   });
   await test('settings split: inside atomic, both parts are batch ops of the one /batch', async () => {
     const api = fakeApi();
@@ -327,6 +331,39 @@ try {
     assert.equal(api.calls.filter((c, i) => i >= before && c.method !== 'GET' && c.path !== '/query').length, 0, 'read stamps are not stored (no inbound rows)');
   });
 
+  await test('message_log: a logged message is never removed; a note is (Administration)', async () => {
+    const api = fakeApi();
+    const log = api.put('comms_log', { recipient: 'p1', direction: 'out', channel: 'whatsapp', body: 'Hola', status: 'logged', sent_by: 'u2' });
+    const note = api.put('staff_note', { person: 'p1', body: 'x' });
+    const p = make(api);
+    await assert.rejects(p.remove('message_log', log.id), (e) => e.code === 'read_only');
+    await p.remove('message_log', note.id);
+    assert.equal(api.table('staff_note').size, 0); assert.equal(api.table('comms_log').size, 1);
+  });
+
+  // ------------------------------------------------------------------ class ledger (for H1 and H3)
+  await test('class_ledger: lot_source is the lot\'s source (H1\'s trial check)', () => {
+    const row = fromRecord(adapters.class_ledger, { id: 'e1', data: { person: 'p1', delta: 1, reason: 'grant', lot: { id: 'l1', source: 'trial' } } });
+    assert.equal(row.lot_source, 'trial');
+    assert.equal(fromRecord(adapters.class_ledger, { id: 'e2', data: { person: 'p1', delta: -1, reason: 'booking' } }).lot_source, null);
+  });
+  await test('class_ledger: a lot whose only entry is its studio_cancel return (credits 1.2.0) reads as the lot\'s opening', async () => {
+    const api = fakeApi({ role: 'member', superAdmin: false });
+    const single = api.put('credit_lot', { person: 'p1', source: 'purchase', quantity: 1 });
+    const pack = api.put('credit_lot', { person: 'p1', source: 'purchase', quantity: 12 });
+    api.put('credit_entry', { lot: single.id, person: 'p1', delta: 1, reason: 'studio_cancel', booking: 'b1' });
+    api.put('credit_entry', { lot: pack.id, person: 'p1', delta: 12, reason: 'grant' });
+    api.put('credit_entry', { lot: pack.id, person: 'p1', delta: -1, reason: 'booking', booking: 'b2' });
+    api.put('credit_entry', { lot: pack.id, person: 'p1', delta: 1, reason: 'studio_cancel', booking: 'b2' });
+    const p = make(api);
+    const rows = await p.list('class_ledger');
+    const opening = rows.find((r) => r.id === single.id);
+    assert.ok(opening, 'the single class lot has a row with its id');
+    assert.deepEqual([opening.reason, opening.delta, opening.purchase_ledger_id], ['cancel_return', 1, null]);
+    assert.ok(rows.find((r) => r.reason === 'cancel_return' && r.purchase_ledger_id === pack.id), 'a return to a lot with a grant stays a return');
+    assert.equal((await p.get('class_ledger', single.id))?.id, single.id);
+  });
+
   // ------------------------------------------------------------------ privacy request
   await test('deletion_requests: a customer\'s request is a privacy_request form submission; listing it reads as empty', async () => {
     const api = fakeApi({ role: 'member', superAdmin: false });
@@ -401,8 +438,15 @@ try {
     const api = fakeApi();
     api.put('booking', { occurrence: 'o1', spot: 3, person: 'p1', status: 'booked' });
     api.put('booking', { occurrence: 'o1', spot: 5, person: 'p2', status: 'cancelled' });
+    api.put('occurrence', { starts_at: new Date(Date.now() + 86400_000).toISOString() }, 'o1');
+    api.put('occurrence', { starts_at: '2020-01-01T12:00:00.000Z' }, 'o0');
+    api.put('booking', { occurrence: 'o0', spot: 7, person: 'p3', status: 'booked' });
     const rows = await signedOut(api).list('bookings', { where: { session_id: 'o1' } });
     assert.deepEqual(rows.map((r) => [r.session_id, r.mat_number, r.status, r.user_id]), [['o1', 3, 'booked', null]]);
+    // Only classes still to come are asked for (review round 1): a visitor never pages the whole history.
+    assert.deepEqual((await signedOut(api).list('bookings')).map((r) => r.mat_number), [3]);
+    const q = api.calls.filter((c) => c.path === '/query' && c.body.entity === 'booking').pop();
+    assert.ok(JSON.stringify(q.body.filter).includes('"ref":"occurrence"'));
   });
 
   // ------------------------------------------------------------------ copy

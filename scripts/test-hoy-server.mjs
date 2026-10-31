@@ -445,6 +445,24 @@ await test('public reads: signed out, a query on the timetable, coaches, rooms o
   }
 });
 
+await test('public reads (lane H2): a settings answer never carries the pay data, even from a row saved before the split', async () => {
+  const legacy = { key: 'studio_settings', value: { profile: { whatsapp: '+57 300' }, payroll: { rateCard: { byTeacher: { leo: 91000 } } }, integrations: { wompi: 'connected' }, contacts: { frontDesk: { whatsapp: '+57 301' }, owner: { whatsapp: '+57 399' }, payroll: { whatsapp: '+57 398' } } } };
+  upstreamReply = (req, res) => { res.writeHead(200, { 'content-type': 'application/json' }); res.end(JSON.stringify(req.url.includes('/api/setting/') ? { data: { id: 's1', data: legacy } } : { data: [{ id: 's1', data: legacy }] })); };
+  for (const [method, path, body] of [['POST', '/api/cos/t/hoy-dev/query', JSON.stringify({ entity: 'setting', filter: { field: 'key', op: 'eq', value: 'studio_settings' } })], ['GET', '/api/cos/t/hoy-dev/api/setting/s1']]) {
+    const r = await pub(method, path, method === 'POST' ? json : {}, body);
+    assert.equal(r.status, 200, path);
+    const text = r.body.toString();
+    for (const secret of ['91000', 'wompi', '+57 399', '+57 398']) assert.ok(!text.includes(secret), `${path}: ${secret}`);
+    const rec = JSON.parse(text).data;
+    const value = (Array.isArray(rec) ? rec[0] : rec).data.value;
+    assert.deepEqual(value, { profile: { whatsapp: '+57 300' }, contacts: { frontDesk: { whatsapp: '+57 301' } } });
+  }
+  // Other public answers stream through untouched.
+  upstreamReply = okUpstream;
+  const r = await pub('POST', '/api/cos/t/hoy-dev/query', json, JSON.stringify({ entity: 'product' }));
+  assert.equal(r.status, 200); assert.equal(r.body.toString(), '{"data":[]}');
+});
+
 await test('public reads: signed out, everything else stays 401 and nothing reaches Company OS', async () => {
   upstreamReply = okUpstream;
   seen.length = 0;

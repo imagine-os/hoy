@@ -1,8 +1,9 @@
-import type {BookingRow,ClassLedgerRow,PaymentRow,UserRow} from './schema';
+import type {BaseRow,BookingRow,ClassLedgerRow,PaymentRow,UserRow} from './schema';
 import type {DataProvider} from './types';
 import {approvedPackageRows,packageLots} from './packages';
 import {dateKey} from '../i18n/format';
 import {tenant} from '../tenant/tenant';
+import {PRODUCTION_BUILD} from '../config/launch';
 
 export type TrialStatus='eligible'|'trial_used'|'trial_active_package'|'trial_clarification'|'trial_checking'|'trial_check_failed';
 export interface TrialAssessment{status:TrialStatus;reasons:string[]}
@@ -61,7 +62,7 @@ export function assessTrial(input:{userId:string;tenantId:string;ledger:ClassLed
  return {status:'eligible',reasons:[]};
 }
 /** Fresh scoped reads, reused inside staged commands. No browser assessment authorizes a real purchase. */
-export async function readTrialAssessment(data:DataProvider,userId:string,excludePaymentId?:string):Promise<TrialAssessment>{
+async function readReviewAssessment(data:DataProvider,userId:string,excludePaymentId?:string):Promise<TrialAssessment>{
  if(data.name!=='mock')throw Error('trial_disconnected');
  const [user,ledger,payments,bookings]=await Promise.all([
   data.get<UserRow>('users',userId),data.list<ClassLedgerRow>('class_ledger',{where:{tenant_id:tenant.id,user_id:userId}}),
@@ -70,6 +71,29 @@ export async function readTrialAssessment(data:DataProvider,userId:string,exclud
  if(!user||user.id!==userId||user.tenant_id!==tenant.id)throw Error('trial_scope');
  return assessTrial({userId,tenantId:tenant.id,ledger,payments,bookings,excludePaymentId});
 }
+/** A ledger row with the lot's source (lane H2 exposes `lot_source` on class_ledger). */
+type LedgerWithSource=ClassLedgerRow&{lot_source?:string|null};
+/** A product row: Company OS `product.kind` is `trial` for the trial (the adapter's `kind` column). */
+type TrialPlan={id:string;slug?:string|null;kind?:unknown};
+/**
+ * Production (Company OS, credits `trial_once_per_person`): the trial is used once the person holds a trial lot, or a
+ * pending or approved payment of a trial product (the server refuses a second one with `trial_used` already while
+ * pending). This reads the person's own lots and payments to show the offer; the server's `trial_used` is final.
+ */
+export function assessLiveTrial(input:{ledger:LedgerWithSource[];payments:PaymentRow[];plans:TrialPlan[];excludePaymentId?:string}):TrialAssessment{
+ const trialProducts=new Set(input.plans.filter(p=>p.kind==='trial'||p.slug==='trial').map(p=>p.id));
+ const lot=input.ledger.some(r=>r.delta>0&&!r.purchase_ledger_id&&(r.lot_source==='trial'||(!!r.plan_id&&trialProducts.has(r.plan_id))));
+ const paid=input.payments.some(p=>p.id!==input.excludePaymentId&&!!p.plan_id&&trialProducts.has(p.plan_id)&&(p.status==='pending'||p.status==='approved'));
+ return lot||paid?{status:'trial_used',reasons:[lot?'trial_lot':'trial_payment']}:{status:'eligible',reasons:[]};
+}
+async function readLiveAssessment(data:DataProvider,userId:string,excludePaymentId?:string):Promise<TrialAssessment>{
+ const [ledger,payments,plans]=await Promise.all([
+  data.list<LedgerWithSource>('class_ledger',{where:{user_id:userId}}),data.list<PaymentRow>('payments',{where:{user_id:userId}}),data.list<TrialPlan&BaseRow>('plans'),
+ ]);
+ return assessLiveTrial({ledger:ledger.filter(r=>r.user_id===userId),payments:payments.filter(p=>p.user_id===userId),plans,excludePaymentId});
+}
+/** The trial offer for a person: Company OS in production, the review build's fixture assessment otherwise. */
+export const readTrialAssessment:(data:DataProvider,userId:string,excludePaymentId?:string)=>Promise<TrialAssessment>=PRODUCTION_BUILD?readLiveAssessment:readReviewAssessment;
 export async function assertTrialAvailable(data:DataProvider,userId:string,excludePaymentId?:string):Promise<void>{
  const result=await readTrialAssessment(data,userId,excludePaymentId);
  if(result.status!=='eligible')throw Error(result.status);

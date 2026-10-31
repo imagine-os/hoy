@@ -54,6 +54,9 @@ export const CONTRACT_REFUSALS = {
   already_signed_up: { es: 'Ya tienes una cuenta. Inicia sesión.', en: 'You already have an account. Sign in.' },
   person_email_mismatch: { es: 'Ese correo ya pertenece a otra persona. Escríbenos para revisarlo.', en: 'That email belongs to someone else. Write to us so we can check it.' },
   consent_required: { es: 'Acepta los términos y la política de privacidad para continuar.', en: 'Accept the terms and the privacy policy to continue.' },
+  email_change_not_allowed: { es: 'El estudio cambia el correo con el que entras. Escríbenos para hacerlo.', en: 'The studio changes the email you sign in with. Write to us to do it.' },
+  // Comms (notification preferences)
+  notification_pref_duplicate: { es: 'Esta preferencia ya se guardó. Actualiza la página para ver tu elección.', en: 'This preference was already saved. Refresh the page to see your choice.' },
   // Requests
   idempotency_conflict: { es: 'Este envío no coincide con el anterior. Actualiza la página e inténtalo de nuevo.', en: 'This submission does not match the previous one. Refresh the page and try again.' },
   idempotency_key_invalid: { es: 'No pudimos enviar la solicitud. Actualiza la página e inténtalo de nuevo.', en: 'We could not send the request. Refresh the page and try again.' },
@@ -92,6 +95,9 @@ export const CONNECTOR_REFUSALS = {
   email_not_connected: { es: 'El envío de correos desde aquí aún no está disponible. Escribe por WhatsApp.', en: 'Sending email from here is not available yet. Write on WhatsApp.' },
   legal_document_in_build: { es: 'Este documento se publica con una nueva versión de la app; aquí solo se publican los que el cliente acepta.', en: 'This document is published with a new version of the app; only the documents customers accept are published here.' },
   legal_document_current: { es: 'Esta es la versión que se pide al registrarse. Publica otra versión en su lugar.', en: 'This is the version asked for at sign-up. Publish another version instead.' },
+  // Hoy all-roles, lane H1: refusals the app gives itself before asking Company OS.
+  content_later: { es: 'Editar este contenido desde la app llega en una próxima actualización. Por ahora no se guardó nada.', en: 'Editing this content from the app arrives in a coming update. Nothing was saved for now.' },
+  checkout_server_only: { es: 'Esta compra se hace desde la página de pago. Vuelve a elegir el paquete.', en: 'This purchase is made from the payment page. Choose the pack again.' },
 } as const satisfies Record<string, RefusalCopy>;
 
 export type ContractRefusalCode = keyof typeof CONTRACT_REFUSALS;

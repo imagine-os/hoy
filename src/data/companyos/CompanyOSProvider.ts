@@ -3,7 +3,7 @@ import { applyQuery, type ChangeEvent, type DataProvider, type Query } from '../
 import type { VoucherCommand, VoucherResult, VoucherRow } from '../vouchers';
 import type { PromotionResult } from '../promotions';
 import { tenant } from '../../tenant/tenant';
-import { adapterFor, fromRecord, toData, RELATED, ROLE_OF_KEY, type CosRecord, type EntityAdapter, type LegalAdapter, type MessagesAdapter, type Row, type SettingsAdapter } from './mapping';
+import { adapterFor, fromRecord, refId, toData, RELATED, ROLE_OF_KEY, type CosRecord, type EntityAdapter, type LegalAdapter, type MessagesAdapter, type Row, type SettingsAdapter } from './mapping';
 import { mergeSettingsRecords, sameJson, splitSettings } from './settingsSplit';
 import { closedDatesOf, formatClosedDates, parseClosedDates } from './closedDates';
 import { planQuery, PAGE, type QuerySpec } from './query';
@@ -140,7 +140,8 @@ export class CompanyOSProvider implements DataProvider {
     const key = `public|${a.table}|${JSON.stringify(query ?? null)}`;
     let p = this.inflight.get(key);
     if (!p) {
-      const read: Promise<Row[]> = this.listEntity(a, query).finally(() => { if (this.inflight.get(key) === read) this.inflight.delete(key); });
+      const scoped = a.signedOutBase ? { ...a, base: [...(a.base ?? []), ...a.signedOutBase()] } : a;
+      const read: Promise<Row[]> = this.listEntity(scoped, query).finally(() => { if (this.inflight.get(key) === read) this.inflight.delete(key); });
       p = read;
       this.inflight.set(key, p);
     }
@@ -168,7 +169,32 @@ export class CompanyOSProvider implements DataProvider {
     return me?.userId && me.personId && me.userId !== me.personId ? { userId: me.userId, personId: me.personId } : null;
   }
 
+  /**
+   * credits 1.2.0 (lane H3): a studio cancel of a paid single class issues a one-class lot whose only entry is its
+   * `studio_cancel` return, with no `grant`. The ledger reads that entry as the lot's opening (id = the lot id, no
+   * purchase row), so the class counts in the balance and later debits on the lot attach to it (lane H2).
+   */
+  private async ledgerOpenings(rows: Row[]): Promise<Row[]> {
+    const returns = rows.filter((r) => r.reason === 'cancel_return' && typeof r.purchase_ledger_id === 'string');
+    if (!returns.length) return rows;
+    const lots = [...new Set(returns.map((r) => r.purchase_ledger_id as string))];
+    const granted = new Set((await this.query({ entity: 'credit_entry', filter: { and: [{ field: 'lot', op: 'in', value: lots }, { field: 'reason', op: 'eq', value: 'grant' }] }, limit: lots.length + 1 }))
+      .map((e) => String(refId(e.data.lot))));
+    const opened = new Set<string>();
+    return rows.map((r) => {
+      const lot = r.purchase_ledger_id as string;
+      if (r.reason !== 'cancel_return' || typeof lot !== 'string' || granted.has(lot) || opened.has(lot) || rows.some((x) => x.id === lot)) return r;
+      opened.add(lot);
+      return { ...r, id: lot, purchase_ledger_id: null };
+    });
+  }
+
   private async listEntity(a: EntityAdapter, q?: Query): Promise<Row[]> {
+    if (a.table === 'class_ledger') return this.ledgerOpenings(await this.listEntityRaw(a, q));
+    return this.listEntityRaw(a, q);
+  }
+
+  private async listEntityRaw(a: EntityAdapter, q?: Query): Promise<Row[]> {
     const { spec, exact } = planQuery(a, q);
     const want = q?.limit != null ? (q.offset ?? 0) + q.limit : null;
     if (exact && want != null && want <= PAGE) {
@@ -195,8 +221,8 @@ export class CompanyOSProvider implements DataProvider {
     if (table === 'class_ledger' && a?.kind === 'entity' && (await this.transport.signedIn())) {
       // A ledger id is a lot id (its grant row) or an entry id: one query for either, not a scan of the ledger.
       const self = await this.self();
-      const rows = await this.query({ entity: a.entity, include: a.include, filter: { or: [{ and: [{ field: 'lot', op: 'eq', value: id }, { field: 'reason', op: 'eq', value: 'grant' }] }, { field: 'id', op: 'eq', value: id }] }, limit: 2 });
-      const row = rows.map((r) => fromRecord(a, r)).find((r) => r.id === id);
+      const rows = await this.query({ entity: a.entity, include: a.include, filter: { or: [{ and: [{ field: 'lot', op: 'eq', value: id }, { field: 'reason', op: 'in', value: ['grant', 'studio_cancel'] }] }, { field: 'id', op: 'eq', value: id }] }, limit: 50 });
+      const row = (await this.ledgerOpenings(rows.map((r) => fromRecord(a, r)))).find((r) => r.id === id);
       return row ? (outbound(table, row, self) as unknown as T) : null;
     }
     if (!a || a.kind !== 'entity' || a.idOf || a.base) return ((await this.list<T>(table, { where: { id } }))[0] ?? null);
@@ -287,6 +313,8 @@ export class CompanyOSProvider implements DataProvider {
     const m = adapterFor(table);
     if (m?.kind === 'messages') {
       const part = await this.messagePartOf(m, id);
+      // The log is the record of what was sent: only a note is removed (Administration).
+      if (part !== m.note) throw new CompanyOSError('read_only');
       await this.transport.request('DELETE', `/api/${part.entity}/${encodeURIComponent(id)}`);
       this.changed([table]);
       return;
@@ -322,13 +350,13 @@ export class CompanyOSProvider implements DataProvider {
    * created or updated only when its part changed. A private part is written only when it has sections (a role that
    * reads the defaults never creates one), and a legacy public record holding the pay data is rewritten without it.
    */
-  async settingsOps(a: SettingsAdapter, patch: Record<string, unknown>): Promise<Op[] | null> {
+  async settingsOps(a: SettingsAdapter, patch: Record<string, unknown>, always = false): Promise<Op[] | null> {
     if (!('settings' in patch)) return null;
     const recs = await this.settingsRecords(a);
     const { pub, priv } = splitSettings(patch.settings);
     const ops: Op[] = [];
     const plan = (key: string, rec: CosRecord | null, value: Record<string, unknown>) => {
-      if (rec && sameJson(rec.data.value, value)) return;
+      if (!always && rec && sameJson(rec.data.value, value)) return;
       ops.push(rec ? { op: 'update', entity: 'setting', id: rec.id, data: { value }, table: a.table } : { op: 'create', entity: 'setting', data: { key, value }, table: a.table });
     };
     plan(a.key, recs.pub, pub);
@@ -339,7 +367,9 @@ export class CompanyOSProvider implements DataProvider {
   private async saveSettings(a: SettingsAdapter, patch: Record<string, unknown>): Promise<Row> {
     const ops = await this.settingsOps(a, patch);
     if (!ops) return tenantRow(await this.settingsRecords(a));
-    for (const op of ops) {
+    // Both records change together or not at all (a legacy row's pay data moves in the same /batch, never lost between).
+    if (ops.length > 1) await this.transport.request('POST', '/batch', { body: { ops: serialize(ops) }, idempotencyKey: newIdempotencyKey() });
+    else for (const op of ops) {
       if (op.op === 'update') await this.transport.request('PATCH', `/api/setting/${encodeURIComponent(op.id!)}`, { body: op.data });
       else await this.transport.request('POST', '/api/setting', { body: op.data, idempotencyKey: newIdempotencyKey() });
     }
@@ -680,7 +710,8 @@ class Stage {
 
   private async saveSettings(a: SettingsAdapter, table: string, id: string, patch: Record<string, unknown>): Promise<Row> {
     const current = (this.touched.get(`${table}:${id}`) ?? (await this.real.get<Row>(table, id)) ?? tenantRow({ pub: null, priv: null })) as Row;
-    const planned = await this.real.settingsOps(a, patch);
+    // A second save in the same callback restates both parts, so a section put back to its stored value isn't lost.
+    const planned = await this.real.settingsOps(a, patch, this.ops.some((o) => o.table === table && !o.dropped));
     if (!planned) return current;
     for (const op of planned) {
       const prior = this.ops.find((o) => o.table === table && !o.dropped && o.entity === op.entity && (op.op === 'update' ? o.id === op.id : o.op === 'create' && o.data?.key === op.data?.key));
