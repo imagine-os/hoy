@@ -80,5 +80,6 @@ export function matrixAccess(role: Role, path: string, areas: MatrixArea[] = mat
   return isRole(role) && Object.prototype.hasOwnProperty.call(hit.access, role) ? hit.access[role] : 'none';
 }
 
-/** False when the matrix says `none` for this role on this path (an unknown role is refused). */
+/** False when the matrix says `none` for this role on this path. An unknown role is refused everywhere, also on paths
+ * no area covers (fail closed), although `matrixAccess` answers `null` there. */
 export const matrixAllows = (role: Role, path: string, areas: MatrixArea[] = matrix) => isRole(role) && matrixAccess(role, path, areas) !== 'none';

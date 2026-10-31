@@ -1,4 +1,5 @@
 import type { Lot, LotLeft } from './customers/customerBalances';
+import type { QuerySpec } from '../staff/desk/useCos';
 
 /**
  * M-01 members tile (Hoy all-roles, decision R-05: memberships are class packs): how many customers hold an active
@@ -6,10 +7,10 @@ import type { Lot, LotLeft } from './customers/customerBalances';
  * aggregate) and today is inside its validity (`valid_from ≤ today ≤ valid_until`, empty = open). A frozen pack still
  * counts: the customer still holds it. Each person counts once. Display only; the server decides every booking.
  */
-export const ACTIVE_PACK_QUERIES = {
+export const ACTIVE_PACK_QUERIES: Record<'lots' | 'left', QuerySpec> = {
   lots: { entity: 'credit_lot' },
   left: { entity: 'credit_entry', aggregate: { groupBy: ['lot'], metrics: [{ op: 'sum', field: 'delta', alias: 'left' }] } },
-} as const;
+};
 
 export function activePackCustomers(input: { lots: Pick<Lot, 'id' | 'person' | 'valid_from' | 'valid_until'>[]; left: { lot: string; left: unknown }[]; today: string }): number {
   const leftBy = new Map<string, number>();

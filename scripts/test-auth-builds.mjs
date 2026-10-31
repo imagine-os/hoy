@@ -52,7 +52,7 @@ check('production: no hub map, actions registry, delivery tracker or source docu
 check('production: no persona switcher, spec chip or demo sign-in screen', has(prod, 'rs-user').length === 0 && has(prod, 'specchip').length === 0 && has(prod, demoSignIn).length === 0, [...has(prod, 'rs-user'), ...has(prod, demoSignIn)].join(', '));
 // The manifest is the assignment (`window.__hoyos = …`, src/app/manifest.ts); the dev inspector's help text only names it
 // (the developer's home `/dev` ships since Hoy all-roles). test-auth-production-ui.mjs checks `window.__hoyos` is unset.
-check('production: no agent manifest (window.__hoyos)', has(prod, /\.__hoyos\s*=[^=]/).length === 0, has(prod, /\.__hoyos\s*=[^=]/).join(', '));
+check('production: no agent manifest (window.__hoyos)', has(prod, /(\.__hoyos|\[\s*["'`]__hoyos["'`]\s*\])\s*=[^=]/).length === 0, has(prod, /(\.__hoyos|\[\s*["'`]__hoyos["'`]\s*\])\s*=[^=]/).join(', '));
 check('production: no preview-frame session (hub DeviceFrame)', has(prod, 'hoyos.session').length === 0);
 // The manual and docs text: a sentence from the manual, the docs README and a changelog entry must not be anywhere.
 const sample = (file) => readFileSync(file, 'utf8').split('\n').find((l) => l.length > 60 && !/^[-#>|`{]/.test(l.trim()))?.trim().slice(0, 50);

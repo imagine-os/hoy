@@ -39,9 +39,9 @@ export function DashboardPage() {
   // R-05 (Hoy all-roles): production counts customers with an active pack from Company OS credits (two queries, the
   // balance a server aggregate); `memberships` has no adapter there. The review build keeps counting its membership
   // rows (`request` is null outside production). A role that may not read credits sees "—", not a crash.
-  const packs = useCosQueries(ACTIVE_PACK_QUERIES as never);
+  const packs = useCosQueries(ACTIVE_PACK_QUERIES);
   const memberships = useReviewMemberships();
-  const packRows = packs.rows as Record<'lots' | 'left', { id: string; [k: string]: unknown }[]> | null;
+  const packRows = packs.rows;
   const members: number | string = !packs.request ? memberships.length : packs.error ? '—' : !packRows ? '…' : activePackCustomers({
     // `/query` rows carry their fields under `data` (integration guide §4); aggregate rows are flat.
     lots: packRows.lots.map((l) => fieldsOf(l)).map((d, i) => ({ id: packRows.lots[i].id, person: str(d.person) ?? '', valid_from: str(d.valid_from), valid_until: str(d.valid_until) })),
