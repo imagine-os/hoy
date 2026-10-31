@@ -31,6 +31,8 @@ Clerk session. Identity is `src/auth/`: Clerk signs the person in (`ProductionSe
   policies. The route guard (`RequireRole`, `src/config/roleMatrix.ts`) only shapes the screens.
 - **Launch scope:** the production build registers only `src/config/launchRoutes.ts` and leaves the hub, dev tools,
   docs and manual out (`vite.config.ts`, `scripts/prune-production.mjs`). A new launch page is added to that list.
+  A route enters `LAUNCH_ROUTES` only when `scripts/test-route-connectivity.mjs` is green for it (every table and method
+  it reaches has a working Company OS adapter; `docs/route-connectivity.md`).
 - **Tenant setup** comes from `deploy/recipes/hoy.json` in `../Company-OS`; the local backend is built with
   `pnpm install && pnpm db:up && pnpm db:migrate && pnpm dev` there (made-up data in the customer's real format).
 - **Real data** arrives only through the production app. Never commit or open the customer's files, exports or `.env*`.
