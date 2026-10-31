@@ -17,11 +17,11 @@ import { packMemberships } from './packMemberships';
  * R-05) their active pack from the credits ledger. Chosen once per build, so the hook order never changes.
  */
 const usePersonPlanRows: (userId: string) => MembershipRow[] = PRODUCTION_BUILD
-  ? (userId) => { const { rows } = useTable<ClassLedgerRow>('class_ledger', { where: { user_id: userId } }); return useMemo(() => packMemberships(rows, dateKey(new Date())), [rows]); }
+  ? (userId) => { const today = dateKey(new Date()); const { rows } = useTable<ClassLedgerRow>('class_ledger', { where: { user_id: userId } }); return useMemo(() => packMemberships(rows, today), [rows, today]); }
   : (userId) => useTable<MembershipRow>('memberships', { where: { user_id: userId } }).rows;
 /** Every plan row, for the studio numbers: in production derived from the ledger the studio input already reads. */
 const useStudioPlanRows: (ledger: ClassLedgerRow[]) => MembershipRow[] = PRODUCTION_BUILD
-  ? (ledger) => useMemo(() => packMemberships(ledger, dateKey(new Date())), [ledger])
+  ? (ledger) => { const today = dateKey(new Date()); return useMemo(() => packMemberships(ledger, today), [ledger, today]); }
   : () => useTable<MembershipRow>('memberships').rows;
 
 /** The one active goal of a person (the latest by starts_on, then created_at, when the data ever holds two). */

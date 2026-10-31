@@ -22,7 +22,8 @@ import { approvedPackageRows, freezePatch, packageState, resumePatch, selectPack
  * The customer's recurring memberships: the review build's rows; none in production (no `memberships` table; R-05:
  * Hoy sells class packs, which `pkg` below already reads from the credits ledger). Chosen once per build.
  */
-const useOwnMemberships: () => MembershipRow[] = PRODUCTION_BUILD ? () => [] : () => useScopedCustomerRead<MembershipRow>('memberships', undefined, true).rows;
+const NO_MEMBERSHIPS: MembershipRow[] = [];
+const useOwnMemberships: () => MembershipRow[] = PRODUCTION_BUILD ? () => NO_MEMBERSHIPS : () => useScopedCustomerRead<MembershipRow>('memberships', undefined, true).rows;
 
 export interface WaitlistRow extends BaseRow { user_id: string; session_id: string; position: number; status: 'waiting' | 'offered' | 'claimed' | 'expired' | 'left'; offered_at: string | null; claim_until: string | null }
 export interface EmergencyContact { name: string; phone: string }

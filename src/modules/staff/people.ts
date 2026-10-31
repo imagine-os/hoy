@@ -31,7 +31,7 @@ export interface Person {
  * row per person from their active pack in the credits ledger (`packMemberships`). Chosen once per build.
  */
 const usePlanRows: () => MembershipRow[] = PRODUCTION_BUILD
-  ? () => { const { rows } = useTable<ClassLedgerRow>('class_ledger'); return useMemo(() => packMemberships(rows, dateKey(new Date())), [rows]); }
+  ? () => { const today = dateKey(new Date()); const { rows } = useTable<ClassLedgerRow>('class_ledger'); return useMemo(() => packMemberships(rows, today), [rows, today]); }
   : () => useTable<MembershipRow>('memberships', { where: { status: ['active', 'paused', 'past_due'] } }).rows;
 
 /** Live join of users × profiles × user_roles × active plans (memberships, or packs in production) × plans. */
