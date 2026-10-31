@@ -4,7 +4,7 @@ import type { Role } from './roles';
 import { roleCan, type Permission } from './permissions';
 import { SessionContext, type SessionCtx, type SessionStatus, type SessionUser } from './sessionContext';
 import { cosPath, loadAppConfig, type AppConfig } from './appConfig';
-import { classifyMe, roleFromMe, type MeInfo } from './companyOsIdentity';
+import { classifyMe, isSuperAdminMe, roleFromMe, type MeInfo } from './companyOsIdentity';
 import { setSessionTokenSource, subscribeUnauthorized } from './sessionToken';
 
 /**
@@ -168,12 +168,15 @@ function ClerkSession({ config, children }: { config: AppConfig; children: React
     if (!role) return visitorSession('no-role', refresh, signOut, true);
     const name = info.name || info.email;
     const user: SessionUser = { id: info.userId, role, name, initials: initialsOf(name), email: info.email, blurb: { es: '', en: '' } };
+    // Super admin is its own role (Hoy all-roles); like the review build's, it passes every route's role list. View-as
+    // (lane D) is not here yet: `viewAs` and `viewAsPerson` stay null, so the effective role is the real one.
+    const isSuperAdmin = isSuperAdminMe(info);
     return {
-      status: 'ready', signedIn: true, user, role, isSuperAdmin: false, canDevMode: false, devMode: false, viewAs: null, viewAsPerson: null, caps: info.caps,
+      status: 'ready', signedIn: true, user, role, isSuperAdmin, canDevMode: false, devMode: false, viewAs: null, viewAsPerson: null, caps: info.caps,
       switchUser: (id) => { if (id === 'public' || id === VISITOR.id) void signOut(); },
       setDevMode: noop, setViewAs: noop, signOut, refresh,
       can: (p) => roleCan(role, p),
-      hasRole: (roles) => roles.includes('public') || roles.includes(role),
+      hasRole: (roles) => roles.includes('public') || roles.includes(role) || isSuperAdmin,
     };
   }, [isLoaded, clerkFailed, isSignedIn, me, key, refresh, signOut]);
 

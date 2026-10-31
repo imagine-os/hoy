@@ -42,13 +42,17 @@ const prod = js(prodDir);
 const all = files(prodDir);
 const bytes = all.reduce((n, f) => n + statSync(f).size, 0);
 check(`production: under the 60 MB upload budget (${(bytes / 1048576).toFixed(1)} MB)`, bytes < 60 * 1048576);
-check('production: Clerk loads in its own chunk, not the entry', has(prod, 'clerk-js').length > 0 && !has(prod, 'clerk-js').some((f) => /^index-/.test(f)));
+// The entry is the script index.html loads (a lazy chunk can also be named index-*, after the package file it starts with).
+const entryJs = readFileSync(join(prodDir, 'index.html'), 'utf8').match(/assets\/([^"']+\.js)/)?.[1];
+check('production: Clerk loads in its own chunk, not the entry', !!entryJs && has(prod, 'clerk-js').length > 0 && !has(prod, 'clerk-js').includes(entryJs), `${entryJs} / ${has(prod, 'clerk-js').join(', ')}`);
 check('production: no in-app screenshots or thumbnails', !all.some((f) => /\/(thumb-[^/]*|[A-Z]+-\d+[a-z]?-(es|en)-[^/]*)\.(jpe?g|png|webp)$/i.test(f)));
 check('production: no hub map, actions registry, delivery tracker or source documents', ['hub-map.json', 'actions.json', 'hub-map', 'hub', 'delivery-room', 'source'].every((p) => !existsSync(join(prodDir, p))));
 // Route-level absence (hub, dev, docs, manual) is checked in the browser: test-auth-production-ui.mjs (PL-03).
 // The demo sign-in screen calls t('customer.signin.demo') (its user list); the key alone stays in the shared string table.
 check('production: no persona switcher, spec chip or demo sign-in screen', has(prod, 'rs-user').length === 0 && has(prod, 'specchip').length === 0 && has(prod, demoSignIn).length === 0, [...has(prod, 'rs-user'), ...has(prod, demoSignIn)].join(', '));
-check('production: no agent manifest (window.__hoyos)', has(prod, '__hoyos').length === 0);
+// The manifest is the assignment (`window.__hoyos = …`, src/app/manifest.ts); the dev inspector's help text only names it
+// (the developer's home `/dev` ships since Hoy all-roles). test-auth-production-ui.mjs checks `window.__hoyos` is unset.
+check('production: no agent manifest (window.__hoyos)', has(prod, /\.__hoyos\s*=[^=]/).length === 0, has(prod, /\.__hoyos\s*=[^=]/).join(', '));
 check('production: no preview-frame session (hub DeviceFrame)', has(prod, 'hoyos.session').length === 0);
 // The manual and docs text: a sentence from the manual, the docs README and a changelog entry must not be anywhere.
 const sample = (file) => readFileSync(file, 'utf8').split('\n').find((l) => l.length > 60 && !/^[-#>|`{]/.test(l.trim()))?.trim().slice(0, 50);

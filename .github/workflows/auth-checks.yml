@@ -59,6 +59,8 @@ jobs:
         run: node scripts/test-launch-config.mjs
       - name: Memberships read as packs (home plan card, dashboard tile)
         run: node scripts/test-pack-reads.mjs
+      - name: A payment's date is its approval (approved_at)
+        run: node scripts/test-payment-paid-at.mjs
       - name: Review build
         run: npm run build
       - name: What each build ships

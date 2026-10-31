@@ -143,6 +143,12 @@ export const strings: StringTable = {
   'customer.home.membership.nudge': { es: 'Aún no tienes paquete. Empieza con una clase de prueba.', en: 'No package yet. Start with a trial class.' },
   'customer.home.membership.cta': { es: 'Ver planes', en: 'See plans' },
   'customer.home.membership.active': { es: 'Membresía activa · renueva {date}', en: 'Active membership · renews {date}' },
+  // Hoy all-roles (R-05): the plan card shows the active pack from the credits ledger.
+  'customer.home.plan.eyebrow': { es: 'Tu paquete', en: 'Your pack' },
+  'customer.home.plan.left.one': { es: '{n} clase disponible', en: '{n} class left' },
+  'customer.home.plan.left.other': { es: '{n} clases disponibles', en: '{n} classes left' },
+  'customer.home.plan.expires': { es: 'Vence el {date}', en: 'Expires {date}' },
+  'customer.home.plan.frozen': { es: 'Congelado hasta el {date}', en: 'Frozen until {date}' },
   'customer.home.quick.book': { es: 'Reservar', en: 'Book' },
   'customer.home.quick.schedule': { es: 'Horario', en: 'Schedule' },
   'customer.home.quick.plans': { es: 'Planes', en: 'Plans' },

@@ -4,7 +4,7 @@ import { useI18n } from '../../i18n/I18nProvider';
 import { useSession } from '../../auth/SessionProvider';
 import { useTable } from '../../data/DataContext';
 import type { BookingRow, MembershipRow, PaymentRow } from '../../data/schema';
-import { formatCOP, formatDate, formatTime, isSameDay, MS, addDays } from '../../i18n/format';
+import { formatCOP, formatDate, formatTime, isSameDay, MS, addDays, dateKey } from '../../i18n/format';
 import { useLayout } from '../../layout/useLayout';
 import { StatTile } from '../../components/molecule/StatTile/StatTile';
 import { Card } from '../../components/molecule/Card/Card';
@@ -19,6 +19,14 @@ import { usePeople } from '../staff/people';
 import { M01, M12 } from './specs';
 import './admin.css';
 import { auditTitle } from '../staff/audit';
+import { useCosQueries } from '../staff/desk/useCos';
+import { ACTIVE_PACK_QUERIES, activePackCustomers } from './activePacks';
+import { PRODUCTION_BUILD } from '../../config/launch';
+
+const str = (v: unknown) => (typeof v === 'string' ? v : null);
+const fieldsOf = (r: Record<string, unknown>): Record<string, unknown> => (r.data && typeof r.data === 'object' ? r.data as Record<string, unknown> : r);
+/** The review build's active memberships (MockProvider). The production build never reads `memberships` (no adapter). */
+const useReviewMemberships: () => MembershipRow[] = PRODUCTION_BUILD ? () => [] : () => useTable<MembershipRow>('memberships', { where: { status: 'active' } }).rows;
 
 /**
  * M-01 — KPI row, occupancy chart, today at a glance and the audit trail; sections via useLayout.
@@ -28,7 +36,18 @@ export function DashboardPage() {
   const { t, lang, dict } = useI18n();
   const { can, hasRole } = useSession();
   const { sections, isVisible } = useLayout(M01);
-  const { rows: memberships } = useTable<MembershipRow>('memberships', { where: { status: 'active' } });
+  // R-05 (Hoy all-roles): production counts customers with an active pack from Company OS credits (two queries, the
+  // balance a server aggregate); `memberships` has no adapter there. The review build keeps counting its membership
+  // rows (`request` is null outside production). A role that may not read credits sees "—", not a crash.
+  const packs = useCosQueries(ACTIVE_PACK_QUERIES as never);
+  const memberships = useReviewMemberships();
+  const packRows = packs.rows as Record<'lots' | 'left', { id: string; [k: string]: unknown }[]> | null;
+  const members: number | string = !packs.request ? memberships.length : packs.error ? '—' : !packRows ? '…' : activePackCustomers({
+    // `/query` rows carry their fields under `data` (integration guide §4); aggregate rows are flat.
+    lots: packRows.lots.map((l) => fieldsOf(l)).map((d, i) => ({ id: packRows.lots[i].id, person: str(d.person) ?? '', valid_from: str(d.valid_from), valid_until: str(d.valid_until) })),
+    left: packRows.left.map((x) => ({ lot: str(x.lot) ?? '', left: typeof x.left === 'number' ? x.left : Number(x.left) })),
+    today: dateKey(new Date()),
+  });
   const { rows: payments } = useTable<PaymentRow>('payments', { where: { status: 'approved' } });
   const { rows: log } = useTable<AuditRow>('audit_log', { orderBy: { column: 'created_at', dir: 'desc' }, limit: 10 });
   const { byId } = usePeople();
@@ -59,7 +78,7 @@ export function DashboardPage() {
   const SECTIONS: Record<string, () => ReactNode> = {
     'KPIRow ×4': () => (
       <div className="grid grid-4">
-        <StatTile label={t('admin.dashboard.members')} value={memberships.length} trend="up" />
+        <div data-members-tile><StatTile label={t('admin.dashboard.members')} value={members} hint={packs.request ? t('admin.dashboard.members.packs') : undefined} trend="up" /></div>
         <StatTile label={t('admin.dashboard.revenue')} value={formatCOP(revenue, lang)} />
         <StatTile label={t('admin.dashboard.occupancy')} value={`${occ}%`} trend={occ > 70 ? 'up' : 'flat'} />
         <StatTile label={t('admin.dashboard.arrivals')} value={todayBookings.length} hint={t('admin.dashboard.arrivals.hint', { n: todayIds.length })} />

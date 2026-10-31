@@ -3,15 +3,22 @@ import { canvasSpecs } from '../../specs/canvasSpecs';
 import { lazyPages } from '../../app/lazyPage';
 import { DEV_MODE_ROLES as DEV_ROLES } from '../../auth/roles';
 import { apiKeysSpec, canvasSpec, layoutEditorSpec, simulatorSpec, specsIndexSpec } from './specs';
+import { PRODUCTION_BUILD } from '../../config/launch';
 export { strings } from './strings';
 
 // super_admin + developer tooling (0031) (component library, layout editor with dnd-kit, knowledgebase): one lazy chunk.
-const page = lazyPages(() => import('./pages'));
+// Production (Hoy all-roles, lane C): only the developer's home `/dev` (the specs index) ships, from its own chunk;
+// the other dev pages (API keys, simulator with demo personas, layout editor…) wait for R-08 and are not in the bundle.
+const page = lazyPages(() => (PRODUCTION_BUILD ? import('./specsPage') : import('./pages')) as Promise<typeof import('./pages')>);
 const base = { roles: DEV_ROLES, surface: 'dev' as const, layout: 'desktop' as const };
 /** The design-system group: it shows in the dev sidebar and, for a super admin, in the staff and admin sidebars. */
 const G = 'core.nav.group.design';
 
-export const routes: RouteDef[] = [
+// Production builds only the home (with the menu entry the specs page has in review), so the other pages' specs and
+// chunks are not referenced at all and stay out of the bundle.
+export const routes: RouteDef[] = PRODUCTION_BUILD ? [
+  { ...base, path: '/dev', element: page('SpecsIndexPage'), spec: specsIndexSpec, nav: { labelKey: 'core.nav.specs', icon: 'specs', order: 3, group: G } },
+] : [
   { ...base, path: '/dev', element: page('SpecsIndexPage'), spec: specsIndexSpec },
   { ...base, path: '/dev/tokens', element: page('TokensPage'), spec: canvasSpecs['D-01'], nav: { labelKey: 'core.nav.tokens', icon: 'tokens', order: 1, group: G } },
   { ...base, path: '/dev/components', element: page('ComponentsPage'), spec: canvasSpecs['D-02'], nav: { labelKey: 'core.nav.components', icon: 'components', order: 2, group: G } },
