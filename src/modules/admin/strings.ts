@@ -386,6 +386,7 @@ export const strings: StringTable = {
   'admin.dashboard.system': { es: 'Sistema', en: 'System' },
 
   // M-02 content
+  'admin.content.later': { es: 'Aquí ves las clases, profesores y salas como están hoy. Editar este contenido desde la app llega en una próxima actualización; mientras tanto, los cambios no se guardan.', en: 'Here you see the classes, teachers and rooms as they are today. Editing this content from the app arrives in a coming update; until then, changes are not saved.' },
   'admin.content.title': { es: 'Contenido', en: 'Content' },
   'admin.content.subtitle': { es: 'Clases, profesores, modalidades y salas: la fuente de la app, el sitio y recepción.', en: 'Classes, teachers, modalities and rooms: the source for the app, the website and the desk.' },
   'admin.content.tab.class_templates': { es: 'Clases (plantillas)', en: 'Classes (templates)' },

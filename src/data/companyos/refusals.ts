@@ -54,6 +54,9 @@ export const CONTRACT_REFUSALS = {
   already_signed_up: { es: 'Ya tienes una cuenta. Inicia sesión.', en: 'You already have an account. Sign in.' },
   person_email_mismatch: { es: 'Ese correo ya pertenece a otra persona. Escríbenos para revisarlo.', en: 'That email belongs to someone else. Write to us so we can check it.' },
   consent_required: { es: 'Acepta los términos y la política de privacidad para continuar.', en: 'Accept the terms and the privacy policy to continue.' },
+  email_change_not_allowed: { es: 'El estudio cambia el correo con el que entras. Escríbenos para hacerlo.', en: 'The studio changes the email you sign in with. Write to us to do it.' },
+  // Comms (notification preferences)
+  notification_pref_duplicate: { es: 'Esta preferencia ya se guardó. Actualiza la página para ver tu elección.', en: 'This preference was already saved. Refresh the page to see your choice.' },
   // Requests
   idempotency_conflict: { es: 'Este envío no coincide con el anterior. Actualiza la página e inténtalo de nuevo.', en: 'This submission does not match the previous one. Refresh the page and try again.' },
   idempotency_key_invalid: { es: 'No pudimos enviar la solicitud. Actualiza la página e inténtalo de nuevo.', en: 'We could not send the request. Refresh the page and try again.' },
@@ -84,6 +87,9 @@ export const CONNECTOR_REFUSALS = {
   not_in_launch: { es: 'Esta función aún no está disponible.', en: 'This feature is not available yet.' },
   promotions_disabled: { es: 'Las promociones aún no están disponibles.', en: 'Promotions are not available yet.' },
   read_only: { es: 'Este contenido no se edita desde la app.', en: 'This content is not edited from the app.' },
+  // Hoy all-roles, lane H1: refusals the app gives itself before asking Company OS.
+  content_later: { es: 'Editar este contenido desde la app llega en una próxima actualización. Por ahora no se guardó nada.', en: 'Editing this content from the app arrives in a coming update. Nothing was saved for now.' },
+  checkout_server_only: { es: 'Esta compra se hace desde la página de pago. Vuelve a elegir el paquete.', en: 'This purchase is made from the payment page. Choose the pack again.' },
 } as const satisfies Record<string, RefusalCopy>;
 
 export type ContractRefusalCode = keyof typeof CONTRACT_REFUSALS;

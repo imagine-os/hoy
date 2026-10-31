@@ -20,6 +20,7 @@ import { checkSaleQuote, readPaymentQuote, type FrozenSaleQuote } from '../../da
 import type { DataProvider } from '../../data/types';
 import type { ClassLedgerRow, PaymentRow } from '../../data/schema';
 import { splitIva } from '../../data/tax';
+import { SERVER_RULES } from './booking/bookingPolicy';
 import type { IconName } from '../../components/atom/Icon/Icon';
 
 export type ElectronicMethod = 'card' | 'pse' | 'qr';
@@ -63,8 +64,13 @@ export async function wompiCheckout(input: { amount: number; method: ElectronicM
   return { status: 'approved', ref: ref() };
 }
 
-/** Records a demo payment; confirmed launch payments retain a receipt preview, never an invoice. */
+/**
+ * Records a demo payment; confirmed launch payments retain a receipt preview, never an invoice. Review build only:
+ * under SERVER_RULES (production) a sale is Company OS's (H-5's payment page: a pending transfer payment the desk
+ * approves, priced by the product master), so this refuses before anything is sent.
+ */
 export async function recordPayment(data: DataProvider, input: { userId: string; planId: string | null; amount: number; method: PayMethod; result?: WompiResult; takenBy?: string | null; ivaRate: number; quote?: FrozenSaleQuote }): Promise<PaymentRow> {
+  if (SERVER_RULES) throw Error('checkout_server_only');
   if(input.quote){await checkSaleQuote(data,input.quote);if(input.quote.planId!==input.planId||input.quote.chargedAmount!==input.amount)throw Error('quote_scope');}
   const manual = input.method === 'transfer' || input.method === 'cash';
   const status = manual ? 'pending' : input.result?.status === 'approved' ? 'approved' : 'declined';

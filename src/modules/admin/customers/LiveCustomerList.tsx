@@ -11,10 +11,8 @@ import { EmptyState } from '../../../components/molecule/EmptyState/EmptyState';
 import { useCosQueries, type CosRow } from '../../staff/desk/useCos';
 import { deskErrorText } from '../../staff/desk/strings';
 import { maskPhone, personMatches, type Person } from '../../staff/people';
-import { BALANCE_QUERIES, customerBalances, type Lot, type LotLeft, type Voucher } from './customerBalances';
+import { BALANCE_QUERIES, customerListRows, type QueryRow } from './customerBalances';
 
-const str = (v: unknown) => (typeof v === 'string' ? v : null);
-const num = (v: unknown) => (typeof v === 'number' ? v : Number(v) || 0);
 
 /** AD-07 in the production build: every customer (a person with a member record), with package, classes left, expiry and vouchers. */
 export function LiveCustomerList() {
@@ -27,19 +25,11 @@ export function LiveCustomerList() {
     ...BALANCE_QUERIES,
   } as never);
   const rows = useMemo(() => {
-    const r = q.rows as Record<string, CosRow[]> | null;
+    const r = q.rows as Record<'people' | 'products' | 'lots' | 'left' | 'vouchers', QueryRow[]> | null;
     if (!r) return [];
-    const balances = customerBalances({
-      lots: r.lots.map<Lot>(l => ({ id: l.id, person: str(l.person) ?? '', source: str(l.source) ?? 'comp', product: str(l.product), valid_from: str(l.valid_from), valid_until: str(l.valid_until), frozen_from: str(l.frozen_from), frozen_until: str(l.frozen_until), voucher: str(l.voucher) })),
-      left: r.left.map<LotLeft>(x => ({ lot: str(x.lot) ?? '', left: num(x.left) })),
-      vouchers: r.vouchers.map<Voucher>(v => ({ id: v.id, buyer: str(v.buyer), redeemed_by: str(v.redeemed_by), uses: num(v.uses), max_uses: num(v.max_uses) || 1, valid_until: str(v.valid_until) })),
-      today: dateKey(new Date()),
-    });
-    const productName = new Map(r.products.map(p => [p.id, str(p.name) ?? '']));
-    return r.people.map(p => {
-      const b = balances.get(p.id);
-      const person: Person = { id: p.id, name: str(p.name) ?? '—', initials: '', email: str(p.email) ?? '', phone: str(p.phone) ?? str(p.whatsapp), role: 'customer', profileId: null, birthday: null, notes: null, marketingOptin: false, whatsappVerified: false, createdAt: str(p.created_at) ?? '' };
-      return { ...person, plan_name: b?.product ? productName.get(b.product) ?? '' : '', remaining: b?.remaining ?? 0, expires: b?.expires ?? '', frozen: b?.frozen ?? false, vouchers: b?.vouchers ?? 0 };
+    return customerListRows(r, dateKey(new Date())).map((c) => {
+      const person: Person = { id: c.id, name: c.name, initials: '', email: c.email, phone: c.phone, role: 'customer', profileId: null, birthday: null, notes: null, marketingOptin: false, whatsappVerified: false, createdAt: c.createdAt };
+      return { ...person, plan_name: c.plan_name, remaining: c.remaining, expires: c.expires, frozen: c.frozen, vouchers: c.vouchers };
     }).filter(p => personMatches(p, search));
   }, [q.rows, search]);
   // The credit aggregate answers at most 1000 lots and the people query stops at 5000 rows: say so rather than undercount.

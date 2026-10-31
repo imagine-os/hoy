@@ -44,40 +44,26 @@ const PENDING = [
 ];
 // OPEN: found by this audit (lane G, 2026-10-31) on routes already in LAUNCH_ROUTES, with no lane closing it yet.
 const OPEN = [
-  // Lane C's role homes (the lane brief: every one of the 11 roles lands on a production page): `/teach` (Teacher, S-03)
-  // and `/admin/content` (Marketing, M-02) entered LAUNCH_ROUTES before their areas are connected, against the rule
-  // above that a new launch route is green. No Wave 1 lane closes them: the coordinator/owner either accepts them until
-  // the waves named or removes the two homes (and gives Teacher and Marketing another home). See lane C's report.
-  ...['sink audit_log', 'sink message_log', 'mock_only modules/teacher/substituteRequest.ts', 'unknown practice_goals', 'unknown reviews', 'unknown space_bookings', 'unknown special_charges']
-    .map((finding) => ({ finding, lane: 'C home, decision pending (teacher app: Wave 4)', routes: ['/teach'], note: 'the Teacher home S-03: substitute requests, practice, reviews, rooms and special charges are not connected' })),
+  // The role homes lane C added (`/teach` Teacher S-03, `/admin/content` Marketing M-02) stay in the launch (owner,
+  // 2026-10-31, lane H). Lane H1 made what is connected read live (the classes, today's rosters, the week; the content
+  // editor's lists) and the rest say "available later" in production (content saves are refused `content_later`).
+  // The code that waits for its wave is still on the route (hidden at run time), so each entry names its wave.
+  ...[['sink audit_log', 'Wave 4 (teacher app: substitute requests log to the audit)'], ['sink message_log', 'Wave 4 (teacher app: substitute requests notify the team)'], ['mock_only modules/teacher/substituteRequest.ts', 'Wave 4 (teacher app: substitute requests)'], ['unknown practice_goals', 'Wave 2 (practice goals; "Mis números")'], ['unknown reviews', 'Wave 3 (class reviews; the rating tile)'], ['unknown space_bookings', 'Wave 4 (teacher app: specials)'], ['unknown special_charges', 'Wave 4 (teacher pay: specials payouts)']]
+    .map(([finding, lane]) => ({ finding, lane, routes: ['/teach'], note: 'the Teacher home S-03: hidden in production ("available later"); the hooks still run on unconnected tables, which read empty with no request' })),
   ...['unknown teacher_profile_proposals', 'sink audit_log', 'mock_only modules/profile-review/contracts.ts', 'unknown events', 'unknown class_pay_rules', 'missing appendClassPayRule', 'dynamic table', 'mock_only modules/admin/contentRecovery.ts', 'dynamic entity2', 'missing contentBatch', 'missing generateRecurrence']
-    .map((finding) => ({ finding, lane: 'C home, decision pending (content: Wave 3)', routes: ['/admin/content'], note: 'the Marketing home M-02: the content editor writes static tables (modalities, teachers, rooms) and unconnected ones' })),
+    .map((finding) => ({ finding, lane: 'Wave 3 (content entities)', routes: ['/admin/content'], note: 'the Marketing home M-02: reads live; every save is refused content_later before anything is sent (contentRecovery.ts), bulk and recurrence are absent on Company OS' })),
   { finding: 'sink audit_log', lane: 'E (scope extension)', routes: ['/admin'], note: 'the dashboard recent-activity card (admin/DashboardPage.tsx) reads audit_log; GET /t/:t/audit like /admin/activity' },
-  { finding: 'sink audit_log', lane: 'unassigned', routes: ['/admin/settings/*', '/app/profile'], note: 'a receipt read (tx.get(audit_log, id)) inside the mock-only flows below; goes with them' },
   { finding: 'sink message_log', lane: 'unassigned', routes: ['*', '/admin/crm/:id', '/staff', '/staff/inbox/*'], note: 'data/comms.ts: the staff inbox, member messages and notes, the unread badge; nothing is read and a sent note is dropped' },
   { finding: 'unknown hours_overrides', lane: 'unassigned (a recipe-defined entity, Wave 2 size S)', routes: ['/admin/settings/*', '/app/plans', '/app/faq', '/app/faq/2', '/app/more', '/site/*'], note: 'useOpeningHours(): dated exceptions (holidays, special hours) are never read, so every screen shows the plain week' },
   { finding: 'read_only legal_documents', lane: 'unassigned', routes: ['/admin/settings/*'], note: 'publishing or unpublishing a legal document refuses read_only (legal_documents is static content in the build)' },
-  { finding: 'unknown special_charges', lane: 'unassigned', routes: ['/admin/finance'], note: 'admin/paymentReportReads.ts reads special_charges (no adapter): those rows are missing from the finance totals' },
   { finding: 'unknown events', lane: 'Wave 3', routes: ['/admin/settings/*'], note: 'Events and RSVPs (reuse map); useMediaLibrary reads events for media use' },
   { finding: 'unknown reviews', lane: 'Wave 3', routes: ['/site/*'], note: 'Class reviews (reuse map); the site home reads reviews' },
   { finding: 'unknown practice_goals', lane: 'Wave 2', routes: ['/admin/analytics', '/admin/crm/:id', '/app'], note: 'Maintenance records, practice goals (reuse map); data/useAnalytics.ts' },
   { finding: 'sink activity_events', lane: 'Wave 2', routes: ['/app'], note: 'practice milestones and streaks (data/useAnalytics.ts, customer/HomePage.tsx): with practice goals' },
-  { finding: 'unknown deletion_requests', lane: 'Wave 2', routes: ['/app/account', '/site/*'], note: 'Account deletion (reuse map: forms 1.0.0 privacy_request)' },
+  { finding: 'unknown deletion_requests', lane: 'H2 (the privacy_request form adapter; Wave 1)', routes: ['/app/account', '/site/*'], note: 'Account deletion: H1 sends it as a deletion_requests insert, H2 maps that to the forms 1.0.0 privacy_request form' },
   { finding: 'unknown waitlist', lane: 'Wave 2', routes: ['/staff', '/staff/checkin'], note: 'Waitlist (reuse map: bookings waitlist_entry)' },
   { finding: 'unknown payroll_runs', lane: 'Wave 4', routes: ['/admin/finance'], note: 'Teacher app and teacher pay (reuse map); admin/payouts.ts' },
   { finding: 'unknown payroll_lines', lane: 'Wave 4', routes: ['/admin/finance'], note: 'Teacher app and teacher pay (reuse map); admin/payouts.ts' },
-  // Flows that refuse on Company OS (`data.name !== 'mock'` → throw …_disconnected) or vanish (`=== 'mock'`).
-  { finding: 'mock_only modules/customer/profileSave.ts', lane: 'unassigned', routes: ['/app/profile'], note: 'saveOwnProfile() throws profile_disconnected: a customer cannot save their profile' },
-  { finding: 'mock_only modules/customer/notificationPrefs.ts', lane: 'unassigned', routes: ['/app/profile', '/app/notifications'], note: 'savePreferences() throws prefs_disconnected' },
-  { finding: 'mock_only modules/profile-review/contracts.ts', lane: 'unassigned', routes: ['/app/profile'], note: 'mockOnly(): the email-change preview throws review_disconnected' },
-  { finding: 'unknown email_change_previews', lane: 'unassigned', routes: ['/app/profile'], note: 'the email-change preview table (profile-review/contracts.ts)' },
-  { finding: 'mock_only modules/customer/accountData.ts', lane: 'unassigned (Wave 2 account deletion)', routes: ['/app/account'], note: 'data export and deletion request throw disconnected' },
-  { finding: 'mock_only modules/customer/marketingConsent.ts', lane: 'unassigned', routes: ['/app/account'], note: 'the marketing-consent switch throws disconnected' },
-  { finding: 'mock_only data/trialEligibility.ts', lane: 'unassigned', routes: ['/app', '/app/class/:id', '/app/checkout/:id', '/app/plans', '/app/passes', '/app/classes', '/app/profile', '/app/more'], note: 'readTrialAssessment() throws trial_disconnected: the trial state on customer screens never resolves' },
-  { finding: 'mock_only modules/classSchedule/studioCancellation.ts', lane: 'unassigned', routes: ['/app/class/:id', '/app/booking/:id', '/app/booking/:id/change'], note: 'readOwnStudioReturn() (the class the studio cancelled) refuses disconnected' },
-  { finding: 'mock_only modules/customer/payments.ts', lane: 'unassigned (verify)', routes: ['/app/plans', '/app/classes'], note: 'recordPayment() is reachable: its audit row is mock-only, and a trial purchase calls assertTrialAvailable (trial_disconnected); check whether the production buy path calls it' },
-  { finding: 'mock_only modules/quotes/hooks.ts', lane: 'unassigned', routes: ['/app/plans', '/app/passes', '/app/classes'], note: 'useOperationalCatalog().quote() answers null unless the provider is the mock' },
-  { finding: 'mock_only modules/admin/paymentInstructions.ts', lane: 'unassigned', routes: ['/admin/settings/*'], note: 'saving the payment instructions throws payment_settings_disconnected' },
   // Signed out (lane G2): reads outside the live public set (SIGNED_OUT_LIVE) come back empty without asking Company OS.
   { finding: 'signed_out tenants (empty)', lane: 'H2 (owner-approved: settings split)', routes: ['/site/*'], note: 'useSettings() (admin/settings.ts: opening hours, contact, policies, legal texts) and readPaymentInstructions() on /site/contact read the studio_settings row, which also holds the payroll rate card and payout account, so the public_site identity cannot read it: every visitor sees the app defaults, not what the studio saved. Closes: lane H2 (the public sections move to a public studio_settings record public_site reads; PUBLIC_TABLES / PUBLIC_ENTITIES then include it)' },
   { finding: 'signed_out bookings (empty)', lane: 'H2 (owner-approved: public booked spots)', routes: ['/site/*'], note: 'the schedule drawer\'s mat map (website/pages/SchedulePage.tsx taken, MatPicker without `taken`) reads bookings to grey out taken mats; signed out every mat looks free and checkout refuses spot_taken after sign-in. Places left are fine (occurrence.booked_count is live). Closes: lane H2 (a public_site read of booked spots per occurrence, no person, passed as MatPicker `taken`)' },
@@ -101,7 +87,6 @@ const BY_DESIGN = [
 const DYNAMIC = [
   { file: 'src/modules/customer/useScopedCustomerRead.ts', arg: 'table', via: ['useScopedCustomerRead'], scope: 'route', why: 'the customer read hook: its callers name the table' },
   { file: 'src/modules/customer/useCustomerRows.ts', arg: 'table', via: ['useCustomerRows'], scope: 'route', why: 'the customer rows hook: its callers name the table' },
-  { file: 'src/modules/classSchedule/studioCancellation.ts', arg: 'table', via: ['scoped', 'owned'], argIndex: 1, why: 'scoped(data, table, …) / owned(data, table, …) helpers in the same file' },
   { file: 'src/modules/customer/accountData.ts', arg: 'table', via: ['owned'], argIndex: 2, why: 'owned(data, actor, table, column) helper in the same file' },
 ];
 
