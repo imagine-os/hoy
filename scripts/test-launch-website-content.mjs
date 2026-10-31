@@ -3,8 +3,8 @@
 // copy from reference/uploads/WEBSITE_MODIF.md (Lorena Medina, 2026-10-01): hero, philosophy, the seven classes with
 // their keywords, the class-to-teacher list, the launch prices and the contact data (tenant.ts / Settings).
 // Also checks no page shows a missing string key (⟨…⟩) or throws. Then the production build (built here unless
-// QA_PROD_DIST is set): a signed-out visitor sees the sign-in prompt instead of the timetable, and no public page states
-// a private-class price (J4) or promises an online payment gateway.
+// QA_PROD_DIST is set): no sign-in prompt replaces the timetable (lane F reads it live; test-website-signed-out-live.mjs),
+// and no public page states a private-class price (J4) or promises an online payment gateway.
 // Run: npm run build && node scripts/test-launch-website-content.mjs
 import { execFileSync } from 'node:child_process';
 import { mkdtemp } from 'node:fs/promises';
@@ -87,7 +87,6 @@ try {
   const prod = await serveDist(5326, prodDir);
   try {
     const PROMPT = { es: 'Inicia sesión para ver los horarios y reservar', en: 'Sign in to see the timetable and book' };
-    const EMPTY = { es: ['Hoy descansamos', 'Sin clases'], en: ['We rest today', 'No classes'] };
     for (const lang of ['es', 'en']) {
       const ctx = await newContext(browser, { lang });
       const page = await ctx.newPage();
@@ -102,7 +101,7 @@ try {
       };
       for (const path of ['/site/schedule', '/site']) {
         const text = await read(path);
-        check(`production ${lang} ${path}: signed out, the sign-in prompt replaces the timetable`, text.includes(PROMPT[lang]) && !EMPTY[lang].some((e) => text.includes(e)), text.slice(0, 200));
+        check(`production ${lang} ${path}: signed out, no sign-in prompt replaces the timetable`, !text.includes(PROMPT[lang]), text.slice(0, 200));
       }
       if (lang === 'es') {
         const plans = await read('/site/plans', true);

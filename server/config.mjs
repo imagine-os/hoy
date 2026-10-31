@@ -19,6 +19,10 @@ import { fileURLToPath } from 'node:url';
  * @property {number} fileSizeLimit      the largest file GET /files/<id> serves
  * @property {number} fileTimeoutMs      the whole of GET /files/<id>: link, download and stream
  * @property {string[]} fileStorageOrigins where download links may point (empty = any http(s); https only in production)
+ * @property {string|null} companyOsReadToken the read-only service identity (ADR 0029, role public_site) the website's
+ *   signed-out reads go out with; never sent to the browser. Null: signed-out reads stay refused
+ * @property {{ perSecond: number, burst: number, totalPerSecond: number, totalBurst: number }} publicReadRate each visitor's
+ *   limit on those reads, and all visitors' together (below the identity's own limit in Company OS)
  * @property {{ siteLive: boolean, siteLiveAt: string|null, publicDocuments: string[] }} launch
  *   the go-live switch the app reads from /app-config.json (SW-08, Q-14): SITE_LIVE, SITE_LIVE_AT, PUBLIC_DOCUMENTS
  */
@@ -50,6 +54,12 @@ export function loadConfig(env = process.env) {
   const clerkPublishableKey = env.CLERK_PUBLISHABLE_KEY || undefined;
   if (clerkPublishableKey && !/^pk_(test|live)_[A-Za-z0-9$=+/_-]+$/.test(clerkPublishableKey)) {
     problems.push('CLERK_PUBLISHABLE_KEY must be a Clerk publishable key (pk_…)');
+  }
+
+  // The website's signed-out reads (lane F): a Company OS read service identity, created by the operator per environment.
+  const companyOsReadToken = (env.COMPANY_OS_READ_TOKEN ?? '').trim() || null;
+  if (companyOsReadToken && !/^cos_svc_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}_[A-Za-z0-9_-]{43}$/.test(companyOsReadToken)) {
+    problems.push('COMPANY_OS_READ_TOKEN must be a Company OS service token (cos_svc_<id>_<secret>), as created');
   }
 
   const authorizedParties = [];
@@ -107,6 +117,8 @@ export function loadConfig(env = process.env) {
     fileSizeLimit: int(env.FILE_SIZE_LIMIT_BYTES, 10 * 1024 * 1024),
     fileTimeoutMs: int(env.FILE_TIMEOUT_MS, 30_000),
     fileStorageOrigins,
+    companyOsReadToken,
+    publicReadRate: { perSecond: int(env.PUBLIC_READ_RATE_PER_SECOND, 20), burst: int(env.PUBLIC_READ_BURST, 120), totalPerSecond: 150, totalBurst: 400 },
     launch: { siteLive: siteLiveRaw === 'true', siteLiveAt, publicDocuments },
   };
   if (problems.length) throw new Error(`Hoy server configuration:\n  - ${problems.join('\n  - ')}`);

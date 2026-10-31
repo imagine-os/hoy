@@ -37,6 +37,8 @@ try {
 
   // ------------------------------------------------------------------ the fake API
   const UUID = () => crypto.randomUUID();
+  /** Signed out, the Hoy server answers these with its read identity (lane F); Company OS hides the private class (J4). */
+  const PUBLIC = new Set(['occurrence', 'schedule', 'resource', 'coach', 'product']);
   function fakeApi() {
     const db = new Map(); // entity -> Map(id -> record)
     const calls = [];
@@ -88,7 +90,9 @@ try {
       const headers = init.headers ?? {};
       calls.push({ method, path: u.pathname, body, headers, credentials: init.credentials });
       if (u.pathname === '/app-config.json') return json(200, { tenant: 'hoy', apiBase: '/api/cos', clerkPublishableKey: 'pk_test', launch: { siteLive: true } });
-      if (headers.authorization !== `Bearer ${token}`) return refuse(401, 'unauthorized');
+      const anonymous = headers.authorization === undefined;
+      const publicRead = anonymous && (method === 'POST' && u.pathname.endsWith('/query') ? PUBLIC.has(body?.entity) : method === 'GET' && PUBLIC.has(u.pathname.match(/\/t\/hoy\/api\/([a-z_]+)/)?.[1]));
+      if (headers.authorization !== `Bearer ${token}` && !publicRead) return refuse(401, 'unauthorized');
       // The Hoy server's own GET /files/<id> (site root, not under apiBase): the stored bytes.
       const served = u.pathname.match(/^\/files\/([^/]+)$/);
       if (served && method === 'GET') {
@@ -101,7 +105,7 @@ try {
       const key = headers['idempotency-key'];
       const run = () => {
         if (path === '/query') {
-          let rows = [...table(body.entity).values()].filter((r) => match(r, body.filter));
+          let rows = [...table(body.entity).values()].filter((r) => match(r, body.filter) && !(publicRead && body.entity === 'product' && r.data.kind === 'private'));
           if (body.sort) rows.sort((a, b) => (a.data[body.sort[0].field] < b.data[body.sort[0].field] ? -1 : 1) * (body.sort[0].dir === 'desc' ? -1 : 1));
           rows = rows.slice(body.offset ?? 0, (body.offset ?? 0) + (body.limit ?? 100));
           rows = rows.map((r) => ({ id: r.id, data: { ...r.data }, orgUnitId: null, createdAt: r.createdAt, updatedAt: r.updatedAt }));
@@ -311,11 +315,49 @@ try {
     const g = await p.get('class_ledger', lot.id);
     assert.equal(g.id, lot.id); assert.equal(g.delta, 4); assert.equal(g.expires_at, '2026-12-31');
   });
-  await test('signed out: build catalogue only, nothing reaches Company OS', async () => {
+  await test('signed out: the website reads the live timetable, teachers, rooms and prices, with no token from the browser', async () => {
     const api = fakeApi(); const p = make(api, { getToken: async () => null });
-    assert.ok((await p.list('plans')).length > 0); assert.ok((await p.list('modalities')).length === 7);
-    assert.deepEqual(await p.list('bookings'), []); assert.equal(await p.get('class_sessions', 'x'), null); assert.equal(await p.me(), null);
-    assert.equal(api.calls.filter((c) => c.path.startsWith('/api/')).length, 0);
+    const room = api.put('resource', { name: 'Salón principal', kind: 'room', capacity: 16 });
+    const clara = api.put('person', { name: 'Clara Zuluaga' }); const nora = api.put('person', { name: 'Nora Nueva' });
+    const c1 = api.put('coach', { person: clara.id, kind: 'teacher', active: true }); api.put('coach', { person: nora.id, kind: 'teacher', active: true });
+    const sched = api.put('schedule', { title: 'Fuego', kind: 'class', resource: room.id, coach: c1.id, weekday: 1, start_time: '07:00', duration_minutes: 50, capacity: 16, active: true });
+    const occ = api.put('occurrence', { title: 'Fuego', kind: 'class', schedule: sched.id, resource: room.id, coach: c1.id, starts_at: '2026-11-02T12:00:00Z', ends_at: '2026-11-02T12:50:00Z', capacity: 16, booked_count: 5, status: 'scheduled' });
+    api.put('product', { key: 'pack12', name: 'Paquete de 12 clases', kind: 'pack', price: 610000, credits: 12, validity_days: 90, active: true });
+    api.put('product', { key: 'private', name: 'Clase privada', kind: 'private', price: 250000, credits: 0, active: true });
+    const plans = await p.list('plans');
+    assert.deepEqual(plans.map((x) => [x.slug, x.price]), [['pack12', 610000]], 'live prices; the private class never reaches the site');
+    const teachers = await p.list('teachers', { where: { active: true } });
+    assert.deepEqual(teachers.map((t) => t.display_name).sort(), ['Clara Zuluaga', 'Nora Nueva']);
+    assert.ok(teachers.find((t) => t.display_name === 'Clara Zuluaga').bio.es.length > 0, 'bio and photo still come from the website content, by name');
+    assert.equal(queriesOf(api, 'coach')[0].body.include[0].field, 'person');
+    assert.deepEqual((await p.list('rooms')).map((r) => r.name), ['Salón principal']);
+    const sessions = await p.list('class_sessions', { orderBy: { column: 'starts_at' } });
+    assert.equal(sessions.length, 1); assert.equal(sessions[0].booked_count, 5); assert.equal(sessions[0].teacher_id, c1.id); assert.equal(sessions[0].modality_id, 'mod_fuego');
+    assert.equal((await p.list('class_templates')).length, 1);
+    // The booking drawer reads one class by id before sending the visitor to sign in.
+    assert.equal((await p.get('class_sessions', occ.id)).capacity, 16);
+    assert.equal((await p.get('rooms', room.id)).name, 'Salón principal');
+    const sent = api.calls.filter((c) => c.path.startsWith('/api/cos/'));
+    assert.ok(sent.length >= 7);
+    assert.ok(sent.every((c) => c.headers.authorization === undefined && c.credentials === 'omit'), 'the browser never sends a token signed out');
+  });
+  await test('signed out: nothing else is asked of Company OS (bookings, people, payments, settings, /me)', async () => {
+    const api = fakeApi(); const p = make(api, { getToken: async () => null });
+    for (const table of ['bookings', 'users', 'profiles', 'payments', 'class_ledger', 'vouchers', 'invoices', 'transfer_receipts', 'user_roles', 'tenants', 'feature_flags', 'notifications']) {
+      assert.deepEqual(await p.list(table), [], table);
+    }
+    assert.ok((await p.list('modalities')).length === 7);
+    assert.equal(await p.get('bookings', 'b1'), null); assert.equal(await p.get('users', 'u1'), null); assert.equal(await p.me(), null);
+    assert.equal(api.calls.filter((c) => c.path.startsWith('/api/cos/')).length, 0);
+  });
+  await test('signed out, then signed in: the member\'s own read, never the public answer', async () => {
+    const api = fakeApi(); let token = null; const p = make(api, { getToken: async () => token });
+    api.put('product', { key: 'pack12', name: 'Paquete', kind: 'pack', price: 610000, active: true });
+    api.put('product', { key: 'private', name: 'Clase privada', kind: 'private', price: 250000, active: true });
+    assert.deepEqual((await p.list('plans')).map((x) => x.slug), ['pack12']);
+    token = 'tok-1';
+    assert.deepEqual((await p.list('plans')).map((x) => x.slug).sort(), ['pack12', 'private'], 'signed in, the member\'s own read');
+    assert.equal(apiCalls(api, '/query').at(-1).headers.authorization, 'Bearer tok-1');
   });
   await test('session: user_roles from /me for the signed-in person', async () => {
     const api = fakeApi(); const me = api.put('person', { name: 'Ana', user: 'user-1' });
@@ -689,7 +731,7 @@ try {
     assert.equal(es.size, CONTRACT_CODES.length, 'every Spanish line is distinct'); assert.equal(en.size, CONTRACT_CODES.length, 'every English line is distinct');
   });
   await test('refusals: connector codes have copy; an unknown code falls back to the generic line with the code', () => {
-    for (const code of ['unauthorized', 'network_error', 'service_unavailable', 'not_in_launch', 'promotions_disabled', 'read_only', 'not_found', 'validation', 'account_not_invited', 'email_not_verified'])
+    for (const code of ['unauthorized', 'network_error', 'service_unavailable', 'not_in_launch', 'promotions_disabled', 'read_only', 'not_found', 'validation', 'account_not_invited', 'email_not_verified', 'rate_limited'])
       assert.ok(hasRefusalCopy(code), code);
     assert.equal(refusalCopy('offer_expired', 'es'), 'No pudimos completar la acción. Si se repite, escríbenos con este código: offer_expired.');
     assert.match(refusalCopy('offer_expired', 'en'), /code: offer_expired\.$/);

@@ -12,7 +12,7 @@ import net from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { gunzipSync } from 'node:zlib';
-import { ANONYMOUS_ROUTES, createHandler, createHoyServer } from '../server/app.mjs';
+import { ANONYMOUS_ROUTES, createHandler, createHoyServer, publicReadLimiter } from '../server/app.mjs';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { clerkSessionVerifier } from '../server/clerk.mjs';
@@ -405,6 +405,186 @@ await test('proxy: logs carry the route shape, never the token, ids or query', a
   assert.doesNotMatch(text, new RegExp(GOOD.replace(/\./g, '\\.')));
   assert.doesNotMatch(text, /limit=5|Ñandú/);
   assert.ok(logs.some((l) => l.event === 'api.cos' && l.route === '/t/hoy-dev/e'));
+});
+
+// ---------------------------------------------------------------------------------------------
+// Signed-out public reads (lane F, ADR 0029): the server's own read-only identity, never the visitor's
+// ---------------------------------------------------------------------------------------------
+const READ_TOKEN = `cos_svc_0b0f6e1c-3c6a-4c0e-9a51-6f3f2c1d9e02_${'R'.repeat(43)}`;
+const publicLogs = [];
+const publicConfig = loadConfig({
+  COMPANY_OS_URL: `http://127.0.0.1:${upstream.address().port}`, COMPANY_OS_TENANT: 'hoy-dev', CLERK_SECRET_KEY: 'sk_test_example',
+  HOY_ENV: 'local', DIST_DIR: dist, UPSTREAM_TIMEOUT_MS: '500', COMPANY_OS_READ_TOKEN: READ_TOKEN,
+});
+const publicServer = createHoyServer(await createHandler(publicConfig, { verifySession: fakeVerify, log: (e) => publicLogs.push(e) }));
+await listen(publicServer);
+const pub = (method, path, headers = {}, body) => request(method, path, headers, body, publicServer);
+const json = { 'content-type': 'application/json' };
+const okUpstream = (req, res) => { res.writeHead(200, { 'content-type': 'application/json', 'set-cookie': 'x=1' }); res.end('{"data":[]}'); };
+
+await test('public reads: signed out, a query on the timetable, coaches, rooms or products goes to Company OS with the server\'s read identity', async () => {
+  upstreamReply = okUpstream;
+  for (const entity of ['occurrence', 'schedule', 'resource', 'coach', 'product']) {
+    seen.length = 0;
+    const body = JSON.stringify({ entity, filter: { all: true }, include: entity === 'coach' ? [{ field: 'person', fields: ['name'] }] : undefined, limit: 500 });
+    const r = await pub('POST', '/api/cos/t/hoy-dev/query', json, body);
+    assert.equal(r.status, 200, entity);
+    assert.equal(r.headers['cache-control'], 'private, no-store');
+    assert.equal(r.headers['set-cookie'], undefined);
+    assert.equal(seen.length, 1, entity);
+    assert.equal(seen[0].url, '/t/hoy-dev/query');
+    assert.equal(seen[0].headers.authorization, `Bearer ${READ_TOKEN}`);
+    assert.equal(seen[0].body.toString(), body, 'the body reaches Company OS as sent');
+  }
+  for (const path of ['/api/occurrence/0b0f6e1c-3c6a-4c0e-9a51-6f3f2c1d9e01', '/api/product', '/api/coach/x1']) {
+    seen.length = 0;
+    const r = await pub('GET', `/api/cos/t/hoy-dev${path}`);
+    assert.equal(r.status, 200, path);
+    assert.equal(seen[0]?.url, `/t/hoy-dev${path}`);
+    assert.equal(seen[0].headers.authorization, `Bearer ${READ_TOKEN}`);
+  }
+});
+
+await test('public reads: signed out, everything else stays 401 and nothing reaches Company OS', async () => {
+  upstreamReply = okUpstream;
+  seen.length = 0;
+  const refusedQueries = [
+    ...['person', 'booking', 'payment', 'credit_lot', 'credit_entry', 'member', 'invoice', 'waitlist_entry', 'setting', 'comms_log', 'file', 'feature_flag', 'voucher'].map((entity) => JSON.stringify({ entity })),
+    '{}', 'not json', '[]', 'null', JSON.stringify({ entity: ['occurrence'] }), JSON.stringify({ entity: { $ne: null } }), JSON.stringify({ entity: 'Occurrence' }),
+    JSON.stringify({ entity: 'occurrence', entity2: 'x' }).replace('entity2', 'entity'), // a repeated key: the parser keeps the last one
+  ];
+  for (const body of refusedQueries) {
+    const r = await pub('POST', '/api/cos/t/hoy-dev/query', json, body);
+    assert.equal(r.status, 401, body);
+    assert.deepEqual(JSON.parse(r.body), { error: 'unauthorized' });
+  }
+  const other = [
+    ['GET', '/me'], ['GET', '/signup'], ['POST', '/signup'], ['POST', '/batch'], ['GET', '/query'],
+    ['GET', '/api/person'], ['GET', '/api/person/p1'], ['GET', '/api/booking'], ['GET', '/api/setting/s1'], ['GET', '/api/payment/x'],
+    ['POST', '/api/occurrence'], ['PATCH', '/api/occurrence/o1'], ['DELETE', '/api/occurrence/o1'], ['PUT', '/api/product/p1'],
+    ['GET', '/api/occurrence/o1/extra'], ['GET', '/api/%6fccurrence/o1/..'], ['HEAD', '/api/product'],
+    ['GET', '/public-files/f1/url'], ['POST', '/public-files/urls'], ['GET', '/files/f1/url'], ['GET', '/audit'], ['GET', '/admin/roles'],
+  ];
+  for (const [method, path] of other) {
+    const r = await pub(method, `/api/cos/t/hoy-dev${path}`, method === 'POST' || method === 'PATCH' || method === 'PUT' ? json : {}, method === 'POST' || method === 'PATCH' || method === 'PUT' ? JSON.stringify({ entity: 'occurrence' }) : undefined);
+    assert.ok([401, 404].includes(r.status), `${method} ${path}: ${r.status}`);
+  }
+  // Other tenants and the platform are never reached, signed out or not.
+  for (const path of ['/api/cos/t/santa-maria/query', '/api/cos/platform/tenants/hoy-dev/service-identities']) {
+    assert.equal((await pub('POST', path, json, JSON.stringify({ entity: 'occurrence' }))).status, 404, path);
+  }
+  assert.equal(seen.length, 0);
+});
+
+await test('public reads: a query body over 16 KiB is refused, not buffered', async () => {
+  seen.length = 0;
+  const big = JSON.stringify({ entity: 'occurrence', filter: { field: 'title', op: 'in', value: Array.from({ length: 4000 }, (_, i) => `t${i}`) } });
+  assert.ok(big.length > 16 * 1024 && big.length < publicConfig.proxyBodyLimit);
+  const r = await pub('POST', '/api/cos/t/hoy-dev/query', json, big);
+  assert.equal(r.status, 413);
+  const chunked = await pub('POST', '/api/cos/t/hoy-dev/query', { ...json, 'transfer-encoding': 'chunked' }, [big.slice(0, 9000), big.slice(9000)]);
+  assert.equal(chunked.status, 413);
+  assert.equal(seen.length, 0);
+});
+
+await test('public reads: the visitor\'s own headers never become the identity', async () => {
+  upstreamReply = okUpstream;
+  seen.length = 0;
+  // A bearer is always a Clerk session to check: the read token itself, any service token, or a forged one is refused.
+  for (const authorization of [`Bearer ${READ_TOKEN}`, `Bearer cos_svc_00000000-0000-4000-8000-000000000000_${'A'.repeat(43)}`, 'Bearer forged', 'Basic dXNlcjpwYXNz', '']) {
+    const r = await pub('POST', '/api/cos/t/hoy-dev/query', { ...json, authorization }, JSON.stringify({ entity: 'product' }));
+    assert.equal(r.status, 401, authorization);
+  }
+  assert.equal(seen.length, 0);
+  // Visitor headers that look like identities or addresses are dropped; the server sets its own.
+  const r = await pub('POST', '/api/cos/t/hoy-dev/query', {
+    ...json, cookie: '__session=visitor', 'x-api-key': 'visitor', 'x-platform-key': 'visitor', 'x-service-token': 'visitor',
+    'x-forwarded-for': '6.6.6.6', 'x-real-ip': '10.0.0.7', 'proxy-authorization': 'Bearer visitor', 'x-tenant': 'santa-maria',
+  }, JSON.stringify({ entity: 'product' }));
+  assert.equal(r.status, 200);
+  const h = seen[0].headers;
+  assert.equal(h.authorization, `Bearer ${READ_TOKEN}`);
+  for (const name of ['cookie', 'x-api-key', 'x-platform-key', 'x-service-token', 'proxy-authorization', 'x-tenant']) assert.equal(h[name], undefined, name);
+  assert.equal(h['x-forwarded-for'], '10.0.0.7', 'the edge\'s address, never the visitor\'s own X-Forwarded-For');
+  // Signed in, the person's own session goes through, never the read identity.
+  seen.length = 0;
+  const signedIn = await pub('POST', '/api/cos/t/hoy-dev/query', { ...json, authorization: `Bearer ${GOOD}` }, JSON.stringify({ entity: 'booking' }));
+  assert.equal(signedIn.status, 200);
+  assert.equal(seen[0].headers.authorization, `Bearer ${GOOD}`);
+});
+
+await test('public reads: the read token is never in an answer, /app-config.json or a log line', async () => {
+  upstreamReply = okUpstream;
+  const answers = [await pub('GET', '/app-config.json'), await pub('POST', '/api/cos/t/hoy-dev/query', json, JSON.stringify({ entity: 'product' })), await pub('POST', '/api/cos/t/hoy-dev/query', json, JSON.stringify({ entity: 'person' }))];
+  for (const a of answers) {
+    assert.doesNotMatch(a.body.toString(), /cos_svc_/);
+    assert.doesNotMatch(JSON.stringify(a.headers), /cos_svc_/);
+  }
+  assert.doesNotMatch(JSON.stringify(publicLogs), /cos_svc_|RRRRRRRR/);
+  assert.ok(publicLogs.some((l) => l.event === 'api.cos' && l.public === true && l.route === '/t/hoy-dev/query'));
+});
+
+await test('public reads: without COMPANY_OS_READ_TOKEN signed-out reads stay 401, as before', async () => {
+  seen.length = 0;
+  const r = await request('POST', '/api/cos/t/hoy-dev/query', json, JSON.stringify({ entity: 'product' }));
+  assert.equal(r.status, 401);
+  assert.equal((await request('GET', '/api/cos/t/hoy-dev/api/occurrence/o1')).status, 401);
+  assert.equal(seen.length, 0);
+});
+
+await test('public reads: one visitor is limited (429), another is still served', async () => {
+  upstreamReply = okUpstream;
+  const limited = createHoyServer(await createHandler({ ...publicConfig, publicReadRate: { perSecond: 0.001, burst: 3 } }, { verifySession: fakeVerify, log: () => {} }));
+  await listen(limited);
+  seen.length = 0;
+  const one = { ...json, 'x-real-ip': '10.0.0.1' };
+  const statuses = [];
+  for (let i = 0; i < 5; i++) statuses.push((await request('POST', '/api/cos/t/hoy-dev/query', one, JSON.stringify({ entity: 'product' }), limited)).status);
+  assert.deepEqual(statuses, [200, 200, 200, 429, 429]);
+  const r = await request('POST', '/api/cos/t/hoy-dev/query', one, JSON.stringify({ entity: 'product' }), limited);
+  assert.deepEqual(JSON.parse(r.body), { error: 'rate_limited' });
+  assert.equal((await request('POST', '/api/cos/t/hoy-dev/query', { ...json, 'x-real-ip': '10.0.0.2' }, JSON.stringify({ entity: 'product' }), limited)).status, 200);
+  // A signed-in person is never limited by it.
+  assert.equal((await request('POST', '/api/cos/t/hoy-dev/query', { ...one, authorization: `Bearer ${GOOD}` }, JSON.stringify({ entity: 'product' }), limited)).status, 200);
+  assert.equal(seen.length, 5);
+  limited.close();
+});
+
+await test('public reads: all visitors together stay under the read identity\'s own limit in Company OS (429 for everyone)', async () => {
+  upstreamReply = okUpstream;
+  const capped = createHoyServer(await createHandler({ ...publicConfig, publicReadRate: { perSecond: 20, burst: 120, totalPerSecond: 0.001, totalBurst: 4 } }, { verifySession: fakeVerify, log: () => {} }));
+  await listen(capped);
+  const statuses = [];
+  for (let i = 0; i < 6; i++) statuses.push((await request('POST', '/api/cos/t/hoy-dev/query', { ...json, 'x-real-ip': `10.0.1.${i}` }, JSON.stringify({ entity: 'product' }), capped)).status);
+  assert.deepEqual(statuses, [200, 200, 200, 200, 429, 429]);
+  capped.close();
+});
+
+await test('public reads: the per-visitor table forgets idle visitors first, never resets a busy one', async () => {
+  const take = publicReadLimiter({ perSecond: 1, burst: 2, totalPerSecond: 1e9, totalBurst: 1e9 }, 3);
+  assert.equal(take('busy', 0), true); assert.equal(take('busy', 0), true); assert.equal(take('busy', 0), false);
+  assert.equal(take('a', 0), true); assert.equal(take('b', 0), true);
+  assert.equal(take('c', 0), false, 'the table is full of busy visitors: a new one waits, nobody is reset');
+  assert.equal(take('busy', 0), false, 'the busy visitor is still limited');
+  assert.equal(take('c', 10_000), true, 'once others are idle again they are forgotten and a new visitor is served');
+});
+
+await test('config: COMPANY_OS_READ_TOKEN must be a Company OS service token; check-bundle finds one in the build', async () => {
+  const ok = { COMPANY_OS_URL: 'http://api.railway.internal:4000', COMPANY_OS_TENANT: 'hoy', CLERK_SECRET_KEY: 'sk_live_x' };
+  assert.equal(loadConfig(ok).companyOsReadToken, null);
+  assert.equal(loadConfig({ ...ok, COMPANY_OS_READ_TOKEN: ` ${READ_TOKEN} ` }).companyOsReadToken, READ_TOKEN);
+  for (const bad of ['sk_live_abc', 'cos_svc_x', `cos_svc_not-a-uuid_${'A'.repeat(43)}`, `${READ_TOKEN}x`, `Bearer ${READ_TOKEN}`]) {
+    assert.throws(() => loadConfig({ ...ok, COMPANY_OS_READ_TOKEN: bad }), /COMPANY_OS_READ_TOKEN/, bad);
+  }
+  assert.throws(() => loadConfig({ ...ok, COMPANY_OS_READ_TOKEN: 'cos_svc_x_not-shown-in-errors' }), (e) => !String(e.message).includes('not-shown-in-errors'), 'the error never repeats the value');
+  const dirty = join(root, 'dirty-svc');
+  await mkdir(dirty, { recursive: true });
+  await writeFile(join(dirty, 'a.js'), `const t="${READ_TOKEN}";`);
+  await writeFile(join(dirty, 'b.js'), 'const t="RRRRRRRRRRRRRRRRRRRR";');
+  const found = await findSecrets(dirty, { COMPANY_OS_READ_TOKEN: READ_TOKEN });
+  assert.match(found.join('\n'), /a\.js: looks like a Company OS service token/);
+  assert.match(found.join('\n'), /a\.js: contains the value of COMPANY_OS_READ_TOKEN/);
+  publicServer.close();
 });
 
 // ---------------------------------------------------------------------------------------------
