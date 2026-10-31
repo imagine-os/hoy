@@ -58,7 +58,8 @@ await check('holds only made-up addresses and phones', () => {
 
 await check('names no real teacher: the studio publishes its teachers, so the seed makes them up', async () => {
   const { teachers, demoUsers } = await sample;
-  const real = [...teachers.map((t) => t.name), demoUsers.find((u) => u.role === 'teacher').name];
+  const real = [...teachers.map((t) => t.display_name), demoUsers.find((u) => u.role === 'teacher').name];
+  assert.ok(real.length >= 11 && real.every((n) => typeof n === 'string' && n.length > 2), 'the catalog names');
   for (const name of real) assert.ok(!text.includes(name), `the seed names ${name}`);
 });
 
