@@ -56,31 +56,17 @@ const OPEN = [
   ...['unknown teacher_profile_proposals', 'sink audit_log', 'mock_only modules/profile-review/contracts.ts', 'unknown events', 'unknown class_pay_rules', 'missing appendClassPayRule', 'dynamic table', 'mock_only modules/admin/contentRecovery.ts', 'dynamic entity2', 'missing contentBatch', 'missing generateRecurrence']
     .map((finding) => ({ finding, lane: 'C home, decision pending (content: Wave 3)', routes: ['/admin/content'], note: 'the Marketing home M-02: the content editor writes static tables (modalities, teachers, rooms) and unconnected ones' })),
   { finding: 'sink audit_log', lane: 'E (scope extension)', routes: ['/admin'], note: 'the dashboard recent-activity card (admin/DashboardPage.tsx) reads audit_log; GET /t/:t/audit like /admin/activity' },
-  { finding: 'sink audit_log', lane: 'unassigned', routes: ['/admin/settings/*', '/app/profile'], note: 'a receipt read (tx.get(audit_log, id)) inside the mock-only flows below; goes with them' },
   { finding: 'sink message_log', lane: 'unassigned', routes: ['*', '/admin/crm/:id', '/staff', '/staff/inbox/*'], note: 'data/comms.ts: the staff inbox, member messages and notes, the unread badge; nothing is read and a sent note is dropped' },
   { finding: 'unknown hours_overrides', lane: 'unassigned (a recipe-defined entity, Wave 2 size S)', routes: ['/admin/settings/*', '/app/plans', '/app/faq', '/app/faq/2', '/app/more', '/site/*'], note: 'useOpeningHours(): dated exceptions (holidays, special hours) are never read, so every screen shows the plain week' },
   { finding: 'read_only legal_documents', lane: 'unassigned', routes: ['/admin/settings/*'], note: 'publishing or unpublishing a legal document refuses read_only (legal_documents is static content in the build)' },
-  { finding: 'unknown special_charges', lane: 'unassigned', routes: ['/admin/finance'], note: 'admin/paymentReportReads.ts reads special_charges (no adapter): those rows are missing from the finance totals' },
   { finding: 'unknown events', lane: 'Wave 3', routes: ['/admin/settings/*'], note: 'Events and RSVPs (reuse map); useMediaLibrary reads events for media use' },
   { finding: 'unknown reviews', lane: 'Wave 3', routes: ['/site/*'], note: 'Class reviews (reuse map); the site home reads reviews' },
   { finding: 'unknown practice_goals', lane: 'Wave 2', routes: ['/admin/analytics', '/admin/crm/:id', '/app'], note: 'Maintenance records, practice goals (reuse map); data/useAnalytics.ts' },
   { finding: 'sink activity_events', lane: 'Wave 2', routes: ['/app'], note: 'practice milestones and streaks (data/useAnalytics.ts, customer/HomePage.tsx): with practice goals' },
-  { finding: 'unknown deletion_requests', lane: 'Wave 2', routes: ['/app/account', '/site/*'], note: 'Account deletion (reuse map: forms 1.0.0 privacy_request)' },
+  { finding: 'unknown deletion_requests', lane: 'H2 (the privacy_request form adapter; Wave 1)', routes: ['/app/account', '/site/*'], note: 'Account deletion: H1 sends it as a deletion_requests insert, H2 maps that to the forms 1.0.0 privacy_request form' },
   { finding: 'unknown waitlist', lane: 'Wave 2', routes: ['/staff', '/staff/checkin'], note: 'Waitlist (reuse map: bookings waitlist_entry)' },
   { finding: 'unknown payroll_runs', lane: 'Wave 4', routes: ['/admin/finance'], note: 'Teacher app and teacher pay (reuse map); admin/payouts.ts' },
   { finding: 'unknown payroll_lines', lane: 'Wave 4', routes: ['/admin/finance'], note: 'Teacher app and teacher pay (reuse map); admin/payouts.ts' },
-  // Flows that refuse on Company OS (`data.name !== 'mock'` → throw …_disconnected) or vanish (`=== 'mock'`).
-  { finding: 'mock_only modules/customer/profileSave.ts', lane: 'unassigned', routes: ['/app/profile'], note: 'saveOwnProfile() throws profile_disconnected: a customer cannot save their profile' },
-  { finding: 'mock_only modules/customer/notificationPrefs.ts', lane: 'unassigned', routes: ['/app/profile', '/app/notifications'], note: 'savePreferences() throws prefs_disconnected' },
-  { finding: 'mock_only modules/profile-review/contracts.ts', lane: 'unassigned', routes: ['/app/profile'], note: 'mockOnly(): the email-change preview throws review_disconnected' },
-  { finding: 'unknown email_change_previews', lane: 'unassigned', routes: ['/app/profile'], note: 'the email-change preview table (profile-review/contracts.ts)' },
-  { finding: 'mock_only modules/customer/accountData.ts', lane: 'unassigned (Wave 2 account deletion)', routes: ['/app/account'], note: 'data export and deletion request throw disconnected' },
-  { finding: 'mock_only modules/customer/marketingConsent.ts', lane: 'unassigned', routes: ['/app/account'], note: 'the marketing-consent switch throws disconnected' },
-  { finding: 'mock_only data/trialEligibility.ts', lane: 'unassigned', routes: ['/app', '/app/class/:id', '/app/checkout/:id', '/app/plans', '/app/passes', '/app/classes', '/app/profile', '/app/more'], note: 'readTrialAssessment() throws trial_disconnected: the trial state on customer screens never resolves' },
-  { finding: 'mock_only modules/classSchedule/studioCancellation.ts', lane: 'unassigned', routes: ['/app/class/:id', '/app/booking/:id', '/app/booking/:id/change'], note: 'readOwnStudioReturn() (the class the studio cancelled) refuses disconnected' },
-  { finding: 'mock_only modules/customer/payments.ts', lane: 'unassigned (verify)', routes: ['/app/plans', '/app/classes'], note: 'recordPayment() is reachable: its audit row is mock-only, and a trial purchase calls assertTrialAvailable (trial_disconnected); check whether the production buy path calls it' },
-  { finding: 'mock_only modules/quotes/hooks.ts', lane: 'unassigned', routes: ['/app/plans', '/app/passes', '/app/classes'], note: 'useOperationalCatalog().quote() answers null unless the provider is the mock' },
-  { finding: 'mock_only modules/admin/paymentInstructions.ts', lane: 'unassigned', routes: ['/admin/settings/*'], note: 'saving the payment instructions throws payment_settings_disconnected' },
 ];
 
 // ── Uses that are unconnected on purpose: the production behaviour IS the empty read or the dropped write.
