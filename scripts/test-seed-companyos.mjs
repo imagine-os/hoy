@@ -124,6 +124,11 @@ await check('books a person at most once a day, after they paid, as the rules wo
     const past = occ.data.status === 'completed';
     assert.ok(past ? ['checked_in', 'no_show', 'late_cancel'].includes(b.data.status) : b.data.status === 'booked', `${b.data.status} on a ${occ.data.status} class`);
     assert.ok(['credit', 'single'].includes(b.data.entitlement));
+    // As the bookings module writes a class booking: the class's times (its daily limit reads them) and the policy copies.
+    assert.equal(b.data.start, occ.data.starts_at);
+    assert.equal(b.data.end, occ.data.ends_at);
+    assert.equal(b.data.policy_late_cancel_hours, 12);
+    assert.equal(b.data.policy_reschedule_hours, 12);
   }
 });
 
