@@ -133,7 +133,7 @@ try {
   let { ctx, page } = await signedIn('admin@example.test');
   let at = await go(page, '/admin/settings/hours');
   check('admin opens Settings › Hours', at === '/admin/settings/hours', at);
-  check('production shows the reception hours and the holiday and special hours together', (await page.locator('[data-holiday-hours]').count()) === 1 && /Recepci/.test(await text(page)), (await text(page)).slice(0, 300));
+  check('production shows the reception hours and the holiday and special hours together', (await page.locator('[data-holiday-hours]').count()) === 1 && /Horario de recepción/i.test(await text(page)), (await text(page)).slice(0, 300));
   check('production shows no Google Business column (not connected at launch)', !/Google/.test(await page.locator('[data-holiday-hours]').innerText().catch(() => '')));
   await addHoliday(page, '2026-11-16', 'Independencia de Cartagena');
   check('admin: the holiday is saved in Company OS', [...world.hours.values()].some((h) => h.data.start_date === '2026-11-16' && h.data.closed === true), JSON.stringify([...world.hours.values()]));
@@ -167,10 +167,11 @@ try {
   reset({ refuseSettings: true });
   ({ ctx, page } = await signedIn('admin@example.test'));
   await go(page, '/admin/settings');
-  const section = page.locator('[data-settings-section]').filter({ has: page.locator('input[type=text], input:not([type])') }).first();
-  await section.locator('input[type=text], input:not([type])').first().fill('Texto de prueba').catch(() => {});
+  const section = page.locator('[data-settings-section]').filter({ has: page.locator('input[type=text]:not([disabled]), input:not([type]):not([disabled])') }).first();
+  await section.locator('input[type=text]:not([disabled]), input:not([type]):not([disabled])').first().fill('Texto de prueba').catch(() => {});
   await section.locator('[data-settings-save]').click({ timeout: 3000 }).catch(() => {});
   await page.waitForTimeout(1500);
+  check('L6: the save was attempted and refused by Company OS', world.log.some((l) => l.method !== 'GET' && (l.route === '/batch' || l.route.startsWith('/api/setting'))));
   check('L6: after a refused save the button is not stuck on saving', (await section.locator('[data-settings-save][aria-busy="true"], [data-settings-save] .spinner').count()) === 0 && (await section.locator('[data-settings-save]').count()) === 1);
   check('L6: the section says why, in words', /No tienes permiso para hacer esto/.test(await section.innerText().catch(() => '')), await section.innerText().catch(() => ''));
   await ctx.close();

@@ -45,7 +45,7 @@ concurrency:
 jobs:
   fake-clerk:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -53,6 +53,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: The Hoy server's own dependencies (the signed-out website check runs the real server)
+        run: npm ci --prefix server
       - name: Production build
         run: npm run build:production && cp -R dist "$RUNNER_TEMP/prod"
       - uses: actions/upload-artifact@v7
@@ -86,8 +88,38 @@ jobs:
         run: node scripts/test-route-connectivity.mjs
       - name: Launch flows on Company OS (profile, preferences, account, trial, payment instructions, studio return; lane H1)
         run: node scripts/test-h1-connected-flows.mjs
+      - name: The Company OS provider (mapping, queries, batch and idempotency, polling, refusal copy)
+        run: node scripts/test-companyos-provider.mjs
+      - name: The activity log's audit read (paging, filters, refusals)
+        run: node scripts/test-admin-activity.mjs
+      - name: Real sign-up check, offline part (options and site safety; the live part skips without COS_LOCAL_API)
+        run: node scripts/test-real-signup.mjs
+      - name: Pay data move out of the public settings (operator script, against a fake Company OS)
+        run: node scripts/test-move-private-settings.mjs
+      - name: Release wiring (company-os.json, release notes, these CI steps)
+        run: node scripts/test-release-wiring.mjs
+      - name: The signed-out website reads live data behind the real Hoy server (production build)
+        run: node scripts/test-website-signed-out-live.mjs
+        env:
+          QA_PROD_DIST: ${{ runner.temp }}/prod
+      - name: The activity log in the browser (production build)
+        run: node scripts/test-admin-activity-ui.mjs
+        env:
+          QA_PROD_DIST: ${{ runner.temp }}/prod
+      - name: Holiday hours, refusals in words, settings save failures (production build; review round 1)
+        run: node scripts/test-r1-ui.mjs
+        env:
+          QA_PROD_DIST: ${{ runner.temp }}/prod
       - name: Review build
         run: npm run build
+      - name: Website rows in the built site (review build, then the production build)
+        run: node scripts/test-launch-website-ui.mjs
+        env:
+          QA_PROD_DIST: ${{ runner.temp }}/prod
+      - name: Website content (review build, then the production build)
+        run: node scripts/test-launch-website-content.mjs
+        env:
+          QA_PROD_DIST: ${{ runner.temp }}/prod
       - name: What each build ships
         run: node scripts/test-auth-builds.mjs
         env:

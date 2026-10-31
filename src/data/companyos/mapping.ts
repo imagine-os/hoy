@@ -489,12 +489,15 @@ const expenseTemplates = entity({
   cols: { ...expenseCols(['concept', 'category', 'amount', 'cadence', 'vendor', 'note', 'active']), anchor_day: { field: 'day_of_month' } },
 });
 
-/** Holiday and special hours (M-08g; recipe entity `hours_override`, lane H2). Administration writes; everyone reads. */
+/**
+ * Holiday and special hours (M-08g; recipe entity `hours_override`, lane H2). Administration writes; everyone reads.
+ * Only `closed: true` is closed: a row stored without it is special hours, not a closed day (review round 1, L4).
+ */
 const hoursOverrides = entity({
   table: 'hours_overrides', entity: 'hours_override',
   cols: {
     start_date: { field: 'start_date', kind: 'day' }, end_date: { field: 'end_date', kind: 'day' },
-    closed: { field: 'closed', from: (v) => v !== false }, open: { field: 'open', from: str }, close: { field: 'close', from: str },
+    closed: { field: 'closed', from: (v) => v === true }, open: { field: 'open', from: str }, close: { field: 'close', from: str },
     label: { field: 'label', from: bi }, kind: { field: 'kind', from: (v) => str(v) ?? 'holiday' },
     source: { field: 'source', from: (v) => str(v) ?? 'manual' }, note: { field: 'note', from: str },
     google_synced_at: { derive: () => null }, created_by: { derive: (r) => str(r.createdBy) },

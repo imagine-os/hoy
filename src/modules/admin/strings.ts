@@ -835,6 +835,7 @@ export const strings: StringTable = {
   'admin.settings.readonly': { es: 'Solo lectura para tu rol', en: 'Read-only for your role' },
   'admin.settings.saved': { es: 'Guardado', en: 'Saved' },
   'admin.settings.unsaved': { es: 'Sin guardar', en: 'Unsaved' },
+  'admin.settings.saveFailed': { es: 'No se pudo guardar. Revisa tu conexión y vuelve a intentarlo.', en: 'Could not save. Check your connection and try again.' },
   'admin.settings.sec.profile': { es: 'Estudio', en: 'Studio' },
   'admin.settings.sec.openingHours': { es: 'Horarios', en: 'Opening hours' },
   // 0047 — M-08a WhatsApp contacts by topic (D-0022)
@@ -1470,6 +1471,7 @@ export const strings: StringTable = {
   'admin.settings.hours.import': { es: 'Importar festivos de Colombia {year}–{next}', en: 'Import Colombian holidays {year}–{next}' },
   'admin.settings.hours.import.done': { es: '{n} festivos añadidos', en: '{n} holidays added' },
   'admin.settings.hours.import.none': { es: 'Ya estaban todos los festivos', en: 'Every holiday was already there' },
+  'admin.settings.hours.import.stopped': { es: 'Se añadieron {n} de {total} festivos; se detuvo en el {date}: {reason}', en: '{n} of {total} holidays added; stopped at {date}: {reason}' },
   'admin.settings.hours.col.dates': { es: 'Fechas', en: 'Dates' },
   'admin.settings.hours.col.label': { es: 'Nombre', en: 'Name' },
   'admin.settings.hours.col.hours': { es: 'Horario', en: 'Hours' },

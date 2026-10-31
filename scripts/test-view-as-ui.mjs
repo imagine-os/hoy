@@ -194,8 +194,8 @@ try {
   log = [];
   await viewAs(page, 'admin');
   await go(page, '/admin/settings');
-  const section = page.locator('[data-settings-section]').filter({ has: page.locator('input[type=text], input:not([type])') }).first();
-  await section.locator('input[type=text], input:not([type])').first().fill('Cambio de prueba').catch(() => {});
+  const section = page.locator('[data-settings-section]').filter({ has: page.locator('input[type=text]:not([disabled]), input:not([type]):not([disabled])') }).first();
+  await section.locator('input[type=text]:not([disabled]), input:not([type]):not([disabled])').first().fill('Cambio de prueba').catch(() => {});
   await section.locator('[data-settings-save]').click({ timeout: 3000 }).catch(() => {});
   await page.waitForTimeout(1500);
   const said = await section.innerText().catch(() => '');

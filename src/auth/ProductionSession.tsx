@@ -10,6 +10,7 @@ import { isViewableRole, loadViewAsSample, publishViewAs, readStoredViewAs, stor
 import { cosJson } from './cosRequest';
 import { useI18n } from '../i18n/I18nProvider';
 import { ViewAsBanner } from '../components/molecule/ViewAsBanner/ViewAsBanner';
+import { EmptyState } from '../components/molecule/EmptyState/EmptyState';
 
 /**
  * The production session (H-2, PL-04): Clerk proves who the person is; Company OS `GET /t/:t/me` says whether they
@@ -253,8 +254,21 @@ function ClerkSession({ config, children }: { config: AppConfig; children: React
   return (
     <SessionContext.Provider key={isSignedIn ? `${userId}|${sessionId}|${activeViewAs ?? ''}` : 'visitor'} value={value}>
       {activeViewAs && <ViewAsBar role={activeViewAs} person={value.viewAsPerson?.name ?? null} loading={sampleLoading} onExit={exitViewAs} />}
-      {children}
+      {/* L2 (review round 1): nobody holds the viewed role, so there is no one to show; the screens would read nobody's
+          (or, before the provider alias, the super admin's own) records. Say so instead of showing them. */}
+      {activeViewAs && !sampleLoading && !samplePerson ? <ViewAsNobody role={activeViewAs} onExit={exitViewAs} /> : children}
     </SessionContext.Provider>
+  );
+}
+
+/** View-as of a role nobody holds: an explicit empty state with the way out, never another person's screens. */
+function ViewAsNobody({ role, onExit }: { role: Role; onExit: () => void }) {
+  const { t, bi } = useI18n();
+  return (
+    <main className="page" data-view-as-empty>
+      <EmptyState icon="users" title={t('hub.viewAs.empty.title', { role: bi(ROLE_LABEL[role]) })} body={t('hub.viewAs.empty.body')}
+        action={<button type="button" className="btn btn-secondary btn-sm" onClick={onExit}>{t('hub.viewAs.empty.exit')}</button>} />
+    </main>
   );
 }
 

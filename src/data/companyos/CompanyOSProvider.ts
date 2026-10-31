@@ -9,7 +9,7 @@ import { closedDatesOf, formatClosedDates, parseClosedDates } from './closedDate
 import { planQuery, PAGE, type QuerySpec } from './query';
 import { CompanyOSError, Transport, newIdempotencyKey, normalizeCode, onTokenSourceChange, wireKey, type TransportOptions } from './transport';
 import { toDay, today as studioToday } from './dates';
-import { onViewAsChange, viewAsPersonId } from '../../auth/viewAs';
+import { onViewAsChange, viewAsActive, viewAsPersonId } from '../../auth/viewAs';
 
 /** Contract §1: `subscribe()` polls every 20 s on the screens that ask for it (`useLiveUpdates`). */
 export const POLL_MS = 20_000;
@@ -19,8 +19,6 @@ const MAX_OPS = 200;
 
 export interface CompanyOSProviderOptions extends TransportOptions {
   pollMs?: number;
-  /** How long after the last hours-override write the bookings closed dates are synced (coalesces an import). */
-  closedDatesDelayMs?: number;
   /** The studio's today (YYYY-MM-DD); tests pin it. */
   today?: () => string;
 }
@@ -44,6 +42,8 @@ export interface CompanyOSMe {
  */
 const PUBLIC_TABLES = new Set(['plans', 'teachers', 'rooms', 'class_templates', 'class_sessions', 'tenants', 'hours_overrides', 'bookings']);
 const isForbidden = (e: unknown) => e instanceof CompanyOSError && e.code === 'forbidden';
+/** Holiday and special hours: every write also keeps bookings `review_closed_dates` (closedDatesAfter). */
+const HOURS = 'hours_overrides';
 
 type Op = { op: 'create' | 'update' | 'delete'; entity: string; id?: string; data?: Record<string, unknown>; token?: string; table: string; dropped?: boolean };
 type Pending = { body: { ops: unknown[] }; result: unknown; tokens: string[]; tables: string[] };
@@ -93,15 +93,11 @@ export class CompanyOSProvider implements DataProvider {
   private meFor: string | null = null;
   private tokenSeq = 0;
   private running = new Map<string, Promise<unknown>>();
-  private readonly closedDatesDelayMs: number;
   private readonly today: () => string;
-  private closedTimer: ReturnType<typeof setTimeout> | null = null;
-  private closedRun: Promise<void> = Promise.resolve();
 
   constructor(options: CompanyOSProviderOptions = {}) {
     this.transport = new Transport(options);
     this.pollMs = options.pollMs ?? POLL_MS;
-    this.closedDatesDelayMs = options.closedDatesDelayMs ?? 1500;
     this.today = options.today ?? studioToday;
     onTokenSourceChange(() => { this.meCache = null; this.emitAll(); });
     // View-as (lane D): "my" records become the sample person's (or the real person's again); every screen reads again.
@@ -167,11 +163,13 @@ export class CompanyOSProvider implements DataProvider {
    * Inbound, a `user_id` (and a `users` id) equal to the user id becomes the person id; outbound, the reverse, so
    * `where: { user_id: session.userId }` finds one's own rows. Other people's rows keep their person ids.
    * While a super admin views as another role (lane D), the session user is aliased to the sample person instead, so the
-   * same screens show that person's records (read-only: the transport refuses writes).
+   * same screens show that person's records (read-only: the transport refuses writes). With no sample person (nobody
+   * holds the role), or before the session confirmed a stored view-as, nobody is aliased: "my" reads match no one,
+   * never the super admin's own records (review round 1, L2).
    */
   async self(): Promise<{ userId: string; personId: string } | null> {
     const me = await this.me().catch(() => null);
-    const personId = viewAsPersonId() ?? me?.personId;
+    const personId = viewAsActive() ? viewAsPersonId() : me?.personId;
     return me?.userId && personId && me.userId !== personId ? { userId: me.userId, personId } : null;
   }
 
@@ -275,6 +273,15 @@ export class CompanyOSProvider implements DataProvider {
   // ------------------------------------------------------------ writes
   /** `options.idempotencyKey`: pass the action's key (`useActionKey`) so a user's own retry can't create twice. */
   async insert<T extends BaseRow = BaseRow>(table: string, row: Partial<T>, options: { idempotencyKey?: string } = {}): Promise<T> {
+    if (table === HOURS) {
+      const after = await this.insertRow<T>(table, row, options);
+      await this.closedDatesAfter(null, after as unknown as Row);
+      return after;
+    }
+    return this.insertRow<T>(table, row, options);
+  }
+
+  private async insertRow<T extends BaseRow>(table: string, row: Partial<T>, options: { idempotencyKey?: string }): Promise<T> {
     const settings = this.settingsAdapter(table);
     if (settings) return this.saveSettings(settings, row as Record<string, unknown>) as unknown as Promise<T>;
     const a = this.writable(table, row as Record<string, unknown>);
@@ -295,6 +302,16 @@ export class CompanyOSProvider implements DataProvider {
   }
 
   async update<T extends BaseRow = BaseRow>(table: string, id: string, patch: Partial<T>): Promise<T> {
+    if (table === HOURS) {
+      const before = await this.get<Row>(table, id);
+      const after = await this.updateRow<T>(table, id, patch);
+      await this.closedDatesAfter(before, after as unknown as Row);
+      return after;
+    }
+    return this.updateRow<T>(table, id, patch);
+  }
+
+  private async updateRow<T extends BaseRow>(table: string, id: string, patch: Partial<T>): Promise<T> {
     const settings = this.settingsAdapter(table);
     if (settings) return this.saveSettings(settings, patch as Record<string, unknown>) as unknown as Promise<T>;
     const legal = adapterFor(table);
@@ -316,6 +333,16 @@ export class CompanyOSProvider implements DataProvider {
   }
 
   async remove(table: string, id: string): Promise<void> {
+    if (table === HOURS) {
+      const before = await this.get<Row>(table, id);
+      await this.removeRow(table, id);
+      await this.closedDatesAfter(before, null);
+      return;
+    }
+    return this.removeRow(table, id);
+  }
+
+  private async removeRow(table: string, id: string): Promise<void> {
     const m = adapterFor(table);
     if (m?.kind === 'messages') {
       const part = await this.messagePartOf(m, id);
@@ -460,32 +487,39 @@ export class CompanyOSProvider implements DataProvider {
   }
 
   // ------------------------------------------------------------ holiday hours → bookings closed dates (lane H2)
-  /** Re-syncs bookings `review_closed_dates` shortly after the last hours-override write (an import coalesces). */
-  private scheduleClosedDates() {
-    if (this.closedTimer) clearTimeout(this.closedTimer);
-    this.closedTimer = setTimeout(() => {
-      this.closedTimer = null;
-      this.closedRun = this.closedRun.then(() => this.syncClosedDates());
-    }, this.closedDatesDelayMs);
+  /**
+   * After an hours-override write (review round 1, M3): when the closed dates it covers changed, bookings
+   * `review_closed_dates` follows before the save returns (no timer a closed tab or a sign-out could lose). A change
+   * that adds or removes no closed date (a note, special hours) touches nothing. The override is saved either way; a
+   * sync that can't run ends the save with a named code the screen shows as "saved, but…" (`SAVED_BUT_NOT_SYNCED`).
+   */
+  private async closedDatesAfter(before: Row | null, after: Row | null): Promise<void> {
+    const today = this.today();
+    const was = closedDatesOf(before ? [before as never] : [], today);
+    const now = closedDatesOf(after ? [after as never] : [], today);
+    if (sameJson(was, now)) return;
+    await this.syncClosedDates(was);
   }
 
-  /** Resolves once a scheduled closed-dates sync has run (tests, and a screen that must wait for it). */
-  async closedDatesSettled(): Promise<void> {
-    while (this.closedTimer) await new Promise((r) => setTimeout(r, Math.max(5, this.closedDatesDelayMs)));
-    await this.closedRun;
-  }
-
-  /** Every closed override's dates from today on → bookings `review_closed_dates`, written only when they differ. */
-  private async syncClosedDates(): Promise<void> {
+  /**
+   * Merges, never replaces: the setting keeps every date it holds (set in Reception hours or the console) except the
+   * ones the written override covered before (`removed`), plus every date a closed override covers from today on.
+   * A date `removed` that another closed override still covers stays. Only the Super Admin edits module settings (Hoy's
+   * Administration, AD-04): anyone else gets `closed_dates_admin_only` without a request that would be refused.
+   */
+  private async syncClosedDates(removed: readonly string[]): Promise<void> {
+    const me = await this.me().catch(() => null);
+    if (!me?.isSuperAdmin) throw new CompanyOSError('closed_dates_admin_only');
     try {
-      const rows = await this.list<Row>('hours_overrides');
-      const dates = closedDatesOf(rows as never, this.today());
+      const rows = await this.list<Row>(HOURS);
+      const owned = closedDatesOf(rows as never, this.today());
       const res = await this.transport.request<{ settings?: { review_closed_dates?: unknown } }>('GET', '/modules/bookings/settings');
-      if (sameJson(parseClosedDates(res.body?.settings?.review_closed_dates), dates)) return;
-      await this.transport.request('PATCH', '/modules/bookings/settings', { body: { settings: { review_closed_dates: formatClosedDates(dates) } } });
+      const current = parseClosedDates(res.body?.settings?.review_closed_dates);
+      const next = [...new Set([...current.filter((d) => !removed.includes(d)), ...owned])].sort();
+      if (sameJson(current, next)) return;
+      await this.transport.request('PATCH', '/modules/bookings/settings', { body: { settings: { review_closed_dates: formatClosedDates(next) } } });
     } catch (e) {
-      // Only the Super Admin edits module settings (Hoy's Administration holds it, AD-04); the override is saved anyway.
-      console.warn('[companyos] bookings review_closed_dates not synced:', e instanceof CompanyOSError ? e.code : e);
+      throw new CompanyOSError(isForbidden(e) ? 'closed_dates_admin_only' : 'closed_dates_not_synced', { details: { cause: e instanceof CompanyOSError ? e.code : 'unknown' } });
     }
   }
 
@@ -537,6 +571,8 @@ export class CompanyOSProvider implements DataProvider {
       const ids = new Map<string, string>();
       pending.tokens.forEach((t, i) => { if (t) ids.set(t, res.body.ids[i]!); });
       this.changed(pending.tables);
+      // An override written in a batch: its previous dates aren't known here, so the sync adds and never removes.
+      if (pending.tables.includes(HOURS)) await this.syncClosedDates([]);
       return resolveTokens(pending.result as T, ids);
     } catch (e) {
       // Only a lost answer may have committed: keep the exact body so a retry with this key replays it.
@@ -655,7 +691,6 @@ export class CompanyOSProvider implements DataProvider {
   }
 
   private changed(tables: string[]) {
-    if (tables.includes('hours_overrides')) this.scheduleClosedDates();
     const all = new Set<string>();
     for (const t of tables) { all.add(t); for (const r of RELATED[t] ?? []) all.add(r); }
     // A read that started before the write may answer with the old rows: the refetch below must not join it.
