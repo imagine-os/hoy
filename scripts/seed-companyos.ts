@@ -9,15 +9,18 @@
 // - a person per sample user (one per role, 31 customers) and per teacher, with a made-up name, address
 //   (@demo.hoyos.test) and no phone (Colombia has no reserved range for made-up numbers); the studio publishes its real teachers' names, so the seed
 //   never uses them;
-// - `memberships`: each sample user's role key (the recipe's, or the system super_admin). The import has no logins;
-//   the loader makes them (see the Company OS report);
+// - `memberships`: each sample user's role key (the recipe's, or the system super_admin). Company OS's seed loader makes
+//   a login per membership and links it to the person (ADR 0025 addendum 2026-10-31);
 // - customers' `member` facets and teachers' `coach` facets;
 // - the classes (`occurrence`) of the sample's two weeks around `asOf`, plus two more weeks of the timetable ahead,
-//   each with its coach; no room, no schedule (those are the recipe's rows);
+//   each with its coach; with --recipe-refs, each with its room (the recipe's, by name: see ROOM_OF); no schedule (the
+//   recipe's schedules are not Hoy's timetable yet, so no class is said to come from one);
 // - the customers' approved payments of the recipe's products with their numbered receipts, a credit lot per pack or
 //   trial with its grant entry, and the sample's bookings that the rules would accept: one a day per person, each
 //   taking a class from a usable lot (credit entry) or paid by its own single-class payment; the rest are left out;
 //   each class's booked_count counts what is left.
+// With --recipe-refs (what Company OS commits), recipe rows are named by their fields, which the loader resolves:
+// products by `key`, rooms by `name`. Without it, no product or room is written.
 // Ids are derived from the sample's ids, so the same `asOf` gives the same file on any machine.
 import { createHash } from 'node:crypto';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -42,6 +45,11 @@ export const ROLE_KEY_OF: Record<string, string> = {
   customer: 'member',
 };
 export const ROLE_KEYS: string[] = [...new Set(Object.values(ROLE_KEY_OF))];
+
+/** The sample's room → the recipe's room (`resource` row), by its name. The sample builds every class in its main room. */
+export const ROOM_OF: Record<string, string> = { room_main: 'Main room', room_meditacion: 'Small room' };
+/** The room a timetable class takes, as the sample builds its classes (src/data/seed/index.ts). */
+const TIMETABLE_ROOM = 'room_main';
 
 /** Made-up names for the catalog's teachers, in catalog order (the real ones are published on Hoy's site). */
 const TEACHER_NAMES = ['Lucía Montoya', 'Tomás Villegas', 'Paula Echeverri', 'Andrés Quintero', 'Mariana Salazar', 'Daniela Ochoa', 'Natalia Giraldo', 'Sebastián Uribe', 'Isabel Carmona', 'Felipe Arboleda', 'Manuela Zapata'];
@@ -128,6 +136,13 @@ export function toCompanyOsSeed(sample: HoySample, recipe: Recipe, asOf: string,
     ? { policy_late_cancel_hours: Number(bookingSettings.late_cancel_hours ?? 0), policy_reschedule_hours: Number(bookingSettings.reschedule_hours ?? 0) }
     : {};
   const productRef = (key: string) => (recipeRefs ? { product: { $ref: { entity: 'product', where: { key } } } } : {});
+  const roomNames = new Set((recipe.records ?? []).filter((s) => s.entity === 'resource').flatMap((s) => s.rows).map((r) => String(r.name)));
+  const roomRef = (roomId: string) => {
+    if (!recipeRefs) return {};
+    const name = ROOM_OF[roomId];
+    if (!name || !roomNames.has(name)) throw new Error(`the sample's room ${roomId} has no room in the recipe (${name ?? 'no name in ROOM_OF'}): add it to ROOM_OF or the recipe's resources`);
+    return { resource: { $ref: { entity: 'resource', where: { name } } } };
+  };
 
   const people: SeedRecord[] = [], facets: SeedRecord[] = [], classes: SeedRecord[] = [], money: SeedRecord[] = [], lots: SeedRecord[] = [], bookings: SeedRecord[] = [];
   const memberships: CompanyOsSeed['memberships'] = [];
@@ -177,13 +192,13 @@ export function toCompanyOsSeed(sample: HoySample, recipe: Recipe, asOf: string,
   type Cls = { rec: SeedRecord; start: number; end: number; status: string; sessionId: string };
   const cls: Cls[] = [];
   const durationOf = (modality: string) => Number(sample.modalities.find((m) => m.id === modality)?.duration_min ?? 50);
-  const addClass = (key: string, title: string, teacherId: string, start: number, end: number, capacity: number, status: string, cancelReason: string | null) => {
+  const addClass = (key: string, title: string, teacherId: string, roomId: string, start: number, end: number, capacity: number, status: string, cancelReason: string | null) => {
     const coach = coachOf.get(teacherId);
     if (!coach) throw new Error(`${key}: teacher ${teacherId} is not in the catalog`);
     const rec: SeedRecord = {
       entity: 'occurrence', id: uuid(`occurrence:${key}`),
       data: {
-        title, kind: 'class', coach, starts_at: isoAt(start), ends_at: isoAt(end), capacity, status, booked_count: 0,
+        title, kind: 'class', coach, ...roomRef(roomId), starts_at: isoAt(start), ends_at: isoAt(end), capacity, status, booked_count: 0,
         ...(status === 'cancelled' ? { cancel_reason: cancelReason ?? 'Clase cancelada', cancelled_at: isoAt(Math.min(now, start - 24 * HOUR)) } : {}),
         ...(status === 'completed' ? { completed_at: isoAt(end) } : {}),
       },
@@ -191,14 +206,14 @@ export function toCompanyOsSeed(sample: HoySample, recipe: Recipe, asOf: string,
     cls.push({ rec, start, end, status, sessionId: key });
   };
   for (const s of [...db.class_sessions].sort((a, b) => a.starts_at.localeCompare(b.starts_at) || a.id.localeCompare(b.id))) {
-    addClass(s.id, s.title, s.teacher_id, Date.parse(s.starts_at), Date.parse(s.ends_at), s.capacity, s.status, s.cancel_reason);
+    addClass(s.id, s.title, s.teacher_id, s.room_id, Date.parse(s.starts_at), Date.parse(s.ends_at), s.capacity, s.status, s.cancel_reason);
   }
   const lastDay = dayOf(Math.max(...cls.map((c) => c.start)));
   for (let d = 1; d <= EXTRA_DAYS; d++) {
     const day = addDays(lastDay, d);
     for (const row of sample.TIMETABLE.filter((t) => t.weekday === weekdayOf(day))) {
       const start = Date.parse(`${day}T${row.time}:00${UTC_OFFSET}`);
-      addClass(`ahead_${day}_${row.time}`, row.title, row.teacher, start, start + durationOf(row.modality) * 60000, sample.mats, 'scheduled', null);
+      addClass(`ahead_${day}_${row.time}`, row.title, row.teacher, TIMETABLE_ROOM, start, start + durationOf(row.modality) * 60000, sample.mats, 'scheduled', null);
     }
   }
   const classOf = new Map(cls.map((c) => [c.sessionId, c]));
