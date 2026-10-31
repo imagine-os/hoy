@@ -44,7 +44,7 @@ How it traces a route (signed-out pages: see *Signed-out pages* after the limits
 | `not_in_launch <file>` | page code throws `not_in_launch` itself (the review build's `if (!cos) throw` guard after `cosOf()` is not one) |
 | `mock_only <file>` | the flow runs only on the review build's MockProvider: on Company OS it throws `…_disconnected` or the control is hidden |
 | `dynamic <arg>` | a table name the check cannot resolve (computed, reassigned, a template literal): add a `DYNAMIC` entry naming where its values come from. A write always needs a resolved name |
-| `signed_out <table> (empty)` / `(write)` | on a signed-out page: a read of a table outside the live public set, which the provider answers with nothing (no request), or any write (no session: the Hoy server answers 401). See *Signed-out pages* below |
+| `signed_out <table> (empty)` / `(write)`, `signed_out request <path>` | on a signed-out page: a read of a table outside the live public set, which the provider answers with nothing (no request); any table write (no session: the Hoy server answers 401); a `request()` the server does not forward signed out. See *Signed-out pages* below |
 
 Hostile checks in the script: synthetic pages that read a sink table (directly and two imports away), an unknown table,
 write a new table, write through a computed or reassigned name or a template literal, call a stub (also destructured),
@@ -84,9 +84,17 @@ code, never from a copy of its own:
 
 The **live set** is every `PUBLIC_TABLES` entry whose adapter is an entity the server forwards (today plans, teachers,
 rooms, class_templates, class_sessions). On a signed-out page, a read of a static table or a live table is connected; any
-other read is `signed_out <table> (empty)` (the visitor sees an empty or default answer); any write is
-`signed_out <table> (write)`. The check fails closed: when a guard changes shape or either list cannot be read, or when a
-`PUBLIC_TABLES` table is not forwarded by the server (the provider would ask and get 401).
+other read is `signed_out <table> (empty)` (the visitor sees an empty or default answer); any table write, live tables
+included, is `signed_out <table> (write)`; a `request()` other than `POST /query` and `GET /api/<public entity>[/<id>]`
+is `signed_out request <path>`. The check fails closed: when a guard changes shape or either list cannot be read, or when a
+`PUBLIC_TABLES` table is not forwarded by the server (the provider would ask and get 401). The `BY_DESIGN` settings
+save holds only while `tenants` is not read live signed out (a check enforces it; lane H2 revisits it).
+
+Limits of the signed-out model: the app shell `*` is judged signed in only (its reads today are user-scoped, and the
+site's `tenants` read is already flagged through the site pages); provider commands that are not table writes or
+`request()` (`uploadFile`, `fileBlob`) are not judged signed out; `PUBLIC_TABLES` and `PUBLIC_ENTITIES` are read as a list
+of quoted names (a spread inside the literal would be missed), and the guard regexes do not pin the order of branches
+inside `list()`.
 
 ## The lists in the script
 

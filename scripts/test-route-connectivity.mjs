@@ -164,6 +164,8 @@ const SIGNED_OUT_MODEL = {
   serverEntities: setOf(serverSrc, 'PUBLIC_ENTITIES'),
 };
 SIGNED_OUT_MODEL.unserved = SIGNED_OUT_MODEL.providerTables.filter((t) => adapters[t]?.kind !== 'entity' || !SIGNED_OUT_MODEL.serverEntities.includes(adapters[t].entity));
+/** A request() the Hoy server forwards signed out (server/app.mjs publicRead()); `:x` is an interpolated id. */
+const publicRequest = (r) => r === 'POST /query' || SIGNED_OUT_MODEL.serverEntities.some((e) => r === `GET /api/${e}` || r === `GET /api/${e}/:x`);
 /** The tables a signed-out page reads live: in PUBLIC_TABLES, an entity adapter, and its entity forwarded by the server. */
 const SIGNED_OUT_LIVE = new Set(SIGNED_OUT_MODEL.providerTables.filter((t) => !SIGNED_OUT_MODEL.unserved.includes(t)));
 
@@ -338,7 +340,8 @@ function usesOf({ text, modules }, hits = new Set()) {
 
 /** The finding a use is on this route, or null when it goes through a working adapter. */
 function judge(use, route) {
-  if (use.op === 'request') return null;
+  // Signed out, the Hoy server forwards only POST /query and GET /api/<public entity>[/<id>]; anything else is 401.
+  if (use.op === 'request') return route.signedOut && !publicRequest(use.request) ? `signed_out request ${use.request}` : null;
   if (use.op === 'method') return use.stub ? `stub ${use.method}` : use.missing ? `missing ${use.method}` : 'voucher voucher';
   if (use.op === 'throws') return `not_in_launch ${use.file.replace(/^src\//, '')}`;
   if (use.op === 'mock_only') return `mock_only ${use.file.replace(/^src\//, '')}`;
