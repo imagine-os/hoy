@@ -32,9 +32,12 @@ export const ANONYMOUS_ROUTES = [];
  * fields (the private class, people's contact details and who booked never come back). Nothing else is forwarded
  * signed out, and the visitor's own headers never become an identity. Without the token, signed-out reads stay 401.
  */
-export const PUBLIC_ENTITIES = new Set(['occurrence', 'schedule', 'resource', 'coach', 'product']);
+// Lane H2: the studio's public settings record, the holiday hours and a booking's class and mat (recipe policies).
+export const PUBLIC_ENTITIES = new Set(['occurrence', 'schedule', 'resource', 'coach', 'product', 'setting', 'hours_override', 'booking']);
 /** A public query is a small JSON QuerySpec: read whole (to check its entity) only up to this size. */
 const PUBLIC_QUERY_LIMIT = 16 * 1024;
+/** The largest public answer the server rewrites (the settings record). */
+const TRANSFORM_LIMIT = 2 * 1024 * 1024;
 const PUBLIC_QUERY_READ_MS = 10_000;
 
 /** Never forwarded, signed in or not (first segment after `/t/<tenant>`): the API's dev login hands out tokens. */
@@ -267,7 +270,33 @@ async function publicProxy(req, res, config, deps, path, isQuery) {
   headers.authorization = `Bearer ${config.companyOsReadToken}`;
   Object.assign(headers, clientHeaders(req));
   res.public = true;
-  await forward(res, config, { method: req.method, path, headers, body: body ?? req, limit: PUBLIC_QUERY_LIMIT });
+  // Lane H2, defence in depth: a studio_settings row saved before the settings split (decision F-01) may still hold
+  // the pay data until Administration saves once (runbook 13c); a visitor never gets those sections.
+  const entity = isQuery ? JSON.parse(body.toString('utf8')).entity : decodeURIComponent(path.split('?')[0].match(/\/api\/([^/]+)/)?.[1] ?? '');
+  const transform = entity === 'setting' ? stripPrivateSettings : undefined;
+  await forward(res, config, { method: req.method, path, headers, body: body ?? req, limit: PUBLIC_QUERY_LIMIT, transform });
+}
+
+/** The settings sections only Administration and Finance read (Hoy src/data/companyos/settingsSplit.ts). */
+const PRIVATE_SETTINGS_SECTIONS = ['payroll', 'integrations'];
+const PRIVATE_SETTINGS_CONTACTS = ['payroll', 'coordinator', 'owner'];
+/** A public settings answer without the private sections, whatever the stored row holds. */
+export function stripPrivateSettings(answer) {
+  const clean = (rec) => {
+    const value = rec?.data?.value;
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return rec;
+    const out = { ...value };
+    for (const k of PRIVATE_SETTINGS_SECTIONS) delete out[k];
+    if (out.contacts && typeof out.contacts === 'object') {
+      out.contacts = { ...out.contacts };
+      for (const k of PRIVATE_SETTINGS_CONTACTS) delete out.contacts[k];
+    }
+    return { ...rec, data: { ...rec.data, value: out } };
+  };
+  if (!answer || typeof answer !== 'object') return answer;
+  if (Array.isArray(answer.data)) return { ...answer, data: answer.data.map(clean) };
+  if (answer.data && typeof answer.data === 'object') return { ...answer, data: clean(answer.data) };
+  return answer;
 }
 
 /**
@@ -354,7 +383,7 @@ function pick(source, names) {
  * One request to Company OS. `body` is a stream (piped with a byte limit) or a Buffer. The answer is
  * streamed back with hop-by-hop, cookie and CORS headers removed; user data is never cacheable.
  */
-function forward(res, config, { method, path, headers, body, limit }) {
+function forward(res, config, { method, path, headers, body, limit, transform }) {
   return new Promise((done) => {
     const target = new URL(config.companyOsUrl.replace(/\/+$/, '') + path);
     const client = target.protocol === 'https:' ? https : http;
@@ -370,6 +399,23 @@ function forward(res, config, { method, path, headers, body, limit }) {
       for (const [k, v] of Object.entries(answer.headers)) if (!DROP_RESPONSE_HEADERS.has(k)) out[k] = v;
       // A signed-in user's data: never stored by the browser or anything in between, whatever the API says.
       out['cache-control'] = 'private, no-store';
+      if (transform && (answer.statusCode ?? 502) === 200) {
+        // A JSON answer to rewrite: read whole (bounded), rewritten, sent; anything unreadable is refused, never passed.
+        const chunks = [];
+        let size = 0;
+        answer.on('data', (c) => { size += c.length; if (size > TRANSFORM_LIMIT) { answer.destroy(); } else chunks.push(c); });
+        answer.on('end', () => {
+          let text;
+          try { text = JSON.stringify(transform(JSON.parse(Buffer.concat(chunks).toString('utf8')))); } catch { text = null; }
+          delete out['content-length'];
+          if (text === null) sendError(res, 502, 'upstream_unavailable');
+          else { res.writeHead(200, { ...out, 'content-type': 'application/json', 'content-length': String(Buffer.byteLength(text)) }); res.end(text); }
+          finish();
+        });
+        answer.on('error', () => { res.destroy(); finish(); });
+        answer.on('close', () => { if (size > TRANSFORM_LIMIT && !res.headersSent) { sendError(res, 502, 'upstream_unavailable'); finish(); } });
+        return;
+      }
       res.writeHead(answer.statusCode ?? 502, out);
       answer.pipe(res);
       answer.on('end', finish);

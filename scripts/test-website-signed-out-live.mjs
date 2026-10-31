@@ -55,16 +55,25 @@ const DATA = {
     rec({ key: 'gift_single', name: 'Tarjeta de regalo · clase individual', kind: 'gift', price: 57000, credits: 1, active: true }),
     rec({ key: 'gift_pack12', name: 'Tarjeta de regalo · paquete de 12 clases', kind: 'gift', price: 612000, credits: 12, validity_days: 90, active: true }),
   ],
+  // Lane H2: the studio's public settings record, a holiday and a booked mat (a booking's class and mat only).
+  setting: [rec({ key: 'studio_settings', value: { policies: { cancellationHours: 12 } } }), rec({ key: 'studio_private', value: { payroll: { rateCard: { byTeacher: { x: 91000 } } } } })],
+  hours_override: [rec({ start_date: '2026-12-25', end_date: '2026-12-25', closed: true, label: { es: 'Navidad', en: 'Christmas' }, kind: 'holiday', source: 'colombia' })],
+  booking: [rec({ occurrence: todayClass.id, spot: 4 })],
 };
+/** What the public_site policies let through (deploy/recipes/hoy.json): the public settings record only. */
+const POLICY = { setting: (r) => r.data.key === 'studio_settings' };
 /** Rows the role never reads (policy: kind ≠ private), kept here to prove they never leak through the site. */
 const HIDDEN_PRIVATE = rec({ key: 'private', name: 'Clase privada', kind: 'private', price: 277000, credits: 0, active: true });
 const match = (r, f) => {
   if (!f || f.all) return true;
   if (f.and) return f.and.every((x) => match(r, x));
   if (f.or) return f.or.some((x) => match(r, x));
+  // Lane H2: signed-out bookings are read for upcoming classes (a filter through the booking's class).
+  if (f.ref) { const target = (DATA[f.entity] ?? []).find((x) => x.id === r.data[f.ref]); return !!target && match(target, f.where); }
   const v = f.field === 'id' ? r.id : r.data[f.field];
   if (f.op === 'eq') return v === f.value;
   if (f.op === 'in') return f.value.includes(v);
+  if (f.op === 'gte') return v >= f.value;
   if (f.op === 'is_null') return v == null;
   if (f.op === 'is_not_null') return v != null;
   throw new Error(`fake: op ${f.op}`);
@@ -82,7 +91,7 @@ const cos = createServer((req, res) => {
     if (req.method === 'POST' && path === '/query') {
       const rows = DATA[body.entity];
       if (!rows) return json(res, 403, { error: 'forbidden' });
-      let out = rows.filter((r) => match(r, body.filter)).map((r) => ({ ...r, data: { ...r.data } }));
+      let out = rows.filter((r) => (POLICY[body.entity]?.(r) ?? true) && match(r, body.filter)).map((r) => ({ ...r, data: { ...r.data } }));
       if (body.sort?.[0]) out.sort((a, b) => (a.data[body.sort[0].field] < b.data[body.sort[0].field] ? -1 : 1));
       out = out.slice(body.offset ?? 0, (body.offset ?? 0) + (body.limit ?? 100));
       for (const inc of body.include ?? []) for (const r of out) {
@@ -187,7 +196,9 @@ try {
 
   // What reached Company OS, and what the browser saw.
   const entities = [...new Set(seen.map((s) => s.entity))].sort();
-  check('Company OS was asked only the public reads', entities.every((e) => ['coach', 'occurrence', 'product', 'resource', 'schedule'].includes(e)), entities.join(', '));
+  check('Company OS was asked only the public reads', entities.every((e) => ['coach', 'occurrence', 'product', 'resource', 'schedule', 'setting', 'hours_override', 'booking'].includes(e)), entities.join(', '));
+  check('the site reads the public settings record live (lane H2)', entities.includes('setting'), entities.join(', '));
+  check('the private settings record never reached the browser', answers.filter((a) => a.url.includes('/api/cos/')).every((a) => !a.body.includes('91000')));
   check('Company OS was asked for the timetable, coaches, rooms and products', ['coach', 'occurrence', 'product', 'resource', 'schedule'].every((e) => entities.includes(e)), entities.join(', '));
   check('every request carried the server\'s read identity', seen.length > 0 && seen.every((s) => s.headers.authorization === `Bearer ${READ_TOKEN}`));
   check('no visitor header reached Company OS (cookie, referer, user-agent, origin)', seen.every((s) => !s.headers.cookie && !s.headers.referer && !s.headers.origin && !s.headers['user-agent']?.includes('Chrome')));

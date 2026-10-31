@@ -69,6 +69,10 @@ export const CONTRACT_REFUSALS = {
   template_in_use: { es: 'Hay gastos registrados con este gasto fijo: desactívalo en lugar de borrarlo.', en: 'Expenses were recorded with this recurring expense: deactivate it instead of deleting it.' },
   // The activity log (GET /t/:t/audit, M-07): a filter the API refused.
   invalid_query: { es: 'No pudimos leer el registro con ese filtro. Cambia el rango o la búsqueda e inténtalo de nuevo.', en: 'We could not read the log with that filter. Change the range or the search and try again.' },
+  // Forms (the privacy request, lane H2).
+  unknown_form: { es: 'Este formulario no está disponible. Escríbenos por WhatsApp.', en: 'This form is not available. Write to us on WhatsApp.' },
+  unknown_answer: { es: 'El formulario tiene un dato que no esperábamos. Actualiza la página e inténtalo de nuevo.', en: 'The form has a detail we did not expect. Refresh the page and try again.' },
+  server_set_field: { es: 'No pudimos enviar la solicitud. Actualiza la página e inténtalo de nuevo.', en: 'We could not send the request. Refresh the page and try again.' },
 } as const satisfies Record<string, RefusalCopy>;
 
 /** The connector's own codes: transport, session and launch scope. */
@@ -87,6 +91,10 @@ export const CONNECTOR_REFUSALS = {
   not_in_launch: { es: 'Esta función aún no está disponible.', en: 'This feature is not available yet.' },
   promotions_disabled: { es: 'Las promociones aún no están disponibles.', en: 'Promotions are not available yet.' },
   read_only: { es: 'Este contenido no se edita desde la app.', en: 'This content is not edited from the app.' },
+  // Lane H2: email goes out only through Company OS; legal texts live in the build.
+  email_not_connected: { es: 'El envío de correos desde aquí aún no está disponible. Escribe por WhatsApp.', en: 'Sending email from here is not available yet. Write on WhatsApp.' },
+  legal_document_in_build: { es: 'Este documento se publica con una nueva versión de la app; aquí solo se publican los que el cliente acepta.', en: 'This document is published with a new version of the app; only the documents customers accept are published here.' },
+  legal_document_current: { es: 'Esta es la versión que se pide al registrarse. Publica otra versión en su lugar.', en: 'This is the version asked for at sign-up. Publish another version instead.' },
   // Hoy all-roles, lane H1: refusals the app gives itself before asking Company OS.
   content_later: { es: 'Editar este contenido desde la app llega en una próxima actualización. Por ahora no se guardó nada.', en: 'Editing this content from the app arrives in a coming update. Nothing was saved for now.' },
   checkout_server_only: { es: 'Esta compra se hace desde la página de pago. Vuelve a elegir el paquete.', en: 'This purchase is made from the payment page. Choose the pack again.' },
