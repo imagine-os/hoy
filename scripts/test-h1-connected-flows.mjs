@@ -223,6 +223,19 @@ await test('preferences: hostile: staff roles, push and a stale revision are ref
   assert.equal(api.writes().length, 0);
 });
 
+await test('preferences (review round): a retry after a lost answer that committed is saved, not prefs_stale', async () => {
+  const api = fakeCos(), p = provider(api);
+  const input = { requestId: 'req-pref-lost', channel: 'email', category: 'payments', enabled: false, expected: m.prefs.preferenceRevision(await m.prefs.readOwnPreferences(p, member), { channel: 'email', category: 'payments' }) };
+  api.loseNext('/batch', 3);
+  await assert.rejects(m.prefs.savePreferences(p, member, input));
+  assert.equal((await m.prefs.savePreferences(p, member, input)).status, 'saved');
+  assert.equal(api.db.notification_pref.size, 1);
+});
+await test('preferences (review round): a row with a category the app does not show is ignored, not a page error', async () => {
+  const api = fakeCos(), p = provider(api);
+  api.put('notification_pref', { person: 'per_m1', channel: 'email', category: 'class_reminders', enabled: false });
+  assert.deepEqual(await m.prefs.readOwnPreferences(p, member), []);
+});
 // ── C-19 profile save (person in one /batch) ────────────────────────────────────────────────────────────────────
 const form = { full_name: 'Fictional Renamed', phone: '+57 300 000 0002', birthday: '1990-05-17', ec_name: '', ec_phone: '' };
 await test('profile: name, date of birth and phone go to the person in one keyed /batch, then read back', async () => {
@@ -327,6 +340,14 @@ await test('marketing switch: one notification_pref marketing row in a keyed /ba
   await (await m.marketing.prepareMarketingCommand(p, actor, 'whatsapp', false, 'nonce-mkt-2')).execute();
   assert.equal((await m.marketing.readMarketingState(p, actor)).optin, false);
 });
+await test('marketing switch (review round): a retry after a lost answer that committed succeeds', async () => {
+  const api = fakeCos(), p = provider(api);
+  const cmd = await m.marketing.prepareMarketingCommand(p, actor, 'email', false, 'nonce-mkt-lost');
+  api.loseNext('/batch', 3);
+  await assert.rejects(cmd.execute());
+  await cmd.execute();
+  assert.equal(api.db.notification_pref.size, 1);
+});
 await test('marketing switch: hostile: a staff role is refused (marketing_scope), nothing written', async () => {
   const api = fakeCos(), p = provider(api);
   await assert.rejects(m.marketing.prepareMarketingCommand(p, { ...actor, role: 'front_desk' }, 'email', false, 'n'), has('marketing_scope'));
@@ -411,6 +432,11 @@ await test('finance: a payment with no product is labelled by its concept (not "
   const pay = { id: 'pay_1', tenant_id: T, created_at: '', updated_at: '', user_id: 'u', plan_id: null, amount: 50000, amount_paid: 50000, currency: 'COP', method: 'cash', provider: 'manual', status: 'approved', paid_at: '2026-10-05T15:00:00Z', note: null, concept: 'Clase privada' };
   const r = m.report.confirmedPaymentReport([pay], { tenantId: T, from: '2026-10-01', to: '2026-10-31', productName: (id) => id, personName: (id) => id });
   assert.equal(r.rows[0].product, 'Clase privada'); assert.equal(r.unresolvedProducts, 0);
+});
+await test('finance (review round): the adapter\'s default concepts (Compra, Transferencia) still count as unresolved', () => {
+  const base = { tenant_id: T, created_at: '', updated_at: '', user_id: 'u', plan_id: null, amount: 1, amount_paid: 1, currency: 'COP', method: 'cash', provider: 'manual', status: 'approved', paid_at: '2026-10-05T15:00:00Z', note: null };
+  const r = m.report.confirmedPaymentReport([{ ...base, id: 'p1', concept: 'Compra' }, { ...base, id: 'p2', concept: 'Transferencia' }], { tenantId: T, from: '2026-10-01', to: '2026-10-31', productName: (id) => id, personName: (id) => id, missingProductLabel: '?' });
+  assert.equal(r.unresolvedProducts, 2); assert.ok(r.rows.every((x) => x.product === '?'));
 });
 await test('finance: production report reads payments only (no special_charges read)', async () => {
   const asked = [];
