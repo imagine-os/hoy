@@ -9,8 +9,8 @@
 // - a person per sample user (one per role, 31 customers) and per teacher, with a made-up name, address
 //   (@demo.hoyos.test) and no phone (Colombia has no reserved range for made-up numbers); the studio publishes its real teachers' names, so the seed
 //   never uses them;
-// - `memberships`: each sample user's role key (the recipe's, or the system super_admin). The import has no logins;
-//   the loader makes them (see the Company OS report);
+// - `memberships`: each sample user's role key (the recipe's, or the system super_admin). Company OS's seed loader makes
+//   a login per membership and links it to the person (ADR 0025 addendum 2026-10-31);
 // - customers' `member` facets and teachers' `coach` facets;
 // - the classes (`occurrence`) of the sample's two weeks around `asOf`, plus two more weeks of the timetable ahead,
 //   each with its coach; with --recipe-refs, each with its room (the recipe's, by name: see ROOM_OF); no schedule (the
@@ -19,6 +19,8 @@
 //   trial with its grant entry, and the sample's bookings that the rules would accept: one a day per person, each
 //   taking a class from a usable lot (credit entry) or paid by its own single-class payment; the rest are left out;
 //   each class's booked_count counts what is left.
+// With --recipe-refs (what Company OS commits), recipe rows are named by their fields, which the loader resolves:
+// products by `key`, rooms by `name`. Without it, no product or room is written.
 // Ids are derived from the sample's ids, so the same `asOf` gives the same file on any machine.
 import { createHash } from 'node:crypto';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
