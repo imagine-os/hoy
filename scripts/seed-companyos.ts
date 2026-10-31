@@ -7,7 +7,7 @@
 //
 // What it writes (Company OS entities; the import runs no module rules, so this file does what they would):
 // - a person per sample user (one per role, 31 customers) and per teacher, with a made-up name, address
-//   (@demo.hoyos.test) and phone (+57 300 555 01xx); the studio publishes its real teachers' names, so the seed
+//   (@demo.hoyos.test) and no phone (Colombia has no reserved range for made-up numbers); the studio publishes its real teachers' names, so the seed
 //   never uses them;
 // - `memberships`: each sample user's role key (the recipe's, or the system super_admin). The import has no logins;
 //   the loader makes them (see the Company OS report);
@@ -119,7 +119,11 @@ export function toCompanyOsSeed(sample: HoySample, recipe: Recipe, asOf: string,
   const { db } = sample;
   const now = Date.parse(asOf);
   const products = new Map((recipe.records ?? []).filter((s) => s.entity === 'product').flatMap((s) => s.rows).filter((p) => !p.valid_from).map((p) => [String(p.key), p]));
-  const bookingSettings = recipe.modules?.find((m) => m.key === 'bookings')?.settings ?? {};
+  const settingsOf = (key: string): Row => recipe.modules?.find((m) => m.key === key)?.settings ?? {};
+  const bookingSettings = settingsOf('bookings');
+  /** Bookings a person may hold a day (0 = no limit), and the methods whose payment carries a reference: the recipe's. */
+  const perDay = Number(bookingSettings.max_bookings_per_person_per_day ?? 0);
+  const needsReference = new Set(String(settingsOf('payments').methods_requiring_reference ?? '').split(',').map((m) => m.trim()).filter(Boolean));
   const policy = bookingSettings.policy_as_of_booking === true
     ? { policy_late_cancel_hours: Number(bookingSettings.late_cancel_hours ?? 0), policy_reschedule_hours: Number(bookingSettings.reschedule_hours ?? 0) }
     : {};
@@ -132,9 +136,8 @@ export function toCompanyOsSeed(sample: HoySample, recipe: Recipe, asOf: string,
     if (!email.endsWith('@demo.hoyos.test')) throw new Error(`${key}: ${email} is not a made-up address`);
     if (emails.has(email)) throw new Error(`two people share ${email}`);
     emails.add(email);
-    if (people.length >= 100) throw new Error('more than 100 people: the made-up phone range is +57 300 555 0100-0199');
     const id = uuid(`person:${key}`);
-    people.push({ entity: 'person', id, createdAt, data: { name, email, phone: `+57 300 555 01${String(people.length).padStart(2, '0')}`, locale: 'es' } });
+    people.push({ entity: 'person', id, createdAt, data: { name, email, locale: 'es' } });
     return id;
   };
 
@@ -155,7 +158,8 @@ export function toCompanyOsSeed(sample: HoySample, recipe: Recipe, asOf: string,
     if (!key) throw new Error(`${u.id}: role ${role} has no Company OS key`);
     const teacher = sample.teachers.find((t) => t.user_id === u.id);
     const name = teacher ? teacherName.get(teacher.id)! : String(nameOf.get(u.id));
-    const id = person(u.id, name, String(u.email), u.created_at);
+    // The teacher who signs in gets an address from the made-up name: the sample's is the real teacher's first name.
+    const id = person(u.id, name, teacher ? `profe.${ascii(name)}@demo.hoyos.test` : String(u.email), u.created_at);
     personOfUser.set(u.id, id);
     memberships.push({ person: id, role: key });
   }
@@ -215,13 +219,13 @@ export function toCompanyOsSeed(sample: HoySample, recipe: Recipe, asOf: string,
     const personId = personOfUser.get(p.user_id)!;
     const method = METHOD[p.method] ?? 'cash';
     const gateway = GATEWAY_METHODS.has(method);
-    const ref = gateway ? (p.provider_ref ?? `wmp_${uuid(`ref:${p.id}`).slice(0, 6)}`) : null;
+    const ref = gateway || needsReference.has(method) ? (p.provider_ref ?? `wmp_${uuid(`ref:${p.id}`).slice(0, 6)}`) : null;
     const paidAt = Date.parse(p.paid_at);
     const rec: SeedRecord = {
       entity: 'payment', id: uuid(`payment:${p.id}`), createdAt: p.paid_at,
       data: {
         person: personId, date: dayOf(paidAt), amount: product.price, method, concept: product.name,
-        provider: gateway ? 'gateway' : 'manual', ...(ref ? { provider_ref: ref, reference: ref } : {}),
+        provider: gateway ? 'gateway' : 'manual', ...(ref ? { reference: ref } : {}), ...(ref && gateway ? { provider_ref: ref } : {}),
         status: 'approved', approved_at: p.paid_at, ...productRef(key),
       },
     };
@@ -253,15 +257,17 @@ export function toCompanyOsSeed(sample: HoySample, recipe: Recipe, asOf: string,
   const ahead = (b: Row) => classOf.get(b.session_id)!.status !== 'completed';
   const sampleBookings = db.bookings.filter((b) => classOf.has(b.session_id) && personOfUser.has(b.user_id) && roleOf.get(b.user_id) === 'customer')
     .sort((a, b) => Number(ahead(b)) - Number(ahead(a)) || (ahead(a) ? 1 : -1) * (classOf.get(a.session_id)!.start - classOf.get(b.session_id)!.start) || a.id.localeCompare(b.id));
-  const bookedDays = new Set<string>();
+  const bookedDays = new Map<string, number>();
   const entries: SeedRecord[] = [];
   for (const b of sampleBookings) {
     const c = classOf.get(b.session_id)!;
     if (c.status === 'cancelled') continue;
     const personId = personOfUser.get(b.user_id)!;
     const day = dayOf(c.start);
-    if (bookedDays.has(`${personId} ${day}`)) continue;
-    const status = c.status === 'completed' ? (['checked_in', 'no_show', 'late_cancel'].includes(b.status) ? b.status : 'checked_in') : 'booked';
+    if (perDay > 0 && (bookedDays.get(`${personId} ${day}`) ?? 0) >= perDay) continue;
+    // A past class keeps the sample's attended, no-show or late-cancel; a class ahead is booked; anything else is left out.
+    if (c.status === 'completed' ? !['checked_in', 'no_show', 'late_cancel'].includes(b.status) : !['booked', 'checked_in'].includes(b.status)) continue;
+    const status = c.status === 'completed' ? b.status : 'booked';
     // Booked two days ahead, after paying, never after the seed's date.
     const lot = (lotsOf.get(personId) ?? [])
       .filter((l) => l.left > (c.status === 'completed' ? PAST_RESERVE : 0) && l.from <= day && (!l.until || day <= l.until) && l.paidAt <= c.start - HOUR)
@@ -271,7 +277,7 @@ export function toCompanyOsSeed(sample: HoySample, recipe: Recipe, asOf: string,
     const paidAt = lot?.paidAt ?? single!.paidAt;
     const at = isoAt(Math.max(paidAt, Math.min(now - HOUR, c.start - 48 * HOUR)));
     const id = uuid(`booking:${b.id}`);
-    bookedDays.add(`${personId} ${day}`);
+    if (status === 'booked' || status === 'checked_in') bookedDays.set(`${personId} ${day}`, (bookedDays.get(`${personId} ${day}`) ?? 0) + 1);
     bookings.push({
       entity: 'booking', id, createdAt: at,
       data: {
@@ -286,12 +292,14 @@ export function toCompanyOsSeed(sample: HoySample, recipe: Recipe, asOf: string,
       entries.push({ entity: 'credit_entry', id: uuid(`take:${b.id}`), createdAt: at, data: { lot: lot.id, person: personId, delta: -1, reason: 'booking', booking: id, at } });
     } else {
       single!.used = true;
-      Object.assign(single!.payment.data, { for_entity: 'booking', for_id: id });
+      // A single class is paid for its booking once the booking exists (payments checks for_id): dated with it.
+      single!.payment.createdAt = at;
+      Object.assign(single!.payment.data, { for_entity: 'booking', for_id: id, date: dayOf(at), approved_at: at });
     }
     if (status === 'booked' || status === 'checked_in') c.rec.data.booked_count = Number(c.rec.data.booked_count) + 1;
   }
   const unused = new Set([...singlesOf.values()].flat().filter((s) => !s.used).map((s) => s.payment.id));
-  const kept = payments.filter((p) => !unused.has(p.rec.id));
+  const kept = payments.filter((p) => !unused.has(p.rec.id)).sort((x, y) => String(x.rec.data.approved_at).localeCompare(String(y.rec.data.approved_at)) || x.rec.id.localeCompare(y.rec.id));
   kept.forEach(({ rec, productKey }, i) => {
     money.push(rec);
     const amount = rec.data.amount as number;
@@ -308,7 +316,7 @@ export function toCompanyOsSeed(sample: HoySample, recipe: Recipe, asOf: string,
 
   return {
     fictional: true,
-    _about: "Hoy's made-up sample (src/data/seed in imagine-os/hoy, dated asOf), generated by its scripts/seed-companyos.ts. Every person, address (@demo.hoyos.test), phone, teacher name, payment and booking is fictional. Do not edit by hand: regenerate.",
+    _about: "Hoy's made-up sample (src/data/seed in imagine-os/hoy, dated asOf), generated by its scripts/seed-companyos.ts. Every person, address (@demo.hoyos.test), teacher name, payment and booking is fictional. Do not edit by hand: regenerate.",
     asOf,
     records: [...people, ...facets, ...cls.map((c) => c.rec), ...money, ...lots, ...bookings, ...entries],
     files: [],

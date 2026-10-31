@@ -7,7 +7,10 @@ import { buildCompanyOsSeed, loadHoySample, DEFAULT_AS_OF, ROLE_KEYS } from './s
 
 // The recipe's products and booking policy as the generator reads them (Company-OS deploy/recipes/hoy.json); prices made up for the check.
 const RECIPE = {
-  modules: [{ key: 'bookings', settings: { late_cancel_hours: 12, reschedule_hours: 12, policy_as_of_booking: true } }],
+  modules: [
+    { key: 'bookings', settings: { late_cancel_hours: 12, reschedule_hours: 12, policy_as_of_booking: true, max_bookings_per_person_per_day: 1 } },
+    { key: 'payments', settings: { methods_requiring_reference: 'online_gateway,card_terminal,card' } },
+  ],
   records: [{
     entity: 'product',
     rows: [
@@ -46,12 +49,12 @@ await check('gives every record a unique UUID', () => {
   assert.equal(new Set(seed.records.map((r) => r.id)).size, seed.records.length);
 });
 
-await check('holds only made-up addresses and phones', () => {
+await check('holds only made-up addresses and no phones', () => {
   const people = of('person');
   assert.ok(people.length >= 41, `${people.length} people`);
   for (const p of people) {
     assert.match(String(p.data.email), /^[a-z0-9.-]+@demo\.hoyos\.test$/, p.data.name);
-    if (p.data.phone !== undefined) assert.match(String(p.data.phone), /^\+57 300 555 01\d\d$/, p.data.name);
+    assert.equal(p.data.phone, undefined, 'no phone: Colombia has no reserved range for made-up numbers');
   }
   assert.equal(new Set(people.map((p) => p.data.email)).size, people.length, 'one address per person');
 });
@@ -61,6 +64,11 @@ await check('names no real teacher: the studio publishes its teachers, so the se
   const real = [...teachers.map((t) => t.display_name), demoUsers.find((u) => u.role === 'teacher').name];
   assert.ok(real.length >= 11 && real.every((n) => typeof n === 'string' && n.length > 2), 'the catalog names');
   for (const name of real) assert.ok(!text.includes(name), `the seed names ${name}`);
+  // Nor a real teacher's first name in an address (the sample's teacher login is named after one).
+  const firsts = new Set(teachers.map((t) => t.display_name.split(' ')[0].toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')));
+  const login = of('person').find((p) => p.id === seed.memberships.find((m) => m.role === 'coach').person);
+  assert.match(login.data.email, /^profe\./);
+  for (const c of of('coach')) { const local = String(byId.get(c.data.person).data.email).split('@')[0]; for (const f of firsts) assert.ok(!local.split('.').includes(f), `${local} names ${f}`); }
 });
 
 await check('gives every role key a person: one membership per person, in the recipe\'s keys or the system super_admin', () => {
@@ -115,13 +123,15 @@ await check('counts each class\'s places from its bookings and never overfills i
   assert.ok(bookings.length >= 50, `${bookings.length} bookings`);
 });
 
-await check('books a person at most once a day, after they paid, as the rules would', () => {
+await check('books a person at most once a day (active bookings, as the daily limit counts them), after they paid', () => {
   const seen = new Set();
   for (const b of of('booking')) {
     const occ = byId.get(b.data.occurrence);
     const key = `${b.data.person} ${day(occ.data.starts_at)}`;
-    assert.ok(!seen.has(key), `two bookings: ${key}`);
-    seen.add(key);
+    if (['booked', 'checked_in'].includes(b.data.status)) {
+      assert.ok(!seen.has(key), `two bookings: ${key}`);
+      seen.add(key);
+    }
     assert.ok(Date.parse(b.createdAt) <= Date.parse(occ.data.starts_at) && Date.parse(b.createdAt) <= asOf, 'booked before the class and before the seed date');
     const past = occ.data.status === 'completed';
     assert.ok(past ? ['checked_in', 'no_show', 'late_cancel'].includes(b.data.status) : b.data.status === 'booked', `${b.data.status} on a ${occ.data.status} class`);
@@ -179,7 +189,9 @@ await check('issues one lot per approved pack or trial payment, as payments and 
     if (['card', 'online_gateway', 'card_terminal'].includes(p.data.method)) assert.ok(p.data.reference, 'a card or gateway payment carries its reference');
   }
   for (const b of of('booking').filter((b) => b.data.entitlement === 'single')) {
-    assert.equal(of('payment').filter((p) => p.data.for_id === b.id).length, 1, 'a single booking has its payment');
+    const pays = of('payment').filter((p) => p.data.for_id === b.id);
+    assert.equal(pays.length, 1, 'a single booking has its payment');
+    assert.ok(Date.parse(pays[0].data.approved_at) >= Date.parse(b.createdAt), 'paid once its booking exists');
   }
   const trials = of('payment').filter((p) => lots.some((l) => l.data.payment === p.id && l.data.source === 'trial'));
   assert.equal(new Set(trials.map((p) => p.data.person)).size, trials.length, 'one trial per person');
@@ -190,6 +202,8 @@ await check('gives every approved payment its numbered receipt, 1 to N, as payme
   const receipts = of('invoice');
   assert.equal(receipts.length, of('payment').length);
   assert.deepEqual(receipts.map((r) => r.data.number).sort((a, b) => a - b), receipts.map((_, i) => i + 1));
+  const inOrder = [...receipts].sort((a, b) => a.data.number - b.data.number).map((r) => r.data.issued_at);
+  assert.deepEqual(inOrder, [...inOrder].sort(), 'numbered in the order they were issued');
   for (const r of receipts) {
     const p = byId.get(r.data.payment);
     assert.equal(r.data.kind, 'receipt');
