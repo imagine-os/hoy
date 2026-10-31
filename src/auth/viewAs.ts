@@ -83,6 +83,7 @@ export function onViewAsChange(listener: () => void): () => void {
 export const viewAsAllows = (method: string, path: string): boolean => method === 'GET' || (method === 'POST' && path === '/query');
 
 // ── The sample person ──────────────────────────────────────────────────────────────────────────────────────────────
+const SAMPLE_BATCH = 50;
 export interface ViewAsSample { userId: string; personId: string; name: string; email: string }
 /** A read against Company OS (`GET /admin/users`, `POST /query`): the parsed body, or a throw when refused. */
 export type ViewAsRead = (method: 'GET' | 'POST', path: string, body?: unknown) => Promise<unknown>;
@@ -119,11 +120,17 @@ export async function loadViewAsSample(role: Role, read: ViewAsRead, viewerUserI
   try {
     const holders = directoryUsers(await read('GET', '/admin/users'))
       .filter((u) => u.userId !== viewerUserId && u.keys.includes(key))
-      .sort((a, b) => a.name.localeCompare(b.name, 'es') || a.userId.localeCompare(b.userId));
-    if (!holders.length) return null;
-    const people = records(await read('POST', '/query', { entity: 'person', filter: { field: 'user', op: 'in', value: holders.map((u) => u.userId) }, limit: 500 }));
-    const personOf = new Map(people.flatMap((p) => { const u = refOf(p.data.user); return u ? [[u, p] as const] : []; }));
-    let candidates = holders.filter((u) => personOf.has(u.userId));
+      // By name (a missing name last), then id: the same person every time.
+      .sort((a, b) => Number(!a.name) - Number(!b.name) || a.name.localeCompare(b.name, 'es') || a.userId.localeCompare(b.userId));
+    // The persons of the first holders, a batch at a time (a studio has hundreds of members; one batch usually does).
+    const personOf = new Map<string, { id: string; data: Record<string, unknown> }>();
+    let candidates: DirectoryUser[] = [];
+    for (let i = 0; i < holders.length && !candidates.length && i < SAMPLE_BATCH * 4; i += SAMPLE_BATCH) {
+      const batch = holders.slice(i, i + SAMPLE_BATCH);
+      const people = records(await read('POST', '/query', { entity: 'person', filter: { field: 'user', op: 'in', value: batch.map((u) => u.userId) }, limit: SAMPLE_BATCH }));
+      for (const p of people) { const u = refOf(p.data.user); if (u) personOf.set(u, p); }
+      candidates = batch.filter((u) => personOf.has(u.userId));
+    }
     if (!candidates.length) return null;
     if (role === 'teacher') {
       const ids = candidates.map((u) => personOf.get(u.userId)!.id);

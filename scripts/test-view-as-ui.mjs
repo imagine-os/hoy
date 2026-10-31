@@ -201,6 +201,17 @@ try {
   await signIn(page, 'super@example.test').catch(() => {});
   check('signing in again is the super admin, not the viewed role (no banner)', route(page) === '/admin' && (await banner(page).count()) === 0 && (await stored(page)) === null, `${route(page)} ${await bannerText(page)}`);
   check('…and the Hub opens again', (await go(page, '/hub')) === '/hub');
+
+  // ── a session that ends outside the app (another tab, expiry): view-as does not outlive it ─────────────────────
+  await viewAs(page, 'customer');
+  check('viewing as customer again', (await stored(page)) === 'customer' && (await banner(page).count()) === 1);
+  await page.evaluate(async () => { await window.Clerk?.signOut?.(); });
+  await page.waitForTimeout(1500);
+  if (await page.evaluate(() => window.__fakeClerk.state.active !== null)) { await page.evaluate(() => { window.__fakeClerk.state.active = null; sessionStorage.setItem('fake-clerk-state', JSON.stringify(window.__fakeClerk.state)); }); await page.reload(); await page.waitForTimeout(1500); }
+  check('a session ended outside the app leaves no view-as in the tab (writes are not stuck read-only)', (await stored(page)) === null, String(await stored(page)));
+  await page.goto(`${BASE}/#/auth/sign-in`); await page.waitForTimeout(800);
+  await signIn(page, 'super@example.test').catch(() => {});
+  check('…and the super admin signs back in without view-as', route(page) === '/admin' && (await banner(page).count()) === 0 && (await stored(page)) === null, `${route(page)} ${await stored(page)}`);
   await ctx.close();
 
   // ── Administration (AD-04: also a backend super_admin) and front desk can't ───────────────────────────────────

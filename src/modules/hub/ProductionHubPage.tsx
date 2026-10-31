@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useI18n } from '../../i18n/I18nProvider';
 import { useSession } from '../../auth/SessionProvider';
 import { ROLE_HOME, ROLE_LABEL, type Role } from '../../auth/roles';
@@ -72,7 +72,7 @@ export function ProductionHubPage() {
                   <div>
                     {viewable
                       ? <Button variant="secondary" icon="eye" data-view-as-experience={e.id} onClick={() => viewAs(owner, e.route)}>{t('hub.prod.viewAs', { role: bi(ROLE_LABEL[owner]) })}</Button>
-                      : <Link to={e.route}><Button variant="secondary">{t('hub.prod.open')}</Button></Link>}
+                      : <Button variant="secondary" data-open-experience={e.id} onClick={() => nav(e.route)}>{t('hub.prod.open')}</Button>}
                   </div>
                 </div>
               </Card>

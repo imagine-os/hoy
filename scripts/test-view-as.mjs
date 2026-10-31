@@ -43,7 +43,8 @@ try {
         export { setSessionTokenSource } from './src/auth/sessionToken.ts';
         export { CompanyOSProvider } from './src/data/companyos/CompanyOSProvider.ts';
         export { Transport, CompanyOSError } from './src/data/companyos/transport.ts';
-        export { refusalCopy, hasRefusalCopy } from './src/data/companyos/refusals.ts';`,
+        export { refusalCopy, hasRefusalCopy } from './src/data/companyos/refusals.ts';
+        export { myPerson, refusalKey } from './src/modules/transfers/launch/cos.ts';`,
       resolveDir: process.cwd(), loader: 'ts',
     },
     bundle: true, platform: 'node', format: 'esm', outfile: file, logLevel: 'silent',
@@ -52,7 +53,7 @@ try {
   });
   const m = await import(pathToFileURL(file));
   const { VIEW_AS_KEY, VIEW_AS_REFUSAL, VIEWABLE_ROLES, isViewableRole, readStoredViewAs, storeViewAs, publishViewAs, viewAsActive, viewAsPersonId, viewAsAllows, loadViewAsSample,
-    cosJson, setSessionTokenSource, CompanyOSProvider, Transport, CompanyOSError, refusalCopy, hasRefusalCopy } = m;
+    cosJson, setSessionTokenSource, CompanyOSProvider, Transport, CompanyOSError, refusalCopy, hasRefusalCopy, myPerson, refusalKey } = m;
 
   const reset = () => { publishViewAs(null); sessionStorage.clear(); };
 
@@ -224,6 +225,22 @@ try {
     assert.equal((await loadViewAsSample('admin', request, 'u_super'))?.personId, 'per_admin');
     assert.equal((await loadViewAsSample('front_desk', request, 'u_super'))?.personId, 'per_desk');
   });
+  await test('hostile: a holder with no name sorts last (an empty name does not win the pick)', async () => {
+    const users = [{ userId: 'u_cust_z', email: 'z@hoy.test', name: '', memberships: [{ roleKey: 'member' }] }, ...USERS.filter((u) => u.userId === 'u_cust_a')];
+    const { request } = directory({ users });
+    assert.equal((await loadViewAsSample('customer', request, 'u_super'))?.personId, 'per_cust_a');
+  });
+  await test('many members: the person lookup asks for a bounded batch, not every member at once', async () => {
+    const many = Array.from({ length: 300 }, (_, i) => ({ userId: `u_m${String(i).padStart(3, '0')}`, email: '', name: `M ${String(i).padStart(3, '0')}`, memberships: [{ roleKey: 'member' }] }));
+    const sizes = [];
+    const request = async (method, path, body) => {
+      if (path === '/admin/users') return { users: [...many, ...USERS] };
+      sizes.push(fieldValues(body.filter, 'user').length);
+      return { data: [] };
+    };
+    assert.equal(await loadViewAsSample('customer', request, 'u_super'), null);
+    assert.ok(sizes.length > 0 && sizes.every((n) => n <= 50), sizes.join(','));
+  });
   await test('never the viewer themself', async () => {
     const { request } = directory();
     assert.equal(await loadViewAsSample('admin', request, 'u_admin'), null);
@@ -252,6 +269,18 @@ try {
     const { log, request } = directory();
     await loadViewAsSample('teacher', request, 'u_super');
     assert.ok(log.every((l) => l === 'GET /admin/users' || l === 'POST /query'), log.join(', '));
+  });
+
+  // ── the transfers' own "my person" read (payments, receipts, gift vouchers) ─────────────────────────────────────
+  await test('myPerson asks for the sample person while viewing as, and for $me otherwise; the refusal has copy there too', async () => {
+    const asked = [];
+    const cos = { request: async (method, path, body) => { asked.push(JSON.stringify(body.filter)); return { data: [] }; } };
+    reset(); publishViewAs({ personId: 'per_cust_a' });
+    await myPerson(cos);
+    reset();
+    await myPerson(cos);
+    assert.deepEqual(asked, ['{"field":"id","op":"eq","value":"per_cust_a"}', '{"field":"user","op":"eq","value":{"$me":true}}']);
+    assert.equal(refusalKey('view_as_read_only'), 'payLaunch.code.view_as_read_only');
   });
 
   // ── the provider alias ──────────────────────────────────────────────────────────────────────────────────────────

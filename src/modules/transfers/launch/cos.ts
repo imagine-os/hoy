@@ -1,4 +1,5 @@
 import type { DataProvider } from '../../../data/types';
+import { viewAsPersonId } from '../../../auth/viewAs';
 
 /**
  * The Company OS seam for the launch payment screens (H-5). The production provider (H-3, `CompanyOSProvider`)
@@ -76,9 +77,11 @@ export async function batch(cos: CosPort, ops: BatchOp[], idempotencyKey: string
   return res.ids;
 }
 
-/** The signed-in person (people `person.user` = the login). */
+/** The signed-in person (people `person.user` = the login); while a super admin views as another role, the sample person. */
 export async function myPerson(cos: CosPort): Promise<CosRecord<{ name?: string; email?: string }> | null> {
-  const res = await cos.request<{ data: CosRecord<{ name?: string; email?: string }>[] }>('POST', '/query', { entity: 'person', filter: { field: 'user', op: 'eq', value: { $me: true } }, limit: 1 });
+  const sample = viewAsPersonId();
+  const filter = sample ? { field: 'id', op: 'eq', value: sample } : { field: 'user', op: 'eq', value: { $me: true } };
+  const res = await cos.request<{ data: CosRecord<{ name?: string; email?: string }>[] }>('POST', '/query', { entity: 'person', filter, limit: 1 });
   return res.data[0] ?? null;
 }
 
@@ -102,7 +105,7 @@ export const KNOWN_CODES = [
   'refunds_disabled', 'duplicate_provider_ref', 'invoice_system_managed',
   'file_too_large', 'file_type_not_allowed', 'file_upload_expired', 'file_upload_missing', 'file_upload_mismatch', 'file_owner_not_found', 'file_not_pending', 'storage_unavailable',
   'idempotency_conflict', 'idempotency_key_invalid', 'forbidden', 'write_forbidden', 'invalid_settings', 'module_not_installed',
-  'stale', 'dates_unsupported', 'unauthorized', 'disconnected',
+  'stale', 'dates_unsupported', 'unauthorized', 'disconnected', 'view_as_read_only',
 ] as const;
 /**
  * `ifMatch mismatch` (409): someone changed the row since this screen read it, e.g. two desks reviewing one payment.

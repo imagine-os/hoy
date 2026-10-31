@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ClerkProvider, useAuth, useClerk } from '@clerk/react';
 import { ROLE_LABEL, type Role } from './roles';
 import { roleCan, type Permission } from './permissions';
@@ -143,11 +143,16 @@ function ClerkSession({ config, children }: { config: AppConfig; children: React
   const activeViewAs = realSuperAdmin && isViewableRole(viewAs) ? viewAs : null;
   const sampleKey = activeViewAs && memberInfo ? `${key}|${memberInfo.userId}|${activeViewAs}` : '';
 
-  // Signed out, or someone who may not view as (a planted value): forget it, in state and in this tab.
+  // Signed out (however: our sign-out, another tab, an expired session), another person signed in, or someone who may
+  // not view as (a planted value): forget it, in state and in this tab, so nothing stays read-only or comes back.
+  const viewAsOwner = useRef<string | null>(null);
   useEffect(() => {
     if (!isLoaded) return;
-    if (!isSignedIn) { if (viewAs) setViewAsState(null); return; }
-    if (memberInfo && !realSuperAdmin && (viewAs || readStoredViewAs())) { storeViewAs(null); setViewAsState(null); }
+    if (!isSignedIn) { viewAsOwner.current = null; storeViewAs(null); if (viewAs) setViewAsState(null); return; }
+    if (!memberInfo) return;
+    if (viewAsOwner.current !== null && viewAsOwner.current !== memberInfo.userId) { storeViewAs(null); setViewAsState(null); }
+    viewAsOwner.current = memberInfo.userId;
+    if (!realSuperAdmin && (viewAs || readStoredViewAs())) { storeViewAs(null); setViewAsState(null); }
   }, [isLoaded, isSignedIn, memberInfo, realSuperAdmin, viewAs]);
 
   // The sample person for the viewed role: reads only (GET /admin/users, POST /query), with the super admin's token.
@@ -165,9 +170,10 @@ function ClerkSession({ config, children }: { config: AppConfig; children: React
   const samplePerson = sample && sample.key === sampleKey ? sample.person : null;
   const sampleLoading = Boolean(sampleKey) && sample?.key !== sampleKey;
 
-  // The transport and the provider read this (read-only, and the alias). Published while rendering, before any screen
-  // below can send a request; the transport also refuses writes while this tab keeps a view-as value (fail closed).
-  publishViewAs(activeViewAs ? { personId: samplePerson?.personId ?? null } : null);
+  // The transport and the provider read this (read-only, and the alias). A layout effect runs before any screen's
+  // effects can send a request; until then the transport refuses writes while this tab keeps a view-as value.
+  const samplePersonId = samplePerson?.personId ?? null;
+  useLayoutEffect(() => { publishViewAs(activeViewAs ? { personId: samplePersonId } : null); }, [activeViewAs, samplePersonId]);
 
   const setViewAs = useCallback((role: Role | null) => {
     if (!realSuperAdmin) return;
