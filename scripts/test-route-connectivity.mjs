@@ -42,9 +42,6 @@ const { check, done } = reporter('route connectivity');
 const PENDING = [
   { finding: 'unknown memberships', lane: 'C', routes: ['/app', '/admin'], note: 'membership reads → pack reads (customer/HomePage.tsx your-plan card, admin/DashboardPage.tsx members tile)' },
   { finding: 'sink audit_log', lane: 'E', routes: ['/admin/activity'], note: 'ActivityPage reads GET /t/:t/audit' },
-  // F: signed out, CompanyOSProvider answers SIGNED_OUT[table] or nothing; the public_site identity replaces it.
-  // tenants (opening hours, payment instructions) and bookings (places left) are read too: outside the plan's list.
-  ...['plans (built-in catalogue)', 'teachers (built-in catalogue)', 'rooms (built-in catalogue)', 'tenants (empty)', 'class_templates (empty)', 'class_sessions (empty)', 'bookings (empty)'].map((t) => ({ finding: `signed_out ${t}`, lane: 'F', routes: ['/site/*'], note: 'signed-out site on the public_site identity (ADR 0029)' })),
 ];
 // OPEN: found by this audit (lane G, 2026-10-31) on routes already in LAUNCH_ROUTES, with no lane closing it yet.
 const OPEN = [
@@ -75,6 +72,9 @@ const OPEN = [
   { finding: 'mock_only modules/customer/payments.ts', lane: 'unassigned (verify)', routes: ['/app/plans', '/app/classes'], note: 'recordPayment() is reachable: its audit row is mock-only, and a trial purchase calls assertTrialAvailable (trial_disconnected); check whether the production buy path calls it' },
   { finding: 'mock_only modules/quotes/hooks.ts', lane: 'unassigned', routes: ['/app/plans', '/app/passes', '/app/classes'], note: 'useOperationalCatalog().quote() answers null unless the provider is the mock' },
   { finding: 'mock_only modules/admin/paymentInstructions.ts', lane: 'unassigned', routes: ['/admin/settings/*'], note: 'saving the payment instructions throws payment_settings_disconnected' },
+  // Signed out (lane G2): reads outside the live public set (SIGNED_OUT_LIVE) come back empty without asking Company OS.
+  { finding: 'signed_out tenants (empty)', lane: 'H2 (owner-approved: settings split)', routes: ['/site/*'], note: 'useSettings() (admin/settings.ts: opening hours, contact, policies, legal texts) and readPaymentInstructions() on /site/contact read the studio_settings row, which also holds the payroll rate card and payout account, so the public_site identity cannot read it: every visitor sees the app defaults, not what the studio saved. Closes: lane H2 (the public sections move to a public studio_settings record public_site reads; PUBLIC_TABLES / PUBLIC_ENTITIES then include it)' },
+  { finding: 'signed_out bookings (empty)', lane: 'H2 (owner-approved: public booked spots)', routes: ['/site/*'], note: 'the schedule drawer\'s mat map (website/pages/SchedulePage.tsx taken, MatPicker without `taken`) reads bookings to grey out taken mats; signed out every mat looks free and checkout refuses spot_taken after sign-in. Places left are fine (occurrence.booked_count is live). Closes: lane H2 (a public_site read of booked spots per occurrence, no person, passed as MatPicker `taken`)' },
 ];
 
 // ── Uses that are unconnected on purpose: the production behaviour IS the empty read or the dropped write.
@@ -85,8 +85,8 @@ const BY_DESIGN = [
   { finding: 'sink audit_log', op: 'insert', why: 'the client\'s own audit row is dropped (mapping.ts sink); Company OS writes the audit entry for every write itself (GET /t/:t/audit)' },
   { finding: 'sink audit_log', op: 'read', file: 'src/modules/staff/HomePage.tsx', why: 'the hook runs, but the timeline it feeds renders only in the review build (`!PRODUCTION_BUILD &&`)' },
   { finding: 'mock_only components/organism/SharedImageField/SharedImageField.tsx', why: 'device-local photos exist only in the review build; production offers the shipped media catalogue' },
-  { finding: 'signed_out tenants (write)', file: 'src/modules/admin/settings.ts', why: 'the module that reads the opening hours also holds the administrators\' settings save; a signed-out visitor has no button that calls it (goes stale when lane F lifts the signed-out model: delete it then)' },
   { finding: 'mock_only data/useMediaLibrary.ts', why: 'device-local photos exist only in the review build; production lists the shipped media catalogue' },
+  { finding: 'signed_out tenants (write)', file: 'src/modules/admin/settings.ts', why: 'useSettings() returns save() next to the settings; no signed-out page calls it (the site, MapSlot and DeleteAccountPage take only `settings`), and signed out the row is empty, so save() writes nothing (`if (row)`)' },
 ];
 
 // ── Table names passed in a variable. `tables`: the values it takes (judged like literals). `via`: the helper forwards
@@ -145,10 +145,21 @@ const dpBody = typesSrc.slice(typesSrc.indexOf('export interface DataProvider'),
 const OPTIONAL = [...dpBody.matchAll(/^\s*(\w+)\?\s*[(<:]/gm)].map((m) => m[1]);
 const MISSING = new Set(OPTIONAL.filter((m) => !PROVIDER_METHODS.has(m)));
 // Signed out (lane F), list() and get() answer the provider's PUBLIC_TABLES live through the Hoy server's public_site
-// identity, which forwards only the entities in server/app.mjs PUBLIC_ENTITIES; every other table reads as empty and
-// every write fails (no session). Lane G2: the model is derived in the next commit.
-const SIGNED_OUT_MODEL = { listGuard: false, getGuard: false, providerTables: [], serverEntities: [], unserved: [] };
-const SIGNED_OUT_LIVE = new Set();
+// identity, which forwards only the entities in server/app.mjs PUBLIC_ENTITIES; every other table reads as empty without
+// a request, and a write has no session (the server answers 401). Both lists are read from the code, never copied here.
+const serverSrc = await readFile('server/app.mjs', 'utf8');
+const setOf = (src, name) => [...(src.match(new RegExp(String.raw`const ${name}\s*=\s*new Set\(\[([^\]]*)\]\)`))?.[1] ?? '').matchAll(/'([^']+)'/g)].map((m) => m[1]);
+const SIGNED_OUT_MODEL = {
+  // list(): `if (!(await this.transport.signedIn())) return (a.kind === 'entity' && PUBLIC_TABLES.has(table) ? … : [])`
+  listGuard: /if\s*\(!\(await this\.transport\.signedIn\(\)\)\)\s*return\s*\(a\.kind === 'entity' && PUBLIC_TABLES\.has\(table\)\s*\?[^:\n]*:\s*\[\]\)/.test(classBody),
+  // get(): `if (!signedIn && !PUBLIC_TABLES.has(table)) return null;`
+  getGuard: /if\s*\(!signedIn && !PUBLIC_TABLES\.has\(table\)\)\s*return null;/.test(classBody),
+  providerTables: setOf(providerSrc, 'PUBLIC_TABLES'),
+  serverEntities: setOf(serverSrc, 'PUBLIC_ENTITIES'),
+};
+SIGNED_OUT_MODEL.unserved = SIGNED_OUT_MODEL.providerTables.filter((t) => adapters[t]?.kind !== 'entity' || !SIGNED_OUT_MODEL.serverEntities.includes(adapters[t].entity));
+/** The tables a signed-out page reads live: in PUBLIC_TABLES, an entity adapter, and its entity forwarded by the server. */
+const SIGNED_OUT_LIVE = new Set(SIGNED_OUT_MODEL.providerTables.filter((t) => !SIGNED_OUT_MODEL.unserved.includes(t)));
 
 check('read the adapters (mapping.ts)', Object.keys(adapters).length >= 20, String(Object.keys(adapters).length));
 check('read the provider methods (CompanyOSProvider.ts)', ['list', 'insert', 'atomic', 'request'].every((m) => PROVIDER_METHODS.has(m)), [...PROVIDER_METHODS].join(','));
@@ -334,7 +345,9 @@ function judge(use, route) {
   if (write && a.kind === 'entity' && a.readOnly) return `read_only ${use.table}`;
   if (a.kind === 'session' && write) return `member ${use.table}`; // update/remove refuse; atomic() refuses an insert
   if (a.kind === 'settings' && use.op === 'remove') return `read_only ${use.table}`;
-  // Signed-out reads and writes: judged against SIGNED_OUT_LIVE (lane G2, next commit).
+  // Signed out: a write has no session (401); a read of anything but a static table or a live one is silently empty.
+  if (route.signedOut && write) return `signed_out ${use.table} (write)`;
+  if (route.signedOut && a.kind !== 'static' && !SIGNED_OUT_LIVE.has(use.table)) return `signed_out ${use.table} (empty)`;
   return null;
 }
 const byDesign = (finding, use) => BY_DESIGN.find((b) => b.finding === finding && (!b.op || b.op === use.op) && (!b.file || b.file === use.file));
