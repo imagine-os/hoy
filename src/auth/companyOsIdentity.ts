@@ -178,6 +178,10 @@ export function signupBody(form: SignupForm, config: SignupConfig) {
 
 export type SignupResult =
   | { kind: 'done' }
+  /** 409 `already_registered`: done only if `/me` now lists the sign-up role (`signupHeld`); else a conflict. */
+  | { kind: 'already-registered' }
+  /** 409 `email_linked_to_other_login` (r2co): the verified email is on a person another login holds. Never done. */
+  | { kind: 'email-linked' }
   | { kind: 'consent-changed'; required: SignupConsent[] }
   | { kind: 'disabled' }
   | { kind: 'unverified' }
@@ -187,8 +191,12 @@ export type SignupResult =
 
 export function classifySignup(status: number, body: unknown): SignupResult {
   const code = errorOf(body);
-  // A retry after a sign-up that went through answers 409 already_registered: treat it as done (ADR 0038).
-  if (status === 201 || status === 200 || (status === 409 && code === 'already_registered')) return { kind: 'done' };
+  if (status === 201 || status === 200) return { kind: 'done' };
+  // Review round 2 (r2hoy, both reviews): Company OS answers 409 already_registered when the login already holds the
+  // sign-up role (a retry after a lost answer, a double tap: ADR 0038 says "go to the app"), but also on a few other
+  // paths (a unique-violation race). So it is never taken on its word: the form re-reads /me (`signupHeld`).
+  if (status === 409 && code === 'already_registered') return { kind: 'already-registered' };
+  if (status === 409 && code === 'email_linked_to_other_login') return { kind: 'email-linked' };
   if (status === 401) return { kind: 'unauthorized' };
   if (status === 403 && code === 'email_not_verified') return { kind: 'unverified' };
   if (status === 403 && code === 'signup_disabled') return { kind: 'disabled' };
@@ -199,6 +207,37 @@ export function classifySignup(status: number, body: unknown): SignupResult {
   }
   if (status === 400 || status === 422) return { kind: 'invalid', code: code || `http_${status}` };
   return { kind: 'error', code: code || `http_${status}` };
+}
+
+/** The tenant's sign-up role: the key `ROLE_KEYS` maps to the customer. */
+const SIGNUP_ROLE_KEY = ROLE_KEYS.find((r) => r.role === 'customer')!.key;
+
+/**
+ * After a 409 `already_registered`: does the login now hold the sign-up role? `true` (it went through: go on), `false`
+ * (a settled /me without it: a conflict), or `null` when /me could not say (failed, malformed): never taken as success.
+ */
+export function signupHeld(status: number, body: unknown): boolean | null {
+  const me = classifyMe(status, body);
+  if (me.kind === 'member') return me.me.roleKeys.includes(SIGNUP_ROLE_KEY);
+  if (me.kind === 'not-member') return false;
+  return null;
+}
+
+/**
+ * The copy key for a sign-up answer that doesn't go on (`null`: it does). `existingLogin`: the Join form of a studio
+ * login (review round 2, L4: Join wording, never a raw code or "create your account"). `held`: `signupHeld` after an
+ * `already_registered`.
+ */
+export function signupNoticeKey(result: SignupResult, { existingLogin, held = null }: { existingLogin: boolean; held?: boolean | null }): string | null {
+  const screen = existingLogin ? 'identity.join' : 'identity.register';
+  switch (result.kind) {
+    case 'done': return null;
+    case 'already-registered': return held === true ? null : held === false ? `${screen}.conflict` : `${screen}.failed`;
+    case 'email-linked': return 'identity.signup.emailLinked';
+    case 'invalid': return result.code === 'duplicate_person_user' ? 'identity.signup.personLinked' : `${screen}.invalid`;
+    case 'error': return `${screen}.failed`;
+    default: return null;
+  }
 }
 
 // ---------------------------------------------------------------------------------------------

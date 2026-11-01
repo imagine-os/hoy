@@ -8,7 +8,7 @@ import { ROLE_HOME, ROLE_LABEL } from '../../auth/roles';
 import { cosJson } from '../../auth/cosRequest';
 import { sendEmailCode, signInWithGoogle, verifyEmailCode, type ClerkLike, type CodeMode } from '../../auth/clerkFlows';
 import {
-  asksEmergencyContact, classifySignup, clerkErrorKind, isEmail, parseSignupConfig, signupBody, signupFormErrors,
+  asksEmergencyContact, classifySignup, clerkErrorKind, isEmail, parseSignupConfig, signupBody, signupFormErrors, signupHeld, signupNoticeKey,
   SIGNUP_FORM_LIMITS, type AuthErrorKind, type SignupConfig, type SignupForm,
 } from '../../auth/companyOsIdentity';
 import { safeAuthBack } from '../../auth/visitorSignIn';
@@ -191,17 +191,25 @@ export function RegisterForm({ initialName = '', cta, existingLogin = false }: {
       const { status, body } = await cosJson('/signup', { method: 'POST', body: signupBody(form, config) });
       const result = classifySignup(status, body);
       if (!alive.current) return;
-      // Lane Y2 review: a studio login that isn't a customer yet only gets 409 already_registered when its email's person
-      // is linked to another login (or an older Company OS refuses existing logins): not done, the studio must look.
-      if (existingLogin && status === 409) { setNotice({ tone: 'warn', text: t('identity.join.conflict') }); return; }
       if (result.kind === 'done') { refresh(); return; }
-      if (result.kind === 'consent-changed') { set('accepted', false); setNotice({ tone: 'warn', text: t('identity.register.changed') }); await load(); }
-      else if (result.kind === 'disabled') setConfig({ ...config, enabled: false });
-      else if (result.kind === 'unverified' || result.kind === 'unauthorized') refresh();
-      else if (result.kind === 'invalid') setNotice({ tone: 'danger', text: t('identity.register.invalid', { code: result.code }) });
-      else setNotice({ tone: 'danger', text: t('identity.register.failed', { code: result.code }) });
+      if (result.kind === 'consent-changed') { set('accepted', false); setNotice({ tone: 'warn', text: t('identity.register.changed') }); await load(); return; }
+      if (result.kind === 'disabled') { setConfig({ ...config, enabled: false }); return; }
+      if (result.kind === 'unverified' || result.kind === 'unauthorized') { refresh(); return; }
+      // Review round 2 (r2hoy): already_registered goes on only when /me now lists the customer role (the answer to an
+      // earlier tap was lost); a studio login whose join didn't happen sees the conflict, never a silent loop.
+      let held: boolean | null = null;
+      if (result.kind === 'already-registered') {
+        const me = await cosJson('/me').catch(() => null);
+        if (!alive.current) return;
+        held = me ? signupHeld(me.status, me.body) : null;
+        if (held) { refresh(); return; }
+      }
+      const key = signupNoticeKey(result, { existingLogin, held });
+      if (!key) { refresh(); return; }
+      const code = result.kind === 'invalid' || result.kind === 'error' ? result.code : 'network';
+      setNotice({ tone: result.kind === 'already-registered' && held === false || result.kind === 'email-linked' ? 'warn' : 'danger', text: t(key, { code }) });
     } catch {
-      if (alive.current) setNotice({ tone: 'danger', text: t('identity.register.failed', { code: 'network' }) });
+      if (alive.current) setNotice({ tone: 'danger', text: t(existingLogin ? 'identity.join.failed' : 'identity.register.failed', { code: 'network' }) });
     } finally {
       if (alive.current) setBusy(false);
     }
