@@ -4,6 +4,7 @@ import { PRODUCTION_BUILD } from '../../config/launch';
 import { createElement as h } from 'react';
 import { lazyPages } from '../../app/lazyPage';
 import { PrivateDocument } from '../../auth/PrivateDocument';
+import { PrivateDocsReady } from '../docs/PrivateDocsReady';
 import { decisionsSpec, manualSpec, sourcesSpec } from './specs';
 export { strings } from './strings';
 
@@ -14,7 +15,8 @@ const base = { roles: PRODUCTION_BUILD ? SUPER_ADMIN : EVERYONE, surface: 'docs'
 // The manual pages, the markdown viewer and the chapter index load on first visit; chapter bodies on demand.
 const lazyPage = lazyPages(() => import('./pages'));
 // SW-06: the manual is internal; a visitor signs in first unless the owner made the path public (src/config/launch.ts).
-const page: typeof lazyPage = (name, props) => h(PrivateDocument, null, lazyPage(name, props));
+// Production (lane Y6): the content comes from the server's gate; the page's chunk loads only once it has arrived.
+const page: typeof lazyPage = (name, props) => h(PrivateDocument, null, h(PrivateDocsReady, null, lazyPage(name, props)));
 
 export const routes: RouteDef[] = [
   { ...base, path: '/manual', element: page('ManualHome'), spec: manualSpec, nav: { labelKey: 'core.nav.manual', icon: 'manual', order: 2 } },

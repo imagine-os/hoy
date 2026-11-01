@@ -1,9 +1,10 @@
-import { readdirSync, readFileSync, statSync } from 'node:fs';
-import { join } from 'node:path';
+import { copyFileSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { extname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
-import { docMetaPlugin } from './scripts/lib/docmeta.mjs';
+import { gzipSync } from 'node:zlib';
+import { docMeta, docMetaPlugin } from './scripts/lib/docmeta.mjs';
 
 const here = fileURLToPath(new URL('.', import.meta.url));
 
@@ -28,11 +29,15 @@ function countFiles(dir: string, suffix: string): number {
  * customers. On top of the runtime switches (src/config/launch.ts, launchRoutes.ts):
  * - the review-only modules (REVIEW_ONLY_MODULES; none since lane Y3) are left out of the route registry's glob, so
  *   their code is not in the bundle;
- * - since lane Y3 (Hoy test-fixes) the manual, the source documents, the docs and the kanban ship for the super admin
- *   (R-08 answered for these pages): `import.meta.glob` over `docs/` keeps its markdown and images, but never the
- *   in-app screenshots (`docs/screenshots/`, about 343 MB of the review build): a glob only over them becomes empty,
- *   any other glob over `docs/` gets `!…/docs/screenshots/**` added, and a direct import of a screenshot is empty;
- * - scripts/prune-production.mjs then removes the review-only files `public/` copies (hub map, delivery tracker).
+ * - since lane Y3 (Hoy test-fixes) the manual, the source documents, the docs and the kanban are pages for the super
+ *   admin (R-08 answered for these pages), and since lane Y6 (owner 2026-11-01, "Gate on the server first") none of
+ *   their content is in the public bundle: every `import.meta.glob` over `docs/` becomes `{}`, a direct import of a file
+ *   under `docs/` is empty, and the build fails if a module from `docs/` is rendered into a chunk. `privateDocsPack`
+ *   writes the content to `<outDir>-private/` instead (docs.json: every markdown body redacted, its docmeta index, the
+ *   docs images as data URLs, the source-document index with its covers; source/: the PDFs and covers), which the Hoy
+ *   server serves only to a signed-in super admin (server/docsGate.mjs). The in-app screenshots never ship at all;
+ * - scripts/prune-production.mjs then removes the review-only files `public/` copies (hub map, delivery tracker, and
+ *   public/source/, which only the private pack carries).
  */
 const PRODUCTION = process.env.VITE_HOY_BUILD === 'production';
 // `dev` ships since Hoy all-roles (lane C, 2026-10-31): the developer's home `/dev` is a launch route, and the kanban
@@ -41,24 +46,55 @@ const PRODUCTION = process.env.VITE_HOY_BUILD === 'production';
 export const REVIEW_ONLY_MODULES: string[] = [];
 const MODULES_GLOB = "import.meta.glob<ModuleExports>('../modules/*/index.ts', { eager: true })";
 const SHOTS_DIR = join(here, 'docs', 'screenshots') + '/';
-
-/**
- * A glob's pattern argument (`'…'` or `['…', '!…']`) with the in-app screenshots taken out (lane Y3), or null when it
- * names only screenshots (the whole glob becomes empty). Patterns that don't point into docs/ come back unchanged.
- */
-export function withoutScreenshots(pattern: string): string | null {
-  const parts = [...pattern.matchAll(/'([^']*)'|"([^"]*)"/g)].map((m) => m[1] ?? m[2]);
-  const intoDocs = (p: string) => /^!?(\.\.\/)+docs\//.test(p);
-  if (!parts.some(intoDocs)) return pattern;
-  const positive = parts.filter((p) => !p.startsWith('!'));
-  if (positive.length && positive.every((p) => /^(\.\.\/)+docs\/screenshots\//.test(p))) return null;
-  const prefix = positive.find(intoDocs)?.match(/^(\.\.\/)+/)?.[0] ?? '../';
-  return `[${[...parts, `!${prefix}docs/screenshots/**`].map((p) => JSON.stringify(p)).join(', ')}]`;
+const DOCS_DIR = join(here, 'docs') + '/';
+/** A glob pattern argument (`'…'` or `['…', '!…']`) that reaches into docs/. */
+const intoDocs = (pattern: string) => [...pattern.matchAll(/'([^']*)'|"([^"]*)"/g)].some((m) => /^(\.\.\/)+docs\//.test(m[1] ?? m[2]));
+/** Where the private pack goes for a public dist folder (server/docsGate.mjs `privateDocsDir`, same rule). */
+export const privateDocsDir = (outDir: string) => `${resolve(outDir).replace(/[/\\]+$/, '')}-private`;
+const IMAGE_TYPES: Record<string, string> = { '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.gif': 'image/gif', '.svg': 'image/svg+xml', '.webp': 'image/webp' };
+/** The files the docs gate may serve from source/ (server/docsGate.mjs SOURCE_NAME). */
+const SOURCE_NAME = /^[a-z0-9][a-z0-9-]*\.(pdf|jpg|jpeg|png|webp)$/;
+function walkDocs(dir: string): string[] {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
+    const path = join(dir, e.name);
+    if (e.name.startsWith('.')) return [];
+    if (e.isDirectory()) return path + '/' === SHOTS_DIR ? [] : walkDocs(path);
+    return e.isFile() ? [path] : [];
+  });
 }
 /**
+ * Lane Y6: the private pack the Hoy server gates. docs.json: every markdown file under docs/ (never the in-app
+ * screenshots) with its body and docmeta index, both redacted (`redactDemo`), every image under docs/ as a data URL,
+ * and docs/source/index.json with each cover as a data URL; source/: the PDFs and covers from public/source/.
+ */
+export function writePrivateDocsPack(dir: string) {
+  rmSync(dir, { recursive: true, force: true });
+  mkdirSync(join(dir, 'source'), { recursive: true });
+  const files = walkDocs(join(here, 'docs')).sort();
+  const rel = (f: string) => relative(here, f).split('\\').join('/');
+  const docs = files.filter((f) => f.endsWith('.md')).map((f) => {
+    const body = redactDemo(readFileSync(f, 'utf8'));
+    return { path: rel(f), info: docMeta(rel(f), body), body };
+  });
+  const images = Object.fromEntries(files.filter((f) => IMAGE_TYPES[extname(f).toLowerCase()]).map((f) => [rel(f), `data:${IMAGE_TYPES[extname(f).toLowerCase()]};base64,${readFileSync(f).toString('base64')}`]));
+  const publicSource = join(here, 'public', 'source');
+  const index = JSON.parse(readFileSync(join(here, 'docs', 'source', 'index.json'), 'utf8')) as { file: string; cover?: string }[];
+  const sources = index.map((s) => {
+    const cover = s.cover ? join(here, 'public', s.cover) : null;
+    const type = cover ? IMAGE_TYPES[extname(cover).toLowerCase()] : undefined;
+    return JSON.parse(redactDemo(JSON.stringify({ ...s, cover: cover && type ? `data:${type};base64,${readFileSync(cover).toString('base64')}` : undefined })));
+  });
+  for (const name of readdirSync(publicSource)) if (SOURCE_NAME.test(name)) copyFileSync(join(publicSource, name), join(dir, 'source', name));
+  const pack = JSON.stringify({ version: 1, docs, images, sources });
+  writeFileSync(join(dir, 'docs.json'), pack);
+  // Served as is to a client that takes gzip (server/docsGate.mjs), so the server never compresses 4 MB per request.
+  writeFileSync(join(dir, 'docs.json.gz'), gzipSync(pack, { level: 9 }));
+}
+
+/**
  * The docs describe the review build, so they name its demo personas (`usr_super`, Sofía Arango, …), which must never
- * reach production JavaScript (H-10). Since the docs ship (lane Y3), the production build redacts them from every
- * bundled docs file: the demo ids (`usr_*`), the demo users' full names and their demo e-mail addresses become `[demo]`.
+ * reach production (H-10). Since the docs ship (lane Y3; behind the server's gate since lane Y6), the production build
+ * redacts them from every docs file in the private pack: the demo ids (`usr_*`), the demo users' full names and their demo e-mail addresses become `[demo]`.
  * The names are read from src/auth/demoUsers.ts, so a new demo user is redacted too.
  */
 const DEMO_FULL_NAMES = [...readFileSync(join(here, 'src/auth/demoUsers.ts'), 'utf8').matchAll(/\bname:\s*'([^']+ [^']+)'/g)].map((m) => m[1]);
@@ -83,6 +119,15 @@ const SEED_LAUNCH_CONTENT = ['catalog', 'timetable', 'content', 'legal', 'media'
 // `src/hub/hubMap.data.ts` is not demo data (roles and experiences, no people): the production Hub draws from it (lane D).
 export const REVIEW_ONLY_DATA = new RegExp(`/src/(hub/(?!hubMap\\.data\\.ts$).+|auth/demoUsers|app/frameSession|data/MockProvider|data/seed/(?!(${SEED_LAUNCH_CONTENT.join('|')})\\.ts$).+)\\.tsx?$`);
 
+/** Lane Y6: a review build removes a private pack left beside its outDir by an earlier production build. */
+function reviewBuild(): Plugin {
+  return {
+    name: 'hoy-review-build',
+    apply: 'build',
+    writeBundle(options) { rmSync(privateDocsDir(resolve(here, options.dir ?? 'dist')), { recursive: true, force: true }); },
+  };
+}
+
 function productionBuild(): Plugin {
   return {
     name: 'hoy-production-build',
@@ -99,29 +144,35 @@ function productionBuild(): Plugin {
         }
       }
       if (shipped.length) this.error(`productionBuild: review-only demo data in the production bundle (H-10):\n  ${shipped.join('\n  ')}`);
+      // Lane Y6: nothing from docs/ is rendered into a public chunk but the empty stubs `load` gives (the gate is the only way to it).
+      const fromDocs = [...rendered].filter((id) => id.split('?')[0].startsWith(DOCS_DIR) && String(this.getModuleInfo(id)?.code ?? '').trim().length > 64);
+      // …and no emitted file (an image or font URL, a CSS url()) comes from docs/ or public/source/ either.
+      const assetsFromDocs = Object.values(bundle).filter((a) => a.type === 'asset').flatMap((a) => [...((a as { originalFileNames?: string[] }).originalFileNames ?? []), ...(a.names ?? [])].filter((n) => /^(docs|public\/source)\//.test(n.replace(here, '').replace(/^\/+/, ''))).map((n) => `${a.fileName} (${n})`));
+      if (assetsFromDocs.length) this.error(`productionBuild: a docs/ or source file emitted into the public bundle (lane Y6):\n  ${assetsFromDocs.join('\n  ')}`);
+      if (fromDocs.length) this.error(`productionBuild: docs/ content in the public bundle (lane Y6, docs gate):\n  ${fromDocs.map((i) => i.replace(here, '')).join('\n  ')}`);
     },
     transform(code, id) {
       const file = id.split('?')[0];
       if (REVIEW_ONLY_DATA.test(file)) return { code, map: null, moduleSideEffects: false };
-      // A docs file (its body `?raw`, its index `?docmeta`): no demo persona in production (lane Y3).
-      if (file.startsWith(join(here, 'docs') + '/') && file.endsWith('.md')) return { code: redactDemo(code), map: null };
       if (file.endsWith('/src/app/registry.ts')) {
         if (!code.includes(MODULES_GLOB)) throw new Error('productionBuild: the module glob in src/app/registry.ts changed; update vite.config.ts');
         const skip = REVIEW_ONLY_MODULES.map((m) => `'!../modules/${m}/index.ts'`).join(', ');
         return code.replace(MODULES_GLOB, `import.meta.glob<ModuleExports>(['../modules/*/index.ts', ${skip}], { eager: true })`);
       }
       if (!file.startsWith(join(here, 'src') + '/') || !code.includes('import.meta.glob')) return null;
-      // A glob over docs/ never includes the in-app screenshots (lane Y3); one over them only resolves to no files.
-      return code.replace(/import\.meta\.glob(?:<[^>()]*>)?\(\s*(\[[^\]]*\]|'[^']*'|"[^"]*")[^)]*\)/g, (all, pattern: string) => {
-        const kept = withoutScreenshots(pattern);
-        return kept === null ? '({})' : all.replace(pattern, kept);
-      });
+      // Lane Y6: a glob over docs/ resolves to no files (the content is in the private pack, behind the server's gate).
+      return code.replace(/import\.meta\.glob(?:<[^>()]*>)?\(\s*(\[[^\]]*\]|'[^']*'|"[^"]*")[^)]*\)/g, (all, pattern: string) => (intoDocs(pattern) ? '({})' : all));
     },
     load(id) {
       const file = id.split('?')[0];
-      // The docs ship since lane Y3; a direct import of an in-app screenshot is still empty.
-      if (!file.startsWith(SHOTS_DIR)) return null;
-      return "export default '';";
+      // Lane Y6: a direct import of anything under docs/ is empty (a JSON file an empty list: Vite's JSON plugin reads it).
+      if (!file.startsWith(DOCS_DIR)) return null;
+      return file.endsWith('.json') ? '[]' : "export default '';";
+    },
+    // Lane Y6: the content of docs/ goes to the private pack, never into a public chunk.
+    writeBundle(options) {
+      const outDir = resolve(here, options.dir ?? 'dist');
+      writePrivateDocsPack(privateDocsDir(outDir));
     },
   };
 }
@@ -132,10 +183,12 @@ export default defineConfig({
   cacheDir: join(here, '.vite'),
   define: {
     __COMPONENT_COUNT__: JSON.stringify(countFiles(join(here, 'src/components'), '.meta.ts')),
+    // Lane Y6: production bundles nothing from docs/; the Hub's stat strip still prints the chapter count.
+    __MANUAL_CHAPTER_COUNT__: JSON.stringify(readdirSync(join(here, 'docs/ops-manual/es')).filter((f) => f.endsWith('.md')).length),
     // Which build this is, as a constant the bundler folds (src/config/launch.ts `PRODUCTION_BUILD`).
     __HOY_BUILD__: JSON.stringify(PRODUCTION ? 'production' : 'review'),
   },
-  plugins: [react(), docMetaPlugin(), ...(PRODUCTION ? [productionBuild()] : [])],
+  plugins: [react(), docMetaPlugin(), ...(PRODUCTION ? [productionBuild()] : [reviewBuild()])],
   server: { port: 5173 },
   preview: { port: 4173 },
   build: { chunkSizeWarningLimit: 1000 },

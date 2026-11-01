@@ -1,8 +1,8 @@
 // Production build (H-2, PL-03): Vite copies public/ whole, so after `vite build` this keeps only what production
 // serves (an allowlist: a new review-only folder in public/ stays out until it is listed here) and removes the rest,
-// e.g. hub-map.json, actions.json, hub/ (the review hub's static page), delivery-room/ (the build tracker). source/ (the
-// owner's source documents behind the operations manual) ships since lane Y3: the Hub's Construction & testing band
-// opens them for the super admin (R-08 answered for these pages).
+// e.g. hub-map.json, actions.json, hub/ (the review hub's static page), delivery-room/ (the build tracker), and source/
+// (the owner's source documents): since lane Y6 they are only in the private pack beside dist (vite.config.ts), which
+// the Hoy server serves to a signed-in super admin (server/docsGate.mjs); a PDF left in dist fails the build.
 // Justin's Hub ships since lane Y3 (super admin only): it needs none of those files (its cards come from
 // src/hub/hubMap.data.ts, its people from Company OS), and demo data still must not ship, so this also fails when a demo
 // persona (the review build's default session `usr_super`, or the demo users of the hub map) is in the JavaScript.
@@ -14,7 +14,7 @@ import { join, relative } from 'node:path';
 
 const DIST = process.argv[2] ?? 'dist';
 /** What production serves: Vite's output (index.html, assets/) and the public files the website and app use. */
-export const PRODUCTION_FILES = new Set(['index.html', 'assets', 'brand', 'images', 'social', 'video', 'website', 'favicon.svg', 'favicon.ico', 'robots.txt', 'manifest.webmanifest', 'release.json', 'source']);
+export const PRODUCTION_FILES = new Set(['index.html', 'assets', 'brand', 'images', 'social', 'video', 'website', 'favicon.svg', 'favicon.ico', 'robots.txt', 'manifest.webmanifest', 'release.json']);
 export const BUDGET_BYTES = 60 * 1024 * 1024;
 /** Demo personas that must never reach production JavaScript (src/auth/demoUsers.ts, src/hub/hubDemoUsers.ts). */
 export const DEMO_MARKERS = ['usr_super', 'Sofía Arango', 'usr_coord', 'usr_mkt', 'usr_maint'];
@@ -34,6 +34,7 @@ let bytes = 0;
     // In-app screenshots are named <code>-<es|en>-<width>… (docs/screenshots/); thumbnails are thumb-*.
     if (/(^|\/)(thumb-[^/]*|[A-Z]+-\d+[a-z]?-(es|en)-[^/]*)\.(jpe?g|png|webp)$/i.test(rel)) problems.push(`${rel}: an in-app screenshot`);
     if (rel.startsWith('assets/') && rel.endsWith('.md')) problems.push(`${rel}: a bundled markdown document`);
+    if (rel.endsWith('.pdf')) problems.push(`${rel}: a PDF in the public bundle (source documents go through the docs gate, lane Y6)`);
     if (rel.startsWith('assets/') && rel.endsWith('.js')) {
       const text = readFileSync(path, 'utf8');
       for (const m of DEMO_MARKERS) if (text.includes(m)) problems.push(`${rel}: demo persona "${m}" in production JavaScript`);

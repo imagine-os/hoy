@@ -15,12 +15,16 @@
 //   every frame is read-only and hides the banner; a planted `?as=` is ignored outside a frame and for a non-super admin;
 // - Report a problem submits the forms module's `problem_report`; the Construction & testing band (manual, source
 //   documents, docs, kanban) opens for the super admin only; the wireframe toggle is session-only and resets on sign-out.
+// Lane Y6: that band's content comes from the real server gate (server/docsGate.mjs over the build's private pack): the
+//   super admin's pages load it with the session token and open a source PDF as a blob; admin (AD-04) and front desk
+//   get 403 from the gate with their own session; no bearer is 401; the old public /source/ URL is gone.
 // Run: npm run build:production && QA_PROD_DIST=dist node scripts/test-view-as-ui.mjs
 import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { extname, join, resolve, sep } from 'node:path';
 import { launchBrowser, reporter } from './lib/launch-qa.mjs';
+import { createDocsGate } from '../server/docsGate.mjs';
 
 const { check, done } = reporter('view-as');
 const isProd = (dir) => existsSync(join(dir, 'index.html')) && readdirSync(join(dir, 'assets')).filter((f) => f.endsWith('.js')).some((f) => readFileSync(join(dir, 'assets', f), 'utf8').includes('clerk-js'));
@@ -81,8 +85,17 @@ function answerQuery(user, q) {
   }
   return [];
 }
+// Lane Y6: the real docs gate (server/docsGate.mjs) over the build's private pack, with this fake's Clerk and /me.
+let gateLog = [];
+const gateAll = [];
+const docsGate = await createDocsGate({ distDir: PROD, tenant: TENANT, upstreamTimeoutMs: 2000 }, {
+  verifySession: async (token) => { const u = /^fake\.([^.]+)\.[^.]+$/.exec(token)?.[1]; if (!u) throw new Error('invalid'); return { userId: u }; },
+  fetchMe: async (token) => { const u = /^fake\.([^.]+)\.[^.]+$/.exec(token)?.[1]; const p = PEOPLE[u]; return p ? { status: 200, body: { user: { id: u }, roleKeys: p.keys, isSuperAdmin: !!p.superAdmin } } : { status: 403, body: { error: 'no access to this tenant' } }; },
+  log: (e) => { gateLog.push(e); gateAll.push(e); },
+});
 const server = createServer(async (req, res) => {
   const path = new URL(req.url, 'http://127.0.0.1').pathname;
+  if (req.url === '/private-docs' || req.url.startsWith('/private-docs/')) return docsGate(req, res, req.url.split('?')[0].slice('/private-docs'.length));
   if (path === '/app-config.json') return json(res, 200, { tenant: TENANT, apiBase: '/api/cos', clerkPublishableKey: PK, environment: 'test' });
   if (path.startsWith(`/api/cos/t/${TENANT}/`)) {
     const user = userOf(req);
@@ -130,7 +143,8 @@ async function open(path = '/auth/sign-in', { liveFrames = false } = {}) {
   await ctx.route(`https://${HOST}/npm/@clerk/clerk-js@*/dist/clerk.browser.js`, (r) => r.fulfill({ status: 200, contentType: 'text/javascript', body: FAKE_CLERK }));
   await ctx.addInitScript(({ accounts, pk }) => {
     window.__fakeClerkConfig = { accounts, publishableKey: pk };
-    if (!sessionStorage.getItem('qa-init')) { sessionStorage.setItem('qa-init', '1'); localStorage.setItem('hoyos.lang', 'es'); }
+    // A frame without storage (lane Y6: the gated PDF's blob: viewer) has nothing to set up.
+    if (window.sessionStorage && !sessionStorage.getItem('qa-init')) { sessionStorage.setItem('qa-init', '1'); localStorage.setItem('hoyos.lang', 'es'); }
   }, { accounts: ACCOUNTS, pk: PK });
   const page = await ctx.newPage();
   await page.clock.install({ time: new Date(`${TODAY}T15:00:00Z`) });
@@ -244,6 +258,20 @@ try {
     const text = await page.locator('main').first().innerText().catch(() => '');
     check(`super admin opens ${path} in production, with its content`, at === path && marker.test(text), `${at} ${text.slice(0, 120)}`);
   }
+  // Lane Y6: that content came through the gate (a signed-in super admin), not from the bundle.
+  check('super admin: the docs content is fetched from the gated /private-docs/docs.json (200)', gateLog.some((l) => l.outcome === 'served' && l.file === 'docs.json'), JSON.stringify(gateLog.slice(-3)));
+  at = await go(page, '/manual/04-recepcion-y-check-in');
+  const chapter = await page.locator('main').first().innerText().catch(() => '');
+  check('super admin: a manual chapter renders its body from the pack', /Recepción|check-in/i.test(chapter) && chapter.length > 800, chapter.slice(0, 120));
+  at = await go(page, '/docs/source');
+  await page.locator('.srcdoc-cover').first().click({ timeout: 3000 }).catch(() => {});
+  await page.waitForTimeout(2500);
+  check('super admin: a source PDF opens through the gate (blob, not a public /source/ URL)', gateAll.some((l) => l.outcome === 'served' && /\.pdf$/.test(l.file ?? '')) && (await page.locator('iframe.srcdoc-frame[src^="blob:"]').count()) >= 1, JSON.stringify(gateLog.slice(-3)));
+  check('super admin: no cover or PDF points at a public /source/ URL', (await page.locator('[src*="source/"], [href*="source/"]').count()) === 0);
+  const direct = await page.evaluate(async () => (await fetch('/private-docs/docs.json', { credentials: 'include' })).status);
+  check('the same browser without the bearer (cookies only) gets 401 from the gate', direct === 401, String(direct));
+  const oldFile = await page.evaluate(async () => (await fetch('/source/manual-de-marca.pdf')).status);
+  check('the old public /source/ URL serves nothing', oldFile === 404, String(oldFile));
   // A planted `?as=` outside a frame is not a view-as, even for the super admin.
   log = [];
   at = await go(page, '/app?as=customer');
@@ -341,9 +369,15 @@ try {
   await page.locator('.hub-head-tools label').filter({ hasText: 'Wireframe' }).click({ timeout: 3000 }).catch(() => {});
   await page.waitForTimeout(400);
   check('wireframe on before signing out', (await skin(page)) === 'wireframe');
+  // Lane Y6 (review round): this tab loads the docs pack; sign-out must not leave it in memory (the tab reloads).
+  await go(page, '/manual');
+  await page.locator('main').first().waitFor({ timeout: 5000 }).catch(() => {});
+  const packHere = gateAll.filter((l) => l.outcome === 'served' && l.file === 'docs.json').length;
   await go(page, '/admin');
+  await page.evaluate(() => { window.__y6PackTab = 1; });
   await page.locator('[data-account-chip] button').first().click({ timeout: 3000 }).catch(() => {});
-  await page.waitForTimeout(1500);
+  await page.waitForTimeout(2500);
+  check('sign-out after the docs pack was loaded reloads the tab (nothing of the pack stays in memory)', packHere > 0 && await page.evaluate(() => window.__y6PackTab === undefined), String(packHere));
   check('wireframe resets on sign-out (styled skin, nothing kept in the tab)', (await skin(page)) === 'styled' && await page.evaluate(() => sessionStorage.getItem('hoyos.skin') === null), await skin(page));
   await page.goto(`${BASE}/#/auth/sign-in`); await page.waitForTimeout(800);
   await signIn(page, 'super@example.test').catch(() => {});
@@ -378,6 +412,10 @@ try {
     check(`${who}: no directory read for a sample`, !log.some((l) => l.kind === 'directory'));
     if (who === 'admin') check('admin: still opens its own screens (settings)', (await go(page, '/admin/settings')) === '/admin/settings');
     for (const p of ['/manual', '/docs', '/docs/source', '/dev/knowledgebase']) check(`${who}: ${p} is refused (super admin only in production)`, refusedAt(await go(page, p)), route(page));
+    // Lane Y6: the gate refuses them too, with their own valid session token (AD-04 admin: /me says isSuperAdmin).
+    const token = await page.evaluate(async () => window.Clerk?.session?.getToken?.() ?? null);
+    const gate = await page.evaluate(async (t) => Promise.all(['/private-docs/docs.json', '/private-docs/source/manual-de-marca.pdf'].map(async (u) => { const r = await fetch(u, { headers: t ? { Authorization: `Bearer ${t}` } : {} }); return [r.status, (await r.text()).length]; })), token);
+    check(`${who}: the gate refuses the docs pack and a source PDF with their own session (403, no content)`, !!token && gate.every(([st, len]) => st === 403 && len < 200), JSON.stringify(gate));
     // A wireframe skin planted in the tab is not theirs: the session resets it.
     await page.evaluate(() => sessionStorage.setItem('hoyos.skin', 'wireframe'));
     await page.reload(); await page.waitForTimeout(1500);

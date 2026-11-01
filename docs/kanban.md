@@ -874,3 +874,12 @@ Protected-capture clarification: M14 schedule/pay screenshots remain local/ignor
 
 - Done (branch `hoy-test-fixes-y5`): M-02 Classes creates, edits and deactivates timetable rows on Company OS `schedule` (teacher, room, class type, weekday, time, length, mats, dates) for Administration, the Coordinator and Super Admin; refusals as copy (`resource_overlap` from bookings 1.6.0 and the editor's own); theme, description and level hidden in production; the rest of M-02 stays "available later". [Changelog](changelog/_pending/hoy-test-fixes-y5.md)
 - Open: Wave 3 content entities (theme, description, level; teachers, modalities, rooms).
+## Hoy test-hoy fixes · lane Y6: the Hub's docs behind a server gate (2026-11-01)
+
+### Done (lane branch, not merged)
+
+- K-01…K-05 (production): the manual, docs and changelog, kanban and source PDFs are out of the public bundle; the Hoy server serves them at `/private-docs/*` only to a signed-in super admin (Clerk session + Company OS `/me`), everyone else 401/403 with no content. [Changelog](changelog/_pending/hoy-test-fixes-y6.md)
+
+### Backlog
+
+- `PUBLIC_DOCUMENTS` (Q-14) can no longer open a manual or docs page to visitors in production: the gate serves the super admin only. Decide whether that switch is retired or needs a public slice of the pack.

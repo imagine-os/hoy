@@ -5,7 +5,8 @@
 //   - the actual values of this environment's secret variables, when they are set (the deploy job).
 // Usage: node server/check-bundle.mjs [distDir]
 import { readdir, readFile } from 'node:fs/promises';
-import { extname, join, relative, resolve } from 'node:path';
+import { existsSync } from 'node:fs';
+import { basename, extname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const SHAPES = [
@@ -42,10 +43,13 @@ async function* walk(dir) {
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const dist = resolve(process.argv[2] ?? 'dist');
-  const findings = await findSecrets(dist);
+  // Lane Y6: a production build's private docs pack (`<dist>-private`, served only by docsGate.mjs) is checked too.
+  const privateDocs = `${dist.replace(/[/\\]+$/, '')}-private`;
+  const withPrivate = existsSync(privateDocs);
+  const findings = [...await findSecrets(dist), ...(withPrivate ? (await findSecrets(privateDocs)).map((f) => `${basename(privateDocs)}/${f}`) : [])];
   if (findings.length) {
     console.error(`❌ check-bundle: secrets in ${dist}:\n  - ${findings.join('\n  - ')}`);
     process.exit(1);
   }
-  console.log(`✅ check-bundle: no secret in ${relative(process.cwd(), dist) || dist}`);
+  console.log(`✅ check-bundle: no secret in ${relative(process.cwd(), dist) || dist}${withPrivate ? ' or its private docs pack' : ''}`);
 }

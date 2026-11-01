@@ -3,7 +3,9 @@
 // - Production build (`npm run build:production`; QA_PROD_DIST=<dir>, else built here into a temp dir): Clerk is a
 //   separate chunk; Justin's Hub ships for super admins (lane D, then Hoy test-fixes lane Y3: its look, live
 //   read-only previews, the session bar, the wireframe toggle) with real people and never a demo persona; the manual,
-//   the source documents, the docs and the kanban ship for the super admin (Y3, R-08 answered for these pages); no
+//   the source documents, the docs and the kanban are NOT in the public bundle (lane Y6: no docs text, docmeta, source
+//   summary, docs image or PDF in dist) but in the private pack beside it (`<dist>-private`, redacted), which only the
+//   server's gate serves to a signed-in super admin; no
 //   demo sign-in panel, persona switcher or agent manifest; no in-app screenshots or hub-map files; under the budget.
 // QA_STRICT_DEMO_DATA=1 also requires that no demo persona or seed (MockProvider) ships in production: that holds once
 // lane H-3's CompanyOSProvider replaces MockProvider in the production build. The deploy workflows run it strict, so a
@@ -12,6 +14,7 @@
 // Run: npm run build && node scripts/test-auth-builds.mjs
 //      CI: npm run build:production && QA_PROD_ONLY=1 QA_PROD_DIST=dist QA_STRICT_DEMO_DATA=1 node scripts/test-auth-builds.mjs
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { existsSync, mkdtempSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, relative } from 'node:path';
@@ -50,7 +53,11 @@ const entryJs = readFileSync(join(prodDir, 'index.html'), 'utf8').match(/assets\
 check('production: Clerk loads in its own chunk, not the entry', !!entryJs && has(prod, 'clerk-js').length > 0 && !has(prod, 'clerk-js').includes(entryJs), `${entryJs} / ${has(prod, 'clerk-js').join(', ')}`);
 check('production: no in-app screenshots or thumbnails', !all.some((f) => /\/(thumb-[^/]*|[A-Z]+-\d+[a-z]?-(es|en)-[^/]*)\.(jpe?g|png|webp)$/i.test(f)));
 check('production: no hub map, actions registry or delivery tracker', ['hub-map.json', 'actions.json', 'hub-map', 'hub', 'delivery-room'].every((p) => !existsSync(join(prodDir, p))));
-check('production: the source documents behind the manual ship (lane Y3: the Construction & testing band)', existsSync(join(prodDir, 'source')) && readdirSync(join(prodDir, 'source')).some((f) => f.endsWith('.pdf')));
+// Lane Y6: the source documents (PDFs, covers) are not public files any more; they are in the private pack the Hoy
+// server gates (server/docsGate.mjs: a signed-in super admin only).
+const privDir = `${prodDir.replace(/\/+$/, '')}-private`;
+check('production: no source document is a public file (no source/, no PDF anywhere in dist)', !existsSync(join(prodDir, 'source')) && !all.some((f) => f.endsWith('.pdf')), all.filter((f) => f.endsWith('.pdf')).join(', '));
+check('production: the source documents are in the private pack beside dist (served only through the gate)', existsSync(join(privDir, 'source')) && readdirSync(join(privDir, 'source')).filter((f) => f.endsWith('.pdf')).length === readdirSync('public/source').filter((f) => f.endsWith('.pdf')).length);
 // Route-level absence (hub, dev, docs, manual) is checked in the browser: test-auth-production-ui.mjs (PL-03).
 // The demo sign-in screen calls t('customer.signin.demo') (its user list); the key alone stays in the shared string table.
 check('production: no persona switcher, spec chip or demo sign-in screen', has(prod, 'rs-user').length === 0 && has(prod, 'specchip').length === 0 && has(prod, demoSignIn).length === 0, [...has(prod, 'rs-user'), ...has(prod, demoSignIn)].join(', '));
@@ -65,15 +72,37 @@ check('production: no review preview-frame session (the "hoyos.session" key in c
 check('production: Justin\'s Hub ships (route /hub, session bar, live previews, brand band)', has(prod, '"/hub"').length > 0 && ['hub-sessionbar', 'hub-card-preview', 'hub-brandband', 'data-hub-persona'].every((m) => has(prod, m).length > 0), ['hub-sessionbar', 'hub-card-preview', 'hub-brandband', 'data-hub-persona'].filter((m) => !has(prod, m).length).join(', '));
 check('production: the frame mode, view-as and the problem report ship', has(prod, 'hoyos.viewAs').length > 0 && has(prod, 'hoyos.skin').length > 0 && has(prod, 'problem_report').length > 0);
 check('production: lane D\'s simplified Hub is gone', has(prod, 'data-production-hub').length === 0);
-// The manual and docs text ship since lane Y3 (super admin only): a manual sentence, the docs README and a changelog entry.
+// Lane Y6 (owner 2026-11-01, "Gate on the server first"): the manual, docs, kanban and changelog text are NOT in the
+// public bundle; they are in `<dist>-private/docs.json`, which only the gated /private-docs/ endpoint serves.
 const sample = (file) => readFileSync(file, 'utf8').split('\n').find((l) => l.length > 60 && !/^[-#>|`{]/.test(l.trim()))?.trim().slice(0, 50);
 const docsDir = 'docs/changelog';
 const changelog = readdirSync(docsDir).filter((f) => f.endsWith('.md')).sort().pop();
-for (const file of ['docs/ops-manual/es/00-index.md', 'docs/README.md', join(docsDir, changelog)]) {
+const publicText = all.filter((f) => /\.(js|css|html|json|map|md|txt|svg|xml|webmanifest)$/.test(f)).map((f) => ({ f, text: readFileSync(f, 'utf8') }));
+const pack = existsSync(join(privDir, 'docs.json')) ? readFileSync(join(privDir, 'docs.json'), 'utf8') : '';
+for (const file of ['docs/ops-manual/es/00-index.md', 'docs/ops-manual/en/04-recepcion-y-check-in.md', 'docs/README.md', 'docs/kanban.md', join(docsDir, changelog)]) {
   const line = sample(file);
-  check(`production: the docs text ships (${relative('.', file)})`, !!line && has(prod, line).length > 0, String(line));
+  check(`production: the docs text is not in any public file (${relative('.', file)})`, !!line && has(publicText, line).length === 0, `${line} in ${has(publicText, String(line)).join(', ')}`);
+  check(`production: the docs text is in the private pack (${relative('.', file)})`, !!line && pack.includes(JSON.stringify(line).slice(1, -1)), String(line));
 }
-check('production: the docs markdown index ships (docmeta)', has(prod, 'ops-manual/es/').length > 0);
+// docmeta's shape ({ title, meta, words, figures, … }, scripts/lib/docmeta.mjs), as JSON or minified; code that only
+// names a manual path or the `DECISIÓN PENDIENTE` marker (the viewer, the specs) is not docs content.
+const DOCMETA = /\bwords"?:\d+,"?figures"?:\d+/;
+check('production: no docs markdown index (docmeta) in the public bundle', has(publicText, DOCMETA).length === 0, has(publicText, DOCMETA).join(', '));
+const sourceIndex = JSON.parse(readFileSync('docs/source/index.json', 'utf8'));
+check('production: no source document summary in the public bundle', sourceIndex.every((s) => has(publicText, s.summary.es.slice(0, 60)).length === 0));
+// Review round: by content, not by name: no docs image (outside the in-app screenshots) and no source file is in dist,
+// as a file or base64 inside a text file; and a body line of every manual chapter is in no public file.
+const sha = (buf) => createHash('sha256').update(buf).digest('hex');
+const docsBinaries = [...files('docs').filter((f) => !f.startsWith('docs/screenshots/') && /\.(png|jpe?g|gif|svg|webp)$/i.test(f)), ...files('public/source')];
+const distHashes = new Set(all.map((f) => sha(readFileSync(f))));
+const leakedBinaries = docsBinaries.filter((f) => { const b = readFileSync(f); const b64 = b.toString('base64'); return distHashes.has(sha(b)) || (b64.length > 240 && has(publicText, b64.slice(100, 220)).length > 0); });
+check(`production: no docs image or source file in the public bundle, by content (${docsBinaries.length} files)`, docsBinaries.length > 5 && leakedBinaries.length === 0, leakedBinaries.join(', '));
+const bodyLine = (file) => readFileSync(file, 'utf8').replace(/^---\n[\s\S]*?\n---\n/, '').split('\n').find((l) => l.trim().length > 50 && !/^[-#>|`{!*\[]/.test(l.trim()))?.trim().slice(0, 50);
+// A line the app's own code also carries (a page spec quoting the manual's lead) is code, not docs content.
+const srcText = files('src').filter((f) => /\.(tsx?|json)$/.test(f)).map((f) => readFileSync(f, 'utf8')).join('\n');
+const chapters = files('docs/ops-manual').filter((f) => f.endsWith('.md')).map((f) => [f, bodyLine(f)]).filter(([, l]) => l && !srcText.includes(l));
+const leakedChapters = chapters.filter(([, l]) => has(publicText, l).length > 0).map(([f]) => f);
+check(`production: no manual chapter body line in a public file (${chapters.length} chapters)`, chapters.length > 20 && leakedChapters.length === 0, leakedChapters.join(', '));
 if (process.env.QA_STRICT_DEMO_DATA === '1') {
   check('production (strict): no demo persona', has(prod, 'Sofía Arango').length === 0 && has(prod, 'usr_super').length === 0, has(prod, 'usr_super').join(', '));
   // Lane Y3 ships the docs, which name the demo users: every demo full name and id must be redacted, accented or not.
@@ -88,6 +117,9 @@ if (process.env.QA_STRICT_DEMO_DATA === '1') {
   const leaked = fromDocs.filter((n) => has(prod, n).length);
   check(`production (strict): the docs carry no demo user (${fromDocs.length} names and ids checked, accented or not)`, fromDocs.length >= 10 && leaked.length === 0, leaked.join(', '));
   check('production (strict): no MockProvider seed', has(prod, 'Juliana Ospina').length === 0);
+  // Lane Y6: the private pack is served to the super admin only, but it still describes the review build: redacted too.
+  const packLeaks = [...new Set([...demoNames, ...demoIds])].filter((n) => pack.includes(n) && !productionSrc.includes(n));
+  check('production (strict): the private docs pack carries no demo user', pack.length > 0 && packLeaks.length === 0, packLeaks.join(', '));
 } else {
   console.log(`note demo personas/seed in production: ${has(prod, 'usr_super').length ? 'present (MockProvider, until H-3 swaps the provider)' : 'absent'} — set QA_STRICT_DEMO_DATA=1 to require absence`);
 }
