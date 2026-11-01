@@ -6,7 +6,8 @@ import { SessionContext, type SessionCtx, type SessionStatus, type SessionUser }
 import { cosPath, loadAppConfig, type AppConfig } from './appConfig';
 import { classifyMe, isSuperAdminMe, roleFromMe, type MeInfo } from './companyOsIdentity';
 import { setSessionTokenSource, subscribeUnauthorized } from './sessionToken';
-import { isViewableRole, loadViewAsSample, publishViewAs, readStoredViewAs, storeViewAs, type ViewAsSample } from './viewAs';
+import { isViewAsFailure, isViewableRole, loadViewAsSample, publishViewAs, readStoredViewAs, storeViewAs, type ViewAsSample, type ViewAsSampleFailure } from './viewAs';
+import { failureCopy } from '../data/companyos/refusals';
 import { cosJson } from './cosRequest';
 import { useI18n } from '../i18n/I18nProvider';
 import { ViewAsBanner } from '../components/molecule/ViewAsBanner/ViewAsBanner';
@@ -103,7 +104,9 @@ function ClerkSession({ config, children }: { config: AppConfig; children: React
   const refresh = useCallback(() => setNonce((n) => n + 1), []);
   // View-as: the role this tab keeps (checked against /me below) and the sample person found for it.
   const [viewAs, setViewAsState] = useState<Role | null>(readStoredViewAs);
-  const [sample, setSample] = useState<{ key: string; person: ViewAsSample | null } | null>(null);
+  const [sample, setSample] = useState<{ key: string; person: ViewAsSample | ViewAsSampleFailure | null } | null>(null);
+  // A failed sample read offers Retry (review round 2, L2): a new attempt reads again.
+  const [sampleAttempt, setSampleAttempt] = useState(0);
 
   // Clerk that never loads (`status: 'error'`, or still loading after the timeout) is an error, not an endless spinner.
   // `'degraded'` counts as loaded (Clerk sets `isLoaded` for it). A Clerk that loads late still recovers on its own.
@@ -162,13 +165,20 @@ function ClerkSession({ config, children }: { config: AppConfig; children: React
     let alive = true;
     const read = async (method: 'GET' | 'POST', path: string, body?: unknown) => {
       const res = await cosJson(path as `/${string}`, { method, body });
-      if (res.status !== 200) throw new Error(`view_as_sample_${res.status}`);
+      if (res.status !== 200) {
+        // The refusal's own code when it is a plain key, else what the status means (the copy comes from the code table).
+        const code = (res.body as { error?: unknown } | null)?.error;
+        throw Object.assign(new Error(`view_as_sample_${res.status}`), { code: typeof code === 'string' && /^[a-z][a-z0-9_]{0,63}$/.test(code) ? code : res.status === 401 || res.status === 403 ? 'forbidden' : 'view_as_unavailable' });
+      }
       return res.body;
     };
     loadViewAsSample(activeViewAs, read, memberInfo.userId).then((person) => { if (alive) setSample({ key: sampleKey, person }); });
     return () => { alive = false; };
-  }, [sampleKey, activeViewAs, memberInfo]);
-  const samplePerson = sample && sample.key === sampleKey ? sample.person : null;
+  }, [sampleKey, activeViewAs, memberInfo, sampleAttempt]);
+  const sampleAnswer = sample && sample.key === sampleKey ? sample.person : null;
+  const sampleFailure = isViewAsFailure(sampleAnswer) ? sampleAnswer : null;
+  const samplePerson = isViewAsFailure(sampleAnswer) ? null : sampleAnswer;
+  const retrySample = useCallback(() => { setSample(null); setSampleAttempt((n) => n + 1); }, []);
   const sampleLoading = Boolean(sampleKey) && sample?.key !== sampleKey;
 
   // The transport and the provider read this (read-only, and the alias). A layout effect runs before any screen's
@@ -256,7 +266,9 @@ function ClerkSession({ config, children }: { config: AppConfig; children: React
       {activeViewAs && <ViewAsBar role={activeViewAs} person={value.viewAsPerson?.name ?? null} loading={sampleLoading} onExit={exitViewAs} />}
       {/* L2 (review round 1): nobody holds the viewed role, so there is no one to show; the screens would read nobody's
           (or, before the provider alias, the super admin's own) records. Say so instead of showing them. */}
-      {activeViewAs && !sampleLoading && !samplePerson ? <ViewAsNobody role={activeViewAs} onExit={exitViewAs} /> : children}
+      {/* Review round 2, L2: a failed read is said as a failure with Retry, never as "nobody holds this role". */}
+      {activeViewAs && !sampleLoading && sampleFailure ? <ViewAsFailed failure={sampleFailure} onRetry={retrySample} onExit={exitViewAs} />
+        : activeViewAs && !sampleLoading && !samplePerson ? <ViewAsNobody role={activeViewAs} onExit={exitViewAs} /> : children}
     </SessionContext.Provider>
   );
 }
@@ -268,6 +280,20 @@ function ViewAsNobody({ role, onExit }: { role: Role; onExit: () => void }) {
     <main className="page" data-view-as-empty>
       <EmptyState icon="users" title={t('hub.viewAs.empty.title', { role: bi(ROLE_LABEL[role]) })} body={t('hub.viewAs.empty.body')}
         action={<button type="button" className="btn btn-secondary btn-sm" onClick={onExit}>{t('hub.viewAs.empty.exit')}</button>} />
+    </main>
+  );
+}
+
+/** View-as whose sample person could not be read: the reason in words, Retry, and the way out. */
+function ViewAsFailed({ failure, onRetry, onExit }: { failure: ViewAsSampleFailure; onRetry: () => void; onExit: () => void }) {
+  const { t, lang } = useI18n();
+  return (
+    <main className="page" data-view-as-failed>
+      <EmptyState tone="error" title={t('hub.viewAs.failed.title')} body={failureCopy({ code: failure.error }, lang, t('hub.viewAs.failed.body'))}
+        action={<div className="row wrap">
+          <button type="button" className="btn btn-primary btn-sm" data-view-as-retry onClick={onRetry}>{t('hub.viewAs.failed.retry')}</button>
+          <button type="button" className="btn btn-secondary btn-sm" onClick={onExit}>{t('hub.viewAs.empty.exit')}</button>
+        </div>} />
     </main>
   );
 }

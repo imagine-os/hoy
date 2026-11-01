@@ -4,7 +4,7 @@ import { useI18n } from '../../i18n/I18nProvider';
 import { useSession } from '../../auth/SessionProvider';
 import { useTable } from '../../data/DataContext';
 import type { BookingRow, MembershipRow, PaymentRow } from '../../data/schema';
-import { formatCOP, formatDate, formatTime, isSameDay, MS, addDays, dateKey } from '../../i18n/format';
+import { formatCOP, formatDate, formatTime, isSameDay, MS, addDays } from '../../i18n/format';
 import { useLayout } from '../../layout/useLayout';
 import { StatTile } from '../../components/molecule/StatTile/StatTile';
 import { Card } from '../../components/molecule/Card/Card';
@@ -22,6 +22,7 @@ import { auditTitle } from '../staff/audit';
 import { useCosQueries } from '../staff/desk/useCos';
 import { ACTIVE_PACK_QUERIES, activePackCustomers } from './activePacks';
 import { PRODUCTION_BUILD } from '../../config/launch';
+import { today as studioToday } from '../../data/companyos/dates';
 import { activityRows, readAuditPage } from '../../data/companyos/audit';
 import { refusalCopy } from '../../data/companyos/refusals';
 import { memberNames, type CosPort } from '../transfers/launch/cos';
@@ -50,7 +51,8 @@ export function DashboardPage() {
     // `/query` rows carry their fields under `data` (integration guide §4); aggregate rows are flat.
     lots: packRows.lots.map((l) => fieldsOf(l)).map((d, i) => ({ id: packRows.lots[i].id, person: str(d.person) ?? '', valid_from: str(d.valid_from), valid_until: str(d.valid_until) })),
     left: packRows.left.map((x) => ({ lot: str(x.lot) ?? '', left: typeof x.left === 'number' ? x.left : Number(x.left) })),
-    today: dateKey(new Date()),
+    // The studio's calendar day (America/Bogota), as every Company OS screen dates "today" (review round 2, L3).
+    today: studioToday(),
   });
   const { rows: payments } = useTable<PaymentRow>('payments', { where: { status: 'approved' } });
   const since = Date.now() - 30 * MS.day;

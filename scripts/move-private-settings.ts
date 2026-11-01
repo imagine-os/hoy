@@ -14,6 +14,9 @@
 // session). Plain http only to localhost. Idempotent: a second run finds nothing to move. An existing studio_private
 // keeps its values (they were saved after the split, so they are newer); contacts merge by intent.
 // Exit: 0 done or nothing to move · 1 a refusal, a malformed answer, or --check found pay data · 2 bad invocation.
+// Node: 22.18+ or 23.6+ (TypeScript type stripping on by default; the script runs the app's own .ts). On an older
+// Node 22 (22.6 to 22.17) add the flag: node --experimental-strip-types scripts/move-private-settings.ts. Older Node
+// cannot parse the file at all, so it stops with a syntax error before any check here can run (review round 2, L6).
 // Tested by scripts/test-move-private-settings.mjs against a fake Company OS.
 import { randomUUID } from 'node:crypto';
 import { PRIVATE_SETTINGS_KEY, PUBLIC_SETTINGS_KEY, mergeSettingsRecords, sameJson, splitSettings } from '../src/data/companyos/settingsSplit.ts';
@@ -27,7 +30,8 @@ class Stop extends Error {
   constructor(message: string, exit: number) { super(message); this.exit = exit; }
 }
 
-const USAGE = 'usage: COMPANY_OS_URL=… COMPANY_OS_TENANT=… (COMPANY_OS_PLATFORM_KEY=… | COMPANY_OS_TOKEN=…) node scripts/move-private-settings.ts [--apply | --check]';
+const USAGE = 'usage: COMPANY_OS_URL=… COMPANY_OS_TENANT=… (COMPANY_OS_PLATFORM_KEY=… | COMPANY_OS_TOKEN=…) node scripts/move-private-settings.ts [--apply | --check]\n'
+  + 'needs Node 22.18+ or 23.6+ (type stripping on by default); on Node 22.6 to 22.17 run node --experimental-strip-types scripts/move-private-settings.ts';
 
 function options() {
   const args = process.argv.slice(2);
@@ -69,9 +73,14 @@ function names(priv: Obj): string[] {
 
 async function main() {
   const o = options();
-  const answer = await call<{ data?: unknown }>(o, 'POST', '/query', { entity: 'setting', filter: { field: 'key', op: 'in', value: [PUBLIC_SETTINGS_KEY, PRIVATE_SETTINGS_KEY] }, limit: 2 });
+  const answer = await call<{ data?: unknown }>(o, 'POST', '/query', { entity: 'setting', filter: { field: 'key', op: 'in', value: [PUBLIC_SETTINGS_KEY, PRIVATE_SETTINGS_KEY] }, limit: 3 });
   const rows = isObj(answer) ? answer.data : undefined;
   if (!Array.isArray(rows) || !rows.every((r): r is SettingRecord => isObj(r) && typeof r.id === 'string' && isObj(r.data))) throw new Stop('the setting query answered in an unexpected shape: nothing written', 1);
+  // One record per key is all the app ever writes. Three rows leave room to see a second one; acting on whichever came
+  // first could report "nothing to move" while the other still holds pay data (review round 2, L7).
+  for (const k of [PUBLIC_SETTINGS_KEY, PRIVATE_SETTINGS_KEY]) {
+    if (rows.filter((r) => r.data.key === k).length > 1) throw new Stop(`${o.tenant}: more than one ${k} record: nothing written; look at them by hand (the app keeps one)`, 1);
+  }
   const pubRec = rows.find((r) => r.data.key === PUBLIC_SETTINGS_KEY) ?? null;
   const privRec = rows.find((r) => r.data.key === PRIVATE_SETTINGS_KEY) ?? null;
   if (!pubRec) { console.log(`${o.tenant}: no ${PUBLIC_SETTINGS_KEY} record yet, nothing to move.`); return; }
