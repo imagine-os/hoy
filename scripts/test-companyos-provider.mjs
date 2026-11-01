@@ -181,6 +181,17 @@ try {
     assert.equal(row.ends_at, '2026-11-01T12:50:00.000Z'); assert.equal(row.booked_count, 3); assert.equal(row.tenant_id, 'ten_hoy');
     const noField = fromRecord(adapters.class_sessions, { id: 'o2', data: { title: 'Fuego con Sara', starts_at: '2026-11-01T12:00:00Z' } });
     assert.equal(noField.modality_id, 'mod_fuego', 'modality from the title when the tenant field is missing');
+    // Lane Y1: a generated class has no type of its own: it reads its schedule's (included as schedule_row), else the title.
+    const viaSchedule = fromRecord(adapters.class_sessions, { id: 'o3', data: { title: 'Morning flow', schedule: 's1', schedule_row: { id: 's1', modality: 'solido' }, starts_at: '2026-11-01T12:00:00Z' } });
+    assert.equal(viaSchedule.modality_id, 'mod_solido', 'the class type of the class\'s schedule');
+    assert.equal(viaSchedule.template_id, 's1', 'the schedule id stays the id');
+    const own = fromRecord(adapters.class_sessions, { id: 'o4', data: { title: 'Morning flow', modality: 'centro', schedule: 's1', schedule_row: { id: 's1', modality: 'solido' } } });
+    assert.equal(own.modality_id, 'mod_centro', 'a class\'s own type wins over its schedule\'s');
+    const hidden = fromRecord(adapters.class_sessions, { id: 'o5', data: { title: 'Pulso flow', schedule: 's1', schedule_row: null } });
+    assert.equal(hidden.modality_id, 'mod_pulso', 'a schedule the reader cannot see: the title');
+    const none = fromRecord(adapters.class_sessions, { id: 'o6', data: { title: 'Morning flow', schedule: 's1', schedule_row: { id: 's1' } } });
+    assert.equal(none.modality_id, null, 'no type anywhere: none (the class is not open for booking)');
+    assert.deepEqual(planQuery(adapters.class_sessions, undefined).spec.include, [{ field: 'schedule', as: 'schedule_row', fields: ['modality'] }], 'one read brings the schedule\'s class type');
     const data = toData(adapters.class_sessions, { modality_id: 'mod_pulso', booked_count: 9, starts_at: '2026-11-01T07:00:00-05:00', level: 'all' }, 'update');
     assert.deepEqual(data, { modality: 'pulso', starts_at: '2026-11-01T12:00:00.000Z' }, 'server count and derived columns are never sent');
   });
