@@ -10,7 +10,7 @@ import { isFramed } from '../app/frameMode';
  * The website's purchase and booking buttons (Book on Plans, Give a gift, the schedule's "Continue booking"; test-hoy
  * fixes, lane Y2). Signed out: sign-in, keeping where the visitor was going (as before). Signed in, whatever the role:
  * straight to the purchase or booking page. A login holding the customer role opens it as a customer; a studio login
- * that isn't a customer yet is offered "Join as a customer" there (`joinsAsCustomer`). The target is validated
+ * that isn't a customer yet is enrolled automatically there (`enrolsAsCustomer`, owner 2026-11-01). The target is validated
  * like a sign-in return; anything else goes to the customer home. Navigation only: the page keeps its guard.
  */
 export function purchaseEntry(user: { role: Role }, target: string): string {
@@ -18,7 +18,7 @@ export function purchaseEntry(user: { role: Role }, target: string): string {
   return signInReturn(target) ?? '/app';
 }
 
-export interface JoinCase {
+export interface EnrolCase {
   status: SessionStatus;
   signedIn: boolean;
   viewAs: Role | null;
@@ -35,15 +35,16 @@ export interface JoinCase {
 export const readOnlyDocument = (): boolean => isFramed() || viewAsActive();
 
 /**
- * Whether a customer page the session can't open offers "Join as a customer" instead of the no-access page: a
- * signed-in studio login, ready, not viewing as (read-only), not a customer yet, on a page of the customer area that
- * customers open. Company OS decides the rest (`POST /t/:t/signup`, ADR 0038 amendment 2026-11-01).
+ * Whether a customer page the session can't open enrols the login as a customer instead of the no-access page (owner
+ * 2026-11-01: every registered login is a customer): a signed-in studio login, ready, not viewing as (read-only), not a
+ * customer yet, on a page of the customer area that customers open. Company OS decides the rest (`POST /t/:t/signup`,
+ * ADR 0038 amendment 2026-11-01).
  *
  * Review round 1 (r1hoy, M1): never in a read-only document. A preview frame or a tab still holding a view-as value
- * refuses every write, so its sign-up form could only fail on submit: it falls through to the no-access page instead.
- * A real super admin without the customer role is offered the join too (L5; RequireRole asks before its own pass).
+ * refuses every write, so an enrolment could only fail: it falls through to the no-access page instead. A real super
+ * admin without the customer role is enrolled too (L5; RequireRole asks before its own pass).
  */
-export function joinsAsCustomer(c: JoinCase): boolean {
+export function enrolsAsCustomer(c: EnrolCase): boolean {
   if (c.readOnly === true || readOnlyDocument()) return false;
   return c.status === 'ready' && c.signedIn && c.viewAs === null && !c.roles.includes('customer') && c.roles.length > 0
     && c.routeRoles.includes('customer') && matrixArea(c.path)?.id === 'customer-app';

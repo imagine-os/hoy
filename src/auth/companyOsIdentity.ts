@@ -224,12 +224,12 @@ export function signupHeld(status: number, body: unknown): boolean | null {
 }
 
 /**
- * The copy key for a sign-up answer that doesn't go on (`null`: it does). `existingLogin`: the Join form of a studio
- * login (review round 2, L4: Join wording, never a raw code or "create your account"). `held`: `signupHeld` after an
- * `already_registered`.
+ * The copy key for a sign-up answer that doesn't go on (`null`: it does). `existingLogin`: the automatic customer
+ * enrolment of a login already in the studio (owner 2026-11-01: every registered login is a customer; no raw codes, no
+ * "create your account"). `held`: `signupHeld` after an `already_registered`.
  */
 export function signupNoticeKey(result: SignupResult, { existingLogin, held = null }: { existingLogin: boolean; held?: boolean | null }): string | null {
-  const screen = existingLogin ? 'identity.join' : 'identity.register';
+  const screen = existingLogin ? 'identity.enrol' : 'identity.register';
   switch (result.kind) {
     case 'done': return null;
     case 'already-registered': return held === true ? null : held === false ? `${screen}.conflict` : `${screen}.failed`;
@@ -238,6 +238,18 @@ export function signupNoticeKey(result: SignupResult, { existingLogin, held = nu
     case 'error': return `${screen}.failed`;
     default: return null;
   }
+}
+
+/**
+ * The automatic enrolment's sign-up body (owner 2026-11-01): a login already in the studio becomes a customer with
+ * nothing to fill in. Company OS uses the person already linked to the login and fills only what it lacks, so this sends
+ * the login's name (when the tenant takes it) and the documents the person accepted, nothing else.
+ */
+export function enrolmentBody(config: SignupConfig, name: string, accepted: boolean) {
+  const person: Record<string, string> = {};
+  const clean = name.trim();
+  if (config.personFields.includes('name') && clean.length >= 2 && !clean.includes('@')) person.name = clean.slice(0, SIGNUP_FORM_LIMITS.name);
+  return { person, facet: {}, consents: accepted ? config.consents.map((c) => ({ document: c.document, version: c.version })) : [] };
 }
 
 // ---------------------------------------------------------------------------------------------

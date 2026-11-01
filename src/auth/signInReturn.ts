@@ -40,7 +40,7 @@ export function signInReturn(value: string | null | undefined): string | null {
  * Where a signed-in person lands: the validated `next` when it is in their own area, else their home. `held` is every
  * role the login holds (lane Y2): an `/app` next is followed for a login holding the customer role, whatever its
  * primary role, and a purchase or booking next (`customerReturn`) for any studio login, whose customer page then
- * offers "Join as a customer". A staff next is still judged by the primary role's matrix.
+ * enrols it as a customer (owner 2026-11-01). A staff next is still judged by the primary role's matrix.
  */
 export function homeFor(role: Role, next: string | null, held: readonly Role[] = [role]): string {
   const target = signInReturn(next);

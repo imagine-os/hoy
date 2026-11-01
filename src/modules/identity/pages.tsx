@@ -145,9 +145,9 @@ const EMPTY_FORM: SignupForm = { name: '', whatsapp: '+57 ', ecName: '', ecPhone
 
 /**
  * CU-01 / CU-02: the studio's sign-up after Clerk proved the email. Company OS stores the consents with their versions.
- * Lane Y2: also "Join as a customer" for a studio login (`src/auth/JoinAsCustomer.tsx`), starting from its name.
+ * A studio login never fills this in: it is enrolled automatically (`src/auth/CustomerEnrolment.tsx`, owner 2026-11-01).
  */
-export function RegisterForm({ initialName = '', cta, existingLogin = false }: { initialName?: string; cta?: string; existingLogin?: boolean } = {}) {
+export function RegisterForm({ initialName = '', cta }: { initialName?: string; cta?: string } = {}) {
   const { t } = useI18n();
   const { refresh } = useSession();
   const { user } = useUser();
@@ -178,7 +178,6 @@ export function RegisterForm({ initialName = '', cta, existingLogin = false }: {
 
   const set = <K extends keyof SignupForm>(k: K, v: SignupForm[K]) => setForm((f) => ({ ...f, [k]: v }));
   const fieldError = (k: keyof SignupForm) => errors[k] && t(`identity.field.${errors[k]}`);
-  const version = (doc: string) => config.consents.find((c) => c.document === doc)?.version;
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -196,7 +195,7 @@ export function RegisterForm({ initialName = '', cta, existingLogin = false }: {
       if (result.kind === 'disabled') { setConfig({ ...config, enabled: false }); return; }
       if (result.kind === 'unverified' || result.kind === 'unauthorized') { refresh(); return; }
       // Review round 2 (r2hoy): already_registered goes on only when /me now lists the customer role (the answer to an
-      // earlier tap was lost); a studio login whose join didn't happen sees the conflict, never a silent loop.
+      // earlier tap was lost); otherwise it is a conflict, never a silent loop back to this form.
       let held: boolean | null = null;
       if (result.kind === 'already-registered') {
         const me = await cosJson('/me').catch(() => null);
@@ -204,12 +203,12 @@ export function RegisterForm({ initialName = '', cta, existingLogin = false }: {
         held = me ? signupHeld(me.status, me.body) : null;
         if (held) { refresh(); return; }
       }
-      const key = signupNoticeKey(result, { existingLogin, held });
+      const key = signupNoticeKey(result, { existingLogin: false, held });
       if (!key) { refresh(); return; }
       const code = result.kind === 'invalid' || result.kind === 'error' ? result.code : 'network';
       setNotice({ tone: result.kind === 'already-registered' && held === false || result.kind === 'email-linked' ? 'warn' : 'danger', text: t(key, { code }) });
     } catch {
-      if (alive.current) setNotice({ tone: 'danger', text: t(existingLogin ? 'identity.join.failed' : 'identity.register.failed', { code: 'network' }) });
+      if (alive.current) setNotice({ tone: 'danger', text: t('identity.register.failed', { code: 'network' }) });
     } finally {
       if (alive.current) setBusy(false);
     }
@@ -229,27 +228,38 @@ export function RegisterForm({ initialName = '', cta, existingLogin = false }: {
             <Field label={t('identity.register.ecPhone')} required error={fieldError('ecPhone')}>{(id) => <Input id={id} inputMode="tel" maxLength={SIGNUP_FORM_LIMITS.ecPhone} value={form.ecPhone} onChange={(e) => set('ecPhone', e.target.value)} />}</Field>
           </div>
         </>}
-        {config.consents.length > 0 && (
-          <div className="stack-sm">
-            <label className="identity-consent">
-              <input type="checkbox" checked={form.accepted} onChange={(e) => set('accepted', e.target.checked)} />
-              <span>
-                {t('identity.register.consent.pre')} <Link to="/site/legal/terms" target="_blank">{t('identity.register.terms')}</Link>
-                {' '}{t('identity.register.consent.and')} <Link to="/site/legal/privacy" target="_blank">{t('identity.register.privacy')}</Link>
-                {' '}{t('identity.register.consent.post')}
-              </span>
-            </label>
-            <p className="xs muted">
-              {[version('terms') && `${t('identity.register.terms')}: ${t('identity.register.version', { version: version('terms')! })}`,
-                version('privacy') && `${t('identity.register.privacy')}: ${t('identity.register.version', { version: version('privacy')! })}`].filter(Boolean).join(' · ')}
-            </p>
-            {errors.accepted && <p className="xs identity-error" role="alert">{t('identity.field.consent')}</p>}
-          </div>
-        )}
+        <ConsentCheck config={config} accepted={form.accepted} onChange={(v) => set('accepted', v)} error={!!errors.accepted} />
         {notice && <Notice tone={notice.tone}>{notice.text}</Notice>}
         <Button type="submit" block size="lg" loading={busy}>{cta ?? t('identity.register.cta')}</Button>
       </form>
     </Card>
+  );
+}
+
+/**
+ * The studio's documents with their versions and the one consent box: the step every new customer sees, and the only
+ * step the automatic customer enrolment of a studio login may show (owner 2026-11-01). Nothing when there are none.
+ */
+export function ConsentCheck({ config, accepted, onChange, error }: { config: SignupConfig; accepted: boolean; onChange: (accepted: boolean) => void; error?: boolean }) {
+  const { t } = useI18n();
+  if (config.consents.length === 0) return null;
+  const version = (doc: string) => config.consents.find((c) => c.document === doc)?.version;
+  return (
+    <div className="stack-sm" data-consent-step>
+      <label className="identity-consent">
+        <input type="checkbox" checked={accepted} onChange={(e) => onChange(e.target.checked)} />
+        <span>
+          {t('identity.register.consent.pre')} <Link to="/site/legal/terms" target="_blank">{t('identity.register.terms')}</Link>
+          {' '}{t('identity.register.consent.and')} <Link to="/site/legal/privacy" target="_blank">{t('identity.register.privacy')}</Link>
+          {' '}{t('identity.register.consent.post')}
+        </span>
+      </label>
+      <p className="xs muted">
+        {[version('terms') && `${t('identity.register.terms')}: ${t('identity.register.version', { version: version('terms')! })}`,
+          version('privacy') && `${t('identity.register.privacy')}: ${t('identity.register.version', { version: version('privacy')! })}`].filter(Boolean).join(' · ')}
+      </p>
+      {error && <p className="xs identity-error" role="alert">{t('identity.field.consent')}</p>}
+    </div>
   );
 }
 
