@@ -5,6 +5,7 @@ import { signInReturn } from './signInReturn';
 import { visitorSignIn } from './visitorSignIn';
 import { viewAsActive } from './viewAs';
 import { isFramed } from '../app/frameMode';
+import { CUSTOMER_AUTO_ENROL_STAFF } from '../config/launch';
 
 /**
  * The website's purchase and booking buttons (Book on Plans, Give a gift, the schedule's "Continue booking"; test-hoy
@@ -29,6 +30,8 @@ export interface EnrolCase {
   path: string;
   /** This document is read-only (a preview frame, or a tab holding a view-as value). Also read from the document itself. */
   readOnly?: boolean;
+  /** The staff enrolment switch (default `CUSTOMER_AUTO_ENROL_STAFF`, on: owner decision C-01). */
+  autoEnrolStaff?: boolean;
 }
 
 /** Whether this document only reads: a preview frame (always read-only, `productionFrame.ts`) or an active view-as. */
@@ -45,6 +48,8 @@ export const readOnlyDocument = (): boolean => isFramed() || viewAsActive();
  * admin without the customer role is enrolled too (L5; RequireRole asks before its own pass).
  */
 export function enrolsAsCustomer(c: EnrolCase): boolean {
+  // Every login reaching this holds a role and not the customer one, so a staff role: the switch decides.
+  if (!(c.autoEnrolStaff ?? CUSTOMER_AUTO_ENROL_STAFF)) return false;
   if (c.readOnly === true || readOnlyDocument()) return false;
   return c.status === 'ready' && c.signedIn && c.viewAs === null && !c.roles.includes('customer') && c.roles.length > 0
     && c.routeRoles.includes('customer') && matrixArea(c.path)?.id === 'customer-app';

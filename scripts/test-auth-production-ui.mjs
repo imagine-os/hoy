@@ -11,9 +11,9 @@ import { extname, join, resolve, sep } from 'node:path';
 import { launchBrowser, reporter } from './lib/launch-qa.mjs';
 
 const { check, done } = reporter('H-2 production sign-in');
-// The staff enrolment switch the build was made with (src/config/launch.ts CUSTOMER_AUTO_ENROL_STAFF, default off):
-// QA_AUTO_ENROL=on for a build with VITE_CUSTOMER_AUTO_ENROL_STAFF=true.
-const AUTO = process.env.QA_AUTO_ENROL === 'on';
+// The staff enrolment switch the build was made with (src/config/launch.ts CUSTOMER_AUTO_ENROL_STAFF, default on, owner
+// C-01): QA_AUTO_ENROL=off for a build with VITE_CUSTOMER_AUTO_ENROL_STAFF=false.
+const AUTO = process.env.QA_AUTO_ENROL !== 'off';
 const DIST = resolve(process.env.QA_PROD_DIST ?? 'dist');
 const TENANT = 'hoy-test';
 const HOST = 'fake.clerk.accounts.dev';
@@ -363,7 +363,7 @@ try {
     check('r2 M1 enrol: a lost answer, then 409 already_registered with /me holding the customer role → the customer page, no error', JSON.stringify(api.members.user_desk.roleKeys) === '["front_desk","member"]' && (await page.locator('[data-enrol-customer]').count()) === 0 && (await page.locator('.appshell').count()) === 1 && route(page) === '/app', `${route(page)} ${api.signups.length}`);
     check('enrol: the sign-up sends the accepted documents and nothing to fill in (no phone, no facet)', JSON.stringify(sent?.consents) === JSON.stringify(api.consents) && !sent?.person?.phone && JSON.stringify(sent?.facet) === '{}', JSON.stringify(sent));
   } else {
-    // The switch is off (default, owner question C-01): a staff login is not enrolled; the customer page stays closed.
+    // The switch is off (a build that turns it off): a staff login is not enrolled; the customer page stays closed.
     await page.waitForTimeout(400);
     check('switch OFF: front desk on the customer app is not enrolled (no step, no sign-up sent, no customer screens)', (await page.locator('[data-enrol-customer]').count()) === 0 && api.signups.length === 0 && (await page.locator('.appshell').count()) === 0 && JSON.stringify(api.members.user_desk.roleKeys) === '["front_desk"]', route(page));
     check('switch OFF: no "Join" wording either', !/Únete|Unirme|\bJoin\b/i.test(await page.locator('body').innerText()));
@@ -408,17 +408,19 @@ try {
   check('Y2 the admin screens still open as Administration', route(page) === '/admin/settings', route(page));
   await ctx.close();
 
-  // Owner 2026-11-01: a tenant with no documents to accept enrols a studio login with no step at all.
-  ({ ctx, page } = await open('/auth/sign-in'));
-  {
-    const saved = api.consents;
-    api.consents = [];
-    await signIn(page, 'recepcion@example.test');
-    await page.goto(`${BASE}/#/app`); await page.waitForTimeout(1500);
-    check('enrol: no documents → the customer app opens straight away (one sign-up, no step shown)', route(page) === '/app' && (await page.locator('.appshell').count()) === 1 && (await page.locator('[data-enrol-customer]').count()) === 0 && api.signups.length === 1 && JSON.stringify(api.members.user_desk.roleKeys) === '["front_desk","member"]', `${route(page)} ${api.signups.length}`);
-    api.consents = saved;
+  if (AUTO) {
+    // Owner 2026-11-01: a tenant with no documents to accept enrols a studio login with no step at all.
+    ({ ctx, page } = await open('/auth/sign-in'));
+    {
+      const saved = api.consents;
+      api.consents = [];
+      await signIn(page, 'recepcion@example.test');
+      await page.goto(`${BASE}/#/app`); await page.waitForTimeout(1500);
+      check('enrol: no documents → the customer app opens straight away (one sign-up, no step shown)', route(page) === '/app' && (await page.locator('.appshell').count()) === 1 && (await page.locator('[data-enrol-customer]').count()) === 0 && api.signups.length === 1 && JSON.stringify(api.members.user_desk.roleKeys) === '["front_desk","member"]', `${route(page)} ${api.signups.length}`);
+      api.consents = saved;
+    }
+    await ctx.close();
   }
-  await ctx.close();
 
   if (AUTO) {
     // Lane review: a teacher-only login (the customer routes also allow the teacher role) is enrolled too, not shown the

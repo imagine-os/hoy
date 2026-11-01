@@ -281,8 +281,8 @@ try {
   // Review round 1 (r1hoy, L5), owner 2026-11-01: the super admin holds no customer role, so a purchase page enrols them
   // as a customer (as for Administration), never a checkout whose purchase Company OS would refuse.
   await go(page, '/app/plans');
-  // The staff enrolment switch (CUSTOMER_AUTO_ENROL_STAFF, default off; QA_AUTO_ENROL=on for a build with it on).
-  if (process.env.QA_AUTO_ENROL === 'on') check('r1 L5 super admin without the customer role: a purchase page enrols them as a customer (not the checkout as super admin)', (await page.locator('[data-enrol-customer]').count()) === 1, route(page));
+  // The staff enrolment switch (CUSTOMER_AUTO_ENROL_STAFF, default on; QA_AUTO_ENROL=off for a build with it off).
+  if (process.env.QA_AUTO_ENROL !== 'off') check('r1 L5 super admin without the customer role: a purchase page enrols them as a customer (not the checkout as super admin)', (await page.locator('[data-enrol-customer]').count()) === 1, route(page));
   else check('switch OFF: the super admin is not enrolled on a purchase page (no step, no sign-up sent)', (await page.locator('[data-enrol-customer]').count()) === 0 && !writes().some((w) => /\/signup$/.test(w.route)), route(page));
   await go(page, '/hub');
 
