@@ -14,7 +14,7 @@ import { Drawer } from '../../components/organism/Drawer/Drawer';
 import { DETAILS_MAX, PROBLEM_REPORT_PATH, problemReportBody, problemReportErrors, SUMMARY_MAX } from './problemReport';
 
 /** The forms module's codes a staff report can meet, in staff words (the code→copy table's lines are customer-facing). */
-const REPORT_CODES = ['unknown_form', 'invalid_answers', 'unknown_answer', 'answer_too_long', 'invalid_email', 'server_set_field', 'write_forbidden', 'forbidden', 'view_as_read_only'];
+const REPORT_CODES = ['idempotency_conflict', 'unknown_form', 'invalid_answers', 'unknown_answer', 'answer_too_long', 'invalid_email', 'server_set_field', 'write_forbidden', 'forbidden', 'view_as_read_only'];
 
 /**
  * Report a problem in the production Hub (lane Y3): the review build's drawer (screen, person, role, summary, details),
@@ -37,9 +37,12 @@ export function HubProblemReport() {
   const summaryRef = useRef<HTMLInputElement>(null), detailsRef = useRef<HTMLTextAreaElement>(null);
   const route = location.pathname;
 
-  const start = () => { setErrors({ summary: false, details: false }); setFailure(null); setSent(false); setOpen(true); };
+  // Reopening after a sent report starts a new one (empty, new key): one click on Send must not file it twice.
+  const start = () => { if (sent) { setSummary(''); setDetails(''); action.renew(); } setErrors({ summary: false, details: false }); setFailure(null); setSent(false); setOpen(true); };
   const reset = () => { setSummary(''); setDetails(''); action.renew(); start(); };
-  const edit = (set: (v: string) => void) => (v: string) => { set(v); action.renew(); };
+  // After a lost answer the first attempt may be stored: the text locks and only a same-key retry is offered.
+  const locked = action.uncertain;
+  const edit = (set: (v: string) => void) => (v: string) => { if (locked) return; set(v); action.renew(); };
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     if (action.busy) return;
@@ -75,9 +78,9 @@ export function HubProblemReport() {
           <Button block variant="secondary" onClick={reset}>{t('hub.report.prod.another')}</Button>
           <Button block variant="ghost" onClick={() => setOpen(false)}>{t('hub.report.close')}</Button>
         </div> : <form className="stack" noValidate onSubmit={submit}>
-          <Field label={t('hub.report.subject')} required error={errors.summary ? t('hub.report.subjectError') : undefined}>{(id) => <Input id={id} ref={summaryRef} value={summary} maxLength={SUMMARY_MAX} invalid={errors.summary} onChange={(e) => edit(setSummary)(e.target.value)} />}</Field>
-          <Field label={t('hub.report.details')} hint={t('hub.report.prod.detailsHint')} error={errors.details ? t('hub.report.prod.detailsError') : undefined}>{(id) => <textarea id={id} ref={detailsRef} className={`input ${errors.details ? 'is-invalid' : ''}`} rows={5} maxLength={DETAILS_MAX} value={details} aria-invalid={errors.details || undefined} onChange={(e) => edit(setDetails)(e.target.value)} />}</Field>
-          <Button type="submit" block loading={action.busy} disabled={action.busy}>{t('hub.report.prod.send')}</Button>
+          <Field label={t('hub.report.subject')} required error={errors.summary ? t('hub.report.subjectError') : undefined}>{(id) => <Input id={id} ref={summaryRef} readOnly={locked} value={summary} maxLength={SUMMARY_MAX} invalid={errors.summary} onChange={(e) => edit(setSummary)(e.target.value)} />}</Field>
+          <Field label={t('hub.report.details')} hint={t('hub.report.prod.detailsHint')} error={errors.details ? t('hub.report.prod.detailsError') : undefined}>{(id) => <textarea id={id} ref={detailsRef} readOnly={locked} className={`input ${errors.details ? 'is-invalid' : ''}`} rows={5} maxLength={DETAILS_MAX} value={details} aria-invalid={errors.details || undefined} onChange={(e) => edit(setDetails)(e.target.value)} />}</Field>
+          <Button type="submit" block loading={action.busy} disabled={action.busy}>{t(locked ? 'hub.report.prod.retrySame' : 'hub.report.prod.send')}</Button>
           <Button type="button" block variant="ghost" onClick={() => setOpen(false)}>{t('hub.report.cancel')}</Button>
         </form>}
       </div>

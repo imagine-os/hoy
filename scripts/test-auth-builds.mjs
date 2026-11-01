@@ -76,6 +76,17 @@ for (const file of ['docs/ops-manual/es/00-index.md', 'docs/README.md', join(doc
 check('production: the docs markdown index ships (docmeta)', has(prod, 'ops-manual/es/').length > 0);
 if (process.env.QA_STRICT_DEMO_DATA === '1') {
   check('production (strict): no demo persona', has(prod, 'Sofía Arango').length === 0 && has(prod, 'usr_super').length === 0, has(prod, 'usr_super').join(', '));
+  // Lane Y3 ships the docs, which name the demo users: every demo full name and id must be redacted, accented or not.
+  const demoSrc = readFileSync('src/auth/demoUsers.ts', 'utf8');
+  const demoNames = [...demoSrc.matchAll(/\bname:\s*'([^']+ [^']+)'/g)].map((x) => x[1]).flatMap((n) => [n, n.normalize('NFD').replace(/[\u0300-\u036f]/g, '')]);
+  const demoIds = [...demoSrc.matchAll(/\bid:\s*'(usr_[a-z0-9_]+)'/g)].map((x) => x[1]);
+  // Names and ids that production code itself carries on purpose (the visitor id, a teacher of the launch seed who shares a
+  // demo name, spec examples) are the H-10 markers' business, not the docs': only the rest is checked here.
+  const REVIEW_ONLY = /^src\/(hub\/(?!hubMap\.data\.ts$)|auth\/demoUsers|app\/frameSession|data\/MockProvider|data\/seed\/(?!(catalog|timetable|content|legal|media|studioPolicies)\.ts$))/;
+  const productionSrc = files('src').filter((f) => /\.(tsx?|json)$/.test(f) && !REVIEW_ONLY.test(relative('.', f))).map((f) => readFileSync(f, 'utf8')).join('\n');
+  const fromDocs = [...new Set([...demoNames, ...demoIds])].filter((n) => !productionSrc.includes(n));
+  const leaked = fromDocs.filter((n) => has(prod, n).length);
+  check(`production (strict): the docs carry no demo user (${fromDocs.length} names and ids checked, accented or not)`, fromDocs.length >= 10 && leaked.length === 0, leaked.join(', '));
   check('production (strict): no MockProvider seed', has(prod, 'Juliana Ospina').length === 0);
 } else {
   console.log(`note demo personas/seed in production: ${has(prod, 'usr_super').length ? 'present (MockProvider, until H-3 swaps the provider)' : 'absent'} — set QA_STRICT_DEMO_DATA=1 to require absence`);

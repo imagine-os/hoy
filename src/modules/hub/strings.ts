@@ -43,6 +43,8 @@ export const strings: StringTable = {
   'hub.report.prod.code.forbidden': { es: 'Tu cuenta no puede enviar reportes.', en: 'Your account may not send reports.' },
   'hub.report.prod.code.view_as_read_only': { es: 'Estás viendo como otro rol (solo lectura). Sal de «Ver como» para enviar el reporte.', en: 'You are viewing as another role (read-only). Exit “View as” to send the report.' },
   'hub.report.prod.code.server_set_field': { es: 'El reporte llevaba un dato que solo pone el servidor. Actualiza la página e inténtalo de nuevo.', en: 'The report carried a detail only the server sets. Refresh the page and try again.' },
+  'hub.report.prod.retrySame': { es: 'Reintentar el mismo reporte', en: 'Retry the same report' },
+  'hub.report.prod.code.idempotency_conflict': { es: 'El reporte cambió después de un envío sin respuesta. Reintenta el mismo texto o cierra y empieza otro.', en: 'The report changed after a send that got no answer. Retry the same text, or close and start another.' },
   'hub.report.prod.code.write_forbidden': { es: 'Tu rol no puede enviar este reporte.', en: 'Your role may not send this report.' },
   'hub.viewAs.label': { es: 'Viendo como', en: 'Viewing as' },
   'hub.viewAs.person': { es: 'con los datos de {name}', en: 'with {name}’s data' },

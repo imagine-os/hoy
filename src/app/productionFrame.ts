@@ -10,7 +10,8 @@
  * - every framed document is read-only: a frame with no viewable role (the super admin and public cards, or a planted
  *   value) keeps the sentinel `FRAME_READ_ONLY`, which the session ignores (not a role) and the Company OS transport's
  *   fail-closed check (`viewAsActive`) treats as "viewing as": only reads leave the browser. A same-origin write through
- *   `fetch` is refused unsent as well (defence in depth for any caller outside the transport);
+ *   `fetch`, `XMLHttpRequest` or `sendBeacon` is refused unsent as well (defence in depth for any caller outside the
+ *   transport);
  * - `lang` / `theme` are the frame's own, the skin is always styled, and every other `hoyos.*` key lives in the frame's
  *   own copy (a frame's draft or sign-out clean-up never touches the parent's);
  * - the view-as banner is hidden (`data-frame` on <html>, productionFrame.css): a preview shows the page, not the bar.
@@ -96,6 +97,34 @@ export function guardFrameFetch(target: { fetch: typeof fetch }, origin: string)
   }) as typeof fetch;
 }
 
+/** The same rule for `XMLHttpRequest` and `navigator.sendBeacon` (a beacon is always a POST). */
+export function guardFrameXhr(win: { XMLHttpRequest?: typeof XMLHttpRequest; navigator?: Navigator }, origin: string): void {
+  const refused = (method: string, raw: string | URL) => {
+    let url: URL | null = null;
+    try { url = new URL(String(raw), origin); } catch { return false; }
+    return url.origin === origin && url.pathname.startsWith('/api/') && method !== 'HEAD' && !viewAsAllows(method, url.pathname.replace(/^\/api\/cos\/t\/[^/]+/, ''));
+  };
+  const X = win.XMLHttpRequest;
+  if (X) {
+    const open = X.prototype.open;
+    const send = X.prototype.send;
+    const blocked = new WeakSet<XMLHttpRequest>();
+    X.prototype.open = function (this: XMLHttpRequest, method: string, url: string | URL, ...rest: unknown[]) {
+      if (refused(String(method).toUpperCase(), url)) blocked.add(this); else blocked.delete(this);
+      return (open as (...a: unknown[]) => void).call(this, method, url, ...rest);
+    } as typeof X.prototype.open;
+    X.prototype.send = function (this: XMLHttpRequest, body?: Document | XMLHttpRequestBodyInit | null) {
+      if (blocked.has(this)) { this.abort(); return; }
+      return send.call(this, body);
+    };
+  }
+  const nav = win.navigator;
+  if (nav && typeof nav.sendBeacon === 'function') {
+    const beacon = nav.sendBeacon.bind(nav);
+    nav.sendBeacon = (url: string | URL, data?: BodyInit | null) => (refused('POST', url) ? false : beacon(url, data));
+  }
+}
+
 let installed = false;
 
 /** Applies the frame rules when this document is framed; true when it did. Safe to call twice. */
@@ -104,6 +133,7 @@ export function installProductionFrame(): boolean {
   if (typeof window === 'undefined' || !isFramed()) return false;
   shadowStorage(Storage.prototype, productionFrameShadow(hashQuery()));
   guardFrameFetch(window, window.location.origin);
+  guardFrameXhr(window, window.location.origin);
   document.documentElement.dataset.frame = 'preview';
   installed = true;
   return true;

@@ -59,6 +59,7 @@ const readBody = (req) => new Promise((r) => { let s = ''; req.on('data', (c) =>
 const values = (f, field) => !f || typeof f !== 'object' ? [] : [...(f.and ?? []), ...(f.or ?? [])].flatMap((x) => values(x, field)).concat(f.field === field ? [].concat(f.value) : []);
 const PORT = Number(process.env.QA_PORT ?? 5194);
 let log = [];
+let dropForm = 0; // the next N problem reports lose their answer (the connection drops)
 let failForm = 0; // the next N problem reports answer 422 unknown_form
 let failDirectory = 0; // review round 2, L2: the next N directory reads answer 503
 function answerQuery(user, q) {
@@ -92,6 +93,7 @@ const server = createServer(async (req, res) => {
     if (req.method === 'POST' && route === '/api/form_submission') {
       const body = await readBody(req);
       log.push({ user, kind: 'form', body, key: req.headers['idempotency-key'] ?? null });
+      if (dropForm > 0) { dropForm--; req.socket.destroy(); return; }
       if (failForm > 0) { failForm--; return json(res, 422, { error: 'unknown_form' }); }
       return json(res, 201, { data: { id: `fs_${log.length}`, data: { ...body, submitted_at: '2026-10-28T15:00:00Z' } } });
     }
@@ -207,6 +209,20 @@ try {
   check('Report a problem submits a problem_report form_submission with the summary, details, screen and the person\'s email', forms().length === 2 && report?.form_key === 'problem_report' && report?.email === 'user_super@example.test' && report?.answers?.summary === 'El botón de reservar no responde' && /Paso 2/.test(report?.answers?.details ?? '') && report?.answers?.route === '/hub' && report?.placement === 'hub' && !('viewing_as' in (report?.answers ?? {})) && !('person' in (report ?? {})), JSON.stringify(report));
   check('…with an Idempotency-Key, the same one on the retry of the refused attempt', !!forms()[0]?.key && forms()[0]?.key === forms()[1]?.key, forms().map((f) => f.key).join(' / '));
   check('…and says it was sent', /enviado/i.test(sentText), sentText.slice(0, 200));
+  // A lost answer: the text locks and only a same-key retry goes out.
+  await drawer.getByRole('button', { name: /Reportar otro problema/ }).click({ timeout: 3000 }).catch(() => {});
+  await drawer.locator('input').first().fill('Segundo reporte de prueba').catch(() => {});
+  dropForm = 9; // the transport retries a lost answer itself (same key); every attempt is lost
+  await drawer.locator('button[type=submit]').click({ timeout: 3000 }).catch(() => {});
+  await page.waitForTimeout(1500);
+  const lockedNow = await drawer.locator('input').first().evaluate((i) => i.readOnly).catch(() => false);
+  check('Report a problem: after a lost answer the text locks and the button offers the same report again', lockedNow && /Reintentar el mismo reporte/.test(await drawer.locator('button[type=submit]').innerText().catch(() => '')));
+  dropForm = 0;
+  const lostCount = forms().length;
+  await drawer.locator('button[type=submit]').click({ timeout: 3000 }).catch(() => {});
+  await page.waitForTimeout(1000);
+  const lost = forms().slice(lostCount - 1);
+  check('…and the retry carries the same Idempotency-Key and body', lost.length === 2 && lost[0].key === lost[1].key && lost[1].body?.answers?.summary === 'Segundo reporte de prueba' && /enviado/i.test(await drawer.innerText().catch(() => '')), lost.map((f) => f.key).join(' / '));
   await drawer.getByRole('button', { name: 'Cerrar' }).last().click({ timeout: 3000 }).catch(() => {});
   await drawer.waitFor({ state: 'hidden', timeout: 3000 }).catch(() => {});
   check('…and the drawer closes', (await page.getByRole('dialog').count()) === 0);
@@ -373,7 +389,8 @@ try {
     await page.waitForTimeout(3000);
     const planted = await (await page.$('#qa-frame'))?.contentFrame();
     const plantedRoute = planted ? decodeURIComponent(new URL(planted.url()).hash.slice(1)) : '';
-    check(`${who}: a planted ?as=customer in a frame is ignored (not the customer home, no sample read)`, !!planted && !plantedRoute.startsWith('/app?') && !log.some((l) => l.kind === 'directory'), plantedRoute);
+    const plantedState = planted ? await planted.evaluate(() => ({ banners: document.querySelectorAll('[data-view-as-banner]').length, sample: document.querySelectorAll('[data-view-as-empty], [data-view-as-failed]').length })).catch(() => null) : null;
+    check(`${who}: a planted ?as=customer in a frame is ignored (no view-as: no banner, no sample read, not the customer home)`, !!planted && plantedState?.banners === 0 && plantedState?.sample === 0 && !log.some((l) => l.kind === 'directory') && !plantedRoute.startsWith('/app?'), `${plantedRoute} ${JSON.stringify(plantedState)}`);
     check(`${who}: …and that frame is read-only too`, planted ? (await planted.evaluate(async () => (await fetch(`/api/cos/t/hoy-test/batch`, { method: 'POST', body: '{}' })).status)) === 403 && writes().length === 0 : false);
     if (who === 'desk') check('desk: still refused an admin screen', refusedAt(await go(page, '/admin/settings')));
     await ctx.close();

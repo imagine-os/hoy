@@ -151,8 +151,45 @@ try {
     assert.equal(sent.length, 3, sent.join(' | '));
   });
 
-  await test('frame: outside a frame nothing is installed (node has no window: not framed)', () => {
+  await test('frame: a top-level document installs nothing (window.self === window.top)', () => {
+    restore();
+    const before = FakeStorage.prototype.getItem;
+    globalThis.window = { location: { hash: '#/app?as=customer', origin: 'http://hoy.test' } };
+    globalThis.window.self = globalThis.window; globalThis.window.top = globalThis.window;
+    globalThis.Storage = FakeStorage;
     assert.equal(m.installProductionFrame(), false);
+    assert.equal(FakeStorage.prototype.getItem, before, 'the storage prototype is untouched');
+  });
+  await test('frame: a framed document installs the shadow, the fetch guard and the banner switch', async () => {
+    restore();
+    const sent = [];
+    const top = {};
+    const dataset = {};
+    globalThis.document = { ...globalThis.document, documentElement: { dataset } };
+    globalThis.window = { self: null, top, location: { hash: '#/app?as=customer&lang=en', origin: 'http://hoy.test' }, fetch: async (u, i) => { sent.push(`${i?.method ?? 'GET'} ${u}`); return new Response('{}'); } };
+    globalThis.window.self = globalThis.window;
+    assert.equal(m.installProductionFrame(), true);
+    const s = new FakeStorage();
+    assert.equal(s.getItem('hoyos.viewAs'), 'customer');
+    assert.equal(s.getItem('hoyos.lang'), 'en');
+    assert.equal((await globalThis.window.fetch('/api/cos/t/hoy/batch', { method: 'POST' })).status, 403);
+    assert.equal(sent.length, 0);
+    assert.equal(dataset.frame, 'preview', 'the banner is hidden by CSS on data-frame');
+    restore();
+    delete globalThis.window;
+  });
+  await test('frame: XMLHttpRequest and sendBeacon writes are refused too; reads pass', () => {
+    const opened = [], sentX = [], beacons = [];
+    class FakeXhr { open(m, u) { opened.push(`${m} ${u}`); } send() { sentX.push(1); } abort() { this.aborted = true; } }
+    const win = { XMLHttpRequest: FakeXhr, navigator: { sendBeacon: (u) => { beacons.push(u); return true; } } };
+    m.guardFrameXhr(win, 'http://hoy.test');
+    const w = new FakeXhr(); w.open('POST', '/api/cos/t/hoy/batch'); w.send('{}');
+    assert.equal(sentX.length, 0); assert.equal(w.aborted, true);
+    const r = new FakeXhr(); r.open('GET', '/api/cos/t/hoy/me'); r.send();
+    assert.equal(sentX.length, 1);
+    assert.equal(win.navigator.sendBeacon('/api/cos/t/hoy/batch', '{}'), false);
+    assert.equal(win.navigator.sendBeacon('https://elsewhere.test/x', '{}'), true);
+    assert.deepEqual(beacons, ['https://elsewhere.test/x']);
   });
 
   // ── the Hub's real people ─────────────────────────────────────────────────────────────────────────────────────

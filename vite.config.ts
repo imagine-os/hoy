@@ -61,7 +61,9 @@ export function withoutScreenshots(pattern: string): string | null {
  * bundled docs file: the demo ids (`usr_*`), the demo users' full names and their demo e-mail addresses become `[demo]`.
  * The names are read from src/auth/demoUsers.ts, so a new demo user is redacted too.
  */
-const DEMO_NAMES = [...readFileSync(join(here, 'src/auth/demoUsers.ts'), 'utf8').matchAll(/\bname:\s*'([^']+ [^']+)'/g)].map((m) => m[1]);
+const DEMO_FULL_NAMES = [...readFileSync(join(here, 'src/auth/demoUsers.ts'), 'utf8').matchAll(/\bname:\s*'([^']+ [^']+)'/g)].map((m) => m[1]);
+// Also the unaccented spelling ("Sofia Arango"): docs are not always typed with accents.
+export const DEMO_NAMES = [...new Set(DEMO_FULL_NAMES.flatMap((n) => [n, n.normalize('NFD').replace(/[\u0300-\u036f]/g, '')]))];
 export function redactDemo(code: string): string {
   let out = code.replace(/\busr_[a-z0-9_]+\b/g, '[demo]').replace(/[a-z0-9._-]+@demo\.hoyos\.test\b/gi, '[demo]');
   for (const name of DEMO_NAMES) out = out.split(name).join('[demo]');
