@@ -392,7 +392,7 @@ export const strings: StringTable = {
   'admin.content.timetableReadOnly': { es: 'Ves el horario como está hoy. Solo Administración y Coordinación lo cambian.', en: 'You see the timetable as it is today. Only Administration and the Coordinator change it.' },
   'admin.content.newClassTitle': { es: 'Nueva clase', en: 'New class' },
   'admin.content.classTypeToPublish': { es: 'Elige la modalidad y guarda para poder publicar esta fila.', en: 'Choose the modality and save to publish this row.' },
-  'admin.content.deactivateHint': { es: 'Las filas no se borran: desactívalas con Publicado.', en: 'Rows are not deleted: switch Published off.' },
+  'admin.content.deactivateHint': { es: 'Las filas no se borran: desactívalas con Publicado para no crear clases nuevas. Las clases ya creadas siguen abiertas; cancela una para suspenderla.', en: 'Rows are not deleted: switch Published off to stop new classes. Classes already made stay open; cancel one to call it off.' },
   'admin.content.title': { es: 'Contenido', en: 'Content' },
   'admin.content.subtitle': { es: 'Clases, profesores, modalidades y salas: la fuente de la app, el sitio y recepción.', en: 'Classes, teachers, modalities and rooms: the source for the app, the website and the desk.' },
   'admin.content.tab.class_templates': { es: 'Clases (plantillas)', en: 'Classes (templates)' },
