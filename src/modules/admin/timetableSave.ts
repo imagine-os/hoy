@@ -70,6 +70,34 @@ function check(patch: Record<string, unknown>) {
   }
 }
 
+const hasClassType = (v: unknown): boolean => typeof v === 'string' && MODALITY_IDS.has(v);
+
+/**
+ * Review round 1 (r1hoy, M2): a row is published only with its class type (without one its classes can't be booked,
+ * `no_class_type`). The drawer's Published toggle is off for a draft without one; switching a published row off stays
+ * possible whatever it holds.
+ */
+export const timetablePublishBlocked = (row: Record<string, unknown>): boolean => row.active !== true && !hasClassType(row.modality_id);
+
+/** The editor's fields that differ from the row it was opened on (L3: nothing changed is nothing to save). */
+export function draftPatch(draft: Record<string, unknown>, basis: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(Object.entries(draft).filter(([key, value]) => JSON.stringify(value) !== JSON.stringify(basis[key])));
+}
+/**
+ * The editor's basis after its own save went through: the fields it sent are what is stored now, so the next diff is
+ * taken against them (a field changed back is sent again, never dropped). The version stays the one the editor read:
+ * the own-save memory below recognises the row at the version this save produced.
+ */
+export const basisAfterSave = <T extends Record<string, unknown>>(basis: T, patch: Record<string, unknown>): T => ({ ...basis, ...structuredClone(patch) });
+export const nothingToSave = (draft: Record<string, unknown>, basis: Record<string, unknown>): boolean => Object.keys(draftPatch(draft, basis)).length === 0;
+
+/**
+ * L4: this tab's own last save of each row, per provider: the version it started from and the version it produced. A
+ * second save from an editor whose basis hasn't refreshed yet finds the row at that produced version and goes ahead;
+ * anyone else's save in between moves the version on and is still a conflict.
+ */
+const ownSaves = new WeakMap<object, Map<string, { from: string; to: string }>>();
+
 /** Saves one timetable action on Company OS; returns the row id. `requestId` keys a create (a retry can't make two). */
 export async function saveTimetableRow(data: DataProvider, actor: TimetableActor, intent: TimetableIntent, requestId: string, currentActor: () => TimetableActor): Promise<string> {
   const assertActor = () => {
@@ -97,12 +125,22 @@ export async function saveTimetableRow(data: DataProvider, actor: TimetableActor
   const current = await data.get<BaseRow>('class_templates', before.id);
   assertActor();
   if (!current) throw timetableRefusal('content_conflict');
+  const mine = ownSaves.get(data)?.get(before.id);
+  const ownLater = !!mine && mine.from === before.updated_at && mine.to === current.updated_at;
   if (current.updated_at !== before.updated_at) {
     // A retry after a lost answer finds the person's own save: the row already holds the patch, so it is saved.
     if (Object.entries(patch).every(([k, v]) => JSON.stringify(current[k] ?? null) === JSON.stringify(v ?? null))) return before.id;
-    throw timetableRefusal('content_conflict');
+    if (!ownLater) throw timetableRefusal('content_conflict');
   }
+  // M2: the row as it would be after this patch must not be published without a class type.
+  const after = { ...current, ...patch };
+  if (after.active === true && ('active' in patch || 'modality_id' in patch) && !hasClassType(after.modality_id)) throw timetableRefusal('timetable_class_type_required');
   // No check after the write: a change of session then must not report a saved row as failed.
-  await data.update('class_templates', before.id, patch);
+  const saved = await data.update<BaseRow>('class_templates', before.id, patch);
+  if (saved?.updated_at) {
+    const rows = ownSaves.get(data) ?? new Map<string, { from: string; to: string }>();
+    rows.set(before.id, { from: ownLater ? mine!.from : before.updated_at, to: saved.updated_at });
+    ownSaves.set(data, rows);
+  }
   return before.id;
 }

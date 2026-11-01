@@ -40,14 +40,26 @@ try {
       contents: `export * from './src/app/productionFrame.ts';
         export * from './src/modules/hub/hubPeople.ts';
         export * from './src/modules/hub/problemReport.ts';
-        export { viewAsActive, readStoredViewAs, VIEW_AS_KEY, VIEW_AS_REFUSAL, VIEWABLE_ROLES, loadViewAsSample } from './src/auth/viewAs.ts';`,
+        export { viewAsActive, readStoredViewAs, VIEW_AS_KEY, VIEW_AS_REFUSAL, VIEWABLE_ROLES, loadViewAsSample } from './src/auth/viewAs.ts';
+        export { DeviceFrame } from './src/components/organism/DeviceFrame/DeviceFrame.tsx';
+        export { createElement } from 'react';
+        export { renderToStaticMarkup } from 'react-dom/server.browser';`,
       resolveDir: process.cwd(), loader: 'ts',
     },
     bundle: true, platform: 'node', format: 'esm', outfile: file, logLevel: 'silent',
     define: { __HOY_BUILD__: '"production"', 'import.meta.env': '{"VITE_HOY_BUILD":"production","DEV":false,"PROD":true}' },
-    loader: { '.css': 'empty' },
+    loader: { '.css': 'empty' }, jsx: 'automatic',
   });
   const m = await import(pathToFileURL(file).href);
+
+  // ── Review round 1 (r1hoy, L1): a production preview frame is a picture, not a second app ─────────────────────
+  await test('r1 L1: a production DeviceFrame is inert (no pointer, no keyboard): a click inside can\'t sign the parent out', () => {
+    const html = m.renderToStaticMarkup(m.createElement(m.DeviceFrame, { route: '/app', as: 'customer', title: 'App de clientes', lazy: false }));
+    assert.match(html, /<div[^>]*\binert=""/, 'the stage carries inert');
+    assert.match(html, /class="devframe[^"]*\bis-inert\b/, 'the stage is styled pointer-events: none');
+    assert.match(html, /<iframe[^>]*tabindex="-1"/, 'the frame is out of the tab order');
+    assert.match(html, /<iframe[^>]*aria-hidden="true"/, 'a picture of the page: out of the accessibility tree too');
+  });
 
   // ── the frame's shadow ────────────────────────────────────────────────────────────────────────────────────────
   const q = (s) => new URLSearchParams(s);

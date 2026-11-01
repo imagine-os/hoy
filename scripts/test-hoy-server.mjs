@@ -220,8 +220,8 @@ await test('/app-config.json exposes only public settings (no secret key)', asyn
   const body = JSON.parse(r.body);
   assert.deepEqual(Object.keys(body).sort(), ['apiBase', 'clerkPublishableKey', 'environment', 'launch', 'tenant']);
   assert.equal(body.apiBase, '/api/cos');
-  // The go-live switch defaults to Coming Soon (SW-08).
-  assert.deepEqual(body.launch, { siteLive: false, siteLiveAt: null, publicDocuments: [] });
+  // The go-live switch defaults to Coming Soon (SW-08). PUBLIC_DOCUMENTS is retired (owner 2026-11-01): no such key.
+  assert.deepEqual(body.launch, { siteLive: false, siteLiveAt: null });
   assert.equal(body.tenant, 'hoy-dev');
   assert.match(body.clerkPublishableKey, /^pk_test_/);
   assert.doesNotMatch(r.body.toString(), /sk_test/);
@@ -979,17 +979,22 @@ await test('config: refuses a missing API address, tenant or Clerk key, a secret
   assert.equal(loadConfig(ok).fileSizeLimit, 10 * 1024 * 1024);
 });
 
-await test('config: the go-live switch (SITE_LIVE, SITE_LIVE_AT, PUBLIC_DOCUMENTS) is checked at start', async () => {
+await test('config: the go-live switch (SITE_LIVE, SITE_LIVE_AT) is checked at start', async () => {
   const ok = { COMPANY_OS_URL: 'http://api.railway.internal:4000', COMPANY_OS_TENANT: 'hoy', CLERK_SECRET_KEY: 'sk_live_x' };
-  assert.deepEqual(loadConfig(ok).launch, { siteLive: false, siteLiveAt: null, publicDocuments: [] });
+  assert.deepEqual(loadConfig(ok).launch, { siteLive: false, siteLiveAt: null });
   assert.equal(loadConfig({ ...ok, SITE_LIVE: 'TRUE ' }).launch.siteLive, true);
   assert.equal(loadConfig({ ...ok, SITE_LIVE: 'false' }).launch.siteLive, false);
   assert.throws(() => loadConfig({ ...ok, SITE_LIVE: 'yes' }), /SITE_LIVE must be/);
   assert.equal(loadConfig({ ...ok, SITE_LIVE_AT: '2026-11-01T06:00:00-05:00' }).launch.siteLiveAt, '2026-11-01T06:00:00-05:00');
   assert.throws(() => loadConfig({ ...ok, SITE_LIVE_AT: '2026-11-01' }), /SITE_LIVE_AT/);
-  assert.deepEqual(loadConfig({ ...ok, PUBLIC_DOCUMENTS: '/manual/es, /docs/terminos' }).launch.publicDocuments, ['/manual/es', '/docs/terminos']);
-  assert.throws(() => loadConfig({ ...ok, PUBLIC_DOCUMENTS: '/admin' }), /PUBLIC_DOCUMENTS/);
-  assert.throws(() => loadConfig({ ...ok, PUBLIC_DOCUMENTS: '/docs/../admin' }), /PUBLIC_DOCUMENTS/);
+});
+await test('config: PUBLIC_DOCUMENTS is retired (owner 2026-11-01): a value left set opens nothing and is not handed out', async () => {
+  const ok = { COMPANY_OS_URL: 'http://api.railway.internal:4000', COMPANY_OS_TENANT: 'hoy', CLERK_SECRET_KEY: 'sk_live_x' };
+  for (const value of ['/manual/es, /docs/terminos', '/manual', '/admin', '/docs/../admin']) {
+    const c = loadConfig({ ...ok, PUBLIC_DOCUMENTS: value });
+    assert.deepEqual(c.launch, { siteLive: false, siteLiveAt: null }, value);
+    assert.ok(!JSON.stringify(c).includes('publicDocuments') && !JSON.stringify(c).includes(value.split(',')[0]), value);
+  }
 });
 
 await test('check-bundle: finds secret shapes and this environment’s secret values; a clean dist passes', async () => {

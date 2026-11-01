@@ -210,6 +210,17 @@ const joinCase = (o) => M.joinsAsCustomer?.({ status: 'ready', signedIn: true, v
 check('Y2 join: a signed-in staff login without the customer role, on a customer page', joinCase({}) === true && joinCase({ roles: ['front_desk'], path: '/app/checkout/occ_1' }) === true);
 check('Y2 join: never while viewing as, signed out, loading or unfinished, or for someone already a customer', joinCase({ viewAs: 'admin' }) === false && joinCase({ signedIn: false }) === false && joinCase({ status: 'loading' }) === false && joinCase({ status: 'needs-signup' }) === false && joinCase({ roles: ['admin', 'customer'] }) === false);
 check('Y2 join: never outside the customer area or on a page customers can\'t open', joinCase({ path: '/admin/settings', routeRoles: ['admin'] }) === false && joinCase({ path: '/staff', routeRoles: ['front_desk'] }) === false && joinCase({ path: '/app/x', routeRoles: ['teacher'] }) === false);
+// Review round 1 (r1hoy, M1): a read-only document (a preview frame, or a tab still holding a view-as value) never offers
+// a sign-up form whose submit can't succeed: it falls through to the no-access page.
+check('r1 M1 join: never in a read-only document (a frame or a stored view-as)', joinCase({ readOnly: true }) === false && joinCase({ readOnly: false }) === true);
+{
+  const prior = globalThis.sessionStorage;
+  const kept = new Map([['hoyos.viewAs', 'customer']]);
+  globalThis.sessionStorage = { getItem: (k) => kept.get(k) ?? null, setItem: (k, v) => kept.set(k, String(v)), removeItem: (k) => kept.delete(k) };
+  check('r1 M1 join: a view-as value kept in the tab (not yet checked by the session) blocks the join, fail closed', joinCase({}) === false);
+  globalThis.sessionStorage = prior;
+}
+check('r1 L5 join: a real super admin without the customer role is offered the join on a customer page too', joinCase({ roles: ['super_admin'] }) === true);
 
 // ── AD-06 team panel: every staff role can be granted and changed (Hoy all-roles, lane C) ─────────────────────
 {

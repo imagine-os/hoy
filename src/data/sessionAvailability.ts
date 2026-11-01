@@ -1,4 +1,4 @@
-import type { ClassSessionRow, ModalityRow } from './schema';
+import type { ClassSessionRow, ModalityRow, RoomRow, TeacherRow } from './schema';
 
 export interface SessionAvailabilityInput {
   session: Pick<ClassSessionRow, 'status' | 'starts_at' | 'ends_at'>;
@@ -18,4 +18,31 @@ export function sessionUnavailableReason({ session, modality, templateActive }: 
   // Lane Y1: a class without a class type (no colour, letter or description) is not open for booking, as admission says.
   if (!modality) return 'no_class_type';
   return null;
+}
+
+/**
+ * Review round 1 (r1hoy, L7): whether a class's timetable row is published, for the reader. A visitor (the website's
+ * `public_site` reader) gets only the published rows, so a class whose row isn't among the rows read was made from a row
+ * that is switched off: false ("not published"). Undefined for a one-off class, or for a reader who got no rows at all
+ * (nothing is known; the class type rule then speaks).
+ */
+export function templateActiveOf(templateId: string | null | undefined, templates: readonly { id: string; active?: boolean }[]): boolean | undefined {
+  if (!templateId || templates.length === 0) return undefined;
+  const row = templates.find((t) => t.id === templateId);
+  return row ? row.active !== false : false;
+}
+
+export interface JoinedSessionRow { session: ClassSessionRow; modality?: ModalityRow; teacher?: TeacherRow; room?: RoomRow; templateActive?: boolean }
+
+/**
+ * Sessions joined with their class type, teacher, room and timetable row (the site and staff screens). L8: nothing is
+ * joined while a read is still loading, so no class says "not open for booking" for a moment before its class type
+ * arrives.
+ */
+export function joinSessionRows(rows: { sessions: readonly ClassSessionRow[]; modalities: readonly ModalityRow[]; teachers: readonly TeacherRow[]; rooms: readonly RoomRow[]; templates: readonly { id: string; active?: boolean }[] }, opts: { loading: boolean; filter?: (s: ClassSessionRow) => boolean }): JoinedSessionRow[] {
+  if (opts.loading) return [];
+  const mod = new Map(rows.modalities.map((m) => [m.id, m]));
+  const tea = new Map(rows.teachers.map((t) => [t.id, t]));
+  const room = new Map(rows.rooms.map((r) => [r.id, r]));
+  return rows.sessions.filter((s) => !opts.filter || opts.filter(s)).map((s) => ({ session: s, modality: mod.get(s.modality_id), teacher: tea.get(s.teacher_id), room: room.get(s.room_id ?? ''), templateActive: templateActiveOf(s.template_id, rows.templates) }));
 }

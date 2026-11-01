@@ -7,15 +7,15 @@ import { SessionContext, heldRoles, type SessionCtx } from './sessionContext';
 import { visitorSignIn } from './visitorSignIn';
 import { joinsAsCustomer } from './purchaseEntry';
 import { matrixAllows } from '../config/roleMatrix';
-import { isPublicDocument, PRODUCTION_BUILD, useLaunchConfig } from '../config/launch';
+import { PRODUCTION_BUILD } from '../config/launch';
 
 // Production only (it needs the Clerk session): folded away in the review build.
 const JoinAsCustomer = PRODUCTION_BUILD ? lazy(() => import('./JoinAsCustomer')) : null;
 
 /**
  * Guards a route. Public routes pass everyone; otherwise the effective role must match. PL-05: the launch permissions
- * matrix (src/config/roleMatrix.ts) then applies on top and can only take access away; a manual or docs path the owner
- * made public (SW-06) stays open.
+ * matrix (src/config/roleMatrix.ts) then applies on top and can only take access away. (The owner's public manual and
+ * docs paths, SW-06's public-documents switch, are retired, owner 2026-11-01: they are the super admin's only.)
  *
  * Production (PL-04): the role is the one Company OS `/me` returned. While the session is still loading a private route
  * waits instead of redirecting; a Clerk session that is not a studio member yet goes to finish sign-up; every other
@@ -25,11 +25,15 @@ const JoinAsCustomer = PRODUCTION_BUILD ? lazy(() => import('./JoinAsCustomer'))
  * Lane Y2 (test-hoy fixes, owner 2026-11-01): a login whose primary role is staff but which also holds the customer
  * role opens the customer area as a customer (the screens below see `role: 'customer'`, the same person); a studio
  * login that isn't a customer yet is offered "Join as a customer" there instead of the no-access page.
+ *
+ * Review round 1 (r1hoy): never inside a read-only document (M1, `joinsAsCustomer`); and a real super admin, whom the
+ * matrix lets into every area, gets the same offer on every customer-area page when they don't hold the customer role
+ * (L5), instead of a checkout whose purchase Company OS would refuse; one who holds it gets the customer session there,
+ * like any staff login. A super admin looks at the customer app through view-as.
  */
 export function RequireRole({ roles, children }: { roles: Role[]; children: ReactNode }) {
   const session = useSession();
   const { hasRole, user, role, status, signedIn, viewAs } = session;
-  const config = useLaunchConfig();
   const loc = useLocation();
   const publicRoute = roles.includes('public');
   const held = heldRoles(session);
@@ -41,11 +45,15 @@ export function RequireRole({ roles, children }: { roles: Role[]; children: Reac
     can: (p) => roleCan('customer', p), hasRole: (r) => r.includes('public') || r.includes('customer'),
   } : null, [asCustomer, session]);
   if (!publicRoute && status === 'loading') return <div className="lazy-fallback" aria-busy="true" />;
-  if (hasRole(roles) && (matrixAllows(role, loc.pathname) || isPublicDocument(config, loc.pathname))) return <>{children}</>;
+  const join = !!JoinAsCustomer && !publicRoute && joinsAsCustomer({ status, signedIn, viewAs, roles: held, routeRoles: roles, path: loc.pathname });
+  const joinPage = JoinAsCustomer && <Suspense fallback={<div className="lazy-fallback" aria-busy="true" />}><JoinAsCustomer /></Suspense>;
+  // A real super admin passes every role check, so their customer-area choice comes first: join when they aren't a
+  // customer, the customer session when they are (as for any staff login that also holds the customer role).
+  if (join && role === 'super_admin') return joinPage;
+  if (customerSession && role === 'super_admin') return <SessionContext.Provider value={customerSession}>{children}</SessionContext.Provider>;
+  if (hasRole(roles) && matrixAllows(role, loc.pathname)) return <>{children}</>;
   if (customerSession) return <SessionContext.Provider value={customerSession}>{children}</SessionContext.Provider>;
-  if (JoinAsCustomer && joinsAsCustomer({ status, signedIn, viewAs, roles: held, routeRoles: roles, path: loc.pathname })) {
-    return <Suspense fallback={<div className="lazy-fallback" aria-busy="true" />}><JoinAsCustomer /></Suspense>;
-  }
+  if (join) return joinPage;
   if (status === 'needs-signup') return <Navigate to={visitorSignIn(loc.pathname + loc.search).replace('/auth/sign-in', '/auth/sign-up')} replace />;
   if (user.role === 'public' || (signedIn && status !== 'ready')) return <Navigate to={visitorSignIn(loc.pathname + loc.search)} replace />;
   return <Navigate to={`/no-access?from=${encodeURIComponent(loc.pathname)}`} replace />;

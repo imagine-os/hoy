@@ -47,6 +47,8 @@ const PEOPLE = {
   user_coach_c: { name: 'Carlos Coach', person: 'per_coach_c', keys: ['coach'] },
   user_cust_z: { name: 'Zoe Cliente', person: 'per_cust_z', keys: ['member'] },
   user_cust_a: { name: 'Ana Cliente', person: 'per_cust_a', keys: ['member'] },
+  // Review round 1 (r1hoy): a real super admin who also joined as a customer.
+  user_supmem: { name: 'Zara Supermember', person: 'per_supmem', keys: ['super_admin', 'member'], superAdmin: true },
 };
 const COACHES = [{ id: 'co_b', data: { person: 'per_coach_b', kind: 'teacher', active: false } }, { id: 'co_c', data: { person: 'per_coach_c', kind: 'teacher', active: true } }];
 const LOTS = [
@@ -54,7 +56,7 @@ const LOTS = [
   { id: 'lot_z', data: { person: 'per_cust_z', source: 'purchase', product: 'prd_pack', valid_from: '2026-10-01', valid_until: '2026-11-15', frozen_from: null, frozen_until: null, voucher: null } },
 ];
 const LEFT = { lot_a: 8, lot_z: 2 };
-const ACCOUNTS = Object.fromEntries(['user_super', 'user_admin', 'user_desk'].map((u) => [u, { emails: [{ id: `ea_${u}`, email: `${u.slice(5)}@example.test`, verified: true }], primary: `ea_${u}` }]));
+const ACCOUNTS = Object.fromEntries(['user_super', 'user_admin', 'user_desk', 'user_supmem'].map((u) => [u, { emails: [{ id: `ea_${u}`, email: `${u.slice(5)}@example.test`, verified: true }], primary: `ea_${u}` }]));
 
 // ── the fake Hoy server + Company OS ────────────────────────────────────────────────────────────────────────────
 const userOf = (req) => /^Bearer fake\.([^.]+)\.[^.]+$/.exec(req.headers.authorization ?? '')?.[1] ?? null;
@@ -276,6 +278,10 @@ try {
   log = [];
   at = await go(page, '/app?as=customer');
   check('a planted ?as= outside a frame changes nothing for the super admin (no view-as, no banner, no sample read)', (await stored(page)) === null && (await banner(page).count()) === 0 && !log.some((l) => l.kind === 'directory'), `${at} ${await stored(page)}`);
+  // Review round 1 (r1hoy, L5): the super admin holds no customer role, so a purchase page offers "Join as a customer"
+  // (as for Administration), never a checkout whose purchase Company OS would refuse.
+  await go(page, '/app/plans');
+  check('r1 L5 super admin without the customer role: a purchase page offers Join as a customer (not the checkout as super admin)', (await page.locator('[data-join-customer]').count()) === 1, route(page));
   await go(page, '/hub');
 
   // ── view as customer: role, home, banner, data ─────────────────────────────────────────────────────────────────
@@ -427,12 +433,21 @@ try {
     await page.waitForTimeout(3000);
     const planted = await (await page.$('#qa-frame'))?.contentFrame();
     const plantedRoute = planted ? decodeURIComponent(new URL(planted.url()).hash.slice(1)) : '';
-    const plantedState = planted ? await planted.evaluate(() => ({ banners: document.querySelectorAll('[data-view-as-banner]').length, sample: document.querySelectorAll('[data-view-as-empty], [data-view-as-failed]').length })).catch(() => null) : null;
+    const plantedState = planted ? await planted.evaluate(() => ({ banners: document.querySelectorAll('[data-view-as-banner]').length, sample: document.querySelectorAll('[data-view-as-empty], [data-view-as-failed]').length, join: document.querySelectorAll('[data-join-customer]').length })).catch(() => null) : null;
+    check(`r1 M1 ${who}: a read-only frame never offers Join as a customer (a sign-up whose submit can't succeed)`, !!planted && plantedState?.join === 0, `${plantedRoute} ${JSON.stringify(plantedState)}`);
     check(`${who}: a planted ?as=customer in a frame is ignored (no view-as: no banner, no sample read, not the customer home)`, !!planted && plantedState?.banners === 0 && plantedState?.sample === 0 && !log.some((l) => l.kind === 'directory') && !plantedRoute.startsWith('/app?'), `${plantedRoute} ${JSON.stringify(plantedState)}`);
     check(`${who}: …and that frame is read-only too`, planted ? (await planted.evaluate(async () => (await fetch(`/api/cos/t/hoy-test/batch`, { method: 'POST', body: '{}' })).status)) === 403 && writes().length === 0 : false);
     if (who === 'desk') check('desk: still refused an admin screen', refusedAt(await go(page, '/admin/settings')));
     await ctx.close();
   }
+
+  // ── Review round 1 (r1hoy, L5 follow-up): a super admin who is also a customer opens the customer area as a customer ──
+  ({ ctx, page } = await open());
+  await signIn(page, 'supmem@example.test');
+  await go(page, '/app/plans');
+  check('r1 super admin + customer: a customer page opens with the customer session (no Join, the way back to their own home)', (await page.locator('[data-join-customer]').count()) === 0 && (await page.locator('[data-primary-home]').count()) >= 1, route(page));
+  check('r1 super admin + customer: …and no staff tooling in the customer screens (no Hub or admin links)', !(await menu(page)).some((l) => l === '/hub' || l.startsWith('/admin/')), (await menu(page)).join(' '));
+  await ctx.close();
 
   // ── live previews: frames under their own view-as, read-only, never touching the parent ───────────────────────
   ({ ctx, page } = await open('/auth/sign-in', { liveFrames: true }));
@@ -451,6 +466,17 @@ try {
     check('…and the frame hides the view-as banner', inside.banner === false);
     const status = await appFrame.evaluate(async () => (await fetch('/api/cos/t/hoy-test/batch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{"ops":[]}' })).status);
     check('a frame is read-only: a write from inside it is refused unsent', status === 403 && writes().length === 0, String(status));
+    // Review round 1 (r1hoy, L1): a preview is a picture of the page: no pointer or keyboard reaches it, so nothing inside
+    // (the account menu's Sign out, which goes to Clerk's own domain) can act for the parent.
+    const el = page.locator('iframe[src*="#/app?as=customer"]').first();
+    const attrs = await el.evaluate((f) => ({ tab: f.getAttribute('tabindex'), inert: !!f.closest('[inert]'), pe: getComputedStyle(f).pointerEvents })).catch(() => null);
+    check('r1 L1 a live preview is inert (inert stage, out of the tab order, no pointer events)', attrs?.inert === true && attrs?.tab === '-1' && attrs?.pe === 'none', JSON.stringify(attrs));
+    await appFrame.evaluate(() => { window.__r1Hits = 0; for (const ev of ['pointerdown', 'click', 'keydown', 'focusin']) document.addEventListener(ev, () => { window.__r1Hits++; }, true); });
+    const box = await el.boundingBox();
+    if (box) await page.mouse.click(box.x + box.width / 2, box.y + Math.min(40, box.height / 2));
+    await page.waitForTimeout(300);
+    const hits = await appFrame.evaluate(() => window.__r1Hits).catch(() => -1);
+    check('r1 L1 …a click on the preview never reaches inside the frame', !!box && hits === 0, `${hits} ${JSON.stringify(box)}`);
   }
   for (const f of page.frames().filter((x) => x !== page.mainFrame())) {
     const ro = await f.evaluate(() => sessionStorage.getItem('hoyos.viewAs')).catch(() => null);
@@ -458,6 +484,16 @@ try {
   }
   check('the parent\'s view-as is untouched by its frames (none stored, no banner, still the Hub)', (await stored(page)) === null && (await banner(page).count()) === 0 && route(page) === '/hub' && (await page.locator('.hub').count()) === 1, `${await stored(page)} ${route(page)}`);
   check('nothing but reads reached Company OS from the Hub and its frames', writes().length === 0, writes().map((w) => `${w.method} ${w.route}`).join(', '));
+  // The keyboard, from the parent's side (tabbing scrolls the card away and the budget may unmount its frame).
+  await page.evaluate(() => { window.__r1FrameFocus = 0; document.addEventListener('focusin', (e) => { if (e.target instanceof Element && e.target.closest('.devframe')) window.__r1FrameFocus++; }, true); });
+  let mounted = 0, frameFocused = 0;
+  for (let i = 0; i < 40; i++) {
+    mounted = Math.max(mounted, await page.locator('.devframe iframe').count());
+    await page.keyboard.press('Tab');
+    if (await page.evaluate(() => document.activeElement?.tagName === 'IFRAME' || !!document.activeElement?.closest?.('.devframe'))) frameFocused++;
+  }
+  check('r1 L1 …and tabbing through the Hub (frames mounted) never focuses a preview frame', mounted >= 1 && frameFocused === 0 && (await page.evaluate(() => window.__r1FrameFocus)) === 0, `mounted ${mounted}, focused ${frameFocused}`);
+  check('r1 L1 …and the parent is still signed in on the Hub', route(page) === '/hub' && (await page.locator('.hub').count()) === 1, route(page));
   await ctx.close();
 
   // ── a visitor ──────────────────────────────────────────────────────────────────────────────────────────────────

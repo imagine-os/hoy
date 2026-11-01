@@ -3,6 +3,8 @@ import { ROLE_HOME, type Role } from './roles';
 import { heldRoles, type SessionCtx, type SessionStatus } from './sessionContext';
 import { signInReturn } from './signInReturn';
 import { visitorSignIn } from './visitorSignIn';
+import { viewAsActive } from './viewAs';
+import { isFramed } from '../app/frameMode';
 
 /**
  * The website's purchase and booking buttons (Book on Plans, Give a gift, the schedule's "Continue booking"; test-hoy
@@ -25,14 +27,24 @@ export interface JoinCase {
   /** The route's own roles. */
   routeRoles: readonly Role[];
   path: string;
+  /** This document is read-only (a preview frame, or a tab holding a view-as value). Also read from the document itself. */
+  readOnly?: boolean;
 }
+
+/** Whether this document only reads: a preview frame (always read-only, `productionFrame.ts`) or an active view-as. */
+export const readOnlyDocument = (): boolean => isFramed() || viewAsActive();
 
 /**
  * Whether a customer page the session can't open offers "Join as a customer" instead of the no-access page: a
  * signed-in studio login, ready, not viewing as (read-only), not a customer yet, on a page of the customer area that
  * customers open. Company OS decides the rest (`POST /t/:t/signup`, ADR 0038 amendment 2026-11-01).
+ *
+ * Review round 1 (r1hoy, M1): never in a read-only document. A preview frame or a tab still holding a view-as value
+ * refuses every write, so its sign-up form could only fail on submit: it falls through to the no-access page instead.
+ * A real super admin without the customer role is offered the join too (L5; RequireRole asks before its own pass).
  */
 export function joinsAsCustomer(c: JoinCase): boolean {
+  if (c.readOnly === true || readOnlyDocument()) return false;
   return c.status === 'ready' && c.signedIn && c.viewAs === null && !c.roles.includes('customer') && c.roles.length > 0
     && c.routeRoles.includes('customer') && matrixArea(c.path)?.id === 'customer-app';
 }

@@ -39,11 +39,12 @@ sent on is Railway's `X-Real-IP`. Answers are always `Cache-Control: private, no
 | `SITE_LIVE`, `SITE_LIVE_AT` | by hand in Railway: the go-live switch (SW-08). Unset or `false` = Coming Soon at the root; `true` = the website; `SITE_LIVE_AT` = an instant with its offset (`2026-11-01T06:00:00-05:00`) | same; set on go-live day (no rebuild, the service restarts) |
 | `COMPANY_OS_READ_TOKEN` | by hand in Railway (secret): the test tenant's `public_site` read identity, `cos_svc_…` (Company OS runbook `prod-env.md` step 13b) | same, production's own identity; unset = the signed-out site shows no classes, prices or teachers |
 | `PUBLIC_READ_BURST`, `PUBLIC_READ_RATE_PER_SECOND` | optional (120, 20): each visitor's signed-out reads | optional |
-| `PUBLIC_DOCUMENTS` | optional, by hand: comma-separated `/manual/…` or `/docs/…` pages a visitor may open without signing in (Q-14) | same |
 
 The server refuses to start without `COMPANY_OS_URL`, a tenant slug and a Clerk key, with a secret in
 `CLERK_PUBLISHABLE_KEY`, or, in production, without `APP_URL`. It also refuses a malformed `SITE_LIVE`,
-`SITE_LIVE_AT`, `PUBLIC_DOCUMENTS` or `COMPANY_OS_READ_TOKEN` (the error never repeats the token).
+`SITE_LIVE_AT` or `COMPANY_OS_READ_TOKEN` (the error never repeats the token). The manual and docs are never public:
+the docs gate serves them to a signed-in super admin only (the old `PUBLIC_DOCUMENTS` switch is retired; a value left
+set in Railway is ignored and can be deleted).
 
 ## Run and test
 

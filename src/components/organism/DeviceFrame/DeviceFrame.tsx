@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { Bi } from '../../../specs/types';
 import type { Role } from '../../../auth/roles';
 import { frameUrl } from '../../../app/frameMode';
+import { PRODUCTION_BUILD } from '../../../config/launch';
 import './DeviceFrame.css';
 
 export type DevicePreset = 'phone' | 'tablet' | 'desktop' | 'tv';
@@ -34,6 +35,13 @@ export interface DeviceFrameProps {
   chrome?: boolean;
   onLoad?: () => void;
   className?: string;
+  /**
+   * A picture of the page, not a second app: no pointer, keyboard or screen reader reaches inside (`inert` stage,
+   * pointer-events none, out of the tab order). On by default in the production build, where the frame shares the
+   * parent's Clerk session and a Sign out inside it would sign the parent out (review round 1, L1); the review build's
+   * simulator stays clickable.
+   */
+  inert?: boolean;
 }
 
 /**
@@ -46,7 +54,7 @@ export interface DeviceFrameProps {
  */
 export function DeviceFrame({
   route, preset = 'desktop', as, lang, theme, dev = false, title,
-  lazy = true, maxScale = 1, chrome = false, onLoad, className = '',
+  lazy = true, maxScale = 1, chrome = false, onLoad, className = '', inert = PRODUCTION_BUILD,
 }: DeviceFrameProps) {
   const { w, h } = DEVICE_PRESETS[preset];
   const stage = useRef<HTMLDivElement>(null);
@@ -69,7 +77,9 @@ export function DeviceFrame({
   return (
     <div
       ref={stage}
-      className={`devframe ${loaded ? 'is-loaded' : ''} ${chrome ? `devframe-chrome ${preset === 'phone' ? 'is-phone' : ''}` : ''} ${className}`}
+      className={`devframe ${loaded ? 'is-loaded' : ''} ${inert ? 'is-inert' : ''} ${chrome ? `devframe-chrome ${preset === 'phone' ? 'is-phone' : ''}` : ''} ${className}`}
+      // React 18 has no `inert` prop: an empty string sets the attribute, undefined leaves it off.
+      {...(inert ? { inert: '' } : {})}
       // The stage never grows past the device itself, so a phone in a wide column sits at 1:1
       // instead of leaving the rest of the row empty; maxScale > 1 lets it grow on a 4K wall.
       style={{ aspectRatio: `${w} / ${h}`, maxWidth: w * maxScale }}
@@ -79,6 +89,8 @@ export function DeviceFrame({
         src={src}
         title={title}
         loading={lazy ? 'lazy' : undefined}
+        tabIndex={inert ? -1 : undefined}
+        aria-hidden={inert ? true : undefined}
         style={{ width: w, height: h, transform: `scale(${scale})` }}
         onLoad={() => { setLoaded(true); onLoad?.(); }}
       />

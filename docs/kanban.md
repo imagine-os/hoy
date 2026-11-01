@@ -882,4 +882,22 @@ Protected-capture clarification: M14 schedule/pay screenshots remain local/ignor
 
 ### Backlog
 
-- `PUBLIC_DOCUMENTS` (Q-14) can no longer open a manual or docs page to visitors in production: the gate serves the super admin only. Decide whether that switch is retired or needs a public slice of the pack.
+- ~~The public-documents switch (Q-14)~~: retired (owner 2026-11-01, "Retire it"; done in review round 1, lane r1hoy below).
+
+## Hoy test-hoy fixes · integrated review round 1, Hoy fixes (lane r1hoy, 2026-11-01)
+
+### Done (lane branch, not merged)
+
+- M1: a read-only document (a preview frame, a tab holding a view-as value) never offers "Join as a customer"; it falls through to no-access. [Changelog](changelog/_pending/hoy-test-fixes-r1hoy.md)
+- M2 (M-02): a timetable row is published only with its class type: the Published toggles are off for a draft without one (with a hint), and the save refuses it (`timetable_class_type_required`).
+- L1 (HUB-01): production preview frames are inert (no pointer, keyboard or screen reader inside), so a Sign out inside can't sign the parent out.
+- L3, L4 (M-02): Save with nothing changed sends nothing; a second quick save from the same editor is no longer a false conflict, and after its own save the editor diffs against what it stored (a field changed back is saved, never dropped).
+- L5: a real super admin without the customer role gets "Join as a customer" on every customer-area page (they look at the customer app through view-as), not a checkout Company OS would refuse; one who holds the customer role gets the customer session there, without staff tooling.
+- L6: the forms codes `invalid_answers`, `answer_too_long`, `invalid_email`, `write_forbidden` have es/en lines in the code→copy table.
+- L7, L8 (W-04, C-02): a class from a switched-off timetable row says "not published" to visitors; nothing says "not open for booking" while class types load.
+- The public-documents switch (`PUBLIC_DOCUMENTS`, Q-14) is retired: server config, `/app-config.json`, the IaC and the app no longer know it; a value left set opens nothing.
+
+### Backlog
+
+- L2: the timetable save's check-then-write gap (two editors saving one row inside the GET→PATCH window: the later one wins) needs `If-Match` on PATCH from Company OS core, which doesn't honour it yet. Not tracked in Company OS `docs/tech-debt.md` yet: handed to the coordinator to add (core: honour `If-Match`; Hoy's timetable then sends the basis version).
+- Operator: the `PUBLIC_DOCUMENTS` variable, if set in Railway, can be deleted (it is ignored).

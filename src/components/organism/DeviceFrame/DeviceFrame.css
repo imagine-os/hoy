@@ -8,5 +8,7 @@
   opacity: 0; transition: opacity var(--dur-slow) var(--ease-out);
 }
 .devframe.is-loaded .devframe-frame { opacity: 1; }
+/* A production preview is a picture: nothing inside takes a click (review round 1, L1). */
+.devframe.is-inert, .devframe.is-inert .devframe-frame { pointer-events: none; }
 .devframe-chrome { border: 1px solid var(--color-border); border-radius: var(--r-frame); box-shadow: var(--shadow-frame); overflow: hidden; }
 .devframe-chrome.is-phone { border-radius: var(--r-phone); }

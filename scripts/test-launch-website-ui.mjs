@@ -60,11 +60,12 @@ try {
     check(`SW-06 a visitor opening ${path} is sent to sign-in`, route(page).startsWith('/auth/sign-in'), route(page));
     await ctx.close();
   }
-  ({ ctx, page } = await open({ launch: { publicDocuments: ['/manual/decisions'] } }, '/manual/decisions'));
-  await page.waitForTimeout(1500);
-  check('SW-06 a path the owner made public opens without sign-in', route(page) === '/manual/decisions');
-  await page.goto(`${srv.base}/#/manual`); await page.waitForURL(/#\/auth\/sign-in/, { timeout: 10000 }).catch(() => {});
-  check('SW-06 the rest of the manual stays private', route(page).startsWith('/auth/sign-in'));
+  // PUBLIC_DOCUMENTS is retired (owner 2026-11-01): a list planted in the launch setting opens nothing.
+  ({ ctx, page } = await open({ launch: { publicDocuments: ['/manual/decisions', '/manual', '/docs'] } }, '/manual/decisions'));
+  await page.waitForURL(/#\/auth\/sign-in/, { timeout: 10000 }).catch(() => {});
+  check('SW-06 a planted publicDocuments list opens nothing: the visitor is sent to sign-in', route(page).startsWith('/auth/sign-in'), route(page));
+  await page.goto(`${srv.base}/#/docs`); await page.waitForURL(/#\/auth\/sign-in/, { timeout: 10000 }).catch(() => {});
+  check('SW-06 …the docs too', route(page).startsWith('/auth/sign-in'), route(page));
   await ctx.close();
   ({ ctx, page } = await open({ userId: 'usr_desk' }, '/manual'));
   await page.waitForTimeout(1500);
