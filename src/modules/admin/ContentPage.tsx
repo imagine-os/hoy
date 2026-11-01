@@ -29,7 +29,7 @@ import { ClassRow } from '../../components/molecule/ClassRow/ClassRow';
 import { TeacherCard } from '../../components/organism/TeacherCard/TeacherCard';
 import { EmptyState } from '../../components/molecule/EmptyState/EmptyState';
 import { writeContent } from './contentRecovery';
-import { draftPatch, nothingToSave, TIMETABLE_UNSTORED, timetablePublishBlocked } from './timetableSave';
+import { basisAfterSave, draftPatch, nothingToSave, TIMETABLE_UNSTORED, timetablePublishBlocked } from './timetableSave';
 import { useContentRecovery } from './useContentRecovery';
 import { ContentSubNav } from './contentNav';
 import './admin.css';
@@ -226,7 +226,7 @@ function Editor({ entity, row, fields, refs, modalities, readOnly, busy, lang, o
   const set = (k: string, v: unknown) => setDraft((d) => ({ ...d, [k]: v }));
   // Review round 1 (r1hoy, L3): nothing changed since the row was opened is nothing to save (no "detail not valid").
   const unchanged = nothingToSave(draft, basis.current);
-  const save = async () => { if (saveLock.current || readOnly) return; const patch = draftPatch(draft, basis.current); if (!Object.keys(patch).length) return; saveLock.current = true; setSaving(true); try { await onSave(structuredClone(patch), basis.current); } catch { /* Page retains the retry operation and draft. */ } finally { saveLock.current = false; setSaving(false); } };
+  const save = async () => { if (saveLock.current || readOnly) return; const patch = draftPatch(draft, basis.current); if (!Object.keys(patch).length) return; saveLock.current = true; setSaving(true); try { await onSave(structuredClone(patch), basis.current); if (PRODUCTION_BUILD && entity === 'class_templates') basis.current = basisAfterSave(basis.current, patch); } catch { /* Page retains the retry operation and draft. */ } finally { saveLock.current = false; setSaving(false); } };
   const d = draft as Record<string, string | number | boolean | Bi | string[] | null>;
   return (
     <div className="stack">

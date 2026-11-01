@@ -354,6 +354,24 @@ await test('r1 L4: a second quick save from the same editor (before the table re
   const rec = api.db.schedule.get(before.id).data;
   assert.equal(rec.capacity, 6); assert.equal(rec.start_time, '09:30'); assert.equal(rec.duration_minutes, 45);
 });
+await test('r1 review: after its own save the editor diffs against what it stored, so a field changed back is saved too', async () => {
+  const api = fakeCos(), p = provider(api);
+  const opened = await seeded(api, p);
+  let basis = opened;
+  const editorSave = async (draft) => {
+    const patch = m.draftPatch(draft, basis);
+    if (!Object.keys(patch).length) return;
+    await save(p, 'admin', { kind: 'update', table: 'class_templates', before: basis, patch });
+    basis = m.basisAfterSave(basis, patch);
+  };
+  await editorSave({ capacity: 6 });
+  // Before the table refetch: capacity back to 8 and a new start time.
+  await editorSave({ capacity: 8, start_time: '09:30' });
+  const rec = api.db.schedule.get(opened.id).data;
+  assert.equal(rec.capacity, 8, 'the revert is saved, not silently dropped');
+  assert.equal(rec.start_time, '09:30');
+  assert.equal(m.basisAfterSave(opened, { capacity: 6 }).updated_at, opened.updated_at, 'the version stays the one the editor read');
+});
 await test('r1 L4: someone else\'s save in between is still a conflict (own saves only)', async () => {
   const api = fakeCos(), p = provider(api);
   const before = await seeded(api, p);

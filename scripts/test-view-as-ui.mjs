@@ -47,6 +47,8 @@ const PEOPLE = {
   user_coach_c: { name: 'Carlos Coach', person: 'per_coach_c', keys: ['coach'] },
   user_cust_z: { name: 'Zoe Cliente', person: 'per_cust_z', keys: ['member'] },
   user_cust_a: { name: 'Ana Cliente', person: 'per_cust_a', keys: ['member'] },
+  // Review round 1 (r1hoy): a real super admin who also joined as a customer.
+  user_supmem: { name: 'Zara Supermember', person: 'per_supmem', keys: ['super_admin', 'member'], superAdmin: true },
 };
 const COACHES = [{ id: 'co_b', data: { person: 'per_coach_b', kind: 'teacher', active: false } }, { id: 'co_c', data: { person: 'per_coach_c', kind: 'teacher', active: true } }];
 const LOTS = [
@@ -54,7 +56,7 @@ const LOTS = [
   { id: 'lot_z', data: { person: 'per_cust_z', source: 'purchase', product: 'prd_pack', valid_from: '2026-10-01', valid_until: '2026-11-15', frozen_from: null, frozen_until: null, voucher: null } },
 ];
 const LEFT = { lot_a: 8, lot_z: 2 };
-const ACCOUNTS = Object.fromEntries(['user_super', 'user_admin', 'user_desk'].map((u) => [u, { emails: [{ id: `ea_${u}`, email: `${u.slice(5)}@example.test`, verified: true }], primary: `ea_${u}` }]));
+const ACCOUNTS = Object.fromEntries(['user_super', 'user_admin', 'user_desk', 'user_supmem'].map((u) => [u, { emails: [{ id: `ea_${u}`, email: `${u.slice(5)}@example.test`, verified: true }], primary: `ea_${u}` }]));
 
 // ── the fake Hoy server + Company OS ────────────────────────────────────────────────────────────────────────────
 const userOf = (req) => /^Bearer fake\.([^.]+)\.[^.]+$/.exec(req.headers.authorization ?? '')?.[1] ?? null;
@@ -439,6 +441,14 @@ try {
     await ctx.close();
   }
 
+  // ── Review round 1 (r1hoy, L5 follow-up): a super admin who is also a customer opens the customer area as a customer ──
+  ({ ctx, page } = await open());
+  await signIn(page, 'supmem@example.test');
+  await go(page, '/app/plans');
+  check('r1 super admin + customer: a customer page opens with the customer session (no Join, the way back to their own home)', (await page.locator('[data-join-customer]').count()) === 0 && (await page.locator('[data-primary-home]').count()) >= 1, route(page));
+  check('r1 super admin + customer: …and no staff tooling in the customer screens (no Hub or admin links)', !(await menu(page)).some((l) => l === '/hub' || l.startsWith('/admin/')), (await menu(page)).join(' '));
+  await ctx.close();
+
   // ── live previews: frames under their own view-as, read-only, never touching the parent ───────────────────────
   ({ ctx, page } = await open('/auth/sign-in', { liveFrames: true }));
   await signIn(page, 'super@example.test');
@@ -476,8 +486,13 @@ try {
   check('nothing but reads reached Company OS from the Hub and its frames', writes().length === 0, writes().map((w) => `${w.method} ${w.route}`).join(', '));
   // The keyboard, from the parent's side (tabbing scrolls the card away and the budget may unmount its frame).
   await page.evaluate(() => { window.__r1FrameFocus = 0; document.addEventListener('focusin', (e) => { if (e.target instanceof Element && e.target.closest('.devframe')) window.__r1FrameFocus++; }, true); });
-  for (let i = 0; i < 40; i++) await page.keyboard.press('Tab');
-  check('r1 L1 …and tabbing through the Hub never focuses a preview frame', (await page.evaluate(() => window.__r1FrameFocus)) === 0);
+  let mounted = 0, frameFocused = 0;
+  for (let i = 0; i < 40; i++) {
+    mounted = Math.max(mounted, await page.locator('.devframe iframe').count());
+    await page.keyboard.press('Tab');
+    if (await page.evaluate(() => document.activeElement?.tagName === 'IFRAME' || !!document.activeElement?.closest?.('.devframe'))) frameFocused++;
+  }
+  check('r1 L1 …and tabbing through the Hub (frames mounted) never focuses a preview frame', mounted >= 1 && frameFocused === 0 && (await page.evaluate(() => window.__r1FrameFocus)) === 0, `mounted ${mounted}, focused ${frameFocused}`);
   check('r1 L1 …and the parent is still signed in on the Hub', route(page) === '/hub' && (await page.locator('.hub').count()) === 1, route(page));
   await ctx.close();
 

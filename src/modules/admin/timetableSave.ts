@@ -83,6 +83,12 @@ export const timetablePublishBlocked = (row: Record<string, unknown>): boolean =
 export function draftPatch(draft: Record<string, unknown>, basis: Record<string, unknown>): Record<string, unknown> {
   return Object.fromEntries(Object.entries(draft).filter(([key, value]) => JSON.stringify(value) !== JSON.stringify(basis[key])));
 }
+/**
+ * The editor's basis after its own save went through: the fields it sent are what is stored now, so the next diff is
+ * taken against them (a field changed back is sent again, never dropped). The version stays the one the editor read:
+ * the own-save memory below recognises the row at the version this save produced.
+ */
+export const basisAfterSave = <T extends Record<string, unknown>>(basis: T, patch: Record<string, unknown>): T => ({ ...basis, ...structuredClone(patch) });
 export const nothingToSave = (draft: Record<string, unknown>, basis: Record<string, unknown>): boolean => Object.keys(draftPatch(draft, basis)).length === 0;
 
 /**
