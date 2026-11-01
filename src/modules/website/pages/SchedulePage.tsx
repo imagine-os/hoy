@@ -15,6 +15,7 @@ import { usesMats, occupiesMat } from '../../../data/mats';
 import { MatPicker } from '../../../components/organism/MatPicker/MatPicker';
 import { SessionCalendar } from '../../../components/organism/SessionCalendar/SessionCalendar';
 import { useSession } from '../../../auth/SessionProvider';
+import { purchaseEntry } from '../../../auth/purchaseEntry';
 import { tenant } from '../../../tenant/tenant';
 import { Chip } from '../../../components/atom/Chip/Chip';
 import { Drawer } from '../../../components/organism/Drawer/Drawer';
@@ -73,7 +74,7 @@ export function SchedulePage() {
       if (!current()) return;
       // Production has no waitlist at launch: a full class goes to checkout, where the server says it is full.
       const next = !PRODUCTION_BUILD && fresh.booked_count >= fresh.capacity ? `/app/waitlist/${fresh.id}` : `/app/checkout/${fresh.id}${mat ? `?mat=${mat}` : ''}`;
-      nav(user.role === 'public' ? `/auth/sign-in?next=${encodeURIComponent(next)}` : next);
+      nav(purchaseEntry(user, next));
     } catch { if (current()) setNavigationError(true); }
     finally { if (operation.current === version) { navigationLock.current = false; if (current()) setNavigating(false); } }
   };

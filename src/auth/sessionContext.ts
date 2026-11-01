@@ -24,6 +24,11 @@ export interface SessionCtx {
   user: SessionUser;
   /** The effective role (viewAs when active). Use this for UI decisions. */
   role: Role;
+  /**
+   * Every role the real login holds, primary first (test-hoy fixes, lane Y2; production from `/me`). While viewing as,
+   * only the viewed role. Absent means `[role]` (the review build, previews): read it with `heldRoles`.
+   */
+  roles?: readonly Role[];
   isSuperAdmin: boolean;
   /** The signed-in user may turn dev mode on: super_admin and developer (0031). Only super_admin may "view as". */
   canDevMode: boolean;
@@ -57,3 +62,6 @@ export function useSession(): SessionCtx {
   if (!v) throw new Error('useSession outside SessionProvider');
   return v;
 }
+
+/** The roles a session holds (`roles`, or its one effective role). */
+export const heldRoles = (s: Pick<SessionCtx, 'role' | 'roles'>): readonly Role[] => s.roles ?? [s.role];

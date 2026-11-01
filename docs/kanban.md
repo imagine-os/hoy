@@ -862,3 +862,10 @@ Protected-capture clarification: M14 schedule/pay screenshots remain local/ignor
 - Choose a specific person in the Hub's dropdown (needs a sample override in `src/auth` view-as).
 - The manual's LMS in production (progress, training sign-offs, requests, edits) needs a Company OS entity.
 - A "Hub" link in the staff shell for the super admin (Justin's Hub has no sidebar entry; `DesktopShell`).
+
+## Hoy test-hoy fixes · lane Y2 (purchases for any signed-in person, deploy fixes)
+### Done
+- P-01 / C-06 / C-08: Book, Give a gift and "Continue booking" go straight to the purchase for any signed-in person; Administration who is also a customer opens `/app` as a customer ("Mis clases" in the staff menu, "Volver a <rol>" in the customer shell); a studio login that isn't a customer is offered "Join as a customer" (Company OS sign-up amendment). [Changelog](changelog/_pending/hoy-test-fixes-y2.md)
+- Deploy: `COMPANY_OS_READ_TOKEN: preserve()` in the IaC; deploy summaries show SITE_LIVE and whether the read token is present; an expired session on a website read falls back to the public identity.
+### Waiting
+- Owner: rename `SET_LIVE` → `SITE_LIVE` in Railway; release Company OS with the sign-up amendment before this frontend deploys.

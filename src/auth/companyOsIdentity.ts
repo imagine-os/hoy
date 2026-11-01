@@ -74,6 +74,19 @@ export function roleFromMe(me: MeInfo): Role | null {
   return me.isSuperAdmin ? 'super_admin' : null;
 }
 
+/**
+ * Every HoyOS role the login holds (test-hoy fixes, lane Y2), in primary order: the first is `roleFromMe`. A staff
+ * member who also takes classes holds `customer` too (one email, owner 2026-11-01), and the customer area opens for
+ * them. AD-04's technical `super_admin` membership of an Administration login is not a role it works as.
+ */
+export function rolesFromMe(me: MeInfo): Role[] {
+  const primary = roleFromMe(me);
+  if (!primary) return [];
+  const held = (key: string) => (key === 'super_admin' ? me.isSuperAdmin : me.roleKeys.includes(key));
+  const roles = ROLE_KEYS.filter((r) => held(r.key)).map((r) => r.role).filter((r) => !(r === 'super_admin' && primary === 'admin'));
+  return roles.length ? roles : [primary];
+}
+
 /** The session's `isSuperAdmin`: `/me` says so and the person works as Super admin (not an AD-04 Administration). */
 export const isSuperAdminMe = (me: MeInfo): boolean => me.isSuperAdmin && roleFromMe(me) === 'super_admin';
 

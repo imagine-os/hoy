@@ -52,6 +52,10 @@ export default defineRailway((ctx) => {
       SITE_LIVE: preserve(),
       SITE_LIVE_AT: preserve(),
       PUBLIC_DOCUMENTS: preserve(),
+      // The signed-out website's read-only Company OS identity (ADR 0029, role public_site), created by the operator and
+      // set by hand in Railway. Without it here, "Apply infra" fails on the variable the service already has (test-hoy,
+      // 2026-11-01). Unset: signed-out reads answer 401.
+      COMPANY_OS_READ_TOKEN: preserve(),
     },
   });
 

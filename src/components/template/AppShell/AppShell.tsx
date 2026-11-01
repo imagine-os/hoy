@@ -9,6 +9,8 @@ import { NavBar } from '../../organism/NavBar/NavBar';
 import { LangToggle } from '../../molecule/LangToggle/LangToggle';
 import { Avatar } from '../../atom/Avatar/Avatar';
 import { PRODUCTION_BUILD } from '../../../config/launch';
+import { primaryHomeOf } from '../../../auth/purchaseEntry';
+import { ROLE_LABEL } from '../../../auth/roles';
 import './AppShell.css';
 
 export interface AppShellProps {
@@ -27,8 +29,11 @@ export interface AppShellProps {
  * There is no phone bezel here at any width; the hub's DeviceFrame simulator draws it around a real 390 px iframe.
  */
 export function AppShell({ surface, routes, homeTo, children, bare = false }: AppShellProps) {
-  const { t } = useI18n();
-  const { user, hasRole } = useSession();
+  const { t, bi } = useI18n();
+  const session = useSession();
+  const { user, hasRole } = session;
+  // Lane Y2: a staff login in the customer area as a customer keeps the way back to its own home.
+  const primary = primaryHomeOf(session);
   const wide = useMinWidth('shell');
   const items = routes.filter((r) => r.surface === surface && r.nav && hasRole(r.roles)).sort((a, b) => a.nav!.order - b.nav!.order)
     .map((r) => ({ to: r.nav!.to ?? r.path, label: t(r.nav!.labelKey), icon: r.nav!.icon, end: r.path === homeTo }));
@@ -36,7 +41,7 @@ export function AppShell({ surface, routes, homeTo, children, bare = false }: Ap
     <div className={`appshell ${wide ? 'is-wide' : 'is-narrow'}`} data-surface={surface}>
       {!bare && (
         <TopBar brand homeTo={homeTo} nav={wide && items.length > 0 ? <NavBar variant="top" items={items} /> : undefined}
-          actions={<><LangToggle size="sm" /><Link to={PRODUCTION_BUILD ? '/app/more' : '/hub'} className="appshell-avatar" title={PRODUCTION_BUILD ? user.name : t('core.nav.hub')}><Avatar name={user.name} initials={user.initials} size={wide ? 36 : 30} /></Link></>} />
+          actions={<>{primary && <Link to={primary.home} className="btn btn-ghost btn-sm" data-primary-home>{t('core.nav.backTo', { role: bi(ROLE_LABEL[primary.role]) })}</Link>}<LangToggle size="sm" /><Link to={PRODUCTION_BUILD ? '/app/more' : '/hub'} className="appshell-avatar" title={PRODUCTION_BUILD ? user.name : t('core.nav.hub')}><Avatar name={user.name} initials={user.initials} size={wide ? 36 : 30} /></Link></>} />
       )}
       <main className="appshell-main">{children}</main>
       {!wide && items.length > 0 && <div className="appshell-dock"><NavBar items={items} /></div>}

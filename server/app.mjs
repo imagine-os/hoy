@@ -101,7 +101,7 @@ export async function createHandler(config, deps) {
       }
       if (rawPath === '/api/cos' || rawPath.startsWith('/api/cos/')) {
         const route = await proxy(req, res, config, deps, rawPath.slice('/api/cos'.length), rawQuery);
-        return log({ event: 'api.cos', method: req.method, route, status: res.statusCode, ms: Date.now() - started, ...(res.public ? { public: true } : {}) });
+        return log({ event: 'api.cos', method: req.method, route, status: res.statusCode, ms: Date.now() - started, ...(res.public ? { public: true } : {}), ...(res.staleSession ? { staleSession: true } : {}) });
       }
       if (rawPath === '/files' || rawPath.startsWith('/files/')) {
         const outcome = await file(req, res, config, deps, rawPath.slice('/files'.length));
@@ -221,9 +221,21 @@ async function proxy(req, res, config, deps, rest, query) {
       return route;
     }
   } else {
+    let valid = true;
     try {
       await deps.verifySession(token);
     } catch {
+      valid = false;
+    }
+    if (!valid) {
+      // Lane Y2 (test-hoy, 2026-11-01): an expired or invalid session on a website read is answered as signed out, with
+      // the server's read identity (the visitor's token is dropped); every other route still answers 401.
+      if (config.companyOsReadToken && publicRead(req.method, segments.slice(2))) {
+        res.staleSession = true;
+        res.setHeader('X-Hoy-Session', 'stale');
+        await publicProxy(req, res, config, deps, rest + query, segments[2] === 'query');
+        return route;
+      }
       sendError(res, 401, 'unauthorized');
       return route;
     }
