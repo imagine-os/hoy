@@ -13,7 +13,7 @@ import { PRODUCTION_BUILD } from '../config/launch';
 // Production only (it needs the Clerk session): folded away in the review build.
 const CustomerEnrolment = PRODUCTION_BUILD ? lazy(() => import('./CustomerEnrolment')) : null;
 // The consent check's one read (lane r2hoy2); loaded on use, so the review build never carries the Company OS call.
-const readSignup = () => import('./cosRequest').then((m) => m.cosJson('/signup'));
+const readSignup = PRODUCTION_BUILD ? () => import('./cosRequest').then((m) => m.cosJson('/signup')) : null;
 
 /**
  * Guards a route. Public routes pass everyone; otherwise the effective role must match. PL-05: the launch permissions

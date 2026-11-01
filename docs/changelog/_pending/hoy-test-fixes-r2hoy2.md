@@ -8,6 +8,7 @@ Decision:
 - Fail open: a network error, an error status, an older Company OS without `registered`, or no answer within 4 s opens the page as before, and a `[signup]` warning goes to the console. Why: Company OS doesn't gate on the consent (its tech-debt #74), so a failed read must not lock a paying customer out of their bookings. The next session asks again.
 - Desk-invited customers also read `registered: false`, and they get the same step (the default): Company OS's rule is that every customer accepts the current documents once. For them it shows once, on their next visit to the customer area.
 - Independent of `CUSTOMER_AUTO_ENROL_STAFF`: the switch decides whether staff become customers, and these logins already are customers. The step shows in both states, and both are tested.
+- Lane review: a customer is never locked out by the step. A notice it can't fix (email linked to another login, a profile the studio must fix, a failure) offers "Continue for now" (`identity.accept.later`), which opens the area for this session. The step's own Retry read gives up after 4 s and opens the page. Its POST gives up after 15 s with a Retry line. A customer can sign out from the loading screen too. The review build carries no `GET /signup` call.
 - Platform operator (owner 2026-11-01): their own login has no Hoy membership (`/me` 403), so it takes the studio's sign-up like any new login. Afterwards `/me` reads `member` only, and they are a customer here. Tested in the UI and in the unit tests.
 
 Alternative rejected:

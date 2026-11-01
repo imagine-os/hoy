@@ -17,6 +17,12 @@ const known = new Map<string, ConsentRead>();
 const listeners = new Set<() => void>();
 const notify = () => { for (const l of listeners) l(); };
 
+/** A call that may never answer (fetch has no timeout): its answer, or `'timeout'` after `ms`. */
+export function withTimeout<T>(call: Promise<T>, ms: number): Promise<T | 'timeout'> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  return Promise.race([call, new Promise<'timeout'>((resolve) => { timer = setTimeout(() => resolve('timeout'), ms); })]).finally(() => clearTimeout(timer));
+}
+
 export interface ConsentReadOptions { timeoutMs?: number; log?: (...args: unknown[]) => void }
 
 /** The login's consent read: the cached one, or one `GET /signup` through `fetcher`. Never rejects. */
@@ -63,9 +69,9 @@ export function resetConsentReads(): void { reads.clear(); known.clear(); }
  * RequireRole's view of the check: `null` when it doesn't apply, `'pending'` while the read is out (at most
  * `CONSENT_READ_TIMEOUT_MS`), then the answer.
  */
-export function useConsentRead(applies: boolean, userId: string, fetcher: () => Promise<{ status: number; body: unknown }>): ConsentRead | 'pending' | null {
+export function useConsentRead(applies: boolean, userId: string, fetcher: (() => Promise<{ status: number; body: unknown }>) | null): ConsentRead | 'pending' | null {
   const answer = useSyncExternalStore(subscribeConsent, () => known.get(userId));
-  useEffect(() => { if (applies && !reads.has(userId)) void readConsent(userId, fetcher); }, [applies, userId, fetcher]);
-  if (!applies) return null;
+  useEffect(() => { if (applies && fetcher && !reads.has(userId)) void readConsent(userId, fetcher); }, [applies, userId, fetcher]);
+  if (!applies || !fetcher) return null;
   return answer ?? 'pending';
 }

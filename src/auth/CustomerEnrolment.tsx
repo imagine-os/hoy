@@ -5,7 +5,10 @@ import { useSession } from './SessionProvider';
 import { ROLE_HOME } from './roles';
 import { cosJson } from './cosRequest';
 import { classifySignup, consentReadFrom, enrolmentBody, parseSignupConfig, signupHeld, signupNoticeKey, type SignupConfig } from './companyOsIdentity';
-import { settleConsent } from './signupStatus';
+import { CONSENT_READ_TIMEOUT_MS, settleConsent, withTimeout } from './signupStatus';
+
+/** Lane review (r2hoy2): the consent step's own calls give up after this; fetch has no timeout of its own. */
+const CONSENT_POST_TIMEOUT_MS = 15_000;
 import { ConsentCheck } from '../modules/identity/pages';
 import { Card } from '../components/molecule/Card/Card';
 import { Notice } from '../components/molecule/Notice/Notice';
@@ -55,7 +58,10 @@ export default function CustomerEnrolment({ consent }: { consent?: SignupConfig 
     busy.current = true;
     setStep('sending');
     try {
-      const { status, body } = await cosJson('/signup', { method: 'POST', body: enrolmentBody(cfg, name, withConsent) });
+      const post = cosJson('/signup', { method: 'POST', body: enrolmentBody(cfg, name, withConsent) });
+      const answer = consentOnly ? await withTimeout(post, CONSENT_POST_TIMEOUT_MS) : await post;
+      if (answer === 'timeout') throw new Error('signup_timeout');
+      const { status, body } = answer;
       const result = classifySignup(status, body);
       if (!alive.current) return;
       if (result.kind === 'done' && consentOnly) { settleConsent(user.id); refresh(); return; }
@@ -104,10 +110,12 @@ export default function CustomerEnrolment({ consent }: { consent?: SignupConfig 
     }
     setStep('loading'); setNotice(null);
     try {
-      const { status, body } = await cosJson('/signup');
       if (consentOnly) {
-        // Retry of the consent check: signed up meanwhile, closed, or unreadable now → the page opens (fail open).
-        const read = consentReadFrom(status, body);
+        // Retry of the consent check: signed up meanwhile, closed, unreadable or silent now → the page opens (fail open).
+        const answer = await withTimeout(cosJson('/signup'), CONSENT_READ_TIMEOUT_MS);
+        if (!alive.current) return;
+        if (answer === 'timeout') { console.warn('[signup] GET /signup gave no answer on retry; the customer area opens without the consent check'); settleConsent(user.id); return; }
+        const read = consentReadFrom(answer.status, answer.body);
         if (!alive.current) return;
         if (read.step === 'pass') { settleConsent(user.id); return; }
         setConfig(read.config);
@@ -115,6 +123,7 @@ export default function CustomerEnrolment({ consent }: { consent?: SignupConfig 
         await enrol(read.config, false);
         return;
       }
+      const { status, body } = await cosJson('/signup');
       const parsed = status === 200 ? parseSignupConfig(body) : null;
       if (!alive.current) return;
       if (!parsed) { setNotice({ tone: 'danger', text: t('identity.enrol.failed') }); setStep('notice'); return; }
@@ -137,7 +146,7 @@ export default function CustomerEnrolment({ consent }: { consent?: SignupConfig 
     ? <p className="small"><Button variant="ghost" size="sm" onClick={() => void signOut()}>{t('identity.signout')}</Button></p>
     : <p className="small"><Link to={ROLE_HOME[role]}>{t('identity.enrol.back')}</Link></p>;
   if (step === 'loading' || step === 'sending' && !config?.consents.length) {
-    return <div className="container page identity-narrow stack" data-enrol-customer="loading"><p className="muted" aria-busy="true">{t(`${lines}.loading`)}</p></div>;
+    return <div className="container page identity-narrow stack" data-enrol-customer="loading"><p className="muted" aria-busy="true">{t(`${lines}.loading`)}</p>{consentOnly && home}</div>;
   }
   if (step === 'closed') return <div className="container page identity-narrow stack" data-enrol-customer="closed"><Card padding="lg"><Notice tone="info">{t('identity.register.closed')}</Notice></Card>{home}</div>;
   if (step === 'notice' || !config) {
@@ -146,6 +155,8 @@ export default function CustomerEnrolment({ consent }: { consent?: SignupConfig 
         <Card padding="lg" className="stack">
           {notice && <Notice tone={notice.tone}>{notice.text}</Notice>}
           <Button variant="secondary" data-enrol-retry onClick={() => void start(true)}>{t('identity.retry')}</Button>
+          {/* Lane review (r2hoy2): a customer already; a refusal they can't fix never keeps them out of their bookings. */}
+          {consentOnly && <Button variant="ghost" data-consent-later onClick={() => settleConsent(user.id)}>{t('identity.accept.later')}</Button>}
         </Card>
         {home}
       </div>

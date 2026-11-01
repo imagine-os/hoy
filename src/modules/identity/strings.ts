@@ -82,6 +82,7 @@ export const strings: StringTable = {
   'identity.accept.loading': { es: 'Revisando tus documentos…', en: 'Checking your documents…' },
   'identity.accept.conflict': { es: 'No pudimos registrar tu aceptación con este correo. Escríbele a administración para revisarlo.', en: 'We could not record your acceptance with this email. Please contact the studio administration.' },
   'identity.accept.invalid': { es: 'No pudimos registrar tu aceptación con los datos de tu ficha. Escríbele a administración para revisarlo.', en: 'We could not record your acceptance with the details on your profile. Please contact the studio administration.' },
+  'identity.accept.later': { es: 'Continuar por ahora', en: 'Continue for now' },
   'identity.accept.failed': { es: 'No pudimos registrar tu aceptación ahora. Reintenta; no se duplicará.', en: 'We could not record your acceptance right now. Retry; it will not be duplicated.' },
   // Review round 2 (r2hoy): sign-up answers that don't go on, each with a line that fits.
   'identity.register.conflict': { es: 'Este correo ya tiene una cuenta en el estudio, pero no pudimos terminar tu registro. Escríbele a administración para revisarlo.', en: 'This email already has an account at the studio, but we could not finish your sign-up. Please contact the studio administration.' },
