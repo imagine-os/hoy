@@ -391,6 +391,7 @@ export const strings: StringTable = {
   'admin.content.timetableLive': { es: 'El horario se guarda en el sistema: cada fila con su profesor/a, sala y modalidad. Una fila nueva empieza en borrador; publícala cuando esté lista. El tema, la descripción y el nivel aún no se guardan, por eso no aparecen aquí.', en: 'The timetable saves to the system: each row with its teacher, room and modality. A new row starts as a draft; publish it when it is ready. Theme, description and level are not saved yet, so they are not shown here.' },
   'admin.content.timetableReadOnly': { es: 'Ves el horario como está hoy. Solo Administración y Coordinación lo cambian.', en: 'You see the timetable as it is today. Only Administration and the Coordinator change it.' },
   'admin.content.newClassTitle': { es: 'Nueva clase', en: 'New class' },
+  'admin.content.classTypeToPublish': { es: 'Elige la modalidad y guarda para poder publicar esta fila.', en: 'Choose the modality and save to publish this row.' },
   'admin.content.deactivateHint': { es: 'Las filas no se borran: desactívalas con Publicado.', en: 'Rows are not deleted: switch Published off.' },
   'admin.content.title': { es: 'Contenido', en: 'Content' },
   'admin.content.subtitle': { es: 'Clases, profesores, modalidades y salas: la fuente de la app, el sitio y recepción.', en: 'Classes, teachers, modalities and rooms: the source for the app, the website and the desk.' },

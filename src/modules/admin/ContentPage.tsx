@@ -29,7 +29,7 @@ import { ClassRow } from '../../components/molecule/ClassRow/ClassRow';
 import { TeacherCard } from '../../components/organism/TeacherCard/TeacherCard';
 import { EmptyState } from '../../components/molecule/EmptyState/EmptyState';
 import { writeContent } from './contentRecovery';
-import { TIMETABLE_UNSTORED } from './timetableSave';
+import { draftPatch, nothingToSave, TIMETABLE_UNSTORED, timetablePublishBlocked } from './timetableSave';
 import { useContentRecovery } from './useContentRecovery';
 import { ContentSubNav } from './contentNav';
 import './admin.css';
@@ -142,6 +142,9 @@ export function ContentPage() {
     } catch { if (action === 'preview') setPreview(null); setBulkError('bulk.error'); } finally { bulkLock.current = false; setBulkBusy(false); }
   };
   const row = rows.find((r) => r.id === selected) ?? null;
+  // Review round 1 (r1hoy, M2): a timetable draft without its class type can't be published (Company OS would make
+  // classes nobody can book); saveTimetableRow refuses it too (timetable_class_type_required).
+  const publishBlocked = (r: BaseRow) => timetableLive && timetablePublishBlocked(r);
 
   const columns = useMemo<DataTableColumn<BaseRow>[]>(() => {
     const first = fields.slice(0, entity === 'class_templates' ? 6 : 4);
@@ -157,9 +160,9 @@ export function ContentPage() {
         if (typeof v === 'boolean') return v ? '✓' : '·';
         return v == null || v === '' ? <span className="muted">—</span> : String(v);
       } })),
-      ...(entity !== 'rooms' ? [{ key: 'active', label: t('admin.content.published'), width: 120, render: (r) => <span onClick={(e) => e.stopPropagation()}><Toggle size="sm" checked={!!r.active} disabled={!canWrite || recovery.busy || bulkBusy} onChange={(on) => publish(r, on)} /></span> } as DataTableColumn<BaseRow>] : []),
+      ...(entity !== 'rooms' ? [{ key: 'active', label: t('admin.content.published'), width: 120, render: (r) => <span onClick={(e) => e.stopPropagation()}><Toggle size="sm" checked={!!r.active} disabled={!canWrite || recovery.busy || bulkBusy || publishBlocked(r)} onChange={(on) => publish(r, on)} /></span> } as DataTableColumn<BaseRow>] : []),
     ];
-  }, [entity, bi, refs, canWrite, checked, bulkBusy, fields, recovery.busy]);
+  }, [entity, bi, refs, canWrite, checked, bulkBusy, fields, recovery.busy, timetableLive]);
 
   const publish = (r: BaseRow, on: boolean) => write({ kind: 'update', table: entity, before: r, patch: { active: on } });
   // Company OS requires a title, so a new production timetable row starts as a titled draft.
@@ -199,7 +202,7 @@ export function ContentPage() {
         view === 'list' ? <div className="grid grid-2">{visibleRows.map(r => <Card key={r.id} title={String(r[FIELDS[entity][0].name])} actions={<Button onClick={() => setSelected(r.id)}>{t('core.common.edit')}</Button>}><div className="stack-sm">{canWrite && <label><input type="checkbox" checked={checked.includes(r.id)} disabled={bulkBusy} onChange={e => { setChecked(ids => e.target.checked ? [...ids, r.id] : ids.filter(id => id !== r.id)); setPreview(null); }} /> {t('bulk.select')}</label>}{fields.slice(1, 5).filter(f => f.kind !== 'bi' && f.kind !== 'list').map(f => <p key={f.name} className="small">{bi(f.label)}: {f.ref ? refLabel(f.ref, r[f.name]) : String(r[f.name] ?? '—')}</p>)}</div></Card>)}</div> : <DataTable columns={columns} rows={visibleRows} rowKey={(r) => r.id} search={search} onRowClick={(r) => setSelected(r.id)} selectedKey={selected} dense />
       )}
       <Drawer open={!!row} onClose={() => setSelected(null)} width={520} title={<div className="row wrap"><span>{t(`admin.content.tab.${entity}`)}</span>{row && <Badge tone={row.active ? 'success' : 'warn'}>{row.active ? t('admin.content.published') : t('admin.content.draft')}</Badge>}</div>}
-        footer={row && canWrite ? <div className="row-between">{timetableLive ? <span className="xs muted">{t('admin.content.deactivateHint')}</span> : <Button variant="danger" size="sm" disabled={recovery.busy || bulkBusy} onClick={() => remove(row)}>{t('core.common.delete')}</Button>}{entity !== 'rooms' && <Toggle size="sm" checked={!!row.active} label={t('admin.content.published')} disabled={recovery.busy || bulkBusy} onChange={(on) => publish(row, on)} />}</div> : undefined}>
+        footer={row && canWrite ? <div className="row-between">{timetableLive ? <span className="xs muted">{t('admin.content.deactivateHint')}</span> : <Button variant="danger" size="sm" disabled={recovery.busy || bulkBusy} onClick={() => remove(row)}>{t('core.common.delete')}</Button>}{entity !== 'rooms' && <span className="row" data-publish-toggle>{publishBlocked(row) && <span className="xs muted" data-publish-hint>{t('admin.content.classTypeToPublish')}</span>}<Toggle size="sm" checked={!!row.active} label={t('admin.content.published')} disabled={recovery.busy || bulkBusy || publishBlocked(row)} onChange={(on) => publish(row, on)} /></span>}</div> : undefined}>
         {row && recovery.notice}
         {row && <Editor key={row.id} entity={entity} row={row} fields={fields} refs={refs} modalities={modalities} readOnly={!canWrite} busy={recovery.busy || bulkBusy} lang={lang} onSave={async (patch, basis) => { if (!await write({ kind: 'update', table: entity, before: basis, patch })) throw Error('content_save_failed'); }} />}
       </Drawer>
@@ -221,7 +224,9 @@ function Editor({ entity, row, fields, refs, modalities, readOnly, busy, lang, o
   useEffect(() => { if (!dirty) basis.current = row; }, [row, dirty]);
   const errors = fields.filter((f) => f.required && !String(draft[f.name] ?? '').trim()).map((f) => f.name);
   const set = (k: string, v: unknown) => setDraft((d) => ({ ...d, [k]: v }));
-  const save = async () => { if (saveLock.current || readOnly) return; saveLock.current = true; setSaving(true); try { await onSave(structuredClone(Object.fromEntries(Object.entries(draft).filter(([key, value]) => JSON.stringify(value) !== JSON.stringify(basis.current[key])))), basis.current); } catch { /* Page retains the retry operation and draft. */ } finally { saveLock.current = false; setSaving(false); } };
+  // Review round 1 (r1hoy, L3): nothing changed since the row was opened is nothing to save (no "detail not valid").
+  const unchanged = nothingToSave(draft, basis.current);
+  const save = async () => { if (saveLock.current || readOnly) return; const patch = draftPatch(draft, basis.current); if (!Object.keys(patch).length) return; saveLock.current = true; setSaving(true); try { await onSave(structuredClone(patch), basis.current); } catch { /* Page retains the retry operation and draft. */ } finally { saveLock.current = false; setSaving(false); } };
   const d = draft as Record<string, string | number | boolean | Bi | string[] | null>;
   return (
     <div className="stack">
@@ -245,7 +250,7 @@ function Editor({ entity, row, fields, refs, modalities, readOnly, busy, lang, o
           </Field>
         ))}
       </div>
-      {!readOnly && <div className="row-between wrap"><span className="xs muted">{dirty ? t('admin.content.unsaved') : t('admin.content.upToDate')}</span><Button size="sm" disabled={busy || !dirty || errors.length > 0} loading={saving} onClick={save}>{t('core.common.save')}</Button></div>}
+      {!readOnly && <div className="row-between wrap"><span className="xs muted">{dirty ? t('admin.content.unsaved') : t('admin.content.upToDate')}</span><Button size="sm" disabled={busy || !dirty || unchanged || errors.length > 0} loading={saving} onClick={save}>{t('core.common.save')}</Button></div>}
       {entity === 'class_templates' && <ClassPayRulesPanel templateId={row.id} />}
       {entity === 'class_templates' && <Card title={t('recurrence.title')}><div className="stack"><p className="small muted">{t('recurrence.explain')}</p><p>{t('recurrence.defaults')}</p><Button variant="secondary" disabled={dirty || readOnly || saving || busy || !data.generateRecurrence} onClick={() => { setRecurrencePreview(previewRecurrence(row)); setRecurrenceMessage(''); }}>{t('recurrence.preview')}</Button>{recurrencePreview && <><ol>{recurrencePreview.map(o => <li key={o.starts_at}>{formatDateTime(o.starts_at, currentLang)} · {Number(row.duration_min)} min</li>)}</ol>{!recurrencePreview.length && <p>{t('recurrence.empty')}</p>}<Button disabled={!row.active || !recurrencePreview.length || dirty || readOnly || busy} loading={saving} onClick={async () => { setSaving(true); try { const result = await data.generateRecurrence!({ template: row, occurrences: recurrencePreview, role, actorId: user.id }); setRecurrenceMessage(t('recurrence.done', { n:result.created, skipped:result.skipped })); setRecurrencePreview(null); } catch { setRecurrenceMessage(t('recurrence.error')); } finally { setSaving(false); } }}>{t('recurrence.generate')}</Button>{!row.active && <p>{t('recurrence.publishFirst')}</p>}</>}{recurrenceMessage && <p role="status">{recurrenceMessage}</p>}</div></Card>}
       <Card tone="muted" eyebrow={t('admin.content.preview')} padding="sm">

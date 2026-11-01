@@ -38,7 +38,7 @@ const noLaunch = { admin: 'none', front_desk: 'none', customer: 'none', public: 
 
 export const LAUNCH_ROLE_MATRIX: MatrixArea[] = [
   { id: 'website', paths: ['/site'], access: area({ admin: 'full', front_desk: 'full', customer: 'full', public: 'full' }, TEAM_ALL) },
-  { id: 'manual', paths: ['/manual', '/docs'], access: area(staffOnly, TEAM_ALL), note: 'SW-06: public paths only when the owner lists them (launch.publicDocuments). Every team role has a reading path.' },
+  { id: 'manual', paths: ['/manual', '/docs'], access: area(staffOnly, TEAM_ALL), note: 'SW-06: never public (the public-documents switch is retired, owner 2026-11-01). Every team role has a reading path.' },
   { id: 'customer-app', paths: ['/app'], access: area({ admin: 'none', front_desk: 'none', customer: 'own', public: 'none' }, { teacher: 'own' }), note: 'A teacher also books classes as a person.' },
   { id: 'front-desk', paths: ['/staff'], access: area(staffOnly, { coordinator: 'full', maintenance: 'limited', finance: 'read', marketing: 'read', developer: 'read', teacher: 'read' }), note: 'Front desk home, check-in, pending payments, register and charge, inbox, rooms; maintenance works from the staff home (rooms, incidents). Each page keeps its route roles.' },
   { id: 'expense-entry', paths: ['/staff/expense'], access: area({ admin: 'full', front_desk: 'limited', customer: 'none', public: 'none' }), note: 'Q-13: record only, no ledger, no income.' },

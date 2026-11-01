@@ -18,9 +18,9 @@ check('railway.ts declares COMPANY_OS_READ_TOKEN: preserve()', /\bCOMPANY_OS_REA
 // Owner 2026-11-01 (answer to y6-public-documents, "Retire it"): the PUBLIC_DOCUMENTS switch is gone everywhere, so nothing
 // pretends to open the manual or docs to visitors (making documents public later is its own change, with its own gate rule).
 check('PUBLIC_DOCUMENTS is retired: not in railway.ts', !/PUBLIC_DOCUMENTS/.test(iac));
-check('PUBLIC_DOCUMENTS is retired: no server file reads it', readdirSync('server').filter((n) => n.endsWith('.mjs')).every((f) => !/PUBLIC_DOCUMENTS|publicDocuments/.test(readFileSync(`server/${f}`, 'utf8'))));
+check('PUBLIC_DOCUMENTS is retired: no server file reads it or hands it out', readdirSync('server').filter((n) => n.endsWith('.mjs')).every((f) => !/env\.PUBLIC_DOCUMENTS|['"]PUBLIC_DOCUMENTS['"]|publicDocuments/.test(readFileSync(`server/${f}`, 'utf8'))));
 check('PUBLIC_DOCUMENTS is retired: the app reads no publicDocuments / isPublicDocument', (function walk(dir) { return readdirSync(dir, { withFileTypes: true }).every((e) => e.isDirectory() ? walk(`${dir}/${e.name}`) : !/\.(ts|tsx)$/.test(e.name) || !/publicDocuments|isPublicDocument|PUBLIC_DOCUMENTS/.test(readFileSync(`${dir}/${e.name}`, 'utf8'))); })('src'));
-check('PUBLIC_DOCUMENTS is retired: server/README.md no longer lists it', !/PUBLIC_DOCUMENTS/.test(readFileSync('server/README.md', 'utf8')));
+check('PUBLIC_DOCUMENTS is retired: server/README.md no longer lists it as a variable', !/^\|[^\n]*`PUBLIC_DOCUMENTS`/m.test(readFileSync('server/README.md', 'utf8')));
 /** Read by the server but deliberately not in the IaC: set by Railway itself, local-only, or a tuning knob with a safe default nobody sets by hand. */
 const NOT_IN_IAC = new Map([
   ['PORT', 'Railway sets it'], ['RAILWAY_ENVIRONMENT_NAME', 'Railway sets it'], ['HOY_ENV', 'local and tests only'],

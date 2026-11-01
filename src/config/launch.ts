@@ -7,15 +7,14 @@ import { useSyncExternalStore } from 'react';
  *
  * - `siteLive` / `siteLiveAt` (SW-08): Coming Soon stays at `/` until the go-live setting flips. `siteLive: true`, or
  *   `siteLiveAt` reached (studio time, ISO with offset), sends `/` to the public website. `/coming-soon` always stays.
- * - `publicDocuments` (SW-06, Q-14): manual and docs paths a visitor may open without signing in. Empty until the owner
- *   decides which are public; every other `/manual` and `/docs` page requires sign-in.
+ * - SW-06 (Q-14): the manual and docs are never public. The owner's list of public paths (the server's public-documents
+ *   switch) is retired (owner 2026-11-01); a value an older server or a fixture still hands in is dropped by `sanitize`.
  * - `reviewTools`: the testing hub link, the version-history link and the concept-imagery note on the public site.
  *   Off in the production build (`VITE_HOY_BUILD=production`).
  */
 export interface LaunchConfig {
   siteLive: boolean;
   siteLiveAt: string | null;
-  publicDocuments: string[];
   reviewTools: boolean;
 }
 
@@ -27,7 +26,7 @@ export const PRODUCTION_BUILD = typeof __HOY_BUILD__ === 'string'
   ? __HOY_BUILD__ === 'production'
   : (typeof import.meta.env === 'object' && import.meta.env.VITE_HOY_BUILD === 'production');
 
-export const LAUNCH_DEFAULTS: LaunchConfig = { siteLive: false, siteLiveAt: null, publicDocuments: [], reviewTools: !PRODUCTION_BUILD };
+export const LAUNCH_DEFAULTS: LaunchConfig = { siteLive: false, siteLiveAt: null, reviewTools: !PRODUCTION_BUILD };
 
 const STORAGE_KEY = 'hoyos.launch';
 const listeners = new Set<() => void>();
@@ -47,7 +46,6 @@ export function sanitize(input: unknown): Partial<LaunchConfig> {
   if (typeof v.siteLive === 'boolean') out.siteLive = v.siteLive;
   // A go-live instant must carry its offset (2026-10-30T00:00:00-05:00): a bare date would be read as UTC or device time.
   if (v.siteLiveAt === null || (typeof v.siteLiveAt === 'string' && /T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2})$/.test(v.siteLiveAt) && Number.isFinite(Date.parse(v.siteLiveAt)))) out.siteLiveAt = v.siteLiveAt as string | null;
-  if (Array.isArray(v.publicDocuments)) out.publicDocuments = v.publicDocuments.filter((p): p is string => typeof p === 'string' && /^\/(manual|docs)(\/[A-Za-z0-9_.-]+)*$/.test(p));
   if (typeof v.reviewTools === 'boolean' && !PRODUCTION_BUILD) out.reviewTools = v.reviewTools;
   return out;
 }
@@ -70,10 +68,4 @@ export function useLaunchConfig(): LaunchConfig {
 export function siteIsLive(config: LaunchConfig, now: Date = new Date()): boolean {
   if (config.siteLive) return true;
   return config.siteLiveAt != null && now.getTime() >= Date.parse(config.siteLiveAt);
-}
-
-/** SW-06 — may a visitor who is not signed in open this manual / docs path? */
-export function isPublicDocument(config: LaunchConfig, path: string): boolean {
-  const clean = path.replace(/\/+$/, '') || '/';
-  return config.publicDocuments.some((p) => clean === p || clean.startsWith(`${p}/`));
 }

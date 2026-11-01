@@ -49,7 +49,9 @@ try {
     const page = await src('src/modules/customer/HomePage.tsx');
     assert.ok(!page.includes('room="Sala principal"'), 'no fixed room');
     assert.match(page, /room=\{next\.room\?\.name\}/);
-    assert.match(await src('src/modules/website/hooks.ts'), /room: rooms\.find\(\(r\) => r\.id === s\.room_id\)/);
+    // Review round 1 (r1hoy): the join moved to the shared joinSessionRows (src/data/sessionAvailability.ts).
+    assert.match(await src('src/modules/website/hooks.ts'), /joinSessionRows\(\{ sessions: sessions\.rows, modalities: modalities\.rows, teachers, rooms,/);
+    assert.match(await src('src/data/sessionAvailability.ts'), /room: room\.get\(s\.room_id \?\? ''\)/);
   });
 
   await check('the app\'s class detail refuses a class without a class type with that reason', async () => {

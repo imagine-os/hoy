@@ -464,10 +464,9 @@ try {
     await appFrame.evaluate(() => { window.__r1Hits = 0; for (const ev of ['pointerdown', 'click', 'keydown', 'focusin']) document.addEventListener(ev, () => { window.__r1Hits++; }, true); });
     const box = await el.boundingBox();
     if (box) await page.mouse.click(box.x + box.width / 2, box.y + Math.min(40, box.height / 2));
-    for (let i = 0; i < 25; i++) await page.keyboard.press('Tab');
+    await page.waitForTimeout(300);
     const hits = await appFrame.evaluate(() => window.__r1Hits).catch(() => -1);
-    check('r1 L1 …a click and the keyboard never reach inside the frame', !!box && hits === 0, `${hits} ${JSON.stringify(box)}`);
-    check('r1 L1 …and the parent is still signed in on the Hub', route(page) === '/hub' && (await page.locator('.hub').count()) === 1, route(page));
+    check('r1 L1 …a click on the preview never reaches inside the frame', !!box && hits === 0, `${hits} ${JSON.stringify(box)}`);
   }
   for (const f of page.frames().filter((x) => x !== page.mainFrame())) {
     const ro = await f.evaluate(() => sessionStorage.getItem('hoyos.viewAs')).catch(() => null);
@@ -475,6 +474,11 @@ try {
   }
   check('the parent\'s view-as is untouched by its frames (none stored, no banner, still the Hub)', (await stored(page)) === null && (await banner(page).count()) === 0 && route(page) === '/hub' && (await page.locator('.hub').count()) === 1, `${await stored(page)} ${route(page)}`);
   check('nothing but reads reached Company OS from the Hub and its frames', writes().length === 0, writes().map((w) => `${w.method} ${w.route}`).join(', '));
+  // The keyboard, from the parent's side (tabbing scrolls the card away and the budget may unmount its frame).
+  await page.evaluate(() => { window.__r1FrameFocus = 0; document.addEventListener('focusin', (e) => { if (e.target instanceof Element && e.target.closest('.devframe')) window.__r1FrameFocus++; }, true); });
+  for (let i = 0; i < 40; i++) await page.keyboard.press('Tab');
+  check('r1 L1 …and tabbing through the Hub never focuses a preview frame', (await page.evaluate(() => window.__r1FrameFocus)) === 0);
+  check('r1 L1 …and the parent is still signed in on the Hub', route(page) === '/hub' && (await page.locator('.hub').count()) === 1, route(page));
   await ctx.close();
 
   // ── a visitor ──────────────────────────────────────────────────────────────────────────────────────────────────

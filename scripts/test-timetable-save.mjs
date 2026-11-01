@@ -199,8 +199,9 @@ await test('edit: a lost answer retried finds its own save and reports it saved 
   // The editor never heard back and retries the same edit from the same basis.
   assert.equal(await save(p, 'admin', { kind: 'update', table: 'class_templates', before, patch: { capacity: 6, start_time: '09:30' } }), before.id);
   assert.equal(api.writes().filter((w) => w.method === 'PATCH').length, 1);
-  // A different edit from that stale basis is still a conflict.
-  await assert.rejects(save(p, 'admin', { kind: 'update', table: 'class_templates', before, patch: { capacity: 5 } }), has('content_conflict'));
+  // A different edit from that stale basis in another tab (its own provider) is still a conflict. (In this tab it is the
+  // same editor's next save, which review round 1's L4 lets through: see the r1 L4 tests.)
+  await assert.rejects(save(provider(api), 'admin', { kind: 'update', table: 'class_templates', before, patch: { capacity: 5 } }), has('content_conflict'));
 });
 await test('deactivate: Published off sends active false; the row stays (deactivated, never deleted)', async () => {
   const api = fakeCos(), p = provider(api);

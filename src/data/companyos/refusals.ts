@@ -75,6 +75,11 @@ export const CONTRACT_REFUSALS = {
   unknown_form: { es: 'Este formulario no está disponible. Escríbenos por WhatsApp.', en: 'This form is not available. Write to us on WhatsApp.' },
   unknown_answer: { es: 'El formulario tiene un dato que no esperábamos. Actualiza la página e inténtalo de nuevo.', en: 'The form has a detail we did not expect. Refresh the page and try again.' },
   server_set_field: { es: 'No pudimos enviar la solicitud. Actualiza la página e inténtalo de nuevo.', en: 'We could not send the request. Refresh the page and try again.' },
+  // Review round 1 (r1hoy, L6): the other form codes (the Hub's Report a problem meets them too, with its own staff copy).
+  invalid_answers: { es: 'Faltan respuestas o alguna no es válida. Revisa el formulario e inténtalo de nuevo.', en: 'Some answers are missing or not valid. Check the form and try again.' },
+  answer_too_long: { es: 'Una de las respuestas es demasiado larga. Acórtala e inténtalo de nuevo.', en: 'One of the answers is too long. Shorten it and try again.' },
+  invalid_email: { es: 'Ese correo no es válido. Revísalo e inténtalo de nuevo.', en: 'That email is not valid. Check it and try again.' },
+  write_forbidden: { es: 'Tu cuenta no puede enviar este formulario. Si crees que es un error, escríbenos.', en: 'Your account cannot send this form. If you think this is a mistake, write to us.' },
 } as const satisfies Record<string, RefusalCopy>;
 
 /** The connector's own codes: transport, session and launch scope. */
@@ -102,6 +107,7 @@ export const CONNECTOR_REFUSALS = {
   content_invalid: { es: 'Hay un dato del horario que no es válido. Revisa el formulario; no se guardó nada.', en: 'A timetable detail is not valid. Check the form; nothing was saved.' },
   content_denied: { es: 'Solo Administración y Coordinación cambian el horario. No se guardó nada.', en: 'Only Administration and the Coordinator change the timetable. Nothing was saved.' },
   content_conflict: { es: 'Alguien cambió esta fila mientras la editabas. Cierra y vuelve a abrirla para ver la versión actual; tu cambio no se guardó.', en: 'Someone changed this row while you were editing it. Close and reopen it to see the current version; your change was not saved.' },
+  timetable_class_type_required: { es: 'Elige la modalidad de esta fila antes de publicarla: sin modalidad sus clases no se pueden reservar. No se guardó nada.', en: 'Choose this row\'s modality (its class type) before publishing it: without one its classes can\'t be booked. Nothing was saved.' },
   timetable_deactivate_instead: { es: 'Las filas del horario no se borran: desactívala (Publicado: no) y sus clases ya creadas siguen intactas.', en: 'Timetable rows are not deleted: deactivate it (Published: off) and its classes already made stay as they are.' },
   content_later: { es: 'Editar este contenido desde la app llega en una próxima actualización. Por ahora no se guardó nada.', en: 'Editing this content from the app arrives in a coming update. Nothing was saved for now.' },
   checkout_server_only: { es: 'Esta compra se hace desde la página de pago. Vuelve a elegir el paquete.', en: 'This purchase is made from the payment page. Choose the pack again.' },

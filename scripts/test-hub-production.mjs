@@ -43,7 +43,7 @@ try {
         export { viewAsActive, readStoredViewAs, VIEW_AS_KEY, VIEW_AS_REFUSAL, VIEWABLE_ROLES, loadViewAsSample } from './src/auth/viewAs.ts';
         export { DeviceFrame } from './src/components/organism/DeviceFrame/DeviceFrame.tsx';
         export { createElement } from 'react';
-        export { renderToStaticMarkup } from 'react-dom/server';`,
+        export { renderToStaticMarkup } from 'react-dom/server.browser';`,
       resolveDir: process.cwd(), loader: 'ts',
     },
     bundle: true, platform: 'node', format: 'esm', outfile: file, logLevel: 'silent',
