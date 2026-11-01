@@ -230,7 +230,9 @@ check('Y2 roles: no duplicates however /me repeats a key', JSON.stringify(rolesO
 // Sign-in return: an /app target is honoured for any login holding the customer role, whatever its primary role.
 check('Y2 return: Administration who is also a customer follows an /app next', M.homeFor('admin', '/app/plans?plan=pack12', ['admin', 'customer']) === '/app/plans?plan=pack12' && M.homeFor('front_desk', '/app/receipts/p1', ['front_desk', 'customer']) === '/app/receipts/p1');
 check('Y2 return: a staff login that is not a customer yet follows a purchase or booking next (the page enrols it)', M.homeFor('admin', '/app/plans?plan=pack12', ['admin']) === '/app/plans?plan=pack12' && M.homeFor('front_desk', '/app/checkout/occ_1?mat=3') === '/app/checkout/occ_1?mat=3' && M.homeFor('admin', '/app/gift-voucher') === '/app/gift-voucher');
-check('Y2 return: other /app pages still send a non-customer home (unchanged)', M.homeFor('admin', '/app/booking/b1', ['admin']) === '/admin' && M.homeFor('admin', '/app/receipts/p1') === '/admin');
+// Changed on purpose (owner 2026-11-01, lane review): every registered login is a customer, so any validated /app next is
+// followed for a staff login too; the customer page enrols it.
+check('owner: a staff login follows any /app next (the page enrols it)', M.homeFor('admin', '/app/booking/b1', ['admin']) === '/app/booking/b1' && M.homeFor('admin', '/app/receipts/p1') === '/app/receipts/p1' && M.homeFor('teacher', '/app/plans', ['teacher']) === '/app/plans');
 check('Y2 return: a hostile next is still dropped for a multi-role login', ['//evil.example', '/app/plans?plan=x&next=//evil', '/app/../admin', 'https://evil.example/app'].every((n) => M.homeFor('admin', n, ['admin', 'customer']) === '/admin'));
 check('Y2 return: the held roles never widen a staff next (the matrix of the primary decides)', M.homeFor('marketing', '/admin/finance', ['marketing', 'customer']) === '/admin/content');
 // The website's purchase and booking buttons.

@@ -47,6 +47,10 @@ const server = createServer(async (req, res) => {
       // r2co contract (review round 2): the login's verified email is on a person linked to another login.
       if (api.emailLinked) return json(res, 409, { error: 'email_linked_to_other_login', message: 'a person with this email is linked to another login' });
       if (api.duplicatePerson) return json(res, 422, { error: 'duplicate_person_user', message: 'person is linked to another user' });
+      // Lane review: an answer the client can't act on (empty consent list) and a 201 that /me never reflects (the tenant's
+      // sign-up role isn't the customer role): the enrolment must stop, not loop.
+      if (api.consentEmpty) return json(res, 422, { error: 'consent_required', details: { required: [] } });
+      if (api.phantomSignup) return json(res, 201, { userId: user, personId: 'per_x', facetId: 'mem_x' });
       const missing = api.consents.filter((c) => !body.consents?.some((x) => x.document === c.document && x.version === c.version));
       if (missing.length) return json(res, 422, { error: 'consent_required', details: { required: api.consents } });
       if (api.members[user]) api.members[user].roleKeys.push('member');
@@ -73,6 +77,7 @@ const ACCOUNTS = {
   user_desk: { emails: [{ id: 'ea_desk', email: 'recepcion@example.test', verified: true }], primary: 'ea_desk' },
   user_admin: { emails: [{ id: 'ea_admin', email: 'admin@example.test', verified: true }], primary: 'ea_admin' },
   user_both: { emails: [{ id: 'ea_both', email: 'ambas@example.test', verified: true }], primary: 'ea_both' },
+  user_coach: { emails: [{ id: 'ea_coach', email: 'profe@example.test', verified: true }], primary: 'ea_coach' },
 };
 const MEMBERS = () => ({
   user_ana: { name: 'Ana Prueba', email: 'ana@example.test', roleKeys: ['member'] },
@@ -80,12 +85,14 @@ const MEMBERS = () => ({
   user_admin: { name: 'Olga Admin', email: 'admin@example.test', roleKeys: ['administrator'] },
   // Administration who also takes classes, on one email (owner 2026-11-01).
   user_both: { name: 'Bea Ambas', email: 'ambas@example.test', roleKeys: ['administrator', 'member'] },
+  // A teacher only (Company OS coach): the customer routes also allow the teacher role.
+  user_coach: { name: 'Teo Profe', email: 'profe@example.test', roleKeys: ['coach'] },
 });
 
 const browser = await launchBrowser();
 const errors = [];
 async function open(path = '/', { lang = 'es', width = 1280, clerk = true } = {}) {
-  api.members = MEMBERS(); api.meStatus = null; api.signupEnabled = true; api.signups = []; api.joinConflict = false; api.emailLinked = false; api.duplicatePerson = false; api.loseAnswer = false;
+  api.members = MEMBERS(); api.meStatus = null; api.signupEnabled = true; api.signups = []; api.joinConflict = false; api.emailLinked = false; api.duplicatePerson = false; api.loseAnswer = false; api.consentEmpty = false; api.phantomSignup = false;
   const ctx = await browser.newContext({ viewport: { width, height: 900 }, reducedMotion: 'reduce' });
   // Playwright tries the last route added first: everything outside is blocked, except Clerk's script (the fake).
   // `clerk: false` blocks Clerk's script too (a CDN outage or a blocker).
@@ -402,6 +409,31 @@ try {
     await page.goto(`${BASE}/#/app`); await page.waitForTimeout(1500);
     check('enrol: no documents → the customer app opens straight away (one sign-up, no step shown)', route(page) === '/app' && (await page.locator('.appshell').count()) === 1 && (await page.locator('[data-enrol-customer]').count()) === 0 && api.signups.length === 1 && JSON.stringify(api.members.user_desk.roleKeys) === '["front_desk","member"]', `${route(page)} ${api.signups.length}`);
     api.consents = saved;
+  }
+  await ctx.close();
+
+  // Lane review: a teacher-only login (the customer routes also allow the teacher role) is enrolled too, not shown the
+  // customer screens as a teacher whose purchases Company OS refuses.
+  ({ ctx, page } = await open('/auth/sign-in'));
+  await signIn(page, 'profe@example.test');
+  await page.goto(`${BASE}/#/app/plans`); await page.waitForTimeout(1200);
+  check('enrol: a teacher-only login on a customer page gets the consent step', (await page.locator('[data-enrol-customer="consent"]').count()) === 1, route(page));
+  if (await page.locator('[data-enrol-customer="consent"]').count()) await acceptAndContinue(page);
+  check('enrol: …and then holds both roles', JSON.stringify(api.members.user_coach.roleKeys) === '["coach","member"]', JSON.stringify(api.members.user_coach.roleKeys));
+  await ctx.close();
+
+  // Lane review: answers the enrolment can't act on stop with a notice (no loop, no stuck step).
+  ({ ctx, page } = await open('/auth/sign-in'));
+  {
+    const saved = api.consents;
+    api.consents = []; api.phantomSignup = true;
+    await signIn(page, 'recepcion@example.test');
+    await page.goto(`${BASE}/#/app`); await page.waitForTimeout(4000);
+    check('enrol: a 201 that /me never reflects stops after at most 2 automatic tries, with a notice', api.signups.length <= 2 && (await page.locator('[data-enrol-customer="notice"]').count()) === 1, `${api.signups.length} ${route(page)}`);
+    api.phantomSignup = false; api.consentEmpty = true;
+    await page.locator('[data-enrol-customer="notice"] button').click(); await page.waitForTimeout(1500);
+    check('enrol: consent_required with no documents to show ends on a notice with Retry, not an empty step', (await page.locator('[data-enrol-customer="notice"]').count()) === 1 && (await page.locator('[data-enrol-customer="consent"]').count()) === 0, route(page));
+    api.consentEmpty = false; api.consents = saved;
   }
   await ctx.close();
 

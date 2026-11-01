@@ -66,6 +66,10 @@ check('summary: an empty PUBLIC_DOCUMENTS is flagged too (any value, even empty,
 check('summary: no PUBLIC_DOCUMENTS, no warning', !/PUBLIC_DOCUMENTS/.test(live.out), live.out);
 const pre = spawnSync(process.execPath, [SCRIPT, '--leftovers'], { input: JSON.stringify({ PUBLIC_DOCUMENTS: 'x', SET_LIVE: 'true', SITE_LIVE: 'true' }), encoding: 'utf8' });
 check('--leftovers prints only the leftover warnings as workflow annotations, exit 0', pre.status === 0 && /^::warning::.*PUBLIC_DOCUMENTS/m.test(pre.stdout) && /^::warning::.*SET_LIVE/m.test(pre.stdout) && !/Go-live switches|^- SITE_LIVE/m.test(pre.stdout), pre.stdout);
+for (const stdin of ['unreadable', '', 'null']) {
+  const r = spawnSync(process.execPath, [SCRIPT, '--leftovers'], { input: stdin, encoding: 'utf8' });
+  check(`--leftovers that can't read the variables (${JSON.stringify(stdin)}) says so as a warning, exit 0 (lane review)`, r.status === 0 && /^::warning::.*could not read/im.test(r.stdout) && /PUBLIC_DOCUMENTS/.test(r.stdout), r.stdout);
+}
 check('--leftovers with none prints nothing', spawnSync(process.execPath, [SCRIPT, '--leftovers'], { input: JSON.stringify({ SITE_LIVE: 'true' }), encoding: 'utf8' }).stdout.trim() === '');
 const arr = run(JSON.stringify([{ name: 'SITE_LIVE', value: 'false' }, { name: 'COMPANY_OS_READ_TOKEN', value: TOKEN }]));
 check('summary: the list shape (name/value pairs) works too', arr.status === 0 && /SITE_LIVE[^\n]*\bfalse\b/.test(arr.out) && /present/.test(arr.out) && !arr.out.includes(TOKEN), arr.out);
