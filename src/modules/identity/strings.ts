@@ -77,6 +77,12 @@ export const strings: StringTable = {
   'identity.enrol.invalid': { es: 'No pudimos activar tu acceso de cliente con los datos de tu ficha. Escríbele a administración para revisarlo.', en: 'We could not turn on your customer access with the details on your profile. Please contact the studio administration.' },
   'identity.enrol.failed': { es: 'No pudimos activar tu acceso de cliente ahora. Reintenta; no se duplicará.', en: 'We could not turn on your customer access right now. Retry; it will not be duplicated.' },
   'identity.enrol.back': { es: 'Volver a mi inicio', en: 'Back to my home' },
+  // Lane r2hoy2 (r2co2): a login that is a customer already but never accepted the documents (invited staff, a
+  // desk-invited customer): the same step (identity.enrol.title/consent/cta), these lines for its answers.
+  'identity.accept.loading': { es: 'Revisando tus documentos…', en: 'Checking your documents…' },
+  'identity.accept.conflict': { es: 'No pudimos registrar tu aceptación con este correo. Escríbele a administración para revisarlo.', en: 'We could not record your acceptance with this email. Please contact the studio administration.' },
+  'identity.accept.invalid': { es: 'No pudimos registrar tu aceptación con los datos de tu ficha. Escríbele a administración para revisarlo.', en: 'We could not record your acceptance with the details on your profile. Please contact the studio administration.' },
+  'identity.accept.failed': { es: 'No pudimos registrar tu aceptación ahora. Reintenta; no se duplicará.', en: 'We could not record your acceptance right now. Retry; it will not be duplicated.' },
   // Review round 2 (r2hoy): sign-up answers that don't go on, each with a line that fits.
   'identity.register.conflict': { es: 'Este correo ya tiene una cuenta en el estudio, pero no pudimos terminar tu registro. Escríbele a administración para revisarlo.', en: 'This email already has an account at the studio, but we could not finish your sign-up. Please contact the studio administration.' },
   'identity.signup.emailLinked': { es: 'Este correo ya está en la ficha de una persona que entra con otra cuenta. Escríbele a administración para revisarlo; no tienes que hacer nada más.', en: 'This email is already on the profile of someone who signs in with another account. Please contact the studio administration to sort it out; there is nothing else you need to do.' },

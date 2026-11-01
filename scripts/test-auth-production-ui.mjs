@@ -147,7 +147,7 @@ async function acceptAndContinue(page) {
 }
 /** The enrolment's notice: Retry starts it again (back to the consent step). */
 async function retry(page) {
-  await page.locator('[data-enrol-customer="notice"] button').click({ timeout: 5000 });
+  await page.locator('[data-enrol-customer="notice"] [data-enrol-retry]').click({ timeout: 5000 });
   await page.waitForTimeout(800);
 }
 async function signIn(page, email) {
@@ -613,6 +613,17 @@ try {
     await retry(page).catch(() => {}); await acceptAndContinue(page).catch(() => {});
     check('r2hoy2 409 already_registered with /me holding the customer role → the customer app (success, no notice)', (await page.locator('[data-enrol-customer]').count()) === 0 && (await page.locator('.appshell').count()) === 1 && route(page) === '/app', `${route(page)} ${(await page.locator('[data-enrol-customer]').innerText().catch(() => '')).slice(0, 120)}`);
     api.joinConflict = false;
+    await ctx.close();
+  }
+  {
+    // A customer whose home is the customer area can't go "back home" from the step: it offers to sign out instead.
+    ({ ctx, page } = await open('/auth/sign-in'));
+    await signIn(page, 'mostrador@example.test');
+    await page.goto(`${BASE}/#/app`); await page.locator('[data-enrol-customer="consent"]').waitFor({ timeout: 5000 }).catch(() => {});
+    check('r2hoy2 a customer on the step: no link back to the same step, a sign-out button instead', (await page.locator('[data-enrol-customer] a[href$="#/app"]').count()) === 0 && (await page.locator('[data-enrol-customer] button', { hasText: 'Cerrar sesión' }).count()) === 1);
+    await page.locator('[data-enrol-customer] button', { hasText: 'Cerrar sesión' }).click({ timeout: 3000 }).catch(() => {});
+    await page.waitForTimeout(1500);
+    check('r2hoy2 …and it signs out (nothing posted)', await page.evaluate(() => window.__fakeClerk.state.active === null) && api.signups.length === 0, route(page));
     await ctx.close();
   }
   {
