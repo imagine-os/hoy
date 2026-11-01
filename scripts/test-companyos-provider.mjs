@@ -111,7 +111,7 @@ try {
           rows = rows.map((r) => ({ id: r.id, data: { ...r.data }, orgUnitId: null, createdAt: r.createdAt, updatedAt: r.updatedAt }));
           for (const inc of body.include ?? []) for (const r of rows) {
             const target = [...db.values()].map((t) => t.get(r.data[inc.field])).find(Boolean);
-            r.data[inc.field] = target ? { id: target.id, ...(inc.fields ? Object.fromEntries(inc.fields.map((f) => [f, target.data[f]])) : target.data) } : null;
+            r.data[inc.as ?? inc.field] = target ? { id: target.id, ...(inc.fields ? Object.fromEntries(inc.fields.map((f) => [f, target.data[f]])) : target.data) } : null;
           }
           return json(200, { data: rows });
         }
@@ -181,6 +181,17 @@ try {
     assert.equal(row.ends_at, '2026-11-01T12:50:00.000Z'); assert.equal(row.booked_count, 3); assert.equal(row.tenant_id, 'ten_hoy');
     const noField = fromRecord(adapters.class_sessions, { id: 'o2', data: { title: 'Fuego con Sara', starts_at: '2026-11-01T12:00:00Z' } });
     assert.equal(noField.modality_id, 'mod_fuego', 'modality from the title when the tenant field is missing');
+    // Lane Y1: a generated class has no type of its own: it reads its schedule's (included as schedule_row), else the title.
+    const viaSchedule = fromRecord(adapters.class_sessions, { id: 'o3', data: { title: 'Morning flow', schedule: 's1', schedule_row: { id: 's1', modality: 'solido' }, starts_at: '2026-11-01T12:00:00Z' } });
+    assert.equal(viaSchedule.modality_id, 'mod_solido', 'the class type of the class\'s schedule');
+    assert.equal(viaSchedule.template_id, 's1', 'the schedule id stays the id');
+    const own = fromRecord(adapters.class_sessions, { id: 'o4', data: { title: 'Morning flow', modality: 'centro', schedule: 's1', schedule_row: { id: 's1', modality: 'solido' } } });
+    assert.equal(own.modality_id, 'mod_centro', 'a class\'s own type wins over its schedule\'s');
+    const hidden = fromRecord(adapters.class_sessions, { id: 'o5', data: { title: 'Pulso flow', schedule: 's1', schedule_row: null } });
+    assert.equal(hidden.modality_id, 'mod_pulso', 'a schedule the reader cannot see: the title');
+    const none = fromRecord(adapters.class_sessions, { id: 'o6', data: { title: 'Morning flow', schedule: 's1', schedule_row: { id: 's1' } } });
+    assert.equal(none.modality_id, null, 'no type anywhere: none (the class is not open for booking)');
+    assert.deepEqual(planQuery(adapters.class_sessions, undefined).spec.include, [{ field: 'schedule', as: 'schedule_row', fields: ['modality'] }], 'one read brings the schedule\'s class type');
     const data = toData(adapters.class_sessions, { modality_id: 'mod_pulso', booked_count: 9, starts_at: '2026-11-01T07:00:00-05:00', level: 'all' }, 'update');
     assert.deepEqual(data, { modality: 'pulso', starts_at: '2026-11-01T12:00:00.000Z' }, 'server count and derived columns are never sent');
   });
@@ -310,6 +321,11 @@ try {
     const p = make(api);
     assert.equal((await p.get('class_sessions', rec.id)).title, 'Pulso');
     assert.equal(await p.get('class_sessions', 'missing'), null);
+    // Lane Y1: one class by id brings its schedule's class type too (admission reads it so).
+    const row = api.put('schedule', { title: 'Morning flow', kind: 'class', weekday: 1, start_time: '07:00', modality: 'solido', active: true });
+    const gen = api.put('occurrence', { title: 'Morning flow', schedule: row.id, starts_at: '2026-11-02T12:00:00Z', ends_at: '2026-11-02T12:50:00Z', capacity: 16, status: 'scheduled' });
+    const one = await p.get('class_sessions', gen.id);
+    assert.equal(one.modality_id, 'mod_solido'); assert.equal(one.template_id, row.id);
     const lot = api.put('credit_lot', { person: 'p1', source: 'purchase', quantity: 4, valid_until: '2026-12-31' });
     api.put('credit_entry', { lot: lot.id, person: 'p1', delta: 4, reason: 'grant' });
     const g = await p.get('class_ledger', lot.id);

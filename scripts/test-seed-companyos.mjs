@@ -11,6 +11,8 @@ const RECIPE = {
     { key: 'bookings', settings: { late_cancel_hours: 12, reschedule_hours: 12, policy_as_of_booking: true, max_bookings_per_person_per_day: 1 } },
     { key: 'payments', settings: { methods_requiring_reference: 'online_gateway,card_terminal,card' } },
   ],
+  // Hoy's class types, the options of the recipe's tenant field `modality` on schedule (Company OS lane Y1).
+  fields: [{ entity: 'schedule', field: 'modality', type: 'select', config: { options: ['alineacion', 'centro', 'fuego', 'hibrido', 'ligereza', 'pulso', 'solido'].map((value) => ({ label: value, value })) } }],
   records: [{ entity: 'resource', rows: [{ name: 'Main room', kind: 'room' }, { name: 'Small room', kind: 'room' }] }, {
     entity: 'product',
     rows: [
@@ -93,13 +95,51 @@ await check('gives customers a member facet and teachers a coach facet; every cl
 });
 
 await check('keeps every reference inside the seed', () => {
-  const refs = { member: { person: 'person' }, coach: { person: 'person' }, occurrence: { coach: 'coach' }, booking: { person: 'person', occurrence: 'occurrence' }, credit_lot: { person: 'person', payment: 'payment' }, credit_entry: { lot: 'credit_lot', person: 'person', booking: 'booking' }, payment: { person: 'person' }, invoice: { payment: 'payment', person: 'person' } };
+  const refs = { member: { person: 'person' }, coach: { person: 'person' }, schedule: { coach: 'coach' }, occurrence: { coach: 'coach', schedule: 'schedule' }, booking: { person: 'person', occurrence: 'occurrence' }, credit_lot: { person: 'person', payment: 'payment' }, credit_entry: { lot: 'credit_lot', person: 'person', booking: 'booking' }, payment: { person: 'person' }, invoice: { payment: 'payment', person: 'person' } };
   for (const r of seed.records) for (const [field, entity] of Object.entries(refs[r.entity] ?? {})) {
     const v = r.data[field];
     if (v === undefined || v === null) continue;
     assert.equal(byId.get(v)?.entity, entity, `${r.entity}.${field}`);
   }
   for (const p of of('payment').filter((p) => p.data.for_entity)) assert.equal(byId.get(p.data.for_id)?.entity, p.data.for_entity);
+});
+
+await check('writes the sample\'s weekly timetable as schedules: one per row, with its coach, class type and length (lane Y1)', async () => {
+  const { TIMETABLE, modalities, mats } = await sample;
+  const schedules = of('schedule');
+  assert.equal(schedules.length, TIMETABLE.length);
+  const slugs = new Set(RECIPE.fields[0].config.options.map((o) => o.value));
+  for (const row of TIMETABLE) {
+    const s = schedules.find((x) => x.data.weekday === row.weekday && x.data.start_time === row.time);
+    assert.ok(s, `${row.weekday} ${row.time}`);
+    const m = modalities.find((x) => x.id === row.modality);
+    assert.deepEqual(s.data, { title: row.title, kind: 'class', coach: s.data.coach, weekday: row.weekday, start_time: row.time, duration_minutes: m.duration_min, capacity: mats, modality: m.slug, active: true });
+    assert.ok(slugs.has(s.data.modality), s.data.modality);
+  }
+  // Schedules come before the classes that name them (one import batch, in order).
+  const first = (e) => seed.records.findIndex((r) => r.entity === e);
+  assert.ok(first('schedule') < first('occurrence'));
+});
+
+await check('links every class to its timetable row: same weekday, time, title and coach, one class per row a day (lane Y1)', () => {
+  const clock = new Intl.DateTimeFormat('en-GB', { timeZone: 'America/Bogota', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+  const seen = new Set();
+  for (const o of of('occurrence')) {
+    const s = byId.get(o.data.schedule);
+    assert.equal(s?.entity, 'schedule', `${o.data.title} ${o.data.starts_at}`);
+    assert.equal(new Date(`${day(o.data.starts_at)}T12:00:00Z`).getUTCDay(), s.data.weekday);
+    assert.equal(clock.format(new Date(o.data.starts_at)), s.data.start_time);
+    assert.equal(o.data.title, s.data.title);
+    assert.equal(o.data.coach, s.data.coach);
+    const key = `${s.id} ${day(o.data.starts_at)}`;
+    assert.ok(!seen.has(key), `two classes of one row on ${key}`);
+    seen.add(key);
+  }
+});
+
+await check('refuses a class type the recipe does not offer (the import would refuse it)', async () => {
+  const fewer = { ...RECIPE, fields: [{ ...RECIPE.fields[0], config: { options: [{ label: 'Fuego', value: 'fuego' }] } }] };
+  await assert.rejects(buildCompanyOsSeed({ recipe: fewer }), /class type/i);
 });
 
 await check('has classes behind and ahead of its date: two weeks back, three weeks on', () => {
@@ -225,7 +265,7 @@ await check('gives the demo customer a pack with classes left and an upcoming cl
 
 await check('writes no recipe ids by default (the recipe makes them); --recipe-refs names products by key and rooms by name', async () => {
   for (const r of [...of('payment'), ...of('credit_lot'), ...of('invoice')]) assert.equal(r.data.product, undefined);
-  for (const o of of('occurrence')) assert.equal(o.data.resource, undefined);
+  for (const o of [...of('occurrence'), ...of('schedule')]) assert.equal(o.data.resource, undefined);
   const withRefs = await buildCompanyOsSeed({ recipe: RECIPE, recipeRefs: true });
   const mine = (entity) => withRefs.records.filter((r) => r.entity === entity);
   const productOf = (key) => PRODUCTS.find((p) => p.key === key);
@@ -243,7 +283,7 @@ await check('writes no recipe ids by default (the recipe makes them); --recipe-r
   }
   // Every class names a room of the recipe by its name (the sample's main room is the recipe's Main room).
   const rooms = new Set(RECIPE.records[0].rows.map((r) => r.name));
-  for (const o of mine('occurrence')) {
+  for (const o of [...mine('occurrence'), ...mine('schedule')]) {
     assert.equal(o.data.resource?.$ref?.entity, 'resource', `${o.data.title} ${o.data.starts_at}`);
     assert.ok(rooms.has(o.data.resource.$ref.where.name), o.data.resource.$ref.where.name);
   }

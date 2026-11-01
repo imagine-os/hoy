@@ -19,7 +19,12 @@ try {
   assert.equal(reason(row, Date.parse(session.ends_at)), 'ended', 'past scheduled data is still inactive');
   assert.equal(reason({ ...row, templateActive: false }, now), 'unpublished');
   assert.equal(reason({ ...row, modality: { active: false } }, now), 'unpublished');
-  assert.equal(reason({ session }, now), null, 'one-off sessions need no template');
+  assert.equal(reason({ session, modality: { active: true } }, now), null, 'one-off sessions need no template');
+  // Lane Y1: a class without a class type is not open for booking, and says so (the tile and the modal agree with admission).
+  assert.equal(reason({ session }, now), 'no_class_type', 'no class type: not open for booking');
+  assert.equal(reason({ session, templateActive: true }, now), 'no_class_type');
+  assert.equal(reason({ session: { ...session, status: 'cancelled' } }, now), 'cancelled', 'a cancelled class says cancelled first');
+  assert.equal(reason({ session }, Date.parse(session.starts_at)), 'started', 'a started class says started first');
   assert.equal(reason({ session: { ...session, starts_at: 'invalid' } }, now), 'unavailable');
-  console.log('PASS: future/full, cancelled, completed, exact start/end, unpublished template/type, one-off and invalid date states');
+  console.log('PASS: future/full, cancelled, completed, exact start/end, unpublished template/type, one-off, no class type and invalid date states');
 } finally { await rm(scratch, { recursive: true, force: true }); }

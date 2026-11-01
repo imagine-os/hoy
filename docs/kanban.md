@@ -845,3 +845,8 @@ Protected-capture clarification: M14 schedule/pay screenshots remain local/ignor
 - RS-09 / Feature Log47 (0184): future-day paid single/trial moves use exact finite receipt terms; package allocation, 12-hour cutoff and unresolved legacy fallback retained. Local and remote validation/release remain separate gates. [Contract](frontend-completion/direct-reschedule-terms.md)
 
 - AD-02 / Feature Log88 (0189): studio cancellation restores a verified directly paid single/trial class under its recorded terms. Persisted staff roles are checked; no bank refund or new voucher-cancellation rule is introduced. [Contract](frontend-completion/studio-direct-paid-return.md)
+
+## Hoy test-hoy fixes, lane Y1: schedule and timetable (2026-11-01)
+
+- Done (branch `hoy-test-fixes-y1`): a class's type comes from its schedule's `modality` (one read: the class query includes it), else its own, else the title; a class without one is "not open for booking yet" on the tile and in the drawer and class detail; the site's drawer names the class's room; ClassCard joins only the parts it has; the admin timetable (M-02) requires the class type; the Company OS test seed carries the sample's timetable as schedules (coach, room, class type) with every class linked.
+- Waiting: production M-02 saves are still refused (`content_later`, Wave 3), so Administration can't enter the timetable from the app yet (owner decision, in lane-y1 notes).
