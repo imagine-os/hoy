@@ -17,6 +17,7 @@ const bundle = await build({
     "export { signInReturn, homeFor, authLink } from './src/auth/signInReturn';",
     "export { purchaseEntry, enrolsAsCustomer } from './src/auth/purchaseEntry';",
     "export { LAUNCH_ROUTES, isLaunchRoute } from './src/config/launchRoutes';",
+    "export { CUSTOMER_AUTO_ENROL_STAFF } from './src/config/launch';",
     "export { getSessionToken, setSessionTokenSource } from './src/auth/sessionToken';",
     "export * as team from './src/modules/admin/team/teamApi';",
     "export { strings as identityStrings } from './src/modules/identity/strings';",
@@ -208,7 +209,7 @@ check('return: launch deep links are kept as next', deep.every((p) => M.visitorS
 const bad = ['/staff/transfers?x=1', '/staff/../admin', '/app/receipts/a%2Fb', '/hub/promotions', '/dev/tokens', '/teach/payroll', '/teach/../admin', '/auth/sign-in', '/site', '/', '//evil.example', '/app/receipts/a/b', '/admin/tables', '/staff/maintenance', 'https://evil.example/staff'];
 check('return: anything but a strict launch path is dropped', bad.every((p) => M.signInReturn(p) === null), bad.filter((p) => M.signInReturn(p) !== null).join(', '));
 check('return: the customer allowlist still applies (query kept)', M.signInReturn('/app/checkout/occ_1?mat=3') === '/app/checkout/occ_1?mat=3');
-check('return: staff follow a staff next; a customer is not sent into staff', M.homeFor('front_desk', '/staff/transfers') === '/staff/transfers' && M.homeFor('customer', '/staff/transfers') === '/app' && M.homeFor('customer', '/app/receipts/p1') === '/app/receipts/p1' && M.homeFor('admin', '/app/booking/b1') === '/app/booking/b1' /* owner 2026-11-01: every login follows an /app next */);
+check('return: staff follow a staff next; a customer is not sent into staff', M.homeFor('front_desk', '/staff/transfers') === '/staff/transfers' && M.homeFor('customer', '/staff/transfers') === '/app' && M.homeFor('customer', '/app/receipts/p1') === '/app/receipts/p1' && M.homeFor('admin', '/app/booking/b1') === '/admin' /* the staff enrolment switch is off by default */);
 check('return: the teacher, hub and dev areas are sign-in returns (their launch routes only)', M.signInReturn('/teach') === '/teach' && M.signInReturn('/dev') === '/dev' && M.signInReturn('/teach/class/occ_1') === (M.isLaunchRoute('/teach/class/:id') ? '/teach/class/occ_1' : null));
 check('return: /hub is a return once it is a launch route (lane D)', M.signInReturn('/hub') === (M.isLaunchRoute('/hub') ? '/hub' : null));
 const HOMES = { super_admin: '/admin', admin: '/admin', coordinator: '/staff', front_desk: '/staff', finance: '/admin', teacher: '/teach', maintenance: '/staff', marketing: '/admin/content', developer: '/dev', customer: '/app' };
@@ -229,10 +230,10 @@ check('Y2 roles: a platform operator (isSuperAdmin, no membership) is super_admi
 check('Y2 roles: no duplicates however /me repeats a key', JSON.stringify(rolesOf(['member', 'member', 'administrator', 'administrator'])) === '["admin","customer"]');
 // Sign-in return: an /app target is honoured for any login holding the customer role, whatever its primary role.
 check('Y2 return: Administration who is also a customer follows an /app next', M.homeFor('admin', '/app/plans?plan=pack12', ['admin', 'customer']) === '/app/plans?plan=pack12' && M.homeFor('front_desk', '/app/receipts/p1', ['front_desk', 'customer']) === '/app/receipts/p1');
-check('Y2 return: a staff login that is not a customer yet follows a purchase or booking next (the page enrols it)', M.homeFor('admin', '/app/plans?plan=pack12', ['admin']) === '/app/plans?plan=pack12' && M.homeFor('front_desk', '/app/checkout/occ_1?mat=3') === '/app/checkout/occ_1?mat=3' && M.homeFor('admin', '/app/gift-voucher') === '/app/gift-voucher');
+check('switch ON: a staff login that is not a customer yet follows a purchase or booking next (the page enrols it)', M.homeFor('admin', '/app/plans?plan=pack12', ['admin'], true) === '/app/plans?plan=pack12' && M.homeFor('front_desk', '/app/checkout/occ_1?mat=3', ['front_desk'], true) === '/app/checkout/occ_1?mat=3' && M.homeFor('admin', '/app/gift-voucher', ['admin'], true) === '/app/gift-voucher');
 // Changed on purpose (owner 2026-11-01, lane review): every registered login is a customer, so any validated /app next is
 // followed for a staff login too; the customer page enrols it.
-check('owner: a staff login follows any /app next (the page enrols it)', M.homeFor('admin', '/app/booking/b1', ['admin']) === '/app/booking/b1' && M.homeFor('admin', '/app/receipts/p1') === '/app/receipts/p1' && M.homeFor('teacher', '/app/plans', ['teacher']) === '/app/plans');
+check('switch ON: a staff login follows any /app next (the page enrols it)', M.homeFor('admin', '/app/booking/b1', ['admin'], true) === '/app/booking/b1' && M.homeFor('admin', '/app/receipts/p1', ['admin'], true) === '/app/receipts/p1' && M.homeFor('teacher', '/app/plans', ['teacher'], true) === '/app/plans');
 check('Y2 return: a hostile next is still dropped for a multi-role login', ['//evil.example', '/app/plans?plan=x&next=//evil', '/app/../admin', 'https://evil.example/app'].every((n) => M.homeFor('admin', n, ['admin', 'customer']) === '/admin'));
 check('Y2 return: the held roles never widen a staff next (the matrix of the primary decides)', M.homeFor('marketing', '/admin/finance', ['marketing', 'customer']) === '/admin/content');
 // The website's purchase and booking buttons.
@@ -241,7 +242,12 @@ check('Y2 entry: signed in (any role) → straight to the purchase or booking pa
 check('Y2 entry: a target outside the customer allowlist is never followed', M.purchaseEntry?.({ role: 'admin' }, '//evil.example') === '/app' && M.purchaseEntry?.({ role: 'public' }, 'https://evil.example') === '/auth/sign-in');
 // Who is enrolled as a customer automatically on a customer page they can't open yet (owner 2026-11-01: every registered
 // login is a customer; this replaced Y2's "Join as a customer" offer, same cases).
-const joinCase = (o) => M.enrolsAsCustomer?.({ status: 'ready', signedIn: true, viewAs: null, roles: ['admin'], routeRoles: ['customer', 'teacher'], path: '/app/plans', ...o });
+// Coordinator 2026-11-01 (owner question C-01 open): the enrolment of staff logins is one switch, default OFF
+// (CUSTOMER_AUTO_ENROL_STAFF). The cases below are the switch ON; the OFF checks follow.
+const joinCase = (o) => M.enrolsAsCustomer?.({ status: 'ready', signedIn: true, viewAs: null, roles: ['admin'], routeRoles: ['customer', 'teacher'], path: '/app/plans', autoEnrolStaff: true, ...o });
+check('switch: CUSTOMER_AUTO_ENROL_STAFF is off by default (a build without VITE_CUSTOMER_AUTO_ENROL_STAFF)', M.CUSTOMER_AUTO_ENROL_STAFF === false);
+check('switch OFF: no staff login is enrolled, whatever the page (the default)', joinCase({ autoEnrolStaff: undefined }) === false && joinCase({ autoEnrolStaff: false }) === false && joinCase({ autoEnrolStaff: false, roles: ['super_admin'] }) === false && joinCase({ autoEnrolStaff: false, roles: ['teacher'] }) === false);
+check('switch OFF: a staff login is not sent into a customer page it can\'t open; one that holds the customer role still is', M.homeFor('admin', '/app/booking/b1', ['admin'], false) === '/admin' && M.homeFor('admin', '/app/plans?plan=pack12', ['admin'], false) === '/admin' && M.homeFor('admin', '/app/plans?plan=pack12', ['admin', 'customer'], false) === '/app/plans?plan=pack12' && M.homeFor('customer', '/app/plans', ['customer'], false) === '/app/plans');
 check('enrol: a signed-in staff login without the customer role, on a customer page', joinCase({}) === true && joinCase({ roles: ['front_desk'], path: '/app/checkout/occ_1' }) === true);
 check('enrol: never while viewing as, signed out, loading or unfinished, or for someone already a customer', joinCase({ viewAs: 'admin' }) === false && joinCase({ signedIn: false }) === false && joinCase({ status: 'loading' }) === false && joinCase({ status: 'needs-signup' }) === false && joinCase({ roles: ['admin', 'customer'] }) === false);
 check('enrol: never outside the customer area or on a page customers can\'t open', joinCase({ path: '/admin/settings', routeRoles: ['admin'] }) === false && joinCase({ path: '/staff', routeRoles: ['front_desk'] }) === false && joinCase({ path: '/app/x', routeRoles: ['teacher'] }) === false);
