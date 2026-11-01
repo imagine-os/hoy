@@ -22,6 +22,8 @@ export type PrivateDocsState = 'ok' | 'signed-out' | 'refused' | 'failed';
 
 let pack: PrivateDocsPack | null = null;
 let pending: Promise<PrivateDocsState> | null = null;
+/** Bumped by every drop: a load started before it is thrown away when it lands (review round 2, L6). */
+let generation = 0;
 
 /** The pack once loaded (docsIndex.ts and sources.ts read it when their chunk first evaluates), else null. */
 export const privateDocs = (): PrivateDocsPack | null => pack;
@@ -47,19 +49,24 @@ async function authorised(path: string): Promise<Response | PrivateDocsState> {
  */
 export function loadPrivateDocs(): Promise<PrivateDocsState> {
   if (pack) return Promise.resolve('ok');
-  pending ??= (async (): Promise<PrivateDocsState> => {
+  if (pending) return pending;
+  const started = generation;
+  const load: Promise<PrivateDocsState> = (async (): Promise<PrivateDocsState> => {
     try {
       const res = await authorised('/docs.json');
       if (typeof res === 'string') return res;
       const body = await res.json() as PrivateDocsPack;
+      // Dropped meanwhile (sign-out while docs.json was downloading): the answer is not kept.
+      if (started !== generation) return 'signed-out';
       if (!body || body.version !== 1 || !Array.isArray(body.docs)) return 'failed';
       pack = body;
       return 'ok';
     } catch {
       return 'failed';
     }
-  })().finally(() => { pending = null; });
-  return pending;
+  })().finally(() => { if (pending === load) pending = null; });
+  pending = load;
+  return load;
 }
 
 const fileUrls = new Map<string, Promise<string | null>>();
@@ -68,9 +75,15 @@ export function privateFileUrl(file: string): Promise<string | null> {
   if (!/^source\/[a-z0-9][a-z0-9-]*\.(pdf|jpe?g|png|webp)$/.test(file)) return Promise.resolve(null);
   let hit = fileUrls.get(file);
   if (!hit) {
-    hit = authorised(`/${file}`).then(async (res) => (typeof res === 'string' ? null : URL.createObjectURL(await res.blob()))).catch(() => null);
-    hit.then((url) => { if (!url) fileUrls.delete(file); });
-    fileUrls.set(file, hit);
+    const started = generation;
+    hit = authorised(`/${file}`).then(async (res) => {
+      if (typeof res === 'string') return null;
+      const blob = await res.blob();
+      return started === generation ? URL.createObjectURL(blob) : null; // dropped meanwhile (L6)
+    }).catch(() => null);
+    const mine = hit;
+    mine.then((url) => { if (!url && fileUrls.get(file) === mine) fileUrls.delete(file); });
+    fileUrls.set(file, mine);
   }
   return hit;
 }
@@ -79,8 +92,10 @@ export function privateFileUrl(file: string): Promise<string | null> {
 /** The pack has been loaded into this tab. */
 export const privateDocsLoaded = (): boolean => pack !== null;
 
-/** Forgets the pack and revokes the PDF links (PrivateDocsWatch, before it reloads the tab). */
+/** Forgets the pack (and any load still on its way) and revokes the PDF links (PrivateDocsWatch, before it reloads the tab). */
 export function dropPrivateDocs() {
+  generation++;
+  pending = null;
   pack = null;
   for (const p of fileUrls.values()) p.then((url) => { if (url) URL.revokeObjectURL(url); });
   fileUrls.clear();

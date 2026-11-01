@@ -21,7 +21,9 @@ export const DOCS_PREFIX = '/private-docs';
 /** The only files served: the pack itself, and the flat files of `source/` with a plain lowercase name. */
 const SOURCE_NAME = /^[a-z0-9][a-z0-9-]*\.(pdf|jpg|jpeg|png|webp)$/;
 const TYPES = { '.json': 'application/json; charset=utf-8', '.pdf': 'application/pdf', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp' };
-const ME_ANSWER_LIMIT = 64 * 1024;
+// Company OS /me describes every entity the person sees, with every field and its config: for the super admin that is
+// hundreds of KB uncompressed, growing with each module release (review round 2, r2hoy M2). Bounded, far above that.
+const ME_ANSWER_LIMIT = 2 * 1024 * 1024;
 const PRIVATE = { 'Cache-Control': 'private, no-store', Vary: 'Authorization', 'Cross-Origin-Resource-Policy': 'same-origin' };
 
 /** Where the production build puts the private pack for a given public dist folder. */

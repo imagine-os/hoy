@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useSession } from '../../auth/SessionProvider';
+import { superAdminTab } from '../../auth/superAdminTab';
 import { dropPrivateDocs, privateDocsLoaded } from './privateDocs';
 
 /**
@@ -7,17 +8,17 @@ import { dropPrivateDocs, privateDocsLoaded } from './privateDocs';
  * constants, which can't be cleared in place). Once the session has settled and the person is no longer the signed-in
  * super admin (sign-out, however it happened, or another login), the PDF links are revoked and the tab reloads, so
  * nothing of the pack stays for the next person. Viewing as another role keeps it: the person is still the super
- * admin. Renders nothing; App.tsx mounts it in the production build only.
+ * admin. Review round 2: a /me that failed once is not settled, so it never reloads the tab mid-read (L5,
+ * `superAdminTab`); the drop happens even while the pack is still downloading, so a late answer is thrown away (L6).
+ * Renders nothing; App.tsx mounts it in the production build only.
  */
 export function PrivateDocsWatch() {
-  const { status, signedIn, isSuperAdmin, viewAs } = useSession();
-  const settled = status !== 'loading';
-  const allowed = signedIn && (isSuperAdmin || viewAs !== null);
+  const verdict = superAdminTab(useSession());
   useEffect(() => {
-    if (settled && !allowed && privateDocsLoaded()) {
-      dropPrivateDocs();
-      window.location.reload();
-    }
-  }, [settled, allowed]);
+    if (verdict !== 'denied') return;
+    const loaded = privateDocsLoaded();
+    dropPrivateDocs();
+    if (loaded) window.location.reload();
+  }, [verdict]);
   return null;
 }

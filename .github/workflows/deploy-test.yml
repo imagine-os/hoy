@@ -105,6 +105,14 @@ jobs:
           case "$CLERK_PUBLISHABLE_KEY" in pk_test_?*) ;; *) echo "::error::test requires a Clerk TEST publishable key (pk_test_…) in the test environment's variables"; exit 1 ;; esac
           if [ -z "$HOY_RAILWAY_PROJECT" ]; then echo "::error::Set the test environment's variable RAILWAY_PROJECT_NAME"; exit 1; fi
 
+      # Review round 2 (r2hoy, L7): a variable left under a wrong or retired name (SET_LIVE, PUBLIC_DOCUMENTS) is warned
+      # about here, before Apply infra (which fails on a variable the IaC doesn't declare). Never prints a value.
+      - name: Leftover variables
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          { railway variable list --service "$SERVICE" --environment "$RAILWAY_ENV" --json 2>/dev/null || echo 'unreadable'; } | node scripts/deploy-switches.mjs --leftovers
+
       - name: Infra plan
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
