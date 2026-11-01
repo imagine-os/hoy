@@ -65,5 +65,19 @@ check('people/analytics: a lot without a product (comp, gift) does not hide the 
 check('people/analytics: a product-less lot alone is still an active plan', rows([L('lotG', 'u1', 1, { expires_at: '2026-11-05' })])?.[0]?.status === 'active');
 check('people/analytics: one person in two tenants gets a row per tenant', rows([L('a', 'u1', 2, { tenant_id: 't1' }), L('b', 'u1', 2, { tenant_id: 't2' })])?.length === 2);
 
+// ── review round 2, L3: the dashboard's active-pack count dates "today" by the studio's calendar (America/Bogota) ──
+const { readFileSync } = await import('node:fs');
+const dash = readFileSync('src/modules/admin/DashboardPage.tsx', 'utf8');
+check('M-01 the active-pack count takes the studio\'s today() (src/data/companyos/dates), not a date made in the page', /today:\s*studioToday\(\)/.test(dash) && /import \{[^}]*today as studioToday[^}]*\} from '\.\.\/\.\.\/data\/companyos\/dates'/.test(dash) && !/today:\s*dateKey\(new Date\(\)\)/.test(dash));
+const D = await tryImport("export * from './src/data/companyos/dates';");
+{
+  const RealDate = Date, tz = process.env.TZ;
+  // 02:00 UTC on 3 Nov is still 2 Nov in Bogotá: a browser in Tokyo (already 3 Nov there) must count with 2 Nov.
+  process.env.TZ = 'Asia/Tokyo';
+  globalThis.Date = class extends RealDate { constructor(...a) { super(...(a.length ? a : ['2026-11-03T02:00:00Z'])); } static now() { return new RealDate('2026-11-03T02:00:00Z').getTime(); } };
+  try { check('M-01 studio today() is the Bogotá day for a browser elsewhere', D.today?.() === '2026-11-02', D.today?.()); }
+  finally { globalThis.Date = RealDate; if (tz === undefined) delete process.env.TZ; else process.env.TZ = tz; }
+}
+
 console.log(failed ? `\n${failed} pack read check(s) failed` : '\npack reads passed');
 process.exitCode = failed ? 1 : 0;

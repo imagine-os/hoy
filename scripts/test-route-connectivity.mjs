@@ -28,6 +28,8 @@
 //
 //   node scripts/test-route-connectivity.mjs            the check (CI: .github/workflows/auth-checks.yml)
 //   node scripts/test-route-connectivity.mjs --report   also print every route's inventory (launch and cut routes)
+//   node scripts/test-route-connectivity.mjs --write    rewrite the two inventory tables in docs/route-connectivity.md
+// The check fails when those committed tables differ from what the code gives (review round 2, L5): the doc can't drift.
 import * as esbuild from 'esbuild';
 import { readFile, readdir, mkdir, mkdtemp, writeFile, rm } from 'node:fs/promises';
 import { existsSync, rmSync } from 'node:fs';
@@ -35,7 +37,10 @@ import path from 'node:path';
 import { reporter } from './lib/launch-qa.mjs';
 
 const ROOT = process.cwd();
-const REPORT = process.argv.includes('--report');
+const WRITE = process.argv.includes('--write');
+const REPORT = process.argv.includes('--report') || WRITE;
+const DOC = 'docs/route-connectivity.md';
+const INVENTORY = { launch: '## Inventory: launch routes', cut: '## Inventory: routes Waves 1–4 add back' };
 const { check, done } = reporter('route connectivity');
 
 // ── Known findings. `routes` are LAUNCH_ROUTES patterns ('*' = the app shell every route renders in), `finding` the
@@ -446,7 +451,7 @@ const results = [];
 for (const r of [SHELL, ...ROUTES]) {
   if (!r.entry) continue;
   const launch = r === SHELL ? '*' : launchPattern(r.path);
-  if (!launch && !REPORT) continue;
+  // Every route is traced (not only the launch ones): the committed inventory lists the cut routes too.
   results.push({ ...r, launch, ...(await analyse(r)) });
 }
 
@@ -492,19 +497,59 @@ for (const b of BY_DESIGN) check(`BY_DESIGN still used on a launch route (else d
 for (const d of DYNAMIC) check(`DYNAMIC still reached on a launch route (else delete it): ${d.file} ${d.arg}`, used.has(d));
 for (const r of RUNTIME_REVIEW) { const f = r.markerFile ?? r.file; check(`RUNTIME_REVIEW switch still in its file: ${f} (${r.marker})`, existsSync(f) && (await readFile(f, 'utf8')).includes(r.marker)); }
 
-if (REPORT) {
-  const kind = (t) => { const a = adapters[t]; return a ? (a.kind === 'entity' && a.readOnly ? 'entity (read-only)' : a.kind) : 'none'; };
-  console.log('\n| Route | Launch | Tables (read / written) → adapter | Methods, requests | Findings |\n|---|---|---|---|---|');
-  for (const r of results) {
-    const reads = new Set(), writes = new Set(), other = new Set();
-    for (const u of r.uses) {
-      if (u.table) (u.op === 'read' ? reads : writes).add(u.table);
-      else if (u.method) other.add(`${u.method}()`);
-      else if (u.request) other.add(u.request);
-    }
-    const tl = (s) => [...s].sort().map((t) => `${t} (${kind(t)})`).join(', ') || '—';
-    const closer = (f) => { const k = r.launch && known.find((e) => e.finding === f && e.routes.includes(r.launch)); return k ? `${f} → ${k.list === 'PENDING' ? `lane ${k.lane}` : k.lane}${k.approved ? ' (owner-approved)' : ''}` : f; };
-    console.log(`| \`${r.path}\` | ${r.launch ? 'yes' : 'no'} | R: ${tl(reads)}<br>W: ${tl(writes)} | ${[...other].sort().join(', ') || '—'} | ${[...r.findings.keys()].map(closer).join('; ') || 'none'} |`);
+/** The doc's table rows in one inventory section (the lines that start with a route in backticks). */
+function docRows(doc, heading) {
+  const start = doc.indexOf(`\n${heading}`);
+  if (start < 0) return null;
+  const end = doc.indexOf('\n## ', start + 1);
+  return doc.slice(start, end < 0 ? undefined : end).split('\n').filter((l) => l.startsWith('| `'));
+}
+/** The doc with one section's table rows replaced (the rows stay where the old ones were). */
+function withRows(doc, heading, rows) {
+  const start = doc.indexOf(`\n${heading}`);
+  const end = doc.indexOf('\n## ', start + 1);
+  const lines = doc.slice(start, end < 0 ? undefined : end).split('\n');
+  const first = lines.findIndex((l) => l.startsWith('| `'));
+  const kept = lines.filter((l) => !l.startsWith('| `'));
+  kept.splice(first, 0, ...rows);
+  return doc.slice(0, start) + kept.join('\n') + (end < 0 ? '' : doc.slice(end));
+}
+{
+  const doc = 'x\n## A\n\n| Route | T |\n|---|---|\n| `/a` | 1 |\n| `/b` | 2 |\n\n## B\n\n| `/c` | 3 |\n';
+  check('inventory: the rows of a section are read', JSON.stringify(docRows(doc, '## A')) === JSON.stringify(['| `/a` | 1 |', '| `/b` | 2 |']));
+  check('hostile: a changed row is a drift', JSON.stringify(docRows(doc, '## A')) !== JSON.stringify(['| `/a` | 1 |', '| `/b` | 9 |']));
+  check('inventory: rewriting a section keeps the text around it and the other section', withRows(doc, '## A', ['| `/z` | 0 |']) === 'x\n## A\n\n| Route | T |\n|---|---|\n| `/z` | 0 |\n\n## B\n\n| `/c` | 3 |\n');
+}
+
+const kind = (t) => { const a = adapters[t]; return a ? (a.kind === 'entity' && a.readOnly ? 'entity (read-only)' : a.kind) : 'none'; };
+/** One route's inventory row, as docs/route-connectivity.md shows it. */
+function inventoryRow(r) {
+  const reads = new Set(), writes = new Set(), other = new Set();
+  for (const u of r.uses) {
+    if (u.table) (u.op === 'read' ? reads : writes).add(u.table);
+    else if (u.method) other.add(`${u.method}()`);
+    else if (u.request) other.add(u.request);
   }
+  const tl = (s) => [...s].sort().map((t) => `${t} (${kind(t)})`).join(', ') || '—';
+  const closer = (f) => { const k = r.launch && known.find((e) => e.finding === f && e.routes.includes(r.launch)); return k ? `${f} → ${k.list === 'PENDING' ? `lane ${k.lane}` : k.lane}${k.approved ? ' (owner-approved)' : ''}` : f; };
+  return `| \`${r.path}\` | R: ${tl(reads)}<br>W: ${tl(writes)} | ${[...other].sort().join(', ') || '—'} | ${[...r.findings.keys()].map(closer).join('; ') || 'none'} |`;
+}
+const expected = { launch: results.filter((r) => r.launch).map(inventoryRow), cut: results.filter((r) => !r.launch).map(inventoryRow) };
+let doc = await readFile(DOC, 'utf8');
+if (WRITE) {
+  for (const k of Object.keys(INVENTORY)) doc = withRows(doc, INVENTORY[k], expected[k]);
+  await writeFile(DOC, doc);
+  console.log(`${DOC}: inventory rewritten (${expected.launch.length} launch routes, ${expected.cut.length} cut routes)`);
+}
+for (const k of Object.keys(INVENTORY)) {
+  const committed = docRows(doc, INVENTORY[k]);
+  const missing = expected[k].filter((r) => !committed?.includes(r)), extra = (committed ?? []).filter((r) => !expected[k].includes(r));
+  check(`${DOC} "${INVENTORY[k].slice(3)}" matches the code (else run --write)`, committed !== null && JSON.stringify(committed) === JSON.stringify(expected[k]),
+    committed === null ? 'section missing' : [...missing.map((r) => `code: ${r.slice(0, 140)}`), ...extra.map((r) => `doc: ${r.slice(0, 140)}`)].slice(0, 6).join(' | ') || 'order differs');
+}
+
+if (REPORT && !WRITE) {
+  // The doc's two tables, launch routes first (`--write` puts them in the doc).
+  for (const k of Object.keys(INVENTORY)) console.log(`\n${INVENTORY[k]}\n\n| Route | Tables (read / written) → adapter | Methods, requests | Findings |\n|---|---|---|---|\n${expected[k].join('\n')}`);
 }
 done();

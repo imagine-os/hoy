@@ -50,7 +50,9 @@ const userOf = (req) => /^Bearer fake\.([^.]+)\.[^.]+$/.exec(req.headers.authori
 const json = (res, status, body) => { res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(body)); };
 const readBody = (req) => new Promise((r) => { let s = ''; req.on('data', (c) => { s += c; }); req.on('end', () => { try { r(JSON.parse(s || '{}')); } catch { r({}); } }); });
 const values = (f, field) => !f || typeof f !== 'object' ? [] : [...(f.and ?? []), ...(f.or ?? [])].flatMap((x) => values(x, field)).concat(f.field === field ? [].concat(f.value) : []);
+const PORT = Number(process.env.QA_PORT ?? 5194);
 let log = [];
+let failDirectory = 0; // review round 2, L2: the next N directory reads answer 503
 function answerQuery(user, q) {
   log.push({ user, kind: 'query', entity: q.entity, filter: JSON.stringify(q.filter ?? null), aggregate: !!q.aggregate });
   if (q.entity === 'person') {
@@ -83,6 +85,7 @@ const server = createServer(async (req, res) => {
     if (route === '/admin/users') {
       log.push({ user, kind: 'directory' });
       if (!p?.superAdmin) return json(res, 403, { error: 'super admin only' });
+      if (failDirectory > 0) { failDirectory--; return json(res, 503, { error: 'unavailable' }); }
       return json(res, 200, { users: Object.entries(PEOPLE).map(([u, x], i) => ({ userId: u, email: `${u}@example.test`, name: x.name, signedUp: true, memberships: x.keys.map((k, j) => ({ membershipId: `m_${i}_${j}`, roleKey: k })) })) });
     }
     if (route === '/query') return json(res, 200, { data: answerQuery(user, await readBody(req)) });
@@ -96,8 +99,8 @@ const server = createServer(async (req, res) => {
     res.writeHead(200, { 'Content-Type': MIME[extname(file)] ?? 'application/octet-stream' }); res.end(await readFile(file));
   } catch { res.writeHead(404); res.end('Not found'); }
 });
-await new Promise((r) => server.listen(5194, '127.0.0.1', r));
-const BASE = 'http://127.0.0.1:5194';
+await new Promise((r) => server.listen(PORT, '127.0.0.1', r));
+const BASE = `http://127.0.0.1:${PORT}`;
 
 const browser = await launchBrowser();
 const errors = [];
@@ -210,6 +213,17 @@ try {
   check('L2 view as a role nobody holds: the banner says so', /Mantenimiento/.test(b) && /sin persona de ejemplo/.test(b), b);
   check('L2 …the screens are replaced by an empty state that explains it', (await page.locator('[data-view-as-empty]').count()) === 1, (await page.locator('main').innerText().catch(() => '')).slice(0, 200));
   check('L2 …and nothing is read as the super admin\'s own person', !log.some((l) => l.kind === 'query' && /per_super/.test(l.filter)), log.filter((l) => l.kind === 'query').map((l) => `${l.entity} ${l.filter}`).join(' | '));
+  await exit(page);
+
+  // ── review round 2, L2: a failed directory read is said as a failure with a retry, never "nobody holds this role" ──
+  failDirectory = 1;
+  await viewAs(page, 'front_desk');
+  const failedText = await page.locator('main').innerText().catch(() => '');
+  check('L2r2 a failed sample read shows a failure state, not the "nobody holds" empty state', (await page.locator('[data-view-as-failed]').count()) === 1 && (await page.locator('[data-view-as-empty]').count()) === 0 && !/Nadie tiene el rol/.test(failedText), failedText.slice(0, 300));
+  check('L2r2 …it says why in words (no raw code)', /No pudimos/.test(failedText) && !/view_as_|unavailable|\b503\b/.test(failedText), failedText.slice(0, 300));
+  await page.locator('[data-view-as-retry]').click({ timeout: 3000 }).catch(() => {});
+  await page.waitForTimeout(2000);
+  check('L2r2 …and Retry reads again and finds the person', /Camilo Desk/.test(await bannerText(page)) && (await page.locator('[data-view-as-failed]').count()) === 0, await bannerText(page));
   await exit(page);
 
   // ── view as front desk, then sign out from the staff shell ─────────────────────────────────────────────────────

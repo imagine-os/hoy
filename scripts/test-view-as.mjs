@@ -193,7 +193,7 @@ try {
     const log = [];
     const request = async (method, path, body) => {
       log.push(`${method} ${path}`);
-      if (refuse) { const e = new Error('forbidden'); e.status = 403; throw e; }
+      if (refuse) { const e = new Error('forbidden'); e.status = 403; e.code = 'forbidden'; throw e; }
       if (method === 'GET' && path === '/admin/users') return { users };
       if (method === 'POST' && path === '/query' && body?.entity === 'person') {
         const want = fieldValues(body.filter, 'user');
@@ -258,12 +258,28 @@ try {
   await test('hostile: a malformed directory (no users array, odd memberships) → null, no crash', async () => {
     for (const users of [null, 'x', [{ userId: 1 }], [{ userId: 'u_cust_a', memberships: 'member' }], [{ userId: 'u_cust_a', memberships: [{ roleKey: '__proto__' }] }]]) {
       const { request } = directory({ users });
-      assert.equal(await loadViewAsSample('customer', request, 'u_super'), null, JSON.stringify(users));
+      const got = await loadViewAsSample('customer', request, 'u_super');
+      // Review round 2, L2: an answer with no users array is a failed read, not "nobody holds the role".
+      if (Array.isArray(users)) assert.equal(got, null, JSON.stringify(users));
+      else assert.deepEqual(got, { error: 'view_as_malformed' }, JSON.stringify(users));
     }
   });
-  await test('the directory refused (403) → null', async () => {
+  // Review round 2, L2: a failed read is a failure with its code (retry and the refusal copy), never "nobody".
+  await test('the directory refused (403) → a failure with the code, not null', async () => {
     const { request } = directory({ refuse: true });
-    assert.equal(await loadViewAsSample('customer', request, 'u_super'), null);
+    assert.deepEqual(await loadViewAsSample('customer', request, 'u_super'), { error: 'forbidden' });
+  });
+  await test('a network error or an error without a code → a generic failure, not null', async () => {
+    assert.deepEqual(await loadViewAsSample('customer', async () => { throw new TypeError('Failed to fetch'); }, 'u_super'), { error: 'network_error' });
+    assert.deepEqual(await loadViewAsSample('customer', async () => { throw 'x'; }, 'u_super'), { error: 'view_as_unavailable' });
+  });
+  await test('hostile: an error code that is not a plain key is not passed through', async () => {
+    const e = new Error('x'); e.code = '<img src=x>';
+    assert.deepEqual(await loadViewAsSample('customer', async () => { throw e; }, 'u_super'), { error: 'view_as_unavailable' });
+  });
+  await test('the person lookup failing after the directory answered → a failure too', async () => {
+    const request = async (method, path) => { if (path === '/admin/users') return { users: USERS }; const e = new Error('x'); e.code = 'forbidden'; throw e; };
+    assert.deepEqual(await loadViewAsSample('customer', request, 'u_super'), { error: 'forbidden' });
   });
   await test('the sample reads are reads only (GET /admin/users, POST /query)', async () => {
     const { log, request } = directory();
