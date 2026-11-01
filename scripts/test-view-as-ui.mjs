@@ -278,10 +278,10 @@ try {
   log = [];
   at = await go(page, '/app?as=customer');
   check('a planted ?as= outside a frame changes nothing for the super admin (no view-as, no banner, no sample read)', (await stored(page)) === null && (await banner(page).count()) === 0 && !log.some((l) => l.kind === 'directory'), `${at} ${await stored(page)}`);
-  // Review round 1 (r1hoy, L5): the super admin holds no customer role, so a purchase page offers "Join as a customer"
-  // (as for Administration), never a checkout whose purchase Company OS would refuse.
+  // Review round 1 (r1hoy, L5), owner 2026-11-01: the super admin holds no customer role, so a purchase page enrols them
+  // as a customer (as for Administration), never a checkout whose purchase Company OS would refuse.
   await go(page, '/app/plans');
-  check('r1 L5 super admin without the customer role: a purchase page offers Join as a customer (not the checkout as super admin)', (await page.locator('[data-join-customer]').count()) === 1, route(page));
+  check('r1 L5 super admin without the customer role: a purchase page enrols them as a customer (not the checkout as super admin)', (await page.locator('[data-enrol-customer]').count()) === 1, route(page));
   await go(page, '/hub');
 
   // ── view as customer: role, home, banner, data ─────────────────────────────────────────────────────────────────
@@ -433,8 +433,8 @@ try {
     await page.waitForTimeout(3000);
     const planted = await (await page.$('#qa-frame'))?.contentFrame();
     const plantedRoute = planted ? decodeURIComponent(new URL(planted.url()).hash.slice(1)) : '';
-    const plantedState = planted ? await planted.evaluate(() => ({ banners: document.querySelectorAll('[data-view-as-banner]').length, sample: document.querySelectorAll('[data-view-as-empty], [data-view-as-failed]').length, join: document.querySelectorAll('[data-join-customer]').length })).catch(() => null) : null;
-    check(`r1 M1 ${who}: a read-only frame never offers Join as a customer (a sign-up whose submit can't succeed)`, !!planted && plantedState?.join === 0, `${plantedRoute} ${JSON.stringify(plantedState)}`);
+    const plantedState = planted ? await planted.evaluate(() => ({ banners: document.querySelectorAll('[data-view-as-banner]').length, sample: document.querySelectorAll('[data-view-as-empty], [data-view-as-failed]').length, join: document.querySelectorAll('[data-enrol-customer]').length })).catch(() => null) : null;
+    check(`r1 M1 ${who}: a read-only frame never enrols as a customer (a sign-up that can't succeed there)`, !!planted && plantedState?.join === 0, `${plantedRoute} ${JSON.stringify(plantedState)}`);
     check(`${who}: a planted ?as=customer in a frame is ignored (no view-as: no banner, no sample read, not the customer home)`, !!planted && plantedState?.banners === 0 && plantedState?.sample === 0 && !log.some((l) => l.kind === 'directory') && !plantedRoute.startsWith('/app?'), `${plantedRoute} ${JSON.stringify(plantedState)}`);
     check(`${who}: …and that frame is read-only too`, planted ? (await planted.evaluate(async () => (await fetch(`/api/cos/t/hoy-test/batch`, { method: 'POST', body: '{}' })).status)) === 403 && writes().length === 0 : false);
     if (who === 'desk') check('desk: still refused an admin screen', refusedAt(await go(page, '/admin/settings')));
@@ -445,7 +445,7 @@ try {
   ({ ctx, page } = await open());
   await signIn(page, 'supmem@example.test');
   await go(page, '/app/plans');
-  check('r1 super admin + customer: a customer page opens with the customer session (no Join, the way back to their own home)', (await page.locator('[data-join-customer]').count()) === 0 && (await page.locator('[data-primary-home]').count()) >= 1, route(page));
+  check('r1 super admin + customer: a customer page opens with the customer session (no enrolment, the way back to their own home)', (await page.locator('[data-enrol-customer]').count()) === 0 && (await page.locator('[data-primary-home]').count()) >= 1, route(page));
   check('r1 super admin + customer: …and no staff tooling in the customer screens (no Hub or admin links)', !(await menu(page)).some((l) => l === '/hub' || l.startsWith('/admin/')), (await menu(page)).join(' '));
   await ctx.close();
 
