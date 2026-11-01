@@ -1,9 +1,10 @@
 // H-2 / PL-03 at bundle level: what each build ships. Reads the built files only (no browser).
 // - Review build (dist/, `npm run build`): unchanged — demo sign-in and hub are there, Clerk is not.
 // - Production build (`npm run build:production`; QA_PROD_DIST=<dir>, else built here into a temp dir): Clerk is a
-//   separate chunk; the Hub ships for super admins (Hoy all-roles, lane D) without its review-only parts (demo users,
-//   live preview frames, wireframe and dev toggles, persona switcher); no dev tools, demo sign-in panel or agent
-//   manifest; no manual or docs text; no in-app screenshots or hub-map files; under the upload budget.
+//   separate chunk; Justin's Hub ships for super admins (lane D, then Hoy test-fixes lane Y3: its look, live
+//   read-only previews, the session bar, the wireframe toggle) with real people and never a demo persona; the manual,
+//   the source documents, the docs and the kanban ship for the super admin (Y3, R-08 answered for these pages); no
+//   demo sign-in panel, persona switcher or agent manifest; no in-app screenshots or hub-map files; under the budget.
 // QA_STRICT_DEMO_DATA=1 also requires that no demo persona or seed (MockProvider) ships in production: that holds once
 // lane H-3's CompanyOSProvider replaces MockProvider in the production build. The deploy workflows run it strict, so a
 // production deploy is refused while the demo data layer would ship.
@@ -48,29 +49,44 @@ check(`production: under the 60 MB upload budget (${(bytes / 1048576).toFixed(1)
 const entryJs = readFileSync(join(prodDir, 'index.html'), 'utf8').match(/assets\/([^"']+\.js)/)?.[1];
 check('production: Clerk loads in its own chunk, not the entry', !!entryJs && has(prod, 'clerk-js').length > 0 && !has(prod, 'clerk-js').includes(entryJs), `${entryJs} / ${has(prod, 'clerk-js').join(', ')}`);
 check('production: no in-app screenshots or thumbnails', !all.some((f) => /\/(thumb-[^/]*|[A-Z]+-\d+[a-z]?-(es|en)-[^/]*)\.(jpe?g|png|webp)$/i.test(f)));
-check('production: no hub map, actions registry, delivery tracker or source documents', ['hub-map.json', 'actions.json', 'hub-map', 'hub', 'delivery-room', 'source'].every((p) => !existsSync(join(prodDir, p))));
+check('production: no hub map, actions registry or delivery tracker', ['hub-map.json', 'actions.json', 'hub-map', 'hub', 'delivery-room'].every((p) => !existsSync(join(prodDir, p))));
+check('production: the source documents behind the manual ship (lane Y3: the Construction & testing band)', existsSync(join(prodDir, 'source')) && readdirSync(join(prodDir, 'source')).some((f) => f.endsWith('.pdf')));
 // Route-level absence (hub, dev, docs, manual) is checked in the browser: test-auth-production-ui.mjs (PL-03).
 // The demo sign-in screen calls t('customer.signin.demo') (its user list); the key alone stays in the shared string table.
 check('production: no persona switcher, spec chip or demo sign-in screen', has(prod, 'rs-user').length === 0 && has(prod, 'specchip').length === 0 && has(prod, demoSignIn).length === 0, [...has(prod, 'rs-user'), ...has(prod, demoSignIn)].join(', '));
 // The manifest is the assignment (`window.__hoyos = …`, src/app/manifest.ts); the dev inspector's help text only names it
 // (the developer's home `/dev` ships since Hoy all-roles). test-auth-production-ui.mjs checks `window.__hoyos` is unset.
 check('production: no agent manifest (window.__hoyos)', has(prod, /(\.__hoyos|\[\s*["'`]__hoyos["'`]\s*\])\s*=[^=]/).length === 0, has(prod, /(\.__hoyos|\[\s*["'`]__hoyos["'`]\s*\])\s*=[^=]/).join(', '));
-check('production: no preview-frame session (hub DeviceFrame)', has(prod, 'hoyos.session').length === 0);
-// Hoy all-roles, lane D: the Hub ships (super admin only) with view-as; its review half (HubPage: live previews, the
-// session bar with the persona switcher, the wireframe toggle, the hub-map fetch) does not.
-check('production: the Hub ships (route /hub, the production Hub page, view-as)', has(prod, '"/hub"').length > 0 && has(prod, 'data-production-hub').length > 0 && has(prod, 'hoyos.viewAs').length > 0, `${has(prod, '"/hub"').join(', ')} / ${has(prod, 'data-production-hub').join(', ')}`);
-check('production: none of the review Hub (session bar with the persona switcher, live previews, brand band with the wireframe toggle)', ['hub-sessionbar', 'hub-card-preview', 'hub-brandband'].every((m) => has(prod, m).length === 0), ['hub-sessionbar', 'hub-card-preview', 'hub-brandband'].filter((m) => has(prod, m).length).join(', '));
-// The manual and docs text: a sentence from the manual, the docs README and a changelog entry must not be anywhere.
+// The review build's frame session (demo users by `hoyos.session`) never ships; production frames shadow view-as instead.
+// The docs (shipped since lane Y3) mention the key in prose; the code's string literal is what must be absent.
+check('production: no review preview-frame session (the "hoyos.session" key in code)', has(prod, /(^|[^\\])"hoyos\.session"/).length === 0, has(prod, /(^|[^\\])"hoyos\.session"/).join(', '));
+// Lane Y3: Justin's Hub ships (super admin only): its markup, live previews, the session bar and the wireframe toggle,
+// the production frame mode and the problem_report form; lane D's simplified page is gone.
+check('production: Justin\'s Hub ships (route /hub, session bar, live previews, brand band)', has(prod, '"/hub"').length > 0 && ['hub-sessionbar', 'hub-card-preview', 'hub-brandband', 'data-hub-persona'].every((m) => has(prod, m).length > 0), ['hub-sessionbar', 'hub-card-preview', 'hub-brandband', 'data-hub-persona'].filter((m) => !has(prod, m).length).join(', '));
+check('production: the frame mode, view-as and the problem report ship', has(prod, 'hoyos.viewAs').length > 0 && has(prod, 'hoyos.skin').length > 0 && has(prod, 'problem_report').length > 0);
+check('production: lane D\'s simplified Hub is gone', has(prod, 'data-production-hub').length === 0);
+// The manual and docs text ship since lane Y3 (super admin only): a manual sentence, the docs README and a changelog entry.
 const sample = (file) => readFileSync(file, 'utf8').split('\n').find((l) => l.length > 60 && !/^[-#>|`{]/.test(l.trim()))?.trim().slice(0, 50);
 const docsDir = 'docs/changelog';
 const changelog = readdirSync(docsDir).filter((f) => f.endsWith('.md')).sort().pop();
 for (const file of ['docs/ops-manual/es/00-index.md', 'docs/README.md', join(docsDir, changelog)]) {
   const line = sample(file);
-  check(`production: no docs text (${relative('.', file)})`, !!line && has(prod, line).length === 0, `${line} in ${has(prod, line ?? '').join(', ')}`);
+  check(`production: the docs text ships (${relative('.', file)})`, !!line && has(prod, line).length > 0, String(line));
 }
-check('production: no docs markdown index (docmeta)', has(prod, 'ops-manual/es/').length === 0);
+check('production: the docs markdown index ships (docmeta)', has(prod, 'ops-manual/es/').length > 0);
 if (process.env.QA_STRICT_DEMO_DATA === '1') {
   check('production (strict): no demo persona', has(prod, 'Sofía Arango').length === 0 && has(prod, 'usr_super').length === 0, has(prod, 'usr_super').join(', '));
+  // Lane Y3 ships the docs, which name the demo users: every demo full name and id must be redacted, accented or not.
+  const demoSrc = readFileSync('src/auth/demoUsers.ts', 'utf8');
+  const demoNames = [...demoSrc.matchAll(/\bname:\s*'([^']+ [^']+)'/g)].map((x) => x[1]).flatMap((n) => [n, n.normalize('NFD').replace(/[\u0300-\u036f]/g, '')]);
+  const demoIds = [...demoSrc.matchAll(/\bid:\s*'(usr_[a-z0-9_]+)'/g)].map((x) => x[1]);
+  // Names and ids that production code itself carries on purpose (the visitor id, a teacher of the launch seed who shares a
+  // demo name, spec examples) are the H-10 markers' business, not the docs': only the rest is checked here.
+  const REVIEW_ONLY = /^src\/(hub\/(?!hubMap\.data\.ts$)|auth\/demoUsers|app\/frameSession|data\/MockProvider|data\/seed\/(?!(catalog|timetable|content|legal|media|studioPolicies)\.ts$))/;
+  const productionSrc = files('src').filter((f) => /\.(tsx?|json)$/.test(f) && !REVIEW_ONLY.test(relative('.', f))).map((f) => readFileSync(f, 'utf8')).join('\n');
+  const fromDocs = [...new Set([...demoNames, ...demoIds])].filter((n) => !productionSrc.includes(n));
+  const leaked = fromDocs.filter((n) => has(prod, n).length);
+  check(`production (strict): the docs carry no demo user (${fromDocs.length} names and ids checked, accented or not)`, fromDocs.length >= 10 && leaked.length === 0, leaked.join(', '));
   check('production (strict): no MockProvider seed', has(prod, 'Juliana Ospina').length === 0);
 } else {
   console.log(`note demo personas/seed in production: ${has(prod, 'usr_super').length ? 'present (MockProvider, until H-3 swaps the provider)' : 'absent'} — set QA_STRICT_DEMO_DATA=1 to require absence`);

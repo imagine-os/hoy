@@ -117,9 +117,14 @@ try {
   // ── PL-03: no review tools in production ──────────────────────────────────────────────────────────────────────
   // `/teach` and `/dev` are role homes since Hoy all-roles (lane C): only those pages ship, not the rest of their areas.
   // `/hub` ships for super admins since lane D (scripts/test-view-as-ui.mjs): a visitor is sent to sign-in there.
-  for (const p of ['/dev/components', '/dev/api-keys', '/docs', '/manual', '/teach/payroll', '/app/state/empty', '/auth/recover', '/auth/locked', '/admin/tables']) {
+  for (const p of ['/dev/components', '/dev/api-keys', '/teach/payroll', '/app/state/empty', '/auth/recover', '/auth/locked', '/admin/tables']) {
     await page.goto(`${BASE}/#${p}`); await page.waitForTimeout(400);
     check(`PL-03 ${p} does not exist in production`, !route(page).startsWith(p), route(page));
+  }
+  // The manual, the docs and the kanban ship for the super admin since lane Y3 (scripts/test-view-as-ui.mjs).
+  for (const p of ['/docs', '/manual', '/dev/knowledgebase']) {
+    await page.goto(`${BASE}/#${p}`); await page.waitForTimeout(400);
+    check(`PL-03 a visitor on ${p} is sent to sign-in`, route(page).startsWith('/auth/sign-in'), route(page));
   }
   await page.goto(`${BASE}/#/auth/sign-in`); await page.waitForTimeout(800);
   const signInText = await page.locator('body').innerText();

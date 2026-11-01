@@ -3,7 +3,7 @@ import type { Role } from '../../../auth/roles';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useTheme } from '../../../design/ThemeProvider';
 import { useThumbUrl, type ThumbShape } from '../../../app/thumbnails';
-import { liveFramesAllowed } from '../../../app/frameSession';
+import { liveFramesAllowed } from '../../../app/frameMode';
 import { Icon } from '../../atom/Icon/Icon';
 import { DeviceFrame } from '../DeviceFrame/DeviceFrame';
 import './PagePreview.css';

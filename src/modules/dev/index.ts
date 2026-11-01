@@ -10,6 +10,8 @@ export { strings } from './strings';
 // Production (Hoy all-roles, lane C): only the developer's home `/dev` (the specs index) ships, from its own chunk;
 // the other dev pages (API keys, simulator with demo personas, layout editor…) wait for R-08 and are not in the bundle.
 const specsPage = lazyPages(() => import('./specsPage'));
+// The kanban and knowledgebase (K-01) ships for the super admin since lane Y3 (the Hub's Construction & testing band).
+const knowledgebasePage = lazyPages(() => import('./kanbanChunk'));
 const reviewPages = () => import('./pages');
 const page = PRODUCTION_BUILD ? (specsPage as unknown as ReturnType<typeof lazyPages<Awaited<ReturnType<typeof reviewPages>>>>) : lazyPages(reviewPages);
 const base = { roles: DEV_ROLES, surface: 'dev' as const, layout: 'desktop' as const };
@@ -20,6 +22,7 @@ const G = 'core.nav.group.design';
 // chunks are not referenced at all and stay out of the bundle.
 export const routes: RouteDef[] = PRODUCTION_BUILD ? [
   { ...base, path: '/dev', element: specsPage('SpecsIndexPage'), spec: specsIndexSpec, nav: { labelKey: 'core.nav.specs', icon: 'specs', order: 3, group: G } },
+  { ...base, roles: ['super_admin'], path: '/dev/knowledgebase', element: knowledgebasePage('KnowledgebasePage'), spec: canvasSpecs['K-01'], nav: { labelKey: 'core.nav.knowledgebase', icon: 'knowledgebase', order: 5, group: G } },
 ] : [
   { ...base, path: '/dev', element: page('SpecsIndexPage'), spec: specsIndexSpec },
   { ...base, path: '/dev/tokens', element: page('TokensPage'), spec: canvasSpecs['D-01'], nav: { labelKey: 'core.nav.tokens', icon: 'tokens', order: 1, group: G } },

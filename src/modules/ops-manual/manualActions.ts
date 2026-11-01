@@ -14,6 +14,7 @@ import type { ActionHandler } from '../../actions';
 import { loadDoc } from '../docs/docsIndex';
 import { LENS_ROLES, chapterNumber } from './audience';
 import { chapterFor, chapters, type Chapter } from './manualIndex';
+import { PRODUCTION_BUILD } from '../../config/launch';
 import { canEditSection, isLead, isOwner, isTeam, useMarkRead, useMarkUnread, useOverrideWrites, useRequestWrites, useTrainingWrites } from './manualData';
 import { splitSections } from './sections';
 import { useLens, type Lens } from './lens';
@@ -147,6 +148,8 @@ export function useRequestHandlers(): Record<string, ActionHandler> {
     'manual.listRequests': async (p) => {
       if (!isLead(role)) throw new Error('requires coordinator, admin or super_admin');
       const status = p?.status ?? 'open';
+      // Production (lane Y3): the manual is read-only; change requests have no Company OS entity yet.
+      if (PRODUCTION_BUILD) return '[]';
       const rows = await data.list<ManualRequestRow>('manual_requests', status === 'all' ? undefined : { where: { status } });
       return JSON.stringify(rows.map((r) => ({ id: r.id, chapter: r.chapter_slug, section: r.section_heading, lang: r.lang, request: r.request, by: r.requested_by, status: r.status, answer: r.answer, at: r.created_at })));
     },
@@ -155,6 +158,7 @@ export function useRequestHandlers(): Record<string, ActionHandler> {
       if (!p?.id) throw new Error('id is required');
       const st = (p.status ?? 'done') as 'done' | 'dismissed' | 'open';
       if (!['done', 'dismissed', 'open'].includes(st)) throw new Error('status must be done, dismissed or open');
+      if (PRODUCTION_BUILD) throw new Error('not_in_launch: change requests are not in production yet');
       const hit = await data.get<ManualRequestRow>('manual_requests', p.id);
       if (!hit) throw new Error(`no request ${p.id}`);
       await answer(p.id, p.answer ?? null, st);

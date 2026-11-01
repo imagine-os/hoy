@@ -48,8 +48,10 @@ const { check, done } = reporter('route connectivity');
 // PENDING: another Wave 1 lane is closing it now.
 const PENDING = [
 ];
+// Lane Y3 (Hoy test-fixes): the Hub's Construction & testing band ships for the super admin (R-08 answered for these pages).
+const CONSTRUCTION_ROUTES = ['/manual', '/manual/decisions', '/manual/:chapter', '/docs', '/docs/*', '/docs/source', '/dev/knowledgebase'];
 // Routes added to LAUNCH_ROUTES after this audit (lane C's role homes, lane D's Hub). Green, or owner-approved per entry.
-const ADDED_ROUTES = ['/teach', '/admin/content', '/dev', '/hub'];
+const ADDED_ROUTES = ['/teach', '/admin/content', '/dev', '/hub', ...CONSTRUCTION_ROUTES];
 // The owner's approval for the two role homes that launch with "available later" sections (lane H plan, P-03b).
 const ROLE_HOMES_APPROVED = 'owner, 2026-10-31: role homes launch with "available later" sections and refused saves (lane H plan cryptic-swimming-whale; decision log P-03b)';
 // OPEN: found by this audit (lane G, 2026-10-31) on routes already in LAUNCH_ROUTES, with no lane closing it yet.
@@ -115,7 +117,7 @@ const viteSrc = await readFile('vite.config.ts', 'utf8');
 const REVIEW_ONLY_MODULES = [...(viteSrc.match(/REVIEW_ONLY_MODULES\s*=\s*\[([^\]]*)\]/)?.[1] ?? '').matchAll(/'([^']+)'/g)].map((m) => m[1]);
 const PROVIDER_FILES = /^src\/data\/(companyos\/|MockProvider\.ts|SupabaseProvider\.ts|DataContext\.tsx|types\.ts)/;
 // The demo data the production build marks side-effect free (vite.config.ts REVIEW_ONLY_DATA).
-const REVIEW_ONLY_DATA = /\/src\/(hub\/(?!hubMap\.data\.ts$).+|auth\/demoUsers|data\/MockProvider|data\/seed\/(?!(catalog|timetable|content|legal|media|studioPolicies)\.ts$).+)\.tsx?$/;
+const REVIEW_ONLY_DATA = /\/src\/(hub\/(?!hubMap\.data\.ts$).+|auth\/demoUsers|app\/frameSession|data\/MockProvider|data\/seed\/(?!(catalog|timetable|content|legal|media|studioPolicies)\.ts$).+)\.tsx?$/;
 
 // ── The adapters and the provider, as the production code defines them ─────────────────────────────────────────
 const CACHE = path.join(ROOT, 'node_modules', '.cache', 'route-connectivity');
@@ -167,12 +169,13 @@ const SIGNED_OUT_LIVE = new Set(SIGNED_OUT_MODEL.providerTables.filter((t) => !S
 
 check('read the adapters (mapping.ts)', Object.keys(adapters).length >= 20, String(Object.keys(adapters).length));
 check('read the provider methods (CompanyOSProvider.ts)', ['list', 'insert', 'atomic', 'request'].every((m) => PROVIDER_METHODS.has(m)), [...PROVIDER_METHODS].join(','));
-check('read the review-only modules (vite.config.ts)', REVIEW_ONLY_MODULES.includes('docs'), REVIEW_ONLY_MODULES.join(','));
+check('read the review-only modules (vite.config.ts; none since lane Y3 ships the docs browser)', /REVIEW_ONLY_MODULES(?::\s*string\[\])?\s*=\s*\[/.test(viteSrc) && !REVIEW_ONLY_MODULES.includes('docs'), REVIEW_ONLY_MODULES.join(','));
 check('read the optional DataProvider methods (types.ts)', OPTIONAL.length >= 5, OPTIONAL.join(','));
 
 // ── Production routes ───────────────────────────────────────────────────────────────────────────────────────────
 const launchSrc = await readFile('src/config/launchRoutes.ts', 'utf8');
 const LAUNCH = [...launchSrc.slice(launchSrc.indexOf('LAUNCH_ROUTES'), launchSrc.indexOf('];', launchSrc.indexOf('LAUNCH_ROUTES'))).matchAll(/'(\/[^']*)'/g)].map((m) => m[1]);
+check('the Construction & testing band routes are launch routes (lane Y3)', CONSTRUCTION_ROUTES.every((r) => LAUNCH.includes(r)), CONSTRUCTION_ROUTES.filter((r) => !LAUNCH.includes(r)).join(', '));
 const launchPattern = (p) => LAUNCH.find((l) => (l.endsWith('/*') ? p === l.slice(0, -2) || p.startsWith(l.slice(0, -1)) : p === l));
 
 /** The routes a module registers in the production build: its production block when it has one, else all of them. */

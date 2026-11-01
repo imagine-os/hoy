@@ -8,6 +8,13 @@
 //   visitor can't open /hub, and a view-as value planted in sessionStorage changes nothing for them;
 // - one real write (a settings Save, viewing as admin) is refused in the browser with its copy (L8, review round 1);
 // - a role nobody holds shows an explicit empty state, never the super admin's own data (L2, review round 1).
+// Lane Y3 (Hoy test-fixes): the Hub is Justin's HubPage, hooked to real data:
+// - its look ships (brand band, session bar, bands, cards, previews); "Entrar como {first name}" and the persona
+//   dropdown name the real person holding each role (the one view-as samples); no demo persona anywhere;
+// - live previews (at most 3) run in frames under their own `?as=`: a frame's view-as never touches the parent's,
+//   every frame is read-only and hides the banner; a planted `?as=` is ignored outside a frame and for a non-super admin;
+// - Report a problem submits the forms module's `problem_report`; the Construction & testing band (manual, source
+//   documents, docs, kanban) opens for the super admin only; the wireframe toggle is session-only and resets on sign-out.
 // Run: npm run build:production && QA_PROD_DIST=dist node scripts/test-view-as-ui.mjs
 import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
@@ -52,6 +59,8 @@ const readBody = (req) => new Promise((r) => { let s = ''; req.on('data', (c) =>
 const values = (f, field) => !f || typeof f !== 'object' ? [] : [...(f.and ?? []), ...(f.or ?? [])].flatMap((x) => values(x, field)).concat(f.field === field ? [].concat(f.value) : []);
 const PORT = Number(process.env.QA_PORT ?? 5194);
 let log = [];
+let dropForm = 0; // the next N problem reports lose their answer (the connection drops)
+let failForm = 0; // the next N problem reports answer 422 unknown_form
 let failDirectory = 0; // review round 2, L2: the next N directory reads answer 503
 function answerQuery(user, q) {
   log.push({ user, kind: 'query', entity: q.entity, filter: JSON.stringify(q.filter ?? null), aggregate: !!q.aggregate });
@@ -80,6 +89,14 @@ const server = createServer(async (req, res) => {
     if (!user) return json(res, 401, { error: 'unauthorized' });
     const route = path.slice(`/api/cos/t/${TENANT}`.length);
     const p = PEOPLE[user];
+    // Lane Y1's problem_report shape: a form_submission created through the runtime, with an Idempotency-Key.
+    if (req.method === 'POST' && route === '/api/form_submission') {
+      const body = await readBody(req);
+      log.push({ user, kind: 'form', body, key: req.headers['idempotency-key'] ?? null });
+      if (dropForm > 0) { dropForm--; req.socket.destroy(); return; }
+      if (failForm > 0) { failForm--; return json(res, 422, { error: 'unknown_form' }); }
+      return json(res, 201, { data: { id: `fs_${log.length}`, data: { ...body, submitted_at: '2026-10-28T15:00:00Z' } } });
+    }
     if (req.method !== 'GET' && route !== '/query') { log.push({ user, kind: 'write', method: req.method, route }); return json(res, 200, { data: { id: 'x' } }); }
     if (route === '/me') return p ? json(res, 200, { tenant: { slug: TENANT, timezone: 'America/Bogota' }, user: { id: user, name: p.name, email: `${user}@example.test` }, roleKeys: p.keys, isSuperAdmin: !!p.superAdmin, caps: [], entities: [] }) : json(res, 403, { error: 'no access to this tenant' });
     if (route === '/admin/users') {
@@ -105,8 +122,10 @@ const BASE = `http://127.0.0.1:${PORT}`;
 const browser = await launchBrowser();
 const errors = [];
 const route = (page) => decodeURIComponent(new URL(page.url()).hash.slice(1));
-async function open(path = '/auth/sign-in') {
+async function open(path = '/auth/sign-in', { liveFrames = false } = {}) {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, reducedMotion: 'reduce' });
+  // Live previews stay off under automation (deterministic captures); this context turns them on, as for a person.
+  if (liveFrames) await ctx.addInitScript(() => { Object.defineProperty(Navigator.prototype, 'webdriver', { get: () => false }); });
   await ctx.route(/^https?:\/\/(?!127\.0\.0\.1)/, (r) => r.abort());
   await ctx.route(`https://${HOST}/npm/@clerk/clerk-js@*/dist/clerk.browser.js`, (r) => r.fulfill({ status: 200, contentType: 'text/javascript', body: FAKE_CLERK }));
   await ctx.addInitScript(({ accounts, pk }) => {
@@ -136,29 +155,105 @@ const banner = (page) => page.locator('[data-view-as-banner]');
 const bannerText = async (page) => ((await banner(page).count()) ? await banner(page).first().innerText() : '');
 const writes = () => log.filter((l) => l.kind === 'write');
 // A missing control fails its checks instead of ending the run (the red run lists every failing check).
-const viewAs = async (page, role) => { await page.locator(`[data-view-as="${role}"]`).first().click({ timeout: 3000 }).catch(() => {}); await page.waitForTimeout(2000); };
+// From the Hub: a card's "Entrar como {name}" (customer, teacher, front desk, admin…) or, for any role, the persona dropdown.
+const viewAs = async (page, role) => { await page.locator('select[data-hub-persona]').selectOption(role, { timeout: 3000 }).catch(() => {}); await page.waitForTimeout(2000); };
+const enterCard = async (page, role) => { await page.locator(`button[data-view-as="${role}"]`).first().click({ timeout: 3000 }).catch(() => {}); await page.waitForTimeout(2000); };
+const forms = () => log.filter((l) => l.kind === 'form');
+const skin = (page) => page.evaluate(() => document.documentElement.dataset.skin ?? '');
 const exit = async (page) => { await banner(page).getByRole('button', { name: /Salir/ }).click({ timeout: 3000 }).catch(() => {}); await page.waitForTimeout(1500); };
 
 try {
-  // ── a super admin: the Hub ─────────────────────────────────────────────────────────────────────────────────────
+  // ── a super admin: Justin's Hub with real people ───────────────────────────────────────────────────────────────
   let { ctx, page } = await open();
   await signIn(page, 'super@example.test');
   check('super admin signs in to the admin home', route(page) === '/admin', route(page));
-  check('super admin: the menu links the Hub', (await menu(page)).includes('/hub'), (await menu(page)).join(' '));
+  log = [];
   let at = await go(page, '/hub');
   check('super admin opens /hub in production', at === '/hub', at);
-  await page.locator('[data-production-hub]').waitFor({ timeout: 5000 }).catch(() => {});
-  check('the production Hub renders', (await page.locator('[data-production-hub]').count()) === 1);
-  const cards = await page.locator('[data-view-as]').evaluateAll((els) => els.map((e) => e.getAttribute('data-view-as')));
-  check('the Hub offers view-as for the 9 other signed-in roles (not super admin, not public)', [...new Set(cards)].sort().join(',') === 'admin,coordinator,customer,developer,finance,front_desk,maintenance,marketing,teacher', cards.join(','));
-  const hubText = await page.locator('main').innerText();
-  check('the Hub shows no demo persona and no live preview frames (review-only parts stay out)', !/\bSofía\b|\bJuliana\b|Mateo Arango|[Uu]suario demo|[Dd]emo user/.test(hubText) && (await page.locator('iframe').count()) === 0, hubText.slice(0, 200));
+  await page.locator('.hub').waitFor({ timeout: 5000 }).catch(() => {});
+  await page.waitForTimeout(1500);
+  check('Justin\'s Hub renders: brand band, hero, session bar ("Estás probando como"), the bands and the stat strip', (await page.locator('.hub .hub-brandband').count()) === 1 && (await page.locator('.hub-hero h1').count()) === 1 && /Estás probando como/i.test(await page.locator('.hub-sessionbar').innerText().catch(() => '')) && (await page.locator('#hub-band-outside, #hub-band-team, #hub-band-build, #hub-band-tools').count()) === 4 && (await page.locator('.hub-stats').count()) === 1);
+  check('…without the staff shell (layout auto, a full page)', (await page.locator('.deskshell, .appshell').count()) === 0);
+  check('…with its cards, statuses, "Estás aquí" and route lines', (await page.locator('.hub-card').count()) >= 15 && (await page.locator('.hub-card-meta code').count()) >= 15 && /Estás aquí/.test(await page.locator('.hub-main').innerText().catch(() => '')));
+  check('the people come from the directory (GET /admin/users, read once)', log.filter((l) => l.kind === 'directory' && l.user === 'user_super').length === 1, String(log.filter((l) => l.kind === 'directory').length));
+  const cardButton = async (role) => (await page.locator(`button[data-view-as="${role}"]`).first().innerText().catch(() => '')).trim();
+  check('"Entrar como {first name}": the real person holding each role (the one view-as samples)', (await cardButton('customer')) === 'Entrar como Ana' && (await cardButton('teacher')) === 'Entrar como Carlos' && (await cardButton('front_desk')) === 'Entrar como Camilo' && (await cardButton('admin')) === 'Entrar como Mateo', `${await cardButton('customer')} / ${await cardButton('teacher')} / ${await cardButton('front_desk')} / ${await cardButton('admin')}`);
+  const options = await page.locator('select[data-hub-persona] option').evaluateAll((els) => els.map((e) => ({ value: e.value, text: e.textContent, disabled: e.disabled })));
+  const opt = (v) => options.find((o) => o.value === v)?.text ?? '';
+  check('the persona dropdown lists the 9 viewable roles, each with its real person', options.filter((o) => o.value).map((o) => o.value).sort().join(',') === 'admin,coordinator,customer,developer,finance,front_desk,maintenance,marketing,teacher' && /Ana Cliente/.test(opt('customer')) && /Carlos Coach/.test(opt('teacher')) && /Camilo Desk/.test(opt('front_desk')) && /Mateo Admin/.test(opt('admin')), options.map((o) => `${o.value}=${o.text}`).join(' | '));
+  check('…the signed-in super admin is the first entry, and a role nobody holds says so (not selectable)', /Aaron Super/.test(options[0]?.text ?? '') && options[0]?.value === '' && options.find((o) => o.value === 'maintenance')?.disabled === true && /nadie/i.test(opt('maintenance')), `${options[0]?.text} / ${opt('maintenance')}`);
+  const hubText = await page.locator('.hub').innerText({ timeout: 3000 }).catch(() => '');
+  check('the Hub shows no demo persona and no demo-data copy', !/\bSofía\b|\bJuliana\b|Mateo Arango|[Uu]suario demo|[Dd]emo user|datos demo/.test(hubText), hubText.slice(0, 200));
+  check('no live preview frames under automation (deterministic captures)', (await page.locator('iframe').count()) === 0);
+  check('the Construction & testing band: manual, source documents, docs and kanban', ['manual', 'sources', 'docs', 'kb'].every((k) => hubText.includes({ manual: 'Manual de operaciones', sources: 'Documentos fuente', docs: 'Documentación y changelog', kb: 'Kanban y knowledgebase' }[k])));
+  check('the wireframe toggle is there for the super admin', (await page.locator('.hub-head-tools input[role=switch]').count()) >= 1);
   check('no view-as banner before viewing as', (await banner(page).count()) === 0);
+  check('the Hub sent nothing but reads', writes().length === 0 && forms().length === 0, writes().map((w) => `${w.method} ${w.route}`).join(', '));
+
+  // ── Report a problem: the forms module's problem_report ───────────────────────────────────────────────────────
+  log = [];
+  await page.locator('.hub-sessionbar').getByRole('button', { name: /Reportar un problema/ }).click({ timeout: 3000 }).catch(() => {});
+  await page.waitForTimeout(500);
+  const drawer = page.getByRole('dialog');
+  await drawer.locator('input').first().fill('El botón de reservar no responde').catch(() => {});
+  await drawer.locator('textarea').first().fill('Paso 1: abrir el horario.\nPaso 2: tocar Reservar.').catch(() => {});
+  failForm = 1;
+  await drawer.locator('button[type=submit]').click({ timeout: 3000 }).catch(() => {});
+  await page.waitForTimeout(1000);
+  const refusedText = await drawer.innerText().catch(() => '');
+  check('Report a problem: a refusal is said in words (no raw code), the text stays', !/unknown_form|\b422\b/.test(refusedText) && /No pudimos enviar/.test(refusedText) && (await drawer.locator('input').first().inputValue().catch(() => '')) === 'El botón de reservar no responde', refusedText.slice(0, 300));
+  await drawer.locator('button[type=submit]').click({ timeout: 3000 }).catch(() => {});
+  await page.waitForTimeout(1000);
+  const sentText = await drawer.innerText().catch(() => '');
+  const report = forms().at(-1)?.body;
+  check('Report a problem submits a problem_report form_submission with the summary, details, screen and the person\'s email', forms().length === 2 && report?.form_key === 'problem_report' && report?.email === 'user_super@example.test' && report?.answers?.summary === 'El botón de reservar no responde' && /Paso 2/.test(report?.answers?.details ?? '') && report?.answers?.route === '/hub' && report?.placement === 'hub' && !('viewing_as' in (report?.answers ?? {})) && !('person' in (report ?? {})), JSON.stringify(report));
+  check('…with an Idempotency-Key, the same one on the retry of the refused attempt', !!forms()[0]?.key && forms()[0]?.key === forms()[1]?.key, forms().map((f) => f.key).join(' / '));
+  check('…and says it was sent', /enviado/i.test(sentText), sentText.slice(0, 200));
+  // A lost answer: the text locks and only a same-key retry goes out.
+  await drawer.getByRole('button', { name: /Reportar otro problema/ }).click({ timeout: 3000 }).catch(() => {});
+  await drawer.locator('input').first().fill('Segundo reporte de prueba').catch(() => {});
+  dropForm = 9; // the transport retries a lost answer itself (same key); every attempt is lost
+  await drawer.locator('button[type=submit]').click({ timeout: 3000 }).catch(() => {});
+  await page.waitForTimeout(1500);
+  const lockedNow = await drawer.locator('input').first().evaluate((i) => i.readOnly).catch(() => false);
+  check('Report a problem: after a lost answer the text locks and the button offers the same report again', lockedNow && /Reintentar el mismo reporte/.test(await drawer.locator('button[type=submit]').innerText().catch(() => '')));
+  dropForm = 0;
+  const lostCount = forms().length;
+  await drawer.locator('button[type=submit]').click({ timeout: 3000 }).catch(() => {});
+  await page.waitForTimeout(1000);
+  const lost = forms().slice(lostCount - 1);
+  check('…and the retry carries the same Idempotency-Key and body', lost.length === 2 && lost[0].key === lost[1].key && lost[1].body?.answers?.summary === 'Segundo reporte de prueba' && /enviado/i.test(await drawer.innerText().catch(() => '')), lost.map((f) => f.key).join(' / '));
+  await drawer.getByRole('button', { name: 'Cerrar' }).last().click({ timeout: 3000 }).catch(() => {});
+  await drawer.waitFor({ state: 'hidden', timeout: 3000 }).catch(() => {});
+  check('…and the drawer closes', (await page.getByRole('dialog').count()) === 0);
+
+  // ── the wireframe toggle: super admin, this tab only, reset on sign-out ────────────────────────────────────────
+  await page.locator('.hub-head-tools label').filter({ hasText: 'Wireframe' }).click({ timeout: 3000 }).catch(() => {});
+  await page.waitForTimeout(400);
+  check('wireframe on: the whole page switches skin', (await skin(page)) === 'wireframe', await skin(page));
+  check('…kept for this tab only (sessionStorage), never in the remembered theme', await page.evaluate(() => sessionStorage.getItem('hoyos.skin') === 'wireframe' && !/wireframe/.test(localStorage.getItem('hoyos.theme') ?? '')));
+  await page.reload(); await page.waitForTimeout(2000);
+  check('…and survives a reload of the tab', (await skin(page)) === 'wireframe', await skin(page));
+  await page.locator('.hub-head-tools label').filter({ hasText: 'Wireframe' }).click({ timeout: 3000 }).catch(() => {});
+  await page.waitForTimeout(400);
+  check('wireframe off again', (await skin(page)) === 'styled', await skin(page));
+
+  // ── the Construction & testing band opens for the super admin ─────────────────────────────────────────────────
+  for (const [path, marker] of [['/manual', /Manual/], ['/docs', /Documentación|Changelog/], ['/docs/source', /Documentos fuente|fuente/i], ['/dev/knowledgebase', /Kanban|Backlog/]]) {
+    at = await go(page, path);
+    const text = await page.locator('main').first().innerText().catch(() => '');
+    check(`super admin opens ${path} in production, with its content`, at === path && marker.test(text), `${at} ${text.slice(0, 120)}`);
+  }
+  // A planted `?as=` outside a frame is not a view-as, even for the super admin.
+  log = [];
+  at = await go(page, '/app?as=customer');
+  check('a planted ?as= outside a frame changes nothing for the super admin (no view-as, no banner, no sample read)', (await stored(page)) === null && (await banner(page).count()) === 0 && !log.some((l) => l.kind === 'directory'), `${at} ${await stored(page)}`);
+  await go(page, '/hub');
 
   // ── view as customer: role, home, banner, data ─────────────────────────────────────────────────────────────────
   log = [];
-  await viewAs(page, 'customer');
-  check('view as customer lands on the customer home', route(page) === '/app', route(page));
+  await enterCard(page, 'customer');
+  check('"Entrar como Ana" (the customer card) views as customer and lands on the customer home', route(page) === '/app', route(page));
   check('view-as is kept in sessionStorage (hoyos.viewAs)', (await stored(page)) === 'customer', String(await stored(page)));
   let b = await bannerText(page);
   check('the banner says who is being viewed: role and sample person (the first member by name)', /Cliente/.test(b) && /Ana Cliente/.test(b) && /Salir/.test(b), b);
@@ -208,7 +303,10 @@ try {
 
   // ── L2: a role nobody holds: an explicit empty state, never the super admin's own data ──────────────────────────
   log = [];
-  await viewAs(page, 'maintenance');
+  // The dropdown can't choose a role nobody holds (it says so); a stored view-as of one still shows the empty state.
+  check('L2 the persona dropdown does not offer a role nobody holds', await page.locator('select[data-hub-persona] option[value="maintenance"]').evaluate((o) => o.disabled).catch(() => false));
+  await page.evaluate(() => sessionStorage.setItem('hoyos.viewAs', 'maintenance'));
+  await page.goto(`${BASE}/#/staff`); await page.reload(); await page.waitForTimeout(2000);
   b = await bannerText(page);
   check('L2 view as a role nobody holds: the banner says so', /Mantenimiento/.test(b) && /sin persona de ejemplo/.test(b), b);
   check('L2 …the screens are replaced by an empty state that explains it', (await page.locator('[data-view-as-empty]').count()) === 1, (await page.locator('main').innerText().catch(() => '')).slice(0, 200));
@@ -239,6 +337,18 @@ try {
   await signIn(page, 'super@example.test').catch(() => {});
   check('signing in again is the super admin, not the viewed role (no banner)', route(page) === '/admin' && (await banner(page).count()) === 0 && (await stored(page)) === null, `${route(page)} ${await bannerText(page)}`);
   check('…and the Hub opens again', (await go(page, '/hub')) === '/hub');
+  // The wireframe toggle resets on sign-out: on, then sign out from the staff shell, then sign in again.
+  await page.locator('.hub-head-tools label').filter({ hasText: 'Wireframe' }).click({ timeout: 3000 }).catch(() => {});
+  await page.waitForTimeout(400);
+  check('wireframe on before signing out', (await skin(page)) === 'wireframe');
+  await go(page, '/admin');
+  await page.locator('[data-account-chip] button').first().click({ timeout: 3000 }).catch(() => {});
+  await page.waitForTimeout(1500);
+  check('wireframe resets on sign-out (styled skin, nothing kept in the tab)', (await skin(page)) === 'styled' && await page.evaluate(() => sessionStorage.getItem('hoyos.skin') === null), await skin(page));
+  await page.goto(`${BASE}/#/auth/sign-in`); await page.waitForTimeout(800);
+  await signIn(page, 'super@example.test').catch(() => {});
+  check('…and signing in again starts styled', route(page) === '/admin' && (await skin(page)) === 'styled', `${route(page)} ${await skin(page)}`);
+  await go(page, '/hub');
 
   // ── a session that ends outside the app (another tab, expiry): view-as does not outlive it ─────────────────────
   await viewAs(page, 'customer');
@@ -267,9 +377,50 @@ try {
     check(`${who}: the planted value is removed`, (await stored(page)) === null);
     check(`${who}: no directory read for a sample`, !log.some((l) => l.kind === 'directory'));
     if (who === 'admin') check('admin: still opens its own screens (settings)', (await go(page, '/admin/settings')) === '/admin/settings');
+    for (const p of ['/manual', '/docs', '/docs/source', '/dev/knowledgebase']) check(`${who}: ${p} is refused (super admin only in production)`, refusedAt(await go(page, p)), route(page));
+    // A wireframe skin planted in the tab is not theirs: the session resets it.
+    await page.evaluate(() => sessionStorage.setItem('hoyos.skin', 'wireframe'));
+    await page.reload(); await page.waitForTimeout(1500);
+    check(`${who}: a planted wireframe skin is reset (super admin only)`, (await skin(page)) === 'styled', await skin(page));
+    // A planted `?as=` in a frame: ignored for anyone but a real super admin.
+    log = [];
+    await go(page, home);
+    await page.evaluate(() => { const f = document.createElement('iframe'); f.id = 'qa-frame'; f.src = `${location.pathname}#/app?as=customer&lang=es&theme=light&dev=0&live=0`; f.style.width = '800px'; f.style.height = '600px'; document.body.appendChild(f); });
+    await page.waitForTimeout(3000);
+    const planted = await (await page.$('#qa-frame'))?.contentFrame();
+    const plantedRoute = planted ? decodeURIComponent(new URL(planted.url()).hash.slice(1)) : '';
+    const plantedState = planted ? await planted.evaluate(() => ({ banners: document.querySelectorAll('[data-view-as-banner]').length, sample: document.querySelectorAll('[data-view-as-empty], [data-view-as-failed]').length })).catch(() => null) : null;
+    check(`${who}: a planted ?as=customer in a frame is ignored (no view-as: no banner, no sample read, not the customer home)`, !!planted && plantedState?.banners === 0 && plantedState?.sample === 0 && !log.some((l) => l.kind === 'directory') && !plantedRoute.startsWith('/app?'), `${plantedRoute} ${JSON.stringify(plantedState)}`);
+    check(`${who}: …and that frame is read-only too`, planted ? (await planted.evaluate(async () => (await fetch(`/api/cos/t/hoy-test/batch`, { method: 'POST', body: '{}' })).status)) === 403 && writes().length === 0 : false);
     if (who === 'desk') check('desk: still refused an admin screen', refusedAt(await go(page, '/admin/settings')));
     await ctx.close();
   }
+
+  // ── live previews: frames under their own view-as, read-only, never touching the parent ───────────────────────
+  ({ ctx, page } = await open('/auth/sign-in', { liveFrames: true }));
+  await signIn(page, 'super@example.test');
+  await go(page, '/hub');
+  log = [];
+  await page.locator('#hub-band-outside').scrollIntoViewIfNeeded().catch(() => {});
+  await page.waitForTimeout(6000);
+  const frameEls = await page.locator('iframe').evaluateAll((els) => els.map((e) => e.getAttribute('src') ?? ''));
+  check('live previews run as frames, at most 3 at once', frameEls.length >= 1 && frameEls.length <= 3, frameEls.join(' | '));
+  const appFrame = await (await page.$('iframe[src*="#/app?as=customer"]'))?.contentFrame();
+  check('the customer app preview runs as customer (?as=customer)', !!appFrame, frameEls.join(' | '));
+  if (appFrame) {
+    const inside = await appFrame.evaluate(() => ({ route: decodeURIComponent(location.hash.slice(1)), viewAs: sessionStorage.getItem('hoyos.viewAs'), banner: [...document.querySelectorAll('[data-view-as-banner]')].some((b) => b.getBoundingClientRect().height > 0) }));
+    check('…inside it, the customer home with the sample person (view-as in the frame only)', inside.route.startsWith('/app') && inside.viewAs === 'customer' && log.some((l) => l.kind === 'query' && /per_cust_a/.test(l.filter)), JSON.stringify(inside));
+    check('…and the frame hides the view-as banner', inside.banner === false);
+    const status = await appFrame.evaluate(async () => (await fetch('/api/cos/t/hoy-test/batch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{"ops":[]}' })).status);
+    check('a frame is read-only: a write from inside it is refused unsent', status === 403 && writes().length === 0, String(status));
+  }
+  for (const f of page.frames().filter((x) => x !== page.mainFrame())) {
+    const ro = await f.evaluate(() => sessionStorage.getItem('hoyos.viewAs')).catch(() => null);
+    check(`frame ${new URL(f.url()).hash.split('?')[0]}: read-only (keeps a view-as value)`, typeof ro === 'string' && ro.length > 0, String(ro));
+  }
+  check('the parent\'s view-as is untouched by its frames (none stored, no banner, still the Hub)', (await stored(page)) === null && (await banner(page).count()) === 0 && route(page) === '/hub' && (await page.locator('.hub').count()) === 1, `${await stored(page)} ${route(page)}`);
+  check('nothing but reads reached Company OS from the Hub and its frames', writes().length === 0, writes().map((w) => `${w.method} ${w.route}`).join(', '));
+  await ctx.close();
 
   // ── a visitor ──────────────────────────────────────────────────────────────────────────────────────────────────
   ({ ctx, page } = await open('/site'));

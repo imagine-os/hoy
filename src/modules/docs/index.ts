@@ -1,6 +1,7 @@
 import type { RouteDef } from '../../specs/types';
 import type { StringTable } from '../../i18n/types';
-import { EVERYONE } from '../../auth/roles';
+import { EVERYONE, type Role } from '../../auth/roles';
+import { PRODUCTION_BUILD } from '../../config/launch';
 import { createElement as h } from 'react';
 import { lazyPages } from '../../app/lazyPage';
 import { PrivateDocument } from '../../auth/PrivateDocument';
@@ -23,11 +24,13 @@ export const strings: StringTable = {
   'docs.screenshots.empty': { es: 'Aún no hay capturas. Ejecuta npm run screenshots al final de la sesión y haz commit de los PNG.', en: 'No screenshots yet. Run npm run screenshots at the end of the session and commit the PNGs.' },
 };
 // The docs browser, its renderers and the markdown index load on first visit (K-02 is not on anyone's daily path).
-const page = lazyPages(() => import('./pages'));
+const lazyPage = lazyPages(() => import('./pages'));
 // SW-06: internal; a visitor signs in first unless the owner made the path public (src/config/launch.ts).
-const el = () => h(PrivateDocument, null, page('DocsBrowser'));
+const page: typeof lazyPage = (name, props) => h(PrivateDocument, null, lazyPage(name, props));
+// Production (Hoy test-fixes, lane Y3): the docs ship for the super admin only (the Hub's Construction & testing band).
+const roles = PRODUCTION_BUILD ? (['super_admin'] as Role[]) : EVERYONE;
 
 export const routes: RouteDef[] = [
-  { path: '/docs', element: el(), spec: docsSpec, roles: EVERYONE, surface: 'docs', layout: 'desktop', nav: { labelKey: 'core.nav.docs', icon: 'docs', order: 1 } },
-  { path: '/docs/*', element: el(), spec: docsSpec, roles: EVERYONE, surface: 'docs', layout: 'desktop' },
+  { path: '/docs', element: page('DocsBrowser'), spec: docsSpec, roles, surface: 'docs', layout: 'desktop', nav: { labelKey: 'core.nav.docs', icon: 'docs', order: 1 } },
+  { path: '/docs/*', element: page('DocsBrowser'), spec: docsSpec, roles, surface: 'docs', layout: 'desktop' },
 ];

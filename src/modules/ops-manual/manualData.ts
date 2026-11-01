@@ -10,6 +10,9 @@ import type { ManualOverrideRow, ManualProgressRow, ManualRequestRow, ManualTrai
 import type { Lang } from '../../i18n/types';
 import { useAudit } from '../staff/audit';
 import { SIGNOFF } from './training';
+import { useI18n } from '../../i18n/I18nProvider';
+import { refusalCopy } from '../../data/companyos/refusals';
+import { toast } from '../../app/toast';
 import type { EditLevel } from './sections';
 
 /** Who may edit a policy or section at `level`: owner = admin + super admin; coordinator = coordination too. */
@@ -40,7 +43,7 @@ export function useNames(): (id: string | null | undefined) => string {
 export const TEAM_PEOPLE = PRODUCTION_BUILD ? [] : demoUsers.filter((u) => TEAM_ROLES.includes(u.role) && u.role !== 'super_admin');
 
 // ---- reading progress ----
-export function useProgress(userId?: string) {
+function reviewUseProgress(userId?: string) {
   const { rows } = useTable<ManualProgressRow>('manual_progress', userId ? { where: { user_id: userId } } : undefined);
   /** chapter slug → newest read row. */
   const bySlug = useMemo(() => {
@@ -52,7 +55,7 @@ export function useProgress(userId?: string) {
   return { rows, readOf };
 }
 
-export function useMarkRead() {
+function reviewUseMarkRead() {
   const data = useData();
   const { user } = useSession();
   const audit = useAudit('admin');
@@ -64,7 +67,7 @@ export function useMarkRead() {
 }
 
 /** Back to unread (0050): removes the person's read rows for the chapter (the newest wins, so all go); the audit keeps the trail. */
-export function useMarkUnread() {
+function reviewUseMarkUnread() {
   const data = useData();
   const { user } = useSession();
   const audit = useAudit('admin');
@@ -77,14 +80,14 @@ export function useMarkUnread() {
 }
 
 // ---- training ----
-export function useTraining(userId?: string) {
+function reviewUseTraining(userId?: string) {
   const { rows } = useTable<ManualTrainingRow>('manual_training', userId ? { where: { user_id: userId } } : undefined);
   const has = useCallback((user: string, role: string, stage: TrainingStage, key: string) => rows.some((r) => r.user_id === user && r.role === role && r.stage === stage && r.item_key === key), [rows]);
   const signoff = useCallback((user: string, role: string, stage: TrainingStage) => rows.find((r) => r.user_id === user && r.role === role && r.stage === stage && r.item_key === SIGNOFF), [rows]);
   return { rows, has, signoff };
 }
 
-export function useTrainingWrites() {
+function reviewUseTrainingWrites() {
   const data = useData();
   const { user } = useSession();
   const audit = useAudit('admin');
@@ -107,7 +110,7 @@ export function useTrainingWrites() {
 }
 
 // ---- section overrides (edits beside the markdown) ----
-export function useOverrides(slug: string | undefined, lang: Lang) {
+function reviewUseOverrides(slug: string | undefined, lang: Lang) {
   const { rows } = useTable<ManualOverrideRow>('manual_overrides', slug ? { where: { chapter_slug: slug, lang } } : { where: { chapter_slug: '__none__' } });
   const sorted = useMemo(() => [...rows].sort((a, b) => a.version - b.version || a.created_at.localeCompare(b.created_at)), [rows]);
   /** Current live override of a section (highest live version), if any. */
@@ -117,7 +120,7 @@ export function useOverrides(slug: string | undefined, lang: Lang) {
   return { rows: sorted, liveOf, historyOf, suggestionsOf };
 }
 
-export function useOverrideWrites() {
+function reviewUseOverrideWrites() {
   const data = useData();
   const { user } = useSession();
   const audit = useAudit('admin');
@@ -146,12 +149,12 @@ export function useOverrideWrites() {
 }
 
 // ---- change requests ----
-export function useRequests(slug?: string) {
+function reviewUseRequests(slug?: string) {
   const { rows } = useTable<ManualRequestRow>('manual_requests', slug ? { where: { chapter_slug: slug } } : undefined);
   return useMemo(() => [...rows].sort((a, b) => b.created_at.localeCompare(a.created_at)), [rows]);
 }
 
-export function useRequestWrites() {
+function reviewUseRequestWrites() {
   const data = useData();
   const { user } = useSession();
   const audit = useAudit('admin');
@@ -175,7 +178,7 @@ export function useStudioPolicies() {
   return { rows, byKey };
 }
 
-export function useStudioPolicyWrite() {
+function reviewUseStudioPolicyWrite() {
   const data = useData();
   const { user } = useSession();
   const audit = useAudit('admin');
@@ -184,3 +187,39 @@ export function useStudioPolicyWrite() {
     await audit('manual.policy.edit', 'studio_policies', row.id, { key: row.key, before: row.value_es, after: value_es });
   }, [data, user.id, audit]);
 }
+
+// ---- production (Hoy test-fixes, lane Y3) ----
+// The manual ships for the super admin as the Hub's Construction & testing band (R-08 answered for these pages), as a
+// read-only manual: its LMS state (reading progress, training sign-offs, change requests, section edits) has no Company
+// OS entity yet, and the text policies are static. So in production these hooks read nothing (no request) and every
+// write says "not available yet" (`not_in_launch`) and changes nothing. `PRODUCTION_BUILD` folds, so the review build's
+// hooks (and their tables) are not in the production bundle. Queued: an LMS entity in Company OS.
+const NO_ROWS: never[] = [];
+const PROGRESS_NONE = { rows: NO_ROWS as ManualProgressRow[], readOf: (_user: string, _slug: string): ManualProgressRow | undefined => undefined };
+const TRAINING_NONE = { rows: NO_ROWS as ManualTrainingRow[], has: (_u: string, _r: string, _s: TrainingStage, _k: string) => false, signoff: (_u: string, _r: string, _s: TrainingStage): ManualTrainingRow | undefined => undefined };
+const OVERRIDES_NONE = { rows: NO_ROWS as ManualOverrideRow[], liveOf: (_h: string): ManualOverrideRow | undefined => undefined, historyOf: (_h: string) => NO_ROWS as ManualOverrideRow[], suggestionsOf: (_h: string) => NO_ROWS as ManualOverrideRow[] };
+function useLater(): (..._args: unknown[]) => Promise<never> {
+  const { lang } = useI18n();
+  return useCallback(async () => {
+    toast(refusalCopy('not_in_launch', lang), 'warn');
+    throw Object.assign(new Error('not_in_launch'), { code: 'not_in_launch' });
+  }, [lang]);
+}
+function useLaterWrites<K extends string>(keys: readonly K[]): Record<K, (..._args: unknown[]) => Promise<never>> {
+  const later = useLater();
+  return useMemo(() => Object.fromEntries(keys.map((k) => [k, later])) as Record<K, typeof later>, [later, keys]);
+}
+const TRAINING_KEYS = ['toggle', 'sign'] as const;
+const OVERRIDE_KEYS = ['save', 'restore', 'decide'] as const;
+const REQUEST_KEYS = ['add', 'answer'] as const;
+
+export const useProgress: typeof reviewUseProgress = PRODUCTION_BUILD ? () => PROGRESS_NONE : reviewUseProgress;
+export const useMarkRead = (PRODUCTION_BUILD ? useLater : reviewUseMarkRead) as typeof reviewUseMarkRead;
+export const useMarkUnread = (PRODUCTION_BUILD ? useLater : reviewUseMarkUnread) as typeof reviewUseMarkUnread;
+export const useTraining: typeof reviewUseTraining = PRODUCTION_BUILD ? () => TRAINING_NONE : reviewUseTraining;
+export const useTrainingWrites = (PRODUCTION_BUILD ? () => useLaterWrites(TRAINING_KEYS) : reviewUseTrainingWrites) as typeof reviewUseTrainingWrites;
+export const useOverrides: typeof reviewUseOverrides = PRODUCTION_BUILD ? () => OVERRIDES_NONE : reviewUseOverrides;
+export const useOverrideWrites = (PRODUCTION_BUILD ? () => useLaterWrites(OVERRIDE_KEYS) : reviewUseOverrideWrites) as typeof reviewUseOverrideWrites;
+export const useRequests: typeof reviewUseRequests = PRODUCTION_BUILD ? () => NO_ROWS as ManualRequestRow[] : reviewUseRequests;
+export const useRequestWrites = (PRODUCTION_BUILD ? () => useLaterWrites(REQUEST_KEYS) : reviewUseRequestWrites) as typeof reviewUseRequestWrites;
+export const useStudioPolicyWrite = (PRODUCTION_BUILD ? useLater : reviewUseStudioPolicyWrite) as typeof reviewUseStudioPolicyWrite;

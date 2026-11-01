@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Bi } from '../../../specs/types';
 import type { Role } from '../../../auth/roles';
-import { frameUrl } from '../../../app/frameSession';
+import { frameUrl } from '../../../app/frameMode';
 import './DeviceFrame.css';
 
 export type DevicePreset = 'phone' | 'tablet' | 'desktop' | 'tv';

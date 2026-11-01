@@ -70,7 +70,9 @@ jobs:
         run: node scripts/test-auth-identity.mjs
       - name: View-as rules (read-only transport, sample person, provider alias)
         run: node scripts/test-view-as.mjs
-      - name: The Hub and view-as on the production build (super admin only, read-only)
+      - name: Justin's Hub in production (read-only preview frames, real people, problem report)
+        run: node scripts/test-hub-production.mjs
+      - name: Justin's Hub and view-as on the production build (super admin only, read-only)
         run: node scripts/test-view-as-ui.mjs
         env:
           QA_PROD_DIST: ${{ runner.temp }}/prod

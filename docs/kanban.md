@@ -850,3 +850,15 @@ Protected-capture clarification: M14 schedule/pay screenshots remain local/ignor
 
 - Done (branch `hoy-test-fixes-y1`): a class's type comes from its schedule's `modality` (one read: the class query includes it), else its own, else the title; a class without one is "not open for booking yet" on the tile and in the drawer and class detail; the site's drawer names the class's room; ClassCard joins only the parts it has; the admin timetable (M-02) requires the class type; the Company OS test seed carries the sample's timetable as schedules (coach, room, class type) with every class linked.
 - Waiting: production M-02 saves are still refused (`content_later`, Wave 3), so Administration can't enter the timetable from the app yet (owner decision, in lane-y1 notes).
+
+## Hoy test-fixes · lane Y3: Justin's Hub in production (2026-11-01)
+
+### Done (lane branch, not merged)
+
+- HUB-01: production `/hub` is Justin's HubPage (super admin only), with the real person of each role ("Entrar como {nombre}", persona dropdown), read-only live preview frames (at most 3) that never touch the parent tab, Report a problem as a `problem_report` form, the Construction & testing band (manual read-only, source documents, docs, kanban; super admin only) and the wireframe skin for the tab, reset on sign-out. `ProductionHubPage` retired. Changelog `_pending/hoy-test-fixes-y3.md`.
+
+### Backlog
+
+- Choose a specific person in the Hub's dropdown (needs a sample override in `src/auth` view-as).
+- The manual's LMS in production (progress, training sign-offs, requests, edits) needs a Company OS entity.
+- A "Hub" link in the staff shell for the super admin (Justin's Hub has no sidebar entry; `DesktopShell`).

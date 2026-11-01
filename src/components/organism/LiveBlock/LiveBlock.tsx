@@ -1,7 +1,10 @@
 import { useMemo, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
-import { formatCOP, MS } from '../../../i18n/format';
+import { dateKey, formatCOP, MS } from '../../../i18n/format';
+import { PRODUCTION_BUILD } from '../../../config/launch';
+import { packMemberships } from '../../../data/packMemberships';
+import type { ClassLedgerRow, MembershipRow } from '../../../data/schema';
 import { Badge } from '../../atom/Badge/Badge';
 import { Chip } from '../../atom/Chip/Chip';
 import { useTable } from '../../../data/DataContext';
@@ -328,10 +331,18 @@ function RoutesBlock({ surface }: { surface?: string }) {
   );
 }
 
+/**
+ * The active plans the stats block counts: the review build's memberships, or in production (no `memberships` table,
+ * R-05) the active packs from the credits ledger, as the analytics read them (lane Y3: the manual ships in production).
+ */
+const useActivePlans: () => MembershipRow[] = PRODUCTION_BUILD
+  ? () => { const today = dateKey(new Date()); const { rows } = useTable<ClassLedgerRow>('class_ledger'); return useMemo(() => packMemberships(rows, today), [rows, today]); }
+  : () => useTable<MembershipRow>('memberships').rows;
+
 function Stats() {
   const { t } = useI18n();
   const { rows: profiles } = useTable('profiles');
-  const { rows: memberships } = useTable('memberships');
+  const memberships = useActivePlans();
   const { rows: sessions } = useTable('class_sessions');
   const { rows: teachers } = useTable('teachers');
   const { rows: bookings } = useTable('bookings');
