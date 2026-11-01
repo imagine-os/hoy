@@ -22,7 +22,9 @@
 // PENDING lists the findings another Wave 1 lane is closing now, each naming its lane; OPEN lists the findings the
 // audit found that no lane is closing yet (each names the wave or reuse-map row that would, or `unassigned`). The check
 // fails on any finding in neither list, and on any entry route that no longer has its finding (the closing lane, or the
-// coordinator at merge, deletes it). A route added to LAUNCH_ROUTES never gets an OPEN entry: it must be green.
+// coordinator at merge, deletes it). A route added to LAUNCH_ROUTES never gets an OPEN entry: it must be green, unless
+// the owner approved launching it with named gaps (ADDED_ROUTES below): then each of its OPEN entries carries
+// `approved` (who, when, where it is recorded) and names the wave that closes it, and the check prints it that way.
 //
 //   node scripts/test-route-connectivity.mjs            the check (CI: .github/workflows/auth-checks.yml)
 //   node scripts/test-route-connectivity.mjs --report   also print every route's inventory (launch and cut routes)
@@ -40,8 +42,11 @@ const { check, done } = reporter('route connectivity');
 // `<kind> <subject>` the check prints. Delete a route (or the entry) when its finding is gone.
 // PENDING: another Wave 1 lane is closing it now.
 const PENDING = [
-  { finding: 'sink audit_log', lane: 'E', routes: ['/admin/activity'], note: 'ActivityPage reads GET /t/:t/audit' },
 ];
+// Routes added to LAUNCH_ROUTES after this audit (lane C's role homes, lane D's Hub). Green, or owner-approved per entry.
+const ADDED_ROUTES = ['/teach', '/admin/content', '/dev', '/hub'];
+// The owner's approval for the two role homes that launch with "available later" sections (lane H plan, P-03b).
+const ROLE_HOMES_APPROVED = 'owner, 2026-10-31: role homes launch with "available later" sections and refused saves (lane H plan cryptic-swimming-whale; decision log P-03b)';
 // OPEN: found by this audit (lane G, 2026-10-31) on routes already in LAUNCH_ROUTES, with no lane closing it yet.
 const OPEN = [
   // The role homes lane C added (`/teach` Teacher S-03, `/admin/content` Marketing M-02) stay in the launch (owner,
@@ -49,10 +54,9 @@ const OPEN = [
   // editor's lists) and the rest say "available later" in production (content saves are refused `content_later`).
   // The code that waits for its wave is still on the route (hidden at run time), so each entry names its wave.
   ...[['sink audit_log', 'Wave 4 (teacher app: substitute requests log to the audit)'], ['mock_only modules/teacher/substituteRequest.ts', 'Wave 4 (teacher app: substitute requests)'], ['unknown practice_goals', 'Wave 2 (practice goals; "Mis números")'], ['unknown reviews', 'Wave 3 (class reviews; the rating tile)'], ['unknown space_bookings', 'Wave 4 (teacher app: specials)'], ['unknown special_charges', 'Wave 4 (teacher pay: specials payouts)']]
-    .map(([finding, lane]) => ({ finding, lane, routes: ['/teach'], note: 'the Teacher home S-03: hidden in production ("available later"); the hooks still run on unconnected tables, which read empty with no request' })),
+    .map(([finding, lane]) => ({ finding, lane, approved: ROLE_HOMES_APPROVED, routes: ['/teach'], note: 'the Teacher home S-03: hidden in production ("available later"); the hooks still run on unconnected tables, which read empty with no request' })),
   ...['unknown teacher_profile_proposals', 'sink audit_log', 'mock_only modules/profile-review/contracts.ts', 'unknown events', 'unknown class_pay_rules', 'missing appendClassPayRule', 'dynamic table', 'mock_only modules/admin/contentRecovery.ts', 'dynamic entity2', 'missing contentBatch', 'missing generateRecurrence']
-    .map((finding) => ({ finding, lane: 'Wave 3 (content entities)', routes: ['/admin/content'], note: 'the Marketing home M-02: reads live; every save is refused content_later before anything is sent (contentRecovery.ts), bulk and recurrence are absent on Company OS' })),
-  { finding: 'sink audit_log', lane: 'E (scope extension)', routes: ['/admin'], note: 'the dashboard recent-activity card (admin/DashboardPage.tsx) reads audit_log; GET /t/:t/audit like /admin/activity' },
+    .map((finding) => ({ finding, lane: 'Wave 3 (content entities)', approved: ROLE_HOMES_APPROVED, routes: ['/admin/content'], note: 'the Marketing home M-02: reads live; every save is refused content_later before anything is sent (contentRecovery.ts), bulk and recurrence are absent on Company OS' })),
   { finding: 'unknown events', lane: 'Wave 3', routes: ['/admin/settings/*'], note: 'Events and RSVPs (reuse map); useMediaLibrary reads events for media use' },
   { finding: 'unknown reviews', lane: 'Wave 3', routes: ['/site/*'], note: 'Class reviews (reuse map); the site home reads reviews' },
   { finding: 'unknown practice_goals', lane: 'Wave 2', routes: ['/admin/analytics', '/admin/crm/:id', '/app'], note: 'Maintenance records, practice goals (reuse map); data/useAnalytics.ts' },
@@ -469,13 +473,21 @@ function verdicts(results, known) {
   check('hostile: a PENDING entry whose finding is gone fails (stale)', v.stale.length === 1);
   const ok = verdicts([fakeRoute], [{ list: 'PENDING', lane: 'E', finding: 'sink audit_log', routes: ['/x'] }]);
   check('a listed finding passes its route and is not stale', ok.failing[0].open.length === 0 && ok.stale.length === 0);
+  check('hostile: an OPEN entry on a route added after the audit, without the owner\'s approval, fails', unapproved([{ finding: 'unknown x', lane: 'Wave 3', routes: ['/teach'] }]).length === 1);
+  check('hostile: an approval that names no wave fails', unapproved([{ finding: 'unknown x', lane: 'unassigned', approved: 'owner, 2026-10-31', routes: ['/teach'] }]).length === 1);
+  check('an approved entry naming its wave passes', unapproved([{ finding: 'unknown x', lane: 'Wave 3', approved: 'owner, 2026-10-31', routes: ['/teach'] }]).length === 0);
+}
+/** OPEN entries on a route added after the audit that lack the owner's approval or a wave. */
+function unapproved(entries) {
+  return entries.filter((e) => e.routes.some((r) => ADDED_ROUTES.includes(r)) && !(typeof e.approved === 'string' && /owner/.test(e.approved) && /\d{4}-\d{2}-\d{2}/.test(e.approved) && /Wave \d/.test(e.lane)));
 }
 
 const known = [...PENDING.map((e) => ({ ...e, list: 'PENDING' })), ...OPEN.map((e) => ({ ...e, list: 'OPEN' }))];
 const { failing, stale, used } = verdicts(results, known);
 for (const { route: r, open } of failing) check(`connected: ${r.path}${r.launch !== r.path ? ` (${r.launch})` : ''}`, open.length === 0, open.join(' | '));
 for (const e of stale) check(`${e.list} still a finding (else delete it): ${e.route} ${e.finding} — ${e.lane}`, false);
-for (const e of known) check(`${e.list} entry names who closes it: ${e.finding}`, Boolean(e.lane) && (e.list === 'OPEN' || ['A', 'B', 'C', 'D', 'E', 'F'].includes(e.lane)));
+for (const e of known) check(`${e.list}${e.approved ? ' (owner-approved)' : ''} entry names who closes it: ${e.finding} → ${e.lane}${e.approved ? ` [${e.routes.join(', ')}]` : ''}`, Boolean(e.lane) && (e.list === 'OPEN' || ['A', 'B', 'C', 'D', 'E', 'F'].includes(e.lane)));
+for (const e of unapproved(OPEN)) check(`OPEN on a route added after the audit needs the owner's approval and a wave: ${e.routes.join(', ')} ${e.finding}`, false);
 for (const b of BY_DESIGN) check(`BY_DESIGN still used on a launch route (else delete it): ${b.finding}${b.file ? ` in ${b.file}` : ''}`, used.has(b));
 for (const d of DYNAMIC) check(`DYNAMIC still reached on a launch route (else delete it): ${d.file} ${d.arg}`, used.has(d));
 for (const r of RUNTIME_REVIEW) { const f = r.markerFile ?? r.file; check(`RUNTIME_REVIEW switch still in its file: ${f} (${r.marker})`, existsSync(f) && (await readFile(f, 'utf8')).includes(r.marker)); }
@@ -491,7 +503,7 @@ if (REPORT) {
       else if (u.request) other.add(u.request);
     }
     const tl = (s) => [...s].sort().map((t) => `${t} (${kind(t)})`).join(', ') || '—';
-    const closer = (f) => { const k = r.launch && known.find((e) => e.finding === f && e.routes.includes(r.launch)); return k ? `${f} → ${k.list === 'PENDING' ? `lane ${k.lane}` : k.lane}` : f; };
+    const closer = (f) => { const k = r.launch && known.find((e) => e.finding === f && e.routes.includes(r.launch)); return k ? `${f} → ${k.list === 'PENDING' ? `lane ${k.lane}` : k.lane}${k.approved ? ' (owner-approved)' : ''}` : f; };
     console.log(`| \`${r.path}\` | ${r.launch ? 'yes' : 'no'} | R: ${tl(reads)}<br>W: ${tl(writes)} | ${[...other].sort().join(', ') || '—'} | ${[...r.findings.keys()].map(closer).join('; ') || 'none'} |`);
   }
 }

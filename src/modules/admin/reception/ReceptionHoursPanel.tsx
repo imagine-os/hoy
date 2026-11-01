@@ -12,29 +12,56 @@ import { cosRequest, errorCode } from '../../staff/desk/wire';
 import { queryAll } from '../../staff/desk/useCos';
 import { deskErrorText } from '../../staff/desk/strings';
 import { WEEK_ORDER, formatDates, formatWeek, parseDates, parseWeek, sundayNeedsNotice, weekProblems, type WeekWindows } from './reviewHours';
+import { closedDatesOf } from '../../../data/companyos/closedDates';
+import { today as studioToday } from '../../../data/companyos/dates';
+import type { HoursOverrideRow } from '../../../data/schema';
 
 interface BookingSettings { settings: { review_hours?: string; review_closed_dates?: string } }
 
-/** AD-05 / J1b / Q-15 in the production build: the weekly reception windows and closed days, in the bookings settings. */
-export function ReceptionHoursPanel() {
+/**
+ * AD-05 / J1b / Q-15 in the production build: the weekly reception windows and closed days, in the bookings settings.
+ * The closed days shown also include every closed holiday or special-hours day from today on (`hours_override`), so
+ * saving here carries the ones a coordinator added (only the Super Admin writes module settings; review round 1, M5).
+ * `closedDatesVersion` changes when an override changed the closed days: the dates are read again, the week edits stay.
+ */
+export function ReceptionHoursPanel({ closedDatesVersion = 0 }: { closedDatesVersion?: number }) {
   const { t, lang } = useI18n();
-  const request = cosRequest(useData());
+  const data = useData();
+  const request = cosRequest(data);
   const [week, setWeek] = useState<WeekWindows | null>(null);
   const [dates, setDates] = useState<string[]>([]);
+  /** What bookings holds now, and the closed holidays from today on: a date only in the second is "not yet in bookings". */
+  const [inBookings, setInBookings] = useState<string[]>([]);
+  const [holidays, setHolidays] = useState<string[]>([]);
+  const loadedDates = useRef(false);
   const [newDate, setNewDate] = useState('');
   const [sundayClasses, setSundayClasses] = useState(0);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null);
   const tRef = useRef(t); tRef.current = t;
   // Loads once per provider: a re-render never re-fetches or overwrites unsaved edits.
+  const loadedWeek = useRef(false);
+  const holidaysRef = useRef<string[]>([]);
   useEffect(() => {
     if (!request) return;
     const t = tRef.current;
-    request<BookingSettings>('GET', '/modules/bookings/settings')
-      .then(r => { setWeek(parseWeek(r.settings.review_hours ?? '')); setDates(parseDates(r.settings.review_closed_dates ?? '')); })
+    // The holidays are a nicety here: a role that may not read them still sees the bookings dates.
+    const holidays = data.list<HoursOverrideRow>('hours_overrides').then(rows => closedDatesOf(rows, studioToday())).catch(() => [] as string[]);
+    Promise.all([request<BookingSettings>('GET', '/modules/bookings/settings'), holidays])
+      .then(([r, extra]) => {
+        if (!loadedWeek.current) { loadedWeek.current = true; setWeek(parseWeek(r.settings.review_hours ?? '')); }
+        const stored = parseDates(r.settings.review_closed_dates ?? '');
+        setInBookings(stored); setHolidays(extra);
+        // First load: bookings' dates plus the holidays. A reload after an override changed (review round 1) adds only
+        // the holiday dates that are new, so unsaved edits to the list survive.
+        if (!loadedDates.current) { loadedDates.current = true; setDates(parseDates(formatDates([...stored, ...extra]))); }
+        else setDates(prev => parseDates(formatDates([...prev, ...extra.filter(d => !holidaysRef.current.includes(d))])));
+        holidaysRef.current = extra;
+      })
       .catch(e => setMessage({ tone: 'error', text: errorCode(e) === 'forbidden' ? t('recHours.forbidden') : deskErrorText(errorCode(e), t) }));
-    queryAll(request, { entity: 'schedule', filter: { and: [{ field: 'weekday', op: 'eq', value: 0 }, { field: 'active', op: 'eq', value: true }] } }).then(r => setSundayClasses(r.length)).catch(() => {});
-  }, [request]);
+    if (closedDatesVersion === 0) queryAll(request, { entity: 'schedule', filter: { and: [{ field: 'weekday', op: 'eq', value: 0 }, { field: 'active', op: 'eq', value: true }] } }).then(r => setSundayClasses(r.length)).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [request, closedDatesVersion]);
   if (!request) return null;
   const dayName = (d: number) => new Intl.DateTimeFormat(lang === 'en' ? 'en' : 'es-CO', { weekday: 'long', timeZone: 'UTC' }).format(new Date(Date.UTC(2026, 10, 1 + d)));
   const problems = week ? weekProblems(week) : [];
@@ -45,6 +72,7 @@ export function ReceptionHoursPanel() {
     setBusy(true); setMessage(null);
     try {
       await request('PATCH', '/modules/bookings/settings', { settings: { review_hours: formatWeek(week), review_closed_dates: formatDates(dates) } });
+      setInBookings(parseDates(formatDates(dates)));
       setMessage({ tone: 'ok', text: t('recHours.saved') });
     } catch (e) { setMessage({ tone: 'error', text: errorCode(e) === 'forbidden' ? t('recHours.forbidden') : deskErrorText(errorCode(e), t) }); }
     finally { setBusy(false); }
@@ -65,7 +93,7 @@ export function ReceptionHoursPanel() {
           {sundayNeedsNotice(week, sundayClasses) && <Notice tone="warn">{t('recHours.sunday', { n: sundayClasses })}</Notice>}
           <div className="stack-sm">
             <span className="small">{t('recHours.closedDates')}</span>
-            <div className="row wrap">{dates.map(d => <Button key={d} size="sm" variant="outline" icon="x" onClick={() => setDates(dates.filter(x => x !== d))}>{formatDate(d, lang)}</Button>)}</div>
+            <div className="row wrap">{dates.map(d => <Button key={d} size="sm" variant="outline" icon="x" data-closed-date={d} data-pending={!inBookings.includes(d) || undefined} onClick={() => setDates(dates.filter(x => x !== d))}>{formatDate(d, lang)}{!inBookings.includes(d) ? ` · ${t('recHours.pending')}` : holidays.includes(d) ? ` · ${t('recHours.holiday')}` : ''}</Button>)}</div>
             <div className="row wrap"><Input type="date" aria-label={t('recHours.addDate')} value={newDate} onChange={e => setNewDate(e.target.value)} /><Button size="sm" variant="secondary" disabled={!newDate} onClick={() => { setDates(parseDates(formatDates([...dates, newDate]))); setNewDate(''); }}>{t('recHours.addDate')}</Button></div>
           </div>
           {noDay && <p className="xs register-diff">{t('recHours.noDay')}</p>}

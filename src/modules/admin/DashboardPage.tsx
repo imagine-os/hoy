@@ -22,6 +22,10 @@ import { auditTitle } from '../staff/audit';
 import { useCosQueries } from '../staff/desk/useCos';
 import { ACTIVE_PACK_QUERIES, activePackCustomers } from './activePacks';
 import { PRODUCTION_BUILD } from '../../config/launch';
+import { activityRows, readAuditPage } from '../../data/companyos/audit';
+import { refusalCopy } from '../../data/companyos/refusals';
+import { memberNames, type CosPort } from '../transfers/launch/cos';
+import { useLoad } from '../transfers/launch/useCos';
 
 const str = (v: unknown) => (typeof v === 'string' ? v : null);
 const fieldsOf = (r: Record<string, unknown>): Record<string, unknown> => (r.data && typeof r.data === 'object' ? r.data as Record<string, unknown> : r);
@@ -33,7 +37,7 @@ const useReviewMemberships: () => MembershipRow[] = PRODUCTION_BUILD ? () => [] 
  * The feature switches moved to M-08b (/admin/settings/features) — the dashboard reads, it does not configure.
  */
 export function DashboardPage() {
-  const { t, lang, dict } = useI18n();
+  const { t, lang } = useI18n();
   const { can, hasRole } = useSession();
   const { sections, isVisible } = useLayout(M01);
   // R-05 (Hoy all-roles): production counts customers with an active pack from Company OS credits (two queries, the
@@ -49,8 +53,6 @@ export function DashboardPage() {
     today: dateKey(new Date()),
   });
   const { rows: payments } = useTable<PaymentRow>('payments', { where: { status: 'approved' } });
-  const { rows: log } = useTable<AuditRow>('audit_log', { orderBy: { column: 'created_at', dir: 'desc' }, limit: 10 });
-  const { byId } = usePeople();
   const since = Date.now() - 30 * MS.day;
   const revenue = payments.filter((p) => p.paid_at && new Date(p.paid_at).getTime() > since).reduce((a, p) => a + p.amount, 0);
   const week = useSessionsJoined((s) => s.status !== 'cancelled' && Math.abs(new Date(s.starts_at).getTime() - Date.now()) < 3.5 * MS.day);
@@ -73,7 +75,6 @@ export function DashboardPage() {
     for (const b of todayBookings) m.set(b.session_id, (m.get(b.session_id) ?? 0) + 1);
     return m;
   }, [todayBookings]);
-  const trail: TimelineItem[] = log.map((a) => ({ id: a.id, at: a.created_at, kind: a.action.startsWith('payment') ? 'payment' : a.action.startsWith('booking') || a.action.startsWith('attendance') ? 'booking' : a.action.includes('note') ? 'note' : 'system', title: auditTitle(a.action, t, dict), meta: `${byId.get(a.actor_id ?? '')?.name ?? t('admin.dashboard.system')} · ${a.entity}${a.entity_id ? ` · ${a.entity_id}` : ''}${a.diff?.source ? ` · ${a.diff.source}` : ''}` }));
 
   const SECTIONS: Record<string, () => ReactNode> = {
     'KPIRow ×4': () => (
@@ -115,7 +116,7 @@ export function DashboardPage() {
     ),
     'AuditTrail': () => (
       <Card title={t('admin.dashboard.audit')} actions={can('audit.read') ? <Link to="/admin/activity" className="small">{t('core.common.viewAll')}</Link> : undefined}>
-        <Timeline items={trail} limit={8} />
+        <RecentActivity />
       </Card>
     ),
   };
@@ -126,4 +127,36 @@ export function DashboardPage() {
       {sections.filter(isVisible).map((name) => SECTIONS[name] ? <Fragment key={name}>{SECTIONS[name]()}</Fragment> : null)}
     </div>
   );
+}
+
+const kindOf = (action: string): TimelineItem['kind'] => (action.startsWith('payment') ? 'payment' : action.startsWith('booking') || action.startsWith('attendance') ? 'booking' : action.includes('note') ? 'note' : 'system');
+
+/**
+ * The dashboard's recent activity. Production: the tenant's Company OS audit trail, like `/admin/activity` (the newest
+ * ten, `GET /t/:t/audit`; the Super Admin reads it, Hoy's Administration, AD-04); a refusal says so in words, never
+ * "nothing happened" (review round 1, M4). Review build: the mock's `audit_log`.
+ */
+const RecentActivity = PRODUCTION_BUILD ? LiveRecentActivity : ReviewRecentActivity;
+
+function LiveRecentActivity() {
+  const { t, dict, lang } = useI18n();
+  const { state } = useLoad(async (cos: CosPort) => {
+    const [events, names] = await Promise.all([
+      readAuditPage(<T,>(method: 'GET', path: string) => cos.request<T>(method, path), { limit: 10 }),
+      memberNames(cos).catch(() => new Map<string, string>()),
+    ]);
+    return activityRows(events, names, { system: t('admin.dashboard.system'), platform: t('admin.activity.platform'), unknown: (id) => t('admin.activity.unknownActor', { id }) });
+  }, []);
+  if (state.status === 'loading') return <EmptyState compact tone="loading" title={t('core.common.loading')} />;
+  if (state.status === 'error') return <p className="small muted" data-dashboard-audit-error={state.code}>{state.code === 'forbidden' ? t('admin.activity.superAdminOnly') : refusalCopy(state.code, lang)}</p>;
+  const items: TimelineItem[] = state.value.map((r) => ({ id: r.id, at: r.created_at, kind: kindOf(r.action), title: auditTitle(r.action, t, dict), meta: `${r.who} · ${r.object}` }));
+  return <Timeline items={items} limit={8} />;
+}
+
+function ReviewRecentActivity() {
+  const { t, dict } = useI18n();
+  const { rows: log } = useTable<AuditRow>('audit_log', { orderBy: { column: 'created_at', dir: 'desc' }, limit: 10 });
+  const { byId } = usePeople();
+  const items: TimelineItem[] = log.map((a) => ({ id: a.id, at: a.created_at, kind: kindOf(a.action), title: auditTitle(a.action, t, dict), meta: `${byId.get(a.actor_id ?? '')?.name ?? t('admin.dashboard.system')} · ${a.entity}${a.entity_id ? ` · ${a.entity_id}` : ''}${a.diff?.source ? ` · ${a.diff.source}` : ''}` }));
+  return <Timeline items={items} limit={8} />;
 }

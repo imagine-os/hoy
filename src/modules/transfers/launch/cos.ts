@@ -1,5 +1,5 @@
 import type { DataProvider } from '../../../data/types';
-import { viewAsPersonId } from '../../../auth/viewAs';
+import { viewAsActive, viewAsPersonId } from '../../../auth/viewAs';
 
 /**
  * The Company OS seam for the launch payment screens (H-5). The production provider (H-3, `CompanyOSProvider`)
@@ -80,6 +80,8 @@ export async function batch(cos: CosPort, ops: BatchOp[], idempotencyKey: string
 /** The signed-in person (people `person.user` = the login); while a super admin views as another role, the sample person. */
 export async function myPerson(cos: CosPort): Promise<CosRecord<{ name?: string; email?: string }> | null> {
   const sample = viewAsPersonId();
+  // Viewing as a role nobody holds (or a stored view-as not yet confirmed): nobody, never the super admin (L2).
+  if (!sample && viewAsActive()) return null;
   const filter = sample ? { field: 'id', op: 'eq', value: sample } : { field: 'user', op: 'eq', value: { $me: true } };
   const res = await cos.request<{ data: CosRecord<{ name?: string; email?: string }>[] }>('POST', '/query', { entity: 'person', filter, limit: 1 });
   return res.data[0] ?? null;

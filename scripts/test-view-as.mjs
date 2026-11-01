@@ -310,15 +310,41 @@ try {
     await provider.list('bookings', { where: { user_id: 'u_super' } });
     assert.ok(JSON.stringify(bodies.at(-1)).includes('per_super'), JSON.stringify(bodies.at(-1)));
   });
-  await test('provider: viewing as with no sample person keeps the real person (nothing invented)', async () => {
+  // L2 (review round 1): with no sample person, "my" reads must not fall back to the super admin's own records.
+  await test('provider: viewing as with no sample person aliases nobody: never the super admin\'s own person', async () => {
     reset(); publishViewAs({ personId: null });
+    const bodies = [];
     const fetch = async (url, init = {}) => {
+      const path = new URL(url, 'http://x').pathname.replace('/api/cos/t/hoy-test', '');
+      const body = init.body ? JSON.parse(init.body) : null;
+      if (path === '/me') return Response.json({ user: { id: 'u_super' }, roleKeys: ['super_admin'], isSuperAdmin: true, caps: [] });
+      if (path === '/query' && body?.entity === 'person') return Response.json({ data: [{ id: 'per_super', data: { name: 'Aaron', user: 'u_super' } }] });
+      if (path === '/query') { bodies.push(body); return Response.json({ data: [] }); }
+      return Response.json({ data: [] });
+    };
+    const provider = new CompanyOSProvider({ fetch, config: { tenant: 'hoy-test', apiBase: '/api/cos' }, getToken: async () => 'tok', retries: 0 });
+    assert.equal(await provider.self(), null);
+    await provider.list('bookings', { where: { user_id: 'u_super' } });
+    assert.ok(!JSON.stringify(bodies).includes('per_super'), JSON.stringify(bodies));
+    reset();
+  });
+  await test('fail closed: a stored view-as the session has not confirmed aliases nobody either', async () => {
+    reset(); sessionStorage.setItem('hoyos.viewAs', 'customer');
+    const fetch = async (url) => {
       const path = new URL(url, 'http://x').pathname.replace('/api/cos/t/hoy-test', '');
       if (path === '/me') return Response.json({ user: { id: 'u_super' }, roleKeys: ['super_admin'], isSuperAdmin: true, caps: [] });
       return Response.json({ data: [{ id: 'per_super', data: { name: 'Aaron', user: 'u_super' } }] });
     };
     const provider = new CompanyOSProvider({ fetch, config: { tenant: 'hoy-test', apiBase: '/api/cos' }, getToken: async () => 'tok', retries: 0 });
-    assert.deepEqual(await provider.self(), { userId: 'u_super', personId: 'per_super' });
+    assert.equal(await provider.self(), null);
+    reset();
+  });
+  await test('myPerson while viewing as with no sample person: null, and no read for $me', async () => {
+    const asked = [];
+    const cos = { request: async (method, path, body) => { asked.push(JSON.stringify(body.filter)); return { data: [{ id: 'per_super', data: {} }] }; } };
+    reset(); publishViewAs({ personId: null });
+    assert.equal(await myPerson(cos), null);
+    assert.deepEqual(asked, []);
     reset();
   });
 } finally {

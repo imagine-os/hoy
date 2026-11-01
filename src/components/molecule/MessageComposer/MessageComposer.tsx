@@ -7,6 +7,7 @@ import { Button } from '../../atom/Button/Button';
 import './MessageComposer.css';
 import { LIMITS } from '../../../shared/limits';
 import { PRODUCTION_BUILD } from '../../../config/launch';
+import { failureCopy } from '../../../data/companyos/refusals';
 
 export type ComposerChannel = Extract<MessageChannel, 'whatsapp' | 'email' | 'note'>;
 export interface ComposerMessage { channel: ComposerChannel; subject?: string; text: string }
@@ -31,12 +32,13 @@ export interface MessageComposerProps {
  * Ctrl+Enter sends. Clears itself after a successful send. Sending itself is the caller's job (useMessaging()).
  */
 export function MessageComposer({ onSend, channels: offered = ['whatsapp', 'email', 'note'], defaultChannel, whatsappBlocked, quietUntil, readOnly = false, author }: MessageComposerProps) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   // Production: no email channel from the staff composer at launch (sending by hand isn't wired; the launch emails are
   // automations, lane H-9). Without this the send fails and the draft is left behind.
   const channels = PRODUCTION_BUILD ? offered.filter((c) => c !== 'email') : offered;
   const [channel, setChannel] = useState<ComposerChannel>(defaultChannel && channels.includes(defaultChannel) ? defaultChannel : channels[0]);
-  const [failed, setFailed] = useState(false);
+  /** The failed send's line: the refusal's copy (a WhatsApp log a role may not write: `forbidden`), else the generic one. */
+  const [failed, setFailed] = useState<string | null>(null);
   const [subject, setSubject] = useState('');
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
@@ -45,17 +47,17 @@ export function MessageComposer({ onSend, channels: offered = ['whatsapp', 'emai
 
   const send = async () => {
     if (!ready) return;
-    setBusy(true); setFailed(false);
+    setBusy(true); setFailed(null);
     try {
       await onSend({ channel, text: text.trim(), subject: channel === 'email' ? subject.trim() : undefined });
       setText(''); setSubject('');
-    } catch {
-      // A failed send keeps the draft and says so, instead of an unhandled rejection.
-      setFailed(true);
+    } catch (e) {
+      // A failed send keeps the draft and says why, instead of an unhandled rejection (review round 1, L5).
+      setFailed(failureCopy(e, lang, t('desk.compose.failed')));
     } finally { setBusy(false); }
   };
   const onKey = (e: KeyboardEvent<HTMLTextAreaElement>) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); void send(); } };
-  const hint = failed ? t('desk.compose.failed') : readOnly ? t('core.msg.compose.readonly') : channel === 'whatsapp' && whatsappBlocked ? whatsappBlocked : channel === 'whatsapp' && quietUntil ? t('core.msg.compose.quiet', { to: quietUntil }) : channel === 'note' ? t('core.msg.note.hint') : undefined;
+  const hint = failed ? failed : readOnly ? t('core.msg.compose.readonly') : channel === 'whatsapp' && whatsappBlocked ? whatsappBlocked : channel === 'whatsapp' && quietUntil ? t('core.msg.compose.quiet', { to: quietUntil }) : channel === 'note' ? t('core.msg.note.hint') : undefined;
 
   return (
     <div className={`composer composer-${channel} ${blocked ? 'is-blocked' : ''}`}>

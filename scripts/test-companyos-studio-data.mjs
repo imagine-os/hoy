@@ -46,7 +46,7 @@ try {
     comms_log: ['administrator', 'front_desk', 'booking_manager', 'marketing'],
     form_submission: ['administrator'],
   };
-  function fakeApi({ role = 'administrator', superAdmin = role === 'administrator', today = '2026-11-01' } = {}) {
+  function fakeApi({ role = 'administrator', superAdmin = role === 'administrator', today = '2026-11-01', hoursWriters = ['administrator', 'booking_manager'], settingsDown = false } = {}) {
     const db = new Map();
     const calls = [];
     const modules = { people: { signup_consents: 'terms@2026-10-01,privacy@2026-10-01', self_signup: false }, bookings: { review_closed_dates: '' } };
@@ -114,6 +114,7 @@ try {
       const mod = path.match(/^\/modules\/(\w+)\/settings$/);
       if (mod) {
         if (!superAdmin) return refuse(403, 'forbidden');
+        if (settingsDown) return refuse(503, 'service_unavailable');
         if (method === 'PATCH') Object.assign(modules[mod[1]], body.settings);
         return json(200, { module: mod[1], settings: { ...modules[mod[1]] } });
       }
@@ -129,6 +130,8 @@ try {
       const one = path.match(/^\/api\/([a-z_]+)(?:\/([^/]+))?$/);
       if (one) {
         const [, entity, id] = one;
+        // The recipe's hours_override grants (administrator; booking_manager once the round-1 grant lands).
+        if (entity === 'hours_override' && method !== 'GET' && !hoursWriters.includes(role)) return refuse(403, 'forbidden');
         if (method === 'POST') {
           if (entity === 'form_submission' && role !== 'member' && role !== 'administrator') return refuse(403, 'forbidden');
           return json(201, { data: put(entity, entity === 'comms_log' ? { ...body, sent_by: 'user-1' } : body) });
@@ -246,6 +249,13 @@ try {
     assert.deepEqual(toData(adapters.hours_overrides, { start_date: '2026-12-31', end_date: '2026-12-31', closed: false, open: '08:00', close: '12:00', label: { es: 'Fin de año', en: 'NYE' }, kind: 'special', source: 'manual', note: null, google_synced_at: null, created_by: 'u1' }, 'create'),
       { start_date: '2026-12-31', end_date: '2026-12-31', closed: false, open: '08:00', close: '12:00', label: { es: 'Fin de año', en: 'NYE' }, kind: 'special', source: 'manual', note: null });
   });
+  await test('L4 hours_override.closed: only true is closed (missing or null is open)', () => {
+    const base = { start_date: '2026-12-25', end_date: '2026-12-25', label: { es: 'x', en: 'x' } };
+    assert.equal(fromRecord(adapters.hours_overrides, { id: 'a', data: { ...base } }).closed, false);
+    assert.equal(fromRecord(adapters.hours_overrides, { id: 'b', data: { ...base, closed: null } }).closed, false);
+    assert.equal(fromRecord(adapters.hours_overrides, { id: 'c', data: { ...base, closed: true } }).closed, true);
+    assert.equal(fromRecord(adapters.hours_overrides, { id: 'd', data: { ...base, closed: 'true' } }).closed, false);
+  });
   await test('closed dates: every date a closed override covers, from today on, sorted and unique', () => {
     const rows = [
       { start_date: '2026-10-20', end_date: '2026-10-20', closed: true },
@@ -255,36 +265,76 @@ try {
     ];
     assert.deepEqual(closedDatesOf(rows, '2026-11-01'), ['2026-12-24', '2026-12-25', '2026-12-26']);
   });
-  await test('hours_overrides: after the holiday import, bookings review_closed_dates holds the closed dates (Super Admin)', async () => {
+  // M3 (review round 1): the sync runs inside the save (awaited), merges with the dates set another way, and a failure
+  // is a named code with copy, after the override itself is saved.
+  const HOLIDAY = (date, extra = {}) => ({ start_date: date, end_date: date, closed: true, label: { es: 'Festivo', en: 'Holiday' }, kind: 'holiday', source: 'colombia', note: null, ...extra });
+  const codeOf = async (fn) => { try { await fn(); return null; } catch (e) { return e?.code ?? String(e); } };
+  await test('M3 hours_overrides: the closed dates are in bookings when the save returns (no timer to outlive)', async () => {
     const api = fakeApi();
     const p = make(api, { today: () => '2026-11-01' });
-    await p.insert('hours_overrides', { start_date: '2026-11-02', end_date: '2026-11-02', closed: true, label: { es: 'Todos los santos', en: 'All Saints' }, kind: 'holiday', source: 'colombia', note: null });
-    await p.insert('hours_overrides', { start_date: '2026-11-16', end_date: '2026-11-16', closed: true, label: { es: 'Independencia de Cartagena', en: 'Cartagena' }, kind: 'holiday', source: 'colombia', note: null });
-    await p.closedDatesSettled();
+    await p.insert('hours_overrides', HOLIDAY('2026-11-02'));
+    assert.equal(api.modules.bookings.review_closed_dates, '2026-11-02');
+    await p.insert('hours_overrides', HOLIDAY('2026-11-16'));
     assert.equal(api.modules.bookings.review_closed_dates, '2026-11-02, 2026-11-16');
-    const patches = writes(api, '/modules/bookings/settings');
-    assert.ok(patches.length >= 1 && patches.length <= 2);
-    // Removing one re-syncs; an unchanged list sends nothing.
     const [first] = await p.list('hours_overrides', { where: { start_date: '2026-11-02' } });
     await p.remove('hours_overrides', first.id);
-    await p.closedDatesSettled();
     assert.equal(api.modules.bookings.review_closed_dates, '2026-11-16');
-    const before = writes(api, '/modules/bookings/settings').length;
+    const settingsCalls = () => api.calls.filter((c) => c.path === '/modules/bookings/settings').length;
+    const before = settingsCalls();
     const [second] = await p.list('hours_overrides');
     await p.update('hours_overrides', second.id, { note: 'only a note' });
-    await p.closedDatesSettled();
-    assert.equal(writes(api, '/modules/bookings/settings').length, before, 'no PATCH when the dates are the same');
+    assert.equal(settingsCalls(), before, 'a note-only edit neither reads nor writes the bookings settings');
   });
-  await test('hours_overrides: without the Super Admin the override still saves and the sync is skipped', async () => {
-    const api = fakeApi({ superAdmin: false });
+  await test('M3 hours_overrides: other closed dates (set in Reception hours or the console) are kept, not replaced', async () => {
+    const api = fakeApi();
+    api.modules.bookings.review_closed_dates = '2026-12-31, 2026-11-20';
     const p = make(api, { today: () => '2026-11-01' });
-    const warn = console.warn; console.warn = () => {};
-    try {
-      await p.insert('hours_overrides', { start_date: '2026-11-02', end_date: '2026-11-02', closed: true, label: { es: 'x', en: 'x' }, kind: 'holiday', source: 'manual', note: null });
-      await p.closedDatesSettled();
-    } finally { console.warn = warn; }
+    const row = await p.insert('hours_overrides', HOLIDAY('2026-11-02'));
+    assert.equal(api.modules.bookings.review_closed_dates, '2026-11-02, 2026-11-20, 2026-12-31');
+    await p.update('hours_overrides', row.id, { start_date: '2026-11-03', end_date: '2026-11-03' });
+    assert.equal(api.modules.bookings.review_closed_dates, '2026-11-03, 2026-11-20, 2026-12-31', 'the moved holiday leaves its old date');
+    await p.update('hours_overrides', row.id, { closed: false, open: '08:00', close: '12:00' });
+    assert.equal(api.modules.bookings.review_closed_dates, '2026-11-20, 2026-12-31', 'opened again: its date leaves, the others stay');
+  });
+  await test('M3 hours_overrides: a date another closed override still covers stays when one of them goes', async () => {
+    const api = fakeApi();
+    const p = make(api, { today: () => '2026-11-01' });
+    const a = await p.insert('hours_overrides', HOLIDAY('2026-12-25'));
+    await p.insert('hours_overrides', HOLIDAY('2026-12-24', { end_date: '2026-12-26', kind: 'special' }));
+    await p.remove('hours_overrides', a.id);
+    assert.equal(api.modules.bookings.review_closed_dates, '2026-12-24, 2026-12-25, 2026-12-26');
+  });
+  await test('M3 hours_overrides: a failed sync is a named error (closed_dates_not_synced) with copy, and the override is saved', async () => {
+    const api = fakeApi({ settingsDown: true });
+    const p = make(api, { today: () => '2026-11-01' });
+    const code = await codeOf(() => p.insert('hours_overrides', HOLIDAY('2026-11-02')));
+    assert.equal(code, 'closed_dates_not_synced');
+    assert.equal(api.table('hours_override').size, 1, 'the override itself is saved');
+    for (const c of ['closed_dates_not_synced', 'closed_dates_admin_only']) assert.ok(hasRefusalCopy(c), `copy for ${c}`);
+  });
+  // M5 (review round 1): the coordinator (booking_manager) keeps holiday hours; Company OS decides.
+  await test('M5 coordinator, the recipe grant in place: the holiday saves; bookings closed dates are Administration\'s (named, with copy)', async () => {
+    const api = fakeApi({ role: 'booking_manager', superAdmin: false });
+    const p = make(api, { today: () => '2026-11-01' });
+    const code = await codeOf(() => p.insert('hours_overrides', HOLIDAY('2026-11-02')));
+    assert.equal(code, 'closed_dates_admin_only');
     assert.equal(api.table('hours_override').size, 1);
     assert.equal(api.modules.bookings.review_closed_dates, '');
+    assert.equal(writes(api, '/modules/bookings/settings').length, 0, 'no module settings call the coordinator would be refused');
+    assert.equal(await codeOf(() => p.insert('hours_overrides', HOLIDAY('2026-11-20', { closed: false, open: '08:00', close: '12:00', kind: 'special' }))), null, 'special (open) hours need no closed-date sync');
+  });
+  await test('M5 coordinator, no grant: the write is refused forbidden, and the copy is a sentence, not the code', async () => {
+    const api = fakeApi({ role: 'booking_manager', superAdmin: false, hoursWriters: ['administrator'] });
+    const p = make(api, { today: () => '2026-11-01' });
+    let err = null;
+    try { await p.insert('hours_overrides', HOLIDAY('2026-11-02')); } catch (e) { err = e; }
+    assert.equal(err?.code, 'forbidden');
+    assert.equal(api.table('hours_override').size, 0);
+    for (const lang of ['es', 'en']) {
+      const line = m.failureCopy(err, lang, 'fallback');
+      assert.ok(line !== 'forbidden' && !/\bforbidden\b/.test(line) && line === m.refusalCopy('forbidden', lang), line);
+    }
+    assert.equal(m.failureCopy(new Error('boom'), 'es', 'fallback'), 'fallback', 'an error without a code shows the screen\'s own line');
   });
   await test('signed out: holiday hours are read live, without the note', async () => {
     const api = fakeApi();

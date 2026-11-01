@@ -2,7 +2,11 @@
 
 **Rule: a route enters `LAUNCH_ROUTES` (`src/config/launchRoutes.ts`) only when `scripts/test-route-connectivity.mjs` is
 green for it.** Waves 2–4 add the cut routes back through this check; a route added to the list never gets an `OPEN`
-entry, it must be connected. (Hoy all-roles programme, lane G, 2026-10-31; plan `lovely-beaming-candy`, Wave 1.)
+entry, it must be connected, unless the owner approved launching it with named gaps: then each of its `OPEN` entries
+carries `approved` (who, when, where recorded) and names the wave that closes it, the check prints it "owner-approved",
+and an entry on a route added after the audit (`ADDED_ROUTES`) without both fails. Today that is `/teach` and
+`/admin/content` (owner, 2026-10-31, lane H plan; P-03b). (Hoy all-roles programme, lane G, 2026-10-31; plan
+`lovely-beaming-candy`, Wave 1; the approval rule: review round 1, M4.)
 
 The check runs in `.github/workflows/auth-checks.yml` next to `test-launch-routes.mjs`:
 
@@ -116,7 +120,7 @@ inside `list()`.
 | Finding | Routes | Lane | Note |
 |---|---|---|---|
 | ~~`unknown memberships`~~ | `/app`, `/admin` | C (closed 2026-10-31) | the your-plan card (`customer/HomePage.tsx`) and the members tile (`admin/DashboardPage.tsx`) read packs |
-| `sink audit_log` | `/admin/activity` | E | `ActivityPage` reads `GET /t/:t/audit` |
+| ~~`sink audit_log`~~ | `/admin/activity` | E (closed; round 1 deleted the stale entry: the production build drops the review branch) | `ActivityPage` reads `GET /t/:t/audit` |
 | ~~`signed_out plans, teachers, rooms, class_templates, class_sessions`~~ | `/site/*` | F (closed 2026-10-31) | read live through the public_site identity; the check judges signed-out pages against that live set (lane G2). What remains signed out is in `OPEN` below |
 
 ### Found by this audit, no lane yet (`OPEN`)
@@ -124,10 +128,10 @@ inside `list()`.
 | Finding | Routes | Proposed | What breaks |
 |---|---|---|---|
 | ~~`unknown memberships`~~ | `*` and 15 staff, admin and customer routes | C (closed 2026-10-31, scope extension) | `staff/people.ts`, `data/useAnalytics.ts` read the active pack (`data/packMemberships.ts`); `customer/hooks.ts` reads none in production (the pack is `pkg`) |
-| `unknown`/`sink`/`mock_only` (lane C homes) | `/teach`, `/admin/content` | kept (owner, lane H); each entry names its wave | H1: the Teacher home reads its classes, today's rosters (inline) and the week live; specials and substitutes (Wave 4), the payroll estimate (Wave 4) and the rating (Wave 3) say "available later". The Marketing home reads live and refuses every save with `content_later` before anything is sent (Wave 3 content entities). The hidden code is still on the route, so the entries stay, named by wave |
+| `unknown`/`sink`/`mock_only` (lane C homes) | `/teach`, `/admin/content` | owner-approved (2026-10-31, lane H plan, P-03b; `approved` on each entry); each entry names its wave | H1: the Teacher home reads its classes, today's rosters (inline) and the week live; specials and substitutes (Wave 4), the payroll estimate (Wave 4) and the rating (Wave 3) say "available later". The Marketing home reads live and refuses every save with `content_later` before anything is sent (Wave 3 content entities). The hidden code is still on the route, so the entries stay, named by wave |
 | ~~`signed_out tenants (empty)`~~ | `/site/*` (13 routes) | H2 (closed 2026-10-31): the public `studio_settings` record is read live; the pay data is in `studio_private` (decision F-01) | `useSettings()` (opening hours, contact, policies, legal texts) and the payment instructions on `/site/contact` read the `studio_settings` row, which also holds the payroll rate card and payout account, so `public_site` may not read it (decision F-01): visitors see the app defaults, not what the studio saved |
 | ~~`signed_out bookings (empty)`~~ | `/site/schedule` (`/site/*`) | H2 (closed 2026-10-31): public_site reads a booking's class and mat only; the provider reads them as booked mats | the schedule drawer's mat map (`SchedulePage` `taken`, `MatPicker` without `taken`) shows every mat free; checkout refuses `spot_taken` after sign-in. Places left are right (`booked_count` is live) |
-| `sink audit_log` | `/admin` | E (scope extension) | the dashboard's recent-activity card is always empty |
+| ~~`sink audit_log`~~ | `/admin` | review round 1 (closed 2026-11-01): the card reads the Company OS audit trail like `/admin/activity` | the dashboard's recent-activity card is always empty |
 | ~~`sink message_log`~~ | `*`, `/admin/crm/:id`, `/staff`, `/staff/inbox/*` | H2 (closed 2026-10-31): `message_log` reads `comms_log` + `staff_note`; a WhatsApp is logged (`logged`, wa.me), a note is a staff note; the unread badge is 0 by design (no inbound WhatsApp, R-04) | `data/comms.ts`: the inbox, member messages and notes, the unread badge read nothing; a sent note is dropped |
 | ~~`unknown hours_overrides`~~ | `/admin/settings/*`, `/app/plans`, `/app/faq`, `/app/faq/2`, `/app/more`, `/site/*` | H2 (closed 2026-10-31): recipe entity `hours_override`; closed dates also go to bookings `review_closed_dates` | `useOpeningHours()`: holidays and special hours are never read |
 | ~~`read_only legal_documents`~~ | `/admin/settings/*` | H2 (closed 2026-10-31): publishing a version customers accept bumps people `signup_consents`; other texts refuse `legal_document_in_build` | publishing a legal document refuses `read_only` |

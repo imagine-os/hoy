@@ -8,6 +8,7 @@ import { PRODUCTION_BUILD } from '../../config/launch';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { useI18n } from '../../i18n/I18nProvider';
+import { failureCopy } from '../../data/companyos/refusals';
 import { useSession } from '../../auth/SessionProvider';
 import { ROLES, ROLE_LABEL, STAFF_ROLES, type Role } from '../../auth/roles';
 import { useData, useTable } from '../../data/DataContext';
@@ -397,20 +398,30 @@ export function SettingsPage({ group = 'general' }: { group?: SettingsGroup }) {
 }
 
 function Section<K extends SettingsSection>({ section, value, save, audit, readOnly, title, icon, render, valid }: { section: K; icon: IconName; value: StudioSettings[K]; save: (s: K, v: StudioSettings[K]) => Promise<{ before: unknown; after: unknown }>; audit: (a: string, e: string, id?: string | null, d?: Record<string, unknown>) => Promise<unknown>; readOnly: boolean; title: string; render: (d: StudioSettings[K], set: (v: StudioSettings[K]) => void) => ReactNode; valid?: (d: StudioSettings[K]) => boolean }) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const [d, setD] = useState(value);
   const [state, setState] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [failed, setFailed] = useState<string | null>(null);
   useEffect(() => setD(value), [value]);
   const dirty = JSON.stringify(d) !== JSON.stringify(value);
   const doSave = async () => {
-    setState('saving');
-    const { before, after } = await save(section, d);
-    await audit('settings.update', 'tenants', tenant.id, { section, before, after });
-    setState('saved'); setTimeout(() => setState('idle'), 2000);
+    setState('saving'); setFailed(null);
+    // A refused or failed save (network, a /batch refused, view-as) ends the spinner and says why (review round 1, L6).
+    try {
+      const { before, after } = await save(section, d);
+      await audit('settings.update', 'tenants', tenant.id, { section, before, after });
+      setState('saved'); setTimeout(() => setState('idle'), 2000);
+    } catch (e) {
+      setState('idle');
+      setFailed(failureCopy(e, lang, t('admin.settings.saveFailed')));
+    }
   };
   return (
-    <Card title={title} icon={icon} actions={!readOnly && <div className="row"><span className="xs muted">{state === 'saved' ? t('admin.settings.saved') : dirty ? t('admin.settings.unsaved') : ''}</span><Button size="sm" disabled={!dirty || (valid ? !valid(d) : false)} loading={state === 'saving'} onClick={doSave}>{t('core.common.save')}</Button></div>}>
-      <div className="stack">{render(d, setD)}</div>
+    <Card data-settings-section={section} title={title} icon={icon} actions={!readOnly && <div className="row"><span className="xs muted">{state === 'saved' ? t('admin.settings.saved') : dirty ? t('admin.settings.unsaved') : ''}</span><Button size="sm" data-settings-save disabled={!dirty || (valid ? !valid(d) : false)} loading={state === 'saving'} onClick={doSave}>{t('core.common.save')}</Button></div>}>
+      <div className="stack">
+        {failed && <p className="small register-diff" role="alert" data-settings-error>{failed}</p>}
+        {render(d, setD)}
+      </div>
     </Card>
   );
 }

@@ -20,6 +20,7 @@ import { useCos, useLoad } from '../transfers/launch/useCos';
 import type { AuditRow } from '../staff/audit';
 import { usePeople } from '../staff/people';
 import './admin.css';
+import { PRODUCTION_BUILD } from '../../config/launch';
 
 type Range = 'today' | '7d' | '30d' | 'all';
 const RANGES: Range[] = ['today', '7d', '30d', 'all'];
@@ -36,7 +37,8 @@ interface Row { id: string; created_at: string; actor_id: string | null; who: st
  */
 export function ActivityPage() {
   const cos = useCos();
-  return cos ? <LiveActivity /> : <ReviewActivity />;
+  // The production build drops the review branch (and its `audit_log` read) at build time (review round 1, M4).
+  return PRODUCTION_BUILD || cos ? <LiveActivity /> : <ReviewActivity />;
 }
 
 function LiveActivity() {
