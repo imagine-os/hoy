@@ -163,7 +163,7 @@ export function ContentPage() {
 
   const publish = (r: BaseRow, on: boolean) => write({ kind: 'update', table: entity, before: r, patch: { active: on } });
   // Company OS requires a title, so a new production timetable row starts as a titled draft.
-  const add = () => write({ kind: 'create', table: entity, patch: { ...structuredClone(BLANK[entity]), ...(timetableLive ? { title: t('admin.content.newClassTitle') } : {}) } }, setSelected);
+  const add = () => write({ kind: 'create', table: entity, patch: { ...structuredClone(BLANK[entity]), ...(entity === 'class_templates' ? { start_date: dateKey() } : {}), ...(timetableLive ? { title: t('admin.content.newClassTitle') } : {}) } }, setSelected);
   const remove = (r: BaseRow) => {
     if (!confirm(t('admin.content.deleteConfirm'))) return;
     return write({ kind: 'delete', table: entity, before: r }, () => setSelected(null));

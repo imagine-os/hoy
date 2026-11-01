@@ -192,6 +192,16 @@ await test('edit: coach, room, class type, weekday and time go out as schedule f
   const after = await listRow(p, before.id);
   assert.equal(after.modality_id, 'mod_solido'); assert.equal(after.room_id, 'room_main'); assert.equal(after.start_time, '10:00');
 });
+await test('edit: a lost answer retried finds its own save and reports it saved (no false content_conflict)', async () => {
+  const api = fakeCos(), p = provider(api);
+  const before = await seeded(api, p);
+  await save(p, 'admin', { kind: 'update', table: 'class_templates', before, patch: { capacity: 6, start_time: '09:30' } });
+  // The editor never heard back and retries the same edit from the same basis.
+  assert.equal(await save(p, 'admin', { kind: 'update', table: 'class_templates', before, patch: { capacity: 6, start_time: '09:30' } }), before.id);
+  assert.equal(api.writes().filter((w) => w.method === 'PATCH').length, 1);
+  // A different edit from that stale basis is still a conflict.
+  await assert.rejects(save(p, 'admin', { kind: 'update', table: 'class_templates', before, patch: { capacity: 5 } }), has('content_conflict'));
+});
 await test('deactivate: Published off sends active false; the row stays (deactivated, never deleted)', async () => {
   const api = fakeCos(), p = provider(api);
   const before = await seeded(api, p);
@@ -272,6 +282,7 @@ await test('definiteRefusal: a 4xx answer and the client refusals are definite (
   assert.equal(m.definiteRefusal(err('forbidden', { status: 403, ambiguous: false })), 'forbidden');
   for (const code of ['content_invalid', 'content_conflict', 'content_denied', 'timetable_deactivate_instead']) assert.equal(m.definiteRefusal(m.timetableRefusal(code)), code);
   assert.equal(m.definiteRefusal(err('network_error', { status: 0, ambiguous: true })), null);
+  assert.equal(m.definiteRefusal(err('some_new_code', { status: 422, ambiguous: false })), null, 'a code without copy is never shown raw');
   assert.equal(m.definiteRefusal(err('service_unavailable', { status: 503, ambiguous: true })), null);
   assert.equal(m.definiteRefusal(new Error('content_context_changed')), null);
   assert.equal(m.definiteRefusal('boom'), null);

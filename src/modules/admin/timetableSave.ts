@@ -17,6 +17,7 @@ import type { Role } from '../../auth/roles';
 import { roleCan } from '../../auth/permissions';
 import { modalities } from '../../data/seed/catalog';
 import { tenant } from '../../tenant/tenant';
+import { hasRefusalCopy } from '../../data/companyos/refusals';
 
 export const TIMETABLE_FIELDS = ['title', 'modality_id', 'teacher_id', 'room_id', 'weekday', 'start_time', 'duration_min', 'capacity', 'start_date', 'end_date', 'active'] as const;
 /** Editor fields Company OS doesn't store (derived in mapping.ts): hidden in production. */
@@ -36,15 +37,15 @@ export function timetableRefusal(code: string): Error {
 
 /**
  * The code of a definite refusal (nothing was saved and retrying the same request won't change that): a 4xx answer
- * from Company OS that isn't ambiguous, or a refusal from this file. Null for a lost answer, a 5xx or anything else,
- * which the screen offers to retry with the same request.
+ * from Company OS that isn't ambiguous and has its own copy, or a refusal from this file. Null for a lost answer, a
+ * 5xx, a code without copy or anything else, which the screen offers to retry with the same request (never a raw code).
  */
 export function definiteRefusal(e: unknown): string | null {
   if (!e || typeof e !== 'object') return null;
   const err = e as { code?: unknown; status?: unknown; ambiguous?: unknown; refused?: unknown };
   if (typeof err.code !== 'string' || !err.code) return null;
   if (err.refused === true) return err.code;
-  return typeof err.status === 'number' && err.status >= 400 && err.status < 500 && err.ambiguous !== true ? err.code : null;
+  return typeof err.status === 'number' && err.status >= 400 && err.status < 500 && err.ambiguous !== true && hasRefusalCopy(err.code) ? err.code : null;
 }
 
 const MODALITY_IDS = new Set(modalities.map((m) => m.id));
@@ -95,7 +96,12 @@ export async function saveTimetableRow(data: DataProvider, actor: TimetableActor
   // Someone saved the row since the editor read it: refuse rather than overwrite their change.
   const current = await data.get<BaseRow>('class_templates', before.id);
   assertActor();
-  if (!current || current.updated_at !== before.updated_at) throw timetableRefusal('content_conflict');
+  if (!current) throw timetableRefusal('content_conflict');
+  if (current.updated_at !== before.updated_at) {
+    // A retry after a lost answer finds the person's own save: the row already holds the patch, so it is saved.
+    if (Object.entries(patch).every(([k, v]) => JSON.stringify(current[k] ?? null) === JSON.stringify(v ?? null))) return before.id;
+    throw timetableRefusal('content_conflict');
+  }
   // No check after the write: a change of session then must not report a saved row as failed.
   await data.update('class_templates', before.id, patch);
   return before.id;
