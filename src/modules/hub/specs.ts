@@ -83,29 +83,44 @@ export const hubSpec = defineSpec({
 });
 
 /**
- * HUB-01 in the production build (Hoy all-roles, lane D): the super admin's Hub. No demo users, previews or toggles;
- * the cards come from the hub map data (`src/hub/hubMap.data.ts` roles and experiences) and each one "views as" a role.
+ * HUB-01 in the production build (Hoy test-fixes, lane Y3): Justin's Hub, unchanged in look, hooked to real data. The
+ * same page as the review build (HubPage.tsx); this spec says what differs in production.
  */
 export const hubProductionSpec = defineSpec({
   code: 'HUB-01',
   name: { es: 'Hub', en: 'Hub' },
   purpose: {
-    es: 'El hub del super admin en producción: ver el estudio como cualquier otro rol, en solo lectura, con los datos de una persona de ejemplo de ese rol.',
-    en: 'The super admin’s Hub in production: view the studio as any other role, read-only, through a sample person of that role.',
+    es: 'El hub del super admin en producción, el mismo del hub de pruebas: cada puesto del estudio con su persona real, vistas previas en vivo de solo lectura, reportar un problema, la banda de construcción y pruebas, y el wireframe.',
+    en: 'The super admin’s Hub in production, the same as the testing hub: every seat at the studio with its real person, live read-only previews, report a problem, the build & test band and the wireframe.',
   },
-  layout: ['Page head (title, lead)', 'Ver como · one card per role (HUB_ROLES but super admin and public): label, description, home, “Ver como”', 'Experiencias · the hub map experiences whose route production registers: open as their role'],
+  layout: [
+    'BrandBand (Wordmark, version Badge, LangToggle, theme, wireframe toggle for the super admin)',
+    'Hero (eyebrow tenant · city, h1, lead, tagline, BreathingRings art ≥ 900 px)',
+    'SessionBar (persona dropdown with the real person of each role, Report a problem)',
+    'FeaturedTraining · Promociones y bonos (not in production yet: planned)',
+    'BandA · Fuera del estudio (Customer app featured with a phone preview, Website, Coming soon page, Teacher app)',
+    'BandB · El equipo (Front desk, Inbox, Caja, Admin, CRM, Mensajes transaccionales, Finanzas, Marketing planned)',
+    'BandC · Construcción y pruebas (Manual, Documentos fuente, Docs, Kanban, Dev tools)',
+    'ToolsRow · Hub de pruebas (9 tool cards; the ones production does not register are shown as planned)',
+    'StatStrip (routes, codes, tables, components, actions, manual chapters)',
+    'Footer',
+  ],
   data: [],
   roles: ['super_admin'],
   logic: [
-    'Only a super admin opens it (route roles); Administration logins, which also hold the backend super_admin membership (AD-04), do not (lane C rule).',
-    '“Ver como” keeps the role in sessionStorage (hoyos.viewAs), goes to the role’s home, and the session picks a sample person by membership (src/auth/viewAs.ts loadViewAsSample): the first active coach for Teacher, the first member for Customer, the person holding the role otherwise. Nobody is invented.',
-    'While viewing as, the effective role is the viewed one (menus, route guard, matrix), the provider aliases the session user to the sample person, and the transport refuses every request but GET and POST /query (view_as_read_only). The banner says who is being viewed and exits back here.',
-    'Public and super admin experiences open as the super admin (no view-as).',
+    'Only a super admin opens it (route roles); Administration logins, which also hold the backend super_admin membership (AD-04), do not (lane C rule). A full page without the staff shell (surface public, layout auto), as in the review build.',
+    '“Entrar como {nombre}” and the persona dropdown name the real person holding each role: the one view-as samples (src/modules/hub/hubPeople.ts reuses loadViewAsSample: by membership, never the viewer, the first active coach for Teacher). The directory (GET /admin/users) is read once.',
+    'Choosing a card or a person starts view-as (read-only, src/auth/viewAs.ts) and opens the role’s page; the super admin’s and public cards just navigate. A role nobody holds says so in the dropdown and cannot be chosen.',
+    'A card or tool whose route the production build does not register yet shows “Planeada” and is not entered (promotions, marketing, the dev tools R-08 keeps out).',
+    'Live previews (in view, at most 3, never under automation) run in frames under their own ?as= (src/app/productionFrame.ts): the frame’s view-as, language, theme and every hoyos.* key are its own and never touch the parent tab; every frame is read-only (the transport refuses writes, a same-origin write through fetch is refused unsent) and hides the view-as banner; clicks never reach a frame. Outside a frame ?as= is ignored, and in a frame it counts only for a real super admin.',
+    'Report a problem submits the forms module’s problem_report (summary, details, route, viewing_as; staff create, Administration and super admin read). A refusal is said in words and the text stays.',
+    'The Construction & testing band ships for the super admin only: the operations manual, the source documents, the docs and changelog, the kanban (R-08 answered for these pages); the dev tools stay out.',
+    'The wireframe toggle is the super admin’s, for this tab only (sessionStorage hoyos.skin), reset on sign-out and for anyone else (src/app/WireframeGate.tsx).',
   ],
-  integrations: ['Company OS GET /admin/users (super admin), POST /query person and coach'],
-  states: ['default', 'English'],
-  checkedAt: [390, 1280],
-  notes: ['The review build’s HUB-01 (HubPage) stays the full testing hub with demo users.'],
+  integrations: ['Company OS GET /admin/users (super admin), POST /query person and coach', 'Company OS POST /forms/problem_report/submissions (forms 1.0.0)'],
+  states: ['default', 'people loading', 'a role nobody holds', 'people unavailable', 'live previews on', 'live previews off (automation)', 'report: edit / invalid / sending / refused / sent', 'wireframe skin', 'dark theme', 'English'],
+  checkedAt: [390, 1280, 1920],
+  notes: ['The review build’s HUB-01 (hubSpec) is the same page with demo users and local report drafts.'],
 });
 
 export const noAccessSpec = defineSpec({

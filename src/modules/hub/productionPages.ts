@@ -1,2 +1,3 @@
-// The production build's only hub page: the super admin's Hub with view-as (Hoy all-roles, lane D). See index.ts.
-export { ProductionHubPage } from './ProductionHubPage';
+// The production build's hub page: Justin's Hub (lane Y3), with real people, read-only previews and the problem report.
+// Its own chunk; the review build loads it from reviewPages.ts with the no-access page. See index.ts.
+export { HubPage } from './HubPage';

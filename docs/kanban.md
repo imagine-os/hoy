@@ -845,3 +845,15 @@ Protected-capture clarification: M14 schedule/pay screenshots remain local/ignor
 - RS-09 / Feature Log47 (0184): future-day paid single/trial moves use exact finite receipt terms; package allocation, 12-hour cutoff and unresolved legacy fallback retained. Local and remote validation/release remain separate gates. [Contract](frontend-completion/direct-reschedule-terms.md)
 
 - AD-02 / Feature Log88 (0189): studio cancellation restores a verified directly paid single/trial class under its recorded terms. Persisted staff roles are checked; no bank refund or new voucher-cancellation rule is introduced. [Contract](frontend-completion/studio-direct-paid-return.md)
+
+## Hoy test-fixes · lane Y3: Justin's Hub in production (2026-11-01)
+
+### Done (lane branch, not merged)
+
+- HUB-01: production `/hub` is Justin's HubPage (super admin only), with the real person of each role ("Entrar como {nombre}", persona dropdown), read-only live preview frames (at most 3) that never touch the parent tab, Report a problem as a `problem_report` form, the Construction & testing band (manual read-only, source documents, docs, kanban; super admin only) and the wireframe skin for the tab, reset on sign-out. `ProductionHubPage` retired. Changelog `_pending/hoy-test-fixes-y3.md`.
+
+### Backlog
+
+- Choose a specific person in the Hub's dropdown (needs a sample override in `src/auth` view-as).
+- The manual's LMS in production (progress, training sign-offs, requests, edits) needs a Company OS entity.
+- A "Hub" link in the staff shell for the super admin (Justin's Hub has no sidebar entry; `DesktopShell`).

@@ -117,7 +117,7 @@ const viteSrc = await readFile('vite.config.ts', 'utf8');
 const REVIEW_ONLY_MODULES = [...(viteSrc.match(/REVIEW_ONLY_MODULES\s*=\s*\[([^\]]*)\]/)?.[1] ?? '').matchAll(/'([^']+)'/g)].map((m) => m[1]);
 const PROVIDER_FILES = /^src\/data\/(companyos\/|MockProvider\.ts|SupabaseProvider\.ts|DataContext\.tsx|types\.ts)/;
 // The demo data the production build marks side-effect free (vite.config.ts REVIEW_ONLY_DATA).
-const REVIEW_ONLY_DATA = /\/src\/(hub\/(?!hubMap\.data\.ts$).+|auth\/demoUsers|data\/MockProvider|data\/seed\/(?!(catalog|timetable|content|legal|media|studioPolicies)\.ts$).+)\.tsx?$/;
+const REVIEW_ONLY_DATA = /\/src\/(hub\/(?!hubMap\.data\.ts$).+|auth\/demoUsers|app\/frameSession|data\/MockProvider|data\/seed\/(?!(catalog|timetable|content|legal|media|studioPolicies)\.ts$).+)\.tsx?$/;
 
 // ── The adapters and the provider, as the production code defines them ─────────────────────────────────────────
 const CACHE = path.join(ROOT, 'node_modules', '.cache', 'route-connectivity');
@@ -169,7 +169,7 @@ const SIGNED_OUT_LIVE = new Set(SIGNED_OUT_MODEL.providerTables.filter((t) => !S
 
 check('read the adapters (mapping.ts)', Object.keys(adapters).length >= 20, String(Object.keys(adapters).length));
 check('read the provider methods (CompanyOSProvider.ts)', ['list', 'insert', 'atomic', 'request'].every((m) => PROVIDER_METHODS.has(m)), [...PROVIDER_METHODS].join(','));
-check('read the review-only modules (vite.config.ts; none since lane Y3 ships the docs browser)', /REVIEW_ONLY_MODULES\s*=\s*\[/.test(viteSrc) && !REVIEW_ONLY_MODULES.includes('docs'), REVIEW_ONLY_MODULES.join(','));
+check('read the review-only modules (vite.config.ts; none since lane Y3 ships the docs browser)', /REVIEW_ONLY_MODULES(?::\s*string\[\])?\s*=\s*\[/.test(viteSrc) && !REVIEW_ONLY_MODULES.includes('docs'), REVIEW_ONLY_MODULES.join(','));
 check('read the optional DataProvider methods (types.ts)', OPTIONAL.length >= 5, OPTIONAL.join(','));
 
 // ── Production routes ───────────────────────────────────────────────────────────────────────────────────────────

@@ -14,6 +14,8 @@ import { RouteTitle } from './RouteTitle';
 import { publishManifest } from './manifest';
 import { PolicySync } from '../modules/customer/policy';
 import { Toasts } from '../components/molecule/Toast/Toast';
+import { PRODUCTION_BUILD } from '../config/launch';
+import { WireframeGate } from './WireframeGate';
 
 export function App() {
   const allRoutes = getRoutes();
@@ -25,6 +27,8 @@ export function App() {
         <DataProviderRoot>
           <SessionProvider>
             <PolicySync />
+            {/* Lane Y3: the wireframe skin is the super admin's only, reset on sign-out. */}
+            {PRODUCTION_BUILD && <WireframeGate />}
             <HashRouter>
               <ScrollToTop />
               {/* Hub-map sample routes (/app/class/sample) open today's real record (0029). */}

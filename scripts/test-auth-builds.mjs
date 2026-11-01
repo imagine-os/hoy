@@ -58,11 +58,12 @@ check('production: no persona switcher, spec chip or demo sign-in screen', has(p
 // (the developer's home `/dev` ships since Hoy all-roles). test-auth-production-ui.mjs checks `window.__hoyos` is unset.
 check('production: no agent manifest (window.__hoyos)', has(prod, /(\.__hoyos|\[\s*["'`]__hoyos["'`]\s*\])\s*=[^=]/).length === 0, has(prod, /(\.__hoyos|\[\s*["'`]__hoyos["'`]\s*\])\s*=[^=]/).join(', '));
 // The review build's frame session (demo users by `hoyos.session`) never ships; production frames shadow view-as instead.
-check('production: no review preview-frame session (hoyos.session)', has(prod, 'hoyos.session').length === 0);
+// The docs (shipped since lane Y3) mention the key in prose; the code's string literal is what must be absent.
+check('production: no review preview-frame session (the "hoyos.session" key in code)', has(prod, /(^|[^\\])"hoyos\.session"/).length === 0, has(prod, /(^|[^\\])"hoyos\.session"/).join(', '));
 // Lane Y3: Justin's Hub ships (super admin only): its markup, live previews, the session bar and the wireframe toggle,
 // the production frame mode and the problem_report form; lane D's simplified page is gone.
 check('production: Justin\'s Hub ships (route /hub, session bar, live previews, brand band)', has(prod, '"/hub"').length > 0 && ['hub-sessionbar', 'hub-card-preview', 'hub-brandband', 'data-hub-persona'].every((m) => has(prod, m).length > 0), ['hub-sessionbar', 'hub-card-preview', 'hub-brandband', 'data-hub-persona'].filter((m) => !has(prod, m).length).join(', '));
-check('production: the frame mode, view-as and the problem report ship', has(prod, 'hoyos.viewAs').length > 0 && has(prod, 'hoyos.skin').length > 0 && has(prod, '/forms/problem_report/submissions').length > 0);
+check('production: the frame mode, view-as and the problem report ship', has(prod, 'hoyos.viewAs').length > 0 && has(prod, 'hoyos.skin').length > 0 && has(prod, 'problem_report').length > 0);
 check('production: lane D\'s simplified Hub is gone', has(prod, 'data-production-hub').length === 0);
 // The manual and docs text ship since lane Y3 (super admin only): a manual sentence, the docs README and a changelog entry.
 const sample = (file) => readFileSync(file, 'utf8').split('\n').find((l) => l.length > 60 && !/^[-#>|`{]/.test(l.trim()))?.trim().slice(0, 50);

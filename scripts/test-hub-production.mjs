@@ -207,13 +207,13 @@ try {
   });
 
   // ── Report a problem ──────────────────────────────────────────────────────────────────────────────────────────
-  await test('report: the forms module\'s problem_report submission, in its shape (keys summary, details, route, viewing_as)', () => {
-    assert.equal(m.PROBLEM_REPORT_PATH, '/forms/problem_report/submissions');
-    const body = m.problemReportBody({ email: 'super@x.test', summary: '  El botón no responde ', details: 'Paso 1\nPaso 2', route: '#/hub', viewingAs: null });
-    assert.deepEqual(body, { email: 'super@x.test', answers: { summary: 'El botón no responde', details: 'Paso 1\nPaso 2', route: '#/hub' }, placement: 'hub' });
-    const viewing = m.problemReportBody({ email: 'super@x.test', summary: 'Resumen ok', details: '', route: '#/app', viewingAs: 'customer' });
-    assert.deepEqual(viewing.answers, { summary: 'Resumen ok', route: '#/app', viewing_as: 'customer' }, 'empty values are not sent');
-    assert.deepEqual(Object.keys(body).sort(), ['answers', 'email', 'placement'], 'no other key (the route answers 400 otherwise)');
+  await test('report: a problem_report form_submission, in the shape lane Y1 documents (keys summary, details, route, viewing_as)', () => {
+    assert.equal(m.PROBLEM_REPORT_PATH, '/api/form_submission');
+    const body = m.problemReportBody({ email: 'super@x.test', summary: '  El botón no responde ', details: 'Paso 1\nPaso 2', route: '/hub', viewingAs: null });
+    assert.deepEqual(body, { form_key: 'problem_report', email: 'super@x.test', placement: 'hub', answers: { summary: 'El botón no responde', details: 'Paso 1\nPaso 2', route: '/hub' } });
+    const viewing = m.problemReportBody({ email: 'super@x.test', summary: 'Resumen ok', details: '', route: '/app', viewingAs: 'member' });
+    assert.deepEqual(viewing.answers, { summary: 'Resumen ok', route: '/app', viewing_as: 'member' }, 'empty values are not sent');
+    assert.deepEqual(Object.keys(body).sort(), ['answers', 'email', 'form_key', 'placement'], 'never person or the server-set stamps (422 server_set_field)');
   });
   await test('report: validation (summary 3 to 120 characters, one line; details at most 2000) and control characters', () => {
     assert.deepEqual(m.problemReportErrors('ab', ''), { summary: true, details: false });

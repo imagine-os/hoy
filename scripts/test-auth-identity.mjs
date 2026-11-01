@@ -156,8 +156,10 @@ check('token seam: a registered source answers', await M.getSessionToken() === '
 M.setSessionTokenSource(null);
 
 // ── PL-03: launch routes only ───────────────────────────────────────────────────────────────────────────────────
-const launch = ['/', '/site', '/site/plans', '/auth/sign-in', '/auth/sign-up', '/auth/callback', '/app', '/app/checkout/:id', '/app/access', '/staff', '/staff/checkin', '/staff/expense', '/admin', '/admin/crm/:id', '/admin/settings/hours', '/admin/products', '/no-access', '/teach', '/dev', '/admin/content'];
-const hidden = ['/hub/promotions', '/dev/tokens', '/dev/api-keys', '/dev/layout/C-01', '/teach/payroll', '/admin/content/media', '/docs', '/docs/*', '/manual', '/manual/:chapter', '/app/state/empty', '/app/events', '/app/rate/:id', '/app/gift', '/app/practice', '/auth/recover', '/auth/locked', '/admin/tables', '/admin/whatsapp', '/admin/finance/payouts', '/admin/class-pay', '/admin/integrations', '/promotions', '/staff/maintenance', '/admin/marketing'];
+const launch = ['/', '/site', '/site/plans', '/auth/sign-in', '/auth/sign-up', '/auth/callback', '/app', '/app/checkout/:id', '/app/access', '/staff', '/staff/checkin', '/staff/expense', '/admin', '/admin/crm/:id', '/admin/settings/hours', '/admin/products', '/no-access', '/teach', '/dev', '/admin/content',
+  // The Hub's Construction & testing band, super admin only (lane Y3).
+  '/hub', '/docs', '/docs/*', '/docs/source', '/manual', '/manual/:chapter', '/manual/decisions', '/dev/knowledgebase'];
+const hidden = ['/hub/promotions', '/dev/tokens', '/dev/api-keys', '/dev/layout/C-01', '/teach/payroll', '/admin/content/media', '/dev/canvas', '/dev/simulator', '/dev/components', '/app/state/empty', '/app/events', '/app/rate/:id', '/app/gift', '/app/practice', '/auth/recover', '/auth/locked', '/admin/tables', '/admin/whatsapp', '/admin/finance/payouts', '/admin/class-pay', '/admin/integrations', '/promotions', '/staff/maintenance', '/admin/marketing'];
 check(`PL-03 launch routes stay (${launch.length})`, launch.every((p) => M.isLaunchRoute(p)), launch.filter((p) => !M.isLaunchRoute(p)).join(', '));
 check(`PL-03 review tools and non-launch routes are gone (${hidden.length})`, hidden.every((p) => !M.isLaunchRoute(p)), hidden.filter((p) => M.isLaunchRoute(p)).join(', '));
 check('PL-03 a prefix does not leak into a longer name (/admin/financeX)', !M.isLaunchRoute('/admin/financeX') && !M.isLaunchRoute('/sitemap'));

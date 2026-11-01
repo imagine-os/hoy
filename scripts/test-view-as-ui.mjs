@@ -88,11 +88,12 @@ const server = createServer(async (req, res) => {
     if (!user) return json(res, 401, { error: 'unauthorized' });
     const route = path.slice(`/api/cos/t/${TENANT}`.length);
     const p = PEOPLE[user];
-    if (req.method === 'POST' && route === '/forms/problem_report/submissions') {
+    // Lane Y1's problem_report shape: a form_submission created through the runtime, with an Idempotency-Key.
+    if (req.method === 'POST' && route === '/api/form_submission') {
       const body = await readBody(req);
-      log.push({ user, kind: 'form', body });
+      log.push({ user, kind: 'form', body, key: req.headers['idempotency-key'] ?? null });
       if (failForm > 0) { failForm--; return json(res, 422, { error: 'unknown_form' }); }
-      return json(res, 200, { outcome: 'created' });
+      return json(res, 201, { data: { id: `fs_${log.length}`, data: { ...body, submitted_at: '2026-10-28T15:00:00Z' } } });
     }
     if (req.method !== 'GET' && route !== '/query') { log.push({ user, kind: 'write', method: req.method, route }); return json(res, 200, { data: { id: 'x' } }); }
     if (route === '/me') return p ? json(res, 200, { tenant: { slug: TENANT, timezone: 'America/Bogota' }, user: { id: user, name: p.name, email: `${user}@example.test` }, roleKeys: p.keys, isSuperAdmin: !!p.superAdmin, caps: [], entities: [] }) : json(res, 403, { error: 'no access to this tenant' });
@@ -169,7 +170,7 @@ try {
   check('super admin opens /hub in production', at === '/hub', at);
   await page.locator('.hub').waitFor({ timeout: 5000 }).catch(() => {});
   await page.waitForTimeout(1500);
-  check('Justin\'s Hub renders: brand band, hero, session bar ("Estás probando como"), the bands and the stat strip', (await page.locator('.hub .hub-brandband').count()) === 1 && (await page.locator('.hub-hero h1').count()) === 1 && /Estás probando como/.test(await page.locator('.hub-sessionbar').innerText().catch(() => '')) && (await page.locator('#hub-band-outside, #hub-band-team, #hub-band-build, #hub-band-tools').count()) === 4 && (await page.locator('.hub-stats').count()) === 1);
+  check('Justin\'s Hub renders: brand band, hero, session bar ("Estás probando como"), the bands and the stat strip', (await page.locator('.hub .hub-brandband').count()) === 1 && (await page.locator('.hub-hero h1').count()) === 1 && /Estás probando como/i.test(await page.locator('.hub-sessionbar').innerText().catch(() => '')) && (await page.locator('#hub-band-outside, #hub-band-team, #hub-band-build, #hub-band-tools').count()) === 4 && (await page.locator('.hub-stats').count()) === 1);
   check('…without the staff shell (layout auto, a full page)', (await page.locator('.deskshell, .appshell').count()) === 0);
   check('…with its cards, statuses, "Estás aquí" and route lines', (await page.locator('.hub-card').count()) >= 15 && (await page.locator('.hub-card-meta code').count()) >= 15 && /Estás aquí/.test(await page.locator('.hub-main').innerText().catch(() => '')));
   check('the people come from the directory (GET /admin/users, read once)', log.filter((l) => l.kind === 'directory' && l.user === 'user_super').length === 1, String(log.filter((l) => l.kind === 'directory').length));
@@ -203,10 +204,12 @@ try {
   await page.waitForTimeout(1000);
   const sentText = await drawer.innerText().catch(() => '');
   const report = forms().at(-1)?.body;
-  check('Report a problem submits problem_report with the summary, details, screen and the person\'s email', forms().length === 2 && report?.email === 'user_super@example.test' && report?.answers?.summary === 'El botón de reservar no responde' && /Paso 2/.test(report?.answers?.details ?? '') && report?.answers?.route === '#/hub' && report?.placement === 'hub' && !('viewing_as' in (report?.answers ?? {})), JSON.stringify(report));
+  check('Report a problem submits a problem_report form_submission with the summary, details, screen and the person\'s email', forms().length === 2 && report?.form_key === 'problem_report' && report?.email === 'user_super@example.test' && report?.answers?.summary === 'El botón de reservar no responde' && /Paso 2/.test(report?.answers?.details ?? '') && report?.answers?.route === '/hub' && report?.placement === 'hub' && !('viewing_as' in (report?.answers ?? {})) && !('person' in (report ?? {})), JSON.stringify(report));
+  check('…with an Idempotency-Key, the same one on the retry of the refused attempt', !!forms()[0]?.key && forms()[0]?.key === forms()[1]?.key, forms().map((f) => f.key).join(' / '));
   check('…and says it was sent', /enviado/i.test(sentText), sentText.slice(0, 200));
-  await page.keyboard.press('Escape').catch(() => {});
-  await page.waitForTimeout(300);
+  await drawer.getByRole('button', { name: 'Cerrar' }).last().click({ timeout: 3000 }).catch(() => {});
+  await drawer.waitFor({ state: 'hidden', timeout: 3000 }).catch(() => {});
+  check('…and the drawer closes', (await page.getByRole('dialog').count()) === 0);
 
   // ── the wireframe toggle: super admin, this tab only, reset on sign-out ────────────────────────────────────────
   await page.locator('.hub-head-tools label').filter({ hasText: 'Wireframe' }).click({ timeout: 3000 }).catch(() => {});
@@ -284,7 +287,10 @@ try {
 
   // ── L2: a role nobody holds: an explicit empty state, never the super admin's own data ──────────────────────────
   log = [];
-  await viewAs(page, 'maintenance');
+  // The dropdown can't choose a role nobody holds (it says so); a stored view-as of one still shows the empty state.
+  check('L2 the persona dropdown does not offer a role nobody holds', await page.locator('select[data-hub-persona] option[value="maintenance"]').evaluate((o) => o.disabled).catch(() => false));
+  await page.evaluate(() => sessionStorage.setItem('hoyos.viewAs', 'maintenance'));
+  await page.goto(`${BASE}/#/staff`); await page.reload(); await page.waitForTimeout(2000);
   b = await bannerText(page);
   check('L2 view as a role nobody holds: the banner says so', /Mantenimiento/.test(b) && /sin persona de ejemplo/.test(b), b);
   check('L2 …the screens are replaced by an empty state that explains it', (await page.locator('[data-view-as-empty]').count()) === 1, (await page.locator('main').innerText().catch(() => '')).slice(0, 200));
@@ -326,6 +332,7 @@ try {
   await page.goto(`${BASE}/#/auth/sign-in`); await page.waitForTimeout(800);
   await signIn(page, 'super@example.test').catch(() => {});
   check('…and signing in again starts styled', route(page) === '/admin' && (await skin(page)) === 'styled', `${route(page)} ${await skin(page)}`);
+  await go(page, '/hub');
 
   // ── a session that ends outside the app (another tab, expiry): view-as does not outlive it ─────────────────────
   await viewAs(page, 'customer');

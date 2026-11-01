@@ -1,4 +1,4 @@
-import { readdirSync, statSync } from 'node:fs';
+import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defineConfig, type Plugin } from 'vite';
@@ -26,19 +26,48 @@ function countFiles(dir: string, suffix: string): number {
 /**
  * The production build (VITE_HOY_BUILD=production, `npm run build:production`; H-2, PL-03): what Railway serves to real
  * customers. On top of the runtime switches (src/config/launch.ts, launchRoutes.ts):
- * - the review-only modules (hub, dev tools, docs browser) are left out of the route registry's glob, so their code
- *   is not in the bundle;
- * - every `import.meta.glob` over `docs/` becomes empty and every direct import of a `docs/` file an empty value:
- *   no manual or docs text, no in-app screenshots (about 316 MB of the review build), no docs images;
- * - scripts/prune-production.mjs then removes the review-only files `public/` copies (hub map, source material).
+ * - the review-only modules (REVIEW_ONLY_MODULES; none since lane Y3) are left out of the route registry's glob, so
+ *   their code is not in the bundle;
+ * - since lane Y3 (Hoy test-fixes) the manual, the source documents, the docs and the kanban ship for the super admin
+ *   (R-08 answered for these pages): `import.meta.glob` over `docs/` keeps its markdown and images, but never the
+ *   in-app screenshots (`docs/screenshots/`, about 343 MB of the review build): a glob only over them becomes empty,
+ *   any other glob over `docs/` gets `!…/docs/screenshots/**` added, and a direct import of a screenshot is empty;
+ * - scripts/prune-production.mjs then removes the review-only files `public/` copies (hub map, delivery tracker).
  */
 const PRODUCTION = process.env.VITE_HOY_BUILD === 'production';
-// `dev` ships since Hoy all-roles (lane C, 2026-10-31): the developer's home `/dev` is a launch route; the module's other
-// pages stay unregistered in production (launchRoutes.ts) until R-08 is decided. `hub` ships since lane D: production
-// registers only its super-admin Hub with view-as (src/modules/hub/index.ts); the review hub stays out of the bundle.
-export const REVIEW_ONLY_MODULES = ['docs'];
+// `dev` ships since Hoy all-roles (lane C, 2026-10-31): the developer's home `/dev` is a launch route, and the kanban
+// `/dev/knowledgebase` since lane Y3; the module's other pages stay unregistered in production (launchRoutes.ts).
+// `hub` ships since lane D (Justin's HubPage since lane Y3, super admin only), `docs` since lane Y3 (super admin only).
+export const REVIEW_ONLY_MODULES: string[] = [];
 const MODULES_GLOB = "import.meta.glob<ModuleExports>('../modules/*/index.ts', { eager: true })";
-const DOCS_DIR = join(here, 'docs') + '/';
+const SHOTS_DIR = join(here, 'docs', 'screenshots') + '/';
+
+/**
+ * A glob's pattern argument (`'…'` or `['…', '!…']`) with the in-app screenshots taken out (lane Y3), or null when it
+ * names only screenshots (the whole glob becomes empty). Patterns that don't point into docs/ come back unchanged.
+ */
+export function withoutScreenshots(pattern: string): string | null {
+  const parts = [...pattern.matchAll(/'([^']*)'|"([^"]*)"/g)].map((m) => m[1] ?? m[2]);
+  const intoDocs = (p: string) => /^!?(\.\.\/)+docs\//.test(p);
+  if (!parts.some(intoDocs)) return pattern;
+  const positive = parts.filter((p) => !p.startsWith('!'));
+  if (positive.length && positive.every((p) => /^(\.\.\/)+docs\/screenshots\//.test(p))) return null;
+  const prefix = positive.find(intoDocs)?.match(/^(\.\.\/)+/)?.[0] ?? '../';
+  return `[${[...parts, `!${prefix}docs/screenshots/**`].map((p) => JSON.stringify(p)).join(', ')}]`;
+}
+/**
+ * The docs describe the review build, so they name its demo personas (`usr_super`, Sofía Arango, …), which must never
+ * reach production JavaScript (H-10). Since the docs ship (lane Y3), the production build redacts them from every
+ * bundled docs file: the demo ids (`usr_*`), the demo users' full names and their demo e-mail addresses become `[demo]`.
+ * The names are read from src/auth/demoUsers.ts, so a new demo user is redacted too.
+ */
+const DEMO_NAMES = [...readFileSync(join(here, 'src/auth/demoUsers.ts'), 'utf8').matchAll(/\bname:\s*'([^']+ [^']+)'/g)].map((m) => m[1]);
+export function redactDemo(code: string): string {
+  let out = code.replace(/\busr_[a-z0-9_]+\b/g, '[demo]').replace(/[a-z0-9._-]+@demo\.hoyos\.test\b/gi, '[demo]');
+  for (const name of DEMO_NAMES) out = out.split(name).join('[demo]');
+  return out;
+}
+
 /**
  * H-10: the review build's demo data — the demo personas (and the hub map that lists them), the in-browser
  * MockProvider and the seed it builds. Real
@@ -50,7 +79,7 @@ const DOCS_DIR = join(here, 'docs') + '/';
  */
 const SEED_LAUNCH_CONTENT = ['catalog', 'timetable', 'content', 'legal', 'media', 'studioPolicies'];
 // `src/hub/hubMap.data.ts` is not demo data (roles and experiences, no people): the production Hub draws from it (lane D).
-export const REVIEW_ONLY_DATA = new RegExp(`/src/(hub/(?!hubMap\\.data\\.ts$).+|auth/demoUsers|data/MockProvider|data/seed/(?!(${SEED_LAUNCH_CONTENT.join('|')})\\.ts$).+)\\.tsx?$`);
+export const REVIEW_ONLY_DATA = new RegExp(`/src/(hub/(?!hubMap\\.data\\.ts$).+|auth/demoUsers|app/frameSession|data/MockProvider|data/seed/(?!(${SEED_LAUNCH_CONTENT.join('|')})\\.ts$).+)\\.tsx?$`);
 
 function productionBuild(): Plugin {
   return {
@@ -72,20 +101,25 @@ function productionBuild(): Plugin {
     transform(code, id) {
       const file = id.split('?')[0];
       if (REVIEW_ONLY_DATA.test(file)) return { code, map: null, moduleSideEffects: false };
+      // A docs file (its body `?raw`, its index `?docmeta`): no demo persona in production (lane Y3).
+      if (file.startsWith(join(here, 'docs') + '/') && file.endsWith('.md')) return { code: redactDemo(code), map: null };
       if (file.endsWith('/src/app/registry.ts')) {
         if (!code.includes(MODULES_GLOB)) throw new Error('productionBuild: the module glob in src/app/registry.ts changed; update vite.config.ts');
         const skip = REVIEW_ONLY_MODULES.map((m) => `'!../modules/${m}/index.ts'`).join(', ');
         return code.replace(MODULES_GLOB, `import.meta.glob<ModuleExports>(['../modules/*/index.ts', ${skip}], { eager: true })`);
       }
       if (!file.startsWith(join(here, 'src') + '/') || !code.includes('import.meta.glob')) return null;
-      // A glob whose pattern(s) point into docs/ resolves to no files at all.
-      return code.replace(/import\.meta\.glob(?:<[^>()]*>)?\(\s*(\[[^\]]*\]|'[^']*'|"[^"]*")[^)]*\)/g, (all, pattern: string) => (/(^|['"\/!])(\.\.\/)+docs\//.test(pattern) ? '({})' : all));
+      // A glob over docs/ never includes the in-app screenshots (lane Y3); one over them only resolves to no files.
+      return code.replace(/import\.meta\.glob(?:<[^>()]*>)?\(\s*(\[[^\]]*\]|'[^']*'|"[^"]*")[^)]*\)/g, (all, pattern: string) => {
+        const kept = withoutScreenshots(pattern);
+        return kept === null ? '({})' : all.replace(pattern, kept);
+      });
     },
     load(id) {
       const file = id.split('?')[0];
-      if (!file.startsWith(DOCS_DIR)) return null;
-      // The one JSON imported from docs/ (source/index.json) is a list.
-      return file.endsWith('.json') ? '[]' : "export default '';";
+      // The docs ship since lane Y3; a direct import of an in-app screenshot is still empty.
+      if (!file.startsWith(SHOTS_DIR)) return null;
+      return "export default '';";
     },
   };
 }

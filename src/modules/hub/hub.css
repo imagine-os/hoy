@@ -218,3 +218,9 @@
 /* 0031 · an announced card (the marketing kit): dashed, a little quieter, never embedded live */
 .hub-card.is-soon { border-style: dashed; }
 .hub-card.is-soon .hub-card-preview { opacity: .55; filter: saturate(.6); }
+
+/* Production (lane Y3): a tool whose page the production build does not register yet is shown, not linked. */
+.hub-tool.is-off { opacity: .6; cursor: default; }
+.hub-tool.is-off:hover { transform: none; }
+/* Production previews are pictures of the running page: a click never reaches the frame (it is read-only anyway). */
+.hub[data-hub="production"] .pagepreview-live { pointer-events: none; }
