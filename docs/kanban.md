@@ -869,3 +869,13 @@ Protected-capture clarification: M14 schedule/pay screenshots remain local/ignor
 - Deploy: `COMPANY_OS_READ_TOKEN: preserve()` in the IaC; deploy summaries show SITE_LIVE and whether the read token is present; an expired session on a website read falls back to the public identity.
 ### Waiting
 - Owner: rename `SET_LIVE` → `SITE_LIVE` in Railway; release Company OS with the sign-up amendment before this frontend deploys.
+
+## Hoy test-hoy fixes · lane Y6: the Hub's docs behind a server gate (2026-11-01)
+
+### Done (lane branch, not merged)
+
+- K-01…K-05 (production): the manual, docs and changelog, kanban and source PDFs are out of the public bundle; the Hoy server serves them at `/private-docs/*` only to a signed-in super admin (Clerk session + Company OS `/me`), everyone else 401/403 with no content. [Changelog](changelog/_pending/hoy-test-fixes-y6.md)
+
+### Backlog
+
+- `PUBLIC_DOCUMENTS` (Q-14) can no longer open a manual or docs page to visitors in production: the gate serves the super admin only. Decide whether that switch is retired or needs a public slice of the pack.

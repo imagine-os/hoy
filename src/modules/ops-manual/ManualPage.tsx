@@ -7,7 +7,6 @@ import { MarkdownViewer, headingSlug } from '../../components/organism/MarkdownV
 import { LiveBlock } from '../../components/organism/LiveBlock/LiveBlock';
 import { Figure, isPhoneCapture } from '../../components/organism/Figure/Figure';
 import { FigurePair } from '../../components/organism/FigurePair/FigurePair';
-import { SourceEmbed } from '../../components/organism/SourceEmbed/SourceEmbed';
 import { ChapterCard } from '../../components/molecule/ChapterCard/ChapterCard';
 import { Toc } from '../../components/molecule/Toc/Toc';
 import { Wordmark } from '../../components/atom/Wordmark/Wordmark';
@@ -30,7 +29,8 @@ import { AudienceChips, AudienceMatrix, ChapterFootBlock, LensSelect, LevelChip,
 import { PolicyWithNote, RequestBox, SectionBlock, StudioValue } from './editing';
 import { canEditSection, useOverrides, useProgress, useStudioPolicies } from './manualData';
 import { splitSections } from './sections';
-import { sourceById, sourceView } from './sources';
+import { sourceById } from './sources';
+import { SourceDocEmbed } from './SourceDocEmbed';
 import { useManualHandlers } from './manualActions';
 import { manualSpec } from './specs';
 import './manual.css';
@@ -257,7 +257,7 @@ function ManualDirective({ kind, arg }: { kind: string; arg?: string }) {
     case 'source': {
       const s = arg ? sourceById(arg) : undefined;
       if (!s) return <div className="live live-unknown"><p><code>{`{{source${arg ? `:${arg}` : ''}}}`}</code> {t('manual.live.unknown')}</p></div>;
-      return <SourceEmbed doc={sourceView(s)} level={4}><Link to={`/docs/source?doc=${s.id}`}>{t('manual.source.allSources')} →</Link></SourceEmbed>;
+      return <SourceDocEmbed doc={s} level={4}><Link to={`/docs/source?doc=${s.id}`}>{t('manual.source.allSources')} →</Link></SourceDocEmbed>;
     }
     case 'editable': return null; // consumed by the section splitter; a stray one renders nothing
     default: return <LiveBlock kind={kind} arg={arg} />;

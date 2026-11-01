@@ -117,6 +117,8 @@ jobs:
         run: node scripts/check-company-os.mjs
       - name: Hoy server tests
         run: node scripts/test-hoy-server.mjs
+      - name: Docs gate (the Hub's docs for a signed-in super admin only; lane Y6)
+        run: node scripts/test-docs-gate.mjs
       - name: Build (production with Clerk, launch routes, no review tools; H-2)
         run: npm run build:production
       - name: Production bundle checks (H-2; refuses demo data, review tools, docs, screenshots)

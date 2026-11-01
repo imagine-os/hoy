@@ -3,7 +3,9 @@
 // - Production build (`npm run build:production`; QA_PROD_DIST=<dir>, else built here into a temp dir): Clerk is a
 //   separate chunk; Justin's Hub ships for super admins (lane D, then Hoy test-fixes lane Y3: its look, live
 //   read-only previews, the session bar, the wireframe toggle) with real people and never a demo persona; the manual,
-//   the source documents, the docs and the kanban ship for the super admin (Y3, R-08 answered for these pages); no
+//   the source documents, the docs and the kanban are NOT in the public bundle (lane Y6: no docs text, docmeta, source
+//   summary, docs image or PDF in dist) but in the private pack beside it (`<dist>-private`, redacted), which only the
+//   server's gate serves to a signed-in super admin; no
 //   demo sign-in panel, persona switcher or agent manifest; no in-app screenshots or hub-map files; under the budget.
 // QA_STRICT_DEMO_DATA=1 also requires that no demo persona or seed (MockProvider) ships in production: that holds once
 // lane H-3's CompanyOSProvider replaces MockProvider in the production build. The deploy workflows run it strict, so a
@@ -81,7 +83,10 @@ for (const file of ['docs/ops-manual/es/00-index.md', 'docs/ops-manual/en/04-rec
   check(`production: the docs text is not in any public file (${relative('.', file)})`, !!line && has(publicText, line).length === 0, `${line} in ${has(publicText, String(line)).join(', ')}`);
   check(`production: the docs text is in the private pack (${relative('.', file)})`, !!line && pack.includes(JSON.stringify(line).slice(1, -1)), String(line));
 }
-check('production: no docs markdown index (docmeta) in the public bundle', has(publicText, 'ops-manual/es/').length === 0 && has(publicText, 'DECISIÓN PENDIENTE').length === 0, has(publicText, 'ops-manual/es/').join(', '));
+// docmeta's shape ({ title, meta, words, figures, … }, scripts/lib/docmeta.mjs), as JSON or minified; code that only
+// names a manual path or the `DECISIÓN PENDIENTE` marker (the viewer, the specs) is not docs content.
+const DOCMETA = /\bwords"?:\d+,"?figures"?:\d+/;
+check('production: no docs markdown index (docmeta) in the public bundle', has(publicText, DOCMETA).length === 0, has(publicText, DOCMETA).join(', '));
 const sourceIndex = JSON.parse(readFileSync('docs/source/index.json', 'utf8'));
 check('production: no source document summary in the public bundle', sourceIndex.every((s) => has(publicText, s.summary.es.slice(0, 60)).length === 0));
 check('production: no docs image in the public bundle (docs/ images ship only inside the private pack)', !all.some((f) => /frontend-completion|evidence/.test(relative(prodDir, f))));

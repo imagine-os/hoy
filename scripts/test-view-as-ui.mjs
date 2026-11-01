@@ -15,6 +15,9 @@
 //   every frame is read-only and hides the banner; a planted `?as=` is ignored outside a frame and for a non-super admin;
 // - Report a problem submits the forms module's `problem_report`; the Construction & testing band (manual, source
 //   documents, docs, kanban) opens for the super admin only; the wireframe toggle is session-only and resets on sign-out.
+// Lane Y6: that band's content comes from the real server gate (server/docsGate.mjs over the build's private pack): the
+//   super admin's pages load it with the session token and open a source PDF as a blob; admin (AD-04) and front desk
+//   get 403 from the gate with their own session; no bearer is 401; the old public /source/ URL is gone.
 // Run: npm run build:production && QA_PROD_DIST=dist node scripts/test-view-as-ui.mjs
 import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
@@ -84,10 +87,11 @@ function answerQuery(user, q) {
 }
 // Lane Y6: the real docs gate (server/docsGate.mjs) over the build's private pack, with this fake's Clerk and /me.
 let gateLog = [];
+const gateAll = [];
 const docsGate = await createDocsGate({ distDir: PROD, tenant: TENANT, upstreamTimeoutMs: 2000 }, {
   verifySession: async (token) => { const u = /^fake\.([^.]+)\.[^.]+$/.exec(token)?.[1]; if (!u) throw new Error('invalid'); return { userId: u }; },
   fetchMe: async (token) => { const u = /^fake\.([^.]+)\.[^.]+$/.exec(token)?.[1]; const p = PEOPLE[u]; return p ? { status: 200, body: { user: { id: u }, roleKeys: p.keys, isSuperAdmin: !!p.superAdmin } } : { status: 403, body: { error: 'no access to this tenant' } }; },
-  log: (e) => gateLog.push(e),
+  log: (e) => { gateLog.push(e); gateAll.push(e); },
 });
 const server = createServer(async (req, res) => {
   const path = new URL(req.url, 'http://127.0.0.1').pathname;
@@ -139,7 +143,8 @@ async function open(path = '/auth/sign-in', { liveFrames = false } = {}) {
   await ctx.route(`https://${HOST}/npm/@clerk/clerk-js@*/dist/clerk.browser.js`, (r) => r.fulfill({ status: 200, contentType: 'text/javascript', body: FAKE_CLERK }));
   await ctx.addInitScript(({ accounts, pk }) => {
     window.__fakeClerkConfig = { accounts, publishableKey: pk };
-    if (!sessionStorage.getItem('qa-init')) { sessionStorage.setItem('qa-init', '1'); localStorage.setItem('hoyos.lang', 'es'); }
+    // A frame without storage (lane Y6: the gated PDF's blob: viewer) has nothing to set up.
+    if (window.sessionStorage && !sessionStorage.getItem('qa-init')) { sessionStorage.setItem('qa-init', '1'); localStorage.setItem('hoyos.lang', 'es'); }
   }, { accounts: ACCOUNTS, pk: PK });
   const page = await ctx.newPage();
   await page.clock.install({ time: new Date(`${TODAY}T15:00:00Z`) });
@@ -258,11 +263,10 @@ try {
   at = await go(page, '/manual/04-recepcion-y-check-in');
   const chapter = await page.locator('main').first().innerText().catch(() => '');
   check('super admin: a manual chapter renders its body from the pack', /Recepción|check-in/i.test(chapter) && chapter.length > 800, chapter.slice(0, 120));
-  gateLog = [];
   at = await go(page, '/docs/source');
   await page.locator('.srcdoc-cover').first().click({ timeout: 3000 }).catch(() => {});
   await page.waitForTimeout(2500);
-  check('super admin: a source PDF opens through the gate (blob, not a public /source/ URL)', gateLog.some((l) => l.outcome === 'served' && /\.pdf$/.test(l.file ?? '')) && (await page.locator('iframe.srcdoc-frame[src^="blob:"]').count()) >= 1, JSON.stringify(gateLog.slice(-3)));
+  check('super admin: a source PDF opens through the gate (blob, not a public /source/ URL)', gateAll.some((l) => l.outcome === 'served' && /\.pdf$/.test(l.file ?? '')) && (await page.locator('iframe.srcdoc-frame[src^="blob:"]').count()) >= 1, JSON.stringify(gateLog.slice(-3)));
   check('super admin: no cover or PDF points at a public /source/ URL', (await page.locator('[src*="source/"], [href*="source/"]').count()) === 0);
   const direct = await page.evaluate(async () => (await fetch('/private-docs/docs.json', { credentials: 'include' })).status);
   check('the same browser without the bearer (cookies only) gets 401 from the gate', direct === 401, String(direct));

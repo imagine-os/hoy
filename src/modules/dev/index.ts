@@ -4,6 +4,8 @@ import { lazyPages } from '../../app/lazyPage';
 import { DEV_MODE_ROLES as DEV_ROLES } from '../../auth/roles';
 import { apiKeysSpec, canvasSpec, layoutEditorSpec, simulatorSpec, specsIndexSpec } from './specs';
 import { PRODUCTION_BUILD } from '../../config/launch';
+import { createElement } from 'react';
+import { PrivateDocsReady } from '../docs/PrivateDocsReady';
 export { strings } from './strings';
 
 // super_admin + developer tooling (0031) (component library, layout editor with dnd-kit, knowledgebase): one lazy chunk.
@@ -22,7 +24,7 @@ const G = 'core.nav.group.design';
 // chunks are not referenced at all and stay out of the bundle.
 export const routes: RouteDef[] = PRODUCTION_BUILD ? [
   { ...base, path: '/dev', element: specsPage('SpecsIndexPage'), spec: specsIndexSpec, nav: { labelKey: 'core.nav.specs', icon: 'specs', order: 3, group: G } },
-  { ...base, roles: ['super_admin'], path: '/dev/knowledgebase', element: knowledgebasePage('KnowledgebasePage'), spec: canvasSpecs['K-01'], nav: { labelKey: 'core.nav.knowledgebase', icon: 'knowledgebase', order: 5, group: G } },
+  { ...base, roles: ['super_admin'], path: '/dev/knowledgebase', element: createElement(PrivateDocsReady, null, knowledgebasePage('KnowledgebasePage')), spec: canvasSpecs['K-01'], nav: { labelKey: 'core.nav.knowledgebase', icon: 'knowledgebase', order: 5, group: G } },
 ] : [
   { ...base, path: '/dev', element: page('SpecsIndexPage'), spec: specsIndexSpec },
   { ...base, path: '/dev/tokens', element: page('TokensPage'), spec: canvasSpecs['D-01'], nav: { labelKey: 'core.nav.tokens', icon: 'tokens', order: 1, group: G } },

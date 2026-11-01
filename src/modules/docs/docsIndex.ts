@@ -1,7 +1,11 @@
 // Every markdown file and image under docs/ at build time. Adding a doc needs no code change.
 // Metadata (title, header lines, headings…) is computed at build time by scripts/lib/docmeta.mjs
 // (`?docmeta`); the bodies are separate `?raw` chunks fetched only when a page opens one.
+// Production (lane Y6): none of docs/ is bundled; the same three maps come from the gated private pack (privateDocs.ts),
+// which PrivateDocsReady loads before this chunk first evaluates.
 import { useEffect, useState } from 'react';
+import { PRODUCTION_BUILD } from '../../config/launch';
+import { privateDocs } from './privateDocs';
 
 /** What scripts/lib/docmeta.mjs extracts from one markdown file. */
 export interface DocMeta {
@@ -16,9 +20,17 @@ export interface DocMeta {
   screenBoxes?: number;
 }
 
-const metaFiles = import.meta.glob<DocMeta>('../../../docs/**/*.md', { query: '?docmeta', import: 'default', eager: true });
-const rawFiles = import.meta.glob<string>('../../../docs/**/*.md', { query: '?raw', import: 'default' });
-const assets = import.meta.glob<string>(['../../../docs/**/*.{png,jpg,jpeg,gif,svg,webp}', '!../../../docs/screenshots/M-14/**', '!../../../docs/screenshots/M-14a/**'], { query: '?url', import: 'default', eager: true });
+const pack = PRODUCTION_BUILD ? privateDocs() : null;
+const fromPack = (path: string) => `../../../${path}`;
+const metaFiles: Record<string, DocMeta> = PRODUCTION_BUILD
+  ? Object.fromEntries((pack?.docs ?? []).map((d) => [fromPack(d.path), d.info]))
+  : import.meta.glob<DocMeta>('../../../docs/**/*.md', { query: '?docmeta', import: 'default', eager: true });
+const rawFiles: Record<string, () => Promise<string>> = PRODUCTION_BUILD
+  ? Object.fromEntries((pack?.docs ?? []).map((d) => [fromPack(d.path), () => Promise.resolve(d.body)]))
+  : import.meta.glob<string>('../../../docs/**/*.md', { query: '?raw', import: 'default' });
+const assets: Record<string, string> = PRODUCTION_BUILD
+  ? Object.fromEntries(Object.entries(pack?.images ?? {}).map(([path, url]) => [fromPack(path), url]))
+  : import.meta.glob<string>(['../../../docs/**/*.{png,jpg,jpeg,gif,svg,webp}', '!../../../docs/screenshots/M-14/**', '!../../../docs/screenshots/M-14a/**'], { query: '?url', import: 'default', eager: true });
 
 const strip = (k: string) => k.replace(/^(\.\.\/)+/, ''); // → 'docs/…'
 

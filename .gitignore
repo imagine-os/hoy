@@ -1,5 +1,7 @@
 node_modules
 dist
+# The production build's private docs pack (lane Y6; served only by server/docsGate.mjs).
+dist-private
 .DS_Store
 *.log
 .vite

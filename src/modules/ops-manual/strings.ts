@@ -284,6 +284,7 @@ export const strings: StringTable = {
   'manual.source.download': { es: 'Descargar PDF', en: 'Download PDF' },
   'manual.source.newTab': { es: 'Abrir en otra pestaña', en: 'Open in a new tab' },
   'manual.source.allSources': { es: 'Todos los documentos fuente', en: 'All source documents' },
+  'manual.source.unavailable': { es: 'Este documento no se pudo abrir. Vuelve a intentarlo o inicia sesión de nuevo.', en: 'This document could not be opened. Try again or sign in again.' },
   'manual.sources.nav': { es: 'Documentos fuente', en: 'Source documents' },
   'manual.sources.title': { es: 'Documentos fuente', en: 'Source documents' },
   'manual.sources.lead': { es: 'Los documentos del owner de donde salen el manual y el sitio. Ábrelos aquí, descárgalos o salta a los capítulos que los citan.', en: 'The owner’s documents the manual and the site are written from. Open them here, download them or jump to the chapters that cite them.' },
