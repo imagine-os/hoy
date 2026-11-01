@@ -28,16 +28,18 @@ export function sourceView(doc: SourceDoc): SourceDocView {
 
 /**
  * The view an embed needs. Review: the public files. Production (lane Y6): the cover is already a data URL from the pack
- * and the PDF is fetched through the gate as a blob: URL; `null` while it loads, `false` when it can't be had.
+ * and the PDF is fetched through the gate as a blob: URL; `null` while it loads, `false` when it can't be had (a new
+ * `attempt` asks again).
  */
-export function useSourceView(doc: SourceDoc): SourceDocView | null | false {
+export function useSourceView(doc: SourceDoc, attempt = 0): SourceDocView | null | false {
   const [fileUrl, setFileUrl] = useState<string | null | false>(PRODUCTION_BUILD ? null : served(doc.file));
   useEffect(() => {
     if (!PRODUCTION_BUILD) return;
     let alive = true;
+    setFileUrl(null);
     privateFileUrl(doc.file).then((url) => { if (alive) setFileUrl(url ?? false); });
     return () => { alive = false; };
-  }, [doc.file]);
+  }, [doc.file, attempt]);
   if (!PRODUCTION_BUILD) return sourceView(doc);
   if (fileUrl === null || fileUrl === false) return fileUrl;
   return { id: doc.id, title: doc.title, kind: doc.kind, pages: doc.pages, date: doc.date, summary: doc.summary, fileUrl, coverUrl: doc.cover };

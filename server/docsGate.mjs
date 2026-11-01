@@ -14,6 +14,7 @@ import { readdir, stat } from 'node:fs/promises';
 import http from 'node:http';
 import https from 'node:https';
 import { extname, join, resolve } from 'node:path';
+import { pipeline } from 'node:stream';
 import { createGzip } from 'node:zlib';
 
 export const DOCS_PREFIX = '/private-docs';
@@ -37,6 +38,8 @@ export async function createDocsGate(config, deps) {
   // resolved), so `..`, encodings, absolute paths, nested or hidden files can't name anything else.
   const files = new Map();
   if ((await stat(join(dir, 'docs.json')).catch(() => null))?.isFile()) files.set('/docs.json', join(dir, 'docs.json'));
+  // The build also writes docs.json.gz (the pack is about 4 MB): served as is to a client that takes gzip.
+  const packGz = (await stat(join(dir, 'docs.json.gz')).catch(() => null))?.isFile() ? join(dir, 'docs.json.gz') : null;
   for (const entry of await readdir(join(dir, 'source'), { withFileTypes: true }).catch(() => [])) {
     if (entry.isFile() && SOURCE_NAME.test(entry.name)) files.set(`/source/${entry.name}`, join(dir, 'source', entry.name));
   }
@@ -81,16 +84,16 @@ export async function createDocsGate(config, deps) {
     const ext = extname(path).toLowerCase();
     const headers = { ...PRIVATE, 'Content-Type': TYPES[ext], 'Content-Disposition': 'inline', 'Content-Security-Policy': "default-src 'none'; sandbox" };
     const gzip = ext === '.json' && /\bgzip\b/.test(String(req.headers['accept-encoding'] ?? ''));
+    const pre = gzip && rest === '/docs.json' ? packGz : null;
+    const preInfo = pre ? await stat(pre).catch(() => null) : null;
     if (gzip) headers['Content-Encoding'] = 'gzip';
-    else headers['Content-Length'] = info.size;
+    if (!gzip) headers['Content-Length'] = info.size;
+    else if (preInfo) headers['Content-Length'] = preInfo.size;
     res.writeHead(200, headers);
     if (req.method === 'HEAD') { res.end(); return 'served'; }
-    await new Promise((done) => {
-      const stream = gzip ? createReadStream(path).pipe(createGzip()) : createReadStream(path);
-      stream.on('error', () => { res.destroy(); done(); });
-      res.on('close', () => { stream.destroy(); done(); });
-      stream.pipe(res);
-    });
+    // pipeline: a read (or gzip) error ends the answer instead of leaving it open.
+    const steps = preInfo ? [createReadStream(pre)] : gzip ? [createReadStream(path), createGzip()] : [createReadStream(path)];
+    await new Promise((done) => pipeline(...steps, res, () => done()));
     return 'served';
   }
 }
@@ -121,8 +124,10 @@ function askMe(config, token, req) {
   return new Promise((done, fail) => {
     const url = new URL(`${config.companyOsUrl.replace(/\/+$/, '')}/t/${config.tenant}/me`);
     const client = url.protocol === 'https:' ? https : http;
-    const ip = String(req.headers['x-real-ip'] ?? req.socket.remoteAddress ?? '');
-    const headers = { accept: 'application/json', authorization: `Bearer ${token}`, 'x-forwarded-for': ip, 'x-real-ip': ip };
+    // The same client headers as app.mjs `clientHeaders`: Railway's X-Real-IP, never the browser's X-Forwarded-For.
+    const first = (v) => (Array.isArray(v) ? v[0] : v);
+    const ip = String(first(req.headers['x-real-ip']) ?? req.socket.remoteAddress ?? '');
+    const headers = { accept: 'application/json', authorization: `Bearer ${token}`, 'x-forwarded-for': ip, 'x-real-ip': ip, 'x-forwarded-proto': String(first(req.headers['x-forwarded-proto']) ?? 'http') };
     const call = client.request(url, { method: 'GET', headers, timeout: config.upstreamTimeoutMs ?? 30_000 }, (answer) => {
       const chunks = [];
       let size = 0;

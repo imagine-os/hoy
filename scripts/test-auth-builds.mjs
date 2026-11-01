@@ -14,6 +14,7 @@
 // Run: npm run build && node scripts/test-auth-builds.mjs
 //      CI: npm run build:production && QA_PROD_ONLY=1 QA_PROD_DIST=dist QA_STRICT_DEMO_DATA=1 node scripts/test-auth-builds.mjs
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { existsSync, mkdtempSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, relative } from 'node:path';
@@ -89,7 +90,19 @@ const DOCMETA = /\bwords"?:\d+,"?figures"?:\d+/;
 check('production: no docs markdown index (docmeta) in the public bundle', has(publicText, DOCMETA).length === 0, has(publicText, DOCMETA).join(', '));
 const sourceIndex = JSON.parse(readFileSync('docs/source/index.json', 'utf8'));
 check('production: no source document summary in the public bundle', sourceIndex.every((s) => has(publicText, s.summary.es.slice(0, 60)).length === 0));
-check('production: no docs image in the public bundle (docs/ images ship only inside the private pack)', !all.some((f) => /frontend-completion|evidence/.test(relative(prodDir, f))));
+// Review round: by content, not by name: no docs image (outside the in-app screenshots) and no source file is in dist,
+// as a file or base64 inside a text file; and a body line of every manual chapter is in no public file.
+const sha = (buf) => createHash('sha256').update(buf).digest('hex');
+const docsBinaries = [...files('docs').filter((f) => !f.startsWith('docs/screenshots/') && /\.(png|jpe?g|gif|svg|webp)$/i.test(f)), ...files('public/source')];
+const distHashes = new Set(all.map((f) => sha(readFileSync(f))));
+const leakedBinaries = docsBinaries.filter((f) => { const b = readFileSync(f); const b64 = b.toString('base64'); return distHashes.has(sha(b)) || (b64.length > 240 && has(publicText, b64.slice(100, 220)).length > 0); });
+check(`production: no docs image or source file in the public bundle, by content (${docsBinaries.length} files)`, docsBinaries.length > 5 && leakedBinaries.length === 0, leakedBinaries.join(', '));
+const bodyLine = (file) => readFileSync(file, 'utf8').replace(/^---\n[\s\S]*?\n---\n/, '').split('\n').find((l) => l.trim().length > 50 && !/^[-#>|`{!*\[]/.test(l.trim()))?.trim().slice(0, 50);
+// A line the app's own code also carries (a page spec quoting the manual's lead) is code, not docs content.
+const srcText = files('src').filter((f) => /\.(tsx?|json)$/.test(f)).map((f) => readFileSync(f, 'utf8')).join('\n');
+const chapters = files('docs/ops-manual').filter((f) => f.endsWith('.md')).map((f) => [f, bodyLine(f)]).filter(([, l]) => l && !srcText.includes(l));
+const leakedChapters = chapters.filter(([, l]) => has(publicText, l).length > 0).map(([f]) => f);
+check(`production: no manual chapter body line in a public file (${chapters.length} chapters)`, chapters.length > 20 && leakedChapters.length === 0, leakedChapters.join(', '));
 if (process.env.QA_STRICT_DEMO_DATA === '1') {
   check('production (strict): no demo persona', has(prod, 'Sofía Arango').length === 0 && has(prod, 'usr_super').length === 0, has(prod, 'usr_super').join(', '));
   // Lane Y3 ships the docs, which name the demo users: every demo full name and id must be redacted, accented or not.

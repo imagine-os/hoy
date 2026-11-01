@@ -3,6 +3,7 @@ import { extname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
+import { gzipSync } from 'node:zlib';
 import { docMeta, docMetaPlugin } from './scripts/lib/docmeta.mjs';
 
 const here = fileURLToPath(new URL('.', import.meta.url));
@@ -84,7 +85,10 @@ export function writePrivateDocsPack(dir: string) {
     return JSON.parse(redactDemo(JSON.stringify({ ...s, cover: cover && type ? `data:${type};base64,${readFileSync(cover).toString('base64')}` : undefined })));
   });
   for (const name of readdirSync(publicSource)) if (SOURCE_NAME.test(name)) copyFileSync(join(publicSource, name), join(dir, 'source', name));
-  writeFileSync(join(dir, 'docs.json'), JSON.stringify({ version: 1, docs, images, sources }));
+  const pack = JSON.stringify({ version: 1, docs, images, sources });
+  writeFileSync(join(dir, 'docs.json'), pack);
+  // Served as is to a client that takes gzip (server/docsGate.mjs), so the server never compresses 4 MB per request.
+  writeFileSync(join(dir, 'docs.json.gz'), gzipSync(pack, { level: 9 }));
 }
 
 /**
@@ -115,6 +119,15 @@ const SEED_LAUNCH_CONTENT = ['catalog', 'timetable', 'content', 'legal', 'media'
 // `src/hub/hubMap.data.ts` is not demo data (roles and experiences, no people): the production Hub draws from it (lane D).
 export const REVIEW_ONLY_DATA = new RegExp(`/src/(hub/(?!hubMap\\.data\\.ts$).+|auth/demoUsers|app/frameSession|data/MockProvider|data/seed/(?!(${SEED_LAUNCH_CONTENT.join('|')})\\.ts$).+)\\.tsx?$`);
 
+/** Lane Y6: a review build removes a private pack left beside its outDir by an earlier production build. */
+function reviewBuild(): Plugin {
+  return {
+    name: 'hoy-review-build',
+    apply: 'build',
+    writeBundle(options) { rmSync(privateDocsDir(resolve(here, options.dir ?? 'dist')), { recursive: true, force: true }); },
+  };
+}
+
 function productionBuild(): Plugin {
   return {
     name: 'hoy-production-build',
@@ -133,6 +146,9 @@ function productionBuild(): Plugin {
       if (shipped.length) this.error(`productionBuild: review-only demo data in the production bundle (H-10):\n  ${shipped.join('\n  ')}`);
       // Lane Y6: nothing from docs/ is rendered into a public chunk but the empty stubs `load` gives (the gate is the only way to it).
       const fromDocs = [...rendered].filter((id) => id.split('?')[0].startsWith(DOCS_DIR) && String(this.getModuleInfo(id)?.code ?? '').trim().length > 64);
+      // …and no emitted file (an image or font URL, a CSS url()) comes from docs/ or public/source/ either.
+      const assetsFromDocs = Object.values(bundle).filter((a) => a.type === 'asset').flatMap((a) => [...((a as { originalFileNames?: string[] }).originalFileNames ?? []), ...(a.names ?? [])].filter((n) => /^(docs|public\/source)\//.test(n.replace(here, '').replace(/^\/+/, ''))).map((n) => `${a.fileName} (${n})`));
+      if (assetsFromDocs.length) this.error(`productionBuild: a docs/ or source file emitted into the public bundle (lane Y6):\n  ${assetsFromDocs.join('\n  ')}`);
       if (fromDocs.length) this.error(`productionBuild: docs/ content in the public bundle (lane Y6, docs gate):\n  ${fromDocs.map((i) => i.replace(here, '')).join('\n  ')}`);
     },
     transform(code, id) {
@@ -172,7 +188,7 @@ export default defineConfig({
     // Which build this is, as a constant the bundler folds (src/config/launch.ts `PRODUCTION_BUILD`).
     __HOY_BUILD__: JSON.stringify(PRODUCTION ? 'production' : 'review'),
   },
-  plugins: [react(), docMetaPlugin(), ...(PRODUCTION ? [productionBuild()] : [])],
+  plugins: [react(), docMetaPlugin(), ...(PRODUCTION ? [productionBuild()] : [reviewBuild()])],
   server: { port: 5173 },
   preview: { port: 4173 },
   build: { chunkSizeWarningLimit: 1000 },

@@ -1,6 +1,7 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useI18n } from '../../i18n/I18nProvider';
 import { SourceEmbed } from '../../components/organism/SourceEmbed/SourceEmbed';
+import { Button } from '../../components/atom/Button/Button';
 import { useSourceView, type SourceDoc } from './sources';
 
 /**
@@ -9,8 +10,9 @@ import { useSourceView, type SourceDoc } from './sources';
  */
 export function SourceDocEmbed({ doc, level, open, children }: { doc: SourceDoc; level: 2 | 3 | 4; open?: boolean; children?: ReactNode }) {
   const { t } = useI18n();
-  const view = useSourceView(doc);
+  const [attempt, setAttempt] = useState(0);
+  const view = useSourceView(doc, attempt);
   if (view === null) return <p className="muted small" data-source-loading={doc.id}>{t('core.common.loading')}</p>;
-  if (view === false) return <p className="muted small" data-source-unavailable={doc.id}>{t('manual.source.unavailable')}</p>;
+  if (view === false) return <p className="muted small row" data-source-unavailable={doc.id}>{t('manual.source.unavailable')} <Button variant="secondary" size="sm" onClick={() => setAttempt((n) => n + 1)}>{t('docs.private.retry')}</Button></p>;
   return <SourceEmbed doc={view} level={level} open={open}>{children}</SourceEmbed>;
 }

@@ -3,7 +3,7 @@
 // (vite.config.ts `privateDocsPack`) and the Hoy server serves it at /private-docs/* only to a signed-in super admin
 // (server/docsGate.mjs). This module fetches it with the session token (src/auth/sessionToken.ts, the only token path)
 // and keeps it in memory for the tab. The review build never calls it: its docs are bundled as before.
-import { getSessionToken } from '../../auth/sessionToken';
+import { getSessionToken, onUnauthorized } from '../../auth/sessionToken';
 import type { DocMeta } from './docsIndex';
 
 export const PRIVATE_DOCS_BASE = '/private-docs';
@@ -27,10 +27,15 @@ let pending: Promise<PrivateDocsState> | null = null;
 export const privateDocs = (): PrivateDocsPack | null => pack;
 
 async function authorised(path: string): Promise<Response | PrivateDocsState> {
-  const token = await getSessionToken();
-  if (!token) return 'signed-out';
-  const res = await fetch(`${PRIVATE_DOCS_BASE}${path}`, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store', credentials: 'omit' });
-  if (res.status === 401) return 'signed-out';
+  const ask = async (refresh: boolean) => {
+    const token = await getSessionToken(refresh ? { refresh: true } : undefined);
+    return token ? fetch(`${PRIVATE_DOCS_BASE}${path}`, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store', credentials: 'omit' }) : null;
+  };
+  // A token that expired on the way (or clock skew) gets one fresh try; a second 401 re-checks the session (as every 401).
+  let res = await ask(false);
+  if (res?.status === 401) res = await ask(true);
+  if (!res) return 'signed-out';
+  if (res.status === 401) { onUnauthorized(); return 'signed-out'; }
   if (res.status === 403) return 'refused';
   if (!res.ok) return 'failed';
   return res;
@@ -70,3 +75,13 @@ export function privateFileUrl(file: string): Promise<string | null> {
   return hit;
 }
 
+
+/** The pack has been loaded into this tab. */
+export const privateDocsLoaded = (): boolean => pack !== null;
+
+/** Forgets the pack and revokes the PDF links (PrivateDocsWatch, before it reloads the tab). */
+export function dropPrivateDocs() {
+  pack = null;
+  for (const p of fileUrls.values()) p.then((url) => { if (url) URL.revokeObjectURL(url); });
+  fileUrls.clear();
+}

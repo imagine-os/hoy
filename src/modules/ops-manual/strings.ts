@@ -290,7 +290,7 @@ export const strings: StringTable = {
   'manual.sources.lead': { es: 'Los documentos del owner de donde salen el manual y el sitio. Ábrelos aquí, descárgalos o salta a los capítulos que los citan.', en: 'The owner’s documents the manual and the site are written from. Open them here, download them or jump to the chapters that cite them.' },
   'manual.sources.count': { es: '{n} documentos', en: '{n} documents' },
   'manual.sources.cited': { es: 'Citado en', en: 'Cited in' },
-  'manual.sources.foot': { es: 'Índice en docs/source/index.json; archivos en public/source/. Un documento nuevo no necesita código.', en: 'Index in docs/source/index.json; files in public/source/. A new document needs no code.' },
+  'manual.sources.foot': { es: 'Índice en docs/source/index.json; archivos en public/source/ (en producción, solo para el super admin, a través del servidor). Un documento nuevo no necesita código.', en: 'Index in docs/source/index.json; files in public/source/ (in production, for the super admin only, through the server). A new document needs no code.' },
   // audit titles for M-07 (admin.audit.<action>)
   'admin.audit.manual.read': { es: 'Capítulo del manual leído', en: 'Manual chapter read' },
   'admin.audit.manual.unread': { es: 'Capítulo del manual marcado como no leído', en: 'Manual chapter marked unread' },

@@ -369,9 +369,15 @@ try {
   await page.locator('.hub-head-tools label').filter({ hasText: 'Wireframe' }).click({ timeout: 3000 }).catch(() => {});
   await page.waitForTimeout(400);
   check('wireframe on before signing out', (await skin(page)) === 'wireframe');
+  // Lane Y6 (review round): this tab loads the docs pack; sign-out must not leave it in memory (the tab reloads).
+  await go(page, '/manual');
+  await page.locator('main').first().waitFor({ timeout: 5000 }).catch(() => {});
+  const packHere = gateAll.filter((l) => l.outcome === 'served' && l.file === 'docs.json').length;
   await go(page, '/admin');
+  await page.evaluate(() => { window.__y6PackTab = 1; });
   await page.locator('[data-account-chip] button').first().click({ timeout: 3000 }).catch(() => {});
-  await page.waitForTimeout(1500);
+  await page.waitForTimeout(2500);
+  check('sign-out after the docs pack was loaded reloads the tab (nothing of the pack stays in memory)', packHere > 0 && await page.evaluate(() => window.__y6PackTab === undefined), String(packHere));
   check('wireframe resets on sign-out (styled skin, nothing kept in the tab)', (await skin(page)) === 'styled' && await page.evaluate(() => sessionStorage.getItem('hoyos.skin') === null), await skin(page));
   await page.goto(`${BASE}/#/auth/sign-in`); await page.waitForTimeout(800);
   await signIn(page, 'super@example.test').catch(() => {});

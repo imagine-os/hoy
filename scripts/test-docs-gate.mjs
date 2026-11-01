@@ -14,7 +14,7 @@ import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import http from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { gunzipSync } from 'node:zlib';
+import { gunzipSync, gzipSync } from 'node:zlib';
 import { createHandler, createHoyServer } from '../server/app.mjs';
 import { clerkSessionVerifier } from '../server/clerk.mjs';
 import { loadConfig } from '../server/config.mjs';
@@ -34,6 +34,8 @@ await mkdir(join(dist, 'assets'), { recursive: true });
 await mkdir(join(priv, 'source', 'sub'), { recursive: true });
 await writeFile(join(dist, 'index.html'), '<!doctype html><title>Hoy</title>');
 await writeFile(join(priv, 'docs.json'), JSON.stringify({ version: 1, docs: [{ path: 'docs/ops-manual/es/01-x.md', info: { title: 'x' }, body: `${SECRET_LINE}\n`.repeat(200) }], images: {}, sources: [] }));
+const PACK_GZ = gzipSync(JSON.stringify({ version: 1, docs: [{ path: 'docs/ops-manual/es/01-x.md', info: { title: 'x' }, body: `${SECRET_LINE} (pre-compressed)\n` }], images: {}, sources: [] }));
+await writeFile(join(priv, 'docs.json.gz'), PACK_GZ);
 await writeFile(join(priv, 'source', 'manual-de-marca.pdf'), PDF);
 await writeFile(join(priv, 'source', 'manual-de-marca-cover.jpg'), Buffer.from([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3]));
 await writeFile(join(priv, 'source', 'sub', 'nested.pdf'), PDF);
@@ -108,7 +110,7 @@ function refused(r, status) {
 }
 
 // ── super admin ────────────────────────────────────────────────────────────────────────────────────────────────
-await test('super admin: docs.json is served, private and never stored, gzipped on request', async () => {
+await test('super admin: docs.json is served, private and never stored; gzip from the build docs.json.gz', async () => {
   seen.length = 0;
   const r = await request('GET', DOCS, { ...auth('user_super'), 'accept-encoding': 'gzip' });
   assert.equal(r.status, 200);
@@ -116,10 +118,15 @@ await test('super admin: docs.json is served, private and never stored, gzipped 
   assert.match(r.headers.vary ?? '', /Authorization/i);
   assert.match(r.headers['content-type'], /^application\/json/);
   assert.equal(r.headers['content-encoding'], 'gzip');
+  assert.equal(Buffer.compare(r.body, PACK_GZ), 0, 'the build\'s docs.json.gz, as is');
+  assert.equal(Number(r.headers['content-length']), PACK_GZ.length);
   assert.match(gunzipSync(r.body).toString(), /Texto interno del manual/);
   const me = seen.filter((s) => s.url === '/t/hoy-dev/me');
   assert.equal(me.length, 1, 'one /me per request, on the configured tenant');
   assert.match(me[0].headers.authorization, /^Bearer ey/, 'asked with the user\'s own token');
+  const plain = await request('GET', DOCS, auth('user_super'));
+  assert.equal(plain.headers['content-encoding'], undefined);
+  assert.match(plain.body.toString(), /^\{"version":1/);
 });
 
 await test('super admin: a source PDF and its cover are served (inline, typed)', async () => {
@@ -208,7 +215,7 @@ const HOSTILE = [
   '/private-docs/source/..%2F..%2Foutside.txt', '/private-docs/source/%2e%2e%2fnotes.txt', '/private-docs//etc/passwd',
   '/private-docs/%2Fetc%2Fpasswd', '/private-docs/source/..\\notes.txt', '/private-docs/source/manual-de-marca.pdf%00.jpg',
   '/private-docs/source/sub/nested.pdf', '/private-docs/source/.hidden.pdf', '/private-docs/notes.txt',
-  '/private-docs/source/', '/private-docs/source', '/private-docs/DOCS.JSON', '/private-docs/docs.json/',
+  '/private-docs/source/', '/private-docs/source', '/private-docs/DOCS.JSON', '/private-docs/docs.json/', '/private-docs/docs.json.gz',
   '/private-docs/source/manual-de-marca.pdf/..', '/private-docs/source/MANUAL-DE-MARCA.PDF',
 ];
 await test('traversal and unlisted files: 404 for the super admin, 401 signed out (nothing probed without a session)', async () => {
