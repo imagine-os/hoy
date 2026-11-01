@@ -307,6 +307,7 @@ export const strings: StringTable = {
   // M-01 dashboard
   'admin.dashboard.title': { es: 'Panel', en: 'Dashboard' },
   'admin.dashboard.members': { es: 'Miembros activos', en: 'Active members' },
+  'admin.dashboard.members.packs': { es: 'Con un paquete activo', en: 'With an active pack' },
   'admin.dashboard.revenue': { es: 'Ingresos 30 días', en: 'Revenue 30 days' },
   'admin.dashboard.occupancy': { es: 'Ocupación 7 días', en: 'Occupancy 7 days' },
   'admin.dashboard.arrivals': { es: 'Llegadas hoy', en: 'Arrivals today' },
@@ -385,6 +386,7 @@ export const strings: StringTable = {
   'admin.dashboard.system': { es: 'Sistema', en: 'System' },
 
   // M-02 content
+  'admin.content.later': { es: 'Aquí ves las clases, profesores y salas como están hoy. Editar este contenido desde la app llega en una próxima actualización; mientras tanto, los cambios no se guardan.', en: 'Here you see the classes, teachers and rooms as they are today. Editing this content from the app arrives in a coming update; until then, changes are not saved.' },
   'admin.content.title': { es: 'Contenido', en: 'Content' },
   'admin.content.subtitle': { es: 'Clases, profesores, modalidades y salas: la fuente de la app, el sitio y recepción.', en: 'Classes, teachers, modalities and rooms: the source for the app, the website and the desk.' },
   'admin.content.tab.class_templates': { es: 'Clases (plantillas)', en: 'Classes (templates)' },
@@ -617,6 +619,15 @@ export const strings: StringTable = {
   'admin.activity.after': { es: 'Después', en: 'After' },
   'admin.activity.raw': { es: 'Detalle', en: 'Detail' },
   'admin.activity.immutable': { es: 'Esta fila es inmutable.', en: 'This row is immutable.' },
+  'admin.activity.superAdminOnly': { es: 'El registro de actividad lo leen solo quienes tienen el rol Super Admin del estudio (Administración).', en: 'Only people with the studio\'s Super Admin role (Administration) can read the activity log.' },
+  'admin.activity.truncated': { es: 'Se muestran las {n} acciones más recientes. Elige un rango más corto para ver el resto.', en: 'Showing the {n} most recent actions. Choose a shorter range to see the rest.' },
+  'admin.activity.platform': { es: 'Operador de la plataforma', en: 'Platform operator' },
+  'admin.activity.unknownActor': { es: 'Usuario {id}', en: 'User {id}' },
+  'admin.activity.retry': { es: 'Reintentar', en: 'Retry' },
+  'admin.activity.empty.none': { es: 'Todavía no hay actividad registrada en este rango.', en: 'No activity has been recorded in this range yet.' },
+  'admin.activity.source.api': { es: 'Servidor', en: 'Server' },
+  'admin.activity.source.platform': { es: 'Plataforma', en: 'Platform' },
+  'admin.activity.retention.live': { es: 'Solo anexar: Company OS guarda cada acción y nadie puede editarla ni borrarla desde la app.', en: 'Append-only: Company OS keeps every action and nobody can edit or delete it from the app.' },
 
   // M-08 settings
   'admin.settings.title': { es: 'Ajustes y políticas', en: 'Settings & policies' },
@@ -824,6 +835,7 @@ export const strings: StringTable = {
   'admin.settings.readonly': { es: 'Solo lectura para tu rol', en: 'Read-only for your role' },
   'admin.settings.saved': { es: 'Guardado', en: 'Saved' },
   'admin.settings.unsaved': { es: 'Sin guardar', en: 'Unsaved' },
+  'admin.settings.saveFailed': { es: 'No se pudo guardar. Revisa tu conexión y vuelve a intentarlo.', en: 'Could not save. Check your connection and try again.' },
   'admin.settings.sec.profile': { es: 'Estudio', en: 'Studio' },
   'admin.settings.sec.openingHours': { es: 'Horarios', en: 'Opening hours' },
   // 0047 — M-08a WhatsApp contacts by topic (D-0022)
@@ -1459,6 +1471,7 @@ export const strings: StringTable = {
   'admin.settings.hours.import': { es: 'Importar festivos de Colombia {year}–{next}', en: 'Import Colombian holidays {year}–{next}' },
   'admin.settings.hours.import.done': { es: '{n} festivos añadidos', en: '{n} holidays added' },
   'admin.settings.hours.import.none': { es: 'Ya estaban todos los festivos', en: 'Every holiday was already there' },
+  'admin.settings.hours.import.stopped': { es: 'Se añadieron {n} de {total} festivos; se detuvo en el {date}: {reason}', en: '{n} of {total} holidays added; stopped at {date}: {reason}' },
   'admin.settings.hours.col.dates': { es: 'Fechas', en: 'Dates' },
   'admin.settings.hours.col.label': { es: 'Nombre', en: 'Name' },
   'admin.settings.hours.col.hours': { es: 'Horario', en: 'Hours' },

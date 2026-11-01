@@ -398,7 +398,7 @@ const png = () => new File([new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 
   check('gift: after unregistering, approvals carry no extra ops', M.reviewOps({ payment: it.payment, product: it.product, decision: 'approve', amountReceived: 600000, reason: '' }).length === 1);
 }
 
-// ── J4 / SW-02: the catalogue a signed-out visitor sees matches Hoy's recipe; the private class has no public price ──
+// ── J4 / SW-02: the catalogue a signed-out visitor reads live matches Hoy's recipe; the private class has no public price ──
 {
   // The Company OS checkout sits next to this repo (`../Company-OS`, CLAUDE.md); from a worktree, next to its main checkout.
   const root = dirname(execFileSync('git', ['rev-parse', '--path-format=absolute', '--git-common-dir']).toString().trim());
@@ -406,13 +406,27 @@ const png = () => new File([new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 
   let recipe = null, recipePath = candidates[0];
   for (const c of candidates) { recipe = await readFile(c, 'utf8').then(JSON.parse, () => null); if (recipe) { recipePath = c; break; } }
   const products = recipe?.records?.flatMap((r) => (r.entity === 'product' ? r.rows : [])) ?? [];
-  const provider = new M.CompanyOSProvider({ fetch: async () => { throw new Error('signed_out_read'); } });
-  const rows = await provider.list('plans');
+  // Lane F: signed out, the site reads the products live through the Hoy server's read identity (role public_site);
+  // the recipe's product policy for that role decides what a visitor sees. Played here on the recipe's own rows.
+  const policy = recipe?.policies?.public_site?.find((p) => p.entity === 'product' && p.actions.includes('read'));
+  const holds = (data, f) => f.and ? f.and.every((x) => holds(data, x)) : f.or ? f.or.some((x) => holds(data, x))
+    : f.op === 'eq' ? (data[f.field] ?? (f.field === 'active' ? true : null)) === f.value : f.op === 'neq' ? data[f.field] !== f.value : (() => { throw new Error(`op ${f.op}`); })();
+  const publicRows = products.filter((p) => policy && holds(p, policy.rowFilter)).map((p, i) => ({ id: `p${i}`, data: Object.fromEntries(Object.entries(p).filter(([k]) => policy.fields.includes(k))) }));
+  const provider = new M.CompanyOSProvider({
+    config: { tenant: 'hoy', apiBase: '/api/cos' }, getToken: async () => null,
+    fetch: async (url, init) => {
+      if (init.headers.authorization !== undefined) throw new Error('signed out, the browser sends no token');
+      const spec = JSON.parse(init.body);
+      return new Response(JSON.stringify({ data: spec.entity === 'product' ? publicRows : [] }), { status: 200, headers: { 'content-type': 'application/json' } });
+    },
+  });
+  const rows = products.length ? await provider.list('plans') : [];
   const shown = M.livePricing(rows, '2026-11-01');
+  if (products.length) check('J4 the recipe\'s public_site role reads products, and never the private class', Boolean(policy) && !products.some((p) => p.kind === 'private' && holds(p, policy.rowFilter)));
   check('J4 signed out, no private-class price is public (no private family row, nothing priced in it)', !rows.some((r) => r.family === 'privadas') && !shown.some((p) => p.family === 'privadas'), shown.filter((p) => p.family === 'privadas').map((p) => p.id).join(','));
   if (!products.length) { if (process.env.CI) check('SW-02 Hoy\'s recipe is readable (set HOY_RECIPE)', false, recipePath); else console.log(`skip SW-02 recipe comparison: ${recipePath} not found (set HOY_RECIPE)`); }
   else {
-    const priced = products.filter((p) => p.price > 0).map((p) => `${p.key}=${p.price}`).sort();
+    const priced = products.filter((p) => p.price > 0 && p.kind !== 'private').map((p) => `${p.key}=${p.price}`).sort();
     const visible = shown.map((p) => `${p.id}=${p.price}`).sort();
     check('SW-02 signed out, the catalogue keys and prices are the recipe\'s priced products', JSON.stringify(visible) === JSON.stringify(priced), `site ${visible.join(' ')} · recipe ${priced.join(' ')}`);
   }

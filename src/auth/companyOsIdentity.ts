@@ -3,16 +3,39 @@ import type { Role } from './roles';
 /**
  * Production identity rules (H-2, CU-01…CU-04, PL-04), kept pure so they are tested without a browser or Clerk.
  *
- * - The role comes from Company OS `GET /t/:t/me` (`roleKeys`), never from the browser. Hoy's launch roles are
- *   `member` (customer), `front_desk` and `administrator`; a Company OS super admin works as Administration here
- *   (no dev tools in production). Any other role key opens nothing (fail closed).
+ * - The role comes from Company OS `GET /t/:t/me` (`roleKeys`, `isSuperAdmin`), never from the browser. `ROLE_KEYS` is
+ *   the one table of Hoy's recipe role keys and the app role each opens; an unknown key opens nothing (fail closed).
  * - A Clerk session that is not yet a member of the tenant (`403 no access to this tenant` / `account_not_invited`)
  *   must finish sign-up: `POST /t/:t/signup` with name, WhatsApp and the required consents (ADR 0038).
- * - `caps` are carried for screen gates; Hoy's recipe gives its three roles none, so the role key decides.
+ * - `caps` are carried for screen gates; the role key decides the screens.
  */
-export const LAUNCH_ROLE_KEYS: Readonly<Record<string, Role>> = Object.freeze({ administrator: 'admin', front_desk: 'front_desk', member: 'customer' });
-/** Highest first: a person with several roles works with the widest launch role. */
-const ROLE_ORDER = ['administrator', 'front_desk', 'member'] as const;
+
+/**
+ * Company OS role key → HoyOS role (`src/auth/roles.ts`), in primary order: a person holding several roles works as
+ * the first one listed here. The order is the widest studio access first:
+ * Administration, Super admin, Coordinator, Finance, Front desk, Marketing, Maintenance, Developer, Teacher, Customer.
+ * Administration comes before Super admin because every Administration login also holds the tenant `super_admin`
+ * membership (decision AD-04: Company OS needs it for module settings and the team routes), so a person with both is
+ * Administration; Super admin is a `super_admin` login without `administrator` (or a platform operator).
+ * `super_admin` counts only with `/me` `isSuperAdmin` (the flag Company OS computes from that membership).
+ * `public_site` (ADR 0029, the signed-out site's service identity) is never a user role and is not listed.
+ */
+export const ROLE_KEYS: readonly { key: string; role: Role }[] = Object.freeze([
+  { key: 'administrator', role: 'admin' },
+  { key: 'super_admin', role: 'super_admin' },
+  { key: 'booking_manager', role: 'coordinator' },
+  { key: 'treasurer', role: 'finance' },
+  { key: 'front_desk', role: 'front_desk' },
+  { key: 'marketing', role: 'marketing' },
+  { key: 'maintenance', role: 'maintenance' },
+  { key: 'developer', role: 'developer' },
+  { key: 'coach', role: 'teacher' },
+  { key: 'member', role: 'customer' },
+] as const);
+/** Company OS role key → HoyOS role. A null-prototype map, so `__proto__` or `toString` are not keys. */
+export const ROLE_OF_KEY: Readonly<Record<string, Role>> = Object.freeze(Object.assign(Object.create(null) as Record<string, Role>, Object.fromEntries(ROLE_KEYS.map((r) => [r.key, r.role]))));
+/** HoyOS role → its Company OS role key (`public` has none). */
+export const KEY_OF_ROLE: Readonly<Partial<Record<Role, string>>> = Object.freeze(Object.fromEntries(ROLE_KEYS.map((r) => [r.role, r.key])));
 
 export interface MeInfo {
   userId: string;
@@ -42,12 +65,17 @@ export function parseMe(raw: unknown): MeInfo | null {
   };
 }
 
-/** The HoyOS role for a `/me` answer, or null when none of its role keys is a launch role. */
+/** The HoyOS role for a `/me` answer (its primary role, `ROLE_KEYS` order), or null when no key opens a role. */
 export function roleFromMe(me: MeInfo): Role | null {
-  if (me.isSuperAdmin) return 'admin';
-  const key = ROLE_ORDER.find((k) => me.roleKeys.includes(k));
-  return key ? LAUNCH_ROLE_KEYS[key] : null;
+  const held = (key: string) => (key === 'super_admin' ? me.isSuperAdmin : me.roleKeys.includes(key));
+  const hit = ROLE_KEYS.find((r) => held(r.key));
+  if (hit) return hit.role;
+  // A platform operator: `isSuperAdmin` without a tenant membership.
+  return me.isSuperAdmin ? 'super_admin' : null;
 }
+
+/** The session's `isSuperAdmin`: `/me` says so and the person works as Super admin (not an AD-04 Administration). */
+export const isSuperAdminMe = (me: MeInfo): boolean => me.isSuperAdmin && roleFromMe(me) === 'super_admin';
 
 export type MeResult =
   | { kind: 'member'; me: MeInfo }
@@ -117,7 +145,11 @@ export function signupFormErrors(form: SignupForm, config: SignupConfig): Partia
   return errors;
 }
 
-export const asksEmergencyContact = (config: SignupConfig) => config.facetFields.includes('emergency_contact_name') && config.facetFields.includes('emergency_contact_phone');
+const EMERGENCY = ['emergency_contact_name', 'emergency_contact_phone'] as const;
+/** Where the tenant keeps the emergency contact: on the person (Hoy since lane H2) or, for an older setup, the facet. */
+export const emergencyContactOn = (config: SignupConfig): 'person' | 'facet' | null =>
+  EMERGENCY.every((f) => config.personFields.includes(f)) ? 'person' : EMERGENCY.every((f) => config.facetFields.includes(f)) ? 'facet' : null;
+export const asksEmergencyContact = (config: SignupConfig) => emergencyContactOn(config) !== null;
 
 /** The `POST /t/:t/signup` body: only fields the tenant allows, phones as `+57 300…` with the digits kept. */
 export function signupBody(form: SignupForm, config: SignupConfig) {
@@ -126,7 +158,8 @@ export function signupBody(form: SignupForm, config: SignupConfig) {
   if (config.personFields.includes('name')) person.name = form.name.trim();
   if (config.personFields.includes('phone')) person.phone = phone(form.whatsapp);
   const facet: Record<string, string> = {};
-  if (asksEmergencyContact(config)) { facet.emergency_contact_name = form.ecName.trim(); facet.emergency_contact_phone = phone(form.ecPhone); }
+  const on = emergencyContactOn(config);
+  if (on) { const into = on === 'person' ? person : facet; into.emergency_contact_name = form.ecName.trim(); into.emergency_contact_phone = phone(form.ecPhone); }
   return { person, facet, consents: form.accepted ? config.consents.map((c) => ({ document: c.document, version: c.version })) : [] };
 }
 

@@ -63,6 +63,8 @@ try {
   const { getRoutes } = await server.ssrLoadModule('/src/app/registry.ts');
   const { routeManifest } = await server.ssrLoadModule('/src/app/manifest.ts');
   const data = await server.ssrLoadModule('/src/hub/hubMap.data.ts');
+  // The demo users live apart since Hoy all-roles lane D (hubMap.data.ts ships in production); joined here as before.
+  const { HUB_DEMO_USERS } = await server.ssrLoadModule('/src/hub/hubDemoUsers.ts');
   const { checkHubMapData } = await server.ssrLoadModule('/src/hub/hubMap.check.ts');
   problems.push(...checkHubMapData());
 
@@ -139,7 +141,7 @@ try {
     embed: { pattern: data.EMBED_PATTERN, note: data.EMBED_NOTE },
     roles: data.HUB_ROLES.map((r) => ({
       id: r.id, label: r.label, description: r.description, band: r.band, home: r.home, device: r.device,
-      ...(r.demoUser ? { demoUser: { id: r.demoUser.id, firstName: r.demoUser.firstName } } : {}),
+      ...(Object.hasOwn(HUB_DEMO_USERS, r.id) ? { demoUser: { id: HUB_DEMO_USERS[r.id].id, firstName: HUB_DEMO_USERS[r.id].firstName } } : {}),
       look: r.look, props: [r.props[0], r.props[1]],
     })),
     experiences, pages, tools,

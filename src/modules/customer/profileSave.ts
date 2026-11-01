@@ -2,6 +2,7 @@ import type { DataProvider } from '../../data/types';
 import type { ProfileRow, UserRow } from '../../data/schema';
 import { tenant } from '../../tenant/tenant';
 import { isPhone } from '../../i18n/format';
+import { PRODUCTION_BUILD } from '../../config/launch';
 
 export interface OwnProfile extends ProfileRow { birthday: string | null; emergency_contact: { name: string; phone: string } | null }
 export interface OwnRows { profile: OwnProfile; account: UserRow }
@@ -33,7 +34,40 @@ export async function readOwnProfile(data: DataProvider, actorId: string): Promi
 function owned(rows: OwnRows) {const p=rows.profile;return [p.id,p.full_name,p.initials,p.birthday??null,p.emergency_contact??null,rows.account.id,rows.account.phone];}
 export async function profileRevision(rows: OwnRows) {return digest(owned(rows));}
 async function digest(value: unknown) {const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify(value)));return [...new Uint8Array(bytes)].map(b=>b.toString(16).padStart(2,'0')).join('');}
-export async function saveOwnProfile(data: DataProvider, input: {actorId:string;role:string;requestId:string;expected:string;form:ProfileForm}, cancelled:()=>boolean=()=>false) {
+export interface ProfileSaveInput {actorId:string;role:string;requestId:string;expected:string;form:ProfileForm}
+const SAVE_ROLES=['customer','teacher','super_admin'];
+/** The values a save writes, as the rows read them back. */
+function written(f:ProfileForm){const name=f.full_name.trim();return {full_name:name,birthday:f.birthday||null,emergency_contact:f.ec_name?{name:f.ec_name.trim(),phone:f.ec_phone.trim()}:null,phone:f.phone.trim()};}
+const holds=(rows:OwnRows,f:ProfileForm)=>{const w=written(f);return rows.profile.full_name===w.full_name&&(rows.profile.birthday??null)===w.birthday&&JSON.stringify(rows.profile.emergency_contact??null)===JSON.stringify(w.emergency_contact)&&rows.account.phone===w.phone;};
+/**
+ * Production (Company OS): name, date of birth, emergency contact and phone are the person's fields, written in one
+ * keyed `/batch` (the action's request id is the Idempotency-Key, so a retry after a lost answer is the same write).
+ * The rows are read back: a value the backend did not keep is reported (`profile_unconfirmed`), never a silent save.
+ * The login email is never written here (the studio changes it).
+ */
+async function saveLiveProfile(data: DataProvider, input: ProfileSaveInput, cancelled:()=>boolean=()=>false) {
+  if(!data.atomic)throw Error('profile_atomic_required');
+  if(!SAVE_ROLES.includes(input.role))throw Error('profile_denied');
+  if(Object.keys(profileErrors(input.form)).length)throw Error('profile_validation');
+  const check=()=>{if(cancelled())throw Error('profile_cancelled');};check();
+  const rows=await readOwnProfile(data,input.actorId);check();
+  // A retry after a lost answer finds the save already there: that is the same request succeeding.
+  if(holds(rows,input.form))return {status:'saved' as const,profileId:rows.profile.id};
+  if(await profileRevision(rows)!==input.expected)throw Error('profile_stale');
+  const w=written(input.form);
+  await data.atomic(async tx=>{
+    check();
+    await tx.update('profiles',rows.profile.id,{full_name:w.full_name,birthday:w.birthday,emergency_contact:w.emergency_contact});
+    await tx.update('users',rows.account.id,{phone:w.phone});check();
+  },{idempotencyKey:`profile_save_${input.actorId}_${input.requestId}`});
+  const after=await readOwnProfile(data,input.actorId);check();
+  if(!holds(after,input.form))throw Error('profile_unconfirmed');
+  return {status:'saved' as const,profileId:after.profile.id};
+}
+/** Saves the signed-in person's own profile: Company OS in production, the review build's browser data otherwise. */
+export const saveOwnProfile: (data: DataProvider, input: ProfileSaveInput, cancelled?: ()=>boolean) => Promise<{status:'saved';profileId:string}> = PRODUCTION_BUILD ? saveLiveProfile : saveReviewProfile;
+/** The review build: the MockProvider's transaction with its own audit receipt (replay by request id). */
+async function saveReviewProfile(data: DataProvider, input: ProfileSaveInput, cancelled:()=>boolean=()=>false) {
   if(data.name!=='mock')throw Error('profile_disconnected');
   if(!data.atomic)throw Error('profile_atomic_required');
   if(!['customer','teacher','super_admin'].includes(input.role))throw Error('profile_denied');

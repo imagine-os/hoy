@@ -54,6 +54,9 @@ export const CONTRACT_REFUSALS = {
   already_signed_up: { es: 'Ya tienes una cuenta. Inicia sesión.', en: 'You already have an account. Sign in.' },
   person_email_mismatch: { es: 'Ese correo ya pertenece a otra persona. Escríbenos para revisarlo.', en: 'That email belongs to someone else. Write to us so we can check it.' },
   consent_required: { es: 'Acepta los términos y la política de privacidad para continuar.', en: 'Accept the terms and the privacy policy to continue.' },
+  email_change_not_allowed: { es: 'El estudio cambia el correo con el que entras. Escríbenos para hacerlo.', en: 'The studio changes the email you sign in with. Write to us to do it.' },
+  // Comms (notification preferences)
+  notification_pref_duplicate: { es: 'Esta preferencia ya se guardó. Actualiza la página para ver tu elección.', en: 'This preference was already saved. Refresh the page to see your choice.' },
   // Requests
   idempotency_conflict: { es: 'Este envío no coincide con el anterior. Actualiza la página e inténtalo de nuevo.', en: 'This submission does not match the previous one. Refresh the page and try again.' },
   idempotency_key_invalid: { es: 'No pudimos enviar la solicitud. Actualiza la página e inténtalo de nuevo.', en: 'We could not send the request. Refresh the page and try again.' },
@@ -64,6 +67,12 @@ export const CONTRACT_REFUSALS = {
   template_not_found: { es: 'Ese gasto fijo ya no existe. Actualiza la página.', en: 'That recurring expense no longer exists. Refresh the page.' },
   invalid_day_of_month: { es: 'El día del mes debe estar entre 1 y 28.', en: 'The day of the month must be between 1 and 28.' },
   template_in_use: { es: 'Hay gastos registrados con este gasto fijo: desactívalo en lugar de borrarlo.', en: 'Expenses were recorded with this recurring expense: deactivate it instead of deleting it.' },
+  // The activity log (GET /t/:t/audit, M-07): a filter the API refused.
+  invalid_query: { es: 'No pudimos leer el registro con ese filtro. Cambia el rango o la búsqueda e inténtalo de nuevo.', en: 'We could not read the log with that filter. Change the range or the search and try again.' },
+  // Forms (the privacy request, lane H2).
+  unknown_form: { es: 'Este formulario no está disponible. Escríbenos por WhatsApp.', en: 'This form is not available. Write to us on WhatsApp.' },
+  unknown_answer: { es: 'El formulario tiene un dato que no esperábamos. Actualiza la página e inténtalo de nuevo.', en: 'The form has a detail we did not expect. Refresh the page and try again.' },
+  server_set_field: { es: 'No pudimos enviar la solicitud. Actualiza la página e inténtalo de nuevo.', en: 'We could not send the request. Refresh the page and try again.' },
 } as const satisfies Record<string, RefusalCopy>;
 
 /** The connector's own codes: transport, session and launch scope. */
@@ -73,6 +82,8 @@ export const CONNECTOR_REFUSALS = {
   email_not_verified: { es: 'Confirma tu correo para continuar.', en: 'Confirm your email to continue.' },
   network_error: { es: 'Sin conexión. Revisa tu internet e inténtalo de nuevo con el mismo botón.', en: 'No connection. Check your internet and try again with the same button.' },
   service_unavailable: { es: 'El servicio no responde ahora. Inténtalo en unos minutos con el mismo botón.', en: 'The service is not responding right now. Try again in a few minutes with the same button.' },
+  // The Hoy server's per-visitor limit on the website's signed-out reads (lane F).
+  rate_limited: { es: 'Demasiadas solicitudes seguidas. Espera un momento y vuelve a intentarlo.', en: 'Too many requests in a row. Wait a moment and try again.' },
   concept_required: { es: 'Falta el concepto.', en: 'A concept is needed.' },
   reference_required: { es: 'Escribe la referencia de la transferencia.', en: 'Enter the transfer reference.' },
   not_found: { es: 'No encontramos este registro. Puede que ya no exista.', en: 'We could not find this record. It may no longer exist.' },
@@ -80,6 +91,18 @@ export const CONNECTOR_REFUSALS = {
   not_in_launch: { es: 'Esta función aún no está disponible.', en: 'This feature is not available yet.' },
   promotions_disabled: { es: 'Las promociones aún no están disponibles.', en: 'Promotions are not available yet.' },
   read_only: { es: 'Este contenido no se edita desde la app.', en: 'This content is not edited from the app.' },
+  // Lane H2: email goes out only through Company OS; legal texts live in the build.
+  email_not_connected: { es: 'El envío de correos desde aquí aún no está disponible. Escribe por WhatsApp.', en: 'Sending email from here is not available yet. Write on WhatsApp.' },
+  legal_document_in_build: { es: 'Este documento se publica con una nueva versión de la app; aquí solo se publican los que el cliente acepta.', en: 'This document is published with a new version of the app; only the documents customers accept are published here.' },
+  legal_document_current: { es: 'Esta es la versión que se pide al registrarse. Publica otra versión en su lugar.', en: 'This is the version asked for at sign-up. Publish another version instead.' },
+  // Hoy all-roles, lane H1: refusals the app gives itself before asking Company OS.
+  content_later: { es: 'Editar este contenido desde la app llega en una próxima actualización. Por ahora no se guardó nada.', en: 'Editing this content from the app arrives in a coming update. Nothing was saved for now.' },
+  checkout_server_only: { es: 'Esta compra se hace desde la página de pago. Vuelve a elegir el paquete.', en: 'This purchase is made from the payment page. Choose the pack again.' },
+  // View-as (Hoy all-roles, lane D): a super admin viewing as another role can look, not change (src/auth/viewAs.ts).
+  view_as_read_only: { es: 'Estás viendo como otro rol: es solo lectura. Sal de «Ver como» para hacer cambios.', en: 'You are viewing as another role: it is read-only. Exit “View as” to make changes.' },
+  // Review round 1 (M3, M5): a holiday is saved, but the bookings closed days (a module setting) could not follow it.
+  closed_dates_admin_only: { es: 'Se guardó. Los días cerrados de las reservas solo los cambia Administración: pídele que abra Ajustes › Horario, revise los días cerrados de recepción (añadir o quitar este) y guarde.', en: 'Saved. Only Administration changes the bookings’ closed days: ask them to open Settings › Hours, check the front desk closed days (add or remove this one) and save.' },
+  closed_dates_not_synced: { es: 'Se guardó, pero no pudimos marcar el día como cerrado en las reservas. Vuelve a guardar en un momento.', en: 'Saved, but we could not mark the day closed in bookings. Save again in a moment.' },
 } as const satisfies Record<string, RefusalCopy>;
 
 export type ContractRefusalCode = keyof typeof CONTRACT_REFUSALS;
@@ -102,3 +125,15 @@ export function refusalCopy(code: string, lang: Lang = 'es'): string {
   const line = (lang === 'en' ? GENERIC_REFUSAL.en : GENERIC_REFUSAL.es) || GENERIC_REFUSAL.es;
   return line.replace('{code}', code || 'unknown');
 }
+
+/**
+ * The line a screen shows for a failed action: the code's copy when the error carries a code this table knows, else
+ * the screen's own `fallback` (a network failure, a bug). Never the raw code (review round 1, M5, L5, L6).
+ */
+export function failureCopy(e: unknown, lang: Lang, fallback: string): string {
+  const code = e && typeof e === 'object' && typeof (e as { code?: unknown }).code === 'string' ? (e as { code: string }).code : '';
+  return code && hasRefusalCopy(code) ? refusalCopy(code, lang) : fallback;
+}
+
+/** The two codes that mean "the holiday is saved; only the bookings closed days did not follow" (a warning, not a failure). */
+export const SAVED_BUT_NOT_SYNCED: readonly string[] = ['closed_dates_admin_only', 'closed_dates_not_synced'];

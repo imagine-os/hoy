@@ -27,6 +27,7 @@ import { need } from './actions';
 import { M08g } from './specs';
 import { PRODUCTION_BUILD } from '../../config/launch';
 import { ReceptionHoursPanel } from './reception/ReceptionHoursPanel';
+import { failureCopy, SAVED_BUT_NOT_SYNCED } from '../../data/companyos/refusals';
 
 const KINDS: readonly HoursOverrideKind[] = ['holiday', 'special', 'event'];
 const KIND_TONE: Record<HoursOverrideKind, BadgeTone> = { holiday: 'danger', special: 'highlight', event: 'primary' };
@@ -62,12 +63,27 @@ const toRow = (d: Draft, by: string): Partial<HoursOverrideRow> => ({
  * M-08g `/admin/settings/hours` — the dated exceptions to the weekly hours (D-0016). Rendered inside the
  * M-08 settings shell (SettingsPage group `hours`). hours.write gates every write; every write is audited.
  */
-/** AD-05: in the production build the reception hours and closed days live in the bookings module settings (J1b). */
+/**
+ * AD-05: in the production build the reception hours and closed days live in the bookings module settings (J1b), and
+ * the holiday and special hours (`hours_override`, lane H2) sit under them: the site, the app and the schedule read
+ * them, and a closed one also closes the day in bookings (review round 1, M3/M5). When an override changes the closed
+ * days, the reception panel reads them again.
+ */
 export function HoursSettings() {
-  return PRODUCTION_BUILD ? <ReceptionHoursPanel /> : <ReviewHoursSettings />;
+  const [closedDatesVersion, setClosedDatesVersion] = useState(0);
+  if (!PRODUCTION_BUILD) return <HolidayHoursSettings />;
+  return (
+    <div className="stack">
+      <ReceptionHoursPanel closedDatesVersion={closedDatesVersion} />
+      <HolidayHoursSettings onClosedDates={() => setClosedDatesVersion((n) => n + 1)} />
+    </div>
+  );
 }
 
-function ReviewHoursSettings() {
+/** A write that saved the override but could not close the day in bookings: a warning in words, not a failure. */
+const savedButNotSynced = (e: unknown): boolean => SAVED_BUT_NOT_SYNCED.includes((e as { code?: string } | null)?.code ?? '');
+
+function HolidayHoursSettings({ onClosedDates }: { onClosedDates?: () => void }) {
   const { t, bi, lang } = useI18n();
   const { can, user } = useSession();
   const data = useData();
@@ -86,6 +102,8 @@ function ReviewHoursSettings() {
   const dates = (o: HoursOverrideRow) => (o.start_date === o.end_date ? fmt(o.start_date) : `${fmt(o.start_date)} – ${fmt(o.end_date)}`);
   const hoursCell = (o: HoursOverrideRow) => (o.closed ? t('admin.settings.hours.closedCell') : o.open && o.close ? `${o.open}–${o.close}` : t('admin.settings.hours.usual'));
   const pendingGoogle = (o: HoursOverrideRow) => !o.google_synced_at || o.google_synced_at < o.updated_at;
+  /** A failure in words: the code's copy, else the screen's line with the error's text (review round 1, M5). */
+  const failure = (e: unknown, key: string) => failureCopy(e, lang, t(key, { error: (e as Error)?.message ?? String(e) }));
 
   /** Inserts every Colombian holiday from today to the end of next year that has no override on its date yet. */
   const importHolidays = async (): Promise<number> => {
@@ -94,12 +112,24 @@ function ReviewHoursSettings() {
     const current = await data.list<HoursOverrideRow>('hours_overrides');
     const taken = new Set(current.map((o) => o.start_date));
     const fresh = upcomingColombianHolidays(today).filter((h) => !taken.has(h.date));
+    // Item by item (one override per holiday); the first refusal stops the import and is named with its date.
+    const added: string[] = [];
+    let warning: unknown = null;
     for (const h of fresh) {
-      await data.insert<HoursOverrideRow>('hours_overrides', { start_date: h.date, end_date: h.date, closed: true, open: null, close: null, label: h.label, kind: 'holiday', source: 'colombia', note: null, google_synced_at: null, created_by: user.id });
+      try {
+        await data.insert<HoursOverrideRow>('hours_overrides', { start_date: h.date, end_date: h.date, closed: true, open: null, close: null, label: h.label, kind: 'holiday', source: 'colombia', note: null, google_synced_at: null, created_by: user.id });
+        added.push(h.date);
+      } catch (e) {
+        if (savedButNotSynced(e)) { added.push(h.date); warning = e; continue; }
+        if (added.length) onClosedDates?.();
+        throw new Error(t('admin.settings.hours.import.stopped', { n: added.length, total: fresh.length, date: formatDate(fromDateKey(h.date), lang, { day: 'numeric', month: 'short' }), reason: failureCopy(e, lang, (e as Error)?.message ?? String(e)) }));
+      }
     }
-    await audit('hours.import_holidays', 'hours_overrides', null, { added: fresh.length, dates: fresh.map((h) => h.date) });
-    toast(fresh.length ? t('admin.settings.hours.import.done', { n: fresh.length }) : t('admin.settings.hours.import.none'), fresh.length ? 'success' : 'neutral');
-    return fresh.length;
+    await audit('hours.import_holidays', 'hours_overrides', null, { added: added.length, dates: added });
+    if (added.length) onClosedDates?.();
+    toast(added.length ? t('admin.settings.hours.import.done', { n: added.length }) : t('admin.settings.hours.import.none'), added.length ? 'success' : 'neutral');
+    if (warning) toast(failureCopy(warning, lang, ''), 'warn', 8000);
+    return added.length;
   };
 
   const save = async (d: Draft): Promise<HoursOverrideRow> => {
@@ -127,16 +157,24 @@ function ReviewHoursSettings() {
     const bad = validateOverride(draft);
     if (bad) { setError(bad); return; }
     setBusy(true);
-    try { await save(draft); toast(t('admin.settings.hours.saved'), 'success'); setDraft(null); }
-    catch (e) { toast(t('admin.settings.hours.err.save', { error: (e as Error).message }), 'danger'); }
+    try { await save(draft); toast(t('admin.settings.hours.saved'), 'success'); setDraft(null); onClosedDates?.(); }
+    catch (e) {
+      // The override was written: the reception panel reads the closed days again either way (review round 2, L1).
+      if (savedButNotSynced(e)) { toast(failureCopy(e, lang, ''), 'warn', 8000); setDraft(null); onClosedDates?.(); }
+      else toast(failure(e, 'admin.settings.hours.err.save'), 'danger');
+    }
     finally { setBusy(false); }
   };
   const doDelete = async () => {
     if (!draft?.id) return;
     if (!confirmDelete) { setConfirmDelete(true); return; }
     setBusy(true);
-    try { await remove(draft.id); toast(t('admin.settings.hours.deleted'), 'success'); setDraft(null); }
-    catch (e) { toast(t('admin.settings.hours.err.delete', { error: (e as Error).message }), 'danger'); }
+    try { await remove(draft.id); toast(t('admin.settings.hours.deleted'), 'success'); setDraft(null); onClosedDates?.(); }
+    catch (e) {
+      // The override was written: the reception panel reads the closed days again either way (review round 2, L1).
+      if (savedButNotSynced(e)) { toast(failureCopy(e, lang, ''), 'warn', 8000); setDraft(null); onClosedDates?.(); }
+      else toast(failure(e, 'admin.settings.hours.err.delete'), 'danger');
+    }
     finally { setBusy(false); setConfirmDelete(false); }
   };
   const open = (d: Draft) => { setDraft(d); setError(null); setConfirmDelete(false); };
@@ -166,13 +204,14 @@ function ReviewHoursSettings() {
     { key: 'closed', label: t('admin.settings.hours.col.hours'), sortable: false, render: (o) => <span className="small">{hoursCell(o)}</span> },
     // Kind and source share a column so the table fits a 1280 settings column without a horizontal scroll.
     { key: 'kind', label: `${t('admin.settings.hours.col.kind')} · ${t('admin.settings.hours.col.source')}`, sortable: false, render: (o) => <span className="row wrap hours-badges"><Badge tone={KIND_TONE[o.kind]}>{t(`admin.settings.hours.kind.${o.kind}`)}</Badge><Badge tone={o.source === 'colombia' ? 'neutral' : 'primary'}>{t(`admin.settings.hours.source.${o.source}`)}</Badge></span> },
-    { key: 'google_synced_at', label: <span title={t('admin.settings.hours.google.hint')}>{t('admin.settings.hours.col.google')}</span>, sortable: false, render: (o) => <Badge tone={pendingGoogle(o) ? 'warn' : 'success'}>{t(pendingGoogle(o) ? 'admin.settings.hours.google.pending' : 'admin.settings.hours.google.sent')}</Badge> },
+    // Google Business Profile isn't connected at launch (M-10a is review-only): no "pending Google" column in production.
+    ...(PRODUCTION_BUILD ? [] : [{ key: 'google_synced_at' as const, label: <span title={t('admin.settings.hours.google.hint')}>{t('admin.settings.hours.col.google')}</span>, sortable: false, render: (o: HoursOverrideRow) => <Badge tone={pendingGoogle(o) ? 'warn' : 'success'}>{t(pendingGoogle(o) ? 'admin.settings.hours.google.pending' : 'admin.settings.hours.google.sent')}</Badge> }]),
   ];
 
   const next30 = datesBetween(today, addDaysToKey(today, 29));
 
   return (
-    <>
+    <div className="stack" data-holiday-hours>
       <Notice tone="info" icon="calendar-clock" title={t('admin.settings.hours.precedence.title')}>
         {t('admin.settings.hours.precedence')} {t('admin.settings.hours.weekly', { sentence: bi(hours.sentence) })} ·{' '}
         <Link to="/admin/settings">{t('admin.settings.hours.editWeekly')}</Link>
@@ -185,7 +224,7 @@ function ReviewHoursSettings() {
           {canWrite
             ? (
               <div className="row wrap">
-                <Button size="sm" icon="plus" onClick={() => open(emptyDraft(today))}>{t('admin.settings.hours.add')}</Button>
+                <Button size="sm" icon="plus" data-hours-add onClick={() => open(emptyDraft(today))}>{t('admin.settings.hours.add')}</Button>
                 <Button size="sm" variant="secondary" icon="download" onClick={() => { importHolidays().catch((e: Error) => toast(t('admin.settings.hours.err.save', { error: e.message }), 'danger')); }}>{t('admin.settings.hours.import', { year, next: year + 1 })}</Button>
               </div>
             )
@@ -225,20 +264,20 @@ function ReviewHoursSettings() {
             {draft.id ? <Button variant="danger" size="sm" icon="trash" disabled={busy} onClick={doDelete}>{confirmDelete ? t('admin.settings.hours.delete.confirm') : t('core.common.delete')}</Button> : <span />}
             <div className="row">
               <Button variant="ghost" size="sm" onClick={() => setDraft(null)}>{t('core.common.cancel')}</Button>
-              <Button size="sm" loading={busy} onClick={submit}>{t('core.common.save')}</Button>
+              <Button size="sm" loading={busy} data-hours-save onClick={submit}>{t('core.common.save')}</Button>
             </div>
           </div>
         ) : undefined}
       >
         {draft && (
-          <div className="stack">
+          <div className="stack" data-hours-drawer>
             {error && <Notice tone="danger">{t(error)}</Notice>}
             <div className="grid grid-2">
               <Field label={t('admin.settings.hours.f.start')} required>{(id) => <Input id={id} type="date" value={draft.start_date} disabled={!canWrite} invalid={error === 'admin.settings.hours.err.start'} onChange={(e) => setDraft({ ...draft, start_date: e.target.value, end_date: draft.end_date < e.target.value ? e.target.value : draft.end_date })} />}</Field>
               <Field label={t('admin.settings.hours.f.end')}>{(id) => <Input id={id} type="date" value={draft.end_date} min={draft.start_date} disabled={!canWrite} invalid={error === 'admin.settings.hours.err.end'} onChange={(e) => setDraft({ ...draft, end_date: e.target.value })} />}</Field>
             </div>
             <div className="grid grid-2">
-              <Field label={t('admin.settings.hours.f.labelEs')} required>{(id) => <Input id={id} value={draft.label_es} disabled={!canWrite} invalid={error === 'admin.settings.hours.err.label'} placeholder="Día de la Raza" onChange={(e) => setDraft({ ...draft, label_es: e.target.value })} />}</Field>
+              <Field label={t('admin.settings.hours.f.labelEs')} required>{(id) => <Input id={id} data-hours-label-es value={draft.label_es} disabled={!canWrite} invalid={error === 'admin.settings.hours.err.label'} placeholder="Día de la Raza" onChange={(e) => setDraft({ ...draft, label_es: e.target.value })} />}</Field>
               <Field label={t('admin.settings.hours.f.labelEn')} hint={t('admin.settings.hours.f.labelEn.hint')}>{(id) => <Input id={id} value={draft.label_en} disabled={!canWrite} placeholder="Columbus Day" onChange={(e) => setDraft({ ...draft, label_en: e.target.value })} />}</Field>
             </div>
             <Toggle checked={draft.closed} disabled={!canWrite} label={t('admin.settings.hours.f.closed')} onChange={(on) => setDraft({ ...draft, closed: on, kind: on && draft.kind === 'special' ? 'holiday' : !on && draft.kind === 'holiday' ? 'special' : draft.kind })} />
@@ -250,10 +289,10 @@ function ReviewHoursSettings() {
             )}
             <Field label={t('admin.settings.hours.f.kind')}>{(id) => <Select id={id} value={draft.kind} disabled={!canWrite} onChange={(e) => setDraft({ ...draft, kind: e.target.value as HoursOverrideKind })}>{KINDS.map((k) => <option key={k} value={k}>{t(`admin.settings.hours.kind.${k}`)}</option>)}</Select>}</Field>
             <Field label={t('admin.settings.hours.f.note')}>{(id) => <textarea id={id} className="input adm-textarea" rows={2} value={draft.note} disabled={!canWrite} onChange={(e) => setDraft({ ...draft, note: e.target.value })} />}</Field>
-            {draft.id && <p className="xs muted">{t('admin.settings.hours.google.hint')}</p>}
+            {draft.id && !PRODUCTION_BUILD && <p className="xs muted">{t('admin.settings.hours.google.hint')}</p>}
           </div>
         )}
       </Drawer>
-    </>
+    </div>
   );
 }

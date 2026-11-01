@@ -78,7 +78,8 @@ export function packageLots(rows: ClassLedgerRow[]): PackageLot[] {
   return lots;
 }
 
-const frozenOn = (row: ClassLedgerRow, day: string) =>
+/** The lot is frozen on `day` (`frozen_until` is the last frozen day). */
+export const frozenOn = (row: ClassLedgerRow, day: string) =>
   !!row.frozen_from && !!row.frozen_until && row.frozen_from <= day && day <= row.frozen_until;
 const liveOn = (row: ClassLedgerRow, day: string) => !row.expires_at || row.expires_at >= day;
 

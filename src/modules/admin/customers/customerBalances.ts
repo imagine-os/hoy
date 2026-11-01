@@ -56,3 +56,26 @@ export const BALANCE_QUERIES = {
   left: { entity: 'credit_entry', aggregate: { groupBy: ['lot'], metrics: [{ op: 'sum', field: 'delta', alias: 'left' }] } },
   vouchers: { entity: 'voucher' },
 } as const;
+
+/** A `/query` row: id and stamps at the top, the entity's fields under `data` (integration guide §4); aggregates are flat. */
+export type QueryRow = { id: string; data?: Record<string, unknown>; createdAt?: string } & Record<string, unknown>;
+const fieldsOf = (r: QueryRow): Record<string, unknown> => (r.data && typeof r.data === 'object' ? r.data : r);
+const text = (v: unknown) => (typeof v === 'string' ? v : null);
+const count = (v: unknown) => (typeof v === 'number' ? v : Number(v) || 0);
+export interface CustomerListRow { id: string; name: string; email: string; phone: string | null; createdAt: string; plan_name: string; remaining: number; expires: string; frozen: boolean; vouchers: number }
+
+/** AD-07: one row per customer (person with a member record) with their pack, classes left, expiry and vouchers. */
+export function customerListRows(rows: { people: QueryRow[]; products: QueryRow[]; lots: QueryRow[]; left: QueryRow[]; vouchers: QueryRow[] }, today: string): CustomerListRow[] {
+  const balances = customerBalances({
+    lots: rows.lots.map<Lot>((r) => { const l = fieldsOf(r); return { id: r.id, person: text(l.person) ?? '', source: text(l.source) ?? 'comp', product: text(l.product), valid_from: text(l.valid_from), valid_until: text(l.valid_until), frozen_from: text(l.frozen_from), frozen_until: text(l.frozen_until), voucher: text(l.voucher) }; }),
+    left: rows.left.map<LotLeft>((x) => ({ lot: text(x.lot) ?? '', left: count(x.left) })),
+    vouchers: rows.vouchers.map<Voucher>((r) => { const v = fieldsOf(r); return { id: r.id, buyer: text(v.buyer), redeemed_by: text(v.redeemed_by), uses: count(v.uses), max_uses: count(v.max_uses) || 1, valid_until: text(v.valid_until) }; }),
+    today,
+  });
+  const productName = new Map(rows.products.map((r) => [r.id, text(fieldsOf(r).name) ?? '']));
+  return rows.people.map((r) => {
+    const p = fieldsOf(r), b = balances.get(r.id);
+    return { id: r.id, name: text(p.name) ?? '—', email: text(p.email) ?? '', phone: text(p.phone) ?? text(p.whatsapp), createdAt: text(r.createdAt) ?? '',
+      plan_name: b?.product ? productName.get(b.product) ?? '' : '', remaining: b?.remaining ?? 0, expires: b?.expires ?? '', frozen: b?.frozen ?? false, vouchers: b?.vouchers ?? 0 };
+  });
+}

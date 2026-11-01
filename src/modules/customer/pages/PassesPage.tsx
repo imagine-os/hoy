@@ -28,6 +28,9 @@ import { PageHead } from '../ui';
 import { SERVER_RULES } from '../booking/bookingPolicy';
 import { useLivePricing } from '../../../data/livePricing';
 
+/** Production: a pack (or a class) is bought on H-5's payment page by product key; Company OS prices it. */
+const payPath = (key: string) => `/app/pay/product/${encodeURIComponent(key)}`;
+
 const PENDING_PASS_KEY = 'hoyos.customer.pendingPass';
 
 /** C-07 — the trial class and the individual class: pay one class at a time (0051). */
@@ -101,6 +104,8 @@ export function ClassesPage() {
   const { user } = useSession();
   const ent = useEntitlements();
   const { freeze, resume } = usePackageActions();
+  const go = useNavigate();
+  const prices = useLivePricing();
   const [buying, setBuying] = useState<PriceItem | null>(null);
   const catalog=useOperationalCatalog(),review=useReviewedQuote(catalog,buying?.id??null,1,30);
   const purchaseKey=useRef(crypto.randomUUID()),purchaseBusy=useRef(false);
@@ -112,7 +117,11 @@ export function ClassesPage() {
   const [done, setDone] = useState(false);
   const [flash, setFlash] = useState<string | null>(null);
   const { pkg } = ent;
-  const packs = [...PACKAGE_IDS, 'single'].flatMap(id=>{const q=catalog.quote(id);return q?[quotedItem(q)]:[];});
+  // "Buy more": production lists the product master's current packs (live pricing, like C-06) and opens the payment
+  // page; the review build keeps its browser quote and simulated checkout. A single class is paid when it is booked.
+  const packs = SERVER_RULES
+    ? PACKAGE_IDS.flatMap((id) => { const p = prices.item(id); return p ? [p] : []; })
+    : [...PACKAGE_IDS, 'single'].flatMap(id=>{const q=catalog.quote(id);return q?[quotedItem(q)]:[];});
   const ledger = [...ent.ledger].sort((a, b) => b.created_at.localeCompare(a.created_at));
   const today = dateKey();
   const soon = !pkg.frozen && pkg.expiresAt && (fromDateKey(pkg.expiresAt).getTime() - Date.now()) < 7 * MS.day;
@@ -146,7 +155,8 @@ export function ClassesPage() {
   const packGrid = (
     <section className="stack-sm">
       <h2 className="cust-h2">{t('customer.classes.topUp')}</h2>
-      <Card padding="none">{packs.map((p) => <PriceRow key={p.id} item={p} onSelect={p=>{purchaseKey.current=crypto.randomUUID();setDone(false);setPurchaseError(false);setBuying(p);}} />)}</Card>
+      {SERVER_RULES && packs.length === 0 && !prices.loading && <Notice tone="warn">{t('quotes.unavailable')}</Notice>}
+      <Card padding="none">{packs.map((p) => <PriceRow key={p.id} item={p} onSelect={p=>{if(SERVER_RULES){go(payPath(p.id));return;}purchaseKey.current=crypto.randomUUID();setDone(false);setPurchaseError(false);setBuying(p);}} />)}</Card>
       <p className="xs muted">{t('customer.classes.topUp.note')}</p>
     </section>
   );

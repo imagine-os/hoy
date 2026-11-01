@@ -1,17 +1,29 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ClerkProvider, useAuth, useClerk } from '@clerk/react';
-import type { Role } from './roles';
+import { ROLE_LABEL, type Role } from './roles';
 import { roleCan, type Permission } from './permissions';
 import { SessionContext, type SessionCtx, type SessionStatus, type SessionUser } from './sessionContext';
 import { cosPath, loadAppConfig, type AppConfig } from './appConfig';
-import { classifyMe, roleFromMe, type MeInfo } from './companyOsIdentity';
+import { classifyMe, isSuperAdminMe, roleFromMe, type MeInfo } from './companyOsIdentity';
 import { setSessionTokenSource, subscribeUnauthorized } from './sessionToken';
+import { isViewAsFailure, isViewableRole, loadViewAsSample, publishViewAs, readStoredViewAs, storeViewAs, type ViewAsSample, type ViewAsSampleFailure } from './viewAs';
+import { failureCopy } from '../data/companyos/refusals';
+import { cosJson } from './cosRequest';
+import { useI18n } from '../i18n/I18nProvider';
+import { ViewAsBanner } from '../components/molecule/ViewAsBanner/ViewAsBanner';
+import { EmptyState } from '../components/molecule/EmptyState/EmptyState';
 
 /**
  * The production session (H-2, PL-04): Clerk proves who the person is; Company OS `GET /t/:t/me` says whether they
  * belong to the studio and with which role. The browser never decides a role. Nothing is kept in localStorage: on
  * sign-out (or a session ended in another tab, which Clerk syncs) the whole tree remounts, so no screen keeps the
  * previous person's data.
+ *
+ * View-as (Hoy all-roles, lane D; `src/auth/viewAs.ts`): a super admin (`isSuperAdminMe`) may view the studio as any
+ * other signed-in role, read-only. The viewed role is kept in this tab's sessionStorage (`hoyos.viewAs`); for anyone
+ * else a stored value is removed and ignored. While viewing as, `role` is the viewed role (no super-admin bypass),
+ * `user` stays the real person, `viewAsPerson` is a sample person of that role (by membership, read from Company OS),
+ * the provider aliases the session user to them and the transport refuses writes. Switching remounts the tree.
  */
 export default function ProductionSession({ children }: { children: ReactNode }) {
   const [config, setConfig] = useState<AppConfig | null>(null);
@@ -54,7 +66,7 @@ const visitorHas = (roles: Role[]) => roles.includes('public');
 
 function visitorSession(status: SessionStatus, refresh: () => void, signOut: () => Promise<void> = async () => {}, signedIn = false): SessionCtx {
   return {
-    status, signedIn, user: VISITOR, role: 'public', isSuperAdmin: false, canDevMode: false, devMode: false, viewAs: null, caps: [],
+    status, signedIn, user: VISITOR, role: 'public', isSuperAdmin: false, canDevMode: false, devMode: false, viewAs: null, viewAsPerson: null, caps: [],
     switchUser: (id) => { if (signedIn && (id === 'public' || id === VISITOR.id)) void signOut(); },
     setDevMode: noop, setViewAs: noop, signOut, refresh, can: visitorCan, hasRole: visitorHas,
   };
@@ -90,6 +102,11 @@ function ClerkSession({ config, children }: { config: AppConfig; children: React
   const [nonce, setNonce] = useState(0);
   const [me, setMe] = useState<MeState | null>(null);
   const refresh = useCallback(() => setNonce((n) => n + 1), []);
+  // View-as: the role this tab keeps (checked against /me below) and the sample person found for it.
+  const [viewAs, setViewAsState] = useState<Role | null>(readStoredViewAs);
+  const [sample, setSample] = useState<{ key: string; person: ViewAsSample | ViewAsSampleFailure | null } | null>(null);
+  // A failed sample read offers Retry (review round 2, L2): a new attempt reads again.
+  const [sampleAttempt, setSampleAttempt] = useState(0);
 
   // Clerk that never loads (`status: 'error'`, or still loading after the timeout) is an error, not an endless spinner.
   // `'degraded'` counts as loaded (Clerk sets `isLoaded` for it). A Clerk that loads late still recovers on its own.
@@ -124,6 +141,57 @@ function ClerkSession({ config, children }: { config: AppConfig; children: React
   useEffect(() => subscribeUnauthorized(refresh), [refresh]);
 
   const key = isSignedIn ? `${userId}|${sessionId}|${nonce}` : '';
+  // Whoever /me says is signed in (null while loading, signed out or not a member), and whether they are a super admin.
+  const memberInfo = me && me.key === key && me.status === 'member' && me.me ? me.me : null;
+  const realSuperAdmin = Boolean(memberInfo && isSuperAdminMe(memberInfo));
+  const activeViewAs = realSuperAdmin && isViewableRole(viewAs) ? viewAs : null;
+  const sampleKey = activeViewAs && memberInfo ? `${key}|${memberInfo.userId}|${activeViewAs}` : '';
+
+  // Signed out (however: our sign-out, another tab, an expired session), another person signed in, or someone who may
+  // not view as (a planted value): forget it, in state and in this tab, so nothing stays read-only or comes back.
+  const viewAsOwner = useRef<string | null>(null);
+  useEffect(() => {
+    if (!isLoaded) return;
+    if (!isSignedIn) { viewAsOwner.current = null; storeViewAs(null); if (viewAs) setViewAsState(null); return; }
+    if (!memberInfo) return;
+    if (viewAsOwner.current !== null && viewAsOwner.current !== memberInfo.userId) { storeViewAs(null); setViewAsState(null); }
+    viewAsOwner.current = memberInfo.userId;
+    if (!realSuperAdmin && (viewAs || readStoredViewAs())) { storeViewAs(null); setViewAsState(null); }
+  }, [isLoaded, isSignedIn, memberInfo, realSuperAdmin, viewAs]);
+
+  // The sample person for the viewed role: reads only (GET /admin/users, POST /query), with the super admin's token.
+  useEffect(() => {
+    if (!sampleKey || !activeViewAs || !memberInfo) return;
+    let alive = true;
+    const read = async (method: 'GET' | 'POST', path: string, body?: unknown) => {
+      const res = await cosJson(path as `/${string}`, { method, body });
+      if (res.status !== 200) {
+        // The refusal's own code when it is a plain key, else what the status means (the copy comes from the code table).
+        const code = (res.body as { error?: unknown } | null)?.error;
+        throw Object.assign(new Error(`view_as_sample_${res.status}`), { code: typeof code === 'string' && /^[a-z][a-z0-9_]{0,63}$/.test(code) ? code : res.status === 401 || res.status === 403 ? 'forbidden' : 'view_as_unavailable' });
+      }
+      return res.body;
+    };
+    loadViewAsSample(activeViewAs, read, memberInfo.userId).then((person) => { if (alive) setSample({ key: sampleKey, person }); });
+    return () => { alive = false; };
+  }, [sampleKey, activeViewAs, memberInfo, sampleAttempt]);
+  const sampleAnswer = sample && sample.key === sampleKey ? sample.person : null;
+  const sampleFailure = isViewAsFailure(sampleAnswer) ? sampleAnswer : null;
+  const samplePerson = isViewAsFailure(sampleAnswer) ? null : sampleAnswer;
+  const retrySample = useCallback(() => { setSample(null); setSampleAttempt((n) => n + 1); }, []);
+  const sampleLoading = Boolean(sampleKey) && sample?.key !== sampleKey;
+
+  // The transport and the provider read this (read-only, and the alias). A layout effect runs before any screen's
+  // effects can send a request; until then the transport refuses writes while this tab keeps a view-as value.
+  const samplePersonId = samplePerson?.personId ?? null;
+  useLayoutEffect(() => { publishViewAs(activeViewAs ? { personId: samplePersonId } : null); }, [activeViewAs, samplePersonId]);
+
+  const setViewAs = useCallback((role: Role | null) => {
+    if (!realSuperAdmin) return;
+    if (role !== null && !isViewableRole(role)) return;
+    storeViewAs(role);
+    setViewAsState(role);
+  }, [realSuperAdmin]);
   useEffect(() => {
     if (!isLoaded || !isSignedIn) return;
     let alive = true;
@@ -151,6 +219,8 @@ function ClerkSession({ config, children }: { config: AppConfig; children: React
   const signOut = useCallback(async () => {
     if (signingOut.current) return;
     signingOut.current = true;
+    storeViewAs(null);
+    setViewAsState(null);
     try { await clerk.signOut(); } finally { clearLocalTraces(); signingOut.current = false; }
   }, [clerk]);
 
@@ -164,21 +234,74 @@ function ClerkSession({ config, children }: { config: AppConfig; children: React
       return visitorSession(status, refresh, signOut, true);
     }
     const info = current.me;
-    const role = roleFromMe(info);
-    if (!role) return visitorSession('no-role', refresh, signOut, true);
+    const realRole = roleFromMe(info);
+    if (!realRole) return visitorSession('no-role', refresh, signOut, true);
     const name = info.name || info.email;
-    const user: SessionUser = { id: info.userId, role, name, initials: initialsOf(name), email: info.email, blurb: { es: '', en: '' } };
+    const user: SessionUser = { id: info.userId, role: realRole, name, initials: initialsOf(name), email: info.email, blurb: { es: '', en: '' } };
+    // Super admin is its own role (Hoy all-roles); like the review build's, it passes every route's role list, except
+    // while viewing as (lane D): then the viewed role decides, as for a real holder of that role.
+    const role: Role = activeViewAs ?? realRole;
+    const isSuperAdmin = isSuperAdminMe(info) && !activeViewAs;
+    const viewAsPerson: SessionUser | null = activeViewAs && samplePerson
+      ? { id: samplePerson.userId, role: activeViewAs, name: samplePerson.name, initials: initialsOf(samplePerson.name || samplePerson.email), email: samplePerson.email, blurb: { es: '', en: '' } }
+      : null;
     return {
-      status: 'ready', signedIn: true, user, role, isSuperAdmin: false, canDevMode: false, devMode: false, viewAs: null, caps: info.caps,
+      // While the sample person is being looked up, private screens wait (they would read the wrong person's records).
+      status: sampleLoading ? 'loading' : 'ready', signedIn: true, user, role, isSuperAdmin, canDevMode: false, devMode: false,
+      viewAs: activeViewAs, viewAsPerson,
+      // Capabilities are the real person's; while viewing as, the viewed role's are not known here: none.
+      caps: activeViewAs ? [] : info.caps,
       switchUser: (id) => { if (id === 'public' || id === VISITOR.id) void signOut(); },
-      setDevMode: noop, setViewAs: noop, signOut, refresh,
+      setDevMode: noop, setViewAs, signOut, refresh,
       can: (p) => roleCan(role, p),
-      hasRole: (roles) => roles.includes('public') || roles.includes(role),
+      hasRole: (roles) => roles.includes('public') || roles.includes(role) || isSuperAdmin,
     };
-  }, [isLoaded, clerkFailed, isSignedIn, me, key, refresh, signOut]);
+  }, [isLoaded, clerkFailed, isSignedIn, me, key, refresh, signOut, activeViewAs, samplePerson, sampleLoading, setViewAs]);
 
-  // A different person (or none) remounts everything below: no screen state survives a sign-out or a switch.
-  return <SessionContext.Provider key={isSignedIn ? `${userId}|${sessionId}` : 'visitor'} value={value}>{children}</SessionContext.Provider>;
+  // A different person (or none), or another viewed role, remounts everything below: no screen state survives a
+  // sign-out, a switch, or entering or leaving view-as.
+  const exitViewAs = useCallback(() => { setViewAs(null); window.location.hash = '#/hub'; }, [setViewAs]);
+  return (
+    <SessionContext.Provider key={isSignedIn ? `${userId}|${sessionId}|${activeViewAs ?? ''}` : 'visitor'} value={value}>
+      {activeViewAs && <ViewAsBar role={activeViewAs} person={value.viewAsPerson?.name ?? null} loading={sampleLoading} onExit={exitViewAs} />}
+      {/* L2 (review round 1): nobody holds the viewed role, so there is no one to show; the screens would read nobody's
+          (or, before the provider alias, the super admin's own) records. Say so instead of showing them. */}
+      {/* Review round 2, L2: a failed read is said as a failure with Retry, never as "nobody holds this role". */}
+      {activeViewAs && !sampleLoading && sampleFailure ? <ViewAsFailed failure={sampleFailure} onRetry={retrySample} onExit={exitViewAs} />
+        : activeViewAs && !sampleLoading && !samplePerson ? <ViewAsNobody role={activeViewAs} onExit={exitViewAs} /> : children}
+    </SessionContext.Provider>
+  );
+}
+
+/** View-as of a role nobody holds: an explicit empty state with the way out, never another person's screens. */
+function ViewAsNobody({ role, onExit }: { role: Role; onExit: () => void }) {
+  const { t, bi } = useI18n();
+  return (
+    <main className="page" data-view-as-empty>
+      <EmptyState icon="users" title={t('hub.viewAs.empty.title', { role: bi(ROLE_LABEL[role]) })} body={t('hub.viewAs.empty.body')}
+        action={<button type="button" className="btn btn-secondary btn-sm" onClick={onExit}>{t('hub.viewAs.empty.exit')}</button>} />
+    </main>
+  );
+}
+
+/** View-as whose sample person could not be read: the reason in words, Retry, and the way out. */
+function ViewAsFailed({ failure, onRetry, onExit }: { failure: ViewAsSampleFailure; onRetry: () => void; onExit: () => void }) {
+  const { t, lang } = useI18n();
+  return (
+    <main className="page" data-view-as-failed>
+      <EmptyState tone="error" title={t('hub.viewAs.failed.title')} body={failureCopy({ code: failure.error }, lang, t('hub.viewAs.failed.body'))}
+        action={<div className="row wrap">
+          <button type="button" className="btn btn-primary btn-sm" data-view-as-retry onClick={onRetry}>{t('hub.viewAs.failed.retry')}</button>
+          <button type="button" className="btn btn-secondary btn-sm" onClick={onExit}>{t('hub.viewAs.empty.exit')}</button>
+        </div>} />
+    </main>
+  );
+}
+
+/** The view-as banner, in the current language (the label, then the sample person once found). */
+function ViewAsBar({ role, person, loading, onExit }: { role: Role; person: string | null; loading: boolean; onExit: () => void }) {
+  const { bi } = useI18n();
+  return <ViewAsBanner role={bi(ROLE_LABEL[role])} person={loading ? '…' : person} onExit={onExit} />;
 }
 
 /** CU-04: nothing of the previous person stays in this browser (pending pass, filters, drafts); language and theme stay. */

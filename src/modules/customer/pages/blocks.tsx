@@ -19,7 +19,7 @@ import { ListGroup, ListRow } from '../../../components/molecule/ListRow/ListRow
 import { useAllSessionsJoined, type JoinedSession } from '../hooks';
 import { PAYMENT_METHODS, type PayMethod } from '../payments';
 import { useData } from '../../../data/DataContext';
-import { readOwnStudioReturn, type OwnStudioReturn } from '../../classSchedule/studioCancellation';
+import { readOwnStudioReturn, type OwnStudioReturn } from '../../classSchedule/ownStudioReturn';
 import { studioStrings as studioCopy } from '../../classSchedule/studioStrings';
 import { policy } from '../policy';
 

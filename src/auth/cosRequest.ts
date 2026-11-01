@@ -1,11 +1,14 @@
 import { cosPath, loadAppConfig } from './appConfig';
 import { getSessionToken, onUnauthorized } from './sessionToken';
+import { VIEW_AS_REFUSAL, viewAsActive, viewAsAllows } from './viewAs';
 
 /**
  * One Company OS call with the current Clerk session, for the auth screens (sign-up). Answers the status and the parsed
  * JSON body instead of throwing on 4xx, so the caller maps refusal codes to copy. A `401` tells the session to re-check.
+ * While a super admin views as another role, only reads go out: a write answers `403 view_as_read_only`, unsent.
  */
 export async function cosJson(path: `/${string}`, init: { method?: 'GET' | 'POST'; body?: unknown } = {}): Promise<{ status: number; body: unknown }> {
+  if (viewAsActive() && !viewAsAllows(init.method ?? 'GET', path)) return { status: 403, body: { error: VIEW_AS_REFUSAL } };
   const config = await loadAppConfig();
   const token = await getSessionToken();
   if (!token) return { status: 401, body: { error: 'unauthorized' } };

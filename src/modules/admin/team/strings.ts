@@ -3,11 +3,18 @@ import type { StringTable } from '../../../i18n/types';
 /** H-7 · AD-06 team users (production build). */
 export const teamStrings: StringTable = {
   'team.title': { es: 'Equipo', en: 'Team' },
-  'team.body': { es: 'Invita a recepción o administración. El cambio de rol o la baja aplica en la siguiente acción de esa persona.', en: 'Invite front desk or administration. A role change or removal applies on that person’s next action.' },
+  'team.body': { es: 'Invita a cualquier rol del equipo. El cambio de rol o la baja aplica en la siguiente acción de esa persona.', en: 'Invite any team role. A role change or removal applies on that person’s next action.' },
   'team.email': { es: 'Correo', en: 'Email' },
   'team.role': { es: 'Rol', en: 'Role' },
   'team.role.front_desk': { es: 'Recepción', en: 'Front desk' },
   'team.role.administrator': { es: 'Administración', en: 'Administration' },
+  'team.role.super_admin': { es: 'Super admin', en: 'Super admin' },
+  'team.role.booking_manager': { es: 'Coordinación', en: 'Coordinator' },
+  'team.role.treasurer': { es: 'Finanzas', en: 'Finance' },
+  'team.role.coach': { es: 'Profesor/a', en: 'Teacher' },
+  'team.role.maintenance': { es: 'Mantenimiento', en: 'Maintenance' },
+  'team.role.marketing': { es: 'Marketing', en: 'Marketing' },
+  'team.role.developer': { es: 'Desarrollo', en: 'Developer' },
   'team.role.other': { es: 'Otro rol', en: 'Other role' },
   'team.invite': { es: 'Invitar', en: 'Invite' },
   'team.invited': { es: 'Invitación enviada a {email}.', en: 'Invitation sent to {email}.' },
@@ -36,5 +43,6 @@ export const teamStrings: StringTable = {
   'team.partial.partly_removed': { es: 'Se retiró solo parte del acceso (código {code}): todavía conserva un rol. Vuelve a intentarlo para terminar.', en: 'Only part of the access was removed (code {code}): they still hold a role. Try again to finish.' },
   'team.partial.retry': { es: 'Reintentar', en: 'Try again' },
   'team.partial.gone': { es: 'Esa persona ya no está en el equipo: no queda nada por terminar.', en: 'That person is no longer on the team: there is nothing left to finish.' },
+  'team.guard.super_admin_only': { es: 'Solo un super admin puede dar o cambiar el rol Super admin.', en: 'Only a super admin can grant or change the Super admin role.' },
   'team.guard.self': { es: 'No puedes cambiar ni quitar tu propio acceso.', en: 'You cannot change or remove your own access.' },
 };

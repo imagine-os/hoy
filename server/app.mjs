@@ -2,7 +2,8 @@
 //   /health              liveness for Railway (and the release it is running);
 //   /app-config.json     the browser's public settings (tenant, API base, Clerk publishable key, the go-live switch);
 //   /api/cos/*           a signed-in user's call, checked against Clerk, forwarded to Company OS on the
-//                        private network with the same token as the bearer;
+//                        private network with the same token as the bearer; signed out, only the website's
+//                        public reads (PUBLIC_ENTITIES), sent with the server's own read-only identity;
 //   GET /files/<id>      a stored file (e.g. a transfer receipt), streamed from storage after the API has
 //                        checked the user may read it; the signed storage link never reaches the browser;
 //   POST /webhooks/resend Resend's delivery webhook, forwarded byte for byte to the API, which checks
@@ -23,6 +24,21 @@ import { createGzip } from 'node:zlib';
  * enumerated), so every call needs a verified Clerk session here before it reaches the private network.
  */
 export const ANONYMOUS_ROUTES = [];
+
+/**
+ * What a visitor without a session may read (lane F, ADR 0029): the website's timetable, coaches, rooms and products,
+ * through `POST /query` or `GET /api/<entity>[/<id>]`. The server sends these with its own read-only service identity
+ * (`COMPANY_OS_READ_TOKEN`, role `public_site`), whose policies and field lists in Company OS decide the rows and
+ * fields (the private class, people's contact details and who booked never come back). Nothing else is forwarded
+ * signed out, and the visitor's own headers never become an identity. Without the token, signed-out reads stay 401.
+ */
+// Lane H2: the studio's public settings record, the holiday hours and a booking's class and mat (recipe policies).
+export const PUBLIC_ENTITIES = new Set(['occurrence', 'schedule', 'resource', 'coach', 'product', 'setting', 'hours_override', 'booking']);
+/** A public query is a small JSON QuerySpec: read whole (to check its entity) only up to this size. */
+const PUBLIC_QUERY_LIMIT = 16 * 1024;
+/** The largest public answer the server rewrites (the settings record). */
+const TRANSFORM_LIMIT = 2 * 1024 * 1024;
+const PUBLIC_QUERY_READ_MS = 10_000;
 
 /** Never forwarded, signed in or not (first segment after `/t/<tenant>`): the API's dev login hands out tokens. */
 const BLOCKED_SECTIONS = new Set(['auth']);
@@ -57,6 +73,7 @@ const COMPRESSIBLE = new Set(['.html', '.js', '.mjs', '.css', '.json', '.map', '
  *   verifySession resolves for a valid Clerk session token and rejects otherwise.
  */
 export async function createHandler(config, deps) {
+  deps = { takePublicRead: publicReadLimiter(config.publicReadRate ?? { perSecond: 20, burst: 120 }), ...deps };
   const distDir = resolve(config.distDir);
   const release = await readFile(resolve(distDir, 'release.json'), 'utf8').then(JSON.parse, () => null);
   const log = deps.log ?? ((entry) => console.log(JSON.stringify(entry)));
@@ -84,7 +101,7 @@ export async function createHandler(config, deps) {
       }
       if (rawPath === '/api/cos' || rawPath.startsWith('/api/cos/')) {
         const route = await proxy(req, res, config, deps, rawPath.slice('/api/cos'.length), rawQuery);
-        return log({ event: 'api.cos', method: req.method, route, status: res.statusCode, ms: Date.now() - started });
+        return log({ event: 'api.cos', method: req.method, route, status: res.statusCode, ms: Date.now() - started, ...(res.public ? { public: true } : {}) });
       }
       if (rawPath === '/files' || rawPath.startsWith('/files/')) {
         const outcome = await file(req, res, config, deps, rawPath.slice('/files'.length));
@@ -194,7 +211,11 @@ async function proxy(req, res, config, deps, rest, query) {
 
   const token = bearer(req.headers.authorization);
   if (token === undefined) {
-    // No session: only the routes the API itself serves to anyone.
+    // No session: the website's public reads, with the server's own identity; then the routes the API serves to anyone.
+    if (config.companyOsReadToken && publicRead(req.method, segments.slice(2))) {
+      await publicProxy(req, res, config, deps, rest + query, segments[2] === 'query');
+      return route;
+    }
     if (!ANONYMOUS_ROUTES.some((r) => r.method === req.method && r.path === tail)) {
       sendError(res, 401, 'unauthorized');
       return route;
@@ -215,6 +236,100 @@ async function proxy(req, res, config, deps, rest, query) {
 
   await forward(res, config, { method: req.method, path: rest + query, headers, body: req, limit: config.proxyBodyLimit });
   return route;
+}
+
+/** `POST /query` or `GET /api/<public entity>[/<id>]` (the path after `/t/<tenant>`, as decoded segments). */
+function publicRead(method, after) {
+  if (method === 'POST') return after.length === 1 && after[0] === 'query';
+  if (method === 'GET') return after[0] === 'api' && (after.length === 2 || after.length === 3) && PUBLIC_ENTITIES.has(after[1]);
+  return false;
+}
+
+/**
+ * A visitor's public read: limited per visitor, a query read whole and refused unless it names a public entity, then
+ * forwarded with the server's read identity and only the browser headers any call may carry.
+ */
+async function publicProxy(req, res, config, deps, path, isQuery) {
+  const client = header(req.headers['x-real-ip']) ?? req.socket.remoteAddress ?? '';
+  if (!deps.takePublicRead(client)) return sendError(res, 429, 'rate_limited');
+  let body;
+  if (isQuery) {
+    if (Number(header(req.headers['content-length']) ?? 0) > PUBLIC_QUERY_LIMIT) return sendError(res, 413, 'payload_too_large');
+    body = await readBody(req, PUBLIC_QUERY_LIMIT, PUBLIC_QUERY_READ_MS);
+    if (body === 'too_large') return sendError(res, 413, 'payload_too_large');
+    if (body === 'too_slow') return sendError(res, 408, 'request_timeout');
+    let spec;
+    try { spec = JSON.parse(body.toString('utf8')); } catch { spec = null; }
+    if (!spec || typeof spec !== 'object' || Array.isArray(spec) || typeof spec.entity !== 'string' || !PUBLIC_ENTITIES.has(spec.entity)) {
+      return sendError(res, 401, 'unauthorized');
+    }
+  }
+  const headers = pick(req.headers, FORWARD_REQUEST_HEADERS);
+  delete headers['content-length'];
+  if (body) headers['content-length'] = String(body.length);
+  headers.authorization = `Bearer ${config.companyOsReadToken}`;
+  Object.assign(headers, clientHeaders(req));
+  res.public = true;
+  // Lane H2, defence in depth: a studio_settings row saved before the settings split (decision F-01) may still hold
+  // the pay data until Administration saves once (runbook 13c); a visitor never gets those sections.
+  const entity = isQuery ? JSON.parse(body.toString('utf8')).entity : decodeURIComponent(path.split('?')[0].match(/\/api\/([^/]+)/)?.[1] ?? '');
+  const transform = entity === 'setting' ? stripPrivateSettings : undefined;
+  await forward(res, config, { method: req.method, path, headers, body: body ?? req, limit: PUBLIC_QUERY_LIMIT, transform });
+}
+
+/** The settings sections only Administration and Finance read (Hoy src/data/companyos/settingsSplit.ts). */
+const PRIVATE_SETTINGS_SECTIONS = ['payroll', 'integrations'];
+const PRIVATE_SETTINGS_CONTACTS = ['payroll', 'coordinator', 'owner'];
+/** A public settings answer without the private sections, whatever the stored row holds. */
+export function stripPrivateSettings(answer) {
+  const clean = (rec) => {
+    const value = rec?.data?.value;
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return rec;
+    const out = { ...value };
+    for (const k of PRIVATE_SETTINGS_SECTIONS) delete out[k];
+    if (out.contacts && typeof out.contacts === 'object') {
+      out.contacts = { ...out.contacts };
+      for (const k of PRIVATE_SETTINGS_CONTACTS) delete out.contacts[k];
+    }
+    return { ...rec, data: { ...rec.data, value: out } };
+  };
+  if (!answer || typeof answer !== 'object') return answer;
+  if (Array.isArray(answer.data)) return { ...answer, data: answer.data.map(clean) };
+  if (answer.data && typeof answer.data === 'object') return { ...answer, data: clean(answer.data) };
+  return answer;
+}
+
+/**
+ * The public reads' limits: one token bucket per visitor address, so one visitor can't spend the rest's share, and one
+ * for all visitors together, kept below the read identity's own limit in Company OS (ADR 0029 §7: 200/s, burst 500)
+ * so the site degrades for the excess instead of being cut off for everyone. In memory, per instance. Past `max`
+ * visitors, idle ones (bucket full again) are forgotten first; a busy visitor is never reset by others.
+ */
+export function publicReadLimiter({ perSecond, burst, totalPerSecond = 150, totalBurst = 400 }, max = 10_000) {
+  const buckets = new Map();
+  const refill = (b, now, rate, cap) => {
+    b.tokens = Math.min(cap, b.tokens + (Math.max(0, now - b.at) / 1000) * rate);
+    b.at = now;
+  };
+  const total = { tokens: totalBurst, at: Date.now() };
+  return (client, now = Date.now()) => {
+    if (buckets.size >= max && !buckets.has(client)) {
+      for (const [k, b] of buckets) {
+        refill(b, now, perSecond, burst);
+        if (b.tokens >= burst) buckets.delete(k);
+      }
+      if (buckets.size >= max) return false;
+    }
+    const b = buckets.get(client) ?? { tokens: burst, at: now };
+    refill(b, now, perSecond, burst);
+    buckets.set(client, b);
+    if (b.tokens < 1) return false;
+    refill(total, now, totalPerSecond, totalBurst);
+    if (total.tokens < 1) return false;
+    b.tokens -= 1;
+    total.tokens -= 1;
+    return true;
+  };
 }
 
 /**
@@ -268,7 +383,7 @@ function pick(source, names) {
  * One request to Company OS. `body` is a stream (piped with a byte limit) or a Buffer. The answer is
  * streamed back with hop-by-hop, cookie and CORS headers removed; user data is never cacheable.
  */
-function forward(res, config, { method, path, headers, body, limit }) {
+function forward(res, config, { method, path, headers, body, limit, transform }) {
   return new Promise((done) => {
     const target = new URL(config.companyOsUrl.replace(/\/+$/, '') + path);
     const client = target.protocol === 'https:' ? https : http;
@@ -284,6 +399,23 @@ function forward(res, config, { method, path, headers, body, limit }) {
       for (const [k, v] of Object.entries(answer.headers)) if (!DROP_RESPONSE_HEADERS.has(k)) out[k] = v;
       // A signed-in user's data: never stored by the browser or anything in between, whatever the API says.
       out['cache-control'] = 'private, no-store';
+      if (transform && (answer.statusCode ?? 502) === 200) {
+        // A JSON answer to rewrite: read whole (bounded), rewritten, sent; anything unreadable is refused, never passed.
+        const chunks = [];
+        let size = 0;
+        answer.on('data', (c) => { size += c.length; if (size > TRANSFORM_LIMIT) { answer.destroy(); } else chunks.push(c); });
+        answer.on('end', () => {
+          let text;
+          try { text = JSON.stringify(transform(JSON.parse(Buffer.concat(chunks).toString('utf8')))); } catch { text = null; }
+          delete out['content-length'];
+          if (text === null) sendError(res, 502, 'upstream_unavailable');
+          else { res.writeHead(200, { ...out, 'content-type': 'application/json', 'content-length': String(Buffer.byteLength(text)) }); res.end(text); }
+          finish();
+        });
+        answer.on('error', () => { res.destroy(); finish(); });
+        answer.on('close', () => { if (size > TRANSFORM_LIMIT && !res.headersSent) { sendError(res, 502, 'upstream_unavailable'); finish(); } });
+        return;
+      }
       res.writeHead(answer.statusCode ?? 502, out);
       answer.pipe(res);
       answer.on('end', finish);

@@ -15,8 +15,11 @@ Clerk session. Identity is `src/auth/`: Clerk signs the person in (`ProductionSe
 (`src/auth/sessionToken.ts`) is the only way code gets a token. Nothing else calls the API.
 
 - **Vocabulary, no translation shim:** the app uses the backend's neutral keys (`'booked'`, `'checked_in'`,
-  `'pending'`…). Spanish and English text is display only, through `useT()` / the module `strings`. Role keys:
-  `member` (customer), `front_desk`, `administrator` (`src/auth/companyOsIdentity.ts` maps them to the app's roles).
+  `'pending'`…). Spanish and English text is display only, through `useT()` / the module `strings`. Role keys
+  (all 11 roles; `ROLE_KEYS` in `src/auth/companyOsIdentity.ts` maps them): `member` (customer), `front_desk`,
+  `administrator` (admin), `booking_manager` (coordinator), `treasurer` (finance), `coach` (teacher), `maintenance`,
+  `marketing`, `developer`, and Company OS's system `super_admin` (`/me` `isSuperAdmin`). `public_site` is the signed-out
+  website's read-only service role, never a user role.
 - **Dates** stay `YYYY-MM-DD` strings end to end; datetimes are ISO strings; "today" uses the tenant's timezone
   (`America/Bogota`, ADR 0032).
 - **Business rules run in the backend** (people, files, comms, bookings, payments, credits). This app shows their
@@ -31,6 +34,8 @@ Clerk session. Identity is `src/auth/`: Clerk signs the person in (`ProductionSe
   policies. The route guard (`RequireRole`, `src/config/roleMatrix.ts`) only shapes the screens.
 - **Launch scope:** the production build registers only `src/config/launchRoutes.ts` and leaves the hub, dev tools,
   docs and manual out (`vite.config.ts`, `scripts/prune-production.mjs`). A new launch page is added to that list.
+  A route enters `LAUNCH_ROUTES` only when `scripts/test-route-connectivity.mjs` is green for it (every table and method
+  it reaches has a working Company OS adapter; `docs/route-connectivity.md`).
 - **Tenant setup** comes from `deploy/recipes/hoy.json` in `../Company-OS`; the local backend is built with
   `pnpm install && pnpm db:up && pnpm db:migrate && pnpm dev` there (made-up data in the customer's real format).
 - **Real data** arrives only through the production app. Never commit or open the customer's files, exports or `.env*`.

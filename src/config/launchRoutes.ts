@@ -6,11 +6,13 @@
  *
  * A pattern is a route path (`/app/class/:id`) or a prefix ending in `/*` that also matches the prefix itself.
  * Left out on purpose:
- * - review tools: `/hub*`, `/dev*`, `/docs*`, `/manual*` (internal text, H-8 SW-06), demo states `/app/state/*`;
+ * - review tools: the rest of `/hub*` (only the super admin's Hub `/hub` ships, lane D), `/dev/*` (only the developer's
+ *   home `/dev` ships), `/docs*`, `/manual*` (internal text, H-8 SW-06), demo states `/app/state/*`;
  * - Clerk replaces them: `/auth/recover` (no passwords), `/auth/locked` (Clerk's attack protection locks);
- * - not launch scope (gap analysis §2 (H), 30 Nov or later): teacher app, payroll and class pay, waitlist, events,
- *   reviews, practice, invites, the review build's gift demo (`/app/gift`, Wompi), promotions, marketing, maintenance,
- *   subscriptions, integrations, WhatsApp, the content editor (static at launch) and the table manager.
+ * - not yet back (gap analysis §2 (H) cut them; owner decision P-03b, 2026-10-31, reverses that: they return in Waves
+ *   2–4): the rest of the teacher app, payroll and class pay, waitlist, events, reviews, practice, invites, the review
+ *   build's gift demo (`/app/gift`, Wompi), promotions, marketing, maintenance, subscriptions, integrations, WhatsApp,
+ *   the content editor's sub-pages and the table manager.
  * A production page a lane adds must be listed with its exact path pattern (`/app/vouchers/:code`, not `:id`):
  * `scripts/test-launch-routes.mjs` fails on a production route that isn't.
  */
@@ -35,6 +37,12 @@ export const LAUNCH_ROUTES: readonly string[] = [
   // Administration
   '/admin', '/admin/analytics', '/admin/crm', '/admin/crm/:id', '/admin/class-schedule/*', '/admin/vouchers/*', '/admin/products/*', '/admin/settings/*',
   '/admin/activity', '/admin/emails/*', '/admin/finance', '/admin/finance/expenses', '/admin/payments/report',
+  // Role homes (Hoy all-roles, lane C, 2026-10-31): every one of the 11 roles lands on a page the production build
+  // registers (`ROLE_HOME`). Only the home itself: the rest of each area comes back in Waves 2–4 through the
+  // route-connectivity check. Teacher (S-03), Marketing (M-02 content), Developer (the dev specs index, R-08).
+  '/teach', '/admin/content', '/dev',
+  // The super admin's Hub with read-only "view as" (Hoy all-roles, lane D): route roles `super_admin` only.
+  '/hub',
 ];
 
 export function isLaunchRoute(path: string, list: readonly string[] = LAUNCH_ROUTES): boolean {

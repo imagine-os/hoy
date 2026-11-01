@@ -1,3 +1,5 @@
+import { PRODUCTION_BUILD } from '../../config/launch';
+import { Notice } from '../../components/molecule/Notice/Notice';
 import{TeacherQueue}from'../profile-review/TeacherQueue';
 import{reviewer}from'../profile-review/contracts';
 import { SharedImageField } from '../../components/organism/SharedImageField/SharedImageField';
@@ -171,6 +173,7 @@ export function ContentPage() {
         </div>
       </div>
       <ContentSubNav current="entities" />
+      {PRODUCTION_BUILD && <Notice tone="info">{t('admin.content.later')}</Notice>}
       {!row && recovery.notice}
       {entity==='teachers'&&reviewer(role)&&<TeacherQueue/>}
       <div className="row wrap" role="tablist">

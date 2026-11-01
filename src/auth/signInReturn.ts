@@ -5,8 +5,11 @@ import { ROLE_HOME, type Role } from './roles';
 
 /** Path segments only: no query, no fragment, no dots, no encoded characters; at most 8 segments. */
 const STRICT_PATH = /^(?:\/[A-Za-z0-9_-]{1,80}){1,8}$/;
-/** The areas a sign-in may send someone back into (never `/auth`, the website or the error pages: no loops). */
-const AREAS = new Set(['app', 'staff', 'admin']);
+/**
+ * The areas a sign-in may send someone back into (never `/auth`, the website or the error pages: no loops). `teach`,
+ * `hub` and `dev` (Hoy all-roles): only their launch routes, like the others.
+ */
+const AREAS = new Set(['app', 'staff', 'admin', 'teach', 'hub', 'dev']);
 
 /** A launch route pattern (`/app/receipts/:paymentId`, `/staff/transfers/*`) that matches this concrete path. */
 function matchesLaunchRoute(path: string): boolean {
@@ -21,7 +24,7 @@ function matchesLaunchRoute(path: string): boolean {
 
 /**
  * Where sign-in may return to (`next`): the customer allowlist (`customerReturn`, query strings included), or any
- * internal launch route in the app, staff or admin areas given as a strict path (`/staff/transfers`,
+ * internal launch route in the app, staff, admin, teacher, hub or dev areas given as a strict path (`/staff/transfers`,
  * `/app/receipts/<id>`, `/app/booking/<id>`, `/app/pay/<what>/<id>`). Anything else is null. Navigation only: the
  * destination keeps its role guard.
  */

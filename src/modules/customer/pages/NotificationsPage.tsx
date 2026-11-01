@@ -1,3 +1,4 @@
+import { PRODUCTION_BUILD } from '../../../config/launch';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
@@ -51,7 +52,7 @@ export function NotificationsPage() {
         {group(earlier, t('customer.notifications.earlier'))}
 
         <section className="stack-sm" data-preference-surface="category">
-          <Notice tone="info">{t('customer.prefs.mock')}</Notice>
+          <Notice tone="info">{t(PRODUCTION_BUILD ? 'customer.prefs.live' : 'customer.prefs.mock')}</Notice>
           {prefs.status==='loading'&&<Notice>{t('customer.prefs.loading')}</Notice>}
           {prefs.error&&<Notice tone="warn" action={<Button size="sm" variant="secondary" onClick={()=>void Promise.resolve(prefs.retry()).catch(()=>{})}>{t(prefs.error==='save'?'customer.prefs.retry':'customer.prefs.reload')}</Button>}>{t(`customer.prefs.${prefs.error}`)}</Notice>}
           {prefs.saved&&<Notice tone="success">{t('customer.prefs.saved')}</Notice>}

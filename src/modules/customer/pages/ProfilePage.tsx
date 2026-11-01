@@ -29,6 +29,13 @@ import { Icon } from '../../../components/atom/Icon/Icon';
 import { useOwnProfile } from '../useOwnProfile';
 import { profileErrors, profileRevision, saveOwnProfile } from '../profileSave';
 
+/**
+ * The email change preview runs only on the review build's browser data. In production the login email is Clerk's
+ * and Company OS people's: the studio changes it (people refuse a member's own change, `email_change_not_allowed`),
+ * so the page says so instead. Chosen once per build, so production never loads the preview.
+ */
+const useEmailChangePreview: () => ReturnType<typeof useEmailChange> | null = PRODUCTION_BUILD ? () => null : useEmailChange;
+
 const spec = canvasSpecs['C-19'];
 
 /** C-19 Profile, settings and the 12-class package (0051: was membership). */
@@ -37,7 +44,7 @@ export function ProfilePage() {
   const contact = useContact();
   const nav = useNavigate();
   const data = useData();
-  const emailChange=useEmailChange();
+  const emailChange=useEmailChangePreview();
   const { user, role, signOut: endSession } = useSession();
   const { sections, isVisible } = useLayout(spec);
   const own = useOwnProfile(data,user.id);
@@ -79,7 +86,7 @@ export function ProfilePage() {
       await saveOwnProfile(data,{actorId:user.id,role,requestId:request.current,expected:expected.current,form},()=>current.cancelled);
       if(current.cancelled||attempt.current!==current)return;
       setEdit(false);flash(t('customer.profile.saved'));
-    }catch(error){if(!current.cancelled&&attempt.current===current)setSaveError(String(error).includes('stale')?'customer.profile.atomic.stale':'customer.profile.atomic.failure');}
+    }catch(error){if(!current.cancelled&&attempt.current===current)setSaveError(String(error).includes('stale')?'customer.profile.atomic.stale':String(error).includes('unconfirmed')?'customer.profile.atomic.unconfirmed':'customer.profile.atomic.failure');}
     finally{delete (current as {saving?:boolean}).saving;if(!current.cancelled&&attempt.current===current)setBusy(false);}
   };
   const onPhoto = (file: File | undefined) => {
@@ -97,17 +104,18 @@ export function ProfilePage() {
   const SECTIONS: Record<string, () => ReactNode> = {
     'Header (photo, name, membership badge)': () => (
       <Card className="row wrap" padding="lg">
+        {PRODUCTION_BUILD ? <Avatar name={name} initials={profile?.initials ?? user.initials} src={profile?.photo_url} size={72} /> : (
         <label className="cust-photo">
           <Avatar name={name} initials={profile?.initials ?? user.initials} src={profile?.photo_url} size={72} />
           <input type="file" accept="image/*" className="sr-only" onChange={(e) => onPhoto(e.target.files?.[0])} />
           <span className="cust-photo-edit" aria-hidden><Icon name="edit" size="xs" /></span>
           <span className="sr-only">{t('customer.profile.changePhoto')}</span>
-        </label>
+        </label>)}
         <div className="grow stack-sm">
           {profile ? <h1 className="cust-title" style={{ fontSize: 'var(--fs-xl)' }}>{name}</h1> : <Skeleton width={180} height={24} />}
           <div className="row wrap">
             {ent.plan ? <Badge tone={ent.membership?.status === 'paused' || ent.pkg.frozen ? 'warn' : 'success'}>{bi({ es: ent.plan.name_es, en: ent.plan.name_en })}</Badge> : <Badge tone="neutral">{t('customer.profile.noPlan')}</Badge>}
-            {profile && !profile.whatsapp_verified && <button type="button" className="cust-linkbtn" onClick={verifyWhatsapp}><Badge tone="warn">{t('customer.profile.whatsapp.verify')}</Badge></button>}
+            {!PRODUCTION_BUILD && profile && !profile.whatsapp_verified && <button type="button" className="cust-linkbtn" onClick={verifyWhatsapp}><Badge tone="warn">{t('customer.profile.whatsapp.verify')}</Badge></button>}
           </div>
           <span className="small muted">{account?.email ?? user.email}{account?.phone ? ` · ${account.phone}` : ''}</span>
         </div>
@@ -124,12 +132,12 @@ export function ProfilePage() {
     PaymentMethods: () => PRODUCTION_BUILD ? null : <ListGroup><ListRow icon="credit-card" title={t('customer.pay.title')} subtitle={t('customer.profile.pay.sub')} to="/app/payment-methods" /></ListGroup>,
     'NotificationPrefs (push / email / WhatsApp)': () => (
       <section className="stack-sm" data-preference-surface="master" aria-label={t('customer.profile.notifications')}>
-        <Notice tone="info">{t('customer.prefs.mock')}</Notice>
+        <Notice tone="info">{t(PRODUCTION_BUILD ? 'customer.prefs.live' : 'customer.prefs.mock')}</Notice>
         {prefs.status==='loading'&&<Notice>{t('customer.prefs.loading')}</Notice>}
         {prefs.error&&<Notice tone="warn" action={<Button size="sm" variant="secondary" onClick={()=>void Promise.resolve(prefs.retry()).catch(()=>{})}>{t(prefs.error==='save'?'customer.prefs.retry':'customer.prefs.reload')}</Button>}>{t(`customer.prefs.${prefs.error}`)}</Notice>}
         {prefs.saved&&<Notice tone="success">{t('customer.prefs.saved')}</Notice>}
         <ListGroup title={t('customer.profile.notifications')}>
-          {NOTIF_CHANNELS.map((k) => <ListRow key={k} icon={k === 'whatsapp' ? 'whatsapp' : k === 'push' ? 'bell' : 'mail'} title={t(`customer.profile.notif.${k}`)} subtitle={t(`customer.profile.notif.${k}.sub`)} trailing={<Toggle size="sm" disabled={prefs.status!=='ready'||prefs.busy} checked={prefs.channelOn(k)} onChange={(v) => { void prefs.setChannel(k, v).catch(()=>{}); }} label="" />} />)}
+          {NOTIF_CHANNELS.map((k) => <ListRow key={k} icon={k === 'whatsapp' ? 'whatsapp' : k === 'push' || k === 'in_app' ? 'bell' : 'mail'} title={t(`customer.profile.notif.${k}`)} subtitle={t(`customer.profile.notif.${k}.sub`)} trailing={<Toggle size="sm" disabled={prefs.status!=='ready'||prefs.busy} checked={prefs.channelOn(k)} onChange={(v) => { void prefs.setChannel(k, v).catch(()=>{}); }} label="" />} />)}
           <ListRow icon="sliders" title={t('customer.notifications.prefs.title')} subtitle={t('customer.notifications.prefs.byCategory')} to="/app/notifications" />
           <ListRow icon="bell" title={t('customer.notifications.title')} to="/app/notifications" />
         </ListGroup>
@@ -171,11 +179,11 @@ export function ProfilePage() {
         {sections.filter(isVisible).map((name) => SECTIONS[name] ? <Fragment key={name}>{SECTIONS[name]()}</Fragment> : null)}
       </div>
 
-      <EmailChangePanel {...emailChange}/>
+      {emailChange ? <EmailChangePanel {...emailChange}/> : <Notice tone="info" title={t('customer.profile.email.title')}>{t('customer.profile.email.studio', { studio: tenant.name })}</Notice>}
 
       <Drawer open={edit} onClose={closeEdit} side="bottom" title={t('customer.profile.edit')} footer={<><Button variant="ghost" onClick={closeEdit}>{t('core.common.cancel')}</Button><Button disabled={busy} onClick={()=>void save()}>{t('core.common.save')}</Button></>}>
         <div className="stack" aria-busy={busy}>
-          <Notice>{t('customer.profile.atomic.mock')}</Notice>
+          {!PRODUCTION_BUILD && <Notice>{t('customer.profile.atomic.mock')}</Notice>}
           {saveError && <Notice tone="danger">{t(saveError)}</Notice>}
           {busy && <Notice>{t('customer.profile.atomic.saving')}</Notice>}
           <Field label={t('customer.form.name')} required error={errors.full_name}>{(id) => <Input disabled={busy} id={id} value={form.full_name} onChange={(e) => (request.current=crypto.randomUUID(),setForm({ ...form, full_name: e.target.value }))} autoComplete="name" />}</Field>
