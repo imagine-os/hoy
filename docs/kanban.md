@@ -845,3 +845,77 @@ Protected-capture clarification: M14 schedule/pay screenshots remain local/ignor
 - RS-09 / Feature Log47 (0184): future-day paid single/trial moves use exact finite receipt terms; package allocation, 12-hour cutoff and unresolved legacy fallback retained. Local and remote validation/release remain separate gates. [Contract](frontend-completion/direct-reschedule-terms.md)
 
 - AD-02 / Feature Log88 (0189): studio cancellation restores a verified directly paid single/trial class under its recorded terms. Persisted staff roles are checked; no bank refund or new voucher-cancellation rule is introduced. [Contract](frontend-completion/studio-direct-paid-return.md)
+
+## Hoy test-hoy fixes, lane Y1: schedule and timetable (2026-11-01)
+
+- Done (branch `hoy-test-fixes-y1`): a class's type comes from its schedule's `modality` (one read: the class query includes it), else its own, else the title; a class without one is "not open for booking yet" on the tile and in the drawer and class detail; the site's drawer names the class's room; ClassCard joins only the parts it has; the admin timetable (M-02) requires the class type; the Company OS test seed carries the sample's timetable as schedules (coach, room, class type) with every class linked.
+- Waiting: production M-02 saves are still refused (`content_later`, Wave 3), so Administration can't enter the timetable from the app yet (owner decision, in lane-y1 notes).
+
+## Hoy test-fixes · lane Y3: Justin's Hub in production (2026-11-01)
+
+### Done (lane branch, not merged)
+
+- HUB-01: production `/hub` is Justin's HubPage (super admin only), with the real person of each role ("Entrar como {nombre}", persona dropdown), read-only live preview frames (at most 3) that never touch the parent tab, Report a problem as a `problem_report` form, the Construction & testing band (manual read-only, source documents, docs, kanban; super admin only) and the wireframe skin for the tab, reset on sign-out. `ProductionHubPage` retired. Changelog `_pending/hoy-test-fixes-y3.md`.
+
+### Backlog
+
+- Choose a specific person in the Hub's dropdown (needs a sample override in `src/auth` view-as).
+- The manual's LMS in production (progress, training sign-offs, requests, edits) needs a Company OS entity.
+- A "Hub" link in the staff shell for the super admin (Justin's Hub has no sidebar entry; `DesktopShell`).
+
+## Hoy test-hoy fixes · lane Y2 (purchases for any signed-in person, deploy fixes)
+### Done
+- P-01 / C-06 / C-08: Book, Give a gift and "Continue booking" go straight to the purchase for any signed-in person; Administration who is also a customer opens `/app` as a customer ("Mis clases" in the staff menu, "Volver a <rol>" in the customer shell); a studio login that isn't a customer is offered "Join as a customer" (Company OS sign-up amendment). [Changelog](changelog/_pending/hoy-test-fixes-y2.md)
+- Deploy: `COMPANY_OS_READ_TOKEN: preserve()` in the IaC; deploy summaries show SITE_LIVE and whether the read token is present; an expired session on a website read falls back to the public identity.
+### Waiting
+- Owner: rename `SET_LIVE` → `SITE_LIVE` in Railway; release Company OS with the sign-up amendment before this frontend deploys.
+
+## Hoy test-hoy fixes · lane Y5 (M-02 timetable saves in production, 2026-11-01)
+
+- Done (branch `hoy-test-fixes-y5`): M-02 Classes creates, edits and deactivates timetable rows on Company OS `schedule` (teacher, room, class type, weekday, time, length, mats, dates) for Administration, the Coordinator and Super Admin; refusals as copy (`resource_overlap` from bookings 1.6.0 and the editor's own); theme, description and level hidden in production; the rest of M-02 stays "available later". [Changelog](changelog/_pending/hoy-test-fixes-y5.md)
+- Open: Wave 3 content entities (theme, description, level; teachers, modalities, rooms).
+## Hoy test-hoy fixes · lane Y6: the Hub's docs behind a server gate (2026-11-01)
+
+### Done (lane branch, not merged)
+
+- K-01…K-05 (production): the manual, docs and changelog, kanban and source PDFs are out of the public bundle; the Hoy server serves them at `/private-docs/*` only to a signed-in super admin (Clerk session + Company OS `/me`), everyone else 401/403 with no content. [Changelog](changelog/_pending/hoy-test-fixes-y6.md)
+
+### Backlog
+
+- ~~The public-documents switch (Q-14)~~: retired (owner 2026-11-01, "Retire it"; done in review round 1, lane r1hoy below).
+
+## Hoy test-hoy fixes · integrated review round 1, Hoy fixes (lane r1hoy, 2026-11-01)
+
+### Done (lane branch, not merged)
+
+- M1: a read-only document (a preview frame, a tab holding a view-as value) never offers "Join as a customer"; it falls through to no-access. [Changelog](changelog/_pending/hoy-test-fixes-r1hoy.md)
+- M2 (M-02): a timetable row is published only with its class type: the Published toggles are off for a draft without one (with a hint), and the save refuses it (`timetable_class_type_required`).
+- L1 (HUB-01): production preview frames are inert (no pointer, keyboard or screen reader inside), so a Sign out inside can't sign the parent out.
+- L3, L4 (M-02): Save with nothing changed sends nothing; a second quick save from the same editor is no longer a false conflict, and after its own save the editor diffs against what it stored (a field changed back is saved, never dropped).
+- L5: a real super admin without the customer role gets "Join as a customer" on every customer-area page (they look at the customer app through view-as), not a checkout Company OS would refuse; one who holds the customer role gets the customer session there, without staff tooling.
+- L6: the forms codes `invalid_answers`, `answer_too_long`, `invalid_email`, `write_forbidden` have es/en lines in the code→copy table.
+- L7, L8 (W-04, C-02): a class from a switched-off timetable row says "not published" to visitors; nothing says "not open for booking" while class types load.
+- The public-documents switch (`PUBLIC_DOCUMENTS`, Q-14) is retired: server config, `/app-config.json`, the IaC and the app no longer know it; a value left set opens nothing.
+
+### Backlog
+
+- L2: the timetable save's check-then-write gap (two editors saving one row inside the GET→PATCH window: the later one wins) needs `If-Match` on PATCH from Company OS core, which doesn't honour it yet. Not tracked in Company OS `docs/tech-debt.md` yet: handed to the coordinator to add (core: honour `If-Match`; Hoy's timetable then sends the basis version).
+- Operator: the `PUBLIC_DOCUMENTS` variable, if set in Railway, can be deleted (it is ignored).
+
+## Hoy test-hoy fixes · integrated review round 2, Hoy fixes (lane r2hoy, 2026-11-01)
+
+### Done (lane branch, not merged)
+
+- Every registered login is a customer (owner): a studio login is enrolled automatically on its first customer page, with at most the documents' consent step; the Join page is gone. Existing staff are enrolled on their first visit. [Changelog](changelog/_pending/hoy-test-fixes-r2hoy.md)
+- Sign-up and enrolment: `409 already_registered` goes on only when `/me` holds the customer role; "email linked to another login" and `duplicate_person_user` say to contact the studio; no raw codes.
+- M-02: a room clash names the class, its day and time, and a remedy that works (r2co details); a title never stands in for the class type (L2).
+- W-04, C-02 (owner L3): a switched-off timetable row stops new classes; its classes already made stay bookable.
+- Docs gate: `/me` cap 2 MB; the super admin's tab isn't reloaded on a one-off `/me` error; a late docs pack is dropped.
+- Deploy: a leftover `PUBLIC_DOCUMENTS` (or `SET_LIVE`) is warned about before Apply infra.
+
+## Hoy test-hoy fixes · consents for invited staff (lane r2hoy2, 2026-11-01)
+
+### Done (lane branch, not merged)
+
+- Customer area (C-xx): a login that holds the customer role but never signed up (invited staff, desk-invited customers: `GET /signup` `registered: false`) accepts the documents once in the same consent step, then goes on. Read once per session, never in frames or view-as; a failed or slow read opens the page as before. [Changelog](changelog/_pending/hoy-test-fixes-r2hoy2.md)
+- A platform operator signing in with their own login takes the studio sign-up like anyone (tested).

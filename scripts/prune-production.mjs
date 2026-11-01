@@ -1,11 +1,12 @@
 // Production build (H-2, PL-03): Vite copies public/ whole, so after `vite build` this keeps only what production
 // serves (an allowlist: a new review-only folder in public/ stays out until it is listed here) and removes the rest,
-// e.g. hub-map.json, actions.json, hub/ (the review hub's static page), delivery-room/ (the build tracker), source/ (the
-// owner's source documents behind the operations manual: internal, H-8 SW-06).
-// The super admin's Hub ships since Hoy all-roles (lane D), as a route in the bundle: it needs none of those files
-// (its cards come from src/hub/hubMap.data.ts), and demo data still must not ship, so this also fails when a demo
+// e.g. hub-map.json, actions.json, hub/ (the review hub's static page), delivery-room/ (the build tracker), and source/
+// (the owner's source documents): since lane Y6 they are only in the private pack beside dist (vite.config.ts), which
+// the Hoy server serves to a signed-in super admin (server/docsGate.mjs); a PDF left in dist fails the build.
+// Justin's Hub ships since lane Y3 (super admin only): it needs none of those files (its cards come from
+// src/hub/hubMap.data.ts, its people from Company OS), and demo data still must not ship, so this also fails when a demo
 // persona (the review build's default session `usr_super`, or the demo users of the hub map) is in the JavaScript.
-// Then it fails when dist/ still holds in-app screenshots or docs markdown, or is larger than the upload budget
+// Then it fails when dist/ still holds in-app screenshots or a raw markdown file, or is larger than the upload budget
 // (Railway uploads failed above roughly 90 MB; the review build is about 437 MB).
 // Usage: last steps of npm run build:production. `node scripts/prune-production.mjs [distDir]`.
 import { existsSync, readFileSync, readdirSync, rmSync, statSync } from 'node:fs';
@@ -33,6 +34,7 @@ let bytes = 0;
     // In-app screenshots are named <code>-<es|en>-<width>… (docs/screenshots/); thumbnails are thumb-*.
     if (/(^|\/)(thumb-[^/]*|[A-Z]+-\d+[a-z]?-(es|en)-[^/]*)\.(jpe?g|png|webp)$/i.test(rel)) problems.push(`${rel}: an in-app screenshot`);
     if (rel.startsWith('assets/') && rel.endsWith('.md')) problems.push(`${rel}: a bundled markdown document`);
+    if (rel.endsWith('.pdf')) problems.push(`${rel}: a PDF in the public bundle (source documents go through the docs gate, lane Y6)`);
     if (rel.startsWith('assets/') && rel.endsWith('.js')) {
       const text = readFileSync(path, 'utf8');
       for (const m of DEMO_MARKERS) if (text.includes(m)) problems.push(`${rel}: demo persona "${m}" in production JavaScript`);

@@ -3,11 +3,12 @@ import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { AuthenticateWithRedirectCallback, useClerk, useUser } from '@clerk/react';
 import { useI18n } from '../../i18n/I18nProvider';
 import { useSession } from '../../auth/SessionProvider';
+import { heldRoles } from '../../auth/sessionContext';
 import { ROLE_HOME, ROLE_LABEL } from '../../auth/roles';
 import { cosJson } from '../../auth/cosRequest';
 import { sendEmailCode, signInWithGoogle, verifyEmailCode, type ClerkLike, type CodeMode } from '../../auth/clerkFlows';
 import {
-  asksEmergencyContact, classifySignup, clerkErrorKind, isEmail, parseSignupConfig, signupBody, signupFormErrors,
+  asksEmergencyContact, classifySignup, clerkErrorKind, isEmail, parseSignupConfig, signupBody, signupFormErrors, signupHeld, signupNoticeKey,
   SIGNUP_FORM_LIMITS, type AuthErrorKind, type SignupConfig, type SignupForm,
 } from '../../auth/companyOsIdentity';
 import { safeAuthBack } from '../../auth/visitorSignIn';
@@ -41,7 +42,7 @@ export function CosAuthPage({ mode }: { mode: CodeMode }) {
   const [params] = useSearchParams();
   const next = params.get('next');
   if (session.status === 'loading') return <Shell title={t('identity.signin.title')}><p className="muted" aria-busy="true">{t('identity.loading')}</p></Shell>;
-  if (session.status === 'ready' && session.signedIn) return <Navigate to={homeFor(session.role, next)} replace />;
+  if (session.status === 'ready' && session.signedIn) return <Navigate to={homeFor(session.role, next, heldRoles(session))} replace />;
   if (session.status === 'needs-signup') {
     if (mode !== 'sign-up') return <Navigate to={authLink('/auth/sign-up', params)} replace />;
     return <Shell title={t('identity.register.title')} sub={t('identity.register.sub')}><RegisterForm /></Shell>;
@@ -142,14 +143,17 @@ function EmailCodeCard({ back }: { back: string }) {
 
 const EMPTY_FORM: SignupForm = { name: '', whatsapp: '+57 ', ecName: '', ecPhone: '+57 ', accepted: false };
 
-/** CU-01 / CU-02: the studio's sign-up after Clerk proved the email. Company OS stores the consents with their versions. */
-function RegisterForm() {
+/**
+ * CU-01 / CU-02: the studio's sign-up after Clerk proved the email. Company OS stores the consents with their versions.
+ * A studio login never fills this in: it is enrolled automatically (`src/auth/CustomerEnrolment.tsx`, owner 2026-11-01).
+ */
+export function RegisterForm({ initialName = '', cta }: { initialName?: string; cta?: string } = {}) {
   const { t } = useI18n();
   const { refresh } = useSession();
   const { user } = useUser();
   const [config, setConfig] = useState<SignupConfig | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [form, setForm] = useState<SignupForm>(EMPTY_FORM);
+  const [form, setForm] = useState<SignupForm>(() => ({ ...EMPTY_FORM, name: initialName }));
   const [errors, setErrors] = useState<ReturnType<typeof signupFormErrors>>({});
   const [notice, setNotice] = useState<{ tone: 'warn' | 'danger' | 'info'; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
@@ -174,7 +178,6 @@ function RegisterForm() {
 
   const set = <K extends keyof SignupForm>(k: K, v: SignupForm[K]) => setForm((f) => ({ ...f, [k]: v }));
   const fieldError = (k: keyof SignupForm) => errors[k] && t(`identity.field.${errors[k]}`);
-  const version = (doc: string) => config.consents.find((c) => c.document === doc)?.version;
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -188,11 +191,22 @@ function RegisterForm() {
       const result = classifySignup(status, body);
       if (!alive.current) return;
       if (result.kind === 'done') { refresh(); return; }
-      if (result.kind === 'consent-changed') { set('accepted', false); setNotice({ tone: 'warn', text: t('identity.register.changed') }); await load(); }
-      else if (result.kind === 'disabled') setConfig({ ...config, enabled: false });
-      else if (result.kind === 'unverified' || result.kind === 'unauthorized') refresh();
-      else if (result.kind === 'invalid') setNotice({ tone: 'danger', text: t('identity.register.invalid', { code: result.code }) });
-      else setNotice({ tone: 'danger', text: t('identity.register.failed', { code: result.code }) });
+      if (result.kind === 'consent-changed') { set('accepted', false); setNotice({ tone: 'warn', text: t('identity.register.changed') }); await load(); return; }
+      if (result.kind === 'disabled') { setConfig({ ...config, enabled: false }); return; }
+      if (result.kind === 'unverified' || result.kind === 'unauthorized') { refresh(); return; }
+      // Review round 2 (r2hoy): already_registered goes on only when /me now lists the customer role (the answer to an
+      // earlier tap was lost); otherwise it is a conflict, never a silent loop back to this form.
+      let held: boolean | null = null;
+      if (result.kind === 'already-registered') {
+        const me = await cosJson('/me').catch(() => null);
+        if (!alive.current) return;
+        held = me ? signupHeld(me.status, me.body) : null;
+        if (held) { refresh(); return; }
+      }
+      const key = signupNoticeKey(result, { existingLogin: false, held });
+      if (!key) { refresh(); return; }
+      const code = result.kind === 'invalid' || result.kind === 'error' ? result.code : 'network';
+      setNotice({ tone: result.kind === 'already-registered' && held === false || result.kind === 'email-linked' ? 'warn' : 'danger', text: t(key, { code }) });
     } catch {
       if (alive.current) setNotice({ tone: 'danger', text: t('identity.register.failed', { code: 'network' }) });
     } finally {
@@ -214,27 +228,38 @@ function RegisterForm() {
             <Field label={t('identity.register.ecPhone')} required error={fieldError('ecPhone')}>{(id) => <Input id={id} inputMode="tel" maxLength={SIGNUP_FORM_LIMITS.ecPhone} value={form.ecPhone} onChange={(e) => set('ecPhone', e.target.value)} />}</Field>
           </div>
         </>}
-        {config.consents.length > 0 && (
-          <div className="stack-sm">
-            <label className="identity-consent">
-              <input type="checkbox" checked={form.accepted} onChange={(e) => set('accepted', e.target.checked)} />
-              <span>
-                {t('identity.register.consent.pre')} <Link to="/site/legal/terms" target="_blank">{t('identity.register.terms')}</Link>
-                {' '}{t('identity.register.consent.and')} <Link to="/site/legal/privacy" target="_blank">{t('identity.register.privacy')}</Link>
-                {' '}{t('identity.register.consent.post')}
-              </span>
-            </label>
-            <p className="xs muted">
-              {[version('terms') && `${t('identity.register.terms')}: ${t('identity.register.version', { version: version('terms')! })}`,
-                version('privacy') && `${t('identity.register.privacy')}: ${t('identity.register.version', { version: version('privacy')! })}`].filter(Boolean).join(' · ')}
-            </p>
-            {errors.accepted && <p className="xs identity-error" role="alert">{t('identity.field.consent')}</p>}
-          </div>
-        )}
+        <ConsentCheck config={config} accepted={form.accepted} onChange={(v) => set('accepted', v)} error={!!errors.accepted} />
         {notice && <Notice tone={notice.tone}>{notice.text}</Notice>}
-        <Button type="submit" block size="lg" loading={busy}>{t('identity.register.cta')}</Button>
+        <Button type="submit" block size="lg" loading={busy}>{cta ?? t('identity.register.cta')}</Button>
       </form>
     </Card>
+  );
+}
+
+/**
+ * The studio's documents with their versions and the one consent box: the step every new customer sees, and the only
+ * step the automatic customer enrolment of a studio login may show (owner 2026-11-01). Nothing when there are none.
+ */
+export function ConsentCheck({ config, accepted, onChange, error }: { config: SignupConfig; accepted: boolean; onChange: (accepted: boolean) => void; error?: boolean }) {
+  const { t } = useI18n();
+  if (config.consents.length === 0) return null;
+  const version = (doc: string) => config.consents.find((c) => c.document === doc)?.version;
+  return (
+    <div className="stack-sm" data-consent-step>
+      <label className="identity-consent">
+        <input type="checkbox" checked={accepted} onChange={(e) => onChange(e.target.checked)} />
+        <span>
+          {t('identity.register.consent.pre')} <Link to="/site/legal/terms" target="_blank">{t('identity.register.terms')}</Link>
+          {' '}{t('identity.register.consent.and')} <Link to="/site/legal/privacy" target="_blank">{t('identity.register.privacy')}</Link>
+          {' '}{t('identity.register.consent.post')}
+        </span>
+      </label>
+      <p className="xs muted">
+        {[version('terms') && `${t('identity.register.terms')}: ${t('identity.register.version', { version: version('terms')! })}`,
+          version('privacy') && `${t('identity.register.privacy')}: ${t('identity.register.version', { version: version('privacy')! })}`].filter(Boolean).join(' · ')}
+      </p>
+      {error && <p className="xs identity-error" role="alert">{t('identity.field.consent')}</p>}
+    </div>
   );
 }
 

@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, matchPath, useNavigate } from 'react-router-dom';
 import pkg from '../../../package.json';
 import { useI18n } from '../../i18n/I18nProvider';
 import { useSession } from '../../auth/SessionProvider';
@@ -10,7 +10,9 @@ import { tenant } from '../../tenant/tenant';
 import { taglines } from '../../tenant/brand';
 import { getRoutes } from '../../app/registry';
 import { routeManifest } from '../../app/manifest';
-import { liveFramesAllowed } from '../../app/frameSession';
+import { liveFramesAllowed } from '../../app/frameMode';
+import { PRODUCTION_BUILD } from '../../config/launch';
+import { isViewableRole, isViewAsFailure } from '../../auth/viewAs';
 import { componentCount, manualChapterCount } from '../../app/counts';
 import { tableRegistry } from '../../data/schema';
 import { listActions, useActions } from '../../actions';
@@ -26,7 +28,11 @@ import { RoleSwitcher } from '../../components/molecule/RoleSwitcher/RoleSwitche
 import { ProblemReport } from '../../components/organism/ProblemReport/ProblemReport';
 import { BreathingRings } from '../../components/organism/BreathingRings/BreathingRings';
 import { LivePreviewBudget, PagePreview } from '../../components/organism/PagePreview/PagePreview';
-import { hubSpec, HUB_SURFACES, HUB_TOOLS, type HubSurfaceKey, type HubToolKey } from './specs';
+import { hubProductionSpec, hubSpec, HUB_SURFACES, HUB_TOOLS, type HubSurfaceKey, type HubToolKey } from './specs';
+import { firstName, type HubPeople } from './hubPeople';
+import { useHubPeople } from './useHubPeople';
+import { HubPersonaSelect } from './HubPersonaSelect';
+import { HubProblemReport } from './HubProblemReport';
 import { useUiScale } from './useUiScale';
 import { HUB_EXPERIENCES, HUB_TOOL_LIST } from '../../hub/hubMap.data';
 import type { HubBand } from '../../hub/hubMap.types';
@@ -113,15 +119,32 @@ const TOOLS: ToolCard[] = HUB_TOOL_LIST.map((x) => ({ key: x.id as HubToolKey, t
 
 type Status = 'built' | 'stub' | 'planned';
 
+/**
+ * Who a card enters as. Review build: the role's demo user. Production (lane Y3): the real person holding the role,
+ * the one view-as samples (src/modules/hub/hubPeople.ts); none for the super admin's and public cards, which open as
+ * the super admin. `PRODUCTION_BUILD` folds, so the demo users never reach the production bundle.
+ */
+function personOf(role: Role, people: HubPeople | null): { name: string } | undefined {
+  if (!PRODUCTION_BUILD) return demoUserByRole(role);
+  const p = people?.[role];
+  return p && !isViewAsFailure(p) && p.name ? { name: p.name } : undefined;
+}
+
 /** One surface card: medallion, status, preview, and the one button that enters it. */
-function SurfaceTile({ card, order, status, here, live, ui, onEnter }: {
+function SurfaceTile({ card, order, status, here, live, ui, onEnter, people, offline, secondaryOn }: {
   card: SurfaceCard; order: number; status: Status; here: boolean; live: boolean; ui: number;
   onEnter: (card: SurfaceCard) => void;
+  /** Production: the real person of each role (null while loading). */
+  people: HubPeople | null;
+  /** Production: the card's route is not in the production build (yet): shown as planned, not entered. */
+  offline: boolean;
+  secondaryOn: boolean;
 }) {
   const { t, bi } = useI18n();
   const { devMode } = useSession();
   const name = t(`hub.card.${card.key}`);
-  const person = card.role ? demoUserByRole(card.role) : undefined;
+  const person = card.role ? personOf(card.role, people) : undefined;
+  const viewAsRole = PRODUCTION_BUILD && card.role && isViewableRole(card.role) ? card.role : undefined;
   const tone = status === 'built' ? 'success' : status === 'stub' ? 'warn' : 'neutral';
 
   return (
@@ -137,17 +160,19 @@ function SurfaceTile({ card, order, status, here, live, ui, onEnter }: {
         <h3 className="hub-card-title">{name}</h3>
         <p className="hub-card-lead muted">{t(`hub.card.${card.key}.body`)}</p>
         <div className="hub-card-foot">
-          {card.comingSoon ? (
+          {offline ? (
+            <Placeholder what={name}><Button variant="secondary" icon="sparkle">{t('hub.prod.notYet')}</Button></Placeholder>
+          ) : card.comingSoon ? (
             <>
               <Placeholder what={name}><Button variant="secondary" icon="sparkle">{t('hub.soon.cta')}</Button></Placeholder>
               <Link className="hub-card-secondary small" to={card.to} onClick={(e) => { e.preventDefault(); onEnter({ ...card, comingSoon: false }); }}>{t('hub.soon.today', { code: card.code })}</Link>
             </>
           ) : (
-            <Button variant="secondary" onClick={() => onEnter(card)}>
-              {card.key === 'promotions' ? t('hub.training.open') : person ? t('hub.enterAs', { name: person.name.split(' ')[0] }) : t('hub.open')}
+            <Button variant="secondary" data-view-as={viewAsRole} onClick={() => onEnter(card)}>
+              {card.key === 'promotions' ? t('hub.training.open') : person ? t('hub.enterAs', { name: firstName(person.name) }) : viewAsRole ? t('hub.prod.viewAs', { role: bi(ROLE_LABEL[viewAsRole]) }) : t('hub.open')}
             </Button>
           )}
-          {card.secondary && (
+          {card.secondary && secondaryOn && (
             <Link
               className="hub-card-secondary small" to={card.secondary.to}
               onClick={card.secondary.asRole ? (e) => { e.preventDefault(); onEnter({ ...card, to: card.secondary!.to }); } : undefined}
@@ -164,7 +189,7 @@ function SurfaceTile({ card, order, status, here, live, ui, onEnter }: {
       <div className="hub-card-preview">
         <PagePreview
           code={card.code} route={card.to} name={name} shape={card.shape ?? 'desktop'}
-          as={card.role} live={live && !card.comingSoon} order={order} maxScale={card.shape === 'phone' ? ui : 1}
+          as={card.role} live={live && !card.comingSoon && !offline} order={order} maxScale={card.shape === 'phone' ? ui : 1}
         />
       </div>
     </article>
@@ -189,11 +214,17 @@ function Band({ id, eyebrow, title, body, tint, children }: {
   );
 }
 
-/** HUB-01 — the front door of the whole system. */
+/**
+ * HUB-01 — the front door of the whole system. Both builds render this page (Hoy test-fixes, lane Y3: Justin's Hub in
+ * production, unchanged in look). Production differs only where the data is real: cards and the persona dropdown name
+ * the person holding each role and enter by read-only view-as; Report a problem submits the `problem_report` form; live
+ * previews run in read-only frames (src/app/productionFrame.ts, at most three); the wireframe skin lasts for the tab.
+ */
 export function HubPage() {
   const { t, bi, setLang } = useI18n();
   const nav = useNavigate();
-  const { role, isSuperAdmin, canDevMode, devMode, setDevMode, switchUser } = useSession();
+  const { role, isSuperAdmin, canDevMode, devMode, setDevMode, switchUser, setViewAs } = useSession();
+  const people = useHubPeople();
   const { theme, toggleTheme, skin, toggleSkin } = useTheme();
   const root = useRef<HTMLDivElement>(null);
   const ui = useUiScale(root);
@@ -204,11 +235,16 @@ export function HubPage() {
   const routes = useMemo(() => getRoutes(), []);
   const manifest = useMemo(() => routeManifest(routes), [routes]);
   const statusOf = useCallback((path: string): Status => manifest.find((m) => m.path === path)?.status ?? 'planned', [manifest]);
+  // Production registers only the launch routes: a card or tool whose route isn't one is shown, but not entered.
+  const registered = useCallback((path: string) => !PRODUCTION_BUILD || routes.some((r) => matchPath({ path: r.path, end: true }, path)), [routes]);
 
   const enter = useCallback((card: SurfaceCard) => {
-    if (card.role) switchUser(card.role);
+    if (PRODUCTION_BUILD) {
+      // View-as (read-only) for a viewable role; the super admin's and public cards just navigate.
+      if (card.role && isViewableRole(card.role)) setViewAs(card.role);
+    } else if (card.role) switchUser(card.role);
     nav(card.to);
-  }, [switchUser, nav]);
+  }, [switchUser, setViewAs, nav]);
 
   const stats = useMemo(() => {
     const codes = new Set(routes.map((r) => r.spec.code));
@@ -230,6 +266,7 @@ export function HubPage() {
       // returned string is reported as { ok: true } and an agent would read it as "done".
       if (!card) throw new Error(`unknown surface "${p?.surface ?? ''}" — one of ${HUB_SURFACES.join(', ')}`);
       if (card.comingSoon) throw new Error(`${card.key} is coming soon (not built yet); today that work happens at ${card.to}`);
+      if (!registered(card.to)) throw new Error(`${card.key} is not in the production build yet (${card.to})`);
       enter(card);
       return `entered ${card.key} at ${card.to}`;
     },
@@ -238,6 +275,7 @@ export function HubPage() {
     'hub.openTool': (p?: Record<string, string>) => {
       const tool = TOOLS.find((x) => x.key === p?.tool);
       if (!tool) throw new Error(`unknown tool "${p?.tool ?? ''}" — one of ${HUB_TOOLS.join(', ')}`);
+      if (!registered(tool.to)) throw new Error(`${tool.key} is not in the production build yet (${tool.to})`);
       nav(tool.to);
       return `opened ${tool.to}`;
     },
@@ -252,7 +290,8 @@ export function HubPage() {
       return `language ${p.lang}`;
     },
     // The machine-readable hub map other hosts (aluzina, between-gigs) render from: where it lives and what it holds.
-    'hub.map': async () => {
+    // The published hub map is a review-build file (pruned from production with its client).
+    'hub.map': PRODUCTION_BUILD ? () => { throw new Error('the hub map is published by the review build only'); } : async () => {
       const m = await loadHubMap();
       return `hub map ${hubMapUrl()} · ${m.schema} v${m.product.version} · ${m.roles.length} roles, ${m.experiences.length} experiences, ${m.pages.length} pages, ${m.tools.length} tools · data at window.__hoyos.hubMap.data`;
     },
@@ -261,20 +300,21 @@ export function HubPage() {
       if (!isSuperAdmin) throw new Error('requires super_admin');
       toggleSkin(); return `skin ${skin === 'wireframe' ? 'styled' : 'wireframe'}`;
     },
-  }), [enter, nav, setDevMode, devMode, setLang, toggleTheme, theme, toggleSkin, skin, isSuperAdmin, canDevMode]);
-  useActions(hubSpec, handlers);
+  }), [enter, nav, setDevMode, devMode, setLang, toggleTheme, theme, toggleSkin, skin, isSuperAdmin, canDevMode, registered]);
+  useActions(PRODUCTION_BUILD ? hubProductionSpec : hubSpec, handlers);
 
-  // Document order decides who gets one of the six live frames first.
+  // Document order decides who gets one of the live frames first (six in review; three in production, lane Y3).
   const tile = (card: SurfaceCard) => (
     <SurfaceTile
       key={card.key} card={card} order={ALL_CARDS.indexOf(card)} status={statusOf(card.to)}
       here={ROLE_HOME[role] === card.to} live={live} ui={ui} onEnter={enter}
+      people={people} offline={!registered(card.to)} secondaryOn={!card.secondary || registered(card.secondary.to)}
     />
   );
 
   return (
-    <LivePreviewBudget max={6}>
-      <div className="hub" ref={root}>
+    <LivePreviewBudget max={PRODUCTION_BUILD ? 3 : 6}>
+      <div className="hub" ref={root} data-hub={PRODUCTION_BUILD ? 'production' : 'review'}>
         <div className="hub-brandband">
           <div className="hub-wrap">
             <header className="hub-head">
@@ -309,8 +349,7 @@ export function HubPage() {
         <div className="hub-wrap">
           <div className="hub-sessionbar">
             <span className="eyebrow hub-sessionbar-label">{t('hub.session')}</span>
-            <RoleSwitcher />
-            <ProblemReport />
+            {PRODUCTION_BUILD ? <><HubPersonaSelect people={people} /><HubProblemReport /></> : <><RoleSwitcher /><ProblemReport /></>}
             {devMode && <p className="small hub-devhint">{t('hub.devHint')}</p>}
           </div>
         </div>
@@ -336,6 +375,16 @@ export function HubPage() {
             <ul className="hub-tools">
               {TOOLS.map((tool) => (
                 <li key={tool.key}>
+                  {!registered(tool.to) ? (
+                    // Production: the tool's page is not in the build yet (R-08 kept these out): shown, not linked.
+                    <div className="hub-tool is-off" aria-disabled="true" style={{ ['--hue' as string]: 'var(--hue-dev)' }}>
+                      <span className="hub-tool-icon" aria-hidden><Icon name={tool.icon} size={Math.round(20 * ui)} /></span>
+                      <span className="hub-tool-text">
+                        <span className="hub-tool-title">{t(`hub.tool.${tool.key}`)}<Badge tone="neutral">{t('hub.status.planned')}</Badge></span>
+                        <span className="hub-tool-body muted xs">{t(`hub.tool.${tool.key}.body`)}</span>
+                      </span>
+                    </div>
+                  ) : (
                   <Link className="hub-tool" to={tool.to} style={{ ['--hue' as string]: 'var(--hue-dev)' }}>
                     <span className="hub-tool-icon" aria-hidden><Icon name={tool.icon} size={Math.round(20 * ui)} /></span>
                     <span className="hub-tool-text">
@@ -347,6 +396,7 @@ export function HubPage() {
                     </span>
                     <span className="hub-tool-go" aria-hidden><Icon name="arrow-right" size={18} /></span>
                   </Link>
+                  )}
                 </li>
               ))}
             </ul>
@@ -363,7 +413,7 @@ export function HubPage() {
                 </div>
               ))}
             </dl>
-            <p className="muted xs hub-footline">{t('hub.footer', { v: pkg.version })}</p>
+            <p className="muted xs hub-footline">{t(PRODUCTION_BUILD ? 'hub.footer.prod' : 'hub.footer', { v: pkg.version })}</p>
           </div>
         </footer>
       </div>

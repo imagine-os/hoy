@@ -55,8 +55,10 @@ jobs:
       - run: npm ci
       - name: The Hoy server's own dependencies (the signed-out website check runs the real server)
         run: npm ci --prefix server
+      # The private docs pack goes beside the copy: the docs gate serves `<dist>-private` (server/docsGate.mjs), and the
+      # review build later removes dist-private from the checkout.
       - name: Production build
-        run: npm run build:production && cp -R dist "$RUNNER_TEMP/prod"
+        run: npm run build:production && cp -R dist "$RUNNER_TEMP/prod" && cp -R dist-private "$RUNNER_TEMP/prod-private"
       - uses: actions/upload-artifact@v7
         with:
           name: production-build
@@ -70,7 +72,9 @@ jobs:
         run: node scripts/test-auth-identity.mjs
       - name: View-as rules (read-only transport, sample person, provider alias)
         run: node scripts/test-view-as.mjs
-      - name: The Hub and view-as on the production build (super admin only, read-only)
+      - name: Justin's Hub in production (read-only preview frames, real people, problem report)
+        run: node scripts/test-hub-production.mjs
+      - name: Justin's Hub and view-as on the production build (super admin only, read-only)
         run: node scripts/test-view-as-ui.mjs
         env:
           QA_PROD_DIST: ${{ runner.temp }}/prod

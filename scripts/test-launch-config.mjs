@@ -40,12 +40,11 @@ M.configureLaunch({ siteLive: true });
 check('SW-08 configureLaunch (production boot, H-3) updates the live config', M.launchConfig().siteLive === true);
 M.configureLaunch({ siteLive: false });
 
-// ── SW-06 — manual and documents require sign-in unless the owner lists them ─────────────────────────────────
-check('SW-06 default: no document is public', D.publicDocuments.length === 0 && !M.isPublicDocument(D, '/manual') && !M.isPublicDocument(D, '/docs/changelog'));
-const pub = { ...D, publicDocuments: ['/manual/house-rules'] };
-check('SW-06 a listed path (and its children) is public', M.isPublicDocument(pub, '/manual/house-rules') && M.isPublicDocument(pub, '/manual/house-rules/'));
-check('SW-06 an unlisted sibling stays private', !M.isPublicDocument(pub, '/manual/prices') && !M.isPublicDocument(pub, '/manual'));
-check('SW-06 only /manual and /docs paths can be made public', JSON.stringify(M.sanitize({ publicDocuments: ['/manual/a', '/admin', 'javascript:x', '/docs/b'] }).publicDocuments) === '["/manual/a","/docs/b"]');
+// ── SW-06 — manual and documents require sign-in; PUBLIC_DOCUMENTS is retired (owner 2026-11-01) ──────────────
+check('SW-06 the launch config has no public-documents list any more', !('publicDocuments' in D) && typeof M.isPublicDocument === 'undefined');
+check('SW-06 a publicDocuments value handed in (an old server, a QA fixture) is dropped, never kept', !('publicDocuments' in M.sanitize({ publicDocuments: ['/manual/a', '/docs/b'] })));
+M.configureLaunch({ publicDocuments: ['/manual'] });
+check('SW-06 …and configureLaunch does not keep it either', !('publicDocuments' in M.launchConfig()));
 
 // ── SW-02 — prices come from the product master ──────────────────────────────────────────────────────────────
 const T = 'ten_hoy';

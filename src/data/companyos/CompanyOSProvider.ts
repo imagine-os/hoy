@@ -229,7 +229,8 @@ export class CompanyOSProvider implements DataProvider {
       const row = (await this.ledgerOpenings(rows.map((r) => fromRecord(a, r)))).find((r) => r.id === id);
       return row ? (outbound(table, row, self) as unknown as T) : null;
     }
-    if (!a || a.kind !== 'entity' || a.idOf || a.base) return ((await this.list<T>(table, { where: { id } }))[0] ?? null);
+    // A table with an include (a class's schedule type, a teacher's name) reads one row through a query, so the embed comes too.
+    if (!a || a.kind !== 'entity' || a.idOf || a.base || a.include) return ((await this.list<T>(table, { where: { id } }))[0] ?? null);
     const signedIn = await this.transport.signedIn();
     if (!signedIn && !PUBLIC_TABLES.has(table)) return null;
     const self = signedIn ? await this.self() : null;

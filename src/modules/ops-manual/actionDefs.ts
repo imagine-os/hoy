@@ -3,6 +3,7 @@
 import type { ActionDef } from '../../actions';
 import { TEAM_ROLES as LENS_ROLES } from '../../auth/roles';
 import index from '../../../docs/source/index.json';
+import { PRODUCTION_BUILD } from '../../config/launch';
 
 const SOURCES = index as { id: string }[];
 const P = (d: string) => d;
@@ -18,7 +19,7 @@ export const MANUAL_ACTIONS: ActionDef[] = [
   { id: 'manual.restoreSection', label: { es: 'Restaurar el original', en: 'Restore the original' }, intent: { es: 'Vuelve al texto original de {section}', en: 'Go back to the original text of {section}' }, params: { chapter: chapterParam, section: 'string — the ## heading text', lang: 'enum:es,en' }, permission: 'manual.edit' },
   { id: 'manual.requestChange', label: { es: 'Pedir un cambio', en: 'Request a change' }, intent: { es: 'Pide que el capítulo {chapter} diga {request}', en: 'Ask for chapter {chapter} to say {request}' }, params: { chapter: chapterParam, request: 'string', section: 'string — ## heading (optional)' }, permission: 'docs.read' },
   { id: 'manual.suggestEdit', label: { es: 'Sugerir una edición', en: 'Suggest an edit' }, intent: { es: 'Sugiere este texto para {section}', en: 'Suggest this text for {section}' }, params: { chapter: chapterParam, section: 'string — the ## heading text', body: 'markdown — proposed section body', note: 'string (optional)', lang: 'enum:es,en' }, permission: 'docs.read' },
-  { id: 'manual.openSource', label: { es: 'Abrir un documento fuente', en: 'Open a source document' }, intent: { es: 'Abre el documento {id}', en: 'Open the {id} document' }, params: { id: `enum:${SOURCES.map((s) => s.id).join(',')}` }, permission: 'docs.read' },
+  { id: 'manual.openSource', label: { es: 'Abrir un documento fuente', en: 'Open a source document' }, intent: { es: 'Abre el documento {id}', en: 'Open the {id} document' }, params: { id: PRODUCTION_BUILD ? 'string — a source document id (/docs/source; production bundles no docs index, lane Y6)' : `enum:${SOURCES.map((s) => s.id).join(',')}` }, permission: 'docs.read' },
 ];
 
 /** K-04 — decisions and requests. */

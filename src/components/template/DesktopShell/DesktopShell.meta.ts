@@ -11,6 +11,7 @@ export default defineMeta({
   ],
   states: [
     'expanded (240 px)',
+    'also-customer (lane Y2: a "Mis clases / My classes" link to /app after the groups, for a staff login holding the customer role)',
     'rail / collapsed (56 px, tooltips al hover y foco)',
     'group folded / group open (navegar abre el grupo activo; también se puede plegar)',
     'dev-mode (códigos de spec visibles + chip de spec en la barra)',

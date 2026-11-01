@@ -1,0 +1,2 @@
+/* A Hub preview frame shows the page, not the view-as bar (src/app/productionFrame.ts, lane Y3). */
+:root[data-frame="preview"] .viewas-banner { display: none; }

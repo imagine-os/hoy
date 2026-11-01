@@ -55,7 +55,8 @@ export interface EntityAdapter {
   cols: Record<string, Col>;
   /** Always ANDed into reads (rooms are the `room` resources). */
   base?: Filter[];
-  include?: { field: string; fields?: string[] }[];
+  /** One-hop embeds; `as` keeps the reference field's id and puts the embedded record under its own key. */
+  include?: { field: string; as?: string; fields?: string[] }[];
   /** Data added to every create (before the row's own values). */
   createDefaults?: (row: Record<string, unknown>) => Record<string, unknown>;
   /** Replaces the generic field-by-field write for this table. */
@@ -164,6 +165,16 @@ const modalityCol: Col = {
   to: (v) => slugOf(v),
   from: (v, rec) => modalityId(v) ?? modalityFromTitle(rec.data.title),
 };
+/** The stored `modality` only, never guessed (timetable rows: the editor and the publish rule read this). */
+const storedModalityCol: Col = { ...modalityCol, from: (v) => modalityId(v) };
+/**
+ * A class's type (lane Y1): its own `modality` (a class Administration adds by hand), else its schedule's (the timetable
+ * row it was generated from, included as `schedule_row`), else its title. None: the class is not open for booking.
+ */
+const classModalityCol: Col = {
+  ...modalityCol,
+  from: (v, rec) => modalityId(v) ?? modalityId(embedded(rec, 'schedule_row')?.modality) ?? modalityFromTitle(rec.data.title),
+};
 
 // ---------------------------------------------------------------- adapters
 const entity = (a: Omit<EntityAdapter, 'kind'>): EntityAdapter => ({ kind: 'entity', ...a });
@@ -221,7 +232,10 @@ const rooms = entity({
 const classTemplates = entity({
   table: 'class_templates', entity: 'schedule',
   cols: {
-    title: { field: 'title' }, modality_id: modalityCol,
+    // Review round 2 (r2hoy, L2): a timetable row's class type is only what it stores. Guessing it from the title would
+    // let a draft titled "Pulso mañana" pass the publish rule while storing nothing, and its classes would lose the type
+    // once the row is renamed. Classes keep their own fallback (classModalityCol).
+    title: { field: 'title' }, modality_id: storedModalityCol,
     teacher_id: { field: 'coach', from: str }, room_id: { field: 'resource', from: str },
     weekday: { field: 'weekday', from: num },
     start_time: { field: 'start_time', to: (v) => (typeof v === 'string' ? v.slice(0, 5) : v) },
@@ -235,8 +249,9 @@ const classTemplates = entity({
 
 const classSessions = entity({
   table: 'class_sessions', entity: 'occurrence',
+  include: [{ field: 'schedule', as: 'schedule_row', fields: ['modality'] }],
   cols: {
-    template_id: { field: 'schedule', from: str }, title: { field: 'title' }, modality_id: modalityCol,
+    template_id: { field: 'schedule', from: str }, title: { field: 'title' }, modality_id: classModalityCol,
     teacher_id: { field: 'coach', from: str }, room_id: { field: 'resource', from: str },
     starts_at: { field: 'starts_at', kind: 'instant' }, ends_at: { field: 'ends_at', kind: 'instant' },
     capacity: { field: 'capacity', from: num },

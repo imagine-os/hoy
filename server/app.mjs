@@ -6,6 +6,7 @@
 //                        public reads (PUBLIC_ENTITIES), sent with the server's own read-only identity;
 //   GET /files/<id>      a stored file (e.g. a transfer receipt), streamed from storage after the API has
 //                        checked the user may read it; the signed storage link never reaches the browser;
+//   /private-docs/*      the Hub's docs and source documents, for a signed-in super admin only (docsGate.mjs);
 //   POST /webhooks/resend Resend's delivery webhook, forwarded byte for byte to the API, which checks
 //                        the signature;
 //   everything else      the built frontend in dist/ (website + app; HashRouter, so no SPA fallback).
@@ -16,6 +17,7 @@ import http from 'node:http';
 import https from 'node:https';
 import { extname, resolve, sep } from 'node:path';
 import { createGzip } from 'node:zlib';
+import { createDocsGate, DOCS_PREFIX } from './docsGate.mjs';
 
 /**
  * Company OS routes a visitor without a session may reach (method + path after `/t/<tenant>`), e.g.
@@ -77,6 +79,8 @@ export async function createHandler(config, deps) {
   const distDir = resolve(config.distDir);
   const release = await readFile(resolve(distDir, 'release.json'), 'utf8').then(JSON.parse, () => null);
   const log = deps.log ?? ((entry) => console.log(JSON.stringify(entry)));
+  // Lane Y6: the Hub's docs, manual, kanban and source documents, for a signed-in super admin only (docsGate.mjs).
+  const docsGate = await createDocsGate(config, { verifySession: deps.verifySession, fetchMe: deps.fetchMe, log });
   const appConfig = JSON.stringify({
     tenant: config.tenant,
     apiBase: '/api/cos',
@@ -101,12 +105,13 @@ export async function createHandler(config, deps) {
       }
       if (rawPath === '/api/cos' || rawPath.startsWith('/api/cos/')) {
         const route = await proxy(req, res, config, deps, rawPath.slice('/api/cos'.length), rawQuery);
-        return log({ event: 'api.cos', method: req.method, route, status: res.statusCode, ms: Date.now() - started, ...(res.public ? { public: true } : {}) });
+        return log({ event: 'api.cos', method: req.method, route, status: res.statusCode, ms: Date.now() - started, ...(res.public ? { public: true } : {}), ...(res.staleSession ? { staleSession: true } : {}) });
       }
       if (rawPath === '/files' || rawPath.startsWith('/files/')) {
         const outcome = await file(req, res, config, deps, rawPath.slice('/files'.length));
         return log({ event: 'file', outcome, status: res.statusCode, ms: Date.now() - started });
       }
+      if (rawPath === DOCS_PREFIX || rawPath.startsWith(`${DOCS_PREFIX}/`)) return await docsGate(req, res, rawPath.slice(DOCS_PREFIX.length));
       if (rawPath.startsWith('/api/') || rawPath.startsWith('/webhooks/')) return sendError(res, 404, 'not_found');
       return await serveStatic(req, res, distDir, rawPath, rawQuery);
     } catch (err) {
@@ -221,9 +226,21 @@ async function proxy(req, res, config, deps, rest, query) {
       return route;
     }
   } else {
+    let valid = true;
     try {
       await deps.verifySession(token);
     } catch {
+      valid = false;
+    }
+    if (!valid) {
+      // Lane Y2 (test-hoy, 2026-11-01): an expired or invalid session on a website read is answered as signed out, with
+      // the server's read identity (the visitor's token is dropped); every other route still answers 401.
+      if (config.companyOsReadToken && publicRead(req.method, segments.slice(2))) {
+        res.staleSession = true;
+        res.setHeader('X-Hoy-Session', 'stale');
+        await publicProxy(req, res, config, deps, rest + query, segments[2] === 'query');
+        return route;
+      }
       sendError(res, 401, 'unauthorized');
       return route;
     }

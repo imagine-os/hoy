@@ -1,19 +1,20 @@
 import { useMemo } from 'react';
 import { useTable } from '../../data/DataContext';
-import type { BaseRow, ClassSessionRow, FaqEntryRow, MediaAssetRow, ModalityRow, TeacherRow } from '../../data/schema';
+import type { BaseRow, ClassSessionRow, FaqEntryRow, MediaAssetRow, ModalityRow, RoomRow, TeacherRow } from '../../data/schema';
 import { isSameDay, addDays, startOfDay } from '../../i18n/format';
+import { joinSessionRows } from '../../data/sessionAvailability';
 
-/** Sessions joined with modality and teacher — shared by site and customer pages. */
+/** Sessions joined with modality and teacher — shared by site and staff pages (`joinSessionRows`; review round 1, L7, L8). */
 export function useSessionsJoined(filter?: (s: ClassSessionRow) => boolean) {
-  const { rows: templates } = useTable<BaseRow & { active: boolean }>('class_templates');
-  const { rows: sessions } = useTable<ClassSessionRow>('class_sessions', { orderBy: { column: 'starts_at' } });
-  const { rows: modalities } = useTable<ModalityRow>('modalities');
+  const templates = useTable<BaseRow & { active: boolean }>('class_templates');
+  const sessions = useTable<ClassSessionRow>('class_sessions', { orderBy: { column: 'starts_at' } });
+  const modalities = useTable<ModalityRow>('modalities');
   const { rows: teachers } = useTable<TeacherRow>('teachers');
-  return useMemo(() => {
-    const mod = new Map(modalities.map((m) => [m.id, m]));
-    const tea = new Map(teachers.map((t) => [t.id, t]));
-    return sessions.filter((s) => !filter || filter(s)).map((s) => ({ session: s, modality: mod.get(s.modality_id), teacher: tea.get(s.teacher_id), templateActive: templates.find(t => t.id === s.template_id)?.active }));
-  }, [sessions, modalities, teachers, templates, filter]);
+  // Lane Y1: each class's own room (the rooms are public).
+  const { rows: rooms } = useTable<RoomRow>('rooms');
+  const loading = sessions.loading || modalities.loading || templates.loading;
+  return useMemo(() => joinSessionRows({ sessions: sessions.rows, modalities: modalities.rows, teachers, rooms, templates: templates.rows }, { loading, filter }),
+    [sessions.rows, modalities.rows, teachers, rooms, templates.rows, loading, filter]);
 }
 
 /** Today's classes still to come (`scheduled`); `all` also returns the ones already taught, for a day board. */

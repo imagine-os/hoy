@@ -38,6 +38,8 @@ export const strings: StringTable = {
   'site.calendar.status.started': { es: 'En curso · reservas cerradas', en: 'In progress · booking closed' },
   'site.calendar.status.unpublished': { es: 'No publicada', en: 'Unpublished' },
   'site.calendar.status.unavailable': { es: 'No disponible', en: 'Unavailable' },
+  // Lane Y1: a class without a class type (no colour, letter or description yet).
+  'site.calendar.status.no_class_type': { es: 'Aún no abre reservas', en: 'Not open for booking yet' },
   'site.calendar.prev': { es: "Período anterior", en: "Previous period" },
   'site.calendar.next': { es: "Período siguiente", en: "Next period" },
   'site.calendar.view': { es: "Vista del calendario", en: "Calendar view" },
@@ -59,7 +61,6 @@ export const strings: StringTable = {
   'site.mat.row': { es: "Fila {n}", en: "Row {n}" },
   'site.mat.rowRange': { es: "mats {from}–{to}", en: "mats {from}–{to}" },
   'site.mat.entry': { es: "Entrada al salón", en: "Studio entrance" },
-  'site.mat.room': { es: "Sala principal", en: "Main studio" },
   'site.mat.available': { es: "Disponible", en: "Available" },
   'site.mat.selected': { es: "Tu elección", en: "Your choice" },
   'site.mat.occupied': { es: "Ocupado", en: "Occupied" },

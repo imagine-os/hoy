@@ -222,6 +222,12 @@ export class Transport {
       }
       const requestId = res.headers.get('x-request-id') ?? undefined;
       if (res.status === 401 && !refreshed) { refreshed = true; attempt--; continue; }
+      // Lane Y2: the Hoy server answered a website read as signed out because it refused this token (expired or
+      // invalid). Ask for a fresh token once; still refused, keep the public answer and let the session re-check.
+      const stale = Boolean(token) && res.headers.get('x-hoy-session') === 'stale';
+      if (stale && !refreshed) { refreshed = true; attempt--; continue; }
+      // A 401 tells the session below; tell it once (review round, L4).
+      if (stale && res.status !== 401) unauthorizedHandler?.();
       const text = res.status === 204 ? '' : await res.text();
       let parsed: unknown = null;
       if (text) { try { parsed = JSON.parse(text); } catch { parsed = null; } }

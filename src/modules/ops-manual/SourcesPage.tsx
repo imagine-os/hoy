@@ -4,11 +4,11 @@ import { useI18n } from '../../i18n/I18nProvider';
 import { useActions } from '../../actions';
 import { Badge } from '../../components/atom/Badge/Badge';
 import { Icon } from '../../components/atom/Icon/Icon';
-import { SourceEmbed } from '../../components/organism/SourceEmbed/SourceEmbed';
+import { SourceDocEmbed } from './SourceDocEmbed';
 import { ManualSidebar } from './ManualPage';
 import { chaptersFor } from './manualIndex';
 import { chapterIcon, MANUAL_ICON } from './chapterIcons';
-import { SOURCES, sourceView } from './sources';
+import { SOURCES } from './sources';
 import { useSourceHandlers } from './manualActions';
 import { sourcesSpec } from './specs';
 import './manual.css';
@@ -34,12 +34,12 @@ export function SourcesPage() {
         </div>
         {SOURCES.map((s) => (
           <div key={s.id} id={`src-${s.id}`} className="manual-source">
-            <SourceEmbed doc={sourceView(s)} level={2} open={focus === s.id}>
+            <SourceDocEmbed doc={s} level={2} open={focus === s.id}>
               <span className="eyebrow">{t('manual.sources.cited')}</span>
               {s.chapters.map((n) => byNumber.get(n)).filter((c) => !!c).map((c) => (
                 <Link key={c!.slug} className="manual-source-chip" to={`/manual/${c!.slug}`}><Icon name={chapterIcon(c!.number)} size={16} /><span className="manual-num">{c!.number}</span>{c!.title}</Link>
               ))}
-            </SourceEmbed>
+            </SourceDocEmbed>
           </div>
         ))}
         <p className="xs muted">{t('manual.sources.foot')}</p>

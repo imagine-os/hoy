@@ -12,9 +12,13 @@
 // - `memberships`: each sample user's role key (the recipe's, or the system super_admin). Company OS's seed loader makes
 //   a login per membership and links it to the person (ADR 0025 addendum 2026-10-31);
 // - customers' `member` facets and teachers' `coach` facets;
+// - the sample's weekly timetable (src/data/seed/timetable.ts) as `schedule` rows, each with its coach, its class type
+//   (the recipe's tenant field `modality`, the class type's slug), its length and the studio's mats (Company OS lane Y1:
+//   the recipe holds no timetable; Administration enters Hoy's real one in the app);
 // - the classes (`occurrence`) of the sample's two weeks around `asOf`, plus two more weeks of the timetable ahead,
-//   each with its coach; with --recipe-refs, each with its room (the recipe's, by name: see ROOM_OF); no schedule (the
-//   recipe's schedules are not Hoy's timetable yet, so no class is said to come from one);
+//   each with its coach and its schedule (so class generation, once the test tenant goes live after the seed, continues
+//   the timetable without making a date again); with --recipe-refs, classes and schedules name their room (the
+//   recipe's, by name: see ROOM_OF);
 // - the customers' approved payments of the recipe's products with their numbered receipts, a credit lot per pack or
 //   trial with its grant entry, and the sample's bookings that the rules would accept: one a day per person, each
 //   taking a class from a usable lot (credit entry) or paid by its own single-class payment; the rest are left out;
@@ -57,8 +61,8 @@ const TEACHER_NAMES = ['Lucía Montoya', 'Tomás Villegas', 'Paula Echeverri', '
 type Row = Record<string, any>;
 type SeedRecord = { entity: string; id: string; createdAt?: string; data: Record<string, unknown> };
 export type CompanyOsSeed = { fictional: true; _about: string; asOf: string; records: SeedRecord[]; files: never[]; memberships: { person: string; role: string }[] };
-type Recipe = { modules?: { key: string; settings?: Row }[]; records?: { entity: string; rows: Row[] }[] };
-export type HoySample = { db: Record<string, Row[]>; TIMETABLE: Row[]; teachers: Row[]; modalities: Row[]; demoUsers: Row[]; mats: number };
+type Recipe = { modules?: { key: string; settings?: Row }[]; records?: { entity: string; rows: Row[] }[]; fields?: { entity: string; field: string; config?: { options?: { value: string }[] } }[] };
+export type HoySample = { db: Record<string, Row[]>; TIMETABLE: Row[]; timetableId: (row: Row) => string; teachers: Row[]; modalities: Row[]; demoUsers: Row[]; mats: number };
 
 /**
  * Hoy's sample as the app builds it, on a clock frozen at `asOf` (the sample is dated from "now"): bundled with
@@ -74,7 +78,7 @@ export async function loadHoySample(asOf: string = DEFAULT_AS_OF): Promise<HoySa
       stdin: {
         contents: [
           "export { buildSeed } from './src/data/seed';",
-          "export { TIMETABLE } from './src/data/seed/timetable';",
+          "export { TIMETABLE, timetableId } from './src/data/seed/timetable';",
           "export { teachers, modalities } from './src/data/seed/catalog';",
           "export { demoUsers } from './src/auth/demoUsers';",
           "export { tenant } from './src/tenant/tenant';",
@@ -87,7 +91,7 @@ export async function loadHoySample(asOf: string = DEFAULT_AS_OF): Promise<HoySa
       banner: { js: `class FrozenDate extends Date { constructor(...args) { super(...(args.length ? args : [${now}])); } static now() { return ${now}; } }` },
     });
     const m = await import(pathToFileURL(outfile).href);
-    return { db: m.buildSeed(), TIMETABLE: [...m.TIMETABLE], teachers: m.teachers, modalities: m.modalities, demoUsers: m.demoUsers, mats: m.tenant.studio.mats };
+    return { db: m.buildSeed(), TIMETABLE: [...m.TIMETABLE], timetableId: m.timetableId, teachers: m.teachers, modalities: m.modalities, demoUsers: m.demoUsers, mats: m.tenant.studio.mats };
   } finally {
     rmSync(scratch, { recursive: true, force: true });
   }
@@ -144,7 +148,9 @@ export function toCompanyOsSeed(sample: HoySample, recipe: Recipe, asOf: string,
     return { resource: { $ref: { entity: 'resource', where: { name } } } };
   };
 
-  const people: SeedRecord[] = [], facets: SeedRecord[] = [], classes: SeedRecord[] = [], money: SeedRecord[] = [], lots: SeedRecord[] = [], bookings: SeedRecord[] = [];
+  /** The class types the recipe offers on a schedule (its `modality` options); none listed: any. */
+  const classTypes = recipe.fields?.find((f) => f.entity === 'schedule' && f.field === 'modality')?.config?.options?.map((o) => String(o.value));
+  const people: SeedRecord[] = [], facets: SeedRecord[] = [], schedules: SeedRecord[] = [], classes: SeedRecord[] = [], money: SeedRecord[] = [], lots: SeedRecord[] = [], bookings: SeedRecord[] = [];
   const memberships: CompanyOsSeed['memberships'] = [];
   const emails = new Set<string>();
   const person = (key: string, name: string, email: string, createdAt: string) => {
@@ -188,17 +194,36 @@ export function toCompanyOsSeed(sample: HoySample, recipe: Recipe, asOf: string,
   }
   const customers = users.filter((u) => roleOf.get(u.id) === 'customer');
 
+  // The timetable: one schedule per row (the sample builds every timetable class in its main room).
+  const scheduleOf = new Map<string, string>();
+  for (const row of sample.TIMETABLE) {
+    const coach = coachOf.get(row.teacher);
+    if (!coach) throw new Error(`timetable ${row.weekday} ${row.time}: teacher ${row.teacher} is not in the catalog`);
+    const modality = sample.modalities.find((m) => m.id === row.modality);
+    if (!modality) throw new Error(`timetable ${row.weekday} ${row.time}: class type ${row.modality} is not in the catalog`);
+    if (classTypes && !classTypes.includes(String(modality.slug))) throw new Error(`timetable ${row.weekday} ${row.time}: class type ${modality.slug} is not one of the recipe's (schedule modality options)`);
+    const key = sample.timetableId(row);
+    const id = uuid(`schedule:${key}`);
+    scheduleOf.set(key, id);
+    schedules.push({
+      entity: 'schedule', id,
+      data: { title: row.title, kind: 'class', coach, ...roomRef(TIMETABLE_ROOM), weekday: row.weekday, start_time: row.time, duration_minutes: Number(modality.duration_min ?? 50), capacity: sample.mats, modality: modality.slug, active: true },
+    });
+  }
+
   // Classes: the sample's, then the timetable for two more weeks.
   type Cls = { rec: SeedRecord; start: number; end: number; status: string; sessionId: string };
   const cls: Cls[] = [];
   const durationOf = (modality: string) => Number(sample.modalities.find((m) => m.id === modality)?.duration_min ?? 50);
-  const addClass = (key: string, title: string, teacherId: string, roomId: string, start: number, end: number, capacity: number, status: string, cancelReason: string | null) => {
+  const addClass = (key: string, title: string, teacherId: string, roomId: string, start: number, end: number, capacity: number, status: string, cancelReason: string | null, templateId: string | null) => {
     const coach = coachOf.get(teacherId);
     if (!coach) throw new Error(`${key}: teacher ${teacherId} is not in the catalog`);
+    const schedule = templateId ? scheduleOf.get(templateId) : undefined;
+    if (templateId && !schedule) throw new Error(`${key}: its timetable row ${templateId} is not in the timetable`);
     const rec: SeedRecord = {
       entity: 'occurrence', id: uuid(`occurrence:${key}`),
       data: {
-        title, kind: 'class', coach, ...roomRef(roomId), starts_at: isoAt(start), ends_at: isoAt(end), capacity, status, booked_count: 0,
+        title, kind: 'class', ...(schedule ? { schedule } : {}), coach, ...roomRef(roomId), starts_at: isoAt(start), ends_at: isoAt(end), capacity, status, booked_count: 0,
         ...(status === 'cancelled' ? { cancel_reason: cancelReason ?? 'Clase cancelada', cancelled_at: isoAt(Math.min(now, start - 24 * HOUR)) } : {}),
         ...(status === 'completed' ? { completed_at: isoAt(end) } : {}),
       },
@@ -206,14 +231,14 @@ export function toCompanyOsSeed(sample: HoySample, recipe: Recipe, asOf: string,
     cls.push({ rec, start, end, status, sessionId: key });
   };
   for (const s of [...db.class_sessions].sort((a, b) => a.starts_at.localeCompare(b.starts_at) || a.id.localeCompare(b.id))) {
-    addClass(s.id, s.title, s.teacher_id, s.room_id, Date.parse(s.starts_at), Date.parse(s.ends_at), s.capacity, s.status, s.cancel_reason);
+    addClass(s.id, s.title, s.teacher_id, s.room_id, Date.parse(s.starts_at), Date.parse(s.ends_at), s.capacity, s.status, s.cancel_reason, s.template_id ?? null);
   }
   const lastDay = dayOf(Math.max(...cls.map((c) => c.start)));
   for (let d = 1; d <= EXTRA_DAYS; d++) {
     const day = addDays(lastDay, d);
     for (const row of sample.TIMETABLE.filter((t) => t.weekday === weekdayOf(day))) {
       const start = Date.parse(`${day}T${row.time}:00${UTC_OFFSET}`);
-      addClass(`ahead_${day}_${row.time}`, row.title, row.teacher, TIMETABLE_ROOM, start, start + durationOf(row.modality) * 60000, sample.mats, 'scheduled', null);
+      addClass(`ahead_${day}_${row.time}`, row.title, row.teacher, TIMETABLE_ROOM, start, start + durationOf(row.modality) * 60000, sample.mats, 'scheduled', null, sample.timetableId(row));
     }
   }
   const classOf = new Map(cls.map((c) => [c.sessionId, c]));
@@ -333,7 +358,7 @@ export function toCompanyOsSeed(sample: HoySample, recipe: Recipe, asOf: string,
     fictional: true,
     _about: "Hoy's made-up sample (src/data/seed in imagine-os/hoy, dated asOf), generated by its scripts/seed-companyos.ts. Every person, address (@demo.hoyos.test), teacher name, payment and booking is fictional. Do not edit by hand: regenerate.",
     asOf,
-    records: [...people, ...facets, ...cls.map((c) => c.rec), ...money, ...lots, ...bookings, ...entries],
+    records: [...people, ...facets, ...schedules, ...cls.map((c) => c.rec), ...money, ...lots, ...bookings, ...entries],
     files: [],
     memberships,
   };
@@ -353,5 +378,5 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   const seed = await buildCompanyOsSeed({ recipe, asOf, recipeRefs });
   writeFileSync(join(out, 'hoy.json'), `${JSON.stringify(seed, null, 2)}\n`);
   const count = (e: string) => seed.records.filter((r) => r.entity === e).length;
-  console.log(`seed-companyos: ${seed.records.length} records (${count('person')} people, ${count('occurrence')} classes, ${count('booking')} bookings, ${count('payment')} payments, ${count('credit_lot')} packs), ${seed.memberships.length} memberships, as of ${asOf} → ${join(out, 'hoy.json')}`);
+  console.log(`seed-companyos: ${seed.records.length} records (${count('person')} people, ${count('schedule')} schedules, ${count('occurrence')} classes, ${count('booking')} bookings, ${count('payment')} payments, ${count('credit_lot')} packs), ${seed.memberships.length} memberships, as of ${asOf} → ${join(out, 'hoy.json')}`);
 }

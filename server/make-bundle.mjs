@@ -1,11 +1,14 @@
 // Assembles what `railway up` uploads for the `web` service: the server's files at the root (Railway runs
-// `npm ci` there and starts `node index.mjs`) and the built frontend under site/ (DIST_DIR in .railway/railway.ts).
+// `npm ci` there and starts `node index.mjs`), the built frontend under site/ (DIST_DIR in .railway/railway.ts) and,
+// for a production build, its private docs pack under site-private/ (lane Y6: served only by docsGate.mjs, to a
+// signed-in super admin; docsGate finds it as `<DIST_DIR>-private`).
 // Refuses a bundle whose frontend carries a secret (check-bundle.mjs). Run after `npm run build`:
 //   node server/make-bundle.mjs <out-dir>     (outside the checkout: the repo's .gitignore ignores dist-like paths)
 import { cp, mkdir, readdir, rm, stat, writeFile } from 'node:fs/promises';
 import { join, relative, resolve, isAbsolute } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { findSecrets } from './check-bundle.mjs';
+import { privateDocsDir } from './docsGate.mjs';
 
 const here = fileURLToPath(new URL('.', import.meta.url));
 const dist = resolve(here, '../dist');
@@ -39,12 +42,15 @@ for (const name of await readdir(here)) {
   if (name === 'package.json' || name === 'package-lock.json' || (name.endsWith('.mjs') && name !== 'make-bundle.mjs')) await cp(join(here, name), join(out, name));
 }
 await cp(dist, join(out, 'site'), { recursive: true });
+const privateDocs = privateDocsDir(dist);
+const withPrivate = await stat(join(privateDocs, 'docs.json')).then(() => true, () => false);
+if (withPrivate) await cp(privateDocs, privateDocsDir(join(out, 'site')), { recursive: true });
 
-const findings = await findSecrets(join(out, 'site'));
+const findings = [...await findSecrets(join(out, 'site')), ...(withPrivate ? (await findSecrets(privateDocsDir(join(out, 'site')))).map((f) => `site-private/${f}`) : [])];
 if (findings.length) {
   console.error(`❌ make-bundle: secrets in the built frontend:\n  - ${findings.join('\n  - ')}`);
   process.exit(1);
 }
 let bytes = 0;
 for (const entry of await readdir(out, { recursive: true, withFileTypes: true })) if (entry.isFile()) bytes += (await stat(join(entry.parentPath, entry.name))).size;
-console.log(`✅ make-bundle: ${out} (${(bytes / 1048576).toFixed(1)} MB), no secret in site/`);
+console.log(`✅ make-bundle: ${out} (${(bytes / 1048576).toFixed(1)} MB), no secret in site/${withPrivate ? ' or site-private/ (the gated docs)' : ''}`);

@@ -8,7 +8,9 @@ export function sessionAdmissionAvailable(session: ClassSessionRow, modality?: P
   return session.tenant_id === tenantId && session.status === 'scheduled'
     && Number.isFinite(Date.parse(session.starts_at)) && Number.isFinite(Date.parse(session.ends_at))
     && Date.parse(session.starts_at) > now && Date.parse(session.ends_at) > Date.parse(session.starts_at)
-    && modality?.active === true && (!session.template_id || template?.id === session.template_id && template.active === true);
+    // Owner 2026-11-01 (r2 L3, "Stop new classes only"): the timetable row's Published flag no longer closes a class it
+    // already made; a withdrawn class type, or a row that doesn't exist, still does.
+    && modality?.active === true && (!session.template_id || template?.id === session.template_id);
 }
 /** Imported session snapshots cannot exceed their current physical room or mat ceiling.
  * This is a fresh-admission limit only; callers must not persist it over historical sessions. */

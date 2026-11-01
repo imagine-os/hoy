@@ -48,8 +48,10 @@ const { check, done } = reporter('route connectivity');
 // PENDING: another Wave 1 lane is closing it now.
 const PENDING = [
 ];
+// Lane Y3 (Hoy test-fixes): the Hub's Construction & testing band ships for the super admin (R-08 answered for these pages).
+const CONSTRUCTION_ROUTES = ['/manual', '/manual/decisions', '/manual/:chapter', '/docs', '/docs/*', '/docs/source', '/dev/knowledgebase'];
 // Routes added to LAUNCH_ROUTES after this audit (lane C's role homes, lane D's Hub). Green, or owner-approved per entry.
-const ADDED_ROUTES = ['/teach', '/admin/content', '/dev', '/hub'];
+const ADDED_ROUTES = ['/teach', '/admin/content', '/dev', '/hub', ...CONSTRUCTION_ROUTES];
 // The owner's approval for the two role homes that launch with "available later" sections (lane H plan, P-03b).
 const ROLE_HOMES_APPROVED = 'owner, 2026-10-31: role homes launch with "available later" sections and refused saves (lane H plan cryptic-swimming-whale; decision log P-03b)';
 // OPEN: found by this audit (lane G, 2026-10-31) on routes already in LAUNCH_ROUTES, with no lane closing it yet.
@@ -61,7 +63,7 @@ const OPEN = [
   ...[['sink audit_log', 'Wave 4 (teacher app: substitute requests log to the audit)'], ['mock_only modules/teacher/substituteRequest.ts', 'Wave 4 (teacher app: substitute requests)'], ['unknown practice_goals', 'Wave 2 (practice goals; "Mis números")'], ['unknown reviews', 'Wave 3 (class reviews; the rating tile)'], ['unknown space_bookings', 'Wave 4 (teacher app: specials)'], ['unknown special_charges', 'Wave 4 (teacher pay: specials payouts)']]
     .map(([finding, lane]) => ({ finding, lane, approved: ROLE_HOMES_APPROVED, routes: ['/teach'], note: 'the Teacher home S-03: hidden in production ("available later"); the hooks still run on unconnected tables, which read empty with no request' })),
   ...['unknown teacher_profile_proposals', 'sink audit_log', 'mock_only modules/profile-review/contracts.ts', 'unknown events', 'unknown class_pay_rules', 'missing appendClassPayRule', 'dynamic table', 'mock_only modules/admin/contentRecovery.ts', 'dynamic entity2', 'missing contentBatch', 'missing generateRecurrence']
-    .map((finding) => ({ finding, lane: 'Wave 3 (content entities)', approved: ROLE_HOMES_APPROVED, routes: ['/admin/content'], note: 'the Marketing home M-02: reads live; every save is refused content_later before anything is sent (contentRecovery.ts), bulk and recurrence are absent on Company OS' })),
+    .map((finding) => ({ finding, lane: 'Wave 3 (content entities)', approved: ROLE_HOMES_APPROVED, routes: ['/admin/content'], note: 'the Marketing home M-02: reads live; timetable rows save to schedule (lane Y5, timetableSave.ts, classes.write); every other save is refused content_later before anything is sent (contentRecovery.ts), bulk and recurrence are absent on Company OS' })),
   { finding: 'unknown events', lane: 'Wave 3', routes: ['/admin/settings/*'], note: 'Events and RSVPs (reuse map); useMediaLibrary reads events for media use' },
   { finding: 'unknown reviews', lane: 'Wave 3', routes: ['/site/*'], note: 'Class reviews (reuse map); the site home reads reviews' },
   { finding: 'unknown practice_goals', lane: 'Wave 2', routes: ['/admin/analytics', '/admin/crm/:id', '/app'], note: 'Maintenance records, practice goals (reuse map); data/useAnalytics.ts' },
@@ -115,7 +117,7 @@ const viteSrc = await readFile('vite.config.ts', 'utf8');
 const REVIEW_ONLY_MODULES = [...(viteSrc.match(/REVIEW_ONLY_MODULES\s*=\s*\[([^\]]*)\]/)?.[1] ?? '').matchAll(/'([^']+)'/g)].map((m) => m[1]);
 const PROVIDER_FILES = /^src\/data\/(companyos\/|MockProvider\.ts|SupabaseProvider\.ts|DataContext\.tsx|types\.ts)/;
 // The demo data the production build marks side-effect free (vite.config.ts REVIEW_ONLY_DATA).
-const REVIEW_ONLY_DATA = /\/src\/(hub\/(?!hubMap\.data\.ts$).+|auth\/demoUsers|data\/MockProvider|data\/seed\/(?!(catalog|timetable|content|legal|media|studioPolicies)\.ts$).+)\.tsx?$/;
+const REVIEW_ONLY_DATA = /\/src\/(hub\/(?!hubMap\.data\.ts$).+|auth\/demoUsers|app\/frameSession|data\/MockProvider|data\/seed\/(?!(catalog|timetable|content|legal|media|studioPolicies)\.ts$).+)\.tsx?$/;
 
 // ── The adapters and the provider, as the production code defines them ─────────────────────────────────────────
 const CACHE = path.join(ROOT, 'node_modules', '.cache', 'route-connectivity');
@@ -167,12 +169,13 @@ const SIGNED_OUT_LIVE = new Set(SIGNED_OUT_MODEL.providerTables.filter((t) => !S
 
 check('read the adapters (mapping.ts)', Object.keys(adapters).length >= 20, String(Object.keys(adapters).length));
 check('read the provider methods (CompanyOSProvider.ts)', ['list', 'insert', 'atomic', 'request'].every((m) => PROVIDER_METHODS.has(m)), [...PROVIDER_METHODS].join(','));
-check('read the review-only modules (vite.config.ts)', REVIEW_ONLY_MODULES.includes('docs'), REVIEW_ONLY_MODULES.join(','));
+check('read the review-only modules (vite.config.ts; none since lane Y3 ships the docs browser)', /REVIEW_ONLY_MODULES(?::\s*string\[\])?\s*=\s*\[/.test(viteSrc) && !REVIEW_ONLY_MODULES.includes('docs'), REVIEW_ONLY_MODULES.join(','));
 check('read the optional DataProvider methods (types.ts)', OPTIONAL.length >= 5, OPTIONAL.join(','));
 
 // ── Production routes ───────────────────────────────────────────────────────────────────────────────────────────
 const launchSrc = await readFile('src/config/launchRoutes.ts', 'utf8');
 const LAUNCH = [...launchSrc.slice(launchSrc.indexOf('LAUNCH_ROUTES'), launchSrc.indexOf('];', launchSrc.indexOf('LAUNCH_ROUTES'))).matchAll(/'(\/[^']*)'/g)].map((m) => m[1]);
+check('the Construction & testing band routes are launch routes (lane Y3)', CONSTRUCTION_ROUTES.every((r) => LAUNCH.includes(r)), CONSTRUCTION_ROUTES.filter((r) => !LAUNCH.includes(r)).join(', '));
 const launchPattern = (p) => LAUNCH.find((l) => (l.endsWith('/*') ? p === l.slice(0, -2) || p.startsWith(l.slice(0, -1)) : p === l));
 
 /** The routes a module registers in the production build: its production block when it has one, else all of them. */

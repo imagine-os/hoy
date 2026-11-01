@@ -23,8 +23,9 @@ import { fileURLToPath } from 'node:url';
  *   signed-out reads go out with; never sent to the browser. Null: signed-out reads stay refused
  * @property {{ perSecond: number, burst: number, totalPerSecond: number, totalBurst: number }} publicReadRate each visitor's
  *   limit on those reads, and all visitors' together (below the identity's own limit in Company OS)
- * @property {{ siteLive: boolean, siteLiveAt: string|null, publicDocuments: string[] }} launch
- *   the go-live switch the app reads from /app-config.json (SW-08, Q-14): SITE_LIVE, SITE_LIVE_AT, PUBLIC_DOCUMENTS
+ * @property {{ siteLive: boolean, siteLiveAt: string|null }} launch
+ *   the go-live switch the app reads from /app-config.json (SW-08): SITE_LIVE, SITE_LIVE_AT. (PUBLIC_DOCUMENTS, Q-14, is
+ *   retired, owner 2026-11-01: the manual and docs are the super admin's only, through the docs gate.)
  */
 
 /** @returns {ServerConfig} Throws with every problem listed, so a bad deploy fails at start, not on first use. */
@@ -97,8 +98,6 @@ export function loadConfig(env = process.env) {
   if (siteLiveAt && !(/T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2})$/.test(siteLiveAt) && Number.isFinite(Date.parse(siteLiveAt)))) {
     problems.push('SITE_LIVE_AT must be an instant with its offset, e.g. 2026-11-01T06:00:00-05:00');
   }
-  const publicDocuments = (env.PUBLIC_DOCUMENTS ?? '').split(',').map((p) => p.trim()).filter(Boolean);
-  for (const p of publicDocuments) if (!/^\/(manual|docs)(\/[A-Za-z0-9_-]+)*$/.test(p)) problems.push(`PUBLIC_DOCUMENTS: ${JSON.stringify(p)} is not a /manual or /docs path`);
 
   const config = {
     port: int(env.PORT, 3000),
@@ -119,7 +118,7 @@ export function loadConfig(env = process.env) {
     fileStorageOrigins,
     companyOsReadToken,
     publicReadRate: { perSecond: int(env.PUBLIC_READ_RATE_PER_SECOND, 20), burst: int(env.PUBLIC_READ_BURST, 120), totalPerSecond: 150, totalBurst: 400 },
-    launch: { siteLive: siteLiveRaw === 'true', siteLiveAt, publicDocuments },
+    launch: { siteLive: siteLiveRaw === 'true', siteLiveAt },
   };
   if (problems.length) throw new Error(`Hoy server configuration:\n  - ${problems.join('\n  - ')}`);
   return config;

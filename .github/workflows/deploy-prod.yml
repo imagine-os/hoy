@@ -139,6 +139,10 @@ jobs:
         run: node scripts/check-company-os.mjs
       - name: Hoy server tests
         run: node scripts/test-hoy-server.mjs
+      - name: Docs gate (the Hub's docs for a signed-in super admin only; lane Y6)
+        run: node scripts/test-docs-gate.mjs
+      - name: Deploy wiring (IaC declares every server variable; summaries show the go-live switches)
+        run: node scripts/test-deploy-wiring.mjs
       - name: Build (production with Clerk, launch routes, no review tools; H-2)
         run: npm run build:production
       - name: Production bundle checks (H-2; refuses demo data, review tools, docs, screenshots)
@@ -203,6 +207,14 @@ jobs:
           if ! printf '%s' "$COMPANY_OS_TENANT" | grep -Eq '^[a-z0-9][a-z0-9-]*$'; then echo "::error::Set the production variable COMPANY_OS_TENANT to Hoy's tenant slug"; exit 1; fi
           if [ -z "$HOY_RAILWAY_PROJECT" ]; then echo "::error::Set the production variable RAILWAY_PROJECT_NAME"; exit 1; fi
 
+      # Review round 2 (r2hoy, L7): a variable left under a wrong or retired name (SET_LIVE, PUBLIC_DOCUMENTS) is warned
+      # about here, before Apply infra (which fails on a variable the IaC doesn't declare). Never prints a value.
+      - name: Leftover variables
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          { railway variable list --service "$SERVICE" --environment "$RAILWAY_ENV" --json 2>/dev/null || echo 'unreadable'; } | node scripts/deploy-switches.mjs --leftovers
+
       - name: Infra plan
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
@@ -261,8 +273,11 @@ jobs:
       - name: Summary
         env:
           APP_URL: ${{ vars.APP_URL }}
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
           echo "### Site: ${APP_URL} (custom domain on the web service in Railway), release $TAG" >> "$GITHUB_STEP_SUMMARY"
+          # The go-live switches (lane Y2): SITE_LIVE and whether the read token is present, never a value.
+          { railway variable list --service "$SERVICE" --environment "$RAILWAY_ENV" --json 2>/dev/null || echo 'unreadable'; } | node scripts/deploy-switches.mjs | tee -a "$GITHUB_STEP_SUMMARY"
 
   # The GitHub Release is the record of what is live: created on the tag's first deploy (notes from
   # the merged PRs), a dated line appended on every later one.

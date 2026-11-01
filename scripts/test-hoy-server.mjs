@@ -220,8 +220,8 @@ await test('/app-config.json exposes only public settings (no secret key)', asyn
   const body = JSON.parse(r.body);
   assert.deepEqual(Object.keys(body).sort(), ['apiBase', 'clerkPublishableKey', 'environment', 'launch', 'tenant']);
   assert.equal(body.apiBase, '/api/cos');
-  // The go-live switch defaults to Coming Soon (SW-08).
-  assert.deepEqual(body.launch, { siteLive: false, siteLiveAt: null, publicDocuments: [] });
+  // The go-live switch defaults to Coming Soon (SW-08). PUBLIC_DOCUMENTS is retired (owner 2026-11-01): no such key.
+  assert.deepEqual(body.launch, { siteLive: false, siteLiveAt: null });
   assert.equal(body.tenant, 'hoy-dev');
   assert.match(body.clerkPublishableKey, /^pk_test_/);
   assert.doesNotMatch(r.body.toString(), /sk_test/);
@@ -510,12 +510,17 @@ await test('public reads: a query body over 16 KiB is refused, not buffered', as
 await test('public reads: the visitor\'s own headers never become the identity', async () => {
   upstreamReply = okUpstream;
   seen.length = 0;
-  // A bearer is always a Clerk session to check: the read token itself, any service token, or a forged one is refused.
+  // A bearer is always a Clerk session to check: the read token itself, any service token, or a forged one is never
+  // forwarded. Changed on purpose (test-hoy fixes, lane Y2): on a public read a failed check is answered as signed out
+  // (the server's read identity), not 401, so a visitor's expired session doesn't break the website.
   for (const authorization of [`Bearer ${READ_TOKEN}`, `Bearer cos_svc_00000000-0000-4000-8000-000000000000_${'A'.repeat(43)}`, 'Bearer forged', 'Basic dXNlcjpwYXNz', '']) {
+    seen.length = 0;
     const r = await pub('POST', '/api/cos/t/hoy-dev/query', { ...json, authorization }, JSON.stringify({ entity: 'product' }));
-    assert.equal(r.status, 401, authorization);
+    assert.equal(r.status, 200, authorization);
+    assert.equal(seen.length, 1, authorization);
+    assert.equal(seen[0].headers.authorization, `Bearer ${READ_TOKEN}`, authorization);
   }
-  assert.equal(seen.length, 0);
+  seen.length = 0;
   // Visitor headers that look like identities or addresses are dropped; the server sets its own.
   const r = await pub('POST', '/api/cos/t/hoy-dev/query', {
     ...json, cookie: '__session=visitor', 'x-api-key': 'visitor', 'x-platform-key': 'visitor', 'x-service-token': 'visitor',
@@ -531,6 +536,76 @@ await test('public reads: the visitor\'s own headers never become the identity',
   const signedIn = await pub('POST', '/api/cos/t/hoy-dev/query', { ...json, authorization: `Bearer ${GOOD}` }, JSON.stringify({ entity: 'booking' }));
   assert.equal(signedIn.status, 200);
   assert.equal(seen[0].headers.authorization, `Bearer ${GOOD}`);
+});
+
+// Lane Y2 (test-hoy, 2026-11-01): an expired Clerk session made every signed-out read 401.
+await test('public reads (Y2): an invalid or expired session on a public read falls back to the read identity', async () => {
+  upstreamReply = okUpstream;
+  const hostile = ['expired.session.token', 'forged', `${GOOD}x`, 'a'.repeat(4000), `${READ_TOKEN}`];
+  for (const token of hostile) {
+    for (const [method, path, body] of [['POST', '/query', JSON.stringify({ entity: 'occurrence' })], ['GET', '/api/product'], ['GET', '/api/coach/c1']]) {
+      seen.length = 0;
+      const r = await pub(method, `/api/cos/t/hoy-dev${path}`, { ...(body ? json : {}), authorization: `Bearer ${token}` }, body);
+      assert.equal(r.status, 200, `${token.slice(0, 20)} ${method} ${path}`);
+      assert.equal(seen.length, 1);
+      assert.equal(seen[0].headers.authorization, `Bearer ${READ_TOKEN}`, 'never the visitor\'s token');
+      assert.equal(r.headers['x-hoy-session'], 'stale', 'the browser is told its session was refused');
+    }
+  }
+  assert.ok(publicLogs.some((l) => l.event === 'api.cos' && l.public === true && l.staleSession === true), 'the log says the session was refused');
+});
+
+await test('public reads (Y2): an expired session on a private route or a non-public query still answers 401, nothing reaches Company OS', async () => {
+  upstreamReply = okUpstream;
+  seen.length = 0;
+  const auth = { authorization: 'Bearer expired.session.token' };
+  for (const [method, path, body] of [
+    ['GET', '/me'], ['POST', '/signup', '{}'], ['POST', '/batch', '[]'], ['GET', '/api/person'], ['GET', '/api/payment/x'],
+    ['POST', '/api/occurrence', '{}'], ['PATCH', '/api/occurrence/o1', '{}'], ['DELETE', '/api/booking/b1'],
+    ['POST', '/query', JSON.stringify({ entity: 'person' })], ['POST', '/query', JSON.stringify({ entity: 'payment' })], ['POST', '/query', 'not json'],
+  ]) {
+    const r = await pub(method, `/api/cos/t/hoy-dev${path}`, { ...auth, ...(body ? json : {}) }, body);
+    assert.equal(r.status, 401, `${method} ${path} ${body ?? ''}`);
+  }
+  assert.equal(seen.length, 0);
+});
+
+await test('public reads (Y2): a valid session on a public read still uses the person, never the read identity', async () => {
+  upstreamReply = okUpstream;
+  for (const [method, path, body] of [['POST', '/query', JSON.stringify({ entity: 'occurrence' })], ['GET', '/api/product']]) {
+    seen.length = 0;
+    const r = await pub(method, `/api/cos/t/hoy-dev${path}`, { ...(body ? json : {}), authorization: `Bearer ${GOOD}` }, body);
+    assert.equal(r.status, 200);
+    assert.equal(seen[0].headers.authorization, `Bearer ${GOOD}`);
+    assert.equal(r.headers['x-hoy-session'], undefined);
+  }
+});
+
+await test('public reads (Y2): without COMPANY_OS_READ_TOKEN an expired session stays 401 on every read', async () => {
+  seen.length = 0;
+  const r = await request('POST', '/api/cos/t/hoy-dev/query', { ...json, authorization: 'Bearer expired.session.token' }, JSON.stringify({ entity: 'occurrence' }));
+  assert.equal(r.status, 401);
+  assert.equal(seen.length, 0);
+});
+
+await test('public reads (Y2): with the real Clerk check, an expired JWT on a public read gets the public answer; on /me, 401', async () => {
+  const { privateKey, publicKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
+  const pem = publicKey.export({ type: 'spki', format: 'pem' }).toString();
+  const realConfig = { ...publicConfig, clerkJwtKey: pem, authorizedParties: ['https://hoy-test.example'] };
+  const real = createHoyServer(await createHandler(realConfig, { verifySession: clerkSessionVerifier(realConfig), log: () => {} }));
+  await listen(real);
+  upstreamReply = okUpstream;
+  const now = Math.floor(Date.now() / 1000);
+  const expired = signJwt({ sub: 'user_9', sid: 'sess_9', azp: 'https://hoy-test.example', iat: now - 700, nbf: now - 700, exp: now - 600 }, privateKey);
+  seen.length = 0;
+  const site = await request('POST', '/api/cos/t/hoy-dev/query', { ...json, authorization: `Bearer ${expired}` }, JSON.stringify({ entity: 'occurrence' }), real);
+  assert.equal(site.status, 200);
+  assert.equal(seen[0].headers.authorization, `Bearer ${READ_TOKEN}`);
+  seen.length = 0;
+  const me = await request('GET', '/api/cos/t/hoy-dev/me', { authorization: `Bearer ${expired}` }, undefined, real);
+  assert.equal(me.status, 401);
+  assert.equal(seen.length, 0);
+  real.close();
 });
 
 await test('public reads: the read token is never in an answer, /app-config.json or a log line', async () => {
@@ -904,17 +979,22 @@ await test('config: refuses a missing API address, tenant or Clerk key, a secret
   assert.equal(loadConfig(ok).fileSizeLimit, 10 * 1024 * 1024);
 });
 
-await test('config: the go-live switch (SITE_LIVE, SITE_LIVE_AT, PUBLIC_DOCUMENTS) is checked at start', async () => {
+await test('config: the go-live switch (SITE_LIVE, SITE_LIVE_AT) is checked at start', async () => {
   const ok = { COMPANY_OS_URL: 'http://api.railway.internal:4000', COMPANY_OS_TENANT: 'hoy', CLERK_SECRET_KEY: 'sk_live_x' };
-  assert.deepEqual(loadConfig(ok).launch, { siteLive: false, siteLiveAt: null, publicDocuments: [] });
+  assert.deepEqual(loadConfig(ok).launch, { siteLive: false, siteLiveAt: null });
   assert.equal(loadConfig({ ...ok, SITE_LIVE: 'TRUE ' }).launch.siteLive, true);
   assert.equal(loadConfig({ ...ok, SITE_LIVE: 'false' }).launch.siteLive, false);
   assert.throws(() => loadConfig({ ...ok, SITE_LIVE: 'yes' }), /SITE_LIVE must be/);
   assert.equal(loadConfig({ ...ok, SITE_LIVE_AT: '2026-11-01T06:00:00-05:00' }).launch.siteLiveAt, '2026-11-01T06:00:00-05:00');
   assert.throws(() => loadConfig({ ...ok, SITE_LIVE_AT: '2026-11-01' }), /SITE_LIVE_AT/);
-  assert.deepEqual(loadConfig({ ...ok, PUBLIC_DOCUMENTS: '/manual/es, /docs/terminos' }).launch.publicDocuments, ['/manual/es', '/docs/terminos']);
-  assert.throws(() => loadConfig({ ...ok, PUBLIC_DOCUMENTS: '/admin' }), /PUBLIC_DOCUMENTS/);
-  assert.throws(() => loadConfig({ ...ok, PUBLIC_DOCUMENTS: '/docs/../admin' }), /PUBLIC_DOCUMENTS/);
+});
+await test('config: PUBLIC_DOCUMENTS is retired (owner 2026-11-01): a value left set opens nothing and is not handed out', async () => {
+  const ok = { COMPANY_OS_URL: 'http://api.railway.internal:4000', COMPANY_OS_TENANT: 'hoy', CLERK_SECRET_KEY: 'sk_live_x' };
+  for (const value of ['/manual/es, /docs/terminos', '/manual', '/admin', '/docs/../admin']) {
+    const c = loadConfig({ ...ok, PUBLIC_DOCUMENTS: value });
+    assert.deepEqual(c.launch, { siteLive: false, siteLiveAt: null }, value);
+    assert.ok(!JSON.stringify(c).includes('publicDocuments') && !JSON.stringify(c).includes(value.split(',')[0]), value);
+  }
 });
 
 await test('check-bundle: finds secret shapes and this environment’s secret values; a clean dist passes', async () => {

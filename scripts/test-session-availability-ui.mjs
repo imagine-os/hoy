@@ -33,7 +33,9 @@ try {
   await page.evaluate(() => { const stored = JSON.parse(localStorage.getItem('hoyos.db.v1')); stored.db.bookings = []; stored.db.voucher_bookings = []; stored.db.class_sessions.find(s => s.id === 'qa_full').booked_count = 4; localStorage.setItem('hoyos.db.v1', JSON.stringify(stored)); dispatchEvent(new StorageEvent('storage', { key: 'hoyos.db.v1', newValue: JSON.stringify(stored) })); });
   const selectDay = async () => { await page.locator('.calendar-date-label input').fill('2026-10-15'); await page.getByRole('button', { name: 'Day', exact: true }).click(); };
   await selectDay();
-  for (const title of ['QA Past', 'QA In progress', 'QA Cancelled', 'QA Completed', 'QA Unpublished']) {
+  // Changed on purpose (owner 2026-11-01, r2 L3): a class whose timetable row is switched off stays open.
+  assert(!(await page.locator('.classrow').filter({ hasText: 'QA Unpublished' }).isDisabled()), 'a switched-off row keeps its class open (day view)');
+  for (const title of ['QA Past', 'QA In progress', 'QA Cancelled', 'QA Completed']) {
     const row = page.locator('.classrow').filter({ hasText: title });
     assert(await row.isDisabled(), `${title} disabled in day view`);
     const hash = await page.evaluate(() => location.hash);
@@ -47,7 +49,8 @@ try {
   await page.getByRole('dialog').waitFor(); await page.keyboard.press('Escape');
   assert.equal(await page.getByRole('dialog').count(), 0);
   await page.getByRole('button', { name: 'Week', exact: true }).click();
-  for (const title of ['QA Past', 'QA In progress', 'QA Cancelled', 'QA Completed', 'QA Unpublished']) assert(await page.locator('.calendar-session').filter({ hasText: title }).isDisabled(), `${title} disabled in desktop week`);
+  assert(!(await page.locator('.calendar-session').filter({ hasText: 'QA Unpublished' }).isDisabled()), 'a switched-off row keeps its class open (week)');
+  for (const title of ['QA Past', 'QA In progress', 'QA Cancelled', 'QA Completed']) assert(await page.locator('.calendar-session').filter({ hasText: title }).isDisabled(), `${title} disabled in desktop week`);
   assert(!(await page.locator('.calendar-session').filter({ hasText: 'QA Full' }).isDisabled()), 'full remains available for waitlist');
   // A still-open schedule becomes disabled when its start time arrives, without reloading.
   await page.clock.fastForward(4 * 3600000 + 1);

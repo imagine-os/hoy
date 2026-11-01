@@ -51,7 +51,7 @@ try{
  assert.equal(await dialog.getByLabel('Flat amount (COP)',{exact:true}).inputValue(),'100000');
  const fixture=await page.evaluate(()=>{const db=JSON.parse(localStorage.getItem('hoyos.db.v1')).db;const t=db.class_templates.find(t=>t.active);const d=new Date();d.setDate(d.getDate()+1);return {teacher:t.teacher_id,modality:t.modality_id,room:t.room_id,weekday:String(d.getDay()),date:`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};});
  await dialog.getByLabel(/^Title/).fill('QA reviewed recurrence');
- for(const [label,value] of [['Teacher',fixture.teacher],['Modality',fixture.modality],['Room',fixture.room],['Weekday',fixture.weekday]])await dialog.getByLabel(label,{exact:true}).selectOption(value);
+ for(const [label,value] of [['Teacher',fixture.teacher],[/^Modality/,fixture.modality],['Room',fixture.room],['Weekday',fixture.weekday]])await dialog.getByLabel(label,typeof label==='string'?{exact:true}:undefined).selectOption(value); // Modality is required since lane Y1 (label "Modality *")
  await dialog.getByLabel('From (optional)',{exact:true}).fill(fixture.date);await dialog.getByLabel('Until (optional)',{exact:true}).fill(fixture.date);
  await dialog.getByLabel('Start time',{exact:true}).fill('23:00');await dialog.getByLabel('Capacity',{exact:true}).fill('8');
  await dialog.getByLabel('Default theme',{exact:true}).fill('Tema de prueba');await dialog.getByLabel('Default theme EN',{exact:true}).fill('Default QA theme');

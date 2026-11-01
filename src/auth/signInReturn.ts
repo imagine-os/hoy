@@ -1,4 +1,5 @@
 import { customerReturn } from '../modules/customer/auth/customerReturn';
+import { CUSTOMER_AUTO_ENROL_STAFF } from '../config/launch';
 import { LAUNCH_ROUTES, isLaunchRoute } from '../config/launchRoutes';
 import { matrixAllows } from '../config/roleMatrix';
 import { ROLE_HOME, type Role } from './roles';
@@ -36,13 +37,19 @@ export function signInReturn(value: string | null | undefined): string | null {
   return matchesLaunchRoute(value) ? value : null;
 }
 
-/** Where a signed-in person lands: the validated `next` when it is in their own area, else their home. */
-export function homeFor(role: Role, next: string | null): string {
+/**
+ * Where a signed-in person lands: the validated `next` when it is in their own area, else their home. `held` is every
+ * role the login holds (lane Y2). An `/app` next is followed for a login holding the customer role, and, with the staff
+ * enrolment switch on (`CUSTOMER_AUTO_ENROL_STAFF`), for every login, whose customer page enrols it. A staff next is still judged by the primary role's matrix.
+ */
+export function homeFor(role: Role, next: string | null, held: readonly Role[] = [role], autoEnrolStaff: boolean = CUSTOMER_AUTO_ENROL_STAFF): string {
   const target = signInReturn(next);
   if (!target) return ROLE_HOME[role];
   const area = target.split('/')[1];
   if (role === 'customer') return area === 'app' ? target : ROLE_HOME[role];
-  if (area === 'app') return ROLE_HOME[role];
+  // Owner 2026-11-01 (lane review): every registered login is a customer; the customer page enrols a staff login. With
+  // the staff enrolment switch off (a build that turns it off), only a login holding the customer role follows an /app next.
+  if (area === 'app') return autoEnrolStaff || held.includes('customer') ? target : ROLE_HOME[role];
   return matrixAllows(role, target.split('?')[0]) ? target : ROLE_HOME[role];
 }
 
