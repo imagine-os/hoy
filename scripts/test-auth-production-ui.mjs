@@ -39,7 +39,7 @@ const server = createServer(async (req, res) => {
     if (route === '/me') {
       if (api.meStatus) return json(res, api.meStatus, { error: 'server_error' });
       const m = api.members[user];
-      return m ? json(res, 200, { tenant: { slug: TENANT }, user: { id: user, name: m.name, email: m.email }, roleKeys: m.roleKeys, isSuperAdmin: false, caps: [], entities: [] }) : json(res, 403, { error: 'no access to this tenant' });
+      return m ? json(res, 200, { tenant: { slug: TENANT }, user: { id: user, name: m.name, email: m.email }, roleKeys: m.roleKeys, isSuperAdmin: !!m.superAdmin, caps: [], entities: [] }) : json(res, 403, { error: 'no access to this tenant' });
     }
     if (route === '/signup' && req.method === 'GET') {
       api.signupReads[user] = (api.signupReads[user] ?? 0) + 1;
@@ -96,6 +96,7 @@ const ACCOUNTS = {
   user_deskcust: { emails: [{ id: 'ea_deskcust', email: 'mostrador@example.test', verified: true }], primary: 'ea_deskcust' },
   // A platform operator (a Company OS super admin elsewhere) signing in with their own login: no Hoy membership.
   user_operator: { emails: [{ id: 'ea_operator', email: 'operadora@example.test', verified: true }], primary: 'ea_operator' },
+  user_supmem: { emails: [{ id: 'ea_supmem', email: 'supmem@example.test', verified: true }], primary: 'ea_supmem' },
 };
 const MEMBERS = () => ({
   user_ana: { name: 'Ana Prueba', email: 'ana@example.test', roleKeys: ['member'], registered: true },
@@ -109,6 +110,8 @@ const MEMBERS = () => ({
   user_invited: { name: 'Iris Invitada', email: 'invitada@example.test', roleKeys: ['front_desk', 'member'], registered: false },
   // A desk-invited customer: member from an invitation, never signed up (registered:false too).
   user_deskcust: { name: 'Dora Mostrador', email: 'mostrador@example.test', roleKeys: ['member'], registered: false },
+  // A super admin who holds member (granted by an invitation) but never signed up.
+  user_supmem: { name: 'Sara Supermiembro', email: 'supmem@example.test', roleKeys: ['super_admin', 'member'], superAdmin: true, registered: false },
 });
 
 const browser = await launchBrowser();
@@ -613,6 +616,46 @@ try {
     await retry(page).catch(() => {}); await acceptAndContinue(page).catch(() => {});
     check('r2hoy2 409 already_registered with /me holding the customer role → the customer app (success, no notice)', (await page.locator('[data-enrol-customer]').count()) === 0 && (await page.locator('.appshell').count()) === 1 && route(page) === '/app', `${route(page)} ${(await page.locator('[data-enrol-customer]').innerText().catch(() => '')).slice(0, 120)}`);
     api.joinConflict = false;
+    await ctx.close();
+  }
+  {
+    // Lane review (r2hoy2, M1): a refusal the person can't fix (email linked to another login) never locks a customer
+    // out of their own bookings: the line says to contact the studio, and "Continue for now" opens the page (fail open).
+    ({ ctx, page } = await open('/auth/sign-in'));
+    await signIn(page, 'mostrador@example.test');
+    await page.goto(`${BASE}/#/app`); await page.waitForTimeout(1200);
+    api.emailLinked = true;
+    await acceptAndContinue(page).catch(() => {});
+    const linked = await page.locator('[data-enrol-customer]').innerText().catch(() => '');
+    check('r2hoy2 review: email linked to another login → contact the studio, with "Continue for now"', /otra cuenta/i.test(linked) && (await page.locator('[data-enrol-customer] [data-consent-later]').count()) === 1 && !/email_linked_to_other_login/.test(linked), linked.slice(0, 300));
+    await page.locator('[data-enrol-customer] [data-consent-later]').click({ timeout: 3000 }).catch(() => {});
+    await page.waitForTimeout(800);
+    check('r2hoy2 review: …"Continue for now" opens the customer app for this session', (await page.locator('.appshell').count()) === 1 && (await page.locator('[data-enrol-customer]').count()) === 0, route(page));
+    api.emailLinked = false;
+    await ctx.close();
+  }
+  {
+    // Lane review (r2hoy2, M2): Retry whose read never answers doesn't leave a dead spinner: it opens the page (fail open).
+    ({ ctx, page } = await open('/auth/sign-in'));
+    await signIn(page, 'mostrador@example.test');
+    await page.goto(`${BASE}/#/app`); await page.waitForTimeout(1200);
+    api.signupFail500 = true;
+    await acceptAndContinue(page).catch(() => {});
+    api.signupFail500 = false; api.signupReadHang = true;
+    await retry(page).catch(() => {});
+    await page.waitForTimeout(6000);
+    check('r2hoy2 review: Retry whose GET /signup hangs → the customer app opens after the wait', (await page.locator('.appshell').count()) === 1 && (await page.locator('[data-enrol-customer]').count()) === 0, `${route(page)} ${(await page.locator('[data-enrol-customer]').innerText().catch(() => '')).slice(0, 120)}`);
+    api.signupReadHang = false; api.hung.forEach((r) => r.end()); api.hung = [];
+    await ctx.close();
+  }
+  {
+    // Lane review (r2hoy2, test gap): a super admin holding member who never signed up sees the step too.
+    ({ ctx, page } = await open('/auth/sign-in'));
+    await signIn(page, 'supmem@example.test');
+    await page.goto(`${BASE}/#/app/plans`); await page.waitForTimeout(1200);
+    check('r2hoy2 super admin + member, registered:false: the consent step on a customer page', (await page.locator('[data-enrol-customer="consent"]').count()) === 1, route(page));
+    await acceptAndContinue(page).catch(() => {});
+    check('r2hoy2 …then the customer session opens (one sign-up, roles unchanged)', (await page.locator('[data-enrol-customer]').count()) === 0 && (await page.locator('.appshell').count()) === 1 && api.members.user_supmem.registered === true && JSON.stringify(api.members.user_supmem.roleKeys) === '["super_admin","member"]', route(page));
     await ctx.close();
   }
   {
