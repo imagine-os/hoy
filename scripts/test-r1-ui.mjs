@@ -23,6 +23,7 @@ const PK = `pk_test_${Buffer.from(`${HOST}$`).toString('base64')}`;
 const FAKE_CLERK = readFileSync(new URL('./fixtures/fake-clerk.js', import.meta.url), 'utf8');
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.png': 'image/png', '.svg': 'image/svg+xml', '.mp4': 'video/mp4', '.woff2': 'font/woff2' };
 const TODAY = '2026-11-03';
+const PORT = Number(process.env.QA_PORT ?? 5221);
 
 const PEOPLE = {
   user_admin: { name: 'Mateo Admin', person: 'per_admin', keys: ['administrator', 'super_admin'], superAdmin: true },
@@ -32,14 +33,15 @@ const ACCOUNTS = Object.fromEntries(Object.keys(PEOPLE).map((u) => [u, { emails:
 
 // ── the fake Hoy server + Company OS ────────────────────────────────────────────────────────────────────────────
 let world;
-function reset({ hoursWriters = ['administrator', 'booking_manager'], refuseSettings = false } = {}) {
-  world = { hours: new Map(), bookings: { review_hours: 'mon-sat 08:00-20:00', review_closed_dates: '2026-12-31' }, hoursWriters, refuseSettings, log: [], seq: 0 };
+function reset({ hoursWriters = ['administrator', 'booking_manager'], refuseSettings = false, holidays = [], closedDates = '2026-12-31', failBookingsPatch = false } = {}) {
+  world = { hours: new Map(), bookings: { review_hours: 'mon-sat 08:00-20:00', review_closed_dates: closedDates }, hoursWriters, refuseSettings, failBookingsPatch, log: [], seq: 0 };
+  for (const [date, label] of holidays) { const id = `ho_${++world.seq}`; world.hours.set(id, rec(id, { start_date: date, end_date: date, closed: true, open: null, close: null, label: { es: label, en: label }, kind: 'holiday', source: 'manual', note: null, google_synced_at: null })); }
 }
-reset();
 const userOf = (req) => /^Bearer fake\.([^.]+)\.[^.]+$/.exec(req.headers.authorization ?? '')?.[1] ?? null;
 const json = (res, status, body) => { res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); res.end(body === undefined ? '' : JSON.stringify(body)); };
 const readBody = (req) => new Promise((r) => { let s = ''; req.on('data', (c) => { s += c; }); req.on('end', () => { try { r(JSON.parse(s || '{}')); } catch { r({}); } }); });
 const rec = (id, data) => ({ id, data, createdBy: 'user_admin', createdAt: '2026-10-01T10:00:00Z', updatedAt: '2026-10-01T10:00:00Z' });
+reset();
 const server = createServer(async (req, res) => {
   const path = new URL(req.url, 'http://127.0.0.1').pathname;
   if (path === '/app-config.json') return json(res, 200, { tenant: TENANT, apiBase: '/api/cos', clerkPublishableKey: PK, environment: 'test' });
@@ -53,6 +55,7 @@ const server = createServer(async (req, res) => {
     if (route === '/me') return p ? json(res, 200, { tenant: { slug: TENANT, timezone: 'America/Bogota' }, user: { id: user, name: p.name, email: `${user}@example.test` }, roleKeys: p.keys, isSuperAdmin: !!p.superAdmin, caps: [], entities: [] }) : json(res, 403, { error: 'forbidden' });
     if (route === '/modules/bookings/settings') {
       if (!p?.superAdmin) return json(res, 403, { error: 'forbidden', message: 'only a Super Admin can change module settings' });
+      if (req.method === 'PATCH' && world.failBookingsPatch) return json(res, 503, { error: 'unavailable' });
       if (req.method === 'PATCH') Object.assign(world.bookings, body.settings);
       return json(res, 200, { module: 'bookings', settings: { ...world.bookings } });
     }
@@ -86,8 +89,8 @@ const server = createServer(async (req, res) => {
     res.writeHead(200, { 'Content-Type': MIME[extname(file)] ?? 'application/octet-stream' }); res.end(await readFile(file));
   } catch { res.writeHead(404); res.end('Not found'); }
 });
-await new Promise((r) => server.listen(5221, '127.0.0.1', r));
-const BASE = 'http://127.0.0.1:5221';
+await new Promise((r) => server.listen(PORT, '127.0.0.1', r));
+const BASE = `http://127.0.0.1:${PORT}`;
 
 const browser = await launchBrowser();
 const errors = [];
@@ -163,6 +166,49 @@ try {
   await page.waitForTimeout(1200);
   check('admin: saving the reception panel puts the holiday in bookings', world.bookings.review_closed_dates === '2026-11-16, 2026-12-31', world.bookings.review_closed_dates);
   check('admin: …and it is no longer marked pending', (await chip.getAttribute('data-pending').catch(() => 'missing')) === null);
+  await ctx.close();
+
+  // ── review round 2, M1: a holiday Administration deletes or moves never comes back through the reception panel ──────
+  /** Opens the holiday's row in the list (the drawer), with the reception panel mounted above it. */
+  const openHoliday = async (page, label) => { await page.locator('[data-holiday-hours] tr', { hasText: label }).first().click({ timeout: 3000 }).catch(() => {}); await page.waitForTimeout(400); };
+  const saveReception = async (page) => { await page.getByRole('button', { name: 'Guardar horario' }).click({ timeout: 3000 }).catch(() => {}); await page.waitForTimeout(1200); };
+  reset({ holidays: [['2026-11-16', 'Independencia de Cartagena']], closedDates: '2026-11-16, 2026-12-31' });
+  ({ ctx, page } = await signedIn('admin@example.test'));
+  await go(page, '/admin/settings/hours');
+  check('M1 delete: the holiday starts in the reception closed days', (await page.locator('[data-closed-date="2026-11-16"]').count()) === 1);
+  await openHoliday(page, 'Independencia de Cartagena');
+  await page.getByRole('button', { name: 'Eliminar', exact: true }).first().click({ timeout: 3000 }).catch(() => {});
+  await page.getByRole('button', { name: /Toca otra vez/ }).click({ timeout: 3000 }).catch(() => {});
+  await page.waitForTimeout(1500);
+  check('M1 delete: the holiday is gone from Company OS and from bookings', world.hours.size === 0 && world.bookings.review_closed_dates === '2026-12-31', `${world.hours.size} ${world.bookings.review_closed_dates}`);
+  check('M1 delete: the reception panel no longer shows the deleted day (no chip)', (await page.locator('[data-closed-date="2026-11-16"]').count()) === 0);
+  await saveReception(page);
+  check('M1 delete: saving the reception panel does not write the deleted day back', world.bookings.review_closed_dates === '2026-12-31', world.bookings.review_closed_dates);
+  await ctx.close();
+
+  reset({ holidays: [['2026-11-16', 'Independencia de Cartagena']], closedDates: '2026-11-16, 2026-12-31' });
+  ({ ctx, page } = await signedIn('admin@example.test'));
+  await go(page, '/admin/settings/hours');
+  await openHoliday(page, 'Independencia de Cartagena');
+  const drawer = page.locator('[data-hours-drawer]');
+  await drawer.locator('input[type=date]').first().fill('2026-11-17').catch(() => {});
+  await drawer.locator('input[type=date]').nth(1).fill('2026-11-17').catch(() => {});
+  await page.locator('[data-hours-save]').click({ timeout: 3000 }).catch(() => {});
+  await page.waitForTimeout(1500);
+  check('M1 move: bookings closes the new day and opens the old one', world.bookings.review_closed_dates === '2026-11-17, 2026-12-31', world.bookings.review_closed_dates);
+  check('M1 move: the reception panel drops the old day and shows the new one', (await page.locator('[data-closed-date="2026-11-16"]').count()) === 0 && (await page.locator('[data-closed-date="2026-11-17"]').count()) === 1);
+  await saveReception(page);
+  check('M1 move: saving the reception panel does not write the old day back', world.bookings.review_closed_dates === '2026-11-17, 2026-12-31', world.bookings.review_closed_dates);
+  await ctx.close();
+
+  // ── review round 2, L1: saved but not synced still refreshes the reception panel (the day shows as pending) ───────
+  reset({ failBookingsPatch: true });
+  ({ ctx, page } = await signedIn('admin@example.test'));
+  await go(page, '/admin/settings/hours');
+  await addHoliday(page, '2026-11-16', 'Independencia de Cartagena');
+  check('L1: the holiday is saved although bookings could not be updated', [...world.hours.values()].some((h) => h.data.start_date === '2026-11-16') && world.bookings.review_closed_dates === '2026-12-31', world.bookings.review_closed_dates);
+  const pendingChip = page.locator('[data-closed-date="2026-11-16"]');
+  check('L1: the reception panel shows the new holiday as pending without a page reload', (await pendingChip.count()) === 1 && (await pendingChip.getAttribute('data-pending')) !== null);
   await ctx.close();
 
   // ── the coordinator, without the grant ─────────────────────────────────────────────────────────────────────────
