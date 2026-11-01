@@ -326,6 +326,18 @@ await test('r1 M2: existing rows unchanged: a draft without a class type still e
   await save(p, 'admin', { kind: 'update', table: 'class_templates', before: legacy, patch: { active: false } });
   assert.equal(api.db.schedule.get(legacy.id).data.active, false);
 });
+await test('r2 L2: a draft whose title names a class type ("Pulso mañana") but stores none reads back without one; publishing is refused', async () => {
+  const api = fakeCos(), p = provider(api);
+  const draft = await listRow(p, await save(p, 'admin', { kind: 'create', table: 'class_templates', patch: { ...NEW_ROW, title: 'Pulso mañana' } }));
+  assert.equal(api.db.schedule.get(draft.id).data.modality ?? null, null, 'nothing stored');
+  assert.ok(!draft.modality_id, `the editor shows no class type (got ${draft.modality_id})`);
+  assert.equal(m.timetablePublishBlocked(draft), true, 'Published stays off');
+  await assert.rejects(save(p, 'admin', { kind: 'update', table: 'class_templates', before: draft, patch: { active: true } }), has('timetable_class_type_required'));
+  assert.equal(api.db.schedule.get(draft.id).data.active, false);
+  // Existing rows unchanged: a row that stores its class type still reads it, whatever its title.
+  const stored = await seeded(api, p, { title: 'Clase de las 7', modality: 'fuego' });
+  assert.equal(stored.modality_id, 'mod_fuego');
+});
 await test('r1 M2: the drawer\'s Published toggle is off-limits for a row without a class type (the screen\'s rule)', () => {
   assert.equal(m.timetablePublishBlocked({ modality_id: '' }), true);
   assert.equal(m.timetablePublishBlocked({ modality_id: null }), true);

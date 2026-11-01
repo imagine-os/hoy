@@ -58,6 +58,15 @@ const off = run(JSON.stringify({ SET_LIVE: 'true' }));
 check('summary: SITE_LIVE unset reads as Coming Soon', off.status === 0 && /SITE_LIVE[^\n]*not set/i.test(off.out), off.out);
 check('summary: a missing read token is said, with what it breaks', /COMPANY_OS_READ_TOKEN[^\n]*missing/i.test(off.out), off.out);
 check('summary: a SET_LIVE variable is flagged as the wrong name', /SET_LIVE/.test(off.out) && /rename/i.test(off.out), off.out);
+// Review round 2 (r2hoy, L7): PUBLIC_DOCUMENTS is retired and no longer declared in the IaC, so a value left in Railway
+// makes "Apply infra" fail on an undeclared variable. The summary says so, and a step before Apply infra warns.
+const leftover = run(JSON.stringify({ SITE_LIVE: 'false', COMPANY_OS_READ_TOKEN: TOKEN, PUBLIC_DOCUMENTS: `ops-manual ${TOKEN}` }));
+check('summary: a leftover PUBLIC_DOCUMENTS is flagged (retired: delete it in Railway), its value never printed', leftover.status === 0 && /PUBLIC_DOCUMENTS/.test(leftover.out) && /delete/i.test(leftover.out) && !leftover.out.includes('ops-manual') && !leftover.out.includes(TOKEN), leftover.out);
+check('summary: an empty PUBLIC_DOCUMENTS is flagged too (any value, even empty, is undeclared)', /PUBLIC_DOCUMENTS/.test(run(JSON.stringify({ PUBLIC_DOCUMENTS: '' })).out));
+check('summary: no PUBLIC_DOCUMENTS, no warning', !/PUBLIC_DOCUMENTS/.test(live.out), live.out);
+const pre = spawnSync(process.execPath, [SCRIPT, '--leftovers'], { input: JSON.stringify({ PUBLIC_DOCUMENTS: 'x', SET_LIVE: 'true', SITE_LIVE: 'true' }), encoding: 'utf8' });
+check('--leftovers prints only the leftover warnings as workflow annotations, exit 0', pre.status === 0 && /^::warning::.*PUBLIC_DOCUMENTS/m.test(pre.stdout) && /^::warning::.*SET_LIVE/m.test(pre.stdout) && !/SITE_LIVE:/.test(pre.stdout), pre.stdout);
+check('--leftovers with none prints nothing', spawnSync(process.execPath, [SCRIPT, '--leftovers'], { input: JSON.stringify({ SITE_LIVE: 'true' }), encoding: 'utf8' }).stdout.trim() === '');
 const arr = run(JSON.stringify([{ name: 'SITE_LIVE', value: 'false' }, { name: 'COMPANY_OS_READ_TOKEN', value: TOKEN }]));
 check('summary: the list shape (name/value pairs) works too', arr.status === 0 && /SITE_LIVE[^\n]*\bfalse\b/.test(arr.out) && /present/.test(arr.out) && !arr.out.includes(TOKEN), arr.out);
 const weird = run(JSON.stringify({ SITE_LIVE: `yes ${TOKEN}`, COMPANY_OS_READ_TOKEN: '   ' }));
@@ -73,6 +82,11 @@ for (const wf of ['.github/workflows/deploy-test.yml', '.github/workflows/deploy
   const summary = text.slice(text.indexOf('- name: Summary'));
   check(`${wf}: the Summary step prints the go-live switches through ${SCRIPT}`, summary.includes(SCRIPT) && summary.includes('GITHUB_STEP_SUMMARY'));
   check(`${wf}: the read token's value is never expanded in the workflow`, !/\$\{?COMPANY_OS_READ_TOKEN\b/.test(text) && !/secrets\.COMPANY_OS_READ_TOKEN/.test(text));
+}
+for (const wf of ['.github/workflows/deploy-test.yml', '.github/workflows/deploy-prod.yml']) {
+  const text = readFileSync(wf, 'utf8');
+  const at = text.indexOf('--leftovers'), apply = text.indexOf('- name: Apply infra');
+  check(`${wf}: leftover variables are warned about before Apply infra (r2 L7)`, at > 0 && apply > 0 && at < apply);
 }
 const qa = readFileSync('.github/workflows/hoy-server-qa.yml', 'utf8');
 check('hoy-server-qa runs this check', qa.includes('node scripts/test-deploy-wiring.mjs'));
