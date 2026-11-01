@@ -22,7 +22,7 @@ export default function JoinAsCustomer() {
         <h1 className="cust-title">{t('identity.join.title')}</h1>
         <Notice tone="info">{t('identity.join.body', { role: bi(ROLE_LABEL[role]) })}</Notice>
       </Card>
-      <RegisterForm initialName={user.name && user.name !== user.email ? user.name : ''} cta={t('identity.join.cta')} />
+      <RegisterForm initialName={user.name && user.name !== user.email ? user.name : ''} cta={t('identity.join.cta')} existingLogin />
       <p className="small"><Link to={ROLE_HOME[role]}>{t('identity.join.back')}</Link></p>
     </div>
   );

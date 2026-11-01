@@ -36,7 +36,8 @@ export function RequireRole({ roles, children }: { roles: Role[]; children: Reac
   const asCustomer = !publicRoute && status === 'ready' && signedIn && viewAs === null && role !== 'customer' && held.includes('customer')
     && roles.includes('customer') && matrixAllows('customer', loc.pathname);
   const customerSession = useMemo<SessionCtx | null>(() => asCustomer ? {
-    ...session, role: 'customer', isSuperAdmin: false, canDevMode: false, devMode: false,
+    // Staff capabilities stay out of the customer screens (review round, L3); `roles` stays for the way back.
+    ...session, role: 'customer', isSuperAdmin: false, canDevMode: false, devMode: false, caps: [],
     can: (p) => roleCan('customer', p), hasRole: (r) => r.includes('public') || r.includes('customer'),
   } : null, [asCustomer, session]);
   if (!publicRoute && status === 'loading') return <div className="lazy-fallback" aria-busy="true" />;

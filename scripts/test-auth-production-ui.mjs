@@ -43,7 +43,7 @@ const server = createServer(async (req, res) => {
       const body = JSON.parse(await new Promise((r) => { let s = ''; req.on('data', (c) => { s += c; }); req.on('end', () => r(s)); }));
       api.signups.push({ user, body });
       // Company OS (ADR 0038 amendment 2026-11-01): a login already in the studio gains the Customer role once.
-      if (api.members[user]?.roleKeys.includes('member')) return json(res, 409, { error: 'already_registered' });
+      if (api.members[user]?.roleKeys.includes('member') || api.joinConflict) return json(res, 409, { error: 'already_registered' });
       const missing = api.consents.filter((c) => !body.consents?.some((x) => x.document === c.document && x.version === c.version));
       if (missing.length) return json(res, 422, { error: 'consent_required', details: { required: api.consents } });
       if (api.members[user]) { api.members[user].roleKeys.push('member'); return json(res, 201, { userId: user, personId: 'per_staff', facetId: 'mem_staff' }); }
@@ -80,7 +80,7 @@ const MEMBERS = () => ({
 const browser = await launchBrowser();
 const errors = [];
 async function open(path = '/', { lang = 'es', width = 1280, clerk = true } = {}) {
-  api.members = MEMBERS(); api.meStatus = null; api.signupEnabled = true; api.signups = [];
+  api.members = MEMBERS(); api.meStatus = null; api.signupEnabled = true; api.signups = []; api.joinConflict = false;
   const ctx = await browser.newContext({ viewport: { width, height: 900 }, reducedMotion: 'reduce' });
   // Playwright tries the last route added first: everything outside is blocked, except Clerk's script (the fake).
   // `clerk: false` blocks Clerk's script too (a CDN outage or a blocker).
@@ -264,6 +264,17 @@ try {
   // Changed on purpose (test-hoy fixes, lane Y2): a studio login that isn't a customer is offered to join on the
   // customer pages instead of the no-access page; the customer screens stay closed until it does.
   check('Y2 front desk on the customer app is offered "Join as a customer", not the customer screens', route(page) === '/app' && (await page.locator('[data-join-customer]').count()) === 1 && (await page.locator('.appshell').count()) === 0, route(page));
+  // Review round (M1): a refusal that isn't "done" for a studio login says so instead of silently showing the form again.
+  api.joinConflict = true;
+  {
+    const form = page.locator('[data-join-customer] [data-register]');
+    const fields = form.locator('input:not([type=checkbox])');
+    await fields.nth(1).fill('+57 300 555 0166'); await fields.nth(2).fill('Luis Prueba'); await fields.nth(3).fill('+57 300 555 0167');
+    await form.locator('input[type=checkbox]').check();
+    await form.locator('button[type=submit]').click(); await page.waitForTimeout(1200);
+    check('Y2 a join the studio refuses (409) tells the person to contact the studio; nothing else changes', /Escríbele a administración/.test(await page.locator('[data-join-customer]').innerText()) && JSON.stringify(api.members.user_desk.roleKeys) === '["front_desk"]' && route(page) === '/app');
+  }
+  api.joinConflict = false;
   await page.goto(`${BASE}/#/staff`); await page.waitForTimeout(1000);
   check('PL-03 the staff shell shows the account and a sign-out button, not a persona list', (await page.locator('[data-account-chip]').count()) > 0 && (await page.locator('#rs-user').count()) === 0);
   await page.locator('[data-account-chip] button').first().click();

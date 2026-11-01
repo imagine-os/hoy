@@ -552,7 +552,7 @@ await test('public reads (Y2): an invalid or expired session on a public read fa
       assert.equal(r.headers['x-hoy-session'], 'stale', 'the browser is told its session was refused');
     }
   }
-  assert.ok(publicLogs.some((l) => l.event === 'api.cos' && l.public === true));
+  assert.ok(publicLogs.some((l) => l.event === 'api.cos' && l.public === true && l.staleSession === true), 'the log says the session was refused');
 });
 
 await test('public reads (Y2): an expired session on a private route or a non-public query still answers 401, nothing reaches Company OS', async () => {

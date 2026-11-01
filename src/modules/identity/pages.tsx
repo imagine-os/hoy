@@ -147,7 +147,7 @@ const EMPTY_FORM: SignupForm = { name: '', whatsapp: '+57 ', ecName: '', ecPhone
  * CU-01 / CU-02: the studio's sign-up after Clerk proved the email. Company OS stores the consents with their versions.
  * Lane Y2: also "Join as a customer" for a studio login (`src/auth/JoinAsCustomer.tsx`), starting from its name.
  */
-export function RegisterForm({ initialName = '', cta }: { initialName?: string; cta?: string } = {}) {
+export function RegisterForm({ initialName = '', cta, existingLogin = false }: { initialName?: string; cta?: string; existingLogin?: boolean } = {}) {
   const { t } = useI18n();
   const { refresh } = useSession();
   const { user } = useUser();
@@ -191,6 +191,9 @@ export function RegisterForm({ initialName = '', cta }: { initialName?: string; 
       const { status, body } = await cosJson('/signup', { method: 'POST', body: signupBody(form, config) });
       const result = classifySignup(status, body);
       if (!alive.current) return;
+      // Lane Y2 review: a studio login that isn't a customer yet only gets 409 already_registered when its email's person
+      // is linked to another login (or an older Company OS refuses existing logins): not done, the studio must look.
+      if (existingLogin && status === 409) { setNotice({ tone: 'warn', text: t('identity.join.conflict') }); return; }
       if (result.kind === 'done') { refresh(); return; }
       if (result.kind === 'consent-changed') { set('accepted', false); setNotice({ tone: 'warn', text: t('identity.register.changed') }); await load(); }
       else if (result.kind === 'disabled') setConfig({ ...config, enabled: false });

@@ -70,6 +70,7 @@ export const strings: StringTable = {
   'identity.join.title': { es: 'Únete como cliente', en: 'Join as a customer' },
   'identity.join.body': { es: 'Entraste como {role}. Para reservar y pagar clases con este mismo correo, completa tus datos de cliente. Tu acceso de equipo no cambia.', en: 'You are signed in as {role}. To book and pay for classes with this same email, complete your customer details. Your team access stays as it is.' },
   'identity.join.cta': { es: 'Unirme como cliente', en: 'Join as a customer' },
+  'identity.join.conflict': { es: 'No pudimos unir tu cuenta de cliente a este correo. Escríbele a administración para revisarlo.', en: 'We could not add a customer profile to this email. Please contact the studio administration.' },
   'identity.join.back': { es: 'Volver a mi inicio', en: 'Back to my home' },
   'identity.noAccess.title': { es: 'Esta zona no es para tu cuenta', en: 'This area is not for your account' },
   'identity.noAccess.body': { es: 'Entraste como {role}. Si crees que deberías ver esta página, escríbele a administración.', en: 'You are signed in as {role}. If you think you should see this page, contact the studio administration.' },
