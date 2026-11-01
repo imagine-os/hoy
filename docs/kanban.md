@@ -901,3 +901,14 @@ Protected-capture clarification: M14 schedule/pay screenshots remain local/ignor
 
 - L2: the timetable save's check-then-write gap (two editors saving one row inside the GET→PATCH window: the later one wins) needs `If-Match` on PATCH from Company OS core, which doesn't honour it yet. Not tracked in Company OS `docs/tech-debt.md` yet: handed to the coordinator to add (core: honour `If-Match`; Hoy's timetable then sends the basis version).
 - Operator: the `PUBLIC_DOCUMENTS` variable, if set in Railway, can be deleted (it is ignored).
+
+## Hoy test-hoy fixes · integrated review round 2, Hoy fixes (lane r2hoy, 2026-11-01)
+
+### Done (lane branch, not merged)
+
+- Every registered login is a customer (owner): a studio login is enrolled automatically on its first customer page, with at most the documents' consent step; the Join page is gone. Existing staff are enrolled on their first visit. [Changelog](changelog/_pending/hoy-test-fixes-r2hoy.md)
+- Sign-up and enrolment: `409 already_registered` goes on only when `/me` holds the customer role; "email linked to another login" and `duplicate_person_user` say to contact the studio; no raw codes.
+- M-02: a room clash names the class, its day and time, and a remedy that works (r2co details); a title never stands in for the class type (L2).
+- W-04, C-02 (owner L3): a switched-off timetable row stops new classes; its classes already made stay bookable.
+- Docs gate: `/me` cap 2 MB; the super admin's tab isn't reloaded on a one-off `/me` error; a late docs pack is dropped.
+- Deploy: a leftover `PUBLIC_DOCUMENTS` (or `SET_LIVE`) is warned about before Apply infra.
