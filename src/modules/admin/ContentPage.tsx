@@ -43,7 +43,8 @@ const FIELDS: Record<Entity, FieldDef[]> = {
     { name: 'title', kind: 'text', label: { es: 'Título', en: 'Title' }, required: true },
     { name: 'theme', kind: 'bi', label: { es: 'Tema predeterminado', en: 'Default theme' } },
     { name: 'description', kind: 'bi', label: { es: 'Descripción predeterminada', en: 'Default description' } },
-    { name: 'modality_id', kind: 'ref', ref: 'modalities', label: { es: 'Modalidad', en: 'Modality' } },
+    // Lane Y1: a timetable row needs its class type (its classes' colour, letter and description; without one they can't be booked).
+    { name: 'modality_id', kind: 'ref', ref: 'modalities', label: { es: 'Modalidad', en: 'Modality' }, required: true },
     { name: 'teacher_id', kind: 'ref', ref: 'teachers', label: { es: 'Profesor/a', en: 'Teacher' } },
     { name: 'room_id', kind: 'ref', ref: 'rooms', label: { es: 'Sala', en: 'Room' } },
     { name: 'start_date', kind: 'date', label: { es: 'Desde (opcional)', en: 'From (optional)' } },

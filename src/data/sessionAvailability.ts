@@ -5,7 +5,7 @@ export interface SessionAvailabilityInput {
   modality?: Pick<ModalityRow, 'active'>;
   templateActive?: boolean;
 }
-export type SessionUnavailableReason = 'cancelled' | 'completed' | 'ended' | 'started' | 'unpublished' | 'unavailable';
+export type SessionUnavailableReason = 'cancelled' | 'completed' | 'ended' | 'started' | 'unpublished' | 'no_class_type' | 'unavailable';
 /** Calendar availability only. Full future classes still open their existing waitlist flow. */
 export function sessionUnavailableReason({ session, modality, templateActive }: SessionAvailabilityInput, now = Date.now()): SessionUnavailableReason | null {
   if (session.status === 'cancelled') return 'cancelled';
@@ -15,5 +15,7 @@ export function sessionUnavailableReason({ session, modality, templateActive }: 
   if (end <= now) return 'ended';
   if (start <= now) return 'started';
   if (templateActive === false || modality?.active === false) return 'unpublished';
+  // Lane Y1: a class without a class type (no colour, letter or description) is not open for booking, as admission says.
+  if (!modality) return 'no_class_type';
   return null;
 }

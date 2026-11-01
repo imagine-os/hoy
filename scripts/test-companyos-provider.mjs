@@ -111,7 +111,7 @@ try {
           rows = rows.map((r) => ({ id: r.id, data: { ...r.data }, orgUnitId: null, createdAt: r.createdAt, updatedAt: r.updatedAt }));
           for (const inc of body.include ?? []) for (const r of rows) {
             const target = [...db.values()].map((t) => t.get(r.data[inc.field])).find(Boolean);
-            r.data[inc.field] = target ? { id: target.id, ...(inc.fields ? Object.fromEntries(inc.fields.map((f) => [f, target.data[f]])) : target.data) } : null;
+            r.data[inc.as ?? inc.field] = target ? { id: target.id, ...(inc.fields ? Object.fromEntries(inc.fields.map((f) => [f, target.data[f]])) : target.data) } : null;
           }
           return json(200, { data: rows });
         }
@@ -321,6 +321,11 @@ try {
     const p = make(api);
     assert.equal((await p.get('class_sessions', rec.id)).title, 'Pulso');
     assert.equal(await p.get('class_sessions', 'missing'), null);
+    // Lane Y1: one class by id brings its schedule's class type too (admission reads it so).
+    const row = api.put('schedule', { title: 'Morning flow', kind: 'class', weekday: 1, start_time: '07:00', modality: 'solido', active: true });
+    const gen = api.put('occurrence', { title: 'Morning flow', schedule: row.id, starts_at: '2026-11-02T12:00:00Z', ends_at: '2026-11-02T12:50:00Z', capacity: 16, status: 'scheduled' });
+    const one = await p.get('class_sessions', gen.id);
+    assert.equal(one.modality_id, 'mod_solido'); assert.equal(one.template_id, row.id);
     const lot = api.put('credit_lot', { person: 'p1', source: 'purchase', quantity: 4, valid_until: '2026-12-31' });
     api.put('credit_entry', { lot: lot.id, person: 'p1', delta: 4, reason: 'grant' });
     const g = await p.get('class_ledger', lot.id);

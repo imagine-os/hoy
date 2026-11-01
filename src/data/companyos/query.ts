@@ -9,7 +9,7 @@ export interface QuerySpec {
   sort?: { field: string; dir: 'asc' | 'desc' }[];
   limit?: number;
   offset?: number;
-  include?: { field: string; fields?: string[] }[];
+  include?: { field: string; as?: string; fields?: string[] }[];
 }
 
 export const PAGE = 500;

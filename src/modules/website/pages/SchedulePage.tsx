@@ -10,7 +10,7 @@ import { useI18n } from '../../../i18n/I18nProvider';
 import { PRODUCTION_BUILD } from '../../../config/launch';
 import { useLayout } from '../../../layout/useLayout';
 import { useData, useTable } from '../../../data/DataContext';
-import type { BookingRow, ModalityRow } from '../../../data/schema';
+import type { BookingRow, ModalityRow, RoomRow } from '../../../data/schema';
 import { usesMats, occupiesMat } from '../../../data/mats';
 import { MatPicker } from '../../../components/organism/MatPicker/MatPicker';
 import { SessionCalendar } from '../../../components/organism/SessionCalendar/SessionCalendar';
@@ -38,6 +38,8 @@ export function SchedulePage() {
   const [picked, setPicked] = useState<string | null>(null);
   const all = useSessionsJoined();
   const { rows: modalitiesAll } = useTable<ModalityRow>('modalities', { where: { active: true } });
+  // Lane Y1: the class's own room (the rooms are public), never a fixed name.
+  const { rows: rooms } = useTable<RoomRow>('rooms');
   const modalities = modalitiesAll;
   // 0039: the filter is the class (modality slug) in ?modality=; an unknown slug (or an old ?movement= link) shows everything.
   const modFilter = modalities.find((m) => m.slug === params.get('modality'))?.slug ?? null;
@@ -106,7 +108,7 @@ export function SchedulePage() {
       <Drawer open={!!chosen} onClose={() => setPicked(null)} title={t('site.schedule.loginTitle')} side="bottom">
         {chosen && (
           <div className="stack">
-            <ClassCard title={chosen.session.title} teacher={chosen.teacher?.display_name ?? ''} room={t('site.mat.room')} startsAt={chosen.session.starts_at} endsAt={chosen.session.ends_at} tone={chosen.modality?.tone ?? 'river'} booked={chosen.session.booked_count} capacity={chosen.session.capacity} />
+            <ClassCard title={chosen.session.title} teacher={chosen.teacher?.display_name ?? ''} room={rooms.find((r) => r.id === chosen.session.room_id)?.name} startsAt={chosen.session.starts_at} endsAt={chosen.session.ends_at} tone={chosen.modality?.tone ?? 'river'} booked={chosen.session.booked_count} capacity={chosen.session.capacity} />
             <SessionEditorial session={chosen.session} />
             {yoga && !full && !unavailable && <MatPicker sessionId={chosen.session.id} capacity={chosen.session.capacity} value={mat} onChange={setMat} />}
             <p className="muted small">{t('site.schedule.loginBody')}</p>

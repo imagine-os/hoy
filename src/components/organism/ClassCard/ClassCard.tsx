@@ -6,6 +6,7 @@ import { Card } from '../../molecule/Card/Card';
 import { Chip } from '../../atom/Chip/Chip';
 import { Button } from '../../atom/Button/Button';
 import { CapacityMeter } from '../../molecule/CapacityMeter/CapacityMeter';
+import { classCardMeta } from './classCardMeta';
 import './ClassCard.css';
 
 export interface ClassCardProps {
@@ -39,7 +40,7 @@ export function ClassCard({ title, teacher, room, startsAt, endsAt, tone, booked
       </div>
       <div className="classcard-main">
         <div className="classcard-time">{formatTime(startsAt, lang)}<span className="classcard-end"> – {formatTime(endsAt, lang)}</span></div>
-        <div className="classcard-meta">{teacher}{room ? ` · ${room}` : ''}{level && level !== 'all' ? ` · ${level}` : ''}</div>
+        {classCardMeta([teacher, room, level]) && <div className="classcard-meta">{classCardMeta([teacher, room, level])}</div>}
         {!isNext && <div className="classcard-date muted small">{formatDate(startsAt, lang)}</div>}
       </div>
       <div className="row-between wrap">

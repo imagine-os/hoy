@@ -99,8 +99,11 @@ export function ClassDetailPage() {
   const cancelled = s.status === 'cancelled';
   const full = left <= 0;
   const phase = classPhase(s, now);
-  const admissionAvailable = SERVER_RULES ? phase === 'open' || phase === 'full' : sessionAdmissionAvailable(s, m, s.template_id ? { id: s.template_id, active: joined.templateActive } : undefined, now);
-  const unavailableReason = SERVER_RULES ? phase : sessionUnavailableReason(joined, now) ?? 'unavailable';
+  const openPhase = SERVER_RULES ? phase === 'open' || phase === 'full' : sessionAdmissionAvailable(s, m, s.template_id ? { id: s.template_id, active: joined.templateActive } : undefined, now);
+  // Lane Y1: a class without a class type is not open for booking, here as on the schedule's tile.
+  const noClassType = !m && (SERVER_RULES ? openPhase : sessionUnavailableReason(joined, now) === 'no_class_type');
+  const admissionAvailable = openPhase && !noClassType;
+  const unavailableReason = noClassType ? 'no_class_type' : SERVER_RULES ? phase : sessionUnavailableReason(joined, now) ?? 'unavailable';
 
   const share = async () => {
     const r = await shareText(`${s.title} · ${formatDate(s.starts_at, lang)} ${formatTime(s.starts_at, lang)} · ${tenant.name}`, window.location.href);

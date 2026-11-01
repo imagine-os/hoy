@@ -52,7 +52,7 @@ try {
 
   await check('the admin timetable requires the class type', async () => {
     const page = await src('src/modules/admin/ContentPage.tsx');
-    assert.match(page, /\{ name: 'modality_id', kind: 'ref', ref: 'modalities',[^}]*required: true/);
+    assert.match(page, /\{ name: 'modality_id', kind: 'ref', ref: 'modalities',[^\n]*required: true \}/);
   });
 } finally { await rm(scratch, { recursive: true, force: true }); }
 
