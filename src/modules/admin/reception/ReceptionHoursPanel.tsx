@@ -52,11 +52,17 @@ export function ReceptionHoursPanel({ closedDatesVersion = 0 }: { closedDatesVer
         if (!loadedWeek.current) { loadedWeek.current = true; setWeek(parseWeek(r.settings.review_hours ?? '')); }
         const stored = parseDates(r.settings.review_closed_dates ?? '');
         setInBookings(stored); setHolidays(extra);
-        // First load: bookings' dates plus the holidays. A reload after an override changed (review round 1) adds only
-        // the holiday dates that are new, so unsaved edits to the list survive.
-        if (!loadedDates.current) { loadedDates.current = true; setDates(parseDates(formatDates([...stored, ...extra]))); }
-        else setDates(prev => parseDates(formatDates([...prev, ...extra.filter(d => !holidaysRef.current.includes(d))])));
+        // First load: bookings' dates plus the holidays. A reload after an override changed (review round 1) adds the
+        // holiday dates that are new and drops the ones that stopped being a holiday (deleted or moved, and no longer in
+        // bookings), so unsaved edits to the list survive and a removed holiday is never written back (review round 2, M1).
+        // The previous holidays are read now: the updater runs later, after the ref has moved on.
+        const before = holidaysRef.current;
         holidaysRef.current = extra;
+        if (!loadedDates.current) { loadedDates.current = true; setDates(parseDates(formatDates([...stored, ...extra]))); }
+        else setDates(prev => parseDates(formatDates([
+          ...prev.filter(d => !(before.includes(d) && !extra.includes(d) && !stored.includes(d))),
+          ...extra.filter(d => !before.includes(d)),
+        ])));
       })
       .catch(e => setMessage({ tone: 'error', text: errorCode(e) === 'forbidden' ? t('recHours.forbidden') : deskErrorText(errorCode(e), t) }));
     if (closedDatesVersion === 0) queryAll(request, { entity: 'schedule', filter: { and: [{ field: 'weekday', op: 'eq', value: 0 }, { field: 'active', op: 'eq', value: true }] } }).then(r => setSundayClasses(r.length)).catch(() => {});

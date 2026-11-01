@@ -159,7 +159,8 @@ function HolidayHoursSettings({ onClosedDates }: { onClosedDates?: () => void })
     setBusy(true);
     try { await save(draft); toast(t('admin.settings.hours.saved'), 'success'); setDraft(null); onClosedDates?.(); }
     catch (e) {
-      if (savedButNotSynced(e)) { toast(failureCopy(e, lang, ''), 'warn', 8000); setDraft(null); }
+      // The override was written: the reception panel reads the closed days again either way (review round 2, L1).
+      if (savedButNotSynced(e)) { toast(failureCopy(e, lang, ''), 'warn', 8000); setDraft(null); onClosedDates?.(); }
       else toast(failure(e, 'admin.settings.hours.err.save'), 'danger');
     }
     finally { setBusy(false); }
@@ -170,7 +171,8 @@ function HolidayHoursSettings({ onClosedDates }: { onClosedDates?: () => void })
     setBusy(true);
     try { await remove(draft.id); toast(t('admin.settings.hours.deleted'), 'success'); setDraft(null); onClosedDates?.(); }
     catch (e) {
-      if (savedButNotSynced(e)) { toast(failureCopy(e, lang, ''), 'warn', 8000); setDraft(null); }
+      // The override was written: the reception panel reads the closed days again either way (review round 2, L1).
+      if (savedButNotSynced(e)) { toast(failureCopy(e, lang, ''), 'warn', 8000); setDraft(null); onClosedDates?.(); }
       else toast(failure(e, 'admin.settings.hours.err.delete'), 'danger');
     }
     finally { setBusy(false); setConfirmDelete(false); }

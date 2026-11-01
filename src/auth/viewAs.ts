@@ -85,6 +85,17 @@ export const viewAsAllows = (method: string, path: string): boolean => method ==
 // ── The sample person ──────────────────────────────────────────────────────────────────────────────────────────────
 const SAMPLE_BATCH = 50;
 export interface ViewAsSample { userId: string; personId: string; name: string; email: string }
+/** The sample person could not be read (refused, offline, an answer of the wrong shape): not the same as "nobody". */
+export interface ViewAsSampleFailure { error: string }
+export const isViewAsFailure = (v: ViewAsSample | ViewAsSampleFailure | null): v is ViewAsSampleFailure => !!v && 'error' in v;
+/** A failure's code: the read's own when it is a plain key, `network_error` for a fetch that never answered. */
+function failureCode(e: unknown): string {
+  const code = e && typeof e === 'object' ? (e as { code?: unknown }).code : undefined;
+  if (typeof code === 'string' && /^[a-z][a-z0-9_]{0,63}$/.test(code)) return code;
+  if (e instanceof TypeError) return 'network_error';
+  return 'view_as_unavailable';
+}
+class Malformed extends Error {}
 /** A read against Company OS (`GET /admin/users`, `POST /query`): the parsed body, or a throw when refused. */
 export type ViewAsRead = (method: 'GET' | 'POST', path: string, body?: unknown) => Promise<unknown>;
 
@@ -110,15 +121,18 @@ const refOf = (v: unknown): string | null => (typeof v === 'string' ? v : v && t
 /**
  * The person a super admin sees the viewed role through, by membership (A2's test seed gives every role key a person
  * with a login): the people holding the role's Company OS key, by name, never the viewer; for Teacher the first one
- * with an active coach record (else the first holder); the first member for Customer. Null when nobody holds the role,
- * when the directory can't be read, or for a role that can't be viewed. Reads only.
+ * with an active coach record (else the first holder); the first member for Customer. Null when nobody holds the role
+ * or for a role that can't be viewed; `{ error }` when the directory or the persons can't be read (review round 2, L2:
+ * the screen offers a retry instead of saying nobody holds the role). Reads only.
  */
-export async function loadViewAsSample(role: Role, read: ViewAsRead, viewerUserId: string): Promise<ViewAsSample | null> {
+export async function loadViewAsSample(role: Role, read: ViewAsRead, viewerUserId: string): Promise<ViewAsSample | ViewAsSampleFailure | null> {
   if (!isViewableRole(role)) return null;
   const key = KEY_OF_ROLE[role];
   if (!key) return null;
   try {
-    const holders = directoryUsers(await read('GET', '/admin/users'))
+    const directory = await read('GET', '/admin/users');
+    if (!directory || typeof directory !== 'object' || !Array.isArray((directory as { users?: unknown }).users)) throw new Malformed();
+    const holders = directoryUsers(directory)
       .filter((u) => u.userId !== viewerUserId && u.keys.includes(key))
       // By name (a missing name last), then id: the same person every time.
       .sort((a, b) => Number(!a.name) - Number(!b.name) || a.name.localeCompare(b.name, 'es') || a.userId.localeCompare(b.userId));
@@ -142,7 +156,7 @@ export async function loadViewAsSample(role: Role, read: ViewAsRead, viewerUserI
     const pick = candidates[0];
     const person = personOf.get(pick.userId)!;
     return { userId: pick.userId, personId: person.id, name: text(person.data.name, 200) || pick.name || pick.email, email: pick.email };
-  } catch {
-    return null;
+  } catch (e) {
+    return { error: e instanceof Malformed ? 'view_as_malformed' : failureCode(e) };
   }
 }

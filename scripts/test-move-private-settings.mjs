@@ -33,6 +33,8 @@ let state;
 function reset(records = {}, opts = {}) {
   state = { records: new Map(), calls: [], refuse: opts.refuse ?? null, malformed: !!opts.malformed, seq: 0 };
   for (const [key, value] of Object.entries(records)) state.records.set(`set_${key}`, { id: `set_${key}`, data: { key, value } });
+  // A second record under a key the app never duplicates (review round 2, L7); listed first so a "first row wins" read picks it.
+  for (const [i, [key, value]] of (opts.duplicates ?? []).entries()) state.records = new Map([[`set_dup_${i}`, { id: `set_dup_${i}`, data: { key, value } }], ...state.records]);
 }
 const json = (res, status, body) => { res.writeHead(status, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(body)); };
 const readBody = (req) => new Promise((r) => { let s = ''; req.on('data', (c) => { s += c; }); req.on('end', () => { try { r(JSON.parse(s || '{}')); } catch { r(null); } }); });
@@ -46,7 +48,8 @@ const server = createServer(async (req, res) => {
   if (req.method === 'POST' && url.pathname === `/t/${TENANT}/query`) {
     if (state.malformed) return json(res, 200, { rows: 'nope' });
     const keys = body?.filter?.value ?? [];
-    return json(res, 200, { data: [...state.records.values()].filter((r) => body?.entity === 'setting' && [].concat(keys).includes(r.data.key)) });
+    const found = [...state.records.values()].filter((r) => body?.entity === 'setting' && [].concat(keys).includes(r.data.key));
+    return json(res, 200, { data: typeof body?.limit === 'number' ? found.slice(0, body.limit) : found });
   }
   if (req.method === 'POST' && url.pathname === `/t/${TENANT}/batch`) {
     for (const op of body.ops) {
@@ -145,6 +148,22 @@ try {
   check('MP-08 plain http to a remote host is refused (the token would travel in clear)', r.code === 2 && state.calls.length === 0, `${r.code}\n${r.out}`);
   r = await run(['--apply'], { ...ENV, COMPANY_OS_TENANT: '../platform' });
   check('MP-08 a tenant slug that is not a slug is refused', r.code === 2 && state.calls.length === 0, `${r.code}\n${r.out}`);
+
+  // MP-09 (review round 2, L7): a key that appears twice is refused, never "whichever row came first"
+  reset({ studio_settings: structuredClone(LEGACY) }, { duplicates: [['studio_settings', { profile: { name: 'x' } }]] });
+  r = await run(['--check'], ENV);
+  check('MP-09 the read asks for at least 3 rows (room to see a duplicate)', state.calls[0]?.body?.limit >= 3, JSON.stringify(state.calls[0]?.body));
+  check('MP-09 two studio_settings records: --check fails (exit 1), names the duplicate, writes nothing', r.code === 1 && /more than one/i.test(r.out) && /studio_settings/.test(r.out) && writes().length === 0, `${r.code}\n${r.out}`);
+  r = await run(['--apply'], ENV);
+  check('MP-09 two studio_settings records: --apply refuses (exit 1) and writes nothing', r.code === 1 && writes().length === 0, `${r.code}\n${r.out}`);
+  reset({ studio_settings: structuredClone(LEGACY), studio_private: { payroll: { rate: 1 } } }, { duplicates: [['studio_private', { payroll: { rate: 2 } }]] });
+  r = await run(['--apply'], ENV);
+  check('MP-09 two studio_private records: --apply refuses (exit 1) and writes nothing', r.code === 1 && /more than one/i.test(r.out) && /studio_private/.test(r.out) && writes().length === 0, `${r.code}\n${r.out}`);
+
+  // MP-10 (review round 2, L6): the usage says which Node runs the script (type stripping on by default)
+  r = await run([], {});
+  check('MP-10 the usage names the minimum Node (22.18 or 23.6+) and the flag for an older Node 22', /Node (>= ?|≥ ?)?22\.18/.test(r.out) && /23\.6/.test(r.out) && /--experimental-strip-types/.test(r.out), r.out);
+  check('MP-10 the script header says it too', /22\.18/.test(readFileSync(SCRIPT, 'utf8').split('\nimport ')[0]));
 } finally {
   server.close();
   rmSync(work, { recursive: true, force: true });
