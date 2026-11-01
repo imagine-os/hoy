@@ -4,7 +4,11 @@ import { useI18n } from '../i18n/I18nProvider';
 import { useSession } from './SessionProvider';
 import { ROLE_HOME } from './roles';
 import { cosJson } from './cosRequest';
-import { classifySignup, enrolmentBody, parseSignupConfig, signupHeld, signupNoticeKey, type SignupConfig } from './companyOsIdentity';
+import { classifySignup, consentReadFrom, enrolmentBody, parseSignupConfig, signupHeld, signupNoticeKey, type SignupConfig } from './companyOsIdentity';
+import { CONSENT_READ_TIMEOUT_MS, settleConsent, withTimeout } from './signupStatus';
+
+/** Lane review (r2hoy2): the consent step's own calls give up after this; fetch has no timeout of its own. */
+const CONSENT_POST_TIMEOUT_MS = 15_000;
 import { ConsentCheck } from '../modules/identity/pages';
 import { Card } from '../components/molecule/Card/Card';
 import { Notice } from '../components/molecule/Notice/Notice';
@@ -26,11 +30,21 @@ import { Button } from '../components/atom/Button/Button';
 const autoTries = new Map<string, number>();
 const AUTO_TRIES = 2;
 
-export default function CustomerEnrolment() {
+/**
+ * Lane r2hoy2 (r2co2 contract): `consent`, the same page for a login that holds the customer role already but never
+ * signed up (`GET /signup` `registered: false`: invited staff, desk-invited customers). RequireRole passes the config it
+ * read (no second read); the page shows the same consent step and posts the same sign-up (Company OS completes it on
+ * the same login, person and facet), with lines that don't speak of turning customer access on. Success, or a 409
+ * `already_registered` with `/me` holding the role, settles the check for the session (`settleConsent`) and the page
+ * opens. Sign-up closed meanwhile: nothing to accept here, the page opens (fail open, like a failed read).
+ */
+export default function CustomerEnrolment({ consent }: { consent?: SignupConfig } = {}) {
   const { t } = useI18n();
-  const { user, role, refresh } = useSession();
-  const [config, setConfig] = useState<SignupConfig | null>(null);
-  const [step, setStep] = useState<'loading' | 'consent' | 'sending' | 'closed' | 'notice'>('loading');
+  const { user, role, refresh, signOut } = useSession();
+  const consentOnly = !!consent;
+  const lines = consentOnly ? 'identity.accept' : 'identity.enrol';
+  const [config, setConfig] = useState<SignupConfig | null>(consent ?? null);
+  const [step, setStep] = useState<'loading' | 'consent' | 'sending' | 'closed' | 'notice'>(consent?.consents.length ? 'consent' : 'loading');
   const [accepted, setAccepted] = useState(false);
   const [missingConsent, setMissingConsent] = useState(false);
   const [notice, setNotice] = useState<{ tone: 'warn' | 'danger' | 'info'; text: string } | null>(null);
@@ -44,14 +58,19 @@ export default function CustomerEnrolment() {
     busy.current = true;
     setStep('sending');
     try {
-      const { status, body } = await cosJson('/signup', { method: 'POST', body: enrolmentBody(cfg, name, withConsent) });
+      const post = cosJson('/signup', { method: 'POST', body: enrolmentBody(cfg, name, withConsent) });
+      const answer = consentOnly ? await withTimeout(post, CONSENT_POST_TIMEOUT_MS) : await post;
+      if (answer === 'timeout') throw new Error('signup_timeout');
+      const { status, body } = answer;
       const result = classifySignup(status, body);
       if (!alive.current) return;
+      if (result.kind === 'done' && consentOnly) { settleConsent(user.id); refresh(); return; }
       if (result.kind === 'done' || result.kind === 'unverified' || result.kind === 'unauthorized') { refresh(); return; }
       if (result.kind === 'consent-changed' && result.required.length === 0) {
         // Nothing to show the person: not a step they can take. Retry reads the documents again.
-        setNotice({ tone: 'danger', text: t('identity.enrol.failed') }); setStep('notice'); return;
+        setNotice({ tone: 'danger', text: t(`${lines}.failed`) }); setStep('notice'); return;
       }
+      if (result.kind === 'disabled' && consentOnly) { settleConsent(user.id); return; }
       if (result.kind === 'disabled') { setStep('closed'); return; }
       if (result.kind === 'consent-changed') {
         const next = { ...cfg, consents: result.required };
@@ -64,24 +83,46 @@ export default function CustomerEnrolment() {
         const me = await cosJson('/me').catch(() => null);
         if (!alive.current) return;
         held = me ? signupHeld(me.status, me.body) : null;
-        if (held) { refresh(); return; }
+        if (held) { if (consentOnly) settleConsent(user.id); refresh(); return; }
       }
-      const key = signupNoticeKey(result, { existingLogin: true, held });
-      if (!key) { refresh(); return; }
+      const key = signupNoticeKey(result, { existingLogin: true, held, consentOnly });
+      if (!key) { if (consentOnly) settleConsent(user.id); refresh(); return; }
       setNotice({ tone: key.endsWith('.failed') ? 'danger' : 'warn', text: t(key) });
       setStep('notice');
     } catch {
       if (!alive.current) return;
-      setNotice({ tone: 'danger', text: t('identity.enrol.failed') });
+      setNotice({ tone: 'danger', text: t(`${lines}.failed`) });
       setStep('notice');
     } finally {
       busy.current = false;
     }
-  }, [name, refresh, t]);
+  }, [consentOnly, lines, name, refresh, t, user.id]);
 
   const start = useCallback(async (manual = false) => {
+    // The consent check's first pass uses the config RequireRole read (once per session); Retry reads it again.
+    if (consent && !manual) {
+      if (consent.consents.length > 0) return;
+      const tries = autoTries.get(user.id) ?? 0;
+      if (tries >= AUTO_TRIES) { setNotice({ tone: 'danger', text: t(`${lines}.failed`) }); setStep('notice'); return; }
+      autoTries.set(user.id, tries + 1);
+      await enrol(consent, false);
+      return;
+    }
     setStep('loading'); setNotice(null);
     try {
+      if (consentOnly) {
+        // Retry of the consent check: signed up meanwhile, closed, unreadable or silent now → the page opens (fail open).
+        const answer = await withTimeout(cosJson('/signup'), CONSENT_READ_TIMEOUT_MS);
+        if (!alive.current) return;
+        if (answer === 'timeout') { console.warn('[signup] GET /signup gave no answer on retry; the customer area opens without the consent check'); settleConsent(user.id); return; }
+        const read = consentReadFrom(answer.status, answer.body);
+        if (!alive.current) return;
+        if (read.step === 'pass') { settleConsent(user.id); return; }
+        setConfig(read.config);
+        if (read.config.consents.length > 0) { setStep('consent'); return; }
+        await enrol(read.config, false);
+        return;
+      }
       const { status, body } = await cosJson('/signup');
       const parsed = status === 200 ? parseSignupConfig(body) : null;
       if (!alive.current) return;
@@ -94,15 +135,18 @@ export default function CustomerEnrolment() {
       autoTries.set(user.id, tries + 1);
       await enrol(parsed, false);
     } catch {
-      if (alive.current) { setNotice({ tone: 'danger', text: t('identity.enrol.failed') }); setStep('notice'); }
+      if (alive.current) { setNotice({ tone: 'danger', text: t(`${lines}.failed`) }); setStep('notice'); }
     }
-  }, [enrol, t, user.id]);
+  }, [consent, consentOnly, enrol, lines, t, user.id]);
   const started = useRef(false);
   useEffect(() => { if (!started.current) { started.current = true; void start(); } }, [start]);
 
-  const home = <p className="small"><Link to={ROLE_HOME[role]}>{t('identity.enrol.back')}</Link></p>;
+  // A customer's home is the customer area this page stands in front of: offer to sign out instead of a link back here.
+  const home = consentOnly && ROLE_HOME[role].startsWith('/app')
+    ? <p className="small"><Button variant="ghost" size="sm" onClick={() => void signOut()}>{t('identity.signout')}</Button></p>
+    : <p className="small"><Link to={ROLE_HOME[role]}>{t('identity.enrol.back')}</Link></p>;
   if (step === 'loading' || step === 'sending' && !config?.consents.length) {
-    return <div className="container page identity-narrow stack" data-enrol-customer="loading"><p className="muted" aria-busy="true">{t('identity.enrol.loading')}</p></div>;
+    return <div className="container page identity-narrow stack" data-enrol-customer="loading"><p className="muted" aria-busy="true">{t(`${lines}.loading`)}</p>{consentOnly && home}</div>;
   }
   if (step === 'closed') return <div className="container page identity-narrow stack" data-enrol-customer="closed"><Card padding="lg"><Notice tone="info">{t('identity.register.closed')}</Notice></Card>{home}</div>;
   if (step === 'notice' || !config) {
@@ -110,7 +154,9 @@ export default function CustomerEnrolment() {
       <div className="container page identity-narrow stack" data-enrol-customer="notice">
         <Card padding="lg" className="stack">
           {notice && <Notice tone={notice.tone}>{notice.text}</Notice>}
-          <Button variant="secondary" onClick={() => void start(true)}>{t('identity.retry')}</Button>
+          <Button variant="secondary" data-enrol-retry onClick={() => void start(true)}>{t('identity.retry')}</Button>
+          {/* Lane review (r2hoy2): a customer already; a refusal they can't fix never keeps them out of their bookings. */}
+          {consentOnly && <Button variant="ghost" data-consent-later onClick={() => settleConsent(user.id)}>{t('identity.accept.later')}</Button>}
         </Card>
         {home}
       </div>

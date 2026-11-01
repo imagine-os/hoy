@@ -5,12 +5,15 @@ import { roleCan } from './permissions';
 import { useSession } from './SessionProvider';
 import { SessionContext, heldRoles, type SessionCtx } from './sessionContext';
 import { visitorSignIn } from './visitorSignIn';
-import { enrolsAsCustomer } from './purchaseEntry';
+import { consentCheckApplies, enrolsAsCustomer } from './purchaseEntry';
+import { useConsentRead } from './signupStatus';
 import { matrixAllows } from '../config/roleMatrix';
 import { PRODUCTION_BUILD } from '../config/launch';
 
 // Production only (it needs the Clerk session): folded away in the review build.
 const CustomerEnrolment = PRODUCTION_BUILD ? lazy(() => import('./CustomerEnrolment')) : null;
+// The consent check's one read (lane r2hoy2); loaded on use, so the review build never carries the Company OS call.
+const readSignup = PRODUCTION_BUILD ? () => import('./cosRequest').then((m) => m.cosJson('/signup')) : null;
 
 /**
  * Guards a route. Public routes pass everyone; otherwise the effective role must match. PL-05: the launch permissions
@@ -31,6 +34,11 @@ const CustomerEnrolment = PRODUCTION_BUILD ? lazy(() => import('./CustomerEnrolm
  * Review round 1 (r1hoy): never inside a read-only document (M1, `enrolsAsCustomer`): a preview frame or view-as never
  * enrols. A real super admin, whom the matrix lets into every area, is enrolled too on the customer area when they don't
  * hold the customer role (L5), and one who holds it gets the customer session there, like any staff login.
+ *
+ * Lane r2hoy2 (r2co2 contract): a login that holds the customer role but never signed up (invited staff, a desk-invited
+ * customer: `GET /signup` `registered: false`) sees the same consent step before the customer area opens, once.
+ * `consentCheckApplies` says where (the customer area; never a frame or view-as); `useConsentRead` reads once per session
+ * and fails open (a failed, slow or older answer opens the page as before, and is logged).
  */
 export function RequireRole({ roles, children }: { roles: Role[]; children: ReactNode }) {
   const session = useSession();
@@ -45,6 +53,8 @@ export function RequireRole({ roles, children }: { roles: Role[]; children: Reac
     ...session, role: 'customer', isSuperAdmin: false, canDevMode: false, devMode: false, caps: [],
     can: (p) => roleCan('customer', p), hasRole: (r) => r.includes('public') || r.includes('customer'),
   } : null, [asCustomer, session]);
+  const checkConsent = PRODUCTION_BUILD && !publicRoute && consentCheckApplies({ status, signedIn, viewAs, roles: held, routeRoles: roles, path: loc.pathname });
+  const consent = useConsentRead(checkConsent, user.id, readSignup);
   if (!publicRoute && status === 'loading') return <div className="lazy-fallback" aria-busy="true" />;
   const enrol = !!CustomerEnrolment && !publicRoute && enrolsAsCustomer({ status, signedIn, viewAs, roles: held, routeRoles: roles, path: loc.pathname });
   const enrolPage = CustomerEnrolment && <Suspense fallback={<div className="lazy-fallback" aria-busy="true" />}><CustomerEnrolment /></Suspense>;
@@ -52,6 +62,9 @@ export function RequireRole({ roles, children }: { roles: Role[]; children: Reac
   // also allow the teacher role, whose purchases Company OS refuses). A real super admin passes every role check, so
   // their customer session (when they hold the role) comes before their own pass too.
   if (enrol) return enrolPage;
+  // A customer who never accepted the documents (r2hoy2): the same step first. Waits at most for the one read.
+  if (consent === 'pending') return <div className="lazy-fallback" aria-busy="true" />;
+  if (consent?.step === 'ask' && CustomerEnrolment) return <Suspense fallback={<div className="lazy-fallback" aria-busy="true" />}><CustomerEnrolment consent={consent.config} /></Suspense>;
   if (customerSession && role === 'super_admin') return <SessionContext.Provider value={customerSession}>{children}</SessionContext.Provider>;
   if (hasRole(roles) && matrixAllows(role, loc.pathname)) return <>{children}</>;
   if (customerSession) return <SessionContext.Provider value={customerSession}>{children}</SessionContext.Provider>;

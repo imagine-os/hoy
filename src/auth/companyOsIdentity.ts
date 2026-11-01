@@ -116,7 +116,14 @@ export function classifyMe(status: number, body: unknown): MeResult {
 // ---------------------------------------------------------------------------------------------
 
 export interface SignupConsent { document: string; version: string }
-export interface SignupConfig { enabled: boolean; consents: SignupConsent[]; personFields: string[]; facetFields: string[] }
+export interface SignupConfig {
+  enabled: boolean; consents: SignupConsent[]; personFields: string[]; facetFields: string[];
+  /**
+   * People 1.9.0 (r2co2): whether this login has signed up here (holds the sign-up role, signed up, a person linked).
+   * Absent when an older Company OS doesn't send it, or it isn't a boolean.
+   */
+  registered?: boolean;
+}
 
 const parseConsents = (x: unknown): SignupConsent[] => Array.isArray(x) ? x.flatMap((c) => {
   const d = c && typeof c === 'object' ? c as Record<string, unknown> : {};
@@ -132,7 +139,29 @@ export function parseSignupConfig(raw: unknown): SignupConfig | null {
   const personFields = list(v.personFields);
   // CU-01 needs name and WhatsApp on the person: a tenant that does not accept them cannot sign people up here.
   if (!personFields.includes('name') || !personFields.includes('phone')) return { enabled: false, consents: [], personFields: [], facetFields: [] };
-  return { enabled: true, consents, personFields, facetFields: list(v.facetFields) };
+  return { enabled: true, consents, personFields, facetFields: list(v.facetFields), ...(typeof v.registered === 'boolean' ? { registered: v.registered } : {}) };
+}
+
+/**
+ * The consent check of a login that already holds the customer role (lane r2hoy2, r2co2 contract): an invited staff
+ * login (`invitations_grant_signup_role`) or a desk-invited customer holds `member` but never signed up, so it never
+ * accepted the studio's documents. `GET /t/:t/signup` says so with `registered: false`; the app then shows the consent
+ * step and posts the sign-up (Company OS completes it on the same login, person and facet). Everything else passes:
+ * signed up, sign-up closed, an older Company OS without the flag, or a failed read (fail open; the reason is logged).
+ * The step needs nothing but the consent, so a tenant that takes no phone still asks (unlike the sign-up form).
+ */
+export type ConsentRead =
+  | { step: 'ask'; config: SignupConfig }
+  | { step: 'pass'; reason: 'registered' | 'closed' | 'unknown' | 'failed' };
+
+export function consentReadFrom(status: number, body: unknown): ConsentRead {
+  if (status !== 200 || !body || typeof body !== 'object' || Array.isArray(body)) return { step: 'pass', reason: 'failed' };
+  const v = body as Record<string, unknown>;
+  if (v.enabled !== true) return { step: 'pass', reason: v.enabled === false ? 'closed' : 'failed' };
+  if (v.registered === true) return { step: 'pass', reason: 'registered' };
+  if (v.registered !== false) return { step: 'pass', reason: 'unknown' };
+  const list = (x: unknown) => Array.isArray(x) ? x.filter((s): s is string => typeof s === 'string') : [];
+  return { step: 'ask', config: { enabled: true, consents: parseConsents(v.consents), personFields: list(v.personFields), facetFields: list(v.facetFields), registered: false } };
 }
 
 /** What the customer types. Email is not here: Company OS takes the verified email from the Clerk session. */
@@ -228,8 +257,9 @@ export function signupHeld(status: number, body: unknown): boolean | null {
  * enrolment of a login already in the studio (owner 2026-11-01: every registered login is a customer; no raw codes, no
  * "create your account"). `held`: `signupHeld` after an `already_registered`.
  */
-export function signupNoticeKey(result: SignupResult, { existingLogin, held = null }: { existingLogin: boolean; held?: boolean | null }): string | null {
-  const screen = existingLogin ? 'identity.enrol' : 'identity.register';
+export function signupNoticeKey(result: SignupResult, { existingLogin, held = null, consentOnly = false }: { existingLogin: boolean; held?: boolean | null; consentOnly?: boolean }): string | null {
+  // consentOnly (r2hoy2): the login is a customer already and only accepts the documents: no "customer access" lines.
+  const screen = consentOnly ? 'identity.accept' : existingLogin ? 'identity.enrol' : 'identity.register';
   switch (result.kind) {
     case 'done': return null;
     case 'already-registered': return held === true ? null : held === false ? `${screen}.conflict` : `${screen}.failed`;

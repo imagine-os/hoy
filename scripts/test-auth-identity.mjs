@@ -15,7 +15,7 @@ const bundle = await build({
     "export * from './src/auth/clerkFlows';",
     "export { safeAuthBack, visitorSignIn } from './src/auth/visitorSignIn';",
     "export { signInReturn, homeFor, authLink } from './src/auth/signInReturn';",
-    "export { purchaseEntry, enrolsAsCustomer } from './src/auth/purchaseEntry';",
+    "export { purchaseEntry, enrolsAsCustomer, consentCheckApplies } from './src/auth/purchaseEntry';",
     "export { LAUNCH_ROUTES, isLaunchRoute } from './src/config/launchRoutes';",
     "export { CUSTOMER_AUTO_ENROL_STAFF } from './src/config/launch';",
     "export { getSessionToken, setSessionTokenSource } from './src/auth/sessionToken';",
@@ -126,6 +126,103 @@ check('CU-02 422 consent_required → the new versions to accept', changed.kind 
 check('sign-up 403 signup_disabled → closed', M.classifySignup(403, { error: 'signup_disabled' }).kind === 'disabled');
 check('sign-up 400 invalid body → invalid with the code', JSON.stringify(M.classifySignup(400, { error: 'invalid body' })) === '{"kind":"invalid","code":"invalid body"}');
 check('sign-up 422 duplicate_person_user → invalid (staff fix the link)', M.classifySignup(422, { error: 'duplicate_person_user' }).kind === 'invalid');
+
+// ── Lane r2hoy2 (r2co2 contract): a login holding the customer role that never signed up accepts the documents once ──
+// Company OS (people 1.9.0, invitations_grant_signup_role on in Hoy's recipe): an invited staff login, a desk-invited
+// customer, holds `member` but GET /signup says `registered: false`. The app then shows the same consent step and posts
+// the sign-up (201 on the same login/person/facet). Read once per session, never in frames or view-as, fail open.
+{
+  const SU = { enabled: true, consents: [{ document: 'terms', version: '2026-10-01' }, { document: 'privacy', version: '2026-10-01' }], personFields: ['name', 'phone'], facetFields: [] };
+  const read = (status, body) => M.consentReadFrom?.(status, body) ?? { step: 'missing' };
+  check('r2hoy2 config: registered is carried when Company OS sends it', M.parseSignupConfig({ ...SU, registered: false }).registered === false && M.parseSignupConfig({ ...SU, registered: true }).registered === true);
+  check('r2hoy2 config: an older Company OS without registered reads as unknown (no key), a non-boolean too', !('registered' in M.parseSignupConfig(SU)) && !('registered' in M.parseSignupConfig({ ...SU, registered: 'false' })));
+  const ask = read(200, { ...SU, registered: false });
+  check('r2hoy2 read: registered:false → ask, with the documents to accept', ask.step === 'ask' && JSON.stringify(ask.config?.consents) === JSON.stringify(SU.consents), JSON.stringify(ask));
+  check('r2hoy2 read: registered:false asks even if the tenant takes no phone (nothing to fill in but the consent)', read(200, { ...SU, personFields: ['name'], registered: false }).step === 'ask');
+  check('r2hoy2 read: registered:true → pass', read(200, { ...SU, registered: true }).step === 'pass');
+  check('r2hoy2 read fails open: no registered field (older Company OS), a string, enabled:false', ['pass'].includes(read(200, SU).step) && read(200, { ...SU, registered: 'false' }).step === 'pass' && read(200, { enabled: false }).step === 'pass' && read(200, { enabled: false, registered: false }).step === 'pass');
+  check('r2hoy2 read fails open: an error status, a malformed body', [[503, { error: 'unavailable' }], [500, null], [403, { error: 'forbidden' }], [401, { error: 'unauthorized' }], [200, null], [200, 'x'], [200, []]].every(([s, b]) => read(s, b).step === 'pass'));
+  check('r2hoy2 read: a pass names why (registered, closed, unknown, failed), for the log', read(200, { ...SU, registered: true }).reason === 'registered' && read(200, { enabled: false }).reason === 'closed' && read(200, SU).reason === 'unknown' && read(503, null).reason === 'failed');
+  // Who is checked: a login that holds the customer role, on a customer page, never read-only. Independent of the staff
+  // enrolment switch (CUSTOMER_AUTO_ENROL_STAFF): the switch decides who becomes a customer; every customer accepts once.
+  const cc = (o) => M.consentCheckApplies?.({ status: 'ready', signedIn: true, viewAs: null, roles: ['customer'], routeRoles: ['customer', 'teacher'], path: '/app/plans', ...o });
+  check('r2hoy2 check: a customer (desk-invited or not) on a customer page', cc({}) === true && cc({ path: '/app/gift-voucher' }) === true && cc({ path: '/app' }) === true);
+  check('r2hoy2 check: invited staff holding the customer role, and a super admin holding it', cc({ roles: ['front_desk', 'customer'] }) === true && cc({ roles: ['admin', 'customer'] }) === true && cc({ roles: ['super_admin', 'customer'] }) === true && cc({ roles: ['teacher', 'customer'] }) === true);
+  check('r2hoy2 check: a login without the customer role is the enrolment\'s, not this check', cc({ roles: ['front_desk'] }) === false && cc({ roles: ['super_admin'] }) === false && cc({ roles: [] }) === false);
+  check('r2hoy2 check: never viewing as, signed out, loading or unfinished', cc({ viewAs: 'customer' }) === false && cc({ signedIn: false }) === false && cc({ status: 'loading' }) === false && cc({ status: 'needs-signup' }) === false);
+  check('r2hoy2 check: never in a read-only document (a frame, a stored view-as)', cc({ readOnly: true }) === false && cc({ readOnly: false }) === true);
+  check('r2hoy2 check: never outside the customer area or on a page customers can\'t open', cc({ path: '/admin/settings', routeRoles: ['admin'] }) === false && cc({ path: '/staff', routeRoles: ['front_desk', 'customer'] }) === false && cc({ path: '/app/x', routeRoles: ['teacher'] }) === false);
+  {
+    const prior = globalThis.sessionStorage;
+    const kept = new Map([['hoyos.viewAs', 'customer']]);
+    globalThis.sessionStorage = { getItem: (k) => kept.get(k) ?? null, setItem: (k, v) => kept.set(k, String(v)), removeItem: (k) => kept.delete(k) };
+    check('r2hoy2 check: a view-as value kept in the tab blocks the read, fail closed', cc({}) === false);
+    globalThis.sessionStorage = prior;
+  }
+  // The consent step's copy for a login that is a customer already: no "turn on your customer access", no Join, no code.
+  const ckey = (status, body, held) => M.signupNoticeKey(M.classifySignup(status, body), { existingLogin: true, consentOnly: true, held });
+  check('r2hoy2 copy: already_registered with /me holding the customer role → success (no line)', ckey(409, { error: 'already_registered' }, true) === null && ckey(201, { userId: 'u' }) === null);
+  check('r2hoy2 copy: already_registered with /me unknown or without the role → the consent lines', ckey(409, { error: 'already_registered' }, null) === 'identity.accept.failed' && ckey(409, { error: 'already_registered' }, false) === 'identity.accept.conflict');
+  check('r2hoy2 copy: other codes → the consent lines (invalid, failed); linked email and person keep theirs', ckey(400, { error: 'invalid body' }) === 'identity.accept.invalid' && ckey(500, { error: 'boom' }) === 'identity.accept.failed' && ckey(409, { error: 'idempotency_conflict' }) === 'identity.accept.failed' && ckey(409, { error: 'email_linked_to_other_login' }) === 'identity.signup.emailLinked' && ckey(422, { error: 'duplicate_person_user' }) === 'identity.signup.personLinked');
+  const ACCEPT = ['identity.accept.loading', 'identity.accept.failed', 'identity.accept.invalid', 'identity.accept.conflict', 'identity.accept.later'];
+  check('r2hoy2 copy: the consent lines exist in Spanish and English, no code, no Join, no "customer access"', ACCEPT.every((k) => idStrings[k]?.es && idStrings[k]?.en && !/\{code\}|Únete|Unirme|\bJoin\b|acceso de cliente|customer access/i.test(idStrings[k].es + idStrings[k].en)), ACCEPT.filter((k) => !(idStrings[k]?.es && idStrings[k]?.en)).join(', '));
+  // Owner 2026-11-01: a platform operator (Company OS super admin, no Hoy membership) is a new person here. Their /me is
+  // 403 → finish sign-up (name and consents), like anyone; afterwards /me reads member only, isSuperAdmin false.
+  check('r2hoy2 operator: /me 403 (no Hoy membership) → the sign-up path, like any new login', M.classifyMe(403, { error: 'no access to this tenant' }).kind === 'not-member');
+  const opMe = M.parseMe({ user: { id: 'usr_operator', name: 'Opal Operadora', email: 'operadora@example.test' }, roleKeys: ['member'], isSuperAdmin: false, caps: [] });
+  check('r2hoy2 operator: after sign-up /me is a customer (member only, not a super admin here)', M.roleFromMe(opMe) === 'customer' && JSON.stringify(M.rolesFromMe(opMe)) === '["customer"]' && M.isSuperAdminMe(opMe) === false && M.signupHeld(200, { user: { id: 'usr_operator' }, roleKeys: ['member'], isSuperAdmin: false }) === true);
+  check('r2hoy2 operator: and the consent check then applies to them on a customer page', cc({ roles: M.rolesFromMe(opMe) }) === true);
+}
+
+// ── r2hoy2: GET /signup is read once per login and tab (cached), never blocks the customer area ─────────────────
+{
+  let S = null;
+  try {
+    const b = await build({ stdin: { contents: "export * from './src/auth/signupStatus';", resolveDir: process.cwd(), loader: 'ts' }, bundle: true, platform: 'node', format: 'esm', write: false, logLevel: 'silent', define: { 'import.meta.env': '{"VITE_HOY_BUILD":"production","DEV":false}' } });
+    S = await import('data:text/javascript;base64,' + Buffer.from(b.outputFiles[0].text).toString('base64'));
+  } catch (e) { check('r2hoy2 cache: src/auth/signupStatus.ts builds', false, String(e?.message ?? e).slice(0, 200)); }
+  if (S) {
+    const SU = { enabled: true, consents: [{ document: 'terms', version: '2026-10-01' }], personFields: ['name', 'phone'], facetFields: [] };
+    const logs = [];
+    const opts = (o = {}) => ({ timeoutMs: 80, log: (...a) => logs.push(a.join(' ')), ...o });
+    let n = 0;
+    const fetcher = (answer) => async () => { n++; return answer; };
+    S.resetConsentReads();
+    const a1 = await S.readConsent('u_a', fetcher({ status: 200, body: { ...SU, registered: false } }), opts());
+    const a2 = await S.readConsent('u_a', fetcher({ status: 200, body: { ...SU, registered: true } }), opts());
+    check('r2hoy2 cache: one GET /signup per login and tab (the second read is the first answer)', n === 1 && a1.step === 'ask' && a2.step === 'ask', `${n} ${a1.step} ${a2.step}`);
+    check('r2hoy2 cache: the answer can be read synchronously once known (no flash on the next page)', S.peekConsent('u_a')?.step === 'ask' && S.peekConsent('u_none') === undefined);
+    n = 0;
+    await Promise.all([S.readConsent('u_b', fetcher({ status: 200, body: { ...SU, registered: true } }), opts()), S.readConsent('u_b', fetcher({ status: 200, body: { ...SU, registered: true } }), opts())]);
+    check('r2hoy2 cache: two pages asking at once share one read', n === 1, String(n));
+    n = 0;
+    const other = await S.readConsent('u_c', fetcher({ status: 200, body: { ...SU, registered: true } }), opts());
+    check('r2hoy2 cache: another login in the tab reads its own', n === 1 && other.step === 'pass');
+    S.settleConsent('u_a');
+    check('r2hoy2 cache: after a successful sign-up the login passes (no second step this session)', S.peekConsent('u_a')?.step === 'pass');
+    let heard = 0;
+    const off = S.subscribeConsent(() => { heard++; });
+    S.settleConsent('u_c'); off(); S.settleConsent('u_b');
+    check('r2hoy2 cache: settling tells the guard to re-render (and unsubscribes)', heard === 1, String(heard));
+    logs.length = 0;
+    const thrown = await S.readConsent('u_throw', async () => { throw new TypeError('Failed to fetch'); }, opts());
+    check('r2hoy2 fail open: a network error passes (customer area opens) and is logged', thrown.step === 'pass' && thrown.reason === 'failed' && logs.some((l) => /signup/i.test(l)), JSON.stringify(logs));
+    logs.length = 0;
+    const down = await S.readConsent('u_503', fetcher({ status: 503, body: { error: 'unavailable' } }), opts());
+    check('r2hoy2 fail open: a 503 passes and is logged', down.step === 'pass' && logs.length === 1, JSON.stringify(logs));
+    logs.length = 0;
+    const t0 = Date.now();
+    const hung = await S.readConsent('u_hang', () => new Promise(() => {}), opts());
+    check('r2hoy2 fail open: a read that never answers passes after the wait, logged', hung.step === 'pass' && hung.reason === 'failed' && Date.now() - t0 < 1500 && logs.length === 1, `${Date.now() - t0} ms ${JSON.stringify(logs)}`);
+    logs.length = 0;
+    await S.readConsent('u_old', fetcher({ status: 200, body: SU }), opts());
+    check('r2hoy2 fail open: an older Company OS (no registered) passes and is logged once', S.peekConsent('u_old')?.step === 'pass' && logs.length === 1, JSON.stringify(logs));
+    logs.length = 0;
+    await S.readConsent('u_ok', fetcher({ status: 200, body: { ...SU, registered: true } }), opts());
+    check('r2hoy2 a registered login logs nothing', logs.length === 0, JSON.stringify(logs));
+    check('r2hoy2 the default wait is a few seconds at most', typeof S.CONSENT_READ_TIMEOUT_MS === 'number' && S.CONSENT_READ_TIMEOUT_MS >= 1000 && S.CONSENT_READ_TIMEOUT_MS <= 5000);
+  }
+}
 
 // ── CU-03: Clerk errors → copy ──────────────────────────────────────────────────────────────────────────────────
 const ce = (code, extra = {}) => ({ errors: [{ code, ...extra }] });

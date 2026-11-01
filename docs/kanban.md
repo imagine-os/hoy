@@ -912,3 +912,10 @@ Protected-capture clarification: M14 schedule/pay screenshots remain local/ignor
 - W-04, C-02 (owner L3): a switched-off timetable row stops new classes; its classes already made stay bookable.
 - Docs gate: `/me` cap 2 MB; the super admin's tab isn't reloaded on a one-off `/me` error; a late docs pack is dropped.
 - Deploy: a leftover `PUBLIC_DOCUMENTS` (or `SET_LIVE`) is warned about before Apply infra.
+
+## Hoy test-hoy fixes · consents for invited staff (lane r2hoy2, 2026-11-01)
+
+### Done (lane branch, not merged)
+
+- Customer area (C-xx): a login that holds the customer role but never signed up (invited staff, desk-invited customers: `GET /signup` `registered: false`) accepts the documents once in the same consent step, then goes on. Read once per session, never in frames or view-as; a failed or slow read opens the page as before. [Changelog](changelog/_pending/hoy-test-fixes-r2hoy2.md)
+- A platform operator signing in with their own login takes the studio sign-up like anyone (tested).

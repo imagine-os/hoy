@@ -26,7 +26,7 @@ const entry = readdirSync(join(DIST, 'assets')).filter((f) => f.endsWith('.js'))
 if (!entry.includes('clerk-js')) { console.error(`${DIST} is not a production build (no Clerk): run npm run build:production`); process.exit(1); }
 
 // ── the fake Hoy server + Company OS ────────────────────────────────────────────────────────────────────────────
-const api = { members: {}, signupEnabled: true, meStatus: null, signups: [], consents: [{ document: 'terms', version: '2026-10-01' }, { document: 'privacy', version: '2026-10-01' }] };
+const api = { members: {}, signupEnabled: true, meStatus: null, signups: [], signupReads: {}, hung: [], consents: [{ document: 'terms', version: '2026-10-01' }, { document: 'privacy', version: '2026-10-01' }] };
 const userOf = (req) => /^Bearer fake\.([^.]+)\.[^.]+$/.exec(req.headers.authorization ?? '')?.[1] ?? null;
 const json = (res, status, body) => { res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(body)); };
 const server = createServer(async (req, res) => {
@@ -39,14 +39,24 @@ const server = createServer(async (req, res) => {
     if (route === '/me') {
       if (api.meStatus) return json(res, api.meStatus, { error: 'server_error' });
       const m = api.members[user];
-      return m ? json(res, 200, { tenant: { slug: TENANT }, user: { id: user, name: m.name, email: m.email }, roleKeys: m.roleKeys, isSuperAdmin: false, caps: [], entities: [] }) : json(res, 403, { error: 'no access to this tenant' });
+      return m ? json(res, 200, { tenant: { slug: TENANT }, user: { id: user, name: m.name, email: m.email }, roleKeys: m.roleKeys, isSuperAdmin: !!m.superAdmin, caps: [], entities: [] }) : json(res, 403, { error: 'no access to this tenant' });
     }
-    if (route === '/signup' && req.method === 'GET') return json(res, 200, api.signupEnabled ? { enabled: true, consents: api.consents, personFields: ['name', 'phone'], facetFields: ['emergency_contact_name', 'emergency_contact_phone'] } : { enabled: false });
+    if (route === '/signup' && req.method === 'GET') {
+      api.signupReads[user] = (api.signupReads[user] ?? 0) + 1;
+      // Lane r2hoy2: the read can fail or hang (the customer area must still open), or come from an older Company OS.
+      if (api.signupReadFail) return json(res, 503, { error: 'unavailable' });
+      if (api.signupReadHang) { api.hung.push(res); return; }
+      // r2co2 (people 1.9.0): `registered` iff this login holds the sign-up role and has signed up.
+      const registered = !!(api.members[user]?.roleKeys.includes('member') && api.members[user].registered);
+      return json(res, 200, api.signupEnabled ? { enabled: true, consents: api.consents, personFields: ['name', 'phone'], facetFields: ['emergency_contact_name', 'emergency_contact_phone'], ...(api.oldCompanyOs ? {} : { registered }) } : { enabled: false });
+    }
     if (route === '/signup' && req.method === 'POST') {
       const body = JSON.parse(await new Promise((r) => { let s = ''; req.on('data', (c) => { s += c; }); req.on('end', () => r(s)); }));
       api.signups.push({ user, body });
       // Company OS (ADR 0038 amendment 2026-11-01): a login already in the studio gains the Customer role once.
-      if (api.members[user]?.roleKeys.includes('member') || api.joinConflict) return json(res, 409, { error: 'already_registered' });
+      // r2co2: a login holding the role that never signed up completes (201); one that did answers 409.
+      if ((api.members[user]?.roleKeys.includes('member') && api.members[user].registered) || api.joinConflict) return json(res, 409, { error: 'already_registered' });
+      if (api.signupFail500) return json(res, 500, { error: 'internal_error' });
       // r2co contract (review round 2): the login's verified email is on a person linked to another login.
       if (api.emailLinked) return json(res, 409, { error: 'email_linked_to_other_login', message: 'a person with this email is linked to another login' });
       if (api.duplicatePerson) return json(res, 422, { error: 'duplicate_person_user', message: 'person is linked to another user' });
@@ -56,8 +66,8 @@ const server = createServer(async (req, res) => {
       if (api.phantomSignup) return json(res, 201, { userId: user, personId: 'per_x', facetId: 'mem_x' });
       const missing = api.consents.filter((c) => !body.consents?.some((x) => x.document === c.document && x.version === c.version));
       if (missing.length) return json(res, 422, { error: 'consent_required', details: { required: api.consents } });
-      if (api.members[user]) api.members[user].roleKeys.push('member');
-      else api.members[user] = { name: body.person.name, email: 'nueva@example.test', roleKeys: ['member'] };
+      if (api.members[user]) { if (!api.members[user].roleKeys.includes('member')) api.members[user].roleKeys.push('member'); api.members[user].registered = true; }
+      else api.members[user] = { name: body.person.name, email: 'nueva@example.test', roleKeys: ['member'], registered: true };
       // Review round 2: the sign-up commits but its answer is lost on the way (a slow phone connection).
       if (api.loseAnswer) { api.loseAnswer = false; req.socket.destroy(); return; }
       return json(res, 201, { userId: user, personId: api.members[user].roleKeys.length > 1 ? 'per_staff' : 'per_1', facetId: 'mem_1' });
@@ -71,8 +81,9 @@ const server = createServer(async (req, res) => {
     res.writeHead(200, { 'Content-Type': MIME[extname(file)] ?? 'application/octet-stream' }); res.end(await readFile(file));
   } catch { res.writeHead(404); res.end('Not found'); }
 });
-await new Promise((r) => server.listen(5331, '127.0.0.1', r));
-const BASE = 'http://127.0.0.1:5331';
+const PORT = Number(process.env.QA_PORT ?? 5331);
+await new Promise((r) => server.listen(PORT, '127.0.0.1', r));
+const BASE = `http://127.0.0.1:${PORT}`;
 
 // Fictional Clerk accounts (user id → emails) and their Company OS membership.
 const ACCOUNTS = {
@@ -81,21 +92,33 @@ const ACCOUNTS = {
   user_admin: { emails: [{ id: 'ea_admin', email: 'admin@example.test', verified: true }], primary: 'ea_admin' },
   user_both: { emails: [{ id: 'ea_both', email: 'ambas@example.test', verified: true }], primary: 'ea_both' },
   user_coach: { emails: [{ id: 'ea_coach', email: 'profe@example.test', verified: true }], primary: 'ea_coach' },
+  user_invited: { emails: [{ id: 'ea_invited', email: 'invitada@example.test', verified: true }], primary: 'ea_invited' },
+  user_deskcust: { emails: [{ id: 'ea_deskcust', email: 'mostrador@example.test', verified: true }], primary: 'ea_deskcust' },
+  // A platform operator (a Company OS super admin elsewhere) signing in with their own login: no Hoy membership.
+  user_operator: { emails: [{ id: 'ea_operator', email: 'operadora@example.test', verified: true }], primary: 'ea_operator' },
+  user_supmem: { emails: [{ id: 'ea_supmem', email: 'supmem@example.test', verified: true }], primary: 'ea_supmem' },
 };
 const MEMBERS = () => ({
-  user_ana: { name: 'Ana Prueba', email: 'ana@example.test', roleKeys: ['member'] },
+  user_ana: { name: 'Ana Prueba', email: 'ana@example.test', roleKeys: ['member'], registered: true },
   user_desk: { name: 'Rita Recepción', email: 'recepcion@example.test', roleKeys: ['front_desk'] },
   user_admin: { name: 'Olga Admin', email: 'admin@example.test', roleKeys: ['administrator'] },
   // Administration who also takes classes, on one email (owner 2026-11-01).
-  user_both: { name: 'Bea Ambas', email: 'ambas@example.test', roleKeys: ['administrator', 'member'] },
+  user_both: { name: 'Bea Ambas', email: 'ambas@example.test', roleKeys: ['administrator', 'member'], registered: true },
   // A teacher only (Company OS coach): the customer routes also allow the teacher role.
   user_coach: { name: 'Teo Profe', email: 'profe@example.test', roleKeys: ['coach'] },
+  // r2co2: staff invited with invitations_grant_signup_role on hold member but never signed up (no consents).
+  user_invited: { name: 'Iris Invitada', email: 'invitada@example.test', roleKeys: ['front_desk', 'member'], registered: false },
+  // A desk-invited customer: member from an invitation, never signed up (registered:false too).
+  user_deskcust: { name: 'Dora Mostrador', email: 'mostrador@example.test', roleKeys: ['member'], registered: false },
+  // A super admin who holds member (granted by an invitation) but never signed up.
+  user_supmem: { name: 'Sara Supermiembro', email: 'supmem@example.test', roleKeys: ['super_admin', 'member'], superAdmin: true, registered: false },
 });
 
 const browser = await launchBrowser();
 const errors = [];
 async function open(path = '/', { lang = 'es', width = 1280, clerk = true } = {}) {
   api.members = MEMBERS(); api.meStatus = null; api.signupEnabled = true; api.signups = []; api.joinConflict = false; api.emailLinked = false; api.duplicatePerson = false; api.loseAnswer = false; api.consentEmpty = false; api.phantomSignup = false;
+  api.signupReads = {}; api.signupReadFail = false; api.signupReadHang = false; api.oldCompanyOs = false; api.signupFail500 = false; api.hung = [];
   const ctx = await browser.newContext({ viewport: { width, height: 900 }, reducedMotion: 'reduce' });
   // Playwright tries the last route added first: everything outside is blocked, except Clerk's script (the fake).
   // `clerk: false` blocks Clerk's script too (a CDN outage or a blocker).
@@ -127,7 +150,7 @@ async function acceptAndContinue(page) {
 }
 /** The enrolment's notice: Retry starts it again (back to the consent step). */
 async function retry(page) {
-  await page.locator('[data-enrol-customer="notice"] button').click();
+  await page.locator('[data-enrol-customer="notice"] [data-enrol-retry]').click({ timeout: 5000 });
   await page.waitForTimeout(800);
 }
 async function signIn(page, email) {
@@ -530,6 +553,163 @@ try {
   for (const end = Date.now() + 30_000; !recovered && Date.now() < end;) { await page.waitForTimeout(500); recovered = await signedOutForm(page).catch(() => false); }
   check('CU-04 a Clerk stuck after sign-out reloads and ends on the sign-in form (no error)', recovered && await page.evaluate(() => window.__fakeClerk.state.active === null), route(page));
   await ctx.close();
+
+  // ── Lane r2hoy2 (r2co2 contract): a login holding the customer role that never signed up accepts the documents once ──
+  // Company OS answers GET /signup { enabled: true, registered: false } for staff invited with
+  // invitations_grant_signup_role on, and for desk-invited customers. The same consent step, then POST /signup (201 on
+  // the same login). Independent of the staff enrolment switch: these logins are customers already. Runs in both builds.
+  const SW = AUTO ? 'switch ON' : 'switch OFF';
+  {
+    ({ ctx, page } = await open('/auth/sign-in'));
+    await signIn(page, 'invitada@example.test');
+    await page.goto(`${BASE}/#/app`); await page.waitForTimeout(1200);
+    const step = page.locator('[data-enrol-customer="consent"]');
+    await step.waitFor({ timeout: 5000 }).catch(() => {});
+    const text = await page.locator('body').innerText();
+    check(`r2hoy2 (${SW}) invited staff (member, registered:false) on the customer app: the consent step, no customer screens yet`, (await step.count()) === 1 && (await page.locator('.appshell').count()) === 0 && route(page) === '/app', route(page));
+    check('r2hoy2 …no Join wording, no "customer access" wording; the documents\' versions show', !/Únete|Unirme|\bJoin\b|acceso de cliente/i.test(text) && /Versión 2026-10-01/.test(await step.innerText().catch(() => '')), text.slice(0, 300));
+    const before = api.signups.length;
+    await step.locator('button[type=submit]').click().catch(() => {}); await page.waitForTimeout(400);
+    check('r2hoy2 …continuing without accepting sends nothing', api.signups.length === before && /Necesitamos tu consentimiento/.test(await step.innerText().catch(() => '')));
+    await acceptAndContinue(page).catch(() => {});
+    const sent = api.signups.at(-1);
+    check('r2hoy2 …accept → POST /signup with the name, facet {} and the documents (no phone)', sent?.user === 'user_invited' && sent.body.person?.name === 'Iris Invitada' && !sent.body.person?.phone && JSON.stringify(sent.body.facet) === '{}' && JSON.stringify(sent.body.consents) === JSON.stringify(api.consents), JSON.stringify(sent));
+    check('r2hoy2 …then the customer app opens on the same login, no second membership', (await page.locator('.appshell').count()) === 1 && (await page.locator('[data-enrol-customer]').count()) === 0 && JSON.stringify(api.members.user_invited.roleKeys) === '["front_desk","member"]' && api.members.user_invited.registered === true, route(page));
+    await page.goto(`${BASE}/#/app/plans`); await page.waitForTimeout(1000);
+    check('r2hoy2 …another customer page: no step again, and GET /signup was read once this session', (await page.locator('[data-enrol-customer]').count()) === 0 && (await page.locator('.appshell').count()) === 1 && api.signupReads.user_invited === 1, `reads ${api.signupReads.user_invited}`);
+    await page.goto(`${BASE}/#/staff`); await page.waitForTimeout(800);
+    check('r2hoy2 …the staff home is not gated (only the customer area asks)', route(page) === '/staff' && (await page.locator('[data-enrol-customer]').count()) === 0, route(page));
+    await ctx.close();
+  }
+  {
+    // A desk-invited customer reads registered:false too: the same step (Company OS: every customer accepts the current
+    // documents once). The documents change between the read and the post: told to accept the new version.
+    ({ ctx, page } = await open('/auth/sign-in?next=/app/gift-voucher'));
+    const saved = api.consents;
+    await signIn(page, 'mostrador@example.test');
+    await page.locator('[data-enrol-customer="consent"]').waitFor({ timeout: 5000 }).catch(() => {});
+    check(`r2hoy2 (${SW}) desk-invited customer (registered:false) on the gift page: the consent step`, route(page) === '/app/gift-voucher' && (await page.locator('[data-enrol-customer="consent"]').count()) === 1 && (await page.locator('.appshell').count()) === 0, route(page));
+    api.consents = [{ document: 'terms', version: '2026-11-01' }, { document: 'privacy', version: '2026-11-01' }];
+    await acceptAndContinue(page).catch(() => {});
+    const changed = await page.locator('[data-enrol-customer]').innerText().catch(() => '');
+    check('r2hoy2 …consent_required (documents changed) → "accept the current version", box unticked, new versions, no code', /Los documentos legales cambiaron/.test(changed) && /Versión 2026-11-01/.test(changed) && !(await page.locator('[data-enrol-customer] input[type=checkbox]').isChecked().catch(() => true)) && !/consent_required/.test(changed), changed.slice(0, 300));
+    await acceptAndContinue(page).catch(() => {});
+    check('r2hoy2 …accepting the current version opens the gift page as a customer', route(page) === '/app/gift-voucher' && (await page.locator('.appshell').count()) === 1 && (await page.locator('[data-enrol-customer]').count()) === 0 && api.members.user_deskcust.registered === true && JSON.stringify(api.signups.at(-1)?.body.consents) === JSON.stringify(api.consents), route(page));
+    api.consents = saved;
+    await ctx.close();
+  }
+  {
+    // 409 already_registered (signed up meanwhile, a double tap): /me holds the customer role → success. Other codes:
+    // their own lines, no raw code, Retry.
+    ({ ctx, page } = await open('/auth/sign-in'));
+    await signIn(page, 'mostrador@example.test');
+    await page.goto(`${BASE}/#/app`); await page.waitForTimeout(1200);
+    api.signupFail500 = true;
+    await acceptAndContinue(page).catch(() => {});
+    const failed = await page.locator('[data-enrol-customer]').innerText().catch(() => '');
+    check('r2hoy2 a 500 on the post → the consent "retry" line (es), no raw code, no "customer access"', (await page.locator('[data-enrol-customer="notice"]').count()) === 1 && /Reintenta/.test(failed) && !/internal_error|\(http_|acceso de cliente/.test(failed), failed.slice(0, 300));
+    api.signupFail500 = false; api.duplicatePerson = true;
+    await retry(page).catch(() => {}); await acceptAndContinue(page).catch(() => {});
+    const dup = await page.locator('[data-enrol-customer]').innerText().catch(() => '');
+    check('r2hoy2 duplicate_person_user → the studio fixes the link (no code)', /administración/i.test(dup) && !/duplicate_person_user/.test(dup), dup.slice(0, 300));
+    api.duplicatePerson = false; api.joinConflict = true;
+    await retry(page).catch(() => {}); await acceptAndContinue(page).catch(() => {});
+    check('r2hoy2 409 already_registered with /me holding the customer role → the customer app (success, no notice)', (await page.locator('[data-enrol-customer]').count()) === 0 && (await page.locator('.appshell').count()) === 1 && route(page) === '/app', `${route(page)} ${(await page.locator('[data-enrol-customer]').innerText().catch(() => '')).slice(0, 120)}`);
+    api.joinConflict = false;
+    await ctx.close();
+  }
+  {
+    // Lane review (r2hoy2, M1): a refusal the person can't fix (email linked to another login) never locks a customer
+    // out of their own bookings: the line says to contact the studio, and "Continue for now" opens the page (fail open).
+    ({ ctx, page } = await open('/auth/sign-in'));
+    await signIn(page, 'mostrador@example.test');
+    await page.goto(`${BASE}/#/app`); await page.waitForTimeout(1200);
+    api.emailLinked = true;
+    await acceptAndContinue(page).catch(() => {});
+    const linked = await page.locator('[data-enrol-customer]').innerText().catch(() => '');
+    check('r2hoy2 review: email linked to another login → contact the studio, with "Continue for now"', /otra cuenta/i.test(linked) && (await page.locator('[data-enrol-customer] [data-consent-later]').count()) === 1 && !/email_linked_to_other_login/.test(linked), linked.slice(0, 300));
+    await page.locator('[data-enrol-customer] [data-consent-later]').click({ timeout: 3000 }).catch(() => {});
+    await page.waitForTimeout(800);
+    check('r2hoy2 review: …"Continue for now" opens the customer app for this session', (await page.locator('.appshell').count()) === 1 && (await page.locator('[data-enrol-customer]').count()) === 0, route(page));
+    api.emailLinked = false;
+    await ctx.close();
+  }
+  {
+    // Lane review (r2hoy2, M2): Retry whose read never answers doesn't leave a dead spinner: it opens the page (fail open).
+    ({ ctx, page } = await open('/auth/sign-in'));
+    await signIn(page, 'mostrador@example.test');
+    await page.goto(`${BASE}/#/app`); await page.waitForTimeout(1200);
+    api.signupFail500 = true;
+    await acceptAndContinue(page).catch(() => {});
+    api.signupFail500 = false; api.signupReadHang = true;
+    await retry(page).catch(() => {});
+    await page.waitForTimeout(6000);
+    check('r2hoy2 review: Retry whose GET /signup hangs → the customer app opens after the wait', (await page.locator('.appshell').count()) === 1 && (await page.locator('[data-enrol-customer]').count()) === 0, `${route(page)} ${(await page.locator('[data-enrol-customer]').innerText().catch(() => '')).slice(0, 120)}`);
+    api.signupReadHang = false; api.hung.forEach((r) => r.end()); api.hung = [];
+    await ctx.close();
+  }
+  {
+    // Lane review (r2hoy2, test gap): a super admin holding member who never signed up sees the step too.
+    ({ ctx, page } = await open('/auth/sign-in'));
+    await signIn(page, 'supmem@example.test');
+    await page.goto(`${BASE}/#/app/plans`); await page.waitForTimeout(1200);
+    check('r2hoy2 super admin + member, registered:false: the consent step on a customer page', (await page.locator('[data-enrol-customer="consent"]').count()) === 1, route(page));
+    await acceptAndContinue(page).catch(() => {});
+    check('r2hoy2 …then the customer session opens (one sign-up, roles unchanged)', (await page.locator('[data-enrol-customer]').count()) === 0 && (await page.locator('.appshell').count()) === 1 && api.members.user_supmem.registered === true && JSON.stringify(api.members.user_supmem.roleKeys) === '["super_admin","member"]', route(page));
+    await ctx.close();
+  }
+  {
+    // A customer whose home is the customer area can't go "back home" from the step: it offers to sign out instead.
+    ({ ctx, page } = await open('/auth/sign-in'));
+    await signIn(page, 'mostrador@example.test');
+    await page.goto(`${BASE}/#/app`); await page.locator('[data-enrol-customer="consent"]').waitFor({ timeout: 5000 }).catch(() => {});
+    check('r2hoy2 a customer on the step: no link back to the same step, a sign-out button instead', (await page.locator('[data-enrol-customer] a[href$="#/app"]').count()) === 0 && (await page.locator('[data-enrol-customer] button', { hasText: 'Cerrar sesión' }).count()) === 1);
+    await page.locator('[data-enrol-customer] button', { hasText: 'Cerrar sesión' }).click({ timeout: 3000 }).catch(() => {});
+    await page.waitForTimeout(1500);
+    check('r2hoy2 …and it signs out (nothing posted)', await page.evaluate(() => window.__fakeClerk.state.active === null) && api.signups.length === 0, route(page));
+    await ctx.close();
+  }
+  {
+    // A registered customer: one read, no step, nothing posted.
+    ({ ctx, page } = await open('/auth/sign-in'));
+    await signIn(page, 'ana@example.test');
+    await page.goto(`${BASE}/#/app`); await page.waitForTimeout(1000);
+    await page.goto(`${BASE}/#/app/plans`); await page.waitForTimeout(1000);
+    check('r2hoy2 a registered customer: no step, nothing posted, GET /signup read once', (await page.locator('[data-enrol-customer]').count()) === 0 && (await page.locator('.appshell').count()) === 1 && api.signups.length === 0 && api.signupReads.user_ana === 1, `reads ${api.signupReads.user_ana} posts ${api.signups.length}`);
+    await ctx.close();
+  }
+  for (const [what, flag, wait] of [['fails (503)', 'signupReadFail', 1200], ['never answers', 'signupReadHang', 6500], ['comes from an older Company OS (no registered)', 'oldCompanyOs', 1200]]) {
+    // Fail open: the customer area never waits on this read; the miss is logged.
+    ({ ctx, page } = await open('/auth/sign-in'));
+    const logs = [];
+    page.on('console', (m) => logs.push(m.text()));
+    api[flag] = true;
+    await signIn(page, 'mostrador@example.test');
+    await page.goto(`${BASE}/#/app`); await page.waitForTimeout(wait);
+    check(`r2hoy2 fail open: GET /signup ${what} → the customer app opens (no step, nothing posted), logged`, (await page.locator('.appshell').count()) === 1 && (await page.locator('[data-enrol-customer]').count()) === 0 && api.signups.length === 0 && logs.some((l) => /signup/i.test(l)), `${route(page)} ${logs.filter((l) => /signup/i.test(l)).join(' | ').slice(0, 200)}`);
+    api[flag] = false; api.hung.forEach((r) => r.end()); api.hung = [];
+    await ctx.close();
+  }
+  {
+    // Owner 2026-11-01: a platform operator (Company OS super admin elsewhere, no Hoy membership) is enrolled like any
+    // login: /me 403 → the studio's sign-up; afterwards a customer here (member only, not a super admin).
+    ({ ctx, page } = await open('/auth/sign-in?next=/app/gift-voucher'));
+    await signIn(page, 'operadora@example.test');
+    await page.locator('[data-register]').waitFor({ timeout: 5000 }).catch(() => {});
+    check('r2hoy2 platform operator (no Hoy membership) on a purchase: the studio sign-up, like any new login', (await page.locator('[data-register]').count()) === 1 && route(page).startsWith('/auth/sign-up'), route(page));
+    const inputs = page.locator('[data-register] input:not([type=checkbox])');
+    await inputs.nth(0).fill('Opal Operadora').catch(() => {});
+    await inputs.nth(1).fill('+57 300 555 0177').catch(() => {});
+    await inputs.nth(2).fill('Contacto Operadora').catch(() => {});
+    await inputs.nth(3).fill('+57 300 555 0176').catch(() => {});
+    await page.locator('[data-register] input[type=checkbox]').check().catch(() => {});
+    await page.locator('[data-register] button[type=submit]').click().catch(() => {});
+    await page.waitForTimeout(1800);
+    const sent = api.signups.at(-1);
+    check('r2hoy2 …the sign-up is posted for the operator\'s own login with the documents', sent?.user === 'user_operator' && JSON.stringify(sent.body.consents) === JSON.stringify(api.consents), JSON.stringify(sent));
+    check('r2hoy2 …then the purchase opens as a customer (member only), no second step', route(page) === '/app/gift-voucher' && (await page.locator('.appshell').count()) === 1 && (await page.locator('[data-enrol-customer]').count()) === 0 && JSON.stringify(api.members.user_operator?.roleKeys) === '["member"]', route(page));
+    await ctx.close();
+  }
 
   // ── English and desktop/mobile ───────────────────────────────────────────────────────────────────────────────
   for (const width of [390, 1280]) {

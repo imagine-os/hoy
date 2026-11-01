@@ -112,6 +112,9 @@ const server = createServer(async (req, res) => {
       if (failForm > 0) { failForm--; return json(res, 422, { error: 'unknown_form' }); }
       return json(res, 201, { data: { id: `fs_${log.length}`, data: { ...body, submitted_at: '2026-10-28T15:00:00Z' } } });
     }
+    // Lane r2hoy2: GET /signup answers registered:false for everyone but Zara (hostile): a frame or a view-as that read
+    // it would show the consent step. Logged, so the frames and view-as checks prove it is never read there.
+    if (route === '/signup' && req.method === 'GET') { log.push({ user, kind: 'signup-read' }); return json(res, 200, { enabled: true, consents: [{ document: 'terms', version: '2026-10-01' }], personFields: ['name', 'phone'], facetFields: [], registered: user === 'user_supmem' }); }
     if (req.method !== 'GET' && route !== '/query') { log.push({ user, kind: 'write', method: req.method, route }); return json(res, 200, { data: { id: 'x' } }); }
     if (route === '/me') return p ? json(res, 200, { tenant: { slug: TENANT, timezone: 'America/Bogota' }, user: { id: user, name: p.name, email: `${user}@example.test` }, roleKeys: p.keys, isSuperAdmin: !!p.superAdmin, caps: [], entities: [] }) : json(res, 403, { error: 'no access to this tenant' });
     if (route === '/admin/users') {
@@ -297,6 +300,7 @@ try {
   await page.locator('[data-plan-card]').first().waitFor({ timeout: 5000 }).catch(() => {});
   const card = await page.locator('[data-plan-card]').first().innerText().catch(() => '');
   check('the data is the sample person\'s: Ana\'s pack (8 classes to 31 Dec)', /8/.test(card) && /31/.test(card), card);
+  check('r2hoy2 viewing as customer: GET /signup is never read and no consent step shows', !log.some((l) => l.kind === 'signup-read') && (await page.locator('[data-enrol-customer]').count()) === 0, JSON.stringify(log.filter((l) => l.kind === 'signup-read')));
   // The customer's own reads (credits, payments, bookings) filter by the person: the sample's, never the super admin's.
   const mine = log.filter((l) => l.kind === 'query' && /"field":"person","op":"eq"/.test(l.filter));
   check('"my" reads ask for the sample person, not the super admin', mine.length > 0 && mine.every((l) => l.filter.includes('per_cust_a') && !l.filter.includes('per_super')), mine.map((l) => `${l.entity} ${l.filter}`).join(' | '));
@@ -447,6 +451,7 @@ try {
   ({ ctx, page } = await open());
   await signIn(page, 'supmem@example.test');
   await go(page, '/app/plans');
+  check('r2hoy2 super admin + customer, registered: GET /signup read once, no consent step', log.filter((l) => l.kind === 'signup-read' && l.user === 'user_supmem').length === 1, JSON.stringify(log.filter((l) => l.kind === 'signup-read')));
   check('r1 super admin + customer: a customer page opens with the customer session (no enrolment, the way back to their own home)', (await page.locator('[data-enrol-customer]').count()) === 0 && (await page.locator('[data-primary-home]').count()) >= 1, route(page));
   check('r1 super admin + customer: …and no staff tooling in the customer screens (no Hub or admin links)', !(await menu(page)).some((l) => l === '/hub' || l.startsWith('/admin/')), (await menu(page)).join(' '));
   await ctx.close();
@@ -485,6 +490,7 @@ try {
     check(`frame ${new URL(f.url()).hash.split('?')[0]}: read-only (keeps a view-as value)`, typeof ro === 'string' && ro.length > 0, String(ro));
   }
   check('the parent\'s view-as is untouched by its frames (none stored, no banner, still the Hub)', (await stored(page)) === null && (await banner(page).count()) === 0 && route(page) === '/hub' && (await page.locator('.hub').count()) === 1, `${await stored(page)} ${route(page)}`);
+  check('r2hoy2 the Hub and its frames never read GET /signup (no consent step in a frame)', !log.some((l) => l.kind === 'signup-read'), JSON.stringify(log.filter((l) => l.kind === 'signup-read')));
   check('nothing but reads reached Company OS from the Hub and its frames', writes().length === 0, writes().map((w) => `${w.method} ${w.route}`).join(', '));
   // The keyboard, from the parent's side (tabbing scrolls the card away and the budget may unmount its frame).
   await page.evaluate(() => { window.__r1FrameFocus = 0; document.addEventListener('focusin', (e) => { if (e.target instanceof Element && e.target.closest('.devframe')) window.__r1FrameFocus++; }, true); });

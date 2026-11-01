@@ -56,6 +56,20 @@ export function enrolsAsCustomer(c: EnrolCase): boolean {
 }
 
 /**
+ * Whether RequireRole checks that a login holding the customer role has accepted the studio's documents (lane r2hoy2,
+ * r2co2 contract: invited staff and desk-invited customers hold `member` but never signed up, `GET /signup`
+ * `registered: false`): a signed-in login holding the customer role, ready, not viewing as, never in a read-only document,
+ * on a customer-area page customers open. Every such login is asked, staff or not (Company OS: every customer accepts the
+ * current terms and privacy once). Independent of the staff enrolment switch, which decides who becomes a customer; this
+ * is about logins that are customers already. A login without the customer role is `enrolsAsCustomer`'s.
+ */
+export function consentCheckApplies(c: Omit<EnrolCase, 'autoEnrolStaff'>): boolean {
+  if (c.readOnly === true || readOnlyDocument()) return false;
+  return c.status === 'ready' && c.signedIn && c.viewAs === null && c.roles.includes('customer')
+    && c.routeRoles.includes('customer') && matrixArea(c.path)?.id === 'customer-app';
+}
+
+/**
  * The primary role's home while a staff login is in the customer area as a customer (lane Y2): the customer shell's
  * way back. Null for a customer, a visitor, or a staff role on its own screens.
  */
