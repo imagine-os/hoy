@@ -289,6 +289,86 @@ await test('definiteRefusal: a 4xx answer and the client refusals are definite (
   for (const code of ['content_invalid', 'content_denied']) assert.ok(m.hasRefusalCopy(code), code);
 });
 
+// ── Review round 1 (r1hoy): publishing needs a class type; an unchanged save; a second quick save ───────────────
+await test('r1 M2: Published on for a row without a class type is refused timetable_class_type_required, nothing sent, with ES and EN copy', async () => {
+  const api = fakeCos(), p = provider(api);
+  const draft = await listRow(p, await save(p, 'admin', { kind: 'create', table: 'class_templates', patch: { ...NEW_ROW } }));
+  const writesBefore = api.writes().length;
+  for (const patch of [{ active: true }, { active: true, modality_id: '' }, { active: true, modality_id: null }, { active: true, title: 'Otra' }]) {
+    const err = await save(p, 'admin', { kind: 'update', table: 'class_templates', before: draft, patch }).then(() => null, (e) => e);
+    assert.equal(err?.code, 'timetable_class_type_required', JSON.stringify(patch));
+    assert.equal(m.definiteRefusal(err), 'timetable_class_type_required');
+  }
+  assert.equal(api.writes().length, writesBefore, 'nothing sent');
+  assert.equal(api.db.schedule.get(draft.id).data.active, false);
+  assert.ok(m.hasRefusalCopy('timetable_class_type_required'));
+  assert.match(m.refusalCopy('timetable_class_type_required', 'es'), /modalidad/i);
+  assert.match(m.refusalCopy('timetable_class_type_required', 'en'), /class type/i);
+});
+await test('r1 M2: a published row can\'t lose its class type either; one save that sets the class type and publishes goes through', async () => {
+  const api = fakeCos(), p = provider(api);
+  const live = await seeded(api, p);
+  for (const patch of [{ modality_id: '' }, { modality_id: null }]) await assert.rejects(save(p, 'admin', { kind: 'update', table: 'class_templates', before: live, patch }), has('timetable_class_type_required'), JSON.stringify(patch));
+  assert.equal(api.writes().length, 0);
+  const draft = await listRow(p, await save(p, 'admin', { kind: 'create', table: 'class_templates', patch: { ...NEW_ROW } }));
+  await save(p, 'admin', { kind: 'update', table: 'class_templates', before: draft, patch: { modality_id: 'mod_fuego', active: true } });
+  assert.equal(api.db.schedule.get(draft.id).data.active, true);
+  assert.equal(api.db.schedule.get(draft.id).data.modality, 'fuego');
+});
+await test('r1 M2: existing rows unchanged: a draft without a class type still edits other fields, and any row still deactivates', async () => {
+  const api = fakeCos(), p = provider(api);
+  const draft = await listRow(p, await save(p, 'admin', { kind: 'create', table: 'class_templates', patch: { ...NEW_ROW } }));
+  await save(p, 'admin', { kind: 'update', table: 'class_templates', before: draft, patch: { capacity: 10 } });
+  assert.equal(api.db.schedule.get(draft.id).data.capacity, 10);
+  // A published row saved before the class type was required (no modality): it can still be switched off.
+  const legacy = await seeded(api, p, { modality: null, title: 'Clase' });
+  await save(p, 'admin', { kind: 'update', table: 'class_templates', before: legacy, patch: { active: false } });
+  assert.equal(api.db.schedule.get(legacy.id).data.active, false);
+});
+await test('r1 M2: the drawer\'s Published toggle is off-limits for a row without a class type (the screen\'s rule)', () => {
+  assert.equal(m.timetablePublishBlocked({ modality_id: '' }), true);
+  assert.equal(m.timetablePublishBlocked({ modality_id: null }), true);
+  assert.equal(m.timetablePublishBlocked({}), true);
+  assert.equal(m.timetablePublishBlocked({ modality_id: 'mod_unknown' }), true);
+  assert.equal(m.timetablePublishBlocked({ modality_id: 'mod_pulso' }), false);
+  // A published row without one may always be switched off.
+  assert.equal(m.timetablePublishBlocked({ modality_id: '', active: true }), false);
+  const s = m.adminStrings['admin.content.classTypeToPublish'];
+  assert.ok(s?.es && s?.en, 'the toggle\'s hint exists in Spanish and English');
+});
+await test('r1 L3: Save with nothing changed sends nothing and is not an error (an empty patch is a no-op)', () => {
+  const basis = { id: 'x', title: 'Pulso', capacity: 8, theme: { es: 'a', en: 'b' } };
+  assert.deepEqual(m.draftPatch({ title: 'Pulso', capacity: 8, theme: { es: 'a', en: 'b' } }, basis), {});
+  assert.deepEqual(m.draftPatch({ title: 'Pulso', capacity: 6 }, basis), { capacity: 6 });
+  assert.equal(m.nothingToSave({ title: 'Pulso', capacity: 8 }, basis), true);
+  assert.equal(m.nothingToSave({ title: 'Pulso', capacity: 6 }, basis), false);
+});
+await test('r1 L4: a second quick save from the same editor (before the table refreshes) is not a false content_conflict', async () => {
+  const api = fakeCos(), p = provider(api);
+  const before = await seeded(api, p);
+  await save(p, 'admin', { kind: 'update', table: 'class_templates', before, patch: { capacity: 6 } });
+  // The editor's basis is still the row it opened; its draft now differs from it in A (saved) and B (new).
+  await save(p, 'admin', { kind: 'update', table: 'class_templates', before, patch: { capacity: 6, start_time: '09:30' } });
+  await save(p, 'admin', { kind: 'update', table: 'class_templates', before, patch: { capacity: 6, start_time: '09:30', duration_min: 45 } });
+  const rec = api.db.schedule.get(before.id).data;
+  assert.equal(rec.capacity, 6); assert.equal(rec.start_time, '09:30'); assert.equal(rec.duration_minutes, 45);
+});
+await test('r1 L4: someone else\'s save in between is still a conflict (own saves only)', async () => {
+  const api = fakeCos(), p = provider(api);
+  const before = await seeded(api, p);
+  await save(p, 'admin', { kind: 'update', table: 'class_templates', before, patch: { capacity: 6 } });
+  // Another editor saves the row after us.
+  const rec = api.db.schedule.get(before.id); rec.data.title = 'Cambiado'; rec.updatedAt = '2026-11-05T00:00:00.000Z';
+  await assert.rejects(save(p, 'admin', { kind: 'update', table: 'class_templates', before, patch: { capacity: 6, start_time: '09:30' } }), has('content_conflict'));
+  assert.equal(api.db.schedule.get(before.id).data.start_time, '09:00');
+});
+await test('r1 L6: the problem report\'s form codes have a line in the code→copy table (ES and EN)', () => {
+  for (const code of ['invalid_answers', 'answer_too_long', 'invalid_email', 'write_forbidden']) {
+    assert.ok(m.hasRefusalCopy(code), code);
+    assert.ok(m.refusalCopy(code, 'es') && m.refusalCopy(code, 'en') && !m.refusalCopy(code, 'es').includes(code), code);
+  }
+});
+
 // ── The rest of M-02 stays refused until Wave 3 ─────────────────────────────────────────────────────────────────
 await test('teachers, class types and rooms still refuse content_later in production, nothing sent', async () => {
   const api = fakeCos(), p = provider(api);

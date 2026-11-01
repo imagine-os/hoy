@@ -276,6 +276,10 @@ try {
   log = [];
   at = await go(page, '/app?as=customer');
   check('a planted ?as= outside a frame changes nothing for the super admin (no view-as, no banner, no sample read)', (await stored(page)) === null && (await banner(page).count()) === 0 && !log.some((l) => l.kind === 'directory'), `${at} ${await stored(page)}`);
+  // Review round 1 (r1hoy, L5): the super admin holds no customer role, so a purchase page offers "Join as a customer"
+  // (as for Administration), never a checkout whose purchase Company OS would refuse.
+  await go(page, '/app/plans');
+  check('r1 L5 super admin without the customer role: a purchase page offers Join as a customer (not the checkout as super admin)', (await page.locator('[data-join-customer]').count()) === 1, route(page));
   await go(page, '/hub');
 
   // ── view as customer: role, home, banner, data ─────────────────────────────────────────────────────────────────
@@ -427,7 +431,8 @@ try {
     await page.waitForTimeout(3000);
     const planted = await (await page.$('#qa-frame'))?.contentFrame();
     const plantedRoute = planted ? decodeURIComponent(new URL(planted.url()).hash.slice(1)) : '';
-    const plantedState = planted ? await planted.evaluate(() => ({ banners: document.querySelectorAll('[data-view-as-banner]').length, sample: document.querySelectorAll('[data-view-as-empty], [data-view-as-failed]').length })).catch(() => null) : null;
+    const plantedState = planted ? await planted.evaluate(() => ({ banners: document.querySelectorAll('[data-view-as-banner]').length, sample: document.querySelectorAll('[data-view-as-empty], [data-view-as-failed]').length, join: document.querySelectorAll('[data-join-customer]').length })).catch(() => null) : null;
+    check(`r1 M1 ${who}: a read-only frame never offers Join as a customer (a sign-up whose submit can't succeed)`, !!planted && plantedState?.join === 0, `${plantedRoute} ${JSON.stringify(plantedState)}`);
     check(`${who}: a planted ?as=customer in a frame is ignored (no view-as: no banner, no sample read, not the customer home)`, !!planted && plantedState?.banners === 0 && plantedState?.sample === 0 && !log.some((l) => l.kind === 'directory') && !plantedRoute.startsWith('/app?'), `${plantedRoute} ${JSON.stringify(plantedState)}`);
     check(`${who}: …and that frame is read-only too`, planted ? (await planted.evaluate(async () => (await fetch(`/api/cos/t/hoy-test/batch`, { method: 'POST', body: '{}' })).status)) === 403 && writes().length === 0 : false);
     if (who === 'desk') check('desk: still refused an admin screen', refusedAt(await go(page, '/admin/settings')));
@@ -451,6 +456,18 @@ try {
     check('…and the frame hides the view-as banner', inside.banner === false);
     const status = await appFrame.evaluate(async () => (await fetch('/api/cos/t/hoy-test/batch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{"ops":[]}' })).status);
     check('a frame is read-only: a write from inside it is refused unsent', status === 403 && writes().length === 0, String(status));
+    // Review round 1 (r1hoy, L1): a preview is a picture of the page: no pointer or keyboard reaches it, so nothing inside
+    // (the account menu's Sign out, which goes to Clerk's own domain) can act for the parent.
+    const el = page.locator('iframe[src*="#/app?as=customer"]').first();
+    const attrs = await el.evaluate((f) => ({ tab: f.getAttribute('tabindex'), inert: !!f.closest('[inert]'), pe: getComputedStyle(f).pointerEvents })).catch(() => null);
+    check('r1 L1 a live preview is inert (inert stage, out of the tab order, no pointer events)', attrs?.inert === true && attrs?.tab === '-1' && attrs?.pe === 'none', JSON.stringify(attrs));
+    await appFrame.evaluate(() => { window.__r1Hits = 0; for (const ev of ['pointerdown', 'click', 'keydown', 'focusin']) document.addEventListener(ev, () => { window.__r1Hits++; }, true); });
+    const box = await el.boundingBox();
+    if (box) await page.mouse.click(box.x + box.width / 2, box.y + Math.min(40, box.height / 2));
+    for (let i = 0; i < 25; i++) await page.keyboard.press('Tab');
+    const hits = await appFrame.evaluate(() => window.__r1Hits).catch(() => -1);
+    check('r1 L1 …a click and the keyboard never reach inside the frame', !!box && hits === 0, `${hits} ${JSON.stringify(box)}`);
+    check('r1 L1 …and the parent is still signed in on the Hub', route(page) === '/hub' && (await page.locator('.hub').count()) === 1, route(page));
   }
   for (const f of page.frames().filter((x) => x !== page.mainFrame())) {
     const ro = await f.evaluate(() => sessionStorage.getItem('hoyos.viewAs')).catch(() => null);
