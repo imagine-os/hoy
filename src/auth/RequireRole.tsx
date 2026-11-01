@@ -48,13 +48,13 @@ export function RequireRole({ roles, children }: { roles: Role[]; children: Reac
   if (!publicRoute && status === 'loading') return <div className="lazy-fallback" aria-busy="true" />;
   const enrol = !!CustomerEnrolment && !publicRoute && enrolsAsCustomer({ status, signedIn, viewAs, roles: held, routeRoles: roles, path: loc.pathname });
   const enrolPage = CustomerEnrolment && <Suspense fallback={<div className="lazy-fallback" aria-busy="true" />}><CustomerEnrolment /></Suspense>;
-  // A real super admin passes every role check, so their customer-area choice comes first: enrolment when they aren't a
-  // customer, the customer session when they are (as for any staff login that also holds the customer role).
-  if (enrol && role === 'super_admin') return enrolPage;
+  // Enrolment comes first for every login that isn't a customer yet (owner 2026-11-01; lane review: the customer routes
+  // also allow the teacher role, whose purchases Company OS refuses). A real super admin passes every role check, so
+  // their customer session (when they hold the role) comes before their own pass too.
+  if (enrol) return enrolPage;
   if (customerSession && role === 'super_admin') return <SessionContext.Provider value={customerSession}>{children}</SessionContext.Provider>;
   if (hasRole(roles) && matrixAllows(role, loc.pathname)) return <>{children}</>;
   if (customerSession) return <SessionContext.Provider value={customerSession}>{children}</SessionContext.Provider>;
-  if (enrol) return enrolPage;
   if (status === 'needs-signup') return <Navigate to={visitorSignIn(loc.pathname + loc.search).replace('/auth/sign-in', '/auth/sign-up')} replace />;
   if (user.role === 'public' || (signedIn && status !== 'ready')) return <Navigate to={visitorSignIn(loc.pathname + loc.search)} replace />;
   return <Navigate to={`/no-access?from=${encodeURIComponent(loc.pathname)}`} replace />;

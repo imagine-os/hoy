@@ -38,6 +38,7 @@ function leftovers(v) {
 }
 
 if (process.argv.includes('--leftovers')) {
+  if (!vars) console.log('::warning::could not read the service variables: check by hand that PUBLIC_DOCUMENTS and SET_LIVE are not set in Railway.');
   for (const w of vars ? leftovers(vars) : []) console.log(`::warning::${w}`);
   process.exit(0);
 }

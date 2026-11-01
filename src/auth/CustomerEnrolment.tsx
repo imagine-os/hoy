@@ -19,6 +19,13 @@ import { Button } from '../components/atom/Button/Button';
  * Idempotent: `already_registered` with `/me` holding the role is success. Never in a read-only document (a preview frame,
  * view-as): RequireRole doesn't mount it there (`enrolsAsCustomer`). Production only; RequireRole loads it lazily.
  */
+/**
+ * Automatic sign-ups per login in this tab (lane review): a 201 that /me never reflects (the tenant's sign-up role isn't
+ * the customer role) would otherwise remount this page and post again forever. Survives remounts; Retry is manual.
+ */
+const autoTries = new Map<string, number>();
+const AUTO_TRIES = 2;
+
 export default function CustomerEnrolment() {
   const { t } = useI18n();
   const { user, role, refresh } = useSession();
@@ -41,9 +48,13 @@ export default function CustomerEnrolment() {
       const result = classifySignup(status, body);
       if (!alive.current) return;
       if (result.kind === 'done' || result.kind === 'unverified' || result.kind === 'unauthorized') { refresh(); return; }
+      if (result.kind === 'consent-changed' && result.required.length === 0) {
+        // Nothing to show the person: not a step they can take. Retry reads the documents again.
+        setNotice({ tone: 'danger', text: t('identity.enrol.failed') }); setStep('notice'); return;
+      }
       if (result.kind === 'disabled') { setStep('closed'); return; }
       if (result.kind === 'consent-changed') {
-        const next = { ...cfg, consents: result.required.length ? result.required : cfg.consents };
+        const next = { ...cfg, consents: result.required };
         setConfig(next); setAccepted(false); setStep('consent');
         setNotice(withConsent ? { tone: 'warn', text: t('identity.register.changed') } : null);
         return;
@@ -68,7 +79,7 @@ export default function CustomerEnrolment() {
     }
   }, [name, refresh, t]);
 
-  const start = useCallback(async () => {
+  const start = useCallback(async (manual = false) => {
     setStep('loading'); setNotice(null);
     try {
       const { status, body } = await cosJson('/signup');
@@ -78,11 +89,14 @@ export default function CustomerEnrolment() {
       setConfig(parsed);
       if (!parsed.enabled) { setStep('closed'); return; }
       if (parsed.consents.length > 0) { setStep('consent'); return; }
+      const tries = autoTries.get(user.id) ?? 0;
+      if (!manual && tries >= AUTO_TRIES) { setNotice({ tone: 'danger', text: t('identity.enrol.failed') }); setStep('notice'); return; }
+      autoTries.set(user.id, tries + 1);
       await enrol(parsed, false);
     } catch {
       if (alive.current) { setNotice({ tone: 'danger', text: t('identity.enrol.failed') }); setStep('notice'); }
     }
-  }, [enrol, t]);
+  }, [enrol, t, user.id]);
   const started = useRef(false);
   useEffect(() => { if (!started.current) { started.current = true; void start(); } }, [start]);
 
@@ -96,7 +110,7 @@ export default function CustomerEnrolment() {
       <div className="container page identity-narrow stack" data-enrol-customer="notice">
         <Card padding="lg" className="stack">
           {notice && <Notice tone={notice.tone}>{notice.text}</Notice>}
-          <Button variant="secondary" onClick={() => void start()}>{t('identity.retry')}</Button>
+          <Button variant="secondary" onClick={() => void start(true)}>{t('identity.retry')}</Button>
         </Card>
         {home}
       </div>

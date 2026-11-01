@@ -38,16 +38,16 @@ export function signInReturn(value: string | null | undefined): string | null {
 
 /**
  * Where a signed-in person lands: the validated `next` when it is in their own area, else their home. `held` is every
- * role the login holds (lane Y2): an `/app` next is followed for a login holding the customer role, whatever its
- * primary role, and a purchase or booking next (`customerReturn`) for any studio login, whose customer page then
- * enrols it as a customer (owner 2026-11-01). A staff next is still judged by the primary role's matrix.
+ * role the login holds (lane Y2). An `/app` next is followed for every login (owner 2026-11-01: every registered login is
+ * a customer; the customer page enrols a studio login that isn't one yet). A staff next is still judged by the primary role's matrix.
  */
-export function homeFor(role: Role, next: string | null, held: readonly Role[] = [role]): string {
+export function homeFor(role: Role, next: string | null, _held: readonly Role[] = [role]): string {
   const target = signInReturn(next);
   if (!target) return ROLE_HOME[role];
   const area = target.split('/')[1];
   if (role === 'customer') return area === 'app' ? target : ROLE_HOME[role];
-  if (area === 'app') return held.includes('customer') || customerReturn(target) ? target : ROLE_HOME[role];
+  // Owner 2026-11-01 (lane review): every registered login is a customer; the customer page enrols a staff login.
+  if (area === 'app') return target;
   return matrixAllows(role, target.split('?')[0]) ? target : ROLE_HOME[role];
 }
 
