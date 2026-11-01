@@ -101,7 +101,7 @@ export const CONNECTOR_REFUSALS = {
   // View-as (Hoy all-roles, lane D): a super admin viewing as another role can look, not change (src/auth/viewAs.ts).
   view_as_read_only: { es: 'Estás viendo como otro rol: es solo lectura. Sal de «Ver como» para hacer cambios.', en: 'You are viewing as another role: it is read-only. Exit “View as” to make changes.' },
   // Review round 1 (M3, M5): a holiday is saved, but the bookings closed days (a module setting) could not follow it.
-  closed_dates_admin_only: { es: 'Se guardó. Los días cerrados de las reservas solo los cambia Administración: pídele que abra Ajustes › Horario y guarde.', en: 'Saved. Only Administration changes the bookings’ closed days: ask them to open Settings › Hours and save.' },
+  closed_dates_admin_only: { es: 'Se guardó. Los días cerrados de las reservas solo los cambia Administración: pídele que abra Ajustes › Horario, revise los días cerrados de recepción (añadir o quitar este) y guarde.', en: 'Saved. Only Administration changes the bookings’ closed days: ask them to open Settings › Hours, check the front desk closed days (add or remove this one) and save.' },
   closed_dates_not_synced: { es: 'Se guardó, pero no pudimos marcar el día como cerrado en las reservas. Vuelve a guardar en un momento.', en: 'Saved, but we could not mark the day closed in bookings. Save again in a moment.' },
 } as const satisfies Record<string, RefusalCopy>;
 

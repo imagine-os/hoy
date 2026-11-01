@@ -152,6 +152,18 @@ try {
   check('coordinator: the screen says it saved, and that the bookings closed days are Administration\'s (words, no code)', /Se guardó/.test(body) && /Administración/.test(body) && !/closed_dates_|forbidden/.test(body), body.slice(0, 600));
   check('coordinator: no module settings write was attempted', !world.log.some((l) => l.route === '/modules/bookings/settings' && l.method === 'PATCH'));
   await ctx.close();
+  // Administration then opens Settings › Hours: the coordinator's holiday is marked "not yet in bookings", and saving
+  // the reception panel applies it (review round 1, second look: the panel keeps the two sets apart).
+  ({ ctx, page } = await signedIn('admin@example.test'));
+  await go(page, '/admin/settings/hours');
+  const chip = page.locator('[data-closed-date="2026-11-16"]');
+  check('admin: the coordinator\'s holiday shows as pending in the reception closed days', (await chip.count()) === 1 && (await chip.getAttribute('data-pending')) !== null && /aún no en reservas/.test(await chip.innerText().catch(() => '')), await chip.innerText().catch(() => 'missing'));
+  check('admin: a date bookings already holds is not marked pending', (await page.locator('[data-closed-date="2026-12-31"]').getAttribute('data-pending').catch(() => 'missing')) === null);
+  await page.getByRole('button', { name: 'Guardar horario' }).click({ timeout: 3000 }).catch(() => {});
+  await page.waitForTimeout(1200);
+  check('admin: saving the reception panel puts the holiday in bookings', world.bookings.review_closed_dates === '2026-11-16, 2026-12-31', world.bookings.review_closed_dates);
+  check('admin: …and it is no longer marked pending', (await chip.getAttribute('data-pending').catch(() => 'missing')) === null);
+  await ctx.close();
 
   // ── the coordinator, without the grant ─────────────────────────────────────────────────────────────────────────
   reset({ hoursWriters: ['administrator'] });

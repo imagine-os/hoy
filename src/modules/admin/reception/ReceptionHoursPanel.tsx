@@ -30,6 +30,10 @@ export function ReceptionHoursPanel({ closedDatesVersion = 0 }: { closedDatesVer
   const request = cosRequest(data);
   const [week, setWeek] = useState<WeekWindows | null>(null);
   const [dates, setDates] = useState<string[]>([]);
+  /** What bookings holds now, and the closed holidays from today on: a date only in the second is "not yet in bookings". */
+  const [inBookings, setInBookings] = useState<string[]>([]);
+  const [holidays, setHolidays] = useState<string[]>([]);
+  const loadedDates = useRef(false);
   const [newDate, setNewDate] = useState('');
   const [sundayClasses, setSundayClasses] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -37,6 +41,7 @@ export function ReceptionHoursPanel({ closedDatesVersion = 0 }: { closedDatesVer
   const tRef = useRef(t); tRef.current = t;
   // Loads once per provider: a re-render never re-fetches or overwrites unsaved edits.
   const loadedWeek = useRef(false);
+  const holidaysRef = useRef<string[]>([]);
   useEffect(() => {
     if (!request) return;
     const t = tRef.current;
@@ -45,7 +50,13 @@ export function ReceptionHoursPanel({ closedDatesVersion = 0 }: { closedDatesVer
     Promise.all([request<BookingSettings>('GET', '/modules/bookings/settings'), holidays])
       .then(([r, extra]) => {
         if (!loadedWeek.current) { loadedWeek.current = true; setWeek(parseWeek(r.settings.review_hours ?? '')); }
-        setDates(parseDates(formatDates([...parseDates(r.settings.review_closed_dates ?? ''), ...extra])));
+        const stored = parseDates(r.settings.review_closed_dates ?? '');
+        setInBookings(stored); setHolidays(extra);
+        // First load: bookings' dates plus the holidays. A reload after an override changed (review round 1) adds only
+        // the holiday dates that are new, so unsaved edits to the list survive.
+        if (!loadedDates.current) { loadedDates.current = true; setDates(parseDates(formatDates([...stored, ...extra]))); }
+        else setDates(prev => parseDates(formatDates([...prev, ...extra.filter(d => !holidaysRef.current.includes(d))])));
+        holidaysRef.current = extra;
       })
       .catch(e => setMessage({ tone: 'error', text: errorCode(e) === 'forbidden' ? t('recHours.forbidden') : deskErrorText(errorCode(e), t) }));
     if (closedDatesVersion === 0) queryAll(request, { entity: 'schedule', filter: { and: [{ field: 'weekday', op: 'eq', value: 0 }, { field: 'active', op: 'eq', value: true }] } }).then(r => setSundayClasses(r.length)).catch(() => {});
@@ -61,6 +72,7 @@ export function ReceptionHoursPanel({ closedDatesVersion = 0 }: { closedDatesVer
     setBusy(true); setMessage(null);
     try {
       await request('PATCH', '/modules/bookings/settings', { settings: { review_hours: formatWeek(week), review_closed_dates: formatDates(dates) } });
+      setInBookings(parseDates(formatDates(dates)));
       setMessage({ tone: 'ok', text: t('recHours.saved') });
     } catch (e) { setMessage({ tone: 'error', text: errorCode(e) === 'forbidden' ? t('recHours.forbidden') : deskErrorText(errorCode(e), t) }); }
     finally { setBusy(false); }
@@ -81,7 +93,7 @@ export function ReceptionHoursPanel({ closedDatesVersion = 0 }: { closedDatesVer
           {sundayNeedsNotice(week, sundayClasses) && <Notice tone="warn">{t('recHours.sunday', { n: sundayClasses })}</Notice>}
           <div className="stack-sm">
             <span className="small">{t('recHours.closedDates')}</span>
-            <div className="row wrap">{dates.map(d => <Button key={d} size="sm" variant="outline" icon="x" onClick={() => setDates(dates.filter(x => x !== d))}>{formatDate(d, lang)}</Button>)}</div>
+            <div className="row wrap">{dates.map(d => <Button key={d} size="sm" variant="outline" icon="x" data-closed-date={d} data-pending={!inBookings.includes(d) || undefined} onClick={() => setDates(dates.filter(x => x !== d))}>{formatDate(d, lang)}{!inBookings.includes(d) ? ` · ${t('recHours.pending')}` : holidays.includes(d) ? ` · ${t('recHours.holiday')}` : ''}</Button>)}</div>
             <div className="row wrap"><Input type="date" aria-label={t('recHours.addDate')} value={newDate} onChange={e => setNewDate(e.target.value)} /><Button size="sm" variant="secondary" disabled={!newDate} onClick={() => { setDates(parseDates(formatDates([...dates, newDate]))); setNewDate(''); }}>{t('recHours.addDate')}</Button></div>
           </div>
           {noDay && <p className="xs register-diff">{t('recHours.noDay')}</p>}

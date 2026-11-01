@@ -8,6 +8,8 @@ export const receptionHoursStrings: StringTable = {
   'recHours.from': { es: 'Abre', en: 'Opens' },
   'recHours.to': { es: 'Cierra', en: 'Closes' },
   'recHours.closedDates': { es: 'Días cerrados (festivos, cierres)', en: 'Closed days (holidays, closures)' },
+  'recHours.pending': { es: 'festivo, aún no en reservas: guarda para aplicarlo', en: 'holiday, not in bookings yet: save to apply' },
+  'recHours.holiday': { es: 'festivo', en: 'holiday' },
   'recHours.addDate': { es: 'Agregar día', en: 'Add day' },
   'recHours.save': { es: 'Guardar horario', en: 'Save hours' },
   'recHours.saved': { es: 'Horario guardado. Aplica desde la próxima reserva.', en: 'Hours saved. They apply from the next booking.' },

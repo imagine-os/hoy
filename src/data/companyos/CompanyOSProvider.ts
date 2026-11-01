@@ -571,8 +571,10 @@ export class CompanyOSProvider implements DataProvider {
       const ids = new Map<string, string>();
       pending.tokens.forEach((t, i) => { if (t) ids.set(t, res.body.ids[i]!); });
       this.changed(pending.tables);
-      // An override written in a batch: its previous dates aren't known here, so the sync adds and never removes.
-      if (pending.tables.includes(HOURS)) await this.syncClosedDates([]);
+      // An override written in a batch: its previous dates aren't known here, so the sync adds and never removes. Only
+      // the Super Admin can sync; for anyone else the committed batch is not reported as failed (the panel shows the
+      // holiday as "not yet in bookings").
+      if (pending.tables.includes(HOURS) && (await this.me().catch(() => null))?.isSuperAdmin) await this.syncClosedDates([]).catch((e) => console.warn('[companyos] closed dates not synced after a batch:', e?.code ?? e));
       return resolveTokens(pending.result as T, ids);
     } catch (e) {
       // Only a lost answer may have committed: keep the exact body so a retry with this key replays it.
