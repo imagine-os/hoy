@@ -16,7 +16,7 @@ Alternative rejected: making every role check use every held role (staff areas t
 
 Changed on purpose: `test-hoy-server.mjs` "the visitor's own headers never become the identity" (a refused bearer on a public read now gets the public answer, still never forwarded); `test-auth-production-ui.mjs` front desk on `/app` is offered Join instead of no-access.
 
-company-os.json now requires >=1.7.1: the first Company OS release after v1.7.0 carries the sign-up amendment (E9: API before frontend).
+company-os.json now requires >=1.8.0: that release carries the sign-up amendment and bookings 1.6.0 (owner 2026-11-01: minor release) (E9: API before frontend).
 
 Owner steps: rename the Railway variable `SET_LIVE` to `SITE_LIVE` (the summary flags it), then Deploy. Company OS must be released with the sign-up amendment before "Join as a customer" works on test-hoy (with an older API it answers `already_registered`, which the form treats as done and nothing changes).
 
