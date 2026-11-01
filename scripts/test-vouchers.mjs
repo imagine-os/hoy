@@ -35,7 +35,7 @@ try {
  rejects({...book,participants:[{name:''}]},'voucher_guest_details_required');
  rejects({...book,sessionId:'s2'},'session_full');
  db.modalities[0].active=false;rejects(book,'session_unavailable');db.modalities[0].active=true;
- db.class_templates=[{...base,id:'qa_voucher_template',active:false}];db.class_sessions[0].template_id='qa_voucher_template';rejects(book,'session_unavailable');db.class_templates[0].active=true;
+ db.class_templates=[{...base,id:'qa_voucher_template',active:true}];db.class_sessions[0].template_id='qa_voucher_missing';rejects(book,'session_unavailable');db.class_sessions[0].template_id='qa_voucher_template';/* owner r2 L3: a switched-off row no longer closes its classes; a missing row still does */
  const b=exec({...book,requestId:'book-once'}).booking; assert.equal(db.vouchers[0].balance,2);assert.equal(db.class_sessions[0].booked_count,2);assert.deepEqual(b.mats,[1,2]);
  exec({...book,requestId:'book-once'});assert.equal(db.voucher_bookings.length,1);
  rejects(book,'booking_exists');
