@@ -449,6 +449,27 @@ try {
     await assert.rejects(p.request('GET', '/me'), (e) => e.code === 'storage_unavailable' && e.status === 503 && !e.ambiguous);
     assert.equal(n, 1, 'an API 503 is a refusal, not retried');
   });
+  // Lane Y2: the Hoy server answers a website read with a refused session as signed out, saying so (X-Hoy-Session: stale).
+  await test('transport (Y2): a signed-out answer to a refused token asks for a fresh token once, then keeps the public answer and tells the session', async () => {
+    const seen = []; let stale = 2; let told = 0;
+    const fetch = async (url, init) => {
+      if (String(url).endsWith('app-config.json')) return new Response(JSON.stringify({ tenant: 'hoy', apiBase: '/api/cos' }), { status: 200 });
+      seen.push(init.headers.authorization);
+      const headers = stale-- > 0 ? { 'x-hoy-session': 'stale' } : {};
+      return new Response(JSON.stringify({ data: [{ id: 'o1', data: {} }] }), { status: 200, headers });
+    };
+    m.setCompanyOSUnauthorizedHandler(() => { told++; });
+    try {
+      const p = new CompanyOSProvider({ fetch, getToken: async ({ refresh } = {}) => (refresh ? 'tok-fresh' : 'tok-old'), retryDelayMs: 1, sleep: async () => {} });
+      const first = await p.request('POST', '/query', { entity: 'occurrence' });
+      assert.deepEqual(seen, ['Bearer tok-old', 'Bearer tok-fresh'], 'one refreshed retry');
+      assert.equal(first.data.length, 1, 'the public answer is kept');
+      assert.equal(told, 1, 'the session re-checks (the token is refused even fresh)');
+      seen.length = 0; told = 0;
+      await p.request('POST', '/query', { entity: 'occurrence' });
+      assert.deepEqual(seen, ['Bearer tok-old'], 'a normal answer: no retry'); assert.equal(told, 0);
+    } finally { m.setCompanyOSUnauthorizedHandler(null); }
+  });
   await test('transport: 502 invitation_failed is the API\'s answer (kept, not retried, not ambiguous)', async () => {
     let n = 0;
     const fetch = async (url) => {

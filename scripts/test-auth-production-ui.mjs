@@ -298,7 +298,8 @@ try {
   await page.goto(`${BASE}/#/app/plans`); await page.waitForTimeout(800);
   check('Y2 the plans page opens for Administration + customer', route(page) === '/app/plans' && (await page.locator('.appshell').count()) === 1, route(page));
   await page.goto(`${BASE}/#/auth/sign-in?next=${encodeURIComponent('/app/plans?plan=pack12')}`); await page.waitForTimeout(800);
-  check('Y2 an /app return is honoured for a login holding the customer role', route(page) === '/app/plans?plan=pack12', route(page));
+  // The plans page takes a chosen plan straight on to its payment.
+  check('Y2 an /app return is honoured for a login holding the customer role (on to the payment)', route(page).startsWith('/app/pay/') && (await page.locator('.appshell').count()) === 1, route(page));
   await page.goto(`${BASE}/#/admin/settings`); await page.waitForTimeout(800);
   check('Y2 the admin screens still open as Administration', route(page) === '/admin/settings', route(page));
   await ctx.close();

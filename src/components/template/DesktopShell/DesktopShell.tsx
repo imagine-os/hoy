@@ -3,6 +3,7 @@ import { Link, NavLink, matchPath, useLocation } from 'react-router-dom';
 import type { RouteDef, Surface } from '../../../specs/types';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useSession } from '../../../auth/SessionProvider';
+import { alsoCustomer } from '../../../auth/purchaseEntry';
 import { useTheme } from '../../../design/ThemeProvider';
 import { useTable } from '../../../data/DataContext';
 import type { ProfileRow } from '../../../data/schema';
@@ -89,7 +90,10 @@ function useNarrow() {
 export function DesktopShell({ surfaces, routes, titleKey, children }: DesktopShellProps) {
   const { t, bi, dict } = useI18n();
   const title = t(titleKey);
-  const { user, role, isSuperAdmin, canDevMode, devMode, setDevMode, hasRole, can } = useSession();
+  const session = useSession();
+  const { user, role, isSuperAdmin, canDevMode, devMode, setDevMode, hasRole, can } = session;
+  // Lane Y2: a staff login that is also a customer (one email) reaches its own classes from the staff menu.
+  const myClasses = alsoCustomer(session);
   const { theme, toggleTheme } = useTheme();
   const { pathname } = useLocation();
   const narrow = useNarrow();
@@ -246,6 +250,18 @@ export function DesktopShell({ surfaces, routes, titleKey, children }: DesktopSh
               </div>
             );
           })}
+          {myClasses && (
+            <div className="deskshell-group">
+              {rail && <hr className="deskshell-sep" aria-hidden />}
+              <div className="deskshell-groupitems">
+                <NavLink to="/app" end className="deskshell-link" data-my-classes title={rail ? t('core.nav.myClasses') : undefined} onClick={() => setDrawer(false)}>
+                  <span className="deskshell-icon" aria-hidden><Icon name="calendar" size="md" /></span>
+                  <span className="deskshell-linktext">{t('core.nav.myClasses')}</span>
+                  {rail && <span className="deskshell-tip" aria-hidden>{t('core.nav.myClasses')}</span>}
+                </NavLink>
+              </div>
+            </div>
+          )}
         </nav>
         <div className="deskshell-foot">
           <button

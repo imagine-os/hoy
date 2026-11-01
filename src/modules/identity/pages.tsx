@@ -3,6 +3,7 @@ import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { AuthenticateWithRedirectCallback, useClerk, useUser } from '@clerk/react';
 import { useI18n } from '../../i18n/I18nProvider';
 import { useSession } from '../../auth/SessionProvider';
+import { heldRoles } from '../../auth/sessionContext';
 import { ROLE_HOME, ROLE_LABEL } from '../../auth/roles';
 import { cosJson } from '../../auth/cosRequest';
 import { sendEmailCode, signInWithGoogle, verifyEmailCode, type ClerkLike, type CodeMode } from '../../auth/clerkFlows';
@@ -41,7 +42,7 @@ export function CosAuthPage({ mode }: { mode: CodeMode }) {
   const [params] = useSearchParams();
   const next = params.get('next');
   if (session.status === 'loading') return <Shell title={t('identity.signin.title')}><p className="muted" aria-busy="true">{t('identity.loading')}</p></Shell>;
-  if (session.status === 'ready' && session.signedIn) return <Navigate to={homeFor(session.role, next)} replace />;
+  if (session.status === 'ready' && session.signedIn) return <Navigate to={homeFor(session.role, next, heldRoles(session))} replace />;
   if (session.status === 'needs-signup') {
     if (mode !== 'sign-up') return <Navigate to={authLink('/auth/sign-up', params)} replace />;
     return <Shell title={t('identity.register.title')} sub={t('identity.register.sub')}><RegisterForm /></Shell>;
@@ -142,14 +143,17 @@ function EmailCodeCard({ back }: { back: string }) {
 
 const EMPTY_FORM: SignupForm = { name: '', whatsapp: '+57 ', ecName: '', ecPhone: '+57 ', accepted: false };
 
-/** CU-01 / CU-02: the studio's sign-up after Clerk proved the email. Company OS stores the consents with their versions. */
-function RegisterForm() {
+/**
+ * CU-01 / CU-02: the studio's sign-up after Clerk proved the email. Company OS stores the consents with their versions.
+ * Lane Y2: also "Join as a customer" for a studio login (`src/auth/JoinAsCustomer.tsx`), starting from its name.
+ */
+export function RegisterForm({ initialName = '', cta }: { initialName?: string; cta?: string } = {}) {
   const { t } = useI18n();
   const { refresh } = useSession();
   const { user } = useUser();
   const [config, setConfig] = useState<SignupConfig | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [form, setForm] = useState<SignupForm>(EMPTY_FORM);
+  const [form, setForm] = useState<SignupForm>(() => ({ ...EMPTY_FORM, name: initialName }));
   const [errors, setErrors] = useState<ReturnType<typeof signupFormErrors>>({});
   const [notice, setNotice] = useState<{ tone: 'warn' | 'danger' | 'info'; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
@@ -232,7 +236,7 @@ function RegisterForm() {
           </div>
         )}
         {notice && <Notice tone={notice.tone}>{notice.text}</Notice>}
-        <Button type="submit" block size="lg" loading={busy}>{t('identity.register.cta')}</Button>
+        <Button type="submit" block size="lg" loading={busy}>{cta ?? t('identity.register.cta')}</Button>
       </form>
     </Card>
   );

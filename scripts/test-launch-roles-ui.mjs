@@ -139,7 +139,13 @@ try {
     const foreign = Object.values(ROLES).map((x) => x.home).filter((h) => h !== r.home && r.refused.includes(h));
     check(`${role}: its menu links no screen it is refused`, !links.some((l) => r.refused.includes(l)), links.filter((l) => r.refused.includes(l)).join(' ') + ` (foreign homes ${foreign.join(' ')})`);
     for (const p of r.opens) { const at = await go(page, p); check(`${role}: opens ${p}`, at === p, at); }
-    for (const p of r.refused) { const at = await go(page, p); check(`${role}: is refused ${p}`, refusedAt(at), at); }
+    // Changed on purpose (test-hoy fixes, lane Y2): a studio login on a customer page is offered "Join as a customer"
+    // there instead of the no-access page; the customer screens stay closed (no customer shell) until it joins.
+    for (const p of r.refused) {
+      const at = await go(page, p);
+      const joinOffer = p.startsWith('/app') && at === p && (await page.locator('[data-join-customer]').count()) === 1 && (await page.locator('.appshell').count()) === 0;
+      check(`${role}: is refused ${p}${joinOffer ? ' (offered Join as a customer)' : ''}`, refusedAt(at) || joinOffer, at);
+    }
     if (role === 'customer') {
       await go(page, '/app');
       await page.locator('[data-plan-card]').first().waitFor({ timeout: 5000 }).catch(() => {});

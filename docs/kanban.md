@@ -845,3 +845,10 @@ Protected-capture clarification: M14 schedule/pay screenshots remain local/ignor
 - RS-09 / Feature Log47 (0184): future-day paid single/trial moves use exact finite receipt terms; package allocation, 12-hour cutoff and unresolved legacy fallback retained. Local and remote validation/release remain separate gates. [Contract](frontend-completion/direct-reschedule-terms.md)
 
 - AD-02 / Feature Log88 (0189): studio cancellation restores a verified directly paid single/trial class under its recorded terms. Persisted staff roles are checked; no bank refund or new voucher-cancellation rule is introduced. [Contract](frontend-completion/studio-direct-paid-return.md)
+
+## Hoy test-hoy fixes · lane Y2 (purchases for any signed-in person, deploy fixes)
+### Done
+- P-01 / C-06 / C-08: Book, Give a gift and "Continue booking" go straight to the purchase for any signed-in person; Administration who is also a customer opens `/app` as a customer ("Mis clases" in the staff menu, "Volver a <rol>" in the customer shell); a studio login that isn't a customer is offered "Join as a customer" (Company OS sign-up amendment). [Changelog](changelog/_pending/hoy-test-fixes-y2.md)
+- Deploy: `COMPANY_OS_READ_TOKEN: preserve()` in the IaC; deploy summaries show SITE_LIVE and whether the read token is present; an expired session on a website read falls back to the public identity.
+### Waiting
+- Owner: rename `SET_LIVE` → `SITE_LIVE` in Railway; release Company OS with the sign-up amendment before this frontend deploys.

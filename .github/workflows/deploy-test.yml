@@ -56,6 +56,8 @@ jobs:
         run: node scripts/check-company-os.mjs
       - name: Hoy server tests
         run: node scripts/test-hoy-server.mjs
+      - name: Deploy wiring (IaC declares every server variable; summaries show the go-live switches)
+        run: node scripts/test-deploy-wiring.mjs
       - name: Build (production with Clerk, launch routes, no review tools; H-2)
         run: npm run build:production
       - name: Production bundle checks (H-2; refuses demo data, review tools, docs, screenshots)
@@ -159,5 +161,9 @@ jobs:
         run: railway up "$RUNNER_TEMP/web" --path-as-root --no-gitignore --ci --service "$SERVICE" --environment "$RAILWAY_ENV" --message "test ${GITHUB_SHA::12}"
 
       - name: Summary
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
           echo "### Site: ${APP_URL} (branch ${GITHUB_REF_NAME}, ${GITHUB_SHA::12})" >> "$GITHUB_STEP_SUMMARY"
+          # The go-live switches (lane Y2): SITE_LIVE and whether the read token is present, never a value.
+          { railway variable list --service "$SERVICE" --environment "$RAILWAY_ENV" --json 2>/dev/null || echo 'unreadable'; } | node scripts/deploy-switches.mjs | tee -a "$GITHUB_STEP_SUMMARY"

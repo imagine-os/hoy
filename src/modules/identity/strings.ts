@@ -66,6 +66,11 @@ export const strings: StringTable = {
   'identity.access.changeByStudio': { es: 'Para cambiar tu correo de acceso, escríbenos: lo cambiamos en tu ficha y te avisamos en ambos correos.', en: 'To change your sign-in email, contact us: we change it on your record and let you know at both addresses.' },
   'identity.access.signout.body': { es: 'Cierra tu sesión en este dispositivo. Para volver necesitarás un código nuevo.', en: 'Signs you out on this device. You will need a new code to come back.' },
   'identity.access.nav': { es: 'Acceso y seguridad', en: 'Sign-in and security' },
+  // Lane Y2 (test-hoy fixes): a studio login joins as a customer on the same email.
+  'identity.join.title': { es: 'Únete como cliente', en: 'Join as a customer' },
+  'identity.join.body': { es: 'Entraste como {role}. Para reservar y pagar clases con este mismo correo, completa tus datos de cliente. Tu acceso de equipo no cambia.', en: 'You are signed in as {role}. To book and pay for classes with this same email, complete your customer details. Your team access stays as it is.' },
+  'identity.join.cta': { es: 'Unirme como cliente', en: 'Join as a customer' },
+  'identity.join.back': { es: 'Volver a mi inicio', en: 'Back to my home' },
   'identity.noAccess.title': { es: 'Esta zona no es para tu cuenta', en: 'This area is not for your account' },
   'identity.noAccess.body': { es: 'Entraste como {role}. Si crees que deberías ver esta página, escríbele a administración.', en: 'You are signed in as {role}. If you think you should see this page, contact the studio administration.' },
   'identity.noAccess.home': { es: 'Ir a mi inicio', en: 'Go to my home' },

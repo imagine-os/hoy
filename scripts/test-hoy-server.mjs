@@ -549,6 +549,7 @@ await test('public reads (Y2): an invalid or expired session on a public read fa
       assert.equal(r.status, 200, `${token.slice(0, 20)} ${method} ${path}`);
       assert.equal(seen.length, 1);
       assert.equal(seen[0].headers.authorization, `Bearer ${READ_TOKEN}`, 'never the visitor\'s token');
+      assert.equal(r.headers['x-hoy-session'], 'stale', 'the browser is told its session was refused');
     }
   }
   assert.ok(publicLogs.some((l) => l.event === 'api.cos' && l.public === true));
@@ -576,6 +577,7 @@ await test('public reads (Y2): a valid session on a public read still uses the p
     const r = await pub(method, `/api/cos/t/hoy-dev${path}`, { ...(body ? json : {}), authorization: `Bearer ${GOOD}` }, body);
     assert.equal(r.status, 200);
     assert.equal(seen[0].headers.authorization, `Bearer ${GOOD}`);
+    assert.equal(r.headers['x-hoy-session'], undefined);
   }
 });
 

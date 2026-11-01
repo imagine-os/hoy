@@ -23,6 +23,9 @@ export const coreStrings: StringTable = {
   'core.nav.back': { es: 'Volver', en: 'Back' },
   'core.nav.main': { es: 'Navegación principal', en: 'Main navigation' },
   'core.nav.home': { es: 'Inicio', en: 'Home' },
+  // Lane Y2: a studio login that is also a customer (one email).
+  'core.nav.myClasses': { es: 'Mis clases', en: 'My classes' },
+  'core.nav.backTo': { es: 'Volver a {role}', en: 'Back to {role}' },
   'core.nav.schedule': { es: 'Horario', en: 'Schedule' },
   'core.nav.plans': { es: 'Planes', en: 'Plans' },
   'core.nav.profile': { es: 'Perfil', en: 'Profile' },

@@ -22,6 +22,8 @@ import { formatCOP } from '../../../i18n/format';
 import { PageHead, SiteShell } from '../SiteShell';
 import { siteSpecs } from '../specs';
 import { GIFT_PURCHASE_PATH } from '../../../config/launchRoutes';
+import { useSession } from '../../../auth/SessionProvider';
+import { purchaseEntry } from '../../../auth/purchaseEntry';
 
 /**
  * P-01 — the launch price list (0051). Amounts come from the product master (useLivePricing, SW-02); names and the "why it exists" rationale from src/tenant/pricing.ts;
@@ -49,7 +51,10 @@ export function PlansPage() {
     const alt = override?.alt || editorialPhotoSlots.find(slot => slot.key === key)?.alt;
     return src && alt ? { src, alt: bi(alt) } : undefined;
   };
-  const buy = (id: string) => nav(`/auth/sign-in?next=${encodeURIComponent(`/app/plans?plan=${id}`)}`);
+  // Lane Y2: signed in (any role) straight to the purchase; signed out through sign-in, keeping it.
+  const { user } = useSession();
+  const buy = (id: string) => nav(purchaseEntry(user, `/app/plans?plan=${id}`));
+  const gift = () => nav(purchaseEntry(user, GIFT_PURCHASE_PATH));
   const prices = useLivePricing();
   const pack = prices.item('pack12');
   const months = Math.round((pack?.validityDays ?? 90) / 30);
@@ -101,9 +106,9 @@ export function PlansPage() {
           </Card>
           <Card eyebrow={bi(FAMILY_RATIONALE.regalos.role)} title={bi(FAMILY_LABEL.regalos)}>
             <p className="small muted">{bi(FAMILY_RATIONALE.regalos.subtitle)}</p>
-            {prices.byFamily('regalos').map((p) => <PriceRow key={p.id} item={p} onSelect={() => nav(`/auth/sign-in?next=${encodeURIComponent(GIFT_PURCHASE_PATH)}`)} />)}
+            {prices.byFamily('regalos').map((p) => <PriceRow key={p.id} item={p} onSelect={gift} />)}
             <p className="small muted" style={{ marginTop: 'var(--stack)' }}>{t('site.plans.gift.note')}</p>
-            <div style={{ marginTop: 'var(--stack-loose)' }}><Button variant="secondary" onClick={() => nav(`/auth/sign-in?next=${encodeURIComponent(GIFT_PURCHASE_PATH)}`)}>{t('site.plans.gift.cta')}</Button></div>
+            <div style={{ marginTop: 'var(--stack-loose)' }}><Button variant="secondary" onClick={gift}>{t('site.plans.gift.cta')}</Button></div>
           </Card>
         </div>
       </section>
