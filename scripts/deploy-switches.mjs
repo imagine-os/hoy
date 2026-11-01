@@ -3,6 +3,8 @@
 // and prints Markdown lines: whether SITE_LIVE is on, SITE_LIVE_AT, and whether COMPANY_OS_READ_TOKEN is present.
 // It never prints a secret's value, nor any value it does not recognise. Always exits 0: a summary never fails a deploy.
 // Run: railway variable list --service web --environment test --json | node scripts/deploy-switches.mjs
+// `--leftovers` (review round 2, r2hoy L7; the deploys run it before Apply infra) prints only the warnings about
+// variables left in Railway under a wrong or retired name, as GitHub `::warning::` annotations, and nothing otherwise.
 import { readFileSync } from 'node:fs';
 
 let input = '';
@@ -25,6 +27,22 @@ function parse(text) {
 }
 
 const vars = parse(input);
+
+/** Variables the service should not have: a wrong name, or a retired switch the IaC no longer declares. */
+function leftovers(v) {
+  const out = [];
+  if (v.has('SET_LIVE')) out.push('a SET_LIVE variable is set, but the server reads SITE_LIVE: rename it in Railway, then deploy.');
+  // Retired 2026-11-01 (owner): nothing reads it, and the IaC no longer declares it, so "Apply infra" fails on it.
+  if (v.has('PUBLIC_DOCUMENTS')) out.push('PUBLIC_DOCUMENTS is set, but it is retired and nothing reads it: delete it in Railway (else "Apply infra" fails on an undeclared variable), then deploy.');
+  return out;
+}
+
+if (process.argv.includes('--leftovers')) {
+  if (!vars) console.log('::warning::could not read the service variables: check by hand that PUBLIC_DOCUMENTS and SET_LIVE are not set in Railway.');
+  for (const w of vars ? leftovers(vars) : []) console.log(`::warning::${w}`);
+  process.exit(0);
+}
+
 const lines = ['#### Go-live switches (web)'];
 if (!vars) {
   lines.push('- Could not read the service variables: check SITE_LIVE and COMPANY_OS_READ_TOKEN in Railway by hand.');
@@ -37,6 +55,6 @@ if (!vars) {
   if (at) lines.push(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?([+-]\d{2}:\d{2}|Z)$/.test(at) ? `- SITE_LIVE_AT: ${at}` : '- SITE_LIVE_AT: invalid (an instant with its offset)');
   const token = (vars.get('COMPANY_OS_READ_TOKEN') ?? '').trim();
   lines.push(token ? '- COMPANY_OS_READ_TOKEN: present' : '- COMPANY_OS_READ_TOKEN: missing (signed-out website reads answer 401)');
-  if (vars.has('SET_LIVE')) lines.push('- Warning: a SET_LIVE variable is set, but the server reads SITE_LIVE: rename it in Railway, then deploy.');
+  for (const w of leftovers(vars)) lines.push(`- Warning: ${w}`);
 }
 console.log(lines.join('\n'));

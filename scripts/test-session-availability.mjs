@@ -17,7 +17,9 @@ try {
   assert.equal(reason({ ...row, session: { ...session, status: 'completed' } }, now), 'completed');
   assert.equal(reason(row, Date.parse(session.starts_at)), 'started', 'booking closes at exact start');
   assert.equal(reason(row, Date.parse(session.ends_at)), 'ended', 'past scheduled data is still inactive');
-  assert.equal(reason({ ...row, templateActive: false }, now), 'unpublished');
+  // Changed on purpose (owner 2026-11-01, r2 L3 "Stop new classes only"): a class whose timetable row is switched off is
+  // still on the schedule and bookable; only a withdrawn class type (or a cancelled class) closes it.
+  assert.equal(reason({ ...row, templateActive: false }, now), null, 'a switched-off row keeps its classes open');
   assert.equal(reason({ ...row, modality: { active: false } }, now), 'unpublished');
   assert.equal(reason({ session, modality: { active: true } }, now), null, 'one-off sessions need no template');
   // Lane Y1: a class without a class type is not open for booking, and says so (the tile and the modal agree with admission).
@@ -26,16 +28,14 @@ try {
   assert.equal(reason({ session: { ...session, status: 'cancelled' } }, now), 'cancelled', 'a cancelled class says cancelled first');
   assert.equal(reason({ session }, Date.parse(session.starts_at)), 'started', 'a started class says started first');
   assert.equal(reason({ session: { ...session, starts_at: 'invalid' } }, now), 'unavailable');
-  // Review round 1 (r1hoy, L7): a visitor reads only published timetable rows, so a class whose row is not among them was
-  // made from a row that is switched off: "not published", not "not open for booking yet".
+  // Review round 1 (r1hoy, L7) reversed by the owner (r2 L3): a class whose row is switched off (or not among the rows a
+  // visitor reads) is not "not published": it stays open.
   const templates = [{ id: 'tpl_on', active: true }, { id: 'tpl_off_staff', active: false }];
   assert.equal(templateActiveOf?.('tpl_on', templates), true);
   assert.equal(templateActiveOf?.('tpl_off_staff', templates), false, 'a reader who sees the row (staff) reads its flag');
-  assert.equal(templateActiveOf?.('tpl_hidden', templates), false, 'the row is not among the readable ones: switched off');
   assert.equal(templateActiveOf?.(null, templates), undefined, 'a one-off class has no row');
-  assert.equal(templateActiveOf?.('', templates), undefined);
-  assert.equal(templateActiveOf?.('tpl_on', []), undefined, 'a reader who reads no rows at all knows nothing (existing behaviour)');
-  assert.equal(reason({ session, templateActive: templateActiveOf?.('tpl_hidden', templates) }, now), 'unpublished', 'a visitor sees "not published"');
+  assert.equal(reason({ session, modality: { active: true }, templateActive: templateActiveOf?.('tpl_hidden', templates) }, now), null, 'a visitor sees it open');
+  assert.equal(reason({ session, modality: { active: true }, templateActive: false }, now), null);
   // L8: while the class types (or the timetable rows) are still loading, no class is joined, so nothing says "not open
   // for booking" for a moment before they arrive.
   const rows = { sessions: [{ ...session, id: 's1', modality_id: 'mod_a', teacher_id: 't', room_id: 'r', template_id: 'tpl_hidden' }], modalities: [{ id: 'mod_a', active: true }], teachers: [], rooms: [], templates };
@@ -43,8 +43,7 @@ try {
   const joined = joinSessionRows?.(rows, { loading: false }) ?? [];
   assert.equal(joined.length, 1);
   assert.equal(joined[0].modality?.id, 'mod_a');
-  assert.equal(joined[0].templateActive, false);
-  assert.equal(reason(joined[0], now), 'unpublished');
+  assert.equal(reason(joined[0], now), null, 'r2 L3: open although its row is not among the rows read');
   assert.equal(joinSessionRows?.(rows, { loading: false, filter: () => false })?.length, 0, 'the filter still applies');
-  console.log('PASS: future/full, cancelled, completed, exact start/end, unpublished template/type, one-off, no class type and invalid date states');
+  console.log('PASS: future/full, cancelled, completed, exact start/end, unpublished type, switched-off row stays open, one-off, no class type and invalid date states');
 } finally { await rm(scratch, { recursive: true, force: true }); }

@@ -5,12 +5,12 @@ import { roleCan } from './permissions';
 import { useSession } from './SessionProvider';
 import { SessionContext, heldRoles, type SessionCtx } from './sessionContext';
 import { visitorSignIn } from './visitorSignIn';
-import { joinsAsCustomer } from './purchaseEntry';
+import { enrolsAsCustomer } from './purchaseEntry';
 import { matrixAllows } from '../config/roleMatrix';
 import { PRODUCTION_BUILD } from '../config/launch';
 
 // Production only (it needs the Clerk session): folded away in the review build.
-const JoinAsCustomer = PRODUCTION_BUILD ? lazy(() => import('./JoinAsCustomer')) : null;
+const CustomerEnrolment = PRODUCTION_BUILD ? lazy(() => import('./CustomerEnrolment')) : null;
 
 /**
  * Guards a route. Public routes pass everyone; otherwise the effective role must match. PL-05: the launch permissions
@@ -23,13 +23,14 @@ const JoinAsCustomer = PRODUCTION_BUILD ? lazy(() => import('./JoinAsCustomer'))
  * shape the screens: Company OS refuses whatever the role may not read or write.
  *
  * Lane Y2 (test-hoy fixes, owner 2026-11-01): a login whose primary role is staff but which also holds the customer
- * role opens the customer area as a customer (the screens below see `role: 'customer'`, the same person); a studio
- * login that isn't a customer yet is offered "Join as a customer" there instead of the no-access page.
+ * role opens the customer area as a customer (the screens below see `role: 'customer'`, the same person).
+ * Owner 2026-11-01 (review round 2): every registered login is a customer. A signed-in login that doesn't hold the
+ * customer role yet is enrolled automatically on its first customer-area page (`CustomerEnrolment`; at most the
+ * documents' consent step), with no separate page to ask for it. Existing staff are enrolled on their first visit.
  *
- * Review round 1 (r1hoy): never inside a read-only document (M1, `joinsAsCustomer`); and a real super admin, whom the
- * matrix lets into every area, gets the same offer on every customer-area page when they don't hold the customer role
- * (L5), instead of a checkout whose purchase Company OS would refuse; one who holds it gets the customer session there,
- * like any staff login. A super admin looks at the customer app through view-as.
+ * Review round 1 (r1hoy): never inside a read-only document (M1, `enrolsAsCustomer`): a preview frame or view-as never
+ * enrols. A real super admin, whom the matrix lets into every area, is enrolled too on the customer area when they don't
+ * hold the customer role (L5), and one who holds it gets the customer session there, like any staff login.
  */
 export function RequireRole({ roles, children }: { roles: Role[]; children: ReactNode }) {
   const session = useSession();
@@ -45,15 +46,15 @@ export function RequireRole({ roles, children }: { roles: Role[]; children: Reac
     can: (p) => roleCan('customer', p), hasRole: (r) => r.includes('public') || r.includes('customer'),
   } : null, [asCustomer, session]);
   if (!publicRoute && status === 'loading') return <div className="lazy-fallback" aria-busy="true" />;
-  const join = !!JoinAsCustomer && !publicRoute && joinsAsCustomer({ status, signedIn, viewAs, roles: held, routeRoles: roles, path: loc.pathname });
-  const joinPage = JoinAsCustomer && <Suspense fallback={<div className="lazy-fallback" aria-busy="true" />}><JoinAsCustomer /></Suspense>;
-  // A real super admin passes every role check, so their customer-area choice comes first: join when they aren't a
-  // customer, the customer session when they are (as for any staff login that also holds the customer role).
-  if (join && role === 'super_admin') return joinPage;
+  const enrol = !!CustomerEnrolment && !publicRoute && enrolsAsCustomer({ status, signedIn, viewAs, roles: held, routeRoles: roles, path: loc.pathname });
+  const enrolPage = CustomerEnrolment && <Suspense fallback={<div className="lazy-fallback" aria-busy="true" />}><CustomerEnrolment /></Suspense>;
+  // Enrolment comes first for every login that isn't a customer yet (owner 2026-11-01; lane review: the customer routes
+  // also allow the teacher role, whose purchases Company OS refuses). A real super admin passes every role check, so
+  // their customer session (when they hold the role) comes before their own pass too.
+  if (enrol) return enrolPage;
   if (customerSession && role === 'super_admin') return <SessionContext.Provider value={customerSession}>{children}</SessionContext.Provider>;
   if (hasRole(roles) && matrixAllows(role, loc.pathname)) return <>{children}</>;
   if (customerSession) return <SessionContext.Provider value={customerSession}>{children}</SessionContext.Provider>;
-  if (join) return joinPage;
   if (status === 'needs-signup') return <Navigate to={visitorSignIn(loc.pathname + loc.search).replace('/auth/sign-in', '/auth/sign-up')} replace />;
   if (user.role === 'public' || (signedIn && status !== 'ready')) return <Navigate to={visitorSignIn(loc.pathname + loc.search)} replace />;
   return <Navigate to={`/no-access?from=${encodeURIComponent(loc.pathname)}`} replace />;

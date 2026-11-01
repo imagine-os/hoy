@@ -15,10 +15,12 @@ const bundle = await build({
     "export * from './src/auth/clerkFlows';",
     "export { safeAuthBack, visitorSignIn } from './src/auth/visitorSignIn';",
     "export { signInReturn, homeFor, authLink } from './src/auth/signInReturn';",
-    "export { purchaseEntry, joinsAsCustomer } from './src/auth/purchaseEntry';",
+    "export { purchaseEntry, enrolsAsCustomer } from './src/auth/purchaseEntry';",
     "export { LAUNCH_ROUTES, isLaunchRoute } from './src/config/launchRoutes';",
+    "export { CUSTOMER_AUTO_ENROL_STAFF } from './src/config/launch';",
     "export { getSessionToken, setSessionTokenSource } from './src/auth/sessionToken';",
     "export * as team from './src/modules/admin/team/teamApi';",
+    "export { strings as identityStrings } from './src/modules/identity/strings';",
   ].join('\n'), resolveDir: process.cwd(), loader: 'ts' },
   bundle: true, platform: 'node', format: 'esm', write: false, logLevel: 'silent', define: { 'import.meta.env': '{"VITE_HOY_BUILD":"review","DEV":false}' },
 });
@@ -87,7 +89,38 @@ check('CU-01 body: only the fields the tenant allows are sent', JSON.stringify(M
 check('CU-01 a tenant that does not accept name and phone cannot sign people up here (fail closed)', M.parseSignupConfig({ enabled: true, consents: [], personFields: ['name'], facetFields: [] }).enabled === false);
 check('sign-up config: enabled:false is closed', M.parseSignupConfig({ enabled: false }).enabled === false && M.parseSignupConfig({ enabled: 'yes' }) === null);
 check('sign-up 201 → done', M.classifySignup(201, { userId: 'u' }).kind === 'done');
-check('sign-up 409 already_registered (a retry) → done', M.classifySignup(409, { error: 'already_registered' }).kind === 'done');
+// Changed on purpose (review round 2, r2hoy, with r2co's contract): 409 already_registered is "the login already holds the
+// sign-up role" only when /me says so. It is re-checked, never taken as done on its word (a lost answer and a double tap
+// go on; anything else is a conflict).
+check('sign-up 409 already_registered → re-check /me (not done on its word)', M.classifySignup(409, { error: 'already_registered' }).kind === 'already-registered');
+check('r2 sign-up 409 email_linked_to_other_login → its own outcome, never done', M.classifySignup(409, { error: 'email_linked_to_other_login', message: 'a person with this email is linked to another login' }).kind === 'email-linked');
+check('r2 sign-up another 409 → an error with its code, never done', JSON.stringify(M.classifySignup(409, { error: 'idempotency_conflict' })) === '{"kind":"error","code":"idempotency_conflict"}');
+const meAnswer = (roleKeys, extra = {}) => ({ user: { id: 'u_fict', name: 'Ficticia', email: 'f@example.test' }, roleKeys, isSuperAdmin: false, caps: [], ...extra });
+check('r2 after already_registered: /me holding the customer role → it went through (go on)', M.signupHeld(200, meAnswer(['member'])) === true && M.signupHeld(200, meAnswer(['front_desk', 'member'])) === true);
+check('r2 after already_registered: /me without the customer role → not held (a conflict)', M.signupHeld(200, meAnswer(['front_desk'])) === false && M.signupHeld(403, { error: 'no access to this tenant' }) === false);
+check('r2 after already_registered: a super admin flag alone is not the customer role', M.signupHeld(200, meAnswer([], { isSuperAdmin: true })) === false);
+check('r2 after already_registered: /me failing or malformed → unknown (null), never success', M.signupHeld(502, null) === null && M.signupHeld(200, { roleKeys: 'member' }) === null && M.signupHeld(401, { error: 'unauthorized' }) === null);
+// Review round 2 (r2hoy, L4): every sign-up refusal has a copy key that fits the screen; the automatic enrolment of a
+// studio login never shows a raw code or "create your account".
+const key = (status, body, existingLogin, held) => M.signupNoticeKey(M.classifySignup(status, body), { existingLogin, held });
+check('r2 enrolment: already_registered not held → the enrolment conflict', key(409, { error: 'already_registered' }, true, false) === 'identity.enrol.conflict');
+check('r2 sign-up: already_registered not held → a sign-up conflict line', key(409, { error: 'already_registered' }, false, false) === 'identity.register.conflict');
+check('r2 already_registered with /me unknown → a retry line (enrolment and sign-up)', key(409, { error: 'already_registered' }, true, null) === 'identity.enrol.failed' && key(409, { error: 'already_registered' }, false, null) === 'identity.register.failed');
+check('r2 email_linked_to_other_login → the "contact the studio" line, on enrolment and on sign-up', key(409, { error: 'email_linked_to_other_login' }, true) === 'identity.signup.emailLinked' && key(409, { error: 'email_linked_to_other_login' }, false) === 'identity.signup.emailLinked');
+check('r2 L4 duplicate_person_user → the "studio fixes the link" line, on enrolment and on sign-up', key(422, { error: 'duplicate_person_user' }, true) === 'identity.signup.personLinked' && key(422, { error: 'duplicate_person_user' }, false) === 'identity.signup.personLinked');
+check('r2 L4 enrolment: another invalid or failed answer → enrolment lines (no "create your account")', key(400, { error: 'invalid body' }, true) === 'identity.enrol.invalid' && key(500, { error: 'boom' }, true) === 'identity.enrol.failed');
+check('r2 sign-up: invalid and failed keep the sign-up lines', key(400, { error: 'invalid body' }, false) === 'identity.register.invalid' && key(500, { error: 'boom' }, false) === 'identity.register.failed');
+const idStrings = M.identityStrings ?? {};
+check('owner 2026-11-01: no "Join" wording is left in the identity strings', !Object.entries(idStrings).some(([k, v]) => /^identity\.join\./.test(k) || /Únete|Unirme|\bJoin\b/.test(`${v.es} ${v.en}`)), Object.keys(idStrings).filter((k) => k.startsWith('identity.join.')).join(', '));
+// The automatic enrolment's body: nothing to fill in, the login's name only when the tenant takes it, consents once accepted.
+const ecfg = M.parseSignupConfig({ enabled: true, consents: [{ document: 'terms', version: '2026-10-01' }], personFields: ['name', 'phone'], facetFields: ['emergency_contact_name'] });
+check('enrolment body: the login\'s name and the accepted documents, no phone, no facet fields, no email', JSON.stringify(M.enrolmentBody(ecfg, ' Olga Admin ', true)) === '{"person":{"name":"Olga Admin"},"facet":{},"consents":[{"document":"terms","version":"2026-10-01"}]}');
+check('enrolment body: not accepted yet sends no consents (Company OS answers consent_required)', JSON.stringify(M.enrolmentBody(ecfg, 'Olga Admin', false).consents) === '[]');
+check('enrolment body: an email or a blank name is not sent as the name (Company OS keeps the linked person\'s)', JSON.stringify(M.enrolmentBody(ecfg, 'olga@example.test', true).person) === '{}' && JSON.stringify(M.enrolmentBody(ecfg, ' ', true).person) === '{}');
+check('enrolment body: a tenant that does not take the name gets none', JSON.stringify(M.enrolmentBody({ ...ecfg, personFields: ['phone'] }, 'Olga Admin', true).person) === '{}');
+const NEW_KEYS = ['identity.register.conflict', 'identity.signup.emailLinked', 'identity.signup.personLinked', 'identity.enrol.invalid', 'identity.enrol.failed', 'identity.enrol.conflict', 'identity.enrol.title', 'identity.enrol.consent', 'identity.enrol.cta', 'identity.enrol.loading', 'identity.enrol.back'];
+check('r2 the new lines exist in Spanish and English', NEW_KEYS.every((k) => idStrings[k]?.es && idStrings[k]?.en), NEW_KEYS.filter((k) => !(idStrings[k]?.es && idStrings[k]?.en)).join(', '));
+check('r2 L4 the enrolment lines show no code', ['identity.enrol.invalid', 'identity.enrol.failed', 'identity.enrol.conflict', 'identity.signup.emailLinked', 'identity.signup.personLinked'].every((k) => idStrings[k] && !/\{code\}/.test(idStrings[k].es + idStrings[k].en)));
 const changed = M.classifySignup(422, { error: 'consent_required', details: { required: [{ document: 'terms', version: '2026-11-01' }] } });
 check('CU-02 422 consent_required → the new versions to accept', changed.kind === 'consent-changed' && changed.required[0].version === '2026-11-01');
 check('sign-up 403 signup_disabled → closed', M.classifySignup(403, { error: 'signup_disabled' }).kind === 'disabled');
@@ -176,7 +209,7 @@ check('return: launch deep links are kept as next', deep.every((p) => M.visitorS
 const bad = ['/staff/transfers?x=1', '/staff/../admin', '/app/receipts/a%2Fb', '/hub/promotions', '/dev/tokens', '/teach/payroll', '/teach/../admin', '/auth/sign-in', '/site', '/', '//evil.example', '/app/receipts/a/b', '/admin/tables', '/staff/maintenance', 'https://evil.example/staff'];
 check('return: anything but a strict launch path is dropped', bad.every((p) => M.signInReturn(p) === null), bad.filter((p) => M.signInReturn(p) !== null).join(', '));
 check('return: the customer allowlist still applies (query kept)', M.signInReturn('/app/checkout/occ_1?mat=3') === '/app/checkout/occ_1?mat=3');
-check('return: staff follow a staff next; a customer is not sent into staff', M.homeFor('front_desk', '/staff/transfers') === '/staff/transfers' && M.homeFor('customer', '/staff/transfers') === '/app' && M.homeFor('customer', '/app/receipts/p1') === '/app/receipts/p1' && M.homeFor('admin', '/app/booking/b1') === '/admin');
+check('return: staff follow a staff next; a customer is not sent into staff', M.homeFor('front_desk', '/staff/transfers') === '/staff/transfers' && M.homeFor('customer', '/staff/transfers') === '/app' && M.homeFor('customer', '/app/receipts/p1') === '/app/receipts/p1' && M.homeFor('admin', '/app/booking/b1') === '/app/booking/b1' /* owner C-01: the staff enrolment switch is on by default */);
 check('return: the teacher, hub and dev areas are sign-in returns (their launch routes only)', M.signInReturn('/teach') === '/teach' && M.signInReturn('/dev') === '/dev' && M.signInReturn('/teach/class/occ_1') === (M.isLaunchRoute('/teach/class/:id') ? '/teach/class/occ_1' : null));
 check('return: /hub is a return once it is a launch route (lane D)', M.signInReturn('/hub') === (M.isLaunchRoute('/hub') ? '/hub' : null));
 const HOMES = { super_admin: '/admin', admin: '/admin', coordinator: '/staff', front_desk: '/staff', finance: '/admin', teacher: '/teach', maintenance: '/staff', marketing: '/admin/content', developer: '/dev', customer: '/app' };
@@ -197,30 +230,39 @@ check('Y2 roles: a platform operator (isSuperAdmin, no membership) is super_admi
 check('Y2 roles: no duplicates however /me repeats a key', JSON.stringify(rolesOf(['member', 'member', 'administrator', 'administrator'])) === '["admin","customer"]');
 // Sign-in return: an /app target is honoured for any login holding the customer role, whatever its primary role.
 check('Y2 return: Administration who is also a customer follows an /app next', M.homeFor('admin', '/app/plans?plan=pack12', ['admin', 'customer']) === '/app/plans?plan=pack12' && M.homeFor('front_desk', '/app/receipts/p1', ['front_desk', 'customer']) === '/app/receipts/p1');
-check('Y2 return: a staff login that is not a customer yet follows a purchase or booking next (the page offers Join)', M.homeFor('admin', '/app/plans?plan=pack12', ['admin']) === '/app/plans?plan=pack12' && M.homeFor('front_desk', '/app/checkout/occ_1?mat=3') === '/app/checkout/occ_1?mat=3' && M.homeFor('admin', '/app/gift-voucher') === '/app/gift-voucher');
-check('Y2 return: other /app pages still send a non-customer home (unchanged)', M.homeFor('admin', '/app/booking/b1', ['admin']) === '/admin' && M.homeFor('admin', '/app/receipts/p1') === '/admin');
+check('switch ON: a staff login that is not a customer yet follows a purchase or booking next (the page enrols it)', M.homeFor('admin', '/app/plans?plan=pack12', ['admin'], true) === '/app/plans?plan=pack12' && M.homeFor('front_desk', '/app/checkout/occ_1?mat=3', ['front_desk'], true) === '/app/checkout/occ_1?mat=3' && M.homeFor('admin', '/app/gift-voucher', ['admin'], true) === '/app/gift-voucher');
+// Changed on purpose (owner 2026-11-01, lane review): every registered login is a customer, so any validated /app next is
+// followed for a staff login too; the customer page enrols it.
+check('switch ON: a staff login follows any /app next (the page enrols it)', M.homeFor('admin', '/app/booking/b1', ['admin'], true) === '/app/booking/b1' && M.homeFor('admin', '/app/receipts/p1', ['admin'], true) === '/app/receipts/p1' && M.homeFor('teacher', '/app/plans', ['teacher'], true) === '/app/plans');
 check('Y2 return: a hostile next is still dropped for a multi-role login', ['//evil.example', '/app/plans?plan=x&next=//evil', '/app/../admin', 'https://evil.example/app'].every((n) => M.homeFor('admin', n, ['admin', 'customer']) === '/admin'));
 check('Y2 return: the held roles never widen a staff next (the matrix of the primary decides)', M.homeFor('marketing', '/admin/finance', ['marketing', 'customer']) === '/admin/content');
 // The website's purchase and booking buttons.
 check('Y2 entry: signed out → sign-in keeping the return', M.purchaseEntry?.({ role: 'public' }, '/app/plans?plan=pack12') === `/auth/sign-in?next=${encodeURIComponent('/app/plans?plan=pack12')}`);
 check('Y2 entry: signed in (any role) → straight to the purchase or booking page', ['customer', 'admin', 'front_desk', 'teacher', 'super_admin'].every((role) => M.purchaseEntry?.({ role }, '/app/checkout/occ_1?mat=3') === '/app/checkout/occ_1?mat=3'));
 check('Y2 entry: a target outside the customer allowlist is never followed', M.purchaseEntry?.({ role: 'admin' }, '//evil.example') === '/app' && M.purchaseEntry?.({ role: 'public' }, 'https://evil.example') === '/auth/sign-in');
-// Who is offered "Join as a customer" on a customer page they can't open yet.
-const joinCase = (o) => M.joinsAsCustomer?.({ status: 'ready', signedIn: true, viewAs: null, roles: ['admin'], routeRoles: ['customer', 'teacher'], path: '/app/plans', ...o });
-check('Y2 join: a signed-in staff login without the customer role, on a customer page', joinCase({}) === true && joinCase({ roles: ['front_desk'], path: '/app/checkout/occ_1' }) === true);
-check('Y2 join: never while viewing as, signed out, loading or unfinished, or for someone already a customer', joinCase({ viewAs: 'admin' }) === false && joinCase({ signedIn: false }) === false && joinCase({ status: 'loading' }) === false && joinCase({ status: 'needs-signup' }) === false && joinCase({ roles: ['admin', 'customer'] }) === false);
-check('Y2 join: never outside the customer area or on a page customers can\'t open', joinCase({ path: '/admin/settings', routeRoles: ['admin'] }) === false && joinCase({ path: '/staff', routeRoles: ['front_desk'] }) === false && joinCase({ path: '/app/x', routeRoles: ['teacher'] }) === false);
+// Who is enrolled as a customer automatically on a customer page they can't open yet (owner 2026-11-01: every registered
+// login is a customer; this replaced Y2's "Join as a customer" offer, same cases).
+// Owner 2026-11-01 (C-01: ship it): the enrolment of staff logins is one switch, default ON (CUSTOMER_AUTO_ENROL_STAFF).
+// The cases below are the switch ON (the default); the OFF checks follow.
+const joinCase = (o) => M.enrolsAsCustomer?.({ status: 'ready', signedIn: true, viewAs: null, roles: ['admin'], routeRoles: ['customer', 'teacher'], path: '/app/plans', autoEnrolStaff: true, ...o });
+check('switch: CUSTOMER_AUTO_ENROL_STAFF is on by default (a build without VITE_CUSTOMER_AUTO_ENROL_STAFF)', M.CUSTOMER_AUTO_ENROL_STAFF === true);
+check('switch ON by default: a staff login is enrolled with no switch passed', joinCase({ autoEnrolStaff: undefined }) === true && joinCase({ autoEnrolStaff: undefined, roles: ['teacher'] }) === true);
+check('switch OFF: no staff login is enrolled, whatever the page', joinCase({ autoEnrolStaff: false }) === false && joinCase({ autoEnrolStaff: false, roles: ['super_admin'] }) === false && joinCase({ autoEnrolStaff: false, roles: ['teacher'] }) === false);
+check('switch OFF: a staff login is not sent into a customer page it can\'t open; one that holds the customer role still is', M.homeFor('admin', '/app/booking/b1', ['admin'], false) === '/admin' && M.homeFor('admin', '/app/plans?plan=pack12', ['admin'], false) === '/admin' && M.homeFor('admin', '/app/plans?plan=pack12', ['admin', 'customer'], false) === '/app/plans?plan=pack12' && M.homeFor('customer', '/app/plans', ['customer'], false) === '/app/plans');
+check('enrol: a signed-in staff login without the customer role, on a customer page', joinCase({}) === true && joinCase({ roles: ['front_desk'], path: '/app/checkout/occ_1' }) === true);
+check('enrol: never while viewing as, signed out, loading or unfinished, or for someone already a customer', joinCase({ viewAs: 'admin' }) === false && joinCase({ signedIn: false }) === false && joinCase({ status: 'loading' }) === false && joinCase({ status: 'needs-signup' }) === false && joinCase({ roles: ['admin', 'customer'] }) === false);
+check('enrol: never outside the customer area or on a page customers can\'t open', joinCase({ path: '/admin/settings', routeRoles: ['admin'] }) === false && joinCase({ path: '/staff', routeRoles: ['front_desk'] }) === false && joinCase({ path: '/app/x', routeRoles: ['teacher'] }) === false);
 // Review round 1 (r1hoy, M1): a read-only document (a preview frame, or a tab still holding a view-as value) never offers
 // a sign-up form whose submit can't succeed: it falls through to the no-access page.
-check('r1 M1 join: never in a read-only document (a frame or a stored view-as)', joinCase({ readOnly: true }) === false && joinCase({ readOnly: false }) === true);
+check('r1 M1 enrol: never in a read-only document (a frame or a stored view-as)', joinCase({ readOnly: true }) === false && joinCase({ readOnly: false }) === true);
 {
   const prior = globalThis.sessionStorage;
   const kept = new Map([['hoyos.viewAs', 'customer']]);
   globalThis.sessionStorage = { getItem: (k) => kept.get(k) ?? null, setItem: (k, v) => kept.set(k, String(v)), removeItem: (k) => kept.delete(k) };
-  check('r1 M1 join: a view-as value kept in the tab (not yet checked by the session) blocks the join, fail closed', joinCase({}) === false);
+  check('r1 M1 enrol: a view-as value kept in the tab (not yet checked by the session) blocks the enrolment, fail closed', joinCase({}) === false);
   globalThis.sessionStorage = prior;
 }
-check('r1 L5 join: a real super admin without the customer role is offered the join on a customer page too', joinCase({ roles: ['super_admin'] }) === true);
+check('r1 L5 enrol: a real super admin without the customer role is enrolled on a customer page too', joinCase({ roles: ['super_admin'] }) === true);
 
 // ── AD-06 team panel: every staff role can be granted and changed (Hoy all-roles, lane C) ─────────────────────
 {

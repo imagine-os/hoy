@@ -26,6 +26,14 @@ export const PRODUCTION_BUILD = typeof __HOY_BUILD__ === 'string'
   ? __HOY_BUILD__ === 'production'
   : (typeof import.meta.env === 'object' && import.meta.env.VITE_HOY_BUILD === 'production');
 
+/**
+ * Owner 2026-11-01 (decision C-01: ship it): a staff login (any login holding a staff role, the super admin included) is
+ * enrolled as a customer automatically on its first customer-area page (`CustomerEnrolment`), like every signed-in
+ * login. Kept as the one switch, default ON; a build with VITE_CUSTOMER_AUTO_ENROL_STAFF=false turns it off (staff are
+ * then not enrolled and a customer page stays closed to them). Logins without a staff role are not affected either way.
+ */
+export const CUSTOMER_AUTO_ENROL_STAFF: boolean = !(typeof import.meta.env === 'object' && import.meta.env.VITE_CUSTOMER_AUTO_ENROL_STAFF === 'false');
+
 export const LAUNCH_DEFAULTS: LaunchConfig = { siteLive: false, siteLiveAt: null, reviewTools: !PRODUCTION_BUILD };
 
 const STORAGE_KEY = 'hoyos.launch';

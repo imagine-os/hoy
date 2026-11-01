@@ -11,6 +11,9 @@ import { extname, join, resolve, sep } from 'node:path';
 import { launchBrowser, reporter } from './lib/launch-qa.mjs';
 
 const { check, done } = reporter('H-2 production sign-in');
+// The staff enrolment switch the build was made with (src/config/launch.ts CUSTOMER_AUTO_ENROL_STAFF, default on, owner
+// C-01): QA_AUTO_ENROL=off for a build with VITE_CUSTOMER_AUTO_ENROL_STAFF=false.
+const AUTO = process.env.QA_AUTO_ENROL !== 'off';
 const DIST = resolve(process.env.QA_PROD_DIST ?? 'dist');
 const TENANT = 'hoy-test';
 const HOST = 'fake.clerk.accounts.dev';
@@ -44,11 +47,20 @@ const server = createServer(async (req, res) => {
       api.signups.push({ user, body });
       // Company OS (ADR 0038 amendment 2026-11-01): a login already in the studio gains the Customer role once.
       if (api.members[user]?.roleKeys.includes('member') || api.joinConflict) return json(res, 409, { error: 'already_registered' });
+      // r2co contract (review round 2): the login's verified email is on a person linked to another login.
+      if (api.emailLinked) return json(res, 409, { error: 'email_linked_to_other_login', message: 'a person with this email is linked to another login' });
+      if (api.duplicatePerson) return json(res, 422, { error: 'duplicate_person_user', message: 'person is linked to another user' });
+      // Lane review: an answer the client can't act on (empty consent list) and a 201 that /me never reflects (the tenant's
+      // sign-up role isn't the customer role): the enrolment must stop, not loop.
+      if (api.consentEmpty) return json(res, 422, { error: 'consent_required', details: { required: [] } });
+      if (api.phantomSignup) return json(res, 201, { userId: user, personId: 'per_x', facetId: 'mem_x' });
       const missing = api.consents.filter((c) => !body.consents?.some((x) => x.document === c.document && x.version === c.version));
       if (missing.length) return json(res, 422, { error: 'consent_required', details: { required: api.consents } });
-      if (api.members[user]) { api.members[user].roleKeys.push('member'); return json(res, 201, { userId: user, personId: 'per_staff', facetId: 'mem_staff' }); }
-      api.members[user] = { name: body.person.name, email: 'nueva@example.test', roleKeys: ['member'] };
-      return json(res, 201, { userId: user, personId: 'per_1', facetId: 'mem_1' });
+      if (api.members[user]) api.members[user].roleKeys.push('member');
+      else api.members[user] = { name: body.person.name, email: 'nueva@example.test', roleKeys: ['member'] };
+      // Review round 2: the sign-up commits but its answer is lost on the way (a slow phone connection).
+      if (api.loseAnswer) { api.loseAnswer = false; req.socket.destroy(); return; }
+      return json(res, 201, { userId: user, personId: api.members[user].roleKeys.length > 1 ? 'per_staff' : 'per_1', facetId: 'mem_1' });
     }
     return json(res, 404, { error: 'not_found' });
   }
@@ -68,6 +80,7 @@ const ACCOUNTS = {
   user_desk: { emails: [{ id: 'ea_desk', email: 'recepcion@example.test', verified: true }], primary: 'ea_desk' },
   user_admin: { emails: [{ id: 'ea_admin', email: 'admin@example.test', verified: true }], primary: 'ea_admin' },
   user_both: { emails: [{ id: 'ea_both', email: 'ambas@example.test', verified: true }], primary: 'ea_both' },
+  user_coach: { emails: [{ id: 'ea_coach', email: 'profe@example.test', verified: true }], primary: 'ea_coach' },
 };
 const MEMBERS = () => ({
   user_ana: { name: 'Ana Prueba', email: 'ana@example.test', roleKeys: ['member'] },
@@ -75,12 +88,14 @@ const MEMBERS = () => ({
   user_admin: { name: 'Olga Admin', email: 'admin@example.test', roleKeys: ['administrator'] },
   // Administration who also takes classes, on one email (owner 2026-11-01).
   user_both: { name: 'Bea Ambas', email: 'ambas@example.test', roleKeys: ['administrator', 'member'] },
+  // A teacher only (Company OS coach): the customer routes also allow the teacher role.
+  user_coach: { name: 'Teo Profe', email: 'profe@example.test', roleKeys: ['coach'] },
 });
 
 const browser = await launchBrowser();
 const errors = [];
 async function open(path = '/', { lang = 'es', width = 1280, clerk = true } = {}) {
-  api.members = MEMBERS(); api.meStatus = null; api.signupEnabled = true; api.signups = []; api.joinConflict = false;
+  api.members = MEMBERS(); api.meStatus = null; api.signupEnabled = true; api.signups = []; api.joinConflict = false; api.emailLinked = false; api.duplicatePerson = false; api.loseAnswer = false; api.consentEmpty = false; api.phantomSignup = false;
   const ctx = await browser.newContext({ viewport: { width, height: 900 }, reducedMotion: 'reduce' });
   // Playwright tries the last route added first: everything outside is blocked, except Clerk's script (the fake).
   // `clerk: false` blocks Clerk's script too (a CDN outage or a blocker).
@@ -102,6 +117,19 @@ const calls = (page) => page.evaluate(() => window.__fakeClerk?.calls ?? []);
 // Clerk's sign-out left a hash-routed app "loading" and then on "service did not answer").
 const signedOutForm = async (page) => route(page).startsWith('/auth/sign-in') && (await page.locator('[data-step="email"] input').count()) === 1
   && (await page.locator('[data-session-problem]').count()) === 0 && (await page.locator('[aria-busy="true"]').count()) === 0;
+/** The automatic enrolment's consent step: tick the box and continue. */
+async function acceptAndContinue(page) {
+  const step = page.locator('[data-enrol-customer="consent"]');
+  await step.waitFor({ timeout: 5000 });
+  await step.locator('input[type=checkbox]').check();
+  await step.locator('button[type=submit]').click();
+  await page.waitForTimeout(1200);
+}
+/** The enrolment's notice: Retry starts it again (back to the consent step). */
+async function retry(page) {
+  await page.locator('[data-enrol-customer="notice"] button').click();
+  await page.waitForTimeout(800);
+}
 async function signIn(page, email) {
   await page.locator('[data-step="email"] input').fill(email);
   await page.locator('[data-step="email"] button[type=submit]').click();
@@ -235,6 +263,36 @@ try {
   check('CU-01 after sign-up the customer lands on the class they chose', route(page) === '/app/checkout/cls_1', route(page));
   await ctx.close();
 
+  // Review round 2 (r2hoy): a new login's sign-up whose answer is lost goes on after the retry's 409 (it went through).
+  ({ ctx, page } = await open('/auth/sign-up?next=/app/plans'));
+  await signIn(page, 'perdida@example.test');
+  await page.locator('[data-register]').waitFor({ timeout: 5000 });
+  {
+    const f = page.locator('[data-register] input:not([type=checkbox])');
+    await f.nth(0).fill('Perdida Prueba'); await f.nth(1).fill('+57 300 555 0191'); await f.nth(2).fill('Contacto'); await f.nth(3).fill('+57 300 555 0192');
+    await page.locator('[data-register] input[type=checkbox]').check();
+    api.loseAnswer = true;
+    await page.locator('[data-register] button[type=submit]').click(); await page.waitForTimeout(1500);
+    if (await page.locator('[data-register]').count()) { await page.locator('[data-register] button[type=submit]').click(); await page.waitForTimeout(1500); }
+    check('r2 sign-up: a lost answer, then 409 already_registered with /me holding the customer role → on to the return', route(page) === '/app/plans' && (await page.locator('[data-register]').count()) === 0, route(page));
+  }
+  await ctx.close();
+
+  // Review round 2 (r2co contract): a new login whose verified email is on a person another login holds.
+  ({ ctx, page } = await open('/auth/sign-up'));
+  await signIn(page, 'compartido@example.test');
+  await page.locator('[data-register]').waitFor({ timeout: 5000 });
+  {
+    const f = page.locator('[data-register] input:not([type=checkbox])');
+    await f.nth(0).fill('Compartido Prueba'); await f.nth(1).fill('+57 300 555 0193'); await f.nth(2).fill('Contacto'); await f.nth(3).fill('+57 300 555 0194');
+    await page.locator('[data-register] input[type=checkbox]').check();
+    api.emailLinked = true;
+    await page.locator('[data-register] button[type=submit]').click(); await page.waitForTimeout(1200);
+    const text = await page.locator('main').innerText();
+    check('r2 sign-up: email linked to another login → "write to the studio", stays on the form, no code', /otra cuenta/i.test(text) && !/email_linked_to_other_login/.test(text) && (await page.locator('[data-register]').count()) === 1 && route(page).startsWith('/auth/sign-up'), text.slice(0, 300));
+  }
+  await ctx.close();
+
   // CU-02: the documents changed while the form was open → asked to accept the new version.
   ({ ctx, page } = await open('/auth/sign-up'));
   await signIn(page, 'otra@example.test');
@@ -266,20 +324,50 @@ try {
   const noAccess = await page.locator('body').innerText();
   check('PL-03 the no-access page has no hub or persona switcher', !/Ir al hub|usuario demo/i.test(noAccess) && (await page.locator('#rs-user').count()) === 0 && /Esta zona no es para tu cuenta/.test(noAccess));
   await page.goto(`${BASE}/#/app`); await page.waitForTimeout(800);
-  // Changed on purpose (test-hoy fixes, lane Y2): a studio login that isn't a customer is offered to join on the
-  // customer pages instead of the no-access page; the customer screens stay closed until it does.
-  check('Y2 front desk on the customer app is offered "Join as a customer", not the customer screens', route(page) === '/app' && (await page.locator('[data-join-customer]').count()) === 1 && (await page.locator('.appshell').count()) === 0, route(page));
-  // Review round (M1): a refusal that isn't "done" for a studio login says so instead of silently showing the form again.
-  api.joinConflict = true;
-  {
-    const form = page.locator('[data-join-customer] [data-register]');
-    const fields = form.locator('input:not([type=checkbox])');
-    await fields.nth(1).fill('+57 300 555 0166'); await fields.nth(2).fill('Luis Prueba'); await fields.nth(3).fill('+57 300 555 0167');
-    await form.locator('input[type=checkbox]').check();
-    await form.locator('button[type=submit]').click(); await page.waitForTimeout(1200);
-    check('Y2 a join the studio refuses (409) tells the person to contact the studio; nothing else changes', /Escríbele a administración/.test(await page.locator('[data-join-customer]').innerText()) && JSON.stringify(api.members.user_desk.roleKeys) === '["front_desk"]' && route(page) === '/app');
+  // Changed on purpose (owner 2026-11-01, review round 2): every registered login is a customer. A studio login that
+  // isn't a customer yet is enrolled automatically on its first customer page: no "Join" page, no form; the only step is
+  // the documents every customer accepts once. (This replaced Y2's "Join as a customer" offer and its checks.)
+  if (AUTO) {
+    const step = page.locator('[data-enrol-customer="consent"]');
+    await step.waitFor({ timeout: 5000 }).catch(() => {});
+    const text = await page.locator('main, body').first().innerText();
+    check('enrol: front desk on the customer app sees only the consent step (no Join page, no form, no customer screens yet)', route(page) === '/app' && (await step.count()) === 1 && (await step.locator('[data-consent-step]').count()) === 1 && (await step.locator('input:not([type=checkbox])').count()) === 0 && (await page.locator('.appshell').count()) === 0, route(page));
+    check('enrol: no "Join" wording anywhere on the page', !/Únete|Unirme|Join as a customer|\bJoin\b/i.test(text), text.slice(0, 300));
+    check('enrol: the consent step shows the documents\' versions', /Versión 2026-10-01/.test(await step.innerText()));
+    const before = api.signups.length;
+    await step.locator('button[type=submit]').click(); await page.waitForTimeout(500);
+    check('enrol: continuing without accepting asks for the consent and sends nothing', /Necesitamos tu consentimiento/.test(await step.innerText()) && api.signups.length === before);
+    // already_registered while /me still lacks the customer role (a race, another path): a conflict, never success.
+    api.joinConflict = true;
+    await acceptAndContinue(page);
+    const conflict = await page.locator('[data-enrol-customer]').innerText();
+    check('enrol: 409 already_registered with /me lacking the customer role → contact the studio; nothing else changes', /Escríbele a administración/.test(conflict) && JSON.stringify(api.members.user_desk.roleKeys) === '["front_desk"]' && (await page.locator('.appshell').count()) === 0 && route(page) === '/app', conflict.slice(0, 200));
+    api.joinConflict = false;
+    // r2co contract: the login's email is on a person another login holds.
+    api.emailLinked = true;
+    await retry(page); await acceptAndContinue(page);
+    const linked = await page.locator('[data-enrol-customer]').innerText();
+    check('r2 enrol: email linked to another login → "write to the studio", never success', /otra cuenta/i.test(linked) && /administración/i.test(linked) && JSON.stringify(api.members.user_desk.roleKeys) === '["front_desk"]' && (await page.locator('.appshell').count()) === 0, linked.slice(0, 300));
+    check('r2 L4 enrol: no raw code on the screen', !/email_linked_to_other_login|already_registered|\(http_/.test(linked));
+    api.emailLinked = false; api.duplicatePerson = true;
+    await retry(page); await acceptAndContinue(page);
+    const dup = await page.locator('[data-enrol-customer]').innerText();
+    check('r2 L4 enrol: duplicate_person_user → the studio fixes the link (no code, no "crear tu cuenta")', /administración/i.test(dup) && !/duplicate_person_user|Revisa los datos marcados|crear tu cuenta/i.test(dup), dup.slice(0, 300));
+    api.duplicatePerson = false;
+    // Idempotent (M1, review2-hoy): the enrolment commits but its answer is lost; the retry gets 409 already_registered,
+    // /me now lists the customer role, so the page goes on as a customer, never an error.
+    api.loseAnswer = true;
+    await retry(page); await acceptAndContinue(page);
+    if (await page.locator('[data-enrol-customer="notice"]').count()) { await retry(page); await acceptAndContinue(page); }
+    const sent = api.signups.at(-1)?.body;
+    check('r2 M1 enrol: a lost answer, then 409 already_registered with /me holding the customer role → the customer page, no error', JSON.stringify(api.members.user_desk.roleKeys) === '["front_desk","member"]' && (await page.locator('[data-enrol-customer]').count()) === 0 && (await page.locator('.appshell').count()) === 1 && route(page) === '/app', `${route(page)} ${api.signups.length}`);
+    check('enrol: the sign-up sends the accepted documents and nothing to fill in (no phone, no facet)', JSON.stringify(sent?.consents) === JSON.stringify(api.consents) && !sent?.person?.phone && JSON.stringify(sent?.facet) === '{}', JSON.stringify(sent));
+  } else {
+    // The switch is off (a build that turns it off): a staff login is not enrolled; the customer page stays closed.
+    await page.waitForTimeout(400);
+    check('switch OFF: front desk on the customer app is not enrolled (no step, no sign-up sent, no customer screens)', (await page.locator('[data-enrol-customer]').count()) === 0 && api.signups.length === 0 && (await page.locator('.appshell').count()) === 0 && JSON.stringify(api.members.user_desk.roleKeys) === '["front_desk"]', route(page));
+    check('switch OFF: no "Join" wording either', !/Únete|Unirme|\bJoin\b/i.test(await page.locator('body').innerText()));
   }
-  api.joinConflict = false;
   await page.goto(`${BASE}/#/staff`); await page.waitForTimeout(1000);
   check('PL-03 the staff shell shows the account and a sign-out button, not a persona list', (await page.locator('[data-account-chip]').count()) > 0 && (await page.locator('#rs-user').count()) === 0);
   await page.locator('[data-account-chip] button').first().click();
@@ -309,7 +397,7 @@ try {
   await page.goto(`${BASE}/#/site/plans`); await page.waitForTimeout(1200);
   await page.getByRole('button', { name: 'Regalar' }).first().click(); await page.waitForTimeout(800);
   check('Y2 Give a gift goes straight to the gift purchase (no sign-in, no dashboard)', route(page) === '/app/gift-voucher', route(page));
-  check('Y2 …and opens it as a customer (the customer app, no Join offer)', (await page.locator('.appshell').count()) === 1 && (await page.locator('[data-join-customer]').count()) === 0);
+  check('Y2 …and opens it as a customer (the customer app, no enrolment step)', (await page.locator('.appshell').count()) === 1 && (await page.locator('[data-enrol-customer]').count()) === 0);
   check('Y2 the customer app offers the way back to the admin home', (await page.locator('[data-primary-home]').count()) === 1 && (await page.locator('[data-primary-home]').getAttribute('href'))?.endsWith('#/admin'));
   await page.goto(`${BASE}/#/app/plans`); await page.waitForTimeout(800);
   check('Y2 the plans page opens for Administration + customer', route(page) === '/app/plans' && (await page.locator('.appshell').count()) === 1, route(page));
@@ -320,29 +408,76 @@ try {
   check('Y2 the admin screens still open as Administration', route(page) === '/admin/settings', route(page));
   await ctx.close();
 
-  // ── Y2: Administration who isn't a customer yet joins from the purchase page, on the same login ───────────────
-  ({ ctx, page } = await open('/auth/sign-in'));
-  await signIn(page, 'admin@example.test');
-  await page.goto(`${BASE}/#/site/plans`); await page.waitForTimeout(1200);
-  await page.getByRole('button', { name: 'Regalar' }).first().click(); await page.waitForTimeout(800);
-  check('Y2 Give a gift (signed in, not a customer) goes to the gift page, not the dashboard', route(page) === '/app/gift-voucher', route(page));
-  check('Y2 the page offers "Join as a customer" with the studio form', (await page.locator('[data-join-customer] [data-register]').count()) === 1 && /cliente/i.test(await page.locator('[data-join-customer]').innerText()));
-  check('Y2 the form starts from the login\'s name', (await page.locator('[data-join-customer] [data-register] input').first().inputValue()) === 'Olga Admin');
-  const join = page.locator('[data-join-customer] [data-register]');
-  const joinInputs = join.locator('input:not([type=checkbox])');
-  await joinInputs.nth(1).fill('+57 300 555 0177');
-  await joinInputs.nth(2).fill('Luis Prueba');
-  await joinInputs.nth(3).fill('+57 300 555 0178');
-  await join.locator('input[type=checkbox]').check();
-  await join.locator('button[type=submit]').click();
-  await page.waitForTimeout(1500);
-  const joined = api.signups.at(-1);
-  check('Y2 joining posts the studio sign-up for the same login', joined?.user === 'user_admin' && joined.body.person?.name === 'Olga Admin' && JSON.stringify(joined.body.consents) === JSON.stringify(api.consents), JSON.stringify(joined));
-  check('Y2 after joining, the same login holds both roles', JSON.stringify(api.members.user_admin.roleKeys) === '["administrator","member"]');
-  check('Y2 after joining, the gift purchase opens as a customer (no Join offer, same page)', route(page) === '/app/gift-voucher' && (await page.locator('[data-join-customer]').count()) === 0 && (await page.locator('.appshell').count()) === 1, route(page));
-  await page.goto(`${BASE}/#/admin`); await page.waitForTimeout(800);
-  check('Y2 after joining, Administration keeps its home and gains "My classes"', route(page) === '/admin' && (await page.locator('[data-my-classes]').count()) === 1, route(page));
-  await ctx.close();
+  if (AUTO) {
+    // Owner 2026-11-01: a tenant with no documents to accept enrols a studio login with no step at all.
+    ({ ctx, page } = await open('/auth/sign-in'));
+    {
+      const saved = api.consents;
+      api.consents = [];
+      await signIn(page, 'recepcion@example.test');
+      await page.goto(`${BASE}/#/app`); await page.waitForTimeout(1500);
+      check('enrol: no documents → the customer app opens straight away (one sign-up, no step shown)', route(page) === '/app' && (await page.locator('.appshell').count()) === 1 && (await page.locator('[data-enrol-customer]').count()) === 0 && api.signups.length === 1 && JSON.stringify(api.members.user_desk.roleKeys) === '["front_desk","member"]', `${route(page)} ${api.signups.length}`);
+      api.consents = saved;
+    }
+    await ctx.close();
+  }
+
+  if (AUTO) {
+    // Lane review: a teacher-only login (the customer routes also allow the teacher role) is enrolled too, not shown the
+    // customer screens as a teacher whose purchases Company OS refuses.
+    ({ ctx, page } = await open('/auth/sign-in'));
+    await signIn(page, 'profe@example.test');
+    await page.goto(`${BASE}/#/app/plans`); await page.waitForTimeout(1200);
+    check('enrol: a teacher-only login on a customer page gets the consent step', (await page.locator('[data-enrol-customer="consent"]').count()) === 1, route(page));
+    if (await page.locator('[data-enrol-customer="consent"]').count()) await acceptAndContinue(page);
+    check('enrol: …and then holds both roles', JSON.stringify(api.members.user_coach.roleKeys) === '["coach","member"]', JSON.stringify(api.members.user_coach.roleKeys));
+    await ctx.close();
+
+    // Lane review: answers the enrolment can't act on stop with a notice (no loop, no stuck step).
+    ({ ctx, page } = await open('/auth/sign-in'));
+    {
+      const saved = api.consents;
+      api.consents = []; api.phantomSignup = true;
+      await signIn(page, 'recepcion@example.test');
+      await page.goto(`${BASE}/#/app`); await page.waitForTimeout(4000);
+      check('enrol: a 201 that /me never reflects stops after at most 2 automatic tries, with a notice', api.signups.length <= 2 && (await page.locator('[data-enrol-customer="notice"]').count()) === 1, `${api.signups.length} ${route(page)}`);
+      api.phantomSignup = false; api.consentEmpty = true;
+      await page.locator('[data-enrol-customer="notice"] button').click(); await page.waitForTimeout(1500);
+      check('enrol: consent_required with no documents to show ends on a notice with Retry, not an empty step', (await page.locator('[data-enrol-customer="notice"]').count()) === 1 && (await page.locator('[data-enrol-customer="consent"]').count()) === 0, route(page));
+      api.consentEmpty = false; api.consents = saved;
+    }
+    await ctx.close();
+
+    // ── Owner 2026-11-01: Administration who isn't a customer yet buys a gift; the app enrols the same login ─────────
+    ({ ctx, page } = await open('/auth/sign-in'));
+    await signIn(page, 'admin@example.test');
+    await page.goto(`${BASE}/#/site/plans`); await page.waitForTimeout(1200);
+    await page.getByRole('button', { name: 'Regalar' }).first().click(); await page.waitForTimeout(800);
+    check('Y2 Give a gift (signed in, not a customer) goes to the gift page, not the dashboard', route(page) === '/app/gift-voucher', route(page));
+    check('enrol: the gift page asks only for the documents (no form, no Join wording)', (await page.locator('[data-enrol-customer="consent"]').count()) === 1 && (await page.locator('[data-enrol-customer] input:not([type=checkbox])').count()) === 0 && !/Únete|Unirme|\bJoin\b/i.test(await page.locator('[data-enrol-customer]').innerText()));
+    await acceptAndContinue(page);
+    const joined = api.signups.at(-1);
+    check('enrol: the studio sign-up is posted for the same login, with its name and the accepted documents', joined?.user === 'user_admin' && joined.body.person?.name === 'Olga Admin' && JSON.stringify(joined.body.consents) === JSON.stringify(api.consents), JSON.stringify(joined));
+    check('enrol: afterwards the same login holds both roles', JSON.stringify(api.members.user_admin.roleKeys) === '["administrator","member"]');
+    check('enrol: the gift purchase then opens as a customer (same page)', route(page) === '/app/gift-voucher' && (await page.locator('[data-enrol-customer]').count()) === 0 && (await page.locator('.appshell').count()) === 1, route(page));
+    await page.goto(`${BASE}/#/admin`); await page.waitForTimeout(800);
+    check('enrol: Administration keeps its home and gains "My classes"', route(page) === '/admin' && (await page.locator('[data-my-classes]').count()) === 1, route(page));
+    await ctx.close();
+  } else {
+    // The switch is off: Administration who isn't a customer yet is not enrolled from a purchase either.
+    ({ ctx, page } = await open('/auth/sign-in'));
+    await signIn(page, 'admin@example.test');
+    await page.goto(`${BASE}/#/site/plans`); await page.waitForTimeout(1200);
+    await page.getByRole('button', { name: 'Regalar' }).first().click(); await page.waitForTimeout(1000);
+    check('switch OFF: Give a gift for Administration (not a customer) enrols nothing and sends no sign-up', (await page.locator('[data-enrol-customer]').count()) === 0 && api.signups.length === 0 && JSON.stringify(api.members.user_admin.roleKeys) === '["administrator"]', route(page));
+    await ctx.close();
+    // A teacher-only login: the customer routes allow the teacher role, so it sees them as a teacher, not enrolled.
+    ({ ctx, page } = await open('/auth/sign-in'));
+    await signIn(page, 'profe@example.test');
+    await page.goto(`${BASE}/#/app/plans`); await page.waitForTimeout(1200);
+    check('switch OFF: a teacher-only login is not enrolled', (await page.locator('[data-enrol-customer]').count()) === 0 && api.signups.length === 0 && JSON.stringify(api.members.user_coach.roleKeys) === '["coach"]', route(page));
+    await ctx.close();
+  }
 
   // ── Y2: a signed-out visitor still goes through sign-in, keeping the purchase ─────────────────────────────────
   ({ ctx, page } = await open('/site/plans'));

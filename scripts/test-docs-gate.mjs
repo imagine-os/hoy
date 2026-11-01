@@ -58,6 +58,11 @@ const ME = {
   user_down: { status: 500, body: { error: 'boom' } },
   user_garbage: { status: 200, raw: 'not json' },
   ...Object.fromEntries(ROLE_KEYS.map((k) => [`user_${k}`, { status: 200, body: { user: { id: `user_${k}` }, roleKeys: [k], isSuperAdmin: false } }])),
+  // Review round 2 (r2hoy, M2): Company OS /me describes every entity the person can see, with every field and its
+  // config (select options…). The super admin sees them all: hundreds of KB uncompressed, and it grows with each module.
+  user_super_big: { status: 200, body: { user: { id: 'user_super_big' }, roleKeys: ['super_admin'], isSuperAdmin: true, ...realisticMe(450 * 1024) } },
+  // Still bounded: an answer far past any real /me is not read to the end.
+  user_super_huge: { status: 200, body: { user: { id: 'user_super_huge' }, roleKeys: ['super_admin'], isSuperAdmin: true, ...realisticMe(3 * 1024 * 1024) } },
 };
 const seen = [];
 const upstream = http.createServer((req, res) => {
@@ -204,6 +209,18 @@ await test('a /me that only looks like a super admin, or no membership: 403; /me
   refused(await request('GET', DOCS, auth('user_unknown')), 502);
 });
 
+await test('r2 M2: a realistically large /me (450 KB, every entity with its fields) still opens the docs for the super admin', async () => {
+  assert.ok(JSON.stringify(ME.user_super_big.body).length > 400 * 1024, 'the fixture is realistic in size');
+  const r = await request('GET', DOCS, auth('user_super_big'));
+  assert.equal(r.status, 200, r.body.toString().slice(0, 120));
+  assert.match(r.body.toString(), /^\{"version":1/);
+  assert.equal((await request('GET', PDF_PATH, auth('user_super_big'))).status, 200);
+});
+
+await test('r2 M2: the /me read stays bounded: an answer of several MB is refused 502, no content', async () => {
+  refused(await request('GET', DOCS, auth('user_super_huge')), 502);
+});
+
 await test('only GET and HEAD, with no body', async () => {
   for (const m of ['POST', 'PUT', 'DELETE', 'PATCH']) refused(await request(m, DOCS, auth('user_super')), 405);
   refused(await request('GET', DOCS, { ...auth('user_super'), 'content-length': '5' }, 'hello'), 400);
@@ -264,6 +281,19 @@ if (failed) { console.error(`\n${failed} docs gate check(s) failed`); process.ex
 console.log(`\ndocs gate passed (${results.length})`);
 
 // ── helpers ────────────────────────────────────────────────────────────────────────────────────────────────────
+/** A /me body shaped like Company OS describeTenant: entities with their fields, configs and permissions, about `bytes` long. */
+function realisticMe(bytes) {
+  const entities = [];
+  const options = Array.from({ length: 12 }, (_, i) => ({ value: `option_${i}`, label: { es: `Opción ${i}`, en: `Option ${i}` } }));
+  for (let e = 0; JSON.stringify(entities).length < bytes; e++) {
+    entities.push({
+      key: `entity_${e}`, name: `Entity ${e}`, orgUnit: null, config: { audit: true, labelField: 'name' },
+      fields: Array.from({ length: 30 }, (_, f) => ({ key: `field_${f}`, name: `Field ${f}`, type: f % 3 ? 'text' : 'select', config: f % 3 ? { maxLength: 500 } : { options }, position: f })),
+      permissions: { read: true, create: true, update: true, delete: false },
+    });
+  }
+  return { tenant: { slug: 'hoy-dev', name: 'Hoy' }, theme: {}, caps: [], orgUnits: [], entities };
+}
 function subOf(authorization) {
   try { return JSON.parse(Buffer.from((authorization ?? '').split(' ')[1].split('.')[1], 'base64url').toString()).sub; } catch { return null; }
 }

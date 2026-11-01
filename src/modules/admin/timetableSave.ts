@@ -17,7 +17,8 @@ import type { Role } from '../../auth/roles';
 import { roleCan } from '../../auth/permissions';
 import { modalities } from '../../data/seed/catalog';
 import { tenant } from '../../tenant/tenant';
-import { hasRefusalCopy } from '../../data/companyos/refusals';
+import { hasRefusalCopy, refusalCopy } from '../../data/companyos/refusals';
+import type { Lang } from '../../i18n/types';
 
 export const TIMETABLE_FIELDS = ['title', 'modality_id', 'teacher_id', 'room_id', 'weekday', 'start_time', 'duration_min', 'capacity', 'start_date', 'end_date', 'active'] as const;
 /** Editor fields Company OS doesn't store (derived in mapping.ts): hidden in production. */
@@ -46,6 +47,39 @@ export function definiteRefusal(e: unknown): string | null {
   if (typeof err.code !== 'string' || !err.code) return null;
   if (err.refused === true) return err.code;
   return typeof err.status === 'number' && err.status >= 400 && err.status < 500 && err.ambiguous !== true && hasRefusalCopy(err.code) ? err.code : null;
+}
+
+/**
+ * Review round 2 (r2hoy, r2co contract): bookings 1.6.0's timetable check names what the row clashes with in
+ * `details` (`source` "schedule": another active row; "class": a class still to come that another row, often a switched-off
+ * one, already made), so the editor can say which class, when, and a remedy that works. Anything malformed: null.
+ */
+interface OverlapDetails { source: 'schedule' | 'class'; title: string; date: string; time: string }
+function overlapDetails(e: unknown): OverlapDetails | null {
+  const d = e && typeof e === 'object' ? (e as { details?: unknown }).details : null;
+  if (!d || typeof d !== 'object' || Array.isArray(d)) return null;
+  const { source, title, date, time } = d as Record<string, unknown>;
+  if (source !== 'schedule' && source !== 'class') return null;
+  if (typeof title !== 'string' || !title.trim() || typeof date !== 'string' || !isDay(date) || typeof time !== 'string' || !/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) return null;
+  const short = title.trim().replace(/\s+/g, ' ');
+  return { source, title: short.length > 80 ? `${short.slice(0, 79)}…` : short, date, time };
+}
+const dayLabel = (date: string, lang: Lang) => new Date(`${date}T12:00:00Z`).toLocaleDateString(lang === 'en' ? 'en-US' : 'es-CO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+
+/** The line the editor shows for a definite refusal: the code's copy, or for a room clash with details, a precise one. */
+export function refusalText(e: unknown, lang: Lang): string {
+  const code = definiteRefusal(e) ?? (e && typeof e === 'object' && typeof (e as { code?: unknown }).code === 'string' ? (e as { code: string }).code : '');
+  const d = code === 'resource_overlap' ? overlapDetails(e) : null;
+  if (!d) return refusalCopy(code, lang);
+  const day = dayLabel(d.date, lang);
+  if (d.source === 'schedule') {
+    return lang === 'en'
+      ? `That room already has “${d.title}” at that time, from another published timetable row (for example on ${day} at ${d.time}). Choose another time or room. If this row replaces that one, switch that one off and start this one after its last class already made.`
+      : `Esa sala ya tiene «${d.title}» a esa hora, de otro horario publicado (por ejemplo el ${day} a las ${d.time}). Elige otra hora u otra sala. Si este horario reemplaza a ese, desactívalo y haz que este empiece después de su última clase ya creada.`;
+  }
+  return lang === 'en'
+    ? `That room already has “${d.title}” on ${day} at ${d.time}, a class another timetable row already made (that row may be switched off). Start this row after that date (set its start date), or cancel that class only if nobody has booked it.`
+    : `Esa sala ya tiene «${d.title}» el ${day} a las ${d.time}, una clase que otro horario ya creó (ese horario puede estar desactivado). Haz que este horario empiece después de esa fecha (su fecha de inicio), o cancela esa clase solo si nadie la reservó.`;
 }
 
 const MODALITY_IDS = new Set(modalities.map((m) => m.id));

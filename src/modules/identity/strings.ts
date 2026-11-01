@@ -67,11 +67,20 @@ export const strings: StringTable = {
   'identity.access.signout.body': { es: 'Cierra tu sesión en este dispositivo. Para volver necesitarás un código nuevo.', en: 'Signs you out on this device. You will need a new code to come back.' },
   'identity.access.nav': { es: 'Acceso y seguridad', en: 'Sign-in and security' },
   // Lane Y2 (test-hoy fixes): a studio login joins as a customer on the same email.
-  'identity.join.title': { es: 'Únete como cliente', en: 'Join as a customer' },
-  'identity.join.body': { es: 'Entraste como {role}. Para reservar y pagar clases con este mismo correo, completa tus datos de cliente. Tu acceso de equipo no cambia.', en: 'You are signed in as {role}. To book and pay for classes with this same email, complete your customer details. Your team access stays as it is.' },
-  'identity.join.cta': { es: 'Unirme como cliente', en: 'Join as a customer' },
-  'identity.join.conflict': { es: 'No pudimos unir tu cuenta de cliente a este correo. Escríbele a administración para revisarlo.', en: 'We could not add a customer profile to this email. Please contact the studio administration.' },
-  'identity.join.back': { es: 'Volver a mi inicio', en: 'Back to my home' },
+  // Owner 2026-11-01: every registered login is a customer. A studio login is enrolled on its first customer-area visit;
+  // the only step it may see is the documents every customer accepts once. No "Join" wording, no raw codes.
+  'identity.enrol.loading': { es: 'Preparando tu acceso de cliente…', en: 'Setting up your customer access…' },
+  'identity.enrol.title': { es: 'Antes de reservar', en: 'Before you book' },
+  'identity.enrol.consent': { es: 'Para reservar y pagar clases, acepta los documentos del estudio. Solo se pide una vez.', en: 'To book and pay for classes, accept the studio\'s documents. You are asked only once.' },
+  'identity.enrol.cta': { es: 'Aceptar y continuar', en: 'Accept and continue' },
+  'identity.enrol.conflict': { es: 'No pudimos activar tu acceso de cliente con este correo. Escríbele a administración para revisarlo.', en: 'We could not turn on your customer access with this email. Please contact the studio administration.' },
+  'identity.enrol.invalid': { es: 'No pudimos activar tu acceso de cliente con los datos de tu ficha. Escríbele a administración para revisarlo.', en: 'We could not turn on your customer access with the details on your profile. Please contact the studio administration.' },
+  'identity.enrol.failed': { es: 'No pudimos activar tu acceso de cliente ahora. Reintenta; no se duplicará.', en: 'We could not turn on your customer access right now. Retry; it will not be duplicated.' },
+  'identity.enrol.back': { es: 'Volver a mi inicio', en: 'Back to my home' },
+  // Review round 2 (r2hoy): sign-up answers that don't go on, each with a line that fits.
+  'identity.register.conflict': { es: 'Este correo ya tiene una cuenta en el estudio, pero no pudimos terminar tu registro. Escríbele a administración para revisarlo.', en: 'This email already has an account at the studio, but we could not finish your sign-up. Please contact the studio administration.' },
+  'identity.signup.emailLinked': { es: 'Este correo ya está en la ficha de una persona que entra con otra cuenta. Escríbele a administración para revisarlo; no tienes que hacer nada más.', en: 'This email is already on the profile of someone who signs in with another account. Please contact the studio administration to sort it out; there is nothing else you need to do.' },
+  'identity.signup.personLinked': { es: 'Tu ficha en el estudio está unida a otra cuenta. Escríbele a administración para que la revisen.', en: 'Your profile at the studio is linked to another account. Please contact the studio administration to check it.' },
   'identity.noAccess.title': { es: 'Esta zona no es para tu cuenta', en: 'This area is not for your account' },
   'identity.noAccess.body': { es: 'Entraste como {role}. Si crees que deberías ver esta página, escríbele a administración.', en: 'You are signed in as {role}. If you think you should see this page, contact the studio administration.' },
   'identity.noAccess.home': { es: 'Ir a mi inicio', en: 'Go to my home' },

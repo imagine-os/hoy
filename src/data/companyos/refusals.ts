@@ -23,7 +23,9 @@ export const CONTRACT_REFUSALS = {
   invalid_transition: { es: 'Esta reserva ya no se puede cambiar así. Actualiza la página para ver su estado.', en: 'This booking can no longer be changed this way. Refresh to see its current status.' },
   booking_system_managed: { es: 'El estudio gestiona este cambio. Escríbenos si necesitas ayuda.', en: 'The studio handles this change. Write to us if you need help.' },
   // Lane Y5: a room holds one class at a time (bookings enforce_no_overlap): a class, or a timetable row since bookings 1.6.0.
-  resource_overlap: { es: 'Esa sala ya tiene una clase a esa hora. Elige otra hora u otra sala, o desactiva la otra clase primero.', en: 'That room already has a class at that time. Choose another time or room, or deactivate the other class first.' },
+  // Review round 2 (r2hoy): switching the other row off doesn't free the room for the classes it already made, so that is
+  // no longer offered; with bookings 1.6.0's details the timetable editor names the clash (timetableSave.ts refusalText).
+  resource_overlap: { es: 'Esa sala ya tiene una clase a esa hora. Elige otra hora u otra sala. Si este horario reemplaza a otro, haz que empiece después de la última clase ya creada del otro, o cancela esas clases solo si nadie las reservó.', en: 'That room already has a class at that time. Choose another time or room. If this row replaces another one, start it after the other row\'s last class already made, or cancel those classes only if nobody has booked them.' },
   reason_required: { es: 'Escribe un motivo nuevo para este cambio.', en: 'Write a new reason for this change.' },
   // Credits
   no_credits: { es: 'No te quedan clases disponibles. Compra un paquete o una clase.', en: 'You have no classes left. Buy a pack or a single class.' },
@@ -54,6 +56,11 @@ export const CONTRACT_REFUSALS = {
   storage_unavailable: { es: 'No pudimos guardar el archivo ahora. Inténtalo en unos minutos.', en: 'We could not store the file right now. Try again in a few minutes.' },
   // Sign-up and people
   already_signed_up: { es: 'Ya tienes una cuenta. Inicia sesión.', en: 'You already have an account. Sign in.' },
+  // Review round 2 (r2hoy): the sign-up codes (the sign-up and Join forms use their own lines in identity/strings.ts:
+  // signupNoticeKey; these are for anywhere else that meets them). already_registered: done only if /me says so.
+  already_registered: { es: 'Este correo ya tiene una cuenta en el estudio. Inicia sesión, o escríbele a administración si no puedes entrar.', en: 'This email already has an account at the studio. Sign in, or contact the studio administration if you cannot.' },
+  email_linked_to_other_login: { es: 'Este correo ya está en la ficha de una persona que entra con otra cuenta. Escríbele a administración para revisarlo.', en: 'This email is already on the profile of someone who signs in with another account. Please contact the studio administration.' },
+  duplicate_person_user: { es: 'Esta ficha ya está unida a otra cuenta. Escríbele a administración para revisarla.', en: 'This profile is already linked to another account. Please contact the studio administration.' },
   person_email_mismatch: { es: 'Ese correo ya pertenece a otra persona. Escríbenos para revisarlo.', en: 'That email belongs to someone else. Write to us so we can check it.' },
   consent_required: { es: 'Acepta los términos y la política de privacidad para continuar.', en: 'Accept the terms and the privacy policy to continue.' },
   email_change_not_allowed: { es: 'El estudio cambia el correo con el que entras. Escríbenos para hacerlo.', en: 'The studio changes the email you sign in with. Write to us to do it.' },
@@ -108,7 +115,8 @@ export const CONNECTOR_REFUSALS = {
   content_denied: { es: 'Solo Administración y Coordinación cambian el horario. No se guardó nada.', en: 'Only Administration and the Coordinator change the timetable. Nothing was saved.' },
   content_conflict: { es: 'Alguien cambió esta fila mientras la editabas. Cierra y vuelve a abrirla para ver la versión actual; tu cambio no se guardó.', en: 'Someone changed this row while you were editing it. Close and reopen it to see the current version; your change was not saved.' },
   timetable_class_type_required: { es: 'Elige la modalidad de esta fila antes de publicarla: sin modalidad sus clases no se pueden reservar. No se guardó nada.', en: 'Choose this row\'s modality (its class type) before publishing it: without one its classes can\'t be booked. Nothing was saved.' },
-  timetable_deactivate_instead: { es: 'Las filas del horario no se borran: desactívala (Publicado: no) y sus clases ya creadas siguen intactas.', en: 'Timetable rows are not deleted: deactivate it (Published: off) and its classes already made stay as they are.' },
+  // Owner 2026-11-01 (r2 L3, "Stop new classes only"): switching a row off stops new classes; the ones already made stay bookable.
+  timetable_deactivate_instead: { es: 'Las filas del horario no se borran: desactívala (Publicado: no) para que no se creen clases nuevas. Las clases ya creadas siguen abiertas a reservas; para suspender una, cancela esa clase.', en: 'Timetable rows are not deleted: switch it off (Published: off) so no new classes are made. Classes already made stay open for booking; to call one off, cancel that class.' },
   content_later: { es: 'Editar este contenido desde la app llega en una próxima actualización. Por ahora no se guardó nada.', en: 'Editing this content from the app arrives in a coming update. Nothing was saved for now.' },
   checkout_server_only: { es: 'Esta compra se hace desde la página de pago. Vuelve a elegir el paquete.', en: 'This purchase is made from the payment page. Choose the pack again.' },
   // View-as (Hoy all-roles, lane D): a super admin viewing as another role can look, not change (src/auth/viewAs.ts).

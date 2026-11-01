@@ -207,6 +207,14 @@ jobs:
           if ! printf '%s' "$COMPANY_OS_TENANT" | grep -Eq '^[a-z0-9][a-z0-9-]*$'; then echo "::error::Set the production variable COMPANY_OS_TENANT to Hoy's tenant slug"; exit 1; fi
           if [ -z "$HOY_RAILWAY_PROJECT" ]; then echo "::error::Set the production variable RAILWAY_PROJECT_NAME"; exit 1; fi
 
+      # Review round 2 (r2hoy, L7): a variable left under a wrong or retired name (SET_LIVE, PUBLIC_DOCUMENTS) is warned
+      # about here, before Apply infra (which fails on a variable the IaC doesn't declare). Never prints a value.
+      - name: Leftover variables
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          { railway variable list --service "$SERVICE" --environment "$RAILWAY_ENV" --json 2>/dev/null || echo 'unreadable'; } | node scripts/deploy-switches.mjs --leftovers
+
       - name: Infra plan
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}

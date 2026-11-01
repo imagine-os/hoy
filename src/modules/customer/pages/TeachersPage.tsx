@@ -47,7 +47,7 @@ export function TeacherProfilePage() {
   const all = sessions.rows.map(session => ({session, templateActive: templates.rows.find(t => t.id === session.template_id)?.active, modality: modalities.find(m => m.id === session.modality_id), room: rooms.rows.find(r => r.id === session.room_id)}));
   const te = rows[0];
 
-  const upcoming = all.filter(x => x.session.teacher_id === id && x.session.status === 'scheduled' && x.templateActive !== false && x.modality?.active && new Date(x.session.starts_at).getTime() > Date.now()).slice(0, 6);
+  const upcoming = all.filter(x => x.session.teacher_id === id && x.session.status === 'scheduled' && x.modality?.active && new Date(x.session.starts_at).getTime() > Date.now()).slice(0, 6);
   if (loading || error || modalitiesRead.loading || modalitiesRead.error) return <div className="container page cust-page"><PageHead back="/app/teachers" title={t('customer.teachers.title')} />{error || modalitiesRead.error ? <Notice tone="danger" action={<Button onClick={() => { retry(); modalitiesRead.retry(); }}>{t('customer.support.retry')}</Button>}>{t('customer.support.readError')}</Notice> : <EmptyState tone="loading" title={t('core.common.loading')} />}</div>;
   if (!te) {
     return <div className="container page cust-page"><PageHead back="/app/teachers" title={t('customer.teachers.notFound')} /><EmptyState title={t('customer.teachers.notFound')} action={<Link to="/app/teachers"><Button>{t('customer.teachers.title')}</Button></Link>} /></div>;

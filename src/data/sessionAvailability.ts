@@ -14,17 +14,20 @@ export function sessionUnavailableReason({ session, modality, templateActive }: 
   if (!Number.isFinite(start) || !Number.isFinite(end)) return 'unavailable';
   if (end <= now) return 'ended';
   if (start <= now) return 'started';
-  if (templateActive === false || modality?.active === false) return 'unpublished';
+  // Owner 2026-11-01 (review round 2, L3, "Stop new classes only"): switching a timetable row off stops new classes; the
+  // classes it already made stay on the schedule and bookable (staff cancel one to call it off). Only a withdrawn class
+  // type makes a class "not published". `templateActive` is kept for the staff screens, never as a reason here.
+  void templateActive;
+  if (modality?.active === false) return 'unpublished';
   // Lane Y1: a class without a class type (no colour, letter or description) is not open for booking, as admission says.
   if (!modality) return 'no_class_type';
   return null;
 }
 
 /**
- * Review round 1 (r1hoy, L7): whether a class's timetable row is published, for the reader. A visitor (the website's
- * `public_site` reader) gets only the published rows, so a class whose row isn't among the rows read was made from a row
- * that is switched off: false ("not published"). Undefined for a one-off class, or for a reader who got no rows at all
- * (nothing is known; the class type rule then speaks).
+ * Whether a class's timetable row is published, for the reader (r1hoy L7): a visitor gets only the published rows, so a
+ * class whose row isn't among them was made from a switched-off row: false. Undefined for a one-off class or a reader
+ * with no rows. Since the owner's r2 L3 decision this no longer closes the class (`sessionUnavailableReason`).
  */
 export function templateActiveOf(templateId: string | null | undefined, templates: readonly { id: string; active?: boolean }[]): boolean | undefined {
   if (!templateId || templates.length === 0) return undefined;
