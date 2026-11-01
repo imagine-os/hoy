@@ -42,9 +42,11 @@ const server = createServer(async (req, res) => {
     if (route === '/signup' && req.method === 'POST') {
       const body = JSON.parse(await new Promise((r) => { let s = ''; req.on('data', (c) => { s += c; }); req.on('end', () => r(s)); }));
       api.signups.push({ user, body });
-      if (api.members[user]) return json(res, 409, { error: 'already_registered' });
+      // Company OS (ADR 0038 amendment 2026-11-01): a login already in the studio gains the Customer role once.
+      if (api.members[user]?.roleKeys.includes('member')) return json(res, 409, { error: 'already_registered' });
       const missing = api.consents.filter((c) => !body.consents?.some((x) => x.document === c.document && x.version === c.version));
       if (missing.length) return json(res, 422, { error: 'consent_required', details: { required: api.consents } });
+      if (api.members[user]) { api.members[user].roleKeys.push('member'); return json(res, 201, { userId: user, personId: 'per_staff', facetId: 'mem_staff' }); }
       api.members[user] = { name: body.person.name, email: 'nueva@example.test', roleKeys: ['member'] };
       return json(res, 201, { userId: user, personId: 'per_1', facetId: 'mem_1' });
     }
@@ -65,11 +67,14 @@ const ACCOUNTS = {
   user_ana: { emails: [{ id: 'ea_ana', email: 'ana@example.test', verified: true }], primary: 'ea_ana' },
   user_desk: { emails: [{ id: 'ea_desk', email: 'recepcion@example.test', verified: true }], primary: 'ea_desk' },
   user_admin: { emails: [{ id: 'ea_admin', email: 'admin@example.test', verified: true }], primary: 'ea_admin' },
+  user_both: { emails: [{ id: 'ea_both', email: 'ambas@example.test', verified: true }], primary: 'ea_both' },
 };
 const MEMBERS = () => ({
   user_ana: { name: 'Ana Prueba', email: 'ana@example.test', roleKeys: ['member'] },
   user_desk: { name: 'Rita Recepción', email: 'recepcion@example.test', roleKeys: ['front_desk'] },
   user_admin: { name: 'Olga Admin', email: 'admin@example.test', roleKeys: ['administrator'] },
+  // Administration who also takes classes, on one email (owner 2026-11-01).
+  user_both: { name: 'Bea Ambas', email: 'ambas@example.test', roleKeys: ['administrator', 'member'] },
 });
 
 const browser = await launchBrowser();
@@ -256,7 +261,9 @@ try {
   const noAccess = await page.locator('body').innerText();
   check('PL-03 the no-access page has no hub or persona switcher', !/Ir al hub|usuario demo/i.test(noAccess) && (await page.locator('#rs-user').count()) === 0 && /Esta zona no es para tu cuenta/.test(noAccess));
   await page.goto(`${BASE}/#/app`); await page.waitForTimeout(800);
-  check('PL-04 front desk does not open the customer app', route(page).startsWith('/no-access'), route(page));
+  // Changed on purpose (test-hoy fixes, lane Y2): a studio login that isn't a customer is offered to join on the
+  // customer pages instead of the no-access page; the customer screens stay closed until it does.
+  check('Y2 front desk on the customer app is offered "Join as a customer", not the customer screens', route(page) === '/app' && (await page.locator('[data-join-customer]').count()) === 1 && (await page.locator('.appshell').count()) === 0, route(page));
   await page.goto(`${BASE}/#/staff`); await page.waitForTimeout(1000);
   check('PL-03 the staff shell shows the account and a sign-out button, not a persona list', (await page.locator('[data-account-chip]').count()) > 0 && (await page.locator('#rs-user').count()) === 0);
   await page.locator('[data-account-chip] button').first().click();
@@ -276,6 +283,55 @@ try {
   await page.locator('[data-account-chip] button').first().click();
   await page.waitForTimeout(1000);
   check('CU-04 administration sign-out ends on the sign-in form (no spinner, no error)', await page.evaluate(() => window.__fakeClerk.state.active === null) && await signedOutForm(page), route(page));
+  await ctx.close();
+
+  // ── Y2: Administration who is also a customer goes straight into booking and payment (one email) ─────────────
+  ({ ctx, page } = await open('/auth/sign-in'));
+  await signIn(page, 'ambas@example.test');
+  check('Y2 Administration + customer lands on the admin home (the primary role keeps its home)', route(page) === '/admin', route(page));
+  check('Y2 the admin menu has a "My classes" link to the customer area', (await page.locator('[data-my-classes]').count()) === 1 && /Mis clases/.test(await page.locator('[data-my-classes]').innerText()) && (await page.locator('[data-my-classes]').getAttribute('href'))?.endsWith('#/app'));
+  await page.goto(`${BASE}/#/site/plans`); await page.waitForTimeout(1200);
+  await page.getByRole('button', { name: 'Regalar' }).first().click(); await page.waitForTimeout(800);
+  check('Y2 Give a gift goes straight to the gift purchase (no sign-in, no dashboard)', route(page) === '/app/gift-voucher', route(page));
+  check('Y2 …and opens it as a customer (the customer app, no Join offer)', (await page.locator('.appshell').count()) === 1 && (await page.locator('[data-join-customer]').count()) === 0);
+  check('Y2 the customer app offers the way back to the admin home', (await page.locator('[data-primary-home]').count()) === 1 && (await page.locator('[data-primary-home]').getAttribute('href'))?.endsWith('#/admin'));
+  await page.goto(`${BASE}/#/app/plans`); await page.waitForTimeout(800);
+  check('Y2 the plans page opens for Administration + customer', route(page) === '/app/plans' && (await page.locator('.appshell').count()) === 1, route(page));
+  await page.goto(`${BASE}/#/auth/sign-in?next=${encodeURIComponent('/app/plans?plan=pack12')}`); await page.waitForTimeout(800);
+  check('Y2 an /app return is honoured for a login holding the customer role', route(page) === '/app/plans?plan=pack12', route(page));
+  await page.goto(`${BASE}/#/admin/settings`); await page.waitForTimeout(800);
+  check('Y2 the admin screens still open as Administration', route(page) === '/admin/settings', route(page));
+  await ctx.close();
+
+  // ── Y2: Administration who isn't a customer yet joins from the purchase page, on the same login ───────────────
+  ({ ctx, page } = await open('/auth/sign-in'));
+  await signIn(page, 'admin@example.test');
+  await page.goto(`${BASE}/#/site/plans`); await page.waitForTimeout(1200);
+  await page.getByRole('button', { name: 'Regalar' }).first().click(); await page.waitForTimeout(800);
+  check('Y2 Give a gift (signed in, not a customer) goes to the gift page, not the dashboard', route(page) === '/app/gift-voucher', route(page));
+  check('Y2 the page offers "Join as a customer" with the studio form', (await page.locator('[data-join-customer] [data-register]').count()) === 1 && /cliente/i.test(await page.locator('[data-join-customer]').innerText()));
+  check('Y2 the form starts from the login\'s name', (await page.locator('[data-join-customer] [data-register] input').first().inputValue()) === 'Olga Admin');
+  const join = page.locator('[data-join-customer] [data-register]');
+  const joinInputs = join.locator('input:not([type=checkbox])');
+  await joinInputs.nth(1).fill('+57 300 555 0177');
+  await joinInputs.nth(2).fill('Luis Prueba');
+  await joinInputs.nth(3).fill('+57 300 555 0178');
+  await join.locator('input[type=checkbox]').check();
+  await join.locator('button[type=submit]').click();
+  await page.waitForTimeout(1500);
+  const joined = api.signups.at(-1);
+  check('Y2 joining posts the studio sign-up for the same login', joined?.user === 'user_admin' && joined.body.person?.name === 'Olga Admin' && JSON.stringify(joined.body.consents) === JSON.stringify(api.consents), JSON.stringify(joined));
+  check('Y2 after joining, the same login holds both roles', JSON.stringify(api.members.user_admin.roleKeys) === '["administrator","member"]');
+  check('Y2 after joining, the gift purchase opens as a customer (no Join offer, same page)', route(page) === '/app/gift-voucher' && (await page.locator('[data-join-customer]').count()) === 0 && (await page.locator('.appshell').count()) === 1, route(page));
+  await page.goto(`${BASE}/#/admin`); await page.waitForTimeout(800);
+  check('Y2 after joining, Administration keeps its home and gains "My classes"', route(page) === '/admin' && (await page.locator('[data-my-classes]').count()) === 1, route(page));
+  await ctx.close();
+
+  // ── Y2: a signed-out visitor still goes through sign-in, keeping the purchase ─────────────────────────────────
+  ({ ctx, page } = await open('/site/plans'));
+  await page.waitForTimeout(600);
+  await page.getByRole('button', { name: 'Regalar' }).first().click(); await page.waitForTimeout(800);
+  check('Y2 signed out, Give a gift goes to sign-in with the return', route(page) === '/auth/sign-in?next=/app/gift-voucher', route(page));
   await ctx.close();
 
   // ── PL-04: /me failing is an error with a retry, never a guessed role ────────────────────────────────────────

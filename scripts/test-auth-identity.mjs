@@ -15,6 +15,7 @@ const bundle = await build({
     "export * from './src/auth/clerkFlows';",
     "export { safeAuthBack, visitorSignIn } from './src/auth/visitorSignIn';",
     "export { signInReturn, homeFor, authLink } from './src/auth/signInReturn';",
+    "export { purchaseEntry, joinsAsCustomer } from './src/auth/purchaseEntry';",
     "export { LAUNCH_ROUTES, isLaunchRoute } from './src/config/launchRoutes';",
     "export { getSessionToken, setSessionTokenSource } from './src/auth/sessionToken';",
     "export * as team from './src/modules/admin/team/teamApi';",
@@ -182,6 +183,31 @@ check('return: a teacher follows a teacher next; others are not sent into the te
 check('return: a developer follows /dev; Administration is not sent into dev tools', M.homeFor('developer', '/dev') === '/dev' && M.homeFor('admin', '/dev') === '/admin' && M.homeFor('super_admin', '/dev') === '/dev');
 check('return: a staff next outside the role\'s matrix goes home', M.homeFor('marketing', '/admin/finance') === '/admin/content' && M.homeFor('maintenance', '/admin/settings') === '/staff' && M.homeFor('finance', '/admin/finance') === '/admin/finance');
 check('return: the Google back link keeps a staff next', M.safeAuthBack('/auth/sign-in?next=/staff/transfers') === '/auth/sign-in?next=%2Fstaff%2Ftransfers');
+
+// ── Test-hoy fixes, lane Y2: one email for staff who are also customers (owner 2026-11-01) ───────────────────
+// The session carries every role the login holds (/me), in primary order; the primary is the first one.
+const rolesOf = (keys, extra) => M.rolesFromMe?.(me(keys, extra));
+check('Y2 roles: every role the login holds, primary first', JSON.stringify(rolesOf(['member', 'administrator'])) === '["admin","customer"]' && JSON.stringify(rolesOf(['member', 'coach', 'front_desk'])) === '["front_desk","teacher","customer"]', JSON.stringify(rolesOf(['member', 'administrator'])));
+check('Y2 roles: the first role is always roleFromMe (the primary)', [['member'], ['administrator', 'member'], ['coach', 'member'], ['treasurer', 'booking_manager', 'member'], ['super_admin', 'member']].every((k) => rolesOf(k, k.includes('super_admin') ? { isSuperAdmin: true } : {})?.[0] === M.roleFromMe(me(k, k.includes('super_admin') ? { isSuperAdmin: true } : {}))));
+check('Y2 roles: AD-04 Administration\'s technical super_admin membership is not a role it works as', JSON.stringify(rolesOf(['administrator', 'super_admin', 'member'], { isSuperAdmin: true })) === '["admin","customer"]');
+check('Y2 roles: a plain "super_admin" key without isSuperAdmin, unknown keys and public_site open nothing', JSON.stringify(rolesOf(['super_admin', 'owner', 'public_site', '__proto__'])) === '[]' && JSON.stringify(rolesOf(['super_admin', 'member'])) === '["customer"]');
+check('Y2 roles: a platform operator (isSuperAdmin, no membership) is super_admin only', JSON.stringify(rolesOf([], { isSuperAdmin: true })) === '["super_admin"]');
+check('Y2 roles: no duplicates however /me repeats a key', JSON.stringify(rolesOf(['member', 'member', 'administrator', 'administrator'])) === '["admin","customer"]');
+// Sign-in return: an /app target is honoured for any login holding the customer role, whatever its primary role.
+check('Y2 return: Administration who is also a customer follows an /app next', M.homeFor('admin', '/app/plans?plan=pack12', ['admin', 'customer']) === '/app/plans?plan=pack12' && M.homeFor('front_desk', '/app/receipts/p1', ['front_desk', 'customer']) === '/app/receipts/p1');
+check('Y2 return: a staff login that is not a customer yet follows a purchase or booking next (the page offers Join)', M.homeFor('admin', '/app/plans?plan=pack12', ['admin']) === '/app/plans?plan=pack12' && M.homeFor('front_desk', '/app/checkout/occ_1?mat=3') === '/app/checkout/occ_1?mat=3' && M.homeFor('admin', '/app/gift-voucher') === '/app/gift-voucher');
+check('Y2 return: other /app pages still send a non-customer home (unchanged)', M.homeFor('admin', '/app/booking/b1', ['admin']) === '/admin' && M.homeFor('admin', '/app/receipts/p1') === '/admin');
+check('Y2 return: a hostile next is still dropped for a multi-role login', ['//evil.example', '/app/plans?plan=x&next=//evil', '/app/../admin', 'https://evil.example/app'].every((n) => M.homeFor('admin', n, ['admin', 'customer']) === '/admin'));
+check('Y2 return: the held roles never widen a staff next (the matrix of the primary decides)', M.homeFor('marketing', '/admin/finance', ['marketing', 'customer']) === '/admin/content');
+// The website's purchase and booking buttons.
+check('Y2 entry: signed out → sign-in keeping the return', M.purchaseEntry?.({ role: 'public' }, '/app/plans?plan=pack12') === `/auth/sign-in?next=${encodeURIComponent('/app/plans?plan=pack12')}`);
+check('Y2 entry: signed in (any role) → straight to the purchase or booking page', ['customer', 'admin', 'front_desk', 'teacher', 'super_admin'].every((role) => M.purchaseEntry?.({ role }, '/app/checkout/occ_1?mat=3') === '/app/checkout/occ_1?mat=3'));
+check('Y2 entry: a target outside the customer allowlist is never followed', M.purchaseEntry?.({ role: 'admin' }, '//evil.example') === '/app' && M.purchaseEntry?.({ role: 'public' }, 'https://evil.example') === '/auth/sign-in');
+// Who is offered "Join as a customer" on a customer page they can't open yet.
+const joinCase = (o) => M.joinsAsCustomer?.({ status: 'ready', signedIn: true, viewAs: null, roles: ['admin'], routeRoles: ['customer', 'teacher'], path: '/app/plans', ...o });
+check('Y2 join: a signed-in staff login without the customer role, on a customer page', joinCase({}) === true && joinCase({ roles: ['front_desk'], path: '/app/checkout/occ_1' }) === true);
+check('Y2 join: never while viewing as, signed out, loading or unfinished, or for someone already a customer', joinCase({ viewAs: 'admin' }) === false && joinCase({ signedIn: false }) === false && joinCase({ status: 'loading' }) === false && joinCase({ status: 'needs-signup' }) === false && joinCase({ roles: ['admin', 'customer'] }) === false);
+check('Y2 join: never outside the customer area or on a page customers can\'t open', joinCase({ path: '/admin/settings', routeRoles: ['admin'] }) === false && joinCase({ path: '/staff', routeRoles: ['front_desk'] }) === false && joinCase({ path: '/app/x', routeRoles: ['teacher'] }) === false);
 
 // ── AD-06 team panel: every staff role can be granted and changed (Hoy all-roles, lane C) ─────────────────────
 {
