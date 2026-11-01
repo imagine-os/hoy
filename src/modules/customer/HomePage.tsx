@@ -81,7 +81,7 @@ export function CustomerHomePage() {
       <section className="stack-sm">
         <div className="eyebrow">{t('customer.home.next')}</div>
         {next
-          ? <ClassCard variant="next" title={next.session.title} teacher={next.teacher?.display_name ?? ''} room="Sala principal" startsAt={next.session.starts_at} endsAt={next.session.ends_at} tone={next.modality?.tone ?? 'river'} booked={next.session.booked_count} capacity={next.session.capacity} cta={{ label: t('customer.home.view'), onClick: () => nav(`/app/class/${next.session.id}`) }} />
+          ? <ClassCard variant="next" title={next.session.title} teacher={next.teacher?.display_name ?? ''} room={next.room?.name} startsAt={next.session.starts_at} endsAt={next.session.ends_at} tone={next.modality?.tone ?? 'river'} booked={next.session.booked_count} capacity={next.session.capacity} cta={{ label: t('customer.home.view'), onClick: () => nav(`/app/class/${next.session.id}`) }} />
           : <Card className="row-between wrap"><span className="muted small">{t('customer.home.next.empty')}</span><Link to="/app/schedule"><Button size="sm">{t('customer.home.next.cta')}</Button></Link></Card>}
       </section>
     ),

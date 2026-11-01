@@ -45,6 +45,13 @@ try {
     assert.match(page, /room=\{[^}]*room_id/);
   });
 
+  await check('the customer home\'s next class names its own room (review round, lane Y1)', async () => {
+    const page = await src('src/modules/customer/HomePage.tsx');
+    assert.ok(!page.includes('room="Sala principal"'), 'no fixed room');
+    assert.match(page, /room=\{next\.room\?\.name\}/);
+    assert.match(await src('src/modules/website/hooks.ts'), /room: rooms\.find\(\(r\) => r\.id === s\.room_id\)/);
+  });
+
   await check('the app\'s class detail refuses a class without a class type with that reason', async () => {
     const page = await src('src/modules/customer/pages/ClassDetailPage.tsx');
     assert.match(page, /no_class_type/);
