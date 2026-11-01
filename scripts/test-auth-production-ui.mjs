@@ -44,11 +44,16 @@ const server = createServer(async (req, res) => {
       api.signups.push({ user, body });
       // Company OS (ADR 0038 amendment 2026-11-01): a login already in the studio gains the Customer role once.
       if (api.members[user]?.roleKeys.includes('member') || api.joinConflict) return json(res, 409, { error: 'already_registered' });
+      // r2co contract (review round 2): the login's verified email is on a person linked to another login.
+      if (api.emailLinked) return json(res, 409, { error: 'email_linked_to_other_login', message: 'a person with this email is linked to another login' });
+      if (api.duplicatePerson) return json(res, 422, { error: 'duplicate_person_user', message: 'person is linked to another user' });
       const missing = api.consents.filter((c) => !body.consents?.some((x) => x.document === c.document && x.version === c.version));
       if (missing.length) return json(res, 422, { error: 'consent_required', details: { required: api.consents } });
-      if (api.members[user]) { api.members[user].roleKeys.push('member'); return json(res, 201, { userId: user, personId: 'per_staff', facetId: 'mem_staff' }); }
-      api.members[user] = { name: body.person.name, email: 'nueva@example.test', roleKeys: ['member'] };
-      return json(res, 201, { userId: user, personId: 'per_1', facetId: 'mem_1' });
+      if (api.members[user]) api.members[user].roleKeys.push('member');
+      else api.members[user] = { name: body.person.name, email: 'nueva@example.test', roleKeys: ['member'] };
+      // Review round 2: the sign-up commits but its answer is lost on the way (a slow phone connection).
+      if (api.loseAnswer) { api.loseAnswer = false; req.socket.destroy(); return; }
+      return json(res, 201, { userId: user, personId: api.members[user].roleKeys.length > 1 ? 'per_staff' : 'per_1', facetId: 'mem_1' });
     }
     return json(res, 404, { error: 'not_found' });
   }
@@ -80,7 +85,7 @@ const MEMBERS = () => ({
 const browser = await launchBrowser();
 const errors = [];
 async function open(path = '/', { lang = 'es', width = 1280, clerk = true } = {}) {
-  api.members = MEMBERS(); api.meStatus = null; api.signupEnabled = true; api.signups = []; api.joinConflict = false;
+  api.members = MEMBERS(); api.meStatus = null; api.signupEnabled = true; api.signups = []; api.joinConflict = false; api.emailLinked = false; api.duplicatePerson = false; api.loseAnswer = false;
   const ctx = await browser.newContext({ viewport: { width, height: 900 }, reducedMotion: 'reduce' });
   // Playwright tries the last route added first: everything outside is blocked, except Clerk's script (the fake).
   // `clerk: false` blocks Clerk's script too (a CDN outage or a blocker).
@@ -235,6 +240,36 @@ try {
   check('CU-01 after sign-up the customer lands on the class they chose', route(page) === '/app/checkout/cls_1', route(page));
   await ctx.close();
 
+  // Review round 2 (r2hoy): a new login's sign-up whose answer is lost goes on after the retry's 409 (it went through).
+  ({ ctx, page } = await open('/auth/sign-up?next=/app/plans'));
+  await signIn(page, 'perdida@example.test');
+  await page.locator('[data-register]').waitFor({ timeout: 5000 });
+  {
+    const f = page.locator('[data-register] input:not([type=checkbox])');
+    await f.nth(0).fill('Perdida Prueba'); await f.nth(1).fill('+57 300 555 0191'); await f.nth(2).fill('Contacto'); await f.nth(3).fill('+57 300 555 0192');
+    await page.locator('[data-register] input[type=checkbox]').check();
+    api.loseAnswer = true;
+    await page.locator('[data-register] button[type=submit]').click(); await page.waitForTimeout(1500);
+    if (await page.locator('[data-register]').count()) { await page.locator('[data-register] button[type=submit]').click(); await page.waitForTimeout(1500); }
+    check('r2 sign-up: a lost answer, then 409 already_registered with /me holding the customer role → on to the return', route(page) === '/app/plans' && (await page.locator('[data-register]').count()) === 0, route(page));
+  }
+  await ctx.close();
+
+  // Review round 2 (r2co contract): a new login whose verified email is on a person another login holds.
+  ({ ctx, page } = await open('/auth/sign-up'));
+  await signIn(page, 'compartido@example.test');
+  await page.locator('[data-register]').waitFor({ timeout: 5000 });
+  {
+    const f = page.locator('[data-register] input:not([type=checkbox])');
+    await f.nth(0).fill('Compartido Prueba'); await f.nth(1).fill('+57 300 555 0193'); await f.nth(2).fill('Contacto'); await f.nth(3).fill('+57 300 555 0194');
+    await page.locator('[data-register] input[type=checkbox]').check();
+    api.emailLinked = true;
+    await page.locator('[data-register] button[type=submit]').click(); await page.waitForTimeout(1200);
+    const text = await page.locator('main').innerText();
+    check('r2 sign-up: email linked to another login → "write to the studio", stays on the form, no code', /otra cuenta/i.test(text) && !/email_linked_to_other_login/.test(text) && (await page.locator('[data-register]').count()) === 1 && route(page).startsWith('/auth/sign-up'), text.slice(0, 300));
+  }
+  await ctx.close();
+
   // CU-02: the documents changed while the form was open → asked to accept the new version.
   ({ ctx, page } = await open('/auth/sign-up'));
   await signIn(page, 'otra@example.test');
@@ -280,6 +315,26 @@ try {
     check('Y2 a join the studio refuses (409) tells the person to contact the studio; nothing else changes', /Escríbele a administración/.test(await page.locator('[data-join-customer]').innerText()) && JSON.stringify(api.members.user_desk.roleKeys) === '["front_desk"]' && route(page) === '/app');
   }
   api.joinConflict = false;
+  // Review round 2 (r2hoy, with r2co's contract): the other refusals a Join can meet, each with its own Join line.
+  {
+    const form = page.locator('[data-join-customer] [data-register]');
+    api.emailLinked = true;
+    await form.locator('button[type=submit]').click(); await page.waitForTimeout(1200);
+    const linked = await page.locator('[data-join-customer]').innerText();
+    check('r2 Join: the email is on a person linked to another login → "write to the studio", never success', /otra cuenta/i.test(linked) && /administración/i.test(linked) && JSON.stringify(api.members.user_desk.roleKeys) === '["front_desk"]' && (await page.locator('.appshell').count()) === 0, linked.slice(0, 300));
+    check('r2 L4 Join: no raw code on the screen', !/email_linked_to_other_login|already_registered|\(http_/.test(linked));
+    api.emailLinked = false; api.duplicatePerson = true;
+    await form.locator('button[type=submit]').click(); await page.waitForTimeout(1200);
+    const dup = await page.locator('[data-join-customer]').innerText();
+    check('r2 L4 Join: duplicate_person_user → the studio fixes the link (Join wording, no code, no "crear tu cuenta")', /administración/i.test(dup) && !/duplicate_person_user|Revisa los datos marcados|crear tu cuenta/i.test(dup), dup.slice(0, 300));
+    api.duplicatePerson = false;
+    // M1 (review2-hoy): the join commits but its answer is lost; the retry gets 409 already_registered, /me now lists
+    // the customer role, so the page goes on as a customer instead of showing a conflict.
+    api.loseAnswer = true;
+    await form.locator('button[type=submit]').click(); await page.waitForTimeout(1500);
+    if (await form.count()) { await form.locator('button[type=submit]').click(); await page.waitForTimeout(1500); }
+    check('r2 M1 Join: a lost answer, then 409 already_registered with /me holding the customer role → the customer page, no conflict', JSON.stringify(api.members.user_desk.roleKeys) === '["front_desk","member"]' && (await page.locator('[data-join-customer]').count()) === 0 && (await page.locator('.appshell').count()) === 1 && route(page) === '/app', `${route(page)} ${api.signups.length}`);
+  }
   await page.goto(`${BASE}/#/staff`); await page.waitForTimeout(1000);
   check('PL-03 the staff shell shows the account and a sign-out button, not a persona list', (await page.locator('[data-account-chip]').count()) > 0 && (await page.locator('#rs-user').count()) === 0);
   await page.locator('[data-account-chip] button').first().click();

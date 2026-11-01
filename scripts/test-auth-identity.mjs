@@ -19,6 +19,7 @@ const bundle = await build({
     "export { LAUNCH_ROUTES, isLaunchRoute } from './src/config/launchRoutes';",
     "export { getSessionToken, setSessionTokenSource } from './src/auth/sessionToken';",
     "export * as team from './src/modules/admin/team/teamApi';",
+    "export { strings as identityStrings } from './src/modules/identity/strings';",
   ].join('\n'), resolveDir: process.cwd(), loader: 'ts' },
   bundle: true, platform: 'node', format: 'esm', write: false, logLevel: 'silent', define: { 'import.meta.env': '{"VITE_HOY_BUILD":"review","DEV":false}' },
 });
@@ -87,7 +88,31 @@ check('CU-01 body: only the fields the tenant allows are sent', JSON.stringify(M
 check('CU-01 a tenant that does not accept name and phone cannot sign people up here (fail closed)', M.parseSignupConfig({ enabled: true, consents: [], personFields: ['name'], facetFields: [] }).enabled === false);
 check('sign-up config: enabled:false is closed', M.parseSignupConfig({ enabled: false }).enabled === false && M.parseSignupConfig({ enabled: 'yes' }) === null);
 check('sign-up 201 → done', M.classifySignup(201, { userId: 'u' }).kind === 'done');
-check('sign-up 409 already_registered (a retry) → done', M.classifySignup(409, { error: 'already_registered' }).kind === 'done');
+// Changed on purpose (review round 2, r2hoy, with r2co's contract): 409 already_registered is "the login already holds the
+// sign-up role" only when /me says so. It is re-checked, never taken as done on its word (a lost answer and a double tap
+// go on; anything else is a conflict).
+check('sign-up 409 already_registered → re-check /me (not done on its word)', M.classifySignup(409, { error: 'already_registered' }).kind === 'already-registered');
+check('r2 sign-up 409 email_linked_to_other_login → its own outcome, never done', M.classifySignup(409, { error: 'email_linked_to_other_login', message: 'a person with this email is linked to another login' }).kind === 'email-linked');
+check('r2 sign-up another 409 → an error with its code, never done', JSON.stringify(M.classifySignup(409, { error: 'idempotency_conflict' })) === '{"kind":"error","code":"idempotency_conflict"}');
+const meAnswer = (roleKeys, extra = {}) => ({ user: { id: 'u_fict', name: 'Ficticia', email: 'f@example.test' }, roleKeys, isSuperAdmin: false, caps: [], ...extra });
+check('r2 after already_registered: /me holding the customer role → it went through (go on)', M.signupHeld(200, meAnswer(['member'])) === true && M.signupHeld(200, meAnswer(['front_desk', 'member'])) === true);
+check('r2 after already_registered: /me without the customer role → not held (a conflict)', M.signupHeld(200, meAnswer(['front_desk'])) === false && M.signupHeld(403, { error: 'no access to this tenant' }) === false);
+check('r2 after already_registered: a super admin flag alone is not the customer role', M.signupHeld(200, meAnswer([], { isSuperAdmin: true })) === false);
+check('r2 after already_registered: /me failing or malformed → unknown (null), never success', M.signupHeld(502, null) === null && M.signupHeld(200, { roleKeys: 'member' }) === null && M.signupHeld(401, { error: 'unauthorized' }) === null);
+// Review round 2 (r2hoy, L4): every sign-up refusal has a copy key that fits the screen; Join never shows a raw code
+// or "create your account".
+const key = (status, body, existingLogin, held) => M.signupNoticeKey(M.classifySignup(status, body), { existingLogin, held });
+check('r2 L4 Join: already_registered not held → the Join conflict', key(409, { error: 'already_registered' }, true, false) === 'identity.join.conflict');
+check('r2 sign-up: already_registered not held → a sign-up conflict line', key(409, { error: 'already_registered' }, false, false) === 'identity.register.conflict');
+check('r2 already_registered with /me unknown → a retry line (Join and sign-up)', key(409, { error: 'already_registered' }, true, null) === 'identity.join.failed' && key(409, { error: 'already_registered' }, false, null) === 'identity.register.failed');
+check('r2 email_linked_to_other_login → the "contact the studio" line, on Join and on sign-up', key(409, { error: 'email_linked_to_other_login' }, true) === 'identity.signup.emailLinked' && key(409, { error: 'email_linked_to_other_login' }, false) === 'identity.signup.emailLinked');
+check('r2 L4 duplicate_person_user → the "studio fixes the link" line, on Join and on sign-up', key(422, { error: 'duplicate_person_user' }, true) === 'identity.signup.personLinked' && key(422, { error: 'duplicate_person_user' }, false) === 'identity.signup.personLinked');
+check('r2 L4 Join: another invalid or failed answer → Join lines (no "create your account")', key(400, { error: 'invalid body' }, true) === 'identity.join.invalid' && key(500, { error: 'boom' }, true) === 'identity.join.failed');
+check('r2 sign-up: invalid and failed keep the sign-up lines', key(400, { error: 'invalid body' }, false) === 'identity.register.invalid' && key(500, { error: 'boom' }, false) === 'identity.register.failed');
+const idStrings = M.identityStrings ?? {};
+const NEW_KEYS = ['identity.register.conflict', 'identity.signup.emailLinked', 'identity.signup.personLinked', 'identity.join.invalid', 'identity.join.failed'];
+check('r2 the new lines exist in Spanish and English', NEW_KEYS.every((k) => idStrings[k]?.es && idStrings[k]?.en), NEW_KEYS.filter((k) => !(idStrings[k]?.es && idStrings[k]?.en)).join(', '));
+check('r2 L4 the Join lines show no code', ['identity.join.invalid', 'identity.join.failed', 'identity.join.conflict', 'identity.signup.emailLinked', 'identity.signup.personLinked'].every((k) => idStrings[k] && !/\{code\}/.test(idStrings[k].es + idStrings[k].en)));
 const changed = M.classifySignup(422, { error: 'consent_required', details: { required: [{ document: 'terms', version: '2026-11-01' }] } });
 check('CU-02 422 consent_required → the new versions to accept', changed.kind === 'consent-changed' && changed.required[0].version === '2026-11-01');
 check('sign-up 403 signup_disabled → closed', M.classifySignup(403, { error: 'signup_disabled' }).kind === 'disabled');

@@ -69,7 +69,9 @@ function fakeCos({ role = 'administrator', superAdmin = false } = {}) {
       return a < bEnd && b < aEnd;
     });
   };
-  const refuse = (status, code) => Object.assign(new Error(code), { status, code });
+  const refuse = (status, code, details) => Object.assign(new Error(code), { status, code, details });
+  /** r2co contract: what Company OS puts in `details` for this clash (a test sets it; null = an older Company OS). */
+  let overlapDetails = null;
   function write(op, entity, id, body) {
     if (!(WRITERS.includes(role) || superAdmin)) throw refuse(403, 'forbidden');
     if (entity !== 'schedule') throw refuse(403, 'forbidden');
@@ -80,14 +82,14 @@ function fakeCos({ role = 'administrator', superAdmin = false } = {}) {
     if (op === 'create') {
       const data = { kind: 'class', spots_enabled: false, active: true, ...Object.fromEntries(Object.entries(body).map(([k, v]) => [k, v === '' ? null : v])) };
       for (const [k, f] of Object.entries(SCHEDULE)) if (f.req && (data[k] == null || data[k] === '')) throw refuse(400, 'validation');
-      if (clash(data, null)) throw refuse(422, 'resource_overlap');
+      if (clash(data, null)) throw refuse(422, 'resource_overlap', overlapDetails ?? undefined);
       return put('schedule', data);
     }
     const rec = db.schedule.get(id);
     if (!rec) throw refuse(404, 'not_found');
     const merged = { ...rec.data, ...Object.fromEntries(Object.entries(body).map(([k, v]) => [k, v === '' ? null : v])) };
     for (const [k, f] of Object.entries(SCHEDULE)) if (f.req && (merged[k] == null || merged[k] === '')) throw refuse(400, 'validation');
-    if (clash(merged, id)) throw refuse(422, 'resource_overlap');
+    if (clash(merged, id) || (overlapDetails?.source === 'class' && merged.active !== false)) throw refuse(422, 'resource_overlap', overlapDetails ?? undefined);
     rec.data = merged; rec.updatedAt = new Date(Date.UTC(2026, 10, 2, 0, 0, ++seq)).toISOString();
     return rec;
   }
@@ -135,10 +137,10 @@ function fakeCos({ role = 'administrator', superAdmin = false } = {}) {
         if (method === 'DELETE') return json(403, { error: 'forbidden' });
         const rec = db[entity]?.get(id);
         return rec ? json(200, { data: withInclude(rec) }) : json(404, { error: 'not_found' });
-      } catch (e) { return json(e.status ?? 422, { error: e.code ?? e.message }); }
+      } catch (e) { return json(e.status ?? 422, { error: e.code ?? e.message, ...(e.details ? { message: 'the room is taken', details: e.details } : {}) }); }
     }
   }
-  return { db, calls, put, fetch, loseNextCreate(n = 1) { lose = n; }, writes: () => calls.filter((c) => c.method !== 'GET' && c.path !== '/query' && c.path !== '/me') };
+  return { db, calls, put, fetch, loseNextCreate(n = 1) { lose = n; }, overlapWith(d) { overlapDetails = d; }, writes: () => calls.filter((c) => c.method !== 'GET' && c.path !== '/query' && c.path !== '/me') };
 }
 const provider = (api) => new m.CompanyOSProvider({ fetch: api.fetch, config: { tenant: 'hoy', apiBase: '/api/cos' }, getToken: async () => 'tok', retryDelayMs: 1, sleep: async () => {} });
 const has = (code) => (e) => String(e?.code ?? e?.message ?? e) === code || String(e?.message ?? e).includes(code);
@@ -276,6 +278,63 @@ await test('a room clash is refused resource_overlap by Company OS; the error is
   assert.match(m.refusalCopy('resource_overlap', 'es'), /sala/i);
   assert.match(m.refusalCopy('resource_overlap', 'en'), /room/i);
   assert.equal(api.db.schedule.get(draft.id).data.active, false);
+});
+// ── Review round 2 (r2hoy, r2co contract): resource_overlap names the clash and a remedy that works ───────────────
+const SCHEDULE_CLASH = { source: 'schedule', schedule: 'schedule_other', title: 'Fuego temprano', date: '2026-11-10', time: '07:00', starts_at: '2026-11-10T12:00:00.000Z' };
+const CLASS_CLASH = { source: 'class', schedule: 'schedule_old', occurrence: 'occ_77', title: 'Morning flow', date: '2026-11-12', time: '07:00', starts_at: '2026-11-12T12:00:00.000Z' };
+async function overlapError(details) {
+  const api = fakeCos(), p = provider(api);
+  await seeded(api, p, { resource: 'room_main', weekday: 1, start_time: '07:00' });
+  api.overlapWith(details);
+  const draft = await listRow(p, (await save(p, 'admin', { kind: 'create', table: 'class_templates', patch: { ...NEW_ROW, room_id: 'room_main', start_time: details?.source === 'class' ? '07:00' : '07:20', weekday: details?.source === 'class' ? 4 : 1, modality_id: 'mod_fuego' } })));
+  const err = await save(p, 'admin', { kind: 'update', table: 'class_templates', before: draft, patch: { active: true } }).then(() => null, (e) => e);
+  assert.ok(err, 'refused');
+  return { err, api, draft };
+}
+await test('r2 M2: another active row clashes: the line names it, its day and time, and says to pick another time or room (ES and EN)', async () => {
+  const { err } = await overlapError(SCHEDULE_CLASH);
+  assert.equal(m.definiteRefusal(err), 'resource_overlap');
+  const es = m.refusalText(err, 'es'), en = m.refusalText(err, 'en');
+  for (const text of [es, en]) { assert.match(text, /Fuego temprano/); assert.match(text, /07:00/); assert.match(text, /10/); }
+  assert.match(es, /otra hora u otra sala/i);
+  assert.match(en, /another time or room/i);
+});
+await test('r2 M2: a class another (switched-off) row already made clashes: start this row after that class; cancel it only if nobody booked it', async () => {
+  const { err } = await overlapError(CLASS_CLASH);
+  const es = m.refusalText(err, 'es'), en = m.refusalText(err, 'en');
+  for (const text of [es, en]) { assert.match(text, /Morning flow/); assert.match(text, /07:00/); assert.match(text, /12/); }
+  assert.match(es, /empiece después/i); assert.match(es, /nadie la reserv/i);
+  assert.match(en, /start this row after/i); assert.match(en, /nobody (has )?booked/i);
+  for (const text of [es, en]) assert.doesNotMatch(text, /desactiva la otra|deactivate the other/i, 'the remedy that no longer works is not offered');
+});
+await test('r2 M2: without details (an older Company OS, another kind of clash) the generic line no longer says "deactivate the other class first"', async () => {
+  const { err } = await overlapError(null);
+  for (const lang of ['es', 'en']) {
+    assert.equal(m.refusalText(err, lang), m.refusalCopy('resource_overlap', lang));
+    assert.doesNotMatch(m.refusalCopy('resource_overlap', lang), /desactiva la otra clase primero|deactivate the other class first/i);
+  }
+  assert.match(m.refusalCopy('resource_overlap', 'es'), /sala/i);
+  assert.match(m.refusalCopy('resource_overlap', 'en'), /room/i);
+});
+await test('r2 M2 hostile details: a malformed or oversized answer falls back to the generic line; nothing raw beyond the title', async () => {
+  const bad = [
+    { ...CLASS_CLASH, source: 'other' }, { ...CLASS_CLASH, date: '12/11/2026' }, { ...CLASS_CLASH, time: '7am' }, { ...CLASS_CLASH, date: '2026-02-31' },
+    { ...CLASS_CLASH, title: 42 }, { ...CLASS_CLASH, title: '' }, 'details', [CLASS_CLASH], null,
+  ];
+  for (const details of bad) {
+    const err = Object.assign(new Error('resource_overlap'), { code: 'resource_overlap', status: 422, ambiguous: false, details });
+    assert.equal(m.refusalText(err, 'es'), m.refusalCopy('resource_overlap', 'es'), JSON.stringify(details));
+  }
+  const long = Object.assign(new Error('resource_overlap'), { code: 'resource_overlap', status: 422, ambiguous: false, details: { ...CLASS_CLASH, title: `<img src=x onerror=alert(1)>${'x'.repeat(5000)}` } });
+  const text = m.refusalText(long, 'es');
+  assert.ok(text.length < 600, `bounded (${text.length})`);
+  // Other codes keep their own line.
+  assert.equal(m.refusalText(m.timetableRefusal('content_conflict'), 'en'), m.refusalCopy('content_conflict', 'en'));
+});
+await test('r2 M2: the editor shows refusalText (the failure itself), not just the code\'s line', async () => {
+  const { readFileSync } = await import('node:fs');
+  const src = readFileSync('src/modules/admin/useContentRecovery.tsx', 'utf8');
+  assert.match(src, /refusalText\(/);
 });
 await test('definiteRefusal: a 4xx answer and the client refusals are definite (no retry); a lost answer or a 5xx is not', async () => {
   const err = (code, init) => Object.assign(new Error(code), { code, ...init });
