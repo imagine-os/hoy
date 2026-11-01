@@ -386,7 +386,12 @@ export const strings: StringTable = {
   'admin.dashboard.system': { es: 'Sistema', en: 'System' },
 
   // M-02 content
-  'admin.content.later': { es: 'Aquí ves las clases, profesores y salas como están hoy. Editar este contenido desde la app llega en una próxima actualización; mientras tanto, los cambios no se guardan.', en: 'Here you see the classes, teachers and rooms as they are today. Editing this content from the app arrives in a coming update; until then, changes are not saved.' },
+  'admin.content.later': { es: 'Aquí ves los profesores, modalidades y salas como están hoy. Editarlos desde la app llega en una próxima actualización; mientras tanto, estos cambios no se guardan. El horario (Clases) sí se guarda.', en: 'Here you see the teachers, modalities and rooms as they are today. Editing them from the app arrives in a coming update; until then, these changes are not saved. The timetable (Classes) does save.' },
+  // Lane Y5: the timetable saves to Company OS in production.
+  'admin.content.timetableLive': { es: 'El horario se guarda en el sistema: cada fila con su profesor/a, sala y modalidad. Una fila nueva empieza en borrador; publícala cuando esté lista. El tema, la descripción y el nivel aún no se guardan, por eso no aparecen aquí.', en: 'The timetable saves to the system: each row with its teacher, room and modality. A new row starts as a draft; publish it when it is ready. Theme, description and level are not saved yet, so they are not shown here.' },
+  'admin.content.timetableReadOnly': { es: 'Ves el horario como está hoy. Solo Administración y Coordinación lo cambian.', en: 'You see the timetable as it is today. Only Administration and the Coordinator change it.' },
+  'admin.content.newClassTitle': { es: 'Nueva clase', en: 'New class' },
+  'admin.content.deactivateHint': { es: 'Las filas no se borran: desactívalas con Publicado.', en: 'Rows are not deleted: switch Published off.' },
   'admin.content.title': { es: 'Contenido', en: 'Content' },
   'admin.content.subtitle': { es: 'Clases, profesores, modalidades y salas: la fuente de la app, el sitio y recepción.', en: 'Classes, teachers, modalities and rooms: the source for the app, the website and the desk.' },
   'admin.content.tab.class_templates': { es: 'Clases (plantillas)', en: 'Classes (templates)' },

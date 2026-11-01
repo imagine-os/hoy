@@ -22,6 +22,8 @@ export const CONTRACT_REFUSALS = {
   reschedule_window_closed: { es: 'Ya no puedes mover esta reserva: el plazo para cambiarla terminó.', en: 'You can no longer move this booking: the window to change it has closed.' },
   invalid_transition: { es: 'Esta reserva ya no se puede cambiar así. Actualiza la página para ver su estado.', en: 'This booking can no longer be changed this way. Refresh to see its current status.' },
   booking_system_managed: { es: 'El estudio gestiona este cambio. Escríbenos si necesitas ayuda.', en: 'The studio handles this change. Write to us if you need help.' },
+  // Lane Y5: a room holds one class at a time (bookings enforce_no_overlap): a class, or a timetable row since bookings 1.6.0.
+  resource_overlap: { es: 'Esa sala ya tiene una clase a esa hora. Elige otra hora u otra sala, o desactiva la otra clase primero.', en: 'That room already has a class at that time. Choose another time or room, or deactivate the other class first.' },
   reason_required: { es: 'Escribe un motivo nuevo para este cambio.', en: 'Write a new reason for this change.' },
   // Credits
   no_credits: { es: 'No te quedan clases disponibles. Compra un paquete o una clase.', en: 'You have no classes left. Buy a pack or a single class.' },
@@ -96,6 +98,11 @@ export const CONNECTOR_REFUSALS = {
   legal_document_in_build: { es: 'Este documento se publica con una nueva versión de la app; aquí solo se publican los que el cliente acepta.', en: 'This document is published with a new version of the app; only the documents customers accept are published here.' },
   legal_document_current: { es: 'Esta es la versión que se pide al registrarse. Publica otra versión en su lugar.', en: 'This is the version asked for at sign-up. Publish another version instead.' },
   // Hoy all-roles, lane H1: refusals the app gives itself before asking Company OS.
+  // Lane Y5: the M-02 timetable editor's own refusals, before anything is sent.
+  content_invalid: { es: 'Hay un dato del horario que no es válido. Revisa el formulario; no se guardó nada.', en: 'A timetable detail is not valid. Check the form; nothing was saved.' },
+  content_denied: { es: 'Solo Administración y Coordinación cambian el horario. No se guardó nada.', en: 'Only Administration and the Coordinator change the timetable. Nothing was saved.' },
+  content_conflict: { es: 'Alguien cambió esta fila mientras la editabas. Cierra y vuelve a abrirla para ver la versión actual; tu cambio no se guardó.', en: 'Someone changed this row while you were editing it. Close and reopen it to see the current version; your change was not saved.' },
+  timetable_deactivate_instead: { es: 'Las filas del horario no se borran: desactívala (Publicado: no) y sus clases ya creadas siguen intactas.', en: 'Timetable rows are not deleted: deactivate it (Published: off) and its classes already made stay as they are.' },
   content_later: { es: 'Editar este contenido desde la app llega en una próxima actualización. Por ahora no se guardó nada.', en: 'Editing this content from the app arrives in a coming update. Nothing was saved for now.' },
   checkout_server_only: { es: 'Esta compra se hace desde la página de pago. Vuelve a elegir el paquete.', en: 'This purchase is made from the payment page. Choose the pack again.' },
   // View-as (Hoy all-roles, lane D): a super admin viewing as another role can look, not change (src/auth/viewAs.ts).

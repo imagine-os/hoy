@@ -869,3 +869,8 @@ Protected-capture clarification: M14 schedule/pay screenshots remain local/ignor
 - Deploy: `COMPANY_OS_READ_TOKEN: preserve()` in the IaC; deploy summaries show SITE_LIVE and whether the read token is present; an expired session on a website read falls back to the public identity.
 ### Waiting
 - Owner: rename `SET_LIVE` → `SITE_LIVE` in Railway; release Company OS with the sign-up amendment before this frontend deploys.
+
+## Hoy test-hoy fixes · lane Y5 (M-02 timetable saves in production, 2026-11-01)
+
+- Done (branch `hoy-test-fixes-y5`): M-02 Classes creates, edits and deactivates timetable rows on Company OS `schedule` (teacher, room, class type, weekday, time, length, mats, dates) for Administration, the Coordinator and Super Admin; refusals as copy (`resource_overlap` from bookings 1.6.0 and the editor's own); theme, description and level hidden in production; the rest of M-02 stays "available later". [Changelog](changelog/_pending/hoy-test-fixes-y5.md)
+- Open: Wave 3 content entities (theme, description, level; teachers, modalities, rooms).
