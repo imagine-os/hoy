@@ -47,6 +47,8 @@ export async function createDocsGate(config, deps) {
   }
   const fetchMe = deps.fetchMe ?? ((token, req) => askMe(config, token, req));
   const log = deps.log ?? ((entry) => console.log(JSON.stringify(entry)));
+  // Said once at start: without the pack every request is a 404, which looks like a broken page, not a missing folder.
+  if (!files.has('/docs.json')) log({ event: 'docs', outcome: 'pack_missing', dir });
 
   return async function docsGate(req, res, rest) {
     const started = Date.now();

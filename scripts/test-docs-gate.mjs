@@ -262,7 +262,10 @@ await test('no private folder built (the review build): the super admin gets 404
   const bare = join(root, 'bare');
   await mkdir(bare, { recursive: true });
   await writeFile(join(bare, 'index.html'), '<!doctype html>');
-  const s = createHoyServer(await createHandler({ ...config, distDir: bare }, { verifySession: clerkSessionVerifier(config), log: () => {} }));
+  const bareLogs = [];
+  const s = createHoyServer(await createHandler({ ...config, distDir: bare }, { verifySession: clerkSessionVerifier(config), log: (e) => bareLogs.push(e) }));
+  // Lane ci1: a missing pack is said once at start (a copied build without its pack served 404 silently in CI).
+  assert.ok(bareLogs.some((l) => l.event === 'docs' && l.outcome === 'pack_missing'), JSON.stringify(bareLogs));
   await listen(s);
   refused(await request('GET', DOCS, auth('user_super'), undefined, s), 404);
   refused(await request('GET', DOCS, {}, undefined, s), 401);

@@ -55,8 +55,10 @@ jobs:
       - run: npm ci
       - name: The Hoy server's own dependencies (the signed-out website check runs the real server)
         run: npm ci --prefix server
+      # The private docs pack goes beside the copy: the docs gate serves `<dist>-private` (server/docsGate.mjs), and the
+      # review build later removes dist-private from the checkout.
       - name: Production build
-        run: npm run build:production && cp -R dist "$RUNNER_TEMP/prod"
+        run: npm run build:production && cp -R dist "$RUNNER_TEMP/prod" && cp -R dist-private "$RUNNER_TEMP/prod-private"
       - uses: actions/upload-artifact@v7
         with:
           name: production-build

@@ -44,5 +44,8 @@ for (const s of ['test-launch-website-ui', 'test-launch-website-content']) {
   check(`L7 CI runs ${s} after the review build, with the production build as QA_PROD_DIST`, at(s) > reviewBuild && reviewBuild >= 0 && /QA_PROD_DIST/.test(stepText(s)), stepText(s));
 }
 check('L7 the signed-out website check has the Hoy server\'s own dependencies installed first (server/, @clerk/backend)', /npm ci --prefix server|cd server && npm ci|working-directory: server/.test(job) && job.indexOf('prefix server') < job.indexOf('test-website-signed-out-live'));
+// Lane ci1: the docs gate looks for the private pack beside whatever dist it serves (`<dist>-private`, docsGate.mjs);
+// the job copies the production build to $RUNNER_TEMP/prod, so the pack must go to $RUNNER_TEMP/prod-private with it.
+check('ci1 the production build step copies the private docs pack beside the copied build (prod-private)', /cp -R dist-private "\$RUNNER_TEMP\/prod-private"/.test(steps[prodBuild] ?? ''), steps[prodBuild]);
 check('L7 test-real-signup runs offline in CI (no COS_LOCAL_API: its live part says it skipped)', !/COS_LOCAL_API:/.test(stepText('test-real-signup')));
 done();
