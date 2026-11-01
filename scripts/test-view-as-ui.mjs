@@ -30,6 +30,8 @@ const { check, done } = reporter('view-as');
 const isProd = (dir) => existsSync(join(dir, 'index.html')) && readdirSync(join(dir, 'assets')).filter((f) => f.endsWith('.js')).some((f) => readFileSync(join(dir, 'assets', f), 'utf8').includes('clerk-js'));
 const PROD = resolve(process.env.QA_PROD_DIST ?? 'dist');
 if (!isProd(PROD)) { console.error(`${PROD} is not a production build: run npm run build:production (or set QA_PROD_DIST)`); process.exit(1); }
+// Lane ci1: the docs gate serves `<dist>-private`; a copied build without its pack answers 404 to everyone (CI, PR 125).
+if (!existsSync(join(`${PROD.replace(/\/+$/, '')}-private`, 'docs.json'))) { console.error(`${PROD}-private/docs.json missing: copy the build's private docs pack beside it (cp -R dist-private <dist>-private)`); process.exit(1); }
 
 const TENANT = 'hoy-test';
 const HOST = 'fake.clerk.accounts.dev';
