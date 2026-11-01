@@ -1,0 +1,12 @@
+# Hoy test-hoy fixes, lane Y5: the M-02 timetable saves in production
+
+Prompt intent: the owner chose "Open timetable saves" (2026-11-01): a small follow-up lane lets the production timetable editor (M-02) save timetable entries (Company OS `schedule` rows with teacher, room, class type); site content editing stays refused until Wave 3. Tests first, blast radius only, one review round.
+Decision:
+- M-02 Classes tab, production: a row is created (as a titled draft, "Nueva clase"), edited and deactivated (Published off) on Company OS `schedule` (`timetableSave.ts`, called from `writeContent`). Create sends an Idempotency-Key from the editor's request id, so a retry can't make two rows. An edit is refused `content_conflict` when the row changed since the editor read it.
+- Who saves: `classes.write` (Administration, the Coordinator, Super Admin; decision A-02 gives the coordinator the timetable). Marketing keeps `content.write` but sees the timetable read only ("Solo Administración y Coordinación lo cambian").
+- Theme, description and level aren't stored in Company OS: the production editor hides them (a patch naming one is refused `content_invalid`, never dropped). Rows aren't deleted (`timetable_deactivate_instead`; the drawer says to switch Published off). The "local demo" line is hidden in production.
+- Refusals show their code's copy, not a retry: a Company OS 4xx answer or a check made before sending (`definiteRefusal`). New lines: `resource_overlap` (a room holds one class at a time; Company OS bookings 1.6.0 refuses a clashing timetable row at save), `content_invalid`, `content_denied`, `content_conflict`, `timetable_deactivate_instead`.
+- Teachers, modalities, rooms, FAQ and the rest of M-02 stay refused `content_later`; the notice says the timetable saves and the rest doesn't.
+Alternative rejected: showing theme and description with a "not saved" label (a field you can type into that never saves is the surprise the owner's walk found); deleting rows (generated classes point at their row); opening every M-02 tab (Wave 3); a client-side clash check (the rule lives in Company OS).
+Files: `src/modules/admin/{timetableSave.ts,contentRecovery.ts,useContentRecovery.tsx,ContentPage.tsx,strings.ts}`, `src/data/companyos/refusals.ts`, `scripts/test-timetable-save.mjs`, `scripts/test-route-connectivity.mjs` (note), `docs/kanban.md`.
+Version: pending (needs Company OS with bookings 1.6.0 for the clash refusal at save; without it the save works and a clash surfaces at generation).

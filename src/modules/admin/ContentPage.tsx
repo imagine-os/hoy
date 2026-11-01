@@ -29,6 +29,7 @@ import { ClassRow } from '../../components/molecule/ClassRow/ClassRow';
 import { TeacherCard } from '../../components/organism/TeacherCard/TeacherCard';
 import { EmptyState } from '../../components/molecule/EmptyState/EmptyState';
 import { writeContent } from './contentRecovery';
+import { TIMETABLE_UNSTORED } from './timetableSave';
 import { useContentRecovery } from './useContentRecovery';
 import { ContentSubNav } from './contentNav';
 import './admin.css';
@@ -110,8 +111,11 @@ export function ContentPage() {
   const { rows: rooms } = useTable<RoomRow>('rooms');
   const refs = { modalities: modalities.map((m) => ({ id: m.id, label: bi({ es: m.name_es, en: m.name_en }) })), teachers: teachers.map((x) => ({ id: x.id, label: x.display_name })), rooms: rooms.map((r) => ({ id: r.id, label: r.name })) };
   const refLabel = (ref: keyof typeof refs, id: unknown) => refs[ref].find((r) => r.id === id)?.label ?? String(id ?? '—');
-  const canWrite = can('content.write');
-  const fields = FIELDS[entity].filter(f => f.name !== 'rate_per_class' || can('payroll.write'));
+  // Lane Y5: in production the timetable saves to Company OS (classes.write); the other tabs wait for Wave 3.
+  const timetableLive = PRODUCTION_BUILD && entity === 'class_templates';
+  const canWrite = timetableLive ? can('classes.write') : can('content.write');
+  // Production hides the timetable fields Company OS doesn't store (theme, description, level), so nothing looks saved that isn't.
+  const fields = FIELDS[entity].filter(f => (f.name !== 'rate_per_class' || can('payroll.write')) && !(timetableLive && (TIMETABLE_UNSTORED as readonly string[]).includes(f.name)));
   const visibleRows = rows.filter(r => String(r[FIELDS[entity][0].name] ?? '').toLocaleLowerCase().includes(search.toLocaleLowerCase()));
   const bulkFields = fields.filter(f => ['teacher_id','modality_id','room_id','weekday','start_time','duration_min','capacity','level','heated','intensity','tone'].includes(f.name));
   const activeField: FieldDef = { name: 'active', kind: 'bool', label: { es: 'Publicado', en: 'Published' } };
@@ -158,7 +162,8 @@ export function ContentPage() {
   }, [entity, bi, refs, canWrite, checked, bulkBusy, fields, recovery.busy]);
 
   const publish = (r: BaseRow, on: boolean) => write({ kind: 'update', table: entity, before: r, patch: { active: on } });
-  const add = () => write({ kind: 'create', table: entity, patch: structuredClone(BLANK[entity]) }, setSelected);
+  // Company OS requires a title, so a new production timetable row starts as a titled draft.
+  const add = () => write({ kind: 'create', table: entity, patch: { ...structuredClone(BLANK[entity]), ...(timetableLive ? { title: t('admin.content.newClassTitle') } : {}) } }, setSelected);
   const remove = (r: BaseRow) => {
     if (!confirm(t('admin.content.deleteConfirm'))) return;
     return write({ kind: 'delete', table: entity, before: r }, () => setSelected(null));
@@ -174,7 +179,7 @@ export function ContentPage() {
         </div>
       </div>
       <ContentSubNav current="entities" />
-      {PRODUCTION_BUILD && <Notice tone="info">{t('admin.content.later')}</Notice>}
+      {PRODUCTION_BUILD && <Notice tone="info">{t(timetableLive ? canWrite ? 'admin.content.timetableLive' : 'admin.content.timetableReadOnly' : 'admin.content.later')}</Notice>}
       {!row && recovery.notice}
       {entity==='teachers'&&reviewer(role)&&<TeacherQueue/>}
       <div className="row wrap" role="tablist">
@@ -182,7 +187,7 @@ export function ContentPage() {
         <span className="xs muted">{t('admin.content.pricingNote')}</span>
       </div>
       <div className="row wrap"><Link to="/admin/class-schedule">{t('schedule.title')}</Link>{(['table', 'list'] as const).map(v => <Button key={v} variant={view === v ? 'primary' : 'secondary'} aria-pressed={view === v} onClick={() => setView(v)}>{t(`schedule.${v}`)}</Button>)}</div>
-      <p className="small muted">{t('schedule.demo')}</p>
+      {!PRODUCTION_BUILD && <p className="small muted">{t('schedule.demo')}</p>}
       {canWrite && data.contentBatch && <Card title={t('bulk.title')}><div className="stack">
         <p className="small muted">{t('bulk.scope')}</p>
         <div className="row wrap"><Button variant="secondary" disabled={bulkBusy} onClick={() => { setChecked(visibleRows.map(r => r.id)); setPreview(null); }}>{t('bulk.selectVisible')}</Button><Button variant="ghost" disabled={bulkBusy} onClick={() => { setChecked([]); setPreview(null); }}>{t('bulk.clear')}</Button><span>{t('bulk.count', { n: checked.length })}</span></div>
@@ -194,7 +199,7 @@ export function ContentPage() {
         view === 'list' ? <div className="grid grid-2">{visibleRows.map(r => <Card key={r.id} title={String(r[FIELDS[entity][0].name])} actions={<Button onClick={() => setSelected(r.id)}>{t('core.common.edit')}</Button>}><div className="stack-sm">{canWrite && <label><input type="checkbox" checked={checked.includes(r.id)} disabled={bulkBusy} onChange={e => { setChecked(ids => e.target.checked ? [...ids, r.id] : ids.filter(id => id !== r.id)); setPreview(null); }} /> {t('bulk.select')}</label>}{fields.slice(1, 5).filter(f => f.kind !== 'bi' && f.kind !== 'list').map(f => <p key={f.name} className="small">{bi(f.label)}: {f.ref ? refLabel(f.ref, r[f.name]) : String(r[f.name] ?? '—')}</p>)}</div></Card>)}</div> : <DataTable columns={columns} rows={visibleRows} rowKey={(r) => r.id} search={search} onRowClick={(r) => setSelected(r.id)} selectedKey={selected} dense />
       )}
       <Drawer open={!!row} onClose={() => setSelected(null)} width={520} title={<div className="row wrap"><span>{t(`admin.content.tab.${entity}`)}</span>{row && <Badge tone={row.active ? 'success' : 'warn'}>{row.active ? t('admin.content.published') : t('admin.content.draft')}</Badge>}</div>}
-        footer={row && canWrite ? <div className="row-between"><Button variant="danger" size="sm" disabled={recovery.busy || bulkBusy} onClick={() => remove(row)}>{t('core.common.delete')}</Button>{entity !== 'rooms' && <Toggle size="sm" checked={!!row.active} label={t('admin.content.published')} disabled={recovery.busy || bulkBusy} onChange={(on) => publish(row, on)} />}</div> : undefined}>
+        footer={row && canWrite ? <div className="row-between">{timetableLive ? <span className="xs muted">{t('admin.content.deactivateHint')}</span> : <Button variant="danger" size="sm" disabled={recovery.busy || bulkBusy} onClick={() => remove(row)}>{t('core.common.delete')}</Button>}{entity !== 'rooms' && <Toggle size="sm" checked={!!row.active} label={t('admin.content.published')} disabled={recovery.busy || bulkBusy} onChange={(on) => publish(row, on)} />}</div> : undefined}>
         {row && recovery.notice}
         {row && <Editor key={row.id} entity={entity} row={row} fields={fields} refs={refs} modalities={modalities} readOnly={!canWrite} busy={recovery.busy || bulkBusy} lang={lang} onSave={async (patch, basis) => { if (!await write({ kind: 'update', table: entity, before: basis, patch })) throw Error('content_save_failed'); }} />}
       </Drawer>

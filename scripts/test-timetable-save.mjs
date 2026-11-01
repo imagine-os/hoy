@@ -172,8 +172,10 @@ await test('create: one keyed POST /api/schedule with the stored fields only (no
 });
 await test('create: a lost answer retried with the same request makes one row (same Idempotency-Key)', async () => {
   const api = fakeCos(), p = provider(api);
-  api.loseNextCreate(1);
+  // Every answer lost: the save fails (the transport's own retries reuse the key); the person's retry reuses it too.
+  api.loseNextCreate(50);
   await assert.rejects(save(p, 'admin', { kind: 'create', table: 'class_templates', patch: { ...NEW_ROW } }, 'req-lost-1'));
+  api.loseNextCreate(0);
   const id = await save(p, 'admin', { kind: 'create', table: 'class_templates', patch: { ...NEW_ROW } }, 'req-lost-1');
   assert.equal(api.db.schedule.size, 1);
   assert.ok(api.db.schedule.has(id));

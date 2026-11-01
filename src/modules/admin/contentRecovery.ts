@@ -5,6 +5,7 @@ import type { Role } from '../../auth/roles';
 import { roleCan } from '../../auth/permissions';
 import { tenant } from '../../tenant/tenant';
 import { PRODUCTION_BUILD } from '../../config/launch';
+import { saveTimetableRow, type TimetableIntent } from './timetableSave';
 
 type Table = 'class_templates' | 'teachers' | 'modalities' | 'rooms' | 'faq_entries';
 export type ContentIntent =
@@ -66,12 +67,16 @@ async function current(data: DataProvider, table: Table, before: BaseRow) {
   return row;
 }
 /**
- * Production: the content editor's tables are the build's own content or Company OS fields it cannot write yet (bios,
- * photos, specialties, modality texts); Wave 3 brings the content entities. Until then a save is refused with copy
- * (`content_later`) before anything is sent, never reported as saved.
+ * Production: the timetable rows (`class_templates`) save to Company OS `schedule` (lane Y5, timetableSave.ts). The
+ * other tables are the build's own content or Company OS fields it cannot write yet (bios, photos, specialties,
+ * modality texts); Wave 3 brings the content entities. Until then their saves are refused with copy (`content_later`)
+ * before anything is sent, never reported as saved.
  */
 export async function writeContent(data: DataProvider, actor: ContentActor, intent: ContentIntent, requestId: string, options: ContentExecution) {
-  if (PRODUCTION_BUILD) throw Error('content_later');
+  if (PRODUCTION_BUILD) {
+    if (intent.table === 'class_templates') return saveTimetableRow(data, { ...actor }, structuredClone(intent) as TimetableIntent, requestId, options.currentActor);
+    throw Error('content_later');
+  }
   actor = { ...actor }; intent = structuredClone(intent);
   const check = () => assertContentActor(actor, options.currentActor());
   check();
