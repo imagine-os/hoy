@@ -18,6 +18,9 @@ import { useBookingPolicy } from '../booking/bookingPolicy';
 import { bookOnServer, useSubmitKey } from '../booking/serverCommands';
 import { refusalCode, refusalMessage } from '../booking/refusals';
 import { classPhase, holdsPlace, purchaseReturnLink, type ServerBookingRow } from '../booking/serverBooking';
+import { audienceVisible, trialOffered } from '../offers';
+import { useAffiliate } from '../useAffiliate';
+import { ConsentHoldNotice, useConsentHeld } from '../../identity/ConsentHold';
 
 /** What the customer pays the class with. A trial or a package is bought first and the class is kept in the link (RS-03). */
 /** Members can't read other people's bookings: every mat shows free and the server answers `spot_taken`. */
@@ -57,15 +60,36 @@ export function ServerCheckoutPage() {
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
   const inFlight = useRef(false);
+  const affiliate = useAffiliate();
+  // C-01d: while the consent waits ("Continue for now"), no new booking or purchase starts here.
+  const consentHeld = useConsentHeld();
+  const price = (itemId: string) => pricing.item(itemId)?.price ?? null;
+  const options: { id: Choice; title: string; sub: string; price: string }[] = [
+    { id: 'package', title: t('customer.srv.pay.balance'), sub: t('customer.srv.pay.balance.sub', { n: ent.classBalance }), price: t('core.common.included') },
+    ...(['single', 'trial', 'pack12', 'pack12_smtc'] as const).flatMap((pid) => {
+      // PRO-04: the trial follows the live assessment (ent.trial): a trial lot or a pending/approved trial payment. The
+      // server's trial_used stays the authority. Package holders still see it (R-14 is open).
+      if (pid === 'trial' && !trialOffered(ent)) return [];
+      const item = pricing.item(pid), amount = price(pid);
+      // PRO-05: the affiliate-only pack only for a member facet with the affiliate price_audience (audience_not_allowed).
+      if (item && !audienceVisible(item, { live: true, affiliate })) return [];
+      return item && amount != null ? [{ id: pid as Choice, title: bi(item.name), sub: bi(item.description), price: formatCOP(amount, lang) }] : [];
+    }),
+  ];
   // No silent default to a paid single class: the balance may still be loading. Preselect the balance only once it shows classes.
-  // One trial per person (decided by the product key in production): once used, it is neither offered nor kept from a link.
-  const kind: Choice | null = (choice === 'trial' && ent.trialUsed ? null : choice) ?? (ent.classBalance > 0 ? 'package' : null);
+  // A trial or pack that isn't offered (used trial, affiliate pack for a non-affiliate) is not kept from a link either.
+  const hidden = (c: Choice | null) => {
+    const item = c ? pricing.item(c) : undefined;
+    return (c === 'trial' && !trialOffered(ent)) || (!!item && !audienceVisible(item, { live: true, affiliate }));
+  };
+  const kind: Choice | null = (hidden(choice) ? null : choice) ?? (ent.classBalance > 0 ? 'package' : null);
   const submitKey = useSubmitKey(`${user.id}:${id}:${kind ?? ''}:${method}:${mat ?? ''}`);
 
   if (!joined) {
     return (
       <div className="container page cust-page">
         <PageHead back="/app/schedule" title={t('customer.checkout.title')} />
+        <ConsentHoldNotice />
         {loading ? <Skeleton shape="rect" height={160} /> : <EmptyState title={t('customer.class.notFound')} action={<Link to="/app/schedule"><Button>{t('customer.class.backToSchedule')}</Button></Link>} />}
       </div>
     );
@@ -75,20 +99,11 @@ export function ServerCheckoutPage() {
   const phase = classPhase(s, now);
   const mats = usesMats(joined.modality);
   const existing = (mine as unknown as ServerBookingRow[]).find((b) => b.session_id === s.id && holdsPlace(b, now));
-  const price = (itemId: string) => pricing.item(itemId)?.price ?? null;
-  const options: { id: Choice; title: string; sub: string; price: string }[] = [
-    { id: 'package', title: t('customer.srv.pay.balance'), sub: t('customer.srv.pay.balance.sub', { n: ent.classBalance }), price: t('core.common.included') },
-    ...(['single', 'trial', 'pack12', 'pack12_smtc'] as const).flatMap((pid) => {
-      if (pid === 'trial' && ent.trialUsed) return [];
-      const item = pricing.item(pid), amount = price(pid);
-      return item && amount != null ? [{ id: pid as Choice, title: bi(item.name), sub: bi(item.description), price: formatCOP(amount, lang) }] : [];
-    }),
-  ];
   const buyFirst = !!kind && BUY_FIRST.includes(kind);
   const holdMinutes = method === 'desk' ? policy.holdMinutesDesk : policy.holdMinutesTransfer;
 
   const confirm = async () => {
-    if (inFlight.current || !kind) return;
+    if (inFlight.current || !kind || consentHeld) return;
     if (buyFirst) { nav(purchaseReturnLink(kind, s.id, mats ? mat : null)); return; }
     inFlight.current = true; setBusy(true); setError(null);
     try {
@@ -108,6 +123,7 @@ export function ServerCheckoutPage() {
   return (
     <div className="container page cust-page cust-has-sticky">
       <PageHead back={`/app/class/${s.id}`} title={t('customer.checkout.title')} />
+      <ConsentHoldNotice />
       <ClassCard title={s.title} teacher={teacherName(joined)} room={roomName(joined)} startsAt={s.starts_at} endsAt={s.ends_at} tone={toneOf(joined)} booked={s.booked_count} capacity={s.capacity} level={s.level} />
       {existing && <Notice tone="info" action={<Button size="sm" variant="secondary" onClick={() => nav(`/app/booking/${existing.id}`)}>{t('customer.class.viewBooking')}</Button>}>{t('customer.home.booked')}</Notice>}
       {closed && <Notice tone="warn">{t(`customer.srv.phase.${phase}`)}</Notice>}
@@ -147,7 +163,7 @@ export function ServerCheckoutPage() {
             {t(refusal.key, refusal.vars)}
           </Notice>
         )}
-        <Button block size="lg" loading={busy} disabled={busy || closed || !!existing || !kind || (mats && !mat && !buyFirst)} onClick={() => void confirm()}>
+        <Button block size="lg" loading={busy} disabled={consentHeld || busy || closed || !!existing || !kind || (mats && !mat && !buyFirst)} onClick={() => void confirm()}>
           {buyFirst ? t('customer.srv.buyFirst.cta') : kind === 'single' ? t(`customer.srv.cta.${method}`) : t('customer.checkout.confirm')}
         </Button>
         {!kind && <p className="xs muted" style={{ textAlign: 'center' }}>{t('customer.srv.pay.pick')}</p>}

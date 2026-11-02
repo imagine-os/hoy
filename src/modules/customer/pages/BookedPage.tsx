@@ -4,7 +4,7 @@ import { useContact, pendingSuffix } from '../../admin/settings';
 import { useCustomerRows } from '../useCustomerRows';
 import {CustomerCancellationReview} from '../../../components/organism/CustomerCancellationReview/CustomerCancellationReview';
 import {useCustomerCancellation} from '../useCustomerCancellation';
-import { useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
 import type { BookingRow, ClassLedgerRow, PaymentRow, ClassSessionRow, ModalityRow, TeacherRow, RoomRow } from '../../../data/schema';
@@ -37,7 +37,7 @@ import { assertRescheduleValidity, rescheduleEntitlement } from '../rescheduleCo
 import { PageHead, downloadIcs, toneOf, roomName, shareText, teacherName } from '../ui';
 import { StudioCancelledBlock } from './blocks';
 import { SERVER_RULES, useBookingPolicy } from '../booking/bookingPolicy';
-import { holdView, serverPaymentStatus, type ServerBookingRow } from '../booking/serverBooking';
+import { awaitingRelease, holdView, RELEASE_RECHECK_MS, RELEASE_RECHECK_TRIES, serverPaymentStatus, type ServerBookingRow } from '../booking/serverBooking';
 import { HoldBlock, ServerChangeSheet } from './ServerBookingParts';
 
 const spec = canvasSpecs['C-08'];
@@ -66,6 +66,20 @@ export function BookedPage({ change = false }: { change?: boolean }) {
   const joined = session ? { session, modality: modalitiesRead.rows.find(m => m.id === session.modality_id), teacher: teachersRead.rows.find(te => te.id === session.teacher_id), room: roomsRead.rows.find(r => r.id === session.room_id) } : null;
   const now = useNow(15_000);
   const [flash, setFlash] = useState<{ tone: 'success' | 'warn'; text: string } | null>(null);
+  // PAG-03: a hold whose time ran out is re-read (the booking and its class, so the place count refreshes) until Company
+  // OS releases it (cancel_reason hold_expired), for a few minutes at most. The rows stay on screen while it re-reads.
+  const releasing = SERVER_RULES && !!booking && awaitingRelease(booking as unknown as ServerBookingRow, now);
+  const recheck = useRef({ bookings: bookingsRead.retry, sessions: sessionsRead.retry });
+  recheck.current = { bookings: bookingsRead.retry, sessions: sessionsRead.retry };
+  useEffect(() => {
+    if (!releasing) return;
+    let tries = 0;
+    const timer = setInterval(() => {
+      if (++tries > RELEASE_RECHECK_TRIES) { clearInterval(timer); return; }
+      recheck.current.bookings(); recheck.current.sessions();
+    }, RELEASE_RECHECK_MS);
+    return () => clearInterval(timer);
+  }, [releasing, booking?.id]);
 
   // Keep the command owner mounted through subscribed refreshes and its own commit.
   // The hook retains an unconfirmed intent and verified result until the viewer closes it.
@@ -111,7 +125,7 @@ export function BookedPage({ change = false }: { change?: boolean }) {
   const active = !past && !studioCancelled && !myCancelled && (SERVER_RULES ? liveServerBooking(booking, s.starts_at) : booking.status === 'booked');
   const deadline = cancelDeadline(s.starts_at);
   const inside = insideCancelWindow(s.starts_at, now);
-  const paymentStatus = SERVER_RULES ? serverPaymentStatus(server) : bookingPaymentStatus(booking, ledger.rows, payments.rows);
+  const paymentStatus = SERVER_RULES ? serverPaymentStatus(server, now) : bookingPaymentStatus(booking, ledger.rows, payments.rows);
   const bookingBase = `/app/booking/${booking.id}`;
 
   const addToCalendar = () => downloadIcs({ title: `${s.title} · ${tenant.name}`, startsAt: s.starts_at, endsAt: s.ends_at, location: `${tenant.name} · ${roomName(joined)}`, description: `${teacherName(joined)}${booking.mat_number ? ` · ${t('site.mat.confirmed', { n: booking.mat_number })}` : ''}` });

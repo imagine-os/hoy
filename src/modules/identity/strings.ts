@@ -84,6 +84,17 @@ export const strings: StringTable = {
   'identity.accept.invalid': { es: 'No pudimos registrar tu aceptación con los datos de tu ficha. Escríbele a administración para revisarlo.', en: 'We could not record your acceptance with the details on your profile. Please contact the studio administration.' },
   'identity.accept.later': { es: 'Continuar por ahora', en: 'Continue for now' },
   'identity.accept.failed': { es: 'No pudimos registrar tu aceptación ahora. Reintenta; no se duplicará.', en: 'We could not record your acceptance right now. Retry; it will not be duplicated.' },
+  // hoy-jas-1nov: a login with no name (email-code sign-in) is asked for it on the enrolment and consent step; Company OS
+  // creates the person with a required name.
+  'identity.name.label': { es: 'Tu nombre', en: 'Your name' },
+  'identity.name.hint': { es: 'Como quieres que el estudio te llame. Lo puedes cambiar luego en tu perfil.', en: 'How the studio should call you. You can change it later in your profile.' },
+  'identity.name.required': { es: 'Escribe tu nombre (al menos 2 letras).', en: 'Enter your name (at least 2 letters).' },
+  'identity.name.email': { es: 'Escribe tu nombre, no tu correo.', en: 'Enter your name, not your email.' },
+  'identity.name.invalid': { es: 'Revisa tu nombre: el estudio no pudo guardarlo. Corrígelo e inténtalo de nuevo.', en: 'Check your name: the studio could not save it. Correct it and try again.' },
+  // Decision C-01d (owner 2026-11-02): after "Continue for now", new bookings and purchases wait for the consent.
+  'identity.hold.title': { es: 'Registra tu consentimiento para reservar', en: 'Record your consent to book' },
+  'identity.hold.body': { es: 'Tus reservas, tu saldo y tu cuenta siguen disponibles. Para reservar o comprar, primero registra tu aceptación de los documentos del estudio.', en: 'Your bookings, balance and account are still available. To book or buy, first record your acceptance of the studio\'s documents.' },
+  'identity.hold.retry': { es: 'Reintentar', en: 'Retry' },
   // Review round 2 (r2hoy): sign-up answers that don't go on, each with a line that fits.
   'identity.register.conflict': { es: 'Este correo ya tiene una cuenta en el estudio, pero no pudimos terminar tu registro. Escríbele a administración para revisarlo.', en: 'This email already has an account at the studio, but we could not finish your sign-up. Please contact the studio administration.' },
   'identity.signup.emailLinked': { es: 'Este correo ya está en la ficha de una persona que entra con otra cuenta. Escríbele a administración para revisarlo; no tienes que hacer nada más.', en: 'This email is already on the profile of someone who signs in with another account. Please contact the studio administration to sort it out; there is nothing else you need to do.' },

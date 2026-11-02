@@ -70,6 +70,12 @@ jobs:
           QA_PROD_DIST: ${{ runner.temp }}/prod
       - name: Identity rules
         run: node scripts/test-auth-identity.mjs
+      - name: Jas's 1 Nov walkthrough, customer and identity rules (lane hoy-jas-1nov-customer)
+        run: node scripts/test-jas-1nov-customer.mjs
+      - name: Jas's 1 Nov walkthrough on the production build (enrolment name, consent hold, greeting, affiliate pack, calendar)
+        run: node scripts/test-jas-1nov-customer-ui.mjs
+        env:
+          QA_PROD_DIST: ${{ runner.temp }}/prod
       - name: View-as rules (read-only transport, sample person, provider alias)
         run: node scripts/test-view-as.mjs
       - name: Justin's Hub in production (read-only preview frames, real people, problem report)

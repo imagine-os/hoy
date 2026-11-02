@@ -18,6 +18,7 @@ import {
   type CosVoucher, type CourtesyForm, type GiftPayment, type GiftProduct, type RedeemedLot,
 } from './model';
 import '../vouchers.css';
+import { ConsentHoldNotice, useConsentHeld } from '../../identity/ConsentHold';
 
 /** A day key (`2026-11-30`, studio day) or an ISO instant, as a long date in studio time. */
 const day = (value: string | null | undefined, lang: 'es' | 'en') =>
@@ -88,7 +89,10 @@ export function GiftVoucherPage() {
   const [tried, setTried] = useState(false);
   const product = products.find((p) => p.id === productId) ?? (products.length === 1 ? products[0] : undefined);
   const errors = { product: !product, name: name.trim().length < 2, email: !isEmail(email) };
+  // C-01d: while the consent waits ("Continue for now"), no gift is bought.
+  const consentHeld = useConsentHeld();
   const go = () => {
+    if (consentHeld) return;
     setTried(true);
     if (!product || errors.name || errors.email) return;
     const recipient = { name: name.trim(), email: email.trim().toLowerCase() };
@@ -99,6 +103,7 @@ export function GiftVoucherPage() {
       <h1>{t('vouchers.cos.gift.title')}</h1>
       <p className="muted">{t('vouchers.cos.gift.sub')}</p>
       <div className="stack">
+        <ConsentHoldNotice />
         {!loading && !products.length && <Notice tone="warn">{t('vouchers.cos.gift.none')}</Notice>}
         {products.length > 0 && (
           <Card title={t('vouchers.cos.gift.which')}>
@@ -124,7 +129,7 @@ export function GiftVoucherPage() {
           </div>
         </Card>
         <Notice title={t('vouchers.cos.gift.howTitle')}>{t('vouchers.cos.gift.how')}</Notice>
-        <Button disabled={!products.length} onClick={go}>{t('vouchers.cos.gift.cta')}</Button>
+        <Button disabled={!products.length || consentHeld} onClick={go}>{t('vouchers.cos.gift.cta')}</Button>
       </div>
     </div>
   );

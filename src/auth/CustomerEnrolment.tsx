@@ -4,8 +4,8 @@ import { useI18n } from '../i18n/I18nProvider';
 import { useSession } from './SessionProvider';
 import { ROLE_HOME } from './roles';
 import { cosJson } from './cosRequest';
-import { classifySignup, consentReadFrom, enrolmentBody, parseSignupConfig, signupHeld, signupNoticeKey, type SignupConfig } from './companyOsIdentity';
-import { CONSENT_READ_TIMEOUT_MS, settleConsent, withTimeout } from './signupStatus';
+import { classifySignup, consentReadFrom, enrolmentBody, enrolmentNameError, parseSignupConfig, signupHeld, signupNoticeKey, SIGNUP_FORM_LIMITS, usableLoginName, type SignupConfig } from './companyOsIdentity';
+import { CONSENT_READ_TIMEOUT_MS, deferConsent, passAfterRead, settleConsent, withTimeout } from './signupStatus';
 
 /** Lane review (r2hoy2): the consent step's own calls give up after this; fetch has no timeout of its own. */
 const CONSENT_POST_TIMEOUT_MS = 15_000;
@@ -13,6 +13,8 @@ import { ConsentCheck } from '../modules/identity/pages';
 import { Card } from '../components/molecule/Card/Card';
 import { Notice } from '../components/molecule/Notice/Notice';
 import { Button } from '../components/atom/Button/Button';
+import { Input } from '../components/atom/Input/Input';
+import { Field } from '../components/molecule/Field/Field';
 
 /**
  * Owner 2026-11-01 (review round 2): every registered login is a customer; there is no special way to become one. A
@@ -37,21 +39,35 @@ const AUTO_TRIES = 2;
  * the same login, person and facet), with lines that don't speak of turning customer access on. Success, or a 409
  * `already_registered` with `/me` holding the role, settles the check for the session (`settleConsent`) and the page
  * opens. Sign-up closed meanwhile: nothing to accept here, the page opens (fail open, like a failed read).
+ *
+ * hoy-jas-1nov (root cause of the 1 Nov "no profile" reports): a login with no usable name (`usableLoginName`; email-code
+ * sign-in gives none) is asked for it on this step, required, 2+ characters and no "@", and the sign-up sends it. Company
+ * OS stays strict (a person needs a name): its 400 `validation` brings the step back with the name field explaining it.
+ * Decision C-01d: "Continue for now" defers the consent (`deferConsent`): the customer area opens, new bookings and
+ * purchases wait for it (`ConsentHoldNotice`).
  */
 export default function CustomerEnrolment({ consent }: { consent?: SignupConfig } = {}) {
   const { t } = useI18n();
   const { user, role, refresh, signOut } = useSession();
   const consentOnly = !!consent;
   const lines = consentOnly ? 'identity.accept' : 'identity.enrol';
+  const loginName = usableLoginName(user);
+  // Asked only when the login has no usable name and the tenant takes a name at sign-up (review). Whether the person row
+  // already has one isn't known to this step (GET /signup and /me don't say), so a nameless login is asked; Company OS
+  // fills only what the person lacks.
+  const needsName = (cfg: SignupConfig | null | undefined) => !loginName && !!cfg?.personFields.includes('name');
+  const [typedName, setTypedName] = useState('');
+  const [nameError, setNameError] = useState<'required' | 'email' | 'invalid' | null>(null);
   const [config, setConfig] = useState<SignupConfig | null>(consent ?? null);
-  const [step, setStep] = useState<'loading' | 'consent' | 'sending' | 'closed' | 'notice'>(consent?.consents.length ? 'consent' : 'loading');
+  const [step, setStep] = useState<'loading' | 'consent' | 'sending' | 'closed' | 'notice'>(consent && (consent.consents.length || needsName(consent)) ? 'consent' : 'loading');
   const [accepted, setAccepted] = useState(false);
   const [missingConsent, setMissingConsent] = useState(false);
   const [notice, setNotice] = useState<{ tone: 'warn' | 'danger' | 'info'; text: string } | null>(null);
   const alive = useRef(true);
   const busy = useRef(false);
   useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
-  const name = user.name && user.name !== user.email ? user.name : '';
+  const askName = needsName(config);
+  const name = askName ? typedName : loginName;
 
   const enrol = useCallback(async (cfg: SignupConfig, withConsent: boolean) => {
     if (busy.current) return;
@@ -78,6 +94,9 @@ export default function CustomerEnrolment({ consent }: { consent?: SignupConfig 
         setNotice(withConsent ? { tone: 'warn', text: t('identity.register.changed') } : null);
         return;
       }
+      // The typed name was refused (Company OS 400 validation): back to the step, the field says so. Any other refusal
+      // (duplicate_person_user…) keeps its own notice, with "Continue for now" on the consent step (review).
+      if (result.kind === 'invalid' && result.code === 'validation' && needsName(cfg)) { setNameError('invalid'); setNotice(null); setStep('consent'); return; }
       let held: boolean | null = null;
       if (result.kind === 'already-registered') {
         const me = await cosJson('/me').catch(() => null);
@@ -96,12 +115,12 @@ export default function CustomerEnrolment({ consent }: { consent?: SignupConfig 
     } finally {
       busy.current = false;
     }
-  }, [consentOnly, lines, name, refresh, t, user.id]);
+  }, [askName, consentOnly, lines, loginName, name, refresh, t, user.id]);
 
   const start = useCallback(async (manual = false) => {
     // The consent check's first pass uses the config RequireRole read (once per session); Retry reads it again.
     if (consent && !manual) {
-      if (consent.consents.length > 0) return;
+      if (consent.consents.length > 0 || needsName(consent)) return;
       const tries = autoTries.get(user.id) ?? 0;
       if (tries >= AUTO_TRIES) { setNotice({ tone: 'danger', text: t(`${lines}.failed`) }); setStep('notice'); return; }
       autoTries.set(user.id, tries + 1);
@@ -114,12 +133,12 @@ export default function CustomerEnrolment({ consent }: { consent?: SignupConfig 
         // Retry of the consent check: signed up meanwhile, closed, unreadable or silent now → the page opens (fail open).
         const answer = await withTimeout(cosJson('/signup'), CONSENT_READ_TIMEOUT_MS);
         if (!alive.current) return;
-        if (answer === 'timeout') { console.warn('[signup] GET /signup gave no answer on retry; the customer area opens without the consent check'); settleConsent(user.id); return; }
+        if (answer === 'timeout') { console.warn('[signup] GET /signup gave no answer on retry; the customer area opens without the consent check'); passAfterRead(user.id, 'timeout'); return; }
         const read = consentReadFrom(answer.status, answer.body);
         if (!alive.current) return;
-        if (read.step === 'pass') { settleConsent(user.id); return; }
+        if (read.step === 'pass') { passAfterRead(user.id, read); return; }
         setConfig(read.config);
-        if (read.config.consents.length > 0) { setStep('consent'); return; }
+        if (read.config.consents.length > 0 || needsName(read.config)) { setStep('consent'); return; }
         await enrol(read.config, false);
         return;
       }
@@ -129,7 +148,7 @@ export default function CustomerEnrolment({ consent }: { consent?: SignupConfig 
       if (!parsed) { setNotice({ tone: 'danger', text: t('identity.enrol.failed') }); setStep('notice'); return; }
       setConfig(parsed);
       if (!parsed.enabled) { setStep('closed'); return; }
-      if (parsed.consents.length > 0) { setStep('consent'); return; }
+      if (parsed.consents.length > 0 || needsName(parsed)) { setStep('consent'); return; }
       const tries = autoTries.get(user.id) ?? 0;
       if (!manual && tries >= AUTO_TRIES) { setNotice({ tone: 'danger', text: t('identity.enrol.failed') }); setStep('notice'); return; }
       autoTries.set(user.id, tries + 1);
@@ -137,7 +156,7 @@ export default function CustomerEnrolment({ consent }: { consent?: SignupConfig 
     } catch {
       if (alive.current) { setNotice({ tone: 'danger', text: t(`${lines}.failed`) }); setStep('notice'); }
     }
-  }, [consent, consentOnly, enrol, lines, t, user.id]);
+  }, [consent, consentOnly, enrol, lines, loginName, t, user.id]);
   const started = useRef(false);
   useEffect(() => { if (!started.current) { started.current = true; void start(); } }, [start]);
 
@@ -145,7 +164,7 @@ export default function CustomerEnrolment({ consent }: { consent?: SignupConfig 
   const home = consentOnly && ROLE_HOME[role].startsWith('/app')
     ? <p className="small"><Button variant="ghost" size="sm" onClick={() => void signOut()}>{t('identity.signout')}</Button></p>
     : <p className="small"><Link to={ROLE_HOME[role]}>{t('identity.enrol.back')}</Link></p>;
-  if (step === 'loading' || step === 'sending' && !config?.consents.length) {
+  if (step === 'loading' || step === 'sending' && !config?.consents.length && !askName) {
     return <div className="container page identity-narrow stack" data-enrol-customer="loading"><p className="muted" aria-busy="true">{t(`${lines}.loading`)}</p>{consentOnly && home}</div>;
   }
   if (step === 'closed') return <div className="container page identity-narrow stack" data-enrol-customer="closed"><Card padding="lg"><Notice tone="info">{t('identity.register.closed')}</Notice></Card>{home}</div>;
@@ -156,7 +175,7 @@ export default function CustomerEnrolment({ consent }: { consent?: SignupConfig 
           {notice && <Notice tone={notice.tone}>{notice.text}</Notice>}
           <Button variant="secondary" data-enrol-retry onClick={() => void start(true)}>{t('identity.retry')}</Button>
           {/* Lane review (r2hoy2): a customer already; a refusal they can't fix never keeps them out of their bookings. */}
-          {consentOnly && <Button variant="ghost" data-consent-later onClick={() => settleConsent(user.id)}>{t('identity.accept.later')}</Button>}
+          {consentOnly && <Button variant="ghost" data-consent-later onClick={() => deferConsent(user.id)}>{t('identity.accept.later')}</Button>}
         </Card>
         {home}
       </div>
@@ -167,12 +186,22 @@ export default function CustomerEnrolment({ consent }: { consent?: SignupConfig 
       <Card padding="lg">
         <form className="stack" noValidate onSubmit={(e) => {
           e.preventDefault();
-          if (!accepted) { setMissingConsent(true); return; }
-          setMissingConsent(false);
+          const nameProblem = askName ? enrolmentNameError(typedName) : null;
+          const consentMissing = config.consents.length > 0 && !accepted;
+          setNameError(nameProblem);
+          setMissingConsent(consentMissing);
+          if (nameProblem || consentMissing) return;
           void enrol(config, true);
         }}>
           <h1 className="cust-title">{t('identity.enrol.title')}</h1>
-          <p className="muted">{t('identity.enrol.consent')}</p>
+          {config.consents.length > 0 && <p className="muted">{t('identity.enrol.consent')}</p>}
+          {askName && (
+            <div data-enrol-name>
+              <Field label={t('identity.name.label')} required hint={t('identity.name.hint')} error={nameError ? t(`identity.name.${nameError}`) : undefined}>
+                {(id) => <Input id={id} autoComplete="name" maxLength={SIGNUP_FORM_LIMITS.name} value={typedName} onChange={(e) => { setTypedName(e.target.value); setNameError(null); }} />}
+              </Field>
+            </div>
+          )}
           <ConsentCheck config={config} accepted={accepted} onChange={(v) => { setAccepted(v); if (v) setMissingConsent(false); }} error={missingConsent} />
           {notice && <Notice tone={notice.tone}>{notice.text}</Notice>}
           <Button type="submit" block size="lg" loading={step === 'sending'}>{t('identity.enrol.cta')}</Button>

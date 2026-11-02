@@ -1,4 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { readCalendarQuery, writeCalendarQuery } from './calendarQuery';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { addDays, dateKey, formatDate, formatTime, fromDateKey, isSameDay, studioParts, studioDate } from '../../../i18n/format';
 import { useMinWidth } from '../../../layout/useMinWidth';
@@ -10,7 +12,21 @@ import './SessionCalendar.css';
 import { sessionUnavailableReason } from '../../../data/sessionAvailability';
 export type CalendarView = 'day' | 'week' | 'month';
 export interface CalendarSession { session: ClassSessionRow; modality?: ModalityRow; teacher?: TeacherRow; templateActive?: boolean }
-export interface SessionCalendarProps { sessions: CalendarSession[]; onPick: (s: ClassSessionRow) => void; mine?: Set<string>; initialView?: CalendarView; allowUnavailable?: boolean }
+export interface SessionCalendarProps {
+  sessions: CalendarSession[]; onPick: (s: ClassSessionRow) => void; mine?: Set<string>; initialView?: CalendarView; allowUnavailable?: boolean;
+  /**
+   * RES-01: keep the day and view in the URL query (`day`, `cv`; replaced, not pushed), so Back from a class returns to
+   * the same day and a remount keeps it. Needs a router; off by default (the state stays in the calendar).
+   */
+  syncUrl?: boolean;
+}
+interface CalendarState { date: Date; view: CalendarView }
+type CalendarSet = (patch: Partial<CalendarState>) => void;
+/** The first day shown: the next class's day for the week view, else today. */
+const firstDate = (sessions: CalendarSession[], initialView: CalendarView) => {
+  const next = sessions.find(x => x.session.status === 'scheduled' && new Date(x.session.starts_at).getTime() > Date.now());
+  return initialView === 'week' && next ? fromDateKey(dateKey(new Date(next.session.starts_at))) : fromDateKey(dateKey());
+};
 /** Dots a compact day cell shows: one per class (capped) coloured by the modality tone; cancelled / completed classes are dimmed. */
 const MAX_DOTS = 4;
 /**
@@ -19,7 +35,31 @@ const MAX_DOTS = 4;
  * 7-column grid of 44 px day cells with class-tone dots, both above the selected day's class list — no horizontal
  * scroll region, no clipped columns.
  */
-export function SessionCalendar({ sessions, onPick, mine, initialView = 'week', allowUnavailable = false }: SessionCalendarProps) {
+export function SessionCalendar(props: SessionCalendarProps) {
+  return props.syncUrl ? <UrlCalendar {...props} /> : <LocalCalendar {...props} />;
+}
+
+function LocalCalendar(props: SessionCalendarProps) {
+  const initialView = props.initialView ?? 'week';
+  const [state, setState] = useState<CalendarState>(() => ({ date: firstDate(props.sessions, initialView), view: initialView }));
+  return <CalendarBody {...props} state={state} set={(patch) => setState((s) => ({ ...s, ...patch }))} />;
+}
+
+/** RES-01: the day and view live in the query; without them, the first day and the route's view. */
+function UrlCalendar(props: SessionCalendarProps) {
+  const initialView = props.initialView ?? 'week';
+  const [params, setParams] = useSearchParams();
+  const [fallback] = useState(() => firstDate(props.sessions, initialView));
+  const query = readCalendarQuery(params);
+  const state: CalendarState = { date: query.day ? fromDateKey(query.day) : fallback, view: query.view ?? initialView };
+  const set: CalendarSet = (patch) => {
+    const next = { ...state, ...patch };
+    setParams((current) => writeCalendarQuery(current, dateKey(next.date), next.view), { replace: true });
+  };
+  return <CalendarBody {...props} state={state} set={set} />;
+}
+
+function CalendarBody({ sessions, onPick, mine, allowUnavailable = false, state, set }: SessionCalendarProps & { state: CalendarState; set: CalendarSet }) {
   const { t, lang, bi } = useI18n();
   const [now, setNow] = useState(Date.now);
   // Refresh at the next start/end boundary, including a resumed background tab.
@@ -34,8 +74,9 @@ export function SessionCalendar({ sessions, onPick, mine, initialView = 'week', 
   const reason = (x: CalendarSession) => sessionUnavailableReason(x, now);
   const pick = (x: CalendarSession) => { if (allowUnavailable || !sessionUnavailableReason(x)) onPick(x.session); };
   const compact = !useMinWidth('shell');
-  const [view, setView] = useState<CalendarView>(initialView);
-  const [date, setDate] = useState(() => { const next = sessions.find(x => x.session.status === 'scheduled' && new Date(x.session.starts_at).getTime() > Date.now()); return initialView === 'week' && next ? fromDateKey(dateKey(new Date(next.session.starts_at))) : fromDateKey(dateKey()); });
+  const { date, view } = state;
+  const setDate = (d: Date) => set({ date: d });
+  const setView = (v: CalendarView) => set({ view: v });
   const monday = addDays(date, -((studioParts(date).weekday + 6) % 7));
   const monthStart = studioDate(studioParts(date).year, studioParts(date).month, 1, 12);
   const gridStart = addDays(monthStart, -((studioParts(monthStart).weekday + 6) % 7));
@@ -43,7 +84,7 @@ export function SessionCalendar({ sessions, onPick, mine, initialView = 'week', 
   const onDay = (d: Date) => sessions.filter(x => isSameDay(x.session.starts_at, d));
   const move = (n: number) => setDate(view === 'month' ? studioDate(studioParts(date).year, studioParts(date).month + n, 1, 12) : addDays(date, n * (view === 'week' ? 7 : 1)));
   const name = (x: CalendarSession) => classDisplay({ title: x.session.title, modalityName: x.modality ? bi({ es: x.modality.name_es, en: x.modality.name_en }) : null, teacher: x.teacher?.display_name ?? '' });
-  const openDay = (d: Date) => { setDate(d); setView('day'); };
+  const openDay = (d: Date) => set({ date: d, view: 'day' });
   const today = new Date();
   const longDay = (d: Date) => formatDate(d, lang, { weekday: 'long', day: 'numeric', month: 'long' });
   const cellLabel = (d: Date) => `${longDay(d)} · ${t('site.calendar.classes', { n: onDay(d).length })}`;

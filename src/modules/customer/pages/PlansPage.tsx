@@ -29,6 +29,9 @@ import { SERVER_RULES } from '../booking/bookingPolicy';
 import { safeCheckoutReturn } from '../booking/serverBooking';
 import { GIFT_PURCHASE_PATH } from '../../../config/launchRoutes';
 import { useLivePricing } from '../../../data/livePricing';
+import { audienceVisible } from '../offers';
+import { useAffiliate } from '../useAffiliate';
+import { ConsentHoldNotice, useConsentHeld } from '../../identity/ConsentHold';
 
 /** Production: a pack or the trial is bought by bank transfer on H-5's payment page, by product key; Company OS prices it. */
 const payPath = (key: string, next: string | null = null) => `/app/pay/product/${encodeURIComponent(key)}${next ? `?next=${encodeURIComponent(next)}` : ''}`;
@@ -54,9 +57,14 @@ export function PlansPage() {
   const [params] = useSearchParams();
   const catalog=useOperationalCatalog();
   const prices = useLivePricing();
+  const affiliate = useAffiliate();
+  // C-01d: while the consent waits ("Continue for now"), nothing is bought from here.
+  const consentHeld = useConsentHeld();
   // Production: the packs and their prices are Company OS's product master (live pricing); the browser quote is review only.
+  // PRO-05: the signed-in app shows the affiliate-only pack only to a member facet with the affiliate price_audience; the
+  // public site is unchanged (open question). The server refuses a sale to anyone else (audience_not_allowed).
   const packages = SERVER_RULES
-    ? PACKAGE_IDS.flatMap((id) => { const p = prices.item(id); return p ? [p] : []; })
+    ? PACKAGE_IDS.flatMap((id) => { const p = prices.item(id); return p && audienceVisible(p, { live: true, affiliate }) ? [p] : []; })
     : PACKAGE_IDS.flatMap(id=>{const q=catalog.quote(id);return q?[quotedItem(q)]:[];});
   // W-xx → A-02 → here with ?plan=<id>: a package opens its confirmation; a single or trial class goes to the schedule with the pass ready.
   const wanted = params.get('plan');
@@ -127,11 +135,12 @@ export function PlansPage() {
   };
 
   // Production: ?plan=<pack or trial> (checkout's "buy and come back", A-02) goes straight to its transfer payment.
-  if (SERVER_RULES && wanted && ([...PACKAGE_IDS, 'trial'] as string[]).includes(wanted)) return <Navigate to={payPath(wanted, next)} replace />;
+  if (SERVER_RULES && wanted && !consentHeld && ([...PACKAGE_IDS, 'trial'] as string[]).includes(wanted)) return <Navigate to={payPath(wanted, next)} replace />;
   return (
     <div className="container page cust-page">
       <PageHead title={t('customer.plans.title')} sub={t('quotes.packageIntro')} />
       <div className="stack">
+        <ConsentHoldNotice />
         {packages.length===0&&!(SERVER_RULES&&prices.loading)&&<Notice tone="warn">{t('quotes.unavailable')}</Notice>}
         {ent.pkg.purchase && (
           <Notice tone={ent.pkg.frozen ? 'warn' : 'success'} title={t('customer.plans.current', { plan:purchasedQuote?bi(purchasedQuote.name):ent.plan ? bi({ es: ent.plan.name_es, en: ent.plan.name_en }) : t('customer.classes.package') })} action={<Link to="/app/classes"><Button size="sm" variant="secondary">{t('customer.plans.manage')}</Button></Link>}>
@@ -152,7 +161,7 @@ export function PlansPage() {
                 {benefits(p).map((b) => <li key={b}>{b}</li>)}
                 {p.audience && <li>{t('customer.plans.benefit.affiliates')}</li>}
               </ul>
-              <Button block size="lg" variant={i === 0 ? 'primary' : 'secondary'} onClick={() => { if (SERVER_RULES) { nav(payPath(p.id)); return; } buyKey.current=crypto.randomUUID();setDone(false);setBuying(p);}}>{t('customer.plans.cta')}</Button>
+              <Button block size="lg" variant={i === 0 ? 'primary' : 'secondary'} disabled={consentHeld} onClick={() => { if (consentHeld) return; if (SERVER_RULES) { nav(payPath(p.id)); return; } buyKey.current=crypto.randomUUID();setDone(false);setBuying(p);}}>{t('customer.plans.cta')}</Button>
             </Card>
           ))}
         </div>
