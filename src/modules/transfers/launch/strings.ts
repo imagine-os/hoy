@@ -170,7 +170,8 @@ export const payLaunchStrings: StringTable = {
   'payLaunch.report.inverted': { es: 'La fecha final no puede ser anterior a la inicial.', en: 'The end date cannot be before the start date.' },
   'payLaunch.report.note': { es: 'Sin facturas en el lanzamiento: este reporte es el registro contable.', en: 'No invoices at launch: this report is the accounting record.' },
   'payLaunch.report.col.date': { es: 'Fecha', en: 'Date' },
-  'payLaunch.report.col.number': { es: 'Nota', en: 'Note' },
+  // PAG-10 (Jas 1 Nov): the column is the purchase note's ("nota de compra") number.
+  'payLaunch.report.col.number': { es: 'N.º de nota', en: 'Receipt no.' },
   'payLaunch.report.col.customer': { es: 'Cliente', en: 'Customer' },
   'payLaunch.report.col.product': { es: 'Producto', en: 'Product' },
   'payLaunch.report.col.method': { es: 'Método', en: 'Method' },
