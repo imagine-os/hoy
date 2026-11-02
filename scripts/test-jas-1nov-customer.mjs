@@ -226,7 +226,7 @@ check('C-01d r2: the consent form offers "Continue for now" to a login that had 
   check('C-01d move: the review build\'s reschedule sheet is unchanged (no hold in BookedPage\'s ChangeSheet)', !/useConsentHeld/.test(src('src/modules/customer/pages/BookedPage.tsx')));
 }
 check('C-01d review: the consent step\'s Retry read keeps the hold (passAfterRead, not settleConsent)', /passAfterRead\(user\.id, 'timeout'\)/.test(enrolSrc) && /passAfterRead\(user\.id, read\)/.test(enrolSrc));
-check('C-01d review: the product payment page holds; a held booking\'s payment stays open', /useConsentHeld\(\) && what === 'product'/.test(src('src/modules/transfers/launch/TransferPayPage.tsx')));
+check('C-01d review: the product payment page holds; a held booking\'s payment stays open', /consentHoldsPay\(\{ held: consentHeld, what,/.test(src('src/modules/transfers/launch/TransferPayPage.tsx')));
 check('name review: only a 400 validation points at the name field; other refusals keep their notice', /result\.kind === 'invalid' && result\.code === 'validation'/.test(enrolSrc));
 check('name review: asked only when the tenant takes a name at sign-up', /personFields\.includes\('name'\)/.test(enrolSrc));
 check('C-01d: "Continue for now" defers the consent instead of settling it', /data-consent-later[^\n]*deferConsent\(/.test(enrolSrc) && !/data-consent-later[^\n]*settleConsent\(/.test(enrolSrc));

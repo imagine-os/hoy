@@ -17,6 +17,7 @@ import { useAction, useCos, useLoad } from './useCos';
 import { holdView, safeCheckoutReturn, type HoldView, type ServerBookingRow } from '../../customer/booking/serverBooking';
 import { useBookingPolicy, type BookingPolicy } from '../../customer/booking/bookingPolicy';
 import { ConsentHoldNotice, useConsentHeld } from '../../identity/ConsentHold';
+import { consentHoldsPay } from '../../identity/consentHoldRules';
 
 export interface PayView { person: string; product: ProductRow | null; booking: BookingRec | null; classStartsAt: string | null; pending: PaymentRec | null; pendingHasReceipt: boolean; affiliate: boolean | null }
 
@@ -86,10 +87,10 @@ function PayScreen({ what, id }: { what: string; id: string }) {
   const [paymentId, setPaymentId] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   // C-01d (review): while the consent waits ("Continue for now"), a product is not bought here (no payment, no receipt).
-  // Paying a held booking stays open: it is an existing booking.
-  const consentHeld = useConsentHeld() && what === 'product';
+  // Paying a held booking stays open (an existing booking), and so does an existing pending payment (review r2): decided
+  // once the read says whether there is one.
+  const consentHeld = useConsentHeld();
 
-  if (consentHeld) return <ConsentHoldNotice />;
   if (state.status === 'loading') return <EmptyState tone="loading" title={t('payLaunch.loading')} />;
   if (state.status === 'error') return <EmptyState tone="error" title={t(refusalKey(state.code), { code: state.code })} action={<Button onClick={reload}>{t('payLaunch.retry')}</Button>} />;
   const v = state.value;
@@ -102,6 +103,7 @@ function PayScreen({ what, id }: { what: string; id: string }) {
   const backToClass = next && !v.booking ? <Link to={next}><Button size="sm" variant="secondary">{t('payLaunch.pay.backToClass')}</Button></Link> : undefined;
   if (done) return <Notice tone="success" action={backToClass}>{t(v.booking ? 'payLaunch.pay.sent' : 'payLaunch.pay.sentProduct')}</Notice>;
   if (v.pending && v.pendingHasReceipt) return <Notice tone="success" action={backToClass}>{t('payLaunch.pay.alreadyPending')}</Notice>;
+  if (consentHoldsPay({ held: consentHeld, what, pending: !!v.pending })) return <ConsentHoldNotice />;
   const resumeId = paymentId ?? v.pending?.id ?? null;
   if (v.booking && v.booking.data.status !== 'held') return <Notice>{t('payLaunch.pay.notHeld')}</Notice>;
   // Display only: the server decides whether the hold still takes a receipt (`hold_expired`), so the form stays.
