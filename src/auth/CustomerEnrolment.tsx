@@ -4,8 +4,8 @@ import { useI18n } from '../i18n/I18nProvider';
 import { useSession } from './SessionProvider';
 import { ROLE_HOME } from './roles';
 import { cosJson } from './cosRequest';
-import { classifySignup, consentReadFrom, enrolmentBody, enrolmentNameError, parseSignupConfig, signupHeld, signupNoticeKey, SIGNUP_FORM_LIMITS, usableLoginName, type SignupConfig } from './companyOsIdentity';
-import { CONSENT_READ_TIMEOUT_MS, deferConsent, passAfterRead, settleConsent, withTimeout } from './signupStatus';
+import { classifySignup, consentReadFrom, validationNamesField, enrolmentBody, enrolmentNameError, parseSignupConfig, signupHeld, signupNoticeKey, SIGNUP_FORM_LIMITS, usableLoginName, type SignupConfig } from './companyOsIdentity';
+import { CONSENT_READ_TIMEOUT_MS, deferConsent, hasDeferred, passAfterRead, settleConsent, withTimeout } from './signupStatus';
 
 /** Lane review (r2hoy2): the consent step's own calls give up after this; fetch has no timeout of its own. */
 const CONSENT_POST_TIMEOUT_MS = 15_000;
@@ -94,9 +94,10 @@ export default function CustomerEnrolment({ consent }: { consent?: SignupConfig 
         setNotice(withConsent ? { tone: 'warn', text: t('identity.register.changed') } : null);
         return;
       }
-      // The typed name was refused (Company OS 400 validation): back to the step, the field says so. Any other refusal
-      // (duplicate_person_user…) keeps its own notice, with "Continue for now" on the consent step (review).
-      if (result.kind === 'invalid' && result.code === 'validation' && needsName(cfg)) { setNameError('invalid'); setNotice(null); setStep('consent'); return; }
+      // The typed name was refused (Company OS 400 validation whose details name the `name` field, review r2): back to
+      // the step, the field says so. Any other refusal (another field, duplicate_person_user…) keeps its own notice, with
+      // "Continue for now" on the consent step (review).
+      if (result.kind === 'invalid' && result.code === 'validation' && needsName(cfg) && validationNamesField(body, 'name')) { setNameError('invalid'); setNotice(null); setStep('consent'); return; }
       let held: boolean | null = null;
       if (result.kind === 'already-registered') {
         const me = await cosJson('/me').catch(() => null);
@@ -205,6 +206,10 @@ export default function CustomerEnrolment({ consent }: { consent?: SignupConfig 
           <ConsentCheck config={config} accepted={accepted} onChange={(v) => { setAccepted(v); if (v) setMissingConsent(false); }} error={missingConsent} />
           {notice && <Notice tone={notice.tone}>{notice.text}</Notice>}
           <Button type="submit" block size="lg" loading={step === 'sending'}>{t('identity.enrol.cta')}</Button>
+          {/* Review r2: shown again after the hold notice's Retry, the step keeps a way back without accepting (re-defers). */}
+          {consentOnly && hasDeferred(user.id) && (
+            <Button type="button" variant="ghost" block disabled={step === 'sending'} data-consent-later onClick={() => deferConsent(user.id)}>{t('identity.accept.later')}</Button>
+          )}
         </form>
       </Card>
       {home}

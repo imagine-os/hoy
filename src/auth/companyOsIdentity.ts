@@ -243,6 +243,20 @@ export function classifySignup(status: number, body: unknown): SignupResult {
   return { kind: 'error', code: code || `http_${status}` };
 }
 
+/**
+ * Review round 2: does a 400 `validation` refusal name this field? Company OS answers it as
+ * `{ error: 'validation', details: string[] }` (`HttpError(400, "validation", undefined, errors)` in its signup service;
+ * the messages are `coerceData`'s: `missing required field "name"`, `field "name" is required`, `field "name": …`).
+ * Anything else (no details, other fields, another shape) does not.
+ */
+export function validationNamesField(body: unknown, field: string): boolean {
+  if (!body || typeof body !== 'object') return false;
+  const details = (body as Record<string, unknown>).details;
+  if (!Array.isArray(details)) return false;
+  const needle = `field "${field}"`;
+  return details.some((d) => typeof d === 'string' && d.includes(needle));
+}
+
 /** The tenant's sign-up role: the key `ROLE_KEYS` maps to the customer. */
 const SIGNUP_ROLE_KEY = ROLE_KEYS.find((r) => r.role === 'customer')!.key;
 
