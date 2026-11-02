@@ -8,7 +8,7 @@ import { PRODUCTION_BUILD } from '../../config/launch';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { useI18n } from '../../i18n/I18nProvider';
-import { failureCopy } from '../../data/companyos/refusals';
+import { failureCopy, hasRefusalCopy, refusalCopy } from '../../data/companyos/refusals';
 import { useSession } from '../../auth/SessionProvider';
 import { ROLES, ROLE_LABEL, STAFF_ROLES, type Role } from '../../auth/roles';
 import { useData, useTable } from '../../data/DataContext';
@@ -482,7 +482,7 @@ function GeneralActions() {
 
 /** Payment instructions have a separate mock-only atomic save/audit and stable retry command. */
 function PaymentSettingsCard({value}:{value:PaymentSettings}){
- const{t}=useI18n(),save=usePaymentSettingsSave();
+ const{t,lang}=useI18n(),save=usePaymentSettingsSave();
  const[draft,setDraft]=useState({data:save.data,context:save.context,before:value,after:value});
  const current=draft.data===save.data&&draft.context===save.context?draft:{data:save.data,context:save.context,before:value,after:value};
  useEffect(()=>{setDraft(prior=>prior.data!==save.data||prior.context!==save.context?{data:save.data,context:save.context,before:value,after:value}:prior);},[save.data,save.context,value]);
@@ -501,7 +501,7 @@ function PaymentSettingsCard({value}:{value:PaymentSettings}){
    </div>
    <SharedImageField label={t('admin.paymentInstructions.qrImageUrl')} value={d.qrImageUrl} disabled={disabled} onChange={qrImageUrl=>set({...d,qrImageUrl})}/>
    {!valid&&<Notice tone="warn">{t('admin.paymentInstructions.invalid')}</Notice>}
-   {save.state==='error'&&<Notice tone="warn">{t('admin.paymentInstructions.saveError')}</Notice>}
+   {save.state==='error'&&<Notice tone="warn">{save.failure&&hasRefusalCopy(save.failure)?refusalCopy(save.failure,lang):t('admin.paymentInstructions.saveError')}</Notice>}
    {stale&&<Notice tone="warn">{t('admin.paymentInstructions.changed')}</Notice>}
    {(stale||save.state==='error')&&<Button variant="secondary" disabled={busy} onClick={()=>{save.changed();setDraft({data:save.data,context:save.context,before:value,after:value});}}>{t('admin.paymentInstructions.reload')}</Button>}
    <Notice tone="warn" title={t('admin.settings.pay.keys.title')}>{t('admin.settings.pay.keys.body')}</Notice>

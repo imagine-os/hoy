@@ -30,7 +30,17 @@ export async function readPaymentInstructions(data:DataProvider,tenantId:string|
  // Do not invent a configured payment destination from defaults when legacy fields are absent.
  return projectPaymentInstructions(rows[0].settings?.payments);
 }
-export interface PaymentSettingsCommand{actorId:string;role:Role;requestId:string;before:PaymentSettings;after:PaymentSettings}
+/** `roles`: every role the session's login holds (`heldRoles`, from Company OS `/me` in production); absent means `[role]`. */
+export interface PaymentSettingsCommand{actorId:string;role:Role;roles?:readonly Role[];requestId:string;before:PaymentSettings;after:PaymentSettings}
+/** Who may change the payment settings: Administration and the super admin (the roles that hold settings.write). */
+const PAYMENT_SETTINGS_ROLES:readonly Role[]=['admin','super_admin'];
+/** The refusal code a failed save carries: Company OS's (`e.code`), or this command's own `payment_settings_*`; else ''. */
+export function saveFailureCode(e:unknown):string{
+ const code=e&&typeof e==='object'&&typeof (e as {code?:unknown}).code==='string'?(e as {code:string}).code:'';
+ if(code)return code;
+ const message=e instanceof Error?e.message:'';
+ return /^payment_settings_[a-z_]+$/.test(message)?message:'';
+}
 export interface PaymentSettingsControl{isCurrent:()=>boolean;failAfterWrites?:number}
 const digest=async(value:unknown)=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify(value)))),n=>n.toString(16).padStart(2,'0')).join('');
 /**
@@ -45,7 +55,9 @@ export async function savePaymentSettings(data:DataProvider,input:PaymentSetting
  if(!validPaymentSettings(command.after)||!validPaymentSettings(command.before))throw Error('payment_settings_invalid');
  const fingerprint=await digest(command),id=`payment_settings_${command.requestId}`;check();
  return data.atomic(async tx=>{
-  const authorize=async()=>{check();const actor=await tx.get<UserRow>('users',command.actorId);check();if(!actor||actor.tenant_id!==tenant.id||actor.status!=='active')throw Error('payment_settings_denied');
+  // Production: the roles come from the session's Company OS `/me` (a login may have no person record, ADM-04);
+  // Company OS's own permissions on the setting record still decide the write. Review build: the mock's user rows.
+  const authorize=PRODUCTION_BUILD?async()=>{check();if(!(command.roles??[command.role]).some(r=>PAYMENT_SETTINGS_ROLES.includes(r)))throw Error('payment_settings_denied');}:async()=>{check();const actor=await tx.get<UserRow>('users',command.actorId);check();if(!actor||actor.tenant_id!==tenant.id||actor.status!=='active')throw Error('payment_settings_denied');
    const roles=(await tx.list<BaseRow>('user_roles',{where:{tenant_id:tenant.id,user_id:command.actorId}})).filter(row=>row.tenant_id===tenant.id&&row.user_id===command.actorId);check();
    if(!roles.some(row=>row.role===command.role||row.role==='super_admin'))throw Error('payment_settings_denied');};
   await authorize();
