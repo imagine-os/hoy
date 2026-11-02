@@ -25,11 +25,11 @@ export function RouteErrorCard({ onRetry, homeTo }: RouteErrorCardProps) {
 }
 
 class Boundary extends Component<{ children: ReactNode; fallback: (retry: () => void) => ReactNode }, { failed: boolean }> {
-  state = { failed: false };
+  override state = { failed: false };
   static getDerivedStateFromError() { return { failed: true }; }
-  componentDidCatch(error: unknown, info: ErrorInfo) { console.error('[route] the page crashed:', error, info.componentStack); }
+  override componentDidCatch(error: unknown, info: ErrorInfo) { console.error('[route] the page crashed:', error, info.componentStack); }
   private retry = () => this.setState({ failed: false });
-  render() { return this.state.failed ? this.props.fallback(this.retry) : this.props.children; }
+  override render() { return this.state.failed ? this.props.fallback(this.retry) : this.props.children; }
 }
 
 /**
