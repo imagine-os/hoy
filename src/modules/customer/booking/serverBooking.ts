@@ -56,7 +56,7 @@ export function holdView(booking: ServerBookingRow, classStartsAt: string, polic
  * 5 minutes): not frozen, `hold_until` passed. The page shows it released and re-reads until the server says so.
  */
 export const awaitingRelease = (b: Pick<ServerBookingRow, 'status' | 'hold_until' | 'hold_frozen_at'>, now = Date.now()) =>
-  b.status === 'held' && !b.hold_frozen_at && !(Date.parse(b.hold_until ?? '') > now);
+  b.status === 'held' && !b.hold_frozen_at && Date.parse(b.hold_until ?? '') <= now; // no or unreadable hold_until: still pending
 /** PAG-03: how often, and how many times, the booking page re-reads an expired hold (6 minutes in all). */
 export const RELEASE_RECHECK_MS = 10_000;
 export const RELEASE_RECHECK_TRIES = 36;
