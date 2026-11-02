@@ -24,11 +24,15 @@ import { ClassCard } from '../../../components/organism/ClassCard/ClassCard';
 import { PageHead, SiteShell } from '../SiteShell';
 import { siteSpecs } from '../specs';
 import { useSessionsJoined } from '../hooks';
+import { drawerCopy } from '../drawerCopy';
+import { ConsentHoldNotice, useConsentHeld } from '../../identity/ConsentHold';
 
 export function SchedulePage() {
   const { photoEdition } = useSiteEdition();
   const { t, bi } = useI18n();
-  const { user, role } = useSession();
+  const { user, role, signedIn } = useSession();
+  // C-01d: a signed-in person whose consent waits ("Continue for now") books nothing new until it is recorded.
+  const consentHeld = useConsentHeld();
   const data = useData();
   const nav = useNavigate(), location = useLocation();
   const navigationRoute = location.pathname + location.search;
@@ -65,7 +69,7 @@ export function SchedulePage() {
   const unavailable = !!chosen && !sessionAdmissionAvailable(chosen.session, chosen.modality, chosen.session.template_id ? { id: chosen.session.template_id, active: chosen.templateActive } : undefined, now);
   const unavailableReason = chosen ? sessionUnavailableReason(chosen, now) ?? 'unavailable' : 'unavailable';
   const signInAndBook = async () => {
-    if (!chosen || navigationLock.current || !sessionAdmissionAvailable(chosen.session, chosen.modality, chosen.session.template_id ? { id: chosen.session.template_id, active: chosen.templateActive } : undefined)) return;
+    if (!chosen || consentHeld || navigationLock.current || !sessionAdmissionAvailable(chosen.session, chosen.modality, chosen.session.template_id ? { id: chosen.session.template_id, active: chosen.templateActive } : undefined)) return;
     const captured = live.current, version = ++operation.current;
     const current = () => operation.current === version && live.current.mounted && live.current.data === captured.data && live.current.actor === captured.actor && live.current.role === captured.role && live.current.navigationRoute === captured.navigationRoute && live.current.picked === captured.picked;
     navigationLock.current = true; setNavigating(true); setNavigationError(false);
@@ -106,15 +110,16 @@ export function SchedulePage() {
     <SiteShell>
       {photoEdition && <div className="container photo-booking-banner"><img src={studioPhoto('pricing-duo')} width={960} height={640} loading="eager" decoding="sync" alt={t('site.photos.duo')} /></div>}
       {sections.filter(isVisible).map((name) => SECTIONS[name] ? <Fragment key={name}>{SECTIONS[name]()}</Fragment> : null)}
-      <Drawer open={!!chosen} onClose={() => setPicked(null)} title={t('site.schedule.loginTitle')} side="bottom">
+      <Drawer open={!!chosen} onClose={() => setPicked(null)} title={t(drawerCopy(signedIn && user.role !== 'public').title)} side="bottom">
         {chosen && (
           <div className="stack">
             <ClassCard title={chosen.session.title} teacher={chosen.teacher?.display_name ?? ''} room={rooms.find((r) => r.id === chosen.session.room_id)?.name} startsAt={chosen.session.starts_at} endsAt={chosen.session.ends_at} tone={chosen.modality?.tone ?? 'river'} booked={chosen.session.booked_count} capacity={chosen.session.capacity} />
             <SessionEditorial session={chosen.session} />
             {yoga && !full && !unavailable && <MatPicker sessionId={chosen.session.id} capacity={chosen.session.capacity} value={mat} onChange={setMat} />}
-            <p className="muted small">{t('site.schedule.loginBody')}</p>
+            <p className="muted small">{t(drawerCopy(signedIn && user.role !== 'public').body)}</p>
+            <ConsentHoldNotice target={`/app/checkout/${chosen.session.id}${mat ? `?mat=${mat}` : ''}`} />
             {navigationError && <Notice tone="warn">{t('core.common.error')}</Notice>}
-            <Button block size="lg" onClick={() => void signInAndBook()} loading={navigating} disabled={navigating || unavailable || (!full && yoga && (mat == null || taken.has(mat)))}>{unavailable ? t(`site.calendar.status.${unavailableReason}`) : full ? t('core.common.waitlist') : t('site.mat.continue')}</Button>
+            <Button block size="lg" onClick={() => void signInAndBook()} loading={navigating} disabled={consentHeld || navigating || unavailable || (!full && yoga && (mat == null || taken.has(mat)))}>{unavailable ? t(`site.calendar.status.${unavailableReason}`) : full ? t('core.common.waitlist') : t('site.mat.continue')}</Button>
           </div>
         )}
       </Drawer>
