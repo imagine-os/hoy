@@ -120,10 +120,12 @@ export function SchedulePage({ view: routeView }: SchedulePageProps) {
         <Button size="sm" variant={activeFilters > 0 ? 'primary' : 'secondary'} onClick={() => setSheet(true)} icon="filter">{t('core.common.filter')}{activeFilters > 0 ? ` · ${activeFilters}` : ''}</Button>
       </div>
     ),
-    'ClassList → ClassRow': () => view === 'today' ? <SessionCalendar sessions={filtered} mine={mine} initialView="day" onPick={open} /> : null,
+    // RES-01: the calendar keeps its day and view in the URL (syncUrl), so Back from a class returns to the same day; a
+    // refetch keeps the rows (useCustomerRows), so the calendar stays mounted.
+    'ClassList → ClassRow': () => view === 'today' ? <SessionCalendar sessions={filtered} mine={mine} initialView="day" onPick={open} syncUrl /> : null,
     // The Today page renders one calendar (its toolbar already switches Day / Week / Month); the week route is C-02b.
-    WeekGrid: () => view === 'week' ? <SessionCalendar sessions={filtered} mine={mine} initialView="week" onPick={open} /> : null,
-    'WeekGrid (Mon–Sat columns → DayChip)': () => <SessionCalendar sessions={filtered} mine={mine} initialView="week" onPick={open} />,
+    WeekGrid: () => view === 'week' ? <SessionCalendar sessions={filtered} mine={mine} initialView="week" onPick={open} syncUrl /> : null,
+    'WeekGrid (Mon–Sat columns → DayChip)': () => <SessionCalendar sessions={filtered} mine={mine} initialView="week" onPick={open} syncUrl />,
     Legend: () => (
       <div className="row wrap cust-legend">
         <span className="eyebrow">{t('customer.schedule.legend')}</span>
