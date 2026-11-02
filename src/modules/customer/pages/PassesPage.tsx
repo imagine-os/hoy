@@ -171,7 +171,7 @@ export function ClassesPage() {
       <h2 className="cust-h2">{t('customer.classes.topUp')}</h2>
       {SERVER_RULES && packs.length === 0 && !prices.loading && <Notice tone="warn">{t('quotes.unavailable')}</Notice>}
       <ConsentHoldNotice />
-      <Card padding="none">{packs.map((p) => <PriceRow key={p.id} item={p} onSelect={p=>{if(consentHeld)return;if(SERVER_RULES){go(payPath(p.id));return;}purchaseKey.current=crypto.randomUUID();setDone(false);setPurchaseError(false);setBuying(p);}} />)}</Card>
+      <Card padding="none">{packs.map((p) => <PriceRow key={p.id} item={p} disabled={consentHeld} onSelect={p=>{if(consentHeld)return;if(SERVER_RULES){go(payPath(p.id));return;}purchaseKey.current=crypto.randomUUID();setDone(false);setPurchaseError(false);setBuying(p);}} />)}</Card>
       <p className="xs muted">{t('customer.classes.topUp.note')}</p>
     </section>
   );
