@@ -9,6 +9,7 @@ import { setSessionTokenSource, subscribeUnauthorized } from './sessionToken';
 import { isViewAsFailure, isViewableRole, loadViewAsSample, publishViewAs, readStoredViewAs, storeViewAs, type ViewAsSample, type ViewAsSampleFailure } from './viewAs';
 import { failureCopy } from '../data/companyos/refusals';
 import { cosJson } from './cosRequest';
+import { clearConsentOnSignOut } from './signupStatus';
 import { useI18n } from '../i18n/I18nProvider';
 import { ViewAsBanner } from '../components/molecule/ViewAsBanner/ViewAsBanner';
 import { EmptyState } from '../components/molecule/EmptyState/EmptyState';
@@ -309,6 +310,7 @@ function ViewAsBar({ role, person, loading, onExit }: { role: Role; person: stri
 /** CU-04: nothing of the previous person stays in this browser (pending pass, filters, drafts); language and theme stay. */
 const KEEP = new Set(['hoyos.lang', 'hoyos.theme']);
 function clearLocalTraces() {
+  clearConsentOnSignOut(); // the C-01d deferral and consent reads, memory and storage
   for (const store of [sessionStorage, localStorage]) {
     try {
       for (const key of Object.keys(store)) if (key.startsWith('hoyos.') && !KEEP.has(key)) store.removeItem(key);
