@@ -10,7 +10,7 @@ import { Chip } from '../../../components/atom/Chip/Chip';
 import { Badge } from '../../../components/atom/Badge/Badge';
 import { Toggle } from '../../../components/atom/Toggle/Toggle';
 import { EmptyState } from '../../../components/molecule/EmptyState/EmptyState';
-import { useCosQueries, type CosRow } from '../../staff/desk/useCos';
+import { flatRows, useCosQueries, type CosRow } from '../../staff/desk/useCos';
 import { batch, errorCode, newActionKey, type BatchOp } from '../../staff/desk/wire';
 import { deskErrorText } from '../../staff/desk/strings';
 import {
@@ -43,7 +43,8 @@ export function LiveSchedulePage() {
   });
   const [message, setMessage] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
-  const rows = q.rows;
+  // `/query` rows carry their fields under `data` (ADM-01 / ADM-02): read them flat, includes kept as embedded objects.
+  const rows = useMemo(() => q.rows && { schedules: flatRows(q.rows.schedules), resources: flatRows(q.rows.resources), coaches: flatRows(q.rows.coaches), occurrences: flatRows(q.rows.occurrences) }, [q.rows]);
   const rooms = rows?.resources ?? [], coaches = rows?.coaches ?? [];
   const roomName = (id: unknown) => str(rooms.find(r => r.id === idOf(id))?.name) || '—';
   const coachName = (id: unknown) => { const c = coaches.find(x => x.id === idOf(id)); return c ? str((c.person as { name?: string } | null)?.name) || '—' : '—'; };
@@ -112,7 +113,7 @@ function Classes({ rows, rooms, coaches, roomName, coachName, weekday, canWrite,
         <div className="row wrap"><Button disabled={busy || problems.length > 0} loading={busy} onClick={save}>{t('live.save')}</Button><Button variant="ghost" onClick={() => setEdit(null)}>{t('core.common.cancel')}</Button></div>
       </Card>}
       {rows.length === 0 ? <EmptyState compact title={t('live.empty')} /> : rows.map(r => (
-        <Card key={r.id} padding="sm" title={str(r.title)} eyebrow={`${weekday(num(r.weekday))} · ${str(r.start_time)}`} actions={canWrite && <div className="row wrap">
+        <Card key={r.id} data-schedule={r.id} padding="sm" title={str(r.title)} eyebrow={`${weekday(num(r.weekday))} · ${str(r.start_time)}`} actions={canWrite && <div className="row wrap">
           <Button size="sm" variant="outline" onClick={() => setEdit({ id: r.id, draft: toDraft(r), key: newActionKey() })}>{t('live.edit')}</Button>
           <Button size="sm" variant="tonal" disabled={busy} onClick={() => run(publishScheduleOps(r.id, r.active === false), newActionKey(), t('live.saved'))}>{r.active === false ? t('live.publish') : t('live.unpublish')}</Button>
         </div>}>
@@ -129,7 +130,7 @@ function Dates({ rows, roomName, coachName, canWrite, busy, run, lang }: { rows:
   if (!rows.length) return <EmptyState compact title={t('live.dates.empty')} />;
   return <div className="stack-sm">{rows.map(o => {
     const booked = num(o.booked_count), cancelled = o.status === 'cancelled';
-    return <Card key={o.id} padding="sm" title={str(o.title)} eyebrow={formatDateTime(str(o.starts_at), lang)} actions={canWrite && !cancelled && o.status === 'scheduled' && <Button size="sm" variant="outline" onClick={() => setCancel({ id: o.id, reason: '', key: newActionKey() })}>{t('live.cancel')}</Button>}>
+    return <Card key={o.id} data-occurrence={o.id} padding="sm" title={str(o.title)} eyebrow={formatDateTime(str(o.starts_at), lang)} actions={canWrite && !cancelled && o.status === 'scheduled' && <Button size="sm" variant="outline" onClick={() => setCancel({ id: o.id, reason: '', key: newActionKey() })}>{t('live.cancel')}</Button>}>
       <p className="small">{coachName(o.coach)} · {roomName(o.resource)} · {booked}/{num(o.capacity)} {cancelled && <Badge tone="danger">{t('live.cancelled')}</Badge>}</p>
       {cancel?.id === o.id && <div className="stack-sm">
         <p className="xs">{t('live.cancel.body', { n: booked })}</p>

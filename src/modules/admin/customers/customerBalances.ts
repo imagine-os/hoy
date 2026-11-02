@@ -59,7 +59,8 @@ export const BALANCE_QUERIES = {
 
 /** A `/query` row: id and stamps at the top, the entity's fields under `data` (integration guide §4); aggregates are flat. */
 export type QueryRow = { id: string; data?: Record<string, unknown>; createdAt?: string } & Record<string, unknown>;
-const fieldsOf = (r: QueryRow): Record<string, unknown> => (r.data && typeof r.data === 'object' ? r.data : r);
+/** A `/query` row's fields (under `data`); an aggregate row is flat and is its own fields. Shared with `flatRows` (desk/useCos.ts). */
+export const fieldsOf = (r: Record<string, unknown>): Record<string, unknown> => (r.data && typeof r.data === 'object' && !Array.isArray(r.data) ? r.data as Record<string, unknown> : r);
 const text = (v: unknown) => (typeof v === 'string' ? v : null);
 const count = (v: unknown) => (typeof v === 'number' ? v : Number(v) || 0);
 export interface CustomerListRow { id: string; name: string; email: string; phone: string | null; createdAt: string; plan_name: string; remaining: number; expires: string; frozen: boolean; vouchers: number }

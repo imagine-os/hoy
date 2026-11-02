@@ -1,9 +1,25 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useData } from '../../../data/DataContext';
 import { cosRequest, errorCode, type CosRequest } from './wire';
+import { fieldsOf } from '../../admin/customers/customerBalances';
 
-/** A Company OS row as `/query` returns it: id and stamps plus the entity's fields. */
+/** A Company OS row read flat: id and stamps plus the entity's fields (`flatRows` turns a `/query` row into one). */
 export type CosRow = { id: string; created_at?: string; updated_at?: string } & Record<string, unknown>;
+
+/** A `/query` row's fields: under `data` (integration guide §1, `{ id, data, orgUnitId, createdAt, updatedAt }`); aggregates are flat. */
+export { fieldsOf };
+
+/**
+ * `/query` rows as flat rows: the fields, then the row's own id and stamps (a field called `id` never replaces the
+ * record id). An `include`d reference stays the embedded `{ id, …fields }` object Company OS put in its place.
+ */
+export function flatRows(rows: Record<string, unknown>[]): CosRow[] {
+  return rows.map((r) => {
+    const f = fieldsOf(r);
+    if (f === r) return r as CosRow;
+    return { ...f, id: String(r.id), created_at: typeof r.createdAt === 'string' ? r.createdAt : undefined, updated_at: typeof r.updatedAt === 'string' ? r.updatedAt : undefined };
+  });
+}
 /** `dir` is required: Company OS `/query` sorts descending when it is left out. */
 export interface QuerySpec { entity: string; filter?: unknown; sort?: { field: string; dir: 'asc' | 'desc' }[]; limit?: number; offset?: number; aggregate?: unknown }
 
