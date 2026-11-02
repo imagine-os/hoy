@@ -20,7 +20,7 @@ import { DESK_CONSENTS, type DeskMethod, type SaleResult } from './deskCommands'
 import { deskErrorText } from './strings';
 import { useActionKeys, useDeskCommands } from './useDesk';
 import { errorCode } from './wire';
-import { deskTrialBlock, notStarted } from './deskSale';
+import { chosenSession, deskTrialBlock, notStarted } from './deskSale';
 import '../staff.css';
 
 const METHODS: { id: DeskMethod; label: string }[] = [{ id: 'cash', label: 'staff.register.method.cash' }, { id: 'card_terminal', label: 'staff.register.method.datafono' }, { id: 'transfer', label: 'staff.register.method.transfer' }];
@@ -40,6 +40,9 @@ export function DeskSalePage() {
   const { people } = usePeople();
   // REC-06: only today's classes that haven't started (the server refuses a started one: occurrence_not_open).
   const todayAll = useTodaySessions();
+  // Re-checked every 30 s, so a class that starts while the form is open drops out of the list.
+  const [, tick] = useState(0);
+  useEffect(() => { const timer = setInterval(() => tick((n) => n + 1), 30_000); return () => clearInterval(timer); }, []);
   const today = notStarted(todayAll, Date.now());
   const data = useData();
   const { rows: plans } = useTable<PlanRow>('plans', { where: { active: true } });
@@ -61,9 +64,11 @@ export function DeskSalePage() {
   const saleDays = useRef(new Map<string, string>());
   const [sessionId, setSessionId] = useState(params.get('session') ?? '');
   const [checkIn, setCheckIn] = useState(true);
+  // The check-in class only while it is still offered (`chosenSession`): payload, toggle and intent all use this.
+  const chosen = chosenSession(today, sessionId);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState<(SaleResult & { name: string }) | null>(null);
+  const [done, setDone] = useState<(SaleResult & { name: string; sessionId: string }) | null>(null);
 
   // Today's price row only (payments 2.8.0 dated prices), as the website's price list reads it (livePricing.ts).
   const products = useMemo(() => plans.filter(p => p.family !== 'regalos' && (!p.valid_from || p.valid_from <= priceDay) && (!p.valid_until || priceDay <= p.valid_until)).sort((a, b) => a.sort - b.sort), [plans, priceDay]);
@@ -89,7 +94,7 @@ export function DeskSalePage() {
   const quoted = !!product && price === 0;
   const productBlocked = !!product && !!blocked(product);
   const valid = !!desk?.sell && whoOk && !!product && !productBlocked && amount >= 0 && (!quoted || amount > 0) && (!differs || reason.trim().length > 0) && (!needsReference || reference.trim().length > 0);
-  const intent = [mode, personId, form, productId, amount, reason.trim(), method, needsReference ? reference.trim() : '', sessionId, checkIn];
+  const intent = [mode, personId, form, productId, amount, reason.trim(), method, needsReference ? reference.trim() : '', chosen, checkIn];
 
   if (!can('payments.write')) return <div className="stack"><div className="page-head"><h1>{t('staff.register.title')}</h1></div><EmptyState tone="error" title={t('staff.register.noPermission')} body={t('staff.register.noPermission.body')} /></div>;
 
@@ -104,21 +109,21 @@ export function DeskSalePage() {
       const result = await desk.sell({
         person: mode === 'existing' ? { id: person!.id } : { new: { name: form.name, phone: form.phone, email: form.email }, consents: DESK_CONSENTS },
         productId: product.id, price, amountReceived: amount, concept: bi({ es: product.name_es, en: product.name_en }), reference: needsReference ? reference : undefined, today: saleDay, reason: differs ? reason.trim() : undefined, method,
-        sessionId: sessionId || undefined, checkIn: !!sessionId && checkIn, key: keys.keyFor(action),
+        sessionId: chosen || undefined, checkIn: !!chosen && checkIn, key: keys.keyFor(action),
       });
       keys.done(action); saleDays.current.delete(intentKey);
-      setDone({ ...result, name: mode === 'existing' ? person!.name : form.name.trim() });
+      setDone({ ...result, name: mode === 'existing' ? person!.name : form.name.trim(), sessionId: chosen });
     } catch (e) { setError(deskErrorText(errorCode(e), t)); } finally { busyRef.current = false; setBusy(false); }
   };
   const reset = () => { setDone(null); setReference(''); setForm({ name: '', phone: '', email: '', consent: false }); setPersonId(null); setQ(''); setMode('new'); setProductId(''); setPaidRaw(null); setReason(''); setSessionId(''); setCheckIn(true); setError(null); };
 
   if (done) return (
     <div className="stack">
-      <div className="page-head"><div><h1>{t('staff.register.done')}</h1><p className="muted small">{t('staff.register.done.existing', { name: done.name })}{done.checkedIn ? ` · ${t('staff.register.done.checkedIn', { cls: todayAll.find(x => x.session.id === sessionId)?.session.title ?? '' })}` : ''}</p></div></div>
+      <div className="page-head"><div><h1>{t('staff.register.done')}</h1><p className="muted small">{t('staff.register.done.existing', { name: done.name })}{done.checkedIn ? ` · ${t('staff.register.done.checkedIn', { cls: todayAll.find(x => x.session.id === done.sessionId)?.session.title ?? '' })}` : ''}</p></div></div>
       {done.checkInError && <EmptyState compact tone="error" title={t('desk.sale.checkInFailed')} body={deskErrorText(done.checkInError, t)} />}
       <div className="row wrap">
         <Button onClick={reset} icon="sell">{t('staff.register.newSale')}</Button>
-        <Link to={`/staff/checkin${sessionId ? `?session=${sessionId}` : ''}`}><Button variant="secondary" icon="checkin">{t('staff.home.openCheckin')}</Button></Link>
+        <Link to={`/staff/checkin${done.sessionId ? `?session=${done.sessionId}` : ''}`}><Button variant="secondary" icon="checkin">{t('staff.home.openCheckin')}</Button></Link>
       </div>
     </div>
   );
@@ -168,8 +173,8 @@ export function DeskSalePage() {
               <Field label={t('staff.register.paid')}>{id => <Input id={id} inputMode="numeric" value={paidRaw ?? String(price)} onChange={e => setPaidRaw(e.target.value)} />}</Field>
               {quoted && amount <= 0 && <p className="xs muted" role="note">{t('desk.sale.quoted')}</p>}
               {differs && <Field label={t('staff.register.note')} required>{id => <Input id={id} value={reason} onChange={e => setReason(e.target.value)} placeholder={t('staff.register.note.ph')} invalid={!reason.trim()} />}</Field>}
-              <Field label={t('staff.register.checkinTo')}>{id => <Select id={id} value={sessionId} onChange={e => setSessionId(e.target.value)}><option value="">{t('staff.register.checkinTo.none')}</option>{today.map(({ session: s, teacher: te }) => <option key={s.id} value={s.id}>{formatTime(s.starts_at, lang)} · {s.title}{te ? ` · ${te.display_name}` : ''} ({s.booked_count}/{s.capacity})</option>)}</Select>}</Field>
-              {sessionId && <Toggle size="sm" checked={checkIn} onChange={setCheckIn} label={t('staff.checkin.checkin')} />}
+              <Field label={t('staff.register.checkinTo')}>{id => <Select id={id} value={chosen} onChange={e => setSessionId(e.target.value)}><option value="">{t('staff.register.checkinTo.none')}</option>{today.map(({ session: s, teacher: te }) => <option key={s.id} value={s.id}>{formatTime(s.starts_at, lang)} · {s.title}{te ? ` · ${te.display_name}` : ''} ({s.booked_count}/{s.capacity})</option>)}</Select>}</Field>
+              {chosen && <Toggle size="sm" checked={checkIn} onChange={setCheckIn} label={t('staff.checkin.checkin')} />}
               {error && <EmptyState compact tone="error" title={t('core.common.error')} body={error} />}
               <Button block size="lg" disabled={!valid} loading={busy} onClick={complete} icon="payment">{t('staff.register.cta')}</Button>
               <p className="xs muted">{t('staff.register.audit', { staff: user.name })}</p>

@@ -21,3 +21,11 @@ export function deskTrialBlock(product: { kind?: unknown; slug?: string | null }
 export function notStarted<T extends { session: { starts_at: string } }>(list: T[], now: number): T[] {
   return list.filter((x) => { const at = Date.parse(x.session.starts_at); return Number.isFinite(at) && at > now; });
 }
+
+/**
+ * The class chosen for check-in, if it is still offered: one that started while the form was open drops out of the
+ * list, and then nothing is sent for it (the server would refuse it `occurrence_not_open` with nothing on screen to fix).
+ */
+export function chosenSession(list: readonly { session: { id: string } }[], sessionId: string): string {
+  return sessionId && list.some((x) => x.session.id === sessionId) ? sessionId : '';
+}
