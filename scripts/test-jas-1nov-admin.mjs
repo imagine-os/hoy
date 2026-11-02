@@ -40,7 +40,7 @@ const ENTRIES = {
   schedule: "export { liveScheduleStrings } from './src/modules/classSchedule/live/strings';",
   staffStrings: "export { strings } from './src/modules/staff/strings';",
   core: "export { coreStrings } from './src/i18n/core';",
-  shell: "export { withShell } from './src/app/shells'; export { RouteErrorBoundary, isChunkLoadError, retryKind, homeKind } from './src/components/organism/RouteErrorBoundary/RouteErrorBoundary';",
+  shell: "export { withShell } from './src/app/shells'; export { RouteErrorBoundary, RouteBoundary, routeBoundaryElement, isChunkLoadError, retryKind, homeKind } from './src/components/organism/RouteErrorBoundary/RouteErrorBoundary';",
 };
 /** Each module bundled on its own (production build), so one missing piece fails only its own tests. */
 async function load(contents) {
@@ -176,6 +176,73 @@ await test('error boundary: Home remounts the page when the crashed page is the 
   assert.equal(homeKind('/admin/class-schedule', '/admin'), 'navigate');
 });
 
+// Review round 1: the boundary used to be keyed by the path, so every path change remounted the page and dropped its
+// state (BookedPage's notice after /app/booking/:id/change → /app/booking/:id, the Settings tabs, the schedule views).
+// React keeps a component's instance while its type and key stay the same; the boundary resets only after a failure.
+/** A RouteBoundary instance driven the way React drives it: new props → componentDidUpdate(prevProps, prevState). */
+function boundary(resetKey, children = { type: 'p', props: {} }) {
+  const { RouteBoundary } = need('shell');
+  assert.equal(typeof RouteBoundary, 'function', 'RouteBoundary is exported');
+  const b = new RouteBoundary({ resetKey, children, fallback: (error, remount) => { b.remountFn = remount; return 'card'; } });
+  b.updates = 0;
+  b.setState = (s) => { b.updates++; b.state = { ...b.state, ...(typeof s === 'function' ? s(b.state, b.props) : s) }; };
+  b.fail = (e) => { b.state = { ...b.state, ...RouteBoundary.getDerivedStateFromError(e) }; };
+  /** A re-render with a new path; `throws` = the page throws during that very render. */
+  b.next = (key, throws = null) => {
+    const prevProps = b.props, prevState = { ...b.state };
+    b.props = { ...b.props, resetKey: key };
+    if (throws) b.fail(throws);
+    b.componentDidUpdate?.(prevProps, prevState);
+  };
+  return b;
+}
+await test('error boundary r1: the boundary carries the path as resetKey, never as its key (same type on every path)', () => {
+  const { RouteBoundary, routeBoundaryElement } = need('shell');
+  assert.equal(typeof routeBoundaryElement, 'function', 'routeBoundaryElement is exported');
+  const page = { type: 'p', props: {} };
+  const a = routeBoundaryElement('/app/booking/bk_1/change', '/app', page), b = routeBoundaryElement('/app/booking/bk_1', '/app', page);
+  assert.equal(a.type, RouteBoundary); assert.equal(b.type, a.type);
+  assert.equal(a.key, null, 'no key from the path: React keeps the page instance'); assert.equal(b.key, null);
+  assert.equal(a.props.resetKey, '/app/booking/bk_1/change'); assert.equal(b.props.resetKey, '/app/booking/bk_1');
+  assert.equal(b.props.children, page, 'the page is passed as it is (no keyed wrapper)');
+});
+await test('error boundary r1: a working page is not reset or re-wrapped on a path change (no state update at all)', () => {
+  const page = { type: 'p', props: {} };
+  const b = boundary('/admin/settings/studio', page);
+  assert.equal(b.render(), page);
+  for (const key of ['/admin/settings/payments', '/admin/settings/hours', '/app/schedule', '/app/schedule/week']) b.next(key);
+  assert.equal(b.updates, 0, 'no setState'); assert.equal(b.state.failed, false);
+  assert.equal(b.render(), page, 'the same children, unwrapped');
+});
+await test('error boundary r1: after a failure, a path change starts clean (the new page renders)', () => {
+  const page = { type: 'p', props: {} };
+  const b = boundary('/admin/class-schedule', page);
+  b.fail(new RangeError('Invalid time value'));
+  assert.equal(b.render(), 'card');
+  b.next('/admin');
+  assert.equal(b.state.failed, false); assert.equal(b.state.error, null);
+  assert.equal(b.render(), page);
+});
+await test('error boundary r1: a failure stays on its own path; a page that throws on arrival is not retried in a loop', () => {
+  const b = boundary('/admin/class-schedule');
+  b.fail(new RangeError('Invalid time value'));
+  b.next('/admin/class-schedule');
+  assert.equal(b.state.failed, true, 'same path: the card stays');
+  const c = boundary('/admin');
+  c.next('/admin/class-schedule', new RangeError('Invalid time value'));
+  assert.equal(c.state.failed, true, 'failed in the render that changed the path: the card shows, no reset');
+  assert.equal(c.render(), 'card');
+});
+await test('error boundary r1: Retry and Home still render the page again (the remount the card is given)', () => {
+  const page = { type: 'p', props: {} };
+  const b = boundary('/admin', page);
+  b.fail(new TypeError("Cannot read properties of null (reading 'split')"));
+  assert.equal(b.render(), 'card');
+  assert.equal(typeof b.remountFn, 'function');
+  b.remountFn();
+  assert.equal(b.state.failed, false); assert.equal(b.render(), page);
+});
+
 // ── ADM-04: the payment settings save is authorised from the session's /me roles ───────────────────────────────────
 const before = () => need('instructions').mergeSettings({}).payments;
 await test('ADM-04 a super_admin login with no person record saves the payment settings (one keyed /batch)', async () => {
@@ -266,6 +333,20 @@ await test('REC-06 a class chosen for check-in that has since started is no long
   assert.equal(chosenSession(notStarted(list, Date.parse('2026-11-02T19:05:00Z')), 'c19'), '', 'started while the form was open: dropped');
   assert.equal(chosenSession(list, ''), '');
   assert.equal(chosenSession(list, 'not_today'), '', 'hostile: a ?session= for another class is not chosen');
+});
+
+await test('REC-06 r1: a chosen class that has started is named on screen (es and en note); none, a later class or another day\'s is not', () => {
+  const { startedChoice, notStarted, deskStrings } = need('deskSale');
+  assert.equal(typeof startedChoice, 'function', 'startedChoice is exported');
+  const all = [{ session: { id: 'c19', starts_at: '2026-11-02T19:00:00Z' } }, { session: { id: 'c21', starts_at: '2026-11-02T21:00:00Z' } }];
+  const offered = notStarted(all, Date.parse('2026-11-02T19:05:00Z'));
+  assert.equal(startedChoice(all, offered, 'c19'), true, 'chosen, then started: the note shows');
+  assert.equal(startedChoice(all, offered, 'c21'), false, 'still offered: no note');
+  assert.equal(startedChoice(all, offered, ''), false, 'no class chosen (sell without check-in): no note');
+  assert.equal(startedChoice(all, offered, 'not_today'), false, 'hostile: a ?session= for another day is not "started"');
+  const s = deskStrings['desk.sale.sessionStarted'];
+  assert.ok(s?.es && s?.en, 'es and en copy');
+  assert.match(s.es, /empezó/); assert.match(s.es, /sin check-in/); assert.match(s.en, /started/); assert.match(s.en, /without check-in/);
 });
 
 // ── FIN-01: the desk expense keeps the chosen paid-on date; the server's rule (not after today) is the only limit ──────

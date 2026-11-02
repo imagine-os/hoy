@@ -10,6 +10,8 @@
 // - RES-02: the greeting names the person (own person row), never the email; no demo announcement in production;
 // - PRO-05: the Santa María pack shows in the app's Plans only for an affiliate member facet;
 // - RES-01: the week grid shows Sunday at 1024 and 768 px; the chosen day survives a refetch and Back.
+// - review r1: cancelling from /app/booking/:id/change lands on /app/booking/:id with the notice (the route boundary keeps
+//   the page mounted across the path change); Buy more's pack rows are disabled while the consent hold is on.
 // Run: npm run build:production && node scripts/test-jas-1nov-customer-ui.mjs   (QA_PROD_DIST=<dir> to test another dir)
 import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
@@ -81,12 +83,19 @@ const server = createServer(async (req, res) => {
       if (spec.entity === 'product') return json(res, 200, { data: PRODUCTS });
       if (spec.entity === 'occurrence') return json(res, 200, { data: [occurrence(api.released ? 4 : 5)] });
       // PAG-03: Ana's single class held by transfer, whose time ran out a minute ago; `released` is the server's pass.
+      // Review r1: Ana's booked class tomorrow, cancelled from its change sheet (Company OS stores late_cancel).
+      if (spec.entity === 'booking' && user === 'user_ana' && api.liveBooking) return json(res, 200, { data: [{ id: 'bk_live', data: { person: `per_${user}`, occurrence: 'occ_9', entitlement: 'credit', ...(api.liveCancelled ? { status: 'late_cancel', cancelled_at: iso(-5_000) } : { status: 'booked' }) }, createdAt: at, updatedAt: at }] });
       if (spec.entity === 'booking' && user === 'user_ana' && api.expiredHold) return json(res, 200, { data: [{ id: 'bk_exp', data: { person: `per_${user}`, occurrence: 'occ_9', entitlement: 'single', payment_method: 'transfer', ...(api.released ? { status: 'cancelled', cancel_reason: 'hold_expired', cancelled_at: iso(-30_000) } : { status: 'held', hold_until: iso(-60_000) }) }, createdAt: at, updatedAt: at }] });
       // PRO-04: a pending trial payment.
       if (spec.entity === 'payment' && m?.trialPending) return json(res, 200, { data: [{ id: 'pay_trial', data: { person: `per_${user}`, product: 'prd_trial', status: 'pending', amount: 30000, method: 'transfer', date: '2026-11-01', concept: 'Clase de prueba' }, createdAt: at, updatedAt: at }] });
       return json(res, 200, { data: [] });
     }
-    if (route === '/batch' && req.method === 'POST') { api.batches.push({ user, body: await bodyOf(req) }); return json(res, 200, { ids: ['pay_new'] }); }
+    if (route === '/batch' && req.method === 'POST') {
+      const body = await bodyOf(req);
+      api.batches.push({ user, body });
+      if (api.liveBooking && body?.ops?.some((o) => o.op === 'update' && o.entity === 'booking' && o.id === 'bk_live' && o.data?.status === 'cancelled')) api.liveCancelled = true;
+      return json(res, 200, { ids: (body?.ops ?? []).map((o) => (o.op === 'update' ? o.id : 'pay_new')) });
+    }
     if (route === '/api/booking/bk_pay' && req.method === 'GET') return json(res, 200, { data: { id: 'bk_pay', data: { person: `per_${user}`, occurrence: null, status: 'held', payment_method: 'transfer', hold_until: iso(20 * 60_000) }, createdAt: at, updatedAt: at } });
     return json(res, 404, { error: 'not_found' });
   }
@@ -141,7 +150,7 @@ const MEMBERS = () => ({
 const browser = await launchBrowser();
 const errors = [];
 async function open(path = '/', { lang = 'es', width = 1280 } = {}) {
-  api.members = MEMBERS(); api.signups = []; api.batches = []; api.emailLinked = false; api.rejectName = false; api.duplicatePerson = false; api.noNameField = false; api.expiredHold = false; api.released = false;
+  api.members = MEMBERS(); api.signups = []; api.batches = []; api.emailLinked = false; api.rejectName = false; api.duplicatePerson = false; api.noNameField = false; api.expiredHold = false; api.released = false; api.liveBooking = false; api.liveCancelled = false;
   const ctx = await browser.newContext({ viewport: { width, height: 900 }, reducedMotion: 'reduce' });
   await ctx.route(/^https?:\/\/(?!127\.0\.0\.1)/, (r) => r.abort());
   await ctx.route(`https://${HOST}/npm/@clerk/clerk-js@*/dist/clerk.browser.js`, (r) => r.fulfill({ status: 200, contentType: 'text/javascript', body: FAKE_CLERK }));
@@ -288,6 +297,8 @@ try {
   await page.goto(`${BASE}/#/app/classes`); await page.waitForTimeout(1500);
   const buyMore = page.locator('button.pricerow').first();
   check('C-01d review: Buy more on the balance shows the notice', (await page.locator('[data-consent-hold]').count()) === 1 && (await buyMore.count()) === 1);
+  const packRows = page.locator('button.pricerow');
+  check('C-01d review r1: …and every pack row in it looks disabled (disabled button, aria-disabled)', (await packRows.count()) > 0 && (await packRows.evaluateAll((bs) => bs.every((b) => b.disabled && b.getAttribute('aria-disabled') === 'true'))), `${await packRows.count()}`);
   await buyMore.click({ timeout: 3000 }).catch(() => {}); await page.waitForTimeout(600);
   check('C-01d review: …and a pack in it goes nowhere (no payment page, nothing written)', route(page) === '/app/classes' && api.batches.length === 0, route(page));
   // The website's Book button (signed in): the drawer shows the notice and the button starts nothing.
@@ -323,6 +334,23 @@ try {
   booked = await text(page, 'main');
   check('PAG-03: the re-read shows the server\'s release ("Cupo liberado")', /Cupo liberado/.test(booked) && !/Pendiente de confirmación/.test(booked), booked.slice(0, 400));
   check('PAG-03: …and the refreshed place count (4 of 15)', (await page.locator('[role=meter]').first().getAttribute('aria-valuenow').catch(() => null)) === '4');
+  await ctx.close();
+
+  // ── review r1: a path change keeps the page mounted; the change sheet's notice shows on the booking ───────────
+  ({ ctx, page } = await open('/auth/sign-in'));
+  await signIn(page, 'ana@example.test');
+  api.liveBooking = true;
+  await page.goto(`${BASE}/#/app/booking/bk_live/change`); await page.waitForTimeout(2000);
+  const sheet = page.locator('[role=dialog]').last();
+  check('r1: /app/booking/:id/change opens the change sheet', (await sheet.count()) === 1 && /Cancelar/.test(await sheet.innerText().catch(() => '')), route(page));
+  await sheet.getByText('Cancelar', { exact: true }).first().click({ timeout: 3000 }).catch(() => {});
+  await page.waitForTimeout(500);
+  await sheet.getByRole('button', { name: 'Sí, cancelar y perder la clase' }).click({ timeout: 3000 }).catch(() => {});
+  await page.waitForTimeout(2500);
+  check('r1: the cancel is one /batch updating the booking to cancelled', api.batches.filter((b) => b.body?.ops?.some((o) => o.entity === 'booking' && o.id === 'bk_live')).length === 1 && api.liveCancelled, JSON.stringify(api.batches).slice(0, 400));
+  check('r1: …then the sheet closes onto /app/booking/:id', route(page) === '/app/booking/bk_live', route(page));
+  const afterCancel = await text(page, 'main');
+  check('r1: …and the cancel notice shows there (the page kept its state across the path change)', /Reserva cancelada\. La clase no vuelve a tu saldo\./.test(afterCancel), afterCancel.slice(0, 400));
   await ctx.close();
 
   // ── 4 · PRO-04: checkout omits a used trial ───────────────────────────────────────────────────────────────────

@@ -275,6 +275,11 @@ try {
   at = await go(page, '/staff/expense');
   const eveningPaidOn = await page.locator('[data-desk-expense-form]').getByLabel('Pagado el', { exact: false }).inputValue().catch(() => 'missing');
   check('Record expense (evening): the paid-on date defaults to the studio day, not the UTC one', eveningPaidOn === TODAY, eveningPaidOn);
+  // Review r1: a check-in class chosen by link (or before it started) that has started drops out with a note.
+  at = await go(page, '/staff/register?session=oc_1900');
+  const startedNote = page.locator('[data-desk-session-started]');
+  const noteShown = await startedNote.waitFor({ timeout: 8000 }).then(() => true, () => false);
+  check('REC-06 r1: a chosen class that has started shows "choose another or sell without check-in"', noteShown && /ya empezó/.test(await startedNote.innerText().catch(() => '')) && /sin check-in/.test(await startedNote.innerText().catch(() => '')), (await text(page)).slice(0, 400));
   check('no fake query was refused for an unknown filter operator', !world.log.some((l) => l.refused), JSON.stringify(world.log.filter((l) => l.refused)).slice(0, 400));
   await ctx.close();
 
