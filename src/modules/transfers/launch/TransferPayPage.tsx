@@ -16,6 +16,7 @@ import { checkReceipt, giftNotes, RECEIPT_TYPES, transferOps, uploadReceipt, typ
 import { useAction, useCos, useLoad } from './useCos';
 import { holdView, safeCheckoutReturn, type HoldView, type ServerBookingRow } from '../../customer/booking/serverBooking';
 import { useBookingPolicy, type BookingPolicy } from '../../customer/booking/bookingPolicy';
+import { ConsentHoldNotice, useConsentHeld } from '../../identity/ConsentHold';
 
 export interface PayView { person: string; product: ProductRow | null; booking: BookingRec | null; classStartsAt: string | null; pending: PaymentRec | null; pendingHasReceipt: boolean; affiliate: boolean | null }
 
@@ -84,7 +85,11 @@ function PayScreen({ what, id }: { what: string; id: string }) {
   // Once the payment exists, a retry only re-sends the image: it never creates a second payment.
   const [paymentId, setPaymentId] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  // C-01d (review): while the consent waits ("Continue for now"), a product is not bought here (no payment, no receipt).
+  // Paying a held booking stays open: it is an existing booking.
+  const consentHeld = useConsentHeld() && what === 'product';
 
+  if (consentHeld) return <ConsentHoldNotice />;
   if (state.status === 'loading') return <EmptyState tone="loading" title={t('payLaunch.loading')} />;
   if (state.status === 'error') return <EmptyState tone="error" title={t(refusalKey(state.code), { code: state.code })} action={<Button onClick={reload}>{t('payLaunch.retry')}</Button>} />;
   const v = state.value;
