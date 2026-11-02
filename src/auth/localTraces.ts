@@ -6,7 +6,7 @@ const KEEP = new Set(['hoyos.lang', 'hoyos.theme']);
 const browserStores = (): Storage[] => {
   const out: Storage[] = [];
   for (const name of ['sessionStorage', 'localStorage'] as const) {
-    try { const st = (globalThis as Record<string, unknown>)[name] as Storage | undefined; if (st) out.push(st); } catch { /* blocked */ }
+    try { const st = (globalThis as unknown as Record<string, unknown>)[name] as Storage | undefined; if (st) out.push(st); } catch { /* blocked */ }
   }
   return out;
 };
