@@ -5,7 +5,7 @@ import { useSession } from './SessionProvider';
 import { ROLE_HOME } from './roles';
 import { cosJson } from './cosRequest';
 import { classifySignup, consentReadFrom, enrolmentBody, enrolmentNameError, parseSignupConfig, signupHeld, signupNoticeKey, SIGNUP_FORM_LIMITS, usableLoginName, type SignupConfig } from './companyOsIdentity';
-import { CONSENT_READ_TIMEOUT_MS, deferConsent, settleConsent, withTimeout } from './signupStatus';
+import { CONSENT_READ_TIMEOUT_MS, deferConsent, passAfterRead, settleConsent, withTimeout } from './signupStatus';
 
 /** Lane review (r2hoy2): the consent step's own calls give up after this; fetch has no timeout of its own. */
 const CONSENT_POST_TIMEOUT_MS = 15_000;
@@ -52,17 +52,21 @@ export default function CustomerEnrolment({ consent }: { consent?: SignupConfig 
   const consentOnly = !!consent;
   const lines = consentOnly ? 'identity.accept' : 'identity.enrol';
   const loginName = usableLoginName(user);
-  const askName = !loginName;
+  // Asked only when the login has no usable name and the tenant takes a name at sign-up (review). Whether the person row
+  // already has one isn't known to this step (GET /signup and /me don't say), so a nameless login is asked; Company OS
+  // fills only what the person lacks.
+  const needsName = (cfg: SignupConfig | null | undefined) => !loginName && !!cfg?.personFields.includes('name');
   const [typedName, setTypedName] = useState('');
   const [nameError, setNameError] = useState<'required' | 'email' | 'invalid' | null>(null);
   const [config, setConfig] = useState<SignupConfig | null>(consent ?? null);
-  const [step, setStep] = useState<'loading' | 'consent' | 'sending' | 'closed' | 'notice'>(consent && (consent.consents.length || askName) ? 'consent' : 'loading');
+  const [step, setStep] = useState<'loading' | 'consent' | 'sending' | 'closed' | 'notice'>(consent && (consent.consents.length || needsName(consent)) ? 'consent' : 'loading');
   const [accepted, setAccepted] = useState(false);
   const [missingConsent, setMissingConsent] = useState(false);
   const [notice, setNotice] = useState<{ tone: 'warn' | 'danger' | 'info'; text: string } | null>(null);
   const alive = useRef(true);
   const busy = useRef(false);
   useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
+  const askName = needsName(config);
   const name = askName ? typedName : loginName;
 
   const enrol = useCallback(async (cfg: SignupConfig, withConsent: boolean) => {
@@ -90,8 +94,9 @@ export default function CustomerEnrolment({ consent }: { consent?: SignupConfig 
         setNotice(withConsent ? { tone: 'warn', text: t('identity.register.changed') } : null);
         return;
       }
-      // The typed name was refused (Company OS 400 validation): back to the step, the field says so.
-      if (result.kind === 'invalid' && askName) { setNameError('invalid'); setNotice(null); setStep('consent'); return; }
+      // The typed name was refused (Company OS 400 validation): back to the step, the field says so. Any other refusal
+      // (duplicate_person_user…) keeps its own notice, with "Continue for now" on the consent step (review).
+      if (result.kind === 'invalid' && result.code === 'validation' && needsName(cfg)) { setNameError('invalid'); setNotice(null); setStep('consent'); return; }
       let held: boolean | null = null;
       if (result.kind === 'already-registered') {
         const me = await cosJson('/me').catch(() => null);
@@ -110,12 +115,12 @@ export default function CustomerEnrolment({ consent }: { consent?: SignupConfig 
     } finally {
       busy.current = false;
     }
-  }, [askName, consentOnly, lines, name, refresh, t, user.id]);
+  }, [askName, consentOnly, lines, loginName, name, refresh, t, user.id]);
 
   const start = useCallback(async (manual = false) => {
     // The consent check's first pass uses the config RequireRole read (once per session); Retry reads it again.
     if (consent && !manual) {
-      if (consent.consents.length > 0 || askName) return;
+      if (consent.consents.length > 0 || needsName(consent)) return;
       const tries = autoTries.get(user.id) ?? 0;
       if (tries >= AUTO_TRIES) { setNotice({ tone: 'danger', text: t(`${lines}.failed`) }); setStep('notice'); return; }
       autoTries.set(user.id, tries + 1);
@@ -128,12 +133,12 @@ export default function CustomerEnrolment({ consent }: { consent?: SignupConfig 
         // Retry of the consent check: signed up meanwhile, closed, unreadable or silent now → the page opens (fail open).
         const answer = await withTimeout(cosJson('/signup'), CONSENT_READ_TIMEOUT_MS);
         if (!alive.current) return;
-        if (answer === 'timeout') { console.warn('[signup] GET /signup gave no answer on retry; the customer area opens without the consent check'); settleConsent(user.id); return; }
+        if (answer === 'timeout') { console.warn('[signup] GET /signup gave no answer on retry; the customer area opens without the consent check'); passAfterRead(user.id, 'timeout'); return; }
         const read = consentReadFrom(answer.status, answer.body);
         if (!alive.current) return;
-        if (read.step === 'pass') { settleConsent(user.id); return; }
+        if (read.step === 'pass') { passAfterRead(user.id, read); return; }
         setConfig(read.config);
-        if (read.config.consents.length > 0 || askName) { setStep('consent'); return; }
+        if (read.config.consents.length > 0 || needsName(read.config)) { setStep('consent'); return; }
         await enrol(read.config, false);
         return;
       }
@@ -143,7 +148,7 @@ export default function CustomerEnrolment({ consent }: { consent?: SignupConfig 
       if (!parsed) { setNotice({ tone: 'danger', text: t('identity.enrol.failed') }); setStep('notice'); return; }
       setConfig(parsed);
       if (!parsed.enabled) { setStep('closed'); return; }
-      if (parsed.consents.length > 0 || askName) { setStep('consent'); return; }
+      if (parsed.consents.length > 0 || needsName(parsed)) { setStep('consent'); return; }
       const tries = autoTries.get(user.id) ?? 0;
       if (!manual && tries >= AUTO_TRIES) { setNotice({ tone: 'danger', text: t('identity.enrol.failed') }); setStep('notice'); return; }
       autoTries.set(user.id, tries + 1);
@@ -151,7 +156,7 @@ export default function CustomerEnrolment({ consent }: { consent?: SignupConfig 
     } catch {
       if (alive.current) { setNotice({ tone: 'danger', text: t(`${lines}.failed`) }); setStep('notice'); }
     }
-  }, [askName, consent, consentOnly, enrol, lines, t, user.id]);
+  }, [consent, consentOnly, enrol, lines, loginName, t, user.id]);
   const started = useRef(false);
   useEffect(() => { if (!started.current) { started.current = true; void start(); } }, [start]);
 

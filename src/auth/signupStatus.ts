@@ -14,6 +14,15 @@ export const CONSENT_READ_TIMEOUT_MS = 4000;
 
 const reads = new Map<string, Promise<ConsentRead>>();
 const known = new Map<string, ConsentRead>();
+/**
+ * Review (C-01d): logins that chose "Continue for now" in this tab. A later read for one of them that can't tell
+ * (failed, timed out, an older Company OS) keeps the hold instead of failing open; only a recorded consent
+ * (`settleConsent`), a registered answer or sign-up closed lift it. Viewing stays open either way.
+ */
+const deferredLogins = new Set<string>();
+const keepsHold = (userId: string, read: ConsentRead | 'timeout') =>
+  deferredLogins.has(userId) && (read === 'timeout' || read.step === 'pass' && (read.reason === 'failed' || read.reason === 'unknown' || read.reason === 'deferred'));
+const DEFERRED: ConsentRead = { step: 'pass', reason: 'deferred' };
 const listeners = new Set<() => void>();
 const notify = () => { for (const l of listeners) l(); };
 
@@ -40,6 +49,10 @@ export function readConsent(userId: string, fetcher: () => Promise<{ status: num
     if (result.step === 'pass' && result.reason === 'failed') log(`[signup] GET /signup answered ${out.r.status}; the customer area opens without the consent check`);
     if (result.step === 'pass' && result.reason === 'unknown') log('[signup] GET /signup has no registered flag (Company OS before people 1.9.0); the consent check is skipped');
     return result;
+  }).then((result) => {
+    if (keepsHold(userId, result)) return DEFERRED;
+    if (result.step === 'pass') deferredLogins.delete(userId);
+    return result;
   });
   reads.set(userId, read);
   void read.then((result) => { if (reads.get(userId) === read) { known.set(userId, result); notify(); } });
@@ -51,6 +64,7 @@ export const peekConsent = (userId: string): ConsentRead | undefined => known.ge
 
 /** The login signed up (201, or `already_registered` with `/me` holding the role): it passes for the rest of the session. */
 export function settleConsent(userId: string): void {
+  deferredLogins.delete(userId);
   const done: ConsentRead = { step: 'pass', reason: 'registered' };
   reads.set(userId, Promise.resolve(done));
   known.set(userId, done);
@@ -63,10 +77,18 @@ export function settleConsent(userId: string): void {
  * account), but every new booking or purchase entry shows "record your consent to book" (`consentDeferred`).
  */
 export function deferConsent(userId: string): void {
-  const later: ConsentRead = { step: 'pass', reason: 'deferred' };
-  reads.set(userId, Promise.resolve(later));
-  known.set(userId, later);
+  deferredLogins.add(userId);
+  reads.set(userId, Promise.resolve(DEFERRED));
+  known.set(userId, DEFERRED);
   notify();
+}
+
+/**
+ * The consent step's own Retry read ended without a step to show (passed, or no answer in time). The page opens (fail
+ * open for viewing), but a login that had deferred keeps its hold unless the answer lifts it (registered, closed).
+ */
+export function passAfterRead(userId: string, read: ConsentRead | 'timeout'): void {
+  if (keepsHold(userId, read)) deferConsent(userId); else settleConsent(userId);
 }
 
 /** New bookings and purchases wait for the consent (C-01d). Display only: Company OS doesn't refuse them yet (#74). */
@@ -77,7 +99,7 @@ export function consentDeferred(userId: string): boolean {
 
 /**
  * The hold notice's Retry: forget this login's answer, so the guard of the page it stands on reads `GET /signup` again
- * (bounded, fail open, as before) and shows the consent step; recording it (`settleConsent`) lifts the hold.
+ * (bounded) and shows the consent step; recording it (`settleConsent`) lifts the hold. A read that can't tell keeps it.
  */
 export function retryConsent(userId: string): void {
   reads.delete(userId);
@@ -96,7 +118,7 @@ export function subscribeConsent(listener: () => void): () => void {
 }
 
 /** Tests only: forget every read. */
-export function resetConsentReads(): void { reads.clear(); known.clear(); }
+export function resetConsentReads(): void { reads.clear(); known.clear(); deferredLogins.clear(); }
 
 /**
  * RequireRole's view of the check: `null` when it doesn't apply, `'pending'` while the read is out (at most
