@@ -40,27 +40,44 @@ export function RouteErrorCard({ onRetry, homeTo, onHome }: RouteErrorCardProps)
   );
 }
 
-interface BoundaryProps { children: ReactNode; fallback: (error: unknown, remount: () => void) => ReactNode }
-class Boundary extends Component<BoundaryProps, { failed: boolean; error: unknown }> {
-  override state: { failed: boolean; error: unknown } = { failed: false, error: null };
-  static getDerivedStateFromError(error: unknown) { return { failed: true, error }; }
+interface BoundaryProps { children: ReactNode; resetKey: string; fallback: (error: unknown, remount: () => void) => ReactNode }
+interface BoundaryState { failed: boolean; error: unknown }
+/**
+ * The boundary itself. It is never keyed by the path: React Router keeps one page instance across that page's routes
+ * (`/app/booking/:id` and its `/change` sheet, the Settings tabs, the schedule's day and week), and a key would remount
+ * it on every path change and drop its state. Only a failed boundary starts clean when `resetKey` (the path) changes.
+ */
+export class RouteBoundary extends Component<BoundaryProps, BoundaryState> {
+  override state: BoundaryState = { failed: false, error: null };
+  static getDerivedStateFromError(error: unknown): Partial<BoundaryState> { return { failed: true, error }; }
   override componentDidCatch(error: unknown, info: ErrorInfo) { console.error('[route] the page crashed:', error, info.componentStack); }
+  override componentDidUpdate(prevProps: BoundaryProps, prevState: BoundaryState) {
+    // Reset only a failure that was already on screen before the path changed. A page that throws in the very render
+    // that changed the path keeps its card (prevState.failed is false then), so it is not retried in a loop.
+    if (prevState.failed && this.state.failed && prevProps.resetKey !== this.props.resetKey) this.setState({ failed: false, error: null });
+  }
+  /** Retry and Home on the home: the crashed page's tree was unmounted, so clearing the failure mounts it afresh. */
   private remount = () => this.setState({ failed: false, error: null });
   override render() { return this.state.failed ? this.props.fallback(this.state.error, this.remount) : this.props.children; }
 }
 
+/** The boundary for one path (hook-free, so it can be checked on its own): `resetKey` is the path, never the key. */
+export function routeBoundaryElement(pathname: string, homeTo: string, children: ReactNode) {
+  return <RouteBoundary resetKey={pathname} fallback={(error, remount) => (
+    <RouteErrorCard homeTo={homeTo}
+      onRetry={() => { if (retryKind(error) === 'reload') window.location.reload(); else remount(); }}
+      onHome={(event) => { if (homeKind(pathname, homeTo) === 'remount') { event.preventDefault(); remount(); } }} />
+  )}>{children}</RouteBoundary>;
+}
+
 /**
  * The route-level error boundary (`withShell`, src/app/shells.tsx): it sits inside the shell, so a page that throws
- * shows `RouteErrorCard` while the menu and the top bar keep working. Opening another page (a new path) starts clean.
- * Retry renders the page again, or reloads after a failed download; Home on the home itself renders it again.
+ * shows `RouteErrorCard` while the menu and the top bar keep working. A working page stays mounted across path changes;
+ * after a crash, opening another page (a new path) starts clean. Retry renders the page again, or reloads after a failed
+ * download; Home on the home itself renders it again.
  */
 export function RouteErrorBoundary({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
   const { role } = useSession();
-  const homeTo = ROLE_HOME[role] ?? '/';
-  return <Boundary key={pathname} fallback={(error, remount) => (
-    <RouteErrorCard homeTo={homeTo}
-      onRetry={() => { if (retryKind(error) === 'reload') window.location.reload(); else remount(); }}
-      onHome={(event) => { if (homeKind(pathname, homeTo) === 'remount') { event.preventDefault(); remount(); } }} />
-  )}>{children}</Boundary>;
+  return routeBoundaryElement(pathname, ROLE_HOME[role] ?? '/', children);
 }
