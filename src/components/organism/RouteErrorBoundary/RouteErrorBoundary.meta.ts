@@ -9,8 +9,9 @@ export default defineMeta({
     { name: 'children', type: 'ReactNode', required: true, description: { es: 'La página.', en: 'The page.' } },
     { name: 'RouteErrorCard.onRetry', type: '() => void', required: true, description: { es: 'Vuelve a mostrar la página.', en: 'Renders the page again.' } },
     { name: 'RouteErrorCard.homeTo', type: 'string', required: true, description: { es: 'Destino de Inicio (el inicio del rol).', en: 'Where Home goes (the role\'s home).' } },
+    { name: 'RouteErrorCard.onHome', type: '(event) => void', description: { es: 'Al pulsar Inicio; en el propio inicio vuelve a mostrar la página en vez de navegar.', en: 'On Home; on the home itself it renders the page again instead of navigating.' } },
   ],
-  states: ['page shown (no error)', 'error card'],
+  states: ['page shown (no error)', 'error card', 'retry after a failed download (reload)', 'home on the home itself (remount)'],
   usages: [
     { title: { es: 'Tarjeta de error', en: 'Error card' }, render: () => h(RouteErrorCard, { onRetry: () => {}, homeTo: '/' }) },
   ],
