@@ -3,6 +3,7 @@ import type { RouteDef, Surface } from '../specs/types';
 import { AppShell } from '../components/template/AppShell/AppShell';
 import { DesktopShell } from '../components/template/DesktopShell/DesktopShell';
 import { getRoutes } from './registry';
+import { RouteErrorBoundary } from '../components/organism/RouteErrorBoundary/RouteErrorBoundary';
 
 /** DesktopShell nav groups and title per surface (the dev surface keeps the admin nav beside the design-system group). */
 const DESKTOP: Record<Surface, { surfaces: Surface[]; titleKey: string }> = {
@@ -19,9 +20,12 @@ const APP_HOME: Partial<Record<Surface, string>> = { customer: '/app', teacher: 
 /**
  * Picks the shell for a route. `RouteDef.layout` decides first — `mobile` → the responsive app shell (column + dock
  * below 900 px, top-bar nav above), `desktop` → DesktopShell (sidebar); `auto` (or unset) falls back to the surface's
- * default. Public pages bring their own layout (SiteShell, AuthShell) whatever they declare.
+ * default. Public pages bring their own layout (SiteShell, AuthShell) whatever they declare. Every page sits in a
+ * `RouteErrorBoundary`.
  */
-export function withShell(route: RouteDef, children: ReactNode): ReactNode {
+export function withShell(route: RouteDef, page: ReactNode): ReactNode {
+  // Inside the shell: a page that throws shows the error card and the menu keeps working.
+  const children = <RouteErrorBoundary>{page}</RouteErrorBoundary>;
   if (route.surface === 'public') return children;
   const allRoutes = getRoutes();
   const mode = route.layout === 'mobile' || route.layout === 'desktop' ? route.layout : (route.surface === 'customer' || route.surface === 'teacher' ? 'mobile' : 'desktop');
