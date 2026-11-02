@@ -17,6 +17,7 @@ Decision:
 - **WEB-03.** When there is a session, the website schedule drawer uses its own title and body (`drawerCopy`: "Reserva esta clase / Book this class").
 - **RES-01.** `useCustomerRows` keeps the rows on screen while the same read refetches, so the calendar no longer unmounts on the 20 s poll. `SessionCalendar` `syncUrl` keeps the day and view in the query (`day`, `cv`; replaced, not pushed), so Back from a class returns to the same day. `cv` is used because the schedule sends `?view=week` to the week route. The week grid lost its fixed minimum width, which cut Sunday off at 1024 px.
 - **RES-02.** The greeting uses the first name on the person's own person row, then the login's name, never the email (`greetingName`; "Hola / Hi" without a name). The fixed demo announcement ("this Saturday the 10:00 class is outdoors") shows only in the review build.
+- Integrated review round 1: while the consent hold is on, Buy more's pack rows are disabled buttons (`aria-disabled`, dimmed; new `disabled` state on `PriceRow`), not only inert.
 
 Alternative rejected:
 - Sending the email's local part as the name, or a placeholder name: Company OS would hold a made-up name for the person. Rejected for asking.
@@ -29,4 +30,4 @@ Alternative rejected:
 Files: `src/auth/{companyOsIdentity.ts,CustomerEnrolment.tsx,signupStatus.ts}`, `src/modules/identity/{strings.ts,ConsentHold.tsx (new)}`, `src/modules/customer/{offers.ts,useAffiliate.ts,lotItems.ts,greeting.ts (new),hooks.ts,HomePage.tsx,useCustomerRows.ts,strings.ts}`, `src/modules/customer/pages/{ServerCheckoutPage,PlansPage,PassesPage,ClassDetailPage,BookedPage,SchedulePage,blocks}.tsx`, `src/modules/customer/booking/serverBooking.ts`, `src/modules/vouchers/production/pages.tsx`, `src/modules/transfers/launch/TransferPayPage.tsx` (lane review, agreed with the coordinator), `src/modules/website/{drawerCopy.ts (new),strings.ts,pages/SchedulePage.tsx}`, `src/components/molecule/LotList/* (new)`, `src/components/organism/SessionCalendar/{SessionCalendar.tsx,SessionCalendar.css,SessionCalendar.meta.ts,calendarQuery.ts (new)}`, `scripts/test-jas-1nov-customer{,-ui}.mjs (new)`, `package.json`, `.github/workflows/auth-checks.yml`.
 Pages: A-03 (enrolment and consent step), C-01, C-02, C-02b, C-03, C-04, C-06, C-07, C-07b, C-08, C-38, E-01, P-02 (website schedule).
 Version: pending (merged with `hoy-jas-1nov`; no Company OS release needed, so `company-os.json` is unchanged).
-D-02: new molecule `LotList` (states default, one lot, no expiry, long name, empty); `SessionCalendar` documents its `syncUrl` prop.
+D-02: new molecule `LotList` (states default, one lot, no expiry, long name, empty); `SessionCalendar` documents its `syncUrl` prop; `PriceRow` gains a `disabled` state (review round 1).
