@@ -9,7 +9,7 @@ import { setSessionTokenSource, subscribeUnauthorized } from './sessionToken';
 import { isViewAsFailure, isViewableRole, loadViewAsSample, publishViewAs, readStoredViewAs, storeViewAs, type ViewAsSample, type ViewAsSampleFailure } from './viewAs';
 import { failureCopy } from '../data/companyos/refusals';
 import { cosJson } from './cosRequest';
-import { clearConsentOnSignOut } from './signupStatus';
+import { clearLocalTraces } from './localTraces';
 import { useI18n } from '../i18n/I18nProvider';
 import { ViewAsBanner } from '../components/molecule/ViewAsBanner/ViewAsBanner';
 import { EmptyState } from '../components/molecule/EmptyState/EmptyState';
@@ -90,7 +90,8 @@ function reloadOnceIfStuck(): boolean {
     if (Date.now() - last < 60_000) return false;
     sessionStorage.setItem(STUCK_RELOAD_KEY, String(Date.now()));
   } catch { return false; }
-  clearLocalTraces(); // a reload mid sign-out skips the sign-out's own clean-up
+  // A reload mid sign-out skips the sign-out's own clean-up. Not a sign-out itself: the C-01d deferral stays (review r2).
+  clearLocalTraces({ keepConsentDeferral: true });
   window.location.reload();
   return true;
 }
@@ -305,17 +306,6 @@ function ViewAsFailed({ failure, onRetry, onExit }: { failure: ViewAsSampleFailu
 function ViewAsBar({ role, person, loading, onExit }: { role: Role; person: string | null; loading: boolean; onExit: () => void }) {
   const { bi } = useI18n();
   return <ViewAsBanner role={bi(ROLE_LABEL[role])} person={loading ? '…' : person} onExit={onExit} />;
-}
-
-/** CU-04: nothing of the previous person stays in this browser (pending pass, filters, drafts); language and theme stay. */
-const KEEP = new Set(['hoyos.lang', 'hoyos.theme']);
-function clearLocalTraces() {
-  clearConsentOnSignOut(); // the C-01d deferral and consent reads, memory and storage
-  for (const store of [sessionStorage, localStorage]) {
-    try {
-      for (const key of Object.keys(store)) if (key.startsWith('hoyos.') && !KEEP.has(key)) store.removeItem(key);
-    } catch { /* storage blocked: nothing to clear */ }
-  }
 }
 
 function initialsOf(name: string): string {

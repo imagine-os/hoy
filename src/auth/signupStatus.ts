@@ -3,7 +3,7 @@ import { consentReadFrom, type ConsentRead } from './companyOsIdentity';
 
 /**
  * Lane r2hoy2 (r2co2 contract): has this login, which holds the customer role, accepted the studio's documents? Company OS
- * says it in `GET /t/:t/signup` `registered`. Read once per login and tab (this cache; a reload reads again, though a deferral made in this browser session holds), only where
+ * says it in `GET /t/:t/signup` `registered`. Read once per login and tab (this cache; a reload reads again, though a deferral made in this browser holds), only where
  * RequireRole asks (`consentCheckApplies`: the customer area, never a frame or a view-as), and it never keeps the customer
  * area closed: a failed read, an error status, an older Company OS without the flag, or no answer within
  * `CONSENT_READ_TIMEOUT_MS` passes (fail open, as before this lane) and is logged once. Why fail open: the consent is not
@@ -19,14 +19,15 @@ const known = new Map<string, ConsentRead>();
  * an older Company OS) keeps the hold instead of failing open; only a recorded consent (`settleConsent`), a registered
  * answer or sign-up closed lift it. Viewing stays open either way.
  *
- * Owner 2026-11-03: the deferral lasts for the browser session, not just this module's memory: a reload or a new tab
- * keeps the hold. It is kept in `sessionStorage` under `DEFERRED_KEY` (a `hoyos.*` key, so the sign-out sweep removes it
- * too, IN-145) as a list of login ids only, no personal data. Every read and write is guarded: when storage throws or is
- * missing, the memory set alone holds it (this tab, as before).
+ * Owner 2026-11-03 (review round 2): the deferral lasts for the browser, a reload AND a new tab or bookmark, not just
+ * this module's memory. It is kept in `localStorage` (sessionStorage is per tab) under `DEFERRED_KEY`, as a list of login
+ * ids only, no personal data. It goes when the consent is recorded, registered or closed, and on sign-out
+ * (`clearConsentOnSignOut` through `clearLocalTraces`, IN-145); the Clerk stuck-reload keeps it. Every read and write is
+ * guarded: when storage throws or is missing, the memory set alone holds it (this tab).
  */
 export const DEFERRED_KEY = 'hoyos.consent.deferred';
 const memoryDeferred = new Set<string>();
-const storage = (): Storage | null => { try { return (globalThis as { sessionStorage?: Storage }).sessionStorage ?? null; } catch { return null; } };
+const storage = (): Storage | null => { try { return (globalThis as { localStorage?: Storage }).localStorage ?? null; } catch { return null; } };
 function storedLogins(): string[] {
   try {
     const raw = storage()?.getItem(DEFERRED_KEY);
@@ -41,6 +42,8 @@ function storeLogins(ids: string[]): void {
     if (ids.length) st.setItem(DEFERRED_KEY, JSON.stringify(ids)); else st.removeItem(DEFERRED_KEY);
   } catch { /* storage blocked or full: memory holds it for this tab */ }
 }
+/** Whether this login chose "Continue for now" and nothing has lifted it (the consent step then offers it again). */
+export const hasDeferred = (userId: string): boolean => deferredLogins.has(userId);
 const deferredLogins = {
   has: (id: string) => memoryDeferred.has(id) || storedLogins().includes(id),
   add: (id: string) => { memoryDeferred.add(id); const ids = storedLogins(); if (!ids.includes(id)) storeLogins([...ids, id]); },
@@ -108,8 +111,8 @@ export function settleConsent(userId: string): void {
 
 /**
  * Decision C-01d (owner 2026-11-02, replacing C-01c's "book anyway"): the consent step could not be recorded and the
- * person chose "Continue for now". The customer area opens for the rest of the session (existing bookings, balance,
- * account), but every new booking or purchase entry shows "record your consent to book" (`consentDeferred`).
+ * person chose "Continue for now". The customer area opens (existing bookings, balance, account), in every tab of this
+ * browser until sign-out, but every new booking or purchase entry shows "record your consent to book" (`consentDeferred`).
  */
 export function deferConsent(userId: string): void {
   deferredLogins.add(userId);
@@ -130,7 +133,7 @@ export function passAfterRead(userId: string, read: ConsentRead | 'timeout'): vo
 /** New bookings and purchases wait for the consent (C-01d). Display only: Company OS doesn't refuse them yet (#74). */
 export function consentDeferred(userId: string): boolean {
   const answer = known.get(userId);
-  // Not read yet in this tab (a reload, a new tab, a page without the guard): the browser session's deferral holds.
+  // Not read yet in this tab (a reload, a new tab, a page without the guard): the deferral stored in this browser holds.
   if (answer === undefined) return !retrying.has(userId) && deferredLogins.has(userId);
   return answer.step === 'pass' && answer.reason === 'deferred';
 }
@@ -161,7 +164,8 @@ export function resetConsentReads(): void { reads.clear(); known.clear(); deferr
 
 /**
  * Sign-out (IN-145: nothing of one person stays for the next): forget every consent read and deferral, in memory and in
- * the browser session's storage. `ProductionSession`'s clean-up calls it.
+ * this browser's storage. The sign-out clean-up (`clearLocalTraces`, src/auth/localTraces.ts) calls it; the Clerk
+ * stuck-reload does not.
  */
 export function clearConsentOnSignOut(): void { resetConsentReads(); notify(); }
 

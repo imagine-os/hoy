@@ -8,7 +8,7 @@ import { Button } from '../../components/atom/Button/Button';
 /**
  * Decision C-01d (owner 2026-11-02): after "Continue for now" on the consent step, the person keeps their bookings,
  * balance and account, but new bookings and purchases wait until the consent is recorded. True while that is so for the
- * signed-in login (this browser session: a reload or a new tab keeps it). Display only: Company OS does not refuse them yet (tech-debt #74).
+ * signed-in login, in this browser (a reload, a new tab or a bookmark keeps it, until sign-out). Display only: Company OS does not refuse them yet (tech-debt #74).
  */
 export function useConsentHeld(): boolean {
   const { user, signedIn } = useSession();
