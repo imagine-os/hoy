@@ -10,6 +10,8 @@
 // - RES-02: the greeting names the person (own person row), never the email; no demo announcement in production;
 // - PRO-05: the Santa María pack shows in the app's Plans only for an affiliate member facet;
 // - RES-01: the week grid shows Sunday at 1024 and 768 px; the chosen day survives a refetch and Back.
+// - C-01d (owner 2026-11-03): the deferral survives a reload; the change sheet's move mode shows the hold and sends
+//   nothing, while cancelling the booking still works.
 // - review r1: cancelling from /app/booking/:id/change lands on /app/booking/:id with the notice (the route boundary keeps
 //   the page mounted across the path change); Buy more's pack rows are disabled while the consent hold is on.
 // Run: npm run build:production && node scripts/test-jas-1nov-customer-ui.mjs   (QA_PROD_DIST=<dir> to test another dir)
@@ -81,10 +83,11 @@ const server = createServer(async (req, res) => {
       if (spec.entity === 'person') return json(res, 200, { data: m ? [{ id: `per_${user}`, data: { name: m.personName ?? null, email: m.email, user }, createdAt: at, updatedAt: at }] : [] });
       if (spec.entity === 'member') return json(res, 200, { data: m?.roleKeys.includes('member') ? [{ id: `mem_${user}`, data: { person: `per_${user}`, status: 'active', price_audience: m.audience ?? 'general', joined_at: '2026-10-01' }, createdAt: at, updatedAt: at }] : [] });
       if (spec.entity === 'product') return json(res, 200, { data: PRODUCTS });
-      if (spec.entity === 'occurrence') return json(res, 200, { data: [occurrence(api.released ? 4 : 5)] });
+      // With the live booking, a second class an hour later the same day, to move to.
+      if (spec.entity === 'occurrence') return json(res, 200, { data: [occurrence(api.released ? 4 : 5), ...(api.liveBooking ? [{ ...occurrence(2), id: 'occ_10', data: { ...occurrence(2).data, title: 'Fuerza', starts_at: iso(26.5 * 3600_000), ends_at: iso(27.5 * 3600_000) } }] : [])] });
       // PAG-03: Ana's single class held by transfer, whose time ran out a minute ago; `released` is the server's pass.
       // Review r1: Ana's booked class tomorrow, cancelled from its change sheet (Company OS stores late_cancel).
-      if (spec.entity === 'booking' && user === 'user_ana' && api.liveBooking) return json(res, 200, { data: [{ id: 'bk_live', data: { person: `per_${user}`, occurrence: 'occ_9', entitlement: 'credit', ...(api.liveCancelled ? { status: 'late_cancel', cancelled_at: iso(-5_000) } : { status: 'booked' }) }, createdAt: at, updatedAt: at }] });
+      if (spec.entity === 'booking' && (user === 'user_ana' || user === 'user_deskcust') && api.liveBooking) return json(res, 200, { data: [{ id: 'bk_live', data: { person: `per_${user}`, occurrence: 'occ_9', entitlement: 'credit', ...(api.liveCancelled ? { status: 'late_cancel', cancelled_at: iso(-5_000) } : { status: 'booked' }) }, createdAt: at, updatedAt: at }] });
       if (spec.entity === 'booking' && user === 'user_ana' && api.expiredHold) return json(res, 200, { data: [{ id: 'bk_exp', data: { person: `per_${user}`, occurrence: 'occ_9', entitlement: 'single', payment_method: 'transfer', ...(api.released ? { status: 'cancelled', cancel_reason: 'hold_expired', cancelled_at: iso(-30_000) } : { status: 'held', hold_until: iso(-60_000) }) }, createdAt: at, updatedAt: at }] });
       // PRO-04: a pending trial payment.
       if (spec.entity === 'payment' && m?.trialPending) return json(res, 200, { data: [{ id: 'pay_trial', data: { person: `per_${user}`, product: 'prd_trial', status: 'pending', amount: 30000, method: 'transfer', date: '2026-11-01', concept: 'Clase de prueba' }, createdAt: at, updatedAt: at }] });
@@ -312,6 +315,27 @@ try {
   await page.goto(`${BASE}/#/app/checkout/occ_9`); await page.waitForTimeout(1500);
   const confirm = page.locator('.cust-sticky button').last();
   check('C-01d review: checkout of a real class shows the notice and its button is disabled', (await page.locator('[data-consent-hold]').count()) === 1 && (await confirm.isDisabled().catch(() => false)), route(page));
+  // Owner 2026-11-03: the deferral lasts for the browser session: a reload keeps the hold (not the consent step).
+  await page.goto(`${BASE}/#/app/plans`); await page.waitForTimeout(900);
+  await page.reload(); await page.waitForTimeout(2000);
+  check('C-01d session: after a reload the hold stays (notice on Plans, no consent step)', (await page.locator('[data-consent-hold]').count()) === 1 && (await stepOf(page).count()) === 0, route(page));
+  // Owner 2026-11-03: a move counts as a new booking; cancelling an existing booking stays allowed.
+  api.liveBooking = true; api.batches = [];
+  await page.goto(`${BASE}/#/app/booking/bk_live/change`); await page.waitForTimeout(2000);
+  let sheet = page.locator('[role=dialog]').last();
+  await sheet.getByText('Reprogramar a otra clase', { exact: true }).first().click({ timeout: 3000 }).catch(() => {});
+  await page.waitForTimeout(600);
+  check('C-01d move: the move mode shows the hold notice', (await sheet.locator('[data-consent-hold]').count()) === 1, (await sheet.innerText().catch(() => '')).slice(0, 300));
+  check('C-01d move: …and offers no class to move to', (await sheet.locator('[role=radio]').count()) === 0 && !/Fuerza/.test(await sheet.innerText().catch(() => '')));
+  check('C-01d move: …and nothing is sent (no POST /batch)', api.batches.length === 0, JSON.stringify(api.batches));
+  await sheet.getByRole('button', { name: 'Volver', exact: true }).click({ timeout: 3000 }).catch(() => {});
+  await page.waitForTimeout(400);
+  await sheet.getByText('Cancelar', { exact: true }).first().click({ timeout: 3000 }).catch(() => {});
+  await page.waitForTimeout(400);
+  await sheet.getByRole('button', { name: 'Sí, cancelar y perder la clase' }).click({ timeout: 3000 }).catch(() => {});
+  await page.waitForTimeout(2500);
+  check('C-01d move: cancelling the existing booking still works while held (one /batch)', api.liveCancelled && api.batches.filter((b) => b.body?.ops?.some((o) => o.entity === 'booking' && o.id === 'bk_live')).length === 1, JSON.stringify(api.batches).slice(0, 300));
+  api.liveBooking = false; api.liveCancelled = false;
   await page.goto(`${BASE}/#/app/checkout/occ_1`); await page.waitForTimeout(900);
   api.emailLinked = false;
   await page.locator('[data-consent-hold] [data-consent-retry]').click({ timeout: 3000 }).catch(() => {});
