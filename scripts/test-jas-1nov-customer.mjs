@@ -111,59 +111,76 @@ if (S.resetConsentReads) {
   check('C-01d review: a login that never deferred still fails open (IN-155 unchanged)', safe(() => S.consentDeferred('usr_fict_never')) === false && S.peekConsent?.('usr_fict_never')?.step === 'pass');
   S.resetConsentReads();
 } else check('C-01d: signupStatus exports the consent hold', false);
-// ── C-01d (owner 2026-11-03): the deferral lasts for the browser session (sessionStorage), not just the module ───────
+// ── C-01d (owner 2026-11-03, review round 2): the deferral lasts for the browser, a reload AND a new tab (localStorage) ─
 {
   const KEY = 'hoyos.consent.deferred';
   const mapStore = () => { const v = new Map(); return { v, getItem: (k) => (v.has(k) ? v.get(k) : null), setItem: (k, x) => v.set(k, String(x)), removeItem: (k) => v.delete(k), key: (i) => [...v.keys()][i] ?? null, get length() { return v.size; } }; };
-  const throwing = { getItem() { throw new Error('SecurityError'); }, setItem() { throw new Error('QuotaExceededError'); }, removeItem() { throw new Error('SecurityError'); } };
-  const hadStorage = Object.getOwnPropertyDescriptor(globalThis, 'sessionStorage');
-  const setStorage = (st) => Object.defineProperty(globalThis, 'sessionStorage', { value: st, configurable: true, writable: true });
+  const throwing = { getItem() { throw new Error('SecurityError'); }, setItem() { throw new Error('QuotaExceededError'); }, removeItem() { throw new Error('SecurityError'); }, key() { throw new Error('SecurityError'); }, get length() { throw new Error('SecurityError'); } };
+  const saved = ['localStorage', 'sessionStorage'].map((k) => [k, Object.getOwnPropertyDescriptor(globalThis, k)]);
+  const setGlobal = (name, st) => Object.defineProperty(globalThis, name, { value: st, configurable: true, writable: true });
   let n = 0;
-  /** A reload or a new tab: the module starts with no state; the browser session's storage stays. */
-  const fresh = () => tryImport(`export * from './src/auth/signupStatus'; export const reloadNo = ${++n};`); // a new bundle text, so a new module instance
+  /**
+   * A reload or a NEW TAB: the module starts with no state, the tab's sessionStorage starts empty (a new tab), and the
+   * browser's localStorage stays. Each call is a new bundle text, so a new module instance.
+   */
+  const fresh = () => { setGlobal('sessionStorage', mapStore()); return tryImport(`export * from './src/auth/signupStatus'; export { clearLocalTraces } from './src/auth/localTraces'; export const reloadNo = ${++n};`); };
   const asks = async () => ({ status: 200, body: { enabled: true, registered: false, consents: cfg.consents, personFields: ['name', 'phone'], facetFields: [] } });
   const id = 'usr_fict_session', other = 'usr_fict_other';
+  const listed = (store) => { try { return JSON.parse(store.v.get(KEY)); } catch { return null; } };
   try {
-    let store = mapStore(); setStorage(store);
+    let store = mapStore(); setGlobal('localStorage', store);
     let S1 = await fresh();
     safe(() => S1.deferConsent(id));
-    const stored = store.v.get(KEY);
-    check('C-01d session: "Continue for now" stores the deferral under a namespaced key (hoyos.*, swept on sign-out)', typeof stored === 'string', JSON.stringify([...store.v.keys()]));
-    check('C-01d session: …holding only the login id, no personal data', (() => { try { return JSON.stringify(JSON.parse(stored)) === JSON.stringify([id]); } catch { return false; } })(), String(stored));
+    check('C-01d session: "Continue for now" stores the deferral in localStorage under hoyos.consent.deferred', typeof store.v.get(KEY) === 'string', JSON.stringify([...store.v.keys()]));
+    check('C-01d session: …holding only the login id, no personal data', JSON.stringify(listed(store)) === JSON.stringify([id]), String(store.v.get(KEY)));
+    check('C-01d session: …and nothing in the tab\'s sessionStorage (a new tab would not see it)', globalThis.sessionStorage.v.size === 0);
     let S2 = await fresh();
-    check('C-01d session: after a reload (fresh module, same storage) the login is still held before any read', safe(() => S2.consentDeferred?.(id)) === true);
+    check('C-01d session: a new tab (fresh module, empty sessionStorage, same localStorage) is held before any read', safe(() => S2.consentDeferred?.(id)) === true);
     let r = await S2.readConsent?.(id, async () => { throw new Error('network'); }, { log: () => {} });
-    check('C-01d session: …and a read that fails keeps the hold', r?.step === 'pass' && safe(() => S2.consentDeferred(id)) === true, JSON.stringify(r));
+    check('C-01d session: …and a failed GET /signup there keeps the hold (no fail open)', r?.step === 'pass' && safe(() => S2.consentDeferred(id)) === true, JSON.stringify(r));
+    S2 = await fresh();
+    r = await S2.readConsent?.(id, () => new Promise(() => {}), { timeoutMs: 30, log: () => {} });
+    check('C-01d session: …and so does one that times out', safe(() => S2.consentDeferred(id)) === true, JSON.stringify(r));
     S2 = await fresh();
     r = await S2.readConsent?.(id, asks, { log: () => {} });
-    check('C-01d session: after a reload, "not registered" keeps the hold (no consent step until Retry)', r?.step === 'pass' && r?.reason === 'deferred' && safe(() => S2.consentDeferred(id)) === true, JSON.stringify(r));
+    check('C-01d session: in a new tab, "not registered" keeps the hold (no consent step until Retry)', r?.step === 'pass' && r?.reason === 'deferred' && safe(() => S2.consentDeferred(id)) === true, JSON.stringify(r));
     safe(() => S2.retryConsent(id));
     r = await S2.readConsent?.(id, asks, { log: () => {} });
     check('C-01d session: …the hold notice\'s Retry still shows the consent step', r?.step === 'ask', JSON.stringify(r));
+    check('C-01d session: …and the step knows the login had deferred (it offers "Continue for now" again)', safe(() => S2.hasDeferred?.(id)) === true);
     S2 = await fresh();
     r = await S2.readConsent?.(id, async () => ({ status: 200, body: { enabled: true, registered: true } }), { log: () => {} });
     check('C-01d session: a registered answer lifts the hold and clears the stored entry', safe(() => S2.consentDeferred(id)) === false && !store.v.has(KEY), String(store.v.get(KEY)));
+    check('C-01d session: …and the step no longer counts the login as deferred', safe(() => S2.hasDeferred?.(id)) === false);
     S1 = await fresh(); safe(() => S1.deferConsent(id));
     S2 = await fresh();
     await S2.readConsent?.(id, async () => ({ status: 200, body: { enabled: false } }), { log: () => {} });
     check('C-01d session: sign-up closed lifts it and clears the entry', safe(() => S2.consentDeferred(id)) === false && !store.v.has(KEY));
     S1 = await fresh(); safe(() => S1.deferConsent(id)); safe(() => S1.deferConsent(other)); safe(() => S1.settleConsent(id));
-    check('C-01d session: settleConsent clears that login\'s entry (another login\'s stays)', (() => { try { return JSON.stringify(JSON.parse(store.v.get(KEY))) === JSON.stringify([other]); } catch { return false; } })(), String(store.v.get(KEY)));
+    check('C-01d session: settleConsent (consent recorded) clears that login\'s entry; another login\'s stays', JSON.stringify(listed(store)) === JSON.stringify([other]), String(store.v.get(KEY)));
     S2 = await fresh();
-    check('C-01d session: …so after a reload the settled login is not held', safe(() => S2.consentDeferred(id)) === false && safe(() => S2.consentDeferred(other)) === true);
-    // IN-145: sign-out drops this login's data: the memory and the stored entry.
-    check('C-01d session: signupStatus exports the sign-out clean-up', typeof S2.clearConsentOnSignOut === 'function');
-    safe(() => S2.clearConsentOnSignOut());
-    check('C-01d session: sign-out clears the hold and the stored entry', safe(() => S2.consentDeferred(other)) === false && !store.v.has(KEY) && (await fresh()).consentDeferred?.(other) === false);
-    check('C-01d session: the session\'s sign-out clean-up calls it', /clearConsentOnSignOut\(\)/.test(src('src/auth/ProductionSession.tsx')));
+    check('C-01d session: …so in a new tab the settled login is not held', safe(() => S2.consentDeferred(id)) === false && safe(() => S2.consentDeferred(other)) === true);
+    // The Clerk stuck-reload (ProductionSession reloadOnceIfStuck) clears traces but keeps the deferral; a sign-out drops it.
+    check('C-01d session: localTraces exports clearLocalTraces', typeof S2.clearLocalTraces === 'function');
+    const tab = globalThis.sessionStorage;
+    store.v.set('hoyos.pendingPass', 'x'); store.v.set('hoyos.lang', 'es'); tab.setItem('hoyos.filter', 'y');
+    safe(() => S2.clearLocalTraces({ keepConsentDeferral: true, stores: [tab, store] }));
+    check('C-01d session: the stuck reload\'s clean-up keeps the deferral (and the language), drops other traces', JSON.stringify(listed(store)) === JSON.stringify([other]) && store.v.get('hoyos.lang') === 'es' && !store.v.has('hoyos.pendingPass') && !tab.v.has('hoyos.filter'), JSON.stringify([...store.v.keys(), ...tab.v.keys()]));
+    S2 = await fresh();
+    check('C-01d session: …so after the stuck reload the login is still held', safe(() => S2.consentDeferred(other)) === true);
+    safe(() => S2.clearLocalTraces({ stores: [globalThis.sessionStorage, store] }));
+    check('C-01d session: a sign-out\'s clean-up clears the hold (memory) and the stored entry, the language stays', safe(() => S2.consentDeferred(other)) === false && !store.v.has(KEY) && store.v.get('hoyos.lang') === 'es');
+    check('C-01d session: …so a new tab after sign-out is not held', (await fresh()).consentDeferred?.(other) === false);
+    const sessionSrc = src('src/auth/ProductionSession.tsx');
+    check('C-01d session: ProductionSession uses the shared clean-up; the stuck reload keeps the deferral, the sign-out paths do not', /from '\.\/localTraces'/.test(sessionSrc) && /reloadOnceIfStuck[\s\S]{0,400}clearLocalTraces\(\{ keepConsentDeferral: true \}\)/.test(sessionSrc) && (sessionSrc.match(/clearLocalTraces\(\)/g) ?? []).length >= 2 && !/function clearLocalTraces/.test(sessionSrc));
     // Hostile storage contents: not JSON, not a list, a list with non-strings.
     for (const junk of ['not json', '{"x":1}', '[1,{"a":2}]']) {
-      store = mapStore(); store.v.set(KEY, junk); setStorage(store);
+      store = mapStore(); store.v.set(KEY, junk); setGlobal('localStorage', store);
       const S3 = await fresh();
       check(`C-01d session hostile: stored ${junk} is ignored (no throw, not held)`, safe(() => S3.consentDeferred(id)) === false);
     }
     // Storage that throws (private mode, blocked): the flow works from memory.
-    setStorage(throwing);
+    setGlobal('localStorage', throwing);
     const S4 = await fresh();
     const thrown = safe(() => S4.deferConsent(id));
     check('C-01d session: storage that throws doesn\'t break "Continue for now"', !(thrown && thrown.thrown) && safe(() => S4.consentDeferred(id)) === true, JSON.stringify(thrown));
@@ -171,12 +188,34 @@ if (S.resetConsentReads) {
     check('C-01d session: …a failed read keeps the hold from memory', r?.step === 'pass' && safe(() => S4.consentDeferred(id)) === true, JSON.stringify(r));
     const settled = safe(() => S4.settleConsent(id));
     check('C-01d session: …and settle lifts it without throwing', !(settled && settled.thrown) && safe(() => S4.consentDeferred(id)) === false);
-    setStorage(undefined);
+    const cleared = safe(() => S4.clearLocalTraces({ stores: [throwing] }));
+    check('C-01d session: …and the sign-out clean-up doesn\'t throw either', !(cleared && cleared.thrown), JSON.stringify(cleared));
+    setGlobal('localStorage', undefined);
     const S5 = await fresh();
-    check('C-01d session: no sessionStorage at all (Node, an old browser) works from memory', !(safe(() => S5.deferConsent(id))?.thrown) && safe(() => S5.consentDeferred(id)) === true);
+    check('C-01d session: no localStorage at all (Node, an old browser) works from memory', !(safe(() => S5.deferConsent(id))?.thrown) && safe(() => S5.consentDeferred(id)) === true);
   } finally {
-    if (hadStorage) Object.defineProperty(globalThis, 'sessionStorage', hadStorage); else delete globalThis.sessionStorage;
+    for (const [k, d] of saved) { if (d) Object.defineProperty(globalThis, k, d); else delete globalThis[k]; }
   }
+}
+// ── review round 2: the consent step shown to a deferred login offers "Continue for now" again (a way back) ────────
+check('C-01d r2: the consent form offers "Continue for now" to a login that had deferred (re-defers)', /hasDeferred\(user\.id\)[\s\S]{0,300}data-consent-later[^\n]*deferConsent\(user\.id\)/.test(enrolSrc) && /data-enrol-customer="consent"/.test(enrolSrc));
+// ── review round 2: a 400 validation points at the name only when its details name the name field ─────────────────
+{
+  // Company OS: HttpError(400, "validation", undefined, errors) → { error: 'validation', details: ['missing required field "name"', …] }.
+  const named = (d) => safe(() => I.validationNamesField?.({ error: 'validation', details: d }, 'name'));
+  check('name r2: details naming the name field (missing, required, coercion) → the name error', named(['missing required field "name"']) === true && named(['field "name" is required']) === true && named(['field "name": expected a string']) === true);
+  check('name r2: details about other fields only → not the name error (the generic notice)', named(['missing required field "phone"']) === false && named(['field "nickname" is required']) === false && named([]) === false);
+  check('name r2 hostile: no details, or details not a list of strings → not the name error', named(undefined) === false && named('field "name" is required') === false && named([{ field: 'name' }]) === false && safe(() => I.validationNamesField?.(null, 'name')) === false);
+  check('name r2: the step uses it for the name error', /validationNamesField\(body, 'name'\)/.test(enrolSrc));
+}
+// ── review round 2: an existing pending product payment is not held; a new purchase is ──────────────────────────
+{
+  const R = await tryImport("export * from './src/modules/identity/consentHoldRules';");
+  check('C-01d r2: a held login buying a product with no pending payment is held', safe(() => R.consentHoldsPay?.({ held: true, what: 'product', pending: false })) === true);
+  check('C-01d r2: …but re-sending or finishing its existing pending payment is not', safe(() => R.consentHoldsPay?.({ held: true, what: 'product', pending: true })) === false);
+  check('C-01d r2: a held booking\'s payment and a login not held are never held', safe(() => R.consentHoldsPay?.({ held: true, what: 'booking', pending: false })) === false && safe(() => R.consentHoldsPay?.({ held: false, what: 'product', pending: false })) === false);
+  const paySrc = src('src/modules/transfers/launch/TransferPayPage.tsx');
+  check('C-01d r2: the payment page decides after its read (consentHoldsPay with v.pending), not before loading', /consentHoldsPay\(\{[^}]*pending: !!v\.pending/.test(paySrc) && !/if \(consentHeld\) return <ConsentHoldNotice \/>;\s*\n\s*if \(state\.status === 'loading'\)/.test(paySrc));
 }
 // ── C-01d (owner 2026-11-03): a move counts as a new booking; cancelling stays allowed ─────────────────────────────
 {
@@ -205,6 +244,17 @@ check('PAG-03: a released booking (cancel_reason hold_expired) reads released', 
 check('PAG-03: an expired hold not yet released by the server is re-read', safe(() => B.awaitingRelease(held(), now)) === true);
 check('PAG-03: …and stops once released, or when the hold is running or frozen', safe(() => B.awaitingRelease(held({ status: 'cancelled', cancel_reason: 'hold_expired' }), now)) === false
   && safe(() => B.awaitingRelease(held({ hold_until: '2026-11-02T15:30:00Z' }), now)) === false && safe(() => B.awaitingRelease(held({ hold_frozen_at: '2026-11-02T14:30:00Z' }), now)) === false);
+{
+  const P = { rescheduleHours: 12, holdMinutesTransfer: 15, holdMinutesDesk: 60 };
+  const startsAt = '2026-11-03T12:00:00Z';
+  const views = [held({ hold_until: null }), held({ hold_until: undefined }), held({ hold_until: 'not-a-date' })].map((b) => safe(() => B.holdView(b, startsAt, P, now)));
+  check('PAG-03 r2: holdView reads a missing or unreadable hold_until as pending, like awaitingRelease (never expired)', views.every((v) => v?.phase === 'pending' && v.until === null), JSON.stringify(views));
+  check('PAG-03 r2: …and the payment status agrees (pending)', [null, 'not-a-date'].every((h) => safe(() => B.serverPaymentStatus(held({ hold_until: h }), now)) === 'pending'));
+  check('PAG-03 r2: a hold_until in the past is still expired; a future one still running', safe(() => B.holdView(held(), startsAt, P, now))?.phase === 'expired' && safe(() => B.holdView(held({ hold_until: '2026-11-02T15:10:00Z' }), startsAt, P, now))?.phase === 'running');
+  const BS = await tryImport("export { bookingStrings } from './src/modules/customer/booking/strings';");
+  const tbl = BS.bookingStrings ?? {};
+  check('PAG-03 r2: the pending hold has es and en copy (title, transfer, desk)', ['customer.srv.hold.pending.title', 'customer.srv.hold.pending.transfer', 'customer.srv.hold.pending.desk'].every((k) => both(tbl, k)));
+}
 check('PAG-03: the re-read is bounded (polls for a few minutes, the server releases every 5)', Number.isInteger(B.RELEASE_RECHECK_MS) && B.RELEASE_RECHECK_MS >= 5000 && Number.isInteger(B.RELEASE_RECHECK_TRIES) && B.RELEASE_RECHECK_MS * B.RELEASE_RECHECK_TRIES >= 5 * 60_000 && B.RELEASE_RECHECK_MS * B.RELEASE_RECHECK_TRIES <= 15 * 60_000);
 const booked = src('src/modules/customer/pages/BookedPage.tsx');
 check('PAG-03: the booking page re-reads the booking and the class while a hold awaits release (place count refreshed)', /awaitingRelease/.test(booked) && /sessionsRead\.retry/.test(booked) && /bookingsRead\.retry/.test(booked));

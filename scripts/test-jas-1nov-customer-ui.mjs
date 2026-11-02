@@ -12,6 +12,8 @@
 // - RES-01: the week grid shows Sunday at 1024 and 768 px; the chosen day survives a refetch and Back.
 // - C-01d (owner 2026-11-03): the deferral survives a reload; the change sheet's move mode shows the hold and sends
 //   nothing, while cancelling the booking still works.
+// - review r2: an existing pending product payment stays payable while held; the gift purchase button is disabled while
+//   held; the consent step after Retry offers "Continue for now"; only a validation naming the name field blames the name.
 // - review r1: cancelling from /app/booking/:id/change lands on /app/booking/:id with the notice (the route boundary keeps
 //   the page mounted across the path change); Buy more's pack rows are disabled while the consent hold is on.
 // Run: npm run build:production && node scripts/test-jas-1nov-customer-ui.mjs   (QA_PROD_DIST=<dir> to test another dir)
@@ -72,7 +74,10 @@ const server = createServer(async (req, res) => {
       if (missing.length) return json(res, 422, { error: 'consent_required', details: { required: CONSENTS } });
       // Company OS (signup.ts:258): the person it creates needs a name. A login with no person name and none sent: 400.
       const name = typeof body?.person?.name === 'string' ? body.person.name : '';
-      if (api.rejectName || (!m?.personName && !name)) return json(res, 400, { error: 'validation', message: 'person.name is required' });
+      // The real shape (Company-OS errors.ts withHttpErrors, HttpError(400, "validation", undefined, errors)): the field
+      // messages of coerceData under `details`, no `message`.
+      if (api.rejectOther) return json(res, 400, { error: 'validation', details: ['field "phone": expected a string'] });
+      if (api.rejectName || (!m?.personName && !name)) return json(res, 400, { error: 'validation', details: ['missing required field "name"'] });
       if (!m.roleKeys.includes('member')) m.roleKeys.push('member');
       m.registered = true;
       if (!m.personName) m.personName = name;
@@ -82,7 +87,7 @@ const server = createServer(async (req, res) => {
       const spec = (await bodyOf(req)) ?? {};
       if (spec.entity === 'person') return json(res, 200, { data: m ? [{ id: `per_${user}`, data: { name: m.personName ?? null, email: m.email, user }, createdAt: at, updatedAt: at }] : [] });
       if (spec.entity === 'member') return json(res, 200, { data: m?.roleKeys.includes('member') ? [{ id: `mem_${user}`, data: { person: `per_${user}`, status: 'active', price_audience: m.audience ?? 'general', joined_at: '2026-10-01' }, createdAt: at, updatedAt: at }] : [] });
-      if (spec.entity === 'product') return json(res, 200, { data: PRODUCTS });
+      if (spec.entity === 'product') return json(res, 200, { data: [...PRODUCTS, ...(api.giftProduct ? [{ id: 'prd_gift4', data: { key: 'gift4', name: 'Regalo 4 clases', kind: 'gift', price: 160000, credits: 4, validity_days: 90, active: true, freezable: false, audience: null, valid_from: '2026-01-01', valid_until: null }, createdAt: at, updatedAt: at }] : [])] });
       // With the live booking, a second class an hour later the same day, to move to.
       if (spec.entity === 'occurrence') return json(res, 200, { data: [occurrence(api.released ? 4 : 5), ...(api.liveBooking ? [{ ...occurrence(2), id: 'occ_10', data: { ...occurrence(2).data, title: 'Fuerza', starts_at: iso(26.5 * 3600_000), ends_at: iso(27.5 * 3600_000) } }] : [])] });
       // PAG-03: Ana's single class held by transfer, whose time ran out a minute ago; `released` is the server's pass.
@@ -90,6 +95,8 @@ const server = createServer(async (req, res) => {
       if (spec.entity === 'booking' && (user === 'user_ana' || user === 'user_deskcust') && api.liveBooking) return json(res, 200, { data: [{ id: 'bk_live', data: { person: `per_${user}`, occurrence: 'occ_9', entitlement: 'credit', ...(api.liveCancelled ? { status: 'late_cancel', cancelled_at: iso(-5_000) } : { status: 'booked' }) }, createdAt: at, updatedAt: at }] });
       if (spec.entity === 'booking' && user === 'user_ana' && api.expiredHold) return json(res, 200, { data: [{ id: 'bk_exp', data: { person: `per_${user}`, occurrence: 'occ_9', entitlement: 'single', payment_method: 'transfer', ...(api.released ? { status: 'cancelled', cancel_reason: 'hold_expired', cancelled_at: iso(-30_000) } : { status: 'held', hold_until: iso(-60_000) }) }, createdAt: at, updatedAt: at }] });
       // PRO-04: a pending trial payment.
+      // Review r2: an existing pending payment for the 12-class pack, its receipt not uploaded yet.
+      if (spec.entity === 'payment' && api.packPending && user === 'user_deskcust') return json(res, 200, { data: [{ id: 'pay_pack', data: { person: `per_${user}`, product: 'prd_pack12', status: 'pending', amount: 540000, method: 'transfer', date: '2026-11-02', concept: 'Paquete de 12 clases' }, createdAt: at, updatedAt: at }] });
       if (spec.entity === 'payment' && m?.trialPending) return json(res, 200, { data: [{ id: 'pay_trial', data: { person: `per_${user}`, product: 'prd_trial', status: 'pending', amount: 30000, method: 'transfer', date: '2026-11-01', concept: 'Clase de prueba' }, createdAt: at, updatedAt: at }] });
       return json(res, 200, { data: [] });
     }
@@ -153,7 +160,7 @@ const MEMBERS = () => ({
 const browser = await launchBrowser();
 const errors = [];
 async function open(path = '/', { lang = 'es', width = 1280 } = {}) {
-  api.members = MEMBERS(); api.signups = []; api.batches = []; api.emailLinked = false; api.rejectName = false; api.duplicatePerson = false; api.noNameField = false; api.expiredHold = false; api.released = false; api.liveBooking = false; api.liveCancelled = false;
+  api.members = MEMBERS(); api.signups = []; api.batches = []; api.emailLinked = false; api.rejectName = false; api.duplicatePerson = false; api.noNameField = false; api.expiredHold = false; api.released = false; api.liveBooking = false; api.liveCancelled = false; api.rejectOther = false; api.packPending = false; api.giftProduct = false;
   const ctx = await browser.newContext({ viewport: { width, height: 900 }, reducedMotion: 'reduce' });
   await ctx.route(/^https?:\/\/(?!127\.0\.0\.1)/, (r) => r.abort());
   await ctx.route(`https://${HOST}/npm/@clerk/clerk-js@*/dist/clerk.browser.js`, (r) => r.fulfill({ status: 200, contentType: 'text/javascript', body: FAKE_CLERK }));
@@ -225,6 +232,13 @@ try {
   ({ ctx, page } = await open('/auth/sign-in'));
   await signIn(page, 'rechazo@example.test');
   await page.goto(`${BASE}/#/app`); await page.waitForTimeout(1200);
+  // Review r2: a validation about another field is not the name's fault: the generic notice, not "check your name".
+  api.rejectOther = true;
+  await submitStep(page, 'Rocío Rechazo');
+  check('name r2: a 400 validation about another field shows the notice, not the name error', (await page.locator('[data-enrol-customer="notice"]').count()) === 1 && !/Revisa tu nombre/.test(await text(page, '[data-enrol-customer]')) && !/validation|phone/.test(await text(page, '[data-enrol-customer]')), await text(page, '[data-enrol-customer]'));
+  api.rejectOther = false;
+  await page.locator('[data-enrol-retry]').click({ timeout: 3000 }).catch(() => {});
+  await page.waitForTimeout(1200);
   api.rejectName = true;
   await submitStep(page, 'Rocío Rechazo');
   check('name: a 400 validation points at the name field (the step stays, the field explains), no raw code', (await stepOf(page).locator('[data-enrol-name] input').count()) === 1 && /Revisa tu nombre/.test(await text(page, '[data-enrol-customer]')) && !/validation/.test(await text(page, '[data-enrol-customer]')), await text(page, '[data-enrol-customer]'));
@@ -294,6 +308,23 @@ try {
   check('C-01d review: …and nothing is written (no POST /batch)', api.batches.length === 0, JSON.stringify(api.batches));
   await page.goto(`${BASE}/#/app/pay/booking/bk_pay`); await page.waitForTimeout(1500);
   check('C-01d review: paying an existing held booking stays open (the form, no hold notice)', (await page.locator('[data-consent-hold]').count()) === 0 && (await page.locator('input[name=receipt]').count()) === 1, route(page));
+  // Review r2: finishing an EXISTING pending product payment (its receipt not sent yet) stays open; nothing new is written.
+  api.packPending = true;
+  await page.goto(`${BASE}/#/app/pay/product/pack12`); await page.waitForTimeout(1500);
+  check('C-01d r2: an existing pending pack payment can be finished while held (the receipt form, no hold notice)', (await page.locator('[data-consent-hold]').count()) === 0 && (await page.locator('input[name=receipt]').count()) === 1, route(page));
+  check('C-01d r2: …and opening it writes nothing', api.batches.length === 0, JSON.stringify(api.batches));
+  api.packPending = false;
+  // Review r2 (test gap): the gift purchase while held: the button is disabled and nothing is written.
+  api.giftProduct = true;
+  await page.goto(`${BASE}/#/app/gift-voucher`); await page.waitForTimeout(1500);
+  const giftCta = page.getByRole('button', { name: 'Continuar al pago por transferencia' });
+  check('C-01d r2: the gift purchase lists the gift product while held', (await page.locator('input[name=gift-product]').count()) === 1, route(page));
+  await page.getByLabel('Nombre de quien recibe').fill('Rosa Regalo').catch(() => {});
+  await page.getByLabel('Correo de quien recibe').fill('rosa@example.test').catch(() => {});
+  check('C-01d r2: …its button is disabled', (await giftCta.count()) === 1 && (await giftCta.isDisabled().catch(() => false)));
+  await giftCta.click({ timeout: 1500 }).catch(() => {}); await page.waitForTimeout(500);
+  check('C-01d r2: …and nothing starts or is written (still on the page, no /batch)', route(page) === '/app/gift-voucher' && api.batches.length === 0, route(page));
+  api.giftProduct = false;
   await page.goto(`${BASE}/#/app/passes`); await page.waitForTimeout(1500);
   const passButtons = page.locator('.cust-pass button');
   check('C-01d review: Passes shows the notice and every pass button is disabled', (await page.locator('[data-consent-hold]').count()) === 1 && (await passButtons.count()) > 0 && (await passButtons.evaluateAll((bs) => bs.every((b) => b.disabled))), `${await passButtons.count()}`);
@@ -341,6 +372,13 @@ try {
   await page.locator('[data-consent-hold] [data-consent-retry]').click({ timeout: 3000 }).catch(() => {});
   await page.waitForTimeout(1200);
   check('C-01d: Retry reruns the consent step', (await stepOf(page).count()) === 1, route(page));
+  // Review r2: the step shown after Retry has a way back without accepting: "Continue for now" re-defers.
+  const later = stepOf(page).locator('[data-consent-later]');
+  check('C-01d r2: the consent step after Retry offers "Continue for now"', (await later.count()) === 1);
+  await later.click({ timeout: 3000 }).catch(() => {}); await page.waitForTimeout(1000);
+  check('C-01d r2: …which opens the page again with the hold (no step, the notice back)', (await stepOf(page).count()) === 0 && (await page.locator('[data-consent-hold]').count()) === 1 && route(page) === '/app/checkout/occ_1', route(page));
+  await page.locator('[data-consent-hold] [data-consent-retry]').click({ timeout: 3000 }).catch(() => {});
+  await page.waitForTimeout(1200);
   await submitStep(page, null).catch(() => {});
   check('C-01d: …and once recorded, booking opens (no notice)', route(page) === '/app/checkout/occ_1' && (await page.locator('[data-consent-hold]').count()) === 0 && (await page.locator('[data-enrol-customer]').count()) === 0 && api.members.user_deskcust.registered === true, route(page));
   await ctx.close();
