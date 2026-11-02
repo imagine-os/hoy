@@ -13,6 +13,7 @@ Decision:
 - PRO-02, product master: the editor and its confirmation and errors sit together in one section above the list (only the message lines are live regions), and opening the editor, or Edit on another card while it is open, scrolls it into view. `product_period_overlap` and `invalid_date` are in `KNOWN_CODES` with es and en copy. "No price valid today" for a product created today with a price from today did not reproduce from the code (see the lane report); a test pins that such a row is in force.
 - PAG-10: the payments report column reads "N.º de nota" / "Receipt no." (the number of the nota de compra).
 - Integrated review round 1: the error boundary is no longer keyed by the path (that remounted every page on every path change and dropped its state, e.g. the cancel notice after `/app/booking/:id/change`, the Settings tabs, the schedule's day and week). It takes the path as `resetKey` and resets only a failure already on screen when the path changes. The desk sale says when the chosen check-in class has started ("choose another or sell without check-in", `startedChoice`).
+- Integrated review round 2: the boundary's meta says public site routes show the card without the site header (no shell around them). The desk sale's "started" keeps a grace of 0; the check-in cut-off after the start (bookings `late_grace_minutes`) is an open question, as the app's booking policy doesn't carry it.
 
 Alternative rejected:
 - Filtering started classes inside `useTodaySessions`: the website's home uses the same hook.
