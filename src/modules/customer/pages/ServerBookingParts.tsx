@@ -20,6 +20,7 @@ import { useBookingPolicy } from '../booking/bookingPolicy';
 import { cancelOnServer, moveOnServer, useSubmitKey } from '../booking/serverCommands';
 import { refusalMessage } from '../booking/refusals';
 import { classPhase, holdView, moveDeadline, moveOpen, type ServerBookingRow } from '../booking/serverBooking';
+import { ConsentHoldNotice, useConsentHeld } from '../../identity/ConsentHold';
 
 /** The server's answer, in the customer's language. */
 function Refusal({ error }: { error: unknown }) {
@@ -72,13 +73,18 @@ export function HoldBlock({ booking, joined }: { booking: ServerBookingRow; join
   );
 }
 
-/** C-08b in the production build: move the booking (RS-09, J3b) or cancel it with the J3 warning, every time. */
+/**
+ * C-08b in the production build: move the booking (RS-09, J3b) or cancel it with the J3 warning, every time. While the
+ * consent is held (C-01d) the move mode shows the hold notice and offers no class; cancelling stays open.
+ */
 export function ServerChangeSheet({ open, onClose, booking, joined, onResult }: { open: boolean; onClose: () => void; booking: ServerBookingRow; joined: JoinedSession; onResult: (f: { tone: 'success' | 'warn'; text: string }) => void }) {
   const { t, lang } = useI18n();
   const data = useData();
   const policy = useBookingPolicy();
   const all = useAllSessionsJoined();
   const now = useNow(1_000);
+  // C-01d (owner 2026-11-03): a move counts as a new booking, so it waits for the consent; cancelling stays allowed.
+  const consentHeld = useConsentHeld();
   const s = joined.session;
   const [mode, setMode] = useState<'menu' | 'move' | 'cancel'>('menu');
   const [day, setDay] = useState(() => dateKey(new Date(s.starts_at)));
@@ -104,7 +110,7 @@ export function ServerChangeSheet({ open, onClose, booking, joined, onResult }: 
     catch (e) { key.settle(e); setError(e); }
     finally { inFlight.current = false; setBusy(false); }
   };
-  const move = () => chosen && act(() => moveOnServer(data, { bookingId: booking.id, toSessionId: chosen.session.id, matNumber: needsMat ? mat : null }, moveKey.take()), moveKey,
+  const move = () => !consentHeld && chosen && act(() => moveOnServer(data, { bookingId: booking.id, toSessionId: chosen.session.id, matNumber: needsMat ? mat : null }, moveKey.take()), moveKey,
     { tone: 'success', text: t('customer.srv.move.done', { when: formatDateTime(chosen.session.starts_at, lang) }) });
   const cancel = () => act(() => cancelOnServer(data, { bookingId: booking.id }, cancelKey.take()), cancelKey,
     { tone: 'warn', text: t(held ? 'customer.srv.cancel.held.done' : 'customer.srv.cancel.done') });
@@ -122,7 +128,7 @@ export function ServerChangeSheet({ open, onClose, booking, joined, onResult }: 
         )}
         {mode === 'move' && (
           <section className="stack-sm">
-            {!canMove ? <Notice tone="warn">{t('customer.srv.move.closed', { h: hours })}</Notice> : <>
+            {consentHeld ? <ConsentHoldNotice /> : !canMove ? <Notice tone="warn">{t('customer.srv.move.closed', { h: hours })}</Notice> : <>
               <Field label={t('customer.change.move.day')}>{(id) => <Input id={id} type="date" value={day} min={dateKey(new Date(now))} disabled={busy} onChange={(e) => { setDay(e.target.value); setTarget(null); setError(null); }} />}</Field>
               <div className="eyebrow">{t('customer.change.pick')}</div>
               {alts.length === 0
