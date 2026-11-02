@@ -17,6 +17,7 @@ import { guardStudioWaitlist, promoteStudioWaitlist } from './studioWaitlist';
 import { rescheduleBooking } from './rescheduleCommand';
 import { PRODUCTION_BUILD } from '../../config/launch';
 import { approvedPackageRows, freezePatch, packageState, resumePatch, selectPackagePurchase } from '../../data/packages';
+import { liveLots } from './offers';
 
 /**
  * The customer's recurring memberships: the review build's rows; none in production (no `memberships` table; R-05:
@@ -88,13 +89,16 @@ export function useEntitlements() {
   const { rows: plans } = useScopedCustomerRead<PlanRow>('plans');
   return useMemo(() => {
     const membership = memberships.find((m) => m.status === 'active') ?? memberships.find((m) => m.status === 'paused') ?? null;
-    const pkg = packageState(approvedPackageRows(ledger, payments));
+    const confirmed = approvedPackageRows(ledger, payments);
+    const pkg = packageState(confirmed);
+    // PRO-06: each live lot with its source and expiry (the home card and the balance list them).
+    const lots = liveLots(confirmed);
     const plan = membership ? plans.find((p) => p.id === membership.plan_id) ?? null : pkg.purchase?.plan_id ? plans.find((p) => p.id === pkg.purchase!.plan_id) ?? null : null;
     // The trial is matched by product key (`slug`): in production each dated product row has its own id, never `plan_trial`.
     const trialPlans = new Set(['plan_trial', ...plans.filter((p) => p.slug === 'trial').map((p) => p.id)]);
     const trialUsed = bookings.some((b) => b.paid_with === 'trial') || payments.some((p) => !!p.plan_id && trialPlans.has(p.plan_id) && p.status === 'approved');
     const defaultKind: EntitlementKind = pkg.balance > 0 ? 'package' : membership?.status === 'active' ? 'membership' : trial.status==='eligible' ? 'trial' : 'single';
-    return { membership, plan, ledger, pkg, classBalance: pkg.balance, nextExpiry: pkg.expiresAt, trialUsed, trial, payments, defaultKind, hasAnyEntitlement: pkg.balance > 0 || membership?.status === 'active' };
+    return { membership, plan, ledger, pkg, lots, classBalance: pkg.balance, nextExpiry: pkg.expiresAt, trialUsed, trial, payments, defaultKind, hasAnyEntitlement: pkg.balance > 0 || membership?.status === 'active' };
   }, [memberships, ledger, payments, bookings, plans, trial.status]);
 }
 

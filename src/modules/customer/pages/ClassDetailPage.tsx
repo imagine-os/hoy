@@ -20,6 +20,7 @@ import { EmptyState } from '../../../components/molecule/EmptyState/EmptyState';
 import { Skeleton } from '../../../components/atom/Skeleton/Skeleton';
 import { canvasSpecs } from '../specs';
 import { useBookingActions, useEntitlements, useMyBookings, useSessionJoined, useWaitlistFor } from '../hooks';
+import { trialOffered } from '../offers';
 import { policy } from '../policy';
 import {  PageHead, durationMin, roomName, shareText } from '../ui';
 import { ClassThumbnail } from '../../../components/molecule/ClassThumbnail/ClassThumbnail';
@@ -123,7 +124,7 @@ export function ClassDetailPage() {
         <p className="xs muted" style={{ textAlign: 'center' }}>{t('customer.book.oneADay')} <Link to={`/app/class/${conflict}`}>{t('customer.class.seeOther')}</Link></p>
       </div>
     );
-    return <Button block size="lg" loading={navigating} disabled={navigating} onClick={() => void openAdmission()}>{ent.hasAnyEntitlement ? t('core.common.book') : ent.trialUsed ? t('customer.class.bookAndPay') : t('customer.class.bookTrial')}</Button>;
+    return <Button block size="lg" loading={navigating} disabled={navigating} onClick={() => void openAdmission()}>{ent.hasAnyEntitlement ? t('core.common.book') : !trialOffered(ent) ? t('customer.class.bookAndPay') : t('customer.class.bookTrial')}</Button>;
   };
 
   const SECTIONS: Record<string, () => ReactNode> = {
