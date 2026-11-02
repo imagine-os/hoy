@@ -118,6 +118,11 @@ export const CONNECTOR_REFUSALS = {
   // Owner 2026-11-01 (r2 L3, "Stop new classes only"): switching a row off stops new classes; the ones already made stay bookable.
   timetable_deactivate_instead: { es: 'Las filas del horario no se borran: desactívala (Publicado: no) para que no se creen clases nuevas. Las clases ya creadas siguen abiertas a reservas; para suspender una, cancela esa clase.', en: 'Timetable rows are not deleted: switch it off (Published: off) so no new classes are made. Classes already made stay open for booking; to call one off, cancel that class.' },
   content_later: { es: 'Editar este contenido desde la app llega en una próxima actualización. Por ahora no se guardó nada.', en: 'Editing this content from the app arrives in a coming update. Nothing was saved for now.' },
+  // ADM-04 (Jas 1 Nov): the payment settings save's own refusals (paymentInstructions.ts), shown on the card in words.
+  payment_settings_denied: { es: 'Solo Administración cambia los datos de pago. No se guardó nada.', en: 'Only Administration changes the payment details. Nothing was saved.' },
+  payment_settings_stale: { es: 'Alguien cambió los datos de pago mientras los editabas. Vuelve a cargarlos; tu cambio no se guardó.', en: 'Someone changed the payment details while you were editing them. Reload them; your change was not saved.' },
+  payment_settings_invalid: { es: 'Revisa los datos de pago: hay un valor que no es válido. No se guardó nada.', en: 'Check the payment details: one value is not valid. Nothing was saved.' },
+  payment_settings_disconnected: { es: 'Esta pantalla no tiene conexión con el sistema. Vuelve a cargar la página.', en: 'This screen has no connection to the system. Reload the page.' },
   checkout_server_only: { es: 'Esta compra se hace desde la página de pago. Vuelve a elegir el paquete.', en: 'This purchase is made from the payment page. Choose the pack again.' },
   // View-as (Hoy all-roles, lane D): a super admin viewing as another role can look, not change (src/auth/viewAs.ts).
   view_as_read_only: { es: 'Estás viendo como otro rol: es solo lectura. Sal de «Ver como» para hacer cambios.', en: 'You are viewing as another role: it is read-only. Exit “View as” to make changes.' },

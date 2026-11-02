@@ -24,7 +24,7 @@ interface InvoiceRow extends BaseRow { payment_id: string; number: string; subto
 // Colombian studios settle biweekly, so 15 days sits between the week and the month.
 type Range = '7d' | '15d' | '30d' | '90d' | 'all';
 
-/** M-09 — revenue by product and method, pending, refunds, the teacher-payroll roll-up (M-09a) and invoices with the DIAN reference. */
+/** M-09 — revenue by product and method, pending, the teacher-payroll roll-up (M-09a) and invoices with the DIAN reference. No refunds (Q-16, 22 Oct): no Refunded card or filter. */
 export function FinancePage() {
   const { t, lang, bi } = useI18n();
   const { settings } = useSettings();
@@ -39,14 +39,13 @@ export function FinancePage() {
   const [picked, setPicked] = useState<Range | null>(null);
   const range: Range = picked ?? (settings.payroll.cadence === 'biweekly' ? '15d' : '30d');
   const setRange = (r: Range) => setPicked(r);
-  const [invStatus, setInvStatus] = useState<'all' | 'approved' | 'pending' | 'refunded'>('all');
+  const [invStatus, setInvStatus] = useState<'all' | 'approved' | 'pending'>('all');
   const { runs, linesOf } = usePayroll();
   const since = range === 'all' ? 0 : Date.now() - Number(range.replace('d', '')) * MS.day;
   const inRange = useMemo(() => payments.filter((p) => new Date(p.paid_at ?? p.created_at).getTime() >= since), [payments, since]);
   const approved = inRange.filter((p) => p.status === 'approved');
   const revenue = approved.reduce((a, p) => a + p.amount, 0);
   const pending = inRange.filter((p) => p.status === 'pending');
-  const refunded = inRange.filter((p) => p.status === 'refunded');
   const planMap = new Map(plans.map((p) => [p.id, p]));
   const byProduct = useMemo(() => { const m = new Map<string, number>(); for (const p of approved) { const k = p.plan_id ?? 'special'; m.set(k, (m.get(k) ?? 0) + p.amount); } return [...m.entries()].map(([id, value]) => ({ id, label: planMap.get(id) ? bi({ es: planMap.get(id)!.name_es, en: planMap.get(id)!.name_en }) : id === 'special' ? t('admin.finance.product.special') : id, value })).sort((a, b) => b.value - a.value); }, [approved, planMap, bi, t]);
   const byMethod = useMemo(() => { const m = new Map<string, number>(); for (const p of approved) m.set(p.method, (m.get(p.method) ?? 0) + p.amount); return [...m.entries()].map(([id, value]) => ({ id, label: t(`admin.finance.method.${id}`), value })).sort((a, b) => b.value - a.value); }, [approved, t]);
@@ -93,10 +92,9 @@ export function FinancePage() {
         <div className="row wrap" role="tablist">{(['7d', '15d', '30d', '90d', 'all'] as Range[]).map((r) => <Chip key={r} selected={range === r} onClick={() => setRange(r)}>{t(`admin.finance.range.${r}`)}</Chip>)}</div>
       </div>
       <section className="finance-payment-summary" aria-label={t('admin.reporting.paymentSummary')}>
-      {paymentReady ? <div className="grid grid-4">
+      {paymentReady ? <div className="grid grid-3">
         <StatTile label={t('admin.finance.revenue')} value={formatCOP(revenue, lang)} hint={t('admin.finance.revenue.hint', { n: approved.length })} trend={revenue > 0 ? 'up' : 'flat'} />
         <StatTile label={t('admin.finance.pending')} value={formatCOP(pending.reduce((a, p) => a + p.amount, 0), lang)} hint={t('admin.finance.pending.hint', { n: pending.length })} />
-        <StatTile label={t('admin.finance.refunded')} value={formatCOP(refunded.reduce((a, p) => a + p.amount, 0), lang)} hint={t('admin.finance.refunded.hint', { n: refunded.length })} trend={refunded.length ? 'down' : 'flat'} />
         <StatTile label={t('admin.finance.wompiShare')} value={`${wompiShare}%`} hint={t('admin.finance.wompiShare.hint')} />
       </div> : paymentReadState(true)}
       </section>
@@ -132,7 +130,7 @@ export function FinancePage() {
         <div className="row-between wrap">
           <div className="eyebrow">{t('admin.finance.invoices')}</div>
           <div className="row wrap" role="tablist" aria-label={t('admin.finance.invFilter')}>
-            {(['all', 'approved', 'pending', 'refunded'] as const).map((s2) => <Chip key={s2} selected={invStatus === s2} onClick={() => setInvStatus(s2)}>{t(`admin.finance.invFilter.${s2}`)}</Chip>)}
+            {(['all', 'approved', 'pending'] as const).map((s2) => <Chip key={s2} selected={invStatus === s2} onClick={() => setInvStatus(s2)}>{t(`admin.finance.invFilter.${s2}`)}</Chip>)}
             <span className="xs muted">{settings.tax.eInvoicing ? t('admin.finance.einv.on') : t('admin.finance.einv.off')}</span>
           </div>
         </div>

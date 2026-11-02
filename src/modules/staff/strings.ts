@@ -62,8 +62,9 @@ export const strings: StringTable = {
   // S-11 (Q-13): reception records an expense; no ledger, no totals.
   'staff.expense.nav': { es: 'Registrar gasto', en: 'Record expense' },
   'staff.expense.title': { es: 'Registrar un gasto', en: 'Record an expense' },
-  'staff.expense.body': { es: 'Anota un gasto pagado hoy desde recepción. Administración lo revisa en el libro de gastos.', en: 'Note an expense paid today at the front desk. Administration reviews it in the expense ledger.' },
-  'staff.expense.hint': { es: 'Queda con fecha de hoy y pagado.', en: 'It is dated today and marked paid.' },
+  'staff.expense.body': { es: 'Anota un gasto que recepción pagó, con el día en que se pagó. Administración lo revisa en el libro de gastos.', en: 'Note an expense the front desk paid, with the day it was paid. Administration reviews it in the expense ledger.' },
+  'staff.expense.hint': { es: 'Queda pagado en la fecha elegida.', en: 'It is marked paid on the date you choose.' },
+  'staff.expense.paidOn': { es: 'Pagado el', en: 'Paid on' },
   'staff.expense.saved': { es: 'Gasto registrado.', en: 'Expense recorded.' },
   'staff.expense.error': { es: 'No se pudo registrar el gasto. Inténtalo de nuevo.', en: 'The expense could not be recorded. Try again.' },
   'staff.expense.amountRange': { es: 'Escribe un valor entre 1 y 5.000.000 COP', en: 'Enter an amount between 1 and 5,000,000 COP' },

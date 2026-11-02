@@ -10,44 +10,52 @@ import { Input, Select } from '../../components/atom/Input/Input';
 import { Field } from '../../components/molecule/Field/Field';
 import { DESK_EXPENSE_MAX_COP, runExpenseCommand } from '../admin/expenseLedger';
 import { LIMITS, clip } from '../../shared/limits';
+import { failureCopy } from '../../data/companyos/refusals';
 
 const METHODS = ['cash', 'transfer', 'card'] as const;
 /** Larger than any petty-cash expense; a bigger one is an administration entry (the command enforces it too). */
 const DESK_MAX_COP = DESK_EXPENSE_MAX_COP;
 
 /**
- * S-11 — reception records a fixed or variable expense paid today (Q-13, PL-05). Record only: no ledger, no totals, no income figures.
+ * S-11 — reception records a fixed or variable expense it paid (Q-13, PL-05), on the paid-on day it picks (today by
+ * default; FIN-01: Company OS refuses a day after today, `invalid_date`, and that is the only limit). Record only: no
+ * ledger, no totals, no income figures.
  * The command is the same one the admin ledger (M-09c) uses; `expenses.create` lets it create and nothing else.
  */
 export function DeskExpensePage() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const data = useData();
   const { user, role, can } = useSession();
-  const empty = { kind: 'variable' as ExpenseRow['kind'], concept: '', category: 'supplies' as ExpenseCategory, amount: 0, method: 'cash' as ExpenseRow['method'], vendor: '', note: '' };
-  const [d, setD] = useState(empty);
+  const blank = () => ({ kind: 'variable' as ExpenseRow['kind'], concept: '', category: 'supplies' as ExpenseCategory, amount: 0, method: 'cash' as ExpenseRow['method'], vendor: '', note: '', paidOn: dateKey(new Date()) });
+  const [d, setD] = useState(blank);
   const [busy, setBusy] = useState(false);
   const [touched, setTouched] = useState(false);
   const [status, setStatus] = useState<'saved' | 'error' | ''>('');
+  const [failure, setFailure] = useState('');
   // One intent per entry: a retry after an error reuses the same ids, so the ledger's replay guard stores it once.
   const intent = useRef<{ requestId: string; id: string; key: string } | null>(null);
-  const set = <K extends keyof typeof d>(k: K, v: (typeof d)[K]) => { setD((x) => ({ ...x, [k]: v })); setStatus(''); };
+  const set = <K extends keyof typeof d>(k: K, v: (typeof d)[K]) => { setD((x) => ({ ...x, [k]: v })); setStatus(''); setFailure(''); };
   const conceptError = d.concept.trim() ? undefined : t('admin.expenses.concept.required');
   const amountError = d.amount > 0 && d.amount <= DESK_MAX_COP ? undefined : t('staff.expense.amountRange');
   const allowed = can('expenses.create');
-  const valid = allowed && !conceptError && !amountError;
+  const valid = allowed && !conceptError && !amountError && !!d.paidOn;
 
   const submit = async () => {
     setTouched(true);
     if (!valid || busy) return;
     setBusy(true);
-    const today = dateKey(new Date());
-    const draft = { kind: d.kind, category: d.category, concept: d.concept.trim(), amount: d.amount, incurred_on: today, paid_on: today, method: d.method, vendor: d.vendor.trim() || null, note: d.note.trim() || null };
+    // The expense is dated the day it was paid (FIN-01).
+    const draft = { kind: d.kind, category: d.category, concept: d.concept.trim(), amount: d.amount, incurred_on: d.paidOn, paid_on: d.paidOn, method: d.method, vendor: d.vendor.trim() || null, note: d.note.trim() || null };
     const key = JSON.stringify(draft);
     if (intent.current?.key !== key) intent.current = { requestId: crypto.randomUUID(), id: `exp_desk_${crypto.randomUUID()}`, key };
     try {
       await runExpenseCommand(data, { type: 'create', requestId: intent.current.requestId, id: intent.current.id, actorId: user.id, role, draft });
-      intent.current = null; setD(empty); setTouched(false); setStatus('saved');
-    } catch { setStatus('error'); }
+      intent.current = null; setD(blank()); setTouched(false); setStatus('saved');
+    } catch (e) {
+      // The review build's own refusal of a future day reads like Company OS's (`invalid_date`).
+      const refusal = e instanceof Error && e.message === 'expense_invalid_date' ? { code: 'invalid_date' } : e;
+      setStatus('error'); setFailure(failureCopy(refusal, lang, t('staff.expense.error')));
+    }
     finally { setBusy(false); }
   };
 
@@ -76,11 +84,14 @@ export function DeskExpensePage() {
               {(id) => <Input id={id} disabled={!allowed || busy} maxLength={LIMITS.name} value={d.vendor} onChange={(e) => set('vendor', clip(e.target.value, LIMITS.name))} />}
             </Field>
           </div>
+          <Field label={t('staff.expense.paidOn')} required>
+            {(id) => <Input id={id} type="date" disabled={!allowed || busy} value={d.paidOn} onChange={(e) => set('paidOn', e.target.value)} />}
+          </Field>
           <Field label={t('admin.expenses.col.note')}>
             {(id) => <Input id={id} disabled={!allowed || busy} maxLength={LIMITS.note} value={d.note} onChange={(e) => set('note', clip(e.target.value, LIMITS.note))} />}
           </Field>
           <div className="row-between wrap">
-            <span className="xs muted" role="status">{status === 'saved' ? t('staff.expense.saved') : status === 'error' ? t('staff.expense.error') : t('staff.expense.hint')}</span>
+            <span className="xs muted" role="status">{status === 'saved' ? t('staff.expense.saved') : status === 'error' ? failure || t('staff.expense.error') : t('staff.expense.hint')}</span>
             <Button size="sm" loading={busy} disabled={!allowed || busy} onClick={() => void submit()}>{t('admin.expenses.form.save')}</Button>
           </div>
         </div>

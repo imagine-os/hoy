@@ -925,8 +925,6 @@ export const strings: StringTable = {
   'admin.finance.revenue.hint': { es: '{n} pagos aprobados', en: '{n} approved payments' },
   'admin.finance.pending': { es: 'Pendientes', en: 'Pending' },
   'admin.finance.pending.hint': { es: '{n} links / transferencias sin confirmar', en: '{n} unconfirmed links / transfers' },
-  'admin.finance.refunded': { es: 'Reembolsado', en: 'Refunded' },
-  'admin.finance.refunded.hint': { es: '{n} reembolsos', en: '{n} refunds' },
   'admin.finance.wompiShare': { es: 'Vía Wompi', en: 'Via Wompi' },
   'admin.finance.wompiShare.hint': { es: 'resto: efectivo / manual', en: 'rest: cash / manual' },
   'admin.finance.byProduct': { es: 'Ingresos por producto', en: 'Revenue by product' },
@@ -1196,7 +1194,6 @@ export const strings: StringTable = {
   'admin.finance.invFilter.all': { es: 'Todas', en: 'All' },
   'admin.finance.invFilter.approved': { es: 'Pagadas', en: 'Paid' },
   'admin.finance.invFilter.pending': { es: 'Pendientes', en: 'Pending' },
-  'admin.finance.invFilter.refunded': { es: 'Reembolsadas', en: 'Refunded' },
   // per-teacher settlement inside a run (M-09b)
   'admin.payouts.payTeacher': { es: 'Marcar como pagado', en: 'Mark as paid' },
   'admin.payouts.teacherPaid': { es: 'Pagado el {date} por {method}', en: 'Paid {date} by {method}' },
