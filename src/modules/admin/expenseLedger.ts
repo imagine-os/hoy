@@ -5,6 +5,7 @@ import type { Role } from '../../auth/roles';
 import { roleCan } from '../../auth/permissions';
 import { tenant } from '../../tenant/tenant';
 import { fixedExpensesFor, type Period } from '../../data/expenseCalc';
+import { dateKey } from '../../i18n/format';
 import { readServerWorkspace, runServerCommand } from './expenseServer';
 
 export type ExpenseDraft = Pick<ExpenseRow,'kind'|'category'|'concept'|'amount'|'incurred_on'|'paid_on'|'method'|'vendor'|'note'>;
@@ -91,6 +92,8 @@ export async function runExpenseCommand(data:DataProvider,command:ExpenseCommand
   // FIN-01 (Jas 1 Nov): the desk picks the paid-on day; Company OS's rule (not after today, `invalid_date`) is the only
   // limit on that day. As before (when both were today), a desk expense is paid and dated the day it was paid.
   if(!Number.isInteger(c.draft?.amount)||c.draft.amount<=0||c.draft.amount>DESK_EXPENSE_MAX_COP||!day(c.draft.paid_on)||c.draft.incurred_on!==c.draft.paid_on)fail('validation');
+  // The review build has no server: its mock refuses a future paid-on day, as Company OS does (`invalid_date`).
+  if(!onServer(data)&&c.draft.paid_on!>dateKey(new Date()))fail('invalid_date');
  }
  check(data,c,control,true);
  if(typeof c.requestId!=='string'||!c.requestId||c.requestId.length>160||!['create','template.create','template.toggle','pay','delete','generate'].includes(c.type))fail('validation');

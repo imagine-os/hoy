@@ -51,7 +51,11 @@ export function DeskExpensePage() {
     try {
       await runExpenseCommand(data, { type: 'create', requestId: intent.current.requestId, id: intent.current.id, actorId: user.id, role, draft });
       intent.current = null; setD(blank()); setTouched(false); setStatus('saved');
-    } catch (e) { setStatus('error'); setFailure(failureCopy(e, lang, t('staff.expense.error'))); }
+    } catch (e) {
+      // The review build's own refusal of a future day reads like Company OS's (`invalid_date`).
+      const refusal = e instanceof Error && e.message === 'expense_invalid_date' ? { code: 'invalid_date' } : e;
+      setStatus('error'); setFailure(failureCopy(refusal, lang, t('staff.expense.error')));
+    }
     finally { setBusy(false); }
   };
 
