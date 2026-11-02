@@ -104,7 +104,8 @@ export function resetConsentReads(): void { reads.clear(); known.clear(); }
  */
 export function useConsentRead(applies: boolean, userId: string, fetcher: (() => Promise<{ status: number; body: unknown }>) | null): ConsentRead | 'pending' | null {
   const answer = useSyncExternalStore(subscribeConsent, () => known.get(userId));
-  useEffect(() => { if (applies && fetcher && !reads.has(userId)) void readConsent(userId, fetcher); }, [applies, userId, fetcher]);
+  // `answer` too (C-01d): the hold notice's Retry forgets the answer (`retryConsent`), and the guard reads again.
+  useEffect(() => { if (applies && fetcher && !reads.has(userId)) void readConsent(userId, fetcher); }, [applies, userId, fetcher, answer]);
   if (!applies || !fetcher) return null;
   return answer ?? 'pending';
 }
