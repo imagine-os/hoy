@@ -34,7 +34,8 @@ export const holdsPlace = (b: Pick<ServerBookingRow, 'status' | 'hold_until' | '
  * - `running`: the clock is running until `until`.
  * - `expired`: the hold has run out; the server releases it on its next pass.
  */
-export type HoldPhase = 'waiting_reception' | 'not_started' | 'until_class' | 'running' | 'expired';
+/** `pending` (review r2): held with no readable `hold_until`: still pending (as `awaitingRelease`), with no time to show. */
+export type HoldPhase = 'waiting_reception' | 'not_started' | 'until_class' | 'running' | 'pending' | 'expired';
 export interface HoldView { phase: HoldPhase; until: string | null; clockStartsAt: string | null; minutes: number; method: 'transfer' | 'desk' }
 
 export function holdView(booking: ServerBookingRow, classStartsAt: string, policy: BookingPolicy, now = Date.now()): HoldView | null {
@@ -43,7 +44,9 @@ export function holdView(booking: ServerBookingRow, classStartsAt: string, polic
   const minutes = booking.policy_hold_minutes ?? (method === 'desk' ? policy.holdMinutesDesk : policy.holdMinutesTransfer);
   if (booking.hold_frozen_at) return { phase: 'waiting_reception', until: null, clockStartsAt: null, minutes, method };
   const until = Date.parse(booking.hold_until ?? '');
-  if (!Number.isFinite(until) || until <= now) return { phase: 'expired', until: booking.hold_until ?? null, clockStartsAt: null, minutes, method };
+  // No or unreadable hold_until: pending, never expired (the same reading as awaitingRelease and serverPaymentStatus).
+  if (!Number.isFinite(until)) return { phase: 'pending', until: null, clockStartsAt: null, minutes, method };
+  if (until <= now) return { phase: 'expired', until: booking.hold_until ?? null, clockStartsAt: null, minutes, method };
   const iso = new Date(until).toISOString();
   if (until === Date.parse(classStartsAt)) return { phase: 'until_class', until: iso, clockStartsAt: null, minutes, method };
   const clockStart = until - minutes * MS.min;

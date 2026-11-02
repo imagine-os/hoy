@@ -53,6 +53,14 @@ export function HoldBlock({ booking, joined }: { booking: ServerBookingRow; join
     <Notice tone="warn" title={t('customer.srv.hold.expired.title')} action={<Link to="/app/schedule"><Button size="sm" variant="secondary">{t('customer.class.backToSchedule')}</Button></Link>}>{t('customer.srv.hold.expired.body')}</Notice>
   );
 
+  // No readable end (review r2): held and pending, with no clock to show.
+  if (view.phase === 'pending') return (
+    <div className="stack">
+      <Notice tone="info" title={t('customer.srv.hold.pending.title')}>{t(`customer.srv.hold.pending.${view.method}`)}</Notice>
+      {view.method === 'transfer' && <Link to={payLink}><Button block>{t('customer.srv.hold.send')}</Button></Link>}
+    </div>
+  );
+
   return (
     <div className="stack">
       <div className="cust-center stack-sm">
