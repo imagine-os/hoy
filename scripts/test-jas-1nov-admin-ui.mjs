@@ -137,6 +137,7 @@ const BASE = `http://127.0.0.1:${PORT}`;
 
 const browser = await launchBrowser();
 const errors = [];
+let scenario = 'start';
 const route = (page) => decodeURIComponent(new URL(page.url()).hash.slice(1));
 async function signedIn(email, { trackErrors = true } = {}) {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, reducedMotion: 'reduce' });
@@ -148,7 +149,7 @@ async function signedIn(email, { trackErrors = true } = {}) {
   }, { accounts: ACCOUNTS, pk: PK });
   const page = await ctx.newPage();
   await page.clock.install({ time: new Date(`${TODAY}T15:00:00Z`) });
-  if (trackErrors) page.on('pageerror', (e) => errors.push(e.message));
+  if (trackErrors) page.on('pageerror', (e) => errors.push(`[${scenario}] ${String(e.stack ?? e.message).split('\n').slice(0, 6).join(' ⏎ ')}`));
   await page.goto(`${BASE}/#/auth/sign-in`);
   await page.waitForTimeout(800);
   await page.locator('[data-step="email"] input').fill(email);
@@ -165,7 +166,7 @@ const tab = (page, name) => page.getByRole('button', { name, exact: true }).firs
 
 try {
   // ── ADM-01 / ADM-02: Class schedule from wrapped rows ──────────────────────────────────────────────────────────
-  reset();
+  scenario = 'class schedule'; reset();
   let { ctx, page } = await signedIn('admin@example.test');
   let at = await go(page, '/admin/class-schedule');
   check('admin opens Class schedule', at === '/admin/class-schedule', at);
@@ -189,7 +190,7 @@ try {
   await ctx.close();
 
   // ── Error boundary: a page that throws keeps the shell and its menu ───────────────────────────────────────────
-  reset({ hostileOccurrence: true });
+  scenario = 'error boundary'; reset({ hostileOccurrence: true });
   ({ ctx, page } = await signedIn('admin@example.test', { trackErrors: false }));
   await go(page, '/admin/class-schedule');
   await tab(page, 'Próximas fechas');
@@ -198,16 +199,24 @@ try {
   check('a page that throws shows the error card', (await card.count()) === 1, (await text(page)).slice(0, 400));
   check('the error card offers Retry and Home', (await card.getByRole('button', { name: 'Reintentar' }).count()) === 1 && (await card.getByText('Ir al inicio').count()) >= 1, await card.innerText().catch(() => 'missing'));
   check('the app shell stays around the card (the sidebar menu is there)', (await page.locator('a[href="#/admin/finance"]').count()) >= 1);
+  // Retry mounts the page again from scratch: it opens on its first tab (Classes), and the same bad row on Upcoming
+  // dates throws again, so the card comes back instead of a blank screen.
   await card.getByRole('button', { name: 'Reintentar' }).click({ timeout: 3000 }).catch(() => {});
-  await page.waitForTimeout(300);
-  check('Retry renders the page again (the same bad row: the card again, not a blank screen)', (await page.locator('[data-route-error]').count()) === 1);
-  await page.locator('a[href="#/admin/finance"]').first().click({ timeout: 3000 }).catch(() => {});
+  await page.waitForTimeout(600);
+  check('Retry renders the page again (its Classes tab shows, the card is gone)', (await page.locator('[data-route-error]').count()) === 0 && (await page.locator('[data-schedule="sch_pulso"]').count()) === 1, (await text(page)).slice(0, 400));
+  await tab(page, 'Próximas fechas');
+  await page.waitForTimeout(600);
+  check('…and the same bad row shows the card again, not a blank screen', (await page.locator('[data-route-error]').count()) === 1);
+  // A visible menu entry other than the current page (folded menu groups keep their links hidden).
+  const other = page.locator('.deskshell-side a.deskshell-link:not(.is-active):visible').first();
+  const href = await other.getAttribute('href', { timeout: 3000 }).catch(() => null);
+  await other.click({ timeout: 3000 }).catch(() => {});
   await page.waitForTimeout(1200);
-  check('the menu still works: another page opens and the card is gone', route(page) === '/admin/finance' && (await page.locator('[data-route-error]').count()) === 0, route(page));
+  check('the menu still works: another page opens from the sidebar and the card is gone', !!href && route(page) === href.replace(/^#/, '') && route(page) !== '/admin/class-schedule' && (await page.locator('[data-route-error]').count()) === 0, `${href} → ${route(page)}`);
   await ctx.close();
 
   // ── ADM-04: payment settings by a super admin with no person record ───────────────────────────────────────────
-  reset();
+  scenario = 'payment settings'; reset();
   ({ ctx, page } = await signedIn('sa@example.test'));
   at = await go(page, '/admin/settings/payments');
   check('super admin (no person) opens Settings › Payments', at === '/admin/settings/payments', at);
@@ -221,7 +230,7 @@ try {
   check('the setting holds the bank name', [...world.setting.values()].some((r) => r.data.value?.payments?.bankName === 'BANCO FICTICIO'));
   await ctx.close();
 
-  reset({ refuseSettings: true });
+  scenario = 'payment settings refused'; reset({ refuseSettings: true });
   ({ ctx, page } = await signedIn('sa@example.test'));
   await go(page, '/admin/settings/payments');
   payCard = page.locator('.card', { hasText: 'Cuenta de consignación' }).first();
@@ -233,12 +242,14 @@ try {
   await ctx.close();
 
   // ── FIN-01: the desk expense's paid-on date ───────────────────────────────────────────────────────────────────
-  reset();
+  scenario = 'desk expense'; reset();
   ({ ctx, page } = await signedIn('desk@example.test'));
   at = await go(page, '/staff/expense');
   check('front desk opens Record expense', at === '/staff/expense', at);
   const form = page.locator('[data-desk-expense-form]');
-  const paidOn = form.getByLabel('Pagado el', { exact: true });
+  check('the Record expense form is shown', (await form.count()) === 1, `${(await text(page)).slice(0, 400)} | errors: ${errors.join(' | ').slice(0, 600)}`);
+  // A required field's label ends in " *" (Field), so labels are matched by their start, as for Concepto and Valor.
+  const paidOn = form.getByLabel('Pagado el', { exact: false });
   check('the paid-on date field is there and defaults to today', (await paidOn.inputValue().catch(() => '')) === TODAY, await paidOn.inputValue().catch(() => 'missing'));
   const fill = async (day) => {
     await form.getByLabel('Concepto', { exact: false }).fill('Jabón ficticio').catch(() => {});
@@ -259,7 +270,7 @@ try {
   await ctx.close();
 
   // ── Finance: no Refunded card, no Refunded chip ───────────────────────────────────────────────────────────────
-  reset();
+  scenario = 'finance'; reset();
   ({ ctx, page } = await signedIn('admin@example.test'));
   at = await go(page, '/admin/finance');
   check('admin opens Finance', at === '/admin/finance', at);
@@ -270,7 +281,7 @@ try {
   await ctx.close();
 
   // ── PRO-02: the product master's feedback sits next to the form ───────────────────────────────────────────────
-  reset();
+  scenario = 'product master'; reset();
   ({ ctx, page } = await signedIn('admin@example.test'));
   at = await go(page, '/admin/products');
   check('admin opens the product master', at === '/admin/products', at);
