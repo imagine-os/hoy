@@ -37,6 +37,8 @@
     "test:session-admission": "node scripts/test-session-admission.mjs",
     "test:delivery-room": "node scripts/test-delivery-room.cjs",
     "test:auth:real-clerk": "node scripts/test-auth-real-clerk.mjs",
+    "test:jas-customer": "node scripts/test-jas-1nov-customer.mjs",
+    "test:jas-customer:ui": "node scripts/test-jas-1nov-customer-ui.mjs",
     "seed:companyos": "node scripts/seed-companyos.ts ../Company-OS/deploy/seeds",
     "test:seed-companyos": "node scripts/test-seed-companyos.mjs"
   },
