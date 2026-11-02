@@ -29,3 +29,11 @@ export function notStarted<T extends { session: { starts_at: string } }>(list: T
 export function chosenSession(list: readonly { session: { id: string } }[], sessionId: string): string {
   return sessionId && list.some((x) => x.session.id === sessionId) ? sessionId : '';
 }
+
+/**
+ * Review r1: the chosen check-in class has started (it is one of today's classes but no longer offered), so it dropped
+ * out of the list. The page says so instead of silently showing "no check-in". A class of another day, or none, is not.
+ */
+export function startedChoice(all: readonly { session: { id: string } }[], offered: readonly { session: { id: string } }[], sessionId: string): boolean {
+  return !!sessionId && all.some((x) => x.session.id === sessionId) && !offered.some((x) => x.session.id === sessionId);
+}

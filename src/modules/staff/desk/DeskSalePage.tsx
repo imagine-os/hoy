@@ -20,7 +20,7 @@ import { DESK_CONSENTS, type DeskMethod, type SaleResult } from './deskCommands'
 import { deskErrorText } from './strings';
 import { useActionKeys, useDeskCommands } from './useDesk';
 import { errorCode } from './wire';
-import { chosenSession, deskTrialBlock, notStarted } from './deskSale';
+import { chosenSession, deskTrialBlock, notStarted, startedChoice } from './deskSale';
 import '../staff.css';
 
 const METHODS: { id: DeskMethod; label: string }[] = [{ id: 'cash', label: 'staff.register.method.cash' }, { id: 'card_terminal', label: 'staff.register.method.datafono' }, { id: 'transfer', label: 'staff.register.method.transfer' }];
@@ -175,6 +175,7 @@ export function DeskSalePage() {
               {differs && <Field label={t('staff.register.note')} required>{id => <Input id={id} value={reason} onChange={e => setReason(e.target.value)} placeholder={t('staff.register.note.ph')} invalid={!reason.trim()} />}</Field>}
               <Field label={t('staff.register.checkinTo')}>{id => <Select id={id} value={chosen} onChange={e => setSessionId(e.target.value)}><option value="">{t('staff.register.checkinTo.none')}</option>{today.map(({ session: s, teacher: te }) => <option key={s.id} value={s.id}>{formatTime(s.starts_at, lang)} · {s.title}{te ? ` · ${te.display_name}` : ''} ({s.booked_count}/{s.capacity})</option>)}</Select>}</Field>
               {chosen && <Toggle size="sm" checked={checkIn} onChange={setCheckIn} label={t('staff.checkin.checkin')} />}
+              {startedChoice(todayAll, today, sessionId) && <p className="xs muted" role="note" data-desk-session-started>{t('desk.sale.sessionStarted')}</p>}
               {error && <EmptyState compact tone="error" title={t('core.common.error')} body={error} />}
               <Button block size="lg" disabled={!valid} loading={busy} onClick={complete} icon="payment">{t('staff.register.cta')}</Button>
               <p className="xs muted">{t('staff.register.audit', { staff: user.name })}</p>
