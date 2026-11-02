@@ -57,6 +57,39 @@ export function settleConsent(userId: string): void {
   notify();
 }
 
+/**
+ * Decision C-01d (owner 2026-11-02, replacing C-01c's "book anyway"): the consent step could not be recorded and the
+ * person chose "Continue for now". The customer area opens for the rest of the session (existing bookings, balance,
+ * account), but every new booking or purchase entry shows "record your consent to book" (`consentDeferred`).
+ */
+export function deferConsent(userId: string): void {
+  const later: ConsentRead = { step: 'pass', reason: 'deferred' };
+  reads.set(userId, Promise.resolve(later));
+  known.set(userId, later);
+  notify();
+}
+
+/** New bookings and purchases wait for the consent (C-01d). Display only: Company OS doesn't refuse them yet (#74). */
+export function consentDeferred(userId: string): boolean {
+  const answer = known.get(userId);
+  return answer?.step === 'pass' && answer.reason === 'deferred';
+}
+
+/**
+ * The hold notice's Retry: forget this login's answer, so the guard of the page it stands on reads `GET /signup` again
+ * (bounded, fail open, as before) and shows the consent step; recording it (`settleConsent`) lifts the hold.
+ */
+export function retryConsent(userId: string): void {
+  reads.delete(userId);
+  known.delete(userId);
+  notify();
+}
+
+/** Whether this login's new bookings and purchases are held (C-01d), kept current. */
+export function useConsentDeferred(userId: string): boolean {
+  return useSyncExternalStore(subscribeConsent, () => consentDeferred(userId));
+}
+
 export function subscribeConsent(listener: () => void): () => void {
   listeners.add(listener);
   return () => { listeners.delete(listener); };
