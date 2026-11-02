@@ -7,6 +7,7 @@
 // Run: node scripts/test-jas-1nov-admin.mjs
 import { build } from 'esbuild';
 import assert from 'node:assert/strict';
+import { cosFilter } from './lib/cos-filter.mjs';
 
 let failures = 0, passed = 0;
 async function test(name, fn) {
@@ -39,7 +40,7 @@ const ENTRIES = {
   schedule: "export { liveScheduleStrings } from './src/modules/classSchedule/live/strings';",
   staffStrings: "export { strings } from './src/modules/staff/strings';",
   core: "export { coreStrings } from './src/i18n/core';",
-  shell: "export { withShell } from './src/app/shells'; export { RouteErrorBoundary } from './src/components/organism/RouteErrorBoundary/RouteErrorBoundary';",
+  shell: "export { withShell } from './src/app/shells'; export { RouteErrorBoundary, isChunkLoadError, retryKind, homeKind } from './src/components/organism/RouteErrorBoundary/RouteErrorBoundary';",
 };
 /** Each module bundled on its own (production build), so one missing piece fails only its own tests. */
 async function load(contents) {
@@ -54,6 +55,18 @@ async function load(contents) {
   } catch (e) { return { __error: String(e.message).split('\n').slice(0, 3).join(' ') }; }
 }
 const m = Object.fromEntries(await Promise.all(Object.entries(ENTRIES).map(async ([k, c]) => [k, await load(c)])));
+/** The review build (MockProvider), for what must stay as it was there. */
+async function loadReview(contents) {
+  try {
+    const out = await build({
+      stdin: { contents, resolveDir: process.cwd(), loader: 'ts' }, bundle: true, platform: 'node', format: 'esm', write: false, logLevel: 'silent', jsx: 'automatic',
+      loader: { '.jpg': 'empty', '.png': 'empty', '.webp': 'empty', '.svg': 'empty', '.css': 'empty', '.md': 'text' },
+      define: { 'import.meta.env': '{"VITE_HOY_BUILD":"review","DEV":false,"PROD":true}', __HOY_BUILD__: '"review"' },
+    });
+    return await import('data:text/javascript;base64,' + Buffer.from(out.outputFiles[0].text).toString('base64'));
+  } catch (e) { return { __error: String(e.message).split('\n').slice(0, 3).join(' ') }; }
+}
+m.review = await loadReview("export { MockProvider } from './src/data/MockProvider'; export { runExpenseCommand } from './src/modules/admin/expenseLedger'; export { dateKey } from './src/i18n/format';");
 const need = (k) => { if (m[k].__error) throw new Error(`does not build (${k}): ${m[k].__error}`); return m[k]; };
 
 /** A `/query` row exactly as Company OS returns it. */
@@ -69,13 +82,8 @@ function fakeCos({ userId, roleKeys, isSuperAdmin = false, people = [], refuseBa
   const calls = [], keys = new Map();
   let seq = 0;
   const put = (entity, data) => { const id = `${entity}_${++seq}`; db[entity].set(id, rec(id, { ...data })); return db[entity].get(id); };
-  const match = (r, f) => {
-    if (!f) return true;
-    if (f.and) return f.and.every((x) => match(r, x));
-    const v = f.field === 'id' ? r.id : r.data[f.field];
-    const want = f.value && typeof f.value === 'object' && f.value.$me ? userId : f.value;
-    return f.op === 'eq' ? v === want : f.op === 'in' ? want.includes(v) : f.op === 'is_null' ? v == null : true;
-  };
+  // Company OS filters, strictly: an unknown operator is a 400, never "every row" (scripts/lib/cos-filter.mjs).
+  const match = (r, f) => cosFilter(r, f, userId);
   async function fetch(url, init = {}) {
     const u = new URL(url, 'http://hoy.test/'), method = init.method ?? 'GET', body = init.body ? JSON.parse(init.body) : undefined;
     const key = init.headers?.['idempotency-key'] ?? init.headers?.['Idempotency-Key'];
@@ -85,7 +93,10 @@ function fakeCos({ userId, roleKeys, isSuperAdmin = false, people = [], refuseBa
     if (key && method !== 'GET' && keys.has(key)) { const prior = keys.get(key); return JSON.stringify(prior.body) === JSON.stringify(body) ? json(prior.status, prior.response) : json(409, { error: 'idempotency_conflict' }); }
     const answer = (status, response) => { if (key && status < 300) keys.set(key, { body, status, response }); return json(status, response); };
     if (path === '/me') return json(200, { user: { id: userId, name: '', email: `${userId}@example.test` }, roleKeys, caps: [], isSuperAdmin });
-    if (path === '/query') return json(200, { data: [...(db[body.entity]?.values() ?? [])].filter((r) => match(r, body.filter)).slice(0, body.limit ?? 100) });
+    if (path === '/query') {
+      try { return json(200, { data: [...(db[body.entity]?.values() ?? [])].filter((r) => match(r, body.filter)).slice(0, body.limit ?? 100) }); }
+      catch (e) { return json(e.status ?? 400, { error: e.code ?? 'invalid_query', message: e.message }); }
+    }
     if (path === '/batch') {
       if (refuseBatch) return json(refuseBatch.status, { error: refuseBatch.code });
       const ids = body.ops.map((op) => {
@@ -147,6 +158,22 @@ await test('error boundary: every shell wraps the page in RouteErrorBoundary, in
 await test('error boundary: its card copy exists in es and en', () => {
   const c = need('core').coreStrings;
   for (const k of ['core.routeError.title', 'core.routeError.body', 'core.routeError.home']) { assert.ok(c[k]?.es, `${k} es`); assert.ok(c[k]?.en, `${k} en`); }
+});
+
+await test('error boundary: Retry reloads the page after a failed page download (the lazy chunk cache keeps the failure), else remounts', () => {
+  const { isChunkLoadError, retryKind } = need('shell');
+  for (const e of [new TypeError('Failed to fetch dynamically imported module: http://127.0.0.1/assets/pages-abc.js'), new TypeError('error loading dynamically imported module'), new TypeError('Importing a module script failed.'), new Error('Unable to preload CSS for /assets/pages-abc.css'), Object.assign(new Error('Loading chunk 12 failed.'), { name: 'ChunkLoadError' })]) {
+    assert.equal(isChunkLoadError(e), true, e.message); assert.equal(retryKind(e), 'reload', e.message);
+  }
+  for (const e of [new RangeError('Invalid time value'), new TypeError("Cannot read properties of null (reading 'split')"), null, 'oops']) {
+    assert.equal(isChunkLoadError(e), false, String(e)); assert.equal(retryKind(e), 'remount', String(e));
+  }
+});
+await test('error boundary: Home remounts the page when the crashed page is the role\'s home, else it navigates', () => {
+  const { homeKind } = need('shell');
+  assert.equal(homeKind('/admin', '/admin'), 'remount');
+  assert.equal(homeKind('/staff', '/staff'), 'remount');
+  assert.equal(homeKind('/admin/class-schedule', '/admin'), 'navigate');
 });
 
 // ── ADM-04: the payment settings save is authorised from the session's /me roles ───────────────────────────────────
@@ -226,6 +253,21 @@ await test('REC-06 sell and check in: a class that has started (or starts this m
   assert.deepEqual(notStarted([s('bad', 'not-a-date')], now), [], 'hostile: an unreadable start is not offered');
 });
 
+await test('REC-06 evening in Bogotá (UTC already tomorrow): at 20:30 a 19:00 class is gone and a 21:00 one is offered', () => {
+  const { notStarted } = need('deskSale');
+  const now = Date.parse('2026-11-03T01:30:00Z'); // 2 Nov, 20:30 in Bogotá
+  const list = [{ session: { id: 'c19', starts_at: '2026-11-03T00:00:00Z' } }, { session: { id: 'c21', starts_at: '2026-11-03T02:00:00Z' } }];
+  assert.deepEqual(notStarted(list, now).map((x) => x.session.id), ['c21']);
+});
+await test('REC-06 a class chosen for check-in that has since started is no longer the choice (nothing is sent for it)', () => {
+  const { chosenSession, notStarted } = need('deskSale');
+  const list = [{ session: { id: 'c19', starts_at: '2026-11-02T19:00:00Z' } }, { session: { id: 'c21', starts_at: '2026-11-02T21:00:00Z' } }];
+  assert.equal(chosenSession(notStarted(list, Date.parse('2026-11-02T18:00:00Z')), 'c19'), 'c19', 'still to come: kept');
+  assert.equal(chosenSession(notStarted(list, Date.parse('2026-11-02T19:05:00Z')), 'c19'), '', 'started while the form was open: dropped');
+  assert.equal(chosenSession(list, ''), '');
+  assert.equal(chosenSession(list, 'not_today'), '', 'hostile: a ?session= for another class is not chosen');
+});
+
 // ── FIN-01: the desk expense keeps the chosen paid-on date; the server's rule (not after today) is the only limit ──────
 const deskDraft = (paid_on) => ({ kind: 'variable', category: 'supplies', concept: 'Jabón ficticio', amount: 20000, incurred_on: paid_on, paid_on, method: 'cash', vendor: null, note: null });
 await test('FIN-01 a front desk expense paid on an earlier day is sent with that day', async () => {
@@ -246,6 +288,36 @@ await test('FIN-01 the desk expense copy names the paid-on date (no "paid today"
   const s = need('staffStrings').strings;
   assert.ok(s['staff.expense.paidOn']?.es && s['staff.expense.paidOn']?.en);
   for (const k of ['staff.expense.body', 'staff.expense.hint']) { assert.doesNotMatch(s[k].es, /\bhoy\b/i, k); assert.doesNotMatch(s[k].en, /\btoday\b/i, k); }
+});
+
+await test('FIN-01 review build (MockProvider): a future paid-on date is refused (invalid_date), as before', async () => {
+  const r = m.review; if (r.__error) throw new Error(`does not build (review): ${r.__error}`);
+  values.clear();
+  const day = shiftDay(r.dateKey(new Date()), 1);
+  await assert.rejects(r.runExpenseCommand(new r.MockProvider(), { type: 'create', requestId: 'req-mock-f', id: 'exp_mock_f', actorId: 'usr_desk', role: 'front_desk', draft: deskDraft(day) }), /invalid_date/);
+});
+await test('FIN-01 review build (MockProvider): today and an earlier paid-on date are recorded', async () => {
+  const r = m.review; if (r.__error) throw new Error(`does not build (review): ${r.__error}`);
+  for (const [i, day] of [r.dateKey(new Date()), shiftDay(r.dateKey(new Date()), -2)].entries()) {
+    values.clear();
+    const d = new r.MockProvider();
+    const out = await r.runExpenseCommand(d, { type: 'create', requestId: `req-mock-${i}`, id: `exp_mock_${i}`, actorId: 'usr_desk', role: 'front_desk', draft: deskDraft(day) });
+    assert.equal(out.created, 1); assert.equal(d.peek('expenses').find((e) => e.id === `exp_mock_${i}`)?.paid_on, day);
+  }
+});
+await test('FIN-01 evening in Bogotá: the studio day, not the UTC one, is today (the default paid-on date)', () => {
+  const r = m.review; if (r.__error) throw new Error(`does not build (review): ${r.__error}`);
+  assert.equal(r.dateKey(new Date('2026-11-03T01:30:00Z')), '2026-11-02');
+  assert.equal(r.dateKey(new Date('2026-11-03T04:59:00Z')), '2026-11-02');
+  assert.equal(r.dateKey(new Date('2026-11-03T05:00:00Z')), '2026-11-03');
+});
+await test('test fakes: an unknown filter operator is refused (400), never "every row"; `in` takes one value and compares as strings', () => {
+  const r = rec('x', { n: 5, s: 'a', e: '' });
+  assert.throws(() => cosFilter(r, { field: 's', op: 'like', value: 'a' }), /unknown filter operator/);
+  assert.equal(cosFilter(r, { field: 'n', op: 'in', value: ['5'] }), true);
+  assert.equal(cosFilter(r, { field: 's', op: 'in', value: 'a' }), true);
+  assert.equal(cosFilter(r, { field: 'e', op: 'in', value: [''] }), false);
+  assert.equal(cosFilter(r, { field: 'missing', op: 'in', value: ['undefined'] }), false);
 });
 
 // ── PRO-02: product master refusal codes ─────────────────────────────────────────────────────────────────────────

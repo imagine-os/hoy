@@ -409,8 +409,9 @@ const png = () => new File([new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 
   // Lane F: signed out, the site reads the products live through the Hoy server's read identity (role public_site);
   // the recipe's product policy for that role decides what a visitor sees. Played here on the recipe's own rows.
   const policy = recipe?.policies?.public_site?.find((p) => p.entity === 'product' && p.actions.includes('read'));
+  // Company OS `in`: one value counts as a one-item list, values compare as strings, an empty or missing field never matches.
   const holds = (data, f) => f.and ? f.and.every((x) => holds(data, x)) : f.or ? f.or.some((x) => holds(data, x))
-    : f.op === 'eq' ? (data[f.field] ?? (f.field === 'active' ? true : null)) === f.value : f.op === 'neq' ? data[f.field] !== f.value : f.op === 'in' ? Array.isArray(f.value) && f.value.includes(data[f.field]) : (() => { throw new Error(`op ${f.op}`); })();
+    : f.op === 'eq' ? (data[f.field] ?? (f.field === 'active' ? true : null)) === f.value : f.op === 'neq' ? data[f.field] !== f.value : f.op === 'in' ? (data[f.field] != null && data[f.field] !== '' && (Array.isArray(f.value) ? f.value : [f.value]).map(String).includes(String(data[f.field]))) : (() => { throw new Error(`op ${f.op}`); })();
   const publicRows = products.filter((p) => policy && holds(p, policy.rowFilter)).map((p, i) => ({ id: `p${i}`, data: Object.fromEntries(Object.entries(p).filter(([k]) => policy.fields.includes(k))) }));
   const provider = new M.CompanyOSProvider({
     config: { tenant: 'hoy', apiBase: '/api/cos' }, getToken: async () => null,

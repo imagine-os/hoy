@@ -17,6 +17,7 @@ import { readFile, stat } from 'node:fs/promises';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { extname, join, resolve, sep } from 'node:path';
 import { launchBrowser, reporter } from './lib/launch-qa.mjs';
+import { cosFilter } from './lib/cos-filter.mjs';
 
 const { check, done } = reporter('Jas 1 Nov, lane A (UI)');
 const isProd = (dir) => existsSync(join(dir, 'index.html')) && readdirSync(join(dir, 'assets')).filter((f) => f.endsWith('.js')).some((f) => readFileSync(join(dir, 'assets', f), 'utf8').includes('clerk-js'));
@@ -45,19 +46,31 @@ const ACCOUNTS = Object.fromEntries(Object.keys(PEOPLE).map((u) => [u, { emails:
 /** A record as `/query` returns it. */
 const rec = (id, data) => ({ id, data, orgUnitId: null, createdAt: '2026-10-20T15:00:00.000Z', updatedAt: '2026-10-20T15:00:00.000Z' });
 let world;
-function reset({ hostileOccurrence = false, refuseSettings = false } = {}) {
+// The evening case: 2 Nov, 20:30 in Bogotá, already 3 Nov in UTC.
+const EVENING = '2026-11-03T01:30:00Z';
+function reset({ hostileOccurrence = false, refuseSettings = false, deskSale = false } = {}) {
   const m = (rows) => new Map(rows.map((r) => [r.id, r]));
   world = {
-    person: m([rec('per_admin', { name: 'Mateo Admin', user: 'user_admin' }), rec('per_desk', { name: 'Rosa Recepción', user: 'user_desk' }), rec('per_ana', { name: 'Ana Fictional', email: 'ana@example.test' })]),
+    person: m([rec('per_admin', { name: 'Mateo Admin', user: 'user_admin' }), rec('per_desk', { name: 'Rosa Recepción', user: 'user_desk' }), rec('per_ana', { name: 'Ana Fictional', email: 'ana@example.test' }),
+      ...(deskSale ? [rec('per_lucia', { name: 'Lucía Prueba', email: 'lucia@example.test', phone: '+57 300 000 0042' })] : [])]),
     resource: m([rec('res_big', { name: 'Sala Grande', kind: 'room', capacity: 16 })]),
     coach: m([rec('co_ana', { person: 'per_ana', kind: 'teacher', active: true })]),
     schedule: m([rec('sch_pulso', { title: 'Pulso mañana', kind: 'class', weekday: 1, start_time: '07:00', duration_minutes: 50, resource: 'res_big', coach: 'co_ana', capacity: 16, spots_enabled: true, valid_from: '2026-10-01', valid_until: null, active: true })]),
     occurrence: m([
       rec('oc_open', { title: 'Pulso mañana', starts_at: '2026-11-03T12:00:00.000Z', ends_at: '2026-11-03T12:50:00.000Z', status: 'scheduled', booked_count: 3, capacity: 16, coach: 'co_ana', resource: 'res_big', schedule: 'sch_pulso' }),
       rec('oc_off', { title: 'Fuerza tarde', starts_at: '2026-11-04T23:00:00.000Z', ends_at: '2026-11-04T23:50:00.000Z', status: 'cancelled', booked_count: 0, capacity: 16, coach: 'co_ana', resource: 'res_big', schedule: 'sch_pulso', cancel_reason: 'Ficticio' }),
+      // Tonight (2 Nov in Bogotá): one class started at 19:00, one starts at 21:00.
+      ...(deskSale ? [
+        rec('oc_1900', { title: 'Noche temprana', starts_at: '2026-11-03T00:00:00.000Z', ends_at: '2026-11-03T00:50:00.000Z', status: 'scheduled', booked_count: 2, capacity: 16, coach: 'co_ana', resource: 'res_big', schedule: 'sch_pulso' }),
+        rec('oc_2100', { title: 'Noche tardía', starts_at: '2026-11-03T02:00:00.000Z', ends_at: '2026-11-03T02:50:00.000Z', status: 'scheduled', booked_count: 1, capacity: 16, coach: 'co_ana', resource: 'res_big', schedule: 'sch_pulso' }),
+      ] : []),
       ...(hostileOccurrence ? [rec('oc_bad', { title: 'Fila rota', starts_at: 'no-es-fecha', status: 'scheduled', booked_count: 0, capacity: 16, coach: 'co_ana', resource: 'res_big' })] : []),
     ]),
-    setting: new Map(), product: new Map(), expense: new Map(),
+    setting: new Map(), expense: new Map(),
+    product: m(deskSale ? [rec('prod_trial', { key: 'trial', name: 'Clase de prueba', kind: 'trial', price: 30000, credits: 1, active: true }), rec('prod_pack', { key: 'pack_8', name: 'Paquete 8 clases', kind: 'pack', price: 200000, credits: 8, active: true })] : []),
+    // Lucía already had her trial: a trial lot and its grant entry (credits).
+    credit_lot: m(deskSale ? [rec('lot_trial', { person: 'per_lucia', source: 'trial', product: 'prod_trial', quantity: 1 })] : []),
+    credit_entry: m(deskSale ? [rec('ce_trial', { lot: 'lot_trial', person: 'per_lucia', delta: 1, reason: 'grant' })] : []),
     refuseSettings, log: [], seq: 0,
   };
 }
@@ -65,18 +78,13 @@ const userOf = (req) => /^Bearer fake\.([^.]+)\.[^.]+$/.exec(req.headers.authori
 const json = (res, status, body) => { res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); res.end(body === undefined ? '' : JSON.stringify(body)); };
 const readBody = (req) => new Promise((r) => { let s = ''; req.on('data', (c) => { s += c; }); req.on('end', () => { try { r(JSON.parse(s || '{}')); } catch { r({}); } }); });
 const put = (entity, data) => { const id = `${entity}_${++world.seq}`; world[entity].set(id, rec(id, { ...data })); return world[entity].get(id); };
-const matches = (r, f) => {
-  if (!f) return true;
-  if (f.and) return f.and.every((x) => matches(r, x));
-  if (f.or) return f.or.some((x) => matches(r, x));
-  const v = f.field === 'id' ? r.id : r.data[f.field];
-  return f.op === 'eq' ? v === f.value : f.op === 'in' ? f.value.includes(v) : true;
-};
+// Company OS filters, strictly: an unknown operator is a 400, never "every row" (scripts/lib/cos-filter.mjs).
+const matches = (r, f, user) => cosFilter(r, f, user);
 /** `include` replaces `data[field]` with the embedded `{ id, …fields }` (integration guide, "include"). */
 const withInclude = (r, include) => {
   const out = structuredClone(r);
   for (const inc of include ?? []) {
-    const target = { person: 'person' }[inc.field], t = target && world[target].get(out.data[inc.field]);
+    const target = { person: 'person', lot: 'credit_lot', schedule: 'schedule', coach: 'coach' }[inc.field], t = target && world[target].get(out.data[inc.field]);
     if (t) out.data[inc.as ?? inc.field] = { id: t.id, ...Object.fromEntries(Object.entries(t.data).filter(([k]) => !inc.fields || inc.fields.includes(k))) };
   }
   return out;
@@ -94,7 +102,9 @@ const server = createServer(async (req, res) => {
     if (route === '/me') return p ? json(res, 200, { tenant: { slug: TENANT, timezone: 'America/Bogota' }, user: { id: user, name: p.name, email: `${user.slice(5)}@example.test` }, roleKeys: p.keys, isSuperAdmin: !!p.superAdmin, caps: [], entities: [] }) : json(res, 403, { error: 'forbidden' });
     if (route === '/query') {
       if (body.aggregate || !world[body.entity]) return json(res, 200, { data: [] });
-      const rows = [...world[body.entity].values()].filter((r) => matches(r, body.filter)).map((r) => withInclude(r, body.include));
+      let rows;
+      try { rows = [...world[body.entity].values()].filter((r) => matches(r, body.filter, user)).map((r) => withInclude(r, body.include)); }
+      catch (e) { world.log.push({ user, refused: e.message, body }); return json(res, e.status ?? 400, { error: e.code ?? 'invalid_query', message: e.message }); }
       return json(res, 200, { data: rows.slice(body.offset ?? 0, (body.offset ?? 0) + (body.limit ?? 100)) });
     }
     if (route === '/batch') {
@@ -139,7 +149,7 @@ const browser = await launchBrowser();
 const errors = [];
 let scenario = 'start';
 const route = (page) => decodeURIComponent(new URL(page.url()).hash.slice(1));
-async function signedIn(email, { trackErrors = true } = {}) {
+async function signedIn(email, { trackErrors = true, at = `${TODAY}T15:00:00Z` } = {}) {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, reducedMotion: 'reduce' });
   await ctx.route(/^https?:\/\/(?!127\.0\.0\.1)/, (r) => r.abort());
   await ctx.route(`https://${HOST}/npm/@clerk/clerk-js@*/dist/clerk.browser.js`, (r) => r.fulfill({ status: 200, contentType: 'text/javascript', body: FAKE_CLERK }));
@@ -148,7 +158,7 @@ async function signedIn(email, { trackErrors = true } = {}) {
     if (!sessionStorage.getItem('qa-init')) { sessionStorage.setItem('qa-init', '1'); localStorage.setItem('hoyos.lang', 'es'); }
   }, { accounts: ACCOUNTS, pk: PK });
   const page = await ctx.newPage();
-  await page.clock.install({ time: new Date(`${TODAY}T15:00:00Z`) });
+  await page.clock.install({ time: new Date(at) });
   if (trackErrors) page.on('pageerror', (e) => errors.push(`[${scenario}] ${String(e.stack ?? e.message).split('\n').slice(0, 6).join(' ⏎ ')}`));
   await page.goto(`${BASE}/#/auth/sign-in`);
   await page.waitForTimeout(800);
@@ -213,6 +223,53 @@ try {
   await other.click({ timeout: 3000 }).catch(() => {});
   await page.waitForTimeout(1200);
   check('the menu still works: another page opens from the sidebar and the card is gone', !!href && route(page) === href.replace(/^#/, '') && route(page) !== '/admin/class-schedule' && (await page.locator('[data-route-error]').count()) === 0, `${href} → ${route(page)}`);
+  // Home from the card opens the role's home (Administration: /admin).
+  await go(page, '/admin/class-schedule');
+  await tab(page, 'Próximas fechas');
+  await page.waitForTimeout(600);
+  await page.locator('[data-route-error]').getByText('Ir al inicio').click({ timeout: 3000 }).catch(() => {});
+  await page.waitForTimeout(1200);
+  check('Home on the card opens the role\'s home and the card is gone', route(page) === '/admin' && (await page.locator('[data-route-error]').count()) === 0, route(page));
+  await ctx.close();
+
+  // ── Error boundary: a page whose code fails to download; Retry reloads the page ──────────────────────────────
+  scenario = 'chunk retry'; reset();
+  ({ ctx, page } = await signedIn('admin@example.test', { trackErrors: false }));
+  await go(page, '/admin');
+  const loaded = new Set(await page.evaluate(() => performance.getEntriesByType('resource').map((e) => e.name)));
+  const blockNew = (r) => (loaded.has(r.request().url()) ? r.continue() : r.abort());
+  await page.route(/\/assets\/.*\.(js|css)$/, blockNew);
+  await go(page, '/admin/class-schedule');
+  check('a page whose code fails to download shows the error card', (await page.locator('[data-route-error]').count()) === 1, (await text(page)).slice(0, 300));
+  await page.unroute(/\/assets\/.*\.(js|css)$/, blockNew);
+  const reloaded = page.waitForEvent('load', { timeout: 8000 }).then(() => true, () => false);
+  await page.locator('[data-route-error]').getByRole('button', { name: 'Reintentar' }).click({ timeout: 3000 }).catch(() => {});
+  check('Retry after a failed download reloads the page', await reloaded);
+  await page.waitForTimeout(1500);
+  check('…and the page then opens (the class shows, no card)', /Pulso mañana/.test(await text(page)) && (await page.locator('[data-route-error]').count()) === 0, (await text(page)).slice(0, 300));
+  await ctx.close();
+
+  // ── PRO-04 desk + REC-06, in the evening (2 Nov 20:30 in Bogotá, 3 Nov in UTC) ─────────────────────────────────
+  scenario = 'desk sale (evening)'; reset({ deskSale: true });
+  ({ ctx, page } = await signedIn('desk@example.test', { at: EVENING }));
+  at = await go(page, '/staff/register');
+  check('front desk opens the desk sale', at === '/staff/register', at);
+  const what = page.getByLabel('Qué compra', { exact: true });
+  await what.selectOption('prod_trial').catch(() => {});
+  await page.getByRole('button', { name: 'Ya es cliente', exact: true }).click({ timeout: 3000 }).catch(() => {});
+  await page.getByPlaceholder('Buscar por nombre, WhatsApp o email…').fill('Lucía').catch(() => {});
+  await page.locator('.register-candidate').first().click({ timeout: 3000 }).catch(() => {});
+  await page.waitForTimeout(1500);
+  const trialOption = what.locator('option[value="prod_trial"]');
+  check('a customer who used the trial: the trial is greyed out, with the reason', (await trialOption.isDisabled().catch(() => false)) && /ya usó su clase de prueba/.test(await trialOption.innerText().catch(() => '')), await trialOption.innerText().catch(() => 'missing'));
+  check('…a pack stays on sale', !(await what.locator('option[value="prod_pack"]').isDisabled().catch(() => true)));
+  check('…and the trial chosen before her shows the note to choose another product', /ya usó su clase de prueba \(o tiene una pendiente de pago\)/.test(await page.locator('[role=note]').allInnerTexts().then((x) => x.join(' ')).catch(() => '')));
+  const classes = await page.getByLabel('Check-in a la clase', { exact: true }).locator('option').allInnerTexts().catch(() => []);
+  check('Sell and check in (evening): the 21:00 class is offered, the 19:00 one that started is not', classes.some((o) => /Noche tardía/.test(o)) && !classes.some((o) => /Noche temprana/.test(o)), classes.join(' | '));
+  at = await go(page, '/staff/expense');
+  const eveningPaidOn = await page.locator('[data-desk-expense-form]').getByLabel('Pagado el', { exact: false }).inputValue().catch(() => 'missing');
+  check('Record expense (evening): the paid-on date defaults to the studio day, not the UTC one', eveningPaidOn === TODAY, eveningPaidOn);
+  check('no fake query was refused for an unknown filter operator', !world.log.some((l) => l.refused), JSON.stringify(world.log.filter((l) => l.refused)).slice(0, 400));
   await ctx.close();
 
   // ── ADM-04: payment settings by a super admin with no person record ───────────────────────────────────────────
