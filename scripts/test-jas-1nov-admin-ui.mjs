@@ -64,7 +64,9 @@ function reset({ hostileOccurrence = false, refuseSettings = false, deskSale = f
         rec('oc_1900', { title: 'Noche temprana', starts_at: '2026-11-03T00:00:00.000Z', ends_at: '2026-11-03T00:50:00.000Z', status: 'scheduled', booked_count: 2, capacity: 16, coach: 'co_ana', resource: 'res_big', schedule: 'sch_pulso' }),
         rec('oc_2100', { title: 'Noche tardía', starts_at: '2026-11-03T02:00:00.000Z', ends_at: '2026-11-03T02:50:00.000Z', status: 'scheduled', booked_count: 1, capacity: 16, coach: 'co_ana', resource: 'res_big', schedule: 'sch_pulso' }),
       ] : []),
-      ...(hostileOccurrence ? [rec('oc_bad', { title: 'Fila rota', starts_at: 'no-es-fecha', status: 'scheduled', booked_count: 0, capacity: 16, coach: 'co_ana', resource: 'res_big' })] : []),
+      // A malformed start that still falls inside the page's 14-day window (the fake compares it as Company OS would, as
+      // text), so the row reaches Upcoming dates and its date formatting throws (Invalid Date → RangeError).
+      ...(hostileOccurrence ? [rec('oc_bad', { title: 'Fila rota', starts_at: '2026-11-05T99:99:00Z', status: 'scheduled', booked_count: 0, capacity: 16, coach: 'co_ana', resource: 'res_big' })] : []),
     ]),
     setting: new Map(), expense: new Map(),
     product: m(deskSale ? [rec('prod_trial', { key: 'trial', name: 'Clase de prueba', kind: 'trial', price: 30000, credits: 1, active: true }), rec('prod_pack', { key: 'pack_8', name: 'Paquete 8 clases', kind: 'pack', price: 200000, credits: 8, active: true })] : []),
@@ -103,7 +105,7 @@ const server = createServer(async (req, res) => {
     if (route === '/query') {
       if (body.aggregate || !world[body.entity]) return json(res, 200, { data: [] });
       let rows;
-      try { rows = [...world[body.entity].values()].filter((r) => matches(r, body.filter, user)).map((r) => withInclude(r, body.include)); }
+      try { rows = [...world[body.entity].values()].filter((r) => matches(r, body.filter, user)).map((r) => withInclude(r, body.include)); world.log.push({ user, answered: body.entity, n: rows.length }); }
       catch (e) { world.log.push({ user, refused: e.message, body }); return json(res, e.status ?? 400, { error: e.code ?? 'invalid_query', message: e.message }); }
       return json(res, 200, { data: rows.slice(body.offset ?? 0, (body.offset ?? 0) + (body.limit ?? 100)) });
     }
@@ -254,17 +256,21 @@ try {
   ({ ctx, page } = await signedIn('desk@example.test', { at: EVENING }));
   at = await go(page, '/staff/register');
   check('front desk opens the desk sale', at === '/staff/register', at);
-  const what = page.getByLabel('Qué compra', { exact: true });
+  // The products and tonight's classes come from three reads each: wait for them before choosing anything.
+  const what = page.locator('select[aria-label="Qué compra"]');
+  const ready = await what.locator('option[value="prod_trial"]').waitFor({ state: 'attached', timeout: 8000 }).then(() => true, () => false);
+  const answered = (entity) => world.log.filter((l) => l.answered === entity).map((l) => l.n).join(',') || 'not asked';
+  check('the desk sale lists the products (fake answered)', ready, `products: ${answered('product')} · occurrences: ${answered('occurrence')} · card: ${await page.locator('[data-route-error]').count()} · ${(await text(page)).slice(0, 500)}`);
   await what.selectOption('prod_trial').catch(() => {});
   await page.getByRole('button', { name: 'Ya es cliente', exact: true }).click({ timeout: 3000 }).catch(() => {});
   await page.getByPlaceholder('Buscar por nombre, WhatsApp o email…').fill('Lucía').catch(() => {});
   await page.locator('.register-candidate').first().click({ timeout: 3000 }).catch(() => {});
   await page.waitForTimeout(1500);
   const trialOption = what.locator('option[value="prod_trial"]');
-  check('a customer who used the trial: the trial is greyed out, with the reason', (await trialOption.isDisabled().catch(() => false)) && /ya usó su clase de prueba/.test(await trialOption.innerText().catch(() => '')), await trialOption.innerText().catch(() => 'missing'));
+  check('a customer who used the trial: the trial is greyed out, with the reason', (await trialOption.isDisabled().catch(() => false)) && /ya usó su clase de prueba/.test(await trialOption.textContent().catch(() => '') ?? ''), await trialOption.textContent().catch(() => 'missing'));
   check('…a pack stays on sale', !(await what.locator('option[value="prod_pack"]').isDisabled().catch(() => true)));
   check('…and the trial chosen before her shows the note to choose another product', /ya usó su clase de prueba \(o tiene una pendiente de pago\)/.test(await page.locator('[role=note]').allInnerTexts().then((x) => x.join(' ')).catch(() => '')));
-  const classes = await page.getByLabel('Check-in a la clase', { exact: true }).locator('option').allInnerTexts().catch(() => []);
+  const classes = await page.getByLabel('Check-in a la clase', { exact: true }).locator('option').allTextContents().catch(() => []);
   check('Sell and check in (evening): the 21:00 class is offered, the 19:00 one that started is not', classes.some((o) => /Noche tardía/.test(o)) && !classes.some((o) => /Noche temprana/.test(o)), classes.join(' | '));
   at = await go(page, '/staff/expense');
   const eveningPaidOn = await page.locator('[data-desk-expense-form]').getByLabel('Pagado el', { exact: false }).inputValue().catch(() => 'missing');
