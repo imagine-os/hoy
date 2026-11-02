@@ -108,6 +108,8 @@ export const KNOWN_CODES = [
   'file_too_large', 'file_type_not_allowed', 'file_upload_expired', 'file_upload_missing', 'file_upload_mismatch', 'file_owner_not_found', 'file_not_pending', 'storage_unavailable',
   'idempotency_conflict', 'idempotency_key_invalid', 'forbidden', 'write_forbidden', 'invalid_settings', 'module_not_installed',
   'stale', 'dates_unsupported', 'unauthorized', 'disconnected', 'view_as_read_only',
+  // PRO-02 (Jas 1 Nov): the product master's period refusals (payments 2.8.0, product_dates_enforced).
+  'product_period_overlap', 'invalid_date',
 ] as const;
 /**
  * `ifMatch mismatch` (409): someone changed the row since this screen read it, e.g. two desks reviewing one payment.

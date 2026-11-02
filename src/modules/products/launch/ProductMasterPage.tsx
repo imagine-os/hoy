@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { addDaysKey, dateKey, formatCOP } from '../../../i18n/format';
 import { useSession } from '../../../auth/SessionProvider';
@@ -35,6 +35,10 @@ export function ProductMasterPage() {
   const [saved, setSaved] = useState<string | null>(null);
   const action = useAction();
   const today = dateKey();
+  // PRO-02: the editor and its feedback sit together above the list; opening the editor brings it into view.
+  const editorRef = useRef<HTMLElement>(null);
+  const open = editing !== null;
+  useEffect(() => { if (open) editorRef.current?.scrollIntoView?.({ block: 'start', behavior: 'smooth' }); }, [open]);
 
   if (state.status === 'loading') return <EmptyState tone="loading" title={t('payLaunch.loading')} />;
   if (state.status === 'error') return <EmptyState tone="error" title={t(refusalKey(state.code), { code: state.code })} action={<Button onClick={reload}>{t('payLaunch.retry')}</Button>} />;
@@ -69,9 +73,40 @@ export function ProductMasterPage() {
   return <div className="stack products-page">
     <div className="page-head"><h1>{t('products.title')}</h1>{canEdit && <Button onClick={() => { setProblem(null); setEditing({ mode: 'create', draft: blank() }); }}>{t('products.launch.add')}</Button>}</div>
     {!canEdit && <Notice>{t('products.launch.readOnly')}</Notice>}
-    {saved && <p role="status">{t(saved)}</p>}
     {canEdit && !dates && <Notice tone="warn">{t('payLaunch.code.dates_unsupported')}</Notice>}
-    {problem && !editing && <p role="alert">{t(`products.launch.error.${problem}`)}</p>}
+    <section className="stack" data-product-editor ref={editorRef} aria-live="polite">
+      {saved && !editing && <p role="status">{t(saved)}</p>}
+      {problem && !editing && <p role="alert">{t(`products.launch.error.${problem}`)}</p>}
+      {editing && <Card title={t(editing.mode === 'create' ? 'products.launch.add' : editing.mode === 'price' ? 'products.launch.newPrice' : 'products.launch.edit')}>
+        <form className="stack" onSubmit={(e) => { e.preventDefault(); void save(); }} noValidate><fieldset className="stack" disabled={action.busy}>
+          {editing.mode === 'price' ? <>
+            <p className="small">{t('products.launch.newPriceNote')}</p>
+            <div className="grid grid-2">
+              <Field label={t('products.amount')} required>{(id) => <Input id={id} name="price" type="number" min={0} step={1} value={editing.price} onChange={(e) => { setEditing({ ...editing, price: e.target.value }); action.renew(); }} />}</Field>
+              <Field label={t('products.starts')} required>{(id) => <Input id={id} name="from" type="date" value={editing.from} onChange={(e) => { setEditing({ ...editing, from: e.target.value }); action.renew(); }} />}</Field>
+            </div>
+          </> : <>
+            <div className="grid grid-2">
+              <Field label={t('products.code')} required>{(id) => <Input id={id} name="key" maxLength={40} value={editing.draft.key} disabled={editing.mode === 'edit'} onChange={(e) => draftField({ key: e.target.value.toLowerCase() })} />}</Field>
+              <Field label={t('products.launch.name')} required>{(id) => <Input id={id} name="name" maxLength={100} value={editing.draft.name} onChange={(e) => draftField({ name: e.target.value })} />}</Field>
+              <Field label={t('products.type')} required>{(id) => <Select id={id} name="kind" value={editing.draft.kind} disabled={editing.mode === 'edit'} onChange={(e) => draftField({ kind: e.target.value as ProductData['kind'] })}>{PRODUCT_KINDS.map((k) => <option key={k} value={k}>{t(`products.launch.kind.${k}`)}</option>)}</Select>}</Field>
+              <Field label={t('products.amount')} required>{(id) => <Input id={id} name="price" type="number" min={0} step={1} value={editing.draft.price} disabled={editing.mode === 'edit'} onChange={(e) => draftField({ price: Number(e.target.value) })} />}</Field>
+              <Field label={t('products.classes')}>{(id) => <Input id={id} name="credits" type="number" min={0} step={1} value={editing.draft.credits ?? ''} onChange={(e) => draftField({ credits: e.target.value === '' ? null : Number(e.target.value) })} />}</Field>
+              <Field label={t('products.validity')}>{(id) => <Input id={id} name="validity" type="number" min={0} step={1} value={editing.draft.validity_days ?? ''} onChange={(e) => draftField({ validity_days: e.target.value === '' ? null : Number(e.target.value) })} />}</Field>
+              {dates && <Field label={t('products.starts')}>{(id) => <Input id={id} name="valid_from" type="date" value={editing.draft.valid_from ?? ''} onChange={(e) => draftField({ valid_from: e.target.value || null })} />}</Field>}
+              {dates && <Field label={t('products.ends')}>{(id) => <Input id={id} name="valid_until" type="date" value={editing.draft.valid_until ?? ''} onChange={(e) => draftField({ valid_until: e.target.value || null })} />}</Field>}
+            </div>
+            <Toggle label={t('products.launch.affiliateOnly')} checked={isAffiliateOnly({ data: editing.draft })} onChange={(on) => draftField({ audience: on ? 'affiliate' : null })} />
+            <Toggle label={t('products.launch.freezable')} checked={!!editing.draft.freezable} onChange={(on) => draftField({ freezable: on })} />
+            <Toggle label={t('products.launch.active')} checked={editing.draft.active !== false} onChange={(on) => draftField({ active: on })} />
+            {editing.mode === 'edit' && <p className="small muted">{t('products.launch.priceLocked')}</p>}
+          </>}
+          {problem && <p role="alert">{t(`products.launch.error.${problem}`)}</p>}
+          {action.error && <p role="alert">{t(refusalKey(action.error), { code: action.error })}</p>}
+          <div className="row wrap"><Button type="submit" loading={action.busy}>{t('products.launch.save')}</Button><Button type="button" variant="ghost" onClick={() => { setEditing(null); setProblem(null); }}>{t('products.cancel')}</Button></div>
+        </fieldset></form>
+      </Card>}
+    </section>
     {groups.length === 0 ? <EmptyState title={t('products.empty')} /> : <div className="grid grid-2" data-testid="product-list">
       {groups.map((g) => { const current = g.rows.find((r) => live.has(r.id)) ?? null, head = current ?? g.rows[0]; return <Card key={g.key} title={head.data.name} data-testid={`product-${g.key}`}>
         <div className="stack-sm">
@@ -87,34 +122,5 @@ export function ProductMasterPage() {
         </div>
       </Card>; })}
     </div>}
-    {editing && <Card title={t(editing.mode === 'create' ? 'products.launch.add' : editing.mode === 'price' ? 'products.launch.newPrice' : 'products.launch.edit')}>
-      <form className="stack" onSubmit={(e) => { e.preventDefault(); void save(); }} noValidate><fieldset className="stack" disabled={action.busy}>
-        {editing.mode === 'price' ? <>
-          <p className="small">{t('products.launch.newPriceNote')}</p>
-          <div className="grid grid-2">
-            <Field label={t('products.amount')} required>{(id) => <Input id={id} name="price" type="number" min={0} step={1} value={editing.price} onChange={(e) => { setEditing({ ...editing, price: e.target.value }); action.renew(); }} />}</Field>
-            <Field label={t('products.starts')} required>{(id) => <Input id={id} name="from" type="date" value={editing.from} onChange={(e) => { setEditing({ ...editing, from: e.target.value }); action.renew(); }} />}</Field>
-          </div>
-        </> : <>
-          <div className="grid grid-2">
-            <Field label={t('products.code')} required>{(id) => <Input id={id} name="key" maxLength={40} value={editing.draft.key} disabled={editing.mode === 'edit'} onChange={(e) => draftField({ key: e.target.value.toLowerCase() })} />}</Field>
-            <Field label={t('products.launch.name')} required>{(id) => <Input id={id} name="name" maxLength={100} value={editing.draft.name} onChange={(e) => draftField({ name: e.target.value })} />}</Field>
-            <Field label={t('products.type')} required>{(id) => <Select id={id} name="kind" value={editing.draft.kind} disabled={editing.mode === 'edit'} onChange={(e) => draftField({ kind: e.target.value as ProductData['kind'] })}>{PRODUCT_KINDS.map((k) => <option key={k} value={k}>{t(`products.launch.kind.${k}`)}</option>)}</Select>}</Field>
-            <Field label={t('products.amount')} required>{(id) => <Input id={id} name="price" type="number" min={0} step={1} value={editing.draft.price} disabled={editing.mode === 'edit'} onChange={(e) => draftField({ price: Number(e.target.value) })} />}</Field>
-            <Field label={t('products.classes')}>{(id) => <Input id={id} name="credits" type="number" min={0} step={1} value={editing.draft.credits ?? ''} onChange={(e) => draftField({ credits: e.target.value === '' ? null : Number(e.target.value) })} />}</Field>
-            <Field label={t('products.validity')}>{(id) => <Input id={id} name="validity" type="number" min={0} step={1} value={editing.draft.validity_days ?? ''} onChange={(e) => draftField({ validity_days: e.target.value === '' ? null : Number(e.target.value) })} />}</Field>
-            {dates && <Field label={t('products.starts')}>{(id) => <Input id={id} name="valid_from" type="date" value={editing.draft.valid_from ?? ''} onChange={(e) => draftField({ valid_from: e.target.value || null })} />}</Field>}
-            {dates && <Field label={t('products.ends')}>{(id) => <Input id={id} name="valid_until" type="date" value={editing.draft.valid_until ?? ''} onChange={(e) => draftField({ valid_until: e.target.value || null })} />}</Field>}
-          </div>
-          <Toggle label={t('products.launch.affiliateOnly')} checked={isAffiliateOnly({ data: editing.draft })} onChange={(on) => draftField({ audience: on ? 'affiliate' : null })} />
-          <Toggle label={t('products.launch.freezable')} checked={!!editing.draft.freezable} onChange={(on) => draftField({ freezable: on })} />
-          <Toggle label={t('products.launch.active')} checked={editing.draft.active !== false} onChange={(on) => draftField({ active: on })} />
-          {editing.mode === 'edit' && <p className="small muted">{t('products.launch.priceLocked')}</p>}
-        </>}
-        {problem && <p role="alert">{t(`products.launch.error.${problem}`)}</p>}
-        {action.error && <p role="alert">{t(refusalKey(action.error), { code: action.error })}</p>}
-        <div className="row wrap"><Button type="submit" loading={action.busy}>{t('products.launch.save')}</Button><Button type="button" variant="ghost" onClick={() => { setEditing(null); setProblem(null); }}>{t('products.cancel')}</Button></div>
-      </fieldset></form>
-    </Card>}
   </div>;
 }

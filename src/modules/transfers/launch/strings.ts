@@ -38,6 +38,8 @@ export const payLaunchStrings: StringTable = {
   'payLaunch.code.stale': { es: 'Alguien cambió esto mientras lo revisabas. Actualiza y vuelve a revisarlo.', en: 'Someone changed this while you were reviewing it. Refresh and review it again.' },
   'payLaunch.code.dates_unsupported': { es: 'El servidor aún no guarda fechas de precio. Para cambiar un precio, desactiva el producto y crea uno nuevo; avisa al equipo.', en: 'The server does not keep price dates yet. To change a price, deactivate the product and create a new one; tell the team.' },
   'payLaunch.code.unauthorized': { es: 'Tu sesión terminó. Vuelve a entrar.', en: 'Your session ended. Sign in again.' },
+  'payLaunch.code.product_period_overlap': { es: 'Otro precio activo de este producto cubre parte de esas fechas, o la fecha final es anterior a la inicial. Cambia las fechas o termina el precio anterior.', en: 'Another active price of this product covers part of those dates, or the end date is before the start date. Change the dates or end the earlier price.' },
+  'payLaunch.code.invalid_date': { es: 'Revisa la fecha: escríbela como día, mes y año válidos.', en: 'Check the date: enter a valid day, month and year.' },
   'payLaunch.code.disconnected': { es: 'Esta pantalla necesita la conexión con Company OS (versión de producción).', en: 'This screen needs the Company OS connection (production build).' },
 
   'payLaunch.retry': { es: 'Reintentar', en: 'Retry' },
