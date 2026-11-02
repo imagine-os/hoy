@@ -51,10 +51,23 @@ export function holdView(booking: ServerBookingRow, classStartsAt: string, polic
   return { phase: 'running', until: iso, clockStartsAt: null, minutes, method };
 }
 
-/** RS-08 — payment status read from the booking itself: held = pending, a released hold = released, otherwise confirmed. */
+/**
+ * PAG-03 (Jas 1 Nov): a hold whose time ran out but which Company OS hasn't released yet (it releases lazily or every
+ * 5 minutes): not frozen, `hold_until` passed. The page shows it released and re-reads until the server says so.
+ */
+export const awaitingRelease = (b: Pick<ServerBookingRow, 'status' | 'hold_until' | 'hold_frozen_at'>, now = Date.now()) =>
+  b.status === 'held' && !b.hold_frozen_at && !(Date.parse(b.hold_until ?? '') > now);
+/** PAG-03: how often, and how many times, the booking page re-reads an expired hold (6 minutes in all). */
+export const RELEASE_RECHECK_MS = 10_000;
+export const RELEASE_RECHECK_TRIES = 36;
+
+/**
+ * RS-08 — payment status read from the booking itself: a live hold = pending, a released hold = released (PAG-03: also
+ * one whose time ran out before the server released it, never "pending"), otherwise confirmed.
+ */
 export type ServerPaymentStatus = 'pending' | 'confirmed' | 'released' | 'unknown';
-export function serverPaymentStatus(booking: ServerBookingRow): ServerPaymentStatus {
-  if (booking.status === 'held') return 'pending';
+export function serverPaymentStatus(booking: ServerBookingRow, now = Date.now()): ServerPaymentStatus {
+  if (booking.status === 'held') return awaitingRelease(booking, now) ? 'released' : 'pending';
   if (booking.cancel_reason === 'hold_expired') return 'released';
   if (booking.status === 'booked' || booking.status === 'checked_in' || booking.status === 'no_show' || booking.status === 'late_cancel') return 'confirmed';
   return 'unknown';
