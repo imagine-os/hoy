@@ -36,7 +36,11 @@ const PRODUCTS = [
   { id: 'prd_pack12', data: { key: 'pack12', name: 'Paquete de 12 clases', kind: 'pack', price: 540000, credits: 12, validity_days: 90, active: true, freezable: true, audience: null, valid_from: '2026-01-01', valid_until: null }, createdAt: at, updatedAt: at },
   { id: 'prd_pack12_smtc', data: { key: 'pack12_smtc', name: 'Paquete de 12 clases · Santa María', kind: 'pack', price: 480000, credits: 12, validity_days: 90, active: true, freezable: true, audience: 'affiliate', valid_from: '2026-01-01', valid_until: null }, createdAt: at, updatedAt: at },
   { id: 'prd_trial', data: { key: 'trial', name: 'Clase de prueba', kind: 'trial', price: 30000, credits: 1, validity_days: 30, active: true, freezable: false, audience: null, valid_from: '2026-01-01', valid_until: null }, createdAt: at, updatedAt: at },
+  { id: 'prd_single', data: { key: 'single', name: 'Clase individual', kind: 'single', price: 45000, credits: 1, validity_days: 30, active: true, freezable: false, audience: null, valid_from: '2026-01-01', valid_until: null }, createdAt: at, updatedAt: at },
 ];
+const iso = (ms) => new Date(Date.now() + ms).toISOString();
+/** A class tomorrow (`/query` occurrence); `booked` is the server's count. */
+const occurrence = (booked) => ({ id: 'occ_9', data: { title: 'Pulso', starts_at: iso(26 * 3600_000), ends_at: iso(27 * 3600_000), capacity: 15, booked_count: booked, status: 'scheduled', resource: null, coach: null, schedule: null }, createdAt: at, updatedAt: at });
 const api = {};
 const userOf = (req) => /^Bearer fake\.([^.]+)\.[^.]+$/.exec(req.headers.authorization ?? '')?.[1] ?? null;
 const json = (res, status, body) => { res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(body)); };
@@ -52,13 +56,14 @@ const server = createServer(async (req, res) => {
     if (route === '/me') return m ? json(res, 200, { tenant: { slug: TENANT }, user: { id: user, name: m.name, email: m.email }, roleKeys: m.roleKeys, isSuperAdmin: false, caps: [], entities: [] }) : json(res, 403, { error: 'no access to this tenant' });
     if (route === '/signup' && req.method === 'GET') {
       const registered = !!(m?.roleKeys.includes('member') && m.registered);
-      return json(res, 200, { enabled: true, consents: CONSENTS, personFields: ['name', 'phone'], facetFields: [], registered });
+      return json(res, 200, { enabled: true, consents: CONSENTS, personFields: api.noNameField ? ['phone'] : ['name', 'phone'], facetFields: [], registered });
     }
     if (route === '/signup' && req.method === 'POST') {
       const body = await bodyOf(req);
       api.signups.push({ user, body });
       if (m?.roleKeys.includes('member') && m.registered) return json(res, 409, { error: 'already_registered' });
       if (api.emailLinked) return json(res, 409, { error: 'email_linked_to_other_login', message: 'a person with this email is linked to another login' });
+      if (api.duplicatePerson) return json(res, 422, { error: 'duplicate_person_user', message: 'person is linked to another user' });
       const missing = CONSENTS.filter((c) => !body?.consents?.some((x) => x.document === c.document && x.version === c.version));
       if (missing.length) return json(res, 422, { error: 'consent_required', details: { required: CONSENTS } });
       // Company OS (signup.ts:258): the person it creates needs a name. A login with no person name and none sent: 400.
@@ -74,8 +79,15 @@ const server = createServer(async (req, res) => {
       if (spec.entity === 'person') return json(res, 200, { data: m ? [{ id: `per_${user}`, data: { name: m.personName ?? null, email: m.email, user }, createdAt: at, updatedAt: at }] : [] });
       if (spec.entity === 'member') return json(res, 200, { data: m?.roleKeys.includes('member') ? [{ id: `mem_${user}`, data: { person: `per_${user}`, status: 'active', price_audience: m.audience ?? 'general', joined_at: '2026-10-01' }, createdAt: at, updatedAt: at }] : [] });
       if (spec.entity === 'product') return json(res, 200, { data: PRODUCTS });
+      if (spec.entity === 'occurrence') return json(res, 200, { data: [occurrence(api.released ? 4 : 5)] });
+      // PAG-03: Ana's single class held by transfer, whose time ran out a minute ago; `released` is the server's pass.
+      if (spec.entity === 'booking' && user === 'user_ana' && api.expiredHold) return json(res, 200, { data: [{ id: 'bk_exp', data: { person: `per_${user}`, occurrence: 'occ_9', entitlement: 'single', payment_method: 'transfer', ...(api.released ? { status: 'cancelled', cancel_reason: 'hold_expired', cancelled_at: iso(-30_000) } : { status: 'held', hold_until: iso(-60_000) }) }, createdAt: at, updatedAt: at }] });
+      // PRO-04: a pending trial payment.
+      if (spec.entity === 'payment' && m?.trialPending) return json(res, 200, { data: [{ id: 'pay_trial', data: { person: `per_${user}`, product: 'prd_trial', status: 'pending', amount: 30000, method: 'transfer', date: '2026-11-01', concept: 'Clase de prueba' }, createdAt: at, updatedAt: at }] });
       return json(res, 200, { data: [] });
     }
+    if (route === '/batch' && req.method === 'POST') { api.batches.push({ user, body: await bodyOf(req) }); return json(res, 200, { ids: ['pay_new'] }); }
+    if (route === '/api/booking/bk_pay' && req.method === 'GET') return json(res, 200, { data: { id: 'bk_pay', data: { person: `per_${user}`, occurrence: null, status: 'held', payment_method: 'transfer', hold_until: iso(20 * 60_000) }, createdAt: at, updatedAt: at } });
     return json(res, 404, { error: 'not_found' });
   }
   try {
@@ -101,6 +113,9 @@ const ACCOUNTS = {
   user_ana: acct('ana', 'ana@example.test'),
   user_quiet: acct('quiet', 'callada@example.test'),
   user_affil: acct('affil', 'afiliada@example.test'),
+  user_dupe: acct('dupe', 'duplicada@example.test'),
+  user_nofield: acct('nofield', 'sincampo@example.test'),
+  user_trialed: acct('trialed', 'probada@example.test'),
 };
 const MEMBERS = () => ({
   // Email-code staff logins with no name in Clerk or Company OS (Jas's 1 Nov "no profile" reports).
@@ -116,12 +131,17 @@ const MEMBERS = () => ({
   user_ana: { name: 'Ana Prueba', email: 'ana@example.test', roleKeys: ['member'], registered: true, personName: 'Anita Persona' },
   user_quiet: { name: null, email: 'callada@example.test', roleKeys: ['member'], registered: true, personName: null },
   user_affil: { name: 'Alba Afiliada', email: 'afiliada@example.test', roleKeys: ['member'], registered: true, personName: 'Alba Afiliada', audience: 'affiliate' },
+  // Review: a nameless customer whose sign-up Company OS refuses duplicate_person_user; one on a tenant taking no name.
+  user_dupe: { name: null, email: 'duplicada@example.test', roleKeys: ['member'], registered: false },
+  user_nofield: { name: null, email: 'sincampo@example.test', roleKeys: ['member'], registered: false, personName: 'Nora Sincampo' },
+  // PRO-04: a registered customer with a pending trial payment.
+  user_trialed: { name: 'Paula Probada', email: 'probada@example.test', roleKeys: ['member'], registered: true, personName: 'Paula Probada', trialPending: true },
 });
 
 const browser = await launchBrowser();
 const errors = [];
 async function open(path = '/', { lang = 'es', width = 1280 } = {}) {
-  api.members = MEMBERS(); api.signups = []; api.emailLinked = false; api.rejectName = false;
+  api.members = MEMBERS(); api.signups = []; api.batches = []; api.emailLinked = false; api.rejectName = false; api.duplicatePerson = false; api.noNameField = false; api.expiredHold = false; api.released = false;
   const ctx = await browser.newContext({ viewport: { width, height: 900 }, reducedMotion: 'reduce' });
   await ctx.route(/^https?:\/\/(?!127\.0\.0\.1)/, (r) => r.abort());
   await ctx.route(`https://${HOST}/npm/@clerk/clerk-js@*/dist/clerk.browser.js`, (r) => r.fulfill({ status: 200, contentType: 'text/javascript', body: FAKE_CLERK }));
@@ -219,6 +239,25 @@ try {
   check('name: …and the consent sign-up carries it', api.signups.at(-1)?.user === 'user_nonamecust' && api.signups.at(-1)?.body.person?.name === 'Celia Cliente' && (await page.locator('.appshell').count()) === 1, JSON.stringify(api.signups.at(-1)));
   await ctx.close();
 
+  // ── review: only a 400 validation points at the name; duplicate_person_user keeps its notice and "Continue for now" ─
+  ({ ctx, page } = await open('/auth/sign-in'));
+  await signIn(page, 'duplicada@example.test');
+  await page.goto(`${BASE}/#/app`); await page.waitForTimeout(1200);
+  api.duplicatePerson = true;
+  await submitStep(page, 'Duna Duplicada');
+  const dupText = await text(page, '[data-enrol-customer]');
+  check('name review: duplicate_person_user for a nameless login → the "profile linked to another account" notice, not the name error', (await page.locator('[data-enrol-customer="notice"]').count()) === 1 && /unida a otra cuenta/.test(dupText) && !/Revisa tu nombre/.test(dupText) && !/duplicate_person_user/.test(dupText), dupText.slice(0, 300));
+  check('name review: …with "Continue for now" (no loop back to the name)', (await page.locator('[data-enrol-customer] [data-consent-later]').count()) === 1 && (await page.locator('[data-enrol-name]').count()) === 0);
+  await ctx.close();
+  ({ ctx, page } = await open('/auth/sign-in'));
+  api.noNameField = true;
+  await signIn(page, 'sincampo@example.test');
+  await page.goto(`${BASE}/#/app`); await page.waitForTimeout(1200);
+  check('name review: a tenant that takes no name at sign-up never asks for one', (await stepOf(page).count()) === 1 && (await stepOf(page).locator('[data-enrol-name]').count()) === 0);
+  await submitStep(page, null);
+  check('name review: …and sends none', api.signups.at(-1)?.user === 'user_nofield' && !('name' in (api.signups.at(-1)?.body.person ?? {})) && (await page.locator('.appshell').count()) === 1, JSON.stringify(api.signups.at(-1)));
+  await ctx.close();
+
   // ── 2 · C-01d: after "Continue for now" ───────────────────────────────────────────────────────────────────────
   ({ ctx, page } = await open('/auth/sign-in'));
   await signIn(page, 'mostrador@example.test');
@@ -237,6 +276,31 @@ try {
     const hold = page.locator('[data-consent-hold]');
     check(`C-01d: ${p} shows "record your consent to book" with Retry`, (await hold.count()) === 1 && /consentimiento/i.test(await hold.innerText().catch(() => '')) && (await hold.locator('[data-consent-retry]').count()) === 1, route(page));
   }
+  // Review: every product purchase waits, including the payment page reached by a link or history; a held booking's stays open.
+  await page.goto(`${BASE}/#/app/pay/product/pack12`); await page.waitForTimeout(1200);
+  check('C-01d review: /app/pay/product/pack12 shows the hold notice and no payment form', (await page.locator('[data-consent-hold]').count()) === 1 && (await page.locator('input[name=receipt]').count()) === 0, route(page));
+  check('C-01d review: …and nothing is written (no POST /batch)', api.batches.length === 0, JSON.stringify(api.batches));
+  await page.goto(`${BASE}/#/app/pay/booking/bk_pay`); await page.waitForTimeout(1500);
+  check('C-01d review: paying an existing held booking stays open (the form, no hold notice)', (await page.locator('[data-consent-hold]').count()) === 0 && (await page.locator('input[name=receipt]').count()) === 1, route(page));
+  await page.goto(`${BASE}/#/app/passes`); await page.waitForTimeout(1500);
+  const passButtons = page.locator('.cust-pass button');
+  check('C-01d review: Passes shows the notice and every pass button is disabled', (await page.locator('[data-consent-hold]').count()) === 1 && (await passButtons.count()) > 0 && (await passButtons.evaluateAll((bs) => bs.every((b) => b.disabled))), `${await passButtons.count()}`);
+  await page.goto(`${BASE}/#/app/classes`); await page.waitForTimeout(1500);
+  const buyMore = page.locator('button.pricerow').first();
+  check('C-01d review: Buy more on the balance shows the notice', (await page.locator('[data-consent-hold]').count()) === 1 && (await buyMore.count()) === 1);
+  await buyMore.click({ timeout: 3000 }).catch(() => {}); await page.waitForTimeout(600);
+  check('C-01d review: …and a pack in it goes nowhere (no payment page, nothing written)', route(page) === '/app/classes' && api.batches.length === 0, route(page));
+  // The website's Book button (signed in): the drawer shows the notice and the button starts nothing.
+  await page.goto(`${BASE}/#/site/schedule`); await page.waitForTimeout(2000);
+  await page.locator('.session-calendar button', { hasText: 'Pulso' }).first().click({ timeout: 5000 }).catch(() => {});
+  await page.waitForTimeout(800);
+  const drawerHold = page.locator('[data-consent-hold]');
+  check('C-01d review: the website schedule drawer shows the notice (signed-in copy) for a held login', (await drawerHold.count()) === 1 && /Reserva esta clase/.test(await text(page)), route(page));
+  const bookBtn = drawerHold.locator('xpath=following-sibling::button').last();
+  check('C-01d review: …and its Book button is disabled', (await bookBtn.count()) === 1 && (await bookBtn.isDisabled().catch(() => false)));
+  await page.goto(`${BASE}/#/app/checkout/occ_9`); await page.waitForTimeout(1500);
+  const confirm = page.locator('.cust-sticky button').last();
+  check('C-01d review: checkout of a real class shows the notice and its button is disabled', (await page.locator('[data-consent-hold]').count()) === 1 && (await confirm.isDisabled().catch(() => false)), route(page));
   await page.goto(`${BASE}/#/app/checkout/occ_1`); await page.waitForTimeout(900);
   api.emailLinked = false;
   await page.locator('[data-consent-hold] [data-consent-retry]').click({ timeout: 3000 }).catch(() => {});
@@ -245,6 +309,31 @@ try {
   await submitStep(page, null).catch(() => {});
   check('C-01d: …and once recorded, booking opens (no notice)', route(page) === '/app/checkout/occ_1' && (await page.locator('[data-consent-hold]').count()) === 0 && (await page.locator('[data-enrol-customer]').count()) === 0 && api.members.user_deskcust.registered === true, route(page));
   await ctx.close();
+
+  // ── 3 · PAG-03: an expired hold shows released, then the server's release and the refreshed count ─────────────
+  ({ ctx, page } = await open('/auth/sign-in'));
+  await signIn(page, 'ana@example.test');
+  api.expiredHold = true;
+  await page.goto(`${BASE}/#/app/booking/bk_exp`); await page.waitForTimeout(2000);
+  let booked = await text(page, 'main');
+  check('PAG-03: an expired hold not yet released reads "released", never "pending"', /Pago liberado/.test(booked) && !/Pendiente de confirmación/.test(booked), booked.slice(0, 400));
+  check('PAG-03: …with the class count the server had (5 of 15)', (await page.locator('[role=meter]').first().getAttribute('aria-valuenow').catch(() => null)) === '5');
+  api.released = true;
+  await page.waitForTimeout(12_000); // one re-read (every 10 s)
+  booked = await text(page, 'main');
+  check('PAG-03: the re-read shows the server\'s release ("Cupo liberado")', /Cupo liberado/.test(booked) && !/Pendiente de confirmación/.test(booked), booked.slice(0, 400));
+  check('PAG-03: …and the refreshed place count (4 of 15)', (await page.locator('[role=meter]').first().getAttribute('aria-valuenow').catch(() => null)) === '4');
+  await ctx.close();
+
+  // ── 4 · PRO-04: checkout omits a used trial ───────────────────────────────────────────────────────────────────
+  for (const [email, used] of [['ana@example.test', false], ['probada@example.test', true]]) {
+    ({ ctx, page } = await open('/auth/sign-in'));
+    await signIn(page, email);
+    await page.goto(`${BASE}/#/app/checkout/occ_9`); await page.waitForTimeout(2500);
+    const choices = await text(page, '.cust-choices');
+    check(`PRO-04: checkout ${used ? 'omits the trial for a pending trial payment' : 'offers the trial to a new customer'}`, choices.length > 0 && /prueba/i.test(choices) === !used, choices.slice(0, 300));
+    await ctx.close();
+  }
 
   // ── 9 · RES-02: greeting and announcement ─────────────────────────────────────────────────────────────────────
   for (const lang of ['es', 'en']) {
