@@ -27,9 +27,9 @@ import { activityRows, readAuditPage } from '../../data/companyos/audit';
 import { refusalCopy } from '../../data/companyos/refusals';
 import { memberNames, type CosPort } from '../transfers/launch/cos';
 import { useLoad } from '../transfers/launch/useCos';
+import { fieldsOf } from './customers/customerBalances';
 
 const str = (v: unknown) => (typeof v === 'string' ? v : null);
-const fieldsOf = (r: Record<string, unknown>): Record<string, unknown> => (r.data && typeof r.data === 'object' ? r.data as Record<string, unknown> : r);
 /** The review build's active memberships (MockProvider). The production build never reads `memberships` (no adapter). */
 const useReviewMemberships: () => MembershipRow[] = PRODUCTION_BUILD ? () => [] : () => useTable<MembershipRow>('memberships', { where: { status: 'active' } }).rows;
 

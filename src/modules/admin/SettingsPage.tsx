@@ -501,7 +501,8 @@ function PaymentSettingsCard({value}:{value:PaymentSettings}){
    </div>
    <SharedImageField label={t('admin.paymentInstructions.qrImageUrl')} value={d.qrImageUrl} disabled={disabled} onChange={qrImageUrl=>set({...d,qrImageUrl})}/>
    {!valid&&<Notice tone="warn">{t('admin.paymentInstructions.invalid')}</Notice>}
-   {save.state==='error'&&<Notice tone="warn">{save.failure&&hasRefusalCopy(save.failure)?refusalCopy(save.failure,lang):t('admin.paymentInstructions.saveError')}</Notice>}
+   {/* One message for a stale save: the "changed" notice below already says it. */}
+   {save.state==='error'&&!(stale&&save.failure==='payment_settings_stale')&&<Notice tone="warn">{save.failure&&hasRefusalCopy(save.failure)?refusalCopy(save.failure,lang):t('admin.paymentInstructions.saveError')}</Notice>}
    {stale&&<Notice tone="warn">{t('admin.paymentInstructions.changed')}</Notice>}
    {(stale||save.state==='error')&&<Button variant="secondary" disabled={busy} onClick={()=>{save.changed();setDraft({data:save.data,context:save.context,before:value,after:value});}}>{t('admin.paymentInstructions.reload')}</Button>}
    <Notice tone="warn" title={t('admin.settings.pay.keys.title')}>{t('admin.settings.pay.keys.body')}</Notice>

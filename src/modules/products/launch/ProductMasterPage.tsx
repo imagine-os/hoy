@@ -37,8 +37,9 @@ export function ProductMasterPage() {
   const today = dateKey();
   // PRO-02: the editor and its feedback sit together above the list; opening the editor brings it into view.
   const editorRef = useRef<HTMLElement>(null);
-  const open = editing !== null;
-  useEffect(() => { if (open) editorRef.current?.scrollIntoView?.({ block: 'start', behavior: 'smooth' }); }, [open]);
+  // Which editor is open (another card's Edit while one is open counts as a new one), so it scrolls into view each time.
+  const openKey = editing ? `${editing.mode}:${editing.mode === 'create' ? 'new' : editing.row.id}` : null;
+  useEffect(() => { if (openKey) editorRef.current?.scrollIntoView?.({ block: 'start', behavior: 'smooth' }); }, [openKey]);
 
   if (state.status === 'loading') return <EmptyState tone="loading" title={t('payLaunch.loading')} />;
   if (state.status === 'error') return <EmptyState tone="error" title={t(refusalKey(state.code), { code: state.code })} action={<Button onClick={reload}>{t('payLaunch.retry')}</Button>} />;
@@ -74,9 +75,9 @@ export function ProductMasterPage() {
     <div className="page-head"><h1>{t('products.title')}</h1>{canEdit && <Button onClick={() => { setProblem(null); setEditing({ mode: 'create', draft: blank() }); }}>{t('products.launch.add')}</Button>}</div>
     {!canEdit && <Notice>{t('products.launch.readOnly')}</Notice>}
     {canEdit && !dates && <Notice tone="warn">{t('payLaunch.code.dates_unsupported')}</Notice>}
-    <section className="stack" data-product-editor ref={editorRef} aria-live="polite">
-      {saved && !editing && <p role="status">{t(saved)}</p>}
-      {problem && !editing && <p role="alert">{t(`products.launch.error.${problem}`)}</p>}
+    <section className="stack" data-product-editor ref={editorRef}>
+      {saved && !editing && <p role="status" aria-live="polite">{t(saved)}</p>}
+      {problem && !editing && <p role="alert" aria-live="assertive">{t(`products.launch.error.${problem}`)}</p>}
       {editing && <Card title={t(editing.mode === 'create' ? 'products.launch.add' : editing.mode === 'price' ? 'products.launch.newPrice' : 'products.launch.edit')}>
         <form className="stack" onSubmit={(e) => { e.preventDefault(); void save(); }} noValidate><fieldset className="stack" disabled={action.busy}>
           {editing.mode === 'price' ? <>
@@ -101,8 +102,8 @@ export function ProductMasterPage() {
             <Toggle label={t('products.launch.active')} checked={editing.draft.active !== false} onChange={(on) => draftField({ active: on })} />
             {editing.mode === 'edit' && <p className="small muted">{t('products.launch.priceLocked')}</p>}
           </>}
-          {problem && <p role="alert">{t(`products.launch.error.${problem}`)}</p>}
-          {action.error && <p role="alert">{t(refusalKey(action.error), { code: action.error })}</p>}
+          {problem && <p role="alert" aria-live="assertive">{t(`products.launch.error.${problem}`)}</p>}
+          {action.error && <p role="alert" aria-live="assertive">{t(refusalKey(action.error), { code: action.error })}</p>}
           <div className="row wrap"><Button type="submit" loading={action.busy}>{t('products.launch.save')}</Button><Button type="button" variant="ghost" onClick={() => { setEditing(null); setProblem(null); }}>{t('products.cancel')}</Button></div>
         </fieldset></form>
       </Card>}
