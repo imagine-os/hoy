@@ -1,8 +1,9 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useSession } from '../../../auth/SessionProvider';
-import { useTable } from '../../../data/DataContext';
+import { useData, useTable } from '../../../data/DataContext';
+import { readTrialAssessment, type TrialAssessment } from '../../../data/trialEligibility';
 import type { PlanRow } from '../../../data/schema';
 import { dateKey, formatCOP, formatTime, parseDigits } from '../../../i18n/format';
 import { tenant } from '../../../tenant/tenant';
@@ -19,6 +20,7 @@ import { DESK_CONSENTS, type DeskMethod, type SaleResult } from './deskCommands'
 import { deskErrorText } from './strings';
 import { useActionKeys, useDeskCommands } from './useDesk';
 import { errorCode } from './wire';
+import { deskTrialBlock, notStarted } from './deskSale';
 import '../staff.css';
 
 const METHODS: { id: DeskMethod; label: string }[] = [{ id: 'cash', label: 'staff.register.method.cash' }, { id: 'card_terminal', label: 'staff.register.method.datafono' }, { id: 'transfer', label: 'staff.register.method.transfer' }];
@@ -36,7 +38,10 @@ export function DeskSalePage() {
   const keys = useActionKeys();
   const [params] = useSearchParams();
   const { people } = usePeople();
-  const today = useTodaySessions();
+  // REC-06: only today's classes that haven't started (the server refuses a started one: occurrence_not_open).
+  const todayAll = useTodaySessions();
+  const today = notStarted(todayAll, Date.now());
+  const data = useData();
   const { rows: plans } = useTable<PlanRow>('plans', { where: { active: true } });
   const priceDay = dateKey(new Date());
   const [mode, setMode] = useState<'new' | 'existing'>('new');
@@ -67,11 +72,23 @@ export function DeskSalePage() {
   const amount = paidRaw === null || paidRaw.trim() === '' ? price : parseDigits(paidRaw);
   const differs = !!product && amount !== price;
   const person = personId ? people.find(p => p.id === personId) : undefined;
+  // PRO-04 (desk part): the chosen person's trial, read from their own lots and payments (assessLiveTrial). Display
+  // only: the server's `trial_used` stays the authority. A walk-in or a failed read greys nothing out.
+  const [trial, setTrial] = useState<{ personId: string; assessment: TrialAssessment } | null>(null);
+  useEffect(() => {
+    if (mode !== 'existing' || !personId) return;
+    let alive = true;
+    readTrialAssessment(data, personId).then((assessment) => { if (alive) setTrial({ personId, assessment }); }, () => { if (alive) setTrial(null); });
+    return () => { alive = false; };
+  }, [data, mode, personId]);
+  const assessment = mode === 'existing' && trial && trial.personId === personId ? trial.assessment : null;
+  const blocked = (p: { kind?: unknown; slug?: string | null }) => deskTrialBlock(p, assessment);
   const candidates = useMemo(() => (q.trim().length < 2 ? [] : people.filter(p => p.role === 'customer' && personMatches(p, q)).slice(0, 6)), [people, q]);
   const whoOk = mode === 'existing' ? !!person : form.name.trim().length > 1 && form.phone.replace(/\D/g, '').length >= 7 && form.consent;
   // A product without a price (the private class, quoted by the studio) needs the amount charged and a reason.
   const quoted = !!product && price === 0;
-  const valid = !!desk?.sell && whoOk && !!product && amount >= 0 && (!quoted || amount > 0) && (!differs || reason.trim().length > 0) && (!needsReference || reference.trim().length > 0);
+  const productBlocked = !!product && !!blocked(product);
+  const valid = !!desk?.sell && whoOk && !!product && !productBlocked && amount >= 0 && (!quoted || amount > 0) && (!differs || reason.trim().length > 0) && (!needsReference || reference.trim().length > 0);
   const intent = [mode, personId, form, productId, amount, reason.trim(), method, needsReference ? reference.trim() : '', sessionId, checkIn];
 
   if (!can('payments.write')) return <div className="stack"><div className="page-head"><h1>{t('staff.register.title')}</h1></div><EmptyState tone="error" title={t('staff.register.noPermission')} body={t('staff.register.noPermission.body')} /></div>;
@@ -97,7 +114,7 @@ export function DeskSalePage() {
 
   if (done) return (
     <div className="stack">
-      <div className="page-head"><div><h1>{t('staff.register.done')}</h1><p className="muted small">{t('staff.register.done.existing', { name: done.name })}{done.checkedIn ? ` · ${t('staff.register.done.checkedIn', { cls: today.find(x => x.session.id === sessionId)?.session.title ?? '' })}` : ''}</p></div></div>
+      <div className="page-head"><div><h1>{t('staff.register.done')}</h1><p className="muted small">{t('staff.register.done.existing', { name: done.name })}{done.checkedIn ? ` · ${t('staff.register.done.checkedIn', { cls: todayAll.find(x => x.session.id === sessionId)?.session.title ?? '' })}` : ''}</p></div></div>
       {done.checkInError && <EmptyState compact tone="error" title={t('desk.sale.checkInFailed')} body={deskErrorText(done.checkInError, t)} />}
       <div className="row wrap">
         <Button onClick={reset} icon="sell">{t('staff.register.newSale')}</Button>
@@ -133,8 +150,9 @@ export function DeskSalePage() {
           <Card eyebrow={t('staff.register.step2')} title={t('staff.register.what')}>
             <Select aria-label={t('staff.register.what')} value={productId} onChange={e => { setProductId(e.target.value); setPaidRaw(null); }}>
               <option value="">—</option>
-              {products.map(p => <option key={p.id} value={p.id}>{bi({ es: p.name_es, en: p.name_en })} · {formatCOP(p.price, lang)}</option>)}
+              {products.map(p => { const why = blocked(p); return <option key={p.id} value={p.id} disabled={!!why}>{bi({ es: p.name_es, en: p.name_en })} · {formatCOP(p.price, lang)}{why ? ` · ${t('desk.sale.trialUsed')}` : ''}</option>; })}
             </Select>
+            {productBlocked && <p className="xs register-diff" role="note">{t('desk.sale.trialUsed.note')}</p>}
           </Card>
           <Card eyebrow={t('staff.register.step3')} title={t('staff.register.how')}>
             <div className="register-methods" role="radiogroup">
