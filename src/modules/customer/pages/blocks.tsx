@@ -16,7 +16,10 @@ import { ClassRow } from '../../../components/molecule/ClassRow/ClassRow';
 import { EmptyState } from '../../../components/molecule/EmptyState/EmptyState';
 import { CountdownRing } from '../../../components/molecule/CountdownRing/CountdownRing';
 import { ListGroup, ListRow } from '../../../components/molecule/ListRow/ListRow';
-import { useAllSessionsJoined, type JoinedSession } from '../hooks';
+import { useAllSessionsJoined, useEntitlements, useMyProfile, type JoinedSession } from '../hooks';
+import { trialOffered } from '../offers';
+import { greetingName } from '../greeting';
+import { PRODUCTION_BUILD } from '../../../config/launch';
 import { PAYMENT_METHODS, type PayMethod } from '../payments';
 import { useData } from '../../../data/DataContext';
 import { readOwnStudioReturn, type OwnStudioReturn } from '../../classSchedule/ownStudioReturn';
@@ -103,17 +106,24 @@ export function EmptyHomeBlock() {
   const { t } = useI18n();
   const nav = useNavigate();
   const { user } = useSession();
+  const ent = useEntitlements();
+  const { profile } = useMyProfile();
+  // RES-02: the person's own name, else the login's; never the email.
+  const first = greetingName({ person: profile?.full_name, login: user.name, email: user.email });
+  // PRO-04: someone who has had the trial (ent.trial) is sent to the plans instead.
+  const trial = trialOffered(ent);
   return (
     <div className="stack cust-home">
-      <h1 className="cust-greeting">{t('customer.home.greeting', { name: user.name.split(' ')[0] })}</h1>
+      <h1 className="cust-greeting">{first ? t('customer.home.greeting', { name: first }) : t('customer.home.greeting.anon')}</h1>
       <Card padding="sm">
         <EmptyState icon="sun" title={t('customer.empty.title')} body={t('customer.empty.body', { name: tenant.name })}
           action={<Button size="lg" onClick={() => nav('/app/schedule')}>{t('customer.empty.cta')}</Button>}
           secondary={<Link to="/app/rules" className="small">{t('customer.empty.tour')} →</Link>} />
       </Card>
       <Card tone="muted" eyebrow={t('customer.empty.stats')}><p className="small muted">{t('customer.empty.stats.body')}</p></Card>
-      <Card tone="highlight" className="row-between wrap"><span className="small">{t('customer.home.membership.nudge')}</span><Link to="/app/passes"><Button size="sm" variant="secondary">{t('customer.empty.trial')}</Button></Link></Card>
-      <Card tone="muted" eyebrow={t('customer.home.announcement')}><p className="small">{t('customer.home.announcement.body')}</p></Card>
+      <Card tone="highlight" className="row-between wrap"><span className="small">{t(trial ? 'customer.home.membership.nudge' : 'customer.home.membership.nudge.noTrial')}</span>{trial ? <Link to="/app/passes"><Button size="sm" variant="secondary">{t('customer.empty.trial')}</Button></Link> : <Link to="/app/plans"><Button size="sm" variant="secondary">{t('customer.home.membership.cta')}</Button></Link>}</Card>
+      {/* RES-02: the fixed demo announcement is review-build sample content only. */}
+      {!PRODUCTION_BUILD && <Card tone="muted" eyebrow={t('customer.home.announcement')}><p className="small">{t('customer.home.announcement.body')}</p></Card>}
     </div>
   );
 }

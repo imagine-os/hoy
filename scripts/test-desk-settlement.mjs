@@ -26,6 +26,9 @@ try {
   const data = new MockProvider(), atomic = data.atomic.bind(data);
   const customer = await data.insert('users', { id: 'qa_desk_customer', email: 'fictional@example.invalid', status: 'active' });
   const quote = freezeSaleQuote(resolveOperationalQuote(data.peek('plans'), 'pack12'));
+  // Quoted before the repricing below: since SW-02 an unpublished quote takes `plans.price`, and a gift whose base no longer
+  // matches it is refused (quote_gift_contract).
+  const giftQuote = freezeSaleQuote(resolveOperationalQuote(data.peek('plans'), 'gift_pack12'));
   async function request(id, patch = {}) {
     return data.insert('payments', { id, user_id: customer.id, plan_id: quote.planId, amount: quote.chargedAmount, amount_paid: null, currency: 'COP', method: 'cash', provider: 'manual', status: 'pending', paid_at: null, note: null, frontend_quote: quote, ...patch });
   }
@@ -49,6 +52,7 @@ try {
   const beforeBooking = JSON.stringify(data.peek('bookings')), beforeInvoice = JSON.stringify(data.peek('invoices'));
   // Repricing the live catalog must not change retained fulfillment terms.
   await data.update('plans', quote.planId, { price: 1, classes: 2, validity_days: 1 });
+  assert.throws(() => resolveOperationalQuote(data.peek('plans'), 'gift_pack12'), /quote_gift_contract/, 'a gift no longer priced like its base is not sold');
   const [a, b] = await Promise.all([settleAtDesk(data, cmd('qa_pending')), settleAtDesk(data, cmd('qa_pending'))]);
   assert.equal(a.id, b.id); assert.equal(a.status, 'approved'); assert.equal(a.taken_by, 'usr_desk'); assert.equal(a.amount_paid, quote.chargedAmount);
   assert.equal(data.peek('class_ledger').filter(r => r.payment_id === a.id).length, 1);
@@ -73,7 +77,6 @@ try {
   const trialQuote = freezeSaleQuote(resolveOperationalQuote(data.peek('plans'), 'trial'));
   await request('qa_trial', { plan_id: 'plan_trial', amount: trialQuote.chargedAmount, frontend_quote: trialQuote });
   const trialBefore = snapshot(); await assert.rejects(settleAtDesk(data, { ...cmd('qa_trial'), amount: trialQuote.chargedAmount }), /trial_active_package/); assert.equal(snapshot(), trialBefore);
-  const giftQuote = freezeSaleQuote(resolveOperationalQuote(data.peek('plans'), 'gift_pack12'));
   await request('qa_gift', { plan_id: giftQuote.planId, amount: giftQuote.chargedAmount, frontend_quote: giftQuote });
   const giftBefore = snapshot(); await assert.rejects(settleAtDesk(data, { ...cmd('qa_gift'), amount: giftQuote.chargedAmount }), /payment_state/); assert.equal(snapshot(), giftBefore, 'voucher-owned gift fulfillment stays separate');
   await request('qa_granted'); await data.insert('class_ledger', { id: 'qa_existing_grant', user_id: customer.id, payment_id: 'qa_granted', delta: quote.classes, reason: 'purchase', expires_at: quote.entitlementExpiresAt });

@@ -229,6 +229,9 @@ export const strings: StringTable = {
   'site.schedule.loginTitle': { es: 'Para reservar, entra a tu cuenta', en: 'Sign in to book' },
   'site.schedule.loginBody': { es: 'Reservar y pagar ocurre dentro de la app. Entra o crea tu cuenta y volverás a esta clase.', en: 'Booking and paying happen inside the app. Sign in or create an account and you will come back to this class.' },
   'site.schedule.loginCta': { es: 'Entrar y reservar', en: 'Sign in and book' },
+  // WEB-03: the drawer for a signed-in person (no sign-in step on the way).
+  'site.schedule.bookTitle': { es: 'Reserva esta clase', en: 'Book this class' },
+  'site.schedule.bookBody': { es: 'Sigue en la app para confirmar tu reserva y elegir cómo pagarla.', en: 'Continue in the app to confirm your booking and choose how to pay for it.' },
   'site.schedule.legend': { es: 'Leyenda', en: 'Legend' },
   'site.schedule.legendBody': { es: 'Cada clase tiene su color. El cupo que ves es en vivo: {mats} tapetes por sesión.', en: 'Each class has its own colour. The capacity you see is live: {mats} mats per session.' },
 

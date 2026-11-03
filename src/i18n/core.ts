@@ -71,6 +71,10 @@ export const coreStrings: StringTable = {
   'core.common.empty': { es: 'Nada por aquí todavía', en: 'Nothing here yet' },
   'core.common.error': { es: 'Algo salió mal', en: 'Something went wrong' },
   'core.common.retry': { es: 'Reintentar', en: 'Retry' },
+  // The route error boundary (src/components/organism/RouteErrorBoundary): a page that crashed.
+  'core.routeError.title': { es: 'Esta página no se pudo mostrar', en: 'This page could not be shown' },
+  'core.routeError.body': { es: 'Algo falló al mostrarla. Reintenta, o abre otra página desde el menú. Si se repite, avísale al equipo.', en: 'Something failed while showing it. Retry, or open another page from the menu. If it happens again, tell the team.' },
+  'core.routeError.home': { es: 'Ir al inicio', en: 'Go home' },
   'core.common.today': { es: 'Hoy', en: 'Today' },
   'core.common.now': { es: 'Ahora', en: 'Now' },
   'core.common.capacity': { es: '{n} mats', en: '{n} mats' },

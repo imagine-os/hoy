@@ -27,6 +27,11 @@ import { policy } from '../policy';
 import { PageHead } from '../ui';
 import { SERVER_RULES } from '../booking/bookingPolicy';
 import { useLivePricing } from '../../../data/livePricing';
+import { audienceVisible, trialOffered } from '../offers';
+import { useAffiliate } from '../useAffiliate';
+import { lotItems } from '../lotItems';
+import { LotList } from '../../../components/molecule/LotList/LotList';
+import { ConsentHoldNotice, useConsentHeld } from '../../identity/ConsentHold';
 
 /** Production: a pack (or a class) is bought on H-5's payment page by product key; Company OS prices it. */
 const payPath = (key: string) => `/app/pay/product/${encodeURIComponent(key)}`;
@@ -43,8 +48,11 @@ export function PassesPage() {
   // Production: names and prices are Company OS's product master (live pricing); the browser quote is review only.
   const prices = useLivePricing();
   const session = params.get('session');
+  // C-01d: while the consent waits, no pass is bought or booked from here.
+  const consentHeld = useConsentHeld();
 
   const pick = (id: string) => {
+    if (consentHeld) return;
     if (session) { nav(`/app/checkout/${encodeURIComponent(session)}?pass=${id}`); return; }
     // Production: the trial is bought first by transfer (H-5's payment page); a single class is paid when it is booked.
     if (SERVER_RULES && id === 'trial') { nav('/app/pay/product/trial'); return; }
@@ -56,6 +64,7 @@ export function PassesPage() {
     <div className="container page cust-page">
       <PageHead back="/app/plans" title={t('customer.passes.title')} sub={t('customer.passes.sub')} />
       <div className="stack">
+        <ConsentHoldNotice />
         {ent.classBalance > 0 && <Notice tone="info" title={t('customer.passes.package', { n: ent.classBalance })} action={<Link to="/app/classes"><Button size="sm" variant="secondary">{t('customer.classes.title')}</Button></Link>}>{t('customer.passes.package.body')}</Notice>}
         <div><div className="eyebrow">{t('customer.passes.eyebrow')}</div><p className="small muted">{t(SERVER_RULES ? 'customer.passes.intro.srv' : 'customer.passes.intro')}</p></div>
         <div className="stack-sm">
@@ -63,14 +72,15 @@ export function PassesPage() {
             if (SERVER_RULES) {
               const item = prices.item(id);
               if (!item) return prices.loading ? null : <Card key={id} tone="muted"><p>{t('quotes.unavailable')}</p></Card>;
-              if (id === 'trial' && ent.trialUsed) return <Notice key={id} tone="info">{t('customer.passes.trialUsed')}</Notice>;
+              // PRO-04: the live assessment (a trial lot, a pending or approved trial payment); the server's trial_used decides.
+              if (id === 'trial' && !trialOffered(ent)) return <Notice key={id} tone="info">{t('customer.passes.trialUsed')}</Notice>;
               return (
                 <Card key={id} className="cust-pass" padding="md">
                   <div className="row-between wrap">
                     <div className="grow"><strong>{bi(item.name)}</strong><div className="small muted">{bi(item.description)}</div></div>
                     <strong className="cust-pass-price">{formatCOP(item.price ?? 0, lang)}</strong>
                   </div>
-                  <Button block onClick={() => pick(id)}>{session ? t('customer.passes.bookWith') : id === 'trial' ? t('customer.passes.buyTrial') : t('customer.passes.cta')}</Button>
+                  <Button block disabled={consentHeld} onClick={() => pick(id)}>{session ? t('customer.passes.bookWith') : id === 'trial' ? t('customer.passes.buyTrial') : t('customer.passes.cta')}</Button>
                 </Card>
               );
             }
@@ -117,10 +127,14 @@ export function ClassesPage() {
   const [done, setDone] = useState(false);
   const [flash, setFlash] = useState<string | null>(null);
   const { pkg } = ent;
+  const affiliate = useAffiliate();
+  const consentHeld = useConsentHeld();
+  const lots = lotItems(ent.lots, t, lang);
   // "Buy more": production lists the product master's current packs (live pricing, like C-06) and opens the payment
   // page; the review build keeps its browser quote and simulated checkout. A single class is paid when it is booked.
   const packs = SERVER_RULES
-    ? PACKAGE_IDS.flatMap((id) => { const p = prices.item(id); return p ? [p] : []; })
+    // PRO-05: the affiliate-only pack only for a member facet with the affiliate price_audience (audience_not_allowed).
+    ? PACKAGE_IDS.flatMap((id) => { const p = prices.item(id); return p && audienceVisible(p, { live: true, affiliate }) ? [p] : []; })
     : [...PACKAGE_IDS, 'single'].flatMap(id=>{const q=catalog.quote(id);return q?[quotedItem(q)]:[];});
   const ledger = [...ent.ledger].sort((a, b) => b.created_at.localeCompare(a.created_at));
   const today = dateKey();
@@ -156,7 +170,8 @@ export function ClassesPage() {
     <section className="stack-sm">
       <h2 className="cust-h2">{t('customer.classes.topUp')}</h2>
       {SERVER_RULES && packs.length === 0 && !prices.loading && <Notice tone="warn">{t('quotes.unavailable')}</Notice>}
-      <Card padding="none">{packs.map((p) => <PriceRow key={p.id} item={p} onSelect={p=>{if(SERVER_RULES){go(payPath(p.id));return;}purchaseKey.current=crypto.randomUUID();setDone(false);setPurchaseError(false);setBuying(p);}} />)}</Card>
+      <ConsentHoldNotice />
+      <Card padding="none">{packs.map((p) => <PriceRow key={p.id} item={p} disabled={consentHeld} onSelect={p=>{if(consentHeld)return;if(SERVER_RULES){go(payPath(p.id));return;}purchaseKey.current=crypto.randomUUID();setDone(false);setPurchaseError(false);setBuying(p);}} />)}</Card>
       <p className="xs muted">{t('customer.classes.topUp.note')}</p>
     </section>
   );
@@ -171,6 +186,8 @@ export function ClassesPage() {
           <StatTile label={t('customer.classes.balance')} value={pkg.left} hint={purchase ? planName : undefined} />
           <StatTile label={t('customer.classes.expires')} value={pkg.expiresAt ? formatDate(pkg.expiresAt, lang) : '—'} hint={soon ? t('customer.classes.expiringSoon') : undefined} />
         </div>
+        {/* PRO-06: each live lot with its source and its expiry, or "no expiry". */}
+        {lots.length > 0 && <Card eyebrow={t('customer.lot.title')} padding="md"><LotList lots={lots} label={t('customer.lot.title')} /></Card>}
         {soon && <Notice tone="warn">{t('customer.classes.expiringSoon.body', { date: formatDate(pkg.expiresAt!, lang) })}</Notice>}
         {purchase && (
           <ListGroup>

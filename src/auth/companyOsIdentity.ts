@@ -152,7 +152,12 @@ export function parseSignupConfig(raw: unknown): SignupConfig | null {
  */
 export type ConsentRead =
   | { step: 'ask'; config: SignupConfig }
-  | { step: 'pass'; reason: 'registered' | 'closed' | 'unknown' | 'failed' };
+  /**
+   * `deferred` (decision C-01d, owner 2026-11-02): the consent step could not be recorded and the person chose "Continue
+   * for now". The customer area opens for what they have (bookings, balance, account); new bookings and purchases wait
+   * for the consent (`consentDeferred`, `ConsentHoldNotice`). Display only: Company OS tech-debt #74 is the server side.
+   */
+  | { step: 'pass'; reason: 'registered' | 'closed' | 'unknown' | 'failed' | 'deferred' };
 
 export function consentReadFrom(status: number, body: unknown): ConsentRead {
   if (status !== 200 || !body || typeof body !== 'object' || Array.isArray(body)) return { step: 'pass', reason: 'failed' };
@@ -238,6 +243,20 @@ export function classifySignup(status: number, body: unknown): SignupResult {
   return { kind: 'error', code: code || `http_${status}` };
 }
 
+/**
+ * Review round 2: does a 400 `validation` refusal name this field? Company OS answers it as
+ * `{ error: 'validation', details: string[] }` (`HttpError(400, "validation", undefined, errors)` in its signup service;
+ * the messages are `coerceData`'s: `missing required field "name"`, `field "name" is required`, `field "name": …`).
+ * Anything else (no details, other fields, another shape) does not.
+ */
+export function validationNamesField(body: unknown, field: string): boolean {
+  if (!body || typeof body !== 'object') return false;
+  const details = (body as Record<string, unknown>).details;
+  if (!Array.isArray(details)) return false;
+  const needle = `field "${field}"`;
+  return details.some((d) => typeof d === 'string' && d.includes(needle));
+}
+
 /** The tenant's sign-up role: the key `ROLE_KEYS` maps to the customer. */
 const SIGNUP_ROLE_KEY = ROLE_KEYS.find((r) => r.role === 'customer')!.key;
 
@@ -271,9 +290,28 @@ export function signupNoticeKey(result: SignupResult, { existingLogin, held = nu
 }
 
 /**
+ * hoy-jas-1nov (root cause of the 1 Nov "no profile" reports): an email-code login often has no name, and Company OS
+ * creates the person with a required `name` (400 `validation` otherwise). The login's name is usable only when it is a
+ * name: 2+ characters, no "@", not the email `ProductionSession` falls back to. Empty: the step asks for it.
+ */
+export function usableLoginName(user: { name?: string | null; email?: string | null }): string {
+  const name = (user.name ?? '').trim();
+  return name.length >= 2 && !name.includes('@') && name !== (user.email ?? '').trim() ? name : '';
+}
+
+/** The name typed on the enrolment or consent step: required (2+ characters) and not an email. Over-long is cut, not refused. */
+export function enrolmentNameError(name: string): 'required' | 'email' | null {
+  const clean = name.trim();
+  if (clean.length < 2) return 'required';
+  if (clean.includes('@')) return 'email';
+  return null;
+}
+
+/**
  * The automatic enrolment's sign-up body (owner 2026-11-01): a login already in the studio becomes a customer with
  * nothing to fill in. Company OS uses the person already linked to the login and fills only what it lacks, so this sends
- * the login's name (when the tenant takes it) and the documents the person accepted, nothing else.
+ * the login's name, or the one typed on the step when the login has none (hoy-jas-1nov), when the tenant takes it, and the
+ * documents the person accepted, nothing else. The name is sent as text and cut at `SIGNUP_FORM_LIMITS.name`.
  */
 export function enrolmentBody(config: SignupConfig, name: string, accepted: boolean) {
   const person: Record<string, string> = {};

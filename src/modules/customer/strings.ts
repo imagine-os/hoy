@@ -50,6 +50,8 @@ export const strings: StringTable = {
 
   // C-01 home
   'customer.home.greeting': { es: 'Hola, {name}', en: 'Hi, {name}' },
+  // RES-02: a login with no usable name is greeted without one, never with its email.
+  'customer.home.greeting.anon': { es: 'Hola', en: 'Hi' },
   'customer.home.next': { es: 'Tu próxima clase', en: 'Your next class' },
   'customer.home.next.empty': { es: 'No tienes clases reservadas.', en: 'You have no booked classes.' },
   'customer.home.next.cta': { es: 'Reserva tu primera clase', en: 'Book your first class' },
@@ -144,6 +146,8 @@ export const strings: StringTable = {
   'customer.practice.empty.body': { es: 'Cuando tomes clases, aquí verás tus semanas, tu meta y tus logros.', en: 'Once you take classes, your weeks, your goal and your milestones show here.' },
   'customer.practice.more.sub': { es: 'Semanas seguidas, meta y logros', en: 'Weeks in a row, goal and milestones' },
   'customer.home.membership.nudge': { es: 'Aún no tienes paquete. Empieza con una clase de prueba.', en: 'No package yet. Start with a trial class.' },
+  // PRO-04: someone who has had the trial isn't offered it again.
+  'customer.home.membership.nudge.noTrial': { es: 'Aún no tienes paquete. Mira los planes para seguir practicando.', en: 'No package yet. See the plans to keep practising.' },
   'customer.home.membership.cta': { es: 'Ver planes', en: 'See plans' },
   'customer.home.membership.active': { es: 'Membresía activa · renueva {date}', en: 'Active membership · renews {date}' },
   // Hoy all-roles (R-05): the plan card shows the active pack from the credits ledger.
@@ -152,6 +156,20 @@ export const strings: StringTable = {
   'customer.home.plan.left.other': { es: '{n} clases disponibles', en: '{n} classes left' },
   'customer.home.plan.expires': { es: 'Vence el {date}', en: 'Expires {date}' },
   'customer.home.plan.frozen': { es: 'Congelado hasta el {date}', en: 'Frozen until {date}' },
+  // PRO-06: each live lot with its source and expiry (credits lot.source).
+  'customer.lot.source.purchase': { es: 'Paquete comprado', en: 'Purchased pack' },
+  'customer.lot.source.trial': { es: 'Clase de prueba', en: 'Trial class' },
+  'customer.lot.source.gift': { es: 'Regalo', en: 'Gift' },
+  'customer.lot.source.courtesy': { es: 'Cortesía', en: 'Courtesy' },
+  'customer.lot.source.comp': { es: 'Cortesía del estudio', en: 'Studio courtesy' },
+  'customer.lot.source.voucher': { es: 'Bono', en: 'Voucher' },
+  'customer.lot.source.other': { es: 'Clases', en: 'Classes' },
+  'customer.lot.left.one': { es: '{n} clase', en: '{n} class' },
+  'customer.lot.left.other': { es: '{n} clases', en: '{n} classes' },
+  'customer.lot.expires': { es: 'vence el {date}', en: 'expires {date}' },
+  'customer.lot.noExpiry': { es: 'sin vencimiento', en: 'no expiry' },
+  'customer.lot.frozen': { es: 'congelado hasta el {date}', en: 'frozen until {date}' },
+  'customer.lot.title': { es: 'Tus clases', en: 'Your classes' },
   'customer.home.quick.book': { es: 'Reservar', en: 'Book' },
   'customer.home.quick.schedule': { es: 'Horario', en: 'Schedule' },
   'customer.home.quick.plans': { es: 'Planes', en: 'Plans' },

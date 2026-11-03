@@ -94,8 +94,16 @@ let outcome; try { outcome = await M.runExpenseCommand(d, { ...desk, ...create }
 check('PL-05 Q-13 front desk records an expense through the ledger command', outcome?.created === 1 && d.peek('expenses').some((e) => e.id === 'qa_desk_expense' && e.created_by === 'usr_desk'), String(outcome));
 check('PL-05 Q-13 front desk cannot read the expense ledger', await rejects(M.readExpenseWorkspace(d, desk), /denied/));
 check('PL-05 Q-13 a caller-shaped {type:"create"} identity cannot read the ledger', await rejects(M.readExpenseWorkspace(d, { ...desk, type: 'create' }), /denied/));
-for (const [label, patch] of [['over 5.000.000 COP', { amount: 5_000_001 }], ['dated another day', { incurred_on: '2026-01-02', paid_on: '2026-01-02' }], ['left unpaid', { paid_on: null }]])
+for (const [label, patch] of [['over 5.000.000 COP', { amount: 5_000_001 }], ['dated another day than it was paid', { incurred_on: '2026-01-02' }], ['left unpaid', { paid_on: null }]])
   check(`PL-05 Q-13 the command refuses a desk expense ${label}`, await rejects(M.runExpenseCommand(fresh(), { ...desk, ...create, requestId: 'qa_' + label, draft: { ...create.draft, ...patch } }), /validation/));
+// FIN-01 (Jas 1 Nov): the desk picks the paid-on day. An earlier day is recorded; the review build refuses a future one
+// (in production Company OS refuses it, `invalid_date`).
+{
+  const past = M.dateKey(new Date(Date.now() - 3 * 864e5)), future = M.dateKey(new Date(Date.now() + 2 * 864e5)), dd = fresh();
+  let earlier; try { earlier = await M.runExpenseCommand(dd, { ...desk, ...create, requestId: 'qa_earlier', id: 'qa_earlier', draft: { ...create.draft, incurred_on: past, paid_on: past } }); } catch (e) { earlier = String(e); }
+  check('FIN-01 a desk expense paid on an earlier day is recorded on that day', earlier?.created === 1 && dd.peek('expenses').some((e) => e.id === 'qa_earlier' && e.paid_on === past), String(earlier));
+  check('FIN-01 the review build refuses a desk expense paid on a future day', await rejects(M.runExpenseCommand(fresh(), { ...desk, ...create, requestId: 'qa_future', draft: { ...create.draft, incurred_on: future, paid_on: future } }), /invalid_date/));
+}
 d = fresh(); await M.runExpenseCommand(d, { ...desk, ...create });
 await M.runExpenseCommand(d, { ...desk, ...create });
 check('PL-05 Q-13 a retried desk entry with the same request is stored once', d.peek('expenses').filter((e) => e.id === 'qa_desk_expense').length === 1);

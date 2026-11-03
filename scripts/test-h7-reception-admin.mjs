@@ -7,6 +7,10 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
+// A fixed clock before the bundle loads: the mock seed builds its classes and bookings from `new Date()`, so the first class
+// an hour ahead (RC-02) was full at some times of day (session_full).
+const RealDate = Date, FIXED_NOW = RealDate.parse('2026-11-02T13:30:00Z');
+globalThis.Date = class extends RealDate { constructor(...a) { super(...(a.length ? a : [FIXED_NOW])); } static now() { return FIXED_NOW; } };
 const scratch = await mkdtemp(join(tmpdir(), 'hoy-h7-'));
 const values = new Map();
 globalThis.localStorage = { getItem: k => values.get(k) ?? null, setItem: (k, v) => values.set(k, v), removeItem: k => values.delete(k) };

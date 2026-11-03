@@ -21,8 +21,13 @@ import { WeekDots } from '../../components/molecule/WeekDots/WeekDots';
 import { usePracticeStats, useMilestoneRecorder } from '../../data/useAnalytics';
 import type { PracticeStats } from '../../data/analytics';
 import { toast } from '../../app/toast';
-import { useEntitlements } from './hooks';
+import { useEntitlements, useMyProfile } from './hooks';
 import { planCard } from './planCard';
+import { trialOffered } from './offers';
+import { greetingName } from './greeting';
+import { lotItems } from './lotItems';
+import { LotList } from '../../components/molecule/LotList/LotList';
+import { PRODUCTION_BUILD } from '../../config/launch';
 import { plural, weekInitials, PracticeGoalPicker, PracticeStreak, usePracticeHandlers, useSaveGoal } from './practice';
 import './customer.css';
 import { Icon } from '../../components/atom/Icon/Icon';
@@ -47,8 +52,12 @@ export function CustomerHomePage() {
 
   const { rows: myBookings, loading: bookingsLoading } = useTable<BookingRow>('bookings', { where: { user_id: user.id } });
   const ent = useEntitlements();
+  // RES-02: the person's own name (their person row), else the login's; never the email.
+  const { profile } = useMyProfile();
+  const first = greetingName({ person: profile?.full_name, login: user.name, email: user.email });
   // R-05: the plan card reads the active pack (credits), not the recurring `memberships` table production lacks.
   const plan = planCard({ membership: ent.membership, pkg: ent.pkg });
+  const lots = lotItems(ent.lots, t, lang);
   const all = useSessionsJoined();
   const now = Date.now();
 
@@ -63,20 +72,25 @@ export function CustomerHomePage() {
   const book = (sessionId: string) => nav(`/app/checkout/${sessionId}`);
 
   const SECTIONS: Record<string, () => ReactNode> = {
-    'TopBar (logo, avatar, bell)': () => <h1 className="cust-greeting">{t('customer.home.greeting', { name: user.name.split(' ')[0] })}</h1>,
+    'TopBar (logo, avatar, bell)': () => <h1 className="cust-greeting">{first ? t('customer.home.greeting', { name: first }) : t('customer.home.greeting.anon')}</h1>,
     'FeedbackPrompt (conditional)': () => null,
     // 0051 + Hoy all-roles (R-05): the active pack (classes left, expiry or freeze), a review-build membership, or the
     // nudge to buy a pack. The section keeps its name (stored layouts reference it).
+    // PRO-06: each live lot with its source and its expiry ("no expiry" when it has none), not one "your pack" line.
     'MembershipNudge (if no plan)': () => plan.kind === 'pack'
-      ? <Card eyebrow={t('customer.home.plan.eyebrow')} className="row-between wrap" data-plan-card="pack">
-          <span className="small"><strong>{plural(t, 'customer.home.plan.left', plan.left)}</strong>
-            {plan.frozenUntil ? ` · ${t('customer.home.plan.frozen', { date: formatDate(plan.frozenUntil, lang) })}` : plan.expires ? ` · ${t('customer.home.plan.expires', { date: formatDate(plan.expires, lang) })}` : ''}</span>
+      ? <Card eyebrow={t(lots.length ? 'customer.lot.title' : 'customer.home.plan.eyebrow')} className="stack-sm" data-plan-card="pack">
+          {lots.length
+            ? <LotList lots={lots} label={t('customer.lot.title')} />
+            : <span className="small"><strong>{plural(t, 'customer.home.plan.left', plan.left)}</strong>
+                {plan.frozenUntil ? ` · ${t('customer.home.plan.frozen', { date: formatDate(plan.frozenUntil, lang) })}` : plan.expires ? ` · ${t('customer.home.plan.expires', { date: formatDate(plan.expires, lang) })}` : ''}</span>}
           <Link to="/app/passes" className="small">{t('customer.home.membership.cta')}</Link>
         </Card>
       : plan.kind === 'membership'
         ? <p className="small muted" data-plan-card="membership">{t('customer.home.membership.active', { date: formatDate(plan.date, lang) })}</p>
-        : <Card tone="highlight" className="row-between wrap" data-plan-card="none"><span className="small">{t('customer.home.membership.nudge')}</span><Link to="/app/plans"><Button size="sm" variant="secondary">{t('customer.home.membership.cta')}</Button></Link></Card>,
-    'AnnouncementCard (if active)': () => <Card tone="muted" eyebrow={t('customer.home.announcement')}><p className="small">{t('customer.home.announcement.body')}</p></Card>,
+        // PRO-04: the trial is offered only to someone who hasn't had it (ent.trial; R-14 for package holders is open).
+        : <Card tone="highlight" className="row-between wrap" data-plan-card="none"><span className="small">{t(trialOffered(ent) ? 'customer.home.membership.nudge' : 'customer.home.membership.nudge.noTrial')}</span><Link to="/app/plans"><Button size="sm" variant="secondary">{t('customer.home.membership.cta')}</Button></Link></Card>,
+    // RES-02: the fixed demo announcement is review-build sample content; the production home has none.
+    'AnnouncementCard (if active)': () => PRODUCTION_BUILD ? null : <Card tone="muted" eyebrow={t('customer.home.announcement')}><p className="small">{t('customer.home.announcement.body')}</p></Card>,
     'NextClassCard + countdown': () => (
       <section className="stack-sm">
         <div className="eyebrow">{t('customer.home.next')}</div>
