@@ -403,7 +403,7 @@ try {
   await signIn(page, 'ana@example.test');
   api.liveBooking = true;
   await page.goto(`${BASE}/#/app/booking/bk_live/change`); await page.waitForTimeout(2000);
-  const sheet = page.locator('[role=dialog]').last();
+  sheet = page.locator('[role=dialog]').last();
   check('r1: /app/booking/:id/change opens the change sheet', (await sheet.count()) === 1 && /Cancelar/.test(await sheet.innerText().catch(() => '')), route(page));
   await sheet.getByText('Cancelar', { exact: true }).first().click({ timeout: 3000 }).catch(() => {});
   await page.waitForTimeout(500);
