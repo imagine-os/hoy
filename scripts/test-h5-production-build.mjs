@@ -23,9 +23,12 @@ try {
   // Its strings stay in the module's string table; the page itself (its test ids) must be gone.
   check('production: the review product draft prototype page is not shipped', !js.includes('"data-testid":"quote-snapshot"') && !js.includes('"data-testid":"published-quote-snapshot"'));
   check('production: the launch payment, product and settings screens are shipped', ['payLaunch.queue.title', 'payLaunch.pay.send', 'products.launch.newPrice', 'bookingPolicies.save', 'payLaunch.receipt.noVat'].every((k) => js.includes(k)));
-  // The guards as Vite folded them into the shipped bundle (not only the esbuild copy below): freezeSaleQuote, checkSaleQuote and
-  // captureLaunchReceipt become a bare throw; reviseProduct is not shipped at all (its draft page is not routed).
-  check('production: the shipped bundle carries the server_decides guards', (js.match(/throw Error\("server_decides"\)/g) ?? []).length >= 3);
+  // The guards as Vite folded them into the shipped bundle (not only the esbuild copy below): freezeSaleQuote and checkSaleQuote
+  // become a bare throw; reviseProduct is not shipped at all (its draft page is not routed), and since lane H1 (2cc80a7b) neither is
+  // captureLaunchReceipt (no production path reaches it). The esbuild copy below still proves each guard refuses.
+  check('production: the shipped bundle carries the server_decides guards', (js.match(/throw Error\("server_decides"\)/g) ?? []).length >= 2);
+  // receipt_payment_scope is only in captureLaunchReceipt's body, which Vite folds away behind its guard: it ships only unguarded.
+  check('production: the browser receipt numbering is never shipped unguarded', !js.includes('receipt_payment_scope'));
   // H-9: the unsent demo email preview in LaunchPaymentReceipt is review-build only.
   check('production: the demo receipt email preview is not shipped', !js.includes('data-receipt-email-body'));
   check('production: the launch routes are registered', ['/app/pay/:what/:id', '/admin/payments/report', '/admin/settings/booking-policies', '/staff/receipts/:paymentId'].every((r) => js.includes(r)));

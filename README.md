@@ -41,6 +41,7 @@ and the inspector panel (`Ctrl+.`) on every page: layout order, data tables, rol
 
 ```
 npm i
+npm ci --prefix server # the Hoy server's own dependencies (@clerk/backend); scripts/test-hoy-server.mjs and test-docs-gate.mjs need them
 npm run dev            # http://localhost:5173/#/
 npm run build          # tokens + tsc --noEmit + vite build → dist/  (must pass before any commit)
 npm run screenshots    # docs/screenshots/<code>/<lang>-<width>[-dark].jpg (Playwright, Chromium preinstalled)
