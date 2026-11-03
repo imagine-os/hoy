@@ -204,7 +204,11 @@ await test('error boundary r1: the boundary carries the path as resetKey, never 
   assert.equal(a.type, RouteBoundary); assert.equal(b.type, a.type);
   assert.equal(a.key, null, 'no key from the path: React keeps the page instance'); assert.equal(b.key, null);
   assert.equal(a.props.resetKey, '/app/booking/bk_1/change'); assert.equal(b.props.resetKey, '/app/booking/bk_1');
-  assert.equal(b.props.children, page, 'the page is passed as it is (no keyed wrapper)');
+  // The page loads under its own Suspense inside the boundary (a failed download is caught there): an unkeyed wrapper
+  // that hands the same page through.
+  assert.equal(b.props.children.key, null, 'the Suspense wrapper has no key');
+  assert.equal(String(b.props.children.type), 'Symbol(react.suspense)', 'the wrapper is a Suspense');
+  assert.equal(b.props.children.props.children, page, 'the page is passed through as it is');
 });
 await test('error boundary r1: a working page is not reset or re-wrapped on a path change (no state update at all)', () => {
   const page = { type: 'p', props: {} };

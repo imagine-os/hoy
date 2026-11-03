@@ -1,4 +1,4 @@
-import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { Component, Suspense, type ErrorInfo, type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useSession } from '../../../auth/SessionProvider';
@@ -67,7 +67,11 @@ export function routeBoundaryElement(pathname: string, homeTo: string, children:
     <RouteErrorCard homeTo={homeTo}
       onRetry={() => { if (retryKind(error) === 'reload') window.location.reload(); else remount(); }}
       onHome={(event) => { if (homeKind(pathname, homeTo) === 'remount') { event.preventDefault(); remount(); } }} />
-  )}>{children}</RouteBoundary>;
+  )}>
+    {/* The page loads under its own Suspense, inside the boundary: a page still downloading keeps the shell on screen, and
+        one whose download fails is caught here (the app-level Suspense alone let that error escape every boundary). */}
+    <Suspense fallback={<div className="lazy-fallback" aria-busy="true" />}>{children}</Suspense>
+  </RouteBoundary>;
 }
 
 /**

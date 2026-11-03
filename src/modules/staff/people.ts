@@ -49,9 +49,10 @@ export function usePeople(): { people: Person[]; byId: Map<string, Person>; load
     const people = users.map<Person>((u) => {
       const p = prof.get(u.id);
       const m = mem.get(u.id);
-      const name = p?.full_name ?? u.email;
+      // A walk-in registered at the desk may have neither a profile name nor an email (name and WhatsApp only).
+      const name = p?.full_name ?? u.email ?? u.phone ?? '';
       return {
-        id: u.id, name, initials: p?.initials ?? name.split(' ').map((s) => s[0]).join('').slice(0, 2).toUpperCase(), email: u.email, phone: u.phone,
+        id: u.id, name, initials: p?.initials ?? name.split(' ').filter(Boolean).map((s) => s[0]).join('').slice(0, 2).toUpperCase(), email: u.email, phone: u.phone,
         role: rol.get(u.id) ?? 'customer', profileId: p?.id ?? null, birthday: p?.birthday ?? null, notes: p?.notes ?? null,
         marketingOptin: !!p?.marketing_optin, whatsappVerified: !!p?.whatsapp_verified, createdAt: u.created_at,
         membership: m, plan: m ? plan.get(m.plan_id) : undefined,
@@ -75,5 +76,5 @@ export const personMatches = (p: Person, q: string) => {
   if (!s) return true;
   const digits = q.replace(/\D/g, ''), phone = phoneKey(p.phone);
   // The query may carry the country code ("+57 300…") or not; the stored number is compared both ways.
-  return fold(p.name).includes(s) || p.email.toLowerCase().includes(s) || (digits.length >= 3 && !!phone && (phone.includes(digits) || `57${phone}`.includes(digits)));
+  return fold(p.name ?? '').includes(s) || (p.email ?? '').toLowerCase().includes(s) || (digits.length >= 3 && !!phone && (phone.includes(digits) || `57${phone}`.includes(digits)));
 };
