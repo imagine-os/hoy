@@ -17,7 +17,7 @@ import { batch, errorCode, newActionKey, type BatchOp } from '../../staff/desk/w
 import { deskErrorText } from '../../staff/desk/strings';
 import {
   WEEKDAYS, cancelOccurrenceOps, createCoachOps, createResourceOps, createScheduleOps, generateOps, publishScheduleOps,
-  schedulePublishBlocked, scheduleProblems, updateCoachOps, updateResourceOps, updateScheduleOps, type ScheduleDraft,
+  schedulePublishBlocked, scheduleProblems, scheduleTypeHint, updateCoachOps, updateResourceOps, updateScheduleOps, type ScheduleDraft,
 } from './scheduleOps';
 
 type Tab = 'classes' | 'dates' | 'teachers' | 'rooms';
@@ -124,7 +124,7 @@ function Classes({ rows, rooms, coaches, roomName, coachName, weekday, canWrite,
           <Button size="sm" variant="tonal" disabled={busy || schedulePublishBlocked(r)} onClick={() => run(publishScheduleOps(r.id, r.active === false), newActionKey(), t('live.saved'))}>{r.active === false ? t('live.publish') : t('live.unpublish')}</Button>
         </div>}>
           <p className="small">{coachName(r.coach)} · {roomName(r.resource)} · {t('live.rooms.mats', { n: num(r.capacity) })} <Badge tone={r.active === false ? 'neutral' : 'success'}>{r.active === false ? t('live.draft') : t('live.published')}</Badge> {str(r.modality) ? <Badge>{typeName(r.modality)}</Badge> : <Badge tone="warn">{t('live.noType')}</Badge>}</p>
-          {canWrite && schedulePublishBlocked(r) && <p className="xs muted">{t('live.publish.needsType')}</p>}
+          {canWrite && scheduleTypeHint(r) && <p className="xs muted" data-type-hint>{t(`live.typeHint.${scheduleTypeHint(r)}`)}</p>}
         </Card>
       ))}
     </div>

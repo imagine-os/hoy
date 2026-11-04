@@ -5,7 +5,9 @@
 //   inactive and no-credit single products stay out; a used trial hides a second trial; a gift goes to the gift page;
 //   hostile product text shows as text.
 // - /coming-soon: public before go-live; once live a visitor and a non-admin go to the site, the Super Admin sees it, and
-//   the Hub's card still opens it.
+//   the Hub's card still opens it. The first paint: the landing never flashes while the launch settings are read, and a
+//   failed or unanswered read doesn't wait for ever.
+// - Buying: a pack and a gift through to the stored payment and its receipt.
 // Run: npm run build:production && QA_PROD_DIST=dist node scripts/test-golive-h3-ui.mjs
 import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
@@ -37,15 +39,16 @@ const rec = (id, data) => ({ id, data, orgUnitId: null, createdAt: '2026-10-20T1
 const HOSTILE = '<img src=x onerror="window.__hacked=1">Plan raro';
 const product = (key, data) => rec(`prod_${key}`, { key, name: `Plan ${key}`, kind: 'pack', price: 300000, credits: 6, validity_days: 60, active: true, ...data });
 let world;
-function reset({ live = false, trialPaid = false } = {}) {
+function reset({ live = false, trialPaid = false, config = 'ok' } = {}) {
   const m = (rows) => new Map(rows.map((r) => [r.id, r]));
   world = {
-    live, seq: 0, log: [],
+    live, config, seq: 0, log: [], uploads: 0,
     person: m([rec('per_owner', { name: 'Olga Dueña', user: 'user_owner' }), rec('per_admin', { name: 'Mateo Admin', user: 'user_admin' }), rec('per_cust', { name: 'Lucía Prueba', user: 'user_cust', email: 'cust@example.test' }), rec('per_ana', { name: 'Ana Fictional' })]),
     member: m([rec('mem_cust', { person: 'per_cust', status: 'active', price_audience: 'general', user: 'user_cust' })]),
     resource: m([rec('res_big', { name: 'Sala Grande', kind: 'room', capacity: 16 })]),
     coach: m([rec('co_ana', { person: 'per_ana', kind: 'teacher', active: true })]),
-    schedule: m([rec('sch_draft', { title: 'Borrador mañana', kind: 'class', weekday: 1, start_time: '07:00', duration_minutes: 50, resource: 'res_big', coach: 'co_ana', capacity: 16, spots_enabled: true, valid_from: '2026-11-09', valid_until: null, active: false })]),
+    schedule: m([rec('sch_draft', { title: 'Borrador mañana', kind: 'class', weekday: 1, start_time: '07:00', duration_minutes: 50, resource: 'res_big', coach: 'co_ana', capacity: 16, spots_enabled: true, valid_from: '2026-11-09', valid_until: null, active: false }),
+      rec('sch_live_notype', { title: 'Publicada sin tipo', kind: 'class', weekday: 2, start_time: '08:00', duration_minutes: 50, resource: 'res_big', coach: 'co_ana', capacity: 16, spots_enabled: true, valid_from: '2026-11-09', valid_until: null, active: true })]),
     occurrence: new Map(),
     product: m([
       product('pack12', { name: 'Paquete de 12 clases', credits: 12, price: 600000 }),
@@ -81,6 +84,11 @@ const publicRows = (entity, rows) => {
 reset();
 const server = createServer(async (req, res) => {
   const path = new URL(req.url, 'http://127.0.0.1').pathname;
+  // A file's upload link (the storage's signed PUT in real life).
+  if (path === '/fake-upload' && req.method === 'PUT') { req.resume(); req.on('end', () => { world.uploads++; res.writeHead(200); res.end(); }); return; }
+  if (path === '/app-config.json' && world.config === 'hang') return; // never answers
+  if (path === '/app-config.json' && world.config === 'fail') return json(res, 500, { error: 'unavailable' });
+  if (path === '/app-config.json' && world.config === 'slow') await new Promise((r) => setTimeout(r, 900));
   if (path === '/app-config.json') return json(res, 200, { tenant: TENANT, apiBase: '/api/cos', clerkPublishableKey: PK, environment: 'test', launch: { siteLive: world.live } });
   if (path.startsWith(`/api/cos/t/${TENANT}/`)) {
     const user = userOf(req), route = path.slice(`/api/cos/t/${TENANT}`.length), p = PEOPLE[user];
@@ -97,6 +105,8 @@ const server = createServer(async (req, res) => {
     if (!user) return json(res, 401, { error: 'unauthorized' });
     if (route === '/me') return p ? json(res, 200, { tenant: { slug: TENANT, timezone: 'America/Bogota' }, user: { id: user, name: p.name, email: `${user.slice(5)}@example.test` }, roleKeys: p.keys, isSuperAdmin: !!p.superAdmin, caps: [], entities: [] }) : json(res, 403, { error: 'forbidden' });
     if (route === '/signup' && req.method === 'GET') return json(res, 200, { enabled: true, consents: [], personFields: [], facetFields: [], registered: true });
+    if (route === '/files' && req.method === 'POST') { const id = `file_${++world.seq}`; return json(res, 201, { file: { id, data: { status: 'pending' } }, uploadUrl: `${BASE}/fake-upload` }); }
+    if (/^\/files\/[^/]+\/confirm$/.test(route)) return json(res, 200, { file: { id: route.split('/')[2], data: { status: 'ready' } } });
     if (route === '/batch') {
       const ids = body.ops.map((o) => {
         if (o.op === 'create') { const id = `${o.entity}_${++world.seq}`; world[o.entity]?.set(id, rec(id, { ...o.data })); return id; }
@@ -129,6 +139,9 @@ async function open(email = null) {
   await ctx.route(`https://${HOST}/npm/@clerk/clerk-js@*/dist/clerk.browser.js`, (r) => r.fulfill({ status: 200, contentType: 'text/javascript', body: FAKE_CLERK }));
   await ctx.addInitScript(({ accounts, pk }) => {
     window.__fakeClerkConfig = { accounts, publishableKey: pk };
+    // First paint: everything the page ever showed, not only where it settled.
+    window.__painted = { landing: false, waiting: false };
+    new MutationObserver(() => { if (document.querySelector('.coming-soon')) window.__painted.landing = true; if (document.querySelector('[data-launch-wait]')) window.__painted.waiting = true; }).observe(document, { childList: true, subtree: true });
     if (!sessionStorage.getItem('qa-init')) { sessionStorage.setItem('qa-init', '1'); localStorage.setItem('hoyos.lang', 'es'); }
   }, { accounts: ACCOUNTS, pk: PK });
   const page = await ctx.newPage();
@@ -148,6 +161,15 @@ async function open(email = null) {
 const go = async (page, path) => { await page.goto(`${BASE}/#${path}`); await page.waitForTimeout(1200); return route(page); };
 const card = (page, key) => page.locator(`[data-generic-plan="${key}"]`);
 const text = (page) => page.locator('body').innerText();
+const painted = (page) => page.evaluate(() => window.__painted);
+const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0]);
+/** The transfer payment's own form: a receipt image and Send. Returns the payment it stored. */
+const payByTransfer = async (page) => {
+  await page.locator('input[name=receipt]').setInputFiles({ name: 'comprobante.png', mimeType: 'image/png', buffer: PNG });
+  await page.getByRole('button', { name: 'Enviar comprobante' }).click();
+  await page.waitForTimeout(1200);
+  return [...world.payment.values()].at(-1)?.data ?? null;
+};
 
 try {
   // ── /coming-soon before and after go-live ─────────────────────────────────────────────────────────────────────
@@ -186,6 +208,36 @@ try {
   check('live: the Hub\'s card still opens it', route(page) === '/coming-soon' && (await page.locator('.coming-soon').count()) === 1, route(page));
   await ctx.close();
 
+  // ── first paint: the launch settings' read decides before anything shows ───────────────────────────────────────
+  for (const path of ['/', '/coming-soon']) {
+    scenario = `first paint, live, ${path}`; reset({ live: true, config: 'slow' });
+    ({ ctx, page } = await open());
+    await page.goto(`${BASE}/#${path}`);
+    await page.locator('[data-launch-wait]').waitFor({ timeout: 3000 }).catch(() => {});
+    await page.waitForTimeout(1800);
+    const seen = await painted(page);
+    check(`live, slow settings, ${path}: the landing never paints, the loading state does, then the site`, !seen.landing && seen.waiting && route(page).startsWith('/site'), `${JSON.stringify(seen)} ${route(page)}`);
+    await ctx.close();
+  }
+  scenario = 'first paint, before go-live'; reset({ config: 'slow' });
+  ({ ctx, page } = await open());
+  await page.goto(`${BASE}/`);
+  await page.locator('.coming-soon').waitFor({ timeout: 4000 }).catch(() => {});
+  check('before go-live, slow settings: the landing shows once they answer', (await page.locator('.coming-soon').count()) === 1, await page.url());
+  await ctx.close();
+  scenario = 'first paint, failed read'; reset({ config: 'fail' });
+  ({ ctx, page } = await open());
+  await page.goto(`${BASE}/`);
+  await page.locator('.coming-soon').waitFor({ timeout: 4000 }).catch(() => {});
+  check('a failed settings read does not wait for ever: the landing shows', (await page.locator('.coming-soon').count()) === 1);
+  await ctx.close();
+  scenario = 'first paint, read never answers'; reset({ config: 'hang' });
+  ({ ctx, page } = await open());
+  await page.goto(`${BASE}/`);
+  await page.locator('.coming-soon').waitFor({ timeout: 8000 }).catch(() => {});
+  check('a settings read that never answers ends at the time limit: the landing shows', (await page.locator('.coming-soon').count()) === 1);
+  await ctx.close();
+
   // ── Plans on the website ──────────────────────────────────────────────────────────────────────────────────────
   scenario = 'plans, website'; reset({ live: true });
   ({ ctx, page } = await open());
@@ -194,6 +246,7 @@ try {
   check('site: a second trial and a new gift have cards', (await card(page, 'trial_b').count()) === 1 && (await card(page, 'gift_b').count()) === 1);
   check('site: audience, private, inactive and no-credit products have none', await (async () => { for (const k of ['aff2', 'priv2', 'off2', 'single0']) if (await card(page, k).count()) return false; return !/QA solo afiliados|QA privada dos|QA retirado|QA sin clases/.test(await text(page)); })());
   check('site: the fixed list\'s pack has no second card', (await card(page, 'pack12').count()) === 0);
+  check('site: the page copes with the fixed trial and single missing from the master', (await page.locator('.plans-pass').count()) === 0 && (await card(page, 'pack6').count()) === 1 && errors.length === 0, errors.join(' '));
   check('site: hostile product text shows as text', (await card(page, 'raro').innerText().catch(() => '')).includes('<img src=x') && !(await page.evaluate(() => window.__hacked === 1)));
   await card(page, 'pack6').getByRole('button').first().click();
   await page.waitForTimeout(800);
@@ -209,10 +262,20 @@ try {
   await card(page, 'pack6').getByRole('button').first().click();
   await page.waitForTimeout(1200);
   check('app: buying the new pack opens its transfer payment', route(page) === '/app/pay/product/pack6' && /Paquete de 6 clases/.test(await text(page)), route(page));
+  const bought = await payByTransfer(page);
+  check('app: the pack is really bought: a pending payment of that product at its price, for no booking', bought?.product === 'prod_pack6' && bought?.amount === 300000 && bought?.status === 'pending' && bought?.person === 'per_cust' && !('for_entity' in bought) && !('notes' in bought), JSON.stringify(bought));
+  check('app: …with its receipt uploaded', world.uploads === 1 && world.log.some((l) => l.route === '/files' && l.body?.ownerId && l.body?.kind === 'receipt'), `${world.uploads}`);
   await go(page, '/app/plans');
   await card(page, 'gift_b').getByRole('button').first().click();
   await page.waitForTimeout(1200);
   check('app: a gift goes to the gift page, that gift chosen', route(page).startsWith('/app/gift-voucher') && /Regalo de 2 clases/.test(await page.getByRole('radio', { checked: true }).locator('xpath=ancestor::label[1]').innerText().catch(() => '')), route(page));
+  await page.getByLabel('Nombre de quien recibe').fill('Juliana Ficticia');
+  await page.getByLabel('Correo de quien recibe').fill('Juliana@Example.Test');
+  await page.getByRole('button', { name: 'Continuar al pago por transferencia' }).click();
+  await page.waitForTimeout(1200);
+  check('app: the gift continues to its transfer payment', route(page) === '/app/pay/product/gift_b', route(page));
+  const gifted = await payByTransfer(page);
+  check('app: the gift is really bought: that product at its price, for no booking, naming the recipient', gifted?.product === 'prod_gift_b' && gifted?.amount === 100000 && !('for_entity' in gifted) && gifted?.notes === `gift-recipient:${JSON.stringify({ name: 'Juliana Ficticia', email: 'juliana@example.test' })}`, JSON.stringify(gifted));
   await go(page, '/app/plans?plan=pack6');
   await page.waitForTimeout(800);
   check('app: ?plan=<new key> (the way back from sign-in) opens its payment', route(page).startsWith('/app/pay/product/pack6'), route(page));
@@ -220,7 +283,7 @@ try {
   await page.waitForTimeout(800);
   check('app: ?plan=<new gift> opens the gift page', route(page).startsWith('/app/gift-voucher'), route(page));
   await go(page, '/app/pay/product/single0');
-  check('app: a no-credit single opened by link takes no payment and points to the schedule', (await page.locator('a[href*="/app/schedule"]').count()) >= 1 && (await page.locator('input[type=file]').count()) === 0, (await text(page)).slice(0, 300));
+  check('app: a no-credit single opened by link takes no payment and points to the schedule', (await page.locator('.notice a[href*="/app/schedule"]').count()) === 1 && (await page.locator('input[type=file]').count()) === 0, (await text(page)).slice(0, 300));
   await ctx.close();
 
   scenario = 'plans, trial used'; reset({ trialPaid: true });
@@ -236,6 +299,7 @@ try {
   await go(page, '/admin/class-schedule');
   const row = page.locator('[data-schedule="sch_draft"]');
   check('a draft without a class type says so, and Publish is off', /Sin tipo de clase/.test(await row.innerText().catch(() => '')) && (await row.getByRole('button', { name: 'Publicar' }).isDisabled().catch(() => false)), await row.innerText().catch(() => 'missing'));
+  check('a published row without a type says its dates can\'t be booked', /no se pueden reservar/.test(await page.locator('[data-schedule="sch_live_notype"] [data-type-hint]').innerText().catch(() => '')));
   await row.getByRole('button', { name: 'Editar' }).click();
   await page.getByLabel('Publicada').check({ force: true }).catch(() => {});
   await page.waitForTimeout(200);

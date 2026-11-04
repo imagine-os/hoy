@@ -3,7 +3,7 @@ import type { BaseRow } from './schema';
 import type { DataProvider, Query } from './types';
 import { MockProvider } from './MockProvider';
 import { CompanyOSProvider } from './companyos/CompanyOSProvider';
-import { configureLaunch, launchConfig, PRODUCTION_BUILD, type LaunchConfig } from '../config/launch';
+import { configureLaunch, launchConfig, loadLaunchSettings, markLaunchSettled, PRODUCTION_BUILD, settleLaunchWithin } from '../config/launch';
 import { onAppConfigLoaded } from '../auth/appConfig';
 
 const Ctx = createContext<DataProvider | null>(null);
@@ -20,14 +20,14 @@ function createDefaultProvider(): DataProvider {
   const apply = () => {
     if (applying) return Promise.resolve();
     applying = true;
-    return provider.launchSettings().then((launch) => {
-      if (!launch) return;
+    return loadLaunchSettings(() => provider.launchSettings()).then((ok) => {
+      if (!ok) return;
       applied = true;
-      configureLaunch(launch as Partial<LaunchConfig>);
       watchGoLive();
-    }).catch(() => {}).finally(() => { applying = false; });
+    }).finally(() => { applying = false; });
   };
   void apply();
+  settleLaunchWithin();
   // A first /app-config.json read that failed leaves the defaults (Coming Soon): the session's retry loads it again.
   onAppConfigLoaded(() => { if (!applied) void apply(); });
   return provider;
@@ -49,7 +49,11 @@ function watchGoLive() {
 }
 
 export function DataProviderRoot({ provider, children }: { provider?: DataProvider; children: ReactNode }) {
-  const p = useMemo(() => provider ?? createDefaultProvider(), [provider]);
+  const p = useMemo(() => {
+    if (!provider) return createDefaultProvider();
+    markLaunchSettled(); // A given provider reads no launch settings: nothing to wait for.
+    return provider;
+  }, [provider]);
   return <Ctx.Provider value={p}>{children}</Ctx.Provider>;
 }
 

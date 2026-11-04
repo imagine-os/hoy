@@ -33,8 +33,12 @@ export function scheduleProblems(d: ScheduleDraft, roomCapacity: number | undefi
 }
 
 /** The list's Publish button: a draft without a class type can't go live; switching a published row off is always possible. */
-export const schedulePublishBlocked = (row: Record<string, unknown>): boolean =>
-  row.active === false && !(typeof row.modality === 'string' && row.modality.trim());
+export const schedulePublishBlocked = (row: Record<string, unknown>): boolean => row.active === false && !hasClassType(row);
+const hasClassType = (row: Record<string, unknown>): boolean => typeof row.modality === 'string' && !!row.modality.trim();
+
+/** What a row without a class type says: a draft how to publish; a published one that its classes can't be booked. */
+export const scheduleTypeHint = (row: Record<string, unknown>): 'publish' | 'unbookable' | null =>
+  hasClassType(row) ? null : row.active === false ? 'publish' : 'unbookable';
 
 export const scheduleData = (d: ScheduleDraft) => ({
   title: d.title.trim(), kind: 'class', weekday: d.weekday, start_time: d.start_time, duration_minutes: CLASS_MINUTES,

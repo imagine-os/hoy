@@ -63,6 +63,31 @@ let current: LaunchConfig = { ...LAUNCH_DEFAULTS, ...fromStorage() };
 
 export const launchConfig = (): LaunchConfig => current;
 
+// Whether production has its answer about the launch settings. Until then `siteLive` is only the default, and a screen
+// that follows it would show Coming Soon to everyone for a moment on launch day. A failed read or one that never answers
+// settles on the defaults, so nothing waits for ever; a later retry still applies the real settings.
+let settled = !PRODUCTION_BUILD;
+export const launchSettled = (): boolean => settled;
+export function markLaunchSettled() {
+  if (settled) return;
+  settled = true;
+  for (const l of listeners) l();
+}
+/** The longest a screen waits for the launch settings. */
+export const LAUNCH_SETTLE_MS = 5000;
+export function settleLaunchWithin(ms: number = LAUNCH_SETTLE_MS) { setTimeout(markLaunchSettled, ms); }
+/** Reads and applies the settings (`configureLaunch`), then settles. Whether settings were applied; it never throws. */
+export async function loadLaunchSettings(read: () => Promise<Record<string, unknown> | null>): Promise<boolean> {
+  try {
+    const launch = await read();
+    if (!launch) return false;
+    configureLaunch(launch as Partial<LaunchConfig>);
+    return true;
+  } catch { return false; } finally { markLaunchSettled(); }
+}
+export const onLaunchChange = (l: () => void) => { listeners.add(l); return () => { listeners.delete(l); }; };
+export const useLaunchSettled = (): boolean => useSyncExternalStore(onLaunchChange, launchSettled, launchSettled);
+
 /** Production boot (H-3) passes the tenant's Company OS settings here; screens re-render with the new values. */
 export function configureLaunch(patch: Partial<LaunchConfig>) {
   current = { ...current, ...sanitize(patch) };
