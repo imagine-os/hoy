@@ -10,7 +10,7 @@ try{
  const outfile=join(dir,'photos.mjs');
  await build({stdin:{contents:"export * from './src/modules/website/photography';export * from './src/data/studioPhotography';export {mediaAssets} from './src/data/seed/media';export {buildMediaLibrary} from './src/data/mediaLibrary';",resolveDir:process.cwd(),loader:'ts'},bundle:true,platform:'node',format:'esm',define:{'import.meta.env.BASE_URL':JSON.stringify('/hoy/')},outfile});
  const {practicePhotos,planPhotos,practiceStudioPhoto,planStudioPhoto,philosophyStudioPhoto,mediaAssets,buildMediaLibrary}=await import(pathToFileURL(outfile));
- const expected={ligereza:'practice-ligereza',hibrido:'practice-hibrido',fuego:'practice-fuego',solido:'practice-solido',centro:'practice-centro',alineacion:'practice-alineacion',pulso:'practice-pulso'};
+ const expected={ligereza:'practice-ligereza',hibrido:'practice-hibrido',fuego:'practice-fuego',solido:'practice-solido',centro:'practice-centro',alineacion:'practice-pulso',pulso:'practice-alineacion'};
  assert.deepEqual(practicePhotos,expected);
  assert.deepEqual(planPhotos,{pack12:'pricing-duo',pack12_smtc:undefined,trial:'plan-trial',single:'plan-single'});
  for(const version of ['latest','photos']){

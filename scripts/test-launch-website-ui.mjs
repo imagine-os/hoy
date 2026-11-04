@@ -81,10 +81,10 @@ try {
 
   // ── SW-05 ──────────────────────────────────────────────────────────────────────────────────────────────────
   const body = await page.locator('body').innerText();
-  check('SW-05 the website names the brand from tenant.ts (no other brand name in the shell)', body.includes('Sobre HOY') && !/humanclub\.com/i.test(body.replace('info@humanclub.com', '')));
+  check('SW-05 the website names the brand from tenant.ts (no other brand name in the shell)', body.includes('Sobre HOY') && !/humanclub\.com/i.test(body.replace('info@hoyhumanclub.com', '')));
   await page.goto(`${srv.base}/#/site/contact`); await page.locator('.site-main').waitFor();
   const footerEmail = await page.locator('.site-foot a[href^="mailto:"]').getAttribute('href');
-  check('SW-05 the footer contact email comes from Settings / tenant.ts', footerEmail === 'mailto:info@humanclub.com', footerEmail);
+  check('SW-05 the footer contact email comes from Settings / tenant.ts', footerEmail === 'mailto:info@hoyhumanclub.com', footerEmail);
 
   // ── SW-04 and SW-05 after an owner edit in Settings ────────────────────────────────────────────────────────
   await db(page, `const t = db.tenants.find((r) => r.id === 'ten_hoy'); t.settings = { ...(t.settings || {}), profile: { ...((t.settings || {}).profile || {}), whatsapp: '+57 300 123 4567', email: 'hola@estudio-ficticio.test', confirmed: true } };`);

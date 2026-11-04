@@ -216,7 +216,7 @@ export const EVENT_DETAILS: Record<string, string[]> = {
   'file.confirmed': ['fileId', 'kind', 'published'],
 };
 
-/** The app's values for `{brand}` and `{contact_email}` (tenant config; the brand and the address are pending with Jas, J5). */
+/** The app's values for `{brand}` and `{contact_email}` (tenant config; the brand is pending with Jas, J5; the address is her answer of 2026-11-04). */
 export const launchBrand = () => ({ brand: tenant.name, contact_email: tenant.contact.email });
 
 /** Fills `{brand}` / `{contact_email}`; Company OS `{{…}}` placeholders are left for the server. */
