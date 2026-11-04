@@ -177,7 +177,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 }
 
 // ── class_cancelled matches the recipe (Company OS deploy/recipes/hoy.json) ─────────────────────────────────────────
-const RECIPE_BODY = 'Hola {{person.name}}:\n\nTuvimos que cancelar la clase del {{record.start|datetime}}. Lo sentimos.\n\nSi la reservaste con una clase de tu paquete, la clase vuelve a tu paquete. Si la pagaste aparte y ya aprobamos tu pago, la clase vuelve a tu saldo para que reserves otra; si tu comprobante estaba en revisión, vuelve cuando recepción lo apruebe.\n\nVer horario: {{links.base}}/#/app/schedule\n\nEquipo HOY\ninfo@humanclub.com';
+const RECIPE_BODY = 'Hola {{person.name}}:\n\nTuvimos que cancelar la clase del {{record.start|datetime}}. Lo sentimos.\n\nSi la reservaste con una clase de tu paquete, la clase vuelve a tu paquete. Si la pagaste aparte y ya aprobamos tu pago, la clase vuelve a tu saldo para que reserves otra; si tu comprobante estaba en revisión, vuelve cuando recepción lo apruebe.\n\nVer horario: {{links.base}}/#/app/schedule\n\nEquipo HOY\ninfo@hoyhumanclub.com';
 const doc = JSON.parse(readFileSync('deploy/comms/hoy-templates.json', 'utf8'));
 const fileRow = doc.records?.flatMap((b) => b.rows ?? []).find((r) => r.key === 'class_cancelled');
 check('class_cancelled: hoy-templates.json has the recipe\'s body', fileRow?.body === RECIPE_BODY, fileRow?.body);

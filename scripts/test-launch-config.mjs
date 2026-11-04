@@ -73,11 +73,11 @@ check('SW-02 published catalog: an unpublished item is not priced from the stati
 // ── PL-07 — validation helpers ───────────────────────────────────────────────────────────────────────────────
 check('PL-07 safeHttpsUrl keeps an https link', M.safeHttpsUrl('https://www.instagram.com/hoyhumanclub') === 'https://www.instagram.com/hoyhumanclub');
 check('PL-07 safeHttpsUrl refuses javascript:, data:, http: and junk', ['javascript:alert(1)', ' javascript:alert(1)', 'data:text/html,<script>', 'http://x.co', 'not a url', ''].every((u) => M.safeHttpsUrl(u) === null));
-check('PL-07 isEmail accepts a normal address and refuses markup or spaces', M.isEmail('info@humanclub.com') && !M.isEmail('<script>@x.co') && !M.isEmail('a b@x.co') && !M.isEmail('nope'));
+check('PL-07 isEmail accepts a normal address and refuses markup or spaces', M.isEmail('info@hoyhumanclub.com') && !M.isEmail('<script>@x.co') && !M.isEmail('a b@x.co') && !M.isEmail('nope'));
 check('PL-07 clip bounds pasted text', M.clip('x'.repeat(900), M.LIMITS.note).length === M.LIMITS.note);
 const hostile = M.contactOf(M.mergeSettings({ profile: { instagramUrl: 'javascript:alert(document.cookie)', mapLink: 'javascript:alert(1)', email: '"><img src=x onerror=alert(1)>' } }));
 check('PL-07 Settings: a javascript: Instagram or map link never becomes a public link', /^https:/.test(hostile.instagramUrl) && (hostile.location.link === null || /^https:/.test(hostile.location.link)));
-check('PL-07 Settings: an invalid contact email falls back to the configured one', hostile.email === 'info@humanclub.com');
+check('PL-07 Settings: an invalid contact email falls back to the configured one', hostile.email === 'info@hoyhumanclub.com');
 check('SW-04 / PL-07 a WhatsApp number without enough digits falls back to the configured one', M.contactOf(M.mergeSettings({ profile: { whatsapp: 'escríbenos' } })).whatsapp === '+57 312 776 5000' && M.contactOf(M.mergeSettings({ profile: { whatsapp: '+57 300 123 4567' } })).whatsapp === '+57 300 123 4567');
 
 // ── PL-05 / Q-13 — reception records an expense but sees no income ──────────────────────────────────────────

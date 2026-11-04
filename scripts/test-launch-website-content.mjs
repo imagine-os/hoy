@@ -35,7 +35,7 @@ const PAGES = {
   today: { path: '/site/schedule', must: [] },
   teachers: { path: '/site/teachers', must: TEACHERS.map(([n]) => n) },
   plans: { path: '/site/plans', must: PRICES.flat() },
-  contact: { path: '/site/contact', must: ['+57 312 776 5000', 'info@humanclub.com', 'Cl. 7B Sur # 29C-100', '@hoyhumanclub'] },
+  contact: { path: '/site/contact', must: ['+57 312 776 5000', 'info@hoyhumanclub.com', 'Cl. 7B Sur # 29C-100', '@hoyhumanclub'] },
 };
 
 const srv = await serveDist(5321);
