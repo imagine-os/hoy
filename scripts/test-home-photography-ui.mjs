@@ -5,7 +5,8 @@ const base=process.env.QA_BASE||'http://127.0.0.1:5196';
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',headless:true,args:['--no-sandbox','--disable-dev-shm-usage']});
 const page=await browser.newPage({viewport:{width:1218,height:1000},reducedMotion:'reduce'}),errors=[];
 page.on('pageerror',error=>errors.push(error.message));
-const expected=['ligereza','hibrido','fuego','solido','centro','alineacion','pulso'];
+// In classOrder; Alineación and Pulso show each other's photo (Jas, 2026-11-04).
+const expected=['ligereza','hibrido','fuego','solido','centro','pulso','alineacion'];
 const matrix=[['es',390,false],['en',390,true],['es',768,false],['en',768,true],['es',1218,false],['en',1218,true],['es',1280,false],['en',1280,true]];
 const plansPrice=async()=>({packages:await page.locator('.package-price strong').allTextContents(),passes:await page.locator('.plans-pass-price').allTextContents()});
 async function decode(){await page.evaluate(async()=>{for(const img of document.images)img.loading='eager';await Promise.all([...document.images].map(i=>i.decode().catch(()=>{})));const nodes=[...document.querySelectorAll('.source-practice,.source-practice .classarch-arch')];for(const node of nodes){for(const m of getComputedStyle(node).backgroundImage.matchAll(/url\(["']?([^"')]+)["']?\)/g)){const img=new Image();img.src=m[1];await img.decode();}}});}
