@@ -553,6 +553,8 @@ await test('smoke: passes on a gated site behind an edge that overwrites X-Real-
 
 await test('smoke: fails, saying so, when the edge lets a written X-Real-IP through', async () => {
   await failsWith(smoke((await start()).base), /X-Real-IP/);
+  // The known limit: on a re-run of a commit, the old instance can pass the commit check and the new one take over mid-count.
+  await failsWith(smoke((await start()).base), /re-run of the same commit[^]*run it again before suspecting the edge/);
 });
 
 await test('smoke: fails when the deployed commit never arrives, or the site never answers', async () => {
@@ -635,6 +637,11 @@ await test('addressKey: the /64 for IPv6, the address itself for IPv4 and anythi
   assert.notEqual(addressKey('1::2:3:4:5:6:7'), addressKey('1:2::3:4:5:6'), 'what :: stands for counts');
   assert.equal(addressKey('fe80::1%eth0'), addressKey('fe80::2'));
   assert.equal(addressKey('64:ff9b::192.0.2.1'), addressKey('64:ff9b::198.51.100.7'));
+  assert.equal(addressKey('::'), '0:0:0:0::/64');
+  assert.equal(addressKey('::1'), addressKey('::'), 'loopback is in the zero /64');
+  assert.equal(addressKey('1:2:3:4:5:6:1.2.3.4'), '1:2:3:4::/64', 'a dotted tail with no ::');
+  assert.equal(addressKey('::ffff:c000:280'), '192.0.2.128', 'IPv4-mapped in hex is that IPv4 address too');
+  assert.equal(addressKey('::FFFF:C000:0280'), addressKey('::ffff:192.0.2.128'));
   assert.equal(addressKey('203.0.113.7'), '203.0.113.7');
   assert.equal(addressKey('::ffff:203.0.113.7'), '203.0.113.7', 'an IPv4 address written as IPv6 is that IPv4 address');
   assert.notEqual(addressKey('203.0.113.7'), addressKey('203.0.113.8'));

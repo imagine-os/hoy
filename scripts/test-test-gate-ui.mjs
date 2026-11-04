@@ -21,7 +21,13 @@ const FAKE_CLERK = readFileSync(new URL('./fixtures/fake-clerk.js', import.meta.
 const PASS = 'correct horse battery';
 const USER = 'user_member';
 const EMAIL = 'member@example.test';
-const ACCOUNTS = { [USER]: { emails: [{ id: 'ea_member', email: EMAIL, verified: true }], primary: 'ea_member' } };
+const NEW_USER = 'user_new';
+const NEW_EMAIL = 'nueva@example.test';
+const ACCOUNTS = {
+  [USER]: { emails: [{ id: 'ea_member', email: EMAIL, verified: true }], primary: 'ea_member' },
+  [NEW_USER]: { emails: [{ id: 'ea_new', email: NEW_EMAIL, verified: true }], primary: 'ea_new' },
+};
+const SIGNUP = { enabled: true, consents: [{ document: 'terms', version: '2026-10-01' }, { document: 'privacy', version: '2026-10-01' }], personFields: ['name', 'phone'], facetFields: ['emergency_contact_name', 'emergency_contact_phone'] };
 const PORT = Number(process.env.QA_PORT ?? 5197);
 // localhost, not 127.0.0.1: Chromium takes a Secure cookie over plain http only on localhost.
 const BASE = `http://localhost:${PORT}`;
@@ -33,7 +39,10 @@ const cos = createServer((req, res) => {
   req.on('end', () => {
     const path = new URL(req.url, 'http://cos').pathname.replace(`/t/${TENANT}`, '');
     seen.push({ method: req.method, path, headers: req.headers });
+    const isNew = /^Bearer fake\.user_new\./.test(req.headers.authorization ?? '');
+    if (path === '/me' && isNew) { res.writeHead(403, { 'content-type': 'application/json' }); return res.end(JSON.stringify({ error: 'account_not_invited' })); }
     res.writeHead(200, { 'content-type': 'application/json' });
+    if (path === '/signup' && req.method === 'GET') return res.end(JSON.stringify(SIGNUP));
     if (path === '/me') return res.end(JSON.stringify({ tenant: { slug: TENANT }, user: { id: USER, name: 'Ana Cliente', email: EMAIL }, roleKeys: ['member'], isSuperAdmin: false, caps: [], entities: [] }));
     return res.end(JSON.stringify({ data: [] }));
   });
@@ -115,13 +124,69 @@ try {
   const refused = answers.filter((a) => a.path.startsWith('/api/') && a.body.includes('test_gate'));
   check('no call of the app met the gate', refused.length === 0, JSON.stringify(refused));
 
-  // 5. The control: without the cookie the same call meets the gate, so it was the cookie that let it through.
+  // 5. The cookie ends while the app is open: the app's own next read meets the gate. The page reloads onto the passphrase
+  // form (a poll would do it within 20 s; moving to another screen does it now), and the Clerk session survives.
   await ctx.clearCookies();
-  const without = await page.evaluate(async (tenant) => {
-    const res = await fetch(`/api/cos/t/${tenant}/me`, { credentials: 'same-origin' });
-    return { status: res.status, body: await res.json().catch(() => null) };
-  }, TENANT);
-  check('without the cookie the same call answers the gate\'s 401', without.status === 401 && without.body?.error === 'test_gate', JSON.stringify(without));
+  answers.length = 0;
+  const seenBefore = me().length;
+  await page.goto(`${BASE}/#/app/history`);
+  const form = page.locator('form[action="/test-gate"] input[name="passphrase"]');
+  check('the app\'s own read meets the gate and the page lands on the passphrase form', await until(async () => (await form.count().catch(() => 0)) === 1, 30_000), page.url());
+  check('that read was answered test_gate', answers.some((a) => a.path.startsWith('/api/') && a.body.includes('test_gate')), JSON.stringify(answers.slice(0, 5)));
+  const clerkState = () => page.evaluate(() => JSON.parse(sessionStorage.getItem('fake-clerk-state') ?? 'null')?.active?.userId ?? null);
+  check('the Clerk session is still there behind the form', (await clerkState().catch(() => null)) === USER);
+  await form.fill(PASS);
+  await page.locator('form[action="/test-gate"] button[type="submit"]').click();
+  check('after the passphrase the same person is signed in, without signing in again', await until(() => me().length > seenBefore), String(me().length));
+  check('and is not asked to sign in', (await page.locator('[data-step="email"]').count()) === 0 && (await clerkState().catch(() => null)) === USER);
+  await ctx.close();
+
+  // 6. A write that meets the gate: the form stays, with what was typed and the copy, and the page does not reload. The
+  // gate's answer is played here, on the one call, so no read can reload the page first. (The sign-up form: cosRequest.ts.)
+  const writer = await browser.newContext({ viewport: { width: 1280, height: 900 }, reducedMotion: 'reduce' });
+  await writer.route(/^https?:\/\/(?!localhost)/, (r) => r.abort());
+  await writer.route(`https://${HOST}/npm/@clerk/clerk-js@*/dist/clerk.browser.js`, (r) => r.fulfill({ status: 200, contentType: 'text/javascript', body: FAKE_CLERK }));
+  await writer.addInitScript(({ accounts, pk }) => {
+    window.__fakeClerkConfig = { accounts, publishableKey: pk };
+    if (!sessionStorage.getItem('qa-init')) { sessionStorage.setItem('qa-init', '1'); localStorage.setItem('hoyos.lang', 'es'); }
+  }, { accounts: ACCOUNTS, pk: PK });
+  const second = await writer.newPage();
+  second.on('pageerror', (e) => errors.push(e.message));
+  await second.goto(`${BASE}/#/auth/sign-in`);
+  await second.locator('input[name="passphrase"]').fill(PASS);
+  await second.locator('form[action="/test-gate"] button[type="submit"]').click();
+  await until(async () => new URL(second.url()).pathname === '/');
+  await second.goto(`${BASE}/#/auth/sign-in`);
+  await second.locator('[data-step="email"] input').waitFor({ timeout: 10_000 }).catch(() => {});
+  await second.locator('[data-step="email"] input').fill(NEW_EMAIL);
+  await second.locator('[data-step="email"] button[type=submit]').click();
+  await second.locator('[data-step="code"]').waitFor({ timeout: 5000 }).catch(() => {});
+  await second.locator('[data-step="code"] input').fill('424242');
+  await second.locator('[data-step="code"] button[type=submit]').click();
+  const register = second.locator('[data-register]');
+  await register.waitFor({ timeout: 10_000 }).catch(() => {});
+  check('a new login gets the sign-up form', (await register.count()) === 1, second.url());
+  const inputs = register.locator('input:not([type=checkbox])');
+  await inputs.nth(0).fill('Nueva Prueba');
+  await inputs.nth(1).fill('+57 300 555 0199');
+  await inputs.nth(2).fill('QA Contacto');
+  await inputs.nth(3).fill('+57 300 555 0198');
+  await register.locator('input[type=checkbox]').check();
+  let gatedWrites = 0;
+  await second.route(`**/api/cos/t/${TENANT}/signup`, (r) => {
+    if (r.request().method() !== 'POST') return r.continue();
+    gatedWrites++;
+    return r.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ error: 'test_gate' }) });
+  });
+  await second.evaluate(() => { window.__notReloaded = true; });
+  await register.locator('button[type=submit]').click();
+  check('the write went out and met the gate', await until(() => gatedWrites > 0));
+  check('the form says to reload', await until(async () => /Recarga la página/.test(await register.innerText().catch(() => ''))), await register.innerText().catch(() => ''));
+  await second.waitForTimeout(1500);
+  check('the page did not reload', (await second.evaluate(() => window.__notReloaded === true).catch(() => false)) === true);
+  check('what was typed is still there', (await inputs.nth(0).inputValue().catch(() => '')) === 'Nueva Prueba');
+  check('the person is still signed in', (await second.evaluate(() => JSON.parse(sessionStorage.getItem('fake-clerk-state') ?? 'null')?.active?.userId ?? null).catch(() => null)) === NEW_USER);
+  await writer.close();
 } finally {
   check('no page threw', errors.length === 0, errors.join(' | '));
   await browser.close();

@@ -197,4 +197,19 @@ check('the deploy gate (deploy-test checks job) runs this check', readFileSync('
   check('the production summary warns too', /Warning:.*TEST_GATE_PASSPHRASE/.test(stray(['--production'], { TEST_GATE_PASSPHRASE: 'x' }).stdout));
 }
 
+// ── The gate, final review round ──────────────────────────────────────────────────────────────────────────────
+{
+  const authChecks = readFileSync('.github/workflows/auth-checks.yml', 'utf8');
+  const signup = authChecks.slice(authChecks.indexOf('\n  real-signup:'));
+  check('real-signup job: runs in the test environment, and takes the site\'s address from its APP_URL (one variable, not two)', /environment:\s*test\b/.test(signup) && /HOY_TEST_URL:\s*\$\{\{\s*vars\.APP_URL\s*\}\}/.test(signup) && !/vars\.HOY_TEST_URL/.test(authChecks));
+  check('deploy-prod: the refusal says the secret may be on this environment or the repository', /::error::[^\n]*TEST_GATE_PASSPHRASE[^\n]*this environment or the repository/.test(readFileSync('.github/workflows/deploy-prod.yml', 'utf8')));
+  for (const f of ['src/modules/identity/pages.tsx', 'src/auth/CustomerEnrolment.tsx']) {
+    check(f + ': a sign-up write that meets the gate keeps the copy, instead of re-checking the session', readFileSync(f, 'utf8').includes('isTestGate('));
+  }
+  check('the transport tells reads from writes for the gate', /reloadIfTestGate\(res\.status, parsed, \{ read \}\)/.test(readFileSync('src/data/companyos/transport.ts', 'utf8')));
+  check('the session keeps the gate apart from a session problem', /testGate/.test(readFileSync('src/auth/sessionContext.ts', 'utf8')) && /testGate/.test(readFileSync('src/modules/identity/pages.tsx', 'utf8')));
+  const docs = readFileSync('src/modules/docs/index.ts', 'utf8');
+  check('the docs have copy for the gate, es and en', docs.includes("'docs.private.test-gate.title'") && docs.includes("'docs.private.test-gate.body'"));
+}
+
 done();

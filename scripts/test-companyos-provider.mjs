@@ -25,7 +25,11 @@ try {
         export * from './src/data/companyos/refusals.ts';
         export * from './src/data/companyos/mapping.ts';
         export * from './src/data/companyos/query.ts';
-        export * from './src/data/companyos/dates.ts';`,
+        export * from './src/data/companyos/dates.ts';
+        export * from './src/auth/testGateReload.ts';
+        export { cosJson } from './src/auth/cosRequest.ts';
+        export { loadPrivateDocs } from './src/modules/docs/privateDocs.ts';
+        export { setSessionTokenSource, subscribeUnauthorized } from './src/auth/sessionToken.ts';`,
       resolveDir: process.cwd(), loader: 'ts',
     },
     bundle: true, platform: 'node', format: 'esm', outfile: file, logLevel: 'silent',
@@ -532,6 +536,110 @@ try {
       Date.now = realNow;
       m.setCompanyOSUnauthorizedHandler(null);
       delete globalThis.sessionStorage; delete globalThis.location;
+    }
+  });
+  /** A browser for reloadIfTestGate: a storage, a location that counts, a clock to move. */
+  const gateBrowser = () => {
+    const store = new Map();
+    const b = { reloads: 0, realNow: Date.now, at: 0 };
+    Object.defineProperty(globalThis, 'sessionStorage', { value: { getItem: (k) => store.get(k) ?? null, setItem: (k, v) => { store.set(k, String(v)); }, removeItem: (k) => { store.delete(k); } }, configurable: true, writable: true });
+    Object.defineProperty(globalThis, 'location', { value: { reload: () => { b.reloads++; } }, configurable: true, writable: true });
+    b.later = () => { b.at += 61_000; Date.now = () => b.realNow() + b.at; };
+    b.end = () => { Date.now = b.realNow; delete globalThis.sessionStorage; delete globalThis.location; delete globalThis.top; };
+    return b;
+  };
+  await test('transport: a write that meets the test gate does not reload: the form stays, with the copy', async () => {
+    const b = gateBrowser();
+    let told = 0;
+    const fetch = async (url) => (String(url).endsWith('app-config.json')
+      ? new Response(JSON.stringify({ tenant: 'hoy', apiBase: '/api/cos' }), { status: 200 })
+      : new Response(JSON.stringify({ error: 'test_gate' }), { status: 401 }));
+    m.setCompanyOSUnauthorizedHandler(() => { told++; });
+    try {
+      const p = new CompanyOSProvider({ fetch, getToken: async () => 'tok', retryDelayMs: 1, sleep: async () => {} });
+      for (const [method, path, body] of [['POST', '/api/person', { name: 'x' }], ['PATCH', '/api/person/1', { name: 'x' }], ['DELETE', '/api/person/1'], ['POST', '/batch', { ops: [] }]]) {
+        await assert.rejects(p.request(method, path, body), (e) => e.code === 'test_gate' && e.status === 401, `${method} ${path}`);
+      }
+      assert.equal(b.reloads, 0, 'typed input survives'); assert.equal(told, 0, 'and the session is not told');
+      assert.match(refusalCopy('test_gate', 'es'), /Recarga la página/);
+      await assert.rejects(p.request('POST', '/query', { entity: 'occurrence' }), (e) => e.code === 'test_gate');
+      assert.equal(b.reloads, 1, 'POST /query only reads: it reloads');
+      b.later();
+      await assert.rejects(p.request('GET', '/api/person/1'), (e) => e.code === 'test_gate');
+      assert.equal(b.reloads, 2, 'so does a GET');
+    } finally { b.end(); m.setCompanyOSUnauthorizedHandler(null); }
+  });
+  await test('reloadIfTestGate: says what happened; only the gate\'s 401 counts', () => {
+    const b = gateBrowser();
+    const gate = { error: 'test_gate' };
+    try {
+      assert.equal(m.reloadIfTestGate(401, { error: 'unauthorized' }), false);
+      assert.equal(m.reloadIfTestGate(403, gate), false);
+      assert.equal(m.reloadIfTestGate(401, null), false);
+      assert.equal(b.reloads, 0);
+      assert.equal(m.reloadIfTestGate(401, gate, { read: false }), 'copy', 'a write');
+      assert.equal(b.reloads, 0);
+      assert.equal(m.reloadIfTestGate(401, gate), 'reloading');
+      assert.equal(b.reloads, 1);
+      assert.equal(m.reloadIfTestGate(401, gate), 'copy', 'inside the guard window');
+      assert.equal(b.reloads, 1);
+      delete globalThis.sessionStorage;
+      b.later();
+      assert.equal(m.reloadIfTestGate(401, gate), 'copy', 'no storage');
+      assert.equal(b.reloads, 1);
+      assert.equal(m.isTestGate(401, gate), true); assert.equal(m.isTestGate(401, { error: 'x' }), false); assert.equal(m.isTestGate(200, gate), false);
+    } finally { b.end(); }
+  });
+  await test('reloadIfTestGate: inside a same-origin frame (the Hub\'s DeviceFrame) the top page reloads, so no frame lands on the gate page', () => {
+    const b = gateBrowser();
+    const gate = { error: 'test_gate' };
+    let topReloads = 0;
+    try {
+      Object.defineProperty(globalThis, 'top', { value: { location: { href: 'http://hoy.test/', reload: () => { topReloads++; } } }, configurable: true, writable: true });
+      assert.equal(m.reloadIfTestGate(401, gate), 'reloading');
+      assert.equal(topReloads, 1); assert.equal(b.reloads, 0);
+      // A cross-origin parent: reading its location throws. The frame reloads itself, and nothing breaks.
+      Object.defineProperty(globalThis, 'top', { value: { get location() { throw new Error('SecurityError: cross-origin'); } }, configurable: true, writable: true });
+      b.later();
+      assert.equal(m.reloadIfTestGate(401, gate), 'reloading');
+      assert.equal(topReloads, 1); assert.equal(b.reloads, 1);
+    } finally { b.end(); }
+  });
+  await test('cosJson and the private docs: the gate\'s 401 is not a session problem; reads reload, writes keep the form', async () => {
+    const b = gateBrowser();
+    let told = 0, answer = { error: 'test_gate' };
+    const realFetch = globalThis.fetch;
+    Object.defineProperty(globalThis, 'document', { value: { baseURI: 'http://hoy.test/' }, configurable: true, writable: true });
+    globalThis.fetch = async (url) => (String(url).includes('app-config.json')
+      ? new Response(JSON.stringify({ tenant: 'hoy', apiBase: '/api/cos', clerkPublishableKey: 'pk_test_x', environment: 'test' }), { status: 200 })
+      : new Response(JSON.stringify(answer), { status: 401 }));
+    m.setSessionTokenSource(async () => 'tok');
+    const stop = m.subscribeUnauthorized(() => { told++; });
+    try {
+      const write = await m.cosJson('/signup', { method: 'POST', body: {} });
+      assert.equal(write.status, 401); assert.deepEqual(write.body, answer, 'the caller gets the code');
+      assert.equal(b.reloads, 0, 'a write keeps the form'); assert.equal(told, 0);
+      await m.cosJson('/me');
+      assert.equal(b.reloads, 1, 'a GET reloads'); assert.equal(told, 0);
+      b.later();
+      await m.cosJson('/query', { method: 'POST', body: { entity: 'person' } });
+      assert.equal(b.reloads, 2, 'POST /query reads: it reloads'); assert.equal(told, 0);
+      b.later();
+      assert.equal(await m.loadPrivateDocs(), 'test-gate', 'the docs say the gate, not signed out');
+      assert.equal(b.reloads, 3); assert.equal(told, 0);
+      assert.equal(await m.loadPrivateDocs(), 'test-gate', 'inside the guard window too');
+      assert.equal(b.reloads, 3);
+      answer = { error: 'unauthorized' };
+      b.later();
+      assert.equal((await m.cosJson('/me')).status, 401);
+      assert.equal(told, 1, 'a refused session still re-checks'); assert.equal(b.reloads, 3);
+      assert.equal(await m.loadPrivateDocs(), 'signed-out');
+      assert.equal(told, 2); assert.equal(b.reloads, 3);
+    } finally {
+      stop(); m.setSessionTokenSource(null);
+      globalThis.fetch = realFetch;
+      delete globalThis.document;
+      b.end();
     }
   });
   await test('transport: 502 invitation_failed is the API\'s answer (kept, not retried, not ambiguous)', async () => {
