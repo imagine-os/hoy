@@ -50,11 +50,11 @@ function reset() {
   world = {
     person: m([
       rec('per_cust', { name: 'Carla Cliente', email: 'cust@example.test', user: 'user_cust' }), rec('per_used', { name: 'Uma Usada', email: 'u@example.test' }), rec('per_book', { name: 'Berta Reserva', email: 'b@example.test' }),
-      rec('per_gift', { name: 'Gina Regalo', email: 'g@example.test' }), rec('per_stale', { name: 'Sara Cambio', email: 's@example.test' }), rec('per_pend', { name: 'Pia Pendiente', email: 'p@example.test' }), rec('per_tab', { name: 'Tita Pestaña', email: 't@example.test' }), rec('per_lost', { name: 'Lina Perdida', email: 'l@example.test' }), rec('per_dbl', { name: 'Dani Doble', email: 'd@example.test' }),
+      rec('per_gift', { name: 'Gina Regalo', email: 'g@example.test' }), rec('per_stale', { name: 'Sara Cambio', email: 's@example.test' }), rec('per_pend', { name: 'Pia Pendiente', email: 'p@example.test' }), rec('per_tab', { name: 'Tita Pestaña', email: 't@example.test' }), rec('per_ref', { name: 'Rita Cambio', email: 'r@example.test' }), rec('per_lost', { name: 'Lina Perdida', email: 'l@example.test' }), rec('per_dbl', { name: 'Dani Doble', email: 'd@example.test' }),
       rec('per_both', { name: 'Berta Ambas', email: 'both@example.test', user: 'user_both' }), rec('per_deskcust', { name: 'Dora Mostrador', email: 'deskcust@example.test', user: 'user_deskcust' }),
     ]),
     product: m([rec('prod_pack', { key: 'pack', name: 'Paquete', kind: 'pack', price: 600000, credits: 12, active: true })]),
-    payment: m([pay('pay_ok', 'per_cust'), pay('pay_used', 'per_used'), pay('pay_booking', 'per_book'), pay('pay_gift', 'per_gift'), pay('pay_stale', 'per_stale'), pay('pay_pend', 'per_pend', 'pending'), pay('pay_tab', 'per_tab'), pay('pay_lost', 'per_lost'), pay('pay_dbl', 'per_dbl'), pay('pay_both', 'per_both'), pay('pay_dc', 'per_deskcust'),
+    payment: m([pay('pay_ok', 'per_cust'), pay('pay_used', 'per_used'), pay('pay_booking', 'per_book'), pay('pay_gift', 'per_gift'), pay('pay_stale', 'per_stale'), pay('pay_pend', 'per_pend', 'pending'), pay('pay_tab', 'per_tab'), pay('pay_ref', 'per_ref'), pay('pay_lost', 'per_lost'), pay('pay_dbl', 'per_dbl'), pay('pay_both', 'per_both'), pay('pay_dc', 'per_deskcust'),
       { ...pay('pay_both_v', 'per_both', 'voided'), data: { ...pay('pay_both_v', 'per_both', 'voided').data, status_reason: 'Motivo interno' } }]),
     invoice: m([inv('inv_ok', 'pay_ok', 41, 'per_cust'), inv('inv_tab', 'pay_tab', 42, 'per_tab'), inv('inv_used', 'pay_used', 43, 'per_used'), inv('inv_both', 'pay_both', 44, 'per_both'), inv('inv_dc', 'pay_dc', 45, 'per_deskcust'),
       { ...inv('inv_both_v', 'pay_both_v', 46, 'per_both'), data: { ...inv('inv_both_v', 'pay_both_v', 46, 'per_both').data, voided_at: `${TODAY}T15:00:00.000Z`, void_reason: 'Motivo interno' } }]),
@@ -201,15 +201,32 @@ try {
     await page.waitForTimeout(300);
     check(`${name}: the payment still reads as it was, Void still offered`, (await row(page, name).locator(VOID).count()) === 1);
   }
-  // The status changed meanwhile: someone else voided it after this screen read it.
-  scenario = 'stale';
+  // A stale screen: someone else voided it after this screen read it.
+  scenario = 'stale, already voided';
   await row(page, 'Sara Cambio').locator(VOID).click({ timeout: 3000 }).catch(() => {});
   await page.waitForTimeout(300);
-  world.payment.get('pay_stale').data.status = 'voided';
+  Object.assign(world.payment.get('pay_stale').data, { status: 'voided', status_reason: 'Primero' });
+  await drawer(page).locator('input[name="void-reason"]').fill('Segundo').catch(() => {});
+  await submit(page).catch(() => {});
+  await page.waitForTimeout(800);
+  const already = await drawer(page).locator('.void-already').innerText({ timeout: 3000 }).catch(() => '');
+  check('Already voided: reads as done, and says the new reason was not saved', /ya estaba anulado/i.test(already) && /no se guardó/i.test(already), already);
+  check('Already voided: the first reason stands', world.payment.get('pay_stale').data.status_reason === 'Primero');
+  await drawer(page).locator('button[data-void-back]').click({ timeout: 3000 }).catch(() => {});
+  await page.waitForTimeout(1200);
+  check('Already voided: on closing, the row reads Anulado and offers no Void', /Anulado/.test(await row(page, 'Sara Cambio').innerText().catch(() => '')) && (await row(page, 'Sara Cambio').locator(VOID).count()) === 0);
+  // The status changed to something else.
+  scenario = 'stale, changed';
+  await row(page, 'Rita Cambio').locator(VOID).click({ timeout: 3000 }).catch(() => {});
+  await page.waitForTimeout(300);
+  world.payment.get('pay_ref').data.status = 'refunded';
   await drawer(page).locator('input[name="void-reason"]').fill('Registrado por error').catch(() => {});
   await submit(page).catch(() => {});
-  await page.waitForTimeout(600);
+  await page.waitForTimeout(800);
   check('The status changed meanwhile: the screen says so', /cambió|actualiza/i.test(await said(page)));
+  await drawer(page).locator('button[data-void-back]').click({ timeout: 3000 }).catch(() => {});
+  await page.waitForTimeout(1200);
+  check('The status changed meanwhile: on closing, the row refreshes and offers no Void', (await row(page, 'Rita Cambio').locator(VOID).count()) === 0 && (await row(page, 'Rita Cambio').count()) >= 1);
   await ctx.close();
 
   // ── The answer is lost: the form locks, a retry reuses the key, one void ───────────────────────────────────

@@ -49,6 +49,9 @@ export const CONTRACT_REFUSALS = {
   // Covers a booking still ahead and one already checked in or completed, which can't be cancelled.
   void_booking_active: { es: 'No se puede anular: este pago cubrió una reserva activa o una clase ya tomada. Si la clase aún no se ha tomado, cancela la reserva primero.', en: 'This payment cannot be voided: it paid for an active booking or a class already taken. If the class has not been taken yet, cancel the booking first.' },
   void_gift_issued: { es: 'No se puede anular: este pago emitió un bono de regalo.', en: 'This payment cannot be voided: it issued a gift voucher.' },
+  payment_voided: { es: 'Este pago está anulado y ya no se puede cambiar.', en: 'This payment is voided and can no longer be changed.' },
+  undo_payment_voided: { es: 'No se puede deshacer: el pago de esta reserva se anuló y no queda otro aprobado.', en: 'This cannot be undone: this booking\'s payment was voided and no other approved payment covers it.' },
+  voucher_payment_not_approved: { es: 'No se puede emitir este bono: el pago ya no está aprobado. Actualiza la página.', en: 'This voucher cannot be issued: the payment is no longer approved. Refresh the page.' },
   payment_undeletable: { es: 'Un pago aprobado o anulado no se puede eliminar.', en: 'An approved or voided payment cannot be deleted.' },
   lot_voided: { es: 'Este paquete se anuló y ya no se puede cambiar.', en: 'This pack was voided and can no longer be changed.' },
   invalid_status_transition: { es: 'Este pago ya no se puede cambiar así. Actualiza la página para ver su estado.', en: 'This payment can no longer be changed this way. Refresh to see its current status.' },

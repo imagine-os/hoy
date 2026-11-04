@@ -31,6 +31,8 @@ const ENTRIES = {
   trial: "export { assessLiveTrial } from './src/data/trialEligibility';",
   identity: "export { isSuperAdminMe, roleFromMe, superAdminFlag } from './src/auth/companyOsIdentity';",
   admin: "export { strings } from './src/modules/admin/strings';",
+  desk: "export { deskErrorText, deskStrings } from './src/modules/staff/desk/strings';",
+  voucher: "export { refusalKey } from './src/modules/vouchers/production/model'; export { productionStrings } from './src/modules/vouchers/production/strings';",
   mapping: "export { adapterFor, fromRecord } from './src/data/companyos/mapping'; export { showsLedgerValidity } from './src/data/packages'; export { strings as customerStrings } from './src/modules/customer/strings'; export { I18nProvider } from './src/i18n/I18nProvider';",
   report: "export * from './src/data/confirmedPaymentReport';",
 };
@@ -101,13 +103,71 @@ await test('voidPayment: a double tap (same key) replays: one void, one write', 
   assert.equal(cos.keyCount(), 1);
   assert.equal(cos.db.payment.find((p) => p.id === paid.id).data.status, 'voided');
 });
-await test('voidPayment: someone voided it first: refused as stale, with words (ifMatch)', async () => {
-  const { voidPayment } = need('void'); const { refusalKey } = need('cos');
+await test('voidPayment: a stale screen, someone voided it first (409): reads as already voided, and the first reason stands', async () => {
+  const { voidPayment } = need('void');
   const { cos, paid } = setup();
-  await voidPayment(cos, paid.id, 'Primero', 'void-key-0003');
+  assert.equal(await voidPayment(cos, paid.id, 'Primero', 'void-key-0003'), 'voided');
+  assert.equal(await voidPayment(cos, paid.id, 'Segundo', 'void-key-0004'), 'already_voided');
+  assert.equal(cos.db.payment.find((p) => p.id === paid.id).data.status_reason, 'Primero');
+});
+await test('voidPayment: the status changed to something else (409): refused as stale, with words', async () => {
+  const { voidPayment, voidRefusalLine } = need('void');
+  const { cos, paid } = setup();
+  cos.db.payment.find((p) => p.id === paid.id).data.status = 'refunded';
   const code = await codeOf(voidPayment(cos, paid.id, 'Segundo', 'void-key-0004'));
   assert.equal(code, 'ifMatch mismatch');
-  assert.equal(refusalKey(code), 'payLaunch.code.stale');
+  assert.equal(voidRefusalLine(code, 'es', (k) => k), 'payLaunch.code.stale');
+});
+await test('voidPayment: the 409 stands when the re-read fails, and another refusal is never re-read', async () => {
+  const { voidPayment } = need('void');
+  const { cos, paid } = setup();
+  cos.db.payment.find((p) => p.id === paid.id).data.status = 'voided';
+  const real = cos.request;
+  const noRead = { ...cos, request: (m, path, ...r) => (m === 'GET' ? Promise.reject(Object.assign(new Error('x'), { code: 'network_error' })) : real(m, path, ...r)) };
+  assert.equal(await codeOf(voidPayment(noRead, paid.id, 'Segundo', 'void-key-0005')), 'ifMatch mismatch');
+  const fresh = setup(); fresh.cos.refuseVoid('void_gift_issued');
+  const before = fresh.cos.calls.length;
+  assert.equal(await codeOf(voidPayment(fresh.cos, fresh.paid.id, 'Motivo', 'void-key-0006')), 'void_gift_issued');
+  assert.equal(fresh.cos.calls.slice(before).filter((c) => c.method === 'GET').length, 0);
+});
+await test('the form handles an already voided payment and refreshes the screen behind it on closing', async () => {
+  const s = await src('src/modules/transfers/launch/VoidPaymentAction.tsx');
+  assert.match(s, /already_voided/); assert.match(s, /refreshTables/);
+  const { payLaunchStrings } = need('refusals');
+  const line = payLaunchStrings['payLaunch.void.already'];
+  assert.match(line.es, /ya estaba anulado/i); assert.match(line.es, /no se guardó/i); assert.match(line.en, /already voided/i); assert.match(line.en, /not saved/i);
+});
+
+// ── C2's later refusal codes ────────────────────────────────────────────────────────────────────────────────
+for (const code of ['payment_voided', 'undo_payment_voided', 'voucher_payment_not_approved']) {
+  await test(`${code}: is in the code→copy table in both languages, without the code`, () => {
+    const { refusalCopy, hasRefusalCopy } = need('refusals');
+    assert.ok(hasRefusalCopy(code)); assert.notEqual(refusalCopy(code, 'es'), refusalCopy(code, 'en'));
+    for (const l of ['es', 'en']) assert.ok(!refusalCopy(code, l).includes(code));
+  });
+}
+await test('payment_voided: the payment screens have their own words for it', () => {
+  const { refusalKey, payLaunchStrings } = need('refusals');
+  assert.equal(refusalKey('payment_voided'), 'payLaunch.code.payment_voided');
+  assert.ok(payLaunchStrings['payLaunch.code.payment_voided']?.es && payLaunchStrings['payLaunch.code.payment_voided']?.en);
+});
+await test('undo_payment_voided: the screen that undoes attendance shows words, not the generic line', () => {
+  const { deskErrorText, deskStrings } = need('desk');
+  for (const l of ['es', 'en']) {
+    const line = deskErrorText('undo_payment_voided', (k) => deskStrings[k]?.[l] ?? k);
+    assert.match(line, l === 'es' ? /anul/i : /void/i, line); assert.ok(!line.includes('undo_payment_voided'));
+  }
+});
+await test('voucher_payment_not_approved: the "to issue" screen shows its own title and body, not the generic one', () => {
+  const { refusalKey, productionStrings } = need('voucher');
+  const key = refusalKey({ code: 'voucher_payment_not_approved' });
+  assert.equal(key, 'vouchers.cos.refusal.voucher_payment_not_approved');
+  for (const part of ['title', 'body']) { const s = productionStrings[`${key}.${part}`]; assert.ok(s?.es && s?.en, part); assert.notEqual(s.es, s.en); }
+  assert.match(productionStrings[`${key}.body`].es, /aprobado/i);
+});
+await test('void_booking_active still fits now that a duplicate payment can be voided: it speaks of this payment\'s booking, not of every payment', () => {
+  const { refusalCopy } = need('refusals');
+  assert.match(refusalCopy('void_booking_active', 'es'), /este pago/); assert.match(refusalCopy('void_booking_active', 'en'), /it paid for/);
 });
 
 // ── Each refusal has words ──────────────────────────────────────────────────────────────────────────────────

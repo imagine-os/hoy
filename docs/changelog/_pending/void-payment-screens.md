@@ -10,3 +10,5 @@ Files: `src/modules/transfers/launch/voidPayment.ts`, `VoidPaymentAction.tsx`, `
 Review build unchanged: it has no Company OS connection, so it never gets the action.
 
 Review fixes: the movements list has words for a void and shows no validity on a voided lot's grant row; a voided payment keeps its approval date on Finance (revenue still counts approved only); the trial check reads the lot's `voided_at`; a too-short reason says the minimum; `void_booking_active` fits a class already taken.
+
+Later contract: a stale screen's void (409, the payment already voided) reads as done and says the new reason was not saved; closing refreshes the screen behind it. `payment_voided`, `undo_payment_voided` and `voucher_payment_not_approved` have words on the payment, attendance and voucher screens.
