@@ -355,7 +355,7 @@ try {
     assert.equal((await p.get('rooms', room.id)).name, 'Salón principal');
     const sent = api.calls.filter((c) => c.path.startsWith('/api/cos/'));
     assert.ok(sent.length >= 7);
-    assert.ok(sent.every((c) => c.headers.authorization === undefined && c.credentials === 'omit'), 'the browser never sends a token signed out');
+    assert.ok(sent.every((c) => c.headers.authorization === undefined && c.credentials === 'same-origin'), 'the browser never sends a token signed out; same-origin carries the test gate\'s cookie');
   });
   await test('signed out: nothing else is asked of Company OS (people, payments, messages, /me)', async () => {
     const api = fakeApi(); const p = make(api, { getToken: async () => null });
@@ -738,7 +738,7 @@ try {
     assert.equal(blob.size, 4); assert.equal(blob.type, 'image/png');
     const gets = api.calls.filter((c) => c.path === `/files/${rec.id}`);
     assert.equal(gets.length, 2, 'the 401, then the refreshed retry'); assert.deepEqual(asked, [false, true]);
-    assert.equal(gets[1].headers.authorization, 'Bearer tok-2'); assert.equal(gets[1].method, 'GET'); assert.equal(gets[1].credentials, 'omit');
+    assert.equal(gets[1].headers.authorization, 'Bearer tok-2'); assert.equal(gets[1].method, 'GET'); assert.equal(gets[1].credentials, 'same-origin');
     await assert.rejects(p.fileBlob('missing-id'), (e) => e instanceof CompanyOSError && e.code === 'not_found' && e.status === 404);
     api.setToken('never');
     await assert.rejects(p.fileBlob(rec.id), (e) => e.code === 'unauthorized' && e.status === 401);

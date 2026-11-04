@@ -34,7 +34,7 @@ const at = (script) => steps.findIndex((s) => new RegExp(`node scripts/${script}
 const stepText = (script) => steps[at(script)] ?? '';
 const reviewBuild = steps.findIndex((s) => /run: npm run build$/m.test(s));
 const prodBuild = steps.findIndex((s) => /npm run build:production/.test(s));
-for (const s of ['test-companyos-provider', 'test-admin-activity', 'test-real-signup', 'test-move-private-settings', 'test-release-wiring']) {
+for (const s of ['test-companyos-provider', 'test-admin-activity', 'test-real-signup', 'test-move-private-settings', 'test-test-gate', 'test-release-wiring']) {
   check(`L7 CI runs ${s} (fake-clerk job)`, at(s) >= 0);
 }
 for (const s of ['test-website-signed-out-live', 'test-admin-activity-ui']) {

@@ -96,4 +96,56 @@ const qa = readFileSync('.github/workflows/hoy-server-qa.yml', 'utf8');
 check('hoy-server-qa runs this check', qa.includes('node scripts/test-deploy-wiring.mjs'));
 check('the deploy gate (deploy-test checks job) runs this check', readFileSync('.github/workflows/deploy-test.yml', 'utf8').includes('node scripts/test-deploy-wiring.mjs'));
 
+// ── The test site's passphrase gate (Company OS playbook rule D5, server/testGate.mjs) ────────────────────────
+{
+  const deployTest = readFileSync('.github/workflows/deploy-test.yml', 'utf8');
+  const deployProd = readFileSync('.github/workflows/deploy-prod.yml', 'utf8');
+  /** The workflow's commands and settings, without its comments. */
+  const yamlCode = (text) => text.split('\n').filter((l) => !/^\s*#/.test(l)).join('\n');
+  const between = (text, from, to) => { const a = text.indexOf(from); const b = text.indexOf(to, a + from.length); return a < 0 || b < 0 ? '' : text.slice(a, b); };
+  const job = deployTest.slice(deployTest.indexOf('\n  deploy:'));
+  const beforeApply = job.slice(0, job.indexOf('- name: Apply infra'));
+  const stepsWith = (name) => beforeApply.split('\n      - ').filter((s) => s.includes(name));
+
+  check('railway.ts declares TEST_GATE_PASSPHRASE: preserve() on test only', /\bprod\s*\?\s*\{\s*\}\s*:\s*\{\s*TEST_GATE_PASSPHRASE:\s*preserve\(\)\s*\}/.test(iac) && (iac.match(/\bTEST_GATE_PASSPHRASE:/g) ?? []).length === 1);
+  check('railway.ts declares COOKIE_SIGNING_SECRET: preserve() in both environments', /^\s*COOKIE_SIGNING_SECRET:\s*preserve\(\),\s*$/m.test(iac));
+  check('railway.ts no longer says the workflow gives test a generated domain', !/Railway-generated|up\.railway\.app/.test(iac));
+  check('the server reads the gate variables (the scan above covers them)', read.has('TEST_GATE_PASSPHRASE') && read.has('COOKIE_SIGNING_SECRET'));
+
+  check('deploy-test: a missing or short passphrase fails with an error naming it, before Apply infra', stepsWith('secrets.TEST_GATE_PASSPHRASE').length > 0 && /\$\{#TEST_GATE_PASSPHRASE\}" -lt 12|\$\{#TEST_GATE_PASSPHRASE\} -lt 12/.test(beforeApply) && /::error::[^\n]*TEST_GATE_PASSPHRASE/.test(beforeApply));
+  check('deploy-test: a missing or short signing secret fails with an error naming it, before Apply infra', stepsWith('secrets.COOKIE_SIGNING_SECRET').length > 0 && /\$\{#COOKIE_SIGNING_SECRET\}" -lt 32|\$\{#COOKIE_SIGNING_SECRET\} -lt 32/.test(beforeApply) && /::error::[^\n]*COOKIE_SIGNING_SECRET/.test(beforeApply));
+  check('deploy-test: a missing APP_URL fails with an error naming it, before Apply infra', /APP_URL:\s*\$\{\{\s*vars\.APP_URL\s*\}\}/.test(beforeApply) && /::error::[^\n]*APP_URL/.test(beforeApply));
+  check('deploy-test: those checks come before the infra plan too (nothing on Railway has been touched)', beforeApply.indexOf('::error::Set the test environment\'s secret TEST_GATE_PASSPHRASE') > 0 && beforeApply.indexOf('::error::Set the test environment\'s secret TEST_GATE_PASSPHRASE') < beforeApply.indexOf('- name: Infra plan'));
+  check('deploy-test: the address has no fallback to the Railway domain', !/railway domain|up\.railway\.app/.test(yamlCode(deployTest)));
+
+  const sync = between(job, '- name: Sync settings', '- uses: actions/download-artifact');
+  for (const name of ['APP_URL', 'TEST_GATE_PASSPHRASE', 'COOKIE_SIGNING_SECRET']) {
+    check('deploy-test: Sync settings writes ' + name + ' with set_var', sync.includes('set_var ' + name + ' "$' + name + '"'));
+  }
+  check('deploy-test: Sync settings takes APP_URL from the environment\'s variable and the gate values from its secrets', /APP_URL:\s*\$\{\{\s*vars\.APP_URL\s*\}\}/.test(sync) && /TEST_GATE_PASSPHRASE:\s*\$\{\{\s*secrets\.TEST_GATE_PASSPHRASE\s*\}\}/.test(sync) && /COOKIE_SIGNING_SECRET:\s*\$\{\{\s*secrets\.COOKIE_SIGNING_SECRET\s*\}\}/.test(sync));
+  check('deploy-test: the Summary still has the site\'s address', /APP_URL:\s*\$\{\{\s*vars\.APP_URL\s*\}\}/.test(job.slice(job.indexOf('- name: Summary'))));
+  const scan = between(job, '- name: No secret of this environment in the bundle', '- name: Deploy');
+  check('deploy-test: the bundle scan gets both values', /TEST_GATE_PASSPHRASE:\s*\$\{\{\s*secrets\.TEST_GATE_PASSPHRASE\s*\}\}/.test(scan) && /COOKIE_SIGNING_SECRET:\s*\$\{\{\s*secrets\.COOKIE_SIGNING_SECRET\s*\}\}/.test(scan));
+  const scanner = readFileSync('server/check-bundle.mjs', 'utf8');
+  const scanned = /SECRET_VARIABLES = \[([^\]]*)\]/.exec(scanner)?.[1] ?? '';
+  check('check-bundle scans for both values', scanned.includes("'TEST_GATE_PASSPHRASE'") && scanned.includes("'COOKIE_SIGNING_SECRET'"));
+  for (const name of ['TEST_GATE_PASSPHRASE', 'COOKIE_SIGNING_SECRET', 'APP_URL']) check('deploy-test header comment lists ' + name, deployTest.slice(0, deployTest.indexOf('\nname:')).includes(name));
+
+  const prodJob = deployProd.slice(deployProd.indexOf('\n  deploy:'));
+  const prodBeforeApply = prodJob.slice(0, prodJob.indexOf('- name: Apply infra'));
+  check('deploy-prod: refuses TEST_GATE_PASSPHRASE before Apply infra (D5: never on production)', /TEST_GATE_PASSPHRASE:\s*\$\{\{\s*secrets\.TEST_GATE_PASSPHRASE\s*\}\}/.test(prodBeforeApply) && /-n "\$TEST_GATE_PASSPHRASE"[^\n]*::error::[^\n]*exit 1/.test(prodBeforeApply));
+  check('deploy-prod: never writes it to Railway', !prodJob.slice(prodJob.indexOf('- name: Apply infra')).includes('TEST_GATE_PASSPHRASE'));
+
+  const handler = readFileSync('server/app.mjs', 'utf8');
+  const gateAt = handler.indexOf('await testGate(req, res, rawPath)');
+  check('the gate runs first in the handler, before /health, /app-config.json, the proxy and the static files', gateAt > 0 && gateAt < handler.indexOf("if (rawPath === '/health')"));
+  check('the bundle takes every server/*.mjs, so testGate.mjs ships (make-bundle)', existsSync('server/testGate.mjs') && readFileSync('server/make-bundle.mjs', 'utf8').includes("name.endsWith('.mjs') && name !== 'make-bundle.mjs'"));
+  for (const wf of ['hoy-server-qa', 'auth-checks', 'deploy-test', 'deploy-prod', 'release']) {
+    check(wf + ' runs the gate\'s tests', readFileSync('.github/workflows/' + wf + '.yml', 'utf8').includes('node scripts/test-test-gate.mjs'));
+  }
+  // The gate's cookie has to travel with the app's own calls: 'omit' answers every signed-in call with the gate's 401.
+  const omits = (function walk(dir) { return readdirSync(dir, { withFileTypes: true }).flatMap((e) => e.isDirectory() ? walk(dir + '/' + e.name) : /\.(ts|tsx)$/.test(e.name) && /credentials:\s*'omit'/.test(readFileSync(dir + '/' + e.name, 'utf8')) ? [dir + '/' + e.name] : []); })('src');
+  check('the app\'s calls to its own server send same-origin cookies (no credentials: omit)', omits.length === 0, omits.join(', '));
+}
+
 done();
