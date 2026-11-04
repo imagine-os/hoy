@@ -32,6 +32,11 @@ const PEOPLE = {
   user_fin: { name: 'Fina Tesorera', keys: ['treasurer'] },
   user_desk: { name: 'Rosa Recepción', keys: ['front_desk'] },
   user_cust: { name: 'Carla Cliente', keys: ['member'] },
+  // A Super Admin who works as Super Admin: the only kind that may view as another role.
+  user_pure: { name: 'Sol Super', keys: ['super_admin'], superAdmin: true },
+  // Administration and Super Admin who also takes classes (one email, owner 2026-11-01).
+  user_both: { name: 'Berta Ambas', keys: ['administrator', 'super_admin', 'member'], superAdmin: true },
+  user_deskcust: { name: 'Dora Mostrador', keys: ['front_desk', 'member'] },
 };
 const ACCOUNTS = Object.fromEntries(Object.keys(PEOPLE).map((u) => [u, { emails: [{ id: `ea_${u}`, email: `${u.slice(5)}@example.test`, verified: true }], primary: `ea_${u}` }]));
 
@@ -45,11 +50,18 @@ function reset() {
   world = {
     person: m([
       rec('per_cust', { name: 'Carla Cliente', email: 'cust@example.test', user: 'user_cust' }), rec('per_used', { name: 'Uma Usada', email: 'u@example.test' }), rec('per_book', { name: 'Berta Reserva', email: 'b@example.test' }),
-      rec('per_gift', { name: 'Gina Regalo', email: 'g@example.test' }), rec('per_stale', { name: 'Sara Cambio', email: 's@example.test' }), rec('per_pend', { name: 'Pia Pendiente', email: 'p@example.test' }), rec('per_tab', { name: 'Tita Pestaña', email: 't@example.test' }),
+      rec('per_gift', { name: 'Gina Regalo', email: 'g@example.test' }), rec('per_stale', { name: 'Sara Cambio', email: 's@example.test' }), rec('per_pend', { name: 'Pia Pendiente', email: 'p@example.test' }), rec('per_tab', { name: 'Tita Pestaña', email: 't@example.test' }), rec('per_lost', { name: 'Lina Perdida', email: 'l@example.test' }), rec('per_dbl', { name: 'Dani Doble', email: 'd@example.test' }),
+      rec('per_both', { name: 'Berta Ambas', email: 'both@example.test', user: 'user_both' }), rec('per_deskcust', { name: 'Dora Mostrador', email: 'deskcust@example.test', user: 'user_deskcust' }),
     ]),
     product: m([rec('prod_pack', { key: 'pack', name: 'Paquete', kind: 'pack', price: 600000, credits: 12, active: true })]),
-    payment: m([pay('pay_ok', 'per_cust'), pay('pay_used', 'per_used'), pay('pay_booking', 'per_book'), pay('pay_gift', 'per_gift'), pay('pay_stale', 'per_stale'), pay('pay_pend', 'per_pend', 'pending'), pay('pay_tab', 'per_tab')]),
-    invoice: m([inv('inv_ok', 'pay_ok', 41, 'per_cust'), inv('inv_tab', 'pay_tab', 42, 'per_tab'), inv('inv_used', 'pay_used', 43, 'per_used')]),
+    payment: m([pay('pay_ok', 'per_cust'), pay('pay_used', 'per_used'), pay('pay_booking', 'per_book'), pay('pay_gift', 'per_gift'), pay('pay_stale', 'per_stale'), pay('pay_pend', 'per_pend', 'pending'), pay('pay_tab', 'per_tab'), pay('pay_lost', 'per_lost'), pay('pay_dbl', 'per_dbl'), pay('pay_both', 'per_both'), pay('pay_dc', 'per_deskcust'),
+      { ...pay('pay_both_v', 'per_both', 'voided'), data: { ...pay('pay_both_v', 'per_both', 'voided').data, status_reason: 'Motivo interno' } }]),
+    invoice: m([inv('inv_ok', 'pay_ok', 41, 'per_cust'), inv('inv_tab', 'pay_tab', 42, 'per_tab'), inv('inv_used', 'pay_used', 43, 'per_used'), inv('inv_both', 'pay_both', 44, 'per_both'), inv('inv_dc', 'pay_dc', 45, 'per_deskcust'),
+      { ...inv('inv_both_v', 'pay_both_v', 46, 'per_both'), data: { ...inv('inv_both_v', 'pay_both_v', 46, 'per_both').data, voided_at: `${TODAY}T15:00:00.000Z`, void_reason: 'Motivo interno' } }]),
+    // Carla's classes: a voided pack (+12, then the void's -12) and a live single, for the movements list.
+    credit_lot: m([rec('lot_v', { person: 'per_cust', source: 'purchase', product: 'prod_pack', payment: 'pay_ok', quantity: 12, valid_until: '2027-02-01', voided_at: `${TODAY}T15:00:00.000Z` }), rec('lot_live', { person: 'per_cust', source: 'courtesy', quantity: 1, valid_until: '2027-03-01' })]),
+    credit_entry: m([rec('ce_g', { person: 'per_cust', lot: 'lot_v', delta: 12, reason: 'grant' }), rec('ce_v', { person: 'per_cust', lot: 'lot_v', delta: -12, reason: 'void' }), rec('ce_l', { person: 'per_cust', lot: 'lot_live', delta: 1, reason: 'grant' })]),
+    keys: new Map(), applied: [], lost: false,
     log: [],
   };
 }
@@ -70,12 +82,23 @@ const server = createServer(async (req, res) => {
     if (route === '/query') {
       if (body.aggregate || !world[body.entity]) return json(res, 200, { data: [] });
       try {
-        const rows = [...world[body.entity].values()].filter((r) => cosFilter(r, body.filter, user));
-        return json(res, 200, { data: structuredClone(rows.slice(body.offset ?? 0, (body.offset ?? 0) + (body.limit ?? 100))) });
+        const rows = [...world[body.entity].values()].filter((r) => cosFilter(r, body.filter, user)).map((r) => {
+          // `include` replaces `data[field]` with the embedded `{ id, …fields }` (integration guide, "include"): only the fields asked for.
+          const out = structuredClone(r);
+          for (const inc of body.include ?? []) {
+            const t = { lot: world.credit_lot }[inc.field]?.get(out.data[inc.field]);
+            if (t) out.data[inc.as ?? inc.field] = { id: t.id, ...Object.fromEntries(Object.entries(t.data).filter(([k]) => !inc.fields || inc.fields.includes(k))) };
+          }
+          return out;
+        });
+        return json(res, 200, { data: rows.slice(body.offset ?? 0, (body.offset ?? 0) + (body.limit ?? 100)) });
       } catch (e) { return json(res, e.status ?? 400, { error: e.code ?? 'invalid_query' }); }
     }
     if (route === '/batch') {
-      world.log.push({ user, ops: body.ops, key: req.headers['idempotency-key'] ?? null });
+      const key = req.headers['idempotency-key'] ?? null;
+      world.log.push({ user, ops: body.ops, key });
+      // ADR 0040: the same key answers the first answer, without writing again.
+      if (key && world.keys.has(key)) return world.lost ? json(res, 503, { error: 'upstream_unavailable' }) : json(res, 200, world.keys.get(key));
       for (const [i, o] of body.ops.entries()) {
         const r = world[o.entity]?.get(o.id);
         if (!r) return json(res, 404, { error: 'not found', opIndex: i });
@@ -85,10 +108,15 @@ const server = createServer(async (req, res) => {
           if (!String(o.data.status_reason ?? '').trim()) return json(res, 422, { error: 'reason_required', opIndex: i });
           if (REFUSE[o.id]) return json(res, 422, { error: REFUSE[o.id], opIndex: i });
           Object.assign(r.data, o.data);
+          world.applied.push(o.id);
           for (const v of world.invoice.values()) if (v.data.payment === o.id) Object.assign(v.data, { voided_at: `${TODAY}T15:00:00.000Z`, void_reason: o.data.status_reason });
         }
       }
-      return json(res, 200, { ids: body.ops.map((o) => o.id) });
+      const answer = { ids: body.ops.map((o) => o.id) };
+      if (key) world.keys.set(key, answer);
+      // Written, but the answer is lost on the way back.
+      if (world.lost) return json(res, 503, { error: 'upstream_unavailable' });
+      return json(res, 200, answer);
     }
     const one = /^\/api\/(\w+)\/([^/]+)$/.exec(route);
     if (one && req.method === 'GET') { const r = world[one[1]]?.get(decodeURIComponent(one[2])); return r ? json(res, 200, { data: r }) : json(res, 404, { error: 'not found' }); }
@@ -136,6 +164,9 @@ const VOID = 'button[data-void-payment]';
 const drawer = (page) => page.getByRole('dialog');
 const submit = (page) => drawer(page).locator('button[data-void-confirm]').click({ timeout: 3000 });
 const batches = () => world.log;
+// The refusal itself, never the drawer's other notices.
+const refusal = (page) => drawer(page).locator('[data-void-refusal]');
+const said = (page) => refusal(page).innerText({ timeout: 3000 }).catch(() => '');
 
 try {
   // ── Finance as Super Admin: reason required, the contract's write ─────────────────────────────────────────
@@ -148,7 +179,7 @@ try {
   await page.waitForTimeout(300);
   await submit(page).catch(() => {});
   await page.waitForTimeout(300);
-  check('Void without a reason: the screen asks for one, nothing is sent', /motivo/i.test(await drawer(page).getByRole('alert').innerText().catch(() => '')) && batches().length === 0, JSON.stringify(batches()));
+  check('Void without a reason: the screen asks for one, nothing is sent', /motivo/i.test(await said(page)) && /3/.test(await said(page)) && batches().length === 0, JSON.stringify(batches()));
   await drawer(page).locator('input[name="void-reason"]').fill('Registrado por error');
   await submit(page).catch(() => {});
   await page.waitForTimeout(1200);
@@ -164,8 +195,8 @@ try {
     await drawer(page).locator('input[name="void-reason"]').fill('Registrado por error').catch(() => {});
     await submit(page).catch(() => {});
     await page.waitForTimeout(600);
-    const said = await drawer(page).getByRole('alert').innerText().catch(() => '');
-    check(`${name}: the refusal is in words, no code`, words.test(said) && !/void_/.test(said), said);
+    const line = await said(page);
+    check(`${name}: the refusal is in words, no code`, words.test(line) && !/void_/.test(line), line);
     await drawer(page).locator('button[data-void-back]').click({ timeout: 3000 }).catch(() => {});
     await page.waitForTimeout(300);
     check(`${name}: the payment still reads as it was, Void still offered`, (await row(page, name).locator(VOID).count()) === 1);
@@ -178,7 +209,81 @@ try {
   await drawer(page).locator('input[name="void-reason"]').fill('Registrado por error').catch(() => {});
   await submit(page).catch(() => {});
   await page.waitForTimeout(600);
-  check('The status changed meanwhile: the screen says so', /cambió|actualiza/i.test(await drawer(page).getByRole('alert').innerText().catch(() => '')));
+  check('The status changed meanwhile: the screen says so', /cambió|actualiza/i.test(await said(page)));
+  await ctx.close();
+
+  // ── The answer is lost: the form locks, a retry reuses the key, one void ───────────────────────────────────
+  scenario = 'lost answer'; reset();
+  ({ ctx, page } = await signedIn('sa@example.test'));
+  await go(page, '/admin/finance');
+  await row(page, 'Lina Perdida').locator(VOID).click({ timeout: 3000 }).catch(() => {});
+  await page.waitForTimeout(300);
+  await drawer(page).locator('input[name="void-reason"]').fill('Registrado por error').catch(() => {});
+  world.lost = true;
+  await submit(page).catch(() => {});
+  await drawer(page).locator('.void-uncertain').waitFor({ timeout: 15000 }).catch(() => {});
+  check('503: the screen says the outcome is unknown, as an alert', (await drawer(page).locator('.void-uncertain[role="alert"]').count()) === 1 && (await refusal(page).count()) === 0);
+  check('503: the reason is locked', await drawer(page).locator('input[name="void-reason"]').isDisabled().catch(() => false));
+  const firstKey = batches()[0]?.key;
+  world.lost = false;
+  await submit(page).catch(() => {});
+  await page.waitForTimeout(1200);
+  check('Retry after 503: every attempt carried the same key, and it was written once', !!firstKey && batches().every((b) => b.key === firstKey) && JSON.stringify(world.applied) === '["pay_lost"]', JSON.stringify({ log: batches().map((b) => b.key), applied: world.applied }));
+  check('Retry after 503: the form closes and the row reads Anulado', (await drawer(page).count()) === 0 && /Anulado/.test(await row(page, 'Lina Perdida').innerText().catch(() => '')));
+
+  // ── A double click ────────────────────────────────────────────────────────────────────────────────────────
+  scenario = 'double click'; world.log.length = 0; world.applied.length = 0;
+  await row(page, 'Dani Doble').locator(VOID).click({ timeout: 3000 }).catch(() => {});
+  await page.waitForTimeout(300);
+  await drawer(page).locator('input[name="void-reason"]').fill('Registrado por error').catch(() => {});
+  await drawer(page).locator('button[data-void-confirm]').dblclick({ timeout: 3000 }).catch(() => {});
+  await page.waitForTimeout(1200);
+  check('A double click voids once, with one request', JSON.stringify(world.applied) === '["pay_dbl"]' && batches().length === 1, JSON.stringify(batches()));
+  await ctx.close();
+
+  // ── A Super Admin viewing as another role ─────────────────────────────────────────────────────────────────
+  scenario = 'view as'; reset();
+  ({ ctx, page } = await signedIn('pure@example.test'));
+  await go(page, '/admin/finance');
+  check('A Super Admin not viewing as anyone sees Void', (await row(page, 'Carla Cliente').locator(VOID).count()) === 1);
+  await page.evaluate(() => sessionStorage.setItem('hoyos.viewAs', 'finance'));
+  await page.reload();
+  await page.waitForTimeout(2000);
+  await go(page, '/admin/finance');
+  check('Viewing as Finance: the banner shows and the payment is listed', (await page.locator('[data-view-as-banner]').count()) === 1 && (await row(page, 'Carla Cliente').count()) >= 1, (await page.locator('body').innerText()).slice(0, 300));
+  check('Viewing as Finance: no Void', (await page.locator(VOID).count()) === 0);
+  await page.evaluate(() => sessionStorage.setItem('hoyos.viewAs', 'front_desk'));
+  await page.reload();
+  await page.waitForTimeout(2000);
+  await go(page, '/staff/receipts/pay_ok');
+  check('Viewing as the desk: the staff receipt shows, no Void', (await page.locator('[data-view-as-banner]').count()) === 1 && (await page.locator('[data-testid="nota-de-compra"]').count()) === 1 && (await page.locator(VOID).count()) === 0);
+  await ctx.close();
+
+  // ── Staff who also hold customer, on their own receipt ────────────────────────────────────────────────────
+  scenario = 'staff and customer'; reset();
+  ({ ctx, page } = await signedIn('both@example.test'));
+  await go(page, '/app/receipts/pay_both');
+  check('Administration with Super Admin and customer, on /app/receipts: their receipt shows, no Void on it', (await page.locator('[data-testid="nota-de-compra"]').count()) === 1 && (await page.locator(VOID).count()) === 0, (await page.locator('body').innerText()).slice(0, 300));
+  await go(page, '/app/receipts/pay_both_v');
+  const ownMark = await page.locator('[data-testid="receipt-voided"]').innerText({ timeout: 3000 }).catch(() => '');
+  check('…and a voided one there reads voided, without the reason', /anulada/i.test(ownMark) && !(await page.locator('body').innerText()).includes('Motivo interno'), ownMark);
+  await go(page, '/admin/finance');
+  check('…while on Finance the same login still gets Void', (await row(page, 'Carla Cliente').locator(VOID).count()) === 1);
+  await ctx.close();
+  ({ ctx, page } = await signedIn('deskcust@example.test'));
+  await go(page, '/app/receipts/pay_dc');
+  check('The desk who also takes classes: their receipt shows, no Void', (await page.locator('[data-testid="nota-de-compra"]').count()) === 1 && (await page.locator(VOID).count()) === 0);
+  await ctx.close();
+
+  // ── The member's classes after a void ─────────────────────────────────────────────────────────────────────
+  scenario = 'passes'; reset();
+  ({ ctx, page } = await signedIn('cust@example.test'));
+  await go(page, '/app/passes');
+  const rows = page.locator('.cust-ledger-row');
+  const voidRow = await rows.filter({ hasText: 'Anulación' }).first().innerText({ timeout: 3000 }).catch(() => '');
+  check('/app/passes: the void reads Anulación, no raw key', /-12/.test(voidRow) && !(await page.locator('body').innerText()).includes('⟨'), (await page.locator('body').innerText()).slice(0, 400));
+  check('/app/passes: the voided lot\'s grant row has no validity badge', (await rows.filter({ hasText: '+12' }).count()) === 1 && !/hasta/.test(await rows.filter({ hasText: '+12' }).first().innerText().catch(() => 'hasta')));
+  check('/app/passes: a live lot still shows its validity', /hasta/.test(await rows.filter({ hasText: '+1' }).filter({ hasNotText: '+12' }).first().innerText().catch(() => '')));
   await ctx.close();
 
   // ── The member's payments tab ─────────────────────────────────────────────────────────────────────────────
@@ -234,7 +339,7 @@ try {
     await go(page, '/admin/crm/per_tab');
     await page.getByText('Pagos', { exact: true }).first().click({ timeout: 3000 }).catch(() => {});
     await page.waitForTimeout(600);
-    check(`${who}: the member's payments tab has no Void`, (await page.locator(VOID).count()) === 0);
+    check(`${who}: the member's payments tab lists the payment, no Void`, (await page.locator('tr', { hasText: 'Paquete' }).count()) >= 1 && (await page.locator(VOID).count()) === 0, (await page.locator('body').innerText()).slice(0, 300));
     await ctx.close();
   }
   ({ ctx, page } = await signedIn('desk@example.test'));

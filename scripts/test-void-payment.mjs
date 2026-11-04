@@ -31,6 +31,8 @@ const ENTRIES = {
   trial: "export { assessLiveTrial } from './src/data/trialEligibility';",
   identity: "export { isSuperAdminMe, roleFromMe, superAdminFlag } from './src/auth/companyOsIdentity';",
   admin: "export { strings } from './src/modules/admin/strings';",
+  mapping: "export { adapterFor, fromRecord } from './src/data/companyos/mapping'; export { showsLedgerValidity } from './src/data/packages'; export { strings as customerStrings } from './src/modules/customer/strings'; export { I18nProvider } from './src/i18n/I18nProvider';",
+  report: "export * from './src/data/confirmedPaymentReport';",
 };
 async function load(contents) {
   try {
@@ -259,20 +261,92 @@ await test('the confirmed payments report leaves a voided payment out, and out o
   assert.equal(r.rows.length, 1); assert.equal(r.total, 100);
 });
 const TRIAL_PLAN = [{ id: 'prod_trial', kind: 'trial' }];
-const grant = (over = {}) => ({ id: 'e1', user_id: 'u', delta: 1, plan_id: 'prod_trial', lot_source: 'trial', purchase_ledger_id: null, payment_id: 'pay_t', ...over });
-await test('a voided trial lets that person buy again: its lot no longer counts, nor does the payment', () => {
+const grant = (over = {}) => ({ id: 'e1', user_id: 'u', delta: 1, plan_id: 'prod_trial', lot_source: 'trial', purchase_ledger_id: null, payment_id: 'pay_t', lot_voided_at: null, ...over });
+const VOIDED_AT = '2026-11-06T10:00:00.000Z';
+await test('a voided trial lets that person buy again: the lot\'s voided_at, as on the server, and the payment no longer counts', () => {
   const { assessLiveTrial } = need('trial');
-  assert.equal(assessLiveTrial({ ledger: [grant()], payments: [{ id: 'pay_t', plan_id: 'prod_trial', status: 'voided' }], plans: TRIAL_PLAN }).status, 'eligible');
+  assert.equal(assessLiveTrial({ ledger: [grant({ lot_voided_at: VOIDED_AT })], payments: [{ id: 'pay_t', plan_id: 'prod_trial', status: 'voided' }], plans: TRIAL_PLAN }).status, 'eligible');
 });
-await test('a trial lot still counts when its payment stands, when the lot has no payment (a courtesy), or when the payment isn\'t in the read', () => {
+await test('the lot decides, not the payment read: a voided lot whose payment isn\'t in the read is clear; a live lot stays used even beside a voided payment', () => {
+  const { assessLiveTrial } = need('trial');
+  assert.equal(assessLiveTrial({ ledger: [grant({ lot_voided_at: VOIDED_AT })], payments: [], plans: TRIAL_PLAN }).status, 'eligible');
+  assert.equal(assessLiveTrial({ ledger: [grant()], payments: [{ id: 'pay_t', plan_id: 'prod_trial', status: 'voided' }], plans: TRIAL_PLAN }).status, 'trial_used');
+});
+await test('a trial lot still counts when its payment stands, when the lot has no payment (a courtesy), or when another lot stands', () => {
   const { assessLiveTrial } = need('trial');
   assert.equal(assessLiveTrial({ ledger: [grant()], payments: [{ id: 'pay_t', plan_id: 'prod_trial', status: 'approved' }], plans: TRIAL_PLAN }).status, 'trial_used');
   assert.equal(assessLiveTrial({ ledger: [grant({ payment_id: null })], payments: [], plans: TRIAL_PLAN }).status, 'trial_used');
-  assert.equal(assessLiveTrial({ ledger: [grant()], payments: [], plans: TRIAL_PLAN }).status, 'trial_used');
+  assert.equal(assessLiveTrial({ ledger: [grant({ lot_voided_at: VOIDED_AT }), grant({ id: 'e2', payment_id: 'pay_x' })], payments: [], plans: TRIAL_PLAN }).status, 'trial_used');
 });
-await test('another voided payment does not clear a trial lot from a standing one', () => {
-  const { assessLiveTrial } = need('trial');
-  assert.equal(assessLiveTrial({ ledger: [grant(), grant({ id: 'e2', payment_id: 'pay_x' })], payments: [{ id: 'pay_t', plan_id: 'prod_trial', status: 'voided' }, { id: 'pay_x', plan_id: 'prod_trial', status: 'approved' }], plans: TRIAL_PLAN }).status, 'trial_used');
+
+// ── The void on the member's classes (real mapping) ─────────────────────────────────────────────────────────
+const entry = (reason, delta, lot = {}) => ({ id: `ce_${reason}`, data: { person: 'per_1', delta, reason, lot: { id: 'lot_1', source: 'purchase', valid_until: '2027-02-01', ...lot } }, createdAt: '2026-11-05T10:00:00.000Z', updatedAt: '2026-11-05T10:00:00.000Z' });
+await test('a void entry maps to reason "void", and that key has words in both languages (no raw key on /app/passes)', () => {
+  const { adapterFor, fromRecord, customerStrings } = need('mapping');
+  const row = fromRecord(adapterFor('class_ledger'), entry('void', -12, { voided_at: VOIDED_AT }));
+  assert.equal(row.reason, 'void');
+  assert.deepEqual(customerStrings[`customer.classes.reason.${row.reason}`], { es: 'Anulación', en: 'Voided' });
+});
+await test('every reason the mapping can give the movements list has words', () => {
+  const { adapterFor, fromRecord, customerStrings } = need('mapping');
+  for (const [reason, delta] of [['grant', 1], ['booking', -1], ['refund', 1], ['expiry', -1], ['studio_cancel', 1], ['adjustment', 1], ['adjustment', -1], ['reschedule', 1], ['void', -1]]) {
+    const r = fromRecord(adapterFor('class_ledger'), entry(reason, delta)).reason;
+    assert.ok(customerStrings[`customer.classes.reason.${r}`], `${reason} → ${r}`);
+  }
+});
+await test('the ledger reads the lot\'s voided_at: its grant row carries it and shows no validity; a live lot\'s grant row still does', () => {
+  const { adapterFor, fromRecord, showsLedgerValidity } = need('mapping');
+  const a = adapterFor('class_ledger');
+  assert.ok(a.include[0].fields.includes('voided_at'), 'in the include');
+  const voidedGrant = fromRecord(a, entry('grant', 12, { voided_at: VOIDED_AT })), liveGrant = fromRecord(a, entry('grant', 12));
+  assert.equal(voidedGrant.lot_voided_at, VOIDED_AT); assert.equal(liveGrant.lot_voided_at, null);
+  assert.equal(showsLedgerValidity(voidedGrant), false); assert.equal(showsLedgerValidity(liveGrant), true);
+  assert.equal(showsLedgerValidity(fromRecord(a, entry('booking', -1))), false, 'a spend row never did');
+});
+await test('/app/passes uses the rule for the validity badge', async () => {
+  assert.match(await src('src/modules/customer/pages/PassesPage.tsx'), /showsLedgerValidity\(c\) && <Badge/);
+});
+
+// ── A voided payment stays on Finance's date range; totals don't change ─────────────────────────────────────
+const pay = (data, updatedAt = '2026-11-06T10:00:00.000Z') => ({ id: 'pay_1', data: { person: 'per_1', amount: 100000, ...data }, createdAt: '2026-10-01T10:00:00.000Z', updatedAt });
+await test('paid_at: a voided payment keeps the moment it was approved, not the void\'s, and has none if it never was', () => {
+  const { adapterFor, fromRecord } = need('mapping');
+  const a = adapterFor('payments');
+  assert.equal(fromRecord(a, pay({ status: 'voided', approved_at: '2026-11-01T14:00:00.000Z' })).paid_at, '2026-11-01T14:00:00.000Z');
+  assert.equal(fromRecord(a, pay({ status: 'voided' })).paid_at, null, 'never approved: no paid date, not the update');
+  assert.equal(fromRecord(a, pay({ status: 'approved', approved_at: '2026-11-01T14:00:00.000Z' })).paid_at, '2026-11-01T14:00:00.000Z');
+  assert.equal(fromRecord(a, pay({ status: 'declined' })).paid_at, null);
+});
+await test('money: a voided payment still has no received amount, and the confirmed report leaves it out though it has a paid date', () => {
+  const { adapterFor, fromRecord } = need('mapping'); const R = need('report');
+  const a = adapterFor('payments');
+  const voided = { ...fromRecord(a, pay({ status: 'voided', approved_at: '2026-11-01T14:00:00.000Z' })), tenant_id: 't' };
+  assert.equal(voided.amount_paid, null);
+  const fn = R.confirmedPaymentRows ?? R.confirmedPaymentReport ?? R.buildConfirmedPaymentReport;
+  assert.equal(typeof fn, 'function', Object.keys(R).join());
+  assert.equal(fn([voided], { tenantId: 't', from: '2026-11-01', to: '2026-11-30', personName: () => '', productName: () => '' }).rows.length, 0);
+});
+await test('every revenue figure counts approved only: Finance, the Dashboard and the desk\'s day', async () => {
+  assert.match(await src('src/modules/admin/FinancePage.tsx'), /const approved = inRange\.filter\(\(p\) => p\.status === 'approved'\);\n\s*const revenue = approved\.reduce/);
+  assert.match(await src('src/modules/admin/DashboardPage.tsx'), /useTable<PaymentRow>\('payments', \{ where: \{ status: 'approved' \} \}\)/);
+  assert.match(await src('src/modules/staff/HomePage.tsx'), /p\.status === 'approved' && p\.paid_at/);
+});
+
+// ── The words for the two refusals the review found ─────────────────────────────────────────────────────────
+await test('a too-short reason says how long it must be, in both languages', () => {
+  const { voidRefusalLine, voidOps } = need('void'); const { payLaunchStrings } = need('refusals');
+  assert.equal(syncCode(() => voidOps('pay_1', 'ab')), 'reason_required');
+  for (const lang of ['es', 'en']) {
+    const line = voidRefusalLine('reason_required', lang, (k) => payLaunchStrings[k][lang]);
+    assert.match(line, /3/, lang);
+  }
+});
+await test('void_booking_active fits a booked, checked-in or completed booking: "cancel" only for one not taken yet', () => {
+  const { refusalCopy } = need('refusals');
+  const es = refusalCopy('void_booking_active', 'es'), en = refusalCopy('void_booking_active', 'en');
+  assert.doesNotMatch(es, /Cancélala primero\.$/); assert.doesNotMatch(en, /Cancel it first\.$/);
+  assert.match(es, /ya (se )?tom/i); assert.match(en, /already/i);
+  assert.match(es, /aún no/i); assert.match(en, /not (been )?taken|not yet/i);
 });
 
 // ── Finance and the member's tab name the status, and mount the action ─────────────────────────────────────
