@@ -50,7 +50,7 @@ function reset() {
   world = {
     person: m([
       rec('per_cust', { name: 'Carla Cliente', email: 'cust@example.test', user: 'user_cust' }), rec('per_used', { name: 'Uma Usada', email: 'u@example.test' }), rec('per_book', { name: 'Berta Reserva', email: 'b@example.test' }),
-      rec('per_gift', { name: 'Gina Regalo', email: 'g@example.test' }), rec('per_stale', { name: 'Sara Cambio', email: 's@example.test' }), rec('per_pend', { name: 'Pia Pendiente', email: 'p@example.test' }), rec('per_tab', { name: 'Tita Pestaña', email: 't@example.test' }), rec('per_ref', { name: 'Rita Cambio', email: 'r@example.test' }), rec('per_lost', { name: 'Lina Perdida', email: 'l@example.test' }), rec('per_dbl', { name: 'Dani Doble', email: 'd@example.test' }),
+      rec('per_gift', { name: 'Gina Regalo', email: 'g@example.test' }), rec('per_stale', { name: 'Sara Cambio', email: 's@example.test' }), rec('per_pend', { name: 'Pia Pendiente', email: 'p@example.test' }), rec('per_tab', { name: 'Tita Pestaña', email: 't@example.test' }), rec('per_fin', { name: 'Fina Tesorera', email: 'fin@example.test', user: 'user_fin' }), rec('per_desk', { name: 'Rosa Recepción', email: 'desk@example.test', user: 'user_desk' }), rec('per_ref', { name: 'Rita Cambio', email: 'r@example.test' }), rec('per_lost', { name: 'Lina Perdida', email: 'l@example.test' }), rec('per_dbl', { name: 'Dani Doble', email: 'd@example.test' }),
       rec('per_both', { name: 'Berta Ambas', email: 'both@example.test', user: 'user_both' }), rec('per_deskcust', { name: 'Dora Mostrador', email: 'deskcust@example.test', user: 'user_deskcust' }),
     ]),
     product: m([rec('prod_pack', { key: 'pack', name: 'Paquete', kind: 'pack', price: 600000, credits: 12, active: true })]),
@@ -122,7 +122,8 @@ const server = createServer(async (req, res) => {
     if (one && req.method === 'GET') { const r = world[one[1]]?.get(decodeURIComponent(one[2])); return r ? json(res, 200, { data: r }) : json(res, 404, { error: 'not found' }); }
     if (/^\/modules\/[^/]+\/settings$/.test(route)) return json(res, 200, { module: route.split('/')[2], settings: {} });
     if (route === '/members') return json(res, 200, { members: Object.entries(PEOPLE).map(([id, u]) => ({ id, name: u.name, email: `${id}@example.test` })) });
-    if (route === '/admin/users') return json(res, 200, { users: [] });
+    // The directory view-as samples a person from (`loadViewAsSample`): without a holder, the page says nobody has the role.
+    if (route === '/admin/users') return json(res, 200, { users: Object.entries(PEOPLE).map(([u, x], i) => ({ userId: u, email: `${u}@example.test`, name: x.name, signedUp: true, memberships: x.keys.map((k, j) => ({ membershipId: `m_${i}_${j}`, roleKey: k })) })) });
     return json(res, req.method === 'GET' ? 200 : 404, req.method === 'GET' ? { data: [] } : { error: 'not_found' });
   }
   try {
@@ -295,12 +296,12 @@ try {
   // ── The member's classes after a void ─────────────────────────────────────────────────────────────────────
   scenario = 'passes'; reset();
   ({ ctx, page } = await signedIn('cust@example.test'));
-  await go(page, '/app/passes');
+  await go(page, '/app/classes');
   const rows = page.locator('.cust-ledger-row');
   const voidRow = await rows.filter({ hasText: 'Anulación' }).first().innerText({ timeout: 3000 }).catch(() => '');
-  check('/app/passes: the void reads Anulación, no raw key', /-12/.test(voidRow) && !(await page.locator('body').innerText()).includes('⟨'), (await page.locator('body').innerText()).slice(0, 400));
-  check('/app/passes: the voided lot\'s grant row has no validity badge', (await rows.filter({ hasText: '+12' }).count()) === 1 && !/hasta/.test(await rows.filter({ hasText: '+12' }).first().innerText().catch(() => 'hasta')));
-  check('/app/passes: a live lot still shows its validity', /hasta/.test(await rows.filter({ hasText: '+1' }).filter({ hasNotText: '+12' }).first().innerText().catch(() => '')));
+  check('/app/classes: the void reads Anulación, no raw key', /-12/.test(voidRow) && !(await page.locator('body').innerText()).includes('⟨'), (await page.locator('body').innerText()).slice(0, 400));
+  check('/app/classes: the voided lot\'s grant row has no validity badge', (await rows.filter({ hasText: '+12' }).count()) === 1 && !/hasta/.test(await rows.filter({ hasText: '+12' }).first().innerText().catch(() => 'hasta')));
+  check('/app/classes: a live lot still shows its validity', /hasta/.test(await rows.filter({ hasText: '+1' }).filter({ hasNotText: '+12' }).first().innerText().catch(() => '')));
   await ctx.close();
 
   // ── The member's payments tab ─────────────────────────────────────────────────────────────────────────────
