@@ -108,6 +108,8 @@ jobs:
         run: node scripts/test-real-signup.mjs
       - name: Pay data move out of the public settings (operator script, against a fake Company OS)
         run: node scripts/test-move-private-settings.mjs
+      - name: The test site's passphrase gate (rule D5, through the real Hoy server)
+        run: node scripts/test-test-gate.mjs
       - name: Release wiring (company-os.json, release notes, these CI steps)
         run: node scripts/test-release-wiring.mjs
       - name: The signed-out website reads live data behind the real Hoy server (production build)

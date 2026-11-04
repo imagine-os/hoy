@@ -7,8 +7,9 @@
  * - No source: Railway never deploys by itself. The workflow builds and checks the frontend on GitHub,
  *   then uploads a bundle (server/ files + the built frontend in `site/`) with `railway up`; Railway
  *   only installs the server's one dependency and starts it.
- * - Public: the workflow gives it a Railway-generated *.up.railway.app domain on test (not declarable
- *   here); production gets the customer's domain by hand once it is chosen (APP_URL).
+ * - Public: a custom domain added by hand in each environment (not declarable here), named by the GitHub
+ *   Environment's APP_URL: test.<the customer's domain> on test, behind the passphrase gate (playbook rule D5),
+ *   and the customer's domain on production once it is chosen.
  * - It reaches the private API over Railway's internal network; the `${{api.…}}` references resolve
  *   against the api service's own variables. The API never gets a public address.
  * - Secrets are `preserve()`: written by the workflow from the GitHub Environment, never in git.
@@ -54,6 +55,11 @@ export default defineRailway((ctx) => {
       // set by hand in Railway. Without it here, "Apply infra" fails on the variable the service already has (test-hoy,
       // 2026-11-01). Unset: signed-out reads answer 401.
       COMPANY_OS_READ_TOKEN: preserve(),
+      // Signs the test gate's cookie (server/testGate.mjs). Declared on production too, where nothing sets or reads it,
+      // so that a value left there is ignored instead of failing "Apply infra" (Company OS IN-140).
+      COOKIE_SIGNING_SECRET: preserve(),
+      // The test site's passphrase gate (Company OS playbook rule D5). Never on production.
+      ...(prod ? {} : { TEST_GATE_PASSPHRASE: preserve() }),
     },
   });
 

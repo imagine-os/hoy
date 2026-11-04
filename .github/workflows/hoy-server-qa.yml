@@ -8,6 +8,7 @@ name: Hoy server QA
 #       - 'company-os.json'
 #       - 'scripts/test-hoy-server.mjs'
 #       - 'scripts/test-docs-gate.mjs'
+#       - 'scripts/test-test-gate.mjs'
 #       - 'scripts/check-company-os.mjs'
 #       - '.github/workflows/hoy-server-qa.yml'
 #       - '.github/workflows/deploy-test.yml'
@@ -35,4 +36,5 @@ jobs:
       - run: node scripts/check-company-os.mjs
       - run: node scripts/test-hoy-server.mjs
       - run: node scripts/test-docs-gate.mjs
+      - run: node scripts/test-test-gate.mjs
       - run: node scripts/test-deploy-wiring.mjs

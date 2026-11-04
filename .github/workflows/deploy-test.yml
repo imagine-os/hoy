@@ -11,7 +11,13 @@
 #   secrets    RAILWAY_TOKEN          project token of Hoy's Railway project, environment `test`
 #              CLERK_SECRET_KEY       the Clerk development instance's secret key (sk_test_…), the
 #                                     same instance Hoy's test `api` verifies
+#              TEST_GATE_PASSPHRASE   the passphrase in front of the whole test site, at least 12
+#                                     characters (Company OS playbook rule D5)
+#              COOKIE_SIGNING_SECRET  signs the gate's cookie, at least 32 characters
+#                                     (openssl rand -hex 32)
 #   variables  CLERK_PUBLISHABLE_KEY  its publishable key (pk_test_…)
+#              APP_URL                https://test.<the customer's domain> (the custom domain on the
+#                                     web service; no path, no trailing slash)
 #              RAILWAY_PROJECT_NAME   Hoy's Railway project name (a label; the token picks the project)
 #              RAILWAY_REGION         optional: the api's region, e.g. us-east4-eqdc4a
 # Any branch may be deployed, and the deploy job runs that branch's .railway/railway.ts with the test
@@ -56,6 +62,8 @@ jobs:
         run: node scripts/check-company-os.mjs
       - name: Hoy server tests
         run: node scripts/test-hoy-server.mjs
+      - name: Test gate (the passphrase in front of the test site; rule D5)
+        run: node scripts/test-test-gate.mjs
       - name: Docs gate (the Hub's docs for a signed-in super admin only; lane Y6)
         run: node scripts/test-docs-gate.mjs
       - name: Deploy wiring (IaC declares every server variable; summaries show the go-live switches)
@@ -105,6 +113,18 @@ jobs:
           case "$CLERK_PUBLISHABLE_KEY" in pk_test_?*) ;; *) echo "::error::test requires a Clerk TEST publishable key (pk_test_…) in the test environment's variables"; exit 1 ;; esac
           if [ -z "$HOY_RAILWAY_PROJECT" ]; then echo "::error::Set the test environment's variable RAILWAY_PROJECT_NAME"; exit 1; fi
 
+      # The test site is public: it never runs without its passphrase gate (Company OS playbook rule D5), and only
+      # at the address the test environment names. Before any infra, variable or service mutation. Never prints a value.
+      - name: Require the test gate and the site's address
+        env:
+          TEST_GATE_PASSPHRASE: ${{ secrets.TEST_GATE_PASSPHRASE }}
+          COOKIE_SIGNING_SECRET: ${{ secrets.COOKIE_SIGNING_SECRET }}
+          APP_URL: ${{ vars.APP_URL }}
+        run: |
+          if [ ${#TEST_GATE_PASSPHRASE} -lt 12 ]; then echo "::error::Set the test environment's secret TEST_GATE_PASSPHRASE (at least 12 characters)"; exit 1; fi
+          if [ ${#COOKIE_SIGNING_SECRET} -lt 32 ]; then echo "::error::Set the test environment's secret COOKIE_SIGNING_SECRET (at least 32 characters: openssl rand -hex 32)"; exit 1; fi
+          if ! printf '%s' "$APP_URL" | grep -Eq '^https://[a-zA-Z0-9.-]+$'; then echo "::error::Set the test environment's variable APP_URL to https://test.<the customer's domain> (no path, no trailing slash)"; exit 1; fi
+
       # Review round 2 (r2hoy, L7): a variable left under a wrong or retired name (SET_LIVE, PUBLIC_DOCUMENTS) is warned
       # about here, before Apply infra (which fails on a variable the IaC doesn't declare). Never prints a value.
       - name: Leftover variables
@@ -134,21 +154,22 @@ jobs:
         run: railway config apply --yes
 
       # The IaC declares these as preserve(); the values go in over stdin, without a redeploy.
-      # APP_URL is this service's own Railway-generated domain (created here if it has none yet).
+      # APP_URL is the custom domain on the web service, named by the test environment's variable.
       - name: Sync settings
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
           CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
           CLERK_PUBLISHABLE_KEY: ${{ vars.CLERK_PUBLISHABLE_KEY }}
+          APP_URL: ${{ vars.APP_URL }}
+          TEST_GATE_PASSPHRASE: ${{ secrets.TEST_GATE_PASSPHRASE }}
+          COOKIE_SIGNING_SECRET: ${{ secrets.COOKIE_SIGNING_SECRET }}
         run: |
           set_var() { printf '%s' "$2" | railway variable set "$1" --stdin --service "$SERVICE" --environment "$RAILWAY_ENV" --skip-deploys; }
-          out=$(railway domain --service "$SERVICE" --environment "$RAILWAY_ENV" 2>&1) || true
-          url=$(printf '%s' "$out" | grep -oE 'https://[a-zA-Z0-9.-]+\.up\.railway\.app' | head -1)
-          if [ -z "$url" ]; then echo "::error::Could not determine the test web service's public URL"; exit 1; fi
-          set_var APP_URL "$url"
+          set_var APP_URL "$APP_URL"
           set_var CLERK_SECRET_KEY "$CLERK_SECRET_KEY"
           set_var CLERK_PUBLISHABLE_KEY "$CLERK_PUBLISHABLE_KEY"
-          echo "APP_URL=$url" >> "$GITHUB_ENV"
+          set_var TEST_GATE_PASSPHRASE "$TEST_GATE_PASSPHRASE"
+          set_var COOKIE_SIGNING_SECRET "$COOKIE_SIGNING_SECRET"
 
       - uses: actions/download-artifact@v4
         with:
@@ -161,6 +182,8 @@ jobs:
         env:
           CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          TEST_GATE_PASSPHRASE: ${{ secrets.TEST_GATE_PASSPHRASE }}
+          COOKIE_SIGNING_SECRET: ${{ secrets.COOKIE_SIGNING_SECRET }}
         run: node server/check-bundle.mjs "$RUNNER_TEMP/web/site"
 
       # Uploads the checked bundle only (not the checkout). --no-gitignore: the bundle's site/ must not
@@ -172,6 +195,7 @@ jobs:
 
       - name: Summary
         env:
+          APP_URL: ${{ vars.APP_URL }}
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
           echo "### Site: ${APP_URL} (branch ${GITHUB_REF_NAME}, ${GITHUB_SHA::12})" >> "$GITHUB_STEP_SUMMARY"

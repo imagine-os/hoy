@@ -24,6 +24,8 @@
 #   variables  CLERK_PUBLISHABLE_KEY  pk_live_…
 #              APP_URL                https://<Hoy's domain> (the custom domain on the web service)
 #              COMPANY_OS_TENANT      Hoy's production tenant slug in Company OS
+#   never      TEST_GATE_PASSPHRASE   production has no passphrase gate (Company OS playbook rule D5):
+#                                     the deploy refuses the secret if it is set
 #              RAILWAY_PROJECT_NAME   Hoy's Railway project name (a label; the token picks the project)
 #              RAILWAY_REGION         optional: the api's region, e.g. us-east4-eqdc4a
 name: Deploy web (prod)
@@ -139,6 +141,8 @@ jobs:
         run: node scripts/check-company-os.mjs
       - name: Hoy server tests
         run: node scripts/test-hoy-server.mjs
+      - name: Test gate (the passphrase in front of the test site; rule D5)
+        run: node scripts/test-test-gate.mjs
       - name: Docs gate (the Hub's docs for a signed-in super admin only; lane Y6)
         run: node scripts/test-docs-gate.mjs
       - name: Deploy wiring (IaC declares every server variable; summaries show the go-live switches)
@@ -200,7 +204,9 @@ jobs:
           APP_URL: ${{ vars.APP_URL }}
           COMPANY_OS_TENANT: ${{ vars.COMPANY_OS_TENANT }}
           HOY_RAILWAY_PROJECT: ${{ vars.RAILWAY_PROJECT_NAME }}
+          TEST_GATE_PASSPHRASE: ${{ secrets.TEST_GATE_PASSPHRASE }}
         run: |
+          if [ -n "$TEST_GATE_PASSPHRASE" ]; then echo "::error::The production environment has a TEST_GATE_PASSPHRASE secret: production never runs the test gate. Delete it."; exit 1; fi
           case "$CLERK_SECRET_KEY" in sk_live_?*) ;; *) echo "::error::production requires a Clerk LIVE secret key (sk_live_…) in the production environment's secrets"; exit 1 ;; esac
           case "$CLERK_PUBLISHABLE_KEY" in pk_live_?*) ;; *) echo "::error::production requires a Clerk LIVE publishable key (pk_live_…) in the production environment's variables"; exit 1 ;; esac
           if ! printf '%s' "$APP_URL" | grep -Eq '^https://[a-zA-Z0-9.-]+$'; then echo "::error::Set the production variable APP_URL to https://<Hoy's domain> (no path)"; exit 1; fi
