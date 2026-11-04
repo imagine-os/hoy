@@ -1,12 +1,17 @@
 import { Navigate } from 'react-router-dom';
 import { useLayout } from '../../layout/useLayout';
+import { useI18n } from '../../i18n/I18nProvider';
+import { EmptyState } from '../../components/molecule/EmptyState/EmptyState';
 import { ComingSoonLanding } from '../../components/template/ComingSoonLanding/ComingSoonLanding';
 import { PRODUCTION_BUILD, siteIsLive, useLaunchConfig, useLaunchSettled } from '../../config/launch';
 import { useSession } from '../../auth/SessionProvider';
 import { comingSoonEntry, rootEntry } from './entry';
 import { comingSoonSpec } from './specs';
 /** While the launch settings or the session are read: the app's own loading state, not a blank page. */
-const Waiting = () => <div className="lazy-fallback" aria-busy="true" data-launch-wait />;
+function Waiting() {
+  const { t } = useI18n();
+  return <div className="lazy-fallback" aria-busy="true" data-launch-wait><EmptyState compact tone="loading" title={t('core.common.loading')} /></div>;
+}
 export function ComingSoonPage() {
   const { sections, isVisible } = useLayout(comingSoonSpec);
   const session = useSession();

@@ -214,6 +214,7 @@ try {
     ({ ctx, page } = await open());
     await page.goto(`${BASE}/#${path}`);
     await page.locator('[data-launch-wait]').waitFor({ timeout: 3000 }).catch(() => {});
+    check(`live, slow settings, ${path}: the wait says it is loading, it is not a blank page`, /Cargando/.test(await page.locator('[data-launch-wait]').innerText().catch(() => '')));
     await page.waitForTimeout(1800);
     const seen = await painted(page);
     check(`live, slow settings, ${path}: the landing never paints, the loading state does, then the site`, !seen.landing && seen.waiting && route(page).startsWith('/site'), `${JSON.stringify(seen)} ${route(page)}`);
