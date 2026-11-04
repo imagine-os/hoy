@@ -1,4 +1,4 @@
-# Manual de operaciones — HOY Wellness Center
+# Manual de operaciones — Hoy Human Club
 
 Cómo funciona el club en persona y en el software, por rol. Se muestra en la app en `/#/manual`
 (portada con la rejilla de capítulos por parte; cada capítulo en `/#/manual/<slug>`, siguiendo el

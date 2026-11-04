@@ -26,7 +26,7 @@ export const tenant = {
   id: 'ten_hoy',
   slug: 'hoy',
   name: 'HOY',
-  legalName: 'HOY Wellness Center',
+  legalName: 'Hoy Human Club',
   tagline: { es: 'Human club', en: 'Human club' },
   /** The studio is in Medellín (the brand manual is headed "Medellín · 2026" and the copy names it). */
   city: 'Medellín',
