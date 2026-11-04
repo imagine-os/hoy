@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useTable } from '../../../data/DataContext';
 import type { MediaAssetRow } from '../../../data/schema';
@@ -61,6 +61,8 @@ export interface MediaSlotProps {
   /** Rendered on top of the slot, filled or empty (a chip, a play button, a headline). */
   overlay?: ReactNode;
   className?: string;
+  /** A stored public image (`/media/<id>`) that didn't load; without this the slot shows its empty frame. */
+  onSrcError?: () => void;
 }
 
 /**
@@ -70,14 +72,15 @@ export interface MediaSlotProps {
  * chip) — never a broken box.
  */
 export function MediaSlot({
-  ratio, kind = 'photo', label, brief, tone, slotKey, src, fallbackSrc, fallbackVideo, motion = true, poster, caption, overlay, className = '',
+  ratio, kind = 'photo', label, brief, tone, slotKey, src, fallbackSrc, fallbackVideo, motion = true, poster, caption, overlay, className = '', onSrcError,
 }: MediaSlotProps) {
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
   const { bi } = useI18n();
   const { rows } = useTable<MediaAssetRow>('media_assets', slotKey ? { where: { slot_key: slotKey } } : { limit: 0 });
   const asset = slotKey ? rows[0] : undefined;
   const ready = asset && asset.status === 'ready' && asset.url ? asset : undefined;
 
-  const url = src ?? ready?.url ?? fallbackSrc ?? undefined;
+  const url = src && src === failedSrc ? undefined : src ?? ready?.url ?? fallbackSrc ?? undefined;
   const effKind = src ? kind : ready?.kind ?? kind;
   const text = typeof label === 'string' ? label : bi(label);
   const alt = (ready && bi(ready.alt)) || text;
@@ -95,7 +98,7 @@ export function MediaSlot({
       <div className={cls} style={style} title={hint} role={url ? undefined : 'img'} aria-label={url ? undefined : text}>
         {url && effKind === 'video' && <video className="mediaslot-media" src={url} poster={poster} controls playsInline preload="metadata" aria-label={alt} />}
         {living && <AmbientScene poster={url!} video={fallbackVideo} motion={motion} alt={alt} className="mediaslot-living" />}
-        {url && effKind !== 'video' && !living && <img className="mediaslot-media" src={url} alt={alt} loading="lazy" />}
+        {url && effKind !== 'video' && !living && <img className="mediaslot-media" src={url} alt={alt} loading="lazy" onError={() => { if (url.startsWith('/media/')) { setFailedSrc(url); onSrcError?.(); } }} />}
         {!url && (
           <div className="mediaslot-empty">
             <span className="mediaslot-glyph" aria-hidden>{GLYPH[effKind]}</span>

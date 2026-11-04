@@ -196,7 +196,7 @@ W = written, with each table's adapter kind (`none` = no adapter). Findings name
 | `/admin/finance` | R: class_ledger (entity), expense_templates (entity), expenses (entity), invoices (entity (read-only)), payments (entity), payroll_lines (none), payroll_runs (none), plans (entity), profiles (entity), teachers (entity), tenants (settings), user_roles (session), users (entity)<br>W: tenants (settings) | — | unknown payroll_runs → Wave 4; unknown payroll_lines → Wave 4 |
 | `/admin/finance/expenses` | R: expense_templates (entity), expenses (entity)<br>W: expense_templates (entity), expenses (entity) | — | none |
 | `/admin/settings/booking-policies` | R: —<br>W: — | GET /modules/bookings/settings, PATCH /modules/bookings/settings | none |
-| `/admin/class-schedule` | R: —<br>W: — | POST /batch, POST /query | none |
+| `/admin/class-schedule` | R: events (none), media_assets (static), modalities (static), teachers (entity)<br>W: — | POST /batch, POST /query | unknown events → Wave 3 |
 | `/` | R: page_layouts (none)<br>W: page_layouts (none) | — | none |
 | `/coming-soon` | R: page_layouts (none)<br>W: page_layouts (none) | — | none |
 | `/app` | R: activity_events (sink), bookings (entity), class_ledger (entity), class_sessions (entity), class_templates (entity), modalities (static), page_layouts (none), payments (entity), plans (entity), practice_goals (none), profiles (entity), rooms (entity), teachers (entity), users (entity)<br>W: activity_events (sink), page_layouts (none), practice_goals (none) | — | unknown practice_goals → Wave 2; sink activity_events → Wave 2 |

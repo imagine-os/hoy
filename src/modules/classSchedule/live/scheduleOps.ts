@@ -1,4 +1,5 @@
 import type { BatchOp } from '../../staff/desk/wire';
+import { COACH_FIELDS, coachBio, coachPhotoUrl, coachPhotoValue, coachSpecialties } from '../../../data/companyos/publicImages';
 
 /**
  * AD-01 / AD-02 · class, schedule, teacher and room writes in Company OS terms (bookings `schedule`, `occurrence`,
@@ -12,7 +13,9 @@ export const WEEKDAYS = [1, 2, 3, 4, 5, 6, 0] as const; // Monday first; 0 = Sun
 
 export interface ScheduleDraft { title: string; weekday: number; start_time: string; resource: string; coach: string; capacity: number; valid_from: string; valid_until?: string; active: boolean }
 export interface ResourceDraft { name: string; capacity: number }
-export interface CoachDraft { name: string; email?: string; phone?: string; active: boolean }
+/** A teacher's public profile: `specialties` are class type slugs, `photo` a `/media/<id>` address or none. */
+export interface CoachProfile { bio: { es: string; en: string }; specialties: string[]; photo: string | null }
+export interface CoachDraft { name: string; email?: string; phone?: string; active: boolean; profile?: CoachProfile }
 
 export type ScheduleProblem = 'title' | 'weekday' | 'start_time' | 'on_the_hour' | 'resource' | 'coach' | 'capacity' | 'valid_from';
 
@@ -47,17 +50,27 @@ export const resourceData = (d: ResourceDraft) => ({ name: d.name.trim(), kind: 
 export const createResourceOps = (d: ResourceDraft): BatchOp[] => [{ op: 'create', entity: 'resource', data: resourceData(d) }];
 export const updateResourceOps = (id: string, d: ResourceDraft): BatchOp[] => [{ op: 'update', entity: 'resource', id, data: resourceData(d) }];
 
+const profileData = (p: CoachProfile | undefined) => (p ? {
+  [COACH_FIELDS.bio]: { es: p.bio.es.trim(), en: p.bio.en.trim() },
+  [COACH_FIELDS.specialties]: coachSpecialties(p.specialties),
+  [COACH_FIELDS.photo]: coachPhotoValue(p.photo),
+} : {});
+/** A `coach` row back into the form; what is stored is untrusted (publicImages.ts). */
+export const coachProfileOf = (row: Record<string, unknown>): CoachProfile => ({
+  bio: coachBio(row[COACH_FIELDS.bio]), specialties: coachSpecialties(row[COACH_FIELDS.specialties]), photo: coachPhotoUrl(row[COACH_FIELDS.photo]),
+});
+
 /** A teacher is a person with a `coach` facet, created together. */
 export function createCoachOps(d: CoachDraft): BatchOp[] {
   return [
     { op: 'create', entity: 'person', data: { name: d.name.trim(), ...(d.email?.trim() ? { email: d.email.trim().toLowerCase() } : {}), ...(d.phone?.trim() ? { phone: d.phone.trim() } : {}) } },
-    { op: 'create', entity: 'coach', data: { person: { $ref: 0 }, kind: 'teacher', active: d.active } },
+    { op: 'create', entity: 'coach', data: { person: { $ref: 0 }, kind: 'teacher', active: d.active, ...profileData(d.profile) } },
   ];
 }
 export function updateCoachOps(coachId: string, personId: string, d: CoachDraft): BatchOp[] {
   return [
     { op: 'update', entity: 'person', id: personId, data: { name: d.name.trim(), ...(d.phone?.trim() ? { phone: d.phone.trim() } : {}) } },
-    { op: 'update', entity: 'coach', id: coachId, data: { active: d.active } },
+    { op: 'update', entity: 'coach', id: coachId, data: { active: d.active, ...profileData(d.profile) } },
   ];
 }
 

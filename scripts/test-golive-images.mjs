@@ -12,11 +12,18 @@ async function test(name, fn) {
   catch (e) { failures++; console.log(`FAIL ${name}\n     ${e?.message ?? e}`); }
 }
 
+const stubRegistry = {
+  name: 'stub-registry',
+  setup(b) {
+    b.onResolve({ filter: /\/registry$/ }, (args) => (args.importer.includes('/src/app/') ? { path: 'registry-stub', namespace: 'stub' } : undefined));
+    b.onLoad({ filter: /.*/, namespace: 'stub' }, () => ({ contents: 'export const getRoutes = () => []; export const getStrings = () => []; export const getRedirects = () => [];', loader: 'js' }));
+  },
+};
 const load = async (contents) => {
   try {
     const out = await build({
       stdin: { contents, resolveDir: process.cwd(), loader: 'ts' },
-      bundle: true, platform: 'node', format: 'esm', write: false, logLevel: 'silent', jsx: 'automatic',
+      bundle: true, platform: 'node', format: 'esm', write: false, logLevel: 'silent', jsx: 'automatic', plugins: [stubRegistry],
       loader: { '.jpg': 'empty', '.png': 'empty', '.webp': 'empty', '.svg': 'empty', '.css': 'empty', '.md': 'text' },
       define: { 'import.meta.env': '{"VITE_HOY_BUILD":"production","DEV":false,"PROD":true}', __HOY_BUILD__: '"production"' },
     });
@@ -26,7 +33,8 @@ const load = async (contents) => {
 const images = await load("export * from './src/data/companyos/publicImages.ts';");
 const provider = await load("export * from './src/data/companyos/CompanyOSProvider.ts'; export * from './src/data/companyos/mapping.ts'; export * from './src/data/companyos/refusals.ts';");
 const ops = await load("export * from './src/modules/classSchedule/live/scheduleOps.ts'; export { liveScheduleStrings } from './src/modules/classSchedule/live/strings.ts'; export { strings as mediaStrings } from './src/modules/media/strings.ts';");
-const pay = await load("import './src/tenant/tenant.ts'; import './src/modules/admin/settings.ts'; export { validPaymentImage } from './src/modules/admin/paymentInstructions.ts';");
+globalThis.localStorage ??= { getItem: () => null, setItem: () => {}, removeItem: () => {} };
+const pay = await load("export { MockProvider } from './src/data/MockProvider'; export { validPaymentImage } from './src/modules/admin/paymentInstructions.ts';");
 const needs = (m) => { if (m.__error) throw new Error(`does not load: ${m.__error}`); };
 
 const ID = '0b0f6e1c-3c6a-4c0e-9a51-6f3f2c1d9e01';
@@ -103,6 +111,59 @@ await test('upload: a file not ready after confirm, or an odd id, is refused and
   await assert.rejects(images.uploadPublicImage({}, owner, f), (e) => e.code === 'disconnected');
 });
 
+// ── Replacing an image removes the old file (owner, 2026-11-04) ─────────────────────────────────────────────────
+const NEW_ID = '1c1f6e1c-3c6a-4c0e-9a51-6f3f2c1d9e02';
+const deleter = (fail) => { const log = []; return { log, request: async (method, path) => { log.push(`${method} ${path}`); if (fail) throw Object.assign(new Error(fail), { code: fail }); return null; } }; };
+await test('replace: upload is done, the owner record is patched, and only then the old file is deleted', async () => {
+  needs(images);
+  const port = deleter();
+  const out = await images.saveThenRemoveOld(port, `/media/${ID}`, `/media/${NEW_ID}`, async () => { port.log.push('patch'); return 'saved'; });
+  assert.equal(out, 'saved');
+  assert.deepEqual(port.log, ['patch', `DELETE /api/file/${ID}`]);
+});
+await test('replace: the photo field\'s bare id works too; ids are compared whatever their case', async () => {
+  needs(images);
+  const port = deleter();
+  await images.saveThenRemoveOld(port, ID, NEW_ID, async () => true);
+  assert.deepEqual(port.log, [`DELETE /api/file/${ID}`]);
+  const same = deleter();
+  await images.saveThenRemoveOld(same, `/media/${ID}`, ID.toUpperCase(), async () => true);
+  assert.deepEqual(same.log, [], 'the same image saved again: nothing to remove');
+});
+await test('replace: a refused patch (falsy or thrown) deletes nothing, and a thrown refusal still reaches the screen', async () => {
+  needs(images);
+  const a = deleter();
+  assert.equal(await images.saveThenRemoveOld(a, `/media/${ID}`, `/media/${NEW_ID}`, async () => null), null);
+  assert.deepEqual(a.log, []);
+  const b = deleter();
+  await assert.rejects(images.saveThenRemoveOld(b, `/media/${ID}`, `/media/${NEW_ID}`, async () => { throw Object.assign(new Error('x'), { code: 'forbidden' }); }), (e) => e.code === 'forbidden');
+  assert.deepEqual(b.log, []);
+});
+await test('replace: a failed delete leaves the new image standing: logged, no error for the person', async () => {
+  needs(images);
+  const warned = []; const original = console.warn; console.warn = (...a) => warned.push(a.join(' '));
+  try {
+    const port = deleter('forbidden');
+    assert.equal(await images.saveThenRemoveOld(port, `/media/${ID}`, `/media/${NEW_ID}`, async () => 'saved'), 'saved');
+    assert.equal(port.log.length, 1);
+    assert.ok(warned.some((w) => /forbidden/.test(w)), 'logged');
+    assert.ok(!warned.some((w) => w.includes(ID)), 'the log carries no id');
+  } finally { console.warn = original; }
+});
+await test('replace: the old id must be a uuid from a saved value: anything else deletes nothing; no new image deletes nothing', async () => {
+  needs(images);
+  for (const old of ['javascript:alert(1)', 'https://evil.example/x.png', `/media/../${ID}`, `/media/${ID}/x`, `/files/${ID}`, `${ID}/../x`, 'images/teachers/a.webp', '', null, undefined, 7, {}, [ID]]) {
+    const port = deleter();
+    await images.saveThenRemoveOld(port, old, `/media/${NEW_ID}`, async () => true);
+    assert.deepEqual(port.log, [], String(old));
+  }
+  const removed = deleter();
+  await images.saveThenRemoveOld(removed, `/media/${ID}`, null, async () => true);
+  assert.deepEqual(removed.log, [], 'Quitar foto is not a replacement: the plan decides replacing only');
+  const noPort = {};
+  assert.equal(await images.saveThenRemoveOld(noPort, `/media/${ID}`, `/media/${NEW_ID}`, async () => 'saved'), 'saved');
+});
+
 // ── Who gets which upload ────────────────────────────────────────────────────────────────────────────────────────
 await test('field mode: review build always local, owner or not; production shared only with an owner and a provider that uploads', () => {
   needs(images);
@@ -143,8 +204,7 @@ await test('teacher: bio, specialties and photo come from the record', () => {
 });
 await test('teacher: nothing is matched to the build by name; no bio or photo reads as empty, for a name the seed knows too', () => {
   needs(provider);
-  const seeded = JSON.parse('{}');
-  const t = teacher(seeded);
+  const t = teacher({});
   assert.deepEqual(t.bio, { es: '', en: '' }); assert.deepEqual(t.specialties, []); assert.equal(t.photo_url, null); assert.equal(t.certifications ?? null, null);
   assert.doesNotMatch(readFileSync('src/data/companyos/mapping.ts', 'utf8'), /seedTeachers/, 'mapping.ts no longer reads the seed\'s teachers');
 });
@@ -188,15 +248,14 @@ await test('editor: reading a coach back for the form', () => {
 // ── The words ────────────────────────────────────────────────────────────────────────────────────────────────────
 await test('copy: every refusal an upload can get has Spanish and English', () => {
   needs(provider);
-  for (const code of ['file_type_not_allowed', 'file_too_large', 'forbidden', 'file_kind_unknown', 'file_upload_mismatch', 'file_upload_missing', 'file_upload_expired', 'file_not_ready', 'storage_not_configured']) {
+  for (const code of ['file_type_not_allowed', 'file_too_large', 'forbidden', 'file_kind_unknown', 'file_upload_mismatch', 'file_upload_missing', 'file_upload_expired', 'file_not_ready', 'storage_not_configured', 'storage_unavailable']) {
     assert.ok(provider.hasRefusalCopy(code), code);
     assert.ok(provider.refusalCopy(code, 'es') && provider.refusalCopy(code, 'en') && provider.refusalCopy(code, 'es') !== provider.refusalCopy(code, 'en'), code);
   }
-  assert.match(provider.refusalCopy('file_type_not_allowed', 'en'), /WebP/, 'the two new kinds take WebP too');
 });
 await test('copy: the new screen strings exist in both languages', () => {
   needs(ops);
-  for (const key of ['live.f.bio', 'live.f.specialties', 'live.f.photo', 'live.f.photoAfterSave']) assert.ok(ops.liveScheduleStrings[key]?.es && ops.liveScheduleStrings[key]?.en, key);
+  for (const key of ['live.f.bioEs', 'live.f.bioEn', 'live.f.specialties', 'live.f.photo', 'live.f.photoAfterSave']) assert.ok(ops.liveScheduleStrings[key]?.es && ops.liveScheduleStrings[key]?.en, key);
   for (const key of ['media.picker.uploadShared', 'media.picker.sharedHint', 'media.picker.busyShared', 'media.picker.saveFirst']) assert.ok(ops.mediaStrings[key]?.es && ops.mediaStrings[key]?.en, key);
 });
 

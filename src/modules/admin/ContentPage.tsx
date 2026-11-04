@@ -183,6 +183,7 @@ export function ContentPage() {
       </div>
       <ContentSubNav current="entities" />
       {PRODUCTION_BUILD && <Notice tone="info">{t(timetableLive ? canWrite ? 'admin.content.timetableLive' : 'admin.content.timetableReadOnly' : 'admin.content.later')}</Notice>}
+      {PRODUCTION_BUILD && entity === 'teachers' && <Notice tone="info">{t('admin.content.teachersLive')} <Link to="/admin/class-schedule">{t('schedule.title')}</Link></Notice>}
       {!row && recovery.notice}
       {entity==='teachers'&&reviewer(role)&&<TeacherQueue/>}
       <div className="row wrap" role="tablist">

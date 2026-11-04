@@ -1,6 +1,6 @@
 import { teacherStudioPhoto } from '../photography';
 import { useSiteEdition } from '../edition';
-import { Fragment, type ReactNode } from 'react';
+import { Fragment, useState, type ReactNode } from 'react';
 import { Link } from '../links';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useLayout } from '../../../layout/useLayout';
@@ -12,6 +12,7 @@ import { Chip } from '../../../components/atom/Chip/Chip';
 import { MediaSlot } from '../../../components/molecule/MediaSlot/MediaSlot';
 import { PageHead, SiteShell } from '../SiteShell';
 import { siteSpecs } from '../specs';
+import { PRODUCTION_BUILD } from '../../../config/launch';
 
 /**
  * W-05 — the studio's teachers (0051: the seven real teachers, each with the class they guide). A teacher with no
@@ -25,6 +26,8 @@ export function TeachersPage() {
   const { sections, isVisible } = useLayout(siteSpecs.teachers);
   const { rows: teachers } = useTable<TeacherRow>('teachers', { where: { active: true } });
   const { rows: modalities } = useTable<ModalityRow>('modalities');
+  // A stored photo that isn't public (any more) is no photo: the portrait-pending arch, as for a teacher who has none.
+  const [unavailable, setUnavailable] = useState<string[]>([]);
   const spec = (id: string) => {
     const m = modalities.find((x) => x.id === id);
     return { label: m ? (lang === 'es' ? m.name_es : m.name_en) : id, tone: m?.tone ?? ('river' as const), slug: classForModality(m?.slug) };
@@ -37,7 +40,7 @@ export function TeachersPage() {
         <p className="xs muted" style={{ marginBottom: 'var(--sp-lg)' }}>{t(teacherPhotoEdition ? 'site.photos.teacherLegend' : 'site.teachers.legend')}</p>
         <div className="site-teachergrid">
           {teachers.map((te) => {
-            const photo = te.photo_url || teacherStudioPhoto(te.id, version);
+            const photo = unavailable.includes(te.id) ? null : te.photo_url || teacherStudioPhoto(te.id, version);
             const first = te.specialties.map(spec)[0];
             const cls = first?.slug ? classes[first.slug] : undefined;
             const initials = te.display_name.split(' ').map((part) => part[0]).slice(0, 2).join('');
@@ -45,11 +48,11 @@ export function TeachersPage() {
               <div key={te.id} className="site-teacher-frame">
                 <Card padding="sm" className="site-teacher">
                   {photo
-                    ? <MediaSlot ratio={!te.photo_url ? 'natural' : edition === 'sanctuary' ? '4:5' : '4:3'} kind="photo" tone={first?.tone} slotKey="teacher.portrait" src={photo} className={!te.photo_url ? 'teacher-studio-photo' : undefined} label={t('site.teachers.portrait', { name: te.display_name })} />
+                    ? <MediaSlot ratio={!te.photo_url ? 'natural' : edition === 'sanctuary' ? '4:5' : '4:3'} kind="photo" tone={first?.tone} slotKey="teacher.portrait" src={photo} onSrcError={() => setUnavailable((u) => [...u, te.id])} className={!te.photo_url ? 'teacher-studio-photo' : undefined} label={t('site.teachers.portrait', { name: te.display_name })} />
                     : <div className="site-teacher-monogram" data-tone={first?.tone ?? 'river'} role="img" aria-label={`${te.display_name} · ${t('site.new.portraitPending')}`}><span aria-hidden>{initials}</span><small aria-hidden>{t('site.new.portraitPending')}</small></div>}
                   <div className="site-teacher-copy">
                     <h3>{te.display_name}</h3>
-                    {cls && <p className="site-teacher-line">{bi(cls.tagline)}</p>}
+                    {(PRODUCTION_BUILD && bi(te.bio)) ? <p className="site-teacher-line">{bi(te.bio)}</p> : cls && <p className="site-teacher-line">{bi(cls.tagline)}</p>}
                     <div className="row wrap">{te.specialties.map(spec).map((s) => s.slug
                       ? <Link key={s.label} to={`/site/classes/${s.slug}`}><Chip tone={s.tone} dot>{s.label}</Chip></Link>
                       : <Chip key={s.label} tone={s.tone} dot>{s.label}</Chip>)}</div>

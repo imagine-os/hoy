@@ -1,5 +1,5 @@
 import { useSiteHref } from '../links';
-import { Fragment, type ReactNode } from 'react';
+import { Fragment, useState, type ReactNode } from 'react';
 import { Link } from '../links';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useLayout } from '../../../layout/useLayout';
@@ -27,6 +27,8 @@ export function HomePage() {
   return edition === 'classic' ? <ClassicHomePage /> : <SanctuaryHome />;
 }
 function SanctuaryHome() {
+  // A stored photo that isn't public (any more) is no photo: the initials, as for a teacher who has none.
+  const [unavailablePhotos, setUnavailablePhotos] = useState<string[]>([]);
   const href = useSiteHref();
   const { t, bi, lang } = useI18n();
   const { sections, isVisible } = useLayout(siteSpecs.home);
@@ -88,8 +90,8 @@ function SanctuaryHome() {
         // 0051: real teachers, no generated portraits — the photo once uploaded, else initials in the tone of their class.
         const mod = modalities.find((m) => m.id === te.specialties[0]);
         const cls = classForModality(mod?.slug);
-        const photo = te.photo_url || teacherStudioPhoto(te.id, version);
-        return <Link to="/site/teachers" key={te.id} className="sanctuary-teacher-link"><span className="sanctuary-teacher-number">{String(i + 1).padStart(2, '0')}</span>{photo ? <img src={photo} loading="lazy" alt="" className="sanctuary-teacher-photo" /> : <span className="sanctuary-teacher-initials" data-tone={mod?.tone ?? 'river'} aria-hidden>{te.display_name.split(' ').map((p) => p[0]).slice(0, 2).join('')}</span>}<span><h3>{te.display_name}</h3><p>{te.specialties.map(id => {const m = modalities.find(m => m.id === id); return m ? (lang === 'es' ? m.name_es : m.name_en) : '';}).filter(Boolean).join(' · ')}{cls ? ` · ${bi(classes[cls].tagline)}` : ''}</p></span><span aria-hidden>↗</span></Link>;
+        const photo = unavailablePhotos.includes(te.id) ? null : te.photo_url || teacherStudioPhoto(te.id, version);
+        return <Link to="/site/teachers" key={te.id} className="sanctuary-teacher-link"><span className="sanctuary-teacher-number">{String(i + 1).padStart(2, '0')}</span>{photo ? <img src={photo} loading="lazy" alt="" className="sanctuary-teacher-photo" onError={() => { if (photo.startsWith('/media/')) setUnavailablePhotos((u) => [...u, te.id]); }} /> : <span className="sanctuary-teacher-initials" data-tone={mod?.tone ?? 'river'} aria-hidden>{te.display_name.split(' ').map((p) => p[0]).slice(0, 2).join('')}</span>}<span><h3>{te.display_name}</h3><p>{te.specialties.map(id => {const m = modalities.find(m => m.id === id); return m ? (lang === 'es' ? m.name_es : m.name_en) : '';}).filter(Boolean).join(' · ')}{cls ? ` · ${bi(classes[cls].tagline)}` : ''}</p></span><span aria-hidden>↗</span></Link>;
       })}</div></div>
     </section>,
     ValueModel: () => <section className="sanctuary-plans" data-reveal><div className="container sanctuary-section"><div className="sanctuary-centered"><p className="eyebrow">{t('site.nav.plans')}</p><h2>{t('site.new.plansTitle')}</h2><p className="muted">{t('site.new.plansBody')}</p></div><div className="sanctuary-plan-grid">{families.map(({ fam, price, sub }, i) => <Link to={'/site/plans'} key={fam} className={`sanctuary-plan ${i === 1 ? 'is-blue' : ''}`}><p className="eyebrow">0{i + 1} / {t(`site.new.planLabel${i}`)}</p><h3>{bi(FAMILY_LABEL[fam])}</h3>{price != null && <p className="sanctuary-price">{formatCOP(price, lang)}<small>{sub}</small></p>}<span className="sanctuary-plan-cta">{t('site.plans.all')}<Icon name="arrow-right" /></span></Link>)}</div><div className="sanctuary-centered sanctuary-plans-more"><Link className="sanctuary-text-link" to="/site/plans">{t('site.value.all')} <Icon name="arrow-right" /></Link></div></div></section>,

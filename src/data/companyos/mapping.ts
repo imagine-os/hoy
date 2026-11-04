@@ -1,6 +1,7 @@
 import type { BaseRow } from '../schema';
 import { tenant } from '../../tenant/tenant';
-import { modalities as seedModalities, plans as seedPlans, teachers as seedTeachers, rooms as seedRooms } from '../seed/catalog';
+import { modalities as seedModalities, plans as seedPlans, rooms as seedRooms } from '../seed/catalog';
+import { COACH_FIELDS, coachBio, coachPhotoUrl, coachSpecialties } from './publicImages';
 import { contentArticles, faqEntries } from '../seed/content';
 import { mediaAssets } from '../seed/media';
 import { legalDocuments } from '../seed/legal';
@@ -214,11 +215,12 @@ const teachers = entity({
     display_name: { derive: (r) => str(embedded(r, 'person')?.name) ?? '' },
     active: { field: 'active', from: (v) => v !== false },
     rate_per_class: { derive: () => null }, rating_avg: { derive: () => null },
-  },
-  /** Bio, photo and specialties are website content, matched to the coach by name. */
-  enrich: (row) => {
-    const seed = seedTeachers.find((t) => fold(t.display_name) === fold(String(row.display_name)));
-    return { ...row, bio: seed?.bio ?? { es: '', en: '' }, photo_url: seed?.photo_url ?? null, specialties: seed?.specialties ?? [], certifications: (seed as { certifications?: unknown } | undefined)?.certifications ?? null };
+    // Go-live lane H1: Class schedule › Teachers writes these. The stored values are untrusted (publicImages.ts); each
+    // language falls back to the other, and a class type this build doesn't know is left out.
+    bio: { derive: (r) => { const b = coachBio(r.data[COACH_FIELDS.bio]); return { es: b.es || b.en, en: b.en || b.es }; } },
+    specialties: { derive: (r) => coachSpecialties(r.data[COACH_FIELDS.specialties]).map((slug) => modalityId(slug)).filter((id) => seedModalities.some((m) => m.id === id)) },
+    photo_url: { derive: (r) => coachPhotoUrl(r.data[COACH_FIELDS.photo]) },
+    certifications: { derive: () => null },
   },
 });
 
