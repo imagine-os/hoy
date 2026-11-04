@@ -31,7 +31,7 @@ export const privateDocs = (): PrivateDocsPack | null => pack;
 async function authorised(path: string): Promise<Response | PrivateDocsState> {
   const ask = async (refresh: boolean) => {
     const token = await getSessionToken(refresh ? { refresh: true } : undefined);
-    return token ? fetch(`${PRIVATE_DOCS_BASE}${path}`, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store', credentials: 'omit' }) : null;
+    return token ? fetch(`${PRIVATE_DOCS_BASE}${path}`, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store', credentials: 'same-origin' }) : null;
   };
   // A token that expired on the way (or clock skew) gets one fresh try; a second 401 re-checks the session (as every 401).
   let res = await ask(false);

@@ -202,7 +202,7 @@ function ClerkSession({ config, children }: { config: AppConfig; children: React
       try {
         const token = await clerk.session?.getToken();
         if (!token) throw new Error('no_token');
-        const res = await fetch(cosPath(config, '/me'), { headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' }, cache: 'no-store', credentials: 'omit' });
+        const res = await fetch(cosPath(config, '/me'), { headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' }, cache: 'no-store', credentials: 'same-origin' });
         const body: unknown = await res.json().catch(() => null);
         const result = classifyMe(res.status, body);
         if (!alive) return;

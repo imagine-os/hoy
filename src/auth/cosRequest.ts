@@ -17,7 +17,7 @@ export async function cosJson(path: `/${string}`, init: { method?: 'GET' | 'POST
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json', ...(init.body === undefined ? {} : { 'Content-Type': 'application/json' }) },
     body: init.body === undefined ? undefined : JSON.stringify(init.body),
     cache: 'no-store',
-    credentials: 'omit',
+    credentials: 'same-origin', // carries the test site's gate cookie (server/testGate.mjs); the proxy forwards no cookie
   });
   const body: unknown = await res.json().catch(() => null);
   if (res.status === 401) onUnauthorized();
