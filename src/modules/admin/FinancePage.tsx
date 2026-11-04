@@ -1,5 +1,6 @@
 import { ConfirmedPaymentReport } from '../../components/organism/ConfirmedPaymentReport/ConfirmedPaymentReport';
 import { usePaymentReport } from './usePaymentReport';
+import { useVoidAccess, VoidPaymentButton, VoidPaymentDrawer } from '../transfers/launch/VoidPaymentAction';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useI18n } from '../../i18n/I18nProvider';
@@ -31,6 +32,8 @@ export function FinancePage() {
   const paymentReport = usePaymentReport();
   const payments = paymentReport.payments, loading = paymentReport.status === 'loading';
   const paymentReady = paymentReport.status === 'ready';
+  const canVoid = useVoidAccess();
+  const [voiding, setVoiding] = useState<string | null>(null);
   const paymentReadState = (withRetry = false) => <EmptyState compact tone={loading ? 'loading' : 'error'} title={t(loading ? 'admin.reporting.figuresLoading' : 'admin.reporting.figuresUnavailable')} body={t(loading ? 'admin.reporting.figuresLoadingBody' : 'admin.reporting.figuresUnavailableBody')} action={!loading && withRetry ? <Button variant="secondary" onClick={paymentReport.retry}>{t('core.common.retry')}</Button> : undefined} />;
   const { rows: invoices } = useTable<InvoiceRow>('invoices', { orderBy: { column: 'issued_at', dir: 'desc' } });
   const { rows: plans } = useTable<PlanRow>('plans');
@@ -75,8 +78,9 @@ export function FinancePage() {
     { key: 'status', label: t('admin.finance.col.status'), render: (p) => <Badge tone={toneForStatus(p.status)}>{t(`admin.finance.status.${p.status}`)}</Badge> },
     { key: 'invoice', label: 'DIAN', sortable: false, render: (p) => { const inv = invByPayment.get(p.id); return inv ? <span className="xs mono" title={inv.dian_cufe ?? t('admin.finance.noCufe')}>{inv.number}{inv.dian_cufe ? ` · ${inv.dian_cufe.slice(0, 8)}…` : ''}</span> : <span className="muted">—</span>; } },
   ];
+  if (canVoid('approved')) payCols.push({ key: 'void', label: '', sortable: false, render: (p) => (canVoid(p.status) ? <VoidPaymentButton onClick={() => setVoiding(p.id)} /> : null) });
   const invCols: DataTableColumn<InvoiceRow>[] = [
-    { key: 'number', label: t('admin.finance.col.invoice'), mono: true },
+    { key: 'number', label: t('admin.finance.col.invoice'), mono: true, render: (i) => <>{i.number}{payStatusOf.get(i.payment_id) === 'voided' && <> <Badge tone="danger">{t('admin.finance.status.voided')}</Badge></>}</> },
     { key: 'issued_at', label: t('admin.finance.col.when'), render: (i) => <span className="mono small">{formatDateTime(i.issued_at, lang)}</span> },
     { key: 'subtotal', label: t('core.common.subtotal'), align: 'right', render: (i) => formatCOP(i.subtotal, lang) },
     { key: 'tax', label: `IVA ${settings.tax.ivaPct}%`, align: 'right', render: (i) => formatCOP(i.tax, lang) },
@@ -125,6 +129,7 @@ export function FinancePage() {
       <section className="stack-sm">
         <div className="row-between wrap"><div className="eyebrow">{t('admin.finance.payments')}</div><span className="xs muted">{t('admin.finance.refund.disabled')}</span></div>
         {paymentReady ? <DataTable columns={payCols} rows={inRange} rowKey={(p) => p.id} dense pageSize={25} emptyText={t('admin.finance.emptyRange')} /> : paymentReadState()}
+        {voiding && <VoidPaymentDrawer key={voiding} paymentId={voiding} onClose={() => setVoiding(null)} />}
       </section>
       <section className="stack-sm">
         <div className="row-between wrap">

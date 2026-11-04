@@ -90,6 +90,12 @@ export function rolesFromMe(me: MeInfo): Role[] {
 /** The session's `isSuperAdmin`: `/me` says so and the person works as Super admin (not an AD-04 Administration). */
 export const isSuperAdminMe = (me: MeInfo): boolean => me.isSuperAdmin && roleFromMe(me) === 'super_admin';
 
+/**
+ * The `/me` Super Admin flag itself, for what the flag alone opens (the payment void): an AD-04 Administration login
+ * holds it though `isSuperAdminMe` is false for it. Viewing as another role, the viewed role decides: no flag.
+ */
+export const superAdminFlag = (me: MeInfo, viewingAs: unknown): boolean => me.isSuperAdmin && !viewingAs;
+
 export type MeResult =
   | { kind: 'member'; me: MeInfo }
   | { kind: 'not-member' }

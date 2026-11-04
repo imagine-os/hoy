@@ -1,4 +1,5 @@
 import {useRef} from 'react';
+import { showsLedgerValidity } from '../../../data/packages';
 import {useOperationalCatalog,useReviewedQuote} from '../../quotes/hooks';
 import {QuoteNotice} from '../../../components/molecule/QuoteNotice/QuoteNotice';
 import {checkSaleQuote,quotedItem,readPaymentQuote} from '../../../data/operationalQuotes';
@@ -206,7 +207,7 @@ export function ClassesPage() {
               <div key={c.id} className="cust-ledger-row">
                 <span className={`cust-ledger-delta ${c.delta > 0 ? 'is-plus' : 'is-minus'}`}>{c.delta > 0 ? `+${c.delta}` : c.delta}</span>
                 <span className="grow"><span className="small">{t(`customer.classes.reason.${c.reason}`)}</span><span className="xs muted"> · {formatDate(c.created_at, lang)}</span>{c.frozen_from && <span className="xs muted"> · {t('customer.classes.frozenRange', { from: formatDate(c.frozen_from, lang), to: formatDate(c.frozen_until ?? c.frozen_from, lang) })}</span>}</span>
-                {c.expires_at && c.delta > 0 && <Badge tone={c.expires_at < today ? 'danger' : 'neutral'}>{c.expires_at < today ? t('customer.classes.expired') : t('customer.classes.until', { date: formatDate(c.expires_at, lang) })}</Badge>}
+                {showsLedgerValidity(c) && <Badge tone={c.expires_at < today ? 'danger' : 'neutral'}>{c.expires_at < today ? t('customer.classes.expired') : t('customer.classes.until', { date: formatDate(c.expires_at, lang) })}</Badge>}
               </div>
             ))}
           </Card>

@@ -403,6 +403,7 @@ export const strings: StringTable = {
   'customer.classes.reason.comp': { es: 'Cortesía', en: 'Comp' },
   'customer.classes.reason.cancel_return': { es: 'Cancelación (devuelta)', en: 'Cancellation (returned)' },
   'customer.classes.reason.reschedule': { es: 'Cambio de clase', en: 'Class change' },
+  'customer.classes.reason.void': { es: 'Anulación', en: 'Voided' },
   'customer.classes.frozenRange': { es: 'congelado {from} – {to}', en: 'frozen {from} – {to}' },
   'customer.classes.expired': { es: 'Vencido', en: 'Expired' },
   'customer.classes.until': { es: 'hasta {date}', en: 'until {date}' },

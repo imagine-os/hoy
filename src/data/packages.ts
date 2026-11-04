@@ -125,3 +125,6 @@ export function resumePatch(purchase: ClassLedgerRow, today: string = dateKey())
 }
 
 // Contents (again): 1. packageState · 2. freezePatch, resumePatch
+
+/** A movement's validity badge: a row that added classes, unless its lot was voided (it has no validity left to show). */
+export const showsLedgerValidity = <R extends Pick<ClassLedgerRow, 'expires_at' | 'delta' | 'lot_voided_at'>>(r: R): r is R & { expires_at: string } => !!r.expires_at && r.delta > 0 && !r.lot_voided_at;

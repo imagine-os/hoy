@@ -12,15 +12,19 @@ const FIELDS = {
   person: ['name', 'email', 'phone', 'user'],
   member: ['person', 'price_audience'],
   product: ['key', 'name', 'kind', 'price', 'tax_rate_percent', 'credits', 'validity_days', 'freezable', 'audience', 'active'],
-  payment: ['person', 'product', 'amount', 'method', 'status', 'date', 'concept', 'reference', 'provider', 'notes', 'for_entity', 'for_id', 'price_override_reason'],
+  payment: ['person', 'product', 'amount', 'method', 'status', 'date', 'concept', 'reference', 'provider', 'notes', 'for_entity', 'for_id', 'price_override_reason', 'status_reason'],
   booking: ['person', 'occurrence', 'status', 'entitlement', 'payment_method', 'hold_until', 'hold_frozen_at', 'hold_left_minutes'],
-  invoice: ['kind', 'number', 'payment', 'person', 'product', 'total', 'issued_at'],
+  invoice: ['kind', 'number', 'payment', 'person', 'product', 'total', 'issued_at', 'voided_at', 'void_reason'],
   file: ['owner_entity', 'owner_id', 'kind', 'status', 'mime', 'filename', 'size_bytes'],
 };
 const MOVES = { pending: ['approved', 'declined', 'voided'], approved: ['refunded', 'voided'] };
 
-/** `productDates` / `approvedBy`: payments 2.7.0 (CO-6) is on; set false to act like 2.6.0. */
-export function fakeCos({ productDates = true, approvedBy = true, users = {}, now = () => Date.now() } = {}) {
+/**
+ * `productDates` / `approvedBy`: payments 2.7.0 (CO-6) is on; set false to act like 2.6.0.
+ * `voidRules`: Hoy's void settings are on (a void needs a reason; the receipt gets its mark). `refuseVoid(code)` makes the
+ * next voids refuse with that code, standing in for the credits rules the frontend only shows the words of.
+ */
+export function fakeCos({ productDates = true, approvedBy = true, voidRules = false, users = {}, now = () => Date.now() } = {}) {
   const fields = clone(FIELDS);
   if (productDates) fields.product.push('valid_from', 'valid_until');
   if (approvedBy) fields.payment.push('approved_by', 'approved_at');
@@ -28,7 +32,7 @@ export function fakeCos({ productDates = true, approvedBy = true, users = {}, no
   const keys = new Map();
   const settings = { review_hours: '', review_closed_dates: '', hold_minutes_transfer: 15, hold_minutes_desk: 60, reschedule_hours: 12, late_cancel_hours: 12, policy_as_of_booking: true, hold_frozen_while_payment_pending: true };
   const calls = [], uploads = new Map();
-  let seq = 0, receiptNo = 0, me = 'usr_desk';
+  let seq = 0, receiptNo = 0, me = 'usr_desk', voidRefusal = null;
   const roleOf = (u) => users[u]?.role ?? 'front_desk';
   const id = (p) => `${p}_${String(++seq).padStart(4, '0')}`;
   const pick = (entity, data) => Object.fromEntries(Object.entries(data).filter(([k]) => fields[entity].includes(k)).map(([k, v]) => [k, v === '' ? null : v]));
@@ -77,6 +81,10 @@ export function fakeCos({ productDates = true, approvedBy = true, users = {}, no
     const from = before?.status, to = after.status;
     if (!before && !['pending', 'approved', 'declined'].includes(to)) throw err('invalid_status_transition');
     if (before && from !== to && !(MOVES[from] ?? []).includes(to)) throw err('invalid_status_transition');
+    if (voidRules && before && to === 'voided' && from !== to) {
+      if (!String(after.status_reason ?? '').trim()) throw err('reason_required');
+      if (voidRefusal) throw err(voidRefusal);
+    }
     const approving = to === 'approved' && from !== 'approved';
     if (approving && product && after.amount !== product.data.price) {
       if (!after.price_override_reason) throw err('amount_mismatch');
@@ -89,6 +97,7 @@ export function fakeCos({ productDates = true, approvedBy = true, users = {}, no
     return { approving, product };
   }
   function afterPayment(r, approving, product) {
+    if (voidRules && r.data.status === 'voided') for (const i of db.invoice) if (i.data.payment === r.id && !i.data.voided_at) { i.data.voided_at = new Date(now()).toISOString(); i.data.void_reason = r.data.status_reason; }
     const booking = r.data.for_entity === 'booking' ? db.booking.find((b) => b.id === r.data.for_id) : null;
     if (booking && booking.data.status === 'held') {
       if (approving) { booking.data.status = 'booked'; booking.data.hold_frozen_at = null; booking.data.hold_left_minutes = null; }
@@ -206,5 +215,6 @@ export function fakeCos({ productDates = true, approvedBy = true, users = {}, no
     as(user) { me = user; return this; },
     seed(entity, data, by = 'usr_admin') { const r = rec(entity, data, by); db[entity].push(r); return r; },
     keyCount: () => keys.size,
+    refuseVoid(code) { voidRefusal = code; return this; },
   };
 }

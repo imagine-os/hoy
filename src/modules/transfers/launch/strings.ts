@@ -159,6 +159,13 @@ export const payLaunchStrings: StringTable = {
   'payLaunch.status.approved': { es: 'Confirmado', en: 'Confirmed' },
   'payLaunch.status.declined': { es: 'Rechazado', en: 'Rejected' },
   'payLaunch.status.refunded': { es: 'Reembolsado', en: 'Refunded' },
+  'payLaunch.void.action': { es: 'Anular pago', en: 'Void payment' },
+  'payLaunch.void.title': { es: 'Anular este pago', en: 'Void this payment' },
+  'payLaunch.void.explain': { es: 'Se retiran las clases que este pago añadió y la nota de compra queda anulada; su número sigue usado. No se puede deshacer.', en: 'The classes this payment added are taken back and the purchase note is voided; its number stays used. This cannot be undone.' },
+  'payLaunch.void.reason': { es: 'Motivo', en: 'Reason' },
+  'payLaunch.void.back': { es: 'Volver', en: 'Back' },
+  'payLaunch.receipt.voided': { es: 'Nota de compra anulada', en: 'Purchase note voided' },
+  'payLaunch.receipt.voidedReason': { es: 'Motivo', en: 'Reason' },
   'payLaunch.status.voided': { es: 'Anulado', en: 'Voided' },
 
   // PG-10 — report
