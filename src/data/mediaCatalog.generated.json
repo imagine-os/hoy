@@ -1451,13 +1451,13 @@
         "label": "Home practice",
         "path": "/site",
         "state": "live",
-        "evidence": "Verified editorial photo fallback; ready CMS photo takes priority. photo_slots:site.classes.alineacion:fallback"
+        "evidence": "Verified editorial photo fallback; ready CMS photo takes priority. photo_slots:site.classes.pulso:fallback"
       },
       {
         "label": "Home practice",
         "path": "/site?version=photos",
         "state": "draft",
-        "evidence": "Verified editorial photo fallback; ready CMS photo takes priority. photo_slots:site.classes.alineacion:fallback"
+        "evidence": "Verified editorial photo fallback; ready CMS photo takes priority. photo_slots:site.classes.pulso:fallback"
       }
     ]
   },
@@ -1662,13 +1662,13 @@
         "label": "Home practice",
         "path": "/site",
         "state": "live",
-        "evidence": "Verified editorial photo fallback; ready CMS photo takes priority. photo_slots:site.classes.pulso:fallback"
+        "evidence": "Verified editorial photo fallback; ready CMS photo takes priority. photo_slots:site.classes.alineacion:fallback"
       },
       {
         "label": "Home practice",
         "path": "/site?version=photos",
         "state": "draft",
-        "evidence": "Verified editorial photo fallback; ready CMS photo takes priority. photo_slots:site.classes.pulso:fallback"
+        "evidence": "Verified editorial photo fallback; ready CMS photo takes priority. photo_slots:site.classes.alineacion:fallback"
       }
     ]
   },

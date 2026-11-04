@@ -42,16 +42,16 @@ export const tenant = {
   locales: ['es', 'en'] as const,
   defaultLocale: 'es' as const,
   /**
-   * 0036 — the phone and the street address come from the owner (Justin, Slack #hoy, 2026-09-29). 0051 — the email and
-   * the Instagram handle are confirmed by the studio's verified website brief and Términos y Condiciones (2026-10-01):
-   * info@humanclub.com, @hoyhumanclub, WhatsApp Business +57 312 776 5000, and the landmark next to the address.
+   * 0036 — the phone and the street address come from the owner (Justin, Slack #hoy, 2026-09-29). 0051 — the Instagram
+   * handle is confirmed by the studio's verified website brief and Términos y Condiciones (2026-10-01); the email is
+   * Jas's answer of 2026-11-04: info@hoyhumanclub.com, @hoyhumanclub, WhatsApp Business +57 312 776 5000, and the landmark next to the address.
    * `confirmed` says which fields are real; a field that is not confirmed is labelled as pending on every screen.
    * M-08a can override each value and each flag.
    */
   contact: {
     /** Display form; `waLink()` strips it to digits for the wa.me link (E.164 +573127765000). It is a WhatsApp Business line. */
     whatsapp: '+57 312 776 5000',
-    email: 'info@humanclub.com',
+    email: 'info@hoyhumanclub.com',
     /** Colombian street format, as the club publishes it. */
     address: 'Cl. 7B Sur # 29C-100, El Poblado',
     /** How to find it (Términos y Condiciones §1). */

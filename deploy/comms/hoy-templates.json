@@ -30,7 +30,7 @@
   },
   "brand": {
     "brand": "HOY",
-    "contact_email": "info@humanclub.com",
+    "contact_email": "info@hoyhumanclub.com",
     "_pending": "J5: brand and domain are pending with Jas. Change src/tenant/tenant.ts and regenerate."
   },
   "templates": [
@@ -186,7 +186,7 @@
           "channel": "email",
           "locale": "",
           "subject": "Te damos la bienvenida a HOY, {{person.name}}",
-          "body": "Hola {{person.name}}:\n\nYa tienes tu cuenta en HOY. Desde la app reservas tus clases, compras tu paquete y ves tu historial.\n\nTu primera clase es el mejor comienzo: elige un horario y llega 10 minutos antes.\n\nReservar: {{links.base}}/#/app/schedule\n\nEquipo HOY\ninfo@humanclub.com",
+          "body": "Hola {{person.name}}:\n\nYa tienes tu cuenta en HOY. Desde la app reservas tus clases, compras tu paquete y ves tu historial.\n\nTu primera clase es el mejor comienzo: elige un horario y llega 10 minutos antes.\n\nReservar: {{links.base}}/#/app/schedule\n\nEquipo HOY\ninfo@hoyhumanclub.com",
           "active": true
         },
         {
@@ -194,7 +194,7 @@
           "channel": "email",
           "locale": "",
           "subject": "Tu reserva está pendiente de confirmar el pago",
-          "body": "Hola {{person.name}}:\n\nRegistramos el pago de tu clase del {{record.start|datetime}} y recepción lo está revisando. Te escribimos cuando quede confirmado.\n\nMientras recepción lo revisa, tu cupo queda guardado.\n\nVer mis reservas: {{links.base}}/#/app\n\nEquipo HOY\ninfo@humanclub.com",
+          "body": "Hola {{person.name}}:\n\nRegistramos el pago de tu clase del {{record.start|datetime}} y recepción lo está revisando. Te escribimos cuando quede confirmado.\n\nMientras recepción lo revisa, tu cupo queda guardado.\n\nVer mis reservas: {{links.base}}/#/app\n\nEquipo HOY\ninfo@hoyhumanclub.com",
           "active": true
         },
         {
@@ -202,7 +202,7 @@
           "channel": "email",
           "locale": "",
           "subject": "Confirmamos tu pago en HOY",
-          "body": "Hola {{person.name}}:\n\nConfirmamos tu pago de {{event.amount}} COP.\n\nEn la app ves el estado de tus reservas y tu historial de pagos.\n\nVer mi historial: {{links.base}}/#/app/history\n\nEquipo HOY\ninfo@humanclub.com",
+          "body": "Hola {{person.name}}:\n\nConfirmamos tu pago de {{event.amount}} COP.\n\nEn la app ves el estado de tus reservas y tu historial de pagos.\n\nVer mi historial: {{links.base}}/#/app/history\n\nEquipo HOY\ninfo@hoyhumanclub.com",
           "active": true
         },
         {
@@ -210,7 +210,7 @@
           "channel": "email",
           "locale": "",
           "subject": "No pudimos confirmar tu pago",
-          "body": "Hola {{person.name}}:\n\nRevisamos tu pago de {{event.amount}} COP y no pudimos confirmarlo.\n\nSi era para una reserva, ábrela en la app para ver si todavía puedes enviar un comprobante nuevo. Si crees que es un error, escríbenos.\n\nVer mis reservas: {{links.base}}/#/app\n\nEquipo HOY\ninfo@humanclub.com",
+          "body": "Hola {{person.name}}:\n\nRevisamos tu pago de {{event.amount}} COP y no pudimos confirmarlo.\n\nSi era para una reserva, ábrela en la app para ver si todavía puedes enviar un comprobante nuevo. Si crees que es un error, escríbenos.\n\nVer mis reservas: {{links.base}}/#/app\n\nEquipo HOY\ninfo@hoyhumanclub.com",
           "active": true
         },
         {
@@ -218,7 +218,7 @@
           "channel": "email",
           "locale": "",
           "subject": "Liberamos tu cupo de la clase del {{record.start|date}}",
-          "body": "Hola {{person.name}}:\n\nTu reserva de la clase del {{record.start|datetime}} no quedó confirmada con un pago a tiempo, así que liberamos el cupo para otra persona.\n\nSi ya pagaste o crees que es un error, escríbenos. Si todavía quieres venir, revisa si quedan cupos y reserva de nuevo.\n\nVer horario: {{links.base}}/#/app/schedule\n\nEquipo HOY\ninfo@humanclub.com",
+          "body": "Hola {{person.name}}:\n\nTu reserva de la clase del {{record.start|datetime}} no quedó confirmada con un pago a tiempo, así que liberamos el cupo para otra persona.\n\nSi ya pagaste o crees que es un error, escríbenos. Si todavía quieres venir, revisa si quedan cupos y reserva de nuevo.\n\nVer horario: {{links.base}}/#/app/schedule\n\nEquipo HOY\ninfo@hoyhumanclub.com",
           "active": true
         },
         {
@@ -226,7 +226,7 @@
           "channel": "email",
           "locale": "",
           "subject": "Tu reserva cambió: ahora es el {{record.start|date}}",
-          "body": "Hola {{person.name}}:\n\nTu reserva ahora es para la clase del {{record.start|datetime}}. El cupo anterior quedó libre.\n\nVer mis reservas: {{links.base}}/#/app\n\nEquipo HOY\ninfo@humanclub.com",
+          "body": "Hola {{person.name}}:\n\nTu reserva ahora es para la clase del {{record.start|datetime}}. El cupo anterior quedó libre.\n\nVer mis reservas: {{links.base}}/#/app\n\nEquipo HOY\ninfo@hoyhumanclub.com",
           "active": true
         },
         {
@@ -234,7 +234,7 @@
           "channel": "email",
           "locale": "",
           "subject": "Cancelamos la clase del {{record.start|date}}",
-          "body": "Hola {{person.name}}:\n\nTuvimos que cancelar la clase del {{record.start|datetime}}. Lo sentimos.\n\nSi la reservaste con una clase de tu paquete, la clase vuelve a tu paquete. Si la pagaste aparte y ya aprobamos tu pago, la clase vuelve a tu saldo para que reserves otra; si tu comprobante estaba en revisión, vuelve cuando recepción lo apruebe.\n\nVer horario: {{links.base}}/#/app/schedule\n\nEquipo HOY\ninfo@humanclub.com",
+          "body": "Hola {{person.name}}:\n\nTuvimos que cancelar la clase del {{record.start|datetime}}. Lo sentimos.\n\nSi la reservaste con una clase de tu paquete, la clase vuelve a tu paquete. Si la pagaste aparte y ya aprobamos tu pago, la clase vuelve a tu saldo para que reserves otra; si tu comprobante estaba en revisión, vuelve cuando recepción lo apruebe.\n\nVer horario: {{links.base}}/#/app/schedule\n\nEquipo HOY\ninfo@hoyhumanclub.com",
           "active": true
         },
         {
@@ -242,7 +242,7 @@
           "channel": "email",
           "locale": "",
           "subject": "Tienes un bono de clases en HOY",
-          "body": "Hola:\n\nTienes un bono de clases para usar en HOY (clases incluidas: {{record.classes}}).\n\nTu código: {{record.code}}\nVálido hasta: {{record.valid_until|date}}\n\nPara usarlo, entra a la app (o crea tu cuenta con este correo) y canjea el código; las clases quedan en tu cuenta. También puedes presentarlo en recepción.\n\nCanjear el bono: {{links.base}}/#/app/vouchers/{{record.code}}\n\nEquipo HOY\ninfo@humanclub.com",
+          "body": "Hola:\n\nTienes un bono de clases para usar en HOY (clases incluidas: {{record.classes}}).\n\nTu código: {{record.code}}\nVálido hasta: {{record.valid_until|date}}\n\nPara usarlo, entra a la app (o crea tu cuenta con este correo) y canjea el código; las clases quedan en tu cuenta. También puedes presentarlo en recepción.\n\nCanjear el bono: {{links.base}}/#/app/vouchers/{{record.code}}\n\nEquipo HOY\ninfo@hoyhumanclub.com",
           "active": true
         },
         {
@@ -250,7 +250,7 @@
           "channel": "email",
           "locale": "",
           "subject": "Tu regalo ya fue enviado",
-          "body": "Hola {{person.name}}:\n\nTu regalo para {{record.recipient_name}} ya fue enviado a {{record.recipient_email}} (clases incluidas: {{record.classes}}).\n\nTe avisamos cuando lo use.\n\nEquipo HOY\ninfo@humanclub.com",
+          "body": "Hola {{person.name}}:\n\nTu regalo para {{record.recipient_name}} ya fue enviado a {{record.recipient_email}} (clases incluidas: {{record.classes}}).\n\nTe avisamos cuando lo use.\n\nEquipo HOY\ninfo@hoyhumanclub.com",
           "active": true
         },
         {
@@ -258,7 +258,7 @@
           "channel": "email",
           "locale": "",
           "subject": "{{record.recipient_name}} ya usó tu regalo",
-          "body": "Hola {{person.name}}:\n\n{{record.recipient_name}} ya usó el regalo que le diste (clases incluidas: {{record.classes}}). ¡Gracias por compartir HOY!\n\nEquipo HOY\ninfo@humanclub.com",
+          "body": "Hola {{person.name}}:\n\n{{record.recipient_name}} ya usó el regalo que le diste (clases incluidas: {{record.classes}}). ¡Gracias por compartir HOY!\n\nEquipo HOY\ninfo@hoyhumanclub.com",
           "active": true
         },
         {
@@ -266,7 +266,7 @@
           "channel": "email",
           "locale": "",
           "subject": "Tu Nota de compra n.º {{record.number}} · HOY",
-          "body": "Hola {{person.name}}:\n\nConfirmamos tu pago. Esta es tu Nota de compra.\n\nNota de compra n.º {{record.number}}\nFecha: {{record.issued_at|date}}\nTotal: {{record.total}} COP\n\nNo es una factura electrónica. En la app ves el estado de tus reservas y tus clases.\n\nVer mi historial: {{links.base}}/#/app/history\n\nEquipo HOY\ninfo@humanclub.com",
+          "body": "Hola {{person.name}}:\n\nConfirmamos tu pago. Esta es tu Nota de compra.\n\nNota de compra n.º {{record.number}}\nFecha: {{record.issued_at|date}}\nTotal: {{record.total}} COP\n\nNo es una factura electrónica. En la app ves el estado de tus reservas y tus clases.\n\nVer mi historial: {{links.base}}/#/app/history\n\nEquipo HOY\ninfo@hoyhumanclub.com",
           "active": true
         },
         {
@@ -274,7 +274,7 @@
           "channel": "email",
           "locale": "",
           "subject": "Comprobante nuevo por revisar",
-          "body": "Hola:\n\nUn cliente subió un comprobante de pago. Revísalo en la cola de pagos para confirmar o rechazar el pago.\n\nAbrir la cola: {{links.base}}/#/staff/transfers\n\nEquipo HOY\ninfo@humanclub.com",
+          "body": "Hola:\n\nUn cliente subió un comprobante de pago. Revísalo en la cola de pagos para confirmar o rechazar el pago.\n\nAbrir la cola: {{links.base}}/#/staff/transfers\n\nEquipo HOY\ninfo@hoyhumanclub.com",
           "active": true
         }
       ]
@@ -537,7 +537,7 @@
       "key": "sign_in_code",
       "_note": "Clerk sends the sign-in code. Set this copy in the Clerk dashboard (Customization → Emails → Verification code), Spanish, on the production instance.",
       "subject": "Tu código para entrar a HOY: {{otp_code}}",
-      "body": "Hola:\n\nTu código para entrar a HOY es {{otp_code}}. Vence en 10 minutos.\n\nSi no lo pediste, ignora este correo: nadie puede entrar sin el código.\n\nEquipo HOY\ninfo@humanclub.com"
+      "body": "Hola:\n\nTu código para entrar a HOY es {{otp_code}}. Vence en 10 minutos.\n\nSi no lo pediste, ignora este correo: nadie puede entrar sin el código.\n\nEquipo HOY\ninfo@hoyhumanclub.com"
     }
   ]
 }

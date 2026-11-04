@@ -1,7 +1,7 @@
 /** Verified editorial selections. Explicit ready CMS photos always take priority. */
 export const practicePhotos = {
   ligereza: 'practice-ligereza', hibrido: 'practice-hibrido', fuego: 'practice-fuego',
-  solido: 'practice-solido', centro: 'practice-centro', alineacion: 'practice-alineacion', pulso: 'practice-pulso',
+  solido: 'practice-solido', centro: 'practice-centro', alineacion: 'practice-pulso', pulso: 'practice-alineacion',
 } as const;
 export const planPhotos: Record<string, string | undefined> = {
   pack12: 'pricing-duo', pack12_smtc: undefined, trial: 'plan-trial', single: 'plan-single',
