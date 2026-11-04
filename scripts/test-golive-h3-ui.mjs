@@ -54,10 +54,10 @@ function reset({ live = false, trialPaid = false } = {}) {
       product('gift_b', { name: 'Regalo de 2 clases', kind: 'gift', credits: 2, price: 100000 }),
       product('gift_pack12', { name: 'Tarjeta de regalo · paquete de 12 clases', kind: 'gift', credits: 12, price: 600000 }),
       product('raro', { name: HOSTILE }),
-      product('aff2', { name: 'Solo afiliados', audience: 'affiliate' }),
-      product('priv2', { name: 'Privada dos', kind: 'private' }),
-      product('off2', { name: 'Retirado', active: false }),
-      product('single0', { name: 'Sin clases', kind: 'single', credits: 0 }),
+      product('aff2', { name: 'QA solo afiliados', audience: 'affiliate' }),
+      product('priv2', { name: 'QA privada dos', kind: 'private' }),
+      product('off2', { name: 'QA retirado', active: false }),
+      product('single0', { name: 'QA sin clases', kind: 'single', credits: 0 }),
     ]),
     payment: m(trialPaid ? [rec('pay_trial', { person: 'per_cust', product: 'prod_trial_b', status: 'pending', amount: 20000, method: 'transfer', date: '2026-11-01', concept: 'Prueba' })] : []),
   };
@@ -192,7 +192,7 @@ try {
   await go(page, '/site/plans');
   check('site: a new public pack has a card, with its name and price', /Paquete de 6 clases/.test(await card(page, 'pack6').innerText().catch(() => '')) && /300\.000/.test(await card(page, 'pack6').innerText().catch(() => '')), await card(page, 'pack6').innerText().catch(() => 'missing'));
   check('site: a second trial and a new gift have cards', (await card(page, 'trial_b').count()) === 1 && (await card(page, 'gift_b').count()) === 1);
-  check('site: audience, private, inactive and no-credit products have none', await (async () => { for (const k of ['aff2', 'priv2', 'off2', 'single0']) if (await card(page, k).count()) return false; return !/Solo afiliados|Privada dos|Retirado|Sin clases/.test(await text(page)); })());
+  check('site: audience, private, inactive and no-credit products have none', await (async () => { for (const k of ['aff2', 'priv2', 'off2', 'single0']) if (await card(page, k).count()) return false; return !/QA solo afiliados|QA privada dos|QA retirado|QA sin clases/.test(await text(page)); })());
   check('site: the fixed list\'s pack has no second card', (await card(page, 'pack12').count()) === 0);
   check('site: hostile product text shows as text', (await card(page, 'raro').innerText().catch(() => '')).includes('<img src=x') && !(await page.evaluate(() => window.__hacked === 1)));
   await card(page, 'pack6').getByRole('button').first().click();
