@@ -63,6 +63,7 @@ export const payLaunchStrings: StringTable = {
   'payLaunch.pay.accountType.savings': { es: 'ahorros', en: 'savings' },
   'payLaunch.pay.accountType.checking': { es: 'corriente', en: 'checking' },
   'payLaunch.pay.breB': { es: 'Llave Bre-B', en: 'Bre-B key' },
+  'payLaunch.pay.qrUnavailable': { es: 'El código QR no está disponible en este momento. Paga con los datos de la cuenta.', en: 'The QR code is not available right now. Pay with the account details.' },
   'payLaunch.pay.qr': { es: 'Código QR del club', en: "The club's QR code" },
   'payLaunch.pay.noInstructions': { es: 'Los datos de pago aún no están configurados. Escríbenos o paga en recepción.', en: 'Payment details are not set up yet. Contact us or pay at the front desk.' },
   'payLaunch.pay.hold': { es: 'Sube el comprobante antes de las {time} para conservar tu cupo.', en: 'Upload the receipt before {time} to keep your place.' },

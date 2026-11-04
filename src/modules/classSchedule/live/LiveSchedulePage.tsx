@@ -13,10 +13,11 @@ import { EmptyState } from '../../../components/molecule/EmptyState/EmptyState';
 import { flatRows, useCosQueries, type CosRow } from '../../staff/desk/useCos';
 import { batch, errorCode, newActionKey, type BatchOp } from '../../staff/desk/wire';
 import { deskErrorText } from '../../staff/desk/strings';
+import { refusalCopy } from '../../../data/companyos/refusals';
 import { useData, useTable } from '../../../data/DataContext';
 import type { ModalityRow } from '../../../data/schema';
 import { SharedImageField } from '../../../components/organism/SharedImageField/SharedImageField';
-import { COACH_PHOTO, saveThenRemoveOld, type ImagePort } from '../../../data/companyos/publicImages';
+import { COACH_PHOTO, ImageDraft, coachPhotoUrl, saveThenRemoveOld, type ImagePort, type ImageSaveNotice } from '../../../data/companyos/publicImages';
 import {
   WEEKDAYS, cancelOccurrenceOps, createCoachOps, createResourceOps, createScheduleOps, generateOps, publishScheduleOps,
   coachProfileOf, scheduleProblems, updateCoachOps, updateResourceOps, updateScheduleOps, type CoachProfile, type ScheduleDraft,
@@ -147,14 +148,16 @@ function Dates({ rows, roomName, coachName, canWrite, busy, run, lang }: { rows:
 
 function Teachers({ rows, canWrite, busy, run }: { rows: CosRow[]; canWrite: boolean; busy: boolean; run: Run }) {
   const { t, lang } = useI18n();
-  const [edit, setEdit] = useState<{ id: string | null; personId: string; name: string; email: string; phone: string; active: boolean; profile: CoachProfile; key: string } | null>(null);
+  const [edit, setEdit] = useState<{ id: string | null; personId: string; name: string; email: string; phone: string; active: boolean; profile: CoachProfile; photoAtOpen: unknown; draft: ImageDraft; key: string } | null>(null);
+  const [photoBusy, setPhotoBusy] = useState(false), [photoNotice, setPhotoNotice] = useState<ImageSaveNotice>(null);
   const { rows: classTypes } = useTable<ModalityRow>('modalities');
   const data = useData();
   const person = (c: CosRow) => (c.person ?? {}) as { id?: string; name?: string; email?: string; phone?: string };
   const sorted = useMemo(() => [...rows].sort((a, b) => str(person(a).name).localeCompare(str(person(b).name))), [rows]);
   const setProfile = (change: Partial<CoachProfile>) => setEdit(e => e && { ...e, profile: { ...e.profile, ...change } });
   return <div className="stack">
-    {canWrite && <Button icon="plus" onClick={() => setEdit({ id: null, personId: '', name: '', email: '', phone: '', active: true, profile: coachProfileOf({}), key: newActionKey() })}>{t('live.new')}</Button>}
+    {photoNotice && <p className="small register-diff" role="status">{photoNotice === 'old_image_remains' ? t('media.picker.oldRemains') : refusalCopy(photoNotice, lang)}</p>}
+    {canWrite && <Button icon="plus" onClick={() => setEdit({ id: null, personId: '', name: '', email: '', phone: '', active: true, profile: coachProfileOf({}), photoAtOpen: undefined, draft: new ImageDraft(data as unknown as ImagePort), key: newActionKey() })}>{t('live.new')}</Button>}
     {edit && <Card title={edit.id ? t('live.edit') : t('live.new')}>
       <div className="grid grid-2">
         <Field label={t('live.f.name')} required>{id => <Input id={id} value={edit.name} onChange={e => setEdit({ ...edit, name: e.target.value })} />}</Field>
@@ -164,11 +167,11 @@ function Teachers({ rows, canWrite, busy, run }: { rows: CosRow[]; canWrite: boo
       <Field label={t('live.f.bioEs')}>{id => <textarea id={id} className="input adm-textarea" value={edit.profile.bio.es} onChange={e => setProfile({ bio: { ...edit.profile.bio, es: e.target.value } })} />}</Field>
       <Field label={t('live.f.bioEn')}>{id => <textarea id={id} className="input adm-textarea" value={edit.profile.bio.en} onChange={e => setProfile({ bio: { ...edit.profile.bio, en: e.target.value } })} />}</Field>
       <div className="stack-sm" role="group" aria-label={t('live.f.specialties')}><strong className="small">{t('live.f.specialties')}</strong><div className="row wrap">{classTypes.map(m => { const on = edit.profile.specialties.includes(m.slug); return <Chip key={m.id} selected={on} onClick={() => setProfile({ specialties: on ? edit.profile.specialties.filter(s => s !== m.slug) : [...edit.profile.specialties, m.slug] })}>{lang === 'en' ? m.name_en : m.name_es}</Chip>; })}</div></div>
-      {edit.id ? <SharedImageField label={t('live.f.photo')} value={edit.profile.photo} disabled={busy} owner={{ ...COACH_PHOTO, ownerId: edit.id }} onChange={photo => setProfile({ photo })} /> : <p className="xs muted">{t('live.f.photoAfterSave')}</p>}
+      {edit.id ? <SharedImageField label={t('live.f.photo')} value={edit.profile.photo} disabled={busy} owner={{ ...COACH_PHOTO, ownerId: edit.id }} saved={coachPhotoUrl(edit.photoAtOpen)} draft={edit.draft} onBusyChange={setPhotoBusy} onChange={photo => setProfile({ photo })} /> : <p className="xs muted">{t('live.f.photoAfterSave')}</p>}
       <Toggle checked={edit.active} onChange={on => setEdit({ ...edit, active: on })} label={t('live.f.active')} />
-      <div className="row wrap"><Button disabled={busy || !edit.name.trim()} loading={busy} onClick={async () => { const d = { name: edit.name, email: edit.email, phone: edit.phone, active: edit.active, profile: edit.profile }; const saved = rows.find(c => c.id === edit.id); if (await saveThenRemoveOld(data as unknown as ImagePort, saved && coachProfileOf(saved).photo, edit.profile.photo, () => run(edit.id ? updateCoachOps(edit.id, edit.personId, d) : createCoachOps(d), edit.key, t('live.saved')))) setEdit(null); }}>{t('live.save')}</Button><Button variant="ghost" onClick={() => setEdit(null)}>{t('core.common.cancel')}</Button></div>
+      <div className="row wrap"><Button disabled={busy || photoBusy || !edit.name.trim()} loading={busy} onClick={async () => { const d = { name: edit.name, email: edit.email, phone: edit.phone, active: edit.active, profile: edit.profile, photoAtOpen: edit.photoAtOpen }; setPhotoNotice(null); const out = await saveThenRemoveOld(data as unknown as ImagePort, { saved: edit.photoAtOpen, next: edit.profile.photo, owner: edit.id ? { ...COACH_PHOTO, ownerId: edit.id } : undefined, draft: edit.draft }, () => run(edit.id ? updateCoachOps(edit.id, edit.personId, d) : createCoachOps(d), edit.key, t('live.saved'))); setPhotoNotice(out.notice); if (out.result) setEdit(null); }}>{t('live.save')}</Button><Button variant="ghost" onClick={() => setEdit(null)}>{t('core.common.cancel')}</Button></div>
     </Card>}
-    {sorted.length === 0 ? <EmptyState compact title={t('live.empty')} /> : sorted.map(c => <Card key={c.id} padding="sm" title={str(person(c).name) || '—'} actions={canWrite && <Button size="sm" variant="outline" onClick={() => setEdit({ id: c.id, personId: str(person(c).id), name: str(person(c).name), email: str(person(c).email), phone: str(person(c).phone), active: c.active !== false, profile: coachProfileOf(c), key: newActionKey() })}>{t('live.edit')}</Button>}>
+    {sorted.length === 0 ? <EmptyState compact title={t('live.empty')} /> : sorted.map(c => <Card key={c.id} padding="sm" title={str(person(c).name) || '—'} actions={canWrite && <Button size="sm" variant="outline" onClick={() => setEdit({ id: c.id, personId: str(person(c).id), name: str(person(c).name), email: str(person(c).email), phone: str(person(c).phone), active: c.active !== false, profile: coachProfileOf(c), photoAtOpen: c.photo, draft: new ImageDraft(data as unknown as ImagePort), key: newActionKey() })}>{t('live.edit')}</Button>}>
       <p className="small">{c.active === false ? <Badge>{t('live.draft')}</Badge> : <Badge tone="success">{t('live.f.active')}</Badge>}</p>
     </Card>)}
   </div>;

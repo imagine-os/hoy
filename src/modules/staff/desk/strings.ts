@@ -7,7 +7,7 @@ export const DESK_CODES = [
   'no_credits', 'lot_expired', 'lot_frozen', 'trial_used',
   'product_inactive', 'audience_not_allowed', 'amount_mismatch', 'invalid_amount', 'invalid_status_transition',
   'already_signed_up', 'person_email_mismatch', 'consent_required', 'duplicate_facet',
-  'idempotency_conflict', 'idempotency_key_invalid', 'forbidden', 'disconnected', 'conflict',
+  'idempotency_conflict', 'idempotency_key_invalid', 'forbidden', 'disconnected', 'conflict', 'ifmatch_mismatch',
   'person_linked_to_other_user', 'user_linked_to_other_person', 'role_mismatch', 'redirect_not_allowed', 'invitation_failed', 'invitations_not_supported',
   'occurrence_generated', 'resource_overlap', 'invalid_settings',
 ] as const;
@@ -41,6 +41,7 @@ export const deskStrings: StringTable = {
   'desk.error.idempotency_key_invalid': { es: 'No se pudo enviar. Recarga la página.', en: 'Could not send. Reload the page.' },
   'desk.error.forbidden': { es: 'Tu rol no permite esta acción.', en: 'Your role does not allow this action.' },
   'desk.error.disconnected': { es: 'Sin conexión con el sistema. Vuelve a intentar.', en: 'No connection to the system. Try again.' },
+  'desk.error.ifmatch_mismatch': { es: 'Alguien cambió este registro mientras lo editabas. Cierra, vuelve a abrirlo y repite tu cambio; no se guardó nada.', en: 'Someone changed this record while you were editing it. Close it, open it again and repeat your change; nothing was saved.' },
   'desk.error.conflict': { es: 'Otra persona cambió esto. Recarga y vuelve a intentar.', en: 'Someone else changed this. Reload and try again.' },
   'desk.error.person_linked_to_other_user': { es: 'Esa persona ya está vinculada a otra cuenta.', en: 'That person is already linked to another account.' },
   'desk.error.user_linked_to_other_person': { es: 'Esa cuenta ya está vinculada a otra persona.', en: 'That account is already linked to another person.' },

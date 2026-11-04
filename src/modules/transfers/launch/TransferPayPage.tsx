@@ -83,6 +83,8 @@ function PayScreen({ what, id }: { what: string; id: string }) {
   const action = useAction();
   const [reference, setReference] = useState('');
   const [file, setFile] = useState<File | null>(null);
+  // A QR that doesn't load says so; the bank details above it still pay.
+  const [failedQr, setFailedQr] = useState<string | null>(null);
   // Once the payment exists, a retry only re-sends the image: it never creates a second payment.
   const [paymentId, setPaymentId] = useState<string | null>(null);
   const [done, setDone] = useState(false);
@@ -144,7 +146,7 @@ function PayScreen({ what, id }: { what: string; id: string }) {
       <div className="stack-sm" data-testid="bank-details">
         {ins.bankName && ins.accountNumber && <span>{t('payLaunch.pay.bank', { bank: ins.bankName, type: t(`payLaunch.pay.accountType.${ins.accountType ?? 'savings'}`), number: ins.accountNumber, holder: ins.accountHolder ?? '' })}</span>}
         {ins.breBKey && <span>{t('payLaunch.pay.breB')}: <strong>{ins.breBKey}</strong></span>}
-        {ins.qrImageUrl && <img src={ins.qrImageUrl} alt={t('payLaunch.pay.qr')} style={{ width: 'min(240px, 100%)', height: 'auto' }} />}
+        {ins.qrImageUrl && (failedQr === ins.qrImageUrl ? <span className="small muted" data-qr="unavailable">{t('payLaunch.pay.qrUnavailable')}</span> : <img src={ins.qrImageUrl} alt={t('payLaunch.pay.qr')} style={{ width: 'min(240px, 100%)', height: 'auto' }} onError={() => setFailedQr(ins.qrImageUrl)} />)}
       </div>
     </Card> : pay.status !== 'loading' && <Notice tone="warn">{t('payLaunch.pay.noInstructions')}</Notice>}
     {v.affiliate !== false && <form className="stack" onSubmit={(e) => { e.preventDefault(); void send(); }} noValidate>

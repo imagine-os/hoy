@@ -15,7 +15,8 @@ export interface ScheduleDraft { title: string; weekday: number; start_time: str
 export interface ResourceDraft { name: string; capacity: number }
 /** A teacher's public profile: `specialties` are class type slugs, `photo` a `/media/<id>` address or none. */
 export interface CoachProfile { bio: { es: string; en: string }; specialties: string[]; photo: string | null }
-export interface CoachDraft { name: string; email?: string; phone?: string; active: boolean; profile?: CoachProfile }
+/** `photoAtOpen`: the `photo` the record held when the form opened, as stored: a save is refused if it has changed since. */
+export interface CoachDraft { name: string; email?: string; phone?: string; active: boolean; profile?: CoachProfile; photoAtOpen?: unknown }
 
 export type ScheduleProblem = 'title' | 'weekday' | 'start_time' | 'on_the_hour' | 'resource' | 'coach' | 'capacity' | 'valid_from';
 
@@ -50,11 +51,10 @@ export const resourceData = (d: ResourceDraft) => ({ name: d.name.trim(), kind: 
 export const createResourceOps = (d: ResourceDraft): BatchOp[] => [{ op: 'create', entity: 'resource', data: resourceData(d) }];
 export const updateResourceOps = (id: string, d: ResourceDraft): BatchOp[] => [{ op: 'update', entity: 'resource', id, data: resourceData(d) }];
 
-const profileData = (p: CoachProfile | undefined) => (p ? {
+const textData = (p: CoachProfile) => ({
   [COACH_FIELDS.bio]: { es: p.bio.es.trim(), en: p.bio.en.trim() },
   [COACH_FIELDS.specialties]: coachSpecialties(p.specialties),
-  [COACH_FIELDS.photo]: coachPhotoValue(p.photo),
-} : {});
+});
 /** A `coach` row back into the form; what is stored is untrusted (publicImages.ts). */
 export const coachProfileOf = (row: Record<string, unknown>): CoachProfile => ({
   bio: coachBio(row[COACH_FIELDS.bio]), specialties: coachSpecialties(row[COACH_FIELDS.specialties]), photo: coachPhotoUrl(row[COACH_FIELDS.photo]),
@@ -64,13 +64,17 @@ export const coachProfileOf = (row: Record<string, unknown>): CoachProfile => ({
 export function createCoachOps(d: CoachDraft): BatchOp[] {
   return [
     { op: 'create', entity: 'person', data: { name: d.name.trim(), ...(d.email?.trim() ? { email: d.email.trim().toLowerCase() } : {}), ...(d.phone?.trim() ? { phone: d.phone.trim() } : {}) } },
-    { op: 'create', entity: 'coach', data: { person: { $ref: 0 }, kind: 'teacher', active: d.active, ...profileData(d.profile) } },
+    { op: 'create', entity: 'coach', data: { person: { $ref: 0 }, kind: 'teacher', active: d.active, ...(d.profile ? textData(d.profile) : {}), ...(coachPhotoValue(d.profile?.photo) ? { [COACH_FIELDS.photo]: coachPhotoValue(d.profile?.photo) } : {}) } },
   ];
 }
 export function updateCoachOps(coachId: string, personId: string, d: CoachDraft): BatchOp[] {
+  // The photo only if it changed, and only over the value this form saw: a stale form can't save a deleted file and take
+  // the current one with it. Company OS compares strictly: a field never set is matched by leaving the value out.
+  const photo = d.profile ? coachPhotoValue(d.profile.photo) : null;
+  const photoChanged = !!d.profile && photo !== coachPhotoValue(coachPhotoUrl(d.photoAtOpen));
   return [
     { op: 'update', entity: 'person', id: personId, data: { name: d.name.trim(), ...(d.phone?.trim() ? { phone: d.phone.trim() } : {}) } },
-    { op: 'update', entity: 'coach', id: coachId, data: { active: d.active, ...profileData(d.profile) } },
+    { op: 'update', entity: 'coach', id: coachId, data: { active: d.active, ...(d.profile ? textData(d.profile) : {}), ...(photoChanged ? { [COACH_FIELDS.photo]: photo } : {}) }, ...(photoChanged ? { ifMatch: { field: COACH_FIELDS.photo, value: d.photoAtOpen } } : {}) },
   ];
 }
 

@@ -59,6 +59,7 @@ export const CONTRACT_REFUSALS = {
   file_owner_not_found: { es: 'El registro de esta imagen ya no existe. Actualiza la página.', en: 'The record for this image no longer exists. Refresh the page.' },
   file_not_pending: { es: 'Esta subida ya terminó. Elige la imagen de nuevo.', en: 'This upload has already finished. Choose the image again.' },
   storage_not_configured: { es: 'El almacenamiento de imágenes no está configurado aquí. Avísale al equipo técnico.', en: 'Image storage is not set up here. Tell the technical team.' },
+  image_not_current: { es: 'Esa imagen ya no está disponible. Sube la imagen de nuevo; no se guardó nada.', en: 'That image is no longer available. Upload it again; nothing was saved.' },
   file_not_ready: { es: 'La imagen aún se está publicando. Inténtalo de nuevo en un momento.', en: 'The image is still being published. Try again in a moment.' },
   storage_unavailable: { es: 'No pudimos guardar el archivo ahora. Inténtalo en unos minutos.', en: 'We could not store the file right now. Try again in a few minutes.' },
   // Sign-up and people
