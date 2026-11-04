@@ -121,6 +121,16 @@ export function giftProducts(rows: Loose[]): GiftProduct[] {
     return [{ id: r.id, key: str(r.key) ?? str(r.slug) ?? r.id, name: { es, en }, classes, price, validityDays: num(r.validity_days) }];
   });
 }
+/**
+ * What the gift page offers: as the plan card and the pay page, each key once at today's row (a price change leaves the
+ * old period's row behind), for everyone. `giftProducts` alone also keeps old rows: the desk needs them for a past payment.
+ */
+export function giftProductsOnSale(rows: Loose[], day: string): GiftProduct[] {
+  const onSale = rows.map(flat).filter((r) => r.active !== false && !str(r.audience) && (!str(r.valid_from) || str(r.valid_from)! <= day) && (!str(r.valid_until) || day <= str(r.valid_until)!));
+  const newestFirst = [...onSale].sort((a, b) => String(b.valid_from ?? '').localeCompare(String(a.valid_from ?? '')));
+  const seen = new Set<string>();
+  return giftProducts(newestFirst).filter((p) => !seen.has(p.key) && !!seen.add(p.key));
+}
 export function giftPayment(row: Loose): GiftPayment | null {
   const r = flat(row);
   if (typeof r.id !== 'string') return null;

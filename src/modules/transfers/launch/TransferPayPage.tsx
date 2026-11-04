@@ -12,7 +12,7 @@ import { EmptyState } from '../../../components/molecule/EmptyState/EmptyState';
 import { usePaymentInstructions } from '../../admin/usePaymentInstructions';
 import { isAffiliateOnly, rowOnDay, type ProductData, type ProductRow } from '../../products/launch/productMaster';
 import { batch, CosError, myPerson, queryAll, refusalKey, type CosPort } from './cos';
-import { checkReceipt, giftNotes, RECEIPT_TYPES, transferOps, uploadReceipt, type BookingRec, type FileRec, type PaymentRec } from './payments';
+import { checkReceipt, giftNotes, productSoldAlone, RECEIPT_TYPES, transferOps, uploadReceipt, type BookingRec, type FileRec, type PaymentRec } from './payments';
 import { useAction, useCos, useLoad } from './useCos';
 import { holdView, safeCheckoutReturn, type HoldView, type ServerBookingRow } from '../../customer/booking/serverBooking';
 import { useBookingPolicy, type BookingPolicy } from '../../customer/booking/bookingPolicy';
@@ -99,6 +99,7 @@ function PayScreen({ what, id }: { what: string; id: string }) {
   if (product.data.kind === 'private') return <Notice>{t('payLaunch.pay.private')}</Notice>;
   // A gift pays for a named recipient (H-6 passes it in router state); opened without one, it goes back to choose them.
   if (product.data.kind === 'gift' && !notes) return <Notice action={<Link to={GIFT_PURCHASE_PATH}><Button size="sm" variant="secondary">{t('payLaunch.pay.giftRecipient.cta')}</Button></Link>}>{t('payLaunch.pay.giftRecipient')}</Notice>;
+  if (!v.booking && !productSoldAlone(product)) return <Notice action={<Link to="/app/schedule"><Button size="sm" variant="secondary">{t('payLaunch.pay.singleAtBooking.cta')}</Button></Link>}>{t('payLaunch.pay.singleAtBooking')}</Notice>;
   // The purchase still waits for reception: the link only goes back to the class, it does not promise the booking.
   const backToClass = next && !v.booking ? <Link to={next}><Button size="sm" variant="secondary">{t('payLaunch.pay.backToClass')}</Button></Link> : undefined;
   if (done) return <Notice tone="success" action={backToClass}>{t(v.booking ? 'payLaunch.pay.sent' : 'payLaunch.pay.sentProduct')}</Notice>;

@@ -83,6 +83,7 @@ export const strings: StringTable = {
   'site.plans.package.noRefund': { es: 'No es reembolsable', en: 'Non-refundable' },
   'site.plans.package.affiliates': { es: 'Solo para afiliados de Santa María Tennis Club', en: 'Only for Santa María Tennis Club affiliates' },
   'site.plans.package.objectLabel': { es: 'Paquete', en: 'Package' },
+  'site.plans.more.title': { es: 'Más opciones.', en: 'More options.' },
   'site.plans.oneClass': { es: '1 clase', en: '1 class' },
   'site.plans.private.cta': { es: 'Agendar una clase privada', en: 'Arrange a private class' },
   'site.plans.private.wa': { es: 'Hola, quiero agendar una clase privada.', en: 'Hi, I would like to arrange a private class.' },

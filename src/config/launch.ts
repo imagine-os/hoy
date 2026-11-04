@@ -6,7 +6,8 @@ import { useSyncExternalStore } from 'react';
  * a QA fixture may set `localStorage['hoyos.launch']` (review build only).
  *
  * - `siteLive` / `siteLiveAt` (SW-08): Coming Soon stays at `/` until the go-live setting flips. `siteLive: true`, or
- *   `siteLiveAt` reached (studio time, ISO with offset), sends `/` to the public website. `/coming-soon` always stays.
+ *   `siteLiveAt` reached (studio time, ISO with offset), sends `/` to the public website. `/coming-soon` then stays only for the Super Admin
+ *   (`src/modules/coming-soon/entry.ts`).
  * - SW-06 (Q-14): the manual and docs are never public. The owner's list of public paths (the server's public-documents
  *   switch) is retired (owner 2026-11-01); a value an older server or a fixture still hands in is dropped by `sanitize`.
  * - `reviewTools`: the testing hub link, the version-history link and the concept-imagery note on the public site.

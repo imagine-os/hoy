@@ -234,7 +234,7 @@
           "channel": "email",
           "locale": "",
           "subject": "Cancelamos la clase del {{record.start|date}}",
-          "body": "Hola {{person.name}}:\n\nTuvimos que cancelar la clase del {{record.start|datetime}}. Lo sentimos.\n\nSi la reservaste con una clase de tu paquete, la clase vuelve a tu paquete. Si la pagaste aparte, te escribimos para reprogramarla.\n\nVer horario: {{links.base}}/#/app/schedule\n\nEquipo HOY\ninfo@humanclub.com",
+          "body": "Hola {{person.name}}:\n\nTuvimos que cancelar la clase del {{record.start|datetime}}. Lo sentimos.\n\nSi la reservaste con una clase de tu paquete, la clase vuelve a tu paquete. Si la pagaste aparte y ya aprobamos tu pago, la clase vuelve a tu saldo para que reserves otra; si tu comprobante estaba en revisión, vuelve cuando recepción lo apruebe.\n\nVer horario: {{links.base}}/#/app/schedule\n\nEquipo HOY\ninfo@humanclub.com",
           "active": true
         },
         {

@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useData, useTable } from '../../../data/DataContext';
 import type { BaseRow } from '../../../data/schema';
-import { CODE_RE, giftProducts, listVouchers, refusalCode, refusalKey, PAYMENT_TABLE, PRODUCT_TABLE, VOUCHER_CHANGES, normalizeCode, writeMayHaveCommitted, type CosVoucher } from './model';
+import { dateKey } from '../../../i18n/format';
+import { CODE_RE, giftProducts, giftProductsOnSale, listVouchers, refusalCode, refusalKey, PAYMENT_TABLE, PRODUCT_TABLE, VOUCHER_CHANGES, normalizeCode, writeMayHaveCommitted, type CosVoucher } from './model';
 
 /**
  * Company OS vouchers, newest first, read with `/query` on mount and again whenever the provider reports a change to
@@ -34,6 +35,12 @@ export function useCosVouchers(): CosVoucherList {
 export function useGiftProducts() {
   const { rows, loading } = useTable<BaseRow>(PRODUCT_TABLE);
   return { products: giftProducts(rows as unknown as Record<string, unknown>[]), loading };
+}
+
+/** The gift page's list: what is on sale today (`giftProductsOnSale`). */
+export function useGiftProductsOnSale() {
+  const { rows, loading } = useTable<BaseRow>(PRODUCT_TABLE);
+  return { products: giftProductsOnSale(rows as unknown as Record<string, unknown>[], dateKey()), loading };
 }
 
 /**

@@ -81,7 +81,7 @@ export function DashboardPage() {
   const SECTIONS: Record<string, () => ReactNode> = {
     'KPIRow ×4': () => (
       <div className="grid grid-4">
-        <div data-members-tile><StatTile label={t('admin.dashboard.members')} value={members} hint={packs.request ? t('admin.dashboard.members.packs') : undefined} trend="up" /></div>
+        <div data-members-tile><StatTile label={t('admin.dashboard.members')} value={members} trend="up" /></div>
         <StatTile label={t('admin.dashboard.revenue')} value={formatCOP(revenue, lang)} />
         <StatTile label={t('admin.dashboard.occupancy')} value={`${occ}%`} trend={occ > 70 ? 'up' : 'flat'} />
         <StatTile label={t('admin.dashboard.arrivals')} value={todayBookings.length} hint={t('admin.dashboard.arrivals.hint', { n: todayIds.length })} />

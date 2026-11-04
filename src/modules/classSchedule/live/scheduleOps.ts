@@ -10,11 +10,11 @@ import type { BatchOp } from '../../staff/desk/wire';
 export const CLASS_MINUTES = 50;
 export const WEEKDAYS = [1, 2, 3, 4, 5, 6, 0] as const; // Monday first; 0 = Sunday, as Company OS stores it
 
-export interface ScheduleDraft { title: string; weekday: number; start_time: string; resource: string; coach: string; capacity: number; valid_from: string; valid_until?: string; active: boolean }
+export interface ScheduleDraft { title: string; weekday: number; start_time: string; resource: string; coach: string; capacity: number; valid_from: string; valid_until?: string; active: boolean; /** The class type's slug (`schedule.modality`, the recipe's select); required to publish. */ modality?: string }
 export interface ResourceDraft { name: string; capacity: number }
 export interface CoachDraft { name: string; email?: string; phone?: string; active: boolean }
 
-export type ScheduleProblem = 'title' | 'weekday' | 'start_time' | 'on_the_hour' | 'resource' | 'coach' | 'capacity' | 'valid_from';
+export type ScheduleProblem = 'title' | 'weekday' | 'start_time' | 'on_the_hour' | 'resource' | 'coach' | 'capacity' | 'valid_from' | 'modality';
 
 /** Checks a class before it is sent: the server checks types and references; the :00 start is Hoy's rule. */
 export function scheduleProblems(d: ScheduleDraft, roomCapacity: number | undefined): ScheduleProblem[] {
@@ -27,17 +27,25 @@ export function scheduleProblems(d: ScheduleDraft, roomCapacity: number | undefi
   if (!d.coach) out.push('coach');
   if (!Number.isInteger(d.capacity) || d.capacity < 1 || (roomCapacity != null && d.capacity > roomCapacity)) out.push('capacity');
   if (!/^\d{4}-\d{2}-\d{2}$/.test(d.valid_from)) out.push('valid_from');
+  // A class without a class type is not open for booking (`no_class_type`), so a published row must have one; a draft may wait.
+  if (d.active && !d.modality?.trim()) out.push('modality');
   return out;
 }
+
+/** The list's Publish button: a draft without a class type can't go live; switching a published row off is always possible. */
+export const schedulePublishBlocked = (row: Record<string, unknown>): boolean =>
+  row.active === false && !(typeof row.modality === 'string' && row.modality.trim());
 
 export const scheduleData = (d: ScheduleDraft) => ({
   title: d.title.trim(), kind: 'class', weekday: d.weekday, start_time: d.start_time, duration_minutes: CLASS_MINUTES,
   resource: d.resource, coach: d.coach, capacity: d.capacity, spots_enabled: true,
   valid_from: d.valid_from, valid_until: d.valid_until || null, active: d.active,
+  ...(d.modality?.trim() ? { modality: d.modality.trim() } : {}),
 });
 
 export const createScheduleOps = (d: ScheduleDraft): BatchOp[] => [{ op: 'create', entity: 'schedule', data: scheduleData(d) }];
-export const updateScheduleOps = (id: string, d: ScheduleDraft): BatchOp[] => [{ op: 'update', entity: 'schedule', id, data: scheduleData(d) }];
+/** An update also clears a type taken off a draft: leaving the field out would keep the old one. */
+export const updateScheduleOps = (id: string, d: ScheduleDraft): BatchOp[] => [{ op: 'update', entity: 'schedule', id, data: { modality: null, ...scheduleData(d) } }];
 /** Publish / unpublish a class: an inactive schedule generates no new dates; dates already generated stay as they are. */
 export const publishScheduleOps = (id: string, active: boolean): BatchOp[] => [{ op: 'update', entity: 'schedule', id, data: { active } }];
 /** Generate the published classes' dates up to `until` (inclusive); idempotent per schedule and date. */

@@ -24,6 +24,8 @@ import { siteSpecs } from '../specs';
 import { GIFT_PURCHASE_PATH } from '../../../config/launchRoutes';
 import { useSession } from '../../../auth/SessionProvider';
 import { purchaseEntry } from '../../../auth/purchaseEntry';
+import { sitePlanPath } from '../../customer/genericPlans';
+import { GenericPlanCard } from '../../../components/molecule/GenericPlanCard/GenericPlanCard';
 
 /**
  * P-01 — the launch price list (0051). Amounts come from the product master (useLivePricing, SW-02); names and the "why it exists" rationale from src/tenant/pricing.ts;
@@ -112,6 +114,11 @@ export function PlansPage() {
           </Card>
         </div>
       </section>
+      {/* WEB-02b: any other product on sale in the master */}
+      {prices.generic.length > 0 && <section className="container site-section">
+        <div className="plans-heading"><h2>{t('site.plans.more.title')}</h2></div>
+        <div className="grid grid-2">{prices.generic.map((p) => <GenericPlanCard key={p.key} plan={p} onSelect={() => nav(purchaseEntry(user, sitePlanPath(p.key)))} />)}</div>
+      </section>}
     </>,
     // Especiales (0017) + 0051 on request: the studio rental and corporate experiences are quoted case by case.
     Specials: () => (
