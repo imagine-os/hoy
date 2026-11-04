@@ -776,7 +776,7 @@ await test('media: hostile ids and path tricks never reach the API', async () =>
 await test('media: reads only: other methods 405, a body 400', async () => {
   upstreamReply = linkTo('receipt.png');
   seen.length = 0;
-  for (const method of ['POST', 'PUT', 'PATCH', 'DELETE']) assert.equal((await media(`/media/${FILE_ID}`, {}, method, 'x')).status, 405, method);
+  for (const method of ['POST', 'PUT', 'PATCH', 'DELETE']) assert.equal((await media(`/media/${FILE_ID}`, {}, method)).status, 405, method);
   assert.equal((await media(`/media/${FILE_ID}`, { 'content-length': '3' }, 'GET', 'abc')).status, 400);
   assert.equal(seen.length, 0);
 });
@@ -814,11 +814,11 @@ await test('proxy: /public-files is never forwarded, signed in or out, so the st
   for (const [method, path] of [['GET', `/public-files/${FILE_ID}/url`], ['GET', `/%70ublic-files/${FILE_ID}/url`], ['GET', `/public-files/${FILE_ID}/url?x=1`], ['POST', '/public-files/urls'], ['GET', '/public-files']]) {
     const body = method === 'POST' ? JSON.stringify({ ids: [FILE_ID] }) : undefined;
     for (const headers of [auth, {}]) {
-      const r = await request(method, `/api/cos/t/hoy-dev${path}`, { ...headers, ...(body ? json : {}) }, body, publicServer);
+      const r = await request(method, `/api/cos/t/hoy-dev${path}`, { ...headers, ...(body ? json : {}) }, body, mediaServer);
       assert.ok([401, 404].includes(r.status), `${method} ${path}: ${r.status}`);
       assert.doesNotMatch(r.body.toString(), new RegExp(SIGNED));
     }
-    assert.equal((await request(method, `/api/cos/t/hoy-dev${path}`, { ...auth, ...(body ? json : {}) }, body, publicServer)).status, 404, 'signed in: refused too');
+    assert.equal((await request(method, `/api/cos/t/hoy-dev${path}`, { ...auth, ...(body ? json : {}) }, body, mediaServer)).status, 404, 'signed in: refused too');
   }
   assert.equal(seen.length, 0);
 });

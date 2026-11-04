@@ -26,7 +26,7 @@ const load = async (contents) => {
 const images = await load("export * from './src/data/companyos/publicImages.ts';");
 const provider = await load("export * from './src/data/companyos/CompanyOSProvider.ts'; export * from './src/data/companyos/mapping.ts'; export * from './src/data/companyos/refusals.ts';");
 const ops = await load("export * from './src/modules/classSchedule/live/scheduleOps.ts'; export { liveScheduleStrings } from './src/modules/classSchedule/live/strings.ts'; export { strings as mediaStrings } from './src/modules/media/strings.ts';");
-const pay = await load("export { validPaymentImage } from './src/modules/admin/paymentInstructions.ts';");
+const pay = await load("import './src/tenant/tenant.ts'; import './src/modules/admin/settings.ts'; export { validPaymentImage } from './src/modules/admin/paymentInstructions.ts';");
 const needs = (m) => { if (m.__error) throw new Error(`does not load: ${m.__error}`); };
 
 const ID = '0b0f6e1c-3c6a-4c0e-9a51-6f3f2c1d9e01';

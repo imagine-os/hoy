@@ -5,7 +5,7 @@
 // - On only when TEST_GATE_PASSPHRASE is set, and never when RAILWAY_ENVIRONMENT_NAME is `production`. With the passphrase
 //   but no COOKIE_SIGNING_SECRET every gated request answers 503: half a configuration never opens the site.
 // - No valid cookie: a 401 passphrase page (plain HTML, Spanish and English, no app bundle), or a 401 JSON answer under
-//   /api/, /files/ and /private-docs/.
+//   /api/, /files/, /media/ and /private-docs/.
 // - The right passphrase sets a signed cookie for 30 days, bound to the site's origin (APP_URL), the passphrase's hash and
 //   the expiry: a new passphrase signs everyone out. It only opens the site: the API still decides by the Clerk session,
 //   and the proxy never forwards it (app.mjs, FORWARD_REQUEST_HEADERS).
@@ -26,7 +26,7 @@ const MAX_BODY_BYTES = 4096;
 const READ_MS = 10_000;
 const MAX_NEXT_LENGTH = 2000;
 const TRIES = { max: 5, windowMs: 15 * 60_000, maxAddresses: 10_000 };
-const JSON_PATH = /^\/(?:api|files|private-docs)(?:\/|$)/;
+const JSON_PATH = /^\/(?:api|files|media|private-docs)(?:\/|$)/;
 const COOKIE = new RegExp(`(?:^|;\\s*)${GATE_COOKIE}=(\\d{1,15})\\.([0-9a-f]{64})(?:;|$)`);
 
 /** What the gate reads from the environment. Off is `{ on: false }`, whatever else is set. */

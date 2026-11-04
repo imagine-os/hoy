@@ -7,6 +7,8 @@
 //                        public reads (PUBLIC_ENTITIES), sent with the server's own read-only identity;
 //   GET /files/<id>      a stored file (e.g. a transfer receipt), streamed from storage after the API has
 //                        checked the user may read it; the signed storage link never reaches the browser;
+//   GET /media/<id>      a public image (a teacher's photo, the payment QR) for anyone, streamed the same way, asked for
+//                        with the server's read identity, so the `public_site` policy in Company OS decides;
 //   /private-docs/*      the Hub's docs and source documents, for a signed-in super admin only (docsGate.mjs);
 //   POST /webhooks/resend Resend's delivery webhook, forwarded byte for byte to the API, which checks
 //                        the signature;
@@ -44,8 +46,11 @@ const PUBLIC_QUERY_LIMIT = 16 * 1024;
 const TRANSFORM_LIMIT = 2 * 1024 * 1024;
 const PUBLIC_QUERY_READ_MS = 10_000;
 
-/** Never forwarded, signed in or not (first segment after `/t/<tenant>`): the API's dev login hands out tokens. */
-const BLOCKED_SECTIONS = new Set(['auth']);
+/**
+ * Never forwarded, signed in or not (first segment after `/t/<tenant>`): the API's dev login hands out tokens, and
+ * /public-files answers with a storage link, which stays on this server (the browser gets the bytes from /media/<id>).
+ */
+const BLOCKED_SECTIONS = new Set(['auth', 'public-files']);
 
 const PROXY_METHODS = new Set(['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE']);
 /** The only browser headers that reach Company OS. Authorization is set by us, from the verified token. */
@@ -115,6 +120,10 @@ export async function createHandler(config, deps) {
       if (rawPath === '/files' || rawPath.startsWith('/files/')) {
         const outcome = await file(req, res, config, deps, rawPath.slice('/files'.length));
         return log({ event: 'file', outcome, status: res.statusCode, ms: Date.now() - started });
+      }
+      if (rawPath === '/media' || rawPath.startsWith('/media/')) {
+        const outcome = await media(req, res, config, deps, rawPath.slice('/media'.length));
+        return log({ event: 'media', outcome, status: res.statusCode, ms: Date.now() - started });
       }
       if (rawPath === DOCS_PREFIX || rawPath.startsWith(`${DOCS_PREFIX}/`)) return await docsGate(req, res, rawPath.slice(DOCS_PREFIX.length));
       if (rawPath.startsWith('/api/') || rawPath.startsWith('/webhooks/')) return sendError(res, 404, 'not_found');
@@ -524,12 +533,7 @@ async function file(req, res, config, deps, rest) {
     return 'refused';
   }
 
-  // One deadline from here on, the session check included; the browser leaving aborts everything.
-  const deadline = Date.now() + config.fileTimeoutMs;
-  const abort = new AbortController();
-  const timer = setTimeout(() => abort.abort(), config.fileTimeoutMs);
-  res.on('close', () => abort.abort());
-  try {
+  return withDeadline(res, config, async (abort, deadline) => {
     const verified = await Promise.race([
       deps.verifySession(token).then(() => true, () => false),
       new Promise((done) => abort.signal.addEventListener('abort', () => done(null), { once: true })),
@@ -539,73 +543,81 @@ async function file(req, res, config, deps, rest) {
       sendError(res, 401, 'unauthorized');
       return 'refused';
     }
+    return linkThenBytes(req, res, config, abort, deadline, {
+      linkPath: `/files/${id}/url`,
+      token,
+      refuse: (status, code) => sendError(res, status, typeof code === 'string' && /^[a-z][a-z0-9_]{0,63}$/.test(code) ? code : REFUSAL_CODES[status] ?? 'refused'),
+      headers: (type) => {
+        const inline = INLINE_TYPES.has(type);
+        return {
+          'Content-Type': inline ? type : 'application/octet-stream',
+          'Content-Disposition': inline ? 'inline' : 'attachment',
+          'Cache-Control': 'private, no-store',
+          'Cross-Origin-Resource-Policy': 'same-origin',
+        };
+      },
+    });
+  });
+}
 
-    // 1. The link, if the API lets this user read the file.
-    const linkUrl = new URL(`${config.companyOsUrl.replace(/\/+$/, '')}/t/${config.tenant}/files/${id}/url`);
-    const answer = await get(linkUrl, { accept: 'application/json', authorization: `Bearer ${token}`, ...clientHeaders(req) }, abort.signal);
-    const body = await readBody(answer, LINK_ANSWER_LIMIT, Math.max(1, deadline - Date.now()));
-    if (body === 'too_slow') abort.abort();
-    if (!Buffer.isBuffer(body)) throw new Error('link answer too large or slow');
-    if (answer.statusCode !== 200) {
-      const status = answer.statusCode ?? 502;
-      if (status >= 400 && status < 500) {
-        // The API's refusal, as it answered it: its machine code (e.g. `file_not_ready`), never its text.
-        const code = parseJson(body)?.error;
-        sendError(res, status, typeof code === 'string' && /^[a-z][a-z0-9_]{0,63}$/.test(code) ? code : REFUSAL_CODES[status] ?? 'refused');
-        return 'refused';
-      }
-      sendError(res, status === 503 ? 503 : 502, status === 503 ? 'storage_not_configured' : 'upstream_unavailable');
-      return 'upstream_error';
-    }
-    const link = storageLink(parseJson(body)?.url, config);
-    if (!link) {
-      sendError(res, 502, 'bad_file_link');
-      return 'bad_link';
-    }
+/** How long a browser keeps a public image. A replaced image gets a new id, so this never hides a change. */
+const MEDIA_MAX_AGE_S = 3600;
+/** Behind the test gate only the browser that passed it may keep an image, as with the site's own files. */
+export function mediaCacheControl(config) {
+  return `${config.testGate?.on ? 'private' : 'public'}, max-age=${MEDIA_MAX_AGE_S}`;
+}
 
-    // 2. The bytes, with nothing of the browser's request and nothing of storage's headers but the type and size.
-    const stored = await get(link, { accept: '*/*', 'accept-encoding': 'identity' }, abort.signal);
-    if (stored.statusCode !== 200) {
-      stored.resume();
-      sendError(res, stored.statusCode === 404 ? 404 : 502, stored.statusCode === 404 ? 'not_found' : 'storage_error');
-      return 'storage_error';
-    }
-    const declared = header(stored.headers['content-length']);
-    const size = declared !== undefined && /^\d+$/.test(declared) ? Number(declared) : undefined;
-    if (size !== undefined && size > config.fileSizeLimit) {
-      stored.destroy();
-      sendError(res, 502, 'file_too_large');
-      return 'too_large';
-    }
-    const type = (header(stored.headers['content-type']) ?? '').split(';')[0].trim().toLowerCase();
-    const inline = INLINE_TYPES.has(type);
-    res.writeHead(200, {
-      'Content-Type': inline ? type : 'application/octet-stream',
-      'Content-Disposition': inline ? 'inline' : 'attachment',
-      'Cache-Control': 'private, no-store',
-      // Even if storage lied about the type: no script, no plugin, no embedding by another site.
-      'Content-Security-Policy': "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; sandbox",
+/**
+ * GET /media/<id>: a public image (a teacher's photo, the payment QR) for anyone, signed in or not. The server asks for
+ * the published copy's link with its own read identity, so the `public_site` policy in Company OS decides which kinds
+ * exist here and everything else is one 404; the visitor's token and cookies are never used. Limited like the public
+ * reads. Only images: anything else stored is refused, never rendered or downloaded from this address.
+ */
+async function media(req, res, config, deps, rest) {
+  if (req.method !== 'GET') {
+    res.setHeader('Allow', 'GET');
+    sendError(res, 405, 'method_not_allowed');
+    return 'refused';
+  }
+  const id = rest.slice(1);
+  if (!rest.startsWith('/') || !FILE_ID.test(id)) {
+    sendError(res, 404, 'not_found');
+    return 'refused';
+  }
+  if (Number(header(req.headers['content-length']) ?? 0) > 0 || req.headers['transfer-encoding'] !== undefined) {
+    sendError(res, 400, 'body_not_allowed');
+    return 'refused';
+  }
+  if (!config.companyOsReadToken) {
+    sendError(res, 404, 'not_found');
+    return 'no_read_identity';
+  }
+  if (!deps.takePublicRead(header(req.headers['x-real-ip']) ?? req.socket.remoteAddress ?? '')) {
+    sendError(res, 429, 'rate_limited');
+    return 'rate_limited';
+  }
+  return withDeadline(res, config, (abort, deadline) => linkThenBytes(req, res, config, abort, deadline, {
+    linkPath: `/public-files/${id.toLowerCase()}/url`,
+    token: config.companyOsReadToken,
+    // A copy just published may not be there yet: its own code, so a retry makes sense. Anything else is one 404.
+    refuse: (status, code) => sendError(res, 404, code === 'file_not_ready' ? code : 'not_found'),
+    headers: (type) => (INLINE_TYPES.has(type) ? {
+      'Content-Type': type,
+      'Content-Disposition': 'inline',
+      'Cache-Control': mediaCacheControl(config),
       'Cross-Origin-Resource-Policy': 'same-origin',
-      ...(size !== undefined ? { 'Content-Length': size } : {}),
-    });
-    return await new Promise((done) => {
-      let seen = 0;
-      stored.on('data', (chunk) => {
-        seen += chunk.length;
-        if (seen > config.fileSizeLimit) {
-          // Undeclared size past the cap: the answer has started, so cut it off (the browser sees a failed download).
-          stored.destroy();
-          res.destroy();
-          done('too_large');
-        }
-      });
-      stored.on('error', () => {
-        res.destroy();
-        done(!abort.signal.aborted ? 'storage_error' : Date.now() >= deadline ? 'timeout' : 'client_gone');
-      });
-      stored.on('end', () => done('served'));
-      stored.pipe(res);
-    });
+    } : null),
+  }));
+}
+
+/** One deadline for all of `work`, the browser leaving aborts it too. Whatever it throws is answered as a timeout or a bad gateway. */
+async function withDeadline(res, config, work) {
+  const deadline = Date.now() + config.fileTimeoutMs;
+  const abort = new AbortController();
+  const timer = setTimeout(() => abort.abort(), config.fileTimeoutMs);
+  res.on('close', () => abort.abort());
+  try {
+    return await work(abort, deadline);
   } catch {
     if (res.headersSent || res.destroyed) {
       res.destroy();
@@ -617,6 +629,80 @@ async function file(req, res, config, deps, rest) {
   } finally {
     clearTimeout(timer);
   }
+}
+
+/**
+ * The API's link for a file, then its bytes. `token` is who asks; `refuse(status, code)` answers the API's own 4xx;
+ * `headers(type)` gives the answer's headers for a stored type, or null to refuse the file.
+ */
+async function linkThenBytes(req, res, config, abort, deadline, { linkPath, token, refuse, headers }) {
+  // 1. The link, if the API lets this caller read the file.
+  const linkUrl = new URL(`${config.companyOsUrl.replace(/\/+$/, '')}/t/${config.tenant}${linkPath}`);
+  const answer = await get(linkUrl, { accept: 'application/json', authorization: `Bearer ${token}`, ...clientHeaders(req) }, abort.signal);
+  const body = await readBody(answer, LINK_ANSWER_LIMIT, Math.max(1, deadline - Date.now()));
+  if (body === 'too_slow') abort.abort();
+  if (!Buffer.isBuffer(body)) throw new Error('link answer too large or slow');
+  if (answer.statusCode !== 200) {
+    const status = answer.statusCode ?? 502;
+    if (status >= 400 && status < 500) {
+      // The API's refusal, as it answered it: its machine code (e.g. `file_not_ready`), never its text.
+      refuse(status, parseJson(body)?.error);
+      return 'refused';
+    }
+    sendError(res, status === 503 ? 503 : 502, status === 503 ? 'storage_not_configured' : 'upstream_unavailable');
+    return 'upstream_error';
+  }
+  const link = storageLink(parseJson(body)?.url, config);
+  if (!link) {
+    sendError(res, 502, 'bad_file_link');
+    return 'bad_link';
+  }
+
+  // 2. The bytes, with nothing of the browser's request and nothing of storage's headers but the type and size.
+  const stored = await get(link, { accept: '*/*', 'accept-encoding': 'identity' }, abort.signal);
+  if (stored.statusCode !== 200) {
+    stored.resume();
+    sendError(res, stored.statusCode === 404 ? 404 : 502, stored.statusCode === 404 ? 'not_found' : 'storage_error');
+    return 'storage_error';
+  }
+  const declared = header(stored.headers['content-length']);
+  const size = declared !== undefined && /^\d+$/.test(declared) ? Number(declared) : undefined;
+  if (size !== undefined && size > config.fileSizeLimit) {
+    stored.destroy();
+    sendError(res, 502, 'file_too_large');
+    return 'too_large';
+  }
+  const type = (header(stored.headers['content-type']) ?? '').split(';')[0].trim().toLowerCase();
+  const answerHeaders = headers(type);
+  if (!answerHeaders) {
+    stored.destroy();
+    sendError(res, 404, 'not_found');
+    return 'not_an_image';
+  }
+  res.writeHead(200, {
+    ...answerHeaders,
+    // Even if storage lied about the type: no script, no plugin, no embedding by another site.
+    'Content-Security-Policy': "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; sandbox",
+    ...(size !== undefined ? { 'Content-Length': size } : {}),
+  });
+  return new Promise((done) => {
+    let seen = 0;
+    stored.on('data', (chunk) => {
+      seen += chunk.length;
+      if (seen > config.fileSizeLimit) {
+        // Undeclared size past the cap: the answer has started, so cut it off (the browser sees a failed download).
+        stored.destroy();
+        res.destroy();
+        done('too_large');
+      }
+    });
+    stored.on('error', () => {
+      res.destroy();
+      done(!abort.signal.aborted ? 'storage_error' : Date.now() >= deadline ? 'timeout' : 'client_gone');
+    });
+    stored.on('end', () => done('served'));
+    stored.pipe(res);
+  });
 }
 
 /** One GET; resolves with the answer (any status), rejects on a network error or when `signal` aborts. */
