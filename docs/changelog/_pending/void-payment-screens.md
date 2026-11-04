@@ -8,3 +8,5 @@ Decision: the action is gated by `/me`'s Super Admin flag (`meSuperAdmin`), not 
 Files: `src/modules/transfers/launch/voidPayment.ts`, `VoidPaymentAction.tsx`, `strings.ts`, `payments.ts`; `src/modules/launch-receipts/launch/ReceiptPages.tsx`, `specs.ts`; `src/modules/admin/FinancePage.tsx`, `MemberPage.tsx`, `strings.ts`; `src/auth/companyOsIdentity.ts`, `sessionContext.ts`, `ProductionSession.tsx`, `RequireRole.tsx`; `src/data/companyos/refusals.ts`; `src/data/trialEligibility.ts`; `scripts/test-void-payment.mjs`, `test-void-payment-ui.mjs`, `lib/fake-cos.mjs`; `.github/workflows/auth-checks.yml`.
 
 Review build unchanged: it has no Company OS connection, so it never gets the action.
+
+Review fixes: the movements list has words for a void and shows no validity on a voided lot's grant row; a voided payment keeps its approval date on Finance (revenue still counts approved only); the trial check reads the lot's `voided_at`; a too-short reason says the minimum; `void_booking_active` fits a class already taken.

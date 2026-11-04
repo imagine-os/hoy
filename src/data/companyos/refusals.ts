@@ -46,7 +46,8 @@ export const CONTRACT_REFUSALS = {
   invalid_amount: { es: 'El monto no es válido. Usa un número entero mayor que cero.', en: 'The amount is not valid. Use a whole number above zero.' },
   // The payment void (credits and payments void settings).
   void_classes_used: { es: 'No se puede anular: ya se usó alguna de las clases de este pago.', en: 'This payment cannot be voided: some of its classes have been used.' },
-  void_booking_active: { es: 'No se puede anular: la reserva que este pago cubrió sigue activa. Cancélala primero.', en: 'This payment cannot be voided: the booking it paid for is still active. Cancel it first.' },
+  // Covers a booking still ahead and one already checked in or completed, which can't be cancelled.
+  void_booking_active: { es: 'No se puede anular: este pago cubrió una reserva activa o una clase ya tomada. Si la clase aún no se ha tomado, cancela la reserva primero.', en: 'This payment cannot be voided: it paid for an active booking or a class already taken. If the class has not been taken yet, cancel the booking first.' },
   void_gift_issued: { es: 'No se puede anular: este pago emitió un bono de regalo.', en: 'This payment cannot be voided: it issued a gift voucher.' },
   payment_undeletable: { es: 'Un pago aprobado o anulado no se puede eliminar.', en: 'An approved or voided payment cannot be deleted.' },
   lot_voided: { es: 'Este paquete se anuló y ya no se puede cambiar.', en: 'This pack was voided and can no longer be changed.' },

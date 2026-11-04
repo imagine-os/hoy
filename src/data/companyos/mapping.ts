@@ -318,8 +318,12 @@ const payments = entity({
     provider_ref: { field: 'provider_ref' }, status: { field: 'status' }, note: { field: 'notes' },
     reference: { field: 'reference' }, concept: { field: 'concept' }, price_override_reason: { field: 'price_override_reason' },
     for_entity: { field: 'for_entity' }, for_id: { field: 'for_id' }, date: { field: 'date', kind: 'day' },
-    /** The day Company OS approved it (`approved_at`, server-set); the last update only when that is missing (lane B). */
-    paid_at: { derive: (r) => (r.data.status === 'approved' ? (validInstant(r.data.approved_at) ?? toInstant(r.updatedAt)) : null) },
+    /**
+     * The day Company OS approved it (`approved_at`, server-set); the last update only when that is missing (lane B).
+     * A voided payment keeps the day it was approved, so it stays where it was on Finance; its last update is the void.
+     * Every revenue figure counts `approved` only, so this adds nothing to a total.
+     */
+    paid_at: { derive: (r) => (r.data.status === 'approved' ? (validInstant(r.data.approved_at) ?? toInstant(r.updatedAt)) : r.data.status === 'voided' ? validInstant(r.data.approved_at) ?? null : null) },
     currency: { derive: () => 'COP' }, taken_by: { derive: () => null }, frontend_receipt: { derive: () => null },
   },
   /** `concept` is required by payments; the desk or the screen may send its own. */
@@ -363,7 +367,7 @@ const transferReceipts = entity({
 const classLedger = entity({
   table: 'class_ledger', entity: 'credit_entry', writeEntity: 'credit_lot',
   clientCreate: (r) => Boolean(r.voucher_code) || (['comp', 'gift'].includes(String(r.reason)) && Number(r.delta) > 0),
-  include: [{ field: 'lot', fields: ['source', 'valid_until', 'frozen_from', 'frozen_until', 'product', 'payment', 'freezable', 'freezes_used'] }],
+  include: [{ field: 'lot', fields: ['source', 'valid_until', 'frozen_from', 'frozen_until', 'product', 'payment', 'freezable', 'freezes_used', 'voided_at'] }],
   idOf: (r) => (r.data.reason === 'grant' && refId(r.data.lot) ? String(refId(r.data.lot)) : r.id),
   cols: {
     user_id: { field: 'person', from: str }, delta: { field: 'delta', from: num },
@@ -378,6 +382,8 @@ const classLedger = entity({
     freezable: { derive: (r) => bool(embedded(r, 'lot')?.freezable) },
     /** The lot's source (purchase, trial, gift, courtesy, comp…), null without a lot (lane H2, for H1's trial check). */
     lot_source: { derive: (r) => str(embedded(r, 'lot')?.source) },
+    /** Server-set when the payment that issued the lot is voided: the lot is unusable for good. */
+    lot_voided_at: { derive: (r) => str(embedded(r, 'lot')?.voided_at) },
     booking_id: { field: 'booking', from: str, readOnly: true },
   },
   toData: (p, mode) => {

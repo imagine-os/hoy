@@ -35,9 +35,9 @@ export function VoidPaymentDrawer({ paymentId, onClose, onDone }: { paymentId: s
   });
   return <Drawer open onClose={() => { if (!action.busy) onClose(); }} title={t('payLaunch.void.title')} side="right">
     <div className="stack">
-      <Notice tone="warn">{t('payLaunch.void.explain')}</Notice>
+      <Notice tone="info">{t('payLaunch.void.explain')}</Notice>
       <Field label={t('payLaunch.void.reason')} required>{(id) => <Input id={id} name="void-reason" maxLength={500} value={reason} disabled={action.busy || action.uncertain} onChange={(e) => { setReason(e.target.value); action.renew(); }} />}</Field>
-      {action.uncertain ? <Notice tone="warn">{t('payLaunch.uncertain')}</Notice> : action.error && <p role="alert">{voidRefusalLine(action.error, lang, t)}</p>}
+      {action.uncertain ? <Notice tone="warn" className="void-uncertain">{t('payLaunch.uncertain')}</Notice> : action.error && <p role="alert" data-void-refusal>{voidRefusalLine(action.error, lang, t)}</p>}
       <div className="row wrap">
         <Button variant="danger" data-void-confirm disabled={action.busy} loading={action.busy} onClick={() => void submit()}>{t('payLaunch.void.action')}</Button>
         <Button variant="secondary" data-void-back disabled={action.busy} onClick={onClose}>{t('payLaunch.void.back')}</Button>

@@ -35,5 +35,7 @@ export function receiptVoid(payment: { status?: unknown; status_reason?: string 
 
 /** The line for a refused void: the code→copy table first, then the payment screens' own codes (`stale`) or the generic line with its code. */
 export function voidRefusalLine(code: string, lang: Lang, t: (key: string, vars?: Record<string, string | number>) => string): string {
+  // The table's `reason_required` is about a new reason; here the reason is new, and what's missing is its length.
+  if (code === 'reason_required') return t(refusalKey(code), { code });
   return hasRefusalCopy(code) ? refusalCopy(code, lang) : t(refusalKey(code), { code });
 }
