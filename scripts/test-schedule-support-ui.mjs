@@ -17,7 +17,7 @@ try {
   const retry=en?'Retry':'Reintentar';
   await mount('/app/schedule');await p.getByText('FICTIONAL qa-open',{exact:true}).waitFor();
   assert(await p.getByRole('button').filter({hasText:'FICTIONAL qa-started'}).isDisabled());
-  assert(await p.getByRole('button').filter({hasText:'FICTIONAL qa-inactive'}).isDisabled());
+  assert(!(await p.getByRole('button').filter({hasText:'FICTIONAL qa-inactive'}).isDisabled()),'owner r2 L3: a switched-off timetable row keeps its classes open');
   assert(!(await p.getByRole('button').filter({hasText:'FICTIONAL qa-full'}).isDisabled()));
   await p.getByText('FICTIONAL qa-midnight',{exact:true}).waitFor();await shot('day');
   await p.locator('.calendar-views button').nth(1).click();await shot('week');
@@ -27,7 +27,7 @@ try {
   await p.locator('.cust-filters-scroll button').nth(0).click();await p.getByText('FICTIONAL qa-open',{exact:true}).waitFor();
   await p.getByRole('button').filter({hasText:'FICTIONAL qa-full'}).click();await p.getByText('FICTIONAL DESTINATION',{exact:true}).waitFor();
   await mount('/app/schedule/week');await p.locator('.calendar-views button').nth(1).waitFor();assert.equal(await p.locator('.calendar-views button').nth(1).getAttribute('aria-pressed'),'true');await p.evaluate(()=>window.qaSupportTheme('dark'));await shot('week-dark');await p.evaluate(()=>window.qaSupportTheme('light'));
-  checks.push(`${lang}/${width}: day/week, method filter/clear, spots/full waitlist navigation, started/inactive disabled, Bogota midnight visible in Tokyo browser, empty results`);
+  checks.push(`${lang}/${width}: day/week, method filter/clear, spots/full waitlist navigation, started disabled, a switched-off row's class stays open (owner r2 L3), Bogota midnight visible in Tokyo browser, empty results`);
   await mount('/app/schedule','error:class_sessions');await p.getByText(readError,{exact:true}).waitFor();await shot('schedule-error');await p.evaluate(()=>window.qaSupportMode='');await p.getByRole('button',{name:retry,exact:true}).click();await p.getByText('FICTIONAL qa-open',{exact:true}).waitFor();
   await mount('/app/booking/qa-booking');await p.getByText(en?'Payment confirmed':'Pago confirmado',{exact:true}).waitFor();assert.match(await p.locator('.appshell-main').innerText(),en?/1:30 PM/:/1:30/);assert.match(await p.locator('.appshell-main').innerText(),/Carolina Cifuentes/);assert.match(await p.locator('.appshell-main').innerText(),/Sala principal/);assert.match(await p.locator('a[href*="google.com/maps"]').getAttribute('href'),/^https:\/\/www.google.com\/maps\//);await shot('booking-confirmed');await p.evaluate(()=>window.qaSupportTheme('dark'));await shot('booking-confirmed-dark');await p.evaluate(()=>window.qaSupportTheme('light'));
   for(const [status,text] of [['pending',en?'Pending confirmation':'Pendiente de confirmación'],['released',en?'Payment released':'Pago liberado']]){await p.evaluate(status=>window.qaSupportProvider.update('payments','qa-payment',{status}),status);await p.getByText(text,{exact:true}).waitFor();await shot(`booking-${status}`);}
