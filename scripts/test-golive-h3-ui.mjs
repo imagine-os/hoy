@@ -302,8 +302,10 @@ try {
   check('a draft without a class type says so, and Publish is off', /Sin tipo de clase/.test(await row.innerText().catch(() => '')) && (await row.getByRole('button', { name: 'Publicar' }).isDisabled().catch(() => false)), await row.innerText().catch(() => 'missing'));
   check('a published row without a type says its dates can\'t be booked', /no se pueden reservar/.test(await page.locator('[data-schedule="sch_live_notype"] [data-type-hint]').innerText().catch(() => '')));
   await row.getByRole('button', { name: 'Editar' }).click();
-  await page.getByLabel('Publicada').check({ force: true }).catch(() => {});
+  // As a person does it: the toggle's real input has no size (Toggle.css), so its visible label takes the click.
+  await page.locator('label.toggle').filter({ hasText: 'Publicada' }).click();
   await page.waitForTimeout(200);
+  check('the form\'s Published toggle is on', await page.getByRole('switch', { name: 'Publicada' }).isChecked());
   check('published without a type: the form says so and Save is off', /Elige el tipo de clase/.test(await text(page)) && (await page.getByRole('button', { name: 'Guardar' }).isDisabled()));
   await page.getByLabel('Tipo de clase').selectOption('pulso');
   await page.waitForTimeout(200);
