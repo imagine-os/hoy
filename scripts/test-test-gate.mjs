@@ -314,6 +314,20 @@ await test('with the cookie: a page answers 200 (still noindex); /api/cos reache
   assert.equal(seen[0].headers.cookie, undefined, 'the gate\'s cookie never reaches Company OS');
 });
 
+await test('routes without the #: behind the gate like any page; past it, they redirect', async () => {
+  const app = await start();
+  for (const path of ['/site', '/site/plans', '/coming-soon']) {
+    const r = await app.call('GET', path);
+    assert.equal(r.status, 401, path);
+    assert.equal(r.headers.location, undefined, path);
+    assert.ok(r.text.includes('name="next"') || r.text.includes(path), `${path}: the form keeps the address asked for`);
+  }
+  const past = await app.call('GET', '/site/plans', { cookie: cookieFor() });
+  assert.equal(past.status, 302);
+  assert.equal(past.headers.location, '/#/site/plans');
+  assert.equal(past.headers['x-robots-tag'], 'noindex, nofollow');
+});
+
 await test('with the cookie: a valid one among other cookies counts; the form\'s address sends you home', async () => {
   const app = await start();
   assert.equal((await app.call('GET', '/', { cookie: `a=1; ${cookieFor()}; b=2` })).status, 200);

@@ -12,6 +12,7 @@
 //   /private-docs/*      the Hub's docs and source documents, for a signed-in super admin only (docsGate.mjs);
 //   POST /webhooks/resend Resend's delivery webhook, forwarded byte for byte to the API, which checks
 //                        the signature;
+//   /site, /coming-soon  a redirect to the same route after the `#`, so an address typed without it still arrives;
 //   everything else      the built frontend in dist/ (website + app; HashRouter, so no SPA fallback).
 // No framework: node:http only. Clerk verification is injected (see clerk.mjs) so tests can fake it.
 import { createReadStream } from 'node:fs';
@@ -127,6 +128,11 @@ export async function createHandler(config, deps) {
       }
       if (rawPath === DOCS_PREFIX || rawPath.startsWith(`${DOCS_PREFIX}/`)) return await docsGate(req, res, rawPath.slice(DOCS_PREFIX.length));
       if (rawPath.startsWith('/api/') || rawPath.startsWith('/webhooks/')) return sendError(res, 404, 'not_found');
+      const route = hashRoute(req.method, rawPath, rawQuery);
+      if (route) {
+        res.writeHead(302, { Location: route, 'Cache-Control': 'no-cache' });
+        return res.end();
+      }
       return await serveStatic(req, res, distDir, rawPath, rawQuery, config.testGate?.on ? 'private' : 'public');
     } catch (err) {
       log({ event: 'server.error', message: err instanceof Error ? err.message : String(err) });
@@ -139,6 +145,18 @@ export async function createHandler(config, deps) {
 // ---------------------------------------------------------------------------------------------
 // /health and shared response helpers
 // ---------------------------------------------------------------------------------------------
+
+/**
+ * The app's routes are hash routes (`/#/site`), so an address typed without the `#` would be a 404. A 302: this changes
+ * when the `#` goes. Only plain segments and a plain query string pass, undecoded, so the Location is always this site's:
+ * anything encoded or odd in the path keeps its 404, and such a query string is dropped.
+ */
+function hashRoute(method, rawPath, rawQuery) {
+  if (method !== 'GET' && method !== 'HEAD') return null;
+  const path = rawPath === '/coming-soon' ? rawPath : /^\/site(?:\/[A-Za-z0-9_-][A-Za-z0-9._-]*)*\/?$/.test(rawPath) ? rawPath.replace(/\/$/, '') : null;
+  if (!path) return null;
+  return `/#${path}${/^\?[A-Za-z0-9._~=&+-]{1,512}$/.test(rawQuery) ? rawQuery : ''}`;
+}
 
 function health(req, res, release) {
   if (req.method !== 'GET' && req.method !== 'HEAD') return sendError(res, 405, 'method_not_allowed');
