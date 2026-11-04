@@ -30,7 +30,7 @@ import { safeCheckoutReturn } from '../booking/serverBooking';
 import { GIFT_PURCHASE_PATH } from '../../../config/launchRoutes';
 import { useLivePricing } from '../../../data/livePricing';
 import { audienceVisible, trialOffered } from '../offers';
-import { genericPlanTarget, plansForCustomer } from '../genericPlans';
+import { genericPlanTarget, plansForCustomer, wantedGenericPlan } from '../genericPlans';
 import { GenericPlanCard } from '../../../components/molecule/GenericPlanCard/GenericPlanCard';
 import { useAffiliate } from '../useAffiliate';
 import { ConsentHoldNotice, useConsentHeld } from '../../identity/ConsentHold';
@@ -72,7 +72,7 @@ export function PlansPage() {
   const wanted = params.get('plan');
   // WEB-02b: the master's other public products. Production only (`prices.generic` is empty in the review build).
   const generic = plansForCustomer(prices.generic, { trialOffered: trialOffered(ent) });
-  const wantedGeneric = prices.generic.find((p) => p.key === wanted);
+  const wantedGeneric = wantedGenericPlan(prices.generic, wanted, { trialOffered: trialOffered(ent), known: ent.trialKnown });
   // RS-03 (production): checkout sends a trial or package purchase here with `next` = the chosen class; the trial opens its
   // confirmation here (the production checkout books only from the balance or a held single class), and "done" goes back.
   const next = SERVER_RULES ? safeCheckoutReturn(params.get('next')) : null;

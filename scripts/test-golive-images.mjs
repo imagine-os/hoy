@@ -269,6 +269,25 @@ await test('unsaved uploads: replaced before saving, or the form closed: deleted
   const failing = filePort({ failDelete: 9 }); const d4 = new images.ImageDraft(failing); d4.add(`/media/${ID}`, COACH_OWNER);
   await silent(() => d4.discard());
 });
+await test('an upload that finishes after its form closed is cleaned up, not left published', async () => {
+  needs(images);
+  const port = filePort();
+  const draft = new images.ImageDraft(port);
+  await draft.discard(); // the form closes while the upload runs
+  draft.add(`/media/${ID}`, COACH_OWNER); await draft.discard(); // what the field does when the upload comes back
+  assert.ok(port.log.includes(`DELETE /api/file/${ID}`));
+});
+await test('busy: only a real upload tells the form; leaving always ends it, so Save is never stuck', () => {
+  needs(images);
+  const seen = []; const tell = (b) => seen.push(b);
+  const end = images.reportImageBusy(true, true, tell);
+  assert.deepEqual(seen, [true]);
+  end(); assert.deepEqual(seen, [true, false], 'unmounted during an upload');
+  seen.length = 0;
+  const none = images.reportImageBusy(false, true, tell);
+  none?.(); assert.deepEqual(seen, [], 'the review build never calls it');
+  assert.doesNotThrow(() => images.reportImageBusy(true, true, undefined)?.());
+});
 await test('a save keeps its new image and clears the other unsaved uploads', async () => {
   needs(images);
   const port = filePort();

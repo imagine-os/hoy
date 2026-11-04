@@ -752,6 +752,28 @@ await test('media: the read identity refused, or the API busy, is no refusal of 
   assert.ok(publicLogs.some((l) => l.event === 'media' && l.upstream === 404), 'a refusal is logged too');
 });
 
+await test('media and files: a client leaving mid-stream gives the slot back at once, and the log says so', async () => {
+  const seenLogs = [];
+  const roomy = createHoyServer(await createHandler({ ...publicConfig, mediaConcurrency: 1, fileTimeoutMs: 20_000 }, { verifySession: fakeVerify, log: (e) => seenLogs.push(e) }));
+  await listen(roomy);
+  const leave = (path, headers) => new Promise((done, fail) => {
+    const req = http.request({ host: '127.0.0.1', port: roomy.address().port, method: 'GET', path, headers, agent: false }, (res) => { res.once('data', () => { req.destroy(); done(); }); });
+    req.on('error', () => {}); setTimeout(() => fail(new Error('no bytes')), 3000).unref(); req.end();
+  });
+  const settle = async (event) => { for (let i = 0; i < 40 && !seenLogs.some((l) => l.event === event); i++) await new Promise((r) => setTimeout(r, 25)); };
+  upstreamReply = linkTo('trickle');
+  await leave(`/media/${FILE_ID}`, { 'x-real-ip': '10.3.0.1' });
+  await settle('media');
+  assert.equal(seenLogs.find((l) => l.event === 'media')?.outcome, 'client_gone', 'the read ended with the client');
+  upstreamReply = linkTo('receipt.png');
+  assert.equal((await request('GET', `/media/${FILE_ID}`, { 'x-real-ip': '10.3.0.1' }, undefined, roomy)).status, 200, 'the slot came back');
+  upstreamReply = linkTo('trickle');
+  await leave(`/files/${FILE_ID}`, { authorization: `Bearer ${GOOD}` });
+  await settle('file');
+  assert.equal(seenLogs.find((l) => l.event === 'file')?.outcome, 'client_gone', '/files shares the code');
+  roomy.close();
+});
+
 await test('media: one address may hold only so many reads at once; the slot comes back afterwards', async () => {
   upstreamReply = linkTo('trickle');
   const capped = createHoyServer(await createHandler({ ...publicConfig, mediaConcurrency: 1, fileTimeoutMs: 300 }, { verifySession: fakeVerify, log: () => {} }));

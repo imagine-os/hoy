@@ -82,6 +82,12 @@ const t2 = plan('trial_b', { kind: 'trial', classes: 1 }), g2 = plan('gift_b', {
 const visible = (offered) => (P.plansForCustomer?.(generic([t2, g2, p2]), { trialOffered: offered }) ?? []).map((p) => p.key).sort().join();
 check('trap trial: a second trial shows to someone who has not had one', visible(true) === 'gift_b,pack6,trial_b', visible(true));
 check('trap trial: once the trial is used, it is gone from their cards, the rest stays', visible(false) === 'gift_b,pack6', visible(false));
+const wantedKey = (key, opts) => P.wantedGenericPlan?.(generic([t2, g2, p2]), key, opts)?.key ?? null;
+check('trap trial: ?plan=<second trial> after the trial is used finds nothing: the plans view, no pay form', wantedKey('trial_b', { trialOffered: false, known: true }) === null, wantedKey('trial_b', { trialOffered: false, known: true }));
+check('trap trial: ?plan=<second trial> for someone who has not had one goes to it', wantedKey('trial_b', { trialOffered: true, known: true }) === 'trial_b');
+check('trap trial: ?plan=<second trial> waits until it is known whether the trial was used', wantedKey('trial_b', { trialOffered: true, known: false }) === null);
+check('routing: ?plan=<pack or gift> is found whatever the trial, without waiting', wantedKey('pack6', { trialOffered: false, known: false }) === 'pack6' && wantedKey('gift_b', { trialOffered: false, known: false }) === 'gift_b');
+check('routing: no plan asked, or an unknown one, finds nothing', wantedKey(null, { trialOffered: true, known: true }) === null && wantedKey('nope', { trialOffered: true, known: true }) === null);
 // trap: a gift is bought for a named recipient (the pay page refuses one opened directly).
 const target = (rows, key, next = null) => P.genericPlanTarget?.(generic(rows).find((p) => p.key === key), next);
 check('trap gift: a gift card goes to the gift page with that product chosen', target([g2], 'gift_b') === `${P.GIFT_PURCHASE_PATH}?product=gift_b`, target([g2], 'gift_b'));

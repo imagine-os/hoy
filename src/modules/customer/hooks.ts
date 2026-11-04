@@ -84,9 +84,11 @@ export function useEntitlements() {
   const trial=useTrialAssessment(user.id);
   const memberships = useOwnMemberships();
   const { rows: ledger } = useScopedCustomerRead<ClassLedgerRow>('class_ledger', undefined, true);
-  const { rows: payments } = useScopedCustomerRead<PaymentRow>('payments', undefined, true);
-  const { rows: bookings } = useScopedCustomerRead<BookingRow>('bookings', undefined, true);
-  const { rows: plans } = useScopedCustomerRead<PlanRow>('plans');
+  const { rows: payments, loading: paymentsLoading } = useScopedCustomerRead<PaymentRow>('payments', undefined, true);
+  const { rows: bookings, loading: bookingsLoading } = useScopedCustomerRead<BookingRow>('bookings', undefined, true);
+  const { rows: plans, loading: plansLoading } = useScopedCustomerRead<PlanRow>('plans');
+  // Whether `trialUsed` and `trial` have been read yet (a failed read counts as read: the server still refuses at the end).
+  const trialKnown = !paymentsLoading && !bookingsLoading && !plansLoading && trial.status !== 'trial_checking';
   return useMemo(() => {
     const membership = memberships.find((m) => m.status === 'active') ?? memberships.find((m) => m.status === 'paused') ?? null;
     const confirmed = approvedPackageRows(ledger, payments);
@@ -98,8 +100,8 @@ export function useEntitlements() {
     const trialPlans = new Set(['plan_trial', ...plans.filter((p) => p.slug === 'trial').map((p) => p.id)]);
     const trialUsed = bookings.some((b) => b.paid_with === 'trial') || payments.some((p) => !!p.plan_id && trialPlans.has(p.plan_id) && p.status === 'approved');
     const defaultKind: EntitlementKind = pkg.balance > 0 ? 'package' : membership?.status === 'active' ? 'membership' : trial.status==='eligible' ? 'trial' : 'single';
-    return { membership, plan, ledger, pkg, lots, classBalance: pkg.balance, nextExpiry: pkg.expiresAt, trialUsed, trial, payments, defaultKind, hasAnyEntitlement: pkg.balance > 0 || membership?.status === 'active' };
-  }, [memberships, ledger, payments, bookings, plans, trial.status]);
+    return { membership, plan, ledger, pkg, lots, classBalance: pkg.balance, nextExpiry: pkg.expiresAt, trialUsed, trialKnown, trial, payments, defaultKind, hasAnyEntitlement: pkg.balance > 0 || membership?.status === 'active' };
+  }, [memberships, ledger, payments, bookings, plans, trial.status, trialKnown]);
 }
 
 /** C-07b: freeze the package (once, up to the M-08 freezeMaxDays) and end a freeze early. */
