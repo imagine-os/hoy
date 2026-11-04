@@ -35,9 +35,12 @@ const provider = await load("export * from './src/data/companyos/CompanyOSProvid
 const ops = await load("export * from './src/modules/classSchedule/live/scheduleOps.ts'; export { liveScheduleStrings } from './src/modules/classSchedule/live/strings.ts'; export { strings as mediaStrings } from './src/modules/media/strings.ts';");
 globalThis.localStorage ??= { getItem: () => null, setItem: () => {}, removeItem: () => {} };
 const pay = await load("export { MockProvider } from './src/data/MockProvider'; export { validPaymentImage } from './src/modules/admin/paymentInstructions.ts';");
+const transport = await load("export { normalizeCode } from './src/data/companyos/transport.ts';");
+const desk = await load("export { DESK_CODES, deskStrings } from './src/modules/staff/desk/strings.ts';");
 const needs = (m) => { if (m.__error) throw new Error(`does not load: ${m.__error}`); };
 
 const ID = '0b0f6e1c-3c6a-4c0e-9a51-6f3f2c1d9e01';
+const OLD = '3c1f6e1c-3c6a-4c0e-9a51-6f3f2c1d9e04';
 const HOSTILE_PHOTOS = ['javascript:alert(1)', 'https://evil.example/x.png', '//evil.example/x.png', '../../etc/passwd', `/media/${ID}`, `${ID}/url`, `${ID}%2F..`, `${ID} `, '<img src=x onerror=alert(1)>', 'data:image/svg+xml,<svg onload=alert(1)>', '', null, undefined, 42, {}, [ID], { id: ID }];
 
 // ── A small Company OS: the real provider's calls, in order ──────────────────────────────────────────────────────
@@ -111,57 +114,180 @@ await test('upload: a file not ready after confirm, or an odd id, is refused and
   await assert.rejects(images.uploadPublicImage({}, owner, f), (e) => e.code === 'disconnected');
 });
 
-// ── Replacing an image removes the old file (owner, 2026-11-04) ─────────────────────────────────────────────────
+// ── Replacing or removing an image removes the old file (owner, 2026-11-04) ─────────────────────────────────────
 const NEW_ID = '1c1f6e1c-3c6a-4c0e-9a51-6f3f2c1d9e02';
-const deleter = (fail) => { const log = []; return { log, request: async (method, path) => { log.push(`${method} ${path}`); if (fail) throw Object.assign(new Error(fail), { code: fail }); return null; } }; };
-await test('replace: upload is done, the owner record is patched, and only then the old file is deleted', async () => {
+const OTHER_ID = '2c1f6e1c-3c6a-4c0e-9a51-6f3f2c1d9e03';
+const COACH_OWNER = { ownerEntity: 'coach', kind: 'photo', ownerId: 'co1' };
+const QR_OWNER = { ownerEntity: 'setting', kind: 'image', ownerId: 'set1' };
+/** A port over a small file table: `files[id]` is what the record says; `holders` are coach rows still pointing at an id. */
+function filePort({ owner = COACH_OWNER, files, holders = [], settingValue, failDelete = 0, failRead = false } = {}) {
+  const log = [];
+  let left = failDelete;
+  const table = files ?? { [ID]: { owner_entity: owner.ownerEntity, owner_id: owner.ownerId, kind: owner.kind }, [OTHER_ID]: { owner_entity: owner.ownerEntity, owner_id: owner.ownerId, kind: owner.kind } };
+  return {
+    log,
+    request: async (method, path, body) => {
+      if (method === 'DELETE') {
+        log.push(`DELETE ${path}`);
+        if (left > 0) { left--; throw Object.assign(new Error('forbidden'), { code: 'forbidden' }); }
+        return null;
+      }
+      log.push(`query ${body.entity}`);
+      if (body.entity === 'file') {
+        if (failRead) throw Object.assign(new Error('storage_unavailable'), { code: 'storage_unavailable' });
+        assert.deepEqual(body.filter, { field: 'id', op: 'eq', value: body.filter.value });
+        const d = table[body.filter.value];
+        return { data: d ? [{ id: body.filter.value, data: d }] : [] };
+      }
+      if (body.entity === 'coach') return { data: holders.map((id) => ({ id, data: { photo: body.filter.value } })) };
+      if (body.entity === 'setting') return { data: settingValue ? [{ id: 'set1', data: { value: settingValue } }] : [] };
+      return { data: [] };
+    },
+  };
+}
+const silent = async (fn) => { const warned = []; const o = console.warn; console.warn = (...a) => warned.push(a.join(' ')); try { return [await fn(), warned]; } finally { console.warn = o; } };
+await test('replace: the owner record is patched, the file is read and checked, and only then deleted', async () => {
   needs(images);
-  const port = deleter();
-  const out = await images.saveThenRemoveOld(port, `/media/${ID}`, `/media/${NEW_ID}`, async () => { port.log.push('patch'); return 'saved'; });
-  assert.equal(out, 'saved');
-  assert.deepEqual(port.log, ['patch', `DELETE /api/file/${ID}`]);
+  const port = filePort();
+  const out = await images.saveThenRemoveOld(port, { saved: `/media/${ID}`, next: `/media/${NEW_ID}`, owner: COACH_OWNER, draft: withUpload(port, NEW_ID) }, async () => { port.log.push('patch'); return 'saved'; });
+  assert.deepEqual(out, { result: 'saved', notice: null });
+  assert.deepEqual(port.log, ['patch', 'query file', 'query coach', `DELETE /api/file/${ID}`]);
 });
-await test('replace: the photo field\'s bare id works too; ids are compared whatever their case', async () => {
+function withUpload(port, id, owner = COACH_OWNER) { const d = new images.ImageDraft(port); d.add(`/media/${id}`, owner); return d; }
+await test('remove: taking an image away with no replacement deletes the file too', async () => {
   needs(images);
-  const port = deleter();
-  await images.saveThenRemoveOld(port, ID, NEW_ID, async () => true);
-  assert.deepEqual(port.log, [`DELETE /api/file/${ID}`]);
-  const same = deleter();
-  await images.saveThenRemoveOld(same, `/media/${ID}`, ID.toUpperCase(), async () => true);
-  assert.deepEqual(same.log, [], 'the same image saved again: nothing to remove');
+  const port = filePort();
+  const out = await images.saveThenRemoveOld(port, { saved: `/media/${ID}`, next: null, owner: COACH_OWNER }, async () => true);
+  assert.equal(out.notice, null);
+  assert.ok(port.log.includes(`DELETE /api/file/${ID}`));
+});
+await test('replace: the photo field\'s bare id works too; the same image saved again removes nothing', async () => {
+  needs(images);
+  const port = filePort();
+  await images.saveThenRemoveOld(port, { saved: ID, next: `/media/${NEW_ID}`, owner: COACH_OWNER, draft: withUpload(port, NEW_ID) }, async () => true);
+  assert.ok(port.log.includes(`DELETE /api/file/${ID}`));
+  const same = filePort();
+  await images.saveThenRemoveOld(same, { saved: `/media/${ID}`, next: ID.toUpperCase(), owner: COACH_OWNER }, async () => true);
+  assert.deepEqual(same.log, []);
 });
 await test('replace: a refused patch (falsy or thrown) deletes nothing, and a thrown refusal still reaches the screen', async () => {
   needs(images);
-  const a = deleter();
-  assert.equal(await images.saveThenRemoveOld(a, `/media/${ID}`, `/media/${NEW_ID}`, async () => null), null);
+  const a = filePort();
+  const refused = await images.saveThenRemoveOld(a, { saved: `/media/${ID}`, next: `/media/${NEW_ID}`, owner: COACH_OWNER, draft: withUpload(a, NEW_ID) }, async () => null);
+  assert.deepEqual(refused, { result: null, notice: null });
   assert.deepEqual(a.log, []);
-  const b = deleter();
-  await assert.rejects(images.saveThenRemoveOld(b, `/media/${ID}`, `/media/${NEW_ID}`, async () => { throw Object.assign(new Error('x'), { code: 'forbidden' }); }), (e) => e.code === 'forbidden');
+  const b = filePort();
+  await assert.rejects(images.saveThenRemoveOld(b, { saved: `/media/${ID}`, next: `/media/${NEW_ID}`, owner: COACH_OWNER, draft: withUpload(b, NEW_ID) }, async () => { throw Object.assign(new Error('x'), { code: 'forbidden' }); }), (e) => e.code === 'forbidden');
   assert.deepEqual(b.log, []);
 });
-await test('replace: a failed delete leaves the new image standing: logged, no error for the person', async () => {
+await test('replace: a /media value that is neither the saved one nor uploaded in this form session is never saved (undo after a save)', async () => {
   needs(images);
-  const warned = []; const original = console.warn; console.warn = (...a) => warned.push(a.join(' '));
-  try {
-    const port = deleter('forbidden');
-    assert.equal(await images.saveThenRemoveOld(port, `/media/${ID}`, `/media/${NEW_ID}`, async () => 'saved'), 'saved');
-    assert.equal(port.log.length, 1);
-    assert.ok(warned.some((w) => /forbidden/.test(w)), 'logged');
-    assert.ok(!warned.some((w) => w.includes(ID)), 'the log carries no id');
-  } finally { console.warn = original; }
+  const port = filePort(); let patched = false;
+  const out = await images.saveThenRemoveOld(port, { saved: `/media/${NEW_ID}`, next: `/media/${ID}`, owner: COACH_OWNER, draft: new images.ImageDraft(port) }, async () => { patched = true; return true; });
+  assert.deepEqual(out, { result: null, notice: 'image_not_current' });
+  assert.equal(patched, false);
+  assert.deepEqual(port.log, [], 'and nothing is deleted');
+  assert.ok(provider.hasRefusalCopy('image_not_current'));
 });
-await test('replace: the old id must be a uuid from a saved value: anything else deletes nothing; no new image deletes nothing', async () => {
+await test('replace: one retry after a failed delete; if it works, nothing to say', async () => {
+  needs(images);
+  const port = filePort({ failDelete: 1 });
+  const [out] = await silent(() => images.saveThenRemoveOld(port, { saved: `/media/${ID}`, next: `/media/${NEW_ID}`, owner: COACH_OWNER, draft: withUpload(port, NEW_ID) }, async () => 'saved'));
+  assert.deepEqual(out, { result: 'saved', notice: null });
+  assert.equal(port.log.filter((l) => l.startsWith('DELETE')).length, 2);
+});
+await test('replace: still failing, the new image stands; logged without the id, and a notice for the person', async () => {
+  needs(images);
+  const port = filePort({ failDelete: 5 });
+  const [out, warned] = await silent(() => images.saveThenRemoveOld(port, { saved: `/media/${ID}`, next: `/media/${NEW_ID}`, owner: COACH_OWNER, draft: withUpload(port, NEW_ID) }, async () => 'saved'));
+  assert.deepEqual(out, { result: 'saved', notice: 'old_image_remains' });
+  assert.equal(port.log.filter((l) => l.startsWith('DELETE')).length, 2, 'one retry, no more');
+  assert.ok(warned.some((w) => /forbidden/.test(w)));
+  assert.ok(!warned.some((w) => w.includes(ID)));
+  const noRead = filePort({ failRead: true });
+  const [read] = await silent(() => images.saveThenRemoveOld(noRead, { saved: `/media/${ID}`, next: null, owner: COACH_OWNER }, async () => 'saved'));
+  assert.equal(read.notice, 'old_image_remains', 'unable to check is unable to delete');
+  assert.ok(!noRead.log.some((l) => l.startsWith('DELETE')));
+});
+await test('replace: only a file of this owner and kind is deleted: a receipt\'s id in photo is left alone, without alarming anyone', async () => {
+  needs(images);
+  for (const d of [{ owner_entity: 'payment', owner_id: 'pay1', kind: 'receipt' }, { owner_entity: 'coach', owner_id: 'other', kind: 'photo' }, { owner_entity: 'coach', owner_id: 'co1', kind: 'other' }]) {
+    const port = filePort({ files: { [ID]: d } });
+    const [out, warned] = await silent(() => images.saveThenRemoveOld(port, { saved: ID, next: null, owner: COACH_OWNER }, async () => 'saved'));
+    assert.deepEqual(out, { result: 'saved', notice: null }, JSON.stringify(d));
+    assert.ok(!port.log.some((l) => l.startsWith('DELETE')), JSON.stringify(d));
+    assert.ok(warned.length > 0, 'logged');
+  }
+});
+await test('replace: a file another coach still holds is left alone; a file already gone is nothing to do', async () => {
+  needs(images);
+  const held = filePort({ holders: ['co2'] });
+  const [out] = await silent(() => images.saveThenRemoveOld(held, { saved: ID, next: null, owner: COACH_OWNER }, async () => 'saved'));
+  assert.equal(out.notice, null);
+  assert.ok(!held.log.some((l) => l.startsWith('DELETE')));
+  const gone = filePort({ files: {} });
+  const [g] = await silent(() => images.saveThenRemoveOld(gone, { saved: ID, next: null, owner: COACH_OWNER }, async () => 'saved'));
+  assert.equal(g.notice, null);
+  assert.ok(!gone.log.some((l) => l.startsWith('DELETE')));
+});
+await test('replace: the old id must be a uuid from a saved value: anything else deletes nothing', async () => {
   needs(images);
   for (const old of ['javascript:alert(1)', 'https://evil.example/x.png', `/media/../${ID}`, `/media/${ID}/x`, `/files/${ID}`, `${ID}/../x`, 'images/teachers/a.webp', '', null, undefined, 7, {}, [ID]]) {
-    const port = deleter();
-    await images.saveThenRemoveOld(port, old, `/media/${NEW_ID}`, async () => true);
+    const port = filePort();
+    await images.saveThenRemoveOld(port, { saved: old, next: null, owner: COACH_OWNER }, async () => true);
     assert.deepEqual(port.log, [], String(old));
   }
-  const removed = deleter();
-  await images.saveThenRemoveOld(removed, `/media/${ID}`, null, async () => true);
-  assert.deepEqual(removed.log, [], 'Quitar foto is not a replacement: the plan decides replacing only');
-  const noPort = {};
-  assert.equal(await images.saveThenRemoveOld(noPort, `/media/${ID}`, `/media/${NEW_ID}`, async () => 'saved'), 'saved');
+});
+await test('no record to check against (owner not known): the old file stays and the person is told; no provider, nothing happens', async () => {
+  needs(images);
+  const port = filePort();
+  const [out] = await silent(() => images.saveThenRemoveOld(port, { saved: `/media/${ID}`, next: null }, async () => 'saved'));
+  assert.equal(out.notice, 'old_image_remains');
+  assert.ok(!port.log.some((l) => l.startsWith('DELETE')));
+  assert.deepEqual(await images.saveThenRemoveOld({}, { saved: `/media/${ID}`, next: `/media/${NEW_ID}`, owner: COACH_OWNER }, async () => 'saved'), { result: 'saved', notice: null }, 'the review build');
+});
+await test('unsaved uploads: replaced before saving, or the form closed: deleted, best effort, and never what is saved or in use', async () => {
+  needs(images);
+  const port = filePort();
+  const draft = new images.ImageDraft(port);
+  draft.add(`/media/${ID}`, COACH_OWNER); draft.add(`/media/${OTHER_ID}`, COACH_OWNER);
+  await draft.discard(`/media/${OTHER_ID}`);
+  assert.ok(port.log.includes(`DELETE /api/file/${ID}`));
+  assert.ok(!port.log.includes(`DELETE /api/file/${OTHER_ID}`), 'the one on screen stays');
+  assert.equal(draft.holds(`/media/${OTHER_ID}`), true); assert.equal(draft.holds(`/media/${ID}`), false);
+  await draft.discard();
+  assert.ok(port.log.includes(`DELETE /api/file/${OTHER_ID}`), 'the form closed');
+  assert.equal(draft.holds(`/media/${OTHER_ID}`), false);
+  // A save whose answer was lost may have stored it: a file its record holds is left alone.
+  const held = filePort({ holders: ['co1'] }); const d2 = new images.ImageDraft(held); d2.add(`/media/${ID}`, COACH_OWNER);
+  await silent(() => d2.discard());
+  assert.ok(!held.log.some((l) => l.startsWith('DELETE')));
+  const qr = filePort({ owner: QR_OWNER, settingValue: { payments: { qrImageUrl: `/media/${ID}` } } }); const d3 = new images.ImageDraft(qr); d3.add(`/media/${ID}`, QR_OWNER);
+  await silent(() => d3.discard());
+  assert.ok(!qr.log.some((l) => l.startsWith('DELETE')), 'the settings record still points at it');
+  // Best effort: a failure never reaches the person.
+  const failing = filePort({ failDelete: 9 }); const d4 = new images.ImageDraft(failing); d4.add(`/media/${ID}`, COACH_OWNER);
+  await silent(() => d4.discard());
+});
+await test('a save keeps its new image and clears the other unsaved uploads', async () => {
+  needs(images);
+  const port = filePort();
+  const draft = new images.ImageDraft(port);
+  draft.add(`/media/${OTHER_ID}`, COACH_OWNER); draft.add(`/media/${NEW_ID}`, COACH_OWNER);
+  await images.saveThenRemoveOld(port, { saved: null, next: `/media/${NEW_ID}`, owner: COACH_OWNER, draft }, async () => true);
+  assert.ok(port.log.includes(`DELETE /api/file/${OTHER_ID}`));
+  assert.ok(!port.log.includes(`DELETE /api/file/${NEW_ID}`));
+  assert.equal(draft.holds(`/media/${NEW_ID}`), false, 'it is the saved one now');
+});
+await test('before upload: a teacher photo is re-encoded; the QR goes unchanged, so it still scans', async () => {
+  needs(images);
+  const original = new File([png()], 'qr.png', { type: 'image/png' });
+  const encoded = new File([png()], 'ana.webp', { type: 'image/webp' });
+  let calls = 0; const encode = async () => { calls++; return encoded; };
+  assert.equal(await images.prepareForUpload(COACH_OWNER, original, encode), encoded);
+  assert.equal(calls, 1);
+  assert.equal(await images.prepareForUpload(QR_OWNER, original, encode), original);
+  assert.equal(calls, 1);
 });
 
 // ── Who gets which upload ────────────────────────────────────────────────────────────────────────────────────────
@@ -224,17 +350,27 @@ await test('teacher: hostile or wrongly typed stored values read as nothing and 
 });
 
 // ── What the editor writes ───────────────────────────────────────────────────────────────────────────────────────
-await test('editor: create and update write the three fields; the photo as a bare id, specialties as slugs', () => {
+await test('editor: create and update write the fields; the photo as a bare id, guarded by the value at form open', () => {
   needs(ops);
   const d = { name: 'Clara', active: true, profile: { bio: { es: ' Enseña ', en: ' Teaches ' }, specialties: ['fuego'], photo: `/media/${ID}` } };
-  const created = ops.createCoachOps(d);
-  assert.deepEqual(created[1].data, { person: { $ref: 0 }, kind: 'teacher', active: true, bio: { es: 'Enseña', en: 'Teaches' }, specialties: ['fuego'], photo: ID });
-  const updated = ops.updateCoachOps('c1', 'p1', d);
-  assert.deepEqual(updated[1], { op: 'update', entity: 'coach', id: 'c1', data: { active: true, bio: { es: 'Enseña', en: 'Teaches' }, specialties: ['fuego'], photo: ID } });
+  assert.deepEqual(ops.createCoachOps(d)[1].data, { person: { $ref: 0 }, kind: 'teacher', active: true, bio: { es: 'Enseña', en: 'Teaches' }, specialties: ['fuego'], photo: ID });
+  const updated = ops.updateCoachOps('c1', 'p1', { ...d, photoAtOpen: OLD })[1];
+  assert.deepEqual(updated.data, { active: true, bio: { es: 'Enseña', en: 'Teaches' }, specialties: ['fuego'], photo: ID });
+  assert.deepEqual(updated.ifMatch, { field: 'photo', value: OLD });
 });
-await test('editor: removing the photo stores nothing; without a profile the writes are what they were', () => {
+await test('editor: an unchanged photo is not sent and not guarded; a stored odd value counts as no photo', () => {
   needs(ops);
-  assert.equal(ops.updateCoachOps('c1', 'p1', { name: 'C', active: true, profile: { bio: { es: '', en: '' }, specialties: [], photo: null } })[1].data.photo, null);
+  const same = ops.updateCoachOps('c1', 'p1', { name: 'C', active: true, photoAtOpen: ID, profile: { bio: { es: '', en: '' }, specialties: [], photo: `/media/${ID}` } })[1];
+  assert.ok(!('photo' in same.data)); assert.equal(same.ifMatch, undefined);
+  const odd = ops.updateCoachOps('c1', 'p1', { name: 'C', active: true, photoAtOpen: 'javascript:alert(1)', profile: { bio: { es: '', en: '' }, specialties: [], photo: null } })[1];
+  assert.ok(!('photo' in odd.data)); assert.equal(odd.ifMatch, undefined);
+});
+await test('editor: removing the photo stores null, guarded; a teacher who never had one is guarded as absent (JSON leaves the value out); no profile, as before', () => {
+  needs(ops);
+  const removed = ops.updateCoachOps('c1', 'p1', { name: 'C', active: true, photoAtOpen: ID, profile: { bio: { es: '', en: '' }, specialties: [], photo: null } })[1];
+  assert.equal(removed.data.photo, null); assert.deepEqual(removed.ifMatch, { field: 'photo', value: ID });
+  const first = ops.updateCoachOps('c1', 'p1', { name: 'C', active: true, profile: { bio: { es: '', en: '' }, specialties: [], photo: `/media/${ID}` } })[1];
+  assert.equal(JSON.stringify(first.ifMatch), '{"field":"photo"}');
   assert.deepEqual(ops.updateCoachOps('c1', 'p1', { name: 'C', active: false })[1].data, { active: false });
   assert.deepEqual(ops.createCoachOps({ name: 'C', active: true })[1].data, { person: { $ref: 0 }, kind: 'teacher', active: true });
 });
@@ -248,15 +384,22 @@ await test('editor: reading a coach back for the form', () => {
 // ── The words ────────────────────────────────────────────────────────────────────────────────────────────────────
 await test('copy: every refusal an upload can get has Spanish and English', () => {
   needs(provider);
-  for (const code of ['file_type_not_allowed', 'file_too_large', 'forbidden', 'file_kind_unknown', 'file_upload_mismatch', 'file_upload_missing', 'file_upload_expired', 'file_not_ready', 'storage_not_configured', 'storage_unavailable']) {
+  for (const code of ['file_type_not_allowed', 'file_too_large', 'forbidden', 'file_kind_unknown', 'file_upload_mismatch', 'file_upload_missing', 'file_upload_expired', 'file_not_ready', 'storage_not_configured', 'storage_unavailable', 'image_not_current']) {
     assert.ok(provider.hasRefusalCopy(code), code);
     assert.ok(provider.refusalCopy(code, 'es') && provider.refusalCopy(code, 'en') && provider.refusalCopy(code, 'es') !== provider.refusalCopy(code, 'en'), code);
   }
 });
+await test('stale form: the guard\'s 409 has words on the screen, in both languages', async () => {
+  needs(transport); needs(desk);
+  const code = transport.normalizeCode('ifMatch mismatch', 409);
+  assert.equal(code, 'ifmatch_mismatch');
+  assert.ok(desk.DESK_CODES.includes(code));
+  assert.ok(desk.deskStrings[`desk.error.${code}`]?.es && desk.deskStrings[`desk.error.${code}`]?.en);
+});
 await test('copy: the new screen strings exist in both languages', () => {
   needs(ops);
   for (const key of ['live.f.bioEs', 'live.f.bioEn', 'live.f.specialties', 'live.f.photo', 'live.f.photoAfterSave']) assert.ok(ops.liveScheduleStrings[key]?.es && ops.liveScheduleStrings[key]?.en, key);
-  for (const key of ['media.picker.uploadShared', 'media.picker.sharedHint', 'media.picker.busyShared', 'media.picker.saveFirst']) assert.ok(ops.mediaStrings[key]?.es && ops.mediaStrings[key]?.en, key);
+  for (const key of ['media.picker.uploadShared', 'media.picker.sharedHint', 'media.picker.busyShared', 'media.picker.saveFirst', 'media.picker.ownerFailed', 'media.picker.oldRemains', 'media.picker.previewUnavailable']) assert.ok(ops.mediaStrings[key]?.es && ops.mediaStrings[key]?.en, key);
 });
 
 console.log(`\n${passed} passed, ${failures} failed`);

@@ -725,7 +725,6 @@ await test('media: other kinds, drafts and receipts are refused as the API refus
   for (const [status, answer, expected] of [
     [404, { error: 'not found' }, { status: 404, error: 'not_found' }],
     [403, { error: 'forbidden' }, { status: 404, error: 'not_found' }],
-    [401, { error: 'unauthorized' }, { status: 404, error: 'not_found' }],
     [404, { error: 'file_not_ready' }, { status: 404, error: 'file_not_ready' }],
   ]) {
     upstreamReply = (req, res) => { res.writeHead(status, { 'content-type': 'application/json' }); res.end(JSON.stringify(answer)); };
@@ -736,6 +735,39 @@ await test('media: other kinds, drafts and receipts are refused as the API refus
     assert.equal(r.headers['cache-control'], 'no-store', 'a refusal must not stick in the browser');
     assert.equal(storageSeen.length, 0);
   }
+});
+
+await test('media: the read identity refused, or the API busy, is no refusal of the file: 502 or 503, no-store, and the log says what came back', async () => {
+  for (const [status, expected] of [[401, 502], [429, 503], [400, 502]]) {
+    upstreamReply = (req, res) => { res.writeHead(status, { 'content-type': 'application/json' }); res.end(JSON.stringify({ error: 'unauthorized' })); };
+    publicLogs.length = 0;
+    const r = await media(`/media/${FILE_ID}`);
+    assert.equal(r.status, expected, String(status));
+    assert.equal(r.headers['cache-control'], 'no-store', String(status));
+    assert.ok(publicLogs.some((l) => l.event === 'media' && l.upstream === status), `logged ${status}`);
+  }
+  upstreamReply = (req, res) => { res.writeHead(404, { 'content-type': 'application/json' }); res.end('{"error":"not found"}'); };
+  publicLogs.length = 0;
+  await media(`/media/${FILE_ID}`);
+  assert.ok(publicLogs.some((l) => l.event === 'media' && l.upstream === 404), 'a refusal is logged too');
+});
+
+await test('media: one address may hold only so many reads at once; the slot comes back afterwards', async () => {
+  upstreamReply = linkTo('trickle');
+  const capped = createHoyServer(await createHandler({ ...publicConfig, mediaConcurrency: 1, fileTimeoutMs: 300 }, { verifySession: fakeVerify, log: () => {} }));
+  await listen(capped);
+  const one = { 'x-real-ip': '10.2.0.1' };
+  const held = request('GET', `/media/${FILE_ID}`, one, undefined, capped).catch(() => null);
+  await new Promise((r) => setTimeout(r, 80));
+  const second = await request('GET', `/media/${FILE_ID}`, one, undefined, capped);
+  assert.equal(second.status, 429);
+  assert.deepEqual(JSON.parse(second.body), { error: 'rate_limited' });
+  upstreamReply = linkTo('receipt.png');
+  assert.equal((await request('GET', `/media/${FILE_ID}`, { 'x-real-ip': '10.2.0.2' }, undefined, capped)).status, 200, 'another address is not affected');
+  await held;
+  await new Promise((r) => setTimeout(r, 50));
+  assert.equal((await request('GET', `/media/${FILE_ID}`, one, undefined, capped)).status, 200, 'the slot came back');
+  capped.close();
 });
 
 await test('media: the API being down or its answer odd is a 502, and an unlisted storage host is never fetched', async () => {
@@ -811,7 +843,7 @@ await test('proxy: /public-files is never forwarded, signed in or out, so the st
   upstreamReply = linkTo('receipt.png');
   seen.length = 0;
   const auth = { authorization: `Bearer ${GOOD}` };
-  for (const [method, path] of [['GET', `/public-files/${FILE_ID}/url`], ['GET', `/%70ublic-files/${FILE_ID}/url`], ['GET', `/public-files/${FILE_ID}/url?x=1`], ['POST', '/public-files/urls'], ['GET', '/public-files']]) {
+  for (const [method, path] of [['GET', `/public-files/${FILE_ID}/url`], ['GET', `/%70ublic-files/${FILE_ID}/url`], ['GET', `/PUBLIC-FILES/${FILE_ID}/url`], ['GET', `/Public-Files/${FILE_ID}/url`], ['GET', `/public-files/${FILE_ID}/url?x=1`], ['POST', '/public-files/urls'], ['GET', '/public-files']]) {
     const body = method === 'POST' ? JSON.stringify({ ids: [FILE_ID] }) : undefined;
     for (const headers of [auth, {}]) {
       const r = await request(method, `/api/cos/t/hoy-dev${path}`, { ...headers, ...(body ? json : {}) }, body, mediaServer);
@@ -831,7 +863,7 @@ const auth = { authorization: `Bearer ${GOOD}` };
 await test('proxy: the private download link route is never forwarded (the browser gets bytes from /files/<id>)', async () => {
   seen.length = 0;
   upstreamReply = linkTo('receipt.png');
-  for (const path of [`/api/cos/t/hoy-dev/files/${FILE_ID}/url`, `/api/cos/t/hoy-dev/files/${FILE_ID}/%75rl`, `/api/cos/t/hoy-dev/files/${FILE_ID}/url?x=1`]) {
+  for (const path of [`/api/cos/t/hoy-dev/files/${FILE_ID}/url`, `/api/cos/t/hoy-dev/files/${FILE_ID}/%75rl`, `/api/cos/t/hoy-dev/files/${FILE_ID}/url?x=1`, `/api/cos/t/hoy-dev/FILES/${FILE_ID}/url`, `/api/cos/t/hoy-dev/files/${FILE_ID}/URL`]) {
     const r = await request('GET', path, auth);
     assert.equal(r.status, 404, path);
     assert.ok(!r.body.includes(SIGNED));
