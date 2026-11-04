@@ -560,8 +560,11 @@ async function file(req, res, config, deps, rest) {
   });
 }
 
-/** How long a browser keeps a public image. A replaced image gets a new id, so this never hides a change. */
-const MEDIA_MAX_AGE_S = 3600;
+/**
+ * How long a browser may keep a public image. A replaced image gets a new id, and the old file is deleted, but a copy
+ * already kept stays until this runs out, so it is short: an old bank QR must not linger.
+ */
+const MEDIA_MAX_AGE_S = 300;
 /** Behind the test gate only the browser that passed it may keep an image, as with the site's own files. */
 export function mediaCacheControl(config) {
   return `${config.testGate?.on ? 'private' : 'public'}, max-age=${MEDIA_MAX_AGE_S}`;

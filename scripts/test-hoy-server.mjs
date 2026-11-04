@@ -713,7 +713,7 @@ await test('media: an allowed image is served inline with the read identity; not
   assert.match(r.headers['content-security-policy'], /sandbox/);
   assert.equal(r.headers['cross-origin-resource-policy'], 'same-origin');
   assert.equal(r.headers['x-content-type-options'], 'nosniff');
-  assert.match(r.headers['cache-control'], /^public, max-age=\d+$/);
+  assert.equal(r.headers['cache-control'], 'public, max-age=300', 'short: a replaced bank QR must not linger');
 });
 
 await test('media: the same image for a signed-out visitor (no session needed)', async () => {
