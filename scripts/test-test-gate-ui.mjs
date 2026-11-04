@@ -132,7 +132,11 @@ try {
   await page.goto(`${BASE}/#/app/history`);
   const form = page.locator('form[action="/test-gate"] input[name="passphrase"]');
   check('the app\'s own read meets the gate and the page lands on the passphrase form', await until(async () => (await form.count().catch(() => 0)) === 1, 30_000), page.url());
-  check('that read was answered test_gate', answers.some((a) => a.path.startsWith('/api/') && a.body.includes('test_gate')), JSON.stringify(answers.slice(0, 5)));
+  // The app reloads on this answer, which can discard the body before it can be read here: the status comes from the app's
+  // own call, the body from the same path asked directly without a cookie.
+  const gatedRead = answers.find((a) => a.path.startsWith('/api/') && a.status === 401);
+  const direct = gatedRead ? await fetch(`${BASE}${gatedRead.path}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' }).then(async (r) => ({ status: r.status, body: await r.text() })) : null;
+  check('that read was answered test_gate', !!direct && direct.status === 401 && direct.body.includes('test_gate'), JSON.stringify({ gatedRead, direct, answers: answers.slice(0, 5) }));
   const clerkState = () => page.evaluate(() => JSON.parse(sessionStorage.getItem('fake-clerk-state') ?? 'null')?.active?.userId ?? null);
   check('the Clerk session is still there behind the form', (await clerkState().catch(() => null)) === USER);
   await form.fill(PASS);
