@@ -17,7 +17,7 @@ const SHAPES = [
   ['a Company OS service token', /\bcos_svc_[0-9a-f-]{36}_[A-Za-z0-9_-]{20,}/],
 ];
 /** Variables whose values must never be in the browser (when present in this process's environment). */
-const SECRET_VARIABLES = ['CLERK_SECRET_KEY', 'RAILWAY_TOKEN', 'RESEND_API_KEY', 'RESEND_WEBHOOK_SECRET', 'COMPANY_OS_PLATFORM_KEY', 'PLATFORM_ADMIN_KEY', 'SUPABASE_SERVICE_ROLE_KEY', 'AUTH_JWT_SECRET', 'COMPANY_OS_READ_TOKEN'];
+const SECRET_VARIABLES = ['CLERK_SECRET_KEY', 'RAILWAY_TOKEN', 'RESEND_API_KEY', 'RESEND_WEBHOOK_SECRET', 'COMPANY_OS_PLATFORM_KEY', 'PLATFORM_ADMIN_KEY', 'SUPABASE_SERVICE_ROLE_KEY', 'AUTH_JWT_SECRET', 'COMPANY_OS_READ_TOKEN', 'TEST_GATE_PASSPHRASE', 'COOKIE_SIGNING_SECRET'];
 const TEXT = new Set(['.js', '.mjs', '.css', '.html', '.json', '.map', '.md', '.txt', '.svg', '.xml', '.webmanifest']);
 
 export async function findSecrets(distDir, env = process.env) {

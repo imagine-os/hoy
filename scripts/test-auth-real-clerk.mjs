@@ -14,6 +14,8 @@
 //     HOY_CLEANUP_ADMIN_EMAIL  a test-hoy Administration login (holds the tenant Super Admin role) in the same Clerk
 //                              development instance; the run opens a short Clerk session for it (Backend API
 //                              `POST /sessions`, development instances only) to remove the QA records, then revokes it
+//     TEST_GATE_PASSPHRASE     the site's passphrase gate (Company OS playbook rule D5); when set, the run passes the
+//                              gate first and its fetches and browser carry the cookie
 // - Accounts are Clerk test addresses (`qa-<run>+clerk_test@example.com`, code 424242): Clerk sends no email.
 // - Clerk's bot protection is passed with a Clerk testing token (Backend API), as Clerk documents for tests.
 // - Every Clerk user this run creates is deleted at the end, even when a check fails; users a crashed run left
@@ -29,13 +31,15 @@ import { readFile, stat } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { extname, join, resolve, sep } from 'node:path';
 import { launchBrowser, reporter } from './lib/launch-qa.mjs';
-import { QA_EMAIL, checkTestSite, cosOver, findSignup, realApiOptions, removeSignup, removeStaleSignups } from './lib/real-signup.mjs';
+import { QA_EMAIL, checkTestSite, cosOver, findSignup, passGate, realApiOptions, removeSignup, removeStaleSignups, withGateCookie } from './lib/real-signup.mjs';
 
 let MODE;
 try { MODE = realApiOptions(process.argv.slice(2), process.env); } catch (e) { console.error(`Real Clerk sign-in: ${e.message}`); process.exit(1); }
 const REAL = MODE.mode === 'real-api';
 const SECRET = process.env.CLERK_SECRET_KEY ?? '';
 const PK = process.env.CLERK_PUBLISHABLE_KEY ?? '';
+const GATE_PASSPHRASE = REAL && process.env.TEST_GATE_PASSPHRASE;
+let gateCookie = null; // real-api on a gated site: { name, value }, from passGate
 // The real-API mode is always asked for on purpose: without its keys it fails instead of passing as "skipped".
 if ((!SECRET || !PK) && REAL) { console.error('Real Clerk sign-up on the test site: needs CLERK_SECRET_KEY and CLERK_PUBLISHABLE_KEY (the test environment\'s)'); process.exit(1); }
 if (!SECRET || !PK) { console.log('Real Clerk sign-in: skipped (no Clerk key in this run)'); process.exit(0); }
@@ -84,7 +88,7 @@ async function adminCos() {
     adminSession = await clerkApi('POST', '/sessions', { user_id: found[0].id });
   }
   const token = async () => (await clerkApi('POST', `/sessions/${adminSession.id}/tokens`, {})).jwt;
-  return cosOver({ apiRoot: `${BASE}/api/cos/t/${encodeURIComponent(TENANT)}`, token });
+  return cosOver({ apiRoot: `${BASE}/api/cos/t/${encodeURIComponent(TENANT)}`, token, fetchImpl: withGateCookie(gateCookie) });
 }
 async function endAdminSession() {
   if (!adminSession) return;
@@ -174,8 +178,10 @@ try {
   const { token } = await clerkApi('POST', '/testing_tokens');
   if (process.env.GITHUB_ACTIONS) console.log(`::add-mask::${token}`);
   if (REAL) {
+    if (GATE_PASSPHRASE) gateCookie = await passGate({ baseUrl: BASE, passphrase: GATE_PASSPHRASE });
+    if (gateCookie && process.env.GITHUB_ACTIONS) console.log(`::add-mask::${gateCookie.value}`);
     // The site's public settings: a test environment on this Clerk instance, and its tenant.
-    const res = await fetch(`${BASE}/app-config.json`, { headers: { accept: 'application/json' } });
+    const res = await withGateCookie(gateCookie)(`${BASE}/app-config.json`, { headers: { accept: 'application/json' } });
     if (!res.ok) throw new Error(`${BASE}/app-config.json answered ${res.status}`);
     const site = checkTestSite(await res.json(), PK);
     TENANT = site.tenant;
@@ -186,6 +192,7 @@ try {
   } else await new Promise((r) => server.listen(PORT, '127.0.0.1', r));
   browser = await launchBrowser();
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, reducedMotion: 'reduce' });
+  if (gateCookie) await ctx.addCookies([{ ...gateCookie, url: BASE, httpOnly: true, secure: true, sameSite: 'Lax' }]);
   // Clerk's frontend API takes the testing token on every request, and its answers say bot protection is bypassed
   // (what @clerk/testing's setupClerkTestingToken does): otherwise sign-up runs Clerk's CAPTCHA, which fails headless.
   await ctx.route(`https://${FAPI}/v1/**`, async (r) => {

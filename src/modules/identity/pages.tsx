@@ -6,6 +6,8 @@ import { useSession } from '../../auth/SessionProvider';
 import { heldRoles } from '../../auth/sessionContext';
 import { ROLE_HOME, ROLE_LABEL } from '../../auth/roles';
 import { cosJson } from '../../auth/cosRequest';
+import { isTestGate } from '../../auth/testGateReload';
+import { refusalCopy } from '../../data/companyos/refusals';
 import { sendEmailCode, signInWithGoogle, verifyEmailCode, type ClerkLike, type CodeMode } from '../../auth/clerkFlows';
 import {
   asksEmergencyContact, classifySignup, clerkErrorKind, isEmail, parseSignupConfig, signupBody, signupFormErrors, signupHeld, signupNoticeKey,
@@ -62,14 +64,14 @@ export function CosAuthPage({ mode }: { mode: CodeMode }) {
 }
 
 function SessionProblem() {
-  const { t } = useI18n();
-  const { status, signedIn, signOut, refresh } = useSession();
+  const { t, lang } = useI18n();
+  const { status, signedIn, signOut, refresh, testGate } = useSession();
   const [busy, setBusy] = useState(false);
   const which = status === 'unverified' ? 'unverified' : status === 'no-role' ? 'noRole' : 'error';
   return (
-    <Shell title={t(`identity.state.${which}.title`)}>
-      <Card padding="lg" className="stack" data-session-problem={status}>
-        <Notice tone={which === 'error' ? 'warn' : 'info'}>{t(`identity.state.${which}.body`)}</Notice>
+    <Shell title={testGate ? t('identity.state.testGate.title') : t(`identity.state.${which}.title`)}>
+      <Card padding="lg" className="stack" data-session-problem={testGate ? 'test-gate' : status}>
+        <Notice tone={which === 'error' ? 'warn' : 'info'}>{testGate ? refusalCopy('test_gate', lang) : t(`identity.state.${which}.body`)}</Notice>
         {which === 'error' && <Button block onClick={refresh}>{t('identity.retry')}</Button>}
         {signedIn && <Button block variant="secondary" loading={busy} onClick={async () => { setBusy(true); try { await signOut(); } finally { setBusy(false); } }}>{t('identity.signout')}</Button>}
       </Card>
@@ -148,7 +150,7 @@ const EMPTY_FORM: SignupForm = { name: '', whatsapp: '+57 ', ecName: '', ecPhone
  * A studio login never fills this in: it is enrolled automatically (`src/auth/CustomerEnrolment.tsx`, owner 2026-11-01).
  */
 export function RegisterForm({ initialName = '', cta }: { initialName?: string; cta?: string } = {}) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { refresh } = useSession();
   const { user } = useUser();
   const [config, setConfig] = useState<SignupConfig | null>(null);
@@ -190,6 +192,8 @@ export function RegisterForm({ initialName = '', cta }: { initialName?: string; 
       const { status, body } = await cosJson('/signup', { method: 'POST', body: signupBody(form, config) });
       const result = classifySignup(status, body);
       if (!alive.current) return;
+      // The test site's gate, not the session: the form stays, with what was typed.
+      if (isTestGate(status, body)) { setNotice({ tone: 'warn', text: refusalCopy('test_gate', lang) }); return; }
       if (result.kind === 'done') { refresh(); return; }
       if (result.kind === 'consent-changed') { set('accepted', false); setNotice({ tone: 'warn', text: t('identity.register.changed') }); await load(); return; }
       if (result.kind === 'disabled') { setConfig({ ...config, enabled: false }); return; }

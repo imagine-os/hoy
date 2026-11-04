@@ -26,6 +26,8 @@
 #              COMPANY_OS_TENANT      Hoy's production tenant slug in Company OS
 #              RAILWAY_PROJECT_NAME   Hoy's Railway project name (a label; the token picks the project)
 #              RAILWAY_REGION         optional: the api's region, e.g. us-east4-eqdc4a
+#   never      TEST_GATE_PASSPHRASE   production has no passphrase gate (Company OS playbook rule D5):
+#                                     the deploy refuses the secret if it is set
 name: Deploy web (prod)
 run-name: Deploy web (prod) ${{ github.ref_name }}
 
@@ -139,6 +141,8 @@ jobs:
         run: node scripts/check-company-os.mjs
       - name: Hoy server tests
         run: node scripts/test-hoy-server.mjs
+      - name: Test gate (the passphrase in front of the test site; rule D5)
+        run: node scripts/test-test-gate.mjs
       - name: Docs gate (the Hub's docs for a signed-in super admin only; lane Y6)
         run: node scripts/test-docs-gate.mjs
       - name: Deploy wiring (IaC declares every server variable; summaries show the go-live switches)
@@ -200,7 +204,9 @@ jobs:
           APP_URL: ${{ vars.APP_URL }}
           COMPANY_OS_TENANT: ${{ vars.COMPANY_OS_TENANT }}
           HOY_RAILWAY_PROJECT: ${{ vars.RAILWAY_PROJECT_NAME }}
+          TEST_GATE_PASSPHRASE: ${{ secrets.TEST_GATE_PASSPHRASE }}
         run: |
+          if [ -n "$TEST_GATE_PASSPHRASE" ]; then echo "::error::A TEST_GATE_PASSPHRASE secret reaches production, from this environment or the repository: production never runs the test gate. Delete it."; exit 1; fi
           case "$CLERK_SECRET_KEY" in sk_live_?*) ;; *) echo "::error::production requires a Clerk LIVE secret key (sk_live_…) in the production environment's secrets"; exit 1 ;; esac
           case "$CLERK_PUBLISHABLE_KEY" in pk_live_?*) ;; *) echo "::error::production requires a Clerk LIVE publishable key (pk_live_…) in the production environment's variables"; exit 1 ;; esac
           if ! printf '%s' "$APP_URL" | grep -Eq '^https://[a-zA-Z0-9.-]+$'; then echo "::error::Set the production variable APP_URL to https://<Hoy's domain> (no path)"; exit 1; fi
@@ -213,7 +219,7 @@ jobs:
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
-          { railway variable list --service "$SERVICE" --environment "$RAILWAY_ENV" --json 2>/dev/null || echo 'unreadable'; } | node scripts/deploy-switches.mjs --leftovers
+          { railway variable list --service "$SERVICE" --environment "$RAILWAY_ENV" --json 2>/dev/null || echo 'unreadable'; } | node scripts/deploy-switches.mjs --leftovers --production
 
       - name: Infra plan
         env:
@@ -277,7 +283,7 @@ jobs:
         run: |
           echo "### Site: ${APP_URL} (custom domain on the web service in Railway), release $TAG" >> "$GITHUB_STEP_SUMMARY"
           # The go-live switches (lane Y2): SITE_LIVE and whether the read token is present, never a value.
-          { railway variable list --service "$SERVICE" --environment "$RAILWAY_ENV" --json 2>/dev/null || echo 'unreadable'; } | node scripts/deploy-switches.mjs | tee -a "$GITHUB_STEP_SUMMARY"
+          { railway variable list --service "$SERVICE" --environment "$RAILWAY_ENV" --json 2>/dev/null || echo 'unreadable'; } | node scripts/deploy-switches.mjs --production | tee -a "$GITHUB_STEP_SUMMARY"
 
   # The GitHub Release is the record of what is live: created on the tag's first deploy (notes from
   # the merged PRs), a dated line appended on every later one.

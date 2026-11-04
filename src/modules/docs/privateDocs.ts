@@ -4,6 +4,7 @@
 // (server/docsGate.mjs). This module fetches it with the session token (src/auth/sessionToken.ts, the only token path)
 // and keeps it in memory for the tab. The review build never calls it: its docs are bundled as before.
 import { getSessionToken, onUnauthorized } from '../../auth/sessionToken';
+import { reloadIfTestGate } from '../../auth/testGateReload';
 import type { DocMeta } from './docsIndex';
 
 export const PRIVATE_DOCS_BASE = '/private-docs';
@@ -18,7 +19,7 @@ export interface PrivateDocsPack {
   sources: { id: string; title: { es: string; en: string }; file: string; cover?: string; pages: number; date: string; kind: string; summary: { es: string; en: string }; chapters: string[] }[];
 }
 
-export type PrivateDocsState = 'ok' | 'signed-out' | 'refused' | 'failed';
+export type PrivateDocsState = 'ok' | 'signed-out' | 'refused' | 'failed' | 'test-gate';
 
 let pack: PrivateDocsPack | null = null;
 let pending: Promise<PrivateDocsState> | null = null;
@@ -31,13 +32,18 @@ export const privateDocs = (): PrivateDocsPack | null => pack;
 async function authorised(path: string): Promise<Response | PrivateDocsState> {
   const ask = async (refresh: boolean) => {
     const token = await getSessionToken(refresh ? { refresh: true } : undefined);
-    return token ? fetch(`${PRIVATE_DOCS_BASE}${path}`, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store', credentials: 'omit' }) : null;
+    return token ? fetch(`${PRIVATE_DOCS_BASE}${path}`, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store', credentials: 'same-origin' }) : null;
   };
   // A token that expired on the way (or clock skew) gets one fresh try; a second 401 re-checks the session (as every 401).
   let res = await ask(false);
   if (res?.status === 401) res = await ask(true);
   if (!res) return 'signed-out';
-  if (res.status === 401) { onUnauthorized(); return 'signed-out'; }
+  if (res.status === 401) {
+    // The test gate's own 401 says nothing about the session.
+    if (reloadIfTestGate(res.status, await res.clone().json().catch(() => null))) return 'test-gate';
+    onUnauthorized();
+    return 'signed-out';
+  }
   if (res.status === 403) return 'refused';
   if (!res.ok) return 'failed';
   return res;

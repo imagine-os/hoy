@@ -42,7 +42,9 @@
     "seed:companyos": "node scripts/seed-companyos.ts ../Company-OS/deploy/seeds",
     "test:seed-companyos": "node scripts/test-seed-companyos.mjs",
     "test:jas-1nov-admin": "node scripts/test-jas-1nov-admin.mjs",
-    "test:jas-1nov-admin:ui": "node scripts/test-jas-1nov-admin-ui.mjs"
+    "test:jas-1nov-admin:ui": "node scripts/test-jas-1nov-admin-ui.mjs",
+    "test:test-gate": "node scripts/test-test-gate.mjs",
+    "test:test-gate:ui": "node scripts/test-test-gate-ui.mjs"
   },
   "dependencies": {
     "@clerk/react": "6.17.8",

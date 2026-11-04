@@ -5,6 +5,7 @@
 // Run: railway variable list --service web --environment test --json | node scripts/deploy-switches.mjs
 // `--leftovers` (review round 2, r2hoy L7; the deploys run it before Apply infra) prints only the warnings about
 // variables left in Railway under a wrong or retired name, as GitHub `::warning::` annotations, and nothing otherwise.
+// `--production` (the production deploy) adds the variables production must not have: TEST_GATE_PASSPHRASE.
 import { readFileSync } from 'node:fs';
 
 let input = '';
@@ -34,6 +35,8 @@ function leftovers(v) {
   if (v.has('SET_LIVE')) out.push('a SET_LIVE variable is set, but the server reads SITE_LIVE: rename it in Railway, then deploy.');
   // Retired 2026-11-01 (owner): nothing reads it, and the IaC no longer declares it, so "Apply infra" fails on it.
   if (v.has('PUBLIC_DOCUMENTS')) out.push('PUBLIC_DOCUMENTS is set, but it is retired and nothing reads it: delete it in Railway (else "Apply infra" fails on an undeclared variable), then deploy.');
+  // Company OS playbook rule D5: the server ignores it on production, and the IaC declares it on test only.
+  if (process.argv.includes('--production') && v.has('TEST_GATE_PASSPHRASE')) out.push('TEST_GATE_PASSPHRASE is set on production, which never runs the test gate: delete it in Railway (else "Apply infra" fails on an undeclared variable), then deploy.');
   return out;
 }
 

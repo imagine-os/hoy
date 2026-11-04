@@ -46,6 +46,29 @@ export function checkTestSite(config, publishableKey) {
 }
 
 /**
+ * Past the test site's passphrase gate (server/testGate.mjs, Company OS playbook rule D5): posts the passphrase and
+ * answers the cookie as `{ name, value }`. Anything but a 303 with a cookie throws; the message never has the passphrase.
+ */
+export async function passGate({ baseUrl, passphrase, fetchImpl = fetch }) {
+  const res = await fetchImpl(`${baseUrl}/test-gate`, {
+    method: 'POST',
+    redirect: 'manual',
+    headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ passphrase, next: '/' }).toString(),
+  });
+  if (res.status !== 303) throw new Error(`the test gate answered ${res.status} to TEST_GATE_PASSPHRASE, expected 303`);
+  const pair = /^([^=;\s]+)=([^;\s]+)/.exec(res.headers.getSetCookie()[0] ?? '');
+  if (!pair) throw new Error('the test gate set no cookie');
+  return { name: pair[1], value: pair[2] };
+}
+
+/** `fetchImpl` with the gate's cookie on every call; without a cookie, `fetchImpl` itself. */
+export function withGateCookie(cookie, fetchImpl = fetch) {
+  if (!cookie) return fetchImpl;
+  return (url, init = {}) => fetchImpl(url, { ...init, headers: { ...init.headers, cookie: `${cookie.name}=${cookie.value}` } });
+}
+
+/**
  * A Company OS client over `apiRoot` (`<site>/api/cos/t/<tenant>` through the Hoy server, or `<api>/t/<tenant>`
  * directly). `token()` gives a bearer per call. Answers `{ status, body }`; a non-2xx throws `{ code, status }`.
  */

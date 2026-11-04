@@ -27,6 +27,8 @@ export const strings: StringTable = {
   'docs.private.refused.body': { es: 'La documentación, el manual y el kanban solo se abren con la cuenta de super admin.', en: 'The documentation, the manual and the kanban open only with the super admin account.' },
   'docs.private.signed-out.title': { es: 'Inicia sesión', en: 'Sign in' },
   'docs.private.signed-out.body': { es: 'Tu sesión terminó. Inicia sesión de nuevo con la cuenta de super admin.', en: 'Your session ended. Sign in again with the super admin account.' },
+  'docs.private.test-gate.title': { es: 'Acceso al sitio de pruebas', en: 'Test site access' },
+  'docs.private.test-gate.body': { es: 'El acceso al sitio de pruebas terminó. Recarga la página y escribe la frase de acceso.', en: 'Your access to the test site has ended. Reload the page and enter the passphrase.' },
   'docs.private.failed.title': { es: 'No se pudo cargar la documentación', en: 'The documentation could not be loaded' },
   'docs.private.failed.body': { es: 'Revisa la conexión e inténtalo de nuevo.', en: 'Check the connection and try again.' },
   'docs.private.retry': { es: 'Reintentar', en: 'Try again' },

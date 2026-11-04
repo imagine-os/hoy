@@ -92,6 +92,7 @@ export const CONTRACT_REFUSALS = {
 /** The connector's own codes: transport, session and launch scope. */
 export const CONNECTOR_REFUSALS = {
   unauthorized: { es: 'Tu sesión terminó. Inicia sesión de nuevo.', en: 'Your session has ended. Sign in again.' },
+  test_gate: { es: 'El acceso al sitio de pruebas terminó. Recarga la página y escribe la frase de acceso.', en: 'Your access to the test site has ended. Reload the page and enter the passphrase.' },
   account_not_invited: { es: 'Esta cuenta aún no tiene acceso. Escríbenos para activarla.', en: 'This account does not have access yet. Write to us to activate it.' },
   email_not_verified: { es: 'Confirma tu correo para continuar.', en: 'Confirm your email to continue.' },
   network_error: { es: 'Sin conexión. Revisa tu internet e inténtalo de nuevo con el mismo botón.', en: 'No connection. Check your internet and try again with the same button.' },

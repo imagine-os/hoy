@@ -18,6 +18,8 @@ export type SessionUser = DemoUser;
 
 export interface SessionCtx {
   status: SessionStatus;
+  /** Production, with `status: 'error'`: `/me` met the test site's passphrase gate (server/testGate.mjs) and the page could not reload: not a session problem. */
+  testGate?: boolean;
   /** A real session exists (Clerk in production; any non-visitor persona in the review build). */
   signedIn: boolean;
   /** The real signed-in user. */

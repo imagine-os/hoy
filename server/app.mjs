@@ -1,4 +1,5 @@
-// The Hoy server's request handler. These jobs, nothing else:
+// The Hoy server's request handler. On the test site every request meets the passphrase gate first (testGate.mjs, off on
+// production and locally). Then these jobs, nothing else:
 //   /health              liveness for Railway (and the release it is running);
 //   /app-config.json     the browser's public settings (tenant, API base, Clerk publishable key, the go-live switch);
 //   /api/cos/*           a signed-in user's call, checked against Clerk, forwarded to Company OS on the
@@ -18,6 +19,7 @@ import https from 'node:https';
 import { extname, resolve, sep } from 'node:path';
 import { createGzip } from 'node:zlib';
 import { createDocsGate, DOCS_PREFIX } from './docsGate.mjs';
+import { createTestGate } from './testGate.mjs';
 
 /**
  * Company OS routes a visitor without a session may reach (method + path after `/t/<tenant>`), e.g.
@@ -71,8 +73,8 @@ const COMPRESSIBLE = new Set(['.html', '.js', '.mjs', '.css', '.json', '.map', '
 
 /**
  * @param {import('./config.mjs').ServerConfig} config
- * @param {{ verifySession: (token: string) => Promise<{ userId: string }> , log?: (entry: object) => void }} deps
- *   verifySession resolves for a valid Clerk session token and rejects otherwise.
+ * @param {{ verifySession: (token: string) => Promise<{ userId: string }> , log?: (entry: object) => void, now?: () => number }} deps
+ *   verifySession resolves for a valid Clerk session token and rejects otherwise. now: the test gate's clock.
  */
 export async function createHandler(config, deps) {
   deps = { takePublicRead: publicReadLimiter(config.publicReadRate ?? { perSecond: 20, burst: 120 }), ...deps };
@@ -81,6 +83,8 @@ export async function createHandler(config, deps) {
   const log = deps.log ?? ((entry) => console.log(JSON.stringify(entry)));
   // Lane Y6: the Hub's docs, manual, kanban and source documents, for a signed-in super admin only (docsGate.mjs).
   const docsGate = await createDocsGate(config, { verifySession: deps.verifySession, fetchMe: deps.fetchMe, log });
+  // The test site's passphrase gate (playbook rule D5).
+  const testGate = createTestGate(config.testGate, { now: deps.now, readBody, closeIfUnread });
   const appConfig = JSON.stringify({
     tenant: config.tenant,
     apiBase: '/api/cos',
@@ -94,6 +98,7 @@ export async function createHandler(config, deps) {
     const [rawPath, rawQuery] = splitUrl(req.url ?? '/');
     securityHeaders(req, res);
     try {
+      if (await testGate(req, res, rawPath)) return;
       if (rawPath === '/health') return health(req, res, release);
       if (rawPath === '/app-config.json') {
         if (req.method !== 'GET' && req.method !== 'HEAD') return sendError(res, 405, 'method_not_allowed');
@@ -113,7 +118,7 @@ export async function createHandler(config, deps) {
       }
       if (rawPath === DOCS_PREFIX || rawPath.startsWith(`${DOCS_PREFIX}/`)) return await docsGate(req, res, rawPath.slice(DOCS_PREFIX.length));
       if (rawPath.startsWith('/api/') || rawPath.startsWith('/webhooks/')) return sendError(res, 404, 'not_found');
-      return await serveStatic(req, res, distDir, rawPath, rawQuery);
+      return await serveStatic(req, res, distDir, rawPath, rawQuery, config.testGate?.on ? 'private' : 'public');
     } catch (err) {
       log({ event: 'server.error', message: err instanceof Error ? err.message : String(err) });
       if (!res.headersSent) sendError(res, 500, 'server_error');
@@ -707,7 +712,7 @@ function readBody(req, limit, ms) {
 // Static files from dist/
 // ---------------------------------------------------------------------------------------------
 
-async function serveStatic(req, res, distDir, rawPath, rawQuery) {
+async function serveStatic(req, res, distDir, rawPath, rawQuery, cacheScope) {
   if (req.method !== 'GET' && req.method !== 'HEAD') {
     res.setHeader('Allow', 'GET, HEAD');
     return sendError(res, 405, 'method_not_allowed');
@@ -743,8 +748,9 @@ async function serveStatic(req, res, distDir, rawPath, rawQuery) {
     ETag: etag,
     'Last-Modified': info.mtime.toUTCString(),
     'Accept-Ranges': 'bytes',
-    // Vite's hashed bundles never change under the same name; everything else is revalidated.
-    'Cache-Control': path.startsWith('/assets/') ? 'public, max-age=31536000, immutable' : ext === '.html' ? 'no-cache' : 'public, max-age=300',
+    // Vite's hashed bundles never change under the same name; everything else is revalidated. Behind the test gate
+    // `private`: no shared cache may hand it to someone who hasn't passed the gate.
+    'Cache-Control': path.startsWith('/assets/') ? `${cacheScope}, max-age=31536000, immutable` : ext === '.html' ? 'no-cache' : `${cacheScope}, max-age=300`,
   };
   if (COMPRESSIBLE.has(ext)) headers.Vary = 'Accept-Encoding';
   // A baseline policy for the pages: no plugins, no <base> hijack, framed only by this origin. Script and connect

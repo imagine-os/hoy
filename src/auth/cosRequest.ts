@@ -1,5 +1,6 @@
 import { cosPath, loadAppConfig } from './appConfig';
 import { getSessionToken, onUnauthorized } from './sessionToken';
+import { reloadIfTestGate } from './testGateReload';
 import { VIEW_AS_REFUSAL, viewAsActive, viewAsAllows } from './viewAs';
 
 /**
@@ -17,9 +18,11 @@ export async function cosJson(path: `/${string}`, init: { method?: 'GET' | 'POST
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json', ...(init.body === undefined ? {} : { 'Content-Type': 'application/json' }) },
     body: init.body === undefined ? undefined : JSON.stringify(init.body),
     cache: 'no-store',
-    credentials: 'omit',
+    credentials: 'same-origin', // carries the test site's gate cookie (server/testGate.mjs); the proxy forwards no cookie
   });
   const body: unknown = await res.json().catch(() => null);
-  if (res.status === 401) onUnauthorized();
+  // The test gate's own 401 says nothing about the session. A read reloads onto the passphrase page; a write keeps the form.
+  const read = (init.method ?? 'GET') === 'GET' || path === '/query';
+  if (res.status === 401 && !reloadIfTestGate(res.status, body, { read })) onUnauthorized();
   return { status: res.status, body };
 }

@@ -8,10 +8,13 @@
  * - Retries: a lost response (network error, 502/504, or a 503 that is the Hoy server's own `upstream_unavailable` /
  *   `upstream_timeout`) is retried with the same body and the same `Idempotency-Key`, so the server answers the first
  *   attempt instead of writing twice (ADR 0040). A write without a key is never retried: it fails at once, `ambiguous`.
+ * - Cookies: `same-origin`, because the test site's passphrase gate (server/testGate.mjs) reads its cookie on these calls.
+ *   Identity is the bearer only: the Hoy server reads no other cookie and forwards none to the API.
  * - View-as (Hoy all-roles, lane D): while a super admin views the studio as another role, only reads leave the browser
  *   (`GET`, `POST /query`); anything else fails at once with `view_as_read_only` (`src/auth/viewAs.ts`), never sent.
  */
 
+import { reloadIfTestGate } from '../../auth/testGateReload';
 import { VIEW_AS_REFUSAL, viewAsActive, viewAsAllows } from '../../auth/viewAs';
 
 export interface CompanyOSConfig { tenant: string; apiBase: string; /** The rest of /app-config.json (e.g. `launch`). */ extra?: Record<string, unknown> }
@@ -184,11 +187,15 @@ export class Transport {
       const headers: Record<string, string> = {};
       if (token) headers.authorization = `Bearer ${token}`;
       let res: Response;
-      try { res = await this.fetchImpl(path, { method: 'GET', headers, credentials: 'omit' }); }
+      try { res = await this.fetchImpl(path, { method: 'GET', headers, credentials: 'same-origin' }); }
       catch { throw new CompanyOSError('network_error'); }
       if (res.status === 401 && !refreshed) { refreshed = true; continue; }
-      // Only a token that was refused means the session ended (no token: Clerk not loaded yet, or signed out).
-      if (res.status === 401 && token) unauthorizedHandler?.();
+      // Only a token that was refused means the session ended (no token: Clerk not loaded yet, or signed out). The test
+      // gate's own 401 says nothing about the session.
+      if (res.status === 401) {
+        const answer: unknown = await res.clone().json().catch(() => null);
+        if (!reloadIfTestGate(res.status, answer) && token) unauthorizedHandler?.();
+      }
       return res;
     }
   }
@@ -215,7 +222,7 @@ export class Transport {
       const mayRetry = attempt < retries && (read || Boolean(options.idempotencyKey));
       let res: Response;
       try {
-        res = await this.fetchImpl(url, { method, headers, body, credentials: 'omit' });
+        res = await this.fetchImpl(url, { method, headers, body, credentials: 'same-origin' });
       } catch {
         if (mayRetry) { await sleep((this.opts.retryDelayMs ?? 400) * 2 ** attempt); continue; }
         throw new CompanyOSError('network_error', { ambiguous: !read });
@@ -235,7 +242,9 @@ export class Transport {
         if (mayRetry) { await sleep((this.opts.retryDelayMs ?? 400) * 2 ** attempt); continue; }
         throw new CompanyOSError('service_unavailable', { status: res.status, requestId, ambiguous: !read });
       }
-      if (res.status === 401 && token) unauthorizedHandler?.();
+      // The test gate's own 401 says nothing about the session. A read reloads onto the passphrase page; a write keeps the
+      // form, and the error below carries the copy.
+      if (!reloadIfTestGate(res.status, parsed, { read }) && res.status === 401 && token) unauthorizedHandler?.();
       if (!res.ok) {
         const e = (parsed ?? {}) as { error?: unknown; message?: unknown; opIndex?: unknown; details?: unknown };
         throw new CompanyOSError(normalizeCode(e.error, res.status), {
