@@ -3,6 +3,9 @@ import type { Role } from './roles';
 export type Permission =
   | 'bookings.read' | 'bookings.write' | 'bookings.write_any'
   | 'classes.read' | 'classes.write'
+  // Owner 2026-11-04: editing a teacher's record, profile and photo. Screen only: the recipe gives only `administrator` `coach`
+  // update, so the Coordinator, who holds `classes.write`, would be refused on Save.
+  | 'teachers.write'
   | 'checkin.write'
   | 'payments.read' | 'payments.write' | 'payments.refund'
   | 'members.read' | 'members.write'
@@ -20,7 +23,7 @@ export type Permission =
   | 'dev.tools' | 'docs.read' | 'audit.read';
 
 const ALL: Permission[] = [
-  'bookings.read', 'bookings.write', 'bookings.write_any', 'classes.read', 'classes.write', 'checkin.write',
+  'bookings.read', 'bookings.write', 'bookings.write_any', 'classes.read', 'classes.write', 'teachers.write', 'checkin.write',
   'payments.read', 'payments.write', 'members.read', 'members.write', 'content.write', 'comms.write',
   'manual.edit', 'manual.train', 'tables.read', 'tables.write', 'settings.write', 'features.write', 'hours.write', 'api_keys.read', 'api_keys.write', 'payroll.read', 'payroll.write',
   'expenses.read', 'expenses.write', 'expenses.create', 'revenue.read', 'maintenance.write', 'dev.tools', 'docs.read', 'audit.read',
