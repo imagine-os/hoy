@@ -214,12 +214,12 @@ try {
   });
 
   await row('AD-01 classes, schedule, teachers and rooms: :00 starts, 50-minute classes, room capacity with numbered mats, publish/unpublish, a teacher is a person + coach', () => {
-    const d = { title: 'Alineación', weekday: 1, start_time: '07:00', resource: 'room16', coach: 'c1', capacity: 16, valid_from: '2026-11-01', valid_until: '', active: true };
+    const d = { title: 'Alineación', weekday: 1, start_time: '07:00', resource: 'room16', coach: 'c1', capacity: 16, valid_from: '2026-11-01', valid_until: '', active: true, modality: 'alineacion' };
     assert.deepEqual(m.scheduleProblems(d, 16), []);
     assert.deepEqual(m.scheduleProblems({ ...d, start_time: '07:30' }, 16), ['on_the_hour']);
     assert.deepEqual(m.scheduleProblems({ ...d, capacity: 9 }, 8), ['capacity'], 'the 8-mat room takes at most 8');
     assert.deepEqual(m.scheduleProblems({ ...d, title: ' ', coach: '', resource: '' }, undefined), ['title', 'resource', 'coach']);
-    assert.deepEqual(m.createScheduleOps(d)[0].data, { title: 'Alineación', kind: 'class', weekday: 1, start_time: '07:00', duration_minutes: 50, resource: 'room16', coach: 'c1', capacity: 16, spots_enabled: true, valid_from: '2026-11-01', valid_until: null, active: true });
+    assert.deepEqual(m.createScheduleOps(d)[0].data, { title: 'Alineación', kind: 'class', weekday: 1, start_time: '07:00', duration_minutes: 50, resource: 'room16', coach: 'c1', capacity: 16, spots_enabled: true, valid_from: '2026-11-01', valid_until: null, active: true, modality: 'alineacion' });
     assert.deepEqual(m.publishScheduleOps('s1', false), [{ op: 'update', entity: 'schedule', id: 's1', data: { active: false } }]);
     assert.deepEqual(m.generateOps('2026-11-30'), [{ op: 'create', entity: 'generation_request', data: { until: '2026-11-30' } }]);
     assert.deepEqual(m.createResourceOps({ name: ' Salón 2 ', capacity: 8 })[0].data, { name: 'Salón 2', kind: 'room', capacity: 8 });

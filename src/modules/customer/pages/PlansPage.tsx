@@ -29,7 +29,9 @@ import { SERVER_RULES } from '../booking/bookingPolicy';
 import { safeCheckoutReturn } from '../booking/serverBooking';
 import { GIFT_PURCHASE_PATH } from '../../../config/launchRoutes';
 import { useLivePricing } from '../../../data/livePricing';
-import { audienceVisible } from '../offers';
+import { audienceVisible, trialOffered } from '../offers';
+import { genericPlanTarget, plansForCustomer } from '../genericPlans';
+import { GenericPlanCard } from '../../../components/molecule/GenericPlanCard/GenericPlanCard';
 import { useAffiliate } from '../useAffiliate';
 import { ConsentHoldNotice, useConsentHeld } from '../../identity/ConsentHold';
 
@@ -68,6 +70,9 @@ export function PlansPage() {
     : PACKAGE_IDS.flatMap(id=>{const q=catalog.quote(id);return q?[quotedItem(q)]:[];});
   // W-xx → A-02 → here with ?plan=<id>: a package opens its confirmation; a single or trial class goes to the schedule with the pass ready.
   const wanted = params.get('plan');
+  // WEB-02b: the master's other public products. Production only (`prices.generic` is empty in the review build).
+  const generic = plansForCustomer(prices.generic, { trialOffered: trialOffered(ent) });
+  const wantedGeneric = prices.generic.find((p) => p.key === wanted);
   // RS-03 (production): checkout sends a trial or package purchase here with `next` = the chosen class; the trial opens its
   // confirmation here (the production checkout books only from the balance or a held single class), and "done" goes back.
   const next = SERVER_RULES ? safeCheckoutReturn(params.get('next')) : null;
@@ -136,6 +141,8 @@ export function PlansPage() {
 
   // Production: ?plan=<pack or trial> (checkout's "buy and come back", A-02) goes straight to its transfer payment.
   if (SERVER_RULES && wanted && !consentHeld && ([...PACKAGE_IDS, 'trial'] as string[]).includes(wanted)) return <Navigate to={payPath(wanted, next)} replace />;
+  // …and the same for a generic plan, once its row has loaded: a gift goes to the gift page.
+  if (SERVER_RULES && wantedGeneric && !consentHeld) return <Navigate to={genericPlanTarget(wantedGeneric, next)} replace />;
   return (
     <div className="container page cust-page">
       <PageHead title={t('customer.plans.title')} sub={t('quotes.packageIntro')} />
@@ -165,6 +172,7 @@ export function PlansPage() {
             </Card>
           ))}
         </div>
+        {generic.length > 0 && <div className="cust-plans">{generic.map((p) => <GenericPlanCard key={p.key} plan={p} disabled={consentHeld} onSelect={() => { if (!consentHeld) nav(genericPlanTarget(p)); }} />)}</div>}
         <p className="xs muted" style={{ textAlign: 'center' }}>{t('customer.plans.note', { mats: tenant.studio.mats })}</p>
         <div className="cust-plans-links">
           <Card tone="muted" className="row-between wrap">

@@ -125,7 +125,7 @@ export const LAUNCH_EMAILS: LaunchEmail[] = [
     name: { es: 'Clase cancelada por el estudio', en: 'Class cancelled by the studio' },
     trigger: { es: 'El estudio cancela una clase con reservas', en: 'The studio cancels a class that has bookings' },
     subject: 'Cancelamos la clase del {{record.start|date}}',
-    body: 'Hola {{person.name}}:\n\nTuvimos que cancelar la clase del {{record.start|datetime}}. Lo sentimos.\n\nSi la reservaste con una clase de tu paquete, la clase vuelve a tu paquete. Si la pagaste aparte, te escribimos para reprogramarla.\n\nVer horario: {{links.base}}/#/app/schedule',
+    body: 'Hola {{person.name}}:\n\nTuvimos que cancelar la clase del {{record.start|datetime}}. Lo sentimos.\n\nSi la reservaste con una clase de tu paquete, la clase vuelve a tu paquete. Si la pagaste aparte y ya aprobamos tu pago, la clase vuelve a tu saldo para que reserves otra; si tu comprobante estaba en revisión, vuelve cuando recepción lo apruebe.\n\nVer horario: {{links.base}}/#/app/schedule',
     automations: [auto({ name: 'class_cancelled', event: 'booking.cancelled_by_studio', record_entity: 'booking', recipient: 'event.person', category: 'bookings',
       _note: 'bookings 1.5.0: booking.cancelled_by_studio { id, occurrence, person } for each active booking a studio cancel cancels.' })],
   }),

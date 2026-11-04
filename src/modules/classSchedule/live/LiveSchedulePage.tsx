@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useSession } from '../../../auth/SessionProvider';
+import { useTable } from '../../../data/DataContext';
+import type { ModalityRow } from '../../../data/schema';
 import { addDays, dateKey, formatDateTime, studioDate } from '../../../i18n/format';
 import { Card } from '../../../components/molecule/Card/Card';
 import { Button } from '../../../components/atom/Button/Button';
@@ -15,7 +17,7 @@ import { batch, errorCode, newActionKey, type BatchOp } from '../../staff/desk/w
 import { deskErrorText } from '../../staff/desk/strings';
 import {
   WEEKDAYS, cancelOccurrenceOps, createCoachOps, createResourceOps, createScheduleOps, generateOps, publishScheduleOps,
-  scheduleProblems, updateCoachOps, updateResourceOps, updateScheduleOps, type ScheduleDraft,
+  schedulePublishBlocked, scheduleProblems, scheduleTypeHint, updateCoachOps, updateResourceOps, updateScheduleOps, type ScheduleDraft,
 } from './scheduleOps';
 
 type Tab = 'classes' | 'dates' | 'teachers' | 'rooms';
@@ -79,14 +81,17 @@ export function LiveSchedulePage() {
 type Run = (ops: BatchOp[], key: string, ok: string) => Promise<string[] | null>;
 
 function Classes({ rows, rooms, coaches, roomName, coachName, weekday, canWrite, busy, run }: { rows: CosRow[]; rooms: CosRow[]; coaches: CosRow[]; roomName: (id: unknown) => string; coachName: (id: unknown) => string; weekday: (d: number) => string; canWrite: boolean; busy: boolean; run: Run }) {
-  const { t } = useI18n();
-  const blank = (): ScheduleDraft => ({ title: '', weekday: 1, start_time: '07:00', resource: rooms[0]?.id ?? '', coach: '', capacity: num(rooms[0]?.capacity) || 1, valid_from: dateKey(new Date()), valid_until: '', active: false });
+  const { t, bi } = useI18n();
+  // The class types live in the frontend; a timetable row stores the slug (the recipe's `schedule.modality` select).
+  const { rows: classTypes } = useTable<ModalityRow>('modalities');
+  const typeName = (slug: unknown) => { const m = classTypes.find(x => x.slug === slug); return m ? bi({ es: m.name_es, en: m.name_en }) : str(slug); };
+  const blank = (): ScheduleDraft => ({ title: '', weekday: 1, start_time: '07:00', resource: rooms[0]?.id ?? '', coach: '', capacity: num(rooms[0]?.capacity) || 1, valid_from: dateKey(new Date()), valid_until: '', active: false, modality: '' });
   const [edit, setEdit] = useState<{ id: string | null; draft: ScheduleDraft; key: string } | null>(null);
   const [until, setUntil] = useState(dateKey(addDays(new Date(), 28)));
   const [genKey, setGenKey] = useState(newActionKey);
   const room = edit ? rooms.find(r => r.id === edit.draft.resource) : undefined;
   const problems = edit ? scheduleProblems(edit.draft, room ? num(room.capacity) : undefined) : [];
-  const toDraft = (r: CosRow): ScheduleDraft => ({ title: str(r.title), weekday: num(r.weekday), start_time: str(r.start_time), resource: idOf(r.resource), coach: idOf(r.coach), capacity: num(r.capacity), valid_from: str(r.valid_from), valid_until: str(r.valid_until), active: r.active !== false });
+  const toDraft = (r: CosRow): ScheduleDraft => ({ title: str(r.title), weekday: num(r.weekday), start_time: str(r.start_time), resource: idOf(r.resource), coach: idOf(r.coach), capacity: num(r.capacity), valid_from: str(r.valid_from), valid_until: str(r.valid_until), active: r.active !== false, modality: str(r.modality) });
   const save = async () => {
     if (!edit || problems.length) return;
     const ids = await run(edit.id ? updateScheduleOps(edit.id, edit.draft) : createScheduleOps(edit.draft), edit.key, t('live.saved'));
@@ -100,6 +105,7 @@ function Classes({ rows, rooms, coaches, roomName, coachName, weekday, canWrite,
       {edit && <Card title={edit.id ? t('live.edit') : t('live.new')}>
         <div className="grid grid-2">
           <Field label={t('live.f.title')} required>{id => <Input id={id} value={edit.draft.title} onChange={e => setEdit({ ...edit, draft: { ...edit.draft, title: e.target.value } })} />}</Field>
+          <Field label={t('live.f.modality')} required>{id => <Select id={id} value={edit.draft.modality ?? ''} onChange={e => setEdit({ ...edit, draft: { ...edit.draft, modality: e.target.value } })}><option value="">—</option>{classTypes.filter(m => m.active !== false).map(m => <option key={m.id} value={m.slug}>{bi({ es: m.name_es, en: m.name_en })}</option>)}</Select>}</Field>
           <Field label={t('live.f.weekday')}>{id => <Select id={id} value={edit.draft.weekday} onChange={e => setEdit({ ...edit, draft: { ...edit.draft, weekday: Number(e.target.value) } })}>{WEEKDAYS.map(d => <option key={d} value={d}>{weekday(d)}</option>)}</Select>}</Field>
           <Field label={t('live.f.start')}>{id => <Input id={id} type="time" step={3600} value={edit.draft.start_time} onChange={e => setEdit({ ...edit, draft: { ...edit.draft, start_time: e.target.value } })} />}</Field>
           <Field label={t('live.f.room')}>{id => <Select id={id} value={edit.draft.resource} onChange={e => { const r = rooms.find(x => x.id === e.target.value); setEdit({ ...edit, draft: { ...edit.draft, resource: e.target.value, capacity: r ? num(r.capacity) : edit.draft.capacity } }); }}><option value="">—</option>{rooms.map(r => <option key={r.id} value={r.id}>{str(r.name)} · {t('live.rooms.mats', { n: num(r.capacity) })}</option>)}</Select>}</Field>
@@ -115,9 +121,10 @@ function Classes({ rows, rooms, coaches, roomName, coachName, weekday, canWrite,
       {rows.length === 0 ? <EmptyState compact title={t('live.empty')} /> : rows.map(r => (
         <Card key={r.id} data-schedule={r.id} padding="sm" title={str(r.title)} eyebrow={`${weekday(num(r.weekday))} · ${str(r.start_time)}`} actions={canWrite && <div className="row wrap">
           <Button size="sm" variant="outline" onClick={() => setEdit({ id: r.id, draft: toDraft(r), key: newActionKey() })}>{t('live.edit')}</Button>
-          <Button size="sm" variant="tonal" disabled={busy} onClick={() => run(publishScheduleOps(r.id, r.active === false), newActionKey(), t('live.saved'))}>{r.active === false ? t('live.publish') : t('live.unpublish')}</Button>
+          <Button size="sm" variant="tonal" disabled={busy || schedulePublishBlocked(r)} onClick={() => run(publishScheduleOps(r.id, r.active === false), newActionKey(), t('live.saved'))}>{r.active === false ? t('live.publish') : t('live.unpublish')}</Button>
         </div>}>
-          <p className="small">{coachName(r.coach)} · {roomName(r.resource)} · {t('live.rooms.mats', { n: num(r.capacity) })} <Badge tone={r.active === false ? 'neutral' : 'success'}>{r.active === false ? t('live.draft') : t('live.published')}</Badge></p>
+          <p className="small">{coachName(r.coach)} · {roomName(r.resource)} · {t('live.rooms.mats', { n: num(r.capacity) })} <Badge tone={r.active === false ? 'neutral' : 'success'}>{r.active === false ? t('live.draft') : t('live.published')}</Badge> {str(r.modality) ? <Badge>{typeName(r.modality)}</Badge> : <Badge tone="warn">{t('live.noType')}</Badge>}</p>
+          {canWrite && scheduleTypeHint(r) && <p className="xs muted" data-type-hint>{t(`live.typeHint.${scheduleTypeHint(r)}`)}</p>}
         </Card>
       ))}
     </div>

@@ -55,6 +55,12 @@ const safeName = (name: string, type: string) => (name.replace(/[^\w.-]+/g, '_')
 
 // ── PG-01 / PG-02 · customer pays by transfer ────────────────────────────────────────────────────────────────
 export interface TransferInput { person: string; product: ProductRow; today: string; reference: string; booking?: string | null; concept: string; notes?: string | null }
+/**
+ * Whether a product can be paid on its own (no booking). A `single` with no credits can't: Company OS issues nothing for
+ * it (credits' `grantingProduct`), so the money would buy no class. It is paid when a class is booked.
+ */
+export const productSoldAlone = (product: Pick<ProductRow, 'data'>): boolean => product.data.kind !== 'single' || Number(product.data.credits ?? 0) > 0;
+
 /** H-6: a gift purchase carries its recipient as `gift-recipient:{…}` in the pending payment's notes; nothing else is accepted. */
 export const giftNotes = (v: unknown): string | null => (typeof v === 'string' && v.length <= 1000 && v.startsWith('gift-recipient:') ? v : null);
 /** The pending payment the receipt hangs on. For a held booking it freezes the hold (bookings 1.4.0). */

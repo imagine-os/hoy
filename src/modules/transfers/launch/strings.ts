@@ -80,6 +80,8 @@ export const payLaunchStrings: StringTable = {
   'payLaunch.pay.notHeld': { es: 'Esta reserva ya no está esperando pago.', en: 'This booking is no longer waiting for payment.' },
   'payLaunch.pay.giftRecipient': { es: 'Para comprar un bono de regalo, primero dinos para quién es.', en: 'To buy a gift voucher, first tell us who it is for.' },
   'payLaunch.pay.giftRecipient.cta': { es: 'Elegir a quién regalar', en: 'Choose who it is for' },
+  'payLaunch.pay.singleAtBooking': { es: 'Esta clase se paga al reservarla: elige tu clase en el horario.', en: 'This class is paid when you book it: choose your class on the schedule.' },
+  'payLaunch.pay.singleAtBooking.cta': { es: 'Ver horario', en: 'See the schedule' },
   'payLaunch.pay.private': { es: 'La clase privada no tiene precio público. Contacta al club para cotizarla.', en: 'Private classes have no public price. Contact the club for a quote.' },
   'payLaunch.pay.affiliate.ok': { es: 'Afiliación Santa María verificada.', en: 'Santa María membership verified.' },
   'payLaunch.pay.affiliate.no': { es: 'El paquete Santa María es solo para afiliados verificados. Recepción verifica tu afiliación antes de la compra.', en: 'The Santa María pack is for verified members only. The front desk verifies your membership before you buy.' },
