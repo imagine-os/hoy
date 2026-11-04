@@ -331,18 +331,12 @@ try {
   check('Administration: the form offers bio and specialties', (await page.getByLabel(/bio/i).count()) >= 1 && (await page.getByRole('group', { name: /especialidades/i }).count()) === 1, (await text(page)).slice(0, 500));
   await ctx.close();
 
+  // The route itself is Administration and Super Admin only (scheduleSpec.roles), so a Coordinator never reaches the
+  // tab today. Access doesn't change (owner, 4 Nov), which this pins; the rule on the tab is checked in test-golive-h3.mjs.
   scenario = 'teachers, coordinator'; reset();
   ({ ctx, page } = await open('coord@example.test'));
   const coordAt = await go(page, '/admin/class-schedule');
-  check('Coordinator: opens Class schedule', coordAt === '/admin/class-schedule', coordAt);
-  check('Coordinator: classes stay editable: New, Edit, and a row\'s controls', (await page.getByRole('button', { name: 'Nueva' }).count()) === 1 && (await page.locator('[data-schedule="sch_draft"]').getByRole('button', { name: 'Editar' }).count()) === 1);
-  await page.getByText('Salones', { exact: true }).first().click();
-  await page.waitForTimeout(400);
-  check('Coordinator: rooms stay editable', (await page.getByRole('button', { name: 'Nueva' }).count()) === 1 && (await page.getByRole('button', { name: 'Editar' }).count()) === 1);
-  await page.getByText('Profesores', { exact: true }).first().click();
-  await page.waitForTimeout(500);
-  check('Coordinator: still sees the teachers', /Ana Fictional/.test(await text(page)), (await text(page)).slice(0, 400));
-  check('Coordinator: no New or Edit on the Teachers tab, so no bio, specialties or photo', (await page.getByRole('button', { name: 'Nueva' }).count()) === 0 && (await page.getByRole('button', { name: 'Editar' }).count()) === 0 && (await page.getByLabel(/bio/i).count()) === 0);
+  check('Coordinator: Class schedule stays closed, as it is today', coordAt.startsWith('/no-access'), coordAt);
   await ctx.close();
 
   check('no page errors', errors.length === 0, errors.join('\n'));

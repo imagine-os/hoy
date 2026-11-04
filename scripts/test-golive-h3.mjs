@@ -59,6 +59,11 @@ check('teachers: the Coordinator can\'t (the recipe gives it `coach` read only),
 check('teachers: Marketing holds neither: nothing changes for it', R.roleCan?.('marketing', 'teachers.write') === false && R.roleCan?.('marketing', 'classes.write') === false);
 check('teachers: the roles holding classes.write are the ones this decides', ROLES.filter((r) => R.roleCan?.(r, 'classes.write')).join() === 'super_admin,admin,coordinator');
 
+const page_ = readFileSync('src/modules/classSchedule/live/LiveSchedulePage.tsx', 'utf8');
+check('teachers: the tab follows teachers.write; classes, dates and rooms keep classes.write', /const canEditTeachers = can\('teachers\.write'\)/.test(page_) && /const canWrite = can\('classes\.write'\)/.test(page_) && /<Teachers rows=\{coaches\} canWrite=\{canEditTeachers\}/.test(page_) && /<Classes [^>]*canWrite=\{canWrite\}/.test(page_) && /<Dates [^>]*canWrite=\{canWrite\}/.test(page_) && /<Rooms [^>]*canWrite=\{canWrite\}/.test(page_));
+const spec_ = readFileSync('src/modules/classSchedule/specs.ts', 'utf8');
+check('teachers: who opens Class schedule has not changed', /roles: \['super_admin', 'admin'\], layout: \['notice', 'filters', 'sessions'\]/.test(spec_));
+
 // ── Plans: the generic card ─────────────────────────────────────────────────────────────────────────────────────
 const DAY = '2026-11-06';
 const plan = (slug, extra = {}) => ({ id: `prod_${slug}`, tenant_id: P.tenant?.id, slug, name_es: `Nombre ${slug}`, name_en: `Nombre ${slug}`, kind: 'pack', price: 300000, classes: 6, validity_days: 60, freezable: false, active: true, audience: null, valid_from: null, valid_until: null, ...extra });
