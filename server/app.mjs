@@ -82,7 +82,7 @@ const COMPRESSIBLE = new Set(['.html', '.js', '.mjs', '.css', '.json', '.map', '
  *   verifySession resolves for a valid Clerk session token and rejects otherwise. now: the test gate's clock.
  */
 export async function createHandler(config, deps) {
-  deps = { takePublicRead: publicReadLimiter(config.publicReadRate ?? { perSecond: 20, burst: 120 }), ...deps };
+  deps = { takePublicRead: publicReadLimiter(config.publicReadRate ?? { perSecond: 20, burst: 120 }), mediaSlots: concurrencyLimiter(config.mediaConcurrency ?? MEDIA_CONCURRENCY), ...deps };
   const distDir = resolve(config.distDir);
   const release = await readFile(resolve(distDir, 'release.json'), 'utf8').then(JSON.parse, () => null);
   const log = deps.log ?? ((entry) => console.log(JSON.stringify(entry)));
@@ -123,7 +123,7 @@ export async function createHandler(config, deps) {
       }
       if (rawPath === '/media' || rawPath.startsWith('/media/')) {
         const outcome = await media(req, res, config, deps, rawPath.slice('/media'.length));
-        return log({ event: 'media', outcome, status: res.statusCode, ms: Date.now() - started });
+        return log({ event: 'media', outcome, status: res.statusCode, ms: Date.now() - started, ...(res.upstreamStatus ? { upstream: res.upstreamStatus } : {}) });
       }
       if (rawPath === DOCS_PREFIX || rawPath.startsWith(`${DOCS_PREFIX}/`)) return await docsGate(req, res, rawPath.slice(DOCS_PREFIX.length));
       if (rawPath.startsWith('/api/') || rawPath.startsWith('/webhooks/')) return sendError(res, 404, 'not_found');
@@ -210,7 +210,7 @@ async function proxy(req, res, config, deps, rest, query) {
   const route = `${tenantPrefix}/${segments[2]}`;
   const tail = rest.slice(tenantPrefix.length);
   // The private download link stays on this server (IN-028): the browser gets the bytes from /files/<id>.
-  if (BLOCKED_SECTIONS.has(segments[2]) || (segments[2] === 'files' && segments[4] === 'url')) {
+  if (BLOCKED_SECTIONS.has(segments[2].toLowerCase()) || (segments[2].toLowerCase() === 'files' && segments[4]?.toLowerCase() === 'url')) {
     sendError(res, 404, 'not_found');
     return route;
   }
@@ -595,22 +595,59 @@ async function media(req, res, config, deps, rest) {
     sendError(res, 404, 'not_found');
     return 'no_read_identity';
   }
-  if (!deps.takePublicRead(header(req.headers['x-real-ip']) ?? req.socket.remoteAddress ?? '')) {
+  const client = header(req.headers['x-real-ip']) ?? req.socket.remoteAddress ?? '';
+  if (!deps.takePublicRead(client)) {
     sendError(res, 429, 'rate_limited');
     return 'rate_limited';
   }
-  return withDeadline(res, config, (abort, deadline) => linkThenBytes(req, res, config, abort, deadline, {
-    linkPath: `/public-files/${id.toLowerCase()}/url`,
-    token: config.companyOsReadToken,
-    // A copy just published may not be there yet: its own code, so a retry makes sense. Anything else is one 404.
-    refuse: (status, code) => sendError(res, 404, code === 'file_not_ready' ? code : 'not_found'),
-    headers: (type) => (INLINE_TYPES.has(type) ? {
-      'Content-Type': type,
-      'Content-Disposition': 'inline',
-      'Cache-Control': mediaCacheControl(config),
-      'Cross-Origin-Resource-Policy': 'same-origin',
-    } : null),
-  }));
+  // The rate above counts requests; this holds the bytes one address can have flowing at once.
+  const release = deps.mediaSlots(client);
+  if (!release) {
+    sendError(res, 429, 'rate_limited');
+    return 'too_many';
+  }
+  try {
+    return await withDeadline(res, config, (abort, deadline) => linkThenBytes(req, res, config, abort, deadline, {
+      linkPath: `/public-files/${id.toLowerCase()}/url`,
+      token: config.companyOsReadToken,
+      refuse: (status, code) => {
+        // `/public-files` leaves out what the policy hides (404), and a read the role lacks is a 403: that is the file refused.
+        // A copy just published may not be there yet: its own code, so a retry makes sense.
+        if (status === 403 || status === 404) return void sendError(res, 404, code === 'file_not_ready' ? code : 'not_found');
+        // The read identity refused (401) or the API too busy (429) says nothing about the file: not a 404 a browser believes.
+        sendError(res, status === 429 ? 503 : 502, 'upstream_unavailable');
+        return 'upstream_error';
+      },
+      headers: (type) => (INLINE_TYPES.has(type) ? {
+        'Content-Type': type,
+        'Content-Disposition': 'inline',
+        'Cache-Control': mediaCacheControl(config),
+        'Cross-Origin-Resource-Policy': 'same-origin',
+      } : null),
+    }));
+  } finally {
+    release();
+  }
+}
+
+/** How many `/media` reads one address may have open at once: a page's images, not a scraper holding the bandwidth. */
+const MEDIA_CONCURRENCY = 16;
+/** Per address: a release function if there is room, else null. In memory, per instance; an address at zero is forgotten. */
+export function concurrencyLimiter(max) {
+  const open = new Map();
+  return (client) => {
+    const now = open.get(client) ?? 0;
+    if (now >= max) return null;
+    open.set(client, now + 1);
+    let released = false;
+    return () => {
+      if (released) return;
+      released = true;
+      const left = (open.get(client) ?? 1) - 1;
+      if (left > 0) open.set(client, left);
+      else open.delete(client);
+    };
+  };
 }
 
 /** One deadline for all of `work`, the browser leaving aborts it too. Whatever it throws is answered as a timeout or a bad gateway. */
@@ -647,10 +684,10 @@ async function linkThenBytes(req, res, config, abort, deadline, { linkPath, toke
   if (!Buffer.isBuffer(body)) throw new Error('link answer too large or slow');
   if (answer.statusCode !== 200) {
     const status = answer.statusCode ?? 502;
+    res.upstreamStatus = status;
     if (status >= 400 && status < 500) {
       // The API's refusal, as it answered it: its machine code (e.g. `file_not_ready`), never its text.
-      refuse(status, parseJson(body)?.error);
-      return 'refused';
+      return refuse(status, parseJson(body)?.error) ?? 'refused';
     }
     sendError(res, status === 503 ? 503 : 502, status === 503 ? 'storage_not_configured' : 'upstream_unavailable');
     return 'upstream_error';
