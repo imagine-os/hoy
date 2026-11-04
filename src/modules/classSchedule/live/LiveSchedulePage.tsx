@@ -35,6 +35,7 @@ export function LiveSchedulePage() {
   const { t, lang } = useI18n();
   const { can } = useSession();
   const canWrite = can('classes.write');
+  const canEditTeachers = can('teachers.write');
   const [tab, setTab] = useState<Tab>('classes');
   const now = new Date();
   // Studio days, not UTC ones: from the start of today in Medellín, so yesterday's evening classes are not listed.
@@ -76,7 +77,7 @@ export function LiveSchedulePage() {
       {q.loading && !rows && <EmptyState compact tone="loading" title={t('core.common.loading')} />}
       {rows && tab === 'classes' && <Classes rows={rows.schedules} rooms={rooms} coaches={coaches} roomName={roomName} coachName={coachName} weekday={weekday} canWrite={canWrite} busy={busy} run={run} />}
       {rows && tab === 'dates' && <Dates rows={rows.occurrences} roomName={roomName} coachName={coachName} canWrite={canWrite} busy={busy} run={run} lang={lang} />}
-      {rows && tab === 'teachers' && <Teachers rows={coaches} canWrite={canWrite} busy={busy} photoBusy={photoBusy} setPhotoBusy={setPhotoBusy} run={run} />}
+      {rows && tab === 'teachers' && <Teachers rows={coaches} canWrite={canEditTeachers} busy={busy} photoBusy={photoBusy} setPhotoBusy={setPhotoBusy} run={run} />}
       {rows && tab === 'rooms' && <Rooms rows={rooms} canWrite={canWrite} busy={busy} run={run} />}
       <p className="xs muted">{t('live.faq')}</p>
     </div>

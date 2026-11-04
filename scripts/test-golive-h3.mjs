@@ -20,6 +20,7 @@ const load = async (contents) => {
   } catch (e) { console.log(`FAIL module does not build: ${String(e.message).split('\n').slice(0, 3).join(' ')}`); failed++; return {}; }
 };
 const S = await load("export * from './src/modules/classSchedule/live/scheduleOps';");
+const R = await load("export { roleCan, ROLE_PERMISSIONS } from './src/auth/permissions';");
 const A = await load("export { sessionUnavailableReason } from './src/data/sessionAvailability'; export { adapters, fromRecord } from './src/data/companyos/mapping'; export { modalities } from './src/data/seed/catalog';");
 const P = await load("export * from './src/data/livePricing'; export * from './src/modules/customer/genericPlans'; export { purchaseEntry } from './src/auth/purchaseEntry'; export { giftProductsOnSale } from './src/modules/vouchers/production/model'; export { tenant } from './src/tenant/tenant'; export { GIFT_PURCHASE_PATH } from './src/config/launchRoutes';");
 const C = await load("export * from './src/modules/coming-soon/entry';");
@@ -49,6 +50,19 @@ const NOW = Date.parse('2026-11-09T10:00:00Z');
 const reasonOf = (session) => A.sessionUnavailableReason?.({ session, modality: (A.modalities ?? []).find((m) => m.id === session.modality_id) }, NOW);
 check('bookable: a class generated from a row with the type is open', reasonOf(rowOf({ title: 'Mañana', schedule: 'sch1', schedule_row: { id: 'sch1', modality: 'pulso' } })) === null);
 check('bookable: a class from a row without one is not', reasonOf(rowOf({ title: 'Mañana', schedule: 'sch1', schedule_row: { id: 'sch1', modality: null } })) === 'no_class_type');
+
+// ── Teachers tab: who edits a teacher (owner, 4 Nov): the recipe's `coach` update, on screen only ───────────────────
+const ROLES = ['super_admin', 'admin', 'coordinator', 'front_desk', 'finance', 'teacher', 'maintenance', 'marketing', 'developer', 'customer', 'public'];
+const editors = ROLES.filter((r) => R.roleCan?.(r, 'teachers.write'));
+check('teachers: only Administration and the Super Admin edit them', editors.join() === 'super_admin,admin', editors.join());
+check('teachers: the Coordinator can\'t (the recipe gives it `coach` read only), but keeps classes, dates and rooms', R.roleCan?.('coordinator', 'teachers.write') === false && R.roleCan?.('coordinator', 'classes.write') === true && R.roleCan?.('coordinator', 'classes.read') === true);
+check('teachers: Marketing holds neither: nothing changes for it', R.roleCan?.('marketing', 'teachers.write') === false && R.roleCan?.('marketing', 'classes.write') === false);
+check('teachers: the roles holding classes.write are the ones this decides', ROLES.filter((r) => R.roleCan?.(r, 'classes.write')).join() === 'super_admin,admin,coordinator');
+
+const page_ = readFileSync('src/modules/classSchedule/live/LiveSchedulePage.tsx', 'utf8');
+check('teachers: the tab follows teachers.write; classes, dates and rooms keep classes.write', /const canEditTeachers = can\('teachers\.write'\)/.test(page_) && /const canWrite = can\('classes\.write'\)/.test(page_) && /<Teachers rows=\{coaches\} canWrite=\{canEditTeachers\}/.test(page_) && /<Classes [^>]*canWrite=\{canWrite\}/.test(page_) && /<Dates [^>]*canWrite=\{canWrite\}/.test(page_) && /<Rooms [^>]*canWrite=\{canWrite\}/.test(page_));
+const spec_ = readFileSync('src/modules/classSchedule/specs.ts', 'utf8');
+check('teachers: who opens Class schedule has not changed', /roles: \['super_admin', 'admin'\], layout: \['notice', 'filters', 'sessions'\]/.test(spec_));
 
 // ── Plans: the generic card ─────────────────────────────────────────────────────────────────────────────────────
 const DAY = '2026-11-06';

@@ -32,6 +32,7 @@ const PEOPLE = {
   user_owner: { name: 'Olga Dueña', person: 'per_owner', keys: ['super_admin'], superAdmin: true },
   user_admin: { name: 'Mateo Admin', person: 'per_admin', keys: ['administrator'] },
   user_cust: { name: 'Lucía Prueba', person: 'per_cust', keys: ['member'] },
+  user_coord: { name: 'Clara Coordina', person: 'per_coord', keys: ['booking_manager'] },
 };
 const ACCOUNTS = Object.fromEntries(Object.keys(PEOPLE).map((u) => [u, { emails: [{ id: `ea_${u}`, email: `${u.slice(5)}@example.test`, verified: true }], primary: `ea_${u}` }]));
 
@@ -43,7 +44,7 @@ function reset({ live = false, trialPaid = false, config = 'ok' } = {}) {
   const m = (rows) => new Map(rows.map((r) => [r.id, r]));
   world = {
     live, config, seq: 0, log: [], uploads: 0,
-    person: m([rec('per_owner', { name: 'Olga Dueña', user: 'user_owner' }), rec('per_admin', { name: 'Mateo Admin', user: 'user_admin' }), rec('per_cust', { name: 'Lucía Prueba', user: 'user_cust', email: 'cust@example.test' }), rec('per_ana', { name: 'Ana Fictional' })]),
+    person: m([rec('per_owner', { name: 'Olga Dueña', user: 'user_owner' }), rec('per_admin', { name: 'Mateo Admin', user: 'user_admin' }), rec('per_cust', { name: 'Lucía Prueba', user: 'user_cust', email: 'cust@example.test' }), rec('per_ana', { name: 'Ana Fictional' }), rec('per_coord', { name: 'Clara Coordina', user: 'user_coord' })]),
     member: m([rec('mem_cust', { person: 'per_cust', status: 'active', price_audience: 'general', user: 'user_cust' })]),
     resource: m([rec('res_big', { name: 'Sala Grande', kind: 'room', capacity: 16 })]),
     coach: m([rec('co_ana', { person: 'per_ana', kind: 'teacher', active: true })]),
@@ -315,6 +316,27 @@ try {
   check('saved with the slug the recipe\'s select holds', saved.modality === 'pulso', JSON.stringify(saved));
   check('…and it publishes', saved.active === true, JSON.stringify(saved));
   check('the row now names its class type', /Pulso/.test(await page.locator('[data-schedule="sch_draft"]').innerText().catch(() => '')));
+  await ctx.close();
+
+  // ── Teachers tab: Administration edits; the Coordinator sees teachers and keeps classes and rooms ────────────────
+  scenario = 'teachers, administration'; reset();
+  ({ ctx, page } = await open('admin@example.test'));
+  await go(page, '/admin/class-schedule');
+  await page.getByText('Profesores', { exact: true }).first().click();
+  await page.waitForTimeout(500);
+  let pane = page.locator('.stack').filter({ hasText: 'Ana Fictional' }).last();
+  check('Administration: New and Edit are on a teacher', (await pane.getByRole('button', { name: 'Editar' }).count()) === 1 && (await page.getByRole('button', { name: 'Nueva' }).count()) === 1);
+  await pane.getByRole('button', { name: 'Editar' }).click();
+  await page.waitForTimeout(300);
+  check('Administration: the form offers bio and specialties', (await page.getByLabel(/bio/i).count()) >= 1 && (await page.getByRole('group', { name: /especialidades/i }).count()) === 1, (await text(page)).slice(0, 500));
+  await ctx.close();
+
+  // The route itself is Administration and Super Admin only (scheduleSpec.roles), so a Coordinator never reaches the
+  // tab today. Access doesn't change (owner, 4 Nov), which this pins; the rule on the tab is checked in test-golive-h3.mjs.
+  scenario = 'teachers, coordinator'; reset();
+  ({ ctx, page } = await open('coord@example.test'));
+  const coordAt = await go(page, '/admin/class-schedule');
+  check('Coordinator: Class schedule stays closed, as it is today', coordAt.startsWith('/no-access'), coordAt);
   await ctx.close();
 
   check('no page errors', errors.length === 0, errors.join('\n'));
