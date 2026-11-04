@@ -24,10 +24,10 @@
 #   variables  CLERK_PUBLISHABLE_KEY  pk_live_…
 #              APP_URL                https://<Hoy's domain> (the custom domain on the web service)
 #              COMPANY_OS_TENANT      Hoy's production tenant slug in Company OS
-#   never      TEST_GATE_PASSPHRASE   production has no passphrase gate (Company OS playbook rule D5):
-#                                     the deploy refuses the secret if it is set
 #              RAILWAY_PROJECT_NAME   Hoy's Railway project name (a label; the token picks the project)
 #              RAILWAY_REGION         optional: the api's region, e.g. us-east4-eqdc4a
+#   never      TEST_GATE_PASSPHRASE   production has no passphrase gate (Company OS playbook rule D5):
+#                                     the deploy refuses the secret if it is set
 name: Deploy web (prod)
 run-name: Deploy web (prod) ${{ github.ref_name }}
 
@@ -219,7 +219,7 @@ jobs:
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
-          { railway variable list --service "$SERVICE" --environment "$RAILWAY_ENV" --json 2>/dev/null || echo 'unreadable'; } | node scripts/deploy-switches.mjs --leftovers
+          { railway variable list --service "$SERVICE" --environment "$RAILWAY_ENV" --json 2>/dev/null || echo 'unreadable'; } | node scripts/deploy-switches.mjs --leftovers --production
 
       - name: Infra plan
         env:
@@ -283,7 +283,7 @@ jobs:
         run: |
           echo "### Site: ${APP_URL} (custom domain on the web service in Railway), release $TAG" >> "$GITHUB_STEP_SUMMARY"
           # The go-live switches (lane Y2): SITE_LIVE and whether the read token is present, never a value.
-          { railway variable list --service "$SERVICE" --environment "$RAILWAY_ENV" --json 2>/dev/null || echo 'unreadable'; } | node scripts/deploy-switches.mjs | tee -a "$GITHUB_STEP_SUMMARY"
+          { railway variable list --service "$SERVICE" --environment "$RAILWAY_ENV" --json 2>/dev/null || echo 'unreadable'; } | node scripts/deploy-switches.mjs --production | tee -a "$GITHUB_STEP_SUMMARY"
 
   # The GitHub Release is the record of what is live: created on the tag's first deploy (notes from
   # the merged PRs), a dated line appended on every later one.

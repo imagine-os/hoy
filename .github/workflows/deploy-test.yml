@@ -201,3 +201,11 @@ jobs:
           echo "### Site: ${APP_URL} (branch ${GITHUB_REF_NAME}, ${GITHUB_SHA::12})" >> "$GITHUB_STEP_SUMMARY"
           # The go-live switches (lane Y2): SITE_LIVE and whether the read token is present, never a value.
           { railway variable list --service "$SERVICE" --environment "$RAILWAY_ENV" --json 2>/dev/null || echo 'unreadable'; } | node scripts/deploy-switches.mjs | tee -a "$GITHUB_STEP_SUMMARY"
+
+      # Last, so the summary above is written even when this fails: the deployed site is this commit and its gate is really
+      # on, from outside, and the edge overwrites X-Real-IP (else the limit of wrong tries could be bypassed). It is given
+      # no passphrase: every try is a made-up wrong one.
+      - name: Smoke check (the site is this commit, behind its gate)
+        env:
+          APP_URL: ${{ vars.APP_URL }}
+        run: node scripts/smoke-test-gate.mjs

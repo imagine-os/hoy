@@ -1,5 +1,6 @@
 import { cosPath, loadAppConfig } from './appConfig';
 import { getSessionToken, onUnauthorized } from './sessionToken';
+import { reloadIfTestGate } from './testGateReload';
 import { VIEW_AS_REFUSAL, viewAsActive, viewAsAllows } from './viewAs';
 
 /**
@@ -20,6 +21,6 @@ export async function cosJson(path: `/${string}`, init: { method?: 'GET' | 'POST
     credentials: 'same-origin', // carries the test site's gate cookie (server/testGate.mjs); the proxy forwards no cookie
   });
   const body: unknown = await res.json().catch(() => null);
-  if (res.status === 401) onUnauthorized();
+  if (res.status === 401 && !reloadIfTestGate(res.status, body)) onUnauthorized();
   return { status: res.status, body };
 }

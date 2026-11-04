@@ -6,6 +6,7 @@ import { SessionContext, type SessionCtx, type SessionStatus, type SessionUser }
 import { cosPath, loadAppConfig, type AppConfig } from './appConfig';
 import { classifyMe, isSuperAdminMe, roleFromMe, rolesFromMe, type MeInfo } from './companyOsIdentity';
 import { setSessionTokenSource, subscribeUnauthorized } from './sessionToken';
+import { reloadIfTestGate } from './testGateReload';
 import { isViewAsFailure, isViewableRole, loadViewAsSample, publishViewAs, readStoredViewAs, storeViewAs, type ViewAsSample, type ViewAsSampleFailure } from './viewAs';
 import { failureCopy } from '../data/companyos/refusals';
 import { cosJson } from './cosRequest';
@@ -204,6 +205,7 @@ function ClerkSession({ config, children }: { config: AppConfig; children: React
         if (!token) throw new Error('no_token');
         const res = await fetch(cosPath(config, '/me'), { headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' }, cache: 'no-store', credentials: 'same-origin' });
         const body: unknown = await res.json().catch(() => null);
+        reloadIfTestGate(res.status, body);
         const result = classifyMe(res.status, body);
         if (!alive) return;
         if (result.kind === 'member') setMe({ key, status: 'member', me: result.me });

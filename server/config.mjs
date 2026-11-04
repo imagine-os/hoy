@@ -101,6 +101,13 @@ export function loadConfig(env = process.env) {
     problems.push('SITE_LIVE_AT must be an instant with its offset, e.g. 2026-11-01T06:00:00-05:00');
   }
 
+  // A test site on Railway never runs open: a passphrase removed by hand must not silently open it (playbook rule D5).
+  const testGate = gateSettings(env);
+  if (env.RAILWAY_ENVIRONMENT_NAME && !production) {
+    if (!testGate.on) problems.push(`TEST_GATE_PASSPHRASE is required on Railway's ${environment} environment: only production runs without the passphrase gate`);
+    if (!env.COOKIE_SIGNING_SECRET) problems.push(`COOKIE_SIGNING_SECRET is required on Railway's ${environment} environment: it signs the passphrase gate's cookie`);
+  }
+
   const config = {
     port: int(env.PORT, 3000),
     distDir: env.DIST_DIR || fileURLToPath(new URL('../dist', import.meta.url)),
@@ -121,7 +128,7 @@ export function loadConfig(env = process.env) {
     companyOsReadToken,
     publicReadRate: { perSecond: int(env.PUBLIC_READ_RATE_PER_SECOND, 20), burst: int(env.PUBLIC_READ_BURST, 120), totalPerSecond: 150, totalBurst: 400 },
     launch: { siteLive: siteLiveRaw === 'true', siteLiveAt },
-    testGate: gateSettings(env),
+    testGate,
   };
   if (problems.length) throw new Error(`Hoy server configuration:\n  - ${problems.join('\n  - ')}`);
   return config;

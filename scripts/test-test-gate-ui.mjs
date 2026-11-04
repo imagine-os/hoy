@@ -84,7 +84,7 @@ try {
   await page.locator('form[action="/test-gate"] button[type="submit"]').click();
   await page.locator('[role="alert"]').waitFor({ timeout: 5000 }).catch(() => {});
   check('a wrong passphrase says so', (await page.locator('[role="alert"]').count()) === 1);
-  check('a wrong passphrase sets no cookie', (await ctx.cookies(BASE)).length === 0);
+  check('a wrong passphrase sets no cookie', !(await ctx.cookies()).some((c) => c.name === 'hoy_test_gate'));
 
   // 3. The right one: the cookie, as the browser took it, and the app.
   await page.locator('input[name="passphrase"]').fill(PASS);
@@ -92,7 +92,7 @@ try {
   await page.waitForURL(`${BASE}/**`, { timeout: 5000 }).catch(() => {});
   await until(async () => new URL(page.url()).pathname === '/');
   check('the right passphrase goes on to the site', new URL(page.url()).pathname === '/', page.url());
-  const cookie = (await ctx.cookies(BASE)).find((c) => c.name === 'hoy_test_gate');
+  const cookie = (await ctx.cookies()).find((c) => c.name === 'hoy_test_gate');
   check('the browser keeps the cookie: HttpOnly, Secure, SameSite=Lax', cookie?.httpOnly === true && cookie?.secure === true && cookie?.sameSite === 'Lax', JSON.stringify({ ...cookie, value: undefined }));
   check('the page\'s script can\'t read it', !(await page.evaluate(() => document.cookie)).includes('hoy_test_gate'));
   check('the app loads', await until(() => page.evaluate(() => (document.querySelector('#root')?.childElementCount ?? 0) > 0)));

@@ -9,11 +9,15 @@
 // - The right passphrase sets a signed cookie for 30 days, bound to the site's origin (APP_URL), the passphrase's hash and
 //   the expiry: a new passphrase signs everyone out. It only opens the site: the API still decides by the Clerk session,
 //   and the proxy never forwards it (app.mjs, FORWARD_REQUEST_HEADERS).
-// - 5 wrong tries in 15 minutes from one address, then 429. In memory, since test runs one instance.
-// - Exempt, exactly: GET /health (Railway) and POST /webhooks/resend (Resend has no cookie; the API checks its signature).
+// - 5 wrong tries in 15 minutes from one address, then 429. The address is the edge's X-Real-IP, as everywhere in this
+//   server (the deploy's smoke check proves the edge overwrites it), and for IPv6 its /64, since one customer holds a whole
+//   /64. In memory, since test runs one instance.
+// - Exempt, exactly: /health, any method (Railway; the route itself answers only GET and HEAD), and POST /webhooks/resend
+//   (Resend has no cookie; the API checks its signature).
 //   Hoy's emails only link to the site and load no image from it, so unlike Between Gigs no image path is exempt.
 // - Every answer while it is on says noindex.
 import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
+import { isIPv6 } from 'node:net';
 
 export const GATE_COOKIE = 'hoy_test_gate';
 export const GATE_PATH = '/test-gate';
@@ -56,6 +60,23 @@ export function safeNext(raw) {
   }
   if (/^\/[/\\]/.test(decoded) || decoded.includes('\\') || /[\x00-\x1f\x7f]/.test(decoded)) return '/';
   return raw;
+}
+
+/** What wrong tries are counted under: an IPv6 address's /64, an IPv4 address as it is, anything else cut to 64 characters. */
+export function addressKey(raw) {
+  const text = String(raw ?? '').trim().slice(0, 64);
+  if (!text) return 'unknown';
+  const address = text.split('%')[0];
+  if (!isIPv6(address)) return text;
+  const mapped = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/i.exec(address);
+  if (mapped) return mapped[1];
+  // A dotted tail stands for two groups, the last two, so its value never reaches the first four.
+  const groups = (part) => (part ? part.split(':').flatMap((g) => (g.includes('.') ? ['0', '0'] : [g])) : []);
+  const [head, tail] = address.split('::');
+  const before = groups(head);
+  const after = groups(tail);
+  const full = address.includes('::') ? [...before, ...Array(8 - before.length - after.length).fill('0'), ...after] : before;
+  return `${full.slice(0, 4).map((g) => parseInt(g, 16).toString(16)).join(':')}::/64`;
 }
 
 /**
@@ -141,7 +162,7 @@ export function createTestGate(settings, { now = Date.now, readBody, closeIfUnre
     const next = safeNext(form.get('next'));
     const at = now();
     // The edge's X-Real-IP, as everywhere in this server; never X-Forwarded-For, whose first hop the browser can write.
-    const who = (req.headers['x-real-ip']?.trim() || req.socket.remoteAddress || 'unknown').slice(0, 64);
+    const who = addressKey(req.headers['x-real-ip']?.trim() || req.socket.remoteAddress);
     if (attempts.blocked(who, at)) return sendPage(req, res, 429, next, MESSAGES.blocked);
     // Digests, so the comparison takes the same time whatever the length typed.
     if (!timingSafeEqual(sha256(form.get('passphrase') ?? ''), passphraseHash)) {

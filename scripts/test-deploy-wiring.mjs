@@ -174,7 +174,7 @@ check('the deploy gate (deploy-test checks job) runs this check', readFileSync('
   const signup = authChecks.slice(authChecks.indexOf('\n  real-signup:'));
   check('real-signup job: gets TEST_GATE_PASSPHRASE from the test environment\'s secrets', /TEST_GATE_PASSPHRASE:\s*\$\{\{\s*secrets\.TEST_GATE_PASSPHRASE\s*\}\}/.test(signup));
   const realClerk = readFileSync('scripts/test-auth-real-clerk.mjs', 'utf8');
-  const passedAt = realClerk.indexOf('await passGate('), configAt = realClerk.search(/await fetch\(.{0,4}BASE.{0,2}\/app-config\.json/);
+  const passedAt = realClerk.indexOf('await passGate('), configAt = realClerk.search(/\(.{0,4}BASE.{0,2}\/app-config\.json/);
   check('test-auth-real-clerk: passes the gate before it reads /app-config.json', passedAt > 0 && configAt > 0 && passedAt < configAt);
   check('test-auth-real-clerk: only when the secret is set', /if \(GATE_PASSPHRASE\)[^\n]*passGate/.test(realClerk));
   check('test-auth-real-clerk: the browser and the clean-up client carry the cookie', /ctx\.addCookies\(/.test(realClerk) && /cosOver\(\{[^\n]*fetchImpl:/.test(realClerk));

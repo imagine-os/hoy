@@ -118,7 +118,7 @@ export async function createHandler(config, deps) {
       }
       if (rawPath === DOCS_PREFIX || rawPath.startsWith(`${DOCS_PREFIX}/`)) return await docsGate(req, res, rawPath.slice(DOCS_PREFIX.length));
       if (rawPath.startsWith('/api/') || rawPath.startsWith('/webhooks/')) return sendError(res, 404, 'not_found');
-      return await serveStatic(req, res, distDir, rawPath, rawQuery);
+      return await serveStatic(req, res, distDir, rawPath, rawQuery, config.testGate?.on ? 'private' : 'public');
     } catch (err) {
       log({ event: 'server.error', message: err instanceof Error ? err.message : String(err) });
       if (!res.headersSent) sendError(res, 500, 'server_error');
@@ -712,7 +712,7 @@ function readBody(req, limit, ms) {
 // Static files from dist/
 // ---------------------------------------------------------------------------------------------
 
-async function serveStatic(req, res, distDir, rawPath, rawQuery) {
+async function serveStatic(req, res, distDir, rawPath, rawQuery, cacheScope) {
   if (req.method !== 'GET' && req.method !== 'HEAD') {
     res.setHeader('Allow', 'GET, HEAD');
     return sendError(res, 405, 'method_not_allowed');
@@ -748,8 +748,9 @@ async function serveStatic(req, res, distDir, rawPath, rawQuery) {
     ETag: etag,
     'Last-Modified': info.mtime.toUTCString(),
     'Accept-Ranges': 'bytes',
-    // Vite's hashed bundles never change under the same name; everything else is revalidated.
-    'Cache-Control': path.startsWith('/assets/') ? 'public, max-age=31536000, immutable' : ext === '.html' ? 'no-cache' : 'public, max-age=300',
+    // Vite's hashed bundles never change under the same name; everything else is revalidated. Behind the test gate
+    // `private`: no shared cache may hand it to someone who hasn't passed the gate.
+    'Cache-Control': path.startsWith('/assets/') ? `${cacheScope}, max-age=31536000, immutable` : ext === '.html' ? 'no-cache' : `${cacheScope}, max-age=300`,
   };
   if (COMPRESSIBLE.has(ext)) headers.Vary = 'Accept-Encoding';
   // A baseline policy for the pages: no plugins, no <base> hijack, framed only by this origin. Script and connect

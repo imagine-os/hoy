@@ -4,6 +4,7 @@
 // (server/docsGate.mjs). This module fetches it with the session token (src/auth/sessionToken.ts, the only token path)
 // and keeps it in memory for the tab. The review build never calls it: its docs are bundled as before.
 import { getSessionToken, onUnauthorized } from '../../auth/sessionToken';
+import { reloadIfTestGate } from '../../auth/testGateReload';
 import type { DocMeta } from './docsIndex';
 
 export const PRIVATE_DOCS_BASE = '/private-docs';
@@ -37,7 +38,10 @@ async function authorised(path: string): Promise<Response | PrivateDocsState> {
   let res = await ask(false);
   if (res?.status === 401) res = await ask(true);
   if (!res) return 'signed-out';
-  if (res.status === 401) { onUnauthorized(); return 'signed-out'; }
+  if (res.status === 401) {
+    if (!reloadIfTestGate(res.status, await res.clone().json().catch(() => null))) onUnauthorized();
+    return 'signed-out';
+  }
   if (res.status === 403) return 'refused';
   if (!res.ok) return 'failed';
   return res;

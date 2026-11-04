@@ -45,7 +45,8 @@ sent on is Railway's `X-Real-IP`. Answers are always `Cache-Control: private, no
 | `PUBLIC_READ_BURST`, `PUBLIC_READ_RATE_PER_SECOND` | optional (120, 20): each visitor's signed-out reads | optional |
 
 The server refuses to start without `COMPANY_OS_URL`, a tenant slug and a Clerk key, with a secret in
-`CLERK_PUBLISHABLE_KEY`, or, in production, without `APP_URL`. It also refuses a malformed `SITE_LIVE`,
+`CLERK_PUBLISHABLE_KEY`, in production without `APP_URL`, or on any other Railway environment without `TEST_GATE_PASSPHRASE`
+and `COOKIE_SIGNING_SECRET` (a passphrase removed by hand must not silently open the test site). It also refuses a malformed `SITE_LIVE`,
 `SITE_LIVE_AT` or `COMPANY_OS_READ_TOKEN` (the error never repeats the token). The manual and docs are never public:
 the docs gate serves them to a signed-in super admin only (the old `PUBLIC_DOCUMENTS` switch is retired; a value left
 set in Railway is ignored and can be deleted).
@@ -58,7 +59,8 @@ npm run build
 COMPANY_OS_URL=http://localhost:4000 COMPANY_OS_TENANT=hoy-dev CLERK_SECRET_KEY=sk_test_… node server/index.mjs
 node scripts/test-hoy-server.mjs      # proxy, tokens, refusals, files, webhook raw body, static, config, secret scan
 node scripts/test-docs-gate.mjs       # /private-docs/: super admin only, hostile tokens, roles, traversal (lane Y6)
-node scripts/test-test-gate.mjs       # the test site's passphrase gate (rule D5): cookies, tries, next, exempt paths
+node scripts/test-test-gate.mjs       # the test site's passphrase gate (rule D5): cookies, tries, next, exempt paths, the deploy's smoke check
+node scripts/test-test-gate-ui.mjs    # after npm run build:production: the gate in a browser, then the app, then a signed-in call
 node scripts/test-website-signed-out-live.mjs   # after npm run build:production: the signed-out site on live data
 node server/check-bundle.mjs dist     # no secret in the built frontend
 ```
