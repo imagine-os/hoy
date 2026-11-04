@@ -139,7 +139,7 @@ function filePort({ owner = COACH_OWNER, files, holders = [], settingValue, fail
         const d = table[body.filter.value];
         return { data: d ? [{ id: body.filter.value, data: d }] : [] };
       }
-      if (body.entity === 'coach') return { data: holders.map((id) => ({ id, data: { photo: body.filter.value } })) };
+      if (body.entity === 'coach') return { data: (typeof holders === 'function' ? holders(body.filter.value) : holders).map((id) => ({ id, data: { photo: body.filter.value } })) };
       if (body.entity === 'setting') return { data: settingValue ? [{ id: 'set1', data: { value: settingValue } }] : [] };
       return { data: [] };
     },
@@ -288,7 +288,8 @@ await test('leaving during a save: the form closes between the patch starting an
 await test('leaving during a save that fails: the unsaved upload is cleaned up, the old file stays', async () => {
   needs(images);
   for (const patch of [async (r) => { await r; return null; }, async (r) => { await r; throw Object.assign(new Error('x'), { code: 'forbidden' }); }]) {
-    const port = filePort({ files: { [NEW_ID]: { owner_entity: 'coach', owner_id: 'co1', kind: 'photo' }, [ID]: { owner_entity: 'coach', owner_id: 'co1', kind: 'photo' } } });
+    // Not saved: the record still holds the old file, and nothing holds the new one.
+    const port = filePort({ holders: (id) => (id === ID ? ['co1'] : []), files: { [NEW_ID]: { owner_entity: 'coach', owner_id: 'co1', kind: 'photo' }, [ID]: { owner_entity: 'coach', owner_id: 'co1', kind: 'photo' } } });
     const draft = withUpload(port, NEW_ID);
     let answer; const inFlight = new Promise((r) => { answer = r; });
     const saving = images.saveThenRemoveOld(port, { saved: `/media/${ID}`, next: `/media/${NEW_ID}`, owner: COACH_OWNER, draft }, () => patch(inFlight));
@@ -300,6 +301,19 @@ await test('leaving during a save that fails: the unsaved upload is cleaned up, 
     assert.ok(!port.log.includes(`DELETE /api/file/${ID}`), 'the old file is still the saved one');
     assert.equal(draft.holds(`/media/${NEW_ID}`), false);
   }
+});
+await test('leaving during a save whose answer never comes back as saved, though the record did change: the record decides', async () => {
+  needs(images);
+  // Settings: the save hook answers nothing once the page has gone, even when the write went through.
+  const port = filePort({ holders: (id) => (id === NEW_ID ? ['co1'] : []), files: { [NEW_ID]: { owner_entity: 'coach', owner_id: 'co1', kind: 'photo' }, [ID]: { owner_entity: 'coach', owner_id: 'co1', kind: 'photo' } } });
+  const draft = withUpload(port, NEW_ID);
+  let answer; const inFlight = new Promise((r) => { answer = r; });
+  const saving = images.saveThenRemoveOld(port, { saved: `/media/${ID}`, next: `/media/${NEW_ID}`, owner: COACH_OWNER, draft }, () => inFlight);
+  await draft.discard();
+  answer(undefined);
+  await saving;
+  assert.ok(port.log.includes(`DELETE /api/file/${ID}`), 'the old file no longer held by anything goes');
+  assert.ok(!port.log.includes(`DELETE /api/file/${NEW_ID}`), 'the record holds the new one');
 });
 await test('a failed save with the form still open keeps the upload, so Save can be tried again', async () => {
   needs(images);
