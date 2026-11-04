@@ -7,6 +7,7 @@
 //   inactive teacher's preview doesn't read as a failure; it shows on the site.
 // - Settings › Payments: the QR upload, unchanged; a refused upload says why in words; a failed delete still saves, with a
 //   notice; after a save there is no undo.
+// - Closing or switching a form during an upload leaves Save usable and the late file deleted.
 // - The pay screen with a refused QR says so, and the bank details stay.
 // - The content page's notice points to Class schedule.
 // Run: npm run build:production && QA_PROD_DIST=dist node scripts/test-golive-images-ui.mjs
@@ -78,7 +79,7 @@ const PEOPLE = {
   user_admin: { name: 'Mateo Admin', person: null, keys: ['administrator', 'super_admin'], superAdmin: true },
   user_customer: { name: 'Ana Cliente', person: 'p_ana', keys: ['member'], superAdmin: false },
 };
-const ACCOUNTS = { 'admin@example.test': { userId: 'user_admin', firstName: 'Mateo' }, 'cliente@example.test': { userId: 'user_customer', firstName: 'Ana' } };
+const ACCOUNTS = Object.fromEntries(Object.keys(PEOPLE).map((u) => [u, { emails: [{ id: `ea_${u}`, email: `${u.slice(5)}@example.test`, verified: true }], primary: `ea_${u}` }]));
 const userOf = (req) => /^Bearer fake\.([^.]+)\.[^.]+$/.exec(req.headers.authorization ?? '')?.[1] ?? null;
 
 // ── fake storage ─────────────────────────────────────────────────────────────────────────────────────────────────
@@ -89,7 +90,7 @@ const storage = createServer((req, res) => {
   storageSeen.push(`${req.method} ${req.url}`);
   req.resume();
   req.on('end', () => {
-    if (req.method === 'PUT') { res.writeHead(200, cors); return res.end(); }
+    if (req.method === 'PUT') return setTimeout(() => { res.writeHead(200, cors); res.end(); }, world.flags.slowPut ?? 0);
     res.writeHead(200, { 'content-type': 'image/png', 'content-length': PNG.length }); res.end(PNG);
   });
 });
@@ -162,6 +163,14 @@ const BASE = `http://127.0.0.1:${web.address().port}`;
 
 const browser = await launchBrowser();
 const errors = [];
+const open = new Set();
+let ctx, page;
+/** One failure doesn't stop the others: every check is reported. */
+async function scenario(name, fn) {
+  try { await fn(); }
+  catch (e) { check(`${name}: ran to the end`, false, String(e?.message ?? e).split('\n').slice(0, 3).join(' ')); }
+  finally { for (const c of open) await c.close().catch(() => {}); open.clear(); }
+}
 async function context(lang = 'es') {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, reducedMotion: 'reduce', timezoneId: 'America/Bogota' });
   await ctx.route(/^https?:\/\/(?!127\.0\.0\.1)/, (r) => r.abort());
@@ -170,7 +179,9 @@ async function context(lang = 'es') {
     window.__fakeClerkConfig = { accounts, publishableKey: pk };
     if (!sessionStorage.getItem('qa-init')) { sessionStorage.setItem('qa-init', '1'); localStorage.setItem('hoyos.lang', lang); }
   }, { accounts: ACCOUNTS, pk: PK, lang });
+  open.add(ctx);
   const page = await ctx.newPage();
+  page.setDefaultTimeout(8000);
   // The content page's review queue reads a table with no adapter yet (route connectivity: Wave 3, teacher_profile_proposals), not this lane's.
   page.on('pageerror', (e) => { if (!/teacher_profile_proposals/.test(e.message)) errors.push(e.message); });
   return { ctx, page };
@@ -210,8 +221,9 @@ const teacherForm = async (page, name) => { await chip(page, 'Profesores').click
 const file = (name = 'foto.png', mimeType = 'image/png') => ({ name, mimeType, buffer: PNG });
 
 try {
+  await scenario('signed out', async () => {
   // ── signed out ───────────────────────────────────────────────────────────────────────────────────────────────
-  let { ctx, page } = await site('/site/teachers');
+  ({ ctx, page } = await site('/site/teachers'));
   check('site: a teacher\'s bio from Company OS shows', (await frame(page, 'Clara Zuluaga').innerText()).includes('Guía con calma.'));
   const clara = frame(page, 'Clara Zuluaga').locator('img').first();
   check('site: a teacher\'s photo comes from /media/<id> and really loads', (await clara.getAttribute('src')) === `/media/${IDS.oldPhoto}` && await loaded(clara));
@@ -230,6 +242,8 @@ try {
   await ctx.close();
 
   // ── Class schedule › Teachers ────────────────────────────────────────────────────────────────────────────────
+  });
+  await scenario('teacher upload and save', async () => {
   reset();
   ({ ctx, page } = await signedIn('admin@example.test'));
   await go(page, '/admin/class-schedule');
@@ -260,6 +274,8 @@ try {
   await ctx.close();
 
   // Removing the photo deletes the file too.
+  });
+  await scenario('removing a photo', async () => {
   reset();
   ({ ctx, page } = await signedIn('admin@example.test'));
   await go(page, '/admin/class-schedule');
@@ -270,6 +286,8 @@ try {
   await ctx.close();
 
   // A stale form: someone else replaced the photo after this form opened.
+  });
+  await scenario('stale form', async () => {
   reset();
   ({ ctx, page } = await signedIn('admin@example.test'));
   await go(page, '/admin/class-schedule');
@@ -287,7 +305,43 @@ try {
   check('closing the form deletes its unsaved upload', await until(() => world.deletes.includes(world.uploads[0].id)));
   await ctx.close();
 
+  // Closing or switching the form during an upload: Save isn't stuck, and the late file doesn't stay published.
+  });
+  await scenario('switching teachers during an upload', async () => {
+  reset({ slowPut: 1500 });
+  ({ ctx, page } = await signedIn('admin@example.test'));
+  await go(page, '/admin/class-schedule');
+  await teacherForm(page, 'Clara Zuluaga');
+  await page.locator('.shared-image-field').getByRole('button', { name: 'Subir imagen' }).first().click();
+  await page.locator('.shared-image-field input[type=file]').setInputFiles(file());
+  await until(() => world.uploads.length > 0);
+  await page.locator('.card, [class*=card]').filter({ hasText: 'Nora Prueba' }).getByRole('button', { name: 'Editar' }).click();
+  // While the first upload is still running: the new form doesn't wait for a file that isn't its own.
+  const usable = await page.waitForFunction(() => { const b = [...document.querySelectorAll('button')].find((x) => x.textContent.trim() === 'Guardar'); return b && !b.disabled; }, null, { timeout: 1000 }).then(() => true, () => false);
+  const confirmed = world.log.some((l) => l.path.endsWith('/confirm'));
+  check('switching teachers during an upload: the new form\'s Save works, before that upload ends', usable && !confirmed, JSON.stringify({ usable, confirmed, form: await page.getByRole('button', { name: 'Guardar', exact: true }).count() }));
+  check('switching teachers during an upload: the late file is deleted, on nobody', await until(() => world.deletes.includes(world.uploads[0].id)) && world.coach.get('co_nora').data.photo === undefined);
+  await ctx.close();
+
   // An inactive teacher's photo isn't public: the preview says so, and it is no failed upload.
+  });
+  await scenario('cancelling during an upload', async () => {
+  reset({ slowPut: 1500 });
+  ({ ctx, page } = await signedIn('admin@example.test'));
+  await go(page, '/admin/class-schedule');
+  await teacherForm(page, 'Clara Zuluaga');
+  await page.locator('.shared-image-field').getByRole('button', { name: 'Subir imagen' }).first().click();
+  await page.locator('.shared-image-field input[type=file]').setInputFiles(file());
+  await until(() => world.uploads.length > 0);
+  await page.getByRole('button', { name: 'Cancelar' }).last().click();
+  await page.getByRole('button', { name: 'Nueva' }).click();
+  await page.getByLabel('Nombre').fill('Profe Nueva');
+  // A new teacher's form has no image field, so nothing else can tell it the upload stopped.
+  const usable = await page.waitForFunction(() => { const b = [...document.querySelectorAll('button')].find((x) => x.textContent.trim() === 'Guardar'); return b && !b.disabled; }, null, { timeout: 1000 }).then(() => true, () => false);
+  check('cancelling during an upload: a new teacher\'s Save isn\'t stuck', usable && !world.log.some((l) => l.path.endsWith('/confirm')));
+  check('cancelling during an upload: the late file is deleted', await until(() => world.deletes.includes(world.uploads[0].id)));
+  });
+  await scenario('inactive teacher', async () => {
   reset({ inactiveCoach: true });
   ({ ctx, page } = await signedIn('admin@example.test'));
   await go(page, '/admin/class-schedule');
@@ -298,6 +352,8 @@ try {
   await ctx.close();
 
   // ── Settings › Payments ──────────────────────────────────────────────────────────────────────────────────────
+  });
+  await scenario('QR upload', async () => {
   reset({ refuseDelete: true });
   ({ ctx, page } = await signedIn('admin@example.test'));
   await go(page, '/admin/settings/payments');
@@ -322,6 +378,8 @@ try {
   check('QR: so does a signed-in person, with no token on the request', await page.evaluate(async (u) => (await fetch(u)).status, qrUrl) === 200);
   await ctx.close();
 
+  });
+  await scenario('QR refused', async () => {
   reset({ refuseUpload: true });
   ({ ctx, page } = await signedIn('admin@example.test'));
   await go(page, '/admin/settings/payments');
@@ -333,13 +391,16 @@ try {
   await ctx.close();
 
   // ── The pay screen with a refused QR ─────────────────────────────────────────────────────────────────────────
+  });
+  await scenario('pay screen', async () => {
   reset({ qrRefused: true });
-  ({ ctx, page } = await signedIn('cliente@example.test'));
+  ({ ctx, page } = await signedIn('customer@example.test'));
   await go(page, '/app/pay/product/pack12');
   check('pay screen: a refused QR says so', await page.locator('[data-qr="unavailable"]').waitFor({ timeout: 8000 }).then(() => true, () => false));
   check('pay screen: the bank details stay', /BANCO FICTICIO/.test(await page.locator('[data-testid="bank-details"]').innerText()));
   check('pay screen: no broken image', await page.locator('[data-testid="bank-details"] img').count() === 0);
   await ctx.close();
+  });
 } finally {
   check('no page threw', errors.length === 0, errors.join(' | '));
   await browser.close();
