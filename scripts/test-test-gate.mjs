@@ -4,16 +4,19 @@
 // Needs `npm ci --prefix server`. Run: node scripts/test-test-gate.mjs
 import assert from 'node:assert/strict';
 import { createHash, createHmac } from 'node:crypto';
-import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, writeFile, rm } from 'node:fs/promises';
 import http from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createHandler, createHoyServer } from '../server/app.mjs';
 import { findSecrets } from '../server/check-bundle.mjs';
 import { loadConfig } from '../server/config.mjs';
+import * as realSignup from './lib/real-signup.mjs';
 
 // Dynamic, so that without the module each check below fails by name instead of the whole file failing to load.
 const gateModule = await import('../server/testGate.mjs').catch(() => ({}));
+const smokeModule = await import('./smoke-test-gate.mjs').catch(() => ({}));
+const { passGate, withGateCookie } = realSignup;
 
 const results = [];
 async function test(name, fn) {
@@ -43,6 +46,9 @@ const dist = join(root, 'dist');
 await mkdir(join(dist, 'assets'), { recursive: true });
 await writeFile(join(dist, 'index.html'), `<!doctype html><title>Hoy</title><script type="module" src="${APP_MARKER}"></script>`);
 await writeFile(join(dist, 'assets', 'index-abc123.js'), 'console.log("the app");\n');
+await writeFile(join(dist, 'logo.png'), 'not really a png');
+const SHA = 'a'.repeat(40);
+await writeFile(join(dist, 'release.json'), JSON.stringify({ version: '1.0.0', sourceCommit: SHA }));
 
 /** Every request that reached the fake Company OS. */
 const seen = [];
@@ -61,7 +67,8 @@ const BASE_ENV = {
   COMPANY_OS_TENANT: 'hoy-dev',
   CLERK_SECRET_KEY: 'sk_test_example',
   CLERK_PUBLISHABLE_KEY: 'pk_test_ZXhhbXBsZS5jbGVyay5hY2NvdW50cy5kZXYk',
-  RAILWAY_ENVIRONMENT_NAME: 'test',
+  // Not RAILWAY_ENVIRONMENT_NAME: on Railway a test site without its gate refuses to start (checked below).
+  HOY_ENV: 'test',
   DIST_DIR: dist,
 };
 const GATED = { TEST_GATE_PASSPHRASE: PASS, COOKIE_SIGNING_SECRET: SECRET, APP_URL: ORIGIN };
@@ -78,7 +85,7 @@ async function start(env = GATED, clock = { now: NOW }) {
   const server = createHoyServer(await createHandler(config, { verifySession: fakeVerify, log: () => {}, now: () => clock.now }));
   await new Promise((r) => server.listen(0, '127.0.0.1', r));
   servers.push(server);
-  return { clock, call: (method, path, headers = {}, body) => request(server, method, path, headers, body) };
+  return { clock, base: `http://127.0.0.1:${server.address().port}`, port: server.address().port, call: (method, path, headers = {}, body) => request(server, method, path, headers, body) };
 }
 
 function request(server, method, path, headers, body) {
@@ -256,6 +263,9 @@ await test('exempt paths are exact: their neighbours, other methods and traversa
     ['GET', '/webhooks/resend'], ['POST', '/webhooks/resend/'], ['POST', '/webhooks/resend/x'], ['POST', '/webhooks/other'],
     ['GET', '/health/'], ['GET', '/health/x'], ['GET', '/healthz'], ['GET', '//health'], ['GET', '/health/../app-config.json'],
     ['POST', '/webhooks/resend/../../api/cos/t/hoy-dev/me'], ['GET', '/%68ealth'], ['GET', '/email/logo.png'],
+    ['HEAD', '/'], ['OPTIONS', '/'], ['OPTIONS', '*'], ['OPTIONS', '/api/cos/t/hoy-dev/me'], ['OPTIONS', '/webhooks/resend'],
+    ['GET', '/api%2fcos'], ['GET', '/api%2fcos/t/hoy-dev/me'], ['GET', 'http://evil.example/health'], ['POST', 'http://evil.example/webhooks/resend'],
+    ['GET', 'http://evil.example/app-config.json'],
   ]) {
     const r = await app.call(method, path, method === 'POST' ? { 'svix-id': 'a', 'svix-timestamp': '1', 'svix-signature': 'v1,x' } : {});
     assert.equal(r.status, 401, `${method} ${path}`);
@@ -489,6 +499,149 @@ await test('a form that is not a form is a wrong try, not a crash', async () => 
   assert.equal((await app.call('POST', '/test-gate', { 'content-type': 'application/json', 'x-real-ip': IP }, '{"passphrase":"x"}')).status, 401);
   assert.equal((await app.call('POST', '/test-gate', { ...FORM, 'x-real-ip': IP }, '%%%&&&===')).status, 401);
   assert.equal((await app.call('POST', '/test-gate', { ...FORM, 'x-real-ip': IP }, '')).status, 401);
+});
+
+// ---------------------------------------------------------------------------------------------
+// A test site on Railway refuses to start without its gate
+// ---------------------------------------------------------------------------------------------
+for (const name of ['test', 'staging', 'pr-12']) {
+  await test(`startup on Railway environment ${name}: no passphrase or no secret refuses to start, naming what is missing, showing no value`, () => {
+    const { HOY_ENV: _, ...base } = BASE_ENV;
+    const env = { ...base, RAILWAY_ENVIRONMENT_NAME: name };
+    assert.throws(() => loadConfig(env), (e) => /TEST_GATE_PASSPHRASE/.test(e.message) && /COOKIE_SIGNING_SECRET/.test(e.message));
+    assert.throws(() => loadConfig({ ...env, TEST_GATE_PASSPHRASE: '' }), /TEST_GATE_PASSPHRASE/);
+    assert.throws(() => loadConfig({ ...env, COOKIE_SIGNING_SECRET: SECRET }), (e) => /TEST_GATE_PASSPHRASE/.test(e.message) && !e.message.includes(SECRET));
+    assert.throws(() => loadConfig({ ...env, TEST_GATE_PASSPHRASE: PASS }), (e) => /COOKIE_SIGNING_SECRET/.test(e.message) && !e.message.includes(PASS));
+    assert.equal(loadConfig({ ...env, TEST_GATE_PASSPHRASE: PASS, COOKIE_SIGNING_SECRET: SECRET }).testGate.on, true);
+  });
+}
+
+await test('startup: production needs no gate, and away from Railway nothing is required', () => {
+  const { HOY_ENV: _, ...base } = BASE_ENV;
+  assert.equal(loadConfig({ ...base, RAILWAY_ENVIRONMENT_NAME: 'production', APP_URL: ORIGIN }).testGate.on, false);
+  assert.equal(loadConfig(base).testGate.on, false, 'local');
+  assert.equal(loadConfig({ ...base, HOY_ENV: 'local' }).testGate.on, false);
+});
+
+// ---------------------------------------------------------------------------------------------
+// The post-deploy smoke check (scripts/smoke-test-gate.mjs), against the real gate
+// ---------------------------------------------------------------------------------------------
+const forward = (app, req, res) => {
+  const up = http.request({ host: '127.0.0.1', port: app.port, method: req.method, path: req.url, headers: { ...req.headers, 'x-real-ip': '198.51.100.50' }, agent: false }, (answer) => {
+    res.writeHead(answer.statusCode, answer.headers);
+    answer.pipe(res);
+  });
+  up.on('error', () => res.destroy());
+  req.pipe(up);
+};
+/** A fake Railway edge: forwards to the app, and overwrites X-Real-IP with what it saw, as the gate relies on. */
+async function edge(app, before) {
+  const server = http.createServer((req, res) => {
+    if (before?.(req, res)) return;
+    forward(app, req, res);
+  });
+  await new Promise((r) => server.listen(0, '127.0.0.1', r));
+  servers.push(server);
+  return `http://127.0.0.1:${server.address().port}`;
+}
+const smoke = (appUrl, sha = SHA, extra = {}) => smokeModule.smokeTestGate({ appUrl, sha, timeoutMs: 200, intervalMs: 20, ...extra });
+const failsWith = (promise, re) => assert.rejects(promise, (e) => { assert.match(e.message, re); return true; });
+
+await test('smoke: passes on a gated site behind an edge that overwrites X-Real-IP', async () => {
+  await smoke(await edge(await start()));
+});
+
+await test('smoke: fails, saying so, when the edge lets a written X-Real-IP through', async () => {
+  await failsWith(smoke((await start()).base), /X-Real-IP/);
+});
+
+await test('smoke: fails when the deployed commit never arrives, or the site never answers', async () => {
+  await failsWith(smoke(await edge(await start()), 'b'.repeat(40)), /commit/);
+  await failsWith(smoke('http://127.0.0.1:1'), /commit/);
+});
+
+await test('smoke: fails on an open site', async () => {
+  await failsWith(smoke(await edge(await start({}))), /401/);
+});
+
+await test('smoke: a commit that arrives late is waited for', async () => {
+  let polls = 0;
+  const front = await edge(await start(), (req, res) => {
+    if (req.url !== '/health' || ++polls >= 3) return false;
+    req.resume();
+    res.writeHead(200, { 'content-type': 'application/json' });
+    res.end(JSON.stringify({ ok: true, commit: 'c'.repeat(40) }));
+    return true;
+  });
+  await smoke(front, SHA, { timeoutMs: 2000 });
+  assert.equal(polls, 3);
+});
+
+await test('smoke: reads no passphrase, so it can\'t print one', async () => {
+  const source = await readFile(new URL('./smoke-test-gate.mjs', import.meta.url), 'utf8');
+  assert.ok(!/TEST_GATE_PASSPHRASE|COOKIE_SIGNING_SECRET/.test(source));
+});
+
+// ---------------------------------------------------------------------------------------------
+// The real-signup job's way past the gate (scripts/lib/real-signup.mjs), against the real gate
+// ---------------------------------------------------------------------------------------------
+await test('passGate: the right passphrase gives the cookie, and it opens the site for fetch', async () => {
+  const app = await start();
+  const cookie = await passGate({ baseUrl: app.base, passphrase: PASS });
+  assert.equal(cookie.name, COOKIE_NAME);
+  assert.match(cookie.value, /^\d+\.[0-9a-f]{64}$/);
+  assert.equal((await fetch(`${app.base}/app-config.json`)).status, 401);
+  assert.equal((await withGateCookie(cookie)(`${app.base}/app-config.json`, { headers: { accept: 'application/json' } })).status, 200);
+});
+
+await test('passGate: a wrong passphrase throws with the status, never the passphrase', async () => {
+  const app = await start();
+  await assert.rejects(passGate({ baseUrl: app.base, passphrase: 'a wrong passphrase' }), (e) => /401/.test(e.message) && !e.message.includes('a wrong passphrase'));
+});
+
+// ---------------------------------------------------------------------------------------------
+// Shared caches don't keep what is behind the gate
+// ---------------------------------------------------------------------------------------------
+await test('static files: private while the gate is on, public (as today) while it is off', async () => {
+  const gated = await start();
+  const cookie = cookieFor();
+  assert.equal((await gated.call('GET', '/assets/index-abc123.js', { cookie })).headers['cache-control'], 'private, max-age=31536000, immutable');
+  assert.equal((await gated.call('GET', '/logo.png', { cookie })).headers['cache-control'], 'private, max-age=300');
+  assert.equal((await gated.call('GET', '/', { cookie })).headers['cache-control'], 'no-cache');
+  const open = await start({});
+  assert.equal((await open.call('GET', '/assets/index-abc123.js')).headers['cache-control'], 'public, max-age=31536000, immutable');
+  assert.equal((await open.call('GET', '/logo.png')).headers['cache-control'], 'public, max-age=300');
+  assert.equal((await open.call('GET', '/')).headers['cache-control'], 'no-cache');
+  const production = await start({ ...GATED, RAILWAY_ENVIRONMENT_NAME: 'production' });
+  assert.equal((await production.call('GET', '/logo.png')).headers['cache-control'], 'public, max-age=300');
+});
+
+// ---------------------------------------------------------------------------------------------
+// IPv6: one customer holds a whole /64
+// ---------------------------------------------------------------------------------------------
+await test('IPv6: wrong tries count per /64: rotating inside it gets no more, another /64 is unaffected', async () => {
+  const app = await start();
+  for (let i = 1; i <= 5; i++) assert.equal((await post(app, { passphrase: 'nope' }, `2001:db8:1:2::${i}`)).status, 401, `try ${i}`);
+  assert.equal((await post(app, { passphrase: PASS }, '2001:db8:1:2:ffff:ffff:ffff:ffff')).status, 429);
+  assert.equal((await post(app, { passphrase: PASS }, '2001:0DB8:0001:0002::abcd')).status, 429, 'written another way, the same /64');
+  assert.equal((await post(app, { passphrase: PASS }, '2001:db8:1:3::1')).status, 303);
+});
+
+await test('addressKey: the /64 for IPv6, the address itself for IPv4 and anything else', () => {
+  const { addressKey } = gateModule;
+  assert.equal(addressKey('2001:db8:1:2:3:4:5:6'), addressKey('2001:db8:1:2::'));
+  assert.equal(addressKey('2001:DB8:0:2::1'), addressKey('2001:db8::2:0:0:0:9'), 'the :: may sit anywhere');
+  assert.notEqual(addressKey('2001:db8:1:2::1'), addressKey('2001:db8:1:3::1'));
+  assert.notEqual(addressKey('1::2:3:4:5:6:7'), addressKey('1:2::3:4:5:6'), 'what :: stands for counts');
+  assert.equal(addressKey('fe80::1%eth0'), addressKey('fe80::2'));
+  assert.equal(addressKey('64:ff9b::192.0.2.1'), addressKey('64:ff9b::198.51.100.7'));
+  assert.equal(addressKey('203.0.113.7'), '203.0.113.7');
+  assert.equal(addressKey('::ffff:203.0.113.7'), '203.0.113.7', 'an IPv4 address written as IPv6 is that IPv4 address');
+  assert.notEqual(addressKey('203.0.113.7'), addressKey('203.0.113.8'));
+  assert.equal(addressKey('x'.repeat(500)).length, 64, 'a long value is cut');
+  assert.equal(addressKey('not an address'), 'not an address');
+  assert.equal(addressKey(''), 'unknown');
+  assert.equal(addressKey(undefined), 'unknown');
 });
 
 // ---------------------------------------------------------------------------------------------

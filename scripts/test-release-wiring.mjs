@@ -37,7 +37,7 @@ const prodBuild = steps.findIndex((s) => /npm run build:production/.test(s));
 for (const s of ['test-companyos-provider', 'test-admin-activity', 'test-real-signup', 'test-move-private-settings', 'test-test-gate', 'test-release-wiring']) {
   check(`L7 CI runs ${s} (fake-clerk job)`, at(s) >= 0);
 }
-for (const s of ['test-website-signed-out-live', 'test-admin-activity-ui']) {
+for (const s of ['test-website-signed-out-live', 'test-admin-activity-ui', 'test-test-gate-ui']) {
   check(`L7 CI runs ${s} on the production build (QA_PROD_DIST)`, at(s) > prodBuild && /QA_PROD_DIST/.test(stepText(s)), stepText(s));
 }
 for (const s of ['test-launch-website-ui', 'test-launch-website-content']) {

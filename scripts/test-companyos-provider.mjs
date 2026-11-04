@@ -486,6 +486,54 @@ try {
       assert.deepEqual(seen, ['Bearer tok-old'], 'a normal answer: no retry'); assert.equal(told, 0);
     } finally { m.setCompanyOSUnauthorizedHandler(null); }
   });
+  await test('transport: the test gate\'s 401 is not a dead session: the page reloads, guarded against a loop, and the session is not told', async () => {
+    const store = new Map();
+    const fakeStorage = { getItem: (k) => store.get(k) ?? null, setItem: (k, v) => { store.set(k, String(v)); }, removeItem: (k) => { store.delete(k); } };
+    let reloads = 0, told = 0, answer = { error: 'test_gate' };
+    Object.defineProperty(globalThis, 'sessionStorage', { value: fakeStorage, configurable: true, writable: true });
+    Object.defineProperty(globalThis, 'location', { value: { reload: () => { reloads++; } }, configurable: true, writable: true });
+    const realNow = Date.now;
+    const fetch = async (url) => {
+      if (String(url).endsWith('app-config.json')) return new Response(JSON.stringify({ tenant: 'hoy', apiBase: '/api/cos' }), { status: 200 });
+      return new Response(JSON.stringify(answer), { status: 401, headers: { 'content-type': 'application/json' } });
+    };
+    const getToken = async () => 'tok';
+    m.setCompanyOSUnauthorizedHandler(() => { told++; });
+    try {
+      const p = new CompanyOSProvider({ fetch, getToken, retryDelayMs: 1, sleep: async () => {} });
+      await assert.rejects(p.request('POST', '/query', { entity: 'occurrence' }), (e) => e.code === 'test_gate' && e.status === 401);
+      assert.equal(reloads, 1, 'the page reloads, so the server shows the passphrase page'); assert.equal(told, 0, 'the session is not dead');
+      await assert.rejects(p.request('POST', '/query', { entity: 'occurrence' }), (e) => e.code === 'test_gate');
+      assert.equal(reloads, 1, 'a second answer right after does not reload again (the loop guard)'); assert.equal(told, 0);
+      Date.now = () => realNow() + 61_000;
+      await assert.rejects(p.request('POST', '/query', { entity: 'occurrence' }), (e) => e.code === 'test_gate');
+      assert.equal(reloads, 2, 'a minute later it may reload again');
+      const signedOut = new CompanyOSProvider({ fetch, getToken: async () => null, retryDelayMs: 1, sleep: async () => {} });
+      Date.now = () => realNow() + 122_000;
+      await assert.rejects(signedOut.request('POST', '/query', { entity: 'occurrence' }), (e) => e.code === 'test_gate');
+      assert.equal(reloads, 3, 'signed out too: the website\'s reads meet the same gate');
+      const transport = new m.Transport({ fetch, config: { tenant: 'hoy', apiBase: '/api/cos' }, getToken, retryDelayMs: 1, sleep: async () => {} });
+      Date.now = () => realNow() + 183_000;
+      assert.equal((await transport.authorizedGet('/files/x')).status, 401);
+      assert.equal(reloads, 4, 'a stored file\'s GET meets it too'); assert.equal(told, 0);
+      answer = { error: 'unauthorized' };
+      Date.now = () => realNow() + 244_000;
+      await assert.rejects(p.request('POST', '/query', { entity: 'occurrence' }), (e) => e.code === 'unauthorized');
+      assert.equal(told, 1, 'a refused session is still a dead session'); assert.equal(reloads, 4, 'and does not reload');
+      assert.equal((await transport.authorizedGet('/files/x')).status, 401);
+      assert.equal(told, 2); assert.equal(reloads, 4);
+      answer = { error: 'test_gate' }; told = 0;
+      delete globalThis.sessionStorage;
+      Date.now = () => realNow() + 305_000;
+      await assert.rejects(p.request('POST', '/query', { entity: 'occurrence' }), (e) => e.code === 'test_gate');
+      assert.equal(reloads, 4, 'no storage, no guard: it does not risk a loop'); assert.equal(told, 0);
+      assert.ok(hasRefusalCopy('test_gate'), 'the code has copy');
+    } finally {
+      Date.now = realNow;
+      m.setCompanyOSUnauthorizedHandler(null);
+      delete globalThis.sessionStorage; delete globalThis.location;
+    }
+  });
   await test('transport: 502 invitation_failed is the API\'s answer (kept, not retried, not ambiguous)', async () => {
     let n = 0;
     const fetch = async (url) => {

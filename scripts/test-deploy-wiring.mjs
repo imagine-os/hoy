@@ -148,4 +148,53 @@ check('the deploy gate (deploy-test checks job) runs this check', readFileSync('
   check('the app\'s calls to its own server send same-origin cookies (no credentials: omit)', omits.length === 0, omits.join(', '));
 }
 
+// ── The gate, second pass (review round 1 of the test-gate lane) ──────────────────────────────────────────────
+{
+  const deployTest = readFileSync('.github/workflows/deploy-test.yml', 'utf8');
+  const deployProd = readFileSync('.github/workflows/deploy-prod.yml', 'utf8');
+  const authChecks = readFileSync('.github/workflows/auth-checks.yml', 'utf8');
+
+  // A non-production Railway environment refuses to start without the gate, so only these two may run this server.
+  const envs = readdirSync('.github/workflows').flatMap((f) => [...readFileSync('.github/workflows/' + f, 'utf8').matchAll(/^\s*RAILWAY_ENV:\s*(\S+)/gm)].map((m) => m[1])).sort();
+  check('this server deploys to two Railway environments only: test and production', JSON.stringify(envs) === '["production","test"]', envs.join(', '));
+  check('no Railway source, so Railway opens no pull-request environment for it', /source:\s*empty\(\)/.test(iac));
+
+  const job = deployTest.slice(deployTest.indexOf('\n  deploy:'));
+  const steps = job.split('\n      - ');
+  const last = steps[steps.length - 1];
+  check('deploy-test: the smoke check is the last step', /node scripts\/smoke-test-gate\.mjs/.test(last), last.slice(0, 120));
+  check('deploy-test: the smoke check gets the address from the environment\'s variable', /APP_URL:\s*\$\{\{\s*vars\.APP_URL\s*\}\}/.test(last));
+  check('deploy-test: the smoke check is never given the passphrase or the signing secret', !/TEST_GATE_PASSPHRASE|COOKIE_SIGNING_SECRET/.test(last));
+  check('deploy-test: a failed smoke check fails the run', !/continue-on-error/.test(last) && !/\|\|\s*true/.test(last));
+  const smoke = existsSync('scripts/smoke-test-gate.mjs') ? readFileSync('scripts/smoke-test-gate.mjs', 'utf8') : '';
+  check('smoke check: polls /health for the deployed commit', smoke.includes('/health') && smoke.includes('commit') && smoke.includes('GITHUB_SHA'));
+  check('smoke check: sends a different X-Real-IP with each wrong try', /x-real-ip/i.test(smoke));
+  check('smoke check: failing exits non-zero with a workflow error', /::error::/.test(smoke) && /process\.exit\(1\)|process\.exitCode = 1/.test(smoke));
+
+  const signup = authChecks.slice(authChecks.indexOf('\n  real-signup:'));
+  check('real-signup job: gets TEST_GATE_PASSPHRASE from the test environment\'s secrets', /TEST_GATE_PASSPHRASE:\s*\$\{\{\s*secrets\.TEST_GATE_PASSPHRASE\s*\}\}/.test(signup));
+  const realClerk = readFileSync('scripts/test-auth-real-clerk.mjs', 'utf8');
+  const passedAt = realClerk.indexOf('await passGate('), configAt = realClerk.search(/await fetch\(.{0,4}BASE.{0,2}\/app-config\.json/);
+  check('test-auth-real-clerk: passes the gate before it reads /app-config.json', passedAt > 0 && configAt > 0 && passedAt < configAt);
+  check('test-auth-real-clerk: only when the secret is set', /if \(GATE_PASSPHRASE\)[^\n]*passGate/.test(realClerk));
+  check('test-auth-real-clerk: the browser and the clean-up client carry the cookie', /ctx\.addCookies\(/.test(realClerk) && /cosOver\(\{[^\n]*fetchImpl:/.test(realClerk));
+  check('test-auth-real-clerk: the fake mode never sends it', /GATE_PASSPHRASE = REAL && process\.env\.TEST_GATE_PASSPHRASE/.test(realClerk));
+
+  for (const f of ['src/data/companyos/transport.ts', 'src/auth/cosRequest.ts', 'src/auth/ProductionSession.tsx', 'src/modules/docs/privateDocs.ts']) {
+    check(f + ' tells the gate\'s 401 from a dead session', existsSync(f) && readFileSync(f, 'utf8').includes('reloadIfTestGate('));
+  }
+
+  const header = deployProd.slice(0, deployProd.indexOf('\nname:'));
+  check('deploy-prod header: the never row comes after the variables', header.indexOf('never      TEST_GATE_PASSPHRASE') > header.indexOf('RAILWAY_REGION'));
+  check('deploy-prod: its leftovers and summary know they are on production', /deploy-switches\.mjs --leftovers --production/.test(deployProd) && /deploy-switches\.mjs --production/.test(deployProd));
+  check('deploy-test: its leftovers do not say production', !/--production/.test(deployTest));
+  const stray = (args, vars) => spawnSync(process.execPath, [SCRIPT, ...args], { input: JSON.stringify(vars), encoding: 'utf8' });
+  const onProd = stray(['--leftovers', '--production'], { SITE_LIVE: 'true', TEST_GATE_PASSPHRASE: 'the secret value' });
+  check('--leftovers --production warns about a stray TEST_GATE_PASSPHRASE, value never printed', onProd.status === 0 && /^::warning::.*TEST_GATE_PASSPHRASE/m.test(onProd.stdout) && !onProd.stdout.includes('the secret value'), onProd.stdout);
+  check('--leftovers --production warns about an empty one too', /TEST_GATE_PASSPHRASE/.test(stray(['--leftovers', '--production'], { TEST_GATE_PASSPHRASE: '' }).stdout));
+  check('--leftovers --production stays quiet without one', stray(['--leftovers', '--production'], { SITE_LIVE: 'true' }).stdout.trim() === '');
+  check('--leftovers on test stays quiet about it', !/TEST_GATE_PASSPHRASE/.test(stray(['--leftovers'], { TEST_GATE_PASSPHRASE: 'x' }).stdout));
+  check('the production summary warns too', /Warning:.*TEST_GATE_PASSPHRASE/.test(stray(['--production'], { TEST_GATE_PASSPHRASE: 'x' }).stdout));
+}
+
 done();

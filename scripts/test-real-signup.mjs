@@ -8,7 +8,10 @@
 //      COS_LOCAL_API=http://localhost:4105 COS_LOCAL_TENANT=hoy-e COS_LOCAL_ADMIN_EMAIL=admin-e@example.test node scripts/test-real-signup.mjs
 import assert from 'node:assert/strict';
 import { createHmac, randomUUID } from 'node:crypto';
+import * as realSignup from './lib/real-signup.mjs';
 import { QA_EMAIL, checkTestSite, cosOver, findSignup, realApiOptions, removeSignup, removeStaleSignups, timeOf } from './lib/real-signup.mjs';
+
+const { passGate, withGateCookie } = realSignup;
 
 let passed = 0, failed = 0, skipped = 0;
 const row = async (name, fn) => {
@@ -16,6 +19,35 @@ const row = async (name, fn) => {
   catch (e) { failed++; console.log(`FAIL ${name}\n     ${String(e?.message ?? e).split('\n').slice(0, 4).join('\n     ')}`); }
 };
 const throwsWith = (fn, re) => assert.throws(fn, (e) => re.test(e.message), String(re));
+
+// ── The test site's passphrase gate (Company OS playbook rule D5) ─────────────────────────────────────────────────
+const SECRET_PHRASE = 'correct horse battery';
+const gateAnswer = (status, cookies = []) => ({ status, headers: { getSetCookie: () => cookies } });
+await row('RS-G1 passGate posts the passphrase as a form, follows no redirect, and keeps the cookie from the 303', async () => {
+  let asked;
+  const cookie = await passGate({ baseUrl: 'https://test.example', passphrase: SECRET_PHRASE, fetchImpl: async (url, init) => { asked = { url, init }; return gateAnswer(303, ['hoy_test_gate=123.abc; Max-Age=2592000; Path=/; HttpOnly; Secure; SameSite=Lax']); } });
+  assert.deepEqual(cookie, { name: 'hoy_test_gate', value: '123.abc' });
+  assert.equal(asked.url, 'https://test.example/test-gate');
+  assert.equal(asked.init.method, 'POST');
+  assert.equal(asked.init.redirect, 'manual');
+  assert.equal(new URLSearchParams(asked.init.body).get('passphrase'), SECRET_PHRASE);
+  assert.match(asked.init.headers['content-type'], /x-www-form-urlencoded/);
+});
+await row('RS-G2 passGate refuses anything but a 303 with a cookie, and never says the passphrase', async () => {
+  for (const answer of [gateAnswer(200), gateAnswer(401), gateAnswer(429), gateAnswer(503), gateAnswer(303), gateAnswer(303, ['nonsense'])]) {
+    await assert.rejects(passGate({ baseUrl: 'https://test.example', passphrase: SECRET_PHRASE, fetchImpl: async () => answer }), (e) => !e.message.includes(SECRET_PHRASE) && /test gate/i.test(e.message));
+  }
+});
+await row('RS-G3 withGateCookie adds the cookie and keeps the rest of the call; no cookie, the call is untouched', async () => {
+  let asked;
+  const base = async (url, init) => { asked = { url, init }; return 'answer'; };
+  const open = withGateCookie({ name: 'hoy_test_gate', value: '123.abc' }, base);
+  assert.equal(await open('https://x/a', { method: 'POST', headers: { accept: 'application/json' }, body: '{}' }), 'answer');
+  assert.deepEqual(asked, { url: 'https://x/a', init: { method: 'POST', headers: { accept: 'application/json', cookie: 'hoy_test_gate=123.abc' }, body: '{}' } });
+  await open('https://x/b');
+  assert.deepEqual(asked.init.headers, { cookie: 'hoy_test_gate=123.abc' });
+  assert.equal(withGateCookie(null, base), base);
+});
 
 // ── 1. options ───────────────────────────────────────────────────────────────────────────────────────────────────
 const ENV = { HOY_TEST_URL: 'https://test-hoy.example.com', HOY_CLEANUP_ADMIN_EMAIL: 'Admin@Example.com' };
