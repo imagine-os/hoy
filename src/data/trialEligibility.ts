@@ -82,7 +82,9 @@ type TrialPlan={id:string;slug?:string|null;kind?:unknown};
  */
 export function assessLiveTrial(input:{ledger:LedgerWithSource[];payments:PaymentRow[];plans:TrialPlan[];excludePaymentId?:string}):TrialAssessment{
  const trialProducts=new Set(input.plans.filter(p=>p.kind==='trial'||p.slug==='trial').map(p=>p.id));
- const lot=input.ledger.some(r=>r.delta>0&&!r.purchase_ledger_id&&(r.lot_source==='trial'||(!!r.plan_id&&trialProducts.has(r.plan_id))));
+ // A voided payment took its lot back (Hoy void rules): a wrongly recorded trial doesn't stop that person buying one.
+ const voided=new Set(input.payments.filter(p=>p.status==='voided').map(p=>p.id));
+ const lot=input.ledger.some(r=>r.delta>0&&!r.purchase_ledger_id&&!(r.payment_id&&voided.has(r.payment_id))&&(r.lot_source==='trial'||(!!r.plan_id&&trialProducts.has(r.plan_id))));
  const paid=input.payments.some(p=>p.id!==input.excludePaymentId&&!!p.plan_id&&trialProducts.has(p.plan_id)&&(p.status==='pending'||p.status==='approved'));
  return lot||paid?{status:'trial_used',reasons:[lot?'trial_lot':'trial_payment']}:{status:'eligible',reasons:[]};
 }

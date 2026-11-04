@@ -44,6 +44,12 @@ export const CONTRACT_REFUSALS = {
   audience_not_allowed: { es: 'Este precio es solo para afiliados. Pregunta en recepción.', en: 'This price is for affiliates only. Ask at the front desk.' },
   amount_mismatch: { es: 'El monto no coincide con el precio. Escribe el motivo de la diferencia para aprobarlo.', en: 'The amount does not match the price. Write the reason for the difference to approve it.' },
   invalid_amount: { es: 'El monto no es válido. Usa un número entero mayor que cero.', en: 'The amount is not valid. Use a whole number above zero.' },
+  // The payment void (credits and payments void settings).
+  void_classes_used: { es: 'No se puede anular: ya se usó alguna de las clases de este pago.', en: 'This payment cannot be voided: some of its classes have been used.' },
+  void_booking_active: { es: 'No se puede anular: la reserva que este pago cubrió sigue activa. Cancélala primero.', en: 'This payment cannot be voided: the booking it paid for is still active. Cancel it first.' },
+  void_gift_issued: { es: 'No se puede anular: este pago emitió un bono de regalo.', en: 'This payment cannot be voided: it issued a gift voucher.' },
+  payment_undeletable: { es: 'Un pago aprobado o anulado no se puede eliminar.', en: 'An approved or voided payment cannot be deleted.' },
+  lot_voided: { es: 'Este paquete se anuló y ya no se puede cambiar.', en: 'This pack was voided and can no longer be changed.' },
   invalid_status_transition: { es: 'Este pago ya no se puede cambiar así. Actualiza la página para ver su estado.', en: 'This payment can no longer be changed this way. Refresh to see its current status.' },
   refunds_disabled: { es: 'El estudio no hace reembolsos desde la app.', en: 'The studio does not issue refunds from the app.' },
   duplicate_provider_ref: { es: 'Ya hay un pago con esa referencia.', en: 'There is already a payment with that reference.' },

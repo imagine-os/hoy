@@ -940,6 +940,7 @@ export const strings: StringTable = {
   'admin.finance.status.pending': { es: 'Pendiente', en: 'Pending' },
   'admin.finance.status.declined': { es: 'Rechazado', en: 'Declined' },
   'admin.finance.status.refunded': { es: 'Reembolsado', en: 'Refunded' },
+  'admin.finance.status.voided': { es: 'Anulado', en: 'Voided' },
   'admin.finance.product.special': { es: 'Especiales (sin plan)', en: 'Specials (no plan)' },
   'admin.finance.provider.wompi': { es: 'Wompi', en: 'Wompi' },
   'admin.finance.provider.manual': { es: 'manual', en: 'manual' },

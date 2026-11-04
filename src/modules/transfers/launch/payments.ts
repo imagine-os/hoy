@@ -14,13 +14,15 @@ export interface PaymentData {
   for_entity?: string | null; for_id?: string | null; price_override_reason?: string | null;
   /** Set by the server when the payment is approved (payments 2.7.0, CO-6): who approved it and when. */
   approved_by?: string | null; approved_at?: string | null;
+  /** Why it was voided (or declined); fixed once written. */
+  status_reason?: string | null;
 }
 export type PaymentRec = CosRecord<PaymentData>;
 export interface BookingData { person?: string; occurrence?: string; status?: string; entitlement?: string; payment_method?: string | null; hold_until?: string | null; hold_frozen_at?: string | null; hold_left_minutes?: number | null; policy_hold_minutes?: number | null; start?: string | null }
 export type BookingRec = CosRecord<BookingData>;
 export interface FileData { owner_entity?: string; owner_id?: string; kind?: string; status?: string; mime?: string }
 export type FileRec = CosRecord<FileData>;
-export interface InvoiceData { kind?: string; number?: number; payment?: string; person?: string; product?: string; total?: number; issued_at?: string }
+export interface InvoiceData { kind?: string; number?: number; payment?: string; person?: string; product?: string; total?: number; issued_at?: string; voided_at?: string | null; void_reason?: string | null }
 export type InvoiceRec = CosRecord<InvoiceData>;
 
 // ── PG-02 · receipt image ────────────────────────────────────────────────────────────────────────────────────

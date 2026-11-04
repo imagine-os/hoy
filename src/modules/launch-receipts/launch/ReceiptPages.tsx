@@ -11,6 +11,8 @@ import { memberNames, myPerson, queryAll, refusalKey, type CosPort } from '../..
 import type { InvoiceRec, PaymentRec } from '../../transfers/launch/payments';
 import type { ProductData } from '../../products/launch/productMaster';
 import { useLoad } from '../../transfers/launch/useCos';
+import { VoidPaymentAction } from '../../transfers/launch/VoidPaymentAction';
+import { receiptVoid, showVoidReason } from '../../transfers/launch/voidPayment';
 
 export interface ReceiptView { payment: PaymentRec; invoice: InvoiceRec | null; product: string | null; customer: string | null; recorder: string | null }
 
@@ -32,13 +34,19 @@ export async function readReceipt(cos: CosPort, paymentId: string, staff: boolea
   return { payment, invoice, product, customer: person, recorder: payment.createdBy ? members.get(payment.createdBy) ?? null : null };
 }
 
-export function NotaDeCompra({ view }: { view: ReceiptView }) {
+/** The customer's list opens a note for a confirmed payment, and for a voided one so it can be read as voided. */
+export const receiptOpens = (status: unknown): boolean => status === 'approved' || status === 'voided';
+
+export function NotaDeCompra({ view, staff = false }: { view: ReceiptView; staff?: boolean }) {
   const { t, lang } = useI18n();
   const { payment, invoice } = view;
-  if (payment.data.status !== 'approved') return <Notice>{t('payLaunch.receipt.pending')}</Notice>;
-  if (!invoice) return <Notice tone="warn">{t('payLaunch.receipt.notIssued')}</Notice>;
+  const { voided, reason } = receiptVoid(payment.data, invoice?.data);
+  const voidMark = voided && <div className="stack-sm" data-testid="receipt-voided"><strong>{t('payLaunch.receipt.voided')}</strong>{showVoidReason(staff) && reason && <span>{t('payLaunch.receipt.voidedReason')}: {reason}</span>}</div>;
+  if (!voided && payment.data.status !== 'approved') return <Notice>{t('payLaunch.receipt.pending')}</Notice>;
+  if (!invoice) return voided ? <Notice tone="warn">{voidMark}</Notice> : <Notice tone="warn">{t('payLaunch.receipt.notIssued')}</Notice>;
   return <Card data-launch-receipt>
     <div className="stack-sm receipt" data-testid="nota-de-compra">
+      {voidMark}
       <strong>{tenant.name}</strong>
       <h2>{t('payLaunch.receipt.number', { number: invoice.data.number ?? '' })}</h2>
       <span className="small">{t('payLaunch.receipt.noVat')}</span>
@@ -61,7 +69,8 @@ function ReceiptPage({ staff }: { staff: boolean }) {
   if (state.status === 'error') return <EmptyState tone="error" title={t(refusalKey(state.code), { code: state.code })} action={<Button onClick={reload}>{t('payLaunch.retry')}</Button>} />;
   return <div className="stack">
     <div className="page-head"><h1>{t('payLaunch.receipt.title')}</h1><Button variant="secondary" onClick={() => window.print()}>{t('payLaunch.receipt.print')}</Button></div>
-    <NotaDeCompra view={state.value} />
+    <NotaDeCompra view={state.value} staff={staff} />
+    {staff && <VoidPaymentAction paymentId={paymentId} status={state.value.payment.data.status} onDone={reload} />}
   </div>;
 }
 export const CustomerReceiptPage = () => <ReceiptPage staff={false} />;
@@ -83,7 +92,7 @@ export function MyReceiptsPage() {
       <div className="row wrap" style={{ justifyContent: 'space-between' }}>
         <div className="stack-sm"><span>{p.data.concept ?? ''}</span><span className="small">{p.data.date} · {formatCOP(p.data.amount, lang)}</span></div>
         <div className="row"><Badge tone={p.data.status === 'approved' ? 'success' : p.data.status === 'pending' ? 'warn' : 'neutral'}>{t(`payLaunch.status.${p.data.status ?? 'approved'}`)}</Badge>
-          {p.data.status === 'approved' && <Link className="btn btn-secondary" to={`/app/receipts/${p.id}`}>{t('payLaunch.receipt.title')}</Link>}</div>
+          {receiptOpens(p.data.status) && <Link className="btn btn-secondary" to={`/app/receipts/${p.id}`}>{t('payLaunch.receipt.title')}</Link>}</div>
       </div>
     </Card>)}
   </div>;

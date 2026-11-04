@@ -29,7 +29,7 @@ const ENTRIES = {
   refusals: "export { refusalCopy, hasRefusalCopy, GENERIC_REFUSAL } from './src/data/companyos/refusals'; export { refusalKey } from './src/modules/transfers/launch/cos'; export { payLaunchStrings } from './src/modules/transfers/launch/strings';",
   cos: "export * from './src/modules/transfers/launch/cos'; export { paymentsReport } from './src/modules/transfers/launch/payments';",
   trial: "export { assessLiveTrial } from './src/data/trialEligibility';",
-  identity: "export { isSuperAdminMe, roleFromMe } from './src/auth/companyOsIdentity';",
+  identity: "export { isSuperAdminMe, roleFromMe, superAdminFlag } from './src/auth/companyOsIdentity';",
   admin: "export { strings } from './src/modules/admin/strings';",
 };
 async function load(contents) {
@@ -53,6 +53,7 @@ async function load(contents) {
 const m = Object.fromEntries(await Promise.all(Object.entries(ENTRIES).map(async ([k, c]) => [k, await load(c)])));
 const need = (k) => { if (m[k].__error) throw new Error(`${k} does not build: ${m[k].__error}`); return m[k]; };
 const codeOf = async (p) => { try { await p; return 'ok'; } catch (e) { return e?.code ?? e?.message ?? String(e); } };
+const src = (p) => readFile(new URL(`../${p}`, import.meta.url), 'utf8');
 const syncCode = (f) => { try { f(); return 'ok'; } catch (e) { return e?.code ?? e?.message; } };
 
 const USERS = { usr_sa: { role: 'super_admin', name: 'Ana Admin' }, usr_desk: { role: 'front_desk', name: 'Diego Desk' } };
@@ -126,7 +127,7 @@ for (const code of CODES) {
     for (const line of [es, en]) { assert.ok(line.length > 15); assert.ok(!line.includes(code)); assert.ok(!line.includes(GENERIC_REFUSAL.es.slice(0, 20))); assert.ok(!line.includes(GENERIC_REFUSAL.en.slice(0, 20))); }
   });
 }
-for (const code of ['payment_approved_undeletable', 'lot_voided', 'invalid_status_transition', 'reason_required', 'write_forbidden']) {
+for (const code of ['payment_undeletable', 'lot_voided', 'invalid_status_transition', 'reason_required', 'write_forbidden']) {
   await test(`${code}: is in the code→copy table in both languages`, () => {
     const { refusalCopy, hasRefusalCopy } = need('refusals');
     assert.ok(hasRefusalCopy(code)); assert.notEqual(refusalCopy(code, 'es'), refusalCopy(code, 'en')); assert.ok(!refusalCopy(code, 'es').includes(code));
@@ -153,15 +154,21 @@ await test('forbidden and write_forbidden (not Super Admin): say so in words', (
 // ── Who gets the action ─────────────────────────────────────────────────────────────────────────────────────
 await test('canVoidPayment: Super Admin, connected, on an approved payment; nothing else', () => {
   const { canVoidPayment } = need('void');
-  assert.equal(canVoidPayment({ isSuperAdmin: true, connected: true, status: 'approved' }), true);
-  assert.equal(canVoidPayment({ isSuperAdmin: false, connected: true, status: 'approved' }), false, 'any other role');
-  assert.equal(canVoidPayment({ isSuperAdmin: true, connected: false, status: 'approved' }), false, 'the review build');
-  for (const status of ['pending', 'declined', 'refunded', 'voided', undefined, null, '']) assert.equal(canVoidPayment({ isSuperAdmin: true, connected: true, status }), false, String(status));
+  assert.equal(canVoidPayment({ superAdmin: true, connected: true, status: 'approved' }), true);
+  assert.equal(canVoidPayment({ superAdmin: false, connected: true, status: 'approved' }), false, 'any other role');
+  assert.equal(canVoidPayment({ superAdmin: true, connected: false, status: 'approved' }), false, 'the review build');
+  for (const status of ['pending', 'declined', 'refunded', 'voided', undefined, null, '']) assert.equal(canVoidPayment({ superAdmin: true, connected: true, status }), false, String(status));
 });
-await test('/me: an Administration login that also holds Super Admin resolves to admin and still carries the flag; Administration alone does not', () => {
-  const { roleFromMe, isSuperAdminMe } = need('identity');
-  const both = { roleKeys: ['administrator', 'super_admin'], isSuperAdmin: true }, alone = { roleKeys: ['administrator'], isSuperAdmin: false };
-  assert.equal(isSuperAdminMe(both), true); assert.equal(isSuperAdminMe(alone), false); assert.equal(roleFromMe(alone), 'admin');
+await test('/me: an Administration login that also holds Super Admin resolves to admin, and has the flag though isSuperAdmin is false for it', () => {
+  const { roleFromMe, isSuperAdminMe, superAdminFlag } = need('identity');
+  const both = { roleKeys: ['administrator', 'super_admin'], isSuperAdmin: true }, alone = { roleKeys: ['administrator'], isSuperAdmin: false }, pure = { roleKeys: ['super_admin'], isSuperAdmin: true };
+  assert.equal(roleFromMe(both), 'admin'); assert.equal(isSuperAdminMe(both), false, 'why the session\'s isSuperAdmin cannot gate this');
+  assert.equal(superAdminFlag(both, null), true); assert.equal(superAdminFlag(pure, null), true); assert.equal(superAdminFlag(alone, null), false);
+  assert.equal(superAdminFlag(both, 'front_desk'), false, 'viewing as another role'); assert.equal(superAdminFlag(pure, 'customer'), false);
+});
+await test('the session carries the flag; the customer area\'s session drops it', async () => {
+  assert.match(await src('src/auth/ProductionSession.tsx'), /meSuperAdmin: superAdminFlag\(info, activeViewAs\)/);
+  assert.match(await src('src/auth/RequireRole.tsx'), /role: 'customer', isSuperAdmin: false, meSuperAdmin: false/);
 });
 const session = (over) => ({ status: 'ready', signedIn: true, role: 'admin', isSuperAdmin: false, viewAs: null, viewAsPerson: null, caps: [], can: () => true, hasRole: () => true, user: { id: 'u', name: 'U' }, ...over });
 const renderAction = (s, status, connected = true) => {
@@ -170,18 +177,18 @@ const renderAction = (s, status, connected = true) => {
   return a.renderToStaticMarkup(h(a.I18nProvider, { tables: [a.payLaunchStrings] }, h(a.DataProviderRoot, { provider }, h(a.SessionContext.Provider, { value: session(s) }, h(a.VoidPaymentAction, { paymentId: 'pay_1', status })))));
 };
 await test('the action renders for a Super Admin on an approved payment (even though the session\'s role resolves to admin)', () => {
-  assert.match(renderAction({ isSuperAdmin: true, role: 'admin' }, 'approved'), /data-void-payment/);
+  assert.match(renderAction({ meSuperAdmin: true, role: 'admin' }, 'approved'), /data-void-payment/);
 });
 await test('the action does not render for Administration, the desk, Finance, a customer, or a Super Admin viewing as another role', () => {
-  for (const role of ['admin', 'front_desk', 'finance', 'customer']) assert.equal(renderAction({ role, isSuperAdmin: false }, 'approved'), '', role);
-  // ProductionSession: `isSuperAdmin = isSuperAdminMe(info) && !activeViewAs`.
-  assert.equal(renderAction({ role: 'front_desk', isSuperAdmin: false, viewAs: 'front_desk' }, 'approved'), '');
+  for (const role of ['admin', 'front_desk', 'finance', 'customer']) assert.equal(renderAction({ role }, 'approved'), '', role);
+  assert.equal(renderAction({ role: 'front_desk', meSuperAdmin: false, viewAs: 'front_desk' }, 'approved'), '', 'view-as');
+  assert.equal(renderAction({ role: 'super_admin', isSuperAdmin: true }, 'approved'), '', 'the flag decides, not isSuperAdmin (a build without /me)');
 });
 await test('the action does not render on a pending, declined, refunded or voided payment', () => {
-  for (const status of ['pending', 'declined', 'refunded', 'voided']) assert.equal(renderAction({ isSuperAdmin: true }, status), '', status);
+  for (const status of ['pending', 'declined', 'refunded', 'voided']) assert.equal(renderAction({ meSuperAdmin: true }, status), '', status);
 });
 await test('review build unchanged: no Company OS connection, no action, even for its super admin', () => {
-  assert.equal(renderAction({ isSuperAdmin: true, role: 'super_admin' }, 'approved', false), '');
+  assert.equal(renderAction({ meSuperAdmin: true, role: 'super_admin' }, 'approved', false), '');
 });
 
 // ── A voided receipt reads voided ───────────────────────────────────────────────────────────────────────────
@@ -208,7 +215,7 @@ await test('NotaDeCompra: the reason falls back to the payment\'s when the recei
   assert.match(bare, /data-testid="receipt-voided"/);
   assert.doesNotMatch(bare, /Motivo/);
 });
-await test('the customer\'s receipt reads voided without the reason, whichever record holds it (owner to confirm; one condition)', () => {
+await test('the customer\'s receipt reads voided without the reason, whichever record holds it (owner, 4 Nov)', () => {
   for (const v of [view('voided', { voided_at: '2026-11-06T10:00:00.000Z', void_reason: 'Motivo interno' }), view('voided', {}, { status_reason: 'Motivo interno' }), view('voided', null, { status_reason: 'Motivo interno' })]) {
     const html = renderNote(v, 'es', false);
     assert.match(html, /data-testid="receipt-voided"/); assert.doesNotMatch(html, /Motivo/);
@@ -273,10 +280,14 @@ await test('Finance and the member\'s payments tab have words for "voided" in bo
   const { strings } = need('admin');
   assert.deepEqual(strings['admin.finance.status.voided'], { es: 'Anulado', en: 'Voided' });
 });
-const src = (p) => readFile(new URL(`../${p}`, import.meta.url), 'utf8');
 await test('the three screens offer the void: Finance, the member\'s payments tab and the staff receipt, and the customer\'s receipt does not', async () => {
   for (const f of ['src/modules/admin/FinancePage.tsx', 'src/modules/admin/MemberPage.tsx']) { const s = await src(f); assert.match(s, /useVoidAccess\(/, f); assert.match(s, /VoidPaymentDrawer/, f); }
   assert.match(await src('src/modules/launch-receipts/launch/ReceiptPages.tsx'), /staff && <VoidPaymentAction/);
+});
+await test('no launch screen offers a payment delete: the generic tables screen, the only one that deletes rows, is out of production', async () => {
+  const routes = await src('src/config/launchRoutes.ts');
+  assert.doesNotMatch(routes, /\/admin\/tables/);
+  for (const f of ['src/modules/admin/FinancePage.tsx', 'src/modules/admin/MemberPage.tsx', 'src/modules/launch-receipts/launch/ReceiptPages.tsx', 'src/modules/transfers/launch/PendingPaymentsPage.tsx']) assert.doesNotMatch(await src(f), /'DELETE'|op: 'delete'|\.remove\(/, f);
 });
 await test('the new suites run on CI', async () => {
   const ci = await src('.github/workflows/auth-checks.yml');

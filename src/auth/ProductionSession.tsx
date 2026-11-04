@@ -4,7 +4,7 @@ import { ROLE_LABEL, type Role } from './roles';
 import { roleCan, type Permission } from './permissions';
 import { SessionContext, type SessionCtx, type SessionStatus, type SessionUser } from './sessionContext';
 import { cosPath, loadAppConfig, type AppConfig } from './appConfig';
-import { classifyMe, isSuperAdminMe, roleFromMe, rolesFromMe, type MeInfo } from './companyOsIdentity';
+import { classifyMe, isSuperAdminMe, roleFromMe, rolesFromMe, superAdminFlag, type MeInfo } from './companyOsIdentity';
 import { setSessionTokenSource, subscribeUnauthorized } from './sessionToken';
 import { reloadIfTestGate } from './testGateReload';
 import { isViewAsFailure, isViewableRole, loadViewAsSample, publishViewAs, readStoredViewAs, storeViewAs, type ViewAsSample, type ViewAsSampleFailure } from './viewAs';
@@ -253,7 +253,7 @@ function ClerkSession({ config, children }: { config: AppConfig; children: React
       : null;
     return {
       // While the sample person is being looked up, private screens wait (they would read the wrong person's records).
-      status: sampleLoading ? 'loading' : 'ready', signedIn: true, user, role, isSuperAdmin, canDevMode: false, devMode: false,
+      status: sampleLoading ? 'loading' : 'ready', signedIn: true, user, role, isSuperAdmin, meSuperAdmin: superAdminFlag(info, activeViewAs), canDevMode: false, devMode: false,
       // Every role the login holds (lane Y2); while viewing as, only the viewed one (no customer area of the real person).
       roles: activeViewAs ? [activeViewAs] : rolesFromMe(info),
       viewAs: activeViewAs, viewAsPerson,

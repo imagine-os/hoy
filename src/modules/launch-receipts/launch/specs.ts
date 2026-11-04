@@ -4,8 +4,8 @@ export const receiptSpec = defineSpec({
   code: 'C-41', name: { es: 'Nota de compra', en: 'Purchase note' },
   purpose: { es: 'Mostrar e imprimir la nota de compra (sin IVA) que Company OS emite al confirmar un pago.', en: 'Show and print the purchase note (no VAT) Company OS issues when a payment is confirmed.' },
   roles: ['customer', 'super_admin', 'admin', 'front_desk'], layout: ['Header', 'Nota de compra'], data: ['payments', 'invoices'],
-  logic: ['PG-08 / J9: payments payment_document = receipt; the server numbers it on approval. The browser never numbers or re-totals.', 'The email copy is a comms automation on payment.approved (H-9).', 'Recorder name only on the staff view (the members list is staff information).'],
-  integrations: ['Company OS payments 2.6.0 (invoice kind receipt)'], states: ['loading', 'read error with retry', 'pending payment', 'receipt not yet issued', 'issued'],
+  logic: ['PG-08 / J9: payments payment_document = receipt; the server numbers it on approval. The browser never numbers or re-totals.', 'The email copy is a comms automation on payment.approved (H-9).', 'Recorder name only on the staff view (the members list is staff information).', 'A voided receipt keeps its number and reads voided; the reason shows on the staff view only (owner, 4 Nov). Void: Super Admin only, by the /me flag.'],
+  integrations: ['Company OS payments 2.6.0 (invoice kind receipt)'], states: ['loading', 'read error with retry', 'pending payment', 'receipt not yet issued', 'issued', 'voided'],
 });
 export const myReceiptsSpec = defineSpec({
   code: 'C-42', name: { es: 'Mis notas de compra', en: 'My purchase notes' },

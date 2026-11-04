@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useI18n } from '../../i18n/I18nProvider';
 import { useSession } from '../../auth/SessionProvider';
 import { useTable } from '../../data/DataContext';
+import { useVoidAccess, VoidPaymentButton, VoidPaymentDrawer } from '../transfers/launch/VoidPaymentAction';
 import type { BaseRow, BookingRow, ClassSessionRow, MessageLogRow, PaymentRow, PlanRow } from '../../data/schema';
 import { isConversationRow, useAuthorOf, useMessaging } from '../../data/comms';
 import { formatCOP, formatDate, formatDateTime, formatTime } from '../../i18n/format';
@@ -49,6 +50,8 @@ export function MemberPage() {
   const { rows: sessions } = useTable<ClassSessionRow>('class_sessions');
   const { rows: plans } = useTable<PlanRow>('plans');
   const [tab, setTab] = useState<Tab>('conversation');
+  const canVoid = useVoidAccess();
+  const [voiding, setVoiding] = useState<string | null>(null);
   const [filter, setFilter] = useState<Filter>('all');
   const logged = useRef<string | null>(null);
   useEffect(() => { if (person && logged.current !== person.id) { logged.current = person.id; audit('member.view', 'users', person.id, { name: person.name }); } }, [person?.id]);
@@ -89,6 +92,7 @@ export function MemberPage() {
     { key: 'amount', label: t('admin.member.col.amount'), align: 'right' as const, render: (p: PaymentRow) => formatCOP(p.amount, lang) },
     { key: 'method', label: t('admin.member.col.method'), render: (p: PaymentRow) => payLabel('method', p.method) },
     { key: 'status', label: t('admin.member.col.status'), render: (p: PaymentRow) => <Badge tone={toneForStatus(p.status)}>{payLabel('status', p.status)}</Badge> },
+    ...(canVoid('approved') ? [{ key: 'void', label: '', sortable: false, render: (p: PaymentRow) => (canVoid(p.status) ? <VoidPaymentButton onClick={() => setVoiding(p.id)} /> : null) }] : []),
   ];
 
   return (
@@ -142,6 +146,7 @@ export function MemberPage() {
       )}
       {tab === 'bookings' && <DataTable columns={bookingCols} rows={[...active].sort((a, b) => (sess.get(b.session_id)?.starts_at ?? '').localeCompare(sess.get(a.session_id)?.starts_at ?? ''))} rowKey={(r) => r.id} dense emptyText={t('admin.member.bookings.empty')} />}
       {tab === 'payments' && canPayments && <DataTable columns={paymentCols} rows={payments} rowKey={(r) => r.id} dense emptyText={t('admin.member.payments.empty')} />}
+      {voiding && <VoidPaymentDrawer key={voiding} paymentId={voiding} onClose={() => setVoiding(null)} />}
       {tab === 'practice' && <PracticeTab userId={person.id} />}
       <p className="xs muted">{t('admin.member.viewLogged')}</p>
     </div>
