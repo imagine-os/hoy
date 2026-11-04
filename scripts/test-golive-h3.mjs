@@ -39,6 +39,9 @@ check('class type: editing a draft can clear it (null, so the old one does not s
 check('publish: refused for a draft without one', S.schedulePublishBlocked?.({ active: false }) === true && S.schedulePublishBlocked?.({ active: false, modality: '' }) === true && S.schedulePublishBlocked?.({ active: false, modality: null }) === true);
 check('publish: allowed for a draft with one', S.schedulePublishBlocked?.({ active: false, modality: 'pulso' }) === false);
 check('publish: switching a published row off stays possible whatever it holds', S.schedulePublishBlocked?.({ active: true }) === false);
+check('hint: a draft with no type is told how to publish', S.scheduleTypeHint?.({ active: false }) === 'publish');
+check('hint: a published row with no type is told its classes can\'t be booked', S.scheduleTypeHint?.({ active: true }) === 'unbookable' && S.scheduleTypeHint?.({ active: true, modality: ' ' }) === 'unbookable' && S.scheduleTypeHint?.({}) === 'unbookable');
+check('hint: a row with a type has none', S.scheduleTypeHint?.({ active: true, modality: 'pulso' }) === null && S.scheduleTypeHint?.({ active: false, modality: 'pulso' }) === null);
 const RECIPE_SLUGS = ['alineacion', 'centro', 'fuego', 'hibrido', 'ligereza', 'pulso', 'solido'];
 check('class type: the frontend\'s list is the recipe\'s seven select options', JSON.stringify((A.modalities ?? []).map((m) => m.slug).sort()) === JSON.stringify(RECIPE_SLUGS), JSON.stringify((A.modalities ?? []).map((m) => m.slug)));
 const rowOf = (data) => A.fromRecord?.(A.adapters.class_sessions, { id: 'oc1', data: { starts_at: '2026-11-09T12:00:00.000Z', ends_at: '2026-11-09T12:50:00.000Z', status: 'scheduled', capacity: 16, booked_count: 0, ...data } });
@@ -90,11 +93,13 @@ check('routing: a signed-in visitor goes straight to it, gifts too', P.purchaseE
 const gift = (id, extra = {}) => ({ id, key: 'gift_b', name: 'Regalo', kind: 'gift', price: 100, credits: 2, active: true, ...extra });
 const sale = (rows) => P.giftProductsOnSale?.(rows, DAY) ?? [];
 check('gift page: only today\'s row of a key, at today\'s price', (() => { const g = sale([gift('old', { valid_until: '2026-11-05', price: 100 }), gift('new', { valid_from: '2026-11-06', price: 200 })]); return g.length === 1 && g[0].price === 200 && g[0].key === 'gift_b'; })());
-check('gift page: an audience-limited or inactive gift is not offered', sale([gift('a', { audience: 'affiliate' })]).length === 0 && sale([gift('b', { active: false })]).length === 0);
+check('gift page: an inactive gift is not offered', sale([gift('b', { active: false })]).length === 0);
+check('gift page: a gift priced at 0 is not offered (the pay page would ask for nothing)', sale([gift('z', { price: 0 })]).length === 0);
+check('gift page: who sees a gift has not changed: one with an audience still shows', sale([gift('a', { audience: 'affiliate' })]).length === 1);
 check('gift page: still reads the frontend `plans` row shape', sale([{ id: 'p', slug: 'gift_b', name_es: 'Regalo', family: 'regalos', price: 100, classes: 2, active: true }]).length === 1);
 
 // ── /coming-soon ────────────────────────────────────────────────────────────────────────────────────────────────
-const entry = (live, session, production = true) => C.comingSoonEntry?.({ production, live, session });
+const entry = (live, session, production = true, settled = true) => C.comingSoonEntry?.({ production, live, settled, session });
 const VISITOR = { status: 'ready', signedIn: false, isSuperAdmin: false, viewAs: null };
 const MEMBER = { status: 'ready', signedIn: true, isSuperAdmin: false, viewAs: null };
 const OWNER = { status: 'ready', signedIn: true, isSuperAdmin: true, viewAs: null };
@@ -107,6 +112,49 @@ check('coming soon: once live, the Super Admin viewing as another role is still 
 check('coming soon: while the session loads it waits, so the Super Admin is not sent away', entry(true, { ...VISITOR, status: 'loading' }) === 'wait');
 check('coming soon: a session that failed is not left blank', entry(true, { ...VISITOR, status: 'error' }) === 'redirect');
 check('coming soon: the review build is unchanged, live or not', entry(true, VISITOR, false) === 'show');
+check('coming soon: until the launch settings are read it waits, whoever opens it, so the landing never flashes', [VISITOR, MEMBER, OWNER].every((s) => entry(false, s, true, false) === 'wait'));
+check('coming soon: the review build never waits for them', entry(false, VISITOR, false, false) === 'show');
+const root = (live, settled, production = true) => C.rootEntry?.({ production, live, settled });
+check('root: until the launch settings are read it waits', root(false, false) === 'wait' && root(true, false) === 'wait');
+check('root: then the site if live, the landing if not', root(true, true) === 'site' && root(false, true) === 'landing');
+check('root: the review build never waits', root(false, false, false) === 'landing');
+
+// ── the launch settings' read settles, whatever happens to it ─────────────────────────────────────────────────────
+let fresh = 0;
+const launchModule = async (build_) => {
+  try {
+    const out = await build({ stdin: { contents: `export * from './src/config/launch'; export const fresh = ${++fresh};`, resolveDir: process.cwd(), loader: 'ts' }, bundle: true, platform: 'node', format: 'esm', write: false, logLevel: 'silent', define: { __HOY_BUILD__: JSON.stringify(build_) } });
+    return await import('data:text/javascript;base64,' + Buffer.from(out.outputFiles[0].text).toString('base64'));
+  } catch (e) { console.log(`FAIL launch module: ${String(e.message).split('\n')[0]}`); failed++; return {}; }
+};
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+{
+  const review = await launchModule('review');
+  check('settled: the review build starts settled', review.launchSettled?.() === true);
+  let L = await launchModule('production');
+  check('settled: production starts unsettled', L.launchSettled?.() === false);
+  await L.loadLaunchSettings?.(async () => ({ siteLive: true }));
+  check('settled: a read that answers applies the settings, then settles', L.launchSettled?.() === true && L.launchConfig?.().siteLive === true);
+  L = await launchModule('production');
+  const applied = await L.loadLaunchSettings?.(async () => null);
+  check('settled: no settings in the answer settles on the defaults', L.launchSettled?.() === true && L.launchConfig?.().siteLive === false && applied === false);
+  L = await launchModule('production');
+  let threw = false;
+  try { await L.loadLaunchSettings?.(async () => { throw new Error('service_unavailable'); }); } catch { threw = true; }
+  check('settled: a failed read settles on the defaults and does not throw', !threw && L.launchSettled?.() === true && L.launchConfig?.().siteLive === false);
+  await L.loadLaunchSettings?.(async () => ({ siteLive: true }));
+  check('settled: a retry that answers after a failure still applies', L.launchConfig?.().siteLive === true);
+  L = await launchModule('production');
+  void L.loadLaunchSettings?.(() => new Promise(() => {}));
+  L.settleLaunchWithin?.(10);
+  await sleep(40);
+  check('settled: a read that never answers settles at the time limit', L.launchSettled?.() === true);
+  L = await launchModule('production');
+  let notified = 0;
+  L.onLaunchChange?.(() => { notified++; });
+  L.markLaunchSettled?.(); L.markLaunchSettled?.();
+  check('settled: screens are told once', notified === 1);
+}
 
 // ── class_cancelled matches the recipe (Company OS deploy/recipes/hoy.json) ─────────────────────────────────────────
 const RECIPE_BODY = 'Hola {{person.name}}:\n\nTuvimos que cancelar la clase del {{record.start|datetime}}. Lo sentimos.\n\nSi la reservaste con una clase de tu paquete, la clase vuelve a tu paquete. Si la pagaste aparte y ya aprobamos tu pago, la clase vuelve a tu saldo para que reserves otra; si tu comprobante estaba en revisión, vuelve cuando recepción lo apruebe.\n\nVer horario: {{links.base}}/#/app/schedule\n\nEquipo HOY\ninfo@humanclub.com';
