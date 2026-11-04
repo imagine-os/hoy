@@ -109,6 +109,10 @@ jobs:
         run: node scripts/test-void-payment.mjs
       - name: The activity log's audit read (paging, filters, refusals)
         run: node scripts/test-admin-activity.mjs
+      - name: Public images and teacher profiles (names, upload path, photo id untrusted, replace order, teachers from Company OS)
+        run: node scripts/test-golive-images.mjs
+      - name: The Hoy server (static, proxy, /files, /media, webhook, config)
+        run: node scripts/test-hoy-server.mjs
       - name: Real sign-up check, offline part (options and site safety; the live part skips without COS_LOCAL_API)
         run: node scripts/test-real-signup.mjs
       - name: Pay data move out of the public settings (operator script, against a fake Company OS)
@@ -135,6 +139,10 @@ jobs:
           QA_PROD_DIST: ${{ runner.temp }}/prod
       - name: The payment void in the browser (Finance, the member's payments tab, the staff and customer receipts; production build)
         run: node scripts/test-void-payment-ui.mjs
+        env:
+          QA_PROD_DIST: ${{ runner.temp }}/prod
+      - name: Public images and teacher profiles in the browser (real server, upload, replace, QR, signed-out site; production build)
+        run: node scripts/test-golive-images-ui.mjs
         env:
           QA_PROD_DIST: ${{ runner.temp }}/prod
       - name: Jas 1 Nov, administration and front desk in the browser (Class schedule, error boundary, payment settings, desk expense, Finance, product master; production build)

@@ -63,6 +63,14 @@ export const CONTRACT_REFUSALS = {
   file_type_not_allowed: { es: 'Sube una imagen PNG o JPG.', en: 'Upload a PNG or JPG image.' },
   file_upload_expired: { es: 'La subida tardó demasiado. Vuelve a subir el archivo.', en: 'The upload took too long. Upload the file again.' },
   file_upload_missing: { es: 'No recibimos el archivo. Vuelve a subirlo.', en: 'We did not receive the file. Upload it again.' },
+  // Go-live lane H1: the upload of a public image (a teacher's photo, the payment QR).
+  file_upload_mismatch: { es: 'El archivo no coincide con lo que dice ser. Súbelo de nuevo como imagen PNG, JPG o WebP.', en: 'The file does not match what it claims to be. Upload it again as a PNG, JPG or WebP image.' },
+  file_kind_unknown: { es: 'Este sistema aún no acepta este tipo de imagen. Avísale al equipo técnico.', en: 'This system does not accept this kind of image yet. Tell the technical team.' },
+  file_owner_not_found: { es: 'El registro de esta imagen ya no existe. Actualiza la página.', en: 'The record for this image no longer exists. Refresh the page.' },
+  file_not_pending: { es: 'Esta subida ya terminó. Elige la imagen de nuevo.', en: 'This upload has already finished. Choose the image again.' },
+  storage_not_configured: { es: 'El almacenamiento de imágenes no está configurado aquí. Avísale al equipo técnico.', en: 'Image storage is not set up here. Tell the technical team.' },
+  image_not_current: { es: 'Esa imagen ya no está disponible. Sube la imagen de nuevo; no se guardó nada.', en: 'That image is no longer available. Upload it again; nothing was saved.' },
+  file_not_ready: { es: 'La imagen aún se está publicando. Inténtalo de nuevo en un momento.', en: 'The image is still being published. Try again in a moment.' },
   storage_unavailable: { es: 'No pudimos guardar el archivo ahora. Inténtalo en unos minutos.', en: 'We could not store the file right now. Try again in a few minutes.' },
   // Sign-up and people
   already_signed_up: { es: 'Ya tienes una cuenta. Inicia sesión.', en: 'You already have an account. Sign in.' },

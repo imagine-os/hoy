@@ -64,7 +64,7 @@ const OPEN = [
     .map(([finding, lane]) => ({ finding, lane, approved: ROLE_HOMES_APPROVED, routes: ['/teach'], note: 'the Teacher home S-03: hidden in production ("available later"); the hooks still run on unconnected tables, which read empty with no request' })),
   ...['unknown teacher_profile_proposals', 'sink audit_log', 'mock_only modules/profile-review/contracts.ts', 'unknown events', 'unknown class_pay_rules', 'missing appendClassPayRule', 'dynamic table', 'mock_only modules/admin/contentRecovery.ts', 'dynamic entity2', 'missing contentBatch', 'missing generateRecurrence']
     .map((finding) => ({ finding, lane: 'Wave 3 (content entities)', approved: ROLE_HOMES_APPROVED, routes: ['/admin/content'], note: 'the Marketing home M-02: reads live; timetable rows save to schedule (lane Y5, timetableSave.ts, classes.write); every other save is refused content_later before anything is sent (contentRecovery.ts), bulk and recurrence are absent on Company OS' })),
-  { finding: 'unknown events', lane: 'Wave 3', routes: ['/admin/settings/*'], note: 'Events and RSVPs (reuse map); useMediaLibrary reads events for media use' },
+  { finding: 'unknown events', lane: 'Wave 3', routes: ['/admin/settings/*', '/admin/class-schedule/*'], note: 'Events and RSVPs (reuse map); useMediaLibrary reads events for media use' },
   { finding: 'unknown reviews', lane: 'Wave 3', routes: ['/site/*'], note: 'Class reviews (reuse map); the site home reads reviews' },
   { finding: 'unknown practice_goals', lane: 'Wave 2', routes: ['/admin/analytics', '/admin/crm/:id', '/app'], note: 'Maintenance records, practice goals (reuse map); data/useAnalytics.ts' },
   { finding: 'sink activity_events', lane: 'Wave 2', routes: ['/app'], note: 'practice milestones and streaks (data/useAnalytics.ts, customer/HomePage.tsx): with practice goals' },
@@ -85,7 +85,6 @@ const BY_DESIGN = [
   { finding: 'missing peek', file: 'src/modules/quotes/hooks.ts', why: 'peek() is only the first-render snapshot; the hook then reads list(\'plans\') from Company OS' },
   { finding: 'sink audit_log', op: 'insert', why: 'the client\'s own audit row is dropped (mapping.ts sink); Company OS writes the audit entry for every write itself (GET /t/:t/audit)' },
   { finding: 'sink audit_log', op: 'read', file: 'src/modules/staff/HomePage.tsx', why: 'the hook runs, but the timeline it feeds renders only in the review build (`!PRODUCTION_BUILD &&`)' },
-  { finding: 'mock_only components/organism/SharedImageField/SharedImageField.tsx', why: 'device-local photos exist only in the review build; production offers the shipped media catalogue' },
   { finding: 'mock_only data/useMediaLibrary.ts', why: 'device-local photos exist only in the review build; production lists the shipped media catalogue' },
   { finding: 'signed_out tenants (write)', file: 'src/modules/admin/settings.ts', why: 'useSettings() returns save() next to the settings; no signed-out page calls it (the site, MapSlot and DeleteAccountPage take only `settings`). Since lane H2 the site reads the public settings record live, so the row exists signed out: a call would still write nothing, since the save is sent without a session (the Hoy server answers 401) and the site\'s identity is read-only (ADR 0029)' },
 ];

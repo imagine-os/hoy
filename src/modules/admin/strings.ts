@@ -385,6 +385,7 @@ export const strings: StringTable = {
   'admin.dashboard.system': { es: 'Sistema', en: 'System' },
 
   // M-02 content
+  'admin.content.teachersLive': { es: 'La biografía, las especialidades y la foto de cada profesor se editan en Horario de clases › Profesores.', en: 'Each teacher\'s bio, specialties and photo are edited in Class schedule › Teachers.' },
   'admin.content.later': { es: 'Aquí ves los profesores, modalidades y salas como están hoy. Editarlos desde la app llega en una próxima actualización; mientras tanto, estos cambios no se guardan. El horario (Clases) sí se guarda.', en: 'Here you see the teachers, modalities and rooms as they are today. Editing them from the app arrives in a coming update; until then, these changes are not saved. The timetable (Classes) does save.' },
   // Lane Y5: the timetable saves to Company OS in production.
   'admin.content.timetableLive': { es: 'El horario se guarda en el sistema: cada fila con su profesor/a, sala y modalidad. Una fila nueva empieza en borrador; publícala cuando esté lista. El tema, la descripción y el nivel aún no se guardan, por eso no aparecen aquí.', en: 'The timetable saves to the system: each row with its teacher, room and modality. A new row starts as a draft; publish it when it is ready. Theme, description and level are not saved yet, so they are not shown here.' },

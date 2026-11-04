@@ -165,7 +165,7 @@ for (const [what, env] of [
 await test('half configured: a passphrase without a signing secret answers 503 on gated paths and never opens the site', async () => {
   const app = await start({ TEST_GATE_PASSPHRASE: PASS, APP_URL: ORIGIN });
   seen.length = 0;
-  for (const [method, path] of [['GET', '/'], ['GET', '/app-config.json'], [`GET`, '/assets/index-abc123.js'], ['GET', '/api/cos/t/hoy-dev/me'], ['GET', '/files/x'], ['GET', '/private-docs/docs.json'], ['POST', '/test-gate']]) {
+  for (const [method, path] of [['GET', '/'], ['GET', '/app-config.json'], [`GET`, '/assets/index-abc123.js'], ['GET', '/api/cos/t/hoy-dev/me'], ['GET', '/files/x'], ['GET', '/media/x'], ['GET', '/private-docs/docs.json'], ['POST', '/test-gate']]) {
     const r = await app.call(method, path, { authorization: `Bearer ${GOOD}` });
     assert.equal(r.status, 503, `${method} ${path}`);
     assert.equal(r.headers['x-robots-tag'], 'noindex, nofollow');
@@ -224,7 +224,7 @@ await test('no cookie: HEAD gets the status without a body', async () => {
 await test('no cookie: /api/, /files/ and /private-docs/ get 401 JSON, and a valid Clerk session does not get past it', async () => {
   const app = await start();
   seen.length = 0;
-  for (const path of ['/api/cos/t/hoy-dev/me', '/api/other', '/files/x', '/private-docs/docs.json', '/api', '/files', '/private-docs']) {
+  for (const path of ['/api/cos/t/hoy-dev/me', '/api/other', '/files/x', '/media/0b0f6e1c-3c6a-4c0e-9a51-6f3f2c1d9e01', '/media', '/private-docs/docs.json', '/api', '/files', '/private-docs']) {
     const r = await app.call('GET', path, { authorization: `Bearer ${GOOD}` });
     assertGateJson(r);
     assert.equal(r.headers['x-robots-tag'], 'noindex, nofollow');
