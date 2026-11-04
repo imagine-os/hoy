@@ -4,6 +4,9 @@
 // The last check proves what the gate relies on: the edge overwrites X-Real-IP. Six wrong tries each claim another address;
 // only if the edge replaces the claim do they count as one visitor, and the sixth answers 429. It leaves this runner's
 // address blocked for 15 minutes, which nobody else uses.
+// Known limit: tries are counted in the instance's memory. On a re-run of a commit already live, /health passes at once on
+// the old instance, and the deployment can switch to the new one mid-count, which starts from zero: the sixth then answers
+// 401 with a sound edge. The error says so. Telling them apart would need the Railway CLI here, for this one rare case.
 // Run: APP_URL=https://test.<domain> GITHUB_SHA=<commit> node scripts/smoke-test-gate.mjs
 import { randomBytes } from 'node:crypto';
 import { resolve } from 'node:path';
@@ -47,7 +50,7 @@ export async function smokeTestGate({ appUrl, sha, timeoutMs = 300_000, interval
     await res.arrayBuffer();
     status = res.status;
   }
-  if (status !== 429) throw new Error(`six wrong passphrases, each claiming another X-Real-IP, answered ${status} on the sixth, expected 429: the edge is not overwriting X-Real-IP, so a visitor could write that header to get unlimited tries`);
+  if (status !== 429) throw new Error(`six wrong passphrases, each claiming another X-Real-IP, answered ${status} on the sixth, expected 429: the edge is not overwriting X-Real-IP, so a visitor could write that header to get unlimited tries. But on a re-run of the same commit, the deployment may have switched mid-check: run it again before suspecting the edge`);
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

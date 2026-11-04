@@ -4,6 +4,8 @@ import { useI18n } from '../i18n/I18nProvider';
 import { useSession } from './SessionProvider';
 import { ROLE_HOME } from './roles';
 import { cosJson } from './cosRequest';
+import { isTestGate } from './testGateReload';
+import { refusalCopy } from '../data/companyos/refusals';
 import { classifySignup, consentReadFrom, validationNamesField, enrolmentBody, enrolmentNameError, parseSignupConfig, signupHeld, signupNoticeKey, SIGNUP_FORM_LIMITS, usableLoginName, type SignupConfig } from './companyOsIdentity';
 import { CONSENT_READ_TIMEOUT_MS, deferConsent, hasDeferred, passAfterRead, settleConsent, withTimeout } from './signupStatus';
 
@@ -47,7 +49,7 @@ const AUTO_TRIES = 2;
  * purchases wait for it (`ConsentHoldNotice`).
  */
 export default function CustomerEnrolment({ consent }: { consent?: SignupConfig } = {}) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { user, role, refresh, signOut } = useSession();
   const consentOnly = !!consent;
   const lines = consentOnly ? 'identity.accept' : 'identity.enrol';
@@ -80,6 +82,8 @@ export default function CustomerEnrolment({ consent }: { consent?: SignupConfig 
       const { status, body } = answer;
       const result = classifySignup(status, body);
       if (!alive.current) return;
+      // The test site's gate, not the session: no re-check; the notice's Retry starts again with what was typed.
+      if (isTestGate(status, body)) { setNotice({ tone: 'warn', text: refusalCopy('test_gate', lang) }); setStep('notice'); return; }
       if (result.kind === 'done' && consentOnly) { settleConsent(user.id); refresh(); return; }
       if (result.kind === 'done' || result.kind === 'unverified' || result.kind === 'unauthorized') { refresh(); return; }
       if (result.kind === 'consent-changed' && result.required.length === 0) {
@@ -116,7 +120,7 @@ export default function CustomerEnrolment({ consent }: { consent?: SignupConfig 
     } finally {
       busy.current = false;
     }
-  }, [askName, consentOnly, lines, loginName, name, refresh, t, user.id]);
+  }, [askName, consentOnly, lang, lines, loginName, name, refresh, t, user.id]);
 
   const start = useCallback(async (manual = false) => {
     // The consent check's first pass uses the config RequireRole read (once per session); Retry reads it again.

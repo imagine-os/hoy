@@ -18,8 +18,8 @@ name: Auth checks
 #                user signs up, lands on /app as a customer (`member`), then its Company OS records (membership, person,
 #                member) are removed through the API as a test-hoy Administration login, and its Clerk user deleted.
 #                Reads, in the `test` environment: secrets CLERK_SECRET_KEY and TEST_GATE_PASSPHRASE (the site's passphrase
-#                gate), variables CLERK_PUBLISHABLE_KEY, HOY_TEST_URL
-#                (the test site's origin) and HOY_CLEANUP_ADMIN_EMAIL (a test-hoy Administration login in the same Clerk
+#                gate), variables CLERK_PUBLISHABLE_KEY, APP_URL (the test site's origin, the deploy's own, given to the
+#                script as HOY_TEST_URL) and HOY_CLEANUP_ADMIN_EMAIL (a test-hoy Administration login in the same Clerk
 #                instance). It refuses a site that says it is production or uses another Clerk instance.
 #
 # Muted 2026-10-30: real-clerk runs only by hand (Run workflow) until it passes. Its last run got past Clerk's
@@ -197,6 +197,6 @@ jobs:
         env:
           CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
           CLERK_PUBLISHABLE_KEY: ${{ vars.CLERK_PUBLISHABLE_KEY }}
-          HOY_TEST_URL: ${{ vars.HOY_TEST_URL }}
+          HOY_TEST_URL: ${{ vars.APP_URL }}
           HOY_CLEANUP_ADMIN_EMAIL: ${{ vars.HOY_CLEANUP_ADMIN_EMAIL }}
           TEST_GATE_PASSPHRASE: ${{ secrets.TEST_GATE_PASSPHRASE }}

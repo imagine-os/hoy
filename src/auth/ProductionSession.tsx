@@ -74,7 +74,7 @@ function visitorSession(status: SessionStatus, refresh: () => void, signOut: () 
   };
 }
 
-type MeState = { key: string; status: 'loading' | 'member' | 'not-member' | 'unverified' | 'error'; me?: MeInfo };
+type MeState = { key: string; status: 'loading' | 'member' | 'not-member' | 'unverified' | 'error' | 'test-gate'; me?: MeInfo };
 
 /** How long sign-in and private routes wait for Clerk before they show the error state (a blocked or failed script). */
 export const CLERK_LOAD_TIMEOUT_MS = 10_000;
@@ -205,7 +205,9 @@ function ClerkSession({ config, children }: { config: AppConfig; children: React
         if (!token) throw new Error('no_token');
         const res = await fetch(cosPath(config, '/me'), { headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' }, cache: 'no-store', credentials: 'same-origin' });
         const body: unknown = await res.json().catch(() => null);
-        reloadIfTestGate(res.status, body);
+        // The test gate's own 401 is no session problem. Reloading: the page is going away, so it stays on "loading".
+        const gate = reloadIfTestGate(res.status, body);
+        if (gate) { if (alive && gate === 'copy') setMe({ key, status: 'test-gate' }); return; }
         const result = classifyMe(res.status, body);
         if (!alive) return;
         if (result.kind === 'member') setMe({ key, status: 'member', me: result.me });
@@ -235,7 +237,7 @@ function ClerkSession({ config, children }: { config: AppConfig; children: React
     if (!current || current.status === 'loading') return visitorSession('loading', refresh, signOut, true);
     if (current.status !== 'member' || !current.me) {
       const status: SessionStatus = current.status === 'not-member' ? 'needs-signup' : current.status === 'unverified' ? 'unverified' : 'error';
-      return visitorSession(status, refresh, signOut, true);
+      return { ...visitorSession(status, refresh, signOut, true), testGate: current.status === 'test-gate' };
     }
     const info = current.me;
     const realRole = roleFromMe(info);

@@ -25,7 +25,7 @@ export function PrivateDocsReady({ children }: { children: ReactNode }) {
   if (state === 'loading') return <p className="muted small" data-private-docs="loading">{t('core.common.loading')}</p>;
   return (
     <div className="stack" data-private-docs={state}>
-      <Notice tone={state === 'failed' ? 'warn' : 'danger'} title={t(`docs.private.${state}.title`)}
+      <Notice tone={state === 'failed' || state === 'test-gate' ? 'warn' : 'danger'} title={t(`docs.private.${state}.title`)}
         action={state !== 'refused' ? <Button variant="secondary" size="sm" onClick={() => setAttempt((n) => n + 1)}>{t('docs.private.retry')}</Button> : undefined}>
         {t(`docs.private.${state}.body`)}
       </Notice>

@@ -68,15 +68,19 @@ export function addressKey(raw) {
   if (!text) return 'unknown';
   const address = text.split('%')[0];
   if (!isIPv6(address)) return text;
-  const mapped = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/i.exec(address);
-  if (mapped) return mapped[1];
-  // A dotted tail stands for two groups, the last two, so its value never reaches the first four.
-  const groups = (part) => (part ? part.split(':').flatMap((g) => (g.includes('.') ? ['0', '0'] : [g])) : []);
+  // The eight groups as numbers; a dotted tail stands for the last two.
+  const groups = (part) => (part ? part.split(':').flatMap((g) => {
+    if (!g.includes('.')) return [parseInt(g, 16)];
+    const [p, q, r, s] = g.split('.').map(Number);
+    return [p * 256 + q, r * 256 + s];
+  }) : []);
   const [head, tail] = address.split('::');
   const before = groups(head);
   const after = groups(tail);
-  const full = address.includes('::') ? [...before, ...Array(8 - before.length - after.length).fill('0'), ...after] : before;
-  return `${full.slice(0, 4).map((g) => parseInt(g, 16).toString(16)).join(':')}::/64`;
+  const full = address.includes('::') ? [...before, ...Array(8 - before.length - after.length).fill(0), ...after] : before;
+  // An IPv4 address written as IPv6, dotted or in hex, is that IPv4 address.
+  if (full.slice(0, 5).every((g) => g === 0) && full[5] === 0xffff) return `${full[6] >> 8}.${full[6] & 255}.${full[7] >> 8}.${full[7] & 255}`;
+  return `${full.slice(0, 4).map((g) => g.toString(16)).join(':')}::/64`;
 }
 
 /**

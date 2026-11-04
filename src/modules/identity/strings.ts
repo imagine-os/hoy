@@ -27,6 +27,7 @@ export const strings: StringTable = {
   'identity.err.email-invalid': { es: 'Revisa el correo: no parece válido.', en: 'Check the email: it does not look valid.' },
   'identity.err.network': { es: 'No hay conexión con el servicio de acceso. Revisa tu internet e inténtalo de nuevo.', en: 'Could not reach the sign-in service. Check your connection and retry.' },
   'identity.err.generic': { es: 'No pudimos completar el acceso. Inténtalo de nuevo.', en: 'We could not complete the sign-in. Please try again.' },
+  'identity.state.testGate.title': { es: 'Acceso al sitio de pruebas', en: 'Test site access' },
   'identity.state.error.title': { es: 'No pudimos cargar tu cuenta', en: 'We could not load your account' },
   'identity.state.error.body': { es: 'El servicio no respondió. Reintenta en un momento.', en: 'The service did not answer. Retry in a moment.' },
   'identity.state.unverified.title': { es: 'Tu correo no está verificado', en: 'Your email is not verified' },

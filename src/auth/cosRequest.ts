@@ -21,6 +21,8 @@ export async function cosJson(path: `/${string}`, init: { method?: 'GET' | 'POST
     credentials: 'same-origin', // carries the test site's gate cookie (server/testGate.mjs); the proxy forwards no cookie
   });
   const body: unknown = await res.json().catch(() => null);
-  if (res.status === 401 && !reloadIfTestGate(res.status, body)) onUnauthorized();
+  // The test gate's own 401 says nothing about the session. A read reloads onto the passphrase page; a write keeps the form.
+  const read = (init.method ?? 'GET') === 'GET' || path === '/query';
+  if (res.status === 401 && !reloadIfTestGate(res.status, body, { read })) onUnauthorized();
   return { status: res.status, body };
 }

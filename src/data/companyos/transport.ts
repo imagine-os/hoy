@@ -242,8 +242,9 @@ export class Transport {
         if (mayRetry) { await sleep((this.opts.retryDelayMs ?? 400) * 2 ** attempt); continue; }
         throw new CompanyOSError('service_unavailable', { status: res.status, requestId, ambiguous: !read });
       }
-      // The test gate's own 401 says nothing about the session.
-      if (!reloadIfTestGate(res.status, parsed) && res.status === 401 && token) unauthorizedHandler?.();
+      // The test gate's own 401 says nothing about the session. A read reloads onto the passphrase page; a write keeps the
+      // form, and the error below carries the copy.
+      if (!reloadIfTestGate(res.status, parsed, { read }) && res.status === 401 && token) unauthorizedHandler?.();
       if (!res.ok) {
         const e = (parsed ?? {}) as { error?: unknown; message?: unknown; opIndex?: unknown; details?: unknown };
         throw new CompanyOSError(normalizeCode(e.error, res.status), {

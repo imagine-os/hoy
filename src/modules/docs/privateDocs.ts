@@ -19,7 +19,7 @@ export interface PrivateDocsPack {
   sources: { id: string; title: { es: string; en: string }; file: string; cover?: string; pages: number; date: string; kind: string; summary: { es: string; en: string }; chapters: string[] }[];
 }
 
-export type PrivateDocsState = 'ok' | 'signed-out' | 'refused' | 'failed';
+export type PrivateDocsState = 'ok' | 'signed-out' | 'refused' | 'failed' | 'test-gate';
 
 let pack: PrivateDocsPack | null = null;
 let pending: Promise<PrivateDocsState> | null = null;
@@ -39,7 +39,9 @@ async function authorised(path: string): Promise<Response | PrivateDocsState> {
   if (res?.status === 401) res = await ask(true);
   if (!res) return 'signed-out';
   if (res.status === 401) {
-    if (!reloadIfTestGate(res.status, await res.clone().json().catch(() => null))) onUnauthorized();
+    // The test gate's own 401 says nothing about the session.
+    if (reloadIfTestGate(res.status, await res.clone().json().catch(() => null))) return 'test-gate';
+    onUnauthorized();
     return 'signed-out';
   }
   if (res.status === 403) return 'refused';

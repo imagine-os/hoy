@@ -206,7 +206,7 @@ jobs:
           HOY_RAILWAY_PROJECT: ${{ vars.RAILWAY_PROJECT_NAME }}
           TEST_GATE_PASSPHRASE: ${{ secrets.TEST_GATE_PASSPHRASE }}
         run: |
-          if [ -n "$TEST_GATE_PASSPHRASE" ]; then echo "::error::The production environment has a TEST_GATE_PASSPHRASE secret: production never runs the test gate. Delete it."; exit 1; fi
+          if [ -n "$TEST_GATE_PASSPHRASE" ]; then echo "::error::A TEST_GATE_PASSPHRASE secret reaches production, from this environment or the repository: production never runs the test gate. Delete it."; exit 1; fi
           case "$CLERK_SECRET_KEY" in sk_live_?*) ;; *) echo "::error::production requires a Clerk LIVE secret key (sk_live_…) in the production environment's secrets"; exit 1 ;; esac
           case "$CLERK_PUBLISHABLE_KEY" in pk_live_?*) ;; *) echo "::error::production requires a Clerk LIVE publishable key (pk_live_…) in the production environment's variables"; exit 1 ;; esac
           if ! printf '%s' "$APP_URL" | grep -Eq '^https://[a-zA-Z0-9.-]+$'; then echo "::error::Set the production variable APP_URL to https://<Hoy's domain> (no path)"; exit 1; fi
