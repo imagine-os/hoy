@@ -12,6 +12,7 @@ import net from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { gunzipSync } from 'node:zlib';
+import * as appModule from '../server/app.mjs';
 import { ANONYMOUS_ROUTES, createHandler, createHoyServer, publicReadLimiter } from '../server/app.mjs';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
@@ -680,6 +681,146 @@ await test('config: COMPANY_OS_READ_TOKEN must be a Company OS service token; ch
   assert.match(found.join('\n'), /a\.js: looks like a Company OS service token/);
   assert.match(found.join('\n'), /a\.js: contains the value of COMPANY_OS_READ_TOKEN/);
   publicServer.close();
+});
+
+// ---------------------------------------------------------------------------------------------
+// GET /media/<id>: a public image (a teacher's photo, the payment QR), with the server's read identity (go-live lane H1)
+// ---------------------------------------------------------------------------------------------
+const MEDIA_LINK = `/t/hoy-dev/public-files/${FILE_ID}/url`;
+const mediaServer = createHoyServer(await createHandler({ ...publicConfig, fileSizeLimit: 4096, fileTimeoutMs: 500 }, { verifySession: fakeVerify, log: (e) => publicLogs.push(e) }));
+await listen(mediaServer);
+const media = (path, headers = {}, method = 'GET', body) => request(method, path, headers, body, mediaServer);
+
+await test('media: an allowed image is served inline with the read identity; nothing of the visitor reaches the API or storage', async () => {
+  upstreamReply = linkTo('receipt.png');
+  seen.length = 0; storageSeen.length = 0;
+  const r = await media(`/media/${FILE_ID}`, { cookie: 'hoy_test_gate=1', authorization: `Bearer ${GOOD}`, 'x-real-ip': '203.0.113.9' });
+  assert.equal(r.status, 200);
+  assert.equal(r.headers['content-type'], 'image/png');
+  assert.equal(r.headers['content-disposition'], 'inline');
+  assert.deepEqual(r.body, receipt);
+  assert.equal(seen.length, 1);
+  assert.equal(seen[0].url, MEDIA_LINK, 'the published-copy route, so the policy and the published bucket decide');
+  assert.equal(seen[0].headers.authorization, `Bearer ${READ_TOKEN}`, 'always the read identity, never the visitor token');
+  assert.equal(seen[0].headers.cookie, undefined);
+  assert.equal(seen[0].headers['x-real-ip'], '203.0.113.9');
+  assert.equal(storageSeen.length, 1);
+  assert.equal(storageSeen[0].headers.cookie, undefined);
+  assert.equal(storageSeen[0].headers.authorization, undefined);
+  const everything = JSON.stringify(r.headers) + r.body.toString('latin1');
+  assert.doesNotMatch(everything, new RegExp(SIGNED), 'the storage link never reaches the browser');
+  assert.equal(r.headers['set-cookie'], undefined);
+  assert.match(r.headers['content-security-policy'], /sandbox/);
+  assert.equal(r.headers['cross-origin-resource-policy'], 'same-origin');
+  assert.equal(r.headers['x-content-type-options'], 'nosniff');
+  assert.match(r.headers['cache-control'], /^public, max-age=\d+$/);
+});
+
+await test('media: the same image for a signed-out visitor (no session needed)', async () => {
+  upstreamReply = linkTo('receipt.png');
+  assert.equal((await media(`/media/${FILE_ID}`)).status, 200);
+});
+
+await test('media: other kinds, drafts and receipts are refused as the API refuses them, with no storage call and no caching', async () => {
+  for (const [status, answer, expected] of [
+    [404, { error: 'not found' }, { status: 404, error: 'not_found' }],
+    [403, { error: 'forbidden' }, { status: 404, error: 'not_found' }],
+    [401, { error: 'unauthorized' }, { status: 404, error: 'not_found' }],
+    [404, { error: 'file_not_ready' }, { status: 404, error: 'file_not_ready' }],
+  ]) {
+    upstreamReply = (req, res) => { res.writeHead(status, { 'content-type': 'application/json' }); res.end(JSON.stringify(answer)); };
+    storageSeen.length = 0;
+    const r = await media(`/media/${FILE_ID}`);
+    assert.equal(r.status, expected.status, JSON.stringify(answer));
+    assert.deepEqual(JSON.parse(r.body), { error: expected.error });
+    assert.equal(r.headers['cache-control'], 'no-store', 'a refusal must not stick in the browser');
+    assert.equal(storageSeen.length, 0);
+  }
+});
+
+await test('media: the API being down or its answer odd is a 502, and an unlisted storage host is never fetched', async () => {
+  upstreamReply = (req, res) => { res.writeHead(500); res.end('boom'); };
+  assert.equal((await media(`/media/${FILE_ID}`)).status, 502);
+  upstreamReply = linkTo('x', 200, { url: 'file:///etc/passwd' });
+  assert.equal((await media(`/media/${FILE_ID}`)).status, 502);
+  upstreamReply = linkTo('x', 200, { nope: true });
+  assert.equal((await media(`/media/${FILE_ID}`)).status, 502);
+});
+
+await test('media: only images: an SVG or anything else stored is refused, never rendered or downloaded from this address', async () => {
+  upstreamReply = linkTo('page.svg');
+  const r = await media(`/media/${FILE_ID}`);
+  assert.equal(r.status, 404);
+  assert.doesNotMatch(r.body.toString(), /script/);
+  assert.equal(r.headers['content-disposition'], undefined);
+});
+
+await test('media: too big is refused; storage missing is a 404', async () => {
+  upstreamReply = linkTo('declared-big');
+  assert.equal((await media(`/media/${FILE_ID}`)).status, 502);
+  upstreamReply = linkTo('gone');
+  assert.equal((await media(`/media/${FILE_ID}`)).status, 404);
+});
+
+await test('media: hostile ids and path tricks never reach the API', async () => {
+  upstreamReply = linkTo('receipt.png');
+  seen.length = 0;
+  for (const path of ['/media', '/media/', '/media/not-a-uuid', `/media/${FILE_ID}/url`, `/media/${FILE_ID}/`, `/media/..%2F${FILE_ID}`, `/media/${FILE_ID}%2F..`, `/media/%2e%2e/${FILE_ID}`, `/media/${FILE_ID}%00`, '/media/..%2F..%2Fetc%2Fpasswd', `/media/${FILE_ID}x`, '/media/<script>alert(1)</script>', `/media//${FILE_ID}`]) {
+    const r = await media(path);
+    assert.equal(r.status, 404, path);
+    assert.deepEqual(JSON.parse(r.body), { error: 'not_found' }, path);
+  }
+  assert.equal(seen.length, 0);
+});
+
+await test('media: reads only: other methods 405, a body 400', async () => {
+  upstreamReply = linkTo('receipt.png');
+  seen.length = 0;
+  for (const method of ['POST', 'PUT', 'PATCH', 'DELETE']) assert.equal((await media(`/media/${FILE_ID}`, {}, method, 'x')).status, 405, method);
+  assert.equal((await media(`/media/${FILE_ID}`, { 'content-length': '3' }, 'GET', 'abc')).status, 400);
+  assert.equal(seen.length, 0);
+});
+
+await test('media: one visitor is limited (429, the public reads\' limiter), another is still served; a query string changes nothing', async () => {
+  upstreamReply = linkTo('receipt.png');
+  const limited = createHoyServer(await createHandler({ ...publicConfig, publicReadRate: { perSecond: 0.001, burst: 2 } }, { verifySession: fakeVerify, log: () => {} }));
+  await listen(limited);
+  const one = { 'x-real-ip': '10.1.0.1' };
+  const statuses = [];
+  for (let i = 0; i < 3; i++) statuses.push((await request('GET', `/media/${FILE_ID}?r=${i}`, one, undefined, limited)).status);
+  assert.deepEqual(statuses, [200, 200, 429]);
+  assert.equal((await request('GET', `/media/${FILE_ID}`, { 'x-real-ip': '10.1.0.2' }, undefined, limited)).status, 200);
+  limited.close();
+});
+
+await test('media: without a read identity nothing is asked (404), and the log never carries the id or the link', async () => {
+  seen.length = 0; logs.length = 0;
+  assert.equal((await request('GET', `/media/${FILE_ID}`)).status, 404, 'the server with no COMPANY_OS_READ_TOKEN');
+  assert.equal(seen.length, 0);
+  assert.ok(logs.some((l) => l.event === 'media'));
+  assert.doesNotMatch(JSON.stringify(logs), new RegExp(FILE_ID));
+});
+
+await test('media: a browser may cache it publicly, but never a shared cache behind the test gate', () => {
+  assert.match(appModule.mediaCacheControl({ testGate: { on: false } }), /^public, max-age=\d+$/);
+  assert.match(appModule.mediaCacheControl({}), /^public, max-age=\d+$/);
+  assert.match(appModule.mediaCacheControl({ testGate: { on: true } }), /^private, max-age=\d+$/);
+});
+
+await test('proxy: /public-files is never forwarded, signed in or out, so the storage link never reaches a browser', async () => {
+  upstreamReply = linkTo('receipt.png');
+  seen.length = 0;
+  const auth = { authorization: `Bearer ${GOOD}` };
+  for (const [method, path] of [['GET', `/public-files/${FILE_ID}/url`], ['GET', `/%70ublic-files/${FILE_ID}/url`], ['GET', `/public-files/${FILE_ID}/url?x=1`], ['POST', '/public-files/urls'], ['GET', '/public-files']]) {
+    const body = method === 'POST' ? JSON.stringify({ ids: [FILE_ID] }) : undefined;
+    for (const headers of [auth, {}]) {
+      const r = await request(method, `/api/cos/t/hoy-dev${path}`, { ...headers, ...(body ? json : {}) }, body, publicServer);
+      assert.ok([401, 404].includes(r.status), `${method} ${path}: ${r.status}`);
+      assert.doesNotMatch(r.body.toString(), new RegExp(SIGNED));
+    }
+    assert.equal((await request(method, `/api/cos/t/hoy-dev${path}`, { ...auth, ...(body ? json : {}) }, body, publicServer)).status, 404, 'signed in: refused too');
+  }
+  assert.equal(seen.length, 0);
 });
 
 // ---------------------------------------------------------------------------------------------
