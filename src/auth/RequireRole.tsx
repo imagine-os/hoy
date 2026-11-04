@@ -50,7 +50,7 @@ export function RequireRole({ roles, children }: { roles: Role[]; children: Reac
     && roles.includes('customer') && matrixAllows('customer', loc.pathname);
   const customerSession = useMemo<SessionCtx | null>(() => asCustomer ? {
     // Staff capabilities stay out of the customer screens (review round, L3); `roles` stays for the way back.
-    ...session, role: 'customer', isSuperAdmin: false, canDevMode: false, devMode: false, caps: [],
+    ...session, role: 'customer', isSuperAdmin: false, meSuperAdmin: false, canDevMode: false, devMode: false, caps: [],
     can: (p) => roleCan('customer', p), hasRole: (r) => r.includes('public') || r.includes('customer'),
   } : null, [asCustomer, session]);
   const checkConsent = PRODUCTION_BUILD && !publicRoute && consentCheckApplies({ status, signedIn, viewAs, roles: held, routeRoles: roles, path: loc.pathname });

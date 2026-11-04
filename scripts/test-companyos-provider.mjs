@@ -247,7 +247,7 @@ try {
     assert.equal(prof.user_id, 'p1'); assert.equal(prof.full_name, 'Ana María Ruiz'); assert.equal(prof.initials, 'AM'); assert.equal(prof.birthday, '1990-05-04');
     assert.equal(fromRecord(adapters.users, { id: 'p1', data: { email: 'a@example.test', user: 'u1' } }).status, 'active');
     const t = fromRecord(adapters.teachers, { id: 'c1', data: { person: { id: 'p9', name: 'Raghu' }, active: true } });
-    assert.equal(t.display_name, 'Raghu'); assert.equal(t.user_id, 'p9'); assert.ok(t.bio.es.length > 0, 'bio from build content');
+    assert.equal(t.display_name, 'Raghu'); assert.equal(t.user_id, 'p9'); assert.deepEqual(t.bio, { es: '', en: '' }, 'no bio in Company OS: none, never the build\'s');
     const v = fromRecord(adapters.vouchers, { id: 'v1', data: { kind: 'gift', classes: 2, code: 'K7M2QX9A', uses: 1, max_uses: 1, valid_until: '2026-12-31', recipient_email: 'x@example.test' } });
     assert.equal(v.status, 'claimed'); assert.equal(v.balance, 0); assert.equal(v.source, 'purchased_gift'); assert.equal(v.expiresAt, '2026-12-31'); assert.equal(v.recipientContact, 'x@example.test');
   });
@@ -348,7 +348,8 @@ try {
     assert.deepEqual(plans.map((x) => [x.slug, x.price]), [['pack12', 610000]], 'live prices; the private class never reaches the site');
     const teachers = await p.list('teachers', { where: { active: true } });
     assert.deepEqual(teachers.map((t) => t.display_name).sort(), ['Clara Zuluaga', 'Nora Nueva']);
-    assert.ok(teachers.find((t) => t.display_name === 'Clara Zuluaga').bio.es.length > 0, 'bio and photo still come from the website content, by name');
+    const clarita = teachers.find((t) => t.display_name === 'Clara Zuluaga');
+    assert.deepEqual([clarita.bio, clarita.photo_url, clarita.specialties], [{ es: '', en: '' }, null, []], 'bio, photo and specialties come from Company OS, not from the build by name');
     assert.equal(queriesOf(api, 'coach')[0].body.include[0].field, 'person');
     assert.deepEqual((await p.list('rooms')).map((r) => r.name), ['Salón principal']);
     const sessions = await p.list('class_sessions', { orderBy: { column: 'starts_at' } });

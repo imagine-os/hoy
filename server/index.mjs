@@ -15,7 +15,7 @@ try {
 }
 
 if (config.environment === 'production' && config.fileStorageOrigins.length === 0) {
-  console.warn(JSON.stringify({ event: 'server.warning', message: 'FILE_STORAGE_ORIGINS is not set: GET /files/<id> refuses every file' }));
+  console.warn(JSON.stringify({ event: 'server.warning', message: 'FILE_STORAGE_ORIGINS is not set: GET /files/<id> and GET /media/<id> refuse every file' }));
 }
 
 const handler = await createHandler(config, { verifySession: clerkSessionVerifier(config) });

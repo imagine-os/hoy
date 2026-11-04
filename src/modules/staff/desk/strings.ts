@@ -7,9 +7,9 @@ export const DESK_CODES = [
   'no_credits', 'lot_expired', 'lot_frozen', 'trial_used',
   'product_inactive', 'audience_not_allowed', 'amount_mismatch', 'invalid_amount', 'invalid_status_transition',
   'already_signed_up', 'person_email_mismatch', 'consent_required', 'duplicate_facet',
-  'idempotency_conflict', 'idempotency_key_invalid', 'forbidden', 'disconnected', 'conflict',
+  'idempotency_conflict', 'idempotency_key_invalid', 'forbidden', 'disconnected', 'conflict', 'ifmatch_mismatch',
   'person_linked_to_other_user', 'user_linked_to_other_person', 'role_mismatch', 'redirect_not_allowed', 'invitation_failed', 'invitations_not_supported',
-  'occurrence_generated', 'resource_overlap', 'invalid_settings',
+  'occurrence_generated', 'resource_overlap', 'invalid_settings', 'undo_payment_voided',
 ] as const;
 
 export const deskStrings: StringTable = {
@@ -41,6 +41,7 @@ export const deskStrings: StringTable = {
   'desk.error.idempotency_key_invalid': { es: 'No se pudo enviar. Recarga la página.', en: 'Could not send. Reload the page.' },
   'desk.error.forbidden': { es: 'Tu rol no permite esta acción.', en: 'Your role does not allow this action.' },
   'desk.error.disconnected': { es: 'Sin conexión con el sistema. Vuelve a intentar.', en: 'No connection to the system. Try again.' },
+  'desk.error.ifmatch_mismatch': { es: 'Alguien cambió este registro mientras lo editabas. Cierra, vuelve a abrirlo y repite tu cambio; no se guardó nada.', en: 'Someone changed this record while you were editing it. Close it, open it again and repeat your change; nothing was saved.' },
   'desk.error.conflict': { es: 'Otra persona cambió esto. Recarga y vuelve a intentar.', en: 'Someone else changed this. Reload and try again.' },
   'desk.error.person_linked_to_other_user': { es: 'Esa persona ya está vinculada a otra cuenta.', en: 'That person is already linked to another account.' },
   'desk.error.user_linked_to_other_person': { es: 'Esa cuenta ya está vinculada a otra persona.', en: 'That account is already linked to another person.' },
@@ -51,6 +52,7 @@ export const deskStrings: StringTable = {
   'desk.error.occurrence_generated': { es: 'Esta clase se generó del horario: cancélala en vez de borrarla.', en: 'This class was generated from the schedule: cancel it instead of deleting it.' },
   'desk.error.resource_overlap': { es: 'El salón ya está ocupado a esa hora.', en: 'The room is already in use at that time.' },
   'desk.error.invalid_settings': { es: 'Revisa el formato del horario.', en: 'Check the hours format.' },
+  'desk.error.undo_payment_voided': { es: 'No se puede deshacer: el pago de esta reserva se anuló y no queda otro aprobado.', en: 'This cannot be undone: this booking\'s payment was voided and no other approved payment covers it.' },
   'desk.error.generic': { es: 'No se pudo guardar (código {code}). No se cambió nada.', en: 'Could not save (code {code}). Nothing was changed.' },
 
   'desk.sale.checkInFailed': { es: 'Venta guardada, pero no se registró la llegada. Márcala en Check-in; no vuelvas a cobrar.', en: 'Sale saved, but the arrival was not recorded. Mark it on Check-in; do not charge again.' },

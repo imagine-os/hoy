@@ -1,4 +1,5 @@
 import {SharedImageField} from '../../components/organism/SharedImageField/SharedImageField';
+import {ImageDraft,SETTING_IMAGE,saveThenRemoveOld,studioSettingsOwnerId,type ImagePort,type ImageSaveNotice} from '../../data/companyos/publicImages';
 import {SavedPaymentInstructions} from '../../components/organism/PaymentInstructions/PaymentInstructions';
 import {validPaymentSettings,type PaymentSettings} from './paymentInstructions';
 import {usePaymentSettingsSave} from './usePaymentSettingsSave';
@@ -486,9 +487,14 @@ function PaymentSettingsCard({value}:{value:PaymentSettings}){
  const[draft,setDraft]=useState({data:save.data,context:save.context,before:value,after:value});
  const current=draft.data===save.data&&draft.context===save.context?draft:{data:save.data,context:save.context,before:value,after:value};
  useEffect(()=>{setDraft(prior=>prior.data!==save.data||prior.context!==save.context?{data:save.data,context:save.context,before:value,after:value}:prior);},[save.data,save.context,value]);
- const d=current.after,busy=save.state==='busy',dirty=JSON.stringify(current.before)!==JSON.stringify(d),stale=JSON.stringify(value)!==JSON.stringify(current.before)&&JSON.stringify(value)!==JSON.stringify(d),valid=validPaymentSettings(d),disabled=!save.canWrite||busy;
+ const[qrBusy,setQrBusy]=useState(false);
+ const d=current.after,busy=save.state==='busy'||qrBusy,dirty=JSON.stringify(current.before)!==JSON.stringify(d),stale=JSON.stringify(value)!==JSON.stringify(current.before)&&JSON.stringify(value)!==JSON.stringify(d),valid=validPaymentSettings(d),disabled=!save.canWrite||busy;
  const set=(next:PaymentSettings)=>{save.changed();setDraft({...current,after:next});};
- const commit=async()=>{const saved=await save.run(current.before,d);if(saved)setDraft({data:save.data,context:save.context,before:saved,after:saved});};
+ // Production: the QR is a Company OS file on the public settings record (undefined: not known yet, or the review build; false: couldn't read it).
+ const[qrOwner,setQrOwner]=useState<string|null|false|undefined>(undefined),[qrNotice,setQrNotice]=useState<ImageSaveNotice>(null);
+ useEffect(()=>{const port=save.data as unknown as ImagePort;if(typeof port.request!=='function')return;let alive=true;studioSettingsOwnerId(port).then(id=>{if(alive)setQrOwner(id);},()=>{if(alive)setQrOwner(false);});return()=>{alive=false;};},[save.data,save.state]);
+ const qrDraft=useMemo(()=>new ImageDraft(save.data as unknown as ImagePort),[save.data]),qrOwnerRecord=qrOwner?{...SETTING_IMAGE,ownerId:qrOwner}:undefined;
+ const commit=async()=>{setQrNotice(null);const out=await saveThenRemoveOld(save.data as unknown as ImagePort,{saved:current.before.qrImageUrl,next:d.qrImageUrl,owner:qrOwnerRecord,draft:qrDraft},()=>save.run(current.before,d));setQrNotice(out.notice);const saved=out.result;if(saved)setDraft({data:save.data,context:save.context,before:saved,after:saved});};
  return <Card title={t('admin.settings.sec.payments')} icon="credit-card" actions={save.canWrite&&<div className="row"><span className="xs muted">{save.state==='saved'?t('admin.settings.saved'):dirty?t('admin.settings.unsaved'):''}</span><Button size="sm" disabled={busy||!valid||(!dirty&&save.state!=='error')||stale} loading={busy} onClick={commit}>{t(save.state==='error'?'core.common.retry':'core.common.save')}</Button></div>}>
   <div className="stack">
    <div className="grid grid-2">
@@ -499,7 +505,8 @@ function PaymentSettingsCard({value}:{value:PaymentSettings}){
     <Field label={t('admin.paymentInstructions.breBKey')} hint={t('admin.paymentInstructions.keyHint')}>{id=><Input id={id} value={d.breBKey} maxLength={256} disabled={disabled} onChange={e=>set({...d,breBKey:e.target.value})}/>}</Field>
     <Field label={t('admin.settings.f.wompiEnv')} hint="Wompi">{id=><Select id={id} value={d.wompiEnv} disabled={disabled} onChange={e=>set({...d,wompiEnv:e.target.value as PaymentSettings['wompiEnv']})}><option value="sandbox">{t('admin.settings.f.sandbox')}</option><option value="production">{t('admin.settings.f.production')}</option></Select>}</Field>
    </div>
-   <SharedImageField label={t('admin.paymentInstructions.qrImageUrl')} value={d.qrImageUrl} disabled={disabled} onChange={qrImageUrl=>set({...d,qrImageUrl})}/>
+   <SharedImageField label={t('admin.paymentInstructions.qrImageUrl')} value={d.qrImageUrl} disabled={disabled} owner={qrOwnerRecord} saved={current.before.qrImageUrl} draft={qrDraft} onBusyChange={setQrBusy} needsSave={qrOwner===null} ownerFailed={qrOwner===false} onChange={qrImageUrl=>set({...d,qrImageUrl})}/>
+   {qrNotice&&<Notice tone="warn">{qrNotice==='old_image_remains'?t('media.picker.oldRemains'):refusalCopy(qrNotice,lang)}</Notice>}
    {!valid&&<Notice tone="warn">{t('admin.paymentInstructions.invalid')}</Notice>}
    {/* One message for a stale save: the "changed" notice below already says it. */}
    {save.state==='error'&&!(stale&&save.failure==='payment_settings_stale')&&<Notice tone="warn">{save.failure&&hasRefusalCopy(save.failure)?refusalCopy(save.failure,lang):t('admin.paymentInstructions.saveError')}</Notice>}

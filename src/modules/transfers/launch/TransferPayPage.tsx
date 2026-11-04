@@ -12,7 +12,7 @@ import { EmptyState } from '../../../components/molecule/EmptyState/EmptyState';
 import { usePaymentInstructions } from '../../admin/usePaymentInstructions';
 import { isAffiliateOnly, rowOnDay, type ProductData, type ProductRow } from '../../products/launch/productMaster';
 import { batch, CosError, myPerson, queryAll, refusalKey, type CosPort } from './cos';
-import { checkReceipt, giftNotes, RECEIPT_TYPES, transferOps, uploadReceipt, type BookingRec, type FileRec, type PaymentRec } from './payments';
+import { checkReceipt, giftNotes, productSoldAlone, RECEIPT_TYPES, transferOps, uploadReceipt, type BookingRec, type FileRec, type PaymentRec } from './payments';
 import { useAction, useCos, useLoad } from './useCos';
 import { holdView, safeCheckoutReturn, type HoldView, type ServerBookingRow } from '../../customer/booking/serverBooking';
 import { useBookingPolicy, type BookingPolicy } from '../../customer/booking/bookingPolicy';
@@ -83,6 +83,8 @@ function PayScreen({ what, id }: { what: string; id: string }) {
   const action = useAction();
   const [reference, setReference] = useState('');
   const [file, setFile] = useState<File | null>(null);
+  // A QR that doesn't load says so; the bank details above it still pay.
+  const [failedQr, setFailedQr] = useState<string | null>(null);
   // Once the payment exists, a retry only re-sends the image: it never creates a second payment.
   const [paymentId, setPaymentId] = useState<string | null>(null);
   const [done, setDone] = useState(false);
@@ -99,6 +101,7 @@ function PayScreen({ what, id }: { what: string; id: string }) {
   if (product.data.kind === 'private') return <Notice>{t('payLaunch.pay.private')}</Notice>;
   // A gift pays for a named recipient (H-6 passes it in router state); opened without one, it goes back to choose them.
   if (product.data.kind === 'gift' && !notes) return <Notice action={<Link to={GIFT_PURCHASE_PATH}><Button size="sm" variant="secondary">{t('payLaunch.pay.giftRecipient.cta')}</Button></Link>}>{t('payLaunch.pay.giftRecipient')}</Notice>;
+  if (!v.booking && !productSoldAlone(product)) return <Notice action={<Link to="/app/schedule"><Button size="sm" variant="secondary">{t('payLaunch.pay.singleAtBooking.cta')}</Button></Link>}>{t('payLaunch.pay.singleAtBooking')}</Notice>;
   // The purchase still waits for reception: the link only goes back to the class, it does not promise the booking.
   const backToClass = next && !v.booking ? <Link to={next}><Button size="sm" variant="secondary">{t('payLaunch.pay.backToClass')}</Button></Link> : undefined;
   if (done) return <Notice tone="success" action={backToClass}>{t(v.booking ? 'payLaunch.pay.sent' : 'payLaunch.pay.sentProduct')}</Notice>;
@@ -144,7 +147,7 @@ function PayScreen({ what, id }: { what: string; id: string }) {
       <div className="stack-sm" data-testid="bank-details">
         {ins.bankName && ins.accountNumber && <span>{t('payLaunch.pay.bank', { bank: ins.bankName, type: t(`payLaunch.pay.accountType.${ins.accountType ?? 'savings'}`), number: ins.accountNumber, holder: ins.accountHolder ?? '' })}</span>}
         {ins.breBKey && <span>{t('payLaunch.pay.breB')}: <strong>{ins.breBKey}</strong></span>}
-        {ins.qrImageUrl && <img src={ins.qrImageUrl} alt={t('payLaunch.pay.qr')} style={{ width: 'min(240px, 100%)', height: 'auto' }} />}
+        {ins.qrImageUrl && (failedQr === ins.qrImageUrl ? <span className="small muted" data-qr="unavailable">{t('payLaunch.pay.qrUnavailable')}</span> : <img src={ins.qrImageUrl} alt={t('payLaunch.pay.qr')} style={{ width: 'min(240px, 100%)', height: 'auto' }} onError={() => setFailedQr(ins.qrImageUrl)} />)}
       </div>
     </Card> : pay.status !== 'loading' && <Notice tone="warn">{t('payLaunch.pay.noInstructions')}</Notice>}
     {v.affiliate !== false && <form className="stack" onSubmit={(e) => { e.preventDefault(); void send(); }} noValidate>

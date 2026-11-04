@@ -306,8 +306,7 @@ export const strings: StringTable = {
 
   // M-01 dashboard
   'admin.dashboard.title': { es: 'Panel', en: 'Dashboard' },
-  'admin.dashboard.members': { es: 'Miembros activos', en: 'Active members' },
-  'admin.dashboard.members.packs': { es: 'Con un paquete activo', en: 'With an active pack' },
+  'admin.dashboard.members': { es: 'Con paquete activo', en: 'With an active pack' },
   'admin.dashboard.revenue': { es: 'Ingresos 30 días', en: 'Revenue 30 days' },
   'admin.dashboard.occupancy': { es: 'Ocupación 7 días', en: 'Occupancy 7 days' },
   'admin.dashboard.arrivals': { es: 'Llegadas hoy', en: 'Arrivals today' },
@@ -386,6 +385,7 @@ export const strings: StringTable = {
   'admin.dashboard.system': { es: 'Sistema', en: 'System' },
 
   // M-02 content
+  'admin.content.teachersLive': { es: 'La biografía, las especialidades y la foto de cada profesor se editan en Horario de clases › Profesores.', en: 'Each teacher\'s bio, specialties and photo are edited in Class schedule › Teachers.' },
   'admin.content.later': { es: 'Aquí ves los profesores, modalidades y salas como están hoy. Editarlos desde la app llega en una próxima actualización; mientras tanto, estos cambios no se guardan. El horario (Clases) sí se guarda.', en: 'Here you see the teachers, modalities and rooms as they are today. Editing them from the app arrives in a coming update; until then, these changes are not saved. The timetable (Classes) does save.' },
   // Lane Y5: the timetable saves to Company OS in production.
   'admin.content.timetableLive': { es: 'El horario se guarda en el sistema: cada fila con su profesor/a, sala y modalidad. Una fila nueva empieza en borrador; publícala cuando esté lista. El tema, la descripción y el nivel aún no se guardan, por eso no aparecen aquí.', en: 'The timetable saves to the system: each row with its teacher, room and modality. A new row starts as a draft; publish it when it is ready. Theme, description and level are not saved yet, so they are not shown here.' },
@@ -940,6 +940,7 @@ export const strings: StringTable = {
   'admin.finance.status.pending': { es: 'Pendiente', en: 'Pending' },
   'admin.finance.status.declined': { es: 'Rechazado', en: 'Declined' },
   'admin.finance.status.refunded': { es: 'Reembolsado', en: 'Refunded' },
+  'admin.finance.status.voided': { es: 'Anulado', en: 'Voided' },
   'admin.finance.product.special': { es: 'Especiales (sin plan)', en: 'Specials (no plan)' },
   'admin.finance.provider.wompi': { es: 'Wompi', en: 'Wompi' },
   'admin.finance.provider.manual': { es: 'manual', en: 'manual' },

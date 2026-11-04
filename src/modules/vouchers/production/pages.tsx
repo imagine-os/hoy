@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { addDaysKey, dateKey, formatCOP, formatDate, fromDateKey } from '../../../i18n/format';
 import { useData, useTable } from '../../../data/DataContext';
@@ -11,7 +11,7 @@ import { Field } from '../../../components/molecule/Field/Field';
 import { Input } from '../../../components/atom/Input/Input';
 import { Notice } from '../../../components/molecule/Notice/Notice';
 import { Badge } from '../../../components/atom/Badge/Badge';
-import { codeFromLink, useCosVouchers, useGiftProducts, useKeyedSubmit, type CosVoucherList } from './hooks';
+import { codeFromLink, useCosVouchers, useGiftProducts, useGiftProductsOnSale, useKeyedSubmit, type CosVoucherList } from './hooks';
 import {
   PAYMENT_TABLE, VOUCHER_CHANGES, courtesyBody, courtesyErrors, createVoucher, giftCheckoutPath, giftPaymentNotes, giftValidUntil, giftsToIssue,
   giftBody, isCode, isEmail, normalizeCode, redeemVoucher, voucherState,
@@ -83,11 +83,14 @@ function RedeemCard({ linked }: { linked: string | undefined }) {
 export function GiftVoucherPage() {
   const { t, bi, lang } = useI18n();
   const navigate = useNavigate();
-  const { products, loading } = useGiftProducts();
+  const { products, loading } = useGiftProductsOnSale();
   const [productId, setProductId] = useState('');
+  // A gift's plan card sends `?product=<key>`: that gift starts chosen.
+  const [params] = useSearchParams();
+  const wanted = params.get('product');
   const [name, setName] = useState(''), [email, setEmail] = useState('');
   const [tried, setTried] = useState(false);
-  const product = products.find((p) => p.id === productId) ?? (products.length === 1 ? products[0] : undefined);
+  const product = products.find((p) => p.id === productId) ?? products.find((p) => p.key === wanted) ?? (products.length === 1 ? products[0] : undefined);
   const errors = { product: !product, name: name.trim().length < 2, email: !isEmail(email) };
   // C-01d: while the consent waits ("Continue for now"), no gift is bought.
   const consentHeld = useConsentHeld();

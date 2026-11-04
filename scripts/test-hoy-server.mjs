@@ -12,6 +12,7 @@ import net from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { gunzipSync } from 'node:zlib';
+import * as appModule from '../server/app.mjs';
 import { ANONYMOUS_ROUTES, createHandler, createHoyServer, publicReadLimiter } from '../server/app.mjs';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
@@ -683,6 +684,253 @@ await test('config: COMPANY_OS_READ_TOKEN must be a Company OS service token; ch
 });
 
 // ---------------------------------------------------------------------------------------------
+// /site and /coming-soon: an address typed without the # goes to the app's route (owner, go-live)
+// ---------------------------------------------------------------------------------------------
+await test('routes without the #: /site, /site/<path> and /coming-soon redirect to the hash route', async () => {
+  for (const [path, location] of [
+    ['/site', '/#/site'], ['/site/', '/#/site'], ['/site/plans', '/#/site/plans'], ['/site/classes/fuego', '/#/site/classes/fuego'], ['/site/teachers/', '/#/site/teachers'], ['/coming-soon', '/#/coming-soon'],
+  ]) {
+    for (const method of ['GET', 'HEAD']) {
+      const r = await request(method, path);
+      assert.equal(r.status, 302, `${method} ${path}`);
+      assert.equal(r.headers.location, location, `${method} ${path}`);
+      assert.equal(r.headers['x-content-type-options'], 'nosniff');
+    }
+  }
+});
+
+await test('routes without the #: a plain query string passes; anything else is dropped, and the redirect still happens', async () => {
+  assert.equal((await request('GET', '/site/plans?version=photos&x=1')).headers.location, '/#/site/plans?version=photos&x=1');
+  for (const query of ['?next=//evil.example', '?a=%0d%0aSet-Cookie:x=1', '?a=%2F%2Fevil', '?a=<script>', '?a=b#c', '?', `?${'a'.repeat(600)}`]) {
+    const r = await request('GET', `/site${query}`);
+    assert.equal(r.status, 302, query);
+    assert.equal(r.headers.location, '/#/site', query);
+    assert.equal(r.headers['set-cookie'], undefined, query);
+  }
+});
+
+await test('routes without the #: hostile paths keep the 404, and no answer ever leaves the site', async () => {
+  for (const path of [
+    '/site/%2f%2fevil.example', '/site/%2fevil', '/site/..', '/site/../etc/passwd', '/site/..%2f..%2fetc', '/site/%2e%2e/x', '/site/.', '/site//evil.example', '/site/a//b', '/site/%0d%0aSet-Cookie:x=1', '/site/%0aevil', '/site/a%00b',
+    '/site/%5cevil', '/site/a\\b', '/site/@evil.example', '/site/a:b', '/site/<script>', '/coming-soon/x', '/coming-soon/', '/coming-soon/..',
+  ]) {
+    const r = await request('GET', path);
+    assert.equal(r.status, 404, path);
+    assert.equal(r.headers.location, undefined, path);
+  }
+  for (const path of ['//evil.example', '//evil.example/site', '//site', '///site']) {
+    const r = await request('GET', path);
+    assert.ok(r.headers.location === undefined || !/^\/\/|^https?:/i.test(r.headers.location), `${path}: ${r.headers.location}`);
+    assert.notEqual(r.headers.location, '/#/site', path);
+  }
+});
+
+await test('routes without the #: only GET and HEAD, and only these paths', async () => {
+  for (const method of ['POST', 'PUT', 'DELETE']) assert.notEqual((await request(method, '/site')).status, 302, method);
+  for (const path of ['/website', '/website/', '/sites', '/site-map', '/SITE', '/coming-soonish', '/index.html', '/assets/index-abc123.js', '/media/x', '/files/x', '/api/x', '/api/cos/t/hoy-dev/me']) {
+    const r = await request('GET', path);
+    assert.ok(r.headers.location === undefined || !r.headers.location.includes('#'), `${path}: ${r.headers.location}`);
+    assert.notEqual(r.status, 302, path);
+  }
+  assert.equal((await request('GET', '/website/')).status, 200, 'the static website is untouched');
+  assert.equal((await request('GET', '/assets/index-abc123.js')).status, 200, 'static files are untouched');
+});
+
+// ---------------------------------------------------------------------------------------------
+// GET /media/<id>: a public image (a teacher's photo, the payment QR), with the server's read identity (go-live lane H1)
+// ---------------------------------------------------------------------------------------------
+const MEDIA_LINK = `/t/hoy-dev/public-files/${FILE_ID}/url`;
+const mediaServer = createHoyServer(await createHandler({ ...publicConfig, fileSizeLimit: 4096, fileTimeoutMs: 500 }, { verifySession: fakeVerify, log: (e) => publicLogs.push(e) }));
+await listen(mediaServer);
+const media = (path, headers = {}, method = 'GET', body) => request(method, path, headers, body, mediaServer);
+
+await test('media: an allowed image is served inline with the read identity; nothing of the visitor reaches the API or storage', async () => {
+  upstreamReply = linkTo('receipt.png');
+  seen.length = 0; storageSeen.length = 0;
+  const r = await media(`/media/${FILE_ID}`, { cookie: 'hoy_test_gate=1', authorization: `Bearer ${GOOD}`, 'x-real-ip': '203.0.113.9' });
+  assert.equal(r.status, 200);
+  assert.equal(r.headers['content-type'], 'image/png');
+  assert.equal(r.headers['content-disposition'], 'inline');
+  assert.deepEqual(r.body, receipt);
+  assert.equal(seen.length, 1);
+  assert.equal(seen[0].url, MEDIA_LINK, 'the published-copy route, so the policy and the published bucket decide');
+  assert.equal(seen[0].headers.authorization, `Bearer ${READ_TOKEN}`, 'always the read identity, never the visitor token');
+  assert.equal(seen[0].headers.cookie, undefined);
+  assert.equal(seen[0].headers['x-real-ip'], '203.0.113.9');
+  assert.equal(storageSeen.length, 1);
+  assert.equal(storageSeen[0].headers.cookie, undefined);
+  assert.equal(storageSeen[0].headers.authorization, undefined);
+  const everything = JSON.stringify(r.headers) + r.body.toString('latin1');
+  assert.doesNotMatch(everything, new RegExp(SIGNED), 'the storage link never reaches the browser');
+  assert.equal(r.headers['set-cookie'], undefined);
+  assert.match(r.headers['content-security-policy'], /sandbox/);
+  assert.equal(r.headers['cross-origin-resource-policy'], 'same-origin');
+  assert.equal(r.headers['x-content-type-options'], 'nosniff');
+  assert.equal(r.headers['cache-control'], 'public, max-age=300', 'short: a replaced bank QR must not linger');
+});
+
+await test('media: the same image for a signed-out visitor (no session needed)', async () => {
+  upstreamReply = linkTo('receipt.png');
+  assert.equal((await media(`/media/${FILE_ID}`)).status, 200);
+});
+
+await test('media: other kinds, drafts and receipts are refused as the API refuses them, with no storage call and no caching', async () => {
+  for (const [status, answer, expected] of [
+    [404, { error: 'not found' }, { status: 404, error: 'not_found' }],
+    [403, { error: 'forbidden' }, { status: 404, error: 'not_found' }],
+    [404, { error: 'file_not_ready' }, { status: 404, error: 'file_not_ready' }],
+  ]) {
+    upstreamReply = (req, res) => { res.writeHead(status, { 'content-type': 'application/json' }); res.end(JSON.stringify(answer)); };
+    storageSeen.length = 0;
+    const r = await media(`/media/${FILE_ID}`);
+    assert.equal(r.status, expected.status, JSON.stringify(answer));
+    assert.deepEqual(JSON.parse(r.body), { error: expected.error });
+    assert.equal(r.headers['cache-control'], 'no-store', 'a refusal must not stick in the browser');
+    assert.equal(storageSeen.length, 0);
+  }
+});
+
+await test('media: the read identity refused, or the API busy, is no refusal of the file: 502 or 503, no-store, and the log says what came back', async () => {
+  for (const [status, expected] of [[401, 502], [429, 503], [400, 502]]) {
+    upstreamReply = (req, res) => { res.writeHead(status, { 'content-type': 'application/json' }); res.end(JSON.stringify({ error: 'unauthorized' })); };
+    publicLogs.length = 0;
+    const r = await media(`/media/${FILE_ID}`);
+    assert.equal(r.status, expected, String(status));
+    assert.equal(r.headers['cache-control'], 'no-store', String(status));
+    assert.ok(publicLogs.some((l) => l.event === 'media' && l.upstream === status), `logged ${status}`);
+  }
+  upstreamReply = (req, res) => { res.writeHead(404, { 'content-type': 'application/json' }); res.end('{"error":"not found"}'); };
+  publicLogs.length = 0;
+  await media(`/media/${FILE_ID}`);
+  assert.ok(publicLogs.some((l) => l.event === 'media' && l.upstream === 404), 'a refusal is logged too');
+});
+
+await test('media and files: a client leaving mid-stream gives the slot back at once, and the log says so', async () => {
+  const seenLogs = [];
+  const roomy = createHoyServer(await createHandler({ ...publicConfig, mediaConcurrency: 1, fileTimeoutMs: 20_000 }, { verifySession: fakeVerify, log: (e) => seenLogs.push(e) }));
+  await listen(roomy);
+  const leave = (path, headers) => new Promise((done, fail) => {
+    const req = http.request({ host: '127.0.0.1', port: roomy.address().port, method: 'GET', path, headers, agent: false }, (res) => { res.once('data', () => { req.destroy(); done(); }); });
+    req.on('error', () => {}); setTimeout(() => fail(new Error('no bytes')), 3000).unref(); req.end();
+  });
+  const settle = async (event) => { for (let i = 0; i < 40 && !seenLogs.some((l) => l.event === event); i++) await new Promise((r) => setTimeout(r, 25)); };
+  upstreamReply = linkTo('trickle');
+  await leave(`/media/${FILE_ID}`, { 'x-real-ip': '10.3.0.1' });
+  await settle('media');
+  assert.equal(seenLogs.find((l) => l.event === 'media')?.outcome, 'client_gone', 'the read ended with the client');
+  upstreamReply = linkTo('receipt.png');
+  assert.equal((await request('GET', `/media/${FILE_ID}`, { 'x-real-ip': '10.3.0.1' }, undefined, roomy)).status, 200, 'the slot came back');
+  upstreamReply = linkTo('trickle');
+  await leave(`/files/${FILE_ID}`, { authorization: `Bearer ${GOOD}` });
+  await settle('file');
+  assert.equal(seenLogs.find((l) => l.event === 'file')?.outcome, 'client_gone', '/files shares the code');
+  roomy.close();
+});
+
+await test('media: one address may hold only so many reads at once; the slot comes back afterwards', async () => {
+  upstreamReply = linkTo('trickle');
+  const capped = createHoyServer(await createHandler({ ...publicConfig, mediaConcurrency: 1, fileTimeoutMs: 300 }, { verifySession: fakeVerify, log: () => {} }));
+  await listen(capped);
+  const one = { 'x-real-ip': '10.2.0.1' };
+  const held = request('GET', `/media/${FILE_ID}`, one, undefined, capped).catch(() => null);
+  await new Promise((r) => setTimeout(r, 80));
+  const second = await request('GET', `/media/${FILE_ID}`, one, undefined, capped);
+  assert.equal(second.status, 429);
+  assert.deepEqual(JSON.parse(second.body), { error: 'rate_limited' });
+  upstreamReply = linkTo('receipt.png');
+  assert.equal((await request('GET', `/media/${FILE_ID}`, { 'x-real-ip': '10.2.0.2' }, undefined, capped)).status, 200, 'another address is not affected');
+  await held;
+  await new Promise((r) => setTimeout(r, 50));
+  assert.equal((await request('GET', `/media/${FILE_ID}`, one, undefined, capped)).status, 200, 'the slot came back');
+  capped.close();
+});
+
+await test('media: the API being down or its answer odd is a 502, and an unlisted storage host is never fetched', async () => {
+  upstreamReply = (req, res) => { res.writeHead(500); res.end('boom'); };
+  assert.equal((await media(`/media/${FILE_ID}`)).status, 502);
+  upstreamReply = linkTo('x', 200, { url: 'file:///etc/passwd' });
+  assert.equal((await media(`/media/${FILE_ID}`)).status, 502);
+  upstreamReply = linkTo('x', 200, { nope: true });
+  assert.equal((await media(`/media/${FILE_ID}`)).status, 502);
+});
+
+await test('media: only images: an SVG or anything else stored is refused, never rendered or downloaded from this address', async () => {
+  upstreamReply = linkTo('page.svg');
+  const r = await media(`/media/${FILE_ID}`);
+  assert.equal(r.status, 404);
+  assert.doesNotMatch(r.body.toString(), /script/);
+  assert.equal(r.headers['content-disposition'], undefined);
+});
+
+await test('media: too big is refused; storage missing is a 404', async () => {
+  upstreamReply = linkTo('declared-big');
+  assert.equal((await media(`/media/${FILE_ID}`)).status, 502);
+  upstreamReply = linkTo('gone');
+  assert.equal((await media(`/media/${FILE_ID}`)).status, 404);
+});
+
+await test('media: hostile ids and path tricks never reach the API', async () => {
+  upstreamReply = linkTo('receipt.png');
+  seen.length = 0;
+  for (const path of ['/media', '/media/', '/media/not-a-uuid', `/media/${FILE_ID}/url`, `/media/${FILE_ID}/`, `/media/..%2F${FILE_ID}`, `/media/${FILE_ID}%2F..`, `/media/%2e%2e/${FILE_ID}`, `/media/${FILE_ID}%00`, '/media/..%2F..%2Fetc%2Fpasswd', `/media/${FILE_ID}x`, '/media/<script>alert(1)</script>', `/media//${FILE_ID}`]) {
+    const r = await media(path);
+    assert.equal(r.status, 404, path);
+    assert.deepEqual(JSON.parse(r.body), { error: 'not_found' }, path);
+  }
+  assert.equal(seen.length, 0);
+});
+
+await test('media: reads only: other methods 405, a body 400', async () => {
+  upstreamReply = linkTo('receipt.png');
+  seen.length = 0;
+  for (const method of ['POST', 'PUT', 'PATCH', 'DELETE']) assert.equal((await media(`/media/${FILE_ID}`, {}, method)).status, 405, method);
+  assert.equal((await media(`/media/${FILE_ID}`, { 'content-length': '3' }, 'GET', 'abc')).status, 400);
+  assert.equal(seen.length, 0);
+});
+
+await test('media: one visitor is limited (429, the public reads\' limiter), another is still served; a query string changes nothing', async () => {
+  upstreamReply = linkTo('receipt.png');
+  const limited = createHoyServer(await createHandler({ ...publicConfig, publicReadRate: { perSecond: 0.001, burst: 2 } }, { verifySession: fakeVerify, log: () => {} }));
+  await listen(limited);
+  const one = { 'x-real-ip': '10.1.0.1' };
+  const statuses = [];
+  for (let i = 0; i < 3; i++) statuses.push((await request('GET', `/media/${FILE_ID}?r=${i}`, one, undefined, limited)).status);
+  assert.deepEqual(statuses, [200, 200, 429]);
+  assert.equal((await request('GET', `/media/${FILE_ID}`, { 'x-real-ip': '10.1.0.2' }, undefined, limited)).status, 200);
+  limited.close();
+});
+
+await test('media: without a read identity nothing is asked (404), and the log never carries the id or the link', async () => {
+  seen.length = 0; logs.length = 0;
+  assert.equal((await request('GET', `/media/${FILE_ID}`)).status, 404, 'the server with no COMPANY_OS_READ_TOKEN');
+  assert.equal(seen.length, 0);
+  assert.ok(logs.some((l) => l.event === 'media'));
+  assert.doesNotMatch(JSON.stringify(logs), new RegExp(FILE_ID));
+});
+
+await test('media: a browser may cache it publicly, but never a shared cache behind the test gate', () => {
+  assert.match(appModule.mediaCacheControl({ testGate: { on: false } }), /^public, max-age=\d+$/);
+  assert.match(appModule.mediaCacheControl({}), /^public, max-age=\d+$/);
+  assert.match(appModule.mediaCacheControl({ testGate: { on: true } }), /^private, max-age=\d+$/);
+});
+
+await test('proxy: /public-files is never forwarded, signed in or out, so the storage link never reaches a browser', async () => {
+  upstreamReply = linkTo('receipt.png');
+  seen.length = 0;
+  const auth = { authorization: `Bearer ${GOOD}` };
+  for (const [method, path] of [['GET', `/public-files/${FILE_ID}/url`], ['GET', `/%70ublic-files/${FILE_ID}/url`], ['GET', `/PUBLIC-FILES/${FILE_ID}/url`], ['GET', `/Public-Files/${FILE_ID}/url`], ['GET', `/public-files/${FILE_ID}/url?x=1`], ['POST', '/public-files/urls'], ['GET', '/public-files']]) {
+    const body = method === 'POST' ? JSON.stringify({ ids: [FILE_ID] }) : undefined;
+    for (const headers of [auth, {}]) {
+      const r = await request(method, `/api/cos/t/hoy-dev${path}`, { ...headers, ...(body ? json : {}) }, body, mediaServer);
+      assert.ok([401, 404].includes(r.status), `${method} ${path}: ${r.status}`);
+      assert.doesNotMatch(r.body.toString(), new RegExp(SIGNED));
+    }
+    assert.equal((await request(method, `/api/cos/t/hoy-dev${path}`, { ...auth, ...(body ? json : {}) }, body, mediaServer)).status, 404, 'signed in: refused too');
+  }
+  assert.equal(seen.length, 0);
+});
+
+// ---------------------------------------------------------------------------------------------
 // GET /files/<id> → the API's download link → the bytes
 // ---------------------------------------------------------------------------------------------
 const auth = { authorization: `Bearer ${GOOD}` };
@@ -690,7 +938,7 @@ const auth = { authorization: `Bearer ${GOOD}` };
 await test('proxy: the private download link route is never forwarded (the browser gets bytes from /files/<id>)', async () => {
   seen.length = 0;
   upstreamReply = linkTo('receipt.png');
-  for (const path of [`/api/cos/t/hoy-dev/files/${FILE_ID}/url`, `/api/cos/t/hoy-dev/files/${FILE_ID}/%75rl`, `/api/cos/t/hoy-dev/files/${FILE_ID}/url?x=1`]) {
+  for (const path of [`/api/cos/t/hoy-dev/files/${FILE_ID}/url`, `/api/cos/t/hoy-dev/files/${FILE_ID}/%75rl`, `/api/cos/t/hoy-dev/files/${FILE_ID}/url?x=1`, `/api/cos/t/hoy-dev/FILES/${FILE_ID}/url`, `/api/cos/t/hoy-dev/files/${FILE_ID}/URL`]) {
     const r = await request('GET', path, auth);
     assert.equal(r.status, 404, path);
     assert.ok(!r.body.includes(SIGNED));

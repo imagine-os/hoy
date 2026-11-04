@@ -32,6 +32,11 @@ export interface SessionCtx {
    */
   roles?: readonly Role[];
   isSuperAdmin: boolean;
+  /**
+   * `/me`'s Super Admin flag (production), which `isSuperAdmin` is not: an AD-04 Administration login resolves to `admin`
+   * and has this one. False while viewing as; absent in the review build. Opens the payment void (`superAdminFlag`).
+   */
+  meSuperAdmin?: boolean;
   /** The signed-in user may turn dev mode on: super_admin and developer (0031). Only super_admin may "view as". */
   canDevMode: boolean;
   devMode: boolean;

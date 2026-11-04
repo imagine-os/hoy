@@ -14,13 +14,15 @@ export interface PaymentData {
   for_entity?: string | null; for_id?: string | null; price_override_reason?: string | null;
   /** Set by the server when the payment is approved (payments 2.7.0, CO-6): who approved it and when. */
   approved_by?: string | null; approved_at?: string | null;
+  /** Why it was voided (or declined); fixed once written. */
+  status_reason?: string | null;
 }
 export type PaymentRec = CosRecord<PaymentData>;
 export interface BookingData { person?: string; occurrence?: string; status?: string; entitlement?: string; payment_method?: string | null; hold_until?: string | null; hold_frozen_at?: string | null; hold_left_minutes?: number | null; policy_hold_minutes?: number | null; start?: string | null }
 export type BookingRec = CosRecord<BookingData>;
 export interface FileData { owner_entity?: string; owner_id?: string; kind?: string; status?: string; mime?: string }
 export type FileRec = CosRecord<FileData>;
-export interface InvoiceData { kind?: string; number?: number; payment?: string; person?: string; product?: string; total?: number; issued_at?: string }
+export interface InvoiceData { kind?: string; number?: number; payment?: string; person?: string; product?: string; total?: number; issued_at?: string; voided_at?: string | null; void_reason?: string | null }
 export type InvoiceRec = CosRecord<InvoiceData>;
 
 // ── PG-02 · receipt image ────────────────────────────────────────────────────────────────────────────────────
@@ -53,6 +55,12 @@ const safeName = (name: string, type: string) => (name.replace(/[^\w.-]+/g, '_')
 
 // ── PG-01 / PG-02 · customer pays by transfer ────────────────────────────────────────────────────────────────
 export interface TransferInput { person: string; product: ProductRow; today: string; reference: string; booking?: string | null; concept: string; notes?: string | null }
+/**
+ * Whether a product can be paid on its own (no booking). A `single` with no credits can't: Company OS issues nothing for
+ * it (credits' `grantingProduct`), so the money would buy no class. It is paid when a class is booked.
+ */
+export const productSoldAlone = (product: Pick<ProductRow, 'data'>): boolean => product.data.kind !== 'single' || Number(product.data.credits ?? 0) > 0;
+
 /** H-6: a gift purchase carries its recipient as `gift-recipient:{…}` in the pending payment's notes; nothing else is accepted. */
 export const giftNotes = (v: unknown): string | null => (typeof v === 'string' && v.length <= 1000 && v.startsWith('gift-recipient:') ? v : null);
 /** The pending payment the receipt hangs on. For a held booking it freezes the hold (bookings 1.4.0). */

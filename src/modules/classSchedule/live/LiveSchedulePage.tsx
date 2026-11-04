@@ -13,9 +13,14 @@ import { EmptyState } from '../../../components/molecule/EmptyState/EmptyState';
 import { flatRows, useCosQueries, type CosRow } from '../../staff/desk/useCos';
 import { batch, errorCode, newActionKey, type BatchOp } from '../../staff/desk/wire';
 import { deskErrorText } from '../../staff/desk/strings';
+import { refusalCopy } from '../../../data/companyos/refusals';
+import { useData, useTable } from '../../../data/DataContext';
+import type { ModalityRow } from '../../../data/schema';
+import { SharedImageField } from '../../../components/organism/SharedImageField/SharedImageField';
+import { COACH_PHOTO, ImageDraft, coachPhotoUrl, saveThenRemoveOld, type ImagePort, type ImageSaveNotice } from '../../../data/companyos/publicImages';
 import {
   WEEKDAYS, cancelOccurrenceOps, createCoachOps, createResourceOps, createScheduleOps, generateOps, publishScheduleOps,
-  scheduleProblems, updateCoachOps, updateResourceOps, updateScheduleOps, type ScheduleDraft,
+  coachProfileOf, schedulePublishBlocked, scheduleProblems, scheduleTypeHint, updateCoachOps, updateResourceOps, updateScheduleOps, type CoachProfile, type ScheduleDraft,
 } from './scheduleOps';
 
 type Tab = 'classes' | 'dates' | 'teachers' | 'rooms';
@@ -30,6 +35,7 @@ export function LiveSchedulePage() {
   const { t, lang } = useI18n();
   const { can } = useSession();
   const canWrite = can('classes.write');
+  const canEditTeachers = can('teachers.write');
   const [tab, setTab] = useState<Tab>('classes');
   const now = new Date();
   // Studio days, not UTC ones: from the start of today in Medellín, so yesterday's evening classes are not listed.
@@ -43,6 +49,8 @@ export function LiveSchedulePage() {
   });
   const [message, setMessage] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
+  // A teacher's photo uploading: as with a save, the tabs and Cancel wait.
+  const [photoBusy, setPhotoBusy] = useState(false);
   // `/query` rows carry their fields under `data` (ADM-01 / ADM-02): read them flat, includes kept as embedded objects.
   const rows = useMemo(() => q.rows && { schedules: flatRows(q.rows.schedules), resources: flatRows(q.rows.resources), coaches: flatRows(q.rows.coaches), occurrences: flatRows(q.rows.occurrences) }, [q.rows]);
   const rooms = rows?.resources ?? [], coaches = rows?.coaches ?? [];
@@ -62,14 +70,14 @@ export function LiveSchedulePage() {
   return (
     <div className="stack">
       <div className="page-head"><div><h1>{t('schedule.title')}</h1><p className="muted small">{t('live.intro')}</p></div></div>
-      <div className="row wrap" role="tablist">{(['classes', 'dates', 'teachers', 'rooms'] as Tab[]).map(k => <Chip key={k} selected={tab === k} onClick={() => setTab(k)}>{t(`live.tab.${k}`)}</Chip>)}</div>
+      <div className="row wrap" role="tablist">{(['classes', 'dates', 'teachers', 'rooms'] as Tab[]).map(k => <Chip key={k} selected={tab === k} disabled={busy || photoBusy} onClick={() => setTab(k)}>{t(`live.tab.${k}`)}</Chip>)}</div>
       {message && <p className={`small ${message.tone === 'error' ? 'register-diff' : 'rooms-free'}`} role={message.tone === 'error' ? 'alert' : 'status'}>{message.text}</p>}
       {!q.request && <EmptyState compact tone="error" title={t('live.loadError')} body={deskErrorText('disconnected', t)} />}
       {q.error && <EmptyState compact tone="error" title={t('live.loadError')} body={deskErrorText(q.error, t)} action={<Button size="sm" onClick={q.reload}>{t('core.common.retry')}</Button>} />}
       {q.loading && !rows && <EmptyState compact tone="loading" title={t('core.common.loading')} />}
       {rows && tab === 'classes' && <Classes rows={rows.schedules} rooms={rooms} coaches={coaches} roomName={roomName} coachName={coachName} weekday={weekday} canWrite={canWrite} busy={busy} run={run} />}
       {rows && tab === 'dates' && <Dates rows={rows.occurrences} roomName={roomName} coachName={coachName} canWrite={canWrite} busy={busy} run={run} lang={lang} />}
-      {rows && tab === 'teachers' && <Teachers rows={coaches} canWrite={canWrite} busy={busy} run={run} />}
+      {rows && tab === 'teachers' && <Teachers rows={coaches} canWrite={canEditTeachers} busy={busy} photoBusy={photoBusy} setPhotoBusy={setPhotoBusy} run={run} />}
       {rows && tab === 'rooms' && <Rooms rows={rooms} canWrite={canWrite} busy={busy} run={run} />}
       <p className="xs muted">{t('live.faq')}</p>
     </div>
@@ -79,14 +87,17 @@ export function LiveSchedulePage() {
 type Run = (ops: BatchOp[], key: string, ok: string) => Promise<string[] | null>;
 
 function Classes({ rows, rooms, coaches, roomName, coachName, weekday, canWrite, busy, run }: { rows: CosRow[]; rooms: CosRow[]; coaches: CosRow[]; roomName: (id: unknown) => string; coachName: (id: unknown) => string; weekday: (d: number) => string; canWrite: boolean; busy: boolean; run: Run }) {
-  const { t } = useI18n();
-  const blank = (): ScheduleDraft => ({ title: '', weekday: 1, start_time: '07:00', resource: rooms[0]?.id ?? '', coach: '', capacity: num(rooms[0]?.capacity) || 1, valid_from: dateKey(new Date()), valid_until: '', active: false });
+  const { t, bi } = useI18n();
+  // The class types live in the frontend; a timetable row stores the slug (the recipe's `schedule.modality` select).
+  const { rows: classTypes } = useTable<ModalityRow>('modalities');
+  const typeName = (slug: unknown) => { const m = classTypes.find(x => x.slug === slug); return m ? bi({ es: m.name_es, en: m.name_en }) : str(slug); };
+  const blank = (): ScheduleDraft => ({ title: '', weekday: 1, start_time: '07:00', resource: rooms[0]?.id ?? '', coach: '', capacity: num(rooms[0]?.capacity) || 1, valid_from: dateKey(new Date()), valid_until: '', active: false, modality: '' });
   const [edit, setEdit] = useState<{ id: string | null; draft: ScheduleDraft; key: string } | null>(null);
   const [until, setUntil] = useState(dateKey(addDays(new Date(), 28)));
   const [genKey, setGenKey] = useState(newActionKey);
   const room = edit ? rooms.find(r => r.id === edit.draft.resource) : undefined;
   const problems = edit ? scheduleProblems(edit.draft, room ? num(room.capacity) : undefined) : [];
-  const toDraft = (r: CosRow): ScheduleDraft => ({ title: str(r.title), weekday: num(r.weekday), start_time: str(r.start_time), resource: idOf(r.resource), coach: idOf(r.coach), capacity: num(r.capacity), valid_from: str(r.valid_from), valid_until: str(r.valid_until), active: r.active !== false });
+  const toDraft = (r: CosRow): ScheduleDraft => ({ title: str(r.title), weekday: num(r.weekday), start_time: str(r.start_time), resource: idOf(r.resource), coach: idOf(r.coach), capacity: num(r.capacity), valid_from: str(r.valid_from), valid_until: str(r.valid_until), active: r.active !== false, modality: str(r.modality) });
   const save = async () => {
     if (!edit || problems.length) return;
     const ids = await run(edit.id ? updateScheduleOps(edit.id, edit.draft) : createScheduleOps(edit.draft), edit.key, t('live.saved'));
@@ -100,6 +111,7 @@ function Classes({ rows, rooms, coaches, roomName, coachName, weekday, canWrite,
       {edit && <Card title={edit.id ? t('live.edit') : t('live.new')}>
         <div className="grid grid-2">
           <Field label={t('live.f.title')} required>{id => <Input id={id} value={edit.draft.title} onChange={e => setEdit({ ...edit, draft: { ...edit.draft, title: e.target.value } })} />}</Field>
+          <Field label={t('live.f.modality')} required>{id => <Select id={id} value={edit.draft.modality ?? ''} onChange={e => setEdit({ ...edit, draft: { ...edit.draft, modality: e.target.value } })}><option value="">—</option>{classTypes.filter(m => m.active !== false).map(m => <option key={m.id} value={m.slug}>{bi({ es: m.name_es, en: m.name_en })}</option>)}</Select>}</Field>
           <Field label={t('live.f.weekday')}>{id => <Select id={id} value={edit.draft.weekday} onChange={e => setEdit({ ...edit, draft: { ...edit.draft, weekday: Number(e.target.value) } })}>{WEEKDAYS.map(d => <option key={d} value={d}>{weekday(d)}</option>)}</Select>}</Field>
           <Field label={t('live.f.start')}>{id => <Input id={id} type="time" step={3600} value={edit.draft.start_time} onChange={e => setEdit({ ...edit, draft: { ...edit.draft, start_time: e.target.value } })} />}</Field>
           <Field label={t('live.f.room')}>{id => <Select id={id} value={edit.draft.resource} onChange={e => { const r = rooms.find(x => x.id === e.target.value); setEdit({ ...edit, draft: { ...edit.draft, resource: e.target.value, capacity: r ? num(r.capacity) : edit.draft.capacity } }); }}><option value="">—</option>{rooms.map(r => <option key={r.id} value={r.id}>{str(r.name)} · {t('live.rooms.mats', { n: num(r.capacity) })}</option>)}</Select>}</Field>
@@ -115,9 +127,10 @@ function Classes({ rows, rooms, coaches, roomName, coachName, weekday, canWrite,
       {rows.length === 0 ? <EmptyState compact title={t('live.empty')} /> : rows.map(r => (
         <Card key={r.id} data-schedule={r.id} padding="sm" title={str(r.title)} eyebrow={`${weekday(num(r.weekday))} · ${str(r.start_time)}`} actions={canWrite && <div className="row wrap">
           <Button size="sm" variant="outline" onClick={() => setEdit({ id: r.id, draft: toDraft(r), key: newActionKey() })}>{t('live.edit')}</Button>
-          <Button size="sm" variant="tonal" disabled={busy} onClick={() => run(publishScheduleOps(r.id, r.active === false), newActionKey(), t('live.saved'))}>{r.active === false ? t('live.publish') : t('live.unpublish')}</Button>
+          <Button size="sm" variant="tonal" disabled={busy || schedulePublishBlocked(r)} onClick={() => run(publishScheduleOps(r.id, r.active === false), newActionKey(), t('live.saved'))}>{r.active === false ? t('live.publish') : t('live.unpublish')}</Button>
         </div>}>
-          <p className="small">{coachName(r.coach)} · {roomName(r.resource)} · {t('live.rooms.mats', { n: num(r.capacity) })} <Badge tone={r.active === false ? 'neutral' : 'success'}>{r.active === false ? t('live.draft') : t('live.published')}</Badge></p>
+          <p className="small">{coachName(r.coach)} · {roomName(r.resource)} · {t('live.rooms.mats', { n: num(r.capacity) })} <Badge tone={r.active === false ? 'neutral' : 'success'}>{r.active === false ? t('live.draft') : t('live.published')}</Badge> {str(r.modality) ? <Badge>{typeName(r.modality)}</Badge> : <Badge tone="warn">{t('live.noType')}</Badge>}</p>
+          {canWrite && scheduleTypeHint(r) && <p className="xs muted" data-type-hint>{t(`live.typeHint.${scheduleTypeHint(r)}`)}</p>}
         </Card>
       ))}
     </div>
@@ -141,23 +154,32 @@ function Dates({ rows, roomName, coachName, canWrite, busy, run, lang }: { rows:
   })}</div>;
 }
 
-function Teachers({ rows, canWrite, busy, run }: { rows: CosRow[]; canWrite: boolean; busy: boolean; run: Run }) {
-  const { t } = useI18n();
-  const [edit, setEdit] = useState<{ id: string | null; personId: string; name: string; email: string; phone: string; active: boolean; key: string } | null>(null);
+function Teachers({ rows, canWrite, busy, photoBusy, setPhotoBusy, run }: { rows: CosRow[]; canWrite: boolean; busy: boolean; photoBusy: boolean; setPhotoBusy: (busy: boolean) => void; run: Run }) {
+  const { t, lang } = useI18n();
+  const [edit, setEdit] = useState<{ id: string | null; personId: string; name: string; email: string; phone: string; active: boolean; profile: CoachProfile; photoAtOpen: unknown; draft: ImageDraft; key: string } | null>(null);
+  const [photoNotice, setPhotoNotice] = useState<ImageSaveNotice>(null);
+  const { rows: classTypes } = useTable<ModalityRow>('modalities');
+  const data = useData();
   const person = (c: CosRow) => (c.person ?? {}) as { id?: string; name?: string; email?: string; phone?: string };
   const sorted = useMemo(() => [...rows].sort((a, b) => str(person(a).name).localeCompare(str(person(b).name))), [rows]);
+  const setProfile = (change: Partial<CoachProfile>) => setEdit(e => e && { ...e, profile: { ...e.profile, ...change } });
   return <div className="stack">
-    {canWrite && <Button icon="plus" onClick={() => setEdit({ id: null, personId: '', name: '', email: '', phone: '', active: true, key: newActionKey() })}>{t('live.new')}</Button>}
+    {photoNotice && <p className="small register-diff" role="status">{photoNotice === 'old_image_remains' ? t('media.picker.oldRemains') : refusalCopy(photoNotice, lang)}</p>}
+    {canWrite && <Button icon="plus" onClick={() => setEdit({ id: null, personId: '', name: '', email: '', phone: '', active: true, profile: coachProfileOf({}), photoAtOpen: undefined, draft: new ImageDraft(data as unknown as ImagePort), key: newActionKey() })}>{t('live.new')}</Button>}
     {edit && <Card title={edit.id ? t('live.edit') : t('live.new')}>
       <div className="grid grid-2">
         <Field label={t('live.f.name')} required>{id => <Input id={id} value={edit.name} onChange={e => setEdit({ ...edit, name: e.target.value })} />}</Field>
         {!edit.id && <Field label={t('live.f.email')}>{id => <Input id={id} type="email" value={edit.email} onChange={e => setEdit({ ...edit, email: e.target.value })} />}</Field>}
         <Field label={t('live.f.phone')}>{id => <Input id={id} inputMode="tel" value={edit.phone} onChange={e => setEdit({ ...edit, phone: e.target.value })} />}</Field>
       </div>
+      <Field label={t('live.f.bioEs')}>{id => <textarea id={id} className="input adm-textarea" value={edit.profile.bio.es} onChange={e => setProfile({ bio: { ...edit.profile.bio, es: e.target.value } })} />}</Field>
+      <Field label={t('live.f.bioEn')}>{id => <textarea id={id} className="input adm-textarea" value={edit.profile.bio.en} onChange={e => setProfile({ bio: { ...edit.profile.bio, en: e.target.value } })} />}</Field>
+      <div className="stack-sm" role="group" aria-label={t('live.f.specialties')}><strong className="small">{t('live.f.specialties')}</strong><div className="row wrap">{classTypes.map(m => { const on = edit.profile.specialties.includes(m.slug); return <Chip key={m.id} selected={on} onClick={() => setProfile({ specialties: on ? edit.profile.specialties.filter(s => s !== m.slug) : [...edit.profile.specialties, m.slug] })}>{lang === 'en' ? m.name_en : m.name_es}</Chip>; })}</div></div>
+      {edit.id ? <SharedImageField key={edit.id} label={t('live.f.photo')} value={edit.profile.photo} disabled={busy} owner={{ ...COACH_PHOTO, ownerId: edit.id }} saved={coachPhotoUrl(edit.photoAtOpen)} draft={edit.draft} onBusyChange={setPhotoBusy} onChange={photo => setProfile({ photo })} /> : <p className="xs muted">{t('live.f.photoAfterSave')}</p>}
       <Toggle checked={edit.active} onChange={on => setEdit({ ...edit, active: on })} label={t('live.f.active')} />
-      <div className="row wrap"><Button disabled={busy || !edit.name.trim()} loading={busy} onClick={async () => { const d = { name: edit.name, email: edit.email, phone: edit.phone, active: edit.active }; if (await run(edit.id ? updateCoachOps(edit.id, edit.personId, d) : createCoachOps(d), edit.key, t('live.saved'))) setEdit(null); }}>{t('live.save')}</Button><Button variant="ghost" onClick={() => setEdit(null)}>{t('core.common.cancel')}</Button></div>
+      <div className="row wrap"><Button disabled={busy || photoBusy || !edit.name.trim()} loading={busy} onClick={async () => { const d = { name: edit.name, email: edit.email, phone: edit.phone, active: edit.active, profile: edit.profile, photoAtOpen: edit.photoAtOpen }; setPhotoNotice(null); const out = await saveThenRemoveOld(data as unknown as ImagePort, { saved: edit.photoAtOpen, next: edit.profile.photo, owner: edit.id ? { ...COACH_PHOTO, ownerId: edit.id } : undefined, draft: edit.draft }, () => run(edit.id ? updateCoachOps(edit.id, edit.personId, d) : createCoachOps(d), edit.key, t('live.saved'))); setPhotoNotice(out.notice); if (out.result) setEdit(null); }}>{t('live.save')}</Button><Button variant="ghost" disabled={busy || photoBusy} onClick={() => setEdit(null)}>{t('core.common.cancel')}</Button></div>
     </Card>}
-    {sorted.length === 0 ? <EmptyState compact title={t('live.empty')} /> : sorted.map(c => <Card key={c.id} padding="sm" title={str(person(c).name) || '—'} actions={canWrite && <Button size="sm" variant="outline" onClick={() => setEdit({ id: c.id, personId: str(person(c).id), name: str(person(c).name), email: str(person(c).email), phone: str(person(c).phone), active: c.active !== false, key: newActionKey() })}>{t('live.edit')}</Button>}>
+    {sorted.length === 0 ? <EmptyState compact title={t('live.empty')} /> : sorted.map(c => <Card key={c.id} padding="sm" title={str(person(c).name) || '—'} actions={canWrite && <Button size="sm" variant="outline" onClick={() => setEdit({ id: c.id, personId: str(person(c).id), name: str(person(c).name), email: str(person(c).email), phone: str(person(c).phone), active: c.active !== false, profile: coachProfileOf(c), photoAtOpen: c.photo, draft: new ImageDraft(data as unknown as ImagePort), key: newActionKey() })}>{t('live.edit')}</Button>}>
       <p className="small">{c.active === false ? <Badge>{t('live.draft')}</Badge> : <Badge tone="success">{t('live.f.active')}</Badge>}</p>
     </Card>)}
   </div>;

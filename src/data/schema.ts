@@ -314,7 +314,7 @@ export interface ProfileRow extends BaseRow { user_id: string; full_name: string
 export interface PaymentRow extends BaseRow { frontend_receipt?: LaunchReceipt | null; user_id: string | null; plan_id: string | null; amount: number; amount_paid: number | null; currency: string; method: string; provider: string; status: string; paid_at: string | null; note: string | null }
 export interface PageLayoutRow extends BaseRow { page_code: string; sections: string[]; hidden: string[] | null; updated_by: string | null }
 /** One movement of a package's classes (0051: was `credits`). Purchase rows carry the expiry and, once, a freeze. */
-export interface ClassLedgerRow extends BaseRow { purchase_ledger_id?: string | null; user_id: string; plan_id?: string | null; payment_id?: string | null; delta: number; reason: string; expires_at: string | null; frozen_from?: string | null; frozen_until?: string | null }
+export interface ClassLedgerRow extends BaseRow { lot_voided_at?: string | null; purchase_ledger_id?: string | null; user_id: string; plan_id?: string | null; payment_id?: string | null; delta: number; reason: string; expires_at: string | null; frozen_from?: string | null; frozen_until?: string | null }
 export type MessageChannel = 'whatsapp' | 'email' | 'push' | 'note';
 export type MessageDirection = 'inbound' | 'outbound' | 'internal';
 export type MessageSource = 'manual' | 'automation' | 'newsletter' | 'system';
