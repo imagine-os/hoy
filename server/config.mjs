@@ -1,6 +1,7 @@
 // The server's settings, all from environment variables (Railway sets them; see server/README.md).
 // No address, domain or organisation is written here: everything that differs per environment is a variable.
 import { fileURLToPath } from 'node:url';
+import { gateSettings } from './testGate.mjs';
 
 /**
  * @typedef {object} ServerConfig
@@ -26,6 +27,7 @@ import { fileURLToPath } from 'node:url';
  * @property {{ siteLive: boolean, siteLiveAt: string|null }} launch
  *   the go-live switch the app reads from /app-config.json (SW-08): SITE_LIVE, SITE_LIVE_AT. (PUBLIC_DOCUMENTS, Q-14, is
  *   retired, owner 2026-11-01: the manual and docs are the super admin's only, through the docs gate.)
+ * @property {ReturnType<typeof gateSettings>} testGate the test site's passphrase gate (testGate.mjs); off on production
  */
 
 /** @returns {ServerConfig} Throws with every problem listed, so a bad deploy fails at start, not on first use. */
@@ -119,6 +121,7 @@ export function loadConfig(env = process.env) {
     companyOsReadToken,
     publicReadRate: { perSecond: int(env.PUBLIC_READ_RATE_PER_SECOND, 20), burst: int(env.PUBLIC_READ_BURST, 120), totalPerSecond: 150, totalBurst: 400 },
     launch: { siteLive: siteLiveRaw === 'true', siteLiveAt },
+    testGate: gateSettings(env),
   };
   if (problems.length) throw new Error(`Hoy server configuration:\n  - ${problems.join('\n  - ')}`);
   return config;

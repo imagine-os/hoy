@@ -5,6 +5,8 @@ Railway project, next to Company OS's private `api` service.
 
 | Path | What it does |
 |---|---|
+| every path, test site only | the passphrase gate (`testGate.mjs`, Company OS playbook rule D5): runs first; no valid cookie is a 401 passphrase page, or 401 JSON under `/api/`, `/files/`, `/private-docs/`. Exempt: `/health` and `POST /webhooks/resend`. Off on production and when `TEST_GATE_PASSPHRASE` is unset |
+| `POST /test-gate` | the gate's form (test site only): the right passphrase sets a signed cookie for 30 days and redirects to `next` (a path on this site); 5 wrong tries in 15 minutes from one address, then 429 |
 | `/health` | `{ ok, version, commit }` from `release.json`; Railway's healthcheck |
 | `/app-config.json` | the browser's public settings: `tenant`, `apiBase` (`/api/cos`), `clerkPublishableKey`, `environment` |
 | `/api/cos/t/<tenant>/…` | checks the `Authorization: Bearer <Clerk session token>` with Clerk, then forwards the call to Company OS over the private network with the same token. Without a session only the website's public reads go through (below); nothing else does (the API authenticates every route, sign-up included; `ANONYMOUS_ROUTES` in `app.mjs` is where a route the API serves to anyone would be added). Other tenants, the platform routes and the API's `auth/` (dev login) are never forwarded |
@@ -14,8 +16,8 @@ Railway project, next to Company OS's private `api` service.
 | `POST /webhooks/resend` | Resend's delivery webhook, forwarded with the raw body and the Svix headers to the API's `/webhooks/messaging/resend` (the API checks the signature) |
 | anything else | the built frontend (`dist/`, or `DIST_DIR`): website and app, HashRouter |
 
-The browser sends the token from Clerk's `getToken()` as a bearer header (cookies are not read, so
-there is no CSRF surface). That includes `/files/<id>`: open a file with `fetch` + the bearer, then show
+The browser sends the token from Clerk's `getToken()` as a bearer header (the only cookie read is the test
+gate's, which opens no data, so there is no CSRF surface). That includes `/files/<id>`: open a file with `fetch` + the bearer, then show
 the response's blob (`URL.createObjectURL`), since a plain link or `<img src>` sends no bearer. Only `accept`, `accept-language`, `content-type`, `content-length`,
 `idempotency-key`, `if-match` and `if-none-match` are forwarded from the browser; the client address
 sent on is Railway's `X-Real-IP`. Answers are always `Cache-Control: private, no-store`.
@@ -28,7 +30,9 @@ sent on is Railway's `X-Real-IP`. Answers are always `Cache-Control: private, no
 | `COMPANY_OS_TENANT` | IaC: `hoy-dev` | workflow, from GitHub var `COMPANY_OS_TENANT` |
 | `CLERK_SECRET_KEY` | workflow, from GitHub secret (`sk_test_…`, development instance) | workflow (`sk_live_…`) |
 | `CLERK_PUBLISHABLE_KEY` | workflow, from GitHub var (`pk_test_…`) | workflow (`pk_live_…`) |
-| `APP_URL` | workflow: the service's Railway domain | workflow, from GitHub var (`https://<domain>`) |
+| `APP_URL` | workflow, from GitHub var (`https://test.<domain>`, the custom domain on the service) | workflow, from GitHub var (`https://<domain>`) |
+| `TEST_GATE_PASSPHRASE` | workflow, from GitHub secret (at least 12 characters): the passphrase gate | never: the deploy refuses it and the server ignores it |
+| `COOKIE_SIGNING_SECRET` | workflow, from GitHub secret (at least 32 characters): signs the gate's cookie; a passphrase without it answers 503 | not used |
 | `DIST_DIR`, `NODE_ENV` | IaC: `site`, `production` | same |
 | `CLERK_AUTHORIZED_PARTIES` | optional: more origins (comma-separated) besides `APP_URL` | optional |
 | `CLERK_JWT_KEY` | optional: the instance's PEM public key (networkless checks) | optional |
@@ -54,6 +58,7 @@ npm run build
 COMPANY_OS_URL=http://localhost:4000 COMPANY_OS_TENANT=hoy-dev CLERK_SECRET_KEY=sk_test_… node server/index.mjs
 node scripts/test-hoy-server.mjs      # proxy, tokens, refusals, files, webhook raw body, static, config, secret scan
 node scripts/test-docs-gate.mjs       # /private-docs/: super admin only, hostile tokens, roles, traversal (lane Y6)
+node scripts/test-test-gate.mjs       # the test site's passphrase gate (rule D5): cookies, tries, next, exempt paths
 node scripts/test-website-signed-out-live.mjs   # after npm run build:production: the signed-out site on live data
 node server/check-bundle.mjs dist     # no secret in the built frontend
 ```
