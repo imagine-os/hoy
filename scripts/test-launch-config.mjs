@@ -18,6 +18,7 @@ const bundle = await build({
     "export { runExpenseCommand, readExpenseWorkspace } from './src/modules/admin/expenseLedger';",
     "export { MockProvider } from './src/data/MockProvider';",
     "export { contactOf, mergeSettings } from './src/modules/admin/settings';",
+    "export { tenant } from './src/tenant/tenant';",
     "export { pricing } from './src/tenant/pricing';",
     "export { LAUNCH_ROLE_MATRIX, matrixAccess, matrixAllows } from './src/config/roleMatrix';",
     "export { resolveOperationalQuote } from './src/data/operationalQuotes';",
@@ -77,6 +78,7 @@ check('PL-07 isEmail accepts a normal address and refuses markup or spaces', M.i
 check('PL-07 clip bounds pasted text', M.clip('x'.repeat(900), M.LIMITS.note).length === M.LIMITS.note);
 const hostile = M.contactOf(M.mergeSettings({ profile: { instagramUrl: 'javascript:alert(document.cookie)', mapLink: 'javascript:alert(1)', email: '"><img src=x onerror=alert(1)>' } }));
 check('PL-07 Settings: a javascript: Instagram or map link never becomes a public link', /^https:/.test(hostile.instagramUrl) && (hostile.location.link === null || /^https:/.test(hostile.location.link)));
+check('Hoy\'s registered name is the owner\'s answer of 2026-11-04', M.tenant.legalName === 'Hoy Human Club', M.tenant.legalName);
 check('PL-07 Settings: an invalid contact email falls back to the configured one', hostile.email === 'info@hoyhumanclub.com');
 check('SW-04 / PL-07 a WhatsApp number without enough digits falls back to the configured one', M.contactOf(M.mergeSettings({ profile: { whatsapp: 'escríbenos' } })).whatsapp === '+57 312 776 5000' && M.contactOf(M.mergeSettings({ profile: { whatsapp: '+57 300 123 4567' } })).whatsapp === '+57 300 123 4567');
 
