@@ -55,7 +55,7 @@ export function voucherState(v: CosVoucher, today: string): VoucherState {
 }
 
 // ── refusal codes → copy ───────────────────────────────────────────────────────────────────────────────────────
-export const VOUCHER_REFUSALS = ['voucher_invalid', 'voucher_expired', 'voucher_redeemed', 'voucher_used_up', 'invalid_quantity', 'lot_expired', 'forbidden', 'write_forbidden', 'idempotency_conflict'] as const;
+export const VOUCHER_REFUSALS = ['voucher_invalid', 'voucher_expired', 'voucher_redeemed', 'voucher_used_up', 'invalid_quantity', 'lot_expired', 'forbidden', 'write_forbidden', 'idempotency_conflict', 'voucher_payment_not_approved'] as const;
 /** The refusal code of a failed write, whatever the provider throws (`{ code }`, `{ error: { code } }` or an Error named by its code). */
 export function refusalCode(error: unknown): string | null {
   const e = error as { code?: unknown; error?: { code?: unknown }; message?: unknown } | null;

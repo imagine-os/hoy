@@ -1,6 +1,6 @@
 import { hasRefusalCopy, refusalCopy } from '../../../data/companyos/refusals';
 import type { Lang } from '../../../i18n/types';
-import { batch, CosError, refusalKey, type BatchOp, type CosPort } from './cos';
+import { batch, CosError, errorCode, refusalKey, type BatchOp, type CosPort } from './cos';
 
 /**
  * The payment void on Company OS (credits and payments void settings): the server takes back the classes, refuses with a
@@ -16,7 +16,24 @@ export function voidOps(paymentId: string, reason: string): BatchOp[] {
   return [{ op: 'update', entity: 'payment', id: paymentId, data: { status: 'voided', status_reason: why.slice(0, MAX_REASON) }, ifMatch: { field: 'status', value: VOIDABLE_STATUS } }];
 }
 
-export const voidPayment = (cos: CosPort, paymentId: string, reason: string, key: string): Promise<string[]> => batch(cos, voidOps(paymentId, reason), key);
+/** The status changed since this screen read it (409, `ifMatch mismatch`, normalised by the transport). */
+export const isStaleVoid = (code: string | null): boolean => refusalKey(code ?? '') === 'payLaunch.code.stale';
+
+/**
+ * `already_voided`: someone voided it after this screen read it. The first void and its reason stand, and ours was not
+ * written. Any other change of status stays the 409, so the screen says the payment changed.
+ */
+export async function voidPayment(cos: CosPort, paymentId: string, reason: string, key: string): Promise<'voided' | 'already_voided'> {
+  try {
+    await batch(cos, voidOps(paymentId, reason), key);
+    return 'voided';
+  } catch (e) {
+    if (!isStaleVoid(errorCode(e))) throw e;
+    const now = await cos.request<{ data: { data?: { status?: unknown } } }>('GET', `/api/payment/${encodeURIComponent(paymentId)}`).catch(() => null);
+    if (now?.data?.data?.status === 'voided') return 'already_voided';
+    throw e;
+  }
+}
 
 /**
  * The `/me` Super Admin flag, never the session's role: an Administration login that also holds Super Admin resolves to

@@ -13,6 +13,8 @@ export interface CosPort {
   /** Receipt image bytes, streamed by the Hoy server (the API's signed link never reaches the browser). */
   fileBlob?(fileId: string): Promise<Blob>;
   /** Upload link → PUT → confirm, done by the provider (H-3); returns the confirmed `file` record. */
+  /** Asks every subscribed screen to read again (the provider's own refresh), after learning its copy is out of date. */
+  refreshTables?(): void;
   uploadFile?(input: { ownerEntity: string; ownerId: string; kind: string; file: File }): Promise<unknown>;
 }
 
@@ -110,6 +112,8 @@ export const KNOWN_CODES = [
   'stale', 'dates_unsupported', 'unauthorized', 'disconnected', 'view_as_read_only',
   // PRO-02 (Jas 1 Nov): the product master's period refusals (payments 2.8.0, product_dates_enforced).
   'product_period_overlap', 'invalid_date',
+  // A voided payment is frozen (payments 2.9.0).
+  'payment_voided',
 ] as const;
 /**
  * `ifMatch mismatch` (409): someone changed the row since this screen read it, e.g. two desks reviewing one payment.

@@ -701,6 +701,8 @@ export class CompanyOSProvider implements DataProvider {
     for (const table of all) this.emit({ table, type: 'reset' });
   }
 
+  /** Every subscribed screen reads again; for a screen that learned its copy is out of date from a refusal. */
+  refreshTables() { this.emitAll(); }
   private emitAll() { for (const table of this.listeners.keys()) if (table !== '*') this.emit({ table, type: 'reset' }); }
 
   private emit(e: ChangeEvent) {

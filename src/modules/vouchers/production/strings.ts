@@ -95,6 +95,8 @@ export const productionStrings: StringTable = {
   'vouchers.cos.refusal.forbidden.body': { es: 'Tu cuenta no puede hacer esto. Si crees que es un error, avísale a la administración.', en: 'Your account cannot do this. If you think this is a mistake, tell the studio administration.' },
   'vouchers.cos.refusal.write_forbidden.title': { es: 'No tienes permiso', en: 'You do not have permission' },
   'vouchers.cos.refusal.write_forbidden.body': { es: 'Tu cuenta no puede hacer esto. Si crees que es un error, avísale a la administración.', en: 'Your account cannot do this. If you think this is a mistake, tell the studio administration.' },
+  'vouchers.cos.refusal.voucher_payment_not_approved.title': { es: 'El pago ya no está aprobado', en: 'The payment is no longer approved' },
+  'vouchers.cos.refusal.voucher_payment_not_approved.body': { es: 'Este bono no se emitió porque su pago ya no está aprobado. Actualiza la página para ver lo que queda por emitir.', en: 'This voucher was not issued because its payment is no longer approved. Refresh the page to see what is left to issue.' },
   'vouchers.cos.refusal.idempotency_conflict.title': { es: 'Los datos cambiaron', en: 'The details changed' },
   'vouchers.cos.refusal.idempotency_conflict.body': { es: 'Ya enviaste esta solicitud con otros datos. Revísalos e inténtalo de nuevo.', en: 'You already sent this request with other details. Check them and try again.' },
   'vouchers.cos.refusal.generic.title': { es: 'No se pudo completar', en: 'It could not be completed' },
