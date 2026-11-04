@@ -725,8 +725,14 @@ async function linkThenBytes(req, res, config, abort, deadline, { linkPath, toke
     'Content-Security-Policy': "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; sandbox",
     ...(size !== undefined ? { 'Content-Length': size } : {}),
   });
-  return new Promise((done) => {
+  return new Promise((settle) => {
     let seen = 0;
+    // Whichever comes first decides the outcome. `/media` holds a slot until this settles, so the client leaving must end it.
+    let settled = false;
+    const done = (outcome) => { if (!settled) { settled = true; settle(outcome); } };
+    const clientGone = () => { stored.destroy(); done('client_gone'); };
+    if (res.destroyed) return clientGone();
+    res.on('close', clientGone);
     stored.on('data', (chunk) => {
       seen += chunk.length;
       if (seen > config.fileSizeLimit) {
@@ -740,7 +746,7 @@ async function linkThenBytes(req, res, config, abort, deadline, { linkPath, toke
       res.destroy();
       done(!abort.signal.aborted ? 'storage_error' : Date.now() >= deadline ? 'timeout' : 'client_gone');
     });
-    stored.on('end', () => done('served'));
+    stored.on('end', () => { done('served'); });
     stored.pipe(res);
   });
 }

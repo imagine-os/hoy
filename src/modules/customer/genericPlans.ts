@@ -20,3 +20,13 @@ export function genericPlanTarget(plan: Pick<GenericPlan, 'key' | 'kind'>, next:
  */
 export const plansForCustomer = (plans: GenericPlan[], { trialOffered }: { trialOffered: boolean }): GenericPlan[] =>
   plans.filter((p) => p.kind !== 'trial' || trialOffered);
+
+/**
+ * `?plan=<key>` goes to its purchase only if it is one of this customer's cards: a used trial's second product finds nothing,
+ * so they stay on the plans view instead of reaching a pay form that refuses on submit. `known`: whether the trial was
+ * used has been read; a trial waits for that, anything else doesn't need it.
+ */
+export function wantedGenericPlan(plans: GenericPlan[], wanted: string | null, { trialOffered, known }: { trialOffered: boolean; known: boolean }): GenericPlan | undefined {
+  const plan = plansForCustomer(plans, { trialOffered }).find((p) => p.key === wanted);
+  return plan?.kind === 'trial' && !known ? undefined : plan;
+}

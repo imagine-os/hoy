@@ -146,6 +146,13 @@ export async function saveThenRemoveOld<T>(port: ImagePort, { saved, next, owner
   return { result, notice: (await removeFile(port, owner, oldId)) ? null : 'old_image_remains' };
 }
 
+/** Tells the form an upload is running, and always that it stopped: a field closed mid-upload must not leave Save disabled. Review build: nothing. */
+export function reportImageBusy(shared: boolean, busy: boolean, tell?: (busy: boolean) => void): (() => void) | undefined {
+  if (!shared || !tell) return undefined;
+  tell(busy);
+  return () => tell(false);
+}
+
 /** A teacher's photo is re-encoded (smaller, no metadata). The QR goes as it is: nothing may stop it scanning. */
 export async function prepareForUpload(owner: { ownerEntity: string; kind: string }, file: File, encodePhoto: (file: File) => Promise<File>): Promise<File> {
   return owner.ownerEntity === COACH_PHOTO.ownerEntity && owner.kind === COACH_PHOTO.kind ? encodePhoto(file) : file;

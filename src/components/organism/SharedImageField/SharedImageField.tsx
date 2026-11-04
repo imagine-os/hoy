@@ -9,7 +9,7 @@ import {useMediaLibrary} from '../../../data/useMediaLibrary';
 import {safeMediaUrl} from '../../../data/mediaLibrary';
 import {downscaledPhoto,importLocalPhoto,isLocalPhotoUrl} from '../../../data/localMediaStore';
 import {tenant} from '../../../tenant/tenant';
-import {imageFieldMode,prepareForUpload,uploadPublicImage,type ImageDraft,type ImageOwner,type ImagePort} from '../../../data/companyos/publicImages';
+import {imageFieldMode,prepareForUpload,reportImageBusy,uploadPublicImage,type ImageDraft,type ImageOwner,type ImagePort} from '../../../data/companyos/publicImages';
 import {refusalCopy} from '../../../data/companyos/refusals';
 import {Button} from '../../atom/Button/Button';
 import {Input,Select} from '../../atom/Input/Input';
@@ -43,7 +43,7 @@ export function SharedImageField({value,onChange,disabled=false,label,owner,save
  const alive=useRef(true);useEffect(()=>{alive.current=true;return()=>{alive.current=false;};},[]);
  // The form closed: its unsaved uploads go (a save has already told the draft which one stays).
  useEffect(()=>()=>{void draft?.discard();},[draft]);
- useEffect(()=>{onBusyChange?.(busy);},[busy,onBusyChange]);
+ useEffect(()=>reportImageBusy(shared,busy,onBusyChange),[shared,busy,onBusyChange]);
  // Once a save has gone through there is nothing to undo to: the old file is deleted.
  useEffect(()=>{if(shared)setPrevious(undefined);},[saved,shared]);
  const current=assets.find(a=>a.url===value||a.variants.includes(value||''));
