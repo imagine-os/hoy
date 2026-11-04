@@ -97,6 +97,13 @@ const storage = createServer((req, res) => {
 await new Promise((r) => storage.listen(0, '127.0.0.1', r));
 const STORAGE = `http://127.0.0.1:${storage.address().port}`;
 
+/** `/batch` as Company OS: `ifMatch` compares strictly, before anything is written. */
+function applyBatch(res, body) {
+  const clash = body.ops.findIndex((o) => o.ifMatch && world[o.entity]?.get(o.id)?.data[o.ifMatch.field] !== o.ifMatch.value);
+  if (clash >= 0) return json(res, 409, { error: 'ifMatch mismatch', opIndex: clash });
+  const ids = body.ops.map((o) => { const r = world[o.entity]?.get(o.id); if (r) Object.assign(r.data, o.data); return o.id ?? world.nextId(); });
+  return json(res, 200, { ids });
+}
 // ── fake Company OS ──────────────────────────────────────────────────────────────────────────────────────────────
 const cos = createServer((req, res) => {
   let raw = '';
@@ -134,13 +141,12 @@ const cos = createServer((req, res) => {
     if (confirm) { world.published.add(confirm[1]); return json(res, 200, { file: { id: confirm[1], data: { status: 'ready', published: true } } }); }
     const del = path.match(/^\/api\/file\/([^/]+)$/);
     if (del && req.method === 'DELETE') { world.deletes.push(del[1]); if (world.flags.refuseDelete) return json(res, 403, { error: 'forbidden' }); world.published.delete(del[1]); world.file.delete(del[1]); return json(res, 200, {}); }
-    if (path === '/batch') {
-      // As Company OS: `ifMatch` compares strictly, before anything is written.
-      const clash = body.ops.findIndex((o) => o.ifMatch && world[o.entity]?.get(o.id)?.data[o.ifMatch.field] !== o.ifMatch.value);
-      if (clash >= 0) return json(res, 409, { error: 'ifMatch mismatch', opIndex: clash });
-      const ids = body.ops.map((o) => { const r = world[o.entity]?.get(o.id); if (r) Object.assign(r.data, o.data); return o.id ?? world.nextId(); });
-      return json(res, 200, { ids });
+    if (path === '/batch' && world.flags.slowSave && !world.flags.slowSaveDone) {
+      world.flags.slowSaveDone = true;
+      world.batchStarted = true;
+      return setTimeout(() => { if (world.flags.failSave) return json(res, 403, { error: 'forbidden' }); applyBatch(res, body); }, world.flags.slowSave);
     }
+    if (path === '/batch') return applyBatch(res, body);
     if (path === '/signup') return json(res, 200, { enabled: true, consents: [], personFields: [], facetFields: [], registered: true });
     const setting = path.match(/^\/api\/setting\/([^/]+)$/);
     if (setting && req.method !== 'GET') { const r = world.setting.get(setting[1]); if (r) Object.assign(r.data, body); return json(res, 200, { data: r }); }
@@ -333,13 +339,35 @@ try {
   await page.locator('.shared-image-field').getByRole('button', { name: 'Subir imagen' }).first().click();
   await page.locator('.shared-image-field input[type=file]').setInputFiles(file());
   await until(() => world.uploads.length > 0);
-  await page.getByRole('button', { name: 'Cancelar' }).last().click();
+  check('during an upload: Cancel and the tabs wait', await page.getByRole('button', { name: 'Cancelar' }).last().isDisabled() && await chip(page, 'Salones').isDisabled());
   await page.getByRole('button', { name: 'Nueva' }).click();
   await page.getByLabel('Nombre').fill('Profe Nueva');
   // A new teacher's form has no image field, so nothing else can tell it the upload stopped.
   const usable = await page.waitForFunction(() => { const b = [...document.querySelectorAll('button')].find((x) => x.textContent.trim() === 'Guardar'); return b && !b.disabled; }, null, { timeout: 1000 }).then(() => true, () => false);
   check('cancelling during an upload: a new teacher\'s Save isn\'t stuck', usable && !world.log.some((l) => l.path.endsWith('/confirm')));
   check('cancelling during an upload: the late file is deleted', await until(() => world.deletes.includes(world.uploads[0].id)));
+  });
+  for (const failSave of [false, true]) await scenario(`leaving during a save${failSave ? ' that fails' : ''}`, async () => {
+  reset({ slowSave: 1200, failSave });
+  ({ ctx, page } = await signedIn('admin@example.test'));
+  await go(page, '/admin/settings/payments');
+  const qr = page.locator('.shared-image-field');
+  await qr.getByRole('button', { name: 'Subir imagen' }).first().click();
+  await qr.locator('input[type=file]').setInputFiles(file('qr.png'));
+  await until(() => world.uploads.length > 0 && world.published.has(world.uploads[0].id));
+  await page.getByRole('button', { name: /Guardar/ }).first().click();
+  await until(() => world.batchStarted);
+  await page.evaluate(() => { location.hash = '#/admin'; });
+  await page.locator('.shared-image-field').waitFor({ state: 'detached' });
+  const id = world.uploads[0].id;
+  check(`leaving during a save${failSave ? ' that fails' : ''}: nothing is deleted before the answer`, world.deletes.length === 0, world.deletes.join());
+  if (failSave) {
+    check('leaving during a save that fails: the unsaved upload goes', await until(() => world.deletes.includes(id)));
+    check('leaving during a save that fails: the old QR stands', !world.deletes.includes(IDS.oldQr) && world.setting.get('set_pub').data.value.payments.qrImageUrl === `/media/${IDS.oldQr}`);
+  } else {
+    check('leaving during a save: the old QR goes', await until(() => world.deletes.includes(IDS.oldQr)));
+    check('leaving during a save: the record holds the new QR, and its file stands', world.setting.get('set_pub').data.value.payments.qrImageUrl === `/media/${id}` && !world.deletes.includes(id), world.deletes.join());
+  }
   });
   await scenario('inactive teacher', async () => {
   reset({ inactiveCoach: true });

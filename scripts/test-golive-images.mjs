@@ -139,7 +139,7 @@ function filePort({ owner = COACH_OWNER, files, holders = [], settingValue, fail
         const d = table[body.filter.value];
         return { data: d ? [{ id: body.filter.value, data: d }] : [] };
       }
-      if (body.entity === 'coach') return { data: holders.map((id) => ({ id, data: { photo: body.filter.value } })) };
+      if (body.entity === 'coach') return { data: (typeof holders === 'function' ? holders(body.filter.value) : holders).map((id) => ({ id, data: { photo: body.filter.value } })) };
       if (body.entity === 'setting') return { data: settingValue ? [{ id: 'set1', data: { value: settingValue } }] : [] };
       return { data: [] };
     },
@@ -268,6 +268,62 @@ await test('unsaved uploads: replaced before saving, or the form closed: deleted
   // Best effort: a failure never reaches the person.
   const failing = filePort({ failDelete: 9 }); const d4 = new images.ImageDraft(failing); d4.add(`/media/${ID}`, COACH_OWNER);
   await silent(() => d4.discard());
+});
+await test('leaving during a save: the form closes between the patch starting and its answer; the new file stays, the old one goes', async () => {
+  needs(images);
+  const port = filePort();
+  const draft = withUpload(port, NEW_ID);
+  let answer; const inFlight = new Promise((r) => { answer = r; });
+  const saving = images.saveThenRemoveOld(port, { saved: `/media/${ID}`, next: `/media/${NEW_ID}`, owner: COACH_OWNER, draft }, () => inFlight);
+  await draft.discard(); // the field unmounts now
+  assert.deepEqual(port.log, [], 'nothing is deleted while the save is in flight');
+  assert.equal(draft.holds(`/media/${NEW_ID}`), true);
+  answer('saved');
+  assert.deepEqual(await saving, { result: 'saved', notice: null });
+  assert.ok(!port.log.includes(`DELETE /api/file/${NEW_ID}`), 'the record holds it now');
+  assert.ok(port.log.includes(`DELETE /api/file/${ID}`), 'the old file goes');
+  await draft.discard(); // anything later: still nothing of the saved one
+  assert.ok(!port.log.includes(`DELETE /api/file/${NEW_ID}`));
+});
+await test('leaving during a save that fails: the unsaved upload is cleaned up, the old file stays', async () => {
+  needs(images);
+  for (const patch of [async (r) => { await r; return null; }, async (r) => { await r; throw Object.assign(new Error('x'), { code: 'forbidden' }); }]) {
+    // Not saved: the record still holds the old file, and nothing holds the new one.
+    const port = filePort({ holders: (id) => (id === ID ? ['co1'] : []), files: { [NEW_ID]: { owner_entity: 'coach', owner_id: 'co1', kind: 'photo' }, [ID]: { owner_entity: 'coach', owner_id: 'co1', kind: 'photo' } } });
+    const draft = withUpload(port, NEW_ID);
+    let answer; const inFlight = new Promise((r) => { answer = r; });
+    const saving = images.saveThenRemoveOld(port, { saved: `/media/${ID}`, next: `/media/${NEW_ID}`, owner: COACH_OWNER, draft }, () => patch(inFlight));
+    await draft.discard();
+    assert.deepEqual(port.log, []);
+    answer();
+    await saving.catch(() => null);
+    assert.ok(port.log.includes(`DELETE /api/file/${NEW_ID}`), 'nobody holds it and the form is gone');
+    assert.ok(!port.log.includes(`DELETE /api/file/${ID}`), 'the old file is still the saved one');
+    assert.equal(draft.holds(`/media/${NEW_ID}`), false);
+  }
+});
+await test('leaving during a save whose answer never comes back as saved, though the record did change: the record decides', async () => {
+  needs(images);
+  // Settings: the save hook answers nothing once the page has gone, even when the write went through.
+  const port = filePort({ holders: (id) => (id === NEW_ID ? ['co1'] : []), files: { [NEW_ID]: { owner_entity: 'coach', owner_id: 'co1', kind: 'photo' }, [ID]: { owner_entity: 'coach', owner_id: 'co1', kind: 'photo' } } });
+  const draft = withUpload(port, NEW_ID);
+  let answer; const inFlight = new Promise((r) => { answer = r; });
+  const saving = images.saveThenRemoveOld(port, { saved: `/media/${ID}`, next: `/media/${NEW_ID}`, owner: COACH_OWNER, draft }, () => inFlight);
+  await draft.discard();
+  answer(undefined);
+  await saving;
+  assert.ok(port.log.includes(`DELETE /api/file/${ID}`), 'the old file no longer held by anything goes');
+  assert.ok(!port.log.includes(`DELETE /api/file/${NEW_ID}`), 'the record holds the new one');
+});
+await test('a failed save with the form still open keeps the upload, so Save can be tried again', async () => {
+  needs(images);
+  const port = filePort();
+  const draft = withUpload(port, NEW_ID);
+  await images.saveThenRemoveOld(port, { saved: `/media/${ID}`, next: `/media/${NEW_ID}`, owner: COACH_OWNER, draft }, async () => null);
+  assert.deepEqual(port.log, []);
+  assert.equal(draft.holds(`/media/${NEW_ID}`), true);
+  const again = await images.saveThenRemoveOld(port, { saved: `/media/${ID}`, next: `/media/${NEW_ID}`, owner: COACH_OWNER, draft }, async () => 'saved');
+  assert.equal(again.result, 'saved', 'the retry is not refused as not current');
 });
 await test('an upload that finishes after its form closed is cleaned up, not left published', async () => {
   needs(images);

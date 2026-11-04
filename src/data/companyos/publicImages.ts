@@ -108,13 +108,30 @@ async function removeFile(port: ImagePort, owner: ImageOwner, id: string): Promi
  */
 export class ImageDraft {
   private uploaded = new Map<string, ImageOwner>();
+  private saving = false;
+  private closedDuringSave = false;
   constructor(private port: ImagePort) {}
   add(url: string, owner: ImageOwner) { const id = coachPhotoValue(url); if (id) this.uploaded.set(id, owner); }
   holds(value: unknown) { const id = savedFileId(value); return !!id && this.uploaded.has(id); }
   /** The record now holds it: no longer this form's to clean up. */
   forget(value: unknown) { const id = savedFileId(value); if (id) this.uploaded.delete(id); }
+  beginSave() { this.saving = true; this.closedDuringSave = false; }
+  /**
+   * The save's answer. Saved: the record holds `saved`, and any other upload goes. Not saved: the form still open keeps its
+   * upload for another try; a form that closed meanwhile has no use for it, so it goes (a lost answer is caught by `removeFile`).
+   */
+  async endSave(saved: boolean, value?: unknown): Promise<boolean> {
+    const closed = this.closedDuringSave;
+    this.saving = false;
+    this.closedDuringSave = false;
+    if (saved) this.forget(value);
+    if (saved || closed) await this.discard();
+    return closed;
+  }
   /** Deletes every unsaved upload but `keep`. Never throws: nothing here is the person's problem. */
   async discard(keep?: unknown) {
+    // During a save nobody knows yet whether the record will hold the upload: the save settles it (`endSave`).
+    if (this.saving) { if (keep === undefined) this.closedDuringSave = true; return; }
     const kept = savedFileId(keep);
     const gone = [...this.uploaded].filter(([id]) => id !== kept);
     for (const [id] of gone) this.uploaded.delete(id);
@@ -137,10 +154,26 @@ export async function saveThenRemoveOld<T>(port: ImagePort, { saved, next, owner
   const live = typeof port.request === 'function';
   const oldId = savedFileId(saved), newId = savedFileId(next);
   if (live && newId && newId !== oldId && !draft?.holds(newId)) return { result: null, notice: 'image_not_current' };
-  const result = await patch();
-  if (!result || !live) return { result, notice: null };
-  draft?.forget(newId);
-  await draft?.discard();
+  draft?.beginSave();
+  // No "saved" after the form closed proves nothing (the settings save answers nothing once its page has gone, even if the
+  // write went through). Then the record decides: `removeFile` leaves the old file alone while the record still holds it.
+  const settleUnsaved = async () => {
+    const closed = await draft?.endSave(false);
+    if (closed && live && oldId && oldId !== newId && owner) await removeFile(port, owner, oldId);
+  };
+  let result: T;
+  try {
+    result = await patch();
+  } catch (e) {
+    await settleUnsaved();
+    throw e;
+  }
+  if (!result) {
+    await settleUnsaved();
+    return { result, notice: null };
+  }
+  await draft?.endSave(true, newId);
+  if (!live) return { result, notice: null };
   if (!oldId || oldId === newId) return { result, notice: null };
   if (!owner) { console.warn('image_delete_failed', 'no_owner'); return { result, notice: 'old_image_remains' }; }
   return { result, notice: (await removeFile(port, owner, oldId)) ? null : 'old_image_remains' };
