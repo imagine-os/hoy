@@ -341,7 +341,7 @@ await test('a trial lot still counts when its payment stands, when the lot has n
 
 // ── The void on the member's classes (real mapping) ─────────────────────────────────────────────────────────
 const entry = (reason, delta, lot = {}) => ({ id: `ce_${reason}`, data: { person: 'per_1', delta, reason, lot: { id: 'lot_1', source: 'purchase', valid_until: '2027-02-01', ...lot } }, createdAt: '2026-11-05T10:00:00.000Z', updatedAt: '2026-11-05T10:00:00.000Z' });
-await test('a void entry maps to reason "void", and that key has words in both languages (no raw key on /app/passes)', () => {
+await test('a void entry maps to reason "void", and that key has words in both languages (no raw key on /app/classes)', () => {
   const { adapterFor, fromRecord, customerStrings } = need('mapping');
   const row = fromRecord(adapterFor('class_ledger'), entry('void', -12, { voided_at: VOIDED_AT }));
   assert.equal(row.reason, 'void');
@@ -363,7 +363,7 @@ await test('the ledger reads the lot\'s voided_at: its grant row carries it and 
   assert.equal(showsLedgerValidity(voidedGrant), false); assert.equal(showsLedgerValidity(liveGrant), true);
   assert.equal(showsLedgerValidity(fromRecord(a, entry('booking', -1))), false, 'a spend row never did');
 });
-await test('/app/passes uses the rule for the validity badge', async () => {
+await test('/app/classes uses the rule for the validity badge', async () => {
   assert.match(await src('src/modules/customer/pages/PassesPage.tsx'), /showsLedgerValidity\(c\) && <Badge/);
 });
 
