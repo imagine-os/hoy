@@ -1733,6 +1733,18 @@
         "evidence": "src/components/molecule/PackageCard/PackageCard.meta.ts: literal asset reference. This is a code placement, not a runtime visibility guarantee."
       },
       {
+        "label": "Home plan card",
+        "path": "/site",
+        "state": "live",
+        "evidence": "Verified editorial photo fallback; ready CMS photo takes priority. photo_slots:site.plans.pack12:fallback"
+      },
+      {
+        "label": "Home plan card",
+        "path": "/site?version=photos",
+        "state": "draft",
+        "evidence": "Verified editorial photo fallback; ready CMS photo takes priority. photo_slots:site.plans.pack12:fallback"
+      },
+      {
         "label": "Plan photograph",
         "path": "/site/plans",
         "state": "live",
@@ -2161,6 +2173,40 @@
         "path": "/site/teachers?version=photos",
         "state": "draft",
         "evidence": "src/modules/website/pages/TeachersPage.tsx; src/modules/website/photography.ts; src/modules/website/edition.ts. Opt-in photos edition only; teacher entries are conditional fallbacks for matching active teachers. teachers:tea_tatiana:fallback"
+      }
+    ]
+  },
+  {
+    "id": "images/studio-2026/warrior-blue.webp",
+    "url": "images/studio-2026/warrior-blue-960.webp",
+    "thumbnail": "images/studio-2026/warrior-blue-480.webp",
+    "name": "Warrior blue",
+    "source": "studio",
+    "kind": "image",
+    "orientation": "portrait",
+    "width": 960,
+    "height": 1440,
+    "variants": [
+      "images/studio-2026/warrior-blue-480.webp",
+      "images/studio-2026/warrior-blue-960.webp"
+    ],
+    "tags": [
+      "studio",
+      "warrior",
+      "blue"
+    ],
+    "usages": [
+      {
+        "label": "Home plan card",
+        "path": "/site",
+        "state": "live",
+        "evidence": "Verified editorial photo fallback; ready CMS photo takes priority. photo_slots:site.plans.trial:fallback"
+      },
+      {
+        "label": "Home plan card",
+        "path": "/site?version=photos",
+        "state": "draft",
+        "evidence": "Verified editorial photo fallback; ready CMS photo takes priority. photo_slots:site.plans.trial:fallback"
       }
     ]
   },

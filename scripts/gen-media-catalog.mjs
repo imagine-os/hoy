@@ -99,7 +99,10 @@ const practicePhotoText=editorialConfig.match(/export const practicePhotos[^=]*=
 const practicePhotoEntries=[...practicePhotoText.matchAll(/(\w+):\s*'([^']+)'/g)].map(m=>[m[1],m[2]]);
 const planPhotoText=editorialConfig.match(/export const planPhotos[^=]*=\s*\{([^}]+)\}/)?.[1]??'';
 const planPhotoEntries=[...planPhotoText.matchAll(/(\w+):\s*'([^']+)'/g)].map(m=>[m[1],m[2]]);
+const homePlanPhotoText=editorialConfig.match(/export const homePlanPhotos[^=]*=\s*\{([^}]+)\}/)?.[1]??'';
+const homePlanPhotoEntries=[...homePlanPhotoText.matchAll(/(\w+):\s*'([^']+)'/g)].map(m=>[m[1],m[2]]);
 const editorialUse=(asset,label,path,slot)=>{for(const [suffix,state] of [['','live'],['?version=photos','draft']])add(asset,label,path+suffix,state,`Verified editorial photo fallback; ready CMS photo takes priority. photo_slots:${slot}:fallback`);};
+for(const [id,name] of homePlanPhotoEntries)editorialUse(`images/studio-2026/${name}-960.webp`,'Home plan card','/site',`site.plans.${id}`);
 for(const [slug,name] of practicePhotoEntries)editorialUse(`images/studio-2026/${name}-960.webp`,'Home practice','/site',`site.classes.${slug}`);
 for(const [id,name] of planPhotoEntries)editorialUse(`images/studio-2026/${name}-960.webp`,'Plan photograph','/site/plans',`site.plans.${id}`);
 editorialUse('images/sanctuary/mountains.webp','Home philosophy','/site','site.home.philosophy');
