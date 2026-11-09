@@ -54,3 +54,15 @@
 .option1-finale-arch img { display:block; width:100%; height:auto; }
 .site[data-edition="sanctuary"] .option1-finale .sanctuary-finale-card { width:100%; max-width:100%; min-width:0; }
 @media(max-width:700px) { .site[data-edition="sanctuary"] .sanctuary-finale.option1-finale { grid-template-columns:1fr; } .option1-finale-background { width:100%; } }
+
+/* Footer artwork treatment for current editions; historical editions retain their styling. */
+.site:is([data-site-version="latest"],[data-site-version="photos"]) .site-foot {
+  background:var(--gradient-site-footer); color:var(--brand-cream);
+  --color-text:var(--brand-cream); --color-text-muted:var(--brand-cream); --color-text-faint:var(--brand-cream);
+  --color-ink:var(--brand-cream); --color-primary:var(--brand-cream);
+  --color-border:color-mix(in srgb,var(--brand-cream) 24%,transparent);
+}
+.site:is([data-site-version="latest"],[data-site-version="photos"]) .site-foot .wordmark-vector { color:var(--brand-cream); }
+.site:is([data-site-version="latest"],[data-site-version="photos"]) .site-foot a:hover { color:var(--brand-yellow); }
+.site:is([data-site-version="latest"],[data-site-version="photos"]) .site-foot a:focus-visible { outline-color:var(--brand-yellow); }
+.site:is([data-site-version="latest"],[data-site-version="photos"]) .site-foot .site-footer-brand:hover .wordmark-vector { color:var(--brand-yellow); }

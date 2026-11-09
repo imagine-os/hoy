@@ -112,6 +112,7 @@ export const semantic = {
     'color-warn': '#8A6A1E',
     'color-danger': '#7E3B2C',       // --dg
     'color-focus': '#5F85B1',
+    'gradient-site-footer': 'linear-gradient(35deg,var(--brand-ink),var(--brand-deepBlue) 50%,var(--tone-plum-fg))', // navy lower-left to plum upper-right
     'gradient-frame': 'linear-gradient(170deg,#FBF7EF,#F6EFE2)', // phone / desktop frame fill (.surf paper, warmed toward the bottom)
     'gradient-tile': 'linear-gradient(150deg,#F5EEE1,#EDE4D4)',   // C-01 prompt tile
     'color-scrim': 'rgba(36,56,79,.35)',
@@ -145,6 +146,7 @@ export const semantic = {
     'color-warn': '#D8C24A',
     'color-danger': '#E0A08F',       // --dg dark
     'color-focus': '#9BC0E4',
+    'gradient-site-footer': 'linear-gradient(35deg,var(--brand-ink),var(--brand-deepBlue) 50%,var(--tone-plum-fg))', // navy lower-left to plum upper-right
     'gradient-frame': 'linear-gradient(170deg,#1D3148,#1B2E44)',
     'gradient-tile': 'linear-gradient(150deg,#22384F,#1B2E44)',
     'color-scrim': 'rgba(0,0,0,.5)',
