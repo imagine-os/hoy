@@ -337,7 +337,11 @@ try {
   check('C-01d review: …and a pack in it goes nowhere (no payment page, nothing written)', route(page) === '/app/classes' && api.batches.length === 0, route(page));
   // The website's Book button (signed in): the drawer shows the notice and the button starts nothing.
   await page.goto(`${BASE}/#/site/schedule`); await page.waitForTimeout(2000);
-  await page.locator('.session-calendar button', { hasText: 'Pulso' }).first().click({ timeout: 5000 }).catch(() => {});
+  // The fixture is 26 hours ahead and can fall in the next week (for example on Sundays).
+  // Select its studio date through the calendar's own control before testing the drawer.
+  const fixtureDay = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(occurrence(5).data.starts_at));
+  await page.locator('.session-calendar input[type=date]').fill(fixtureDay);
+  await page.locator('.session-calendar button', { hasText: 'Pulso' }).first().click({ timeout: 5000 });
   await page.waitForTimeout(800);
   const drawerHold = page.locator('[data-consent-hold]');
   check('C-01d review: the website schedule drawer shows the notice (signed-in copy) for a held login', (await drawerHold.count()) === 1 && /Reserva esta clase/.test(await text(page)), route(page));

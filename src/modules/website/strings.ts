@@ -136,6 +136,7 @@ export const strings: StringTable = {
   "site.new.ritualAlt": { es: "Estudio tropical de yoga con jardín en Medellín", en: "Tropical yoga studio with a garden in Medellín" },
   "site.new.visit": { es: "Te esperamos.", en: "We’ll see you here." },
   "site.new.firstClass": { es: "Tu primera clase", en: "Your first class" },
+  "site.new.trialCardTitle": { es: "Para empezar", en: "To begin" },
   'site.new.packageSub': { es: '{n} clases · {months} meses', en: '{n} classes · {months} months' },
   'site.new.privateSub': { es: 'hasta {n} personas', en: 'up to {n} people' },
   'site.nav.home': { es: 'Inicio', en: 'Home' },

@@ -1,0 +1,40 @@
+name: Home photo cards QA
+on:
+  pull_request:
+    paths:
+      - 'src/modules/website/**'
+      - 'src/data/studioPhotography.ts'
+      - 'src/data/mediaCatalog.generated.json'
+      - 'public/images/studio-2026/**'
+      - 'scripts/test-home-photo-cards-ui.mjs'
+      - 'scripts/test-home-photo-cards-contract.mjs'
+      - 'scripts/gen-media-catalog.mjs'
+      - 'scripts/test-media-model.mjs'
+      - '.github/workflows/home-photo-cards-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  home-photo-cards:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: node scripts/test-home-photography.mjs && node scripts/test-editorial-photo-upgrade.mjs && npm run build:production && npm run build && node scripts/test-media-model.mjs && node scripts/test-home-photo-cards-contract.mjs
+      - name: Verify Home cards and existing editorial photo contracts
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 5508 > /tmp/home-preview.log 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:5508/ >/dev/null && break; sleep 1; done
+          node scripts/test-home-photo-cards-ui.mjs
+          node scripts/test-home-photography-ui.mjs
+        env:
+          CHROMIUM_PATH: /usr/bin/google-chrome
+          QA_BASE: http://127.0.0.1:5508
+          HOME_PHOTO_OUTPUT: /tmp/home-photo-cards
