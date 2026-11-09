@@ -8,6 +8,12 @@
 .plans-pass.has-photo { padding:0; overflow:hidden; }
 .plans-pass.has-photo .plans-pass-copy { padding:var(--card-pad); }
 .plans-pass-photo { display:block; width:100%; height:auto; }
+/* Current website passes opt into the same full-photo treatment as package details. */
+.site:is([data-site-version="latest"],[data-site-version="photos"]) .plans-pass-full-photo { position:relative; isolation:isolate; background:var(--brand-ink); color:var(--brand-white); --color-primary:var(--brand-white); --color-text:var(--brand-white); --color-ink:var(--brand-white); --color-text-muted:var(--brand-white); --color-text-faint:var(--brand-white); --color-focus:var(--brand-yellow); }
+.site:is([data-site-version="latest"],[data-site-version="photos"]) .plans-pass-full-photo .plans-pass-photo { position:absolute; inset:0; z-index:-2; width:100%; height:100%; object-fit:cover; opacity:1; }
+.site:is([data-site-version="latest"],[data-site-version="photos"]) .plans-pass-full-photo::before { content:''; position:absolute; inset:0; z-index:-1; pointer-events:none; background:linear-gradient(180deg,color-mix(in srgb,var(--brand-ink) 68%,transparent),color-mix(in srgb,var(--brand-ink) 52%,transparent) 42%,color-mix(in srgb,var(--brand-ink) 90%,transparent)); }
+.site:is([data-site-version="latest"],[data-site-version="photos"]) .plans-pass-full-photo .btn { background:var(--brand-white); color:var(--brand-ink); border-color:var(--brand-cream); }
+.site:is([data-site-version="latest"],[data-site-version="photos"]) .plans-pass-full-photo .btn:hover:not(:disabled) { background:var(--brand-cream); }
 .photo-philosophy { width:100%; height:auto; max-height:38rem; object-fit:contain; }
 .photo-community { width:100%; height:auto; max-height:inherit; object-fit:contain; display:block; }
 /* The verified group photo keeps its native height; its arch is measured from its width. */

@@ -22,6 +22,8 @@ export interface PackageCardProps {
   ctaLabel: string;
   onSelect: () => void;
   photo?: { src: string; alt: string };
+  /** Optional website presentation; the default keeps the existing photo object. */
+  photoPresentation?: 'object' | 'background';
 }
 
 /**
@@ -29,9 +31,9 @@ export interface PackageCardProps {
  * the call to action. Was MembershipCard (the retired monthly / annual plans); the look is kept, the content is the
  * package's. Prices come from src/tenant/pricing.ts; the rules come from the caller (the M-08 freeze policy).
  */
-export function PackageCard({ item, index, total, tone, eyebrow, objectLabel, benefits, ctaLabel, onSelect, photo }: PackageCardProps) {
+export function PackageCard({ item, index, total, tone, eyebrow, objectLabel, benefits, ctaLabel, onSelect, photo, photoPresentation = 'object' }: PackageCardProps) {
   const { bi, lang } = useI18n();
-  return <article className="package-card" data-tone={tone}>
+  return <article className={`package-card${photo && photoPresentation === 'background' ? ' package-card-full-photo' : ''}`} data-tone={tone}>
     {photo ? <div className="package-object package-photo-object"><img src={photo.src} alt={photo.alt} className="package-photo" loading="lazy" decoding="async" /></div> : <div className="package-object" aria-hidden="true"><Wordmark height={36}/><span className="package-orbit"/><span className="package-object-label">{objectLabel}</span><span className="package-object-name">{bi(item.name)}</span><span className="package-object-footer">{String(index).padStart(2, '0')} / {String(total).padStart(2, '0')} <span>{item.classes ?? ''}</span></span></div>}
     <div className="package-card-copy"><div className="row-between wrap"><p className="eyebrow">{eyebrow}</p>{item.badge && <span className="package-badge">{bi(item.badge)}</span>}</div><h2>{bi(item.name)}</h2><p className="muted">{bi(item.description)}</p><div className="package-price"><strong>{formatCOP(item.price ?? 0, lang)}</strong><span>COP</span></div>
     <ul className="package-benefits">{benefits.map((b) => <li key={b}>{b}</li>)}</ul>

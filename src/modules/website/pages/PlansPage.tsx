@@ -88,14 +88,15 @@ export function PlansPage() {
             <PackageCard key={p.id} item={p} index={i + 1} total={all.length} tone={p.audience ? 'moss' : 'river'}
               eyebrow={p.audience ? bi(p.audience) : bi(FAMILY_RATIONALE.paquetes.role)} objectLabel={t('site.plans.package.objectLabel')}
               benefits={p.audience ? [...packageRules, t('site.plans.package.affiliates')] : packageRules}
-              ctaLabel={t('site.plans.package.cta')} onSelect={() => buy(p.id)} photo={planPhoto(p.id)} />
+              ctaLabel={t('site.plans.package.cta')} onSelect={() => buy(p.id)} photo={planPhoto(p.id)}
+              photoPresentation={usesCurrentStudioPhotos(version) ? 'background' : 'object'} />
           ))}
         </div>
       </section>
       {/* the trial class and the individual class */}
       <section className="container site-section">
         <div className="site-section-top"><div><p className="eyebrow">{bi(FAMILY_LABEL.bienvenida)}</p><h2>{t('site.plans.passesTitle')}</h2><p className="muted">{t('site.plans.passesBody')}</p></div></div>
-        <div className="plans-pass-grid">{prices.byFamily('bienvenida').map((p) => <article className={`plans-pass${planPhoto(p.id) ? ' has-photo' : ''}`} key={p.id}>{planPhoto(p.id) && <img className="plans-pass-photo" src={planPhoto(p.id)!.src} alt={planPhoto(p.id)!.alt} loading="lazy" decoding="async" />}<div className="plans-pass-copy"><span className="eyebrow">{t('site.plans.oneClass')}</span><h3>{bi(p.name)}</h3><p className="small muted">{bi(p.description)}</p><strong className="plans-pass-price">{formatCOP(p.price ?? 0, lang)}</strong><Button variant="secondary" onClick={() => buy(p.id)}>{t('site.plans.select')}</Button></div></article>)}</div>
+        <div className="plans-pass-grid">{prices.byFamily('bienvenida').map((p) => <article className={`plans-pass${planPhoto(p.id) ? ' has-photo plans-pass-full-photo' : ''}`} key={p.id}>{planPhoto(p.id) && <img className="plans-pass-photo" src={planPhoto(p.id)!.src} alt={planPhoto(p.id)!.alt} loading="lazy" decoding="async" />}<div className="plans-pass-copy"><span className="eyebrow">{t('site.plans.oneClass')}</span><h3>{bi(p.name)}</h3><p className="small muted">{bi(p.description)}</p><strong className="plans-pass-price">{formatCOP(p.price ?? 0, lang)}</strong><Button variant="secondary" onClick={() => buy(p.id)}>{t('site.plans.select')}</Button></div></article>)}</div>
         {/* private classes and gift cards */}
         <div className="plans-secondary">
           <Card eyebrow={bi(FAMILY_RATIONALE.privadas.role)} title={bi(FAMILY_LABEL.privadas)}>
