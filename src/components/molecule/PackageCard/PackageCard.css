@@ -4,6 +4,14 @@
 .package-object .wordmark{filter:brightness(0) invert(1);opacity:.88}
 .package-object.package-photo-object{padding:0;aspect-ratio:auto;background:none;}
 .package-photo{display:block;width:100%;height:auto;}
+/* Explicit opt-in: keep the item, rules and purchase action in their existing flow. */
+.package-card.package-card-full-photo{position:relative;isolation:isolate;overflow:hidden;gap:0;background:var(--brand-ink);color:var(--brand-white);--color-primary:var(--brand-white);--color-text:var(--brand-white);--color-ink:var(--brand-white);--color-text-muted:var(--brand-white);--color-text-faint:var(--brand-white);--color-border:color-mix(in srgb,var(--brand-white) 32%,transparent);--color-focus:var(--brand-yellow)}
+.package-card-full-photo .package-photo-object{position:absolute;inset:0;z-index:-2;border-radius:inherit;box-shadow:none;}
+.package-card-full-photo .package-photo{width:100%;height:100%;object-fit:cover;opacity:1;}
+.package-card-full-photo::before{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(180deg,color-mix(in srgb,var(--brand-ink) 68%,transparent),color-mix(in srgb,var(--brand-ink) 52%,transparent) 42%,color-mix(in srgb,var(--brand-ink) 90%,transparent));}
+.package-card-full-photo .package-benefits li::before{color:var(--brand-cream);}
+.package-card-full-photo .btn{background:var(--brand-white);color:var(--brand-ink);border-color:var(--brand-cream);}
+.package-card-full-photo .btn:hover:not(:disabled){background:var(--brand-cream);}
 .package-object-label{font-size:0.625rem;letter-spacing:.2em;text-transform:uppercase;margin-top:auto}
 .package-object-name{font-family:var(--font-heading);font-size:clamp(1.4375rem,3vw,2.1875rem);font-weight:300}
 .package-object-footer{display:flex;justify-content:space-between;align-items:baseline;width:100%;font-size:0.625rem;letter-spacing:.15em;margin-top:var(--sp-md)}
