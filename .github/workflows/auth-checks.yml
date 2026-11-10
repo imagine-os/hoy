@@ -111,6 +111,8 @@ jobs:
         run: node scripts/test-admin-activity.mjs
       - name: Public images and teacher profiles (names, upload path, photo id untrusted, replace order, teachers from Company OS)
         run: node scripts/test-golive-images.mjs
+      - name: Class images (schedule.image: upload and replace, occurrence reads its schedule's image, thumbnail order, who edits)
+        run: node scripts/test-class-images.mjs
       - name: The Hoy server (static, proxy, /files, /media, webhook, config)
         run: node scripts/test-hoy-server.mjs
       - name: Real sign-up check, offline part (options and site safety; the live part skips without COS_LOCAL_API)
