@@ -1,5 +1,5 @@
 import type { BatchOp } from '../../staff/desk/wire';
-import { COACH_FIELDS, coachBio, coachPhotoUrl, coachPhotoValue, coachSpecialties } from '../../../data/companyos/publicImages';
+import { COACH_FIELDS, SCHEDULE_FIELDS, coachBio, coachPhotoUrl, coachPhotoValue, coachSpecialties } from '../../../data/companyos/publicImages';
 
 /**
  * AD-01 / AD-02 · class, schedule, teacher and room writes in Company OS terms (bookings `schedule`, `occurrence`,
@@ -11,7 +11,7 @@ import { COACH_FIELDS, coachBio, coachPhotoUrl, coachPhotoValue, coachSpecialtie
 export const CLASS_MINUTES = 50;
 export const WEEKDAYS = [1, 2, 3, 4, 5, 6, 0] as const; // Monday first; 0 = Sunday, as Company OS stores it
 
-export interface ScheduleDraft { title: string; weekday: number; start_time: string; resource: string; coach: string; capacity: number; valid_from: string; valid_until?: string; active: boolean; /** The class type's slug (`schedule.modality`, the recipe's select); required to publish. */ modality?: string }
+export interface ScheduleDraft { title: string; weekday: number; start_time: string; resource: string; coach: string; capacity: number; valid_from: string; valid_until?: string; active: boolean; /** The class type's slug (`schedule.modality`, the recipe's select); required to publish. */ modality?: string; /** The class image as a `/media/<id>` address or none (D2); undefined: the form has no image field, nothing is sent. */ image?: string | null; /** `schedule.image` as stored when the form opened: an update is refused if it has changed since. */ imageAtOpen?: unknown }
 export interface ResourceDraft { name: string; capacity: number }
 /** A teacher's public profile: `specialties` are class type slugs, `photo` a `/media/<id>` address or none. */
 export interface CoachProfile { bio: { es: string; en: string }; specialties: string[]; photo: string | null }
@@ -51,9 +51,22 @@ export const scheduleData = (d: ScheduleDraft) => ({
   ...(d.modality?.trim() ? { modality: d.modality.trim() } : {}),
 });
 
-export const createScheduleOps = (d: ScheduleDraft): BatchOp[] => [{ op: 'create', entity: 'schedule', data: scheduleData(d) }];
-/** An update also clears a type taken off a draft: leaving the field out would keep the old one. */
-export const updateScheduleOps = (id: string, d: ScheduleDraft): BatchOp[] => [{ op: 'update', entity: 'schedule', id, data: { modality: null, ...scheduleData(d) } }];
+/** A `schedule` row's image back into the form; what is stored is untrusted (publicImages.ts). */
+export const scheduleImageOf = (row: Record<string, unknown>): string | null => coachPhotoUrl(row[SCHEDULE_FIELDS.image]);
+
+export const createScheduleOps = (d: ScheduleDraft): BatchOp[] => {
+  const image = coachPhotoValue(d.image);
+  return [{ op: 'create', entity: 'schedule', data: { ...scheduleData(d), ...(image ? { [SCHEDULE_FIELDS.image]: image } : {}) } }];
+};
+/**
+ * An update also clears a type taken off a draft: leaving the field out would keep the old one. The image only if it
+ * changed, and only over the value this form saw (as for a teacher's photo): a stale form can't save a deleted file.
+ */
+export const updateScheduleOps = (id: string, d: ScheduleDraft): BatchOp[] => {
+  const image = coachPhotoValue(d.image);
+  const changed = d.image !== undefined && image !== coachPhotoValue(coachPhotoUrl(d.imageAtOpen));
+  return [{ op: 'update', entity: 'schedule', id, data: { modality: null, ...scheduleData(d), ...(changed ? { [SCHEDULE_FIELDS.image]: image } : {}) }, ...(changed ? { ifMatch: { field: SCHEDULE_FIELDS.image, value: d.imageAtOpen } } : {}) }];
+};
 /** Publish / unpublish a class: an inactive schedule generates no new dates; dates already generated stay as they are. */
 export const publishScheduleOps = (id: string, active: boolean): BatchOp[] => [{ op: 'update', entity: 'schedule', id, data: { active } }];
 /** Generate the published classes' dates up to `until` (inclusive); idempotent per schedule and date. */

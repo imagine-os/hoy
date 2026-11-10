@@ -1,7 +1,7 @@
 import type { BaseRow } from '../schema';
 import { tenant } from '../../tenant/tenant';
 import { modalities as seedModalities, plans as seedPlans, rooms as seedRooms } from '../seed/catalog';
-import { COACH_FIELDS, coachBio, coachPhotoUrl, coachSpecialties } from './publicImages';
+import { COACH_FIELDS, SCHEDULE_FIELDS, coachBio, coachPhotoUrl, coachSpecialties } from './publicImages';
 import { contentArticles, faqEntries } from '../seed/content';
 import { mediaAssets } from '../seed/media';
 import { legalDocuments } from '../seed/legal';
@@ -244,6 +244,8 @@ const classTemplates = entity({
     duration_min: { field: 'duration_minutes', from: num }, capacity: { field: 'capacity', from: num },
     start_date: { field: 'valid_from', kind: 'day' }, end_date: { field: 'valid_until', kind: 'day' },
     active: { field: 'active', from: (v) => v !== false },
+    // Hoy 12 Nov (D2): the class's own image, a bare file id as stored (untrusted, like a teacher's photo); Class schedule › Clases writes it.
+    image_url: { derive: (r) => coachPhotoUrl(r.data[SCHEDULE_FIELDS.image]) },
     level: { derive: () => 'all' }, generation_mode: { derive: () => 'automatic' }, theme: { derive: () => null }, description: { derive: () => null },
   },
   createDefaults: () => ({ kind: 'class' }),
@@ -251,8 +253,10 @@ const classTemplates = entity({
 
 const classSessions = entity({
   table: 'class_sessions', entity: 'occurrence',
-  include: [{ field: 'schedule', as: 'schedule_row', fields: ['modality'] }],
+  include: [{ field: 'schedule', as: 'schedule_row', fields: ['modality', SCHEDULE_FIELDS.image] }],
   cols: {
+    // An occurrence shows its schedule's image; a class added by hand has no schedule and so none.
+    image_url: { derive: (r) => coachPhotoUrl(embedded(r, 'schedule_row')?.[SCHEDULE_FIELDS.image]) },
     template_id: { field: 'schedule', from: str }, title: { field: 'title' }, modality_id: classModalityCol,
     teacher_id: { field: 'coach', from: str }, room_id: { field: 'resource', from: str },
     starts_at: { field: 'starts_at', kind: 'instant' }, ends_at: { field: 'ends_at', kind: 'instant' },

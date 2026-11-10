@@ -17,10 +17,10 @@ import { refusalCopy } from '../../../data/companyos/refusals';
 import { useData, useTable } from '../../../data/DataContext';
 import type { ModalityRow } from '../../../data/schema';
 import { SharedImageField } from '../../../components/organism/SharedImageField/SharedImageField';
-import { COACH_PHOTO, ImageDraft, coachPhotoUrl, saveThenRemoveOld, type ImagePort, type ImageSaveNotice } from '../../../data/companyos/publicImages';
+import { COACH_PHOTO, SCHEDULE_IMAGE, ImageDraft, coachPhotoUrl, saveThenRemoveOld, type ImagePort, type ImageSaveNotice } from '../../../data/companyos/publicImages';
 import {
   WEEKDAYS, cancelOccurrenceOps, createCoachOps, createResourceOps, createScheduleOps, generateOps, publishScheduleOps,
-  coachProfileOf, schedulePublishBlocked, scheduleProblems, scheduleTypeHint, updateCoachOps, updateResourceOps, updateScheduleOps, type CoachProfile, type ScheduleDraft,
+  coachProfileOf, scheduleImageOf, schedulePublishBlocked, scheduleProblems, scheduleTypeHint, updateCoachOps, updateResourceOps, updateScheduleOps, type CoachProfile, type ScheduleDraft,
 } from './scheduleOps';
 
 type Tab = 'classes' | 'dates' | 'teachers' | 'rooms';
@@ -36,6 +36,8 @@ export function LiveSchedulePage() {
   const { can } = useSession();
   const canWrite = can('classes.write');
   const canEditTeachers = can('teachers.write');
+  // A class's image is public like a teacher's photo and has the same gate (Administration, Super Admin): the Coordinator's `classes.write` is not enough.
+  const canEditImage = can('teachers.write');
   const [tab, setTab] = useState<Tab>('classes');
   const now = new Date();
   // Studio days, not UTC ones: from the start of today in Medellín, so yesterday's evening classes are not listed.
@@ -75,7 +77,7 @@ export function LiveSchedulePage() {
       {!q.request && <EmptyState compact tone="error" title={t('live.loadError')} body={deskErrorText('disconnected', t)} />}
       {q.error && <EmptyState compact tone="error" title={t('live.loadError')} body={deskErrorText(q.error, t)} action={<Button size="sm" onClick={q.reload}>{t('core.common.retry')}</Button>} />}
       {q.loading && !rows && <EmptyState compact tone="loading" title={t('core.common.loading')} />}
-      {rows && tab === 'classes' && <Classes rows={rows.schedules} rooms={rooms} coaches={coaches} roomName={roomName} coachName={coachName} weekday={weekday} canWrite={canWrite} busy={busy} run={run} />}
+      {rows && tab === 'classes' && <Classes rows={rows.schedules} rooms={rooms} coaches={coaches} roomName={roomName} coachName={coachName} weekday={weekday} canWrite={canWrite} canEditImage={canEditImage} busy={busy} photoBusy={photoBusy} setPhotoBusy={setPhotoBusy} run={run} />}
       {rows && tab === 'dates' && <Dates rows={rows.occurrences} roomName={roomName} coachName={coachName} canWrite={canWrite} busy={busy} run={run} lang={lang} />}
       {rows && tab === 'teachers' && <Teachers rows={coaches} canWrite={canEditTeachers} busy={busy} photoBusy={photoBusy} setPhotoBusy={setPhotoBusy} run={run} />}
       {rows && tab === 'rooms' && <Rooms rows={rooms} canWrite={canWrite} busy={busy} run={run} />}
@@ -86,28 +88,37 @@ export function LiveSchedulePage() {
 
 type Run = (ops: BatchOp[], key: string, ok: string) => Promise<string[] | null>;
 
-function Classes({ rows, rooms, coaches, roomName, coachName, weekday, canWrite, busy, run }: { rows: CosRow[]; rooms: CosRow[]; coaches: CosRow[]; roomName: (id: unknown) => string; coachName: (id: unknown) => string; weekday: (d: number) => string; canWrite: boolean; busy: boolean; run: Run }) {
-  const { t, bi } = useI18n();
+function Classes({ rows, rooms, coaches, roomName, coachName, weekday, canWrite, canEditImage, busy, photoBusy, setPhotoBusy, run }: { rows: CosRow[]; rooms: CosRow[]; coaches: CosRow[]; roomName: (id: unknown) => string; coachName: (id: unknown) => string; weekday: (d: number) => string; canWrite: boolean; canEditImage: boolean; busy: boolean; photoBusy: boolean; setPhotoBusy: (busy: boolean) => void; run: Run }) {
+  const { t, bi, lang } = useI18n();
+  const data = useData();
   // The class types live in the frontend; a timetable row stores the slug (the recipe's `schedule.modality` select).
   const { rows: classTypes } = useTable<ModalityRow>('modalities');
   const typeName = (slug: unknown) => { const m = classTypes.find(x => x.slug === slug); return m ? bi({ es: m.name_es, en: m.name_en }) : str(slug); };
   const blank = (): ScheduleDraft => ({ title: '', weekday: 1, start_time: '07:00', resource: rooms[0]?.id ?? '', coach: '', capacity: num(rooms[0]?.capacity) || 1, valid_from: dateKey(new Date()), valid_until: '', active: false, modality: '' });
-  const [edit, setEdit] = useState<{ id: string | null; draft: ScheduleDraft; key: string } | null>(null);
+  const [edit, setEdit] = useState<{ id: string | null; draft: ScheduleDraft; key: string; imageDraft: ImageDraft } | null>(null);
+  const [imageNotice, setImageNotice] = useState<ImageSaveNotice>(null);
   const [until, setUntil] = useState(dateKey(addDays(new Date(), 28)));
   const [genKey, setGenKey] = useState(newActionKey);
   const room = edit ? rooms.find(r => r.id === edit.draft.resource) : undefined;
   const problems = edit ? scheduleProblems(edit.draft, room ? num(room.capacity) : undefined) : [];
-  const toDraft = (r: CosRow): ScheduleDraft => ({ title: str(r.title), weekday: num(r.weekday), start_time: str(r.start_time), resource: idOf(r.resource), coach: idOf(r.coach), capacity: num(r.capacity), valid_from: str(r.valid_from), valid_until: str(r.valid_until), active: r.active !== false, modality: str(r.modality) });
+  const toDraft = (r: CosRow): ScheduleDraft => ({ title: str(r.title), weekday: num(r.weekday), start_time: str(r.start_time), resource: idOf(r.resource), coach: idOf(r.coach), capacity: num(r.capacity), valid_from: str(r.valid_from), valid_until: str(r.valid_until), active: r.active !== false, modality: str(r.modality), image: scheduleImageOf(r), imageAtOpen: r.image });
   const save = async () => {
     if (!edit || problems.length) return;
-    const ids = await run(edit.id ? updateScheduleOps(edit.id, edit.draft) : createScheduleOps(edit.draft), edit.key, t('live.saved'));
-    if (ids) setEdit(null);
+    setImageNotice(null);
+    // The image field only exists for who may edit it, on a saved row: everyone else's save carries no image at all.
+    const withImage = canEditImage && !!edit.id;
+    const draft = withImage ? edit.draft : { ...edit.draft, image: undefined };
+    const out = await saveThenRemoveOld(data as unknown as ImagePort, { saved: withImage ? draft.imageAtOpen : undefined, next: withImage ? draft.image : undefined, owner: edit.id ? { ...SCHEDULE_IMAGE, ownerId: edit.id } : undefined, draft: edit.imageDraft },
+      () => run(edit.id ? updateScheduleOps(edit.id, draft) : createScheduleOps(draft), edit.key, t('live.saved')));
+    setImageNotice(out.notice);
+    if (out.result) setEdit(null);
   };
   return (
     <div className="stack">
-      {canWrite && <div className="row wrap"><Button icon="plus" onClick={() => setEdit({ id: null, draft: blank(), key: newActionKey() })}>{t('live.new')}</Button>
+      {canWrite && <div className="row wrap"><Button icon="plus" onClick={() => setEdit({ id: null, draft: blank(), key: newActionKey(), imageDraft: new ImageDraft(data as unknown as ImagePort) })}>{t('live.new')}</Button>
         <Field label={t('live.generate')}>{id => <Input id={id} type="date" value={until} onChange={e => { setUntil(e.target.value); setGenKey(newActionKey()); }} />}</Field>
         <Button variant="secondary" disabled={busy || !until} onClick={async () => { if (await run(generateOps(until), genKey, t('live.saved'))) setGenKey(newActionKey()); }}>{t('live.generate.go')}</Button></div>}
+      {imageNotice && <p className="small register-diff" role="status">{imageNotice === 'old_image_remains' ? t('media.picker.oldRemains') : refusalCopy(imageNotice, lang)}</p>}
       {edit && <Card title={edit.id ? t('live.edit') : t('live.new')}>
         <div className="grid grid-2">
           <Field label={t('live.f.title')} required>{id => <Input id={id} value={edit.draft.title} onChange={e => setEdit({ ...edit, draft: { ...edit.draft, title: e.target.value } })} />}</Field>
@@ -120,13 +131,14 @@ function Classes({ rows, rooms, coaches, roomName, coachName, weekday, canWrite,
           <Field label={t('live.f.from')}>{id => <Input id={id} type="date" value={edit.draft.valid_from} onChange={e => setEdit({ ...edit, draft: { ...edit.draft, valid_from: e.target.value } })} />}</Field>
           <Field label={t('live.f.until')}>{id => <Input id={id} type="date" value={edit.draft.valid_until ?? ''} onChange={e => setEdit({ ...edit, draft: { ...edit.draft, valid_until: e.target.value } })} />}</Field>
         </div>
+        {canEditImage && (edit.id ? <SharedImageField key={edit.id} label={t('live.f.classImage')} value={edit.draft.image ?? null} disabled={busy} owner={{ ...SCHEDULE_IMAGE, ownerId: edit.id }} saved={coachPhotoUrl(edit.draft.imageAtOpen)} draft={edit.imageDraft} onBusyChange={setPhotoBusy} onChange={image => setEdit({ ...edit, draft: { ...edit.draft, image } })} /> : <p className="xs muted">{t('live.f.classImageAfterSave')}</p>)}
         <Toggle checked={edit.draft.active} onChange={on => setEdit({ ...edit, draft: { ...edit.draft, active: on } })} label={t('live.published')} />
         {problems.map(p => <p key={p} className="xs register-diff">{t(`live.problem.${p}`)}</p>)}
-        <div className="row wrap"><Button disabled={busy || problems.length > 0} loading={busy} onClick={save}>{t('live.save')}</Button><Button variant="ghost" onClick={() => setEdit(null)}>{t('core.common.cancel')}</Button></div>
+        <div className="row wrap"><Button disabled={busy || photoBusy || problems.length > 0} loading={busy} onClick={save}>{t('live.save')}</Button><Button variant="ghost" disabled={busy || photoBusy} onClick={() => setEdit(null)}>{t('core.common.cancel')}</Button></div>
       </Card>}
       {rows.length === 0 ? <EmptyState compact title={t('live.empty')} /> : rows.map(r => (
         <Card key={r.id} data-schedule={r.id} padding="sm" title={str(r.title)} eyebrow={`${weekday(num(r.weekday))} · ${str(r.start_time)}`} actions={canWrite && <div className="row wrap">
-          <Button size="sm" variant="outline" onClick={() => setEdit({ id: r.id, draft: toDraft(r), key: newActionKey() })}>{t('live.edit')}</Button>
+          <Button size="sm" variant="outline" onClick={() => setEdit({ id: r.id, draft: toDraft(r), key: newActionKey(), imageDraft: new ImageDraft(data as unknown as ImagePort) })}>{t('live.edit')}</Button>
           <Button size="sm" variant="tonal" disabled={busy || schedulePublishBlocked(r)} onClick={() => run(publishScheduleOps(r.id, r.active === false), newActionKey(), t('live.saved'))}>{r.active === false ? t('live.publish') : t('live.unpublish')}</Button>
         </div>}>
           <p className="small">{coachName(r.coach)} · {roomName(r.resource)} · {t('live.rooms.mats', { n: num(r.capacity) })} <Badge tone={r.active === false ? 'neutral' : 'success'}>{r.active === false ? t('live.draft') : t('live.published')}</Badge> {str(r.modality) ? <Badge>{typeName(r.modality)}</Badge> : <Badge tone="warn">{t('live.noType')}</Badge>}</p>

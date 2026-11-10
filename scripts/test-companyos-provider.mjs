@@ -195,7 +195,7 @@ try {
     assert.equal(hidden.modality_id, 'mod_pulso', 'a schedule the reader cannot see: the title');
     const none = fromRecord(adapters.class_sessions, { id: 'o6', data: { title: 'Morning flow', schedule: 's1', schedule_row: { id: 's1' } } });
     assert.equal(none.modality_id, null, 'no type anywhere: none (the class is not open for booking)');
-    assert.deepEqual(planQuery(adapters.class_sessions, undefined).spec.include, [{ field: 'schedule', as: 'schedule_row', fields: ['modality'] }], 'one read brings the schedule\'s class type');
+    assert.deepEqual(planQuery(adapters.class_sessions, undefined).spec.include, [{ field: 'schedule', as: 'schedule_row', fields: ['modality', 'image'] }], 'one read brings the schedule\'s class type and image');
     const data = toData(adapters.class_sessions, { modality_id: 'mod_pulso', booked_count: 9, starts_at: '2026-11-01T07:00:00-05:00', level: 'all' }, 'update');
     assert.deepEqual(data, { modality: 'pulso', starts_at: '2026-11-01T12:00:00.000Z' }, 'server count and derived columns are never sent');
   });
