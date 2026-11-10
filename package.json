@@ -46,7 +46,8 @@
     "test:jas-1nov-admin": "node scripts/test-jas-1nov-admin.mjs",
     "test:jas-1nov-admin:ui": "node scripts/test-jas-1nov-admin-ui.mjs",
     "test:test-gate": "node scripts/test-test-gate.mjs",
-    "test:test-gate:ui": "node scripts/test-test-gate-ui.mjs"
+    "test:test-gate:ui": "node scripts/test-test-gate-ui.mjs",
+    "test:seo": "node --experimental-strip-types scripts/test-seo.mjs"
   },
   "dependencies": {
     "@clerk/react": "6.17.8",

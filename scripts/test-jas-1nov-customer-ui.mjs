@@ -22,6 +22,7 @@ import { readFile, stat } from 'node:fs/promises';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { extname, join, resolve, sep } from 'node:path';
 import { launchBrowser, reporter } from './lib/launch-qa.mjs';
+import { routeOf } from './lib/site-route.mjs';
 
 const { check, done } = reporter('hoy-jas-1nov customer (production build)');
 const DIST = resolve(process.env.QA_PROD_DIST ?? 'dist');
@@ -174,7 +175,7 @@ async function open(path = '/', { lang = 'es', width = 1280 } = {}) {
   await page.waitForTimeout(800);
   return { ctx, page };
 }
-const route = (page) => decodeURIComponent(new URL(page.url()).hash.slice(1));
+const route = (page) => routeOf(page.url());
 async function signIn(page, email) {
   await page.locator('[data-step="email"] input').fill(email);
   await page.locator('[data-step="email"] button[type=submit]').click();

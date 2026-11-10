@@ -14,6 +14,7 @@ import { join, resolve } from 'node:path';
 import { launchBrowser, reporter } from './lib/launch-qa.mjs';
 import { createHandler, createHoyServer } from '../server/app.mjs';
 import { loadConfig } from '../server/config.mjs';
+import { routeOf } from './lib/site-route.mjs';
 
 const { check, done } = reporter('signed-out website on live data');
 const DIST = resolve(process.env.QA_PROD_DIST ?? 'dist');
@@ -142,7 +143,7 @@ async function open(path, lang = 'es') {
   await page.waitForTimeout(1500);
   return { ctx, page };
 }
-const route = (page) => decodeURIComponent(new URL(page.url()).hash.slice(1));
+const route = (page) => routeOf(page.url());
 const PROMPT = /Inicia sesión para ver los horarios|Sign in to see the timetable/;
 
 try {

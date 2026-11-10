@@ -684,32 +684,32 @@ await test('config: COMPANY_OS_READ_TOKEN must be a Company OS service token; ch
 });
 
 // ---------------------------------------------------------------------------------------------
-// /site and /coming-soon: an address typed without the # goes to the app's route (owner, go-live)
+// /site and /coming-soon: an old address typed without the # (lane H-SEO, D11: the website is on real paths now)
 // ---------------------------------------------------------------------------------------------
-await test('routes without the #: /site, /site/<path> and /coming-soon redirect to the hash route', async () => {
-  for (const [path, location] of [
-    ['/site', '/#/site'], ['/site/', '/#/site'], ['/site/plans', '/#/site/plans'], ['/site/classes/fuego', '/#/site/classes/fuego'], ['/site/teachers/', '/#/site/teachers'], ['/coming-soon', '/#/coming-soon'],
+await test('old /site addresses answer 301 to the website\'s real path; /coming-soon still goes to its hash route', async () => {
+  for (const [path, location, status] of [
+    ['/site', '/', 301], ['/site/', '/', 301], ['/site/plans', '/planes', 301], ['/site/classes/fuego', '/clases/fuego', 301], ['/site/teachers/', '/profesores', 301], ['/coming-soon', '/#/coming-soon', 302],
   ]) {
     for (const method of ['GET', 'HEAD']) {
       const r = await request(method, path);
-      assert.equal(r.status, 302, `${method} ${path}`);
+      assert.equal(r.status, status, `${method} ${path}`);
       assert.equal(r.headers.location, location, `${method} ${path}`);
       assert.equal(r.headers['x-content-type-options'], 'nosniff');
     }
   }
 });
 
-await test('routes without the #: a plain query string passes; anything else is dropped, and the redirect still happens', async () => {
-  assert.equal((await request('GET', '/site/plans?version=photos&x=1')).headers.location, '/#/site/plans?version=photos&x=1');
+await test('old /site addresses: a plain query string passes; anything else is dropped, and the redirect still happens', async () => {
+  assert.equal((await request('GET', '/site/plans?version=photos&x=1')).headers.location, '/planes?version=photos&x=1');
   for (const query of ['?next=//evil.example', '?a=%0d%0aSet-Cookie:x=1', '?a=%2F%2Fevil', '?a=<script>', '?a=b#c', '?', `?${'a'.repeat(600)}`]) {
     const r = await request('GET', `/site${query}`);
-    assert.equal(r.status, 302, query);
-    assert.equal(r.headers.location, '/#/site', query);
+    assert.equal(r.status, 301, query);
+    assert.equal(r.headers.location, '/', query);
     assert.equal(r.headers['set-cookie'], undefined, query);
   }
 });
 
-await test('routes without the #: hostile paths keep the 404, and no answer ever leaves the site', async () => {
+await test('old /site addresses: hostile paths keep the 404, and no answer ever leaves the site', async () => {
   for (const path of [
     '/site/%2f%2fevil.example', '/site/%2fevil', '/site/..', '/site/../etc/passwd', '/site/..%2f..%2fetc', '/site/%2e%2e/x', '/site/.', '/site//evil.example', '/site/a//b', '/site/%0d%0aSet-Cookie:x=1', '/site/%0aevil', '/site/a%00b',
     '/site/%5cevil', '/site/a\\b', '/site/@evil.example', '/site/a:b', '/site/<script>', '/coming-soon/x', '/coming-soon/', '/coming-soon/..',
@@ -721,16 +721,17 @@ await test('routes without the #: hostile paths keep the 404, and no answer ever
   for (const path of ['//evil.example', '//evil.example/site', '//site', '///site']) {
     const r = await request('GET', path);
     assert.ok(r.headers.location === undefined || !/^\/\/|^https?:/i.test(r.headers.location), `${path}: ${r.headers.location}`);
-    assert.notEqual(r.headers.location, '/#/site', path);
+    assert.notEqual(r.headers.location, '/', path);
   }
 });
 
 await test('routes without the #: only GET and HEAD, and only these paths', async () => {
-  for (const method of ['POST', 'PUT', 'DELETE']) assert.notEqual((await request(method, '/site')).status, 302, method);
+  for (const method of ['POST', 'PUT', 'DELETE']) assert.ok(![301, 302].includes((await request(method, '/site')).status), method);
   for (const path of ['/website', '/website/', '/sites', '/site-map', '/SITE', '/coming-soonish', '/index.html', '/assets/index-abc123.js', '/media/x', '/files/x', '/api/x', '/api/cos/t/hoy-dev/me']) {
     const r = await request('GET', path);
     assert.ok(r.headers.location === undefined || !r.headers.location.includes('#'), `${path}: ${r.headers.location}`);
     assert.notEqual(r.status, 302, path);
+    if (path !== '/website') assert.notEqual(r.status, 301, path);
   }
   assert.equal((await request('GET', '/website/')).status, 200, 'the static website is untouched');
   assert.equal((await request('GET', '/assets/index-abc123.js')).status, 200, 'static files are untouched');

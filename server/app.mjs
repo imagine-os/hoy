@@ -12,8 +12,10 @@
 //   /private-docs/*      the Hub's docs and source documents, for a signed-in super admin only (docsGate.mjs);
 //   POST /webhooks/resend Resend's delivery webhook, forwarded byte for byte to the API, which checks
 //                        the signature;
-//   /site, /coming-soon  a redirect to the same route after the `#`, so an address typed without it still arrives;
-//   everything else      the built frontend in dist/ (website + app; HashRouter, so no SPA fallback).
+//   the public website   real Spanish paths (/, /nosotros, /clases/<slug>, …; seo.mjs, lane H-SEO): index.html with
+//                        each page's tags and JSON-LD; sitemap.xml, robots.txt; old /site/<x> → 301; www → apex 301;
+//   /coming-soon         a redirect to the same route after the `#`, so an address typed without it still arrives;
+//   everything else      the built frontend in dist/ (the app keeps HashRouter); any other path is a 404.
 // No framework: node:http only. Clerk verification is injected (see clerk.mjs) so tests can fake it.
 import { createReadStream } from 'node:fs';
 import { readFile, stat } from 'node:fs/promises';
@@ -23,6 +25,7 @@ import { extname, resolve, sep } from 'node:path';
 import { createGzip } from 'node:zlib';
 import { createDocsGate, DOCS_PREFIX } from './docsGate.mjs';
 import { createTestGate } from './testGate.mjs';
+import { CANONICAL_ORIGIN, createSeo, wwwLocation } from './seo.mjs';
 
 /**
  * Company OS routes a visitor without a session may reach (method + path after `/t/<tenant>`), e.g.
@@ -91,6 +94,18 @@ export async function createHandler(config, deps) {
   const docsGate = await createDocsGate(config, { verifySession: deps.verifySession, fetchMe: deps.fetchMe, log });
   // The test site's passphrase gate (playbook rule D5).
   const testGate = createTestGate(config.testGate, { now: deps.now, readBody, closeIfUnread });
+  // Lane H-SEO (D11): the public website's pages, sitemap, robots and old addresses.
+  const indexFile = resolve(distDir, 'index.html');
+  const seo = createSeo(config, {
+    now: deps.now,
+    readTemplate: () => readFile(indexFile, 'utf8').catch(() => null),
+    headers: () => ({ 'Content-Security-Policy': HTML_CSP }),
+  });
+  // The hosts whose www redirects to them: the indexed one and this deployment's own (APP_URL).
+  const siteHosts = [...new Set([new URL(CANONICAL_ORIGIN).host, ...(config.authorizedParties ?? []).map((o) => new URL(o).host)])];
+  const wwwHeaders = config.environment === 'production' && !config.testGate?.on
+    ? { 'Cache-Control': 'public, max-age=3600' }
+    : { 'Cache-Control': 'private, max-age=3600', 'X-Robots-Tag': 'noindex, nofollow' };
   const appConfig = JSON.stringify({
     tenant: config.tenant,
     apiBase: '/api/cos',
@@ -104,6 +119,12 @@ export async function createHandler(config, deps) {
     const [rawPath, rawQuery] = splitUrl(req.url ?? '/');
     securityHeaders(req, res);
     try {
+      // D11: the apex is the indexed host; a request on www goes there first, before the test gate.
+      const apex = wwwLocation(header(req.headers.host), req.url, siteHosts);
+      if (apex) {
+        res.writeHead(req.method === 'GET' || req.method === 'HEAD' ? 301 : 308, { Location: apex, ...wwwHeaders });
+        return res.end();
+      }
       if (await testGate(req, res, rawPath)) return;
       if (rawPath === '/health') return health(req, res, release);
       if (rawPath === '/app-config.json') {
@@ -128,6 +149,7 @@ export async function createHandler(config, deps) {
       }
       if (rawPath === DOCS_PREFIX || rawPath.startsWith(`${DOCS_PREFIX}/`)) return await docsGate(req, res, rawPath.slice(DOCS_PREFIX.length));
       if (rawPath.startsWith('/api/') || rawPath.startsWith('/webhooks/')) return sendError(res, 404, 'not_found');
+      if (await seo(req, res, rawPath, rawQuery)) return;
       const route = hashRoute(req.method, rawPath, rawQuery);
       if (route) {
         res.writeHead(302, { Location: route, 'Cache-Control': 'no-cache' });
@@ -147,13 +169,13 @@ export async function createHandler(config, deps) {
 // ---------------------------------------------------------------------------------------------
 
 /**
- * The app's routes are hash routes (`/#/site`), so an address typed without the `#` would be a 404. A 302: this changes
- * when the `#` goes. Only plain segments and a plain query string pass, undecoded, so the Location is always this site's:
- * anything encoded or odd in the path keeps its 404, and such a query string is dropped.
+ * `/coming-soon` is a hash route (`/#/coming-soon`), so the address typed without the `#` would be a 404. A 302. (The
+ * website's `/site/<x>` addresses moved to real paths in lane H-SEO: seo.mjs answers them with a 301.) A plain query
+ * string passes, undecoded; anything else is dropped.
  */
 function hashRoute(method, rawPath, rawQuery) {
   if (method !== 'GET' && method !== 'HEAD') return null;
-  const path = rawPath === '/coming-soon' ? rawPath : /^\/site(?:\/[A-Za-z0-9_-][A-Za-z0-9._-]*)*\/?$/.test(rawPath) ? rawPath.replace(/\/$/, '') : null;
+  const path = rawPath === '/coming-soon' ? rawPath : null;
   if (!path) return null;
   return `/#${path}${/^\?[A-Za-z0-9._~=&+-]{1,512}$/.test(rawQuery) ? rawQuery : ''}`;
 }
