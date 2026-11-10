@@ -16,6 +16,7 @@ import { checkReceipt, giftNotes, productSoldAlone, RECEIPT_TYPES, transferOps, 
 import { useAction, useCos, useLoad } from './useCos';
 import { holdView, safeCheckoutReturn, type HoldView, type ServerBookingRow } from '../../customer/booking/serverBooking';
 import { useBookingPolicy, type BookingPolicy } from '../../customer/booking/bookingPolicy';
+import { PageHead } from '../../customer/ui';
 import { ConsentHoldNotice, useConsentHeld } from '../../identity/ConsentHold';
 import { consentHoldsPay } from '../../identity/consentHoldRules';
 
@@ -69,7 +70,17 @@ export function TransferPayPage() {
   return <PayScreen key={`${what}/${id}`} what={what} id={id} />;
 }
 
+/** The customer page frame (as ServerCheckoutPage): container, page head with back link, the block spacing. */
 function PayScreen({ what, id }: { what: string; id: string }) {
+  const { t } = useI18n();
+  const back = safeCheckoutReturn(useSearchParams()[0].get('next')) ?? '/app';
+  return <div className="container page cust-page">
+    <PageHead back={back} title={t('payLaunch.pay.title')} />
+    <PayBody what={what} id={id} />
+  </div>;
+}
+
+function PayBody({ what, id }: { what: string; id: string }) {
   // H-6's gift screen passes the recipient in router state; only a `gift-recipient:` note for a gift product is kept.
   const notes = giftNotes((useLocation().state as { paymentNotes?: unknown } | null)?.paymentNotes);
   // RS-03: a trial or package bought from a class's checkout keeps that class, to go back once the receipt is sent.
@@ -126,8 +137,7 @@ function PayScreen({ what, id }: { what: string; id: string }) {
     setDone(true);
   });
 
-  return <div className="stack">
-    <h1>{t('payLaunch.pay.title')}</h1>
+  return <>
     <Card>
       <div className="stack-sm">
         <span>{product.data.name}</span>
@@ -158,5 +168,5 @@ function PayScreen({ what, id }: { what: string; id: string }) {
       <Button type="submit" loading={action.busy} disabled={action.busy || !file}>{t(action.busy ? 'payLaunch.pay.sending' : 'payLaunch.pay.send')}</Button>
     </form>}
     <p className="small muted">{t('payLaunch.pay.payAtDesk')}</p>
-  </div>;
+  </>;
 }
