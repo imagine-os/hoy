@@ -251,6 +251,7 @@ W = written, with each table's adapter kind (`none` = no adapter). Findings name
 | `/admin/payments/report` | R: —<br>W: — | GET /members, POST /query | none |
 | `/staff/vouchers` | R: payments (entity), plans (entity)<br>W: — | POST /api/:x, POST /query | none |
 | `/admin/vouchers` | R: payments (entity), plans (entity)<br>W: — | POST /api/:x, POST /query | none |
+| `/admin/vouchers/teachers` | R: payments (entity), teachers (entity)<br>W: — | POST /api/:x, POST /query | none |
 | `/app/vouchers` | R: —<br>W: — | POST /api/:x, POST /query | none |
 | `/app/vouchers/:code` | R: —<br>W: — | POST /api/:x, POST /query | none |
 | `/app/gift-voucher` | R: plans (entity)<br>W: — | — | none |

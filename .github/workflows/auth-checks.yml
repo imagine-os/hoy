@@ -101,6 +101,8 @@ jobs:
         run: node scripts/test-companyos-studio-data.mjs
       - name: Route connectivity (every launch route on a working Company OS adapter; docs/route-connectivity.md)
         run: node scripts/test-route-connectivity.mjs
+      - name: Teacher codes (create body, share link, funnel, checkout code entry refusals; Hoy 12 Nov lane H-CODES)
+        run: node scripts/test-teacher-codes.mjs
       - name: Launch flows on Company OS (profile, preferences, account, trial, payment instructions, studio return; lane H1)
         run: node scripts/test-h1-connected-flows.mjs
       - name: The Company OS provider (mapping, queries, batch and idempotency, polling, refusal copy)

@@ -26,6 +26,8 @@ export interface CosVoucher extends BaseRow {
   kind: VoucherKind; product?: string | null; classes: number; valid_until?: string | null; max_uses?: number | null;
   recipient_email?: string | null; recipient_name?: string | null; buyer?: string | null; note?: string | null;
   code?: string | null; uses?: number | null; redeemed_by?: string | null; redeemed_at?: string | null;
+  /** Company OS (lane CO, 12 Nov): a teacher's code names its teacher (`coach`) and is for people new to Hoy only. */
+  coach?: string | null; first_time_only?: boolean | null;
 }
 export interface Recipient { name: string; email: string }
 export interface GiftProduct { id: string; key: string; name: { es: string; en: string }; classes: number; price: number; validityDays: number | null }
@@ -55,7 +57,7 @@ export function voucherState(v: CosVoucher, today: string): VoucherState {
 }
 
 // ── refusal codes → copy ───────────────────────────────────────────────────────────────────────────────────────
-export const VOUCHER_REFUSALS = ['voucher_invalid', 'voucher_expired', 'voucher_redeemed', 'voucher_used_up', 'invalid_quantity', 'lot_expired', 'forbidden', 'write_forbidden', 'idempotency_conflict', 'voucher_payment_not_approved'] as const;
+export const VOUCHER_REFUSALS = ['voucher_invalid', 'voucher_expired', 'voucher_redeemed', 'voucher_used_up', 'invalid_quantity', 'lot_expired', 'forbidden', 'write_forbidden', 'idempotency_conflict', 'voucher_payment_not_approved', 'voucher_first_time_only'] as const;
 /** The refusal code of a failed write, whatever the provider throws (`{ code }`, `{ error: { code } }` or an Error named by its code). */
 export function refusalCode(error: unknown): string | null {
   const e = error as { code?: unknown; error?: { code?: unknown }; message?: unknown } | null;
