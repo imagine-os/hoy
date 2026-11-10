@@ -57,6 +57,12 @@ export function fakeCredits({ today = '2026-11-02', products = [], payments = []
       const mine = spec.filter?.field === 'user' && spec.filter?.value?.$me === true;
       return mine && state.me ? [{ id: state.me, data: { name: 'Persona Ficticia' } }] : [];
     }
+    if (spec.entity === 'credit_lot') {
+      if (!state.readVouchers) throw refuse('forbidden', 403);
+      const lots = state.lots.filter((l) => l.voucher != null).map(record);
+      const offset = spec.offset ?? 0, limit = Math.min(spec.limit ?? 100, 500);
+      return lots.slice(offset, offset + limit);
+    }
     if (spec.entity !== 'voucher') throw refuse(`unknown entity "${spec.entity}"`, 400);
     if (!state.readVouchers) throw refuse('forbidden', 403);
     const rows = [...state.vouchers];
