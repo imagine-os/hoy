@@ -30,6 +30,7 @@
     "test:analytics": "node scripts/test-analytics.mjs",
     "test:promotions": "node --experimental-strip-types scripts/test-promotions.mjs",
     "test:vouchers": "node --experimental-strip-types scripts/test-vouchers.mjs",
+    "test:teacher-codes": "node scripts/test-teacher-codes.mjs",
     "media-catalog": "node scripts/gen-media-catalog.mjs",
     "test:subscriptions": "node --experimental-strip-types scripts/test-subscriptions.mjs && node scripts/test-subscription-expenses.mjs",
     "test:content-recovery": "node scripts/test-content-recovery.mjs && node scripts/test-content-recovery-context.mjs && node scripts/test-content-batch.mjs",

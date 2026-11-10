@@ -101,4 +101,42 @@ export const productionStrings: StringTable = {
   'vouchers.cos.refusal.idempotency_conflict.body': { es: 'Ya enviaste esta solicitud con otros datos. Revísalos e inténtalo de nuevo.', en: 'You already sent this request with other details. Check them and try again.' },
   'vouchers.cos.refusal.generic.title': { es: 'No se pudo completar', en: 'It could not be completed' },
   'vouchers.cos.refusal.generic.body': { es: 'Inténtalo de nuevo en un momento; no se hizo ningún cambio doble.', en: 'Try again in a moment; nothing is done twice.' },
+
+  // Hoy 12 Nov · first-time-only (a teacher's code is for people new to Hoy)
+  'vouchers.cos.refusal.voucher_first_time_only.title': { es: 'Este código es para personas nuevas en Hoy', en: 'This code is for people new to Hoy' },
+  'vouchers.cos.refusal.voucher_first_time_only.body': { es: 'Es solo para quien es nuevo en Hoy, y tú ya tienes clases, un pago o una clase a la que asististe. No se sumó nada a tu saldo. Escríbenos si crees que es un error.', en: 'It is only for people new to Hoy, and you already have classes, a payment or an attended class. Nothing was added to your balance. Write to us if you think this is a mistake.' },
+  'vouchers.cos.err.coach': { es: 'Elige un profesor.', en: 'Choose a teacher.' },
+
+  // Checkout · "¿Tienes un código?" (VoucherCodeEntry)
+  'vouchers.cos.entry.title': { es: '¿Tienes un código?', en: 'Do you have a code?' },
+  'vouchers.cos.entry.label': { es: 'Código', en: 'Code' },
+  'vouchers.cos.entry.hint': { es: 'Son 8 letras y números. Si es tu primera vez en Hoy, suma las clases a tu saldo.', en: 'It has 8 letters and numbers. If this is your first time at Hoy, it adds the classes to your balance.' },
+  'vouchers.cos.entry.cta': { es: 'Usar el código', en: 'Use the code' },
+  'vouchers.cos.entry.done': { es: 'Listo: sumamos {classes} a tu saldo.', en: 'Done: {classes} added to your balance.' },
+
+  // M-14 · teacher codes
+  'vouchers.teachers.title': { es: 'Códigos de profesores', en: 'Teacher codes' },
+  'vouchers.teachers.sub': { es: 'Cada profesor comparte su código: quien es nuevo en Hoy lo canjea y recibe clases gratis. Aquí ves cuántas personas llegaron y cuántas compraron después.', en: 'Each teacher shares their code: someone new to Hoy redeems it and gets free classes. Here you see how many people came and how many bought afterwards.' },
+  'vouchers.teachers.new': { es: 'Nuevo código de profesor', en: 'New teacher code' },
+  'vouchers.teachers.teacher': { es: 'Profesor', en: 'Teacher' },
+  'vouchers.teachers.teacher.choose': { es: 'Elige un profesor', en: 'Choose a teacher' },
+  'vouchers.teachers.noTeachers': { es: 'No hay profesores activos.', en: 'There are no active teachers.' },
+  'vouchers.teachers.rule': { es: 'Solo lo pueden canjear personas nuevas en Hoy, y no se envía por correo: tú compartes el código o su enlace.', en: 'Only people new to Hoy can redeem it, and no email is sent: you share the code or its link.' },
+  'vouchers.teachers.create': { es: 'Crear código', en: 'Create code' },
+  'vouchers.teachers.created': { es: 'Código creado: {code}', en: 'Code created: {code}' },
+  'vouchers.teachers.codes': { es: 'Códigos por profesor', en: 'Codes by teacher' },
+  'vouchers.teachers.noCodes': { es: 'Sin códigos todavía.', en: 'No codes yet.' },
+  'vouchers.teachers.copy': { es: 'Copiar enlace', en: 'Copy link' },
+  'vouchers.teachers.copied': { es: 'Enlace copiado', en: 'Link copied' },
+  'vouchers.teachers.copyFailed': { es: 'No se pudo copiar; selecciona el enlace y cópialo.', en: 'Could not copy; select the link and copy it.' },
+  'vouchers.teachers.funnel.title': { es: 'Embudo por profesor', en: 'Funnel by teacher' },
+  'vouchers.teachers.funnel.sub': { es: 'Canjearon: personas distintas que usaron un código del profesor. Compraron después: tienen un pago aprobado posterior a su canje, de cualquier producto.', en: 'Redeemed: distinct people who used one of the teacher\'s codes. Bought later: an approved payment after their redemption, any product.' },
+  'vouchers.teachers.funnel.codes': { es: 'Códigos', en: 'Codes' },
+  'vouchers.teachers.funnel.redeemed': { es: 'Canjearon', en: 'Redeemed' },
+  'vouchers.teachers.funnel.bought': { es: 'Compraron después', en: 'Bought later' },
+  'vouchers.teachers.funnel.people': { es: 'Ver personas', en: 'Show people' },
+  'vouchers.teachers.funnel.bought.yes': { es: 'compró', en: 'bought' },
+  'vouchers.teachers.funnel.bought.no': { es: 'aún no', en: 'not yet' },
+  'vouchers.teachers.funnel.loading': { es: 'Cargando el embudo…', en: 'Loading the funnel…' },
+  'vouchers.teachers.funnel.failed': { es: 'No pudimos leer los canjes o los pagos. Recarga la página en un momento.', en: "We couldn't read the redemptions or payments. Reload the page in a moment." },
 };

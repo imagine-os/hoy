@@ -39,6 +39,7 @@ export const CONTRACT_REFUSALS = {
   voucher_expired: { es: 'Este bono ya venció.', en: 'This voucher has expired.' },
   voucher_redeemed: { es: 'Este bono ya se usó y no se puede cambiar.', en: 'This voucher has been used and cannot be changed.' },
   voucher_used_up: { es: 'Este bono ya se usó por completo, o ya lo canjeaste.', en: 'This voucher is fully used, or you have already redeemed it.' },
+  voucher_first_time_only: { es: 'Este código es solo para personas nuevas en Hoy: ya tienes clases, un pago o una clase a la que asististe.', en: 'This code is only for people new to Hoy: you already have classes, a payment or an attended class.' },
   // Payments
   product_inactive: { es: 'Este producto ya no está a la venta.', en: 'This product is no longer for sale.' },
   audience_not_allowed: { es: 'Este precio es solo para afiliados. Pregunta en recepción.', en: 'This price is for affiliates only. Ask at the front desk.' },

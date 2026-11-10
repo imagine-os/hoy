@@ -31,3 +31,10 @@ export const deskSpec: PageSpec = {
   purpose: { es: 'Emitir el bono de un regalo pagado y ver los bonos emitidos.', en: 'Issue the voucher of a paid gift and see issued vouchers.' },
   roles: ['super_admin', 'admin', 'coordinator', 'front_desk'], layout: ['gifts', 'list'],
 };
+export const teacherCodesSpec: PageSpec = {
+  ...base, code: 'M-14', name: { es: 'Códigos de profesores', en: 'Teacher codes' },
+  purpose: { es: 'Crear códigos de clases gratis para cada profesor, compartir su enlace y ver cuántas personas los canjearon y cuántas compraron después.', en: 'Create free-class codes for each teacher, share their link, and see how many people redeemed them and how many bought afterwards.' },
+  roles: ['super_admin', 'admin'], layout: ['create', 'codes', 'funnel'],
+  logic: ['A code is a courtesy voucher with a coach and first_time_only; it has no recipient, so no email goes out.', 'Only people new to Hoy can redeem it (voucher_first_time_only).', 'Bought later: an approved payment by the person dated after their redemption, any product.'],
+  states: ['Empty', 'Invalid form', 'Creating', 'Created', 'Refused', 'Copied', 'Funnel loading', 'Funnel failed'],
+};
