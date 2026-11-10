@@ -129,7 +129,7 @@ export function ClassDetailPage() {
 
   const SECTIONS: Record<string, () => ReactNode> = {
     'HeroImage (placeholder)': () => (
-      <div style={{ aspectRatio: '16 / 9', overflow: 'hidden', borderRadius: 'var(--r-lg)' }}><ClassThumbnail modality={m}/></div>
+      <div style={{ aspectRatio: '16 / 9', overflow: 'hidden', borderRadius: 'var(--r-lg)' }}><ClassThumbnail modality={m} imageUrl={s.image_url}/></div>
     ),
     'TitleBlock (time, duration, room)': () => (
       <div className="stack-sm">

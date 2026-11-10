@@ -8,6 +8,9 @@ import { PUBLIC_SETTINGS_KEY } from './settingsSplit';
 
 export const COACH_PHOTO = { ownerEntity: 'coach', kind: 'photo' } as const;
 export const SETTING_IMAGE = { ownerEntity: 'setting', kind: 'image' } as const;
+/** A timetable class's image (Hoy 12 Nov, D2): file owner `schedule`, kind `image`, published at once; the tenant field `schedule.image` is a bare file id like `coach.photo`. */
+export const SCHEDULE_IMAGE = { ownerEntity: 'schedule', kind: 'image' } as const;
+export const SCHEDULE_FIELDS = { image: 'image' } as const;
 /** The tenant fields on `coach`: `bio` json `{ es, en }`, `specialties` json array of class type slugs, `photo` text, a bare file id. */
 export const COACH_FIELDS = { bio: 'bio', specialties: 'specialties', photo: 'photo' } as const;
 
@@ -186,9 +189,11 @@ export function reportImageBusy(shared: boolean, busy: boolean, tell?: (busy: bo
   return () => tell(false);
 }
 
-/** A teacher's photo is re-encoded (smaller, no metadata). The QR goes as it is: nothing may stop it scanning. */
+/** A teacher's photo and a class's image are re-encoded (smaller, no metadata). The QR goes as it is: nothing may stop it scanning. */
 export async function prepareForUpload(owner: { ownerEntity: string; kind: string }, file: File, encodePhoto: (file: File) => Promise<File>): Promise<File> {
-  return owner.ownerEntity === COACH_PHOTO.ownerEntity && owner.kind === COACH_PHOTO.kind ? encodePhoto(file) : file;
+  const photo = owner.ownerEntity === COACH_PHOTO.ownerEntity && owner.kind === COACH_PHOTO.kind;
+  const classImage = owner.ownerEntity === SCHEDULE_IMAGE.ownerEntity && owner.kind === SCHEDULE_IMAGE.kind;
+  return photo || classImage ? encodePhoto(file) : file;
 }
 
 /** The record that owns the QR: the public settings row. No row yet (nothing saved): null. A failed read throws. */
