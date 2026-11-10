@@ -37,7 +37,7 @@ export async function fictionalReceipt(): Promise<ReceiptImage> {
   const blob=await new Promise<Blob>(r=>canvas.toBlob(b=>r(b!),'image/png'));
   return readReceipt(new File([blob],'fictional-demo-receipt.png',{type:'image/png'}));
 }
-export interface TransferRequest { quote?:FrozenSaleQuote; key:string; userId:string; sessionId:string|null; matNumber:number|null; productId:string; productName:Bi; amount:number; classes:number; expiresAt:string; image:ReceiptImage }
+export interface TransferRequest { quote?:FrozenSaleQuote; key:string; userId:string; sessionId:string|null; productId:string; productName:Bi; amount:number; classes:number; expiresAt:string; image:ReceiptImage }
 /** Fictional browser-only staged request. No booking/hold/grant before explicit review. */
 export async function submitTransfer(data:DataProvider,request:TransferRequest,cancelled:()=>boolean=()=>false):Promise<TransferReceiptRow> {
   const input=structuredClone(request),check=()=>{if(cancelled())throw Error('cancelled');};check();
@@ -46,13 +46,13 @@ export async function submitTransfer(data:DataProvider,request:TransferRequest,c
   const result=await data.atomic(async tx=>{
     check();await assertReceiptOwner(tx,input.userId);check();const existing=await tx.get<TransferReceiptRow>('transfer_receipts',input.key);
     if(existing){const {receipt,payment}=await ownedReceipt(tx,input.userId,input.key);check();
-      if(receipt.session_id!==input.sessionId||receipt.mat_number!==input.matNumber||receipt.product_id!==input.productId||JSON.stringify(receipt.product_name)!==JSON.stringify(input.productName)||receipt.classes!==input.classes||receipt.expires_at!==input.expiresAt||receipt.image_data_url!==input.image.dataUrl||receipt.file_name!==input.image.fileName||receipt.mime_type!==input.image.mimeType||receipt.byte_size!==input.image.bytes||payment.amount!==input.amount)throw Error('request_conflict');
+      if(receipt.session_id!==input.sessionId||receipt.product_id!==input.productId||JSON.stringify(receipt.product_name)!==JSON.stringify(input.productName)||receipt.classes!==input.classes||receipt.expires_at!==input.expiresAt||receipt.image_data_url!==input.image.dataUrl||receipt.file_name!==input.image.fileName||receipt.mime_type!==input.image.mimeType||receipt.byte_size!==input.image.bytes||payment.amount!==input.amount)throw Error('request_conflict');
       await verifyUploadIntent(tx,receipt,fingerprint);check();return receipt;}
     if(!Number.isInteger(input.amount)||input.amount<1||!Number.isInteger(input.classes)||input.classes<1||!input.image.dataUrl.startsWith(`data:${input.image.mimeType};base64,`)||!Number.isInteger(input.image.bytes)||input.image.bytes<1||input.image.bytes>RECEIPT_MAX_BYTES)throw Error('invalid');
     if(input.quote&&(input.quote.kind!=='class'||input.quote.quantity!==1||input.quote.classes!==input.classes||input.quote.entitlementExpiresAt!==input.expiresAt||JSON.stringify(input.quote.name)!==JSON.stringify(input.productName)))throw Error('quote_scope');
     if(input.sessionId)await requireExistingBookingContact(tx,input.userId,tenant.id,{isCurrent:()=>{check();return true;}});
     const payment=await recordPayment(tx,{userId:input.userId,planId:input.productId,amount:input.amount,method:'transfer',ivaRate:policy.ivaRate,quote:input.quote});
-    check();const receipt=await tx.insert<TransferReceiptRow>('transfer_receipts',{id:input.key,user_id:input.userId,payment_id:payment.id,session_id:input.sessionId,mat_number:input.matNumber,product_id:input.productId,product_name:input.productName,classes:input.classes,expires_at:input.expiresAt,image_data_url:input.image.dataUrl,file_name:input.image.fileName,mime_type:input.image.mimeType,byte_size:input.image.bytes,status:'pending',amount_received:null,review_reason:null,reviewed_by:null,reviewed_at:null,booking_id:null});
+    check();const receipt=await tx.insert<TransferReceiptRow>('transfer_receipts',{id:input.key,user_id:input.userId,payment_id:payment.id,session_id:input.sessionId,mat_number:null,product_id:input.productId,product_name:input.productName,classes:input.classes,expires_at:input.expiresAt,image_data_url:input.image.dataUrl,file_name:input.image.fileName,mime_type:input.image.mimeType,byte_size:input.image.bytes,status:'pending',amount_received:null,review_reason:null,reviewed_by:null,reviewed_at:null,booking_id:null});
     check();await insertAlertIntent(tx,receipt,fingerprint);await assertReceiptOwner(tx,input.userId);check();return receipt;
   });
   const current=await ownedReceipt(data,input.userId,result.id);await verifyUploadIntent(data,current.receipt,fingerprint);check();return current.receipt;
@@ -88,7 +88,6 @@ export async function reviewTransfer(data:DataProvider,input:{id:string;actorId:
     if(input.decision==='approved'){
       await activatePaidPackage(tx,{paymentId:payment.id,userId:receipt.user_id,planId:receipt.product_id,classes:receipt.classes,expiresAt:receipt.expires_at});
       if(receipt.session_id)booking=await bookWithPackage(tx,{userId:receipt.user_id,sessionId:receipt.session_id,status:'booked',paymentId:payment.id,paidWith:receipt.product_id==='plan_trial'?'trial':receipt.classes>1?'package':'single'});
-      if(booking&&receipt.mat_number!=null)await tx.update('bookings',booking.id,{mat_number:receipt.mat_number});
       const {subtotal,tax}=splitIva(payment.amount,policy.ivaRate);
       await captureLaunchReceipt(tx, reviewedPayment, { source: 'transfer-review', item: receipt.product_name, recordedTax: { subtotal, tax, total: payment.amount } });
     }

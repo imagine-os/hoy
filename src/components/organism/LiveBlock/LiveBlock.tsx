@@ -195,7 +195,6 @@ function TenantFacts({ what }: { what?: string }) {
   if (key === 'capacity' || key === 'all') rows.push(
     [t('manual.live.tenant.mats'), String(tenant.studio.mats)],
     [t('manual.live.tenant.classesPerDay'), String(tenant.studio.classesPerDay)],
-    [t('manual.live.tenant.perPerson'), String(tenant.studio.perPersonPerDay)],
     [t('manual.live.tenant.rooms'), String(tenant.studio.rooms)],
     [t('manual.live.tenant.seatsPerDay'), String(tenant.studio.mats * tenant.studio.classesPerDay)],
   );

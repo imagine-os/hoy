@@ -46,7 +46,7 @@ export const scheduleTypeHint = (row: Record<string, unknown>): 'publish' | 'unb
 
 export const scheduleData = (d: ScheduleDraft) => ({
   title: d.title.trim(), kind: 'class', weekday: d.weekday, start_time: d.start_time, duration_minutes: CLASS_MINUTES,
-  resource: d.resource, coach: d.coach, capacity: d.capacity, spots_enabled: true,
+  resource: d.resource, coach: d.coach, capacity: d.capacity,
   valid_from: d.valid_from, valid_until: d.valid_until || null, active: d.active,
   ...(d.modality?.trim() ? { modality: d.modality.trim() } : {}),
 });

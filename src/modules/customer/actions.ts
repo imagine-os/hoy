@@ -3,7 +3,6 @@ import { PRODUCTION_BUILD } from '../../config/launch';
 import { useNavigate } from 'react-router-dom';
 import type { ActionDef, ActionHandler } from '../../actions/types';
 import { demoUsers } from '../../auth/demoUsers';
-import { tenant } from '../../tenant/tenant';
 
 /**
  * 0025 — what the customer reserve / register flow can be asked to do (WebMCP, and later voice).
@@ -43,11 +42,6 @@ export const appReserve: ActionDef = {
   intent: { es: 'Reserva la clase {session}', en: 'Reserve the class {session}' },
   params: { session: 'string (class_sessions.id)' }, permission: 'bookings.write',
 };
-export const appPickMat: ActionDef = {
-  id: 'app.pickMat', label: { es: 'Elegir tapete', en: 'Pick a mat' },
-  intent: { es: 'Quiero el tapete {mat}', en: 'I want mat {mat}' },
-  params: { mat: `number 1–${tenant.studio.mats}` }, permission: 'bookings.write',
-};
 export const appConfirmReservation: ActionDef = {
   id: 'app.confirmReservation', label: { es: 'Confirmar la reserva', en: 'Confirm the reservation' },
   intent: { es: 'Confirma mi reserva', en: 'Confirm my reservation' }, permission: 'bookings.write',
@@ -68,7 +62,7 @@ export const CUSTOMER_ACTIONS: Record<string, ActionDef[]> = {
   'C-01': [appSetGoal, ...APP_NAV_ACTIONS],
   'C-27': [appSetGoal, ...APP_NAV_ACTIONS],
   'C-02': [appReserve, ...APP_NAV_ACTIONS],
-  'C-04': [appPickMat, appConfirmReservation, ...APP_NAV_ACTIONS],
+  'C-04': [appConfirmReservation, ...APP_NAV_ACTIONS],
   'C-06': [appChoosePlan, ...APP_NAV_ACTIONS],
   'C-08': APP_NAV_ACTIONS,
   'C-25': [contactWhatsapp],

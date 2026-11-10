@@ -24,7 +24,7 @@ here, on the website and at the desk at the same time.
 One studio and one rule that protects the experience:
 
 1. Every class has a fixed number of mats.
-2. Each person takes **one class a day**.
+2. Each person can take **several classes a day**, as long as they do not overlap.
 3. We never sell more spots than fit.
 
 This is the capacity in force:

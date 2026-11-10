@@ -5,7 +5,7 @@ import { batch, errorCode, ref, type BatchOp, type CosRequest } from './wire';
 /**
  * H-7 · the front desk's writes (RC-02, RC-04, RC-05, RC-10, J1c). Two implementations behind one interface:
  *
- * - **server** (production): plain Company OS writes. The server decides capacity, the last spot, one class a day,
+ * - **server** (production): plain Company OS writes. The server decides capacity, the last spot, overlapping classes,
  *   balance, expiry, freeze, undo eligibility (`allow_undo_check_in`) and price; a refusal comes back as its code.
  *   Every multi-record write is one `/batch` with the action's `Idempotency-Key`.
  * - **review** (MockProvider): the existing browser commands, unchanged (fictional demo).

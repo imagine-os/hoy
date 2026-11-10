@@ -218,8 +218,10 @@ try {
         assertFull(late.api, cancelResult, late.now, 'cancellation');
         for (const session of cancelResult.class_sessions.filter(s => late.api.usesMats(cancelResult.modalities.find(m => m.id === s.modality_id)))) {
           const seats = cancelResult.bookings.filter(b => b.session_id === session.id && active(b));
-          assert(seats.every(b => Number.isInteger(b.mat_number) && b.mat_number >= 1 && b.mat_number <= Math.min(session.capacity, late.api.tenant.studio.mats)), 'new mat allocation outside range');
-          assert.equal(new Set(seats.map(b => b.mat_number)).size, seats.length, 'duplicate allocated mat');
+          // Hoy 12 Nov (D1): no mat is assigned any more; a number an older booking carries must still be in range and unique.
+          const numbered = seats.filter(b => b.mat_number != null);
+          assert(numbered.every(b => Number.isInteger(b.mat_number) && b.mat_number >= 1 && b.mat_number <= Math.min(session.capacity, late.api.tenant.studio.mats)), 'mat number outside range');
+          assert.equal(new Set(numbered.map(b => b.mat_number)).size, numbered.length, 'duplicate mat number');
         }
         const voucherDb = clone(morning);
         const voucherSession = voucherDb.class_sessions.find(s => s.id === candidate.id);

@@ -63,10 +63,10 @@ check('H-4 review build: the browser rules stay (SERVER_RULES off, MockProvider 
 // ── RS-02 — book with an active package (or a redeemed voucher): one write, one class taken by the server ─────────────
 {
   const p = fakeServer(({ row }) => ({ id: 'bkg_1', ...row, status: 'booked' }));
-  const b = await M.bookOnServer(p, { userId: 'usr_ana', sessionId: 'ses_1', paidWith: 'package', matNumber: 4 }, 'key-rs02');
+  const b = await M.bookOnServer(p, { userId: 'usr_ana', sessionId: 'ses_1', paidWith: 'package' }, 'key-rs02');
   const w = writes(p);
   check('RS-02 booking from the balance is one insert into bookings, inside atomic with an Idempotency-Key', w.length === 1 && w[0].table === 'bookings' && p.calls[0].op === 'atomic' && p.calls[0].key === 'key-rs02');
-  check('RS-02 the write names the class, the person, paid_with package and the mat; no browser reads', w[0].row.session_id === 'ses_1' && w[0].row.user_id === 'usr_ana' && w[0].row.paid_with === 'package' && w[0].row.mat_number === 4 && !('payment_method' in w[0].row));
+  check('RS-02 the write names the class, the person and paid_with package, and sends no mat; no browser reads', w[0].row.session_id === 'ses_1' && w[0].row.user_id === 'usr_ana' && w[0].row.paid_with === 'package' && !('mat_number' in w[0].row) && !('payment_method' in w[0].row));
   check('RS-02 the confirmed booking comes back for the upcoming list (status booked, id from the server)', b.id === 'bkg_1' && b.status === 'booked');
   check('RS-02 no browser balance check: no_credits is the server\'s answer, with ES/EN copy', !!es('customer.refusal.no_credits') && !!en('customer.refusal.no_credits'));
 }
@@ -79,15 +79,15 @@ check('H-4 review build: the browser rules stay (SERVER_RULES off, MockProvider 
   const d = fakeServer(({ row }) => ({ id: 'bkg_3', ...row, status: 'held' }));
   await M.bookOnServer(d, { userId: 'usr_ana', sessionId: 'ses_2', paidWith: 'single', paymentMethod: 'desk' }, 'key-rs03d');
   check('RS-03 pay at reception sends payment_method desk (J2 one-hour hold)', writes(d)[0].row.payment_method === 'desk');
-  const link = M.purchaseReturnLink('pack12', 'ses_2', 7), next = decodeURIComponent(new URL(link, 'http://x').searchParams.get('next'));
-  check('RS-03 buying a package first keeps the chosen class and mat in the return link', link.startsWith('/app/plans?plan=pack12&') && next === '/app/checkout/ses_2?mat=7');
+  const link = M.purchaseReturnLink('pack12', 'ses_2'), next = decodeURIComponent(new URL(link, 'http://x').searchParams.get('next'));
+  check('RS-03 buying a package first keeps the chosen class in the return link', link.startsWith('/app/plans?plan=pack12&') && next === '/app/checkout/ses_2');
   check('RS-03 the purchase screen only follows a return to this app\'s checkout (no open redirect)', M.safeCheckoutReturn(next) === next && M.safeCheckoutReturn('/app/checkout/ses_2') === '/app/checkout/ses_2' && ['https://evil.test', '//evil.test', '/admin', '/app/checkout/../admin', '/app/checkout/ses?x=1', null].every((v) => M.safeCheckoutReturn(v) === null));
-  check('RS-03 a trial bought first keeps the class too (no mat for a non-mat class)', decodeURIComponent(new URL(M.purchaseReturnLink('trial', 'ses_9', null), 'http://x').searchParams.get('next')) === '/app/checkout/ses_9');
+  check('RS-03 a trial bought first keeps the class too ', decodeURIComponent(new URL(M.purchaseReturnLink('trial', 'ses_9'), 'http://x').searchParams.get('next')) === '/app/checkout/ses_9');
 }
 
 // ── RS-04 / RS-05 / RS-06 / RS-07 — the server decides; the screen shows its refusal ─────────────────────────────────
 for (const [row, code, words] of [
-  ['RS-04', 'daily_limit_reached', /una clase por persona al día/], ['RS-05', 'occurrence_not_open', /ya no admite reservas/],
+  ['RS-04', 'daily_limit_reached', /ya tienes una reserva ese día/i], ['RS-04', 'person_overlap', /otra clase a esa hora/], ['RS-05', 'occurrence_not_open', /ya no admite reservas/],
   ['RS-06', 'occurrence_full', /llena/], ['RS-06', 'spot_taken', /mat/],
 ]) {
   const p = fakeServer(() => { throw refuse(code); });
@@ -139,12 +139,12 @@ check('i18n every new H-4 string has Spanish and English', keys.every((k) => M.b
 // ── RS-09 / J3b — move a booking up to reschedule_hours before the class ─────────────────────────────────────────────
 {
   const p = fakeServer(({ id, patch }) => ({ id, ...patch }));
-  await M.moveOnServer(p, { bookingId: 'bkg_9', toSessionId: 'ses_new', matNumber: 3 }, 'mv-1');
+  await M.moveOnServer(p, { bookingId: 'bkg_9', toSessionId: 'ses_new' }, 'mv-1');
   const w = writes(p)[0];
-  check('RS-09 a move is PATCH bookings { session_id } with the new class\'s mat (the old one never carries over)', w.op === 'update' && w.id === 'bkg_9' && w.patch.session_id === 'ses_new' && w.patch.mat_number === 3 && Object.keys(w.patch).length === 2);
+  check('RS-09 a move is PATCH bookings { session_id } and sends no mat', w.op === 'update' && w.id === 'bkg_9' && w.patch.session_id === 'ses_new' && !('mat_number' in w.patch) && Object.keys(w.patch).length === 1);
   const n = fakeServer(({ id, patch }) => ({ id, ...patch }));
   await M.moveOnServer(n, { bookingId: 'bkg_9', toSessionId: 'ses_plain' }, 'mv-2');
-  check('RS-09 moving to a class without mats sends no mat', writes(n)[0].patch.mat_number === null);
+  check('RS-09 moving to any other class sends no mat either', !('mat_number' in writes(n)[0].patch));
   const booked = { id: 'b', status: 'booked' };
   check('RS-09 the move button is open 12 h before the class, including the exact deadline', M.moveOpen(booked, at(12), policy, NOW) && M.moveOpen(booked, at(13), policy, NOW));
   check('RS-09 after the deadline the button is unavailable', !M.moveOpen(booked, at(11.99), policy, NOW));

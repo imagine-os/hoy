@@ -221,14 +221,14 @@ try {
 
   // ── bookings (H-4, RS) ─────────────────────────────────────────────────────────────────────────────────────────
   await test('bookings · create from the balance (RS-02) and a held single class (RS-03)', async () => {
-    const [credit] = only(await record(() => m.bookOnServer(provider, { userId: LOGIN, sessionId: 'occ-1', paidWith: 'package', matNumber: 4 }, KEY())));
-    keyed(credit); keeps(credit, { occurrence: 'occ-1', person: PERSON, entitlement: 'credit', status: 'booked', spot: 4 });
+    const [credit] = only(await record(() => m.bookOnServer(provider, { userId: LOGIN, sessionId: 'occ-1', paidWith: 'package' }, KEY())));
+    keyed(credit); keeps(credit, { occurrence: 'occ-1', person: PERSON, entitlement: 'credit', status: 'booked' });assert.ok(!('spot' in credit.data), 'no spot is sent');
     const [single] = only(await record(() => m.bookOnServer(provider, { userId: LOGIN, sessionId: 'occ-1', paidWith: 'single' }, KEY())));
     keeps(single, { occurrence: 'occ-1', person: PERSON, entitlement: 'single', payment_method: 'transfer' });
   });
   await test('bookings · move (RS-09): the new occurrence and mat reach the booking', async () => {
-    const [w] = only(await record(() => m.moveOnServer(provider, { bookingId: 'bk-1', toSessionId: 'occ-2', matNumber: 7 }, KEY())));
-    assert.equal(w.id, 'bk-1'); keeps(w, { occurrence: 'occ-2', spot: 7 });
+    const [w] = only(await record(() => m.moveOnServer(provider, { bookingId: 'bk-1', toSessionId: 'occ-2' }, KEY())));
+    assert.equal(w.id, 'bk-1'); keeps(w, { occurrence: 'occ-2' });assert.ok(!('spot' in w.data), 'no spot is sent');
   });
   await test('bookings · cancel (J3): status cancelled reaches the booking', async () => {
     const [w] = only(await record(() => m.cancelOnServer(provider, { bookingId: 'bk-1' }, KEY())));

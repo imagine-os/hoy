@@ -26,7 +26,6 @@ export function legalTokens(settings:StudioSettings,lang:Lang):LegalTokens {
       email: contact.pendingFields.email ? `${contact.email} ${t('customer.legal.token.pending')}` : contact.email,
       whatsapp: contact.pendingFields.whatsapp ? `${contact.whatsapp} ${t('customer.legal.token.pending')}` : contact.whatsapp,
       mats: settings.studio.mats,
-      perPersonPerDay: settings.studio.perPersonPerDay,
       landmark: tenant.contact.landmark[lang],
       instagram: contact.instagram,
     },

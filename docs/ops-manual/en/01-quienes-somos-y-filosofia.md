@@ -91,7 +91,7 @@ We are a wellness club that is small on purpose. Looking after a few people well
 limitation.
 
 1. We never sell more spots than the room holds.
-2. Each person takes one class a day, on any plan.
+2. Each person can take several classes a day, as long as they do not overlap, on any plan.
 3. If a class is full, it is full: we offer the next one or the waitlist.
 
 This is the studio's capacity:

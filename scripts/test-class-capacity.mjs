@@ -71,7 +71,7 @@ try {
   await command('cancel', { bookingId: booked.booking.id });
   assert.equal((await db.get('class_sessions', session.id)).booked_count, 1);
   const replacement = await db.insert('bookings', regular('capacity-after-voucher-cancel'));
-  assert(replacement.mat_number !== a.mat_number, 'released voucher mat is available');
+  assert.equal(replacement.mat_number ?? null, null, 'the released seat books again and no mat is assigned (D1)');
   const oneSeat = await book(1);
   assert.equal((await db.get('class_sessions', session.id)).booked_count, 3, 'regular and group cancellations release seats for either booking path');
 

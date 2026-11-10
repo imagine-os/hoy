@@ -11,11 +11,11 @@ const read = (p) => readFile(p, 'utf8');
 const exists = (p) => access(p).then(() => true, () => false);
 const dir = await mkdtemp(join(tmpdir(), 'hoy-12nov-book-'));
 const RealDate = Date, values = new Map();
-globalThis.Date = class extends RealDate { constructor(...a) { super(...(a.length ? a : [now])); } static now() { return new RealDate(now).getTime(); } };
-globalThis.localStorage = { getItem: (k) => values.get(k) ?? null, setItem: (k, v) => values.set(k, v) };
 const checks = [];
 try {
-  const fixture = await admissionFixture();
+  const fixture = await admissionFixture(); // it resets Date and localStorage, so the clock and storage are set after it
+  globalThis.Date = class extends RealDate { constructor(...a) { super(...(a.length ? a : [now])); } static now() { return new RealDate(now).getTime(); } };
+  globalThis.localStorage = { getItem: (k) => values.get(k) ?? null, setItem: (k, v) => values.set(k, v) };
   const file = join(dir, 'book.mjs');
   await build({
     stdin: {
@@ -89,12 +89,16 @@ export { resolveOperationalQuote, freezeSaleQuote } from './src/data/operational
   }
   {
     const f = sameDay();
-    const original = { ...f.db.class_sessions.find((x) => x.id === ids.session), id: 'h12_move_from', starts_at: '2026-10-23T16:00:00Z', ends_at: '2026-10-23T17:00:00Z' };
+    // The move target, the other class held that day and the class moved from are all on 25 Oct, more than 12 h away.
+    const target = f.db.class_sessions.find((x) => x.id === ids.session), prior = f.db.class_sessions.find((x) => x.id === 'h12_prior');
+    target.starts_at = '2026-10-25T23:00:00Z'; target.ends_at = '2026-10-26T00:00:00Z';
+    prior.starts_at = '2026-10-25T21:00:00Z'; prior.ends_at = '2026-10-25T22:00:00Z';
+    const original = { ...target, id: 'h12_move_from', starts_at: '2026-10-25T15:00:00Z', ends_at: '2026-10-25T16:00:00Z' };
     f.db.class_sessions.push(original);
     f.db.bookings.push({ id: 'h12_move', tenant_id: 'ten_hoy', created_at: now, updated_at: now, user_id: ids.user, session_id: original.id, status: 'booked', paid_with: 'comp', ledger_id: null });
     const data = provider(f);
     await data.atomic((tx) => m.rescheduleBooking(tx, { userId: ids.user, bookingId: 'h12_move', fromSessionId: original.id, toSessionId: ids.session, now: RealDate.parse(now) }));
-    assert.equal(data.peek('bookings').find((b) => b.id === 'h12_move').session_id, ids.session, 'moving into a day that already has a class works');
+    assert(data.peek('bookings').some((b) => b.user_id === ids.user && b.session_id === ids.session && b.status === 'booked'), 'moving into a day that already has a class works');
     checks.push('moving onto a day that already has a class works');
   }
   assert.equal(await exists('src/data/dailyAdmission.ts'), false, 'the one-class-a-day module is gone');

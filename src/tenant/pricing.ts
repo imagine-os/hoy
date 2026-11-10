@@ -184,12 +184,11 @@ export const DISCIPLINE = {
   numbers: [
     { value: tenant.studio.mats, label: { es: 'mats por clase', en: 'mats per class' } },
     { value: tenant.studio.classesPerDay, label: { es: 'clases por día entre semana', en: 'classes per weekday' } },
-    { value: tenant.studio.perPersonPerDay, label: { es: 'clase al día por persona', en: 'class a day per person' } },
     { value: priceItem('private')?.maxPeople ?? 3, label: { es: 'personas como máximo en una clase privada', en: 'people at most in a private class' } },
   ],
   paragraph: {
-    es: 'Un salón con cupos contados para que cada clase se viva con calma: reservas tu lugar, eliges tu mat y llegas a una sala preparada para ti.',
-    en: 'One room with a set number of places so every class is lived calmly: you book your place, choose your mat and arrive at a room ready for you.',
+    es: 'Un salón con cupos contados para que cada clase se viva con calma: reservas tu lugar y llegas a una sala preparada para ti.',
+    en: 'One room with a set number of places so every class is lived calmly: you book your place and arrive at a room ready for you.',
   },
   tagline: { es: 'La vida es HOY.', en: 'Life is HOY.' },
 } as const;

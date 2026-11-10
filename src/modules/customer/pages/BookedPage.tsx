@@ -128,7 +128,7 @@ export function BookedPage({ change = false }: { change?: boolean }) {
   const paymentStatus = SERVER_RULES ? serverPaymentStatus(server, now) : bookingPaymentStatus(booking, ledger.rows, payments.rows);
   const bookingBase = `/app/booking/${booking.id}`;
 
-  const addToCalendar = () => downloadIcs({ title: `${s.title} · ${tenant.name}`, startsAt: s.starts_at, endsAt: s.ends_at, location: `${tenant.name} · ${roomName(joined)}`, description: `${teacherName(joined)}${booking.mat_number ? ` · ${t('site.mat.confirmed', { n: booking.mat_number })}` : ''}` });
+  const addToCalendar = () => downloadIcs({ title: `${s.title} · ${tenant.name}`, startsAt: s.starts_at, endsAt: s.ends_at, location: `${tenant.name} · ${roomName(joined)}`, description: `${teacherName(joined)}` });
   const share = async () => { const r = await shareText(t('customer.booked.shareText', { title: s.title, when: `${formatDate(s.starts_at, lang)} ${formatTime(s.starts_at, lang)}`, name: tenant.name }), window.location.href); if (r !== 'failed') setFlash({ tone: 'success', text: r === 'copied' ? t('customer.class.linkCopied') : t('customer.class.shared') }); };
 
   const SECTIONS: Record<string, () => ReactNode> = {
@@ -162,7 +162,6 @@ export function BookedPage({ change = false }: { change?: boolean }) {
     ClassSummary: () => (
       <div className="stack-sm">
         <ClassCard title={s.title} teacher={teacherName(joined)} room={roomName(joined)} startsAt={s.starts_at} endsAt={s.ends_at} tone={toneOf(joined)} booked={s.booked_count} capacity={s.capacity} level={s.level} onClick={() => nav(`/app/class/${s.id}`)} />
-        {booking.mat_number && !studioCancelled && !myCancelled && <p className="small" style={{ textAlign: 'center' }}>{t('site.mat.confirmed', { n: booking.mat_number })}</p>}
         <Card eyebrow={t('customer.booked.payment.title')} className="stack-sm">
           {ledger.loading || payments.loading ? <p role="status">{t('core.common.loading')}</p> : ledger.error || payments.error ? <Notice tone="danger" action={<Button onClick={() => { ledger.retry(); payments.retry(); }}>{t('customer.support.retry')}</Button>}>{t('customer.support.readError')}</Notice> : <><Badge tone={paymentStatus === 'confirmed' ? 'success' : 'neutral'}>{t(`customer.booked.payment.${paymentStatus}`)}</Badge>{paymentStatus === 'unknown' && <p className="small muted">{t('customer.booked.payment.unknownBody')}</p>}</>}
         </Card>
@@ -242,7 +241,7 @@ function ChangeSheet({ open, onClose, booking, joined, inside, deadline, onResul
     setBusy(true); setErr(null);
     try { const next = await reschedule(booking, s, to); close(); nav(`/app/booking/${next.id}`, { replace: true }); }
     catch (e) {
-      const key = e instanceof Error && e.message === 'booking_contact_required' ? 'customer.book.contactRequired' : e instanceof Error && e.message === 'reschedule_cutoff' ? 'customer.change.move.closed' : e instanceof Error && e.message === 'same_day_conflict' ? 'customer.change.move.conflict' : e instanceof Error && (e.message === 'package_expired' || e.message === 'package_frozen' || e.message === 'reschedule_entitlement_unresolved') ? 'customer.change.move.validity' : 'customer.change.move.failed';
+      const key = e instanceof Error && e.message === 'booking_contact_required' ? 'customer.book.contactRequired' : e instanceof Error && e.message === 'reschedule_cutoff' ? 'customer.change.move.closed' : e instanceof Error && e.message === 'person_overlap' ? 'customer.change.move.conflict' : e instanceof Error && (e.message === 'package_expired' || e.message === 'package_frozen' || e.message === 'reschedule_entitlement_unresolved') ? 'customer.change.move.validity' : 'customer.change.move.failed';
       setErr(t(key, { h: RESCHEDULE_CUTOFF_HOURS }));
     }
     finally { setBusy(false); }

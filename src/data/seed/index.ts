@@ -111,7 +111,7 @@ export function buildSeed(): Record<string, BaseRow[]> {
   const hasPackage = (uid: string) => ledger.some((c) => c.user_id === uid && c.reason === 'purchase' && c.delta > 1);
   const bookings = db.bookings as BookingRow[];
   let b = 0;
-  const custDays = new Set<string>(); // the demo customer books at most one class per day (tenant.studio.perPersonPerDay)
+  const custDays = new Set<string>(); // the demo customer is given at most one class per day
   for (const s of sessions) {
     if (s.status === 'cancelled') continue;
     const n = r.int(4, tenant.studio.mats);
@@ -308,7 +308,7 @@ export function buildSeed(): Record<string, BaseRow[]> {
 
   // ---- practice analytics (0040, C-01 / C-27 / M-06 / M-12): goals, the demo member's history and the events record ----
   // Appended last and without the shared RNG, so nothing above shifts. The session window is ±7 days, so the demo
-  // member's older weeks are given here: completed morning classes she attended (one per day, tenant.studio.perPersonPerDay)
+  // member's older weeks are given here: completed morning classes she attended (one per day)
   // with a fixed rotation of co-attendees, so the weekly streak has real rows under it: 2 visits in each of the last
   // 7 full weeks except the 6th one back (1 visit) — the rest-week rule visibly saves that week.
   const currentWeek = weekStartKey(NOW);
