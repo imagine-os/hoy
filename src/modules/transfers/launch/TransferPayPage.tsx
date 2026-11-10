@@ -160,13 +160,13 @@ function PayBody({ what, id }: { what: string; id: string }) {
         {ins.qrImageUrl && (failedQr === ins.qrImageUrl ? <span className="small muted" data-qr="unavailable">{t('payLaunch.pay.qrUnavailable')}</span> : <img src={ins.qrImageUrl} alt={t('payLaunch.pay.qr')} style={{ width: 'min(240px, 100%)', height: 'auto' }} onError={() => setFailedQr(ins.qrImageUrl)} />)}
       </div>
     </Card> : pay.status !== 'loading' && <Notice tone="warn">{t('payLaunch.pay.noInstructions')}</Notice>}
-    {v.affiliate !== false && <form className="stack" onSubmit={(e) => { e.preventDefault(); void send(); }} noValidate>
+    {v.affiliate !== false && <div><form className="stack" onSubmit={(e) => { e.preventDefault(); void send(); }} noValidate>
       <Field label={t('payLaunch.pay.reference')}>{(fid) => <Input id={fid} name="reference" maxLength={120} value={reference} disabled={action.busy || action.uncertain || !!resumeId} onChange={(e) => { setReference(e.target.value); action.renew(); }} />}</Field>
       <Field label={t('payLaunch.pay.receipt')} required>{(fid) => <input id={fid} name="receipt" type="file" accept={RECEIPT_TYPES.join(',')} disabled={action.busy} onChange={(e) => { setFile(e.target.files?.[0] ?? null); action.setError(null); }} />}</Field>
       {resumeId && <Notice tone="warn">{t(paymentId ? 'payLaunch.pay.partial' : 'payLaunch.pay.missingImage')}</Notice>}
       {action.uncertain ? <Notice tone="warn">{t('payLaunch.uncertain')}</Notice> : action.error && <p role="alert">{t(refusalKey(action.error), { code: action.error })}</p>}
       <Button type="submit" loading={action.busy} disabled={action.busy || !file}>{t(action.busy ? 'payLaunch.pay.sending' : 'payLaunch.pay.send')}</Button>
-    </form>}
+    </form></div>}
     <p className="small muted">{t('payLaunch.pay.payAtDesk')}</p>
   </>;
 }
