@@ -443,6 +443,23 @@ await test('robots.txt (production): the sitemap line; /app, /hub and the API di
   assert.ok(lines.includes(`Sitemap: ${ORIGIN}/sitemap.xml`));
 });
 
+await test('before go-live nothing is offered for indexing: robots says Disallow: / and the sitemap has no URL', async () => {
+  for (const env of [{ SITE_LIVE: 'false' }, { SITE_LIVE: '', SITE_LIVE_AT: '2026-11-13T06:00:00-05:00' }]) {
+    const app = await start(env);
+    const robots = await app.call('GET', '/robots.txt');
+    assert.equal(robots.status, 200);
+    assert.ok(robots.text.split('\n').map((l) => l.trim()).includes('Disallow: /'), JSON.stringify(env));
+    assert.ok(!/Sitemap:/.test(robots.text), JSON.stringify(env));
+    const map = await app.call('GET', '/sitemap.xml');
+    assert.equal(map.status, 200);
+    assert.match(map.text, /<urlset xmlns="http:\/\/www\.sitemaps\.org\/schemas\/sitemap\/0\.9">/);
+    assert.equal([...map.text.matchAll(/<url>/g)].length, 0, JSON.stringify(env));
+  }
+  // Reached by SITE_LIVE_AT: open.
+  const live = await start({ SITE_LIVE: '', SITE_LIVE_AT: '2026-11-12T06:00:00-05:00' });
+  assert.ok(!(await live.call('GET', '/robots.txt')).text.split('\n').map((l) => l.trim()).includes('Disallow: /'));
+});
+
 await test('robots.txt outside production disallows everything', async () => {
   const r = await (await start({ HOY_ENV: 'local' })).call('GET', '/robots.txt');
   assert.equal(r.status, 200);
@@ -481,10 +498,11 @@ await test('a request on www answers 301 to the same path on the apex', async ()
   }
   assert.equal((await app.call('GET', '/planes', { host: 'www.hoyhumanclub.com:443' })).headers.location, `${ORIGIN}/planes`);
   // Not www, or not a host name: served as usual.
-  for (const host of ['hoyhumanclub.com', 'test.hoyhumanclub.com', 'wwwhoy.example', 'www.', 'www..evil', 'www.evil.example/x']) {
+  for (const host of ['hoyhumanclub.com', 'test.hoyhumanclub.com', 'wwwhoy.example', 'www.', 'www..evil', 'www.evil.example/x', 'www.evil.example', 'www.hoyhumanclub.com.evil.example', 'www.test.hoyhumanclub.com']) {
     const r = await app.call('GET', '/planes', { host });
-    assert.ok(r.status !== 301 || !String(r.headers.location).includes('evil'), host);
-    if (host === 'hoyhumanclub.com' || host === 'test.hoyhumanclub.com') assert.equal(r.status, 200, host);
+    // Only the indexed host's www (or the configured site's) redirects; anything else is served as usual.
+    assert.notEqual(r.status, 301, host);
+    assert.equal(r.status, 200, host);
   }
   // A path that would leave the site after the host goes to the apex root instead.
   const odd = await app.call('GET', '//evil.example/x', { host: 'www.hoyhumanclub.com' });
@@ -492,10 +510,21 @@ await test('a request on www answers 301 to the same path on the apex', async ()
   assert.equal(odd.headers.location, `${ORIGIN}/`);
 });
 
-await test('www on the test site redirects too, before the gate', async () => {
-  const r = await (await start(GATED)).call('GET', '/planes', { host: 'www.test.hoyhumanclub.com' });
+await test('www on the test site redirects too, before the gate: privately cached, noindex', async () => {
+  const app = await start(GATED);
+  const r = await app.call('GET', '/planes', { host: 'www.test.hoyhumanclub.com' });
   assert.equal(r.status, 301);
   assert.equal(r.headers.location, 'https://test.hoyhumanclub.com/planes');
+  assert.match(r.headers['cache-control'] ?? '', /^private\b/);
+  assert.equal(r.headers['x-robots-tag'], 'noindex, nofollow');
+  const evil = await app.call('GET', '/planes', { host: 'www.evil.example' });
+  assert.notEqual(evil.status, 301, 'not the configured host: no redirect');
+});
+
+await test('www on production: publicly cacheable, no noindex', async () => {
+  const r = await (await start()).call('GET', '/planes', { host: 'www.hoyhumanclub.com' });
+  assert.match(r.headers['cache-control'] ?? '', /^public\b/);
+  assert.equal(r.headers['x-robots-tag'], undefined);
 });
 
 // ---------------------------------------------------------------------------------------------
@@ -510,6 +539,39 @@ await test('the app\'s own server routes are unchanged (index, assets, app-confi
   assert.equal((await app.call('GET', '/health')).status, 200);
   assert.equal((await app.call('GET', '/api/cos/t/hoy-dev/me')).status, 401);
   assert.equal((await app.call('GET', '/api/nope')).status, 404);
+});
+
+// ---------------------------------------------------------------------------------------------
+// The production build: one <base href="/"> on every page, so the app's relative assets (./images, ./brand) resolve
+// from the root after the browser moves to /clases/fuego, whichever page it started on
+// ---------------------------------------------------------------------------------------------
+await test('production build: /, the live home and /clases/fuego carry one <base href="/"> before any relative URL', async () => {
+  const prodDist = process.env.QA_PROD_DIST ?? new URL('../dist', import.meta.url).pathname;
+  const built = await readFile(join(prodDist, 'index.html'), 'utf8').catch(() => null);
+  assert.ok(built, `no production build at ${prodDist}: run npm run build:production first`);
+  assert.ok(!(await readFile(join(prodDist, 'hub-map.json')).catch(() => null)), `${prodDist} is the review build (hub-map.json): this check reads the production build`);
+  const check = (html, what) => {
+    assert.equal([...html.matchAll(/<base\b[^>]*>/g)].length, 1, `${what}: one <base>`);
+    const base = html.search(/<base href="\/"\s*\/?>/);
+    assert.ok(base >= 0, `${what}: <base href="/">`);
+    const relative = html.search(/(?:src|href)="\.\//);
+    assert.ok(relative === -1 || base < relative, `${what}: the base comes before the first ./ URL`);
+  };
+  for (const [env, path] of [[{ SITE_LIVE: 'false' }, '/'], [{ SITE_LIVE: 'true' }, '/'], [{ SITE_LIVE: 'false' }, '/clases/fuego'], [{ SITE_LIVE: 'false' }, '/legal/terminos']]) {
+    const config = loadConfig({ ...BASE_ENV, ...env, DIST_DIR: prodDist });
+    const server = createHoyServer(await createHandler(config, { verifySession: async () => { throw new Error('none'); }, log: () => {}, now: () => NOW }));
+    await new Promise((r) => server.listen(0, '127.0.0.1', r));
+    servers.push(server);
+    const r = await request(server, 'GET', path, {});
+    assert.equal(r.status, 200, path);
+    check(r.text, `${path} ${JSON.stringify(env)}`);
+  }
+});
+
+await test('the FAQ index links are real addresses (/preguntas#faq-<key>), not a bare #fragment that the root base would send home', async () => {
+  const source = await readFile(new URL('../src/modules/website/pages/FaqPage.tsx', import.meta.url), 'utf8');
+  assert.ok(!/href=\{`#faq-/.test(source), 'a bare #faq- href');
+  assert.ok(/\/preguntas#faq-|cleanPathOf\('\/site\/faq'\)/.test(source), 'the FAQ path in the href');
 });
 
 // ---------------------------------------------------------------------------------------------
