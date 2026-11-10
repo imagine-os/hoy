@@ -215,6 +215,14 @@ try {
     }
     assert.match(m.productionStrings['vouchers.cos.entry.title'].es, /¿Tienes un código\?/);
   });
+
+  await test('the app checkout offers the code field and books from the balance once it is redeemed (D5)', async () => {
+    const { readFile } = await import('node:fs/promises');
+    const page = await readFile(new URL('../src/modules/customer/pages/ServerCheckoutPage.tsx', import.meta.url), 'utf8');
+    assert.match(page, /import \{ VoucherCodeEntry \} from '\.\.\/\.\.\/vouchers\/production\/VoucherCodeEntry'/, 'checkout imports the code entry');
+    assert.match(page, /<VoucherCodeEntry onRedeemed=\{\(\) => \{ setChoice\('package'\);/, 'a redeemed code selects "Una clase de tu saldo"');
+    assert.match(page, /!consentHeld && !closed && !existing && <VoucherCodeEntry/, 'no code field while consent waits, the class is closed or already booked');
+  });
 } finally { await rm(dir, { recursive: true, force: true }); }
 console.log(failed ? `\n${failed} teacher-code (H-CODES) test(s) failed` : '\nteacher-code (H-CODES) tests passed');
 process.exitCode = failed ? 1 : 0;

@@ -19,6 +19,7 @@ import { classPhase, holdsPlace, purchaseReturnLink, type ServerBookingRow } fro
 import { audienceVisible, trialOffered } from '../offers';
 import { useAffiliate } from '../useAffiliate';
 import { ConsentHoldNotice, useConsentHeld } from '../../identity/ConsentHold';
+import { VoucherCodeEntry } from '../../vouchers/production/VoucherCodeEntry';
 
 /** What the customer pays the class with. A trial or a package is bought first and the class is kept in the link (RS-03). */
 type Choice = 'package' | 'single' | 'trial' | 'pack12' | 'pack12_smtc';
@@ -136,6 +137,9 @@ export function ServerCheckoutPage() {
         {kind === 'package' && <p className="xs muted">{t('customer.srv.pay.balance.note')}</p>}
         {buyFirst && <Notice tone="info" title={t('customer.srv.buyFirst.title')}>{t('customer.srv.buyFirst.body')}</Notice>}
       </section>
+
+      {/* Hoy 12 Nov (D5): a teacher's or studio's code adds classes to the balance, then the class books from it. */}
+      {!consentHeld && !closed && !existing && <VoucherCodeEntry onRedeemed={() => { setChoice('package'); setError(null); }} />}
 
       {kind === 'single' && (
         <section className="stack-sm">
