@@ -323,8 +323,9 @@ await test('routes without the #: behind the gate like any page; past it, they r
     assert.ok(r.text.includes('name="next"') || r.text.includes(path), `${path}: the form keeps the address asked for`);
   }
   const past = await app.call('GET', '/site/plans', { cookie: cookieFor() });
-  assert.equal(past.status, 302);
-  assert.equal(past.headers.location, '/#/site/plans');
+  // Lane H-SEO (D11): an old /site address now goes to the website's real path.
+  assert.equal(past.status, 301);
+  assert.equal(past.headers.location, '/planes');
   assert.equal(past.headers['x-robots-tag'], 'noindex, nofollow');
 });
 
