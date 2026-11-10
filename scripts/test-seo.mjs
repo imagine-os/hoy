@@ -524,7 +524,8 @@ await test('path map: every website route has a clean path, and the map round-tr
     const sample = route.replace(':slug', 'fuego');
     const clean = paths.cleanPathOf(sample);
     assert.ok(clean, route);
-    assert.equal(paths.internalPathOf(clean), sample, route);
+    // `/` maps back to the root entry, which shows the home once live (SW-08); checked below.
+    assert.equal(paths.internalPathOf(clean), sample === '/site' ? '/' : sample, route);
   }
   for (const [from, to] of Object.entries(LEGACY)) assert.equal(paths.cleanPathOf(from), to, from);
   assert.equal(paths.internalPathOf('/'), '/', 'the root stays the root entry (Coming Soon until go-live)');
