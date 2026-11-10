@@ -170,8 +170,9 @@ export function renderPage(template, page, studio) {
   const meta = (attribute, key, value) => `    <meta ${attribute}="${key}" content="${escapeAttr(value)}" />`;
   const block = [
     '    <!-- hoy-seo:start -->',
-    // The build's assets are relative (vite base './'): on /clases/fuego they must still resolve from the root.
-    ...(page.path === '/' ? [] : ['    <base href="/" />']),
+    // The build's assets are relative (vite base './'): on /clases/fuego they must still resolve from the root. The
+    // production build carries its own (vite.config.ts); a template without one gets it here.
+    ...(/<base\b/i.test(template) ? [] : ['    <base href="/" />']),
     `    <title>${escapeAttr(page.title)}</title>`,
     meta('name', 'description', page.description),
     `    <link rel="canonical" href="${url}" />`,
@@ -207,7 +208,9 @@ export function renderPage(template, page, studio) {
   return html;
 }
 
-export function sitemapXml() {
+/** Before go-live (`open` false) the sitemap lists nothing. */
+export function sitemapXml(open = true) {
+  if (!open) return '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n</urlset>\n';
   const urls = PUBLIC_PATHS.map((p) => `  <url>\n    <loc>${CANONICAL_ORIGIN}${p}</loc>\n  </url>`).join('\n');
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`;
 }
@@ -231,13 +234,14 @@ export function robotsTxt(production) {
 }
 
 /**
- * A request on `www.<host>` → 301 to `https://<host>` with the same path (D11: the apex is indexed). The host must be a
- * plain host name; a path that isn't plain (or would start with `//`) becomes `/`. Null when there's nothing to do.
+ * A request on `www.<host>` → 301 to `https://<host>` with the same path (D11: the apex is indexed), when `<host>` is
+ * one of the site's own (`siteHosts`). The host must be a plain host name; a path that isn't plain (or would start with `//`) becomes `/`. Null when there's nothing to do.
  */
-export function wwwLocation(hostHeader, rawUrl) {
+export function wwwLocation(hostHeader, rawUrl, siteHosts = [new URL(CANONICAL_ORIGIN).host]) {
   const host = typeof hostHeader === 'string' ? hostHeader.trim().toLowerCase() : '';
   const m = /^www\.((?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63})(?::\d{1,5})?$/.exec(host);
-  if (!m) return null;
+  // Only this site's own hosts (the indexed one, the configured APP_URL): any other www name is served as usual.
+  if (!m || !siteHosts.includes(m[1])) return null;
   const path = /^\/(?!\/)[A-Za-z0-9\-._~!$&'()*+,;=:@%/?]*$/.test(rawUrl ?? '') && (rawUrl ?? '').length <= 2048 ? rawUrl : '/';
   return `https://${m[1]}${path}`;
 }
@@ -286,7 +290,9 @@ export function createSeo(config, deps) {
     if (rawPath === '/robots.txt' || rawPath === '/sitemap.xml') {
       if (!get) return refuse(req, res);
       const xml = rawPath === '/sitemap.xml';
-      return send(req, res, 200, xml ? 'application/xml; charset=utf-8' : 'text/plain; charset=utf-8', xml ? sitemapXml() : robotsTxt(production), `${cacheScope}, max-age=3600`);
+      // Before go-live nothing is offered for indexing: robots closes the site, the sitemap is empty.
+      const open = live();
+      return send(req, res, 200, xml ? 'application/xml; charset=utf-8' : 'text/plain; charset=utf-8', xml ? sitemapXml(open) : robotsTxt(production && open), `${cacheScope}, max-age=${open ? 3600 : 300}`);
     }
     const legacy = legacyLocation(rawPath, rawQuery);
     if (legacy) {

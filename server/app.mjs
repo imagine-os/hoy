@@ -25,7 +25,7 @@ import { extname, resolve, sep } from 'node:path';
 import { createGzip } from 'node:zlib';
 import { createDocsGate, DOCS_PREFIX } from './docsGate.mjs';
 import { createTestGate } from './testGate.mjs';
-import { createSeo, wwwLocation } from './seo.mjs';
+import { CANONICAL_ORIGIN, createSeo, wwwLocation } from './seo.mjs';
 
 /**
  * Company OS routes a visitor without a session may reach (method + path after `/t/<tenant>`), e.g.
@@ -101,6 +101,11 @@ export async function createHandler(config, deps) {
     readTemplate: () => readFile(indexFile, 'utf8').catch(() => null),
     headers: () => ({ 'Content-Security-Policy': HTML_CSP }),
   });
+  // The hosts whose www redirects to them: the indexed one and this deployment's own (APP_URL).
+  const siteHosts = [...new Set([new URL(CANONICAL_ORIGIN).host, ...(config.authorizedParties ?? []).map((o) => new URL(o).host)])];
+  const wwwHeaders = config.environment === 'production' && !config.testGate?.on
+    ? { 'Cache-Control': 'public, max-age=3600' }
+    : { 'Cache-Control': 'private, max-age=3600', 'X-Robots-Tag': 'noindex, nofollow' };
   const appConfig = JSON.stringify({
     tenant: config.tenant,
     apiBase: '/api/cos',
@@ -115,9 +120,9 @@ export async function createHandler(config, deps) {
     securityHeaders(req, res);
     try {
       // D11: the apex is the indexed host; a request on www goes there first, before the test gate.
-      const apex = wwwLocation(header(req.headers.host), req.url);
+      const apex = wwwLocation(header(req.headers.host), req.url, siteHosts);
       if (apex) {
-        res.writeHead(req.method === 'GET' || req.method === 'HEAD' ? 301 : 308, { Location: apex, 'Cache-Control': 'public, max-age=3600' });
+        res.writeHead(req.method === 'GET' || req.method === 'HEAD' ? 301 : 308, { Location: apex, ...wwwHeaders });
         return res.end();
       }
       if (await testGate(req, res, rawPath)) return;
