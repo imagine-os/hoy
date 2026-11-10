@@ -198,6 +198,23 @@ await test('thumbnail: the method photo is the one the Home page shows for that 
   assert.match(thumb.practiceStudioPhoto('fuego', 'latest'), /images\/studio-2026\//);
 });
 
+await test('thumbnail: a class image gets one retry (a fresh upload may answer file_not_ready) before it falls through', () => {
+  needs(thumb);
+  assert.equal(thumb.retrySrc(`/media/${ID}`, 0), `/media/${ID}`);
+  assert.equal(thumb.retrySrc(`/media/${ID}`, 1), `/media/${ID}?r=1`);
+  assert.equal(thumb.retrySrc('/images/x.webp', 1), '/images/x.webp', 'only /media addresses are retried');
+  assert.equal(thumb.maxMediaRetries, 1);
+});
+const thumbSrc = readFileSync('src/components/molecule/ClassThumbnail/ClassThumbnail.tsx', 'utf8');
+await test('thumbnail: the failed state resets when the class image or the method changes', () => {
+  assert.match(thumbSrc, /setFailed\(\{\}\)[^\n]*\[imageUrl, slug\]/);
+});
+await test('form: the image notice is cleared on New, Edit and Cancel', () => {
+  const page2 = readFileSync('src/modules/classSchedule/live/LiveSchedulePage.tsx', 'utf8');
+  const classes = page2.slice(page2.indexOf('function Classes('), page2.indexOf('function Dates('));
+  assert.ok((classes.match(/setImageNotice\(null\)/g) ?? []).length >= 4, 'save, new, edit, cancel');
+});
+
 // ── Who edits it, and where it is wired ──────────────────────────────────────────────────────────────────────────
 const page = readFileSync('src/modules/classSchedule/live/LiveSchedulePage.tsx', 'utf8');
 await test('form: the Clases form has the shared image field on the schedule row, for whoever may edit teacher photos only', () => {

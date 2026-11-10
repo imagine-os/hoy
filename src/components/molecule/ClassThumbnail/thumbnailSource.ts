@@ -15,3 +15,7 @@ export function classThumbnailSource({ imageUrl, cmsUrl, methodPhoto, classFaile
   if (methodPhoto && !methodFailed) return { kind: 'method', src: methodPhoto };
   return { kind: 'tile' };
 }
+
+/** A fresh upload may answer `file_not_ready` for a moment: a /media image is asked once more (`?r=1`, as the image field's preview does). */
+export const maxMediaRetries = 1;
+export const retrySrc = (src: string, tries: number): string => (tries > 0 && MEDIA.test(src) ? `${src}?r=${tries}` : src);

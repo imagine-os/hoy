@@ -115,7 +115,7 @@ function Classes({ rows, rooms, coaches, roomName, coachName, weekday, canWrite,
   };
   return (
     <div className="stack">
-      {canWrite && <div className="row wrap"><Button icon="plus" onClick={() => setEdit({ id: null, draft: blank(), key: newActionKey(), imageDraft: new ImageDraft(data as unknown as ImagePort) })}>{t('live.new')}</Button>
+      {canWrite && <div className="row wrap"><Button icon="plus" onClick={() => { setImageNotice(null); setEdit({ id: null, draft: blank(), key: newActionKey(), imageDraft: new ImageDraft(data as unknown as ImagePort) }); }}>{t('live.new')}</Button>
         <Field label={t('live.generate')}>{id => <Input id={id} type="date" value={until} onChange={e => { setUntil(e.target.value); setGenKey(newActionKey()); }} />}</Field>
         <Button variant="secondary" disabled={busy || !until} onClick={async () => { if (await run(generateOps(until), genKey, t('live.saved'))) setGenKey(newActionKey()); }}>{t('live.generate.go')}</Button></div>}
       {imageNotice && <p className="small register-diff" role="status">{imageNotice === 'old_image_remains' ? t('media.picker.oldRemains') : refusalCopy(imageNotice, lang)}</p>}
@@ -134,11 +134,11 @@ function Classes({ rows, rooms, coaches, roomName, coachName, weekday, canWrite,
         {canEditImage && (edit.id ? <SharedImageField key={edit.id} label={t('live.f.classImage')} value={edit.draft.image ?? null} disabled={busy} owner={{ ...SCHEDULE_IMAGE, ownerId: edit.id }} saved={coachPhotoUrl(edit.draft.imageAtOpen)} draft={edit.imageDraft} onBusyChange={setPhotoBusy} onChange={image => setEdit({ ...edit, draft: { ...edit.draft, image } })} /> : <p className="xs muted">{t('live.f.classImageAfterSave')}</p>)}
         <Toggle checked={edit.draft.active} onChange={on => setEdit({ ...edit, draft: { ...edit.draft, active: on } })} label={t('live.published')} />
         {problems.map(p => <p key={p} className="xs register-diff">{t(`live.problem.${p}`)}</p>)}
-        <div className="row wrap"><Button disabled={busy || photoBusy || problems.length > 0} loading={busy} onClick={save}>{t('live.save')}</Button><Button variant="ghost" disabled={busy || photoBusy} onClick={() => setEdit(null)}>{t('core.common.cancel')}</Button></div>
+        <div className="row wrap"><Button disabled={busy || photoBusy || problems.length > 0} loading={busy} onClick={save}>{t('live.save')}</Button><Button variant="ghost" disabled={busy || photoBusy} onClick={() => { setImageNotice(null); setEdit(null); }}>{t('core.common.cancel')}</Button></div>
       </Card>}
       {rows.length === 0 ? <EmptyState compact title={t('live.empty')} /> : rows.map(r => (
         <Card key={r.id} data-schedule={r.id} padding="sm" title={str(r.title)} eyebrow={`${weekday(num(r.weekday))} · ${str(r.start_time)}`} actions={canWrite && <div className="row wrap">
-          <Button size="sm" variant="outline" onClick={() => setEdit({ id: r.id, draft: toDraft(r), key: newActionKey(), imageDraft: new ImageDraft(data as unknown as ImagePort) })}>{t('live.edit')}</Button>
+          <Button size="sm" variant="outline" onClick={() => { setImageNotice(null); setEdit({ id: r.id, draft: toDraft(r), key: newActionKey(), imageDraft: new ImageDraft(data as unknown as ImagePort) }); }}>{t('live.edit')}</Button>
           <Button size="sm" variant="tonal" disabled={busy || schedulePublishBlocked(r)} onClick={() => run(publishScheduleOps(r.id, r.active === false), newActionKey(), t('live.saved'))}>{r.active === false ? t('live.publish') : t('live.unpublish')}</Button>
         </div>}>
           <p className="small">{coachName(r.coach)} · {roomName(r.resource)} · {t('live.rooms.mats', { n: num(r.capacity) })} <Badge tone={r.active === false ? 'neutral' : 'success'}>{r.active === false ? t('live.draft') : t('live.published')}</Badge> {str(r.modality) ? <Badge>{typeName(r.modality)}</Badge> : <Badge tone="warn">{t('live.noType')}</Badge>}</p>
