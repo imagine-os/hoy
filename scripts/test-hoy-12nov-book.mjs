@@ -139,7 +139,10 @@ export { resolveOperationalQuote, freezeSaleQuote } from './src/data/operational
   }
   assert(m.DESK_CODES.includes('person_overlap'), 'desk lists person_overlap');
   assert(m.BOOKING_REFUSALS.includes('person_overlap'), 'the app (booking and move) lists person_overlap');
-  checks.push('person_overlap has es and en copy on the app, the desk and moving');
+  const vs = await read('src/modules/vouchers/strings.ts');
+  assert(/already has another class at that time/.test(vs) && /otra clase a esa hora/.test(vs) && !/same_day_conflict/.test(await read('src/modules/vouchers/availability.ts')), 'vouchers map person_overlap');
+  assert(/code === 'person_overlap' \?/.test(await read('src/modules/customer/pages/ServerCheckoutPage.tsx')), 'checkout offers back to schedule for person_overlap');
+  checks.push('person_overlap has es and en copy on the app, the desk, moving and vouchers');
 
   // ---- 6. Copy: no mat picker prompt, no per-day line, terms clause gone, version unchanged -----------------------
   for (const f of ['src/tenant/pricing.ts', 'src/modules/website/strings.ts', 'src/modules/customer/strings.ts', 'src/modules/customer/booking/strings.ts', 'src/modules/customer/actions.ts']) {

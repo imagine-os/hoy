@@ -151,8 +151,8 @@ export function ServerCheckoutPage() {
 
       <div className="stack-sm cust-sticky">
         {refusal && (
-          <Notice tone={code === 'occurrence_full' || code === 'spot_taken' ? 'warn' : 'danger'} title={t('customer.srv.refused')}
-            action={code === 'occurrence_full' || code === 'occurrence_not_open' || code === 'daily_limit_reached' ? <Button size="sm" variant="secondary" onClick={() => nav('/app/schedule')}>{t('customer.class.backToSchedule')}</Button> : undefined}>
+          <Notice tone={code === 'occurrence_full' || code === 'person_overlap' ? 'warn' : 'danger'} title={t('customer.srv.refused')}
+            action={code === 'occurrence_full' || code === 'occurrence_not_open' || code === 'person_overlap' ? <Button size="sm" variant="secondary" onClick={() => nav('/app/schedule')}>{t('customer.class.backToSchedule')}</Button> : undefined}>
             {t(refusal.key, refusal.vars)}
           </Notice>
         )}
