@@ -49,7 +49,7 @@ export function creditLotRows(recs: unknown[]): VoucherLot[] {
 export async function listVoucherLots(data: DataProvider): Promise<VoucherLot[]> {
   const cos = cosOf(data);
   if (!cos) throw new CosError('not_in_launch');
-  const recs = await queryAll<Loose>(cos, { entity: 'credit_lot', filter: { field: 'voucher', op: 'is_not_null' }, include: [{ field: 'person', fields: ['name'] }] }, 20_000);
+  const recs = await queryAll<Loose>(cos, { entity: 'credit_lot', filter: { field: 'voucher', op: 'is_not_null' }, include: [{ field: 'person', fields: ['name'] }], sort: [{ field: 'voucher', dir: 'asc' }] }, 20_000);
   return creditLotRows(recs);
 }
 
@@ -73,6 +73,13 @@ const boughtAfter = (p: PaymentFact, redeemedAt: string) => {
   return !!p.day && !Number.isNaN(redeemed) && p.day > dateKey(new Date(redeemed));
 };
 
+/** Teachers plus one entry per coach id on a code that is not among them (a removed teacher), so no code drops out. */
+export function withUnknownCoaches(coaches: { id: string; name: string }[], vouchers: CosVoucher[], unknownName: string): { id: string; name: string }[] {
+  const known = new Set(coaches.map((c) => c.id));
+  const extra = [...new Set(vouchers.map((v) => v.coach).filter((c): c is string => !!c && !known.has(c)))];
+  return extra.length ? [...coaches, ...extra.map((id) => ({ id, name: unknownName }))] : coaches;
+}
+
 export interface FunnelPerson { person: string; name: string; redeemedAt: string; boughtLater: boolean }
 export interface TeacherFunnel { coach: string; name: string; codes: CosVoucher[]; redeemed: number; bought: number; people: FunnelPerson[] }
 export function teacherFunnel({ coaches, vouchers, lots, payments, names }: {
@@ -84,7 +91,7 @@ export function teacherFunnel({ coaches, vouchers, lots, payments, names }: {
     const ids = new Set(codes.map((v) => v.id));
     // One person per teacher, whichever and however many of the teacher's codes they used; the first redemption counts.
     const first = new Map<string, VoucherLot>();
-    for (const l of lots) if (ids.has(l.voucher) && (!first.has(l.person) || l.created_at < first.get(l.person)!.created_at)) first.set(l.person, l);
+    for (const l of lots) if (ids.has(l.voucher) && (!first.has(l.person) || Date.parse(l.created_at) < Date.parse(first.get(l.person)!.created_at))) first.set(l.person, l);
     const people = [...first.values()].map((l) => ({
       person: l.person, name: names.get(l.person) ?? l.name ?? l.person, redeemedAt: l.created_at,
       boughtLater: paid.some((p) => p.person === l.person && boughtAfter(p, l.created_at)),

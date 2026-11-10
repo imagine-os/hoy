@@ -12,7 +12,7 @@ import { Notice } from '../../../components/molecule/Notice/Notice';
 import { Badge } from '../../../components/atom/Badge/Badge';
 import { useCosVouchers, useKeyedSubmit } from './hooks';
 import { PAYMENT_TABLE, VOUCHER_CHANGES, createVoucher, voucherState, type CosVoucher } from './model';
-import { listVoucherLots, teacherCodeBody, teacherCodeErrors, teacherCodeLink, teacherFunnel, type TeacherCodeForm, type VoucherLot } from './teacherCodes';
+import { listVoucherLots, teacherCodeBody, teacherCodeErrors, teacherCodeLink, teacherFunnel, withUnknownCoaches, type TeacherCodeForm, type VoucherLot } from './teacherCodes';
 import '../vouchers.css';
 
 const LIVE = [PAYMENT_TABLE, VOUCHER_CHANGES];
@@ -114,7 +114,7 @@ function CodeRow({ v }: { v: CosVoucher }) {
 function FunnelSection({ teachers, vouchers, listLoading }: { teachers: Teacher[]; vouchers: CosVoucher[]; listLoading: boolean }) {
   const { t } = useI18n();
   const data = useData();
-  const { rows: payments, loading: payLoading } = useTable<BaseRow>(PAYMENT_TABLE);
+  const { rows: payments, loading: payLoading, error: payError } = useTable<BaseRow>(PAYMENT_TABLE);
   const [lots, setLots] = useState<VoucherLot[] | null>(null);
   const [failed, setFailed] = useState(false);
   // Redemptions come from the credit lots; read again whenever the vouchers list changes (a redemption raises `uses`).
@@ -124,16 +124,16 @@ function FunnelSection({ teachers, vouchers, listLoading }: { teachers: Teacher[
     listVoucherLots(data).then((l) => { if (alive) { setLots(l); setFailed(false); } }, () => { if (alive) setFailed(true); });
     return () => { alive = false; };
   }, [data, marker]);
-  const known = lots != null && !listLoading && !payLoading;
+  const known = lots != null && !listLoading && !payLoading && !payError;
   const withCodes = new Set(vouchers.map((v) => v.coach).filter(Boolean));
-  const coaches = teachers.filter((x) => x.active || withCodes.has(x.id));
+  const coaches = withUnknownCoaches(teachers.filter((x) => x.active || withCodes.has(x.id)), vouchers, t('vouchers.teachers.unknown'));
   const rows = known ? teacherFunnel({ coaches, vouchers, lots, payments: payments as unknown as Record<string, unknown>[], names: new Map() }) : [];
   return (
     <section className="stack" aria-labelledby="teacher-funnel">
       <h2 id="teacher-funnel">{t('vouchers.teachers.funnel.title')}</h2>
       <p className="muted">{t('vouchers.teachers.funnel.sub')}</p>
-      {failed && <Notice tone="warn">{t('vouchers.teachers.funnel.failed')}</Notice>}
-      {!known && !failed && <Notice>{t('vouchers.teachers.funnel.loading')}</Notice>}
+      {(failed || !!payError) && <Notice tone="warn">{t('vouchers.teachers.funnel.failed')}</Notice>}
+      {!known && !failed && !payError && <Notice>{t('vouchers.teachers.funnel.loading')}</Notice>}
       {rows.map((r) => (
         <Card key={r.coach} title={r.name}>
           <div className="stack-sm">
@@ -173,7 +173,7 @@ export function TeacherCodesPage() {
           <h2 id="teacher-codes">{t('vouchers.teachers.codes')}</h2>
           {list.failed && <Notice tone="warn">{t('vouchers.cos.list.failed')}</Notice>}
           {!list.loading && !list.failed && !mine.length && <Notice>{t('vouchers.teachers.noCodes')}</Notice>}
-          {teachers.filter((x) => mine.some((v) => v.coach === x.id)).map((x) => (
+          {withUnknownCoaches(teachers, mine, t('vouchers.teachers.unknown')).filter((x) => mine.some((v) => v.coach === x.id)).map((x) => (
             <Card key={x.id} title={x.name}><ul className="stack">{mine.filter((v) => v.coach === x.id).map((v) => <CodeRow key={v.id} v={v} />)}</ul></Card>
           ))}
         </section>

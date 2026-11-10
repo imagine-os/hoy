@@ -125,6 +125,7 @@ export const productionStrings: StringTable = {
   'vouchers.teachers.create': { es: 'Crear código', en: 'Create code' },
   'vouchers.teachers.created': { es: 'Código creado: {code}', en: 'Code created: {code}' },
   'vouchers.teachers.codes': { es: 'Códigos por profesor', en: 'Codes by teacher' },
+  'vouchers.teachers.unknown': { es: 'Profesor que ya no está en la lista', en: 'Teacher no longer on the list' },
   'vouchers.teachers.noCodes': { es: 'Sin códigos todavía.', en: 'No codes yet.' },
   'vouchers.teachers.copy': { es: 'Copiar enlace', en: 'Copy link' },
   'vouchers.teachers.copied': { es: 'Enlace copiado', en: 'Link copied' },

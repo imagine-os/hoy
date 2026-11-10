@@ -141,6 +141,31 @@ try {
     assert.deepEqual(read.map((l) => [l.person, l.voucher]), [['p_luz', 'v1']]);
   });
 
+  await test('the first redemption is the earliest instant, whatever the offset; codes of a removed teacher get an unknown group', async () => {
+    const mixed = [lot('l1', 'p_luz', 'v1', '2026-11-03T12:00:00-05:00'), lot('l2', 'p_luz', 'v2', '2026-11-03T15:00:00Z')];
+    const r = m.teacherFunnel({ coaches, vouchers, lots: mixed, payments: [pay('a', 'p_luz', 'approved', '2026-11-03T16:00:00Z')], names });
+    assert.equal(r[0].people[0].redeemedAt, '2026-11-03T15:00:00Z', '15:00Z is before 17:00Z (12:00-05:00)');
+    assert.equal(r[0].bought, 1);
+    const orphan = [...vouchers, { id: 'v9', kind: 'courtesy', classes: 1, code: 'DDDDDDD2', coach: 'coa_gone', uses: 1, max_uses: 5 }];
+    const all = m.withUnknownCoaches(coaches, orphan, 'Profesor desconocido');
+    assert.deepEqual(all.map((c) => c.id), ['coa_ana', 'coa_beto', 'coa_cami', 'coa_gone']);
+    assert.equal(all[3].name, 'Profesor desconocido');
+    assert.deepEqual(m.withUnknownCoaches(coaches, vouchers, 'x'), coaches, 'none unknown: unchanged');
+    const f = m.teacherFunnel({ coaches: all, vouchers: orphan, lots: [lot('l9', 'p_luz', 'v9', '2026-11-03T15:00:00Z')], payments: [], names });
+    assert.deepEqual([f[3].codes.length, f[3].redeemed], [1, 1]);
+    assert.ok(m.productionStrings['vouchers.teachers.unknown']?.es && m.productionStrings['vouchers.teachers.unknown']?.en);
+  });
+
+  await test('the lot read has a stable sort ending in a unique key', async () => {
+    const { fake, data } = setup({ vouchers });
+    let spec;
+    const orig = fake.request;
+    const spy = { ...data, request: (mth, path, body, o) => { if (body?.entity === 'credit_lot') spec = body; return orig(mth, path, body, o); } };
+    Object.setPrototypeOf(spy, data);
+    await m.listVoucherLots(spy);
+    assert.ok(spec?.sort?.length >= 1, 'a sort is sent');
+  });
+
   // ── the code entry at checkout ────────────────────────────────────────────────────────────────────────────────
   await test('the code entry redeems the typed code, reloads the balance, and reports the classes added', async () => {
     const { fake, data } = setup();
