@@ -292,9 +292,9 @@ export const strings: StringTable = {
     "es": "Esta persona ya tiene una reserva para esta clase. No se guardó otra reserva ni se descontaron clases del bono.",
     "en": "This person already has a booking for this class. No second booking was saved or voucher credits deducted."
   },
-  "vouchers.dailyConflict": {
-    "es": "Esta persona ya tiene una clase ese día. No se guardó otra reserva ni se descontaron clases del bono.",
-    "en": "This person already has a class on this day. No second booking was saved or voucher credits deducted."
+  "vouchers.overlapConflict": {
+    "es": "Esta persona ya tiene otra clase a esa hora. No se guardó otra reserva ni se descontaron clases del bono.",
+    "en": "This person already has another class at that time. No second booking was saved or voucher credits deducted."
   },
   "vouchers.error": {
     "es": "No se pudo completar. Verifica el saldo, el aforo, los participantes y el estado del bono.",

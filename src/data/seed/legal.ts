@@ -81,7 +81,7 @@ Los datos que registras deben ser verdaderos y actuales, en especial tu teléfon
 
 ## 5. Reservas, cupos y asistencia
 
-La sala tiene {{tenant.mats}} mats y {{tenant.perPersonPerDay}} clase por persona al día. La reserva se confirma cuando el cupo queda tomado en la plataforma.
+La sala tiene {{tenant.mats}} mats. La reserva se confirma cuando el cupo queda tomado en la plataforma.
 
 - Puedes cancelar sin costo hasta **{{policy.cancellationHours}} horas** antes del inicio; dentro de esa ventana la clase se consume. El detalle está en la Política de cancelaciones, que hace parte de estos términos.
 - Si un cupo se libera, quien esté primero en lista de espera tiene **{{policy.waitlistClaimMin}} minutos** para reclamarlo.
@@ -149,7 +149,7 @@ The details you register must be true and current — especially your phone, you
 
 ## 5. Booking, capacity and attendance
 
-The room holds {{tenant.mats}} mats and {{tenant.perPersonPerDay}} class per person per day. A booking is confirmed when the spot is taken on the platform.
+The room holds {{tenant.mats}} mats. A booking is confirmed when the spot is taken on the platform.
 
 - You can cancel free of charge until **{{policy.cancellationHours}} hours** before the start; inside that window the class is consumed. The detail is in the Cancellation policy, which forms part of these terms.
 - When a spot opens, the first person on the waitlist has **{{policy.waitlistClaimMin}} minutes** to claim it.

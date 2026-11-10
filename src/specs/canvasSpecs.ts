@@ -3240,7 +3240,7 @@ export const canvasSpecs: Record<string, PageSpec> = {
       "Prices live in one config; no surface hard-codes a figure. Changing a price here changes it everywhere.",
       "Membresía has exactly two options — Mensual and Anual. No third tier, no hidden discounts.",
       "Espacio prices are 'desde' and lead to a conversation, not a checkout.",
-      "One class a day per person on any plan; the studio holds 15 mats and runs 4 classes a day.",
+      "A person can take several classes a day, never two at the same time; the studio holds 16 mats and runs 4 classes a day.",
       "Conscious controls: pause up to 30 days, leave without mazes, a kind cancellation window, notice before every charge.",
       "Every plan CTA enters the same single-screen checkout (C-04) with lazy registration and local payment methods."
     ],

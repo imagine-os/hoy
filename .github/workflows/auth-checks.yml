@@ -127,6 +127,8 @@ jobs:
         run: node scripts/test-test-gate.mjs
       - name: SEO, the public website on real paths (tags, JSON-LD, sitemap, robots, old addresses, www, noindex on test)
         run: node scripts/test-seo.mjs
+      - name: Mats and several classes a day (Hoy 12 Nov, lane H-BOOK)
+        run: node scripts/test-hoy-12nov-book.mjs
       - name: Release wiring (company-os.json, release notes, these CI steps)
         run: node scripts/test-release-wiring.mjs
       - name: The signed-out website reads live data behind the real Hoy server (production build)

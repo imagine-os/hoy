@@ -8,7 +8,7 @@ export function voucherAvailability(v:Pick<VoucherRow,'status'|'expiresAt'|'bala
 }
 const errors:Record<string,string>={
  booking_contact_required:'customer.book.contactRequired',
- same_day_conflict:'vouchers.dailyConflict', booking_exists:'vouchers.duplicateBooking',
+ person_overlap:'vouchers.overlapConflict', booking_exists:'vouchers.duplicateBooking',
  voucher_unavailable:'vouchers.unavailableReason',voucher_already_claimed:'vouchers.claimedOther',
  voucher_insufficient_balance:'vouchers.insufficient',voucher_participant_cap:'vouchers.capError',
  voucher_expiration_invalid:'vouchers.expiryError',session_full:'vouchers.fullError',

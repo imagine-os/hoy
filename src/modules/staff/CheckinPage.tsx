@@ -25,7 +25,6 @@ import { errorCode } from './desk/wire';
 import type { AttendanceTo } from './desk/deskCommands';
 import { maskPhone, personMatches, usePeople, type Person } from './people';
 import { S02 } from './specs';
-import { tenant } from '../../tenant/tenant';
 import { approvedPackageRows, packageState } from '../../data/packages';
 import { bookWithPackage } from '../../data/deskBooking';
 import './staff.css';
@@ -69,7 +68,6 @@ export function CheckinPage() {
   const futureSessions = allSessions.filter(x => x.session.status === 'scheduled' && Date.parse(x.session.starts_at) > Date.now());
   const { rows: ledger } = useTable<ClassLedgerRow>('class_ledger');
   const { rows: payments } = useTable<PaymentRow>('payments');
-  const { rows: allBookings } = useTable<BookingRow>('bookings');
   const now = Date.now();
   const autoId = useMemo(() => {
     const live = todayAll.find((x) => new Date(x.session.starts_at).getTime() - 30 * MS.min <= now && new Date(x.session.ends_at).getTime() >= now);
@@ -129,12 +127,12 @@ export function CheckinPage() {
     const code = errorCode(error);
     if (server) return deskErrorText(code, t);
     if (code === 'booking_contact_required') return t('customer.book.contactRequired');
-    const known = ['session_full', 'session_unavailable', 'booking_exists', 'same_day_conflict', 'insufficient_classes', 'package_frozen', 'package_expired', 'disconnected'];
+    const known = ['session_full', 'session_unavailable', 'booking_exists', 'person_overlap', 'insufficient_classes', 'package_frozen', 'package_expired', 'disconnected'];
     return t(`staff.checkin.error.${known.includes(code) ? code : 'failed'}`);
   };
   const packageFor = (userId: string) => packageState(approvedPackageRows(ledger.filter(row => row.user_id === userId), payments));
   const unavailable = (userId: string) => {
-    // Production: the server decides capacity, balance, expiry and one class a day; only the class choice is checked here.
+    // Production: the server decides capacity, balance, expiry and overlaps; only the class choice is checked here.
     if (server) return !selected || selected.session.status !== 'scheduled' ? t('staff.checkin.package.unavailable') : null;
     if (selected && !sessionAdmissionAvailable(selected.session, selected.modality, selected.session.template_id ? { id: selected.session.template_id, active: selected.templateActive } : undefined)) return t('staff.checkin.error.session_unavailable');
     if (!selected || selected.session.status !== 'scheduled' || Date.parse(selected.session.starts_at) <= Date.now()) return t('staff.checkin.package.unavailable');
@@ -144,7 +142,6 @@ export function CheckinPage() {
     if (state.balance < 1) return t('staff.checkin.package.empty');
     const atClass = packageState(approvedPackageRows(ledger.filter(row => row.user_id === userId), payments), dateKey(new Date(selected.session.starts_at)));
     if (atClass.balance < 1) return t('staff.checkin.package.expired');
-    if (tenant.studio.perPersonPerDay === 1 && allBookings.some(b => b.user_id === userId && b.status !== 'cancelled' && b.status !== 'late_cancel' && allSessions.some(({ session: s }) => s.id === b.session_id && isSameDay(s.starts_at, selected.session.starts_at)))) return t('staff.checkin.error.same_day_conflict');
     return null;
   };
   const packageLabel = (userId: string) => {

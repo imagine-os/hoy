@@ -53,7 +53,6 @@ jobs:
           node scripts/test-session-admission.mjs
           node scripts/test-physical-admission-capacity.mjs
           node scripts/test-package-booking-confirmation.mjs
-          node scripts/test-daily-admission.mjs
           node scripts/test-desk-transactions.mjs
           node scripts/test-reschedule-atomic.mjs
           node scripts/test-reception-attendance.mjs
@@ -85,8 +84,6 @@ jobs:
           QA_BASE=http://127.0.0.1:5480 QA_OUTPUT=/tmp/booking-package-flow node scripts/test-package-booking-flow-ui.mjs
           QA_BASE=http://127.0.0.1:5481 QA_OUTPUT=/tmp/booking-package-recovery node scripts/test-package-booking-recovery-ui.mjs
           QA_BASE=http://127.0.0.1:5481 QA_OUTPUT=/tmp/booking-voucher-duplicate node scripts/test-package-voucher-duplicate-ui.mjs
-          QA_BASE=http://127.0.0.1:5480 QA_OUTPUT=/tmp/booking-daily node scripts/test-daily-admission-ui.mjs
-          QA_BASE=http://127.0.0.1:5481 QA_OUTPUT=/tmp/booking-daily-context node scripts/test-daily-admission-context.mjs
           QA_BASE=http://127.0.0.1:5480 QA_OUTPUT=/tmp/booking-cta-production node scripts/test-rs05-cta.mjs
           QA_BASE=http://127.0.0.1:5481 QA_DEV=1 QA_OUTPUT=/tmp/booking-cta-dev node scripts/test-rs05-cta.mjs
           QA_BASE=http://127.0.0.1:5481 QA_OUTPUT=/tmp/booking-cta-context node scripts/test-rs05-cta-context.mjs

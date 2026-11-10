@@ -1,6 +1,5 @@
 import { requireExistingBookingContact } from '../../data/bookingContact';
-import { requireDailyAdmission } from '../../data/dailyAdmission';
-import { requireSessionAdmission, assertAdmissionContext, type AdmissionControl } from '../../data/sessionAdmission';
+import { requireSessionAdmission, requireBookingAdmission, assertAdmissionContext, type AdmissionControl } from '../../data/sessionAdmission';
 import { assertRescheduleAllowed } from './reschedule';
 import type { DataProvider } from '../../data/types';
 import type { BookingRow, ClassLedgerRow, ClassSessionRow, PaymentRow } from '../../data/schema';
@@ -61,7 +60,7 @@ export async function rescheduleBooking(data: DataProvider, input: { userId: str
   const bookings = await data.list<BookingRow>('bookings', { where: { user_id: input.userId } });
   const others = bookings.filter(b => b.id !== booking.id && b.status !== 'cancelled' && b.status !== 'late_cancel');
   if (others.some(b => b.session_id === target.id)) throw new Error('booking_exists');
-  await requireDailyAdmission(data, target, input.userId, input.control, booking.id);
+  await requireBookingAdmission(data, target, input.userId, input.control, booking.id);
   {
     const rows = await data.list<ClassLedgerRow>('class_ledger', { where: { user_id: input.userId } });
     const payments = await data.list<PaymentRow>('payments', { where: { user_id: input.userId } });

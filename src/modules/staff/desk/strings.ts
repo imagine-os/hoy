@@ -2,7 +2,7 @@ import type { StringTable } from '../../../i18n/types';
 
 /** H-7 · desk and admin copy for the Company OS refusal codes these screens can receive, plus the new desk controls. */
 export const DESK_CODES = [
-  'occurrence_full', 'occurrence_not_open', 'already_booked', 'daily_limit_reached', 'spot_required', 'spot_invalid', 'spot_taken',
+  'occurrence_full', 'occurrence_not_open', 'already_booked', 'daily_limit_reached', 'person_overlap', 'spot_required', 'spot_invalid', 'spot_taken',
   'hold_expired', 'invalid_transition', 'booking_system_managed', 'reason_required',
   'no_credits', 'lot_expired', 'lot_frozen', 'trial_used',
   'product_inactive', 'audience_not_allowed', 'amount_mismatch', 'invalid_amount', 'invalid_status_transition',
@@ -16,6 +16,7 @@ export const deskStrings: StringTable = {
   'desk.error.occurrence_full': { es: 'La clase está llena. No se descontó ninguna clase.', en: 'The class is full. No class was deducted.' },
   'desk.error.occurrence_not_open': { es: 'La clase ya empezó, terminó o fue cancelada.', en: 'The class has started, ended or was cancelled.' },
   'desk.error.already_booked': { es: 'Esta persona ya tiene un cupo en esta clase.', en: 'This person already has a spot in this class.' },
+  'desk.error.person_overlap': { es: 'Esta persona ya tiene otra clase a esa hora.', en: 'This person already has another class at that time.' },
   'desk.error.daily_limit_reached': { es: 'Esta persona ya tiene una clase ese día.', en: 'This person already has a class that day.' },
   'desk.error.spot_required': { es: 'Elige un tapete.', en: 'Choose a mat.' },
   'desk.error.spot_invalid': { es: 'Ese tapete no existe en este salón.', en: 'That mat does not exist in this room.' },
@@ -75,7 +76,7 @@ export const deskStrings: StringTable = {
   'desk.figures.pending': { es: 'Pagos por revisar', en: 'Payments to review' },
   'desk.figures.noShows': { es: '{n} no asistieron', en: '{n} no-shows' },
   'desk.walkin.consent': { es: 'La persona aceptó de palabra los términos y la política de datos', en: 'The person accepted the terms and the data policy verbally' },
-  'desk.server.rules': { es: 'El sistema revisa cupos, saldo, vigencia y una clase por día al guardar.', en: 'The system checks spots, balance, validity and one class a day when saving.' },
+  'desk.server.rules': { es: 'El sistema revisa cupos, saldo, vigencia y que no se crucen dos clases al guardar.', en: 'The system checks spots, balance, validity and that no two classes overlap when saving.' },
 };
 
 /** The copy key for a refusal code; anything unknown shows the generic line with the code, so support can trace it. */

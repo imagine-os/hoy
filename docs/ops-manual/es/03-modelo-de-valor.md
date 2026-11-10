@@ -24,7 +24,7 @@ cambia, cambia aquí, en el sitio y en el mostrador al mismo tiempo.
 Un solo estudio y una regla que protege la experiencia:
 
 1. Cada clase tiene un número fijo de mats.
-2. Cada persona toma **una clase al día**.
+2. Cada persona puede tomar **varias clases al día**, sin que se crucen en horario.
 3. No se venden más cupos de los que caben.
 
 Esta es la capacidad vigente:

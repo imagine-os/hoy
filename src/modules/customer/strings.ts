@@ -179,12 +179,11 @@ export const strings: StringTable = {
   'customer.home.view': { es: 'Ver', en: 'View' },
   'customer.home.booked': { es: 'Reservada', en: 'Booked' },
   'customer.book.ok': { es: 'Reserva confirmada', en: 'Booking confirmed' },
-  'customer.book.oneADay': { es: 'Solo una clase por persona al día.', en: 'Only one class per person per day.' },
   'customer.state.demo': { es: 'Ruta de demostración del estado {code}. En el flujo real este bloque aparece dentro de la página correspondiente.', en: 'Demo route for state {code}. In the real flow this block renders inside the relevant page.' },
 
   // C-02 schedule
   'customer.schedule.title': { es: 'Horario', en: 'Schedule' },
-  'customer.schedule.sub': { es: 'Solo en el estudio. Una clase por persona al día.', en: 'In-studio only. One class per person per day.' },
+  'customer.schedule.sub': { es: 'Solo en el estudio.', en: 'In-studio only.' },
   'customer.schedule.view': { es: 'Vista', en: 'View' },
   'customer.schedule.view.today': { es: 'Día', en: 'Day' },
   'customer.schedule.view.week': { es: 'Semana', en: 'Week' },
@@ -454,7 +453,7 @@ export const strings: StringTable = {
   'customer.change.move.day.hint': { es: 'Elige un día futuro con clases disponibles.', en: 'Choose a future day with available classes.' },
   'customer.change.move.expires': { es: 'Tu paquete original vence el {date}.', en: 'Your original package expires on {date}.' },
   'customer.change.move.validity': { es: 'No se pudo comprobar la vigencia del pago original. Conservamos tu reserva; pide ayuda a recepción.', en: 'The original entitlement could not be verified for this class. Your booking is unchanged; ask reception for help.' },
-  'customer.change.move.conflict': { es: 'Ya tienes otra reserva ese día. Conservamos tu reserva original.', en: 'You already have another booking that day. Your original booking is unchanged.' },
+  'customer.change.move.conflict': { es: 'Ya tienes otra clase a esa hora. Conservamos tu reserva original.', en: 'You already have another class at that time. Your original booking is unchanged.' },
   'customer.change.move.failed': { es: 'No se guardó el cambio. Tu reserva original sigue activa; vuelve a intentarlo.', en: 'The change was not saved. Your original booking is still active; try again.' },
   'customer.change.pick': { es: 'Elige una alternativa', en: 'Pick a replacement' },
   'customer.change.noAlt': { es: 'No hay alternativas válidas para este día', en: 'No eligible replacements on this day' },

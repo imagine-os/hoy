@@ -6,7 +6,7 @@ const COVER = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http:
 const DOC: SourceDocView = {
   id: 'demo', kind: 'deck', pages: 8, date: '2026-09-29', fileUrl: 'about:blank', coverUrl: COVER,
   title: { es: 'Modelo de valor (sin precios)', en: 'Value model (no prices)' },
-  summary: { es: 'Las seis líneas de ingreso de HOY y la disciplina detrás: 16 tapetes por sesión y una clase diaria por persona.', en: 'HOY’s six revenue lines and the discipline behind them: 16 mats per session and one class per person per day.' },
+  summary: { es: 'Las seis líneas de ingreso de HOY y la disciplina detrás: 16 tapetes por sesión.', en: 'HOY’s six revenue lines and the discipline behind them: 16 mats per session.' },
 };
 
 export default defineMeta({

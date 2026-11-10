@@ -102,13 +102,13 @@ export function classPhase(session: Pick<ClassSessionRow, 'status' | 'starts_at'
   return session.booked_count >= session.capacity ? 'full' : 'open';
 }
 
-/** RS-03 — the purchase link for a trial or package keeps the chosen class (and mat) so the customer comes back to it. */
-/** The only return targets the purchase screen follows: this app's checkout for one class, with an optional mat. */
+/** RS-03 — the purchase link for a trial or package keeps the chosen class so the customer comes back to it. */
+/** The only return targets the purchase screen follows: this app's checkout for one class (an older link may carry `?mat=`, ignored). */
 export function safeCheckoutReturn(next: string | null): string | null {
   return next && /^\/app\/checkout\/[A-Za-z0-9_-]{1,64}(\?mat=\d{1,2})?$/.test(next) ? next : null;
 }
 
-export function purchaseReturnLink(planId: string, sessionId: string, mat: number | null): string {
-  const back = `/app/checkout/${encodeURIComponent(sessionId)}${mat ? `?mat=${mat}` : ''}`;
+export function purchaseReturnLink(planId: string, sessionId: string): string {
+  const back = `/app/checkout/${encodeURIComponent(sessionId)}`;
   return `/app/plans?plan=${encodeURIComponent(planId)}&next=${encodeURIComponent(back)}`;
 }

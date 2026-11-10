@@ -10,9 +10,7 @@ import { useI18n } from '../../../i18n/I18nProvider';
 import { PRODUCTION_BUILD } from '../../../config/launch';
 import { useLayout } from '../../../layout/useLayout';
 import { useData, useTable } from '../../../data/DataContext';
-import type { BookingRow, ModalityRow, RoomRow } from '../../../data/schema';
-import { usesMats, occupiesMat } from '../../../data/mats';
-import { MatPicker } from '../../../components/organism/MatPicker/MatPicker';
+import type { ModalityRow, RoomRow } from '../../../data/schema';
 import { SessionCalendar } from '../../../components/organism/SessionCalendar/SessionCalendar';
 import { useSession } from '../../../auth/SessionProvider';
 import { purchaseEntry } from '../../../auth/purchaseEntry';
@@ -38,8 +36,6 @@ export function SchedulePage() {
   const navigationRoute = location.pathname + location.search;
   const [params, setParams] = useSearchParams();
   const { sections, isVisible } = useLayout(siteSpecs.schedule);
-  const [mat, setMat] = useState<number | null>(null);
-  const { rows: bookings } = useTable<BookingRow>('bookings');
   const [picked, setPicked] = useState<string | null>(null);
   const all = useSessionsJoined();
   const { rows: modalitiesAll } = useTable<ModalityRow>('modalities', { where: { active: true } });
@@ -63,8 +59,6 @@ export function SchedulePage() {
   live.current = { data, actor: user.id, role, picked, navigationRoute, mounted: true };
   useEffect(() => { live.current.mounted = true; return () => { live.current.mounted = false; }; }, []);
   useEffect(() => { operation.current++; navigationLock.current = false; setNavigating(false); setNavigationError(false); }, [data, user.id, role, picked, navigationRoute]);
-  const yoga = usesMats(chosen?.modality);
-  const taken = new Set(bookings.filter(b => b.session_id === picked && occupiesMat(b)).map(b => b.mat_number));
   const full = !!chosen && chosen.session.booked_count >= chosen.session.capacity;
   const unavailable = !!chosen && !sessionAdmissionAvailable(chosen.session, chosen.modality, chosen.session.template_id ? { id: chosen.session.template_id, active: chosen.templateActive } : undefined, now);
   const unavailableReason = chosen ? sessionUnavailableReason(chosen, now) ?? 'unavailable' : 'unavailable';
@@ -77,7 +71,7 @@ export function SchedulePage() {
       const fresh = await requireSessionAdmission(data, chosen.session.id, { isCurrent: current });
       if (!current()) return;
       // Production has no waitlist at launch: a full class goes to checkout, where the server says it is full.
-      const next = !PRODUCTION_BUILD && fresh.booked_count >= fresh.capacity ? `/app/waitlist/${fresh.id}` : `/app/checkout/${fresh.id}${mat ? `?mat=${mat}` : ''}`;
+      const next = !PRODUCTION_BUILD && fresh.booked_count >= fresh.capacity ? `/app/waitlist/${fresh.id}` : `/app/checkout/${fresh.id}`;
       nav(purchaseEntry(user, next));
     } catch { if (current()) setNavigationError(true); }
     finally { if (operation.current === version) { navigationLock.current = false; if (current()) setNavigating(false); } }
@@ -92,7 +86,7 @@ export function SchedulePage() {
   const SECTIONS: Record<string, () => ReactNode> = {
     PageHead: () => <PageHead title={t('site.schedule.title')} body={t('site.schedule.body', { mats: tenant.studio.mats, classes: tenant.studio.classesPerDay })} />,
     DayTabs: () => null,
-    ClassList: () => <section className="container"><SessionCalendar sessions={list} onPick={s => { setPicked(s.id); setMat(null); }} /></section>,
+    ClassList: () => <section className="container"><SessionCalendar sessions={list} onPick={s => { setPicked(s.id); }} /></section>,
     Legend: () => (
       <section className="container" style={{ paddingBottom: 'var(--sp-4xl)' }}>
         <div className="site-legend">
@@ -115,11 +109,10 @@ export function SchedulePage() {
           <div className="stack">
             <ClassCard title={chosen.session.title} teacher={chosen.teacher?.display_name ?? ''} room={rooms.find((r) => r.id === chosen.session.room_id)?.name} startsAt={chosen.session.starts_at} endsAt={chosen.session.ends_at} tone={chosen.modality?.tone ?? 'river'} booked={chosen.session.booked_count} capacity={chosen.session.capacity} />
             <SessionEditorial session={chosen.session} />
-            {yoga && !full && !unavailable && <MatPicker sessionId={chosen.session.id} capacity={chosen.session.capacity} value={mat} onChange={setMat} />}
             <p className="muted small">{t(drawerCopy(signedIn && user.role !== 'public').body)}</p>
-            <ConsentHoldNotice target={`/app/checkout/${chosen.session.id}${mat ? `?mat=${mat}` : ''}`} />
+            <ConsentHoldNotice target={`/app/checkout/${chosen.session.id}`} />
             {navigationError && <Notice tone="warn">{t('core.common.error')}</Notice>}
-            <Button block size="lg" onClick={() => void signInAndBook()} loading={navigating} disabled={consentHeld || navigating || unavailable || (!full && yoga && (mat == null || taken.has(mat)))}>{unavailable ? t(`site.calendar.status.${unavailableReason}`) : full ? t('core.common.waitlist') : t('site.mat.continue')}</Button>
+            <Button block size="lg" onClick={() => void signInAndBook()} loading={navigating} disabled={consentHeld || navigating || unavailable}>{unavailable ? t(`site.calendar.status.${unavailableReason}`) : full ? t('core.common.waitlist') : t('site.mat.continue')}</Button>
           </div>
         )}
       </Drawer>

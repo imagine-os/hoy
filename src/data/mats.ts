@@ -1,7 +1,7 @@
 import type { BookingRow, ModalityRow } from './schema';
 /**
  * Keep this catalogue predicate aligned with the studio's yoga modalities. 0051: the seven classes — the ones whose method
- * is yoga-based (Ligereza: yoga yin · Híbrido: yoga dinámico · Alineación: vinyasas) let the member choose a mat.
+ * is yoga-based (Ligereza: yoga yin · Híbrido: yoga dinámico · Alineación: vinyasas) nobody picks a mat any more (Hoy 12 Nov): they cap the capacity, and an older booking may still carry a number.
  */
 export const usesMats = (modality?: Pick<ModalityRow, 'slug'> | null) => !!modality && /yoga|vinyasa|flow|yin|ligereza|hibrido|alineacion/.test(modality.slug);
 export const occupiesMat = (b: Pick<BookingRow, 'status'>) => b.status === 'booked' || b.status === 'checked_in';
