@@ -85,6 +85,8 @@ jobs:
         run: node scripts/test-view-as-ui.mjs
         env:
           QA_PROD_DIST: ${{ runner.temp }}/prod
+      - name: Pay page sits in the customer page frame (H-PAY)
+        run: node scripts/test-pay-page-frame.mjs
       - name: Launch routes
         run: node scripts/test-launch-routes.mjs
       - name: Launch config and the role matrix (11 roles)
