@@ -5,7 +5,7 @@
 // - the old addresses (/site/x on the server, /#/site/x in the browser) reach the new path;
 // - unknown paths answer 404; sitemap.xml and robots.txt are valid; the test site says noindex; www goes to the apex;
 // - the app's hash routes and its server routes are unchanged; hostile paths (traversal, very long, encoded) go nowhere.
-// Needs `npm ci --prefix server`. Run: node --experimental-strip-types scripts/test-seo.mjs
+// Needs `npm ci --prefix server`. Run: node scripts/test-seo.mjs (Node 22.18+ strips the types of the .ts it imports)
 import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, readFile, writeFile } from 'node:fs/promises';
 import http from 'node:http';

@@ -9,6 +9,7 @@ import { readFile, stat } from 'node:fs/promises';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { extname, join, resolve, sep } from 'node:path';
 import { launchBrowser, reporter } from './lib/launch-qa.mjs';
+import { routeOf } from './lib/site-route.mjs';
 
 const { check, done } = reporter('H-2 production sign-in');
 // The staff enrolment switch the build was made with (src/config/launch.ts CUSTOMER_AUTO_ENROL_STAFF, default on, owner
@@ -134,7 +135,7 @@ async function open(path = '/', { lang = 'es', width = 1280, clerk = true } = {}
   await page.waitForTimeout(800);
   return { ctx, page };
 }
-const route = (page) => decodeURIComponent(new URL(page.url()).hash.slice(1));
+const route = (page) => routeOf(page.url());
 const calls = (page) => page.evaluate(() => window.__fakeClerk?.calls ?? []);
 // Signed out for real: the sign-in form, not a spinner and not the session-problem screen (H-2 test environment:
 // Clerk's sign-out left a hash-routed app "loading" and then on "service did not answer").

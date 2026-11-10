@@ -15,6 +15,7 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { extname, join, resolve, sep } from 'node:path';
 import { launchBrowser, reporter } from './lib/launch-qa.mjs';
 import { cosFilter } from './lib/cos-filter.mjs';
+import { routeOf } from './lib/site-route.mjs';
 
 const { check, done } = reporter('Go-live lane H3 (UI)');
 const isProd = (dir) => existsSync(join(dir, 'index.html')) && readdirSync(join(dir, 'assets')).filter((f) => f.endsWith('.js')).some((f) => readFileSync(join(dir, 'assets', f), 'utf8').includes('clerk-js'));
@@ -133,7 +134,7 @@ const BASE = `http://127.0.0.1:${PORT}`;
 const browser = await launchBrowser();
 const errors = [];
 let scenario = 'start';
-const route = (page) => decodeURIComponent(new URL(page.url()).hash.slice(1));
+const route = (page) => routeOf(page.url());
 async function open(email = null) {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, reducedMotion: 'reduce' });
   await ctx.route(/^https?:\/\/(?!127\.0\.0\.1)/, (r) => r.abort());

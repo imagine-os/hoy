@@ -12,6 +12,7 @@ import { mkdtemp } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { serveDist, launchBrowser, newContext, reporter } from './lib/launch-qa.mjs';
+import { routeOf } from './lib/site-route.mjs';
 
 const { check, done } = reporter('website launch rows');
 const srv = await serveDist(5322);
@@ -25,7 +26,7 @@ async function open(opts, path) {
   await page.goto(`${srv.base}/#${path}`);
   return { ctx, page };
 }
-const route = (page) => new URL(page.url()).hash.slice(1);
+const route = (page) => routeOf(page.url(), { decode: false });
 const db = (page, fn, arg) => page.evaluate(([src, arg]) => {
   const stored = JSON.parse(localStorage.getItem('hoyos.db.v1'));
   new Function('db', 'arg', src)(stored.db, arg);
