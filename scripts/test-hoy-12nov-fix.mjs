@@ -1,4 +1,4 @@
-// Hoy 12 Nov, lane FIX (owner, 2026-11-11): F1 REC-05 desk offers/books a started class inside the 15-minute grace;
+// Hoy 12 Nov, lane FIX (owner, 2026-11-11): F1b no late grace and no check-in after the class has ended (F1, a grace, was reversed);
 // F2 PAG-04 the reason typed when a transfer payment is rejected reaches the customer (status_reason, views, email).
 import assert from 'node:assert/strict';
 import { build } from 'esbuild';
@@ -13,8 +13,10 @@ try {
   await build({
     stdin: {
       contents: `export { reviewOps } from './src/modules/transfers/launch/payments';
-export { notStarted } from './src/modules/staff/desk/deskSale';
-export { BOOKING_POLICY_DEFAULTS, configureBookingPolicy, bookingPolicy } from './src/modules/customer/booking/bookingPolicy';
+export { notStarted, checkInOpen } from './src/modules/staff/desk/deskSale';
+export { deskStrings, DESK_CODES } from './src/modules/staff/desk/strings';
+export { CONTRACT_REFUSALS } from './src/data/companyos/refusals';
+export { BOOKING_POLICY_DEFAULTS } from './src/modules/customer/booking/bookingPolicy';
 export { adapterFor, fromRecord } from './src/data/companyos/mapping';
 export { declinedReasonFor } from './src/modules/customer/declinedReason';
 export { strings as customerStrings } from './src/modules/customer/strings';`,
@@ -26,21 +28,26 @@ export { strings as customerStrings } from './src/modules/customer/strings';`,
   const checks = [];
   const check = (name, fn) => { fn(); checks.push(name); };
 
-  // ── F1
+  // ── F1b (owner, 2026-11-11, supersedes F1): no late grace; no check-in after the class has ended (the UI only hints)
   const now = Date.parse('2026-11-12T18:08:00Z');
   const at = (minutesAgo) => ({ session: { starts_at: new Date(now - minutesAgo * 60000).toISOString() } });
-  check('F1 the policy carries the grace (15) and the desk offers a class that started 8 minutes ago, not 20, not a future one', () => {
-    assert.equal(m.BOOKING_POLICY_DEFAULTS.lateGraceMinutes, 15);
+  check('F1b no grace in the policy and the desk offers only classes that have not started', () => {
+    assert.equal('lateGraceMinutes' in m.BOOKING_POLICY_DEFAULTS, false);
     const list = [at(8), at(20), at(-30), { session: { starts_at: 'junk' } }];
-    assert.deepEqual(m.notStarted(list, now, 15), [list[0], list[2]]);
-    assert.deepEqual(m.notStarted(list, now, 0), [list[2]], 'grace 0 keeps the old reading');
-    assert.deepEqual(m.notStarted(list, now), [list[2]], 'no grace given: unchanged');
+    assert.deepEqual(m.notStarted(list, now), [list[2]]);
   });
-  check('F1 the grace is configured from the setting (whole numbers only)', () => {
-    m.configureBookingPolicy({ lateGraceMinutes: 10 });
-    assert.equal(m.bookingPolicy().lateGraceMinutes, 10);
-    m.configureBookingPolicy({ lateGraceMinutes: -1 });
-    assert.equal(m.bookingPolicy().lateGraceMinutes, 10);
+  check('F1b check-in is offered before the start and during the class, not after its end', () => {
+    const cls = (start, end) => ({ starts_at: new Date(now + start * 60000).toISOString(), ends_at: new Date(now + end * 60000).toISOString() });
+    assert.equal(m.checkInOpen(cls(30, 80), now), true);
+    assert.equal(m.checkInOpen(cls(-10, 40), now), true);
+    assert.equal(m.checkInOpen(cls(-60, -1), now), false);
+    assert.equal(m.checkInOpen(cls(-60, 0), now), true, 'at the end minute it is still open (the server refuses strictly after the end)');
+    assert.equal(m.checkInOpen({ starts_at: 'junk', ends_at: 'junk' }, now), true, 'an unreadable end is not a reason to hide the button');
+  });
+  check('F1b check_in_closed has desk and contract copy in es and en', () => {
+    assert.ok(m.DESK_CODES.includes('check_in_closed'));
+    const d = m.deskStrings['desk.error.check_in_closed'], c = m.CONTRACT_REFUSALS.check_in_closed;
+    for (const x of [d, c]) assert.ok(x && x.es.length > 10 && x.en.length > 10);
   });
 
   // ── F2
