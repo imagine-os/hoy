@@ -38,9 +38,9 @@ export interface CompanyOSMe {
  * Signed out, the website reads these live: the Hoy server answers them with its read-only identity (`public_site`,
  * ADR 0029), whose policies hide the private class (J4), who booked and people's contact details. Every other table
  * reads as empty signed out, without asking Company OS. Lane H2 adds the studio's public settings record (`tenants`),
- * the holiday hours and the booked mats (a booking's class and mat only).
+ * the holiday hours. Since 12 Nov (R4, no mats) the website reads no bookings signed out.
  */
-const PUBLIC_TABLES = new Set(['plans', 'teachers', 'rooms', 'class_templates', 'class_sessions', 'tenants', 'hours_overrides', 'bookings']);
+const PUBLIC_TABLES = new Set(['plans', 'teachers', 'rooms', 'class_templates', 'class_sessions', 'tenants', 'hours_overrides']);
 const isForbidden = (e: unknown) => e instanceof CompanyOSError && e.code === 'forbidden';
 /** Holiday and special hours: every write also keeps bookings `review_closed_dates` (closedDatesAfter). */
 const HOURS = 'hours_overrides';
