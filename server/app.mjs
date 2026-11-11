@@ -42,8 +42,8 @@ export const ANONYMOUS_ROUTES = [];
  * fields (the private class, people's contact details and who booked never come back). Nothing else is forwarded
  * signed out, and the visitor's own headers never become an identity. Without the token, signed-out reads stay 401.
  */
-// Lane H2: the studio's public settings record, the holiday hours and a booking's class and mat (recipe policies).
-export const PUBLIC_ENTITIES = new Set(['occurrence', 'schedule', 'resource', 'coach', 'product', 'setting', 'hours_override', 'booking']);
+// Lane H2: the studio's public settings record and the holiday hours (recipe policies). The public site reads no bookings (decision R4).
+export const PUBLIC_ENTITIES = new Set(['occurrence', 'schedule', 'resource', 'coach', 'product', 'setting', 'hours_override']);
 /** A public query is a small JSON QuerySpec: read whole (to check its entity) only up to this size. */
 const PUBLIC_QUERY_LIMIT = 16 * 1024;
 /** The largest public answer the server rewrites (the settings record). */

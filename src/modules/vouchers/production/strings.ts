@@ -110,7 +110,7 @@ export const productionStrings: StringTable = {
   // Checkout · "¿Tienes un código?" (VoucherCodeEntry)
   'vouchers.cos.entry.title': { es: '¿Tienes un código?', en: 'Do you have a code?' },
   'vouchers.cos.entry.label': { es: 'Código', en: 'Code' },
-  'vouchers.cos.entry.hint': { es: 'Son 8 letras y números. Si es tu primera vez en Hoy, suma las clases a tu saldo.', en: 'It has 8 letters and numbers. If this is your first time at Hoy, it adds the classes to your balance.' },
+  'vouchers.cos.entry.hint': { es: 'Son 8 letras y números. Puede ser un código de regalo, de cortesía o de un profesor.', en: 'It has 8 letters and numbers. It can be a gift, courtesy or teacher code.' },
   'vouchers.cos.entry.cta': { es: 'Usar el código', en: 'Use the code' },
   'vouchers.cos.entry.done': { es: 'Listo: sumamos {classes} a tu saldo.', en: 'Done: {classes} added to your balance.' },
 

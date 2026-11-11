@@ -22,6 +22,8 @@ interface SignUpLike {
   prepareEmailAddressVerification(p: { strategy: 'email_code' }): Promise<SignUpLike>;
   attemptEmailAddressVerification(p: { code: string }): Promise<SignUpLike>;
 }
+import { appBase } from '../config/appBase';
+
 export interface ClerkLike {
   client?: { signIn: SignInLike & { create(p: { identifier: string }): Promise<SignInLike> }; signUp: SignUpLike & { create(p: { emailAddress: string }): Promise<SignUpLike> } } | null;
   setActive(p: { session: string | null }): Promise<void>;
@@ -75,7 +77,7 @@ export async function verifyEmailCode(clerk: ClerkLike, mode: CodeMode, code: st
 export async function signInWithGoogle(clerk: ClerkLike, back: string, location: Pick<Location, 'origin' | 'pathname'> = window.location): Promise<void> {
   const client = clerk.client;
   if (!client) throw Object.assign(new Error('clerk_not_ready'), { code: 'network_error' });
-  const base = `${location.origin}${location.pathname}`;
+  const base = appBase(location);
   await client.signIn.authenticateWithRedirect({
     strategy: 'oauth_google',
     redirectUrl: `${base}#/auth/callback?${new URLSearchParams({ back })}`,

@@ -65,7 +65,7 @@ export function ReviewDrawer({ item, customer, current, onClose, onDone }: { ite
       <label className="row"><input type="checkbox" checked={compared} disabled={locked} onChange={(e) => setCompared(e.target.checked)} /> {t('payLaunch.review.compared')}</label>
       <Field label={t('payLaunch.review.received')} required>{(id) => <Input id={id} name="received" type="number" inputMode="numeric" min={1} step={1} value={amount} disabled={locked} onChange={(e) => edit(() => setAmount(e.target.value))} />}</Field>
       {differs && <Notice tone="warn">{t('payLaunch.review.differs')}</Notice>}
-      <Field label={t('payLaunch.review.reason')}>{(id) => <Input id={id} name="reason" maxLength={500} value={reason} disabled={locked} onChange={(e) => edit(() => setReason(e.target.value))} />}</Field>
+      <Field label={t('payLaunch.review.reason')} hint={t('payLaunch.review.reasonHint')}>{(id) => <Input id={id} name="reason" maxLength={500} value={reason} disabled={locked} onChange={(e) => edit(() => setReason(e.target.value))} />}</Field>
       {action.uncertain ? <Notice tone="warn">{t('payLaunch.uncertain')}</Notice> : action.error && <p role="alert">{t(refusalKey(action.error), { code: action.error })}</p>}
       <div className="row wrap">
         <Button disabled={action.busy || !compared} loading={action.busy} onClick={() => void decide('approve')}>{t('payLaunch.review.approve')}</Button>

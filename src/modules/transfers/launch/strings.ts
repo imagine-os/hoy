@@ -116,6 +116,7 @@ export const payLaunchStrings: StringTable = {
   'payLaunch.review.received': { es: 'Valor recibido (COP)', en: 'Amount received (COP)' },
   'payLaunch.review.reason': { es: 'Motivo (obligatorio si el valor es distinto o si rechazas)', en: 'Reason (required when the amount differs or you reject)' },
   'payLaunch.review.notCurrentRow': { es: 'Este pago apunta a un precio que no es el vigente hoy para este producto ({price}). Revisa antes de confirmar.', en: 'This payment points to a price that is not today\'s for this product ({price}). Check before confirming.' },
+  'payLaunch.review.reasonHint': { es: 'La persona verá este motivo.', en: 'The customer will see this reason.' },
   'payLaunch.review.differs': { es: 'El valor recibido es distinto del precio; quedará anotado con el motivo.', en: 'The amount received differs from the price; it is recorded with the reason.' },
   'payLaunch.review.approve': { es: 'Confirmar pago', en: 'Confirm payment' },
   'payLaunch.review.approveCheckIn': { es: 'Confirmar y registrar llegada', en: 'Confirm and check in' },

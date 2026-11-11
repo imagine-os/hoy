@@ -131,6 +131,8 @@ jobs:
         run: node scripts/test-hoy-12nov-book.mjs
       - name: Late grace at the desk and the rejection reason (Hoy 12 Nov, lane FIX)
         run: node scripts/test-hoy-12nov-fix.mjs
+      - name: "Review round 1 fixes (Hoy 12 Nov: site-path links, decline hint, neutral copy, check-in keeps its class)"
+        run: node scripts/test-hoy-12nov-r1.mjs
       - name: Release wiring (company-os.json, release notes, these CI steps)
         run: node scripts/test-release-wiring.mjs
       - name: The signed-out website reads live data behind the real Hoy server (production build)

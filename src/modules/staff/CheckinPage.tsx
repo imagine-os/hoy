@@ -80,6 +80,12 @@ export function CheckinPage() {
   const wanted = params.get('session');
   const selected = allSessions.find((x) => x.session.id === wanted) ?? todayAll.find((x) => x.session.id === autoId);
   const selectedId = selected?.session.id;
+  // The 15-second clock moves `autoId` to the next class when the current one ends: put the class staff are looking at
+  // in the address once one is shown, so marking no-shows after the end keeps its roster (and the "class ended" note).
+  useEffect(() => {
+    if (wanted || !autoId) return;
+    setParams((prev) => { const next = new URLSearchParams(prev); next.set('session', autoId); return next; }, { replace: true });
+  }, [wanted, autoId, setParams]);
 
   const { rows: bookings, loading } = useTable<BookingRow>('bookings', { where: { session_id: selectedId ?? '__none__' } });
   const { rows: waitlist } = useTable<WaitlistRow>('waitlist', { where: { session_id: selectedId ?? '__none__', status: 'waiting' } });

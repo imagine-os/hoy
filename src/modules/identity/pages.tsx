@@ -21,6 +21,7 @@ import { Button } from '../../components/atom/Button/Button';
 import { Input } from '../../components/atom/Input/Input';
 import { Field } from '../../components/molecule/Field/Field';
 import { Notice } from '../../components/molecule/Notice/Notice';
+import { appBase } from '../../config/appBase';
 import './identity.css';
 
 const errKey = (kind: AuthErrorKind) => `identity.err.${kind}`;
@@ -272,7 +273,7 @@ export function AuthCallbackPage() {
   const { t } = useI18n();
   const { status } = useSession();
   const [params] = useSearchParams();
-  const target = `${window.location.origin}${window.location.pathname}#${safeAuthBack(params.get('back'))}`;
+  const target = `${appBase()}#${safeAuthBack(params.get('back'))}`;
   // Until the app configuration has loaded there is no ClerkProvider yet (ProductionSession), and Clerk's callback
   // component throws outside one: wait, as the sign-in page does. A configuration that failed shows the problem.
   if (status === 'loading') return <Shell title={t('identity.signin.title')}><p className="muted" aria-busy="true">{t('identity.callback')}</p></Shell>;
