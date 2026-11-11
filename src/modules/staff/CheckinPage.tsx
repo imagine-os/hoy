@@ -28,6 +28,7 @@ import { S02 } from './specs';
 import { approvedPackageRows, packageState } from '../../data/packages';
 import { bookWithPackage } from '../../data/deskBooking';
 import { checkInOpen } from './desk/deskSale';
+import { useNow } from '../customer/hooks';
 import { SERVER_RULES } from '../customer/booking/bookingPolicy';
 import './staff.css';
 import { type Lang } from '../../i18n/types';
@@ -70,7 +71,7 @@ export function CheckinPage() {
   const futureSessions = allSessions.filter(x => x.session.status === 'scheduled' && Date.parse(x.session.starts_at) > Date.now());
   const { rows: ledger } = useTable<ClassLedgerRow>('class_ledger');
   const { rows: payments } = useTable<PaymentRow>('payments');
-  const now = Date.now();
+  const now = useNow(15_000); // re-read so a class that ends while the screen is open stops offering "Llegó"
   const autoId = useMemo(() => {
     const live = todayAll.find((x) => new Date(x.session.starts_at).getTime() - 30 * MS.min <= now && new Date(x.session.ends_at).getTime() >= now);
     const next = todayAll.find((x) => new Date(x.session.starts_at).getTime() > now);
@@ -198,7 +199,7 @@ export function CheckinPage() {
   const onSearchKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Escape') { setQ(''); return; }
     if (e.key !== 'Enter' || !q.trim()) return;
-    if (expected[0]) { if (checkInOffered) setStatus(expected[0].b, 'checked_in'); }
+    if (expected[0]) { if (!checkInOffered) setError(t('staff.checkin.ended')); else setStatus(expected[0].b, 'checked_in'); }
     else if (walkIns.length === 1) walkIn(walkIns[0]);
   };
 

@@ -129,7 +129,7 @@ export function BookedPage({ change = false }: { change?: boolean }) {
   const paymentStatus = SERVER_RULES ? serverPaymentStatus(server, now) : bookingPaymentStatus(booking, ledger.rows, payments.rows);
   const bookingBase = `/app/booking/${booking.id}`;
   /** F2: why reception rejected the receipt for this booking (plain text, rendered as a text node). */
-  const declinedReason = SERVER_RULES ? declinedReasonFor(payments.rows as never, booking.id) : null;
+  const declinedReason = SERVER_RULES ? declinedReasonFor(payments.rows as ReadonlyArray<PaymentRow & { for_entity?: string | null; for_id?: string | null }>, booking.id) : null;
 
   const addToCalendar = () => downloadIcs({ title: `${s.title} · ${tenant.name}`, startsAt: s.starts_at, endsAt: s.ends_at, location: `${tenant.name} · ${roomName(joined)}`, description: `${teacherName(joined)}` });
   const share = async () => { const r = await shareText(t('customer.booked.shareText', { title: s.title, when: `${formatDate(s.starts_at, lang)} ${formatTime(s.starts_at, lang)}`, name: tenant.name }), window.location.href); if (r !== 'failed') setFlash({ tone: 'success', text: r === 'copied' ? t('customer.class.linkCopied') : t('customer.class.shared') }); };
