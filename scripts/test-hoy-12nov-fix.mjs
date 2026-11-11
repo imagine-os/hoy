@@ -72,7 +72,9 @@ export { strings as customerStrings } from './src/modules/customer/strings';`,
       { id: 'c', status: 'approved', for_entity: 'booking', for_id: 'b1', status_reason: null, created_at: '2026-11-12T10:00:00Z' },
       { id: 'd', status: 'declined', for_entity: 'booking', for_id: 'b2', status_reason: 'Otra', created_at: '2026-11-12T10:00:00Z' },
     ];
-    assert.equal(m.declinedReasonFor(rows, 'b1'), 'Nuevo');
+    assert.equal(m.declinedReasonFor(rows, 'b1'), null, 'a newer approved payment hides the older rejection');
+    assert.equal(m.declinedReasonFor(rows.filter((r) => r.id !== 'c'), 'b1'), 'Nuevo');
+    assert.equal(m.declinedReasonFor([...rows.filter((r) => r.id !== 'c'), { id: 'e', status: 'pending', for_entity: 'booking', for_id: 'b1', created_at: '2026-11-12T11:00:00Z' }], 'b1'), null, 'a new pending receipt hides it too');
     assert.equal(m.declinedReasonFor(rows, 'b3'), null);
     assert.equal(m.declinedReasonFor([{ ...rows[0], status_reason: '  ' }], 'b1'), null);
   });
@@ -85,5 +87,13 @@ export { strings as customerStrings } from './src/modules/customer/strings';`,
   assert.match(src.slice(src.indexOf("key: 'payment_rejected'"), src.indexOf("key: 'booking_released'")), /\{\{event\.reason\}\}/);
   assert.ok(gen.templates.some((x) => x.key === 'payment_rejected' && x.body?.includes('{{event.reason}}')) || JSON.stringify(gen).includes('Motivo: {{event.reason}}'), 'generated templates carry {{event.reason}}');
   checks.push('F2 email source and generated templates');
+  const read = (f) => readFile(f, 'utf8');
+  const [teacher, settingsPage, checkin, booked] = await Promise.all(['src/modules/teacher/ClassPage.tsx', 'src/modules/admin/SettingsPage.tsx', 'src/modules/staff/CheckinPage.tsx', 'src/modules/customer/pages/BookedPage.tsx'].map(read));
+  assert.match(teacher, /SERVER_RULES \? 0 : settings\.policies\.lateGraceMin/, 'teacher class page promises no grace in production');
+  assert.match(settingsPage, /!SERVER_RULES && <Field label=\{t\('admin\.settings\.f\.lateGrace'\)\}/, 'the late-grace field is hidden in production');
+  assert.match(checkin, /useNow\(/, 'check-in re-evaluates the ended class on a timer');
+  assert.match(checkin, /if \(!checkInOffered\) setError\(t\('staff\.checkin\.ended'\)\)/, 'Enter on an ended class says why');
+  assert.equal(booked.includes('as never'), false, 'no cast in BookedPage');
+  checks.push('F2/F1b review: teacher grace, settings field, timer, Enter feedback, no cast');
   console.log('PASS ' + checks.join('; '));
 } finally { await rm(dir, { recursive: true, force: true }); }
