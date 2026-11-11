@@ -484,29 +484,27 @@ try {
   });
 
   // ------------------------------------------------------------------ signed-out mats
-  await test('signed out: bookings read as booked mats (class and mat, nothing else)', async () => {
+  await test('signed out: bookings read as nothing, and Company OS is not asked (R4: no mats, 12 Nov)', async () => {
     const api = fakeApi();
     api.put('booking', { occurrence: 'o1', spot: 3, person: 'p1', status: 'booked' });
-    api.put('booking', { occurrence: 'o1', spot: 5, person: 'p2', status: 'cancelled' });
     api.put('occurrence', { starts_at: new Date(Date.now() + 86400_000).toISOString() }, 'o1');
-    api.put('occurrence', { starts_at: '2020-01-01T12:00:00.000Z' }, 'o0');
-    api.put('booking', { occurrence: 'o0', spot: 7, person: 'p3', status: 'booked' });
-    const rows = await signedOut(api).list('bookings', { where: { session_id: 'o1' } });
-    assert.deepEqual(rows.map((r) => [r.session_id, r.mat_number, r.status, r.user_id]), [['o1', 3, 'booked', null]]);
-    // Only classes still to come are asked for (review round 1): a visitor never pages the whole history.
-    assert.deepEqual((await signedOut(api).list('bookings')).map((r) => r.mat_number), [3]);
-    const q = api.calls.filter((c) => c.path === '/query' && c.body.entity === 'booking').pop();
-    assert.ok(JSON.stringify(q.body.filter).includes('"ref":"occurrence"'));
+    assert.deepEqual(await signedOut(api).list('bookings', { where: { session_id: 'o1' } }), []);
+    assert.deepEqual(await signedOut(api).list('bookings'), []);
+    assert.equal(api.calls.filter((c) => c.path === '/query' && c.body.entity === 'booking').length, 0);
   });
 
   // ------------------------------------------------------------------ copy
   await test('refusal copy: the new codes have Spanish and English lines', () => {
     for (const code of ['legal_document_in_build', 'legal_document_current', 'email_not_connected', 'unknown_form', 'unknown_answer']) assert.ok(hasRefusalCopy(code), code);
   });
-  await test('the Hoy server forwards the new public entities signed out', async () => {
+  await test('the Hoy server forwards the new public entities signed out, and no bookings (R4: no mats, 12 Nov)', async () => {
     const src = await readFile('server/app.mjs', 'utf8');
     const list = src.match(/PUBLIC_ENTITIES = new Set\(\[([^\]]*)\]\)/)[1];
-    for (const e of ['setting', 'hours_override', 'booking']) assert.ok(list.includes(`'${e}'`), e);
+    for (const e of ['setting', 'hours_override']) assert.ok(list.includes(`'${e}'`), e);
+    assert.ok(!list.includes(`'booking'`), 'booking is no longer forwarded');
+    const provider = await readFile('src/data/companyos/CompanyOSProvider.ts', 'utf8');
+    const tables = provider.match(/const PUBLIC_TABLES = new Set\(\[([^\]]*)\]\)/)[1];
+    assert.ok(!tables.includes(`'bookings'`), 'the provider no longer reads bookings signed out');
   });
 } finally {
   await rm(scratch, { recursive: true, force: true });
