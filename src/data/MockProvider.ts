@@ -99,6 +99,9 @@ export class MockProvider implements DataProvider {
     if (!(this.db.class_templates ?? []).some(row => row.id.startsWith('tpl_fixed_'))) upgradeTimetable(this.db, buildSeed());
     this.expandDemoCalendar();
     ensureFullDemoSession(this.db, Date.now());
+    // The calendar expanded above is saved now, as it was when assignLegacyMats() ended with a persist (a later before/after
+    // comparison must not see the expansion as a change).
+    this.persist();
     // Cross-tab realtime: another tab's persist() fires `storage` here; reload and tell every subscriber.
     if (typeof window !== 'undefined') window.addEventListener('storage', (e) => this.onStorage(e));
   }
@@ -384,6 +387,7 @@ export class MockProvider implements DataProvider {
   /** Refresh only synthetic sample fixtures when an already-open demo crosses a class start. */
   prepareDemoSamples(): void {
     if (!ensureFullDemoSession(this.db, Date.now())) return;
+    this.persist();
     for (const table of ['class_sessions', 'bookings', 'waitlist']) this.emit({ table, type: 'reset' });
   }
 
