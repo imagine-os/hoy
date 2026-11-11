@@ -33,6 +33,8 @@
     "test:book": "node scripts/test-hoy-12nov-book.mjs",
     "test:fix-12nov": "node scripts/test-hoy-12nov-fix.mjs",
     "test:r1-12nov": "node scripts/test-hoy-12nov-r1.mjs",
+    "test:r2-12nov": "node scripts/test-hoy-12nov-r2.mjs",
+    "test:seo:ui": "node scripts/test-seo-ui.mjs",
     "test:vouchers": "node --experimental-strip-types scripts/test-vouchers.mjs",
     "test:teacher-codes": "node scripts/test-teacher-codes.mjs",
     "media-catalog": "node scripts/gen-media-catalog.mjs",

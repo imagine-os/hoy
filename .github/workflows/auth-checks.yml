@@ -133,6 +133,8 @@ jobs:
         run: node scripts/test-hoy-12nov-fix.mjs
       - name: "Review round 1 fixes (Hoy 12 Nov: site-path links, decline hint, neutral copy, check-in keeps its class)"
         run: node scripts/test-hoy-12nov-r1.mjs
+      - name: "Review round 2 fixes (Hoy 12 Nov: one title table for server and browser, check-in follows the clock, decline hint)"
+        run: node scripts/test-hoy-12nov-r2.mjs
       - name: Release wiring (company-os.json, release notes, these CI steps)
         run: node scripts/test-release-wiring.mjs
       - name: The signed-out website reads live data behind the real Hoy server (production build)
@@ -165,6 +167,10 @@ jobs:
           QA_PROD_DIST: ${{ runner.temp }}/prod
       - name: Go-live lane H3 in the browser (class type, plan cards, /coming-soon once live; production build)
         run: node scripts/test-golive-h3-ui.mjs
+        env:
+          QA_PROD_DIST: ${{ runner.temp }}/prod
+      - name: "SEO after hydration in the browser (titles, JSON-LD, reload, Back and Forward; real server, production build)"
+        run: node scripts/test-seo-ui.mjs
         env:
           QA_PROD_DIST: ${{ runner.temp }}/prod
       - name: Review build
