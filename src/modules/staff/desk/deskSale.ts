@@ -19,10 +19,7 @@ export function deskTrialBlock(product: { kind?: unknown; slug?: string | null }
 
 /**
  * REC-06: "Sell and check in" offers only today's classes that have not started yet (an unreadable start is not offered).
- * The grace after the start is 0 here. Open question (review r2): whether the desk may still sell and check in during the
- * check-in cut-off after the start (bookings `late_grace_minutes`). The booking policy this app reads
- * (`useBookingPolicy`: reschedule and hold minutes) doesn't carry it, so it is not used; the server's
- * `occurrence_not_open` stays the authority.
+ * No grace after the start (owner 2026-11-11, F1b); the server's `occurrence_not_open` stays the authority.
  */
 export function notStarted<T extends { session: { starts_at: string } }>(list: T[], now: number): T[] {
   return list.filter((x) => { const at = Date.parse(x.session.starts_at); return Number.isFinite(at) && at > now; });
@@ -42,4 +39,14 @@ export function chosenSession(list: readonly { session: { id: string } }[], sess
  */
 export function startedChoice(all: readonly { session: { id: string } }[], offered: readonly { session: { id: string } }[], sessionId: string): boolean {
   return !!sessionId && all.some((x) => x.session.id === sessionId) && !offered.some((x) => x.session.id === sessionId);
+}
+
+/**
+ * F1b (owner 2026-11-11): Company OS (bookings 1.8.0 `check_in_closes_at_end`) refuses `check_in_closed` once a class has
+ * ended, for staff too; before the start and during the class check-in works. This only hides the "Llegó" button as a hint;
+ * the server is the authority. An unreadable end keeps the button.
+ */
+export function checkInOpen(session: { ends_at: string }, now: number): boolean {
+  const end = Date.parse(session.ends_at);
+  return !Number.isFinite(end) || now <= end;
 }

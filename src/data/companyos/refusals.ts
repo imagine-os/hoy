@@ -12,6 +12,7 @@ export const CONTRACT_REFUSALS = {
   // Bookings
   occurrence_full: { es: 'Esta clase ya está llena.', en: 'This class is full.' },
   occurrence_not_open: { es: 'Esta clase ya no admite reservas: empezó, se canceló o terminó.', en: 'This class no longer takes bookings: it has started, been cancelled or ended.' },
+  check_in_closed: { es: 'La clase ya terminó: ya no se puede registrar la llegada.', en: 'The class has ended: arrivals can no longer be recorded.' },
   already_booked: { es: 'Ya tienes una reserva en esta clase.', en: 'You already have a booking in this class.' },
   person_overlap: { es: 'Ya tienes otra clase a esa hora. Elige una clase que no se cruce con tus reservas.', en: 'You already have another class at that time. Pick a class that does not overlap your bookings.' },
   daily_limit_reached: { es: 'Ya tienes una clase reservada ese día. Puedes reservar una clase por día.', en: 'You already have a class booked that day. You can book one class a day.' },

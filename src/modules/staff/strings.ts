@@ -151,6 +151,7 @@ export const strings: StringTable = {
   'staff.checkin.noClasses': { es: 'Hoy no hay clases programadas', en: 'No classes scheduled today' },
   'staff.checkin.noClasses.body': { es: 'El horario se genera desde las plantillas de clase en Contenido.', en: 'The schedule is generated from class templates in Content.' },
   'staff.checkin.arrivals': { es: '{n} de {total} llegaron', en: '{n} of {total} arrived' },
+  'staff.checkin.ended': { es: 'Esta clase ya terminó: ya no se puede registrar la llegada.', en: 'This class has ended: arrivals can no longer be recorded.' },
   'staff.checkin.grace': { es: 'gracia {n} min', en: '{n} min grace' },
   'staff.checkin.search.ph': { es: 'Nombre, WhatsApp o email…', en: 'Name, WhatsApp or email…' },
   'staff.checkin.kbd': { es: 'Pulsa / para buscar · Enter hace check-in del primero · Esc limpia', en: 'Press / to search · Enter checks in the first · Esc clears' },

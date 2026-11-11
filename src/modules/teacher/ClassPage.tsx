@@ -1,4 +1,5 @@
 import { useEffect,useRef,useState } from 'react';
+import { SERVER_RULES } from '../customer/booking/bookingPolicy';
 import { Link, useParams } from 'react-router-dom';
 import { useI18n } from '../../i18n/I18nProvider';
 import { useSession } from '../../auth/SessionProvider';
@@ -60,7 +61,8 @@ function OwnedTeacherClass({id,actor}:{id:string;actor:TeacherActor}){
   const canComplete = (isMine || override) && session.status === 'scheduled' && now >= start;
   const active = bookings.filter((b) => b.status !== 'cancelled' && b.status !== 'late_cancel');
   const present = active.filter((b) => b.status === 'checked_in').length;
-  const graceMs = settings.policies.lateGraceMin * MS.min;
+  // Production: Hoy has no late grace (owner 2026-11-11, F1b); the review build keeps the demo policy.
+  const graceMs = (SERVER_RULES ? 0 : settings.policies.lateGraceMin) * MS.min;
 
   const command=async(kind:'note'|'complete')=>{
    if(savingRef.current)return;savingRef.current=true;setSaving(true);setSaveError(false);

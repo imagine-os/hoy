@@ -31,6 +31,7 @@
     "test:analytics": "node scripts/test-analytics.mjs",
     "test:promotions": "node --experimental-strip-types scripts/test-promotions.mjs",
     "test:book": "node scripts/test-hoy-12nov-book.mjs",
+    "test:fix-12nov": "node scripts/test-hoy-12nov-fix.mjs",
     "test:vouchers": "node --experimental-strip-types scripts/test-vouchers.mjs",
     "test:teacher-codes": "node scripts/test-teacher-codes.mjs",
     "media-catalog": "node scripts/gen-media-catalog.mjs",

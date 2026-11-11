@@ -3,7 +3,7 @@ import type { StringTable } from '../../../i18n/types';
 /** H-7 · desk and admin copy for the Company OS refusal codes these screens can receive, plus the new desk controls. */
 export const DESK_CODES = [
   'occurrence_full', 'occurrence_not_open', 'already_booked', 'daily_limit_reached', 'person_overlap', 'spot_required', 'spot_invalid', 'spot_taken',
-  'hold_expired', 'invalid_transition', 'booking_system_managed', 'reason_required',
+  'hold_expired', 'check_in_closed', 'invalid_transition', 'booking_system_managed', 'reason_required',
   'no_credits', 'lot_expired', 'lot_frozen', 'trial_used',
   'product_inactive', 'audience_not_allowed', 'amount_mismatch', 'invalid_amount', 'invalid_status_transition',
   'already_signed_up', 'person_email_mismatch', 'consent_required', 'duplicate_facet',
@@ -21,6 +21,7 @@ export const deskStrings: StringTable = {
   'desk.error.spot_required': { es: 'Elige un tapete.', en: 'Choose a mat.' },
   'desk.error.spot_invalid': { es: 'Ese tapete no existe en este salón.', en: 'That mat does not exist in this room.' },
   'desk.error.spot_taken': { es: 'Ese tapete ya está ocupado.', en: 'That mat is already taken.' },
+  'desk.error.check_in_closed': { es: 'La clase ya terminó: ya no se puede registrar la llegada.', en: 'The class has ended: arrivals can no longer be recorded.' },
   'desk.error.hold_expired': { es: 'La reserva en espera venció y el cupo se liberó.', en: 'The held booking expired and the spot was released.' },
   'desk.error.invalid_transition': { es: 'Ese cambio no está permitido para esta reserva ahora.', en: 'That change is not allowed for this booking now.' },
   'desk.error.booking_system_managed': { es: 'El sistema gestiona este cambio; no se puede hacer a mano.', en: 'The system manages this change; it cannot be made by hand.' },
